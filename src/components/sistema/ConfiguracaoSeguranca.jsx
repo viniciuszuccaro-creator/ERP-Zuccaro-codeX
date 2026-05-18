@@ -113,6 +113,16 @@ const normalizeSecurityConfig = (data = {}) => {
   };
 };
 
+const validateSecurityConfig = (data = {}) => {
+  const issues = [];
+  if (data.jwt_ativo && data.jwt_validade_access_minutos < 5) issues.push('Access Token deve ter validade minima de 5 minutos.');
+  if (data.jwt_ativo && data.jwt_validade_refresh_dias < 1) issues.push('Refresh Token deve ter validade minima de 1 dia.');
+  if (data.exigir_mfa && (!Array.isArray(data.mfa_metodos_disponiveis) || data.mfa_metodos_disponiveis.length === 0)) issues.push('MFA exige ao menos um metodo disponivel.');
+  if ((data.politica_senha?.tamanho_minimo || 0) < 8) issues.push('Politica de senha deve exigir no minimo 8 caracteres.');
+  if (data.tentativas_login_max < 3) issues.push('Tentativas maximas de login deve ser no minimo 3.');
+  return issues;
+};
+
 /**
  * Configuração de Segurança e Sessões
  */
@@ -269,8 +279,17 @@ export default function ConfiguracaoSeguranca({ empresaId, grupoId }) {
       toast.error('Sem permissao para editar configuracoes de seguranca.');
       return;
     }
+    const clean = normalizeSecurityConfig(formData);
+    const issues = validateSecurityConfig(clean);
+    if (issues.length) {
+      toast.error(issues[0]);
+      return;
+    }
+    if (!window.confirm('Regra-Mae: confirma salvar configuracoes de seguranca para o contexto atual? Esta acao sensivel sera auditada.')) {
+      return;
+    }
     setSalvando(true);
-    salvarMutation.mutate(normalizeSecurityConfig(formData));
+    salvarMutation.mutate(clean);
   };
 
   if (isLoading) {

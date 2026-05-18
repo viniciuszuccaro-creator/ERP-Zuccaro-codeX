@@ -125,7 +125,7 @@ export default function PermissoesGranularesModal({ open, onOpenChange, perfil, 
         <Tabs defaultValue="comercial" className="flex-1 overflow-hidden flex flex-col">
           <TabsList className="grid grid-cols-3 md:grid-cols-6 gap-1">
             {Object.keys(PERMISSOES_GRANULARES).map(mod => (
-              <TabsTrigger key={mod} value={mod} className="text-xs" data-action={`RBAC.PermissoesGranulares.tab.${mod}`}>
+              <TabsTrigger key={mod} value={mod} className="text-xs" data-action={`RBAC.PermissoesGranulares.tab.${mod}`} data-permission="Sistema.Controle de Acesso.visualizar">
                 {mod.charAt(0).toUpperCase() + mod.slice(1)}
               </TabsTrigger>
             ))}
@@ -144,6 +144,8 @@ export default function PermissoesGranularesModal({ open, onOpenChange, perfil, 
                             <span className="text-sm">{label}</span>
                             <Switch
                               data-action={`RBAC.PermissoesGranulares.${modulo}.${funcId}.${permId}`}
+                              data-permission="Sistema.Controle de Acesso.editar"
+                              data-sensitive="true"
                               checked={permissoesGranulares?.[modulo]?.[funcId]?.[permId] || false}
                               onCheckedChange={() => togglePermissao(modulo, funcId, permId)}
                               disabled={disabled}
@@ -163,7 +165,7 @@ export default function PermissoesGranularesModal({ open, onOpenChange, perfil, 
           <Button variant="outline" onClick={() => onOpenChange(false)} data-action="RBAC.PermissoesGranulares.cancelar">
             Cancelar
           </Button>
-          <Button onClick={handleSalvar} disabled={disabled} className="bg-blue-600 hover:bg-blue-700" data-action="RBAC.PermissoesGranulares.salvar">
+          <Button onClick={handleSalvar} disabled={disabled} className="bg-blue-600 hover:bg-blue-700" data-action="RBAC.PermissoesGranulares.salvar" data-permission="Sistema.Controle de Acesso.editar" data-sensitive="true">
             <CheckCircle className="w-4 h-4 mr-2" />
             Salvar Permissões
           </Button>

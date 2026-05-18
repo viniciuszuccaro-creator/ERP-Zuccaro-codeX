@@ -4,18 +4,37 @@ Este projeto esta configurado para rodar localmente, sem depender do Base44 ou d
 
 ## 1. Arquivo que voce deve levar
 
-Use o ZIP gerado na pasta:
+Use o ZIP/projeto portatil que esta no HD externo:
 
-`C:\Users\cpaba\Documents\New project`
+`D:\ERP Zuccaro\erp-integra-portatil-20260508-061538.zip`
+
+Ou, se ja estiver extraido, use a pasta:
+
+`D:\ERP Zuccaro\erp-integra-portatil-20260508-061538\erp-integra-portatil-20260508-061538`
 
 Ele leva o codigo do projeto, as configuracoes locais e as instrucoes. Ele nao leva `node_modules`, `dist`, logs ou arquivos temporarios, porque isso deixa o pacote pesado e pode causar problema em outro computador.
+
+Se preferir trabalhar pelo GitHub, use o repositorio novo:
+
+```text
+https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX.git
+```
+
+No computador novo:
+
+```powershell
+git clone https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX.git "C:\ERP Zuccaro\ERP-Zuccaro-codeX"
+cd "C:\ERP Zuccaro\ERP-Zuccaro-codeX"
+npm install
+npm run dev -- --host 0.0.0.0
+```
 
 ## 2. Preparar o computador novo
 
 1. Instale o Node.js LTS pelo site oficial: https://nodejs.org/
 2. Extraia o ZIP em uma pasta simples, por exemplo:
 
-   `C:\ERP\erp-integra-main`
+   `C:\ERP Zuccaro\erp-integra-portatil`
 
 3. Abra o PowerShell dentro da pasta extraida.
 4. Rode:
@@ -119,3 +138,19 @@ E abra:
 ```text
 http://localhost:5174/
 ```
+
+## 6. Como continuar o plano de melhoria em outro computador
+
+Depois de abrir o projeto no Codex do outro computador, informe que o arquivo de continuidade e:
+
+```text
+STATUS_DO_PROJETO.md
+```
+
+E que a regra e seguir:
+
+```text
+PLANO_MELHORIA_ERP_ZUCCARO.md
+```
+
+O ultimo checkpoint registrado esta no final do `STATUS_DO_PROJETO.md`.

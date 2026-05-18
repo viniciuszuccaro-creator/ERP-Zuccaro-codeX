@@ -6,8 +6,17 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Sparkles } from "lucide-react";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function FiscalContabilSection({ formData, setFormData, sugestoesIA, handleDadosNCM, planoContas }) {
+  const { hasPermission } = usePermissions();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id || formData?.empresa_id || formData?.group_id || formData?.grupo_id);
+  const podeEditar = hasPermission?.("Cadastros.Produto.editar") || hasPermission?.("Fiscal.Produto.editar");
+  const podeBuscarFiscal = hasPermission?.("Cadastros.Produto.ia") || hasPermission?.("Fiscal.Produto.buscarDados") || podeEditar;
+  const canEdit = contextoValido && podeEditar;
+
   return (
     <>
       <Card className="border-purple-200 bg-purple-50">
@@ -22,7 +31,7 @@ export default function FiscalContabilSection({ formData, setFormData, sugestoes
             <div>
               <Label>Origem da Mercadoria</Label>
               <Select value={formData.origem_mercadoria} onValueChange={(v) => setFormData(prev => ({...prev, origem_mercadoria: v}))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger disabled={!canEdit} data-permission="Fiscal.Produto.editar" data-action="selecionar-origem-mercadoria-produto" data-sensitive><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="0 - Nacional">0 - Nacional</SelectItem>
                   <SelectItem value="1 - Estrangeira Importação Direta">1 - Estrangeira Importação Direta</SelectItem>
@@ -36,7 +45,7 @@ export default function FiscalContabilSection({ formData, setFormData, sugestoes
             <div>
               <Label>Regime Tributário do Produto</Label>
               <Select value={formData.regime_tributario_produto} onValueChange={(v) => setFormData(prev => ({...prev, regime_tributario_produto: v}))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger disabled={!canEdit} data-permission="Fiscal.Produto.editar" data-action="selecionar-regime-tributario-produto" data-sensitive><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Simples Nacional">Simples Nacional</SelectItem>
                   <SelectItem value="Lucro Presumido">Lucro Presumido</SelectItem>
@@ -54,6 +63,10 @@ export default function FiscalContabilSection({ formData, setFormData, sugestoes
                 onChange={(e) => setFormData(prev => ({ ...prev, ncm: e.target.value }))}
                 placeholder="00000000"
                 maxLength={8}
+                disabled={!canEdit}
+                data-permission="Fiscal.Produto.editar"
+                data-action="editar-ncm-produto"
+                data-sensitive
               />
               {sugestoesIA?.ncm_info && (
                 <p className="text-xs text-blue-600 mt-1">ℹ️ {sugestoesIA.ncm_info}</p>
@@ -64,7 +77,10 @@ export default function FiscalContabilSection({ formData, setFormData, sugestoes
                 tipo="ncm"
                 valor={formData.ncm}
                 onDadosEncontrados={handleDadosNCM}
-                disabled={!formData.ncm || formData.ncm.length !== 8}
+                disabled={!formData.ncm || formData.ncm.length !== 8 || !contextoValido || !podeBuscarFiscal}
+                data-permission="Fiscal.Produto.buscarDados"
+                data-action="buscar-dados-ncm-produto"
+                data-sensitive
               >
                 Buscar NCM
               </BotaoBuscaAutomatica>
@@ -78,6 +94,10 @@ export default function FiscalContabilSection({ formData, setFormData, sugestoes
                 value={formData.cest || ""}
                 onChange={(e) => setFormData(prev => ({ ...prev, cest: e.target.value }))}
                 placeholder="00.000.00"
+                disabled={!canEdit}
+                data-permission="Fiscal.Produto.editar"
+                data-action="editar-cest-produto"
+                data-sensitive
               />
             </div>
             <div>
@@ -86,6 +106,10 @@ export default function FiscalContabilSection({ formData, setFormData, sugestoes
                 value={formData.cfop_padrao_venda || ""}
                 onChange={(e) => setFormData(prev => ({ ...prev, cfop_padrao_venda: e.target.value }))}
                 placeholder="5102"
+                disabled={!canEdit}
+                data-permission="Fiscal.Produto.editar"
+                data-action="editar-cfop-venda-produto"
+                data-sensitive
               />
             </div>
             <div>
@@ -94,6 +118,10 @@ export default function FiscalContabilSection({ formData, setFormData, sugestoes
                 value={formData.cfop_padrao_compra || ""}
                 onChange={(e) => setFormData(prev => ({ ...prev, cfop_padrao_compra: e.target.value }))}
                 placeholder="1102"
+                disabled={!canEdit}
+                data-permission="Fiscal.Produto.editar"
+                data-action="editar-cfop-compra-produto"
+                data-sensitive
               />
             </div>
           </div>
@@ -113,6 +141,10 @@ export default function FiscalContabilSection({ formData, setFormData, sugestoes
                 value={formData.tributacao?.icms_cst || ''} 
                 onChange={(e) => setFormData(prev => ({ ...prev, tributacao: { ...prev.tributacao, icms_cst: e.target.value } }))} 
                 placeholder="00"
+                disabled={!canEdit}
+                data-permission="Fiscal.Produto.editar"
+                data-action="editar-icms-cst-produto"
+                data-sensitive
               />
             </div>
             <div>
@@ -121,6 +153,10 @@ export default function FiscalContabilSection({ formData, setFormData, sugestoes
                 type="number" step="0.01" 
                 value={formData.tributacao?.icms_aliquota || 0} 
                 onChange={(e) => setFormData(prev => ({ ...prev, tributacao: { ...prev.tributacao, icms_aliquota: parseFloat(e.target.value) || 0 } }))} 
+                disabled={!canEdit}
+                data-permission="Fiscal.Produto.editar"
+                data-action="editar-icms-aliquota-produto"
+                data-sensitive
               />
             </div>
             <div>
@@ -129,27 +165,31 @@ export default function FiscalContabilSection({ formData, setFormData, sugestoes
                 value={formData.tributacao?.pis_cst || ''} 
                 onChange={(e) => setFormData(prev => ({ ...prev, tributacao: { ...prev.tributacao, pis_cst: e.target.value } }))} 
                 placeholder="01"
+                disabled={!canEdit}
+                data-permission="Fiscal.Produto.editar"
+                data-action="editar-pis-cst-produto"
+                data-sensitive
               />
             </div>
             <div>
               <Label>PIS Alíquota (%)</Label>
-              <Input type="number" step="0.01" value={formData.tributacao?.pis_aliquota || 0} onChange={(e) => setFormData(prev => ({ ...prev, tributacao: { ...prev.tributacao, pis_aliquota: parseFloat(e.target.value) || 0 } }))} />
+              <Input type="number" step="0.01" value={formData.tributacao?.pis_aliquota || 0} onChange={(e) => setFormData(prev => ({ ...prev, tributacao: { ...prev.tributacao, pis_aliquota: parseFloat(e.target.value) || 0 } }))} disabled={!canEdit} data-permission="Fiscal.Produto.editar" data-action="editar-pis-aliquota-produto" data-sensitive />
             </div>
             <div>
               <Label>COFINS CST</Label>
-              <Input value={formData.tributacao?.cofins_cst || ''} onChange={(e) => setFormData(prev => ({ ...prev, tributacao: { ...prev.tributacao, cofins_cst: e.target.value } }))} placeholder="01" />
+              <Input value={formData.tributacao?.cofins_cst || ''} onChange={(e) => setFormData(prev => ({ ...prev, tributacao: { ...prev.tributacao, cofins_cst: e.target.value } }))} placeholder="01" disabled={!canEdit} data-permission="Fiscal.Produto.editar" data-action="editar-cofins-cst-produto" data-sensitive />
             </div>
             <div>
               <Label>COFINS Alíquota (%)</Label>
-              <Input type="number" step="0.01" value={formData.tributacao?.cofins_aliquota || 0} onChange={(e) => setFormData(prev => ({ ...prev, tributacao: { ...prev.tributacao, cofins_aliquota: parseFloat(e.target.value) || 0 } }))} />
+              <Input type="number" step="0.01" value={formData.tributacao?.cofins_aliquota || 0} onChange={(e) => setFormData(prev => ({ ...prev, tributacao: { ...prev.tributacao, cofins_aliquota: parseFloat(e.target.value) || 0 } }))} disabled={!canEdit} data-permission="Fiscal.Produto.editar" data-action="editar-cofins-aliquota-produto" data-sensitive />
             </div>
             <div>
               <Label>IPI CST</Label>
-              <Input value={formData.tributacao?.ipi_cst || ''} onChange={(e) => setFormData(prev => ({ ...prev, tributacao: { ...prev.tributacao, ipi_cst: e.target.value } }))} placeholder="50" />
+              <Input value={formData.tributacao?.ipi_cst || ''} onChange={(e) => setFormData(prev => ({ ...prev, tributacao: { ...prev.tributacao, ipi_cst: e.target.value } }))} placeholder="50" disabled={!canEdit} data-permission="Fiscal.Produto.editar" data-action="editar-ipi-cst-produto" data-sensitive />
             </div>
             <div>
               <Label>IPI Alíquota (%)</Label>
-              <Input type="number" step="0.01" value={formData.tributacao?.ipi_aliquota || 0} onChange={(e) => setFormData(prev => ({ ...prev, tributacao: { ...prev.tributacao, ipi_aliquota: parseFloat(e.target.value) || 0 } }))} />
+              <Input type="number" step="0.01" value={formData.tributacao?.ipi_aliquota || 0} onChange={(e) => setFormData(prev => ({ ...prev, tributacao: { ...prev.tributacao, ipi_aliquota: parseFloat(e.target.value) || 0 } }))} disabled={!canEdit} data-permission="Fiscal.Produto.editar" data-action="editar-ipi-aliquota-produto" data-sensitive />
             </div>
           </div>
         </CardContent>
@@ -166,7 +206,7 @@ export default function FiscalContabilSection({ formData, setFormData, sugestoes
           <div>
             <Label>Conta Contábil</Label>
             <Select value={formData.conta_contabil_id || ''} onValueChange={(v) => setFormData(prev => ({ ...prev, conta_contabil_id: v }))}>
-              <SelectTrigger>
+              <SelectTrigger disabled={!canEdit} data-permission="Fiscal.Produto.editar" data-action="selecionar-conta-contabil-produto" data-sensitive>
                 <SelectValue placeholder="Selecione a conta contábil..." />
               </SelectTrigger>
               <SelectContent>

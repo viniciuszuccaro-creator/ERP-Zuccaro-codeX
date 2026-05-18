@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import useCadastrosAllCounts from "@/components/cadastros/hooks/useCadastrosAllCounts";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -20,6 +20,8 @@ import Bloco5Organizacional from "@/components/cadastros/blocks/Bloco5Organizaci
 import Bloco6Tecnologia from "@/components/cadastros/blocks/Bloco6Tecnologia";
 import GroupCountBadge from "@/components/cadastros/GroupCountBadge";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { useUser } from "@/components/lib/UserContext";
+import { useToast } from "@/components/ui/use-toast";
 import ExternalAppsHub from "@/components/administracao-sistema/ExternalAppsHub";
 
 export default function Cadastros() {
@@ -29,8 +31,33 @@ export default function Cadastros() {
   const { counts: allCounts, totals, isLoading: countsLoading } = useCadastrosAllCounts();
   const { isAdmin, hasPermission } = usePermissions();
   const { empresaAtual, grupoAtual } = useContextoVisual();
-  const podeVerCadastros = isAdmin?.() || hasPermission("Cadastros", null, "visualizar") || hasPermission("Cadastros", "Cadastros Gerais", "visualizar");
+  const { user } = useUser();
+  const { toast } = useToast();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const podeVerCadastros = isAdmin?.() || hasPermission("Cadastros", null, "visualizar") || hasPermission("Cadastros", null, "ver") || hasPermission("Cadastros", "Cadastros Gerais", "visualizar") || hasPermission("Cadastros", "Cadastros Gerais", "ver");
+  const podeVerAppsExternos = isAdmin?.() || hasPermission("Sistema", "Integracoes", "visualizar") || hasPermission("Sistema", "Integracoes", "ver");
   const contextoAtivo = Boolean(empresaAtual?.id || grupoAtual?.id);
+
+  const registrarAuditoriaCadastros = async (descricao, extras = {}) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario_id: user?.id,
+        usuario: user?.full_name || user?.email || "Usuario",
+        acao: extras.acao || "Visualizacao",
+        modulo: "Cadastros",
+        tipo_auditoria: extras.tipo_auditoria || "acesso",
+        entidade: extras.entidade || "Cadastros Gerais",
+        descricao,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        dados_novos: extras.dados_novos,
+        data_hora: new Date().toISOString(),
+        sucesso: extras.sucesso ?? true,
+      });
+    } catch (_) {}
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -40,11 +67,26 @@ export default function Cadastros() {
   }, []);
 
   const handleAbaChange = (value) => {
+    if (value === "apps-externos" && !podeVerAppsExternos) {
+      toast({
+        title: "Acesso negado",
+        description: "Seu perfil nao possui permissao para acessar Apps, Portais & Ambientes Externos.",
+        variant: "destructive",
+      });
+      registrarAuditoriaCadastros("Bloqueio de acesso a Apps, Portais & Ambientes Externos", {
+        acao: "Bloqueio",
+        sucesso: false,
+        dados_novos: { aba: value },
+      });
+      return;
+    }
+
     setAbaGerenciamento(value);
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
     try { localStorage.setItem('Cadastros_tab', value); } catch {}
+    registrarAuditoriaCadastros(`Troca de aba em Cadastros: ${value}`, { dados_novos: { aba: value } });
   };
 
   const handleCardClick = (blocoId) => {
@@ -53,7 +95,23 @@ export default function Cadastros() {
     } else {
       setAcordeonAberto([...acordeonAberto, blocoId]);
     }
+    registrarAuditoriaCadastros(`Alternar bloco de Cadastros: ${blocoId}`, {
+      entidade: "Bloco Cadastros",
+      dados_novos: { bloco: blocoId },
+    });
   };
+
+  useEffect(() => {
+    const termo = searchTerm.trim();
+    if (termo.length < 3) return;
+    const timeout = setTimeout(() => {
+      registrarAuditoriaCadastros("Busca universal em Cadastros Gerais", {
+        entidade: "Busca Cadastros",
+        dados_novos: { termo },
+      });
+    }, 900);
+    return () => clearTimeout(timeout);
+  }, [searchTerm]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!podeVerCadastros) {
     return (
@@ -74,8 +132,8 @@ export default function Cadastros() {
       <Tabs value={abaGerenciamento} onValueChange={handleAbaChange}>
         <div className="overflow-x-auto pb-1">
           <TabsList className="inline-flex flex-nowrap min-w-max gap-2 mb-2">
-            <TabsTrigger value="cadastros" data-permission="Cadastros.visualizar">📋 Cadastros Gerais</TabsTrigger>
-            <TabsTrigger value="apps-externos" data-permission="Sistema.Integracoes.visualizar">📱 Apps, Portais & Ambientes Externos</TabsTrigger>
+            <TabsTrigger value="cadastros" data-permission="Cadastros.visualizar" data-action="abrir-aba-cadastros-gerais">📋 Cadastros Gerais</TabsTrigger>
+            <TabsTrigger value="apps-externos" disabled={!podeVerAppsExternos} data-permission="Sistema.Integracoes.visualizar" data-action="abrir-aba-apps-externos">📱 Apps, Portais & Ambientes Externos</TabsTrigger>
           </TabsList>
         </div>
 
@@ -96,7 +154,7 @@ export default function Cadastros() {
 
           {/* DASHBOARD DE TOTAIS */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-blue-50 to-blue-100" onClick={() => handleCardClick('bloco1')}>
+            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-blue-50 to-blue-100" onClick={() => handleCardClick('bloco1')} data-permission="Cadastros.Pessoas.visualizar" data-action="alternar-bloco-pessoas">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Users className="w-5 h-5 text-blue-600" />
@@ -106,7 +164,7 @@ export default function Cadastros() {
                 <p className="text-xs text-blue-700">& Parceiros</p>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-purple-50 to-purple-100" onClick={() => handleCardClick('bloco2')}>
+            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-purple-50 to-purple-100" onClick={() => handleCardClick('bloco2')} data-permission="Cadastros.Produtos.visualizar" data-action="alternar-bloco-produtos">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Package className="w-5 h-5 text-purple-600" />
@@ -116,7 +174,7 @@ export default function Cadastros() {
                 <p className="text-xs text-purple-700">& Serviços</p>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-green-50 to-green-100" onClick={() => handleCardClick('bloco3')}>
+            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-green-50 to-green-100" onClick={() => handleCardClick('bloco3')} data-permission="Cadastros.Financeiro.visualizar" data-action="alternar-bloco-financeiro-fiscal">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <DollarSign className="w-5 h-5 text-green-600" />
@@ -126,7 +184,7 @@ export default function Cadastros() {
                 <p className="text-xs text-green-700">& Fiscal</p>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-orange-50 to-orange-100" onClick={() => handleCardClick('bloco4')}>
+            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-orange-50 to-orange-100" onClick={() => handleCardClick('bloco4')} data-permission="Cadastros.Logistica.visualizar" data-action="alternar-bloco-logistica">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Truck className="w-5 h-5 text-orange-600" />
@@ -136,7 +194,7 @@ export default function Cadastros() {
                 <p className="text-xs text-orange-700">Frota & Almox.</p>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-indigo-50 to-indigo-100" onClick={() => handleCardClick('bloco5')}>
+            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-indigo-50 to-indigo-100" onClick={() => handleCardClick('bloco5')} data-permission="Cadastros.Organizacional.visualizar" data-action="alternar-bloco-organizacional">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Building2 className="w-5 h-5 text-indigo-600" />
@@ -146,7 +204,7 @@ export default function Cadastros() {
                 <p className="text-xs text-indigo-700">Estrutura</p>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-cyan-50 to-cyan-100" onClick={() => handleCardClick('bloco6')}>
+            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-cyan-50 to-cyan-100" onClick={() => handleCardClick('bloco6')} data-permission="Cadastros.Tecnologia.visualizar" data-action="alternar-bloco-tecnologia">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Cpu className="w-5 h-5 text-cyan-600" />
@@ -164,6 +222,8 @@ export default function Cadastros() {
             value={searchTerm}
             onChange={(val) => setSearchTerm(val)}
             className="h-12 text-base shadow-md border-slate-300"
+            data-permission="Cadastros.Busca.visualizar"
+            data-action="buscar-cadastros-gerais"
           />
 
           {/* ACCORDIONS - 6 BLOCOS */}

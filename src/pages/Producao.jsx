@@ -16,9 +16,11 @@ import ModuleKPIs from "@/components/layout/ModuleKPIs";
 import ModuleContent from "@/components/layout/ModuleContent";
 import ModuleTabs from "@/components/layout/ModuleTabs";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 
 const KanbanProducaoInteligente = React.lazy(() => import("@/components/producao/KanbanProducaoInteligente"));
 const ApontamentoProducao = React.lazy(() => import("@/components/producao/ApontamentoProducao"));
+const FormularioOrdemProducao = React.lazy(() => import("@/components/producao/FormularioOrdemProducao"));
 const ControleRefugo = React.lazy(() => import("@/components/producao/ControleRefugo"));
 const RelatoriosProducao = React.lazy(() => import("@/components/producao/RelatoriosProducao"));
 const ConfiguracaoProducao = React.lazy(() => import("../components/producao/ConfiguracaoProducao"));
@@ -29,15 +31,21 @@ const DocumentosProducao = React.lazy(() => import("../components/producao/Docum
 
 export default function Producao() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
-  const { filtrarPorContexto, getFiltroContexto, empresaAtual } = useContextoVisual();
+  const { filtrarPorContexto, getFiltroContexto, empresaAtual, grupoAtual } = useContextoVisual();
   const { openWindow } = useWindow();
   const { user } = useUser();
+  const { toast } = useToast();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const contextKey = groupId ? `grupo:${groupId}` : `empresa:${empresaId || 'sem-empresa'}`;
+  const canSeeProducao = hasPermission('Produção', null, 'visualizar') || hasPermission('Produção', null, 'ver');
+  const canCreateOP = hasPermission('Produção', 'Ordens Produção', 'criar') || hasPermission('Produção', 'OrdemProducao', 'criar');
 
   const { data: ordensProducao = [] } = useQuery({
-    queryKey: ['ordens-producao', empresaAtual?.id],
+    queryKey: ['ordens-producao', contextKey],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         return await filtrarPorContexto('OrdemProducao', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar ordens de produção:', err);
@@ -45,16 +53,17 @@ export default function Producao() {
       }
     },
     staleTime: 30000,
-    retry: 2
+    retry: 2,
+    enabled: canSeeProducao && contextoValido
   });
 
   const { data: totalOrdensProducao = 0 } = useQuery({
-    queryKey: ['ordens-producao-count', empresaAtual?.id],
+    queryKey: ['ordens-producao-count', contextKey],
     queryFn: async () => {
       try {
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'OrdemProducao',
-          filter: getFiltroContexto('empresa_id')
+          filter: getFiltroContexto('empresa_id', true)
         });
         return response.data?.count || ordensProducao.length;
       } catch {
@@ -62,7 +71,8 @@ export default function Producao() {
       }
     },
     staleTime: 60000,
-    retry: 1
+    retry: 1,
+    enabled: canSeeProducao && contextoValido
   });
 
   const totalOPs = ordensProducao.length;
@@ -90,17 +100,24 @@ export default function Producao() {
       windowTitle: '📋 Kanban Produção',
       width: 1600,
       height: 900,
-      props: { windowMode: true }
+      props: { windowMode: true },
+      sectionKey: 'Kanban',
+      permission: 'Produção.Kanban.visualizar',
+      action: 'abrir-kanban-producao'
     },
     {
       title: 'Ordens Produção',
       description: 'Listagem OPs',
       icon: Factory,
       color: 'orange',
-      component: () => <div className="p-4">Listagem de OPs (em desenvolvimento)</div>,
+      component: KanbanProducaoInteligente,
       windowTitle: '🏭 Ordens de Produção',
       width: 1500,
       height: 850,
+      props: { windowMode: true },
+      sectionKey: 'Ordens Produção',
+      permission: 'Produção.Ordens Produção.visualizar',
+      action: 'abrir-ordens-producao'
     },
     {
       title: 'Apontamentos',
@@ -111,7 +128,10 @@ export default function Producao() {
       windowTitle: '⏱️ Apontamentos',
       width: 1300,
       height: 800,
-      props: { windowMode: true }
+      props: { windowMode: true },
+      sectionKey: 'Apontamentos',
+      permission: 'Produção.Apontamentos.visualizar',
+      action: 'abrir-apontamentos-producao'
     },
     {
       title: 'Controle Refugo',
@@ -122,7 +142,10 @@ export default function Producao() {
       windowTitle: '⚠️ Controle de Refugo',
       width: 1400,
       height: 800,
-      props: { ops: ordensProducao, windowMode: true }
+      props: { ops: ordensProducao, windowMode: true },
+      sectionKey: 'Controle Refugo',
+      permission: 'Produção.Controle Refugo.visualizar',
+      action: 'abrir-controle-refugo'
     },
     {
       title: 'Dashboard IA',
@@ -133,7 +156,10 @@ export default function Producao() {
       windowTitle: '🤖 Dashboard Refugo IA',
       width: 1400,
       height: 800,
-      props: { empresaId: empresaAtual?.id, windowMode: true }
+      props: { empresaId: empresaAtual?.id, windowMode: true },
+      sectionKey: 'Dashboard IA',
+      permission: 'Produção.Dashboard IA.visualizar',
+      action: 'abrir-dashboard-ia-producao'
     },
     {
       title: 'Dashboard Realtime',
@@ -144,7 +170,10 @@ export default function Producao() {
       windowTitle: '📊 Dashboard Realtime',
       width: 1500,
       height: 850,
-      props: { empresaId: empresaAtual?.id, windowMode: true }
+      props: { empresaId: empresaAtual?.id, windowMode: true },
+      sectionKey: 'Dashboard Realtime',
+      permission: 'Produção.Dashboard Realtime.visualizar',
+      action: 'abrir-dashboard-realtime-producao'
     },
     {
       title: 'IoT Equipamentos',
@@ -155,7 +184,10 @@ export default function Producao() {
       windowTitle: '⚡ IoT & Equipamentos',
       width: 1400,
       height: 800,
-      props: { windowMode: true }
+      props: { windowMode: true },
+      sectionKey: 'IoT Equipamentos',
+      permission: 'Produção.IoT Equipamentos.visualizar',
+      action: 'abrir-iot-equipamentos'
     },
     {
       title: 'Documentos',
@@ -166,7 +198,10 @@ export default function Producao() {
       windowTitle: '📄 Documentos Produção',
       width: 1200,
       height: 700,
-      props: { windowMode: true }
+      props: { windowMode: true },
+      sectionKey: 'Documentos',
+      permission: 'Produção.Documentos.visualizar',
+      action: 'abrir-documentos-producao'
     },
     {
       title: 'Relatórios',
@@ -177,7 +212,10 @@ export default function Producao() {
       windowTitle: '📈 Relatórios Produção',
       width: 1400,
       height: 800,
-      props: { ops: ordensProducao, windowMode: true }
+      props: { ops: ordensProducao, windowMode: true },
+      sectionKey: 'Relatórios',
+      permission: 'Produção.Relatórios.visualizar',
+      action: 'abrir-relatorios-producao'
     },
     {
       title: 'Configurações',
@@ -188,20 +226,79 @@ export default function Producao() {
       windowTitle: '⚙️ Configurações',
       width: 1200,
       height: 700,
-      props: { windowMode: true }
+      props: { windowMode: true },
+      sectionKey: 'Configurações',
+      permission: 'Produção.Configurações.visualizar',
+      action: 'abrir-configuracoes-producao'
     },
   ];
 
+  const canViewModule = (module) => {
+    const section = module.sectionKey || module.title;
+    return hasPermission('Produção', section, 'visualizar') ||
+      hasPermission('Produção', section, 'ver') ||
+      hasPermission('Produção', null, 'visualizar') ||
+      hasPermission('Produção', null, 'ver');
+  };
+
+  const allowedModules = modules.filter(canViewModule);
+
+  const handleNovaOP = () => {
+    if (!contextoValido || !empresaId) {
+      toast({
+        title: 'Empresa obrigatória',
+        description: 'Selecione uma empresa operacional antes de criar OP.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (!canCreateOP) {
+      toast({
+        title: 'Acesso negado',
+        description: 'Seu perfil não pode criar ordem de produção.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    openWindow(FormularioOrdemProducao, { windowMode: true }, {
+      title: 'Nova Ordem de Produção',
+      width: 1400,
+      height: 900,
+    });
+  };
+
   const handleModuleClick = (module) => {
+    if (!contextoValido) {
+      toast({
+        title: 'Contexto obrigatório',
+        description: 'Selecione o Grupo CPA ou uma empresa antes de abrir Produção.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!canViewModule(module)) {
+      toast({
+        title: 'Acesso negado',
+        description: 'Seu perfil não possui permissão para esta seção de Produção.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     React.startTransition(() => {
       // Auditoria de abertura de seção
       base44.entities.AuditLog.create({
+        usuario_id: user?.id,
         usuario: user?.full_name || user?.email || 'Usuário',
         acao: 'Visualização',
         modulo: 'Produção',
         tipo_auditoria: 'acesso',
         entidade: 'Seção',
         descricao: `Abrir seção: ${module.title}`,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
         data_hora: new Date().toISOString(),
       });
       openWindow(
@@ -226,7 +323,7 @@ export default function Producao() {
       <ModuleLayout
         title="Produção"
         subtitle="Chão de fábrica, OPs e desempenho"
-        actions={<div className="flex items-center gap-2"><Button size="sm" onClick={() => base44.analytics.track({ eventName: 'producao_primary_action' })}>Nova OP</Button></div>}
+        actions={<div className="flex items-center gap-2"><Button size="sm" onClick={handleNovaOP} disabled={!contextoValido || !empresaId || !canCreateOP} data-permission="Produção.Ordens Produção.criar" data-action="criar-ordem-producao">Nova OP</Button></div>}
       >
         <ModuleKPIs>
           <KPIsProducao
@@ -238,7 +335,7 @@ export default function Producao() {
         </ModuleKPIs>
         <ModuleContent>
           <ModuleTabs
-            listagem={<ModulosGridProducao modules={modules} onModuleClick={handleModuleClick} />}
+            listagem={<ModulosGridProducao modules={allowedModules} onModuleClick={handleModuleClick} />}
           />
         </ModuleContent>
       </ModuleLayout>

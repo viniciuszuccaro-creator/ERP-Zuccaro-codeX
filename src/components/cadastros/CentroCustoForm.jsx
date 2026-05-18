@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Receipt, Trash2, Power, PowerOff } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -13,9 +14,13 @@ import usePermissions from "@/components/lib/usePermissions";
 export default function CentroCustoForm({ centroCusto, item, data, initialData, defaultValues, onSubmit, onSave, onClose, isSubmitting, windowMode = false }) {
   const dadosCentroCusto = item || data || initialData || defaultValues || centroCusto;
   const { canCreate, canEdit, canDelete } = usePermissions();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosCentroCusto?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || dadosCentroCusto?.empresa_id || dadosCentroCusto?.group_id);
   const podeCriar = canCreate("Cadastros", "CentroCusto") || canCreate("Financeiro", "CentroCusto") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "CentroCusto") || canEdit("Financeiro", "CentroCusto") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "CentroCusto") || canDelete("Financeiro", "CentroCusto") || canDelete("Cadastros", null);
+  const podeSalvar = dadosCentroCusto?.id ? podeEditar : podeCriar;
   const [formData, setFormData] = useState(dadosCentroCusto || {
     codigo: "",
     descricao: "",
@@ -45,11 +50,17 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
       alert("Sem permissao para criar centros de custo.");
       return;
     }
+    if (!contextoValido) {
+      alert("Selecione um grupo ou empresa antes de salvar.");
+      return;
+    }
     const dataToSubmit = {
       ...formData,
       orcamento_mensal: formData.orcamento_mensal ? parseFloat(formData.orcamento_mensal) : null,
       // Injeta 'nome' para o Visualizador Universal (CentroCusto usa 'descricao' como nome)
       nome: formData.nome || formData.descricao || '',
+      group_id: groupId || formData.group_id,
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
     };
     if (onSubmit) {
       onSubmit(dataToSubmit);
@@ -88,6 +99,10 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
             onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
             placeholder="Ex: CC001"
             required
+            disabled={!podeSalvar}
+            data-permission="Financeiro.CentroCusto.editar"
+            data-action="editar-codigo-centro-custo"
+            data-sensitive
           />
         </div>
 
@@ -97,7 +112,7 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
             value={formData.tipo}
             onValueChange={(value) => setFormData({ ...formData, tipo: value })}
           >
-            <SelectTrigger>
+            <SelectTrigger disabled={!podeSalvar} data-permission="Financeiro.CentroCusto.editar" data-action="selecionar-tipo-centro-custo" data-sensitive>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -115,6 +130,10 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
             value={formData.descricao}
             onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
             required
+            disabled={!podeSalvar}
+            data-permission="Financeiro.CentroCusto.editar"
+            data-action="editar-descricao-centro-custo"
+            data-sensitive
           />
         </div>
 
@@ -124,7 +143,7 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
             value={formData.categoria}
             onValueChange={(value) => setFormData({ ...formData, categoria: value })}
           >
-            <SelectTrigger>
+            <SelectTrigger disabled={!podeSalvar} data-permission="Financeiro.CentroCusto.editar" data-action="selecionar-categoria-centro-custo" data-sensitive>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -146,6 +165,10 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
             id="responsavel"
             value={formData.responsavel}
             onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
+            disabled={!podeSalvar}
+            data-permission="Financeiro.CentroCusto.editar"
+            data-action="editar-responsavel-centro-custo"
+            data-sensitive
           />
         </div>
 
@@ -157,6 +180,10 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
             step="0.01"
             value={formData.orcamento_mensal}
             onChange={(e) => setFormData({ ...formData, orcamento_mensal: e.target.value })}
+            disabled={!podeSalvar}
+            data-permission="Financeiro.CentroCusto.editar"
+            data-action="editar-orcamento-centro-custo"
+            data-sensitive
           />
         </div>
 
@@ -166,7 +193,7 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
             value={formData.status}
             onValueChange={(value) => setFormData({ ...formData, status: value })}
           >
-            <SelectTrigger>
+            <SelectTrigger disabled={!podeSalvar} data-permission="Financeiro.CentroCusto.alterarStatus" data-action="selecionar-status-centro-custo" data-sensitive>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -183,6 +210,10 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
             value={formData.observacoes}
             onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
             rows={3}
+            disabled={!podeSalvar}
+            data-permission="Financeiro.CentroCusto.editar"
+            data-action="editar-observacoes-centro-custo"
+            data-sensitive
           />
         </div>
       </div>
@@ -194,8 +225,9 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
               type="button"
               variant="outline"
               onClick={handleAlternarStatus}
-              disabled={!podeEditar}
+              disabled={!contextoValido || !podeEditar}
               data-permission="Cadastros.CentroCusto.alterarStatus"
+              data-action={formData.status === 'Ativo' ? "inativar-centro-custo" : "ativar-centro-custo"}
               data-sensitive
               className={formData.status === 'Ativo' ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
             >
@@ -209,8 +241,9 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
               type="button"
               variant="destructive"
               onClick={handleExcluir}
-              disabled={!podeExcluir}
+              disabled={!contextoValido || !podeExcluir}
               data-permission="Cadastros.CentroCusto.excluir"
+              data-action="excluir-centro-custo"
               data-sensitive
             >
               <Trash2 className="w-4 h-4 mr-2" />Excluir
@@ -219,9 +252,10 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
         )}
         <Button
           type="submit"
-          disabled={isSubmitting || (dadosCentroCusto?.id ? !podeEditar : !podeCriar)}
+          disabled={isSubmitting || !contextoValido || !podeSalvar}
           className="bg-purple-600 hover:bg-purple-700"
           data-permission="Cadastros.CentroCusto.salvar"
+          data-action="salvar-centro-custo"
           data-sensitive
         >
           {isSubmitting ? 'Salvando...' : 'Salvar'}

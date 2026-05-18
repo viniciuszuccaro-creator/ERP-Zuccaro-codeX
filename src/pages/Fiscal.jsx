@@ -27,12 +27,39 @@ const ImportarXMLNFe = React.lazy(() => import('../components/fiscal/ImportarXML
 
 export default function FiscalPage() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
-  const { filtrarPorContexto, empresaAtual } = useContextoVisual();
+  const { filtrarPorContexto, empresaAtual, grupoAtual, estaNoGrupo } = useContextoVisual();
   const { openWindow } = useWindow();
   const { user } = useUser();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || estaNoGrupo);
+  const podeVerFiscal = hasPermission('Fiscal', null, 'ver') || hasPermission('Fiscal', null, 'visualizar');
+  const podeEmitirNFe = hasPermission('Fiscal', 'Notas Fiscais', 'emitir') ||
+    hasPermission('Fiscal', 'Notas Fiscais', 'criar') ||
+    hasPermission('Fiscal', null, 'emitir') ||
+    hasPermission('Fiscal', null, 'criar');
+  const empresaObrigatoriaParaNFe = Boolean(empresaAtual?.id);
+
+  const auditFiscalAction = async (acao, detalhes = {}, tipo = 'acesso') => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id || null,
+        acao,
+        modulo: 'Fiscal',
+        tipo_auditoria: tipo,
+        entidade: 'Fiscal',
+        descricao: `Fiscal: ${acao}`,
+        detalhes,
+        group_id: groupId,
+        grupo_id: groupId,
+        empresa_id: empresaAtual?.id || null,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (_) {}
+  };
 
   const { data: notasFiscais = [] } = useQuery({
-    queryKey: ['notasFiscais', empresaAtual?.id],
+    queryKey: ['notasFiscais', empresaAtual?.id, groupId, estaNoGrupo],
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_faturamento_id: empresaAtual.id } : {};
@@ -43,7 +70,8 @@ export default function FiscalPage() {
       }
     },
     staleTime: 30000,
-    retry: 2
+    retry: 2,
+    enabled: Boolean(contextoValido && podeVerFiscal)
   });
 
   // Dados já vêm filtrados do servidor
@@ -144,11 +172,22 @@ export default function FiscalPage() {
     },
   ];
 
-  const allowedModules = modules.filter(m => hasPermission('Fiscal', (m.sectionKey || m.title), 'ver'));
+  const canViewFiscalModule = (module) => (
+    hasPermission('Fiscal', (module.sectionKey || module.title), 'ver') ||
+    hasPermission('Fiscal', (module.sectionKey || module.title), 'visualizar')
+  );
+
+  const allowedModules = modules.filter(canViewFiscalModule);
 
    const handleModuleClick = (module) => {
+    if (!contextoValido || !canViewFiscalModule(module)) {
+      auditFiscalAction('acesso_bloqueado', { secao: module.title }, 'seguranca');
+      return;
+    }
     React.startTransition(() => {
       // Auditoria de abertura de seção
+      auditFiscalAction('abrir_secao', { secao: module.title });
+      /*
       base44.entities.AuditLog.create({
         usuario: user?.full_name || user?.email || 'Usuário',
         acao: 'Visualização',
@@ -158,6 +197,7 @@ export default function FiscalPage() {
         descricao: `Abrir seção: ${module.title}`,
         data_hora: new Date().toISOString(),
       });
+      */
       openWindow(
          module.component,
         { 
@@ -177,7 +217,19 @@ export default function FiscalPage() {
   return (
     <ProtectedSection module="Fiscal" action="visualizar">
     <ErrorBoundary>
-      <ModuleLayout title="Fiscal e Tributário" subtitle="NF-e, tributos e relatórios" actions={<div className="flex items-center gap-2"><Button size="sm" onClick={() => base44.analytics.track({ eventName: 'fiscal_primary_action' })}>Nova NF-e</Button></div>}>
+      <div className="w-full h-full" data-permission="Fiscal.visualizar">
+      <ModuleLayout title="Fiscal e Tributário" subtitle="NF-e, tributos e relatórios" actions={<div className="flex items-center gap-2"><Button size="sm" data-permission="Fiscal.Notas Fiscais.emitir" data-action="Fiscal.emitir_nfe" disabled={!podeEmitirNFe || !empresaObrigatoriaParaNFe} onClick={() => {
+        if (!empresaObrigatoriaParaNFe) {
+          auditFiscalAction('emissao_nfe_bloqueada_sem_empresa', { motivo: 'NF-e exige empresa faturadora' }, 'seguranca');
+          return;
+        }
+        if (!podeEmitirNFe) {
+          auditFiscalAction('emissao_nfe_bloqueada_sem_permissao', {}, 'seguranca');
+          return;
+        }
+        auditFiscalAction('iniciar_nova_nfe', { empresa_faturamento_id: empresaAtual?.id }, 'sensivel');
+        base44.analytics.track({ eventName: 'fiscal_primary_action' });
+      }}>Nova NF-e</Button></div>}>
         <ModuleKPIs>
           <KPIsFiscal
             total={statusCounts.total}
@@ -193,6 +245,7 @@ export default function FiscalPage() {
           />
         </ModuleContent>
       </ModuleLayout>
+      </div>
     </ErrorBoundary>
     </ProtectedSection>
   );

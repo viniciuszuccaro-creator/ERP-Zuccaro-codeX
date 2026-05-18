@@ -90,7 +90,12 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
               </SelectContent>
             </Select>
             {selectedEntregas.length > 0 && hasPermission('Expedição','Entrega','exportar') && (
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                data-permission="Expedição.Entrega.exportar"
+                data-action="exportar-entregas-csv"
+              >
                 <Download className="w-3 h-3 mr-1" /> CSV ({selectedEntregas.length})
               </Button>
             )}
@@ -117,11 +122,25 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
               { key: 'status', label: 'Status', render: (e) => <Badge className={statusColors[e.status]} style={{ fontSize: '10px' }}>{e.status}</Badge> },
               { key: 'actions', label: 'Ações', render: (e) => (
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" onClick={() => openWindow(DetalhesEntregaView, { entrega: e, estaNoGrupo, obterNomeEmpresa, statusColors, windowMode: true }, { title: `🚚 ${e.numero_pedido}`, width: 1000, height: 700 })} className="h-7 w-7">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => openWindow(DetalhesEntregaView, { entrega: e, estaNoGrupo, obterNomeEmpresa, statusColors, windowMode: true }, { title: `🚚 ${e.numero_pedido}`, width: 1000, height: 700 })}
+                    className="h-7 w-7"
+                    data-permission="Expedição.Entrega.visualizar"
+                    data-action="visualizar-entrega"
+                  >
                     <Eye className="w-3 h-3" />
                   </Button>
                   {hasPermission('Expedição','Entrega','editar') && (
-                    <Button variant="ghost" size="icon" onClick={() => openWindow(FormularioEntrega, { formData: e, windowMode: true, isEditing: true }, { title: `✏️ ${e.numero_pedido}`, width: 1100, height: 650 })} className="h-7 w-7">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => openWindow(FormularioEntrega, { formData: e, windowMode: true, isEditing: true }, { title: `✏️ ${e.numero_pedido}`, width: 1100, height: 650 })}
+                      className="h-7 w-7"
+                      data-permission="Expedição.Entrega.editar"
+                      data-action="editar-entrega"
+                    >
                       <Edit className="w-3 h-3" />
                     </Button>
                   )}

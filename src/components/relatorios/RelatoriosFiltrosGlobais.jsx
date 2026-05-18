@@ -8,7 +8,7 @@ import { Filter } from "lucide-react";
 
 export default function RelatoriosFiltrosGlobais({ filtros, setFiltros }) {
   return (
-    <Card className="border-0 shadow-md">
+    <Card className="border-0 shadow-md" data-permission="Relatorios.visualizar">
       <CardContent className="p-4">
         <div className="flex flex-wrap gap-4 items-end">
           <div>
@@ -16,6 +16,8 @@ export default function RelatoriosFiltrosGlobais({ filtros, setFiltros }) {
             <Input
               id="data_inicio"
               type="date"
+              data-permission="Relatorios.visualizar"
+              data-action="Relatorios.filtro.data_inicio"
               value={filtros.data_inicio}
               onChange={(e) => setFiltros({ ...filtros, data_inicio: e.target.value })}
             />
@@ -25,6 +27,8 @@ export default function RelatoriosFiltrosGlobais({ filtros, setFiltros }) {
             <Input
               id="data_fim"
               type="date"
+              data-permission="Relatorios.visualizar"
+              data-action="Relatorios.filtro.data_fim"
               value={filtros.data_fim}
               onChange={(e) => setFiltros({ ...filtros, data_fim: e.target.value })}
             />
@@ -56,7 +60,7 @@ export default function RelatoriosFiltrosGlobais({ filtros, setFiltros }) {
                 });
               }}
             >
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-40" data-permission="Relatorios.visualizar" data-action="Relatorios.filtro.periodo">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -68,7 +72,7 @@ export default function RelatoriosFiltrosGlobais({ filtros, setFiltros }) {
               </SelectContent>
             </Select>
           </div>
-          <Button variant="outline">
+          <Button variant="outline" data-permission="Relatorios.visualizar" data-action="Relatorios.aplicar_filtros">
             <Filter className="w-4 h-4 mr-2" />
             Aplicar Filtros
           </Button>

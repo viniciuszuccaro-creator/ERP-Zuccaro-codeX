@@ -14,11 +14,15 @@ import ContextoConfigBanner from "@/components/administracao-sistema/common/Cont
 import HerancaConfigNotice from "@/components/administracao-sistema/common/HerancaConfigNotice";
 
 export default function SegurancaGovernancaIndex() {
-  const { isAdmin } = usePermissions();
+  const { isAdmin, hasPermission } = usePermissions();
   const { empresaAtual, grupoAtual } = useContextoVisual();
   const params = new URLSearchParams(window.location.search);
   const segTab = params.get('segTab') || 'politicas';
   const [activeTab, setActiveTab] = React.useState(segTab);
+  const canViewSecurity =
+    isAdmin() ||
+    hasPermission('Sistema', 'Seguranca', 'visualizar') ||
+    hasPermission('Sistema', 'Segurança', 'visualizar');
 
   const handleTabChange = (value) => {
     setActiveTab(value);
@@ -28,15 +32,15 @@ export default function SegurancaGovernancaIndex() {
     window.history.replaceState(null, '', `${window.location.pathname}?${nextParams.toString()}`);
   };
 
-  if (!isAdmin()) return <div className="p-4 text-sm text-slate-500">Acesso restrito.</div>;
+  if (!canViewSecurity) return <div className="p-4 text-sm text-slate-500">Acesso restrito.</div>;
 
   return (
     <div className="w-full h-full min-h-0 flex flex-col overflow-auto">
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full h-full min-h-0">
         <TabsList className="flex flex-wrap gap-2">
-          <TabsTrigger value="politicas" data-action="Seguranca.tab.politicas">Políticas</TabsTrigger>
-          <TabsTrigger value="manutencao" data-action="Seguranca.tab.manutencao">Monitoramento & Manutenção</TabsTrigger>
-          <TabsTrigger value="compliance" data-action="Seguranca.tab.compliance">Compliance IA</TabsTrigger>
+          <TabsTrigger value="politicas" data-action="Seguranca.tab.politicas" data-permission="Sistema.Seguranca.visualizar">Políticas</TabsTrigger>
+          <TabsTrigger value="manutencao" data-action="Seguranca.tab.manutencao" data-permission="Sistema.Seguranca.visualizar">Monitoramento & Manutenção</TabsTrigger>
+          <TabsTrigger value="compliance" data-action="Seguranca.tab.compliance" data-permission="Sistema.Seguranca.visualizar">Compliance IA</TabsTrigger>
         </TabsList>
 
         <TabsContent value="politicas" className="mt-4 w-full h-full min-h-0">

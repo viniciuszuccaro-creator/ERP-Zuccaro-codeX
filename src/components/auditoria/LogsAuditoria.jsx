@@ -11,6 +11,21 @@ import { Shield, Search, Filter, Eye, Building2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PaginationControls from "@/components/ui/PaginationControls";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+
+const isCriticalAuditLog = (log = {}) => {
+  const text = [log.acao, log.entidade, log.modulo, log.tipo_auditoria, log.descricao]
+    .map((value) => String(value || "").toLowerCase())
+    .join(" ");
+  return text.includes("exclus") ||
+    text.includes("perfilacesso") ||
+    text.includes("configuracaoseguranca") ||
+    text.includes("seguranca") ||
+    text.includes("rbac") ||
+    text.includes("bloqueio") ||
+    text.includes("liquida") ||
+    text.includes("nota fiscal");
+};
 
 /**
  * Logs de auditoria completos do sistema
@@ -18,10 +33,13 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  */
 export default function LogsAuditoria() {
   const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { isAdmin, hasPermission } = usePermissions();
   const scopeId = empresaAtual?.id || grupoAtual?.id || 'sem-contexto';
   const contextoValido = scopeId !== 'sem-contexto';
+  const canViewAudit = isAdmin() || hasPermission('Sistema', 'Auditoria', 'visualizar') || hasPermission('Sistema', 'Logs', 'visualizar');
   const [filtroModulo, setFiltroModulo] = useState("todos");
   const [filtroAcao, setFiltroAcao] = useState("todos");
+  const [filtroCritico, setFiltroCritico] = useState(false);
   const [filtroUsuario, setFiltroUsuario] = useState("");
   const [periodoInicio, setPeriodoInicio] = useState("");
   const [periodoFim, setPeriodoFim] = useState("");
@@ -31,7 +49,7 @@ export default function LogsAuditoria() {
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ['audit-logs-full', scopeId, contexto],
     queryFn: () => filterInContext('AuditLog', {}, '-created_date', 500),
-    enabled: contextoValido,
+    enabled: contextoValido && canViewAudit,
   });
 
   const { data: empresas = [] } = useQuery({
@@ -43,6 +61,7 @@ export default function LogsAuditoria() {
   const logsFiltrados = logs.filter(log => {
     if (filtroModulo !== "todos" && log.modulo !== filtroModulo) return false;
     if (filtroAcao !== "todos" && log.acao !== filtroAcao) return false;
+    if (filtroCritico && !isCriticalAuditLog(log)) return false;
     if (filtroUsuario && !log.usuario?.toLowerCase().includes(filtroUsuario.toLowerCase())) return false;
     if (periodoInicio && log.data_hora < periodoInicio) return false;
     if (periodoFim && log.data_hora > periodoFim) return false;
@@ -61,7 +80,7 @@ export default function LogsAuditoria() {
   };
 
   return (
-    <div className="space-y-6 w-full h-full">
+    <div className="space-y-6 w-full h-full" data-permission="Sistema.Auditoria.visualizar">
       <div>
         <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
           <Shield className="w-7 h-7 text-blue-600" />
@@ -110,11 +129,11 @@ export default function LogsAuditoria() {
       {/* Filtros */}
       <Card>
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
             <div>
               <Label>Módulo</Label>
               <Select value={filtroModulo} onValueChange={setFiltroModulo}>
-                <SelectTrigger className="mt-2" data-action="LogsAuditoria.filtroModulo">
+                <SelectTrigger className="mt-2" data-action="LogsAuditoria.filtroModulo" data-permission="Sistema.Auditoria.visualizar">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -129,7 +148,7 @@ export default function LogsAuditoria() {
             <div>
               <Label>Ação</Label>
               <Select value={filtroAcao} onValueChange={setFiltroAcao}>
-                <SelectTrigger className="mt-2" data-action="LogsAuditoria.filtroAcao">
+                <SelectTrigger className="mt-2" data-action="LogsAuditoria.filtroAcao" data-permission="Sistema.Auditoria.visualizar">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -151,6 +170,7 @@ export default function LogsAuditoria() {
                   onChange={(e) => setFiltroUsuario(e.target.value)}
                   className="pl-9"
                   data-action="LogsAuditoria.filtroUsuario"
+                  data-permission="Sistema.Auditoria.visualizar"
                 />
               </div>
             </div>
@@ -163,6 +183,7 @@ export default function LogsAuditoria() {
                 onChange={(e) => setPeriodoInicio(e.target.value)}
                 className="mt-2"
                 data-action="LogsAuditoria.periodoInicio"
+                data-permission="Sistema.Auditoria.visualizar"
               />
             </div>
 
@@ -174,7 +195,21 @@ export default function LogsAuditoria() {
                 onChange={(e) => setPeriodoFim(e.target.value)}
                 className="mt-2"
                 data-action="LogsAuditoria.periodoFim"
+                data-permission="Sistema.Auditoria.visualizar"
               />
+            </div>
+
+            <div>
+              <Label>Eventos sensiveis</Label>
+              <div className="flex items-center gap-2 mt-4">
+                <Checkbox
+                  checked={filtroCritico}
+                  onCheckedChange={setFiltroCritico}
+                  data-action="LogsAuditoria.filtroCritico"
+                  data-permission="Sistema.Auditoria.visualizar"
+                />
+                <span className="text-sm text-slate-700">Somente criticos</span>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -187,10 +222,10 @@ export default function LogsAuditoria() {
             <CardTitle>Registro de Atividades ({logsFiltrados.length})</CardTitle>
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-2">
-                <Checkbox checked={showDescricao} onCheckedChange={setShowDescricao} data-action="LogsAuditoria.colunaDescricao" /> Descrição
+                <Checkbox checked={showDescricao} onCheckedChange={setShowDescricao} data-action="LogsAuditoria.colunaDescricao" data-permission="Sistema.Auditoria.visualizar" /> Descrição
               </div>
               <div className="flex items-center gap-2">
-                <Checkbox checked={showIP} onCheckedChange={setShowIP} data-action="LogsAuditoria.colunaIP" /> IP
+                <Checkbox checked={showIP} onCheckedChange={setShowIP} data-action="LogsAuditoria.colunaIP" data-permission="Sistema.Auditoria.visualizar" /> IP
               </div>
             </div>
           </div>
@@ -213,7 +248,7 @@ export default function LogsAuditoria() {
               </TableHeader>
               <TableBody>
                 {paginatedLogs.map(log => (
-                  <TableRow key={log.id} className={!log.sucesso ? 'bg-red-50' : ''}>
+                  <TableRow key={log.id} className={!log.sucesso ? 'bg-red-50' : isCriticalAuditLog(log) ? 'bg-orange-50/60' : ''}>
                     <TableCell className="text-sm">
                       {new Date(log.data_hora || log.created_date).toLocaleString('pt-BR')}
                     </TableCell>

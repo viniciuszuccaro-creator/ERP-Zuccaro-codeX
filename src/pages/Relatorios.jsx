@@ -30,6 +30,7 @@ const DashboardRepresentantes = React.lazy(() => import("@/components/relatorios
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import ProtectedSection from "@/components/security/ProtectedSection";
+import usePermissions from "@/components/lib/usePermissions";
 import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
 
@@ -57,6 +58,7 @@ export default function Relatorios() {
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
     try {localStorage.setItem('Relatorios_tab', value);} catch {}
+    auditRelatorioAction('alterar_aba', { aba: value });
   }; // Changed default active tab to "vendas"
   const [selectedReport, setSelectedReport] = useState(null);
   const [agendarEmailDialogOpen, setAgendarEmailDialogOpen] = useState(false);
@@ -78,31 +80,59 @@ export default function Relatorios() {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { empresaAtual, filterInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, estaNoGrupo, filterInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const hasContextoAtivo = Boolean(empresaAtual?.id || grupoAtual?.id || estaNoGrupo);
+  const canViewRelatorios = hasPermission('Relatórios', null, 'visualizar') || hasPermission('Relatorios', null, 'visualizar') || hasPermission('Relatórios', null, 'ver');
+  const canExportRelatorios = hasPermission('Relatórios', null, 'exportar') || hasPermission('Relatorios', null, 'exportar');
+  const canScheduleRelatorios = hasPermission('Relatórios', null, 'editar') || hasPermission('Relatorios', null, 'editar') || hasPermission('Sistema', 'Relatórios', 'editar');
+
+  const auditRelatorioAction = async (acao, detalhes = {}) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: 'Relatórios',
+        entidade: 'Relatorio',
+        origem_tela: 'Relatórios e Análises',
+        tipo_auditoria: acao.includes('export') || acao.includes('agendar') ? 'sensivel' : 'navegacao',
+        descricao: `Relatórios: ${acao}`,
+        detalhes,
+        group_id: grupoAtual?.id || empresaAtual?.grupo_id || empresaAtual?.group_id || null,
+        grupo_id: grupoAtual?.id || empresaAtual?.grupo_id || empresaAtual?.group_id || null,
+        empresa_id: empresaAtual?.id || null,
+        data_hora: new Date().toISOString()
+      });
+    } catch (_) {}
+  };
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes', empresaAtual?.id],
-    queryFn: () => filterInContext('Cliente', {}, '-created_date', 9999)
+    queryKey: ['clientes', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+    queryFn: () => filterInContext('Cliente', {}, '-created_date', 9999),
+    enabled: Boolean(hasContextoAtivo && canViewRelatorios)
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos', empresaAtual?.id],
-    queryFn: () => filterInContext('Pedido', {}, '-data_pedido', 9999)
+    queryKey: ['pedidos', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+    queryFn: () => filterInContext('Pedido', {}, '-data_pedido', 9999),
+    enabled: Boolean(hasContextoAtivo && canViewRelatorios)
   });
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos', empresaAtual?.id],
-    queryFn: () => filterInContext('Produto', {}, '-created_date', 9999)
+    queryKey: ['produtos', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+    queryFn: () => filterInContext('Produto', {}, '-created_date', 9999),
+    enabled: Boolean(hasContextoAtivo && canViewRelatorios)
   });
 
   const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contasReceber', empresaAtual?.id],
-    queryFn: () => filterInContext('ContaReceber', {}, '-data_vencimento', 9999)
+    queryKey: ['contasReceber', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+    queryFn: () => filterInContext('ContaReceber', {}, '-data_vencimento', 9999),
+    enabled: Boolean(hasContextoAtivo && canViewRelatorios)
   });
 
   const { data: contasPagar = [] } = useQuery({
-    queryKey: ['contasPagar', empresaAtual?.id],
-    queryFn: () => filterInContext('ContaPagar', {}, '-data_vencimento', 9999)
+    queryKey: ['contasPagar', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+    queryFn: () => filterInContext('ContaPagar', {}, '-data_vencimento', 9999),
+    enabled: Boolean(hasContextoAtivo && canViewRelatorios)
   });
 
   const filtrarPorPeriodo = (data, campo = 'created_date') => {
@@ -143,6 +173,15 @@ export default function Relatorios() {
   }, [pedidos, filtros]);
 
   const exportarParaExcel = (dados, nomeArquivo) => {
+    if (!canExportRelatorios) {
+      toast({
+        title: "Acesso restrito",
+        description: "Seu perfil nao possui permissao para exportar relatorios.",
+        variant: "destructive"
+      });
+      auditRelatorioAction('exportacao_bloqueada', { nomeArquivo });
+      return;
+    }
     if (!dados || dados.length === 0) {
       toast({
         title: "⚠️ Sem Dados",
@@ -166,6 +205,11 @@ export default function Relatorios() {
     link.href = URL.createObjectURL(blob);
     link.download = `${nomeArquivo}_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
+    auditRelatorioAction('exportar_csv', {
+      nomeArquivo,
+      total_registros: dados.length,
+      filtros
+    });
 
     toast({
       title: "✅ Exportado!",
@@ -196,16 +240,39 @@ export default function Relatorios() {
         title: "✅ Relatório Agendado!",
         description: `O relatório será enviado ${data.frequencia.toLowerCase()} para ${data.destinatarios}`
       });
+      auditRelatorioAction('agendar_envio_email', {
+        relatorio: data.relatorio,
+        frequencia: data.frequencia
+      });
       setAgendarEmailDialogOpen(false);
     }
   });
 
   const handleAgendarEmail = (e) => {
     e.preventDefault();
+    if (!canScheduleRelatorios) {
+      toast({
+        title: "Acesso restrito",
+        description: "Seu perfil nao possui permissao para agendar relatorios.",
+        variant: "destructive"
+      });
+      auditRelatorioAction('agendamento_bloqueado', { relatorio: selectedReport?.titulo });
+      return;
+    }
     agendarRelatorioMutation.mutate({
       ...agendamentoForm,
       relatorio: selectedReport?.titulo
     });
+  };
+
+  const selecionarRelatorio = (rel) => {
+    setSelectedReport(rel);
+    auditRelatorioAction('selecionar_relatorio', { id: rel?.id, titulo: rel?.titulo });
+  };
+
+  const alterarFiltros = (next) => {
+    setFiltros(next);
+    auditRelatorioAction('alterar_filtros', next);
   };
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#64748b'];
@@ -328,7 +395,7 @@ export default function Relatorios() {
 
   return (
     <ProtectedSection module="Relatórios" action="visualizar">
-    <div className="h-full min-h-screen w-full p-6 lg:p-8 space-y-6 overflow-auto">
+    <div className="h-full min-h-screen w-full p-6 lg:p-8 space-y-6 overflow-auto" data-permission="Relatorios.visualizar">
       <div>
         <h1 className="text-3xl font-bold text-slate-900 mb-2">Relatórios e Análises</h1>
         <p className="text-slate-600">Relatórios estratégicos, análises gerenciais e exportação de dados</p>
@@ -338,37 +405,38 @@ export default function Relatorios() {
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
           {/* Existing Triggers */}
-          <TabsTrigger value="estrategicos" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+          <TabsTrigger value="estrategicos" data-permission="Relatorios.visualizar" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <BarChart3 className="w-4 h-4 mr-2" />
             Relatórios Estratégicos
           </TabsTrigger>
-          <TabsTrigger value="operacionais" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
+          <TabsTrigger value="operacionais" data-permission="Relatorios.visualizar" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
             <Activity className="w-4 h-4 mr-2" />
             Relatórios Operacionais
           </TabsTrigger>
           <TabsTrigger
                 value="agendamento"
+                data-permission="Relatorios.editar"
                 className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                 
             <Calendar className="w-4 h-4 mr-2" />
             Agendamento
           </TabsTrigger>
-          <TabsTrigger value="vendas" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+          <TabsTrigger value="vendas" data-permission="Comercial.visualizar" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <TrendingUp className="w-4 h-4 mr-2" />Vendas
           </TabsTrigger>
-          <TabsTrigger value="financeiro" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
+          <TabsTrigger value="financeiro" data-permission="Financeiro.visualizar" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
             <DollarSign className="w-4 h-4 mr-2" />Financeiro
           </TabsTrigger>
-          <TabsTrigger value="estoque" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+          <TabsTrigger value="estoque" data-permission="Estoque.visualizar" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
             <Package className="w-4 h-4 mr-2" />Estoque
           </TabsTrigger>
-          <TabsTrigger value="producao" className="data-[state=active]:bg-orange-600 data-[state=active]:text-white">
+          <TabsTrigger value="producao" data-permission="Producao.visualizar" className="data-[state=active]:bg-orange-600 data-[state=active]:text-white">
             <Activity className="w-4 h-4 mr-2" />Produção
           </TabsTrigger>
-          <TabsTrigger value="dre" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+          <TabsTrigger value="dre" data-permission="Financeiro.visualizar" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
             <BarChart3 className="w-4 h-4 mr-2" />DRE
           </TabsTrigger>
-          <TabsTrigger value="exportacao">
+          <TabsTrigger value="exportacao" data-permission="Relatorios.exportar">
             <Download className="w-4 h-4 mr-2" />
             Exportações
           </TabsTrigger>
@@ -390,7 +458,7 @@ export default function Relatorios() {
                       Icon={rel.icone}
                       colorClass={rel.cor}
                       badgeText="Estratégico"
-                      onClick={() => setSelectedReport(rel)} />
+                      onClick={() => selecionarRelatorio(rel)} />
 
                     )}
               </div>
@@ -408,7 +476,7 @@ export default function Relatorios() {
                         </CardTitle>
                         <p className="text-sm text-slate-600 mt-1">{selectedReport.descricao}</p>
                       </div>
-                      <Button variant="outline" size="sm" onClick={() => setSelectedReport(null)}>
+                      <Button variant="outline" size="sm" data-permission="Relatorios.visualizar" data-action="Relatorios.fechar" onClick={() => setSelectedReport(null)}>
                         Fechar
                       </Button>
                     </div>
@@ -431,7 +499,9 @@ export default function Relatorios() {
           <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[740px]">
             <ResizablePanel defaultSize={35} minSize={25} className="overflow-auto">
               {/* Filtros Globais */}
-              <RelatoriosFiltrosGlobais filtros={filtros} setFiltros={setFiltros} />
+              <div data-permission="Relatorios.visualizar" data-action="Relatorios.alterar_filtros">
+                <RelatoriosFiltrosGlobais filtros={filtros} setFiltros={alterarFiltros} />
+              </div>
             </ResizablePanel>
             <ResizableHandle withHandle />
             <ResizablePanel defaultSize={65} minSize={35} className="overflow-auto">
@@ -445,7 +515,7 @@ export default function Relatorios() {
                       Icon={rel.icone}
                       colorClass={rel.cor}
                       badgeText={rel.tipo}
-                      onClick={() => setSelectedReport(rel)} />
+                      onClick={() => selecionarRelatorio(rel)} />
 
                     )}
               </div>
@@ -502,10 +572,21 @@ export default function Relatorios() {
           <FormWrapper
               schema={scheduleSchema}
               defaultValues={agendamentoForm}
-              onSubmit={(values) => agendarRelatorioMutation.mutate({
-                ...values,
-                relatorio: selectedReport?.titulo
-              })}>
+              onSubmit={(values) => {
+                if (!canScheduleRelatorios) {
+                  toast({
+                    title: "Acesso restrito",
+                    description: "Seu perfil nao possui permissao para agendar relatorios.",
+                    variant: "destructive"
+                  });
+                  auditRelatorioAction('agendamento_bloqueado', { relatorio: selectedReport?.titulo });
+                  return;
+                }
+                agendarRelatorioMutation.mutate({
+                  ...values,
+                  relatorio: selectedReport?.titulo
+                });
+              }}>
               
             {(methods) =>
               <div className="space-y-4">
@@ -527,7 +608,7 @@ export default function Relatorios() {
                     value={methods.watch('frequencia')}
                     onValueChange={(value) => methods.setValue('frequencia', value, { shouldValidate: true })}>
                     
-                <SelectTrigger>
+                <SelectTrigger data-permission="Relatorios.editar" data-action="Relatorios.agendamento.frequencia">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -545,7 +626,7 @@ export default function Relatorios() {
                     value={methods.watch('dia_semana')}
                     onValueChange={(value) => methods.setValue('dia_semana', value)}>
                     
-                  <SelectTrigger>
+                  <SelectTrigger data-permission="Relatorios.editar" data-action="Relatorios.agendamento.dia_semana">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -565,6 +646,8 @@ export default function Relatorios() {
                 <Input
                     id="dia_mes"
                     type="number"
+                    data-permission="Relatorios.editar"
+                    data-action="Relatorios.agendamento.dia_mes"
                     min="1"
                     max="28"
                     {...methods.register('dia_mes')} />
@@ -577,6 +660,8 @@ export default function Relatorios() {
               <Input
                     id="hora"
                     type="time"
+                    data-permission="Relatorios.editar"
+                    data-action="Relatorios.agendamento.hora"
                     {...methods.register('hora')} />
                   
             </div>
@@ -585,6 +670,8 @@ export default function Relatorios() {
               <Label htmlFor="destinatarios">Destinatários * (separados por vírgula)</Label>
               <Textarea
                     id="destinatarios"
+                    data-permission="Relatorios.editar"
+                    data-action="Relatorios.agendamento.destinatarios"
                     {...methods.register('destinatarios')}
                     placeholder="email1@exemplo.com, email2@exemplo.com"
                     rows={2} />
@@ -594,6 +681,8 @@ export default function Relatorios() {
             <div className="flex items-center space-x-2">
               <Checkbox
                     id="ativo"
+                    data-permission="Relatorios.editar"
+                    data-action="Relatorios.agendamento.ativo"
                     checked={agendamentoForm.ativo}
                     onCheckedChange={(checked) => setAgendamentoForm({ ...agendamentoForm, ativo: checked })} />
                   
@@ -608,7 +697,9 @@ export default function Relatorios() {
               </Button>
               <Button
                     type="submit"
-                    disabled={agendarRelatorioMutation.isPending}
+                    data-permission="Relatorios.editar"
+                    data-action="Relatorios.agendar_email"
+                    disabled={agendarRelatorioMutation.isPending || !canScheduleRelatorios}
                     className="bg-blue-600 hover:bg-blue-700">
                     
                 {agendarRelatorioMutation.isPending ? 'Agendando...' : 'Agendar'}

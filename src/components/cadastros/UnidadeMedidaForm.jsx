@@ -12,7 +12,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, initialData, defaultValues, onSubmit, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || unidadeMedida || unidade;
   const { hasPermission } = usePermissions();
-  const { empresaAtual, grupoAtual, contextoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = hasPermission?.("Cadastros.UnidadeMedida.criar") || hasPermission?.("Cadastros.Produto.criar");
@@ -51,7 +51,7 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
     onSubmit({
       ...formData,
       group_id: groupId || formData.group_id,
-      empresa_id: contextoAtual === "empresa" ? empresaAtual?.id : formData.empresa_id
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id
     });
   };
 
@@ -65,6 +65,7 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
             onChange={(e) => setFormData({ ...formData, sigla: e.target.value.toUpperCase() })}
             placeholder="KG, MT, UN..."
             required
+            data-action="editar-sigla-unidade-medida"
           />
         </div>
         <div>
@@ -74,6 +75,7 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
             onChange={(e) => setFormData({ ...formData, nome_completo: e.target.value })}
             placeholder="Quilograma, Metro, Unidade..."
             required
+            data-action="editar-nome-unidade-medida"
           />
         </div>
       </div>
@@ -81,7 +83,7 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
       <div>
         <Label>Tipo de Grandeza</Label>
         <Select value={formData.tipo_grandeza} onValueChange={(v) => setFormData({ ...formData, tipo_grandeza: v })}>
-          <SelectTrigger>
+          <SelectTrigger data-action="selecionar-tipo-grandeza-unidade-medida">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -103,6 +105,7 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
             value={formData.unidade_base_conversao || ''}
             onChange={(e) => setFormData({ ...formData, unidade_base_conversao: e.target.value })}
             placeholder="KG, MT..."
+            data-action="editar-unidade-base-conversao"
           />
         </div>
         <div>
@@ -112,6 +115,7 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
             step="0.0001"
             value={formData.fator_conversao_para_base}
             onChange={(e) => setFormData({ ...formData, fator_conversao_para_base: parseFloat(e.target.value) })}
+            data-action="editar-fator-conversao"
           />
         </div>
       </div>
@@ -123,6 +127,7 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
             checked={formData.usa_em_estoque}
             disabled={!podeSalvar}
             data-permission="Cadastros.UnidadeMedida.editar"
+            data-action="alternar-uso-estoque-unidade-medida"
             data-sensitive="true"
             onCheckedChange={(v) => setFormData({ ...formData, usa_em_estoque: v })}
           />
@@ -133,6 +138,7 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
             checked={formData.usa_em_compras}
             disabled={!podeSalvar}
             data-permission="Cadastros.UnidadeMedida.editar"
+            data-action="alternar-uso-compras-unidade-medida"
             data-sensitive="true"
             onCheckedChange={(v) => setFormData({ ...formData, usa_em_compras: v })}
           />
@@ -146,6 +152,7 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
             checked={formData.usa_em_vendas}
             disabled={!podeSalvar}
             data-permission="Cadastros.UnidadeMedida.editar"
+            data-action="alternar-uso-vendas-unidade-medida"
             data-sensitive="true"
             onCheckedChange={(v) => setFormData({ ...formData, usa_em_vendas: v })}
           />
@@ -156,6 +163,7 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
             checked={formData.ativo}
             disabled={!podeSalvar}
             data-permission="Cadastros.UnidadeMedida.alterarStatus"
+            data-action="alternar-status-unidade-medida"
             data-sensitive="true"
             onCheckedChange={(v) => setFormData({ ...formData, ativo: v })}
           />
@@ -167,6 +175,7 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
         className="w-full bg-indigo-600 hover:bg-indigo-700"
         disabled={!contextoValido || !podeSalvar}
         data-permission="Cadastros.UnidadeMedida.salvar"
+        data-action="salvar-unidade-medida"
         data-sensitive="true"
       >
         {dadosIniciais ? 'Atualizar Unidade' : 'Criar Unidade de Medida'}

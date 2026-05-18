@@ -48,8 +48,15 @@ export default function usePermissions() {
 
     const SECTION_ALIASES = {
       controledeacesso: 'acessos',
+      controleacesso: 'acessos',
+      controledeacessos: 'acessos',
       gestaoacessos: 'acessos',
+      gestaodeacessos: 'acessos',
       acessos: 'acessos',
+      permissao: 'acessos',
+      permissoes: 'acessos',
+      perfilacesso: 'acessos',
+      perfisacesso: 'acessos',
       perfis: 'acessos',
       usuarios: 'acessos',
       integracoes: 'integracoes',
@@ -83,8 +90,9 @@ export default function usePermissions() {
         if (!cursor || typeof cursor !== 'object') return undefined;
         const rawKey = pathArr[i];
         const key = SECTION_ALIASES[normalizeSimple(rawKey)] || rawKey;
+        const candidates = [rawKey, key, resolveModule(rawKey)].filter(Boolean);
         const keys = Object.keys(cursor || {});
-        const found = keys.find((k) => normalizeSimple(k) === normalizeSimple(key));
+        const found = keys.find((k) => candidates.some((candidate) => normalizeSimple(k) === normalizeSimple(candidate)));
         cursor = found ? cursor[found] : undefined;
       }
       return cursor;
@@ -170,14 +178,6 @@ export default function usePermissions() {
     // Se não houver seção especificada, verifica ação em qualquer subnível direto
     if (!section) {
       return nodeHasAction(modNode, desired);
-      return Object.values(modNode).some((node) => {
-        if (Array.isArray(node)) return node.includes(desired) || (desired === 'visualizar' && node.includes('ver'));
-        // Caso node seja objeto, verifica se algum filho é array com a ação
-        if (node && typeof node === 'object') {
-          return Object.values(node).some((v) => Array.isArray(v) && (v.includes(desired) || (desired === 'visualizar' && v.includes('ver'))));
-        }
-        return false;
-      });
     }
 
     // Suporta paths hierárquicos: "Pedidos.Financeiro.margens" ou ["Pedidos","Financeiro","margens"]
@@ -185,28 +185,6 @@ export default function usePermissions() {
     let cursor = getNodeByPath(modNode, path);
     if (cursor == null) return false;
     return nodeHasAction(cursor, desired);
-
-    if (!cursor) return false;
-
-    if (Array.isArray(cursor)) {
-      return cursor.includes(desired) || (desired === 'visualizar' && cursor.includes('ver'));
-    }
-
-    // Se o nó final ainda for um objeto, aceite se QUALQUER folha trouxer a ação
-    if (typeof cursor === 'object') {
-      const stack = [cursor];
-      while (stack.length) {
-        const node = stack.pop();
-        if (Array.isArray(node)) {
-          if (node.includes(desired) || (desired === 'visualizar' && node.includes('ver'))) return true;
-        } else if (node && typeof node === 'object') {
-          Object.values(node).forEach((v) => stack.push(v));
-        }
-      }
-      return false;
-    }
-
-    return false;
   };
 
   // Helpers específicos para granularidade

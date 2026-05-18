@@ -23,6 +23,9 @@ import {
   CheckCircle,
   XCircle
 } from "lucide-react";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 
 /**
  * Componente completo de controle de estoque com:
@@ -38,21 +41,49 @@ export default function ControleEstoqueCompleto({ empresaId }) {
   const [produtoInventario, setProdutoInventario] = useState(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useUser();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
+  const { canCreate, canEdit } = usePermissions();
+  const empresaOperacionalId = empresaId || empresaAtual?.id || null;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextoValido = Boolean(empresaOperacionalId || groupId);
+  const canAjustarInventario = canCreate('Estoque', 'Inventario') || canCreate('Estoque', 'InventÃ¡rio') || canEdit('Estoque', 'Inventario') || canEdit('Estoque', 'InventÃ¡rio');
+  const canBloquearLote = canEdit('Estoque', 'Lotes') || canEdit('Estoque', 'Lotes e Validade');
+
+  const auditEstoqueControle = async (acao, detalhes = {}, sucesso = true) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuario local',
+        usuario_id: user?.id || null,
+        acao,
+        modulo: 'Estoque',
+        tipo_auditoria: sucesso ? 'sensivel' : 'seguranca',
+        entidade: 'ControleEstoque',
+        descricao: `Controle de estoque: ${acao}`,
+        detalhes,
+        empresa_id: empresaOperacionalId,
+        group_id: groupId,
+        grupo_id: groupId,
+        sucesso,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (_) {}
+  };
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos-controle', empresaId],
+    queryKey: ['produtos-controle', empresaOperacionalId, groupId],
     queryFn: async () => {
-      const prods = await base44.entities.Produto.list();
-      return prods.filter(p => p.empresa_id === empresaId);
+      return await filterInContext('Produto', {}, '-updated_date', 9999);
     },
+    enabled: contextoValido,
   });
 
   const { data: movimentacoes = [] } = useQuery({
-    queryKey: ['movimentacoes-controle', empresaId],
+    queryKey: ['movimentacoes-controle', empresaOperacionalId, groupId],
     queryFn: async () => {
-      const movs = await base44.entities.MovimentacaoEstoque.list('-created_date', 200);
-      return movs.filter(m => m.empresa_id === empresaId);
+      return await filterInContext('MovimentacaoEstoque', {}, '-created_date', 200);
     },
+    enabled: contextoValido,
   });
 
   // Reservas ativas
@@ -94,14 +125,17 @@ export default function ControleEstoqueCompleto({ empresaId }) {
   // Fazer inventário
   const fazerInventarioMutation = useMutation({
     mutationFn: async ({ produtoId, quantidadeContada, lote, observacao }) => {
+      if (!contextoValido) throw new Error("Selecione grupo ou empresa antes de fazer inventario.");
+      if (!canAjustarInventario) throw new Error("Sem permissao para ajustar inventario.");
+      if (!Number.isFinite(quantidadeContada) || quantidadeContada < 0) throw new Error("Quantidade contada invalida.");
       const produto = produtos.find(p => p.id === produtoId);
       if (!produto) throw new Error("Produto não encontrado");
 
       const diferenca = quantidadeContada - (produto.estoque_atual || 0);
 
       // Criar movimentação de ajuste
-      await base44.entities.MovimentacaoEstoque.create({
-        empresa_id: empresaId,
+      await createInContext('MovimentacaoEstoque', {
+        empresa_id: empresaOperacionalId,
         tipo_movimento: "ajuste",
         origem_movimento: "inventario",
         produto_id: produtoId,
@@ -120,7 +154,7 @@ export default function ControleEstoqueCompleto({ empresaId }) {
       });
 
       // Atualizar produto
-      await base44.entities.Produto.update(produtoId, {
+      await updateInContext('Produto', produtoId, {
         estoque_atual: quantidadeContada
       });
 
@@ -137,12 +171,27 @@ export default function ControleEstoqueCompleto({ empresaId }) {
       
       setInventarioOpen(false);
       setProdutoInventario(null);
+      auditEstoqueControle('inventario_ajustado', {
+        produto_id: produto.id,
+        produto_descricao: produto.descricao,
+        diferenca,
+      });
+    },
+    onError: (error) => {
+      auditEstoqueControle('inventario_bloqueado', { erro: error?.message }, false);
+      toast({
+        title: "Erro no inventario",
+        description: error?.message || "Nao foi possivel ajustar o inventario",
+        variant: "destructive",
+      });
     },
   });
 
   // Bloquear lote vencido
   const bloquearLoteVencidoMutation = useMutation({
     mutationFn: async ({ produtoId, numeroLote }) => {
+      if (!contextoValido) throw new Error("Selecione grupo ou empresa antes de bloquear lote.");
+      if (!canBloquearLote) throw new Error("Sem permissao para bloquear lote.");
       const produto = produtos.find(p => p.id === produtoId);
       if (!produto) throw new Error("Produto não encontrado");
 
@@ -158,14 +207,19 @@ export default function ControleEstoqueCompleto({ empresaId }) {
         return l;
       });
 
-      await base44.entities.Produto.update(produtoId, {
+      await updateInContext('Produto', produtoId, {
         lotes: lotesAtualizados
       });
 
-      return produto;
+      return { produto, numeroLote };
     },
-    onSuccess: () => {
+    onSuccess: ({ produto, numeroLote }) => {
       queryClient.invalidateQueries({ queryKey: ['produtos-controle'] });
+      auditEstoqueControle('lote_bloqueado', {
+        produto_id: produto.id,
+        produto_descricao: produto.descricao,
+        numero_lote: numeroLote,
+      });
       toast({
         title: "🔒 Lote bloqueado",
         description: "Lote vencido bloqueado para uso"
@@ -193,6 +247,8 @@ export default function ControleEstoqueCompleto({ empresaId }) {
                     <Button
                       size="sm"
                       variant="destructive"
+                      disabled={!contextoValido || !canBloquearLote}
+                      data-permission="Estoque.Lotes.editar"
                       onClick={() => bloquearLoteVencidoMutation.mutate({
                         produtoId: item.id,
                         numeroLote: item.lote.numero_lote
@@ -476,7 +532,7 @@ export default function ControleEstoqueCompleto({ empresaId }) {
                       <Button type="button" variant="outline" onClick={() => setInventarioOpen(false)}>
                         Cancelar
                       </Button>
-                      <Button type="submit" disabled={fazerInventarioMutation.isPending}>
+                      <Button type="submit" disabled={fazerInventarioMutation.isPending || !contextoValido || !canAjustarInventario} data-permission="Estoque.Inventario.criar">
                         Confirmar Contagem
                       </Button>
                     </div>

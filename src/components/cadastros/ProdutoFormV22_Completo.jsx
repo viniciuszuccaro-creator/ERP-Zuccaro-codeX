@@ -634,6 +634,10 @@ Caso contrário, sugira:
               <Switch
                 checked={modoManual}
                 onCheckedChange={setModoManual}
+                disabled={!contextoValido || (produto?.id ? !podeEditar : !podeCriar)}
+                data-permission="Cadastros.Produto.editar"
+                data-action="alternar-modo-manual-produto"
+                data-sensitive
               />
             </div>
           </div>
@@ -690,6 +694,9 @@ Caso contrário, sugira:
                     onChange={(e) => setFormData(prev => ({...prev, descricao: e.target.value}))}
                     placeholder="Ex: Vergalhão 8mm 12m CA-50"
                     className="flex-1"
+                    data-permission="Cadastros.Produto.editar"
+                    data-action="editar-descricao-produto"
+                    data-sensitive
                   />
                   <Button
                     type="button"
@@ -697,6 +704,9 @@ Caso contrário, sugira:
                     variant="outline"
                     onClick={() => analisarDescricaoIA(formData.descricao)}
                     disabled={processandoIA || modoManual}
+                    data-permission="Cadastros.Produto.ia"
+                    data-action="analisar-descricao-produto-ia"
+                    data-sensitive
                   >
                     {processandoIA ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                   </Button>
@@ -717,7 +727,7 @@ Caso contrário, sugira:
                           </Badge>
                         )}
                       </div>
-                      <Button size="sm" onClick={aplicarSugestaoIA} className="bg-purple-600">
+                      <Button size="sm" onClick={aplicarSugestaoIA} className="bg-purple-600" data-permission="Cadastros.Produto.ia" data-action="aplicar-sugestao-produto-ia" data-sensitive>
                         Aplicar Tudo
                       </Button>
                     </div>
@@ -750,7 +760,7 @@ Caso contrário, sugira:
                       }));
                     }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger data-permission="Cadastros.Produto.editar" data-action="selecionar-setor-atividade-produto" data-sensitive>
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -784,7 +794,7 @@ Caso contrário, sugira:
                       }
                     }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger data-permission="Cadastros.Produto.editar" data-action="selecionar-grupo-produto-produto" data-sensitive>
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -813,7 +823,7 @@ Caso contrário, sugira:
                       }));
                     }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger data-permission="Cadastros.Produto.editar" data-action="selecionar-marca-produto" data-sensitive>
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -844,6 +854,9 @@ Caso contrário, sugira:
                     onChange={(e) => setFormData(prev => ({...prev, codigo: e.target.value}))}
                     placeholder="0001"
                     required
+                    data-permission="Cadastros.Produto.editar"
+                    data-action="editar-codigo-produto"
+                    data-sensitive
                   />
                   <p className="text-xs text-slate-500 mt-1">
                     {produto ? 'Código do produto' : `Próximo: ${formData.codigo}`}
@@ -856,13 +869,16 @@ Caso contrário, sugira:
                     value={formData.codigo_barras}
                     onChange={(e) => setFormData(prev => ({...prev, codigo_barras: e.target.value}))}
                     placeholder="7891234567890"
+                    data-permission="Cadastros.Produto.editar"
+                    data-action="editar-codigo-barras-produto"
+                    data-sensitive
                   />
                 </div>
 
                 <div>
                   <Label>Tipo de Item</Label>
                   <Select value={formData.tipo_item} onValueChange={(v) => setFormData(prev => ({...prev, tipo_item: v}))}>
-                    <SelectTrigger>
+                    <SelectTrigger data-permission="Cadastros.Produto.editar" data-action="selecionar-tipo-item-produto" data-sensitive>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -889,9 +905,12 @@ Caso contrário, sugira:
                       onChange={handleUploadFoto}
                       className="hidden"
                       id="foto-upload"
+                      data-permission="Cadastros.Produto.editar"
+                      data-action="upload-foto-produto"
+                      data-sensitive
                     />
                     <label htmlFor="foto-upload" className="flex-1">
-                      <Button type="button" variant="outline" size="sm" disabled={uploadingFoto} className="w-full" asChild>
+                      <Button type="button" variant="outline" size="sm" disabled={uploadingFoto || !contextoValido || (produto?.id ? !podeEditar : !podeCriar)} className="w-full" asChild data-permission="Cadastros.Produto.editar" data-action="abrir-upload-foto-produto" data-sensitive>
                         <span>
                           {uploadingFoto ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
                           {formData.foto_produto_url ? 'Alterar' : 'Upload'}
@@ -903,8 +922,11 @@ Caso contrário, sugira:
                         type="button"
                         size="sm"
                         onClick={gerarImagemIA}
-                        disabled={gerandoImagem}
+                        disabled={gerandoImagem || !contextoValido || (produto?.id ? !podeEditar : !podeCriar)}
                         className="bg-purple-600 hover:bg-purple-700"
+                        data-permission="Cadastros.Produto.ia"
+                        data-action="gerar-imagem-produto-ia"
+                        data-sensitive
                       >
                         {gerandoImagem ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                       </Button>
@@ -923,6 +945,10 @@ Caso contrário, sugira:
             </div>
             <Switch
               checked={formData.eh_bitola}
+              disabled={!contextoValido || (produto?.id ? !podeEditar : !podeCriar)}
+              data-permission="Cadastros.Produto.editar"
+              data-action="alternar-bitola-produto"
+              data-sensitive
               onCheckedChange={(v) => {
                 setFormData(prev => ({...prev, eh_bitola: v}));
                 if (v) {
@@ -951,6 +977,9 @@ Caso contrário, sugira:
                       value={formData.bitola_diametro_mm}
                       onChange={(e) => setFormData(prev => ({...prev, bitola_diametro_mm: parseFloat(e.target.value) || 0}))}
                       placeholder="8.0"
+                      data-permission="Cadastros.Produto.editar"
+                      data-action="editar-diametro-bitola-produto"
+                      data-sensitive
                     />
                   </div>
 
@@ -962,13 +991,16 @@ Caso contrário, sugira:
                       value={formData.peso_teorico_kg_m}
                       onChange={(e) => setFormData(prev => ({...prev, peso_teorico_kg_m: parseFloat(e.target.value) || 0}))}
                       placeholder="0.395"
+                      data-permission="Cadastros.Produto.editar"
+                      data-action="editar-peso-teorico-produto"
+                      data-sensitive
                     />
                   </div>
 
                   <div>
                     <Label>Tipo de Aço</Label>
                     <Select value={formData.tipo_aco} onValueChange={(v) => setFormData(prev => ({...prev, tipo_aco: v}))}>
-                      <SelectTrigger>
+                      <SelectTrigger data-permission="Cadastros.Produto.editar" data-action="selecionar-tipo-aco-produto" data-sensitive>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -987,6 +1019,9 @@ Caso contrário, sugira:
                       value={formData.comprimento_barra_padrao_m}
                       onChange={(e) => setFormData(prev => ({...prev, comprimento_barra_padrao_m: parseFloat(e.target.value) || 12}))}
                       placeholder="12"
+                      data-permission="Cadastros.Produto.editar"
+                      data-action="editar-comprimento-barra-produto"
+                      data-sensitive
                     />
                   </div>
                 </div>
@@ -1019,7 +1054,7 @@ Caso contrário, sugira:
             <CardContent className="p-4">
               <Label>Status</Label>
               <Select value={formData.status} onValueChange={(v) => setFormData(prev => ({...prev, status: v}))}>
-                <SelectTrigger>
+                <SelectTrigger data-permission="Cadastros.Produto.alterarStatus" data-action="selecionar-status-produto" data-sensitive>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1047,7 +1082,7 @@ Caso contrário, sugira:
               <div>
                 <Label>Unidade Principal (Relatórios) *</Label>
                 <Select value={formData.unidade_principal} onValueChange={(v) => setFormData(prev => ({...prev, unidade_principal: v, unidade_medida: v }))}>
-                  <SelectTrigger>
+                  <SelectTrigger data-permission="Cadastros.Produto.editar" data-action="selecionar-unidade-principal-produto" data-sensitive>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1071,8 +1106,11 @@ Caso contrário, sugira:
                           ? 'bg-indigo-600 text-white'
                           : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
                       }`}
-                      onClick={() => toggleUnidadeSecundaria(unidade)}
-                    >
+                    onClick={() => toggleUnidadeSecundaria(unidade)}
+                    data-permission="Cadastros.Produto.editar"
+                    data-action={`alternar-unidade-secundaria-${unidade}`}
+                    data-sensitive
+                  >
                       {(formData.unidades_secundarias || []).includes(unidade) && <CheckCircle2 className="w-3 h-3 mr-1" />}
                       {unidade}
                     </Badge>
@@ -1119,6 +1157,10 @@ Caso contrário, sugira:
                   <Switch
                     checked={formData.exibir_no_site || false}
                     onCheckedChange={(v) => setFormData(prev => ({...prev, exibir_no_site: v}))}
+                    disabled={!contextoValido || (produto?.id ? !podeEditar : !podeCriar)}
+                    data-permission="Cadastros.Produto.editar"
+                    data-action="alternar-exibir-site-produto"
+                    data-sensitive
                   />
                 </div>
 
@@ -1130,6 +1172,10 @@ Caso contrário, sugira:
                   <Switch
                     checked={formData.exibir_no_marketplace || false}
                     onCheckedChange={(v) => setFormData(prev => ({...prev, exibir_no_marketplace: v}))}
+                    disabled={!contextoValido || (produto?.id ? !podeEditar : !podeCriar)}
+                    data-permission="Cadastros.Produto.editar"
+                    data-action="alternar-exibir-marketplace-produto"
+                    data-sensitive
                   />
                 </div>
               </div>
@@ -1147,6 +1193,9 @@ Caso contrário, sugira:
                     onClick={gerarDescricaoSEO}
                     disabled={gerandoDescricaoSEO || modoManual}
                     className="bg-green-600 hover:bg-green-700"
+                    data-permission="Cadastros.Produto.ia"
+                    data-action="gerar-descricao-seo-produto-ia"
+                    data-sensitive
                   >
                     {gerandoDescricaoSEO ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -1162,6 +1211,9 @@ Caso contrário, sugira:
                   onChange={(e) => setFormData(prev => ({...prev, descricao_seo: e.target.value}))}
                   placeholder="Descrição detalhada para SEO..."
                   className="min-h-[100px]"
+                  data-permission="Cadastros.Produto.editar"
+                  data-action="editar-descricao-seo-produto"
+                  data-sensitive
                 />
 
                 <div>
@@ -1173,6 +1225,9 @@ Caso contrário, sugira:
                       slug_site: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-')
                     }))}
                     placeholder="vergalhao-8mm-ca50"
+                    data-permission="Cadastros.Produto.editar"
+                    data-action="editar-slug-produto"
+                    data-sensitive
                   />
                 </div>
               </CardContent>
@@ -1230,6 +1285,7 @@ Caso contrário, sugira:
                 type="button"
                 variant="outline"
                 data-permission="Cadastros.Produto.alterarStatus"
+                data-action={formData.status === 'Ativo' ? "inativar-produto" : "ativar-produto"}
                 data-sensitive
                 onClick={handleAlternarStatus}
                 disabled={!podeEditar || !contextoValido}
@@ -1251,6 +1307,7 @@ Caso contrário, sugira:
                 type="button"
                 variant="destructive"
                 data-permission="Cadastros.Produto.excluir"
+                data-action="excluir-produto"
                 data-sensitive
                 onClick={handleExcluir}
                 disabled={!podeExcluir || !contextoValido}
@@ -1261,7 +1318,7 @@ Caso contrário, sugira:
             </>
           )}
         </div>
-        <Button type="submit" data-permission="Cadastros.Produto.salvar" data-sensitive disabled={isSubmitting || !contextoValido || (produto?.id ? !podeEditar : !podeCriar)} className="bg-purple-600 hover:bg-purple-700 px-8">
+        <Button type="submit" data-permission="Cadastros.Produto.salvar" data-action="salvar-produto" data-sensitive disabled={isSubmitting || !contextoValido || (produto?.id ? !podeEditar : !podeCriar)} className="bg-purple-600 hover:bg-purple-700 px-8">
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {!isSubmitting && <Save className="w-4 h-4 mr-2" />}
           {produto ? 'Atualizar Produto' : 'Criar Produto'}

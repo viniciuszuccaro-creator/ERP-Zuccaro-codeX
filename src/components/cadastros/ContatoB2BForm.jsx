@@ -6,13 +6,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Loader2, MessageCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * V21.1.2 - WINDOW MODE READY
  */
 export default function ContatoB2BForm({ contato, contatoB2B, item, data, onSubmit, onSave, onClose, isSubmitting, windowMode = false }) {
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const dadosIniciais = contatoB2B || contato || item || data;
+  const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id);
   const [formData, setFormData] = useState(dadosIniciais || {
     cliente_id: '',
     nome_contato: '',
@@ -31,12 +33,17 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, onSubm
   });
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list(),
+    queryKey: ['clientes-contato-b2b', empresaAtual?.id || grupoAtual?.id || 'sem-contexto'],
+    queryFn: () => filterInContext('Cliente', {}, 'nome', 500),
+    enabled: contextoValido,
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!contextoValido) {
+      alert('Selecione um grupo ou empresa antes de salvar o contato.');
+      return;
+    }
     if (!formData.nome_contato || !formData.email) {
       alert('Preencha os campos obrigatórios');
       return;
@@ -53,8 +60,8 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, onSubm
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <Label>Cliente *</Label>
-        <Select value={formData.cliente_id} onValueChange={(v) => setFormData({...formData, cliente_id: v})}>
-          <SelectTrigger>
+        <Select value={formData.cliente_id} onValueChange={(v) => setFormData({...formData, cliente_id: v})} disabled={!contextoValido}>
+          <SelectTrigger data-permission="Cadastros.ContatoB2B.editar" data-action="Cadastros.ContatoB2B.cliente">
             <SelectValue placeholder="Selecione o cliente" />
           </SelectTrigger>
           <SelectContent>
@@ -71,6 +78,8 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, onSubm
           value={formData.nome_contato}
           onChange={(e) => setFormData({...formData, nome_contato: e.target.value})}
           placeholder="Nome completo"
+          data-permission="Cadastros.ContatoB2B.editar"
+          data-action="Cadastros.ContatoB2B.nome_contato"
         />
       </div>
 
@@ -81,12 +90,14 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, onSubm
             value={formData.cargo}
             onChange={(e) => setFormData({...formData, cargo: e.target.value})}
             placeholder="Ex: Gerente de Compras"
+            data-permission="Cadastros.ContatoB2B.editar"
+            data-action="Cadastros.ContatoB2B.cargo"
           />
         </div>
         <div>
           <Label>Departamento</Label>
           <Select value={formData.departamento} onValueChange={(v) => setFormData({...formData, departamento: v})}>
-            <SelectTrigger>
+            <SelectTrigger data-permission="Cadastros.ContatoB2B.editar" data-action="Cadastros.ContatoB2B.departamento">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -108,6 +119,8 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, onSubm
           value={formData.email}
           onChange={(e) => setFormData({...formData, email: e.target.value})}
           placeholder="contato@empresa.com"
+          data-permission="Cadastros.ContatoB2B.editar"
+          data-action="Cadastros.ContatoB2B.email"
         />
       </div>
 
@@ -117,6 +130,8 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, onSubm
           <Input
             value={formData.telefone}
             onChange={(e) => setFormData({...formData, telefone: e.target.value})}
+            data-permission="Cadastros.ContatoB2B.editar"
+            data-action="Cadastros.ContatoB2B.telefone"
           />
         </div>
         <div>
@@ -124,6 +139,8 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, onSubm
           <Input
             value={formData.whatsapp}
             onChange={(e) => setFormData({...formData, whatsapp: e.target.value})}
+            data-permission="Cadastros.ContatoB2B.editar"
+            data-action="Cadastros.ContatoB2B.whatsapp"
           />
         </div>
       </div>
@@ -133,11 +150,14 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, onSubm
         <Switch
           checked={formData.principal}
           onCheckedChange={(v) => setFormData({...formData, principal: v})}
+          data-permission="Cadastros.ContatoB2B.editar"
+          data-action="Cadastros.ContatoB2B.principal"
+          data-sensitive="true"
         />
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={isSubmitting || !contextoValido} data-permission="Cadastros.ContatoB2B.editar" data-action="Cadastros.ContatoB2B.salvar" data-sensitive="true">
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {dadosIniciais ? 'Atualizar' : 'Criar Contato'}
         </Button>

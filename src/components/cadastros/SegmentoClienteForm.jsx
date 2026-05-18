@@ -34,13 +34,15 @@ export default function SegmentoClienteForm({ segmento, segmentoCliente, item, d
           onChange={(e) => setFormData({ ...formData, nome_segmento: e.target.value })}
           placeholder="Metalúrgicas, Construtoras, Varejo..."
           required
+          data-permission="Cadastros.SegmentoCliente.editar"
+          data-action="Cadastros.SegmentoCliente.nome_segmento"
         />
       </div>
 
       <div>
         <Label>Tipo de Segmento</Label>
         <Select value={formData.tipo_segmento} onValueChange={(v) => setFormData({ ...formData, tipo_segmento: v })}>
-          <SelectTrigger>
+          <SelectTrigger data-permission="Cadastros.SegmentoCliente.editar" data-action="Cadastros.SegmentoCliente.tipo_segmento">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -60,6 +62,8 @@ export default function SegmentoClienteForm({ segmento, segmentoCliente, item, d
           value={formData.descricao || ''}
           onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
           rows={3}
+          data-permission="Cadastros.SegmentoCliente.editar"
+          data-action="Cadastros.SegmentoCliente.descricao"
         />
       </div>
 
@@ -68,10 +72,13 @@ export default function SegmentoClienteForm({ segmento, segmentoCliente, item, d
         <Switch
           checked={formData.ativo}
           onCheckedChange={(v) => setFormData({ ...formData, ativo: v })}
+          data-permission="Cadastros.SegmentoCliente.editar"
+          data-action="Cadastros.SegmentoCliente.ativo"
+          data-sensitive="true"
         />
       </div>
 
-      <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+      <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" data-permission="Cadastros.SegmentoCliente.editar" data-action="Cadastros.SegmentoCliente.salvar" data-sensitive="true">
         {dadosIniciais ? 'Atualizar Segmento' : 'Criar Segmento'}
       </Button>
     </form>

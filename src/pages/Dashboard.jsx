@@ -88,6 +88,27 @@ export default function Dashboard() {
   const canSeeRH = hasPermission('RH', null, 'ver');
   const canSeeCompras = hasPermission('Compras', null, 'ver');
   const canSeeProducao = hasPermission('Produção', null, 'ver');
+  const canSeeDashboard = hasPermission('Dashboard', null, 'ver') || hasPermission('Dashboard', null, 'visualizar');
+  const canSeeFiscal = hasPermission('Fiscal', null, 'ver') || hasPermission('Fiscal', null, 'visualizar');
+  const canSeeSistema = hasPermission('Sistema', null, 'ver') || hasPermission('Sistema', null, 'visualizar');
+
+  const auditDashboardAction = async (acao, detalhes = {}) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: 'Dashboard',
+        entidade: 'Dashboard',
+        origem_tela: 'Dashboard Executivo',
+        tipo_auditoria: 'navegacao',
+        descricao: `Dashboard: ${acao}`,
+        detalhes,
+        group_id: grupoAtual?.id || empresaAtual?.grupo_id || empresaAtual?.group_id || null,
+        grupo_id: grupoAtual?.id || empresaAtual?.grupo_id || empresaAtual?.group_id || null,
+        empresa_id: empresaAtual?.id || null,
+        data_hora: new Date().toISOString()
+      });
+    } catch (_) {}
+  };
 
   const [periodo, setPeriodo] = useState(() => {
     try {
@@ -113,6 +134,7 @@ export default function Dashboard() {
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
     try { localStorage.setItem('Dashboard_tab', value); } catch {}
+    auditDashboardAction('alterar_aba', { aba: value });
   }; // New state for active tab
 
   useEffect(() => {
@@ -280,6 +302,7 @@ export default function Dashboard() {
   });
 
   const { data: totalColaboradoresDash = 0 } = useQuery({
+    enabled: Boolean(hasContextoAtivo && canSeeRH),
     queryKey: ['colaboradores-count-dash', empresaAtual?.id, grupoAtual?.id],
     queryFn: async () => {
       try {
@@ -314,7 +337,7 @@ export default function Dashboard() {
   });
 
   const { data: notasFiscais = [] } = useQuery({
-      enabled: Boolean((canSeeFinanceiro || hasPermission('Fiscal', null, 'ver') || canSeeComercial) && hasContextoAtivo),
+      enabled: Boolean((canSeeFinanceiro || canSeeFiscal || canSeeComercial) && hasContextoAtivo),
       queryKey: ['notasFiscais', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
@@ -443,7 +466,7 @@ export default function Dashboard() {
     queryKey: ['command-center', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       const since = Date.now() - 24 * 60 * 60 * 1000;
-      const logs = await base44.entities.AuditLog.filter({}, '-data_hora', 500);
+      const logs = await filterInContext('AuditLog', {}, '-data_hora', 500);
       const within = (logs || []).filter(l => {
         const t = new Date(l?.data_hora || l?.created_date || Date.now()).getTime();
         return t >= since;
@@ -455,6 +478,7 @@ export default function Dashboard() {
       return { errors, funcs, secAlerts };
     },
     staleTime: 60000,
+    enabled: Boolean(hasContextoAtivo && canSeeSistema),
   });
 
   // KPIs Chatbot / SLA últimas 24h
@@ -472,6 +496,7 @@ export default function Dashboard() {
       return { chats: within.length, sla_ok: sla.ok, sla_total: sla.total };
     },
     staleTime: 60000,
+    enabled: Boolean(hasContextoAtivo && canSeeSistema),
   });
 
   // Assinaturas realtime locais (reforço) para invalidar KPIs do Dashboard
@@ -497,6 +522,7 @@ export default function Dashboard() {
 
   // DRILL-DOWN - Função para navegar ao clicar em KPI
   const handleDrillDown = (rota) => {
+    auditDashboardAction('abrir_modulo_por_dashboard', { rota });
     navigate(rota);
   };
 
@@ -663,6 +689,7 @@ export default function Dashboard() {
       icon: ShoppingCart,
       color: "from-purple-500 to-purple-600",
       url: createPageUrl("Comercial"),
+      permission: "Comercial.visualizar",
       count: pedidosPeriodo.length
     },
     {
@@ -671,6 +698,7 @@ export default function Dashboard() {
       icon: Box,
       color: "from-indigo-500 to-indigo-600",
       url: createPageUrl("Estoque"),
+      permission: "Estoque.visualizar",
       count: produtosBaixoEstoque > 0 ? produtosBaixoEstoque : null,
       alert: produtosBaixoEstoque > 0
     },
@@ -680,6 +708,7 @@ export default function Dashboard() {
       icon: Truck,
       color: "from-orange-500 to-orange-600",
       url: createPageUrl("Expedicao"),
+      permission: "Expedicao.visualizar",
       count: entregasPendentes
     },
     {
@@ -688,6 +717,7 @@ export default function Dashboard() {
       icon: DollarSign,
       color: "from-green-500 to-green-600",
       url: createPageUrl("Financeiro"),
+      permission: "Financeiro.visualizar",
       count: null
     },
   ];
@@ -701,16 +731,23 @@ export default function Dashboard() {
 
   return (
     <ProtectedSection module="Dashboard" action="ver">
-    <div className="w-full h-full min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="w-full h-full min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-blue-50" data-permission="Dashboard.visualizar">
       <div className="flex-1 overflow-hidden p-6 space-y-6">
       <DashboardHeader
         empresaAtual={empresaAtual}
         estaNoGrupo={estaNoGrupo}
         grupoAtual={grupoAtual}
         autoRefresh={autoRefresh}
-        setAutoRefresh={setAutoRefresh}
+        setAutoRefresh={(value) => {
+          setAutoRefresh(value);
+          auditDashboardAction('alterar_auto_refresh', { ativo: value });
+        }}
         periodo={periodo}
-        setPeriodo={setPeriodo}
+        setPeriodo={(value) => {
+          setPeriodo(value);
+          auditDashboardAction('alterar_periodo', { periodo: value });
+        }}
+        canSeeDashboard={canSeeDashboard}
       />
 
       <ErrorBoundary>
@@ -844,7 +881,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="flex justify-end mt-3">
-                  <Button variant="outline" onClick={() => handleDrillDown(createPageUrl('Comercial'))}>Ver todos</Button>
+                  <Button variant="outline" data-permission="Comercial.visualizar" data-action="Dashboard.abrir.Comercial" onClick={() => handleDrillDown(createPageUrl('Comercial'))}>Ver todos</Button>
                 </div>
               </CardContent>
             </Card>
@@ -882,12 +919,14 @@ export default function Dashboard() {
           )}
 
           {/* Estoque Crítico */}
+          {canSeeEstoque && (
           <WidgetEstoqueCritico 
             preds14Count={(previsoesIA?.previsoes || []).filter(p => p.risco_ruptura && p.risco_ruptura !== 'baixo').length}
             preds30Count={(previsoesIA30?.previsoes || []).filter(p => p.risco_ruptura && p.risco_ruptura !== 'baixo').length}
             count={produtosBaixoEstoque}
             onNavigate={() => handleDrillDown(createPageUrl("Estoque"))}
           />
+          )}
 
           {/* Gráficos + Top Produtos (redimensionável) */}
           <PanelGroup direction="vertical" className="gap-2 min-h-[420px]">
@@ -1052,7 +1091,9 @@ export default function Dashboard() {
           <QuickAccessModulesGrid modules={quickAccess} onClick={handleDrillDown} />
 
           {/* Resumo Financeiro */}
+          {canSeeFinanceiro && (
           <FinancialSummary receitasPendentes={receitasPendentes} despesasPendentes={despesasPendentes} fluxoCaixa={fluxoCaixa} />
+          )}
 
           {/* NOVO: Gamificação */}
           <div>

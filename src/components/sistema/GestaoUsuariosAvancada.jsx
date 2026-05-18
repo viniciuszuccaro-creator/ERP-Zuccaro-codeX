@@ -144,6 +144,10 @@ export default function GestaoUsuariosAvancada({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!contextoValido) {
+      toast.error("Selecione um grupo ou empresa antes de alterar acesso de usuario.");
+      return;
+    }
     if (!canEdit) {
       toast.error("Sem permissao para alterar acesso de usuario.");
       return;
@@ -214,6 +218,7 @@ export default function GestaoUsuariosAvancada({
                 onCheckedChange={(v) => setFormData({ ...formData, autenticacao_dois_fatores: v })}
                 data-permission="Sistema.Controle de Acesso.editar"
                 data-action="RBAC.Usuario.2fa"
+                data-sensitive="true"
               />
               <Label className="cursor-pointer flex items-center gap-2">
                 <Fingerprint className="w-4 h-4 text-green-600" />
@@ -239,7 +244,7 @@ export default function GestaoUsuariosAvancada({
             disabled={controlesDesabilitados}
             onValueChange={(v) => setFormData({ ...formData, perfil_acesso_id: v })}
           >
-            <SelectTrigger className="mt-1" data-permission="Sistema.Controle de Acesso.editar" data-action="RBAC.Usuario.perfil">
+            <SelectTrigger className="mt-1" data-permission="Sistema.Controle de Acesso.editar" data-action="RBAC.Usuario.perfil" data-sensitive="true">
               <SelectValue placeholder="Selecionar perfil" />
             </SelectTrigger>
             <SelectContent>
@@ -285,6 +290,7 @@ export default function GestaoUsuariosAvancada({
                     onCheckedChange={() => toggleEmpresa(empresa.id)}
                     data-permission="Sistema.Controle de Acesso.editar"
                     data-action={`RBAC.Usuario.empresa.${empresa.id}`}
+                    data-sensitive="true"
                   />
                   <div className="flex-1">
                     <p className="font-medium text-sm">{empresa.nome_fantasia || empresa.razao_social}</p>
@@ -326,6 +332,7 @@ export default function GestaoUsuariosAvancada({
               })}
               data-permission="Sistema.Controle de Acesso.editar"
               data-action="RBAC.Usuario.restricao.proprios"
+              data-sensitive="true"
             />
           </div>
 
@@ -346,6 +353,7 @@ export default function GestaoUsuariosAvancada({
               placeholder="0.00"
               data-permission="Sistema.Controle de Acesso.editar"
               data-action="RBAC.Usuario.limiteAprovacao"
+              data-sensitive="true"
             />
           </div>
         </CardContent>

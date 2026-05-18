@@ -22,8 +22,10 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [viewingRecebimento, setViewingRecebimento] = useState(null);
   const { openWindow } = useWindow();
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
   const { canCreate } = usePermissions();
+  const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id);
+  const canCreateRecebimento = canCreate('Estoque', 'Recebimento');
   const [formData, setFormData] = useState({
     numero_recebimento: `REC-${Date.now()}`,
     ordem_compra_id: "",
@@ -40,33 +42,40 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
+      if (!contextoValido) throw new Error("Selecione grupo ou empresa antes de registrar recebimento.");
+      if (!canCreateRecebimento) throw new Error("Sem permissao para registrar recebimento.");
+      const itensRecebidos = data.itens || data.itens_recebidos || [];
+      if (!itensRecebidos.some(item => Number(item.quantidade_recebida) > 0)) {
+        throw new Error("Informe ao menos um item recebido com quantidade maior que zero.");
+      }
       // Criar recebimento
-      await base44.entities.MovimentacaoEstoque.create({
+      await createInContext('MovimentacaoEstoque', {
         tipo_movimentacao: "Entrada",
         empresa_id: empresaAtual?.id,
         data_movimentacao: data.data_recebimento,
         documento: data.numero_nf || data.numero_recebimento,
         responsavel: data.responsavel_recebimento,
         observacoes: `Recebimento: ${data.numero_recebimento}`,
-        itens_recebidos: data.itens
+        itens_recebidos: itensRecebidos
       });
 
       // Atualizar estoque de cada produto
-      for (const item of data.itens) {
-        if (item.quantidade_recebida > 0) {
+      for (const item of itensRecebidos) {
+        const quantidadeRecebida = Number(item.quantidade_recebida || 0);
+        if (quantidadeRecebida > 0) {
           const produto = produtos.find(p => p.id === item.produto_id);
           if (produto) {
-            await base44.entities.Produto.update(produto.id, {
-              estoque_atual: (produto.estoque_atual || 0) + item.quantidade_recebida
+            await updateInContext('Produto', produto.id, {
+              estoque_atual: (produto.estoque_atual || 0) + quantidadeRecebida
             });
 
             // Criar movimentação individual
-            await base44.entities.MovimentacaoEstoque.create({
+            await createInContext('MovimentacaoEstoque', {
               empresa_id: empresaAtual?.id,
               produto_id: item.produto_id,
               produto_descricao: item.produto_descricao,
               tipo_movimentacao: "Entrada",
-              quantidade: item.quantidade_recebida,
+              quantidade: quantidadeRecebida,
               data_movimentacao: data.data_recebimento,
               documento: data.numero_nf || data.numero_recebimento,
               motivo: "Recebimento de compra",
@@ -79,7 +88,7 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
 
       // Atualizar status da ordem de compra se informada
       if (data.ordem_compra_id) {
-        await base44.entities.OrdemCompra.update(data.ordem_compra_id, {
+        await updateInContext('OrdemCompra', data.ordem_compra_id, {
           status: "Recebida"
         });
       }
@@ -189,9 +198,11 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
           />
         </div>
 
-        {canCreate('Estoque', 'Recebimento') && (
+        {canCreateRecebimento && (
           <Button
             className="bg-green-600 hover:bg-green-700"
+            disabled={!contextoValido}
+            data-permission="Estoque.Recebimento.criar"
             onClick={() => openWindow(RecebimentoForm, {
             windowMode: true,
             onSubmit: async (data) => {
@@ -203,7 +214,7 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
                 });
                 toast.success("✅ Recebimento registrado!");
               } catch (error) {
-                toast.error("Erro ao registrar recebimento");
+                toast.error(error?.message || "Erro ao registrar recebimento");
               }
             }
           }, {

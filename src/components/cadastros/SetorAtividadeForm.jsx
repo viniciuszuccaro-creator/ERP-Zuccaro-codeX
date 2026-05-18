@@ -15,7 +15,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 export default function SetorAtividadeForm({ setor, setorAtividade, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false, closeSelf }) {
   const dadosIniciais = item || data || initialData || defaultValues || setorAtividade || setor;
   const { hasPermission } = usePermissions();
-  const { empresaAtual, grupoAtual, contextoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = hasPermission?.("Cadastros.SetorAtividade.criar") || hasPermission?.("Cadastros.Produto.criar");
@@ -52,7 +52,7 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
     onSubmit({
       ...formData,
       group_id: groupId || formData.group_id,
-      empresa_id: contextoAtual === "empresa" ? empresaAtual?.id : formData.empresa_id
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id
     });
     if (typeof closeSelf === 'function') closeSelf();
   };
@@ -85,6 +85,7 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
           onChange={(e) => setFormData({...formData, nome: e.target.value})}
           placeholder="Ex: Revenda, Almoxarifado, Fábrica"
           required
+          data-action="editar-nome-setor-atividade"
         />
       </div>
 
@@ -94,13 +95,14 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
           value={formData.descricao}
           onChange={(e) => setFormData({...formData, descricao: e.target.value})}
           placeholder="Detalhes sobre este setor de atividade"
+          data-action="editar-descricao-setor-atividade"
         />
       </div>
 
       <div>
         <Label>Tipo de Operação</Label>
         <Select value={formData.tipo_operacao} onValueChange={(v) => setFormData({...formData, tipo_operacao: v})}>
-          <SelectTrigger>
+          <SelectTrigger data-action="selecionar-tipo-operacao-setor-atividade">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -120,6 +122,7 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
             value={formData.icone}
             onChange={(e) => setFormData({...formData, icone: e.target.value})}
             placeholder="📦"
+            data-action="editar-icone-setor-atividade"
           />
         </div>
 
@@ -129,6 +132,7 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
             type="color"
             value={formData.cor}
             onChange={(e) => setFormData({...formData, cor: e.target.value})}
+            data-action="editar-cor-setor-atividade"
           />
         </div>
       </div>
@@ -140,6 +144,7 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
           onCheckedChange={(v) => setFormData({...formData, ativo: v})}
           disabled={!podeSalvar}
           data-permission="Cadastros.SetorAtividade.alterarStatus"
+          data-action="alternar-status-setor-atividade"
           data-sensitive="true"
         />
       </div>
@@ -153,6 +158,7 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
               onClick={handleAlternarStatus}
               disabled={!podeSalvar}
               data-permission="Cadastros.SetorAtividade.alterarStatus"
+              data-action={formData.ativo ? "inativar-setor-atividade" : "ativar-setor-atividade"}
               data-sensitive="true"
               className={formData.ativo ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
             >
@@ -168,6 +174,7 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
               onClick={handleExcluir}
               disabled={!podeExcluir}
               data-permission="Cadastros.SetorAtividade.excluir"
+              data-action="excluir-setor-atividade"
               data-sensitive="true"
             >
               <Trash2 className="w-4 h-4 mr-2" />Excluir
@@ -178,6 +185,7 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
           type="submit"
           disabled={isSubmitting || !contextoValido || !podeSalvar}
           data-permission="Cadastros.SetorAtividade.salvar"
+          data-action="salvar-setor-atividade"
           data-sensitive="true"
         >
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}

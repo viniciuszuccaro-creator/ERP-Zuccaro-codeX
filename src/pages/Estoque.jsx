@@ -31,7 +31,7 @@ const IAReposicao = React.lazy(() => import("../components/estoque/IAReposicao")
 
 export default function Estoque() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
-  const canSeeEstoque = hasPermission('Estoque', null, 'ver');
+  const canSeeEstoque = hasPermission('Estoque', null, 'ver') || hasPermission('Estoque', null, 'visualizar');
   const canExportEstoque = hasPermission('Estoque', null, 'exportar') || hasPermission('Estoque', 'Relatórios', 'exportar') || hasPermission('Estoque', 'Relatorios', 'exportar');
   const canTransferirEstoque = hasPermission('Estoque', 'Transferências', 'criar') || hasPermission('Estoque', 'Transferencias', 'criar') || hasPermission('Estoque', 'Movimentações', 'criar') || hasPermission('Estoque', 'Movimentacoes', 'criar');
   const { openWindow } = useWindow();
@@ -40,6 +40,26 @@ export default function Estoque() {
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const contextKey = empresaAtual?.id || groupId || 'sem-contexto';
   const contextoValido = contextKey !== 'sem-contexto';
+
+  const auditEstoqueAction = async (acao, detalhes = {}, tipoAuditoria = 'acesso', sucesso = true) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuario local',
+        usuario_id: user?.id || null,
+        acao,
+        modulo: 'Estoque',
+        tipo_auditoria: tipoAuditoria,
+        entidade: 'Estoque',
+        descricao: `Estoque: ${acao}`,
+        detalhes,
+        empresa_id: empresaAtual?.id || null,
+        group_id: groupId || null,
+        grupo_id: groupId || null,
+        sucesso,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (_) {}
+  };
   
   // Estados removidos - VisualizadorUniversalEntidade gerencia tudo internamente
 
@@ -174,7 +194,13 @@ export default function Estoque() {
 
   // Exportação PDF do estoque de aço (bitolas)
   const handleExportAco = async () => {
-    if (!canExportEstoque) return;
+    if (!contextoValido || !canExportEstoque) {
+      await auditEstoqueAction('exportacao_aco_bloqueada', {
+        motivo: !contextoValido ? 'sem_contexto_grupo_empresa' : 'sem_permissao',
+        permissao: 'Estoque.Relatorios.exportar',
+      }, 'seguranca', false);
+      return;
+    }
     try {
       const { data } = await base44.functions.invoke('exportEstoqueAco', {
         filtros: { empresa_id: empresaAtual?.id || null, group_id: groupId || null }
@@ -194,9 +220,11 @@ export default function Estoque() {
           usuario_id: user?.id || null,
           acao: 'Exportacao',
           modulo: 'Estoque',
+          tipo_auditoria: 'sensivel',
           entidade: 'RelatorioEstoqueAco',
           empresa_id: empresaAtual?.id || null,
           group_id: groupId || null,
+          grupo_id: groupId || null,
           descricao: 'Exportacao de estoque de aco em PDF',
           sucesso: true,
           data_hora: new Date().toISOString(),
@@ -313,9 +341,21 @@ export default function Estoque() {
     },
   ];
 
-  const allowedModules = modules.filter(m => hasPermission('Estoque', (m.sectionKey || m.title), 'ver'));
+  const canViewEstoqueModule = (module) => {
+    const section = module.sectionKey || module.title;
+    return hasPermission('Estoque', section, 'ver') || hasPermission('Estoque', section, 'visualizar');
+  };
+
+  const allowedModules = modules.filter(canViewEstoqueModule);
 
    const handleModuleClick = (module) => {
+    if (!contextoValido || !canViewEstoqueModule(module)) {
+      auditEstoqueAction('abertura_secao_bloqueada', {
+        secao: module.title,
+        motivo: !contextoValido ? 'sem_contexto_grupo_empresa' : 'sem_permissao',
+      }, 'seguranca', false);
+      return;
+    }
     React.startTransition(() => {
       // Auditoria de abertura de seção
       base44.entities.AuditLog.create({
@@ -347,7 +387,16 @@ export default function Estoque() {
         title="Estoque e Almoxarifado"
         subtitle="Produtos, níveis e movimentações"
         actions={<div className="flex items-center gap-2">
-          <Button onClick={handleExportAco} disabled={!contextoValido || !canExportEstoque} variant="outline" className="gap-2"><Download className="w-3 h-3" /> Exportar Aço (PDF)</Button>
+          <Button
+            onClick={handleExportAco}
+            disabled={!contextoValido || !canExportEstoque}
+            variant="outline"
+            className="gap-2"
+            data-permission="Estoque.Relatorios.exportar"
+            data-action="exportar-estoque-aco"
+          >
+            <Download className="w-3 h-3" /> Exportar Aço (PDF)
+          </Button>
         </div>}
       >
         <ModuleKPIs>
@@ -374,6 +423,8 @@ export default function Estoque() {
               })}
               className="bg-purple-600 hover:bg-purple-700 mb-2"
               disabled={!contextoValido || !canTransferirEstoque}
+              data-permission="Estoque.Transferencias.criar"
+              data-action="transferir-entre-empresas"
               size="sm"
             >
               <ArrowLeftRight className="w-3 h-3 mr-2" />

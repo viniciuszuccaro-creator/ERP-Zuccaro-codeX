@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 export default function FormaPagamentoFormCompleto({ formaPagamento, item, data, onSubmit, onSave, onClose, windowMode = false }) {
   const formaPagamentoNorm = formaPagamento || item || data;
   const [abaAtiva, setAbaAtiva] = useState('geral');
-  const { empresaAtual, grupoAtual, contextoAtual, filterInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, filterInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || formaPagamentoNorm?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || formaPagamentoNorm?.empresa_id || formaPagamentoNorm?.group_id);
@@ -40,8 +40,8 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
   });
 
   const [formData, setFormData] = useState(() => formaPagamentoNorm || {
-    group_id: contextoAtual === 'grupo' ? empresaAtual?.group_id : undefined,
-    empresa_id: contextoAtual === 'empresa' ? empresaAtual?.id : undefined,
+    group_id: groupId || undefined,
+    empresa_id: contexto === 'empresa' ? empresaAtual?.id : undefined,
     codigo: '',
     descricao: '',
     tipo: 'Dinheiro',
@@ -123,7 +123,7 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
     const payload = {
       ...formData,
       group_id: groupId || formData.group_id,
-      empresa_id: contextoAtual === 'empresa' ? empresaAtual?.id : formData.empresa_id,
+      empresa_id: contexto === 'empresa' ? empresaAtual?.id : formData.empresa_id,
     };
     if (onSubmit) onSubmit(payload);
     if (onSave) onSave();
@@ -529,7 +529,7 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
                 <Label className="font-semibold">Escopo Multiempresa</Label>
               </div>
               <p className="text-xs text-slate-600 mb-3">
-                Contexto: {contextoAtual === 'grupo' ? '🏢 Grupo Empresarial' : '🏪 Empresa Individual'}
+                Contexto: {contexto === 'grupo' ? '🏢 Grupo Empresarial' : '🏪 Empresa Individual'}
               </p>
             </CardContent>
           </Card>

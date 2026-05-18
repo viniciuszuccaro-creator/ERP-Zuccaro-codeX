@@ -27,6 +27,7 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
   const { empresaAtual, grupoAtual, getFiltroContexto, createInContext, updateInContext } = useContextoVisual();
   const { canCreate } = usePermissions();
   const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id);
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const canCreateMovimentacao = canCreate('Estoque', 'Movimentações') || canCreate('Estoque', 'Movimentacoes');
   const filtroMovimentacoes = getFiltroContexto('empresa_id', true) || {};
   const { data: movsBackend = [] } = useEntityListSorted('MovimentacaoEstoque', filtroMovimentacoes, { sortField: 'data_movimentacao', sortDirection: 'desc', limit: 500, enabled: contextoValido });
@@ -76,12 +77,19 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
       if (!canCreateMovimentacao) {
         throw new Error("Sem permissao para criar movimentacao de estoque.");
       }
+      if (!contextoValido) {
+        throw new Error("Selecione grupo ou empresa antes de movimentar estoque.");
+      }
+      const quantidade = parseFloat(data.quantidade);
+      if (!Number.isFinite(quantidade) || quantidade <= 0) {
+        throw new Error("Quantidade da movimentacao deve ser maior que zero.");
+      }
       const movimentacaoData = {
         tipo_movimentacao: data.tipo_movimentacao,
         empresa_id: data.empresa_id || empresaAtual?.id,
         produto_id: data.produto_id,
         produto_descricao: data.produto_nome,
-        quantidade: parseFloat(data.quantidade),
+        quantidade,
         data_movimentacao: data.data_movimentacao,
         documento_referencia: data.documento_referencia,
         observacoes: data.observacoes,
@@ -92,7 +100,7 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
       
       const produto = produtos.find(p => p.id === data.produto_id);
       if (produto) {
-        const qtd = parseFloat(data.quantidade);
+        const qtd = quantidade;
         let novoEstoque = produto.estoque_atual || 0;
         
         if (data.tipo_movimentacao === 'Entrada' || data.tipo_movimentacao === 'Devolução') {
@@ -105,6 +113,10 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
           novoEstoque = qtd;
         }
         
+        if (novoEstoque < 0) {
+          throw new Error("Movimentacao deixaria o estoque negativo.");
+        }
+
         await updateInContext('Produto', produto.id, {
           estoque_atual: novoEstoque
         });
@@ -124,6 +136,9 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
             acao: 'Criação', modulo: 'Estoque', entidade: 'MovimentacaoEstoque', registro_id: novaMov.id,
             usuario: authUser?.full_name || authUser?.email, usuario_id: authUser?.id,
             descricao: 'Movimentação registrada', dados_novos: novaMov,
+            empresa_id: novaMov.empresa_id || empresaAtual?.id || null,
+            group_id: novaMov.group_id || groupId || null,
+            grupo_id: novaMov.group_id || groupId || null,
             data_hora: new Date().toISOString(), sucesso: true
           });
         }
@@ -204,7 +219,7 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
                 });
                 toast.success("✅ Movimentação registrada!");
               } catch (error) {
-                toast.error("Erro ao registrar movimentação");
+                toast.error(error?.message || "Erro ao registrar movimentação");
               }
             }
           }, {

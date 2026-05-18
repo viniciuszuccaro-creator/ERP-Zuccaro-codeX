@@ -16,6 +16,8 @@ export default function ModulosGridProducao({ modules, onModuleClick }) {
               onClick={() => onModuleClick(module)}
               color={module.color}
               badge={module.badge}
+              dataPermission={module.permission || `Producao.${module.title}.visualizar`}
+              dataAction={module.action || `abrir-producao-${module.title.toLowerCase().replace(/\s+/g, '-')}`}
             />
           ))}
         </div>

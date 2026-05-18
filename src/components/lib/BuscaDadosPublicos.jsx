@@ -356,7 +356,7 @@ export async function buscarDadosRNTRC(rntrc) {
  * Componente de Botão de Busca Automática V21.5
  * Integração completa com backend functions para dados reais
  */
-export function BotaoBuscaAutomatica({ tipo, valor, onDadosEncontrados, disabled }) {
+export function BotaoBuscaAutomatica({ tipo, valor, onDadosEncontrados, disabled, ...buttonProps }) {
   const [buscando, setBuscando] = React.useState(false);
   const [resultado, setResultado] = React.useState(null);
 
@@ -416,6 +416,7 @@ export function BotaoBuscaAutomatica({ tipo, valor, onDadosEncontrados, disabled
         variant="outline"
         size="sm"
         className="w-full"
+        {...buttonProps}
       >
         {buscando ? (
           <>

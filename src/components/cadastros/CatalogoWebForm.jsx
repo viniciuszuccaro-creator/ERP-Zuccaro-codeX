@@ -11,7 +11,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windowMode = false }) {
   const dadosIniciais = catalogoWeb || catalogo;
   const { hasPermission } = usePermissions();
-  const { empresaAtual, grupoAtual, contextoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = hasPermission?.("Cadastros.CatalogoWeb.criar") || hasPermission?.("Cadastros.Produto.criar");
@@ -40,7 +40,7 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
     onSubmit({
       ...formData,
       group_id: groupId || formData.group_id,
-      empresa_id: contextoAtual === "empresa" ? empresaAtual?.id : formData.empresa_id,
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
       nome: formData.nome_catalogo || formData.nome || ''
     });
   };
@@ -53,6 +53,7 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
           value={formData.nome_catalogo}
           onChange={(e) => setFormData({ ...formData, nome_catalogo: e.target.value })}
           required
+          data-action="editar-nome-catalogo-web"
         />
       </div>
 
@@ -62,6 +63,7 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
           value={formData.descricao}
           onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
           rows={3}
+          data-action="editar-descricao-catalogo-web"
         />
       </div>
 
@@ -71,6 +73,7 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
           value={formData.produto_id}
           onChange={(e) => setFormData({ ...formData, produto_id: e.target.value })}
           placeholder="ID do produto associado"
+          data-action="editar-produto-catalogo-web"
         />
       </div>
 
@@ -81,6 +84,7 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
             checked={formData.exibir_site}
             disabled={!podeSalvar}
             data-permission="Cadastros.CatalogoWeb.editar"
+            data-action="alternar-exibir-site-catalogo-web"
             data-sensitive="true"
             onCheckedChange={(v) => setFormData({ ...formData, exibir_site: v })}
           />
@@ -91,6 +95,7 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
             checked={formData.exibir_marketplace}
             disabled={!podeSalvar}
             data-permission="Cadastros.CatalogoWeb.editar"
+            data-action="alternar-exibir-marketplace-catalogo-web"
             data-sensitive="true"
             onCheckedChange={(v) => setFormData({ ...formData, exibir_marketplace: v })}
           />
@@ -103,6 +108,7 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
           type="number"
           value={formData.ordem_exibicao}
           onChange={(e) => setFormData({ ...formData, ordem_exibicao: parseInt(e.target.value) })}
+          data-action="editar-ordem-catalogo-web"
         />
       </div>
 
@@ -112,6 +118,7 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
           checked={formData.ativo}
           disabled={!podeSalvar}
           data-permission="Cadastros.CatalogoWeb.alterarStatus"
+          data-action="alternar-status-catalogo-web"
           data-sensitive="true"
           onCheckedChange={(v) => setFormData({ ...formData, ativo: v })}
         />
@@ -122,6 +129,7 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
         className="w-full bg-blue-600 hover:bg-blue-700"
         disabled={!contextoValido || !podeSalvar}
         data-permission="Cadastros.CatalogoWeb.salvar"
+        data-action="salvar-catalogo-web"
         data-sensitive="true"
       >
         {dadosIniciais ? 'Atualizar' : 'Criar Catálogo Web'}

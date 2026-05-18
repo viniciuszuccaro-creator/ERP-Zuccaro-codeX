@@ -5,10 +5,18 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { Loader2 } from "lucide-react";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function PrecosSection({ formData, setFormData }) {
   const [optimizing, setOptimizing] = useState(false);
-  const canOptimize = Boolean(formData?.id);
+  const { hasPermission } = usePermissions();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id || formData?.empresa_id || formData?.group_id || formData?.grupo_id);
+  const podeEditar = hasPermission?.("Cadastros.Produto.editar");
+  const podeUsarIA = hasPermission?.("Cadastros.Produto.ia") || podeEditar;
+  const canEdit = contextoValido && podeEditar;
+  const canOptimize = Boolean(formData?.id) && contextoValido && podeUsarIA;
   const handleOptimize = async () => {
     if (!canOptimize || optimizing) return;
     setOptimizing(true);
@@ -33,6 +41,10 @@ export default function PrecosSection({ formData, setFormData }) {
               step="0.01"
               value={formData.custo_aquisicao}
               onChange={(e) => setFormData(prev => ({...prev, custo_aquisicao: parseFloat(e.target.value) || 0}))}
+              disabled={!canEdit}
+              data-permission="Cadastros.Produto.editar"
+              data-action="editar-custo-aquisicao-produto"
+              data-sensitive
             />
           </div>
           <div>
@@ -42,6 +54,10 @@ export default function PrecosSection({ formData, setFormData }) {
               step="0.01"
               value={formData.preco_venda}
               onChange={(e) => setFormData(prev => ({...prev, preco_venda: parseFloat(e.target.value) || 0}))}
+              disabled={!canEdit}
+              data-permission="Cadastros.Produto.editar"
+              data-action="editar-preco-venda-produto"
+              data-sensitive
             />
           </div>
           <div>
@@ -51,6 +67,8 @@ export default function PrecosSection({ formData, setFormData }) {
               value={formData.custo_aquisicao > 0 ? (((formData.preco_venda - formData.custo_aquisicao) / formData.custo_aquisicao) * 100).toFixed(2) : 0}
               disabled
               className="bg-white"
+              data-permission="Cadastros.Produto.visualizar"
+              data-action="visualizar-margem-produto"
             />
           </div>
           <div>
@@ -60,12 +78,23 @@ export default function PrecosSection({ formData, setFormData }) {
               step="0.01"
               value={formData.margem_minima_percentual}
               onChange={(e) => setFormData(prev => ({...prev, margem_minima_percentual: parseFloat(e.target.value) || 0}))}
+              disabled={!canEdit}
+              data-permission="Cadastros.Produto.editar"
+              data-action="editar-margem-minima-produto"
+              data-sensitive
             />
             <p className="text-xs text-slate-500 mt-1">Usada na aprovação de descontos</p>
           </div>
         </div>
         <div className="flex justify-end pt-2">
-          <Button onClick={handleOptimize} disabled={!canOptimize || optimizing} className="bg-blue-600 hover:bg-blue-700">
+          <Button
+            onClick={handleOptimize}
+            disabled={!canOptimize || optimizing}
+            className="bg-blue-600 hover:bg-blue-700"
+            data-permission="Cadastros.Produto.ia"
+            data-action="otimizar-preco-produto"
+            data-sensitive
+          >
             {optimizing ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Otimizando...</>) : 'Otimizar Preço (Políticas)'}
           </Button>
         </div>

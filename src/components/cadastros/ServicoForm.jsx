@@ -15,7 +15,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 export default function ServicoForm({ servico, onSubmit, isSubmitting, windowMode = false }) {
   const dadosIniciais = servico;
   const { hasPermission } = usePermissions();
-  const { empresaAtual, grupoAtual, contextoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = hasPermission?.("Cadastros.Servico.criar") || hasPermission?.("Cadastros.Produto.criar");
@@ -53,7 +53,7 @@ export default function ServicoForm({ servico, onSubmit, isSubmitting, windowMod
     onSubmit({
       ...formData,
       group_id: groupId || formData.group_id,
-      empresa_id: contextoAtual === "empresa" ? empresaAtual?.id : formData.empresa_id,
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
       nome: formData.descricao
     });
   };
@@ -66,6 +66,7 @@ export default function ServicoForm({ servico, onSubmit, isSubmitting, windowMod
           value={formData.descricao}
           onChange={(e) => setFormData({...formData, descricao: e.target.value})}
           placeholder="Ex: Corte de Aço, Dobra, Soldagem"
+          data-action="editar-descricao-servico"
         />
       </div>
 
@@ -76,13 +77,14 @@ export default function ServicoForm({ servico, onSubmit, isSubmitting, windowMod
             value={formData.codigo_servico}
             onChange={(e) => setFormData({...formData, codigo_servico: e.target.value})}
             placeholder="SRV-001"
+            data-action="editar-codigo-servico"
           />
         </div>
 
         <div>
           <Label>Tipo de Serviço</Label>
           <Select value={formData.tipo_servico} onValueChange={(v) => setFormData({...formData, tipo_servico: v})}>
-            <SelectTrigger>
+            <SelectTrigger data-action="selecionar-tipo-servico">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -99,7 +101,7 @@ export default function ServicoForm({ servico, onSubmit, isSubmitting, windowMod
         <div>
           <Label>Unidade de Cobrança</Label>
           <Select value={formData.unidade} onValueChange={(v) => setFormData({...formData, unidade: v})}>
-            <SelectTrigger>
+            <SelectTrigger data-action="selecionar-unidade-servico">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -118,6 +120,7 @@ export default function ServicoForm({ servico, onSubmit, isSubmitting, windowMod
             step="0.01"
             value={formData.preco_servico}
             onChange={(e) => setFormData({...formData, preco_servico: parseFloat(e.target.value)})}
+            data-action="editar-preco-servico"
           />
         </div>
       </div>
@@ -128,6 +131,7 @@ export default function ServicoForm({ servico, onSubmit, isSubmitting, windowMod
           value={formData.observacoes}
           onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
           rows={3}
+          data-action="editar-observacoes-servico"
         />
       </div>
 
@@ -138,6 +142,7 @@ export default function ServicoForm({ servico, onSubmit, isSubmitting, windowMod
           onCheckedChange={(v) => setFormData({...formData, ativo: v})}
           disabled={!podeSalvar}
           data-permission="Cadastros.Servico.alterarStatus"
+          data-action="alternar-status-servico"
           data-sensitive="true"
         />
       </div>
@@ -147,6 +152,7 @@ export default function ServicoForm({ servico, onSubmit, isSubmitting, windowMod
           type="submit"
           disabled={isSubmitting || !contextoValido || !podeSalvar}
           data-permission="Cadastros.Servico.salvar"
+          data-action="salvar-servico"
           data-sensitive="true"
         >
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}

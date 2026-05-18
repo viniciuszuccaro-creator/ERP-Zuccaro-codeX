@@ -36,19 +36,26 @@ function buildSimpleFilter(entityName, empresaId, groupId) {
   if (groupId && !empresaId) return { group_id: groupId };
   // Contexto de empresa: usa empresa_id para o backend expandir para todos os campos
   if (empresaId) return { empresa_id: empresaId };
-  // Sem contexto: conta tudo (admin)
+  // Sem contexto valido: a query retorna zero antes de chegar aqui.
   return {};
 }
 
 export default function useCadastrosAllCounts() {
   const { empresaAtual, grupoAtual } = useContextoVisual();
   const empresaId = empresaAtual?.id || null;
-  const groupId   = grupoAtual?.id   || null;
+  const groupId   = grupoAtual?.id || empresaAtual?.group_id || null;
+  const contextoValido = Boolean(empresaId || groupId);
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ["cadastros-all-counts-v5", empresaId, groupId],
     queryFn: async () => {
+      if (!contextoValido) {
+        const vazio = {};
+        ALL_ENTITIES.forEach(e => { vazio[e] = 0; });
+        return vazio;
+      }
+
       const entities = ALL_ENTITIES.map(entityName => ({
         entityName,
         filter: buildSimpleFilter(entityName, empresaId, groupId),

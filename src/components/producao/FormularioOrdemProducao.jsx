@@ -12,6 +12,9 @@ import { Save, Zap, Package, AlertTriangle, Factory, CheckCircle2 } from "lucide
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import SeletorProdutosProducao from "./SeletorProdutosProducao";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 
 /**
  * V21.6 - FORMULÁRIO DE ORDEM DE PRODUÇÃO COMPLETO
@@ -22,6 +25,16 @@ import SeletorProdutosProducao from "./SeletorProdutosProducao";
  */
 export default function FormularioOrdemProducao({ op, onClose }) {
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || op?.group_id || null;
+  const empresaId = op?.empresa_id || empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const contextKey = groupId ? `grupo:${groupId}` : `empresa:${empresaId || "sem-empresa"}`;
+  const canCreateOP = hasPermission("Produção", "Ordens Produção", "criar") || hasPermission("Produção", "OrdemProducao", "criar");
+  const canEditOP = hasPermission("Produção", "Ordens Produção", "editar") || hasPermission("Produção", "OrdemProducao", "editar");
+  const canUseIA = hasPermission("Produção", "IA", "executar") || hasPermission("Produção", "Ordens Produção", "ia");
   const [formData, setFormData] = useState(op || {
     numero_op: "",
     tipo_producao: "Armado Padrão",
@@ -38,41 +51,52 @@ export default function FormularioOrdemProducao({ op, onClose }) {
   const [produtosInsuficientes, setProdutosInsuficientes] = useState([]);
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ["pedidos"],
-    queryFn: () => base44.entities.Pedido.list(),
+    queryKey: ["pedidos-producao-form", contextKey],
+    queryFn: () => filterInContext("Pedido", {}, "-created_date", 500),
+    enabled: contextoValido,
   });
 
   const { data: empresas = [] } = useQuery({
-    queryKey: ["empresas"],
-    queryFn: () => base44.entities.Empresa.list(),
+    queryKey: ["empresas-producao-form", contextKey],
+    queryFn: () => filterInContext("Empresa", {}, "nome_fantasia", 500, "id"),
+    enabled: contextoValido,
   });
 
   const { data: produtosProducao = [] } = useQuery({
-    queryKey: ['produtos-producao'],
+    queryKey: ['produtos-producao', contextKey],
     queryFn: async () => {
-      const all = await base44.entities.Produto.list();
+      const all = await filterInContext("Produto", {}, "descricao", 1000);
       return all.filter(p => 
         p.tipo_item === 'Matéria-Prima Produção' && 
         p.status === 'Ativo'
       );
-    }
+    },
+    enabled: contextoValido,
   });
 
   const saveMutation = useMutation({
     mutationFn: (data) => {
+      if (!contextoValido) throw new Error("Contexto multiempresa obrigatório.");
+      if (!data.empresa_id) throw new Error("Empresa de produção obrigatória.");
+      if (op?.id && !canEditOP) throw new Error("Seu perfil não pode editar OP.");
+      if (!op?.id && !canCreateOP) throw new Error("Seu perfil não pode criar OP.");
       if (op?.id) {
-        return base44.entities.OrdemProducao.update(op.id, data);
+        return updateInContext('OrdemProducao', op.id, data);
       }
-      return base44.entities.OrdemProducao.create(data);
+      return createInContext('OrdemProducao', data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["ordens-producao"]);
+      queryClient.invalidateQueries({ queryKey: ["ordens-producao"] });
       toast.success(op?.id ? "OP atualizada!" : "OP criada!");
       if (onClose) onClose();
     },
   });
 
   const handleGerarIA = async () => {
+    if (!canUseIA) {
+      toast.error("Seu perfil não pode usar IA em Produção.");
+      return;
+    }
     toast.info("🤖 IA analisando pedido...");
     
     try {
@@ -190,13 +214,34 @@ Retorne sugestões de:
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    if (!contextoValido) {
+      toast.error("Selecione o Grupo CPA ou uma empresa antes de salvar OP.");
+      return;
+    }
+
+    if (!formData.numero_op?.trim()) {
+      toast.error("Informe o número da OP.");
+      return;
+    }
+
+    if (!formData.empresa_id) {
+      toast.error("Informe a empresa de produção.");
+      return;
+    }
     
     if (!validarEstoque()) {
       toast.error("❌ Estoque insuficiente de matéria-prima!");
       return;
     }
     
-    saveMutation.mutate(formData);
+    saveMutation.mutate({
+      ...formData,
+      empresa_id: formData.empresa_id || empresaId,
+      group_id: formData.group_id || groupId,
+      usuario_responsavel: formData.usuario_responsavel || user?.full_name || user?.email,
+      usuario_responsavel_id: formData.usuario_responsavel_id || user?.id,
+    });
   };
 
   return (
@@ -351,7 +396,15 @@ Retorne sugestões de:
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <Button type="button" onClick={handleGerarIA} variant="outline" className="w-full">
+                    <Button
+                      type="button"
+                      onClick={handleGerarIA}
+                      variant="outline"
+                      className="w-full"
+                      disabled={!canUseIA}
+                      data-permission="Produção.Ordens Produção.ia"
+                      data-action="gerar-sugestoes-producao-ia"
+                    >
                       🤖 Gerar Sugestões de Produção com IA
                     </Button>
                   </CardContent>
@@ -456,6 +509,9 @@ Retorne sugestões de:
                 onClick={() => setSeletorProdutoAberto(true)}
                 variant="outline"
                 className="w-full border-dashed border-2 border-blue-300 hover:bg-blue-50"
+                disabled={op?.id ? !canEditOP : !canCreateOP}
+                data-permission="Produção.Ordens Produção.editar"
+                data-action="adicionar-materia-prima-op"
               >
                 <Package className="w-4 h-4 mr-2" />
                 Adicionar Matéria-Prima
@@ -590,8 +646,10 @@ Retorne sugestões de:
           </Button>
           <Button 
             type="submit" 
-            disabled={saveMutation.isPending}
+            disabled={saveMutation.isPending || !contextoValido || !formData.empresa_id || (op?.id ? !canEditOP : !canCreateOP)}
             className="bg-purple-600 hover:bg-purple-700"
+            data-permission={op?.id ? "Produção.Ordens Produção.editar" : "Produção.Ordens Produção.criar"}
+            data-action={op?.id ? "atualizar-ordem-producao" : "criar-ordem-producao"}
           >
             <Save className="w-4 h-4 mr-2" />
             {saveMutation.isPending ? "Salvando..." : "Salvar OP"}

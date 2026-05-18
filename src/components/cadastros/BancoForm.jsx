@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Landmark } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -13,8 +14,12 @@ import usePermissions from "@/components/lib/usePermissions";
 export default function BancoForm({ banco, item, data, initialData, defaultValues, onSubmit, onSave, onClose, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || banco;
   const { canCreate, canEdit } = usePermissions();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = canCreate("Cadastros", "Banco") || canCreate("Financeiro", "Banco") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Banco") || canEdit("Financeiro", "Banco") || canEdit("Cadastros", null);
+  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const [formData, setFormData] = useState(dadosIniciais || {
     nome_banco: '',
     codigo_banco: '',
@@ -56,8 +61,17 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
       alert('Preencha os campos obrigatórios');
       return;
     }
+    if (!contextoValido) {
+      alert('Selecione um grupo ou empresa antes de salvar.');
+      return;
+    }
     // Injeta 'nome' para compatibilidade com o Visualizador Universal
-    const payload = { ...formData, nome: formData.nome_banco };
+    const payload = {
+      ...formData,
+      group_id: groupId || formData.group_id,
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
+      nome: formData.nome_banco
+    };
     if (onSubmit) {
       onSubmit(payload);
     } else {
@@ -75,6 +89,10 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
             value={formData.nome_banco}
             onChange={(e) => setFormData({...formData, nome_banco: e.target.value})}
             placeholder="Ex: Banco do Brasil"
+            disabled={!podeSalvar}
+            data-permission="Financeiro.Banco.editar"
+            data-action="editar-nome-banco"
+            data-sensitive
           />
         </div>
 
@@ -85,6 +103,10 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
             onChange={(e) => setFormData({...formData, codigo_banco: e.target.value})}
             placeholder="001, 033, 237"
             maxLength={3}
+            disabled={!podeSalvar}
+            data-permission="Financeiro.Banco.editar"
+            data-action="editar-codigo-banco"
+            data-sensitive
           />
         </div>
       </div>
@@ -96,6 +118,10 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
             value={formData.agencia}
             onChange={(e) => setFormData({...formData, agencia: e.target.value})}
             placeholder="1234"
+            disabled={!podeSalvar}
+            data-permission="Financeiro.Banco.editar"
+            data-action="editar-agencia-banco"
+            data-sensitive
           />
         </div>
 
@@ -106,13 +132,17 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
             onChange={(e) => setFormData({...formData, agencia_digito: e.target.value})}
             placeholder="5"
             maxLength={1}
+            disabled={!podeSalvar}
+            data-permission="Financeiro.Banco.editar"
+            data-action="editar-digito-agencia-banco"
+            data-sensitive
           />
         </div>
 
         <div>
           <Label>Tipo de Conta</Label>
           <Select value={formData.tipo_conta} onValueChange={(v) => setFormData({...formData, tipo_conta: v})}>
-            <SelectTrigger>
+            <SelectTrigger disabled={!podeSalvar} data-permission="Financeiro.Banco.editar" data-action="selecionar-tipo-conta-banco" data-sensitive>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -131,6 +161,10 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
             value={formData.conta}
             onChange={(e) => setFormData({...formData, conta: e.target.value})}
             placeholder="12345-6"
+            disabled={!podeSalvar}
+            data-permission="Financeiro.Banco.editar"
+            data-action="editar-conta-banco"
+            data-sensitive
           />
         </div>
 
@@ -141,6 +175,10 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
             onChange={(e) => setFormData({...formData, conta_digito: e.target.value})}
             placeholder="7"
             maxLength={2}
+            disabled={!podeSalvar}
+            data-permission="Financeiro.Banco.editar"
+            data-action="editar-digito-conta-banco"
+            data-sensitive
           />
         </div>
       </div>
@@ -152,13 +190,17 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
             value={formData.chave_pix}
             onChange={(e) => setFormData({...formData, chave_pix: e.target.value})}
             placeholder="00.000.000/0001-00"
+            disabled={!podeSalvar}
+            data-permission="Financeiro.Banco.editar"
+            data-action="editar-chave-pix-banco"
+            data-sensitive
           />
         </div>
 
         <div>
           <Label>Tipo Chave PIX</Label>
           <Select value={formData.tipo_chave_pix} onValueChange={(v) => setFormData({...formData, tipo_chave_pix: v})}>
-            <SelectTrigger>
+            <SelectTrigger disabled={!podeSalvar} data-permission="Financeiro.Banco.editar" data-action="selecionar-tipo-chave-pix-banco" data-sensitive>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -181,6 +223,10 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
             value={formData.saldo_inicial}
             onChange={(e) => setFormData({...formData, saldo_inicial: parseFloat(e.target.value) || 0})}
             placeholder="0.00"
+            disabled={!podeSalvar}
+            data-permission="Financeiro.Banco.editar"
+            data-action="editar-saldo-inicial-banco"
+            data-sensitive
           />
         </div>
 
@@ -192,6 +238,10 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
             value={formData.limite_especial}
             onChange={(e) => setFormData({...formData, limite_especial: parseFloat(e.target.value) || 0})}
             placeholder="0.00"
+            disabled={!podeSalvar}
+            data-permission="Financeiro.Banco.editar"
+            data-action="editar-limite-especial-banco"
+            data-sensitive
           />
         </div>
       </div>
@@ -204,6 +254,10 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
         <Switch
           checked={formData.principal}
           onCheckedChange={(v) => setFormData({...formData, principal: v})}
+          disabled={!podeSalvar}
+          data-permission="Financeiro.Banco.editar"
+          data-action="alternar-conta-principal-banco"
+          data-sensitive
         />
       </div>
 
@@ -212,14 +266,19 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
         <Switch
           checked={formData.ativo}
           onCheckedChange={(v) => setFormData({...formData, ativo: v})}
+          disabled={!podeSalvar}
+          data-permission="Financeiro.Banco.alterarStatus"
+          data-action="alternar-status-banco"
+          data-sensitive
         />
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
         <Button
           type="submit"
-          disabled={isSubmitting || (dadosIniciais?.id ? !podeEditar : !podeCriar)}
+          disabled={isSubmitting || !contextoValido || !podeSalvar}
           data-permission="Cadastros.Banco.salvar"
+          data-action="salvar-banco"
           data-sensitive
         >
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}

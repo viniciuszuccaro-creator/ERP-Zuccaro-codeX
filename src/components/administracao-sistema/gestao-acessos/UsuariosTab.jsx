@@ -77,6 +77,10 @@ export default function UsuariosTab() {
   });
 
   const handleInvite = async () => {
+    if (!podeConvidar) {
+      toast.error("Sem permissao para convidar usuario.");
+      return;
+    }
     if (!contextoValido) {
       toast.error("Selecione um grupo ou empresa antes de convidar usuario.");
       return;
@@ -121,15 +125,20 @@ export default function UsuariosTab() {
   const roleColor = (role) => role === "admin" ? "bg-purple-100 text-purple-700" : "bg-slate-100 text-slate-600";
 
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full h-full min-h-0 space-y-4">
+      {!contextoValido && (
+        <div className="w-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          Selecione um grupo ou empresa para carregar e alterar usuarios do escopo correto.
+        </div>
+      )}
       <div className="flex flex-wrap gap-3 items-center justify-between">
         <div className="flex flex-wrap gap-2 flex-1">
           <div className="relative min-w-[180px] flex-1 max-w-sm">
             <Search className="absolute left-2.5 top-2.5 w-4 h-4 text-slate-400" />
-            <Input className="pl-8" placeholder="Buscar usuario..." value={search} onChange={e => setSearch(e.target.value)} data-action="RBAC.Usuario.buscar" />
+            <Input className="pl-8" placeholder="Buscar usuario..." value={search} onChange={e => setSearch(e.target.value)} data-action="RBAC.Usuario.buscar" data-permission="Sistema.Controle de Acesso.visualizar" />
           </div>
           <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger className="w-32" data-action="RBAC.Usuario.filtroRole"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-32" data-action="RBAC.Usuario.filtroRole" data-permission="Sistema.Controle de Acesso.visualizar"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos</SelectItem>
               <SelectItem value="admin">Admin</SelectItem>
@@ -138,7 +147,7 @@ export default function UsuariosTab() {
           </Select>
         </div>
         {podeConvidar && (
-          <Button onClick={handleInvite} disabled={!contextoValido} className="bg-blue-600 hover:bg-blue-700" data-action="RBAC.Usuario.convidar" data-permission="Sistema.Controle de Acesso.criar" data-sensitive="true">
+          <Button onClick={handleInvite} disabled={!contextoValido || !podeConvidar} className="bg-blue-600 hover:bg-blue-700" data-action="RBAC.Usuario.convidar" data-permission="Sistema.Controle de Acesso.criar" data-sensitive="true">
             <UserCog className="w-4 h-4 mr-2" />Convidar Usuario
           </Button>
         )}
@@ -147,7 +156,7 @@ export default function UsuariosTab() {
       {loadingUsers ? (
         <div className="text-sm text-slate-500 p-4">Carregando...</div>
       ) : (
-        <div className="grid gap-2">
+        <div className="grid gap-2 min-h-0">
           {filtered.length === 0 && (
             <div className="text-sm text-slate-400 p-6 text-center">Nenhum usuario encontrado.</div>
           )}
@@ -172,7 +181,7 @@ export default function UsuariosTab() {
                     )}
                   </div>
                 </div>
-                <Button size="sm" variant="outline" disabled={!podeEditarUsuarios} onClick={() => setSelectedUser(u)} data-action="RBAC.Usuario.configurar" data-permission="Sistema.Controle de Acesso.editar" data-sensitive="true">
+                <Button size="sm" variant="outline" disabled={!contextoValido || !podeEditarUsuarios} onClick={() => setSelectedUser(u)} data-action="RBAC.Usuario.configurar" data-permission="Sistema.Controle de Acesso.editar" data-sensitive="true">
                   Configurar
                 </Button>
               </CardContent>

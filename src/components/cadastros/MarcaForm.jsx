@@ -15,7 +15,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 export default function MarcaForm({ marca, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || marca;
   const { hasPermission } = usePermissions();
-  const { empresaAtual, grupoAtual, contextoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = hasPermission?.("Cadastros.Marca.criar") || hasPermission?.("Cadastros.Produto.criar");
@@ -57,7 +57,7 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
     onSubmit({
       ...formData,
       group_id: groupId || formData.group_id,
-      empresa_id: contextoAtual === "empresa" ? empresaAtual?.id : formData.empresa_id,
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
       nome: formData.nome_marca
     });
   };
@@ -88,6 +88,7 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
           value={formData.nome_marca}
           onChange={(e) => setFormData({...formData, nome_marca: e.target.value})}
           placeholder="Ex: Gerdau, ArcelorMittal"
+          data-action="editar-nome-marca"
         />
       </div>
 
@@ -97,6 +98,7 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
           value={formData.descricao}
           onChange={(e) => setFormData({...formData, descricao: e.target.value})}
           rows={2}
+          data-action="editar-descricao-marca"
         />
       </div>
 
@@ -106,6 +108,7 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
           <Input
             value={formData.cnpj}
             onChange={(e) => setFormData({...formData, cnpj: e.target.value})}
+            data-action="editar-cnpj-marca"
           />
         </div>
         <div>
@@ -113,6 +116,7 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
           <Input
             value={formData.pais_origem}
             onChange={(e) => setFormData({...formData, pais_origem: e.target.value})}
+            data-action="editar-pais-origem-marca"
           />
         </div>
       </div>
@@ -124,12 +128,13 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
             value={formData.site}
             onChange={(e) => setFormData({...formData, site: e.target.value})}
             placeholder="https://..."
+            data-action="editar-site-marca"
           />
         </div>
         <div>
           <Label>Categoria</Label>
           <Select value={formData.categoria} onValueChange={(v) => setFormData({...formData, categoria: v})}>
-            <SelectTrigger>
+            <SelectTrigger data-action="selecionar-categoria-marca">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -151,6 +156,7 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
           onCheckedChange={(v) => setFormData({...formData, ativo: v})}
           disabled={!podeSalvar}
           data-permission="Cadastros.Marca.alterarStatus"
+          data-action="alternar-status-marca"
           data-sensitive="true"
         />
       </div>
@@ -164,6 +170,7 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
               onClick={handleAlternarStatus}
               disabled={!podeSalvar}
               data-permission="Cadastros.Marca.alterarStatus"
+              data-action={formData.ativo ? "inativar-marca" : "ativar-marca"}
               data-sensitive="true"
               className={formData.ativo ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
             >
@@ -179,6 +186,7 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
               onClick={handleExcluir}
               disabled={!podeExcluir}
               data-permission="Cadastros.Marca.excluir"
+              data-action="excluir-marca"
               data-sensitive="true"
             >
               <Trash2 className="w-4 h-4 mr-2" />Excluir
@@ -189,6 +197,7 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
           type="submit"
           disabled={isSubmitting || !contextoValido || !podeSalvar}
           data-permission="Cadastros.Marca.salvar"
+          data-action="salvar-marca"
           data-sensitive="true"
         >
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}

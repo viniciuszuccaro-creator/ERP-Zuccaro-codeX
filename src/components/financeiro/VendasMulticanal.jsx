@@ -24,25 +24,32 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 export default function VendasMulticanal({ windowMode = false }) {
   const [canalFiltro, setCanalFiltro] = useState("todos");
   const [statusFiltro, setStatusFiltro] = useState("todos");
   const [busca, setBusca] = useState("");
-  const { empresaAtual, filtrarPorContexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual, estaNoGrupo, filtrarPorContexto, createInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
+  const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id || estaNoGrupo);
+  const canView = hasPermission('Financeiro', 'Vendas Multicanal', 'ver') || hasPermission('Financeiro', 'Vendas Multicanal', 'visualizar');
+  const canSyncPayment = hasPermission('Financeiro', 'Vendas Multicanal', 'editar') || hasPermission('Financeiro', null, 'editar') || hasPermission('Financeiro', null, 'baixar');
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos-multicanal'],
-    queryFn: () => base44.entities.Pedido.list('-created_date'),
+    queryKey: ['pedidos-multicanal', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+    queryFn: () => filtrarPorContexto('Pedido', {}, '-created_date', 9999),
+    enabled: Boolean(contextoValido && canView),
   });
 
   const { data: pagamentosOmnichannel = [] } = useQuery({
-    queryKey: ['pagamentos-omnichannel'],
-    queryFn: () => base44.entities.PagamentoOmnichannel.list('-created_date'),
+    queryKey: ['pagamentos-omnichannel', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+    queryFn: () => filtrarPorContexto('PagamentoOmnichannel', {}, '-created_date', 9999),
+    enabled: Boolean(contextoValido && canView),
   });
 
-  const pedidosFiltrados = filtrarPorContexto(pedidos, 'empresa_id');
+  const pedidosFiltrados = pedidos;
 
   const pedidosMulticanal = pedidosFiltrados.filter(p => 
     ['E-commerce', 'Site', 'Marketplace', 'Portal', 'WhatsApp', 'Chatbot', 'App'].includes(p.origem_pedido)
@@ -99,9 +106,24 @@ export default function VendasMulticanal({ windowMode = false }) {
 
   const sincronizarPagamentoMutation = useMutation({
     mutationFn: async (pedidoId) => {
+      if (!contextoValido || !canSyncPayment) {
+        await base44.entities.AuditLog.create({
+          acao: 'Sincronizacao bloqueada',
+          modulo: 'Financeiro',
+          entidade: 'PagamentoOmnichannel',
+          tipo_auditoria: 'seguranca',
+          descricao: 'Bloqueio ao sincronizar pagamento multicanal',
+          group_id: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
+          grupo_id: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
+          empresa_id: empresaAtual?.id || null,
+          data_hora: new Date().toISOString()
+        });
+        throw new Error('Sem permissao ou contexto para sincronizar pagamento.');
+      }
       const pedido = pedidos.find(p => p.id === pedidoId);
-      await base44.entities.PagamentoOmnichannel.create({
+      await createInContext('PagamentoOmnichannel', {
         empresa_id: pedido.empresa_id,
+        group_id: pedido.group_id || pedido.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id,
         origem_canal: pedido.origem_pedido,
         pedido_id: pedido.id,
         numero_pedido: pedido.numero_pedido,
@@ -111,6 +133,17 @@ export default function VendasMulticanal({ windowMode = false }) {
         status_conferencia: 'Pendente',
         data_venda: pedido.data_pedido
       });
+      await base44.entities.AuditLog.create({
+        acao: 'Sincronizar pagamento',
+        modulo: 'Financeiro',
+        entidade: 'PagamentoOmnichannel',
+        tipo_auditoria: 'sensivel',
+        descricao: `Pagamento multicanal sincronizado: ${pedido.numero_pedido || pedido.id}`,
+        group_id: pedido.group_id || pedido.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
+        grupo_id: pedido.group_id || pedido.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
+        empresa_id: pedido.empresa_id || empresaAtual?.id || null,
+        data_hora: new Date().toISOString()
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pagamentos-omnichannel'] });
@@ -119,7 +152,7 @@ export default function VendasMulticanal({ windowMode = false }) {
   });
 
   const content = (
-    <div className="space-y-1.5">
+    <div className="space-y-1.5" data-permission="Financeiro.Vendas Multicanal.visualizar">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -211,10 +244,12 @@ export default function VendasMulticanal({ windowMode = false }) {
                 placeholder="🔍 Buscar pedido ou cliente..."
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
+                data-permission="Financeiro.Vendas Multicanal.visualizar"
+                data-action="Financeiro.VendasMulticanal.buscar"
                 className="w-64"
               />
               <Select value={canalFiltro} onValueChange={setCanalFiltro}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-40" data-permission="Financeiro.Vendas Multicanal.visualizar" data-action="Financeiro.VendasMulticanal.filtrar">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -229,7 +264,7 @@ export default function VendasMulticanal({ windowMode = false }) {
                 </SelectContent>
               </Select>
               <Select value={statusFiltro} onValueChange={setStatusFiltro}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-40" data-permission="Financeiro.Vendas Multicanal.visualizar" data-action="Financeiro.VendasMulticanal.filtrar">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -288,13 +323,16 @@ export default function VendasMulticanal({ windowMode = false }) {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
-                      <Button size="sm" variant="outline" title="Ver Detalhes">
+                      <Button size="sm" variant="outline" data-permission="Financeiro.Vendas Multicanal.visualizar" data-action="Financeiro.VendasMulticanal.ver" title="Ver Detalhes">
                         <Eye className="w-4 h-4" />
                       </Button>
                       {['Aprovado', 'Pronto para Faturar'].includes(pedido.status) && (
                         <Button 
                           size="sm" 
                           className="bg-green-600"
+                          data-permission="Financeiro.Vendas Multicanal.editar"
+                          data-action="Financeiro.VendasMulticanal.sincronizar_pagamento"
+                          disabled={!canSyncPayment || sincronizarPagamentoMutation.isPending}
                           onClick={() => sincronizarPagamentoMutation.mutate(pedido.id)}
                           title="Sincronizar Pagamento"
                         >

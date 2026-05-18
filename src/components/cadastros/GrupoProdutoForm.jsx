@@ -15,7 +15,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false, closeSelf }) {
   const dadosIniciais = item || data || initialData || defaultValues || grupoProduto || grupo;
   const { hasPermission } = usePermissions();
-  const { empresaAtual, grupoAtual, contextoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = hasPermission?.("Cadastros.GrupoProduto.criar") || hasPermission?.("Cadastros.Produto.criar");
@@ -56,7 +56,7 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
     onSubmit({
       ...formData,
       group_id: groupId || formData.group_id,
-      empresa_id: contextoAtual === "empresa" ? empresaAtual?.id : formData.empresa_id,
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
       nome: formData.nome_grupo
     });
     if (typeof closeSelf === 'function') closeSelf();
@@ -89,6 +89,7 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
           value={formData.nome_grupo}
           onChange={(e) => setFormData({...formData, nome_grupo: e.target.value})}
           placeholder="Ex: Ferragens, Bitolas, Materiais Elétricos"
+          data-action="editar-nome-grupo-produto"
         />
       </div>
 
@@ -99,12 +100,13 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
             value={formData.codigo}
             onChange={(e) => setFormData({...formData, codigo: e.target.value})}
             placeholder="Ex: FERR001"
+            data-action="editar-codigo-grupo-produto"
           />
         </div>
         <div>
           <Label>Natureza *</Label>
           <Select value={formData.natureza} onValueChange={(v) => setFormData({...formData, natureza: v})}>
-            <SelectTrigger>
+            <SelectTrigger data-action="selecionar-natureza-grupo-produto">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -124,6 +126,7 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
             value={formData.ncm_padrao}
             onChange={(e) => setFormData({...formData, ncm_padrao: e.target.value})}
             placeholder="Ex: 7213.10.00"
+            data-action="editar-ncm-padrao-grupo-produto"
           />
         </div>
         <div>
@@ -133,6 +136,7 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
             step="0.01"
             value={formData.margem_sugerida}
             onChange={(e) => setFormData({...formData, margem_sugerida: parseFloat(e.target.value)})}
+            data-action="editar-margem-grupo-produto"
           />
         </div>
       </div>
@@ -144,6 +148,7 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
           onCheckedChange={(v) => setFormData({...formData, ativo: v})}
           disabled={!podeSalvar}
           data-permission="Cadastros.GrupoProduto.alterarStatus"
+          data-action="alternar-status-grupo-produto"
           data-sensitive="true"
         />
       </div>
@@ -157,6 +162,7 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
               onClick={handleAlternarStatus}
               disabled={!podeSalvar}
               data-permission="Cadastros.GrupoProduto.alterarStatus"
+              data-action={formData.ativo ? "inativar-grupo-produto" : "ativar-grupo-produto"}
               data-sensitive="true"
               className={formData.ativo ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
             >
@@ -172,6 +178,7 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
               onClick={handleExcluir}
               disabled={!podeExcluir}
               data-permission="Cadastros.GrupoProduto.excluir"
+              data-action="excluir-grupo-produto"
               data-sensitive="true"
             >
               <Trash2 className="w-4 h-4 mr-2" />Excluir
@@ -182,6 +189,7 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
           type="submit"
           disabled={isSubmitting || !contextoValido || !podeSalvar}
           data-permission="Cadastros.GrupoProduto.salvar"
+          data-action="salvar-grupo-produto"
           data-sensitive="true"
         >
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}

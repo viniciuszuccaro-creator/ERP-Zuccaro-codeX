@@ -36,7 +36,7 @@ const LogisticaFinanceiroPanel = React.lazy(() => import("../components/expedica
 
 export default function Financeiro() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
-  const canSeeFinanceiro = hasPermission('Financeiro', null, 'ver');
+  const canSeeFinanceiro = hasPermission('Financeiro', null, 'ver') || hasPermission('Financeiro', null, 'visualizar');
   const { openWindow } = useWindow();
   const { user } = useUser();
 
@@ -380,9 +380,29 @@ export default function Financeiro() {
 
   const allModules = [...modules, ...grupoModules];
 
-  const allowedAllModules = allModules.filter(m => hasPermission('Financeiro', (m.sectionKey || m.title), 'ver'));
+  const canViewFinanceModule = (module) => (
+    hasPermission('Financeiro', (module.sectionKey || module.title), 'ver') ||
+    hasPermission('Financeiro', (module.sectionKey || module.title), 'visualizar')
+  );
+
+  const allowedAllModules = allModules.filter(canViewFinanceModule);
 
    const handleModuleClick = (module) => {
+    if (!contextoValido || !canViewFinanceModule(module)) {
+      base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        acao: 'Acesso bloqueado',
+        modulo: 'Financeiro',
+        tipo_auditoria: 'seguranca',
+        entidade: 'Seção',
+        descricao: `Bloqueio ao abrir seção financeira: ${module.title}`,
+        group_id: groupId,
+        grupo_id: groupId,
+        empresa_id: empresaAtual?.id || null,
+        data_hora: new Date().toISOString(),
+      }).catch(() => {});
+      return;
+    }
     React.startTransition(() => {
       // Auditoria de abertura de seção
       base44.entities.AuditLog.create({
@@ -392,8 +412,11 @@ export default function Financeiro() {
         tipo_auditoria: 'acesso',
         entidade: 'Seção',
         descricao: `Abrir seção: ${module.title}`,
+        group_id: groupId,
+        grupo_id: groupId,
+        empresa_id: empresaAtual?.id || null,
         data_hora: new Date().toISOString(),
-      });
+      }).catch(() => {});
       openWindow(
         module.component,
         { 
@@ -414,6 +437,7 @@ export default function Financeiro() {
   return (
     <ProtectedSection module="Financeiro" action="visualizar">
     <ErrorBoundary>
+      <div className="w-full h-full" data-permission="Financeiro.visualizar">
       <ModuleLayout title="Financeiro e Contábil" subtitle="Pagamentos, recebimentos e conciliação">
         <ModuleKPIs>
           <KPIsFinanceiroLaunchpad
@@ -440,6 +464,7 @@ export default function Financeiro() {
           />
         </ModuleContent>
       </ModuleLayout>
+      </div>
     </ErrorBoundary>
     </ProtectedSection>
   );

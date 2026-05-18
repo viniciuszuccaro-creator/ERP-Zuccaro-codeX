@@ -12,7 +12,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode = false }) {
   const dadosIniciais = kitProduto || kit;
   const { hasPermission } = usePermissions();
-  const { empresaAtual, grupoAtual, contextoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = hasPermission?.("Cadastros.KitProduto.criar") || hasPermission?.("Cadastros.Produto.criar");
@@ -42,7 +42,7 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
     onSubmit({
       ...formData,
       group_id: groupId || formData.group_id,
-      empresa_id: contextoAtual === "empresa" ? empresaAtual?.id : formData.empresa_id,
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
       nome: formData.nome_kit || formData.nome || ''
     });
   };
@@ -70,6 +70,7 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
             value={formData.nome_kit}
             onChange={(e) => setFormData({ ...formData, nome_kit: e.target.value })}
             required
+            data-action="editar-nome-kit-produto"
           />
         </div>
         <div>
@@ -77,6 +78,7 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
           <Input
             value={formData.codigo_kit}
             onChange={(e) => setFormData({ ...formData, codigo_kit: e.target.value })}
+            data-action="editar-codigo-kit-produto"
           />
         </div>
       </div>
@@ -87,6 +89,7 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
           value={formData.descricao}
           onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
           rows={2}
+          data-action="editar-descricao-kit-produto"
         />
       </div>
 
@@ -99,6 +102,7 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
             onClick={adicionarItem}
             disabled={!podeSalvar}
             data-permission="Cadastros.KitProduto.editar"
+            data-action="adicionar-item-kit-produto"
             data-sensitive="true"
           >
             <Plus className="w-4 h-4 mr-1" />
@@ -117,6 +121,7 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
                     novosItens[idx].produto_id = e.target.value;
                     setFormData({ ...formData, itens_kit: novosItens });
                   }}
+                  data-action="editar-produto-item-kit"
                 />
               </div>
               <div className="w-24">
@@ -129,6 +134,7 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
                     novosItens[idx].quantidade = parseFloat(e.target.value);
                     setFormData({ ...formData, itens_kit: novosItens });
                   }}
+                  data-action="editar-quantidade-item-kit"
                 />
               </div>
               <Button
@@ -138,6 +144,7 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
                 onClick={() => removerItem(idx)}
                 disabled={!podeSalvar}
                 data-permission="Cadastros.KitProduto.editar"
+                data-action="remover-item-kit-produto"
                 data-sensitive="true"
               >
                 <Trash2 className="w-4 h-4 text-red-600" />
@@ -155,6 +162,7 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
             step="0.01"
             value={formData.preco_kit}
             onChange={(e) => setFormData({ ...formData, preco_kit: parseFloat(e.target.value) })}
+            data-action="editar-preco-kit-produto"
           />
         </div>
         <div className="flex items-center justify-between p-3 border rounded">
@@ -163,6 +171,7 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
             checked={formData.aplicar_desconto_kit}
             disabled={!podeSalvar}
             data-permission="Cadastros.KitProduto.editar"
+            data-action="alternar-desconto-kit-produto"
             data-sensitive="true"
             onCheckedChange={(v) => setFormData({ ...formData, aplicar_desconto_kit: v })}
           />
@@ -177,6 +186,7 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
             step="0.01"
             value={formData.percentual_desconto}
             onChange={(e) => setFormData({ ...formData, percentual_desconto: parseFloat(e.target.value) })}
+            data-action="editar-percentual-desconto-kit"
           />
         </div>
       )}
@@ -187,6 +197,7 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
           checked={formData.ativo}
           disabled={!podeSalvar}
           data-permission="Cadastros.KitProduto.alterarStatus"
+          data-action="alternar-status-kit-produto"
           data-sensitive="true"
           onCheckedChange={(v) => setFormData({ ...formData, ativo: v })}
         />
@@ -197,6 +208,7 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
         className="w-full bg-purple-600 hover:bg-purple-700"
         disabled={!contextoValido || !podeSalvar}
         data-permission="Cadastros.KitProduto.salvar"
+        data-action="salvar-kit-produto"
         data-sensitive="true"
       >
         {dadosIniciais ? 'Atualizar Kit' : 'Criar Kit de Produtos'}

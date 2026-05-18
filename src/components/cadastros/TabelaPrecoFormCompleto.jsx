@@ -497,6 +497,9 @@ RETORNE:
                     onChange={(e) => setFormData({...formData, nome: e.target.value})}
                     placeholder="Ex: Atacado SP, Varejo Nacional, Tabela Obra"
                     required
+                    data-permission="Cadastros.TabelaPreco.editar"
+                    data-action="editar-nome-tabela-preco"
+                    data-sensitive
                   />
                 </div>
 
@@ -506,13 +509,16 @@ RETORNE:
                     value={formData.descricao}
                     onChange={(e) => setFormData({...formData, descricao: e.target.value})}
                     placeholder="Detalhes sobre aplicação desta tabela"
+                    data-permission="Cadastros.TabelaPreco.editar"
+                    data-action="editar-descricao-tabela-preco"
+                    data-sensitive
                   />
                 </div>
 
                 <div>
                   <Label>Tipo de Tabela *</Label>
                   <Select value={formData.tipo} onValueChange={(v) => setFormData({...formData, tipo: v})}>
-                    <SelectTrigger>
+                    <SelectTrigger data-permission="Cadastros.TabelaPreco.editar" data-action="selecionar-tipo-tabela-preco" data-sensitive>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -535,6 +541,9 @@ RETORNE:
                       value={formData.data_inicio}
                       onChange={(e) => setFormData({...formData, data_inicio: e.target.value})}
                       required
+                      data-permission="Cadastros.TabelaPreco.editar"
+                      data-action="editar-data-inicio-tabela-preco"
+                      data-sensitive
                     />
                   </div>
 
@@ -544,6 +553,9 @@ RETORNE:
                       type="date"
                       value={formData.data_fim}
                       onChange={(e) => setFormData({...formData, data_fim: e.target.value})}
+                      data-permission="Cadastros.TabelaPreco.editar"
+                      data-action="editar-data-fim-tabela-preco"
+                      data-sensitive
                     />
                     <p className="text-xs text-slate-500 mt-1">Deixe vazio para vigência indeterminada</p>
                   </div>
@@ -557,6 +569,10 @@ RETORNE:
                   <Switch
                     checked={formData.compartilhar_grupo}
                     onCheckedChange={(v) => setFormData({...formData, compartilhar_grupo: v})}
+                    disabled={!contextoValido || (tabela?.id ? !podeEditar : !podeCriar)}
+                    data-permission="Cadastros.TabelaPreco.compartilhar"
+                    data-action="alternar-compartilhar-grupo-tabela-preco"
+                    data-sensitive
                   />
                 </div>
 
@@ -568,6 +584,10 @@ RETORNE:
                   <Switch
                     checked={formData.ativo}
                     onCheckedChange={(v) => setFormData({...formData, ativo: v})}
+                    disabled={!contextoValido || (tabela?.id ? !podeEditar : !podeCriar)}
+                    data-permission="Cadastros.TabelaPreco.alterarStatus"
+                    data-action="alternar-status-tabela-preco"
+                    data-sensitive
                   />
                 </div>
 
@@ -590,6 +610,8 @@ RETORNE:
                 size="sm"
                 variant={modoInclusao === 'individual' ? 'default' : 'outline'}
                 onClick={() => setModoInclusao('individual')}
+                data-permission="Cadastros.TabelaPreco.editar"
+                data-action="selecionar-inclusao-individual-tabela-preco"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Individual
@@ -599,6 +621,8 @@ RETORNE:
                 size="sm"
                 variant={modoInclusao === 'lote' ? 'default' : 'outline'}
                 onClick={() => setModoInclusao('lote')}
+                data-permission="Cadastros.TabelaPreco.editar"
+                data-action="selecionar-inclusao-lote-tabela-preco"
               >
                 <Package className="w-4 h-4 mr-2" />
                 Em Lote (V21.0)
@@ -618,6 +642,8 @@ RETORNE:
                     placeholder="Digite para buscar..."
                     value={searchProduto}
                     onChange={(e) => setSearchProduto(e.target.value)}
+                    data-permission="Cadastros.TabelaPreco.visualizar"
+                    data-action="buscar-produto-tabela-preco"
                   />
                   
                   <div className="space-y-2 max-h-80 overflow-y-auto">
@@ -638,6 +664,9 @@ RETORNE:
                           size="sm"
                           variant="outline"
                           onClick={() => handleAdicionarProdutoIndividual(produto)}
+                          data-permission="Cadastros.TabelaPreco.editar"
+                          data-action="adicionar-produto-individual-tabela-preco"
+                          data-sensitive
                         >
                           <Plus className="w-3 h-3" />
                         </Button>
@@ -670,7 +699,7 @@ RETORNE:
                     <div>
                       <Label className="text-xs">Setor de Atividade</Label>
                       <Select value={filtroLote.setor_id} onValueChange={(v) => setFiltroLote({...filtroLote, setor_id: v})}>
-                        <SelectTrigger className="h-9">
+                        <SelectTrigger className="h-9" data-permission="Cadastros.TabelaPreco.editar" data-action="filtrar-setor-tabela-preco">
                           <SelectValue placeholder="Todos" />
                         </SelectTrigger>
                         <SelectContent>
@@ -687,7 +716,7 @@ RETORNE:
                     <div>
                       <Label className="text-xs">Grupo/Linha</Label>
                       <Select value={filtroLote.grupo_id} onValueChange={(v) => setFiltroLote({...filtroLote, grupo_id: v})}>
-                        <SelectTrigger className="h-9">
+                        <SelectTrigger className="h-9" data-permission="Cadastros.TabelaPreco.editar" data-action="filtrar-grupo-tabela-preco">
                           <SelectValue placeholder="Todos" />
                         </SelectTrigger>
                         <SelectContent>
@@ -702,7 +731,7 @@ RETORNE:
                     <div>
                       <Label className="text-xs">Marca</Label>
                       <Select value={filtroLote.marca_id} onValueChange={(v) => setFiltroLote({...filtroLote, marca_id: v})}>
-                        <SelectTrigger className="h-9">
+                        <SelectTrigger className="h-9" data-permission="Cadastros.TabelaPreco.editar" data-action="filtrar-marca-tabela-preco">
                           <SelectValue placeholder="Todas" />
                         </SelectTrigger>
                         <SelectContent>
@@ -721,13 +750,15 @@ RETORNE:
                         value={filtroLote.ncm}
                         onChange={(e) => setFiltroLote({...filtroLote, ncm: e.target.value})}
                         placeholder="Ex: 7214"
+                        data-permission="Cadastros.TabelaPreco.editar"
+                        data-action="filtrar-ncm-tabela-preco"
                       />
                     </div>
 
                     <div>
                       <Label className="text-xs">Curva ABC</Label>
                       <Select value={filtroLote.curva_abc} onValueChange={(v) => setFiltroLote({...filtroLote, curva_abc: v})}>
-                        <SelectTrigger className="h-9">
+                        <SelectTrigger className="h-9" data-permission="Cadastros.TabelaPreco.editar" data-action="filtrar-curva-abc-tabela-preco">
                           <SelectValue placeholder="Todos" />
                         </SelectTrigger>
                         <SelectContent>
@@ -742,7 +773,7 @@ RETORNE:
                     <div>
                       <Label className="text-xs">Tipo</Label>
                       <Select value={filtroLote.eh_bitola} onValueChange={(v) => setFiltroLote({...filtroLote, eh_bitola: v})}>
-                        <SelectTrigger className="h-9">
+                        <SelectTrigger className="h-9" data-permission="Cadastros.TabelaPreco.editar" data-action="filtrar-tipo-produto-tabela-preco">
                           <SelectValue placeholder="Todos" />
                         </SelectTrigger>
                         <SelectContent>
@@ -759,6 +790,9 @@ RETORNE:
                     onClick={handleAdicionarProdutosLote} 
                     className="w-full bg-purple-600 hover:bg-purple-700"
                     disabled={produtosDisponiveis.length === 0}
+                    data-permission="Cadastros.TabelaPreco.editar"
+                    data-action="adicionar-produtos-lote-tabela-preco"
+                    data-sensitive
                   >
                     <Package className="w-4 h-4 mr-2" />
                     Adicionar {produtosDisponiveis.length} Produtos Filtrados
@@ -835,6 +869,9 @@ RETORNE:
                           size="sm"
                           variant="ghost"
                           onClick={() => handleRemoverItem(idx)}
+                          data-permission="Cadastros.TabelaPreco.editar"
+                          data-action="remover-item-tabela-preco"
+                          data-sensitive
                         >
                           <X className="w-4 h-4 text-red-600" />
                         </Button>
@@ -862,7 +899,7 @@ RETORNE:
                 <div>
                   <Label>Base de Cálculo</Label>
                   <Select value={regraCalculo.base} onValueChange={(v) => setRegraCalculo({...regraCalculo, base: v})}>
-                    <SelectTrigger>
+                    <SelectTrigger data-permission="Cadastros.TabelaPreco.editar" data-action="selecionar-base-calculo-tabela-preco" data-sensitive>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -876,7 +913,7 @@ RETORNE:
                 <div>
                   <Label>Tipo de Cálculo</Label>
                   <Select value={regraCalculo.tipo} onValueChange={(v) => setRegraCalculo({...regraCalculo, tipo: v})}>
-                    <SelectTrigger>
+                    <SelectTrigger data-permission="Cadastros.TabelaPreco.editar" data-action="selecionar-tipo-calculo-tabela-preco" data-sensitive>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -899,6 +936,9 @@ RETORNE:
                     value={regraCalculo.valor}
                     onChange={(e) => setRegraCalculo({...regraCalculo, valor: parseFloat(e.target.value) || 0})}
                     placeholder="30"
+                    data-permission="Cadastros.TabelaPreco.editar"
+                    data-action="editar-valor-calculo-tabela-preco"
+                    data-sensitive
                   />
                   <p className="text-xs text-slate-500 mt-1">
                     {regraCalculo.tipo === 'markup' && 'Preço = Custo × (1 + Markup%)'}
@@ -912,6 +952,9 @@ RETORNE:
                   onClick={handleRecalcularPrecos}
                   disabled={calculando || itensTabela.length === 0}
                   className="w-full bg-blue-600 hover:bg-blue-700"
+                  data-permission="Cadastros.TabelaPreco.editar"
+                  data-action="recalcular-precos-tabela-preco"
+                  data-sensitive
                 >
                   {calculando ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -942,6 +985,9 @@ RETORNE:
                   onClick={handleSugerirPrecosIA}
                   disabled={calculando || itensTabela.length === 0}
                   className="w-full bg-purple-600 hover:bg-purple-700"
+                  data-permission="Cadastros.TabelaPreco.ia"
+                  data-action="sugerir-precos-tabela-preco-ia"
+                  data-sensitive
                 >
                   {calculando ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -1021,6 +1067,9 @@ RETORNE:
                 variant="outline"
                 onClick={handleAlternarStatus}
                 disabled={!podeEditar || !contextoValido}
+                data-permission="Cadastros.TabelaPreco.alterarStatus"
+                data-action={formData.ativo ? "inativar-tabela-preco" : "ativar-tabela-preco"}
+                data-sensitive
                 className={formData.ativo ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
               >
                 {formData.ativo ? (
@@ -1040,6 +1089,9 @@ RETORNE:
                 variant="destructive"
                 onClick={handleExcluir}
                 disabled={!podeExcluir || !contextoValido}
+                data-permission="Cadastros.TabelaPreco.excluir"
+                data-action="excluir-tabela-preco"
+                data-sensitive
               >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Excluir
@@ -1051,6 +1103,9 @@ RETORNE:
               onClick={handleSalvar}
               disabled={salvando || !podeAvancar || !contextoValido || (tabela?.id ? !podeEditar : !podeCriar)} 
               className="bg-green-600 hover:bg-green-700 min-w-[180px]"
+              data-permission="Cadastros.TabelaPreco.salvar"
+              data-action="salvar-tabela-preco"
+              data-sensitive
             >
             {salvando && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             {!salvando && <Save className="w-4 h-4 mr-2" />}

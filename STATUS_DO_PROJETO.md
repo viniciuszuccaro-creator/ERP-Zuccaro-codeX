@@ -1,16 +1,42 @@
 # Status do Projeto ERP Zuccaro
 
-Atualizado em: 2026-05-10
+Atualizado em: 2026-05-13
 
 ## Origem e modo de trabalho
 
 Este projeto esta rodando localmente neste computador, a partir da pasta:
 
-`E:\ERP Zuccaro\erp-integra-portatil-20260508-061538\erp-integra-portatil-20260508-061538`
+`D:\ERP Zuccaro\erp-integra-portatil-20260508-061538\erp-integra-portatil-20260508-061538`
 
 URL local:
 
 `http://localhost:5173/`
+
+## Checkpoint para continuar em outro computador
+
+Este arquivo e o ponto principal de continuidade do projeto. Ao abrir este ERP em outro computador ou em uma nova conversa no Codex, comece lendo:
+
+1. `STATUS_DO_PROJETO.md`
+2. `PLANO_MELHORIA_ERP_ZUCCARO.md`
+3. `COMO_LEVAR_PARA_OUTRO_COMPUTADOR.md`
+
+Estado atual em 2026-05-13:
+
+- Projeto em modo local, sem gravar no Base44 nem no GitHub.
+- Projeto de trabalho atual: `D:\ERP Zuccaro\erp-integra-portatil-20260508-061538\erp-integra-portatil-20260508-061538`.
+- URL local padrao: `http://localhost:5173/`.
+- Script rapido para abrir no HD externo: `abrir-erp-hd.bat`.
+- Build validado apos o ultimo lote: `npm run build` passou.
+- Tela validada apos o ultimo lote: `http://localhost:5173/cadastros` respondeu `200`.
+- Ultimo foco trabalhado: `Cadastros Gerais > Pessoas & Parceiros`.
+- Proximo foco recomendado: continuar em `Cadastros Gerais > Produtos & Servicos`, revisando formularios, listas auxiliares, contexto grupo/empresa, RBAC, auditoria e validacoes.
+
+Regra de continuidade:
+
+- Nao criar modulo novo se ja existir modulo/tela/componente com proposito igual ou similar.
+- Melhorar sempre o componente existente.
+- Nao apagar funcionalidade existente.
+- Toda alteracao deve respeitar multiempresa, RBAC, seguranca, auditoria, responsividade, `w-full` e `h-full`.
 
 O projeto esta em modo local:
 
@@ -287,6 +313,27 @@ Checklist inicial:
 - Mantido o salvamento existente com `group_id`, `empresa_id`, `perfil_acesso_id`, `perfil_acesso_nome`, empresas vinculadas e auditoria em `AuditLog`.
 - Build validado com sucesso apos as alteracoes.
 
+### Seguranca e Governanca
+
+- Confirmada a entrada existente de seguranca em `src/components/administracao-sistema/seguranca-governanca/SegurancaGovernancaIndex.jsx`.
+- Ajustado o acesso da area de seguranca para aceitar administradores ou permissao granular `Sistema.Seguranca.visualizar`.
+- Abas existentes de Politicas, Monitoramento/Manutencao e Compliance IA receberam `data-permission` para rastreio visual/RBAC.
+- O wrapper `SegurancaDashboard` deixou de enviar dados zerados e passou a carregar usuarios, perfis e auditoria do contexto grupo/empresa.
+- O dashboard de seguranca agora calcula cobertura de usuarios com perfil, conflitos por auditoria e atividades recentes com base em dados reais.
+- `ConfiguracaoSeguranca` ganhou validacao minima antes de salvar politicas sensiveis: JWT, MFA, senha e brute force.
+- Salvamento de configuracao de seguranca agora exige confirmacao da Regra-Mae e continua auditando a acao sensivel.
+- Build validado com sucesso apos as alteracoes.
+
+### Auditoria completa e eventos criticos
+
+- Confirmada a entrada existente de auditoria em `src/components/administracao-sistema/auditoria-logs/AuditoriaLogsIndex.jsx`.
+- Reforcado RBAC da area de auditoria para administradores ou permissoes granulares `Sistema.Auditoria.visualizar` / `Sistema.Logs.visualizar`.
+- `AuditTrailPanel` passou a consultar dados somente quando houver permissao de auditoria e recebeu `data-permission` nos filtros e botoes existentes.
+- `LogsAuditoria` ganhou filtro de eventos sensiveis/criticos e destaque visual para eventos como exclusao, perfil de acesso, seguranca, RBAC, bloqueio, liquidacao e nota fiscal.
+- `GlobalAuditLog` passou a respeitar permissao granular e contexto grupo/empresa antes de carregar logs.
+- Mantida a Regra-Mae: nenhuma tela ou modulo novo foi criado, apenas reforco nas telas e componentes ja existentes.
+- Build validado com sucesso apos as alteracoes.
+
 ### Cadastros Gerais
 
 - Confirmado que a pagina existente de Cadastros Gerais e `src/pages/Cadastros.jsx`.
@@ -314,3 +361,118 @@ Checklist inicial:
 - Auditoria de abertura de area comercial agora inclui `empresa_id` e `group_id`.
 - Mantidos os filtros multiempresa existentes via `filterInContext`, `createInContext` e `updateInContext`.
 - Build validado com sucesso apos as alteracoes.
+
+### Dashboard executivo e relatorios iniciais
+
+- Confirmada a pagina existente do dashboard principal em `src/pages/Dashboard.jsx`.
+- Reforcado o contexto grupo/empresa nas consultas do Command Center, usando `filterInContext` tambem para `AuditLog`.
+- Adicionada validacao de contexto/permissao para metricas de RH, Sistema, Fiscal e Financeiro antes de carregar indicadores.
+- Acoes sensiveis de navegacao do dashboard agora geram auditoria: troca de aba, troca de periodo, auto-refresh e abertura de modulo pelo dashboard.
+- `DashboardHeader` recebeu `data-permission` e `data-action` nos controles de periodo e atualizacao automatica.
+- `QuickAccessModulesGrid` recebeu `data-permission` e `data-action` nos cards de acesso rapido existentes.
+- Widgets financeiro e estoque critico passaram a respeitar permissao do modulo antes de aparecer.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou componente novo foi criado; apenas reforco nos existentes.
+- Build validado com sucesso apos as alteracoes.
+
+### Relatorios gerenciais e exportacoes
+
+- Confirmada a pagina existente de relatorios em `src/pages/Relatorios.jsx`.
+- Reforcado carregamento de dados dos relatorios para depender de contexto grupo/empresa ativo e permissao de visualizacao.
+- Consultas principais de clientes, pedidos, produtos, contas a receber e contas a pagar agora incluem grupo/empresa na chave de cache.
+- Exportacao CSV passou a exigir permissao granular `Relatorios.exportar`; tentativa sem permissao gera bloqueio visual e auditoria.
+- Alteracao de aba, selecao de relatorio, filtros globais, exportacao e agendamento de envio agora geram `AuditLog` com grupo/empresa.
+- Abas principais receberam `data-permission` por area: Comercial, Financeiro, Estoque, Producao, Relatorios e Exportacao.
+- `RelatoriosFiltrosGlobais`, `RelatorioCard` e `SelectedOperationalReport` receberam `data-permission` e `data-action` nos controles existentes.
+- Agendamento de relatorios agora exige permissao de edicao e bloqueia o botao de agendar quando o perfil nao permitir.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou componente novo foi criado; apenas reforco nos existentes.
+- Build validado com sucesso apos as alteracoes.
+
+### Financeiro e operacoes sensiveis
+
+- Confirmada a pagina existente do modulo Financeiro em `src/pages/Financeiro.jsx`.
+- Reforcada permissao de visualizacao do Financeiro para aceitar `ver` e `visualizar`, mantendo compatibilidade com perfis antigos.
+- Abertura de modulos financeiros agora valida contexto grupo/empresa e permissao granular antes de abrir janela.
+- Tentativa de abertura sem contexto/permissao gera `AuditLog` de seguranca com `group_id`, `grupo_id` e `empresa_id`.
+- Auditoria de abertura de secao financeira passou a registrar grupo e empresa.
+- `ModulosGridFinanceiro` passou a propagar `data-permission` e `data-action` para os cards existentes.
+- `VendasMulticanal` deixou de buscar pedidos e pagamentos fora do contexto e passou a usar `filtrarPorContexto` com chaves de cache por grupo/empresa.
+- Sincronizacao de pagamento multicanal agora exige contexto e permissao de edicao/baixa financeira; bloqueios e sincronizacoes geram auditoria.
+- Filtros, busca, visualizacao e botao de sincronizar pagamento em `VendasMulticanal` receberam `data-permission` e `data-action`.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou componente novo foi criado; apenas reforco nos existentes.
+- Build validado com sucesso apos as alteracoes.
+
+### Fiscal, NF-e e regra empresa faturadora
+
+- Confirmada a pagina existente do modulo Fiscal em `src/pages/Fiscal.jsx`.
+- Consultas de `NotaFiscal` agora usam chave de cache com empresa, grupo e contexto visual.
+- Carregamento de notas fiscais passou a exigir contexto grupo/empresa e permissao de visualizacao fiscal.
+- Abertura de secoes fiscais agora valida contexto e permissao granular antes de abrir janela.
+- Abertura e bloqueio de secoes fiscais agora geram `AuditLog` com `group_id`, `grupo_id` e `empresa_id`.
+- O botao existente `Nova NF-e` agora exige permissao fiscal de criar/emitir e empresa selecionada.
+- Se o usuario estiver no grupo sem empresa faturadora, a tentativa de NF-e e bloqueada e auditada, reforcando a regra de que emissao fiscal sai pela empresa.
+- `ModulosGridFiscal` passou a propagar `data-permission` e `data-action` para os cards existentes.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou componente novo foi criado; apenas reforco nos existentes.
+- Build validado com sucesso apos as alteracoes.
+
+### Administracao do Sistema - Gestao de Acessos
+
+- Seguido o primeiro foco do plano de melhoria: reforco do modulo existente de Gestao de Acessos, sem criar modulo novo.
+- `usePermissions` passou a reconhecer mais aliases de Controle de Acesso, Perfis e Permissoes, melhorando compatibilidade entre perfis antigos e novos.
+- Removidos trechos inalcançaveis do resolvedor de permissoes, mantendo a mesma API publica do hook.
+- `GestaoAcessosIndex` recebeu `w-full h-full`, areas internas redimensionaveis e `data-permission` nas abas existentes.
+- `UsuariosTab` passou a bloquear convite/configuracao quando nao houver contexto grupo/empresa ou permissao adequada, com aviso visual no escopo invalido.
+- `GestaoUsuariosAvancada` reforcou validacao de contexto antes de salvar e marcou perfil, 2FA, empresas vinculadas e restricoes como acoes sensiveis.
+- `CentralPerfisAcesso` recebeu aviso de contexto, busca com permissao declarada e campos sensiveis mais rastreaveis.
+- `PermissoesGranularesModal` recebeu `data-permission` e `data-sensitive` nos switches e no salvar.
+- Build validado com sucesso e tela `administracaosistema?tab=acessos` abriu no navegador interno sem erro de console.
+
+### Cadastros Gerais - auditoria e contexto no visualizador central
+
+- Seguido o plano de melhoria na Fase 6/7 usando o componente existente `VisualizadorUniversalEntidadeV24`.
+- Adicionada auditoria para tentativas de criar/editar cadastro sem contexto grupo/empresa ou sem permissao.
+- A abertura de formulario de criacao/edicao agora registra evento de visualizacao com entidade, grupo e empresa.
+- O visualizador central passou a mostrar aviso quando nao houver grupo/empresa selecionado, evitando operacao fora do escopo multiempresa.
+- Mantida a Regra-Mae: nenhum modulo/tela duplicado foi criado e nenhuma funcionalidade existente foi removida.
+- Build validado com sucesso apos as alteracoes.
+
+### Cadastros Gerais - Pessoas & Parceiros
+
+- Seguido o plano de melhoria no bloco existente `Pessoas & Parceiros`, sem criar telas ou entidades duplicadas.
+- `ContatoB2BForm` passou a carregar clientes pelo `filterInContext`, respeitando grupo/empresa em vez de listar todos os clientes.
+- `ContatoB2BForm` bloqueia salvamento sem contexto grupo/empresa e marcou cliente, campos principais, switch de contato principal e salvar com `data-permission`, `data-action` e `data-sensitive` quando aplicavel.
+- `SegmentoClienteForm` recebeu rastreio RBAC/auditoria visual nos campos, select, switch e botao de salvar.
+- `RegiaoAtendimentoForm` passou a carregar colaboradores e transportadoras por contexto grupo/empresa e bloqueia salvar sem contexto.
+- Abas e acoes sensiveis de `RegiaoAtendimentoForm` receberam marcadores de permissao/acao.
+- Build validado com sucesso apos as alteracoes.
+
+### Cadastros Gerais - Produtos & Servicos
+
+- Seguido o plano de melhoria no bloco existente `Produtos & Servicos`, sem criar telas, modulos ou entidades duplicadas.
+- Corrigido o uso de `contextoAtual` inexistente nos formularios de Servico, GrupoProduto, Marca, SetorAtividade, UnidadeMedida, KitProduto e CatalogoWeb.
+- Esses formularios agora usam o `contexto` real do `useContextoVisual` para gravar `empresa_id` quando o usuario estiver em uma empresa.
+- Mantido o `group_id` para consolidacao no grupo, respeitando multiempresa e o fluxo atual.
+- Reforcados os controles existentes desses formularios com `data-action` em campos, selects, switches e botoes sensiveis.
+- Mantidos `data-permission` e `data-sensitive` existentes, deixando os controles mais rastreaveis para RBAC, auditoria e testes.
+- Build validado com sucesso apos as alteracoes.
+- `ProdutoFormV22_Completo` tambem foi reforcado no proprio formulario existente, sem criar tela nova.
+- No produto completo foram marcadas acoes de IA, descricao, classificacao tripla, codigo/SKU, codigo de barras, tipo de item, upload/geracao de imagem, bitola, unidade principal, unidades secundarias, e-commerce, SEO, status, excluir e salvar.
+- Controles sensiveis do produto passaram a ter `data-permission`, `data-action` e `data-sensitive`, e varios switches/botoes agora respeitam contexto e permissao antes de alterar dados.
+- `TabelaPrecoFormCompleto` tambem foi reforcado no modulo existente de Produtos & Servicos.
+- Na tabela de preco foram marcadas acoes de configuracao, vigencia, compartilhar com grupo, status, inclusao individual/lote, filtros de lote, adicionar/remover produtos, motor de calculo, sugestao IA, excluir e salvar.
+- Verificado que nao restou `contextoAtual` nesses formularios revisados.
+- Build validado com sucesso apos as alteracoes.
+- Componentes internos do produto completo tambem foram reforcados: `PrecosSection`, `PesoDimensoesSection`, `FiscalContabilSection` e `EstoqueAvancadoSection`.
+- Esses componentes agora validam contexto grupo/empresa por `useContextoVisual` antes de permitir alteracoes sensiveis.
+- Campos de preco, margem minima, peso, dimensoes, fiscal, tributacao, contabilizacao, estoque minimo/maximo, lote, validade, almoxarifado e localizacao receberam bloqueio por permissao/contexto.
+- Controles internos receberam `data-permission`, `data-action` e `data-sensitive` conforme a area: Produto, Fiscal e Estoque.
+- `BotaoBuscaAutomatica` foi ajustado para repassar atributos extras ao botao interno, permitindo auditoria/RBAC visual sem quebrar usos existentes.
+- Build validado com sucesso apos as alteracoes.
+- Proximo passo sugerido: repetir o mesmo padrao nos demais blocos de `Cadastros Gerais`: Financeiro & Fiscal, Logistica/Frota/Almoxarifado, Organizacional e Tecnologia.
+
+### Sincronizacao GitHub - novo repositorio CodeX
+
+- Repositorio novo informado pelo usuario: `viniciuszuccaro-creator/ERP-Zuccaro-codeX`.
+- Remoto antigo preservado como `old-origin`: `https://github.com/viniciuszuccaro-creator/erp-integra.git`.
+- Remoto principal `origin` apontado para: `https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX.git`.
+- Documentos existentes de transporte para outro computador atualizados com instrucao de `git clone`.
+- Objetivo: permitir continuar o ERP Zuccaro em outros computadores mantendo `STATUS_DO_PROJETO.md` e `PLANO_MELHORIA_ERP_ZUCCARO.md` como guia de continuidade.

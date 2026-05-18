@@ -9,7 +9,7 @@ import LaunchpadCard from './LaunchpadCard';
  */
 export default function ModulosGridFinanceiro({ modules, onModuleClick }) {
   return (
-    <Card className="border-0 shadow-md">
+    <Card className="border-0 shadow-md" data-permission="Financeiro.visualizar">
       <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50 border-b px-3 py-2">
         <CardTitle className="text-sm flex items-center gap-2 font-semibold">
           <Zap className="w-4 h-4 text-blue-600 flex-shrink-0" />
@@ -26,6 +26,8 @@ export default function ModulosGridFinanceiro({ modules, onModuleClick }) {
               icon={module.icon}
               color={module.color}
               badge={module.badge}
+              dataPermission={`Financeiro.${module.sectionKey || module.title}.visualizar`}
+              dataAction={`Financeiro.abrir.${module.sectionKey || module.title}`}
               onClick={() => onModuleClick(module)}
             />
           ))}

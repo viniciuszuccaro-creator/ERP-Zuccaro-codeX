@@ -12,12 +12,16 @@ import AuditDetailsDialog from "./AuditDetailsDialog";
 
 export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = null }) {
   const { getFiltroContexto, contexto, empresaAtual, grupoAtual, empresasDoGrupo = [], filterInContext } = useContextoVisual();
-  const { isAdmin, user } = usePermissions();
+  const { isAdmin, user, hasPermission } = usePermissions();
   const queryClient = useQueryClient();
   const [escopo, setEscopo] = useState("meus"); // meus | todos
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const [usuarioId, setUsuarioId] = useState('todos');
+  const canViewAudit =
+    isAdmin() ||
+    hasPermission('Sistema', 'Auditoria', 'visualizar') ||
+    hasPermission('Sistema', 'Logs', 'visualizar');
 
   const filtroBase = getFiltroContexto("empresa_id", true) || {};
   const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
@@ -65,7 +69,7 @@ export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = 
       const rows = await filterInContext('AuditLog', criterios, "-data_hora", limit);
       return rows;
     },
-    enabled: scopeKey !== 'sem-contexto',
+    enabled: canViewAudit && scopeKey !== 'sem-contexto',
     staleTime: 3000,
   });
 
@@ -75,7 +79,7 @@ export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = 
       const rows = await base44.entities.User.list();
       return rows.filter(usuarioNoEscopo);
     },
-    enabled: isAdmin() && scopeKey !== 'sem-contexto',
+    enabled: canViewAudit && isAdmin() && scopeKey !== 'sem-contexto',
     staleTime: 60000,
   });
 
@@ -87,7 +91,7 @@ export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = 
   }, [queryClient]);
 
   return (
-    <div className="w-full h-full p-3">
+    <div className="w-full h-full p-3" data-permission="Sistema.Auditoria.visualizar">
       <div className="flex items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2 text-slate-600 text-sm">
           <Clock className="w-4 h-4" />
@@ -95,7 +99,7 @@ export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = 
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Select value={escopo} onValueChange={setEscopo} disabled={!isAdmin()}>
-            <SelectTrigger className="w-40" data-action="AuditTrail.filtroEscopo">
+            <SelectTrigger className="w-40" data-action="AuditTrail.filtroEscopo" data-permission="Sistema.Auditoria.visualizar">
               <SelectValue placeholder="Escopo" />
             </SelectTrigger>
             <SelectContent>
@@ -106,7 +110,7 @@ export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = 
 
           {isAdmin() && escopo === 'todos' && (
             <Select value={usuarioId} onValueChange={setUsuarioId}>
-              <SelectTrigger className="w-56" data-action="AuditTrail.filtroUsuario">
+              <SelectTrigger className="w-56" data-action="AuditTrail.filtroUsuario" data-permission="Sistema.Auditoria.visualizar">
                 <SelectValue placeholder="Usuário" />
               </SelectTrigger>
               <SelectContent>
@@ -151,7 +155,7 @@ export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = 
                   <TableCell className="whitespace-nowrap">{l.usuario}</TableCell>
                   <TableCell className="whitespace-nowrap">
                     {isAdmin() ? (
-                      <Button variant="outline" size="sm" onClick={() => { setSelected(l); setOpen(true); }} data-action="AuditTrail.verDetalhes">
+                      <Button variant="outline" size="sm" onClick={() => { setSelected(l); setOpen(true); }} data-action="AuditTrail.verDetalhes" data-permission="Sistema.Auditoria.visualizar">
                         Ver {l?.dados_novos?.__sensitive ? <span className="ml-2 inline-flex items-center text-red-600">• sensível</span> : null}
                       </Button>
                     ) : (

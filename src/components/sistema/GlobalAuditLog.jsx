@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileEdit, FilePlus, Trash2, Clock, User, Calendar } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * GLOBAL AUDIT LOG V21.0
@@ -14,15 +15,17 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  */
 export default function GlobalAuditLog({ limite = 20, mostrarFiltros = true }) {
   const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { isAdmin, hasPermission } = usePermissions();
   const scopeId = empresaAtual?.id || grupoAtual?.id || 'sem-contexto';
   const contextoValido = scopeId !== 'sem-contexto';
+  const canViewAudit = isAdmin() || hasPermission('Sistema', 'Auditoria', 'visualizar') || hasPermission('Sistema', 'Logs', 'visualizar');
   const [filtroEntidade, setFiltroEntidade] = useState('todas');
   const [filtroAcao, setFiltroAcao] = useState('todas');
 
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ['audit-logs-global', limite, scopeId, contexto],
     queryFn: () => filterInContext('AuditLog', {}, '-created_date', limite),
-    enabled: contextoValido,
+    enabled: contextoValido && canViewAudit,
   });
 
   const normalizarAcao = (acao) => {
@@ -85,7 +88,7 @@ export default function GlobalAuditLog({ limite = 20, mostrarFiltros = true }) {
   };
 
   return (
-    <Card className="border-2 border-slate-300 w-full h-full">
+    <Card className="border-2 border-slate-300 w-full h-full" data-permission="Sistema.Auditoria.visualizar">
       <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
@@ -95,7 +98,7 @@ export default function GlobalAuditLog({ limite = 20, mostrarFiltros = true }) {
           {mostrarFiltros && (
             <div className="flex gap-2 flex-wrap">
               <Select value={filtroEntidade} onValueChange={setFiltroEntidade}>
-                <SelectTrigger className="w-32 h-8" data-action="GlobalAuditLog.filtroEntidade">
+                <SelectTrigger className="w-32 h-8" data-action="GlobalAuditLog.filtroEntidade" data-permission="Sistema.Auditoria.visualizar">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -108,7 +111,7 @@ export default function GlobalAuditLog({ limite = 20, mostrarFiltros = true }) {
               </Select>
 
               <Select value={filtroAcao} onValueChange={setFiltroAcao}>
-                <SelectTrigger className="w-32 h-8" data-action="GlobalAuditLog.filtroAcao">
+                <SelectTrigger className="w-32 h-8" data-action="GlobalAuditLog.filtroAcao" data-permission="Sistema.Auditoria.visualizar">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

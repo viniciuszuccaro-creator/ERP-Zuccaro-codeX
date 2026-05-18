@@ -12,6 +12,7 @@ import { MapPin, Truck, DollarSign, TrendingUp, X, Plus, Trash2 } from "lucide-r
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 const ESTADOS_BRASIL = [
   "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
@@ -20,6 +21,8 @@ const ESTADOS_BRASIL = [
 ];
 
 export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, item, data, open, onOpenChange, onSubmit, onSave, onClose, windowMode = false }) {
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id);
   const dadosIniciaisProps = regiaoAtendimento || item || data;
   const [formData, setFormData] = useState(dadosIniciaisProps || {
     nome_regiao: "",
@@ -54,13 +57,15 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
   const [novaCidade, setNovaCidade] = useState({ cidade: "", estado: "", cep_inicial: "", cep_final: "" });
 
   const { data: vendedores = [] } = useQuery({
-    queryKey: ['colaboradores-vendedores'],
-    queryFn: () => base44.entities.Colaborador.list(),
+    queryKey: ['colaboradores-vendedores', empresaAtual?.id || grupoAtual?.id || 'sem-contexto'],
+    queryFn: () => filterInContext('Colaborador', {}, 'nome_completo', 500, 'empresa_alocada_id'),
+    enabled: contextoValido,
   });
 
   const { data: transportadoras = [] } = useQuery({
-    queryKey: ['transportadoras'],
-    queryFn: () => base44.entities.Transportadora.list(),
+    queryKey: ['transportadoras', empresaAtual?.id || grupoAtual?.id || 'sem-contexto'],
+    queryFn: () => filterInContext('Transportadora', {}, 'razao_social', 500, 'empresa_dona_id'),
+    enabled: contextoValido,
   });
 
   useEffect(() => {
@@ -108,6 +113,10 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
 
   const handleSubmit = (e) => {
     e?.preventDefault();
+    if (!contextoValido) {
+      toast.error("Selecione um grupo ou empresa antes de salvar a regiÃ£o.");
+      return;
+    }
     if (!formData.nome_regiao) {
       toast.error("Nome da região é obrigatório");
       return;
@@ -163,19 +172,19 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
     <form onSubmit={handleSubmit} className="space-y-4">
       <Tabs defaultValue="geral" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="geral">
+          <TabsTrigger value="geral" data-permission="Cadastros.RegiaoAtendimento.visualizar" data-action="Cadastros.RegiaoAtendimento.tab.geral">
             <MapPin className="w-4 h-4 mr-2" />
             Geral
           </TabsTrigger>
-          <TabsTrigger value="logistica">
+          <TabsTrigger value="logistica" data-permission="Cadastros.RegiaoAtendimento.visualizar" data-action="Cadastros.RegiaoAtendimento.tab.logistica">
             <Truck className="w-4 h-4 mr-2" />
             Logística
           </TabsTrigger>
-          <TabsTrigger value="comercial">
+          <TabsTrigger value="comercial" data-permission="Cadastros.RegiaoAtendimento.visualizar" data-action="Cadastros.RegiaoAtendimento.tab.comercial">
             <DollarSign className="w-4 h-4 mr-2" />
             Comercial
           </TabsTrigger>
-          <TabsTrigger value="metricas">
+          <TabsTrigger value="metricas" data-permission="Cadastros.RegiaoAtendimento.visualizar" data-action="Cadastros.RegiaoAtendimento.tab.metricas">
             <TrendingUp className="w-4 h-4 mr-2" />
             Métricas
           </TabsTrigger>
@@ -565,16 +574,19 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
                 type="button"
                 variant={formData.ativo ? "outline" : "default"}
                 onClick={handleAlternarStatus}
+                data-permission="Cadastros.RegiaoAtendimento.editar"
+                data-action="Cadastros.RegiaoAtendimento.alternar-status"
+                data-sensitive="true"
               >
                 {formData.ativo ? "Inativar" : "Ativar"}
               </Button>
-              <Button type="button" variant="destructive" onClick={handleExcluir}>
+              <Button type="button" variant="destructive" onClick={handleExcluir} data-permission="Cadastros.RegiaoAtendimento.excluir" data-action="Cadastros.RegiaoAtendimento.excluir" data-sensitive="true">
                 Excluir
               </Button>
             </>
           )}
         </div>
-        <Button type="submit">
+        <Button type="submit" disabled={!contextoValido} data-permission="Cadastros.RegiaoAtendimento.editar" data-action="Cadastros.RegiaoAtendimento.salvar" data-sensitive="true">
           {regiaoId || dadosIniciaisProps ? "Atualizar" : "Criar"} Região
         </Button>
       </div>

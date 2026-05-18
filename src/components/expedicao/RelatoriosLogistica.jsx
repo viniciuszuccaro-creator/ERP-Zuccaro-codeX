@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { BarChart3, FileText, Truck, MapPin, TrendingUp } from "lucide-react";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 import {
   BarChart,
   Bar,
@@ -32,19 +33,28 @@ import {
 export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
   const [periodoInicio, setPeriodoInicio] = useState("");
   const [periodoFim, setPeriodoFim] = useState("");
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const canViewReports = hasPermission("Expedição", "Relatórios", "ver") || hasPermission("Expedição", "Relatórios", "visualizar");
+  const activeEmpresaId = empresaId || empresaAtual?.id || null;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const contextoValido = Boolean(activeEmpresaId || groupId);
+  const contextKey = groupId ? `grupo:${groupId}` : `empresa:${activeEmpresaId || "sem-empresa"}`;
 
   const { data: entregas = [] } = useQuery({
-    queryKey: ['entregas-relatorio', empresaId],
-    queryFn: () => base44.entities.Entrega.list('-created_date'),
+    queryKey: ['entregas-relatorio', contextKey],
+    queryFn: () => filterInContext('Entrega', {}, '-created_date', 9999),
+    enabled: canViewReports && contextoValido,
   });
 
   const { data: romaneios = [] } = useQuery({
-    queryKey: ['romaneios-relatorio', empresaId],
-    queryFn: () => base44.entities.Romaneio.list('-created_date'),
+    queryKey: ['romaneios-relatorio', contextKey],
+    queryFn: () => filterInContext('Romaneio', {}, '-created_date', 9999),
+    enabled: canViewReports && contextoValido,
   });
 
   const entregasFiltradas = entregas.filter(e => {
-    if (empresaId && e.empresa_id !== empresaId) return false;
+    if (activeEmpresaId && e.empresa_id !== activeEmpresaId && e.empresa_responsavel_id !== activeEmpresaId) return false;
     if (periodoInicio && e.data_saida < periodoInicio) return false;
     if (periodoFim && e.data_saida > periodoFim) return false;
     return true;

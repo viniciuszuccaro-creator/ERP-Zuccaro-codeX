@@ -7,7 +7,7 @@ export default function SelectedOperationalReport({ selectedReport, filtros, onE
   if (!selectedReport || selectedReport.component) return null;
 
   return (
-    <Card className="border-0 shadow-md mt-4">
+    <Card className="border-0 shadow-md mt-4" data-permission="Relatorios.visualizar">
       <CardHeader className="border-b bg-slate-50">
         <div className="flex justify-between items-center">
           <div>
@@ -24,6 +24,8 @@ export default function SelectedOperationalReport({ selectedReport, filtros, onE
             <Button
               variant="outline"
               size="sm"
+              data-permission="Relatorios.exportar"
+              data-action="Relatorios.exportar_csv"
               onClick={() => {
                 const dados = selectedReport.getData ? selectedReport.getData() : [];
                 if (Array.isArray(dados)) onExport(dados, selectedReport.titulo);
@@ -32,7 +34,7 @@ export default function SelectedOperationalReport({ selectedReport, filtros, onE
               <Download className="w-4 h-4 mr-2" />
               Excel
             </Button>
-            <Button variant="outline" size="sm" onClick={onClose}>
+            <Button variant="outline" size="sm" data-permission="Relatorios.visualizar" data-action="Relatorios.fechar" onClick={onClose}>
               Fechar
             </Button>
           </div>

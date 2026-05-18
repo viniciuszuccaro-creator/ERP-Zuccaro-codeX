@@ -5,17 +5,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import AuditTrailPanel from "@/components/auditoria/AuditTrailPanel";
 import LogsAuditoria from "@/components/auditoria/LogsAuditoria";
 import GlobalAuditLog from "@/components/sistema/GlobalAuditLog";
-import { FileText } from "lucide-react";
+import usePermissions from "@/components/lib/usePermissions";
 
 export default function AuditoriaLogsIndex() {
   const [entidade, setEntidade] = useState('todas');
+  const { isAdmin, hasPermission } = usePermissions();
+  const canViewAudit =
+    isAdmin() ||
+    hasPermission('Sistema', 'Auditoria', 'visualizar') ||
+    hasPermission('Sistema', 'Logs', 'visualizar');
+
+  if (!canViewAudit) {
+    return <div className="p-4 text-sm text-slate-500">Acesso restrito.</div>;
+  }
+
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full h-full flex flex-col" data-permission="Sistema.Auditoria.visualizar">
       <Tabs defaultValue="painel" className="w-full h-full">
         <TabsList className="flex flex-wrap gap-2">
-          <TabsTrigger value="painel" data-action="AuditoriaLogs.tab.painel">Painel</TabsTrigger>
-          <TabsTrigger value="logs" data-action="AuditoriaLogs.tab.logs">Logs</TabsTrigger>
-          <TabsTrigger value="global" data-action="AuditoriaLogs.tab.global">Global</TabsTrigger>
+          <TabsTrigger value="painel" data-action="AuditoriaLogs.tab.painel" data-permission="Sistema.Auditoria.visualizar">Painel</TabsTrigger>
+          <TabsTrigger value="logs" data-action="AuditoriaLogs.tab.logs" data-permission="Sistema.Auditoria.visualizar">Logs</TabsTrigger>
+          <TabsTrigger value="global" data-action="AuditoriaLogs.tab.global" data-permission="Sistema.Auditoria.visualizar">Global</TabsTrigger>
         </TabsList>
 
         <TabsContent value="painel" className="mt-4 h-full">
@@ -23,7 +33,7 @@ export default function AuditoriaLogsIndex() {
             <CardContent className="p-4 space-y-3 h-full">
               <div className="flex items-center gap-2">
                 <Select value={entidade} onValueChange={setEntidade}>
-                  <SelectTrigger className="w-56" data-action="AuditoriaLogs.filtroEntidade">
+                  <SelectTrigger className="w-56" data-action="AuditoriaLogs.filtroEntidade" data-permission="Sistema.Auditoria.visualizar">
                     <SelectValue placeholder="Entidade" />
                   </SelectTrigger>
                   <SelectContent>

@@ -247,7 +247,7 @@ export default function CentralPerfisAcesso() {
   const canManageOpenProfile = perfilAberto?.novo ? podeCriarPerfil : podeEditarPerfil;
 
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full h-full min-h-0 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2">
           <Shield className="w-5 h-5 text-blue-600" />
@@ -262,9 +262,18 @@ export default function CentralPerfisAcesso() {
         </div>
       </div>
 
+      {!contextoValido && (
+        <Alert className="border-amber-200 bg-amber-50">
+          <AlertTriangle className="w-4 h-4 text-amber-600" />
+          <AlertDescription className="text-xs text-amber-800">
+            Selecione um grupo ou empresa para criar, editar ou excluir perfis de acesso no escopo correto.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-        <Input placeholder="Buscar perfis..." value={busca} onChange={(e) => setBusca(e.target.value)} className="pl-10" />
+        <Input placeholder="Buscar perfis..." value={busca} onChange={(e) => setBusca(e.target.value)} className="pl-10" data-action="RBAC.Perfil.buscar" data-permission="Sistema.Controle de Acesso.visualizar" />
       </div>
 
       <div className="space-y-3">
@@ -354,7 +363,7 @@ export default function CentralPerfisAcesso() {
                   <div className="flex items-center gap-2 mt-2"><Switch checked={formPerfil.ativo} disabled={!canManageOpenProfile} data-permission={perfilAberto?.novo ? "Sistema.Controle de Acesso.criar" : "Sistema.Controle de Acesso.editar"} data-action="RBAC.Perfil.status" onCheckedChange={(v) => setFormPerfil({ ...formPerfil, ativo: v })} /><span className="text-sm">{formPerfil.ativo ? 'Ativo' : 'Inativo'}</span></div>
                 </div>
               </div>
-              <div><Label className="text-xs">Descrição</Label><Textarea value={formPerfil.descricao} onChange={(e) => setFormPerfil({ ...formPerfil, descricao: e.target.value })} placeholder="Responsabilidades do perfil" className="mt-1" rows={2} /></div>
+              <div><Label className="text-xs">Descrição</Label><Textarea value={formPerfil.descricao} onChange={(e) => setFormPerfil({ ...formPerfil, descricao: e.target.value })} placeholder="Responsabilidades do perfil" className="mt-1" rows={2} disabled={!canManageOpenProfile} data-action="RBAC.Perfil.descricao" data-permission={perfilAberto?.novo ? "Sistema.Controle de Acesso.criar" : "Sistema.Controle de Acesso.editar"} /></div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -402,7 +411,7 @@ export default function CentralPerfisAcesso() {
                                           const IconeAcao = acao.icone;
                                           return (
                                             <label key={acao.id} className={`flex items-center gap-1 cursor-pointer px-2 py-1 rounded border text-xs transition-all ${marcado ? 'bg-blue-100 border-blue-300 text-blue-700 font-semibold' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
-                                              <Checkbox checked={marcado} disabled={!canManageOpenProfile} data-permission={perfilAberto?.novo ? "Sistema.Controle de Acesso.criar" : "Sistema.Controle de Acesso.editar"} data-action={`RBAC.Permissao.${modId}.${secId}.${acao.id}`} onCheckedChange={() => togglePermissao(modId, secId, acao.id)} />
+                                              <Checkbox checked={marcado} disabled={!canManageOpenProfile} data-permission={perfilAberto?.novo ? "Sistema.Controle de Acesso.criar" : "Sistema.Controle de Acesso.editar"} data-action={`RBAC.Permissao.${modId}.${secId}.${acao.id}`} data-sensitive="true" onCheckedChange={() => togglePermissao(modId, secId, acao.id)} />
                                               <IconeAcao className="w-3 h-3" />
                                               {acao.nome}
                                             </label>

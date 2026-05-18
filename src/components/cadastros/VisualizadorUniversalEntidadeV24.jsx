@@ -244,6 +244,24 @@ export default function VisualizadorUniversalEntidadeV24({
   const canCreateCadastro = canCreate("Cadastros", ENTITY) || canCreate("Cadastros", null);
   const canEditCadastro = canEdit("Cadastros", ENTITY) || canEdit("Cadastros", null);
   const canDeleteCadastro = canDelete("Cadastros", ENTITY) || canDelete("Cadastros", null);
+  const auditCadastroEvent = useCallback(async function(acao, descricao, extra) {
+    try {
+      const operador = await base44.auth.me().catch(function() { return null; });
+      await base44.entities.AuditLog.create({
+        usuario: operador?.full_name || operador?.email || "Usuario local",
+        usuario_id: operador?.id || null,
+        acao,
+        modulo: "Cadastros Gerais",
+        tipo_auditoria: "cadastro",
+        entidade: ENTITY,
+        descricao,
+        empresa_id: empresaId || null,
+        group_id: groupId || null,
+        dados_novos: extra || null,
+        data_hora: new Date().toISOString()
+      });
+    } catch (_) {}
+  }, [ENTITY, empresaId, groupId]);
 
   const COLUMNS = useMemo(function() {
     if (columns && columns.length > 0) return columns;
@@ -467,28 +485,42 @@ export default function VisualizadorUniversalEntidadeV24({
   }, [ENTITY, editItem, empresaId, groupId, handleCloseForm, isSimple, canCreateCadastro, canEditCadastro, canDeleteCadastro, createInContext, updateInContext, deleteInContext]);
 
   const handleNewItem = useCallback(function() {
+    if (!contextoValido) {
+      auditCadastroEvent("Bloqueio", "Tentativa de criar cadastro sem contexto grupo/empresa", { motivo: "sem_contexto" });
+      alert("Selecione um grupo ou empresa antes de criar.");
+      return;
+    }
     if (!canCreateCadastro) {
+      auditCadastroEvent("Bloqueio", "Tentativa de criar cadastro sem permissao", { permissao: `Cadastros.${ENTITY}.criar` });
       alert("Sem permissao para criar.");
       return;
     }
+    auditCadastroEvent("Visualizacao", "Formulario de criacao aberto", { origem: "VisualizadorUniversalEntidadeV24" });
     setEditItem(null);
     setEditError(null);
     setFormKey(function(k) { return k + 1; });
     setShowForm(true);
-  }, [canCreateCadastro]);
+  }, [ENTITY, auditCadastroEvent, canCreateCadastro, contextoValido]);
 
   const handleEditItem = useCallback(function(item) {
     if (!item || !item.id) return;
+    if (!contextoValido) {
+      auditCadastroEvent("Bloqueio", "Tentativa de editar cadastro sem contexto grupo/empresa", { registro_id: item.id, motivo: "sem_contexto" });
+      alert("Selecione um grupo ou empresa antes de editar.");
+      return;
+    }
     if (!canEditCadastro) {
+      auditCadastroEvent("Bloqueio", "Tentativa de editar cadastro sem permissao", { registro_id: item.id, permissao: `Cadastros.${ENTITY}.editar` });
       alert("Sem permissao para editar.");
       return;
     }
+    auditCadastroEvent("Visualizacao", "Formulario de edicao aberto", { registro_id: item.id, origem: "VisualizadorUniversalEntidadeV24" });
     setEditItem(JSON.parse(JSON.stringify(item)));
     setEditError(null);
     setIsLoadingEdit(false);
     setFormKey(function(k) { return k + 1; });
     setShowForm(true);
-  }, [canEditCadastro]);
+  }, [ENTITY, auditCadastroEvent, canEditCadastro, contextoValido]);
 
   const formProps = useMemo(
     function() { return buildFormProps(editItem, handleCloseForm, isSelfManaged ? handleCloseForm : handlePersistSubmit); },
@@ -875,6 +907,12 @@ export default function VisualizadorUniversalEntidadeV24({
           </Button>
         )}
       </div>
+
+      {!contextoValido && (
+        <div className="bg-amber-50 border border-amber-200 rounded-sm px-3 py-2 text-xs text-amber-800 shrink-0">
+          Selecione um grupo ou empresa para carregar, criar ou editar este cadastro no escopo correto.
+        </div>
+      )}
 
       {/* Banner cross-page */}
       {showCrossPageBanner && (

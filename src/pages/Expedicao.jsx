@@ -45,12 +45,16 @@ const RelatorioFinanceiroLogistica = React.lazy(() => import("../components/expe
 
 export default function Expedicao() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
-  const canSeeExpedicao = hasPermission('Expedição', null, 'ver');
+  const canSeeExpedicao = hasPermission('Expedição', null, 'ver') || hasPermission('Expedição', null, 'visualizar');
   const { openWindow } = useWindow();
   const { user } = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { estaNoGrupo, empresaAtual, empresasDoGrupo, filtrarPorContexto, getFiltroContexto, grupoAtual } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const contextKey = estaNoGrupo ? `grupo:${groupId || 'sem-grupo'}` : `empresa:${empresaId || 'sem-empresa'}`;
 
   const [comprovanteModal, setComprovanteModal] = React.useState(null);
   const [entregaSelecionada, setEntregaSelecionada] = React.useState(null);
@@ -59,10 +63,9 @@ export default function Expedicao() {
   const [ocorrenciaOpen, setOcorrenciaOpen] = React.useState(false);
 
   const { data: entregas = [] } = useQuery({
-    queryKey: ['entregas', empresaAtual?.id],
+    queryKey: ['entregas', contextKey],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         return await filtrarPorContexto('Entrega', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar entregas:', err);
@@ -71,17 +74,16 @@ export default function Expedicao() {
     },
     staleTime: 30000,
     retry: 2,
-    enabled: canSeeExpedicao
+    enabled: canSeeExpedicao && contextoValido
   });
 
   const { data: totalEntregas = 0 } = useQuery({
-    queryKey: ['entregas-count', empresaAtual?.id],
+    queryKey: ['entregas-count', contextKey],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Entrega',
-          filter: getFiltroContexto('empresa_id')
+          filter: getFiltroContexto('empresa_id', true)
         });
         return response.data?.count || entregas.length;
       } catch {
@@ -90,14 +92,13 @@ export default function Expedicao() {
     },
     staleTime: 60000,
     retry: 1,
-    enabled: canSeeExpedicao
+    enabled: canSeeExpedicao && contextoValido
   });
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes', empresaAtual?.id],
+    queryKey: ['clientes', contextKey],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         return await filtrarPorContexto('Cliente', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar clientes:', err);
@@ -106,14 +107,13 @@ export default function Expedicao() {
     },
     staleTime: 30000,
     retry: 1,
-    enabled: canSeeExpedicao
+    enabled: canSeeExpedicao && contextoValido
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos', empresaAtual?.id],
+    queryKey: ['pedidos', contextKey],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         return await filtrarPorContexto('Pedido', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar pedidos:', err);
@@ -122,14 +122,13 @@ export default function Expedicao() {
     },
     staleTime: 30000,
     retry: 1,
-    enabled: canSeeExpedicao
+    enabled: canSeeExpedicao && contextoValido
   });
 
   const { data: romaneios = [] } = useQuery({
-    queryKey: ['romaneios', empresaAtual?.id],
+    queryKey: ['romaneios', contextKey],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         return await filtrarPorContexto('Romaneio', {}, '-created_date', 50);
       } catch (err) {
         console.error('Erro ao buscar romaneios:', err);
@@ -138,14 +137,13 @@ export default function Expedicao() {
     },
     staleTime: 30000,
     retry: 1,
-    enabled: canSeeExpedicao
+    enabled: canSeeExpedicao && contextoValido
   });
 
   const { data: rotas = [] } = useQuery({
-    queryKey: ['rotas', empresaAtual?.id],
+    queryKey: ['rotas', contextKey],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         return await filtrarPorContexto('Rota', {}, '-created_date', 50);
       } catch (err) {
         console.error('Erro ao buscar rotas:', err);
@@ -154,7 +152,7 @@ export default function Expedicao() {
     },
     staleTime: 30000,
     retry: 1,
-    enabled: canSeeExpedicao
+    enabled: canSeeExpedicao && contextoValido
   });
 
   // Dados já vêm filtrados do servidor
@@ -316,18 +314,45 @@ export default function Expedicao() {
   }
   ];
 
-  const allowedModules = modules.filter(m => hasPermission('Expedição', (m.sectionKey || m.title), 'ver'));
+  const canViewModule = (module) => {
+    const section = module.sectionKey || module.title;
+    return hasPermission('Expedição', section, 'ver') || hasPermission('Expedição', section, 'visualizar');
+  };
+
+  const allowedModules = modules.filter(canViewModule);
 
    const handleModuleClick = (module) => {
+    if (!contextoValido) {
+      toast({
+        title: 'Contexto obrigatório',
+        description: 'Selecione o Grupo CPA ou uma empresa antes de abrir o módulo.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!canViewModule(module)) {
+      toast({
+        title: 'Acesso negado',
+        description: 'Seu perfil não possui permissão para esta seção de Expedição.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     React.startTransition(() => {
       // Auditoria de abertura de seção
       base44.entities.AuditLog.create({
+        usuario_id: user?.id,
         usuario: user?.full_name || user?.email || 'Usuário',
         acao: 'Visualização',
         modulo: 'Expedição',
         tipo_auditoria: 'acesso',
         entidade: 'Seção',
         descricao: `Abrir seção: ${module.title}`,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
         data_hora: new Date().toISOString(),
       });
       openWindow(

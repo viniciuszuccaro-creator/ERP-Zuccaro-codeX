@@ -3,8 +3,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function PesoDimensoesSection({ formData, setFormData }) {
+  const { hasPermission } = usePermissions();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id || formData?.empresa_id || formData?.group_id || formData?.grupo_id);
+  const canEdit = contextoValido && hasPermission?.("Cadastros.Produto.editar");
+
   return (
     <Card className="border-orange-200 bg-orange-50">
       <CardContent className="p-4 space-y-4">
@@ -22,6 +29,10 @@ export default function PesoDimensoesSection({ formData, setFormData }) {
               step="0.001"
               value={formData.peso_liquido_kg}
               onChange={(e) => setFormData(prev => ({...prev, peso_liquido_kg: parseFloat(e.target.value) || 0}))}
+              disabled={!canEdit}
+              data-permission="Cadastros.Produto.editar"
+              data-action="editar-peso-liquido-produto"
+              data-sensitive
             />
           </div>
           <div>
@@ -31,6 +42,10 @@ export default function PesoDimensoesSection({ formData, setFormData }) {
               step="0.001"
               value={formData.peso_bruto_kg}
               onChange={(e) => setFormData(prev => ({...prev, peso_bruto_kg: parseFloat(e.target.value) || 0}))}
+              disabled={!canEdit}
+              data-permission="Cadastros.Produto.editar"
+              data-action="editar-peso-bruto-produto"
+              data-sensitive
             />
           </div>
         </div>
@@ -42,6 +57,10 @@ export default function PesoDimensoesSection({ formData, setFormData }) {
               step="0.1"
               value={formData.altura_cm}
               onChange={(e) => setFormData(prev => ({...prev, altura_cm: parseFloat(e.target.value) || 0}))}
+              disabled={!canEdit}
+              data-permission="Cadastros.Produto.editar"
+              data-action="editar-altura-produto"
+              data-sensitive
             />
           </div>
           <div>
@@ -51,6 +70,10 @@ export default function PesoDimensoesSection({ formData, setFormData }) {
               step="0.1"
               value={formData.largura_cm}
               onChange={(e) => setFormData(prev => ({...prev, largura_cm: parseFloat(e.target.value) || 0}))}
+              disabled={!canEdit}
+              data-permission="Cadastros.Produto.editar"
+              data-action="editar-largura-produto"
+              data-sensitive
             />
           </div>
           <div>
@@ -60,6 +83,10 @@ export default function PesoDimensoesSection({ formData, setFormData }) {
               step="0.1"
               value={formData.comprimento_cm}
               onChange={(e) => setFormData(prev => ({...prev, comprimento_cm: parseFloat(e.target.value) || 0}))}
+              disabled={!canEdit}
+              data-permission="Cadastros.Produto.editar"
+              data-action="editar-comprimento-produto"
+              data-sensitive
             />
           </div>
           <div>
@@ -69,6 +96,8 @@ export default function PesoDimensoesSection({ formData, setFormData }) {
               value={formData.volume_m3?.toFixed(6) || 0}
               disabled
               className="bg-white"
+              data-permission="Cadastros.Produto.visualizar"
+              data-action="visualizar-volume-produto"
             />
           </div>
         </div>

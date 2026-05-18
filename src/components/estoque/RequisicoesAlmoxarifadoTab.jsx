@@ -21,8 +21,10 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { openWindow } = useWindow();
-  const { empresaAtual, contexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, createInContext, updateInContext } = useContextoVisual();
   const { canCreate } = usePermissions();
+  const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id);
+  const canCreateRequisicao = canCreate('Estoque', 'Requisicoes') || canCreate('Estoque', 'Requisições');
   const [formData, setFormData] = useState({
     numero_requisicao: `REQ-ALM-${Date.now()}`,
     data_requisicao: new Date().toISOString().split('T')[0],
@@ -39,20 +41,27 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
+      if (!contextoValido) throw new Error("Selecione grupo ou empresa antes de registrar requisicao.");
+      if (!canCreateRequisicao) throw new Error("Sem permissao para registrar requisicao.");
+      const itens = data.itens || [data];
       // Criar requisição como MovimentacaoEstoque
-      for (const item of data.itens) {
-        await base44.entities.MovimentacaoEstoque.create({
+      for (const item of itens) {
+        const quantidade = Number(item.quantidade || 0);
+        if (!Number.isFinite(quantidade) || quantidade <= 0) {
+          throw new Error("Quantidade da requisicao deve ser maior que zero.");
+        }
+        await createInContext('MovimentacaoEstoque', {
           empresa_id: empresaAtual?.id,
           group_id: contexto?.group_id,
           produto_id: item.produto_id,
           produto_descricao: item.produto_descricao,
           tipo_movimento: "saida",
-          quantidade: item.quantidade,
+          quantidade,
           data_movimentacao: data.data_requisicao,
           documento: data.numero_requisicao,
           motivo: `Requisição Almoxarifado - ${data.finalidade}`,
           localizacao_origem: "Almoxarifado",
-          localizacao_destino: data.setor,
+          localizacao_destino: data.setor || data.setor_solicitante,
           responsavel: data.solicitante,
           observacoes: data.observacoes
         });
@@ -60,8 +69,12 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
         // Atualizar estoque
         const produto = produtos.find(p => p.id === item.produto_id);
         if (produto) {
-          await base44.entities.Produto.update(produto.id, {
-            estoque_atual: (produto.estoque_atual || 0) - item.quantidade
+          const novoEstoque = (produto.estoque_atual || 0) - quantidade;
+          if (novoEstoque < 0) {
+            throw new Error(`Requisicao deixaria estoque negativo para ${produto.descricao}.`);
+          }
+          await updateInContext('Produto', produto.id, {
+            estoque_atual: novoEstoque
           });
         }
       }
@@ -76,12 +89,19 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
 
   const aprovarMutation = useMutation({
     mutationFn: async ({ id, itens }) => {
+      if (!contextoValido) throw new Error("Selecione grupo ou empresa antes de aprovar requisicao.");
+      if (!canCreateRequisicao) throw new Error("Sem permissao para aprovar requisicao.");
       // Processar baixa no estoque para cada item
       for (const item of itens) {
         const produto = produtos.find(p => p.id === item.produto_id);
         if (produto) {
-          await base44.entities.Produto.update(produto.id, {
-            estoque_atual: (produto.estoque_atual || 0) - item.quantidade
+          const quantidade = Number(item.quantidade || 0);
+          const novoEstoque = (produto.estoque_atual || 0) - quantidade;
+          if (novoEstoque < 0) {
+            throw new Error(`Aprovacao deixaria estoque negativo para ${produto.descricao}.`);
+          }
+          await updateInContext('Produto', produto.id, {
+            estoque_atual: novoEstoque
           });
         }
       }
@@ -172,9 +192,11 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
             className="pl-9"
           />
         </div>
-        {canCreate('Estoque', 'Requisicoes') && (
+        {canCreateRequisicao && (
           <Button
             className="bg-orange-600 hover:bg-orange-700"
+            disabled={!contextoValido}
+            data-permission="Estoque.Requisicoes.criar"
             onClick={() => openWindow(RequisicaoAlmoxarifadoForm, {
             windowMode: true,
             onSubmit: async (data) => {
@@ -186,7 +208,7 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
                 });
                 toast.success("✅ Requisição registrada!");
               } catch (error) {
-                toast.error("Erro ao criar requisição");
+                toast.error(error?.message || "Erro ao criar requisição");
               }
             }
           }, {

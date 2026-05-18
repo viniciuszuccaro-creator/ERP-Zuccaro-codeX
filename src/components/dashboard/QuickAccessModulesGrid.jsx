@@ -11,6 +11,8 @@ export default function QuickAccessModulesGrid({ modules, onClick }) {
           <Card
             key={index}
             onClick={() => onClick(module.url)}
+            data-permission={module.permission}
+            data-action={`Dashboard.abrir.${module.title}`}
             className="hover:shadow-xl transition-all duration-300 border-0 overflow-hidden group cursor-pointer h-full"
           >
             <div className={`h-2 bg-gradient-to-r ${module.color}`} />

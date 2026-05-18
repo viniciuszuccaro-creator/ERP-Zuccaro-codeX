@@ -15,13 +15,25 @@ import { useToast } from '@/components/ui/use-toast';
 import { useUser } from "@/components/lib/UserContext";
 import { base44 } from "@/api/base44Client";
 import { toast as sonnerToast } from "sonner";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+
+const normalizeEntregaFormData = (dados = {}) => ({
+  ...dados,
+  endereco_entrega_completo: {
+    ...(dados.endereco_entrega_completo || {}),
+  },
+  contato_entrega: {
+    ...(dados.contato_entrega || {}),
+  },
+});
 
 
 export default function FormularioEntrega({
-  formData,
-  setFormData,
+  formData: formDataProp,
+  setFormData: setFormDataProp,
   onSubmit,
-  onCancel,
+  onCancel = () => {},
   clientes = [],
   pedidos = [],
   empresasDoGrupo = [],
@@ -30,12 +42,22 @@ export default function FormularioEntrega({
   isLoading = false,
   windowMode = false
 }) {
+  const [formDataState, setFormDataState] = useState(() => normalizeEntregaFormData(formDataProp));
+  const formData = normalizeEntregaFormData(setFormDataProp ? formDataProp : formDataState);
+  const setFormData = setFormDataProp || setFormDataState;
   const [previsaoIA, setPrevisaoIA] = useState(null);
   const [calculandoPrevisao, setCalculandoPrevisao] = useState(false);
 
   const queryClient = useQueryClient();
   const { toast: toastHook } = useToast();
   const { user: authUser } = useUser();
+  const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || formData?.group_id || null;
+  const empresaId = formData?.empresa_id || empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const canCreateEntrega = hasPermission('Expedição', 'Entrega', 'criar');
+  const canEditEntrega = hasPermission('Expedição', 'Entrega', 'editar');
 
   const calcularPrevisaoEntrega = async () => {
     if (!formData.endereco_entrega_completo?.cidade) {
@@ -92,7 +114,7 @@ Retorne:
         usuario_responsavel: data.usuario_responsavel || (authUser?.full_name || authUser?.email),
         usuario_responsavel_id: data.usuario_responsavel_id || authUser?.id,
       };
-      return base44.entities.Entrega.create(payload);
+      return createInContext('Entrega', payload);
     },
     onSuccess: async (entregaCriada) => {
       queryClient.invalidateQueries({ queryKey: ['entregas'] });
@@ -104,6 +126,8 @@ Retorne:
       try {
         await base44.entities.AuditLog.create({
           empresa_id: entregaCriada?.empresa_id,
+          group_id: entregaCriada?.group_id || groupId,
+          grupo_id: entregaCriada?.group_id || groupId,
           usuario: authUser?.full_name || authUser?.email,
           usuario_id: authUser?.id,
           acao: 'Criação',
@@ -125,7 +149,7 @@ Retorne:
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Entrega.update(id, data),
+    mutationFn: ({ id, data }) => updateInContext('Entrega', id, data),
     onSuccess: async (entregaAtualizada, variables) => {
       queryClient.invalidateQueries({ queryKey: ['entregas'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
@@ -136,6 +160,8 @@ Retorne:
       try {
         await base44.entities.AuditLog.create({
           empresa_id: entregaAtualizada?.empresa_id,
+          group_id: entregaAtualizada?.group_id || groupId,
+          grupo_id: entregaAtualizada?.group_id || groupId,
           usuario: authUser?.full_name || authUser?.email,
           usuario_id: authUser?.id,
           acao: 'Edição',
@@ -213,6 +239,39 @@ Retorne:
   };
 
   const handleSubmitForm = async () => {
+    if (!contextoValido) {
+      toastHook({
+        title: "Contexto obrigatório",
+        description: "Selecione o Grupo CPA ou uma empresa antes de salvar a entrega.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (isEditing && !canEditEntrega) {
+      toastHook({ title: "Acesso negado", description: "Seu perfil não pode editar entregas.", variant: "destructive" });
+      return;
+    }
+
+    if (!isEditing && !canCreateEntrega) {
+      toastHook({ title: "Acesso negado", description: "Seu perfil não pode criar entregas.", variant: "destructive" });
+      return;
+    }
+
+    if (estaNoGrupo && !formData.empresa_id) {
+      toastHook({
+        title: "Empresa obrigatória",
+        description: "Informe a empresa responsável pela entrega.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!formData.cliente_id) {
+      toastHook({ title: "Cliente obrigatório", description: "Selecione o cliente da entrega.", variant: "destructive" });
+      return;
+    }
+
     if (isEditing && formData.id) {
       updateMutation.mutate({ id: formData.id, data: formData });
     } else {
@@ -696,6 +755,8 @@ Retorne no formato JSON.`,
           type="submit"
           disabled={isSubmitting}
           className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+          data-permission={isEditing ? "Expedição.Entrega.editar" : "Expedição.Entrega.criar"}
+          data-action={isEditing ? "atualizar-entrega" : "criar-entrega"}
         >
           <CheckCircle2 className="w-4 h-4 mr-2" />
           {isEditing ? '💾 Atualizar' : '🚀 Criar'} Entrega

@@ -100,7 +100,7 @@ export default function GestaoAcessosIndex() {
   const perfisAtivos = perfis.filter(p => p.ativo !== false).length;
 
   return (
-    <div className="w-full flex flex-col gap-3 min-h-0">
+    <div className="w-full h-full flex flex-col gap-3 min-h-0 overflow-hidden">
       {/* Banner RBAC com estatÃ­sticas */}
       <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Card className="border-blue-200 bg-blue-50">
@@ -160,52 +160,52 @@ export default function GestaoAcessosIndex() {
          </span>
        </div>
 
-      <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
+      <Tabs value={tab} onValueChange={handleTabChange} className="w-full h-full min-h-0 flex flex-col">
         <div className="w-full overflow-x-auto pb-1 -mx-1 px-1">
           <TabsList className="inline-flex h-auto gap-1 flex-nowrap min-w-max bg-slate-100 p-1 rounded-lg">
-            <TabsTrigger value="perfis" data-action="RBAC.tab.perfis" className="text-xs px-2.5 sm:px-4 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <TabsTrigger value="perfis" data-action="RBAC.tab.perfis" data-permission="Sistema.Controle de Acesso.visualizar" className="text-xs px-2.5 sm:px-4 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <Shield className="w-3.5 h-3.5 mr-1" />
               Perfis RBAC
               <Badge className="ml-1.5 text-[9px] bg-blue-100 text-blue-700 px-1">{perfisAtivos}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="usuarios" data-action="RBAC.tab.usuarios" className="text-xs px-2.5 sm:px-4 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <TabsTrigger value="usuarios" data-action="RBAC.tab.usuarios" data-permission="Sistema.Controle de Acesso.visualizar" className="text-xs px-2.5 sm:px-4 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <Users className="w-3.5 h-3.5 mr-1" />
               UsuÃ¡rios
               {usuariosSemPerfil > 0 && (
                 <Badge className="ml-1.5 text-[9px] bg-amber-100 text-amber-700 px-1">{usuariosSemPerfil} âš </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="sod" data-action="RBAC.tab.sod" className="text-xs px-2.5 sm:px-4 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <TabsTrigger value="sod" data-action="RBAC.tab.sod" data-permission="Sistema.Controle de Acesso.visualizar" className="text-xs px-2.5 sm:px-4 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <AlertTriangle className="w-3.5 h-3.5 mr-1" />
               SoD
             </TabsTrigger>
-            <TabsTrigger value="relatorios" data-action="RBAC.tab.relatorios" className="text-xs px-2.5 sm:px-4 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <TabsTrigger value="relatorios" data-action="RBAC.tab.relatorios" data-permission="Sistema.Controle de Acesso.visualizar" className="text-xs px-2.5 sm:px-4 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <BarChart3 className="w-3.5 h-3.5 mr-1" />
               RelatÃ³rios
             </TabsTrigger>
           </TabsList>
         </div>
 
-        <TabsContent value="perfis" className="mt-3 w-full">
-          <div className="w-full overflow-x-auto">
+        <TabsContent value="perfis" className="mt-3 w-full flex-1 min-h-0 overflow-auto">
+          <div className="w-full h-full overflow-x-auto">
             <CentralPerfisAcesso />
           </div>
         </TabsContent>
 
-        <TabsContent value="usuarios" className="mt-3 w-full">
-          <div className="w-full">
+        <TabsContent value="usuarios" className="mt-3 w-full flex-1 min-h-0 overflow-auto">
+          <div className="w-full h-full">
             <UsuariosTab />
           </div>
         </TabsContent>
 
-        <TabsContent value="sod" className="mt-3 w-full">
-          <div className="w-full overflow-x-auto">
+        <TabsContent value="sod" className="mt-3 w-full flex-1 min-h-0 overflow-auto">
+          <div className="w-full h-full overflow-x-auto">
             <SoDChecker />
           </div>
         </TabsContent>
 
-        <TabsContent value="relatorios" className="mt-3 w-full">
-          <div className="w-full overflow-x-auto">
+        <TabsContent value="relatorios" className="mt-3 w-full flex-1 min-h-0 overflow-auto">
+          <div className="w-full h-full overflow-x-auto">
             <RelatorioPermissoes perfis={perfis} usuarios={usuariosNoEscopo} empresas={empresas} />
           </div>
         </TabsContent>
