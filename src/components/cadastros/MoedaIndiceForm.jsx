@@ -6,12 +6,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { TrendingUp } from 'lucide-react';
 import usePermissions from '@/components/lib/usePermissions';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 export default function MoedaIndiceForm({ moeda, moedaIndice, item, data, onSubmit, onSave, onClose, windowMode = false }) {
   const dadosIniciais = item || data || moedaIndice || moeda;
   const { canCreate, canEdit } = usePermissions();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = canCreate("Cadastros", "MoedaIndice") || canCreate("Financeiro", "MoedaIndice") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "MoedaIndice") || canEdit("Financeiro", "MoedaIndice") || canEdit("Cadastros", null);
+  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const [formData, setFormData] = useState(dadosIniciais || {
     codigo: '',
     nome: '',
@@ -38,8 +43,17 @@ export default function MoedaIndiceForm({ moeda, moedaIndice, item, data, onSubm
       alert("Sem permissao para criar moedas e indices.");
       return;
     }
+    if (!contextoValido) {
+      alert("Selecione um grupo ou empresa antes de salvar.");
+      return;
+    }
+    const payload = {
+      ...formData,
+      group_id: groupId || formData.group_id,
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
+    };
     if (onSubmit) {
-      onSubmit(formData);
+      onSubmit(payload);
     } else {
       if (onSave) onSave();
       if (onClose) onClose();
@@ -56,6 +70,10 @@ export default function MoedaIndiceForm({ moeda, moedaIndice, item, data, onSubm
             onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
             placeholder="USD, EUR, IPCA..."
             required
+            disabled={!podeSalvar}
+            data-permission="Financeiro.MoedaIndice.editar"
+            data-action="editar-codigo-moeda-indice"
+            data-sensitive
           />
         </div>
         <div>
@@ -64,6 +82,10 @@ export default function MoedaIndiceForm({ moeda, moedaIndice, item, data, onSubm
             value={formData.nome}
             onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
             required
+            disabled={!podeSalvar}
+            data-permission="Financeiro.MoedaIndice.editar"
+            data-action="editar-nome-moeda-indice"
+            data-sensitive
           />
         </div>
       </div>
@@ -72,7 +94,7 @@ export default function MoedaIndiceForm({ moeda, moedaIndice, item, data, onSubm
         <div>
           <Label>Tipo</Label>
           <Select value={formData.tipo} onValueChange={(v) => setFormData({ ...formData, tipo: v })}>
-            <SelectTrigger>
+            <SelectTrigger disabled={!podeSalvar} data-permission="Financeiro.MoedaIndice.editar" data-action="selecionar-tipo-moeda-indice" data-sensitive>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -88,6 +110,10 @@ export default function MoedaIndiceForm({ moeda, moedaIndice, item, data, onSubm
             step="0.0001"
             value={formData.cotacao_atual}
             onChange={(e) => setFormData({ ...formData, cotacao_atual: parseFloat(e.target.value) })}
+            disabled={!podeSalvar}
+            data-permission="Financeiro.MoedaIndice.editar"
+            data-action="editar-cotacao-moeda-indice"
+            data-sensitive
           />
         </div>
       </div>
@@ -97,14 +123,19 @@ export default function MoedaIndiceForm({ moeda, moedaIndice, item, data, onSubm
         <Switch
           checked={formData.ativo}
           onCheckedChange={(v) => setFormData({ ...formData, ativo: v })}
+          disabled={!podeSalvar}
+          data-permission="Financeiro.MoedaIndice.alterarStatus"
+          data-action="alternar-status-moeda-indice"
+          data-sensitive
         />
       </div>
 
       <Button
         type="submit"
         className="w-full bg-emerald-600 hover:bg-emerald-700"
-        disabled={dadosIniciais?.id ? !podeEditar : !podeCriar}
+        disabled={!contextoValido || !podeSalvar}
         data-permission="Cadastros.MoedaIndice.salvar"
+        data-action="salvar-moeda-indice"
         data-sensitive
       >
         {dadosIniciais ? 'Atualizar' : 'Criar Moeda/Índice'}

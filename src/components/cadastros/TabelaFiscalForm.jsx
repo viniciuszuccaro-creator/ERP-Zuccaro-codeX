@@ -27,7 +27,7 @@ export default function TabelaFiscalForm({
   onCancel 
 }) {
   const { hasPermission } = usePermissions();
-  const { empresaAtual, grupoAtual, contextoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || tabela?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || tabela?.empresa_id || tabela?.group_id);
   const podeCriar = hasPermission?.("Cadastros.TabelaFiscal.criar") || hasPermission?.("Financeiro.TabelaFiscal.criar");
@@ -161,7 +161,7 @@ Seja preciso e cite a legislação aplicável.`,
     if (onSubmit) {
       onSubmit({
         ...formData,
-        empresa_id: contextoAtual === "empresa" ? empresaAtual?.id : formData.empresa_id,
+        empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
         group_id: groupId || formData.group_id,
         nome: formData.nome_regra,
         descricao: formData.cfop + ' - ' + formData.regime_tributario

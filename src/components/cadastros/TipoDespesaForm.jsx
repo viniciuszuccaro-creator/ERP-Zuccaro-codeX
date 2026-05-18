@@ -7,14 +7,19 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Receipt } from 'lucide-react';
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import usePermissions from '@/components/lib/usePermissions';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmit, onSave, onClose, windowMode = false }) {
   const dadosIniciais = item || data || tipoDespesa || tipo;
   const { canCreate, canEdit } = usePermissions();
+  const { empresaAtual, grupoAtual, contexto, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
+  const contextKey = empresaAtual?.id ? `empresa-${empresaAtual.id}` : groupId ? `grupo-${groupId}` : "sem-contexto";
   const podeCriar = canCreate("Cadastros", "TipoDespesa") || canCreate("Financeiro", "TipoDespesa") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "TipoDespesa") || canEdit("Financeiro", "TipoDespesa") || canEdit("Cadastros", null);
+  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const [formData, setFormData] = useState(dadosIniciais || {
     codigo: '', nome: '', categoria: 'Operacional',
     conta_contabil_padrao_id: '', conta_contabil_padrao_nome: '',
@@ -33,14 +38,16 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
   }, [dadosIniciais?.id]);
 
   const { data: contasContabeis = [] } = useQuery({
-    queryKey: ['plano-contas'],
-    queryFn: () => base44.entities.PlanoDeContas.list(),
+    queryKey: ['tipo-despesa-plano-contas', contextKey],
+    queryFn: () => filterInContext('PlanoDeContas', {}, '-codigo_conta', 500),
+    enabled: contextoValido,
     staleTime: 300000, refetchOnWindowFocus: false,
   });
 
   const { data: centrosResultado = [] } = useQuery({
-    queryKey: ['centros-resultado'],
-    queryFn: () => base44.entities.CentroResultado.list(),
+    queryKey: ['tipo-despesa-centros-resultado', contextKey],
+    queryFn: () => filterInContext('CentroResultado', {}, '-nome', 500),
+    enabled: contextoValido,
     staleTime: 300000, refetchOnWindowFocus: false,
   });
 
@@ -54,8 +61,17 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
       alert("Sem permissao para criar tipos de despesa.");
       return;
     }
+    if (!contextoValido) {
+      alert("Selecione um grupo ou empresa antes de salvar.");
+      return;
+    }
+    const payload = {
+      ...formData,
+      group_id: groupId || formData.group_id,
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
+    };
     if (onSubmit) {
-      onSubmit(formData);
+      onSubmit(payload);
     } else {
       if (onSave) onSave();
       if (onClose) onClose();
@@ -67,18 +83,18 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Código</Label>
-          <Input value={formData.codigo} onChange={(e) => setFormData({ ...formData, codigo: e.target.value })} placeholder="DESP001" />
+          <Input value={formData.codigo} onChange={(e) => setFormData({ ...formData, codigo: e.target.value })} placeholder="DESP001" disabled={!podeSalvar} data-permission="Financeiro.TipoDespesa.editar" data-action="editar-codigo-tipo-despesa" data-sensitive />
         </div>
         <div>
           <Label>Nome *</Label>
-          <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} placeholder="Energia Elétrica" required />
+          <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} placeholder="Energia Elétrica" required disabled={!podeSalvar} data-permission="Financeiro.TipoDespesa.editar" data-action="editar-nome-tipo-despesa" data-sensitive />
         </div>
       </div>
 
       <div>
         <Label>Categoria</Label>
         <Select value={formData.categoria} onValueChange={(v) => setFormData({ ...formData, categoria: v })}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectTrigger disabled={!podeSalvar} data-permission="Financeiro.TipoDespesa.editar" data-action="selecionar-categoria-tipo-despesa" data-sensitive><SelectValue /></SelectTrigger>
           <SelectContent>
             {['Fixa','Variável','Operacional','Administrativa','Comercial','Fiscal','Investimento','Utilidades','Outros'].map(c => (
               <SelectItem key={c} value={c}>{c}</SelectItem>
@@ -93,7 +109,7 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
           const conta = contasContabeis.find(c => c.id === v);
           setFormData({ ...formData, conta_contabil_padrao_id: v, conta_contabil_padrao_nome: conta?.nome || '' });
         }}>
-          <SelectTrigger><SelectValue placeholder="Selecione a conta..." /></SelectTrigger>
+          <SelectTrigger disabled={!contextoValido || !podeSalvar} data-permission="Financeiro.TipoDespesa.editar" data-action="selecionar-conta-padrao-tipo-despesa" data-sensitive><SelectValue placeholder="Selecione a conta..." /></SelectTrigger>
           <SelectContent>
             {contasContabeis.map(c => <SelectItem key={c.id} value={c.id}>{c.codigo} - {c.nome}</SelectItem>)}
           </SelectContent>
@@ -106,7 +122,7 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
           const centro = centrosResultado.find(c => c.id === v);
           setFormData({ ...formData, centro_resultado_padrao_id: v, centro_resultado_padrao_nome: centro?.nome || '' });
         }}>
-          <SelectTrigger><SelectValue placeholder="Selecione o centro..." /></SelectTrigger>
+          <SelectTrigger disabled={!contextoValido || !podeSalvar} data-permission="Financeiro.TipoDespesa.editar" data-action="selecionar-centro-resultado-tipo-despesa" data-sensitive><SelectValue placeholder="Selecione o centro..." /></SelectTrigger>
           <SelectContent>
             {centrosResultado.map(c => <SelectItem key={c.id} value={c.id}>{c.codigo} - {c.nome}</SelectItem>)}
           </SelectContent>
@@ -115,38 +131,39 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
 
       <div>
         <Label>Observações</Label>
-        <Textarea value={formData.observacoes || ''} onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })} rows={2} />
+        <Textarea value={formData.observacoes || ''} onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })} rows={2} disabled={!podeSalvar} data-permission="Financeiro.TipoDespesa.editar" data-action="editar-observacoes-tipo-despesa" data-sensitive />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="flex items-center justify-between p-3 border rounded-sm bg-slate-50">
           <Label>Exige Aprovação</Label>
-          <Switch checked={!!formData.exige_aprovacao} onCheckedChange={(v) => setFormData({ ...formData, exige_aprovacao: v })} />
+          <Switch checked={!!formData.exige_aprovacao} onCheckedChange={(v) => setFormData({ ...formData, exige_aprovacao: v })} disabled={!podeSalvar} data-permission="Financeiro.TipoDespesa.aprovacao" data-action="alternar-aprovacao-tipo-despesa" data-sensitive />
         </div>
         {formData.exige_aprovacao && (
           <div>
             <Label>Limite para Aprovação Automática (R$)</Label>
             <Input type="number" step="0.01" value={formData.limite_aprovacao_automatica || 0}
-              onChange={(e) => setFormData({ ...formData, limite_aprovacao_automatica: parseFloat(e.target.value) || 0 })} />
+              onChange={(e) => setFormData({ ...formData, limite_aprovacao_automatica: parseFloat(e.target.value) || 0 })} disabled={!podeSalvar} data-permission="Financeiro.TipoDespesa.aprovacao" data-action="editar-limite-aprovacao-tipo-despesa" data-sensitive />
           </div>
         )}
       </div>
 
       <div className="flex items-center justify-between p-3 border rounded-sm bg-slate-50">
         <Label>Pode ser Recorrente</Label>
-        <Switch checked={!!formData.pode_ser_recorrente} onCheckedChange={(v) => setFormData({ ...formData, pode_ser_recorrente: v })} />
+        <Switch checked={!!formData.pode_ser_recorrente} onCheckedChange={(v) => setFormData({ ...formData, pode_ser_recorrente: v })} disabled={!podeSalvar} data-permission="Financeiro.TipoDespesa.editar" data-action="alternar-recorrencia-tipo-despesa" data-sensitive />
       </div>
 
       <div className="flex items-center justify-between p-3 border rounded-sm bg-slate-50">
         <Label className="font-semibold">Tipo Ativo</Label>
-        <Switch checked={!!formData.ativo} onCheckedChange={(v) => setFormData({ ...formData, ativo: v })} />
+        <Switch checked={!!formData.ativo} onCheckedChange={(v) => setFormData({ ...formData, ativo: v })} disabled={!podeSalvar} data-permission="Financeiro.TipoDespesa.alterarStatus" data-action="alternar-status-tipo-despesa" data-sensitive />
       </div>
 
       <Button
         type="submit"
         className="w-full bg-purple-600 hover:bg-purple-700"
-        disabled={dadosIniciais?.id ? !podeEditar : !podeCriar}
+        disabled={!contextoValido || !podeSalvar}
         data-permission="Cadastros.TipoDespesa.salvar"
+        data-action="salvar-tipo-despesa"
         data-sensitive
       >
         {dadosIniciais ? 'Atualizar Tipo' : 'Criar Tipo de Despesa'}
