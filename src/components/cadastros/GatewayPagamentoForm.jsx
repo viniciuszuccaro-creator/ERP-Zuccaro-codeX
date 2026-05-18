@@ -11,12 +11,21 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreditCard, Globe, Lock, BarChart3, Settings } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 export default function GatewayPagamentoForm({ gateway, windowMode = false, onSubmit }) {
+  const { empresaAtual, grupoAtual, contexto, filterInContext } = useContextoVisual();
+  const { canCreate, canEdit } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || gateway?.group_id || null;
+  const contextoValido = Boolean(groupId || empresaAtual?.id || gateway?.empresa_id);
+  const podeCriar = canCreate("Cadastros", "GatewayPagamento") || canCreate("Financeiro", "GatewayPagamento") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "GatewayPagamento") || canEdit("Financeiro", "GatewayPagamento") || canEdit("Cadastros", null);
+  const podeSalvar = gateway?.id ? podeEditar : podeCriar;
   const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas'],
-    queryFn: () => base44.entities.Empresa.list(),
+    queryKey: ['empresas-gateway-pagamento', groupId, empresaAtual?.id],
+    queryFn: () => filterInContext('Empresa', {}, 'nome_fantasia', 500),
+    enabled: contextoValido,
   });
 
   const [formData, setFormData] = useState(gateway || {
@@ -53,9 +62,19 @@ export default function GatewayPagamentoForm({ gateway, windowMode = false, onSu
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!contextoValido) {
+      alert('Selecione um grupo ou empresa antes de salvar.');
+      return;
+    }
+    if (!podeSalvar) {
+      alert('Sem permissao para salvar gateways de pagamento.');
+      return;
+    }
     onSubmit?.({
       ...formData,
-      tipos_pagamento_suportados: tiposSelecionados
+      tipos_pagamento_suportados: tiposSelecionados,
+      group_id: groupId || formData.group_id,
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
     });
   };
 
@@ -385,7 +404,7 @@ export default function GatewayPagamentoForm({ gateway, windowMode = false, onSu
 
         <div className={windowMode ? "border-t bg-slate-50 p-4" : "mt-6"}>
           <div className="flex justify-end gap-3">
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={!contextoValido || !podeSalvar} data-permission="Cadastros.GatewayPagamento.salvar" data-action="salvar-gateway-pagamento" data-sensitive>
               <CreditCard className="w-4 h-4 mr-2" />
               {gateway ? 'Atualizar Gateway' : 'Cadastrar Gateway'}
             </Button>

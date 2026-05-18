@@ -7,8 +7,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Zap, Save } from "lucide-react";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function ApiExternaForm({ apiExterna, onSubmit, isSubmitting, windowMode = false }) {
+  const { canCreate, canEdit } = usePermissions();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || apiExterna?.group_id || null;
+  const contextoValido = Boolean(groupId || empresaAtual?.id || apiExterna?.empresa_id);
+  const podeCriar = canCreate("Cadastros", "ApiExterna") || canCreate("Sistema", "ApiExterna") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "ApiExterna") || canEdit("Sistema", "ApiExterna") || canEdit("Cadastros", null);
+  const podeSalvar = apiExterna?.id ? podeEditar : podeCriar;
   const [formData, setFormData] = useState(apiExterna || {
     nome_integracao: "",
     tipo_api: "REST",
@@ -28,7 +37,20 @@ export default function ApiExternaForm({ apiExterna, onSubmit, isSubmitting, win
       alert('Nome da integração é obrigatório');
       return;
     }
-    await onSubmit({ ...formData, nome: formData.nome_integracao });
+    if (!contextoValido) {
+      alert('Selecione um grupo ou empresa antes de salvar.');
+      return;
+    }
+    if (!podeSalvar) {
+      alert('Sem permissao para salvar APIs externas.');
+      return;
+    }
+    await onSubmit({
+      ...formData,
+      nome: formData.nome_integracao,
+      group_id: groupId || formData.group_id,
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
+    });
   };
 
   const form = (
@@ -48,12 +70,16 @@ export default function ApiExternaForm({ apiExterna, onSubmit, isSubmitting, win
                 value={formData.nome_integracao}
                 onChange={(e) => setFormData({ ...formData, nome_integracao: e.target.value })}
                 placeholder="Ex: API WhatsApp Business"
+                disabled={!podeSalvar}
+                data-permission="Cadastros.ApiExterna.editar"
+                data-action="editar-nome-api-externa"
+                data-sensitive
               />
             </div>
             <div>
               <Label>Tipo de API</Label>
-              <Select value={formData.tipo_api} onValueChange={(val) => setFormData({ ...formData, tipo_api: val })}>
-                <SelectTrigger>
+              <Select value={formData.tipo_api} onValueChange={(val) => setFormData({ ...formData, tipo_api: val })} disabled={!podeSalvar}>
+                <SelectTrigger data-permission="Cadastros.ApiExterna.editar" data-action="editar-tipo-api-externa" data-sensitive>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -72,6 +98,10 @@ export default function ApiExternaForm({ apiExterna, onSubmit, isSubmitting, win
               value={formData.url_base}
               onChange={(e) => setFormData({ ...formData, url_base: e.target.value })}
               placeholder="https://api.exemplo.com/v1"
+              disabled={!podeSalvar}
+              data-permission="Cadastros.ApiExterna.editar"
+              data-action="editar-url-api-externa"
+              data-sensitive
             />
           </div>
 
@@ -82,6 +112,10 @@ export default function ApiExternaForm({ apiExterna, onSubmit, isSubmitting, win
                 type="password"
                 value={formData.api_key}
                 onChange={(e) => setFormData({ ...formData, api_key: e.target.value })}
+                disabled={!podeSalvar}
+                data-permission="Cadastros.ApiExterna.credenciais"
+                data-action="editar-api-key-api-externa"
+                data-sensitive
               />
             </div>
             <div>
@@ -90,6 +124,10 @@ export default function ApiExternaForm({ apiExterna, onSubmit, isSubmitting, win
                 type="password"
                 value={formData.api_secret}
                 onChange={(e) => setFormData({ ...formData, api_secret: e.target.value })}
+                disabled={!podeSalvar}
+                data-permission="Cadastros.ApiExterna.credenciais"
+                data-action="editar-api-secret-api-externa"
+                data-sensitive
               />
             </div>
           </div>
@@ -100,6 +138,9 @@ export default function ApiExternaForm({ apiExterna, onSubmit, isSubmitting, win
               value={formData.descricao}
               onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
               rows={3}
+              disabled={!podeSalvar}
+              data-permission="Cadastros.ApiExterna.editar"
+              data-action="editar-descricao-api-externa"
             />
           </div>
 
@@ -108,13 +149,17 @@ export default function ApiExternaForm({ apiExterna, onSubmit, isSubmitting, win
             <Switch
               checked={formData.ativo}
               onCheckedChange={(val) => setFormData({ ...formData, ativo: val })}
+              disabled={!podeSalvar}
+              data-permission="Cadastros.ApiExterna.editar"
+              data-action="alternar-api-externa"
+              data-sensitive
             />
           </div>
         </CardContent>
       </Card>
 
       <div className="flex justify-end gap-3">
-        <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={isSubmitting}>
+        <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Cadastros.ApiExterna.salvar" data-action="salvar-api-externa" data-sensitive>
           <Save className="w-4 h-4 mr-2" />
           {isSubmitting ? 'Salvando...' : apiExterna ? 'Atualizar' : 'Criar'}
         </Button>

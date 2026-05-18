@@ -6,9 +6,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Webhook as WebhookIcon } from 'lucide-react';
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
-export default function WebhookForm({ webhook, onSubmit, windowMode = false }) {
+export default function WebhookForm({ webhook, onSubmit, isSubmitting, windowMode = false }) {
   const dadosIniciais = webhook;
+  const { canCreate, canEdit } = usePermissions();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const contextoValido = Boolean(groupId || empresaAtual?.id || dadosIniciais?.empresa_id);
+  const podeCriar = canCreate("Cadastros", "Webhook") || canCreate("Sistema", "Webhook") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "Webhook") || canEdit("Sistema", "Webhook") || canEdit("Cadastros", null);
+  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const [formData, setFormData] = useState(dadosIniciais || {
     nome_webhook: '',
     evento_gatilho: 'pedido_aprovado',
@@ -20,7 +29,20 @@ export default function WebhookForm({ webhook, onSubmit, windowMode = false }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ ...formData, nome: formData.nome_webhook || formData.nome || '' });
+    if (!contextoValido) {
+      alert('Selecione um grupo ou empresa antes de salvar.');
+      return;
+    }
+    if (!podeSalvar) {
+      alert('Sem permissao para salvar webhooks.');
+      return;
+    }
+    onSubmit({
+      ...formData,
+      nome: formData.nome_webhook || formData.nome || '',
+      group_id: groupId || formData.group_id,
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
+    });
   };
 
   const content = (
@@ -31,14 +53,18 @@ export default function WebhookForm({ webhook, onSubmit, windowMode = false }) {
           value={formData.nome_webhook}
           onChange={(e) => setFormData({ ...formData, nome_webhook: e.target.value })}
           required
+          disabled={!podeSalvar}
+          data-permission="Cadastros.Webhook.editar"
+          data-action="editar-nome-webhook"
+          data-sensitive
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Evento Gatilho *</Label>
-          <Select value={formData.evento_gatilho} onValueChange={(v) => setFormData({ ...formData, evento_gatilho: v })}>
-            <SelectTrigger>
+          <Select value={formData.evento_gatilho} onValueChange={(v) => setFormData({ ...formData, evento_gatilho: v })} disabled={!podeSalvar}>
+            <SelectTrigger data-permission="Cadastros.Webhook.editar" data-action="editar-evento-webhook" data-sensitive>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -54,8 +80,8 @@ export default function WebhookForm({ webhook, onSubmit, windowMode = false }) {
         </div>
         <div>
           <Label>Método HTTP</Label>
-          <Select value={formData.metodo_http} onValueChange={(v) => setFormData({ ...formData, metodo_http: v })}>
-            <SelectTrigger>
+          <Select value={formData.metodo_http} onValueChange={(v) => setFormData({ ...formData, metodo_http: v })} disabled={!podeSalvar}>
+            <SelectTrigger data-permission="Cadastros.Webhook.editar" data-action="editar-metodo-webhook" data-sensitive>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -74,6 +100,10 @@ export default function WebhookForm({ webhook, onSubmit, windowMode = false }) {
           onChange={(e) => setFormData({ ...formData, url_destino: e.target.value })}
           placeholder="https://api.example.com/webhook"
           required
+          disabled={!podeSalvar}
+          data-permission="Cadastros.Webhook.credenciais"
+          data-action="editar-url-webhook"
+          data-sensitive
         />
       </div>
 
@@ -83,6 +113,9 @@ export default function WebhookForm({ webhook, onSubmit, windowMode = false }) {
           value={formData.descricao}
           onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
           rows={2}
+          disabled={!podeSalvar}
+          data-permission="Cadastros.Webhook.editar"
+          data-action="editar-descricao-webhook"
         />
       </div>
 
@@ -91,10 +124,14 @@ export default function WebhookForm({ webhook, onSubmit, windowMode = false }) {
         <Switch
           checked={formData.ativo}
           onCheckedChange={(v) => setFormData({ ...formData, ativo: v })}
+          disabled={!podeSalvar}
+          data-permission="Cadastros.Webhook.editar"
+          data-action="alternar-webhook"
+          data-sensitive
         />
       </div>
 
-      <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700">
+      <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Cadastros.Webhook.salvar" data-action="salvar-webhook" data-sensitive>
         {dadosIniciais ? 'Atualizar' : 'Criar Webhook'}
       </Button>
     </form>

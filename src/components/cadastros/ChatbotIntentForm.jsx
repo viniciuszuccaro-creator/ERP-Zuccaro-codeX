@@ -7,8 +7,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageCircle, Save, Plus, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmitting, windowMode = false }) {
+  const { canCreate, canEdit } = usePermissions();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || chatbotIntent?.group_id || null;
+  const contextoValido = Boolean(groupId || empresaAtual?.id || chatbotIntent?.empresa_id);
+  const podeCriar = canCreate("Cadastros", "ChatbotIntent") || canCreate("Sistema", "ChatbotIntent") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "ChatbotIntent") || canEdit("Sistema", "ChatbotIntent") || canEdit("Cadastros", null);
+  const podeSalvar = chatbotIntent?.id ? podeEditar : podeCriar;
   const [formData, setFormData] = useState(chatbotIntent || {
     nome_intent: "",
     descricao: "",
@@ -23,7 +32,7 @@ export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmittin
   const [novaFrase, setNovaFrase] = useState("");
 
   const adicionarFrase = () => {
-    if (novaFrase.trim()) {
+    if (podeSalvar && novaFrase.trim()) {
       setFormData({
         ...formData,
         frases_treinamento: [...(formData.frases_treinamento || []), novaFrase.trim()]
@@ -33,6 +42,7 @@ export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmittin
   };
 
   const removerFrase = (index) => {
+    if (!podeSalvar) return;
     setFormData({
       ...formData,
       frases_treinamento: formData.frases_treinamento.filter((_, i) => i !== index)
@@ -45,7 +55,20 @@ export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmittin
       alert('Nome da intent é obrigatório');
       return;
     }
-    await onSubmit({ ...formData, nome: formData.nome_intent });
+    if (!contextoValido) {
+      alert('Selecione um grupo ou empresa antes de salvar.');
+      return;
+    }
+    if (!podeSalvar) {
+      alert('Sem permissao para salvar intents do chatbot.');
+      return;
+    }
+    await onSubmit({
+      ...formData,
+      nome: formData.nome_intent,
+      group_id: groupId || formData.group_id,
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
+    });
   };
 
   const form = (
@@ -94,7 +117,7 @@ export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmittin
                 placeholder="Ex: Quero consultar meu pedido"
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), adicionarFrase())}
               />
-              <Button type="button" onClick={adicionarFrase} size="sm">
+              <Button type="button" onClick={adicionarFrase} size="sm" disabled={!podeSalvar} data-permission="Cadastros.ChatbotIntent.editar" data-action="adicionar-frase-treinamento" data-sensitive>
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
@@ -106,6 +129,10 @@ export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmittin
                     type="button"
                     onClick={() => removerFrase(idx)}
                     className="ml-2 hover:text-red-600"
+                    disabled={!podeSalvar}
+                    data-permission="Cadastros.ChatbotIntent.editar"
+                    data-action="remover-frase-treinamento"
+                    data-sensitive
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -143,7 +170,7 @@ export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmittin
       </Card>
 
       <div className="flex justify-end gap-3">
-        <Button type="submit" className="bg-purple-600 hover:bg-purple-700" disabled={isSubmitting}>
+        <Button type="submit" className="bg-purple-600 hover:bg-purple-700" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Cadastros.ChatbotIntent.salvar" data-action="salvar-intent-chatbot" data-sensitive>
           <Save className="w-4 h-4 mr-2" />
           {isSubmitting ? 'Salvando...' : chatbotIntent ? 'Atualizar' : 'Criar'}
         </Button>

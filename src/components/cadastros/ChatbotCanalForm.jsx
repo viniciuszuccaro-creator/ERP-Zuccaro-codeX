@@ -7,9 +7,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Smartphone, Save } from "lucide-react";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function ChatbotCanalForm({ chatbotCanal, onSubmit, isSubmitting, windowMode = false }) {
   const dadosIniciais = chatbotCanal;
+  const { canCreate, canEdit } = usePermissions();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const contextoValido = Boolean(groupId || empresaAtual?.id || dadosIniciais?.empresa_id);
+  const podeCriar = canCreate("Cadastros", "ChatbotCanal") || canCreate("Sistema", "ChatbotCanal") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "ChatbotCanal") || canEdit("Sistema", "ChatbotCanal") || canEdit("Cadastros", null);
+  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const [formData, setFormData] = useState(dadosIniciais || {
     nome_canal: "",
     tipo_canal: "WhatsApp",
@@ -28,7 +37,20 @@ export default function ChatbotCanalForm({ chatbotCanal, onSubmit, isSubmitting,
       alert('Nome do canal é obrigatório');
       return;
     }
-    await onSubmit({ ...formData, nome: formData.nome_canal });
+    if (!contextoValido) {
+      alert('Selecione um grupo ou empresa antes de salvar.');
+      return;
+    }
+    if (!podeSalvar) {
+      alert('Sem permissao para salvar canais de chatbot.');
+      return;
+    }
+    await onSubmit({
+      ...formData,
+      nome: formData.nome_canal,
+      group_id: groupId || formData.group_id,
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
+    });
   };
 
   const form = (
@@ -125,7 +147,7 @@ export default function ChatbotCanalForm({ chatbotCanal, onSubmit, isSubmitting,
       </Card>
 
       <div className="flex justify-end gap-3">
-        <Button type="submit" className="bg-green-600 hover:bg-green-700" disabled={isSubmitting}>
+        <Button type="submit" className="bg-green-600 hover:bg-green-700" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Cadastros.ChatbotCanal.salvar" data-action="salvar-canal-chatbot" data-sensitive>
           <Save className="w-4 h-4 mr-2" />
           {isSubmitting ? 'Salvando...' : dadosIniciais ? 'Atualizar' : 'Criar'}
         </Button>

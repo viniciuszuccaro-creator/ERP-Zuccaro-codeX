@@ -3,6 +3,10 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { useUser } from "@/components/lib/UserContext";
+import { useToast } from "@/components/ui/use-toast";
+import { base44 } from "@/api/base44Client";
 import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
 import { Zap, Code, Settings, Package, Link2, Cloud, MessageCircle, Bell } from "lucide-react";
 import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado";
@@ -25,8 +29,53 @@ function filterTiles(tiles, searchTerm) {
 export default function Bloco6Tecnologia({ allCounts, isLoading, searchTerm = "" }) {
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { user } = useUser();
+  const { toast } = useToast();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+
+  const registrarAuditoria = async (entidade, acao, sucesso = true) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario_id: user?.id,
+        usuario: user?.full_name || user?.email || "Usuario",
+        acao,
+        modulo: "Cadastros",
+        entidade,
+        tipo_auditoria: sucesso ? "acesso" : "seguranca",
+        descricao: `${acao} em cadastro de tecnologia, IA e parametros: ${entidade}`,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        dados_novos: { bloco: "Tecnologia, IA & Parametros", entidade },
+        data_hora: new Date().toISOString(),
+        sucesso,
+      });
+    } catch (_) {}
+  };
 
   const openList = (entidade, titulo, Icon, campos, FormComp) => () => {
+    if (!contextoValido) {
+      toast({
+        title: "Selecione grupo ou empresa",
+        description: "Cadastros de tecnologia precisam de contexto ativo para abrir.",
+        variant: "destructive",
+      });
+      registrarAuditoria(entidade, "Bloqueio sem contexto", false);
+      return;
+    }
+    if (!canViewEntity(entidade)) {
+      toast({
+        title: "Acesso negado",
+        description: "Seu perfil nao possui permissao para visualizar este cadastro.",
+        variant: "destructive",
+      });
+      registrarAuditoria(entidade, "Bloqueio por permissao", false);
+      return;
+    }
+    registrarAuditoria(entidade, "Visualizacao");
     openWindow(
       VisualizadorUniversalEntidadeV24,
       { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true },
@@ -61,16 +110,19 @@ export default function Bloco6Tecnologia({ allCounts, isLoading, searchTerm = ""
             </CardTitle>
           </div>
         </CardHeader>
-        <CardContent className="p-4 text-sm text-slate-600">Total consolidado do grupo.</CardContent>
+        <CardContent className="p-4 text-sm text-slate-600">
+          {contextoValido ? "Total consolidado do grupo/empresa." : "Selecione grupo ou empresa para abrir tecnologia, IA e parametros."}
+        </CardContent>
       </Card>
 
       {filteredTiles.map(({ k, t, i: Icon, c, f: FormComp }) => (
         <Card 
           key={k} 
           className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
-          onClick={canViewEntity(k) ? openList(k, t, Icon, c, FormComp) : undefined}
+          onClick={openList(k, t, Icon, c, FormComp)}
           data-permission={`Cadastros.${k}.visualizar`}
           data-action={`Cadastros.${k}.abrir`}
+          data-context-required="group-or-company"
         >
           <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
             <div className="flex items-center justify-between">
@@ -85,9 +137,10 @@ export default function Bloco6Tecnologia({ allCounts, isLoading, searchTerm = ""
                 size="sm" 
                 className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); openList(k, t, Icon, c, FormComp)(); }}
-                disabled={!canViewEntity(k)}
+                disabled={!contextoValido || !canViewEntity(k)}
                 data-permission={`Cadastros.${k}.visualizar`}
                 data-action={`Cadastros.${k}.abrir`}
+                data-context-required="group-or-company"
               >
                 Abrir
               </Button>

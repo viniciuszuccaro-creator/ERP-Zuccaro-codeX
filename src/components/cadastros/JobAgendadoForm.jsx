@@ -7,8 +7,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Clock, Save } from "lucide-react";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function JobAgendadoForm({ jobAgendado, onSubmit, isSubmitting, windowMode = false }) {
+  const { canCreate, canEdit } = usePermissions();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || jobAgendado?.group_id || null;
+  const contextoValido = Boolean(groupId || empresaAtual?.id || jobAgendado?.empresa_id);
+  const podeCriar = canCreate("Cadastros", "JobAgendado") || canCreate("Sistema", "JobAgendado") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "JobAgendado") || canEdit("Sistema", "JobAgendado") || canEdit("Cadastros", null);
+  const podeSalvar = jobAgendado?.id ? podeEditar : podeCriar;
   const [formData, setFormData] = useState(jobAgendado || {
     nome_job: "",
     tipo_job: "IA_Fiscal",
@@ -26,7 +35,20 @@ export default function JobAgendadoForm({ jobAgendado, onSubmit, isSubmitting, w
       alert('Nome do job é obrigatório');
       return;
     }
-    await onSubmit({ ...formData, nome: formData.nome_job });
+    if (!contextoValido) {
+      alert('Selecione um grupo ou empresa antes de salvar.');
+      return;
+    }
+    if (!podeSalvar) {
+      alert('Sem permissao para salvar jobs agendados.');
+      return;
+    }
+    await onSubmit({
+      ...formData,
+      nome: formData.nome_job,
+      group_id: groupId || formData.group_id,
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
+    });
   };
 
   const form = (
@@ -123,7 +145,7 @@ export default function JobAgendadoForm({ jobAgendado, onSubmit, isSubmitting, w
       </Card>
 
       <div className="flex justify-end gap-3">
-        <Button type="submit" className="bg-amber-600 hover:bg-amber-700" disabled={isSubmitting}>
+        <Button type="submit" className="bg-amber-600 hover:bg-amber-700" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Cadastros.JobAgendado.salvar" data-action="salvar-job-agendado" data-sensitive>
           <Save className="w-4 h-4 mr-2" />
           {isSubmitting ? 'Salvando...' : jobAgendado ? 'Atualizar' : 'Criar'}
         </Button>
