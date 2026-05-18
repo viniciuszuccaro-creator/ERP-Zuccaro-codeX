@@ -24,7 +24,7 @@ export default function LocalEstoqueForm({
 }) {
   const dadosIniciais = localEstoque || local;
   const { hasPermission } = usePermissions();
-  const { empresaAtual, grupoAtual, contextoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = hasPermission?.("Cadastros.LocalEstoque.criar") || hasPermission?.("Estoque.LocalEstoque.criar");
@@ -61,7 +61,7 @@ export default function LocalEstoqueForm({
       onSubmit({
         ...formData,
         group_id: groupId || formData.group_id,
-        empresa_id: contextoAtual === "empresa" ? empresaAtual?.id : formData.empresa_id
+        empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id
       });
     }
   };

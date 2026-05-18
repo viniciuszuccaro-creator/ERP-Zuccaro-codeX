@@ -14,7 +14,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 export default function TipoFreteForm({ tipo, tipoFrete, onSubmit, isSubmitting, windowMode = false }) {
   const dadosIniciais = tipoFrete || tipo;
   const { hasPermission } = usePermissions();
-  const { empresaAtual, grupoAtual, contextoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = hasPermission?.("Cadastros.TipoFrete.criar") || hasPermission?.("Logistica.TipoFrete.criar");
@@ -48,7 +48,7 @@ export default function TipoFreteForm({ tipo, tipoFrete, onSubmit, isSubmitting,
     onSubmit({
       ...formData,
       group_id: groupId || formData.group_id,
-      empresa_id: contextoAtual === "empresa" ? empresaAtual?.id : formData.empresa_id,
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
       nome: formData.descricao
     });
   };

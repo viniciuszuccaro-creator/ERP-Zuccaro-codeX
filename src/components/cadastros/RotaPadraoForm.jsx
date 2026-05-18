@@ -11,7 +11,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 export default function RotaPadraoForm({ rota, rotaPadrao, onSubmit, windowMode = false }) {
   const dadosIniciais = rotaPadrao || rota;
   const { hasPermission } = usePermissions();
-  const { empresaAtual, grupoAtual, contextoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = hasPermission?.("Cadastros.RotaPadrao.criar") || hasPermission?.("Logistica.RotaPadrao.criar");
@@ -40,7 +40,7 @@ export default function RotaPadraoForm({ rota, rotaPadrao, onSubmit, windowMode 
     onSubmit({
       ...formData,
       group_id: groupId || formData.group_id,
-      empresa_id: contextoAtual === "empresa" ? empresaAtual?.id : formData.empresa_id,
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
       nome: formData.nome_rota || formData.nome || ''
     });
   };

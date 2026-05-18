@@ -19,7 +19,7 @@ import { toast } from "sonner";
 export default function MotoristaForm({ motorista, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || motorista;
   const { hasPermission } = usePermissions();
-  const { empresaAtual, grupoAtual, contextoAtual, filterInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, filterInContext } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = hasPermission?.("Cadastros.Motorista.criar") || hasPermission?.("Logistica.Motorista.criar");
@@ -75,7 +75,7 @@ export default function MotoristaForm({ motorista, item, data, initialData, defa
     onSubmit({
       ...formData,
       group_id: groupId || formData.group_id,
-      empresa_id: contextoAtual === "empresa" ? empresaAtual?.id : formData.empresa_id,
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
       nome: formData.nome_completo || formData.nome || ''
     });
   };

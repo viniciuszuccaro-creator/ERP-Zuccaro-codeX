@@ -491,3 +491,15 @@ Checklist inicial:
 - `TabelaFiscalForm` corrigiu o uso de contexto para gravar `empresa_id` quando o usuario estiver operando em uma empresa.
 - Build validado com sucesso apos as alteracoes.
 - Proximo passo sugerido: continuar `Cadastros Gerais` no bloco `Logistica, Frotas & Almoxarifado`, reforcando formularios de veiculos, motoristas, rotas, almoxarifados e locais de estoque.
+
+### Cadastros Gerais - Logistica, Frotas & Almoxarifado
+
+- Seguido o plano de melhoria no bloco existente `Logistica, Frotas & Almoxarifado`, sem criar telas, modulos ou entidades duplicadas.
+- `Bloco4Logistica` passou a exigir contexto grupo/empresa antes de abrir cadastros logisticos, frota e almoxarifado.
+- Abertura e bloqueio de entidades do bloco agora geram `AuditLog` com usuario, modulo, entidade, grupo e empresa.
+- Cards e botoes do bloco receberam `data-context-required`, mantendo `data-permission` e `data-action` existentes.
+- O botao existente `App` do motorista agora tambem respeita contexto e permissao antes de abrir.
+- `VeiculoForm`, `MotoristaForm`, `LocalEstoqueForm`, `RotaPadraoForm` e `TipoFreteForm` passaram a usar o `contexto` real do `useContextoVisual` para gravar `empresa_id` quando o usuario estiver em uma empresa.
+- Mantido o `group_id` em todos os payloads desses formularios, reforcando a regra de consolidacao no grupo.
+- Build validado com sucesso apos as alteracoes.
+- Proximo passo sugerido: continuar `Cadastros Gerais` no bloco `Estrutura Organizacional`, reforcando Empresa, Filial, Departamento, Cargo, Turno, Centro de Operacao e Centro de Resultado.
