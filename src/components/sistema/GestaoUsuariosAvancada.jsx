@@ -48,6 +48,7 @@ export default function GestaoUsuariosAvancada({
     .filter(Boolean);
   const [formData, setFormData] = useState({
     perfil_acesso_id: usuario?.perfil_acesso_id || "sem-perfil",
+    nivel_acesso_contexto: usuario?.nivel_acesso_contexto || usuario?.escopo_acesso || "empresa",
     empresas_vinculadas: normalizeEmpresaIds(usuario?.empresas_vinculadas),
     restricoes_adicionais: usuario?.restricoes_adicionais || {
       pode_ver_apenas_proprios_registros: false,
@@ -76,13 +77,20 @@ export default function GestaoUsuariosAvancada({
       const empresasNomes = empresas
         .filter(e => empresasVinculadas.includes(e.id))
         .map(e => e.nome_fantasia || e.razao_social);
+      const escopoAcesso = data.nivel_acesso_contexto || "empresa";
+      const acessoGrupo = escopoAcesso === "grupo" || escopoAcesso === "grupo_empresa";
+      const acessoEmpresas = escopoAcesso === "empresa" || escopoAcesso === "grupo_empresa" || escopoAcesso === "setores";
 
       const payload = {
         ...data,
+        nivel_acesso_contexto: escopoAcesso,
+        escopo_acesso: escopoAcesso,
+        acesso_grupo: acessoGrupo,
+        acesso_empresas: acessoEmpresas,
         perfil_acesso_id: perfilId,
         perfil_acesso_nome: perfilSelecionado?.nome_perfil || null,
-        empresas_vinculadas: empresasVinculadas,
-        empresas_vinculadas_nomes: empresasNomes,
+        empresas_vinculadas: acessoEmpresas ? empresasVinculadas : [],
+        empresas_vinculadas_nomes: acessoEmpresas ? empresasNomes : [],
         ...(groupId ? { group_id: groupId } : {}),
         ...(empresaId ? { empresa_id: empresaId } : {})
       };
@@ -98,8 +106,9 @@ export default function GestaoUsuariosAvancada({
           entidade: "User",
           registro_id: usuario.id,
           descricao: `Configuracao de acesso alterada para ${usuario?.email || usuario?.full_name || usuario.id}`,
-          dados_antigos: {
+          dados_anteriores: {
             perfil_acesso_id: usuario?.perfil_acesso_id || null,
+            nivel_acesso_contexto: usuario?.nivel_acesso_contexto || usuario?.escopo_acesso || null,
             empresas_vinculadas: usuario?.empresas_vinculadas || [],
             autenticacao_dois_fatores: usuario?.autenticacao_dois_fatores || false,
             restricoes_adicionais: usuario?.restricoes_adicionais || null
@@ -130,6 +139,10 @@ export default function GestaoUsuariosAvancada({
       toast.error("Sem permissao para alterar empresas vinculadas.");
       return;
     }
+    if (formData.nivel_acesso_contexto === "grupo") {
+      toast.error("Acesso somente grupo nao permite vincular empresas.");
+      return;
+    }
     setFormData(prev => {
       const empresas = prev.empresas_vinculadas || [];
       const index = empresas.indexOf(empresaId);
@@ -138,6 +151,20 @@ export default function GestaoUsuariosAvancada({
         return { ...prev, empresas_vinculadas: empresas.filter(e => e !== empresaId) };
       } else {
         return { ...prev, empresas_vinculadas: [...empresas, empresaId] };
+      }
+    });
+  };
+
+  const setRestricaoLista = (campo, valor) => {
+    const lista = String(valor || "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    setFormData({
+      ...formData,
+      restricoes_adicionais: {
+        ...formData.restricoes_adicionais,
+        [campo]: lista
       }
     });
   };
@@ -264,6 +291,39 @@ export default function GestaoUsuariosAvancada({
         </CardContent>
       </Card>
 
+      {/* Escopo de Liberacao */}
+      <Card>
+        <CardHeader className="bg-slate-50 border-b">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Key className="w-4 h-4 text-slate-600" />
+            Escopo de Liberacao
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 space-y-3">
+          <div>
+            <Label>Tipo de acesso</Label>
+            <Select
+              value={formData.nivel_acesso_contexto}
+              disabled={controlesDesabilitados}
+              onValueChange={(v) => setFormData({ ...formData, nivel_acesso_contexto: v })}
+            >
+              <SelectTrigger className="mt-1" data-permission="Sistema.Controle de Acesso.editar" data-action="RBAC.Usuario.escopoAcesso" data-context-required="group-or-company" data-sensitive="true">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="grupo">Somente Grupo</SelectItem>
+                <SelectItem value="empresa">Somente Empresas</SelectItem>
+                <SelectItem value="grupo_empresa">Grupo e Empresas</SelectItem>
+                <SelectItem value="setores">Empresas e Setores</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
+            Esta liberacao grava o escopo no usuario e limita empresas/setores ao grupo ou empresa atual.
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Empresas Vinculadas */}
       <Card>
         <CardHeader className="bg-green-50 border-b">
@@ -286,10 +346,11 @@ export default function GestaoUsuariosAvancada({
                 >
                   <Checkbox
                     checked={vinculado}
-                    disabled={controlesDesabilitados}
+                    disabled={controlesDesabilitados || formData.nivel_acesso_contexto === "grupo"}
                     onCheckedChange={() => toggleEmpresa(empresa.id)}
                     data-permission="Sistema.Controle de Acesso.editar"
                     data-action={`RBAC.Usuario.empresa.${empresa.id}`}
+                    data-context-required="group-or-company"
                     data-sensitive="true"
                   />
                   <div className="flex-1">
@@ -303,6 +364,9 @@ export default function GestaoUsuariosAvancada({
               );
             })}
           </div>
+          {formData.nivel_acesso_contexto === "grupo" && (
+            <p className="text-xs text-slate-500 mt-3">Acesso definido como somente grupo; vinculos de empresas ficam desativados.</p>
+          )}
         </CardContent>
       </Card>
 
@@ -355,6 +419,37 @@ export default function GestaoUsuariosAvancada({
               data-action="RBAC.Usuario.limiteAprovacao"
               data-sensitive="true"
             />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>Setores permitidos</Label>
+              <Input
+                value={(formData.restricoes_adicionais?.departamentos_permitidos || []).join(", ")}
+                disabled={controlesDesabilitados}
+                onChange={(e) => setRestricaoLista("departamentos_permitidos", e.target.value)}
+                className="mt-1"
+                placeholder="Comercial, Financeiro, Producao"
+                data-permission="Sistema.Controle de Acesso.editar"
+                data-action="RBAC.Usuario.setoresPermitidos"
+                data-context-required="group-or-company"
+                data-sensitive="true"
+              />
+            </div>
+            <div>
+              <Label>Centros de custo permitidos</Label>
+              <Input
+                value={(formData.restricoes_adicionais?.centros_custo_permitidos || []).join(", ")}
+                disabled={controlesDesabilitados}
+                onChange={(e) => setRestricaoLista("centros_custo_permitidos", e.target.value)}
+                className="mt-1"
+                placeholder="ADM, OBRA-01, COMERCIAL"
+                data-permission="Sistema.Controle de Acesso.editar"
+                data-action="RBAC.Usuario.centrosCustoPermitidos"
+                data-context-required="group-or-company"
+                data-sensitive="true"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

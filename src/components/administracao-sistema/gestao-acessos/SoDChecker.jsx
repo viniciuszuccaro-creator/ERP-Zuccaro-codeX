@@ -47,6 +47,12 @@ export default function SoDChecker() {
     setErro(null);
     try {
       if (!hasValidScope) {
+        await audit({
+          acao: "Bloqueio sem contexto",
+          entidade: "SoD",
+          descricao: "Tentativa de executar analise SoD sem contexto valido.",
+          dadosNovos: { group_id: groupId || null, empresa_id: empresaId || null, scope: estaNoGrupo ? "grupo" : "empresa" }
+        });
         throw new Error("Selecione um grupo e uma empresa antes de analisar SoD.");
       }
 
@@ -68,6 +74,12 @@ export default function SoDChecker() {
     } catch (e) {
       const message = e?.message || "Falha ao executar analise";
       setErro(message);
+      await audit({
+        acao: "Erro Analise SoD",
+        entidade: "SoD",
+        descricao: message,
+        dadosNovos: { group_id: groupId || null, empresa_id: empresaId || null }
+      });
       toast.error(message);
     } finally {
       setLoading(false);
@@ -80,6 +92,12 @@ export default function SoDChecker() {
     setErro(null);
     try {
       if (!hasValidScope) {
+        await audit({
+          acao: "Bloqueio sem contexto",
+          entidade: "PerfilAcesso",
+          descricao: "Tentativa de persistir conflitos SoD sem contexto valido.",
+          dadosNovos: { group_id: groupId || null, empresa_id: empresaId || null }
+        });
         throw new Error("Selecione um grupo e uma empresa antes de persistir conflitos.");
       }
 
@@ -136,11 +154,11 @@ export default function SoDChecker() {
             <p className="text-xs text-slate-500">Verifica conflitos de permissoes nos perfis de acesso.</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button onClick={executarAnalise} disabled={loading || !hasValidScope || !podeExecutar} data-action="SoD.analisar" data-permission="Sistema.Controle de Acesso.editar">
+            <Button onClick={executarAnalise} disabled={loading || !hasValidScope || !podeExecutar} data-action="SoD.analisar" data-permission="Sistema.Controle de Acesso.editar" data-context-required="group-or-company" data-sensitive="true">
               {loading ? "Analisando..." : "Executar Analise"}
             </Button>
             {resultado && (
-              <Button onClick={persistirConflitos} disabled={persistindo || !hasValidScope || !podeExecutar} variant="outline" data-action="SoD.persistir" data-permission="Sistema.Controle de Acesso.editar" data-sensitive="true">
+              <Button onClick={persistirConflitos} disabled={persistindo || !hasValidScope || !podeExecutar} variant="outline" data-action="SoD.persistir" data-permission="Sistema.Controle de Acesso.editar" data-context-required="group-or-company" data-sensitive="true">
                 {persistindo ? "Salvando..." : "Persistir Conflitos"}
               </Button>
             )}

@@ -33,6 +33,25 @@ export default function UsuariosTab() {
     .map((item) => (typeof item === "string" ? item : item?.empresa_id || item?.id))
     .filter(Boolean);
 
+  const auditarUsuario = async ({ acao, descricao, dadosNovos }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Usuario local",
+        usuario_id: user?.id || null,
+        empresa_id: contexto === "grupo" ? null : empresaAtual?.id || null,
+        group_id: grupoAtivoId || null,
+        acao,
+        modulo: "Controle de Acesso",
+        entidade: "User",
+        descricao,
+        dados_novos: dadosNovos || null,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar gestao de usuarios:", error);
+    }
+  };
+
   const usuarioNoEscopo = (u) => {
     const empresasVinculadas = normalizeEmpresaIds(u.empresas_vinculadas);
     const temMarcadorEscopo = Boolean(
@@ -79,10 +98,20 @@ export default function UsuariosTab() {
   const handleInvite = async () => {
     if (!podeConvidar) {
       toast.error("Sem permissao para convidar usuario.");
+      await auditarUsuario({
+        acao: "Bloqueio por permissao",
+        descricao: "Tentativa de convidar usuario sem permissao.",
+        dadosNovos: { contexto, group_id: grupoAtivoId || null, empresa_id: empresaAtual?.id || null }
+      });
       return;
     }
     if (!contextoValido) {
       toast.error("Selecione um grupo ou empresa antes de convidar usuario.");
+      await auditarUsuario({
+        acao: "Bloqueio sem contexto",
+        descricao: "Tentativa de convidar usuario sem grupo ou empresa.",
+        dadosNovos: { contexto }
+      });
       return;
     }
 
@@ -135,10 +164,10 @@ export default function UsuariosTab() {
         <div className="flex flex-wrap gap-2 flex-1">
           <div className="relative min-w-[180px] flex-1 max-w-sm">
             <Search className="absolute left-2.5 top-2.5 w-4 h-4 text-slate-400" />
-            <Input className="pl-8" placeholder="Buscar usuario..." value={search} onChange={e => setSearch(e.target.value)} data-action="RBAC.Usuario.buscar" data-permission="Sistema.Controle de Acesso.visualizar" />
+            <Input className="pl-8" placeholder="Buscar usuario..." value={search} onChange={e => setSearch(e.target.value)} data-action="RBAC.Usuario.buscar" data-permission="Sistema.Controle de Acesso.visualizar" data-context-required="group-or-company" />
           </div>
           <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger className="w-32" data-action="RBAC.Usuario.filtroRole" data-permission="Sistema.Controle de Acesso.visualizar"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-32" data-action="RBAC.Usuario.filtroRole" data-permission="Sistema.Controle de Acesso.visualizar" data-context-required="group-or-company"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos</SelectItem>
               <SelectItem value="admin">Admin</SelectItem>
@@ -147,7 +176,7 @@ export default function UsuariosTab() {
           </Select>
         </div>
         {podeConvidar && (
-          <Button onClick={handleInvite} disabled={!contextoValido || !podeConvidar} className="bg-blue-600 hover:bg-blue-700" data-action="RBAC.Usuario.convidar" data-permission="Sistema.Controle de Acesso.criar" data-sensitive="true">
+          <Button onClick={handleInvite} disabled={!contextoValido || !podeConvidar} className="bg-blue-600 hover:bg-blue-700" data-action="RBAC.Usuario.convidar" data-permission="Sistema.Controle de Acesso.criar" data-context-required="group-or-company" data-sensitive="true">
             <UserCog className="w-4 h-4 mr-2" />Convidar Usuario
           </Button>
         )}
@@ -181,7 +210,7 @@ export default function UsuariosTab() {
                     )}
                   </div>
                 </div>
-                <Button size="sm" variant="outline" disabled={!contextoValido || !podeEditarUsuarios} onClick={() => setSelectedUser(u)} data-action="RBAC.Usuario.configurar" data-permission="Sistema.Controle de Acesso.editar" data-sensitive="true">
+                <Button size="sm" variant="outline" disabled={!contextoValido || !podeEditarUsuarios} onClick={() => setSelectedUser(u)} data-action="RBAC.Usuario.configurar" data-permission="Sistema.Controle de Acesso.editar" data-context-required="group-or-company" data-sensitive="true">
                   Configurar
                 </Button>
               </CardContent>

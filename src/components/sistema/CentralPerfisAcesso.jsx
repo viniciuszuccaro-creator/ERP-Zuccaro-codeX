@@ -57,7 +57,15 @@ export default function CentralPerfisAcesso() {
   const [usuarioAberto, setUsuarioAberto] = useState(null);
   const [busca, setBusca] = useState("");
   const [modulosExpandidos, setModulosExpandidos] = useState([]);
-  const [formPerfil, setFormPerfil] = useState({ nome_perfil: "", descricao: "", nivel_perfil: "Operacional", permissoes: {}, ativo: true });
+  const [formPerfil, setFormPerfil] = useState({
+    nome_perfil: "",
+    descricao: "",
+    nivel_perfil: "Operacional",
+    escopo_acesso: "grupo_empresa",
+    setores_permitidos: [],
+    permissoes: {},
+    ativo: true
+  });
 
   const queryClient = useQueryClient();
   const { contexto, empresaAtual, grupoAtual, empresasDoGrupo = [], filterInContext } = useContextoVisual();
@@ -117,7 +125,11 @@ export default function CentralPerfisAcesso() {
       }
 
       const perfilId = perfilAberto?.id;
-      if (perfilId && !perfilAberto.novo) return base44.entities.PerfilAcesso.update(perfilId, data);
+      if (perfilId && !perfilAberto.novo) {
+        const anterior = await base44.entities.PerfilAcesso.get(perfilId).catch(() => null);
+        const atualizado = await base44.entities.PerfilAcesso.update(perfilId, data);
+        return { ...atualizado, _dados_anteriores: anterior };
+      }
       return base44.entities.PerfilAcesso.create(data);
     },
     onSuccess: (result) => {
@@ -135,6 +147,7 @@ export default function CentralPerfisAcesso() {
           entidade: 'PerfilAcesso',
           registro_id: result?.id || perfilAberto?.id,
           descricao: (foiCriacao ? 'Criacao' : 'Atualizacao') + ` do perfil "${result?.nome_perfil || formPerfil.nome_perfil}"`,
+          dados_anteriores: result?._dados_anteriores || null,
           dados_novos: result || formPerfil,
           sucesso: true,
           data_hora: new Date().toISOString()
@@ -176,7 +189,23 @@ export default function CentralPerfisAcesso() {
 
 
 
-  const resetForm = () => setFormPerfil({ nome_perfil: "", descricao: "", nivel_perfil: "Operacional", permissoes: {}, ativo: true });
+  const resetForm = () => setFormPerfil({
+    nome_perfil: "",
+    descricao: "",
+    nivel_perfil: "Operacional",
+    escopo_acesso: "grupo_empresa",
+    setores_permitidos: [],
+    permissoes: {},
+    ativo: true
+  });
+
+  const setSetoresPerfil = (valor) => {
+    const setores = String(valor || "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    setFormPerfil({ ...formPerfil, setores_permitidos: setores });
+  };
 
   const togglePermissao = (modulo, secao, acao) => {
     if (!canManageOpenProfile) { toast.error('Sem permissao para alterar permissoes deste perfil.'); return; }
@@ -232,7 +261,15 @@ export default function CentralPerfisAcesso() {
 
   const abrirEdicaoPerfil = (perfil) => {
     setPerfilAberto(perfil);
-    setFormPerfil({ nome_perfil: perfil.nome_perfil || "", descricao: perfil.descricao || "", nivel_perfil: perfil.nivel_perfil || "Operacional", permissoes: perfil.permissoes || {}, ativo: perfil.ativo !== false });
+    setFormPerfil({
+      nome_perfil: perfil.nome_perfil || "",
+      descricao: perfil.descricao || "",
+      nivel_perfil: perfil.nivel_perfil || "Operacional",
+      escopo_acesso: perfil.escopo_acesso || perfil.nivel_acesso_contexto || "grupo_empresa",
+      setores_permitidos: perfil.setores_permitidos || perfil.departamentos_permitidos || [],
+      permissoes: perfil.permissoes || {},
+      ativo: perfil.ativo !== false
+    });
   };
 
   const stats = useMemo(() => {
@@ -344,6 +381,10 @@ export default function CentralPerfisAcesso() {
               if (!formPerfil.nome_perfil) { toast.error("Nome é obrigatório"); return; }
               salvarPerfilMutation.mutate({
                 ...formPerfil,
+                nivel_acesso_contexto: formPerfil.escopo_acesso,
+                acesso_grupo: formPerfil.escopo_acesso === "grupo" || formPerfil.escopo_acesso === "grupo_empresa",
+                acesso_empresas: ["empresa", "grupo_empresa", "setores"].includes(formPerfil.escopo_acesso),
+                departamentos_permitidos: formPerfil.setores_permitidos || [],
                 group_id: grupoAtivoId || null,
                 grupo_id: grupoAtivoId || null,
                 ...(empresaAtivaId ? { empresa_id: empresaAtivaId } : {}),
@@ -362,6 +403,20 @@ export default function CentralPerfisAcesso() {
                 <div><Label className="text-xs">Status</Label>
                   <div className="flex items-center gap-2 mt-2"><Switch checked={formPerfil.ativo} disabled={!canManageOpenProfile} data-permission={perfilAberto?.novo ? "Sistema.Controle de Acesso.criar" : "Sistema.Controle de Acesso.editar"} data-action="RBAC.Perfil.status" onCheckedChange={(v) => setFormPerfil({ ...formPerfil, ativo: v })} /><span className="text-sm">{formPerfil.ativo ? 'Ativo' : 'Inativo'}</span></div>
                 </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div><Label className="text-xs">Escopo de liberacao</Label>
+                  <Select value={formPerfil.escopo_acesso} onValueChange={(v) => setFormPerfil({ ...formPerfil, escopo_acesso: v })}>
+                    <SelectTrigger className="mt-1" disabled={!canManageOpenProfile} data-action="RBAC.Perfil.escopoAcesso" data-permission={perfilAberto?.novo ? "Sistema.Controle de Acesso.criar" : "Sistema.Controle de Acesso.editar"} data-context-required="group-or-company" data-sensitive="true"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="grupo">Somente Grupo</SelectItem>
+                      <SelectItem value="empresa">Somente Empresas</SelectItem>
+                      <SelectItem value="grupo_empresa">Grupo e Empresas</SelectItem>
+                      <SelectItem value="setores">Empresas e Setores</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div><Label className="text-xs">Setores permitidos</Label><Input value={(formPerfil.setores_permitidos || []).join(", ")} onChange={(e) => setSetoresPerfil(e.target.value)} placeholder="Comercial, Financeiro, Producao" className="mt-1" disabled={!canManageOpenProfile} data-action="RBAC.Perfil.setoresPermitidos" data-permission={perfilAberto?.novo ? "Sistema.Controle de Acesso.criar" : "Sistema.Controle de Acesso.editar"} data-context-required="group-or-company" data-sensitive="true" /></div>
               </div>
               <div><Label className="text-xs">Descrição</Label><Textarea value={formPerfil.descricao} onChange={(e) => setFormPerfil({ ...formPerfil, descricao: e.target.value })} placeholder="Responsabilidades do perfil" className="mt-1" rows={2} disabled={!canManageOpenProfile} data-action="RBAC.Perfil.descricao" data-permission={perfilAberto?.novo ? "Sistema.Controle de Acesso.criar" : "Sistema.Controle de Acesso.editar"} /></div>
 
