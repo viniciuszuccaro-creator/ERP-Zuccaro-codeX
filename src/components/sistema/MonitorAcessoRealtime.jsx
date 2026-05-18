@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 import {
   Activity,
   Users,
@@ -26,11 +27,18 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 export default function MonitorAcessoRealtime() {
   const [tempoReal, setTempoReal] = useState(new Date());
   const { contexto, empresaAtual, grupoAtual, empresasDoGrupo = [], filterInContext } = useContextoVisual();
+  const { user, isAdmin, hasPermission } = usePermissions();
   const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
     try { return localStorage.getItem('group_atual_id'); } catch { return null; }
   })();
   const empresaAtivaId = contexto === 'grupo' ? null : empresaAtual?.id;
   const scopeKey = empresaAtivaId || grupoAtivoId || 'sem-contexto';
+  const contextoValido = scopeKey !== 'sem-contexto';
+  const podeVisualizarMonitor = isAdmin() ||
+    hasPermission('Sistema', ['Seguranca', 'Monitoramento', 'AcessoRealtime'], 'visualizar') ||
+    hasPermission('Sistema', ['Segurança', 'Monitoramento', 'AcessoRealtime'], 'visualizar') ||
+    hasPermission('Sistema', 'Monitoramento', 'visualizar') ||
+    hasPermission('Sistema', 'AcessoRealtime', 'visualizar');
   const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
     .map((item) => (typeof item === 'string' ? item : item?.empresa_id || item?.id))
     .filter(Boolean);
@@ -60,19 +68,39 @@ export default function MonitorAcessoRealtime() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (contextoValido && podeVisualizarMonitor) return;
+    base44.entities.AuditLog.create({
+      usuario: user?.full_name || user?.email || 'Usuario local',
+      usuario_id: user?.id || null,
+      acao: 'MonitorAcessoRealtime.bloqueado',
+      modulo: 'Sistema',
+      entidade: 'MonitorAcessoRealtime',
+      tipo_auditoria: 'seguranca',
+      empresa_id: empresaAtivaId || null,
+      group_id: grupoAtivoId || null,
+      grupo_id: grupoAtivoId || null,
+      descricao: !contextoValido
+        ? 'Monitor de acesso bloqueado por ausencia de contexto grupo/empresa'
+        : 'Monitor de acesso bloqueado por ausencia de permissao',
+      sucesso: false,
+      data_hora: new Date().toISOString(),
+    }).catch(() => {});
+  }, [contextoValido, podeVisualizarMonitor, user?.id, user?.email, user?.full_name, empresaAtivaId, grupoAtivoId]);
+
   const { data: usuarios = [] } = useQuery({
     queryKey: ['usuarios-monitor', scopeKey],
     queryFn: async () => {
       const rows = await base44.entities.User.list();
       return rows.filter(usuarioNoEscopo);
     },
-    enabled: !!scopeKey && scopeKey !== 'sem-contexto',
+    enabled: contextoValido && podeVisualizarMonitor,
   });
 
   const { data: auditoriaRecente = [] } = useQuery({
     queryKey: ['auditoria-realtime', scopeKey, tempoReal],
     queryFn: () => filterInContext('AuditoriaAcesso', {}, '-created_date', 100),
-    enabled: !!scopeKey && scopeKey !== 'sem-contexto',
+    enabled: contextoValido && podeVisualizarMonitor,
   });
 
   const getDataEvento = (evento) => evento?.data_hora || evento?.created_date || evento?.updated_date;
@@ -133,7 +161,16 @@ export default function MonitorAcessoRealtime() {
     .slice(0, 6);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full h-full">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full h-full" data-permission="Sistema.Seguranca.Monitoramento.AcessoRealtime.visualizar" data-context-required="true">
+      {(!contextoValido || !podeVisualizarMonitor) && (
+        <Card className="lg:col-span-3 border-amber-200 bg-amber-50">
+          <CardContent className="p-4 text-sm text-amber-900">
+            {!contextoValido
+              ? 'Selecione um grupo ou empresa para visualizar o monitor de acesso em tempo real.'
+              : 'Seu perfil nao tem permissao para visualizar o monitor de acesso em tempo real.'}
+          </CardContent>
+        </Card>
+      )}
       {/* Status em Tempo Real */}
       <Card className="lg:col-span-3">
         <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
