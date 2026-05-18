@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 import {
   Activity,
   Users,
@@ -26,11 +27,17 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 export default function MonitorAcessoRealtime() {
   const [tempoReal, setTempoReal] = useState(new Date());
   const { contexto, empresaAtual, grupoAtual, empresasDoGrupo = [], filterInContext } = useContextoVisual();
+  const { isAdmin, hasPermission } = usePermissions();
   const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
     try { return localStorage.getItem('group_atual_id'); } catch { return null; }
   })();
   const empresaAtivaId = contexto === 'grupo' ? null : empresaAtual?.id;
   const scopeKey = empresaAtivaId || grupoAtivoId || 'sem-contexto';
+  const contextoValido = scopeKey !== 'sem-contexto';
+  const podeVisualizarMonitor = isAdmin() ||
+    hasPermission('Sistema', 'Monitoramento', 'visualizar') ||
+    hasPermission('Sistema', 'Seguranca', 'visualizar') ||
+    hasPermission('Sistema', 'Segurança', 'visualizar');
   const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
     .map((item) => (typeof item === 'string' ? item : item?.empresa_id || item?.id))
     .filter(Boolean);
@@ -66,13 +73,13 @@ export default function MonitorAcessoRealtime() {
       const rows = await base44.entities.User.list();
       return rows.filter(usuarioNoEscopo);
     },
-    enabled: !!scopeKey && scopeKey !== 'sem-contexto',
+    enabled: contextoValido && podeVisualizarMonitor,
   });
 
   const { data: auditoriaRecente = [] } = useQuery({
     queryKey: ['auditoria-realtime', scopeKey, tempoReal],
     queryFn: () => filterInContext('AuditoriaAcesso', {}, '-created_date', 100),
-    enabled: !!scopeKey && scopeKey !== 'sem-contexto',
+    enabled: contextoValido && podeVisualizarMonitor,
   });
 
   const getDataEvento = (evento) => evento?.data_hora || evento?.created_date || evento?.updated_date;
@@ -132,8 +139,24 @@ export default function MonitorAcessoRealtime() {
     .sort((a, b) => b.quantidade - a.quantidade)
     .slice(0, 6);
 
+  if (!contextoValido) {
+    return (
+      <div className="w-full h-full rounded border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+        Selecione um grupo ou empresa para visualizar o monitoramento de acesso.
+      </div>
+    );
+  }
+
+  if (!podeVisualizarMonitor) {
+    return (
+      <div className="w-full h-full rounded border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        Acesso restrito ao monitoramento de seguranca.
+      </div>
+    );
+  }
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full h-full">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full h-full" data-permission="Sistema.Monitoramento.visualizar" data-context-required="group-or-company">
       {/* Status em Tempo Real */}
       <Card className="lg:col-span-3">
         <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
@@ -147,31 +170,31 @@ export default function MonitorAcessoRealtime() {
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="text-center p-4 border rounded-lg bg-green-50">
+            <div className="text-center p-4 border rounded-lg bg-green-50" data-action="MonitorAcessoRealtime.metric.online">
               <Users className="w-8 h-8 text-green-600 mx-auto mb-2" />
               <p className="text-3xl font-bold text-green-700">{usuariosOnline.length}</p>
               <p className="text-xs text-green-600">Online Agora</p>
             </div>
 
-            <div className="text-center p-4 border rounded-lg bg-blue-50">
+            <div className="text-center p-4 border rounded-lg bg-blue-50" data-action="MonitorAcessoRealtime.metric.acoes">
               <Eye className="w-8 h-8 text-blue-600 mx-auto mb-2" />
               <p className="text-3xl font-bold text-blue-700">{auditoriaRecente.length}</p>
               <p className="text-xs text-blue-600">Ações Recentes</p>
             </div>
 
-            <div className="text-center p-4 border rounded-lg bg-orange-50">
+            <div className="text-center p-4 border rounded-lg bg-orange-50" data-action="MonitorAcessoRealtime.metric.negados" data-sensitive="true">
               <AlertTriangle className="w-8 h-8 text-orange-600 mx-auto mb-2" />
               <p className="text-3xl font-bold text-orange-700">{acessosNegados24h.length}</p>
               <p className="text-xs text-orange-600">Acessos Negados</p>
             </div>
 
-            <div className="text-center p-4 border rounded-lg bg-red-50">
+            <div className="text-center p-4 border rounded-lg bg-red-50" data-action="MonitorAcessoRealtime.metric.loginFalho" data-sensitive="true">
               <XCircle className="w-8 h-8 text-red-600 mx-auto mb-2" />
               <p className="text-3xl font-bold text-red-700">{loginsFalhados.length}</p>
               <p className="text-xs text-red-600">Login Falho</p>
             </div>
 
-            <div className="text-center p-4 border rounded-lg bg-purple-50">
+            <div className="text-center p-4 border rounded-lg bg-purple-50" data-action="MonitorAcessoRealtime.metric.bloqueados" data-sensitive="true">
               <Shield className="w-8 h-8 text-purple-600 mx-auto mb-2" />
               <p className="text-3xl font-bold text-purple-700">{usuariosBloqueados.length}</p>
               <p className="text-xs text-purple-600">Bloqueados</p>

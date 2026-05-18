@@ -608,3 +608,16 @@ Checklist inicial:
 - Botao de analise de IA recebeu marcadores de acao sensivel, permissao e contexto obrigatorio.
 - Build validado com sucesso apos as alteracoes.
 - Proximo passo sugerido: continuar em `MonitorAcessoRealtime` e `MonitoramentoManutencaoIndex`, reforcando acoes em tempo real, manutencoes, exportacoes e trilhas de auditoria global.
+
+### Administracao do Sistema - Monitoramento e Auditoria Global
+
+- Seguido o plano de melhoria nos componentes existentes de monitoramento, manutencao e logs, sem criar telas ou modulos duplicados.
+- `MonitorAcessoRealtime` passou a exigir contexto grupo/empresa e permissao antes de consultar usuarios e eventos de auditoria em tempo real.
+- Indicadores sensiveis do monitor de acesso receberam marcadores de acao, contexto e sensibilidade para RBAC/auditoria visual.
+- `MonitoramentoManutencaoIndex` passou a registrar na auditoria o contexto e a permissao ao navegar entre abas de monitoramento, backup, acesso em tempo real e governanca.
+- Container principal de monitoramento recebeu marcadores de permissao e contexto obrigatorio.
+- `LogsAuditoria` passou a exigir permissao granular de exportacao antes de gerar CSV dos logs filtrados.
+- Exportacao CSV de auditoria agora registra `AuditLog` com quantidade exportada, filtros usados, usuario, grupo e empresa.
+- Lista de logs recebeu marcador de contexto obrigatorio para reforcar isolamento multiempresa.
+- Build validado com sucesso apos as alteracoes.
+- Proximo passo sugerido: continuar nos formularios `ConfiguracaoBackup` e `ConfiguracaoMonitoramento`, adicionando auditoria de bloqueios sem contexto/permissao e dados anteriores nas alteracoes.

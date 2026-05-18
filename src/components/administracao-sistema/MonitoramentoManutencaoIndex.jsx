@@ -11,12 +11,19 @@ import MonitorAcessoRealtimeSection from "@/components/administracao-sistema/seg
 import PainelGovernancaSection from "@/components/administracao-sistema/seguranca-governanca/PainelGovernancaSection";
 import { base44 } from "@/api/base44Client";
 import { useUser } from "@/components/lib/UserContext";
+import usePermissions from "@/components/lib/usePermissions";
 
 export default function MonitoramentoManutencaoIndex({ initialTab = "monitoramento" }) {
   const { empresaAtual, grupoAtual } = useContextoVisual();
   const { user } = useUser();
+  const { isAdmin, hasPermission } = usePermissions();
   const [tab, setTab] = React.useState(initialTab);
   const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextoValido = !!(empresaAtual?.id || grupoAtivoId);
+  const canViewMonitoramento = isAdmin() ||
+    hasPermission("Sistema", "Monitoramento", "visualizar") ||
+    hasPermission("Sistema", "Seguranca", "visualizar") ||
+    hasPermission("Sistema", "Segurança", "visualizar");
 
   const handleTabChange = (next) => {
     setTab(next);
@@ -30,6 +37,11 @@ export default function MonitoramentoManutencaoIndex({ initialTab = "monitoramen
         modulo: "Monitoramento",
         entidade: "AdministracaoSistema",
         descricao: `Aba de monitoramento visualizada: ${next}`,
+        dados_novos: {
+          aba: next,
+          contexto_valido: contextoValido,
+          permissao_visualizacao: canViewMonitoramento
+        },
         data_hora: new Date().toISOString(),
       });
     } catch (error) {
@@ -38,7 +50,7 @@ export default function MonitoramentoManutencaoIndex({ initialTab = "monitoramen
   };
 
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full h-full flex flex-col" data-permission="Sistema.Monitoramento.visualizar" data-context-required="group-or-company">
       <Tabs value={tab} onValueChange={handleTabChange} className="w-full h-full">
         <TabsList className="flex flex-wrap gap-2">
           <TabsTrigger value="monitoramento" data-action="Monitoramento.tab.monitoramento">Monitoramento</TabsTrigger>

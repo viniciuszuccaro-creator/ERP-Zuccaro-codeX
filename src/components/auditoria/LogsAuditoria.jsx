@@ -1,17 +1,20 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Shield, Search, Filter, Eye, Building2 } from "lucide-react";
+import { Shield, Search, Filter, Eye, Building2, Download } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PaginationControls from "@/components/ui/PaginationControls";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
 
 const isCriticalAuditLog = (log = {}) => {
   const text = [log.acao, log.entidade, log.modulo, log.tipo_auditoria, log.descricao]
@@ -37,6 +40,7 @@ export default function LogsAuditoria() {
   const scopeId = empresaAtual?.id || grupoAtual?.id || 'sem-contexto';
   const contextoValido = scopeId !== 'sem-contexto';
   const canViewAudit = isAdmin() || hasPermission('Sistema', 'Auditoria', 'visualizar') || hasPermission('Sistema', 'Logs', 'visualizar');
+  const canExportAudit = isAdmin() || hasPermission('Sistema', 'Auditoria', 'exportar') || hasPermission('Sistema', 'Logs', 'exportar');
   const [filtroModulo, setFiltroModulo] = useState("todos");
   const [filtroAcao, setFiltroAcao] = useState("todos");
   const [filtroCritico, setFiltroCritico] = useState(false);
@@ -79,8 +83,71 @@ export default function LogsAuditoria() {
     return emp?.nome_fantasia || emp?.razao_social || '-';
   };
 
+  const exportarLogsCSV = async () => {
+    if (!contextoValido) {
+      toast.error('Selecione um grupo ou empresa antes de exportar logs.');
+      return;
+    }
+    if (!canExportAudit) {
+      toast.error('Sem permissao para exportar logs de auditoria.');
+      return;
+    }
+
+    const colunas = ['data_hora', 'usuario', 'empresa', 'modulo', 'acao', 'entidade', 'descricao', 'status', 'ip'];
+    const linhas = logsFiltrados.map((log) => [
+      log.data_hora || log.created_date || '',
+      log.usuario || '',
+      obterNomeEmpresa(log.empresa_id),
+      log.modulo || '',
+      log.acao || '',
+      log.entidade || '',
+      log.descricao || '',
+      log.sucesso !== false ? 'sucesso' : 'erro',
+      log.ip_address || ''
+    ]);
+    const csv = [colunas, ...linhas]
+      .map((row) => row.map((value) => JSON.stringify(String(value ?? ''))).join(';'))
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `logs-auditoria-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    try {
+      const me = await base44.auth.me();
+      await base44.entities.AuditLog.create({
+        usuario: me?.full_name || me?.email || 'Usuario',
+        usuario_id: me?.id || null,
+        empresa_id: empresaAtual?.id || null,
+        group_id: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
+        acao: 'Exportacao',
+        modulo: 'Auditoria',
+        entidade: 'AuditLog',
+        descricao: `Exportacao CSV de logs de auditoria (${logsFiltrados.length} registros)`,
+        dados_novos: {
+          quantidade: logsFiltrados.length,
+          filtro_modulo: filtroModulo,
+          filtro_acao: filtroAcao,
+          filtro_critico: filtroCritico,
+          filtro_usuario: filtroUsuario,
+          periodo_inicio: periodoInicio,
+          periodo_fim: periodoFim
+        },
+        sucesso: true,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar exportacao de logs:', error);
+    }
+  };
+
   return (
-    <div className="space-y-6 w-full h-full" data-permission="Sistema.Auditoria.visualizar">
+    <div className="space-y-6 w-full h-full" data-permission="Sistema.Auditoria.visualizar" data-context-required="group-or-company">
       <div>
         <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
           <Shield className="w-7 h-7 text-blue-600" />
@@ -218,15 +285,28 @@ export default function LogsAuditoria() {
       {/* Tabela de Logs */}
       <Card>
         <CardHeader className="bg-slate-50 border-b">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <CardTitle>Registro de Atividades ({logsFiltrados.length})</CardTitle>
-            <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-4 text-sm flex-wrap justify-end">
               <div className="flex items-center gap-2">
                 <Checkbox checked={showDescricao} onCheckedChange={setShowDescricao} data-action="LogsAuditoria.colunaDescricao" data-permission="Sistema.Auditoria.visualizar" /> Descrição
               </div>
               <div className="flex items-center gap-2">
                 <Checkbox checked={showIP} onCheckedChange={setShowIP} data-action="LogsAuditoria.colunaIP" data-permission="Sistema.Auditoria.visualizar" /> IP
               </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={exportarLogsCSV}
+                disabled={!contextoValido || !canExportAudit || logsFiltrados.length === 0}
+                data-action="LogsAuditoria.exportarCSV"
+                data-permission="Sistema.Auditoria.exportar"
+                data-context-required="group-or-company"
+                data-sensitive="true"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                CSV
+              </Button>
             </div>
           </div>
         </CardHeader>
