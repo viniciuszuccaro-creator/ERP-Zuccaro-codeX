@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FileText, CheckCircle, AlertCircle, Send, Eye } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { useUser } from "@/components/lib/UserContext";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * Teste de Emissão de NF-e
@@ -19,8 +22,54 @@ export default function TesteNFe({ configuracao, windowMode = false }) {
   const [pedidoTeste, setPedidoTeste] = useState("");
 
   const { toast } = useToast();
+  const { user } = useUser();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { isAdmin, hasPermission } = usePermissions();
+
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || user?.grupo_atual_id || user?.grupo_padrao_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeTestar = isAdmin() || hasPermission("Sistema", "Integracoes", "editar") || hasPermission("Sistema", "Integrações", "editar");
+
+  const auditarTeste = async (acao, descricao, dadosNovos = null) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Usuario local",
+        usuario_id: user?.id || null,
+        empresa_id: empresaId,
+        group_id: groupId,
+        acao,
+        modulo: "Integracoes",
+        entidade: "TesteNFe",
+        descricao,
+        dados_novos: dadosNovos,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar teste de NF-e:", error);
+    }
+  };
 
   const executarTeste = async () => {
+    if (!contextoValido) {
+      toast({
+        title: "Contexto obrigatorio",
+        description: "Selecione grupo ou empresa antes de testar NF-e.",
+        variant: "destructive"
+      });
+      await auditarTeste("Bloqueio sem contexto", "Tentativa de testar NF-e sem grupo ou empresa.", { pedido_teste: pedidoTeste || null });
+      return;
+    }
+    if (!podeTestar) {
+      toast({
+        title: "Permissao negada",
+        description: "Seu perfil nao permite executar testes de integracoes.",
+        variant: "destructive"
+      });
+      await auditarTeste("Bloqueio por permissao", "Tentativa de testar NF-e sem permissao.", { pedido_teste: pedidoTeste || null });
+      return;
+    }
+
     setTestando(true);
     setResultado(null);
 
@@ -43,6 +92,13 @@ export default function TesteNFe({ configuracao, windowMode = false }) {
       };
 
       setResultado(nfeSimulada);
+      await auditarTeste("Teste NF-e", "Teste simulado de emissao NF-e executado.", {
+        pedido_teste: pedidoTeste || null,
+        numero: nfeSimulada.numero,
+        serie: nfeSimulada.serie,
+        ambiente: nfeSimulada.ambiente,
+        codigo_status: nfeSimulada.codigo_status,
+      });
 
       toast({
         title: "✅ NF-e Autorizada!",
@@ -53,6 +109,7 @@ export default function TesteNFe({ configuracao, windowMode = false }) {
         status: 'error',
         mensagem: error.message
       });
+      await auditarTeste("Erro Teste NF-e", "Falha no teste simulado de NF-e.", { erro: error.message, pedido_teste: pedidoTeste || null });
       
       toast({
         title: "❌ Erro na Emissão",
@@ -90,6 +147,10 @@ export default function TesteNFe({ configuracao, windowMode = false }) {
               value={pedidoTeste}
               onChange={(e) => setPedidoTeste(e.target.value)}
               placeholder="PED-2025-001"
+              disabled={!contextoValido || !podeTestar}
+              data-action="Integracoes.TesteNFe.pedidoTeste"
+              data-permission="Sistema.Integracoes.editar"
+              data-context-required="group-or-company"
             />
           </div>
 
@@ -107,8 +168,12 @@ export default function TesteNFe({ configuracao, windowMode = false }) {
 
           <Button
             onClick={executarTeste}
-            disabled={testando}
+            disabled={testando || !contextoValido || !podeTestar}
             className="w-full bg-blue-600 hover:bg-blue-700"
+            data-action="Integracoes.TesteNFe.executar"
+            data-permission="Sistema.Integracoes.editar"
+            data-context-required="group-or-company"
+            data-sensitive="true"
           >
             {testando ? (
               <>
@@ -141,11 +206,11 @@ export default function TesteNFe({ configuracao, windowMode = false }) {
                     <p className="text-xs text-green-700 mt-2">{resultado.mensagem_sefaz}</p>
                   </div>
                   <div className="flex gap-2 mt-3">
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" data-action="Integracoes.TesteNFe.verXml" data-permission="Sistema.Integracoes.visualizar" data-context-required="group-or-company" data-sensitive="true">
                       <Eye className="w-4 h-4 mr-1" />
                       Ver XML
                     </Button>
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" data-action="Integracoes.TesteNFe.verDanfe" data-permission="Sistema.Integracoes.visualizar" data-context-required="group-or-company" data-sensitive="true">
                       <FileText className="w-4 h-4 mr-1" />
                       Ver DANFE
                     </Button>

@@ -7,6 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { MapPin, Navigation, CheckCircle, AlertCircle, Send } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { base44 } from "@/api/base44Client";
+import { useUser } from "@/components/lib/UserContext";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * Teste de Integração Google Maps API
@@ -18,8 +22,53 @@ export default function TesteGoogleMaps({ configuracao, windowMode = false }) {
   const [enderecoTeste, setEnderecoTeste] = useState("Av. Paulista, 1000 - São Paulo, SP");
 
   const { toast } = useToast();
+  const { user } = useUser();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { isAdmin, hasPermission } = usePermissions();
+
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || user?.grupo_atual_id || user?.grupo_padrao_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeTestar = isAdmin() || hasPermission("Sistema", "Integracoes", "editar") || hasPermission("Sistema", "Integrações", "editar");
+
+  const auditarTeste = async (acao, descricao, dadosNovos = null) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Usuario local",
+        usuario_id: user?.id || null,
+        empresa_id: empresaId,
+        group_id: groupId,
+        acao,
+        modulo: "Integracoes",
+        entidade: "TesteGoogleMaps",
+        descricao,
+        dados_novos: dadosNovos,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar teste de Google Maps:", error);
+    }
+  };
 
   const executarTeste = async () => {
+    if (!contextoValido) {
+      toast({
+        title: "Contexto obrigatorio",
+        description: "Selecione grupo ou empresa antes de testar Maps.",
+        variant: "destructive"
+      });
+      await auditarTeste("Bloqueio sem contexto", "Tentativa de testar Google Maps sem grupo ou empresa.", { endereco_teste: enderecoTeste });
+      return;
+    }
+    if (!podeTestar) {
+      toast({
+        title: "Permissao negada",
+        description: "Seu perfil nao permite executar testes de integracoes.",
+        variant: "destructive"
+      });
+      await auditarTeste("Bloqueio por permissao", "Tentativa de testar Google Maps sem permissao.", { endereco_teste: enderecoTeste });
+      return;
+    }
     if (!enderecoTeste) {
       toast({
         title: "❌ Erro",
@@ -67,6 +116,12 @@ export default function TesteGoogleMaps({ configuracao, windowMode = false }) {
         geocoding: geocodingSimulado,
         rota: rotaSimulada
       });
+      await auditarTeste("Teste Google Maps", "Teste simulado de geocodificacao e rota executado.", {
+        endereco: enderecoTeste,
+        latitude: lat,
+        longitude: lng,
+        distancia_km: rotaSimulada.distancia_km,
+      });
 
       toast({
         title: "✅ Teste Realizado!",
@@ -77,6 +132,7 @@ export default function TesteGoogleMaps({ configuracao, windowMode = false }) {
         status: 'error',
         mensagem: error.message
       });
+      await auditarTeste("Erro Teste Google Maps", "Falha no teste simulado de Google Maps.", { erro: error.message, endereco_teste: enderecoTeste });
       
       toast({
         title: "❌ Erro no Teste",
@@ -114,6 +170,10 @@ export default function TesteGoogleMaps({ configuracao, windowMode = false }) {
               value={enderecoTeste}
               onChange={(e) => setEnderecoTeste(e.target.value)}
               placeholder="Digite um endereço completo..."
+              disabled={!contextoValido || !podeTestar}
+              data-action="Integracoes.TesteGoogleMaps.enderecoTeste"
+              data-permission="Sistema.Integracoes.editar"
+              data-context-required="group-or-company"
             />
           </div>
 
@@ -128,8 +188,12 @@ export default function TesteGoogleMaps({ configuracao, windowMode = false }) {
 
           <Button
             onClick={executarTeste}
-            disabled={testando}
+            disabled={testando || !contextoValido || !podeTestar}
             className="w-full bg-red-600 hover:bg-red-700"
+            data-action="Integracoes.TesteGoogleMaps.executar"
+            data-permission="Sistema.Integracoes.editar"
+            data-context-required="group-or-company"
+            data-sensitive="true"
           >
             {testando ? (
               <>
@@ -163,6 +227,10 @@ export default function TesteGoogleMaps({ configuracao, windowMode = false }) {
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:underline flex items-center gap-1 mt-2"
+                      data-action="Integracoes.TesteGoogleMaps.abrirMaps"
+                      data-permission="Sistema.Integracoes.visualizar"
+                      data-context-required="group-or-company"
+                      data-sensitive="true"
                     >
                       <MapPin className="w-3 h-3" />
                       Abrir no Google Maps

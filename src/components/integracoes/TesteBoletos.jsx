@@ -7,6 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DollarSign, CheckCircle, AlertCircle, Send, Copy, QrCode, FileText, Eye } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { base44 } from "@/api/base44Client";
+import { useUser } from "@/components/lib/UserContext";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * Teste de Geração de Boletos e PIX
@@ -19,8 +23,53 @@ export default function TesteBoletos({ configuracao, windowMode = false }) {
   const [clienteTeste, setClienteTeste] = useState("Cliente Teste Ltda");
 
   const { toast } = useToast();
+  const { user } = useUser();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { isAdmin, hasPermission } = usePermissions();
+
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || user?.grupo_atual_id || user?.grupo_padrao_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeTestar = isAdmin() || hasPermission("Sistema", "Integracoes", "editar") || hasPermission("Sistema", "Integrações", "editar");
+
+  const auditarTeste = async (acao, descricao, dadosNovos = null) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Usuario local",
+        usuario_id: user?.id || null,
+        empresa_id: empresaId,
+        group_id: groupId,
+        acao,
+        modulo: "Integracoes",
+        entidade: "TesteBoletos",
+        descricao,
+        dados_novos: dadosNovos,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar teste de boletos:", error);
+    }
+  };
 
   const executarTeste = async () => {
+    if (!contextoValido) {
+      toast({
+        title: "Contexto obrigatorio",
+        description: "Selecione grupo ou empresa antes de testar boleto/PIX.",
+        variant: "destructive"
+      });
+      await auditarTeste("Bloqueio sem contexto", "Tentativa de testar boleto/PIX sem grupo ou empresa.", { valor_teste: valorTeste, cliente_teste: clienteTeste });
+      return;
+    }
+    if (!podeTestar) {
+      toast({
+        title: "Permissao negada",
+        description: "Seu perfil nao permite executar testes de integracoes.",
+        variant: "destructive"
+      });
+      await auditarTeste("Bloqueio por permissao", "Tentativa de testar boleto/PIX sem permissao.", { valor_teste: valorTeste, cliente_teste: clienteTeste });
+      return;
+    }
     if (!valorTeste || parseFloat(valorTeste) <= 0) {
       toast({
         title: "❌ Erro",
@@ -58,6 +107,12 @@ export default function TesteBoletos({ configuracao, windowMode = false }) {
       };
 
       setResultado(boletoSimulado);
+      await auditarTeste("Teste Boleto PIX", "Teste simulado de boleto e PIX executado.", {
+        valor: boletoSimulado.valor,
+        cliente: boletoSimulado.cliente,
+        provedor: boletoSimulado.provedor,
+        id_cobranca: boletoSimulado.id_cobranca,
+      });
 
       toast({
         title: "✅ Cobrança Gerada!",
@@ -68,6 +123,7 @@ export default function TesteBoletos({ configuracao, windowMode = false }) {
         status: 'error',
         mensagem: error.message
       });
+      await auditarTeste("Erro Teste Boleto PIX", "Falha no teste simulado de boleto e PIX.", { erro: error.message, valor_teste: valorTeste, cliente_teste: clienteTeste });
       
       toast({
         title: "❌ Erro na Geração",
@@ -79,9 +135,19 @@ export default function TesteBoletos({ configuracao, windowMode = false }) {
     }
   };
 
-  const copiarCodigoPix = () => {
+  const copiarCodigoPix = async () => {
+    if (!contextoValido || !podeTestar) {
+      toast({
+        title: "Acao bloqueada",
+        description: "Selecione contexto e confirme permissao para copiar codigo sensivel.",
+        variant: "destructive"
+      });
+      await auditarTeste(contextoValido ? "Bloqueio por permissao" : "Bloqueio sem contexto", "Tentativa de copiar codigo PIX sem contexto/permissao.");
+      return;
+    }
     if (resultado?.pix?.copia_cola) {
       navigator.clipboard.writeText(resultado.pix.copia_cola);
+      await auditarTeste("Copiar PIX", "Codigo PIX copia e cola copiado em teste.", { id_cobranca: resultado?.id_cobranca || null });
       toast({
         title: "✅ Código PIX Copiado!",
         description: "Cole no app do seu banco"
@@ -118,6 +184,10 @@ export default function TesteBoletos({ configuracao, windowMode = false }) {
                 value={valorTeste}
                 onChange={(e) => setValorTeste(e.target.value)}
                 placeholder="150.00"
+                disabled={!contextoValido || !podeTestar}
+                data-action="Integracoes.TesteBoletos.valorTeste"
+                data-permission="Sistema.Integracoes.editar"
+                data-context-required="group-or-company"
               />
             </div>
             <div>
@@ -127,6 +197,10 @@ export default function TesteBoletos({ configuracao, windowMode = false }) {
                 value={clienteTeste}
                 onChange={(e) => setClienteTeste(e.target.value)}
                 placeholder="Nome do cliente..."
+                disabled={!contextoValido || !podeTestar}
+                data-action="Integracoes.TesteBoletos.clienteTeste"
+                data-permission="Sistema.Integracoes.editar"
+                data-context-required="group-or-company"
               />
             </div>
           </div>
@@ -145,8 +219,12 @@ export default function TesteBoletos({ configuracao, windowMode = false }) {
 
           <Button
             onClick={executarTeste}
-            disabled={testando}
+            disabled={testando || !contextoValido || !podeTestar}
             className="w-full bg-green-600 hover:bg-green-700"
+            data-action="Integracoes.TesteBoletos.executar"
+            data-permission="Sistema.Integracoes.editar"
+            data-context-required="group-or-company"
+            data-sensitive="true"
           >
             {testando ? (
               <>
@@ -179,7 +257,7 @@ export default function TesteBoletos({ configuracao, windowMode = false }) {
                       {resultado.boleto.linha_digitavel}
                     </p>
                   </div>
-                  <Button size="sm" variant="outline" className="w-full">
+                  <Button size="sm" variant="outline" className="w-full" data-action="Integracoes.TesteBoletos.verPdf" data-permission="Sistema.Integracoes.visualizar" data-context-required="group-or-company" data-sensitive="true">
                     <Eye className="w-4 h-4 mr-1" />
                     Ver Boleto PDF
                   </Button>
@@ -212,6 +290,11 @@ export default function TesteBoletos({ configuracao, windowMode = false }) {
                     size="sm" 
                     onClick={copiarCodigoPix}
                     className="w-full bg-green-600 hover:bg-green-700"
+                    disabled={!contextoValido || !podeTestar}
+                    data-action="Integracoes.TesteBoletos.copiarPix"
+                    data-permission="Sistema.Integracoes.editar"
+                    data-context-required="group-or-company"
+                    data-sensitive="true"
                   >
                     <Copy className="w-4 h-4 mr-1" />
                     Copiar Código PIX

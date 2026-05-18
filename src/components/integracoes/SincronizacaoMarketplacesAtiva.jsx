@@ -15,6 +15,10 @@ import {
   Upload
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useToast } from '@/components/ui/use-toast';
+import { useUser } from '@/components/lib/UserContext';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * Sincronização ATIVA de Marketplaces
@@ -23,30 +27,71 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 export default function SincronizacaoMarketplacesAtiva() {
   const [sincronizando, setSincronizando] = useState(false);
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { user } = useUser();
+  const { empresaAtual, grupoAtual, filterInContext, carimbarContexto } = useContextoVisual();
+  const { isAdmin, hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || user?.grupo_atual_id || user?.grupo_padrao_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeOperar = isAdmin() || hasPermission("Sistema", "Integracoes", "editar") || hasPermission("Sistema", "Integrações", "editar");
+  const scope = {
+    ...(groupId ? { group_id: groupId } : {}),
+    ...(empresaId ? { empresa_id: empresaId } : {}),
+  };
+
+  const auditarMarketplace = async (acao, descricao, dadosNovos = null, dadosAnteriores = null) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuario local',
+        usuario_id: user?.id || null,
+        empresa_id: empresaId,
+        group_id: groupId,
+        acao,
+        modulo: 'Integracoes',
+        entidade: 'PedidoExterno',
+        descricao,
+        dados_anteriores: dadosAnteriores,
+        dados_novos: dadosNovos,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar marketplace:', error);
+    }
+  };
 
   const { data: pedidosExternos = [] } = useQuery({
-    queryKey: ['pedidos-externos-pendentes'],
-    queryFn: () => base44.entities.PedidoExterno.filter({
+    queryKey: ['pedidos-externos-pendentes', groupId || 'sem-grupo', empresaId || 'sem-empresa'],
+    queryFn: () => filterInContext('PedidoExterno', {
       status_importacao: ['A Validar', 'Em Revisão']
-    }, '-created_date'),
+    }, '-created_date', 100),
+    enabled: contextoValido,
     refetchInterval: 30000 // Atualiza a cada 30s
   });
 
   const importarPedidoMutation = useMutation({
     mutationFn: async (pedidoExterno) => {
+      if (!contextoValido) {
+        await auditarMarketplace('Bloqueio sem contexto', 'Tentativa de importar pedido externo sem grupo ou empresa.', { pedido_externo_id: pedidoExterno?.id });
+        throw new Error('Selecione grupo ou empresa antes de importar pedidos.');
+      }
+      if (!podeOperar) {
+        await auditarMarketplace('Bloqueio por permissao', 'Tentativa de importar pedido externo sem permissao.', { pedido_externo_id: pedidoExterno?.id });
+        throw new Error('Seu perfil nao permite importar pedidos externos.');
+      }
       // 1. Verificar se cliente existe
       let clienteId = pedidoExterno.cliente_erp_id;
       
       if (!clienteId) {
-        const clientesExistentes = await base44.entities.Cliente.filter({
+        const clientesExistentes = await filterInContext('Cliente', {
           cnpj: pedidoExterno.cliente_cpf_cnpj
-        });
+        }, '-updated_date', 20);
 
         if (clientesExistentes.length > 0) {
           clienteId = clientesExistentes[0].id;
         } else {
           // Criar cliente novo
-          const novoCliente = await base44.entities.Cliente.create({
+          const novoCliente = await base44.entities.Cliente.create(carimbarContexto({
             tipo: pedidoExterno.cliente_cpf_cnpj?.length === 14 ? 'Pessoa Física' : 'Pessoa Jurídica',
             status: 'Ativo',
             nome: pedidoExterno.cliente_nome,
@@ -61,14 +106,15 @@ export default function SincronizacaoMarketplacesAtiva() {
               valor: pedidoExterno.cliente_telefone,
               principal: true
             }],
-            origem_pedido: pedidoExterno.origem
-          });
+            origem_pedido: pedidoExterno.origem,
+            ...scope
+          }));
           clienteId = novoCliente.id;
         }
       }
 
       // 2. Criar pedido no ERP
-      const pedidoERP = await base44.entities.Pedido.create({
+      const pedidoERP = await base44.entities.Pedido.create(carimbarContexto({
         numero_pedido: `${pedidoExterno.origem.substring(0, 3).toUpperCase()}-${pedidoExterno.numero_pedido_externo}`,
         cliente_id: clienteId,
         cliente_nome: pedidoExterno.cliente_nome,
@@ -94,8 +140,9 @@ export default function SincronizacaoMarketplacesAtiva() {
         valor_frete: pedidoExterno.valor_frete,
         valor_total: pedidoExterno.valor_total,
         forma_pagamento: pedidoExterno.forma_pagamento_externa || 'Marketplace',
-        observacoes_publicas: `Importado de ${pedidoExterno.origem} - Pedido #${pedidoExterno.numero_pedido_externo}`
-      });
+        observacoes_publicas: `Importado de ${pedidoExterno.origem} - Pedido #${pedidoExterno.numero_pedido_externo}`,
+        ...scope
+      }));
 
       // 3. Atualizar pedido externo
       await base44.entities.PedidoExterno.update(pedidoExterno.id, {
@@ -103,18 +150,51 @@ export default function SincronizacaoMarketplacesAtiva() {
         validado: true,
         pedido_erp_id: pedidoERP.id,
         cliente_erp_id: clienteId,
-        data_validacao: new Date().toISOString()
+        data_validacao: new Date().toISOString(),
+        ...scope
       });
+      await auditarMarketplace('Importar Pedido Marketplace', 'Pedido externo importado para o ERP com escopo multiempresa.', {
+        pedido_externo_id: pedidoExterno.id,
+        pedido_erp_id: pedidoERP.id,
+        cliente_id: clienteId,
+        origem: pedidoExterno.origem,
+        valor_total: pedidoExterno.valor_total,
+      }, pedidoExterno);
 
       return { pedidoERP, clienteId };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pedidos-externos-pendentes'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Importacao bloqueada',
+        description: error.message,
+        variant: 'destructive'
+      });
     }
   });
 
   const sincronizarTodos = async () => {
+    if (!contextoValido) {
+      toast({
+        title: 'Contexto obrigatorio',
+        description: 'Selecione grupo ou empresa antes de buscar pedidos.',
+        variant: 'destructive'
+      });
+      await auditarMarketplace('Bloqueio sem contexto', 'Tentativa de sincronizar marketplaces sem grupo ou empresa.');
+      return;
+    }
+    if (!podeOperar) {
+      toast({
+        title: 'Permissao negada',
+        description: 'Seu perfil nao permite sincronizar marketplaces.',
+        variant: 'destructive'
+      });
+      await auditarMarketplace('Bloqueio por permissao', 'Tentativa de sincronizar marketplaces sem permissao.');
+      return;
+    }
     setSincronizando(true);
 
     // Simular busca de novos pedidos
@@ -155,9 +235,11 @@ export default function SincronizacaoMarketplacesAtiva() {
       await base44.entities.PedidoExterno.create({
         ...pedido,
         status_importacao: 'A Validar',
-        json_completo: pedido
+        json_completo: pedido,
+        ...scope
       });
     }
+    await auditarMarketplace('Sincronizar Marketplaces', 'Busca simulada de pedidos externos executada com escopo multiempresa.', { quantidade: novosPedidos.length, ...scope });
 
     queryClient.invalidateQueries({ queryKey: ['pedidos-externos-pendentes'] });
     setSincronizando(false);
@@ -179,6 +261,15 @@ export default function SincronizacaoMarketplacesAtiva() {
     );
   };
 
+  const abrirPedidoExterno = async (pedidoExterno) => {
+    await auditarMarketplace('Abrir Pedido Marketplace', 'Link externo de pedido marketplace aberto.', {
+      pedido_externo_id: pedidoExterno.id,
+      id_externo: pedidoExterno.id_externo,
+      origem: pedidoExterno.origem,
+    }, pedidoExterno);
+    window.open(`https://marketplace.com/pedido/${pedidoExterno.id_externo}`, '_blank');
+  };
+
   return (
     <div className="space-y-4">
       <Card className="border-blue-200 bg-blue-50">
@@ -189,9 +280,13 @@ export default function SincronizacaoMarketplacesAtiva() {
             </CardTitle>
             <Button
               onClick={sincronizarTodos}
-              disabled={sincronizando}
+              disabled={sincronizando || !contextoValido || !podeOperar}
               size="sm"
               className="bg-blue-600 hover:bg-blue-700"
+              data-action="Integracoes.Marketplaces.sincronizar"
+              data-permission="Sistema.Integracoes.editar"
+              data-context-required="group-or-company"
+              data-sensitive="true"
             >
               {sincronizando ? (
                 <>
@@ -264,8 +359,12 @@ export default function SincronizacaoMarketplacesAtiva() {
                         <Button
                           size="sm"
                           onClick={() => importarPedidoMutation.mutate(pe)}
-                          disabled={importarPedidoMutation.isPending}
+                          disabled={importarPedidoMutation.isPending || !contextoValido || !podeOperar}
                           className="bg-green-600 hover:bg-green-700"
+                          data-action="Integracoes.Marketplaces.importarPedido"
+                          data-permission="Sistema.Integracoes.editar"
+                          data-context-required="group-or-company"
+                          data-sensitive="true"
                         >
                           <Download className="w-4 h-4 mr-1" />
                           Importar
@@ -274,7 +373,11 @@ export default function SincronizacaoMarketplacesAtiva() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => window.open(`https://marketplace.com/pedido/${pe.id_externo}`, '_blank')}
+                            onClick={() => abrirPedidoExterno(pe)}
+                            data-action="Integracoes.Marketplaces.abrirPedidoExterno"
+                            data-permission="Sistema.Integracoes.visualizar"
+                            data-context-required="group-or-company"
+                            data-sensitive="true"
                           >
                             <ExternalLink className="w-4 h-4" />
                           </Button>

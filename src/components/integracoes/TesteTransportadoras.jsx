@@ -7,6 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Truck, CheckCircle, AlertCircle, Send, Package } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { base44 } from "@/api/base44Client";
+import { useUser } from "@/components/lib/UserContext";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * Teste de Cálculo de Frete com Transportadoras
@@ -20,8 +24,53 @@ export default function TesteTransportadoras({ configuracao, windowMode = false 
   const [peso, setPeso] = useState("25");
 
   const { toast } = useToast();
+  const { user } = useUser();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { isAdmin, hasPermission } = usePermissions();
+
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || user?.grupo_atual_id || user?.grupo_padrao_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeTestar = isAdmin() || hasPermission("Sistema", "Integracoes", "editar") || hasPermission("Sistema", "Integrações", "editar");
+
+  const auditarTeste = async (acao, descricao, dadosNovos = null) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Usuario local",
+        usuario_id: user?.id || null,
+        empresa_id: empresaId,
+        group_id: groupId,
+        acao,
+        modulo: "Integracoes",
+        entidade: "TesteTransportadoras",
+        descricao,
+        dados_novos: dadosNovos,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar teste de transportadoras:", error);
+    }
+  };
 
   const executarTeste = async () => {
+    if (!contextoValido) {
+      toast({
+        title: "Contexto obrigatorio",
+        description: "Selecione grupo ou empresa antes de testar transportadoras.",
+        variant: "destructive"
+      });
+      await auditarTeste("Bloqueio sem contexto", "Tentativa de testar transportadoras sem grupo ou empresa.", { cep_origem: cepOrigem, cep_destino: cepDestino, peso });
+      return;
+    }
+    if (!podeTestar) {
+      toast({
+        title: "Permissao negada",
+        description: "Seu perfil nao permite executar testes de integracoes.",
+        variant: "destructive"
+      });
+      await auditarTeste("Bloqueio por permissao", "Tentativa de testar transportadoras sem permissao.", { cep_origem: cepOrigem, cep_destino: cepDestino, peso });
+      return;
+    }
     if (!cepOrigem || !cepDestino || !peso) {
       toast({
         title: "❌ Erro",
@@ -72,6 +121,12 @@ export default function TesteTransportadoras({ configuracao, windowMode = false 
         cep_destino: cepDestino,
         peso_kg: parseFloat(peso)
       });
+      await auditarTeste("Teste Transportadoras", "Teste simulado de cotacao de frete executado.", {
+        cep_origem: cepOrigem,
+        cep_destino: cepDestino,
+        peso_kg: parseFloat(peso),
+        opcoes: fretes.length,
+      });
 
       toast({
         title: "✅ Cotação Realizada!",
@@ -82,6 +137,7 @@ export default function TesteTransportadoras({ configuracao, windowMode = false 
         status: 'error',
         mensagem: error.message
       });
+      await auditarTeste("Erro Teste Transportadoras", "Falha no teste simulado de transportadoras.", { erro: error.message, cep_origem: cepOrigem, cep_destino: cepDestino, peso });
       
       toast({
         title: "❌ Erro na Cotação",
@@ -121,6 +177,10 @@ export default function TesteTransportadoras({ configuracao, windowMode = false 
                 onChange={(e) => setCepOrigem(e.target.value)}
                 placeholder="00000-000"
                 maxLength="9"
+                disabled={!contextoValido || !podeTestar}
+                data-action="Integracoes.TesteTransportadoras.cepOrigem"
+                data-permission="Sistema.Integracoes.editar"
+                data-context-required="group-or-company"
               />
             </div>
             <div>
@@ -131,6 +191,10 @@ export default function TesteTransportadoras({ configuracao, windowMode = false 
                 onChange={(e) => setCepDestino(e.target.value)}
                 placeholder="00000-000"
                 maxLength="9"
+                disabled={!contextoValido || !podeTestar}
+                data-action="Integracoes.TesteTransportadoras.cepDestino"
+                data-permission="Sistema.Integracoes.editar"
+                data-context-required="group-or-company"
               />
             </div>
             <div>
@@ -142,6 +206,10 @@ export default function TesteTransportadoras({ configuracao, windowMode = false 
                 value={peso}
                 onChange={(e) => setPeso(e.target.value)}
                 placeholder="25.0"
+                disabled={!contextoValido || !podeTestar}
+                data-action="Integracoes.TesteTransportadoras.peso"
+                data-permission="Sistema.Integracoes.editar"
+                data-context-required="group-or-company"
               />
             </div>
           </div>
@@ -157,8 +225,12 @@ export default function TesteTransportadoras({ configuracao, windowMode = false 
 
           <Button
             onClick={executarTeste}
-            disabled={testando}
+            disabled={testando || !contextoValido || !podeTestar}
             className="w-full bg-orange-600 hover:bg-orange-700"
+            data-action="Integracoes.TesteTransportadoras.executar"
+            data-permission="Sistema.Integracoes.editar"
+            data-context-required="group-or-company"
+            data-sensitive="true"
           >
             {testando ? (
               <>
