@@ -114,6 +114,20 @@ export default function IntegracoesIndex({ initialTab }) {
   const handleCriarBase = async () => {
     if (!integracoesKey) {
       toast.error("Selecione um grupo ou empresa para criar a base de integracoes.");
+      await auditIntegracao({
+        acao: "Bloqueio sem contexto",
+        descricao: "Tentativa de criar estrutura base de integracoes sem grupo ou empresa.",
+        dadosNovos: { scope },
+      });
+      return;
+    }
+    if (!podeCriarIntegracoes) {
+      toast.error("Seu perfil nao permite criar estrutura base de integracoes.");
+      await auditIntegracao({
+        acao: "Bloqueio por permissao",
+        descricao: "Tentativa de criar estrutura base de integracoes sem permissao.",
+        dadosNovos: { scope },
+      });
       return;
     }
 
@@ -147,6 +161,20 @@ export default function IntegracoesIndex({ initialTab }) {
   const handleTestWebhookAsaasPago = async () => {
     if (!scopeId) {
       toast.error("Selecione um grupo ou empresa para testar o webhook.");
+      await auditIntegracao({
+        acao: "Bloqueio sem contexto",
+        descricao: "Tentativa de testar webhook Asaas sem grupo ou empresa.",
+        dadosNovos: { provider: "asaas" },
+      });
+      return;
+    }
+    if (!podeEditarIntegracoes) {
+      toast.error("Seu perfil nao permite testar webhooks de integracoes.");
+      await auditIntegracao({
+        acao: "Bloqueio por permissao",
+        descricao: "Tentativa de testar webhook Asaas sem permissao.",
+        dadosNovos: { provider: "asaas" },
+      });
       return;
     }
     setTestandoWebhook("asaas");
@@ -173,6 +201,20 @@ export default function IntegracoesIndex({ initialTab }) {
   const handleTestWebhookNFeAutorizada = async () => {
     if (!scopeId) {
       toast.error("Selecione um grupo ou empresa para testar o webhook.");
+      await auditIntegracao({
+        acao: "Bloqueio sem contexto",
+        descricao: "Tentativa de testar webhook NF-e sem grupo ou empresa.",
+        dadosNovos: { provider: "enotas" },
+      });
+      return;
+    }
+    if (!podeEditarIntegracoes) {
+      toast.error("Seu perfil nao permite testar webhooks de integracoes.");
+      await auditIntegracao({
+        acao: "Bloqueio por permissao",
+        descricao: "Tentativa de testar webhook NF-e sem permissao.",
+        dadosNovos: { provider: "enotas" },
+      });
       return;
     }
     setTestandoWebhook("nfe");
@@ -198,8 +240,22 @@ export default function IntegracoesIndex({ initialTab }) {
   };
 
   const handleCopy = async (text) => {
+    if (!contextoValido || !podeEditarIntegracoes) {
+      toast.error("Selecione um contexto e confirme permissao antes de copiar URL sensivel.");
+      await auditIntegracao({
+        acao: contextoValido ? "Bloqueio por permissao" : "Bloqueio sem contexto",
+        descricao: "Tentativa de copiar URL de webhook sem contexto/permissao.",
+        dadosNovos: { webhookUrl: text },
+      });
+      return;
+    }
     try {
       await navigator.clipboard.writeText(text);
+      await auditIntegracao({
+        acao: "Copiar URL Webhook",
+        descricao: `URL de webhook copiada para ${scopeLabel}`,
+        dadosNovos: { webhookUrl: text },
+      });
       toast.success("URL copiada.");
     } catch (_) {
       toast.error("Nao foi possivel copiar a URL.");
@@ -210,14 +266,14 @@ export default function IntegracoesIndex({ initialTab }) {
     <div className="w-full h-full flex flex-col">
       <Tabs value={tab} onValueChange={handleTabChange} className="w-full h-full">
         <TabsList className="flex flex-wrap gap-2 h-auto">
-          <TabsTrigger value="gerenciamento" data-action="Integracoes.tab.gerenciamento"><CheckCircle2 className="w-4 h-4 mr-2" />Gerenciamento</TabsTrigger>
-          <TabsTrigger value="status" data-action="Integracoes.tab.status"><CheckCircle2 className="w-4 h-4 mr-2" />Status</TabsTrigger>
-          <TabsTrigger value="nfe" data-action="Integracoes.tab.nfe"><FileText className="w-4 h-4 mr-2" />NF-e</TabsTrigger>
-          <TabsTrigger value="boletos" data-action="Integracoes.tab.boletos"><DollarSign className="w-4 h-4 mr-2" />Boletos/PIX</TabsTrigger>
-          <TabsTrigger value="whatsapp" data-action="Integracoes.tab.whatsapp"><MessageCircle className="w-4 h-4 mr-2" />WhatsApp</TabsTrigger>
-          <TabsTrigger value="transportadoras" data-action="Integracoes.tab.transportadoras"><Truck className="w-4 h-4 mr-2" />Transportadoras</TabsTrigger>
-          <TabsTrigger value="maps" data-action="Integracoes.tab.maps"><Globe className="w-4 h-4 mr-2" />Maps</TabsTrigger>
-          <TabsTrigger value="marketplaces" data-action="Integracoes.tab.marketplaces"><ShoppingCart className="w-4 h-4 mr-2" />Marketplaces</TabsTrigger>
+          <TabsTrigger value="gerenciamento" data-action="Integracoes.tab.gerenciamento" data-permission="Sistema.Integracoes.visualizar" data-context-required="group-or-company"><CheckCircle2 className="w-4 h-4 mr-2" />Gerenciamento</TabsTrigger>
+          <TabsTrigger value="status" data-action="Integracoes.tab.status" data-permission="Sistema.Integracoes.visualizar" data-context-required="group-or-company"><CheckCircle2 className="w-4 h-4 mr-2" />Status</TabsTrigger>
+          <TabsTrigger value="nfe" data-action="Integracoes.tab.nfe" data-permission="Sistema.Integracoes.visualizar" data-context-required="group-or-company"><FileText className="w-4 h-4 mr-2" />NF-e</TabsTrigger>
+          <TabsTrigger value="boletos" data-action="Integracoes.tab.boletos" data-permission="Sistema.Integracoes.visualizar" data-context-required="group-or-company"><DollarSign className="w-4 h-4 mr-2" />Boletos/PIX</TabsTrigger>
+          <TabsTrigger value="whatsapp" data-action="Integracoes.tab.whatsapp" data-permission="Sistema.Integracoes.visualizar" data-context-required="group-or-company"><MessageCircle className="w-4 h-4 mr-2" />WhatsApp</TabsTrigger>
+          <TabsTrigger value="transportadoras" data-action="Integracoes.tab.transportadoras" data-permission="Sistema.Integracoes.visualizar" data-context-required="group-or-company"><Truck className="w-4 h-4 mr-2" />Transportadoras</TabsTrigger>
+          <TabsTrigger value="maps" data-action="Integracoes.tab.maps" data-permission="Sistema.Integracoes.visualizar" data-context-required="group-or-company"><Globe className="w-4 h-4 mr-2" />Maps</TabsTrigger>
+          <TabsTrigger value="marketplaces" data-action="Integracoes.tab.marketplaces" data-permission="Sistema.Integracoes.visualizar" data-context-required="group-or-company"><ShoppingCart className="w-4 h-4 mr-2" />Marketplaces</TabsTrigger>
         </TabsList>
 
         <TabsContent value="gerenciamento" className="mt-4">
@@ -284,7 +340,7 @@ export default function IntegracoesIndex({ initialTab }) {
                   <h3 className="font-semibold">Webhooks & Testes Rápidos</h3>
                   <div className="flex items-center gap-2 text-xs">
                     <code className="px-2 py-1 bg-slate-100 rounded flex-1 overflow-x-auto">{webhookUrl}</code>
-                    <Button size="sm" variant="outline" onClick={() => handleCopy(webhookUrl)} data-action="Integracoes.webhook.copiarUrl" data-permission="Sistema.Integracoes.visualizar">Copiar URL</Button>
+                    <Button size="sm" variant="outline" onClick={() => handleCopy(webhookUrl)} disabled={!contextoValido || !podeEditarIntegracoes} data-action="Integracoes.webhook.copiarUrl" data-permission="Sistema.Integracoes.editar" data-context-required="group-or-company" data-sensitive="true">Copiar URL</Button>
                   </div>
                   <div className="text-xs text-slate-600">Header: x-internal-token: <span className="font-mono">DEPLOY_AUDIT_TOKEN</span></div>
                   <div className="flex flex-wrap gap-2">

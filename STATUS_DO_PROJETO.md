@@ -551,3 +551,16 @@ Checklist inicial:
 - Toggles e campos criticos de caixa, conciliacao bancaria, portal do cliente e roteirizacao receberam bloqueio por permissao/contexto e marcadores `data-permission`, `data-action` e `data-sensitive`.
 - Build validado com sucesso apos as alteracoes.
 - Proximo passo sugerido: voltar para `AdministracaoSistema`, especialmente aba `integracoes`, revisando toggles/botoes globais e garantindo que cada acao tenha contexto, RBAC e auditoria.
+
+### Administracao do Sistema - Integracoes
+
+- Seguido o plano de melhoria na aba existente `administracaosistema?tab=integracoes`, sem criar tela ou modulo duplicado.
+- `CentralIntegracoes` passou a validar contexto grupo/empresa e permissoes antes de ativar/desativar integracoes.
+- Toggles de integracao agora bloqueiam sem contexto ou sem permissao e registram auditoria de bloqueio.
+- Abertura de configuracoes de integracao agora valida permissao de visualizacao e registra auditoria.
+- Botoes de toggle/configurar receberam `data-permission`, `data-context-required` e `data-sensitive`.
+- `IntegracoesIndex` passou a auditar bloqueios ao criar estrutura base, testar webhooks e copiar URL sensivel.
+- Abas internas de integracoes receberam marcadores de permissao e contexto para RBAC/auditoria visual.
+- O botao de copiar URL de webhook agora exige contexto e permissao de edicao por tratar URL operacional sensivel.
+- Build validado com sucesso apos as alteracoes.
+- Proximo passo sugerido: continuar na aba `integracoes` reforcando componentes de teste especificos (`TesteNFe`, `TesteBoletos`, `TesteGoogleMaps`, `TesteTransportadoras`, `ConfigWhatsAppBusiness` e marketplaces).

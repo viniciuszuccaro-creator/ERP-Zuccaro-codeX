@@ -8,6 +8,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
 import { useToast } from "@/components/ui/use-toast";
 import { useWindow } from "@/components/lib/useWindow";
+import usePermissions from "@/components/lib/usePermissions";
 import ConfiguracaoNFeForm from "@/components/cadastros/ConfiguracaoNFeForm";
 import ConfiguracaoBoletosForm from "@/components/cadastros/ConfiguracaoBoletosForm";
 import ConfiguracaoWhatsAppForm from "@/components/cadastros/ConfiguracaoWhatsAppForm";
@@ -31,6 +32,7 @@ export default function CentralIntegracoes() {
   const { empresaAtual, grupoAtual } = useContextoVisual();
   const { user } = useUser();
   const { openWindow } = useWindow();
+  const { isAdmin, hasPermission } = usePermissions();
   const [salvandoKey, setSalvandoKey] = React.useState(null);
 
   const grupoAtivoId = grupoAtual?.id
@@ -50,6 +52,32 @@ export default function CentralIntegracoes() {
       : {};
   const scopeLabel = empresaAtual?.id ? "empresa atual" : grupoAtivoId ? "grupo atual" : "contexto atual";
   const chaveIntegracoes = scopeId ? `integracoes_${scopeId}` : null;
+  const contextoValido = Boolean(scopeId);
+  const podeVisualizarIntegracoes = isAdmin() || hasPermission("Sistema", "Integrações", "visualizar") || hasPermission("Sistema", "Integracoes", "visualizar");
+  const podeEditarIntegracoes = isAdmin() || hasPermission("Sistema", "Integrações", "editar") || hasPermission("Sistema", "Integracoes", "editar");
+  const podeCriarIntegracoes = isAdmin() || hasPermission("Sistema", "Integrações", "criar") || hasPermission("Sistema", "Integracoes", "criar");
+
+  const auditarIntegracao = async ({ acao, descricao, integracao, sucesso = true, dadosNovos = null }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Sistema",
+        usuario_id: user?.id || null,
+        empresa_id: scope?.empresa_id || null,
+        group_id: grupoAtivoId || null,
+        acao,
+        modulo: "Integracoes",
+        entidade: "ConfiguracaoSistema",
+        registro_id: chaveIntegracoes || null,
+        tipo_auditoria: sucesso ? "acao" : "seguranca",
+        descricao,
+        dados_novos: { integracao, scope, ...(dadosNovos || {}) },
+        sucesso,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar central de integracoes:", error);
+    }
+  };
 
   const { data: configs = [] } = useQuery({
     queryKey: ["configuracao-integracao-marketplace", scopeId || "sem-contexto"],
@@ -69,6 +97,24 @@ export default function CentralIntegracoes() {
   const setAtivo = async (key, ativo) => {
     if (!chaveIntegracoes) {
       toast({ title: "Selecione um grupo ou empresa", variant: "destructive" });
+      await auditarIntegracao({
+        acao: "Bloqueio sem contexto",
+        descricao: "Tentativa de alternar integracao sem grupo ou empresa.",
+        integracao: key,
+        sucesso: false,
+        dadosNovos: { ativo },
+      });
+      return;
+    }
+    if (!podeEditarIntegracoes && !podeCriarIntegracoes) {
+      toast({ title: "Acesso negado", description: "Seu perfil nao permite alterar integracoes.", variant: "destructive" });
+      await auditarIntegracao({
+        acao: "Bloqueio por permissao",
+        descricao: "Tentativa de alternar integracao sem permissao.",
+        integracao: key,
+        sucesso: false,
+        dadosNovos: { ativo },
+      });
       return;
     }
 
@@ -88,19 +134,11 @@ export default function CentralIntegracoes() {
         await base44.entities.ConfiguracaoSistema.create(payload);
       }
 
-      await base44.entities.AuditLog.create({
-        usuario: user?.full_name || user?.email || "Sistema",
-        usuario_id: user?.id || null,
-        empresa_id: scope?.empresa_id || null,
-        group_id: scope?.group_id || null,
+      await auditarIntegracao({
         acao: ativo ? "Ativacao" : "Desativacao",
-        modulo: "Integracoes",
-        entidade: "ConfiguracaoSistema",
-        registro_id: existentes?.[0]?.id || null,
-        descricao: `${ativo ? "Ativacao" : "Desativacao"} de integracao`,
-        dados_novos: { chave: key, ativo },
-        sucesso: true,
-        data_hora: new Date().toISOString(),
+        descricao: `${ativo ? "Ativacao" : "Desativacao"} de integracao no ${scopeLabel}`,
+        integracao: key,
+        dadosNovos: { chave: key, ativo, registro_id: existentes?.[0]?.id || null },
       });
 
       toast({ title: ativo ? `Integracao ativada no ${scopeLabel}` : `Integracao desativada no ${scopeLabel}` });
@@ -114,6 +152,51 @@ export default function CentralIntegracoes() {
   };
 
   const isAtivo = (key) => Boolean(cfgIntegracoes?.[key]?.ativo);
+
+  const abrirConfiguracao = async (integracao) => {
+    if (!chaveIntegracoes) {
+      toast({ title: "Selecione um grupo ou empresa", variant: "destructive" });
+      await auditarIntegracao({
+        acao: "Bloqueio sem contexto",
+        descricao: "Tentativa de abrir configuracao de integracao sem grupo ou empresa.",
+        integracao: integracao.key || integracao.nome,
+        sucesso: false,
+      });
+      return;
+    }
+    if (!podeVisualizarIntegracoes) {
+      toast({ title: "Acesso negado", description: "Seu perfil nao permite visualizar integracoes.", variant: "destructive" });
+      await auditarIntegracao({
+        acao: "Bloqueio por permissao",
+        descricao: "Tentativa de abrir configuracao de integracao sem permissao.",
+        integracao: integracao.key || integracao.nome,
+        sucesso: false,
+      });
+      return;
+    }
+    if (integracao.cmp) {
+      await auditarIntegracao({
+        acao: "Abrir Configuracao",
+        descricao: `Abertura de configuracao de integracao: ${integracao.nome}`,
+        integracao: integracao.key || integracao.nome,
+      });
+      openWindow(
+        integracao.cmp,
+        {
+          windowMode: true,
+          empresaId: empresaAtual?.id || null,
+          groupId: grupoAtivoId || null,
+          scope,
+        },
+        integracao.win || { title: "Configuracao", width: 1000, height: 700 }
+      );
+    } else {
+      toast({
+        title: "Configuracao indisponivel",
+        description: "Esta integracao ainda nao possui tela de configuracao.",
+      });
+    }
+  };
 
   const integracoesDisponiveis = [
     {
@@ -239,8 +322,11 @@ export default function CentralIntegracoes() {
                       size="sm"
                       variant="outline"
                       onClick={() => setAtivo(integracao.key, !ativo)}
-                      disabled={!chaveIntegracoes || salvando}
+                      disabled={!contextoValido || salvando || (!podeEditarIntegracoes && !podeCriarIntegracoes)}
                       data-action={`Integracoes.${integracao.key}.toggle`}
+                      data-permission="Sistema.Integracoes.editar"
+                      data-context-required="group-or-company"
+                      data-sensitive="true"
                     >
                       {salvando ? "Salvando..." : ativo ? "Desativar" : "Ativar"}
                     </Button>
@@ -250,31 +336,12 @@ export default function CentralIntegracoes() {
                     size="sm"
                     variant="outline"
                     className="ml-auto"
-                    disabled={!chaveIntegracoes}
+                    disabled={!contextoValido || !podeVisualizarIntegracoes}
                     data-action={`Integracoes.${integracao.key || integracao.nome}.configurar`}
-                    onClick={() => {
-                      if (!chaveIntegracoes) {
-                        toast({ title: "Selecione um grupo ou empresa", variant: "destructive" });
-                        return;
-                      }
-                      if (integracao.cmp) {
-                        openWindow(
-                          integracao.cmp,
-                          {
-                            windowMode: true,
-                            empresaId: empresaAtual?.id || null,
-                            groupId: grupoAtivoId || null,
-                            scope,
-                          },
-                          integracao.win || { title: "Configuracao", width: 1000, height: 700 }
-                        );
-                      } else {
-                        toast({
-                          title: "Configuracao indisponivel",
-                          description: "Esta integracao ainda nao possui tela de configuracao.",
-                        });
-                      }
-                    }}
+                    data-permission="Sistema.Integracoes.visualizar"
+                    data-context-required="group-or-company"
+                    data-sensitive="true"
+                    onClick={() => abrirConfiguracao(integracao)}
                   >
                     <Link2 className="w-3 h-3 mr-1" />
                     Configurar
