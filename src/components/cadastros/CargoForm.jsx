@@ -6,12 +6,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Briefcase, Trash2, Power, PowerOff } from "lucide-react";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * V21.1.2 - WINDOW MODE READY
  */
 export default function CargoForm({ cargo, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || cargo;
+  const { canCreate, canEdit, canDelete } = usePermissions();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
+  const podeCriar = canCreate("Cadastros", "Cargo") || canCreate("Sistema", "Cargo") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "Cargo") || canEdit("Sistema", "Cargo") || canEdit("Cadastros", null);
+  const podeExcluir = canDelete("Cadastros", "Cargo") || canDelete("Sistema", "Cargo") || canDelete("Cadastros", null);
+  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const [formData, setFormData] = useState(dadosIniciais || {
     nome_cargo: '',
     descricao: '',
@@ -35,10 +45,27 @@ export default function CargoForm({ cargo, item, data, initialData, defaultValue
       alert('Preencha o nome do cargo');
       return;
     }
-    onSubmit({ ...formData, nome: formData.nome_cargo });
+    if (!contextoValido) {
+      alert('Selecione um grupo ou empresa antes de salvar.');
+      return;
+    }
+    if (!podeSalvar) {
+      alert('Sem permissao para salvar cargos.');
+      return;
+    }
+    onSubmit({
+      ...formData,
+      nome: formData.nome_cargo,
+      group_id: groupId || formData.group_id,
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
+    });
   };
 
   const handleExcluir = () => {
+    if (!podeExcluir) {
+      alert('Sem permissao para excluir cargos.');
+      return;
+    }
     if (!window.confirm(`Tem certeza que deseja excluir o cargo "${formData.nome_cargo}"? Esta ação não pode ser desfeita.`)) {
       return;
     }
@@ -60,6 +87,10 @@ export default function CargoForm({ cargo, item, data, initialData, defaultValue
           value={formData.nome_cargo}
           onChange={(e) => setFormData({...formData, nome_cargo: e.target.value})}
           placeholder="Ex: Analista Financeiro, Operador de Produção"
+          disabled={!podeSalvar}
+          data-permission="Cadastros.Cargo.editar"
+          data-action="editar-nome-cargo"
+          data-sensitive
         />
       </div>
 
@@ -69,13 +100,17 @@ export default function CargoForm({ cargo, item, data, initialData, defaultValue
           value={formData.codigo_cbo}
           onChange={(e) => setFormData({...formData, codigo_cbo: e.target.value})}
           placeholder="Ex: 2522-10"
+          disabled={!podeSalvar}
+          data-permission="Cadastros.Cargo.editar"
+          data-action="editar-cbo-cargo"
+          data-sensitive
         />
       </div>
 
       <div>
         <Label>Nível Hierárquico</Label>
         <Select value={formData.nivel_hierarquico} onValueChange={(v) => setFormData({...formData, nivel_hierarquico: v})}>
-          <SelectTrigger>
+          <SelectTrigger disabled={!podeSalvar} data-permission="Cadastros.Cargo.editar" data-action="selecionar-nivel-cargo" data-sensitive>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -95,6 +130,10 @@ export default function CargoForm({ cargo, item, data, initialData, defaultValue
           step="0.01"
           value={formData.salario_base}
           onChange={(e) => setFormData({...formData, salario_base: parseFloat(e.target.value)})}
+          disabled={!podeSalvar}
+          data-permission="Cadastros.Cargo.editar"
+          data-action="editar-salario-cargo"
+          data-sensitive
         />
       </div>
 
@@ -104,6 +143,10 @@ export default function CargoForm({ cargo, item, data, initialData, defaultValue
           value={formData.descricao}
           onChange={(e) => setFormData({...formData, descricao: e.target.value})}
           rows={3}
+          disabled={!podeSalvar}
+          data-permission="Cadastros.Cargo.editar"
+          data-action="editar-descricao-cargo"
+          data-sensitive
         />
       </div>
 
@@ -112,6 +155,10 @@ export default function CargoForm({ cargo, item, data, initialData, defaultValue
         <Switch
           checked={formData.ativo}
           onCheckedChange={(v) => setFormData({...formData, ativo: v})}
+          disabled={!podeSalvar}
+          data-permission="Cadastros.Cargo.alterarStatus"
+          data-action="alternar-status-cargo"
+          data-sensitive
         />
       </div>
 
@@ -122,6 +169,10 @@ export default function CargoForm({ cargo, item, data, initialData, defaultValue
               type="button"
               variant="outline"
               onClick={handleAlternarStatus}
+              disabled={!contextoValido || !podeEditar}
+              data-permission="Cadastros.Cargo.alterarStatus"
+              data-action={formData.ativo ? "inativar-cargo" : "ativar-cargo"}
+              data-sensitive
               className={formData.ativo ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
             >
               {formData.ativo ? (
@@ -130,12 +181,12 @@ export default function CargoForm({ cargo, item, data, initialData, defaultValue
                 <><Power className="w-4 h-4 mr-2" />Ativar</>
               )}
             </Button>
-            <Button type="button" variant="destructive" onClick={handleExcluir}>
+            <Button type="button" variant="destructive" onClick={handleExcluir} disabled={!contextoValido || !podeExcluir} data-permission="Cadastros.Cargo.excluir" data-action="excluir-cargo" data-sensitive>
               <Trash2 className="w-4 h-4 mr-2" />Excluir
             </Button>
           </>
         )}
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Cadastros.Cargo.salvar" data-action="salvar-cargo" data-sensitive>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {dadosIniciais ? 'Atualizar' : 'Criar Cargo'}
         </Button>
