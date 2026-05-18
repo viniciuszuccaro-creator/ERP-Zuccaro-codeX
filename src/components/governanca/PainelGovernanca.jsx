@@ -16,6 +16,8 @@ import {
   Clock
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * Painel de Governança Corporativa
@@ -23,27 +25,42 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
  */
 export default function PainelGovernanca({ empresaId, grupoId }) {
   const [periodo, setPeriodo] = useState('hoje');
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { isAdmin, hasPermission } = usePermissions();
+  const groupId = grupoId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaAtivaId = empresaId || empresaAtual?.id || null;
+  const scopeKey = empresaAtivaId || groupId || 'sem-contexto';
+  const scope = {
+    ...(groupId ? { group_id: groupId } : {}),
+    ...(empresaAtivaId ? { empresa_id: empresaAtivaId } : {}),
+  };
+  const contextoValido = scopeKey !== 'sem-contexto';
+  const podeVerGovernanca = isAdmin() || hasPermission('Sistema', 'Seguranca', 'visualizar') || hasPermission('Sistema', 'Segurança', 'visualizar');
 
   const { data: auditoriaGlobal = [] } = useQuery({
-    queryKey: ['auditoria-global', empresaId],
-    queryFn: () => base44.entities.AuditoriaGlobal.list('-data_hora', 100),
+    queryKey: ['auditoria-global', scopeKey],
+    queryFn: () => filterInContext('AuditoriaGlobal', {}, '-data_hora', 100),
+    enabled: contextoValido && podeVerGovernanca,
   });
 
   const { data: auditoriaAcessos = [] } = useQuery({
-    queryKey: ['auditoria-acessos', empresaId],
-    queryFn: () => base44.entities.AuditoriaAcesso.list('-data_hora', 50),
+    queryKey: ['auditoria-acessos', scopeKey],
+    queryFn: () => filterInContext('AuditoriaAcesso', {}, '-data_hora', 50),
+    enabled: contextoValido && podeVerGovernanca,
   });
 
   const { data: governanca } = useQuery({
-    queryKey: ['governanca-empresa', empresaId],
+    queryKey: ['governanca-empresa', scopeKey],
     queryFn: async () => {
-      const configs = await base44.entities.GovernancaEmpresa.filter({
-        empresa_id: empresaId
-      });
+      const configs = await base44.entities.GovernancaEmpresa.filter(scope);
       return configs[0];
     },
-    enabled: !!empresaId
+    enabled: contextoValido && podeVerGovernanca
   });
+
+  if (!podeVerGovernanca) {
+    return <div className="p-4 text-sm text-slate-500">Sem permissao para visualizar governanca.</div>;
+  }
 
   // KPIs de Governança
   const loginsHoje = auditoriaAcessos.filter(a => 
@@ -173,9 +190,9 @@ export default function PainelGovernanca({ empresaId, grupoId }) {
 
       <Tabs defaultValue="logs" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="logs">Logs de Auditoria</TabsTrigger>
-          <TabsTrigger value="acessos">Acessos e Logins</TabsTrigger>
-          <TabsTrigger value="riscos">Ações de Risco</TabsTrigger>
+          <TabsTrigger value="logs" data-action="Governanca.tab.logs" data-permission="Sistema.Seguranca.visualizar" data-context-required="group-or-company">Logs de Auditoria</TabsTrigger>
+          <TabsTrigger value="acessos" data-action="Governanca.tab.acessos" data-permission="Sistema.Seguranca.visualizar" data-context-required="group-or-company">Acessos e Logins</TabsTrigger>
+          <TabsTrigger value="riscos" data-action="Governanca.tab.riscos" data-permission="Sistema.Seguranca.visualizar" data-context-required="group-or-company">Ações de Risco</TabsTrigger>
         </TabsList>
 
         <TabsContent value="logs">

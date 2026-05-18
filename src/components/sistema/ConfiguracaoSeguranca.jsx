@@ -24,6 +24,7 @@ import {
 import { toast } from 'sonner';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
+import { useUser } from '@/components/lib/UserContext';
 
 const DEFAULT_SECURITY_CONFIG = {
   jwt_ativo: true,
@@ -131,6 +132,7 @@ export default function ConfiguracaoSeguranca({ empresaId, grupoId }) {
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual } = useContextoVisual();
   const { isAdmin, hasPermission } = usePermissions();
+  const { user } = useUser();
   const grupoAtivoId = grupoId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
     try { return localStorage.getItem('group_atual_id'); } catch { return null; }
   })();
@@ -140,6 +142,26 @@ export default function ConfiguracaoSeguranca({ empresaId, grupoId }) {
   const contextoValido = scopeId !== 'sem-contexto';
   const podeEditarSeguranca = isAdmin() || hasPermission('Sistema', 'Segurança', 'editar') || hasPermission('Sistema', 'Seguranca', 'editar');
   const controlesDesabilitados = !contextoValido || !podeEditarSeguranca;
+
+  const auditarSeguranca = async ({ acao, descricao, dadosNovos = null, dadosAnteriores = null }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuario local',
+        usuario_id: user?.id || null,
+        acao,
+        modulo: 'Seguranca',
+        entidade: 'ConfiguracaoSeguranca',
+        empresa_id: empresaAtivaId || null,
+        group_id: grupoAtivoId || null,
+        descricao,
+        dados_anteriores: dadosAnteriores,
+        dados_novos: dadosNovos,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar configuracao de seguranca:', error);
+    }
+  };
 
   const { data: config, isLoading } = useQuery({
     queryKey: ['config-seguranca', scopeId],
@@ -234,6 +256,7 @@ export default function ConfiguracaoSeguranca({ empresaId, grupoId }) {
         group_id: grupoAtivoId || null,
         origem_configuracao: empresaAtivaId ? 'empresa' : 'grupo',
       };
+      const before = config?.id ? await base44.entities.ConfiguracaoSeguranca.get(config.id).catch(() => null) : null;
       const result = config?.id
         ? await base44.entities.ConfiguracaoSeguranca.update(config.id, stamped)
         : await base44.entities.ConfiguracaoSeguranca.create(stamped);
@@ -250,6 +273,7 @@ export default function ConfiguracaoSeguranca({ empresaId, grupoId }) {
           empresa_id: empresaAtivaId || null,
           group_id: grupoAtivoId || null,
           descricao: 'Configuracao de seguranca atualizada',
+          dados_anteriores: before,
           dados_novos: stamped,
           sucesso: true,
           data_hora: new Date().toISOString()
@@ -273,10 +297,20 @@ export default function ConfiguracaoSeguranca({ empresaId, grupoId }) {
   const handleSalvar = () => {
     if (!contextoValido) {
       toast.error('Selecione um grupo ou empresa antes de salvar.');
+      auditarSeguranca({
+        acao: 'Bloqueio sem contexto',
+        descricao: 'Tentativa de salvar configuracoes de seguranca sem grupo ou empresa.',
+        dadosNovos: { scope }
+      });
       return;
     }
     if (!podeEditarSeguranca) {
       toast.error('Sem permissao para editar configuracoes de seguranca.');
+      auditarSeguranca({
+        acao: 'Bloqueio por permissao',
+        descricao: 'Tentativa de salvar configuracoes de seguranca sem permissao.',
+        dadosNovos: { scope }
+      });
       return;
     }
     const clean = normalizeSecurityConfig(formData);
@@ -332,19 +366,19 @@ export default function ConfiguracaoSeguranca({ empresaId, grupoId }) {
 
       <Tabs defaultValue="jwt" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="jwt" data-action="Seguranca.tab.jwt">
+          <TabsTrigger value="jwt" data-action="Seguranca.tab.jwt" data-permission="Sistema.Seguranca.visualizar" data-context-required="group-or-company">
             <Key className="w-4 h-4 mr-2" />
             JWT
           </TabsTrigger>
-          <TabsTrigger value="sessoes" data-action="Seguranca.tab.sessoes">
+          <TabsTrigger value="sessoes" data-action="Seguranca.tab.sessoes" data-permission="Sistema.Seguranca.visualizar" data-context-required="group-or-company">
             <Clock className="w-4 h-4 mr-2" />
             Sessões
           </TabsTrigger>
-          <TabsTrigger value="mfa" data-action="Seguranca.tab.mfa">
+          <TabsTrigger value="mfa" data-action="Seguranca.tab.mfa" data-permission="Sistema.Seguranca.visualizar" data-context-required="group-or-company">
             <Smartphone className="w-4 h-4 mr-2" />
             MFA
           </TabsTrigger>
-          <TabsTrigger value="senhas" data-action="Seguranca.tab.senhas">
+          <TabsTrigger value="senhas" data-action="Seguranca.tab.senhas" data-permission="Sistema.Seguranca.visualizar" data-context-required="group-or-company">
             <Lock className="w-4 h-4 mr-2" />
             Senhas
           </TabsTrigger>
@@ -911,6 +945,7 @@ export default function ConfiguracaoSeguranca({ empresaId, grupoId }) {
           className="bg-blue-600 hover:bg-blue-700"
           data-action="Seguranca.Configuracao.salvar"
           data-permission="Sistema.Seguranca.editar"
+          data-context-required="group-or-company"
           data-sensitive="true"
         >
           {salvando || salvarMutation.isPending ? (

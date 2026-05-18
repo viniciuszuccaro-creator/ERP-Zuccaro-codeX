@@ -7,11 +7,16 @@ import { Badge } from '@/components/ui/badge';
 import { Shield, AlertTriangle, CheckCircle, RefreshCw, Eye, Users, Lock } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import { useUser } from '@/components/lib/UserContext';
+import usePermissions from '@/components/lib/usePermissions';
+import { toast } from 'sonner';
 
 export default function IAGovernancaCompliance() {
   const [analisando, setAnalisando] = useState(false);
   const queryClient = useQueryClient();
-  const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { contexto, empresaAtual, grupoAtual, empresasDoGrupo = [], filterInContext } = useContextoVisual();
+  const { user } = useUser();
+  const { isAdmin, hasPermission } = usePermissions();
   const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
     try { return localStorage.getItem('group_atual_id'); } catch { return null; }
   })();
@@ -22,6 +27,44 @@ export default function IAGovernancaCompliance() {
     ...(grupoAtivoId ? { group_id: grupoAtivoId } : {}),
     ...(empresaAtivaId ? { empresa_id: empresaAtivaId } : {}),
   };
+  const podeExecutar = isAdmin() || hasPermission('Sistema', 'Seguranca', 'editar') || hasPermission('Sistema', 'Segurança', 'editar');
+  const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
+    .map((item) => (typeof item === 'string' ? item : item?.empresa_id || item?.id))
+    .filter(Boolean);
+  const usuarioNoEscopo = (usuario) => {
+    const vinculadas = normalizeEmpresaIds(usuario?.empresas_vinculadas);
+    const temMarcadorEscopo = Boolean(usuario?.group_id || usuario?.grupo_id || usuario?.grupo_atual_id || usuario?.empresa_id || usuario?.empresa_atual_id || vinculadas.length);
+    if (!temMarcadorEscopo) return true;
+    if (contexto === 'grupo') {
+      const empresasIds = empresasDoGrupo.map((empresa) => empresa.id);
+      return usuario.group_id === grupoAtivoId ||
+        usuario.grupo_id === grupoAtivoId ||
+        usuario.grupo_atual_id === grupoAtivoId ||
+        vinculadas.some((id) => empresasIds.includes(id));
+    }
+    return usuario.empresa_id === empresaAtivaId ||
+      usuario.empresa_atual_id === empresaAtivaId ||
+      vinculadas.includes(empresaAtivaId);
+  };
+
+  const auditarIA = async ({ acao, descricao, dadosNovos = null }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuario local',
+        usuario_id: user?.id || null,
+        empresa_id: empresaAtivaId || null,
+        group_id: grupoAtivoId || null,
+        acao,
+        modulo: 'Seguranca',
+        entidade: 'IA_Governanca',
+        descricao,
+        dados_novos: dadosNovos,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar IA de governanca:', error);
+    }
+  };
 
   const { data: perfis = [] } = useQuery({
     queryKey: ['perfisAcesso', scopeKey],
@@ -31,7 +74,11 @@ export default function IAGovernancaCompliance() {
 
   const { data: usuarios = [] } = useQuery({
     queryKey: ['usuarios', scopeKey],
-    queryFn: () => base44.entities.User.list()
+    queryFn: async () => {
+      const rows = await base44.entities.User.list();
+      return rows.filter(usuarioNoEscopo);
+    },
+    enabled: hasValidScope,
   });
 
   const { data: logs = [] } = useQuery({
@@ -42,6 +89,22 @@ export default function IAGovernancaCompliance() {
 
   const analisarGovernancaMutation = useMutation({
     mutationFn: async () => {
+      if (!hasValidScope) {
+        await auditarIA({
+          acao: 'Bloqueio sem contexto',
+          descricao: 'Tentativa de executar IA de governanca sem grupo ou empresa.',
+          dadosNovos: scope
+        });
+        throw new Error('Selecione um grupo ou empresa antes de executar a analise.');
+      }
+      if (!podeExecutar) {
+        await auditarIA({
+          acao: 'Bloqueio por permissao',
+          descricao: 'Tentativa de executar IA de governanca sem permissao.',
+          dadosNovos: scope
+        });
+        throw new Error('Sem permissao para executar analise de governanca.');
+      }
       setAnalisando(true);
       
       // Analisar cada perfil de acesso
@@ -90,7 +153,8 @@ export default function IAGovernancaCompliance() {
         if (conflitos.length > 0) {
           await base44.entities.PerfilAcesso.update(perfil.id, {
             conflitos_sod_detectados: conflitos,
-            permissoes_sensiveis: permissoesSensiveis
+            permissoes_sensiveis: permissoesSensiveis,
+            ...scope
           });
           
           // Registrar no log de IA
@@ -150,11 +214,20 @@ export default function IAGovernancaCompliance() {
       }
       
       setAnalisando(false);
+      await auditarIA({
+        acao: 'Analise IA Governanca',
+        descricao: 'Analise de governanca e compliance executada no escopo atual.',
+        dadosNovos: { perfis_analisados: perfis.length, usuarios_analisados: usuarios.length, ...scope }
+      });
       return { perfis_analisados: perfis.length, usuarios_analisados: usuarios.length };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['perfisAcesso', scopeKey] });
       queryClient.invalidateQueries({ queryKey: ['logsIA', 'governanca', scopeKey] });
+    },
+    onError: (error) => {
+      setAnalisando(false);
+      toast.error(error.message || 'Erro ao executar analise de governanca.');
     }
   });
 
@@ -181,9 +254,12 @@ export default function IAGovernancaCompliance() {
         </div>
         <Button
           onClick={() => analisarGovernancaMutation.mutate()}
-          disabled={analisando || !hasValidScope}
+          disabled={analisando || !hasValidScope || !podeExecutar}
           className="bg-blue-600 hover:bg-blue-700"
           data-action="IAGovernanca.executarAnalise"
+          data-permission="Sistema.Seguranca.editar"
+          data-context-required="group-or-company"
+          data-sensitive="true"
         >
           {analisando ? (
             <>
