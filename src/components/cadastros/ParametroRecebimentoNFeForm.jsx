@@ -5,8 +5,17 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FileText, Save } from "lucide-react";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function ParametroRecebimentoNFeForm({ parametro, onSubmit, windowMode = false }) {
+  const { canCreate, canEdit } = usePermissions();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || parametro?.group_id || null;
+  const contextoValido = Boolean(groupId || empresaAtual?.id || parametro?.empresa_id);
+  const podeCriar = canCreate("Cadastros", "ParametroRecebimentoNFe") || canCreate("Fiscal", "NF-e") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "ParametroRecebimentoNFe") || canEdit("Fiscal", "NF-e") || canEdit("Cadastros", null);
+  const podeSalvar = parametro?.id ? podeEditar : podeCriar;
   const [formData, setFormData] = useState(parametro || {
     sugerir_cadastro_automatico_produto: true,
     usar_ia_para_classificacao: true,
@@ -23,7 +32,19 @@ export default function ParametroRecebimentoNFeForm({ parametro, onSubmit, windo
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    if (!contextoValido) {
+      alert('Selecione um grupo ou empresa antes de salvar.');
+      return;
+    }
+    if (!podeSalvar) {
+      alert('Sem permissao para salvar parametros de recebimento de NF-e.');
+      return;
+    }
+    onSubmit({
+      ...formData,
+      group_id: groupId || formData.group_id,
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
+    });
   };
 
   const containerClass = windowMode ? "w-full h-full overflow-auto p-6" : "space-y-6";
@@ -96,7 +117,7 @@ export default function ParametroRecebimentoNFeForm({ parametro, onSubmit, windo
         </Card>
 
         <div className="flex justify-end gap-3">
-          <Button type="submit" className="bg-green-600 hover:bg-green-700">
+          <Button type="submit" className="bg-green-600 hover:bg-green-700" disabled={!contextoValido || !podeSalvar} data-permission="Cadastros.ParametroRecebimentoNFe.salvar" data-action="salvar-parametros-recebimento-nfe" data-sensitive>
             <Save className="w-4 h-4 mr-2" />
             Salvar Parâmetros
           </Button>

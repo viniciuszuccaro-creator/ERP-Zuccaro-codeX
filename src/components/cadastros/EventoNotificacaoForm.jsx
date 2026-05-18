@@ -7,8 +7,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Bell, Save } from "lucide-react";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function EventoNotificacaoForm({ evento, onSubmit, isSubmitting, windowMode = false }) {
+  const { canCreate, canEdit } = usePermissions();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || evento?.group_id || null;
+  const contextoValido = Boolean(groupId || empresaAtual?.id || evento?.empresa_id);
+  const podeCriar = canCreate("Cadastros", "EventoNotificacao") || canCreate("Sistema", "EventoNotificacao") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "EventoNotificacao") || canEdit("Sistema", "EventoNotificacao") || canEdit("Cadastros", null);
+  const podeSalvar = evento?.id ? podeEditar : podeCriar;
   const [formData, setFormData] = useState(evento || {
     nome_evento: "",
     tipo_evento: "Sistema",
@@ -26,7 +35,20 @@ export default function EventoNotificacaoForm({ evento, onSubmit, isSubmitting, 
       alert('Nome do evento é obrigatório');
       return;
     }
-    await onSubmit(formData);
+    if (!contextoValido) {
+      alert('Selecione um grupo ou empresa antes de salvar.');
+      return;
+    }
+    if (!podeSalvar) {
+      alert('Sem permissao para salvar eventos/notificacoes.');
+      return;
+    }
+    await onSubmit({
+      ...formData,
+      nome: formData.nome_evento,
+      group_id: groupId || formData.group_id,
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
+    });
   };
 
   const form = (
@@ -46,12 +68,16 @@ export default function EventoNotificacaoForm({ evento, onSubmit, isSubmitting, 
                 value={formData.nome_evento}
                 onChange={(e) => setFormData({ ...formData, nome_evento: e.target.value })}
                 placeholder="Ex: Pedido Aprovado"
+                disabled={!podeSalvar}
+                data-permission="Cadastros.EventoNotificacao.editar"
+                data-action="editar-nome-evento-notificacao"
+                data-sensitive
               />
             </div>
             <div>
               <Label>Tipo de Evento</Label>
-              <Select value={formData.tipo_evento} onValueChange={(val) => setFormData({ ...formData, tipo_evento: val })}>
-                <SelectTrigger>
+              <Select value={formData.tipo_evento} onValueChange={(val) => setFormData({ ...formData, tipo_evento: val })} disabled={!podeSalvar}>
+                <SelectTrigger data-permission="Cadastros.EventoNotificacao.editar" data-action="editar-tipo-evento-notificacao" data-sensitive>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -73,6 +99,9 @@ export default function EventoNotificacaoForm({ evento, onSubmit, isSubmitting, 
               onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
               placeholder="Descreva quando este evento ocorre"
               rows={2}
+              disabled={!podeSalvar}
+              data-permission="Cadastros.EventoNotificacao.editar"
+              data-action="editar-descricao-evento-notificacao"
             />
           </div>
 
@@ -83,13 +112,17 @@ export default function EventoNotificacaoForm({ evento, onSubmit, isSubmitting, 
               onChange={(e) => setFormData({ ...formData, template_mensagem: e.target.value })}
               placeholder="Use {variavel} para campos dinâmicos. Ex: Olá {cliente_nome}, seu pedido {numero_pedido} foi aprovado!"
               rows={4}
+              disabled={!podeSalvar}
+              data-permission="Cadastros.EventoNotificacao.editar"
+              data-action="editar-template-evento-notificacao"
+              data-sensitive
             />
           </div>
 
           <div>
             <Label>Prioridade</Label>
-            <Select value={formData.prioridade} onValueChange={(val) => setFormData({ ...formData, prioridade: val })}>
-              <SelectTrigger>
+            <Select value={formData.prioridade} onValueChange={(val) => setFormData({ ...formData, prioridade: val })} disabled={!podeSalvar}>
+              <SelectTrigger data-permission="Cadastros.EventoNotificacao.editar" data-action="editar-prioridade-evento-notificacao" data-sensitive>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -106,13 +139,17 @@ export default function EventoNotificacaoForm({ evento, onSubmit, isSubmitting, 
             <Switch
               checked={formData.ativo}
               onCheckedChange={(val) => setFormData({ ...formData, ativo: val })}
+              disabled={!podeSalvar}
+              data-permission="Cadastros.EventoNotificacao.editar"
+              data-action="alternar-evento-notificacao"
+              data-sensitive
             />
           </div>
         </CardContent>
       </Card>
 
       <div className="flex justify-end gap-3">
-        <Button type="submit" className="bg-amber-600 hover:bg-amber-700" disabled={isSubmitting}>
+        <Button type="submit" className="bg-amber-600 hover:bg-amber-700" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Cadastros.EventoNotificacao.salvar" data-action="salvar-evento-notificacao" data-sensitive>
           <Save className="w-4 h-4 mr-2" />
           {isSubmitting ? 'Salvando...' : evento ? 'Atualizar' : 'Criar'}
         </Button>
