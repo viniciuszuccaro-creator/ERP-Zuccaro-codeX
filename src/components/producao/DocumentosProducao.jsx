@@ -6,17 +6,67 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Printer, Download, FileText } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { base44 } from "@/api/base44Client";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 
 export default function DocumentosProducao({ pedido, itensProducao }) {
   const docRef = useRef();
   const { toast } = useToast();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
+  const empresaId = pedido?.empresa_id || empresaAtual?.id || null;
+  const groupId = pedido?.group_id || pedido?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeExportarDocumento = hasPermission("Produção", "Documentos", "exportar") ||
+    hasPermission("Produção", "Documentos", "visualizar") ||
+    hasPermission("Producao", "Documentos", "exportar") ||
+    hasPermission("Producao", "Documentos", "visualizar") ||
+    hasPermission("Producao", null, "exportar");
 
-  const handleImprimir = () => {
+  const auditarDocumento = async ({ acao, descricao, sucesso = true, dadosNovos = null }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Usuario local",
+        usuario_id: user?.id || null,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        acao,
+        modulo: "Produção",
+        entidade: "DocumentoProducao",
+        registro_id: pedido?.id || null,
+        tipo_auditoria: sucesso ? "ui" : "seguranca",
+        descricao,
+        dados_novos: dadosNovos,
+        sucesso,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar documento de produção:", error);
+    }
+  };
+
+  const handleImprimir = async () => {
+    if (!contextoValido || !podeExportarDocumento) {
+      await auditarDocumento({ acao: "DocumentoProducao.bloqueado", descricao: "Tentativa de imprimir documento sem contexto ou permissão.", sucesso: false, dadosNovos: { pedido_id: pedido?.id, numero_pedido: pedido?.numero_pedido } });
+      toast({ title: "Acesso negado", description: "Selecione um contexto válido e confirme sua permissão para imprimir.", variant: "destructive" });
+      return;
+    }
+    await auditarDocumento({ acao: "Impressão", descricao: "Impressão de documentos de produção acionada.", dadosNovos: { pedido_id: pedido?.id, numero_pedido: pedido?.numero_pedido, itens: Array.isArray(itensProducao) ? itensProducao.length : 0 } });
     window.print();
     toast({ title: "🖨️ Enviando para impressora..." });
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
+    if (!contextoValido || !podeExportarDocumento) {
+      await auditarDocumento({ acao: "DocumentoProducao.bloqueado", descricao: "Tentativa de gerar PDF sem contexto ou permissão.", sucesso: false, dadosNovos: { pedido_id: pedido?.id, numero_pedido: pedido?.numero_pedido } });
+      toast({ title: "Acesso negado", description: "Selecione um contexto válido e confirme sua permissão para gerar PDF.", variant: "destructive" });
+      return;
+    }
+    await auditarDocumento({ acao: "Exportação", descricao: "Geração de PDF de documentos de produção acionada.", dadosNovos: { pedido_id: pedido?.id, numero_pedido: pedido?.numero_pedido, itens: Array.isArray(itensProducao) ? itensProducao.length : 0 } });
     toast({ title: "📄 Gerando PDF...", description: "Download iniciará em breve" });
   };
 
@@ -72,13 +122,13 @@ export default function DocumentosProducao({ pedido, itensProducao }) {
   const itensSeguro = Array.isArray(itensProducao) ? itensProducao : [];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full h-full" data-permission="Producao.Documentos.exportar" data-context-required="true">
       <div className="flex justify-end gap-2 no-print">
-        <Button onClick={handleImprimir} className="bg-blue-600">
+        <Button onClick={handleImprimir} className="bg-blue-600" disabled={!contextoValido || !podeExportarDocumento} data-permission="Producao.Documentos.exportar" data-action="DocumentosProducao.imprimir" data-sensitive>
           <Printer className="w-4 h-4 mr-2" />
           Imprimir
         </Button>
-        <Button onClick={handleDownloadPDF} variant="outline">
+        <Button onClick={handleDownloadPDF} variant="outline" disabled={!contextoValido || !podeExportarDocumento} data-permission="Producao.Documentos.exportar" data-action="DocumentosProducao.pdf" data-sensitive>
           <Download className="w-4 h-4 mr-2" />
           Download PDF
         </Button>

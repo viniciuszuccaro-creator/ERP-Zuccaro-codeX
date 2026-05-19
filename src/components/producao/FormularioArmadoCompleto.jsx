@@ -13,20 +13,36 @@ import { Calculator, Package, Ruler, Layers, Grid3x3, Building, Columns, Box as 
 import { useToast } from "@/components/ui/use-toast";
 import { Switch } from "@/components/ui/switch";
 import DescricaoAutomaticaArmado from "./DescricaoAutomaticaArmado";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 
 export default function FormularioArmadoCompleto({ onSalvar, onCancelar, itemInicial = null }) {
   const { toast } = useToast();
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
+  const empresaId = itemInicial?.empresa_id || empresaAtual?.id || null;
+  const groupId = itemInicial?.group_id || itemInicial?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const contextKey = groupId ? `grupo:${groupId}` : `empresa:${empresaId || "sem-empresa"}`;
+  const podeSalvarArmado = hasPermission("Produção", "Engenharia", "criar") ||
+    hasPermission("Produção", "Engenharia", "editar") ||
+    hasPermission("Produção", "Armado", "criar") ||
+    hasPermission("Producao", "Engenharia", "criar") ||
+    hasPermission("Producao", "Armado", "criar");
   const [tipoSelecionado, setTipoSelecionado] = useState(itemInicial?.tipo_peca || null);
 
   const [elementoEstrutural, setElementoEstrutural] = useState(itemInicial?.identificador || "");
   const [elementoObrigatorio] = useState(itemInicial?.origem_ia || false);
 
   const { data: configuracoes } = useQuery({
-    queryKey: ['configProducao'],
+    queryKey: ['configProducao', 'armado', contextKey],
     queryFn: async () => {
-      const configs = await base44.entities.ConfiguracaoProducao.filter({ tipo: "Perda Aço" });
+      const configs = await filterInContext("ConfiguracaoProducao", { tipo: "Configuração Geral" }, "-created_date", 20);
       return configs[0] || { perda_aco_percentual: 5, perda_arame_percentual: 10 };
     },
+    enabled: contextoValido,
   });
 
   const PESOS_BITOLA = {
@@ -286,6 +302,36 @@ export default function FormularioArmadoCompleto({ onSalvar, onCancelar, itemIni
   ]);
 
   const handleSalvar = () => {
+    const auditarArmado = (acao, descricao, sucesso = true, dadosNovos = null) => {
+      base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Usuario local",
+        usuario_id: user?.id || null,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        acao,
+        modulo: "Produção",
+        entidade: "FormularioArmado",
+        registro_id: itemInicial?.id || null,
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        descricao,
+        dados_anteriores: itemInicial,
+        dados_novos: dadosNovos,
+        sucesso,
+        data_hora: new Date().toISOString()
+      }).catch((error) => console.warn("Falha ao auditar armado:", error));
+    };
+
+    if (!contextoValido) {
+      auditarArmado("FormularioArmado.bloqueado", "Tentativa de adicionar armado sem contexto grupo/empresa.", false, formData);
+      toast({ title: "❌ Contexto obrigatório", description: "Selecione grupo ou empresa antes de adicionar o item.", variant: "destructive" });
+      return;
+    }
+    if (!podeSalvarArmado) {
+      auditarArmado("FormularioArmado.bloqueado", "Tentativa de adicionar armado sem permissão.", false, formData);
+      toast({ title: "❌ Acesso negado", description: "Seu perfil não pode adicionar itens armados.", variant: "destructive" });
+      return;
+    }
     if (!tipoSelecionado) {
       toast({
         title: "❌ Erro",
@@ -338,10 +384,14 @@ export default function FormularioArmadoCompleto({ onSalvar, onCancelar, itemIni
       tipo_servico: "armado",
       identificador: elementoEstrutural.trim() || descricaoAutomatica, // Use trimmed elementoEstrutural if present, else auto-description
       origem_ia: itemInicial?.origem_ia || false,
+      empresa_id: empresaId,
+      group_id: groupId,
+      grupo_id: groupId,
       descricao_automatica: descricaoAutomatica,
       resumo: resumo
     };
 
+    auditarArmado(itemInicial?.id ? "Edição" : "Criação", "Item armado calculado e adicionado ao pedido.", true, itemCompleto);
     onSalvar(itemCompleto);
     toast({ title: "✅ Item Adicionado ao Pedido!" });
   };
@@ -357,7 +407,7 @@ export default function FormularioArmadoCompleto({ onSalvar, onCancelar, itemIni
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full h-full" data-permission="Producao.Engenharia.criar" data-context-required="true">
       <Card>
         <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50">
           <CardTitle>Armado Sob Medida - Cálculo Automático</CardTitle>
@@ -766,6 +816,9 @@ export default function FormularioArmadoCompleto({ onSalvar, onCancelar, itemIni
           <Button 
             onClick={tipoSelecionado === "Bloco" ? calcularBloco : calcularElemento}
             className="w-full h-16 text-lg bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+            disabled={!contextoValido}
+            data-action="FormularioArmado.calcular"
+            data-permission="Producao.Engenharia.criar"
           >
             <Calculator className="w-6 h-6 mr-2" />
             CALCULAR {tipoSelecionado.toUpperCase()}
@@ -866,7 +919,7 @@ export default function FormularioArmadoCompleto({ onSalvar, onCancelar, itemIni
         <Button type="button" variant="outline" onClick={onCancelar}>
           Cancelar
         </Button>
-        <Button type="button" onClick={handleSalvar} disabled={!resumo} className="bg-blue-600 hover:bg-blue-700">
+        <Button type="button" onClick={handleSalvar} disabled={!resumo || !contextoValido || !podeSalvarArmado} className="bg-blue-600 hover:bg-blue-700" data-action="FormularioArmado.salvar" data-permission="Producao.Engenharia.criar" data-sensitive>
           <Save className="w-4 h-4 mr-2" />
           Adicionar Item
         </Button>

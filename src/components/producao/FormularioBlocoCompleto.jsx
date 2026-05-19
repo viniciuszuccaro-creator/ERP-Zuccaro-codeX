@@ -11,16 +11,31 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calculator, Package, Ruler, Layers, Grid3x3 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 
 export default function FormularioBlocoCompleto({ onSalvar, onCancelar, blocoInicial = null }) {
   const { toast } = useToast();
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
+  const empresaId = blocoInicial?.empresa_id || empresaAtual?.id || null;
+  const groupId = blocoInicial?.group_id || blocoInicial?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const contextKey = groupId ? `grupo:${groupId}` : `empresa:${empresaId || "sem-empresa"}`;
+  const podeSalvarBloco = hasPermission("Produção", "Engenharia", "criar") ||
+    hasPermission("Produção", "Bloco", "criar") ||
+    hasPermission("Producao", "Engenharia", "criar") ||
+    hasPermission("Producao", "Bloco", "criar");
 
   const { data: configuracoes } = useQuery({
-    queryKey: ['configProducao'],
+    queryKey: ['configProducao', 'bloco', contextKey],
     queryFn: async () => {
-      const configs = await base44.entities.ConfiguracaoProducao.filter({ tipo: "Perda Aço" });
+      const configs = await filterInContext("ConfiguracaoProducao", { tipo: "Configuração Geral" }, "-created_date", 20);
       return configs[0] || { perda_aco_percentual: 5, perda_arame_percentual: 10 };
     },
+    enabled: contextoValido,
   });
 
   const [formData, setFormData] = useState(blocoInicial || {
@@ -196,6 +211,36 @@ export default function FormularioBlocoCompleto({ onSalvar, onCancelar, blocoIni
   };
 
   const handleSalvar = () => {
+    const auditarBloco = (acao, descricao, sucesso = true, dadosNovos = null) => {
+      base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Usuario local",
+        usuario_id: user?.id || null,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        acao,
+        modulo: "Produção",
+        entidade: "FormularioBloco",
+        registro_id: blocoInicial?.id || null,
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        descricao,
+        dados_anteriores: blocoInicial,
+        dados_novos: dadosNovos,
+        sucesso,
+        data_hora: new Date().toISOString()
+      }).catch((error) => console.warn("Falha ao auditar bloco:", error));
+    };
+
+    if (!contextoValido) {
+      auditarBloco("FormularioBloco.bloqueado", "Tentativa de adicionar bloco sem contexto grupo/empresa.", false, formData);
+      toast({ title: "❌ Contexto obrigatório", description: "Selecione grupo ou empresa antes de adicionar o bloco.", variant: "destructive" });
+      return;
+    }
+    if (!podeSalvarBloco) {
+      auditarBloco("FormularioBloco.bloqueado", "Tentativa de adicionar bloco sem permissão.", false, formData);
+      toast({ title: "❌ Acesso negado", description: "Seu perfil não pode adicionar blocos.", variant: "destructive" });
+      return;
+    }
     if (!formData.comprimento || !formData.altura || !formData.largura) {
       toast({
         title: "❌ Erro",
@@ -221,16 +266,20 @@ export default function FormularioBlocoCompleto({ onSalvar, onCancelar, blocoIni
       ...formData,
       tipo_servico: "armado",
       nome_projeto: formData.identificador,
+      empresa_id: empresaId,
+      group_id: groupId,
+      grupo_id: groupId,
       descricao_automatica: descricaoAutomatica,
       resumo: resumo
     };
 
+    auditarBloco(blocoInicial?.id ? "Edição" : "Criação", "Bloco calculado e adicionado ao pedido.", true, blocoCompleto);
     onSalvar(blocoCompleto);
     toast({ title: "✅ Bloco Adicionado ao Pedido!" });
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full h-full" data-permission="Producao.Engenharia.criar" data-context-required="true">
       {/* DADOS DO BLOCO */}
       <Card>
         <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50">
@@ -376,6 +425,9 @@ export default function FormularioBlocoCompleto({ onSalvar, onCancelar, blocoIni
       <Button 
         onClick={calcularAutomatico}
         className="w-full h-16 text-lg bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+        disabled={!contextoValido}
+        data-action="FormularioBloco.calcular"
+        data-permission="Producao.Engenharia.criar"
       >
         <Calculator className="w-6 h-6 mr-2" />
         CALCULAR BLOCO
@@ -464,8 +516,11 @@ export default function FormularioBlocoCompleto({ onSalvar, onCancelar, blocoIni
         </Button>
         <Button
           onClick={handleSalvar}
-          disabled={!resumo}
+          disabled={!resumo || !contextoValido || !podeSalvarBloco}
           className="bg-green-600 hover:bg-green-700 min-w-[200px]"
+          data-action="FormularioBloco.salvar"
+          data-permission="Producao.Engenharia.criar"
+          data-sensitive
         >
           <Package className="w-4 h-4 mr-2" />
           Adicionar Bloco ao Pedido
