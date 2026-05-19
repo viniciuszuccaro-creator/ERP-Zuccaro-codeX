@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -34,9 +35,33 @@ export default function KanbanProducaoInteligente({ windowMode = false }) {
   const empresaId = empresaAtual?.id || null;
   const contextoValido = Boolean(groupId || empresaId);
   const contextKey = groupId ? `grupo:${groupId}` : `empresa:${empresaId || "sem-empresa"}`;
-  const canViewKanban = hasPermission("Produção", "Kanban", "visualizar") || hasPermission("Produção", "Kanban", "ver") || hasPermission("Produção", null, "visualizar") || hasPermission("Produção", null, "ver");
-  const canEditOP = hasPermission("Produção", "Ordens Produção", "editar") || hasPermission("Produção", "OrdemProducao", "editar");
-  const canCreateOP = hasPermission("Produção", "Ordens Produção", "criar") || hasPermission("Produção", "OrdemProducao", "criar");
+  const canViewKanban = hasPermission("Produção", "Kanban", "visualizar") || hasPermission("Produção", "Kanban", "ver") || hasPermission("Produção", null, "visualizar") || hasPermission("Produção", null, "ver") || hasPermission("Producao", "Kanban", "visualizar") || hasPermission("Producao", null, "visualizar");
+  const canEditOP = hasPermission("Produção", "Ordens Produção", "editar") || hasPermission("Produção", "OrdemProducao", "editar") || hasPermission("Producao", "Ordens Producao", "editar") || hasPermission("Producao", "OrdemProducao", "editar");
+  const canCreateOP = hasPermission("Produção", "Ordens Produção", "criar") || hasPermission("Produção", "OrdemProducao", "criar") || hasPermission("Producao", "Ordens Producao", "criar") || hasPermission("Producao", "OrdemProducao", "criar");
+
+  const auditarKanban = async ({ acao, descricao, sucesso = true, dadosNovos = null, dadosAnteriores = null, registroId = null }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Usuario local",
+        usuario_id: user?.id || null,
+        empresa_id: empresaId || dadosNovos?.empresa_id || dadosAnteriores?.empresa_id || null,
+        group_id: groupId || dadosNovos?.group_id || dadosAnteriores?.group_id || null,
+        grupo_id: groupId || dadosNovos?.group_id || dadosAnteriores?.group_id || null,
+        acao,
+        modulo: "Produção",
+        entidade: "KanbanProducao",
+        registro_id: registroId,
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        descricao,
+        dados_anteriores: dadosAnteriores,
+        dados_novos: dadosNovos,
+        sucesso,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar Kanban de produção:", error);
+    }
+  };
 
   const { data: ops = [], isLoading } = useQuery({
     queryKey: ["ordens-producao", contextKey],
@@ -51,24 +76,41 @@ export default function KanbanProducaoInteligente({ windowMode = false }) {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }) => {
-      if (!contextoValido) throw new Error("Contexto multiempresa obrigatório.");
-      if (!canEditOP) throw new Error("Seu perfil não pode alterar OP.");
+    mutationFn: async ({ id, status }) => {
       const opAtual = ops.find(op => op.id === id);
-      return updateInContext("OrdemProducao", id, { 
-      status,
-      historico_mudancas_status: [
-        ...(opAtual?.historico_mudancas_status || []),
-        {
-          data_hora: new Date().toISOString(),
-          status_anterior: opAtual?.status,
-          status_novo: status,
-          usuario: user?.full_name || user?.email || "Sistema",
-          usuario_id: user?.id,
-          motivo: "Movido no Kanban"
-        }
-      ]
-    });
+      if (!contextoValido) {
+        await auditarKanban({ acao: "Kanban.bloqueado", descricao: "Tentativa de mover OP sem contexto grupo/empresa.", sucesso: false, dadosNovos: { id, status }, dadosAnteriores: opAtual, registroId: id });
+        throw new Error("Contexto multiempresa obrigatório.");
+      }
+      if (!canEditOP) {
+        await auditarKanban({ acao: "Kanban.bloqueado", descricao: "Tentativa de mover OP sem permissão.", sucesso: false, dadosNovos: { id, status }, dadosAnteriores: opAtual, registroId: id });
+        throw new Error("Seu perfil não pode alterar OP.");
+      }
+      const dadosStatus = {
+        status,
+        group_id: opAtual?.group_id || groupId || null,
+        empresa_id: opAtual?.empresa_id || empresaId || null,
+        historico_mudancas_status: [
+          ...(opAtual?.historico_mudancas_status || []),
+          {
+            data_hora: new Date().toISOString(),
+            status_anterior: opAtual?.status,
+            status_novo: status,
+            usuario: user?.full_name || user?.email || "Sistema",
+            usuario_id: user?.id,
+            motivo: "Movido no Kanban"
+          }
+        ]
+      };
+      const result = await updateInContext("OrdemProducao", id, dadosStatus);
+      await auditarKanban({
+        acao: "Edição",
+        descricao: `Status da OP ${opAtual?.numero_op || id} alterado no Kanban para ${status}.`,
+        dadosNovos: dadosStatus,
+        dadosAnteriores: opAtual,
+        registroId: id
+      });
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["ordens-producao"] });
@@ -81,7 +123,13 @@ export default function KanbanProducaoInteligente({ windowMode = false }) {
 
   const handleDragEnd = (result) => {
     if (!result.destination) return;
+    if (!contextoValido) {
+      auditarKanban({ acao: "Kanban.bloqueado", descricao: "Tentativa de mover OP no Kanban sem contexto grupo/empresa.", sucesso: false, dadosNovos: { draggableId: result.draggableId } });
+      toast.error("Selecione um grupo ou empresa antes de mover OP.");
+      return;
+    }
     if (!canEditOP) {
+      auditarKanban({ acao: "Kanban.bloqueado", descricao: "Tentativa de mover OP no Kanban sem permissão.", sucesso: false, dadosNovos: { draggableId: result.draggableId } });
       toast.error("Seu perfil não pode mover OP no Kanban.");
       return;
     }
@@ -93,6 +141,12 @@ export default function KanbanProducaoInteligente({ windowMode = false }) {
   };
 
   const handleAbrirOP = (op) => {
+    auditarKanban({
+      acao: "Visualizacao",
+      descricao: `OP ${op.numero_op || op.id} aberta pelo Kanban.`,
+      dadosNovos: { op_id: op.id, numero_op: op.numero_op, status: op.status },
+      registroId: op.id
+    });
     openWindow(FormularioOrdemProducao, { op, windowMode: true }, {
       title: `OP ${op.numero_op} - ${op.cliente_nome}`,
       width: 1400,
@@ -102,13 +156,16 @@ export default function KanbanProducaoInteligente({ windowMode = false }) {
 
   const handleNovaOP = () => {
     if (!empresaId) {
+      auditarKanban({ acao: "Kanban.bloqueado", descricao: "Tentativa de criar OP pelo Kanban sem empresa operacional.", sucesso: false, dadosNovos: { groupId, empresaId } });
       toast.error("Selecione uma empresa operacional antes de criar OP.");
       return;
     }
     if (!canCreateOP) {
+      auditarKanban({ acao: "Kanban.bloqueado", descricao: "Tentativa de criar OP pelo Kanban sem permissão.", sucesso: false, dadosNovos: { groupId, empresaId } });
       toast.error("Seu perfil não pode criar OP.");
       return;
     }
+    auditarKanban({ acao: "Criacao", descricao: "Abertura de nova OP pelo Kanban.", dadosNovos: { groupId, empresaId } });
     openWindow(FormularioOrdemProducao, { windowMode: true }, {
       title: "Nova Ordem de Produção",
       width: 1400,
@@ -134,7 +191,7 @@ export default function KanbanProducaoInteligente({ windowMode = false }) {
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-hidden" : "h-full flex flex-col bg-gradient-to-br from-slate-50 to-blue-50";
 
   return (
-    <div className={containerClass}>
+    <div className={containerClass} data-permission="Producao.Kanban.visualizar" data-context-required="true">
       <div className="p-6 border-b bg-white shadow-sm">
         <div className="flex items-center justify-between">
           <div>
@@ -149,6 +206,7 @@ export default function KanbanProducaoInteligente({ windowMode = false }) {
               className="px-3 py-2 border rounded-lg"
               data-permission="Produção.Kanban.visualizar"
               data-action="filtrar-kanban-por-empresa"
+              data-context-required="true"
             >
               <option value="todas">Todas as Empresas</option>
               {empresas.map(emp => (
@@ -156,7 +214,7 @@ export default function KanbanProducaoInteligente({ windowMode = false }) {
               ))}
             </select>
 
-            <Button onClick={handleNovaOP} disabled={!empresaId || !canCreateOP} className="bg-blue-600 hover:bg-blue-700" data-permission="Produção.Ordens Produção.criar" data-action="criar-ordem-producao-kanban">
+            <Button onClick={handleNovaOP} disabled={!empresaId || !canCreateOP} className="bg-blue-600 hover:bg-blue-700" data-permission="Produção.Ordens Produção.criar" data-action="criar-ordem-producao-kanban" data-context-required="true" data-sensitive="true">
               <Plus className="w-4 h-4 mr-2" />
               Nova OP
             </Button>

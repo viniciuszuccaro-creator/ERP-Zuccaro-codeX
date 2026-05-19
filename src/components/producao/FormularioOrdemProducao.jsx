@@ -32,9 +32,9 @@ export default function FormularioOrdemProducao({ op, onClose }) {
   const empresaId = op?.empresa_id || empresaAtual?.id || null;
   const contextoValido = Boolean(groupId || empresaId);
   const contextKey = groupId ? `grupo:${groupId}` : `empresa:${empresaId || "sem-empresa"}`;
-  const canCreateOP = hasPermission("Produção", "Ordens Produção", "criar") || hasPermission("Produção", "OrdemProducao", "criar");
-  const canEditOP = hasPermission("Produção", "Ordens Produção", "editar") || hasPermission("Produção", "OrdemProducao", "editar");
-  const canUseIA = hasPermission("Produção", "IA", "executar") || hasPermission("Produção", "Ordens Produção", "ia");
+  const canCreateOP = hasPermission("Produção", "Ordens Produção", "criar") || hasPermission("Produção", "OrdemProducao", "criar") || hasPermission("Producao", "Ordens Producao", "criar") || hasPermission("Producao", "OrdemProducao", "criar");
+  const canEditOP = hasPermission("Produção", "Ordens Produção", "editar") || hasPermission("Produção", "OrdemProducao", "editar") || hasPermission("Producao", "Ordens Producao", "editar") || hasPermission("Producao", "OrdemProducao", "editar");
+  const canUseIA = hasPermission("Produção", "IA", "executar") || hasPermission("Produção", "Ordens Produção", "ia") || hasPermission("Producao", "IA", "executar") || hasPermission("Producao", "Ordens Producao", "ia");
   const [formData, setFormData] = useState(op || {
     numero_op: "",
     tipo_producao: "Armado Padrão",
@@ -74,16 +74,63 @@ export default function FormularioOrdemProducao({ op, onClose }) {
     enabled: contextoValido,
   });
 
+  const auditarOP = async ({ acao, descricao, sucesso = true, dadosNovos = null, dadosAnteriores = null }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Usuario local",
+        usuario_id: user?.id || null,
+        empresa_id: formData?.empresa_id || empresaId || null,
+        group_id: formData?.group_id || groupId || null,
+        grupo_id: formData?.group_id || groupId || null,
+        acao,
+        modulo: "Produção",
+        entidade: "OrdemProducao",
+        registro_id: op?.id || null,
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        descricao,
+        dados_anteriores: dadosAnteriores,
+        dados_novos: dadosNovos,
+        sucesso,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar ordem de produção:", error);
+    }
+  };
+
   const saveMutation = useMutation({
-    mutationFn: (data) => {
-      if (!contextoValido) throw new Error("Contexto multiempresa obrigatório.");
-      if (!data.empresa_id) throw new Error("Empresa de produção obrigatória.");
-      if (op?.id && !canEditOP) throw new Error("Seu perfil não pode editar OP.");
-      if (!op?.id && !canCreateOP) throw new Error("Seu perfil não pode criar OP.");
-      if (op?.id) {
-        return updateInContext('OrdemProducao', op.id, data);
+    mutationFn: async (data) => {
+      if (!contextoValido) {
+        await auditarOP({ acao: "OP.bloqueada", descricao: "Tentativa de salvar OP sem contexto grupo/empresa.", sucesso: false, dadosNovos: data });
+        throw new Error("Contexto multiempresa obrigatório.");
       }
-      return createInContext('OrdemProducao', data);
+      if (!data.empresa_id) {
+        await auditarOP({ acao: "OP.bloqueada", descricao: "Tentativa de salvar OP sem empresa de produção.", sucesso: false, dadosNovos: data });
+        throw new Error("Empresa de produção obrigatória.");
+      }
+      if (op?.id && !canEditOP) {
+        await auditarOP({ acao: "OP.bloqueada", descricao: "Tentativa de editar OP sem permissão.", sucesso: false, dadosNovos: data, dadosAnteriores: op });
+        throw new Error("Seu perfil não pode editar OP.");
+      }
+      if (!op?.id && !canCreateOP) {
+        await auditarOP({ acao: "OP.bloqueada", descricao: "Tentativa de criar OP sem permissão.", sucesso: false, dadosNovos: data });
+        throw new Error("Seu perfil não pode criar OP.");
+      }
+      const stamped = {
+        ...data,
+        empresa_id: data.empresa_id || empresaId,
+        group_id: data.group_id || groupId,
+        grupo_id: data.group_id || groupId,
+      };
+      let result;
+      if (op?.id) {
+        result = await updateInContext('OrdemProducao', op.id, stamped);
+        await auditarOP({ acao: "Edição", descricao: `OP ${stamped.numero_op || op.numero_op || op.id} atualizada.`, dadosNovos: stamped, dadosAnteriores: op });
+        return result;
+      }
+      result = await createInContext('OrdemProducao', stamped);
+      await auditarOP({ acao: "Criação", descricao: `OP ${stamped.numero_op || result?.id || "nova"} criada.`, dadosNovos: result || stamped });
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["ordens-producao"] });
@@ -93,7 +140,13 @@ export default function FormularioOrdemProducao({ op, onClose }) {
   });
 
   const handleGerarIA = async () => {
+    if (!contextoValido) {
+      await auditarOP({ acao: "IA.bloqueada", descricao: "Tentativa de usar IA em OP sem contexto grupo/empresa.", sucesso: false, dadosNovos: { pedido_id: formData.pedido_id } });
+      toast.error("Selecione o Grupo CPA ou uma empresa antes de usar IA.");
+      return;
+    }
     if (!canUseIA) {
+      await auditarOP({ acao: "IA.bloqueada", descricao: "Tentativa de usar IA em OP sem permissão.", sucesso: false, dadosNovos: { pedido_id: formData.pedido_id } });
       toast.error("Seu perfil não pode usar IA em Produção.");
       return;
     }
@@ -143,8 +196,14 @@ Retorne sugestões de:
       }));
 
       toast.success("✅ IA gerou sugestões!");
+      await auditarOP({
+        acao: "IA",
+        descricao: `Sugestões de IA geradas para OP ${formData.numero_op || "em edição"}.`,
+        dadosNovos: { pedido_id: formData.pedido_id, tempo_previsto_horas: result.tempo_previsto_horas, gargalos: result.gargalos }
+      });
     } catch (error) {
       toast.error("Erro ao gerar sugestões IA");
+      await auditarOP({ acao: "IA.erro", descricao: "Erro ao gerar sugestões de IA para OP.", sucesso: false, dadosNovos: { erro: error?.message } });
     }
   };
 
@@ -245,7 +304,7 @@ Retorne sugestões de:
   };
 
   return (
-    <div className="h-full flex flex-col bg-white w-full">
+    <div className="h-full flex flex-col bg-white w-full" data-permission={op?.id ? "Producao.OrdemProducao.editar" : "Producao.OrdemProducao.criar"} data-context-required="true">
       <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
         <div className="flex-1 overflow-auto p-6">
           <Tabs defaultValue="geral" className="h-full">
@@ -404,6 +463,8 @@ Retorne sugestões de:
                       disabled={!canUseIA}
                       data-permission="Produção.Ordens Produção.ia"
                       data-action="gerar-sugestoes-producao-ia"
+                      data-context-required="true"
+                      data-sensitive="true"
                     >
                       🤖 Gerar Sugestões de Produção com IA
                     </Button>
@@ -650,6 +711,8 @@ Retorne sugestões de:
             className="bg-purple-600 hover:bg-purple-700"
             data-permission={op?.id ? "Produção.Ordens Produção.editar" : "Produção.Ordens Produção.criar"}
             data-action={op?.id ? "atualizar-ordem-producao" : "criar-ordem-producao"}
+            data-context-required="true"
+            data-sensitive="true"
           >
             <Save className="w-4 h-4 mr-2" />
             {saveMutation.isPending ? "Salvando..." : "Salvar OP"}
