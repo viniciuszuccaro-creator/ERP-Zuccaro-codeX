@@ -22,12 +22,29 @@ import {
   ResponsiveContainer
 } from "recharts";
 import { Factory, Clock, TrendingUp, DollarSign, AlertTriangle } from "lucide-react";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 export default function RelatoriosProducao({ ops }) {
   const [periodoInicio, setPeriodoInicio] = useState("");
   const [periodoFim, setPeriodoFim] = useState("");
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const empresaId = empresaAtual?.id || null;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeVerRelatorios = hasPermission("Produção", "Relatórios", "visualizar") ||
+    hasPermission("Produção", null, "visualizar") ||
+    hasPermission("Producao", "Relatorios", "visualizar") ||
+    hasPermission("Producao", null, "visualizar");
 
-  const opsFiltradas = ops.filter(op => {
+  const opsContextuais = Array.isArray(ops) ? ops.filter(op => {
+    if (groupId && op.group_id && op.group_id !== groupId) return false;
+    if (empresaId && op.empresa_id && op.empresa_id !== empresaId) return false;
+    return true;
+  }) : [];
+
+  const opsFiltradas = opsContextuais.filter(op => {
     if (periodoInicio && op.data_emissao < periodoInicio) return false;
     if (periodoFim && op.data_emissao > periodoFim) return false;
     return true;
@@ -92,8 +109,20 @@ export default function RelatoriosProducao({ ops }) {
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
+  if (!contextoValido || !podeVerRelatorios) {
+    return (
+      <div className="space-y-6 w-full h-full" data-permission="Producao.Relatorios.visualizar" data-context-required="true">
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="p-6 text-amber-800">
+            {!contextoValido ? "Selecione grupo ou empresa para visualizar relatórios de produção." : "Seu perfil não possui permissão para visualizar relatórios de produção."}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full h-full" data-permission="Producao.Relatorios.visualizar" data-context-required="true">
       <Card>
         <CardContent className="p-4">
           <div className="flex gap-4">

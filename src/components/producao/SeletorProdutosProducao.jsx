@@ -11,6 +11,9 @@ import {
   CheckCircle2, Zap, Filter 
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 
 /**
  * V21.6 - SELETOR INTELIGENTE DE PRODUTOS PARA PRODUÇÃO
@@ -25,17 +28,67 @@ export default function SeletorProdutosProducao({ onSelecionarProduto, quantidad
   const [busca, setBusca] = useState('');
   const [filtroBitola, setFiltroBitola] = useState('todos');
   const [filtroTipoAco, setFiltroTipoAco] = useState('todos');
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
+  const empresaId = empresaAtual?.id || null;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const contextKey = groupId ? `grupo:${groupId}` : `empresa:${empresaId || "sem-empresa"}`;
+  const podeVisualizarProdutos = hasPermission("Produção", "Produtos", "visualizar") ||
+    hasPermission("Produção", "Ordens Produção", "criar") ||
+    hasPermission("Producao", "Produtos", "visualizar") ||
+    hasPermission("Producao", "Ordens Producao", "criar") ||
+    hasPermission("Estoque", "Produtos", "visualizar");
+  const podeSelecionarProduto = hasPermission("Produção", "Ordens Produção", "criar") ||
+    hasPermission("Produção", "Ordens Produção", "editar") ||
+    hasPermission("Producao", "Ordens Producao", "criar") ||
+    hasPermission("Producao", "Ordens Producao", "editar");
 
   const { data: produtos = [], isLoading } = useQuery({
-    queryKey: ['produtos-producao-ativas'],
+    queryKey: ['produtos-producao-ativas', contextKey],
     queryFn: async () => {
-      const all = await base44.entities.Produto.list();
+      const all = await filterInContext("Produto", {}, "descricao", 1000);
       return all.filter(p => 
         p.tipo_item === 'Matéria-Prima Produção' && 
         p.status === 'Ativo'
       );
-    }
+    },
+    enabled: contextoValido && podeVisualizarProdutos,
   });
+
+  const auditarSelecaoProduto = ({ produto, sucesso = true, descricao }) => {
+    base44.entities.AuditLog.create({
+      usuario: user?.full_name || user?.email || "Usuario local",
+      usuario_id: user?.id || null,
+      empresa_id: empresaId,
+      group_id: groupId,
+      grupo_id: groupId,
+      acao: sucesso ? "Seleção" : "SeletorProdutoProducao.bloqueado",
+      modulo: "Produção",
+      entidade: "Produto",
+      registro_id: produto?.id || null,
+      tipo_auditoria: sucesso ? "ui" : "seguranca",
+      descricao,
+      dados_novos: {
+        produto_id: produto?.id,
+        codigo: produto?.codigo,
+        descricao: produto?.descricao,
+        quantidadeNecessaria
+      },
+      sucesso,
+      data_hora: new Date().toISOString()
+    }).catch((error) => console.warn("Falha ao auditar seletor de produto:", error));
+  };
+
+  const handleSelecionarProduto = (produto) => {
+    if (!contextoValido || !podeSelecionarProduto) {
+      auditarSelecaoProduto({ produto, sucesso: false, descricao: "Tentativa de selecionar produto de produção sem contexto ou permissão." });
+      return;
+    }
+    auditarSelecaoProduto({ produto, descricao: "Produto de produção selecionado para OP." });
+    onSelecionarProduto && onSelecionarProduto(produto);
+  };
 
   const produtosFiltrados = produtos.filter(p => {
     const matchBusca = !busca || 
@@ -57,7 +110,7 @@ export default function SeletorProdutosProducao({ onSelecionarProduto, quantidad
   const produtosComEstoque = produtos.filter(p => (p.estoque_disponivel || p.estoque_atual || 0) > 0).length;
 
   return (
-    <div className="w-full h-full space-y-4">
+    <div className="w-full h-full space-y-4" data-permission="Producao.Produtos.visualizar" data-context-required="true">
       {/* Header com Estatísticas */}
       <Alert className="border-orange-300 bg-orange-50">
         <Factory className="w-5 h-5 text-orange-600" />
@@ -82,10 +135,11 @@ export default function SeletorProdutosProducao({ onSelecionarProduto, quantidad
             onChange={(e) => setBusca(e.target.value)}
             placeholder="Buscar produto, código ou bitola..."
             className="pl-10"
+            disabled={!contextoValido || !podeVisualizarProdutos}
           />
         </div>
 
-        <Select value={filtroBitola} onValueChange={setFiltroBitola}>
+        <Select value={filtroBitola} onValueChange={setFiltroBitola} disabled={!contextoValido || !podeVisualizarProdutos}>
           <SelectTrigger className="w-40">
             <SelectValue />
           </SelectTrigger>
@@ -96,7 +150,7 @@ export default function SeletorProdutosProducao({ onSelecionarProduto, quantidad
           </SelectContent>
         </Select>
 
-        <Select value={filtroTipoAco} onValueChange={setFiltroTipoAco}>
+        <Select value={filtroTipoAco} onValueChange={setFiltroTipoAco} disabled={!contextoValido || !podeVisualizarProdutos}>
           <SelectTrigger className="w-32">
             <SelectValue />
           </SelectTrigger>
@@ -139,7 +193,10 @@ export default function SeletorProdutosProducao({ onSelecionarProduto, quantidad
                   <div
                     key={produto.id}
                     className="p-4 hover:bg-slate-50 transition-colors cursor-pointer"
-                    onClick={() => onSelecionarProduto && onSelecionarProduto(produto)}
+                    onClick={() => handleSelecionarProduto(produto)}
+                    data-permission="Producao.OrdensProducao.criar"
+                    data-action="SeletorProdutosProducao.selecionar"
+                    data-sensitive
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex-1">

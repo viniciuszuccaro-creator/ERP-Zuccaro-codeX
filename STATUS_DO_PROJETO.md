@@ -776,3 +776,20 @@ Checklist inicial:
 - `git diff --check` executado sem erros.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em relatorios/exportacoes de Producao e integracoes com Estoque/Expedicao, revisando origem dos dados, filtros por grupo/empresa, permissoes e auditoria de exportacao.
+
+### Producao - Fase 8 Relatorios e Estoque
+
+- Seguido o plano de melhoria nos componentes existentes `RelatorioProducao`, `RelatoriosProducao` e `SeletorProdutosProducao`, sem criar telas, modulos, componentes ou arquivos duplicados.
+- `RelatorioProducao` passou a exigir contexto grupo/empresa e permissao de visualizacao antes de consultar ordens e apontamentos.
+- Consultas de relatorio de producao agora usam chave por contexto (`grupo` ou `empresa`) e `filterInContext`, mantendo os indicadores dentro do escopo autorizado.
+- Exportacoes CSV de producao mensal e top produtos agora exigem permissao granular de exportacao e geram `AuditLog` com usuario, `group_id`, `grupo_id`, `empresa_id`, filtros e quantidade de linhas.
+- Tentativas de exportar relatorio de producao sem contexto/RBAC agora sao bloqueadas e auditadas como seguranca.
+- `RelatoriosProducao` passou a validar contexto/RBAC antes da exibicao e a filtrar defensivamente a lista recebida por `group_id` e `empresa_id`.
+- `SeletorProdutosProducao` deixou de usar listagem global de `Produto` e passou a consultar materia-prima de producao via `filterInContext`, reforcando a integracao com Estoque no escopo correto.
+- Selecionar produto para OP agora valida contexto/RBAC e gera auditoria de selecao ou bloqueio com dados do produto e quantidade necessaria.
+- Filtros e selecao de produtos de producao receberam marcadores `data-permission`, `data-action`, `data-context-required` e `data-sensitive`.
+- Wrappers principais preservam `w-full h-full`, reforcando o layout obrigatorio.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida, nenhuma tela nova foi criada e os fluxos atuais de relatorio/produtos foram preservados.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em fluxos comerciais que enviam itens para Producao (`EnviarProducaoParaItens`, `EditarItemProducaoModal` e botoes do Comercial), revisando propagacao para grupo/empresa, permissoes, auditoria e integracao com OP/Estoque.

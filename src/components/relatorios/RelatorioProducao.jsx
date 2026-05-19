@@ -8,6 +8,9 @@ import {
 } from "recharts";
 import { Download, Factory, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
+import { base44 } from "@/api/base44Client";
 import FiltrosPeriodoEmpresa from "@/components/relatorios/FiltrosPeriodoEmpresa";
 import { exportarCSV } from "@/components/relatorios/exportUtils";
 
@@ -18,15 +21,31 @@ export default function RelatorioProducao() {
     data_inicio: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
     data_fim: new Date().toISOString().split('T')[0],
   });
-  const { filterInContext, empresaAtual } = useContextoVisual();
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
+  const empresaId = empresaAtual?.id || null;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const contextKey = groupId ? `grupo:${groupId}` : `empresa:${empresaId || "sem-empresa"}`;
+  const podeVerRelatorio = hasPermission("Produção", "Relatórios", "visualizar") ||
+    hasPermission("Produção", null, "visualizar") ||
+    hasPermission("Producao", "Relatorios", "visualizar") ||
+    hasPermission("Producao", null, "visualizar");
+  const podeExportarRelatorio = hasPermission("Produção", "Relatórios", "exportar") ||
+    hasPermission("Producao", "Relatorios", "exportar") ||
+    hasPermission("Relatórios", "Produção", "exportar") ||
+    hasPermission("Relatorios", "Producao", "exportar");
 
   const { data: ordens = [] } = useQuery({
-    queryKey: ['rel-ops', empresaAtual?.id],
+    queryKey: ['rel-ops', contextKey],
     queryFn: () => filterInContext('OrdemProducao', {}, '-created_date', 9999),
+    enabled: contextoValido && podeVerRelatorio,
   });
   const { data: apontamentos = [] } = useQuery({
-    queryKey: ['rel-apontamentos', empresaAtual?.id],
+    queryKey: ['rel-apontamentos', contextKey],
     queryFn: () => filterInContext('ApontamentoProducao', {}, '-created_date', 9999),
+    enabled: contextoValido && podeVerRelatorio,
   });
 
   const orsFiltrados = useMemo(() => {
@@ -73,8 +92,51 @@ export default function RelatorioProducao() {
 
   const eficiencia = total > 0 ? Math.round((concluidas / total) * 100) : 0;
 
+  const auditarExportacao = async ({ nomeArquivo, linhas, sucesso = true, motivo = null }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Usuario local",
+        usuario_id: user?.id || null,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        acao: sucesso ? "Exportação" : "RelatorioProducao.bloqueado",
+        modulo: "Produção",
+        entidade: "RelatorioProducao",
+        tipo_auditoria: sucesso ? "ui" : "seguranca",
+        descricao: sucesso ? `CSV ${nomeArquivo} exportado.` : motivo,
+        dados_novos: { nomeArquivo, linhas, filtros },
+        sucesso,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar exportação de produção:", error);
+    }
+  };
+
+  const handleExportarCSV = async (dados, nomeArquivo) => {
+    if (!contextoValido || !podeExportarRelatorio) {
+      await auditarExportacao({ nomeArquivo, linhas: dados?.length || 0, sucesso: false, motivo: "Tentativa de exportar relatório de produção sem contexto ou permissão." });
+      return;
+    }
+    exportarCSV(dados, nomeArquivo);
+    await auditarExportacao({ nomeArquivo, linhas: dados?.length || 0 });
+  };
+
+  if (!contextoValido || !podeVerRelatorio) {
+    return (
+      <div className="space-y-6 w-full h-full" data-permission="Producao.Relatorios.visualizar" data-context-required="true">
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="p-6 text-amber-800">
+            {!contextoValido ? "Selecione um grupo ou empresa para visualizar relatórios de produção." : "Seu perfil não possui permissão para visualizar relatórios de produção."}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6 w-full">
+    <div className="space-y-6 w-full h-full" data-permission="Producao.Relatorios.visualizar" data-context-required="true">
       <FiltrosPeriodoEmpresa filtros={filtros} setFiltros={setFiltros} />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -103,7 +165,7 @@ export default function RelatorioProducao() {
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <CardTitle className="text-base">OPs por Mês (Total × Concluídas)</CardTitle>
-              <Button size="sm" variant="outline" onClick={() => exportarCSV(producaoMensal, 'producao_mensal')}>
+              <Button size="sm" variant="outline" onClick={() => handleExportarCSV(producaoMensal, 'producao_mensal')} disabled={!podeExportarRelatorio} data-permission="Producao.Relatorios.exportar" data-action="RelatorioProducao.exportarMensal" data-sensitive>
                 <Download className="w-3 h-3 mr-1" /> CSV
               </Button>
             </div>
@@ -144,7 +206,7 @@ export default function RelatorioProducao() {
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <CardTitle className="text-base">Top 10 Produtos Produzidos</CardTitle>
-              <Button size="sm" variant="outline" onClick={() => exportarCSV(porProduto, 'top_produtos_producao')}>
+              <Button size="sm" variant="outline" onClick={() => handleExportarCSV(porProduto, 'top_produtos_producao')} disabled={!podeExportarRelatorio} data-permission="Producao.Relatorios.exportar" data-action="RelatorioProducao.exportarProdutos" data-sensitive>
                 <Download className="w-3 h-3 mr-1" /> CSV
               </Button>
             </div>
