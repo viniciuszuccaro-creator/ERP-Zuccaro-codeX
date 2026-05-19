@@ -357,16 +357,7 @@ export default function Estoque() {
       return;
     }
     React.startTransition(() => {
-      // Auditoria de abertura de seção
-      base44.entities.AuditLog.create({
-        usuario: user?.full_name || user?.email || 'Usuário',
-        acao: 'Visualização',
-        modulo: 'Estoque',
-        tipo_auditoria: 'acesso',
-        entidade: 'Seção',
-        descricao: `Abrir seção: ${module.title}`,
-        data_hora: new Date().toISOString(),
-      });
+      auditEstoqueAction('abrir_secao', { secao: module.title }, 'acesso');
       openWindow(
         module.component,
         { ...(module.props || {}), windowMode: true },
@@ -383,6 +374,7 @@ export default function Estoque() {
   return (
     <ProtectedSection module="Estoque" action="visualizar">
     <ErrorBoundary>
+      <div className="w-full h-full" data-permission="Estoque.visualizar" data-context-required="true">
       <ModuleLayout
         title="Estoque e Almoxarifado"
         subtitle="Produtos, níveis e movimentações"
@@ -393,7 +385,7 @@ export default function Estoque() {
             variant="outline"
             className="gap-2"
             data-permission="Estoque.Relatorios.exportar"
-            data-action="exportar-estoque-aco"
+            data-action="Estoque.exportar_aco_pdf"
           >
             <Download className="w-3 h-3" /> Exportar Aço (PDF)
           </Button>
@@ -412,19 +404,31 @@ export default function Estoque() {
         <ModuleContent>
           {estaNoGrupo && (
             <Button
-              onClick={() => openWindow(TransferenciaEntreEmpresasForm, {
-                empresasDoGrupo,
-                produtos: produtosParaKPIs,
-                windowMode: true
-              }, {
-                title: '↔️ Transferência Entre Empresas',
-                width: 900,
-                height: 600
-              })}
+              onClick={() => {
+                if (!contextoValido || !canTransferirEstoque) {
+                  auditEstoqueAction('transferencia_entre_empresas_bloqueada', {
+                    motivo: !contextoValido ? 'sem_contexto_grupo_empresa' : 'sem_permissao',
+                    permissao: 'Estoque.Transferencias.criar',
+                  }, 'seguranca', false);
+                  return;
+                }
+                auditEstoqueAction('abrir_transferencia_entre_empresas', {
+                  total_empresas_contexto: empresasDoGrupo?.length || 0,
+                }, 'sensivel');
+                openWindow(TransferenciaEntreEmpresasForm, {
+                  empresasDoGrupo,
+                  produtos: produtosParaKPIs,
+                  windowMode: true
+                }, {
+                  title: '↔️ Transferência Entre Empresas',
+                  width: 900,
+                  height: 600
+                });
+              }}
               className="bg-purple-600 hover:bg-purple-700 mb-2"
               disabled={!contextoValido || !canTransferirEstoque}
               data-permission="Estoque.Transferencias.criar"
-              data-action="transferir-entre-empresas"
+              data-action="Estoque.transferir_entre_empresas"
               size="sm"
             >
               <ArrowLeftRight className="w-3 h-3 mr-2" />
@@ -436,6 +440,7 @@ export default function Estoque() {
           />
         </ModuleContent>
       </ModuleLayout>
+      </div>
     </ErrorBoundary>
     </ProtectedSection>
   );

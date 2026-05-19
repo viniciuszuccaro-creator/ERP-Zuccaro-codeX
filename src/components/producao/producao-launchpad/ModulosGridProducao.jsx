@@ -4,7 +4,7 @@ import LaunchpadCard from "../../financeiro/LaunchpadCard";
 
 export default function ModulosGridProducao({ modules, onModuleClick }) {
   return (
-    <Card className="border-0 shadow-sm flex-1">
+    <Card className="border-0 shadow-sm flex-1" data-permission="Producao.visualizar" data-context-required="true">
       <CardContent className="p-2">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
           {modules.map((module, idx) => (

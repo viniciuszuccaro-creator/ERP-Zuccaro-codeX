@@ -4,11 +4,12 @@ import App from '@/App.jsx'
 import '@/index.css'
 import { queryClientInstance } from '@/lib/query-client'
 import { hydrateLocalBase44FromSnapshot, PESSOAS_PARCEIROS_ENTITIES } from '@/api/localBase44Client'
+import { isLocalOnlyMode } from '@/api/base44Client'
 
 const recoverLocalStorageIfRequested = () => {
   try {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('reset-local') !== '1') return;
+    if (params.get('reset-local') !== '1') return false;
 
     [
       'erp_integra_local_db_v1',
@@ -27,18 +28,42 @@ const recoverLocalStorageIfRequested = () => {
     const next = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}${window.location.hash || ''}`;
     window.history.replaceState({}, '', next || '/');
     console.info('[erp-local] Banco local do navegador reiniciado.');
+    return true;
   } catch (error) {
     console.warn('[erp-local] Falha ao reiniciar dados locais:', error?.message || error);
+    return false;
   }
 };
 
-recoverLocalStorageIfRequested();
+const resetLocalRequested = recoverLocalStorageIfRequested();
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  // <React.StrictMode>
-  <App />
-  // </React.StrictMode>,
-)
+const renderApp = () => {
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    // <React.StrictMode>
+    <App />
+    // </React.StrictMode>,
+  )
+}
+
+const hydrateLocalDataBeforeRender = async () => {
+  if (!isLocalOnlyMode) return { imported: false, reason: 'remote-mode' };
+
+  const result = await hydrateLocalBase44FromSnapshot({
+    sourceUrl: '/base44-local-core-snapshot.json',
+    force: resetLocalRequested,
+  });
+  const pessoasResult = await hydrateLocalBase44FromSnapshot({
+    sourceUrl: '/base44-local-core-snapshot.json',
+    onlyEntities: PESSOAS_PARCEIROS_ENTITIES,
+    force: true,
+  });
+
+  if (result?.imported || pessoasResult?.imported) {
+    console.info('[base44-local] Snapshot core importado antes de montar o ERP.', result);
+  }
+
+  return { core: result, pessoasParceiros: pessoasResult };
+}
 
 const hydrateCoreSnapshotInBackground = () => {
   try {
@@ -69,7 +94,14 @@ const hydrateCoreSnapshotInBackground = () => {
   }
 };
 
-hydrateCoreSnapshotInBackground();
+hydrateLocalDataBeforeRender()
+  .catch((error) => {
+    console.warn('[base44-local] Falha ao hidratar snapshot antes do render:', error?.message || error);
+  })
+  .finally(() => {
+    renderApp();
+    hydrateCoreSnapshotInBackground();
+  });
 
 if (import.meta.hot) {
   import.meta.hot.on('vite:beforeUpdate', () => {

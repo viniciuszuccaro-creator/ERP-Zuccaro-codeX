@@ -20,27 +20,35 @@ export default function MonitoramentoManutencaoIndex({ initialTab = "monitoramen
   const [tab, setTab] = React.useState(initialTab);
   const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const contextoValido = !!(empresaAtual?.id || grupoAtivoId);
-  const canViewMonitoramento = isAdmin() ||
-    hasPermission("Sistema", "Monitoramento", "visualizar") ||
-    hasPermission("Sistema", "Seguranca", "visualizar") ||
-    hasPermission("Sistema", "Segurança", "visualizar");
+  const canViewTab = (next) => {
+    if (isAdmin()) return true;
+    const mapa = {
+      monitoramento: [['Seguranca', 'Monitoramento'], ['Segurança', 'Monitoramento'], 'Monitoramento'],
+      backup: [['Seguranca', 'Backup'], ['Segurança', 'Backup'], 'Backup'],
+      acesso: [['Seguranca', 'Monitoramento', 'AcessoRealtime'], ['Segurança', 'Monitoramento', 'AcessoRealtime'], 'AcessoRealtime'],
+      governanca: [['Seguranca', 'Governanca'], ['Segurança', 'Governança'], 'Governanca'],
+    };
+    return (mapa[next] || []).some((section) => hasPermission('Sistema', section, 'visualizar'));
+  };
 
-  const handleTabChange = (next) => {
-    setTab(next);
+  const registrarAuditoriaMonitoramento = (acao, next, sucesso = true, detalhe = null) => {
     try {
       base44.entities.AuditLog.create({
         usuario: user?.full_name || user?.email || "Usuario local",
         usuario_id: user?.id || null,
         empresa_id: empresaAtual?.id || null,
         group_id: grupoAtivoId || null,
-        acao: "Visualizacao",
+        grupo_id: grupoAtivoId || null,
+        acao,
         modulo: "Monitoramento",
         entidade: "AdministracaoSistema",
-        descricao: `Aba de monitoramento visualizada: ${next}`,
+        tipo_auditoria: sucesso ? "acesso" : "seguranca",
+        descricao: detalhe || `Aba de monitoramento visualizada: ${next}`,
+        sucesso,
         dados_novos: {
           aba: next,
           contexto_valido: contextoValido,
-          permissao_visualizacao: canViewMonitoramento
+          permissao_visualizacao: canViewTab(next)
         },
         data_hora: new Date().toISOString(),
       });
@@ -49,14 +57,30 @@ export default function MonitoramentoManutencaoIndex({ initialTab = "monitoramen
     }
   };
 
+  const handleTabChange = (next) => {
+    if (!contextoValido || !canViewTab(next)) {
+      registrarAuditoriaMonitoramento(
+        "Monitoramento.aba_bloqueada",
+        next,
+        false,
+        !contextoValido
+          ? `Aba de monitoramento bloqueada sem contexto grupo/empresa: ${next}`
+          : `Aba de monitoramento bloqueada sem permissao: ${next}`
+      );
+      return;
+    }
+    setTab(next);
+    registrarAuditoriaMonitoramento("Visualizacao", next, true);
+  };
+
   return (
-    <div className="w-full h-full flex flex-col" data-permission="Sistema.Monitoramento.visualizar" data-context-required="group-or-company">
-      <Tabs value={tab} onValueChange={handleTabChange} className="w-full h-full">
+    <div className="w-full h-full flex flex-col" data-permission="Sistema.Monitoramento.visualizar" data-context-required="true">
+      <Tabs value={tab} onValueChange={handleTabChange} className="w-full h-full" data-context-required="true" data-permission="Sistema.Monitoramento.visualizar">
         <TabsList className="flex flex-wrap gap-2">
-          <TabsTrigger value="monitoramento" data-action="Monitoramento.tab.monitoramento">Monitoramento</TabsTrigger>
-          <TabsTrigger value="backup" data-action="Monitoramento.tab.backup">Backup</TabsTrigger>
-          <TabsTrigger value="acesso" data-action="Monitoramento.tab.acesso">Acesso em Tempo Real</TabsTrigger>
-          <TabsTrigger value="governanca" data-action="Monitoramento.tab.governanca">Governança</TabsTrigger>
+          <TabsTrigger value="monitoramento" disabled={!contextoValido || !canViewTab("monitoramento")} data-action="Monitoramento.tab.monitoramento" data-permission="Sistema.Monitoramento.visualizar" data-context-required="true">Monitoramento</TabsTrigger>
+          <TabsTrigger value="backup" disabled={!contextoValido || !canViewTab("backup")} data-action="Monitoramento.tab.backup" data-permission="Sistema.Backup.visualizar" data-context-required="true">Backup</TabsTrigger>
+          <TabsTrigger value="acesso" disabled={!contextoValido || !canViewTab("acesso")} data-action="Monitoramento.tab.acesso" data-permission="Sistema.Seguranca.Monitoramento.AcessoRealtime.visualizar" data-context-required="true">Acesso em Tempo Real</TabsTrigger>
+          <TabsTrigger value="governanca" disabled={!contextoValido || !canViewTab("governanca")} data-action="Monitoramento.tab.governanca" data-permission="Sistema.Seguranca.Governanca.visualizar" data-context-required="true">Governança</TabsTrigger>
         </TabsList>
 
         <TabsContent value="monitoramento" className="mt-4">

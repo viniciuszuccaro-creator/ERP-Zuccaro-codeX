@@ -45,7 +45,7 @@ const RelatorioFinanceiroLogistica = React.lazy(() => import("../components/expe
 
 export default function Expedicao() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
-  const canSeeExpedicao = hasPermission('Expedição', null, 'ver') || hasPermission('Expedição', null, 'visualizar');
+  const canSeeExpedicao = hasPermission('Expedição', null, 'ver') || hasPermission('Expedição', null, 'visualizar') || hasPermission('Expedicao', null, 'ver') || hasPermission('Expedicao', null, 'visualizar');
   const { openWindow } = useWindow();
   const { user } = useUser();
   const { toast } = useToast();
@@ -316,13 +316,78 @@ export default function Expedicao() {
 
   const canViewModule = (module) => {
     const section = module.sectionKey || module.title;
-    return hasPermission('Expedição', section, 'ver') || hasPermission('Expedição', section, 'visualizar');
+    return hasPermission('Expedição', section, 'ver') || hasPermission('Expedição', section, 'visualizar') || hasPermission('Expedicao', section, 'ver') || hasPermission('Expedicao', section, 'visualizar');
   };
 
   const allowedModules = modules.filter(canViewModule);
+  const auditExpedicaoAction = async (acao, module, detalhes = {}) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario_id: user?.id,
+        usuario: user?.full_name || user?.email || 'Usuário',
+        acao,
+        modulo: 'Expedição',
+        tipo_auditoria: detalhes.sucesso === false ? 'seguranca' : 'acesso',
+        entidade: 'Seção',
+        descricao: detalhes.descricao || `Abrir seção: ${module?.title || 'Expedição'}`,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        sucesso: detalhes.sucesso !== false,
+        detalhes: {
+          sectionKey: module?.sectionKey || module?.title || null,
+          contexto: estaNoGrupo ? 'grupo' : 'empresa',
+          ...detalhes,
+        },
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar ação de Expedição:', error);
+    }
+  };
 
-   const handleModuleClick = (module) => {
+  const handlePrimaryAction = async () => {
     if (!contextoValido) {
+      await auditExpedicaoAction('nova_entrega_bloqueada', { title: 'Nova Entrega' }, {
+        sucesso: false,
+        motivo: 'contexto_obrigatorio',
+        descricao: 'Tentativa de criar entrega sem contexto de grupo/empresa.',
+      });
+      toast({
+        title: 'Contexto obrigatório',
+        description: 'Selecione o Grupo CPA ou uma empresa antes de criar entrega.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const canCreateEntrega = hasPermission('Expedição', 'Entregas', 'criar') || hasPermission('Expedição', 'Entregas', 'incluir') || hasPermission('Expedicao', 'Entregas', 'criar') || hasPermission('Expedicao', 'Entregas', 'incluir');
+    if (!canCreateEntrega) {
+      await auditExpedicaoAction('nova_entrega_bloqueada', { title: 'Nova Entrega' }, {
+        sucesso: false,
+        motivo: 'permissao_negada',
+        descricao: 'Tentativa de criar entrega sem permissão.',
+      });
+      toast({
+        title: 'Acesso negado',
+        description: 'Seu perfil não possui permissão para criar entregas.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    await auditExpedicaoAction('nova_entrega', { title: 'Nova Entrega' }, {
+      descricao: 'Acionamento do comando principal de nova entrega.',
+    });
+    base44.analytics.track({ eventName: 'expedicao_primary_action' });
+  };
+  const handleModuleClick = (module) => {
+    if (!contextoValido) {
+      auditExpedicaoAction('abrir_secao_bloqueado', module, {
+        sucesso: false,
+        motivo: 'contexto_obrigatorio',
+        descricao: `Tentativa de abrir seção sem contexto: ${module.title}`,
+      });
       toast({
         title: 'Contexto obrigatório',
         description: 'Selecione o Grupo CPA ou uma empresa antes de abrir o módulo.',
@@ -332,6 +397,11 @@ export default function Expedicao() {
     }
 
     if (!canViewModule(module)) {
+      auditExpedicaoAction('abrir_secao_bloqueado', module, {
+        sucesso: false,
+        motivo: 'permissao_negada',
+        descricao: `Tentativa de abrir seção sem permissão: ${module.title}`,
+      });
       toast({
         title: 'Acesso negado',
         description: 'Seu perfil não possui permissão para esta seção de Expedição.',
@@ -341,19 +411,8 @@ export default function Expedicao() {
     }
 
     React.startTransition(() => {
-      // Auditoria de abertura de seção
-      base44.entities.AuditLog.create({
-        usuario_id: user?.id,
-        usuario: user?.full_name || user?.email || 'Usuário',
-        acao: 'Visualização',
-        modulo: 'Expedição',
-        tipo_auditoria: 'acesso',
-        entidade: 'Seção',
+      auditExpedicaoAction('abrir_secao', module, {
         descricao: `Abrir seção: ${module.title}`,
-        empresa_id: empresaId,
-        group_id: groupId,
-        grupo_id: groupId,
-        data_hora: new Date().toISOString(),
       });
       openWindow(
          module.component,
@@ -367,11 +426,11 @@ export default function Expedicao() {
       );
     });
   };
-
   return (
     <ProtectedSection module="Expedição" action="visualizar">
     <ErrorBoundary>
-      <ModuleLayout title="Expedição e Logística" subtitle="Entregas, romaneios e rotas" actions={<div className="flex items-center gap-2"><Button size="sm" onClick={() => base44.analytics.track({ eventName: 'expedicao_primary_action' })}>Nova Entrega</Button></div>}>
+      <div className="w-full h-full" data-permission="Expedicao.visualizar" data-context-required="true">
+      <ModuleLayout title="Expedição e Logística" subtitle="Entregas, romaneios e rotas" actions={<div className="flex items-center gap-2"><Button size="sm" onClick={handlePrimaryAction} data-permission="Expedicao.Entregas.criar" data-action="Expedicao.nova_entrega">Nova Entrega</Button></div>}>
         <ModuleKPIs>
           <KPIsExpedicao statusCounts={statusCounts} />
           {estaNoGrupo && (
@@ -386,6 +445,7 @@ export default function Expedicao() {
           />
         </ModuleContent>
       </ModuleLayout>
+      </div>
 
       <Dialog open={notificadorOpen} onOpenChange={setNotificadorOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
