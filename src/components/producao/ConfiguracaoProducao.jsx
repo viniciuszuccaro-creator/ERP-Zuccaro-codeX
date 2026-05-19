@@ -12,10 +12,14 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Lock, Unlock, Save, AlertTriangle, TrendingDown, DollarSign, Clock, Settings, Package } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 export default function ConfiguracaoProducao({ empresaId }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { isAdmin: isPermissionAdmin, hasPermission } = usePermissions();
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -23,28 +27,45 @@ export default function ConfiguracaoProducao({ empresaId }) {
   });
 
   const isAdmin = user?.role === 'admin';
+  const empresaOperacionalId = empresaId || empresaAtual?.id || null;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const contextoValido = Boolean(groupId || empresaOperacionalId);
+  const contextKey = groupId ? `grupo:${groupId}` : `empresa:${empresaOperacionalId || "sem-empresa"}`;
+  const podeEditarConfig = isAdmin || isPermissionAdmin() ||
+    hasPermission("Produção", "Configurações", "editar") ||
+    hasPermission("Produção", "ConfiguracaoProducao", "editar") ||
+    hasPermission("Producao", "Configuracoes", "editar") ||
+    hasPermission("Producao", "ConfiguracaoProducao", "editar");
+  const podeBloquearConfig = isAdmin || isPermissionAdmin() ||
+    hasPermission("Produção", "Configurações", "bloquear") ||
+    hasPermission("Produção", "ConfiguracaoProducao", "bloquear") ||
+    hasPermission("Producao", "Configuracoes", "bloquear") ||
+    hasPermission("Producao", "ConfiguracaoProducao", "bloquear") ||
+    podeEditarConfig;
 
   const { data: config } = useQuery({
-    queryKey: ['configProducao', empresaId],
+    queryKey: ['configProducao', contextKey],
     queryFn: async () => {
+      const filtro = empresaOperacionalId ? { empresa_id: empresaOperacionalId } : { group_id: groupId };
       const configs = await base44.entities.ConfiguracaoProducao.filter({
-        empresa_id: empresaId
+        ...filtro
       });
       return configs[0] || null;
     },
-    enabled: !!empresaId, // Only run this query if empresaId is available
+    enabled: contextoValido,
   });
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos-bitola'],
+    queryKey: ['produtos-bitola', contextKey],
     queryFn: async () => {
-      const todos = await base44.entities.Produto.list();
+      const todos = await filterInContext("Produto", {}, "descricao", 1000);
       return todos.filter(p => p.eh_bitola && p.status === 'Ativo');
     },
+    enabled: contextoValido,
   });
 
   const [formData, setFormData] = useState({
-    empresa_id: empresaId,
+    empresa_id: empresaOperacionalId,
     perda_aco_percentual: config?.perda_aco_percentual || 5,
     perda_arame_percentual: config?.perda_arame_percentual || 10,
     preco_aco_kg: config?.preco_aco_kg || 8.5,
@@ -71,7 +92,7 @@ export default function ConfiguracaoProducao({ empresaId }) {
   React.useEffect(() => {
     if (config) {
       setFormData({
-        empresa_id: empresaId,
+        empresa_id: empresaOperacionalId,
         perda_aco_percentual: config.perda_aco_percentual || 5,
         perda_arame_percentual: config.perda_arame_percentual || 10,
         preco_aco_kg: config.preco_aco_kg || 8.5,
@@ -94,12 +115,52 @@ export default function ConfiguracaoProducao({ empresaId }) {
       });
     } else {
       // If config is null initially, ensure empresa_id is set for new config creation
-      setFormData(prev => ({ ...prev, empresa_id: empresaId }));
+      setFormData(prev => ({ ...prev, empresa_id: empresaOperacionalId }));
     }
-  }, [config, empresaId]);
+  }, [config, empresaOperacionalId]);
+
+  const auditarConfiguracao = async ({ acao, descricao, sucesso = true, dadosNovos = null, dadosAnteriores = null, registroId = null }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Usuario local",
+        usuario_id: user?.id || null,
+        empresa_id: empresaOperacionalId || dadosNovos?.empresa_id || dadosAnteriores?.empresa_id || null,
+        group_id: groupId || dadosNovos?.group_id || dadosAnteriores?.group_id || null,
+        grupo_id: groupId || dadosNovos?.grupo_id || dadosAnteriores?.grupo_id || null,
+        acao,
+        modulo: "Produção",
+        entidade: "ConfiguracaoProducao",
+        registro_id: registroId || config?.id || null,
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        descricao,
+        dados_anteriores: dadosAnteriores,
+        dados_novos: dadosNovos,
+        sucesso,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar configuração de produção:", error);
+    }
+  };
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
+      if (!contextoValido) {
+        await auditarConfiguracao({ acao: "ConfiguracaoProducao.bloqueada", descricao: "Tentativa de salvar configuração sem contexto grupo/empresa.", sucesso: false, dadosNovos: data });
+        throw new Error("Contexto multiempresa obrigatório.");
+      }
+      if (!empresaOperacionalId) {
+        await auditarConfiguracao({ acao: "ConfiguracaoProducao.bloqueada", descricao: "Tentativa de salvar configuração sem empresa operacional.", sucesso: false, dadosNovos: data });
+        throw new Error("Empresa operacional obrigatória.");
+      }
+      if (!podeEditarConfig) {
+        await auditarConfiguracao({ acao: "ConfiguracaoProducao.bloqueada", descricao: "Tentativa de salvar configuração sem permissão.", sucesso: false, dadosNovos: data, dadosAnteriores: config });
+        throw new Error("Seu perfil não pode editar configurações de produção.");
+      }
+      if (config?.bloqueado_edicao && !podeBloquearConfig) {
+        await auditarConfiguracao({ acao: "ConfiguracaoProducao.bloqueada", descricao: "Tentativa de salvar configuração bloqueada sem liberação.", sucesso: false, dadosNovos: data, dadosAnteriores: config });
+        throw new Error("Configurações bloqueadas por administrador.");
+      }
       const historico = config?.historico_alteracoes || [];
       
       // Adicionar ao histórico
@@ -118,34 +179,57 @@ export default function ConfiguracaoProducao({ empresaId }) {
 
       const dadosCompletos = {
         ...data,
-        chave: `config_producao_${empresaId}`,
+        empresa_id: empresaOperacionalId,
+        group_id: groupId,
+        grupo_id: groupId,
+        chave: `config_producao_${empresaOperacionalId}`,
         tipo: "Configuração Geral",
         historico_alteracoes: historico
       };
 
       if (config?.id) {
-        return await base44.entities.ConfiguracaoProducao.update(config.id, dadosCompletos);
+        const result = await base44.entities.ConfiguracaoProducao.update(config.id, dadosCompletos);
+        await auditarConfiguracao({ acao: "Edição", descricao: "Configuração de produção atualizada.", dadosNovos: result || dadosCompletos, dadosAnteriores: config, registroId: config.id });
+        return result;
       } else {
-        return await base44.entities.ConfiguracaoProducao.create(dadosCompletos);
+        const result = await base44.entities.ConfiguracaoProducao.create(dadosCompletos);
+        await auditarConfiguracao({ acao: "Criação", descricao: "Configuração de produção criada.", dadosNovos: result || dadosCompletos, registroId: result?.id });
+        return result;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['configProducao', empresaId] });
+      queryClient.invalidateQueries({ queryKey: ['configProducao'] });
       toast({ title: "✅ Configurações Salvas!" });
+    },
+    onError: (error) => {
+      toast({ title: "❌ Erro ao salvar", description: error.message, variant: "destructive" });
     },
   });
 
   const toggleBloquear = useMutation({
     mutationFn: async (bloquear) => {
+      if (!contextoValido || !empresaOperacionalId) {
+        await auditarConfiguracao({ acao: "ConfiguracaoProducao.bloqueada", descricao: "Tentativa de bloquear/desbloquear sem contexto grupo/empresa.", sucesso: false, dadosNovos: { bloquear } });
+        throw new Error("Selecione grupo/empresa antes de bloquear configurações.");
+      }
+      if (!podeBloquearConfig) {
+        await auditarConfiguracao({ acao: "ConfiguracaoProducao.bloqueada", descricao: "Tentativa de bloquear/desbloquear sem permissão.", sucesso: false, dadosNovos: { bloquear }, dadosAnteriores: config });
+        throw new Error("Seu perfil não pode bloquear configurações de produção.");
+      }
       const dados = {
         ...formData,
+        empresa_id: empresaOperacionalId,
+        group_id: groupId,
+        grupo_id: groupId,
         bloqueado_edicao: bloquear,
         bloqueado_por: bloquear ? user?.full_name : null,
         bloqueado_em: bloquear ? new Date().toISOString() : null
       };
       
       if (config?.id) {
-        return await base44.entities.ConfiguracaoProducao.update(config.id, dados);
+        const result = await base44.entities.ConfiguracaoProducao.update(config.id, dados);
+        await auditarConfiguracao({ acao: bloquear ? "Bloqueio" : "Desbloqueio", descricao: bloquear ? "Configuração de produção bloqueada." : "Configuração de produção desbloqueada.", dadosNovos: result || dados, dadosAnteriores: config, registroId: config.id });
+        return result;
       } else {
          // If there's no config yet, create one with the blocked status
         const historico = [];
@@ -158,25 +242,48 @@ export default function ConfiguracaoProducao({ empresaId }) {
         });
         const newConfigData = {
           ...dados,
-          chave: `config_producao_${empresaId}`,
+          chave: `config_producao_${empresaOperacionalId}`,
           tipo: "Configuração Geral",
           historico_alteracoes: historico,
-          empresa_id: empresaId,
+          empresa_id: empresaOperacionalId,
+          group_id: groupId,
+          grupo_id: groupId,
         };
-        return await base44.entities.ConfiguracaoProducao.create(newConfigData);
+        const result = await base44.entities.ConfiguracaoProducao.create(newConfigData);
+        await auditarConfiguracao({ acao: bloquear ? "Bloqueio" : "Desbloqueio", descricao: "Configuração de produção criada com estado de bloqueio.", dadosNovos: result || newConfigData, registroId: result?.id });
+        return result;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['configProducao', empresaId] });
+      queryClient.invalidateQueries({ queryKey: ['configProducao'] });
       toast({ 
         title: formData.bloqueado_edicao ? "🔓 Configurações Desbloqueadas" : "🔒 Configurações Bloqueadas",
         description: formData.bloqueado_edicao ? "Usuários comuns podem editar" : "Apenas administradores podem editar"
       });
     },
+    onError: (error) => {
+      toast({ title: "❌ Acesso negado", description: error.message, variant: "destructive" });
+    },
   });
 
   const handleSalvar = () => {
-    if (config?.bloqueado_edicao && !isAdmin) {
+    if (!contextoValido || !empresaOperacionalId) {
+      toast({
+        title: "❌ Contexto obrigatório",
+        description: "Selecione um grupo e empresa antes de salvar.",
+        variant: "destructive"
+      });
+      return;
+    }
+    if (!podeEditarConfig) {
+      toast({
+        title: "❌ Acesso Negado",
+        description: "Seu perfil não pode editar configurações de produção",
+        variant: "destructive"
+      });
+      return;
+    }
+    if (config?.bloqueado_edicao && !podeBloquearConfig) {
       toast({
         title: "❌ Acesso Negado",
         description: "Configurações bloqueadas por administrador",
@@ -188,10 +295,10 @@ export default function ConfiguracaoProducao({ empresaId }) {
     saveMutation.mutate(formData);
   };
 
-  const isDisabled = config?.bloqueado_edicao && !isAdmin;
+  const isDisabled = !contextoValido || !empresaOperacionalId || !podeEditarConfig || (config?.bloqueado_edicao && !podeBloquearConfig);
 
   return (
-    <Tabs defaultValue="perdas" className="space-y-6">
+    <Tabs defaultValue="perdas" className="space-y-6 w-full h-full" data-permission="Producao.ConfiguracaoProducao.editar" data-context-required="true">
       <TabsList className="bg-white border shadow-sm">
         <TabsTrigger value="perdas">
           <TrendingDown className="w-4 h-4 mr-2" />
@@ -219,8 +326,8 @@ export default function ConfiguracaoProducao({ empresaId }) {
                 </p>
               </div>
             </div>
-            {isAdmin && (
-              <Button onClick={() => toggleBloquear.mutate(false)} variant="outline" className="border-red-300">
+            {podeBloquearConfig && (
+              <Button onClick={() => toggleBloquear.mutate(false)} variant="outline" className="border-red-300" data-permission="Producao.ConfiguracaoProducao.bloquear" data-sensitive>
                 <Unlock className="w-4 h-4 mr-2" />
                 Desbloquear
               </Button>
@@ -228,7 +335,7 @@ export default function ConfiguracaoProducao({ empresaId }) {
           </div>
         )}
 
-        {!config?.bloqueado_edicao && isAdmin && (
+        {!config?.bloqueado_edicao && podeBloquearConfig && (
           <div className="p-4 bg-blue-50 border border-blue-200 rounded flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Unlock className="w-5 h-5 text-blue-600" />
@@ -237,7 +344,7 @@ export default function ConfiguracaoProducao({ empresaId }) {
                 <p className="text-sm text-blue-700">Todos os usuários podem editar estas configurações</p>
               </div>
             </div>
-            <Button onClick={() => toggleBloquear.mutate(true)} variant="outline" className="border-blue-300">
+            <Button onClick={() => toggleBloquear.mutate(true)} variant="outline" className="border-blue-300" data-permission="Producao.ConfiguracaoProducao.bloquear" data-sensitive>
               <Lock className="w-4 h-4 mr-2" />
               Bloquear Edição
             </Button>
@@ -736,6 +843,8 @@ export default function ConfiguracaoProducao({ empresaId }) {
           onClick={handleSalvar}
           disabled={isDisabled || saveMutation.isPending}
           className="bg-green-600 hover:bg-green-700 min-w-[200px]"
+          data-permission="Producao.ConfiguracaoProducao.editar"
+          data-sensitive
         >
           <Save className="w-4 h-4 mr-2" />
           {saveMutation.isPending ? 'Salvando...' : 'Salvar Configurações'}

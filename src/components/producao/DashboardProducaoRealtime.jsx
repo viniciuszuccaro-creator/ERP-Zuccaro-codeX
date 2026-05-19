@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * ETAPA 5: DASHBOARD PRODUÇÃO TEMPO REAL V21.4
@@ -22,7 +23,17 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
  */
 
 function DashboardProducaoRealtime({ empresaId, windowMode = false }) {
-  const { filterInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const empresaOperacionalId = empresaId || empresaAtual?.id || null;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const contextoValido = Boolean(groupId || empresaOperacionalId);
+  const contextKey = groupId ? `grupo:${groupId}` : `empresa:${empresaOperacionalId || "sem-empresa"}`;
+  const canViewDashboard = hasPermission("Produção", "Dashboard", "visualizar") ||
+    hasPermission("Produção", "Dashboard", "ver") ||
+    hasPermission("Produção", null, "visualizar") ||
+    hasPermission("Producao", "Dashboard", "visualizar") ||
+    hasPermission("Producao", null, "visualizar");
   const [metricas, setMetricas] = useState({
     eficienciaGeral: 0,
     opsAtrasadas: 0,
@@ -33,13 +44,15 @@ function DashboardProducaoRealtime({ empresaId, windowMode = false }) {
   });
 
   const { data: ops = [] } = useQuery({
-    queryKey: ['ordens-producao'],
-    queryFn: () => filterInContext('OrdemProducao', {})
+    queryKey: ['ordens-producao-dashboard', contextKey],
+    queryFn: () => filterInContext('OrdemProducao', {}, '-created_date', 500),
+    enabled: contextoValido && canViewDashboard,
   });
 
   const { data: apontamentos = [] } = useQuery({
-    queryKey: ['apontamentos-producao'],
-    queryFn: () => filterInContext('ApontamentoProducao', {})
+    queryKey: ['apontamentos-producao-dashboard', contextKey],
+    queryFn: () => filterInContext('ApontamentoProducao', {}, '-created_date', 500),
+    enabled: contextoValido && canViewDashboard,
   });
 
   // Calcular métricas em tempo real
@@ -99,8 +112,21 @@ function DashboardProducaoRealtime({ empresaId, windowMode = false }) {
 
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "w-full h-full space-y-6";
 
+  if (!contextoValido || !canViewDashboard) {
+    return (
+      <div className={containerClass} data-permission="Producao.Dashboard.visualizar" data-context-required="true">
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="p-6 flex items-center gap-3 text-amber-800">
+            <AlertTriangle className="w-5 h-5" />
+            <span>{!contextoValido ? "Selecione um grupo ou empresa para visualizar o dashboard de produção." : "Seu perfil não possui permissão para visualizar o dashboard de produção."}</span>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className={containerClass}>
+    <div className={containerClass} data-permission="Producao.Dashboard.visualizar" data-context-required="true">
       <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
       {/* KPIs Principais */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
