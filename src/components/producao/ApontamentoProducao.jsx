@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/components/ui/use-toast";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
+import usePermissions from "@/components/lib/usePermissions";
 import { Clock, CheckCircle, Play, Pause, AlertTriangle } from "lucide-react";
 
 /**
@@ -19,7 +20,16 @@ import { Clock, CheckCircle, Play, Pause, AlertTriangle } from "lucide-react";
 export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { getFiltroContexto } = useContextoVisual();
+  const { getFiltroContexto, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = op?.group_id || grupoAtual?.id || empresaAtual?.group_id || null;
+  const empresaId = op?.empresa_id || empresaAtual?.id || null;
+  const ordemId = opId || op?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const canApontar = hasPermission("Produção", "Apontamento", "criar") ||
+    hasPermission("Produção", "Ordens Produção", "editar") ||
+    hasPermission("Producao", "Apontamento", "criar") ||
+    hasPermission("Producao", "Ordens Producao", "editar");
 
   // Assuming the first collaborator is the current user for this context.
   // In a real application, you might use a dedicated authentication hook like `useUser`.
@@ -32,6 +42,30 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
   const fallbackColab = colaboradores[0];
   const operadorNome = (operador?.full_name || operador?.email || fallbackColab?.nome_completo || "Operador");
   const operadorId = (operador?.id || fallbackColab?.id || null);
+
+  const auditarApontamento = async ({ acao, descricao, sucesso = true, dadosNovos = null, dadosAnteriores = null }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        empresa_id: empresaId || null,
+        group_id: groupId || null,
+        grupo_id: groupId || null,
+        usuario: operadorNome,
+        usuario_id: operadorId,
+        acao,
+        modulo: "Produção",
+        entidade: "ApontamentoProducao",
+        registro_id: ordemId,
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        descricao,
+        dados_anteriores: dadosAnteriores,
+        dados_novos: dadosNovos,
+        data_hora: new Date().toISOString(),
+        sucesso
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar apontamento de producao:", error);
+    }
+  };
 
   const [formApontamento, setFormApontamento] = useState({
     setor: op?.status || "Em Corte",
@@ -50,6 +84,26 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
 
   const salvarApontamentoMutation = useMutation({
     mutationFn: async () => {
+      if (!contextoValido) {
+        await auditarApontamento({
+          acao: "Apontamento.bloqueado",
+          descricao: "Tentativa de apontamento de producao sem contexto grupo/empresa.",
+          sucesso: false,
+          dadosNovos: formApontamento
+        });
+        throw new Error("Selecione um grupo ou empresa antes de apontar produção.");
+      }
+      if (!canApontar) {
+        await auditarApontamento({
+          acao: "Apontamento.bloqueado",
+          descricao: "Tentativa de apontamento de producao sem permissao.",
+          sucesso: false,
+          dadosNovos: formApontamento
+        });
+        throw new Error("Seu perfil nao possui permissao para registrar apontamento.");
+      }
+      if (!ordemId) throw new Error("OP obrigatoria para registrar apontamento.");
+
       const novoApontamento = {
         data_hora: new Date().toISOString(),
         operador: operadorNome,
@@ -136,13 +190,15 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
 
       if (novoRefugo) {
         await base44.entities.AuditLog.create({
-          empresa_id: op.empresa_id,
+          empresa_id: empresaId,
+          group_id: groupId,
+          grupo_id: groupId,
           usuario: operadorNome,
           usuario_id: operadorId,
           acao: "Criação",
           modulo: "Produção",
           entidade: "Refugo",
-          registro_id: opId,
+          registro_id: ordemId,
           descricao: `Refugo registrado no item ${formApontamento.item_elemento} (${formApontamento.motivo_refugo || "Motivo não informado"})`,
           dados_novos: novoRefugo,
           data_hora: new Date().toISOString(),
@@ -153,7 +209,7 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
        // Se concluiu 100% e modo for "reserva_baixa", baixar estoque
       if (percentual === 100 && !op.estoque_baixado) {
         const config = await base44.entities.ConfiguracaoProducao.filter({
-          empresa_id: op.empresa_id
+          empresa_id: empresaId
         });
 
         if (config.length > 0 && config[0]?.modo_integracao_estoque === "reserva_baixa") {
@@ -161,11 +217,11 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
           const baixas = [];
           for (const material of (op.materiais_necessarios || [])) {
             const movBaixa = await base44.entities.MovimentacaoEstoque.create({
-              group_id: op.group_id,
-              empresa_id: op.empresa_id,
+              group_id: groupId,
+              empresa_id: empresaId,
               tipo_movimento: "saida",
               origem_movimento: "producao",
-              origem_documento_id: op.id,
+              origem_documento_id: ordemId,
               produto_id: material.produto_id,
               produto_descricao: material.descricao,
               quantidade: material.quantidade_kg,
@@ -178,7 +234,9 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
             });
 
             await base44.entities.AuditLog.create({
-              empresa_id: op.empresa_id,
+              empresa_id: empresaId,
+              group_id: groupId,
+              grupo_id: groupId,
               usuario: operadorNome,
               usuario_id: operadorId,
               acao: "Criação",
@@ -207,16 +265,19 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
         }
       }
 
-      const opAtualizada = await base44.entities.OrdemProducao.update(opId, dadosAtualizados);
+      const opAtualizada = await base44.entities.OrdemProducao.update(ordemId, dadosAtualizados);
       await base44.entities.AuditLog.create({
-        empresa_id: op.empresa_id,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
         usuario: operadorNome,
         usuario_id: operadorId,
         acao: "Edição",
         modulo: "Produção",
         entidade: "OrdemProducao",
-        registro_id: opId,
+        registro_id: ordemId,
         descricao: `Apontamento registrado no item ${formApontamento.item_elemento} (${formApontamento.setor})`,
+        dados_anteriores: op,
         dados_novos: dadosAtualizados,
         data_hora: new Date().toISOString(),
         sucesso: true
@@ -256,7 +317,7 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
   const itensDisponiveis = op?.itens_producao || [];
 
   return (
-    <Card className="border-0 shadow-md">
+    <Card className="border-0 shadow-md" data-permission="Producao.Apontamento.criar" data-context-required="true">
       <CardHeader className="bg-blue-50 border-b">
         <CardTitle className="text-base flex items-center gap-2">
           <Clock className="w-5 h-5 text-blue-600" />
@@ -403,8 +464,12 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
           <div className="flex justify-end gap-3 pt-4 border-t">
             <Button
               type="submit"
-              disabled={salvarApontamentoMutation.isPending}
+              disabled={salvarApontamentoMutation.isPending || !contextoValido || !canApontar}
               className="bg-blue-600 hover:bg-blue-700"
+              data-action="Producao.Apontamento.registrar"
+              data-permission="Producao.Apontamento.criar"
+              data-context-required="true"
+              data-sensitive="true"
             >
               {salvarApontamentoMutation.isPending ? 'Salvando...' : 'Registrar Apontamento'}
             </Button>
