@@ -39,8 +39,8 @@ export default function Producao() {
   const empresaId = empresaAtual?.id || null;
   const contextoValido = Boolean(groupId || empresaId);
   const contextKey = groupId ? `grupo:${groupId}` : `empresa:${empresaId || 'sem-empresa'}`;
-  const canSeeProducao = hasPermission('Produção', null, 'visualizar') || hasPermission('Produção', null, 'ver');
-  const canCreateOP = hasPermission('Produção', 'Ordens Produção', 'criar') || hasPermission('Produção', 'OrdemProducao', 'criar');
+  const canSeeProducao = hasPermission('Produção', null, 'visualizar') || hasPermission('Produção', null, 'ver') || hasPermission('Producao', null, 'visualizar') || hasPermission('Producao', null, 'ver');
+  const canCreateOP = hasPermission('Produção', 'Ordens Produção', 'criar') || hasPermission('Produção', 'OrdemProducao', 'criar') || hasPermission('Producao', 'Ordens Produção', 'criar') || hasPermission('Producao', 'OrdemProducao', 'criar');
 
   const { data: ordensProducao = [] } = useQuery({
     queryKey: ['ordens-producao', contextKey],
@@ -102,7 +102,7 @@ export default function Producao() {
       height: 900,
       props: { windowMode: true },
       sectionKey: 'Kanban',
-      permission: 'Produção.Kanban.visualizar',
+      permission: 'Producao.Kanban.visualizar',
       action: 'abrir-kanban-producao'
     },
     {
@@ -116,7 +116,7 @@ export default function Producao() {
       height: 850,
       props: { windowMode: true },
       sectionKey: 'Ordens Produção',
-      permission: 'Produção.Ordens Produção.visualizar',
+      permission: 'Producao.Ordens Produção.visualizar',
       action: 'abrir-ordens-producao'
     },
     {
@@ -130,7 +130,7 @@ export default function Producao() {
       height: 800,
       props: { windowMode: true },
       sectionKey: 'Apontamentos',
-      permission: 'Produção.Apontamentos.visualizar',
+      permission: 'Producao.Apontamentos.visualizar',
       action: 'abrir-apontamentos-producao'
     },
     {
@@ -144,7 +144,7 @@ export default function Producao() {
       height: 800,
       props: { ops: ordensProducao, windowMode: true },
       sectionKey: 'Controle Refugo',
-      permission: 'Produção.Controle Refugo.visualizar',
+      permission: 'Producao.Controle Refugo.visualizar',
       action: 'abrir-controle-refugo'
     },
     {
@@ -158,7 +158,7 @@ export default function Producao() {
       height: 800,
       props: { empresaId: empresaAtual?.id, windowMode: true },
       sectionKey: 'Dashboard IA',
-      permission: 'Produção.Dashboard IA.visualizar',
+      permission: 'Producao.Dashboard IA.visualizar',
       action: 'abrir-dashboard-ia-producao'
     },
     {
@@ -172,7 +172,7 @@ export default function Producao() {
       height: 850,
       props: { empresaId: empresaAtual?.id, windowMode: true },
       sectionKey: 'Dashboard Realtime',
-      permission: 'Produção.Dashboard Realtime.visualizar',
+      permission: 'Producao.Dashboard Realtime.visualizar',
       action: 'abrir-dashboard-realtime-producao'
     },
     {
@@ -186,7 +186,7 @@ export default function Producao() {
       height: 800,
       props: { windowMode: true },
       sectionKey: 'IoT Equipamentos',
-      permission: 'Produção.IoT Equipamentos.visualizar',
+      permission: 'Producao.IoT Equipamentos.visualizar',
       action: 'abrir-iot-equipamentos'
     },
     {
@@ -200,7 +200,7 @@ export default function Producao() {
       height: 700,
       props: { windowMode: true },
       sectionKey: 'Documentos',
-      permission: 'Produção.Documentos.visualizar',
+      permission: 'Producao.Documentos.visualizar',
       action: 'abrir-documentos-producao'
     },
     {
@@ -214,7 +214,7 @@ export default function Producao() {
       height: 800,
       props: { ops: ordensProducao, windowMode: true },
       sectionKey: 'Relatórios',
-      permission: 'Produção.Relatórios.visualizar',
+      permission: 'Producao.Relatórios.visualizar',
       action: 'abrir-relatorios-producao'
     },
     {
@@ -228,7 +228,7 @@ export default function Producao() {
       height: 700,
       props: { windowMode: true },
       sectionKey: 'Configurações',
-      permission: 'Produção.Configurações.visualizar',
+      permission: 'Producao.Configurações.visualizar',
       action: 'abrir-configuracoes-producao'
     },
   ];
@@ -238,13 +238,48 @@ export default function Producao() {
     return hasPermission('Produção', section, 'visualizar') ||
       hasPermission('Produção', section, 'ver') ||
       hasPermission('Produção', null, 'visualizar') ||
-      hasPermission('Produção', null, 'ver');
+      hasPermission('Produção', null, 'ver') ||
+      hasPermission('Producao', section, 'visualizar') ||
+      hasPermission('Producao', section, 'ver') ||
+      hasPermission('Producao', null, 'visualizar') ||
+      hasPermission('Producao', null, 'ver');
   };
 
   const allowedModules = modules.filter(canViewModule);
-
+  const auditProducaoAction = async (acao, detalhes = {}, tipoAuditoria = 'acesso', sucesso = true) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario_id: user?.id,
+        usuario: user?.full_name || user?.email || 'Usuário',
+        acao,
+        modulo: 'Produção',
+        tipo_auditoria: tipoAuditoria,
+        entidade: detalhes.entidade || 'Seção',
+        registro_id: detalhes.registro_id || null,
+        descricao: detalhes.descricao || acao,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        sucesso,
+        detalhes: {
+          contexto: empresaId ? 'empresa' : 'grupo',
+          empresaId,
+          groupId,
+          ...detalhes,
+        },
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar ação de Produção:', error);
+    }
+  };
   const handleNovaOP = () => {
     if (!contextoValido || !empresaId) {
+      auditProducaoAction('nova_op_bloqueada', {
+        entidade: 'OrdemProducao',
+        motivo: 'empresa_obrigatoria',
+        descricao: 'Tentativa de criar OP sem empresa operacional selecionada.',
+      }, 'seguranca', false);
       toast({
         title: 'Empresa obrigatória',
         description: 'Selecione uma empresa operacional antes de criar OP.',
@@ -253,6 +288,11 @@ export default function Producao() {
       return;
     }
     if (!canCreateOP) {
+      auditProducaoAction('nova_op_bloqueada', {
+        entidade: 'OrdemProducao',
+        motivo: 'permissao_negada',
+        descricao: 'Tentativa de criar ordem de produção sem permissão.',
+      }, 'seguranca', false);
       toast({
         title: 'Acesso negado',
         description: 'Seu perfil não pode criar ordem de produção.',
@@ -260,15 +300,24 @@ export default function Producao() {
       });
       return;
     }
-    openWindow(FormularioOrdemProducao, { windowMode: true }, {
+    auditProducaoAction('nova_op', {
+      entidade: 'OrdemProducao',
+      descricao: 'Abertura do formulário de nova ordem de produção.',
+    }, 'acesso', true);
+    openWindow(FormularioOrdemProducao, { windowMode: true, empresaId, groupId }, {
       title: 'Nova Ordem de Produção',
       width: 1400,
       height: 900,
     });
   };
-
   const handleModuleClick = (module) => {
     if (!contextoValido) {
+      auditProducaoAction('abrir_secao_bloqueado', {
+        entidade: 'Seção',
+        secao: module.title,
+        motivo: 'contexto_obrigatorio',
+        descricao: `Tentativa de abrir seção de Produção sem contexto: ${module.title}`,
+      }, 'seguranca', false);
       toast({
         title: 'Contexto obrigatório',
         description: 'Selecione o Grupo CPA ou uma empresa antes de abrir Produção.',
@@ -278,6 +327,12 @@ export default function Producao() {
     }
 
     if (!canViewModule(module)) {
+      auditProducaoAction('abrir_secao_bloqueado', {
+        entidade: 'Seção',
+        secao: module.title,
+        motivo: 'permissao_negada',
+        descricao: `Tentativa de abrir seção de Produção sem permissão: ${module.title}`,
+      }, 'seguranca', false);
       toast({
         title: 'Acesso negado',
         description: 'Seu perfil não possui permissão para esta seção de Produção.',
@@ -287,25 +342,19 @@ export default function Producao() {
     }
 
     React.startTransition(() => {
-      // Auditoria de abertura de seção
-      base44.entities.AuditLog.create({
-        usuario_id: user?.id,
-        usuario: user?.full_name || user?.email || 'Usuário',
-        acao: 'Visualização',
-        modulo: 'Produção',
-        tipo_auditoria: 'acesso',
+      auditProducaoAction('abrir_secao', {
         entidade: 'Seção',
+        secao: module.title,
+        sectionKey: module.sectionKey || module.title,
         descricao: `Abrir seção: ${module.title}`,
-        empresa_id: empresaId,
-        group_id: groupId,
-        grupo_id: groupId,
-        data_hora: new Date().toISOString(),
-      });
+      }, 'acesso', true);
       openWindow(
         module.component,
-        { 
+        {
           ...(module.props || {}),
-          windowMode: true 
+          empresaId,
+          groupId,
+          windowMode: true
         },
         {
           title: module.windowTitle,
@@ -316,14 +365,14 @@ export default function Producao() {
       );
     });
   };
-
   return (
     <ProtectedSection module="Produção" action="visualizar">
     <ErrorBoundary>
+      <div className="w-full h-full" data-permission="Producao.visualizar" data-context-required="true">
       <ModuleLayout
         title="Produção"
         subtitle="Chão de fábrica, OPs e desempenho"
-        actions={<div className="flex items-center gap-2"><Button size="sm" onClick={handleNovaOP} disabled={!contextoValido || !empresaId || !canCreateOP} data-permission="Produção.Ordens Produção.criar" data-action="criar-ordem-producao">Nova OP</Button></div>}
+        actions={<div className="flex items-center gap-2"><Button size="sm" onClick={handleNovaOP} disabled={!contextoValido || !empresaId || !canCreateOP} data-permission="Producao.OrdensProducao.criar" data-action="Producao.criar_ordem_producao" data-context-required="true">Nova OP</Button></div>}
       >
         <ModuleKPIs>
           <KPIsProducao
@@ -339,6 +388,7 @@ export default function Producao() {
           />
         </ModuleContent>
       </ModuleLayout>
+      </div>
     </ErrorBoundary>
     </ProtectedSection>
   );
