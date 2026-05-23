@@ -807,3 +807,18 @@ Checklist inicial:
 - `git diff --check` executado sem erros.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 nas integracoes de Producao com Expedicao/Estoque, revisando passagem de status, separacao/conferencia, documentos e auditoria antes/depois.
+### Expedicao - Fase 8 Separacao e Conferencia
+
+- Seguido o proximo passo salvo no status: continuar integracao de Producao com Expedicao/Estoque, com foco no fluxo existente `SeparacaoConferencia`.
+- Antes de editar, foi verificado que varias leituras do PowerShell mostram acentos quebrados, mas os arquivos em disco estao em UTF-8 correto; nas novas alteracoes foram usadas chaves tecnicas/ASCII para nao introduzir texto corrompido.
+- `SeparacaoConferencia` deixou de buscar entregas via `Entrega.list()` global e passou a usar `filterInContext`, mantendo a consulta dentro do contexto grupo/empresa.
+- Conclusao de separacao/conferencia agora valida contexto grupo/empresa e RBAC antes da mutation e tambem dentro da mutation.
+- Tentativas bloqueadas por falta de contexto ou permissao agora geram `AuditLog` de seguranca com usuario, `group_id`, `grupo_id`, `empresa_id` e motivo.
+- Criacao de `SeparacaoConferencia` passou a usar `createInContext`, reforcando `group_id`, `grupo_id` e `empresa_id`.
+- Atualizacoes de `Entrega` e `Pedido` apos conferencia sem divergencia passaram a usar `updateInContext`, mantendo contexto e historico de status da entrega.
+- Auditoria operacional da conclusao passou a registrar antes/depois, sucesso, usuario e contexto multiempresa.
+- Campos de quantidade/observacao e botao de concluir conferencia receberam bloqueio visual por contexto/RBAC e marcadores `data-permission`, `data-action`, `data-context-required` e `data-sensitive`.
+- Mantida a Regra-Mae: nenhuma tela, modulo, arquivo ou funcionalidade nova foi criada; apenas reforco do fluxo existente.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `DetalhesEntregaView`, `FormularioEntrega` e `RomaneioForm`, revisando mudancas de status, criacao/edicao de entrega, romaneio e auditoria antes/depois.
