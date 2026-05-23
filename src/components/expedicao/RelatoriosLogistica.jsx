@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, FileText, Truck, MapPin, TrendingUp } from "lucide-react";
+import { BarChart3, FileText, Truck, MapPin, Download } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 import {
   BarChart,
   Bar,
@@ -35,12 +37,35 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
   const [periodoFim, setPeriodoFim] = useState("");
   const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
-  const canViewReports = hasPermission("Expedição", "Relatórios", "ver") || hasPermission("Expedição", "Relatórios", "visualizar");
+  const { user } = useUser();
+  const canViewReports = hasPermission("Expedicao", "Relatorios", "ver") || hasPermission("Expedicao", "Relatorios", "visualizar") || hasPermission("Expedicao", "Relatorio", "visualizar");
+  const canExportReports = hasPermission("Expedicao", "Relatorios", "exportar") || hasPermission("Expedicao", "Entrega", "exportar");
   const activeEmpresaId = empresaId || empresaAtual?.id || null;
   const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
   const contextoValido = Boolean(activeEmpresaId || groupId);
   const contextKey = groupId ? `grupo:${groupId}` : `empresa:${activeEmpresaId || "sem-empresa"}`;
 
+  const auditRelatorio = async ({ acao, sucesso = true, motivo = null, detalhes = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: "Expedicao",
+        entidade: "RelatorioLogistica",
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        usuario_id: user?.id || user?.email || null,
+        usuario_nome: user?.full_name || user?.email || "Sistema",
+        group_id: groupId,
+        grupo_id: groupId,
+        empresa_id: activeEmpresaId,
+        resultado: sucesso ? "sucesso" : "bloqueado",
+        motivo,
+        detalhes,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar relatorio de logistica", error);
+    }
+  };
   const { data: entregas = [] } = useQuery({
     queryKey: ['entregas-relatorio', contextKey],
     queryFn: () => filterInContext('Entrega', {}, '-created_date', 9999),
@@ -51,6 +76,12 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
     queryKey: ['romaneios-relatorio', contextKey],
     queryFn: () => filterInContext('Romaneio', {}, '-created_date', 9999),
     enabled: canViewReports && contextoValido,
+  });
+
+  const romaneiosFiltrados = romaneios.filter(r => {
+    if (activeEmpresaId && r.empresa_id !== activeEmpresaId && r.empresa_responsavel_id !== activeEmpresaId) return false;
+    if (groupId && r.group_id && r.group_id !== groupId) return false;
+    return true;
   });
 
   const entregasFiltradas = entregas.filter(e => {
@@ -77,7 +108,7 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
 
   // Por motorista
   const porMotorista = {};
-  romaneios.forEach(r => {
+  romaneiosFiltrados.forEach(r => {
     if (!porMotorista[r.motorista]) {
       porMotorista[r.motorista] = { motorista: r.motorista, entregas: 0, realizadas: 0, frustradas: 0, km: 0 };
     }
@@ -88,17 +119,54 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
   });
   const dadosMotoristas = Object.values(porMotorista);
 
+  const porCidade = {};
+  entregasFiltradas.forEach(e => {
+    const cidade = e.endereco_entrega_completo?.cidade || "Sem cidade";
+    const estado = e.endereco_entrega_completo?.estado || "";
+    const chave = `${cidade}/${estado}`;
+    if (!porCidade[chave]) porCidade[chave] = { cidade: chave, quantidade: 0 };
+    porCidade[chave].quantidade += 1;
+  });
+  const dadosCidades = Object.values(porCidade).sort((a, b) => b.quantidade - a.quantidade).slice(0, 15);
+
+  const exportarResumoCSV = async () => {
+    if (!contextoValido || !canExportReports) {
+      await auditRelatorio({ acao: "Logistica.relatorio.exportar_csv.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
+      return;
+    }
+    const headers = ["indicador", "valor"];
+    const rows = [
+      ["total_entregas", totalEntregas],
+      ["entregas_realizadas", entregasRealizadas],
+      ["entregas_frustradas", entregasFrustradas],
+      ["taxa_sucesso", taxaSucesso],
+      ["tempo_medio_horas", tempoMedio.toFixed(1)],
+    ];
+    const escapeCsv = (value) => "\"" + String(value ?? "").replace(/\"/g, "\"\"") + "\"";
+    const csv = [headers, ...rows].map(row => row.map(escapeCsv).join(";")).join("\n");
+    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "relatorio-logistica-resumo.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    await auditRelatorio({ acao: "Logistica.relatorio.exportar_csv", detalhes: { totalEntregas, periodoInicio, periodoFim } });
+  };
+
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
 
   return (
-    <div className={containerClass}>
+    <div className={containerClass} data-permission="Expedicao.Relatorios.visualizar" data-context-required="true">
       <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
       {/* Filtros */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex gap-4">
+          <div className="flex gap-4 items-end">
             <div>
               <Label>Período Início</Label>
               <Input
@@ -117,6 +185,18 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
                 className="mt-2"
               />
             </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={exportarResumoCSV}
+              disabled={!contextoValido || !canExportReports}
+              data-permission="Expedicao.Relatorios.exportar"
+              data-action="Logistica.relatorio.exportar_csv"
+              data-context-required="true"
+              data-sensitive="true"
+            >
+              <Download className="w-4 h-4 mr-2" /> CSV
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -224,12 +304,7 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
             </CardHeader>
             <CardContent className="p-6">
               <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={[
-                  { cidade: 'São Paulo', quantidade: 15 },
-                  { cidade: 'Campinas', quantidade: 8 },
-                  { cidade: 'Santos', quantidade: 5 },
-                  { cidade: 'Sorocaba', quantidade: 3 }
-                ]}>
+                <BarChart data={dadosCidades}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="cidade" />
                   <YAxis />

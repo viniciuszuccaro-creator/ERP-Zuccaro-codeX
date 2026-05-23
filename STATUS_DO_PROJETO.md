@@ -872,3 +872,21 @@ Checklist inicial:
 - `git diff --check` executado sem erros.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em listagens e relatorios de Expedicao/Logistica, revisando filtros por grupo/empresa, exportacoes, acoes em lote, RBAC e auditoria.
+
+### Expedicao - Fase 8 Listagens e Relatorios
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em listagens e relatorios de Expedicao/Logistica, revisando filtros por grupo/empresa, exportacoes, acoes em lote, RBAC e auditoria.
+- `EntregasListagem` passou a reforcar filtro local por contexto grupo/empresa, preservando a visao consolidada quando o usuario estiver no grupo.
+- Exportacao CSV de entregas selecionadas agora funciona no botao existente e exporta apenas registros filtrados e selecionados dentro do contexto atual.
+- Exportacao CSV da listagem agora exige contexto grupo/empresa e permissao `Expedicao.Entrega.exportar` ou equivalente.
+- Bloqueios e exportacao bem-sucedida da listagem agora geram `AuditLog` com usuario, `group_id`, `grupo_id`, `empresa_id`, filtros e quantidade exportada.
+- Marcadores de RBAC/contexto da listagem foram padronizados para chaves tecnicas sem acento, como `Expedicao.Entrega.visualizar/editar/exportar`.
+- `RelatoriosLogistica` passou a filtrar romaneios por empresa/grupo antes de calcular desempenho por motorista.
+- Grafico de entregas por cidade deixou de usar dados fixos de exemplo e passou a usar as entregas reais filtradas por periodo e contexto.
+- Relatorio de Logistica ganhou exportacao CSV de resumo, com bloqueio por contexto/RBAC e auditoria operacional/seguranca.
+- Botoes de exportacao receberam `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- Foi validado que `EntregasListagem`, `RelatoriosLogistica` e `STATUS_DO_PROJETO.md` ficaram sem mojibake real apos as alteracoes.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `RoteirizacaoMapa`, `RoteirizacaoInteligente` e painel logistico, revisando geracao/otimizacao de rotas, contexto grupo/empresa, permissoes e auditoria.

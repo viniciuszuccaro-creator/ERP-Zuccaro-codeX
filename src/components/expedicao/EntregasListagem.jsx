@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ERPDataTable from '@/components/ui/erp/DataTable';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import IconeAcessoCliente from "@/components/cadastros/IconeAcessoCliente";
 import IconeAcessoTransportadora from "@/components/cadastros/IconeAcessoTransportadora";
 import { useWindow } from '@/components/lib/useWindow';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import { useUser } from '@/components/lib/UserContext';
 import usePermissions from '@/components/lib/usePermissions';
 import { ProtectedAction } from '@/components/ProtectedAction';
 import FormularioEntrega from './FormularioEntrega';
@@ -27,8 +30,44 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
   const [selectedEntregas, setSelectedEntregas] = useState([]);
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { user } = useUser();
+  const effectiveGroupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const effectiveEmpresaId = estaNoGrupo ? null : (empresaAtual?.id || null);
+  const contextoValido = Boolean(effectiveGroupId || effectiveEmpresaId);
+  const canViewEntrega = hasPermission('Expedicao', 'Entrega', 'visualizar') || hasPermission('Expedicao', 'Entregas', 'visualizar') || hasPermission('Expedicao', 'Entrega', 'ver');
+  const canEditEntrega = hasPermission('Expedicao', 'Entrega', 'editar') || hasPermission('Expedicao', 'Entregas', 'editar');
+  const canExportEntrega = hasPermission('Expedicao', 'Entrega', 'exportar') || hasPermission('Expedicao', 'Entregas', 'exportar') || hasPermission('Expedicao', 'Relatorios', 'exportar');
 
-  const filteredEntregas = entregas.filter(e => {
+  const auditListagem = async ({ acao, sucesso = true, motivo = null, detalhes = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: 'Expedicao',
+        entidade: 'Entrega',
+        tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
+        usuario_id: user?.id || user?.email || null,
+        usuario_nome: user?.full_name || user?.email || 'Sistema',
+        group_id: effectiveGroupId,
+        grupo_id: effectiveGroupId,
+        empresa_id: effectiveEmpresaId,
+        resultado: sucesso ? 'sucesso' : 'bloqueado',
+        motivo,
+        detalhes,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar listagem de entregas', error);
+    }
+  };
+
+  const entregasContextuais = entregas.filter(e => {
+    if (effectiveEmpresaId && e.empresa_id && e.empresa_id !== effectiveEmpresaId && e.empresa_responsavel_id !== effectiveEmpresaId) return false;
+    if (effectiveGroupId && e.group_id && e.group_id !== effectiveGroupId) return false;
+    return true;
+  });
+
+  const filteredEntregas = entregasContextuais.filter(e => {
     const searchLower = searchTerm.toLowerCase();
     const matchSearch = e.numero_pedido?.toLowerCase().includes(searchLower) ||
                        e.cliente_nome?.toLowerCase().includes(searchLower) ||
@@ -62,8 +101,48 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
     return empresa?.nome_fantasia || empresa?.razao_social || '-';
   };
 
+  const exportarEntregasSelecionadas = async () => {
+    if (!contextoValido || !canExportEntrega) {
+      await auditListagem({ acao: 'Entrega.exportar_csv.bloqueado', sucesso: false, motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada', detalhes: { selecionadas: selectedEntregas.length } });
+      return;
+    }
+
+    const selecionadas = filteredEntregas.filter(e => selectedEntregas.includes(e.id));
+    if (selecionadas.length === 0) {
+      await auditListagem({ acao: 'Entrega.exportar_csv.bloqueado', sucesso: false, motivo: 'nenhuma_entrega_selecionada' });
+      return;
+    }
+
+    const headers = ['pedido', 'cliente', 'empresa', 'status', 'cidade', 'estado', 'transportadora', 'data_previsao', 'data_saida', 'data_entrega'];
+    const escapeCsv = (value) => '"' + String(value ?? '').replace(/"/g, '""') + '"';
+    const rows = selecionadas.map(e => [
+      e.numero_pedido || '',
+      e.cliente_nome || '',
+      obterNomeEmpresa(e.empresa_id),
+      e.status || '',
+      e.endereco_entrega_completo?.cidade || '',
+      e.endereco_entrega_completo?.estado || '',
+      e.transportadora || '',
+      e.data_previsao || '',
+      e.data_saida || '',
+      e.data_entrega || '',
+    ]);
+    const csv = [headers, ...rows].map(row => row.map(escapeCsv).join(';')).join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'entregas-expedicao.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    await auditListagem({ acao: 'Entrega.exportar_csv', detalhes: { quantidade: selecionadas.length, filtros: { status: selectedStatus, busca: searchTerm } } });
+  };
+
   const content = (
-    <div className="space-y-2">
+    <div className="w-full h-full space-y-2" data-permission="Expedicao.Entrega.visualizar" data-context-required="true">
       <Card className="border-0 shadow-sm">
         <CardContent className="p-3">
           <div className="flex gap-3">
@@ -89,12 +168,16 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
                 <SelectItem value="Entregue">Entregue</SelectItem>
               </SelectContent>
             </Select>
-            {selectedEntregas.length > 0 && hasPermission('Expedição','Entrega','exportar') && (
+            {selectedEntregas.length > 0 && canExportEntrega && (
               <Button
                 variant="outline"
                 size="sm"
-                data-permission="Expedição.Entrega.exportar"
-                data-action="exportar-entregas-csv"
+                onClick={exportarEntregasSelecionadas}
+                disabled={!contextoValido || !canExportEntrega}
+                data-permission="Expedicao.Entrega.exportar"
+                data-action="Entrega.exportar_csv"
+                data-context-required="true"
+                data-sensitive="true"
               >
                 <Download className="w-3 h-3 mr-1" /> CSV ({selectedEntregas.length})
               </Button>
@@ -127,19 +210,19 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
                     size="icon"
                     onClick={() => openWindow(DetalhesEntregaView, { entrega: e, estaNoGrupo, obterNomeEmpresa, statusColors, windowMode: true }, { title: `🚚 ${e.numero_pedido}`, width: 1000, height: 700 })}
                     className="h-7 w-7"
-                    data-permission="Expedição.Entrega.visualizar"
-                    data-action="visualizar-entrega"
+                    data-permission="Expedicao.Entrega.visualizar" data-context-required="true"
+                    data-action="Entrega.visualizar"
                   >
                     <Eye className="w-3 h-3" />
                   </Button>
-                  {hasPermission('Expedição','Entrega','editar') && (
+                  {canEditEntrega && (
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => openWindow(FormularioEntrega, { formData: e, windowMode: true, isEditing: true }, { title: `✏️ ${e.numero_pedido}`, width: 1100, height: 650 })}
                       className="h-7 w-7"
-                      data-permission="Expedição.Entrega.editar"
-                      data-action="editar-entrega"
+                      data-permission="Expedicao.Entrega.editar" data-context-required="true" data-sensitive="true"
+                      data-action="Entrega.editar"
                     >
                       <Edit className="w-3 h-3" />
                     </Button>
@@ -159,7 +242,7 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
               setSelectedEntregas(all ? [] : filteredEntregas.map(e=>e.id));
             }}
             onToggleItem={(id) => setSelectedEntregas(prev => prev.includes(id) ? prev.filter(x => x!==id) : [...prev, id])}
-            permission="Expedição.Entrega.visualizar"
+            permission="Expedicao.Entrega.visualizar"
             page={page}
             pageSize={pageSize}
             totalItems={filteredEntregas.length}
@@ -221,7 +304,7 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
                         <Button variant="ghost" size="icon" onClick={() => openWindow(DetalhesEntregaView, { entrega, estaNoGrupo, obterNomeEmpresa, statusColors, windowMode: true }, { title: `🚚 ${entrega.numero_pedido}`, width: 1000, height: 700 })} className="h-7 w-7">
                           <Eye className="w-3 h-3" />
                         </Button>
-                        {hasPermission('Expedição','Entrega','editar') && (
+                        {canEditEntrega && (
                           <Button variant="ghost" size="icon" onClick={() => openWindow(FormularioEntrega, { formData: entrega, windowMode: true, isEditing: true }, { title: `✏️ ${entrega.numero_pedido}`, width: 1100, height: 650 })} className="h-7 w-7">
                             <Edit className="w-3 h-3" />
                           </Button>
