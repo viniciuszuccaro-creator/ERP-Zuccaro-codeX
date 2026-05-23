@@ -13,6 +13,9 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
 import { FileText, Truck, CheckCircle, MapPin } from "lucide-react";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 
 /**
  * Formulário para Geração de Romaneio
@@ -21,6 +24,17 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-hidden" : "";
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
+  const effectiveEmpresaId = empresaId || empresaAtual?.id || null;
+  const effectiveGroupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const contextoValido = Boolean(effectiveGroupId || effectiveEmpresaId);
+  const canGerarRomaneio =
+    hasPermission("Expedicao", "Romaneios", "criar") ||
+    hasPermission("Expedicao", "Romaneio", "criar") ||
+    hasPermission("Expedicao", "Entrega", "editar") ||
+    hasPermission("Logistica", "Romaneios", "criar");
 
   const [formData, setFormData] = useState({
     motorista: "",
@@ -39,19 +53,43 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
     combustivel_ok: false,
     observacoes: ""
   });
+  const checklistCompleto = checklist.documentos_ok && checklist.veiculo_ok && checklist.carga_conferida && checklist.combustivel_ok;
 
   const { data: entregas = [] } = useQuery({
-    queryKey: ['entregas-para-romaneio', empresaId],
+    queryKey: ['entregas-para-romaneio', effectiveEmpresaId, effectiveGroupId],
     queryFn: async () => {
-      const todas = await base44.entities.Entrega.list('-created_date');
-      return todas.filter(e => 
-        e.empresa_id === empresaId && 
+      const todas = await filterInContext('Entrega', {}, '-created_date', 500);
+      return todas.filter(e =>
+        (!effectiveEmpresaId || e.empresa_id === effectiveEmpresaId) &&
         e.status === "Pronto para Expedir" &&
         !e.romaneio_id
       );
     },
-    enabled: isOpen && !!empresaId,
+    enabled: (isOpen || windowMode) && contextoValido && canGerarRomaneio,
   });
+
+  const auditRomaneio = async ({ acao, sucesso = true, motivo = null, dadosAnteriores = null, dadosNovos = null }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: "Expedicao",
+        entidade: "Romaneio",
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        usuario_id: user?.id || user?.email || null,
+        usuario_nome: user?.full_name || user?.email || "Sistema",
+        group_id: effectiveGroupId,
+        grupo_id: effectiveGroupId,
+        empresa_id: effectiveEmpresaId,
+        dados_anteriores: dadosAnteriores,
+        dados_novos: dadosNovos,
+        resultado: sucesso ? "sucesso" : "bloqueado",
+        motivo,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar romaneio", error);
+    }
+  };
 
   const toggleEntrega = (entregaId) => {
     if (formData.entregas_selecionadas.includes(entregaId)) {
@@ -69,7 +107,22 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
 
   const gerarRomaneioMutation = useMutation({
     mutationFn: async () => {
-      const entregasSelecionadas = entregas.filter(e => 
+      if (!contextoValido) {
+        await auditRomaneio({ acao: "Romaneio.gerar.bloqueado", sucesso: false, motivo: "contexto_obrigatorio" });
+        throw new Error("Selecione um grupo ou empresa antes de gerar o romaneio.");
+      }
+
+      if (!canGerarRomaneio) {
+        await auditRomaneio({ acao: "Romaneio.gerar.bloqueado", sucesso: false, motivo: "permissao_negada" });
+        throw new Error("Voce nao tem permissao para gerar romaneio.");
+      }
+
+      if (!checklistCompleto) {
+        await auditRomaneio({ acao: "Romaneio.gerar.bloqueado", sucesso: false, motivo: "checklist_incompleto" });
+        throw new Error("Conclua o checklist de saida antes de gerar o romaneio.");
+      }
+
+      const entregasSelecionadas = entregas.filter(e =>
         formData.entregas_selecionadas.includes(e.id)
       );
 
@@ -77,18 +130,36 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
         throw new Error("Selecione pelo menos uma entrega");
       }
 
+      const entregaForaDoContexto = entregasSelecionadas.find(e =>
+        (effectiveEmpresaId && e.empresa_id !== effectiveEmpresaId) ||
+        (effectiveGroupId && e.group_id && e.group_id !== effectiveGroupId)
+      );
+
+      if (entregaForaDoContexto) {
+        await auditRomaneio({
+          acao: "Romaneio.gerar.bloqueado",
+          sucesso: false,
+          motivo: "entrega_fora_do_contexto",
+          dadosNovos: { entrega_id: entregaForaDoContexto.id }
+        });
+        throw new Error("A entrega selecionada nao pertence ao contexto ativo.");
+      }
+
       const pesoTotal = entregasSelecionadas.reduce((sum, e) => sum + (e.peso_total_kg || 0), 0);
       const volumesTotal = entregasSelecionadas.reduce((sum, e) => sum + (e.volumes || 0), 0);
       const valorTotal = entregasSelecionadas.reduce((sum, e) => sum + (e.valor_mercadoria || 0), 0);
+      const numeroRomaneio = "ROM-" + Date.now();
+      const now = new Date().toISOString();
+      const groupId = effectiveGroupId || entregasSelecionadas[0].group_id || null;
+      const selectedEmpresaId = effectiveEmpresaId || entregasSelecionadas[0].empresa_id || null;
 
-      const numeroRomaneio = `ROM-${Date.now()}`;
-
-      const romaneio = await base44.entities.Romaneio.create({
-        group_id: entregasSelecionadas[0].group_id,
-        empresa_id: empresaId,
+      const romaneio = await createInContext("Romaneio", {
+        group_id: groupId,
+        grupo_id: groupId,
+        empresa_id: selectedEmpresaId,
         numero_romaneio: numeroRomaneio,
-        data_romaneio: new Date().toISOString().split('T')[0],
-        data_saida: new Date().toISOString(),
+        data_romaneio: now.split('T')[0],
+        data_saida: now,
         motorista: formData.motorista,
         motorista_telefone: formData.motorista_telefone,
         veiculo: formData.veiculo,
@@ -106,39 +177,76 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
         entregas_frustradas: 0
       });
 
-      // Atualizar entregas
       for (const entrega of entregasSelecionadas) {
-        await base44.entities.Entrega.update(entrega.id, {
+        await updateInContext("Entrega", entrega.id, {
+          group_id: groupId,
+          grupo_id: groupId,
+          empresa_id: selectedEmpresaId,
           romaneio_id: romaneio.id,
           status: "Saiu para Entrega",
-          data_saida: new Date().toISOString(),
+          data_saida: now,
           historico_status: [
             ...(entrega.historico_status || []),
             {
               status: "Saiu para Entrega",
-              data_hora: new Date().toISOString(),
-              usuario: "Sistema",
-              observacao: `Incluído no romaneio ${numeroRomaneio}`
+              data_hora: now,
+              usuario: user?.full_name || user?.email || "Sistema",
+              usuario_id: user?.id || user?.email || null,
+              observacao: "Incluido no romaneio " + numeroRomaneio
             }
           ]
         });
       }
+
+      await auditRomaneio({
+        acao: "Romaneio.gerar",
+        sucesso: true,
+        dadosAnteriores: { entregas: entregasSelecionadas.map(e => ({ id: e.id, status: e.status, romaneio_id: e.romaneio_id || null })) },
+        dadosNovos: { romaneio_id: romaneio.id, numero_romaneio: numeroRomaneio, entregas_ids: formData.entregas_selecionadas }
+      });
 
       return romaneio;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['entregas'] });
       queryClient.invalidateQueries({ queryKey: ['romaneios'] });
-      toast({ title: "✅ Romaneio gerado com sucesso!" });
+      queryClient.invalidateQueries({ queryKey: ['entregas-para-romaneio'] });
+      toast({ title: "Romaneio gerado com sucesso!" });
       onClose();
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao gerar romaneio",
+        description: error?.message || "Nao foi possivel gerar o romaneio.",
+        variant: "destructive"
+      });
     },
   });
 
-  const unifiedSubmit = React.useCallback(() => gerarRomaneioMutation.mutate(), [gerarRomaneioMutation]);
+  const unifiedSubmit = React.useCallback(async () => {
+    if (!contextoValido) {
+      await auditRomaneio({ acao: "Romaneio.gerar.bloqueado", sucesso: false, motivo: "contexto_obrigatorio" });
+      toast({ title: "Contexto obrigatorio", description: "Selecione um grupo ou empresa antes de gerar o romaneio.", variant: "destructive" });
+      return;
+    }
+
+    if (!canGerarRomaneio) {
+      await auditRomaneio({ acao: "Romaneio.gerar.bloqueado", sucesso: false, motivo: "permissao_negada" });
+      toast({ title: "Permissao negada", description: "Voce nao tem permissao para gerar romaneio.", variant: "destructive" });
+      return;
+    }
+
+    if (!window.confirm("Confirmar inclusao do romaneio com " + formData.entregas_selecionadas.length + " entrega(s)?")) {
+      await auditRomaneio({ acao: "Romaneio.gerar.cancelado", sucesso: false, motivo: "confirmacao_cancelada" });
+      return;
+    }
+
+    gerarRomaneioMutation.mutate();
+  }, [auditRomaneio, canGerarRomaneio, contextoValido, formData.entregas_selecionadas.length, gerarRomaneioMutation, toast]);
   const entregasSelecionadas = entregas.filter(e => formData.entregas_selecionadas.includes(e.id));
 
   const content = (
-    <div className={containerClass}>
+    <div className={containerClass} data-permission="Expedicao.Romaneios.criar" data-context-required="true">
       {windowMode && (
         <div className="flex-shrink-0 p-6 border-b">
           <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -208,7 +316,10 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
                   <TableRow className="bg-slate-50">
                     <TableHead className="w-12">
                       <Checkbox
-                        checked={formData.entregas_selecionadas.length === entregas.length}
+                        checked={entregas.length > 0 && formData.entregas_selecionadas.length === entregas.length}
+                        disabled={!contextoValido || !canGerarRomaneio}
+                        data-permission="Expedicao.Romaneios.criar"
+                        data-context-required="true"
                         onCheckedChange={(checked) => {
                           setFormData({
                             ...formData,
@@ -231,6 +342,9 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
                       <TableCell>
                         <Checkbox
                           checked={formData.entregas_selecionadas.includes(entrega.id)}
+                          disabled={!contextoValido || !canGerarRomaneio}
+                          data-permission="Expedicao.Romaneios.criar"
+                          data-context-required="true"
                           onCheckedChange={() => toggleEntrega(entrega.id)}
                         />
                       </TableCell>
@@ -365,10 +479,17 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
             <Button
               type="submit"
               disabled={
+                !contextoValido ||
+                !canGerarRomaneio ||
+                !checklistCompleto ||
                 !formData.motorista ||
                 formData.entregas_selecionadas.length === 0 ||
                 gerarRomaneioMutation.isPending
               }
+              data-action="Romaneio.gerar"
+              data-permission="Expedicao.Romaneios.criar"
+              data-context-required="true"
+              data-sensitive="true"
               className="flex-1 bg-purple-600 hover:bg-purple-700"
             >
               {gerarRomaneioMutation.isPending ? 'Gerando...' : 'Gerar Romaneio'}

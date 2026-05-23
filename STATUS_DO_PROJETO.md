@@ -666,7 +666,7 @@ Checklist inicial:
 - Confirmado que o snapshot compacto contem `GRUPO CPA`, as empresas `3Z LTDA` e `CPA FERRO E ACO`, alem de registros de Cadastros Gerais como Produto, GrupoProduto, Marca, UnidadeMedida, SetorAtividade, SegmentoCliente e outros.
 - Causa corrigida: o ERP renderizava primeiro com `seedRecords()` local e so depois importava o snapshot em segundo plano, permitindo a tela abrir com dados `LOCAL` antes da importacao real.
 - `src/main.jsx` foi ajustado para, em `VITE_LOCAL_ONLY=true`, hidratar o snapshot local antes de montar o React/ERP.
-- `?reset-local=1` agora limpa o banco local e for�a a importacao do snapshot real antes da renderizacao inicial.
+- `?reset-local=1` agora limpa o banco local e forca a importacao do snapshot real antes da renderizacao inicial.
 - Mantida a Regra-Mae: nenhum modulo/tela/componente novo foi criado; foi corrigido apenas o bootstrap existente.
 - Build validado com sucesso apos a alteracao.
 
@@ -837,3 +837,20 @@ Checklist inicial:
 - `git diff --check` executado sem erros.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em `FormularioEntrega` e `RomaneioForm`, revisando criacao/edicao de entrega, romaneio, saida para entrega e auditoria antes/depois.
+### Expedicao - Fase 8 Romaneio de Entrega
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `RomaneioForm`, revisando romaneio, saida para entrega, RBAC, contexto e auditoria antes/depois.
+- `RomaneioForm` deixou de buscar entregas via `Entrega.list()` global e passou a usar `filterInContext`, mantendo a lista dentro do contexto grupo/empresa.
+- Geracao de romaneio agora exige contexto grupo/empresa e permissao antes de consultar, selecionar e salvar.
+- Criacao de `Romaneio` passou a usar `createInContext`, reforcando `group_id`, `grupo_id` e `empresa_id`.
+- Atualizacao das entregas para `Saiu para Entrega` passou a usar `updateInContext`, preservando historico de status com usuario e contexto.
+- Antes de incluir um romaneio, o sistema agora pede confirmacao explicita, respeitando a Regra-Mae para inclusao de registros.
+- Checklist de saida passou a bloquear a geracao enquanto documentos, veiculo, carga e combustivel nao estiverem confirmados.
+- Bloqueios por contexto, permissao, checklist incompleto, entrega fora de contexto e cancelamento de confirmacao agora geram `AuditLog`.
+- Geracao bem-sucedida do romaneio agora gera `AuditLog` operacional com antes/depois, entregas vinculadas, usuario, `group_id`, `grupo_id` e `empresa_id`.
+- Checkboxes de selecao e botao de gerar receberam marcadores `data-permission`, `data-context-required`, `data-action` e `data-sensitive` conforme a acao.
+- Foi validado que `RomaneioForm` ficou sem mojibake real apos as alteracoes, evitando novos erros ortograficos na secao Expedicao e Logistica.
+- Mantida a Regra-Mae: nenhuma tela, modulo, arquivo ou funcionalidade nova foi criada; apenas reforco do fluxo existente.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `FormularioEntrega`, revisando criacao/edicao de entrega, previsao/geolocalizacao, RBAC, contexto e auditoria antes/depois.
