@@ -1,36 +1,107 @@
 import React, { useRef } from "react";
+import { base44 } from "@/api/base44Client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Printer, Download } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { useUser } from "@/components/lib/UserContext";
+import usePermissions from "@/components/lib/usePermissions";
 
 export default function EtiquetaCNC({ item, pedido }) {
   const etiquetaRef = useRef();
   const { toast } = useToast();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { user } = useUser();
+  const { hasPermission } = usePermissions();
+  const empresaId = pedido?.empresa_id || item?.empresa_id || empresaAtual?.id || null;
+  const groupId = pedido?.group_id || pedido?.grupo_id || item?.group_id || item?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeExportarEtiqueta = hasPermission("Producao", "Documentos", "exportar") ||
+    hasPermission("Producao", "Etiquetas", "exportar") ||
+    hasPermission("Produção", "Documentos", "exportar") ||
+    hasPermission("Produção", "Etiquetas", "exportar") ||
+    hasPermission("Producao", null, "exportar");
 
-  const handleImprimir = () => {
+  const auditarEtiqueta = async ({ acao, descricao, sucesso = true, dadosNovos = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario_id: user?.id,
+        usuario: user?.full_name || user?.email || "Usuario",
+        acao,
+        modulo: "Producao",
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        entidade: "EtiquetaCNC",
+        registro_id: item?.id || pedido?.id,
+        descricao,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        sucesso,
+        dados_novos: dadosNovos,
+        detalhes: {
+          pedido_id: pedido?.id,
+          item_id: item?.id,
+          tipo_servico: item?.tipo_servico,
+          contexto: empresaId ? "empresa" : "grupo",
+          ...dadosNovos,
+        },
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar etiqueta CNC:", error);
+    }
+  };
+
+  const validarExportacao = async (acao) => {
+    if (contextoValido && podeExportarEtiqueta) return true;
+
+    await auditarEtiqueta({
+      acao: `${acao}_bloqueado`,
+      descricao: "Tentativa de exportar etiqueta CNC sem contexto ou permissao.",
+      sucesso: false,
+      dadosNovos: { motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" },
+    });
+    toast({ title: "Acesso negado", description: "Selecione contexto valido e confirme permissao para exportar etiquetas.", variant: "destructive" });
+    return false;
+  };
+
+  const handleImprimir = async () => {
+    if (!(await validarExportacao("EtiquetaCNC.imprimir"))) return;
+
     window.print();
-    toast({ title: "🖨️ Enviando para impressora..." });
+    await auditarEtiqueta({
+      acao: "EtiquetaCNC.imprimir",
+      descricao: "Etiqueta CNC enviada para impressao.",
+      dadosNovos: { pedido_numero: pedido?.numero_pedido, item_tipo: item?.tipo_servico },
+    });
+    toast({ title: "Enviando para impressora..." });
   };
 
-  const handleDownloadPDF = () => {
-    toast({ title: "📄 Gerando PDF...", description: "Download iniciará em breve" });
-    // Aqui você pode integrar com biblioteca de geração de PDF
-  };
+  const handleDownloadPDF = async () => {
+    if (!(await validarExportacao("EtiquetaCNC.pdf"))) return;
 
+    await auditarEtiqueta({
+      acao: "EtiquetaCNC.pdf",
+      descricao: "Geracao de PDF da etiqueta CNC solicitada.",
+      dadosNovos: { pedido_numero: pedido?.numero_pedido, item_tipo: item?.tipo_servico },
+    });
+    toast({ title: "Gerando PDF...", description: "Download iniciara em breve" });
+    // Aqui voce pode integrar com biblioteca de geracao de PDF
+  };
   // Detectar tipo de item (corte/dobra ou armado)
   const isCorteDebra = item.tipo_servico === "corte_dobra";
   const isArmado = item.tipo_servico === "armado";
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full h-full" data-permission="Producao.Documentos.exportar" data-context-required="true">
       <div className="flex justify-end gap-2 no-print">
-        <Button onClick={handleImprimir} className="bg-blue-600">
+        <Button onClick={handleImprimir} disabled={!contextoValido || !podeExportarEtiqueta} data-permission="Producao.Documentos.exportar" data-action="EtiquetaCNC.imprimir" data-context-required="true" data-sensitive className="bg-blue-600">
           <Printer className="w-4 h-4 mr-2" />
           Imprimir
         </Button>
-        <Button onClick={handleDownloadPDF} variant="outline">
+        <Button onClick={handleDownloadPDF} disabled={!contextoValido || !podeExportarEtiqueta} data-permission="Producao.Documentos.exportar" data-action="EtiquetaCNC.pdf" data-context-required="true" data-sensitive variant="outline">
           <Download className="w-4 h-4 mr-2" />
           Download PDF
         </Button>

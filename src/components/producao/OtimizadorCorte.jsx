@@ -1,10 +1,15 @@
 import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/use-toast";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { useUser } from "@/components/lib/UserContext";
+import usePermissions from "@/components/lib/usePermissions";
 import { 
   Scissors, 
   TrendingDown, 
@@ -14,13 +19,61 @@ import {
   CheckCircle 
 } from "lucide-react";
 
-export default function OtimizadorCorte({ itens, onOtimizacaoCalculada }) {
+export default function OtimizadorCorte({ itens = [], onOtimizacaoCalculada }) {
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
+  const { toast } = useToast();
+  const empresaId = empresaAtual?.id || itens?.[0]?.empresa_id || null;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || itens?.[0]?.group_id || itens?.[0]?.grupo_id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const canOptimize = hasPermission("Produção", "Engenharia", "visualizar") || hasPermission("Producao", "Engenharia", "visualizar") || hasPermission("Producao", "Ordens Producao", "visualizar");
+  const canSaveEstoque = hasPermission("Estoque", "Movimentacoes", "criar") || hasPermission("Estoque", "Produtos", "editar") || hasPermission("Producao", "Engenharia", "editar");
   const [tamanhoBarraPadrao, setTamanhoBarraPadrao] = useState(1200); // 12 metros em cm
   const [otimizacao, setOtimizacao] = useState(null);
   const [calculando, setCalculando] = useState(false);
 
+
+  const auditarOtimizador = async ({ acao, descricao, sucesso = true, dadosNovos = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario_id: user?.id,
+        usuario: user?.full_name || user?.email || 'Usuário',
+        acao,
+        modulo: 'Produção',
+        tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
+        entidade: 'OtimizadorCorte',
+        descricao,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        sucesso,
+        dados_novos: dadosNovos,
+        detalhes: {
+          itens: itens.length,
+          tamanhoBarraPadrao,
+          contexto: empresaId ? 'empresa' : 'grupo',
+          ...dadosNovos,
+        },
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar otimizador de corte:', error);
+    }
+  };
   // ALGORITMO DE OTIMIZAÇÃO DE CORTE (First Fit Decreasing)
-  const calcularOtimizacao = () => {
+  const calcularOtimizacao = async () => {
+    if (!contextoValido || !canOptimize) {
+      await auditarOtimizador({
+        acao: 'OtimizadorCorte.calculo_bloqueado',
+        descricao: 'Tentativa de calcular otimizacao sem contexto ou permissao.',
+        sucesso: false,
+        dadosNovos: { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada' },
+      });
+      toast({ title: 'Acesso negado', description: 'Selecione contexto valido e confirme permissao para otimizar corte.', variant: 'destructive' });
+      return;
+    }
+
     setCalculando(true);
 
     try {
@@ -116,6 +169,12 @@ export default function OtimizadorCorte({ itens, onOtimizacaoCalculada }) {
         onOtimizacaoCalculada(resultado);
       }
 
+      await auditarOtimizador({
+        acao: 'OtimizadorCorte.calcular',
+        descricao: 'Otimização de corte calculada.',
+        dadosNovos: resultado.estatisticas,
+      });
+
     } catch (error) {
       console.error("Erro na otimização:", error);
     } finally {
@@ -169,21 +228,71 @@ export default function OtimizadorCorte({ itens, onOtimizacaoCalculada }) {
   const salvarPontasNoEstoque = async () => {
     if (!otimizacao) return;
 
+    const pontas = otimizacao.estatisticas.pontas_reutilizaveis || [];
+    if (!contextoValido || !canSaveEstoque) {
+      await auditarOtimizador({
+        acao: 'OtimizadorCorte.salvar_pontas_bloqueado',
+        descricao: 'Tentativa de salvar pontas no estoque sem contexto ou permissão.',
+        sucesso: false,
+        dadosNovos: { pontas: pontas.length, motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada' },
+      });
+      toast({ title: 'Acesso negado', description: 'Selecione contexto válido e confirme permissão para movimentar estoque.', variant: 'destructive' });
+      return;
+    }
+
+    if (!window.confirm(`Confirmar inclusão de ${pontas.length} pontas reutilizáveis no Estoque?`)) {
+      await auditarOtimizador({
+        acao: 'OtimizadorCorte.salvar_pontas_cancelado',
+        descricao: 'Usuário cancelou a inclusão de pontas reutilizáveis no estoque.',
+        sucesso: false,
+        dadosNovos: { pontas: pontas.length, motivo: 'confirmacao_cancelada' },
+      });
+      return;
+    }
+
     try {
-      // Registrar pontas reutilizáveis no estoque como "Refugo Utilizável"
-      for (const ponta of otimizacao.estatisticas.pontas_reutilizaveis) {
-        // Aqui você criaria registros de refugo no estoque
-        console.log("Salvando ponta:", ponta);
+      const movimentacoes = [];
+      for (const ponta of pontas) {
+        const quantidadeKg = Number(((ponta.tamanho / 100) * 0.963).toFixed(3));
+        const movimentacao = await base44.entities.MovimentacaoEstoque.create({
+          group_id: groupId,
+          grupo_id: groupId,
+          empresa_id: empresaId,
+          tipo_movimento: 'entrada',
+          origem_movimento: 'producao_otimizador_corte',
+          produto_descricao: `Ponta reutilizável ${ponta.bitola || ''} - ${ponta.tamanho}cm`,
+          quantidade: quantidadeKg,
+          unidade_medida: 'kg',
+          documento: 'Otimizador de Corte',
+          motivo: 'Entrada de ponta reutilizável gerada pelo otimizador de corte',
+          data_movimentacao: new Date().toISOString(),
+          responsavel: user?.full_name || user?.email || 'Usuário',
+          responsavel_id: user?.id,
+          observacoes: `Barra #${ponta.barra}; tamanho ${ponta.tamanho}cm; bitola ${ponta.bitola || 'n/i'}`,
+        });
+        movimentacoes.push(movimentacao);
       }
 
-      alert(`${otimizacao.estatisticas.pontas_reutilizaveis.length} pontas salvas no estoque!`);
+      await auditarOtimizador({
+        acao: 'OtimizadorCorte.salvar_pontas_estoque',
+        descricao: 'Pontas reutilizáveis incluídas no estoque.',
+        dadosNovos: { pontas: pontas.length, movimentacoes_ids: movimentacoes.map(m => m.id) },
+      });
+      toast({ title: 'Pontas salvas no estoque', description: `${pontas.length} pontas reutilizáveis registradas.` });
     } catch (error) {
-      console.error("Erro ao salvar pontas:", error);
+      console.error('Erro ao salvar pontas:', error);
+      await auditarOtimizador({
+        acao: 'OtimizadorCorte.salvar_pontas_erro',
+        descricao: 'Erro ao salvar pontas reutilizáveis no estoque.',
+        sucesso: false,
+        dadosNovos: { erro: error?.message, pontas: pontas.length },
+      });
+      toast({ title: 'Erro ao salvar pontas', description: 'Não foi possível registrar as pontas no estoque.', variant: 'destructive' });
     }
   };
 
   return (
-    <Card>
+    <Card data-permission="Producao.Engenharia.visualizar" data-context-required="true">
       <CardHeader className="bg-gradient-to-r from-emerald-50 to-green-50">
         <CardTitle className="flex items-center gap-2">
           <Scissors className="w-5 h-5 text-emerald-600" />
@@ -198,6 +307,9 @@ export default function OtimizadorCorte({ itens, onOtimizacaoCalculada }) {
               <Label>Tamanho Barra Padrão (cm)</Label>
               <Input
                 type="number"
+                disabled={!contextoValido || !canOptimize}
+                data-permission="Producao.Engenharia.visualizar"
+                data-context-required="true"
                 value={tamanhoBarraPadrao}
                 onChange={(e) => setTamanhoBarraPadrao(parseInt(e.target.value))}
                 placeholder="1200"
@@ -209,7 +321,10 @@ export default function OtimizadorCorte({ itens, onOtimizacaoCalculada }) {
             <div className="flex items-end">
               <Button 
                 onClick={calcularOtimizacao}
-                disabled={calculando}
+                disabled={calculando || !contextoValido || !canOptimize}
+                data-permission="Producao.Engenharia.visualizar"
+                data-action="OtimizadorCorte.calcular"
+                data-context-required="true"
                 className="w-full bg-emerald-600 hover:bg-emerald-700"
               >
                 {calculando ? (
@@ -376,6 +491,11 @@ export default function OtimizadorCorte({ itens, onOtimizacaoCalculada }) {
                       <Button 
                         size="sm"
                         onClick={salvarPontasNoEstoque}
+                        disabled={!contextoValido || !canSaveEstoque}
+                        data-permission="Estoque.Movimentacoes.criar"
+                        data-action="OtimizadorCorte.salvar_pontas_estoque"
+                        data-context-required="true"
+                        data-sensitive
                         className="bg-green-600 hover:bg-green-700"
                       >
                         <Save className="w-4 h-4 mr-1" />
