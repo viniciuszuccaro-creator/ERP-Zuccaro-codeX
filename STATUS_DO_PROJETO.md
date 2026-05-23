@@ -822,3 +822,18 @@ Checklist inicial:
 - `git diff --check` executado sem erros.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em `DetalhesEntregaView`, `FormularioEntrega` e `RomaneioForm`, revisando mudancas de status, criacao/edicao de entrega, romaneio e auditoria antes/depois.
+### Expedicao - Fase 8 Detalhes da Entrega e Ortografia
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `DetalhesEntregaView`, revisando mudancas de status, confirmacao de entrega, RBAC, contexto e auditoria.
+- Foi revisada a secao visivel `Expedicao e Logistica` e seus componentes de launchpad; nao foi encontrado mojibake real nos arquivos de Expedição, apenas exibicao quebrada do terminal PowerShell ao ler UTF-8.
+- `DetalhesEntregaView` passou a ter handler local para mudanca de status quando a janela for aberta sem `onStatusChange`, corrigindo botoes que podiam nao salvar alteracoes.
+- Mudancas de status agora exigem contexto grupo/empresa e permissao de edicao de Entrega antes de atualizar.
+- Alteracao para `Entrega Frustrada` agora pede confirmacao antes de salvar a mudanca.
+- Status alterado pela tela de detalhes agora atualiza `Entrega` via `updateInContext`, reforcando `group_id`, `grupo_id`, `empresa_id` e historico de status.
+- Confirmacao de entrega com assinatura digital agora tambem reforca `group_id`, `grupo_id` e `empresa_id` no payload.
+- Mudancas de status, bloqueios e confirmacao com assinatura agora geram `AuditLog` com usuario, contexto multiempresa, antes/depois e sucesso/bloqueio.
+- Botoes sensiveis receberam marcadores tecnicos `data-permission`, `data-context-required` e `data-sensitive`.
+- Mantida a Regra-Mae: nenhuma tela, modulo, arquivo ou funcionalidade nova foi criada; apenas reforco do fluxo existente.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `FormularioEntrega` e `RomaneioForm`, revisando criacao/edicao de entrega, romaneio, saida para entrega e auditoria antes/depois.

@@ -1,4 +1,5 @@
 import React from "react";
+import { base44 } from "@/api/base44Client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,19 +34,101 @@ export default function DetalhesEntregaView({
   const { user } = useUser();
   const groupId = entrega?.group_id || grupoAtual?.id || empresaAtual?.group_id || null;
   const empresaId = entrega?.empresa_id || empresaAtual?.id || null;
-  const canUpdateEntrega = hasPermission("Expedição", "Entrega", "editar");
+  const contextoValido = Boolean(groupId || empresaId);
+  const canUpdateEntrega = hasPermission("Expedicao", "Entrega", "editar") || hasPermission("Expedi\u00e7\u00e3o", "Entrega", "editar");
+
+  const auditarEntrega = async ({ acao, descricao, sucesso = true, dadosNovos = {}, dadosAnteriores = entrega }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Usuario",
+        usuario_id: user?.id,
+        acao,
+        modulo: "Expedicao",
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        entidade: "Entrega",
+        registro_id: entrega?.id,
+        descricao,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        sucesso,
+        dados_anteriores: dadosAnteriores,
+        dados_novos: dadosNovos,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (auditError) {
+      console.warn("Falha ao auditar detalhe da entrega:", auditError);
+    }
+  };
+
+  const handleStatusChangeLocal = async (novoStatus) => {
+    if (!contextoValido || !canUpdateEntrega) {
+      await auditarEntrega({
+        acao: "DetalhesEntrega.status_bloqueado",
+        descricao: "Tentativa de alterar status da entrega sem contexto ou permissao.",
+        sucesso: false,
+        dadosNovos: { status_novo: novoStatus, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" },
+      });
+      toast.error("Selecione contexto valido e confirme permissao para alterar a entrega.");
+      return;
+    }
+
+    if (novoStatus === "Entrega Frustrada" && !window.confirm("Confirmar alteracao da entrega para Entrega Frustrada?")) {
+      await auditarEntrega({
+        acao: "DetalhesEntrega.status_cancelado",
+        descricao: "Usuario cancelou a alteracao para Entrega Frustrada.",
+        sucesso: false,
+        dadosNovos: { status_novo: novoStatus, motivo: "confirmacao_cancelada" },
+      });
+      return;
+    }
+
+    if (typeof onStatusChange === "function") {
+      onStatusChange(entrega, novoStatus);
+      return;
+    }
+
+    const payload = {
+      status: novoStatus,
+      group_id: groupId,
+      grupo_id: groupId,
+      empresa_id: empresaId,
+      historico_status: [
+        ...(entrega.historico_status || []),
+        {
+          status: novoStatus,
+          data_hora: new Date().toISOString(),
+          usuario: user?.full_name || user?.email || "Sistema",
+          usuario_id: user?.id,
+          observacao: `Status alterado pela tela de detalhes para ${novoStatus}.`,
+        }
+      ]
+    };
+
+    const atualizada = await updateInContext("Entrega", entrega.id, payload);
+    await auditarEntrega({
+      acao: "DetalhesEntrega.alterar_status",
+      descricao: `Status da entrega alterado para ${novoStatus}.`,
+      dadosNovos: atualizada || payload,
+    });
+    queryClient.invalidateQueries({ queryKey: ["entregas"] });
+    toast.success(`Status alterado para ${novoStatus}.`);
+  };
 
   const confirmarEntregaAssinaturaMutation = useMutation({
     mutationFn: async (dadosAssinatura) => {
-      if (!empresaId && !groupId) {
+      if (!contextoValido) {
         throw new Error("Contexto multiempresa obrigatório para confirmar entrega.");
       }
       if (!canUpdateEntrega) {
         throw new Error("Seu perfil não pode alterar entregas.");
       }
-      return await updateInContext("Entrega", entrega.id, {
+      const atualizada = await updateInContext("Entrega", entrega.id, {
         status: "Entregue",
         data_entrega: new Date().toISOString(),
+        group_id: groupId,
+        grupo_id: groupId,
+        empresa_id: empresaId,
         comprovante_entrega: {
           assinatura_digital: dadosAssinatura.assinatura_base64,
           nome_recebedor: dadosAssinatura.nome_recebedor,
@@ -65,6 +148,12 @@ export default function DetalhesEntregaView({
           }
         ]
       });
+      await auditarEntrega({
+        acao: "DetalhesEntrega.confirmar_entrega",
+        descricao: "Entrega confirmada com assinatura digital.",
+        dadosNovos: atualizada,
+      });
+      return atualizada;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['entregas'] });
@@ -182,51 +271,51 @@ export default function DetalhesEntregaView({
           {!showAssinatura ? (
             <div className="flex flex-wrap gap-2 pt-4 border-t">
               <Button
-                onClick={() => onStatusChange(entrega, "Em Separação")}
-                disabled={!canUpdateEntrega || entrega.status !== "Aguardando Separação"}
+                onClick={() => handleStatusChangeLocal("Em Separação")}
+                disabled={!contextoValido || !canUpdateEntrega || entrega.status !== "Aguardando Separação"}
                 size="sm"
                 variant="outline"
-                data-permission="Expedição.Entrega.editar"
+                data-permission="Expedicao.Entrega.editar" data-context-required="true" data-sensitive
                 data-action="iniciar-separacao"
               >
                 Iniciar Separação
               </Button>
               <Button
-                onClick={() => onStatusChange(entrega, "Pronto para Expedir")}
-                disabled={!canUpdateEntrega || entrega.status !== "Em Separação"}
+                onClick={() => handleStatusChangeLocal("Pronto para Expedir")}
+                disabled={!contextoValido || !canUpdateEntrega || entrega.status !== "Em Separação"}
                 size="sm"
                 className="bg-indigo-600 hover:bg-indigo-700"
-                data-permission="Expedição.Entrega.editar"
+                data-permission="Expedicao.Entrega.editar" data-context-required="true" data-sensitive
                 data-action="pronto-para-expedir"
               >
                 Pronto para Expedir
               </Button>
               <Button
-                onClick={() => onStatusChange(entrega, "Saiu para Entrega")}
-                disabled={!canUpdateEntrega || entrega.status !== "Pronto para Expedir"}
+                onClick={() => handleStatusChangeLocal("Saiu para Entrega")}
+                disabled={!contextoValido || !canUpdateEntrega || entrega.status !== "Pronto para Expedir"}
                 size="sm"
                 className="bg-orange-600 hover:bg-orange-700"
-                data-permission="Expedição.Entrega.editar"
+                data-permission="Expedicao.Entrega.editar" data-context-required="true" data-sensitive
                 data-action="sair-para-entrega"
               >
                 Saiu para Entrega
               </Button>
               <Button
                 onClick={() => setShowAssinatura(true)}
-                disabled={!canUpdateEntrega || !["Saiu para Entrega", "Em Trânsito"].includes(entrega.status)}
+                disabled={!contextoValido || !canUpdateEntrega || !["Saiu para Entrega", "Em Trânsito"].includes(entrega.status)}
                 size="sm"
                 className="bg-green-600 hover:bg-green-700"
-                data-permission="Expedição.Entrega.editar"
+                data-permission="Expedicao.Entrega.editar" data-context-required="true" data-sensitive
                 data-action="confirmar-entrega"
               >
                 Confirmar Entrega
               </Button>
               <Button
-                onClick={() => onStatusChange(entrega, "Entrega Frustrada")}
-                disabled={!canUpdateEntrega || ["Entregue", "Cancelado", "Aguardando Separação"].includes(entrega.status)}
+                onClick={() => handleStatusChangeLocal("Entrega Frustrada")}
+                disabled={!contextoValido || !canUpdateEntrega || ["Entregue", "Cancelado", "Aguardando Separação"].includes(entrega.status)}
                 size="sm"
                 variant="destructive"
-                data-permission="Expedição.Entrega.editar"
+                data-permission="Expedicao.Entrega.editar" data-context-required="true" data-sensitive
                 data-action="marcar-entrega-frustrada"
               >
                 Marcar como Frustrada
@@ -315,7 +404,7 @@ export default function DetalhesEntregaView({
   );
 
   if (windowMode) {
-    return <div className={containerClass}>{content}</div>;
+    return <div className={containerClass} data-permission="Expedicao.Entrega.visualizar" data-context-required="true">{content}</div>;
   }
 
   return content;
