@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +10,8 @@ import {
   CheckCircle2, Zap, Filter 
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * V21.6 - SELETOR INTELIGENTE DE PRODUTOS PARA PRODUÇÃO
@@ -22,19 +23,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
  * ✅ Filtros por tipo de aço, diâmetro
  */
 export default function SeletorProdutosProducao({ onSelecionarProduto, quantidadeNecessaria }) {
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const empresaId = empresaAtual?.id || null;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const canViewProdutos = hasPermission('Estoque', 'Produtos', 'visualizar') ||
+    hasPermission('Estoque', 'Produtos', 'ver') ||
+    hasPermission('Producao', 'Ordens Producao', 'visualizar') ||
+    hasPermission('Produção', 'Ordens Produção', 'visualizar');
   const [busca, setBusca] = useState('');
   const [filtroBitola, setFiltroBitola] = useState('todos');
   const [filtroTipoAco, setFiltroTipoAco] = useState('todos');
 
   const { data: produtos = [], isLoading } = useQuery({
-    queryKey: ['produtos-producao-ativas'],
+    queryKey: ['produtos-producao-ativas', groupId, empresaId],
     queryFn: async () => {
-      const all = await base44.entities.Produto.list();
-      return all.filter(p => 
-        p.tipo_item === 'Matéria-Prima Produção' && 
+      const all = await filterInContext('Produto', {}, 'descricao', 1000);
+      return all.filter(p =>
+        p.tipo_item === 'Matéria-Prima Produção' &&
         p.status === 'Ativo'
       );
-    }
+    },
+    enabled: contextoValido && canViewProdutos
   });
 
   const produtosFiltrados = produtos.filter(p => {
@@ -57,7 +68,7 @@ export default function SeletorProdutosProducao({ onSelecionarProduto, quantidad
   const produtosComEstoque = produtos.filter(p => (p.estoque_disponivel || p.estoque_atual || 0) > 0).length;
 
   return (
-    <div className="w-full h-full space-y-4">
+    <div className="w-full h-full space-y-4" data-permission="Producao.OrdensProducao.visualizar" data-context-required="true">
       {/* Header com Estatísticas */}
       <Alert className="border-orange-300 bg-orange-50">
         <Factory className="w-5 h-5 text-orange-600" />
@@ -79,13 +90,16 @@ export default function SeletorProdutosProducao({ onSelecionarProduto, quantidad
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input
             value={busca}
+            disabled={!contextoValido || !canViewProdutos}
+            data-permission="Estoque.Produtos.visualizar"
+            data-context-required="true"
             onChange={(e) => setBusca(e.target.value)}
             placeholder="Buscar produto, código ou bitola..."
             className="pl-10"
           />
         </div>
 
-        <Select value={filtroBitola} onValueChange={setFiltroBitola}>
+        <Select value={filtroBitola} onValueChange={setFiltroBitola} disabled={!contextoValido || !canViewProdutos}>
           <SelectTrigger className="w-40">
             <SelectValue />
           </SelectTrigger>
@@ -96,7 +110,7 @@ export default function SeletorProdutosProducao({ onSelecionarProduto, quantidad
           </SelectContent>
         </Select>
 
-        <Select value={filtroTipoAco} onValueChange={setFiltroTipoAco}>
+        <Select value={filtroTipoAco} onValueChange={setFiltroTipoAco} disabled={!contextoValido || !canViewProdutos}>
           <SelectTrigger className="w-32">
             <SelectValue />
           </SelectTrigger>
@@ -118,7 +132,12 @@ export default function SeletorProdutosProducao({ onSelecionarProduto, quantidad
         </CardHeader>
         <CardContent className="p-0">
           <div className="max-h-[400px] overflow-y-auto divide-y">
-            {isLoading ? (
+            {!contextoValido || !canViewProdutos ? (
+              <div className="text-center py-12 text-slate-500">
+                <AlertTriangle className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                <p>Selecione contexto válido e confirme permissão para consultar produtos de Estoque.</p>
+              </div>
+            ) : isLoading ? (
               <div className="text-center py-12">
                 <p className="text-slate-500">Carregando produtos...</p>
               </div>

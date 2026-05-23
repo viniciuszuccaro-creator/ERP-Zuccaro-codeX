@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   BarChart,
@@ -21,9 +23,28 @@ import {
   Legend,
   ResponsiveContainer
 } from "recharts";
-import { Factory, Clock, TrendingUp, DollarSign, AlertTriangle } from "lucide-react";
+import { Factory, Clock, TrendingUp, DollarSign, AlertTriangle, Download, Printer } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { useUser } from "@/components/lib/UserContext";
+import usePermissions from "@/components/lib/usePermissions";
 
-export default function RelatoriosProducao({ ops }) {
+export default function RelatoriosProducao({ ops = [] }) {
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
+  const { toast } = useToast();
+  const empresaId = empresaAtual?.id || null;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const canViewReports = hasPermission("Produção", "Relatórios", "visualizar") ||
+    hasPermission("Produção", "Relatórios", "ver") ||
+    hasPermission("Producao", "Relatorios", "visualizar") ||
+    hasPermission("Producao", "Relatorios", "ver") ||
+    hasPermission("Producao", null, "visualizar");
+  const canExportReports = hasPermission("Produção", "Relatórios", "exportar") ||
+    hasPermission("Producao", "Relatorios", "exportar") ||
+    hasPermission("Producao", null, "exportar");
   const [periodoInicio, setPeriodoInicio] = useState("");
   const [periodoFim, setPeriodoFim] = useState("");
 
@@ -91,29 +112,141 @@ export default function RelatoriosProducao({ ops }) {
   const dadosOperadores = Object.values(porOperador);
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+  const auditRelatorioProducao = async ({ acao, descricao, sucesso = true, dadosNovos = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario_id: user?.id,
+        usuario: user?.full_name || user?.email || 'Usuário',
+        acao,
+        modulo: 'Produção',
+        tipo_auditoria: sucesso ? 'relatorio' : 'seguranca',
+        entidade: 'RelatoriosProducao',
+        descricao,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        sucesso,
+        dados_novos: dadosNovos,
+        detalhes: {
+          periodoInicio,
+          periodoFim,
+          quantidade_ops: opsFiltradas.length,
+          contexto: empresaId ? 'empresa' : 'grupo',
+          ...dadosNovos,
+        },
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar relatório de produção:', error);
+    }
+  };
 
+  const handleExportarCSV = async () => {
+    if (!contextoValido || !canViewReports || !canExportReports) {
+      await auditRelatorioProducao({
+        acao: 'RelatoriosProducao.exportar_bloqueado',
+        descricao: 'Tentativa de exportar relatório de produção sem contexto ou permissão.',
+        sucesso: false,
+        dadosNovos: { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada' },
+      });
+      toast({ title: 'Acesso negado', description: 'Selecione contexto válido e confirme permissão de exportação.', variant: 'destructive' });
+      return;
+    }
+
+    const headers = ['numero_op', 'status', 'tipo_producao', 'data_emissao', 'peso_teorico_total_kg', 'peso_real_total_kg', 'perda_kg_real', 'custo_previsto', 'custo_real'];
+    const linhas = opsFiltradas.map(op => [
+      op.numero_op || op.numero || op.id || '',
+      op.status || '',
+      op.tipo_producao || '',
+      op.data_emissao || '',
+      op.peso_teorico_total_kg || 0,
+      op.peso_real_total_kg || 0,
+      op.perda_kg_real || 0,
+      op.custos_previstos?.total || 0,
+      op.custos_reais?.total || 0,
+    ]);
+    const csv = [headers, ...linhas]
+      .map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(';'))
+      .join('\n');
+    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `relatorio-producao-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    await auditRelatorioProducao({
+      acao: 'Exportação',
+      descricao: 'Exportação CSV de relatório de produção.',
+      dadosNovos: { formato: 'csv', quantidade_ops: opsFiltradas.length },
+    });
+    toast({ title: 'Exportação concluída', description: `${opsFiltradas.length} OPs exportadas.` });
+  };
+
+  const handleImprimirRelatorio = async () => {
+    if (!contextoValido || !canViewReports) {
+      await auditRelatorioProducao({
+        acao: 'RelatoriosProducao.imprimir_bloqueado',
+        descricao: 'Tentativa de imprimir relatório de produção sem contexto ou permissão.',
+        sucesso: false,
+        dadosNovos: { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada' },
+      });
+      toast({ title: 'Acesso negado', description: 'Selecione contexto válido e confirme permissão de visualização.', variant: 'destructive' });
+      return;
+    }
+    await auditRelatorioProducao({
+      acao: 'Impressão',
+      descricao: 'Impressão de relatório de produção acionada.',
+      dadosNovos: { quantidade_ops: opsFiltradas.length },
+    });
+    window.print();
+  };
+
+  if (!contextoValido || !canViewReports) {
+    return (
+      <Alert className="border-red-200 bg-red-50" data-permission="Producao.Relatorios.visualizar" data-context-required="true">
+        <AlertTriangle className="h-5 w-5 text-red-600" />
+        <AlertDescription>Selecione um contexto válido e confirme sua permissão para visualizar relatórios de produção.</AlertDescription>
+      </Alert>
+    );
+  }
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full h-full" data-permission="Producao.Relatorios.visualizar" data-context-required="true">
       <Card>
         <CardContent className="p-4">
-          <div className="flex gap-4">
-            <div>
-              <Label>Período Início</Label>
-              <Input
-                type="date"
-                value={periodoInicio}
-                onChange={(e) => setPeriodoInicio(e.target.value)}
-                className="mt-2"
-              />
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="flex gap-4">
+              <div>
+                <Label>Período Início</Label>
+                <Input
+                  type="date"
+                  value={periodoInicio}
+                  onChange={(e) => setPeriodoInicio(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+              <div>
+                <Label>Período Fim</Label>
+                <Input
+                  type="date"
+                  value={periodoFim}
+                  onChange={(e) => setPeriodoFim(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
             </div>
-            <div>
-              <Label>Período Fim</Label>
-              <Input
-                type="date"
-                value={periodoFim}
-                onChange={(e) => setPeriodoFim(e.target.value)}
-                className="mt-2"
-              />
+            <div className="flex gap-2 no-print">
+              <Button type="button" variant="outline" onClick={handleImprimirRelatorio} data-permission="Producao.Relatorios.visualizar" data-action="RelatoriosProducao.imprimir" data-context-required="true">
+                <Printer className="w-4 h-4 mr-2" />
+                Imprimir
+              </Button>
+              <Button type="button" onClick={handleExportarCSV} disabled={!canExportReports} data-permission="Producao.Relatorios.exportar" data-action="RelatoriosProducao.exportar_csv" data-context-required="true" data-sensitive>
+                <Download className="w-4 h-4 mr-2" />
+                Exportar CSV
+              </Button>
             </div>
           </div>
         </CardContent>
@@ -171,7 +304,7 @@ export default function RelatoriosProducao({ ops }) {
         </Card>
       </div>
 
-      <Tabs defaultValue="geral">
+      <Tabs defaultValue="geral" data-permission="Producao.Relatorios.visualizar" data-context-required="true">
         <TabsList className="bg-white border flex-wrap h-auto">
           <TabsTrigger value="geral">Geral</TabsTrigger>
           <TabsTrigger value="tipo">Por Tipo</TabsTrigger>
