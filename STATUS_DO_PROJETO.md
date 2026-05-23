@@ -854,3 +854,21 @@ Checklist inicial:
 - `git diff --check` executado sem erros.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em `FormularioEntrega`, revisando criacao/edicao de entrega, previsao/geolocalizacao, RBAC, contexto e auditoria antes/depois.
+
+### Expedicao - Fase 8 Formulario de Entrega
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `FormularioEntrega`, revisando criacao/edicao de entrega, previsao/geolocalizacao, RBAC, contexto e auditoria antes/depois.
+- `FormularioEntrega` passou a usar chaves tecnicas de permissao `Expedicao.Entrega.criar/editar`, evitando dependencia de acento para RBAC.
+- Criacao e edicao de entrega agora reforcam `group_id`, `grupo_id` e `empresa_id` antes de chamar `createInContext` e `updateInContext`.
+- Antes de criar uma nova entrega, o sistema agora pede confirmacao explicita, respeitando a Regra-Mae para inclusao de registros.
+- Bloqueios por falta de contexto, empresa, cliente ou permissao agora geram `AuditLog` de seguranca com usuario, grupo e empresa.
+- Calculo de previsao por IA e geolocalizacao agora exigem contexto grupo/empresa e permissao do formulario antes de executar.
+- Prompts enviados para IA agora recebem sanitizacao simples dos campos de endereco/frete para reduzir risco de entrada indevida.
+- Sucesso e erro em previsao por IA e geolocalizacao agora geram auditoria operacional/seguranca com contexto multiempresa.
+- Botoes de previsao, geolocalizacao e salvar receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- `FormWrapper` existente passou a encaminhar atributos extras para o `<form>`, permitindo que os marcadores `data-*` realmente cheguem ao DOM sem criar componente novo.
+- Foi validado que `FormularioEntrega`, `FormWrapper` e `STATUS_DO_PROJETO.md` ficaram sem mojibake real apos as alteracoes.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em listagens e relatorios de Expedicao/Logistica, revisando filtros por grupo/empresa, exportacoes, acoes em lote, RBAC e auditoria.

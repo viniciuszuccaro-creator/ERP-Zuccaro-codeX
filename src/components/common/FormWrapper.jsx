@@ -32,6 +32,7 @@ export default function FormWrapper({
   reValidateMode = 'onChange',
   externalData,
   children,
+  ...formProps
 }) {
   const { carimbarContexto } = useContextoVisual();
   const methods = useForm({
@@ -95,6 +96,7 @@ export default function FormWrapper({
       <form
         onSubmit={methods.handleSubmit(handleValid, handleInvalid)}
         className={cn('w-full h-full space-y-6', className)}
+        {...formProps}
       >
         <FormErrorSummary messages={errorMessages} />
         {typeof children === 'function' ? children(methods) : children}
