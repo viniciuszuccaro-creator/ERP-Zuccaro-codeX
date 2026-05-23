@@ -7,33 +7,67 @@ import { Badge } from "@/components/ui/badge";
 import { Zap, Map, Truck, Navigation, TrendingDown } from "lucide-react";
 import { toast } from "sonner";
 import TesteGoogleMaps from "@/components/integracoes/TesteGoogleMaps";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 
 export default function RoteirizacaoInteligente({ windowMode = false }) {
   const queryClient = useQueryClient();
   const [dataRota, setDataRota] = useState(new Date().toISOString().split('T')[0]);
+  const { empresaAtual, grupoAtual, filterInContext, createInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const canViewRoteirizacao = hasPermission("Expedicao", "Roteirizacao", "visualizar") || hasPermission("Expedicao", "Rotas", "visualizar") || hasPermission("Expedicao", "Rotas", "ver");
+  const canGenerateRoteirizacao = hasPermission("Expedicao", "Roteirizacao", "criar") || hasPermission("Expedicao", "Rotas", "criar") || hasPermission("Expedicao", "Rotas", "editar");
 
+  const auditIA = async ({ acao, sucesso = true, motivo = null, detalhes = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao, modulo: "Expedicao", entidade: "RoteirizacaoInteligente",
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        usuario_id: user?.id || user?.email || null,
+        usuario_nome: user?.full_name || user?.email || "Sistema",
+        group_id: groupId, grupo_id: groupId, empresa_id: empresaId,
+        resultado: sucesso ? "sucesso" : "bloqueado", motivo, detalhes, data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar roteirizacao IA", error);
+    }
+  };
   const { data: entregas = [] } = useQuery({
-    queryKey: ["entregas"],
-    queryFn: () => base44.entities.Entrega.list(),
+    queryKey: ["entregas", groupId, empresaId],
+    queryFn: () => filterInContext("Entrega", {}, "-created_date", 500),
+    enabled: contextoValido && canViewRoteirizacao,
   });
 
   const { data: motoristas = [] } = useQuery({
-    queryKey: ["motoristas"],
-    queryFn: () => base44.entities.Motorista.list(),
+    queryKey: ["motoristas", groupId, empresaId],
+    queryFn: () => filterInContext("Motorista", {}, "nome", 200),
+    enabled: contextoValido && canViewRoteirizacao,
   });
 
   const { data: veiculos = [] } = useQuery({
-    queryKey: ["veiculos"],
-    queryFn: () => base44.entities.Veiculo.list(),
+    queryKey: ["veiculos", groupId, empresaId],
+    queryFn: () => filterInContext("Veiculo", {}, "placa", 200),
+    enabled: contextoValido && canViewRoteirizacao,
   });
 
   const { data: rotas = [] } = useQuery({
-    queryKey: ["roteirizacao-inteligente"],
-    queryFn: () => base44.entities.RoteirizacaoInteligente.list(),
+    queryKey: ["roteirizacao-inteligente", groupId, empresaId],
+    queryFn: () => filterInContext("RoteirizacaoInteligente", {}, "-created_date", 200),
+    enabled: contextoValido && canViewRoteirizacao,
   });
 
   const gerarRotaIAMutation = useMutation({
     mutationFn: async ({ entregasIds, motoristaId, veiculoId }) => {
+      if (!contextoValido || !canGenerateRoteirizacao) {
+        await auditIA({ acao: "RoteirizacaoIA.gerar.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
+        throw new Error("Contexto ou permissao obrigatoria para gerar rota com IA.");
+      }
+
       toast.info("🤖 IA otimizando rota...");
 
       const entregasSelecionadas = entregas.filter(e => entregasIds.includes(e.id));
@@ -65,7 +99,10 @@ Retorne a melhor sequência de entregas, distância total, tempo estimado e cust
       const motorista = motoristas.find(m => m.id === motoristaId);
       const veiculo = veiculos.find(v => v.id === veiculoId);
 
-      return base44.entities.RoteirizacaoInteligente.create({
+      const rotaCriada = await createInContext("RoteirizacaoInteligente", {
+        group_id: groupId,
+        grupo_id: groupId,
+        empresa_id: empresaId,
         data_rota: dataRota,
         motorista_id: motoristaId,
         motorista_nome: motorista?.nome || "",
@@ -90,12 +127,20 @@ Retorne a melhor sequência de entregas, distância total, tempo estimado e cust
           fatores_considerados: ["Distância", "Janela de Entrega", "Trânsito", "Prioridade", "Peso"],
           economia_vs_rota_manual: result.economia_vs_manual
         },
-        status: "Planejada"
+        status: "Planejada",
+        criado_por: user?.full_name || user?.email || "Sistema"
       });
+
+      await auditIA({ acao: "RoteirizacaoIA.gerar", detalhes: { rota_id: rotaCriada.id, entregas: entregasSelecionadas.length, motoristaId, veiculoId } });
+      return rotaCriada;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["roteirizacao-inteligente"]);
+      queryClient.invalidateQueries({ queryKey: ["roteirizacao-inteligente"] });
       toast.success("✅ Rota otimizada gerada com IA!");
+    },
+    onError: async (error) => {
+      await auditIA({ acao: "RoteirizacaoIA.gerar.erro", sucesso: false, motivo: error?.message || "erro_ia" });
+      toast.error(error?.message || "Erro ao gerar rota com IA");
     },
   });
 
@@ -106,7 +151,7 @@ Retorne a melhor sequência de entregas, distância total, tempo estimado e cust
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
 
   return (
-    <div className={containerClass}>
+    <div className={containerClass} data-permission="Expedicao.Rotas.visualizar" data-context-required="true">
       <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
       <div className="flex items-center justify-between">
         <div>
@@ -116,6 +161,15 @@ Retorne a melhor sequência de entregas, distância total, tempo estimado e cust
 
         <Button
           onClick={() => {
+            if (!contextoValido || !canGenerateRoteirizacao) {
+              auditIA({ acao: "RoteirizacaoIA.gerar.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
+              toast.error("Contexto ou permissao obrigatoria para gerar rota com IA");
+              return;
+            }
+            if (!window.confirm("Confirmar geracao de rota com IA para as entregas pendentes?")) {
+              auditIA({ acao: "RoteirizacaoIA.gerar.cancelado", sucesso: false, motivo: "confirmacao_cancelada" });
+              return;
+            }
             if (entregasPendentes.length > 0 && motoristas.length > 0 && veiculos.length > 0) {
               gerarRotaIAMutation.mutate({
                 entregasIds: entregasPendentes.slice(0, 5).map(e => e.id),
@@ -126,7 +180,11 @@ Retorne a melhor sequência de entregas, distância total, tempo estimado e cust
               toast.error("Cadastre entregas, motoristas e veículos primeiro");
             }
           }}
-          disabled={gerarRotaIAMutation.isPending}
+          disabled={gerarRotaIAMutation.isPending || !contextoValido || !canGenerateRoteirizacao}
+          data-action="RoteirizacaoIA.gerar"
+          data-permission="Expedicao.Rotas.criar"
+          data-context-required="true"
+          data-sensitive="true"
           className="bg-blue-600 hover:bg-blue-700"
         >
           <Zap className="w-4 h-4 mr-2" />
@@ -240,7 +298,7 @@ Retorne a melhor sequência de entregas, distância total, tempo estimado e cust
                         </Badge>
                       </td>
                       <td className="p-3 text-center">
-                        <Button size="sm" variant="outline">
+                        <Button size="sm" variant="outline" data-permission="Expedicao.Rotas.visualizar" data-action="RoteirizacaoIA.mapa" data-context-required="true">
                           <Map className="w-3 h-3 mr-1" />
                           Mapa
                         </Button>

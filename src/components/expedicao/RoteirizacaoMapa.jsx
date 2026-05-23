@@ -8,6 +8,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import { Map, Route, Zap, MapPin, Clock, TrendingUp, AlertCircle, Package, FileText } from "lucide-react";
 import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -63,7 +65,7 @@ function otimizarRotaNN(pontos, origem) {
   return rotaOtimizada;
 }
 
-export default function RoteirizacaoMapa({ entregas, motoristas, veiculos, windowMode = false }) {
+export default function RoteirizacaoMapa({ entregas = [], motoristas = [], veiculos = [], windowMode = false }) {
   const [entregasSelecionadas, setEntregasSelecionadas] = useState([]);
   const [rotaOtimizada, setRotaOtimizada] = useState(null);
   const [motoristaSelecionado, setMotoristaSelecionado] = useState("");
@@ -72,7 +74,42 @@ export default function RoteirizacaoMapa({ entregas, motoristas, veiculos, windo
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const canOptimizeRoute = hasPermission("Expedicao", "Rotas", "editar") || hasPermission("Expedicao", "Roteirizacao", "editar") || hasPermission("Expedicao", "Rotas", "criar");
+  const canCreateRomaneio = hasPermission("Expedicao", "Romaneios", "criar") || hasPermission("Expedicao", "Romaneio", "criar");
+
+  const auditRota = async ({ acao, sucesso = true, motivo = null, detalhes = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: "Expedicao",
+        entidade: "Roteirizacao",
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        usuario_id: user?.id || user?.email || null,
+        usuario_nome: user?.full_name || user?.email || "Sistema",
+        group_id: groupId,
+        grupo_id: groupId,
+        empresa_id: empresaId,
+        resultado: sucesso ? "sucesso" : "bloqueado",
+        motivo,
+        detalhes,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar roteirizacao", error);
+    }
+  };
+
+  const entregasContextuais = entregas.filter(e => {
+    if (empresaId && e.empresa_id && e.empresa_id !== empresaId && e.empresa_responsavel_id !== empresaId) return false;
+    if (groupId && e.group_id && e.group_id !== groupId) return false;
+    return true;
+  });
 
   const handleSelecionarEntrega = (entrega) => {
     if (entregasSelecionadas.find(e => e.id === entrega.id)) {
@@ -83,6 +120,12 @@ export default function RoteirizacaoMapa({ entregas, motoristas, veiculos, windo
   };
 
   const handleOtimizarRota = async () => {
+    if (!contextoValido || !canOptimizeRoute) {
+      await auditRota({ acao: "Rota.otimizar.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
+      toast({ title: "Acesso bloqueado", description: "Selecione um contexto e verifique sua permissao para otimizar rotas.", variant: "destructive" });
+      return;
+    }
+
     if (entregasSelecionadas.length === 0) {
       toast({
         title: "⚠️ Nenhuma entrega selecionada",
@@ -118,6 +161,7 @@ export default function RoteirizacaoMapa({ entregas, motoristas, veiculos, windo
         description: "Cadastre latitude/longitude nos endereços das entregas selecionadas para otimização.",
         variant: "destructive"
       });
+      await auditRota({ acao: "Rota.otimizar.bloqueado", sucesso: false, motivo: "entregas_sem_coordenadas", detalhes: { selecionadas: entregasSelecionadas.length } });
       setIsOptimizing(false);
       return;
     }
@@ -136,13 +180,16 @@ export default function RoteirizacaoMapa({ entregas, motoristas, veiculos, windo
     const tempoTotalParadasMinutos = rotaCalculada.length * tempoPorParadaMinutos;
     const tempoEstimado = tempoViagemMinutos + tempoTotalParadasMinutos;
 
-    setRotaOtimizada({
+    const resultadoOtimizado = {
       pontos: rotaCalculada,
       distancia_total_km: distanciaTotal,
       tempo_estimado_minutos: Math.round(tempoEstimado),
       algoritmo: 'Nearest Neighbor',
       data_calculo: new Date().toISOString()
-    });
+    };
+
+    setRotaOtimizada(resultadoOtimizado);
+    await auditRota({ acao: "Rota.otimizar", detalhes: { entregas: rotaCalculada.length, distancia_total_km: distanciaTotal, tempo_estimado_minutos: Math.round(tempoEstimado) } });
 
     setIsOptimizing(false);
 
@@ -153,6 +200,12 @@ export default function RoteirizacaoMapa({ entregas, motoristas, veiculos, windo
   };
 
   const handleGerarRomaneio = async () => {
+    if (!contextoValido || !canCreateRomaneio) {
+      await auditRota({ acao: "Rota.gerar_romaneio.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
+      toast({ title: "Acesso bloqueado", description: "Selecione um contexto e verifique sua permissao para gerar romaneio.", variant: "destructive" });
+      return;
+    }
+
     if (!rotaOtimizada || !motoristaSelecionado || !veiculoSelecionado) {
       toast({
         title: "⚠️ Dados incompletos",
@@ -162,11 +215,17 @@ export default function RoteirizacaoMapa({ entregas, motoristas, veiculos, windo
       return;
     }
 
+    if (!window.confirm("Confirmar criacao da rota e do romaneio para as entregas selecionadas?")) {
+      await auditRota({ acao: "Rota.gerar_romaneio.cancelado", sucesso: false, motivo: "confirmacao_cancelada", detalhes: { entregas: rotaOtimizada.pontos.length } });
+      return;
+    }
+
     try {
       // Criar Rota
-      const rota = await base44.entities.Rota.create({
-        empresa_id: empresaAtual?.id,
-        group_id: empresaAtual?.grupo_id,
+      const rota = await createInContext("Rota", {
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
         nome_rota: `Rota ${new Date().toLocaleDateString('pt-BR')} - ${motoristas.find(m => m.id === motoristaSelecionado)?.nome_completo || 'Motorista Desconhecido'}`,
         data_rota: new Date().toISOString().split('T')[0],
         motorista_id: motoristaSelecionado,
@@ -191,13 +250,14 @@ export default function RoteirizacaoMapa({ entregas, motoristas, veiculos, windo
         progresso_percentual: 0,
         entregas_concluidas: 0,
         entregas_frustradas: 0,
-        criado_por: "Sistema"
+        criado_por: user?.full_name || user?.email || "Sistema"
       });
 
       // Criar Romaneio
-      const romaneio = await base44.entities.Romaneio.create({
-        empresa_id: empresaAtual?.id,
-        group_id: empresaAtual?.grupo_id,
+      const romaneio = await createInContext("Romaneio", {
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
         numero_romaneio: `ROM-${Date.now()}`,
         data_romaneio: new Date().toISOString().split('T')[0],
         motorista_id: motoristaSelecionado,
@@ -208,12 +268,15 @@ export default function RoteirizacaoMapa({ entregas, motoristas, veiculos, windo
         distancia_total_km: rotaOtimizada.distancia_total_km,
         tempo_previsto_minutos: rotaOtimizada.tempo_estimado_minutos,
         status: 'Aberto',
-        criado_por: "Sistema"
+        criado_por: user?.full_name || user?.email || "Sistema"
       });
 
       // Atualizar entregas com o romaneio e rota
       for (const ponto of rotaOtimizada.pontos) {
-        await base44.entities.Entrega.update(ponto.id, {
+        await updateInContext("Entrega", ponto.id, {
+          group_id: groupId,
+          grupo_id: groupId,
+          empresa_id: empresaId || ponto.empresa_id,
           rota_id: rota.id,
           romaneio_id: romaneio.id,
           status: 'Pronto para Expedir'
@@ -223,6 +286,8 @@ export default function RoteirizacaoMapa({ entregas, motoristas, veiculos, windo
       queryClient.invalidateQueries({ queryKey: ['entregas'] });
       queryClient.invalidateQueries({ queryKey: ['rotas'] });
       queryClient.invalidateQueries({ queryKey: ['romaneios'] });
+
+      await auditRota({ acao: "Rota.gerar_romaneio", detalhes: { rota_id: rota.id, romaneio_id: romaneio.id, entregas: rotaOtimizada.pontos.length } });
 
       toast({
         title: "✅ Romaneio gerado!",
@@ -236,6 +301,7 @@ export default function RoteirizacaoMapa({ entregas, motoristas, veiculos, windo
       setVeiculoSelecionado("");
 
     } catch (error) {
+      await auditRota({ acao: "Rota.gerar_romaneio.erro", sucesso: false, motivo: error?.message || "erro_salvar" });
       console.error("Erro ao gerar romaneio:", error);
       toast({
         title: "❌ Erro ao gerar romaneio",
@@ -245,7 +311,7 @@ export default function RoteirizacaoMapa({ entregas, motoristas, veiculos, windo
     }
   };
 
-  const entregasPendentes = entregas.filter(e =>
+  const entregasPendentes = entregasContextuais.filter(e =>
     e.status === 'Aguardando Separação' ||
     e.status === 'Pronto para Expedir'
   );
@@ -253,7 +319,7 @@ export default function RoteirizacaoMapa({ entregas, motoristas, veiculos, windo
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
 
   return (
-    <div className={containerClass}>
+    <div className={containerClass} data-permission="Expedicao.Rotas.visualizar" data-context-required="true">
       <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
       <Card className="border-2 border-blue-200">
         <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
@@ -304,7 +370,9 @@ export default function RoteirizacaoMapa({ entregas, motoristas, veiculos, windo
                         ? 'border-2 border-blue-500 bg-blue-50'
                         : 'border hover:border-blue-300'
                     }`}
-                    onClick={() => handleSelecionarEntrega(entrega)}
+                    onClick={() => contextoValido && canOptimizeRoute && handleSelecionarEntrega(entrega)}
+                    data-permission="Expedicao.Rotas.editar"
+                    data-context-required="true"
                   >
                     <CardContent className="p-3">
                       <div className="flex items-start justify-between">
@@ -390,7 +458,11 @@ export default function RoteirizacaoMapa({ entregas, motoristas, veiculos, windo
             {/* BOTÃO OTIMIZAR */}
             <Button
               onClick={handleOtimizarRota}
-              disabled={entregasSelecionadas.length === 0 || isOptimizing}
+              disabled={!contextoValido || !canOptimizeRoute || entregasSelecionadas.length === 0 || isOptimizing}
+              data-action="Rota.otimizar"
+              data-permission="Expedicao.Rotas.editar"
+              data-context-required="true"
+              data-sensitive="true"
               className="w-full bg-purple-600 hover:bg-purple-700"
               size="lg"
             >
@@ -470,7 +542,11 @@ export default function RoteirizacaoMapa({ entregas, motoristas, veiculos, windo
                   {/* BOTÃO GERAR ROMANEIO */}
                   <Button
                     onClick={handleGerarRomaneio}
-                    disabled={!motoristaSelecionado || !veiculoSelecionado}
+                    disabled={!contextoValido || !canCreateRomaneio || !motoristaSelecionado || !veiculoSelecionado}
+                    data-action="Rota.gerar_romaneio"
+                    data-permission="Expedicao.Romaneios.criar"
+                    data-context-required="true"
+                    data-sensitive="true"
                     className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
                   >
                     <FileText className="w-4 h-4 mr-2" />

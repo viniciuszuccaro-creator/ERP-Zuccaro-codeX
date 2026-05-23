@@ -890,3 +890,24 @@ Checklist inicial:
 - `git diff --check` executado sem erros.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em `RoteirizacaoMapa`, `RoteirizacaoInteligente` e painel logistico, revisando geracao/otimizacao de rotas, contexto grupo/empresa, permissoes e auditoria.
+
+### Expedicao - Fase 8 Rotas e Roteirizacao IA
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `RoteirizacaoMapa`, `RoteirizacaoInteligente` e painel logistico, revisando geracao/otimizacao de rotas, contexto grupo/empresa, permissoes e auditoria.
+- `RoteirizacaoMapa` passou a filtrar entregas por contexto grupo/empresa antes de permitir selecao e otimizacao.
+- Otimizacao de rota agora exige contexto grupo/empresa e permissao tecnica `Expedicao.Rotas.editar/criar` ou `Expedicao.Roteirizacao.editar`.
+- Falhas de otimizacao por falta de contexto, permissao ou coordenadas agora geram `AuditLog` de seguranca.
+- Otimizacao bem-sucedida agora gera `AuditLog` operacional com quantidade de entregas, distancia e tempo estimado.
+- Criacao de rota e romaneio no mapa passou a usar `createInContext`, reforcando `group_id`, `grupo_id` e `empresa_id`.
+- Atualizacao das entregas vinculadas a rota/romaneio passou a usar `updateInContext` com contexto multiempresa.
+- Antes de criar rota e romaneio, o sistema agora pede confirmacao explicita, respeitando a Regra-Mae para inclusao de registros.
+- Sucesso, erro e cancelamento da geracao de rota/romaneio agora ficam auditados.
+- `RoteirizacaoInteligente` deixou de buscar `Entrega`, `Motorista`, `Veiculo` e `RoteirizacaoInteligente` por `.list()` global e passou a usar `filterInContext`.
+- Geracao de rota por IA agora exige contexto grupo/empresa, permissao, confirmacao explicita e cria o registro por `createInContext`.
+- Bloqueios, erros e sucesso da roteirizacao IA agora geram auditoria com usuario, `group_id`, `grupo_id` e `empresa_id`.
+- Botoes sensiveis de otimizar rota, gerar romaneio e gerar rota com IA receberam `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- Foi validado que `RoteirizacaoMapa`, `RoteirizacaoInteligente` e `STATUS_DO_PROJETO.md` ficaram sem mojibake real apos as alteracoes.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 no `DashboardLogistico` e seus componentes do painel logistico, revisando salvamento de regras, simulacao/otimizacao, relatorios, contexto grupo/empresa, permissoes e auditoria.
