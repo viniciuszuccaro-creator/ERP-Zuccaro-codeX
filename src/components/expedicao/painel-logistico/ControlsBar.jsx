@@ -9,7 +9,7 @@ const ALL_STATUSES = [
   'Aguardando Separação', 'Em Separação', 'Pronto para Expedir', 'Saiu para Entrega', 'Em Trânsito', 'Entregue', 'Entrega Frustrada'
 ];
 
-export default function ControlsBar({ filters, setFilters, rules, onSaveRules, loadingRules }) {
+export default function ControlsBar({ filters, setFilters, rules, onSaveRules, loadingRules, contextoValido = true, canEditRules = true, canSimulate = true, onAudit }) {
   const [open, setOpen] = React.useState(false);
   const [local, setLocal] = React.useState(rules || {});
 
@@ -26,12 +26,19 @@ export default function ControlsBar({ filters, setFilters, rules, onSaveRules, l
     const [loading, setLoading] = React.useState(false);
 
     const run = async () => {
+      if (!contextoValido || !canSimulate) {
+        await onAudit?.({ acao: "PainelLogistico.simulacao.bloqueada", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
+        return;
+      }
       setLoading(true);
       try {
         const res = await base44.functions.invoke('optimizeDeliveryRoute', { mode: 'simulation', constraints: params });
+        await onAudit?.({ acao: 'PainelLogistico.simulacao', detalhes: { constraints: params } });
         // Notifica o painel via evento custom
         window.dispatchEvent(new CustomEvent('logistica:simulation', { detail: res?.data }));
         onClose?.();
+      } catch (error) {
+        await onAudit?.({ acao: 'PainelLogistico.simulacao.erro', sucesso: false, motivo: error?.message || 'erro_simulacao' });
       } finally { setLoading(false); }
     };
 
@@ -65,7 +72,7 @@ export default function ControlsBar({ filters, setFilters, rules, onSaveRules, l
         </div>
         <div className="flex justify-end gap-2">
           <button className="px-3 py-1 border rounded" onClick={()=>onClose?.()}>Cancelar</button>
-          <button className="px-3 py-1 bg-blue-600 text-white rounded" onClick={run} disabled={loading}>{loading?'Simulando...':'Simular'}</button>
+          <button className="px-3 py-1 bg-blue-600 text-white rounded disabled:opacity-50" onClick={run} disabled={loading || !contextoValido || !canSimulate} data-permission="Expedicao.PainelLogistico.editar" data-action="PainelLogistico.simular" data-context-required="true" data-sensitive="true">{loading?'Simulando...':'Simular'}</button>
         </div>
       </div>
     );
@@ -81,8 +88,8 @@ export default function ControlsBar({ filters, setFilters, rules, onSaveRules, l
       </div>
       <div className="ml-auto flex items-center gap-2">
         <Badge variant="outline" className="text-xs">Regras: atraso≥{local.minAtrasoHoras ?? 1}h • filaRota&gt;{local.maxFilaRota ?? 8} • trânsito≥{local.maxTransitoHoras ?? 6}h • esperaCD≥{local.maxEsperaCentroHoras ?? 4}h</Badge>
-        <Button variant="outline" onClick={() => setOpen(true)}>Configurar Regras</Button>
-        <Button onClick={() => setOpen('sim')}>Simular Cenário</Button>
+        <Button variant="outline" onClick={() => setOpen(true)} disabled={!contextoValido || !canEditRules} data-permission="Expedicao.PainelLogistico.editar" data-action="PainelLogistico.regras.abrir" data-context-required="true" data-sensitive="true">Configurar Regras</Button>
+        <Button onClick={() => setOpen('sim')} disabled={!contextoValido || !canSimulate} data-permission="Expedicao.PainelLogistico.editar" data-action="PainelLogistico.simulacao.abrir" data-context-required="true" data-sensitive="true">Simular Cenário</Button>
       </div>
 
       <Dialog open={open===true} onOpenChange={(v)=>setOpen(v?true:false)}>
@@ -106,7 +113,7 @@ export default function ControlsBar({ filters, setFilters, rules, onSaveRules, l
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-              <Button onClick={() => { onSaveRules?.(local); setOpen(false); }} disabled={loadingRules}>Salvar</Button>
+              <Button onClick={() => { onSaveRules?.(local); setOpen(false); }} disabled={loadingRules || !contextoValido || !canEditRules} data-permission="Expedicao.PainelLogistico.editar" data-action="PainelLogistico.regras.salvar" data-context-required="true" data-sensitive="true">Salvar</Button>
             </div>
           </div>
         </DialogContent>

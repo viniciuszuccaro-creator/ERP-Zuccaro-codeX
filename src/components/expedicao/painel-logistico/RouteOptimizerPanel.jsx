@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Route as RouteIcon, ListOrdered } from 'lucide-react';
 
-export default function RouteOptimizerPanel({ entregas = [], empresaId, groupId, onSelectEntrega }) {
+export default function RouteOptimizerPanel({ entregas = [], empresaId, groupId, onSelectEntrega, contextoValido = true, canOptimize = true, onAudit }) {
   const candidatas = useMemo(() => (
     (entregas || []).filter(e => e?.endereco_entrega_completo?.latitude && e?.endereco_entrega_completo?.longitude && !['Entregue','Cancelado','Devolvido'].includes(e.status))
   ), [entregas]);
@@ -19,6 +19,10 @@ export default function RouteOptimizerPanel({ entregas = [], empresaId, groupId,
   const [rota, setRota] = useState(null);
 
   const otimizar = async () => {
+    if (!contextoValido || !canOptimize) {
+      await onAudit?.({ acao: "PainelLogistico.rota.otimizar.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
+      return;
+    }
     if (!candidatas.length) return;
     setLoading(true);
     try {
@@ -33,6 +37,7 @@ export default function RouteOptimizerPanel({ entregas = [], empresaId, groupId,
         },
       };
       const { data } = await base44.functions.invoke('optimizeDeliveryRoute', payload);
+      await onAudit?.({ acao: 'PainelLogistico.rota.otimizar', detalhes: { entregas: candidatas.length, constraints: payload.constraints } });
       const d = data || {};
       const view = {
         ...d,
@@ -45,6 +50,8 @@ export default function RouteOptimizerPanel({ entregas = [], empresaId, groupId,
       };
       setRota(view);
       try { window.dispatchEvent(new CustomEvent('logistica:route', { detail: view })); } catch {}
+    } catch (error) {
+      await onAudit?.({ acao: 'PainelLogistico.rota.otimizar.erro', sucesso: false, motivo: error?.message || 'erro_otimizacao' });
     } finally {
       setLoading(false);
     }
@@ -58,7 +65,7 @@ export default function RouteOptimizerPanel({ entregas = [], empresaId, groupId,
   }, [rota]);
 
   return (
-    <Card className="mt-3">
+    <Card className="mt-3" data-permission="Expedicao.PainelLogistico.visualizar" data-context-required="true">
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <RouteIcon className="w-4 h-4 text-emerald-600" /> Otimização de Rotas
@@ -80,7 +87,7 @@ export default function RouteOptimizerPanel({ entregas = [], empresaId, groupId,
               <input type="checkbox" checked={respeitarJanelas} onChange={(e)=>setRespeitarJanelas(e.target.checked)} />
               Respeitar janelas de entrega
             </label>
-            <Button onClick={otimizar} disabled={loading || !candidatas.length || !empresaId} className="ml-auto">
+            <Button onClick={otimizar} disabled={loading || !candidatas.length || !contextoValido || !canOptimize || !empresaId} className="ml-auto" data-permission="Expedicao.PainelLogistico.editar" data-action="PainelLogistico.rota.otimizar" data-context-required="true" data-sensitive="true">
               {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin"/> : <ListOrdered className="w-4 h-4 mr-2"/>}
               Otimizar rota
             </Button>

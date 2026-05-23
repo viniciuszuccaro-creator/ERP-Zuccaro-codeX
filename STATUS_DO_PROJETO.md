@@ -911,3 +911,20 @@ Checklist inicial:
 - `git diff --check` executado sem erros.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 no `DashboardLogistico` e seus componentes do painel logistico, revisando salvamento de regras, simulacao/otimizacao, relatorios, contexto grupo/empresa, permissoes e auditoria.
+
+### Expedicao - Fase 8 Painel Logistico
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 no `DashboardLogistico` e seus componentes do painel logistico, revisando salvamento de regras, simulacao/otimizacao, relatorios, contexto grupo/empresa, permissoes e auditoria.
+- `DashboardLogistico` passou a exigir contexto grupo/empresa e permissao tecnica antes de carregar entregas, regras, relatorios e acoes sensiveis.
+- Chave de regras do painel logistico agora e escopada por empresa ou grupo, evitando configuracao global sem contexto multiempresa.
+- Salvamento das regras passou a usar `createInContext` e `updateInContext`, reforcando `group_id`, `grupo_id` e `empresa_id`.
+- Abertura de relatorio, salvamento de regras e bloqueios por contexto/permissao agora geram `AuditLog` com usuario, grupo, empresa, resultado e detalhes.
+- `ControlsBar` passou a bloquear e auditar simulacao de cenarios quando faltar contexto ou permissao.
+- `RouteOptimizerPanel` passou a bloquear e auditar otimizacao de rotas por falta de contexto/permissao, alem de auditar sucesso e erro da IA.
+- `PerformanceReportDialog` passou a bloquear e auditar exportacao CSV quando faltar contexto ou permissao, e auditar exportacao bem-sucedida.
+- Botoes sensiveis de salvar regras, simular cenario, otimizar rota, abrir relatorio e exportar CSV receberam `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- Foi validado que `DashboardLogistico` e componentes do painel logistico ficaram sem mojibake real apos as alteracoes.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `DriverChat`, `OcorrenciasPanel`, `ComprovanteDigital` e `LogisticaReversa`, revisando comunicacao, ocorrencias, comprovantes, reversa, contexto grupo/empresa, permissoes e auditoria.

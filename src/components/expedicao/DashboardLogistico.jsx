@@ -16,10 +16,37 @@ import PerformanceReportDialog from "./painel-logistico/PerformanceReportDialog"
 import RouteOptimizerPanel from "./painel-logistico/RouteOptimizerPanel";
 import { Activity } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 
 export default function DashboardLogistico({ empresaId, entregas: entregasProp = [], windowMode }) {
   const queryClient = useQueryClient();
-  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { filterInContext, empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
+  const effectiveEmpresaId = empresaId || empresaAtual?.id || null;
+  const effectiveGroupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const contextoValido = Boolean(effectiveGroupId || effectiveEmpresaId);
+  const canViewPainel = hasPermission("Expedicao", "Painel Logistico", "visualizar") || hasPermission("Expedicao", "Rotas", "visualizar") || hasPermission("Expedicao", "Entregas", "visualizar");
+  const canEditRules = hasPermission("Expedicao", "Painel Logistico", "editar") || hasPermission("Expedicao", "Configuracoes", "editar");
+  const canSimulate = hasPermission("Expedicao", "Painel Logistico", "editar") || hasPermission("Expedicao", "Rotas", "editar");
+  const canExportReport = hasPermission("Expedicao", "Relatorios", "exportar") || hasPermission("Expedicao", "Painel Logistico", "exportar");
+
+  const auditPainel = async ({ acao, sucesso = true, motivo = null, detalhes = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao, modulo: "Expedicao", entidade: "PainelLogistico",
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        usuario_id: user?.id || user?.email || null,
+        usuario_nome: user?.full_name || user?.email || "Sistema",
+        group_id: effectiveGroupId, grupo_id: effectiveGroupId, empresa_id: effectiveEmpresaId,
+        resultado: sucesso ? "sucesso" : "bloqueado", motivo, detalhes, data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar painel logistico", error);
+    }
+  };
+
   const [selected, setSelected] = React.useState(null);
   const [filters, setFilters] = React.useState({ q: '', statuses: [] });
   const [simResult, setSimResult] = React.useState(null);
@@ -36,39 +63,48 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
   }, []);
 
   // Regras configuráveis salvas em ConfiguracaoSistema
-  const rulesKey = React.useMemo(() => empresaId ? `logistica_alertas_rules_${empresaId}` : `logistica_alertas_rules_global`, [empresaId]);
+  const rulesKey = React.useMemo(() => effectiveEmpresaId ? `logistica_alertas_rules_${effectiveEmpresaId}` : `logistica_alertas_rules_${effectiveGroupId || "global"}`, [effectiveEmpresaId, effectiveGroupId]);
   const { data: rules, isLoading: loadingRules } = useQuery({
-    queryKey: ['log-rules', rulesKey],
+    queryKey: ['log-rules', rulesKey, effectiveGroupId, effectiveEmpresaId],
     queryFn: async () => {
       const rows = await filterInContext('ConfiguracaoSistema', { chave: rulesKey }, undefined, 1);
       return rows?.[0]?.valor_json || rows?.[0]?.regras || { minAtrasoHoras: 1, maxFilaRota: 8, maxTransitoHoras: 6 };
-    }
+    },
+    enabled: contextoValido && canViewPainel
   });
 
   const saveRulesMutation = useMutation({
     mutationFn: async (newRules) => {
-      const rows = await filterInContext('ConfiguracaoSistema', { chave: rulesKey }, undefined, 1);
-      if (rows?.length) {
-        await base44.entities.ConfiguracaoSistema.update(rows[0].id, { valor_json: newRules });
-      } else {
-        await base44.entities.ConfiguracaoSistema.create({ chave: rulesKey, valor_json: newRules });
+      if (!contextoValido || !canEditRules) {
+        await auditPainel({ acao: "PainelLogistico.regras.salvar.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
+        throw new Error("Contexto ou permissao obrigatoria para salvar regras.");
       }
+      const rows = await filterInContext('ConfiguracaoSistema', { chave: rulesKey }, undefined, 1);
+      const payload = { chave: rulesKey, valor_json: newRules, group_id: effectiveGroupId, grupo_id: effectiveGroupId, empresa_id: effectiveEmpresaId };
+      if (rows?.length) {
+        await updateInContext("ConfiguracaoSistema", rows[0].id, payload);
+      } else {
+        await createInContext("ConfiguracaoSistema", payload);
+      }
+      await auditPainel({ acao: "PainelLogistico.regras.salvar", detalhes: { rulesKey, regras: newRules } });
       return newRules;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['log-rules', rulesKey] })
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['log-rules', rulesKey] }),
+    onError: (error) => auditPainel({ acao: "PainelLogistico.regras.salvar.erro", sucesso: false, motivo: error?.message || "erro_salvar" })
   });
 
   // Carrega entregas em tempo quase real (fallback props)
   const { data: entregas = [] } = useQuery({
-    queryKey: ['painel-logistico-entregas', empresaId],
+    queryKey: ['painel-logistico-entregas', effectiveGroupId, effectiveEmpresaId],
     queryFn: async () => await filterInContext('Entrega', {}, '-updated_date', 400),
     initialData: entregasProp,
     staleTime: 15000,
+    enabled: contextoValido && canViewPainel
   });
 
   const handleEntregaUpdated = (e) => {
     try { setSelected(e); } catch (_) {}
-    try { queryClient.invalidateQueries({ queryKey: ['painel-logistico-entregas', empresaId] }); } catch (_) {}
+    try { queryClient.invalidateQueries({ queryKey: ['painel-logistico-entregas', effectiveGroupId, effectiveEmpresaId] }); } catch (_) {}
   };
 
   const filtradas = React.useMemo(() => {
@@ -81,19 +117,19 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
   }, [entregas, filters]);
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full" data-permission="Expedicao.PainelLogistico.visualizar" data-context-required="true">
       <Card className="mb-3">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2"><Activity className="w-4 h-4 text-teal-600"/> Painel Logístico</CardTitle>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="text-xs">{filtradas.length} entregas</Badge>
-              <Button size="sm" variant="outline" onClick={() => setShowReport(true)}>Relatório</Button>
+              <Button size="sm" variant="outline" onClick={() => { auditPainel({ acao: "PainelLogistico.relatorio.abrir" }); setShowReport(true); }} disabled={!contextoValido || !canExportReport} data-permission="Expedicao.Relatorios.exportar" data-action="PainelLogistico.relatorio.abrir" data-context-required="true" data-sensitive="true">Relatório</Button>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <ControlsBar filters={filters} setFilters={setFilters} rules={rules} onSaveRules={(r) => saveRulesMutation.mutate(r)} loadingRules={saveRulesMutation.isPending || loadingRules} />
+          <ControlsBar filters={filters} setFilters={setFilters} rules={rules} onSaveRules={(r) => saveRulesMutation.mutate(r)} loadingRules={saveRulesMutation.isPending || loadingRules} contextoValido={contextoValido} canEditRules={canEditRules} canSimulate={canSimulate} onAudit={auditPainel} />
           {simResult && (
             <div className="mt-3 grid md:grid-cols-3 gap-2 text-sm">
               <div className="border rounded p-2">Distância Total: <span className="font-medium">{(simResult?.total_distance_km ?? simResult?.distance_km ?? 0).toLocaleString('pt-BR')} km</span></div>
@@ -102,7 +138,7 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
             </div>
           )}
 
-          <RouteOptimizerPanel entregas={filtradas} empresaId={empresaAtual?.id} groupId={grupoAtual?.id} onSelectEntrega={setSelected} />
+          <RouteOptimizerPanel entregas={filtradas} empresaId={effectiveEmpresaId} groupId={effectiveGroupId} onSelectEntrega={setSelected} contextoValido={contextoValido} canOptimize={canSimulate} onAudit={auditPainel} />
         </CardContent>
       </Card>
 
@@ -127,7 +163,7 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
-      <PerformanceReportDialog open={showReport} onOpenChange={setShowReport} entregas={filtradas} />
+      <PerformanceReportDialog open={showReport} onOpenChange={setShowReport} entregas={filtradas} contextoValido={contextoValido} canExport={canExportReport} onAudit={auditPainel} />
     </div>
   );
 }
