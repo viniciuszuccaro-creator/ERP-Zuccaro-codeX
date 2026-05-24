@@ -987,3 +987,23 @@ Checklist inicial:
 - `git diff --check` executado sem erros.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em `MapaRastreamentoRealTime`, `RastreamentoPublico` e `SeparacaoConferenciaIA`, revisando contexto grupo/empresa, RBAC/auditoria onde aplicavel, seguranca, textos e acoes sensiveis.
+
+### Expedicao - Fase 8 Rastreamento e Separacao IA
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `MapaRastreamentoRealTime`, `RastreamentoPublico` e `SeparacaoConferenciaIA`.
+- `MapaRastreamentoRealTime` deixou de consultar entrega e posicoes por chamadas globais e passou a usar `filterInContext` com chaves por grupo/empresa.
+- Visualizacao do mapa em tempo real agora exige contexto grupo/empresa e permissao RBAC de rastreamento, entregas ou painel logistico.
+- Marcadores, destino, veiculo e overlay do mapa tiveram textos corrigidos e exibicao protegida contra dados incompletos de latitude/longitude.
+- `RastreamentoPublico` teve textos com mojibake corrigidos, remocao de simbolos corrompidos e sanitizacao basica dos campos exibidos ao cliente.
+- Rastreamento publico passou a montar uma resposta reduzida para exibicao, evitando carregar dados internos desnecessarios na tela publica.
+- `SeparacaoConferenciaIA` deixou de buscar `Pedido`, `Produto` e `Colaborador` por `.list()` global e passou a usar `filterInContext`.
+- Scanner, validacao por IA, otimizacao de rota e finalizacao agora exigem contexto grupo/empresa e permissao RBAC.
+- Prompts enviados para IA agora usam textos sanitizados e dados numericos controlados para reduzir risco de entrada indevida.
+- Finalizacao da separacao IA agora pede confirmacao explicita antes de criar registro e atualizar pedido.
+- Finalizacao passou a criar `SeparacaoConferencia` via `createInContext` e atualizar `Pedido` via `updateInContext`, mantendo `group_id`, `grupo_id` e `empresa_id`.
+- Auditoria foi adicionada para validacao IA, otimizacao de rota, codigos nao encontrados, itens fora do pedido, bloqueios, cancelamentos, erros e finalizacao.
+- Botoes sensiveis receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em componentes restantes da Expedicao e Logistica, priorizando `LogisticaEntregaTab`, `PedidosEntregaTab`, `RelatoriosLogistica`, `RelatorioFinanceiroLogistica` e integracoes entre pedido, entrega, financeiro e fiscal.
