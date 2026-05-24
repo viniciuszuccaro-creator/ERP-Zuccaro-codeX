@@ -968,3 +968,22 @@ Checklist inicial:
 - `git diff --check` executado sem erros.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em `SeparacaoConferenciaIA`, `EnvioMensagemAutomatica`, `MapaRastreamentoRealTime`, `RastreamentoPublico` e componentes financeiros da logistica, revisando contexto grupo/empresa, RBAC, auditoria, textos e acoes sensiveis.
+
+### Expedicao - Fase 8 Comunicacao Automatica e Financeiro Logistico
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `EnvioMensagemAutomatica` e componentes financeiros da logistica, revisando contexto grupo/empresa, RBAC, auditoria, textos e acoes sensiveis.
+- `EnvioMensagemAutomatica` passou a exigir entrega valida, contexto grupo/empresa e permissao RBAC antes de registrar envio de WhatsApp.
+- Templates e mensagens livres agora sao sanitizados antes do envio e antes de gravar historico.
+- Envio de mensagem agora pede confirmacao explicita antes de alterar a entrega e criar historico, respeitando a Regra-Mae para inclusao/alteracao de registros.
+- Atualizacao da entrega e criacao de `HistoricoCliente` passaram a usar `updateInContext` e `createInContext`, reforcando `group_id`, `grupo_id` e `empresa_id`.
+- Bloqueios por falta de contexto, falta de permissao, telefone ausente, cancelamento, erro e sucesso do envio agora geram `AuditLog`.
+- `LogisticaFinanceiroPanel` passou a carregar configuracoes, entregas, contas a receber e contas a pagar por contexto grupo/empresa.
+- Geracao de contas a receber e contas a pagar agora exige contexto, permissao RBAC, configuracao financeira, confirmacao explicita e auditoria.
+- Conciliacao de titulos a receber e a pagar agora exige contexto, permissao RBAC, confirmacao explicita e auditoria.
+- Criacao e conciliacao de titulos passaram a usar `createInContext` e `updateInContext`, mantendo carimbo multiempresa nos registros financeiros.
+- Corrigidos textos com mojibake real e ajustes ortograficos em comunicacao automatica e financeiro logistico.
+- Botoes sensiveis receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `MapaRastreamentoRealTime`, `RastreamentoPublico` e `SeparacaoConferenciaIA`, revisando contexto grupo/empresa, RBAC/auditoria onde aplicavel, seguranca, textos e acoes sensiveis.
