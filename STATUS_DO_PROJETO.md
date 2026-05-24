@@ -1086,3 +1086,19 @@ Checklist inicial:
 - Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 nos subcomponentes do painel logistico, priorizando `ControlsBar`, `RouteOptimizerPanel`, `PerformanceReportDialog`, `AlertsPanel`, `BottlenecksPanel`, `QueuePanels` e `MapView`, revisando contexto grupo/empresa, RBAC, auditoria, textos e acoes sensiveis.
+
+### Expedicao - Fase 8 Subpaineis Logisticos
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 nos subcomponentes do painel logistico, priorizando `ControlsBar`, `RouteOptimizerPanel`, `PerformanceReportDialog`, `AlertsPanel`, `BottlenecksPanel`, `QueuePanels` e `MapView`.
+- `ControlsBar` recebeu reforco de contexto/permissao no container principal, confirmacao explicita antes de executar simulacao logistica e validacao numerica para parametros do simulador.
+- Salvamento de regras pelo `ControlsBar` passou a auditar bloqueio por contexto/permissao antes de delegar a gravacao ao fluxo existente.
+- `RouteOptimizerPanel` passou a auditar bloqueios por falta de contexto, permissao, empresa ou entregas validas, exigir confirmacao antes de otimizar rota e sanitizar entradas numericas de capacidade/paradas.
+- `RouteOptimizerPanel` passou a exibir alerta visual quando faltar contexto/permissao e a auditar selecao de entrega sugerida na rota.
+- `PerformanceReportDialog` passou a bloquear exportacao sem linhas, exigir confirmacao antes de gerar CSV e auditar cancelamento/bloqueio/exportacao.
+- `AlertsPanel`, `BottlenecksPanel`, `QueuePanels` e `MapView` receberam marcadores de contexto/permissao e auditoria opcional nas selecoes de entregas exibidas nos paineis.
+- Paineis de alertas, gargalos e filas passaram a exibir aviso visual quando faltar contexto grupo/empresa ou permissao para visualizacao.
+- Corrigidos textos corrompidos e inconsistencias de exibicao nos subpaineis logisticos sem criar tela, modulo ou arquivo novo.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; as melhorias foram aplicadas nos componentes existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em componentes auxiliares de Expedicao/Logistica ainda nao revisados, priorizando `LiveMap`, `TimelineEntrega`, componentes de configuracao/logistica financeira e integracoes finais entre entrega, estoque, financeiro e fiscal.

@@ -23,11 +23,20 @@ export default function ControlsBar({ filters, setFilters, rules, onSaveRules, l
 
   function SimuladorWhatIf({ onClose }) {
     const [params, setParams] = React.useState({ vehicles: 1, maxCapacityKg: 3000, maxVolumeM3: 12, considerTimeWindows: true, prioritizeUrgent: true, groupByRegion: true });
+    const setNumericParam = (key, value, fallback = 0) => {
+      const parsed = Number(value);
+      setParams((prev) => ({ ...prev, [key]: Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback }));
+    };
     const [loading, setLoading] = React.useState(false);
 
     const run = async () => {
       if (!contextoValido || !canSimulate) {
         await onAudit?.({ acao: "PainelLogistico.simulacao.bloqueada", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
+        return;
+      }
+      const confirmado = window.confirm('Confirma executar a simulacao logistica com os parametros atuais?');
+      if (!confirmado) {
+        await onAudit?.({ acao: 'PainelLogistico.simulacao.cancelada', sucesso: false, motivo: 'confirmacao_cancelada' });
         return;
       }
       setLoading(true);
@@ -47,15 +56,15 @@ export default function ControlsBar({ filters, setFilters, rules, onSaveRules, l
         <div className="grid md:grid-cols-2 gap-2">
           <div>
             <label className="text-sm">Veículos</label>
-            <input className="w-full border rounded px-2 py-1" type="number" value={params.vehicles} onChange={(e)=>setParams({...params, vehicles: Number(e.target.value)||1})} />
+            <input className="w-full border rounded px-2 py-1" type="number" value={params.vehicles} onChange={(e)=>setNumericParam('vehicles', e.target.value, 1)} />
           </div>
           <div>
             <label className="text-sm">Capacidade (kg)</label>
-            <input className="w-full border rounded px-2 py-1" type="number" value={params.maxCapacityKg} onChange={(e)=>setParams({...params, maxCapacityKg: Number(e.target.value)||0})} />
+            <input className="w-full border rounded px-2 py-1" type="number" value={params.maxCapacityKg} onChange={(e)=>setNumericParam('maxCapacityKg', e.target.value, 0)} />
           </div>
           <div>
             <label className="text-sm">Volume (m³)</label>
-            <input className="w-full border rounded px-2 py-1" type="number" value={params.maxVolumeM3} onChange={(e)=>setParams({...params, maxVolumeM3: Number(e.target.value)||0})} />
+            <input className="w-full border rounded px-2 py-1" type="number" value={params.maxVolumeM3} onChange={(e)=>setNumericParam('maxVolumeM3', e.target.value, 0)} />
           </div>
           <div className="flex items-center gap-2 mt-6">
             <input id="tw" type="checkbox" checked={params.considerTimeWindows} onChange={(e)=>setParams({...params, considerTimeWindows: e.target.checked})} />
@@ -79,7 +88,7 @@ export default function ControlsBar({ filters, setFilters, rules, onSaveRules, l
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="w-full flex flex-wrap items-center gap-2" data-permission="Expedicao.PainelLogistico.visualizar" data-context-required="true">
       <Input placeholder="Buscar cliente, pedido..." value={filters.q || ''} onChange={(e) => setFilters({ ...filters, q: e.target.value })} className="w-[220px]" />
       <div className="flex flex-wrap gap-1">
         {ALL_STATUSES.map((s) => (
@@ -113,7 +122,14 @@ export default function ControlsBar({ filters, setFilters, rules, onSaveRules, l
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-              <Button onClick={() => { onSaveRules?.(local); setOpen(false); }} disabled={loadingRules || !contextoValido || !canEditRules} data-permission="Expedicao.PainelLogistico.editar" data-action="PainelLogistico.regras.salvar" data-context-required="true" data-sensitive="true">Salvar</Button>
+              <Button onClick={async () => {
+                if (!contextoValido || !canEditRules) {
+                  await onAudit?.({ acao: 'PainelLogistico.regras.salvar.bloqueado', sucesso: false, motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada' });
+                  return;
+                }
+                onSaveRules?.(local);
+                setOpen(false);
+              }} disabled={loadingRules || !contextoValido || !canEditRules} data-permission="Expedicao.PainelLogistico.editar" data-action="PainelLogistico.regras.salvar" data-context-required="true" data-sensitive="true">Salvar</Button>
             </div>
           </div>
         </DialogContent>

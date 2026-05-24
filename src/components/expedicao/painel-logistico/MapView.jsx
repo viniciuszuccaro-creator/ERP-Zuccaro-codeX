@@ -23,7 +23,7 @@ function FlyTo({ center }) {
   return null;
 }
 
-export default function MapView({ entregas = [], selected, onSelect }) {
+export default function MapView({ entregas = [], selected, onSelect, contextoValido = true, canView = true, onAudit }) {
   const points = (entregas || [])
     .map((e) => ({
       id: e.id,
@@ -49,7 +49,7 @@ export default function MapView({ entregas = [], selected, onSelect }) {
   }, [points, selected]);
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full" data-permission="Expedicao.PainelLogistico.visualizar" data-context-required="true">
       <MapContainer center={center} zoom={11} className="w-full h-full rounded-lg overflow-hidden border border-slate-200">
         <FlyTo center={center} />
         <TileLayer
@@ -62,7 +62,7 @@ export default function MapView({ entregas = [], selected, onSelect }) {
             center={[p.lat, p.lng]}
             radius={8}
             pathOptions={{ color: statusColor(p.status), fillColor: statusColor(p.status), fillOpacity: 0.8 }}
-            eventHandlers={{ click: () => onSelect && onSelect(entregas.find(e => e.id === p.id)) }}
+            eventHandlers={{ click: async () => { if (!contextoValido || !canView) { await onAudit?.({ acao: 'PainelLogistico.mapa.selecionar.bloqueado', sucesso: false, motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada', detalhes: { entrega_id: p.id } }); return; } await onAudit?.({ acao: 'PainelLogistico.mapa.selecionar', detalhes: { entrega_id: p.id } }); onSelect && onSelect(entregas.find(e => e.id === p.id)); } }}
           >
             <Popup>
               <div className="text-sm">

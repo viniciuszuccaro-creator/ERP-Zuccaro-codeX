@@ -40,6 +40,15 @@ export default function PerformanceReportDialog({ open, onOpenChange, entregas =
       await onAudit?.({ acao: "PainelLogistico.relatorio.exportar.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada", detalhes: { filename } });
       return;
     }
+    if (!rows.length) {
+      await onAudit?.({ acao: 'PainelLogistico.relatorio.exportar.bloqueado', sucesso: false, motivo: 'sem_linhas', detalhes: { filename } });
+      return;
+    }
+    const confirmado = window.confirm(`Confirma exportar ${rows.length} linhas do relatorio logistico?`);
+    if (!confirmado) {
+      await onAudit?.({ acao: 'PainelLogistico.relatorio.exportar.cancelado', sucesso: false, motivo: 'confirmacao_cancelada', detalhes: { filename, linhas: rows.length } });
+      return;
+    }
     const headers = Object.keys(rows[0] || { key: 'Chave', total: 0, entregues: 0, frustradas: 0, atraso: 0, sla: 0 });
     const csv = [headers.join(','), ...rows.map(r => headers.map(h => r[h]).join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -51,7 +60,7 @@ export default function PerformanceReportDialog({ open, onOpenChange, entregas =
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-4xl w-full" data-permission="Expedicao.Relatorios.visualizar" data-context-required="true">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-semibold">Relatório de Performance Logística</h3>
           <div className="flex items-center gap-2">
@@ -60,6 +69,12 @@ export default function PerformanceReportDialog({ open, onOpenChange, entregas =
             <input type="date" value={periodo.ate} onChange={(e)=>setPeriodo({ ...periodo, ate: e.target.value })} className="border rounded px-2 py-1 text-sm"/>
           </div>
         </div>
+
+        {(!contextoValido || !canExport) && (
+          <div className="mb-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+            {!contextoValido ? 'Selecione grupo/empresa para exportar relatorios.' : 'Seu perfil nao tem permissao para exportar relatorios.'}
+          </div>
+        )}
 
         <div className="grid md:grid-cols-2 gap-4 max-h-[60vh] overflow-auto">
           <div>

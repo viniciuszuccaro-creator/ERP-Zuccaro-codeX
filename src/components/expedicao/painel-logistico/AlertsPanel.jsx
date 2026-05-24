@@ -8,7 +8,7 @@ const sevCfg = {
   low: { text: 'Médio', cls: 'bg-blue-100 text-blue-700' }
 };
 
-export default function AlertsPanel({ entregas = [], rules, onSelectEntrega }) {
+export default function AlertsPanel({ entregas = [], rules, onSelectEntrega, contextoValido = true, canView = true, onAudit }) {
   const alerts = React.useMemo(() => {
     const res = [];
     const now = new Date();
@@ -88,14 +88,19 @@ export default function AlertsPanel({ entregas = [], rules, onSelectEntrega }) {
   }, [entregas, rules]);
 
   return (
-    <Card className="h-full">
+    <Card className="h-full" data-permission="Expedicao.PainelLogistico.visualizar" data-context-required="true">
       <CardHeader className="pb-2">
         <CardTitle className="text-base">Alertas Proativos</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 overflow-auto max-h-[32vh]">
+        {(!contextoValido || !canView) && (
+          <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+            {!contextoValido ? 'Selecione grupo/empresa para visualizar alertas.' : 'Seu perfil nao tem permissao para visualizar alertas.'}
+          </div>
+        )}
         {alerts.length === 0 && <div className="text-sm text-slate-500">Sem alertas no momento.</div>}
         {alerts.map((a) => (
-          <button key={a.id} onClick={() => a.entrega && onSelectEntrega?.(a.entrega)} className="w-full text-left border rounded p-2 hover:bg-slate-50">
+          <button key={a.id} disabled={!contextoValido || !canView} data-action="PainelLogistico.alerta.selecionar" data-context-required="true" onClick={async () => { await onAudit?.({ acao: 'PainelLogistico.alerta.selecionar', detalhes: { alerta_id: a.id, entrega_id: a.entrega?.id || null } }); a.entrega && onSelectEntrega?.(a.entrega); }} className="w-full text-left border rounded p-2 hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed">
             <div className="flex items-center justify-between">
               <div className="font-medium text-sm truncate">{a.title}</div>
               <Badge className={sevCfg[a.sev].cls}>{sevCfg[a.sev].text}</Badge>

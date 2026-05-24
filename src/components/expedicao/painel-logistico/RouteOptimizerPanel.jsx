@@ -23,7 +23,19 @@ export default function RouteOptimizerPanel({ entregas = [], empresaId, groupId,
       await onAudit?.({ acao: "PainelLogistico.rota.otimizar.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
       return;
     }
-    if (!candidatas.length) return;
+    if (!candidatas.length) {
+      await onAudit?.({ acao: 'PainelLogistico.rota.otimizar.bloqueado', sucesso: false, motivo: 'sem_entregas_validas' });
+      return;
+    }
+    if (!empresaId) {
+      await onAudit?.({ acao: 'PainelLogistico.rota.otimizar.bloqueado', sucesso: false, motivo: 'empresa_obrigatoria' });
+      return;
+    }
+    const confirmado = window.confirm('Confirma otimizar a rota para as entregas validas do contexto atual?');
+    if (!confirmado) {
+      await onAudit?.({ acao: 'PainelLogistico.rota.otimizar.cancelado', sucesso: false, motivo: 'confirmacao_cancelada', detalhes: { entregas: candidatas.length } });
+      return;
+    }
     setLoading(true);
     try {
       const payload = {
@@ -73,14 +85,19 @@ export default function RouteOptimizerPanel({ entregas = [], empresaId, groupId,
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
+        {(!contextoValido || !canOptimize) && (
+          <Alert className="border-red-200 bg-red-50 text-red-800">
+            <AlertDescription>{!contextoValido ? 'Selecione grupo/empresa para otimizar rotas.' : 'Seu perfil nao tem permissao para otimizar rotas.'}</AlertDescription>
+          </Alert>
+        )}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           <div>
             <label className="text-xs text-slate-600">Capacidade do veículo (kg)</label>
-            <Input value={capacidadeKg} onChange={(e)=>setCapacidadeKg(e.target.value)} placeholder="8000" />
+            <Input value={capacidadeKg} onChange={(e)=>setCapacidadeKg(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="8000" />
           </div>
           <div>
             <label className="text-xs text-slate-600">Máx. paradas</label>
-            <Input value={maxParadas} onChange={(e)=>setMaxParadas(e.target.value)} placeholder="30" />
+            <Input value={maxParadas} onChange={(e)=>setMaxParadas(e.target.value.replace(/[^0-9]/g, ''))} placeholder="30" />
           </div>
           <div className="col-span-2 flex items-end gap-3">
             <label className="flex items-center gap-2 text-sm text-slate-700">
@@ -108,7 +125,7 @@ export default function RouteOptimizerPanel({ entregas = [], empresaId, groupId,
                 return (
                   <li key={`${entregaId}-${idx}`} className="flex items-center gap-2 text-sm">
                     <Badge className="bg-emerald-600">{idx + 1}</Badge>
-                    <button className="text-left hover:underline" onClick={()=>onSelectEntrega && entregaId && onSelectEntrega(e || { id: entregaId })}>
+                    <button className="text-left hover:underline" data-action="PainelLogistico.entrega.selecionar" data-context-required="true" onClick={async ()=>{ await onAudit?.({ acao: 'PainelLogistico.entrega.selecionar', detalhes: { entrega_id: entregaId, origem: 'otimizacao_rota' } }); onSelectEntrega && entregaId && onSelectEntrega(e || { id: entregaId }); }}>
                       {nome}
                       {eta != null && <span className="text-slate-500 ml-2">ETA ~{eta} min</span>}
                     </button>
