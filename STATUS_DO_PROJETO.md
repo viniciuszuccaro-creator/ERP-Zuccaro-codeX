@@ -1072,3 +1072,17 @@ Checklist inicial:
 - Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 nos paineis logisticos restantes, priorizando `DashboardLogistico`, `DashboardEntregasRealtime`, `OcorrenciasPanel`, `DriverChat` e demais componentes de painel, revisando contexto grupo/empresa, RBAC, auditoria, textos e acoes sensiveis.
+
+### Expedicao - Fase 8 Paineis Logisticos
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 nos paineis logisticos restantes, priorizando `DashboardLogistico`, `DashboardEntregasRealtime`, `OcorrenciasPanel` e `DriverChat`.
+- `DashboardLogistico` teve textos corrompidos corrigidos em titulo, relatorio, distancia, duracao, nao alocados e ocorrencias.
+- Salvamento de regras do painel logistico agora exige confirmacao explicita, contexto grupo/empresa, permissao RBAC e auditoria de cancelamento/sucesso/erro.
+- `DashboardLogistico` passou a exibir alerta visual quando faltar contexto/permissao para visualizar o painel.
+- `DashboardEntregasRealtime` teve textos corrigidos em tempo medio, ultimos 7 dias, atencao e operacao dentro dos padroes, mantendo bloqueio por contexto/permissao.
+- `OcorrenciasPanel` teve textos corrigidos, passou a validar upload de imagem com limite de 8MB, auditar rejeicao de arquivo invalido e exibir bloqueio visual quando faltar contexto/permissao.
+- `DriverChat` teve textos corrigidos e passou a exibir bloqueio visual quando faltar contexto/permissao para enviar mensagens.
+- Botao de envio do `DriverChat` recebeu marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 nos subcomponentes do painel logistico, priorizando `ControlsBar`, `RouteOptimizerPanel`, `PerformanceReportDialog`, `AlertsPanel`, `BottlenecksPanel`, `QueuePanels` e `MapView`, revisando contexto grupo/empresa, RBAC, auditoria, textos e acoes sensiveis.

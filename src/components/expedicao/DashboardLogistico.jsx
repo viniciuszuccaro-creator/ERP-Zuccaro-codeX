@@ -62,7 +62,7 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
     };
   }, []);
 
-  // Regras configuráveis salvas em ConfiguracaoSistema
+  // Regras configuraveis salvas em ConfiguracaoSistema
   const rulesKey = React.useMemo(() => effectiveEmpresaId ? `logistica_alertas_rules_${effectiveEmpresaId}` : `logistica_alertas_rules_${effectiveGroupId || "global"}`, [effectiveEmpresaId, effectiveGroupId]);
   const { data: rules, isLoading: loadingRules } = useQuery({
     queryKey: ['log-rules', rulesKey, effectiveGroupId, effectiveEmpresaId],
@@ -78,6 +78,11 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
       if (!contextoValido || !canEditRules) {
         await auditPainel({ acao: "PainelLogistico.regras.salvar.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
         throw new Error("Contexto ou permissao obrigatoria para salvar regras.");
+      }
+      const confirmado = window.confirm("Confirma salvar as regras do painel logistico para o contexto atual?");
+      if (!confirmado) {
+        await auditPainel({ acao: "PainelLogistico.regras.salvar.cancelado", sucesso: false, motivo: "confirmacao_cancelada" });
+        throw new Error("Salvamento cancelado pelo usuario.");
       }
       const rows = await filterInContext('ConfiguracaoSistema', { chave: rulesKey }, undefined, 1);
       const payload = { chave: rulesKey, valor_json: newRules, group_id: effectiveGroupId, grupo_id: effectiveGroupId, empresa_id: effectiveEmpresaId };
@@ -118,13 +123,21 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
 
   return (
     <div className="w-full h-full" data-permission="Expedicao.PainelLogistico.visualizar" data-context-required="true">
+      {(!contextoValido || !canViewPainel) && (
+        <Card className="mb-3 bg-red-50 border-red-300">
+          <CardContent className="p-3 text-sm text-red-800">
+            <p className="font-semibold">Painel logistico bloqueado</p>
+            <p>{!contextoValido ? "Selecione grupo/empresa para visualizar o painel." : "Seu perfil nao tem permissao para visualizar o painel logistico."}</p>
+          </CardContent>
+        </Card>
+      )}
       <Card className="mb-3">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center gap-2"><Activity className="w-4 h-4 text-teal-600"/> Painel Logístico</CardTitle>
+            <CardTitle className="text-lg flex items-center gap-2"><Activity className="w-4 h-4 text-teal-600"/> Painel Logistico</CardTitle>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="text-xs">{filtradas.length} entregas</Badge>
-              <Button size="sm" variant="outline" onClick={() => { auditPainel({ acao: "PainelLogistico.relatorio.abrir" }); setShowReport(true); }} disabled={!contextoValido || !canExportReport} data-permission="Expedicao.Relatorios.exportar" data-action="PainelLogistico.relatorio.abrir" data-context-required="true" data-sensitive="true">Relatório</Button>
+              <Button size="sm" variant="outline" onClick={() => { auditPainel({ acao: "PainelLogistico.relatorio.abrir" }); setShowReport(true); }} disabled={!contextoValido || !canExportReport} data-permission="Expedicao.Relatorios.exportar" data-action="PainelLogistico.relatorio.abrir" data-context-required="true" data-sensitive="true">Relatorio</Button>
             </div>
           </div>
         </CardHeader>
@@ -132,9 +145,9 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
           <ControlsBar filters={filters} setFilters={setFilters} rules={rules} onSaveRules={(r) => saveRulesMutation.mutate(r)} loadingRules={saveRulesMutation.isPending || loadingRules} contextoValido={contextoValido} canEditRules={canEditRules} canSimulate={canSimulate} onAudit={auditPainel} />
           {simResult && (
             <div className="mt-3 grid md:grid-cols-3 gap-2 text-sm">
-              <div className="border rounded p-2">Distância Total: <span className="font-medium">{(simResult?.total_distance_km ?? simResult?.distance_km ?? 0).toLocaleString('pt-BR')} km</span></div>
-              <div className="border rounded p-2">Duração Total: <span className="font-medium">{(simResult?.total_duration_min ?? simResult?.duration_min ?? 0)} min</span></div>
-              <div className="border rounded p-2">Não Alocados: <span className="font-medium">{(simResult?.unassigned?.length || 0)}</span></div>
+              <div className="border rounded p-2">Distancia Total: <span className="font-medium">{(simResult?.total_distance_km ?? simResult?.distance_km ?? 0).toLocaleString('pt-BR')} km</span></div>
+              <div className="border rounded p-2">Duracao Total: <span className="font-medium">{(simResult?.total_duration_min ?? simResult?.duration_min ?? 0)} min</span></div>
+              <div className="border rounded p-2">Nao Alocados: <span className="font-medium">{(simResult?.unassigned?.length || 0)}</span></div>
             </div>
           )}
 
@@ -158,7 +171,7 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
                 <OcorrenciasPanel entrega={selected} onUpdated={handleEntregaUpdated} />
               </div>
             ) : (
-              <Card className="h-full"><CardContent className="text-sm text-slate-500 p-3">Selecione uma entrega no mapa para conversar com o motorista e registrar ocorrências.</CardContent></Card>
+              <Card className="h-full"><CardContent className="text-sm text-slate-500 p-3">Selecione uma entrega no mapa para conversar com o motorista e registrar ocorrencias.</CardContent></Card>
             )}
           </div>
         </ResizablePanel>

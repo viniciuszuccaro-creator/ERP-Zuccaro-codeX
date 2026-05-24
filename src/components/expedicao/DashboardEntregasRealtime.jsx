@@ -1,4 +1,4 @@
-﻿import React, { useMemo } from "react";
+import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
@@ -93,7 +93,7 @@ function DashboardEntregasRealtime({ empresaId, windowMode = false }) {
   if (!contextoValido || !canViewDashboard) {
     return (
       <div className={containerClass} data-permission="Expedicao.Dashboard.visualizar" data-context-required="true">
-        <Card className="border-yellow-200 bg-yellow-50">
+        <Card className="border-yellow-200 bg-yellow-50" data-permission="Expedicao.Dashboard.visualizar" data-context-required="true">
           <CardContent className="p-4 text-sm text-yellow-800">
             Selecione um contexto grupo/empresa e confirme permissao para visualizar o dashboard de entregas.
           </CardContent>
@@ -110,12 +110,12 @@ function DashboardEntregasRealtime({ empresaId, windowMode = false }) {
           <Card><CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600">No Prazo</CardTitle></CardHeader><CardContent><div className="flex items-center gap-2"><CheckCircle className="w-5 h-5 text-green-600" /><span className="text-2xl font-bold text-green-600">{metricas.entregasPrazo}</span></div></CardContent></Card>
           <Card><CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600">Atrasadas</CardTitle></CardHeader><CardContent><div className="flex items-center gap-2"><AlertCircle className="w-5 h-5 text-red-600" /><span className="text-2xl font-bold text-red-600">{metricas.entregasAtrasadas}</span></div></CardContent></Card>
           <Card><CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600">Taxa Sucesso</CardTitle></CardHeader><CardContent><div className="flex items-center gap-2"><TrendingUp className="w-5 h-5 text-green-600" /><span className="text-2xl font-bold">{metricas.taxaSucesso}%</span></div></CardContent></Card>
-          <Card><CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600">Tempo Médio</CardTitle></CardHeader><CardContent><div className="flex items-center gap-2"><Clock className="w-5 h-5 text-purple-600" /><span className="text-2xl font-bold">{metricas.tempoMedioEntrega}</span><span className="text-sm text-slate-600">min</span></div></CardContent></Card>
+          <Card><CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600">Tempo Medio</CardTitle></CardHeader><CardContent><div className="flex items-center gap-2"><Clock className="w-5 h-5 text-purple-600" /><span className="text-2xl font-bold">{metricas.tempoMedioEntrega}</span><span className="text-sm text-slate-600">min</span></div></CardContent></Card>
           <Card><CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600">KM Rodado Hoje</CardTitle></CardHeader><CardContent><div className="flex items-center gap-2"><MapPin className="w-5 h-5 text-orange-600" /><span className="text-2xl font-bold">{metricas.kmRodadoHoje}</span><span className="text-sm text-slate-600">km</span></div></CardContent></Card>
         </div>
 
         <Card>
-          <CardHeader><CardTitle className="text-sm">Entregas nos Últimos 7 Dias</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm">Entregas nos Ultimos 7 Dias</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={dadosEntregasPorDia}>
@@ -134,8 +134,8 @@ function DashboardEntregasRealtime({ empresaId, windowMode = false }) {
           <CardContent>
             <div className="space-y-2">
               {metricas.entregasAtrasadas > 0 && <div className="p-3 bg-red-50 border border-red-200 rounded"><Badge variant="destructive">Urgente</Badge><span className="ml-2 font-medium">{metricas.entregasAtrasadas} entregas atrasadas</span></div>}
-              {metricas.taxaSucesso < 90 && <div className="p-3 bg-yellow-50 border border-yellow-200 rounded"><Badge className="bg-yellow-600">Atenção</Badge><span className="ml-2 font-medium">Taxa de sucesso abaixo da meta (90%)</span></div>}
-              {metricas.entregasAtrasadas === 0 && metricas.taxaSucesso >= 90 && <div className="p-3 bg-green-50 border border-green-200 rounded text-center"><CheckCircle className="w-5 h-5 inline text-green-600 mr-2" /><span className="font-medium text-green-800">Operação logística dentro dos padrões!</span></div>}
+              {metricas.taxaSucesso < 90 && <div className="p-3 bg-yellow-50 border border-yellow-200 rounded"><Badge className="bg-yellow-600">Atencao</Badge><span className="ml-2 font-medium">Taxa de sucesso abaixo da meta (90%)</span></div>}
+              {metricas.entregasAtrasadas === 0 && metricas.taxaSucesso >= 90 && <div className="p-3 bg-green-50 border border-green-200 rounded text-center"><CheckCircle className="w-5 h-5 inline text-green-600 mr-2" /><span className="font-medium text-green-800">Operacao logistica dentro dos padroes!</span></div>}
             </div>
           </CardContent>
         </Card>

@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 
-const TIPOS = ["Atraso", "Avaria", "Extravio", "Devolução Parcial", "Problema Veículo", "Outros"];
+const TIPOS = ["Atraso", "Avaria", "Extravio", "Devolucao Parcial", "Problema Veiculo", "Outros"];
 
 const sanitizeText = (value) => String(value || "")
   .replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, "")
@@ -64,6 +64,10 @@ export default function OcorrenciasPanel({ entrega, onUpdated }) {
       await auditOcorrencia({ acao: "Entrega.ocorrencia.upload.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
       return;
     }
+    if (!file?.type?.startsWith("image/") || file.size > 8 * 1024 * 1024) {
+      await auditOcorrencia({ acao: "Entrega.ocorrencia.upload.rejeitado", sucesso: false, motivo: "arquivo_invalido", detalhes: { tipo: file?.type, tamanho: file?.size } });
+      return;
+    }
     setUploading(true);
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
@@ -84,7 +88,7 @@ export default function OcorrenciasPanel({ entrega, onUpdated }) {
         throw new Error("Contexto e permissao sao obrigatorios para registrar ocorrencia.");
       }
       if (!texto) throw new Error("Descricao obrigatoria.");
-      const confirmado = window.confirm("Confirma incluir esta ocorrência na entrega selecionada?");
+      const confirmado = window.confirm("Confirma incluir esta ocorrencia na entrega selecionada?");
       if (!confirmado) {
         await auditOcorrencia({ acao: "Entrega.ocorrencia.criar.cancelado", sucesso: false, motivo: "confirmacao_cancelada" });
         throw new Error("Inclusao cancelada pelo usuario.");
@@ -93,7 +97,7 @@ export default function OcorrenciasPanel({ entrega, onUpdated }) {
         tipo,
         descricao: texto,
         data_hora: new Date().toISOString(),
-        responsavel: user?.full_name || user?.email || entrega?.usuario_responsavel || "Operação",
+        responsavel: user?.full_name || user?.email || entrega?.usuario_responsavel || "Operacao",
         foto_url: fotoUrl || undefined,
       };
       const ocorrencias = Array.isArray(entrega?.ocorrencias) ? [...entrega.ocorrencias, nova] : [nova];
@@ -117,9 +121,14 @@ export default function OcorrenciasPanel({ entrega, onUpdated }) {
   return (
     <Card className="h-full flex flex-col" data-permission="Expedicao.Ocorrencias.visualizar" data-context-required="true">
       <CardHeader className="py-2 border-b bg-slate-50">
-        <CardTitle className="text-sm">Ocorrências Logísticas</CardTitle>
+        <CardTitle className="text-sm">Ocorrencias Logisticas</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 overflow-auto p-3 space-y-3">
+        {(!contextoValido || !canCreateOccurrence) && (
+          <div className="rounded border border-red-200 bg-red-50 p-2 text-xs text-red-800">
+            {!contextoValido ? "Selecione grupo/empresa para registrar ocorrencias." : "Seu perfil nao tem permissao para registrar ocorrencias."}
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
           <div>
             <label className="text-xs">Tipo</label>
@@ -128,8 +137,8 @@ export default function OcorrenciasPanel({ entrega, onUpdated }) {
             </select>
           </div>
           <div className="md:col-span-2">
-            <label className="text-xs">Descrição</label>
-            <Input value={descricao} onChange={(e)=>setDescricao(e.target.value)} placeholder="Detalhe a ocorrência" disabled={!contextoValido || !canCreateOccurrence} />
+            <label className="text-xs">Descricao</label>
+            <Input value={descricao} onChange={(e)=>setDescricao(e.target.value)} placeholder="Detalhe a ocorrencia" disabled={!contextoValido || !canCreateOccurrence} />
           </div>
           <div className="md:col-span-3 flex items-center gap-2 text-xs">
             <input type="file" accept="image/*" onChange={(e)=> e.target.files?.[0] && uploadFoto(e.target.files[0])} disabled={!contextoValido || !canCreateOccurrence || uploading} data-permission="Expedicao.Ocorrencias.criar" data-context-required="true" />
@@ -140,7 +149,7 @@ export default function OcorrenciasPanel({ entrega, onUpdated }) {
         </div>
 
         <div className="space-y-2">
-          {lista.length === 0 && <div className="text-xs text-slate-500">Sem ocorrências registradas.</div>}
+          {lista.length === 0 && <div className="text-xs text-slate-500">Sem ocorrencias registradas.</div>}
           {lista.map((o, idx) => (
             <div key={idx} className="border rounded p-2">
               <div className="flex items-center justify-between text-sm">
@@ -149,7 +158,7 @@ export default function OcorrenciasPanel({ entrega, onUpdated }) {
               </div>
               <div className="text-sm text-slate-700 mt-1">{o.descricao}</div>
               {o.foto_url && (
-                <a href={o.foto_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 underline mt-1 inline-block">Ver evidência</a>
+                <a href={o.foto_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 underline mt-1 inline-block">Ver evidencia</a>
               )}
             </div>
           ))}

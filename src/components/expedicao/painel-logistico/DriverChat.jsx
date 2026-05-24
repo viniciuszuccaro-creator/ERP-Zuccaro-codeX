@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -111,15 +111,20 @@ export default function DriverChat({ entrega, onUpdated }) {
     <Card className="h-full flex flex-col" data-permission="Expedicao.Comunicacao.visualizar" data-context-required="true">
       <CardHeader className="py-2 border-b bg-slate-50">
         <CardTitle className="text-sm flex items-center gap-2">
-          <MessageCircle className="w-4 h-4 text-blue-600"/> Comunicação com Motorista
+          <MessageCircle className="w-4 h-4 text-blue-600"/> Comunicacao com Motorista
           {entrega?.motorista && (
             <Badge variant="outline" className="ml-auto text-xs">{entrega.motorista}</Badge>
           )}
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 overflow-auto space-y-2 p-3">
+        {(!contextoValido || !canSend) && (
+          <div className="rounded border border-red-200 bg-red-50 p-2 text-xs text-red-800">
+            {!contextoValido ? "Selecione grupo/empresa para enviar mensagens." : "Seu perfil nao tem permissao para enviar mensagens."}
+          </div>
+        )}
         {mensagens.length === 0 && (
-          <div className="text-xs text-slate-500">Sem mensagens ainda. Envie uma atualização para o motorista.</div>
+          <div className="text-xs text-slate-500">Sem mensagens ainda. Envie uma atualizacao para o motorista.</div>
         )}
         {mensagens.map((m, idx) => {
           const isOperador = (m?.responsavel || "").toLowerCase() !== (entrega?.motorista || "").toLowerCase();
@@ -138,7 +143,7 @@ export default function DriverChat({ entrega, onUpdated }) {
       </CardContent>
       <form onSubmit={handleSend} className="border-t p-2 flex gap-2" data-permission="Expedicao.Comunicacao.criar" data-context-required="true">
         <Input value={msg} onChange={(e)=>setMsg(e.target.value)} placeholder="Escreva uma mensagem..." className="flex-1" disabled={enviarMutation.isPending || !contextoValido || !canSend} />
-        <Button type="submit" disabled={!sanitizeText(msg) || enviarMutation.isPending || !contextoValido || !canSend} className="bg-blue-600 hover:bg-blue-700" data-action="Entrega.comunicacao.enviar" data-sensitive="true">
+        <Button type="submit" disabled={!sanitizeText(msg) || enviarMutation.isPending || !contextoValido || !canSend} className="bg-blue-600 hover:bg-blue-700" data-action="Entrega.comunicacao.enviar" data-permission="Expedicao.Comunicacao.criar" data-context-required="true" data-sensitive="true">
           <Send className="w-4 h-4"/>
         </Button>
       </form>
