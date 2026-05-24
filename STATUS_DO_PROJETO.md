@@ -950,3 +950,21 @@ Checklist inicial:
 - `git diff --check` executado sem erros.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em componentes restantes da Expedicao, priorizando `ConfiguracaoExpedicao`, `SeparacaoConferencia`, `DashboardEntregasRealtime` e fluxos de status/acoes em lote, revisando contexto grupo/empresa, RBAC, auditoria e textos.
+
+### Expedicao - Fase 8 Configuracoes, Dashboard e Conferencia
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `ConfiguracaoExpedicao`, `SeparacaoConferencia`, `DashboardEntregasRealtime` e fluxos de status/acoes em lote.
+- `ConfiguracaoExpedicao` deixou de consultar/salvar configuracao global por chamada direta e passou a usar `filterInContext`, `createInContext` e `updateInContext` com `group_id`, `grupo_id` e `empresa_id`.
+- As configuracoes de transportadora, WhatsApp, e-mail, regras gerais e Google Maps agora sao recarregadas do registro salvo no contexto atual.
+- Salvamento de configuracoes agora exige contexto grupo/empresa, permissao RBAC, sanitizacao basica, confirmacao explicita e auditoria de sucesso, bloqueio, cancelamento e erro.
+- Toggles da aba Geral deixaram de ser apenas visuais e passaram a persistir em `configuracoes_gerais`.
+- `DashboardEntregasRealtime` passou a carregar entregas e rotas por `filterInContext`, com query keys por grupo/empresa e bloqueio visual quando faltar contexto ou permissao.
+- Metricas do dashboard agora sao calculadas por `useMemo`, usando apenas dados filtrados do contexto atual.
+- `SeparacaoConferencia` passou a gravar `HistoricoCliente` via `createInContext`, reforcando carimbo multiempresa.
+- Conclusao de separacao/conferencia agora pede confirmacao explicita antes de criar registros e alterar status.
+- Corrigidos textos com mojibake real e ajustes ortograficos em configuracoes, dashboard em tempo real e separacao/conferencia.
+- Botoes sensiveis receberam ou mantiveram marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `SeparacaoConferenciaIA`, `EnvioMensagemAutomatica`, `MapaRastreamentoRealTime`, `RastreamentoPublico` e componentes financeiros da logistica, revisando contexto grupo/empresa, RBAC, auditoria, textos e acoes sensiveis.

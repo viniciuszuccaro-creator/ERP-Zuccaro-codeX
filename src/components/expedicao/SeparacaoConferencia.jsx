@@ -188,7 +188,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
         }
 
         // Registrar histórico
-        await base44.entities.HistoricoCliente.create({
+        await createInContext("HistoricoCliente", {
           group_id: effectiveGroupId,
           grupo_id: effectiveGroupId,
           empresa_id: effectiveEmpresaId,
@@ -232,7 +232,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
       queryClient.invalidateQueries({ queryKey: ['entregas'] }); // Invalidate deliveries query
       queryClient.invalidateQueries({ queryKey: ['separacoes'] });
       toast({
-        title: "✅ Conferência concluída!",
+        title: "Conferência concluída!",
         description: "Itens conferidos com sucesso"
       });
       // Optionally, navigate away or update parent component
@@ -291,7 +291,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
         });
       } else {
         toast({
-          title: "⚠️ Item não esperado",
+          title: "Item não esperado",
           description: `O item escaneado "${scannedItem.descricao || scannedItem.codigo_sku || 'SKU Desconhecido'}" não faz parte desta entrega.`,
           variant: "destructive",
         });
@@ -323,7 +323,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
 
     if (!todosSeparadosMinimo) {
       toast({
-        title: "⚠️ Itens não conferidos",
+        title: "Itens não conferidos",
         description: "Pelo menos um item não teve sua quantidade separada informada ou é zero.",
         variant: "destructive"
       });
@@ -332,9 +332,20 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
 
     if (!checklist.conferiu_quantidade || !checklist.conferiu_qualidade || !checklist.conferiu_embalagem || !checklist.conferiu_etiquetas || !checklist.conferiu_documentos) {
       toast({
-        title: "⚠️ Checklist incompleto",
+        title: "Checklist incompleto",
         description: "Por favor, marque todos os itens do checklist de conferência.",
         variant: "destructive"
+      });
+      return;
+    }
+
+    const confirmado = window.confirm("Confirma concluir a separação/conferência desta entrega?");
+    if (!confirmado) {
+      await auditarSeparacao({
+        acao: "SeparacaoConferencia.submit_cancelado",
+        descricao: "Conclusao de separacao cancelada pelo usuario antes de gravar.",
+        sucesso: false,
+        dadosNovos: { motivo: "confirmacao_cancelada" },
       });
       return;
     }
