@@ -1117,3 +1117,16 @@ Checklist inicial:
 - Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos componentes existentes.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em componentes restantes de Expedicao/Logistica ainda nao revisados, priorizando `TimelineEntregaVisual`, `ConfiguracaoExpedicao`, `FormularioEntrega`, `EnvioMensagemAutomatica`, `LogisticaReversa` e integracoes finais com fiscal/estoque/financeiro.
+
+### Expedicao - Fase 8 Timeline e Configuracoes de Expedicao
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em componentes restantes de Expedicao/Logistica, priorizando `TimelineEntregaVisual`, `ConfiguracaoExpedicao`, `FormularioEntrega`, `EnvioMensagemAutomatica`, `LogisticaReversa` e integracoes finais.
+- `TimelineEntregaVisual` foi reforcada sem criar componente novo: recebeu contexto/permissao visual, sanitizacao de textos exibidos, validacao segura do link de mapa e auditoria opcional ao abrir mapa.
+- `TimelineEntregaVisual` teve textos corrompidos corrigidos e passou a evitar renderizacao sem pedido, contexto ou permissao.
+- `ConfiguracaoExpedicao` recebeu aviso visual quando faltar contexto/permissao de visualizacao.
+- Campos de configuracao de transportadora, WhatsApp, e-mail e geral passaram a atualizar estado por helpers sanitizados antes de salvar.
+- Mantido o fluxo existente de confirmacao explicita, RBAC, `createInContext`/`updateInContext` e auditoria de salvar/cancelar/erro nas configuracoes de expedicao.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos componentes existentes.
+- `npm run build` retornou `Acesso negado` no atalho do Vite neste ambiente, entao o build foi validado com sucesso via `node node_modules/vite/bin/vite.js build`.
+- Permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `FormularioEntrega`, `EnvioMensagemAutomatica`, `LogisticaReversa` e fluxos finais de estoque/financeiro/fiscal, revisando contexto grupo/empresa, RBAC, auditoria, sanitizacao e acoes sensiveis.

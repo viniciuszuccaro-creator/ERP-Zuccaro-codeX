@@ -158,9 +158,18 @@ export default function ConfiguracaoExpedicao({ empresaId }) {
   });
 
   const disabled = isLoading || !contextoValido || !canEditConfig || salvarMutation.isPending;
+  const updateTransportadora = (patch) => setConfigTransportadora((prev) => ({ ...prev, ...sanitizeObject(patch) }));
+  const updateWhatsApp = (patch) => setConfigWhatsApp((prev) => ({ ...prev, ...sanitizeObject(patch) }));
+  const updateEmail = (patch) => setConfigEmail((prev) => ({ ...prev, ...sanitizeObject(patch) }));
+  const updateGeral = (patch) => setConfigGeral((prev) => ({ ...prev, ...sanitizeObject(patch) }));
 
   return (
     <div className="w-full h-full space-y-6" data-permission="Expedicao.Configuracoes.visualizar" data-context-required="true">
+      {(!contextoValido || !canViewConfig) && (
+        <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+          {!contextoValido ? "Selecione grupo/empresa para visualizar configuracoes de expedicao." : "Seu perfil nao tem permissao para visualizar configuracoes de expedicao."}
+        </div>
+      )}
       <Tabs defaultValue="transportadora">
         <TabsList className="bg-white border shadow-sm">
           <TabsTrigger value="transportadora"><Truck className="w-4 h-4 mr-2" />Transportadoras</TabsTrigger>
@@ -175,7 +184,7 @@ export default function ConfiguracaoExpedicao({ empresaId }) {
             <CardContent className="p-6 space-y-4">
               <div>
                 <Label>Provedor</Label>
-                <Select value={configTransportadora.provider} onValueChange={(v) => setConfigTransportadora({ ...configTransportadora, provider: v })} disabled={disabled}>
+                <Select value={configTransportadora.provider} onValueChange={(v) => updateTransportadora({ provider: v })} disabled={disabled}>
                   <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Nenhum">Nenhum</SelectItem>
@@ -190,10 +199,10 @@ export default function ConfiguracaoExpedicao({ empresaId }) {
 
               {configTransportadora.provider !== "Nenhum" && (
                 <>
-                  <div><Label>URL da API</Label><Input value={configTransportadora.api_url} onChange={(e) => setConfigTransportadora({ ...configTransportadora, api_url: e.target.value })} placeholder="https://api.melhorenvio.com/..." className="mt-2" disabled={disabled} /></div>
-                  <div><Label>API Token/Key</Label><Input type="password" value={configTransportadora.api_token} onChange={(e) => setConfigTransportadora({ ...configTransportadora, api_token: e.target.value })} placeholder="Seu token de API" className="mt-2" disabled={disabled} /></div>
-                  <div className="flex items-center gap-3 pt-3"><input type="checkbox" id="calc-frete" checked={configTransportadora.calcular_frete_auto} onChange={(e) => setConfigTransportadora({ ...configTransportadora, calcular_frete_auto: e.target.checked })} disabled={disabled} /><label htmlFor="calc-frete" className="text-sm">Calcular frete automaticamente ao criar entrega</label></div>
-                  <div className="flex items-center gap-3"><input type="checkbox" id="rastreamento" checked={configTransportadora.enviar_rastreamento_auto} onChange={(e) => setConfigTransportadora({ ...configTransportadora, enviar_rastreamento_auto: e.target.checked })} disabled={disabled} /><label htmlFor="rastreamento" className="text-sm">Enviar código de rastreamento para o cliente</label></div>
+                  <div><Label>URL da API</Label><Input value={configTransportadora.api_url} onChange={(e) => updateTransportadora({ api_url: e.target.value })} placeholder="https://api.melhorenvio.com/..." className="mt-2" disabled={disabled} /></div>
+                  <div><Label>API Token/Key</Label><Input type="password" value={configTransportadora.api_token} onChange={(e) => updateTransportadora({ api_token: e.target.value })} placeholder="Seu token de API" className="mt-2" disabled={disabled} /></div>
+                  <div className="flex items-center gap-3 pt-3"><input type="checkbox" id="calc-frete" checked={configTransportadora.calcular_frete_auto} onChange={(e) => updateTransportadora({ calcular_frete_auto: e.target.checked })} disabled={disabled} /><label htmlFor="calc-frete" className="text-sm">Calcular frete automaticamente ao criar entrega</label></div>
+                  <div className="flex items-center gap-3"><input type="checkbox" id="rastreamento" checked={configTransportadora.enviar_rastreamento_auto} onChange={(e) => updateTransportadora({ enviar_rastreamento_auto: e.target.checked })} disabled={disabled} /><label htmlFor="rastreamento" className="text-sm">Enviar código de rastreamento para o cliente</label></div>
                 </>
               )}
 
@@ -210,7 +219,7 @@ export default function ConfiguracaoExpedicao({ empresaId }) {
             <CardContent className="p-6 space-y-4">
               <div>
                 <Label>Provedor WhatsApp</Label>
-                <Select value={configWhatsApp.provider} onValueChange={(v) => setConfigWhatsApp({ ...configWhatsApp, provider: v })} disabled={disabled}>
+                <Select value={configWhatsApp.provider} onValueChange={(v) => updateWhatsApp({ provider: v })} disabled={disabled}>
                   <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Nenhum">Nenhum</SelectItem>
@@ -224,15 +233,15 @@ export default function ConfiguracaoExpedicao({ empresaId }) {
 
               {configWhatsApp.provider !== "Nenhum" && (
                 <>
-                  <div><Label>URL da API</Label><Input value={configWhatsApp.api_url} onChange={(e) => setConfigWhatsApp({ ...configWhatsApp, api_url: e.target.value })} className="mt-2" disabled={disabled} /></div>
-                  <div><Label>API Token</Label><Input type="password" value={configWhatsApp.api_token} onChange={(e) => setConfigWhatsApp({ ...configWhatsApp, api_token: e.target.value })} className="mt-2" disabled={disabled} /></div>
+                  <div><Label>URL da API</Label><Input value={configWhatsApp.api_url} onChange={(e) => updateWhatsApp({ api_url: e.target.value })} className="mt-2" disabled={disabled} /></div>
+                  <div><Label>API Token</Label><Input type="password" value={configWhatsApp.api_token} onChange={(e) => updateWhatsApp({ api_token: e.target.value })} className="mt-2" disabled={disabled} /></div>
                   <div className="space-y-3 pt-4">
                     <h4 className="font-semibold text-sm">Modelos de Mensagens</h4>
-                    <div><Label>Saída para Entrega</Label><Textarea value={configWhatsApp.modelo_saida} onChange={(e) => setConfigWhatsApp({ ...configWhatsApp, modelo_saida: e.target.value })} rows={2} className="mt-2" disabled={disabled} /><p className="text-xs text-slate-500 mt-1">Variáveis: <span className="font-mono">{"{{numero_pedido}}"}</span>, <span className="font-mono">{"{{data_prevista}}"}</span></p></div>
-                    <div><Label>Entrega Concluída</Label><Textarea value={configWhatsApp.modelo_entregue} onChange={(e) => setConfigWhatsApp({ ...configWhatsApp, modelo_entregue: e.target.value })} rows={2} className="mt-2" disabled={disabled} /></div>
-                    <div><Label>Entrega Frustrada</Label><Textarea value={configWhatsApp.modelo_frustrada} onChange={(e) => setConfigWhatsApp({ ...configWhatsApp, modelo_frustrada: e.target.value })} rows={2} className="mt-2" disabled={disabled} /><p className="text-xs text-slate-500 mt-1">Variável: <span className="font-mono">{"{{motivo}}"}</span></p></div>
+                    <div><Label>Saída para Entrega</Label><Textarea value={configWhatsApp.modelo_saida} onChange={(e) => updateWhatsApp({ modelo_saida: e.target.value })} rows={2} className="mt-2" disabled={disabled} /><p className="text-xs text-slate-500 mt-1">Variáveis: <span className="font-mono">{"{{numero_pedido}}"}</span>, <span className="font-mono">{"{{data_prevista}}"}</span></p></div>
+                    <div><Label>Entrega Concluída</Label><Textarea value={configWhatsApp.modelo_entregue} onChange={(e) => updateWhatsApp({ modelo_entregue: e.target.value })} rows={2} className="mt-2" disabled={disabled} /></div>
+                    <div><Label>Entrega Frustrada</Label><Textarea value={configWhatsApp.modelo_frustrada} onChange={(e) => updateWhatsApp({ modelo_frustrada: e.target.value })} rows={2} className="mt-2" disabled={disabled} /><p className="text-xs text-slate-500 mt-1">Variável: <span className="font-mono">{"{{motivo}}"}</span></p></div>
                   </div>
-                  <div className="flex items-center gap-3"><input type="checkbox" id="whats-auto" checked={configWhatsApp.enviar_auto} onChange={(e) => setConfigWhatsApp({ ...configWhatsApp, enviar_auto: e.target.checked })} disabled={disabled} /><label htmlFor="whats-auto" className="text-sm">Enviar mensagens automaticamente</label></div>
+                  <div className="flex items-center gap-3"><input type="checkbox" id="whats-auto" checked={configWhatsApp.enviar_auto} onChange={(e) => updateWhatsApp({ enviar_auto: e.target.checked })} disabled={disabled} /><label htmlFor="whats-auto" className="text-sm">Enviar mensagens automaticamente</label></div>
                 </>
               )}
             </CardContent>
@@ -243,11 +252,11 @@ export default function ConfiguracaoExpedicao({ empresaId }) {
           <Card>
             <CardHeader className="bg-purple-50 border-b"><CardTitle className="text-base">Notificações por E-mail</CardTitle></CardHeader>
             <CardContent className="p-6 space-y-4">
-              <div className="flex items-center gap-3 p-3 bg-blue-50 rounded"><input type="checkbox" id="email-auto" checked={configEmail.enviar_auto} onChange={(e) => setConfigEmail({ ...configEmail, enviar_auto: e.target.checked })} disabled={disabled} /><label htmlFor="email-auto" className="text-sm">Enviar e-mails automaticamente nas mudanças de status</label></div>
-              <div><Label>Assunto - Saída para Entrega</Label><Input value={configEmail.assunto_saida} onChange={(e) => setConfigEmail({ ...configEmail, assunto_saida: e.target.value })} className="mt-2" disabled={disabled} /></div>
-              <div><Label>Corpo do E-mail - Saída</Label><Textarea value={configEmail.corpo_saida} onChange={(e) => setConfigEmail({ ...configEmail, corpo_saida: e.target.value })} rows={4} className="mt-2" placeholder="Olá {{cliente_nome}}, seu pedido {{numero_pedido}} saiu para entrega..." disabled={disabled} /></div>
-              <div><Label>Assunto - Entrega Concluída</Label><Input value={configEmail.assunto_entregue} onChange={(e) => setConfigEmail({ ...configEmail, assunto_entregue: e.target.value })} className="mt-2" disabled={disabled} /></div>
-              <div><Label>Corpo do E-mail - Entregue</Label><Textarea value={configEmail.corpo_entregue} onChange={(e) => setConfigEmail({ ...configEmail, corpo_entregue: e.target.value })} rows={4} className="mt-2" disabled={disabled} /></div>
+              <div className="flex items-center gap-3 p-3 bg-blue-50 rounded"><input type="checkbox" id="email-auto" checked={configEmail.enviar_auto} onChange={(e) => updateEmail({ enviar_auto: e.target.checked })} disabled={disabled} /><label htmlFor="email-auto" className="text-sm">Enviar e-mails automaticamente nas mudanças de status</label></div>
+              <div><Label>Assunto - Saída para Entrega</Label><Input value={configEmail.assunto_saida} onChange={(e) => updateEmail({ assunto_saida: e.target.value })} className="mt-2" disabled={disabled} /></div>
+              <div><Label>Corpo do E-mail - Saída</Label><Textarea value={configEmail.corpo_saida} onChange={(e) => updateEmail({ corpo_saida: e.target.value })} rows={4} className="mt-2" placeholder="Olá {{cliente_nome}}, seu pedido {{numero_pedido}} saiu para entrega..." disabled={disabled} /></div>
+              <div><Label>Assunto - Entrega Concluída</Label><Input value={configEmail.assunto_entregue} onChange={(e) => updateEmail({ assunto_entregue: e.target.value })} className="mt-2" disabled={disabled} /></div>
+              <div><Label>Corpo do E-mail - Entregue</Label><Textarea value={configEmail.corpo_entregue} onChange={(e) => updateEmail({ corpo_entregue: e.target.value })} rows={4} className="mt-2" disabled={disabled} /></div>
               <p className="text-xs text-slate-500 p-3 bg-slate-50 rounded">O servidor SMTP é configurado em Integrações &gt; E-mail.</p>
             </CardContent>
           </Card>
@@ -259,15 +268,15 @@ export default function ConfiguracaoExpedicao({ empresaId }) {
             <CardContent className="p-6 space-y-4">
               <div className="space-y-3">
                 <h4 className="font-semibold text-sm">Regras de Expedição</h4>
-                <div className="flex items-center gap-3 p-3 bg-blue-50 rounded"><input type="checkbox" id="separacao-obrigatoria" checked={configGeral.separacao_obrigatoria} onChange={(e) => setConfigGeral({ ...configGeral, separacao_obrigatoria: e.target.checked })} disabled={disabled} /><label htmlFor="separacao-obrigatoria" className="text-sm">Exigir separação/conferência antes de gerar romaneio</label></div>
-                <div className="flex items-center gap-3 p-3 bg-green-50 rounded"><input type="checkbox" id="foto-obrigatoria" checked={configGeral.foto_obrigatoria} onChange={(e) => setConfigGeral({ ...configGeral, foto_obrigatoria: e.target.checked })} disabled={disabled} /><label htmlFor="foto-obrigatoria" className="text-sm">Foto de comprovante obrigatória para finalizar entrega</label></div>
-                <div className="flex items-center gap-3 p-3 bg-purple-50 rounded"><input type="checkbox" id="assinatura-obrigatoria" checked={configGeral.assinatura_obrigatoria} onChange={(e) => setConfigGeral({ ...configGeral, assinatura_obrigatoria: e.target.checked })} disabled={disabled} /><label htmlFor="assinatura-obrigatoria" className="text-sm">Assinatura digital obrigatória para finalizar entrega</label></div>
-                <div className="flex items-center gap-3 p-3 bg-orange-50 rounded"><input type="checkbox" id="salvar-cliente" checked={configGeral.perguntar_salvar_cliente} onChange={(e) => setConfigGeral({ ...configGeral, perguntar_salvar_cliente: e.target.checked })} disabled={disabled} /><label htmlFor="salvar-cliente" className="text-sm">Perguntar se quer salvar endereço/contato no cliente</label></div>
+                <div className="flex items-center gap-3 p-3 bg-blue-50 rounded"><input type="checkbox" id="separacao-obrigatoria" checked={configGeral.separacao_obrigatoria} onChange={(e) => updateGeral({ separacao_obrigatoria: e.target.checked })} disabled={disabled} /><label htmlFor="separacao-obrigatoria" className="text-sm">Exigir separação/conferência antes de gerar romaneio</label></div>
+                <div className="flex items-center gap-3 p-3 bg-green-50 rounded"><input type="checkbox" id="foto-obrigatoria" checked={configGeral.foto_obrigatoria} onChange={(e) => updateGeral({ foto_obrigatoria: e.target.checked })} disabled={disabled} /><label htmlFor="foto-obrigatoria" className="text-sm">Foto de comprovante obrigatória para finalizar entrega</label></div>
+                <div className="flex items-center gap-3 p-3 bg-purple-50 rounded"><input type="checkbox" id="assinatura-obrigatoria" checked={configGeral.assinatura_obrigatoria} onChange={(e) => updateGeral({ assinatura_obrigatoria: e.target.checked })} disabled={disabled} /><label htmlFor="assinatura-obrigatoria" className="text-sm">Assinatura digital obrigatória para finalizar entrega</label></div>
+                <div className="flex items-center gap-3 p-3 bg-orange-50 rounded"><input type="checkbox" id="salvar-cliente" checked={configGeral.perguntar_salvar_cliente} onChange={(e) => updateGeral({ perguntar_salvar_cliente: e.target.checked })} disabled={disabled} /><label htmlFor="salvar-cliente" className="text-sm">Perguntar se quer salvar endereço/contato no cliente</label></div>
               </div>
 
               <div className="pt-4 border-t">
                 <h4 className="font-semibold text-sm mb-3">Integração Google Maps (preparado)</h4>
-                <div><Label>Google Maps API Key</Label><Input type="password" placeholder="Chave de API do Google Maps" className="mt-2" value={configGeral.google_maps_api_key} onChange={(e) => setConfigGeral({ ...configGeral, google_maps_api_key: e.target.value })} disabled={disabled} /><p className="text-xs text-slate-500 mt-2">Será usado para roteirização e cálculo de rotas quando a integração estiver ativa.</p></div>
+                <div><Label>Google Maps API Key</Label><Input type="password" placeholder="Chave de API do Google Maps" className="mt-2" value={configGeral.google_maps_api_key} onChange={(e) => updateGeral({ google_maps_api_key: e.target.value })} disabled={disabled} /><p className="text-xs text-slate-500 mt-2">Será usado para roteirização e cálculo de rotas quando a integração estiver ativa.</p></div>
               </div>
             </CardContent>
           </Card>
