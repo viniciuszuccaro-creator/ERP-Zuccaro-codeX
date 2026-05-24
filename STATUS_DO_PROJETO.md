@@ -1023,3 +1023,19 @@ Checklist inicial:
 - `git diff --check` executado sem erros.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em `RelatoriosLogistica`, `RelatorioFinanceiroLogistica`, `NotificadorAutomaticoEntrega`, `ComprovanteEntregaDigital` e `RegistroOcorrenciaLogistica`, revisando contexto grupo/empresa, RBAC, auditoria, textos e integracoes financeiro/fiscal.
+
+### Expedicao - Fase 8 Notificacoes, Ocorrencias e Financeiro Logistico
+
+- Seguido o proximo passo salvo no status: continuar em `RelatorioFinanceiroLogistica`, `NotificadorAutomaticoEntrega` e `RegistroOcorrenciaLogistica`.
+- `NotificadorAutomaticoEntrega` teve textos corrompidos corrigidos e passou a exigir contexto grupo/empresa e permissao RBAC antes de enviar/registrar notificacao.
+- Mensagens de notificacao agora sao sanitizadas, usam confirmacao explicita e registram auditoria de sucesso, bloqueio, cancelamento e erro.
+- Quando existe entrega vinculada, a notificacao e gravada via `updateInContext`; quando nao existe, gera historico do cliente via `createInContext`.
+- `RegistroOcorrenciaLogistica` teve textos corrompidos corrigidos e passou a exigir contexto grupo/empresa, permissao RBAC e confirmacao antes de registrar ocorrencia.
+- Ocorrencias agora sao sanitizadas, gravadas via `updateInContext` ou `createInContext`, e auditadas com usuario, grupo, empresa, pedido e entrega.
+- Upload de foto de ocorrencia passou a gerar auditoria de sucesso/erro.
+- `RelatorioFinanceiroLogistica` passou a bloquear sem contexto/permissao, enviar filtros com `group_id` e `empresa_id`, e auditar consultas/aplicacao de filtros.
+- Botoes sensiveis receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive` quando aplicavel.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `ComprovanteEntregaDigital` e `RelatoriosLogistica`, revisando baixa de estoque, comprovante, relatorios operacionais, contexto grupo/empresa, RBAC, auditoria e textos.
