@@ -59,7 +59,12 @@ export default function FormularioEntrega({
   const canCreateEntrega = hasPermission('Expedicao', 'Entrega', 'criar') || hasPermission('Expedicao', 'Entregas', 'criar');
   const canEditEntrega = hasPermission('Expedicao', 'Entrega', 'editar') || hasPermission('Expedicao', 'Entregas', 'editar');
   const canSaveEntrega = isEditing ? canEditEntrega : canCreateEntrega;
-  const sanitizePromptValue = (value) => String(value || '').replace(/[<>]/g, '').trim();
+  const sanitizePromptValue = (value) => String(value || '').replace(/[<>]/g, '').replace(/javascript:/gi, '').trim();
+  const sanitizeEntregaPayload = (value) => {
+    if (Array.isArray(value)) return value.map(sanitizeEntregaPayload);
+    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, val]) => [key, sanitizeEntregaPayload(val)]));
+    return typeof value === 'string' ? sanitizePromptValue(value) : value;
+  };
 
   const auditEntrega = async ({ acao, sucesso = true, motivo = null, dadosAnteriores = null, dadosNovos = null }) => {
     try {
@@ -325,17 +330,18 @@ Retorne:
       return;
     }
 
-    if (!isEditing && !window.confirm("Confirmar inclusao desta entrega?")) {
-      await auditEntrega({ acao: "Entrega.criar.cancelado", sucesso: false, motivo: "confirmacao_cancelada" });
+    const mensagemConfirmacao = isEditing ? 'Confirmar atualizacao desta entrega?' : 'Confirmar inclusao desta entrega?';
+    if (!window.confirm(mensagemConfirmacao)) {
+      await auditEntrega({ acao: isEditing ? 'Entrega.editar.cancelado' : 'Entrega.criar.cancelado', sucesso: false, motivo: 'confirmacao_cancelada', dadosNovos: { entrega_id: formData.id || null } });
       return;
     }
 
-    const payload = {
+    const payload = sanitizeEntregaPayload({
       ...formData,
       group_id: formData.group_id || groupId,
       grupo_id: formData.grupo_id || formData.group_id || groupId,
       empresa_id: formData.empresa_id || empresaId,
-    };
+    });
 
     if (isEditing && formData.id) {
       updateMutation.mutate({ id: formData.id, data: payload });
@@ -393,6 +399,12 @@ Retorne no formato JSON.`,
   };
 
   const content = (
+    <>
+      {(!contextoValido || !canSaveEntrega) && (
+        <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+          {!contextoValido ? 'Selecione grupo/empresa para salvar entregas.' : 'Seu perfil nao tem permissao para salvar entregas.'}
+        </div>
+      )}
     <FormWrapper onSubmit={handleSubmitForm} externalData={formData} className={`w-full h-full space-y-6 ${windowMode ? 'p-6 overflow-auto' : ''}`} data-permission={isEditing ? "Expedicao.Entrega.editar" : "Expedicao.Entrega.criar"} data-context-required="true">
       {/* Empresa (se no grupo) */}
       {estaNoGrupo && (
@@ -848,6 +860,7 @@ Retorne no formato JSON.`,
         </Button>
       </div>
     </FormWrapper>
+    </>
   );
 
   if (windowMode) {

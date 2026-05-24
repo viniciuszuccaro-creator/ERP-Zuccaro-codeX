@@ -1130,3 +1130,17 @@ Checklist inicial:
 - `npm run build` retornou `Acesso negado` no atalho do Vite neste ambiente, entao o build foi validado com sucesso via `node node_modules/vite/bin/vite.js build`.
 - Permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em `FormularioEntrega`, `EnvioMensagemAutomatica`, `LogisticaReversa` e fluxos finais de estoque/financeiro/fiscal, revisando contexto grupo/empresa, RBAC, auditoria, sanitizacao e acoes sensiveis.
+
+### Expedicao - Fase 8 Formulario, Mensagens e Logistica Reversa
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `FormularioEntrega`, `EnvioMensagemAutomatica`, `LogisticaReversa` e fluxos finais de estoque/financeiro/fiscal.
+- `FormularioEntrega` recebeu sanitizacao recursiva do payload antes de criar/editar entrega, incluindo bloqueio de marcadores perigosos como `javascript:` em textos.
+- Criacao e edicao de entrega agora exigem confirmacao explicita, com auditoria quando o usuario cancela a operacao.
+- `FormularioEntrega` passou a exibir aviso visual quando faltar contexto grupo/empresa ou permissao RBAC para salvar entregas.
+- `EnvioMensagemAutomatica` passou a exibir aviso visual quando faltar contexto/permissao para enviar WhatsApp e os templates receberam marcadores de permissao, contexto obrigatorio e acao sensivel.
+- `LogisticaReversa` passou a exibir aviso visual quando faltar contexto/permissao para processar devolucao e o botao cancelar recebeu marcador de acao/contexto.
+- Mantidos os fluxos existentes de entrega, mensagem e devolucao; nenhuma tela, modulo, componente ou arquivo novo foi criado.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `node node_modules/vite/bin/vite.js build` porque o atalho `npm run build` pode retornar `Acesso negado` no Vite neste ambiente.
+- Permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 nas integracoes finais de Expedicao com estoque, financeiro e fiscal, validando que status de entrega, baixa/retorno de estoque, cobranca/faturamento e emissao fiscal respeitem grupo/empresa, RBAC, auditoria, confirmacao e Regra-Mae.

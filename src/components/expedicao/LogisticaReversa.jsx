@@ -179,6 +179,11 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 space-y-4">
+        {(!contextoValido || !canProcess) && (
+          <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+            {!contextoValido ? "Selecione grupo/empresa e entrega para processar logistica reversa." : "Seu perfil nao tem permissao para processar logistica reversa."}
+          </div>
+        )}
         <div>
           <Label>Motivo da Recusa</Label>
           <Select value={motivo} onValueChange={setMotivo} disabled={!contextoValido || !canProcess || processarDevolucaoMutation.isPending}>
@@ -226,7 +231,7 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
         </div>
 
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onConcluido} disabled={processarDevolucaoMutation.isPending}>Cancelar</Button>
+          <Button variant="outline" onClick={onConcluido} disabled={processarDevolucaoMutation.isPending} data-action="Entrega.logisticaReversa.cancelar" data-context-required="true">Cancelar</Button>
           <Button onClick={() => processarDevolucaoMutation.mutate()} disabled={!motivo || !acao || processarDevolucaoMutation.isPending || !contextoValido || !canProcess} className="bg-orange-600 hover:bg-orange-700" data-action="Entrega.logisticaReversa.processar" data-permission="Expedicao.LogisticaReversa.editar" data-context-required="true" data-sensitive="true">
             {processarDevolucaoMutation.isPending ? "Processando..." : "Processar Devolução"}
           </Button>

@@ -170,6 +170,11 @@ export default function EnvioMensagemAutomatica({ entrega, tipo = "saida_entrega
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 space-y-4">
+        {(!contextoValido || !canSend) && (
+          <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+            {!contextoValido ? "Selecione grupo/empresa e entrega para enviar WhatsApp." : "Seu perfil nao tem permissao para enviar WhatsApp."}
+          </div>
+        )}
         <Alert className="border-amber-300 bg-amber-50">
           <AlertCircle className="h-4 w-4 text-amber-600" />
           <AlertDescription className="text-xs"><strong>{aviso.titulo}</strong> - {aviso.mensagem}</AlertDescription>
@@ -191,9 +196,9 @@ export default function EnvioMensagemAutomatica({ entrega, tipo = "saida_entrega
             <div>
               <Label>Templates prontos</Label>
               <div className="grid grid-cols-3 gap-2 mt-2">
-                <Button size="sm" variant="outline" onClick={() => handleEnviar(templates.confirmacao_pedido)} disabled={disabled} data-action="Entrega.whatsapp.confirmacao" data-sensitive="true">Confirmação</Button>
-                <Button size="sm" variant="outline" onClick={() => handleEnviar(templates.saida_entrega)} disabled={disabled} data-action="Entrega.whatsapp.saida" data-sensitive="true">Saída</Button>
-                <Button size="sm" variant="outline" onClick={() => handleEnviar(templates.entrega_realizada)} disabled={disabled} data-action="Entrega.whatsapp.entregue" data-sensitive="true">Entregue</Button>
+                <Button size="sm" variant="outline" onClick={() => handleEnviar(templates.confirmacao_pedido)} disabled={disabled} data-action="Entrega.whatsapp.confirmacao" data-permission="Expedicao.Comunicacao.criar" data-context-required="true" data-sensitive="true">Confirmação</Button>
+                <Button size="sm" variant="outline" onClick={() => handleEnviar(templates.saida_entrega)} disabled={disabled} data-action="Entrega.whatsapp.saida" data-permission="Expedicao.Comunicacao.criar" data-context-required="true" data-sensitive="true">Saída</Button>
+                <Button size="sm" variant="outline" onClick={() => handleEnviar(templates.entrega_realizada)} disabled={disabled} data-action="Entrega.whatsapp.entregue" data-permission="Expedicao.Comunicacao.criar" data-context-required="true" data-sensitive="true">Entregue</Button>
               </div>
             </div>
 
