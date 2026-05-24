@@ -1056,3 +1056,19 @@ Checklist inicial:
 - Verificacao de mojibake real e escapes literais executada sem apontamentos nos arquivos alterados.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 nos componentes restantes de Expedicao/Logistica, priorizando `ComprovanteDigital`, `DetalhesEntregaView`, `EntregasListagem` e paineis logisticos, revisando contexto grupo/empresa, RBAC, auditoria, textos e acoes sensiveis.
+
+### Expedicao - Fase 8 Detalhes e Listagem de Entregas
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `ComprovanteDigital`, `DetalhesEntregaView`, `EntregasListagem` e paineis logisticos.
+- `DetalhesEntregaView` teve textos corrompidos corrigidos em abas, campos, status, timeline, notificacoes e acoes de entrega.
+- Alteracao de status da entrega agora exige contexto grupo/empresa, permissao RBAC e confirmacao explicita para qualquer status sensivel, nao apenas entrega frustrada.
+- Quando a mudanca de status for delegada ao fluxo externo, a tela agora registra auditoria antes de chamar o fluxo recebido por propriedade.
+- Confirmacao com assinatura digital agora exige confirmacao explicita, sanitiza nome/documento do recebedor, preserva `group_id`, `grupo_id` e `empresa_id`, e audita cancelamento/sucesso/erro.
+- `DetalhesEntregaView` passou a exibir alerta visual quando faltar contexto ou permissao para acoes sensiveis.
+- `EntregasListagem` teve textos corrompidos corrigidos em busca, status, colunas, botoes e titulos de janelas.
+- Exportacao CSV de entregas selecionadas agora exige confirmacao explicita e audita cancelamento, bloqueios e sucesso.
+- Abertura de detalhes e edicao de entrega agora registra auditoria operacional com entrega e numero do pedido.
+- `EntregasListagem` passou a exibir alerta visual quando faltar contexto/permissao para visualizar entregas e manteve marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive` nas acoes sensiveis.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 nos paineis logisticos restantes, priorizando `DashboardLogistico`, `DashboardEntregasRealtime`, `OcorrenciasPanel`, `DriverChat` e demais componentes de painel, revisando contexto grupo/empresa, RBAC, auditoria, textos e acoes sensiveis.

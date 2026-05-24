@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { base44 } from "@/api/base44Client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ import AssinaturaDigitalEntrega from "./AssinaturaDigitalEntrega";
 
 /**
  * V21.1.2 - WINDOW MODE READY
- * Visualização detalhada de uma entrega com timeline e notificações
+ * Visualizacao detalhada de uma entrega com timeline e notificacoes
  */
 export default function DetalhesEntregaView({ 
   entrega, 
@@ -35,7 +35,7 @@ export default function DetalhesEntregaView({
   const groupId = entrega?.group_id || grupoAtual?.id || empresaAtual?.group_id || null;
   const empresaId = entrega?.empresa_id || empresaAtual?.id || null;
   const contextoValido = Boolean(groupId || empresaId);
-  const canUpdateEntrega = hasPermission("Expedicao", "Entrega", "editar") || hasPermission("Expedi\u00e7\u00e3o", "Entrega", "editar");
+  const canUpdateEntrega = hasPermission("Expedicao", "Entrega", "editar") || hasPermission("Expedicao", "Entregas", "editar") || hasPermission("Expedicao", "Painel Logistico", "editar");
 
   const auditarEntrega = async ({ acao, descricao, sucesso = true, dadosNovos = {}, dadosAnteriores = entrega }) => {
     try {
@@ -73,10 +73,11 @@ export default function DetalhesEntregaView({
       return;
     }
 
-    if (novoStatus === "Entrega Frustrada" && !window.confirm("Confirmar alteracao da entrega para Entrega Frustrada?")) {
+    const confirmado = window.confirm("Confirma alterar o status desta entrega para " + novoStatus + "?");
+    if (!confirmado) {
       await auditarEntrega({
         acao: "DetalhesEntrega.status_cancelado",
-        descricao: "Usuario cancelou a alteracao para Entrega Frustrada.",
+        descricao: "Usuario cancelou a alteracao de status da entrega.",
         sucesso: false,
         dadosNovos: { status_novo: novoStatus, motivo: "confirmacao_cancelada" },
       });
@@ -84,6 +85,11 @@ export default function DetalhesEntregaView({
     }
 
     if (typeof onStatusChange === "function") {
+      await auditarEntrega({
+        acao: "DetalhesEntrega.alterar_status.delegado",
+        descricao: "Status da entrega delegado ao fluxo externo.",
+        dadosNovos: { status_novo: novoStatus },
+      });
       onStatusChange(entrega, novoStatus);
       return;
     }
@@ -118,11 +124,23 @@ export default function DetalhesEntregaView({
   const confirmarEntregaAssinaturaMutation = useMutation({
     mutationFn: async (dadosAssinatura) => {
       if (!contextoValido) {
-        throw new Error("Contexto multiempresa obrigatório para confirmar entrega.");
+        throw new Error("Contexto multiempresa obrigatorio para confirmar entrega.");
       }
       if (!canUpdateEntrega) {
-        throw new Error("Seu perfil não pode alterar entregas.");
+        throw new Error("Seu perfil nao pode alterar entregas.");
       }
+      const confirmado = window.confirm("Confirma registrar a assinatura digital e marcar esta entrega como entregue?");
+      if (!confirmado) {
+        await auditarEntrega({
+          acao: "DetalhesEntrega.confirmar_entrega.cancelado",
+          descricao: "Usuario cancelou a confirmacao de entrega com assinatura digital.",
+          sucesso: false,
+          dadosNovos: { motivo: "confirmacao_cancelada" },
+        });
+        throw new Error("Confirmacao cancelada pelo usuario.");
+      }
+      const nomeRecebedor = String(dadosAssinatura.nome_recebedor || "").replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, "").replace(/javascript:\s*/gi, "").trim();
+      const documentoRecebedor = String(dadosAssinatura.documento_recebedor || "").replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, "").replace(/javascript:\s*/gi, "").trim();
       const atualizada = await updateInContext("Entrega", entrega.id, {
         status: "Entregue",
         data_entrega: new Date().toISOString(),
@@ -131,8 +149,8 @@ export default function DetalhesEntregaView({
         empresa_id: empresaId,
         comprovante_entrega: {
           assinatura_digital: dadosAssinatura.assinatura_base64,
-          nome_recebedor: dadosAssinatura.nome_recebedor,
-          documento_recebedor: dadosAssinatura.documento_recebedor,
+          nome_recebedor: nomeRecebedor,
+          documento_recebedor: documentoRecebedor,
           data_hora_recebimento: dadosAssinatura.data_hora_assinatura,
           latitude_entrega: dadosAssinatura.latitude || null,
           longitude_entrega: dadosAssinatura.longitude || null
@@ -144,7 +162,7 @@ export default function DetalhesEntregaView({
             data_hora: new Date().toISOString(),
             usuario: user?.full_name || user?.email || "Sistema",
             usuario_id: user?.id,
-            observacao: `Entrega confirmada com assinatura digital. Recebido por: ${dadosAssinatura.nome_recebedor}`
+            observacao: `Entrega confirmada com assinatura digital. Recebido por: ${nomeRecebedor}`
           }
         ]
       });
@@ -158,15 +176,23 @@ export default function DetalhesEntregaView({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['entregas'] });
       setShowAssinatura(false);
-      toast.success("✅ Entrega confirmada com assinatura!");
+      toast.success("Entrega confirmada com assinatura.");
     },
     onError: (error) => {
-      toast.error(error.message || "Erro ao confirmar entrega.");
+      if (error?.message !== "Confirmacao cancelada pelo usuario.") toast.error(error.message || "Erro ao confirmar entrega.");
     }
   });
 
   const content = (
     <div className={`${windowMode ? 'p-6 flex-1 overflow-auto' : 'space-y-4'}`}>
+      {(!contextoValido || !canUpdateEntrega) && (
+        <Card className="mb-3 bg-red-50 border-red-300">
+          <CardContent className="p-3 text-sm text-red-800">
+            <p className="font-semibold">Acoes sensiveis bloqueadas</p>
+            <p>{!contextoValido ? "Selecione grupo/empresa para alterar esta entrega." : "Seu perfil nao tem permissao para alterar entregas."}</p>
+          </CardContent>
+        </Card>
+      )}
       {!windowMode && (
         <div className="flex items-center gap-2 mb-4">
           <Truck className="w-5 h-5 text-blue-600" />
@@ -176,9 +202,9 @@ export default function DetalhesEntregaView({
 
       <Tabs defaultValue="info" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="info">Informações</TabsTrigger>
+          <TabsTrigger value="info">Informacoes</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
-          <TabsTrigger value="notificacoes">Notificações</TabsTrigger>
+          <TabsTrigger value="notificacoes">Notificacoes</TabsTrigger>
           <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
         </TabsList>
 
@@ -198,7 +224,7 @@ export default function DetalhesEntregaView({
 
           {estaNoGrupo && (
             <div>
-              <Label className="text-slate-600">Empresa Responsável</Label>
+              <Label className="text-slate-600">Empresa Responsavel</Label>
               <div className="flex items-center gap-2 mt-1">
                 <Building2 className="w-5 h-5 text-purple-600" />
                 <span className="font-semibold">{obterNomeEmpresa(entrega.empresa_id)}</span>
@@ -207,7 +233,7 @@ export default function DetalhesEntregaView({
           )}
 
           <div>
-            <Label className="text-slate-600">Endereço de Entrega</Label>
+            <Label className="text-slate-600">Endereco de Entrega</Label>
             <p className="text-sm">
               {entrega.endereco_entrega_completo?.logradouro}, {entrega.endereco_entrega_completo?.numero}
               {entrega.endereco_entrega_completo?.complemento && ` - ${entrega.endereco_entrega_completo?.complemento}`}
@@ -223,12 +249,12 @@ export default function DetalhesEntregaView({
             <p className="text-sm">
               <strong>{entrega.contato_entrega?.nome || '-'}</strong>
               <br/>
-              📞 {entrega.contato_entrega?.whatsapp || entrega.contato_entrega?.telefone || '-'}
+              Telefone: {entrega.contato_entrega?.whatsapp || entrega.contato_entrega?.telefone || '-'}
               {entrega.contato_entrega?.instrucoes_especiais && (
                 <>
                   <br/>
                   <span className="italic text-slate-500">
-                    Instruções: {entrega.contato_entrega.instrucoes_especiais}
+                    Instrucoes: {entrega.contato_entrega.instrucoes_especiais}
                   </span>
                 </>
               )}
@@ -238,7 +264,7 @@ export default function DetalhesEntregaView({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label className="text-slate-600">Transportadora</Label>
-              <p className="font-medium">{entrega.transportadora || 'Frota Própria'}</p>
+              <p className="font-medium">{entrega.transportadora || 'Frota Propria'}</p>
             </div>
             <div>
               <Label className="text-slate-600">Motorista</Label>
@@ -263,7 +289,7 @@ export default function DetalhesEntregaView({
 
           {entrega.observacoes && (
             <div>
-              <Label className="text-slate-600">Observações</Label>
+              <Label className="text-slate-600">Observacoes</Label>
               <p className="text-sm p-3 bg-slate-50 rounded">{entrega.observacoes}</p>
             </div>
           )}
@@ -271,18 +297,18 @@ export default function DetalhesEntregaView({
           {!showAssinatura ? (
             <div className="flex flex-wrap gap-2 pt-4 border-t">
               <Button
-                onClick={() => handleStatusChangeLocal("Em Separação")}
-                disabled={!contextoValido || !canUpdateEntrega || entrega.status !== "Aguardando Separação"}
+                onClick={() => handleStatusChangeLocal("Em Separacao")}
+                disabled={!contextoValido || !canUpdateEntrega || entrega.status !== "Aguardando Separacao"}
                 size="sm"
                 variant="outline"
                 data-permission="Expedicao.Entrega.editar" data-context-required="true" data-sensitive
                 data-action="iniciar-separacao"
               >
-                Iniciar Separação
+                Iniciar Separacao
               </Button>
               <Button
                 onClick={() => handleStatusChangeLocal("Pronto para Expedir")}
-                disabled={!contextoValido || !canUpdateEntrega || entrega.status !== "Em Separação"}
+                disabled={!contextoValido || !canUpdateEntrega || entrega.status !== "Em Separacao"}
                 size="sm"
                 className="bg-indigo-600 hover:bg-indigo-700"
                 data-permission="Expedicao.Entrega.editar" data-context-required="true" data-sensitive
@@ -302,7 +328,7 @@ export default function DetalhesEntregaView({
               </Button>
               <Button
                 onClick={() => setShowAssinatura(true)}
-                disabled={!contextoValido || !canUpdateEntrega || !["Saiu para Entrega", "Em Trânsito"].includes(entrega.status)}
+                disabled={!contextoValido || !canUpdateEntrega || !["Saiu para Entrega", "Em Transito"].includes(entrega.status)}
                 size="sm"
                 className="bg-green-600 hover:bg-green-700"
                 data-permission="Expedicao.Entrega.editar" data-context-required="true" data-sensitive
@@ -312,7 +338,7 @@ export default function DetalhesEntregaView({
               </Button>
               <Button
                 onClick={() => handleStatusChangeLocal("Entrega Frustrada")}
-                disabled={!contextoValido || !canUpdateEntrega || ["Entregue", "Cancelado", "Aguardando Separação"].includes(entrega.status)}
+                disabled={!contextoValido || !canUpdateEntrega || ["Entregue", "Cancelado", "Aguardando Separacao"].includes(entrega.status)}
                 size="sm"
                 variant="destructive"
                 data-permission="Expedicao.Entrega.editar" data-context-required="true" data-sensitive
@@ -367,7 +393,7 @@ export default function DetalhesEntregaView({
               ))}
             </div>
           ) : (
-            <p className="text-center text-slate-500 py-8">Nenhum histórico disponível</p>
+            <p className="text-center text-slate-500 py-8">Nenhum historico disponivel</p>
           )}
         </TabsContent>
 
@@ -392,7 +418,7 @@ export default function DetalhesEntregaView({
               ))}
             </div>
           ) : (
-            <p className="text-center text-slate-500 py-8">Nenhuma notificação enviada</p>
+            <p className="text-center text-slate-500 py-8">Nenhuma notificacao enviada</p>
           )}
         </TabsContent>
 
