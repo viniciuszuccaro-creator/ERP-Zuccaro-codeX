@@ -1007,3 +1007,19 @@ Checklist inicial:
 - `git diff --check` executado sem erros.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em componentes restantes da Expedicao e Logistica, priorizando `LogisticaEntregaTab`, `PedidosEntregaTab`, `RelatoriosLogistica`, `RelatorioFinanceiroLogistica` e integracoes entre pedido, entrega, financeiro e fiscal.
+
+### Comercial e Expedicao - Fase 8 Integracao Pedido, Entrega e Estoque
+
+- Seguido o proximo passo salvo no status: continuar em `LogisticaEntregaTab`, `PedidosEntregaTab`, relatorios e integracoes entre pedido, entrega, financeiro e fiscal.
+- `LogisticaEntregaTab` teve textos corrompidos corrigidos e passou a usar `w-full h-full` no container principal.
+- Criacao e remocao de etapas de entrega/faturamento parcial agora exigem permissao visual e confirmacao explicita antes de alterar o pedido em memoria.
+- Campos de entrega passaram a sanitizar textos e o link do Google Maps recebeu validacao basica para reduzir entrada indevida.
+- Acoes sensiveis da aba de logistica do pedido receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- `PedidosEntregaTab` deixou de buscar pedidos, entregas e regioes por chamadas globais e passou a usar `filterInContext` por grupo/empresa.
+- Alteracao de status de pedido agora exige contexto grupo/empresa, permissao RBAC, confirmacao explicita, `updateInContext` e auditoria operacional/seguranca.
+- Quando existir entrega vinculada, a mudanca de status tambem sincroniza a entidade `Entrega` no mesmo contexto multiempresa.
+- Confirmacao de entrega com baixa de estoque agora exige permissao de entrega e estoque, confirmacao explicita, usa `filterInContext`, `createInContext` e `updateInContext`, e audita bloqueios/estoque insuficiente.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `RelatoriosLogistica`, `RelatorioFinanceiroLogistica`, `NotificadorAutomaticoEntrega`, `ComprovanteEntregaDigital` e `RegistroOcorrenciaLogistica`, revisando contexto grupo/empresa, RBAC, auditoria, textos e integracoes financeiro/fiscal.
