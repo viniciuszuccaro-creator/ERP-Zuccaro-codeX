@@ -928,3 +928,25 @@ Checklist inicial:
 - `git diff --check` executado sem erros.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em `DriverChat`, `OcorrenciasPanel`, `ComprovanteDigital` e `LogisticaReversa`, revisando comunicacao, ocorrencias, comprovantes, reversa, contexto grupo/empresa, permissoes e auditoria.
+
+### Expedicao - Fase 8 Comunicacao, Ocorrencias e Reversa
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `DriverChat`, `OcorrenciasPanel`, `ComprovanteDigital` e `LogisticaReversa`, revisando comunicacao, ocorrencias, comprovantes, reversa, contexto grupo/empresa, permissoes e auditoria.
+- `DriverChat` passou a exigir contexto grupo/empresa e permissao antes de enviar mensagens para a entrega.
+- Mensagens ao motorista agora sao sanitizadas, pedem confirmacao explicita antes de incluir registro e sao gravadas via `updateInContext`.
+- Bloqueios, cancelamentos, erros e sucesso da comunicacao agora geram `AuditLog` com usuario, grupo, empresa e entrega.
+- `OcorrenciasPanel` passou a exigir contexto e permissao para upload de evidencia e criacao de ocorrencias.
+- Ocorrencias agora sao sanitizadas, pedem confirmacao antes da inclusao e sao salvas via `updateInContext` com `group_id`, `grupo_id` e `empresa_id`.
+- Upload de evidencia e criacao de ocorrencia agora geram auditoria operacional/seguranca.
+- `ComprovanteDigital` passou a usar `updateInContext` para confirmar entrega, reforcando contexto multiempresa no comprovante e no historico de status.
+- Confirmacao de entrega agora exige permissao, contexto e confirmacao explicita antes de marcar como `Entregue`.
+- Arquivo do comprovante, GPS, bloqueios, erros e sucesso da confirmacao agora geram `AuditLog`.
+- `LogisticaReversa` deixou de atualizar entrega, contas a receber, estoque e notificacao por chamadas diretas globais e passou a usar `filterInContext`, `updateInContext` e `createInContext`.
+- Processamento de devolucao agora exige contexto, permissao e confirmacao explicita antes de alterar entrega, financeiro e estoque.
+- Logistica reversa agora registra historico da entrega e auditoria completa de sucesso, bloqueio, cancelamento e erro.
+- Corrigidos textos com mojibake real e erros ortograficos nos quatro componentes da secao Expedicao e Logistica.
+- Botoes e inputs sensiveis receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em componentes restantes da Expedicao, priorizando `ConfiguracaoExpedicao`, `SeparacaoConferencia`, `DashboardEntregasRealtime` e fluxos de status/acoes em lote, revisando contexto grupo/empresa, RBAC, auditoria e textos.
