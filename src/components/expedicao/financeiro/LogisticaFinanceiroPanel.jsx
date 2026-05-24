@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
@@ -136,7 +136,7 @@ export default function LogisticaFinanceiroPanel({ empresaId }) {
       await ensureCanWrite("FinanceiroLogistica.gerarCPCombustivel");
       const custoKm = Number(cfg?.custo_km || 0);
       const elegiveis = (entregas || []).filter(e => Number(e.km_rodado || 0) > 0 && custoKm > 0);
-      const confirmado = window.confirm(`Confirma gerar contas a pagar de combustível para ${elegiveis.length} entrega(s)?`);
+      const confirmado = window.confirm(`Confirma gerar contas a pagar de Combustivel para ${elegiveis.length} entrega(s)?`);
       if (!confirmado) {
         await auditFinanceiro({ acao: "FinanceiroLogistica.gerarCPCombustivel.cancelado", sucesso: false, motivo: "confirmacao_cancelada", detalhes: { quantidade: elegiveis.length } });
         throw new Error("Geracao cancelada pelo usuario.");
@@ -149,7 +149,7 @@ export default function LogisticaFinanceiroPanel({ empresaId }) {
           group_id: effectiveGroupId,
           grupo_id: effectiveGroupId,
           empresa_id: e.empresa_id || effectiveEmpresaId,
-          descricao: `Combustível [LOG] entrega_id:${e.id} rota:${e.rota_id || ""}`,
+          descricao: `Combustivel [LOG] entrega_id:${e.id} rota:${e.rota_id || ""}`,
           fornecedor: e.motorista || "Motorista",
           valor,
           data_emissao: hoje.toISOString().slice(0, 10),
@@ -157,7 +157,7 @@ export default function LogisticaFinanceiroPanel({ empresaId }) {
           centro_custo_id: cfg.centro_custo_id,
           plano_contas_id: cfg.plano_contas_id,
           categoria: "Transporte",
-          forma_pagamento: cfg.forma_pagamento || "Cartão",
+          forma_pagamento: cfg.forma_pagamento || "Cartao",
           status: "Pendente",
         });
       }
@@ -172,7 +172,10 @@ export default function LogisticaFinanceiroPanel({ empresaId }) {
       await auditFinanceiro({ acao: "FinanceiroLogistica.conciliarCR.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada", detalhes: { conta_id: cr?.id } });
       return;
     }
-    if (!window.confirm("Confirma conciliar este recebimento logístico?")) return;
+    if (!window.confirm("Confirma conciliar este recebimento logistico?")) {
+      await auditFinanceiro({ acao: "FinanceiroLogistica.conciliarCR.cancelado", sucesso: false, motivo: "confirmacao_cancelada", detalhes: { conta_id: cr?.id } });
+      return;
+    }
     await updateInContext("ContaReceber", cr.id, {
       group_id: cr.group_id || effectiveGroupId,
       grupo_id: cr.grupo_id || cr.group_id || effectiveGroupId,
@@ -189,7 +192,10 @@ export default function LogisticaFinanceiroPanel({ empresaId }) {
       await auditFinanceiro({ acao: "FinanceiroLogistica.conciliarCP.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada", detalhes: { conta_id: cp?.id } });
       return;
     }
-    if (!window.confirm("Confirma conciliar esta despesa logística?")) return;
+    if (!window.confirm("Confirma conciliar esta despesa logistica?")) {
+      await auditFinanceiro({ acao: "FinanceiroLogistica.conciliarCP.cancelado", sucesso: false, motivo: "confirmacao_cancelada", detalhes: { conta_id: cp?.id } });
+      return;
+    }
     await updateInContext("ContaPagar", cp.id, {
       group_id: cp.group_id || effectiveGroupId,
       grupo_id: cp.grupo_id || cp.group_id || effectiveGroupId,
@@ -217,38 +223,38 @@ export default function LogisticaFinanceiroPanel({ empresaId }) {
         <Card><CardHeader className="pb-1"><CardTitle className="text-sm">CP (Gerado)</CardTitle></CardHeader><CardContent><div className="text-xl font-semibold text-rose-700">R$ {totalCP.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div></CardContent></Card>
       </div>
 
-      <Section title="Ações Rápidas" extra={<Badge variant="outline" className="text-xs">Config necessária para gerar títulos</Badge>}>
+      <Section title="Acoes Rapidas" extra={<Badge variant="outline" className="text-xs">Config necessaria para gerar titulos</Badge>}>
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => gerarCRMutation.mutate()} disabled={gerarCRMutation.isPending || !canGenerate} data-action="FinanceiroLogistica.gerarCR" data-permission="Expedicao.FinanceiroLogistica.criar" data-context-required="true" data-sensitive="true">Gerar Contas a Receber por Entregas Entregues</Button>
-          <Button variant="outline" onClick={() => gerarCPCombustivelMutation.mutate()} disabled={gerarCPCombustivelMutation.isPending || !canGenerate} data-action="FinanceiroLogistica.gerarCPCombustivel" data-permission="Expedicao.FinanceiroLogistica.criar" data-context-required="true" data-sensitive="true">Gerar Contas a Pagar de Combustível</Button>
+          <Button variant="outline" onClick={() => gerarCPCombustivelMutation.mutate()} disabled={gerarCPCombustivelMutation.isPending || !canGenerate} data-action="FinanceiroLogistica.gerarCPCombustivel" data-permission="Expedicao.FinanceiroLogistica.criar" data-context-required="true" data-sensitive="true">Gerar Contas a Pagar de Combustivel</Button>
         </div>
       </Section>
 
-      <Section title="Conciliação de Recebimentos">
+      <Section title="Conciliacao de Recebimentos">
         <div className="grid gap-2 max-h-[260px] overflow-auto">
-          {crLog.length === 0 && <div className="text-sm text-slate-500">Sem títulos gerados [LOG].</div>}
+          {crLog.length === 0 && <div className="text-sm text-slate-500">Sem titulos gerados [LOG].</div>}
           {crLog.map((c) => (
             <div key={c.id} className="flex items-center justify-between border rounded px-3 py-2 text-sm">
               <div className="min-w-0"><div className="font-medium truncate">{c.descricao}</div><div className="text-slate-600">R$ {Number(c.valor || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} - Venc: {c.data_vencimento}</div></div>
-              <div className="flex items-center gap-2"><Badge variant="outline" className="text-xs">{c.status}</Badge>{c.status !== "Recebido" && <Button size="sm" onClick={() => conciliarCR(c)} disabled={!canConciliate} data-action="FinanceiroLogistica.conciliarCR" data-sensitive="true">Conciliar</Button>}</div>
+              <div className="flex items-center gap-2"><Badge variant="outline" className="text-xs">{c.status}</Badge>{c.status !== "Recebido" && <Button size="sm" onClick={() => conciliarCR(c)} disabled={!canConciliate} data-action="FinanceiroLogistica.conciliarCR" data-permission="Expedicao.FinanceiroLogistica.editar" data-context-required="true" data-sensitive="true">Conciliar</Button>}</div>
             </div>
           ))}
         </div>
       </Section>
 
-      <Section title="Conciliação de Despesas">
+      <Section title="Conciliacao de Despesas">
         <div className="grid gap-2 max-h-[260px] overflow-auto">
           {cpLog.length === 0 && <div className="text-sm text-slate-500">Sem despesas geradas [LOG].</div>}
           {cpLog.map((c) => (
             <div key={c.id} className="flex items-center justify-between border rounded px-3 py-2 text-sm">
               <div className="min-w-0"><div className="font-medium truncate">{c.descricao}</div><div className="text-slate-600">R$ {Number(c.valor || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} - Venc: {c.data_vencimento}</div></div>
-              <div className="flex items-center gap-2"><Badge variant="outline" className="text-xs">{c.status}</Badge>{c.status !== "Pago" && <Button size="sm" onClick={() => conciliarCP(c)} disabled={!canConciliate} data-action="FinanceiroLogistica.conciliarCP" data-sensitive="true">Conciliar</Button>}</div>
+              <div className="flex items-center gap-2"><Badge variant="outline" className="text-xs">{c.status}</Badge>{c.status !== "Pago" && <Button size="sm" onClick={() => conciliarCP(c)} disabled={!canConciliate} data-action="FinanceiroLogistica.conciliarCP" data-permission="Expedicao.FinanceiroLogistica.editar" data-context-required="true" data-sensitive="true">Conciliar</Button>}</div>
             </div>
           ))}
         </div>
       </Section>
 
-      <Section title="Configuração Padrão"><ConfigFinanceiroLogistica empresaId={effectiveEmpresaId} /></Section>
+      <Section title="Configuracao Padrao"><ConfigFinanceiroLogistica empresaId={effectiveEmpresaId} groupId={effectiveGroupId} onAudit={auditFinanceiro} /></Section>
     </div>
   );
 }

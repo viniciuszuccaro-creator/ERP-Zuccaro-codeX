@@ -1102,3 +1102,18 @@ Checklist inicial:
 - `git diff --check` executado sem erros.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em componentes auxiliares de Expedicao/Logistica ainda nao revisados, priorizando `LiveMap`, `TimelineEntrega`, componentes de configuracao/logistica financeira e integracoes finais entre entrega, estoque, financeiro e fiscal.
+
+### Expedicao - Fase 8 Auxiliares Logistica Financeira e Mapa Vivo
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em componentes auxiliares de Expedicao/Logistica, priorizando `LiveMap`, componentes de configuracao/logistica financeira e integracoes finais entre entrega, estoque, financeiro e fiscal.
+- `LiveMap` deixou de buscar entrega por chamada global direta e passou a usar `filterInContext`, respeitando contexto grupo/empresa antes de carregar destino da entrega.
+- `LiveMap` passou a aceitar `contextoValido`, `canView` e `onAudit`, exibindo bloqueio visual quando faltar contexto/permissao e auditando bloqueios/erro de ETA.
+- `ConfigFinanceiroLogistica` foi reforcado com contexto grupo/empresa, RBAC, sanitizacao de entradas, confirmacao explicita antes de salvar e auditoria de bloqueio/cancelamento/sucesso/erro.
+- Salvamento da configuracao financeira logistica passou a usar `createInContext` e `updateInContext`, preservando `group_id`, `grupo_id` e `empresa_id`.
+- `LogisticaFinanceiroPanel` passou a repassar `groupId` e auditoria para a configuracao financeira logistica.
+- Conciliacao de recebimentos e despesas logisticas agora audita cancelamento quando o usuario nao confirma a operacao.
+- Botoes de conciliacao receberam `data-permission`, `data-context-required` e `data-sensitive`.
+- Corrigidos textos e acentuacao inconsistente nos componentes alterados, mantendo comportamento e fluxo existentes.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos componentes existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em componentes restantes de Expedicao/Logistica ainda nao revisados, priorizando `TimelineEntregaVisual`, `ConfiguracaoExpedicao`, `FormularioEntrega`, `EnvioMensagemAutomatica`, `LogisticaReversa` e integracoes finais com fiscal/estoque/financeiro.
