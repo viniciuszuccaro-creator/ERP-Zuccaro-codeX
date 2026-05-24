@@ -1039,3 +1039,20 @@ Checklist inicial:
 - `git diff --check` executado sem erros.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em `ComprovanteEntregaDigital` e `RelatoriosLogistica`, revisando baixa de estoque, comprovante, relatorios operacionais, contexto grupo/empresa, RBAC, auditoria e textos.
+
+### Expedicao - Fase 8 Comprovante e Relatorios Logisticos
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `ComprovanteEntregaDigital` e `RelatoriosLogistica`.
+- `ComprovanteEntregaDigital` deixou de usar chamadas globais criticas de `Produto`, `MovimentacaoEstoque`, `Entrega` e `Pedido` e passou a operar com `filterInContext`, `createInContext` e `updateInContext`.
+- Confirmacao de entrega com baixa de estoque agora exige contexto grupo/empresa, permissao RBAC, foto do comprovante, nome do recebedor e confirmacao explicita antes de alterar registros.
+- Dados do recebedor, observacoes, produto, unidade e numero de pedido passaram por sanitizacao antes de gravar ou auditar.
+- Baixa de estoque agora valida produto existente e saldo suficiente, grava `MovimentacaoEstoque` com `group_id`, `grupo_id` e `empresa_id`, atualiza produto no contexto e audita bloqueios, erros e sucesso.
+- Criacao/atualizacao de entrega e atualizacao do pedido agora preservam `group_id`, `grupo_id` e `empresa_id`, historico de status e comprovante digital.
+- Upload de foto, captura de GPS e confirmacao de entrega receberam auditoria operacional/seguranca e marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive` quando aplicavel.
+- `RelatoriosLogistica` teve textos corrompidos/acentuacao inconsistente corrigidos, alerta visual quando faltar contexto/permissao e exportacao CSV com confirmacao explicita e auditoria de cancelamento.
+- Layout dos filtros, abas e KPIs do relatorio foi ajustado para melhor responsividade sem criar telas, modulos ou arquivos novos.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Verificacao de mojibake real e escapes literais executada sem apontamentos nos arquivos alterados.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 nos componentes restantes de Expedicao/Logistica, priorizando `ComprovanteDigital`, `DetalhesEntregaView`, `EntregasListagem` e paineis logisticos, revisando contexto grupo/empresa, RBAC, auditoria, textos e acoes sensiveis.

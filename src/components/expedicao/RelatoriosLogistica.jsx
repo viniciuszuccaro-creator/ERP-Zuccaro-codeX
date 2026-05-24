@@ -30,7 +30,7 @@ import {
 } from "recharts";
 
 /**
- * Relatórios de Logística e Expedição
+ * Relatorios de Logistica e Expedicao
  */
 export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
   const [periodoInicio, setPeriodoInicio] = useState("");
@@ -91,13 +91,13 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
     return true;
   });
 
-  // Métricas
+  // Metricas
   const totalEntregas = entregasFiltradas.length;
   const entregasRealizadas = entregasFiltradas.filter(e => e.status === "Entregue").length;
   const entregasFrustradas = entregasFiltradas.filter(e => e.status === "Entrega Frustrada").length;
   const taxaSucesso = totalEntregas > 0 ? ((entregasRealizadas / totalEntregas) * 100).toFixed(1) : 0;
 
-  // Tempo médio
+  // Tempo medio
   const entregasComTempo = entregasFiltradas.filter(e => e.data_entrega && e.data_saida);
   const tempoMedio = entregasComTempo.length > 0
     ? entregasComTempo.reduce((sum, e) => {
@@ -134,6 +134,12 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
       await auditRelatorio({ acao: "Logistica.relatorio.exportar_csv.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
       return;
     }
+    const confirmado = window.confirm("Confirma exportar o resumo logistico filtrado para CSV?");
+    if (!confirmado) {
+      await auditRelatorio({ acao: "Logistica.relatorio.exportar_csv.cancelado", sucesso: false, motivo: "confirmacao_cancelada" });
+      return;
+    }
+
     const headers = ["indicador", "valor"];
     const rows = [
       ["total_entregas", totalEntregas],
@@ -163,12 +169,20 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
   return (
     <div className={containerClass} data-permission="Expedicao.Relatorios.visualizar" data-context-required="true">
       <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
+        {(!contextoValido || !canViewReports) && (
+          <Card className="bg-red-50 border-red-300">
+            <CardContent className="p-4 text-sm text-red-800">
+              <p className="font-semibold">Relatorio bloqueado</p>
+              <p>{!contextoValido ? "Selecione um grupo/empresa para visualizar os indicadores logisticos." : "Seu perfil nao tem permissao para visualizar relatorios logisticos."}</p>
+            </CardContent>
+          </Card>
+        )}
       {/* Filtros */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex gap-4 items-end">
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-4 items-end">
             <div>
-              <Label>Período Início</Label>
+              <Label>Periodo Inicio</Label>
               <Input
                 type="date"
                 value={periodoInicio}
@@ -177,7 +191,7 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
               />
             </div>
             <div>
-              <Label>Período Fim</Label>
+              <Label>Periodo Fim</Label>
               <Input
                 type="date"
                 value={periodoFim}
@@ -201,8 +215,8 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="geral">
-        <TabsList>
+      <Tabs defaultValue="geral" className="w-full">
+        <TabsList className="w-full sm:w-auto">
           <TabsTrigger value="geral">
             <BarChart3 className="w-4 h-4 mr-2" />
             Geral
@@ -219,7 +233,7 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
 
         <TabsContent value="geral" className="space-y-6">
           {/* KPIs */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             <Card>
               <CardContent className="p-4 text-center">
                 <p className="text-xs text-slate-600">Total Entregas</p>
@@ -241,7 +255,7 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
             </Card>
             <Card className="bg-blue-50">
               <CardContent className="p-4 text-center">
-                <p className="text-xs text-blue-700">Tempo Médio</p>
+                <p className="text-xs text-blue-700">Tempo Medio</p>
                 <p className="text-3xl font-bold text-blue-900">{tempoMedio.toFixed(1)}</p>
                 <p className="text-xs text-blue-600">horas</p>
               </CardContent>
@@ -290,7 +304,7 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
               {dadosMotoristas.length === 0 && (
                 <div className="text-center py-12 text-slate-500">
                   <Truck className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                  <p>Nenhum dado disponível</p>
+                  <p>Nenhum dado disponivel</p>
                 </div>
               )}
             </CardContent>
