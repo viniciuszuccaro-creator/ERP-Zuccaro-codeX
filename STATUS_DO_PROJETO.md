@@ -1235,3 +1235,19 @@ Checklist inicial:
 - `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
 - Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em `GerarCobrancaModal` e `GeradorLinkPagamento`, reforcando PIX, boleto, ordem de liquidacao e logs de cobranca com os mesmos pilares de contexto grupo/empresa, RBAC, auditoria, sanitizacao, confirmacao e Regra-Mae.
+### Financeiro - Fase 8 Cobranca PIX, Boleto e Ordem de Liquidacao
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `GerarCobrancaModal` e `GeradorLinkPagamento`.
+- `GerarCobrancaModal` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Geracao de PIX e boleto agora exige contexto grupo/empresa, empresa selecionada, permissao RBAC financeira, valor valido e confirmacao explicita antes de gravar.
+- PIX e boleto agora preservam `group_id`, `grupo_id` e `empresa_id` em `LogCobranca` e `ContaReceber`, com sanitizacao de textos/linha digitavel e validacao de URL segura para PDF/fatura.
+- `GerarCobrancaModal` passou a auditar bloqueio por contexto, permissao ou valor invalido, cancelamento pelo usuario e sucesso da geracao de PIX/boleto.
+- Botoes sensiveis de PIX, boleto e abertura de PDF receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- `GeradorLinkPagamento` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Criacao de `PagamentoOmnichannel`, atualizacao de `ContaReceber` e criacao de `CaixaOrdemLiquidacao` passaram a usar `createInContext`/`updateInContext`, preservando contexto multiempresa.
+- Link de pagamento agora exige permissao RBAC, contexto grupo/empresa, empresa selecionada, valor valido, gateway permitido, validade limitada e confirmacao explicita antes de gerar ordem de liquidacao.
+- Link gerado e copia para area de transferencia passaram por validacao de URL segura; dados de cliente/titulo foram sanitizados antes de gravar e exibir.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
+- Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 nas telas de contas a receber/pagar e liquidacao, priorizando `ContasReceberTab`, `ContasPagarTab`, `LiquidarReceberPagar` e `CaixaCentralLiquidacao` para reforcar baixa, cancelamento, conciliacao, auditoria e rateio por grupo/empresa.

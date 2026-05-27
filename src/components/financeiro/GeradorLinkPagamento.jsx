@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -12,128 +13,183 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Link2, Copy, Check, QrCode } from "lucide-react";
+import { Link2, Copy, Check, QrCode, AlertTriangle } from "lucide-react";
 import { useUser } from "@/components/lib/UserContext";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 import { toast } from "sonner";
 
-/**
- * ETAPA 4 - Gerador de Links de Pagamento
- * Componente para gerar links de pagamento omnichannel
- */
-export default function GeradorLinkPagamento({ 
-  titulo,
-  pedido,
-  onClose 
-}) {
+const sanitizeText = (value) => String(value || "")
+  .replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, "")
+  .replace(/javascript:\s*/gi, "")
+  .trim();
+
+const isSafeUrl = (value) => {
+  try {
+    const url = new URL(String(value || ""));
+    return ["https:", "http:"].includes(url.protocol);
+  } catch {
+    return false;
+  }
+};
+
+const allowedGateways = new Set(["asaas", "mercadopago", "pagseguro"]);
+
+export default function GeradorLinkPagamento({ titulo, pedido, onClose }) {
   const { user } = useUser();
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
   const [linkGerado, setLinkGerado] = useState(null);
   const [copiado, setCopiado] = useState(false);
   const [config, setConfig] = useState({
-    gateway: "asaas", // asaas, mercadopago, pagseguro
+    gateway: "asaas",
     validade_dias: 7,
     permitir_parcelas: false,
     max_parcelas: 1
   });
 
+  const origem = titulo || pedido || {};
+  const groupId = origem?.group_id || origem?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = origem?.empresa_id || empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeGerarLink = hasPermission("Financeiro", "Contas a Receber", "editar")
+    || hasPermission("Financeiro", "ContaReceber", "editar")
+    || hasPermission("Financeiro", "Cobranca", "criar")
+    || hasPermission("Financeiro", null, "editar");
+  const valor = Number(titulo?.valor_total || titulo?.valor || pedido?.valor_total || pedido?.valor || 0);
+  const clienteNome = sanitizeText(titulo?.cliente_nome || titulo?.cliente || pedido?.cliente_nome || pedido?.cliente);
+  const bloqueado = !contextoValido || !empresaId || !podeGerarLink;
+
+  const withContext = (payload = {}) => ({
+    ...payload,
+    ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
+    ...(empresaId ? { empresa_id: empresaId } : {})
+  });
+
+  const auditLink = async (acao, sucesso, detalhes = {}) => {
+    try {
+      await base44.entities.AuditLog.create(withContext({
+        usuario_id: user?.id || null,
+        usuario_nome: user?.full_name || user?.email || "Usuario",
+        acao,
+        modulo: "Financeiro",
+        entidade: "PagamentoOmnichannel",
+        registro_id: detalhes?.pagamento_id || null,
+        tipo_auditoria: sucesso ? "entidade" : "seguranca",
+        descricao: `Gerador de link de pagamento: ${acao}`,
+        sucesso,
+        detalhes,
+        data_hora: new Date().toISOString()
+      }));
+    } catch {}
+  };
+
   const gerarLink = useMutation({
     mutationFn: async () => {
-      // Criar registro de pagamento omnichannel
-      const pagamento = await base44.entities.PagamentoOmnichannel.create({
-        group_id: titulo?.group_id || pedido?.group_id,
-        empresa_id: titulo?.empresa_id || pedido?.empresa_id,
-        origem_pagamento: "Link Pagamento",
-        id_pedido_vinculado: pedido?.id,
-        id_cliente: titulo?.cliente_id || pedido?.cliente_id,
-        cliente_nome: titulo?.cliente_nome || pedido?.cliente_nome,
-        cliente_cpf_cnpj: titulo?.cliente_cpf_cnpj || pedido?.cliente_cpf_cnpj,
-        valor_bruto: titulo?.valor_total || pedido?.valor_total || 0,
-        valor_liquido: titulo?.valor_total || pedido?.valor_total || 0,
-        forma_pagamento: "Link Pagamento",
-        gateway_utilizado: config.gateway,
-        status_transacao: "Pendente",
-        status_conferencia: "Pendente",
-        link_expiracao: new Date(Date.now() + config.validade_dias * 24 * 60 * 60 * 1000).toISOString(),
-        conta_receber_id: titulo?.id
-      });
-
-      // Gerar link fictício (em produção, integraria com gateway real)
-      const link = `https://pag.erp-integra.com.br/${config.gateway}/${pagamento.id}`;
-      
-      await base44.entities.PagamentoOmnichannel.update(pagamento.id, {
-        link_pagamento: link
-      });
-
-      // Se houver título, vincular
-      if (titulo) {
-        await base44.entities.ContaReceber.update(titulo.id, {
-          link_pagamento_gerado: link,
-          data_link_pagamento: new Date().toISOString()
-        });
+      if (!contextoValido || !empresaId) {
+        await auditLink("bloqueado_sem_contexto", false, { titulo_id: titulo?.id, pedido_id: pedido?.id });
+        throw new Error("Selecione uma empresa do grupo antes de gerar o link.");
+      }
+      if (!podeGerarLink) {
+        await auditLink("bloqueado_sem_permissao", false, { permissao: "Financeiro.ContaReceber.editar" });
+        throw new Error("Sem permissao para gerar link de pagamento.");
+      }
+      if (!valor || valor <= 0) {
+        await auditLink("bloqueado_valor_invalido", false, { valor });
+        throw new Error("Informe um titulo ou pedido com valor valido.");
+      }
+      const gateway = allowedGateways.has(config.gateway) ? config.gateway : "asaas";
+      const validadeDias = Math.min(Math.max(Number(config.validade_dias) || 7, 1), 30);
+      const confirmado = window.confirm("Gerar link de pagamento e ordem de liquidacao pendente? Esta acao sera auditada.");
+      if (!confirmado) {
+        await auditLink("cancelado_pelo_usuario", false, { valor, gateway });
+        throw new Error("Geracao cancelada pelo usuario.");
       }
 
-      // Criar ordem de liquidação pendente
-      await base44.entities.CaixaOrdemLiquidacao.create({
-        group_id: pagamento.group_id,
-        empresa_id: pagamento.empresa_id,
+      const pagamento = await createInContext("PagamentoOmnichannel", withContext({
+        origem_pagamento: "Link Pagamento",
+        id_pedido_vinculado: pedido?.id || null,
+        id_cliente: titulo?.cliente_id || pedido?.cliente_id || null,
+        cliente_nome: clienteNome,
+        cliente_cpf_cnpj: sanitizeText(titulo?.cliente_cpf_cnpj || pedido?.cliente_cpf_cnpj),
+        valor_bruto: valor,
+        valor_liquido: valor,
+        forma_pagamento: "Link Pagamento",
+        gateway_utilizado: gateway,
+        status_transacao: "Pendente",
+        status_conferencia: "Pendente",
+        link_expiracao: new Date(Date.now() + validadeDias * 24 * 60 * 60 * 1000).toISOString(),
+        conta_receber_id: titulo?.id || null
+      }));
+
+      const link = `https://pag.erp-integra.com.br/${gateway}/${encodeURIComponent(pagamento.id)}`;
+      if (!isSafeUrl(link)) throw new Error("Link de pagamento invalido.");
+
+      await updateInContext("PagamentoOmnichannel", pagamento.id, withContext({ link_pagamento: link }));
+
+      if (titulo?.id) {
+        await updateInContext("ContaReceber", titulo.id, withContext({
+          link_pagamento_gerado: link,
+          url_fatura: link,
+          data_link_pagamento: new Date().toISOString(),
+          status_cobranca: "gerada_simulada",
+          forma_cobranca: "Link Pagamento",
+          pagamento_omnichannel_id: pagamento.id
+        }));
+      }
+
+      await createInContext("CaixaOrdemLiquidacao", withContext({
         tipo_operacao: "Recebimento",
         origem: "Omnichannel",
         titulos_vinculados: titulo ? [{
           titulo_id: titulo.id,
           tipo_titulo: "ContaReceber",
-          numero_titulo: titulo.numero_titulo,
-          valor_titulo: titulo.valor_total,
-          cliente_fornecedor_id: titulo.cliente_id,
-          cliente_fornecedor_nome: titulo.cliente_nome
+          numero_titulo: sanitizeText(titulo.numero_titulo || titulo.numero_documento),
+          valor_titulo: valor,
+          cliente_fornecedor_id: titulo.cliente_id || null,
+          cliente_fornecedor_nome: clienteNome
         }] : [],
-        valor_total: pagamento.valor_bruto,
+        valor_total: valor,
         forma_pagamento_pretendida: "Link Pagamento",
         status: "Pendente",
         data_ordem: new Date().toISOString(),
-        usuario_solicitante_id: user.id,
+        usuario_solicitante_id: user?.id || null,
         pagamento_omnichannel_id: pagamento.id,
-        pedido_omnichannel_id: pedido?.id
-      });
+        pedido_omnichannel_id: pedido?.id || null
+      }));
 
-      // Registrar auditoria
-      await base44.entities.AuditLog.create({
-        group_id: pagamento.group_id,
-        empresa_id: pagamento.empresa_id,
-        usuario_id: user.id,
-        usuario_nome: user.full_name,
-        acao: "Geração de Link de Pagamento",
-        modulo: "Financeiro",
-        entidade: "PagamentoOmnichannel",
-        entidade_id: pagamento.id,
-        detalhes: {
-          valor: pagamento.valor_bruto,
-          gateway: config.gateway,
-          validade_dias: config.validade_dias,
-          titulo_id: titulo?.id,
-          pedido_id: pedido?.id
-        }
+      await auditLink("link_pagamento_gerado", true, {
+        pagamento_id: pagamento.id,
+        valor,
+        gateway,
+        validade_dias: validadeDias,
+        titulo_id: titulo?.id || null,
+        pedido_id: pedido?.id || null
       });
 
       return { link, pagamento };
     },
     onSuccess: (data) => {
       setLinkGerado(data.link);
-      queryClient.invalidateQueries(['contas-receber']);
-      queryClient.invalidateQueries(['pagamentos-omnichannel']);
+      queryClient.invalidateQueries({ queryKey: ["contas-receber"] });
+      queryClient.invalidateQueries({ queryKey: ["contasReceber"] });
+      queryClient.invalidateQueries({ queryKey: ["pagamentos-omnichannel"] });
+      queryClient.invalidateQueries({ queryKey: ["ordens-liquidacao"] });
       toast.success("Link de pagamento gerado com sucesso!");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao gerar link de pagamento");
     }
   });
 
   const copiarLink = () => {
-    if (linkGerado) {
-      navigator.clipboard.writeText(linkGerado);
-      setCopiado(true);
-      toast.success("Link copiado!");
-      setTimeout(() => setCopiado(false), 2000);
-    }
+    if (!linkGerado || !isSafeUrl(linkGerado)) return;
+    navigator.clipboard.writeText(linkGerado);
+    setCopiado(true);
+    toast.success("Link copiado!");
+    setTimeout(() => setCopiado(false), 2000);
   };
-
-  const valor = titulo?.valor_total || pedido?.valor_total || 0;
 
   return (
     <Card className="w-full">
@@ -149,23 +205,32 @@ export default function GeradorLinkPagamento({
             <div className="p-4 bg-slate-50 rounded-lg">
               <div className="flex justify-between mb-2">
                 <span className="text-sm text-slate-600">Cliente:</span>
-                <span className="font-medium">
-                  {titulo?.cliente_nome || pedido?.cliente_nome}
-                </span>
+                <span className="font-medium">{clienteNome || "-"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-slate-600">Valor:</span>
                 <span className="text-lg font-bold text-green-600">
-                  R$ {valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                  R$ {valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </span>
               </div>
             </div>
 
+            {bloqueado && (
+              <Alert className="border-amber-300 bg-amber-50">
+                <AlertTriangle className="w-4 h-4 text-amber-600" />
+                <AlertDescription className="text-amber-900">
+                  {!contextoValido || !empresaId
+                    ? "Selecione uma empresa do grupo antes de gerar o link."
+                    : "Seu perfil nao tem permissao para gerar link de pagamento."}
+                </AlertDescription>
+              </Alert>
+            )}
+
             <div>
               <Label>Gateway de Pagamento</Label>
-              <Select 
+              <Select
                 value={config.gateway}
-                onValueChange={(v) => setConfig({...config, gateway: v})}
+                onValueChange={(v) => setConfig({ ...config, gateway: allowedGateways.has(v) ? v : "asaas" })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -180,20 +245,26 @@ export default function GeradorLinkPagamento({
 
             <div>
               <Label>Validade do Link (dias)</Label>
-              <Input 
+              <Input
                 type="number"
+                min="1"
+                max="30"
                 value={config.validade_dias}
-                onChange={(e) => setConfig({...config, validade_dias: parseInt(e.target.value) || 7})}
+                onChange={(e) => setConfig({ ...config, validade_dias: Math.min(Math.max(parseInt(e.target.value, 10) || 7, 1), 30) })}
               />
             </div>
 
-            <Button 
+            <Button
               onClick={() => gerarLink.mutate()}
               className="w-full bg-blue-600 hover:bg-blue-700"
-              disabled={gerarLink.isPending}
+              disabled={gerarLink.isPending || bloqueado}
+              data-action="gerar-link-pagamento-omnichannel"
+              data-permission="Financeiro.ContaReceber.editar"
+              data-context-required="group_id,empresa_id"
+              data-sensitive="true"
             >
               <Link2 className="w-4 h-4 mr-2" />
-              Gerar Link
+              {gerarLink.isPending ? "Gerando..." : "Gerar Link"}
             </Button>
           </>
         ) : (
@@ -203,16 +274,10 @@ export default function GeradorLinkPagamento({
                 <Check className="w-5 h-5" />
                 Link gerado com sucesso!
               </div>
-              
-              <div className="p-3 bg-white rounded border break-all text-sm">
-                {linkGerado}
-              </div>
 
-              <Button 
-                onClick={copiarLink}
-                variant="outline"
-                className="w-full"
-              >
+              <div className="p-3 bg-white rounded border break-all text-sm">{linkGerado}</div>
+
+              <Button onClick={copiarLink} variant="outline" className="w-full" title="Copiar link">
                 {copiado ? (
                   <>
                     <Check className="w-4 h-4 mr-2 text-green-600" />
@@ -229,25 +294,17 @@ export default function GeradorLinkPagamento({
 
             <div className="text-center p-4 bg-slate-50 rounded">
               <QrCode className="w-12 h-12 mx-auto mb-2 text-slate-400" />
-              <p className="text-sm text-slate-600">
-                QR Code será gerado pelo gateway
-              </p>
+              <p className="text-sm text-slate-600">QR Code sera gerado pelo gateway</p>
             </div>
 
             <div className="space-y-2 text-sm text-slate-600">
-              <p>✓ Link expira em {config.validade_dias} dias</p>
-              <p>✓ Pagamento será registrado automaticamente após confirmação</p>
-              <p>✓ Cliente receberá notificação por e-mail/WhatsApp</p>
+              <p>Link expira em {config.validade_dias} dias</p>
+              <p>Pagamento sera registrado automaticamente apos confirmacao</p>
+              <p>Cliente recebera notificacao por e-mail/WhatsApp</p>
             </div>
 
             {onClose && (
-              <Button 
-                onClick={onClose}
-                variant="outline"
-                className="w-full"
-              >
-                Fechar
-              </Button>
+              <Button onClick={onClose} variant="outline" className="w-full">Fechar</Button>
             )}
           </>
         )}
