@@ -1220,3 +1220,18 @@ Checklist inicial:
 - `git diff --check` executado sem erros.
 - Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 nas integracoes finais de Expedicao/Comercial com financeiro e fiscal, priorizando componentes que geram cobranca, link de pagamento, boleto, contas a receber e atualizacao de status apos entrega/faturamento.
+### Financeiro/CRM - Fase 8 Link de Pagamento e Boleto no Chat
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 nas integracoes finais de Expedicao/Comercial com financeiro e fiscal, priorizando cobranca, link de pagamento, boleto e contas a receber.
+- `GerarLinkPagamentoModal` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Geracao de link de pagamento agora exige contexto de grupo/empresa, empresa selecionada e permissao RBAC financeira antes de executar.
+- Link de pagamento agora exige confirmacao explicita, sanitiza campos do cliente, valida URL segura, preserva `group_id`, `grupo_id` e `empresa_id` em `PagamentoOmnichannel` e `ContaReceber`, e audita bloqueio, cancelamento e sucesso.
+- `GerarBoletoChat` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Consulta de titulos no chat passou a usar `filterInContext`, respeitando grupo/empresa e permissao antes de listar contas a receber.
+- Geracao de 2a via de boleto pelo chat agora exige contexto grupo/empresa, permissao RBAC, confirmacao explicita, sanitizacao da linha digitavel/textos, validacao de URL segura e auditoria de bloqueio/cancelamento/sucesso.
+- Atualizacoes em `ContaReceber` e `ConversaOmnicanal` passaram a usar `updateInContext`, mantendo `group_id`, `grupo_id` e `empresa_id` no fluxo de envio de boleto ao cliente.
+- Botoes sensiveis receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
+- Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `GerarCobrancaModal` e `GeradorLinkPagamento`, reforcando PIX, boleto, ordem de liquidacao e logs de cobranca com os mesmos pilares de contexto grupo/empresa, RBAC, auditoria, sanitizacao, confirmacao e Regra-Mae.
