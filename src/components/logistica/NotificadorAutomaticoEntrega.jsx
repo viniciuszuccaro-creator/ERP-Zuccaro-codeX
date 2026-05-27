@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -119,7 +119,7 @@ export default function NotificadorAutomaticoEntrega({ pedido, entrega, onClose,
 
       if (canal === "E-mail" && pedido?.cliente_email) {
         await base44.integrations.Core.SendEmail({
-          to: pedido.cliente_email,
+          to: sanitizeText(pedido.cliente_email),
           subject: `Atualizacao do Pedido #${pedido.numero_pedido}`,
           body: mensagemFinal
         });
@@ -174,7 +174,7 @@ export default function NotificadorAutomaticoEntrega({ pedido, entrega, onClose,
 
         <div>
           <Label>Mensagem (personalize ou use a padrao)</Label>
-          <Textarea value={mensagemCustom} onChange={(e) => setMensagemCustom(e.target.value)} placeholder={mensagemFinal} rows={8} className="font-mono text-sm" />
+          <Textarea value={mensagemCustom} onChange={(e) => setMensagemCustom(sanitizeText(e.target.value))} placeholder={mensagemFinal} rows={8} className="font-mono text-sm" />
           <p className="text-xs text-slate-500 mt-1">Deixe em branco para usar a mensagem padrao automatica.</p>
         </div>
 

@@ -1204,3 +1204,19 @@ Checklist inicial:
 - `git diff --check` executado sem erros apos ajuste de espaco final.
 - Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em componentes filhos chamados por `PedidosEntregaTab`, priorizando `NotificadorAutomaticoEntrega`, `ComprovanteEntregaDigital`, `RegistroOcorrenciaLogistica` e `IntegracaoRomaneio`, reforcando contexto, RBAC, auditoria, sanitizacao e confirmacao nas acoes internas.
+### Expedicao - Fase 8 Filhos de Pedidos para Entrega
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `NotificadorAutomaticoEntrega`, `ComprovanteEntregaDigital`, `RegistroOcorrenciaLogistica` e `IntegracaoRomaneio`.
+- `IntegracaoRomaneio` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Romaneio passou a usar `filterInContext`, `createInContext` e `updateInContext` para pedidos, motoristas, veiculos, romaneio, entregas e status do pedido.
+- Criacao de romaneio agora exige contexto grupo/empresa, permissao RBAC, motorista/veiculo/placa/pedidos obrigatorios e confirmacao explicita antes de gravar.
+- Romaneio, entregas criadas e pedidos atualizados preservam `group_id`, `grupo_id` e `empresa_id`, com historico de status no pedido.
+- Criacao de romaneio passou a auditar bloqueio, cancelamento e sucesso com usuario, timestamp, grupo, empresa e quantidade de entregas.
+- Campos de motorista, veiculo, placa, cliente e pedido no romaneio passaram por sanitizacao antes de exibir ou gravar.
+- `NotificadorAutomaticoEntrega` passou a sanitizar mensagem personalizada e e-mail usado no envio.
+- `ComprovanteEntregaDigital` passou a sanitizar campos digitados e validar abertura de foto por URL segura.
+- `RegistroOcorrenciaLogistica` passou a bloquear upload sem contexto/permissao, validar imagem de ate 8MB, sanitizar descricao/resolucao e proteger abertura de foto.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 nas integracoes finais de Expedicao/Comercial com financeiro e fiscal, priorizando componentes que geram cobranca, link de pagamento, boleto, contas a receber e atualizacao de status apos entrega/faturamento.

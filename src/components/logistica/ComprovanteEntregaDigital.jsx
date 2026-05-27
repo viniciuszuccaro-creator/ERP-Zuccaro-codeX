@@ -307,7 +307,7 @@ export default function ComprovanteEntregaDigital({ pedido, entrega, onSuccess, 
                 {uploadando ? "Enviando..." : fotoComprovante ? "Foto enviada" : "Tirar/Enviar Foto"}
               </Button>
               {fotoComprovante && (
-                <Button type="button" variant="outline" onClick={() => window.open(fotoComprovante, "_blank")}>
+                <Button type="button" variant="outline" onClick={() => /^https?:\/\//i.test(String(fotoComprovante || "")) && window.open(fotoComprovante, "_blank", "noopener,noreferrer")}>
                   Ver Foto
                 </Button>
               )}
@@ -319,22 +319,22 @@ export default function ComprovanteEntregaDigital({ pedido, entrega, onSuccess, 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label className="flex items-center gap-2"><User className="w-4 h-4" /> Nome de quem recebeu *</Label>
-            <Input value={nomeRecebedor} onChange={(e) => setNomeRecebedor(e.target.value)} placeholder="Nome completo" disabled={!contextoValido || !canConfirmDelivery} />
+            <Input value={nomeRecebedor} onChange={(e) => setNomeRecebedor(sanitizeText(e.target.value))} placeholder="Nome completo" disabled={!contextoValido || !canConfirmDelivery} />
           </div>
           <div>
             <Label className="flex items-center gap-2"><FileText className="w-4 h-4" /> CPF/RG do recebedor</Label>
-            <Input value={documentoRecebedor} onChange={(e) => setDocumentoRecebedor(e.target.value)} placeholder="000.000.000-00" disabled={!contextoValido || !canConfirmDelivery} />
+            <Input value={documentoRecebedor} onChange={(e) => setDocumentoRecebedor(sanitizeText(e.target.value))} placeholder="000.000.000-00" disabled={!contextoValido || !canConfirmDelivery} />
           </div>
         </div>
 
         <div>
           <Label>Cargo/funcao do recebedor</Label>
-          <Input value={cargoRecebedor} onChange={(e) => setCargoRecebedor(e.target.value)} placeholder="Ex: Gerente, Almoxarife, Proprietario..." disabled={!contextoValido || !canConfirmDelivery} />
+          <Input value={cargoRecebedor} onChange={(e) => setCargoRecebedor(sanitizeText(e.target.value))} placeholder="Ex: Gerente, Almoxarife, Proprietario..." disabled={!contextoValido || !canConfirmDelivery} />
         </div>
 
         <div>
           <Label>Observacoes da entrega</Label>
-          <Textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} placeholder="Ex: Entregue em perfeito estado, sem avarias..." rows={3} disabled={!contextoValido || !canConfirmDelivery} />
+          <Textarea value={observacoes} onChange={(e) => setObservacoes(sanitizeText(e.target.value))} placeholder="Ex: Entregue em perfeito estado, sem avarias..." rows={3} disabled={!contextoValido || !canConfirmDelivery} />
         </div>
 
         <Card className={geolocalizacao ? "bg-green-50 border-green-300" : "bg-slate-50"}>

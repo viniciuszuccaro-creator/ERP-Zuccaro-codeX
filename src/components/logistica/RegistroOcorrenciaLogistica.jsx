@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,6 +63,16 @@ export default function RegistroOcorrenciaLogistica({ pedido, entrega, onClose, 
   const handleFotoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    if (!contextoValido || !canRegister) {
+      await auditarOcorrencia({ acao: "OcorrenciaLogistica.upload_foto_bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
+      toast.error("Contexto e permissao sao obrigatorios para enviar foto.");
+      return;
+    }
+    if (!file.type?.startsWith("image/") || file.size > 8 * 1024 * 1024) {
+      await auditarOcorrencia({ acao: "OcorrenciaLogistica.upload_foto_rejeitado", sucesso: false, motivo: "arquivo_invalido", detalhes: { tipo: file.type, tamanho: file.size } });
+      toast.error("Envie uma imagem valida com no maximo 8MB.");
+      return;
+    }
     setUploadando(true);
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
@@ -189,10 +199,10 @@ export default function RegistroOcorrenciaLogistica({ pedido, entrega, onClose, 
           </Select>
         </div>
 
-        <div><Label>Descricao Detalhada *</Label><Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descreva o que aconteceu em detalhes..." rows={4} /></div>
-        <div><Label>Acao Tomada / Resolucao</Label><Textarea value={resolucao} onChange={(e) => setResolucao(e.target.value)} placeholder="O que foi feito para resolver? Quando sera reagendado?" rows={3} /></div>
+        <div><Label>Descricao Detalhada *</Label><Textarea value={descricao} onChange={(e) => setDescricao(sanitizeText(e.target.value))} placeholder="Descreva o que aconteceu em detalhes..." rows={4} /></div>
+        <div><Label>Acao Tomada / Resolucao</Label><Textarea value={resolucao} onChange={(e) => setResolucao(sanitizeText(e.target.value))} placeholder="O que foi feito para resolver? Quando sera reagendado?" rows={3} /></div>
 
-        <Card className="bg-slate-50"><CardContent className="p-4"><Label className="mb-2 block">Foto da Ocorrencia (opcional)</Label><div className="flex gap-3"><Button variant="outline" onClick={() => document.getElementById("foto-ocorrencia-input").click()} disabled={uploadando} className="flex-1"><Camera className="w-4 h-4 mr-2" />{uploadando ? "Enviando..." : fotoUrl ? "Foto enviada" : "Enviar Foto"}</Button>{fotoUrl && <><Button variant="outline" onClick={() => window.open(fotoUrl, "_blank", "noopener,noreferrer")}>Ver</Button><Button variant="outline" onClick={() => setFotoUrl(null)} className="text-red-600"><X className="w-4 h-4" /></Button></>}</div><input id="foto-ocorrencia-input" type="file" accept="image/*" capture="environment" onChange={handleFotoUpload} className="hidden" /></CardContent></Card>
+        <Card className="bg-slate-50"><CardContent className="p-4"><Label className="mb-2 block">Foto da Ocorrencia (opcional)</Label><div className="flex gap-3"><Button variant="outline" onClick={() => document.getElementById("foto-ocorrencia-input").click()} disabled={uploadando || !contextoValido || !canRegister} className="flex-1"><Camera className="w-4 h-4 mr-2" />{uploadando ? "Enviando..." : fotoUrl ? "Foto enviada" : "Enviar Foto"}</Button>{fotoUrl && <><Button variant="outline" onClick={() => /^https?:\/\//i.test(String(fotoUrl || "")) && window.open(fotoUrl, "_blank", "noopener,noreferrer")}>Ver</Button><Button variant="outline" onClick={() => setFotoUrl(null)} className="text-red-600"><X className="w-4 h-4" /></Button></>}</div><input id="foto-ocorrencia-input" type="file" accept="image/*" capture="environment" onChange={handleFotoUpload} className="hidden" /></CardContent></Card>
 
         {tipoOcorrencia === "Avaria" && <Card className="bg-red-50 border-red-300"><CardContent className="p-3 text-sm text-red-800"><p className="font-semibold">Atencao - Avaria:</p><p>Notifique o setor de qualidade e tire fotos detalhadas dos danos.</p></CardContent></Card>}
         {tipoOcorrencia === "Entrega Frustrada" && <Card className="bg-orange-50 border-orange-300"><CardContent className="p-3 text-sm text-orange-800"><p className="font-semibold">Entrega Frustrada:</p><p>Reagende a entrega e confirme novo contato com o cliente.</p></CardContent></Card>}
