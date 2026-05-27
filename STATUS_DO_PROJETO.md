@@ -1188,3 +1188,19 @@ Checklist inicial:
 - `git diff --check` executado sem erros.
 - Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em `PedidosEntregaTab`, conectando pedido, entrega, cobranca e emissao fiscal com os mesmos pilares de contexto grupo/empresa, RBAC, auditoria, sanitizacao, confirmacao e Regra-Mae.
+### Comercial/Expedicao - Fase 8 Pedidos para Entrega
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `PedidosEntregaTab`, conectando pedido, entrega, cobranca e emissao fiscal com contexto grupo/empresa, RBAC, auditoria, sanitizacao, confirmacao e Regra-Mae.
+- `PedidosEntregaTab` foi reforcado sem criar tela, modulo, componente ou arquivo novo.
+- Abertura de paineis logisticos, analytics, roteirizacao e romaneio agora passa por helper central com validacao de contexto grupo/empresa, permissao e auditoria.
+- Criacao de romaneio com pedidos filtrados agora exige confirmacao explicita e audita bloqueio/cancelamento/abertura.
+- Busca por pedido/cliente passou a sanitizar entrada antes de filtrar.
+- Abertura de notificacao, comprovante e ocorrencia passou por helper auditado, respeitando permissao e contexto antes de abrir os fluxos filhos.
+- Status de pedido/entrega e baixa automatica de estoque preservam `group_id`, `grupo_id` e `empresa_id` por helper de contexto.
+- Baixa de estoque manteve confirmacao obrigatoria, auditoria de estoque insuficiente e sanitizacao da descricao do produto na movimentacao.
+- Links externos de mapa agora so aparecem quando usam URL segura `http` ou `https`.
+- `TimelineEntregaVisual` passou a receber contexto, permissao e auditoria a partir de `PedidosEntregaTab`.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros apos ajuste de espaco final.
+- Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em componentes filhos chamados por `PedidosEntregaTab`, priorizando `NotificadorAutomaticoEntrega`, `ComprovanteEntregaDigital`, `RegistroOcorrenciaLogistica` e `IntegracaoRomaneio`, reforcando contexto, RBAC, auditoria, sanitizacao e confirmacao nas acoes internas.
