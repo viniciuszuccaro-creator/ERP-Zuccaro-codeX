@@ -13,39 +13,63 @@ import { toast } from 'sonner';
  * Permite: Pedido Inteiro OU Etapa Específica
  * WINDOW MODE READY
  */
-export default function GerarNFeModal({ open, onClose, pedidoData, onEmitir, windowMode = false }) {
+export default function GerarNFeModal({ open, onClose, pedidoData, onEmitir, windowMode = false, contextoValido = true, canEmitir = true, empresaId = null, groupId = null, onAudit }) {
   const [escopo, setEscopo] = useState('pedido_inteiro'); // ou 'etapa_especifica'
   const [etapaSelecionada, setEtapaSelecionada] = useState(null);
 
   const etapas = pedidoData?.etapas_entrega || [];
   const etapasPendentes = etapas.filter(e => !e.faturada);
+  const sanitizeFiscalText = (value) => String(value || '').replace(/[<>]/g, '').replace(/javascript:/gi, '').trim();
+  const contextoEmissaoValido = contextoValido && canEmitir && Boolean(empresaId);
+  const registrarAuditoria = async (acao, detalhes = {}, sucesso = true) => {
+    if (typeof onAudit === 'function') {
+      await onAudit(acao, { origem: 'GerarNFeModal', ...detalhes }, sucesso);
+    }
+  };
 
-  const handleEmitir = () => {
+  const handleEmitir = async () => {
+    if (!contextoEmissaoValido) {
+      await registrarAuditoria('nfe_modal_emitir_bloqueada', { motivo: !empresaId ? 'empresa_faturadora_obrigatoria' : 'contexto_ou_permissao', pedido_id: pedidoData?.id }, false);
+      toast.error('Selecione uma empresa faturadora e confirme permissao para emitir NF-e.');
+      return;
+    }
+
     if (escopo === 'etapa_especifica' && !etapaSelecionada) {
       toast.error('Selecione uma etapa');
       return;
     }
 
+    const etapaEscolhidaLocal = etapas.find(e => e.id === etapaSelecionada);
     const dadosNFe = {
       escopo,
       pedido_id: pedidoData?.id,
-      numero_pedido: pedidoData?.numero_pedido,
+      numero_pedido: sanitizeFiscalText(pedidoData?.numero_pedido),
       cliente_id: pedidoData?.cliente_id,
-      cliente_nome: pedidoData?.cliente_nome,
+      cliente_nome: sanitizeFiscalText(pedidoData?.cliente_nome),
       etapa_id: escopo === 'etapa_especifica' ? etapaSelecionada : null,
-      itens: escopo === 'pedido_inteiro' 
-        ? [...(pedidoData.itens_revenda || []), ...(pedidoData.itens_armado_padrao || []), ...(pedidoData.itens_corte_dobra || [])]
-        : (etapas.find(e => e.id === etapaSelecionada)?.itens_etapa || []),
+      itens: escopo === 'pedido_inteiro'
+        ? [...(pedidoData?.itens_revenda || []), ...(pedidoData?.itens_armado_padrao || []), ...(pedidoData?.itens_corte_dobra || [])]
+        : (etapaEscolhidaLocal?.itens_etapa || []),
       valor_total: escopo === 'pedido_inteiro'
-        ? pedidoData.valor_total
-        : (etapas.find(e => e.id === etapaSelecionada)?.valor_total_etapa || 0),
-      observacoes_nfe: pedidoData?.observacoes_nfe,
-      cfop: pedidoData?.cfop_pedido || '5102',
-      natureza_operacao: pedidoData?.natureza_operacao || 'Venda de mercadoria'
+        ? (pedidoData?.valor_total || 0)
+        : (etapaEscolhidaLocal?.valor_total_etapa || 0),
+      observacoes_nfe: sanitizeFiscalText(pedidoData?.observacoes_nfe),
+      cfop: sanitizeFiscalText(pedidoData?.cfop_pedido || '5102'),
+      natureza_operacao: sanitizeFiscalText(pedidoData?.natureza_operacao || 'Venda de mercadoria'),
+      empresa_id: empresaId,
+      empresa_faturamento_id: empresaId,
+      group_id: groupId,
+      grupo_id: groupId
     };
 
-    onEmitir(dadosNFe);
-    toast.success('✅ NF-e será gerada com os dados informados');
+    if (!window.confirm('Confirmar emissao da NF-e com este escopo?')) {
+      await registrarAuditoria('nfe_modal_emitir_cancelada', { motivo: 'confirmacao_cancelada', pedido_id: pedidoData?.id, escopo }, false);
+      return;
+    }
+
+    await Promise.resolve(onEmitir?.(dadosNFe));
+    await registrarAuditoria('nfe_modal_emitida', { pedido_id: pedidoData?.id, escopo, etapa_id: dadosNFe.etapa_id }, true);
+    toast.success('NF-e sera gerada com os dados informados');
   };
 
   const etapaEscolhida = etapas.find(e => e.id === etapaSelecionada);
@@ -57,6 +81,15 @@ export default function GerarNFeModal({ open, onClose, pedidoData, onEmitir, win
           <Receipt className="w-6 h-6 text-purple-600" />
           <h2 className="text-xl font-bold">Emitir NF-e - Escolha o Escopo</h2>
         </div>
+      )}
+
+      {!contextoEmissaoValido && (
+        <Alert className="border-red-300 bg-red-50">
+          <AlertTriangle className="w-4 h-4 text-red-600" />
+          <AlertDescription className="text-sm text-red-700 ml-6">
+            Para emitir NF-e, selecione uma empresa faturadora e confirme permissao fiscal no contexto atual.
+          </AlertDescription>
+        </Alert>
       )}
 
       <div className="space-y-4">
@@ -217,7 +250,11 @@ export default function GerarNFeModal({ open, onClose, pedidoData, onEmitir, win
         <Button 
           onClick={handleEmitir}
           className="bg-purple-600 hover:bg-purple-700"
-          disabled={escopo === 'etapa_especifica' && !etapaSelecionada}
+          disabled={!contextoEmissaoValido || (escopo === 'etapa_especifica' && !etapaSelecionada)}
+          data-action="Fiscal.NotaFiscal.emitir"
+          data-permission="Fiscal.NotaFiscal.emitir"
+          data-context-required="true"
+          data-sensitive="true"
         >
           <Receipt className="w-4 h-4 mr-2" />
           Gerar NF-e

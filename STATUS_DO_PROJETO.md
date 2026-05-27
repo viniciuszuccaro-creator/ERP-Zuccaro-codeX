@@ -1174,3 +1174,17 @@ Checklist inicial:
 - `git diff --check` executado sem erros.
 - Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em `GerarNFeModal`, `FechamentoFinanceiroTab` e `PedidosEntregaTab`, conectando os mesmos pilares de contexto grupo/empresa, RBAC, auditoria, sanitizacao, confirmacao e Regra-Mae nos fluxos de emissao, cobranca, entrega e fechamento financeiro.
+### Comercial/Fiscal - Fase 8 Emissao no Fechamento Financeiro
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `GerarNFeModal` e `FechamentoFinanceiroTab`.
+- `FechamentoFinanceiroTab` foi reforcado sem criar tela, modulo, componente ou arquivo novo.
+- Botao de emissao de NF-e no fechamento financeiro agora valida contexto grupo/empresa, empresa faturadora obrigatoria e permissao fiscal antes de abrir o modal.
+- `FechamentoFinanceiroTab` passou a auditar bloqueio de abertura e emissao de NF-e com `group_id`, `grupo_id`, `empresa_id`, usuario, timestamp e pedido relacionado.
+- Campos financeiros/fiscais sensiveis do fechamento receberam sanitizacao ou normalizacao antes de atualizar o estado do pedido, incluindo desconto, parcelas, intervalo, observacoes, CFOP e natureza da operacao.
+- `GerarNFeModal` passou a receber contexto, permissao, empresa faturadora e auditoria do fluxo pai, mantendo o componente existente.
+- Emissao pelo modal agora bloqueia falta de contexto/permissao/empresa, exige confirmacao explicita, sanitiza dados fiscais e preserva `group_id`, `grupo_id`, `empresa_id` e `empresa_faturamento_id` no payload.
+- Botao sensivel de emissao recebeu marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `PedidosEntregaTab`, conectando pedido, entrega, cobranca e emissao fiscal com os mesmos pilares de contexto grupo/empresa, RBAC, auditoria, sanitizacao, confirmacao e Regra-Mae.
