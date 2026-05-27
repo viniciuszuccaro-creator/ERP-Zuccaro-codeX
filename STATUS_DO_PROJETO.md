@@ -1159,3 +1159,18 @@ Checklist inicial:
 - `git diff --check` executado sem erros.
 - Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 revisando os fluxos comerciais que disparam entrega, NF-e, cobranca e fechamento financeiro, priorizando `GerarNFeModal`, `NotasFiscaisTab`, `FechamentoFinanceiroTab` e `PedidosEntregaTab`.
+
+### Comercial/Fiscal - Fase 8 Notas Fiscais
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 nos fluxos comerciais que disparam entrega, NF-e, cobranca e fechamento financeiro, iniciando por `NotasFiscaisTab`.
+- `NotasFiscaisTab` foi reforcada sem criar tela, modulo, componente ou arquivo novo.
+- Criacao, edicao e cancelamento de NF-e agora validam contexto grupo/empresa, empresa faturadora obrigatoria e permissao RBAC antes de executar a acao sensivel.
+- Payloads de Nota Fiscal passaram a preservar `group_id`, `grupo_id`, `empresa_id` e `empresa_faturamento_id` nos fluxos de criacao, edicao e cancelamento.
+- Salvamento e cancelamento de NF-e agora exigem confirmacao explicita antes da acao, auditando cancelamento pelo usuario, bloqueio por contexto/permissao e sucesso operacional.
+- Motivo de cancelamento e campos textuais principais da NF-e passaram por sanitizacao antes de gravar ou enviar ao simulador fiscal.
+- Log fiscal do cancelamento passou a registrar tambem contexto de grupo e empresa.
+- Botoes sensiveis de criar, salvar, exportar e cancelar NF-e receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive` quando aplicavel.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `GerarNFeModal`, `FechamentoFinanceiroTab` e `PedidosEntregaTab`, conectando os mesmos pilares de contexto grupo/empresa, RBAC, auditoria, sanitizacao, confirmacao e Regra-Mae nos fluxos de emissao, cobranca, entrega e fechamento financeiro.
