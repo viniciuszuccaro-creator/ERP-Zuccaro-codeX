@@ -56,6 +56,13 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
     canEdit('Financeiro', 'Contas a Pagar') ||
     hasPermission('Financeiro', null, 'baixar');
   const controlesDesabilitados = !contextoValido || !podeOperarCaixa;
+  const empresaId = empresaAtual?.id || null;
+  const podeCriarEntregaPDV = hasPermission('Expedicao', 'Entrega', 'criar') || hasPermission('Expedicao', 'Entregas', 'criar') || hasPermission('Expedição', 'Entregas', 'criar');
+  const podeEmitirNFePDV = hasPermission('Fiscal', 'Notas Fiscais', 'emitir') || hasPermission('Fiscal', 'Notas Fiscais', 'criar') || hasPermission('Fiscal', null, 'emitir');
+  const podeCriarReceberPDV = canCreate('Financeiro', 'Contas a Receber') || hasPermission('Financeiro', 'Contas a Receber', 'criar') || hasPermission('Financeiro', null, 'criar');
+  const nfeBloqueada = emitirNFe && (!empresaId || !podeEmitirNFePDV || !clienteSelecionado);
+  const entregaBloqueada = tipoEntrega === 'Entrega' && (!empresaId || !clienteSelecionado || !podeCriarEntregaPDV);
+  const financeiroBloqueado = (emitirBoleto || formasPagamentoVenda.some(f => f.forma_descricao !== 'Dinheiro')) && !podeCriarReceberPDV;
   
   // Hook centralizado de formas de pagamento
   const { formasPagamento, obterFormasPorContexto, obterConfiguracao, isLoading: loadingFormas } = useFormasPagamento({ empresa_id: empresaAtual?.id });
@@ -150,12 +157,35 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
   const totalVenda = subtotal - valorDesconto + valorAcrescimo;
   const troco = totalPago - totalVenda;
 
+  const sanitizePDVText = (value) => String(value || '').replace(/[<>]/g, '').replace(/javascript:/gi, '').trim();
+  const auditCaixaAction = async (acao, detalhes = {}, sucesso = true) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario_id: user?.id || null,
+        usuario: user?.full_name || user?.email || 'Usuario',
+        acao,
+        modulo: 'Financeiro',
+        tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
+        entidade: detalhes.entidade || 'CaixaMovimento',
+        descricao: detalhes.descricao || acao,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        sucesso,
+        detalhes: { origem: 'CaixaPDVCompleto', contexto: empresaId ? 'empresa' : 'grupo', ...detalhes },
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar Caixa PDV:', error);
+    }
+  };
+
   const abrirCaixa = useMutation({
     mutationFn: async (saldo) => {
       if (controlesDesabilitados) throw new Error("Sem contexto ou permissÃ£o para abrir caixa.");
       await createInContext('CaixaMovimento', {
         ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
-        ...(groupId ? { group_id: groupId } : {}),
+        ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
         data_movimento: new Date().toISOString(),
         tipo_movimento: 'Abertura',
         origem: 'Abertura Caixa',
@@ -175,17 +205,36 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
 
   const finalizarVenda = useMutation({
     mutationFn: async () => {
-      if (controlesDesabilitados) throw new Error("Sem contexto ou permissÃ£o para finalizar venda.");
+      if (controlesDesabilitados) {
+        await auditCaixaAction('pdv_venda_bloqueada', { motivo: 'contexto_ou_permissao', entidade: 'Pedido' }, false);
+        throw new Error("Sem contexto ou permissao para finalizar venda.");
+      }
+      if (!window.confirm(`Confirmar finalizacao da venda no valor de R$ ${totalVenda.toFixed(2)}?`)) {
+        await auditCaixaAction('pdv_venda_cancelada', { motivo: 'confirmacao_cancelada', entidade: 'Pedido', valor_total: totalVenda }, false);
+        throw new Error("Venda cancelada pelo usuario.");
+      }
+      if (entregaBloqueada) {
+        await auditCaixaAction('pdv_entrega_bloqueada', { motivo: 'empresa_cliente_ou_permissao', entidade: 'Entrega', cliente_id: clienteSelecionado?.id || null }, false);
+        throw new Error("Entrega pelo PDV exige empresa, cliente e permissao de expedicao.");
+      }
+      if (nfeBloqueada) {
+        await auditCaixaAction('pdv_nfe_bloqueada', { motivo: 'empresa_cliente_ou_permissao', entidade: 'NotaFiscal', cliente_id: clienteSelecionado?.id || null }, false);
+        throw new Error("NF-e pelo PDV exige empresa faturadora, cliente e permissao fiscal.");
+      }
+      if (financeiroBloqueado) {
+        await auditCaixaAction('pdv_financeiro_bloqueado', { motivo: 'permissao_contas_receber', entidade: 'ContaReceber' }, false);
+        throw new Error("Sem permissao para gerar conta a receber pelo PDV.");
+      }
       const pedido = await createInContext('Pedido', {
         ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
-        ...(groupId ? { group_id: groupId } : {}),
+        ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
         numero_pedido: `PDV-${Date.now()}`,
         forma_pagamento: formasPagamentoVenda.map(f => f.forma_descricao).join(', '),
         tipo: 'Pedido',
         tipo_frete: tipoEntrega === "Retirada" ? "Retirada" : "CIF",
         origem_pedido: 'PDV Presencial',
         data_pedido: hoje,
-        cliente_nome: clienteSelecionado?.nome || 'Cliente Avulso',
+        cliente_nome: sanitizePDVText(clienteSelecionado?.nome || 'Cliente Avulso'),
         cliente_id: clienteSelecionado?.id,
         vendedor: user?.full_name,
         itens_revenda: carrinho.map(item => ({
@@ -207,19 +256,19 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
         const enderecoCliente = clienteSelecionado.endereco_principal || {};
         await createInContext('Entrega', {
           ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
-          ...(groupId ? { group_id: groupId } : {}),
+          ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
           pedido_id: pedido.id,
           numero_pedido: pedido.numero_pedido,
           cliente_id: clienteSelecionado.id,
-          cliente_nome: clienteSelecionado.nome,
+          cliente_nome: sanitizePDVText(clienteSelecionado.nome),
           endereco_entrega_completo: {
-            logradouro: enderecoCliente.logradouro || enderecoEntrega,
-            numero: enderecoCliente.numero || "",
-            complemento: enderecoCliente.complemento || "",
-            bairro: enderecoCliente.bairro || "",
-            cidade: enderecoCliente.cidade || "",
-            estado: enderecoCliente.estado || "",
-            cep: enderecoCliente.cep || ""
+            logradouro: sanitizePDVText(enderecoCliente.logradouro || enderecoEntrega),
+            numero: sanitizePDVText(enderecoCliente.numero || ""),
+            complemento: sanitizePDVText(enderecoCliente.complemento || ""),
+            bairro: sanitizePDVText(enderecoCliente.bairro || ""),
+            cidade: sanitizePDVText(enderecoCliente.cidade || ""),
+            estado: sanitizePDVText(enderecoCliente.estado || ""),
+            cep: sanitizePDVText(enderecoCliente.cep || "")
           },
           data_previsao: hoje,
           status: "Aguardando Separação",
@@ -233,9 +282,9 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
       if (emitirBoleto || formasPagamentoVenda.some(f => f.forma_descricao !== 'Dinheiro')) {
         contaReceber = await createInContext('ContaReceber', {
           ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
-          ...(groupId ? { group_id: groupId } : {}),
+          ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
           descricao: `Venda PDV ${pedido.numero_pedido}`,
-          cliente: clienteSelecionado?.nome || 'Cliente Avulso',
+          cliente: sanitizePDVText(clienteSelecionado?.nome || 'Cliente Avulso'),
           cliente_id: clienteSelecionado?.id,
           pedido_id: pedido.id,
           valor: totalVenda,
@@ -249,12 +298,12 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
 
       if (emitirNFe && clienteSelecionado) {
         await createInContext('NotaFiscal', {
-          ...(groupId ? { group_id: groupId } : {}),
-          empresa_faturamento_id: empresaAtual?.id,
+          ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
+          empresa_faturamento_id: empresaId,
           numero: `${Date.now()}`,
           serie: '1',
           tipo: 'NF-e (Saída)',
-          cliente_fornecedor: clienteSelecionado.nome,
+          cliente_fornecedor: sanitizePDVText(clienteSelecionado.nome),
           cliente_fornecedor_id: clienteSelecionado.id,
           pedido_id: pedido.id,
           data_emissao: hoje,
@@ -268,7 +317,7 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
         if (fp.valor > 0 && fp.forma_id) {
           await createInContext('CaixaMovimento', {
             ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
-            ...(groupId ? { group_id: groupId } : {}),
+            ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
             data_movimento: new Date().toISOString(),
             tipo_movimento: 'Entrada',
             origem: 'Venda PDV',
@@ -283,7 +332,11 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
         }
       }
 
+      await auditCaixaAction('pdv_venda_finalizada', { entidade: 'Pedido', pedido_id: pedido.id, numero_pedido: pedido.numero_pedido, valor_total: totalVenda, entrega: tipoEntrega, emitir_nfe: emitirNFe }, true);
       return { pedido, contaReceber };
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Falha ao finalizar venda.');
     },
     onSuccess: ({ pedido }) => {
       setCarrinho([]);
@@ -309,7 +362,14 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
 
   const liquidarTitulo = useMutation({
     mutationFn: async ({ titulo, tipo, forma }) => {
-      if (!contextoValido || !podeLiquidarTitulos) throw new Error("Sem contexto ou permissÃ£o para liquidar tÃ­tulo.");
+      if (!contextoValido || !podeLiquidarTitulos) {
+        await auditCaixaAction('pdv_liquidacao_bloqueada', { motivo: 'contexto_ou_permissao', entidade: tipo === 'receber' ? 'ContaReceber' : 'ContaPagar', titulo_id: titulo?.id }, false);
+        throw new Error("Sem contexto ou permissao para liquidar titulo.");
+      }
+      if (!window.confirm(`Confirmar liquidacao de ${tipo === 'receber' ? 'recebimento' : 'pagamento'} no valor de R$ ${(titulo.valor || 0).toFixed(2)} via ${forma}?`)) {
+        await auditCaixaAction('pdv_liquidacao_cancelada', { motivo: 'confirmacao_cancelada', entidade: tipo === 'receber' ? 'ContaReceber' : 'ContaPagar', titulo_id: titulo?.id, valor: titulo?.valor, forma }, false);
+        throw new Error("Liquidacao cancelada pelo usuario.");
+      }
       if (tipo === 'receber') {
         await updateInContext('ContaReceber', titulo.id, {
           status: 'Recebido',
@@ -320,7 +380,7 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
 
         await createInContext('CaixaMovimento', {
           ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
-          ...(groupId ? { group_id: groupId } : {}),
+          ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
           data_movimento: new Date().toISOString(),
           tipo_movimento: 'Entrada',
           origem: 'Liquidação Receber',
@@ -341,7 +401,7 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
 
         await createInContext('CaixaMovimento', {
           ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
-          ...(groupId ? { group_id: groupId } : {}),
+          ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
           data_movimento: new Date().toISOString(),
           tipo_movimento: 'Saída',
           origem: 'Liquidação Pagar',
@@ -365,7 +425,7 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
       if (controlesDesabilitados) throw new Error("Sem contexto ou permissÃ£o para fechar caixa.");
       await createInContext('CaixaMovimento', {
         ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
-        ...(groupId ? { group_id: groupId } : {}),
+        ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
         data_movimento: new Date().toISOString(),
         tipo_movimento: 'Fechamento',
         origem: 'Fechamento Caixa',
@@ -663,11 +723,11 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
                       <Label htmlFor="recibo" className="text-sm">Emitir Recibo</Label>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Checkbox checked={emitirNFe} onCheckedChange={setEmitirNFe} id="nfe" />
+                      <Checkbox checked={emitirNFe} onCheckedChange={setEmitirNFe} id="nfe" disabled={!empresaId || !podeEmitirNFePDV || !clienteSelecionado} data-action="PDV.nfe.marcar" data-permission="Fiscal.Notas Fiscais.emitir" data-context-required="true" data-sensitive="true" />
                       <Label htmlFor="nfe" className="text-sm">Emitir NF-e</Label>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Checkbox checked={emitirBoleto} onCheckedChange={setEmitirBoleto} id="boleto" />
+                      <Checkbox checked={emitirBoleto} onCheckedChange={setEmitirBoleto} id="boleto" disabled={!podeCriarReceberPDV} data-action="PDV.boleto.marcar" data-permission="Financeiro.Contas a Receber.criar" data-context-required="true" data-sensitive="true" />
                       <Label htmlFor="boleto" className="text-sm">Gerar Boleto</Label>
                     </div>
                   </div>
@@ -759,7 +819,10 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
                     </div>
                   )}
 
-                  <Button onClick={() => finalizarVenda.mutate()} disabled={controlesDesabilitados || finalizarVenda.isPending || carrinho.length === 0 || totalPago < totalVenda} className="w-full bg-emerald-600 h-10">
+                  {(nfeBloqueada || entregaBloqueada || financeiroBloqueado) && (
+                    <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">Revise empresa, cliente e permissoes antes de finalizar venda com entrega, boleto ou NF-e.</div>
+                  )}
+                  <Button onClick={() => finalizarVenda.mutate()} disabled={controlesDesabilitados || finalizarVenda.isPending || carrinho.length === 0 || totalPago < totalVenda || nfeBloqueada || entregaBloqueada || financeiroBloqueado} className="w-full bg-emerald-600 h-10" data-action="PDV.venda.finalizar" data-permission="Financeiro.PDV.criar" data-context-required="true" data-sensitive="true">
                     <CheckCircle2 className="w-4 h-4 mr-2" /> Finalizar Venda
                   </Button>
                   <Button onClick={() => {
@@ -797,7 +860,7 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
                       <TableCell>{p.cliente_nome}</TableCell>
                       <TableCell className="font-bold">R$ {(p.valor_total || 0).toFixed(2)}</TableCell>
                       <TableCell>
-                        <Button size="sm" disabled={!contextoValido || !podeLiquidarTitulos || liquidarTitulo.isPending} onClick={() => liquidarTitulo.mutate({ titulo: { id: p.id, cliente: p.cliente_nome, valor: p.valor_total }, tipo: 'receber', forma: 'Dinheiro' })}>
+                        <Button size="sm" disabled={!contextoValido || !podeLiquidarTitulos || liquidarTitulo.isPending} onClick={() => liquidarTitulo.mutate({ titulo: { id: p.id, cliente: p.cliente_nome, valor: p.valor_total }, tipo: 'receber', forma: 'Dinheiro' })} data-action="PDV.pedido.receber" data-permission="Financeiro.Contas a Receber.baixar" data-context-required="true" data-sensitive="true">
                           Receber
                         </Button>
                       </TableCell>
@@ -830,8 +893,8 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
                       <TableCell className="font-bold text-green-600">R$ {(c.valor || 0).toFixed(2)}</TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <Button size="sm" className="bg-green-600" onClick={() => liquidarTitulo.mutate({ titulo: c, tipo: 'receber', forma: 'Dinheiro' })}>💵</Button>
-                          <Button size="sm" className="bg-green-600" onClick={() => liquidarTitulo.mutate({ titulo: c, tipo: 'receber', forma: 'PIX' })}>PIX</Button>
+                          <Button size="sm" className="bg-green-600" disabled={!contextoValido || !podeLiquidarTitulos || liquidarTitulo.isPending} onClick={() => liquidarTitulo.mutate({ titulo: c, tipo: 'receber', forma: 'Dinheiro' })} data-action="PDV.receber.dinheiro" data-permission="Financeiro.Contas a Receber.baixar" data-context-required="true" data-sensitive="true">💵</Button>
+                          <Button size="sm" className="bg-green-600" disabled={!contextoValido || !podeLiquidarTitulos || liquidarTitulo.isPending} onClick={() => liquidarTitulo.mutate({ titulo: c, tipo: 'receber', forma: 'PIX' })} data-action="PDV.receber.pix" data-permission="Financeiro.Contas a Receber.baixar" data-context-required="true" data-sensitive="true">PIX</Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -863,8 +926,8 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
                       <TableCell className="font-bold text-red-600">R$ {(c.valor || 0).toFixed(2)}</TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <Button size="sm" className="bg-red-600" onClick={() => liquidarTitulo.mutate({ titulo: c, tipo: 'pagar', forma: 'Dinheiro' })}>💵</Button>
-                          <Button size="sm" className="bg-red-600" onClick={() => liquidarTitulo.mutate({ titulo: c, tipo: 'pagar', forma: 'PIX' })}>PIX</Button>
+                          <Button size="sm" className="bg-red-600" disabled={!contextoValido || !podeLiquidarTitulos || liquidarTitulo.isPending} onClick={() => liquidarTitulo.mutate({ titulo: c, tipo: 'pagar', forma: 'Dinheiro' })} data-action="PDV.pagar.dinheiro" data-permission="Financeiro.Contas a Pagar.baixar" data-context-required="true" data-sensitive="true">💵</Button>
+                          <Button size="sm" className="bg-red-600" disabled={!contextoValido || !podeLiquidarTitulos || liquidarTitulo.isPending} onClick={() => liquidarTitulo.mutate({ titulo: c, tipo: 'pagar', forma: 'PIX' })} data-action="PDV.pagar.pix" data-permission="Financeiro.Contas a Pagar.baixar" data-context-required="true" data-sensitive="true">PIX</Button>
                         </div>
                       </TableCell>
                     </TableRow>

@@ -1144,3 +1144,18 @@ Checklist inicial:
 - Build validado com sucesso via `node node_modules/vite/bin/vite.js build` porque o atalho `npm run build` pode retornar `Acesso negado` no Vite neste ambiente.
 - Permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 nas integracoes finais de Expedicao com estoque, financeiro e fiscal, validando que status de entrega, baixa/retorno de estoque, cobranca/faturamento e emissao fiscal respeitem grupo/empresa, RBAC, auditoria, confirmacao e Regra-Mae.
+### Expedicao - Fase 8 Integracao PDV, Entrega e Fiscal
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 nas integracoes finais de Expedicao com estoque, financeiro e fiscal.
+- `CaixaPDVCompleto` foi reforcado sem criar tela, modulo, componente ou arquivo novo.
+- Venda PDV agora valida contexto grupo/empresa e permissao antes de finalizar operacao sensivel.
+- Finalizacao de venda agora exige confirmacao explicita e audita bloqueio, cancelamento e sucesso.
+- Criacao automatica de entrega pelo PDV agora exige empresa, cliente e permissao de expedicao antes de liberar o fluxo.
+- Emissao de NF-e pelo PDV agora exige empresa faturadora, cliente e permissao fiscal antes de liberar o fluxo.
+- Geracao de boleto/conta a receber pelo PDV agora exige permissao financeira para criacao de contas a receber.
+- Payloads gerados pelo PDV passaram a preservar `group_id`, `grupo_id` e `empresa_id` nos fluxos de caixa, pedido, entrega, conta a receber e NF-e.
+- Campos textuais de cliente/endereco usados nos fluxos automaticos do PDV passaram por sanitizacao simples contra marcadores HTML e `javascript:`.
+- Liquidacoes de recebimentos/pagamentos no PDV agora exigem confirmacao explicita, auditam bloqueio/cancelamento/sucesso e receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive` nos botoes sensiveis.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 revisando os fluxos comerciais que disparam entrega, NF-e, cobranca e fechamento financeiro, priorizando `GerarNFeModal`, `NotasFiscaisTab`, `FechamentoFinanceiroTab` e `PedidosEntregaTab`.
