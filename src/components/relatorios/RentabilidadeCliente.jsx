@@ -1,32 +1,47 @@
 
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Users, TrendingUp, Download, Star, Award, Calendar } from "lucide-react";
+import { Users, TrendingUp, Download, Star, Award, Calendar, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import ExportMenu from "@/components/ui/ExportMenu"; // Added import
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 export default function RentabilidadeCliente({ empresaId }) { // Kept empresaId as it was in original code, even if not in outline
   const [periodo, setPeriodo] = useState(12); // meses
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaSelecionadaId = empresaId || empresaAtual?.id || null;
+  const contextKey = empresaSelecionadaId || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const canViewRentabilidade = hasPermission("Comercial", "Rentabilidade", "visualizar") ||
+    hasPermission("Comercial", "Relatorios", "visualizar") ||
+    hasPermission("Financeiro", "Relatorios", "visualizar") ||
+    hasPermission("Comercial", null, "visualizar");
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list(),
+    queryKey: ['clientes', 'rentabilidade-cliente', contextKey],
+    queryFn: () => filterInContext('Cliente', {}, 'nome', 9999),
+    enabled: contextoValido && canViewRentabilidade,
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list('-data_pedido'),
+    queryKey: ['pedidos', 'rentabilidade-cliente', contextKey],
+    queryFn: () => filterInContext('Pedido', {}, '-data_pedido', 9999),
+    enabled: contextoValido && canViewRentabilidade,
   });
 
   const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contasReceber'],
-    queryFn: () => base44.entities.ContaReceber.list(),
+    queryKey: ['contasReceber', 'rentabilidade-cliente', contextKey],
+    queryFn: () => filterInContext('ContaReceber', {}, '-data_vencimento', 9999),
+    enabled: contextoValido && canViewRentabilidade,
   });
 
   // Calcular rentabilidade por cliente
@@ -42,7 +57,7 @@ export default function RentabilidadeCliente({ empresaId }) { // Kept empresaId 
         const dataPedido = new Date(p.data_pedido);
         return p.status !== 'Cancelado' &&
                dataPedido >= dataCorte &&
-               (!empresaId || p.empresa_id === empresaId);
+               (!empresaSelecionadaId || p.empresa_id === empresaSelecionadaId);
       })
       .forEach(p => {
         const key = p.cliente_id || p.cliente_nome;
@@ -184,7 +199,13 @@ export default function RentabilidadeCliente({ empresaId }) { // Kept empresaId 
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full h-full" data-permission="Comercial.Rentabilidade.visualizar" data-context-required="group-or-company">
+      {(!contextoValido || !canViewRentabilidade) && (
+        <Alert className="border-amber-300 bg-amber-50">
+          <AlertCircle className="h-5 w-5 text-amber-600" />
+          <AlertDescription>Selecione grupo ou empresa e confirme permissao para visualizar rentabilidade por cliente.</AlertDescription>
+        </Alert>
+      )}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Rentabilidade por Cliente (Top 20)</h2> {/* Modified title */}
@@ -212,6 +233,9 @@ export default function RentabilidadeCliente({ empresaId }) { // Kept empresaId 
             }))}
             fileName="rentabilidade_clientes_top20"
             title="Rentabilidade por Cliente - Top 20"
+            module="Comercial"
+            section="Rentabilidade"
+            action="exportar"
           />
         </div>
       </div>

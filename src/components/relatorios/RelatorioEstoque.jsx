@@ -1,13 +1,17 @@
 import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ScatterChart, Scatter
 } from "recharts";
 import { Download, Package, AlertTriangle, TrendingDown, Archive } from "lucide-react";
 import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 import FiltrosPeriodoEmpresa from "@/components/relatorios/FiltrosPeriodoEmpresa";
 import { exportarCSV } from "@/components/relatorios/exportUtils";
 
@@ -18,15 +22,27 @@ export default function RelatorioEstoque() {
     data_inicio: new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0],
     data_fim: new Date().toISOString().split('T')[0],
   });
-  const { filterInContext, empresaAtual } = useContextoVisual();
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextKey = empresaId || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const canViewRelatorio = hasPermission("Estoque", "Relatorios", "visualizar") ||
+    hasPermission("Estoque", null, "visualizar");
+  const canExportRelatorio = hasPermission("Estoque", "Relatorios", "exportar") ||
+    hasPermission("Estoque", null, "exportar");
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['rel-produtos', empresaAtual?.id],
+    queryKey: ['rel-produtos', contextKey],
     queryFn: () => filterInContext('Produto', {}, '-estoque_atual', 200),
+    enabled: contextoValido && canViewRelatorio,
   });
   const { data: movimentacoes = [] } = useQuery({
-    queryKey: ['rel-mov', empresaAtual?.id],
+    queryKey: ['rel-mov', contextKey],
     queryFn: () => filterInContext('MovimentacaoEstoque', {}, '-data_movimentacao', 9999),
+    enabled: contextoValido && canViewRelatorio,
   });
 
   const produtosAtivos = produtos.filter(p => p.status === 'Ativo');
@@ -69,8 +85,45 @@ export default function RelatorioEstoque() {
 
   const fmt = v => `R$ ${Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
+  const auditarExportacao = async (nome, quantidade, sucesso = true) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao: sucesso ? "Exportacao" : "Bloqueio",
+        modulo: "Estoque",
+        entidade: "RelatorioEstoque",
+        descricao: sucesso ? `Exportacao CSV do relatorio de estoque: ${nome}` : `Exportacao bloqueada no relatorio de estoque: ${nome}`,
+        usuario_id: user?.id || null,
+        usuario: user?.full_name || user?.email || "Usuario local",
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        dados_novos: { nome, quantidade, filtros },
+        sucesso,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar exportacao de estoque:", error);
+    }
+  };
+
+  const exportarRelatorio = async (dados, nomeArquivo) => {
+    if (!contextoValido || !canExportRelatorio) {
+      await auditarExportacao(nomeArquivo, dados?.length || 0, false);
+      return;
+    }
+    exportarCSV(dados, nomeArquivo);
+    await auditarExportacao(nomeArquivo, dados?.length || 0, true);
+  };
+
   return (
-    <div className="space-y-6 w-full">
+    <div className="space-y-6 w-full h-full" data-permission="Estoque.Relatorios.visualizar" data-context-required="group-or-company">
+      {(!contextoValido || !canViewRelatorio) && (
+        <Alert className="border-amber-300 bg-amber-50">
+          <AlertTriangle className="h-5 w-5 text-amber-600" />
+          <AlertDescription>Selecione grupo ou empresa e confirme permissao para visualizar o relatorio de estoque.</AlertDescription>
+        </Alert>
+      )}
       <FiltrosPeriodoEmpresa filtros={filtros} setFiltros={setFiltros} />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -99,7 +152,7 @@ export default function RelatorioEstoque() {
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <CardTitle className="text-base">Movimentações por Mês (Entradas × Saídas)</CardTitle>
-              <Button size="sm" variant="outline" onClick={() => exportarCSV(movMensais, 'movimentacoes_mensais')}>
+              <Button size="sm" variant="outline" onClick={() => exportarRelatorio(movMensais, 'movimentacoes_mensais')} disabled={!contextoValido || !canExportRelatorio} data-action="RelatorioEstoque.exportarMovimentacoes" data-permission="Estoque.Relatorios.exportar" data-context-required="group-or-company" data-sensitive="true">
                 <Download className="w-3 h-3 mr-1" /> CSV
               </Button>
             </div>
@@ -123,7 +176,7 @@ export default function RelatorioEstoque() {
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <CardTitle className="text-base">Valor em Estoque por Grupo</CardTitle>
-              <Button size="sm" variant="outline" onClick={() => exportarCSV(porGrupo, 'estoque_por_grupo')}>
+              <Button size="sm" variant="outline" onClick={() => exportarRelatorio(porGrupo, 'estoque_por_grupo')} disabled={!contextoValido || !canExportRelatorio} data-action="RelatorioEstoque.exportarGrupo" data-permission="Estoque.Relatorios.exportar" data-context-required="group-or-company" data-sensitive="true">
                 <Download className="w-3 h-3 mr-1" /> CSV
               </Button>
             </div>

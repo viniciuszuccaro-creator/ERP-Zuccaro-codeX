@@ -1,28 +1,42 @@
 
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart } from "recharts";
 import { Package, TrendingUp, Download, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import ExportMenu from "@/components/ui/ExportMenu";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 export default function RentabilidadeProduto({ empresaId }) {
   const [periodo, setPeriodo] = useState(12);
   const [ordenacao, setOrdenacao] = useState("margem_valor");
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaSelecionadaId = empresaId || empresaAtual?.id || null;
+  const contextKey = empresaSelecionadaId || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const canViewRentabilidade = hasPermission("Comercial", "Rentabilidade", "visualizar") ||
+    hasPermission("Comercial", "Relatorios", "visualizar") ||
+    hasPermission("Financeiro", "Relatorios", "visualizar") ||
+    hasPermission("Comercial", null, "visualizar");
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryKey: ['produtos', 'rentabilidade-produto', contextKey],
+    queryFn: () => filterInContext('Produto', {}, 'descricao', 9999),
+    enabled: contextoValido && canViewRentabilidade,
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list('-data_pedido'),
+    queryKey: ['pedidos', 'rentabilidade-produto', contextKey],
+    queryFn: () => filterInContext('Pedido', {}, '-data_pedido', 9999),
+    enabled: contextoValido && canViewRentabilidade,
   });
 
   // Calcular rentabilidade por produto
@@ -37,7 +51,7 @@ export default function RentabilidadeProduto({ empresaId }) {
         const dataPedido = new Date(p.data_pedido);
         return p.status !== 'Cancelado' &&
                dataPedido >= dataCorte &&
-               (!empresaId || p.empresa_id === empresaId);
+               (!empresaSelecionadaId || p.empresa_id === empresaSelecionadaId);
       })
       .forEach(pedido => {
         const itensRevenda = pedido.itens_revenda || [];
@@ -137,7 +151,13 @@ export default function RentabilidadeProduto({ empresaId }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full h-full" data-permission="Comercial.Rentabilidade.visualizar" data-context-required="group-or-company">
+      {(!contextoValido || !canViewRentabilidade) && (
+        <Alert className="border-amber-300 bg-amber-50">
+          <AlertCircle className="h-5 w-5 text-amber-600" />
+          <AlertDescription>Selecione grupo ou empresa e confirme permissao para visualizar rentabilidade por produto.</AlertDescription>
+        </Alert>
+      )}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Rentabilidade por Produto (Curva ABC)</h2>
@@ -180,6 +200,9 @@ export default function RentabilidadeProduto({ empresaId }) {
             }))}
             fileName="rentabilidade_produtos"
             title="Rentabilidade por Produto - Curva ABC"
+            module="Comercial"
+            section="Rentabilidade"
+            action="exportar"
           />
         </div>
       </div>

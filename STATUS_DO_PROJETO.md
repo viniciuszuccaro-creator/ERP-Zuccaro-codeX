@@ -1,5 +1,20 @@
 # Status do Projeto ERP Zuccaro
 
+### Gerencial - Fase 8 Relatorios de Vendas, Estoque e Rentabilidade
+
+- Seguido o proximo passo salvo no status: continuar em `RelatorioVendas`, `RelatorioEstoque`, `RelatorioProducao`, `RentabilidadeProduto` e `RentabilidadeCliente`.
+- `RelatorioVendas` passou a validar contexto grupo/empresa, RBAC de visualizacao/exportacao e auditoria de exportacoes CSV ou bloqueios.
+- `RelatorioEstoque` passou a validar contexto grupo/empresa, RBAC de visualizacao/exportacao e auditoria de exportacoes de movimentacoes e valor por grupo.
+- `RentabilidadeProduto` deixou de listar `Produto` e `Pedido` globalmente e passou a usar `filterInContext`, mantendo filtro por empresa quando recebido por prop.
+- `RentabilidadeCliente` deixou de listar `Cliente`, `Pedido` e `ContaReceber` globalmente e passou a usar `filterInContext`, mantendo o filtro por empresa recebido por prop.
+- Exportacoes via `ExportMenu` em rentabilidade por produto/cliente foram vinculadas ao modulo/secao corretos para RBAC e auditoria do componente compartilhado.
+- Relatorios passaram a exibir alerta visual quando faltar contexto grupo/empresa ou permissao de acesso.
+- `RelatorioProducao` foi revisado e ja estava reforcado com contexto, RBAC e auditoria; mantido sem alteracoes nesta rodada.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos componentes existentes.
+- `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 nos relatorios restantes e dashboards gerenciais por regiao/origem/canais, priorizando `RelatorioVendasPorRegiao`, `RelatorioPedidosPorOrigem`, `DashboardCanaisOrigem`, `DashboardFormasPagamento` e `RelatoriosEstoque`.
+
 ### Financeiro - Fase 8 Relatorios DRE, Indicadores e Inadimplencia
 
 - Seguido o proximo passo salvo no status: continuar em `RelatorioFinanceiro`, `RelatorioDRE`, `DREComparativo` e `DashboardInadimplencia`.

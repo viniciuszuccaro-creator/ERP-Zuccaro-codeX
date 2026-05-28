@@ -1,15 +1,19 @@
 import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area
 } from "recharts";
-import { Download, TrendingUp, ShoppingCart, Users, DollarSign } from "lucide-react";
+import { Download, TrendingUp, ShoppingCart, Users, DollarSign, AlertCircle } from "lucide-react";
 import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 import FiltrosPeriodoEmpresa from "@/components/relatorios/FiltrosPeriodoEmpresa";
 import { exportarCSV } from "@/components/relatorios/exportUtils";
 
@@ -20,11 +24,24 @@ export default function RelatorioVendas() {
     data_inicio: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
     data_fim: new Date().toISOString().split('T')[0],
   });
-  const { filterInContext, empresaAtual } = useContextoVisual();
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextKey = empresaId || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const canViewRelatorio = hasPermission("Comercial", "Relatorios", "visualizar") ||
+    hasPermission("Comercial", "Vendas", "visualizar") ||
+    hasPermission("Comercial", null, "visualizar");
+  const canExportRelatorio = hasPermission("Comercial", "Relatorios", "exportar") ||
+    hasPermission("Comercial", "Vendas", "exportar") ||
+    hasPermission("Comercial", null, "exportar");
 
   const { data: pedidos = [], isLoading } = useQuery({
-    queryKey: ['pedidos-relatorio', empresaAtual?.id],
+    queryKey: ['pedidos-relatorio', contextKey],
     queryFn: () => filterInContext('Pedido', {}, '-data_pedido', 9999),
+    enabled: contextoValido && canViewRelatorio,
   });
 
   const pedidosFiltrados = useMemo(() => {
@@ -71,8 +88,45 @@ export default function RelatorioVendas() {
 
   const fmt = (v) => `R$ ${Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
+  const auditarExportacao = async (nome, quantidade, sucesso = true) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao: sucesso ? "Exportacao" : "Bloqueio",
+        modulo: "Comercial",
+        entidade: "RelatorioVendas",
+        descricao: sucesso ? `Exportacao CSV do relatorio de vendas: ${nome}` : `Exportacao bloqueada no relatorio de vendas: ${nome}`,
+        usuario_id: user?.id || null,
+        usuario: user?.full_name || user?.email || "Usuario local",
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        dados_novos: { nome, quantidade, filtros },
+        sucesso,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar exportacao de vendas:", error);
+    }
+  };
+
+  const exportarRelatorio = async (dados, nomeArquivo) => {
+    if (!contextoValido || !canExportRelatorio) {
+      await auditarExportacao(nomeArquivo, dados?.length || 0, false);
+      return;
+    }
+    exportarCSV(dados, nomeArquivo);
+    await auditarExportacao(nomeArquivo, dados?.length || 0, true);
+  };
+
   return (
-    <div className="space-y-6 w-full">
+    <div className="space-y-6 w-full h-full" data-permission="Comercial.Relatorios.visualizar" data-context-required="group-or-company">
+      {(!contextoValido || !canViewRelatorio) && (
+        <Alert className="border-amber-300 bg-amber-50">
+          <AlertCircle className="h-5 w-5 text-amber-600" />
+          <AlertDescription>Selecione grupo ou empresa e confirme permissao para visualizar o relatorio de vendas.</AlertDescription>
+        </Alert>
+      )}
       <FiltrosPeriodoEmpresa filtros={filtros} setFiltros={setFiltros} />
 
       {/* KPIs */}
@@ -103,7 +157,7 @@ export default function RelatorioVendas() {
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <CardTitle className="text-base">Faturamento Mensal</CardTitle>
-              <Button size="sm" variant="outline" onClick={() => exportarCSV(vendasMensais, 'vendas_mensais')}>
+              <Button size="sm" variant="outline" onClick={() => exportarRelatorio(vendasMensais, 'vendas_mensais')} disabled={!contextoValido || !canExportRelatorio} data-action="RelatorioVendas.exportarMensal" data-permission="Comercial.Relatorios.exportar" data-context-required="group-or-company" data-sensitive="true">
                 <Download className="w-3 h-3 mr-1" /> CSV
               </Button>
             </div>
@@ -148,7 +202,7 @@ export default function RelatorioVendas() {
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <CardTitle className="text-base">Top 10 Clientes por Faturamento</CardTitle>
-              <Button size="sm" variant="outline" onClick={() => exportarCSV(top10Clientes, 'top_clientes')}>
+              <Button size="sm" variant="outline" onClick={() => exportarRelatorio(top10Clientes, 'top_clientes')} disabled={!contextoValido || !canExportRelatorio} data-action="RelatorioVendas.exportarClientes" data-permission="Comercial.Relatorios.exportar" data-context-required="group-or-company" data-sensitive="true">
                 <Download className="w-3 h-3 mr-1" /> CSV
               </Button>
             </div>
