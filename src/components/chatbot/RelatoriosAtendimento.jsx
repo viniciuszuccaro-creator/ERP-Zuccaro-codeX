@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   BarChart,
   Bar,
@@ -34,6 +35,8 @@ import {
   Filter
 } from 'lucide-react';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
+import { useUser } from '@/components/lib/UserContext';
 
 /**
  * V21.6 - RELATÓRIOS DE ATENDIMENTO
@@ -47,24 +50,38 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
  */
 export default function RelatoriosAtendimento() {
   const [periodo, setPeriodo] = useState('7dias');
-  const { empresaAtual } = useContextoVisual();
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextKey = empresaId || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const canViewRelatorio = hasPermission('CRM', 'Atendimento', 'visualizar') ||
+    hasPermission('CRM', 'Relatorios', 'visualizar') ||
+    hasPermission('CRM', null, 'visualizar');
+  const canExportRelatorio = hasPermission('CRM', 'Atendimento', 'exportar') ||
+    hasPermission('CRM', 'Relatorios', 'exportar') ||
+    hasPermission('CRM', null, 'exportar');
 
   const CORES = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
   // Buscar dados
   const { data: conversas = [], isLoading } = useQuery({
-    queryKey: ['relatorio-conversas', periodo, empresaAtual?.id],
+    queryKey: ['relatorio-conversas', periodo, contextKey],
     queryFn: async () => {
       const dataInicio = new Date();
       if (periodo === '7dias') dataInicio.setDate(dataInicio.getDate() - 7);
       else if (periodo === '30dias') dataInicio.setDate(dataInicio.getDate() - 30);
       else if (periodo === '90dias') dataInicio.setDate(dataInicio.getDate() - 90);
 
-      return await base44.entities.ConversaOmnicanal.filter({
-        empresa_id: empresaAtual?.id
+      const conversasContexto = await filterInContext('ConversaOmnicanal', {}, '-data_inicio', 1000);
+      return conversasContexto.filter((conversa) => {
+        const data = conversa.data_inicio || conversa.created_date;
+        return !data || new Date(data) >= dataInicio;
       });
     },
-    enabled: !!empresaAtual?.id
+    enabled: contextoValido && canViewRelatorio
   });
 
   // Calcular métricas
@@ -131,7 +148,38 @@ export default function RelatoriosAtendimento() {
     };
   }, [conversas]);
 
-  const exportarRelatorio = () => {
+  const auditarExportacao = async (sucesso = true) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao: sucesso ? 'Exportacao' : 'Bloqueio',
+        modulo: 'CRM',
+        entidade: 'RelatoriosAtendimento',
+        descricao: sucesso
+          ? 'Exportacao CSV de relatorio de atendimento'
+          : 'Bloqueio de exportacao de relatorio de atendimento por contexto ou RBAC',
+        usuario_id: user?.id || null,
+        usuario: user?.email || user?.full_name || 'Usuario',
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
+        sucesso,
+        dados_novos: {
+          periodo,
+          totalConversas: metricas?.total || 0
+        },
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar relatorio de atendimento:', error);
+    }
+  };
+
+  const exportarRelatorio = async () => {
+    if (!contextoValido || !canExportRelatorio) {
+      await auditarExportacao(false);
+      return;
+    }
     if (!metricas) return;
 
     const csv = [
@@ -155,6 +203,7 @@ export default function RelatoriosAtendimento() {
     a.href = url;
     a.download = `relatorio-atendimento-${periodo}.csv`;
     a.click();
+    await auditarExportacao(true);
   };
 
   if (isLoading) {
@@ -166,8 +215,19 @@ export default function RelatoriosAtendimento() {
   }
 
   return (
-    <div className="w-full h-full overflow-auto p-4 lg:p-6">
+    <div
+      className="w-full h-full overflow-auto p-4 lg:p-6"
+      data-permission="CRM.Atendimento.visualizar"
+      data-context-required="group-or-company"
+    >
       <div className="max-w-7xl mx-auto space-y-6">
+        {(!contextoValido || !canViewRelatorio) && (
+          <Alert className="border-amber-300 bg-amber-50">
+            <AlertDescription>
+              Selecione grupo ou empresa e confirme permissao para visualizar relatorios de atendimento.
+            </AlertDescription>
+          </Alert>
+        )}
         {/* Header */}
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div>
@@ -189,7 +249,15 @@ export default function RelatoriosAtendimento() {
               <option value="90dias">Últimos 90 dias</option>
             </select>
 
-            <Button onClick={exportarRelatorio} variant="outline">
+            <Button
+              onClick={exportarRelatorio}
+              variant="outline"
+              disabled={!contextoValido || !canExportRelatorio || !metricas}
+              data-action="RelatoriosAtendimento.exportarCSV"
+              data-permission="CRM.Atendimento.exportar"
+              data-context-required="group-or-company"
+              data-sensitive="true"
+            >
               <Download className="w-4 h-4 mr-2" />
               Exportar
             </Button>

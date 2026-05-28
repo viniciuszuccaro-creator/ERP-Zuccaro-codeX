@@ -6,8 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import { FileText, Download, CheckCircle, AlertTriangle, Loader2 } from "lucide-react";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 
 /**
  * Componente de exportação SPED Fiscal e Contribuições
@@ -16,6 +20,18 @@ import { FileText, Download, CheckCircle, AlertTriangle, Loader2 } from "lucide-
 export default function ExportacaoSPED({ empresaId }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { filterInContext, createInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaSelecionadaId = empresaId || empresaAtual?.id || null;
+  const contextoValido = Boolean(empresaSelecionadaId || groupId);
+  const canViewSPED = hasPermission('Fiscal', 'SPED', 'visualizar') ||
+    hasPermission('Fiscal', 'Relatorios', 'visualizar') ||
+    hasPermission('Fiscal', null, 'visualizar');
+  const canGenerateSPED = hasPermission('Fiscal', 'SPED', 'criar') ||
+    hasPermission('Fiscal', 'SPED', 'executar') ||
+    hasPermission('Fiscal', null, 'criar');
 
   const [tipoSped, setTipoSped] = useState("Fiscal (EFD ICMS/IPI)");
   const [periodoInicial, setPeriodoInicial] = useState(
@@ -28,14 +44,32 @@ export default function ExportacaoSPED({ empresaId }) {
 
   const gerarSPEDMutation = useMutation({
     mutationFn: async ({ tipoSped, periodoInicial, periodoFinal }) => {
+      if (!contextoValido || !canGenerateSPED) {
+        await base44.entities.AuditLog.create({
+          acao: 'Bloqueio',
+          modulo: 'Fiscal',
+          entidade: 'ExportacaoSPED',
+          descricao: 'Bloqueio de geracao SPED por contexto ou RBAC',
+          usuario_id: user?.id || null,
+          usuario: user?.email || user?.full_name || 'Usuario',
+          empresa_id: empresaSelecionadaId,
+          group_id: groupId,
+          grupo_id: groupId,
+          tipo_auditoria: 'seguranca',
+          sucesso: false,
+          dados_novos: { tipoSped, periodoInicial, periodoFinal },
+          data_hora: new Date().toISOString()
+        });
+        throw new Error('Selecione grupo/empresa e confirme permissao para gerar SPED.');
+      }
+
       // SIMULAÇÃO - Substituir por geração real do arquivo SPED
       await new Promise(resolve => setTimeout(resolve, 3000));
 
       // Buscar notas do período
-      const notas = await base44.entities.NotaFiscal.filter({
-        empresa_faturamento_id: empresaId,
+      const notas = await filterInContext('NotaFiscal', {
         status: "Autorizada"
-      });
+      }, '-data_emissao', 5000, 'empresa_faturamento_id');
 
       const notasPeriodo = notas.filter(n => {
         const data = n.data_emissao;
@@ -49,8 +83,11 @@ export default function ExportacaoSPED({ empresaId }) {
 
       const periodoApuracao = periodoInicial.substring(0, 7); // YYYY-MM
 
-      const novoSPED = await base44.entities.SPEDFiscal.create({
-        empresa_id: empresaId,
+      const novoSPED = await createInContext('SPEDFiscal', {
+        empresa_id: empresaSelecionadaId,
+        empresa_faturamento_id: empresaSelecionadaId,
+        group_id: groupId,
+        grupo_id: groupId,
         tipo_sped: tipoSped,
         periodo_inicial: periodoInicial,
         periodo_final: periodoFinal,
@@ -95,7 +132,30 @@ export default function ExportacaoSPED({ empresaId }) {
             tipo: "info"
           }
         ],
-        usuario_geracao: "Usuário Atual"
+        usuario_geracao: user?.email || user?.full_name || "Usuario Atual"
+      }, 'empresa_id');
+
+      await base44.entities.AuditLog.create({
+        acao: 'Geracao',
+        modulo: 'Fiscal',
+        entidade: 'ExportacaoSPED',
+        entidade_id: novoSPED?.id || null,
+        descricao: 'SPED gerado com contexto grupo/empresa',
+        usuario_id: user?.id || null,
+        usuario: user?.email || user?.full_name || 'Usuario',
+        empresa_id: empresaSelecionadaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        tipo_auditoria: 'fiscal',
+        sucesso: true,
+        dados_novos: {
+          tipoSped,
+          periodoInicial,
+          periodoFinal,
+          quantidade_notas_fiscal: notasPeriodo.length,
+          valor_total_operacoes: valorTotal
+        },
+        data_hora: new Date().toISOString()
       });
 
       return novoSPED;
@@ -131,7 +191,18 @@ export default function ExportacaoSPED({ empresaId }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div
+      className="space-y-6 w-full h-full"
+      data-permission="Fiscal.SPED.visualizar"
+      data-context-required="group-or-company"
+    >
+      {(!contextoValido || !canViewSPED) && (
+        <Alert className="border-amber-300 bg-amber-50">
+          <AlertDescription>
+            Selecione grupo ou empresa e confirme permissao para visualizar a exportacao SPED.
+          </AlertDescription>
+        </Alert>
+      )}
       {/* Formulário */}
       <Card className="border-2 border-purple-200">
         <CardHeader className="bg-purple-50 border-b">
@@ -173,8 +244,12 @@ export default function ExportacaoSPED({ empresaId }) {
 
           <Button
             onClick={handleGerar}
-            disabled={gerando}
+            disabled={gerando || !contextoValido || !canGenerateSPED}
             className="w-full bg-purple-600 hover:bg-purple-700 h-12"
+            data-action="ExportacaoSPED.gerar"
+            data-permission="Fiscal.SPED.criar"
+            data-context-required="group-or-company"
+            data-sensitive="true"
           >
             {gerando ? (
               <>

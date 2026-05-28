@@ -1,5 +1,21 @@
 # Status do Projeto ERP Zuccaro
 
+### Gerencial - Fase 8 Central de Relatorios, Atendimento e SPED
+
+- Seguido o proximo passo salvo no status: continuar em `GeradorRelatorios`, `AgendamentoRelatorios`, `RelatoriosAtendimento`, `ExportacaoSPED` e `RelatorioFinanceiroLogistica`.
+- `GeradorRelatorios` passou a validar RBAC de visualizacao/exportacao, bloquear exportacoes sem permissao e auditar sucesso ou bloqueio com usuario, grupo e empresa.
+- `AgendamentoRelatorios` deixou de salvar configuracao globalmente e passou a usar `filterInContext`, `createInContext` e `updateInContext`, preservando `group_id`, `grupo_id` e `empresa_id`.
+- Salvamento de agendamento agora exige contexto grupo/empresa, permissao RBAC de edicao e auditoria de bloqueio quando faltar permissao ou contexto.
+- `RelatoriosAtendimento` deixou de consultar conversas por empresa fixa/global e passou a usar `filterInContext`, mantendo filtro por periodo no resultado contextualizado.
+- Exportacao CSV de atendimento agora exige contexto grupo/empresa, permissao RBAC e auditoria de sucesso ou bloqueio.
+- `ExportacaoSPED` deixou de buscar NF-e e criar SPED de forma direta/global; agora usa `filterInContext` para notas e `createInContext` para o SPED gerado.
+- Geracao SPED agora carimba grupo/empresa, exige permissao fiscal, audita bloqueios e registra auditoria fiscal da geracao.
+- `RelatorioFinanceiroLogistica` foi revisado nesta rodada e ja estava reforcado com contexto, RBAC e auditoria; mantido sem alteracoes.
+- Mantida a Regra-Mae: nenhum modulo, tela, componente ou arquivo novo foi criado; apenas melhoria nos componentes existentes.
+- `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em relatorios/logistica/fiscal ainda restantes, priorizando `RelatoriosLogistica`, `DashboardLogistico`, `RelatorioFinanceiro`, `RelatoriosProducao` e pontos com exportacao direta sem `ExportMenu` auditado.
+
 ### Gerencial - Fase 8 Origem, Regiao, Canais e Formas
 
 - Seguido o proximo passo salvo no status: continuar em `RelatorioVendasPorRegiao`, `RelatorioPedidosPorOrigem`, `DashboardCanaisOrigem`, `DashboardFormasPagamento` e `RelatoriosEstoque`.

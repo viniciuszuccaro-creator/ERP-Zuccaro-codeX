@@ -5,10 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/components/ui/use-toast';
 import { Calendar, Mail, Clock } from 'lucide-react';
+import useContextoVisual from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
+import { useUser } from '@/components/lib/UserContext';
 
 /**
  * Agendamento Inteligente de Relatórios
@@ -17,6 +21,18 @@ import { Calendar, Mail, Clock } from 'lucide-react';
 export default function AgendamentoRelatorios({ empresaId }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { filterInContext, createInContext, updateInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaSelecionadaId = empresaId || empresaAtual?.id || null;
+  const contextoValido = Boolean(empresaSelecionadaId || groupId);
+  const canViewAgendamento = hasPermission('Sistema', 'Relatorios', 'visualizar') ||
+    hasPermission('Relatorios', null, 'visualizar') ||
+    hasPermission('Sistema', null, 'visualizar');
+  const canEditAgendamento = hasPermission('Sistema', 'Relatorios', 'editar') ||
+    hasPermission('Relatorios', null, 'editar') ||
+    hasPermission('Sistema', null, 'editar');
 
   const [agendamento, setAgendamento] = useState({
     ativo: false,
@@ -31,23 +47,43 @@ export default function AgendamentoRelatorios({ empresaId }) {
 
   const salvarMutation = useMutation({
     mutationFn: async (data) => {
+      if (!contextoValido || !canEditAgendamento) {
+        await base44.entities.AuditLog.create({
+          acao: 'Bloqueio',
+          modulo: 'Sistema',
+          entidade: 'AgendamentoRelatorios',
+          descricao: 'Bloqueio ao salvar agendamento de relatorios por contexto ou RBAC',
+          usuario_id: user?.id || null,
+          usuario: user?.email || user?.full_name || 'Usuario',
+          empresa_id: empresaSelecionadaId,
+          group_id: groupId,
+          grupo_id: groupId,
+          tipo_auditoria: 'seguranca',
+          sucesso: false,
+          dados_novos: data,
+          data_hora: new Date().toISOString()
+        });
+        throw new Error('Selecione grupo/empresa e confirme permissao para salvar agendamentos.');
+      }
+
       // Salvar configuração
-      const configs = await base44.entities.ConfiguracaoSistema.filter({
+      const configs = await filterInContext('ConfiguracaoSistema', {
         chave: 'agendamento_relatorios'
-      });
+      }, '-created_date', 10);
+
+      const payload = {
+        chave: 'agendamento_relatorios',
+        categoria: 'Sistema',
+        configuracoes_sistema: data,
+        empresa_id: empresaSelecionadaId,
+        group_id: groupId,
+        grupo_id: groupId
+      };
 
       if (configs.length > 0) {
-        return await base44.entities.ConfiguracaoSistema.update(configs[0].id, {
-          categoria: 'Sistema',
-          configuracoes_sistema: data
-        });
-      } else {
-        return await base44.entities.ConfiguracaoSistema.create({
-          chave: 'agendamento_relatorios',
-          categoria: 'Sistema',
-          configuracoes_sistema: data
-        });
+        return await updateInContext('ConfiguracaoSistema', configs[0].id, payload);
       }
+      return await createInContext('ConfiguracaoSistema', payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['config-sistema'] });
@@ -56,7 +92,11 @@ export default function AgendamentoRelatorios({ empresaId }) {
   });
 
   return (
-    <Card>
+    <Card
+      className="w-full h-full"
+      data-permission="Sistema.Relatorios.editar"
+      data-context-required="group-or-company"
+    >
       <CardHeader className="bg-blue-50 border-b">
         <CardTitle className="text-base flex items-center gap-2">
           <Calendar className="w-5 h-5 text-blue-600" />
@@ -64,6 +104,13 @@ export default function AgendamentoRelatorios({ empresaId }) {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 space-y-4">
+        {(!contextoValido || !canViewAgendamento) && (
+          <Alert className="border-amber-300 bg-amber-50">
+            <AlertDescription>
+              Selecione grupo ou empresa e confirme permissao para visualizar agendamentos de relatorios.
+            </AlertDescription>
+          </Alert>
+        )}
         <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border">
           <div>
             <Label className="font-semibold">Ativar Envio Automático</Label>
@@ -71,6 +118,7 @@ export default function AgendamentoRelatorios({ empresaId }) {
           </div>
           <Switch
             checked={agendamento.ativo}
+            disabled={!contextoValido || !canEditAgendamento}
             onCheckedChange={(v) => setAgendamento({...agendamento, ativo: v})}
           />
         </div>
@@ -146,6 +194,7 @@ export default function AgendamentoRelatorios({ empresaId }) {
               <Label className="text-sm">Incluir Gráficos</Label>
               <Switch
                 checked={agendamento.incluir_graficos}
+                disabled={!contextoValido || !canEditAgendamento}
                 onCheckedChange={(v) => setAgendamento({...agendamento, incluir_graficos: v})}
               />
             </div>
@@ -154,8 +203,12 @@ export default function AgendamentoRelatorios({ empresaId }) {
 
         <Button
           onClick={() => salvarMutation.mutate(agendamento)}
-          disabled={salvarMutation.isPending}
+          disabled={salvarMutation.isPending || !contextoValido || !canEditAgendamento}
           className="w-full"
+          data-action="AgendamentoRelatorios.salvar"
+          data-permission="Sistema.Relatorios.editar"
+          data-context-required="group-or-company"
+          data-sensitive="true"
         >
           <Mail className="w-4 h-4 mr-2" />
           Salvar Agendamento

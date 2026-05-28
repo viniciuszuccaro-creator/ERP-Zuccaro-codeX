@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
+import { useUser } from '@/components/lib/UserContext';
 import {
   exportarPedidosExcel,
   exportarClientesExcel,
@@ -51,8 +53,16 @@ export default function GeradorRelatorios({ empresaId }) {
   const [gerando, setGerando] = useState(null);
   const { toast } = useToast();
   const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
   const scopeId = empresaId || empresaAtual?.id || grupoAtual?.id || 'sem-contexto';
   const contextoValido = scopeId !== 'sem-contexto';
+  const canViewRelatorios = hasPermission('Sistema', 'Relatorios', 'visualizar') ||
+    hasPermission('Relatorios', null, 'visualizar') ||
+    hasPermission('Sistema', null, 'visualizar');
+  const canExportRelatorios = hasPermission('Sistema', 'Relatorios', 'exportar') ||
+    hasPermission('Relatorios', null, 'exportar') ||
+    hasPermission('Sistema', null, 'exportar');
 
   const listar = (entityName, order, limit, campo) => (
     filterInContext(entityName, {}, order, limit, campo)
@@ -210,16 +220,40 @@ export default function GeradorRelatorios({ empresaId }) {
       if (!contextoValido) {
         throw new Error('Selecione um grupo ou empresa antes de exportar.');
       }
+      if (!canExportRelatorios) {
+        await base44.entities.AuditLog.create({
+          acao: 'bloqueio_exportacao_relatorio',
+          modulo: 'Sistema',
+          entidade: 'GeradorRelatorios',
+          entidade_id: relatorio.id,
+          descricao: `Exportacao bloqueada por RBAC: ${relatorio.titulo}`,
+          usuario_id: user?.id || null,
+          usuario: user?.email || user?.full_name || 'Usuario',
+          empresa_id: empresaAtual?.id || empresaId || null,
+          group_id: grupoAtual?.id || empresaAtual?.group_id || null,
+          grupo_id: grupoAtual?.id || empresaAtual?.group_id || null,
+          tipo_auditoria: 'seguranca',
+          sucesso: false,
+          data_hora: new Date().toISOString()
+        });
+        throw new Error('Usuario sem permissao para exportar relatorios.');
+      }
       await relatorio.exportaExcel();
       await base44.entities.AuditLog.create({
         acao: 'exportar_relatorio',
-        modulo: 'sistema',
-        entidade: 'Relatorio',
+        modulo: 'Sistema',
+        entidade: 'GeradorRelatorios',
         entidade_id: relatorio.id,
         descricao: `Relatorio exportado: ${relatorio.titulo}`,
+        usuario_id: user?.id || null,
+        usuario: user?.email || user?.full_name || 'Usuario',
         empresa_id: empresaAtual?.id || empresaId || null,
         group_id: grupoAtual?.id || empresaAtual?.group_id || null,
-        contexto
+        grupo_id: grupoAtual?.id || empresaAtual?.group_id || null,
+        tipo_auditoria: 'operacional',
+        sucesso: true,
+        contexto,
+        data_hora: new Date().toISOString()
       });
       toast({ 
         title: '✅ Excel Exportado!',
@@ -238,7 +272,18 @@ export default function GeradorRelatorios({ empresaId }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div
+      className="space-y-6 w-full h-full"
+      data-permission="Sistema.Relatorios.visualizar"
+      data-context-required="group-or-company"
+    >
+      {(!contextoValido || !canViewRelatorios) && (
+        <Alert className="border-amber-300 bg-amber-50">
+          <AlertDescription>
+            Selecione grupo ou empresa e confirme permissao para visualizar a central de relatorios.
+          </AlertDescription>
+        </Alert>
+      )}
       <Alert className="border-blue-300 bg-blue-50">
         <FileDown className="w-5 h-5 text-blue-600" />
         <AlertDescription>
@@ -296,8 +341,11 @@ export default function GeradorRelatorios({ empresaId }) {
                 <div className="flex gap-2">
                   <Button
                     onClick={() => handleExportarExcel(relatorio)}
-                    disabled={isGerando}
+                    disabled={isGerando || !contextoValido || !canExportRelatorios}
                     data-action={`Relatorios.exportar.${relatorio.id}`}
+                    data-permission="Sistema.Relatorios.exportar"
+                    data-context-required="group-or-company"
+                    data-sensitive="true"
                     className={`flex-1 ${
                 relatorio.cor === 'blue' ? 'bg-blue-600 hover:bg-blue-700' :
                 relatorio.cor === 'purple' ? 'bg-purple-600 hover:bg-purple-700' :
