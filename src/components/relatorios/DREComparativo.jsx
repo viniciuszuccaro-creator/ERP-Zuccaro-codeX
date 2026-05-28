@@ -3,31 +3,46 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { TrendingUp, TrendingDown, Download, Calendar } from "lucide-react";
+import { TrendingUp, TrendingDown, Download, Calendar, AlertTriangle } from "lucide-react";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 import ExportMenu from "@/components/ui/ExportMenu";
 
 export default function DREComparativo({ empresaId, windowMode = false }) {
   const [periodo, setPeriodo] = useState("3"); // 3, 6, 12 meses
   const [tipoGrafico, setTipoGrafico] = useState("linha");
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaSelecionadaId = empresaId || empresaAtual?.id || null;
+  const contextKey = empresaSelecionadaId || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const canViewDRE = hasPermission("Financeiro", "DRE", "visualizar") ||
+    hasPermission("Financeiro", "Relatorios", "visualizar") ||
+    hasPermission("Financeiro", null, "visualizar");
 
   const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contasReceber'],
-    queryFn: () => base44.entities.ContaReceber.list('-data_emissao'),
+    queryKey: ['contasReceber', 'dre-comparativo', contextKey],
+    queryFn: () => filterInContext('ContaReceber', {}, '-data_emissao', 9999),
+    enabled: contextoValido && canViewDRE,
   });
 
   const { data: contasPagar = [] } = useQuery({
-    queryKey: ['contasPagar'],
-    queryFn: () => base44.entities.ContaPagar.list('-data_emissao'),
+    queryKey: ['contasPagar', 'dre-comparativo', contextKey],
+    queryFn: () => filterInContext('ContaPagar', {}, '-data_emissao', 9999),
+    enabled: contextoValido && canViewDRE,
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list('-data_pedido'),
+    queryKey: ['pedidos', 'dre-comparativo', contextKey],
+    queryFn: () => filterInContext('Pedido', {}, '-data_pedido', 9999),
+    enabled: contextoValido && canViewDRE,
   });
 
   // Gerar dados dos últimos N meses
@@ -49,7 +64,7 @@ export default function DREComparativo({ empresaId, windowMode = false }) {
           const dataPedido = new Date(p.data_pedido);
           return dataPedido >= inicio && dataPedido <= fim && 
                  (p.status === 'Faturado' || p.status === 'Entregue') &&
-                 (!empresaId || p.empresa_id === empresaId);
+                 (!empresaSelecionadaId || p.empresa_id === empresaSelecionadaId);
         })
         .reduce((sum, p) => sum + (p.valor_total || 0), 0);
 
@@ -59,7 +74,7 @@ export default function DREComparativo({ empresaId, windowMode = false }) {
           const dataPedido = new Date(p.data_pedido);
           return dataPedido >= inicio && dataPedido <= fim && 
                  (p.status === 'Faturado' || p.status === 'Entregue') &&
-                 (!empresaId || p.empresa_id === empresaId);
+                 (!empresaSelecionadaId || p.empresa_id === empresaSelecionadaId);
         })
         .reduce((sum, p) => sum + (p.custo_total || 0), 0);
 
@@ -68,7 +83,7 @@ export default function DREComparativo({ empresaId, windowMode = false }) {
         .filter(c => {
           const dataEmissao = new Date(c.data_emissao);
           return dataEmissao >= inicio && dataEmissao <= fim &&
-                 (!empresaId || c.empresa_id === empresaId);
+                 (!empresaSelecionadaId || c.empresa_id === empresaSelecionadaId);
         })
         .reduce((sum, c) => sum + (c.valor || 0), 0);
 
@@ -115,6 +130,12 @@ export default function DREComparativo({ empresaId, windowMode = false }) {
   return (
     <div className={containerClass}>
       <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
+      {(!contextoValido || !canViewDRE) && (
+        <Alert className="border-amber-300 bg-amber-50" data-permission="Financeiro.DRE.visualizar" data-context-required="group-or-company">
+          <AlertTriangle className="h-5 w-5 text-amber-600" />
+          <AlertDescription>Selecione grupo ou empresa e confirme permissao para visualizar o DRE comparativo.</AlertDescription>
+        </Alert>
+      )}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">DRE Comparativo Multi-Períodos</h2>
@@ -154,6 +175,9 @@ export default function DREComparativo({ empresaId, windowMode = false }) {
             }))} 
             fileName="dre_comparativo" 
             title="DRE Comparativo Multi-Períodos"
+            module="Financeiro"
+            section="DRE"
+            action="exportar"
           />
         </div>
       </div>

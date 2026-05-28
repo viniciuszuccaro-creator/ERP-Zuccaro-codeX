@@ -5,23 +5,37 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import { AlertTriangle, TrendingDown, Download, Clock, DollarSign, Shield } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import ExportMenu from "@/components/ui/ExportMenu"; // Added import
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 export default function DashboardInadimplencia({ empresaId }) {
   const [filtroRisco, setFiltroRisco] = useState("todos");
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaSelecionadaId = empresaId || empresaAtual?.id || null;
+  const contextKey = empresaSelecionadaId || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const canViewInadimplencia = hasPermission("Financeiro", "Inadimplencia", "visualizar") ||
+    hasPermission("Financeiro", "Relatorios", "visualizar") ||
+    hasPermission("Financeiro", null, "visualizar");
 
   const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contasReceber'],
-    queryFn: () => base44.entities.ContaReceber.list('-data_vencimento'),
+    queryKey: ['contasReceber', 'dashboard-inadimplencia', contextKey],
+    queryFn: () => filterInContext('ContaReceber', {}, '-data_vencimento', 9999),
+    enabled: contextoValido && canViewInadimplencia,
   });
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list(),
+    queryKey: ['clientes', 'dashboard-inadimplencia', contextKey],
+    queryFn: () => filterInContext('Cliente', {}, 'nome', 9999),
+    enabled: contextoValido && canViewInadimplencia,
   });
 
   const hoje = new Date();
@@ -31,7 +45,7 @@ export default function DashboardInadimplencia({ empresaId }) {
     const porCliente = {};
 
     contasReceber
-      .filter(c => (!empresaId || c.empresa_id === empresaId))
+      .filter(c => (!empresaSelecionadaId || c.empresa_id === empresaSelecionadaId))
       .forEach(conta => {
         const key = conta.cliente_id || conta.cliente;
         if (!key) return;
@@ -155,7 +169,13 @@ export default function DashboardInadimplencia({ empresaId }) {
   // The exportarExcel function is removed as ExportMenu will handle it
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full h-full" data-permission="Financeiro.Inadimplencia.visualizar" data-context-required="group-or-company">
+      {(!contextoValido || !canViewInadimplencia) && (
+        <Alert className="border-amber-300 bg-amber-50">
+          <AlertTriangle className="h-5 w-5 text-amber-600" />
+          <AlertDescription>Selecione grupo ou empresa e confirme permissao para visualizar inadimplencia.</AlertDescription>
+        </Alert>
+      )}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Dashboard de Inadimplência</h2>
@@ -184,6 +204,9 @@ export default function DashboardInadimplencia({ empresaId }) {
             }))} 
             fileName="dashboard_inadimplencia" 
             title="Dashboard de Inadimplência"
+            module="Financeiro"
+            section="Inadimplencia"
+            action="exportar"
           />
         </div>
       </div>

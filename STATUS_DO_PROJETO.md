@@ -1,5 +1,19 @@
 # Status do Projeto ERP Zuccaro
 
+### Financeiro - Fase 8 Relatorios DRE, Indicadores e Inadimplencia
+
+- Seguido o proximo passo salvo no status: continuar em `RelatorioFinanceiro`, `RelatorioDRE`, `DREComparativo` e `DashboardInadimplencia`.
+- `RelatorioFinanceiro` passou a consultar contas a receber/pagar com chave por grupo/empresa, validar RBAC de visualizacao/exportacao e auditar exportacoes CSV ou bloqueios.
+- `RelatorioDRE` passou a consultar pedidos/contas a pagar por contexto grupo/empresa, validar permissao de DRE e auditar exportacoes de DRE resumida, DRE mensal e despesas por categoria.
+- `DREComparativo` deixou de buscar dados financeiros globais e passou a usar `filterInContext` para `ContaReceber`, `ContaPagar` e `Pedido`, mantendo filtro por empresa quando recebido por prop.
+- `DashboardInadimplencia` deixou de listar contas/clientes globalmente e passou a respeitar `filterInContext`, grupo/empresa e permissao de visualizacao.
+- Exportacoes via `ExportMenu` em DRE comparativo e inadimplencia foram vinculadas aos modulos/secoes corretos para RBAC e auditoria ja existentes no componente compartilhado.
+- Relatorios passaram a exibir alerta visual quando faltar contexto grupo/empresa ou permissao de acesso.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos componentes existentes.
+- `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 nos demais relatorios e indicadores financeiros/gerenciais, priorizando `RelatorioVendas`, `RelatorioEstoque`, `RelatorioProducao`, `RentabilidadeProduto` e `RentabilidadeCliente` para contexto grupo/empresa, RBAC, exportacoes auditadas e consistencia de calculos.
+
 ### Financeiro - Fase 8 Relatorios e Fluxos Bancarios Auxiliares
 
 - Seguido o proximo passo salvo no status: revisar `FluxoCaixaProjetado`, `ExtratoBancarioResumo`, `MovimentosDiarios` e `CartoesACompensar`.

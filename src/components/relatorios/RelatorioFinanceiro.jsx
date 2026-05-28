@@ -1,13 +1,17 @@
 import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   BarChart, Bar, LineChart, Line, ComposedChart,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine
 } from "recharts";
 import { Download, TrendingUp, TrendingDown, DollarSign, AlertCircle } from "lucide-react";
 import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 import FiltrosPeriodoEmpresa from "@/components/relatorios/FiltrosPeriodoEmpresa";
 import { exportarCSV } from "@/components/relatorios/exportUtils";
 
@@ -16,15 +20,29 @@ export default function RelatorioFinanceiro() {
     data_inicio: new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0],
     data_fim: new Date().toISOString().split('T')[0],
   });
-  const { filterInContext, empresaAtual } = useContextoVisual();
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextKey = empresaId || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const canViewRelatorio = hasPermission("Financeiro", "Relatorios", "visualizar") ||
+    hasPermission("Financeiro", "Relatorio Financeiro", "visualizar") ||
+    hasPermission("Financeiro", null, "visualizar");
+  const canExportRelatorio = hasPermission("Financeiro", "Relatorios", "exportar") ||
+    hasPermission("Financeiro", "Relatorio Financeiro", "exportar") ||
+    hasPermission("Financeiro", null, "exportar");
 
   const { data: receber = [] } = useQuery({
-    queryKey: ['rel-receber', empresaAtual?.id],
+    queryKey: ['rel-receber', contextKey],
     queryFn: () => filterInContext('ContaReceber', {}, '-data_vencimento', 9999),
+    enabled: contextoValido && canViewRelatorio,
   });
   const { data: pagar = [] } = useQuery({
-    queryKey: ['rel-pagar', empresaAtual?.id],
+    queryKey: ['rel-pagar', contextKey],
     queryFn: () => filterInContext('ContaPagar', {}, '-data_vencimento', 9999),
+    enabled: contextoValido && canViewRelatorio,
   });
 
   const filtrar = (lista, campo) => {
@@ -64,8 +82,45 @@ export default function RelatorioFinanceiro() {
 
   const fmt = v => `R$ ${Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
+  const auditarExportacao = async (nome, quantidade, sucesso = true) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao: sucesso ? "Exportacao" : "Bloqueio",
+        modulo: "Financeiro",
+        entidade: "RelatorioFinanceiro",
+        descricao: sucesso ? `Exportacao CSV do relatorio financeiro: ${nome}` : `Exportacao bloqueada no relatorio financeiro: ${nome}`,
+        usuario_id: user?.id || null,
+        usuario: user?.full_name || user?.email || "Usuario local",
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        dados_novos: { nome, quantidade, filtros },
+        sucesso,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar exportacao do relatorio financeiro:", error);
+    }
+  };
+
+  const exportarRelatorio = async (dados, nomeArquivo) => {
+    if (!contextoValido || !canExportRelatorio) {
+      await auditarExportacao(nomeArquivo, dados?.length || 0, false);
+      return;
+    }
+    exportarCSV(dados, nomeArquivo);
+    await auditarExportacao(nomeArquivo, dados?.length || 0, true);
+  };
+
   return (
-    <div className="space-y-6 w-full">
+    <div className="space-y-6 w-full h-full" data-permission="Financeiro.Relatorios.visualizar" data-context-required="group-or-company">
+      {(!contextoValido || !canViewRelatorio) && (
+        <Alert className="border-amber-300 bg-amber-50">
+          <AlertCircle className="h-5 w-5 text-amber-600" />
+          <AlertDescription>Selecione grupo ou empresa e confirme permissao para visualizar o relatorio financeiro.</AlertDescription>
+        </Alert>
+      )}
       <FiltrosPeriodoEmpresa filtros={filtros} setFiltros={setFiltros} />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -94,7 +149,7 @@ export default function RelatorioFinanceiro() {
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <CardTitle className="text-base">Fluxo de Caixa Mensal (Receitas × Despesas)</CardTitle>
-              <Button size="sm" variant="outline" onClick={() => exportarCSV(fluxoMensal, 'fluxo_mensal')}>
+              <Button size="sm" variant="outline" onClick={() => exportarRelatorio(fluxoMensal, 'fluxo_mensal')} disabled={!contextoValido || !canExportRelatorio} data-action="RelatorioFinanceiro.exportarFluxo" data-permission="Financeiro.Relatorios.exportar" data-context-required="group-or-company" data-sensitive="true">
                 <Download className="w-3 h-3 mr-1" /> CSV
               </Button>
             </div>
@@ -120,7 +175,7 @@ export default function RelatorioFinanceiro() {
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <CardTitle className="text-base">Contas a Receber por Status</CardTitle>
-              <Button size="sm" variant="outline" onClick={() => exportarCSV(statusReceber, 'status_receber')}>
+              <Button size="sm" variant="outline" onClick={() => exportarRelatorio(statusReceber, 'status_receber')} disabled={!contextoValido || !canExportRelatorio} data-action="RelatorioFinanceiro.exportarStatusReceber" data-permission="Financeiro.Relatorios.exportar" data-context-required="group-or-company" data-sensitive="true">
                 <Download className="w-3 h-3 mr-1" /> CSV
               </Button>
             </div>
