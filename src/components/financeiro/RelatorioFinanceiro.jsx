@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   BarChart,
   Bar,
@@ -25,6 +25,8 @@ import {
   ResponsiveContainer
 } from "recharts";
 import { TrendingUp, TrendingDown, DollarSign, CreditCard, Download, Filter } from "lucide-react";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * Relatórios Financeiros Avançados
@@ -33,25 +35,48 @@ export default function RelatorioFinanceiro({ empresaId, windowMode = false }) {
   const [periodoInicio, setPeriodoInicio] = useState("");
   const [periodoFim, setPeriodoFim] = useState("");
   const [filtroCliente, setFiltroCliente] = useState("todos");
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaSelecionadaId = empresaId || empresaAtual?.id || null;
+  const contextKey = empresaSelecionadaId || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const canViewRelatorio = hasPermission("Financeiro", "Relatorios", "visualizar") ||
+    hasPermission("Financeiro", "Relatorio Financeiro", "visualizar") ||
+    hasPermission("Financeiro", null, "visualizar");
+  const canExportRelatorio = hasPermission("Financeiro", "Relatorios", "exportar") ||
+    hasPermission("Financeiro", "Relatorio Financeiro", "exportar") ||
+    hasPermission("Financeiro", null, "exportar");
 
   const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contasReceber'],
-    queryFn: () => base44.entities.ContaReceber.list('-data_vencimento'),
+    queryKey: ['contasReceber-analytics-financeiro', contextKey],
+    queryFn: () => filterInContext('ContaReceber', empresaSelecionadaId ? { empresa_id: empresaSelecionadaId } : {}, '-data_vencimento', 5000),
+    enabled: contextoValido && canViewRelatorio,
   });
 
   const { data: contasPagar = [] } = useQuery({
-    queryKey: ['contasPagar'],
-    queryFn: () => base44.entities.ContaPagar.list('-data_vencimento'),
+    queryKey: ['contasPagar-analytics-financeiro', contextKey],
+    queryFn: () => filterInContext('ContaPagar', empresaSelecionadaId ? { empresa_id: empresaSelecionadaId } : {}, '-data_vencimento', 5000),
+    enabled: contextoValido && canViewRelatorio,
   });
 
   // Filtrar por empresa se necessário
-  const receberFiltradas = empresaId 
-    ? contasReceber.filter(c => c.empresa_id === empresaId)
-    : contasReceber;
+  const receberFiltradas = contasReceber.filter(c => {
+    if (empresaSelecionadaId && c.empresa_id && c.empresa_id !== empresaSelecionadaId) return false;
+    if (groupId && c.group_id && c.group_id !== groupId && c.grupo_id !== groupId) return false;
+    if (periodoInicio && c.data_vencimento < periodoInicio) return false;
+    if (periodoFim && c.data_vencimento > periodoFim) return false;
+    if (filtroCliente !== "todos" && c.cliente_id !== filtroCliente) return false;
+    return true;
+  });
 
-  const pagarFiltradas = empresaId
-    ? contasPagar.filter(c => c.empresa_id === empresaId)
-    : contasPagar;
+  const pagarFiltradas = contasPagar.filter(c => {
+    if (empresaSelecionadaId && c.empresa_id && c.empresa_id !== empresaSelecionadaId) return false;
+    if (groupId && c.group_id && c.group_id !== groupId && c.grupo_id !== groupId) return false;
+    if (periodoInicio && c.data_vencimento < periodoInicio) return false;
+    if (periodoFim && c.data_vencimento > periodoFim) return false;
+    return true;
+  });
 
   // Por Forma de Pagamento
   const porFormaPagamento = {};
@@ -109,7 +134,19 @@ export default function RelatorioFinanceiro({ empresaId, windowMode = false }) {
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
   const content = (
-    <div className="space-y-1.5">
+    <div
+      className="space-y-1.5 w-full h-full"
+      data-permission="Financeiro.Relatorios.visualizar"
+      data-context-required="group-or-company"
+      data-can-export={canExportRelatorio ? "true" : "false"}
+    >
+      {(!contextoValido || !canViewRelatorio) && (
+        <Alert className="border-amber-300 bg-amber-50">
+          <AlertDescription>
+            Selecione grupo ou empresa e confirme permissao para visualizar relatorios financeiros.
+          </AlertDescription>
+        </Alert>
+      )}
       {/* Filtros */}
       <Card>
         <CardContent className="p-4">

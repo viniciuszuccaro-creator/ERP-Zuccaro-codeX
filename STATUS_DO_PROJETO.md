@@ -1,5 +1,17 @@
 # Status do Projeto ERP Zuccaro
 
+### Financeiro/Logistica/Producao - Fase 8 Relatorios Restantes
+
+- Seguido o proximo passo salvo no status: revisar `RelatoriosLogistica`, `DashboardLogistico`, `RelatorioFinanceiro`, `RelatoriosProducao` e pontos com exportacao direta sem `ExportMenu` auditado.
+- `RelatoriosLogistica`, `DashboardLogistico`, `RelatoriosProducao` e `src/components/relatorios/RelatorioFinanceiro.jsx` foram revisados e ja estavam reforcados com contexto grupo/empresa, RBAC e auditoria; mantidos sem alteracoes nesta rodada.
+- `src/components/financeiro/RelatorioFinanceiro.jsx` deixou de consultar `ContaReceber` e `ContaPagar` globalmente e passou a usar `filterInContext` com chave por grupo/empresa.
+- O relatorio financeiro analitico antigo passou a validar contexto grupo/empresa, permissao RBAC de visualizacao e filtro local por periodo/cliente sobre dados contextualizados.
+- Container principal recebeu `w-full`, `h-full`, `data-permission`, `data-context-required` e alerta visual quando faltar contexto ou permissao.
+- Mantida a Regra-Mae: nenhum modulo, tela, componente ou arquivo novo foi criado; apenas melhoria no componente existente.
+- `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 procurando relatorios/exportacoes diretas remanescentes em `src/components` com `rg "base44.entities.*.(list|filter)"`, priorizando modulos fiscal, compras, CRM e dashboards legados.
+
 ### Gerencial - Fase 8 Central de Relatorios, Atendimento e SPED
 
 - Seguido o proximo passo salvo no status: continuar em `GeradorRelatorios`, `AgendamentoRelatorios`, `RelatoriosAtendimento`, `ExportacaoSPED` e `RelatorioFinanceiroLogistica`.
