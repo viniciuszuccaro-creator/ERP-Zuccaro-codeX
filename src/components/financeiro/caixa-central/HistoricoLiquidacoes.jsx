@@ -4,15 +4,24 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useQuery } from '@tanstack/react-query';
 import useContextoVisual from '@/components/lib/useContextoVisual';
-import { CheckCircle2, TrendingUp, TrendingDown } from 'lucide-react';
+import usePermissions from '@/components/lib/usePermissions';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CheckCircle2, TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
 
 export default function HistoricoLiquidacoes() {
-  const { filterInContext, empresaAtual } = useContextoVisual();
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const canViewHistorico = hasPermission('Financeiro', 'Caixa Central', 'visualizar') ||
+    hasPermission('Financeiro', 'Caixa', 'visualizar') ||
+    hasPermission('Financeiro', null, 'visualizar');
 
   const { data: ordensLiquidacao = [], isLoading } = useQuery({
-    queryKey: ['caixa-ordens-liquidacao', empresaAtual?.id],
+    queryKey: ['caixa-ordens-liquidacao', groupId, empresaId],
     queryFn: () => filterInContext('CaixaOrdemLiquidacao', {}, '-created_date'),
-    enabled: !!empresaAtual?.id
+    enabled: contextoValido && canViewHistorico
   });
 
   const ordensLiquidadas = ordensLiquidacao.filter(o => o.status === "Liquidado");
@@ -30,6 +39,12 @@ export default function HistoricoLiquidacoes() {
 
   return (
     <Card className="border-0 shadow-md">
+      {(!contextoValido || !canViewHistorico) && (
+        <Alert className="m-4 border-amber-300 bg-amber-50" data-permission="Financeiro.CaixaCentral.visualizar" data-context-required="true">
+          <AlertTriangle className="h-5 w-5 text-amber-600" />
+          <AlertDescription>Selecione grupo ou empresa e confirme permissao para visualizar historico de liquidacoes.</AlertDescription>
+        </Alert>
+      )}
       <CardHeader className="bg-slate-50 border-b">
         <CardTitle className="flex items-center gap-2">
           <CheckCircle2 className="w-5 h-5 text-green-600" />

@@ -1285,3 +1285,20 @@ Checklist inicial:
 - `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em `OrdensLiquidacaoPendentes`, `HistoricoLiquidacoes`, `ConciliacaoBancariaTab` e `GestaoRemessaRetorno`, reforcando processamento/cancelamento/conciliacao/retorno bancario com contexto grupo/empresa, RBAC, auditoria antes/depois, confirmacao e Regra-Mae.
+
+### Financeiro - Fase 8 Ordens, Conciliacao e CNAB
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `OrdensLiquidacaoPendentes`, `HistoricoLiquidacoes`, `ConciliacaoBancariaTab` e `GestaoRemessaRetorno`.
+- `OrdensLiquidacaoPendentes` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Liquidacao e cancelamento de ordens agora exigem contexto grupo/empresa, permissao RBAC, confirmacao explicita e auditoria de sucesso/cancelamento com dados anteriores e novos.
+- Baixa dos titulos vinculados pela ordem agora preserva `group_id`, `grupo_id` e `empresa_id` em `ContaReceber`, `ContaPagar` e `CaixaOrdemLiquidacao`.
+- Botoes sensiveis de liquidar/cancelar/confirmar receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- `HistoricoLiquidacoes` passou a usar contexto por grupo/empresa, validar permissao de visualizacao e exibir alerta quando faltar contexto ou acesso.
+- `ConciliacaoBancariaTab` passou a auditar geracao/cancelamento de conciliacao com IA, gravando usuario, grupo, empresa e periodo, alem de exigir confirmacao explicita antes da geracao.
+- `GestaoRemessaRetorno` passou a auditar geracao de remessa, processamento de retorno e cancelamentos pelo usuario.
+- Arquivos de retorno CNAB agora passam por validacao de tamanho limite de 5MB e bloqueio de conteudo inseguro antes de processar.
+- Remessa, retorno e baixas automaticas preservam `group_id`, `grupo_id` e `empresa_id`, registrando usuario de criacao/processamento.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco dos componentes existentes.
+- `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 nos relatórios financeiros e fluxos bancarios auxiliares, priorizando `FluxoCaixaProjetado`, `ExtratoBancarioResumo`, `MovimentosDiarios`, `CartoesACompensar` e `OrdensLiquidacaoPendentes` para revisar rateio, conciliacao final, auditoria antes/depois e exportacoes.

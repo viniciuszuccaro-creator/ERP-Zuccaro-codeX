@@ -10,17 +10,20 @@ import { Zap, Upload, CheckCircle, AlertTriangle, TrendingUp } from "lucide-reac
 import { toast } from "sonner";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 
 export default function ConciliacaoBancariaTab() {
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual, filterInContext, createInContext } = useContextoVisual();
   const { canCreate, canEdit, hasPermission } = usePermissions();
+  const { user } = useUser();
   const [periodo, setPeriodo] = useState({
     inicio: new Date(new Date().setDate(1)).toISOString().split('T')[0],
     fim: new Date().toISOString().split('T')[0]
   });
   const [contaSelecionadaId, setContaSelecionadaId] = useState("");
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
   const contextKey = empresaAtual?.id || groupId || "sem-contexto";
   const contextoValido = contextKey !== "sem-contexto";
   const podeConciliar = canCreate('Financeiro', 'ConciliaÃ§Ã£o BancÃ¡ria') ||
@@ -28,6 +31,28 @@ export default function ConciliacaoBancariaTab() {
     hasPermission('Financeiro', 'ConciliacaoBancaria', 'criar') ||
     hasPermission('Financeiro', 'ConciliacaoBancaria', 'editar');
   const controlesBloqueados = !contextoValido || !podeConciliar;
+
+  const auditarConciliacao = async ({ acao, descricao, dadosNovos, sucesso = true }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: 'Financeiro',
+        entidade: 'ConciliacaoBancaria',
+        descricao,
+        usuario_id: user?.id || null,
+        usuario: user?.full_name || user?.email || 'Usuario local',
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
+        dados_novos: dadosNovos,
+        sucesso,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar conciliacao bancaria:', error);
+    }
+  };
 
   const { data: conciliacoes = [], isLoading } = useQuery({
     queryKey: ["conciliacao-bancaria", contextKey],
@@ -94,6 +119,9 @@ Retorne sugestões de conciliação baseadas em valor, data, histórico e simila
       });
 
       return createInContext('ConciliacaoBancaria', {
+        group_id: groupId,
+        grupo_id: groupId,
+        empresa_id: empresaId,
         conta_bancaria_id: contaId,
         periodo_inicio: periodo.inicio,
         periodo_fim: periodo.fim,
@@ -103,7 +131,12 @@ Retorne sugestões de conciliação baseadas em valor, data, histórico e simila
         status: "Em Processamento"
       });
     },
-    onSuccess: () => {
+    onSuccess: async (conciliacao) => {
+      await auditarConciliacao({
+        acao: 'Criacao',
+        descricao: 'Conciliacao bancaria gerada com IA.',
+        dadosNovos: { conciliacao_id: conciliacao?.id, conta_bancaria_id: conciliacao?.conta_bancaria_id, periodo }
+      });
       queryClient.invalidateQueries(["conciliacao-bancaria"]);
       toast.success("✅ Conciliação gerada com IA!");
     },
@@ -163,18 +196,26 @@ Retorne sugestões de conciliação baseadas em valor, data, histórico e simila
               onClick={() => {
                 const contaId = contaSelecionadaId || contas[0]?.id;
                 if (contaId) {
+                  if (!window.confirm("Gerar conciliacao bancaria com IA para o periodo selecionado?")) {
+                    auditarConciliacao({ acao: 'Cancelamento', descricao: 'Usuario cancelou geracao de conciliacao bancaria com IA.', dadosNovos: { contaId, periodo }, sucesso: false });
+                    return;
+                  }
                   gerarConciliacaoIAMutation.mutate({ contaId });
                 } else {
                   toast.error("Nenhuma conta bancária cadastrada");
                 }
               }}
               disabled={controlesDesabilitados}
+              data-action="ConciliacaoBancaria.gerar_ia"
+              data-permission="Financeiro.ConciliacaoBancaria.criar"
+              data-context-required="true"
+              data-sensitive
             >
               <Zap className="w-4 h-4 mr-2" />
               Gerar Conciliação com IA
             </Button>
 
-            <Button variant="outline" disabled={controlesDesabilitados}>
+            <Button variant="outline" disabled={controlesDesabilitados} data-action="ConciliacaoBancaria.importar_ofx" data-permission="Financeiro.ConciliacaoBancaria.criar" data-context-required="true" data-sensitive>
               <Upload className="w-4 h-4 mr-2" />
               Importar Extrato OFX
             </Button>

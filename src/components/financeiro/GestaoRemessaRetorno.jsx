@@ -28,6 +28,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 
 /**
  * 🏦 GESTÃO DE REMESSA E RETORNO CNAB V21.8
@@ -50,7 +51,9 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
   const { canCreate, canEdit, hasPermission } = usePermissions();
+  const { user } = useUser();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
   const contextKey = empresaAtual?.id || groupId || "sem-contexto";
   const contextoValido = contextKey !== "sem-contexto";
   const podeGerarRemessa = canCreate("Financeiro", "Remessa Retorno") ||
@@ -59,6 +62,30 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
   const podeProcessarRetorno = canEdit("Financeiro", "Remessa Retorno") ||
     canEdit("Financeiro", "Contas a Receber") ||
     hasPermission("Financeiro", null, "baixar");
+
+  const auditarCNAB = async ({ acao, entidade = 'ArquivoRemessaRetorno', registroId, descricao, dadosAnteriores, dadosNovos, sucesso = true }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: 'Financeiro',
+        entidade,
+        registro_id: registroId || null,
+        descricao,
+        usuario_id: user?.id || null,
+        usuario: user?.full_name || user?.email || 'Usuario local',
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
+        dados_anteriores: dadosAnteriores,
+        dados_novos: dadosNovos,
+        sucesso,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar CNAB:', error);
+    }
+  };
 
   // Queries
   const { data: bancos = [] } = useQuery({
@@ -117,8 +144,9 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
 
       // Criar arquivo
       const arquivo = await createInContext('ArquivoRemessaRetorno', {
-        ...(titulos[0].empresa_id ? { empresa_id: titulos[0].empresa_id } : {}),
-        ...(groupId ? { group_id: groupId } : {}),
+        empresa_id: titulos[0].empresa_id || empresaId,
+        group_id: titulos[0].group_id || groupId,
+        grupo_id: titulos[0].grupo_id || titulos[0].group_id || groupId,
         banco_id: bancoId,
         banco_codigo: banco.codigo,
         banco_nome: banco.nome,
@@ -131,6 +159,8 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
         arquivo_nome: `REM${banco.codigo}_${numeroArquivo}.REM`,
         conteudo_arquivo: conteudoCNAB,
         status: 'Gerado',
+        criado_por: user?.full_name || user?.email,
+        criado_por_id: user?.id,
         titulos_incluidos: titulos.map((t, idx) => ({
           titulo_id: t.id,
           nosso_numero: String(Date.now() + idx).substring(0, 10),
@@ -145,6 +175,9 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
       for (const titulo of titulos) {
         const nossoNumero = String(Date.now()).substring(0, 10);
         await updateInContext('ContaReceber', titulo.id, {
+          group_id: titulo.group_id || groupId,
+          grupo_id: titulo.grupo_id || titulo.group_id || groupId,
+          empresa_id: titulo.empresa_id || empresaId,
           arquivo_remessa_id: arquivo.id,
           nosso_numero: nossoNumero,
           data_registro_banco: new Date().toISOString(),
@@ -154,7 +187,13 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
 
       return arquivo;
     },
-    onSuccess: (arquivo) => {
+    onSuccess: async (arquivo) => {
+      await auditarCNAB({
+        acao: 'Criacao',
+        registroId: arquivo?.id,
+        descricao: 'Arquivo de remessa CNAB gerado e titulos vinculados.',
+        dadosNovos: { arquivo_nome: arquivo?.arquivo_nome, quantidade_titulos: arquivo?.quantidade_titulos, valor_total: arquivo?.valor_total }
+      });
       queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
       queryClient.invalidateQueries({ queryKey: ['arquivos-remessa-retorno'] });
       toast.success(`✅ Remessa gerada! ${arquivo.quantidade_titulos} títulos`);
@@ -178,7 +217,9 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
   const processarRetornoMutation = useMutation({
     mutationFn: async (file) => {
       if (!contextoValido || !podeProcessarRetorno) throw new Error("Sem contexto ou permissÃ£o para processar retorno.");
+      if (!file || file.size <= 0 || file.size > 5 * 1024 * 1024) throw new Error("Arquivo de retorno invalido ou acima de 5MB.");
       const conteudo = await file.text();
+      if (/<script|javascript:/i.test(conteudo)) throw new Error("Arquivo de retorno contem conteudo bloqueado por seguranca.");
       const linhas = conteudo.split('\n').filter(l => l.trim());
 
       // Parser simplificado de retorno
@@ -194,8 +235,9 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
 
       // Criar registro do arquivo
       const arquivo = await createInContext('ArquivoRemessaRetorno', {
-        ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
-        ...(groupId ? { group_id: groupId } : {}),
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
         tipo_arquivo: 'Retorno',
         banco_codigo: '000',
         banco_nome: 'Importado',
@@ -206,6 +248,8 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
         arquivo_nome: file.name,
         conteudo_arquivo: conteudo,
         status: 'Processado',
+        processado_por: user?.full_name || user?.email,
+        processado_por_id: user?.id,
         ocorrencias_retorno: ocorrencias.map(o => ({
           nosso_numero: o.nossoNumero,
           codigo_ocorrencia: o.codigoOcorrencia,
@@ -223,6 +267,9 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
         
         if (titulo && ocorrencia.codigoOcorrencia === '06') {
           await updateInContext('ContaReceber', titulo.id, {
+            group_id: titulo.group_id || groupId,
+            grupo_id: titulo.grupo_id || titulo.group_id || groupId,
+            empresa_id: titulo.empresa_id || empresaId,
             status: 'Recebido',
             data_recebimento: ocorrencia.dataPagamento || new Date().toISOString(),
             valor_recebido: ocorrencia.valorPago || titulo.valor,
@@ -236,7 +283,13 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
 
       return { arquivo, titulosBaixados };
     },
-    onSuccess: ({ titulosBaixados }) => {
+    onSuccess: async ({ arquivo, titulosBaixados }) => {
+      await auditarCNAB({
+        acao: 'Processamento',
+        registroId: arquivo?.id,
+        descricao: 'Arquivo de retorno CNAB processado com baixa automatica de titulos.',
+        dadosNovos: { arquivo_nome: arquivo?.arquivo_nome, quantidade_titulos: arquivo?.quantidade_titulos, titulosBaixados }
+      });
       queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
       queryClient.invalidateQueries({ queryKey: ['arquivos-remessa-retorno'] });
       toast.success(`✅ Retorno processado! ${titulosBaixados} título(s) baixado(s)`);
@@ -252,6 +305,10 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (!window.confirm(`Processar arquivo de retorno ${file.name}? Esta acao pode baixar titulos automaticamente.`)) {
+        auditarCNAB({ acao: 'Cancelamento', descricao: 'Usuario cancelou processamento de retorno CNAB.', dadosNovos: { arquivo_nome: file.name }, sucesso: false });
+        return;
+      }
       setArquivoRetorno(file);
       setProcessandoRetorno(true);
       processarRetornoMutation.mutate(file);
@@ -302,6 +359,10 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
                     onClick={() => setDialogRemessa(true)}
                     disabled={!contextoValido || !podeGerarRemessa}
                     className="bg-blue-600 hover:bg-blue-700"
+                    data-action="GestaoRemessaRetorno.abrir_remessa"
+                    data-permission="Financeiro.RemessaRetorno.criar"
+                    data-context-required="true"
+                    data-sensitive
                   >
                     <Send className="w-4 h-4 mr-2" />
                     Gerar Remessa
@@ -411,6 +472,10 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
                       onChange={handleFileUpload}
                       className="max-w-xs mx-auto"
                       disabled={processandoRetorno || !contextoValido || !podeProcessarRetorno}
+                      data-action="GestaoRemessaRetorno.processar_retorno"
+                      data-permission="Financeiro.RemessaRetorno.editar"
+                      data-context-required="true"
+                      data-sensitive
                     />
                     {processandoRetorno && (
                       <div className="mt-4">
@@ -551,6 +616,10 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
                       toast.error("Selecione um banco");
                       return;
                     }
+                    if (!window.confirm(`Gerar remessa com ${titulosSelecionados.length} titulo(s) selecionado(s)?`)) {
+                      auditarCNAB({ acao: 'Cancelamento', descricao: 'Usuario cancelou geracao de remessa CNAB.', dadosNovos: { titulosSelecionados, bancoSelecionado }, sucesso: false });
+                      return;
+                    }
                     gerarRemessaMutation.mutate({
                       bancoId: bancoSelecionado,
                       titulosIds: titulosSelecionados
@@ -558,6 +627,10 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
                   }}
                   disabled={!contextoValido || !podeGerarRemessa || gerarRemessaMutation.isPending}
                   className="bg-blue-600 hover:bg-blue-700"
+                  data-action="GestaoRemessaRetorno.gerar_remessa"
+                  data-permission="Financeiro.RemessaRetorno.criar"
+                  data-context-required="true"
+                  data-sensitive
                 >
                   <Download className="w-4 h-4 mr-2" />
                   {gerarRemessaMutation.isPending ? 'Gerando...' : 'Gerar e Baixar'}
