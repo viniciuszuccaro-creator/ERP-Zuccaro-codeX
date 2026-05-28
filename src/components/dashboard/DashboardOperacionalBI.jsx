@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -24,14 +23,24 @@ import { Button } from "@/components/ui/button"; // keep single import
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 function DashboardOperacionalBI({ windowMode = false }) {
   const [periodoFiltro, setPeriodoFiltro] = useState("mes");
-  const { empresaAtual, estaNoGrupo, filtrarPorContexto, filterInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, estaNoGrupo, filtrarPorContexto, filterInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextKey = empresaId || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const canViewDashboard = hasPermission("Dashboard", "Operacional", "visualizar") ||
+    hasPermission("Dashboard", null, "visualizar") ||
+    hasPermission("Sistema", "Dashboard", "visualizar");
 
   const { data: pedidos = [], isError: errPedidos } = useQuery({
-    queryKey: ["bi-pedidos", empresaAtual?.id, estaNoGrupo],
-    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Pedido', {}, '-created_date', 9999) : base44.entities.Pedido.list('-created_date', 200)),
+    queryKey: ["bi-pedidos", contextKey],
+    queryFn: () => filterInContext('Pedido', {}, '-created_date', 9999),
+    enabled: contextoValido && canViewDashboard,
     initialData: [],
     staleTime: 120000,
     gcTime: 600000,
@@ -41,8 +50,9 @@ function DashboardOperacionalBI({ windowMode = false }) {
   });
 
   const { data: ops = [], isError: errOps } = useQuery({
-    queryKey: ["bi-ordens-producao", empresaAtual?.id, estaNoGrupo],
-    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('OrdemProducao', {}, '-data_emissao', 9999) : (base44.entities.OrdemProducao?.list ? base44.entities.OrdemProducao.list('-data_emissao', 200) : Promise.resolve([]))),
+    queryKey: ["bi-ordens-producao", contextKey],
+    queryFn: () => filterInContext('OrdemProducao', {}, '-data_emissao', 9999),
+    enabled: contextoValido && canViewDashboard,
     initialData: [],
     staleTime: 120000,
     gcTime: 600000,
@@ -52,8 +62,9 @@ function DashboardOperacionalBI({ windowMode = false }) {
   });
 
   const { data: entregas = [], isError: errEntregas } = useQuery({
-    queryKey: ["bi-entregas", empresaAtual?.id, estaNoGrupo],
-    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Entrega', {}, '-created_date', 9999) : base44.entities.Entrega.list('-created_date', 200)),
+    queryKey: ["bi-entregas", contextKey],
+    queryFn: () => filterInContext('Entrega', {}, '-created_date', 9999),
+    enabled: contextoValido && canViewDashboard,
     initialData: [],
     staleTime: 120000,
     gcTime: 600000,
@@ -63,8 +74,9 @@ function DashboardOperacionalBI({ windowMode = false }) {
   });
 
   const { data: contasReceber = [], isError: errCR } = useQuery({
-    queryKey: ["bi-contasReceber", empresaAtual?.id, estaNoGrupo],
-    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('ContaReceber', {}, '-data_vencimento', 9999) : base44.entities.ContaReceber.list('-data_vencimento', 200)),
+    queryKey: ["bi-contasReceber", contextKey],
+    queryFn: () => filterInContext('ContaReceber', {}, '-data_vencimento', 9999),
+    enabled: contextoValido && canViewDashboard,
     initialData: [],
     staleTime: 120000,
     gcTime: 600000,
@@ -74,8 +86,9 @@ function DashboardOperacionalBI({ windowMode = false }) {
   });
 
   const { data: produtos = [], isError: errProdutos } = useQuery({
-    queryKey: ["bi-produtos", empresaAtual?.id, estaNoGrupo],
-    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Produto', {}, '-created_date', 9999) : base44.entities.Produto.list('-created_date', 200)),
+    queryKey: ["bi-produtos", contextKey],
+    queryFn: () => filterInContext('Produto', {}, '-created_date', 9999),
+    enabled: contextoValido && canViewDashboard,
     initialData: [],
     staleTime: 120000,
     gcTime: 600000,
@@ -85,8 +98,9 @@ function DashboardOperacionalBI({ windowMode = false }) {
   });
 
   const { data: clientes = [], isError: errClientes } = useQuery({
-    queryKey: ["bi-clientes", empresaAtual?.id, estaNoGrupo],
-    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Cliente', {}, '-created_date', 9999) : base44.entities.Cliente.list('-created_date', 200)),
+    queryKey: ["bi-clientes", contextKey],
+    queryFn: () => filterInContext('Cliente', {}, '-created_date', 9999),
+    enabled: contextoValido && canViewDashboard,
     initialData: [],
     staleTime: 120000,
     gcTime: 600000,
@@ -161,8 +175,19 @@ function DashboardOperacionalBI({ windowMode = false }) {
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "w-full space-y-6 p-6 bg-gradient-to-br from-slate-50 to-blue-50";
 
   return (
-    <div className={`${containerClass} min-h-[760px]`}>
+    <div
+      className={`${containerClass} min-h-[760px]`}
+      data-permission="Dashboard.Operacional.visualizar"
+      data-context-required="group-or-company"
+    >
       <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6 overflow-auto"}>
+      {(!contextoValido || !canViewDashboard) && (
+        <Alert className="border-amber-300 bg-amber-50">
+          <AlertDescription>
+            Selecione grupo ou empresa e confirme permissao para visualizar o dashboard operacional.
+          </AlertDescription>
+        </Alert>
+      )}
       {erroGeral && (
         <Alert className="border-red-300 bg-red-50">
           <AlertDescription className="flex items-center justify-between gap-3">

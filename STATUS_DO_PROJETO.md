@@ -1,5 +1,18 @@
 # Status do Projeto ERP Zuccaro
 
+### Dashboard - Fase 8 BI Operacional e Painel 3D
+
+- Seguido o proximo passo salvo no status: procurar relatorios/exportacoes diretas remanescentes em `src/components`, priorizando modulos fiscal, compras, CRM e dashboards legados.
+- `DashboardOperacionalBI` deixou de usar fallbacks globais para `Pedido`, `OrdemProducao`, `Entrega`, `ContaReceber`, `Produto` e `Cliente`, passando a usar `filterInContext` com chave por grupo/empresa.
+- `PainelOperacoes3D` deixou de listar `OrdemProducao`, `Entrega` e `PosicaoVeiculo` globalmente e passou a respeitar o contexto grupo/empresa.
+- `WidgetCanaisOrigem` deixou de consultar `Pedido` diretamente e passou a carregar dados por contexto, mantendo filtro por empresa quando recebido.
+- `GamificacaoOperacoes` deixou de listar `Pedido`, `OrdemProducao` e `Entrega` globalmente e passou a usar consultas contextualizadas.
+- Os componentes receberam bloqueio por contexto/RBAC, `enabled` seguro nas queries, `w-full`, `h-full`, `data-permission`, `data-context-required` e alerta visual quando faltar grupo/empresa ou permissao.
+- Mantida a Regra-Mae: nenhum modulo, tela, componente ou arquivo novo foi criado; apenas melhoria nos componentes existentes.
+- `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em CRM/Atendimento e Compras ainda globais, priorizando `AnalyticsAtendimento`, `ChatbotDashboard`, `ChatbotFilaEspera`, `DashboardAtendente`, `ExportarConversas`, `CotacoesTab`, `DetalhesFornecedor` e modulos fiscais restantes.
+
 ### Financeiro/Logistica/Producao - Fase 8 Relatorios Restantes
 
 - Seguido o proximo passo salvo no status: revisar `RelatoriosLogistica`, `DashboardLogistico`, `RelatorioFinanceiro`, `RelatoriosProducao` e pontos com exportacao direta sem `ExportMenu` auditado.

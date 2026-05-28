@@ -1,6 +1,5 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -8,6 +7,8 @@ import { Activity, TrendingUp, ArrowRight } from "lucide-react";
 import BadgeOrigemPedido from "@/components/comercial/BadgeOrigemPedido";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * V21.6 - Widget de Canais no Dashboard Principal
@@ -15,20 +16,22 @@ import { createPageUrl } from "@/utils";
  */
 export default function WidgetCanaisOrigem({ empresaId }) {
   const navigate = useNavigate();
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaSelecionadaId = empresaId || empresaAtual?.id || null;
+  const contextKey = empresaSelecionadaId || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const canViewWidget = hasPermission("Dashboard", "Operacional", "visualizar") ||
+    hasPermission("Comercial", "Relatorios", "visualizar") ||
+    hasPermission("Dashboard", null, "visualizar");
 
   const { data: pedidos = [], isLoading } = useQuery({
-    queryKey: ['pedidos-30-dias', empresaId],
+    queryKey: ['pedidos-30-dias', contextKey],
     queryFn: async () => {
       const hoje = new Date();
       const dias30Atras = new Date(hoje.getTime() - 30 * 24 * 60 * 60 * 1000);
-      const dataInicio = dias30Atras.toISOString().split('T')[0];
-
-      let todosPedidos;
-      if (empresaId) {
-        todosPedidos = await base44.entities.Pedido.filter({ empresa_id: empresaId });
-      } else {
-        todosPedidos = await base44.entities.Pedido.list('-created_date', 500);
-      }
+      const todosPedidos = await filterInContext('Pedido', empresaSelecionadaId ? { empresa_id: empresaSelecionadaId } : {}, '-created_date', 500);
 
       return todosPedidos.filter(p => {
         if (!p.created_date) return false;
@@ -36,6 +39,7 @@ export default function WidgetCanaisOrigem({ empresaId }) {
         return dataPedido >= dias30Atras;
       });
     },
+    enabled: contextoValido && canViewWidget,
     initialData: [],
   });
 
@@ -81,6 +85,8 @@ export default function WidgetCanaisOrigem({ empresaId }) {
     <Card 
       className="hover:shadow-lg transition-all duration-300 cursor-pointer border-blue-200 bg-gradient-to-br from-blue-50 to-slate-50"
       onClick={() => navigate(createPageUrl('Cadastros') + '?tab=parametros&subtab=dashboard')}
+      data-permission="Dashboard.Operacional.visualizar"
+      data-context-required="group-or-company"
     >
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
@@ -94,6 +100,11 @@ export default function WidgetCanaisOrigem({ empresaId }) {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
+        {(!contextoValido || !canViewWidget) && (
+          <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+            Selecione grupo ou empresa e confirme permissao para visualizar canais de origem.
+          </div>
+        )}
         
         {/* Canal Principal */}
         {canalPrincipal && (

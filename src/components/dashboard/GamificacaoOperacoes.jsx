@@ -1,31 +1,45 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, TrendingUp, Star, Award } from 'lucide-react';
+import useContextoVisual from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * Gamificação de Operações
  * Rankings de desempenho por função
  */
 export default function GamificacaoOperacoes() {
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextKey = empresaId || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const canViewGamificacao = hasPermission("Dashboard", "Operacional", "visualizar") ||
+    hasPermission("Sistema", "Gamificacao", "visualizar") ||
+    hasPermission("Dashboard", null, "visualizar");
+
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos-gamificacao'],
-    queryFn: () => base44.entities.Pedido.list('-data_pedido', 100),
+    queryKey: ['pedidos-gamificacao', contextKey],
+    queryFn: () => filterInContext('Pedido', {}, '-data_pedido', 100),
+    enabled: contextoValido && canViewGamificacao,
   });
 
   const { data: apontamentos = [] } = useQuery({
-    queryKey: ['apontamentos-gamificacao'],
+    queryKey: ['apontamentos-gamificacao', contextKey],
     queryFn: async () => {
-      const ops = await base44.entities.OrdemProducao.list('-data_emissao', 100);
+      const ops = await filterInContext('OrdemProducao', {}, '-data_emissao', 100);
       return ops.flatMap(op => op.apontamentos || []);
     },
+    enabled: contextoValido && canViewGamificacao,
   });
 
   const { data: entregas = [] } = useQuery({
-    queryKey: ['entregas-gamificacao'],
-    queryFn: () => base44.entities.Entrega.list('-created_date', 100),
+    queryKey: ['entregas-gamificacao', contextKey],
+    queryFn: () => filterInContext('Entrega', {}, '-created_date', 100),
+    enabled: contextoValido && canViewGamificacao,
   });
 
   // Top 5 Vendedores
@@ -95,7 +109,18 @@ export default function GamificacaoOperacoes() {
   };
 
   return (
-    <div className="grid lg:grid-cols-3 gap-6">
+    <div
+      className="grid lg:grid-cols-3 gap-6 w-full h-full"
+      data-permission="Dashboard.Operacional.visualizar"
+      data-context-required="group-or-company"
+    >
+      {(!contextoValido || !canViewGamificacao) && (
+        <Card className="lg:col-span-3 border-amber-300 bg-amber-50">
+          <CardContent className="p-4 text-sm text-amber-900">
+            Selecione grupo ou empresa e confirme permissao para visualizar gamificacao operacional.
+          </CardContent>
+        </Card>
+      )}
       {/* Top Vendedores */}
       <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100">
         <CardHeader className="border-b bg-white/80">

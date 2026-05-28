@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,6 +14,8 @@ import {
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import useContextoVisual from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * Painel de Operações 3D - Comando Central
@@ -22,23 +23,36 @@ import 'leaflet/dist/leaflet.css';
  */
 export default function PainelOperacoes3D({ empresaId, grupoId }) {
   const [atualizandoAoVivo, setAtualizandoAoVivo] = useState(false);
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const effectiveGroupId = grupoId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const effectiveEmpresaId = empresaId || empresaAtual?.id || null;
+  const contextKey = effectiveEmpresaId || effectiveGroupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const canViewPainel = hasPermission("Dashboard", "Operacoes", "visualizar") ||
+    hasPermission("Expedicao", "Painel Logistico", "visualizar") ||
+    hasPermission("Producao", "Relatorios", "visualizar") ||
+    hasPermission("Dashboard", null, "visualizar");
 
   // Queries com auto-refresh
   const { data: ops = [] } = useQuery({
-    queryKey: ['ops-tempo-real'],
-    queryFn: () => base44.entities.OrdemProducao.list('-updated_date', 50),
+    queryKey: ['ops-tempo-real', contextKey],
+    queryFn: () => filterInContext('OrdemProducao', {}, '-updated_date', 50),
+    enabled: contextoValido && canViewPainel,
     refetchInterval: 30000 // 30 segundos
   });
 
   const { data: entregas = [] } = useQuery({
-    queryKey: ['entregas-tempo-real'],
-    queryFn: () => base44.entities.Entrega.list('-updated_date', 50),
+    queryKey: ['entregas-tempo-real', contextKey],
+    queryFn: () => filterInContext('Entrega', {}, '-updated_date', 50),
+    enabled: contextoValido && canViewPainel,
     refetchInterval: 30000
   });
 
   const { data: posicoesVeiculos = [] } = useQuery({
-    queryKey: ['posicoes-veiculos'],
-    queryFn: () => base44.entities.PosicaoVeiculo.list('-data_hora', 100),
+    queryKey: ['posicoes-veiculos', contextKey],
+    queryFn: () => filterInContext('PosicaoVeiculo', {}, '-data_hora', 100),
+    enabled: contextoValido && canViewPainel,
     refetchInterval: 60000 // 1 minuto
   });
 
@@ -67,7 +81,18 @@ export default function PainelOperacoes3D({ empresaId, grupoId }) {
   const veiculosArray = Object.values(veiculosAtivos);
 
   return (
-    <div className="space-y-6">
+    <div
+      className="space-y-6 w-full h-full"
+      data-permission="Dashboard.Operacoes.visualizar"
+      data-context-required="group-or-company"
+    >
+      {(!contextoValido || !canViewPainel) && (
+        <Card className="border-amber-300 bg-amber-50">
+          <CardContent className="p-4 text-sm text-amber-900">
+            Selecione grupo ou empresa e confirme permissao para visualizar o painel de operacoes.
+          </CardContent>
+        </Card>
+      )}
       {/* KPIs Principais */}
       <div className="grid grid-cols-4 gap-4">
         <Card className="border-0 shadow-md bg-gradient-to-br from-blue-50 to-blue-100">
