@@ -9,25 +9,34 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { AlertTriangle, TrendingDown, TrendingUp, Download, Calendar } from "lucide-react";
 import { format, addMonths, startOfMonth, endOfMonth, isBefore, isAfter, isWithinInterval } from "date-fns";
 import ExportMenu from "@/components/ui/ExportMenu"; // Added new import
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function FluxoCaixaProjetado({ windowMode = false }) {
   const [mesesProjecao, setMesesProjecao] = useState(6);
-
-  // Note: Since empresaId is no longer a prop, the filtering logic
-  // `(!empresaId || c.empresa_id === empresaId)` will effectively become
-  // `(true || c.empresa_id === undefined)` which means it will
-  // fetch/filter data across all companies. If specific company filtering is
-  // still required, empresaId should be sourced from context or a different state.
-  // For now, adhering strictly to the removal of the prop from the function signature.
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const canViewRelatorio = hasPermission("Financeiro", "Relatorios", "visualizar") ||
+    hasPermission("Financeiro", "Fluxo Caixa", "visualizar") ||
+    hasPermission("Financeiro", null, "visualizar");
+  const canExportRelatorio = hasPermission("Financeiro", "Relatorios", "exportar") ||
+    hasPermission("Financeiro", "Fluxo Caixa", "exportar") ||
+    hasPermission("Financeiro", null, "exportar");
 
   const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contasReceber'],
-    queryFn: () => base44.entities.ContaReceber.list('-data_vencimento'),
+    queryKey: ['contasReceber', 'fluxo-caixa-projetado', groupId, empresaId],
+    queryFn: () => filterInContext('ContaReceber', {}, '-data_vencimento', 1000),
+    enabled: contextoValido && canViewRelatorio,
   });
 
   const { data: contasPagar = [] } = useQuery({
-    queryKey: ['contasPagar'],
-    queryFn: () => base44.entities.ContaPagar.list('-data_vencimento'),
+    queryKey: ['contasPagar', 'fluxo-caixa-projetado', groupId, empresaId],
+    queryFn: () => filterInContext('ContaPagar', {}, '-data_vencimento', 1000),
+    enabled: contextoValido && canViewRelatorio,
   });
 
   // Calcular saldo inicial (caixa atual)
@@ -106,6 +115,12 @@ export default function FluxoCaixaProjetado({ windowMode = false }) {
   return (
     <div className={containerClass}>
       <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
+      {(!contextoValido || !canViewRelatorio) && (
+        <Alert className="border-amber-300 bg-amber-50" data-permission="Financeiro.Relatorios.visualizar" data-context-required="true">
+          <AlertTriangle className="h-5 w-5 text-amber-600" />
+          <AlertDescription>Selecione grupo ou empresa e confirme permissao para visualizar o fluxo de caixa projetado.</AlertDescription>
+        </Alert>
+      )}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Fluxo de Caixa Projetado (6 meses)</h2> {/* Updated title */}
@@ -115,6 +130,9 @@ export default function FluxoCaixaProjetado({ windowMode = false }) {
           data={projecao} // Passed projecao array as data
           fileName="fluxo_caixa_projetado" 
           title="Fluxo de Caixa Projetado"
+          disabled={!contextoValido || !canExportRelatorio}
+          data-permission="Financeiro.Relatorios.exportar"
+          data-context-required="true"
           // You might want to specify columns for ExportMenu if it doesn't infer them or if you want specific order/names
           columns={[
             { header: 'Mês', accessor: 'mes' },

@@ -8,21 +8,37 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import useContextoVisual from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
+import { useUser } from '@/components/lib/UserContext';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Calendar,
   ArrowUpCircle,
   ArrowDownCircle,
   DollarSign,
-  Printer
+  Printer,
+  AlertTriangle
 } from 'lucide-react';
 
 export default function MovimentosDiarios() {
-  const { filterInContext, empresaAtual } = useContextoVisual();
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
   const [dataFiltro, setDataFiltro] = useState(new Date().toISOString().split('T')[0]);
   const [abaOperador, setAbaOperador] = useState("todos");
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextKey = empresaId || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const canViewMovimentos = hasPermission('Financeiro', 'Caixa Diario', 'visualizar') ||
+    hasPermission('Financeiro', 'Caixa Central', 'visualizar') ||
+    hasPermission('Financeiro', null, 'visualizar');
+  const canPrintMovimentos = hasPermission('Financeiro', 'Caixa Diario', 'exportar') ||
+    hasPermission('Financeiro', 'Caixa Central', 'exportar') ||
+    hasPermission('Financeiro', null, 'exportar');
 
   const { data: movimentosCaixa = [], isLoading } = useQuery({
-    queryKey: ['movimentos-caixa', dataFiltro, empresaAtual?.id],
+    queryKey: ['movimentos-caixa', dataFiltro, contextKey],
     queryFn: async () => {
       const movsCaixa = await filterInContext('CaixaMovimento', {
         data_movimento: {
@@ -44,13 +60,13 @@ export default function MovimentosDiarios() {
         numero_documento: m.pedido_id || m.conta_receber_id || m.conta_pagar_id
       }));
     },
-    enabled: !!empresaAtual?.id
+    enabled: contextoValido && canViewMovimentos
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos-movimentos', empresaAtual?.id],
+    queryKey: ['pedidos-movimentos', contextKey],
     queryFn: () => filterInContext('Pedido', {}, undefined, 100),
-    enabled: !!empresaAtual?.id
+    enabled: contextoValido && canViewMovimentos
   });
 
   const operadoresUnicos = [...new Set(movimentosCaixa.map(m => m.usuario_operador_nome).filter(Boolean))];
@@ -61,6 +77,46 @@ export default function MovimentosDiarios() {
   const totalEntradas = movimentosFiltrados.filter(m => m.tipo === 'entrada').reduce((sum, m) => sum + (m.valor_movimento || 0), 0);
   const totalSaidas = movimentosFiltrados.filter(m => m.tipo === 'saida').reduce((sum, m) => sum + (m.valor_movimento || 0), 0);
   const saldoCaixa = totalEntradas - totalSaidas;
+
+  const auditarMovimento = async ({ acao, descricao, dadosNovos, sucesso = true }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: 'Financeiro',
+        entidade: 'CaixaMovimento',
+        descricao,
+        usuario_id: user?.id || null,
+        usuario: user?.full_name || user?.email || 'Usuario local',
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
+        dados_novos: dadosNovos,
+        sucesso,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar movimentos diarios:', error);
+    }
+  };
+
+  const handleImprimir = async () => {
+    if (!contextoValido || !canPrintMovimentos) {
+      await auditarMovimento({
+        acao: 'Bloqueio',
+        descricao: 'Impressao de movimentos diarios bloqueada por falta de contexto ou permissao.',
+        dadosNovos: { dataFiltro, operador: abaOperador, quantidade: movimentosFiltrados.length },
+        sucesso: false
+      });
+      return;
+    }
+    await auditarMovimento({
+      acao: 'Impressao',
+      descricao: 'Impressao de movimentos diarios do caixa.',
+      dadosNovos: { dataFiltro, operador: abaOperador, quantidade: movimentosFiltrados.length }
+    });
+    window.print();
+  };
 
   if (isLoading) {
     return (
@@ -73,7 +129,13 @@ export default function MovimentosDiarios() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full h-full" data-permission="Financeiro.CaixaDiario.visualizar" data-context-required="group-or-company">
+      {(!contextoValido || !canViewMovimentos) && (
+        <Alert className="border-amber-300 bg-amber-50">
+          <AlertTriangle className="h-5 w-5 text-amber-600" />
+          <AlertDescription>Selecione grupo ou empresa e confirme permissao para visualizar os movimentos diarios.</AlertDescription>
+        </Alert>
+      )}
       {/* Header com Filtro de Data */}
       <Card className="border-0 shadow-md">
         <CardHeader className="bg-slate-50 border-b py-3">
@@ -92,7 +154,16 @@ export default function MovimentosDiarios() {
                   className="w-48 h-8"
                 />
               </div>
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleImprimir}
+                disabled={!contextoValido || !canPrintMovimentos}
+                data-action="MovimentosDiarios.imprimir"
+                data-permission="Financeiro.CaixaDiario.exportar"
+                data-context-required="group-or-company"
+                data-sensitive="true"
+              >
                 <Printer className="w-4 h-4 mr-2" />
                 Imprimir
               </Button>

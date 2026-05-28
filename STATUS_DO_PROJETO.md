@@ -1,6 +1,20 @@
 # Status do Projeto ERP Zuccaro
 
-Atualizado em: 2026-05-13
+### Financeiro - Fase 8 Relatorios e Fluxos Bancarios Auxiliares
+
+- Seguido o proximo passo salvo no status: revisar `FluxoCaixaProjetado`, `ExtratoBancarioResumo`, `MovimentosDiarios` e `CartoesACompensar`.
+- `FluxoCaixaProjetado` passou a consultar contas a receber/pagar por `filterInContext`, com chave por grupo/empresa e bloqueio por RBAC de visualizacao/exportacao.
+- `ExtratoBancarioResumo` passou a validar contexto grupo/empresa e permissao antes de listar extratos, exibir aviso visual de bloqueio e exportar CSV com auditoria.
+- `MovimentosDiarios` passou a filtrar caixa/pedidos por grupo/empresa, validar permissao de visualizacao/impressao e auditar impressao ou bloqueio.
+- `CartoesACompensar` deixou de usar listagem/atualizacao global de `MovimentoCartao` e passou a usar `filterInContext`/`updateInContext`.
+- Compensacao de cartao agora exige contexto, permissao RBAC, confirmacao explicita e auditoria com dados anteriores/novos, preservando `group_id`, `grupo_id` e `empresa_id`.
+- Botoes sensiveis de exportacao, impressao e conciliacao receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou funcionalidade foi removida; as melhorias foram feitas nos componentes existentes.
+- `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `RelatorioFinanceiro`, `RelatorioDRE`, `DREComparativo`, `DashboardInadimplencia` e demais relatorios financeiros, reforcando contexto grupo/empresa, RBAC, exportacoes auditadas, rateio e consistencia dos indicadores.
+
+Atualizado em: 2026-05-28
 
 ## Origem e modo de trabalho
 

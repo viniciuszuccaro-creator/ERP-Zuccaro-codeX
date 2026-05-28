@@ -7,29 +7,45 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import useContextoVisual from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
+import { useUser } from '@/components/lib/UserContext';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Building2, 
   TrendingUp, 
   TrendingDown, 
   Calendar,
   Download,
-  Filter
+  Filter,
+  AlertTriangle
 } from 'lucide-react';
 
 export default function ExtratoBancarioResumo() {
-  const { filterInContext, empresaAtual } = useContextoVisual();
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
   const [dataInicio, setDataInicio] = useState(new Date(new Date().setDate(1)).toISOString().split('T')[0]);
   const [dataFim, setDataFim] = useState(new Date().toISOString().split('T')[0]);
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextKey = empresaId || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const canViewExtrato = hasPermission('Financeiro', 'Extrato Bancario', 'visualizar') ||
+    hasPermission('Financeiro', 'Caixa Central', 'visualizar') ||
+    hasPermission('Financeiro', null, 'visualizar');
+  const canExportExtrato = hasPermission('Financeiro', 'Extrato Bancario', 'exportar') ||
+    hasPermission('Financeiro', 'Caixa Central', 'exportar') ||
+    hasPermission('Financeiro', null, 'exportar');
 
   const { data: extratos = [], isLoading } = useQuery({
-    queryKey: ['extrato-bancario', dataInicio, dataFim, empresaAtual?.id],
+    queryKey: ['extrato-bancario', dataInicio, dataFim, contextKey],
     queryFn: () => filterInContext('ExtratoBancario', {
       data_lancamento: {
         $gte: new Date(dataInicio + 'T00:00:00').toISOString(),
         $lte: new Date(dataFim + 'T23:59:59').toISOString()
       }
     }, '-data_lancamento'),
-    enabled: !!empresaAtual?.id
+    enabled: contextoValido && canViewExtrato
   });
 
   const totalEntradas = extratos.filter(e => e.tipo_lancamento === 'Crédito').reduce((sum, e) => sum + (e.valor || 0), 0);
@@ -46,6 +62,68 @@ export default function ExtratoBancarioResumo() {
     porConta[conta].saldo = porConta[conta].creditos - porConta[conta].debitos;
   });
 
+  const auditarExtrato = async ({ acao, descricao, dadosNovos, sucesso = true }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: 'Financeiro',
+        entidade: 'ExtratoBancario',
+        descricao,
+        usuario_id: user?.id || null,
+        usuario: user?.full_name || user?.email || 'Usuario local',
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
+        dados_novos: dadosNovos,
+        sucesso,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar extrato bancario:', error);
+    }
+  };
+
+  const handleExportar = async () => {
+    if (!contextoValido || !canExportExtrato) {
+      await auditarExtrato({
+        acao: 'Bloqueio',
+        descricao: 'Exportacao de extrato bloqueada por falta de contexto ou permissao.',
+        dadosNovos: { dataInicio, dataFim, quantidade: extratos.length },
+        sucesso: false
+      });
+      return;
+    }
+
+    const colunas = ['data', 'conta', 'tipo', 'historico', 'valor', 'saldo'];
+    const linhas = extratos.map((ext) => [
+      ext.data_lancamento ? new Date(ext.data_lancamento).toLocaleDateString('pt-BR') : '',
+      ext.conta_bancaria_nome || '',
+      ext.tipo_lancamento || '',
+      ext.historico || ext.descricao || '',
+      ext.valor || 0,
+      ext.saldo_apos || 0
+    ]);
+    const csv = [colunas, ...linhas]
+      .map((row) => row.map((value) => JSON.stringify(String(value ?? ''))).join(';'))
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `extrato-bancario-${dataInicio}-${dataFim}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    await auditarExtrato({
+      acao: 'Exportacao',
+      descricao: 'Exportacao CSV do resumo de extrato bancario.',
+      dadosNovos: { dataInicio, dataFim, quantidade: extratos.length }
+    });
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -57,7 +135,13 @@ export default function ExtratoBancarioResumo() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full h-full" data-permission="Financeiro.ExtratoBancario.visualizar" data-context-required="group-or-company">
+      {(!contextoValido || !canViewExtrato) && (
+        <Alert className="border-amber-300 bg-amber-50">
+          <AlertTriangle className="h-5 w-5 text-amber-600" />
+          <AlertDescription>Selecione grupo ou empresa e confirme permissao para visualizar o extrato bancario.</AlertDescription>
+        </Alert>
+      )}
       {/* Filtros de Período */}
       <Card className="border-0 shadow-md">
         <CardHeader className="bg-slate-50 border-b py-3">
@@ -83,7 +167,16 @@ export default function ExtratoBancarioResumo() {
                   className="w-40 h-8"
                 />
               </div>
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportar}
+                disabled={!contextoValido || !canExportExtrato}
+                data-action="ExtratoBancarioResumo.exportarCSV"
+                data-permission="Financeiro.ExtratoBancario.exportar"
+                data-context-required="group-or-company"
+                data-sensitive="true"
+              >
                 <Download className="w-4 h-4 mr-2" />
                 Exportar
               </Button>
