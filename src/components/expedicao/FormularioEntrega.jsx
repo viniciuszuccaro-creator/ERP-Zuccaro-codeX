@@ -56,10 +56,46 @@ export default function FormularioEntrega({
   const groupId = grupoAtual?.id || empresaAtual?.group_id || formData?.group_id || null;
   const empresaId = formData?.empresa_id || empresaAtual?.id || null;
   const contextoValido = Boolean(groupId || empresaId);
-  const canCreateEntrega = hasPermission('Expedição', 'Entrega', 'criar');
-  const canEditEntrega = hasPermission('Expedição', 'Entrega', 'editar');
+  const canCreateEntrega = hasPermission('Expedicao', 'Entrega', 'criar') || hasPermission('Expedicao', 'Entregas', 'criar');
+  const canEditEntrega = hasPermission('Expedicao', 'Entrega', 'editar') || hasPermission('Expedicao', 'Entregas', 'editar');
+  const canSaveEntrega = isEditing ? canEditEntrega : canCreateEntrega;
+  const sanitizePromptValue = (value) => String(value || '').replace(/[<>]/g, '').replace(/javascript:/gi, '').trim();
+  const sanitizeEntregaPayload = (value) => {
+    if (Array.isArray(value)) return value.map(sanitizeEntregaPayload);
+    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, val]) => [key, sanitizeEntregaPayload(val)]));
+    return typeof value === 'string' ? sanitizePromptValue(value) : value;
+  };
+
+  const auditEntrega = async ({ acao, sucesso = true, motivo = null, dadosAnteriores = null, dadosNovos = null }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: 'Expedicao',
+        entidade: 'Entrega',
+        tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
+        usuario_id: authUser?.id || authUser?.email || null,
+        usuario_nome: authUser?.full_name || authUser?.email || 'Sistema',
+        group_id: groupId,
+        grupo_id: groupId,
+        empresa_id: empresaId,
+        dados_anteriores: dadosAnteriores,
+        dados_novos: dadosNovos,
+        resultado: sucesso ? 'sucesso' : 'bloqueado',
+        motivo,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar entrega', error);
+    }
+  };
 
   const calcularPrevisaoEntrega = async () => {
+    if (!contextoValido || !canSaveEntrega) {
+      await auditEntrega({ acao: "Entrega.previsao_ia.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
+      sonnerToast.error("Contexto ou permissao obrigatoria para calcular previsao");
+      return;
+    }
+
     if (!formData.endereco_entrega_completo?.cidade) {
       sonnerToast.error("❌ Preencha o endereço primeiro");
       return;
@@ -70,11 +106,11 @@ export default function FormularioEntrega({
     try {
       const resultado = await base44.integrations.Core.InvokeLLM({
         prompt: `Calcule a previsão de entrega para:
-Cidade: ${formData.endereco_entrega_completo.cidade}
-Estado: ${formData.endereco_entrega_completo.estado}
-Peso: ${formData.peso_total_kg || 0} kg
-Prioridade: ${formData.prioridade}
-Tipo Frete: ${formData.tipo_frete}
+Cidade: ${sanitizePromptValue(formData.endereco_entrega_completo.cidade)}
+Estado: ${sanitizePromptValue(formData.endereco_entrega_completo.estado)}
+Peso: ${Number(formData.peso_total_kg || 0)} kg
+Prioridade: ${sanitizePromptValue(formData.prioridade)}
+Tipo Frete: ${sanitizePromptValue(formData.tipo_frete)}
 
 Retorne:
 - data_prevista (formato YYYY-MM-DD)
@@ -92,6 +128,12 @@ Retorne:
         }
       });
 
+      await auditEntrega({
+        acao: "Entrega.previsao_ia",
+        sucesso: true,
+        dadosNovos: { cidade: formData.endereco_entrega_completo?.cidade, estado: formData.endereco_entrega_completo?.estado, resultado }
+      });
+
       setPrevisaoIA(resultado);
       setFormData(prev => ({
         ...prev,
@@ -101,6 +143,7 @@ Retorne:
       sonnerToast.success("🤖 Previsão calculada com IA!");
       
     } catch (error) {
+      await auditEntrega({ acao: "Entrega.previsao_ia.erro", sucesso: false, motivo: error?.message || "erro_ia" });
       sonnerToast.error("Erro ao calcular previsão");
     } finally {
       setCalculandoPrevisao(false);
@@ -111,6 +154,9 @@ Retorne:
     mutationFn: (data) => {
       const payload = {
         ...data,
+        group_id: data.group_id || groupId,
+        grupo_id: data.grupo_id || data.group_id || groupId,
+        empresa_id: data.empresa_id || empresaId,
         usuario_responsavel: data.usuario_responsavel || (authUser?.full_name || authUser?.email),
         usuario_responsavel_id: data.usuario_responsavel_id || authUser?.id,
       };
@@ -149,7 +195,14 @@ Retorne:
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => updateInContext('Entrega', id, data),
+    mutationFn: ({ id, data }) => updateInContext('Entrega', id, {
+      ...data,
+      group_id: data.group_id || groupId,
+      grupo_id: data.grupo_id || data.group_id || groupId,
+      empresa_id: data.empresa_id || empresaId,
+      usuario_responsavel: data.usuario_responsavel || (authUser?.full_name || authUser?.email),
+      usuario_responsavel_id: data.usuario_responsavel_id || authUser?.id,
+    }),
     onSuccess: async (entregaAtualizada, variables) => {
       queryClient.invalidateQueries({ queryKey: ['entregas'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
@@ -240,6 +293,7 @@ Retorne:
 
   const handleSubmitForm = async () => {
     if (!contextoValido) {
+      await auditEntrega({ acao: "Entrega.salvar.bloqueado", sucesso: false, motivo: "contexto_obrigatorio", dadosNovos: { isEditing } });
       toastHook({
         title: "Contexto obrigatório",
         description: "Selecione o Grupo CPA ou uma empresa antes de salvar a entrega.",
@@ -249,16 +303,19 @@ Retorne:
     }
 
     if (isEditing && !canEditEntrega) {
+      await auditEntrega({ acao: "Entrega.editar.bloqueado", sucesso: false, motivo: "permissao_negada", dadosNovos: { entrega_id: formData.id || null } });
       toastHook({ title: "Acesso negado", description: "Seu perfil não pode editar entregas.", variant: "destructive" });
       return;
     }
 
     if (!isEditing && !canCreateEntrega) {
+      await auditEntrega({ acao: "Entrega.criar.bloqueado", sucesso: false, motivo: "permissao_negada" });
       toastHook({ title: "Acesso negado", description: "Seu perfil não pode criar entregas.", variant: "destructive" });
       return;
     }
 
     if (estaNoGrupo && !formData.empresa_id) {
+      await auditEntrega({ acao: "Entrega.salvar.bloqueado", sucesso: false, motivo: "empresa_obrigatoria" });
       toastHook({
         title: "Empresa obrigatória",
         description: "Informe a empresa responsável pela entrega.",
@@ -268,14 +325,28 @@ Retorne:
     }
 
     if (!formData.cliente_id) {
+      await auditEntrega({ acao: "Entrega.salvar.bloqueado", sucesso: false, motivo: "cliente_obrigatorio" });
       toastHook({ title: "Cliente obrigatório", description: "Selecione o cliente da entrega.", variant: "destructive" });
       return;
     }
 
+    const mensagemConfirmacao = isEditing ? 'Confirmar atualizacao desta entrega?' : 'Confirmar inclusao desta entrega?';
+    if (!window.confirm(mensagemConfirmacao)) {
+      await auditEntrega({ acao: isEditing ? 'Entrega.editar.cancelado' : 'Entrega.criar.cancelado', sucesso: false, motivo: 'confirmacao_cancelada', dadosNovos: { entrega_id: formData.id || null } });
+      return;
+    }
+
+    const payload = sanitizeEntregaPayload({
+      ...formData,
+      group_id: formData.group_id || groupId,
+      grupo_id: formData.grupo_id || formData.group_id || groupId,
+      empresa_id: formData.empresa_id || empresaId,
+    });
+
     if (isEditing && formData.id) {
-      updateMutation.mutate({ id: formData.id, data: formData });
+      updateMutation.mutate({ id: formData.id, data: payload });
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(payload);
     }
   };
 
@@ -283,7 +354,13 @@ Retorne:
 
   // 🤖 IA: Auto-preencher dados do Google Maps
   const buscarDadosGoogleMaps = async () => {
-    const endereco = `${formData.endereco_entrega_completo.logradouro}, ${formData.endereco_entrega_completo.numero}, ${formData.endereco_entrega_completo.cidade}, ${formData.endereco_entrega_completo.estado}`;
+    if (!contextoValido || !canSaveEntrega) {
+      await auditEntrega({ acao: "Entrega.geolocalizacao.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
+      sonnerToast.error("Contexto ou permissao obrigatoria para buscar geolocalizacao");
+      return;
+    }
+
+    const endereco = `${sanitizePromptValue(formData.endereco_entrega_completo.logradouro)}, ${sanitizePromptValue(formData.endereco_entrega_completo.numero)}, ${sanitizePromptValue(formData.endereco_entrega_completo.cidade)}, ${sanitizePromptValue(formData.endereco_entrega_completo.estado)}`;
     
     try {
       const resultado = await base44.integrations.Core.InvokeLLM({
@@ -301,6 +378,8 @@ Retorne no formato JSON.`,
         }
       });
 
+      await auditEntrega({ acao: "Entrega.geolocalizacao", sucesso: true, dadosNovos: { endereco, resultado } });
+
       setFormData(prev => ({
         ...prev,
         endereco_entrega_completo: {
@@ -314,12 +393,19 @@ Retorne no formato JSON.`,
       sonnerToast.success("📍 Geolocalização obtida!");
       
     } catch (error) {
+      await auditEntrega({ acao: "Entrega.geolocalizacao.erro", sucesso: false, motivo: error?.message || "erro_geolocalizacao" });
       sonnerToast.error("Erro ao buscar coordenadas");
     }
   };
 
   const content = (
-    <FormWrapper onSubmit={handleSubmitForm} externalData={formData} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+    <>
+      {(!contextoValido || !canSaveEntrega) && (
+        <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+          {!contextoValido ? 'Selecione grupo/empresa para salvar entregas.' : 'Seu perfil nao tem permissao para salvar entregas.'}
+        </div>
+      )}
+    <FormWrapper onSubmit={handleSubmitForm} externalData={formData} className={`w-full h-full space-y-6 ${windowMode ? 'p-6 overflow-auto' : ''}`} data-permission={isEditing ? "Expedicao.Entrega.editar" : "Expedicao.Entrega.criar"} data-context-required="true">
       {/* Empresa (se no grupo) */}
       {estaNoGrupo && (
         <div className="p-4 bg-blue-50 border border-blue-200 rounded">
@@ -395,7 +481,11 @@ Retorne no formato JSON.`,
               <Button
                 type="button"
                 onClick={calcularPrevisaoEntrega}
-                disabled={calculandoPrevisao}
+                disabled={calculandoPrevisao || !contextoValido || !canSaveEntrega}
+                data-action="Entrega.previsao_ia"
+                data-permission={isEditing ? "Expedicao.Entrega.editar" : "Expedicao.Entrega.criar"}
+                data-context-required="true"
+                data-sensitive="true"
                 variant="outline"
                 className="border-purple-300 text-purple-700 hover:bg-purple-50"
                 title="Calcular com IA"
@@ -547,6 +637,11 @@ Retorne no formato JSON.`,
             <Button
               type="button"
               onClick={buscarDadosGoogleMaps}
+              disabled={!contextoValido || !canSaveEntrega}
+              data-action="Entrega.geolocalizacao"
+              data-permission={isEditing ? "Expedicao.Entrega.editar" : "Expedicao.Entrega.criar"}
+              data-context-required="true"
+              data-sensitive="true"
               variant="outline"
               size="sm"
               className="border-purple-300 text-purple-700 hover:bg-purple-100"
@@ -753,16 +848,19 @@ Retorne no formato JSON.`,
         </Button>
         <Button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || !contextoValido || !canSaveEntrega}
           className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-          data-permission={isEditing ? "Expedição.Entrega.editar" : "Expedição.Entrega.criar"}
-          data-action={isEditing ? "atualizar-entrega" : "criar-entrega"}
+          data-permission={isEditing ? "Expedicao.Entrega.editar" : "Expedicao.Entrega.criar"}
+          data-action={isEditing ? "Entrega.atualizar" : "Entrega.criar"}
+          data-context-required="true"
+          data-sensitive="true"
         >
           <CheckCircle2 className="w-4 h-4 mr-2" />
           {isEditing ? '💾 Atualizar' : '🚀 Criar'} Entrega
         </Button>
       </div>
     </FormWrapper>
+    </>
   );
 
   if (windowMode) {

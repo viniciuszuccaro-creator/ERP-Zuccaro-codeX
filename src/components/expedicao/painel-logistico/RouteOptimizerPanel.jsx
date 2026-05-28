@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Route as RouteIcon, ListOrdered } from 'lucide-react';
 
-export default function RouteOptimizerPanel({ entregas = [], empresaId, groupId, onSelectEntrega }) {
+export default function RouteOptimizerPanel({ entregas = [], empresaId, groupId, onSelectEntrega, contextoValido = true, canOptimize = true, onAudit }) {
   const candidatas = useMemo(() => (
     (entregas || []).filter(e => e?.endereco_entrega_completo?.latitude && e?.endereco_entrega_completo?.longitude && !['Entregue','Cancelado','Devolvido'].includes(e.status))
   ), [entregas]);
@@ -19,7 +19,23 @@ export default function RouteOptimizerPanel({ entregas = [], empresaId, groupId,
   const [rota, setRota] = useState(null);
 
   const otimizar = async () => {
-    if (!candidatas.length) return;
+    if (!contextoValido || !canOptimize) {
+      await onAudit?.({ acao: "PainelLogistico.rota.otimizar.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
+      return;
+    }
+    if (!candidatas.length) {
+      await onAudit?.({ acao: 'PainelLogistico.rota.otimizar.bloqueado', sucesso: false, motivo: 'sem_entregas_validas' });
+      return;
+    }
+    if (!empresaId) {
+      await onAudit?.({ acao: 'PainelLogistico.rota.otimizar.bloqueado', sucesso: false, motivo: 'empresa_obrigatoria' });
+      return;
+    }
+    const confirmado = window.confirm('Confirma otimizar a rota para as entregas validas do contexto atual?');
+    if (!confirmado) {
+      await onAudit?.({ acao: 'PainelLogistico.rota.otimizar.cancelado', sucesso: false, motivo: 'confirmacao_cancelada', detalhes: { entregas: candidatas.length } });
+      return;
+    }
     setLoading(true);
     try {
       const payload = {
@@ -33,6 +49,7 @@ export default function RouteOptimizerPanel({ entregas = [], empresaId, groupId,
         },
       };
       const { data } = await base44.functions.invoke('optimizeDeliveryRoute', payload);
+      await onAudit?.({ acao: 'PainelLogistico.rota.otimizar', detalhes: { entregas: candidatas.length, constraints: payload.constraints } });
       const d = data || {};
       const view = {
         ...d,
@@ -45,6 +62,8 @@ export default function RouteOptimizerPanel({ entregas = [], empresaId, groupId,
       };
       setRota(view);
       try { window.dispatchEvent(new CustomEvent('logistica:route', { detail: view })); } catch {}
+    } catch (error) {
+      await onAudit?.({ acao: 'PainelLogistico.rota.otimizar.erro', sucesso: false, motivo: error?.message || 'erro_otimizacao' });
     } finally {
       setLoading(false);
     }
@@ -58,7 +77,7 @@ export default function RouteOptimizerPanel({ entregas = [], empresaId, groupId,
   }, [rota]);
 
   return (
-    <Card className="mt-3">
+    <Card className="mt-3" data-permission="Expedicao.PainelLogistico.visualizar" data-context-required="true">
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <RouteIcon className="w-4 h-4 text-emerald-600" /> Otimização de Rotas
@@ -66,21 +85,26 @@ export default function RouteOptimizerPanel({ entregas = [], empresaId, groupId,
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
+        {(!contextoValido || !canOptimize) && (
+          <Alert className="border-red-200 bg-red-50 text-red-800">
+            <AlertDescription>{!contextoValido ? 'Selecione grupo/empresa para otimizar rotas.' : 'Seu perfil nao tem permissao para otimizar rotas.'}</AlertDescription>
+          </Alert>
+        )}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           <div>
             <label className="text-xs text-slate-600">Capacidade do veículo (kg)</label>
-            <Input value={capacidadeKg} onChange={(e)=>setCapacidadeKg(e.target.value)} placeholder="8000" />
+            <Input value={capacidadeKg} onChange={(e)=>setCapacidadeKg(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="8000" />
           </div>
           <div>
             <label className="text-xs text-slate-600">Máx. paradas</label>
-            <Input value={maxParadas} onChange={(e)=>setMaxParadas(e.target.value)} placeholder="30" />
+            <Input value={maxParadas} onChange={(e)=>setMaxParadas(e.target.value.replace(/[^0-9]/g, ''))} placeholder="30" />
           </div>
           <div className="col-span-2 flex items-end gap-3">
             <label className="flex items-center gap-2 text-sm text-slate-700">
               <input type="checkbox" checked={respeitarJanelas} onChange={(e)=>setRespeitarJanelas(e.target.checked)} />
               Respeitar janelas de entrega
             </label>
-            <Button onClick={otimizar} disabled={loading || !candidatas.length || !empresaId} className="ml-auto">
+            <Button onClick={otimizar} disabled={loading || !candidatas.length || !contextoValido || !canOptimize || !empresaId} className="ml-auto" data-permission="Expedicao.PainelLogistico.editar" data-action="PainelLogistico.rota.otimizar" data-context-required="true" data-sensitive="true">
               {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin"/> : <ListOrdered className="w-4 h-4 mr-2"/>}
               Otimizar rota
             </Button>
@@ -101,7 +125,7 @@ export default function RouteOptimizerPanel({ entregas = [], empresaId, groupId,
                 return (
                   <li key={`${entregaId}-${idx}`} className="flex items-center gap-2 text-sm">
                     <Badge className="bg-emerald-600">{idx + 1}</Badge>
-                    <button className="text-left hover:underline" onClick={()=>onSelectEntrega && entregaId && onSelectEntrega(e || { id: entregaId })}>
+                    <button className="text-left hover:underline" data-action="PainelLogistico.entrega.selecionar" data-context-required="true" onClick={async ()=>{ await onAudit?.({ acao: 'PainelLogistico.entrega.selecionar', detalhes: { entrega_id: entregaId, origem: 'otimizacao_rota' } }); onSelectEntrega && entregaId && onSelectEntrega(e || { id: entregaId }); }}>
                       {nome}
                       {eta != null && <span className="text-slate-500 ml-2">ETA ~{eta} min</span>}
                     </button>

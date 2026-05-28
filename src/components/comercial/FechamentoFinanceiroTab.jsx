@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +10,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DollarSign, Percent, FileText, Receipt, CheckCircle, AlertTriangle } from 'lucide-react';
 import GerarNFeModal from './GerarNFeModal';
 import { useFormasPagamento } from '@/components/lib/useFormasPagamento';
+import useContextoVisual from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 /**
@@ -17,8 +20,46 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
  */
 export default function FechamentoFinanceiroTab({ formData, setFormData, onNext }) {
   const [modalNFeOpen, setModalNFeOpen] = useState(false);
-  
-  const { formasPagamento, obterConfiguracao } = useFormasPagamento({ empresa_id: formData?.empresa_id });
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const empresaId = formData?.empresa_id || empresaAtual?.id || null;
+  const groupId = formData?.group_id || formData?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const canEmitirNFe = hasPermission('Fiscal', 'NotaFiscal', 'emitir') || hasPermission('Fiscal', 'NotaFiscal', 'criar') || hasPermission('Fiscal', null, 'criar');
+  const sanitizeText = (value) => String(value || '').replace(/[<>]/g, '').replace(/javascript:/gi, '').trim();
+  const sanitizePercentual = (value) => Math.min(100, Math.max(0, Number.parseFloat(value) || 0));
+  const sanitizeInteiro = (value, fallback = 0) => Math.max(0, Number.parseInt(value, 10) || fallback);
+  const auditFechamento = async (acao, detalhes = {}, sucesso = true) => {
+    try {
+      const usuario = await base44.auth.me().catch(() => null);
+      await base44.entities.AuditLog.create({
+        usuario_id: usuario?.id || null,
+        usuario: usuario?.full_name || usuario?.email || 'Sistema',
+        acao,
+        modulo: 'Comercial/FechamentoFinanceiro',
+        tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
+        entidade: detalhes.entidade || 'Pedido',
+        descricao: detalhes.descricao || acao,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        sucesso,
+        detalhes: { origem: 'FechamentoFinanceiroTab', pedido_id: formData?.id || null, ...detalhes },
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar fechamento financeiro:', error);
+    }
+  };
+  const abrirModalNFe = async () => {
+    if (!contextoValido || !empresaId || !canEmitirNFe) {
+      await auditFechamento('nfe_fechamento_abrir_bloqueada', { motivo: !empresaId ? 'empresa_faturadora_obrigatoria' : 'contexto_ou_permissao' }, false);
+      return;
+    }
+    setModalNFeOpen(true);
+  };
+
+  const { formasPagamento, obterConfiguracao } = useFormasPagamento({ empresa_id: empresaId });
 
   const valorProdutos = formData?.valor_produtos || 0;
   const descontoPercentual = formData?.desconto_geral_pedido_percentual || 0;
@@ -70,11 +111,25 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
               </Alert>
             )}
 
-            {/* V21.1: Botão Emitir NF-e com Escopo */}
+            {(!contextoValido || !empresaId || !canEmitirNFe) && (
+              <Alert className="border-red-300 bg-red-50 p-3">
+                <AlertTriangle className="w-4 h-4 text-red-600" />
+                <AlertDescription className="text-sm text-red-700 ml-6">
+                  Para emitir NF-e, selecione empresa faturadora e confirme permissao fiscal no contexto atual.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* V21.1: Botao Emitir NF-e com Escopo */}
             <Button
-              onClick={() => setModalNFeOpen(true)}
+              onClick={abrirModalNFe}
               className="w-full bg-purple-600 hover:bg-purple-700"
               size="lg"
+              disabled={!contextoValido || !empresaId || !canEmitirNFe}
+              data-action="Fiscal.NotaFiscal.emitir"
+              data-permission="Fiscal.NotaFiscal.emitir"
+              data-context-required="true"
+              data-sensitive="true"
             >
               <Receipt className="w-5 h-5 mr-2" />
               Emitir NF-e (Pedido Completo ou por Etapa)
@@ -103,8 +158,8 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
                 value={descontoPercentual}
                 onChange={(e) => setFormData(prev => ({
                   ...prev,
-                  desconto_geral_pedido_percentual: parseFloat(e.target.value) || 0,
-                  desconto_geral_pedido_valor: (valorProdutos * (parseFloat(e.target.value) || 0)) / 100
+                  desconto_geral_pedido_percentual: sanitizePercentual(e.target.value),
+                  desconto_geral_pedido_valor: (valorProdutos * sanitizePercentual(e.target.value)) / 100
                 }))}
               />
             </div>
@@ -125,7 +180,7 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
                 value={formData?.justificativa_desconto || ''}
                 onChange={(e) => setFormData(prev => ({
                   ...prev,
-                  justificativa_desconto: e.target.value
+                  justificativa_desconto: sanitizeText(e.target.value)
                 }))}
                 className="w-full p-3 border rounded-lg"
                 rows="2"
@@ -189,7 +244,7 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
                   value={formData?.numero_parcelas || 2}
                   onChange={(e) => setFormData(prev => ({
                     ...prev,
-                    numero_parcelas: parseInt(e.target.value)
+                    numero_parcelas: sanitizeInteiro(e.target.value, 2)
                   }))}
                 />
                 <p className="text-xs text-slate-500 mt-1">
@@ -203,7 +258,7 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
                   value={formData?.intervalo_parcelas || obterConfiguracao(formData.forma_pagamento_id)?.intervalo_parcelas_dias || 30}
                   onChange={(e) => setFormData(prev => ({
                     ...prev,
-                    intervalo_parcelas: parseInt(e.target.value)
+                    intervalo_parcelas: sanitizeInteiro(e.target.value, obterConfiguracao(formData.forma_pagamento_id)?.intervalo_parcelas_dias || 30)
                   }))}
                 />
               </div>
@@ -230,7 +285,7 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
               value={formData?.observacoes_nfe || ''}
               onChange={(e) => setFormData(prev => ({
                 ...prev,
-                observacoes_nfe: e.target.value
+                observacoes_nfe: sanitizeText(e.target.value)
               }))}
               className="w-full p-3 border rounded-lg"
               rows="3"
@@ -245,7 +300,7 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
                 value={formData?.cfop_pedido || '5102'}
                 onChange={(e) => setFormData(prev => ({
                   ...prev,
-                  cfop_pedido: e.target.value
+                  cfop_pedido: sanitizeText(e.target.value)
                 }))}
                 placeholder="5102"
               />
@@ -260,7 +315,7 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
                 value={formData?.natureza_operacao || 'Venda de mercadoria'}
                 onChange={(e) => setFormData(prev => ({
                   ...prev,
-                  natureza_operacao: e.target.value
+                  natureza_operacao: sanitizeText(e.target.value)
                 }))}
               />
             </div>
@@ -322,7 +377,7 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
               value={formData?.observacoes_publicas || ''}
               onChange={(e) => setFormData(prev => ({
                 ...prev,
-                observacoes_publicas: e.target.value
+                observacoes_publicas: sanitizeText(e.target.value)
               }))}
               className="w-full p-3 border rounded-lg"
               rows="3"
@@ -336,7 +391,7 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
               value={formData?.observacoes_internas || ''}
               onChange={(e) => setFormData(prev => ({
                 ...prev,
-                observacoes_internas: e.target.value
+                observacoes_internas: sanitizeText(e.target.value)
               }))}
               className="w-full p-3 border rounded-lg"
               rows="3"
@@ -351,7 +406,13 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
         open={modalNFeOpen}
         onClose={() => setModalNFeOpen(false)}
         pedidoData={formData}
-        onEmitir={(dadosNFe) => {
+        contextoValido={contextoValido}
+        canEmitir={canEmitirNFe}
+        empresaId={empresaId}
+        groupId={groupId}
+        onAudit={auditFechamento}
+        onEmitir={async (dadosNFe) => {
+          await auditFechamento('nfe_fechamento_emitida', { entidade: 'NotaFiscal', escopo: dadosNFe?.escopo, etapa_id: dadosNFe?.etapa_id }, true);
           console.log('Emitir NF-e:', dadosNFe);
           setModalNFeOpen(false);
         }}

@@ -42,6 +42,9 @@ import IntegracaoRomaneio from "../logistica/IntegracaoRomaneio";
 import PainelMetricasRealtime from "../logistica/PainelMetricasRealtime";
 import { useWindow } from "@/components/lib/useWindow";
 import { usePermissoesLogistica } from "../logistica/ControleAcessoLogistica";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 
 /**
  * 🚚 PEDIDOS PARA ENTREGA V21.5
@@ -65,23 +68,116 @@ export default function PedidosEntregaTab({ windowMode = false }) {
   const queryClient = useQueryClient();
   const { openWindow } = useWindow();
   const permissoes = usePermissoesLogistica();
+  const { user } = useUser();
+  const { empresaAtual, grupoAtual, filterInContext, updateInContext, createInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+
+  const effectiveEmpresaId = empresaAtual?.id || null;
+  const effectiveGroupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const contextoValido = Boolean(effectiveGroupId || effectiveEmpresaId);
+  const canView = hasPermission("Comercial", "Pedido", "visualizar") || hasPermission("Expedicao", "Entregas", "visualizar") || hasPermission("Expedicao", "Painel Logistico", "visualizar");
+  const canEdit = hasPermission("Comercial", "Pedido", "editar") || hasPermission("Expedicao", "Entregas", "editar") || hasPermission("Expedicao", "Entrega", "editar");
+  const canStockMove = hasPermission("Estoque", "Movimentacoes", "criar") || hasPermission("Estoque", "Produto", "editar");
+  const canNotify = hasPermission("Expedicao", "Entrega", "notificar") || hasPermission("Expedicao", "Entregas", "editar") || canEdit;
+  const canCreateRomaneio = permissoes.podeCriarRomaneio && (hasPermission("Expedicao", "Romaneio", "criar") || hasPermission("Expedicao", "Entregas", "editar") || canEdit);
+  const canRoute = hasPermission("Expedicao", "Roteirizacao", "executar") || hasPermission("Expedicao", "Painel Logistico", "editar") || canEdit;
+  const canRegisterProof = permissoes.podeConfirmarEntrega && canEdit;
+  const canRegisterOccurrence = permissoes.podeRegistrarOcorrencia && (hasPermission("Expedicao", "Ocorrencias", "criar") || canEdit);
+  const sanitizeText = (value) => String(value || "").replace(/[<>]/g, "").replace(/javascript:/gi, "").trim();
+  const isSafeExternalUrl = (value) => /^https?:\/\//i.test(String(value || ""));
+  const withContextData = (payload = {}) => ({
+    ...payload,
+    group_id: payload.group_id || effectiveGroupId,
+    grupo_id: payload.grupo_id || payload.group_id || effectiveGroupId,
+    empresa_id: payload.empresa_id || effectiveEmpresaId,
+  });
+
+  const auditEntrega = async ({ acao, sucesso = true, motivo = null, detalhes = {}, dadosAnteriores = null, dadosNovos = null, registroId = null }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Usuario",
+        usuario_id: user?.id,
+        acao,
+        modulo: "Comercial",
+        entidade: "PedidoEntrega",
+        registro_id: registroId,
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        empresa_id: effectiveEmpresaId,
+        group_id: effectiveGroupId,
+        grupo_id: effectiveGroupId,
+        sucesso,
+        resultado: sucesso ? "sucesso" : "bloqueado",
+        motivo,
+        detalhes,
+        dados_anteriores: dadosAnteriores,
+        dados_novos: dadosNovos,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar pedidos para entrega", error);
+    }
+  };
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list('-created_date'),
+    queryKey: ["pedidos-entrega", effectiveGroupId, effectiveEmpresaId],
+    queryFn: () => filterInContext("Pedido", {}, "-created_date", 1000),
+    enabled: contextoValido && canView,
   });
 
   const { data: entregas = [] } = useQuery({
-    queryKey: ['entregas'],
-    queryFn: () => base44.entities.Entrega.list('-created_date'),
+    queryKey: ["entregas-comercial", effectiveGroupId, effectiveEmpresaId],
+    queryFn: () => filterInContext("Entrega", {}, "-created_date", 1000),
+    enabled: contextoValido && canView,
   });
 
   const { data: regioes = [] } = useQuery({
-    queryKey: ['regioes'],
-    queryFn: () => base44.entities.RegiaoAtendimento.list(),
+    queryKey: ["regioes-entrega", effectiveGroupId, effectiveEmpresaId],
+    queryFn: () => filterInContext("RegiaoAtendimento", {}, "nome", 300),
+    enabled: contextoValido && canView,
   });
 
   // Filtrar pedidos para entrega (tipo_frete = CIF ou FOB, status = Aprovado ou posterior)
+  const abrirPainelLogistica = async (Component, config, acao, permitido = canView, sensivel = false) => {
+    if (!contextoValido || !permitido) {
+      await auditEntrega({ acao: `${acao}.bloqueado`, sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada", detalhes: { tela: config?.title } });
+      toast.error("Contexto e permissao sao obrigatorios para esta acao.");
+      return;
+    }
+    if (sensivel && !window.confirm("Confirmar abertura desta acao logistica sensivel?")) {
+      await auditEntrega({ acao: `${acao}.cancelado`, sucesso: false, motivo: "confirmacao_cancelada", detalhes: { tela: config?.title } });
+      return;
+    }
+    await auditEntrega({ acao, detalhes: { tela: config?.title } });
+    openWindow(Component, { windowMode: true, contextoValido, empresaId: effectiveEmpresaId, groupId: effectiveGroupId }, config);
+  };
+
+  const abrirDialogEntrega = async (tipo, pedido, entrega, permitido = true) => {
+    if (!contextoValido || !permitido) {
+      await auditEntrega({ acao: `PedidoEntrega.${tipo}_bloqueado`, sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada", detalhes: { pedido_id: pedido?.id }, registroId: pedido?.id });
+      toast.error("Contexto e permissao sao obrigatorios para esta acao.");
+      return;
+    }
+    setEntregaSelecionada({ pedido, entrega });
+    if (tipo === "notificar") setNotificadorOpen(true);
+    if (tipo === "comprovante") setComprovanteOpen(true);
+    if (tipo === "ocorrencia") setOcorrenciaOpen(true);
+    await auditEntrega({ acao: `PedidoEntrega.${tipo}_abrir`, detalhes: { pedido_id: pedido?.id, entrega_id: entrega?.id }, registroId: pedido?.id });
+  };
+
+  const abrirRomaneio = async () => {
+    if (!contextoValido || !canCreateRomaneio) {
+      await auditEntrega({ acao: "PedidoEntrega.romaneio_bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada", detalhes: { pedidos: pedidosFiltrados.length } });
+      toast.error("Contexto e permissao sao obrigatorios para criar romaneio.");
+      return;
+    }
+    if (!window.confirm("Confirmar criacao de romaneio com os pedidos filtrados?")) {
+      await auditEntrega({ acao: "PedidoEntrega.romaneio_cancelado", sucesso: false, motivo: "confirmacao_cancelada", detalhes: { pedidos: pedidosFiltrados.length } });
+      return;
+    }
+    await auditEntrega({ acao: "PedidoEntrega.romaneio_abrir", detalhes: { pedidos: pedidosFiltrados.length } });
+    setRomaneioOpen(true);
+  };
+
   const pedidosParaEntrega = useMemo(() => {
     return pedidos.filter(p => 
       (p.tipo_frete === 'CIF' || p.tipo_frete === 'FOB') &&
@@ -110,8 +206,8 @@ export default function PedidosEntregaTab({ windowMode = false }) {
     
     if (busca) {
       resultado = resultado.filter(p =>
-        p.numero_pedido?.toLowerCase().includes(busca.toLowerCase()) ||
-        p.cliente_nome?.toLowerCase().includes(busca.toLowerCase())
+        sanitizeText(p.numero_pedido).toLowerCase().includes(busca.toLowerCase()) ||
+        sanitizeText(p.cliente_nome).toLowerCase().includes(busca.toLowerCase())
       );
     }
     
@@ -129,11 +225,47 @@ export default function PedidosEntregaTab({ windowMode = false }) {
   }, [pedidosParaEntrega, busca, statusFiltro, regiaoFiltro]);
 
   const atualizarStatusMutation = useMutation({
-    mutationFn: ({ pedidoId, novoStatus }) => 
-      base44.entities.Pedido.update(pedidoId, { status: novoStatus }),
+    mutationFn: async ({ pedido, pedidoId, entrega, novoStatus, motivo }) => {
+      const pedidoAlvo = pedido || pedidos.find(p => p.id === pedidoId);
+      if (!pedidoAlvo) throw new Error("Pedido nao encontrado para atualizar status.");
+      if (!contextoValido || !canEdit) {
+        await auditEntrega({ acao: "PedidoEntrega.status_bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada", detalhes: { pedido_id: pedidoAlvo.id, novoStatus }, registroId: pedidoAlvo.id });
+        throw new Error("Contexto e permissao sao obrigatorios para alterar status.");
+      }
+      if (!window.confirm(`Confirma alterar o status do pedido para ${novoStatus}?`)) {
+        await auditEntrega({ acao: "PedidoEntrega.status_cancelado", sucesso: false, motivo: "confirmacao_cancelada", detalhes: { pedido_id: pedidoAlvo.id, novoStatus }, registroId: pedidoAlvo.id });
+        throw new Error("Alteracao cancelada pelo usuario.");
+      }
+      const pedidoAtualizado = await updateInContext("Pedido", pedidoAlvo.id, withContextData({
+        status: novoStatus,
+        group_id: pedidoAlvo.group_id || effectiveGroupId,
+        grupo_id: pedidoAlvo.grupo_id || pedidoAlvo.group_id || effectiveGroupId,
+        empresa_id: pedidoAlvo.empresa_id || effectiveEmpresaId,
+        historico_status: [...(pedidoAlvo.historico_status || []), { status: novoStatus, data_hora: new Date().toISOString(), usuario: user?.full_name || user?.email || "Sistema", usuario_id: user?.id, observacao: motivo || `Status alterado para ${novoStatus}.` }]
+      }));
+      const entregaAlvo = entrega || entregas.find(e => e.pedido_id === pedidoAlvo.id);
+      let entregaAtualizada = null;
+      if (entregaAlvo?.id) {
+        entregaAtualizada = await updateInContext("Entrega", entregaAlvo.id, withContextData({
+          status: novoStatus,
+          group_id: entregaAlvo.group_id || pedidoAlvo.group_id || effectiveGroupId,
+          grupo_id: entregaAlvo.grupo_id || entregaAlvo.group_id || pedidoAlvo.group_id || effectiveGroupId,
+          empresa_id: entregaAlvo.empresa_id || pedidoAlvo.empresa_id || effectiveEmpresaId,
+          historico_status: [...(entregaAlvo.historico_status || []), { status: novoStatus, data_hora: new Date().toISOString(), usuario: user?.full_name || user?.email || "Sistema", usuario_id: user?.id, observacao: motivo || `Status sincronizado com pedido ${pedidoAlvo.numero_pedido}.` }]
+        }));
+      }
+      await auditEntrega({ acao: "PedidoEntrega.alterar_status", detalhes: { pedido_id: pedidoAlvo.id, entrega_id: entregaAlvo?.id, novoStatus }, dadosAnteriores: { pedido: pedidoAlvo, entrega: entregaAlvo }, dadosNovos: { pedido: pedidoAtualizado, entrega: entregaAtualizada }, registroId: pedidoAlvo.id });
+      return { pedidoAtualizado, entregaAtualizada };
+    },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pedidos-entrega"] });
+      queryClient.invalidateQueries({ queryKey: ["entregas-comercial"] });
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-      toast.success("✅ Status atualizado!");
+      queryClient.invalidateQueries({ queryKey: ['entregas'] });
+      toast.success("Status atualizado.");
+    },
+    onError: (error) => {
+      if (error?.message !== "Alteracao cancelada pelo usuario.") toast.error(error?.message || "Erro ao atualizar status.");
     }
   });
 
@@ -143,7 +275,19 @@ export default function PedidosEntregaTab({ windowMode = false }) {
     setDetalhesOpen(true);
   };
 
-  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "w-full h-full space-y-6";
+
+  if (!contextoValido || !canView) {
+    return (
+      <div className={containerClass} data-permission="Expedicao.Entregas.visualizar" data-context-required="true">
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardContent className="p-4 text-sm text-yellow-800">
+            Selecione um contexto grupo/empresa e confirme permissao para visualizar pedidos para entrega.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className={containerClass}>
@@ -160,11 +304,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
         
         <div className="flex flex-wrap gap-2">
           <Button
-            onClick={() => openWindow(PainelMetricasRealtime, { windowMode: true }, {
-              title: '⚡ Métricas em Tempo Real',
-              width: 1100,
-              height: 650
-            })}
+            onClick={() => abrirPainelLogistica(PainelMetricasRealtime, { title: 'Metricas em Tempo Real', width: 1100, height: 650 }, "PedidoEntrega.metricas_abrir", canView)}
             variant="outline"
             className="border-green-300 text-green-700 hover:bg-green-50"
           >
@@ -173,11 +313,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
           </Button>
 
           <Button
-            onClick={() => openWindow(DashboardLogisticaInteligente, { windowMode: true }, {
-              title: '📊 Dashboard Logística IA',
-              width: 1200,
-              height: 700
-            })}
+            onClick={() => abrirPainelLogistica(DashboardLogisticaInteligente, { title: 'Dashboard Logistica IA', width: 1200, height: 700 }, "PedidoEntrega.analytics_abrir", canView)}
             variant="outline"
             className="border-blue-300 text-blue-700 hover:bg-blue-50"
           >
@@ -186,11 +322,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
           </Button>
           
           <Button
-            onClick={() => openWindow(MapaRoteirizacaoIA, { windowMode: true }, {
-              title: '🗺️ Roteirização Inteligente',
-              width: 1000,
-              height: 700
-            })}
+            onClick={() => abrirPainelLogistica(MapaRoteirizacaoIA, { title: 'Roteirizacao Inteligente', width: 1000, height: 700 }, "PedidoEntrega.roteirizacao_abrir", canRoute, true)}
             className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
           >
             <Route className="w-4 h-4 mr-2" />
@@ -199,7 +331,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
 
           {permissoes.podeCriarRomaneio && (
             <Button
-              onClick={() => setRomaneioOpen(true)}
+              onClick={abrirRomaneio}
               className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
             >
               <FileText className="w-4 h-4 mr-2" />
@@ -262,7 +394,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
                 value={busca}
-                onChange={(e) => setBusca(e.target.value)}
+                onChange={(e) => setBusca(sanitizeText(e.target.value))}
                 placeholder="Buscar por pedido ou cliente..."
                 className="pl-10"
               />
@@ -377,23 +509,17 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => {
-                                setEntregaSelecionada({ pedido, entrega });
-                                setNotificadorOpen(true);
-                              }}
+                              onClick={() => abrirDialogEntrega("notificar", pedido, entrega, canNotify)}
                               className="border-green-300 text-green-700 hover:bg-green-50"
                             >
                               <Bell className="w-4 h-4 mr-1" />
                               Notificar
                             </Button>
 
-                            {pedido.status === 'Em Trânsito' && permissoes.podeConfirmarEntrega && (
+                            {pedido.status === 'Em Trânsito' && canRegisterProof && (
                               <Button
                                 size="sm"
-                                onClick={() => {
-                                  setEntregaSelecionada({ pedido, entrega });
-                                  setComprovanteOpen(true);
-                                }}
+                                onClick={() => abrirDialogEntrega("comprovante", pedido, entrega, canRegisterProof)}
                                 className="bg-green-600 hover:bg-green-700 text-white"
                               >
                                 <CheckCircle2 className="w-4 h-4 mr-1" />
@@ -449,9 +575,9 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                         <TableCell>{pedido.cliente_nome}</TableCell>
                         <TableCell className="text-sm">
                           {pedido.endereco_entrega_principal?.logradouro}, {pedido.endereco_entrega_principal?.numero}
-                          {pedido.endereco_entrega_principal?.mapa_url && (
+                          {pedido.endereco_entrega_principal?.mapa_url && isSafeExternalUrl(pedido.endereco_entrega_principal.mapa_url) && (
                             <a 
-                              href={pedido.endereco_entrega_principal.mapa_url} 
+                              href={isSafeExternalUrl(pedido.endereco_entrega_principal.mapa_url) ? pedido.endereco_entrega_principal.mapa_url : "#"}
                               target="_blank" 
                               rel="noopener noreferrer"
                               className="ml-2 text-blue-600 hover:underline inline-flex items-center"
@@ -635,50 +761,56 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                   {entregaSelecionada.pedido.status === 'Em Trânsito' ? (
                     <Button
                       onClick={async () => {
-                        // Baixa automática de estoque
-                        if (entregaSelecionada.pedido.itens_revenda?.length > 0) {
-                          for (const item of entregaSelecionada.pedido.itens_revenda) {
-                            if (item.produto_id) {
-                              const produtos = await base44.entities.Produto.filter({ 
-                                id: item.produto_id,
-                                empresa_id: entregaSelecionada.pedido.empresa_id 
-                              });
-                              
-                              const produto = produtos[0];
-                              if (produto && (produto.estoque_atual || 0) >= (item.quantidade || 0)) {
-                                const novoEstoque = (produto.estoque_atual || 0) - (item.quantidade || 0);
-                                
-                                await base44.entities.MovimentacaoEstoque.create({
-                                  empresa_id: entregaSelecionada.pedido.empresa_id,
-                                  tipo_movimento: "saida",
-                                  origem_movimento: "pedido",
-                                  origem_documento_id: entregaSelecionada.pedido.id,
-                                  produto_id: item.produto_id,
-                                  produto_descricao: item.descricao || item.produto_descricao,
-                                  quantidade: item.quantidade,
-                                  unidade_medida: item.unidade,
-                                  estoque_anterior: produto.estoque_atual || 0,
-                                  estoque_atual: novoEstoque,
-                                  data_movimentacao: new Date().toISOString(),
-                                  documento: entregaSelecionada.pedido.numero_pedido,
-                                  motivo: "Entrega confirmada",
-                                  aprovado: true
-                                });
-                                
-                                await base44.entities.Produto.update(item.produto_id, {
-                                  estoque_atual: novoEstoque
-                                });
-                              }
-                            }
-                          }
+                        const pedido = entregaSelecionada.pedido;
+                        const entrega = entregaSelecionada.entrega;
+                        if (!contextoValido || !canEdit || !canStockMove) {
+                          await auditEntrega({ acao: "PedidoEntrega.confirmar_bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada", detalhes: { pedido_id: pedido.id }, registroId: pedido.id });
+                          toast.error("Contexto e permissoes de entrega/estoque sao obrigatorios.");
+                          return;
                         }
-                        
-                        atualizarStatusMutation.mutate({
-                          pedidoId: entregaSelecionada.pedido.id,
-                          novoStatus: 'Entregue'
-                        });
+                        if (!window.confirm("Confirma a entrega e a baixa automatica de estoque deste pedido?")) {
+                          await auditEntrega({ acao: "PedidoEntrega.confirmar_cancelado", sucesso: false, motivo: "confirmacao_cancelada", detalhes: { pedido_id: pedido.id }, registroId: pedido.id });
+                          return;
+                        }
+                        for (const item of pedido.itens_revenda || []) {
+                          if (!item.produto_id) continue;
+                          const produtos = await filterInContext("Produto", { id: item.produto_id }, undefined, 1);
+                          const produto = produtos[0];
+                          if (!produto) continue;
+                          const quantidade = Number(item.quantidade || 0);
+                          const estoqueAnterior = Number(produto.estoque_atual || 0);
+                          if (estoqueAnterior < quantidade) {
+                            await auditEntrega({ acao: "PedidoEntrega.estoque_insuficiente", sucesso: false, motivo: "estoque_insuficiente", detalhes: { pedido_id: pedido.id, produto_id: item.produto_id, estoqueAnterior, quantidade }, registroId: pedido.id });
+                            continue;
+                          }
+                          const novoEstoque = estoqueAnterior - quantidade;
+                          await createInContext("MovimentacaoEstoque", withContextData({
+                            group_id: pedido.group_id || effectiveGroupId,
+                            grupo_id: pedido.grupo_id || pedido.group_id || effectiveGroupId,
+                            empresa_id: pedido.empresa_id || effectiveEmpresaId,
+                            tipo_movimento: "saida",
+                            origem_movimento: "pedido",
+                            origem_documento_id: pedido.id,
+                            produto_id: item.produto_id,
+                            produto_descricao: sanitizeText(item.descricao || item.produto_descricao),
+                            quantidade,
+                            unidade_medida: item.unidade,
+                            estoque_anterior: estoqueAnterior,
+                            estoque_atual: novoEstoque,
+                            data_movimentacao: new Date().toISOString(),
+                            documento: pedido.numero_pedido,
+                            motivo: "Entrega confirmada",
+                            aprovado: true
+                          }));
+                          await updateInContext("Produto", item.produto_id, withContextData({
+                            estoque_atual: novoEstoque,
+                            group_id: produto.group_id || pedido.group_id || effectiveGroupId,
+                            grupo_id: produto.grupo_id || produto.group_id || pedido.group_id || effectiveGroupId,
+                            empresa_id: produto.empresa_id || pedido.empresa_id || effectiveEmpresaId
+                          }));
+                        }
+                        atualizarStatusMutation.mutate({ pedido, entrega, novoStatus: 'Entregue', motivo: 'Entrega confirmada com baixa automatica de estoque.' });
                         setDetalhesOpen(false);
-                        toast.success("✅ Entrega confirmada e estoque baixado automaticamente!");
                       }}
                       className="bg-green-600 hover:bg-green-700 w-full"
                     >
@@ -707,7 +839,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
               <Card className="bg-slate-50">
                 <CardContent className="p-4 space-y-2">
                   <Button
-                    onClick={() => setNotificadorOpen(true)}
+                    onClick={() => abrirDialogEntrega("notificar", entregaSelecionada.pedido, entregaSelecionada.entrega, canNotify)}
                     className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
                   >
                     <MessageCircle className="w-4 h-4 mr-2" />
@@ -716,7 +848,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
 
                   {permissoes.podeConfirmarEntrega && entregaSelecionada.pedido.status === 'Em Trânsito' && (
                     <Button
-                      onClick={() => setComprovanteOpen(true)}
+                      onClick={() => abrirDialogEntrega("comprovante", entregaSelecionada.pedido, entregaSelecionada.entrega, canRegisterProof)}
                       variant="outline"
                       className="w-full border-green-300 text-green-700 hover:bg-green-50"
                     >
@@ -727,7 +859,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
 
                   {permissoes.podeRegistrarOcorrencia && (
                     <Button
-                      onClick={() => setOcorrenciaOpen(true)}
+                      onClick={() => abrirDialogEntrega("ocorrencia", entregaSelecionada.pedido, entregaSelecionada.entrega, canRegisterOccurrence)}
                       variant="outline"
                       className="w-full border-orange-300 text-orange-700 hover:bg-orange-50"
                     >

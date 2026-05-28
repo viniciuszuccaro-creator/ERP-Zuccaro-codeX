@@ -666,7 +666,7 @@ Checklist inicial:
 - Confirmado que o snapshot compacto contem `GRUPO CPA`, as empresas `3Z LTDA` e `CPA FERRO E ACO`, alem de registros de Cadastros Gerais como Produto, GrupoProduto, Marca, UnidadeMedida, SetorAtividade, SegmentoCliente e outros.
 - Causa corrigida: o ERP renderizava primeiro com `seedRecords()` local e so depois importava o snapshot em segundo plano, permitindo a tela abrir com dados `LOCAL` antes da importacao real.
 - `src/main.jsx` foi ajustado para, em `VITE_LOCAL_ONLY=true`, hidratar o snapshot local antes de montar o React/ERP.
-- `?reset-local=1` agora limpa o banco local e for�a a importacao do snapshot real antes da renderizacao inicial.
+- `?reset-local=1` agora limpa o banco local e forca a importacao do snapshot real antes da renderizacao inicial.
 - Mantida a Regra-Mae: nenhum modulo/tela/componente novo foi criado; foi corrigido apenas o bootstrap existente.
 - Build validado com sucesso apos a alteracao.
 
@@ -793,3 +793,478 @@ Checklist inicial:
 - `git diff --check` executado sem erros.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em fluxos comerciais que enviam itens para Producao (`EnviarProducaoParaItens`, `EditarItemProducaoModal` e botoes do Comercial), revisando propagacao para grupo/empresa, permissoes, auditoria e integracao com OP/Estoque.
+
+### Producao - Fase 8 Relatorios, Exportacoes e Estoque
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em relatorios/exportacoes de Producao e integracoes com Estoque/Expedicao, sem criar telas, modulos ou arquivos duplicados.
+- `RelatoriosProducao` passou a validar contexto grupo/empresa e RBAC antes de exibir relatorios.
+- Relatorios de Producao agora possuem exportacao CSV e impressao no componente existente, com bloqueio por contexto/permissao quando necessario.
+- Exportacao CSV e impressao de relatorios agora geram `AuditLog` com usuario, `group_id`, `grupo_id`, `empresa_id`, periodo filtrado, quantidade de OPs e sucesso/bloqueio.
+- Wrapper, abas e botoes de relatorio receberam marcadores `data-permission`, `data-action`, `data-context-required` e `data-sensitive` conforme a acao.
+- `SeletorProdutosProducao` deixou de consultar `Produto.list()` global e passou a usar `filterInContext`, mantendo a materia-prima de producao dentro do escopo de grupo/empresa autorizado.
+- Filtros e consulta do seletor de produtos agora exigem contexto ativo e permissao de visualizacao de Produtos/Producao, reforcando a integracao com Estoque.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida e nenhum modulo novo foi criado; apenas reforco nos componentes existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `OtimizadorCorte` e `EtiquetaCNC`, revisando salvar pontas no Estoque, impressao/PDF de etiquetas, contexto grupo/empresa, permissoes e auditoria.
+### Producao - Fase 8 Otimizador e Etiquetas
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `OtimizadorCorte` e `EtiquetaCNC`, sem criar telas, modulos, componentes ou arquivos duplicados.
+- `OtimizadorCorte` passou a exigir contexto grupo/empresa e RBAC antes de calcular otimizacao de corte.
+- Calculo bloqueado por falta de contexto ou permissao agora gera `AuditLog` de seguranca com usuario, `group_id`, `grupo_id`, `empresa_id` e motivo do bloqueio.
+- Calculo autorizado agora gera `AuditLog` operacional com as estatisticas da otimizacao.
+- Salvamento de pontas reaproveitaveis no Estoque agora exige permissao, contexto grupo/empresa e confirmacao explicita antes de incluir registros, respeitando a Regra-Mae.
+- Pontas reaproveitaveis agora geram `MovimentacaoEstoque` com `group_id`, `grupo_id`, `empresa_id`, origem `producao_otimizador_corte`, quantidade em kg e responsavel.
+- Salvamento, cancelamento, erro e bloqueio de pontas no Estoque agora ficam auditados.
+- `EtiquetaCNC` passou a validar contexto grupo/empresa e RBAC antes de imprimir ou solicitar PDF.
+- Impressao e solicitacao de PDF de etiqueta agora geram `AuditLog` operacional; tentativas sem contexto/permissao geram auditoria de seguranca.
+- Botoes sensiveis de calcular, salvar pontas, imprimir etiqueta e PDF receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive` quando aplicavel.
+- Wrappers principais preservam/reforcam `w-full h-full` e marcadores de contexto/permissao.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida e nenhum modulo novo foi criado; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 nas integracoes de Producao com Expedicao/Estoque, revisando passagem de status, separacao/conferencia, documentos e auditoria antes/depois.
+### Expedicao - Fase 8 Separacao e Conferencia
+
+- Seguido o proximo passo salvo no status: continuar integracao de Producao com Expedicao/Estoque, com foco no fluxo existente `SeparacaoConferencia`.
+- Antes de editar, foi verificado que varias leituras do PowerShell mostram acentos quebrados, mas os arquivos em disco estao em UTF-8 correto; nas novas alteracoes foram usadas chaves tecnicas/ASCII para nao introduzir texto corrompido.
+- `SeparacaoConferencia` deixou de buscar entregas via `Entrega.list()` global e passou a usar `filterInContext`, mantendo a consulta dentro do contexto grupo/empresa.
+- Conclusao de separacao/conferencia agora valida contexto grupo/empresa e RBAC antes da mutation e tambem dentro da mutation.
+- Tentativas bloqueadas por falta de contexto ou permissao agora geram `AuditLog` de seguranca com usuario, `group_id`, `grupo_id`, `empresa_id` e motivo.
+- Criacao de `SeparacaoConferencia` passou a usar `createInContext`, reforcando `group_id`, `grupo_id` e `empresa_id`.
+- Atualizacoes de `Entrega` e `Pedido` apos conferencia sem divergencia passaram a usar `updateInContext`, mantendo contexto e historico de status da entrega.
+- Auditoria operacional da conclusao passou a registrar antes/depois, sucesso, usuario e contexto multiempresa.
+- Campos de quantidade/observacao e botao de concluir conferencia receberam bloqueio visual por contexto/RBAC e marcadores `data-permission`, `data-action`, `data-context-required` e `data-sensitive`.
+- Mantida a Regra-Mae: nenhuma tela, modulo, arquivo ou funcionalidade nova foi criada; apenas reforco do fluxo existente.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `DetalhesEntregaView`, `FormularioEntrega` e `RomaneioForm`, revisando mudancas de status, criacao/edicao de entrega, romaneio e auditoria antes/depois.
+### Expedicao - Fase 8 Detalhes da Entrega e Ortografia
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `DetalhesEntregaView`, revisando mudancas de status, confirmacao de entrega, RBAC, contexto e auditoria.
+- Foi revisada a secao visivel `Expedicao e Logistica` e seus componentes de launchpad; nao foi encontrado mojibake real nos arquivos de Expedição, apenas exibicao quebrada do terminal PowerShell ao ler UTF-8.
+- `DetalhesEntregaView` passou a ter handler local para mudanca de status quando a janela for aberta sem `onStatusChange`, corrigindo botoes que podiam nao salvar alteracoes.
+- Mudancas de status agora exigem contexto grupo/empresa e permissao de edicao de Entrega antes de atualizar.
+- Alteracao para `Entrega Frustrada` agora pede confirmacao antes de salvar a mudanca.
+- Status alterado pela tela de detalhes agora atualiza `Entrega` via `updateInContext`, reforcando `group_id`, `grupo_id`, `empresa_id` e historico de status.
+- Confirmacao de entrega com assinatura digital agora tambem reforca `group_id`, `grupo_id` e `empresa_id` no payload.
+- Mudancas de status, bloqueios e confirmacao com assinatura agora geram `AuditLog` com usuario, contexto multiempresa, antes/depois e sucesso/bloqueio.
+- Botoes sensiveis receberam marcadores tecnicos `data-permission`, `data-context-required` e `data-sensitive`.
+- Mantida a Regra-Mae: nenhuma tela, modulo, arquivo ou funcionalidade nova foi criada; apenas reforco do fluxo existente.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `FormularioEntrega` e `RomaneioForm`, revisando criacao/edicao de entrega, romaneio, saida para entrega e auditoria antes/depois.
+### Expedicao - Fase 8 Romaneio de Entrega
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `RomaneioForm`, revisando romaneio, saida para entrega, RBAC, contexto e auditoria antes/depois.
+- `RomaneioForm` deixou de buscar entregas via `Entrega.list()` global e passou a usar `filterInContext`, mantendo a lista dentro do contexto grupo/empresa.
+- Geracao de romaneio agora exige contexto grupo/empresa e permissao antes de consultar, selecionar e salvar.
+- Criacao de `Romaneio` passou a usar `createInContext`, reforcando `group_id`, `grupo_id` e `empresa_id`.
+- Atualizacao das entregas para `Saiu para Entrega` passou a usar `updateInContext`, preservando historico de status com usuario e contexto.
+- Antes de incluir um romaneio, o sistema agora pede confirmacao explicita, respeitando a Regra-Mae para inclusao de registros.
+- Checklist de saida passou a bloquear a geracao enquanto documentos, veiculo, carga e combustivel nao estiverem confirmados.
+- Bloqueios por contexto, permissao, checklist incompleto, entrega fora de contexto e cancelamento de confirmacao agora geram `AuditLog`.
+- Geracao bem-sucedida do romaneio agora gera `AuditLog` operacional com antes/depois, entregas vinculadas, usuario, `group_id`, `grupo_id` e `empresa_id`.
+- Checkboxes de selecao e botao de gerar receberam marcadores `data-permission`, `data-context-required`, `data-action` e `data-sensitive` conforme a acao.
+- Foi validado que `RomaneioForm` ficou sem mojibake real apos as alteracoes, evitando novos erros ortograficos na secao Expedicao e Logistica.
+- Mantida a Regra-Mae: nenhuma tela, modulo, arquivo ou funcionalidade nova foi criada; apenas reforco do fluxo existente.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `FormularioEntrega`, revisando criacao/edicao de entrega, previsao/geolocalizacao, RBAC, contexto e auditoria antes/depois.
+
+### Expedicao - Fase 8 Formulario de Entrega
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `FormularioEntrega`, revisando criacao/edicao de entrega, previsao/geolocalizacao, RBAC, contexto e auditoria antes/depois.
+- `FormularioEntrega` passou a usar chaves tecnicas de permissao `Expedicao.Entrega.criar/editar`, evitando dependencia de acento para RBAC.
+- Criacao e edicao de entrega agora reforcam `group_id`, `grupo_id` e `empresa_id` antes de chamar `createInContext` e `updateInContext`.
+- Antes de criar uma nova entrega, o sistema agora pede confirmacao explicita, respeitando a Regra-Mae para inclusao de registros.
+- Bloqueios por falta de contexto, empresa, cliente ou permissao agora geram `AuditLog` de seguranca com usuario, grupo e empresa.
+- Calculo de previsao por IA e geolocalizacao agora exigem contexto grupo/empresa e permissao do formulario antes de executar.
+- Prompts enviados para IA agora recebem sanitizacao simples dos campos de endereco/frete para reduzir risco de entrada indevida.
+- Sucesso e erro em previsao por IA e geolocalizacao agora geram auditoria operacional/seguranca com contexto multiempresa.
+- Botoes de previsao, geolocalizacao e salvar receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- `FormWrapper` existente passou a encaminhar atributos extras para o `<form>`, permitindo que os marcadores `data-*` realmente cheguem ao DOM sem criar componente novo.
+- Foi validado que `FormularioEntrega`, `FormWrapper` e `STATUS_DO_PROJETO.md` ficaram sem mojibake real apos as alteracoes.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em listagens e relatorios de Expedicao/Logistica, revisando filtros por grupo/empresa, exportacoes, acoes em lote, RBAC e auditoria.
+
+### Expedicao - Fase 8 Listagens e Relatorios
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em listagens e relatorios de Expedicao/Logistica, revisando filtros por grupo/empresa, exportacoes, acoes em lote, RBAC e auditoria.
+- `EntregasListagem` passou a reforcar filtro local por contexto grupo/empresa, preservando a visao consolidada quando o usuario estiver no grupo.
+- Exportacao CSV de entregas selecionadas agora funciona no botao existente e exporta apenas registros filtrados e selecionados dentro do contexto atual.
+- Exportacao CSV da listagem agora exige contexto grupo/empresa e permissao `Expedicao.Entrega.exportar` ou equivalente.
+- Bloqueios e exportacao bem-sucedida da listagem agora geram `AuditLog` com usuario, `group_id`, `grupo_id`, `empresa_id`, filtros e quantidade exportada.
+- Marcadores de RBAC/contexto da listagem foram padronizados para chaves tecnicas sem acento, como `Expedicao.Entrega.visualizar/editar/exportar`.
+- `RelatoriosLogistica` passou a filtrar romaneios por empresa/grupo antes de calcular desempenho por motorista.
+- Grafico de entregas por cidade deixou de usar dados fixos de exemplo e passou a usar as entregas reais filtradas por periodo e contexto.
+- Relatorio de Logistica ganhou exportacao CSV de resumo, com bloqueio por contexto/RBAC e auditoria operacional/seguranca.
+- Botoes de exportacao receberam `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- Foi validado que `EntregasListagem`, `RelatoriosLogistica` e `STATUS_DO_PROJETO.md` ficaram sem mojibake real apos as alteracoes.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `RoteirizacaoMapa`, `RoteirizacaoInteligente` e painel logistico, revisando geracao/otimizacao de rotas, contexto grupo/empresa, permissoes e auditoria.
+
+### Expedicao - Fase 8 Rotas e Roteirizacao IA
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `RoteirizacaoMapa`, `RoteirizacaoInteligente` e painel logistico, revisando geracao/otimizacao de rotas, contexto grupo/empresa, permissoes e auditoria.
+- `RoteirizacaoMapa` passou a filtrar entregas por contexto grupo/empresa antes de permitir selecao e otimizacao.
+- Otimizacao de rota agora exige contexto grupo/empresa e permissao tecnica `Expedicao.Rotas.editar/criar` ou `Expedicao.Roteirizacao.editar`.
+- Falhas de otimizacao por falta de contexto, permissao ou coordenadas agora geram `AuditLog` de seguranca.
+- Otimizacao bem-sucedida agora gera `AuditLog` operacional com quantidade de entregas, distancia e tempo estimado.
+- Criacao de rota e romaneio no mapa passou a usar `createInContext`, reforcando `group_id`, `grupo_id` e `empresa_id`.
+- Atualizacao das entregas vinculadas a rota/romaneio passou a usar `updateInContext` com contexto multiempresa.
+- Antes de criar rota e romaneio, o sistema agora pede confirmacao explicita, respeitando a Regra-Mae para inclusao de registros.
+- Sucesso, erro e cancelamento da geracao de rota/romaneio agora ficam auditados.
+- `RoteirizacaoInteligente` deixou de buscar `Entrega`, `Motorista`, `Veiculo` e `RoteirizacaoInteligente` por `.list()` global e passou a usar `filterInContext`.
+- Geracao de rota por IA agora exige contexto grupo/empresa, permissao, confirmacao explicita e cria o registro por `createInContext`.
+- Bloqueios, erros e sucesso da roteirizacao IA agora geram auditoria com usuario, `group_id`, `grupo_id` e `empresa_id`.
+- Botoes sensiveis de otimizar rota, gerar romaneio e gerar rota com IA receberam `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- Foi validado que `RoteirizacaoMapa`, `RoteirizacaoInteligente` e `STATUS_DO_PROJETO.md` ficaram sem mojibake real apos as alteracoes.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 no `DashboardLogistico` e seus componentes do painel logistico, revisando salvamento de regras, simulacao/otimizacao, relatorios, contexto grupo/empresa, permissoes e auditoria.
+
+### Expedicao - Fase 8 Painel Logistico
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 no `DashboardLogistico` e seus componentes do painel logistico, revisando salvamento de regras, simulacao/otimizacao, relatorios, contexto grupo/empresa, permissoes e auditoria.
+- `DashboardLogistico` passou a exigir contexto grupo/empresa e permissao tecnica antes de carregar entregas, regras, relatorios e acoes sensiveis.
+- Chave de regras do painel logistico agora e escopada por empresa ou grupo, evitando configuracao global sem contexto multiempresa.
+- Salvamento das regras passou a usar `createInContext` e `updateInContext`, reforcando `group_id`, `grupo_id` e `empresa_id`.
+- Abertura de relatorio, salvamento de regras e bloqueios por contexto/permissao agora geram `AuditLog` com usuario, grupo, empresa, resultado e detalhes.
+- `ControlsBar` passou a bloquear e auditar simulacao de cenarios quando faltar contexto ou permissao.
+- `RouteOptimizerPanel` passou a bloquear e auditar otimizacao de rotas por falta de contexto/permissao, alem de auditar sucesso e erro da IA.
+- `PerformanceReportDialog` passou a bloquear e auditar exportacao CSV quando faltar contexto ou permissao, e auditar exportacao bem-sucedida.
+- Botoes sensiveis de salvar regras, simular cenario, otimizar rota, abrir relatorio e exportar CSV receberam `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- Foi validado que `DashboardLogistico` e componentes do painel logistico ficaram sem mojibake real apos as alteracoes.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `DriverChat`, `OcorrenciasPanel`, `ComprovanteDigital` e `LogisticaReversa`, revisando comunicacao, ocorrencias, comprovantes, reversa, contexto grupo/empresa, permissoes e auditoria.
+
+### Expedicao - Fase 8 Comunicacao, Ocorrencias e Reversa
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `DriverChat`, `OcorrenciasPanel`, `ComprovanteDigital` e `LogisticaReversa`, revisando comunicacao, ocorrencias, comprovantes, reversa, contexto grupo/empresa, permissoes e auditoria.
+- `DriverChat` passou a exigir contexto grupo/empresa e permissao antes de enviar mensagens para a entrega.
+- Mensagens ao motorista agora sao sanitizadas, pedem confirmacao explicita antes de incluir registro e sao gravadas via `updateInContext`.
+- Bloqueios, cancelamentos, erros e sucesso da comunicacao agora geram `AuditLog` com usuario, grupo, empresa e entrega.
+- `OcorrenciasPanel` passou a exigir contexto e permissao para upload de evidencia e criacao de ocorrencias.
+- Ocorrencias agora sao sanitizadas, pedem confirmacao antes da inclusao e sao salvas via `updateInContext` com `group_id`, `grupo_id` e `empresa_id`.
+- Upload de evidencia e criacao de ocorrencia agora geram auditoria operacional/seguranca.
+- `ComprovanteDigital` passou a usar `updateInContext` para confirmar entrega, reforcando contexto multiempresa no comprovante e no historico de status.
+- Confirmacao de entrega agora exige permissao, contexto e confirmacao explicita antes de marcar como `Entregue`.
+- Arquivo do comprovante, GPS, bloqueios, erros e sucesso da confirmacao agora geram `AuditLog`.
+- `LogisticaReversa` deixou de atualizar entrega, contas a receber, estoque e notificacao por chamadas diretas globais e passou a usar `filterInContext`, `updateInContext` e `createInContext`.
+- Processamento de devolucao agora exige contexto, permissao e confirmacao explicita antes de alterar entrega, financeiro e estoque.
+- Logistica reversa agora registra historico da entrega e auditoria completa de sucesso, bloqueio, cancelamento e erro.
+- Corrigidos textos com mojibake real e erros ortograficos nos quatro componentes da secao Expedicao e Logistica.
+- Botoes e inputs sensiveis receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em componentes restantes da Expedicao, priorizando `ConfiguracaoExpedicao`, `SeparacaoConferencia`, `DashboardEntregasRealtime` e fluxos de status/acoes em lote, revisando contexto grupo/empresa, RBAC, auditoria e textos.
+
+### Expedicao - Fase 8 Configuracoes, Dashboard e Conferencia
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `ConfiguracaoExpedicao`, `SeparacaoConferencia`, `DashboardEntregasRealtime` e fluxos de status/acoes em lote.
+- `ConfiguracaoExpedicao` deixou de consultar/salvar configuracao global por chamada direta e passou a usar `filterInContext`, `createInContext` e `updateInContext` com `group_id`, `grupo_id` e `empresa_id`.
+- As configuracoes de transportadora, WhatsApp, e-mail, regras gerais e Google Maps agora sao recarregadas do registro salvo no contexto atual.
+- Salvamento de configuracoes agora exige contexto grupo/empresa, permissao RBAC, sanitizacao basica, confirmacao explicita e auditoria de sucesso, bloqueio, cancelamento e erro.
+- Toggles da aba Geral deixaram de ser apenas visuais e passaram a persistir em `configuracoes_gerais`.
+- `DashboardEntregasRealtime` passou a carregar entregas e rotas por `filterInContext`, com query keys por grupo/empresa e bloqueio visual quando faltar contexto ou permissao.
+- Metricas do dashboard agora sao calculadas por `useMemo`, usando apenas dados filtrados do contexto atual.
+- `SeparacaoConferencia` passou a gravar `HistoricoCliente` via `createInContext`, reforcando carimbo multiempresa.
+- Conclusao de separacao/conferencia agora pede confirmacao explicita antes de criar registros e alterar status.
+- Corrigidos textos com mojibake real e ajustes ortograficos em configuracoes, dashboard em tempo real e separacao/conferencia.
+- Botoes sensiveis receberam ou mantiveram marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `SeparacaoConferenciaIA`, `EnvioMensagemAutomatica`, `MapaRastreamentoRealTime`, `RastreamentoPublico` e componentes financeiros da logistica, revisando contexto grupo/empresa, RBAC, auditoria, textos e acoes sensiveis.
+
+### Expedicao - Fase 8 Comunicacao Automatica e Financeiro Logistico
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `EnvioMensagemAutomatica` e componentes financeiros da logistica, revisando contexto grupo/empresa, RBAC, auditoria, textos e acoes sensiveis.
+- `EnvioMensagemAutomatica` passou a exigir entrega valida, contexto grupo/empresa e permissao RBAC antes de registrar envio de WhatsApp.
+- Templates e mensagens livres agora sao sanitizados antes do envio e antes de gravar historico.
+- Envio de mensagem agora pede confirmacao explicita antes de alterar a entrega e criar historico, respeitando a Regra-Mae para inclusao/alteracao de registros.
+- Atualizacao da entrega e criacao de `HistoricoCliente` passaram a usar `updateInContext` e `createInContext`, reforcando `group_id`, `grupo_id` e `empresa_id`.
+- Bloqueios por falta de contexto, falta de permissao, telefone ausente, cancelamento, erro e sucesso do envio agora geram `AuditLog`.
+- `LogisticaFinanceiroPanel` passou a carregar configuracoes, entregas, contas a receber e contas a pagar por contexto grupo/empresa.
+- Geracao de contas a receber e contas a pagar agora exige contexto, permissao RBAC, configuracao financeira, confirmacao explicita e auditoria.
+- Conciliacao de titulos a receber e a pagar agora exige contexto, permissao RBAC, confirmacao explicita e auditoria.
+- Criacao e conciliacao de titulos passaram a usar `createInContext` e `updateInContext`, mantendo carimbo multiempresa nos registros financeiros.
+- Corrigidos textos com mojibake real e ajustes ortograficos em comunicacao automatica e financeiro logistico.
+- Botoes sensiveis receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `MapaRastreamentoRealTime`, `RastreamentoPublico` e `SeparacaoConferenciaIA`, revisando contexto grupo/empresa, RBAC/auditoria onde aplicavel, seguranca, textos e acoes sensiveis.
+
+### Expedicao - Fase 8 Rastreamento e Separacao IA
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `MapaRastreamentoRealTime`, `RastreamentoPublico` e `SeparacaoConferenciaIA`.
+- `MapaRastreamentoRealTime` deixou de consultar entrega e posicoes por chamadas globais e passou a usar `filterInContext` com chaves por grupo/empresa.
+- Visualizacao do mapa em tempo real agora exige contexto grupo/empresa e permissao RBAC de rastreamento, entregas ou painel logistico.
+- Marcadores, destino, veiculo e overlay do mapa tiveram textos corrigidos e exibicao protegida contra dados incompletos de latitude/longitude.
+- `RastreamentoPublico` teve textos com mojibake corrigidos, remocao de simbolos corrompidos e sanitizacao basica dos campos exibidos ao cliente.
+- Rastreamento publico passou a montar uma resposta reduzida para exibicao, evitando carregar dados internos desnecessarios na tela publica.
+- `SeparacaoConferenciaIA` deixou de buscar `Pedido`, `Produto` e `Colaborador` por `.list()` global e passou a usar `filterInContext`.
+- Scanner, validacao por IA, otimizacao de rota e finalizacao agora exigem contexto grupo/empresa e permissao RBAC.
+- Prompts enviados para IA agora usam textos sanitizados e dados numericos controlados para reduzir risco de entrada indevida.
+- Finalizacao da separacao IA agora pede confirmacao explicita antes de criar registro e atualizar pedido.
+- Finalizacao passou a criar `SeparacaoConferencia` via `createInContext` e atualizar `Pedido` via `updateInContext`, mantendo `group_id`, `grupo_id` e `empresa_id`.
+- Auditoria foi adicionada para validacao IA, otimizacao de rota, codigos nao encontrados, itens fora do pedido, bloqueios, cancelamentos, erros e finalizacao.
+- Botoes sensiveis receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em componentes restantes da Expedicao e Logistica, priorizando `LogisticaEntregaTab`, `PedidosEntregaTab`, `RelatoriosLogistica`, `RelatorioFinanceiroLogistica` e integracoes entre pedido, entrega, financeiro e fiscal.
+
+### Comercial e Expedicao - Fase 8 Integracao Pedido, Entrega e Estoque
+
+- Seguido o proximo passo salvo no status: continuar em `LogisticaEntregaTab`, `PedidosEntregaTab`, relatorios e integracoes entre pedido, entrega, financeiro e fiscal.
+- `LogisticaEntregaTab` teve textos corrompidos corrigidos e passou a usar `w-full h-full` no container principal.
+- Criacao e remocao de etapas de entrega/faturamento parcial agora exigem permissao visual e confirmacao explicita antes de alterar o pedido em memoria.
+- Campos de entrega passaram a sanitizar textos e o link do Google Maps recebeu validacao basica para reduzir entrada indevida.
+- Acoes sensiveis da aba de logistica do pedido receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- `PedidosEntregaTab` deixou de buscar pedidos, entregas e regioes por chamadas globais e passou a usar `filterInContext` por grupo/empresa.
+- Alteracao de status de pedido agora exige contexto grupo/empresa, permissao RBAC, confirmacao explicita, `updateInContext` e auditoria operacional/seguranca.
+- Quando existir entrega vinculada, a mudanca de status tambem sincroniza a entidade `Entrega` no mesmo contexto multiempresa.
+- Confirmacao de entrega com baixa de estoque agora exige permissao de entrega e estoque, confirmacao explicita, usa `filterInContext`, `createInContext` e `updateInContext`, e audita bloqueios/estoque insuficiente.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `RelatoriosLogistica`, `RelatorioFinanceiroLogistica`, `NotificadorAutomaticoEntrega`, `ComprovanteEntregaDigital` e `RegistroOcorrenciaLogistica`, revisando contexto grupo/empresa, RBAC, auditoria, textos e integracoes financeiro/fiscal.
+
+### Expedicao - Fase 8 Notificacoes, Ocorrencias e Financeiro Logistico
+
+- Seguido o proximo passo salvo no status: continuar em `RelatorioFinanceiroLogistica`, `NotificadorAutomaticoEntrega` e `RegistroOcorrenciaLogistica`.
+- `NotificadorAutomaticoEntrega` teve textos corrompidos corrigidos e passou a exigir contexto grupo/empresa e permissao RBAC antes de enviar/registrar notificacao.
+- Mensagens de notificacao agora sao sanitizadas, usam confirmacao explicita e registram auditoria de sucesso, bloqueio, cancelamento e erro.
+- Quando existe entrega vinculada, a notificacao e gravada via `updateInContext`; quando nao existe, gera historico do cliente via `createInContext`.
+- `RegistroOcorrenciaLogistica` teve textos corrompidos corrigidos e passou a exigir contexto grupo/empresa, permissao RBAC e confirmacao antes de registrar ocorrencia.
+- Ocorrencias agora sao sanitizadas, gravadas via `updateInContext` ou `createInContext`, e auditadas com usuario, grupo, empresa, pedido e entrega.
+- Upload de foto de ocorrencia passou a gerar auditoria de sucesso/erro.
+- `RelatorioFinanceiroLogistica` passou a bloquear sem contexto/permissao, enviar filtros com `group_id` e `empresa_id`, e auditar consultas/aplicacao de filtros.
+- Botoes sensiveis receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive` quando aplicavel.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `ComprovanteEntregaDigital` e `RelatoriosLogistica`, revisando baixa de estoque, comprovante, relatorios operacionais, contexto grupo/empresa, RBAC, auditoria e textos.
+
+### Expedicao - Fase 8 Comprovante e Relatorios Logisticos
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `ComprovanteEntregaDigital` e `RelatoriosLogistica`.
+- `ComprovanteEntregaDigital` deixou de usar chamadas globais criticas de `Produto`, `MovimentacaoEstoque`, `Entrega` e `Pedido` e passou a operar com `filterInContext`, `createInContext` e `updateInContext`.
+- Confirmacao de entrega com baixa de estoque agora exige contexto grupo/empresa, permissao RBAC, foto do comprovante, nome do recebedor e confirmacao explicita antes de alterar registros.
+- Dados do recebedor, observacoes, produto, unidade e numero de pedido passaram por sanitizacao antes de gravar ou auditar.
+- Baixa de estoque agora valida produto existente e saldo suficiente, grava `MovimentacaoEstoque` com `group_id`, `grupo_id` e `empresa_id`, atualiza produto no contexto e audita bloqueios, erros e sucesso.
+- Criacao/atualizacao de entrega e atualizacao do pedido agora preservam `group_id`, `grupo_id` e `empresa_id`, historico de status e comprovante digital.
+- Upload de foto, captura de GPS e confirmacao de entrega receberam auditoria operacional/seguranca e marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive` quando aplicavel.
+- `RelatoriosLogistica` teve textos corrompidos/acentuacao inconsistente corrigidos, alerta visual quando faltar contexto/permissao e exportacao CSV com confirmacao explicita e auditoria de cancelamento.
+- Layout dos filtros, abas e KPIs do relatorio foi ajustado para melhor responsividade sem criar telas, modulos ou arquivos novos.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Verificacao de mojibake real e escapes literais executada sem apontamentos nos arquivos alterados.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 nos componentes restantes de Expedicao/Logistica, priorizando `ComprovanteDigital`, `DetalhesEntregaView`, `EntregasListagem` e paineis logisticos, revisando contexto grupo/empresa, RBAC, auditoria, textos e acoes sensiveis.
+
+### Expedicao - Fase 8 Detalhes e Listagem de Entregas
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `ComprovanteDigital`, `DetalhesEntregaView`, `EntregasListagem` e paineis logisticos.
+- `DetalhesEntregaView` teve textos corrompidos corrigidos em abas, campos, status, timeline, notificacoes e acoes de entrega.
+- Alteracao de status da entrega agora exige contexto grupo/empresa, permissao RBAC e confirmacao explicita para qualquer status sensivel, nao apenas entrega frustrada.
+- Quando a mudanca de status for delegada ao fluxo externo, a tela agora registra auditoria antes de chamar o fluxo recebido por propriedade.
+- Confirmacao com assinatura digital agora exige confirmacao explicita, sanitiza nome/documento do recebedor, preserva `group_id`, `grupo_id` e `empresa_id`, e audita cancelamento/sucesso/erro.
+- `DetalhesEntregaView` passou a exibir alerta visual quando faltar contexto ou permissao para acoes sensiveis.
+- `EntregasListagem` teve textos corrompidos corrigidos em busca, status, colunas, botoes e titulos de janelas.
+- Exportacao CSV de entregas selecionadas agora exige confirmacao explicita e audita cancelamento, bloqueios e sucesso.
+- Abertura de detalhes e edicao de entrega agora registra auditoria operacional com entrega e numero do pedido.
+- `EntregasListagem` passou a exibir alerta visual quando faltar contexto/permissao para visualizar entregas e manteve marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive` nas acoes sensiveis.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 nos paineis logisticos restantes, priorizando `DashboardLogistico`, `DashboardEntregasRealtime`, `OcorrenciasPanel`, `DriverChat` e demais componentes de painel, revisando contexto grupo/empresa, RBAC, auditoria, textos e acoes sensiveis.
+
+### Expedicao - Fase 8 Paineis Logisticos
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 nos paineis logisticos restantes, priorizando `DashboardLogistico`, `DashboardEntregasRealtime`, `OcorrenciasPanel` e `DriverChat`.
+- `DashboardLogistico` teve textos corrompidos corrigidos em titulo, relatorio, distancia, duracao, nao alocados e ocorrencias.
+- Salvamento de regras do painel logistico agora exige confirmacao explicita, contexto grupo/empresa, permissao RBAC e auditoria de cancelamento/sucesso/erro.
+- `DashboardLogistico` passou a exibir alerta visual quando faltar contexto/permissao para visualizar o painel.
+- `DashboardEntregasRealtime` teve textos corrigidos em tempo medio, ultimos 7 dias, atencao e operacao dentro dos padroes, mantendo bloqueio por contexto/permissao.
+- `OcorrenciasPanel` teve textos corrigidos, passou a validar upload de imagem com limite de 8MB, auditar rejeicao de arquivo invalido e exibir bloqueio visual quando faltar contexto/permissao.
+- `DriverChat` teve textos corrigidos e passou a exibir bloqueio visual quando faltar contexto/permissao para enviar mensagens.
+- Botao de envio do `DriverChat` recebeu marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos fluxos existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 nos subcomponentes do painel logistico, priorizando `ControlsBar`, `RouteOptimizerPanel`, `PerformanceReportDialog`, `AlertsPanel`, `BottlenecksPanel`, `QueuePanels` e `MapView`, revisando contexto grupo/empresa, RBAC, auditoria, textos e acoes sensiveis.
+
+### Expedicao - Fase 8 Subpaineis Logisticos
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 nos subcomponentes do painel logistico, priorizando `ControlsBar`, `RouteOptimizerPanel`, `PerformanceReportDialog`, `AlertsPanel`, `BottlenecksPanel`, `QueuePanels` e `MapView`.
+- `ControlsBar` recebeu reforco de contexto/permissao no container principal, confirmacao explicita antes de executar simulacao logistica e validacao numerica para parametros do simulador.
+- Salvamento de regras pelo `ControlsBar` passou a auditar bloqueio por contexto/permissao antes de delegar a gravacao ao fluxo existente.
+- `RouteOptimizerPanel` passou a auditar bloqueios por falta de contexto, permissao, empresa ou entregas validas, exigir confirmacao antes de otimizar rota e sanitizar entradas numericas de capacidade/paradas.
+- `RouteOptimizerPanel` passou a exibir alerta visual quando faltar contexto/permissao e a auditar selecao de entrega sugerida na rota.
+- `PerformanceReportDialog` passou a bloquear exportacao sem linhas, exigir confirmacao antes de gerar CSV e auditar cancelamento/bloqueio/exportacao.
+- `AlertsPanel`, `BottlenecksPanel`, `QueuePanels` e `MapView` receberam marcadores de contexto/permissao e auditoria opcional nas selecoes de entregas exibidas nos paineis.
+- Paineis de alertas, gargalos e filas passaram a exibir aviso visual quando faltar contexto grupo/empresa ou permissao para visualizacao.
+- Corrigidos textos corrompidos e inconsistencias de exibicao nos subpaineis logisticos sem criar tela, modulo ou arquivo novo.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; as melhorias foram aplicadas nos componentes existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em componentes auxiliares de Expedicao/Logistica ainda nao revisados, priorizando `LiveMap`, `TimelineEntrega`, componentes de configuracao/logistica financeira e integracoes finais entre entrega, estoque, financeiro e fiscal.
+
+### Expedicao - Fase 8 Auxiliares Logistica Financeira e Mapa Vivo
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em componentes auxiliares de Expedicao/Logistica, priorizando `LiveMap`, componentes de configuracao/logistica financeira e integracoes finais entre entrega, estoque, financeiro e fiscal.
+- `LiveMap` deixou de buscar entrega por chamada global direta e passou a usar `filterInContext`, respeitando contexto grupo/empresa antes de carregar destino da entrega.
+- `LiveMap` passou a aceitar `contextoValido`, `canView` e `onAudit`, exibindo bloqueio visual quando faltar contexto/permissao e auditando bloqueios/erro de ETA.
+- `ConfigFinanceiroLogistica` foi reforcado com contexto grupo/empresa, RBAC, sanitizacao de entradas, confirmacao explicita antes de salvar e auditoria de bloqueio/cancelamento/sucesso/erro.
+- Salvamento da configuracao financeira logistica passou a usar `createInContext` e `updateInContext`, preservando `group_id`, `grupo_id` e `empresa_id`.
+- `LogisticaFinanceiroPanel` passou a repassar `groupId` e auditoria para a configuracao financeira logistica.
+- Conciliacao de recebimentos e despesas logisticas agora audita cancelamento quando o usuario nao confirma a operacao.
+- Botoes de conciliacao receberam `data-permission`, `data-context-required` e `data-sensitive`.
+- Corrigidos textos e acentuacao inconsistente nos componentes alterados, mantendo comportamento e fluxo existentes.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos componentes existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em componentes restantes de Expedicao/Logistica ainda nao revisados, priorizando `TimelineEntregaVisual`, `ConfiguracaoExpedicao`, `FormularioEntrega`, `EnvioMensagemAutomatica`, `LogisticaReversa` e integracoes finais com fiscal/estoque/financeiro.
+
+### Expedicao - Fase 8 Timeline e Configuracoes de Expedicao
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em componentes restantes de Expedicao/Logistica, priorizando `TimelineEntregaVisual`, `ConfiguracaoExpedicao`, `FormularioEntrega`, `EnvioMensagemAutomatica`, `LogisticaReversa` e integracoes finais.
+- `TimelineEntregaVisual` foi reforcada sem criar componente novo: recebeu contexto/permissao visual, sanitizacao de textos exibidos, validacao segura do link de mapa e auditoria opcional ao abrir mapa.
+- `TimelineEntregaVisual` teve textos corrompidos corrigidos e passou a evitar renderizacao sem pedido, contexto ou permissao.
+- `ConfiguracaoExpedicao` recebeu aviso visual quando faltar contexto/permissao de visualizacao.
+- Campos de configuracao de transportadora, WhatsApp, e-mail e geral passaram a atualizar estado por helpers sanitizados antes de salvar.
+- Mantido o fluxo existente de confirmacao explicita, RBAC, `createInContext`/`updateInContext` e auditoria de salvar/cancelar/erro nas configuracoes de expedicao.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas reforco dos componentes existentes.
+- `npm run build` retornou `Acesso negado` no atalho do Vite neste ambiente, entao o build foi validado com sucesso via `node node_modules/vite/bin/vite.js build`.
+- Permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `FormularioEntrega`, `EnvioMensagemAutomatica`, `LogisticaReversa` e fluxos finais de estoque/financeiro/fiscal, revisando contexto grupo/empresa, RBAC, auditoria, sanitizacao e acoes sensiveis.
+
+### Expedicao - Fase 8 Formulario, Mensagens e Logistica Reversa
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `FormularioEntrega`, `EnvioMensagemAutomatica`, `LogisticaReversa` e fluxos finais de estoque/financeiro/fiscal.
+- `FormularioEntrega` recebeu sanitizacao recursiva do payload antes de criar/editar entrega, incluindo bloqueio de marcadores perigosos como `javascript:` em textos.
+- Criacao e edicao de entrega agora exigem confirmacao explicita, com auditoria quando o usuario cancela a operacao.
+- `FormularioEntrega` passou a exibir aviso visual quando faltar contexto grupo/empresa ou permissao RBAC para salvar entregas.
+- `EnvioMensagemAutomatica` passou a exibir aviso visual quando faltar contexto/permissao para enviar WhatsApp e os templates receberam marcadores de permissao, contexto obrigatorio e acao sensivel.
+- `LogisticaReversa` passou a exibir aviso visual quando faltar contexto/permissao para processar devolucao e o botao cancelar recebeu marcador de acao/contexto.
+- Mantidos os fluxos existentes de entrega, mensagem e devolucao; nenhuma tela, modulo, componente ou arquivo novo foi criado.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `node node_modules/vite/bin/vite.js build` porque o atalho `npm run build` pode retornar `Acesso negado` no Vite neste ambiente.
+- Permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 nas integracoes finais de Expedicao com estoque, financeiro e fiscal, validando que status de entrega, baixa/retorno de estoque, cobranca/faturamento e emissao fiscal respeitem grupo/empresa, RBAC, auditoria, confirmacao e Regra-Mae.
+### Expedicao - Fase 8 Integracao PDV, Entrega e Fiscal
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 nas integracoes finais de Expedicao com estoque, financeiro e fiscal.
+- `CaixaPDVCompleto` foi reforcado sem criar tela, modulo, componente ou arquivo novo.
+- Venda PDV agora valida contexto grupo/empresa e permissao antes de finalizar operacao sensivel.
+- Finalizacao de venda agora exige confirmacao explicita e audita bloqueio, cancelamento e sucesso.
+- Criacao automatica de entrega pelo PDV agora exige empresa, cliente e permissao de expedicao antes de liberar o fluxo.
+- Emissao de NF-e pelo PDV agora exige empresa faturadora, cliente e permissao fiscal antes de liberar o fluxo.
+- Geracao de boleto/conta a receber pelo PDV agora exige permissao financeira para criacao de contas a receber.
+- Payloads gerados pelo PDV passaram a preservar `group_id`, `grupo_id` e `empresa_id` nos fluxos de caixa, pedido, entrega, conta a receber e NF-e.
+- Campos textuais de cliente/endereco usados nos fluxos automaticos do PDV passaram por sanitizacao simples contra marcadores HTML e `javascript:`.
+- Liquidacoes de recebimentos/pagamentos no PDV agora exigem confirmacao explicita, auditam bloqueio/cancelamento/sucesso e receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive` nos botoes sensiveis.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 revisando os fluxos comerciais que disparam entrega, NF-e, cobranca e fechamento financeiro, priorizando `GerarNFeModal`, `NotasFiscaisTab`, `FechamentoFinanceiroTab` e `PedidosEntregaTab`.
+
+### Comercial/Fiscal - Fase 8 Notas Fiscais
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 nos fluxos comerciais que disparam entrega, NF-e, cobranca e fechamento financeiro, iniciando por `NotasFiscaisTab`.
+- `NotasFiscaisTab` foi reforcada sem criar tela, modulo, componente ou arquivo novo.
+- Criacao, edicao e cancelamento de NF-e agora validam contexto grupo/empresa, empresa faturadora obrigatoria e permissao RBAC antes de executar a acao sensivel.
+- Payloads de Nota Fiscal passaram a preservar `group_id`, `grupo_id`, `empresa_id` e `empresa_faturamento_id` nos fluxos de criacao, edicao e cancelamento.
+- Salvamento e cancelamento de NF-e agora exigem confirmacao explicita antes da acao, auditando cancelamento pelo usuario, bloqueio por contexto/permissao e sucesso operacional.
+- Motivo de cancelamento e campos textuais principais da NF-e passaram por sanitizacao antes de gravar ou enviar ao simulador fiscal.
+- Log fiscal do cancelamento passou a registrar tambem contexto de grupo e empresa.
+- Botoes sensiveis de criar, salvar, exportar e cancelar NF-e receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive` quando aplicavel.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `GerarNFeModal`, `FechamentoFinanceiroTab` e `PedidosEntregaTab`, conectando os mesmos pilares de contexto grupo/empresa, RBAC, auditoria, sanitizacao, confirmacao e Regra-Mae nos fluxos de emissao, cobranca, entrega e fechamento financeiro.
+### Comercial/Fiscal - Fase 8 Emissao no Fechamento Financeiro
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `GerarNFeModal` e `FechamentoFinanceiroTab`.
+- `FechamentoFinanceiroTab` foi reforcado sem criar tela, modulo, componente ou arquivo novo.
+- Botao de emissao de NF-e no fechamento financeiro agora valida contexto grupo/empresa, empresa faturadora obrigatoria e permissao fiscal antes de abrir o modal.
+- `FechamentoFinanceiroTab` passou a auditar bloqueio de abertura e emissao de NF-e com `group_id`, `grupo_id`, `empresa_id`, usuario, timestamp e pedido relacionado.
+- Campos financeiros/fiscais sensiveis do fechamento receberam sanitizacao ou normalizacao antes de atualizar o estado do pedido, incluindo desconto, parcelas, intervalo, observacoes, CFOP e natureza da operacao.
+- `GerarNFeModal` passou a receber contexto, permissao, empresa faturadora e auditoria do fluxo pai, mantendo o componente existente.
+- Emissao pelo modal agora bloqueia falta de contexto/permissao/empresa, exige confirmacao explicita, sanitiza dados fiscais e preserva `group_id`, `grupo_id`, `empresa_id` e `empresa_faturamento_id` no payload.
+- Botao sensivel de emissao recebeu marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `PedidosEntregaTab`, conectando pedido, entrega, cobranca e emissao fiscal com os mesmos pilares de contexto grupo/empresa, RBAC, auditoria, sanitizacao, confirmacao e Regra-Mae.
+### Comercial/Expedicao - Fase 8 Pedidos para Entrega
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `PedidosEntregaTab`, conectando pedido, entrega, cobranca e emissao fiscal com contexto grupo/empresa, RBAC, auditoria, sanitizacao, confirmacao e Regra-Mae.
+- `PedidosEntregaTab` foi reforcado sem criar tela, modulo, componente ou arquivo novo.
+- Abertura de paineis logisticos, analytics, roteirizacao e romaneio agora passa por helper central com validacao de contexto grupo/empresa, permissao e auditoria.
+- Criacao de romaneio com pedidos filtrados agora exige confirmacao explicita e audita bloqueio/cancelamento/abertura.
+- Busca por pedido/cliente passou a sanitizar entrada antes de filtrar.
+- Abertura de notificacao, comprovante e ocorrencia passou por helper auditado, respeitando permissao e contexto antes de abrir os fluxos filhos.
+- Status de pedido/entrega e baixa automatica de estoque preservam `group_id`, `grupo_id` e `empresa_id` por helper de contexto.
+- Baixa de estoque manteve confirmacao obrigatoria, auditoria de estoque insuficiente e sanitizacao da descricao do produto na movimentacao.
+- Links externos de mapa agora so aparecem quando usam URL segura `http` ou `https`.
+- `TimelineEntregaVisual` passou a receber contexto, permissao e auditoria a partir de `PedidosEntregaTab`.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros apos ajuste de espaco final.
+- Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em componentes filhos chamados por `PedidosEntregaTab`, priorizando `NotificadorAutomaticoEntrega`, `ComprovanteEntregaDigital`, `RegistroOcorrenciaLogistica` e `IntegracaoRomaneio`, reforcando contexto, RBAC, auditoria, sanitizacao e confirmacao nas acoes internas.
+### Expedicao - Fase 8 Filhos de Pedidos para Entrega
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `NotificadorAutomaticoEntrega`, `ComprovanteEntregaDigital`, `RegistroOcorrenciaLogistica` e `IntegracaoRomaneio`.
+- `IntegracaoRomaneio` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Romaneio passou a usar `filterInContext`, `createInContext` e `updateInContext` para pedidos, motoristas, veiculos, romaneio, entregas e status do pedido.
+- Criacao de romaneio agora exige contexto grupo/empresa, permissao RBAC, motorista/veiculo/placa/pedidos obrigatorios e confirmacao explicita antes de gravar.
+- Romaneio, entregas criadas e pedidos atualizados preservam `group_id`, `grupo_id` e `empresa_id`, com historico de status no pedido.
+- Criacao de romaneio passou a auditar bloqueio, cancelamento e sucesso com usuario, timestamp, grupo, empresa e quantidade de entregas.
+- Campos de motorista, veiculo, placa, cliente e pedido no romaneio passaram por sanitizacao antes de exibir ou gravar.
+- `NotificadorAutomaticoEntrega` passou a sanitizar mensagem personalizada e e-mail usado no envio.
+- `ComprovanteEntregaDigital` passou a sanitizar campos digitados e validar abertura de foto por URL segura.
+- `RegistroOcorrenciaLogistica` passou a bloquear upload sem contexto/permissao, validar imagem de ate 8MB, sanitizar descricao/resolucao e proteger abertura de foto.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 nas integracoes finais de Expedicao/Comercial com financeiro e fiscal, priorizando componentes que geram cobranca, link de pagamento, boleto, contas a receber e atualizacao de status apos entrega/faturamento.
+### Financeiro/CRM - Fase 8 Link de Pagamento e Boleto no Chat
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 nas integracoes finais de Expedicao/Comercial com financeiro e fiscal, priorizando cobranca, link de pagamento, boleto e contas a receber.
+- `GerarLinkPagamentoModal` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Geracao de link de pagamento agora exige contexto de grupo/empresa, empresa selecionada e permissao RBAC financeira antes de executar.
+- Link de pagamento agora exige confirmacao explicita, sanitiza campos do cliente, valida URL segura, preserva `group_id`, `grupo_id` e `empresa_id` em `PagamentoOmnichannel` e `ContaReceber`, e audita bloqueio, cancelamento e sucesso.
+- `GerarBoletoChat` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Consulta de titulos no chat passou a usar `filterInContext`, respeitando grupo/empresa e permissao antes de listar contas a receber.
+- Geracao de 2a via de boleto pelo chat agora exige contexto grupo/empresa, permissao RBAC, confirmacao explicita, sanitizacao da linha digitavel/textos, validacao de URL segura e auditoria de bloqueio/cancelamento/sucesso.
+- Atualizacoes em `ContaReceber` e `ConversaOmnicanal` passaram a usar `updateInContext`, mantendo `group_id`, `grupo_id` e `empresa_id` no fluxo de envio de boleto ao cliente.
+- Botoes sensiveis receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
+- Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `GerarCobrancaModal` e `GeradorLinkPagamento`, reforcando PIX, boleto, ordem de liquidacao e logs de cobranca com os mesmos pilares de contexto grupo/empresa, RBAC, auditoria, sanitizacao, confirmacao e Regra-Mae.
+### Financeiro - Fase 8 Cobranca PIX, Boleto e Ordem de Liquidacao
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `GerarCobrancaModal` e `GeradorLinkPagamento`.
+- `GerarCobrancaModal` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Geracao de PIX e boleto agora exige contexto grupo/empresa, empresa selecionada, permissao RBAC financeira, valor valido e confirmacao explicita antes de gravar.
+- PIX e boleto agora preservam `group_id`, `grupo_id` e `empresa_id` em `LogCobranca` e `ContaReceber`, com sanitizacao de textos/linha digitavel e validacao de URL segura para PDF/fatura.
+- `GerarCobrancaModal` passou a auditar bloqueio por contexto, permissao ou valor invalido, cancelamento pelo usuario e sucesso da geracao de PIX/boleto.
+- Botoes sensiveis de PIX, boleto e abertura de PDF receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- `GeradorLinkPagamento` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Criacao de `PagamentoOmnichannel`, atualizacao de `ContaReceber` e criacao de `CaixaOrdemLiquidacao` passaram a usar `createInContext`/`updateInContext`, preservando contexto multiempresa.
+- Link de pagamento agora exige permissao RBAC, contexto grupo/empresa, empresa selecionada, valor valido, gateway permitido, validade limitada e confirmacao explicita antes de gerar ordem de liquidacao.
+- Link gerado e copia para area de transferencia passaram por validacao de URL segura; dados de cliente/titulo foram sanitizados antes de gravar e exibir.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
+- Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 nas telas de contas a receber/pagar e liquidacao, priorizando `ContasReceberTab`, `ContasPagarTab`, `LiquidarReceberPagar` e `CaixaCentralLiquidacao` para reforcar baixa, cancelamento, conciliacao, auditoria e rateio por grupo/empresa.

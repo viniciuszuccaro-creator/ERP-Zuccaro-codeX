@@ -13,6 +13,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { CheckCircle, XCircle, AlertTriangle, Package, Camera, QrCode, List } from "lucide-react";
 import { useUser } from "@/components/lib/UserContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 import ScannerQRCode from './ScannerQRCode'; // Import the new ScannerQRCode component
 
@@ -23,6 +25,12 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
   const { user } = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const contextoBaseValido = Boolean(grupoAtual?.id || empresaAtual?.id || empresaId);
+  const canConcluirSeparacao = hasPermission("Expedicao", "Entrega", "editar") ||
+    hasPermission("Expedicao", "Separacao", "criar") ||
+    hasPermission("Expedicao", "Separacao", "editar");
 
   const [activeTab, setActiveTab] = useState("scanner");
   
@@ -32,16 +40,43 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
   const { data: entrega, isLoading, isError, error } = useQuery({
     queryKey: ['entrega', entregaId],
     queryFn: async () => {
-      const entregas = await base44.entities.Entrega.list();
+      const entregas = await filterInContext("Entrega", {}, "-created_date", 500);
       return entregas.find(e => e.id === entregaId);
     },
-    enabled: !!entregaId && !pedido,
+    enabled: !!entregaId && !pedido && contextoBaseValido && canConcluirSeparacao,
   });
 
   const [itens, setItens] = useState([]);
 
   // Use pedido if provided, otherwise use entrega
   const dadosParaSeparacao = pedido || entrega;
+  const effectiveEmpresaId = dadosParaSeparacao?.empresa_id || empresaId || empresaAtual?.id || null;
+  const effectiveGroupId = dadosParaSeparacao?.group_id || dadosParaSeparacao?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || null;
+  const contextoValido = Boolean(effectiveGroupId || effectiveEmpresaId);
+
+  const auditarSeparacao = async ({ acao, descricao, sucesso = true, dadosNovos = {}, dadosAnteriores = null, registroId = null }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Usuario",
+        usuario_id: user?.id,
+        acao,
+        modulo: "Expedicao",
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        entidade: "SeparacaoConferencia",
+        registro_id: registroId || dadosParaSeparacao?.id || entregaId || pedido?.id,
+        descricao,
+        empresa_id: effectiveEmpresaId,
+        group_id: effectiveGroupId,
+        grupo_id: effectiveGroupId,
+        sucesso,
+        dados_anteriores: dadosAnteriores,
+        dados_novos: dadosNovos,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (auditError) {
+      console.warn("Falha ao auditar separacao/conferencia:", auditError);
+    }
+  };
 
   useEffect(() => {
     if (dadosParaSeparacao?.itens_revenda && dadosParaSeparacao.itens_revenda.length > 0) {
@@ -78,12 +113,31 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
       if (!dadosParaSeparacao) {
         throw new Error("Dados não disponíveis para criar separação.");
       }
+      if (!contextoValido) {
+        await auditarSeparacao({
+          acao: "SeparacaoConferencia.bloqueado",
+          descricao: "Tentativa de concluir separacao sem contexto grupo/empresa.",
+          sucesso: false,
+          dadosNovos: { motivo: "contexto_obrigatorio" },
+        });
+        throw new Error("Contexto multiempresa obrigatorio para concluir separacao.");
+      }
+      if (!canConcluirSeparacao) {
+        await auditarSeparacao({
+          acao: "SeparacaoConferencia.bloqueado",
+          descricao: "Tentativa de concluir separacao sem permissao.",
+          sucesso: false,
+          dadosNovos: { motivo: "permissao_negada" },
+        });
+        throw new Error("Sem permissao para concluir separacao/conferencia.");
+      }
 
       const temDivergencia = itens.some(i => i.divergencia);
       
-      const separacao = await base44.entities.SeparacaoConferencia.create({
-        group_id: dadosParaSeparacao.group_id,
-        empresa_id: dadosParaSeparacao.empresa_id || empresaId,
+      const separacao = await createInContext("SeparacaoConferencia", {
+        group_id: effectiveGroupId,
+        grupo_id: effectiveGroupId,
+        empresa_id: effectiveEmpresaId,
         numero_separacao: `SEP-${Date.now()}`,
         pedido_id: dadosParaSeparacao.id,
         numero_pedido: dadosParaSeparacao.numero_pedido || dadosParaSeparacao.numero_entrega,
@@ -106,21 +160,38 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
       // Se não tem divergência, atualizar status do pedido
       if (!temDivergencia && dadosParaSeparacao) {
         if (entrega?.id) {
-          await base44.entities.Entrega.update(entrega.id, {
-            status: "Pronto para Expedir"
+          await updateInContext("Entrega", entrega.id, {
+            status: "Pronto para Expedir",
+            group_id: effectiveGroupId,
+            grupo_id: effectiveGroupId,
+            empresa_id: effectiveEmpresaId,
+            historico_status: [
+              ...(entrega.historico_status || []),
+              {
+                status: "Pronto para Expedir",
+                data_hora: new Date().toISOString(),
+                usuario: user?.full_name || user?.email || "Sistema",
+                usuario_id: user?.id,
+                observacao: "Separacao e conferencia concluida sem divergencia."
+              }
+            ]
           });
         }
         
         if (pedido?.id) {
-          await base44.entities.Pedido.update(pedido.id, {
-            status: "Pronto para Faturar"
+          await updateInContext("Pedido", pedido.id, {
+            status: "Pronto para Faturar",
+            group_id: effectiveGroupId,
+            grupo_id: effectiveGroupId,
+            empresa_id: effectiveEmpresaId
           });
         }
 
         // Registrar histórico
-        await base44.entities.HistoricoCliente.create({
-          group_id: dadosParaSeparacao.group_id,
-          empresa_id: dadosParaSeparacao.empresa_id || empresaId,
+        await createInContext("HistoricoCliente", {
+          group_id: effectiveGroupId,
+          grupo_id: effectiveGroupId,
+          empresa_id: effectiveEmpresaId,
           cliente_id: dadosParaSeparacao.cliente_id,
           cliente_nome: dadosParaSeparacao.cliente_nome,
           modulo_origem: "Expedicao",
@@ -141,18 +212,27 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
       // Auditoria mínima
       try {
         await base44.entities.AuditLog.create({
-          usuario: user?.full_name || user?.email || 'Usuário',
+          usuario: user?.full_name || user?.email || 'Usuario',
           usuario_id: user?.id,
-          empresa_id: separacao?.empresa_id || empresaId || null,
-          acao: 'Criação', modulo: 'Expedição', entidade: 'SeparacaoConferencia', registro_id: separacao?.id,
-          descricao: `Separação concluída (${separacao?.numero_separacao || ''})`,
-          dados_novos: separacao
+          empresa_id: separacao?.empresa_id || effectiveEmpresaId || null,
+          group_id: separacao?.group_id || effectiveGroupId || null,
+          grupo_id: separacao?.grupo_id || separacao?.group_id || effectiveGroupId || null,
+          acao: 'SeparacaoConferencia.concluir',
+          modulo: 'Expedicao',
+          tipo_auditoria: 'operacional',
+          entidade: 'SeparacaoConferencia',
+          registro_id: separacao?.id,
+          descricao: `Separacao concluida (${separacao?.numero_separacao || ''})`,
+          dados_anteriores: dadosParaSeparacao,
+          dados_novos: separacao,
+          sucesso: true,
+          data_hora: new Date().toISOString()
         });
       } catch (_) {}
       queryClient.invalidateQueries({ queryKey: ['entregas'] }); // Invalidate deliveries query
       queryClient.invalidateQueries({ queryKey: ['separacoes'] });
       toast({
-        title: "✅ Conferência concluída!",
+        title: "Conferência concluída!",
         description: "Itens conferidos com sucesso"
       });
       // Optionally, navigate away or update parent component
@@ -211,7 +291,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
         });
       } else {
         toast({
-          title: "⚠️ Item não esperado",
+          title: "Item não esperado",
           description: `O item escaneado "${scannedItem.descricao || scannedItem.codigo_sku || 'SKU Desconhecido'}" não faz parte desta entrega.`,
           variant: "destructive",
         });
@@ -220,15 +300,30 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!contextoValido || !canConcluirSeparacao) {
+      await auditarSeparacao({
+        acao: "SeparacaoConferencia.submit_bloqueado",
+        descricao: "Tentativa de concluir separacao bloqueada antes da validacao final.",
+        sucesso: false,
+        dadosNovos: { motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" },
+      });
+      toast({
+        title: "Acesso negado",
+        description: "Selecione contexto valido e confirme permissao para concluir a conferencia.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     const todosConferidos = itens.every(i => i.quantidade_separada === i.quantidade_pedida); // Check exact match
     const todosSeparadosMinimo = itens.every(i => i.quantidade_separada > 0); // Check if at least some quantity separated
 
     if (!todosSeparadosMinimo) {
       toast({
-        title: "⚠️ Itens não conferidos",
+        title: "Itens não conferidos",
         description: "Pelo menos um item não teve sua quantidade separada informada ou é zero.",
         variant: "destructive"
       });
@@ -237,9 +332,20 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
 
     if (!checklist.conferiu_quantidade || !checklist.conferiu_qualidade || !checklist.conferiu_embalagem || !checklist.conferiu_etiquetas || !checklist.conferiu_documentos) {
       toast({
-        title: "⚠️ Checklist incompleto",
+        title: "Checklist incompleto",
         description: "Por favor, marque todos os itens do checklist de conferência.",
         variant: "destructive"
+      });
+      return;
+    }
+
+    const confirmado = window.confirm("Confirma concluir a separação/conferência desta entrega?");
+    if (!confirmado) {
+      await auditarSeparacao({
+        acao: "SeparacaoConferencia.submit_cancelado",
+        descricao: "Conclusao de separacao cancelada pelo usuario antes de gravar.",
+        sucesso: false,
+        dadosNovos: { motivo: "confirmacao_cancelada" },
       });
       return;
     }
@@ -264,7 +370,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
   const containerClass2 = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
 
   return (
-    <div className={containerClass2}>
+    <div className={containerClass2} data-permission="Expedicao.Separacao.criar" data-context-required="true">
       <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
       {/* Info Pedido (now Entrega) */}
       <Card className="border-2 border-blue-200 bg-blue-50">
@@ -366,6 +472,9 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
                             type="number"
                             value={item.quantidade_separada}
                             onChange={(e) => atualizarItem(idx, "quantidade_separada", parseFloat(e.target.value) || 0)}
+                            disabled={!contextoValido || !canConcluirSeparacao}
+                            data-permission="Expedicao.Separacao.criar"
+                            data-context-required="true"
                             className="text-center font-semibold h-10"
                           />
                         </TableCell>
@@ -383,6 +492,9 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
                             type="text"
                             value={item.observacao_item || ""}
                             onChange={(e) => atualizarItem(idx, "observacao_item", e.target.value)}
+                            disabled={!contextoValido || !canConcluirSeparacao}
+                            data-permission="Expedicao.Separacao.criar"
+                            data-context-required="true"
                             placeholder="Obs..."
                             className="text-sm h-8"
                           />
@@ -479,7 +591,11 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
             <div className="flex gap-3">
               <Button
                 type="submit"
-                disabled={criarSeparacaoMutation.isPending}
+                disabled={criarSeparacaoMutation.isPending || !contextoValido || !canConcluirSeparacao}
+                data-permission="Expedicao.Separacao.criar"
+                data-action="SeparacaoConferencia.concluir"
+                data-context-required="true"
+                data-sensitive
                 className="flex-1 h-14 text-lg bg-green-600 hover:bg-green-700"
               >
                 {criarSeparacaoMutation.isPending ? 'Salvando...' : 'Concluir Conferência'}

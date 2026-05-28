@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, FileText, Truck, MapPin, TrendingUp } from "lucide-react";
+import { BarChart3, FileText, Truck, MapPin, Download } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 import {
   BarChart,
   Bar,
@@ -28,19 +30,42 @@ import {
 } from "recharts";
 
 /**
- * Relatórios de Logística e Expedição
+ * Relatorios de Logistica e Expedicao
  */
 export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
   const [periodoInicio, setPeriodoInicio] = useState("");
   const [periodoFim, setPeriodoFim] = useState("");
   const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
-  const canViewReports = hasPermission("Expedição", "Relatórios", "ver") || hasPermission("Expedição", "Relatórios", "visualizar");
+  const { user } = useUser();
+  const canViewReports = hasPermission("Expedicao", "Relatorios", "ver") || hasPermission("Expedicao", "Relatorios", "visualizar") || hasPermission("Expedicao", "Relatorio", "visualizar");
+  const canExportReports = hasPermission("Expedicao", "Relatorios", "exportar") || hasPermission("Expedicao", "Entrega", "exportar");
   const activeEmpresaId = empresaId || empresaAtual?.id || null;
   const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
   const contextoValido = Boolean(activeEmpresaId || groupId);
   const contextKey = groupId ? `grupo:${groupId}` : `empresa:${activeEmpresaId || "sem-empresa"}`;
 
+  const auditRelatorio = async ({ acao, sucesso = true, motivo = null, detalhes = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: "Expedicao",
+        entidade: "RelatorioLogistica",
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        usuario_id: user?.id || user?.email || null,
+        usuario_nome: user?.full_name || user?.email || "Sistema",
+        group_id: groupId,
+        grupo_id: groupId,
+        empresa_id: activeEmpresaId,
+        resultado: sucesso ? "sucesso" : "bloqueado",
+        motivo,
+        detalhes,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar relatorio de logistica", error);
+    }
+  };
   const { data: entregas = [] } = useQuery({
     queryKey: ['entregas-relatorio', contextKey],
     queryFn: () => filterInContext('Entrega', {}, '-created_date', 9999),
@@ -53,6 +78,12 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
     enabled: canViewReports && contextoValido,
   });
 
+  const romaneiosFiltrados = romaneios.filter(r => {
+    if (activeEmpresaId && r.empresa_id !== activeEmpresaId && r.empresa_responsavel_id !== activeEmpresaId) return false;
+    if (groupId && r.group_id && r.group_id !== groupId) return false;
+    return true;
+  });
+
   const entregasFiltradas = entregas.filter(e => {
     if (activeEmpresaId && e.empresa_id !== activeEmpresaId && e.empresa_responsavel_id !== activeEmpresaId) return false;
     if (periodoInicio && e.data_saida < periodoInicio) return false;
@@ -60,13 +91,13 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
     return true;
   });
 
-  // Métricas
+  // Metricas
   const totalEntregas = entregasFiltradas.length;
   const entregasRealizadas = entregasFiltradas.filter(e => e.status === "Entregue").length;
   const entregasFrustradas = entregasFiltradas.filter(e => e.status === "Entrega Frustrada").length;
   const taxaSucesso = totalEntregas > 0 ? ((entregasRealizadas / totalEntregas) * 100).toFixed(1) : 0;
 
-  // Tempo médio
+  // Tempo medio
   const entregasComTempo = entregasFiltradas.filter(e => e.data_entrega && e.data_saida);
   const tempoMedio = entregasComTempo.length > 0
     ? entregasComTempo.reduce((sum, e) => {
@@ -77,7 +108,7 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
 
   // Por motorista
   const porMotorista = {};
-  romaneios.forEach(r => {
+  romaneiosFiltrados.forEach(r => {
     if (!porMotorista[r.motorista]) {
       porMotorista[r.motorista] = { motorista: r.motorista, entregas: 0, realizadas: 0, frustradas: 0, km: 0 };
     }
@@ -88,19 +119,70 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
   });
   const dadosMotoristas = Object.values(porMotorista);
 
+  const porCidade = {};
+  entregasFiltradas.forEach(e => {
+    const cidade = e.endereco_entrega_completo?.cidade || "Sem cidade";
+    const estado = e.endereco_entrega_completo?.estado || "";
+    const chave = `${cidade}/${estado}`;
+    if (!porCidade[chave]) porCidade[chave] = { cidade: chave, quantidade: 0 };
+    porCidade[chave].quantidade += 1;
+  });
+  const dadosCidades = Object.values(porCidade).sort((a, b) => b.quantidade - a.quantidade).slice(0, 15);
+
+  const exportarResumoCSV = async () => {
+    if (!contextoValido || !canExportReports) {
+      await auditRelatorio({ acao: "Logistica.relatorio.exportar_csv.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
+      return;
+    }
+    const confirmado = window.confirm("Confirma exportar o resumo logistico filtrado para CSV?");
+    if (!confirmado) {
+      await auditRelatorio({ acao: "Logistica.relatorio.exportar_csv.cancelado", sucesso: false, motivo: "confirmacao_cancelada" });
+      return;
+    }
+
+    const headers = ["indicador", "valor"];
+    const rows = [
+      ["total_entregas", totalEntregas],
+      ["entregas_realizadas", entregasRealizadas],
+      ["entregas_frustradas", entregasFrustradas],
+      ["taxa_sucesso", taxaSucesso],
+      ["tempo_medio_horas", tempoMedio.toFixed(1)],
+    ];
+    const escapeCsv = (value) => "\"" + String(value ?? "").replace(/\"/g, "\"\"") + "\"";
+    const csv = [headers, ...rows].map(row => row.map(escapeCsv).join(";")).join("\n");
+    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "relatorio-logistica-resumo.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    await auditRelatorio({ acao: "Logistica.relatorio.exportar_csv", detalhes: { totalEntregas, periodoInicio, periodoFim } });
+  };
+
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
 
   return (
-    <div className={containerClass}>
+    <div className={containerClass} data-permission="Expedicao.Relatorios.visualizar" data-context-required="true">
       <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
+        {(!contextoValido || !canViewReports) && (
+          <Card className="bg-red-50 border-red-300">
+            <CardContent className="p-4 text-sm text-red-800">
+              <p className="font-semibold">Relatorio bloqueado</p>
+              <p>{!contextoValido ? "Selecione um grupo/empresa para visualizar os indicadores logisticos." : "Seu perfil nao tem permissao para visualizar relatorios logisticos."}</p>
+            </CardContent>
+          </Card>
+        )}
       {/* Filtros */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-4 items-end">
             <div>
-              <Label>Período Início</Label>
+              <Label>Periodo Inicio</Label>
               <Input
                 type="date"
                 value={periodoInicio}
@@ -109,7 +191,7 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
               />
             </div>
             <div>
-              <Label>Período Fim</Label>
+              <Label>Periodo Fim</Label>
               <Input
                 type="date"
                 value={periodoFim}
@@ -117,12 +199,24 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
                 className="mt-2"
               />
             </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={exportarResumoCSV}
+              disabled={!contextoValido || !canExportReports}
+              data-permission="Expedicao.Relatorios.exportar"
+              data-action="Logistica.relatorio.exportar_csv"
+              data-context-required="true"
+              data-sensitive="true"
+            >
+              <Download className="w-4 h-4 mr-2" /> CSV
+            </Button>
           </div>
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="geral">
-        <TabsList>
+      <Tabs defaultValue="geral" className="w-full">
+        <TabsList className="w-full sm:w-auto">
           <TabsTrigger value="geral">
             <BarChart3 className="w-4 h-4 mr-2" />
             Geral
@@ -139,7 +233,7 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
 
         <TabsContent value="geral" className="space-y-6">
           {/* KPIs */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             <Card>
               <CardContent className="p-4 text-center">
                 <p className="text-xs text-slate-600">Total Entregas</p>
@@ -161,7 +255,7 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
             </Card>
             <Card className="bg-blue-50">
               <CardContent className="p-4 text-center">
-                <p className="text-xs text-blue-700">Tempo Médio</p>
+                <p className="text-xs text-blue-700">Tempo Medio</p>
                 <p className="text-3xl font-bold text-blue-900">{tempoMedio.toFixed(1)}</p>
                 <p className="text-xs text-blue-600">horas</p>
               </CardContent>
@@ -210,7 +304,7 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
               {dadosMotoristas.length === 0 && (
                 <div className="text-center py-12 text-slate-500">
                   <Truck className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                  <p>Nenhum dado disponível</p>
+                  <p>Nenhum dado disponivel</p>
                 </div>
               )}
             </CardContent>
@@ -224,12 +318,7 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
             </CardHeader>
             <CardContent className="p-6">
               <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={[
-                  { cidade: 'São Paulo', quantidade: 15 },
-                  { cidade: 'Campinas', quantidade: 8 },
-                  { cidade: 'Santos', quantidade: 5 },
-                  { cidade: 'Sorocaba', quantidade: 3 }
-                ]}>
+                <BarChart data={dadosCidades}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="cidade" />
                   <YAxis />

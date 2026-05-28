@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   BarChart,
@@ -21,22 +23,30 @@ import {
   Legend,
   ResponsiveContainer
 } from "recharts";
-import { Factory, Clock, TrendingUp, DollarSign, AlertTriangle } from "lucide-react";
+import { Factory, Clock, TrendingUp, DollarSign, AlertTriangle, Download, Printer } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { useUser } from "@/components/lib/UserContext";
 import usePermissions from "@/components/lib/usePermissions";
 
-export default function RelatoriosProducao({ ops }) {
-  const [periodoInicio, setPeriodoInicio] = useState("");
-  const [periodoFim, setPeriodoFim] = useState("");
+export default function RelatoriosProducao({ ops = [] }) {
   const { empresaAtual, grupoAtual } = useContextoVisual();
   const { hasPermission } = usePermissions();
+  const { user } = useUser();
+  const { toast } = useToast();
   const empresaId = empresaAtual?.id || null;
   const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
   const contextoValido = Boolean(groupId || empresaId);
-  const podeVerRelatorios = hasPermission("Produção", "Relatórios", "visualizar") ||
-    hasPermission("Produção", null, "visualizar") ||
+  const canViewReports = hasPermission("ProduÃ§Ã£o", "RelatÃ³rios", "visualizar") ||
+    hasPermission("ProduÃ§Ã£o", "RelatÃ³rios", "ver") ||
     hasPermission("Producao", "Relatorios", "visualizar") ||
+    hasPermission("Producao", "Relatorios", "ver") ||
     hasPermission("Producao", null, "visualizar");
+  const canExportReports = hasPermission("ProduÃ§Ã£o", "RelatÃ³rios", "exportar") ||
+    hasPermission("Producao", "Relatorios", "exportar") ||
+    hasPermission("Producao", null, "exportar");
+  const [periodoInicio, setPeriodoInicio] = useState("");
+  const [periodoFim, setPeriodoFim] = useState("");
 
   const opsContextuais = Array.isArray(ops) ? ops.filter(op => {
     if (groupId && op.group_id && op.group_id !== groupId) return false;
@@ -65,7 +75,7 @@ export default function RelatoriosProducao({ ops }) {
 
   const tempoEstimado = opsFiltradas.reduce((sum, op) => sum + (op.tempo_estimado_horas || 0), 0);
   const tempoReal = opsFiltradas.reduce((sum, op) => sum + (op.tempo_real_horas || 0), 0);
-  const eficienciaMedia = tempoEstimado > 0 && tempoReal > 0 
+  const eficienciaMedia = tempoEstimado > 0 && tempoReal > 0
     ? ((tempoEstimado / tempoReal) * 100).toFixed(1)
     : 0;
 
@@ -96,7 +106,7 @@ export default function RelatoriosProducao({ ops }) {
   const porOperador = {};
   opsFiltradas.forEach(op => {
     (op.apontamentos || []).forEach(apt => {
-      const operador = apt.operador || "Não informado";
+      const operador = apt.operador || "NÃ£o informado";
       if (!porOperador[operador]) {
         porOperador[operador] = { operador, ops: 0, peso: 0, tempo: 0, refugo: 0 };
       }
@@ -108,41 +118,141 @@ export default function RelatoriosProducao({ ops }) {
   const dadosOperadores = Object.values(porOperador);
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+  const auditRelatorioProducao = async ({ acao, descricao, sucesso = true, dadosNovos = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario_id: user?.id,
+        usuario: user?.full_name || user?.email || 'UsuÃ¡rio',
+        acao,
+        modulo: 'ProduÃ§Ã£o',
+        tipo_auditoria: sucesso ? 'relatorio' : 'seguranca',
+        entidade: 'RelatoriosProducao',
+        descricao,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        sucesso,
+        dados_novos: dadosNovos,
+        detalhes: {
+          periodoInicio,
+          periodoFim,
+          quantidade_ops: opsFiltradas.length,
+          contexto: empresaId ? 'empresa' : 'grupo',
+          ...dadosNovos,
+        },
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar relatÃ³rio de produÃ§Ã£o:', error);
+    }
+  };
 
-  if (!contextoValido || !podeVerRelatorios) {
+  const handleExportarCSV = async () => {
+    if (!contextoValido || !canViewReports || !canExportReports) {
+      await auditRelatorioProducao({
+        acao: 'RelatoriosProducao.exportar_bloqueado',
+        descricao: 'Tentativa de exportar relatÃ³rio de produÃ§Ã£o sem contexto ou permissÃ£o.',
+        sucesso: false,
+        dadosNovos: { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada' },
+      });
+      toast({ title: 'Acesso negado', description: 'Selecione contexto vÃ¡lido e confirme permissÃ£o de exportaÃ§Ã£o.', variant: 'destructive' });
+      return;
+    }
+
+    const headers = ['numero_op', 'status', 'tipo_producao', 'data_emissao', 'peso_teorico_total_kg', 'peso_real_total_kg', 'perda_kg_real', 'custo_previsto', 'custo_real'];
+    const linhas = opsFiltradas.map(op => [
+      op.numero_op || op.numero || op.id || '',
+      op.status || '',
+      op.tipo_producao || '',
+      op.data_emissao || '',
+      op.peso_teorico_total_kg || 0,
+      op.peso_real_total_kg || 0,
+      op.perda_kg_real || 0,
+      op.custos_previstos?.total || 0,
+      op.custos_reais?.total || 0,
+    ]);
+    const csv = [headers, ...linhas]
+      .map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(';'))
+      .join('\n');
+    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `relatorio-producao-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    await auditRelatorioProducao({
+      acao: 'ExportaÃ§Ã£o',
+      descricao: 'ExportaÃ§Ã£o CSV de relatÃ³rio de produÃ§Ã£o.',
+      dadosNovos: { formato: 'csv', quantidade_ops: opsFiltradas.length },
+    });
+    toast({ title: 'ExportaÃ§Ã£o concluÃ­da', description: `${opsFiltradas.length} OPs exportadas.` });
+  };
+
+  const handleImprimirRelatorio = async () => {
+    if (!contextoValido || !canViewReports) {
+      await auditRelatorioProducao({
+        acao: 'RelatoriosProducao.imprimir_bloqueado',
+        descricao: 'Tentativa de imprimir relatÃ³rio de produÃ§Ã£o sem contexto ou permissÃ£o.',
+        sucesso: false,
+        dadosNovos: { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada' },
+      });
+      toast({ title: 'Acesso negado', description: 'Selecione contexto vÃ¡lido e confirme permissÃ£o de visualizaÃ§Ã£o.', variant: 'destructive' });
+      return;
+    }
+    await auditRelatorioProducao({
+      acao: 'ImpressÃ£o',
+      descricao: 'ImpressÃ£o de relatÃ³rio de produÃ§Ã£o acionada.',
+      dadosNovos: { quantidade_ops: opsFiltradas.length },
+    });
+    window.print();
+  };
+
+  if (!contextoValido || !canViewReports) {
     return (
-      <div className="space-y-6 w-full h-full" data-permission="Producao.Relatorios.visualizar" data-context-required="true">
-        <Card className="border-amber-200 bg-amber-50">
-          <CardContent className="p-6 text-amber-800">
-            {!contextoValido ? "Selecione grupo ou empresa para visualizar relatórios de produção." : "Seu perfil não possui permissão para visualizar relatórios de produção."}
-          </CardContent>
-        </Card>
-      </div>
+      <Alert className="border-red-200 bg-red-50" data-permission="Producao.Relatorios.visualizar" data-context-required="true">
+        <AlertTriangle className="h-5 w-5 text-red-600" />
+        <AlertDescription>Selecione um contexto vÃ¡lido e confirme sua permissÃ£o para visualizar relatÃ³rios de produÃ§Ã£o.</AlertDescription>
+      </Alert>
     );
   }
-
   return (
     <div className="space-y-6 w-full h-full" data-permission="Producao.Relatorios.visualizar" data-context-required="true">
       <Card>
         <CardContent className="p-4">
-          <div className="flex gap-4">
-            <div>
-              <Label>Período Início</Label>
-              <Input
-                type="date"
-                value={periodoInicio}
-                onChange={(e) => setPeriodoInicio(e.target.value)}
-                className="mt-2"
-              />
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="flex gap-4">
+              <div>
+                <Label>PerÃ­odo InÃ­cio</Label>
+                <Input
+                  type="date"
+                  value={periodoInicio}
+                  onChange={(e) => setPeriodoInicio(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+              <div>
+                <Label>PerÃ­odo Fim</Label>
+                <Input
+                  type="date"
+                  value={periodoFim}
+                  onChange={(e) => setPeriodoFim(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
             </div>
-            <div>
-              <Label>Período Fim</Label>
-              <Input
-                type="date"
-                value={periodoFim}
-                onChange={(e) => setPeriodoFim(e.target.value)}
-                className="mt-2"
-              />
+            <div className="flex gap-2 no-print">
+              <Button type="button" variant="outline" onClick={handleImprimirRelatorio} data-permission="Producao.Relatorios.visualizar" data-action="RelatoriosProducao.imprimir" data-context-required="true">
+                <Printer className="w-4 h-4 mr-2" />
+                Imprimir
+              </Button>
+              <Button type="button" onClick={handleExportarCSV} disabled={!canExportReports} data-permission="Producao.Relatorios.exportar" data-action="RelatoriosProducao.exportar_csv" data-context-required="true" data-sensitive>
+                <Download className="w-4 h-4 mr-2" />
+                Exportar CSV
+              </Button>
             </div>
           </div>
         </CardContent>
@@ -191,7 +301,7 @@ export default function RelatoriosProducao({ ops }) {
         <Card className="bg-blue-50">
           <CardContent className="p-4 text-center">
             <Clock className="w-6 h-6 mx-auto mb-2 text-blue-600" />
-            <p className="text-xs text-blue-700">Eficiência</p>
+            <p className="text-xs text-blue-700">EficiÃªncia</p>
             <p className="text-2xl font-bold text-blue-900">{eficienciaMedia}%</p>
             <p className="text-xs text-blue-600">
               {tempoReal.toFixed(0)}h reais
@@ -200,7 +310,7 @@ export default function RelatoriosProducao({ ops }) {
         </Card>
       </div>
 
-      <Tabs defaultValue="geral">
+      <Tabs defaultValue="geral" data-permission="Producao.Relatorios.visualizar" data-context-required="true">
         <TabsList className="bg-white border flex-wrap h-auto">
           <TabsTrigger value="geral">Geral</TabsTrigger>
           <TabsTrigger value="tipo">Por Tipo</TabsTrigger>
@@ -211,7 +321,7 @@ export default function RelatoriosProducao({ ops }) {
         <TabsContent value="geral">
           <Card>
             <CardHeader className="bg-slate-50 border-b">
-              <CardTitle className="text-base">Distribuição por Status</CardTitle>
+              <CardTitle className="text-base">DistribuiÃ§Ã£o por Status</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               <ResponsiveContainer width="100%" height={300}>
@@ -239,7 +349,7 @@ export default function RelatoriosProducao({ ops }) {
         <TabsContent value="tipo">
           <Card>
             <CardHeader className="bg-slate-50 border-b">
-              <CardTitle className="text-base">Produção por Tipo</CardTitle>
+              <CardTitle className="text-base">ProduÃ§Ã£o por Tipo</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               <ResponsiveContainer width="100%" height={300}>
@@ -278,7 +388,7 @@ export default function RelatoriosProducao({ ops }) {
                   {dadosOperadores.map((op, idx) => {
                     const produtividade = op.tempo > 0 ? (op.peso / (op.tempo / 60)).toFixed(2) : 0;
                     const taxaRefugo = op.peso > 0 ? ((op.refugo / op.peso) * 100).toFixed(1) : 0;
-                    
+
                     return (
                       <TableRow key={idx}>
                         <TableCell className="font-medium">{op.operador}</TableCell>
@@ -336,7 +446,7 @@ export default function RelatoriosProducao({ ops }) {
 
             <Card>
               <CardHeader className="bg-purple-50">
-                <CardTitle className="text-base">Análise de Variação</CardTitle>
+                <CardTitle className="text-base">AnÃ¡lise de VariaÃ§Ã£o</CardTitle>
               </CardHeader>
               <CardContent className="p-6">
                 <div className="space-y-4">
@@ -354,7 +464,7 @@ export default function RelatoriosProducao({ ops }) {
                   </div>
                   <div className="h-px bg-slate-300"></div>
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-900 font-semibold">Variação:</span>
+                    <span className="text-slate-900 font-semibold">VariaÃ§Ã£o:</span>
                     <span className={`font-bold text-xl ${parseFloat(variacaoCusto) > 0 ? 'text-red-600' : 'text-green-600'}`}>
                       {parseFloat(variacaoCusto) > 0 ? '+' : ''}{variacaoCusto}%
                     </span>
@@ -364,8 +474,8 @@ export default function RelatoriosProducao({ ops }) {
                     <Alert className="border-red-200 bg-red-50 mt-4">
                       <AlertTriangle className="h-5 w-5 text-red-600" />
                       <AlertDescription>
-                        <strong>Atenção:</strong> Custo real {parseFloat(variacaoCusto)}% acima do previsto.
-                        Revisar perdas e tempos de produção.
+                        <strong>AtenÃ§Ã£o:</strong> Custo real {parseFloat(variacaoCusto)}% acima do previsto.
+                        Revisar perdas e tempos de produÃ§Ã£o.
                       </AlertDescription>
                     </Alert>
                   )}
