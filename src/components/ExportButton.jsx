@@ -13,9 +13,19 @@ import { toast } from "sonner";
  * Botão de Exportação Universal - V19.1
  * CSV e JSON nativos (sem dependências externas)
  */
-export default function ExportButton({ data = [], filename = "export", columns = null }) {
+export default function ExportButton({ data = [], filename = "export", columns = null, disabled = false, onBeforeExport, ...buttonProps }) {
   
-  const exportToCSV = () => {
+  const exportToCSV = async () => {
+    if (disabled) {
+      toast.error('Exportacao bloqueada por permissao ou contexto');
+      return;
+    }
+
+    if (onBeforeExport) {
+      const permitido = await onBeforeExport('csv');
+      if (permitido === false) return;
+    }
+
     if (!data || data.length === 0) {
       toast.error('Nenhum dado para exportar');
       return;
@@ -49,7 +59,17 @@ export default function ExportButton({ data = [], filename = "export", columns =
     toast.success(`✅ ${data.length} registros exportados para CSV!`);
   };
 
-  const exportToJSON = () => {
+  const exportToJSON = async () => {
+    if (disabled) {
+      toast.error('Exportacao bloqueada por permissao ou contexto');
+      return;
+    }
+
+    if (onBeforeExport) {
+      const permitido = await onBeforeExport('json');
+      if (permitido === false) return;
+    }
+
     if (!data || data.length === 0) {
       toast.error('Nenhum dado para exportar');
       return;
@@ -79,7 +99,7 @@ export default function ExportButton({ data = [], filename = "export", columns =
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" disabled={disabled} {...buttonProps}>
           <Download className="w-4 h-4 mr-2" />
           Exportar
         </Button>

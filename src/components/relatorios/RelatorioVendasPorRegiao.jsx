@@ -4,8 +4,12 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import useContextoVisual from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
+import { useUser } from '@/components/lib/UserContext';
 import { MapPin, TrendingUp, DollarSign, Users, Package, Award, FileDown } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
@@ -14,25 +18,43 @@ const CORES_GRAFICO = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#
 export default function RelatorioVendasPorRegiao() {
   const [periodoSelecionado, setPeriodoSelecionado] = useState('30');
   const [vendedorSelecionado, setVendedorSelecionado] = useState('todos');
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
+
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextKey = empresaId || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const canViewRelatorio = hasPermission('Comercial', 'Relatorios', 'visualizar') ||
+    hasPermission('Comercial', 'Vendas', 'visualizar') ||
+    hasPermission('Comercial', null, 'visualizar');
+  const canExportRelatorio = hasPermission('Comercial', 'Relatorios', 'exportar') ||
+    hasPermission('Comercial', 'Vendas', 'exportar') ||
+    hasPermission('Comercial', null, 'exportar');
 
   const { data: regioes = [] } = useQuery({
-    queryKey: ['regioes-atendimento'],
-    queryFn: () => base44.entities.RegiaoAtendimento.list()
+    queryKey: ['regioes-atendimento', contextKey],
+    queryFn: () => filterInContext('RegiaoAtendimento', {}, 'nome_regiao', 500),
+    enabled: contextoValido && canViewRelatorio
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list('-data_pedido')
+    queryKey: ['pedidos-vendas-regiao', contextKey],
+    queryFn: () => filterInContext('Pedido', {}, '-data_pedido', 1000),
+    enabled: contextoValido && canViewRelatorio
   });
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list()
+    queryKey: ['clientes-vendas-regiao', contextKey],
+    queryFn: () => filterInContext('Cliente', {}, 'nome', 2000),
+    enabled: contextoValido && canViewRelatorio
   });
 
   const { data: colaboradores = [] } = useQuery({
-    queryKey: ['colaboradores'],
-    queryFn: () => base44.entities.Colaborador.filter({ departamento: 'Comercial' })
+    queryKey: ['colaboradores-comercial-vendas-regiao', contextKey],
+    queryFn: () => filterInContext('Colaborador', { departamento: 'Comercial' }, 'nome_completo', 500),
+    enabled: contextoValido && canViewRelatorio
   });
 
   const calcularDataLimite = () => {
@@ -101,7 +123,41 @@ export default function RelatorioVendasPorRegiao() {
     value: r.valorTotal
   }));
 
-  const exportarCSV = () => {
+  const auditarExportacao = async (sucesso = true) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao: sucesso ? 'Exportacao' : 'Bloqueio',
+        modulo: 'Comercial',
+        entidade: 'RelatorioVendasPorRegiao',
+        descricao: sucesso
+          ? 'Exportacao CSV do relatorio de vendas por regiao'
+          : 'Bloqueio de exportacao do relatorio de vendas por regiao por contexto ou RBAC',
+        usuario_id: user?.id || null,
+        usuario: user?.email || user?.full_name || 'Usuario',
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
+        dados_novos: {
+          periodoSelecionado,
+          vendedorSelecionado,
+          quantidadeRegioes: dadosPorRegiao.length,
+          totalVendas: totaisGerais.totalVendas
+        },
+        sucesso,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar exportacao de vendas por regiao:', error);
+    }
+  };
+
+  const exportarCSV = async () => {
+    if (!contextoValido || !canExportRelatorio) {
+      await auditarExportacao(false);
+      return;
+    }
+
     const headers = ['Região', 'Tipo', 'Total Clientes', 'Qtd Pedidos', 'Valor Total', 'Ticket Médio', 'Meta Mensal', '% Meta'];
     const rows = dadosPorRegiao.map(r => [
       r.nome,
@@ -120,10 +176,22 @@ export default function RelatorioVendasPorRegiao() {
     link.href = URL.createObjectURL(blob);
     link.download = `vendas_por_regiao_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
+    await auditarExportacao(true);
   };
 
   return (
-    <div className="space-y-6">
+    <div
+      className="space-y-6 w-full h-full"
+      data-permission="Comercial.Relatorios.visualizar"
+      data-context-required="group-or-company"
+    >
+      {(!contextoValido || !canViewRelatorio) && (
+        <Alert className="border-amber-300 bg-amber-50">
+          <AlertDescription>
+            Selecione grupo ou empresa e confirme permissao para visualizar vendas por regiao.
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -132,7 +200,15 @@ export default function RelatorioVendasPorRegiao() {
           </h2>
           <p className="text-sm text-slate-600 mt-1">Análise de desempenho comercial segmentado por região de atendimento</p>
         </div>
-        <Button onClick={exportarCSV} variant="outline">
+        <Button
+          onClick={exportarCSV}
+          variant="outline"
+          disabled={!contextoValido || !canExportRelatorio}
+          data-action="RelatorioVendasPorRegiao.exportarCSV"
+          data-permission="Comercial.Relatorios.exportar"
+          data-context-required="group-or-company"
+          data-sensitive="true"
+        >
           <FileDown className="w-4 h-4 mr-2" />
           Exportar CSV
         </Button>

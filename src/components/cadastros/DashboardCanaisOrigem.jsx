@@ -1,9 +1,11 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 import { 
   BarChart, 
   Bar, 
@@ -34,23 +36,32 @@ import ExportButton from "@/components/ExportButton";
  * Visualiza performance, conversão e volume por canal
  */
 export default function DashboardCanaisOrigem({ empresaId, windowMode = false }) {
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaSelecionadaId = empresaId || empresaAtual?.id || null;
+  const contextKey = empresaSelecionadaId || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const canViewDashboard = hasPermission('Comercial', 'Relatorios', 'visualizar') ||
+    hasPermission('Comercial', 'Pedidos', 'visualizar') ||
+    hasPermission('Comercial', null, 'visualizar');
+  const canExportDashboard = hasPermission('Comercial', 'Relatorios', 'exportar') ||
+    hasPermission('Comercial', 'Pedidos', 'exportar') ||
+    hasPermission('Comercial', null, 'exportar');
   
   // Buscar parâmetros de origem
   const { data: parametros = [], isLoading: loadingParametros } = useQuery({
-    queryKey: ['parametros-origem-pedido'],
-    queryFn: () => base44.entities.ParametroOrigemPedido.list(),
+    queryKey: ['parametros-origem-pedido', contextKey],
+    queryFn: () => filterInContext('ParametroOrigemPedido', {}, 'canal', 500),
+    enabled: contextoValido && canViewDashboard,
     initialData: [],
   });
 
   // Buscar pedidos para análise
   const { data: pedidos = [], isLoading: loadingPedidos } = useQuery({
-    queryKey: ['pedidos', empresaId],
-    queryFn: () => {
-      if (empresaId) {
-        return base44.entities.Pedido.filter({ empresa_id: empresaId });
-      }
-      return base44.entities.Pedido.list('-created_date', 500);
-    },
+    queryKey: ['pedidos-canais-origem', contextKey],
+    queryFn: () => filterInContext('Pedido', empresaSelecionadaId ? { empresa_id: empresaSelecionadaId } : {}, '-created_date', 500),
+    enabled: contextoValido && canViewDashboard,
     initialData: [],
   });
 
@@ -146,8 +157,19 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
   }
 
   return (
-    <div className={containerClass}>
+    <div
+      className={containerClass}
+      data-permission="Comercial.Relatorios.visualizar"
+      data-context-required="group-or-company"
+    >
       <div className={windowMode ? "flex-1 overflow-auto p-6" : ""}>
+        {(!contextoValido || !canViewDashboard) && (
+          <Alert className="mb-4 border-amber-300 bg-amber-50">
+            <AlertDescription>
+              Selecione grupo ou empresa e confirme permissao para visualizar canais de origem.
+            </AlertDescription>
+          </Alert>
+        )}
         
         {/* KPIs Gerais */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -227,6 +249,11 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
                 }))}
                 filename="performance-canais-origem"
                 className="bg-green-600 hover:bg-green-700"
+                disabled={!contextoValido || !canExportDashboard}
+                data-action="DashboardCanaisOrigem.exportar"
+                data-permission="Comercial.Relatorios.exportar"
+                data-context-required="group-or-company"
+                data-sensitive="true"
               >
                 <Download className="w-4 h-4 mr-2" />
                 Exportar

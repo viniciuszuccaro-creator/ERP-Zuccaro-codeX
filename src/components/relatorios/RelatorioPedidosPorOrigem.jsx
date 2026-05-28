@@ -6,9 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BadgeOrigemPedido from "@/components/comercial/BadgeOrigemPedido";
 import DashboardCanaisOrigem from "@/components/cadastros/DashboardCanaisOrigem";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 import {
   Table,
   TableBody,
@@ -37,23 +41,34 @@ export default function RelatorioPedidosPorOrigem({ empresaId, windowMode = fals
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
   const [origemFiltro, setOrigemFiltro] = useState('todos');
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
+
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaSelecionadaId = empresaId || empresaAtual?.id || null;
+  const contextKey = empresaSelecionadaId || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const canViewRelatorio = hasPermission('Comercial', 'Relatorios', 'visualizar') ||
+    hasPermission('Comercial', 'Pedidos', 'visualizar') ||
+    hasPermission('Comercial', null, 'visualizar');
+  const canExportRelatorio = hasPermission('Comercial', 'Relatorios', 'exportar') ||
+    hasPermission('Comercial', 'Pedidos', 'exportar') ||
+    hasPermission('Comercial', null, 'exportar');
 
   // Buscar pedidos
   const { data: pedidos = [], isLoading } = useQuery({
-    queryKey: ['pedidos', empresaId],
-    queryFn: () => {
-      if (empresaId) {
-        return base44.entities.Pedido.filter({ empresa_id: empresaId });
-      }
-      return base44.entities.Pedido.list('-created_date', 500);
-    },
+    queryKey: ['pedidos-origem', contextKey],
+    queryFn: () => filterInContext('Pedido', empresaSelecionadaId ? { empresa_id: empresaSelecionadaId } : {}, '-created_date', 500),
+    enabled: contextoValido && canViewRelatorio,
     initialData: [],
   });
 
   // Buscar clientes para referência
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list(),
+    queryKey: ['clientes-pedidos-origem', contextKey],
+    queryFn: () => filterInContext('Cliente', {}, 'nome', 2000),
+    enabled: contextoValido && canViewRelatorio,
     initialData: [],
   });
 
@@ -90,7 +105,42 @@ export default function RelatorioPedidosPorOrigem({ empresaId, windowMode = fals
 
   const origens = Object.keys(pedidosPorOrigem);
 
-  const handleExportar = () => {
+  const auditarExportacao = async (sucesso = true) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao: sucesso ? 'Exportacao' : 'Bloqueio',
+        modulo: 'Comercial',
+        entidade: 'RelatorioPedidosPorOrigem',
+        descricao: sucesso
+          ? 'Exportacao CSV do relatorio de pedidos por origem'
+          : 'Bloqueio de exportacao do relatorio de pedidos por origem por contexto ou RBAC',
+        usuario_id: user?.id || null,
+        usuario: user?.email || user?.full_name || 'Usuario',
+        empresa_id: empresaSelecionadaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
+        dados_novos: {
+          dataInicio,
+          dataFim,
+          origemFiltro,
+          quantidadeOrigens: origens.length,
+          quantidadePedidos: pedidosFiltrados.length
+        },
+        sucesso,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar exportacao de pedidos por origem:', error);
+    }
+  };
+
+  const handleExportar = async () => {
+    if (!contextoValido || !canExportRelatorio) {
+      await auditarExportacao(false);
+      return;
+    }
+
     const csvContent = [
       ['Origem', 'Total Pedidos', 'Valor Total', 'Aprovados', 'Taxa Conversão'],
       ...origens.map(origem => {
@@ -111,14 +161,26 @@ export default function RelatorioPedidosPorOrigem({ empresaId, windowMode = fals
     link.href = URL.createObjectURL(blob);
     link.download = `pedidos_por_origem_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
+    await auditarExportacao(true);
   };
 
   const containerClass = windowMode 
     ? "w-full h-full flex flex-col overflow-hidden" 
-    : "";
+    : "w-full h-full";
 
   return (
-    <div className={containerClass}>
+    <div
+      className={containerClass}
+      data-permission="Comercial.Relatorios.visualizar"
+      data-context-required="group-or-company"
+    >
+      {(!contextoValido || !canViewRelatorio) && (
+        <Alert className="mb-4 border-amber-300 bg-amber-50">
+          <AlertDescription>
+            Selecione grupo ou empresa e confirme permissao para visualizar pedidos por origem.
+          </AlertDescription>
+        </Alert>
+      )}
       
       <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className={windowMode ? "w-full h-full flex flex-col" : ""}>
         <div className={windowMode ? "p-6 pb-4" : "mb-4"}>
@@ -133,7 +195,15 @@ export default function RelatorioPedidosPorOrigem({ empresaId, windowMode = fals
             </TabsTrigger>
           </TabsList>
 
-          <Button onClick={handleExportar} variant="outline">
+          <Button
+            onClick={handleExportar}
+            variant="outline"
+            disabled={!contextoValido || !canExportRelatorio}
+            data-action="RelatorioPedidosPorOrigem.exportarCSV"
+            data-permission="Comercial.Relatorios.exportar"
+            data-context-required="group-or-company"
+            data-sensitive="true"
+          >
             <Download className="w-4 h-4 mr-2" />
             Exportar CSV
           </Button>
@@ -308,7 +378,7 @@ export default function RelatorioPedidosPorOrigem({ empresaId, windowMode = fals
 
         {/* ABA: DASHBOARD ANALYTICS */}
         <TabsContent value="dashboard" className={windowMode ? "mt-0 flex-1 overflow-auto" : "mt-0"}>
-          <DashboardCanaisOrigem empresaId={empresaId} windowMode={windowMode} />
+          <DashboardCanaisOrigem empresaId={empresaSelecionadaId} windowMode={windowMode} />
         </TabsContent>
       </Tabs>
 

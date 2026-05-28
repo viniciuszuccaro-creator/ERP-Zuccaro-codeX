@@ -13,19 +13,38 @@ import {
 import { TrendingUp, TrendingDown, AlertCircle, CheckCircle, Package } from "lucide-react";
 import ProtectedField from "@/components/security/ProtectedField";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 export default function RelatoriosEstoque({ produtos, movimentacoes }) {
-  const { empresaAtual, contexto } = useContextoVisual();
-  const produtosFiltrados = Array.isArray(produtos) ? produtos.filter(p => {
-    const empresaOk = empresaAtual?.id ? p.empresa_id === empresaAtual.id : true;
-    const grupoOk = contexto?.group_id ? (p.group_id === contexto.group_id || p.compartilhado_grupo) : true;
-    return empresaOk && grupoOk;
-  }) : [];
-  const movimentacoesFiltradas = Array.isArray(movimentacoes) ? movimentacoes.filter(m => {
-    const empresaOk = empresaAtual?.id ? m.empresa_id === empresaAtual.id : true;
-    const grupoOk = contexto?.group_id ? (m.group_id === contexto.group_id) : true;
-    return empresaOk && grupoOk;
-  }) : [];
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const canViewRelatorios = hasPermission('Estoque', 'Relatorios', 'visualizar') ||
+    hasPermission('Estoque', null, 'visualizar');
+
+  const pertenceAoContexto = (item = {}) => {
+    if (!contextoValido) return false;
+    if (empresaId) {
+      return item.empresa_id === empresaId ||
+        item.empresa_dona_id === empresaId ||
+        item.group_id === groupId ||
+        item.grupo_id === groupId ||
+        item.compartilhado_grupo === true;
+    }
+    return item.group_id === groupId ||
+      item.grupo_id === groupId ||
+      item.compartilhado_grupo === true ||
+      item.origem === 'grupo';
+  };
+
+  const produtosFiltrados = Array.isArray(produtos) && canViewRelatorios
+    ? produtos.filter(pertenceAoContexto)
+    : [];
+  const movimentacoesFiltradas = Array.isArray(movimentacoes) && canViewRelatorios
+    ? movimentacoes.filter(pertenceAoContexto)
+    : [];
   const produtosComValor = produtosFiltrados.map(p => {
     const valorEstoque = (p.estoque_atual || 0) * (p.custo_aquisicao || 0);
     const valorMovimentado = movimentacoesFiltradas
@@ -71,7 +90,7 @@ export default function RelatoriosEstoque({ produtos, movimentacoes }) {
   });
 
   const produtosComGiro = produtosFiltrados.map(p => {
-    const totalSaidas = movimentacoes
+    const totalSaidas = movimentacoesFiltradas
       .filter(m => m.produto_id === p.id && m.tipo_movimento === "saida")
       .reduce((sum, m) => sum + (m.quantidade || 0), 0);
     
@@ -99,7 +118,19 @@ export default function RelatoriosEstoque({ produtos, movimentacoes }) {
   ];
 
   return (
-    <div className="space-y-6">
+    <div
+      className="space-y-6 w-full h-full"
+      data-permission="Estoque.Relatorios.visualizar"
+      data-context-required="group-or-company"
+      data-context-mode={contexto}
+    >
+      {(!contextoValido || !canViewRelatorios) && (
+        <Card className="border-amber-300 bg-amber-50">
+          <CardContent className="p-4 text-sm text-amber-900">
+            Selecione grupo ou empresa e confirme permissao para visualizar relatorios de estoque.
+          </CardContent>
+        </Card>
+      )}
       <Tabs defaultValue="abc">
         <TabsList className="bg-white border flex-wrap h-auto">
           <TabsTrigger value="abc">

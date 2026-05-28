@@ -1,5 +1,21 @@
 # Status do Projeto ERP Zuccaro
 
+### Gerencial - Fase 8 Origem, Regiao, Canais e Formas
+
+- Seguido o proximo passo salvo no status: continuar em `RelatorioVendasPorRegiao`, `RelatorioPedidosPorOrigem`, `DashboardCanaisOrigem`, `DashboardFormasPagamento` e `RelatoriosEstoque`.
+- `RelatorioVendasPorRegiao` deixou de consultar regioes, pedidos, clientes e colaboradores globalmente e passou a usar `filterInContext` por grupo/empresa.
+- Exportacao CSV de vendas por regiao agora exige contexto grupo/empresa, permissao RBAC de exportacao e grava auditoria de sucesso ou bloqueio.
+- `RelatorioPedidosPorOrigem` passou a consultar pedidos e clientes por contexto, manter filtro por empresa quando recebido por prop e auditar exportacao CSV.
+- `DashboardCanaisOrigem` passou a consultar parametros de origem e pedidos por contexto, validar RBAC de visualizacao/exportacao e bloquear exportacao quando faltar permissao ou contexto.
+- `ExportButton` compartilhado passou a aceitar `disabled`, `onBeforeExport` e atributos de controle, preservando comportamento existente para telas que nao passam esses parametros.
+- `DashboardFormasPagamento` deixou de listar formas de pagamento, pedidos, contas a receber e movimentos de caixa globalmente e passou a usar `filterInContext`.
+- `RelatoriosEstoque` corrigiu a filtragem multiempresa usando `grupoAtual`/`empresaAtual`, removeu o uso incorreto de `contexto?.group_id` e passou a calcular giro usando `movimentacoesFiltradas`.
+- Relatorios e dashboards receberam marcadores `data-permission`, `data-context-required` e avisos visuais quando faltar contexto grupo/empresa ou permissao.
+- Mantida a Regra-Mae: nenhum modulo, tela ou arquivo novo foi criado; apenas melhoria nos componentes existentes e no botao compartilhado ja existente.
+- `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `GeradorRelatorios`, `AgendamentoRelatorios`, `RelatoriosAtendimento`, `ExportacaoSPED`, `RelatorioFinanceiroLogistica` e demais relatorios ainda globais.
+
 ### Gerencial - Fase 8 Relatorios de Vendas, Estoque e Rentabilidade
 
 - Seguido o proximo passo salvo no status: continuar em `RelatorioVendas`, `RelatorioEstoque`, `RelatorioProducao`, `RentabilidadeProduto` e `RentabilidadeCliente`.

@@ -2,32 +2,47 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { TrendingUp, DollarSign, Zap, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import HeaderFormasCompacto from './formas-pagamento/HeaderFormasCompacto';
 import KPIsFormas from './formas-pagamento/KPIsFormas';
+import useContextoVisual from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 export default function DashboardFormasPagamento({ windowMode = false }) {
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextKey = empresaId || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const canViewDashboard = hasPermission('Financeiro', 'Formas de Pagamento', 'visualizar') ||
+    hasPermission('Financeiro', 'Relatorios', 'visualizar') ||
+    hasPermission('Financeiro', null, 'visualizar');
+
   const { data: formasPagamento = [] } = useQuery({
-    queryKey: ['formas-pagamento'],
-    queryFn: () => base44.entities.FormaPagamento.list(),
+    queryKey: ['formas-pagamento', contextKey],
+    queryFn: () => filterInContext('FormaPagamento', {}, 'descricao', 500),
+    enabled: contextoValido && canViewDashboard,
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos-analytics-formas'],
-    queryFn: () => base44.entities.Pedido.list('-created_date', 1000),
+    queryKey: ['pedidos-analytics-formas', contextKey],
+    queryFn: () => filterInContext('Pedido', {}, '-created_date', 1000),
+    enabled: contextoValido && canViewDashboard,
   });
 
   const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contas-receber-analytics-formas'],
-    queryFn: () => base44.entities.ContaReceber.list('-created_date', 1000),
+    queryKey: ['contas-receber-analytics-formas', contextKey],
+    queryFn: () => filterInContext('ContaReceber', {}, '-created_date', 1000),
+    enabled: contextoValido && canViewDashboard,
   });
 
   const { data: movimentosCaixa = [] } = useQuery({
-    queryKey: ['movimentos-caixa-analytics'],
-    queryFn: () => base44.entities.CaixaMovimento.list('-data_movimento', 1000),
+    queryKey: ['movimentos-caixa-analytics', contextKey],
+    queryFn: () => filterInContext('CaixaMovimento', {}, '-data_movimento', 1000),
+    enabled: contextoValido && canViewDashboard,
   });
 
   const analisarUso = () => {
@@ -64,7 +79,18 @@ export default function DashboardFormasPagamento({ windowMode = false }) {
   const totalIntegradas = formasPagamento.filter(f => f.gerar_cobranca_online).length;
 
   const content = (
-    <div className="space-y-1.5">
+    <div
+      className="space-y-1.5 w-full h-full"
+      data-permission="Financeiro.Formas de Pagamento.visualizar"
+      data-context-required="group-or-company"
+    >
+      {(!contextoValido || !canViewDashboard) && (
+        <Alert className="border-amber-300 bg-amber-50">
+          <AlertDescription>
+            Selecione grupo ou empresa e confirme permissao para visualizar formas de pagamento.
+          </AlertDescription>
+        </Alert>
+      )}
       <HeaderFormasCompacto />
       <KPIsFormas totalAtivas={totalAtivas} totalPDV={totalPDV} totalEcommerce={totalEcommerce} totalIntegradas={totalIntegradas} />
 
