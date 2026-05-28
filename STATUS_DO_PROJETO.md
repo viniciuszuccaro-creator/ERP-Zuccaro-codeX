@@ -1268,3 +1268,20 @@ Checklist inicial:
 - `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
 - Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 nas telas de contas a receber/pagar e liquidacao, priorizando `ContasReceberTab`, `ContasPagarTab`, `LiquidarReceberPagar` e `CaixaCentralLiquidacao` para reforcar baixa, cancelamento, conciliacao, auditoria e rateio por grupo/empresa.
+
+### Financeiro - Fase 8 Contas, Baixas e Liquidacao
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `ContasReceberTab`, `ContasPagarTab`, `LiquidarReceberPagar` e `CaixaCentralLiquidacao`.
+- `ContasReceberTab` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Baixa de contas a receber agora valida contexto grupo/empresa antes de abrir ou confirmar a baixa, exige confirmacao explicita e audita cancelamento/baixa com usuario, timestamp, `group_id`, `grupo_id`, `empresa_id`, dados anteriores e novos.
+- Envio de contas a receber para o Caixa agora exige contexto, titulos selecionados e confirmacao explicita, criando ordem por `createInContext` e preservando grupo/empresa.
+- `ContasPagarTab` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Baixa/pagamento de contas a pagar agora valida contexto grupo/empresa, exige confirmacao explicita, usa `contasList` como fonte consistente e preserva `group_id`, `grupo_id` e `empresa_id` em `ContaPagar` e `CaixaMovimento`.
+- Envio de contas a pagar para o Caixa agora exige contexto, titulos selecionados e confirmacao explicita, criando ordem por `createInContext` e preservando grupo/empresa.
+- Botoes sensiveis de confirmacao de baixa em receber/pagar receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- `LiquidarReceberPagar` agora audita envio/cancelamento de titulos para a ordem de liquidacao, exige confirmacao explicita em envios individuais e em lote, e grava usuario/contexto nas ordens criadas.
+- `CaixaCentralLiquidacao` passou a filtrar consultas por `groupId`/`empresaId`, bloquear carregamento sem contexto/permissao e exibir alerta visual quando faltar contexto ou acesso.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; as melhorias foram aplicadas nos componentes existentes.
+- `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `OrdensLiquidacaoPendentes`, `HistoricoLiquidacoes`, `ConciliacaoBancariaTab` e `GestaoRemessaRetorno`, reforcando processamento/cancelamento/conciliacao/retorno bancario com contexto grupo/empresa, RBAC, auditoria antes/depois, confirmacao e Regra-Mae.

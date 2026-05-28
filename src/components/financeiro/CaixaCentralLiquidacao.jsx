@@ -1,8 +1,10 @@
 import React, { Suspense } from 'react';
-import { Wallet, Calendar, List, Clock, FileText, TrendingUp, CreditCard, Building2 } from 'lucide-react';
+import { Wallet, Calendar, List, Clock, FileText, TrendingUp, CreditCard, Building2, AlertTriangle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import useContextoVisual from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useWindow } from '@/components/lib/useWindow';
 import CaixaCentralHeader from './caixa-central/CaixaCentralHeader';
 import KPIsFinanceiros from './caixa-central/KPIsFinanceiros';
@@ -19,17 +21,26 @@ const CartoesACompensar = React.lazy(() => import('./CartoesACompensar'));
 const ConciliacaoBancariaTab = React.lazy(() => import('./ConciliacaoBancariaTab'));
 
 export default function CaixaCentralLiquidacao({ windowMode = false }) {
-  const { filterInContext } = useContextoVisual();
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const canViewCaixa = hasPermission('Financeiro', 'Caixa Central', 'visualizar') ||
+    hasPermission('Financeiro', 'Caixa', 'visualizar') ||
+    hasPermission('Financeiro', null, 'visualizar');
 
   const { data: contasReceber = [] } = useQuery({
-    queryKey: ['liquidacao', 'receber'],
+    queryKey: ['liquidacao', 'receber', groupId, empresaId],
     queryFn: () => filterInContext('ContaReceber', { status: 'Pendente' }, '-data_vencimento', 50),
+    enabled: contextoValido && canViewCaixa,
   });
 
   const { data: contasPagar = [] } = useQuery({
-    queryKey: ['liquidacao', 'pagar'],
+    queryKey: ['liquidacao', 'pagar', groupId, empresaId],
     queryFn: () => filterInContext('ContaPagar', { status: 'Pendente' }, '-data_vencimento', 50),
+    enabled: contextoValido && canViewCaixa,
   });
 
   const totalReceber = contasReceber.reduce((sum, c) => sum + (c.valor || 0), 0);
@@ -115,6 +126,7 @@ export default function CaixaCentralLiquidacao({ windowMode = false }) {
   ];
 
   const handleModuleClick = (module) => {
+    if (!contextoValido || !canViewCaixa) return;
     React.startTransition(() => {
       openWindow(
         module.component,
@@ -134,6 +146,12 @@ export default function CaixaCentralLiquidacao({ windowMode = false }) {
 
   return (
     <div className="w-full h-full flex flex-col space-y-1.5 overflow-auto p-1.5 bg-gradient-to-br from-slate-50 to-blue-50">
+      {(!contextoValido || !canViewCaixa) && (
+        <Alert className="border-amber-300 bg-amber-50" data-permission="Financeiro.CaixaCentral.visualizar" data-context-required="true">
+          <AlertTriangle className="h-5 w-5 text-amber-600" />
+          <AlertDescription>Selecione grupo ou empresa e confirme permissao para visualizar a central de liquidacao.</AlertDescription>
+        </Alert>
+      )}
       <CaixaCentralHeader />
 
       <KPIsFinanceiros 

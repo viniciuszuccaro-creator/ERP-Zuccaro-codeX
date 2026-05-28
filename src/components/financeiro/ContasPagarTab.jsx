@@ -24,7 +24,7 @@ import useBackendPagination from "@/components/lib/useBackendPagination";
 import usePersistedSort from "@/components/lib/usePersistedSort";
 
 export default function ContasPagarTab({ contas, windowMode = false }) {
-  const { createInContext, updateInContext } = useContextoVisual();
+  const { createInContext, updateInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { page, setPage, pageSize, setPageSize } = useBackendPagination('ContaPagar', 20);
   const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('ContaPagar', 'data_vencimento', 'asc');
 
@@ -38,6 +38,9 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
   const { formasPagamento } = useFormasPagamento();
   const { user: authUser } = useUser();
   const { hasPermission } = usePermissions();
+  const empresaId = empresaAtual?.id || null;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextoValido = Boolean(groupId || empresaId);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
@@ -59,11 +62,39 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
     queryFn: () => base44.entities.Empresa.list(),
   });
 
+  const auditarFinanceiro = async ({ acao, entidade, registroId, descricao, dadosAnteriores, dadosNovos, sucesso = true }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: 'Financeiro',
+        entidade,
+        registro_id: registroId || null,
+        descricao,
+        usuario_id: authUser?.id || null,
+        usuario: authUser?.full_name || authUser?.email || 'Usuario local',
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
+        dados_anteriores: dadosAnteriores,
+        dados_novos: dadosNovos,
+        sucesso,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar financeiro pagar:', error);
+    }
+  };
+
   const enviarParaCaixaMutation = useMutation({
     mutationFn: async (titulos) => {
+      if (!contextoValido) throw new Error('Selecione grupo ou empresa antes de enviar titulos ao Caixa.');
+      if (!Array.isArray(titulos) || titulos.length === 0) throw new Error('Selecione ao menos um titulo para enviar ao Caixa.');
       const ordens = await Promise.all(titulos.map(async (titulo) => {
-        return await base44.entities.CaixaOrdemLiquidacao.create({
-          empresa_id: titulo.empresa_id,
+        return await createInContext('CaixaOrdemLiquidacao', {
+          group_id: titulo.group_id || groupId,
+          grupo_id: titulo.grupo_id || titulo.group_id || groupId,
+          empresa_id: titulo.empresa_id || empresaId,
           tipo_operacao: 'Pagamento',
           origem: 'Contas a Pagar',
           valor_total: titulo.valor,
@@ -76,7 +107,9 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
             cliente_fornecedor_nome: titulo.fornecedor,
             valor_titulo: titulo.valor
           }],
-          data_ordem: new Date().toISOString()
+          data_ordem: new Date().toISOString(),
+          criado_por: authUser?.full_name || authUser?.email,
+          criado_por_id: authUser?.id
         });
       }));
       return ordens;
@@ -91,12 +124,13 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
 
   const baixarTituloMutation = useMutation({
     mutationFn: async ({ id, dados }) => {
-      const conta = contas.find(c => c.id === id);
+      const conta = contasList.find(c => c.id === id);
       const valorTotal = (conta?.valor || 0) + (dados.juros || 0) + (dados.multa || 0) - (dados.desconto || 0);
       
       await createInContext('CaixaMovimento', {
-        empresa_id: conta.empresa_id,
-        group_id: conta.group_id,
+        empresa_id: conta?.empresa_id || empresaId,
+        group_id: conta?.group_id || groupId,
+        grupo_id: conta?.grupo_id || conta?.group_id || groupId,
         tipo_movimento: 'Saída',
         categoria: 'Pagamento Fornecedor',
         subcategoria: conta.categoria,
@@ -114,6 +148,9 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
       });
 
       return await updateInContext('ContaPagar', id, {
+        group_id: conta?.group_id || groupId,
+        grupo_id: conta?.grupo_id || conta?.group_id || groupId,
+        empresa_id: conta?.empresa_id || empresaId,
         status: "Pago",
         data_pagamento: dados.data_pagamento,
         valor_pago: valorTotal,
@@ -124,7 +161,16 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
         observacoes: dados.observacoes
       });
     },
-    onSuccess: () => {
+    onSuccess: async (_data, vars) => {
+      const contaAntes = contasList.find(c => c.id === vars?.id);
+      await auditarFinanceiro({
+        acao: 'Edicao',
+        entidade: 'ContaPagar',
+        registroId: vars?.id,
+        descricao: 'Baixa de titulo a pagar registrada',
+        dadosAnteriores: contaAntes,
+        dadosNovos: { ...vars?.dados, status: 'Pago' }
+      });
       queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
       queryClient.invalidateQueries({ queryKey: ['caixa-movimentos'] });
       setDialogBaixaOpen(false);
@@ -200,6 +246,10 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
   };
 
   const handleBaixar = (conta) => {
+    if (!contextoValido) {
+      toast({ title: 'Selecione grupo ou empresa para pagar titulo', variant: 'destructive' });
+      return;
+    }
     if (!hasPermission('Financeiro','ContaPagar','baixar') && !hasPermission('Financeiro','ContaPagar','liquidar')) {
       toast({ title: '⛔ Sem permissão para baixar', variant: 'destructive' });
       return;
@@ -218,6 +268,10 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
   };
 
   const handleBaixarMultipla = () => {
+    if (!contextoValido) {
+      toast({ title: 'Selecione grupo ou empresa para baixa multipla', variant: 'destructive' });
+      return;
+    }
     if (!hasPermission('Financeiro','ContaPagar','baixar') && !hasPermission('Financeiro','ContaPagar','liquidar')) {
       toast({ title: '⛔ Sem permissão para baixa múltipla', variant: 'destructive' });
       return;
@@ -241,6 +295,22 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
 
   const handleSubmitBaixa = (e) => {
     e.preventDefault();
+    if (!contextoValido) {
+      toast({ title: 'Contexto obrigatorio', description: 'Selecione grupo ou empresa antes de confirmar o pagamento.', variant: 'destructive' });
+      return;
+    }
+    const totalTitulos = contaAtual ? 1 : contasSelecionadas.length;
+    if (!window.confirm(`Confirmar pagamento de ${totalTitulos} titulo(s) a pagar?`)) {
+      auditarFinanceiro({
+        acao: 'Cancelamento',
+        entidade: 'ContaPagar',
+        registroId: contaAtual?.id,
+        descricao: 'Usuario cancelou a confirmacao de baixa de conta a pagar.',
+        dadosNovos: { totalTitulos, dadosBaixa },
+        sucesso: false
+      });
+      return;
+    }
     if (contaAtual) {
       baixarTituloMutation.mutate({ id: contaAtual.id, dados: dadosBaixa });
     } else {
@@ -291,6 +361,8 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
         onEnviarCaixa={() => {
           const titulos = contasList.filter(c => contasSelecionadas.includes(c.id));
           if (!hasPermission('Financeiro','ContaPagar','enviar_caixa') && !hasPermission('Financeiro','ContaPagar','editar')) { toast({ title: '⛔ Sem permissão para enviar ao Caixa', variant: 'destructive' }); return; }
+          if (!contextoValido || titulos.length === 0) { toast({ title: 'Selecione contexto e titulos para enviar ao Caixa', variant: 'destructive' }); return; }
+          if (!window.confirm(`Enviar ${titulos.length} titulo(s) a pagar para o Caixa?`)) return;
           enviarParaCaixaMutation.mutate(titulos);
         }}
         empresaId={empresas[0]?.id}
@@ -402,8 +474,8 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
             )}
 
             <div className="flex justify-end gap-3">
-              <Button type="button" variant="outline" onClick={() => setDialogBaixaOpen(false)}>Cancelar</Button>
-              <Button type="submit" disabled={baixarTituloMutation.isPending || baixarMultiplaMutation.isPending} className="bg-green-600">
+              <Button type="button" variant="outline" onClick={() => setDialogBaixaOpen(false)} data-action="ContaPagar.baixa_cancelar">Cancelar</Button>
+              <Button type="submit" disabled={!contextoValido || baixarTituloMutation.isPending || baixarMultiplaMutation.isPending} className="bg-green-600" data-action="ContaPagar.baixar" data-permission="Financeiro.ContaPagar.baixar" data-context-required="true" data-sensitive>
                 {(baixarTituloMutation.isPending || baixarMultiplaMutation.isPending) ? 'Registrando...' : 'Confirmar'}
               </Button>
             </div>

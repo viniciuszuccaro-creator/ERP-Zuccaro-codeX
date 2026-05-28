@@ -27,7 +27,7 @@ import useBackendPagination from "@/components/lib/useBackendPagination";
 import usePersistedSort from "@/components/lib/usePersistedSort";
 
 export default function ContasReceberTab({ contas, empresas = [], windowMode = false }) {
-  const { createInContext, updateInContext } = useContextoVisual();
+  const { createInContext, updateInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { page, setPage, pageSize, setPageSize } = useBackendPagination('ContaReceber', 20);
   const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('ContaReceber', 'data_vencimento', 'asc');
 
@@ -41,6 +41,9 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
   const { formasPagamento } = useFormasPagamento();
   const { user: authUser } = useUser();
   const { hasPermission } = usePermissions();
+  const empresaId = empresaAtual?.id || null;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextoValido = Boolean(groupId || empresaId);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todas");
@@ -75,11 +78,39 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
 
   const empresasData = empresas.length > 0 ? empresas : empresasQuery;
 
+  const auditarFinanceiro = async ({ acao, entidade, registroId, descricao, dadosAnteriores, dadosNovos, sucesso = true }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: 'Financeiro',
+        entidade,
+        registro_id: registroId || null,
+        descricao,
+        usuario_id: authUser?.id || null,
+        usuario: authUser?.full_name || authUser?.email || 'Usuario local',
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
+        dados_anteriores: dadosAnteriores,
+        dados_novos: dadosNovos,
+        sucesso,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar financeiro receber:', error);
+    }
+  };
+
   const enviarParaCaixaMutation = useMutation({
     mutationFn: async (titulos) => {
+      if (!contextoValido) throw new Error('Selecione grupo ou empresa antes de enviar titulos ao Caixa.');
+      if (!Array.isArray(titulos) || titulos.length === 0) throw new Error('Selecione ao menos um titulo para enviar ao Caixa.');
       const ordens = await Promise.all(titulos.map(async (titulo) => {
-        return await base44.entities.CaixaOrdemLiquidacao.create({
-          empresa_id: titulo.empresa_id,
+        return await createInContext('CaixaOrdemLiquidacao', {
+          group_id: titulo.group_id || groupId,
+          grupo_id: titulo.grupo_id || titulo.group_id || groupId,
+          empresa_id: titulo.empresa_id || empresaId,
           tipo_operacao: 'Recebimento',
           origem: 'Contas a Receber',
           valor_total: titulo.valor,
@@ -92,7 +123,9 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
             cliente_fornecedor_nome: titulo.cliente,
             valor_titulo: titulo.valor
           }],
-          data_ordem: new Date().toISOString()
+          data_ordem: new Date().toISOString(),
+          criado_por: authUser?.full_name || authUser?.email,
+          criado_por_id: authUser?.id
         });
       }));
       return ordens;
@@ -111,7 +144,11 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
 
   const baixarTituloMutation = useMutation({
     mutationFn: async ({ id, dados }) => {
+        const conta = contasList.find(c => c.id === id);
         const titulo = await updateInContext('ContaReceber', id, {
+          group_id: conta?.group_id || groupId,
+          grupo_id: conta?.grupo_id || conta?.group_id || groupId,
+          empresa_id: conta?.empresa_id || empresaId,
           status: "Recebido",
           data_recebimento: dados.data_recebimento,
           valor_recebido: dados.valor_recebido,
@@ -122,7 +159,6 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
           observacoes: dados.observacoes
         });
 
-        const conta = contasList.find(c => c.id === id);
         if (conta?.cliente_id) {
           await createInContext('HistoricoCliente', {
             group_id: conta.group_id,
@@ -145,6 +181,15 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
         return titulo;
       },
       onSuccess: async (_data, vars) => {
+      const contaAntes = contasList.find(c => c.id === vars?.id);
+      await auditarFinanceiro({
+        acao: 'Edicao',
+        entidade: 'ContaReceber',
+        registroId: vars?.id,
+        descricao: 'Baixa de titulo registrada',
+        dadosAnteriores: contaAntes,
+        dadosNovos: { ...vars?.dados, status: 'Recebido' }
+      });
       await base44.entities.AuditLog.create({
         acao: 'Edição', modulo: 'Financeiro', entidade: 'ContaReceber', registro_id: vars?.id,
         descricao: 'Baixa de título registrada', data_hora: new Date().toISOString()
@@ -231,6 +276,10 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
   };
 
   const handleBaixar = (conta) => {
+    if (!contextoValido) {
+      toast({ title: 'Selecione grupo ou empresa para baixar titulo', variant: 'destructive' });
+      return;
+    }
     if (!hasPermission('Financeiro','ContaReceber','baixar') && !hasPermission('Financeiro','ContaReceber','liquidar')) {
       toast({ title: '⛔ Sem permissão para baixar', variant: 'destructive' });
       return;
@@ -249,6 +298,10 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
   };
 
   const handleBaixarMultipla = () => {
+    if (!contextoValido) {
+      toast({ title: 'Selecione grupo ou empresa para baixa multipla', variant: 'destructive' });
+      return;
+    }
     if (!hasPermission('Financeiro','ContaReceber','baixar') && !hasPermission('Financeiro','ContaReceber','liquidar')) {
       toast({ title: '⛔ Sem permissão para baixa múltipla', variant: 'destructive' });
       return;
@@ -272,6 +325,22 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
 
   const handleSubmitBaixa = (e) => {
     e.preventDefault();
+    if (!contextoValido) {
+      toast({ title: 'Contexto obrigatorio', description: 'Selecione grupo ou empresa antes de confirmar a baixa.', variant: 'destructive' });
+      return;
+    }
+    const totalTitulos = contaAtual ? 1 : contasSelecionadas.length;
+    if (!window.confirm(`Confirmar baixa de ${totalTitulos} titulo(s) a receber?`)) {
+      auditarFinanceiro({
+        acao: 'Cancelamento',
+        entidade: 'ContaReceber',
+        registroId: contaAtual?.id,
+        descricao: 'Usuario cancelou a confirmacao de baixa de conta a receber.',
+        dadosNovos: { totalTitulos, dadosBaixa },
+        sucesso: false
+      });
+      return;
+    }
     if (contaAtual) {
       baixarTituloMutation.mutate({ id: contaAtual.id, dados: dadosBaixa });
     } else {
@@ -321,6 +390,8 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
         }, { title: '💰 Nova Conta a Receber', width: 900, height: 600 })}}
         onEnviarCaixa={() => { if (!hasPermission('Financeiro','ContaReceber','enviar_caixa') && !hasPermission('Financeiro','ContaReceber','editar')) { toast({ title: '⛔ Sem permissão para enviar ao Caixa', variant: 'destructive' }); return; }
           const titulos = contasList.filter(c => contasSelecionadas.includes(c.id));
+          if (!contextoValido || titulos.length === 0) { toast({ title: 'Selecione contexto e titulos para enviar ao Caixa', variant: 'destructive' }); return; }
+          if (!window.confirm(`Enviar ${titulos.length} titulo(s) a receber para o Caixa?`)) return;
           enviarParaCaixaMutation.mutate(titulos);
         }}
         baixarPending={baixarMultiplaMutation.isPending}
@@ -446,8 +517,8 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
             )}
 
             <div className="flex justify-end gap-3">
-              <Button type="button" variant="outline" onClick={() => setDialogBaixaOpen(false)}>Cancelar</Button>
-              <Button type="submit" disabled={baixarTituloMutation.isPending || baixarMultiplaMutation.isPending} className="bg-green-600">
+              <Button type="button" variant="outline" onClick={() => setDialogBaixaOpen(false)} data-action="ContaReceber.baixa_cancelar">Cancelar</Button>
+              <Button type="submit" disabled={!contextoValido || baixarTituloMutation.isPending || baixarMultiplaMutation.isPending} className="bg-green-600" data-action="ContaReceber.baixar" data-permission="Financeiro.ContaReceber.baixar" data-context-required="true" data-sensitive>
                 {(baixarTituloMutation.isPending || baixarMultiplaMutation.isPending) ? 'Baixando...' : 'Confirmar'}
               </Button>
             </div>

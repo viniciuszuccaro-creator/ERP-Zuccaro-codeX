@@ -11,6 +11,7 @@ import { base44 } from '@/api/base44Client';
 import useContextoVisual from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { useToast } from '@/components/ui/use-toast';
+import { useUser } from '@/components/lib/UserContext';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -25,16 +26,40 @@ export default function LiquidarReceberPagar() {
   const { filterInContext, empresaAtual, grupoAtual, createInContext } = useContextoVisual();
   const { canCreate, hasPermission } = usePermissions();
   const { toast } = useToast();
+  const { user } = useUser();
   const queryClient = useQueryClient();
   const [abaAtiva, setAbaAtiva] = useState("receber");
   const [titulosSelecionadosReceber, setTitulosSelecionadosReceber] = useState([]);
   const [titulosSelecionadosPagar, setTitulosSelecionadosPagar] = useState([]);
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
   const contextKey = empresaAtual?.id || groupId || "sem-contexto";
   const contextoValido = contextKey !== "sem-contexto";
   const podeEnviarCaixa = canCreate('Financeiro', 'Caixa') ||
     canCreate('Financeiro', 'Caixa Central') ||
     hasPermission('Financeiro', null, 'baixar');
+
+  const auditarLiquidacao = async ({ acao, descricao, dadosNovos, sucesso = true }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: 'Financeiro',
+        entidade: 'CaixaOrdemLiquidacao',
+        descricao,
+        usuario_id: user?.id || null,
+        usuario: user?.full_name || user?.email || 'Usuario local',
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
+        dados_novos: dadosNovos,
+        sucesso,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar liquidacao:', error);
+    }
+  };
 
   const { data: contasReceber = [] } = useQuery({
     queryKey: ['contasReceber-liquidacao', contextKey],
@@ -71,13 +96,20 @@ export default function LiquidarReceberPagar() {
           }],
           data_ordem: new Date().toISOString(),
           ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
-          ...(groupId ? { group_id: groupId } : {})
+          ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
+          criado_por: user?.full_name || user?.email,
+          criado_por_id: user?.id
         };
         return await createInContext('CaixaOrdemLiquidacao', ordemData);
       }));
       return ordens;
     },
-    onSuccess: (ordens) => {
+    onSuccess: async (ordens) => {
+      await auditarLiquidacao({
+        acao: 'Criacao',
+        descricao: `${ordens.length} titulo(s) enviados para ordem de liquidacao no Caixa Central.`,
+        dadosNovos: { quantidade: ordens.length }
+      });
       queryClient.invalidateQueries({ queryKey: ['caixa-ordens-liquidacao'] });
       toast({ title: `✅ ${ordens.length} título(s) enviado(s) para Caixa!` });
       setTitulosSelecionadosReceber([]);
@@ -109,12 +141,20 @@ export default function LiquidarReceberPagar() {
               </div>
               {titulosSelecionadosReceber.length > 0 && (
                 <Button
-                  onClick={() => enviarParaCaixaMutation.mutate({ 
-                    titulos: contasReceber.filter(c => titulosSelecionadosReceber.includes(c.id)), 
-                    tipo: 'receber' 
-                  })}
+                  onClick={() => {
+                    const titulos = contasReceber.filter(c => titulosSelecionadosReceber.includes(c.id));
+                    if (!window.confirm(`Enviar ${titulos.length} titulo(s) a receber para o Caixa Central?`)) {
+                      auditarLiquidacao({ acao: 'Cancelamento', descricao: 'Usuario cancelou envio de contas a receber para liquidacao.', dadosNovos: { quantidade: titulos.length }, sucesso: false });
+                      return;
+                    }
+                    enviarParaCaixaMutation.mutate({ titulos, tipo: 'receber' });
+                  }}
                   disabled={!contextoValido || !podeEnviarCaixa || enviarParaCaixaMutation.isPending}
                   className="bg-green-600 hover:bg-green-700"
+                  data-action="LiquidarReceberPagar.enviar_receber_caixa"
+                  data-permission="Financeiro.Caixa.criar"
+                  data-context-required="true"
+                  data-sensitive
                 >
                   <Send className="w-4 h-4 mr-2" />
                   Enviar {titulosSelecionadosReceber.length} para Caixa
@@ -170,8 +210,18 @@ export default function LiquidarReceberPagar() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => enviarParaCaixaMutation.mutate({ titulos: [conta], tipo: 'receber' })}
+                          onClick={() => {
+                            if (!window.confirm('Enviar este titulo a receber para o Caixa Central?')) {
+                              auditarLiquidacao({ acao: 'Cancelamento', descricao: 'Usuario cancelou envio individual de conta a receber.', dadosNovos: { titulo_id: conta.id }, sucesso: false });
+                              return;
+                            }
+                            enviarParaCaixaMutation.mutate({ titulos: [conta], tipo: 'receber' });
+                          }}
                           disabled={!contextoValido || !podeEnviarCaixa || enviarParaCaixaMutation.isPending}
+                          data-action="LiquidarReceberPagar.enviar_receber_caixa"
+                          data-permission="Financeiro.Caixa.criar"
+                          data-context-required="true"
+                          data-sensitive
                         >
                           <ArrowRight className="w-4 h-4 mr-1" />
                           Enviar
@@ -201,12 +251,20 @@ export default function LiquidarReceberPagar() {
               </div>
               {titulosSelecionadosPagar.length > 0 && (
                 <Button
-                  onClick={() => enviarParaCaixaMutation.mutate({ 
-                    titulos: contasPagar.filter(c => titulosSelecionadosPagar.includes(c.id)), 
-                    tipo: 'pagar' 
-                  })}
+                  onClick={() => {
+                    const titulos = contasPagar.filter(c => titulosSelecionadosPagar.includes(c.id));
+                    if (!window.confirm(`Enviar ${titulos.length} titulo(s) a pagar para o Caixa Central?`)) {
+                      auditarLiquidacao({ acao: 'Cancelamento', descricao: 'Usuario cancelou envio de contas a pagar para liquidacao.', dadosNovos: { quantidade: titulos.length }, sucesso: false });
+                      return;
+                    }
+                    enviarParaCaixaMutation.mutate({ titulos, tipo: 'pagar' });
+                  }}
                   disabled={!contextoValido || !podeEnviarCaixa || enviarParaCaixaMutation.isPending}
                   className="bg-red-600 hover:bg-red-700"
+                  data-action="LiquidarReceberPagar.enviar_pagar_caixa"
+                  data-permission="Financeiro.Caixa.criar"
+                  data-context-required="true"
+                  data-sensitive
                 >
                   <Send className="w-4 h-4 mr-2" />
                   Enviar {titulosSelecionadosPagar.length} para Caixa
@@ -262,8 +320,18 @@ export default function LiquidarReceberPagar() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => enviarParaCaixaMutation.mutate({ titulos: [conta], tipo: 'pagar' })}
+                          onClick={() => {
+                            if (!window.confirm('Enviar este titulo a pagar para o Caixa Central?')) {
+                              auditarLiquidacao({ acao: 'Cancelamento', descricao: 'Usuario cancelou envio individual de conta a pagar.', dadosNovos: { titulo_id: conta.id }, sucesso: false });
+                              return;
+                            }
+                            enviarParaCaixaMutation.mutate({ titulos: [conta], tipo: 'pagar' });
+                          }}
                           disabled={!contextoValido || !podeEnviarCaixa || enviarParaCaixaMutation.isPending}
+                          data-action="LiquidarReceberPagar.enviar_pagar_caixa"
+                          data-permission="Financeiro.Caixa.criar"
+                          data-context-required="true"
+                          data-sensitive
                         >
                           <ArrowRight className="w-4 h-4 mr-1" />
                           Enviar
