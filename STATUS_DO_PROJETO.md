@@ -1,5 +1,14 @@
 # Status do Projeto ERP Zuccaro
 
+### Estoque - Fase 8 Relatorios com Exportacao Auditada
+
+- Seguido o proximo passo do plano de melhoria dentro do modulo Estoque, mantendo a Regra-Mae e melhorando o componente existente `RelatoriosEstoque`.
+- As abas Curva ABC, Giro de Estoque e Itens Parados receberam exportacao CSV/JSON pelo `ExportButton` compartilhado, sem criar tela, modulo ou arquivo novo.
+- Exportacoes agora exigem contexto de grupo/empresa, permissao RBAC granular `Estoque.Relatorios.exportar`, confirmacao do usuario e registro em `AuditLog` de sucesso, cancelamento ou bloqueio.
+- Dados exportados passam a levar `group_id`, `grupo_id` e `empresa_id`, reforcando multiempresa e rastreabilidade dos relatorios.
+- A tela manteve alerta visual quando faltar contexto ou permissao, preservou os fluxos atuais e corrigiu textos/acento no trecho de relatorios do estoque.
+- Build validado com sucesso via Vite; permanecem apenas warnings tecnicos preexistentes de browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 nos pontos de estoque/compras que ainda salvam ou exportam dados sensiveis sem confirmacao, auditoria ou contexto explicito.
 ### Dashboard - Fase 8 BI Operacional e Painel 3D
 
 - Seguido o proximo passo salvo no status: procurar relatorios/exportacoes diretas remanescentes em `src/components`, priorizando modulos fiscal, compras, CRM e dashboards legados.

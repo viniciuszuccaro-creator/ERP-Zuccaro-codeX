@@ -10,10 +10,12 @@ import {
   Tooltip,
   ResponsiveContainer
 } from "recharts";
-import { TrendingUp, TrendingDown, AlertCircle, CheckCircle, Package } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertCircle, CheckCircle, Package, Download } from "lucide-react";
 import ProtectedField from "@/components/security/ProtectedField";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import ExportButton from "@/components/ExportButton";
+import { base44 } from "@/api/base44Client";
 
 export default function RelatoriosEstoque({ produtos, movimentacoes }) {
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
@@ -23,6 +25,28 @@ export default function RelatoriosEstoque({ produtos, movimentacoes }) {
   const contextoValido = Boolean(groupId || empresaId);
   const canViewRelatorios = hasPermission('Estoque', 'Relatorios', 'visualizar') ||
     hasPermission('Estoque', null, 'visualizar');
+  const canExportRelatorios = hasPermission('Estoque', 'Relatorios', 'exportar') ||
+    hasPermission('Estoque', null, 'exportar');
+
+  const auditRelatorioEstoque = async ({ acao, sucesso = true, motivo = null, detalhes = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: 'Estoque',
+        entidade: 'RelatoriosEstoque',
+        tipo_auditoria: sucesso ? 'relatorio' : 'seguranca',
+        descricao: motivo || 'Auditoria dos relatorios de estoque.',
+        dados_novos: detalhes,
+        group_id: groupId,
+        grupo_id: groupId,
+        empresa_id: empresaId,
+        sucesso,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar relatorios de estoque:', error);
+    }
+  };
 
   const pertenceAoContexto = (item = {}) => {
     if (!contextoValido) return false;
@@ -104,6 +128,64 @@ export default function RelatoriosEstoque({ produtos, movimentacoes }) {
     };
   }).sort((a, b) => parseFloat(b.giro_estoque) - parseFloat(a.giro_estoque));
 
+  const withContext = (row = {}) => ({
+    ...row,
+    group_id: groupId || '',
+    grupo_id: groupId || '',
+    empresa_id: empresaId || '',
+  });
+
+  const exportABC = classificacaoABC.slice(0, 100).map((produto) => withContext({
+    classe: produto.classe_abc,
+    produto: produto.descricao,
+    estoque_atual: produto.estoque_atual || 0,
+    valor_estoque: Number(produto.valor_estoque || 0).toFixed(2),
+    percentual_valor: produto.percentual_valor,
+  }));
+
+  const exportGiro = produtosComGiro.slice(0, 200).map((produto) => withContext({
+    produto: produto.descricao,
+    estoque_atual: produto.estoque_atual || 0,
+    total_saidas: produto.total_saidas || 0,
+    giro_estoque: produto.giro_estoque,
+  }));
+
+  const exportParados = itensParados.map((produto) => withContext({
+    produto: produto.descricao,
+    grupo: produto.grupo || produto.grupo_produto_nome || '',
+    estoque_atual: produto.estoque_atual || 0,
+    valor_imobilizado: Number((produto.estoque_atual || 0) * (produto.custo_aquisicao || 0)).toFixed(2),
+    acao_sugerida: 'Revisar',
+  }));
+
+  const beforeExportRelatorio = (tipo, rows) => async (formato) => {
+    if (!contextoValido || !canExportRelatorios) {
+      await auditRelatorioEstoque({
+        acao: 'RelatoriosEstoque.exportar_bloqueado',
+        sucesso: false,
+        motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+        detalhes: { tipo, formato, linhas: rows.length },
+      });
+      return false;
+    }
+
+    const confirmado = window.confirm(`Confirma exportar ${rows.length} linhas do relatorio de estoque (${tipo}) em ${String(formato).toUpperCase()}?`);
+    if (!confirmado) {
+      await auditRelatorioEstoque({
+        acao: 'RelatoriosEstoque.exportar_cancelado',
+        sucesso: false,
+        motivo: 'confirmacao_cancelada',
+        detalhes: { tipo, formato, linhas: rows.length },
+      });
+      return false;
+    }
+
+    await auditRelatorioEstoque({
+      acao: 'RelatoriosEstoque.exportar',
+      detalhes: { tipo, formato, linhas: rows.length, produtos: produtosFiltrados.length, movimentacoes: movimentacoesFiltradas.length },
+    });
+    return true;
+  };
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b'];
 
   const countABC = {
@@ -215,7 +297,21 @@ export default function RelatoriosEstoque({ produtos, movimentacoes }) {
 
           <Card>
             <CardHeader className="bg-slate-50 border-b">
-              <CardTitle className="text-base">Top 20 Produtos (Classe A/B)</CardTitle>
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle className="text-base">Top 20 Produtos (Classe A/B)</CardTitle>
+                <ExportButton
+                  data={exportABC}
+                  filename="estoque-curva-abc"
+                  disabled={!contextoValido || !canExportRelatorios}
+                  onBeforeExport={beforeExportRelatorio('curva_abc', exportABC)}
+                  data-permission="Estoque.Relatorios.exportar"
+                  data-action="RelatoriosEstoque.exportar_abc"
+                  data-context-required="group-or-company"
+                  data-sensitive="true"
+                >
+                  <Download className="w-4 h-4 mr-2" /> Exportar
+                </ExportButton>
+              </div>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
@@ -259,7 +355,21 @@ export default function RelatoriosEstoque({ produtos, movimentacoes }) {
         <TabsContent value="giro">
           <Card>
             <CardHeader className="bg-slate-50 border-b">
-              <CardTitle className="text-base">Giro de Estoque (Ordenado)</CardTitle>
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle className="text-base">Giro de Estoque (Ordenado)</CardTitle>
+                <ExportButton
+                  data={exportGiro}
+                  filename="estoque-giro"
+                  disabled={!contextoValido || !canExportRelatorios}
+                  onBeforeExport={beforeExportRelatorio('giro_estoque', exportGiro)}
+                  data-permission="Estoque.Relatorios.exportar"
+                  data-action="RelatoriosEstoque.exportar_giro"
+                  data-context-required="group-or-company"
+                  data-sensitive="true"
+                >
+                  <Download className="w-4 h-4 mr-2" /> Exportar
+                </ExportButton>
+              </div>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
@@ -308,10 +418,24 @@ export default function RelatoriosEstoque({ produtos, movimentacoes }) {
         <TabsContent value="parados">
           <Card>
             <CardHeader className="bg-red-50 border-b">
-              <CardTitle className="text-base flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-red-600" />
-                Itens sem Movimento (+90 dias) - {itensParados.length} produtos
-              </CardTitle>
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-red-600" />
+                  Itens sem Movimento (+90 dias) - {itensParados.length} produtos
+                </CardTitle>
+                <ExportButton
+                  data={exportParados}
+                  filename="estoque-itens-parados"
+                  disabled={!contextoValido || !canExportRelatorios}
+                  onBeforeExport={beforeExportRelatorio('itens_parados', exportParados)}
+                  data-permission="Estoque.Relatorios.exportar"
+                  data-action="RelatoriosEstoque.exportar_parados"
+                  data-context-required="group-or-company"
+                  data-sensitive="true"
+                >
+                  <Download className="w-4 h-4 mr-2" /> Exportar
+                </ExportButton>
+              </div>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
