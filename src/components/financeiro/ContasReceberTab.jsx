@@ -44,7 +44,21 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
   const empresaId = empresaAtual?.id || null;
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const contextoValido = Boolean(groupId || empresaId);
-
+  const podeBaixarReceber = hasPermission('Financeiro','ContaReceber','baixar') || hasPermission('Financeiro','ContaReceber','liquidar');
+  const podeEnviarCaixaReceber = hasPermission('Financeiro','ContaReceber','enviar_caixa') || hasPermission('Financeiro','ContaReceber','editar');
+  const podeExportarReceber = hasPermission('Financeiro','ContaReceber','exportar');
+  const sanitizeText = (value) => String(value || "")
+    .replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, "")
+    .replace(/javascript:\s*/gi, "")
+    .trim();
+  const isSafeUrl = (value) => {
+    try {
+      const url = new URL(String(value || ""));
+      return ['http:', 'https:'].includes(url.protocol);
+    } catch (_) {
+      return false;
+    }
+  };
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todas");
   const [gerarCobrancaDialogOpen, setGerarCobrancaDialogOpen] = useState(false);
@@ -105,7 +119,20 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
   const enviarParaCaixaMutation = useMutation({
     mutationFn: async (titulos) => {
       if (!contextoValido) throw new Error('Selecione grupo ou empresa antes de enviar titulos ao Caixa.');
+      if (!podeEnviarCaixaReceber) throw new Error('Sem permissao para enviar titulos ao Caixa.');
       if (!Array.isArray(titulos) || titulos.length === 0) throw new Error('Selecione ao menos um titulo para enviar ao Caixa.');
+      const total = titulos.reduce((sum, titulo) => sum + Number(titulo.valor || 0), 0);
+      if (total <= 0) throw new Error('Valor total invalido para enviar ao Caixa.');
+      if (!window.confirm(`Enviar ${titulos.length} titulo(s) a receber para o Caixa no total de R$ ${total.toFixed(2)}?`)) {
+        await auditarFinanceiro({
+          acao: 'Cancelamento',
+          entidade: 'CaixaOrdemLiquidacao',
+          descricao: 'Envio de contas a receber ao Caixa cancelado pelo usuario',
+          dadosNovos: { quantidade: titulos.length, valor_total: total },
+          sucesso: false
+        });
+        throw new Error('Envio ao Caixa cancelado pelo usuario.');
+      }
       const ordens = await Promise.all(titulos.map(async (titulo) => {
         return await createInContext('CaixaOrdemLiquidacao', {
           group_id: titulo.group_id || groupId,
@@ -113,15 +140,18 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
           empresa_id: titulo.empresa_id || empresaId,
           tipo_operacao: 'Recebimento',
           origem: 'Contas a Receber',
-          valor_total: titulo.valor,
+          valor_total: Number(titulo.valor || 0),
           forma_pagamento_pretendida: 'PIX',
           status: 'Pendente',
           titulos_vinculados: [{
             titulo_id: titulo.id,
             tipo_titulo: 'ContaReceber',
-            numero_titulo: titulo.numero_documento || titulo.descricao,
-            cliente_fornecedor_nome: titulo.cliente,
-            valor_titulo: titulo.valor
+            numero_titulo: sanitizeText(titulo.numero_documento || titulo.descricao),
+            cliente_fornecedor_nome: sanitizeText(titulo.cliente),
+            valor_titulo: Number(titulo.valor || 0),
+            group_id: titulo.group_id || groupId,
+            grupo_id: titulo.grupo_id || titulo.group_id || groupId,
+            empresa_id: titulo.empresa_id || empresaId
           }],
           data_ordem: new Date().toISOString(),
           criado_por: authUser?.full_name || authUser?.email,
@@ -131,56 +161,74 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
       return ordens;
     },
     onSuccess: async (ordens) => {
-      await base44.entities.AuditLog.create({
-        acao: 'Criação', modulo: 'Financeiro', entidade: 'CaixaOrdemLiquidacao',
-        descricao: `${ordens.length} título(s) enviados para o Caixa (Receber)`,
-        data_hora: new Date().toISOString()
+      await auditarFinanceiro({
+        acao: 'Criacao',
+        entidade: 'CaixaOrdemLiquidacao',
+        descricao: `${ordens.length} titulo(s) a receber enviados para o Caixa`,
+        dadosNovos: { quantidade: ordens.length, ordens_ids: ordens.map(ordem => ordem?.id).filter(Boolean) }
       });
       queryClient.invalidateQueries({ queryKey: ['caixa-ordens-liquidacao'] });
+      queryClient.invalidateQueries({ queryKey: ['ordens-liquidacao'] });
       toast({ title: `✅ ${ordens.length} título(s) enviado(s) para o Caixa!` });
       setContasSelecionadas([]);
+    },
+    onError: (error) => {
+      toast({ title: error?.message || 'Falha ao enviar titulos ao Caixa', variant: 'destructive' });
     }
   });
 
   const baixarTituloMutation = useMutation({
     mutationFn: async ({ id, dados }) => {
-        const conta = contasList.find(c => c.id === id);
-        const titulo = await updateInContext('ContaReceber', id, {
-          group_id: conta?.group_id || groupId,
-          grupo_id: conta?.grupo_id || conta?.group_id || groupId,
-          empresa_id: conta?.empresa_id || empresaId,
-          status: "Recebido",
-          data_recebimento: dados.data_recebimento,
-          valor_recebido: dados.valor_recebido,
-          forma_recebimento: dados.forma_recebimento,
-          juros: dados.juros,
-          multa: dados.multa,
-          desconto: dados.desconto,
-          observacoes: dados.observacoes
-        });
+      if (!contextoValido) throw new Error('Selecione grupo ou empresa antes de baixar titulo.');
+      if (!podeBaixarReceber) throw new Error('Sem permissao para baixar titulo.');
+      const conta = contasList.find(c => c.id === id);
+      if (!conta) throw new Error('Titulo nao encontrado para baixa.');
+      const dadosSanitizados = {
+        ...dados,
+        juros: Number(dados.juros || 0),
+        multa: Number(dados.multa || 0),
+        desconto: Number(dados.desconto || 0),
+        valor_recebido: Number(dados.valor_recebido || 0),
+        forma_recebimento: sanitizeText(dados.forma_recebimento),
+        observacoes: sanitizeText(dados.observacoes)
+      };
+      const titulo = await updateInContext('ContaReceber', id, {
+        group_id: conta.group_id || groupId,
+        grupo_id: conta.grupo_id || conta.group_id || groupId,
+        empresa_id: conta.empresa_id || empresaId,
+        status: "Recebido",
+        data_recebimento: dadosSanitizados.data_recebimento,
+        valor_recebido: dadosSanitizados.valor_recebido,
+        forma_recebimento: dadosSanitizados.forma_recebimento,
+        juros: dadosSanitizados.juros,
+        multa: dadosSanitizados.multa,
+        desconto: dadosSanitizados.desconto,
+        observacoes: dadosSanitizados.observacoes
+      });
 
-        if (conta?.cliente_id) {
-          await createInContext('HistoricoCliente', {
-            group_id: conta.group_id,
-            empresa_id: conta.empresa_id,
-            cliente_id: conta.cliente_id,
-            cliente_nome: conta.cliente,
-            modulo_origem: "Financeiro",
-            referencia_id: id,
-            referencia_tipo: "ContaReceber",
-            tipo_evento: "Recebimento",
-            titulo_evento: `Recebimento de R$ ${dados.valor_recebido.toFixed(2)}`,
-            descricao_detalhada: `Título ${conta.descricao} recebido via ${dados.forma_recebimento}`,
-            usuario_responsavel: authUser?.full_name || authUser?.email,
-            usuario_responsavel_id: authUser?.id,
-            data_evento: new Date().toISOString(),
-            valor_relacionado: dados.valor_recebido,
-            resolvido: true
-          });
-        }
-        return titulo;
-      },
-      onSuccess: async (_data, vars) => {
+      if (conta.cliente_id) {
+        await createInContext('HistoricoCliente', {
+          group_id: conta.group_id || groupId,
+          grupo_id: conta.grupo_id || conta.group_id || groupId,
+          empresa_id: conta.empresa_id || empresaId,
+          cliente_id: conta.cliente_id,
+          cliente_nome: sanitizeText(conta.cliente),
+          modulo_origem: "Financeiro",
+          referencia_id: id,
+          referencia_tipo: "ContaReceber",
+          tipo_evento: "Recebimento",
+          titulo_evento: `Recebimento de R$ ${dadosSanitizados.valor_recebido.toFixed(2)}`,
+          descricao_detalhada: `Titulo ${sanitizeText(conta.descricao)} recebido via ${dadosSanitizados.forma_recebimento}`,
+          usuario_responsavel: authUser?.full_name || authUser?.email,
+          usuario_responsavel_id: authUser?.id,
+          data_evento: new Date().toISOString(),
+          valor_relacionado: dadosSanitizados.valor_recebido,
+          resolvido: true
+        });
+      }
+      return titulo;
+    },
+    onSuccess: async (_data, vars) => {
       const contaAntes = contasList.find(c => c.id === vars?.id);
       await auditarFinanceiro({
         acao: 'Edicao',
@@ -190,35 +238,42 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
         dadosAnteriores: contaAntes,
         dadosNovos: { ...vars?.dados, status: 'Recebido' }
       });
-      await base44.entities.AuditLog.create({
-        acao: 'Edição', modulo: 'Financeiro', entidade: 'ContaReceber', registro_id: vars?.id,
-        descricao: 'Baixa de título registrada', data_hora: new Date().toISOString()
-      });
       queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
       setDialogBaixaOpen(false);
       setContaAtual(null);
       toast({ title: "✅ Título baixado com sucesso!" });
+    },
+    onError: (error) => {
+      toast({ title: error?.message || 'Falha ao baixar titulo', variant: 'destructive' });
     }
   });
 
   const baixarMultiplaMutation = useMutation({
     mutationFn: async (dados) => {
-        await Promise.all(contasSelecionadas.map(async (contaId) => {
-          const conta = contasList.find(c => c.id === contaId);
-          if (conta) {
-            const valorTotal = (conta.valor || 0) + (dados.juros || 0) + (dados.multa || 0) - (dados.desconto || 0);
-            await baixarTituloMutation.mutateAsync({ id: contaId, dados: { ...dados, valor_recebido: valorTotal } });
-          }
-        }));
-      },
-      onSuccess: async () => {
-      await base44.entities.AuditLog.create({
-        acao: 'Edição', modulo: 'Financeiro', entidade: 'ContaReceber',
-        descricao: `Baixa múltipla (${contasSelecionadas.length})`, data_hora: new Date().toISOString()
+      if (!contextoValido) throw new Error('Selecione grupo ou empresa antes da baixa multipla.');
+      if (!podeBaixarReceber) throw new Error('Sem permissao para baixa multipla.');
+      if (contasSelecionadas.length === 0) throw new Error('Selecione ao menos um titulo para baixa multipla.');
+      await Promise.all(contasSelecionadas.map(async (contaId) => {
+        const conta = contasList.find(c => c.id === contaId);
+        if (conta) {
+          const valorTotal = Number(conta.valor || 0) + Number(dados.juros || 0) + Number(dados.multa || 0) - Number(dados.desconto || 0);
+          await baixarTituloMutation.mutateAsync({ id: contaId, dados: { ...dados, valor_recebido: valorTotal } });
+        }
+      }));
+    },
+    onSuccess: async () => {
+      await auditarFinanceiro({
+        acao: 'Edicao',
+        entidade: 'ContaReceber',
+        descricao: `Baixa multipla de contas a receber (${contasSelecionadas.length})`,
+        dadosNovos: { ids: contasSelecionadas, quantidade: contasSelecionadas.length }
       });
       setContasSelecionadas([]);
       setDialogBaixaOpen(false);
       toast({ title: `✅ ${contasSelecionadas.length} título(s) baixado(s)!` });
+    },
+    onError: (error) => {
+      toast({ title: error?.message || 'Falha na baixa multipla', variant: 'destructive' });
     }
   });
 
@@ -360,11 +415,16 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
         contasSelecionadas={contasSelecionadas}
         totalSelecionado={totalSelecionado}
         onExportar={() => {
-          if (!hasPermission('Financeiro','ContaReceber','exportar')) { toast({ title: '⛔ Sem permissão para exportar', variant: 'destructive' }); return; }
+          if (!podeExportarReceber) { toast({ title: '⛔ Sem permissão para exportar', variant: 'destructive' }); return; }
+          if (!contextoValido) { toast({ title: 'Selecione grupo ou empresa para exportar', variant: 'destructive' }); return; }
           const itens = contasSelecionadas.length > 0
             ? contasList.filter(c => contasSelecionadas.includes(c.id))
             : filteredContas;
-          const headers = ['cliente','descricao','numero_documento','empresa_id','data_vencimento','valor','status'];
+          if (!window.confirm(`Exportar ${itens.length} titulo(s) a receber com contexto grupo/empresa?`)) {
+            auditarFinanceiro({ acao: 'Cancelamento', entidade: 'ContaReceber', descricao: 'Exportacao de contas a receber cancelada pelo usuario', dadosNovos: { quantidade: itens.length }, sucesso: false });
+            return;
+          }
+          const headers = ['cliente','descricao','numero_documento','empresa_id','group_id','grupo_id','data_vencimento','valor','status'];
           const csv = [headers.join(','), ...itens.map(c => headers.map(h => JSON.stringify(c[h] ?? '')).join(','))].join('\n');
           const blob = new Blob([csv], { type: 'text/csv' });
           const url = URL.createObjectURL(blob);
@@ -373,7 +433,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
           a.download = `contas_receber_${new Date().toISOString().slice(0,10)}.csv`;
           a.click();
           URL.revokeObjectURL(url);
-          try { base44.entities.AuditLog.create({ acao: 'Exportação', modulo: 'Financeiro', entidade: 'ContaReceber', descricao: `Exportados ${itens.length} títulos`, data_hora: new Date().toISOString() }); } catch(_) {}
+          try { auditarFinanceiro({ acao: 'Exportacao', entidade: 'ContaReceber', descricao: `Exportados ${itens.length} titulos a receber`, dadosNovos: { quantidade: itens.length, ids: itens.map(item => item.id).filter(Boolean) } }); } catch(_) {}
         }}
         onBaixarMultipla={handleBaixarMultipla}
         onNovaConta={() => { if (!hasPermission('Financeiro','ContaReceber','criar')) { toast({ title: '⛔ Sem permissão para criar', variant: 'destructive' }); return; } openWindow(ContaReceberForm, {
@@ -391,7 +451,6 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
         onEnviarCaixa={() => { if (!hasPermission('Financeiro','ContaReceber','enviar_caixa') && !hasPermission('Financeiro','ContaReceber','editar')) { toast({ title: '⛔ Sem permissão para enviar ao Caixa', variant: 'destructive' }); return; }
           const titulos = contasList.filter(c => contasSelecionadas.includes(c.id));
           if (!contextoValido || titulos.length === 0) { toast({ title: 'Selecione contexto e titulos para enviar ao Caixa', variant: 'destructive' }); return; }
-          if (!window.confirm(`Enviar ${titulos.length} titulo(s) a receber para o Caixa?`)) return;
           enviarParaCaixaMutation.mutate(titulos);
         }}
         baixarPending={baixarMultiplaMutation.isPending}
@@ -425,7 +484,10 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
           setContaParaLink(conta);
           setGerarLinkDialogOpen(true);
         }}
-        onVerBoleto={(conta) => window.open(conta.boleto_url, '_blank')}
+        onVerBoleto={(conta) => {
+          if (!isSafeUrl(conta?.boleto_url)) { toast({ title: 'URL do boleto invalida ou insegura', variant: 'destructive' }); return; }
+          window.open(conta.boleto_url, '_blank', 'noopener,noreferrer');
+        }}
         onCopiarPix={(conta) => {
           navigator.clipboard.writeText(conta.pix_copia_cola);
           toast({ title: "📋 PIX copiado!" });

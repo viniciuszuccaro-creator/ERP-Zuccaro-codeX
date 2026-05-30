@@ -1419,3 +1419,20 @@ Checklist inicial:
 - `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
 - Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em `ContasReceberTab` e `ContasPagarTab`, reforcando baixa direta, baixa multipla, envio para Caixa, aprovacao de pagamento, exportacao e auditoria com contexto grupo/empresa.
+### Financeiro - Fase 8 Contas a Receber/Pagar: baixa, envio ao Caixa e exportacao
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `ContasReceberTab` e `ContasPagarTab`.
+- `ContasReceberTab` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Baixa direta e baixa multipla de contas a receber agora tambem validam contexto grupo/empresa e permissao RBAC dentro das mutations, sanitizam campos gravados e auditam sucesso/cancelamento/erro com usuario, `group_id`, `grupo_id` e `empresa_id`.
+- Envio de contas a receber para o Caixa passou a validar permissao, contexto, quantidade, valor total e confirmacao dentro da operacao sensivel, preservando grupo/empresa nos titulos vinculados da ordem.
+- Exportacao de contas a receber agora exige contexto, permissao e confirmacao, inclui `group_id`/`grupo_id`/`empresa_id` no CSV e registra auditoria contextualizada.
+- Abertura de boleto em contas a receber passou a validar URL segura antes de abrir em nova aba.
+- `ContasPagarTab` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Baixa direta e pagamento multiplo de contas a pagar agora tambem validam contexto e permissao dentro das mutations, tratam titulo inexistente antes de gravar movimento no Caixa, sanitizam campos e preservam `group_id`, `grupo_id` e `empresa_id` em `ContaPagar` e `CaixaMovimento`.
+- Envio de contas a pagar para o Caixa passou a validar permissao, contexto, quantidade, valor total e confirmacao dentro da operacao sensivel, preservando grupo/empresa nos titulos vinculados da ordem.
+- Aprovacao de pagamento em contas a pagar agora exige contexto, permissao e confirmacao, preserva contexto multiempresa e registra auditoria antes/depois.
+- Exportacao de contas a pagar agora exige contexto, permissao e confirmacao, inclui `group_id`/`grupo_id`/`empresa_id` no CSV e registra auditoria contextualizada.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 nos relatorios financeiros e fluxos bancarios auxiliares, priorizando `FluxoCaixaProjetado`, `ExtratoBancarioResumo`, `MovimentosDiarios`, `CartoesACompensar` e revisao final de exportacoes/auditoria por grupo/empresa.
