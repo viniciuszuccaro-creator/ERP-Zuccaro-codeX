@@ -13,6 +13,28 @@ import { toast } from "sonner";
  * Botão de Exportação Universal - V19.1
  * CSV e JSON nativos (sem dependências externas)
  */
+const sanitizeExportValue = (value) => {
+  const text = String(value ?? '');
+  const sanitized = text.replace(/[\r\n]+/g, ' ').trim();
+  return /^[=+\-@]/.test(sanitized) ? `'${sanitized}` : sanitized;
+};
+
+const normalizeExportRows = (rows = [], columns = null) => {
+  const source = columns
+    ? rows.map(row => {
+        const obj = {};
+        columns.forEach(col => {
+          obj[col.header || col.key] = row[col.key];
+        });
+        return obj;
+      })
+    : rows;
+
+  return source.map(row => Object.fromEntries(
+    Object.entries(row || {}).map(([key, value]) => [key, sanitizeExportValue(value)])
+  ));
+};
+
 export default function ExportButton({ data = [], filename = "export", columns = null, disabled = false, onBeforeExport, ...buttonProps }) {
   
   const exportToCSV = async () => {
@@ -31,15 +53,7 @@ export default function ExportButton({ data = [], filename = "export", columns =
       return;
     }
 
-    const dadosExport = columns 
-      ? data.map(row => {
-          const obj = {};
-          columns.forEach(col => {
-            obj[col.header || col.key] = row[col.key];
-          });
-          return obj;
-        })
-      : data;
+    const dadosExport = normalizeExportRows(data, columns);
 
     const headers = Object.keys(dadosExport[0]);
     const csvContent = [
@@ -75,15 +89,7 @@ export default function ExportButton({ data = [], filename = "export", columns =
       return;
     }
 
-    const dadosExport = columns 
-      ? data.map(row => {
-          const obj = {};
-          columns.forEach(col => {
-            obj[col.header || col.key] = row[col.key];
-          });
-          return obj;
-        })
-      : data;
+    const dadosExport = normalizeExportRows(data, columns);
 
     const jsonContent = JSON.stringify(dadosExport, null, 2);
     const blob = new Blob([jsonContent], { type: 'application/json' });

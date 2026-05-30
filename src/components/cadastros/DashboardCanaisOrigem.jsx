@@ -30,6 +30,7 @@ import {
   Download
 } from "lucide-react";
 import ExportButton from "@/components/ExportButton";
+import { base44 } from "@/api/base44Client";
 
 /**
  * Dashboard de Canais de Origem de Pedidos V21.6
@@ -48,6 +49,26 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
   const canExportDashboard = hasPermission('Comercial', 'Relatorios', 'exportar') ||
     hasPermission('Comercial', 'Pedidos', 'exportar') ||
     hasPermission('Comercial', null, 'exportar');
+
+  const auditDashboardCanais = async ({ acao, sucesso = true, motivo = null, detalhes = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: 'Comercial',
+        entidade: 'DashboardCanaisOrigem',
+        tipo_auditoria: sucesso ? 'relatorio' : 'seguranca',
+        descricao: motivo || 'Auditoria do dashboard de canais de origem.',
+        dados_novos: detalhes,
+        group_id: groupId,
+        grupo_id: groupId,
+        empresa_id: empresaSelecionadaId,
+        sucesso,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar dashboard de canais de origem:', error);
+    }
+  };
   
   // Buscar parâmetros de origem
   const { data: parametros = [], isLoading: loadingParametros } = useQuery({
@@ -131,6 +152,53 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
       value: m.totalPedidos
     }));
 
+  const dadosExportacao = Object.values(metricas).map(m => ({
+    Canal: m.nome,
+    Tipo: m.tipo,
+    Ativo: m.ativo ? 'Sim' : 'Nao',
+    'Total Pedidos': m.totalPedidos,
+    'Valor Total': m.valorTotal,
+    'Pedidos Aprovados': m.pedidosAprovados,
+    'Taxa Conversao (%)': m.taxaConversao.toFixed(2),
+    'Ticket Medio': m.ticketMedio.toFixed(2),
+    group_id: groupId || '',
+    grupo_id: groupId || '',
+    empresa_id: empresaSelecionadaId || '',
+  }));
+
+  const beforeExportDashboard = async (formato) => {
+    if (!contextoValido || !canExportDashboard) {
+      await auditDashboardCanais({
+        acao: 'DashboardCanaisOrigem.exportar_bloqueado',
+        sucesso: false,
+        motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+        detalhes: { formato, linhas: dadosExportacao.length },
+      });
+      return false;
+    }
+
+    const confirmado = window.confirm(`Confirma exportar ${dadosExportacao.length} canais de origem em ${String(formato).toUpperCase()}?`);
+    if (!confirmado) {
+      await auditDashboardCanais({
+        acao: 'DashboardCanaisOrigem.exportar_cancelado',
+        sucesso: false,
+        motivo: 'confirmacao_cancelada',
+        detalhes: { formato, linhas: dadosExportacao.length },
+      });
+      return false;
+    }
+
+    await auditDashboardCanais({
+      acao: 'DashboardCanaisOrigem.exportar',
+      detalhes: {
+        formato,
+        linhas: dadosExportacao.length,
+        totalPedidos: totalGeralPedidos,
+        valorTotal: totalGeralValor,
+      },
+    });
+    return true;
+  };
   const CORES = {
     blue: '#3b82f6',
     green: '#22c55e',
@@ -237,19 +305,11 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
                 Performance por Canal
               </CardTitle>
               <ExportButton
-                data={Object.values(metricas).map(m => ({
-                  Canal: m.nome,
-                  Tipo: m.tipo,
-                  Ativo: m.ativo ? 'Sim' : 'Não',
-                  'Total Pedidos': m.totalPedidos,
-                  'Valor Total': m.valorTotal,
-                  'Pedidos Aprovados': m.pedidosAprovados,
-                  'Taxa Conversão (%)': m.taxaConversao.toFixed(2),
-                  'Ticket Médio': m.ticketMedio.toFixed(2)
-                }))}
+                data={dadosExportacao}
                 filename="performance-canais-origem"
                 className="bg-green-600 hover:bg-green-700"
                 disabled={!contextoValido || !canExportDashboard}
+                onBeforeExport={beforeExportDashboard}
                 data-action="DashboardCanaisOrigem.exportar"
                 data-permission="Comercial.Relatorios.exportar"
                 data-context-required="group-or-company"

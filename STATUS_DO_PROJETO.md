@@ -1520,3 +1520,14 @@ Checklist inicial:
 - Validado no navegador local em `http://localhost:5173/cadastros?tab=cadastros`: total de `Pessoas & Parceiros` voltou para 8, com Cliente 1, Colaborador 2, Representante 1, SegmentoCliente 3 e RegiaoAtendimento 1.
 - Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas restaurado o carregamento dos dados existentes do snapshot.
 - Proximo passo sugerido: continuar Fase 8 nos relatorios especificos por area ainda pendentes, priorizando `DashboardCanaisOrigem`, `RelatoriosLogistica`, `RelatoriosProducao`, `RelatoriosEstoque` e dashboards realtime para contexto grupo/empresa, RBAC granular, confirmacoes e auditoria.
+
+### Relatorios - Fase 8 Canais de Origem e Exportador Universal
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em relatorios especificos por area ainda pendentes.
+- `DashboardCanaisOrigem` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Exportacao de performance por canal agora exige contexto grupo/empresa e permissao RBAC, pede confirmacao explicita para CSV/JSON, audita bloqueio/cancelamento/sucesso e inclui `group_id`, `grupo_id` e `empresa_id` nos dados exportados.
+- `ExportButton` existente foi reforcado para sanitizar valores exportados em CSV/JSON, removendo quebras de linha e protegendo celulas iniciadas por `=`, `+`, `-` ou `@` contra formula injection.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco dos fluxos de exportacao existentes.
+- `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
+- Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 nos dashboards realtime e relatorios de logistica/producao/estoque, priorizando a revisao final de `DashboardTempoReal`, `DashboardEntregasRealtime`, `DashboardProducaoRealtime`, `RelatoriosLogistica`, `RelatoriosProducao` e `RelatoriosEstoque` para auditoria de visualizacao/exportacao, RBAC granular e contexto multiempresa.
