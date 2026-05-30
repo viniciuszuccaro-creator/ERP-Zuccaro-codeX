@@ -4,7 +4,8 @@ import { localBase44, localApiUser as localOnlyUser } from './localBase44Client'
 
 const { appId, serverUrl, token, functionsVersion } = appParams;
 const apiKey = import.meta.env.VITE_BASE44_API_KEY;
-export const isLocalOnlyMode = import.meta.env.VITE_LOCAL_ONLY === 'true';
+const hasRemoteBase44Config = Boolean(appId && serverUrl);
+export const isLocalOnlyMode = import.meta.env.VITE_LOCAL_ONLY === 'true' || !hasRemoteBase44Config;
 
 export const isApiKeyMode = isLocalOnlyMode || !!apiKey;
 export const localApiUser = isLocalOnlyMode ? localOnlyUser : {

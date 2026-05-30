@@ -1502,3 +1502,12 @@ Checklist inicial:
 - `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
 - Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 nos relatorios especificos por area ainda pendentes, priorizando `DashboardCanaisOrigem`, `RelatoriosLogistica`, `RelatoriosProducao`, `RelatoriosEstoque` e dashboards realtime para contexto grupo/empresa, RBAC granular, confirmacoes e auditoria.
+
+### Abertura Local - Correcao Modo Local Automatico
+
+- Corrigida a abertura local do ERP no projeto do GitHub `ERP-Zuccaro-codeX-local`.
+- Diagnostico confirmou que o servidor respondia, mas o frontend tentava chamar Base44 remoto em `null/api/apps/null/entities/User/me`, causando `Erro ao iniciar o ERP local`.
+- `src/api/base44Client.js` foi reforcado no existente para entrar automaticamente em modo local quando nao houver `appId` e `serverUrl` remotos configurados, alem de respeitar `VITE_LOCAL_ONLY=true`.
+- Validado em navegador headless local: `http://localhost:5173/` carregou o Dashboard sem a tela `Erro ao iniciar o ERP local`.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco do fluxo existente de inicializacao local.
+- Proximo passo sugerido: continuar Fase 8 nos relatorios especificos por area ainda pendentes, priorizando `DashboardCanaisOrigem`, `RelatoriosLogistica`, `RelatoriosProducao`, `RelatoriosEstoque` e dashboards realtime para contexto grupo/empresa, RBAC granular, confirmacoes e auditoria.
