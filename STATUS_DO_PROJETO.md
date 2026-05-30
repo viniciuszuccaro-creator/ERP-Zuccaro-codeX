@@ -1436,3 +1436,17 @@ Checklist inicial:
 - `git diff --check` executado sem erros.
 - Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 nos relatorios financeiros e fluxos bancarios auxiliares, priorizando `FluxoCaixaProjetado`, `ExtratoBancarioResumo`, `MovimentosDiarios`, `CartoesACompensar` e revisao final de exportacoes/auditoria por grupo/empresa.
+
+### Financeiro - Fase 8 Relatorios e Fluxos Bancarios Auxiliares
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `FluxoCaixaProjetado`, `ExtratoBancarioResumo`, `MovimentosDiarios`, `CartoesACompensar` e revisao final de exportacoes/auditoria por grupo/empresa.
+- `ExportMenu` foi reforcado no componente existente, sem criar exportador paralelo: agora respeita `disabled`, `columns`, contexto grupo/empresa, RBAC, confirmacao antes de exportar, sanitizacao de CSV/PDF e auditoria contextualizada.
+- `FluxoCaixaProjetado` passou a auditar exportacao, cancelamento e bloqueio por falta de contexto/permissao, usando `group_id`, `grupo_id`, `empresa_id`, usuario e quantidade exportada.
+- Exportacao do fluxo de caixa projetado agora usa as colunas configuradas, inclui contexto grupo/empresa nos dados e exige confirmacao explicita antes de CSV/PDF.
+- `ExtratoBancarioResumo` passou a validar periodo antes da exportacao, exigir confirmacao explicita, auditar bloqueio/cancelamento/sucesso e incluir `group_id`, `grupo_id` e `empresa_id` no CSV.
+- `MovimentosDiarios` passou a exigir confirmacao antes de imprimir, auditando cancelamento e impressao com contexto, operador, data e quantidade de movimentos.
+- `CartoesACompensar` passou a bloquear compensacao sem valor liquido valido, confirmar compensacao com NSU/valor e gravar usuario/data de conciliacao mantendo `group_id`, `grupo_id` e `empresa_id`.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco dos componentes existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em relatorios gerenciais financeiros e dashboards de inadimplencia/rentabilidade, priorizando `DashboardInadimplencia`, `RelatorioFinanceiro`, `RelatorioDRE`, `RentabilidadeCliente` e `RentabilidadeProduto` para exportacoes, auditoria, contexto grupo/empresa e RBAC granular.

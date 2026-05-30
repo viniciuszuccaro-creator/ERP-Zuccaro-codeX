@@ -110,10 +110,19 @@ export default function MovimentosDiarios() {
       });
       return;
     }
+    if (!window.confirm(`Imprimir movimentos diarios de ${dataFiltro} (${movimentosFiltrados.length} registro(s))?`)) {
+      await auditarMovimento({
+        acao: 'Cancelamento',
+        descricao: 'Impressao de movimentos diarios cancelada pelo usuario.',
+        dadosNovos: { dataFiltro, operador: abaOperador, quantidade: movimentosFiltrados.length },
+        sucesso: false
+      });
+      return;
+    }
     await auditarMovimento({
       acao: 'Impressao',
       descricao: 'Impressao de movimentos diarios do caixa.',
-      dadosNovos: { dataFiltro, operador: abaOperador, quantidade: movimentosFiltrados.length }
+      dadosNovos: { dataFiltro, operador: abaOperador, quantidade: movimentosFiltrados.length, group_id: groupId, empresa_id: empresaId }
     });
     window.print();
   };

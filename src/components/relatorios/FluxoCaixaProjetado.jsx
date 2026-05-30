@@ -12,11 +12,13 @@ import ExportMenu from "@/components/ui/ExportMenu"; // Added new import
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useUser } from "@/components/lib/UserContext";
 
 export default function FluxoCaixaProjetado({ windowMode = false }) {
   const [mesesProjecao, setMesesProjecao] = useState(6);
   const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { hasPermission } = usePermissions();
+  const { user } = useUser();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
   const contextoValido = Boolean(groupId || empresaId);
@@ -110,6 +112,60 @@ export default function FluxoCaixaProjetado({ windowMode = false }) {
   const maiorEntrada = Math.max(...projecao.map(m => m.receitaPrevista));
   const maiorSaida = Math.max(...projecao.map(m => m.despesaPrevista));
 
+
+  const auditarRelatorio = async ({ acao, descricao, dadosNovos, sucesso = true }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: "Financeiro",
+        entidade: "FluxoCaixaProjetado",
+        descricao,
+        usuario_id: user?.id || null,
+        usuario: user?.full_name || user?.email || "Usuario local",
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        dados_novos: dadosNovos,
+        sucesso,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar fluxo de caixa projetado:", error);
+    }
+  };
+
+  const confirmarExportacao = async ({ formato, quantidade }) => {
+    if (!contextoValido || !canExportRelatorio) {
+      await auditarRelatorio({
+        acao: "Bloqueio",
+        descricao: "Exportacao do fluxo de caixa projetado bloqueada por falta de contexto ou permissao.",
+        dadosNovos: { formato, quantidade, mesesProjecao },
+        sucesso: false
+      });
+      return false;
+    }
+    const confirmado = window.confirm(`Exportar fluxo de caixa projetado em ${formato} com ${quantidade} mes(es)?`);
+    if (!confirmado) {
+      await auditarRelatorio({
+        acao: "Cancelamento",
+        descricao: "Exportacao do fluxo de caixa projetado cancelada pelo usuario.",
+        dadosNovos: { formato, quantidade, mesesProjecao },
+        sucesso: false
+      });
+      return false;
+    }
+    return true;
+  };
+
+  const registrarExportacao = async ({ formato, quantidade }) => {
+    await auditarRelatorio({
+      acao: "Exportacao",
+      descricao: "Exportacao do fluxo de caixa projetado.",
+      dadosNovos: { formato, quantidade, mesesProjecao, saldoAtual }
+    });
+  };
+
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
 
   return (
@@ -123,14 +179,18 @@ export default function FluxoCaixaProjetado({ windowMode = false }) {
       )}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Fluxo de Caixa Projetado (6 meses)</h2> {/* Updated title */}
+          <h2 className="text-2xl font-bold">Fluxo de Caixa Projetado ({mesesProjecao} meses)</h2> {/* Updated title */}
           <p className="text-sm text-slate-600">Previsão de entradas e saídas com IA</p> {/* Updated description */}
         </div>
         <ExportMenu 
           data={projecao} // Passed projecao array as data
           fileName="fluxo_caixa_projetado" 
           title="Fluxo de Caixa Projetado"
+          module="Financeiro"
+          section="Relatorios"
           disabled={!contextoValido || !canExportRelatorio}
+          onBeforeExport={confirmarExportacao}
+          onExport={registrarExportacao}
           data-permission="Financeiro.Relatorios.exportar"
           data-context-required="true"
           // You might want to specify columns for ExportMenu if it doesn't infer them or if you want specific order/names
@@ -141,6 +201,8 @@ export default function FluxoCaixaProjetado({ windowMode = false }) {
             { header: 'Saldo do Mês', accessor: 'saldoMes' },
             { header: 'Saldo Acumulado', accessor: 'saldoAcumulado' },
             { header: 'Status', accessor: 'alertaNivel' },
+            { header: 'Grupo', accessor: 'group_id' },
+            { header: 'Empresa', accessor: 'empresa_id' },
           ]}
         />
       </div>

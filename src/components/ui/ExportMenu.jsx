@@ -11,79 +11,122 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { base44 } from "@/api/base44Client";
 
+const sanitizeCell = (value) => String(value ?? "")
+  .replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, "")
+  .replace(/javascript:\s*/gi, "")
+  .trim();
+
+const escapeHtml = (value) => sanitizeCell(value)
+  .replace(/&/g, "&amp;")
+  .replace(/</g, "&lt;")
+  .replace(/>/g, "&gt;")
+  .replace(/"/g, "&quot;")
+  .replace(/'/g, "&#039;");
+
 /**
- * Menu de exportação reutilizável
- * Exporta dados em Excel ou PDF
+ * Menu de exportacao reutilizavel.
+ * Exporta dados em CSV ou PDF/impressao com RBAC, contexto e auditoria opcional.
  */
-export default function ExportMenu({ data, fileName = "relatorio", title = "Relatório", module = "Sistema", section = "Exportacao", action = "exportar" }) {
+export default function ExportMenu({
+  data,
+  fileName = "relatorio",
+  title = "Relatorio",
+  module = "Sistema",
+  section = "Exportacao",
+  disabled = false,
+  columns = null,
+  onBeforeExport,
+  onExport,
+}) {
   const { hasPermission } = usePermissions();
   const { empresaAtual, grupoAtual } = useContextoVisual();
-  const allowed = hasPermission(module, section, 'exportar');
-  const exportToExcel = () => {
-    if (!allowed) {
-      base44.entities.AuditLog.create({
-        usuario: 'UI', acao: 'Bloqueio', modulo: module, tipo_auditoria: 'seguranca',
-        entidade: 'Exportacao', descricao: `Tentativa sem permissão (${section})`,
-        empresa_id: empresaAtual?.id || null, group_id: grupoAtual?.id || null,
-        data_hora: new Date().toISOString(), sucesso: false
+  const empresaId = empresaAtual?.id || null;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const allowed = hasPermission(module, section, "exportar") || hasPermission(module, null, "exportar");
+  const blocked = disabled || !allowed || !contextoValido;
+  const safeData = Array.isArray(data) ? data : [];
+  const resolvedColumns = Array.isArray(columns) && columns.length > 0
+    ? columns
+    : Object.keys(safeData[0] || {}).map((key) => ({ header: key, accessor: key }));
+
+  const audit = async ({ acao, descricao, formato, sucesso = true }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: "UI",
+        acao,
+        modulo: module,
+        tipo_auditoria: sucesso ? "ui" : "seguranca",
+        entidade: "Exportacao",
+        descricao,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        dados_novos: { section, formato, quantidade: safeData.length },
+        data_hora: new Date().toISOString(),
+        sucesso
       });
-      alert('Você não tem permissão para exportar.');
-      return;
+    } catch (error) {
+      console.warn("Falha ao auditar exportacao:", error);
     }
-    base44.entities.AuditLog.create({
-      usuario: 'UI', acao: 'Exportação', modulo: module, tipo_auditoria: 'ui',
-      entidade: 'Exportacao', descricao: `Exportar Excel (${section})`,
-      empresa_id: empresaAtual?.id || null, group_id: grupoAtual?.id || null,
-      data_hora: new Date().toISOString(), sucesso: true
-    });
-    if (!data || data.length === 0) {
-      alert("Não há dados para exportar");
-      return;
-    }
-
-    // Criar CSV
-    const headers = Object.keys(data[0]);
-    const csvContent = [
-      headers.join(";"),
-      ...data.map(row => headers.map(h => row[h] || "").join(";"))
-    ].join("\n");
-
-    // Download
-    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `${fileName}_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
   };
 
-  const exportToPDF = () => {
-    if (!allowed) {
-      base44.entities.AuditLog.create({
-        usuario: 'UI', acao: 'Bloqueio', modulo: module, tipo_auditoria: 'seguranca',
-        entidade: 'Exportacao', descricao: `Tentativa sem permissão (${section})`,
-        empresa_id: empresaAtual?.id || null, group_id: grupoAtual?.id || null,
-        data_hora: new Date().toISOString(), sucesso: false
+  const ensureCanExport = async (formato) => {
+    if (blocked) {
+      await audit({
+        acao: "Bloqueio",
+        descricao: `Tentativa de exportacao bloqueada (${section})`,
+        formato,
+        sucesso: false
       });
-      alert('Você não tem permissão para exportar.');
-      return;
+      alert("Selecione grupo/empresa e confirme permissao para exportar.");
+      return false;
     }
-    base44.entities.AuditLog.create({
-      usuario: 'UI', acao: 'Exportação', modulo: module, tipo_auditoria: 'ui',
-      entidade: 'Exportacao', descricao: `Exportar PDF (${section})`,
-      empresa_id: empresaAtual?.id || null, group_id: grupoAtual?.id || null,
-      data_hora: new Date().toISOString(), sucesso: true
-    });
-    if (!data || data.length === 0) {
-      alert("Não há dados para exportar");
-      return;
+    if (!safeData.length) {
+      alert("Nao ha dados para exportar");
+      return false;
     }
+    if (typeof onBeforeExport === "function") {
+      const result = await onBeforeExport({ formato, quantidade: safeData.length });
+      if (result === false) return false;
+    } else if (!window.confirm(`Exportar ${safeData.length} registro(s) de ${title}?`)) {
+      await audit({
+        acao: "Cancelamento",
+        descricao: `Exportacao cancelada (${section})`,
+        formato,
+        sucesso: false
+      });
+      return false;
+    }
+    return true;
+  };
 
-    // Criar HTML para impressão
-    const headers = Object.keys(data[0]);
+  const exportToExcel = async () => {
+    if (!(await ensureCanExport("CSV"))) return;
+    const csvContent = [
+      resolvedColumns.map((column) => sanitizeCell(column.header || column.accessor)).join(";"),
+      ...safeData.map((row) => resolvedColumns
+        .map((column) => JSON.stringify(sanitizeCell(row[column.accessor] ?? "")))
+        .join(";"))
+    ].join("\n");
+
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.download = `${fileName}_${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    await audit({ acao: "Exportacao", descricao: `Exportar CSV (${section})`, formato: "CSV" });
+    if (typeof onExport === "function") await onExport({ formato: "CSV", quantidade: safeData.length });
+  };
+
+  const exportToPDF = async () => {
+    if (!(await ensureCanExport("PDF"))) return;
     const htmlTable = `
       <html>
         <head>
-          <title>${title}</title>
+          <title>${escapeHtml(title)}</title>
           <style>
             body { font-family: Arial, sans-serif; padding: 20px; }
             h1 { color: #1e293b; margin-bottom: 20px; }
@@ -95,50 +138,51 @@ export default function ExportMenu({ data, fileName = "relatorio", title = "Rela
           </style>
         </head>
         <body>
-          <h1>${title}</h1>
-          <p><strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR')}</p>
+          <h1>${escapeHtml(title)}</h1>
+          <p><strong>Data:</strong> ${new Date().toLocaleDateString("pt-BR")}</p>
           <table>
             <thead>
-              <tr>
-                ${headers.map(h => `<th>${h}</th>`).join('')}
-              </tr>
+              <tr>${resolvedColumns.map((column) => `<th>${escapeHtml(column.header || column.accessor)}</th>`).join("")}</tr>
             </thead>
             <tbody>
-              ${data.map(row => `
-                <tr>
-                  ${headers.map(h => `<td>${row[h] || '-'}</td>`).join('')}
-                </tr>
-              `).join('')}
+              ${safeData.map((row) => `
+                <tr>${resolvedColumns.map((column) => `<td>${escapeHtml(row[column.accessor] || "-")}</td>`).join("")}</tr>
+              `).join("")}
             </tbody>
           </table>
           <div class="footer">
-            <p>Gerado em ${new Date().toLocaleString('pt-BR')} - ERP Integra</p>
+            <p>Gerado em ${new Date().toLocaleString("pt-BR")} - ERP Integra</p>
           </div>
         </body>
       </html>
     `;
 
-    // Abrir em nova janela e imprimir
-    const printWindow = window.open('', '', 'height=600,width=800');
+    const printWindow = window.open("", "", "height=600,width=800");
+    if (!printWindow) {
+      alert("Nao foi possivel abrir a janela de impressao.");
+      return;
+    }
     printWindow.document.write(htmlTable);
     printWindow.document.close();
     printWindow.print();
+    await audit({ acao: "Exportacao", descricao: `Exportar PDF (${section})`, formato: "PDF" });
+    if (typeof onExport === "function") await onExport({ formato: "PDF", quantidade: safeData.length });
   };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" disabled={blocked} data-action={`${section}.exportar`} data-context-required="group-or-company" data-sensitive="true">
           <Download className="w-4 h-4 mr-2" />
           Exportar
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuItem onClick={exportToExcel}>
+        <DropdownMenuItem onClick={exportToExcel} disabled={blocked}>
           <FileSpreadsheet className="w-4 h-4 mr-2 text-green-600" />
           Exportar Excel (CSV)
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={exportToPDF}>
+        <DropdownMenuItem onClick={exportToPDF} disabled={blocked}>
           <FileText className="w-4 h-4 mr-2 text-red-600" />
           Exportar PDF (Imprimir)
         </DropdownMenuItem>

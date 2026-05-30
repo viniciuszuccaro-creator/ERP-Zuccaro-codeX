@@ -63,12 +63,18 @@ export default function CartoesACompensar() {
       if (!contextoValido || !canConciliarCartoes) {
         throw new Error("Sem contexto ou permissao para conciliar cartao.");
       }
+      if (!cartao?.id || Number(cartao.valor_liquido || 0) <= 0) {
+        throw new Error("Cartao sem valor liquido valido para compensacao.");
+      }
       return updateInContext("MovimentoCartao", cartao.id, {
         group_id: cartao.group_id || groupId,
         grupo_id: cartao.grupo_id || cartao.group_id || groupId,
         empresa_id: cartao.empresa_id || empresaId,
         status_compensacao: "Compensado",
-        data_recebimento_efetivo: new Date().toISOString().split("T")[0]
+        data_recebimento_efetivo: new Date().toISOString().split("T")[0],
+        conciliado_por: user?.full_name || user?.email,
+        conciliado_por_id: user?.id,
+        data_conciliacao: new Date().toISOString()
       });
     },
     onSuccess: async (updated, { cartao }) => {
@@ -99,12 +105,25 @@ export default function CartoesACompensar() {
       toast.error("Selecione grupo/empresa e confirme permissao para conciliar.");
       return;
     }
-    if (!window.confirm("Confirmar compensacao deste cartao?")) {
+    if (Number(cartao?.valor_liquido || 0) <= 0) {
+      await auditarCartao({
+        acao: "Bloqueio",
+        cartao,
+        descricao: "Compensacao de cartao bloqueada por valor liquido invalido.",
+        dadosAnteriores: cartao,
+        dadosNovos: { valor_liquido: cartao?.valor_liquido, status_compensacao: cartao?.status_compensacao },
+        sucesso: false
+      });
+      toast.error("Cartao sem valor liquido valido para compensacao.");
+      return;
+    }
+    if (!window.confirm(`Confirmar compensacao do cartao ${cartao.nsu || cartao.id} no valor de R$ ${Number(cartao.valor_liquido || 0).toFixed(2)}?`)) {
       await auditarCartao({
         acao: "Cancelamento",
         cartao,
         descricao: "Usuario cancelou a compensacao do cartao.",
         dadosAnteriores: cartao,
+        dadosNovos: { valor_liquido: cartao?.valor_liquido, status_compensacao: cartao?.status_compensacao },
         sucesso: false
       });
       return;

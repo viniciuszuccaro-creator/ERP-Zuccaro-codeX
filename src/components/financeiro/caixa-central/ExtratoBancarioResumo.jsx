@@ -94,15 +94,36 @@ export default function ExtratoBancarioResumo() {
       });
       return;
     }
+    if (!dataInicio || !dataFim || new Date(dataInicio) > new Date(dataFim)) {
+      await auditarExtrato({
+        acao: 'Bloqueio',
+        descricao: 'Exportacao de extrato bloqueada por periodo invalido.',
+        dadosNovos: { dataInicio, dataFim },
+        sucesso: false
+      });
+      return;
+    }
+    if (!window.confirm(`Exportar ${extratos.length} lancamento(s) bancario(s) de ${dataInicio} ate ${dataFim}?`)) {
+      await auditarExtrato({
+        acao: 'Cancelamento',
+        descricao: 'Exportacao de extrato bancario cancelada pelo usuario.',
+        dadosNovos: { dataInicio, dataFim, quantidade: extratos.length },
+        sucesso: false
+      });
+      return;
+    }
 
-    const colunas = ['data', 'conta', 'tipo', 'historico', 'valor', 'saldo'];
+    const colunas = ['data', 'conta', 'tipo', 'historico', 'valor', 'saldo', 'group_id', 'grupo_id', 'empresa_id'];
     const linhas = extratos.map((ext) => [
       ext.data_lancamento ? new Date(ext.data_lancamento).toLocaleDateString('pt-BR') : '',
       ext.conta_bancaria_nome || '',
       ext.tipo_lancamento || '',
       ext.historico || ext.descricao || '',
       ext.valor || 0,
-      ext.saldo_apos || 0
+      ext.saldo_apos || 0,
+      ext.group_id || groupId || '',
+      ext.grupo_id || ext.group_id || groupId || '',
+      ext.empresa_id || empresaId || ''
     ]);
     const csv = [colunas, ...linhas]
       .map((row) => row.map((value) => JSON.stringify(String(value ?? ''))).join(';'))
@@ -120,7 +141,7 @@ export default function ExtratoBancarioResumo() {
     await auditarExtrato({
       acao: 'Exportacao',
       descricao: 'Exportacao CSV do resumo de extrato bancario.',
-      dadosNovos: { dataInicio, dataFim, quantidade: extratos.length }
+      dadosNovos: { dataInicio, dataFim, quantidade: extratos.length, group_id: groupId, empresa_id: empresaId }
     });
   };
 
