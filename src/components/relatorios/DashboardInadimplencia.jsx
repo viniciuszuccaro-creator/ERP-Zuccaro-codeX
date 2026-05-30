@@ -200,7 +200,10 @@ export default function DashboardInadimplencia({ empresaId }) {
               'Total Devido': `R$ ${c.valor_vencido.toFixed(2)}`,
               'Dias Atraso Médio': c.dias_atraso_medio.toFixed(0),
               'Score de Risco': c.score_risco.toFixed(0),
-              Classificação: c.nivel_risco
+              Classificacao: c.nivel_risco,
+              group_id: groupId,
+              grupo_id: groupId,
+              empresa_id: empresaSelecionadaId
             }))} 
             fileName="dashboard_inadimplencia" 
             title="Dashboard de Inadimplência"

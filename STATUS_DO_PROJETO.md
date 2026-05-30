@@ -1450,3 +1450,19 @@ Checklist inicial:
 - `git diff --check` executado sem erros.
 - Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em relatorios gerenciais financeiros e dashboards de inadimplencia/rentabilidade, priorizando `DashboardInadimplencia`, `RelatorioFinanceiro`, `RelatorioDRE`, `RentabilidadeCliente` e `RentabilidadeProduto` para exportacoes, auditoria, contexto grupo/empresa e RBAC granular.
+
+### Financeiro - Fase 8 Relatorios Gerenciais Financeiros
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em relatorios gerenciais financeiros e dashboards de inadimplencia/rentabilidade.
+- `DashboardInadimplencia` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Exportacao de inadimplencia passou a incluir contexto `group_id`, `grupo_id` e `empresa_id` nos dados exportados, usando o `ExportMenu` reforcado com RBAC, contexto e confirmacao.
+- `RentabilidadeCliente` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Exportacao de rentabilidade por cliente passou a incluir periodo e contexto grupo/empresa nos dados exportados.
+- `RentabilidadeProduto` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Exportacao de rentabilidade por produto passou a incluir periodo, ordenacao e contexto grupo/empresa nos dados exportados, mantendo bloqueio visual por contexto/permissao.
+- `RelatorioFinanceiro` passou a exigir confirmacao antes de exportar CSV, auditar cancelamento/bloqueio/sucesso e carimbar `group_id`, `grupo_id` e `empresa_id` em cada linha exportada.
+- `RelatorioDRE` passou a exigir confirmacao antes de exportar CSV, auditar cancelamento/bloqueio/sucesso e carimbar `group_id`, `grupo_id` e `empresa_id` em cada linha exportada.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco dos componentes existentes.
+- `git diff --check` executado sem erros.
+- Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em relatorios comerciais/operacionais que ainda usam exportacao manual, priorizando `RelatorioVendas`, `RelatorioPedidosPorOrigem`, `RelatorioVendasPorRegiao`, `DREComparativo` e `RelatorioProducao` para confirmacao, auditoria, contexto grupo/empresa e RBAC granular.

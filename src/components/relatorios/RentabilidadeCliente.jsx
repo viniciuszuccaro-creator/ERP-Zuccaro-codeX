@@ -227,9 +227,12 @@ export default function RentabilidadeCliente({ empresaId }) { // Kept empresaId 
               Cliente: c.cliente_nome,
               Faturamento: `R$ ${c.faturamento.toFixed(2)}`,
               Custo: `R$ ${c.custos.toFixed(2)}`,
-              Lucro: `R$ ${c.margem_valor.toFixed(2)}`,
-              Margem: `${c.margem_percentual.toFixed(1)}%`,
-              Pedidos: c.quantidade_pedidos
+              Lucro: `R$ ${c.margem_valor.toFixed(2)}`,              Margem: `${c.margem_percentual.toFixed(1)}%`,
+              Pedidos: c.quantidade_pedidos,
+              PeriodoMeses: periodo,
+              group_id: groupId,
+              grupo_id: groupId,
+              empresa_id: empresaSelecionadaId
             }))}
             fileName="rentabilidade_clientes_top20"
             title="Rentabilidade por Cliente - Top 20"

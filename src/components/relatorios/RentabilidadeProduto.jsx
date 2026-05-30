@@ -196,13 +196,19 @@ export default function RentabilidadeProduto({ empresaId }) {
               'Margem %': `${p.margem_percentual.toFixed(1)}%`,
               'Preço Médio': `R$ ${p.preco_medio_venda.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
               'Pedidos': p.quantidade_pedidos,
-              'Giro Estoque': p.giro_estoque.toFixed(2)
+              'Giro Estoque': p.giro_estoque.toFixed(2),
+              PeriodoMeses: periodo,
+              Ordenacao: ordenacao,
+              group_id: groupId,
+              grupo_id: groupId,
+              empresa_id: empresaSelecionadaId
             }))}
             fileName="rentabilidade_produtos"
             title="Rentabilidade por Produto - Curva ABC"
             module="Comercial"
             section="Rentabilidade"
             action="exportar"
+            disabled={!contextoValido || !canViewRentabilidade}
           />
         </div>
       </div>

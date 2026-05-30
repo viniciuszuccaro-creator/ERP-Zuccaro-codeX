@@ -105,12 +105,23 @@ export default function RelatorioFinanceiro() {
   };
 
   const exportarRelatorio = async (dados, nomeArquivo) => {
+    const linhas = Array.isArray(dados) ? dados : [];
     if (!contextoValido || !canExportRelatorio) {
-      await auditarExportacao(nomeArquivo, dados?.length || 0, false);
+      await auditarExportacao(nomeArquivo, linhas.length, false);
       return;
     }
-    exportarCSV(dados, nomeArquivo);
-    await auditarExportacao(nomeArquivo, dados?.length || 0, true);
+    if (!window.confirm(`Exportar ${linhas.length} registro(s) do relatorio financeiro (${nomeArquivo})?`)) {
+      await auditarExportacao(`${nomeArquivo}: cancelado pelo usuario`, linhas.length, false);
+      return;
+    }
+    const dadosComContexto = linhas.map((linha) => ({
+      ...linha,
+      group_id: linha.group_id || groupId,
+      grupo_id: linha.grupo_id || linha.group_id || groupId,
+      empresa_id: linha.empresa_id || empresaId
+    }));
+    exportarCSV(dadosComContexto, nomeArquivo);
+    await auditarExportacao(nomeArquivo, dadosComContexto.length, true);
   };
 
   return (
