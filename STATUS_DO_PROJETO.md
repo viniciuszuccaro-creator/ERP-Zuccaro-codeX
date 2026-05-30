@@ -1402,3 +1402,20 @@ Checklist inicial:
 - `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 nos relatórios financeiros e fluxos bancarios auxiliares, priorizando `FluxoCaixaProjetado`, `ExtratoBancarioResumo`, `MovimentosDiarios`, `CartoesACompensar` e `OrdensLiquidacaoPendentes` para revisar rateio, conciliacao final, auditoria antes/depois e exportacoes.
+
+### Financeiro - Fase 8 Caixa Central e Envio para Liquidacao
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 nas telas de contas a receber/pagar e liquidacao, iniciando por `LiquidarReceberPagar` e `CaixaCentralLiquidacao`.
+- `LiquidarReceberPagar` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Envio de contas a receber e contas a pagar para o Caixa agora exige contexto grupo/empresa, empresa selecionada, permissao RBAC financeira, titulos selecionados, valor valido e confirmacao explicita antes de criar ordens.
+- Criacao de `CaixaOrdemLiquidacao` passou a preservar `group_id`, `grupo_id` e `empresa_id` em cada ordem e tambem nos titulos vinculados.
+- Campos de cliente, fornecedor, numero de documento e descricao passaram por sanitizacao antes de exibir ou gravar nas ordens.
+- Envio individual e em lote para o Caixa passou a auditar bloqueio por contexto/permissao/valor, cancelamento pelo usuario e sucesso com quantidade, total e ids dos titulos.
+- Botoes sensiveis de envio ao Caixa receberam marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- `CaixaCentralLiquidacao` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Consultas de pendencias do Caixa agora usam chave por contexto e so executam com contexto e permissao de visualizacao financeira.
+- Abertura de modulos do Caixa passou a validar empresa selecionada e permissao, auditando bloqueio e abertura de modulos sensiveis como liquidacao, ordens, cartoes e conciliacao.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
+- Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `ContasReceberTab` e `ContasPagarTab`, reforcando baixa direta, baixa multipla, envio para Caixa, aprovacao de pagamento, exportacao e auditoria com contexto grupo/empresa.
