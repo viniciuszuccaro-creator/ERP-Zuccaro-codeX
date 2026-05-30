@@ -1511,3 +1511,12 @@ Checklist inicial:
 - Validado em navegador headless local: `http://localhost:5173/` carregou o Dashboard sem a tela `Erro ao iniciar o ERP local`.
 - Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco do fluxo existente de inicializacao local.
 - Proximo passo sugerido: continuar Fase 8 nos relatorios especificos por area ainda pendentes, priorizando `DashboardCanaisOrigem`, `RelatoriosLogistica`, `RelatoriosProducao`, `RelatoriosEstoque` e dashboards realtime para contexto grupo/empresa, RBAC granular, confirmacoes e auditoria.
+
+### Cadastros Gerais - Restauracao Pessoas & Parceiros Local
+
+- Corrigida a hidratacao local do snapshot apos a abertura automatica em modo local.
+- Diagnostico confirmou que o snapshot do projeto possuia 8 registros em `Pessoas & Parceiros`, mas o banco local do navegador estava com zero porque a importacao ainda exigia `VITE_LOCAL_ONLY=true`.
+- `src/api/localBase44Client.js` foi ajustado no fluxo existente para permitir a importacao do snapshot quando o ERP ja estiver operando em modo local automatico.
+- Validado no navegador local em `http://localhost:5173/cadastros?tab=cadastros`: total de `Pessoas & Parceiros` voltou para 8, com Cliente 1, Colaborador 2, Representante 1, SegmentoCliente 3 e RegiaoAtendimento 1.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas restaurado o carregamento dos dados existentes do snapshot.
+- Proximo passo sugerido: continuar Fase 8 nos relatorios especificos por area ainda pendentes, priorizando `DashboardCanaisOrigem`, `RelatoriosLogistica`, `RelatoriosProducao`, `RelatoriosEstoque` e dashboards realtime para contexto grupo/empresa, RBAC granular, confirmacoes e auditoria.

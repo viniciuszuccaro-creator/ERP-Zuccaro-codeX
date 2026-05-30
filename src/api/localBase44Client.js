@@ -1027,7 +1027,6 @@ const normalizeSnapshotRecord = (entityName, raw, topology) => {
 
 export const hydrateLocalBase44FromSnapshot = async ({ force = false, includeAuditLog = false, sourceUrl = '/base44-local-core-snapshot.json', onlyEntities = null } = {}) => {
   if (typeof window === 'undefined') return { imported: false, reason: 'server' };
-  if (import.meta.env?.VITE_LOCAL_ONLY !== 'true') return { imported: false, reason: 'remote-mode' };
 
   let snapshot;
   try {
