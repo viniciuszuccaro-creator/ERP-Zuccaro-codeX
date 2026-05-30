@@ -1484,3 +1484,21 @@ Checklist inicial:
 - `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
 - Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em relatorios e dashboards comerciais/producao ainda pendentes, priorizando `DashboardRepresentantes`, `RelatorioEstoque`, `RelatorioPersonalizado`, `AgendamentoRelatorios` e `SelectedOperationalReport` para contexto grupo/empresa, RBAC granular, confirmacoes, auditoria e sanitizacao de exportacoes.
+
+### Relatorios - Fase 8 Dashboards Pendentes, Estoque e Agendamentos
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `DashboardRepresentantes`, `RelatorioEstoque`, `RelatorioPersonalizado`, `AgendamentoRelatorios` e `SelectedOperationalReport`.
+- `DashboardRepresentantes` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Consultas de representantes, clientes e pedidos agora usam `filterInContext`, so executam com contexto grupo/empresa e permissao de visualizacao, e a exportacao exige RBAC, confirmacao, auditoria e carimba `group_id`, `grupo_id` e `empresa_id`.
+- `RelatorioEstoque` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Exportacoes de movimentacoes mensais e estoque por grupo agora confirmam antes do CSV, auditam bloqueio/cancelamento/sucesso e incluem contexto grupo/empresa nas linhas exportadas.
+- `RelatorioPersonalizado` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Relatorio personalizado agora consulta via `filterInContext`, respeita contexto/RBAC para gerar e exportar, sanitiza celulas CSV, confirma exportacoes CSV/Excel, audita bloqueio/cancelamento/sucesso e inclui contexto multiempresa no arquivo.
+- `AgendamentoRelatorios` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Salvamento de agendamento agora sanitiza destinatarios, exige confirmacao, audita cancelamento/sucesso, preserva `group_id`, `grupo_id` e `empresa_id` e exibe erro quando contexto/permissao/destinatario impedem salvar.
+- `SelectedOperationalReport` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Exportacao operacional selecionada agora valida contexto e permissao, confirma quantidade antes de exportar, audita bloqueio/cancelamento/sucesso e envia dados ao exportador ja carimbados com grupo/empresa.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco dos fluxos existentes.
+- `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
+- Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 nos relatorios especificos por area ainda pendentes, priorizando `DashboardCanaisOrigem`, `RelatoriosLogistica`, `RelatoriosProducao`, `RelatoriosEstoque` e dashboards realtime para contexto grupo/empresa, RBAC granular, confirmacoes e auditoria.

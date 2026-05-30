@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +11,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Download, Filter, BarChart3, FileText, Table as TableIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   BarChart,
@@ -28,6 +32,11 @@ import {
 } from 'recharts';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+const sanitizeText = (value) => String(value ?? "").replace(/[<>]/g, "").replace(/javascript:/gi, "").replace(/\r?\n/g, " ").trim();
+const sanitizeCsvCell = (value) => {
+  const sanitized = sanitizeText(typeof value === "object" ? JSON.stringify(value) : value);
+  return sanitized.includes(",") || sanitized.includes('"') ? `"${sanitized.replace(/"/g, '""')}"` : sanitized;
+};
 
 export default function RelatorioPersonalizado() {
   const [config, setConfig] = useState({
@@ -42,6 +51,19 @@ export default function RelatorioPersonalizado() {
   });
 
   const [showConfig, setShowConfig] = useState(true);
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextKey = empresaId || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const canViewRelatorio = hasPermission("Relatorios", "Personalizado", "visualizar") ||
+    hasPermission("Relat�rios", "Personalizado", "visualizar") ||
+    hasPermission("Relatorios", null, "visualizar");
+  const canExportRelatorio = hasPermission("Relatorios", "Personalizado", "exportar") ||
+    hasPermission("Relat�rios", "Personalizado", "exportar") ||
+    hasPermission("Relatorios", null, "exportar");
 
   const entidadesDisponiveis = [
     { value: 'Pedido', label: 'Pedidos', campos: ['numero_pedido', 'cliente_nome', 'vendedor', 'valor_total', 'status', 'data_pedido'] },
@@ -56,7 +78,7 @@ export default function RelatorioPersonalizado() {
   const entidadeAtual = entidadesDisponiveis.find(e => e.value === config.entidade);
 
   const { data: dados = [], isLoading } = useQuery({
-    queryKey: ['relatorio', config],
+    queryKey: ['relatorio', config, contextKey],
     queryFn: async () => {
       let query = {};
       
@@ -79,7 +101,7 @@ export default function RelatorioPersonalizado() {
         }
       });
 
-      const data = await base44.entities[config.entidade].filter(
+      const data = await filterInContext(config.entidade,
         query,
         config.ordenacao,
         1000
@@ -87,7 +109,7 @@ export default function RelatorioPersonalizado() {
 
       return data;
     },
-    enabled: !showConfig,
+    enabled: !showConfig && contextoValido && canViewRelatorio,
   });
 
   const handleToggleCampo = (campo) => {
@@ -99,33 +121,64 @@ export default function RelatorioPersonalizado() {
     }));
   };
 
-  const handleExportarCSV = () => {
-    if (!dados.length) return;
+
+  const auditarExportacao = async ({ formato, sucesso = true, motivo = null }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao: sucesso ? "Exportacao" : "Bloqueio",
+        modulo: "Relatorios",
+        entidade: "RelatorioPersonalizado",
+        descricao: sucesso ? `Exportacao ${formato} do relatorio personalizado` : (motivo || `Bloqueio de exportacao ${formato} do relatorio personalizado`),
+        usuario_id: user?.id || null,
+        usuario: user?.full_name || user?.email || "Usuario local",
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        dados_novos: { entidade: config.entidade, campos: config.campos, filtros: config.filtros, quantidade: dados.length, contextKey },
+        sucesso,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar exportacao personalizada:", error);
+    }
+  };
+  const handleExportarCSV = async (formato = "CSV") => {
+    if (!contextoValido || !canExportRelatorio) {
+      await auditarExportacao({ formato, sucesso: false, motivo: "Tentativa de exportar relatorio personalizado sem contexto grupo/empresa ou permissao RBAC." });
+      return false;
+    }
+    if (!dados.length) {
+      await auditarExportacao({ formato, sucesso: false, motivo: "Tentativa de exportar relatorio personalizado sem dados." });
+      return false;
+    }
+    const confirmado = window.confirm(`Exportar ${dados.length} registros do relatorio personalizado para ${formato}?`);
+    if (!confirmado) {
+      await auditarExportacao({ formato, sucesso: false, motivo: "Exportacao do relatorio personalizado cancelada pelo usuario." });
+      return false;
+    }
 
     const camposExport = config.campos.length > 0 ? config.campos : entidadeAtual.campos;
-    const csvHeader = camposExport.join(',');
+    const csvHeader = [...camposExport, "group_id", "grupo_id", "empresa_id"].join(',');
     const csvRows = dados.map(item =>
-      camposExport.map(campo => {
-        const valor = item[campo];
-        if (valor === null || valor === undefined) return '';
-        return typeof valor === 'string' ? `"${valor}"` : valor;
-      }).join(',')
+      [...camposExport.map(campo => sanitizeCsvCell(item[campo])), groupId || '', groupId || '', empresaId || ''].join(',')
     );
 
     const csv = [csvHeader, ...csvRows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `relatorio_${config.entidade}_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `relatorio_${sanitizeText(config.entidade)}_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     URL.revokeObjectURL(url);
+    await auditarExportacao({ formato, sucesso: true });
+    return true;
   };
 
-  const handleExportarExcel = () => {
-    // Simulação de export Excel (na produção usar biblioteca como xlsx)
-    handleExportarCSV();
-    alert('Para exportar para Excel real, integre com biblioteca xlsx');
+  const handleExportarExcel = async () => {
+    const exportado = await handleExportarCSV("Excel");
+    if (exportado) alert('Para exportar para Excel real, integre com biblioteca xlsx');
   };
 
   const processarDadosGrafico = () => {
@@ -249,9 +302,14 @@ export default function RelatorioPersonalizado() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full h-full" data-permission="Relatorios.Personalizado.visualizar" data-context-required="group-or-company">
       <Card>
         <CardHeader>
+          {(!contextoValido || !canViewRelatorio) && (
+            <Alert className="mb-4 border-amber-300 bg-amber-50">
+              <AlertDescription>Selecione grupo ou empresa e confirme permissao para visualizar relatorios personalizados.</AlertDescription>
+            </Alert>
+          )}
           <div className="flex items-center justify-between">
             <CardTitle>Relatório Personalizado</CardTitle>
             <div className="flex gap-2">
@@ -261,11 +319,11 @@ export default function RelatorioPersonalizado() {
               </Button>
               {!showConfig && (
                 <>
-                  <Button variant="outline" size="sm" onClick={handleExportarCSV}>
+                  <Button variant="outline" size="sm" onClick={() => handleExportarCSV("CSV")} disabled={!contextoValido || !canExportRelatorio || !dados.length} data-action="RelatorioPersonalizado.exportarCSV" data-permission="Relatorios.Personalizado.exportar" data-context-required="group-or-company" data-sensitive="true">
                     <Download className="w-4 h-4 mr-2" />
                     CSV
                   </Button>
-                  <Button variant="outline" size="sm" onClick={handleExportarExcel}>
+                  <Button variant="outline" size="sm" onClick={handleExportarExcel} disabled={!contextoValido || !canExportRelatorio || !dados.length} data-action="RelatorioPersonalizado.exportarExcel" data-permission="Relatorios.Personalizado.exportar" data-context-required="group-or-company" data-sensitive="true">
                     <FileText className="w-4 h-4 mr-2" />
                     Excel
                   </Button>
@@ -384,7 +442,7 @@ export default function RelatorioPersonalizado() {
             )}
 
             <div className="flex justify-end pt-4">
-              <Button onClick={() => setShowConfig(false)}>
+              <Button onClick={() => setShowConfig(false)} disabled={!contextoValido || !canViewRelatorio} data-action="RelatorioPersonalizado.gerar" data-permission="Relatorios.Personalizado.visualizar" data-context-required="group-or-company">
                 Gerar Relatório
               </Button>
             </div>

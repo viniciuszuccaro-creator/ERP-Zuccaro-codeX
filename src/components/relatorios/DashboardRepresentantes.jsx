@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,6 +16,10 @@ import {
   Download
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
+import { exportarCSV } from "@/components/relatorios/exportUtils";
 
 const tiposRepresentante = [
   { value: 'todos', label: 'Todos os Tipos' },
@@ -30,20 +35,36 @@ const tiposRepresentante = [
 export default function DashboardRepresentantes() {
   const [periodoFiltro, setPeriodoFiltro] = React.useState("mes");
   const [tipoFiltro, setTipoFiltro] = React.useState("todos");
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextKey = empresaId || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const canViewDashboard = hasPermission("Comercial", "Representantes", "visualizar") ||
+    hasPermission("Comercial", "Relatorios", "visualizar") ||
+    hasPermission("Comercial", null, "visualizar");
+  const canExportDashboard = hasPermission("Comercial", "Representantes", "exportar") ||
+    hasPermission("Comercial", "Relatorios", "exportar") ||
+    hasPermission("Comercial", null, "exportar");
 
   const { data: representantes = [] } = useQuery({
-    queryKey: ['representantes'],
-    queryFn: () => base44.entities.Representante.filter({ status: 'Ativo' })
+    queryKey: ['representantes-dashboard', contextKey],
+    queryFn: () => filterInContext('Representante', { status: 'Ativo' }, 'nome', 1000),
+    enabled: contextoValido && canViewDashboard
   });
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list()
+    queryKey: ['clientes-dashboard-representantes', contextKey],
+    queryFn: () => filterInContext('Cliente', {}, 'nome', 5000),
+    enabled: contextoValido && canViewDashboard
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list()
+    queryKey: ['pedidos-dashboard-representantes', contextKey],
+    queryFn: () => filterInContext('Pedido', {}, '-data_pedido', 5000),
+    enabled: contextoValido && canViewDashboard
   });
 
   const calcularMetricasGerais = () => {
@@ -96,6 +117,49 @@ export default function DashboardRepresentantes() {
     .sort((a, b) => b.vendas - a.vendas)
     .slice(0, 10);
 
+
+  const auditarExportacao = async (sucesso = true, motivo = null) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao: sucesso ? "Exportacao" : "Bloqueio",
+        modulo: "Comercial",
+        entidade: "DashboardRepresentantes",
+        descricao: sucesso ? "Exportacao CSV do dashboard de representantes" : (motivo || "Bloqueio de exportacao do dashboard de representantes"),
+        usuario_id: user?.id || null,
+        usuario: user?.full_name || user?.email || "Usuario local",
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        dados_novos: { periodoFiltro, tipoFiltro, quantidade: dadosRankingRepresentantes.length, contextKey },
+        sucesso,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar exportacao de representantes:", error);
+    }
+  };
+
+  const exportarRepresentantes = async () => {
+    if (!contextoValido || !canExportDashboard) {
+      await auditarExportacao(false, "Tentativa de exportar dashboard de representantes sem contexto grupo/empresa ou permissao RBAC.");
+      return;
+    }
+    const confirmado = window.confirm(`Exportar ${dadosRankingRepresentantes.length} representantes para CSV?`);
+    if (!confirmado) {
+      await auditarExportacao(false, "Exportacao CSV do dashboard de representantes cancelada pelo usuario.");
+      return;
+    }
+    const dadosComContexto = dadosRankingRepresentantes.map((item) => ({
+      ...item,
+      periodo: periodoFiltro,
+      group_id: groupId,
+      grupo_id: groupId,
+      empresa_id: empresaId,
+    }));
+    exportarCSV(dadosComContexto, "dashboard_representantes");
+    await auditarExportacao(true);
+  };
   const dadosPorTipo = [
     { name: 'Representante', value: representantes.filter(r => r.tipo_representante === 'Representante Comercial').length, color: '#8b5cf6' },
     { name: 'Construtor', value: representantes.filter(r => r.tipo_representante === 'Construtor').length, color: '#3b82f6' },
@@ -105,7 +169,12 @@ export default function DashboardRepresentantes() {
   ].filter(d => d.value > 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full h-full" data-permission="Comercial.Relatorios.visualizar" data-context-required="group-or-company">
+      {(!contextoValido || !canViewDashboard) && (
+        <Alert className="border-amber-300 bg-amber-50">
+          <AlertDescription>Selecione grupo ou empresa e confirme permissao para visualizar o dashboard de representantes.</AlertDescription>
+        </Alert>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -140,7 +209,7 @@ export default function DashboardRepresentantes() {
             </SelectContent>
           </Select>
 
-          <Button variant="outline">
+          <Button variant="outline" onClick={exportarRepresentantes} disabled={!contextoValido || !canExportDashboard} data-action="DashboardRepresentantes.exportarCSV" data-permission="Comercial.Relatorios.exportar" data-context-required="group-or-company" data-sensitive="true">
             <Download className="w-4 h-4 mr-2" />
             Exportar
           </Button>

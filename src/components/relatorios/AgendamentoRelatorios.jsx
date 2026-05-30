@@ -14,6 +14,9 @@ import useContextoVisual from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { useUser } from '@/components/lib/UserContext';
 
+const sanitizeText = (value) => String(value || '').replace(/[<>]/g, '').replace(/javascript:/gi, '').trim();
+const sanitizeEmails = (value) => sanitizeText(value).split(',').map((email) => email.trim()).filter(Boolean).join(', ');
+
 /**
  * Agendamento Inteligente de Relatórios
  * Envia relatórios automáticos por e-mail
@@ -66,7 +69,31 @@ export default function AgendamentoRelatorios({ empresaId }) {
         throw new Error('Selecione grupo/empresa e confirme permissao para salvar agendamentos.');
       }
 
-      // Salvar configuração
+      const destinatariosSanitizados = sanitizeEmails(data.destinatarios);
+      if (data.ativo && !destinatariosSanitizados) {
+        throw new Error('Informe ao menos um destinatario valido para ativar o agendamento.');
+      }
+      const confirmado = window.confirm(`Salvar agendamento de ${data.relatorio} (${data.frequencia}) para ${destinatariosSanitizados || 'sem destinatarios'}?`);
+      if (!confirmado) {
+        await base44.entities.AuditLog.create({
+          acao: 'Cancelamento',
+          modulo: 'Sistema',
+          entidade: 'AgendamentoRelatorios',
+          descricao: 'Agendamento de relatorios cancelado pelo usuario antes de salvar',
+          usuario_id: user?.id || null,
+          usuario: user?.email || user?.full_name || 'Usuario',
+          empresa_id: empresaSelecionadaId,
+          group_id: groupId,
+          grupo_id: groupId,
+          tipo_auditoria: 'seguranca',
+          sucesso: false,
+          dados_novos: data,
+          data_hora: new Date().toISOString()
+        });
+        throw new Error('Salvamento do agendamento cancelado pelo usuario.');
+      }
+
+      // Salvar configuracao
       const configs = await filterInContext('ConfiguracaoSistema', {
         chave: 'agendamento_relatorios'
       }, '-created_date', 10);
@@ -74,20 +101,40 @@ export default function AgendamentoRelatorios({ empresaId }) {
       const payload = {
         chave: 'agendamento_relatorios',
         categoria: 'Sistema',
-        configuracoes_sistema: data,
+        configuracoes_sistema: { ...data, destinatarios: destinatariosSanitizados },
         empresa_id: empresaSelecionadaId,
         group_id: groupId,
         grupo_id: groupId
       };
 
-      if (configs.length > 0) {
-        return await updateInContext('ConfiguracaoSistema', configs[0].id, payload);
-      }
-      return await createInContext('ConfiguracaoSistema', payload);
+      const resultado = configs.length > 0
+        ? await updateInContext('ConfiguracaoSistema', configs[0].id, payload)
+        : await createInContext('ConfiguracaoSistema', payload);
+
+      await base44.entities.AuditLog.create({
+        acao: 'Salvar',
+        modulo: 'Sistema',
+        entidade: 'AgendamentoRelatorios',
+        descricao: 'Agendamento de relatorios salvo com contexto grupo/empresa',
+        usuario_id: user?.id || null,
+        usuario: user?.email || user?.full_name || 'Usuario',
+        empresa_id: empresaSelecionadaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        tipo_auditoria: 'operacional',
+        sucesso: true,
+        dados_novos: payload,
+        data_hora: new Date().toISOString()
+      });
+
+      return resultado;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['config-sistema'] });
       toast({ title: '✅ Agendamento salvo!' });
+    },
+    onError: (error) => {
+      toast({ title: 'Agendamento nao salvo', description: error?.message || 'Verifique contexto e permissoes.', variant: 'destructive' });
     }
   });
 
@@ -120,6 +167,9 @@ export default function AgendamentoRelatorios({ empresaId }) {
             checked={agendamento.ativo}
             disabled={!contextoValido || !canEditAgendamento}
             onCheckedChange={(v) => setAgendamento({...agendamento, ativo: v})}
+            data-action="AgendamentoRelatorios.alterarAtivo"
+            data-permission="Sistema.Relatorios.editar"
+            data-context-required="group-or-company"
           />
         </div>
 
@@ -186,7 +236,11 @@ export default function AgendamentoRelatorios({ empresaId }) {
               <Input
                 placeholder="email1@empresa.com, email2@empresa.com"
                 value={agendamento.destinatarios}
-                onChange={(e) => setAgendamento({...agendamento, destinatarios: e.target.value})}
+                disabled={!contextoValido || !canEditAgendamento}
+                onChange={(e) => setAgendamento({...agendamento, destinatarios: sanitizeEmails(e.target.value)})}
+                data-action="AgendamentoRelatorios.destinatarios"
+                data-permission="Sistema.Relatorios.editar"
+                data-context-required="group-or-company"
               />
             </div>
 
