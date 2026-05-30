@@ -16,6 +16,7 @@ import { Plus, Send, Eye, CheckCircle2, TrendingUp, Award, FileText, ShoppingCar
 import CotacaoForm from "./CotacaoForm";
 import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { toast as sonnerToast } from "sonner";
 
 export default function CotacoesTab({ windowMode = false }) {
@@ -24,6 +25,33 @@ export default function CotacoesTab({ windowMode = false }) {
   const [comparativoModal, setComparativoModal] = useState(null);
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
+  const { empresaAtual, grupoAtual, contexto, filterInContext, createInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const canViewCotacao = hasPermission('Compras', 'Cotacao', 'visualizar') || hasPermission('Compras', null, 'visualizar');
+  const canCreateCotacao = hasPermission('Compras', 'Cotacao', 'criar') || hasPermission('Compras', null, 'criar');
+  const canGerarOC = hasPermission('Compras', 'Cotacao', 'gerar_oc') || hasPermission('Compras', 'OrdemCompra', 'criar') || hasPermission('Compras', null, 'criar');
+
+  const auditCotacao = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: 'Compras',
+        entidade: 'Cotacao',
+        tipo_auditoria: sucesso ? 'entidade' : 'seguranca',
+        descricao: motivo || 'Auditoria de cotacoes de compras.',
+        dados_novos: dados,
+        group_id: groupId,
+        grupo_id: groupId,
+        empresa_id: empresaId,
+        sucesso,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar cotacao:', error);
+    }
+  };
   const [formCotacao, setFormCotacao] = useState({
     descricao: "",
     data_limite_resposta: "",
@@ -36,13 +64,15 @@ export default function CotacoesTab({ windowMode = false }) {
   const queryClient = useQueryClient();
 
   const { data: fornecedores = [] } = useQuery({
-    queryKey: ['fornecedores'],
-    queryFn: () => base44.entities.Fornecedor.list(),
+    queryKey: ['fornecedores-cotacao', groupId, empresaId, contexto],
+    queryFn: () => filterInContext('Fornecedor', {}, 'nome', 9999),
+    enabled: contextoValido && canViewCotacao,
   });
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryKey: ['produtos-cotacao', groupId, empresaId, contexto],
+    queryFn: () => filterInContext('Produto', {}, 'descricao', 9999),
+    enabled: contextoValido && canViewCotacao,
   });
 
   // Criar entidade Cotacao (mock local)
@@ -94,7 +124,16 @@ export default function CotacoesTab({ windowMode = false }) {
   const criarCotacaoMutation = useMutation({
     mutationFn: async (data) => {
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      if (!contextoValido || !canCreateCotacao) {
+        await auditCotacao({
+          acao: 'Cotacao.criar_bloqueada',
+          sucesso: false,
+          motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+          dados: { descricao: data.descricao }
+        });
+        throw new Error(!contextoValido ? 'Selecione grupo ou empresa antes de criar cotacao.' : 'Sem permissao para criar cotacao.');
+      }
+
       const novaCotacao = {
         id: Date.now().toString(),
         numero_cotacao: `COT-${String(cotacoes.length + 1).padStart(3, '0')}`,
@@ -105,26 +144,48 @@ export default function CotacoesTab({ windowMode = false }) {
         fornecedores_convidados: data.fornecedores_selecionados.length,
         propostas_recebidas: 0,
         itens: data.itens,
-        propostas: []
+        propostas: [],
+        group_id: groupId,
+        grupo_id: groupId,
+        empresa_id: empresaId
       };
 
       setCotacoes([novaCotacao, ...cotacoes]);
+      await auditCotacao({ acao: 'Cotacao.criada', dados: { cotacao_id: novaCotacao.id, fornecedores: novaCotacao.fornecedores_convidados, itens: novaCotacao.itens.length } });
       return novaCotacao;
     },
     onSuccess: () => {
       setDialogOpen(false);
       resetForm();
       toast({
-        title: "✅ Cotação Criada!",
-        description: "Cotação criada e enviada aos fornecedores"
+        title: "Cotacao criada",
+        description: "Cotacao criada e enviada aos fornecedores"
       });
+    },
+    onError: (error) => {
+      toast({ title: "Cotacao nao criada", description: error?.message || "Erro ao criar cotacao", variant: "destructive" });
     },
   });
 
   const gerarOrdemCompraMutation = useMutation({
     mutationFn: async (proposta) => {
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      if (!contextoValido || !canGerarOC) {
+        await auditCotacao({
+          acao: 'Cotacao.gerar_oc_bloqueada',
+          sucesso: false,
+          motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+          dados: { fornecedor_id: proposta.fornecedor_id, valor_total: proposta.valor_total }
+        });
+        throw new Error(!contextoValido ? 'Selecione grupo ou empresa antes de gerar OC.' : 'Sem permissao para gerar ordem de compra.');
+      }
+
+      const confirmado = window.confirm(`Confirma gerar uma ordem de compra para ${proposta.fornecedor_nome} no valor de R$ ${Number(proposta.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}?`);
+      if (!confirmado) {
+        await auditCotacao({ acao: 'Cotacao.gerar_oc_cancelada', sucesso: false, motivo: 'confirmacao_cancelada', dados: { fornecedor_id: proposta.fornecedor_id, valor_total: proposta.valor_total } });
+        throw new Error('Geracao de OC cancelada pelo usuario.');
+      }
+
       const ordemCompra = {
         fornecedor_id: proposta.fornecedor_id,
         fornecedor_nome: proposta.fornecedor_nome,
@@ -138,18 +199,27 @@ export default function CotacoesTab({ windowMode = false }) {
           valor_total: item.valor_total
         })),
         condicao_pagamento: proposta.forma_pagamento,
-        prazo_entrega_acordado: proposta.prazo_entrega
+        prazo_entrega_acordado: proposta.prazo_entrega,
+        origem: 'cotacao',
+        group_id: groupId,
+        grupo_id: groupId,
+        empresa_id: empresaId
       };
 
-      return base44.entities.OrdemCompra.create(ordemCompra);
+      const criada = await createInContext('OrdemCompra', ordemCompra);
+      await auditCotacao({ acao: 'Cotacao.gerar_oc', dados: { ordem_compra_id: criada?.id, fornecedor_id: proposta.fornecedor_id, valor_total: proposta.valor_total } });
+      return criada;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ordensCompra'] });
       setComparativoModal(null);
       toast({
-        title: "✅ Ordem de Compra Gerada!",
-        description: "OC criada com sucesso a partir da cotação"
+        title: "Ordem de compra gerada",
+        description: "OC criada com sucesso a partir da cotacao"
       });
+    },
+    onError: (error) => {
+      toast({ title: "OC nao gerada", description: error?.message || "Erro ao gerar ordem de compra", variant: "destructive" });
     },
   });
 
