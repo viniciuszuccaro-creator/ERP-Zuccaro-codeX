@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  FileText, 
-  DollarSign, 
+import {
+  FileText,
+  DollarSign,
   TrendingUp,
   Package,
   X,
@@ -26,6 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -43,32 +44,61 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
   });
 
   const queryClient = useQueryClient();
-  const { canEdit } = usePermissions();
+  const { hasPermission, canEdit } = usePermissions();
+  const { empresaAtual, grupoAtual, contexto, filterInContext, updateInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || fornecedor?.group_id || fornecedor?.grupo_id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || fornecedor?.empresa_dona_id || fornecedor?.empresa_id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const canViewFornecedor = hasPermission('Compras', 'Fornecedores', 'visualizar') ||
+    hasPermission('Compras', null, 'visualizar');
+  const canManageFornecedor = hasPermission('Compras', 'Fornecedores', 'editar') ||
+    hasPermission('Compras', null, 'editar') ||
+    canEdit('compras', 'fornecedores');
+
+  const auditFornecedor = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: 'Compras',
+        entidade: 'Fornecedor',
+        tipo_auditoria: sucesso ? 'entidade' : 'seguranca',
+        descricao: motivo || `Fornecedor ${fornecedor?.nome || fornecedor?.id || ''}`.trim(),
+        dados_novos: { fornecedor_id: fornecedor?.id, ...dados },
+        group_id: groupId,
+        grupo_id: groupId,
+        empresa_id: empresaId,
+        sucesso,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar fornecedor:', error);
+    }
+  };
 
   // Buscar dados relacionados
   const { data: ordensCompra = [] } = useQuery({
-    queryKey: ['ordens-compra-fornecedor', fornecedor.id],
-    queryFn: () => base44.entities.OrdemCompra.filter({ fornecedor_id: fornecedor.id }),
-    enabled: !!fornecedor.id
+    queryKey: ['ordens-compra-fornecedor', fornecedor.id, groupId, empresaId, contexto],
+    queryFn: () => filterInContext('OrdemCompra', { fornecedor_id: fornecedor.id }, '-data_solicitacao', 100),
+    enabled: !!fornecedor.id && contextoValido && canViewFornecedor
   });
 
   const { data: notasFiscais = [] } = useQuery({
-    queryKey: ['notas-entrada-fornecedor', fornecedor.id],
-    queryFn: () => base44.entities.NotaFiscal.filter({ 
+    queryKey: ['notas-entrada-fornecedor', fornecedor.id, groupId, empresaId, contexto],
+    queryFn: () => filterInContext('NotaFiscal', {
       cliente_fornecedor_id: fornecedor.id,
       tipo: 'NF-e (Entrada)'
-    }),
-    enabled: !!fornecedor.id
+    }, '-data_emissao', 100, 'empresa_faturamento_id'),
+    enabled: !!fornecedor.id && contextoValido && canViewFornecedor
   });
 
   const { data: contasPagar = [] } = useQuery({
-    queryKey: ['contas-pagar-fornecedor', fornecedor.id],
-    queryFn: () => base44.entities.ContaPagar.filter({ fornecedor_id: fornecedor.id }),
-    enabled: !!fornecedor.id
+    queryKey: ['contas-pagar-fornecedor', fornecedor.id, groupId, empresaId, contexto],
+    queryFn: () => filterInContext('ContaPagar', { fornecedor_id: fornecedor.id }, '-data_vencimento', 100),
+    enabled: !!fornecedor.id && contextoValido && canViewFornecedor
   });
 
   const updateFornecedorMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Fornecedor.update(id, data),
+    mutationFn: ({ id, data }) => updateInContext('Fornecedor', id, data, 'empresa_dona_id'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
       toast.success("Fornecedor atualizado com sucesso!");
@@ -79,7 +109,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
   const totalCompras = ordensCompra
     .filter(o => o.status !== 'Cancelada')
     .reduce((sum, o) => sum + (o.valor_total || 0), 0);
-  
+
   const valorPendente = contasPagar
     .filter(c => c.status === 'Pendente')
     .reduce((sum, c) => sum + (c.valor || 0), 0);
@@ -94,12 +124,24 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
         .reduce((sum, o) => sum + o.lead_time_real, 0) / ordensCompra.filter(o => o.lead_time_real > 0).length
     : (fornecedor.prazo_entrega_padrao || 0);
 
-  const handleAdicionarDocumento = () => {
+  const handleAdicionarDocumento = async () => {
+    if (!contextoValido || !canManageFornecedor) {
+      await auditFornecedor({
+        acao: 'Fornecedor.documento_bloqueado',
+        sucesso: false,
+        motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+        dados: { tipo: documentoForm.tipo }
+      });
+      toast.error(!contextoValido ? 'Selecione grupo ou empresa antes de alterar documentos.' : 'Sem permissão para alterar documentos do fornecedor.');
+      return;
+    }
+
     const novosDocumentos = [...(fornecedor.documentos || []), { ...documentoForm, data_upload: new Date().toISOString() }];
     updateFornecedorMutation.mutate({
       id: fornecedor.id,
       data: { ...fornecedor, documentos: novosDocumentos }
     });
+    await auditFornecedor({ acao: 'Fornecedor.documento_adicionado', dados: { tipo: documentoForm.tipo, nome_arquivo: documentoForm.nome_arquivo } });
     setShowDocumentoDialog(false);
     setDocumentoForm({
       tipo: "Contrato Social",
@@ -109,16 +151,35 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
     });
   };
 
-  const handleRemoverDocumento = (index) => {
+  const handleRemoverDocumento = async (index) => {
+    if (!contextoValido || !canManageFornecedor) {
+      await auditFornecedor({
+        acao: 'Fornecedor.documento_remocao_bloqueada',
+        sucesso: false,
+        motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+        dados: { index }
+      });
+      toast.error(!contextoValido ? 'Selecione grupo ou empresa antes de alterar documentos.' : 'Sem permissão para remover documentos do fornecedor.');
+      return;
+    }
+
+    const documento = (fornecedor.documentos || [])[index];
+    const confirmado = window.confirm(`Confirma remover o documento ${documento?.nome_arquivo || documento?.tipo || ''}?`);
+    if (!confirmado) {
+      await auditFornecedor({ acao: 'Fornecedor.documento_remocao_cancelada', sucesso: false, motivo: 'confirmacao_cancelada', dados: { index } });
+      return;
+    }
+
     const documentosAtualizados = (fornecedor.documentos || []).filter((_, idx) => idx !== index);
     updateFornecedorMutation.mutate({
       id: fornecedor.id,
       data: { ...fornecedor, documentos: documentosAtualizados }
     });
+    await auditFornecedor({ acao: 'Fornecedor.documento_removido', dados: { index, tipo: documento?.tipo, nome_arquivo: documento?.nome_arquivo } });
   };
 
   const content = (
-    <div className={windowMode ? 'w-full h-full overflow-auto bg-white p-4' : ''}>
+    <div className={windowMode ? 'w-full h-full overflow-auto bg-white p-4' : 'w-full h-full'} data-permission="Compras.Fornecedores.visualizar" data-context-required="group-or-company" data-context-mode={contexto}>
       <Card className={windowMode ? 'border shadow-sm' : 'border-0 shadow-none m-4'}>
         <CardHeader className="border-b bg-white">
           <div className="flex items-center justify-between">
@@ -137,6 +198,13 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
         </CardHeader>
 
         <CardContent className="p-6">
+          {(!contextoValido || !canViewFornecedor) && (
+            <Card className="mb-4 border-amber-300 bg-amber-50">
+              <CardContent className="p-4 text-sm text-amber-900">
+                Selecione grupo ou empresa e confirme permissão para visualizar detalhes do fornecedor.
+              </CardContent>
+            </Card>
+          )}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-3 mb-6">
               <TabsTrigger value="historico">
@@ -270,7 +338,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                 </Card>
               )}
 
-              {canEdit('compras', 'fornecedores') && (
+              {canManageFornecedor && (
                 <Button className="w-full">
                   <Edit className="w-4 h-4 mr-2" />
                   Editar Condições Comerciais
@@ -313,7 +381,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                     <FileText className="w-5 h-5 text-indigo-600" />
                     Documentos Vinculados
                   </h3>
-                  {canEdit('compras', 'fornecedores') && (
+                  {canManageFornecedor && (
                     <Dialog open={showDocumentoDialog} onOpenChange={setShowDocumentoDialog}>
                       <DialogTrigger asChild>
                         <Button size="sm">
@@ -400,7 +468,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                             <Button size="sm" variant="ghost" title="Download">
                               <Download className="w-4 h-4" />
                             </Button>
-                            {canEdit('compras', 'fornecedores') && (
+                            {canManageFornecedor && (
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -451,7 +519,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                       </div>
                     </>
                   )}
-                  {canEdit('compras', 'fornecedores') && (
+                  {canManageFornecedor && (
                     <Button className="w-full mt-4">
                       <Edit className="w-4 h-4 mr-2" />
                       Editar Dados Bancários

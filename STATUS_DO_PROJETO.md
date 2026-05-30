@@ -1,5 +1,15 @@
 # Status do Projeto ERP Zuccaro
 
+### Compras - Fase 8 Detalhes do Fornecedor
+
+- Seguido o proximo passo do plano: reforcar pontos de estoque/compras com dados sensiveis sem contexto explicito, confirmacao ou auditoria.
+- `DetalhesFornecedor` deixou de consultar ordens de compra, NF-e de entrada e contas a pagar diretamente pelo `base44` global e passou a usar `filterInContext` com chave por grupo/empresa.
+- Atualizacao de documentos do fornecedor passou a usar `updateInContext` com campo `empresa_dona_id`, preservando carimbo multiempresa e auditoria padrao da camada de contexto.
+- Inclusao e remocao de documentos agora exigem contexto grupo/empresa, permissao RBAC de edicao em Compras/Fornecedores e geram auditoria especifica de sucesso, bloqueio ou cancelamento.
+- Remocao de documento passou a pedir confirmacao do usuario antes de alterar o cadastro, respeitando a Regra-Mae antes de excluir/retirar qualquer informacao.
+- A tela recebeu `w-full`, `h-full`, marcadores `data-permission`, `data-context-required` e alerta visual quando faltar contexto ou permissao.
+- Build validado com sucesso via Vite; permanecem apenas warnings tecnicos preexistentes de browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `CotacoesTab`, substituindo listagens/criacao global por contexto e auditando geracao de ordem de compra a partir de cotacao.
 ### Estoque - Fase 8 Relatorios com Exportacao Auditada
 
 - Seguido o proximo passo do plano de melhoria dentro do modulo Estoque, mantendo a Regra-Mae e melhorando o componente existente `RelatoriosEstoque`.
