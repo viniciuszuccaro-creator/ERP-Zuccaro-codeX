@@ -88,20 +88,20 @@ export default function RelatorioVendas() {
 
   const fmt = (v) => `R$ ${Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
-  const auditarExportacao = async (nome, quantidade, sucesso = true) => {
+  const auditarExportacao = async (nome, quantidade, sucesso = true, motivo = null) => {
     try {
       await base44.entities.AuditLog.create({
         acao: sucesso ? "Exportacao" : "Bloqueio",
         modulo: "Comercial",
         entidade: "RelatorioVendas",
-        descricao: sucesso ? `Exportacao CSV do relatorio de vendas: ${nome}` : `Exportacao bloqueada no relatorio de vendas: ${nome}`,
+        descricao: sucesso ? `Exportacao CSV do relatorio de vendas: ${nome}` : (motivo || `Exportacao bloqueada no relatorio de vendas: ${nome}`),
         usuario_id: user?.id || null,
         usuario: user?.full_name || user?.email || "Usuario local",
         empresa_id: empresaId,
         group_id: groupId,
         grupo_id: groupId,
         tipo_auditoria: sucesso ? "operacional" : "seguranca",
-        dados_novos: { nome, quantidade, filtros },
+        dados_novos: { nome, quantidade, filtros, contextKey },
         sucesso,
         data_hora: new Date().toISOString()
       });
@@ -111,12 +111,24 @@ export default function RelatorioVendas() {
   };
 
   const exportarRelatorio = async (dados, nomeArquivo) => {
+    const quantidade = dados?.length || 0;
     if (!contextoValido || !canExportRelatorio) {
-      await auditarExportacao(nomeArquivo, dados?.length || 0, false);
+      await auditarExportacao(nomeArquivo, quantidade, false, "Tentativa de exportar relatorio de vendas sem contexto grupo/empresa ou permissao RBAC.");
       return;
     }
-    exportarCSV(dados, nomeArquivo);
-    await auditarExportacao(nomeArquivo, dados?.length || 0, true);
+    const confirmado = window.confirm(`Exportar ${quantidade} registros de ${nomeArquivo} para CSV?`);
+    if (!confirmado) {
+      await auditarExportacao(nomeArquivo, quantidade, false, "Exportacao CSV do relatorio de vendas cancelada pelo usuario.");
+      return;
+    }
+    const dadosComContexto = (dados || []).map(item => ({
+      ...item,
+      group_id: groupId,
+      grupo_id: groupId,
+      empresa_id: empresaId,
+    }));
+    exportarCSV(dadosComContexto, nomeArquivo);
+    await auditarExportacao(nomeArquivo, dadosComContexto.length, true);
   };
 
   return (

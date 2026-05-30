@@ -123,7 +123,7 @@ export default function RelatorioVendasPorRegiao() {
     value: r.valorTotal
   }));
 
-  const auditarExportacao = async (sucesso = true) => {
+  const auditarExportacao = async (sucesso = true, motivo = null) => {
     try {
       await base44.entities.AuditLog.create({
         acao: sucesso ? 'Exportacao' : 'Bloqueio',
@@ -131,7 +131,7 @@ export default function RelatorioVendasPorRegiao() {
         entidade: 'RelatorioVendasPorRegiao',
         descricao: sucesso
           ? 'Exportacao CSV do relatorio de vendas por regiao'
-          : 'Bloqueio de exportacao do relatorio de vendas por regiao por contexto ou RBAC',
+          : (motivo || 'Bloqueio de exportacao do relatorio de vendas por regiao por contexto ou RBAC'),
         usuario_id: user?.id || null,
         usuario: user?.email || user?.full_name || 'Usuario',
         empresa_id: empresaId,
@@ -142,7 +142,8 @@ export default function RelatorioVendasPorRegiao() {
           periodoSelecionado,
           vendedorSelecionado,
           quantidadeRegioes: dadosPorRegiao.length,
-          totalVendas: totaisGerais.totalVendas
+          totalVendas: totaisGerais.totalVendas,
+          contextKey
         },
         sucesso,
         data_hora: new Date().toISOString()
@@ -154,11 +155,17 @@ export default function RelatorioVendasPorRegiao() {
 
   const exportarCSV = async () => {
     if (!contextoValido || !canExportRelatorio) {
-      await auditarExportacao(false);
+      await auditarExportacao(false, 'Tentativa de exportar vendas por regiao sem contexto grupo/empresa ou permissao RBAC.');
       return;
     }
 
-    const headers = ['Região', 'Tipo', 'Total Clientes', 'Qtd Pedidos', 'Valor Total', 'Ticket Médio', 'Meta Mensal', '% Meta'];
+    const confirmado = window.confirm(`Exportar ${dadosPorRegiao.length} regioes para CSV?`);
+    if (!confirmado) {
+      await auditarExportacao(false, 'Exportacao CSV do relatorio de vendas por regiao cancelada pelo usuario.');
+      return;
+    }
+
+    const headers = ['Região', 'Tipo', 'Total Clientes', 'Qtd Pedidos', 'Valor Total', 'Ticket Médio', 'Meta Mensal', '% Meta', 'group_id', 'grupo_id', 'empresa_id'];
     const rows = dadosPorRegiao.map(r => [
       r.nome,
       r.tipo,
@@ -167,7 +174,10 @@ export default function RelatorioVendasPorRegiao() {
       r.valorTotal.toFixed(2),
       r.ticketMedio.toFixed(2),
       r.metaMensal.toFixed(2),
-      r.percentualMeta.toFixed(1)
+      r.percentualMeta.toFixed(1),
+      groupId || '',
+      groupId || '',
+      empresaId || ''
     ]);
 
     const csv = [headers, ...rows].map(row => row.join(';')).join('\n');

@@ -26,6 +26,9 @@ export default function DREComparativo({ empresaId, windowMode = false }) {
   const canViewDRE = hasPermission("Financeiro", "DRE", "visualizar") ||
     hasPermission("Financeiro", "Relatorios", "visualizar") ||
     hasPermission("Financeiro", null, "visualizar");
+  const canExportDRE = hasPermission("Financeiro", "DRE", "exportar") ||
+    hasPermission("Financeiro", "Relatorios", "exportar") ||
+    hasPermission("Financeiro", null, "exportar");
 
   const { data: contasReceber = [] } = useQuery({
     queryKey: ['contasReceber', 'dre-comparativo', contextKey],
@@ -128,7 +131,7 @@ export default function DREComparativo({ empresaId, windowMode = false }) {
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
 
   return (
-    <div className={containerClass}>
+    <div className={containerClass} data-permission="Financeiro.DRE.visualizar" data-context-required="group-or-company">
       <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
       {(!contextoValido || !canViewDRE) && (
         <Alert className="border-amber-300 bg-amber-50" data-permission="Financeiro.DRE.visualizar" data-context-required="group-or-company">
@@ -172,12 +175,16 @@ export default function DREComparativo({ empresaId, windowMode = false }) {
               'Lucro Líquido': d.lucroLiquido,
               'Margem Bruta %': d.margemBruta,
               'Margem Líquida %': d.margemLiquida,
+              group_id: groupId,
+              grupo_id: groupId,
+              empresa_id: empresaSelecionadaId,
             }))} 
             fileName="dre_comparativo" 
             title="DRE Comparativo Multi-Períodos"
             module="Financeiro"
             section="DRE"
             action="exportar"
+            disabled={!contextoValido || !canExportDRE}
           />
         </div>
       </div>

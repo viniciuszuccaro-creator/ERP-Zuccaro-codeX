@@ -105,7 +105,7 @@ export default function RelatorioPedidosPorOrigem({ empresaId, windowMode = fals
 
   const origens = Object.keys(pedidosPorOrigem);
 
-  const auditarExportacao = async (sucesso = true) => {
+  const auditarExportacao = async (sucesso = true, motivo = null) => {
     try {
       await base44.entities.AuditLog.create({
         acao: sucesso ? 'Exportacao' : 'Bloqueio',
@@ -113,7 +113,7 @@ export default function RelatorioPedidosPorOrigem({ empresaId, windowMode = fals
         entidade: 'RelatorioPedidosPorOrigem',
         descricao: sucesso
           ? 'Exportacao CSV do relatorio de pedidos por origem'
-          : 'Bloqueio de exportacao do relatorio de pedidos por origem por contexto ou RBAC',
+          : (motivo || 'Bloqueio de exportacao do relatorio de pedidos por origem por contexto ou RBAC'),
         usuario_id: user?.id || null,
         usuario: user?.email || user?.full_name || 'Usuario',
         empresa_id: empresaSelecionadaId,
@@ -125,7 +125,8 @@ export default function RelatorioPedidosPorOrigem({ empresaId, windowMode = fals
           dataFim,
           origemFiltro,
           quantidadeOrigens: origens.length,
-          quantidadePedidos: pedidosFiltrados.length
+          quantidadePedidos: pedidosFiltrados.length,
+          contextKey
         },
         sucesso,
         data_hora: new Date().toISOString()
@@ -137,12 +138,18 @@ export default function RelatorioPedidosPorOrigem({ empresaId, windowMode = fals
 
   const handleExportar = async () => {
     if (!contextoValido || !canExportRelatorio) {
-      await auditarExportacao(false);
+      await auditarExportacao(false, 'Tentativa de exportar pedidos por origem sem contexto grupo/empresa ou permissao RBAC.');
+      return;
+    }
+
+    const confirmado = window.confirm(`Exportar ${origens.length} origens e ${pedidosFiltrados.length} pedidos para CSV?`);
+    if (!confirmado) {
+      await auditarExportacao(false, 'Exportacao CSV do relatorio de pedidos por origem cancelada pelo usuario.');
       return;
     }
 
     const csvContent = [
-      ['Origem', 'Total Pedidos', 'Valor Total', 'Aprovados', 'Taxa Conversão'],
+      ['Origem', 'Total Pedidos', 'Valor Total', 'Aprovados', 'Taxa Conversão', 'group_id', 'grupo_id', 'empresa_id'],
       ...origens.map(origem => {
         const dados = pedidosPorOrigem[origem];
         const taxa = dados.total > 0 ? ((dados.aprovados / dados.total) * 100).toFixed(1) : 0;
@@ -151,7 +158,10 @@ export default function RelatorioPedidosPorOrigem({ empresaId, windowMode = fals
           dados.total,
           `R$ ${dados.valorTotal.toFixed(2)}`,
           dados.aprovados,
-          `${taxa}%`
+          `${taxa}%`,
+          groupId || '',
+          groupId || '',
+          empresaSelecionadaId || ''
         ];
       })
     ].map(row => row.join(';')).join('\n');

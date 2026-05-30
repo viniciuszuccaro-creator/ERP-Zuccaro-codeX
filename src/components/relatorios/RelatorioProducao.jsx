@@ -105,7 +105,7 @@ export default function RelatorioProducao() {
         entidade: "RelatorioProducao",
         tipo_auditoria: sucesso ? "ui" : "seguranca",
         descricao: sucesso ? `CSV ${nomeArquivo} exportado.` : motivo,
-        dados_novos: { nomeArquivo, linhas, filtros },
+        dados_novos: { nomeArquivo, linhas, filtros, contextKey },
         sucesso,
         data_hora: new Date().toISOString()
       });
@@ -115,12 +115,24 @@ export default function RelatorioProducao() {
   };
 
   const handleExportarCSV = async (dados, nomeArquivo) => {
+    const linhas = dados?.length || 0;
     if (!contextoValido || !podeExportarRelatorio) {
-      await auditarExportacao({ nomeArquivo, linhas: dados?.length || 0, sucesso: false, motivo: "Tentativa de exportar relatório de produção sem contexto ou permissão." });
+      await auditarExportacao({ nomeArquivo, linhas, sucesso: false, motivo: "Tentativa de exportar relatorio de producao sem contexto grupo/empresa ou permissao RBAC." });
       return;
     }
-    exportarCSV(dados, nomeArquivo);
-    await auditarExportacao({ nomeArquivo, linhas: dados?.length || 0 });
+    const confirmado = window.confirm(`Exportar ${linhas} registros de ${nomeArquivo} para CSV?`);
+    if (!confirmado) {
+      await auditarExportacao({ nomeArquivo, linhas, sucesso: false, motivo: "Exportacao CSV do relatorio de producao cancelada pelo usuario." });
+      return;
+    }
+    const dadosComContexto = (dados || []).map(item => ({
+      ...item,
+      group_id: groupId,
+      grupo_id: groupId,
+      empresa_id: empresaId,
+    }));
+    exportarCSV(dadosComContexto, nomeArquivo);
+    await auditarExportacao({ nomeArquivo, linhas: dadosComContexto.length });
   };
 
   if (!contextoValido || !podeVerRelatorio) {
@@ -165,7 +177,7 @@ export default function RelatorioProducao() {
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <CardTitle className="text-base">OPs por Mês (Total × Concluídas)</CardTitle>
-              <Button size="sm" variant="outline" onClick={() => handleExportarCSV(producaoMensal, 'producao_mensal')} disabled={!podeExportarRelatorio} data-permission="Producao.Relatorios.exportar" data-action="RelatorioProducao.exportarMensal" data-sensitive>
+              <Button size="sm" variant="outline" onClick={() => handleExportarCSV(producaoMensal, 'producao_mensal')} disabled={!contextoValido || !podeExportarRelatorio} data-permission="Producao.Relatorios.exportar" data-action="RelatorioProducao.exportarMensal" data-context-required="group-or-company" data-sensitive>
                 <Download className="w-3 h-3 mr-1" /> CSV
               </Button>
             </div>
@@ -206,7 +218,7 @@ export default function RelatorioProducao() {
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <CardTitle className="text-base">Top 10 Produtos Produzidos</CardTitle>
-              <Button size="sm" variant="outline" onClick={() => handleExportarCSV(porProduto, 'top_produtos_producao')} disabled={!podeExportarRelatorio} data-permission="Producao.Relatorios.exportar" data-action="RelatorioProducao.exportarProdutos" data-sensitive>
+              <Button size="sm" variant="outline" onClick={() => handleExportarCSV(porProduto, 'top_produtos_producao')} disabled={!contextoValido || !podeExportarRelatorio} data-permission="Producao.Relatorios.exportar" data-action="RelatorioProducao.exportarProdutos" data-context-required="group-or-company" data-sensitive>
                 <Download className="w-3 h-3 mr-1" /> CSV
               </Button>
             </div>

@@ -1466,3 +1466,21 @@ Checklist inicial:
 - `git diff --check` executado sem erros.
 - Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 em relatorios comerciais/operacionais que ainda usam exportacao manual, priorizando `RelatorioVendas`, `RelatorioPedidosPorOrigem`, `RelatorioVendasPorRegiao`, `DREComparativo` e `RelatorioProducao` para confirmacao, auditoria, contexto grupo/empresa e RBAC granular.
+
+### Financeiro/Comercial/Producao - Fase 8 Relatorios Comerciais e Operacionais
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em relatorios comerciais/operacionais com exportacoes manuais.
+- `RelatorioVendas` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Exportacoes de vendas mensais e top clientes agora exigem contexto grupo/empresa, permissao RBAC, confirmacao explicita, auditoria de bloqueio/cancelamento/sucesso e incluem `group_id`, `grupo_id` e `empresa_id` nas linhas exportadas.
+- `RelatorioPedidosPorOrigem` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Exportacao de pedidos por origem agora exige contexto/permissao, confirma quantidade de origens e pedidos antes do CSV, audita cancelamento/bloqueio/sucesso e inclui contexto multiempresa no arquivo.
+- `RelatorioVendasPorRegiao` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Exportacao de vendas por regiao agora confirma antes de gerar CSV, audita cancelamento/bloqueio/sucesso e carimba `group_id`, `grupo_id` e `empresa_id` em cada linha.
+- `RelatorioProducao` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Exportacoes de producao mensal e top produtos agora exigem contexto/permissao, confirmacao explicita, auditoria contextualizada e exportam contexto grupo/empresa junto aos dados.
+- `DREComparativo` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
+- Exportacao via `ExportMenu` agora recebe contexto grupo/empresa nas linhas exportadas, bloqueio visual por contexto/permissao de exportacao e marcadores de permissao/contexto no container principal.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco dos fluxos de exportacao existentes.
+- `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
+- Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em relatorios e dashboards comerciais/producao ainda pendentes, priorizando `DashboardRepresentantes`, `RelatorioEstoque`, `RelatorioPersonalizado`, `AgendamentoRelatorios` e `SelectedOperationalReport` para contexto grupo/empresa, RBAC granular, confirmacoes, auditoria e sanitizacao de exportacoes.
