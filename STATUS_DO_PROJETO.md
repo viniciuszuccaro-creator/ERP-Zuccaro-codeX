@@ -1,5 +1,17 @@
 # Status do Projeto ERP Zuccaro
 
+### Compras/Estoque - Fase 8 Importacao NF-e Recebimento
+
+- Seguido o proximo passo salvo no status: continuar em `ImportacaoNFeRecebimento`, substituindo importacao/movimentacoes/atualizacao de produto diretas por contexto, confirmacao e auditoria completa.
+- `ImportacaoNFeRecebimento` deixou de criar `ImportacaoXMLNFe` e `MovimentacaoEstoque` diretamente pelo `base44.entities.*.create` e passou a usar `createInContext`.
+- Atualizacao de estoque do produto deixou de usar `Produto.filter/update` global e passou a usar `filterInContext` e `updateInContext`.
+- Processamento e confirmacao de recebimento agora exigem contexto grupo/empresa e permissao RBAC em Compras/ImportacaoNFe, Compras/Recebimento ou Estoque/Movimentacoes.
+- Confirmacao de recebimento passou a pedir confirmacao do usuario antes de atualizar estoque, com auditoria de sucesso, bloqueio e cancelamento.
+- A tela recebeu `w-full`, `h-full`, `data-permission`, `data-context-required`, alerta visual quando faltar contexto/permissao e botoes/campo de arquivo desabilitados quando a acao nao for permitida.
+- Textos visiveis quebrados por codificacao no fluxo de NF-e foram limpos dentro do componente alterado.
+- Mantida a Regra-Mae: nenhum modulo, tela, componente ou arquivo novo foi criado; apenas melhoria no componente existente.
+- Build validado com sucesso via Vite; permanecem apenas warnings tecnicos preexistentes de browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 procurando criacoes diretas restantes em compras/fiscal/estoque, priorizando `ImportarXMLNFe`, `OrdensCompraTab` e recebimentos/movimentacoes que ainda tenham auditoria minima.
 ### Estoque - Fase 8 Transferencia Entre Empresas
 
 - Seguido o proximo passo salvo no status: continuar Fase 8 em `ImportacaoNFeRecebimento` e `TransferenciaEntreEmpresasForm`, priorizando criacoes diretas de estoque/transferencia sem `createInContext` ou auditoria completa.

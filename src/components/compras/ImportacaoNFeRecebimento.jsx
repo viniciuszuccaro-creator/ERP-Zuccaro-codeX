@@ -7,10 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Upload, FileText, CheckCircle2, AlertCircle, Sparkles, Package, Download } from "lucide-react";
+import { Upload, FileText, CheckCircle2, AlertCircle, Sparkles, Package } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function ImportacaoNFeRecebimento({ windowMode = false }) {
   const [arquivo, setArquivo] = useState(null);
@@ -18,15 +20,51 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
   const [resultado, setResultado] = useState(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { hasPermission } = usePermissions();
+  const { empresaAtual, grupoAtual, contexto, createInContext, updateInContext, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const canProcessarNFe = hasPermission('Compras', 'ImportacaoNFe', 'criar') ||
+    hasPermission('Compras', 'Recebimento', 'criar') ||
+    hasPermission('Estoque', 'Movimentacoes', 'criar') ||
+    hasPermission('Compras', null, 'criar');
+
+  const auditImportacao = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: 'Compras',
+        entidade: 'ImportacaoXMLNFe',
+        tipo_auditoria: sucesso ? 'entidade' : 'seguranca',
+        descricao: motivo || 'Auditoria de importacao de NF-e de recebimento.',
+        dados_novos: dados,
+        group_id: groupId || dados.group_id || null,
+        grupo_id: groupId || dados.group_id || null,
+        empresa_id: empresaId || dados.empresa_id || null,
+        sucesso,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar importacao de NF-e:', error);
+    }
+  };
 
   const processarXMLMutation = useMutation({
     mutationFn: async (file) => {
+      if (!contextoValido || !canProcessarNFe) {
+        await auditImportacao({
+          acao: 'ImportacaoNFe.processamento_bloqueado',
+          sucesso: false,
+          motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+          dados: { arquivo: file?.name }
+        });
+        throw new Error(!contextoValido ? 'Selecione grupo ou empresa antes de processar NF-e.' : 'Sem permissao para processar NF-e de recebimento.');
+      }
+
       setProcessando(true);
-      
-      // Simular processamento
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Mock: resultado processamento XML
       const mockResultado = {
         sucesso: true,
         nfe: {
@@ -34,13 +72,13 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
           serie: "1",
           chave: "35250112345678901234567890123456789012345678",
           data_emissao: "2025-01-20",
-          fornecedor: "Aços Fortes Ltda",
+          fornecedor: "Acos Fortes Ltda",
           cnpj: "12.345.678/0001-90",
           valor_total: 15800.00,
           itens: [
             {
               codigo: "BIT-125",
-              descricao: "Barra de Aço CA-50 12.5mm",
+              descricao: "Barra de Aco CA-50 12.5mm",
               ncm: "72142000",
               quantidade: 500,
               unidade: "KG",
@@ -51,7 +89,7 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
             },
             {
               codigo: "BIT-100",
-              descricao: "Barra de Aço CA-50 10.0mm",
+              descricao: "Barra de Aco CA-50 10.0mm",
               ncm: "72142000",
               quantidade: 300,
               unidade: "KG",
@@ -63,19 +101,29 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
           ]
         },
         avisos: [
-          "✅ Todos os produtos foram encontrados no cadastro",
-          "🤖 IA sugeriu atualização de custo médio dos produtos"
+          "Todos os produtos foram encontrados no cadastro",
+          "IA sugeriu atualizacao de custo medio dos produtos"
         ]
       };
 
       setResultado(mockResultado);
       setProcessando(false);
+      await auditImportacao({
+        acao: 'ImportacaoNFe.processada',
+        dados: {
+          arquivo: file?.name,
+          numero_nfe: mockResultado.nfe.numero,
+          chave_acesso: mockResultado.nfe.chave,
+          quantidade_itens: mockResultado.nfe.itens.length,
+          valor_total: mockResultado.nfe.valor_total
+        }
+      });
       return mockResultado;
     },
     onError: (error) => {
       setProcessando(false);
       toast({
-        title: "❌ Erro no Processamento",
+        title: "Erro no processamento",
         description: error.message,
         variant: "destructive"
       });
@@ -84,8 +132,17 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
 
   const confirmarRecebimentoMutation = useMutation({
     mutationFn: async (dados) => {
-      // 1. Criar registro de importação
-      const importacao = await base44.entities.ImportacaoXMLNFe.create({
+      if (!contextoValido || !canProcessarNFe) {
+        await auditImportacao({
+          acao: 'ImportacaoNFe.recebimento_bloqueado',
+          sucesso: false,
+          motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+          dados: { numero_nfe: dados?.nfe?.numero, chave_acesso: dados?.nfe?.chave }
+        });
+        throw new Error(!contextoValido ? 'Selecione grupo ou empresa antes de confirmar recebimento.' : 'Sem permissao para confirmar recebimento por NF-e.');
+      }
+
+      const importacao = await createInContext('ImportacaoXMLNFe', {
         tipo_nfe: "Entrada",
         chave_acesso: dados.nfe.chave,
         numero_nfe: dados.nfe.numero,
@@ -96,15 +153,19 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
         valor_total: dados.nfe.valor_total,
         quantidade_itens: dados.nfe.itens.length,
         status_processamento: "Processado",
-        data_importacao: new Date().toISOString()
+        data_importacao: new Date().toISOString(),
+        group_id: groupId,
+        grupo_id: groupId,
+        empresa_id: empresaId
       });
 
-      // 2. Criar movimentações de estoque para cada item
+      let itensMovimentados = 0;
       for (const item of dados.nfe.itens) {
         if (item.produto_encontrado && item.produto_id) {
-          await base44.entities.MovimentacaoEstoque.create({
+          await createInContext('MovimentacaoEstoque', {
             origem_movimento: "nfe",
             tipo_movimento: "entrada",
+            tipo_movimentacao: "Entrada",
             produto_id: item.produto_id,
             produto_descricao: item.descricao,
             quantidade: item.quantidade,
@@ -114,42 +175,69 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
             documento: `NF-e ${dados.nfe.numero}`,
             data_movimentacao: dados.nfe.data_emissao,
             motivo: `Recebimento NF-e ${dados.nfe.numero}`,
-            responsavel: "Sistema - Importação XML"
+            responsavel: "Sistema - Importacao XML",
+            group_id: groupId,
+            grupo_id: groupId,
+            empresa_id: empresaId
           });
+          itensMovimentados += 1;
 
-          // Atualizar estoque do produto
-          const produto = await base44.entities.Produto.filter({ id: item.produto_id });
-          if (produto && produto.length > 0) {
-            const produtoAtual = produto[0];
-            await base44.entities.Produto.update(item.produto_id, {
-              estoque_atual: (produtoAtual.estoque_atual || 0) + item.quantidade,
+          const produtos = await filterInContext('Produto', { id: item.produto_id }, 'descricao', 1);
+          const produtoAtual = Array.isArray(produtos) ? produtos[0] : null;
+          if (produtoAtual) {
+            await updateInContext('Produto', item.produto_id, {
+              estoque_atual: (Number(produtoAtual.estoque_atual) || 0) + Number(item.quantidade || 0),
               ultimo_preco_compra: item.valor_unitario,
-              ultima_compra: dados.nfe.data_emissao
+              ultima_compra: dados.nfe.data_emissao,
+              group_id: produtoAtual.group_id || groupId,
+              grupo_id: produtoAtual.grupo_id || groupId,
+              empresa_id: produtoAtual.empresa_id || empresaId
             });
           }
         }
       }
+
+      await auditImportacao({
+        acao: 'ImportacaoNFe.recebimento_confirmado',
+        dados: {
+          importacao_id: importacao?.id,
+          numero_nfe: dados.nfe.numero,
+          chave_acesso: dados.nfe.chave,
+          itens_movimentados: itensMovimentados,
+          valor_total: dados.nfe.valor_total,
+          group_id: groupId,
+          empresa_id: empresaId
+        }
+      });
 
       return importacao;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['movimentacoes'] });
       queryClient.invalidateQueries({ queryKey: ['produtos'] });
+      queryClient.invalidateQueries({ queryKey: ['importacoes-nfe'] });
       toast({
-        title: "✅ Recebimento Confirmado!",
+        title: "Recebimento confirmado",
         description: "Estoque atualizado automaticamente"
       });
       setResultado(null);
       setArquivo(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Recebimento nao confirmado",
+        description: error?.message || "Erro ao confirmar recebimento",
+        variant: "destructive"
+      });
     }
   });
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (!file.name.endsWith('.xml')) {
+      if (!file.name.toLowerCase().endsWith('.xml')) {
         toast({
-          title: "⚠️ Formato Inválido",
+          title: "Formato invalido",
           description: "Por favor, selecione um arquivo XML",
           variant: "destructive"
         });
@@ -164,21 +252,67 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
     processarXMLMutation.mutate(arquivo);
   };
 
+  const handleConfirmarRecebimento = async () => {
+    if (!resultado) return;
+    if (!contextoValido || !canProcessarNFe) {
+      await auditImportacao({
+        acao: 'ImportacaoNFe.recebimento_bloqueado',
+        sucesso: false,
+        motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+        dados: { numero_nfe: resultado?.nfe?.numero, chave_acesso: resultado?.nfe?.chave }
+      });
+      toast({
+        title: "Recebimento bloqueado",
+        description: !contextoValido ? "Selecione grupo ou empresa antes de confirmar." : "Sem permissao para confirmar recebimento.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const confirmado = window.confirm(`Confirma o recebimento da NF-e ${resultado.nfe.numero} e a atualizacao de estoque de ${resultado.nfe.itens.length} item(ns)?`);
+    if (!confirmado) {
+      await auditImportacao({
+        acao: 'ImportacaoNFe.recebimento_cancelado',
+        sucesso: false,
+        motivo: 'confirmacao_cancelada',
+        dados: { numero_nfe: resultado.nfe.numero, chave_acesso: resultado.nfe.chave }
+      });
+      return;
+    }
+
+    confirmarRecebimentoMutation.mutate(resultado);
+  };
+
   const content = (
-    <div className="space-y-2">
+    <div
+      className="space-y-2 w-full h-full"
+      data-permission="Compras.ImportacaoNFe.criar"
+      data-context-required="group-or-company"
+      data-context-mode={contexto}
+    >
+      {(!contextoValido || !canProcessarNFe) && (
+        <Alert className="border-amber-300 bg-amber-50">
+          <AlertCircle className="w-4 h-4 text-amber-700" />
+          <AlertDescription className="text-sm text-amber-800">
+            {!contextoValido
+              ? "Selecione um grupo ou empresa antes de processar NF-e."
+              : "Seu perfil nao possui permissao para processar recebimento por NF-e."}
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50">
         <CardHeader className="bg-blue-100/50 border-b border-blue-200 py-3 px-4">
           <CardTitle className="flex items-center gap-2 text-base">
             <Upload className="w-5 h-5 text-blue-600" />
-            🤖 Recebimento Automático por NF-e (XML)
+            Recebimento automatico por NF-e (XML)
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4 space-y-3">
           <Alert className="border-blue-300 bg-white/70">
             <Sparkles className="w-4 h-4 text-blue-600" />
             <AlertDescription className="text-sm">
-              <strong>IA Automatizada:</strong> Faça upload do XML da NF-e de entrada. 
-              O sistema identifica produtos, atualiza estoque e custos automaticamente.
+              <strong>IA automatizada:</strong> faca upload do XML da NF-e de entrada. O sistema identifica produtos, atualiza estoque e custos automaticamente.
             </AlertDescription>
           </Alert>
 
@@ -193,10 +327,11 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
                 accept=".xml"
                 onChange={handleFileChange}
                 className="flex-1"
+                disabled={!contextoValido || !canProcessarNFe}
               />
               <Button
                 onClick={handleProcessar}
-                disabled={!arquivo || processando}
+                disabled={!arquivo || processando || !contextoValido || !canProcessarNFe}
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 {processando ? (
@@ -224,7 +359,7 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
             <div className="space-y-2">
               <Progress value={60} className="h-2" />
               <p className="text-xs text-slate-600 text-center">
-                🤖 IA analisando XML e identificando produtos...
+                IA analisando XML e identificando produtos...
               </p>
             </div>
           )}
@@ -236,13 +371,13 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
           <CardHeader className="bg-green-100 border-b border-green-200 py-3 px-4">
             <CardTitle className="flex items-center gap-2 text-base">
               <CheckCircle2 className="w-5 h-5 text-green-600" />
-              Dados da NF-e Processados
+              Dados da NF-e processados
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 space-y-3">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="bg-white p-3 rounded-lg border border-green-200">
-                <p className="text-xs text-slate-600">Número NF-e</p>
+                <p className="text-xs text-slate-600">Numero NF-e</p>
                 <p className="text-lg font-bold text-green-900">{resultado.nfe.numero}</p>
               </div>
               <div className="bg-white p-3 rounded-lg border border-green-200">
@@ -257,7 +392,7 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
               </div>
             </div>
 
-            <div className="bg-white border border-green-200 rounded-lg p-3">
+            <div className="bg-white border border-green-200 rounded-lg p-3 overflow-x-auto">
               <p className="text-sm font-semibold mb-2">Itens da NF-e:</p>
               <Table>
                 <TableHeader>
@@ -315,8 +450,8 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
               </Button>
               <Button
                 className="bg-green-600 hover:bg-green-700"
-                onClick={() => confirmarRecebimentoMutation.mutate(resultado)}
-                disabled={confirmarRecebimentoMutation.isPending}
+                onClick={handleConfirmarRecebimento}
+                disabled={confirmarRecebimentoMutation.isPending || !contextoValido || !canProcessarNFe}
               >
                 {confirmarRecebimentoMutation.isPending ? (
                   <>
@@ -337,12 +472,12 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
 
       <Card className="border-0 shadow-sm">
         <CardHeader className="bg-slate-50 border-b py-2 px-3">
-          <CardTitle className="text-sm">📊 Histórico de Importações</CardTitle>
+          <CardTitle className="text-sm">Historico de importacoes</CardTitle>
         </CardHeader>
         <CardContent className="p-3">
           <div className="text-center py-8 text-slate-500">
             <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p className="text-sm">Nenhuma importação realizada ainda</p>
+            <p className="text-sm">Nenhuma importacao realizada ainda</p>
           </div>
         </CardContent>
       </Card>
