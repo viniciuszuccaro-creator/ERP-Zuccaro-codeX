@@ -1,4 +1,17 @@
-# Status do Projeto ERP Zuccaro
+﻿# Status do Projeto ERP Zuccaro
+
+### Cadastros - Fase 8 Importação Produto NF-e/PDF
+
+- Seguido o próximo ponto salvo no status: revisar `ImportacaoProdutoNFe`, que ainda filtrava e criava produto diretamente pelo `base44.entities.Produto`.
+- Verificação de duplicidade passou a usar `filterInContext`, respeitando contexto de grupo/empresa.
+- Importação de produtos passou a usar `createInContext`, com `group_id`, `grupo_id` e `empresa_id` no payload.
+- Processamento e importação agora exigem contexto de grupo/empresa e permissão RBAC para criar produto.
+- Dados extraídos da NF-e/PDF passam por sanitização simples, limite de tamanho e conversão numérica antes da gravação.
+- Importação em massa passou a pedir confirmação do usuário e gerar auditoria de bloqueio, cancelamento, erro e sucesso.
+- Botões sensíveis receberam alerta de contexto/permissão e marcadores `data-permission`, `data-action` e `data-sensitive`.
+- Mantida a Regra-Mãe: nenhuma tela, módulo, arquivo ou fluxo novo foi criado; apenas melhoria no componente existente.
+- Próximo passo sugerido: continuar varredura em Cadastro Gerais/Estoque por chamadas diretas de `Produto.create/update/delete/filter/list` e corrigir no fluxo existente.
+
 
 ### Cadastros - Fase 8 Importar Produtos NF-e XML
 
