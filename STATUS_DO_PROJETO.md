@@ -1,3 +1,12 @@
+
+### Comercial - Fase 8 Sugestões e Itens de Produto
+- Segui o próximo passo salvo do plano em Comercial: `SugestoesProdutos`, `TabelaPrecoItensModal` e `AdicionarItemRevendaModal`.
+- `SugestoesProdutos` deixou de consultar pedidos/produtos globalmente e passou a usar `filterInContext` com `groupId`/`empresaId` na chave da query, alerta de contexto/permissão e botão protegido por RBAC.
+- `TabelaPrecoItensModal` passou a listar itens/produtos por contexto, criar/editar/excluir via `createInContext`/`updateInContext`/`deleteInContext`, mantendo confirmação da Regra-Mãe antes de remover item.
+- `AdicionarItemRevendaModal` passou a carregar produtos de revenda por contexto, bloquear busca/seleção/adição sem permissão e preservar o fluxo atual de cálculo de margem, estoque e aprovação.
+- Todos os pontos alterados receberam marcadores `data-context-required`, `data-permission`, `data-action` e `data-sensitive` onde a ação altera dado.
+- Próximo passo: revisar `Top10ProdutosCliente` e os demais componentes auxiliares do pedido comercial que ainda possam usar consultas globais de produto/cliente.
+
 # Status do Projeto ERP Zuccaro
 
 ### Comercial - Fase 8 Seletores de Produto

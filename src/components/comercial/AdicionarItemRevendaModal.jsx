@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { 
@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { calcularPrecoItem } from "./CalculadorPrecoItem";
 import Top10ProdutosCliente from "./Top10ProdutosCliente";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -45,15 +47,35 @@ export default function AdicionarItemRevendaModal({
   const [searchTerm, setSearchTerm] = useState("");
   const [mostrarSugestoes, setMostrarSugestoes] = useState(true);
 
+  const { filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === "empresa" ? empresaAtual?.id : null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeVisualizarProduto =
+    hasPermission("Comercial.Pedido.criar") ||
+    hasPermission("Comercial.Pedido.editar") ||
+    hasPermission("Estoque.Produto.visualizar") ||
+    hasPermission("Cadastros.Produto.visualizar");
+  const podeAdicionarItem =
+    hasPermission("Comercial.Pedido.criar") ||
+    hasPermission("Comercial.Pedido.editar") ||
+    hasPermission("comercial", "criar_pedido") ||
+    hasPermission("comercial", "editar_pedido");
+  const consultaHabilitada = Boolean(contextoValido && podeVisualizarProduto);
+  const acaoHabilitada = Boolean(contextoValido && podeAdicionarItem);
+
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryKey: ["produtos-revenda-contexto", groupId, empresaId, contexto],
+    queryFn: () => filterInContext("Produto", {}, "descricao", 500),
+    enabled: consultaHabilitada,
   });
 
-  const produtosAtivos = produtos.filter(p => 
+  const produtosAtivos = consultaHabilitada ? produtos.filter(p =>
     p.status === 'Ativo' && 
     (p.tipo_item === 'Revenda' || p.tipo_item === 'Produto Acabado')
-  );
+  ) : [];
 
   const produtosFiltrados = produtosAtivos.filter(p =>
     p.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -74,6 +96,11 @@ export default function AdicionarItemRevendaModal({
   }) : null;
 
   const handleAdicionarItem = () => {
+    if (!acaoHabilitada) {
+      alert("Selecione um contexto de grupo/empresa e confirme permissao para alterar pedido comercial.");
+      return;
+    }
+
     if (!produtoSelecionado || !calculo) return;
 
     if (calculo.margem_violada && !justificativaDesconto.trim()) {
@@ -133,8 +160,17 @@ export default function AdicionarItemRevendaModal({
   };
 
   const content = (
-    <div className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
-          {cliente && mostrarSugestoes && !produtoSelecionado && (
+    <div className={`w-full h-full space-y-6 ${windowMode ? 'p-6 overflow-auto' : ''}`} data-context-required="true" data-permission="Comercial.Pedido.criar">
+          {(!contextoValido || !podeVisualizarProduto) && (
+            <Alert className="border-amber-200 bg-amber-50" data-context-required="true" data-permission="Estoque.Produto.visualizar">
+              <AlertCircle className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-amber-800">
+                Selecao de itens exige contexto de grupo/empresa e permissao para visualizar produtos.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {cliente && mostrarSugestoes && !produtoSelecionado && consultaHabilitada && (
             <Card className="border-blue-200 bg-blue-50">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-3">
@@ -456,7 +492,10 @@ export default function AdicionarItemRevendaModal({
         <Button
           type="button"
           onClick={handleAdicionarItem}
-          disabled={!produtoSelecionado || quantidade <= 0 || (calculo?.margem_violada && !justificativaDesconto.trim())}
+          disabled={!acaoHabilitada || !produtoSelecionado || quantidade <= 0 || (calculo?.margem_violada && !justificativaDesconto.trim())}
+          data-permission="Comercial.Pedido.criar"
+          data-action="adicionar-item-revenda"
+          data-sensitive="true"
           className={calculo?.margem_violada ? "bg-orange-600 hover:bg-orange-700" : "bg-blue-600 hover:bg-blue-700"}
         >
           {calculo?.margem_violada ? "Adicionar (Aguardando Aprovação)" : "Adicionar Item"}

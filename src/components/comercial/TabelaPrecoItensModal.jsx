@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Package, TrendingUp, Calendar } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Plus, Edit, Trash2, Package, TrendingUp, Calendar, ShieldAlert } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import SearchInput from "@/components/ui/SearchInput";
 import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { DollarSign } from "lucide-react";
 
 /**
@@ -24,6 +25,22 @@ export default function TabelaPrecoItensModal({ tabela, isOpen, onClose, windowM
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { hasPermission } = usePermissions();
+  const { filterInContext, createInContext, updateInContext, deleteInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+
+  const groupId = tabela?.group_id || tabela?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = tabela?.empresa_id || (contexto === "empresa" ? empresaAtual?.id : null);
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeVisualizar =
+    hasPermission("Comercial.TabelaPreco.visualizar") ||
+    hasPermission("Cadastros.TabelaPreco.visualizar") ||
+    hasPermission("comercial", "visualizar_tabela_preco") ||
+    hasPermission("comercial", "editar_tabela_preco");
+  const podeEditar =
+    hasPermission("Comercial.TabelaPreco.editar") ||
+    hasPermission("Cadastros.TabelaPreco.editar") ||
+    hasPermission("comercial", "editar_tabela_preco");
+  const acaoHabilitada = Boolean(contextoValido && podeEditar);
+  const consultaHabilitada = Boolean(tabela?.id && contextoValido && podeVisualizar);
 
   const [formItem, setFormItem] = useState({
     produto_id: "",
@@ -36,14 +53,15 @@ export default function TabelaPrecoItensModal({ tabela, isOpen, onClose, windowM
   });
 
   const { data: itens = [] } = useQuery({
-    queryKey: ['tabela-preco-itens', tabela?.id],
-    queryFn: () => base44.entities.TabelaPrecoItem.filter({ tabela_preco_id: tabela.id }),
-    enabled: !!tabela?.id,
+    queryKey: ["tabela-preco-itens-contexto", tabela?.id, groupId, empresaId, contexto],
+    queryFn: () => filterInContext("TabelaPrecoItem", { tabela_preco_id: tabela.id }, "produto_descricao", 1000),
+    enabled: consultaHabilitada,
   });
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryKey: ["produtos-tabela-preco-contexto", groupId, empresaId, contexto],
+    queryFn: () => filterInContext("Produto", {}, "descricao", 500),
+    enabled: Boolean(contextoValido && podeVisualizar),
   });
 
   const createItemMutation = useMutation({
@@ -51,15 +69,20 @@ export default function TabelaPrecoItensModal({ tabela, isOpen, onClose, windowM
       const produto = produtos.find(p => p.id === data.produto_id);
       const precoComDesconto = data.preco_base * (1 - data.percentual_desconto / 100);
       
-      return base44.entities.TabelaPrecoItem.create({
+      if (!acaoHabilitada) {
+        throw new Error("Contexto de grupo/empresa e permissao para editar tabela de preco sao obrigatorios.");
+      }
+
+      return createInContext("TabelaPrecoItem", {
         ...data,
         tabela_preco_id: tabela.id,
         tabela_preco_nome: tabela.nome,
         produto_codigo: produto?.codigo,
         produto_descricao: produto?.descricao,
         preco_com_desconto: precoComDesconto,
-        empresa_id: tabela.empresa_id,
-        group_id: tabela.group_id
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId
       });
     },
     onSuccess: () => {
@@ -74,9 +97,16 @@ export default function TabelaPrecoItensModal({ tabela, isOpen, onClose, windowM
   const updateItemMutation = useMutation({
     mutationFn: ({ id, data }) => {
       const precoComDesconto = data.preco_base * (1 - data.percentual_desconto / 100);
-      return base44.entities.TabelaPrecoItem.update(id, {
+      if (!acaoHabilitada) {
+        throw new Error("Contexto de grupo/empresa e permissao para editar tabela de preco sao obrigatorios.");
+      }
+
+      return updateInContext("TabelaPrecoItem", id, {
         ...data,
-        preco_com_desconto: precoComDesconto
+        preco_com_desconto: precoComDesconto,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId
       });
     },
     onSuccess: () => {
@@ -88,7 +118,12 @@ export default function TabelaPrecoItensModal({ tabela, isOpen, onClose, windowM
   });
 
   const deleteItemMutation = useMutation({
-    mutationFn: (id) => base44.entities.TabelaPrecoItem.delete(id),
+    mutationFn: (id) => {
+      if (!acaoHabilitada) {
+        throw new Error("Contexto de grupo/empresa e permissão para editar tabela de preço são obrigatórios.");
+      }
+      return deleteInContext("TabelaPrecoItem", id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tabela-preco-itens'] });
       toast({ title: "✅ Item removido!" });
@@ -97,6 +132,10 @@ export default function TabelaPrecoItensModal({ tabela, isOpen, onClose, windowM
 
   const handleSubmitItem = (e) => {
     e.preventDefault();
+    if (!acaoHabilitada) {
+      toast({ title: "Acao bloqueada", description: "Selecione um contexto de grupo/empresa e confirme sua permissao para editar tabela de preco.", variant: "destructive" });
+      return;
+    }
     if (editingItem) {
       updateItemMutation.mutate({ id: editingItem.id, data: formItem });
     } else {
@@ -119,7 +158,7 @@ export default function TabelaPrecoItensModal({ tabela, isOpen, onClose, windowM
   };
 
   const handleDeleteItem = (item) => {
-    if (confirm(`Remover "${item.produto_descricao}" desta tabela?`)) {
+    if (acaoHabilitada && confirm(`Regra-Mãe: confirma remover "${item.produto_descricao}" desta tabela de preço?`)) {
       deleteItemMutation.mutate(item.id);
     }
   };
@@ -133,10 +172,8 @@ export default function TabelaPrecoItensModal({ tabela, isOpen, onClose, windowM
     !itens.some(i => i.produto_id === p.id)
   );
 
-  const podeEditar = hasPermission('comercial', 'editar_tabela_preco');
-
   const content = (
-    <div className={`${windowMode ? 'w-full h-full overflow-hidden flex flex-col bg-white' : ''}`}>
+    <div className={`w-full h-full ${windowMode ? 'overflow-hidden flex flex-col bg-white' : ''}`} data-context-required="true" data-permission="Comercial.TabelaPreco.visualizar">
       <div className={`${windowMode ? 'border-b pb-4 px-6 pt-6' : ''} flex-shrink-0`}>
         <div className="flex items-start justify-between">
             <div>
@@ -205,7 +242,9 @@ export default function TabelaPrecoItensModal({ tabela, isOpen, onClose, windowM
                     }}
                     required
                     className="w-full border rounded-md p-2"
-                    disabled={!!editingItem}
+                    disabled={!!editingItem || !acaoHabilitada}
+                    data-permission="Comercial.TabelaPreco.editar"
+                    data-action="selecionar-produto-tabela-preco"
                   >
                     <option value="">Selecione um produto...</option>
                     {(editingItem ? produtos : produtosDisponiveis).map(p => (
@@ -305,7 +344,10 @@ export default function TabelaPrecoItensModal({ tabela, isOpen, onClose, windowM
                 </Button>
                 <Button 
                   type="submit" 
-                  disabled={createItemMutation.isPending || updateItemMutation.isPending}
+                  disabled={!acaoHabilitada || createItemMutation.isPending || updateItemMutation.isPending}
+                  data-permission="Comercial.TabelaPreco.editar"
+                  data-action={editingItem ? "atualizar-item-tabela-preco" : "adicionar-item-tabela-preco"}
+                  data-sensitive="true"
                   className="bg-green-600 hover:bg-green-700"
                 >
                   {editingItem ? 'Atualizar' : 'Adicionar'}
