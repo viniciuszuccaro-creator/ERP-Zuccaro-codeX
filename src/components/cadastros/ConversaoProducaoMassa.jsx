@@ -54,7 +54,7 @@ export default function ConversaoProducaoMassa({ produtos, onConcluido }) {
     } catch (_) {}
   };
 
-  // Filtrar apenas produtos que n?o s?o de produ??o
+  // Filtrar apenas produtos que não são de produção
   const produtosConversiveis = produtos.filter(p => 
     p.tipo_item !== 'Matéria-Prima Produção'
   );
