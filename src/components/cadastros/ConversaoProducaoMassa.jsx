@@ -10,6 +10,8 @@ import {
   ArrowRight, Sparkles, Loader2, Package 
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 import { toast } from "sonner";
 
 /**
@@ -21,17 +23,44 @@ import { toast } from "sonner";
  * ✅ Barra de progresso para conversão
  */
 export default function ConversaoProducaoMassa({ produtos, onConcluido }) {
+  const { empresaAtual, grupoAtual, contexto, updateInContext } = useContextoVisual();
+  const { canEdit } = usePermissions();
   const [produtosSelecionados, setProdutosSelecionados] = useState([]);
   const [processando, setProcessando] = useState(false);
   const [progresso, setProgresso] = useState(0);
   const [analisandoIA, setAnalisandoIA] = useState(false);
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === 'empresa' ? empresaAtual?.id : null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeEditarProduto = canEdit('Cadastros', 'Produto') || canEdit('Estoque', 'Produto') || canEdit('Producao', 'Produto') || canEdit('Cadastros', null) || canEdit('Estoque', null);
 
-  // Filtrar apenas produtos que NÃO são de produção
+  const auditConversao = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: 'Cadastros',
+        entidade: 'Produto',
+        registro_id: dados.registro_id || null,
+        empresa_id: dados.empresa_id || empresaId || null,
+        group_id: dados.group_id || groupId || null,
+        grupo_id: dados.group_id || groupId || null,
+        tipo_auditoria: sucesso ? 'entidade' : 'seguranca',
+        descricao: motivo || 'Auditoria da conversao em massa de produtos para producao.',
+        dados_anteriores: dados.dados_anteriores || null,
+        dados_novos: { ...dados, contexto },
+        sucesso,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (_) {}
+  };
+
+  // Filtrar apenas produtos que n?o s?o de produ??o
   const produtosConversiveis = produtos.filter(p => 
     p.tipo_item !== 'Matéria-Prima Produção'
   );
 
   const toggleProduto = (produtoId) => {
+    if (!contextoValido || !podeEditarProduto || processando) return;
     setProdutosSelecionados(prev => 
       prev.includes(produtoId) 
         ? prev.filter(id => id !== produtoId)
@@ -40,6 +69,7 @@ export default function ConversaoProducaoMassa({ produtos, onConcluido }) {
   };
 
   const selecionarTodos = () => {
+    if (!contextoValido || !podeEditarProduto || processando) return;
     if (produtosSelecionados.length === produtosConversiveis.length) {
       setProdutosSelecionados([]);
     } else {
@@ -49,6 +79,16 @@ export default function ConversaoProducaoMassa({ produtos, onConcluido }) {
 
   // IA sugere produtos que devem ir para produção
   const analisarComIA = async () => {
+    if (!contextoValido) {
+      await auditConversao({ acao: 'Produto.conversao_producao_ia_bloqueada', sucesso: false, motivo: 'Contexto de grupo ou empresa obrigatorio.', dados: { etapa: 'ia' } });
+      toast.error('Selecione um grupo ou empresa antes de usar a IA.');
+      return;
+    }
+    if (!podeEditarProduto) {
+      await auditConversao({ acao: 'Produto.conversao_producao_ia_negada', sucesso: false, motivo: 'Permissao negada para editar produtos.', dados: { etapa: 'ia' } });
+      toast.error('Sem permissao para editar produtos.');
+      return;
+    }
     setAnalisandoIA(true);
     
     try {
@@ -109,6 +149,22 @@ Retorne apenas os índices (0, 1, 2...) dos produtos que DEVEM ir para produçã
       toast.error('Selecione ao menos um produto');
       return;
     }
+    if (!contextoValido) {
+      await auditConversao({ acao: 'Produto.conversao_producao_bloqueada', sucesso: false, motivo: 'Contexto de grupo ou empresa obrigatorio.', dados: { total_produtos: produtosSelecionados.length } });
+      toast.error('Selecione um grupo ou empresa antes de converter produtos.');
+      return;
+    }
+    if (!podeEditarProduto) {
+      await auditConversao({ acao: 'Produto.conversao_producao_negada', sucesso: false, motivo: 'Permissao negada para editar produtos.', dados: { total_produtos: produtosSelecionados.length } });
+      toast.error('Sem permissao para editar produtos.');
+      return;
+    }
+
+    const confirmado = window.confirm('Converter ' + produtosSelecionados.length + ' produto(s) para Materia-Prima Producao no contexto selecionado? Esta acao sera auditada.');
+    if (!confirmado) {
+      await auditConversao({ acao: 'Produto.conversao_producao_cancelada', sucesso: false, motivo: 'Confirmacao cancelada pelo usuario.', dados: { total_produtos: produtosSelecionados.length } });
+      return;
+    }
 
     setProcessando(true);
     setProgresso(0);
@@ -120,7 +176,10 @@ Retorne apenas os índices (0, 1, 2...) dos produtos que DEVEM ir para produçã
       for (const produtoId of produtosSelecionados) {
         const produto = produtos.find(p => p.id === produtoId);
         
-        await base44.entities.Produto.update(produtoId, {
+        await updateInContext('Produto', produtoId, {
+          empresa_id: produto?.empresa_id || empresaId || null,
+          group_id: produto?.group_id || groupId || null,
+          grupo_id: produto?.grupo_id || produto?.group_id || groupId || null,
           tipo_item: 'Matéria-Prima Produção',
           setor_atividade_id: 'setor-fabrica-001',
           setor_atividade_nome: 'Fábrica'
@@ -130,6 +189,7 @@ Retorne apenas os índices (0, 1, 2...) dos produtos que DEVEM ir para produçã
         setProgresso(Math.round((concluidos / total) * 100));
       }
 
+      await auditConversao({ acao: 'Produto.conversao_producao_concluida', sucesso: true, dados: { total_produtos: total, produtos_ids: produtosSelecionados.slice(0, 100) } });
       toast.success(`✅ ${total} produto(s) convertido(s) para Produção!`);
       setProdutosSelecionados([]);
       
@@ -137,6 +197,7 @@ Retorne apenas os índices (0, 1, 2...) dos produtos que DEVEM ir para produçã
         onConcluido();
       }
     } catch (error) {
+      await auditConversao({ acao: 'Produto.conversao_producao_erro', sucesso: false, motivo: error?.message || 'Erro na conversao em massa.', dados: { total_produtos: produtosSelecionados.length } });
       toast.error('Erro na conversão', {
         description: error.message
       });
@@ -159,7 +220,16 @@ Retorne apenas os índices (0, 1, 2...) dos produtos que DEVEM ir para produçã
         </AlertDescription>
       </Alert>
 
-      {/* Estatísticas */}
+      {(!contextoValido || !podeEditarProduto) && (
+        <Alert variant="destructive">
+          <AlertTriangle className="w-4 h-4" />
+          <AlertDescription>
+            Conversão em massa exige contexto de grupo/empresa e permissão para editar produtos.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Estatisticas */}
       <div className="grid grid-cols-3 gap-4">
         <Card className="border-blue-200">
           <CardContent className="p-4">
@@ -189,8 +259,10 @@ Retorne apenas os índices (0, 1, 2...) dos produtos que DEVEM ir para produçã
       <div className="flex gap-3">
         <Button
           onClick={analisarComIA}
-          disabled={analisandoIA || produtosConversiveis.length === 0}
+          disabled={analisandoIA || produtosConversiveis.length === 0 || !contextoValido || !podeEditarProduto}
           variant="outline"
+          data-permission="Cadastros.Produto.editar"
+          data-action="sugerir-conversao-producao-ia"
           className="border-purple-300 text-purple-700 hover:bg-purple-50"
         >
           {analisandoIA ? (
@@ -204,15 +276,20 @@ Retorne apenas os índices (0, 1, 2...) dos produtos que DEVEM ir para produçã
         <Button
           onClick={selecionarTodos}
           variant="outline"
-          disabled={produtosConversiveis.length === 0}
+          disabled={produtosConversiveis.length === 0 || !contextoValido || !podeEditarProduto || processando}
+          data-permission="Cadastros.Produto.editar"
+          data-action="selecionar-produtos-conversao-producao"
         >
           {produtosSelecionados.length === produtosConversiveis.length ? 'Desmarcar Todos' : 'Selecionar Todos'}
         </Button>
 
         <Button
           onClick={converterProdutos}
-          disabled={processando || produtosSelecionados.length === 0}
+          disabled={processando || produtosSelecionados.length === 0 || !contextoValido || !podeEditarProduto}
           className="bg-orange-600 hover:bg-orange-700 ml-auto"
+          data-permission="Cadastros.Produto.editar"
+          data-action="converter-produtos-producao-massa"
+          data-sensitive
         >
           {processando ? (
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -267,6 +344,9 @@ Retorne apenas os índices (0, 1, 2...) dos produtos que DEVEM ir para produçã
                         <Checkbox
                           checked={selecionado}
                           onCheckedChange={() => toggleProduto(produto.id)}
+                          disabled={!contextoValido || !podeEditarProduto || processando}
+                          data-permission="Cadastros.Produto.editar"
+                          data-action="selecionar-produto-conversao-producao"
                         />
                         
                         <div className="flex-1">

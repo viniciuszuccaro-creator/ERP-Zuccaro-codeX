@@ -1,5 +1,16 @@
 # Status do Projeto ERP Zuccaro
 
+### Cadastros - Fase 8 Conversão Produção em Massa
+
+- Seguido o próximo ponto salvo no status: continuar varredura em Cadastro Gerais/Estoque por chamadas diretas de `Produto.create/update/delete/filter/list`.
+- `ConversaoProducaoMassa` deixou de usar `base44.entities.Produto.update` diretamente e passou a usar `updateInContext`.
+- Conversão em massa agora exige contexto de grupo/empresa e permissão RBAC para editar produtos antes de IA, seleção e gravação.
+- A conversão em lote passou a pedir confirmação explícita antes de alterar produtos e registra auditoria de bloqueio, negação, cancelamento, erro e sucesso.
+- Payload de atualização preserva `empresa_id`, `group_id` e `grupo_id` do produto/contexto para manter a ramificação multiempresa.
+- Botões e checkboxes sensíveis receberam bloqueio visual e marcadores `data-permission`, `data-action` e `data-sensitive` quando aplicável.
+- Mantida a Regra-Mãe: nenhuma tela, módulo, arquivo ou fluxo novo foi criado; apenas melhoria no componente existente.
+- Próximo passo sugerido: continuar varredura em Cadastro Gerais/Estoque por chamadas diretas restantes de `Produto.create/update/delete/filter/list`, priorizando dashboards e seletores de produto que ainda usam `Produto.list/filter` global.
+
 ### Cadastros - Fase 8 Importação Produto NF-e/PDF
 
 - Seguido o próximo ponto salvo no status: revisar `ImportacaoProdutoNFe`, que ainda filtrava e criava produto diretamente pelo `base44.entities.Produto`.
