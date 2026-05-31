@@ -1,5 +1,14 @@
 # Status do Projeto ERP Zuccaro
 
+### Cadastros - Fase 8 Dashboard Estruturantes
+
+- Seguido o próximo passo salvo no status: revisar `DashboardEstruturantes`, que ainda listava cadastros estruturantes e produtos globalmente.
+- `DashboardEstruturantes` deixou de usar `.list()` global em `SetorAtividade`, `GrupoProduto`, `Marca`, `LocalEstoque`, `TabelaFiscal` e `Produto`.
+- Consultas passaram a usar `filterInContext`, com query keys por grupo/empresa e execução condicionada a contexto e permissão RBAC.
+- O wrapper principal recebeu `w-full`, `h-full`, `data-permission` e `data-context-required`.
+- A tela exibe alerta visual quando faltar contexto de grupo/empresa ou permissão para visualizar cadastros.
+- Mantida a Regra-Mãe: nenhuma tela, módulo, arquivo ou fluxo novo foi criado; apenas melhoria no componente existente.
+- Próximo passo sugerido: continuar varredura em `MultiTabelasEditor` e seletores comerciais de produto que ainda usam `Produto.list/filter` global.
 ### Cadastros - Fase 8 Dashboard Produtos Produção
 
 - Seguido o próximo passo salvo no status: continuar varredura em dashboards e seletores de produto que ainda usam `Produto.list/filter` global.

@@ -1,9 +1,11 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Factory, Package, Award, Warehouse, Scale, TrendingUp, CheckCircle2, AlertCircle, ChevronRight, Stars } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * 🎯 DASHBOARD ESTRUTURANTES V21.2 FASE 2
@@ -12,34 +14,55 @@ import { base44 } from "@/api/base44Client";
  * Mostra métricas, qualidade de dados e status de integração
  */
 export default function DashboardEstruturantes() {
+  const { empresaAtual, grupoAtual, contexto, filterInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === 'empresa' ? empresaAtual?.id : null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeVisualizarCadastros = hasPermission('Cadastros', null, 'visualizar') || hasPermission('Cadastros', 'Produto', 'visualizar') || hasPermission('Estoque', 'Produto', 'visualizar');
+  const consultasHabilitadas = contextoValido && podeVisualizarCadastros;
+  const queryScope = [groupId, empresaId, contexto];
+
   const { data: setores = [] } = useQuery({
-    queryKey: ['setores-atividade'],
-    queryFn: () => base44.entities.SetorAtividade.list(),
+    queryKey: ['setores-atividade', ...queryScope],
+    queryFn: () => filterInContext('SetorAtividade', {}, 'nome', 9999),
+    enabled: consultasHabilitadas,
+    staleTime: 120000,
   });
 
   const { data: grupos = [] } = useQuery({
-    queryKey: ['grupos-produto'],
-    queryFn: () => base44.entities.GrupoProduto.list(),
+    queryKey: ['grupos-produto', ...queryScope],
+    queryFn: () => filterInContext('GrupoProduto', {}, 'nome', 9999),
+    enabled: consultasHabilitadas,
+    staleTime: 120000,
   });
 
   const { data: marcas = [] } = useQuery({
-    queryKey: ['marcas'],
-    queryFn: () => base44.entities.Marca.list(),
+    queryKey: ['marcas', ...queryScope],
+    queryFn: () => filterInContext('Marca', {}, 'nome', 9999),
+    enabled: consultasHabilitadas,
+    staleTime: 120000,
   });
 
   const { data: locais = [] } = useQuery({
-    queryKey: ['locais-estoque'],
-    queryFn: () => base44.entities.LocalEstoque.list(),
+    queryKey: ['locais-estoque', ...queryScope],
+    queryFn: () => filterInContext('LocalEstoque', {}, 'nome', 9999),
+    enabled: consultasHabilitadas,
+    staleTime: 120000,
   });
 
   const { data: tabelas = [] } = useQuery({
-    queryKey: ['tabelas-fiscais'],
-    queryFn: () => base44.entities.TabelaFiscal.list(),
+    queryKey: ['tabelas-fiscais', ...queryScope],
+    queryFn: () => filterInContext('TabelaFiscal', {}, 'nome', 9999),
+    enabled: consultasHabilitadas,
+    staleTime: 120000,
   });
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryKey: ['produtos-estruturantes', ...queryScope],
+    queryFn: () => filterInContext('Produto', {}, 'descricao', 9999),
+    enabled: consultasHabilitadas,
+    staleTime: 120000,
   });
 
   // Métricas calculadas
@@ -131,7 +154,7 @@ export default function DashboardEstruturantes() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="w-full h-full space-y-6" data-permission="Cadastros.visualizar" data-context-required="true">
       {/* HEADER */}
       <div className="flex items-center justify-between">
         <div>
@@ -148,6 +171,15 @@ export default function DashboardEstruturantes() {
           100% Operacional
         </Badge>
       </div>
+
+      {(!contextoValido || !podeVisualizarCadastros) && (
+        <Alert variant="destructive">
+          <AlertCircle className="w-5 h-5" />
+          <AlertDescription>
+            Dashboard de cadastros estruturantes exige contexto de grupo/empresa e permissão para visualizar cadastros.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* CARDS DOS ESTRUTURANTES */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
