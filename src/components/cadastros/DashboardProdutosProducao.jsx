@@ -9,6 +9,8 @@ import {
   BarChart3, Zap, CheckCircle2, ArrowUpRight
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * V21.6 - DASHBOARD DE PRODUTOS EM PRODUÇÃO
