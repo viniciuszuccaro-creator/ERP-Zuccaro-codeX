@@ -1,5 +1,17 @@
 # Status do Projeto ERP Zuccaro
 
+### Estoque - Fase 8 Inventario em Contexto
+
+- Seguido o proximo passo salvo no status: continuar em `InventarioForm`, reforcando cadastro/aprovacao de inventario sem criar tela, modulo ou arquivo novo.
+- Criacao e edicao de inventario deixaram de usar `base44.entities.Inventario.create/update` diretamente e passaram a usar `createInContext` e `updateInContext`.
+- Salvamento agora exige contexto de grupo/empresa e permissao RBAC antes de persistir qualquer contagem.
+- Aprovacao agora valida contexto, permissao granular e existencia de inventario salvo antes de aplicar o status sensivel.
+- Status sensiveis como aprovado/concluido/cancelado passaram a pedir confirmacao do usuario antes da alteracao.
+- Bloqueios, cancelamentos, erros, criacao e edicao geram auditoria com `group_id`, `grupo_id`, `empresa_id`, antes/depois, status e total de itens.
+- A tela recebeu marcadores `data-permission`, `data-context-required`, `data-context-mode` e alerta visual quando faltar contexto/permissao.
+- Mantida a Regra-Mae: apenas melhoria no componente existente, sem duplicar fluxo e sem excluir funcionalidade.
+- Proximo passo sugerido: revisar `InventarioContagem` e outros pontos de estoque/cadastros que ainda alterem dados sensiveis sem contexto, confirmacao ou auditoria completa.
+
 ### Interface - Remocao Autorizada de Documentacao e Modo Escuro
 
 - Alteracao feita com autorizacao explicita do usuario para excluir a entrada `Documentacao` da barra lateral esquerda e todo o conteudo diretamente associado a ela.
