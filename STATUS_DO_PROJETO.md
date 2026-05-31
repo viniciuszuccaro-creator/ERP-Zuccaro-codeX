@@ -1,4 +1,4 @@
-﻿# Status do Projeto ERP Zuccaro
+# Status do Projeto ERP Zuccaro
 
 ### Cadastros - Fase 8 Importação Produto NF-e/PDF
 
