@@ -1,5 +1,16 @@
 # Status do Projeto ERP Zuccaro
 
+### Estoque - Fase 8 Contagem de Inventario
+
+- Seguido o proximo passo salvo no status: revisar `InventarioContagem` dentro do fluxo existente de inventario, sem criar tela, modulo ou arquivo novo.
+- Corrigido o calculo de ajuste para usar o item ja atualizado, evitando diferenca atrasada ao alterar saldo do sistema ou contagem fisica.
+- Campos de texto da contagem passaram por sanitizacao simples contra caracteres de tag e limite de tamanho antes de atualizar o estado local.
+- Remocao de item da contagem agora pede confirmacao do usuario, respeitando a Regra-Mae antes de retirar informacao do inventario.
+- Botoes da contagem receberam `type="button"` para evitar submissao acidental do formulario principal.
+- A grade recebeu `w-full`, `h-full`, rolagem horizontal controlada, estado vazio e marcador `data-permission` para facilitar RBAC visual.
+- Mantida a integracao com `InventarioForm`: a persistencia e a auditoria completa continuam no salvamento/aprovacao do inventario.
+- Proximo passo sugerido: continuar em outros pontos de estoque/cadastros que ainda alterem dados sensiveis sem contexto, confirmacao ou auditoria completa.
+
 ### Estoque - Fase 8 Inventario em Contexto
 
 - Seguido o proximo passo salvo no status: continuar em `InventarioForm`, reforcando cadastro/aprovacao de inventario sem criar tela, modulo ou arquivo novo.
