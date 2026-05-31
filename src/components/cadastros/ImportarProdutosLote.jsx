@@ -7,6 +7,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Upload, Loader2, FileSpreadsheet, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
+
+const sanitizeText = (value, max = 240) => String(value ?? '').replace(/[<>]/g, '').slice(0, max).trim();
+const toNumber = (value) => {
+  const parsed = Number(String(value ?? '').replace(',', '.'));
+  return Number.isFinite(parsed) ? parsed : 0;
+};
 
 /**
  * V21.1.2 - IMPORTAR PRODUTOS EM LOTE (CSV/XLSX)
@@ -14,6 +22,32 @@ import { toast } from 'sonner';
  */
 export default function ImportarProdutosLote({ onProdutosCriados, onClose }) {
   const [arquivo, setArquivo] = useState(null);
+  const { empresaAtual, grupoAtual, contexto, createInContext } = useContextoVisual();
+  const { canCreate } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === 'empresa' ? empresaAtual?.id : null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeCriarProduto = canCreate('Cadastros', 'Produto') || canCreate('Estoque', 'Produto') || canCreate('Cadastros', null);
+
+  const auditImportacaoProdutos = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: 'Cadastros',
+        entidade: 'Produto',
+        registro_id: dados.registro_id || null,
+        empresa_id: dados.empresa_id || empresaId || null,
+        group_id: dados.group_id || groupId || null,
+        grupo_id: dados.group_id || groupId || null,
+        tipo_auditoria: sucesso ? 'entidade' : 'seguranca',
+        descricao: motivo || 'Auditoria da importa\u00e7\u00e3o de produtos em lote.',
+        dados_anteriores: dados.dados_anteriores || null,
+        dados_novos: { ...dados, contexto, arquivo: arquivo?.name || null },
+        sucesso,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (_) {}
+  };
   const [processando, setProcessando] = useState(false);
   const [dadosParsed, setDadosParsed] = useState(null);
   const [mapeamento, setMapeamento] = useState({
@@ -76,12 +110,12 @@ export default function ImportarProdutosLote({ onProdutosCriados, onClose }) {
         });
         setMapeamento(colunasAuto);
         
-        toast.success(`✅ ${resultado.output.linhas.length} linhas encontradas`);
+        toast.success(`${resultado.output.linhas.length} linhas encontradas`);
       } else {
-        toast.error('❌ Erro ao processar arquivo: ' + resultado.details);
+        toast.error('Erro ao processar arquivo: ' + resultado.details);
       }
     } catch (error) {
-      toast.error('❌ Erro: ' + error.message);
+      toast.error('Erro: ' + error.message);
     } finally {
       setProcessando(false);
     }
@@ -93,6 +127,23 @@ export default function ImportarProdutosLote({ onProdutosCriados, onClose }) {
       return;
     }
 
+    if (!contextoValido) {
+      await auditImportacaoProdutos({ acao: 'Produto.importacao_lote_bloqueada', sucesso: false, motivo: 'Contexto de grupo ou empresa obrigat\u00f3rio.', dados: { total_linhas: dadosParsed?.linhas?.length || 0 } });
+      toast.error('Selecione um grupo ou empresa antes de importar produtos.');
+      return;
+    }
+    if (!podeCriarProduto) {
+      await auditImportacaoProdutos({ acao: 'Produto.importacao_lote_negada', sucesso: false, motivo: 'Permiss\u00e3o negada para criar produtos.', dados: { total_linhas: dadosParsed?.linhas?.length || 0 } });
+      toast.error('Sem permiss\u00e3o para criar produtos.');
+      return;
+    }
+
+    const confirmado = window.confirm('Criar ' + dadosParsed.linhas.length + ' produto(s) no contexto selecionado? Esta a\u00e7\u00e3o ser\u00e1 auditada.');
+    if (!confirmado) {
+      await auditImportacaoProdutos({ acao: 'Produto.importacao_lote_cancelada', sucesso: false, motivo: 'Confirma\u00e7\u00e3o cancelada pelo usu\u00e1rio.', dados: { total_linhas: dadosParsed.linhas.length } });
+      return;
+    }
+
     setProcessando(true);
 
     try {
@@ -100,18 +151,21 @@ export default function ImportarProdutosLote({ onProdutosCriados, onClose }) {
 
       for (const linha of dadosParsed.linhas) {
         const novoProduto = {
-          descricao: linha[mapeamento.descricao] || '',
-          codigo: mapeamento.codigo ? linha[mapeamento.codigo] : '',
-          ncm: mapeamento.ncm ? linha[mapeamento.ncm] : '',
-          unidade_medida: mapeamento.unidade_medida ? linha[mapeamento.unidade_medida] : 'UN',
-          unidade_principal: mapeamento.unidade_medida ? linha[mapeamento.unidade_medida] : 'UN',
-          unidades_secundarias: mapeamento.unidade_medida ? [linha[mapeamento.unidade_medida]] : ['UN'],
-          custo_aquisicao: mapeamento.custo_aquisicao ? parseFloat(linha[mapeamento.custo_aquisicao]) || 0 : 0,
-          preco_venda: mapeamento.preco_venda ? parseFloat(linha[mapeamento.preco_venda]) || 0 : 0,
-          peso_teorico_kg_m: mapeamento.peso_teorico_kg_m ? parseFloat(linha[mapeamento.peso_teorico_kg_m]) || 0 : 0,
-          grupo: mapeamento.grupo ? linha[mapeamento.grupo] : 'Outros',
+          descricao: sanitizeText(linha[mapeamento.descricao], 240),
+          codigo: mapeamento.codigo ? sanitizeText(linha[mapeamento.codigo], 80) : '',
+          ncm: mapeamento.ncm ? sanitizeText(linha[mapeamento.ncm], 20) : '',
+          unidade_medida: mapeamento.unidade_medida ? sanitizeText(linha[mapeamento.unidade_medida], 12).toUpperCase() : 'UN',
+          unidade_principal: mapeamento.unidade_medida ? sanitizeText(linha[mapeamento.unidade_medida], 12).toUpperCase() : 'UN',
+          unidades_secundarias: mapeamento.unidade_medida ? [sanitizeText(linha[mapeamento.unidade_medida], 12).toUpperCase()] : ['UN'],
+          custo_aquisicao: mapeamento.custo_aquisicao ? toNumber(linha[mapeamento.custo_aquisicao]) : 0,
+          preco_venda: mapeamento.preco_venda ? toNumber(linha[mapeamento.preco_venda]) : 0,
+          peso_teorico_kg_m: mapeamento.peso_teorico_kg_m ? toNumber(linha[mapeamento.peso_teorico_kg_m]) : 0,
+          grupo: mapeamento.grupo ? sanitizeText(linha[mapeamento.grupo], 120) : 'Outros',
           tipo_item: 'Revenda',
-          status: 'Ativo'
+          status: 'Ativo',
+          group_id: groupId,
+          grupo_id: groupId,
+          empresa_id: empresaId
         };
 
         // IA pode sugerir eh_bitola se tiver peso_teorico
@@ -119,15 +173,18 @@ export default function ImportarProdutosLote({ onProdutosCriados, onClose }) {
           novoProduto.eh_bitola = true;
         }
 
-        const produtoCriado = await base44.entities.Produto.create(novoProduto);
+        if (!novoProduto.descricao) continue;
+        const produtoCriado = await createInContext('Produto', novoProduto);
         produtosCriados.push(produtoCriado);
       }
 
-      toast.success(`✅ ${produtosCriados.length} produtos criados!`);
+      await auditImportacaoProdutos({ acao: 'Produto.importacao_lote_concluida', sucesso: true, dados: { total_linhas: dadosParsed.linhas.length, total_criados: produtosCriados.length, codigos: produtosCriados.map((p) => p?.codigo).filter(Boolean).slice(0, 50) } });
+      toast.success(`${produtosCriados.length} produtos criados!`);
       onProdutosCriados && onProdutosCriados(produtosCriados);
       onClose && onClose();
     } catch (error) {
-      toast.error('❌ Erro ao criar produtos: ' + error.message);
+      await auditImportacaoProdutos({ acao: 'Produto.importacao_lote_erro', sucesso: false, motivo: error?.message || 'Erro ao criar produtos.', dados: { total_linhas: dadosParsed?.linhas?.length || 0 } });
+      toast.error('Erro ao criar produtos: ' + error.message);
     } finally {
       setProcessando(false);
     }
@@ -138,9 +195,18 @@ export default function ImportarProdutosLote({ onProdutosCriados, onClose }) {
       <Alert className="border-purple-200 bg-purple-50">
         <FileSpreadsheet className="w-4 h-4 text-purple-600" />
         <AlertDescription className="text-sm text-purple-900">
-          📊 <strong>Importação em Lote:</strong> Envie CSV ou XLSX com seus produtos
+          <strong>{'Importa\u00e7\u00e3o em Lote:'}</strong> Envie CSV ou XLSX com seus produtos
         </AlertDescription>
       </Alert>
+
+      {(!contextoValido || !podeCriarProduto) && (
+        <Alert variant="destructive">
+          <AlertTriangle className="w-4 h-4" />
+          <AlertDescription>
+            {'O importador exige contexto de grupo/empresa e permiss\u00e3o para criar produtos.'}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* UPLOAD */}
       {!dadosParsed && (
@@ -152,10 +218,10 @@ export default function ImportarProdutosLote({ onProdutosCriados, onClose }) {
               onChange={handleUploadArquivo}
               className="hidden"
               id="lote-upload"
-              disabled={processando}
+              disabled={processando || !contextoValido || !podeCriarProduto}
             />
             <label htmlFor="lote-upload">
-              <Button variant="outline" size="lg" disabled={processando} asChild>
+              <Button variant="outline" size="lg" disabled={processando || !contextoValido || !podeCriarProduto} asChild>
                 <span>
                   {processando ? (
                     <Loader2 className="w-5 h-5 mr-2 animate-spin" />
@@ -313,7 +379,10 @@ export default function ImportarProdutosLote({ onProdutosCriados, onClose }) {
               <Button variant="outline" onClick={onClose}>Cancelar</Button>
               <Button 
                 onClick={handleCriarProdutos}
-                disabled={processando || !mapeamento.descricao}
+                disabled={processando || !mapeamento.descricao || !contextoValido || !podeCriarProduto}
+                data-permission="Cadastros.Produto.criar"
+                data-action="importar-produtos-lote"
+                data-sensitive
                 className="bg-purple-600 hover:bg-purple-700"
               >
                 {processando ? (

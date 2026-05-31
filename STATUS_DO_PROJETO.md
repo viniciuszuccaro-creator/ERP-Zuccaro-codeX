@@ -1,5 +1,18 @@
 # Status do Projeto ERP Zuccaro
 
+### Cadastros - Fase 8 Importar Produtos em Lote
+
+- Seguido o próximo ponto do plano: continuar nos importadores de produtos de Cadastro Gerais, priorizando `ImportarProdutosLote`.
+- Criação de produto em lote deixou de usar `base44.entities.Produto.create` diretamente e passou a usar `createInContext`.
+- Importação agora exige contexto de grupo/empresa e permissão RBAC de criação de produto antes de enviar arquivo ou criar registros.
+- Campos importados passam por sanitização simples, limite de tamanho e conversão numérica padronizada antes da gravação.
+- Criação em massa passou a pedir confirmação do usuário com a quantidade de produtos e gera auditoria de bloqueio, cancelamento, erro e sucesso.
+- Produtos importados recebem `group_id`, `grupo_id` e `empresa_id` conforme o contexto selecionado.
+- O importador recebeu alerta visual de contexto/permissão e marcadores `data-permission`, `data-action` e `data-sensitive` na ação sensível.
+- Mantida a Regra-Mãe: nenhuma tela, módulo, arquivo ou fluxo novo foi criado; apenas melhoria no componente existente.
+- Próximo passo sugerido: revisar `ImportarProdutosNFe` ou `ImportacaoProdutoNFe`, que ainda criam produto diretamente em Cadastro Gerais.
+
+
 ### Cadastros/Estoque - Fase 8 Historico do Produto em Contexto
 
 - Seguido o proximo ponto do plano: revisar atualizacoes diretas de produto em Cadastro Gerais, priorizando `HistoricoProduto`.
