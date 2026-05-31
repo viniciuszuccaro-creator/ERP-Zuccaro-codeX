@@ -7,6 +7,15 @@
 - Todos os pontos alterados receberam marcadores `data-context-required`, `data-permission`, `data-action` e `data-sensitive` onde a ação altera dado.
 - Próximo passo: revisar `Top10ProdutosCliente` e os demais componentes auxiliares do pedido comercial que ainda possam usar consultas globais de produto/cliente.
 
+
+### Comercial - Fase 8 Top 10 Produtos do Cliente
+- Segui o proximo passo salvo: revisar `Top10ProdutosCliente`, que ainda usava `Pedido.filter` e `Produto.list` globais.
+- Historico de pedidos e produtos disponiveis passaram a usar `filterInContext` com chave por `groupId`, `empresaId` e contexto visual.
+- Sugestoes com IA agora exigem contexto de grupo/empresa e permissao comercial antes de enviar historico/produtos ao LLM.
+- Selecionar produto sugerido e buscar sugestoes de IA receberam bloqueio visual por RBAC e marcadores `data-permission`, `data-action`, `data-sensitive` e `data-context-required`.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas melhoria no componente existente.
+- Proximo passo: continuar a varredura nos auxiliares comerciais com consultas diretas, priorizando `AnalisePedidoAprovacao`, `DetalhesCliente`, `HistoricoProdutosCliente` e aprovadores de pedido.
+
 # Status do Projeto ERP Zuccaro
 
 ### Comercial - Fase 8 Seletores de Produto

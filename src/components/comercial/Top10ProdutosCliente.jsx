@@ -1,55 +1,57 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Package, Plus, Calendar } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useToast } from "@/components/ui/use-toast"; // Assuming toast is imported from here
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Package, ShieldAlert } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto }) {
   const [usandoIA, setUsandoIA] = useState(false);
   const [sugestoesIA, setSugestoesIA] = useState([]);
   const { toast } = useToast();
+  const { filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === "empresa" ? empresaAtual?.id : null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeVisualizarHistorico =
+    hasPermission("Comercial.Pedido.visualizar") ||
+    hasPermission("Comercial.Pedido.criar") ||
+    hasPermission("Comercial.Pedido.editar") ||
+    hasPermission("Estoque.Produto.visualizar") ||
+    hasPermission("Cadastros.Produto.visualizar");
+  const podeSelecionarProduto =
+    hasPermission("Comercial.Pedido.criar") ||
+    hasPermission("Comercial.Pedido.editar") ||
+    hasPermission("comercial", "criar_pedido") ||
+    hasPermission("comercial", "editar_pedido");
+  const podeUsarIA = contextoValido && podeVisualizarHistorico && podeSelecionarProduto;
+  const consultaHabilitada = Boolean(clienteId && contextoValido && podeVisualizarHistorico);
 
   const { data: pedidos = [], isLoading: isLoadingPedidos } = useQuery({
-    queryKey: ['pedidosCliente', clienteId],
-    queryFn: async () => {
-      if (!clienteId) return [];
-      try {
-        return await base44.entities.Pedido.filter({ cliente_id: clienteId });
-      } catch (error) {
-        console.error('Erro ao buscar pedidos:', error);
-        return [];
-      }
-    },
-    enabled: !!clienteId
+    queryKey: ["top10-pedidos-cliente-contexto", clienteId, groupId, empresaId, contexto],
+    queryFn: async () => filterInContext("Pedido", { cliente_id: clienteId }, "-data_pedido", 200),
+    enabled: consultaHabilitada
   });
 
   const { data: produtos = [], isLoading: isLoadingProdutos } = useQuery({
-    queryKey: ['produtosDisponiveis'],
-    queryFn: async () => {
-      try {
-        return await base44.entities.Produto.list();
-      } catch (error) {
-        console.error('Erro ao buscar produtos disponíveis:', error);
-        return [];
-      }
-    },
-    enabled: !!clienteId // Only fetch products if a client ID is provided
+    queryKey: ["top10-produtos-disponiveis-contexto", clienteId, groupId, empresaId, contexto],
+    queryFn: async () => filterInContext("Produto", {}, "descricao", 500),
+    enabled: consultaHabilitada
   });
 
-
-  // Consolidar produtos (from existing code)
   const produtosConsolidados = {};
 
   pedidos.forEach(pedido => {
     const itensRevenda = Array.isArray(pedido.itens_revenda) ? pedido.itens_revenda : [];
 
     itensRevenda.forEach(item => {
-      if (!item || typeof item !== 'object') return;
+      if (!item || typeof item !== "object") return;
 
       const key = item.produto_id || item.codigo_sku || item.descricao;
       if (!key) return;
@@ -57,14 +59,14 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto })
       if (!produtosConsolidados[key]) {
         produtosConsolidados[key] = {
           produto_id: item.produto_id,
-          codigo: item.codigo_sku || '',
-          descricao: item.descricao || 'Produto',
+          codigo: item.codigo_sku || "",
+          descricao: item.descricao || "Produto",
           quantidade_total: 0,
           valor_total: 0,
           frequencia: 0,
           ultimo_preco: 0,
           ultima_compra: null,
-          unidade: item.unidade || 'UN'
+          unidade: item.unidade || "UN"
         };
       }
 
@@ -83,25 +85,34 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto })
     .sort((a, b) => b.valor_total - a.valor_total)
     .slice(0, 10);
 
-  // Buscar sugestões com IA
   const buscarSugestoesIA = async () => {
+    if (!podeUsarIA) {
+      toast({
+        title: "Acao bloqueada",
+        description: "Selecione um contexto de grupo/empresa e confirme permissao para sugestoes comerciais com IA.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (!clienteId || !produtos.length || !pedidos.length) {
       toast({
-        title: "⚠️ Aviso",
-        description: "Não há dados suficientes (cliente, produtos ou pedidos) para gerar sugestões de IA.",
+        title: "Aviso",
+        description: "Nao ha dados suficientes de cliente, produtos ou pedidos para gerar sugestoes de IA.",
         variant: "destructive"
       });
       return;
     }
 
     setUsandoIA(true);
-    setSugestoesIA([]); // Clear previous suggestions
+    setSugestoesIA([]);
 
     try {
-      // Preparar contexto do cliente
       const historicoPedidos = pedidos.map(p => ({
         data: p.data_pedido,
         valor: p.valor_total,
+        group_id: p.group_id || groupId || null,
+        empresa_id: p.empresa_id || empresaId || null,
         itens: p.itens_revenda?.map(i => ({
           produto: i.descricao,
           quantidade: i.quantidade,
@@ -109,27 +120,35 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto })
         }))
       }));
 
-      // Trimming prompt to avoid leading/trailing whitespace issues with LLMs
-      const prompt = `
-Analise o histórico de compras deste cliente e sugira os 10 melhores produtos para oferecer agora.
-Considere padrões de compra, produtos complementares e frequência.
-Use apenas os 'PRODUTOS DISPONÍVEIS' fornecidos.
+      const linhasProdutos = produtos
+        .slice(0, 50)
+        .map(p => (p.codigo || "") + " - " + (p.descricao || "") + " - R$ " + (p.preco_venda || 0))
+        .join("\n");
 
-HISTÓRICO DE PEDIDOS:
-${JSON.stringify(historicoPedidos, null, 2)}
-
-PRODUTOS DISPONÍVEIS:
-${produtos.slice(0, 50).map(p => `${p.codigo} - ${p.descricao} - R$ ${p.preco_venda}`).join('\n')}
-
-Retorne um JSON contendo um array de objetos, onde cada objeto representa uma sugestão de produto e possui as seguintes propriedades:
-- produto_codigo: string (Código SKU do produto sugerido, deve existir em 'PRODUTOS DISPONÍVEIS')
-- motivo_sugestao: string (Uma breve explicação do porquê o produto é recomendado para este cliente)
-- score_confianca: number (Um valor de 0 a 100 indicando a confiança na sugestão)
-- produtos_complementares: string[] (Um array de códigos SKU de outros produtos que complementam a sugestão, se houver)
-      `.trim();
+      const prompt = [
+        "Analise o historico de compras deste cliente e sugira os 10 melhores produtos para oferecer agora.",
+        "Considere padroes de compra, produtos complementares e frequencia.",
+        "Use apenas os PRODUTOS DISPONIVEIS fornecidos e respeite o contexto de grupo/empresa informado.",
+        "",
+        "CONTEXTO:",
+        "Grupo: " + (groupId || "nao informado"),
+        "Empresa: " + (empresaId || "nao informada"),
+        "",
+        "HISTORICO DE PEDIDOS:",
+        JSON.stringify(historicoPedidos, null, 2),
+        "",
+        "PRODUTOS DISPONIVEIS:",
+        linhasProdutos,
+        "",
+        "Retorne um JSON contendo um array de objetos em sugestoes com:",
+        "- produto_codigo: string, codigo SKU existente em PRODUTOS DISPONIVEIS",
+        "- motivo_sugestao: string",
+        "- score_confianca: number de 0 a 100",
+        "- produtos_complementares: string[] opcional"
+      ].join("\n");
 
       const resultado = await base44.integrations.Core.InvokeLLM({
-        prompt: prompt,
+        prompt,
         response_json_schema: {
           type: "object",
           properties: {
@@ -154,25 +173,25 @@ Retorne um JSON contendo um array de objetos, onde cada objeto representa uma su
         }
       });
 
-      const sugestoesComProdutos = resultado.sugestoes
+      const sugestoesComProdutos = (resultado.sugestoes || [])
         .map(sug => {
           const prod = produtos.find(p => p.codigo === sug.produto_codigo);
           return prod ? { ...sug, produto: prod } : null;
         })
-        .filter(s => s !== null)
+        .filter(Boolean)
         .slice(0, 10);
 
       setSugestoesIA(sugestoesComProdutos);
 
       toast({
-        title: "✅ IA analisou o histórico!",
-        description: `${sugestoesComProdutos.length} produtos sugeridos com base no comportamento do cliente`
+        title: "IA analisou o historico",
+        description: sugestoesComProdutos.length + " produtos sugeridos com base no comportamento do cliente"
       });
     } catch (error) {
-      console.error('Erro ao buscar sugestões de IA:', error);
+      console.error("Erro ao buscar sugestoes de IA:", error);
       toast({
-        title: "❌ Erro na IA",
-        description: `Não foi possível gerar sugestões com IA. Detalhes: ${error.message || 'Erro desconhecido'}`,
+        title: "Erro na IA",
+        description: "Nao foi possivel gerar sugestoes com IA. Detalhes: " + (error.message || "Erro desconhecido"),
         variant: "destructive"
       });
     } finally {
@@ -180,11 +199,9 @@ Retorne um JSON contendo um array de objetos, onde cada objeto representa uma su
     }
   };
 
-  // Usar sugestões IA se disponível, senão usa top10 normal
   const sugestoesExibir = sugestoesIA.length > 0
     ? sugestoesIA
     : top10Produtos.map(t => {
-      // Ensure we find the full product object for the fallback
       const fullProduct = produtos.find(p => p.id === t.produto_id) || {
         id: t.produto_id,
         codigo: t.codigo,
@@ -194,111 +211,77 @@ Retorne um JSON contendo um array de objetos, onde cada objeto representa uma su
       };
       return {
         produto: fullProduct,
-        motivo_sugestao: `Comprado ${t.quantidade_total} ${t.unidade} anteriormente`,
-        score_confianca: Math.min(100, t.frequencia * 20 + (t.valor_total / 100)), // Simple heuristic for a score
+        motivo_sugestao: "Comprado " + t.quantidade_total + " " + t.unidade + " anteriormente",
+        score_confianca: Math.min(100, t.frequencia * 20 + (t.valor_total / 100)),
       };
     });
 
-  // Display a loading state if data is still being fetched and no suggestions are available
+  if (!clienteId) return null;
+
+  if (!contextoValido || !podeVisualizarHistorico) {
+    return (
+      <Alert className="w-full h-full border-amber-200 bg-amber-50" data-context-required="true" data-permission="Comercial.Pedido.visualizar">
+        <ShieldAlert className="h-4 w-4 text-amber-600" />
+        <AlertDescription className="text-amber-800">
+          Sugestoes de produtos exigem contexto de grupo/empresa e permissao para visualizar pedidos ou produtos.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   if (isLoadingPedidos || isLoadingProdutos) {
     return (
-      <div className="flex justify-center items-center h-48">
+      <div className="w-full h-full flex justify-center items-center min-h-48" data-context-required="true" data-permission="Comercial.Pedido.visualizar">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600" />
-        <p className="ml-4 text-amber-700">Carregando histórico e produtos...</p>
+        <p className="ml-4 text-amber-700">Carregando historico e produtos...</p>
       </div>
     );
   }
 
-  // No client ID or no historical data and no IA suggestions
-  if (!clienteId || (pedidos.length === 0 && sugestoesIA.length === 0 && top10Produtos.length === 0)) {
+  if (pedidos.length === 0 && sugestoesIA.length === 0 && top10Produtos.length === 0) {
     return (
-      <div className="text-center py-8 text-slate-500 border rounded-lg bg-white p-6 shadow-sm">
+      <div className="w-full h-full text-center py-8 text-slate-500 border rounded-lg bg-white p-6 shadow-sm" data-context-required="true" data-permission="Comercial.Pedido.visualizar">
         <Package className="w-12 h-12 mx-auto mb-2 opacity-30" />
-        <p className="text-sm">Cliente sem histórico de compras</p>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={buscarSugestoesIA}
-          disabled={usandoIA || !clienteId || isLoadingProdutos}
-          className="mt-3 border-purple-300 text-purple-700 hover:bg-purple-50"
-        >
-          {usandoIA ? (
-            <>
-              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-purple-600 mr-2" />
-              Analisando...
-            </>
-          ) : (
-            <>
-              🤖 Buscar Sugestões com IA
-            </>
-          )}
+        <p className="text-sm">Cliente sem historico de compras</p>
+        <Button size="sm" variant="outline" onClick={buscarSugestoesIA} disabled={usandoIA || !podeUsarIA || isLoadingProdutos} className="mt-3 border-purple-300 text-purple-700 hover:bg-purple-50" data-permission="Comercial.Pedido.criar" data-action="buscar-sugestoes-ia-cliente" data-sensitive="true">
+          {usandoIA ? "Analisando..." : "Buscar sugestoes com IA"}
         </Button>
       </div>
     );
   }
-
 
   return (
-    <div className="space-y-4">
-      {/* BOTÃO IA */}
+    <div className="w-full h-full space-y-4" data-context-required="true" data-permission="Comercial.Pedido.visualizar">
       <div className="flex justify-between items-center">
         <p className="text-sm text-blue-700 font-medium">
-          {sugestoesIA.length > 0 ? '🤖 Sugestões da IA' : '📊 Baseado em Histórico'}
+          {sugestoesIA.length > 0 ? "Sugestoes da IA" : "Baseado em historico"}
         </p>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={buscarSugestoesIA}
-          disabled={usandoIA || !clienteId || isLoadingProdutos || isLoadingPedidos}
-          className="border-purple-300 text-purple-700 hover:bg-purple-50"
-        >
-          {usandoIA ? (
-            <>
-              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-purple-600 mr-2" />
-              Analisando...
-            </>
-          ) : (
-            <>
-              🤖 Analisar com IA
-            </>
-          )}
+        <Button size="sm" variant="outline" onClick={buscarSugestoesIA} disabled={usandoIA || !podeUsarIA || isLoadingProdutos || isLoadingPedidos} className="border-purple-300 text-purple-700 hover:bg-purple-50" data-permission="Comercial.Pedido.criar" data-action="analisar-produtos-cliente-ia" data-sensitive="true">
+          {usandoIA ? "Analisando..." : "Analisar com IA"}
         </Button>
       </div>
 
-      {/* LISTA DE SUGESTÕES */}
-      <div className="space-y-2 max-h-64 overflow-y-auto pr-2"> {/* Added pr-2 for scrollbar visibility */}
+      <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
         {sugestoesExibir.slice(0, 10).map((sug, idx) => (
-          <button
-            key={sug.produto?.id || `sug-${idx}`} // Use a more robust key
-            onClick={() => onSelecionarProduto && typeof onSelecionarProduto === 'function' && sug.produto ? onSelecionarProduto(sug.produto) : null}
-            className="w-full p-3 text-left hover:bg-blue-100 transition-colors border rounded-lg bg-white"
-            disabled={!sug.produto} // Disable if product data is missing
-          >
+          <button key={sug.produto?.id || "sug-" + idx} type="button" onClick={() => {
+            if (podeSelecionarProduto && onSelecionarProduto && typeof onSelecionarProduto === "function" && sug.produto) onSelecionarProduto(sug.produto);
+          }} className="w-full p-3 text-left hover:bg-blue-100 transition-colors border rounded-lg bg-white disabled:opacity-50 disabled:cursor-not-allowed" disabled={!sug.produto || !podeSelecionarProduto} data-permission="Comercial.Pedido.criar" data-action="selecionar-sugestao-produto-cliente">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <p className="font-medium text-sm">{sug.produto?.descricao || 'Produto Desconhecido'}</p>
-                <p className="text-xs text-slate-600 mt-1">
-                  💡 {sug.motivo_sugestao || 'Sugestão genérica'}
-                </p>
+                <p className="font-medium text-sm">{sug.produto?.descricao || "Produto desconhecido"}</p>
+                <p className="text-xs text-slate-600 mt-1">{sug.motivo_sugestao || "Sugestao comercial"}</p>
                 {sug.score_confianca !== undefined && (
                   <div className="flex items-center gap-2 mt-2">
                     <div className="flex-1 bg-slate-200 rounded-full h-1.5">
-                      <div
-                        className="bg-purple-600 h-1.5 rounded-full transition-all"
-                        style={{ width: `${Math.max(0, Math.min(100, sug.score_confianca))}%` }} // Ensure score is between 0-100
-                      />
+                      <div className="bg-purple-600 h-1.5 rounded-full transition-all" style={{ width: Math.max(0, Math.min(100, sug.score_confianca)) + "%" }} />
                     </div>
                     <span className="text-xs text-slate-500">{Math.round(sug.score_confianca)}%</span>
                   </div>
                 )}
               </div>
               <div className="text-right ml-4">
-                <p className="font-bold text-green-600">
-                  R$ {sug.produto?.preco_venda?.toFixed(2) || '0.00'}
-                </p>
-                <Badge variant="outline" className="text-xs mt-1">
-                  {sug.produto?.codigo || 'N/A'}
-                </Badge>
+                <p className="font-bold text-green-600">R$ {(sug.produto?.preco_venda || 0).toFixed(2)}</p>
+                <Badge variant="outline" className="text-xs mt-1">{sug.produto?.codigo || "N/A"}</Badge>
               </div>
             </div>
           </button>
@@ -306,24 +289,9 @@ Retorne um JSON contendo um array de objetos, onde cada objeto representa uma su
         {sugestoesExibir.length === 0 && (
           <div className="text-center py-8 text-slate-500">
             <Package className="w-12 h-12 mx-auto mb-2 opacity-30" />
-            <p className="text-sm">Nenhuma sugestão encontrada para este cliente.</p>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={buscarSugestoesIA}
-              disabled={usandoIA || !clienteId || isLoadingProdutos || isLoadingPedidos}
-              className="mt-3 border-purple-300 text-purple-700 hover:bg-purple-50"
-            >
-              {usandoIA ? (
-                <>
-                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-purple-600 mr-2" />
-                  Analisando...
-                </>
-              ) : (
-                <>
-                  🤖 Tentar buscar com IA
-                </>
-              )}
+            <p className="text-sm">Nenhuma sugestao encontrada para este cliente.</p>
+            <Button size="sm" variant="outline" onClick={buscarSugestoesIA} disabled={usandoIA || !podeUsarIA || isLoadingProdutos || isLoadingPedidos} className="mt-3 border-purple-300 text-purple-700 hover:bg-purple-50" data-permission="Comercial.Pedido.criar" data-action="tentar-sugestoes-ia-cliente" data-sensitive="true">
+              {usandoIA ? "Analisando..." : "Tentar buscar com IA"}
             </Button>
           </div>
         )}
