@@ -16,6 +16,14 @@
 - Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas melhoria no componente existente.
 - Proximo passo: continuar a varredura nos auxiliares comerciais com consultas diretas, priorizando `AnalisePedidoAprovacao`, `DetalhesCliente`, `HistoricoProdutosCliente` e aprovadores de pedido.
 
+### Comercial - Fase 8 Analise e Detalhes de Cliente
+- Segui o proximo passo salvo: revisar `AnalisePedidoAprovacao` e `DetalhesCliente`, que ainda buscavam `Produto`/`Pedido` direto pelo `base44`.
+- `AnalisePedidoAprovacao` passou a consultar produtos via `filterInContext`, com chave por pedido, grupo, empresa e contexto visual.
+- Ajustes de desconto, fechamento automatico, aprovar e negar agora ficam bloqueados sem contexto/permissao e receberam marcadores `data-permission`, `data-action`, `data-sensitive` e `data-context-required`.
+- `DetalhesCliente` passou a buscar pedidos do cliente por `filterInContext`, com alerta quando faltar contexto ou permissao.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas melhoria nos componentes existentes.
+- Proximo passo: continuar nos historicos comerciais (`HistoricoProdutosCliente`, `HistoricoComprasCliente`, `HistoricoOrigemCliente`) e aprovadores de pedido restantes.
+
 # Status do Projeto ERP Zuccaro
 
 ### Comercial - Fase 8 Seletores de Produto

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -17,11 +18,13 @@ import {
   DollarSign,
   Box,
   Zap,
-  Rocket
+  Rocket,
+  ShieldAlert
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import ValidadorEstoquePedido from "./ValidadorEstoquePedido";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * 🔐 ANÁLISE DE PEDIDO PARA APROVAÇÃO V21.5 - COMPLETO
@@ -51,15 +54,32 @@ export default function AnalisePedidoAprovacao({
     pedidoProp.desconto_geral_pedido_valor || 0
   );
   const [fecharAutomatico, setFecharAutomatico] = useState(false); // V21.6
+  const { filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+
+  const groupId = pedidoProp.group_id || pedidoProp.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = pedidoProp.empresa_id || (contexto === "empresa" ? empresaAtual?.id : null);
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeVisualizarAprovacao =
+    hasPermission("Comercial.Pedido.visualizar") ||
+    hasPermission("Comercial.Pedido.aprovar") ||
+    hasPermission("comercial", "aprovar_pedido") ||
+    hasPermission("Estoque.Produto.visualizar");
+  const podeEditarAprovacao =
+    hasPermission("Comercial.Pedido.aprovar") ||
+    hasPermission("Comercial.Pedido.editar") ||
+    hasPermission("comercial", "aprovar_pedido") ||
+    hasPermission("comercial", "editar_pedido");
+  const consultaHabilitada = Boolean(contextoValido && podeVisualizarAprovacao);
   
   // Estado para descontos individuais dos itens
   const [descontosItens, setDescontosItens] = useState({});
   
   // V21.5: Buscar produtos para verificar estoque
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos', pedidoProp.empresa_id],
-    queryFn: () => base44.entities.Produto.filter({ empresa_id: pedidoProp.empresa_id }),
-    enabled: !!pedidoProp.empresa_id
+    queryKey: ["produtos-aprovacao-pedido-contexto", pedidoProp.id, groupId, empresaId, contexto],
+    queryFn: () => filterInContext("Produto", pedidoProp.empresa_id ? { empresa_id: pedidoProp.empresa_id } : {}, "descricao", 500),
+    enabled: consultaHabilitada
   });
 
   // Agregar todos os itens do pedido
@@ -218,6 +238,7 @@ export default function AnalisePedidoAprovacao({
   };
 
   const handleAprovar = () => {
+    if (!podeEditarAprovacao) return;
     // Preparar dados dos itens com descontos aplicados
     const itensAtualizados = todosItens.map(item => {
       const desconto = descontosItens[item.id_interno];
@@ -246,10 +267,21 @@ export default function AnalisePedidoAprovacao({
     return !valores.estoque.disponivel;
   });
 
-  const containerClass = windowMode ? "w-full h-full overflow-auto p-6" : "p-6";
+  const containerClass = windowMode ? "w-full h-full overflow-auto p-6" : "w-full h-full p-6";
+
+  if (!contextoValido || !podeVisualizarAprovacao) {
+    return (
+      <Alert className="w-full h-full border-amber-200 bg-amber-50" data-context-required="true" data-permission="Comercial.Pedido.aprovar">
+        <ShieldAlert className="h-4 w-4 text-amber-600" />
+        <AlertDescription className="text-amber-800">
+          Análise de aprovação exige contexto de grupo/empresa e permissão para visualizar ou aprovar pedidos.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
-    <div className={containerClass}>
+    <div className={containerClass} data-context-required="true" data-permission="Comercial.Pedido.aprovar">
       <div className="space-y-4">
         {/* INFORMAÇÕES DO PEDIDO */}
         <Card className="bg-slate-50">
@@ -296,6 +328,9 @@ export default function AnalisePedidoAprovacao({
                     setDescontoGeralValor(0);
                   }}
                   placeholder="0.00"
+                  disabled={!podeEditarAprovacao}
+                  data-action="ajustar-desconto-geral-percentual"
+                  data-sensitive="true"
                 />
               </div>
               <div>
@@ -309,6 +344,9 @@ export default function AnalisePedidoAprovacao({
                     setDescontoGeralPercentual(0);
                   }}
                   placeholder="0.00"
+                  disabled={!podeEditarAprovacao}
+                  data-action="ajustar-desconto-geral-valor"
+                  data-sensitive="true"
                 />
               </div>
             </div>
@@ -446,6 +484,9 @@ export default function AnalisePedidoAprovacao({
                             value={descontoAtual.percentual}
                             onChange={(e) => handleDescontoItemChange(item.id_interno, 'percentual', e.target.value)}
                             placeholder="0"
+                            disabled={!podeEditarAprovacao}
+                            data-action="ajustar-desconto-item-percentual"
+                            data-sensitive="true"
                           />
                         </TableCell>
                         <TableCell>
@@ -456,6 +497,9 @@ export default function AnalisePedidoAprovacao({
                             value={descontoAtual.valor}
                             onChange={(e) => handleDescontoItemChange(item.id_interno, 'valor', e.target.value)}
                             placeholder="0.00"
+                            disabled={!podeEditarAprovacao}
+                            data-action="ajustar-desconto-item-valor"
+                            data-sensitive="true"
                           />
                         </TableCell>
                         <TableCell className="font-bold text-green-600">
@@ -563,7 +607,10 @@ export default function AnalisePedidoAprovacao({
               <Switch
                 checked={fecharAutomatico}
                 onCheckedChange={setFecharAutomatico}
+                disabled={!podeEditarAprovacao}
                 id="auto-close-approval"
+                data-action="alternar-fechamento-automatico"
+                data-sensitive="true"
               />
             </div>
             {fecharAutomatico && (
@@ -581,6 +628,9 @@ export default function AnalisePedidoAprovacao({
           <Button
             variant="outline"
             onClick={() => onNegar(comentarios)}
+            disabled={!podeEditarAprovacao}
+            data-action="negar-desconto-pedido"
+            data-sensitive="true"
             className="border-red-300 text-red-600 hover:bg-red-50"
           >
             <XCircle className="w-4 h-4 mr-2" />
@@ -592,7 +642,9 @@ export default function AnalisePedidoAprovacao({
               : "bg-green-600 hover:bg-green-700 shadow-lg"
             }
             onClick={handleAprovar}
-            disabled={temEstoqueInsuficiente}
+            disabled={!podeEditarAprovacao || temEstoqueInsuficiente}
+            data-action="aprovar-pedido"
+            data-sensitive="true"
           >
             <CheckCircle2 className="w-4 h-4 mr-2" />
             {fecharAutomatico ? '✅ Aprovar e 🚀 Fechar' : '✅ Aprovar Pedido'}
