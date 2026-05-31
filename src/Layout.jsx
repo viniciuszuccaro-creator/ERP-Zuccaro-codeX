@@ -18,7 +18,6 @@ import {
         Calendar,
         BarChart3,
         Factory,
-        BookOpen,
         Search,
         MessageCircle,
         CheckCircle2,
@@ -89,7 +88,6 @@ const navigationItems = [
   { title: "Fiscal e Tributário", url: createPageUrl("Fiscal"), icon: FileText, group: "administrativo" },
   { title: "Gestão de Contratos", url: createPageUrl("Contratos"), icon: FileText, group: "administrativo" },
   { title: "Administração do Sistema", url: createPageUrl("AdministracaoSistema?tab=integracoes"), icon: Settings, group: "sistema" },
-  { title: "📚 Documentação", url: createPageUrl("Documentacao"), icon: BookOpen, group: "sistema" },
   
   
   
@@ -143,7 +141,6 @@ function LayoutContent({ children, currentPageName }) {
 
 
         const [pesquisaOpen, setPesquisaOpen] = useState(false);
-        const [modoEscuro, setModoEscuro] = useState(false);
         const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
         const auditThrottleRef = React.useRef({ click: 0, change: 0 });
         const { prefetch: prefetchModule } = usePrefetchModuleData();
@@ -295,24 +292,11 @@ function LayoutContent({ children, currentPageName }) {
         e.preventDefault();
         window.location.href = createPageUrl('Comercial');
       }
-
-      if (ctrl && e.key === 'm') {
-        e.preventDefault();
-        setModoEscuro(prev => !prev);
-      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
-
-  useEffect(() => {
-    if (modoEscuro) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [modoEscuro]);
 
   // Offline status + basic offline shell cache (last data snapshot)
   useEffect(() => {
@@ -587,54 +571,6 @@ function LayoutContent({ children, currentPageName }) {
       window.removeEventListener('unhandledrejection', onUnhandled);
     };
   }, []);
-
-  const darkModeStyles = modoEscuro ? `
-    <style>
-      :root.dark {
-        --background: 222.2 84% 4.9%;
-        --foreground: 210 40% 98%;
-        --card: 222.2 84% 4.9%;
-        --card-foreground: 210 40% 98%;
-        --primary: 217.2 91.2% 59.8%;
-        --slate-50: #0f172a;
-        --slate-100: #1e293b;
-        --slate-200: #334155;
-        --slate-600: #cbd5e1;
-        --slate-700: #e2e8f0;
-        --slate-900: #f1f5f9;
-      }
-      
-      .dark body {
-        background: linear-gradient(to bottom right, #0f172a, #1e293b);
-        color: #f1f5f9;
-      }
-      
-      .dark .bg-white {
-        background-color: #1e293b !important;
-        color: #f1f5f9 !important;
-      }
-      
-      .dark .bg-slate-50 {
-        background-color: #0f172a !important;
-      }
-      
-      .dark .text-slate-900 {
-        color: #f1f5f9 !important;
-      }
-      
-      .dark .text-slate-600 {
-        color: #cbd5e1 !important;
-      }
-      
-      .dark .border-slate-200 {
-        border-color: #334155 !important;
-      }
-      
-      .dark .shadow-md {
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
-      }
-    </style>
-  ` : '';
 
   useEffect(() => {
     if (!user) return;
@@ -1330,7 +1266,6 @@ function LayoutContent({ children, currentPageName }) {
   if (isMobilePage) {
     return (
       <>
-        {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
         <div className="w-full h-full min-h-screen">{children}</div>
       </>
     );
@@ -1338,7 +1273,6 @@ function LayoutContent({ children, currentPageName }) {
 
   return (
     <SidebarProvider>
-      {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
       
       <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-50 to-blue-50">
         {/* Fase 2: preencher h-full com rolagem interna em todo conteúdo central */}
@@ -1425,16 +1359,6 @@ function LayoutContent({ children, currentPageName }) {
                 title="Sair"
               >
                 <LogOut className="w-4 h-4 text-slate-500" />
-              </button>
-            </div>
-            
-            <div className="mt-2 pt-2 border-t border-slate-200">
-              <button
-                onClick={() => setModoEscuro(!modoEscuro)}
-                className="w-full flex items-center gap-2 p-2 rounded hover:bg-slate-100 text-sm text-slate-600 transition-colors"
-                title="Ctrl+M"
-              >
-                {modoEscuro ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
               </button>
             </div>
           </SidebarFooter>

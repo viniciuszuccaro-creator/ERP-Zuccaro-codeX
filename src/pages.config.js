@@ -59,7 +59,6 @@ import Contratos from './pages/Contratos';
 import Dashboard from './pages/Dashboard';
 import DashboardCorporativo from './pages/DashboardCorporativo';
 import DemoMultitarefas from './pages/DemoMultitarefas';
-import Documentacao from './pages/Documentacao';
 import Empresas from './pages/Empresas';
 import EntregasMobile from './pages/EntregasMobile';
 import Estoque from './pages/Estoque';
@@ -92,7 +91,6 @@ export const PAGES = {
     "Dashboard": Dashboard,
     "DashboardCorporativo": DashboardCorporativo,
     "DemoMultitarefas": DemoMultitarefas,
-    "Documentacao": Documentacao,
     "Empresas": Empresas,
     "EntregasMobile": EntregasMobile,
     "Estoque": Estoque,

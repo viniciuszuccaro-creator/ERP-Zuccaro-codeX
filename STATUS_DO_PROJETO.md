@@ -1,5 +1,16 @@
 # Status do Projeto ERP Zuccaro
 
+### Interface - Remocao Autorizada de Documentacao e Modo Escuro
+
+- Alteracao feita com autorizacao explicita do usuario para excluir a entrada `Documentacao` da barra lateral esquerda e todo o conteudo diretamente associado a ela.
+- Removidos a rota/importacao `Documentacao`, a pagina `src/pages/Documentacao.jsx` e a pasta `src/components/docs`.
+- `PageNotFound` deixou de reconhecer `Documentacao` como pagina valida para redirecionamento.
+- Removido o recurso de `Modo Escuro` do `Layout`: estado, atalho `Ctrl+M`, injecao de estilos e botao do rodape da barra lateral.
+- Removida a opcao `Escuro` das preferencias de aparencia do usuario e removido `Ctrl+M` do painel de atalhos.
+- Mantida a Regra-Mae: a exclusao foi feita somente porque o usuario autorizou explicitamente nesta conversa; nenhum outro modulo operacional foi removido.
+- Build validado com sucesso via Vite; permanecem apenas warnings tecnicos preexistentes de browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar o plano de melhoria em `InventarioForm` ou revisar outros pontos de Cadastro Gerais com duplicidade/fluxo sensivel.
+
 ### Estoque/Cadastros - Fase 8 Importador de Produtos em Contexto
 
 - Seguido o proximo passo salvo no status: continuar no proprio `ImportadorProdutosPlanilha`, substituindo operacoes diretas de `Produto`, `UnidadeMedida`, `GrupoProduto` e `SetorAtividade` por helpers de contexto.

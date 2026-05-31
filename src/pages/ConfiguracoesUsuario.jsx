@@ -586,7 +586,6 @@ export default function ConfiguracoesUsuario() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Claro">☀️ Claro</SelectItem>
-                      <SelectItem value="Escuro">🌙 Escuro</SelectItem>
                       <SelectItem value="Auto">🔄 Automático (Sistema)</SelectItem>
                     </SelectContent>
                   </Select>

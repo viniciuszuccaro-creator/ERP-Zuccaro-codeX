@@ -22,8 +22,7 @@ export default function AtalhosTecladoInfo() {
       items: [
         { tecla: 'Ctrl+K', acao: 'Pesquisa Universal' },
         { tecla: 'Ctrl+Shift+D', acao: 'Ir para Dashboard' },
-        { tecla: 'Ctrl+Shift+C', acao: 'Ir para Comercial' },
-        { tecla: 'Ctrl+M', acao: 'Alternar Modo Escuro' }
+        { tecla: 'Ctrl+Shift+C', acao: 'Ir para Comercial' }
       ]
     },
     {

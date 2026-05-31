@@ -12,7 +12,7 @@ export default function PageNotFound({}) {
     // Redirecionamento inteligente: tenta normalizar rota desconhecida (case/acentos/hífens) e aliases comuns
     useEffect(() => {
         const known = [
-            'Home','Dashboard','DashboardCorporativo','Relatorios','Agenda','CRM','Cadastros','Comercial','Estoque','Compras','Expedicao','Producao','ProducaoMobile','Financeiro','RH','Fiscal','Contratos','AdministracaoSistema','Documentacao','HubAtendimento','OrcamentoSite','PortalCliente','EntregasMobile'
+            'Home','Dashboard','DashboardCorporativo','Relatorios','Agenda','CRM','Cadastros','Comercial','Estoque','Compras','Expedicao','Producao','ProducaoMobile','Financeiro','RH','Fiscal','Contratos','AdministracaoSistema','HubAtendimento','OrcamentoSite','PortalCliente','EntregasMobile'
         ];
         const normalize = (s) => (s || '')
           .toString()
