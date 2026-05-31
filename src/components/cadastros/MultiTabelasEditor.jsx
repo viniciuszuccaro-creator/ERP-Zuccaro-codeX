@@ -12,6 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DollarSign, Calculator, Loader2, Package, Sparkles, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * V21.1.2 - EDITOR MULTI-TABELAS
@@ -19,6 +21,8 @@ import { toast } from 'sonner';
  */
 export default function MultiTabelasEditor({ isOpen, onClose, tabelas }) {
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, contexto, filterInContext, updateInContext } = useContextoVisual();
+  const { canEdit, hasPermission } = usePermissions();
   const [tabelasSelecionadas, setTabelasSelecionadas] = useState([]);
   const [aplicando, setAplicando] = useState(false);
   
@@ -27,6 +31,33 @@ export default function MultiTabelasEditor({ isOpen, onClose, tabelas }) {
     tipo: 'markup',
     valor: 30
   });
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === 'empresa' ? empresaAtual?.id : null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeEditarTabelaPreco = canEdit('Cadastros', 'TabelaPreco') || hasPermission('Comercial', 'TabelaPreco', 'editar');
+  const podeUsarIA = hasPermission('Cadastros', 'TabelaPreco', 'editar') || hasPermission('Sistema', 'IA', 'executar');
+  const acaoBloqueada = !contextoValido || !podeEditarTabelaPreco;
+
+  const auditMultiTabela = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: (await base44.auth.me())?.email || 'Usuario',
+        acao,
+        modulo: 'Cadastros',
+        tipo_auditoria: sucesso ? 'entidade' : 'seguranca',
+        entidade: 'TabelaPrecoItem',
+        descricao: motivo || 'Auditoria da edição multi-tabela de preços.',
+        empresa_id: empresaId,
+        group_id: groupId,
+        dados_anteriores: dados?.antes || null,
+        dados_novos: dados?.depois || dados,
+        sucesso,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar edicao multi-tabela:', error);
+    }
+  };
 
   const toggleTabela = (tabelaId) => {
     if (tabelasSelecionadas.includes(tabelaId)) {
@@ -49,21 +80,35 @@ export default function MultiTabelasEditor({ isOpen, onClose, tabelas }) {
       toast.error('Selecione pelo menos uma tabela');
       return;
     }
+    if (!contextoValido) {
+      await auditMultiTabela({ acao: 'TabelaPrecoItem.recalculo_multi_bloqueado', sucesso: false, motivo: 'Contexto de grupo ou empresa obrigatório.', dados: { tabelasSelecionadas } });
+      toast.error('Selecione um contexto de grupo/empresa antes de recalcular tabelas.');
+      return;
+    }
+    if (!podeEditarTabelaPreco) {
+      await auditMultiTabela({ acao: 'TabelaPrecoItem.recalculo_multi_negado', sucesso: false, motivo: 'Permissão negada para editar tabelas de preço.', dados: { tabelasSelecionadas } });
+      toast.error('Sem permissão para editar tabelas de preço.');
+      return;
+    }
+
+    const confirmado = window.confirm(`Regra-Mãe: recalcular itens de ${tabelasSelecionadas.length} tabela(s) de preço no contexto selecionado? Esta ação será auditada.`);
+    if (!confirmado) {
+      await auditMultiTabela({ acao: 'TabelaPrecoItem.recalculo_multi_cancelado', sucesso: false, motivo: 'Confirmação cancelada pelo usuário.', dados: { tabelasSelecionadas } });
+      return;
+    }
 
     setAplicando(true);
 
     try {
       let totalItensAtualizados = 0;
+      const produtos = await filterInContext('Produto', {}, 'descricao', 9999);
+      const produtosMap = {};
+      produtos.forEach(p => produtosMap[p.id] = p);
+      const alteracoesAuditadas = [];
 
       for (const tabelaId of tabelasSelecionadas) {
         // Buscar itens da tabela
-        const itens = await base44.entities.TabelaPrecoItem.filter({ tabela_preco_id: tabelaId });
-        
-        // Buscar produtos para pegar custo atualizado
-        const produtoIds = itens.map(i => i.produto_id);
-        const produtos = await base44.entities.Produto.list();
-        const produtosMap = {};
-        produtos.forEach(p => produtosMap[p.id] = p);
+        const itens = await filterInContext('TabelaPrecoItem', { tabela_preco_id: tabelaId }, 'produto_descricao', 1000);
 
         // Recalcular cada item
         for (const item of itens) {
@@ -100,7 +145,7 @@ export default function MultiTabelasEditor({ isOpen, onClose, tabelas }) {
           const margem = custoBase > 0 ? ((novoPreco - custoBase) / custoBase * 100) : 0;
 
           // Atualizar item
-          await base44.entities.TabelaPrecoItem.update(item.id, {
+          const payload = {
             custo_base: custoBase,
             preco_base: novoPreco,
             preco_com_desconto: novoPreco * (1 - (item.percentual_desconto || 0) / 100),
@@ -108,17 +153,38 @@ export default function MultiTabelasEditor({ isOpen, onClose, tabelas }) {
             preco_anterior: item.preco_base,
             data_ultima_alteracao: new Date().toISOString(),
             motivo_alteracao: `Recálculo multi-tabela: ${regraGlobal.tipo} ${regraGlobal.valor}${regraGlobal.tipo.includes('percentual') || regraGlobal.tipo === 'markup' || regraGlobal.tipo === 'margem' ? '%' : ''}`
+          };
+
+          await updateInContext('TabelaPrecoItem', item.id, payload);
+          alteracoesAuditadas.push({
+            id: item.id,
+            tabela_preco_id: tabelaId,
+            produto_id: item.produto_id,
+            antes: { preco_base: item.preco_base, custo_base: item.custo_base, margem_percentual: item.margem_percentual },
+            depois: { preco_base: payload.preco_base, custo_base: payload.custo_base, margem_percentual: payload.margem_percentual }
           });
 
           totalItensAtualizados++;
         }
       }
 
+      await auditMultiTabela({
+        acao: 'TabelaPrecoItem.recalculo_multi_concluido',
+        dados: {
+          tabelasSelecionadas,
+          totalItensAtualizados,
+          regraGlobal,
+          alteracoes: alteracoesAuditadas.slice(0, 100)
+        }
+      });
+
       queryClient.invalidateQueries({ queryKey: ['tabelas-preco-itens'] });
+      queryClient.invalidateQueries({ queryKey: ['tabelas-preco'] });
       toast.success(`✅ ${totalItensAtualizados} itens atualizados em ${tabelasSelecionadas.length} tabelas`);
       onClose();
     } catch (error) {
-      toast.error('❌ Erro ao aplicar regra: ' + error.message);
+      await auditMultiTabela({ acao: 'TabelaPrecoItem.recalculo_multi_erro', sucesso: false, motivo: error.message, dados: { tabelasSelecionadas, regraGlobal } });
+      toast.error('Erro ao aplicar regra: ' + error.message);
     } finally {
       setAplicando(false);
     }
@@ -127,6 +193,16 @@ export default function MultiTabelasEditor({ isOpen, onClose, tabelas }) {
   const handleAplicarIAGlobal = async () => {
     if (tabelasSelecionadas.length === 0) {
       toast.error('Selecione pelo menos uma tabela');
+      return;
+    }
+    if (!contextoValido || !podeUsarIA) {
+      await auditMultiTabela({
+        acao: 'TabelaPrecoItem.sugestao_ia_multi_bloqueada',
+        sucesso: false,
+        motivo: !contextoValido ? 'Contexto de grupo ou empresa obrigatório.' : 'Permissão negada para sugestão de IA em precificação.',
+        dados: { tabelasSelecionadas }
+      });
+      toast.error(!contextoValido ? 'Selecione um contexto de grupo/empresa antes de usar a IA.' : 'Sem permissão para usar IA nesta precificação.');
       return;
     }
 
@@ -172,6 +248,15 @@ Responda com:
         valor: resultado.markup_sugerido
       });
 
+      await auditMultiTabela({
+        acao: 'TabelaPrecoItem.sugestao_ia_multi',
+        dados: {
+          tabelasSelecionadas,
+          markup_sugerido: resultado.markup_sugerido,
+          estrategia: resultado.estrategia
+        }
+      });
+
       toast.success(`✨ PriceBrain: ${resultado.estrategia}`);
       
       if (resultado.observacoes) {
@@ -180,7 +265,8 @@ Responda com:
         }, 1500);
       }
     } catch (error) {
-      toast.error('❌ Erro ao consultar IA: ' + error.message);
+      await auditMultiTabela({ acao: 'TabelaPrecoItem.sugestao_ia_multi_erro', sucesso: false, motivo: error.message, dados: { tabelasSelecionadas } });
+      toast.error('Erro ao consultar IA: ' + error.message);
     } finally {
       setAplicando(false);
     }
@@ -188,7 +274,7 @@ Responda com:
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-full max-w-4xl max-h-[90vh] overflow-y-auto" data-permission="Cadastros.TabelaPreco.editar" data-context-required="true">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <DollarSign className="w-5 h-5 text-green-600" />
@@ -199,16 +285,25 @@ Responda com:
         <Alert className="border-purple-200 bg-purple-50">
           <Sparkles className="w-4 h-4 text-purple-600" />
           <AlertDescription className="text-sm text-purple-900">
-            🚀 <strong>Novo V21.1.2:</strong> Selecione múltiplas tabelas e aplique a mesma regra de recálculo em todas simultaneamente
+            <strong>Novo V21.1.2:</strong> Selecione múltiplas tabelas e aplique a mesma regra de recálculo em todas simultaneamente.
           </AlertDescription>
         </Alert>
+
+        {acaoBloqueada && (
+          <Alert variant="destructive">
+            <Package className="w-4 h-4" />
+            <AlertDescription className="text-sm">
+              Edição multi-tabela exige contexto de grupo/empresa e permissão para editar tabelas de preço.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* SELEÇÃO DE TABELAS */}
         <Card>
           <CardHeader className="bg-slate-50 border-b pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">Selecionar Tabelas</CardTitle>
-              <Button size="sm" variant="outline" onClick={handleSelecionarTodas}>
+              <Button size="sm" variant="outline" onClick={handleSelecionarTodas} disabled={acaoBloqueada} data-action="MultiTabelasEditor.selecionarTodas" data-permission="Cadastros.TabelaPreco.editar">
                 {tabelasSelecionadas.length === tabelas.length ? 'Desmarcar Todas' : 'Selecionar Todas'}
               </Button>
             </div>
@@ -224,6 +319,9 @@ Responda com:
                 <Checkbox
                   checked={tabelasSelecionadas.includes(tabela.id)}
                   onCheckedChange={() => toggleTabela(tabela.id)}
+                  disabled={acaoBloqueada}
+                  data-action="MultiTabelasEditor.selecionarTabela"
+                  data-permission="Cadastros.TabelaPreco.editar"
                 />
                 <div className="flex-1">
                   <p className="font-semibold text-sm">{tabela.nome}</p>
@@ -246,7 +344,7 @@ Responda com:
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <Label>Base de Cálculo</Label>
-                <Select value={regraGlobal.base} onValueChange={(v) => setRegraGlobal({...regraGlobal, base: v})}>
+                <Select value={regraGlobal.base} onValueChange={(v) => setRegraGlobal({...regraGlobal, base: v})} disabled={acaoBloqueada} data-action="MultiTabelasEditor.baseCalculo" data-permission="Cadastros.TabelaPreco.editar">
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -260,7 +358,7 @@ Responda com:
 
               <div>
                 <Label>Tipo de Ajuste</Label>
-                <Select value={regraGlobal.tipo} onValueChange={(v) => setRegraGlobal({...regraGlobal, tipo: v})}>
+                <Select value={regraGlobal.tipo} onValueChange={(v) => setRegraGlobal({...regraGlobal, tipo: v})} disabled={acaoBloqueada} data-action="MultiTabelasEditor.tipoAjuste" data-permission="Cadastros.TabelaPreco.editar">
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -281,6 +379,9 @@ Responda com:
                   value={regraGlobal.valor}
                   onChange={(e) => setRegraGlobal({...regraGlobal, valor: parseFloat(e.target.value) || 0})}
                   placeholder="30"
+                  disabled={acaoBloqueada}
+                  data-action="MultiTabelasEditor.valorRegra"
+                  data-permission="Cadastros.TabelaPreco.editar"
                 />
               </div>
             </div>
@@ -289,8 +390,11 @@ Responda com:
               <Button
                 type="button"
                 onClick={handleAplicarRegra}
-                disabled={aplicando || tabelasSelecionadas.length === 0}
+                disabled={aplicando || tabelasSelecionadas.length === 0 || acaoBloqueada}
                 className="flex-1 bg-blue-600 hover:bg-blue-700"
+                data-action="MultiTabelasEditor.aplicarRegra"
+                data-permission="Cadastros.TabelaPreco.editar"
+                data-sensitive="true"
               >
                 {aplicando ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -303,8 +407,11 @@ Responda com:
               <Button
                 type="button"
                 onClick={handleAplicarIAGlobal}
-                disabled={aplicando || tabelasSelecionadas.length === 0}
+                disabled={aplicando || tabelasSelecionadas.length === 0 || !contextoValido || !podeUsarIA}
                 className="flex-1 bg-purple-600 hover:bg-purple-700"
+                data-action="MultiTabelasEditor.sugerirIA"
+                data-permission="Sistema.IA.executar"
+                data-sensitive="true"
               >
                 {aplicando ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />

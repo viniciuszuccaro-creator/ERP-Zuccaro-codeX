@@ -1,5 +1,15 @@
 # Status do Projeto ERP Zuccaro
 
+### Cadastros - Fase 8 Multi-Tabelas de Preço
+
+- Seguido o próximo passo salvo no status: revisar `MultiTabelasEditor`, que ainda buscava produtos globalmente e atualizava itens de tabela diretamente.
+- `MultiTabelasEditor` deixou de usar `base44.entities.Produto.list()` e passou a buscar produtos via `filterInContext`.
+- Itens de tabela de preço passaram a ser carregados com `filterInContext` e atualizados com `updateInContext`, mantendo contexto grupo/empresa.
+- Recalculo multi-tabela agora exige contexto de grupo/empresa, permissão RBAC de edição e confirmação do usuário antes de alterar preços em massa.
+- Fluxos de bloqueio, cancelamento, erro, sucesso e sugestão por IA passaram a gerar auditoria com `group_id`, `empresa_id` e resumo antes/depois.
+- Controles sensíveis receberam bloqueio visual e marcadores `data-action`, `data-permission`, `data-sensitive` e `data-context-required`.
+- Mantida a Regra-Mãe: nenhuma tela, módulo, arquivo ou fluxo novo foi criado; apenas melhoria no componente existente.
+- Próximo passo sugerido: continuar seletores comerciais de produto que ainda usam `Produto.list/filter`, priorizando `SelecionarProdutoModal`, `SelecionarProdutoForm`, `SugestoesProdutos` e `TabelaPrecoItensModal`.
 ### Cadastros - Fase 8 Dashboard Estruturantes
 
 - Seguido o próximo passo salvo no status: revisar `DashboardEstruturantes`, que ainda listava cadastros estruturantes e produtos globalmente.
