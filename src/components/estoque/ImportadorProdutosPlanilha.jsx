@@ -174,7 +174,7 @@ const mapTipoItem = (v) => {
       const makeKey = (empresaId, codigo) => `${empresaId || ''}__${String(codigo || '').toUpperCase()}`;
 
 export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
-  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, filterInContext, createInContext, updateInContext, deleteInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const [arquivo, setArquivo] = useState(null);
   const [processando, setProcessando] = useState(false);
@@ -206,6 +206,12 @@ const [suggesting, setSuggesting] = useState(false);
     hasPermission('Cadastros', 'Produto', 'editar') ||
     hasPermission('Estoque', null, 'criar') ||
     hasPermission('Cadastros', null, 'criar');
+
+  const withProdutoContexto = (payload = {}, produtoBase = {}) => ({
+    ...payload,
+    empresa_id: produtoBase.empresa_id || payload.empresa_id || empresaId || empresaAtual?.id || null,
+    group_id: produtoBase.group_id || payload.group_id || contextoGrupoId || null,
+  });
 
   const auditImportadorProdutos = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
@@ -262,12 +268,12 @@ const [suggesting, setSuggesting] = useState(false);
   // Mapas para Grupo de Produto e Setor de Atividade (carregar do ERP)
   const { data: gruposProduto = [] } = useQuery({
     queryKey: ['grupos-produto'],
-    queryFn: () => base44.entities.GrupoProduto.list(),
+    queryFn: () => filterInContext('GrupoProduto', {}, 'nome_grupo', 500),
     staleTime: 300000,
   });
   const { data: setoresAtividade = [] } = useQuery({
     queryKey: ['setores-atividade'],
-    queryFn: () => base44.entities.SetorAtividade.list(),
+    queryFn: () => filterInContext('SetorAtividade', {}, 'nome', 500),
     staleTime: 300000,
   });
   const gruposByCodigo = React.useMemo(() => {
@@ -487,7 +493,7 @@ const [suggesting, setSuggesting] = useState(false);
           const [empId, code] = k.split('__');
           if (internos.has(k)) return null;
           try {
-            const encontrados = await base44.entities.Produto.filter({ empresa_id: empId, codigo: code }, undefined, 1);
+            const encontrados = await filterInContext('Produto', { empresa_id: empId, codigo: code }, undefined, 1);
             if (Array.isArray(encontrados) && encontrados.length > 0) {
               const novo = produtosAlvo.find(p => makeKey(p.empresa_id, p.codigo) === k);
               duplics.push({ empresa_id: empId, codigo: code, existente: encontrados[0], novo });
@@ -496,7 +502,7 @@ const [suggesting, setSuggesting] = useState(false);
             const msg = String(err?.message || '').toLowerCase();
             if (msg.includes('rate limit')) {
               await sleep(500);
-              const encontrados = await base44.entities.Produto.filter({ empresa_id: empId, codigo: code }, undefined, 1);
+              const encontrados = await filterInContext('Produto', { empresa_id: empId, codigo: code }, undefined, 1);
               if (Array.isArray(encontrados) && encontrados.length > 0) {
                 const novo = produtosAlvo.find(p => makeKey(p.empresa_id, p.codigo) === k);
                 duplics.push({ empresa_id: empId, codigo: code, existente: encontrados[0], novo });
@@ -895,7 +901,7 @@ const [suggesting, setSuggesting] = useState(false);
         if (unidadesDetectadas.size) {
           let existentes = [];
           try {
-            existentes = await base44.entities.UnidadeMedida.list();
+            existentes = await filterInContext('UnidadeMedida', {}, 'sigla', 500);
           } catch (_) {}
           const existentesSet = new Set((existentes || []).map(u => String(u.sigla || '').toUpperCase().trim()));
           const novosUM = Array.from(unidadesDetectadas).filter(s => !existentesSet.has(s));
@@ -915,7 +921,7 @@ const [suggesting, setSuggesting] = useState(false);
             }));
             for (let i = 0; i < payloadsUM.length; i += 20) {
               const slice = payloadsUM.slice(i, i + 20);
-              await Promise.allSettled(slice.map(p => base44.entities.UnidadeMedida.create(p)));
+              await Promise.allSettled(slice.map(p => createInContext('UnidadeMedida', p)));
               await sleep(200);
             }
           }
@@ -1041,7 +1047,7 @@ const [suggesting, setSuggesting] = useState(false);
         }));
         for (let i = 0; i < payloads.length; i += 10) {
           const slice = payloads.slice(i, i + 10);
-          const res = await Promise.allSettled(slice.map(p => base44.entities.GrupoProduto.create(p)));
+          const res = await Promise.allSettled(slice.map(p => createInContext('GrupoProduto', p)));
           res.forEach((r, idx) => {
             if (r.status === 'fulfilled') {
               const p = slice[idx];
@@ -1063,7 +1069,7 @@ const [suggesting, setSuggesting] = useState(false);
         }));
         for (let i = 0; i < payloadsS.length; i += 10) {
           const slice = payloadsS.slice(i, i + 10);
-          const resS = await Promise.allSettled(slice.map(p => base44.entities.SetorAtividade.create(p)));
+          const resS = await Promise.allSettled(slice.map(p => createInContext('SetorAtividade', p)));
           resS.forEach((r, idx) => {
             if (r.status === 'fulfilled') {
               const p = slice[idx];
@@ -1125,12 +1131,12 @@ const [suggesting, setSuggesting] = useState(false);
           const checks = await Promise.allSettled(slice.map(async (k) => {
             const [empId, code] = k.split('__');
             try {
-              const found = await base44.entities.Produto.filter({ empresa_id: empId, codigo: code }, undefined, 1);
+              const found = await filterInContext('Produto', { empresa_id: empId, codigo: code }, undefined, 1);
               if (Array.isArray(found) && found.length > 0) existingSet.add(k);
             } catch (err) {
               if (String(err?.message || '').toLowerCase().includes('rate limit')) {
                 await sleep(600);
-                const found = await base44.entities.Produto.filter({ empresa_id: empId, codigo: code }, undefined, 1);
+                const found = await filterInContext('Produto', { empresa_id: empId, codigo: code }, undefined, 1);
                 if (Array.isArray(found) && found.length > 0) existingSet.add(k);
               }
             }
@@ -1177,26 +1183,22 @@ const [suggesting, setSuggesting] = useState(false);
               if (patch.ncm != null) patch.ncm = sanitizeNCM(patch.ncm);
               Object.keys(patch).forEach(k => patch[k] === undefined && delete patch[k]);
               try {
-                return await base44.entities.Produto.update(d.existente.id, patch);
+                return await updateInContext('Produto', d.existente.id, withProdutoContexto(patch, d.novo));
               } catch (err) {
                 const msg = String(err?.message || '').toLowerCase();
                 const status = err?.response?.status || err?.status;
                 if (status === 404 || msg.includes('not found') || msg.includes('does not exist') || msg.includes('no such')) {
-                  return await base44.entities.Produto.create({
-                    ...patch,
-                    empresa_id: d.empresa_id,
-                    codigo: d.codigo,
-                  });
+                  return await createInContext('Produto', withProdutoContexto({ ...patch, codigo: d.codigo }, d.novo));
                 }
                 if (msg.includes('rate limit')) {
                   await sleep(600 + Math.floor(Math.random() * 200));
                   try {
-                    return await base44.entities.Produto.update(d.existente.id, patch);
+                    return await updateInContext('Produto', d.existente.id, withProdutoContexto(patch, d.novo));
                   } catch (err2) {
                     const msg2 = String(err2?.message || '').toLowerCase();
                     if (msg2.includes('rate limit')) {
                       await sleep(1200 + Math.floor(Math.random() * 300));
-                      return await base44.entities.Produto.update(d.existente.id, patch);
+                      return await updateInContext('Produto', d.existente.id, withProdutoContexto(patch, d.novo));
                     }
                     throw err2;
                   }
@@ -1216,25 +1218,17 @@ const [suggesting, setSuggesting] = useState(false);
             const parte = paraSubstituir.slice(i, i + chunkS);
             const res = await Promise.allSettled(parte.map(async (d) => {
               try {
-                await base44.entities.Produto.delete(d.existente.id);
+                await deleteInContext('Produto', d.existente.id);
                 await sleep(200);
-                return await base44.entities.Produto.create({
-                  ...d.novo,
-                  empresa_id: d.empresa_id,
-                  codigo: d.codigo,
-                });
+                return await createInContext('Produto', withProdutoContexto({ ...d.novo, codigo: d.codigo }, d.novo));
               } catch (err) {
                 const msg = String(err?.message || '').toLowerCase();
                 if (msg.includes('rate limit')) {
                   await sleep(600 + Math.floor(Math.random() * 200));
                   try {
-                    await base44.entities.Produto.delete(d.existente.id);
+                    await deleteInContext('Produto', d.existente.id);
                     await sleep(200);
-                    return await base44.entities.Produto.create({
-                      ...d.novo,
-                      empresa_id: d.empresa_id,
-                      codigo: d.codigo,
-                    });
+                    return await createInContext('Produto', withProdutoContexto({ ...d.novo, codigo: d.codigo }, d.novo));
                   } catch (err2) {
                     throw err2;
                   }
@@ -1286,12 +1280,12 @@ const [suggesting, setSuggesting] = useState(false);
           await Promise.allSettled(slice.map(async (k) => {
             const [empId, code] = k.split('__');
             try {
-              const found = await base44.entities.Produto.filter({ empresa_id: empId, codigo: code }, undefined, 1);
+              const found = await filterInContext('Produto', { empresa_id: empId, codigo: code }, undefined, 1);
               if (Array.isArray(found) && found[0]) existingByKey[k] = found[0];
             } catch (err) {
               if (String(err?.message || '').toLowerCase().includes('rate limit')) {
                 await sleep(600);
-                const found = await base44.entities.Produto.filter({ empresa_id: empId, codigo: code }, undefined, 1);
+                const found = await filterInContext('Produto', { empresa_id: empId, codigo: code }, undefined, 1);
                 if (Array.isArray(found) && found[0]) existingByKey[k] = found[0];
               }
             }
@@ -1325,43 +1319,43 @@ const [suggesting, setSuggesting] = useState(false);
             if (patch.ncm != null) patch.ncm = sanitizeNCM(patch.ncm);
             Object.keys(patch).forEach(k => patch[k] === undefined && delete patch[k]);
             try {
-              return await base44.entities.Produto.update(existente.id, patch);
+              return await updateInContext('Produto', existente.id, withProdutoContexto(patch, p));
             } catch (err) {
               const msg = String(err?.message || '').toLowerCase();
               if (msg.includes('rate limit')) {
                 await sleep(800 + Math.floor(Math.random() * 200));
                 try {
-                  return await base44.entities.Produto.update(existente.id, patch);
+                  return await updateInContext('Produto', existente.id, withProdutoContexto(patch, p));
                 } catch (err2) {
                   const msg2 = String(err2?.message || '').toLowerCase();
                   if (msg2.includes('rate limit')) {
                     await sleep(1500 + Math.floor(Math.random() * 300));
-                    return await base44.entities.Produto.update(existente.id, patch);
+                    return await updateInContext('Produto', existente.id, withProdutoContexto(patch, p));
                   }
                   throw err2;
                 }
               }
               // se por algum motivo não encontrar mais, cria
               if (msg.includes('not found')) {
-                return await base44.entities.Produto.create({ ...p });
+                return await createInContext('Produto', withProdutoContexto({ ...p }, p));
               }
               throw err;
             }
           } else {
             try {
-              return await base44.entities.Produto.create(p);
+              return await createInContext('Produto', withProdutoContexto(p, p));
             } catch (err) {
               const msg = String(err?.message || '').toLowerCase();
               if (msg.includes('rate limit')) {
                 // backoff com jitter e até 2 tentativas
                 await sleep(800 + Math.floor(Math.random() * 200));
                 try {
-                  return await base44.entities.Produto.create(p);
+                  return await createInContext('Produto', withProdutoContexto(p, p));
                 } catch (err2) {
                   const msg2 = String(err2?.message || '').toLowerCase();
                   if (msg2.includes('rate limit')) {
                     await sleep(1500 + Math.floor(Math.random() * 300));
-                    return await base44.entities.Produto.create(p);
+                    return await createInContext('Produto', withProdutoContexto(p, p));
                   }
                   throw err2;
                 }

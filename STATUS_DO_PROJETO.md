@@ -1,5 +1,15 @@
 # Status do Projeto ERP Zuccaro
 
+### Estoque/Cadastros - Fase 8 Importador de Produtos em Contexto
+
+- Seguido o proximo passo salvo no status: continuar no proprio `ImportadorProdutosPlanilha`, substituindo operacoes diretas de `Produto`, `UnidadeMedida`, `GrupoProduto` e `SetorAtividade` por helpers de contexto.
+- Listagens de `GrupoProduto`, `SetorAtividade`, `UnidadeMedida` e verificacoes de `Produto` passaram a usar `filterInContext`.
+- Criacoes de `UnidadeMedida`, `GrupoProduto`, `SetorAtividade` e `Produto` passaram a usar `createInContext`.
+- Atualizacoes e substituicoes de `Produto` passaram a usar `updateInContext` e `deleteInContext`, preservando `empresa_id` e `group_id` do item importado.
+- Mantidos os fluxos existentes de preview, duplicidade, atualizar, pular e substituir; nenhuma tela, modulo, funcionalidade ou arquivo novo foi criado.
+- Build validado com sucesso via Vite; permanecem apenas warnings tecnicos preexistentes de browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: seguir para `InventarioForm` ou revisar outros importadores de Cadastro Gerais que ainda tenham chamadas diretas e fluxo sensivel.
+
 ### Estoque/Cadastros - Fase 8 Importador de Produtos
 
 - Seguido o proximo passo salvo no status: continuar Fase 8 em `ImportadorProdutosPlanilha`, priorizando importacoes/atualizacoes/exclusoes de produto com fluxo sensivel e perguntas obrigatorias antes de excluir/substituir.
