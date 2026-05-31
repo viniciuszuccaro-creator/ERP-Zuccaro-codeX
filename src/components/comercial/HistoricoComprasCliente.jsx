@@ -1,54 +1,80 @@
 import React from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { History, Package, Plus, TrendingUp } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { History, Package, Plus, TrendingUp, ShieldAlert } from "lucide-react";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 export default function HistoricoComprasCliente({ clienteId, onAdicionarProduto }) {
+  const { filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === "empresa" ? empresaAtual?.id : null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeVisualizarHistorico =
+    hasPermission("Comercial.Pedido.visualizar") ||
+    hasPermission("CRM.Cliente.visualizar") ||
+    hasPermission("comercial", "visualizar_pedido");
+  const podeAdicionarProduto =
+    hasPermission("Comercial.Pedido.criar") ||
+    hasPermission("Comercial.Pedido.editar") ||
+    hasPermission("comercial", "criar_pedido") ||
+    hasPermission("comercial", "editar_pedido");
+  const consultaHabilitada = Boolean(clienteId && contextoValido && podeVisualizarHistorico);
+
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidosCliente', clienteId],
+    queryKey: ["pedidos-cliente-compras-contexto", clienteId, groupId, empresaId, contexto],
     queryFn: async () => {
-      if (!clienteId) return [];
       try {
-        return await base44.entities.Pedido.filter({ cliente_id: clienteId });
+        return await filterInContext("Pedido", { cliente_id: clienteId }, "-data_pedido", 200);
       } catch (error) {
-        console.error('Erro ao buscar pedidos:', error);
+        console.error("Erro ao buscar pedidos:", error);
         return [];
       }
     },
-    enabled: !!clienteId
+    enabled: consultaHabilitada
   });
 
-  if (!clienteId || pedidos.length === 0) {
-    return null;
+  if (!clienteId) return null;
+
+  if (!contextoValido || !podeVisualizarHistorico) {
+    return (
+      <Alert className="w-full h-full border-amber-200 bg-amber-50" data-context-required="true" data-permission="Comercial.Pedido.visualizar">
+        <ShieldAlert className="h-4 w-4 text-amber-600" />
+        <AlertDescription className="text-amber-800">
+          Histórico de compras exige contexto de grupo/empresa e permissão para visualizar pedidos.
+        </AlertDescription>
+      </Alert>
+    );
   }
 
-  // Consolidar produtos mais comprados
+  if (pedidos.length === 0) return null;
+
   const produtosConsolidados = {};
-  
   pedidos.forEach(pedido => {
     const itensRevenda = Array.isArray(pedido.itens_revenda) ? pedido.itens_revenda : [];
-    
     itensRevenda.forEach(item => {
-      if (!item || typeof item !== 'object') return;
-      
+      if (!item || typeof item !== "object") return;
+
       const key = item.produto_id || item.descricao;
       if (!key) return;
-      
+
       if (!produtosConsolidados[key]) {
         produtosConsolidados[key] = {
           produto_id: item.produto_id,
-          descricao: item.descricao || 'Produto',
-          codigo_sku: item.codigo_sku || '',
+          descricao: item.descricao || "Produto",
+          codigo_sku: item.codigo_sku || "",
           quantidade_total: 0,
           valor_total: 0,
           frequencia: 0,
           ultimo_preco: 0
         };
       }
-      
+
       produtosConsolidados[key].quantidade_total += item.quantidade || 0;
       produtosConsolidados[key].valor_total += item.valor_item || 0;
       produtosConsolidados[key].frequencia += 1;
@@ -60,12 +86,10 @@ export default function HistoricoComprasCliente({ clienteId, onAdicionarProduto 
     .sort((a, b) => b.valor_total - a.valor_total)
     .slice(0, 5);
 
-  if (topProdutos.length === 0) {
-    return null;
-  }
+  if (topProdutos.length === 0) return null;
 
   return (
-    <Card className="border-2 border-blue-200">
+    <Card className="w-full h-full border-2 border-blue-200" data-context-required="true" data-permission="Comercial.Pedido.visualizar">
       <CardHeader className="bg-blue-50 border-b">
         <CardTitle className="text-sm flex items-center gap-2">
           <History className="w-4 h-4 text-blue-600" />
@@ -99,19 +123,23 @@ export default function HistoricoComprasCliente({ clienteId, onAdicionarProduto 
                 size="sm"
                 variant="outline"
                 onClick={() => {
-                  if (onAdicionarProduto && typeof onAdicionarProduto === 'function') {
+                  if (!podeAdicionarProduto) return;
+                  if (onAdicionarProduto && typeof onAdicionarProduto === "function") {
                     onAdicionarProduto({
                       id: produto.produto_id,
                       codigo: produto.codigo_sku,
                       descricao: produto.descricao,
                       preco_venda: produto.ultimo_preco,
                       custo_aquisicao: produto.ultimo_preco * 0.6,
-                      unidade_medida: 'UN',
+                      unidade_medida: "UN",
                       estoque_atual: 100
                     });
                   }
                 }}
+                disabled={!podeAdicionarProduto}
                 className="border-blue-300 text-blue-600 hover:bg-blue-50"
+                data-permission="Comercial.Pedido.criar"
+                data-action="adicionar-produto-historico-cliente"
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Adicionar

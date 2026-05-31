@@ -24,6 +24,14 @@
 - Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas melhoria nos componentes existentes.
 - Proximo passo: continuar nos historicos comerciais (`HistoricoProdutosCliente`, `HistoricoComprasCliente`, `HistoricoOrigemCliente`) e aprovadores de pedido restantes.
 
+### Comercial - Fase 8 Historicos do Cliente
+- Segui o proximo passo salvo: revisar `HistoricoProdutosCliente`, `HistoricoComprasCliente` e `HistoricoOrigemCliente`.
+- Os tres historicos deixaram de consultar `Pedido` diretamente pelo `base44` e passaram a usar `filterInContext`, com chave por cliente, grupo, empresa e contexto visual.
+- Os historicos agora exigem contexto de grupo/empresa e permissao RBAC para visualizar pedidos/clientes antes de carregar dados.
+- O botao existente de adicionar produto pelo historico de compras passou a respeitar permissao comercial de criacao/edicao de pedido e recebeu `data-permission`/`data-action`.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas melhoria nos componentes existentes.
+- Proximo passo: continuar nos aprovadores comerciais restantes (`AprovacaoDescontos`, `AprovacaoDescontosManager`, `CentralAprovacoesManager`) e fluxos de fechamento que ainda usam chamadas diretas.
+
 # Status do Projeto ERP Zuccaro
 
 ### Comercial - Fase 8 Seletores de Produto
