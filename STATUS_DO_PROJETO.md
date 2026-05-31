@@ -1,5 +1,17 @@
 # Status do Projeto ERP Zuccaro
 
+### Compras/Estoque - Fase 8 Ordens de Compra
+
+- Seguido o proximo passo salvo no status: continuar em `OrdensCompraTab`, reforcando recebimento de OC, atualizacao de produto e auditorias minimas ainda restantes.
+- `OrdensCompraTab` passou a validar contexto grupo/empresa e RBAC granular antes de criar, aprovar, enviar, receber e avaliar ordem de compra.
+- Recebimento de OC deixou de buscar e atualizar `Produto` diretamente pelo `base44.entities.Produto.filter/update` e passou a usar `filterInContext` e `updateInContext`.
+- Aprovacao, envio ao fornecedor e recebimento passaram a pedir confirmacao do usuario antes de alterar status ou movimentar estoque.
+- Auditorias antigas minimas foram substituidas por auditoria com acao especifica, usuario, group_id, grupo_id, empresa_id, dados da OC e registro de bloqueio/cancelamento/sucesso.
+- Avaliacao de fornecedor deixou de atualizar a OC diretamente e passou a usar `updateInContext`.
+- A tela recebeu `w-full`, `h-full`, `data-permission`, `data-context-required` e alerta visual quando faltar contexto.
+- Mantida a Regra-Mae: nenhum modulo, tela, componente ou arquivo novo foi criado; apenas melhoria no componente existente.
+- Build validado com sucesso via Vite; permanecem apenas warnings tecnicos preexistentes de browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `ImportadorProdutosPlanilha` ou `InventarioForm`, priorizando importacoes/atualizacoes/exclusoes de produto com fluxo sensivel e perguntas obrigatorias antes de excluir/substituir.
 ### Fiscal/Compras/Estoque - Fase 8 Importar XML NF-e
 
 - Seguido o proximo passo salvo no status: continuar Fase 8 procurando criacoes diretas restantes em compras/fiscal/estoque, priorizando `ImportarXMLNFe`, `OrdensCompraTab` e recebimentos/movimentacoes com auditoria minima.

@@ -33,7 +33,10 @@ import { ImprimirOrdemCompra } from "@/components/lib/ImprimirOrdemCompra";
 import { useUser } from "@/components/lib/UserContext";
 
 export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas = [], windowMode = false }) {
-  const { createInContext, updateInContext } = useContextoVisual();
+  const { createInContext, updateInContext, filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
   const { page, setPage, pageSize, setPageSize } = useBackendPagination('OrdemCompra', 20);
   const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('OrdemCompra', 'data_solicitacao', 'desc');
 
@@ -43,6 +46,11 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
   const ocList = Array.isArray(ordensCompra) && ordensCompra.length ? ordensCompra : ocBackend;
   const { user: authUser } = useUser();
   const { hasPermission } = usePermissions();
+  const canCreateOC = hasPermission('Compras','OrdemCompra','criar') || hasPermission('Compras', null, 'criar');
+  const canApproveOC = hasPermission('Compras','OrdemCompra','aprovar') || hasPermission('Compras', null, 'aprovar');
+  const canSendOC = hasPermission('Compras','OrdemCompra','enviar_fornecedor') || hasPermission('Compras','OrdemCompra','editar');
+  const canReceiveOC = hasPermission('Compras','OrdemCompra','receber') || hasPermission('Estoque','Movimentacoes','criar');
+  const canEvaluateSupplier = hasPermission('Compras','OrdemCompra','avaliar_fornecedor') || hasPermission('Compras','Fornecedor','editar');
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingOC, setEditingOC] = useState(null);
@@ -101,6 +109,28 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  const auditOrdemCompra = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: 'Compras',
+        entidade: 'OrdemCompra',
+        tipo_auditoria: sucesso ? 'entidade' : 'seguranca',
+        descricao: motivo || 'Auditoria de ordem de compra.',
+        usuario: authUser?.email || authUser?.full_name || 'Sistema',
+        usuario_id: authUser?.id || null,
+        group_id: groupId || dados.group_id || null,
+        grupo_id: groupId || dados.group_id || null,
+        empresa_id: empresaId || dados.empresa_id || null,
+        dados_novos: dados,
+        sucesso,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar ordem de compra:', error);
+    }
+  };
+
   const createMutation = useMutation({
     mutationFn: (data) => createInContext('OrdemCompra', data),
     onSuccess: () => {
@@ -123,8 +153,16 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
 
   const aprovarMutation = useMutation({
     mutationFn: async ({ id, oc }) => {
+      if (!contextoValido || !canApproveOC) {
+        await auditOrdemCompra({
+          acao: 'OrdemCompra.aprovacao_bloqueada',
+          sucesso: false,
+          motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+          dados: { ordem_compra_id: id, numero_oc: oc?.numero_oc }
+        });
+        throw new Error(!contextoValido ? 'Selecione grupo ou empresa antes de aprovar OC.' : 'Sem permissao para aprovar OC.');
+      }
       const hoje = new Date().toISOString().split('T')[0];
-      
       await updateInContext('OrdemCompra', id, {
         status: 'Aprovada',
         data_aprovacao: hoje,
@@ -139,18 +177,30 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
           }
         ]
       });
+      return { id, oc };
     },
-    onSuccess: async () => {
-      try { await base44.entities.AuditLog.create({ acao: 'Edição', modulo: 'Compras', entidade: 'OrdemCompra', descricao: 'OC aprovada', data_hora: new Date().toISOString() }); } catch(_) {}
+    onSuccess: async ({ id, oc }) => {
+      await auditOrdemCompra({
+        acao: 'OrdemCompra.aprovada',
+        dados: { ordem_compra_id: id, numero_oc: oc?.numero_oc, status_anterior: oc?.status, status_novo: 'Aprovada' }
+      });
       queryClient.invalidateQueries(['ordensCompra']);
-      toast({ title: "✅ Ordem de Compra aprovada!" });
+      toast({ title: "Ordem de Compra aprovada!" });
     },
   });
 
   const enviarFornecedorMutation = useMutation({
     mutationFn: async ({ id, oc }) => {
+      if (!contextoValido || !canSendOC) {
+        await auditOrdemCompra({
+          acao: 'OrdemCompra.envio_bloqueado',
+          sucesso: false,
+          motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+          dados: { ordem_compra_id: id, numero_oc: oc?.numero_oc }
+        });
+        throw new Error(!contextoValido ? 'Selecione grupo ou empresa antes de enviar OC.' : 'Sem permissao para enviar OC ao fornecedor.');
+      }
       const hoje = new Date().toISOString().split('T')[0];
-      
       await updateInContext('OrdemCompra', id, {
         status: 'Enviada ao Fornecedor',
         data_envio_fornecedor: hoje,
@@ -165,12 +215,16 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
           }
         ]
       });
+      return { id, oc };
     },
-    onSuccess: async () => {
-      try { await base44.entities.AuditLog.create({ acao: 'Edição', modulo: 'Compras', entidade: 'OrdemCompra', descricao: 'OC enviada ao fornecedor', data_hora: new Date().toISOString() }); } catch(_) {}
+    onSuccess: async ({ id, oc }) => {
+      await auditOrdemCompra({
+        acao: 'OrdemCompra.enviada_fornecedor',
+        dados: { ordem_compra_id: id, numero_oc: oc?.numero_oc, status_anterior: oc?.status, status_novo: 'Enviada ao Fornecedor' }
+      });
       queryClient.invalidateQueries(['ordensCompra']);
-      toast({ 
-        title: "✅ OC Enviada ao Fornecedor!",
+      toast({
+        title: "OC enviada ao fornecedor!",
         description: "E-mail enviado (se configurado)"
       });
     },
@@ -178,6 +232,15 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
 
   const receberMutation = useMutation({
     mutationFn: async ({ id, oc, dados }) => {
+      if (!contextoValido || !canReceiveOC) {
+        await auditOrdemCompra({
+          acao: 'OrdemCompra.recebimento_bloqueado',
+          sucesso: false,
+          motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+          dados: { ordem_compra_id: id, numero_oc: oc?.numero_oc }
+        });
+        throw new Error(!contextoValido ? 'Selecione grupo ou empresa antes de receber OC.' : 'Sem permissao para receber OC.');
+      }
       const dataEnvio = new Date(oc.data_envio_fornecedor);
       const dataRecebimento = new Date(dados.data_entrega_real);
       const leadTimeReal = Math.floor((dataRecebimento - dataEnvio) / (1000 * 60 * 60 * 24));
@@ -245,22 +308,29 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
 
           // Atualizar estoque do produto
           if (item.produto_id) {
-            const produto = await base44.entities.Produto.filter({ id: item.produto_id });
+            const produto = await filterInContext('Produto', { id: item.produto_id }, 'descricao', 1);
             if (produto && produto.length > 0) {
               const produtoAtual = produto[0];
-              await base44.entities.Produto.update(item.produto_id, {
-                estoque_atual: (produtoAtual.estoque_atual || 0) + item.quantidade_solicitada
+              await updateInContext('Produto', item.produto_id, {
+                estoque_atual: (Number(produtoAtual.estoque_atual) || 0) + Number(item.quantidade_solicitada || 0),
+                ultima_compra: dados.data_entrega_real,
+                ultimo_preco_compra: item.valor_unitario,
+                group_id: produtoAtual.group_id || groupId,
+                grupo_id: produtoAtual.grupo_id || groupId,
+                empresa_id: produtoAtual.empresa_id || empresaId
               });
             }
           }
         }
       }
 
-      return { leadTimeReal, fornecedorNome: oc.fornecedor_nome };
+      return { leadTimeReal, fornecedorNome: oc.fornecedor_nome, ordemCompraId: id, numeroOC: oc.numero_oc, itensRecebidos: oc.itens?.length || 0 };
     },
-    onSuccess: async ({ leadTimeReal, fornecedorNome }) => {
-      try { await base44.entities.AuditLog.create({ acao: 'Edição', modulo: 'Compras', entidade: 'OrdemCompra', descricao: 'Recebimento registrado', data_hora: new Date().toISOString() }); } catch(_) {}
-
+    onSuccess: async ({ leadTimeReal, fornecedorNome, ordemCompraId, numeroOC, itensRecebidos }) => {
+      await auditOrdemCompra({
+        acao: 'OrdemCompra.recebida',
+        dados: { ordem_compra_id: ordemCompraId, numero_oc: numeroOC, lead_time_real: leadTimeReal, itens_recebidos: itensRecebidos }
+      });
       queryClient.invalidateQueries(['ordensCompra']);
       queryClient.invalidateQueries(['fornecedores']);
       queryClient.invalidateQueries(['movimentacoes']);
@@ -291,7 +361,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
       ) / 4;
 
       // Atualizar OC com avaliação
-      await base44.entities.OrdemCompra.update(oc.id, {
+      await updateInContext('OrdemCompra', oc.id, {
         avaliacao_fornecedor: {
           realizada: true,
           data: new Date().toISOString(),
@@ -412,12 +482,17 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
   };
 
   const handleReceberClick = (oc) => {
-    if (!hasPermission('Compras','OrdemCompra','receber')) { toast({ title: '⛔ Sem permissão para receber', variant: 'destructive' }); return; }
+    if (!contextoValido || !canReceiveOC) { toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de receber' : 'Sem permissao para receber', variant: 'destructive' }); return; }
     openWindow(RecebimentoOCForm, {
       ordemCompra: oc,
       windowMode: true,
       onSubmit: async (dados) => {
         try {
+          const confirmado = window.confirm(`Confirma receber a OC ${oc.numero_oc} e atualizar estoque/produto?`);
+          if (!confirmado) {
+            await auditOrdemCompra({ acao: 'OrdemCompra.recebimento_cancelado', sucesso: false, motivo: 'confirmacao_cancelada', dados: { ordem_compra_id: oc.id, numero_oc: oc.numero_oc } });
+            return;
+          }
           await receberMutation.mutateAsync({ id: oc.id, oc, dados });
           sonnerToast.success("✅ Recebimento registrado!");
         } catch (error) {
@@ -456,12 +531,17 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
   };
 
   const content = (
-    <div className="space-y-1.5">
+    <div className="space-y-1.5 w-full h-full" data-permission="Compras.OrdemCompra" data-context-required="group-or-company" data-context-mode={contexto}>
+      {!contextoValido && (
+        <Alert className="border-amber-300 bg-amber-50">
+          <AlertDescription className="text-sm text-amber-800">Selecione grupo ou empresa antes de criar, aprovar, enviar ou receber ordens de compra.</AlertDescription>
+        </Alert>
+      )}
       <OrdensCompraHeader
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         onNovaOC={() => {
-          if (!hasPermission('Compras','OrdemCompra','criar')) { toast({ title: '⛔ Sem permissão para criar', variant: 'destructive' }); return; }
+          if (!contextoValido || !canCreateOC) { toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de criar' : 'Sem permissao para criar', variant: 'destructive' }); return; }
           openWindow(OrdemCompraForm, {
             windowMode: true,
             onSubmit: async (data) => {
@@ -625,10 +705,10 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
             onImprimir={(oc)=>{ const empresa = empresas?.find(e => e.id === oc.empresa_id); const fornecedor = fornecedores?.find(f => f.id === oc.fornecedor_id); ImprimirOrdemCompra({ oc, empresa, fornecedor }); }}
             onVer={(oc)=> openWindow(OrdemCompraForm, { ordemCompra: oc, windowMode: true, onSubmit: async (data) => { try { await updateMutation.mutateAsync({ id: oc.id, data }); sonnerToast.success('✅ OC atualizada!'); } catch { sonnerToast.error('Erro ao atualizar OC'); } } }, { title: `👁️ Ver: ${oc.numero_oc}`, width: 1100, height: 700 })}
             onEditar={handleEdit}
-            onAprovar={(oc)=> { if (!hasPermission('Compras','OrdemCompra','aprovar')) { toast({ title: '⛔ Sem permissão para aprovar', variant: 'destructive' }); return; } aprovarMutation.mutate({ id: oc.id, oc }); }}
-            onEnviar={(oc)=> { if (!hasPermission('Compras','OrdemCompra','enviar_fornecedor')) { toast({ title: '⛔ Sem permissão para enviar', variant: 'destructive' }); return; } enviarFornecedorMutation.mutate({ id: oc.id, oc }); }}
+            onAprovar={(oc)=> { if (!contextoValido || !canApproveOC) { toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de aprovar' : 'Sem permissao para aprovar', variant: 'destructive' }); return; } if (!window.confirm(`Confirma aprovar a OC ${oc.numero_oc}?`)) { auditOrdemCompra({ acao: 'OrdemCompra.aprovacao_cancelada', sucesso: false, motivo: 'confirmacao_cancelada', dados: { ordem_compra_id: oc.id, numero_oc: oc.numero_oc } }); return; } aprovarMutation.mutate({ id: oc.id, oc }); }}
+            onEnviar={(oc)=> { if (!contextoValido || !canSendOC) { toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de enviar' : 'Sem permissao para enviar', variant: 'destructive' }); return; } if (!window.confirm(`Confirma enviar a OC ${oc.numero_oc} ao fornecedor?`)) { auditOrdemCompra({ acao: 'OrdemCompra.envio_cancelado', sucesso: false, motivo: 'confirmacao_cancelada', dados: { ordem_compra_id: oc.id, numero_oc: oc.numero_oc } }); return; } enviarFornecedorMutation.mutate({ id: oc.id, oc }); }}
             onReceber={handleReceberClick}
-            onAvaliar={(oc)=> { if (!hasPermission('Compras','OrdemCompra','avaliar_fornecedor')) { toast({ title: '⛔ Sem permissão para avaliar', variant: 'destructive' }); return; } openWindow(AvaliacaoFornecedorForm, { ordemCompra: oc, windowMode: true, onSubmit: async (avaliacao) => { try { await avaliarFornecedorMutation.mutateAsync({ oc, avaliacao }); sonnerToast.success('⭐ Avaliação registrada!'); } catch { sonnerToast.error('Erro ao avaliar fornecedor'); } } }, { title: `⭐ Avaliar: ${oc.fornecedor_nome}`, width: 800, height: 650 }); }}
+            onAvaliar={(oc)=> { if (!contextoValido || !canEvaluateSupplier) { toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de avaliar' : 'Sem permissao para avaliar', variant: 'destructive' }); return; } openWindow(AvaliacaoFornecedorForm, { ordemCompra: oc, windowMode: true, onSubmit: async (avaliacao) => { try { await avaliarFornecedorMutation.mutateAsync({ oc, avaliacao }); sonnerToast.success('⭐ Avaliação registrada!'); } catch { sonnerToast.error('Erro ao avaliar fornecedor'); } } }, { title: `⭐ Avaliar: ${oc.fornecedor_nome}`, width: 800, height: 650 }); }}
           />
 
           <OCPaginacao
