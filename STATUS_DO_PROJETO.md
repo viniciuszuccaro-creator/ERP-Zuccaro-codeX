@@ -1,5 +1,15 @@
 # Status do Projeto ERP Zuccaro
 
+### Cadastros - Fase 8 Dashboard Produtos Produção
+
+- Seguido o próximo passo salvo no status: continuar varredura em dashboards e seletores de produto que ainda usam `Produto.list/filter` global.
+- `DashboardProdutosProducao` deixou de usar `base44.entities.Produto.list` e passou a consultar produtos via `filterInContext` com filtro de matéria-prima de produção.
+- Consulta de ordens de produção do dashboard também passou para `filterInContext`, mantendo o cruzamento de uso por produto dentro do contexto grupo/empresa.
+- Dashboard agora exige contexto de grupo/empresa e permissão RBAC para visualizar produto antes de carregar dados.
+- Botão de conversão de produtos recebeu bloqueio visual por contexto/permissão e marcadores `data-permission`, `data-action` e `data-sensitive`.
+- Mantida a Regra-Mãe: nenhuma tela, módulo, arquivo ou fluxo novo foi criado; apenas melhoria no componente existente.
+- Próximo passo sugerido: continuar varredura nos seletores e dashboards restantes que ainda usam `Produto.list/filter`, priorizando `DashboardEstruturantes`, `MultiTabelasEditor` e seletores comerciais de produto.
+
 ### Cadastros - Fase 8 Conversão Produção em Massa
 
 - Seguido o próximo ponto salvo no status: continuar varredura em Cadastro Gerais/Estoque por chamadas diretas de `Produto.create/update/delete/filter/list`.

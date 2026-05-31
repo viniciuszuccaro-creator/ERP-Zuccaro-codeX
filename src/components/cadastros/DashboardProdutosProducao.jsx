@@ -1,6 +1,5 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -21,17 +20,27 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
  * ✅ Integração com Ordens de Produção
  */
 export default function DashboardProdutosProducao({ onAbrirConversao }) {
+  const { empresaAtual, grupoAtual, contexto, filterInContext } = useContextoVisual();
+  const { hasPermission, canEdit } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === 'empresa' ? empresaAtual?.id : null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeVisualizarProduto = hasPermission('Cadastros', 'Produto', 'visualizar') || hasPermission('Estoque', 'Produto', 'visualizar') || hasPermission('Producao', 'Produto', 'visualizar') || hasPermission('Cadastros', null, 'visualizar') || hasPermission('Estoque', null, 'visualizar');
+  const podeEditarProduto = canEdit('Cadastros', 'Produto') || canEdit('Estoque', 'Produto') || canEdit('Producao', 'Produto') || canEdit('Cadastros', null) || canEdit('Estoque', null);
+  const consultasHabilitadas = contextoValido && podeVisualizarProduto;
+
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos-producao'],
-    queryFn: async () => {
-      const all = await base44.entities.Produto.list();
-      return all.filter(p => p.tipo_item === 'Matéria-Prima Produção');
-    }
+    queryKey: ['produtos-producao', groupId, empresaId, contexto],
+    queryFn: () => filterInContext('Produto', { tipo_item: 'Matéria-Prima Produção' }, 'descricao', 9999),
+    enabled: consultasHabilitadas,
+    staleTime: 120000,
   });
 
   const { data: ordensProducao = [] } = useQuery({
-    queryKey: ['ordens-producao'],
-    queryFn: () => base44.entities.OrdemProducao.list('-created_date', 100)
+    queryKey: ['ordens-producao-dashboard-produtos', groupId, empresaId, contexto],
+    queryFn: () => filterInContext('OrdemProducao', {}, '-created_date', 100),
+    enabled: consultasHabilitadas,
+    staleTime: 120000,
   });
 
   // Análises
@@ -79,7 +88,7 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
   const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'];
 
   return (
-    <div className="w-full h-full space-y-6">
+    <div className="w-full h-full space-y-6" data-permission="Cadastros.Produto.visualizar" data-context-required="true">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -93,7 +102,11 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
         {onAbrirConversao && (
           <Button
             onClick={onAbrirConversao}
+            disabled={!contextoValido || !podeEditarProduto}
             className="bg-orange-600 hover:bg-orange-700"
+            data-permission="Cadastros.Produto.editar"
+            data-action="abrir-conversao-producao"
+            data-sensitive
           >
             <ArrowUpRight className="w-4 h-4 mr-2" />
             Converter Produtos
@@ -101,7 +114,16 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
         )}
       </div>
 
-      {/* Alertas Críticos */}
+      {(!contextoValido || !podeVisualizarProduto) && (
+        <Alert variant="destructive">
+          <AlertCircle className="w-5 h-5" />
+          <AlertDescription>
+            Dashboard de produtos em produção exige contexto de grupo/empresa e permissão para visualizar produtos.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Alertas Criticos */}
       {produtosCriticos.length > 0 && (
         <Alert className="border-red-300 bg-red-50">
           <AlertCircle className="w-5 h-5 text-red-600" />
