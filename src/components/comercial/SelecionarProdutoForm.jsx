@@ -1,21 +1,31 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, Package, CheckCircle, AlertTriangle } from "lucide-react";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * V21.1.2 - WINDOW MODE READY
  */
 export default function SelecionarProdutoForm({ onSelect, windowMode = false }) {
   const [searchTerm, setSearchTerm] = useState("");
+  const { empresaAtual, grupoAtual, contexto, filterInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === 'empresa' ? empresaAtual?.id : null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeVisualizarProdutos = hasPermission('Comercial', 'Pedido', 'criar') || hasPermission('Comercial', 'Pedido', 'editar') || hasPermission('Estoque', 'Produto', 'visualizar') || hasPermission('Cadastros', 'Produto', 'visualizar');
+  const consultaHabilitada = contextoValido && podeVisualizarProdutos;
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryKey: ['produtos-seletor-comercial-form', groupId, empresaId, contexto],
+    queryFn: () => filterInContext('Produto', {}, 'descricao', 500),
+    enabled: consultaHabilitada,
+    staleTime: 120000,
   });
 
   const produtosFiltrados = produtos.filter(p => 
@@ -24,7 +34,15 @@ export default function SelecionarProdutoForm({ onSelect, windowMode = false }) 
   );
 
   const content = (
-    <div className={`space-y-4 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+    <div className={`w-full h-full space-y-4 ${windowMode ? 'p-6 overflow-auto' : ''}`} data-permission="Comercial.Pedido.criar" data-context-required="true">
+      {(!contextoValido || !podeVisualizarProdutos) && (
+        <Alert variant="destructive">
+          <AlertTriangle className="w-4 h-4" />
+          <AlertDescription>
+            Selecionar produto exige contexto de grupo/empresa e permissão para visualizar produtos comerciais.
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
         <Input
@@ -33,6 +51,9 @@ export default function SelecionarProdutoForm({ onSelect, windowMode = false }) 
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-10"
           autoFocus
+              disabled={!consultaHabilitada}
+              data-action="SelecionarProduto.buscar"
+              data-permission="Comercial.Pedido.criar"
         />
       </div>
 
@@ -72,6 +93,9 @@ export default function SelecionarProdutoForm({ onSelect, windowMode = false }) 
                     <Button
                       size="sm"
                       className="bg-blue-600 hover:bg-blue-700"
+                      disabled={!consultaHabilitada}
+                      data-action="SelecionarProduto.adicionar"
+                      data-permission="Comercial.Pedido.criar"
                       onClick={() => onSelect(produto)}
                     >
                       <CheckCircle className="w-4 h-4 mr-1" />

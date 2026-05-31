@@ -1,5 +1,15 @@
 # Status do Projeto ERP Zuccaro
 
+### Comercial - Fase 8 Seletores de Produto
+
+- Seguido o próximo passo salvo no status: revisar seletores comerciais de produto que ainda usavam `Produto.list()` global.
+- `SelecionarProdutoModal` e `SelecionarProdutoForm` deixaram de usar `base44.entities.Produto.list()` e passaram a buscar produtos via `filterInContext`.
+- Consultas receberam query keys por grupo/empresa/contexto, limite de carregamento e `enabled` condicionado a contexto e permissão RBAC.
+- Busca e botão de adicionar produto agora ficam bloqueados quando faltar contexto de grupo/empresa ou permissão para selecionar produtos no fluxo comercial.
+- Os wrappers receberam `w-full`, `h-full`, `data-permission` e `data-context-required`, mantendo responsividade sem criar tela nova.
+- Textos visíveis dos seletores foram ajustados para português correto com acentuação preservada.
+- Mantida a Regra-Mãe: nenhuma tela, módulo, arquivo ou fluxo novo foi criado; apenas melhoria nos componentes existentes.
+- Próximo passo sugerido: continuar seletores comerciais restantes, priorizando `SugestoesProdutos`, `TabelaPrecoItensModal` e `AdicionarItemRevendaModal`.
 ### Cadastros - Fase 8 Multi-Tabelas de Preço
 
 - Seguido o próximo passo salvo no status: revisar `MultiTabelasEditor`, que ainda buscava produtos globalmente e atualizava itens de tabela diretamente.
