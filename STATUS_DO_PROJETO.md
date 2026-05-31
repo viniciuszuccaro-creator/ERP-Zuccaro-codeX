@@ -1,5 +1,17 @@
 # Status do Projeto ERP Zuccaro
 
+### Fiscal/Compras/Estoque - Fase 8 Importar XML NF-e
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 procurando criacoes diretas restantes em compras/fiscal/estoque, priorizando `ImportarXMLNFe`, `OrdensCompraTab` e recebimentos/movimentacoes com auditoria minima.
+- `ImportarXMLNFe` deixou de listar produtos e fornecedores globalmente e passou a usar `filterInContext` por grupo/empresa.
+- Criacao de fornecedor, produto, ordem de compra, movimentacao de estoque, conta a pagar e registro de importacao XML passou a usar `createInContext`.
+- Atualizacao de produto no recebimento por XML deixou de usar update direto e passou a usar `updateInContext`.
+- Importacao XML agora exige contexto grupo/empresa e permissao RBAC de Fiscal/ImportarXMLNFe, Fiscal/Notas Fiscais, Compras/ImportacaoNFe ou Estoque/Movimentacoes.
+- Confirmacao da importacao passou a pedir confirmacao do usuario antes de executar impactos em compras, estoque e financeiro, com auditoria de sucesso, bloqueio e cancelamento.
+- A tela recebeu `w-full`, `h-full`, `data-permission`, `data-context-required`, alerta visual e controles desabilitados quando faltar contexto ou permissao.
+- Mantida a Regra-Mae: nenhum modulo, tela, componente ou arquivo novo foi criado; apenas melhoria no componente existente.
+- Build validado com sucesso via Vite; permanecem apenas warnings tecnicos preexistentes de browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `OrdensCompraTab`, reforcando recebimento de OC, atualizacao de produto e auditorias minimas ainda restantes.
 ### Compras/Estoque - Fase 8 Importacao NF-e Recebimento
 
 - Seguido o proximo passo salvo no status: continuar em `ImportacaoNFeRecebimento`, substituindo importacao/movimentacoes/atualizacao de produto diretas por contexto, confirmacao e auditoria completa.

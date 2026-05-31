@@ -13,6 +13,8 @@ import ItensTabela from './importar-xml/ItensTabela';
 import DuplicatasTabela from './importar-xml/DuplicatasTabela';
 import OpcoesImportacao from './importar-xml/OpcoesImportacao';
 import { toast } from 'sonner';
+import useContextoVisual from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 import { parseNFeXML, validarXMLNFe, lerArquivoXML } from '../lib/parserXMLNFe';
 
 /**
@@ -34,15 +36,47 @@ export default function ImportarXMLNFe({ empresaId }) {
   });
 
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, contexto, filterInContext, createInContext, updateInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaSelecionadaId = empresaId || empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaSelecionadaId);
+  const canImportarXML = hasPermission('Fiscal', 'ImportarXMLNFe', 'criar') ||
+    hasPermission('Fiscal', 'Notas Fiscais', 'criar') ||
+    hasPermission('Fiscal', null, 'criar') ||
+    hasPermission('Compras', 'ImportacaoNFe', 'criar') ||
+    hasPermission('Estoque', 'Movimentacoes', 'criar');
+
+  const auditImportacaoXML = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: 'Fiscal',
+        entidade: 'ImportacaoXMLNFe',
+        tipo_auditoria: sucesso ? 'fiscal' : 'seguranca',
+        descricao: motivo || 'Auditoria de importacao XML NF-e.',
+        dados_novos: dados,
+        group_id: groupId || dados.group_id || null,
+        grupo_id: groupId || dados.group_id || null,
+        empresa_id: empresaSelecionadaId || dados.empresa_id || null,
+        sucesso,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar importacao XML NF-e:', error);
+    }
+  };
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryKey: ['produtos-xml-nfe', groupId, empresaSelecionadaId, contexto],
+    queryFn: () => filterInContext('Produto', {}, 'descricao', 9999),
+    enabled: contextoValido,
   });
 
   const { data: fornecedores = [] } = useQuery({
-    queryKey: ['fornecedores'],
-    queryFn: () => base44.entities.Fornecedor.list(),
+    queryKey: ['fornecedores-xml-nfe', groupId, empresaSelecionadaId, contexto],
+    queryFn: () => filterInContext('Fornecedor', {}, 'nome', 9999),
+    enabled: contextoValido,
   });
 
   // Processar arquivo XML
@@ -50,7 +84,18 @@ export default function ImportarXMLNFe({ empresaId }) {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (!file.name.endsWith('.xml')) {
+    if (!contextoValido || !canImportarXML) {
+      await auditImportacaoXML({
+        acao: 'ImportarXMLNFe.processamento_bloqueado',
+        sucesso: false,
+        motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+        dados: { arquivo: file.name }
+      });
+      toast.error(!contextoValido ? 'Selecione grupo ou empresa antes de importar XML.' : 'Sem permissao para importar XML NF-e.');
+      return;
+    }
+
+    if (!file.name.toLowerCase().endsWith('.xml')) {
       toast.error('Por favor, selecione um arquivo XML');
       return;
     }
@@ -131,6 +176,16 @@ export default function ImportarXMLNFe({ empresaId }) {
   // Importar NF-e
   const importarMutation = useMutation({
     mutationFn: async () => {
+      if (!contextoValido || !canImportarXML) {
+        await auditImportacaoXML({
+          acao: 'ImportarXMLNFe.importacao_bloqueada',
+          sucesso: false,
+          motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+          dados: { numero_nfe: dadosNFe?.numeroNFe, chave_acesso: dadosNFe?.chaveAcesso }
+        });
+        throw new Error(!contextoValido ? 'Selecione grupo ou empresa antes de confirmar importacao.' : 'Sem permissao para confirmar importacao XML NF-e.');
+      }
+
       const resultados = {
         fornecedor_id: null,
         ordem_compra_id: null,
@@ -141,7 +196,7 @@ export default function ImportarXMLNFe({ empresaId }) {
 
       // 1. Criar/Encontrar Fornecedor
       if (opcoes.criarFornecedor && !dadosNFe.fornecedorExistente) {
-        const novoFornecedor = await base44.entities.Fornecedor.create({
+        const novoFornecedor = await createInContext('Fornecedor', {
           nome: dadosNFe.fornecedor.razao_social,
           nome_fantasia: dadosNFe.fornecedor.nome_fantasia,
           cnpj: dadosNFe.fornecedor.cnpj,
@@ -152,8 +207,11 @@ export default function ImportarXMLNFe({ empresaId }) {
           estado: dadosNFe.fornecedor.endereco?.estado,
           telefone: dadosNFe.fornecedor.endereco?.telefone,
           categoria: 'Matéria Prima',
-          status: 'Ativo'
-        });
+          status: 'Ativo',
+          empresa_dona_id: empresaSelecionadaId,
+          group_id: groupId,
+          grupo_id: groupId
+        }, 'empresa_dona_id');
         resultados.fornecedor_id = novoFornecedor.id;
       } else {
         resultados.fornecedor_id = dadosNFe.fornecedorExistente?.id;
@@ -162,8 +220,10 @@ export default function ImportarXMLNFe({ empresaId }) {
       // 2. Criar Produtos Não Mapeados
       if (opcoes.criarProdutos && dadosNFe.produtosNaoMapeados.length > 0) {
         for (const item of dadosNFe.produtosNaoMapeados) {
-          const novoProduto = await base44.entities.Produto.create({
-            empresa_id: empresaId,
+          const novoProduto = await createInContext('Produto', {
+            empresa_id: empresaSelecionadaId,
+            group_id: groupId,
+            grupo_id: groupId,
             codigo: item.codigo_produto,
             codigo_barras: item.codigo_ean,
             descricao: item.descricao,
@@ -197,7 +257,10 @@ export default function ImportarXMLNFe({ empresaId }) {
 
       // 3. Criar Ordem de Compra
       if (opcoes.criarOrdemCompra) {
-        const ordemCompra = await base44.entities.OrdemCompra.create({
+        const ordemCompra = await createInContext('OrdemCompra', {
+          empresa_id: empresaSelecionadaId,
+          group_id: groupId,
+          grupo_id: groupId,
           numero_oc: `OC-NFE-${dadosNFe.numeroNFe}`,
           fornecedor_id: resultados.fornecedor_id,
           fornecedor_nome: dadosNFe.fornecedor.razao_social,
@@ -227,22 +290,24 @@ export default function ImportarXMLNFe({ empresaId }) {
           if (!item.produto_id_mapeado) continue;
 
           // Buscar produto atualizado
-          const produtoAtual = await base44.entities.Produto.filter({ id: item.produto_id_mapeado });
+          const produtoAtual = await filterInContext('Produto', { id: item.produto_id_mapeado }, 'descricao', 1);
           if (produtoAtual.length === 0) continue;
 
           const produto = produtoAtual[0];
           const novoEstoque = (produto.estoque_atual || 0) + item.quantidade;
 
           // Atualizar estoque do produto
-          await base44.entities.Produto.update(produto.id, {
+          await updateInContext('Produto', produto.id, {
             estoque_atual: novoEstoque,
             ultima_compra: dadosNFe.dataEmissao,
             ultimo_preco_compra: item.valor_unitario
           });
 
           // Criar movimentação
-          const movimentacao = await base44.entities.MovimentacaoEstoque.create({
-            empresa_id: empresaId,
+          const movimentacao = await createInContext('MovimentacaoEstoque', {
+            empresa_id: empresaSelecionadaId,
+            group_id: groupId,
+            grupo_id: groupId,
             origem_movimento: 'nfe',
             origem_documento_id: resultados.ordem_compra_id,
             tipo_movimento: 'entrada',
@@ -272,7 +337,7 @@ export default function ImportarXMLNFe({ empresaId }) {
           // Mapear centro de custo e plano de contas por NCM/fornecedor (se existir config)
           let centro_custo_id = null; let plano_contas_id = null;
           try {
-            const cfgs = await base44.entities.ConfiguracaoSistema.filter({ chave: 'mapa_xml_centro_custo', empresa_id: empresaId }, undefined, 1);
+            const cfgs = await base44.entities.ConfiguracaoSistema.filter({ chave: 'mapa_xml_centro_custo', empresa_id: empresaSelecionadaId }, undefined, 1);
             const mapa = cfgs?.[0]?.valor_json || {};
             const chave = dadosNFe.fornecedor.cnpj;
             const mapFornecedor = mapa[chave] || {};
@@ -280,8 +345,10 @@ export default function ImportarXMLNFe({ empresaId }) {
             plano_contas_id = mapFornecedor?.plano_contas_id || null;
           } catch {}
 
-          const conta = await base44.entities.ContaPagar.create({
-            empresa_id: empresaId,
+          const conta = await createInContext('ContaPagar', {
+            empresa_id: empresaSelecionadaId,
+            group_id: groupId,
+            grupo_id: groupId,
             descricao: `NF-e ${dadosNFe.numeroNFe} - Parcela ${duplicata.numero}`,
             fornecedor: dadosNFe.fornecedor.razao_social,
             fornecedor_id: resultados.fornecedor_id,
@@ -305,8 +372,10 @@ export default function ImportarXMLNFe({ empresaId }) {
         }
       } else if (opcoes.criarContasPagar && dadosNFe.duplicatas.length === 0) {
         // Criar conta única
-        const conta = await base44.entities.ContaPagar.create({
-          empresa_id: empresaId,
+        const conta = await createInContext('ContaPagar', {
+          empresa_id: empresaSelecionadaId,
+          group_id: groupId,
+          grupo_id: groupId,
           descricao: `NF-e ${dadosNFe.numeroNFe}`,
           fornecedor: dadosNFe.fornecedor.razao_social,
           fornecedor_id: resultados.fornecedor_id,
@@ -330,8 +399,10 @@ export default function ImportarXMLNFe({ empresaId }) {
       // Criar registro de importação
       const arquivoUpload = await base44.integrations.Core.UploadFile({ file: arquivo });
 
-      await base44.entities.ImportacaoXMLNFe.create({
-        empresa_id: empresaId,
+      await createInContext('ImportacaoXMLNFe', {
+        empresa_id: empresaSelecionadaId,
+        group_id: groupId,
+        grupo_id: groupId,
         numero_importacao: `IMP-${Date.now()}`,
         data_importacao: new Date().toISOString(),
         tipo_nfe: 'Entrada',
@@ -373,7 +444,22 @@ export default function ImportarXMLNFe({ empresaId }) {
       queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
       queryClient.invalidateQueries({ queryKey: ['importacoes-xml'] });
 
-      toast.success('✅ NF-e importada com sucesso!', {
+      await auditImportacaoXML({
+        acao: 'ImportarXMLNFe.importacao_confirmada',
+        dados: {
+          numero_nfe: dadosNFe.numeroNFe,
+          chave_acesso: dadosNFe.chaveAcesso,
+          fornecedor_id: resultados.fornecedor_id,
+          ordem_compra_id: resultados.ordem_compra_id,
+          movimentacoes_ids: resultados.movimentacoes_ids,
+          contas_pagar_ids: resultados.contas_pagar_ids,
+          produtos_criados: resultados.produtos_criados,
+          group_id: groupId,
+          empresa_id: empresaSelecionadaId
+        }
+      });
+
+      toast.success('NF-e importada com sucesso!', {
         description: `${resultados.movimentacoes_ids.length} entrada(s) no estoque, ${resultados.contas_pagar_ids.length} conta(s) a pagar`
       });
 
@@ -385,14 +471,49 @@ export default function ImportarXMLNFe({ empresaId }) {
     },
     onError: (error) => {
       console.error('Erro ao importar:', error);
-      toast.error('❌ Erro ao importar NF-e', {
+      toast.error('Erro ao importar NF-e', {
         description: error.message
       });
     }
   });
 
+  const handleConfirmarImportacao = async () => {
+    if (!dadosNFe) return;
+    if (!contextoValido || !canImportarXML) {
+      await auditImportacaoXML({
+        acao: 'ImportarXMLNFe.importacao_bloqueada',
+        sucesso: false,
+        motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+        dados: { numero_nfe: dadosNFe?.numeroNFe, chave_acesso: dadosNFe?.chaveAcesso }
+      });
+      toast.error(!contextoValido ? 'Selecione grupo ou empresa antes de confirmar importacao.' : 'Sem permissao para confirmar importacao XML NF-e.');
+      return;
+    }
+
+    const confirmado = window.confirm(`Confirma importar a NF-e ${dadosNFe.numeroNFe} e executar as acoes selecionadas no financeiro/estoque/compras?`);
+    if (!confirmado) {
+      await auditImportacaoXML({
+        acao: 'ImportarXMLNFe.importacao_cancelada',
+        sucesso: false,
+        motivo: 'confirmacao_cancelada',
+        dados: { numero_nfe: dadosNFe.numeroNFe, chave_acesso: dadosNFe.chaveAcesso }
+      });
+      return;
+    }
+
+    importarMutation.mutate();
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full h-full" data-permission="Fiscal.ImportarXMLNFe.criar" data-context-required="group-or-company" data-context-mode={contexto}>
+      {(!contextoValido || !canImportarXML) && (
+        <Alert className="border-amber-300 bg-amber-50">
+          <AlertTriangle className="w-5 h-5 text-amber-700" />
+          <AlertDescription className="text-sm text-amber-800">
+            {!contextoValido ? 'Selecione grupo ou empresa antes de importar XML NF-e.' : 'Seu perfil nao possui permissao para importar XML NF-e.'}
+          </AlertDescription>
+        </Alert>
+      )}
       {/* Upload */}
       <Card className="border-2 border-dashed border-blue-300 bg-blue-50">
         <CardContent className="p-8">
@@ -411,10 +532,10 @@ export default function ImportarXMLNFe({ empresaId }) {
               onChange={handleFileUpload}
               className="hidden"
               id="xml-upload"
-              disabled={processando}
+              disabled={processando || !contextoValido || !canImportarXML}
             />
             <label htmlFor="xml-upload">
-              <Button asChild className="bg-blue-600 hover:bg-blue-700">
+              <Button asChild disabled={processando || !contextoValido || !canImportarXML} className="bg-blue-600 hover:bg-blue-700">
                 <span>
                   {processando ? (
                     <>
@@ -582,8 +703,8 @@ export default function ImportarXMLNFe({ empresaId }) {
               Cancelar
             </Button>
             <Button
-              onClick={() => importarMutation.mutate()}
-              disabled={importarMutation.isPending}
+              onClick={handleConfirmarImportacao}
+              disabled={importarMutation.isPending || !contextoValido || !canImportarXML}
               className="bg-green-600 hover:bg-green-700"
             >
               {importarMutation.isPending ? (
