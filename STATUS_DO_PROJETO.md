@@ -1,5 +1,16 @@
 # Status do Projeto ERP Zuccaro
 
+### Estoque/Cadastros - Fase 8 Importador de Produtos
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `ImportadorProdutosPlanilha`, priorizando importacoes/atualizacoes/exclusoes de produto com fluxo sensivel e perguntas obrigatorias antes de excluir/substituir.
+- `ImportadorProdutosPlanilha` agora valida permissao RBAC antes de processar e importar planilha de produtos.
+- Importacao passou a exigir confirmacao explicita com resumo de arquivo, destino, produtos alvo, duplicados a atualizar, duplicados a substituir/excluir e recriar, e duplicados a pular.
+- Cancelamento, bloqueio, sucesso e erro da importacao agora geram auditoria com `group_id`, `grupo_id`, `empresa_id`, contexto, arquivo e contagens.
+- Tela recebeu `w-full`, `h-full`, `data-permission`, `data-context-required`, `data-context-mode`, alerta visual e botoes/campo de arquivo desabilitados sem contexto/permissao.
+- Mantida a Regra-Mae: nenhum modulo, tela, componente ou arquivo novo foi criado; apenas melhoria no componente existente.
+- Build validado com sucesso via Vite; permanecem apenas warnings tecnicos preexistentes de browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar no proprio `ImportadorProdutosPlanilha`, substituindo operacoes diretas de `Produto`, `UnidadeMedida`, `GrupoProduto` e `SetorAtividade` por helpers de contexto, ou seguir para `InventarioForm`.
+
 ### Compras/Estoque - Fase 8 Ordens de Compra
 
 - Seguido o proximo passo salvo no status: continuar em `OrdensCompraTab`, reforcando recebimento de OC, atualizacao de produto e auditorias minimas ainda restantes.

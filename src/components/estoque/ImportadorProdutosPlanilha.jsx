@@ -10,6 +10,7 @@ import { Upload, Loader2, CheckCircle2, Download, AlertCircle, Wand2 } from "luc
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -173,7 +174,8 @@ const mapTipoItem = (v) => {
       const makeKey = (empresaId, codigo) => `${empresaId || ''}__${String(codigo || '').toUpperCase()}`;
 
 export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { hasPermission } = usePermissions();
   const [arquivo, setArquivo] = useState(null);
   const [processando, setProcessando] = useState(false);
   const [preview, setPreview] = useState([]);
@@ -195,6 +197,40 @@ const [estrategiaDuplicidadeGlobal, setEstrategiaDuplicidadeGlobal] = useState('
 const [invalidNCMKeys, setInvalidNCMKeys] = useState(new Set());
 const [ncmSuggestions, setNcmSuggestions] = useState({});
 const [suggesting, setSuggesting] = useState(false);
+  const contextoGrupoId = grupoId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || empresaAtual?.groupId || null;
+  const contextoEmpresaId = empresaId || empresaAtual?.id || null;
+  const hasDestinoImportacao = !!(empresaId || grupoId);
+  const canImportarProdutos = hasPermission('Estoque', 'Produtos', 'criar') ||
+    hasPermission('Estoque', 'Produtos', 'editar') ||
+    hasPermission('Cadastros', 'Produto', 'criar') ||
+    hasPermission('Cadastros', 'Produto', 'editar') ||
+    hasPermission('Estoque', null, 'criar') ||
+    hasPermission('Cadastros', null, 'criar');
+
+  const auditImportadorProdutos = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: 'Estoque',
+        entidade: 'Produto',
+        tipo_auditoria: sucesso ? 'entidade' : 'seguranca',
+        descricao: motivo || 'Auditoria de importacao de produtos por planilha.',
+        group_id: contextoGrupoId || dados.group_id || null,
+        grupo_id: contextoGrupoId || dados.group_id || null,
+        empresa_id: contextoEmpresaId || dados.empresa_id || null,
+        dados_anteriores: dados.dados_anteriores || null,
+        dados_novos: {
+          ...dados,
+          contexto,
+          arquivo: arquivo?.name || dados.arquivo || null,
+        },
+        sucesso,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar importacao de produtos:', error);
+    }
+  };
   const { data: grupos = [] } = useQuery({
     queryKey: ['grupos-empresariais'],
     queryFn: () => base44.entities.GrupoEmpresarial.list(),
@@ -827,6 +863,13 @@ const [suggesting, setSuggesting] = useState(false);
         toast.error('Selecione a empresa ou um grupo.');
         return;
       }
+      if (!canImportarProdutos) {
+        const motivo = 'Sem permissao para processar planilha de produtos.';
+        await auditImportadorProdutos({ acao: 'estoque.produtos.importacao_planilha.processamento_bloqueado', sucesso: false, motivo, dados: { arquivo: f.name } });
+        setErro(motivo);
+        toast.error(motivo);
+        return;
+      }
       const rows = await extrairLinhas(f);
       if (!rows.length) {
         toast.error("Não encontramos linhas na planilha.");
@@ -917,6 +960,36 @@ const [suggesting, setSuggesting] = useState(false);
     if (!empresaId && !grupoId) {
       setErro('Selecione a empresa de destino ou um grupo.');
       toast.error('Selecione a empresa ou um grupo.');
+      return;
+    }
+    if (!canImportarProdutos) {
+      const motivo = 'Sem permissao para importar produtos.';
+      await auditImportadorProdutos({ acao: 'estoque.produtos.importacao_planilha.bloqueada', sucesso: false, motivo });
+      setErro(motivo);
+      toast.error(motivo);
+      return;
+    }
+    const produtosAlvoConfirmacao = getProdutosAlvo();
+    const qtdAtualizar = duplicidades.filter((d) => escolhasDuplicidades[makeKey(d.empresa_id, d.codigo)] === 'atualizar').length;
+    const qtdSubstituir = duplicidades.filter((d) => escolhasDuplicidades[makeKey(d.empresa_id, d.codigo)] === 'substituir').length;
+    const qtdPular = duplicidades.filter((d) => !['atualizar', 'substituir'].includes(escolhasDuplicidades[makeKey(d.empresa_id, d.codigo)])).length;
+    const confirmado = window.confirm([
+      'Confirma a importacao de produtos nesta base do ERP?',
+      'Arquivo: ' + (arquivo?.name || '-'),
+      'Destino: ' + (grupoId ? 'Grupo' : 'Empresa') + ' ' + (grupoId || empresaId),
+      'Produtos alvo: ' + produtosAlvoConfirmacao.length,
+      'Duplicados para atualizar: ' + qtdAtualizar,
+      'Duplicados para substituir/excluir e recriar: ' + qtdSubstituir,
+      'Duplicados para pular: ' + qtdPular,
+      'Esta acao sera auditada com grupo e empresa.'
+    ].join('\n'));
+    if (!confirmado) {
+      await auditImportadorProdutos({
+        acao: 'estoque.produtos.importacao_planilha.cancelada',
+        sucesso: false,
+        motivo: 'Usuario cancelou a importacao de produtos.',
+        dados: { produtos_alvo: produtosAlvoConfirmacao.length, qtd_atualizar: qtdAtualizar, qtd_substituir: qtdSubstituir, qtd_pular: qtdPular }
+      });
       return;
     }
     // Valida se os campos essenciais estão mapeados
@@ -1315,6 +1388,21 @@ const [suggesting, setSuggesting] = useState(false);
       if (replacedTotal > 0) msgs.push(`${replacedTotal} substituídos`);
       if (failedTotal > 0) msgs.push(`${failedTotal} falharam`);
       
+      await auditImportadorProdutos({
+        acao: 'estoque.produtos.importacao_planilha.concluida',
+        sucesso: failedTotal === 0,
+        motivo: failedTotal > 0 ? 'Importacao de produtos concluida com falhas.' : 'Importacao de produtos concluida com sucesso.',
+        dados: {
+          produtos_alvo: produtos.length,
+          criados: createdTotal,
+          atualizados: updatedTotal || 0,
+          substituidos: replacedTotal || 0,
+          falhas: failedTotal,
+          duplicidades: duplicidades.length,
+          grupo_destino_id: grupoId || null,
+          empresa_destino_id: empresaId || null,
+        },
+      });
       if (failedTotal > 0) {
         toast.warning(`Importação concluída: ${processados} processados (${msgs.join(', ')}).`);
       } else {
@@ -1323,6 +1411,12 @@ const [suggesting, setSuggesting] = useState(false);
       onConcluido && onConcluido();
       closeSelf && closeSelf();
     } catch (e) {
+      await auditImportadorProdutos({
+        acao: 'estoque.produtos.importacao_planilha.erro',
+        sucesso: false,
+        motivo: e?.message || 'Erro ao importar produtos por planilha.',
+        dados: { arquivo: arquivo?.name || null }
+      });
       toast.error(e?.message || "Erro ao importar");
     } finally {
       setProcessando(false);
@@ -1330,7 +1424,7 @@ const [suggesting, setSuggesting] = useState(false);
   };
 
   return (
-    <Card className="border-indigo-200">
+    <Card className="border-indigo-200 w-full h-full" data-permission="Estoque.Produtos.importar" data-context-required="group-or-company" data-context-mode={contexto}>
       <CardHeader className="bg-slate-50 border-b">
         <CardTitle className="text-base">Importar Planilha de Produtos</CardTitle>
       </CardHeader>
@@ -1340,6 +1434,16 @@ const [suggesting, setSuggesting] = useState(false);
             Envie uma planilha com 14 colunas (A–N) e cabeçalho na linha 1. Dados a partir da linha 2. Formatos: XLS, XLSX, CSV, CSV UTF‑8.
           </AlertDescription>
         </Alert>
+
+        {(!hasDestinoImportacao || !canImportarProdutos) && (
+          <Alert variant="destructive">
+            <AlertDescription className="text-sm">
+              {!hasDestinoImportacao
+                ? 'Selecione grupo ou empresa antes de processar a planilha.'
+                : 'Seu perfil nao possui permissao para importar produtos.'}
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1">
@@ -1379,7 +1483,7 @@ const [suggesting, setSuggesting] = useState(false);
             type="file"
             accept=".xls,.xlsx,.csv,text/csv"
             onChange={handleArquivo}
-            disabled={processando}
+            disabled={processando || !hasDestinoImportacao || !canImportarProdutos}
           />
           {arquivo && (
             <p className="text-xs text-slate-500 mt-1">{arquivo.name}</p>
@@ -1627,7 +1731,7 @@ const [suggesting, setSuggesting] = useState(false);
           <Button type="button" variant="outline" onClick={() => closeSelf && closeSelf()} disabled={processando}>
             Cancelar
           </Button>
-          <Button type="button" onClick={importar} disabled={processando || !arquivo || (!empresaId && !grupoId) || checando} className="gap-2 bg-indigo-600 hover:bg-indigo-700">
+          <Button type="button" onClick={importar} disabled={processando || !arquivo || (!empresaId && !grupoId) || checando || !canImportarProdutos} className="gap-2 bg-indigo-600 hover:bg-indigo-700">
             {processando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
             {processando ? "Importando..." : "Importar Agora"}
           </Button>
