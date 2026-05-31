@@ -1,5 +1,16 @@
 # Status do Projeto ERP Zuccaro
 
+### Cadastros - Fase 8 Intents do Chatbot em Contexto
+
+- Seguido o proximo ponto do plano em Cadastro Gerais: revisar `ChatbotIntentsForm`, que ainda gravava `ChatbotIntent` diretamente pelo `base44`.
+- O adapter antigo foi mantido, mas criacao, edicao e migracao de intents passaram a usar `createInContext`, `updateInContext` e `filterInContext`.
+- Salvamento agora valida contexto de grupo/empresa e permissao RBAC antes de persistir a intent.
+- Dados textuais da intent passam por sanitizacao simples e limite de tamanho antes da gravacao.
+- Desativacao de intent ativa passou a pedir confirmacao, pois pode afetar atendimentos automaticos.
+- Bloqueios, cancelamento de desativacao, erros e sucesso passaram a gerar auditoria com `group_id`, `grupo_id`, `empresa_id`, antes/depois e nome da intent.
+- Mantida a Regra-Mae: nenhuma tela, modulo, arquivo ou fluxo novo foi criado; apenas melhoria no componente existente.
+- Proximo passo sugerido: continuar nos importadores de produtos de Cadastro Gerais ou em atualizacoes diretas de produto ainda existentes.
+
 ### Estoque - Fase 8 Contagem de Inventario
 
 - Seguido o proximo passo salvo no status: revisar `InventarioContagem` dentro do fluxo existente de inventario, sem criar tela, modulo ou arquivo novo.
