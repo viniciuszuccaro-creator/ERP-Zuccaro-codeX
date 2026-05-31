@@ -272,15 +272,23 @@ export default function CotacoesTab({ windowMode = false }) {
   };
 
   const content = (
-    <div className="space-y-2">
+    <div className="space-y-2 w-full h-full" data-permission="Compras.Cotacao.visualizar" data-context-required="group-or-company" data-context-mode={contexto}>
+      {(!contextoValido || !canViewCotacao) && (
+        <Card className="border-amber-300 bg-amber-50">
+          <CardContent className="p-4 text-sm text-amber-900">
+            Selecione grupo ou empresa e confirme permissão para visualizar cotações.
+          </CardContent>
+        </Card>
+      )}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Sistema de Cotações</h2>
           <p className="text-sm text-slate-600">Cote com múltiplos fornecedores e escolha a melhor proposta</p>
         </div>
-        {hasPermission('Compras','Cotacao','criar') && (
+        {canCreateCotacao && (
           <Button
             className="bg-cyan-600 hover:bg-cyan-700"
+            disabled={!contextoValido || !canCreateCotacao}
             onClick={() => openWindow(CotacaoForm, {
               windowMode: true,
               onSubmit: async (data) => {
@@ -709,12 +717,12 @@ export default function CotacoesTab({ windowMode = false }) {
                                 <Send className="w-4 h-4 mr-2" />
                                 Solicitar Esclarecimentos
                               </Button>
-                              {hasPermission('Compras','Cotacao','gerar_oc') && (
+                              {canGerarOC && (
                                 <Button
                                   size="sm"
                                   className="bg-green-600 hover:bg-green-700"
                                   onClick={() => gerarOrdemCompraMutation.mutate(proposta)}
-                                  disabled={gerarOrdemCompraMutation.isPending}
+                                  disabled={gerarOrdemCompraMutation.isPending || !contextoValido || !canGerarOC}
                                 >
                                   <ShoppingCart className="w-4 h-4 mr-2" />
                                   {gerarOrdemCompraMutation.isPending ? 'Gerando...' : 'Gerar Ordem de Compra'}

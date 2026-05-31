@@ -1,5 +1,15 @@
 # Status do Projeto ERP Zuccaro
 
+### Compras - Fase 8 Cotacoes em Contexto
+
+- Seguido o proximo passo salvo no status: continuar em `CotacoesTab`, substituindo listagens/criacao global por contexto e auditando geracao de ordem de compra a partir de cotacao.
+- `CotacoesTab` deixou de listar fornecedores e produtos globalmente e passou a usar `filterInContext` com chave por grupo/empresa.
+- Criacao de cotacao agora valida contexto grupo/empresa, permissao RBAC de criacao, carimba `group_id`, `grupo_id` e `empresa_id` e gera auditoria de sucesso ou bloqueio.
+- Geracao de ordem de compra a partir de proposta agora usa `createInContext`, exige contexto/permissao, pede confirmacao antes de criar a OC e audita sucesso, bloqueio ou cancelamento.
+- A tela recebeu `w-full`, `h-full`, marcadores `data-permission`, `data-context-required`, alerta visual quando faltar contexto/permissao e botoes desabilitados para acoes sensiveis sem permissao.
+- Mantida a Regra-Mae: nenhum modulo, tela, componente ou arquivo novo foi criado; apenas melhoria no componente existente.
+- Build validado com sucesso via Vite; permanecem apenas warnings tecnicos preexistentes de browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `ImportacaoNFeRecebimento` e `TransferenciaEntreEmpresasForm`, priorizando criacoes diretas de estoque/transferencia sem `createInContext` ou auditoria completa.
 ### Compras - Fase 8 Detalhes do Fornecedor
 
 - Seguido o proximo passo do plano: reforcar pontos de estoque/compras com dados sensiveis sem contexto explicito, confirmacao ou auditoria.
