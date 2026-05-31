@@ -1,5 +1,16 @@
 # Status do Projeto ERP Zuccaro
 
+### Cadastros/Estoque - Fase 8 Historico do Produto em Contexto
+
+- Seguido o proximo ponto do plano: revisar atualizacoes diretas de produto em Cadastro Gerais, priorizando `HistoricoProduto`.
+- Consultas de movimentacoes, pedidos e ordens de producao deixaram de listar dados globalmente e passaram a usar `filterInContext`.
+- Conversao de produto para materia-prima de producao deixou de usar `base44.entities.Produto.update` direto e passou a usar `updateInContext`.
+- A conversao agora exige contexto de grupo/empresa, permissao RBAC de edicao de produto e confirmacao do usuario antes de alterar o cadastro.
+- Bloqueios, cancelamento, erro e sucesso da conversao geram auditoria com `group_id`, `grupo_id`, `empresa_id`, antes/depois e id do produto.
+- O botao sensivel passou a ser desabilitado sem contexto/permissao e recebeu marcadores `data-permission`, `data-action` e `data-sensitive`.
+- Mantida a Regra-Mae: nenhuma tela, modulo, arquivo ou fluxo novo foi criado; apenas melhoria no componente existente.
+- Proximo passo sugerido: continuar nos importadores de produtos de Cadastro Gerais que ainda criam produto diretamente.
+
 ### Cadastros - Fase 8 Intents do Chatbot em Contexto
 
 - Seguido o proximo ponto do plano em Cadastro Gerais: revisar `ChatbotIntentsForm`, que ainda gravava `ChatbotIntent` diretamente pelo `base44`.

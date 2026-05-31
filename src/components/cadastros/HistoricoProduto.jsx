@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * V21.6 - Histórico e Análise Futurista do Produto
@@ -24,35 +26,61 @@ import { toast } from "sonner";
  */
 export default function HistoricoProduto({ produtoId, produto }) {
   const [convertendo, setConvertendo] = useState(false);
+  const { empresaAtual, grupoAtual, contexto, filterInContext, updateInContext } = useContextoVisual();
+  const { canEdit } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || produto?.group_id || null;
+  const empresaId = contexto === "empresa" ? empresaAtual?.id : produto?.empresa_id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeEditarProduto = canEdit("Cadastros", "Produto") || canEdit("Estoque", "Produto") || canEdit("Cadastros", null);
+
+  const auditHistoricoProduto = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: "Cadastros",
+        entidade: "Produto",
+        registro_id: dados.registro_id || produtoId || null,
+        empresa_id: dados.empresa_id || empresaId || null,
+        group_id: dados.group_id || groupId || null,
+        grupo_id: dados.group_id || groupId || null,
+        tipo_auditoria: sucesso ? "entidade" : "seguranca",
+        descricao: motivo || "Auditoria do historico do produto.",
+        dados_anteriores: dados.dados_anteriores || null,
+        dados_novos: { ...dados, contexto },
+        sucesso,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (_) {}
+  };
 
   const { data: movimentacoes = [] } = useQuery({
-    queryKey: ['movimentacoes-produto', produtoId],
-    queryFn: () => base44.entities.MovimentacaoEstoque.filter({
+    queryKey: ['movimentacoes-produto', produtoId, groupId, empresaId],
+    queryFn: () => filterInContext('MovimentacaoEstoque', {
       produto_id: produtoId
     }, '-data_movimentacao', 100),
-    enabled: !!produtoId
+    enabled: !!produtoId && contextoValido
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos-produto', produtoId],
+    queryKey: ['pedidos-produto', produtoId, groupId, empresaId],
     queryFn: async () => {
-      const allPedidos = await base44.entities.Pedido.list();
+      const allPedidos = await filterInContext('Pedido', {}, '-created_date', 500);
       return allPedidos.filter(p => 
         p.itens_revenda?.some(item => item.produto_id === produtoId)
       ).slice(0, 50);
     },
-    enabled: !!produtoId
+    enabled: !!produtoId && contextoValido
   });
 
   const { data: ordensProducao = [] } = useQuery({
-    queryKey: ['ordens-producao-produto', produtoId],
+    queryKey: ['ordens-producao-produto', produtoId, groupId, empresaId],
     queryFn: async () => {
-      const all = await base44.entities.OrdemProducao.list();
+      const all = await filterInContext('OrdemProducao', {}, '-created_date', 500);
       return all.filter(op => 
         op.itens?.some(item => item.produto_id === produtoId)
       );
     },
-    enabled: !!produtoId
+    enabled: !!produtoId && contextoValido
   });
 
   // Calcular métricas
@@ -93,18 +121,53 @@ export default function HistoricoProduto({ produtoId, produto }) {
 
   // V21.6: Converter para produção
   const enviarParaProducao = async () => {
+    if (!contextoValido) {
+      await auditHistoricoProduto({ acao: "Produto.converter_producao_bloqueado", sucesso: false, motivo: "Contexto de grupo ou empresa obrigatorio.", dados: { produto_id: produtoId } });
+      toast.error("Selecione um grupo ou empresa antes de converter o produto.");
+      return;
+    }
+    if (!podeEditarProduto) {
+      await auditHistoricoProduto({ acao: "Produto.converter_producao_negado", sucesso: false, motivo: "Permissão negada para converter produto.", dados: { produto_id: produtoId } });
+      toast.error("Sem permissão para converter produto para produção.");
+      return;
+    }
+
+    const confirmado = window.confirm("Enviar este produto para uso em produção? A alteração será auditada e pode afetar ordens de produção.");
+    if (!confirmado) {
+      await auditHistoricoProduto({ acao: "Produto.converter_producao_cancelado", sucesso: false, motivo: "Confirmação cancelada pelo usuário.", dados: { produto_id: produtoId } });
+      return;
+    }
+
     setConvertendo(true);
+    const dadosAnteriores = produto ? { ...produto } : null;
     try {
-      await base44.entities.Produto.update(produtoId, {
+      const payload = {
         tipo_item: 'Matéria-Prima Produção',
         setor_atividade_id: 'setor-fabrica-001',
-        setor_atividade_nome: 'Fábrica'
+        setor_atividade_nome: 'Fábrica',
+        group_id: produto?.group_id || groupId,
+        grupo_id: produto?.grupo_id || produto?.group_id || groupId,
+        empresa_id: produto?.empresa_id || empresaId,
+      };
+      const atualizado = await updateInContext('Produto', produtoId, payload);
+
+      await auditHistoricoProduto({
+        acao: "Produto.convertido_producao",
+        sucesso: true,
+        dados: {
+          registro_id: produtoId,
+          empresa_id: payload.empresa_id || atualizado?.empresa_id || null,
+          group_id: payload.group_id || atualizado?.group_id || null,
+          dados_anteriores: dadosAnteriores,
+          dados_novos: atualizado || payload,
+        },
       });
-      
-      toast.success('🏭 Produto convertido para Produção!');
-      window.location.reload(); // Recarregar para atualizar dados
+
+      toast.success('Produto convertido para Produção!');
+      window.location.reload();
     } catch (error) {
-      toast.error('Erro ao converter');
+      await auditHistoricoProduto({ acao: "Produto.converter_producao_erro", sucesso: false, motivo: error?.message || "Erro ao converter produto.", dados: { produto_id: produtoId, dados_anteriores: dadosAnteriores } });
+      toast.error(error?.message || 'Erro ao converter');
     } finally {
       setConvertendo(false);
     }
@@ -125,7 +188,10 @@ export default function HistoricoProduto({ produtoId, produto }) {
               </div>
               <Button
                 onClick={enviarParaProducao}
-                disabled={convertendo}
+                disabled={convertendo || !contextoValido || !podeEditarProduto}
+                data-permission="Cadastros.Produto.editar"
+                data-action="converter-produto-producao"
+                data-sensitive
                 className="bg-orange-600 hover:bg-orange-700"
               >
                 <Factory className="w-4 h-4 mr-2" />
