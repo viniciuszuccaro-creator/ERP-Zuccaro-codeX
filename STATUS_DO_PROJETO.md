@@ -1,5 +1,14 @@
 # Status do Projeto ERP Zuccaro
 
+### Estoque - Fase 8 Transferencia Entre Empresas
+
+- Seguido o proximo passo salvo no status: continuar Fase 8 em `ImportacaoNFeRecebimento` e `TransferenciaEntreEmpresasForm`, priorizando criacoes diretas de estoque/transferencia sem `createInContext` ou auditoria completa.
+- `TransferenciaEntreEmpresasForm` deixou de criar transferencia e movimentacoes de estoque diretamente pelo `base44.entities.*.create` e passou a usar `createInContext`.
+- Transferencia agora exige contexto grupo/empresa, permissao RBAC de criacao em Estoque/Transferencias, confirmacao do usuario e auditoria de bloqueio, cancelamento e sucesso.
+- A tela recebeu `w-full`, `h-full`, `data-permission`, `data-context-required` e botao sensivel desabilitado sem contexto/permissao.
+- Mantida a Regra-Mae: nenhum modulo, tela, componente ou arquivo novo foi criado; apenas melhoria no componente existente.
+- Build validado com sucesso via Vite; permanecem apenas warnings tecnicos preexistentes de browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em `ImportacaoNFeRecebimento`, substituindo importacao/movimentacoes/atualizacao de produto diretas por contexto, confirmacao e auditoria completa.
 ### Compras - Fase 8 Cotacoes em Contexto
 
 - Seguido o proximo passo salvo no status: continuar em `CotacoesTab`, substituindo listagens/criacao global por contexto e auditando geracao de ordem de compra a partir de cotacao.

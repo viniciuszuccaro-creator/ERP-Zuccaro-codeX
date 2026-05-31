@@ -11,6 +11,7 @@ import { ArrowLeftRight, Save, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import usePermissions from "@/components/lib/usePermissions";
 import ProtectedField from "@/components/security/ProtectedField";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -23,7 +24,31 @@ export default function TransferenciaEntreEmpresasForm({
   windowMode = false
 }) {
   const queryClient = useQueryClient();
-  const { canCreate } = usePermissions();
+  const { canCreate, hasPermission } = usePermissions();
+  const { empresaAtual, grupoAtual, contexto, createInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextoValido = Boolean(groupId || empresasDoGrupo.length > 0);
+  const canCreateTransferencia = canCreate('Estoque', 'Transferencias') || hasPermission('Estoque', null, 'criar');
+
+  const auditTransferencia = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: 'Estoque',
+        entidade: 'TransferenciaFilial',
+        tipo_auditoria: sucesso ? 'entidade' : 'seguranca',
+        descricao: motivo || 'Auditoria de transferencia entre empresas.',
+        dados_novos: dados,
+        group_id: groupId || dados.group_id || null,
+        grupo_id: groupId || dados.group_id || null,
+        empresa_id: dados.empresa_origem_id || empresaAtual?.id || null,
+        sucesso,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar transferencia entre empresas:', error);
+    }
+  };
 
   const [formData, setFormData] = useState({
     empresa_origem_id: "",
@@ -43,7 +68,7 @@ export default function TransferenciaEntreEmpresasForm({
       const empresaDestino = empresasDoGrupo.find(e => e.id === data.empresa_destino_id);
 
       // Criar registro de transferência
-      const transferencia = await base44.entities.TransferenciaFilial.create({
+      const transferencia = await createInContext('TransferenciaFilial', {
         group_id: empresaOrigem.group_id,
         empresa_origem_id: data.empresa_origem_id,
         empresa_destino_id: data.empresa_destino_id,
@@ -61,7 +86,7 @@ export default function TransferenciaEntreEmpresasForm({
       });
 
       // Criar movimentações de estoque
-      await base44.entities.MovimentacaoEstoque.create({
+      await createInContext('MovimentacaoEstoque', {
         empresa_id: data.empresa_origem_id,
         group_id: empresaOrigem.group_id,
         produto_id: data.produto_id,
@@ -73,7 +98,7 @@ export default function TransferenciaEntreEmpresasForm({
         data_movimentacao: new Date().toISOString()
       });
 
-      await base44.entities.MovimentacaoEstoque.create({
+      await createInContext('MovimentacaoEstoque', {
         empresa_id: data.empresa_destino_id,
         group_id: empresaDestino.group_id,
         produto_id: data.produto_id,
@@ -83,6 +108,18 @@ export default function TransferenciaEntreEmpresasForm({
         quantidade: data.quantidade,
         observacoes: `Transferência de ${empresaOrigem.nome_fantasia}`,
         data_movimentacao: new Date().toISOString()
+      });
+
+      await auditTransferencia({
+        acao: 'TransferenciaEntreEmpresas.confirmada',
+        dados: {
+          transferencia_id: transferencia?.id,
+          group_id: empresaOrigem.group_id || empresaDestino.group_id || groupId,
+          empresa_origem_id: data.empresa_origem_id,
+          empresa_destino_id: data.empresa_destino_id,
+          produto_id: data.produto_id,
+          quantidade: data.quantidade
+        }
       });
 
       return transferencia;
@@ -112,9 +149,20 @@ export default function TransferenciaEntreEmpresasForm({
 
   const produtoSelecionado = produtos.find(p => p.id === formData.produto_id);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
+    if (!contextoValido || !canCreateTransferencia) {
+      await auditTransferencia({
+        acao: 'TransferenciaEntreEmpresas.bloqueada',
+        sucesso: false,
+        motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+        dados: { ...formData }
+      });
+      toast.error(!contextoValido ? "Selecione grupo ou empresa antes de transferir." : "Sem permissão para transferir estoque entre empresas.");
+      return;
+    }
+
     if (!formData.empresa_origem_id || !formData.empresa_destino_id) {
       toast.error("Selecione as empresas de origem e destino");
       return;
@@ -135,11 +183,20 @@ export default function TransferenciaEntreEmpresasForm({
       return;
     }
 
+    const produto = produtos.find(p => p.id === formData.produto_id);
+    const empresaOrigem = empresasDoGrupo.find(e => e.id === formData.empresa_origem_id);
+    const empresaDestino = empresasDoGrupo.find(e => e.id === formData.empresa_destino_id);
+    const confirmado = window.confirm(`Confirma transferir ${formData.quantidade} ${formData.unidade || produto?.unidade_medida || ''} de ${produto?.descricao || 'produto'} de ${empresaOrigem?.nome_fantasia || 'origem'} para ${empresaDestino?.nome_fantasia || 'destino'}?`);
+    if (!confirmado) {
+      await auditTransferencia({ acao: 'TransferenciaEntreEmpresas.cancelada', sucesso: false, motivo: 'confirmacao_cancelada', dados: { ...formData } });
+      return;
+    }
+
     createTransferenciaMutation.mutate(formData);
   };
 
   const content = (
-    <div className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+    <div className={`space-y-6 w-full h-full ${windowMode ? 'p-6 overflow-auto' : ''}`} data-permission="Estoque.Transferencias.criar" data-context-required="group-or-company" data-context-mode={contexto}>
       {!windowMode && (
         <div className="flex items-center gap-2 mb-4">
           <ArrowLeftRight className="w-6 h-6 text-purple-600" />
@@ -319,7 +376,7 @@ export default function TransferenciaEntreEmpresasForm({
         <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
           <Button
             type="submit"
-            disabled={createTransferenciaMutation.isPending || !canCreate('Estoque','Transferencias')}
+            disabled={createTransferenciaMutation.isPending || !contextoValido || !canCreateTransferencia}
             className="bg-purple-600 hover:bg-purple-700"
           >
             {createTransferenciaMutation.isPending ? (
