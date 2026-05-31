@@ -1,5 +1,18 @@
 # Status do Projeto ERP Zuccaro
 
+### Cadastros - Fase 8 Importar Produtos NF-e XML
+
+- Seguido o pr?ximo ponto salvo no status: revisar `ImportarProdutosNFe`, que ainda criava produtos diretamente no `base44.entities.Produto.create`.
+- Consulta de duplicidade de produtos passou a usar `filterInContext`, respeitando grupo/empresa selecionados.
+- Cria??o de produtos a partir do XML passou a usar `createInContext`, com `group_id`, `grupo_id` e `empresa_id` no payload.
+- Upload e cria??o agora exigem contexto de grupo/empresa e permiss?o RBAC para criar produto.
+- Campos extra?dos da NF-e passam por sanitiza??o simples, limite de tamanho e convers?o num?rica antes da grava??o.
+- Cria??o em massa passou a pedir confirma??o do usu?rio e gerar auditoria de bloqueio, cancelamento, erro e sucesso.
+- A a??o sens?vel recebeu alerta visual quando faltar contexto/permiss?o e marcadores `data-permission`, `data-action` e `data-sensitive`.
+- Mantida a Regra-M?e: nenhuma tela, m?dulo, arquivo ou fluxo novo foi criado; apenas melhoria no componente existente.
+- Pr?ximo passo sugerido: revisar `ImportacaoProdutoNFe`, que ainda tem cria??o direta de produto por NF-e/PDF.
+
+
 ### Cadastros - Fase 8 Importar Produtos em Lote
 
 - Seguido o próximo ponto do plano: continuar nos importadores de produtos de Cadastro Gerais, priorizando `ImportarProdutosLote`.

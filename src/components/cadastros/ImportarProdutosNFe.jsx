@@ -7,6 +7,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import { FileText, Upload, Loader2, CheckCircle2, Package, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
+
+const sanitizeText = (value, max = 240) => String(value ?? '').replace(/[<>]/g, '').slice(0, max).trim();
+const toNumber = (value) => {
+  const parsed = Number(String(value ?? '').replace(',', '.'));
+  return Number.isFinite(parsed) ? parsed : 0;
+};
 
 /**
  * V21.1.2 - IMPORTAR PRODUTOS A PARTIR DE NF-e
@@ -14,6 +22,32 @@ import { toast } from 'sonner';
  */
 export default function ImportarProdutosNFe({ onProdutosCriados, onClose }) {
   const [xmlFile, setXmlFile] = useState(null);
+  const { empresaAtual, grupoAtual, contexto, filterInContext, createInContext } = useContextoVisual();
+  const { canCreate } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === 'empresa' ? empresaAtual?.id : null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeCriarProduto = canCreate('Cadastros', 'Produto') || canCreate('Estoque', 'Produto') || canCreate('Cadastros', null);
+
+  const auditImportacaoNFe = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: 'Cadastros',
+        entidade: 'Produto',
+        registro_id: dados.registro_id || null,
+        empresa_id: dados.empresa_id || empresaId || null,
+        group_id: dados.group_id || groupId || null,
+        grupo_id: dados.group_id || groupId || null,
+        tipo_auditoria: sucesso ? 'entidade' : 'seguranca',
+        descricao: motivo || 'Auditoria da importa\u00e7\u00e3o de produtos via NF-e.',
+        dados_anteriores: dados.dados_anteriores || null,
+        dados_novos: { ...dados, contexto, arquivo: xmlFile?.name || null },
+        sucesso,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (_) {}
+  };
   const [processando, setProcessando] = useState(false);
   const [itensParsed, setItensParsed] = useState([]);
   const [itensSelecionados, setItensSelecionados] = useState([]);
@@ -21,6 +55,17 @@ export default function ImportarProdutosNFe({ onProdutosCriados, onClose }) {
   const handleUploadXML = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    if (!contextoValido) {
+      await auditImportacaoNFe({ acao: 'Produto.importacao_nfe_bloqueada', sucesso: false, motivo: 'Contexto de grupo ou empresa obrigat\u00f3rio.', dados: { etapa: 'upload' } });
+      toast.error('Selecione um grupo ou empresa antes de importar produtos da NF-e.');
+      return;
+    }
+    if (!podeCriarProduto) {
+      await auditImportacaoNFe({ acao: 'Produto.importacao_nfe_negada', sucesso: false, motivo: 'Permiss\u00e3o negada para criar produtos.', dados: { etapa: 'upload' } });
+      toast.error('Sem permiss\u00e3o para criar produtos.');
+      return;
+    }
 
     setXmlFile(file);
     setProcessando(true);
@@ -71,7 +116,7 @@ IMPORTANTE: Extraia TODOS os itens, não apenas um exemplo.`,
       });
 
       // Verificar quais produtos já existem
-      const produtosExistentes = await base44.entities.Produto.list();
+      const produtosExistentes = await filterInContext('Produto', {}, '-updated_date', 9999);
       
       const itensComStatus = resultado.itens.map(item => {
         const existe = produtosExistentes.find(p => 
@@ -89,9 +134,9 @@ IMPORTANTE: Extraia TODOS os itens, não apenas um exemplo.`,
 
       setItensParsed(itensComStatus);
       setItensSelecionados(itensComStatus.filter(i => i.criar_novo).map((_, idx) => idx));
-      toast.success(`✅ ${itensComStatus.length} itens encontrados na NF-e`);
+      toast.success(`${itensComStatus.length} itens encontrados na NF-e`);
     } catch (error) {
-      toast.error('❌ Erro ao processar XML: ' + error.message);
+      toast.error('Erro ao processar XML: ' + error.message);
     } finally {
       setProcessando(false);
     }
@@ -105,6 +150,23 @@ IMPORTANTE: Extraia TODOS os itens, não apenas um exemplo.`,
       return;
     }
 
+    if (!contextoValido) {
+      await auditImportacaoNFe({ acao: 'Produto.importacao_nfe_bloqueada', sucesso: false, motivo: 'Contexto de grupo ou empresa obrigat\u00f3rio.', dados: { total_itens: itensCriar.length } });
+      toast.error('Selecione um grupo ou empresa antes de criar produtos.');
+      return;
+    }
+    if (!podeCriarProduto) {
+      await auditImportacaoNFe({ acao: 'Produto.importacao_nfe_negada', sucesso: false, motivo: 'Permiss\u00e3o negada para criar produtos.', dados: { total_itens: itensCriar.length } });
+      toast.error('Sem permiss\u00e3o para criar produtos.');
+      return;
+    }
+
+    const confirmado = window.confirm('Criar ' + itensCriar.length + ' produto(s) a partir da NF-e no contexto selecionado? Esta a\u00e7\u00e3o ser\u00e1 auditada.');
+    if (!confirmado) {
+      await auditImportacaoNFe({ acao: 'Produto.importacao_nfe_cancelada', sucesso: false, motivo: 'Confirma\u00e7\u00e3o cancelada pelo usu\u00e1rio.', dados: { total_itens: itensCriar.length } });
+      return;
+    }
+
     setProcessando(true);
 
     try {
@@ -112,27 +174,33 @@ IMPORTANTE: Extraia TODOS os itens, não apenas um exemplo.`,
 
       for (const item of itensCriar) {
         const novoProduto = {
-          descricao: item.descricao,
-          codigo: item.codigo_produto || '',
-          ncm: item.ncm || '',
-          unidade_medida: item.unidade || 'UN',
-          unidade_principal: item.unidade || 'UN',
-          unidades_secundarias: [item.unidade || 'UN'],
-          custo_aquisicao: item.valor_unitario || 0,
+          descricao: sanitizeText(item.descricao, 240),
+          codigo: sanitizeText(item.codigo_produto, 80),
+          ncm: sanitizeText(item.ncm, 20),
+          unidade_medida: sanitizeText(item.unidade || 'UN', 12).toUpperCase() || 'UN',
+          unidade_principal: sanitizeText(item.unidade || 'UN', 12).toUpperCase() || 'UN',
+          unidades_secundarias: [sanitizeText(item.unidade || 'UN', 12).toUpperCase() || 'UN'],
+          custo_aquisicao: toNumber(item.valor_unitario),
           tipo_item: 'Revenda',
           grupo: 'Outros',
-          status: 'Ativo'
+          status: 'Ativo',
+          group_id: groupId,
+          grupo_id: groupId,
+          empresa_id: empresaId
         };
 
-        const produtoCriado = await base44.entities.Produto.create(novoProduto);
+        if (!novoProduto.descricao) continue;
+        const produtoCriado = await createInContext('Produto', novoProduto);
         produtosCriados.push(produtoCriado);
       }
 
-      toast.success(`✅ ${produtosCriados.length} produtos criados com sucesso!`);
+      await auditImportacaoNFe({ acao: 'Produto.importacao_nfe_concluida', sucesso: true, dados: { total_itens: itensCriar.length, total_criados: produtosCriados.length, codigos: produtosCriados.map((p) => p?.codigo).filter(Boolean).slice(0, 50) } });
+      toast.success(`${produtosCriados.length} produtos criados com sucesso!`);
       onProdutosCriados && onProdutosCriados(produtosCriados);
       onClose && onClose();
     } catch (error) {
-      toast.error('❌ Erro ao criar produtos: ' + error.message);
+      await auditImportacaoNFe({ acao: 'Produto.importacao_nfe_erro', sucesso: false, motivo: error?.message || 'Erro ao criar produtos.', dados: { total_itens: itensCriar.length } });
+      toast.error('Erro ao criar produtos: ' + error.message);
     } finally {
       setProcessando(false);
     }
@@ -155,6 +223,15 @@ IMPORTANTE: Extraia TODOS os itens, não apenas um exemplo.`,
         </AlertDescription>
       </Alert>
 
+      {(!contextoValido || !podeCriarProduto) && (
+        <Alert variant="destructive">
+          <AlertTriangle className="w-4 h-4" />
+          <AlertDescription>
+            {'O importador exige contexto de grupo/empresa e permiss\u00e3o para criar produtos.'}
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* UPLOAD */}
       {!itensParsed.length && (
         <Card>
@@ -165,10 +242,10 @@ IMPORTANTE: Extraia TODOS os itens, não apenas um exemplo.`,
               onChange={handleUploadXML}
               className="hidden"
               id="xml-upload"
-              disabled={processando}
+              disabled={processando || !contextoValido || !podeCriarProduto}
             />
             <label htmlFor="xml-upload">
-              <Button variant="outline" size="lg" disabled={processando} asChild>
+              <Button variant="outline" size="lg" disabled={processando || !contextoValido || !podeCriarProduto} asChild>
                 <span>
                   {processando ? (
                     <Loader2 className="w-5 h-5 mr-2 animate-spin" />
@@ -254,7 +331,10 @@ IMPORTANTE: Extraia TODOS os itens, não apenas um exemplo.`,
               </Button>
               <Button 
                 onClick={handleCriarProdutos}
-                disabled={processando || itensSelecionados.length === 0}
+                disabled={processando || itensSelecionados.length === 0 || !contextoValido || !podeCriarProduto}
+                data-permission="Cadastros.Produto.criar"
+                data-action="importar-produtos-nfe"
+                data-sensitive
                 className="bg-green-600 hover:bg-green-700"
               >
                 {processando ? (
