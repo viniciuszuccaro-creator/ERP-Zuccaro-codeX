@@ -5,15 +5,62 @@ async function getUsuarioAtual() {
   try { return await base44.auth.me(); } catch { return null; }
 }
 
-async function auditar(modulo, entidade, acao, registro_id, descricao, empresaId, dados_anteriores = null, dados_novos = null) {
+function getBrowserContextoFallback() {
+  if (typeof localStorage === 'undefined') return {};
+  try {
+    return {
+      groupId: localStorage.getItem('group_atual_id') || localStorage.getItem('grupo_atual_id') || null,
+      empresaId: localStorage.getItem('empresa_atual_id') || null
+    };
+  } catch {
+    return {};
+  }
+}
+
+function normalizarContextoOperacao(registro = {}, empresaId = null) {
+  const browserCtx = getBrowserContextoFallback();
+  const groupId = registro.group_id || registro.grupo_id || registro.group_atual_id || browserCtx.groupId || null;
+  const empresaOperacaoId = empresaId || registro.empresa_id || registro.empresa_atual_id || browserCtx.empresaId || null;
+
+  if (!groupId && !empresaOperacaoId) {
+    throw new Error('Contexto multiempresa obrigatorio para executar fluxo de pedido');
+  }
+
+  return { groupId, empresaId: empresaOperacaoId };
+}
+
+function aplicarContextoPayload(payload = {}, contextoOperacao = {}) {
+  return {
+    ...payload,
+    ...(contextoOperacao.groupId && !payload.group_id ? { group_id: contextoOperacao.groupId } : {}),
+    ...(contextoOperacao.empresaId && !payload.empresa_id ? { empresa_id: contextoOperacao.empresaId } : {})
+  };
+}
+
+async function filterScoped(entityName, criterios = {}, contextoOperacao = {}, order = undefined, limit = undefined) {
+  const scoped = aplicarContextoPayload(criterios, contextoOperacao);
+  return base44.entities[entityName].filter(scoped, order, limit);
+}
+
+async function createScoped(entityName, payload = {}, contextoOperacao = {}) {
+  return base44.entities[entityName].create(aplicarContextoPayload(payload, contextoOperacao));
+}
+
+async function updateScoped(entityName, id, payload = {}, contextoOperacao = {}) {
+  const before = await base44.entities[entityName].get?.(id).catch(() => null);
+  const updated = await base44.entities[entityName].update(id, aplicarContextoPayload(payload, contextoOperacao));
+  return { before, updated };
+}
+
+async function auditar(modulo, entidade, acao, registro_id, descricao, empresaId, dados_anteriores = null, dados_novos = null, groupId = null) {
   const user = await getUsuarioAtual();
   const mapModulo = (m) => {
     const mapa = {
+      'Logistica': 'Expedicao',
       'Logística': 'Expedição',
-      'Logistica': 'Expedição',
       'Expedição': 'Expedição',
+      'Producao': 'Producao',
       'Produção': 'Produção',
-      'Producao': 'Produção',
       'Estoque': 'Estoque',
       'Financeiro': 'Financeiro',
       'Comercial': 'Comercial'
@@ -23,6 +70,7 @@ async function auditar(modulo, entidade, acao, registro_id, descricao, empresaId
   const moduloNorm = mapModulo(modulo);
   await base44.entities.AuditLog.create({
     empresa_id: empresaId,
+    group_id: groupId,
     usuario: user?.full_name || user?.email || 'Sistema',
     usuario_id: user?.id || '',
     acao,
@@ -723,6 +771,7 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
   };
 
   try {
+    const contextoOperacao = normalizarContextoOperacao(pedido, empresaId);
     onLog('🚀 Iniciando fechamento automático...', 'info');
     onProgresso(0);
 
@@ -738,7 +787,7 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
       for (const item of itens) {
         if (item.produto_id) {
           try {
-            const baixa = await baixarEstoqueItemAprovacao(item, pedido, empresaId);
+            const baixa = await baixarEstoqueItemAprovacao(item, pedido, contextoOperacao.empresaId);
             resultados.estoque.itens.push(baixa);
             onLog(`✅ ${item.descricao}: ${item.quantidade} ${item.unidade} baixado(s)`, 'success');
           } catch (error) {
@@ -768,9 +817,9 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
         const intervalo = pedido.intervalo_parcelas || 30;
         dataVencimento.setDate(dataVencimento.getDate() + (i * intervalo));
 
-        const conta = await base44.entities.ContaReceber.create({
-           empresa_id: empresaId,
-           group_id: pedido.group_id,
+        const conta = await createScoped('ContaReceber', {
+           empresa_id: contextoOperacao.empresaId,
+           group_id: contextoOperacao.groupId,
           origem_tipo: 'pedido',
           descricao: `Venda - Pedido ${pedido.numero_pedido} - Parcela ${i}/${numeroParcelas}`,
           cliente: pedido.cliente_nome,
@@ -784,9 +833,9 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
           numero_documento: pedido.numero_pedido,
           numero_parcela: `${i}/${numeroParcelas}`,
           visivel_no_portal: true
-        });
+        }, contextoOperacao);
 
-        await auditar("Financeiro","ContaReceber","create", conta.id, `CR gerada do Pedido ${pedido.numero_pedido} - Parcela ${i}/${numeroParcelas}` , empresaId, null, conta);
+        await auditar('Financeiro', 'ContaReceber', 'create', conta.id, `CR gerada do Pedido ${pedido.numero_pedido} - Parcela ${i}/${numeroParcelas}`, contextoOperacao.empresaId, null, conta, contextoOperacao.groupId);
         resultados.financeiro.contas.push(conta);
         onLog(`✅ Parcela ${i}/${numeroParcelas}: R$ ${valorParcela.toFixed(2)} - Venc: ${dataVencimento.toLocaleDateString('pt-BR')}`, 'success');
       }
@@ -805,15 +854,15 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
       const tipoFrete = pedido.tipo_frete || 'CIF';
       
       if (tipoFrete === 'Retirada') {
-        await base44.entities.Pedido.update(pedido.id, {
+        await updateScoped('Pedido', pedido.id, {
           observacoes_internas: (pedido.observacoes_internas || '') + '\n[AUTOMAÇÃO] Cliente irá retirar na loja.'
-        });
+        }, contextoOperacao);
         onLog(`✅ Pedido marcado para RETIRADA`, 'success');
       } else {
         const user = await getUsuarioAtual();
-        const entrega = await base44.entities.Entrega.create({
-          empresa_id: empresaId,
-          group_id: pedido.group_id,
+        const entrega = await createScoped('Entrega', {
+          empresa_id: contextoOperacao.empresaId,
+          group_id: contextoOperacao.groupId,
           pedido_id: pedido.id,
           numero_pedido: pedido.numero_pedido,
           cliente_id: pedido.cliente_id,
@@ -833,9 +882,9 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
           prioridade: pedido.prioridade || 'Normal',
           usuario_responsavel: (user?.full_name || user?.email || 'Sistema'),
           usuario_responsavel_id: user?.id
-        });
+        }, contextoOperacao);
 
-        await auditar("Expedição","Entrega","create", entrega.id, `Entrega criada do Pedido ${pedido.numero_pedido}`, empresaId, null, entrega);
+        await auditar('Expedição', 'Entrega', 'create', entrega.id, `Entrega criada do Pedido ${pedido.numero_pedido}`, contextoOperacao.empresaId, null, entrega, contextoOperacao.groupId);
         resultados.logistica.entrega = entrega;
         onLog(`✅ Entrega criada - Previsão: ${pedido.data_prevista_entrega || 'A definir'}`, 'success');
       }
@@ -851,12 +900,12 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
     // ETAPA 4: Atualizar Status
     onLog('📝 Atualizando status do pedido...', 'info');
     try {
-      await base44.entities.Pedido.update(pedido.id, {
+      const { before: pedidoAntes, updated: pedidoAtualizado } = await updateScoped('Pedido', pedido.id, {
         status: 'Pronto para Faturar',
-        observacoes_internas: (pedido.observacoes_internas || '') + 
+        observacoes_internas: (pedido.observacoes_internas || '') +
           `\n[AUTOMAÇÃO ${new Date().toLocaleString('pt-BR')}] Fluxo automático concluído com sucesso.`
-      });
-      await auditar("Comercial","Pedido","update", pedido.id, `Pedido ${pedido.numero_pedido} pronto para faturar (fechamento automático)`, empresaId, null, { status: 'Pronto para Faturar' });
+      }, contextoOperacao);
+      await auditar('Comercial', 'Pedido', 'update', pedido.id, `Pedido ${pedido.numero_pedido} pronto para faturar (fechamento automático)`, contextoOperacao.empresaId, pedidoAntes, pedidoAtualizado, contextoOperacao.groupId);
 
       resultados.status.sucesso = true;
       onEtapaConcluida('status', true);
@@ -895,13 +944,13 @@ export async function validarEstoqueCompleto(pedido, empresaId) {
     itensInsuficientes: [],
     itensOK: []
   };
+  const contextoOperacao = normalizarContextoOperacao(pedido, empresaId);
 
   for (const item of itens) {
     if (item.produto_id) {
-      const produtos = await base44.entities.Produto.filter({ 
-        id: item.produto_id,
-        empresa_id: empresaId 
-      });
+      const produtos = await filterScoped('Produto', {
+        id: item.produto_id
+      }, contextoOperacao);
       
       const produto = produtos[0];
       if (produto) {
@@ -939,10 +988,10 @@ export async function obterEstatisticasAutomacao(empresaId = null, diasRetroativ
   const dataLimite = new Date();
   dataLimite.setDate(dataLimite.getDate() - diasRetroativos);
 
-  // Buscar pedidos
-  const pedidos = empresaId
-    ? await base44.entities.Pedido.filter({ empresa_id: empresaId })
-    : await base44.entities.Pedido.list();
+  const contextoOperacao = normalizarContextoOperacao({}, empresaId);
+
+  // Buscar pedidos sempre dentro do contexto grupo/empresa
+  const pedidos = await filterScoped('Pedido', {}, contextoOperacao, '-created_date', 500);
 
   const pedidosRecentes = pedidos.filter(p => {
     const dataPedido = new Date(p.created_date);
@@ -969,7 +1018,8 @@ export async function obterEstatisticasAutomacao(empresaId = null, diasRetroativ
     pedidosAutomaticos: pedidosComAutomacao.length,
     taxaAutomacao,
     diasAnalise: diasRetroativos,
-    empresaId
+    empresaId: contextoOperacao.empresaId,
+    groupId: contextoOperacao.groupId
   };
 }
 

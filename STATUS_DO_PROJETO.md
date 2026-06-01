@@ -1,3 +1,13 @@
+### Comercial - Fase 8 Hook Central de Fechamento
+- Segui o proximo passo salvo: revisar o hook central `useFluxoPedido`, priorizando `executarFechamentoCompleto`, `validarEstoqueCompleto` e `obterEstatisticasAutomacao`.
+- O fechamento completo passou a normalizar contexto de operacao com `group_id` e `empresa_id`, usando fallback do contexto salvo no navegador quando chamado por widgets.
+- Criacao de `ContaReceber`, criacao de `Entrega` e atualizacao de `Pedido` dentro do fechamento automatico passaram por helpers internos de contexto, sem criar tela, modulo ou arquivo novo.
+- Auditoria do fechamento agora registra `group_id`, `empresa_id`, dados antes/depois do pedido e dados novos de financeiro/logistica.
+- Validacao de estoque e estatisticas de automacao passaram a consultar pedidos/produtos por contexto em vez de listar globalmente.
+- Build validado com sucesso via Vite; permanecem apenas warnings tecnicos preexistentes de browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Mantida a Regra-Mae: apenas melhoria no hook existente, preservando o fluxo atual de fechamento.
+- Proximo passo sugerido: continuar no mesmo `useFluxoPedido`, migrando os fluxos restantes de aprovar/faturar/concluir/cancelar pedido que ainda possuem chamadas diretas para `Pedido`, `ContaReceber`, `Entrega` e `Produto`.
+
 
 ### Comercial - Fase 8 Sugestões e Itens de Produto
 - Segui o próximo passo salvo do plano em Comercial: `SugestoesProdutos`, `TabelaPrecoItensModal` e `AdicionarItemRevendaModal`.
