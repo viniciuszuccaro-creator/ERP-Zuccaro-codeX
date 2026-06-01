@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,20 +23,20 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 
 /**
- * V21.6 - AUTOMAÃ‡ÃƒO COMPLETA DO FLUXO DE PEDIDO
- * 
- * Fluxo AutomÃ¡tico:
- * 1. AprovaÃ§Ã£o â†’ Baixa de Estoque
+ * V21.6 - AUTOMAÇÃO COMPLETA DO FLUXO DE PEDIDO
+ *
+ * Fluxo Automático:
+ * 1. Aprovação → Baixa de Estoque
  * 2. Gerar Financeiro (Contas a Receber)
  * 3. Criar Entrega/Retirada
- * 4. Status â†’ Pronto para Faturar
- * 5. IntegraÃ§Ã£o com NF-e
- * 
- * Regra-MÃ£e: Sistema inteligente e automÃ¡tico
+ * 4. Status → Pronto para Faturar
+ * 5. Integração com NF-e
+ *
+ * Regra-Mãe: Sistema inteligente e automático
  */
 export default function AutomacaoFluxoPedido({
-  pedido, 
-  onComplete, 
+  pedido,
+  onComplete,
   autoExecute = false,
   windowMode = false,
   empresaId = null
@@ -44,7 +44,7 @@ export default function AutomacaoFluxoPedido({
   // V21.6: Multi-empresa
   const empresaProcessamento = empresaId || pedido?.empresa_id;
   const { user } = useUser();
-  const { filterInContext, createInContext, updateInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { filterInContext, createInContext, updateInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const [executando, setExecutando] = useState(false);
   const [etapaConcluida, setEtapaConcluida] = useState({
@@ -86,8 +86,8 @@ export default function AutomacaoFluxoPedido({
 
   // ETAPA 1: Baixar Estoque (DEPRECATED - usar hook centralizado)
   const baixarEstoque = async () => {
-    adicionarLog('ðŸ”„ Iniciando baixa de estoque...', 'info');
-    
+    adicionarLog('🔄 Iniciando baixa de estoque...', 'info');
+
     try {
       const itensParaBaixar = [
         ...(pedido.itens_revenda || []),
@@ -101,9 +101,9 @@ export default function AutomacaoFluxoPedido({
         if (item.produto_id) {
           const produtos = await filterInContext('Produto', {
             id: item.produto_id,
-            empresa_id: pedido.empresa_id 
+            empresa_id: pedido.empresa_id
           }, undefined, 1);
-          
+
           const produto = produtos[0];
           if (produto) {
             const estoqueAtual = produto.estoque_atual || 0;
@@ -111,8 +111,8 @@ export default function AutomacaoFluxoPedido({
 
             if (estoqueAtual >= quantidade) {
               const novoEstoque = estoqueAtual - quantidade;
-              
-              // Criar movimentaÃ§Ã£o
+
+              // Criar movimentação
               await createInContext('MovimentacaoEstoque', {
                 group_id: groupId,
                 empresa_id: pedido.empresa_id,
@@ -130,20 +130,20 @@ export default function AutomacaoFluxoPedido({
                 disponivel_atual: novoEstoque,
                 data_movimentacao: new Date().toISOString(),
                 documento: pedido.numero_pedido,
-                motivo: `Baixa automÃ¡tica - Fechamento de pedido`,
-                responsavel: "Sistema AutomÃ¡tico",
+                motivo: `Baixa automática - Fechamento de pedido`,
+                responsavel: "Sistema Automático",
                 aprovado: true
               });
-              
+
               // Atualizar estoque
               await updateInContext('Produto', item.produto_id, {
                 estoque_atual: novoEstoque
               });
 
               totalBaixado++;
-              adicionarLog(`âœ… ${item.descricao}: ${quantidade} ${item.unidade} baixado(s)`, 'success');
+              adicionarLog(`✅ ${item.descricao}: ${quantidade} ${item.unidade} baixado(s)`, 'success');
             } else {
-              adicionarLog(`âš ï¸ ${item.descricao}: Estoque insuficiente (${estoqueAtual}/${quantidade})`, 'warning');
+              adicionarLog(`⚠️ ${item.descricao}: Estoque insuficiente (${estoqueAtual}/${quantidade})`, 'warning');
             }
           }
         }
@@ -151,18 +151,18 @@ export default function AutomacaoFluxoPedido({
 
       setEtapaConcluida(prev => ({ ...prev, estoque: true }));
       setProgresso(25);
-      adicionarLog(`âœ… Estoque baixado: ${totalBaixado} itens processados`, 'success');
+      adicionarLog(`✅ Estoque baixado: ${totalBaixado} itens processados`, 'success');
       return true;
     } catch (error) {
-      adicionarLog(`âŒ Erro ao baixar estoque: ${error.message}`, 'error');
+      adicionarLog(`❌ Erro ao baixar estoque: ${error.message}`, 'error');
       throw error;
     }
   };
 
   // ETAPA 2: Gerar Financeiro (Contas a Receber)
   const gerarFinanceiro = async () => {
-    adicionarLog('ðŸ’° Gerando contas a receber...', 'info');
-    
+    adicionarLog('💰 Gerando contas a receber...', 'info');
+
     try {
       const valorTotal = pedido.valor_total || 0;
       const numeroParcelas = pedido.numero_parcelas || 1;
@@ -171,12 +171,12 @@ export default function AutomacaoFluxoPedido({
 
       for (let i = 1; i <= numeroParcelas; i++) {
         const dataVencimento = new Date(dataEmissao);
-        
+
         // Calcular vencimento baseado no intervalo de parcelas
         if (pedido.intervalo_parcelas) {
           dataVencimento.setDate(dataVencimento.getDate() + (i * pedido.intervalo_parcelas));
         } else {
-          dataVencimento.setDate(dataVencimento.getDate() + (i * 30)); // PadrÃ£o 30 dias
+          dataVencimento.setDate(dataVencimento.getDate() + (i * 30)); // Padrão 30 dias
         }
 
         await createInContext('ContaReceber', {
@@ -191,40 +191,40 @@ export default function AutomacaoFluxoPedido({
           data_emissao: dataEmissao.toISOString().split('T')[0],
           data_vencimento: dataVencimento.toISOString().split('T')[0],
           status: 'Pendente',
-          forma_recebimento: pedido.forma_pagamento || 'Ã€ Vista',
+          forma_recebimento: pedido.forma_pagamento || 'À Vista',
           numero_documento: pedido.numero_pedido,
           numero_parcela: `${i}/${numeroParcelas}`,
           visivel_no_portal: true
         });
 
-        adicionarLog(`âœ… Parcela ${i}/${numeroParcelas}: R$ ${valorParcela.toFixed(2)} - Venc: ${dataVencimento.toLocaleDateString('pt-BR')}`, 'success');
+        adicionarLog(`✅ Parcela ${i}/${numeroParcelas}: R$ ${valorParcela.toFixed(2)} - Venc: ${dataVencimento.toLocaleDateString('pt-BR')}`, 'success');
       }
 
       setEtapaConcluida(prev => ({ ...prev, financeiro: true }));
       setProgresso(50);
-      adicionarLog(`âœ… Financeiro gerado: ${numeroParcelas} parcela(s)`, 'success');
+      adicionarLog(`✅ Financeiro gerado: ${numeroParcelas} parcela(s)`, 'success');
       return true;
     } catch (error) {
-      adicionarLog(`âŒ Erro ao gerar financeiro: ${error.message}`, 'error');
+      adicionarLog(`❌ Erro ao gerar financeiro: ${error.message}`, 'error');
       throw error;
     }
   };
 
   // ETAPA 3: Criar Entrega ou Retirada
   const criarLogistica = async () => {
-    adicionarLog('ðŸšš Criando registro de logÃ­stica...', 'info');
-    
+    adicionarLog('🚚 Criando registro de logística...', 'info');
+
     try {
       const tipoFrete = pedido.tipo_frete || 'CIF';
-      
+
       if (tipoFrete === 'Retirada') {
         // Marcar como retirada no pedido
         await updateInContext('Pedido', pedido.id, {
           tipo_frete: 'Retirada',
-          observacoes_internas: (pedido.observacoes_internas || '') + '\n[AUTOMAÃ‡ÃƒO] Cliente irÃ¡ retirar na loja.'
+          observacoes_internas: (pedido.observacoes_internas || '') + '\n[AUTOMAÇÃO] Cliente irá retirar na loja.'
         });
-        
-        adicionarLog(`âœ… Pedido marcado para RETIRADA`, 'success');
+
+        adicionarLog(`✅ Pedido marcado para RETIRADA`, 'success');
       } else {
         // Criar registro de entrega
         await createInContext('Entrega', {
@@ -245,39 +245,39 @@ export default function AutomacaoFluxoPedido({
           valor_frete: pedido.valor_frete || 0,
           peso_total_kg: pedido.peso_total_kg || 0,
           volumes: 1,
-          status: 'Aguardando SeparaÃ§Ã£o',
+          status: 'Aguardando Separação',
           prioridade: pedido.prioridade || 'Normal'
         });
 
-        adicionarLog(`âœ… Entrega criada - PrevisÃ£o: ${pedido.data_prevista_entrega || 'A definir'}`, 'success');
+        adicionarLog(`✅ Entrega criada - Previsão: ${pedido.data_prevista_entrega || 'A definir'}`, 'success');
       }
 
       setEtapaConcluida(prev => ({ ...prev, logistica: true }));
       setProgresso(75);
       return true;
     } catch (error) {
-      adicionarLog(`âŒ Erro ao criar logÃ­stica: ${error.message}`, 'error');
+      adicionarLog(`❌ Erro ao criar logística: ${error.message}`, 'error');
       throw error;
     }
   };
 
   // ETAPA 4: Atualizar Status do Pedido
   const atualizarStatus = async () => {
-    adicionarLog('ðŸ“ Atualizando status do pedido...', 'info');
-    
+    adicionarLog('📝 Atualizando status do pedido...', 'info');
+
     try {
       await updateInContext('Pedido', pedido.id, {
         status: 'Pronto para Faturar',
-        observacoes_internas: (pedido.observacoes_internas || '') + 
-          `\n[AUTOMAÃ‡ÃƒO ${new Date().toLocaleString('pt-BR')}] Fluxo automÃ¡tico concluÃ­do com sucesso.`
+        observacoes_internas: (pedido.observacoes_internas || '') +
+          `\n[AUTOMAÇÃO ${new Date().toLocaleString('pt-BR')}] Fluxo automático concluído com sucesso.`
       });
 
       setEtapaConcluida(prev => ({ ...prev, status: true }));
       setProgresso(100);
-      adicionarLog(`âœ… Pedido atualizado para: PRONTO PARA FATURAR`, 'success');
+      adicionarLog(`✅ Pedido atualizado para: PRONTO PARA FATURAR`, 'success');
       return true;
     } catch (error) {
-      adicionarLog(`âŒ Erro ao atualizar status: ${error.message}`, 'error');
+      adicionarLog(`❌ Erro ao atualizar status: ${error.message}`, 'error');
       throw error;
     }
   };
@@ -286,15 +286,15 @@ export default function AutomacaoFluxoPedido({
   const executarFluxoCompleto = async () => {
     if (executando || !permitido) {
       if (!permitido) {
-        toast.error('âŒ Sem permissÃ£o para executar fechamento automÃ¡tico');
+        toast.error('❌ Sem permissão para executar fechamento automático');
       }
       return;
     }
-    
+
     setExecutando(true);
     setProgresso(0);
     setLogs([]);
-    
+
     try {
       await executarFechamentoCompleto(
         pedido,
@@ -306,9 +306,9 @@ export default function AutomacaoFluxoPedido({
             setEtapaConcluida(prev => ({ ...prev, [etapa]: sucesso }));
           },
           onComplete: (resultados) => {
-            toast.success('âœ… Fluxo de pedido concluÃ­do com sucesso!');
-            adicionarLog('ðŸŽ‰ AUTOMAÃ‡ÃƒO CONCLUÃDA! Fechando em 2s...', 'success');
-            
+            toast.success('✅ Fluxo de pedido concluído com sucesso!');
+            adicionarLog('🎉 AUTOMAÇÃO CONCLUÍDA! Fechando em 2s...', 'success');
+
             // Aguardar 2s e fechar janela/modal
             setTimeout(() => {
               if (onComplete) {
@@ -317,13 +317,13 @@ export default function AutomacaoFluxoPedido({
             }, 2000);
           },
           onError: (error) => {
-            toast.error(`âŒ Erro na automaÃ§Ã£o: ${error.message}`);
+            toast.error(`❌ Erro na automação: ${error.message}`);
           }
         }
       );
     } catch (error) {
-      toast.error(`âŒ Erro crÃ­tico: ${error.message}`);
-      adicionarLog(`âŒ FALHA CRÃTICA: ${error.message}`, 'error');
+      toast.error(`❌ Erro crítico: ${error.message}`);
+      adicionarLog(`❌ FALHA CRÍTICA: ${error.message}`, 'error');
     } finally {
       setExecutando(false);
     }
@@ -332,17 +332,17 @@ export default function AutomacaoFluxoPedido({
   const etapas = [
     { id: 'estoque', label: 'Baixa de Estoque', icon: Package, concluida: etapaConcluida.estoque },
     { id: 'financeiro', label: 'Gerar Financeiro', icon: DollarSign, concluida: etapaConcluida.financeiro },
-    { id: 'logistica', label: 'Criar LogÃ­stica', icon: Truck, concluida: etapaConcluida.logistica },
+    { id: 'logistica', label: 'Criar Logística', icon: Truck, concluida: etapaConcluida.logistica },
     { id: 'status', label: 'Atualizar Status', icon: FileText, concluida: etapaConcluida.status }
   ];
 
   // V21.6 FINAL: w-full h-full responsivo
-  const containerClass = windowMode 
-    ? 'w-full h-full flex flex-col overflow-hidden' 
+  const containerClass = windowMode
+    ? 'w-full h-full flex flex-col overflow-hidden'
     : 'w-full h-full space-y-6';
 
-  const contentClass = windowMode 
-    ? 'flex-1 overflow-y-auto p-6 space-y-6' 
+  const contentClass = windowMode
+    ? 'flex-1 overflow-y-auto p-6 space-y-6'
     : 'space-y-6';
 
   const Wrapper = ({ children }) => windowMode ? (
@@ -361,14 +361,14 @@ export default function AutomacaoFluxoPedido({
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <ShoppingCart className="w-6 h-6 text-blue-600" />
-              AutomaÃ§Ã£o do Fluxo de Pedido
+              Automação do Fluxo de Pedido
             </CardTitle>
             <Badge className="bg-blue-600 text-white px-3 py-1">
               Pedido {pedido.numero_pedido}
             </Badge>
           </div>
           <p className="text-sm text-slate-600 mt-2">
-            Sistema inteligente de fechamento automÃ¡tico - Regra-MÃ£e V21.6
+            Sistema inteligente de fechamento automático - Regra-Mãe V21.6
           </p>
         </CardHeader>
         <CardContent>
@@ -388,8 +388,8 @@ export default function AutomacaoFluxoPedido({
           const Icon = etapa.icon;
           return (
             <Card key={etapa.id} className={`${
-              etapa.concluida 
-                ? 'border-green-400 bg-green-50' 
+              etapa.concluida
+                ? 'border-green-400 bg-green-50'
                 : executando && index === Object.values(etapaConcluida).filter(Boolean).length
                 ? 'border-blue-400 bg-blue-50 animate-pulse'
                 : 'border-slate-200'
@@ -407,7 +407,7 @@ export default function AutomacaoFluxoPedido({
                 <div>
                   <p className="font-semibold text-sm">{etapa.label}</p>
                   <p className="text-xs text-slate-500">
-                    {etapa.concluida ? 'ConcluÃ­do' : 'Pendente'}
+                    {etapa.concluida ? 'Concluído' : 'Pendente'}
                   </p>
                 </div>
               </CardContent>
@@ -419,13 +419,13 @@ export default function AutomacaoFluxoPedido({
       {/* Logs */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Logs de ExecuÃ§Ã£o</CardTitle>
+          <CardTitle className="text-base">Logs de Execução</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {logs.length === 0 ? (
               <p className="text-sm text-slate-500 text-center py-8">
-                Nenhuma aÃ§Ã£o executada ainda
+                Nenhuma ação executada ainda
               </p>
             ) : (
               logs.map((log, index) => (
@@ -449,35 +449,35 @@ export default function AutomacaoFluxoPedido({
         </CardContent>
       </Card>
 
-      {/* ValidaÃ§Ã£o de Acesso */}
+      {/* Validação de Acesso */}
       {!permitido && (
         <Alert className="border-red-300 bg-red-50">
           <AlertTriangle className="w-4 h-4 text-red-600" />
           <AlertDescription>
-            <p className="font-semibold text-red-900">ðŸ”’ Acesso Negado</p>
+            <p className="font-semibold text-red-900">🔒 Acesso Negado</p>
             <p className="text-sm text-red-700 mt-1">
-              Apenas <strong>Administradores</strong> e <strong>Gerentes</strong> podem executar o fechamento automÃ¡tico de pedidos.
+              Apenas <strong>Administradores</strong> e <strong>Gerentes</strong> podem executar o fechamento automático de pedidos.
             </p>
           </AlertDescription>
         </Alert>
       )}
 
-      {/* AÃ§Ãµes */}
+      {/* Ações */}
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="font-semibold text-slate-900">Pronto para executar?</p>
               <p className="text-sm text-slate-600">
-                Este processo irÃ¡: baixar estoque, gerar financeiro, criar logÃ­stica e atualizar status
+                Este processo irá: baixar estoque, gerar financeiro, criar logística e atualizar status
               </p>
               {!permitido && (
                 <p className="text-xs text-red-600 mt-1">
-                  âš ï¸ VocÃª nÃ£o tem permissÃ£o para executar esta aÃ§Ã£o
+                  ⚠️ Você não tem permissão para executar esta ação
                 </p>
               )}
             </div>
-            
+
             <Button
               onClick={executarFluxoCompleto}
               disabled={executando || progresso === 100 || !permitido}
@@ -496,12 +496,12 @@ export default function AutomacaoFluxoPedido({
               ) : progresso === 100 ? (
                 <>
                   <CheckCircle2 className="w-5 h-5 mr-2" />
-                  ConcluÃ­do
+                  Concluído
                 </>
               ) : (
                 <>
                   <ArrowRight className="w-5 h-5 mr-2" />
-                  ðŸš€ Executar Fluxo Completo
+                  🚀 Executar Fluxo Completo
                 </>
               )}
             </Button>
@@ -511,9 +511,9 @@ export default function AutomacaoFluxoPedido({
             <Alert className="mt-4 border-green-300 bg-green-50">
               <CheckCircle2 className="w-4 h-4 text-green-600" />
               <AlertDescription>
-                <p className="font-semibold text-green-900">âœ… Fluxo concluÃ­do com sucesso!</p>
+                <p className="font-semibold text-green-900">✅ Fluxo concluído com sucesso!</p>
                 <p className="text-sm text-green-700 mt-1">
-                  Pedido pronto para faturamento. PrÃ³ximo passo: Gerar NF-e
+                  Pedido pronto para faturamento. Próximo passo: Gerar NF-e
                 </p>
               </AlertDescription>
             </Alert>
