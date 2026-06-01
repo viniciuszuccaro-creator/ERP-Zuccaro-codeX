@@ -1,3 +1,12 @@
+### Comercial - Fase 8 Faturamento, OP e Cancelamento em Contexto
+- Segui o proximo passo salvo no hook central `useFluxoPedido`: migrar `faturarPedidoCompleto`, `concluirOPCompleto`, `cancelarPedidoCompleto` e auxiliares de faturamento/cancelamento.
+- Faturamento completo agora normaliza contexto multiempresa antes de baixar estoque, criar entrega e atualizar pedido faturado.
+- Baixas de estoque do faturamento, consumo de material da OP e liberacao de reserva no cancelamento passaram a usar `filterScoped`, `createScoped` e `updateScoped`.
+- Conclusao de OP agora atualiza `OrdemProducao` e pedido vinculado com auditoria completa, dados antes/depois, `group_id` e `empresa_id`.
+- Cancelamento de pedido agora busca reservas/contas por contexto, cancela contas a receber com auditoria e libera limite de credito usando o mesmo contexto do pedido.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas melhoria no hook central existente.
+- Proximo passo sugerido: continuar no mesmo `useFluxoPedido`, revisando chamadas restantes do fechamento automatico e corrigindo textos/comentarios com codificacao quebrada sem alterar comportamento.
+
 ### Comercial - Fase 8 Aprovacao do Pedido em Contexto
 - Segui o proximo passo salvo no hook central `useFluxoPedido`: migrar fluxos restantes com chamadas diretas, priorizando aprovacao completa do pedido.
 - `aprovarPedidoCompleto` agora normaliza contexto multiempresa antes de validar credito, baixar estoque, gerar OP, gerar contas a receber, atualizar limite de credito, atualizar pedido e registrar historico do cliente.

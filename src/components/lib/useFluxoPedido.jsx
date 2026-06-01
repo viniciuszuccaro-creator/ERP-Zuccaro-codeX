@@ -275,8 +275,9 @@ async function baixarEstoqueItemAprovacao(item, pedido, empresaId) {
     aprovado: true
   }, contextoOperacao);
 
-  await updateScoped('Produto', item.produto_id, { estoque_atual: novoEstoque }, contextoOperacao);
-  await auditar('Estoque', 'MovimentacaoEstoque', 'create', movimentacao.id, `Baixa por faturamento - Pedido ${pedido.numero_pedido}`, contextoOperacao.empresaId, null, movimentacao, contextoOperacao.groupId);
+  const { before: produtoAntes, updated: produtoAtualizado } = await updateScoped('Produto', item.produto_id, { estoque_atual: novoEstoque }, contextoOperacao);
+  await auditar('Estoque', 'MovimentacaoEstoque', 'create', movimentacao.id, `Baixa por aprovacao - Pedido ${pedido.numero_pedido}`, contextoOperacao.empresaId, null, movimentacao, contextoOperacao.groupId);
+  await auditar('Estoque', 'Produto', 'update', item.produto_id, `Estoque atualizado por aprovacao - Pedido ${pedido.numero_pedido}`, contextoOperacao.empresaId, produtoAntes, produtoAtualizado, contextoOperacao.groupId);
   return movimentacao;
 }
 
@@ -376,11 +377,12 @@ export async function faturarPedidoCompleto(pedido, nfe, empresaId) {
   };
 
   try {
-    // 1. BAIXAR ESTOQUE (Itens de Revenda)
+    const contextoOperacao = normalizarContextoOperacao(pedido, empresaId);
+
     if (pedido.itens_revenda?.length > 0) {
       for (const item of pedido.itens_revenda) {
         try {
-          const baixa = await baixarEstoqueItem(item, pedido, empresaId);
+          const baixa = await baixarEstoqueItem(item, pedido, contextoOperacao.empresaId);
           resultados.baixasEstoque.push(baixa);
         } catch (error) {
           resultados.erros.push(`Erro ao baixar ${item.descricao}: ${error.message}`);
@@ -388,11 +390,10 @@ export async function faturarPedidoCompleto(pedido, nfe, empresaId) {
       }
     }
 
-    // 2. CRIAR ENTREGA AUTOMATICAMENTE
     const user = await getUsuarioAtual();
-    const entrega = await base44.entities.Entrega.create({
-      empresa_id: empresaId,
-      group_id: pedido.group_id,
+    const entrega = await createScoped('Entrega', {
+      empresa_id: contextoOperacao.empresaId,
+      group_id: contextoOperacao.groupId,
       pedido_id: pedido.id,
       numero_pedido: pedido.numero_pedido,
       nfe_id: nfe?.id,
@@ -407,29 +408,28 @@ export async function faturarPedidoCompleto(pedido, nfe, empresaId) {
       peso_total_kg: pedido.peso_total_kg,
       valor_frete: pedido.valor_frete,
       valor_mercadoria: pedido.valor_total,
-      status: "Pronto para Expedir",
-      prioridade: pedido.prioridade || "Normal",
+      status: 'Pronto para Expedir',
+      prioridade: pedido.prioridade || 'Normal',
       usuario_responsavel: (user?.full_name || user?.email || 'Sistema'),
       usuario_responsavel_id: user?.id,
       qr_code: `ENT-${Date.now()}`,
       historico_status: [{
-        status: "Pronto para Expedir",
+        status: 'Pronto para Expedir',
         data_hora: new Date().toISOString(),
-        usuario: (user?.full_name || user?.email || "Sistema"),
-        observacao: "Entrega criada automaticamente no faturamento"
+        usuario: (user?.full_name || user?.email || 'Sistema'),
+        observacao: 'Entrega criada automaticamente no faturamento'
       }]
-    });
+    }, contextoOperacao);
 
-    await auditar("Logística","Entrega","create", entrega.id, `Entrega criada do Pedido ${pedido.numero_pedido}`, empresaId, null, entrega);
-  resultados.entrega = entrega;
+    await auditar('Logistica', 'Entrega', 'create', entrega.id, `Entrega criada do Pedido ${pedido.numero_pedido}`, contextoOperacao.empresaId, null, entrega, contextoOperacao.groupId);
+    resultados.entrega = entrega;
 
-    // 3. ATUALIZAR PEDIDO
-    await base44.entities.Pedido.update(pedido.id, {
-      status: "Faturado",
+    const { before: pedidoAntes, updated: pedidoAtualizado } = await updateScoped('Pedido', pedido.id, {
+      status: 'Faturado',
       ordem_expedicao_id: entrega.id,
       data_entrega_realizada: new Date().toISOString().split('T')[0]
-    });
-    await auditar("Comercial","Pedido","update", pedido.id, `Pedido ${pedido.numero_pedido} faturado`, empresaId, null, { status: "Faturado" });
+    }, contextoOperacao);
+    await auditar('Comercial', 'Pedido', 'update', pedido.id, `Pedido ${pedido.numero_pedido} faturado`, contextoOperacao.empresaId, pedidoAntes, pedidoAtualizado, contextoOperacao.groupId);
 
   } catch (error) {
     resultados.erros.push(`Erro no faturamento: ${error.message}`);
@@ -442,18 +442,14 @@ export async function faturarPedidoCompleto(pedido, nfe, empresaId) {
  * 8️⃣ BAIXAR ESTOQUE
  */
 async function baixarEstoqueItem(item, pedido, empresaId) {
-  const produtos = await base44.entities.Produto.filter({
-    id: item.produto_id,
-    empresa_id: empresaId
-  });
-
+  const contextoOperacao = normalizarContextoOperacao(pedido, empresaId);
+  const produtos = await filterScoped('Produto', { id: item.produto_id }, contextoOperacao);
   const produto = produtos[0];
 
   if (!produto) {
-    throw new Error("Produto não encontrado");
+    throw new Error('Produto nao encontrado');
   }
 
-  // Liberar reserva primeiro
   const novoReservado = Math.max(0, (produto.estoque_reservado || 0) - item.quantidade);
   const novoEstoque = (produto.estoque_atual || 0) - item.quantidade;
 
@@ -461,13 +457,12 @@ async function baixarEstoqueItem(item, pedido, empresaId) {
     throw new Error(`Estoque insuficiente para ${produto.descricao}`);
   }
 
-  // Criar movimentação de saída
   const user = await getUsuarioAtual();
-  const movimentacao = await base44.entities.MovimentacaoEstoque.create({
-    empresa_id: empresaId,
-    group_id: pedido.group_id,
-    tipo_movimento: "liberacao_reserva",
-    origem_movimento: "pedido",
+  const movimentacao = await createScoped('MovimentacaoEstoque', {
+    empresa_id: contextoOperacao.empresaId,
+    group_id: contextoOperacao.groupId,
+    tipo_movimento: 'liberacao_reserva',
+    origem_movimento: 'pedido',
     origem_documento_id: pedido.id,
     produto_id: item.produto_id,
     produto_descricao: item.descricao,
@@ -480,18 +475,18 @@ async function baixarEstoqueItem(item, pedido, empresaId) {
     reservado_atual: novoReservado,
     data_movimentacao: new Date().toISOString(),
     documento: pedido.numero_pedido,
-    motivo: `Baixa por faturamento - NF-e`,
-    responsavel: (user?.full_name || user?.email || "Sistema"),
+    motivo: 'Baixa por faturamento - NF-e',
+    responsavel: (user?.full_name || user?.email || 'Sistema'),
     responsavel_id: user?.id
-  });
+  }, contextoOperacao);
 
-  // Atualizar produto
-  await base44.entities.Produto.update(item.produto_id, {
+  const { before: produtoAntes, updated: produtoAtualizado } = await updateScoped('Produto', item.produto_id, {
     estoque_atual: novoEstoque,
     estoque_reservado: novoReservado
-  });
+  }, contextoOperacao);
 
-  await auditar("Estoque","MovimentacaoEstoque","create", movimentacao.id, `Baixa por faturamento - Pedido ${pedido.numero_pedido}`, empresaId, null, movimentacao);
+  await auditar('Estoque', 'MovimentacaoEstoque', 'create', movimentacao.id, `Baixa por faturamento - Pedido ${pedido.numero_pedido}`, contextoOperacao.empresaId, null, movimentacao, contextoOperacao.groupId);
+  await auditar('Estoque', 'Produto', 'update', item.produto_id, `Estoque atualizado por faturamento - Pedido ${pedido.numero_pedido}`, contextoOperacao.empresaId, produtoAntes, produtoAtualizado, contextoOperacao.groupId);
   return movimentacao;
 }
 
@@ -506,43 +501,43 @@ export async function concluirOPCompleto(op, empresaId) {
   };
 
   try {
-    // 1. BAIXAR MATERIAIS CONSUMIDOS (se configurado)
+    const contextoOperacao = normalizarContextoOperacao(op, empresaId);
+
     if (op.materiais_necessarios?.length > 0) {
       for (const material of op.materiais_necessarios) {
         try {
-          await baixarMaterialProducao(material, op, empresaId);
+          const baixa = await baixarMaterialProducao(material, op, contextoOperacao.empresaId);
+          if (baixa) resultados.baixasMaterial.push(baixa);
         } catch (error) {
           resultados.erros.push(`Material ${material.descricao}: ${error.message}`);
         }
       }
     }
 
-    // 2. ATUALIZAR OP
     const user = await getUsuarioAtual();
-    await base44.entities.OrdemProducao.update(op.id, {
-      status: "Finalizada",
+    const { before: opAntes, updated: opAtualizada } = await updateScoped('OrdemProducao', op.id, {
+      status: 'Finalizada',
       data_conclusao_real: new Date().toISOString(),
       percentual_conclusao: 100,
       historico_status: [
         ...(op.historico_status || []),
         {
           status_anterior: op.status,
-          status_novo: "Finalizada",
+          status_novo: 'Finalizada',
           data_hora: new Date().toISOString(),
-          usuario: (user?.full_name || user?.email || "Sistema"),
-          observacao: "OP concluída - material liberado para expedição"
+          usuario: (user?.full_name || user?.email || 'Sistema'),
+          observacao: 'OP concluida - material liberado para expedicao'
         }
       ]
-    });
+    }, contextoOperacao);
 
-    await auditar("Produção","OrdemProducao","update", op.id, `OP ${op.numero_op} finalizada`, empresaId, { status: op.status }, { status: "Finalizada" });
+    await auditar('Producao', 'OrdemProducao', 'update', op.id, `OP ${op.numero_op} finalizada`, contextoOperacao.empresaId, opAntes, opAtualizada, contextoOperacao.groupId);
 
-  // 3. ATUALIZAR PEDIDO (se vinculado)
     if (op.pedido_id) {
-      await base44.entities.Pedido.update(op.pedido_id, {
-        status: "Pronto para Faturar"
-      });
-      await auditar("Comercial","Pedido","update", op.pedido_id, `Pedido ${op.numero_pedido || ''} pronto para faturar (via OP ${op.numero_op})`, empresaId, { status: op.status }, { status: "Pronto para Faturar" });
+      const { before: pedidoAntes, updated: pedidoAtualizado } = await updateScoped('Pedido', op.pedido_id, {
+        status: 'Pronto para Faturar'
+      }, contextoOperacao);
+      await auditar('Comercial', 'Pedido', 'update', op.pedido_id, `Pedido ${op.numero_pedido || ''} pronto para faturar (via OP ${op.numero_op})`, contextoOperacao.empresaId, pedidoAntes, pedidoAtualizado, contextoOperacao.groupId);
     }
 
   } catch (error) {
@@ -556,40 +551,40 @@ export async function concluirOPCompleto(op, empresaId) {
  * 🔟 BAIXAR MATERIAL DA PRODUÇÃO
  */
 async function baixarMaterialProducao(material, op, empresaId) {
-  const produtos = await base44.entities.Produto.filter({
-    id: material.bitola_id || material.produto_id,
-    empresa_id: empresaId
-  });
+  const contextoOperacao = normalizarContextoOperacao(op, empresaId);
+  const produtos = await filterScoped('Produto', { id: material.bitola_id || material.produto_id }, contextoOperacao);
 
   const produto = produtos[0];
-  if (!produto) return;
+  if (!produto) return null;
 
   const novoEstoque = (produto.estoque_atual || 0) - material.quantidade_kg;
 
   const user = await getUsuarioAtual();
-  const movConsumo = await base44.entities.MovimentacaoEstoque.create({
-    empresa_id: empresaId,
-    group_id: op.group_id,
-    tipo_movimento: "saida",
-    origem_movimento: "producao",
+  const movConsumo = await createScoped('MovimentacaoEstoque', {
+    empresa_id: contextoOperacao.empresaId,
+    group_id: contextoOperacao.groupId,
+    tipo_movimento: 'saida',
+    origem_movimento: 'producao',
     origem_documento_id: op.id,
     produto_id: produto.id,
     produto_descricao: material.descricao,
     quantidade: material.quantidade_kg,
-    unidade_medida: "KG",
+    unidade_medida: 'KG',
     estoque_anterior: produto.estoque_atual,
     estoque_atual: novoEstoque,
     data_movimentacao: new Date().toISOString(),
     documento: op.numero_op,
-    motivo: `Consumo na produção - OP ${op.numero_op}`,
-    responsavel: (user?.full_name || user?.email || "Sistema"),
+    motivo: `Consumo na producao - OP ${op.numero_op}`,
+    responsavel: (user?.full_name || user?.email || 'Sistema'),
     responsavel_id: user?.id
-  });
+  }, contextoOperacao);
 
-  await auditar("Estoque","MovimentacaoEstoque","create", movConsumo.id, `Consumo na produção - OP ${op.numero_op}`, empresaId, null, movConsumo);
-  await base44.entities.Produto.update(produto.id, {
+  await auditar('Estoque', 'MovimentacaoEstoque', 'create', movConsumo.id, `Consumo na producao - OP ${op.numero_op}`, contextoOperacao.empresaId, null, movConsumo, contextoOperacao.groupId);
+  const { before: produtoAntes, updated: produtoAtualizado } = await updateScoped('Produto', produto.id, {
     estoque_atual: Math.max(0, novoEstoque)
-  });
+  }, contextoOperacao);
+  await auditar('Estoque', 'Produto', 'update', produto.id, `Estoque atualizado por consumo de producao - OP ${op.numero_op}`, contextoOperacao.empresaId, produtoAntes, produtoAtualizado, contextoOperacao.groupId);
+  return movConsumo;
 }
 
 /**
@@ -603,45 +598,42 @@ export async function cancelarPedidoCompleto(pedido, empresaId) {
   };
 
   try {
-    // 1. LIBERAR RESERVAS DE ESTOQUE
-    const movimentacoes = await base44.entities.MovimentacaoEstoque.filter({
+    const contextoOperacao = normalizarContextoOperacao(pedido, empresaId);
+    const movimentacoes = await filterScoped('MovimentacaoEstoque', {
       origem_documento_id: pedido.id,
-      tipo_movimento: "reserva"
-    });
+      tipo_movimento: 'reserva'
+    }, contextoOperacao);
 
     for (const mov of movimentacoes) {
       try {
-        await liberarReservaEstoque(mov, empresaId);
-        resultados.reservasLiberadas.push(mov);
+        const reservaLiberada = await liberarReservaEstoque(mov, contextoOperacao.empresaId);
+        resultados.reservasLiberadas.push(reservaLiberada || mov);
       } catch (error) {
         resultados.erros.push(`Erro ao liberar reserva: ${error.message}`);
       }
     }
 
-    // 2. CANCELAR CONTAS A RECEBER
-    const contas = await base44.entities.ContaReceber.filter({
+    const contas = await filterScoped('ContaReceber', {
       pedido_id: pedido.id,
-      status: "Pendente"
-    });
+      status: 'Pendente'
+    }, contextoOperacao);
 
     for (const conta of contas) {
-      await base44.entities.ContaReceber.update(conta.id, {
-        status: "Cancelado"
-      });
-      await auditar("Financeiro","ContaReceber","update", conta.id, `Conta a receber cancelada (Pedido ${pedido.numero_pedido})`, empresaId, { status: conta.status }, { status: "Cancelado" });
-      resultados.contasCanceladas.push(conta);
+      const { before: contaAntes, updated: contaAtualizada } = await updateScoped('ContaReceber', conta.id, {
+        status: 'Cancelado'
+      }, contextoOperacao);
+      await auditar('Financeiro', 'ContaReceber', 'update', conta.id, `Conta a receber cancelada (Pedido ${pedido.numero_pedido})`, contextoOperacao.empresaId, contaAntes, contaAtualizada, contextoOperacao.groupId);
+      resultados.contasCanceladas.push(contaAtualizada || conta);
     }
 
-    // 3. LIBERAR LIMITE DE CRÉDITO
     if (pedido.cliente_id) {
-      await atualizarLimiteCreditoCliente(pedido.cliente_id, pedido.valor_total, 'remover');
+      await atualizarLimiteCreditoCliente(pedido.cliente_id, pedido.valor_total, 'remover', contextoOperacao);
     }
 
-    // 4. ATUALIZAR PEDIDO
-    await base44.entities.Pedido.update(pedido.id, {
-      status: "Cancelado"
-    });
-    await auditar("Comercial","Pedido","update", pedido.id, `Pedido ${pedido.numero_pedido} cancelado`, empresaId, null, { status: "Cancelado" });
+    const { before: pedidoAntes, updated: pedidoAtualizado } = await updateScoped('Pedido', pedido.id, {
+      status: 'Cancelado'
+    }, contextoOperacao);
+    await auditar('Comercial', 'Pedido', 'update', pedido.id, `Pedido ${pedido.numero_pedido} cancelado`, contextoOperacao.empresaId, pedidoAntes, pedidoAtualizado, contextoOperacao.groupId);
 
   } catch (error) {
     resultados.erros.push(`Erro ao cancelar: ${error.message}`);
@@ -654,21 +646,19 @@ export async function cancelarPedidoCompleto(pedido, empresaId) {
  * 1️⃣2️⃣ LIBERAR RESERVA DE ESTOQUE
  */
 async function liberarReservaEstoque(movimentacaoReserva, empresaId) {
-  const produtos = await base44.entities.Produto.filter({
-    id: movimentacaoReserva.produto_id,
-    empresa_id: empresaId
-  });
+  const contextoOperacao = normalizarContextoOperacao(movimentacaoReserva, empresaId);
+  const produtos = await filterScoped('Produto', { id: movimentacaoReserva.produto_id }, contextoOperacao);
 
   const produto = produtos[0];
-  if (!produto) return;
+  if (!produto) return null;
 
-  // Criar movimentação de liberação
+  const reservadoAtual = Math.max(0, (produto.estoque_reservado || 0) - movimentacaoReserva.quantidade);
   const user = await getUsuarioAtual();
-  const mov = await base44.entities.MovimentacaoEstoque.create({
-     empresa_id: empresaId,
-     group_id: movimentacaoReserva.group_id,
-     tipo_movimento: "liberacao_reserva",
-    origem_movimento: "pedido",
+  const mov = await createScoped('MovimentacaoEstoque', {
+    empresa_id: contextoOperacao.empresaId,
+    group_id: contextoOperacao.groupId,
+    tipo_movimento: 'liberacao_reserva',
+    origem_movimento: 'pedido',
     origem_documento_id: movimentacaoReserva.origem_documento_id,
     produto_id: produto.id,
     produto_descricao: produto.descricao,
@@ -678,19 +668,20 @@ async function liberarReservaEstoque(movimentacaoReserva, empresaId) {
     estoque_anterior: produto.estoque_atual,
     estoque_atual: produto.estoque_atual,
     reservado_anterior: produto.estoque_reservado || 0,
-    reservado_atual: Math.max(0, (produto.estoque_reservado || 0) - movimentacaoReserva.quantidade),
+    reservado_atual: reservadoAtual,
     data_movimentacao: new Date().toISOString(),
     documento: movimentacaoReserva.documento,
-    motivo: "Liberação de reserva - pedido cancelado",
-    responsavel: (user?.full_name || user?.email || "Sistema"),
+    motivo: 'Liberacao de reserva - pedido cancelado',
+    responsavel: (user?.full_name || user?.email || 'Sistema'),
     responsavel_id: user?.id
-  });
+  }, contextoOperacao);
 
-  await auditar("Estoque","MovimentacaoEstoque","create", mov.id, "Liberação de reserva - pedido cancelado", empresaId, null, mov);
-  // Atualizar produto
-  await base44.entities.Produto.update(produto.id, {
-    estoque_reservado: Math.max(0, (produto.estoque_reservado || 0) - movimentacaoReserva.quantidade)
-  });
+  await auditar('Estoque', 'MovimentacaoEstoque', 'create', mov.id, 'Liberacao de reserva - pedido cancelado', contextoOperacao.empresaId, null, mov, contextoOperacao.groupId);
+  const { before: produtoAntes, updated: produtoAtualizado } = await updateScoped('Produto', produto.id, {
+    estoque_reservado: reservadoAtual
+  }, contextoOperacao);
+  await auditar('Estoque', 'Produto', 'update', produto.id, 'Reserva liberada por cancelamento de pedido', contextoOperacao.empresaId, produtoAntes, produtoAtualizado, contextoOperacao.groupId);
+  return mov;
 }
 
 /**
