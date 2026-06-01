@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +18,8 @@ import {
   FileText
 } from "lucide-react";
 import { useUser } from "@/components/lib/UserContext";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 import { toast } from "sonner";
 
 /**
@@ -41,6 +42,23 @@ export default function AprovacaoDescontos({ windowMode = false, empresaId = nul
   console.warn('⚠️ AprovacaoDescontos está DEPRECATED. Use CentralAprovacoesManager.jsx');
   const { user } = useUser();
   const queryClient = useQueryClient();
+  const { filterInContext, updateInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaContextoId = empresaId || (contexto === "empresa" ? empresaAtual?.id : null);
+  const contextoValido = Boolean(groupId || empresaContextoId);
+  const podeVisualizarAprovacoes =
+    user?.role === "admin" ||
+    user?.role === "gerente" ||
+    hasPermission("Comercial.Pedido.visualizar") ||
+    hasPermission("Comercial.Pedido.aprovar");
+  const podeEditarAprovacoes =
+    user?.role === "admin" ||
+    user?.role === "gerente" ||
+    hasPermission("Comercial.Pedido.aprovar") ||
+    hasPermission("Comercial.Pedido.editar");
+  const consultaHabilitada = Boolean(contextoValido && podeVisualizarAprovacoes);
   const [filtros, setFiltros] = useState({
     empresa_id: "",
     vendedor: "",
@@ -55,11 +73,9 @@ export default function AprovacaoDescontos({ windowMode = false, empresaId = nul
 
   // V21.6: Multi-empresa
   const { data: pedidosPendentes = [], isLoading } = useQuery({
-    queryKey: ['pedidos-aprovacao', filtros, empresaId],
+    queryKey: ["pedidos-aprovacao-legacy-simples-contexto", filtros, empresaContextoId, groupId, contexto],
     queryFn: async () => {
-      const pedidos = empresaId
-        ? await base44.entities.Pedido.filter({ empresa_id: empresaId })
-        : await base44.entities.Pedido.list();
+      const pedidos = await filterInContext("Pedido", empresaContextoId ? { empresa_id: empresaContextoId } : {}, "-created_date", 500);
       
       return pedidos.filter(p => 
         p.status_aprovacao === "pendente" &&
@@ -67,12 +83,17 @@ export default function AprovacaoDescontos({ windowMode = false, empresaId = nul
         (!filtros.vendedor || p.vendedor_id === filtros.vendedor) &&
         (!filtros.cliente || p.cliente_id === filtros.cliente)
       );
-    }
+    },
+    enabled: consultaHabilitada,
   });
 
   // Mutation para aprovar/rejeitar
   const aprovarRejeitar = useMutation({
     mutationFn: async ({ pedidoId, acao, desconto_ajustado, comentarios }) => {
+      if (!contextoValido || !podeEditarAprovacoes) {
+        throw new Error("Sem contexto ou permissao para registrar decisao de desconto.");
+      }
+
       const pedido = pedidosPendentes.find(p => p.id === pedidoId);
       
       let novoStatus = "";
@@ -90,7 +111,7 @@ export default function AprovacaoDescontos({ windowMode = false, empresaId = nul
       }
 
       // Atualizar pedido
-      await base44.entities.Pedido.update(pedidoId, {
+      await updateInContext("Pedido", pedidoId, {
         status_aprovacao: novoStatus,
         desconto_aprovado_percentual: descontoAprovado,
         usuario_aprovador_id: user.id,
@@ -98,27 +119,10 @@ export default function AprovacaoDescontos({ windowMode = false, empresaId = nul
         comentarios_aprovacao: comentarios
       });
 
-      // Registrar auditoria
-      await base44.entities.AuditLog.create({
-        group_id: pedido.group_id,
-        empresa_id: pedido.empresa_id,
-        usuario_id: user.id,
-        usuario_nome: user.full_name,
-        acao: `Aprovação de desconto - ${acao}`,
-        modulo: "Comercial",
-        entidade: "Pedido",
-        entidade_id: pedidoId,
-        detalhes: {
-          desconto_solicitado: pedido.desconto_solicitado_percentual,
-          desconto_aprovado: descontoAprovado,
-          comentarios
-        }
-      });
-
       return { pedidoId, acao };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['pedidos-aprovacao']);
+      queryClient.invalidateQueries({ queryKey: ["pedidos-aprovacao-legacy-simples-contexto"] });
       setPedidoSelecionado(null);
       setDecisao({ acao: "", desconto_ajustado_percentual: 0, comentarios: "" });
       toast.success("Decisão registrada com sucesso!");
@@ -167,7 +171,7 @@ export default function AprovacaoDescontos({ windowMode = false, empresaId = nul
   };
 
   const content = (
-    <div className="space-y-6">
+    <div className="w-full h-full space-y-6" data-context-required="true" data-permission="Comercial.Pedido.aprovar">
       {/* V21.6: Alerta Deprecated */}
       <Card className="border-2 border-yellow-400 bg-yellow-50">
         <CardContent className="p-4">
@@ -347,6 +351,10 @@ export default function AprovacaoDescontos({ windowMode = false, empresaId = nul
               <Button 
                 onClick={handleAprovar}
                 className="flex-1 bg-green-600 hover:bg-green-700"
+                disabled={!contextoValido || !podeEditarAprovacoes || aprovarRejeitar.isPending}
+                data-permission="Comercial.Pedido.aprovar"
+                data-action="aprovar-desconto-integral-legacy"
+                data-sensitive="true"
               >
                 <CheckCircle2 className="w-4 h-4 mr-2" />
                 Aprovar Integral
@@ -354,6 +362,10 @@ export default function AprovacaoDescontos({ windowMode = false, empresaId = nul
               <Button 
                 onClick={handleAprovarParcial}
                 className="flex-1 bg-blue-600 hover:bg-blue-700"
+                disabled={!contextoValido || !podeEditarAprovacoes || aprovarRejeitar.isPending}
+                data-permission="Comercial.Pedido.aprovar"
+                data-action="aprovar-desconto-parcial-legacy"
+                data-sensitive="true"
               >
                 <Percent className="w-4 h-4 mr-2" />
                 Aprovar Parcial
@@ -362,6 +374,10 @@ export default function AprovacaoDescontos({ windowMode = false, empresaId = nul
                 onClick={handleRejeitar}
                 variant="destructive"
                 className="flex-1"
+                disabled={!contextoValido || !podeEditarAprovacoes || aprovarRejeitar.isPending}
+                data-permission="Comercial.Pedido.aprovar"
+                data-action="rejeitar-desconto-legacy"
+                data-sensitive="true"
               >
                 <XCircle className="w-4 h-4 mr-2" />
                 Rejeitar
@@ -375,13 +391,13 @@ export default function AprovacaoDescontos({ windowMode = false, empresaId = nul
 
   // V21.6: w-full h-full responsivo
   const Wrapper = ({ children }) => windowMode ? (
-    <div className="w-full h-full flex flex-col overflow-hidden bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="w-full h-full flex flex-col overflow-hidden bg-gradient-to-br from-slate-50 to-blue-50" data-context-required="true" data-permission="Comercial.Pedido.aprovar">
       <div className="flex-1 overflow-y-auto p-6">
         {children}
       </div>
     </div>
   ) : (
-    <>{children}</>
+    <div className="w-full h-full" data-context-required="true" data-permission="Comercial.Pedido.aprovar">{children}</div>
   );
 
   return <Wrapper>{content}</Wrapper>;

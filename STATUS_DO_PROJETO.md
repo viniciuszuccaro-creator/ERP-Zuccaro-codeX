@@ -41,6 +41,15 @@
 - Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas melhoria no componente existente.
 - Proximo passo: continuar nos componentes legacy `AprovacaoDescontosManager` e `AprovacaoDescontos`, preservando compatibilidade sem duplicar fluxo.
 
+### Comercial - Fase 8 Aprovadores Legacy em Contexto
+- Segui o proximo passo salvo: revisar `AprovacaoDescontosManager` e `AprovacaoDescontos`, mantendo compatibilidade sem criar fluxo novo.
+- Os componentes legacy deixaram de listar e atualizar `Pedido` diretamente pelo `base44` e passaram a usar `filterInContext`/`updateInContext`.
+- As consultas agora dependem de contexto grupo/empresa e permissao RBAC para visualizar/aprovar pedidos.
+- Aprovacoes, aprovacoes parciais e negacoes bloqueiam sem contexto/permissao antes de alterar pedido.
+- Botoes sensiveis receberam `data-permission`, `data-action`, `data-sensitive` e os wrappers receberam `data-context-required`.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas melhoria nos componentes existentes.
+- Proximo passo: continuar nos fluxos de fechamento comercial que ainda usam chamadas diretas ou sem marcadores RBAC/contexto.
+
 # Status do Projeto ERP Zuccaro
 
 ### Comercial - Fase 8 Seletores de Produto

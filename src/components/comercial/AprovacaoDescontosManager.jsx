@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,6 +20,9 @@ import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useWindow } from "@/components/lib/useWindow";
 import AnalisePedidoAprovacao from "./AnalisePedidoAprovacao";
+import { useUser } from "@/components/lib/UserContext";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * 🔐 APROVAÇÃO DE DESCONTOS MANAGER V21.6 - DEPRECATED
@@ -50,23 +52,39 @@ function AprovacaoDescontosManager({ windowMode = false, empresaId = null }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { openWindow } = useWindow();
+  const { user } = useUser();
+  const { filterInContext, updateInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaContextoId = empresaId || (contexto === "empresa" ? empresaAtual?.id : null);
+  const contextoValido = Boolean(groupId || empresaContextoId);
+  const podeVisualizarAprovacoes =
+    user?.role === "admin" ||
+    user?.role === "gerente" ||
+    hasPermission("Comercial.Pedido.visualizar") ||
+    hasPermission("Comercial.Pedido.aprovar");
+  const podeEditarAprovacoes =
+    user?.role === "admin" ||
+    user?.role === "gerente" ||
+    hasPermission("Comercial.Pedido.aprovar") ||
+    hasPermission("Comercial.Pedido.editar");
+  const consultaHabilitada = Boolean(contextoValido && podeVisualizarAprovacoes);
 
   // V21.6: Multi-empresa
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos', empresaId],
-    queryFn: () => empresaId
-      ? base44.entities.Pedido.filter({ empresa_id: empresaId }, '-created_date')
-      : base44.entities.Pedido.list('-created_date'),
-  });
-
-  const { data: user } = useQuery({
-    queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me(),
+    queryKey: ["pedidos-aprovacao-legacy-contexto", empresaContextoId, groupId, contexto],
+    queryFn: () => filterInContext("Pedido", empresaContextoId ? { empresa_id: empresaContextoId } : {}, "-created_date", 500),
+    enabled: consultaHabilitada,
   });
 
   // MUTATIONS
   const aprovarPedidoMutation = useMutation({
     mutationFn: async ({ pedidoId, dados }) => {
+      if (!contextoValido || !podeEditarAprovacoes) {
+        throw new Error("Sem contexto ou permissao para aprovar pedido.");
+      }
+
       // Preparar itens atualizados com descontos
       const itensRevendaAtualizados = [];
       const itensArmadoAtualizados = [];
@@ -84,7 +102,7 @@ function AprovacaoDescontosManager({ windowMode = false, empresaId = null }) {
         });
       }
 
-      await base44.entities.Pedido.update(pedidoId, {
+      await updateInContext("Pedido", pedidoId, {
         status_aprovacao: "aprovado",
         usuario_aprovador_id: user?.id,
         data_aprovacao: new Date().toISOString(),
@@ -100,7 +118,7 @@ function AprovacaoDescontosManager({ windowMode = false, empresaId = null }) {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-aprovacao-legacy-contexto"] });
       toast({ title: "✅ Desconto aprovado com sucesso!" });
       setAprovacaoDialogOpen(false);
       setPedidoSelecionado(null);
@@ -112,7 +130,11 @@ function AprovacaoDescontosManager({ windowMode = false, empresaId = null }) {
 
   const negarPedidoMutation = useMutation({
     mutationFn: async ({ pedidoId, comentarios }) => {
-      await base44.entities.Pedido.update(pedidoId, {
+      if (!contextoValido || !podeEditarAprovacoes) {
+        throw new Error("Sem contexto ou permissao para negar pedido.");
+      }
+
+      await updateInContext("Pedido", pedidoId, {
         status_aprovacao: "negado",
         usuario_aprovador_id: user?.id,
         data_aprovacao: new Date().toISOString(),
@@ -120,7 +142,7 @@ function AprovacaoDescontosManager({ windowMode = false, empresaId = null }) {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-aprovacao-legacy-contexto"] });
       toast({ title: "❌ Desconto negado" });
       setAprovacaoDialogOpen(false);
       setPedidoSelecionado(null);
@@ -163,18 +185,18 @@ function AprovacaoDescontosManager({ windowMode = false, empresaId = null }) {
   // V21.6: w-full h-full responsivo
   const containerClass = windowMode 
     ? 'w-full h-full flex flex-col overflow-hidden' 
-    : 'space-y-6';
+    : 'w-full h-full space-y-6';
 
   const contentClass = windowMode 
     ? 'flex-1 overflow-y-auto p-6 space-y-6' 
     : 'space-y-6';
 
   const Wrapper = ({ children }) => windowMode ? (
-    <div className={containerClass}>
+    <div className={containerClass} data-context-required="true" data-permission="Comercial.Pedido.aprovar">
       <div className={contentClass}>{children}</div>
     </div>
   ) : (
-    <div className={containerClass}>{children}</div>
+    <div className={containerClass} data-context-required="true" data-permission="Comercial.Pedido.aprovar">{children}</div>
   );
 
   return (
@@ -340,6 +362,10 @@ function AprovacaoDescontosManager({ windowMode = false, empresaId = null }) {
                           );
                         }}
                         className="bg-orange-600 hover:bg-orange-700"
+                        disabled={!contextoValido || !podeEditarAprovacoes}
+                        data-permission="Comercial.Pedido.aprovar"
+                        data-action="analisar-aprovacao-desconto-legacy"
+                        data-sensitive="true"
                       >
                         <ShieldCheck className="w-4 h-4 mr-1" />
                         Analisar
