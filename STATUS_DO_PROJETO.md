@@ -50,6 +50,14 @@
 - Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas melhoria nos componentes existentes.
 - Proximo passo: continuar nos fluxos de fechamento comercial que ainda usam chamadas diretas ou sem marcadores RBAC/contexto.
 
+### Comercial - Fase 8 Fechamento Automatico em Contexto
+- Segui o proximo passo salvo: revisar fluxos de fechamento comercial, priorizando `AutomacaoFluxoPedido`.
+- O fechamento automatico deixou de executar atualizacoes/criacoes diretas em `Pedido`, `Produto`, `MovimentacaoEstoque`, `ContaReceber` e `Entrega` dentro do componente e passou a usar helpers de contexto.
+- A acao de executar fluxo completo agora exige contexto grupo/empresa e permissao RBAC granular para marcar pedido pronto para faturar/aprovar/editar.
+- O wrapper e o botao principal receberam `data-context-required`, `data-permission`, `data-action` e `data-sensitive`.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas melhoria no componente existente.
+- Proximo passo: revisar o hook central `useFluxoPedido` e dashboards/widgets de fechamento que ainda usam chamadas diretas globais.
+
 # Status do Projeto ERP Zuccaro
 
 ### Comercial - Fase 8 Seletores de Produto
