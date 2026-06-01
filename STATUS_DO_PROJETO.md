@@ -1,3 +1,12 @@
+### Comercial - Fase 8 Aprovacao do Pedido em Contexto
+- Segui o proximo passo salvo no hook central `useFluxoPedido`: migrar fluxos restantes com chamadas diretas, priorizando aprovacao completa do pedido.
+- `aprovarPedidoCompleto` agora normaliza contexto multiempresa antes de validar credito, baixar estoque, gerar OP, gerar contas a receber, atualizar limite de credito, atualizar pedido e registrar historico do cliente.
+- Validacao de credito, baixa de estoque da aprovacao, geracao de OP, geracao de conta a receber e atualizacao de limite do cliente passaram a usar `filterScoped`, `createScoped` e `updateScoped`.
+- Auditorias do fluxo de aprovacao agora carregam `group_id`, `empresa_id` e dados antes/depois quando ha atualizacao.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas melhoria no hook central existente.
+- Build validado com sucesso via Vite; permanecem apenas warnings tecnicos preexistentes de browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar no mesmo `useFluxoPedido`, migrando `faturarPedidoCompleto`, `concluirOPCompleto`, `cancelarPedidoCompleto` e auxiliares de faturamento/cancelamento que ainda possuem chamadas diretas para `Entrega`, `Pedido`, `Produto`, `MovimentacaoEstoque` e `ContaReceber`.
+
 ### Comercial - Fase 8 Hook Central de Fechamento
 - Segui o proximo passo salvo: revisar o hook central `useFluxoPedido`, priorizando `executarFechamentoCompleto`, `validarEstoqueCompleto` e `obterEstatisticasAutomacao`.
 - O fechamento completo passou a normalizar contexto de operacao com `group_id` e `empresa_id`, usando fallback do contexto salvo no navegador quando chamado por widgets.
