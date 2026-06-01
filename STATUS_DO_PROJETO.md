@@ -32,6 +32,15 @@
 - Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas melhoria nos componentes existentes.
 - Proximo passo: continuar nos aprovadores comerciais restantes (`AprovacaoDescontos`, `AprovacaoDescontosManager`, `CentralAprovacoesManager`) e fluxos de fechamento que ainda usam chamadas diretas.
 
+### Comercial - Fase 8 Central de Aprovacoes em Contexto
+- Segui o proximo passo salvo: revisar `CentralAprovacoesManager`, componente atual recomendado para aprovacoes comerciais.
+- A central deixou de listar, buscar e atualizar `Pedido` diretamente pelo `base44` e passou a usar `filterInContext`/`updateInContext`.
+- Consultas agora dependem de contexto grupo/empresa e permissao RBAC para visualizar/aprovar pedidos.
+- Aprovacao, negacao e aprovacao com fechamento automatico agora bloqueiam sem contexto/permissao antes de alterar pedido.
+- Botoes sensiveis receberam `data-permission`, `data-action`, `data-sensitive` e o wrapper recebeu `data-context-required`.
+- Mantida a Regra-Mae: nenhuma tela, modulo ou arquivo novo foi criado; apenas melhoria no componente existente.
+- Proximo passo: continuar nos componentes legacy `AprovacaoDescontosManager` e `AprovacaoDescontos`, preservando compatibilidade sem duplicar fluxo.
+
 # Status do Projeto ERP Zuccaro
 
 ### Comercial - Fase 8 Seletores de Produto

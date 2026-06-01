@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,8 +24,9 @@ import { useWindow } from "@/components/lib/useWindow";
 import AnalisePedidoAprovacao from "./AnalisePedidoAprovacao";
 import AutomacaoFluxoPedido from "./AutomacaoFluxoPedido";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { executarFechamentoCompleto } from "@/components/lib/useFluxoPedido";
 import { useUser } from "@/components/lib/UserContext";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * 🔐 CENTRAL DE APROVAÇÕES V21.5
@@ -38,32 +38,44 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
   const [aprovacaoDialogOpen, setAprovacaoDialogOpen] = useState(false);
   const [pedidoSelecionado, setPedidoSelecionado] = useState(null);
   const [comentariosAprovacao, setComentariosAprovacao] = useState("");
-  const [permitido, setPermitido] = useState(true);
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { openWindow } = useWindow();
   const { user } = useUser();
+  const { filterInContext, updateInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaContextoId = empresaId || (contexto === "empresa" ? empresaAtual?.id : null);
+  const contextoValido = Boolean(groupId || empresaContextoId);
+  const podeVisualizarAprovacoes =
+    user?.role === "admin" ||
+    user?.role === "gerente" ||
+    hasPermission("Comercial.Pedido.visualizar") ||
+    hasPermission("Comercial.Pedido.aprovar");
+  const podeEditarAprovacoes =
+    user?.role === "admin" ||
+    user?.role === "gerente" ||
+    hasPermission("Comercial.Pedido.aprovar") ||
+    hasPermission("Comercial.Pedido.editar");
+  const consultaHabilitada = Boolean(contextoValido && podeVisualizarAprovacoes);
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos', empresaId],
-    queryFn: () => empresaId
-      ? base44.entities.Pedido.filter({ empresa_id: empresaId }, '-created_date')
-      : base44.entities.Pedido.list('-created_date'),
+    queryKey: ["pedidos-aprovacoes-contexto", empresaContextoId, groupId, contexto],
+    queryFn: () => filterInContext("Pedido", empresaContextoId ? { empresa_id: empresaContextoId } : {}, "-created_date", 500),
+    enabled: consultaHabilitada,
   });
 
-  // V21.6: Validar permissão
-  useEffect(() => {
-    if (user) {
-      const temPermissao = user.role === 'admin' || user.role === 'gerente';
-      setPermitido(temPermissao);
-    }
-  }, [user]);
 
   // V21.6: APROVAÇÃO COM FECHAMENTO AUTOMÁTICO OPCIONAL
   const aprovarPedidoMutation = useMutation({
     mutationFn: async ({ pedidoId, dados, executarFechamento = false }) => {
-      const pedidosCompletos = await base44.entities.Pedido.filter({ id: pedidoId });
+      if (!contextoValido || !podeEditarAprovacoes) {
+        throw new Error("Sem contexto ou permissao para aprovar pedido.");
+      }
+
+      const pedidosCompletos = await filterInContext("Pedido", { id: pedidoId }, undefined, 1);
       const pedido = pedidosCompletos[0];
       
       const itensRevendaAtualizados = [];
@@ -79,7 +91,7 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
       }
 
       // Atualizar pedido com aprovação
-      await base44.entities.Pedido.update(pedidoId, {
+      await updateInContext("Pedido", pedidoId, {
         status_aprovacao: "aprovado",
         status: "Aprovado",
         usuario_aprovador_id: user?.id,
@@ -97,14 +109,14 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
 
       // V21.6: Se solicitado, executar fechamento completo
       if (executarFechamento) {
-        const pedidoAtualizado = await base44.entities.Pedido.filter({ id: pedidoId });
+        const pedidoAtualizado = await filterInContext("Pedido", { id: pedidoId }, undefined, 1);
         return { pedido: pedidoAtualizado[0], executarFechamento: true };
       }
 
       return { pedido: null, executarFechamento: false };
     },
     onSuccess: (resultado) => {
-      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-aprovacoes-contexto"] });
       queryClient.invalidateQueries({ queryKey: ['produtos'] });
       queryClient.invalidateQueries({ queryKey: ['movimentacoes'] });
       queryClient.invalidateQueries({ queryKey: ['contas-receber'] });
@@ -145,7 +157,11 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
 
   const negarPedidoMutation = useMutation({
     mutationFn: async ({ pedidoId, comentarios }) => {
-      await base44.entities.Pedido.update(pedidoId, {
+      if (!contextoValido || !podeEditarAprovacoes) {
+        throw new Error("Sem contexto ou permissao para negar pedido.");
+      }
+
+      await updateInContext("Pedido", pedidoId, {
         status_aprovacao: "negado",
         usuario_aprovador_id: user?.id,
         data_aprovacao: new Date().toISOString(),
@@ -153,7 +169,7 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-aprovacoes-contexto"] });
       toast({ title: "❌ Desconto negado" });
       setAprovacaoDialogOpen(false);
       setPedidoSelecionado(null);
@@ -167,25 +183,25 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
   // V21.6: Responsividade w-full h-full
   const containerClass = windowMode 
     ? 'w-full h-full flex flex-col overflow-hidden' 
-    : 'space-y-6';
+    : 'w-full h-full space-y-6';
 
   const contentClass = windowMode 
     ? 'flex-1 overflow-y-auto p-6' 
     : '';
 
   const Wrapper = ({ children }) => windowMode ? (
-    <div className={containerClass}>
+    <div className={containerClass} data-context-required="true" data-permission="Comercial.Pedido.aprovar">
       <div className={contentClass}>{children}</div>
     </div>
   ) : (
-    <div className="space-y-6">{children}</div>
+    <div className="w-full h-full space-y-6" data-context-required="true" data-permission="Comercial.Pedido.aprovar">{children}</div>
   );
 
   return (
     <Wrapper>
       
       {/* V21.6: Controle de Acesso */}
-      {!permitido && (
+      {(!contextoValido || !podeVisualizarAprovacoes) && (
         <Alert className="border-red-300 bg-red-50 mb-6">
           <Shield className="w-4 h-4 text-red-600" />
           <AlertDescription>
@@ -345,7 +361,10 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
                                 );
                               }}
                               className="bg-orange-600 hover:bg-orange-700"
-                              disabled={!permitido}
+                              disabled={!contextoValido || !podeEditarAprovacoes}
+                              data-permission="Comercial.Pedido.aprovar"
+                              data-action="analisar-aprovacao-desconto"
+                              data-sensitive="true"
                             >
                               <ShieldCheck className="w-4 h-4 mr-1" />
                               Analisar
@@ -386,8 +405,11 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
                                 );
                               }}
                               className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
-                              disabled={!permitido}
+                              disabled={!contextoValido || !podeEditarAprovacoes}
                               title="Aprovar e Fechar Pedido Automaticamente"
+                              data-permission="Comercial.Pedido.aprovar"
+                              data-action="aprovar-e-fechar-pedido"
+                              data-sensitive="true"
                             >
                               <Zap className="w-4 h-4 mr-1" />
                               Aprovar + Fechar
