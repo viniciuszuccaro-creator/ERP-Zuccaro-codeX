@@ -1,5 +1,4 @@
 import React from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +15,17 @@ import {
   Phone
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
+
+const isSafeUrl = (value) => {
+  try {
+    const url = new URL(String(value || ''));
+    return ['https:', 'http:'].includes(url.protocol);
+  } catch {
+    return false;
+  }
+};
 
 /**
  * V21.6 - CONSULTAR ENTREGAS NO CHAT
@@ -28,31 +38,42 @@ import { motion } from 'framer-motion';
  * ✅ Contato do motorista
  */
 export default function ConsultarEntregaChat({ clienteId, conversa }) {
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = conversa?.group_id || conversa?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = conversa?.empresa_id || empresaAtual?.id || null;
+  const contextKey = empresaId || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const podeConsultarEntregas = hasPermission('Expedicao', 'Entregas', 'visualizar')
+    || hasPermission('Expedição', 'Entregas', 'visualizar')
+    || hasPermission('CRM', 'Atendimento', 'visualizar')
+    || hasPermission('Comercial', 'Pedidos', 'visualizar');
+
   // Buscar entregas do cliente
   const { data: entregas = [], isLoading } = useQuery({
-    queryKey: ['entregas-cliente', clienteId],
+    queryKey: ['entregas-cliente', clienteId, contextKey],
     queryFn: async () => {
-      if (!clienteId) return [];
-      return await base44.entities.Entrega.filter({
+      if (!clienteId || !contextoValido || !podeConsultarEntregas) return [];
+      return await filterInContext('Entrega', {
         cliente_id: clienteId,
         status: { $nin: ['Entregue', 'Cancelado'] }
       }, '-data_previsao');
     },
-    enabled: !!clienteId
+    enabled: !!clienteId && contextoValido && podeConsultarEntregas
   });
 
   // Buscar entregas recentes entregues
   const { data: entregasRecentes = [] } = useQuery({
-    queryKey: ['entregas-recentes', clienteId],
+    queryKey: ['entregas-recentes', clienteId, contextKey],
     queryFn: async () => {
-      if (!clienteId) return [];
-      const todas = await base44.entities.Entrega.filter({
+      if (!clienteId || !contextoValido || !podeConsultarEntregas) return [];
+      const todas = await filterInContext('Entrega', {
         cliente_id: clienteId,
         status: 'Entregue'
       }, '-data_entrega', 5);
       return todas;
     },
-    enabled: !!clienteId
+    enabled: !!clienteId && contextoValido && podeConsultarEntregas
   });
 
   const formatarData = (data) => {
@@ -90,7 +111,11 @@ export default function ConsultarEntregaChat({ clienteId, conversa }) {
   }
 
   return (
-    <Card className="w-full">
+    <Card
+      className="w-full h-full"
+      data-permission="Expedicao.Entregas.visualizar"
+      data-context-required="group_id|empresa_id"
+    >
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center justify-between">
           <span className="flex items-center gap-2 text-blue-900">
@@ -105,6 +130,15 @@ export default function ConsultarEntregaChat({ clienteId, conversa }) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {(!contextoValido || !podeConsultarEntregas) && (
+          <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            <AlertCircle className="w-4 h-4 mt-0.5" />
+            <span>
+              Selecione grupo/empresa e confirme permissao de entregas ou atendimento para consultar rastreamento.
+            </span>
+          </div>
+        )}
+
         {entregas.length === 0 && entregasRecentes.length === 0 ? (
           <div className="text-center py-6 text-slate-400">
             <Truck className="w-10 h-10 mx-auto mb-2 opacity-30" />
@@ -192,11 +226,15 @@ export default function ConsultarEntregaChat({ clienteId, conversa }) {
                       )}
 
                       {/* Link de rastreamento */}
-                      {entrega.link_publico_rastreamento && (
+                      {entrega.link_publico_rastreamento && isSafeUrl(entrega.link_publico_rastreamento) && (
                         <Button
                           variant="outline"
                           size="sm"
                           className="w-full mt-3"
+                          disabled={!contextoValido || !podeConsultarEntregas}
+                          data-action="rastrear-entrega-chat"
+                          data-permission="Expedicao.Entregas.visualizar"
+                          data-context-required="group_id|empresa_id"
                           onClick={() => window.open(entrega.link_publico_rastreamento, '_blank')}
                         >
                           <Navigation className="w-4 h-4 mr-2" />

@@ -1,3 +1,23 @@
+### Administracao do Sistema - Fase 8 Aba Ferramentas
+- Corrigida a aba existente `Ferramentas` em `AdminTabs`, sem excluir a funcionalidade porque ela tem utilidade administrativa para seed leve e backfill multiempresa.
+- A aba `ferramentas` agora entra na lista de abas validas para usuario admin; antes o resolvedor de aba ativa ignorava esse valor e voltava para a primeira aba visivel.
+- Container principal de ferramentas recebeu `w-full`, `h-full`, `data-permission` e `data-context-required`.
+- Mantida a Regra-Mae: nenhuma tela, modulo, componente ou arquivo novo foi criado; apenas corrigida a aba existente e preservadas as operacoes administrativas.
+- Tentativa de verificacao pelo navegador embutido falhou por instabilidade do runtime local; validacao sera feita por build Vite e checagens de diff.
+- Build validado com sucesso via Vite; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+
+### Atendimento/Chatbot - Fase 8 Pedidos, Entregas e Boletos no Chat
+- Seguido o plano de melhoria nos componentes existentes `CriarPedidoChat`, `ConsultarEntregaChat` e revisao de `GerarBoletoChat`, sem criar tela, modulo, componente ou arquivo novo.
+- `ConsultarEntregaChat` deixou de consultar `Entrega` diretamente e passou a usar `filterInContext`, com chave por grupo/empresa, RBAC de Expedicao/Atendimento/Comercial e bloqueio visual sem contexto/permissao.
+- Links de rastreamento de entrega agora sao validados antes de abrir e a acao recebeu `data-permission`, `data-context-required` e `data-action`.
+- `CriarPedidoChat` deixou de buscar cliente/produtos/pedidos globalmente e passou a usar `filterInContext`, `createInContext` e `updateInContext`.
+- Criacao de pedido pelo chat agora exige empresa do grupo, permissao Comercial/Atendimento, confirmacao do usuario, carimbo `group_id`/`grupo_id`/`empresa_id` e vinculo contextual na conversa.
+- Acoes sensiveis de busca, adicionar/remover produto, alterar quantidade e criar pedido receberam bloqueio sem contexto/RBAC e marcadores `data-permission`, `data-context-required`, `data-action` e `data-sensitive`.
+- `GerarBoletoChat` foi revisado e ja permanecia no padrao contextual, com chamada direta apenas para `AuditLog.create` de auditoria.
+- Mantida a Regra-Mae: fluxos atuais de pedido, entrega e boleto foram preservados; apenas consultas, gravacoes, bloqueios e seguranca existentes foram reforcados.
+- Build validado com sucesso via Vite; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em Atendimento/Chatbot no `IntentEngine`, migrando intents dinamicas, consultas de pedidos/entregas/boletos e criacoes automaticas para contexto, RBAC e auditoria.
+
 ### Atendimento/Chatbot - Fase 8 Widgets Omnicanal
 - Seguido o plano de melhoria nos widgets existentes `ChatbotWidget` e `ChatbotWidgetAvancado`, sem criar tela, modulo, componente ou arquivo novo.
 - Configuracao de canal, conversa existente, mensagens e dados do cliente passaram a usar `filterInContext` com chave por grupo/empresa.

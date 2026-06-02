@@ -50,9 +50,13 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
   const canAccess = (perm) => isAdminUser || hasPermission('Sistema', perm, 'visualizar');
 
   const visibleTabs = TAB_DEFS.filter(t => canAccess(t.perm));
+  const allowedTabValues = new Set([
+    ...visibleTabs.map((tab) => tab.value),
+    ...(isAdminUser ? ["ferramentas"] : []),
+  ]);
 
   // Garante que o tab ativo seja válido
-  const resolvedTab = visibleTabs.find(t => t.value === activeTab)
+  const resolvedTab = allowedTabValues.has(activeTab)
     ? activeTab
     : (visibleTabs[0]?.value || "gerais");
 
@@ -273,7 +277,11 @@ function AdminFerramentas({ empresaAtual, grupoAtual }) {
   };
 
   return (
-    <div className="w-full space-y-4">
+    <div
+      className="w-full h-full space-y-4"
+      data-permission="Sistema.Configuracoes.executar"
+      data-context-required="group_id|empresa_id"
+    >
       <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg text-sm text-orange-800">
         ⚠️ <strong>Ferramentas administrativas</strong> — Use com cautela. Estas operações afetam dados reais do banco.
       </div>
