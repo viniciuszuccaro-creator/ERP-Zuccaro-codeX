@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import IntentEngine from './IntentEngine';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * V21.5 FINAL - Widget de Chatbot OMNICANAL AVANÇADO
@@ -58,58 +59,69 @@ export default function ChatbotWidgetAvancado({
   const [avaliacaoSelecionada, setAvaliacaoSelecionada] = useState(0);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextKey = empresaId || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const canUseChatbot = hasPermission('CRM', 'Atendimento', 'visualizar') || hasPermission('Sistema', 'Integracoes', 'visualizar');
+  const contextoPayload = {
+    ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
+    ...(empresaId ? { empresa_id: empresaId } : {})
+  };
 
   // Buscar configuração do canal
   const { data: configCanal } = useQuery({
-    queryKey: ['config-canal', canal, empresaAtual?.id],
+    queryKey: ['config-canal', canal, contextKey],
     queryFn: async () => {
-      const configs = await base44.entities.ConfiguracaoCanal.filter({ 
+      const configs = await filterInContext('ConfiguracaoCanal', {
         canal, 
-        ativo: true,
-        empresa_id: empresaAtual?.id
-      });
+        ativo: true
+      }, 'canal', 10);
       return configs[0] || null;
     },
+    enabled: contextoValido && canUseChatbot,
     staleTime: 5 * 60 * 1000
   });
 
   // Buscar conversa existente
   const { data: conversaExistente } = useQuery({
-    queryKey: ['conversa-omnicanal', sessaoId],
+    queryKey: ['conversa-omnicanal', sessaoId, contextKey],
     queryFn: async () => {
-      const conversas = await base44.entities.ConversaOmnicanal.filter({
+      const conversas = await filterInContext('ConversaOmnicanal', {
         sessao_id: sessaoId
-      });
+      }, '-data_ultima_mensagem', 10);
       return conversas[0] || null;
     },
-    enabled: !!sessaoId
+    enabled: !!sessaoId && contextoValido && canUseChatbot
   });
 
   // Buscar mensagens da conversa
   const { data: mensagensHistorico = [] } = useQuery({
-    queryKey: ['mensagens-omnicanal', sessaoId],
+    queryKey: ['mensagens-omnicanal', sessaoId, contextKey],
     queryFn: async () => {
       if (!sessaoId) return [];
-      return await base44.entities.MensagemOmnicanal.filter(
+      return await filterInContext(
+        'MensagemOmnicanal',
         { sessao_id: sessaoId },
         'data_envio',
         100
       );
     },
-    enabled: !!sessaoId && aberto,
+    enabled: !!sessaoId && aberto && contextoValido && canUseChatbot,
     refetchInterval: 3000
   });
 
   // Buscar dados do cliente para contexto
   const { data: dadosCliente } = useQuery({
-    queryKey: ['cliente-contexto', clienteId],
+    queryKey: ['cliente-contexto', clienteId, contextKey],
     queryFn: async () => {
       if (!clienteId) return null;
-      const clientes = await base44.entities.Cliente.filter({ id: clienteId });
+      const clientes = await filterInContext('Cliente', { id: clienteId }, 'nome', 10);
       return clientes[0] || null;
     },
-    enabled: !!clienteId
+    enabled: !!clienteId && contextoValido && canUseChatbot
   });
 
   // Inicializar conversa
@@ -121,14 +133,17 @@ export default function ChatbotWidgetAvancado({
 
   const inicializarConversa = async () => {
     try {
-      const novaConversa = await base44.entities.ConversaOmnicanal.create({
+      if (!contextoValido || !canUseChatbot) return;
+
+      const novaConversa = await createInContext('ConversaOmnicanal', {
+        ...contextoPayload,
         canal,
         sessao_id: sessaoId,
         cliente_id: clienteId,
         cliente_nome: dadosCliente?.nome || 'Cliente',
         cliente_email: dadosCliente?.email,
         cliente_telefone: dadosCliente?.telefone,
-        empresa_id: empresaAtual?.id,
+        empresa_id: empresaId,
         status: 'Em Progresso',
         tipo_atendimento: 'Bot',
         prioridade: 'Normal',
@@ -148,7 +163,8 @@ export default function ChatbotWidgetAvancado({
       const mensagemBoasVindas = configCanal?.mensagem_boas_vindas || 
         `Olá ${nomeCliente}! 👋 Sou o assistente virtual do ERP Zuccaro. Como posso ajudar você hoje?`;
 
-       await base44.entities.MensagemOmnicanal.create({
+       await createInContext('MensagemOmnicanal', {
+         ...contextoPayload,
          conversa_id: novaConversa.id,
         sessao_id: sessaoId,
         canal,
@@ -180,6 +196,10 @@ export default function ChatbotWidgetAvancado({
     mutationFn: async ({ mensagem, arquivo }) => {
       const conversaId = conversaAtiva?.id || conversaExistente?.id;
       
+      if (!contextoValido || !canUseChatbot) {
+        throw new Error('Contexto ou permissao insuficiente para usar o chatbot.');
+      }
+
       if (!conversaId) {
         throw new Error('Conversa não inicializada');
       }
@@ -197,7 +217,8 @@ export default function ChatbotWidgetAvancado({
       }
 
       // 2. Salvar mensagem do cliente
-      const mensagemCliente = await base44.entities.MensagemOmnicanal.create({
+      const mensagemCliente = await createInContext('MensagemOmnicanal', {
+        ...contextoPayload,
         conversa_id: conversaId,
         sessao_id: sessaoId,
         canal,
@@ -242,12 +263,13 @@ export default function ChatbotWidgetAvancado({
           resultado.intent,
           resultado.entidades_detectadas,
           clienteId,
-          { empresaId: empresaAtual?.id, dadosCliente }
+          { empresaId, dadosCliente }
         );
       }
 
       // 6. Salvar resposta do bot
-      const respostaBot = await base44.entities.MensagemOmnicanal.create({
+      const respostaBot = await createInContext('MensagemOmnicanal', {
+        ...contextoPayload,
         conversa_id: conversaId,
         sessao_id: sessaoId,
         canal,
@@ -265,7 +287,8 @@ export default function ChatbotWidgetAvancado({
       });
 
       // 7. Atualizar conversa
-      await base44.entities.ConversaOmnicanal.update(conversaId, {
+      await updateInContext('ConversaOmnicanal', conversaId, {
+        ...contextoPayload,
         data_ultima_mensagem: new Date().toISOString(),
         total_mensagens: (conversaAtiva?.total_mensagens || 0) + 2,
         mensagens_cliente: (conversaAtiva?.mensagens_cliente || 0) + 1,
@@ -280,11 +303,12 @@ export default function ChatbotWidgetAvancado({
       });
 
       // 8. Registrar em ChatbotInteracao (retrocompatibilidade)
-      await base44.entities.ChatbotInteracao.create({
+      await createInContext('ChatbotInteracao', {
+        ...contextoPayload,
         sessao_id: sessaoId,
         canal,
         cliente_id: clienteId,
-        empresa_id: empresaAtual?.id,
+        empresa_id: empresaId,
         mensagem_usuario: mensagem,
         intent_detectado: resultado.intent,
         confianca_intent: resultado.confianca,
@@ -302,9 +326,11 @@ export default function ChatbotWidgetAvancado({
           usuario: dadosCliente?.nome || 'Cliente',
           acao: 'Criação',
           modulo: 'Chatbot',
+          tipo_auditoria: 'operacional',
           entidade: 'Conversa',
           descricao: `Intent: ${resultado.intent} (confiança ${resultado.confianca}%) • Canal: ${canal}`,
-          empresa_id: empresaAtual?.id,
+          empresa_id: empresaId,
+          group_id: groupId,
           dados_novos: { intent: resultado.intent, confianca: resultado.confianca, sentimento: resultado.sentimento, acoes: resultado.acoes_sugeridas },
           data_hora: new Date().toISOString()
         });
@@ -343,7 +369,8 @@ export default function ChatbotWidgetAvancado({
       // Round-robin simples (pode não haver atendentes configurados)
       const atendenteId = atendentes[0] || null;
 
-      await base44.entities.ConversaOmnicanal.update(conversaId, {
+      await updateInContext('ConversaOmnicanal', conversaId, {
+        ...contextoPayload,
         tipo_atendimento: 'Humano',
         atendente_id: atendenteId,
         transferido_em: new Date().toISOString(),
@@ -353,7 +380,8 @@ export default function ChatbotWidgetAvancado({
 
       // Criar notificação (se houver atendente)
       if (atendenteId) {
-      await base44.entities.Notificacao.create({
+      await createInContext('Notificacao', {
+        ...contextoPayload,
         titulo: '🚨 Nova Conversa - Transbordo Chatbot',
         mensagem: `Cliente precisa de atendimento humano.\nSentimento: ${resultado.sentimento}\nIntent: ${resultado.intent}\nCanal: ${canal}`,
         tipo: 'urgente',
@@ -376,6 +404,7 @@ export default function ChatbotWidgetAvancado({
   };
 
   const handleEnviar = () => {
+    if (!contextoValido || !canUseChatbot) return;
     if (!mensagemAtual.trim() && !arquivoAnexo) return;
     
     setProcessando(true);
@@ -411,7 +440,10 @@ export default function ChatbotWidgetAvancado({
     const conversaId = conversaAtiva?.id || conversaExistente?.id;
     
     try {
-      await base44.entities.ConversaOmnicanal.update(conversaId, {
+      if (!contextoValido || !canUseChatbot) return;
+
+      await updateInContext('ConversaOmnicanal', conversaId, {
+        ...contextoPayload,
         score_satisfacao: nota,
         feedback_cliente: avaliacaoSelecionada === nota ? 'Positivo' : null,
         resolvido: nota >= 4,
@@ -442,6 +474,8 @@ export default function ChatbotWidgetAvancado({
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         className="fixed bottom-6 right-6 bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full p-4 shadow-2xl hover:shadow-3xl transition-all z-50 flex items-center gap-2"
+        data-permission="CRM.Atendimento.visualizar"
+        data-context-required="group_id|empresa_id"
       >
         <MessageCircle className="w-6 h-6" />
         <div className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></div>
@@ -464,6 +498,8 @@ export default function ChatbotWidgetAvancado({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.9, y: 20 }}
       className={`${exibirBotaoFlutuante ? 'fixed bottom-6 right-6' : 'relative'} w-full max-w-md ${exibirBotaoFlutuante ? 'h-[600px]' : 'h-full'} bg-white rounded-2xl shadow-2xl border-2 border-slate-200 flex flex-col z-50 overflow-hidden`}
+      data-permission="CRM.Atendimento.visualizar"
+      data-context-required="group_id|empresa_id"
     >
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 text-white p-4 flex items-center justify-between">
@@ -534,6 +570,13 @@ export default function ChatbotWidgetAvancado({
         </motion.div>
       )}
 
+      {(!contextoValido || !canUseChatbot) && (
+        <div className="bg-amber-50 border-b border-amber-200 p-3 text-sm text-amber-800 flex items-center gap-2">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <span>Selecione grupo/empresa e confirme permissao de atendimento para usar o chatbot.</span>
+        </div>
+      )}
+
       {/* Indicador de digitação */}
       {atendenteDitigando && (
         <motion.div
@@ -568,6 +611,10 @@ export default function ChatbotWidgetAvancado({
                   whileHover={{ scale: 1.2 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => handleAvaliar(nota)}
+                  disabled={!contextoValido || !canUseChatbot}
+                  data-action="avaliar-atendimento-chatbot"
+                  data-permission="CRM.Atendimento.visualizar"
+                  data-context-required="group_id|empresa_id"
                   className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
                     avaliacaoSelecionada === nota
                       ? 'bg-yellow-400 text-white scale-125'
@@ -653,6 +700,9 @@ export default function ChatbotWidgetAvancado({
                               whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
                               onClick={() => handleSugestaoClick(sug)}
+                              disabled={!contextoValido || !canUseChatbot}
+                              data-action="enviar-sugestao-chatbot"
+                              data-permission="CRM.Atendimento.visualizar"
                               className="block w-full text-left text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg transition-colors font-medium shadow-sm"
                             >
                               {sug}
@@ -737,9 +787,12 @@ export default function ChatbotWidgetAvancado({
                 variant="outline"
                 size="icon"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={processando}
+                disabled={processando || !contextoValido || !canUseChatbot}
                 className="flex-shrink-0 hover:bg-blue-50 hover:border-blue-300 transition-colors"
                 title="Anexar arquivo"
+                data-action="anexar-arquivo-chatbot"
+                data-permission="CRM.Atendimento.visualizar"
+                data-context-required="group_id|empresa_id"
               >
                 <Paperclip className="w-5 h-5" />
               </Button>
@@ -750,15 +803,20 @@ export default function ChatbotWidgetAvancado({
                 onChange={(e) => setMensagemAtual(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleEnviar()}
                 placeholder="Digite sua mensagem..."
-                disabled={processando}
+                disabled={processando || !contextoValido || !canUseChatbot}
                 className="flex-1 border-2 focus:border-blue-500 transition-colors"
+                data-action="digitar-mensagem-chatbot"
+                data-permission="CRM.Atendimento.visualizar"
               />
 
               {/* Botão enviar */}
               <Button
                 onClick={handleEnviar}
-                disabled={processando || (!mensagemAtual.trim() && !arquivoAnexo)}
+                disabled={processando || !contextoValido || !canUseChatbot || (!mensagemAtual.trim() && !arquivoAnexo)}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 flex-shrink-0 shadow-lg hover:shadow-xl transition-all"
+                data-action="enviar-mensagem-chatbot"
+                data-permission="CRM.Atendimento.visualizar"
+                data-context-required="group_id|empresa_id"
               >
                 <Send className="w-5 h-5" />
               </Button>

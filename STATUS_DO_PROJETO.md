@@ -1,3 +1,14 @@
+### Atendimento/Chatbot - Fase 8 Widgets Omnicanal
+- Seguido o plano de melhoria nos widgets existentes `ChatbotWidget` e `ChatbotWidgetAvancado`, sem criar tela, modulo, componente ou arquivo novo.
+- Configuracao de canal, conversa existente, mensagens e dados do cliente passaram a usar `filterInContext` com chave por grupo/empresa.
+- Criacao de conversa, mensagens, interacoes retrocompativeis, notificacoes de transbordo e atualizacoes de conversa passaram a usar `createInContext` e `updateInContext`.
+- Transbordo para atendente e avaliacao/CSAT agora respeitam contexto grupo/empresa antes de alterar dados.
+- Auditoria dos widgets passou a registrar `group_id`, `empresa_id` e `tipo_auditoria` operacional.
+- Acoes sensiveis de envio, sugestoes, anexo e avaliacao receberam bloqueio sem contexto/RBAC e marcadores `data-permission`, `data-context-required` e `data-action`.
+- Mantida a Regra-Mae: os widgets e fluxos atuais foram preservados; apenas consultas, gravacoes, bloqueios e auditoria existentes foram reforcados.
+- Build validado com sucesso via Vite; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em Atendimento/Chatbot nos componentes auxiliares com chamadas diretas restantes, priorizando `IntentEngine`, `GerarBoletoChat`, `CriarPedidoChat` e `ConsultarEntregaChat`.
+
 ### Atendimento/Chatbot - Fase 8 Multicanal e Transferencia
 - Seguido o plano de melhoria em componentes existentes de Atendimento/Chatbot, sem criar tela, modulo, componente ou arquivo novo.
 - `ChatbotMulticanal` deixou de consultar/alterar `ConfiguracaoCanal` e `ConversaOmnicanal` diretamente e passou a usar `filterInContext`, `createInContext` e `updateInContext`.
