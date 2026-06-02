@@ -1,3 +1,15 @@
+### Atendimento/Chatbot - Fase 8 Configuracao, Templates e Automacoes
+- Seguido o plano de melhoria nos componentes existentes `ConfiguracaoCanais`, `BaseConhecimento`, `AutomacaoFluxos`, `TemplatesMensagens` e `GerenciadorTemplates`, sem criar tela, modulo, componente ou arquivo novo.
+- `ConfiguracaoCanais` deixou de consultar/criar/atualizar `ConfiguracaoCanal` diretamente e passou a usar `filterInContext`, `createInContext` e `updateInContext` com chave por grupo/empresa.
+- Formularios de configuracao basica, horarios, IA e SLA passaram a bloquear salvamentos/toggles sem contexto ou permissao de integracoes/atendimento.
+- `BaseConhecimento` passou a carregar, criar e atualizar base por configuracao contextual, preservando o canal `Portal` existente como fallback.
+- `AutomacaoFluxos` passou a salvar automacoes via `updateInContext`, bloqueando toggle/salvamento sem contexto, canal ou permissao.
+- `TemplatesMensagens` e `GerenciadorTemplates` passaram a listar, criar, atualizar e excluir templates somente dentro do contexto grupo/empresa, sem uso de `ConfiguracaoCanal.get/list/filter/create/update` direto.
+- Acoes sensiveis receberam `data-action`, `data-permission`, `data-context-required` e `data-sensitive` quando alteram dados.
+- Mantida a Regra-Mae: os fluxos atuais de configuracao, base de conhecimento, templates e automacoes foram preservados; apenas contexto, RBAC e rastreabilidade foram reforcados.
+- Build validado com sucesso via Vite; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em Atendimento/Chatbot nos componentes restantes `NotificacoesCanal`, `RoteamentoInteligente`, `AvaliacaoAtendimento`, `TagsCategorizacao` e historicos/IA auxiliares que ainda usam chamadas diretas.
+
 ### Atendimento/Chatbot - Fase 8 Analytics, SLA e Painel do Atendente
 - Seguido o plano de melhoria nos componentes existentes `AnalyticsAtendimento`, `MonitorSLA` e `DashboardAtendente`, sem criar tela, modulo, componente ou arquivo novo.
 - `AnalyticsAtendimento` deixou de consultar conversas/mensagens diretamente por empresa ou de forma global e passou a usar `filterInContext` com chave por grupo/empresa.

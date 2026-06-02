@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,6 +30,7 @@ import {
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 import RoteamentoInteligente from "./RoteamentoInteligente";
 import NotificacoesCanal from "./NotificacoesCanal";
 import AutomacaoFluxos from "./AutomacaoFluxos";
@@ -51,9 +51,18 @@ import WebhooksTester from "./WebhooksTester";
  */
 export default function ConfiguracaoCanais() {
   const queryClient = useQueryClient();
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
   const [canalSelecionado, setCanalSelecionado] = useState("WhatsApp");
   const [abaAtiva, setAbaAtiva] = useState("basico");
+  const empresaId = empresaAtual?.id;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id;
+  const contextKey = empresaId || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const canViewConfig = hasPermission("Sistema", "Integracoes", "visualizar") ||
+    hasPermission("CRM", "Atendimento", "visualizar");
+  const canEditConfig = hasPermission("Sistema", "Integracoes", "editar") ||
+    hasPermission("CRM", "Atendimento", "editar");
 
   const canais = [
     { nome: "WhatsApp", icon: MessageCircle, cor: "green" },
@@ -69,13 +78,11 @@ export default function ConfiguracaoCanais() {
 
   // Buscar configurações
   const { data: configs = [], isLoading } = useQuery({
-    queryKey: ['config-canais', empresaAtual?.id],
+    queryKey: ['config-canais', contextKey],
     queryFn: async () => {
-      return await base44.entities.ConfiguracaoCanal.filter({
-        empresa_id: empresaAtual?.id
-      });
+      return await filterInContext("ConfiguracaoCanal", {}, "canal", 100);
     },
-    enabled: !!empresaAtual
+    enabled: contextoValido && canViewConfig
   });
 
   const configAtual = configs.find(c => c.canal === canalSelecionado);
@@ -83,13 +90,15 @@ export default function ConfiguracaoCanais() {
   // Salvar configuração
   const salvarConfigMutation = useMutation({
     mutationFn: async (dados) => {
+      if (!contextoValido || !canEditConfig) {
+        throw new Error("Contexto ou permissao insuficiente para salvar configuracao de canal");
+      }
+
       if (configAtual) {
-        return await base44.entities.ConfiguracaoCanal.update(configAtual.id, dados);
+        return await updateInContext("ConfiguracaoCanal", configAtual.id, dados);
       } else {
-        return await base44.entities.ConfiguracaoCanal.create({
+        return await createInContext("ConfiguracaoCanal", {
           ...dados,
-          empresa_id: empresaAtual?.id,
-          group_id: empresaAtual?.group_id,
           canal: canalSelecionado
         });
       }
@@ -105,7 +114,7 @@ export default function ConfiguracaoCanais() {
   const totalConversasAtivas = configs.reduce((acc, c) => acc + (c.conversas_ativas || 0), 0);
 
   return (
-    <div className="w-full h-full overflow-auto p-4 lg:p-6">
+    <div className="w-full h-full overflow-auto p-4 lg:p-6" data-permission="Sistema.Integracoes.editar" data-context-required="group-or-company">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header com Resumo */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
@@ -125,6 +134,14 @@ export default function ConfiguracaoCanais() {
             </Badge>
           </div>
         </div>
+
+        {(!contextoValido || !canViewConfig) && (
+          <Alert className="border-amber-200 bg-amber-50">
+            <AlertDescription className="text-amber-800">
+              Selecione grupo/empresa e confirme permissao para configurar canais de atendimento.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Cards de Status dos Canais */}
         <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-3">
@@ -203,6 +220,7 @@ export default function ConfiguracaoCanais() {
                     config={configAtual}
                     onSave={(dados) => salvarConfigMutation.mutate(dados)}
                     isSaving={salvarConfigMutation.isPending}
+                    canEdit={contextoValido && canEditConfig}
                   />
                 </CardContent>
               </Card>
@@ -220,6 +238,7 @@ export default function ConfiguracaoCanais() {
               config={configAtual}
               onSave={(dados) => salvarConfigMutation.mutate(dados)}
               isSaving={salvarConfigMutation.isPending}
+              canEdit={contextoValido && canEditConfig}
             />
           </TabsUI.TabsContent>
 
@@ -229,6 +248,7 @@ export default function ConfiguracaoCanais() {
               config={configAtual}
               onSave={(dados) => salvarConfigMutation.mutate(dados)}
               isSaving={salvarConfigMutation.isPending}
+              canEdit={contextoValido && canEditConfig}
             />
           </TabsUI.TabsContent>
 
@@ -238,6 +258,7 @@ export default function ConfiguracaoCanais() {
               config={configAtual}
               onSave={(dados) => salvarConfigMutation.mutate(dados)}
               isSaving={salvarConfigMutation.isPending}
+              canEdit={contextoValido && canEditConfig}
             />
           </TabsUI.TabsContent>
 
@@ -254,7 +275,7 @@ export default function ConfiguracaoCanais() {
   );
 }
 
-function ConfiguracaoCanalForm({ canal, config, onSave, isSaving }) {
+function ConfiguracaoCanalForm({ canal, config, onSave, isSaving, canEdit = true }) {
   const [formData, setFormData] = useState({
     ativo: false,
     modo_atendimento: 'Bot com Transbordo',
@@ -297,6 +318,10 @@ function ConfiguracaoCanalForm({ canal, config, onSave, isSaving }) {
         <Switch
           checked={formData.ativo}
           onCheckedChange={(checked) => setFormData({ ...formData, ativo: checked })}
+          disabled={!canEdit}
+          data-action="ConfiguracaoCanais.toggleCanal"
+          data-permission="Sistema.Integracoes.editar"
+          data-context-required="group-or-company"
         />
       </div>
 
@@ -388,7 +413,7 @@ function ConfiguracaoCanalForm({ canal, config, onSave, isSaving }) {
 
       {/* Botão Salvar */}
       <div className="flex justify-end pt-4 border-t">
-        <Button type="submit" disabled={isSaving} className="bg-blue-600 hover:bg-blue-700">
+        <Button type="submit" disabled={isSaving || !canEdit} className="bg-blue-600 hover:bg-blue-700" data-action="ConfiguracaoCanais.salvarBasico" data-permission="Sistema.Integracoes.editar" data-context-required="group-or-company" data-sensitive="true">
           {isSaving ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
           Salvar Configuração
         </Button>
@@ -398,7 +423,7 @@ function ConfiguracaoCanalForm({ canal, config, onSave, isSaving }) {
 }
 
 // Componente de Configuração de Horários
-function ConfiguracaoHorarios({ config, onSave, isSaving }) {
+function ConfiguracaoHorarios({ config, onSave, isSaving, canEdit = true }) {
   const diasSemana = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo'];
   const diasLabels = { segunda: 'Segunda', terca: 'Terça', quarta: 'Quarta', quinta: 'Quinta', sexta: 'Sexta', sabado: 'Sábado', domingo: 'Domingo' };
 
@@ -442,6 +467,10 @@ function ConfiguracaoHorarios({ config, onSave, isSaving }) {
                 ...horarios,
                 [dia]: { ...horarios[dia], ativo: c }
               })}
+              disabled={!canEdit}
+              data-action="ConfiguracaoCanais.toggleHorario"
+              data-permission="Sistema.Integracoes.editar"
+              data-context-required="group-or-company"
             />
             <Input
               type="time"
@@ -467,7 +496,7 @@ function ConfiguracaoHorarios({ config, onSave, isSaving }) {
           </div>
         ))}
         <div className="flex justify-end pt-4">
-          <Button onClick={handleSave} disabled={isSaving} className="bg-blue-600">
+          <Button onClick={handleSave} disabled={isSaving || !canEdit} className="bg-blue-600" data-action="ConfiguracaoCanais.salvarHorarios" data-permission="Sistema.Integracoes.editar" data-context-required="group-or-company" data-sensitive="true">
             {isSaving ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
             Salvar Horários
           </Button>
@@ -478,7 +507,7 @@ function ConfiguracaoHorarios({ config, onSave, isSaving }) {
 }
 
 // Componente de Configuração de IA
-function ConfiguracaoIA({ config, onSave, isSaving }) {
+function ConfiguracaoIA({ config, onSave, isSaving, canEdit = true }) {
   const [iaConfig, setIaConfig] = useState({
     modelo: 'gpt-4',
     temperatura: 0.7,
@@ -560,6 +589,10 @@ function ConfiguracaoIA({ config, onSave, isSaving }) {
             <Switch
               checked={iaConfig.usar_historico_cliente}
               onCheckedChange={(c) => setIaConfig({ ...iaConfig, usar_historico_cliente: c })}
+              disabled={!canEdit}
+              data-action="ConfiguracaoCanais.toggleHistoricoIA"
+              data-permission="Sistema.Integracoes.editar"
+              data-context-required="group-or-company"
             />
           </div>
           <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
@@ -567,6 +600,10 @@ function ConfiguracaoIA({ config, onSave, isSaving }) {
             <Switch
               checked={iaConfig.usar_base_conhecimento}
               onCheckedChange={(c) => setIaConfig({ ...iaConfig, usar_base_conhecimento: c })}
+              disabled={!canEdit}
+              data-action="ConfiguracaoCanais.toggleBaseConhecimentoIA"
+              data-permission="Sistema.Integracoes.editar"
+              data-context-required="group-or-company"
             />
           </div>
           <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
@@ -574,12 +611,16 @@ function ConfiguracaoIA({ config, onSave, isSaving }) {
             <Switch
               checked={iaConfig.detectar_idioma}
               onCheckedChange={(c) => setIaConfig({ ...iaConfig, detectar_idioma: c })}
+              disabled={!canEdit}
+              data-action="ConfiguracaoCanais.toggleIdiomaIA"
+              data-permission="Sistema.Integracoes.editar"
+              data-context-required="group-or-company"
             />
           </div>
         </div>
 
         <div className="flex justify-end pt-4">
-          <Button onClick={handleSave} disabled={isSaving} className="bg-purple-600">
+          <Button onClick={handleSave} disabled={isSaving || !canEdit} className="bg-purple-600" data-action="ConfiguracaoCanais.salvarIA" data-permission="Sistema.Integracoes.editar" data-context-required="group-or-company" data-sensitive="true">
             {isSaving ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
             Salvar IA
           </Button>
@@ -590,7 +631,7 @@ function ConfiguracaoIA({ config, onSave, isSaving }) {
 }
 
 // Componente de Configuração de SLA
-function ConfiguracaoSLA({ config, onSave, isSaving }) {
+function ConfiguracaoSLA({ config, onSave, isSaving, canEdit = true }) {
   const [slaConfig, setSlaConfig] = useState({
     tempo_primeira_resposta_minutos: 5,
     tempo_resolucao_minutos: 60,
@@ -654,6 +695,10 @@ function ConfiguracaoSLA({ config, onSave, isSaving }) {
             <Switch
               checked={slaConfig.alertar_gestores}
               onCheckedChange={(c) => setSlaConfig({ ...slaConfig, alertar_gestores: c })}
+              disabled={!canEdit}
+              data-action="ConfiguracaoCanais.toggleAlertaSLA"
+              data-permission="Sistema.Integracoes.editar"
+              data-context-required="group-or-company"
             />
           </div>
           <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
@@ -661,12 +706,16 @@ function ConfiguracaoSLA({ config, onSave, isSaving }) {
             <Switch
               checked={slaConfig.escalar_automaticamente}
               onCheckedChange={(c) => setSlaConfig({ ...slaConfig, escalar_automaticamente: c })}
+              disabled={!canEdit}
+              data-action="ConfiguracaoCanais.toggleEscalaSLA"
+              data-permission="Sistema.Integracoes.editar"
+              data-context-required="group-or-company"
             />
           </div>
         </div>
 
         <div className="flex justify-end pt-4">
-          <Button onClick={handleSave} disabled={isSaving} className="bg-red-600">
+          <Button onClick={handleSave} disabled={isSaving || !canEdit} className="bg-red-600" data-action="ConfiguracaoCanais.salvarSLA" data-permission="Sistema.Integracoes.editar" data-context-required="group-or-company" data-sensitive="true">
             {isSaving ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
             Salvar SLA
           </Button>

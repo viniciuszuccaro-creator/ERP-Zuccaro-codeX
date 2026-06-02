@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,8 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Workflow, Clock, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * V21.6 - AUTOMAÇÕES E FLUXOS
@@ -16,6 +17,13 @@ import { toast } from 'sonner';
  * ✅ Layout responsivo w-full h-full
  */
 export default function AutomacaoFluxos({ canalConfig }) {
+  const { empresaAtual, grupoAtual, updateInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const empresaId = empresaAtual?.id;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id;
+  const contextoValido = Boolean(empresaId || groupId);
+  const canEditAutomacao = hasPermission('Sistema', 'Integracoes', 'editar') ||
+    hasPermission('CRM', 'Atendimento', 'editar');
   const [automacoes, setAutomacoes] = useState([
     {
       nome: 'Boas-vindas Fora Horário',
@@ -49,9 +57,9 @@ export default function AutomacaoFluxos({ canalConfig }) {
 
   const salvarMutation = useMutation({
     mutationFn: async () => {
-      if (!canalConfig?.id) return;
+      if (!canalConfig?.id || !contextoValido || !canEditAutomacao) return;
       
-      await base44.entities.ConfiguracaoCanal.update(canalConfig.id, {
+      await updateInContext('ConfiguracaoCanal', canalConfig.id, {
         acoes_automaticas: automacoes.map(a => ({
           trigger: a.trigger,
           acao: a.acao,
@@ -64,7 +72,7 @@ export default function AutomacaoFluxos({ canalConfig }) {
   });
 
   return (
-    <Card className="w-full">
+    <Card className="w-full h-full" data-permission="Sistema.Integracoes.editar" data-context-required="group-or-company">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Workflow className="w-5 h-5 text-purple-600" />
@@ -86,6 +94,10 @@ export default function AutomacaoFluxos({ canalConfig }) {
               </div>
               <Switch
                 checked={auto.ativo}
+                disabled={!contextoValido || !canEditAutomacao || !canalConfig?.id}
+                data-action="AutomacaoFluxos.toggleAutomacao"
+                data-permission="Sistema.Integracoes.editar"
+                data-context-required="group-or-company"
                 onCheckedChange={(checked) => {
                   const novas = [...automacoes];
                   novas[idx].ativo = checked;
@@ -96,7 +108,7 @@ export default function AutomacaoFluxos({ canalConfig }) {
           </div>
         ))}
 
-        <Button onClick={() => salvarMutation.mutate()} className="w-full bg-purple-600 hover:bg-purple-700">
+        <Button onClick={() => salvarMutation.mutate()} disabled={!contextoValido || !canEditAutomacao || !canalConfig?.id || salvarMutation.isPending} className="w-full bg-purple-600 hover:bg-purple-700" data-action="AutomacaoFluxos.salvar" data-permission="Sistema.Integracoes.editar" data-context-required="group-or-company" data-sensitive="true">
           <Workflow className="w-4 h-4 mr-2" />
           Salvar Automações
         </Button>

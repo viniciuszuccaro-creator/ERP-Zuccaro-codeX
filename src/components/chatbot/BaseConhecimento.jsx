@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,7 @@ import { BookOpen, Plus, Search, Edit2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * V21.5 - BASE DE CONHECIMENTO IA
@@ -20,7 +20,16 @@ export default function BaseConhecimento() {
   const [busca, setBusca] = useState('');
   const [editando, setEditando] = useState(null);
   const queryClient = useQueryClient();
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const empresaId = empresaAtual?.id;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id;
+  const contextKey = empresaId || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const canViewBase = hasPermission('CRM', 'Atendimento', 'visualizar') ||
+    hasPermission('Sistema', 'Integracoes', 'visualizar');
+  const canEditBase = hasPermission('CRM', 'Atendimento', 'editar') ||
+    hasPermission('Sistema', 'Integracoes', 'editar');
 
   const [form, setForm] = useState({
     pergunta: '',
@@ -30,22 +39,26 @@ export default function BaseConhecimento() {
   });
 
   const { data: conhecimentos = [] } = useQuery({
-    queryKey: ['base-conhecimento', empresaAtual?.id],
+    queryKey: ['base-conhecimento', contextKey],
     queryFn: async () => {
-      const configs = await base44.entities.ConfiguracaoCanal.list();
+      const configs = await filterInContext('ConfiguracaoCanal', {}, 'canal', 100);
       return configs.flatMap(c => c.base_conhecimento || []);
-    }
+    },
+    enabled: contextoValido && canViewBase
   });
 
   const salvarMutation = useMutation({
     mutationFn: async (dados) => {
-      const configs = await base44.entities.ConfiguracaoCanal.filter({ empresa_id: empresaAtual?.id });
+      if (!contextoValido || !canEditBase) {
+        throw new Error('Contexto ou permissao insuficiente para salvar conhecimento');
+      }
+
+      const configs = await filterInContext('ConfiguracaoCanal', { canal: 'Portal' }, 'canal', 10);
       let config = configs[0];
       
       if (!config) {
-        config = await base44.entities.ConfiguracaoCanal.create({
+        config = await createInContext('ConfiguracaoCanal', {
           canal: 'Portal',
-          empresa_id: empresaAtual?.id,
           ativo: true,
           base_conhecimento: []
         });
@@ -62,7 +75,7 @@ export default function BaseConhecimento() {
         ? baseAtual.map(k => k.id === editando.id ? novo : k)
         : [...baseAtual, novo];
 
-      await base44.entities.ConfiguracaoCanal.update(config.id, {
+      await updateInContext('ConfiguracaoCanal', config.id, {
         base_conhecimento: baseAtualizada
       });
     },
@@ -86,7 +99,7 @@ export default function BaseConhecimento() {
   );
 
   return (
-    <div className="w-full h-full space-y-6">
+    <div className="w-full h-full space-y-6" data-permission="CRM.Atendimento.editar" data-context-required="group-or-company">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -95,7 +108,7 @@ export default function BaseConhecimento() {
           </h2>
           <p className="text-sm text-slate-600 mt-1">Treine o chatbot com perguntas frequentes</p>
         </div>
-        <Button onClick={() => setDialogAberto(true)} className="bg-blue-600">
+        <Button onClick={() => setDialogAberto(true)} disabled={!contextoValido || !canEditBase} className="bg-blue-600" data-action="BaseConhecimento.adicionar" data-permission="CRM.Atendimento.editar" data-context-required="group-or-company">
           <Plus className="w-4 h-4 mr-2" />
           Adicionar
         </Button>
@@ -103,6 +116,11 @@ export default function BaseConhecimento() {
 
       <Card>
         <CardContent className="p-4">
+          {(!contextoValido || !canViewBase) && (
+            <div className="text-sm text-amber-800 mb-3">
+              Selecione grupo/empresa e confirme permissao para visualizar a base de conhecimento.
+            </div>
+          )}
           <Input
             placeholder="Buscar na base de conhecimento..."
             value={busca}
@@ -121,7 +139,7 @@ export default function BaseConhecimento() {
                   <Badge className="mt-2 text-xs">{item.categoria}</Badge>
                 </div>
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
+                  <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!contextoValido || !canEditBase} data-action="BaseConhecimento.editar" data-permission="CRM.Atendimento.editar" data-context-required="group-or-company" onClick={() => {
                     setEditando(item);
                     setForm(item);
                     setDialogAberto(true);
@@ -175,7 +193,7 @@ export default function BaseConhecimento() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={resetForm}>Cancelar</Button>
-            <Button onClick={() => salvarMutation.mutate(form)} className="bg-blue-600">
+            <Button onClick={() => salvarMutation.mutate(form)} disabled={!contextoValido || !canEditBase || salvarMutation.isPending} className="bg-blue-600" data-action="BaseConhecimento.salvar" data-permission="CRM.Atendimento.editar" data-context-required="group-or-company" data-sensitive="true">
               Salvar
             </Button>
           </DialogFooter>

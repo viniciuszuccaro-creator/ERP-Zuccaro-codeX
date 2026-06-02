@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,6 +19,7 @@ import {
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * V21.6 - TEMPLATES DE MENSAGENS AVANÇADO
@@ -39,7 +39,16 @@ export default function TemplatesMensagens({ onSelecionarTemplate }) {
   const [exibirForm, setExibirForm] = useState(false);
   
   const queryClient = useQueryClient();
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const empresaId = empresaAtual?.id;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id;
+  const contextKey = empresaId || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const canViewTemplates = hasPermission('CRM', 'Atendimento', 'visualizar') ||
+    hasPermission('Sistema', 'Integracoes', 'visualizar');
+  const canEditTemplates = hasPermission('CRM', 'Atendimento', 'editar') ||
+    hasPermission('Sistema', 'Integracoes', 'editar');
 
   const categorias = ['Saudação', 'Despedida', 'Orçamento', 'Pedido', 'Entrega', 'Financeiro', 'Suporte', 'Geral'];
 
@@ -55,11 +64,9 @@ export default function TemplatesMensagens({ onSelecionarTemplate }) {
 
   // Buscar templates
   const { data: templates = [], isLoading } = useQuery({
-    queryKey: ['templates-mensagens-lista', empresaAtual?.id],
+    queryKey: ['templates-mensagens-lista', contextKey],
     queryFn: async () => {
-      const configs = await base44.entities.ConfiguracaoCanal.filter({
-        empresa_id: empresaAtual?.id
-      });
+      const configs = await filterInContext('ConfiguracaoCanal', {}, 'canal', 100);
       
       const allTemplates = [];
       configs.forEach(config => {
@@ -76,21 +83,21 @@ export default function TemplatesMensagens({ onSelecionarTemplate }) {
       
       return allTemplates;
     },
-    enabled: !!empresaAtual?.id
+    enabled: contextoValido && canViewTemplates
   });
 
   const salvarTemplateMutation = useMutation({
     mutationFn: async (template) => {
-      const configs = await base44.entities.ConfiguracaoCanal.filter({
-        empresa_id: empresaAtual?.id,
-        ativo: true
-      });
+      if (!contextoValido || !canEditTemplates) {
+        throw new Error('Contexto ou permissao insuficiente para salvar template');
+      }
+
+      const configs = await filterInContext('ConfiguracaoCanal', { ativo: true }, 'canal', 100);
 
       let config = configs[0];
       if (!config) {
-        config = await base44.entities.ConfiguracaoCanal.create({
+        config = await createInContext('ConfiguracaoCanal', {
           canal: 'Portal',
-          empresa_id: empresaAtual?.id,
           ativo: true,
           templates_mensagem: []
         });
@@ -111,7 +118,7 @@ export default function TemplatesMensagens({ onSelecionarTemplate }) {
         ? templatesAtuais.map(t => t.id === editando.id ? novoTpl : t)
         : [...templatesAtuais, novoTpl];
 
-      await base44.entities.ConfiguracaoCanal.update(config.id, {
+      await updateInContext('ConfiguracaoCanal', config.id, {
         templates_mensagem: templatesAtualizados
       });
     },
@@ -124,10 +131,16 @@ export default function TemplatesMensagens({ onSelecionarTemplate }) {
 
   const excluirTemplateMutation = useMutation({
     mutationFn: async (template) => {
-      const config = await base44.entities.ConfiguracaoCanal.get(template.config_id);
+      if (!contextoValido || !canEditTemplates) {
+        throw new Error('Contexto ou permissao insuficiente para excluir template');
+      }
+
+      const configs = await filterInContext('ConfiguracaoCanal', { id: template.config_id }, 'canal', 1);
+      const config = configs[0];
+      if (!config) throw new Error('Configuracao de canal nao encontrada no contexto atual');
       const templatesAtualizados = (config.templates_mensagem || []).filter(t => t.id !== template.id);
       
-      await base44.entities.ConfiguracaoCanal.update(config.id, {
+      await updateInContext('ConfiguracaoCanal', config.id, {
         templates_mensagem: templatesAtualizados
       });
     },
@@ -178,8 +191,14 @@ export default function TemplatesMensagens({ onSelecionarTemplate }) {
   };
 
   return (
-    <div className="w-full h-full overflow-auto">
+    <div className="w-full h-full overflow-auto" data-permission="CRM.Atendimento.editar" data-context-required="group-or-company">
       <div className="space-y-4">
+        {(!contextoValido || !canViewTemplates) && (
+          <div className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-md p-3">
+            Selecione grupo/empresa e confirme permissao para visualizar templates de atendimento.
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex-1 w-full sm:w-auto">
@@ -206,7 +225,7 @@ export default function TemplatesMensagens({ onSelecionarTemplate }) {
               ))}
             </select>
             
-            <Button onClick={() => setExibirForm(true)} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={() => setExibirForm(true)} disabled={!contextoValido || !canEditTemplates} className="bg-blue-600 hover:bg-blue-700" data-action="TemplatesMensagens.novo" data-permission="CRM.Atendimento.editar" data-context-required="group-or-company">
               <Plus className="w-4 h-4 mr-2" />
               Novo
             </Button>
@@ -296,8 +315,12 @@ export default function TemplatesMensagens({ onSelecionarTemplate }) {
                     </Button>
                     <Button
                       onClick={() => salvarTemplateMutation.mutate(novoTemplate)}
-                      disabled={!novoTemplate.nome || !novoTemplate.conteudo || salvarTemplateMutation.isPending}
+                      disabled={!novoTemplate.nome || !novoTemplate.conteudo || salvarTemplateMutation.isPending || !contextoValido || !canEditTemplates}
                       className="bg-blue-600 hover:bg-blue-700"
+                      data-action="TemplatesMensagens.salvar"
+                      data-permission="CRM.Atendimento.editar"
+                      data-context-required="group-or-company"
+                      data-sensitive="true"
                     >
                       <Check className="w-4 h-4 mr-2" />
                       {editando ? 'Atualizar' : 'Criar'}
@@ -342,6 +365,9 @@ export default function TemplatesMensagens({ onSelecionarTemplate }) {
                           size="icon"
                           className="h-7 w-7"
                           onClick={() => handleCopiar(template.conteudo)}
+                          data-action="TemplatesMensagens.copiar"
+                          data-permission="CRM.Atendimento.visualizar"
+                          data-context-required="group-or-company"
                         >
                           <Copy className="w-3 h-3" />
                         </Button>
@@ -350,6 +376,10 @@ export default function TemplatesMensagens({ onSelecionarTemplate }) {
                           size="icon"
                           className="h-7 w-7"
                           onClick={() => handleEditar(template)}
+                          disabled={!contextoValido || !canEditTemplates}
+                          data-action="TemplatesMensagens.editar"
+                          data-permission="CRM.Atendimento.editar"
+                          data-context-required="group-or-company"
                         >
                           <Edit2 className="w-3 h-3" />
                         </Button>
@@ -357,6 +387,11 @@ export default function TemplatesMensagens({ onSelecionarTemplate }) {
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7 text-red-600"
+                          disabled={!contextoValido || !canEditTemplates || excluirTemplateMutation.isPending}
+                          data-action="TemplatesMensagens.excluir"
+                          data-permission="CRM.Atendimento.editar"
+                          data-context-required="group-or-company"
+                          data-sensitive="true"
                           onClick={() => {
                             if (confirm('Excluir template?')) {
                               excluirTemplateMutation.mutate(template);
@@ -390,6 +425,9 @@ export default function TemplatesMensagens({ onSelecionarTemplate }) {
                         variant="outline"
                         size="sm"
                         className="w-full mt-3"
+                        data-action="TemplatesMensagens.usar"
+                        data-permission="CRM.Atendimento.visualizar"
+                        data-context-required="group-or-company"
                         onClick={() => onSelecionarTemplate(template.conteudo)}
                       >
                         <MessageSquare className="w-3 h-3 mr-1" />
