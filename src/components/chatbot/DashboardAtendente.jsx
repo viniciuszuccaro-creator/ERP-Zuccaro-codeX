@@ -1,5 +1,4 @@
 import React from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -28,11 +27,17 @@ import usePermissions from '@/components/lib/usePermissions';
  * ✅ Ranking e gamificação
  */
 export default function DashboardAtendente() {
-  const { empresaAtual } = useContextoVisual();
-  const { user } = usePermissions();
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { user, hasPermission } = usePermissions();
+  const empresaId = empresaAtual?.id;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id;
+  const contextKey = empresaId || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const canViewAtendente = hasPermission('CRM', 'Atendimento', 'visualizar') ||
+    hasPermission('Dashboard', 'Atendimento', 'visualizar');
 
   const { data: metricas, isLoading } = useQuery({
-    queryKey: ['metricas-atendente', user?.id],
+    queryKey: ['metricas-atendente', user?.id, contextKey],
     queryFn: async () => {
       if (!user?.id) return null;
 
@@ -40,10 +45,9 @@ export default function DashboardAtendente() {
       hoje.setHours(0, 0, 0, 0);
 
       // Buscar conversas do atendente
-      const conversas = await base44.entities.ConversaOmnicanal.filter({
-        atendente_id: user.id,
-        empresa_id: empresaAtual?.id
-      });
+      const conversas = await filterInContext('ConversaOmnicanal', {
+        atendente_id: user.id
+      }, '-data_ultima_mensagem', 500);
 
       const conversasHoje = conversas.filter(c => 
         new Date(c.data_ultima_mensagem) >= hoje
@@ -86,13 +90,23 @@ export default function DashboardAtendente() {
         nivel: Math.floor(conversas.length / 50) + 1
       };
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && contextoValido && canViewAtendente,
     refetchInterval: 30000
   });
 
+  if (!contextoValido || !canViewAtendente) {
+    return (
+      <Card className="w-full h-full" data-permission="CRM.Atendimento.visualizar" data-context-required="group-or-company">
+        <CardContent className="p-4 text-sm text-amber-800">
+          Selecione grupo/empresa e confirme permissao de atendimento para visualizar o painel do atendente.
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (isLoading || !metricas) {
     return (
-      <Card className="w-full">
+      <Card className="w-full h-full" data-permission="CRM.Atendimento.visualizar" data-context-required="group-or-company">
         <CardContent className="p-4">
           <div className="animate-pulse space-y-3">
             <div className="h-4 bg-slate-200 rounded w-1/2" />
@@ -107,7 +121,7 @@ export default function DashboardAtendente() {
   const metaResolucao = 80; // %
 
   return (
-    <div className="space-y-4">
+    <div className="w-full h-full space-y-4" data-permission="CRM.Atendimento.visualizar" data-context-required="group-or-company">
       {/* Header com pontos */}
       <Card className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">
         <CardContent className="p-4">

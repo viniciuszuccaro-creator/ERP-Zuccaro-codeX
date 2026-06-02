@@ -1,8 +1,8 @@
 import React from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   BarChart,
   Bar,
@@ -28,6 +28,7 @@ import {
   Phone
 } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * V21.5 - ANALYTICS DE ATENDIMENTO OMNICANAL
@@ -35,25 +36,33 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  * Dashboard de métricas e KPIs do Hub de Atendimento
  */
 export default function AnalyticsAtendimento() {
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const empresaId = empresaAtual?.id;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id;
+  const contextKey = empresaId || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const canViewAnalytics = hasPermission('CRM', 'Atendimento', 'visualizar') ||
+    hasPermission('CRM', 'Relatorios', 'visualizar') ||
+    hasPermission('Dashboard', 'Atendimento', 'visualizar') ||
+    hasPermission('Sistema', 'Integracoes', 'visualizar');
 
   // Buscar todas as conversas
   const { data: conversas = [] } = useQuery({
-    queryKey: ['analytics-conversas', empresaAtual?.id],
+    queryKey: ['analytics-conversas', contextKey],
     queryFn: async () => {
-      return await base44.entities.ConversaOmnicanal.filter({
-        empresa_id: empresaAtual?.id
-      });
+      return await filterInContext('ConversaOmnicanal', {}, '-data_inicio', 1000);
     },
-    enabled: !!empresaAtual
+    enabled: contextoValido && canViewAnalytics
   });
 
   // Buscar todas as mensagens
   const { data: mensagens = [] } = useQuery({
-    queryKey: ['analytics-mensagens', empresaAtual?.id],
+    queryKey: ['analytics-mensagens', contextKey],
     queryFn: async () => {
-      return await base44.entities.MensagemOmnicanal.filter({});
-    }
+      return await filterInContext('MensagemOmnicanal', {}, '-created_date', 2000);
+    },
+    enabled: contextoValido && canViewAnalytics
   });
 
   // Calcular métricas
@@ -112,12 +121,20 @@ export default function AnalyticsAtendimento() {
   const COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#10b981'];
 
   return (
-    <div className="w-full h-full overflow-auto p-6">
+    <div className="w-full h-full overflow-auto p-6" data-permission="CRM.Atendimento.visualizar" data-context-required="group-or-company">
       <div className="max-w-7xl mx-auto space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Analytics de Atendimento</h1>
           <p className="text-slate-600 mt-1">Métricas e KPIs do Hub Omnicanal</p>
         </div>
+
+        {(!contextoValido || !canViewAnalytics) && (
+          <Alert className="border-amber-200 bg-amber-50">
+            <AlertDescription className="text-amber-800">
+              Selecione grupo/empresa e confirme permissao de atendimento para visualizar analytics.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">

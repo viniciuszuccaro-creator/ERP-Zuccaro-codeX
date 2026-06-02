@@ -1,3 +1,13 @@
+### Atendimento/Chatbot - Fase 8 Analytics, SLA e Painel do Atendente
+- Seguido o plano de melhoria nos componentes existentes `AnalyticsAtendimento`, `MonitorSLA` e `DashboardAtendente`, sem criar tela, modulo, componente ou arquivo novo.
+- `AnalyticsAtendimento` deixou de consultar conversas/mensagens diretamente por empresa ou de forma global e passou a usar `filterInContext` com chave por grupo/empresa.
+- `MonitorSLA` deixou de usar `ConversaOmnicanal.list()` global e passou a carregar conversas por contexto, com bloqueio por RBAC e aviso quando faltar grupo/empresa.
+- `DashboardAtendente` passou a calcular metricas individuais somente dentro do contexto grupo/empresa e com permissao de atendimento/dashboard.
+- Containers principais receberam `w-full`, `h-full`, `data-permission` e `data-context-required`, mantendo responsividade e controle visual de acesso.
+- Mantida a Regra-Mae: fluxos atuais de analytics, SLA e painel do atendente foram preservados; apenas consultas, bloqueios e contexto foram reforcados.
+- Build validado com sucesso via Vite; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em Atendimento/Chatbot nos componentes restantes de configuracao/automacao/base de conhecimento/templates que ainda gravam `ConfiguracaoCanal` diretamente.
+
 ### Atendimento/Chatbot - Fase 8 IntentEngine em Contexto
 - Seguido o plano de melhoria no `IntentEngine`, sem criar tela, modulo, componente ou arquivo novo.
 - Adicionados helpers internos para normalizar `groupId`/`empresaId`, montar filtros contextuais e carimbar payloads criados pelo motor de intents.

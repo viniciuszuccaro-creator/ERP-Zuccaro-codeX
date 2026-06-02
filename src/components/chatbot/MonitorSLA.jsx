@@ -1,12 +1,12 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Clock, AlertTriangle, CheckCircle, TrendingUp, Timer } from 'lucide-react';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import { Progress } from '@/components/ui/progress';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * V21.5 - MONITOR DE SLA (Service Level Agreement)
@@ -19,7 +19,15 @@ import { Progress } from '@/components/ui/progress';
  * ✅ Alertas em tempo real
  */
 export default function MonitorSLA() {
-  const { empresaAtual, filtrarPorContexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const empresaId = empresaAtual?.id;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id;
+  const contextKey = empresaId || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const canViewSla = hasPermission('CRM', 'Atendimento', 'visualizar') ||
+    hasPermission('CRM', 'Relatorios', 'visualizar') ||
+    hasPermission('Sistema', 'Integracoes', 'visualizar');
 
   // Metas de SLA configuráveis
   const metasSLA = {
@@ -29,11 +37,11 @@ export default function MonitorSLA() {
   };
 
   const { data: conversas = [] } = useQuery({
-    queryKey: ['conversas-sla', empresaAtual?.id],
+    queryKey: ['conversas-sla', contextKey],
     queryFn: async () => {
-      return await base44.entities.ConversaOmnicanal.list();
+      return await filterInContext('ConversaOmnicanal', {}, '-data_inicio', 1000);
     },
-    select: (data) => filtrarPorContexto(data, 'empresa_id'),
+    enabled: contextoValido && canViewSla,
     refetchInterval: 10000
   });
 
@@ -98,7 +106,15 @@ export default function MonitorSLA() {
   }, [conversas]);
 
   return (
-    <div className="space-y-6">
+    <div className="w-full h-full space-y-6" data-permission="CRM.Atendimento.visualizar" data-context-required="group-or-company">
+      {(!contextoValido || !canViewSla) && (
+        <Alert className="border-amber-200 bg-amber-50">
+          <AlertDescription className="text-amber-800">
+            Selecione grupo/empresa e confirme permissao de atendimento para monitorar SLA.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Alertas */}
       {metricas.conversasExcedidas.length > 0 && (
         <Alert className="border-red-300 bg-red-50">
