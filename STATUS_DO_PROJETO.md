@@ -1,3 +1,15 @@
+### Atendimento/Chatbot - Fase 8 IntentEngine em Contexto
+- Seguido o plano de melhoria no `IntentEngine`, sem criar tela, modulo, componente ou arquivo novo.
+- Adicionados helpers internos para normalizar `groupId`/`empresaId`, montar filtros contextuais e carimbar payloads criados pelo motor de intents.
+- Intents dinamicas (`ChatbotIntent`) passaram a consultar por contexto grupo/empresa.
+- Consultas automaticas de pedidos, entregas e boletos passaram a usar filtros com `group_id`/`empresa_id`.
+- Criacao automatica de pedido e boleto agora exige contexto valido, carimba `group_id`/`grupo_id`/`empresa_id` e registra auditoria com dados novos.
+- Emissao de boleto via funcao backend preservada, mas a atualizacao do `ContaReceber` passou a manter contexto multiempresa.
+- `ChatbotWidget` e `ChatbotWidgetAvancado` passaram a enviar `groupId` e `empresaId` ao `IntentEngine`.
+- Mantida a Regra-Mae: o motor atual foi reforcado sem duplicar fluxo e sem remover intents existentes.
+- Build validado com sucesso via Vite; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em Atendimento/Chatbot nos componentes restantes com chamadas diretas de atendimento, priorizando relatorios, analytics e automacoes.
+
 ### Administracao do Sistema - Fase 8 Aba Ferramentas
 - Corrigida a aba existente `Ferramentas` em `AdminTabs`, sem excluir a funcionalidade porque ela tem utilidade administrativa para seed leve e backfill multiempresa.
 - A aba `ferramentas` agora entra na lista de abas validas para usuario admin; antes o resolvedor de aba ativa ignorava esse valor e voltava para a primeira aba visivel.

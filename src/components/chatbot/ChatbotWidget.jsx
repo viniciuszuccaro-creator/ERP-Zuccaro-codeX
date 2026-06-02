@@ -203,6 +203,7 @@ export default function ChatbotWidget({
         sessaoId,
         conversaId,
         temAnexo: !!arquivo,
+        groupId,
         empresaId
       });
 
@@ -218,7 +219,7 @@ export default function ChatbotWidget({
           resultado.intent,
           resultado.entidades_detectadas,
           clienteId,
-          { empresaId }
+          { groupId, empresaId }
         );
       }
 

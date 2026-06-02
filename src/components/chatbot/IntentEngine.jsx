@@ -1,5 +1,37 @@
 import { base44 } from '@/api/base44Client';
 
+const getContextIds = (contexto = {}) => ({
+  groupId: contexto.groupId || contexto.grupoId || contexto.group_id || contexto.grupo_id || null,
+  empresaId: contexto.empresaId || contexto.empresa_id || null,
+});
+
+const hasContext = (contexto = {}) => {
+  const { groupId, empresaId } = getContextIds(contexto);
+  return Boolean(groupId || empresaId);
+};
+
+const withContextPayload = (payload = {}, contexto = {}) => {
+  const { groupId, empresaId } = getContextIds(contexto);
+  return {
+    ...payload,
+    ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
+    ...(empresaId ? { empresa_id: empresaId } : {}),
+  };
+};
+
+const withContextFilter = (filter = {}, contexto = {}) => {
+  const { groupId, empresaId } = getContextIds(contexto);
+  return {
+    ...filter,
+    ...(groupId ? { group_id: groupId } : {}),
+    ...(empresaId ? { empresa_id: empresaId } : {}),
+  };
+};
+
+const canRunAutomaticAction = (contexto = {}) => {
+  return hasContext(contexto) && contexto?.bloquearAcoesAutomaticas !== true;
+};
+
 /**
  * V21.6 - MOTOR DE INTENTS AVANÇADO
  * 
@@ -122,8 +154,7 @@ const IntentEngine = {
 
     // Detecção dinâmica via entidade ChatbotIntent (multiempresa)
     try {
-      const filtro = { ativo: true };
-      if (contexto?.empresaId) filtro.empresa_id = contexto.empresaId;
+      const filtro = withContextFilter({ ativo: true }, contexto);
       const intentsDinamicas = await base44.entities.ChatbotIntent.filter(filtro, '-updated_date', 50);
       for (const dyn of intentsDinamicas || []) {
         const palavras = Array.isArray(dyn.palavras_chave) ? dyn.palavras_chave : String(dyn.palavras_chave || '').split(',');
@@ -340,7 +371,7 @@ const IntentEngine = {
           }
           
           const pedidos = await base44.entities.Pedido.filter(
-            { cliente_id: clienteId },
+            withContextFilter({ cliente_id: clienteId }, contexto),
             '-data_pedido',
             5
           );
@@ -366,7 +397,7 @@ const IntentEngine = {
           }
           
           const entregas = await base44.entities.Entrega.filter(
-            { cliente_id: clienteId, status: { $nin: ['Entregue', 'Cancelado'] } },
+            withContextFilter({ cliente_id: clienteId, status: { $nin: ['Entregue', 'Cancelado'] } }, contexto),
             '-data_previsao',
             5
           );
@@ -392,7 +423,7 @@ const IntentEngine = {
           }
           
           const boletos = await base44.entities.ContaReceber.filter(
-            { cliente_id: clienteId, status: { $in: ['Pendente', 'Atrasado'] } },
+            withContextFilter({ cliente_id: clienteId, status: { $in: ['Pendente', 'Atrasado'] } }, contexto),
             'data_vencimento',
             5
           );
@@ -413,6 +444,9 @@ const IntentEngine = {
         }
         
         case 'criar_pedido': {
+          if (!canRunAutomaticAction(contexto)) {
+            return { tipo: 'erro', mensagem: 'Para criar pedido automaticamente, selecione uma empresa/grupo valido e confirme permissao de atendimento.' };
+          }
           if (!clienteId) {
             return { tipo: 'erro', mensagem: 'Para criar o pedido, preciso identificar você (cliente). Informe seu CPF/CNPJ ou faça login.' };
           }
@@ -420,13 +454,13 @@ const IntentEngine = {
           const dataIso = hoje.toISOString().slice(0,10);
           let clienteNome = 'Cliente';
           try {
-            const c = await base44.entities.Cliente.filter({ id: clienteId });
+            const c = await base44.entities.Cliente.filter(withContextFilter({ id: clienteId }, contexto));
             if (c?.[0]?.nome) clienteNome = c[0].nome;
           } catch {}
 
           const numero = `WEB-${Date.now()}`;
           const valor = Number(entidades?.valor || 0);
-          const pedido = await base44.entities.Pedido.create({
+          const pedido = await base44.entities.Pedido.create(withContextPayload({
             numero_pedido: numero,
             tipo: 'Pedido',
             origem_pedido: 'Chatbot',
@@ -434,11 +468,10 @@ const IntentEngine = {
             cliente_id: clienteId,
             cliente_nome: clienteNome,
             valor_total: isNaN(valor) ? 0 : valor,
-            empresa_id: contexto?.empresaId || undefined,
             pode_ver_no_portal: true,
             prioridade: 'Normal',
             status: 'Rascunho'
-          });
+          }, contexto));
 
           try {
             await base44.entities.AuditLog.create({
@@ -448,6 +481,9 @@ const IntentEngine = {
               entidade: 'Pedido',
               registro_id: pedido.id,
               descricao: `Pedido criado via chatbot (${numero})`,
+              ...withContextPayload({}, contexto),
+              dados_anteriores: null,
+              dados_novos: pedido,
               data_hora: new Date().toISOString(),
             });
           } catch {}
@@ -461,6 +497,9 @@ const IntentEngine = {
 
         case 'emitir_boleto':
         case 'gerar_boleto': {
+          if (!canRunAutomaticAction(contexto)) {
+            return { tipo: 'erro', mensagem: 'Para emitir boleto automaticamente, selecione uma empresa/grupo valido e confirme permissao financeira.' };
+          }
           if (!clienteId) {
             return { tipo: 'erro', mensagem: 'Para emitir boleto, preciso identificar você (cliente).' };
           }
@@ -472,11 +511,13 @@ const IntentEngine = {
           // Buscar configurações mínimas (centro de custo e plano de contas)
           let centroId, planoId;
           try {
-            const centros = await base44.entities.CentroCusto.filter({ empresa_id: contexto?.empresaId, status: 'Ativo' }, '-updated_date', 1);
+            const centros = await base44.entities.CentroCusto.filter(withContextFilter({ status: 'Ativo' }, contexto), '-updated_date', 1);
             centroId = centros?.[0]?.id;
           } catch {}
           try {
-            const planos = await base44.entities.PlanoDeContas ? await base44.entities.PlanoDeContas.list() : [];
+            const planos = await base44.entities.PlanoDeContas
+              ? await base44.entities.PlanoDeContas.filter(withContextFilter({}, contexto), '-updated_date', 20)
+              : [];
             planoId = planos?.[0]?.id;
           } catch {}
 
@@ -485,7 +526,7 @@ const IntentEngine = {
           }
 
           const venc = new Date(Date.now() + 3*24*60*60*1000).toISOString().slice(0,10);
-          const cr = await base44.entities.ContaReceber.create({
+          const cr = await base44.entities.ContaReceber.create(withContextPayload({
             descricao: 'Boleto gerado via Chatbot',
             cliente_id: clienteId,
             valor: valor,
@@ -495,15 +536,14 @@ const IntentEngine = {
             forma_cobranca: 'Boleto',
             status_cobranca: 'gerada',
             url_boleto_pdf: null,
-            empresa_id: contexto?.empresaId || undefined,
             canal_origem: 'Chatbot'
-          });
+          }, contexto));
 
           // Emissão real do PDF (função backend)
           try {
             const { data } = await base44.functions.invoke('emitirBoleto', { conta_receber_id: cr.id });
             if (data?.url) {
-              await base44.entities.ContaReceber.update(cr.id, { url_boleto_pdf: data.url });
+              await base44.entities.ContaReceber.update(cr.id, withContextPayload({ url_boleto_pdf: data.url }, contexto));
             }
           } catch (e) {
             // mantém registro sem URL se falhar
@@ -517,6 +557,9 @@ const IntentEngine = {
               entidade: 'ContaReceber',
               registro_id: cr.id,
               descricao: `Boleto emitido via chatbot no valor de R$ ${valor.toLocaleString('pt-BR')}`,
+              ...withContextPayload({}, contexto),
+              dados_anteriores: null,
+              dados_novos: cr,
               data_hora: new Date().toISOString(),
             });
           } catch {}

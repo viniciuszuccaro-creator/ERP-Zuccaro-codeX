@@ -241,6 +241,8 @@ export default function ChatbotWidgetAvancado({
         sessaoId,
         conversaId,
         temAnexo: !!arquivo,
+        groupId,
+        empresaId,
         historico: mensagensHistorico.slice(-5),
         dadosCliente
       });
@@ -263,7 +265,7 @@ export default function ChatbotWidgetAvancado({
           resultado.intent,
           resultado.entidades_detectadas,
           clienteId,
-          { empresaId, dadosCliente }
+          { groupId, empresaId, dadosCliente }
         );
       }
 
