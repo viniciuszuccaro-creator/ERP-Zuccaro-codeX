@@ -1,3 +1,12 @@
+### Sistema - Fase 8 Atalhos Iniciais e Layout Global
+- Seguido pedido do plano de melhoria no layout global existente `src/Layout.jsx`, sem criar tela, modulo, componente ou arquivo novo.
+- Removidos do inicio/cabecalho do sistema os atalhos visuais `IA Estoque`, `IA Financeiro` e `Funil/KPIs`.
+- Removidas as funcoes locais `handleIAEstoque` e `handleIAFinanceiro`, que eram usadas exclusivamente pelos botoes removidos no cabecalho.
+- Verificado que `Funil/KPIs` apontava para o modulo compartilhado `Comercial`; o modulo e seus componentes foram preservados para nao quebrar pedidos, clientes, aprovacoes, funil e demais fluxos existentes.
+- Verificado que a funcao `iaFinanceAnomalyScan` ainda e usada no Dashboard e em fluxos de pedido; por isso os diretorios/servicos compartilhados de IA foram preservados.
+- Mantida a Regra-Mae: melhoria feita no existente, sem apagar fluxo essencial, sem duplicar modulo e sem danificar o sistema.
+- Proximo passo sugerido: validar build, abrir o sistema em `http://127.0.0.1:5173/` e continuar o plano no `useFluxoPedido` conforme o ponto anterior salvo.
+
 ### Comercial - Fase 8 Faturamento, OP e Cancelamento em Contexto
 - Segui o proximo passo salvo no hook central `useFluxoPedido`: migrar `faturarPedidoCompleto`, `concluirOPCompleto`, `cancelarPedidoCompleto` e auxiliares de faturamento/cancelamento.
 - Faturamento completo agora normaliza contexto multiempresa antes de baixar estoque, criar entrega e atualizar pedido faturado.

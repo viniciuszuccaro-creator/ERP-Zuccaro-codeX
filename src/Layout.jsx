@@ -1107,28 +1107,7 @@ function LayoutContent({ children, currentPageName }) {
     };
   }, [user?.id, empresaAtual?.id, moduleName]);
 
-  const handleIAEstoque = async () => {
-          try {
-            const filtros = {
-              ...(grupoAtual?.id ? { group_id: grupoAtual.id } : {}),
-              ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
-            };
-            await base44.functions.invoke('iaFinanceAnomalyScan', {
-              filtros,
-              previsao_estoque: { enabled: true, horizon_days: 14 }
-            });
-          } catch (_) {}
-        };
-        const handleIAFinanceiro = async () => {
-          try {
-            const filtros = {
-              ...(grupoAtual?.id ? { group_id: grupoAtual.id } : {}),
-              ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
-            };
-            await base44.functions.invoke('iaFinanceAnomalyScan', { filtros });
-          } catch (_) {}
-        };
-        const isMobilePage = currentPageName === "ProducaoMobile";
+  const isMobilePage = currentPageName === "ProducaoMobile";
 
 
 
@@ -1398,21 +1377,6 @@ function LayoutContent({ children, currentPageName }) {
                 <AcoesRapidasGlobal />
 
                 <NotificationCenter />
-                {hasPermission('Estoque', null, 'visualizar') && (
-                  <button onClick={handleIAEstoque} className="px-2 py-1 rounded-lg hover:bg-slate-100 text-sm text-slate-600 hidden lg:inline" title="Previsões de Estoque (IA)">
-                    IA Estoque
-                  </button>
-                )}
-                {hasPermission('Financeiro', null, 'visualizar') && (
-                  <button onClick={handleIAFinanceiro} className="px-2 py-1 rounded-lg hover:bg-slate-100 text-sm text-slate-600 hidden lg:inline" title="Anomalias Financeiras (IA)">
-                    IA Financeiro
-                  </button>
-                )}
-                {hasPermission('Comercial', null, 'visualizar') && (
-                  <Link to={createPageUrl('Comercial')} className="px-2 py-1 rounded-lg hover:bg-slate-100 text-sm text-slate-600 hidden lg:inline" title="Funil e KPIs Comerciais">
-                    Funil/KPIs
-                  </Link>
-                )}
                 
                 <Link to={createPageUrl("ConfiguracoesUsuario")}>
                   <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
