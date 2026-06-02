@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,6 +17,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * V21.6 - CONFIGURAÇÃO DE NOTIFICAÇÕES
@@ -31,8 +31,17 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
 export default function NotificacoesCanal({ canalConfig }) {
   // Compatibilidade - aceita canalConfig ou canalId
   const canalId = canalConfig?.id;
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext, updateInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
+  const empresaId = empresaAtual?.id;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id;
+  const contextKey = empresaId || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const canViewNotificacoes = hasPermission('Sistema', 'Integracoes', 'visualizar') ||
+    hasPermission('CRM', 'Atendimento', 'visualizar');
+  const canEditNotificacoes = hasPermission('Sistema', 'Integracoes', 'editar') ||
+    hasPermission('CRM', 'Atendimento', 'editar');
 
   const tiposNotificacao = [
     { id: 'nova_mensagem', label: 'Nova mensagem do cliente', icone: MessageCircle },
@@ -50,18 +59,16 @@ export default function NotificacoesCanal({ canalConfig }) {
 
   // Buscar configuração
   const { data: config } = useQuery({
-    queryKey: ['config-notificacoes', canalId, empresaAtual?.id],
+    queryKey: ['config-notificacoes', canalId || 'primeiro-ativo', contextKey],
     queryFn: async () => {
       if (!canalId) {
-        const configs = await base44.entities.ConfiguracaoCanal.filter({
-          empresa_id: empresaAtual?.id,
-          ativo: true
-        });
+        const configs = await filterInContext('ConfiguracaoCanal', { ativo: true }, 'canal', 10);
         return configs[0];
       }
-      return await base44.entities.ConfiguracaoCanal.get(canalId);
+      const configs = await filterInContext('ConfiguracaoCanal', { id: canalId }, 'canal', 1);
+      return configs[0];
     },
-    enabled: !!empresaAtual?.id
+    enabled: contextoValido && canViewNotificacoes
   });
 
   const [configLocal, setConfigLocal] = useState({
@@ -89,9 +96,9 @@ export default function NotificacoesCanal({ canalConfig }) {
 
   const salvarMutation = useMutation({
     mutationFn: async () => {
-      if (!config?.id) return;
+      if (!config?.id || !contextoValido || !canEditNotificacoes) return;
       
-      await base44.entities.ConfiguracaoCanal.update(config.id, {
+      await updateInContext('ConfiguracaoCanal', config.id, {
         notificacoes: configLocal
       });
     },
@@ -118,7 +125,7 @@ export default function NotificacoesCanal({ canalConfig }) {
   };
 
   return (
-    <Card className="w-full">
+    <Card className="w-full h-full" data-permission="Sistema.Integracoes.editar" data-context-required="group-or-company">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2">
           <Bell className="w-5 h-5 text-blue-600" />
@@ -142,6 +149,10 @@ export default function NotificacoesCanal({ canalConfig }) {
                   </div>
                   <Switch
                     checked={configLocal[tipo.id]}
+                    disabled={!contextoValido || !canEditNotificacoes || !config?.id}
+                    data-action="NotificacoesCanal.toggleTipo"
+                    data-permission="Sistema.Integracoes.editar"
+                    data-context-required="group-or-company"
                     onCheckedChange={() => toggleTipo(tipo.id)}
                   />
                 </div>
@@ -163,6 +174,10 @@ export default function NotificacoesCanal({ canalConfig }) {
                 <button
                   key={canal.id}
                   onClick={() => toggleCanal(canal.id)}
+                  disabled={!contextoValido || !canEditNotificacoes || !config?.id}
+                  data-action="NotificacoesCanal.toggleCanal"
+                  data-permission="Sistema.Integracoes.editar"
+                  data-context-required="group-or-company"
                   className={`p-3 rounded-lg border-2 flex items-center gap-2 transition-all ${
                     ativo 
                       ? 'border-blue-500 bg-blue-50 text-blue-700' 
@@ -190,6 +205,10 @@ export default function NotificacoesCanal({ canalConfig }) {
           </div>
           <Switch
             checked={configLocal.som_ativado}
+            disabled={!contextoValido || !canEditNotificacoes || !config?.id}
+            data-action="NotificacoesCanal.toggleSom"
+            data-permission="Sistema.Integracoes.editar"
+            data-context-required="group-or-company"
             onCheckedChange={(checked) => setConfigLocal(prev => ({ ...prev, som_ativado: checked }))}
           />
         </div>
@@ -197,8 +216,12 @@ export default function NotificacoesCanal({ canalConfig }) {
         {/* Salvar */}
         <Button
           onClick={() => salvarMutation.mutate()}
-          disabled={salvarMutation.isPending}
+          disabled={salvarMutation.isPending || !contextoValido || !canEditNotificacoes || !config?.id}
           className="w-full bg-blue-600 hover:bg-blue-700"
+          data-action="NotificacoesCanal.salvar"
+          data-permission="Sistema.Integracoes.editar"
+          data-context-required="group-or-company"
+          data-sensitive="true"
         >
           {salvarMutation.isPending ? (
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />

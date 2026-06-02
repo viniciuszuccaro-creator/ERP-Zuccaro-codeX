@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Settings2, Users, TrendingUp, Settings, Brain } from 'lucide-react';
 import { toast } from 'sonner';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * V21.6 - ROTEAMENTO INTELIGENTE DE CONVERSAS
@@ -24,7 +24,16 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
  */
 export default function RoteamentoInteligente({ canalConfig }) {
   const queryClient = useQueryClient();
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext, updateInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const empresaId = empresaAtual?.id;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id;
+  const contextKey = empresaId || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const canViewRoteamento = hasPermission('CRM', 'Atendimento', 'visualizar') ||
+    hasPermission('Sistema', 'Integracoes', 'visualizar');
+  const canEditRoteamento = hasPermission('CRM', 'Atendimento', 'editar') ||
+    hasPermission('Sistema', 'Integracoes', 'editar');
 
   const [regras, setRegras] = useState({
     tipo_roteamento: 'round-robin',
@@ -36,20 +45,20 @@ export default function RoteamentoInteligente({ canalConfig }) {
   });
 
   const { data: atendentes = [] } = useQuery({
-    queryKey: ['atendentes-equipe', empresaAtual?.id],
+    queryKey: ['atendentes-equipe', contextKey, canalConfig?.id],
     queryFn: async () => {
-      const usuarios = await base44.entities.User.list();
+      const usuarios = await filterInContext('User', {}, 'full_name', 500);
       return usuarios.filter(u => 
         canalConfig?.equipe_atendimento_ids?.includes(u.id)
       );
     },
-    enabled: !!canalConfig
+    enabled: !!canalConfig && contextoValido && canViewRoteamento
   });
 
   const { data: estatisticas = [] } = useQuery({
-    queryKey: ['estatisticas-atendentes'],
+    queryKey: ['estatisticas-atendentes', contextKey, canalConfig?.id],
     queryFn: async () => {
-      const conversas = await base44.entities.ConversaOmnicanal.list();
+      const conversas = await filterInContext('ConversaOmnicanal', {}, '-data_inicio', 1000);
       
       return atendentes.map(atendente => {
         const conversasAtendente = conversas.filter(c => c.atendente_id === atendente.id);
@@ -74,14 +83,14 @@ export default function RoteamentoInteligente({ canalConfig }) {
         };
       });
     },
-    enabled: atendentes.length > 0
+    enabled: atendentes.length > 0 && contextoValido && canViewRoteamento
   });
 
   const salvarRegrasMutation = useMutation({
     mutationFn: async () => {
-      if (!canalConfig?.id) return;
+      if (!canalConfig?.id || !contextoValido || !canEditRoteamento) return;
       
-      await base44.entities.ConfiguracaoCanal.update(canalConfig.id, {
+      await updateInContext('ConfiguracaoCanal', canalConfig.id, {
         regras_roteamento: regras
       });
     },
@@ -115,7 +124,9 @@ export default function RoteamentoInteligente({ canalConfig }) {
     }
 
     if (atendenteEscolhido) {
-      await base44.entities.ConversaOmnicanal.update(conversaId, {
+      if (!contextoValido || !canEditRoteamento) return;
+
+      await updateInContext('ConversaOmnicanal', conversaId, {
         atendente_id: atendenteEscolhido.atendente_id,
         atendente_nome: atendenteEscolhido.nome,
         status: 'Em Progresso'
@@ -126,7 +137,7 @@ export default function RoteamentoInteligente({ canalConfig }) {
   };
 
   return (
-    <div className="w-full h-full space-y-6">
+    <div className="w-full h-full space-y-6" data-permission="CRM.Atendimento.editar" data-context-required="group-or-company">
       <Card className="w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -154,6 +165,10 @@ export default function RoteamentoInteligente({ canalConfig }) {
             <Label>Priorizar último atendente</Label>
             <Switch
               checked={regras.priorizar_ultimo_atendente}
+              disabled={!contextoValido || !canEditRoteamento || !canalConfig?.id}
+              data-action="RoteamentoInteligente.toggleUltimoAtendente"
+              data-permission="CRM.Atendimento.editar"
+              data-context-required="group-or-company"
               onCheckedChange={(checked) => setRegras({ ...regras, priorizar_ultimo_atendente: checked })}
             />
           </div>
@@ -162,6 +177,10 @@ export default function RoteamentoInteligente({ canalConfig }) {
             <Label>Considerar carga de trabalho</Label>
             <Switch
               checked={regras.considerar_carga_trabalho}
+              disabled={!contextoValido || !canEditRoteamento || !canalConfig?.id}
+              data-action="RoteamentoInteligente.toggleCarga"
+              data-permission="CRM.Atendimento.editar"
+              data-context-required="group-or-company"
               onCheckedChange={(checked) => setRegras({ ...regras, considerar_carga_trabalho: checked })}
             />
           </div>
@@ -175,6 +194,10 @@ export default function RoteamentoInteligente({ canalConfig }) {
             </Label>
             <Switch
               checked={regras.usar_ia_matching}
+              disabled={!contextoValido || !canEditRoteamento || !canalConfig?.id}
+              data-action="RoteamentoInteligente.toggleIA"
+              data-permission="CRM.Atendimento.editar"
+              data-context-required="group-or-company"
               onCheckedChange={(checked) => setRegras({ ...regras, usar_ia_matching: checked })}
             />
           </div>
@@ -193,8 +216,12 @@ export default function RoteamentoInteligente({ canalConfig }) {
 
           <Button
             onClick={() => salvarRegrasMutation.mutate()}
-            disabled={salvarRegrasMutation.isPending}
+            disabled={salvarRegrasMutation.isPending || !contextoValido || !canEditRoteamento || !canalConfig?.id}
             className="w-full bg-blue-600 hover:bg-blue-700"
+            data-action="RoteamentoInteligente.salvarRegras"
+            data-permission="CRM.Atendimento.editar"
+            data-context-required="group-or-company"
+            data-sensitive="true"
           >
             Salvar Regras
           </Button>

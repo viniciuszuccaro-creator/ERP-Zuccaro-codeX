@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +13,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * V21.6 - AVALIAÇÃO DE ATENDIMENTO (CSAT)
@@ -26,15 +27,26 @@ import { motion } from 'framer-motion';
  * ✅ Registro na conversa
  */
 export default function AvaliacaoAtendimento({ conversa, onAvaliacaoEnviada }) {
+  const { empresaAtual, grupoAtual, updateInContext, createInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
   const [nota, setNota] = useState(0);
   const [hoverNota, setHoverNota] = useState(0);
   const [feedback, setFeedback] = useState('');
   const [nps, setNps] = useState(null);
   const [etapa, setEtapa] = useState('estrelas'); // estrelas, feedback, nps, concluido
+  const empresaId = conversa?.empresa_id || empresaAtual?.id;
+  const groupId = conversa?.group_id || conversa?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id;
+  const contextoValido = Boolean(empresaId || groupId);
+  const canAvaliar = hasPermission('CRM', 'Atendimento', 'editar') ||
+    hasPermission('CRM', 'Atendimento', 'criar');
 
   const enviarAvaliacaoMutation = useMutation({
     mutationFn: async () => {
-      await base44.entities.ConversaOmnicanal.update(conversa.id, {
+      if (!contextoValido || !canAvaliar) {
+        throw new Error('Contexto ou permissao insuficiente para registrar avaliacao');
+      }
+
+      await updateInContext('ConversaOmnicanal', conversa.id, {
         score_satisfacao: nota,
         feedback_cliente: feedback || null,
         nps_score: nps,
@@ -44,7 +56,7 @@ export default function AvaliacaoAtendimento({ conversa, onAvaliacaoEnviada }) {
       });
 
       // Criar mensagem de sistema
-      await base44.entities.MensagemOmnicanal.create({
+      await createInContext('MensagemOmnicanal', {
         conversa_id: conversa.id,
         sessao_id: conversa.sessao_id,
         canal: conversa.canal,
@@ -80,7 +92,7 @@ export default function AvaliacaoAtendimento({ conversa, onAvaliacaoEnviada }) {
   if (!conversa) return null;
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full h-full max-w-md mx-auto" data-permission="CRM.Atendimento.editar" data-context-required="group-or-company">
       <CardHeader className="pb-3 text-center">
         <CardTitle className="text-lg flex items-center justify-center gap-2">
           {etapa === 'concluido' ? (
@@ -258,9 +270,13 @@ export default function AvaliacaoAtendimento({ conversa, onAvaliacaoEnviada }) {
                 Voltar
               </Button>
               <Button
-                onClick={() => enviarAvaliacaoMutation.mutate()}
-                disabled={enviarAvaliacaoMutation.isPending}
+              onClick={() => enviarAvaliacaoMutation.mutate()}
+                disabled={enviarAvaliacaoMutation.isPending || !contextoValido || !canAvaliar}
                 className="flex-1 bg-green-600 hover:bg-green-700"
+                data-action="AvaliacaoAtendimento.enviar"
+                data-permission="CRM.Atendimento.editar"
+                data-context-required="group-or-company"
+                data-sensitive="true"
               >
                 {enviarAvaliacaoMutation.isPending ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
@@ -275,7 +291,12 @@ export default function AvaliacaoAtendimento({ conversa, onAvaliacaoEnviada }) {
 
             <button
               onClick={() => enviarAvaliacaoMutation.mutate()}
+              disabled={enviarAvaliacaoMutation.isPending || !contextoValido || !canAvaliar}
               className="w-full text-sm text-slate-500 hover:text-slate-700"
+              data-action="AvaliacaoAtendimento.pularNpsEnviar"
+              data-permission="CRM.Atendimento.editar"
+              data-context-required="group-or-company"
+              data-sensitive="true"
             >
               Pular NPS e enviar
             </button>

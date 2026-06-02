@@ -1,3 +1,14 @@
+### Atendimento/Chatbot - Fase 8 Notificacoes, Roteamento, Avaliacao e Tags
+- Seguido o plano de melhoria nos componentes existentes `NotificacoesCanal`, `RoteamentoInteligente`, `AvaliacaoAtendimento` e `TagsCategorizacao`, sem criar tela, modulo, componente ou arquivo novo.
+- `NotificacoesCanal` deixou de buscar/atualizar `ConfiguracaoCanal` diretamente e passou a usar `filterInContext` e `updateInContext`, bloqueando toggles e salvamento sem contexto/permissao.
+- `RoteamentoInteligente` deixou de listar usuarios/conversas globalmente e passou a carregar equipe e estatisticas por grupo/empresa; regras e atribuicao de conversa agora usam `updateInContext`.
+- `AvaliacaoAtendimento` passou a atualizar conversa e criar mensagem interna por `updateInContext`/`createInContext`, exigindo contexto e permissao antes de finalizar atendimento.
+- `TagsCategorizacao` passou a atualizar tags da conversa por `updateInContext`, com bloqueio de edicao, adicao e remocao sem contexto/RBAC.
+- Acoes sensiveis receberam `data-action`, `data-permission`, `data-context-required` e `data-sensitive` quando alteram dados.
+- Mantida a Regra-Mae: fluxos atuais de notificacao, roteamento, CSAT/NPS e tags foram preservados; apenas contexto, RBAC e rastreabilidade foram reforcados.
+- Build validado com sucesso via Vite; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em Atendimento/Chatbot nos componentes auxiliares restantes `HistoricoClienteChat`, `SugestoesIA`, `IAConversacional`, `TranscricaoAudio` e pontos com `InvokeLLM`/consultas diretas.
+
 ### Atendimento/Chatbot - Fase 8 Configuracao, Templates e Automacoes
 - Seguido o plano de melhoria nos componentes existentes `ConfiguracaoCanais`, `BaseConhecimento`, `AutomacaoFluxos`, `TemplatesMensagens` e `GerenciadorTemplates`, sem criar tela, modulo, componente ou arquivo novo.
 - `ConfiguracaoCanais` deixou de consultar/criar/atualizar `ConfiguracaoCanal` diretamente e passou a usar `filterInContext`, `createInContext` e `updateInContext` com chave por grupo/empresa.
