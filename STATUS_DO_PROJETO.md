@@ -1,3 +1,12 @@
+### Atendimento/Chatbot - Fase 8 Dashboard, Fila e Exportacoes
+- Seguido o plano de melhoria em componentes existentes de Atendimento/Chatbot, sem criar tela, modulo, componente ou arquivo novo.
+- `ChatbotDashboard` deixou de listar `ConversaOmnicanal`, `MensagemOmnicanal` e `ChatbotInteracao` globalmente e passou a usar `filterInContext` com chave por grupo/empresa.
+- `ChatbotFilaEspera` deixou de buscar conversas aguardando e usuarios de forma global/direta e passou a respeitar contexto grupo/empresa e RBAC de atendimento.
+- `ExportarConversas` deixou de exportar conversas por filtro direto de empresa e passou a carregar dados via `filterInContext`, bloquear exportacao sem contexto/RBAC e auditar sucesso ou bloqueio em `AuditLog`.
+- Componentes receberam `w-full`, `h-full`, `data-permission`, `data-context-required`, `data-sensitive` nas exportacoes e avisos visuais quando faltar contexto ou permissao.
+- Mantida a Regra-Mae: fluxos compartilhados de IA/CRM/Atendimento foram preservados; somente consultas, bloqueios e exportacoes existentes foram reforcados.
+- Proximo passo sugerido: continuar Fase 8 em Atendimento/Chatbot nos widgets `ChatbotWidget`, `ChatbotWidgetAvancado`, `ChatbotMulticanal` e `TransferirConversa`, revisando criacao/atualizacao de conversas, mensagens e notificacoes com contexto, RBAC e auditoria.
+
 ### Sistema - Fase 8 Atalhos Iniciais e Layout Global
 - Seguido pedido do plano de melhoria no layout global existente `src/Layout.jsx`, sem criar tela, modulo, componente ou arquivo novo.
 - Removidos do inicio/cabecalho do sistema os atalhos visuais `IA Estoque`, `IA Financeiro` e `Funil/KPIs`.

@@ -1,6 +1,5 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -16,6 +15,7 @@ import {
   Timer
 } from 'lucide-react';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 import {
   LineChart,
   Line,
@@ -46,32 +46,41 @@ import {
  * ✅ Satisfação do cliente (CSAT)
  */
 export default function ChatbotDashboard() {
-  const { empresaAtual, filtrarPorContexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextKey = empresaId || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const canViewDashboard = hasPermission('CRM', 'Atendimento', 'visualizar') ||
+    hasPermission('Sistema', 'Integracoes', 'visualizar') ||
+    hasPermission('Dashboard', 'Atendimento', 'visualizar');
 
   // Buscar todas as conversas
   const { data: conversas = [] } = useQuery({
-    queryKey: ['conversas-analytics', empresaAtual?.id],
+    queryKey: ['conversas-analytics', contextKey],
     queryFn: async () => {
-      return await base44.entities.ConversaOmnicanal.list();
+      return await filterInContext('ConversaOmnicanal', {}, '-data_inicio', 1000);
     },
-    select: (data) => filtrarPorContexto(data, 'empresa_id')
+    enabled: contextoValido && canViewDashboard
   });
 
   // Buscar todas as mensagens
   const { data: mensagens = [] } = useQuery({
-    queryKey: ['mensagens-analytics', empresaAtual?.id],
+    queryKey: ['mensagens-analytics', contextKey],
     queryFn: async () => {
-      return await base44.entities.MensagemOmnicanal.list();
-    }
+      return await filterInContext('MensagemOmnicanal', {}, '-created_date', 2000);
+    },
+    enabled: contextoValido && canViewDashboard
   });
 
   // Buscar interações
   const { data: interacoes = [] } = useQuery({
-    queryKey: ['interacoes-analytics', empresaAtual?.id],
+    queryKey: ['interacoes-analytics', contextKey],
     queryFn: async () => {
-      return await base44.entities.ChatbotInteracao.list();
+      return await filterInContext('ChatbotInteracao', {}, '-created_date', 1000);
     },
-    select: (data) => filtrarPorContexto(data, 'empresa_id')
+    enabled: contextoValido && canViewDashboard
   });
 
   // Calcular métricas
@@ -170,7 +179,13 @@ export default function ChatbotDashboard() {
   };
 
   return (
-    <div className="w-full h-full space-y-6 overflow-auto">
+    <div className="w-full h-full space-y-6 overflow-auto" data-permission="CRM.Atendimento.visualizar" data-context-required="group-or-company">
+      {(!contextoValido || !canViewDashboard) && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          Selecione um grupo/empresa e confirme permissao de atendimento para visualizar o dashboard.
+        </div>
+      )}
+
       {/* KPIs Principais */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         <Card>

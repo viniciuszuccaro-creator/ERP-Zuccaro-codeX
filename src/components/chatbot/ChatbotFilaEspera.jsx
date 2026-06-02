@@ -1,10 +1,10 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Users, AlertCircle, TrendingUp } from 'lucide-react';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * V21.5 - FILA DE ESPERA INTELIGENTE
@@ -17,26 +17,32 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
  * ✅ Distribuição inteligente
  */
 export default function ChatbotFilaEspera() {
-  const { empresaAtual, filtrarPorContexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextKey = empresaId || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const canViewFila = hasPermission('CRM', 'Atendimento', 'visualizar') ||
+    hasPermission('Sistema', 'Integracoes', 'visualizar');
 
   const { data: conversasAguardando = [] } = useQuery({
-    queryKey: ['fila-espera', empresaAtual?.id],
+    queryKey: ['fila-espera', contextKey],
     queryFn: async () => {
-      return await base44.entities.ConversaOmnicanal.filter({
-        status: 'Aguardando',
-        empresa_id: empresaAtual?.id
-      }, '-transferido_em');
+      return await filterInContext('ConversaOmnicanal', { status: 'Aguardando' }, '-transferido_em', 200);
     },
+    enabled: contextoValido && canViewFila,
     refetchInterval: 5000
   });
 
   const { data: atendentesDisponiveis = [] } = useQuery({
-    queryKey: ['atendentes-disponiveis'],
+    queryKey: ['atendentes-disponiveis', contextKey],
     queryFn: async () => {
       // Buscar usuários com permissão de atendimento
-      const usuarios = await base44.entities.User.list();
+      const usuarios = await filterInContext('User', {}, 'full_name', 500);
       return usuarios.filter(u => u.role === 'admin' || u.email); // Placeholder
-    }
+    },
+    enabled: contextoValido && canViewFila
   });
 
   const calcularTempoEspera = (dataTransferencia) => {
@@ -69,7 +75,13 @@ export default function ChatbotFilaEspera() {
     : 0;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full h-full" data-permission="CRM.Atendimento.visualizar" data-context-required="group-or-company">
+      {(!contextoValido || !canViewFila) && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          Selecione um grupo/empresa e confirme permissao de atendimento para visualizar a fila.
+        </div>
+      )}
+
       {/* Resumo da Fila */}
       <div className="grid grid-cols-3 gap-4">
         <Card>
