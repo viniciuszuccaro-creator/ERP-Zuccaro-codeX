@@ -16,6 +16,8 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * V21.6 - IA CONVERSACIONAL AVANÇADA
@@ -29,11 +31,20 @@ import { motion } from 'framer-motion';
  * ✅ Análise de risco de churn
  */
 export default function IAConversacional({ conversa, mensagens = [], clienteId }) {
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const empresaId = conversa?.empresa_id || empresaAtual?.id;
+  const groupId = conversa?.group_id || conversa?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id;
+  const contextKey = empresaId || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const canUseIA = hasPermission('CRM', 'Atendimento', 'visualizar') ||
+    hasPermission('Sistema', 'Integracoes', 'visualizar');
+
   // Buscar análise da IA
   const { data: analise, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['ia-analise-conversa', conversa?.id],
+    queryKey: ['ia-analise-conversa', conversa?.id, contextKey],
     queryFn: async () => {
-      if (!conversa || mensagens.length < 2) return null;
+      if (!conversa || mensagens.length < 2 || !contextoValido || !canUseIA) return null;
 
       const ultimasMensagens = mensagens.slice(-10).map(m => ({
         remetente: m.tipo_remetente,
@@ -132,7 +143,7 @@ Forneça:
         };
       }
     },
-    enabled: !!conversa && mensagens.length >= 2,
+    enabled: !!conversa && mensagens.length >= 2 && contextoValido && canUseIA,
     staleTime: 60000, // 1 minuto
     retry: 1 // Tentar apenas 1 vez em caso de erro
   });
@@ -141,7 +152,7 @@ Forneça:
 
   if (isLoading) {
     return (
-      <Card className="w-full">
+      <Card className="w-full h-full" data-permission="CRM.Atendimento.visualizar" data-context-required="group-or-company">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600" />
@@ -154,7 +165,7 @@ Forneça:
 
   if (!analise) {
     return (
-      <Card className="w-full">
+      <Card className="w-full h-full" data-permission="CRM.Atendimento.visualizar" data-context-required="group-or-company">
         <CardContent className="p-4 text-center text-slate-500">
           <Brain className="w-8 h-8 mx-auto mb-2 opacity-30" />
           <p className="text-sm">Aguardando mais mensagens para análise</p>
@@ -170,7 +181,7 @@ Forneça:
   };
 
   return (
-    <Card className="w-full border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50">
+    <Card className="w-full h-full border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50" data-permission="CRM.Atendimento.visualizar" data-context-required="group-or-company">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-purple-900">
           <Brain className="w-5 h-5 text-purple-600" />

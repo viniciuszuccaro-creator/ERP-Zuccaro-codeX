@@ -6,6 +6,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Mic, Square, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * V21.5 - TRANSCRIÇÃO DE ÁUDIO COM IA
@@ -18,14 +20,25 @@ import { motion } from 'framer-motion';
  * ✅ Detecção de urgência por voz
  */
 export default function TranscricaoAudio({ onTranscricao }) {
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
   const [gravando, setGravando] = useState(false);
   const [duracao, setDuracao] = useState(0);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const intervaloRef = useRef(null);
+  const empresaId = empresaAtual?.id;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id;
+  const contextoValido = Boolean(empresaId || groupId);
+  const canTranscrever = hasPermission('CRM', 'Atendimento', 'criar') ||
+    hasPermission('CRM', 'Atendimento', 'editar');
 
   const transcricaoMutation = useMutation({
     mutationFn: async (audioBlob) => {
+      if (!contextoValido || !canTranscrever) {
+        throw new Error('Contexto ou permissao insuficiente para transcrever audio');
+      }
+
       // Upload do áudio
       const file = new File([audioBlob], `audio-${Date.now()}.webm`, { type: 'audio/webm' });
       const uploadResult = await base44.integrations.Core.UploadFile({ file });
@@ -69,6 +82,11 @@ Retorne em JSON.
   });
 
   const iniciarGravacao = async () => {
+    if (!contextoValido || !canTranscrever) {
+      toast.error('Selecione grupo/empresa e confirme permissao para transcrever audio');
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
@@ -114,14 +132,18 @@ Retorne em JSON.
   };
 
   return (
-    <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50">
+    <Card className="w-full h-full border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50" data-permission="CRM.Atendimento.criar" data-context-required="group-or-company">
       <CardContent className="p-4">
         <div className="text-center space-y-3">
           {!gravando ? (
             <Button
               onClick={iniciarGravacao}
-              disabled={transcricaoMutation.isPending}
+              disabled={transcricaoMutation.isPending || !contextoValido || !canTranscrever}
               className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 w-full"
+              data-action="TranscricaoAudio.iniciar"
+              data-permission="CRM.Atendimento.criar"
+              data-context-required="group-or-company"
+              data-sensitive="true"
             >
               <Mic className="w-4 h-4 mr-2" />
               Gravar Áudio
@@ -146,6 +168,10 @@ Retorne em JSON.
               <Button
                 onClick={pararGravacao}
                 className="bg-slate-900 hover:bg-slate-800 w-full"
+                data-action="TranscricaoAudio.pararTranscrever"
+                data-permission="CRM.Atendimento.criar"
+                data-context-required="group-or-company"
+                data-sensitive="true"
               >
                 <Square className="w-4 h-4 mr-2" />
                 Parar e Transcrever

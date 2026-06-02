@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * V21.6 - SUGESTÕES INTELIGENTES DE IA
@@ -25,10 +27,19 @@ import { motion } from 'framer-motion';
  * ✅ Oportunidades de venda
  */
 export default function SugestoesIA({ conversa, mensagens = [] }) {
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const empresaId = conversa?.empresa_id || empresaAtual?.id;
+  const groupId = conversa?.group_id || conversa?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id;
+  const contextKey = empresaId || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const canUseIA = hasPermission('CRM', 'Atendimento', 'visualizar') ||
+    hasPermission('Sistema', 'Integracoes', 'visualizar');
+
   const { data: sugestoes, isLoading, refetch } = useQuery({
-    queryKey: ['sugestoes-ia', conversa?.id, mensagens.length],
+    queryKey: ['sugestoes-ia', conversa?.id, mensagens.length, contextKey],
     queryFn: async () => {
-      if (!conversa || mensagens.length < 1) return null;
+      if (!conversa || mensagens.length < 1 || !contextoValido || !canUseIA) return null;
 
       // Pegar últimas mensagens para contexto
       const ultimasMensagens = mensagens.slice(-5);
@@ -105,7 +116,7 @@ Também sugira 2 ações que o atendente deve considerar.`,
         };
       }
     },
-    enabled: !!conversa && mensagens.length >= 1,
+    enabled: !!conversa && mensagens.length >= 1 && contextoValido && canUseIA,
     staleTime: 30000,
     retry: 1
   });
@@ -119,7 +130,7 @@ Também sugira 2 ações que o atendente deve considerar.`,
 
   if (isLoading) {
     return (
-      <Card className="w-full">
+      <Card className="w-full h-full" data-permission="CRM.Atendimento.visualizar" data-context-required="group-or-company">
         <CardContent className="p-4">
           <div className="flex items-center gap-2 text-slate-500">
             <Sparkles className="w-4 h-4 animate-pulse" />
@@ -132,7 +143,7 @@ Também sugira 2 ações que o atendente deve considerar.`,
 
   if (!sugestoes) {
     return (
-      <Card className="w-full">
+      <Card className="w-full h-full" data-permission="CRM.Atendimento.visualizar" data-context-required="group-or-company">
         <CardContent className="p-4 text-center text-slate-400">
           <Lightbulb className="w-6 h-6 mx-auto mb-2 opacity-30" />
           <p className="text-xs">Aguardando mensagem do cliente</p>
@@ -142,7 +153,7 @@ Também sugira 2 ações que o atendente deve considerar.`,
   }
 
   return (
-    <Card className="w-full border-yellow-200 bg-gradient-to-br from-yellow-50 to-orange-50">
+    <Card className="w-full h-full border-yellow-200 bg-gradient-to-br from-yellow-50 to-orange-50" data-permission="CRM.Atendimento.visualizar" data-context-required="group-or-company">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-sm text-yellow-900">
           <Lightbulb className="w-4 h-4 text-yellow-600" />
@@ -183,6 +194,9 @@ Também sugira 2 ações que o atendente deve considerar.`,
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.1 }}
                   className="group p-2 bg-white rounded-lg border hover:border-yellow-400 transition-colors cursor-pointer"
+                  data-action="SugestoesIA.copiarResposta"
+                  data-permission="CRM.Atendimento.visualizar"
+                  data-context-required="group-or-company"
                   onClick={() => copiarResposta(resp.texto)}
                 >
                   <div className="flex items-start justify-between gap-2">

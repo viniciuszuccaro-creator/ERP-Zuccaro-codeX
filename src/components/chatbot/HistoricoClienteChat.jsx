@@ -1,5 +1,4 @@
 import React from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +12,8 @@ import {
   Phone,
   User
 } from "lucide-react";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * V21.5 - HISTÓRICO DO CLIENTE NO HUB
@@ -21,34 +22,43 @@ import {
  * durante o atendimento
  */
 export default function HistoricoClienteChat({ clienteId }) {
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const empresaId = empresaAtual?.id;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id;
+  const contextKey = empresaId || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const canViewHistorico = hasPermission('CRM', 'Atendimento', 'visualizar') ||
+    hasPermission('CRM', 'Clientes', 'visualizar') ||
+    hasPermission('Comercial', 'Clientes', 'visualizar');
+
   // Buscar dados do cliente
   const { data: cliente } = useQuery({
-    queryKey: ['cliente-chat', clienteId],
-    queryFn: () => base44.entities.Cliente.get(clienteId),
-    enabled: !!clienteId
+    queryKey: ['cliente-chat', clienteId, contextKey],
+    queryFn: async () => {
+      const clientes = await filterInContext('Cliente', { id: clienteId }, 'nome', 1);
+      return clientes[0];
+    },
+    enabled: !!clienteId && contextoValido && canViewHistorico
   });
 
   // Buscar pedidos recentes
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos-cliente-chat', clienteId],
-    queryFn: () => base44.entities.Pedido.filter({ cliente_id: clienteId }, '-data_pedido', 5),
-    enabled: !!clienteId
+    queryKey: ['pedidos-cliente-chat', clienteId, contextKey],
+    queryFn: () => filterInContext('Pedido', { cliente_id: clienteId }, '-data_pedido', 5),
+    enabled: !!clienteId && contextoValido && canViewHistorico
   });
 
   // Buscar conversas anteriores
   const { data: conversasAnteriores = [] } = useQuery({
-    queryKey: ['conversas-anteriores', clienteId],
-    queryFn: () => base44.entities.ConversaOmnicanal.filter(
-      { cliente_id: clienteId, status: 'Resolvida' },
-      '-data_finalizacao',
-      10
-    ),
-    enabled: !!clienteId
+    queryKey: ['conversas-anteriores', clienteId, contextKey],
+    queryFn: () => filterInContext('ConversaOmnicanal', { cliente_id: clienteId, status: 'Resolvida' }, '-data_finalizacao', 10),
+    enabled: !!clienteId && contextoValido && canViewHistorico
   });
 
   if (!clienteId || !cliente) {
     return (
-      <Card className="h-full">
+      <Card className="w-full h-full" data-permission="CRM.Atendimento.visualizar" data-context-required="group-or-company">
         <CardContent className="p-6 text-center text-slate-400">
           <User className="w-12 h-12 mx-auto mb-3 opacity-30" />
           <p>Selecione uma conversa para ver o histórico do cliente</p>
@@ -58,7 +68,7 @@ export default function HistoricoClienteChat({ clienteId }) {
   }
 
   return (
-    <div className="h-full overflow-auto space-y-4">
+    <div className="w-full h-full overflow-auto space-y-4" data-permission="CRM.Atendimento.visualizar" data-context-required="group-or-company">
       {/* Informações do Cliente */}
       <Card>
         <CardHeader className="pb-3">

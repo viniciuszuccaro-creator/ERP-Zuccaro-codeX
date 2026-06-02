@@ -1,3 +1,14 @@
+### Atendimento/Chatbot - Fase 8 Historico, IA Auxiliar e Transcricao
+- Seguido o plano de melhoria nos componentes existentes `HistoricoClienteChat`, `SugestoesIA`, `IAConversacional` e `TranscricaoAudio`, sem criar tela, modulo, componente ou arquivo novo.
+- `HistoricoClienteChat` deixou de usar `Cliente.get`, `Pedido.filter` e `ConversaOmnicanal.filter` diretos e passou a consultar cliente, pedidos e conversas anteriores por `filterInContext`.
+- Historico do cliente agora usa chave por grupo/empresa e exige permissao de atendimento/clientes antes de carregar dados sensiveis.
+- `SugestoesIA` e `IAConversacional` passaram a executar `InvokeLLM` somente com contexto grupo/empresa e permissao de atendimento/integracoes.
+- `TranscricaoAudio` passou a bloquear gravacao, upload e transcricao por IA sem contexto e RBAC de atendimento.
+- Cards e acoes sensiveis receberam `w-full`, `h-full`, `data-permission`, `data-context-required`, `data-action` e `data-sensitive` quando aplicavel.
+- Mantida a Regra-Mae: fluxos atuais de historico, sugestoes de IA, analise conversacional e transcricao foram preservados; apenas contexto, RBAC e rastreabilidade foram reforcados.
+- Build validado com sucesso via Vite; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 em Atendimento/Chatbot nos componentes restantes com `base44` direto, priorizando `ConfiguracaoAvancada`, `IntegracaoWhatsApp`, `WebhooksTester`, `DashboardAtendente`/componentes legados e revisao final de chamadas `InvokeLLM`.
+
 ### Atendimento/Chatbot - Fase 8 Notificacoes, Roteamento, Avaliacao e Tags
 - Seguido o plano de melhoria nos componentes existentes `NotificacoesCanal`, `RoteamentoInteligente`, `AvaliacaoAtendimento` e `TagsCategorizacao`, sem criar tela, modulo, componente ou arquivo novo.
 - `NotificacoesCanal` deixou de buscar/atualizar `ConfiguracaoCanal` diretamente e passou a usar `filterInContext` e `updateInContext`, bloqueando toggles e salvamento sem contexto/permissao.
