@@ -11,7 +11,8 @@ import {
   Users,
   Building,
   MessageCircle,
-  Check
+  Check,
+  AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
@@ -31,16 +32,26 @@ export default function TransferirConversa({ conversa, onTransferido }) {
   const [destinoId, setDestinoId] = useState('');
   const [nota, setNota] = useState('');
   const queryClient = useQueryClient();
-  const { empresaAtual } = useContextoVisual();
-  const { user } = usePermissions();
+  const { empresaAtual, grupoAtual, filterInContext, updateInContext, createInContext } = useContextoVisual();
+  const { user, hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || conversa?.group_id || conversa?.grupo_id || null;
+  const empresaId = empresaAtual?.id || conversa?.empresa_id || null;
+  const contextKey = empresaId || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const canTransferir = hasPermission('CRM', 'Atendimento', 'editar') || hasPermission('Sistema', 'Integracoes', 'editar');
+  const contextoPayload = {
+    ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
+    ...(empresaId ? { empresa_id: empresaId } : {})
+  };
 
   // Buscar atendentes disponíveis
   const { data: atendentes = [] } = useQuery({
-    queryKey: ['atendentes-disponiveis', empresaAtual?.id],
+    queryKey: ['atendentes-disponiveis', contextKey],
     queryFn: async () => {
-      const usuarios = await base44.entities.User.list();
+      const usuarios = await filterInContext('User', {}, 'full_name', 500);
       return usuarios.filter(u => u.id !== user?.id);
-    }
+    },
+    enabled: contextoValido && canTransferir
   });
 
   const departamentos = [
@@ -53,7 +64,15 @@ export default function TransferirConversa({ conversa, onTransferido }) {
 
   const transferirMutation = useMutation({
     mutationFn: async () => {
+      if (!contextoValido) {
+        throw new Error('Contexto de grupo ou empresa obrigatorio para transferir conversa.');
+      }
+      if (!canTransferir) {
+        throw new Error('Usuario sem permissao para transferir conversa.');
+      }
+
       const updates = {
+        ...contextoPayload,
         status: tipo === 'fila' ? 'Não Atribuída' : 'Aguardando',
         transferido_em: new Date().toISOString(),
         transferido_por: user?.id,
@@ -77,10 +96,11 @@ export default function TransferirConversa({ conversa, onTransferido }) {
         updates.departamento = null;
       }
 
-      await base44.entities.ConversaOmnicanal.update(conversa.id, updates);
+      await updateInContext('ConversaOmnicanal', conversa.id, updates);
 
       // Criar mensagem de sistema
-      await base44.entities.MensagemOmnicanal.create({
+      await createInContext('MensagemOmnicanal', {
+        ...contextoPayload,
         conversa_id: conversa.id,
         sessao_id: conversa.sessao_id,
         canal: conversa.canal,
@@ -98,7 +118,8 @@ export default function TransferirConversa({ conversa, onTransferido }) {
 
       // Notificar novo atendente
       if (tipo === 'atendente' && destinoId) {
-        await base44.entities.Notificacao.create({
+        await createInContext('Notificacao', {
+          ...contextoPayload,
           titulo: '📨 Conversa Transferida',
           mensagem: `${user?.full_name} transferiu uma conversa para você.\nCliente: ${conversa.cliente_nome}\nCanal: ${conversa.canal}${nota ? `\nNota: ${nota}` : ''}`,
           tipo: 'info',
@@ -108,19 +129,39 @@ export default function TransferirConversa({ conversa, onTransferido }) {
           link_acao: `/hub-atendimento?conversa=${conversa.id}`
         });
       }
+
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuario',
+        usuario_id: user?.id || null,
+        acao: 'Transferencia',
+        modulo: 'CRM',
+        tipo_auditoria: 'operacional',
+        entidade: 'ConversaOmnicanal',
+        registro_id: conversa.id,
+        descricao: `Conversa transferida para ${tipo}`,
+        empresa_id: empresaId,
+        group_id: groupId,
+        dados_anteriores: conversa,
+        dados_novos: { ...updates, tipo_transferencia: tipo, destino_id: destinoId || null },
+        data_hora: new Date().toISOString()
+      });
     },
     onSuccess: () => {
       toast.success('Conversa transferida!');
       queryClient.invalidateQueries({ queryKey: ['conversas-omnicanal'] });
       onTransferido?.();
     },
-    onError: () => {
-      toast.error('Erro ao transferir');
+    onError: (error) => {
+      toast.error(error?.message || 'Erro ao transferir');
     }
   });
 
   return (
-    <Card className="w-full">
+    <Card
+      className="w-full h-full"
+      data-permission="CRM.Atendimento.editar"
+      data-context-required="group_id|empresa_id"
+    >
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-blue-900">
           <ArrowRightLeft className="w-5 h-5 text-blue-600" />
@@ -128,13 +169,25 @@ export default function TransferirConversa({ conversa, onTransferido }) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {(!contextoValido || !canTransferir) && (
+          <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+            <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+            <span>
+              Selecione um grupo/empresa e confirme a permissao de atendimento para transferir conversas.
+            </span>
+          </div>
+        )}
+
         {/* Tipo de transferência */}
         <div className="grid grid-cols-3 gap-2">
           <Button
             variant={tipo === 'atendente' ? 'default' : 'outline'}
             size="sm"
             onClick={() => { setTipo('atendente'); setDestinoId(''); }}
+            disabled={!contextoValido || !canTransferir}
             className="flex-col h-auto py-3"
+            data-action="selecionar-transferencia-atendente"
+            data-permission="CRM.Atendimento.editar"
           >
             <User className="w-5 h-5 mb-1" />
             <span className="text-xs">Atendente</span>
@@ -143,7 +196,10 @@ export default function TransferirConversa({ conversa, onTransferido }) {
             variant={tipo === 'departamento' ? 'default' : 'outline'}
             size="sm"
             onClick={() => { setTipo('departamento'); setDestinoId(''); }}
+            disabled={!contextoValido || !canTransferir}
             className="flex-col h-auto py-3"
+            data-action="selecionar-transferencia-departamento"
+            data-permission="CRM.Atendimento.editar"
           >
             <Building className="w-5 h-5 mb-1" />
             <span className="text-xs">Depto</span>
@@ -152,7 +208,10 @@ export default function TransferirConversa({ conversa, onTransferido }) {
             variant={tipo === 'fila' ? 'default' : 'outline'}
             size="sm"
             onClick={() => { setTipo('fila'); setDestinoId(''); }}
+            disabled={!contextoValido || !canTransferir}
             className="flex-col h-auto py-3"
+            data-action="selecionar-transferencia-fila"
+            data-permission="CRM.Atendimento.editar"
           >
             <Users className="w-5 h-5 mb-1" />
             <span className="text-xs">Fila</span>
@@ -166,6 +225,7 @@ export default function TransferirConversa({ conversa, onTransferido }) {
               <button
                 key={atendente.id}
                 onClick={() => setDestinoId(atendente.id)}
+                disabled={!contextoValido || !canTransferir}
                 className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
                   destinoId === atendente.id 
                     ? 'border-blue-500 bg-blue-50' 
@@ -193,6 +253,7 @@ export default function TransferirConversa({ conversa, onTransferido }) {
               <button
                 key={depto.id}
                 onClick={() => setDestinoId(depto.id)}
+                disabled={!contextoValido || !canTransferir}
                 className={`p-3 rounded-lg border-2 text-center transition-all ${
                   destinoId === depto.id 
                     ? 'border-blue-500 bg-blue-50' 
@@ -221,6 +282,7 @@ export default function TransferirConversa({ conversa, onTransferido }) {
           <Textarea
             value={nota}
             onChange={(e) => setNota(e.target.value)}
+            disabled={!contextoValido || !canTransferir}
             placeholder="Adicione contexto para o próximo atendente..."
             className="h-20 text-sm"
           />
@@ -229,8 +291,11 @@ export default function TransferirConversa({ conversa, onTransferido }) {
         {/* Botão transferir */}
         <Button
           onClick={() => transferirMutation.mutate()}
-          disabled={transferirMutation.isPending || (tipo !== 'fila' && !destinoId)}
+          disabled={transferirMutation.isPending || !contextoValido || !canTransferir || (tipo !== 'fila' && !destinoId)}
           className="w-full bg-blue-600 hover:bg-blue-700"
+          data-action="transferir-conversa"
+          data-permission="CRM.Atendimento.editar"
+          data-context-required="group_id|empresa_id"
         >
           {transferirMutation.isPending ? (
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />

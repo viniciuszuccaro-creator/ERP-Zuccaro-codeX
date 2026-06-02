@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +20,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * V21.6 - GERENCIADOR MULTICANAL
@@ -33,8 +33,15 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
  * ✅ Links para configuração detalhada
  */
 export default function ChatbotMulticanal() {
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextKey = empresaId || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const canViewCanais = hasPermission('Sistema', 'Integracoes', 'visualizar') || hasPermission('CRM', 'Atendimento', 'visualizar');
+  const canEditCanais = hasPermission('Sistema', 'Integracoes', 'editar') || hasPermission('CRM', 'Atendimento', 'editar');
 
   const canaisDisponiveis = [
     { id: 'WhatsApp', nome: 'WhatsApp', icone: Phone, cor: 'bg-green-600', corLight: 'bg-green-100 text-green-700' },
@@ -49,19 +56,18 @@ export default function ChatbotMulticanal() {
 
   // Buscar configurações de canais
   const { data: configsCanais = [], isLoading } = useQuery({
-    queryKey: ['configs-canais-multi', empresaAtual?.id],
+    queryKey: ['configs-canais-multi', contextKey],
     queryFn: async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      return await base44.entities.ConfiguracaoCanal.filter(filtro);
-    }
+      return await filterInContext('ConfiguracaoCanal', {}, 'canal', 100);
+    },
+    enabled: contextoValido && canViewCanais
   });
 
   // Buscar estatísticas por canal
   const { data: estatisticas = {} } = useQuery({
-    queryKey: ['estatisticas-canais', empresaAtual?.id],
+    queryKey: ['estatisticas-canais', contextKey],
     queryFn: async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      const conversas = await base44.entities.ConversaOmnicanal.filter(filtro);
+      const conversas = await filterInContext('ConversaOmnicanal', {}, '-data_inicio', 1000);
 
       const stats = {};
       canaisDisponiveis.forEach(canal => {
@@ -75,19 +81,26 @@ export default function ChatbotMulticanal() {
       });
 
       return stats;
-    }
+    },
+    enabled: contextoValido && canViewCanais
   });
 
   const toggleCanalMutation = useMutation({
     mutationFn: async ({ canalId, ativo }) => {
+      if (!contextoValido) {
+        throw new Error('Contexto de grupo ou empresa obrigatorio para alterar canal.');
+      }
+      if (!canEditCanais) {
+        throw new Error('Usuario sem permissao para alterar canais.');
+      }
+
       const configExistente = configsCanais.find(c => c.canal === canalId);
       
       if (configExistente) {
-        await base44.entities.ConfiguracaoCanal.update(configExistente.id, { ativo });
+        await updateInContext('ConfiguracaoCanal', configExistente.id, { ativo });
       } else {
-        await base44.entities.ConfiguracaoCanal.create({
+        await createInContext('ConfiguracaoCanal', {
           canal: canalId,
-          empresa_id: empresaAtual?.id || 'default',
           ativo,
           modo_atendimento: 'Bot com Transbordo',
           mensagem_boas_vindas: `Olá! Bem-vindo ao atendimento via ${canalId}. Como posso ajudar?`
@@ -101,7 +114,7 @@ export default function ChatbotMulticanal() {
     },
     onError: (error) => {
       console.error('Erro ao atualizar canal:', error);
-      toast.error('Erro ao atualizar canal');
+      toast.error(error?.message || 'Erro ao atualizar canal');
     }
   });
 
@@ -133,7 +146,11 @@ export default function ChatbotMulticanal() {
   }
 
   return (
-    <div className="w-full h-full overflow-auto p-4 lg:p-6">
+    <div
+      className="w-full h-full overflow-auto p-4 lg:p-6"
+      data-permission="Sistema.Integracoes.visualizar"
+      data-context-required="group_id|empresa_id"
+    >
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -144,11 +161,26 @@ export default function ChatbotMulticanal() {
             </h1>
             <p className="text-slate-600 mt-1">Gerencie todos os canais de comunicação</p>
           </div>
-          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['configs-canais-multi'] })}>
+          <Button
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['configs-canais-multi'] })}
+            disabled={!contextoValido || !canViewCanais}
+            data-action="atualizar-canais"
+            data-permission="Sistema.Integracoes.visualizar"
+            data-context-required="group_id|empresa_id"
+          >
             <RefreshCw className="w-4 h-4 mr-2" />
             Atualizar
           </Button>
         </div>
+
+        {(!contextoValido || !canViewCanais) && (
+          <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+            <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+            <span>
+              Selecione um grupo/empresa e confirme a permissao em Integracoes ou Atendimento para gerenciar canais.
+            </span>
+          </div>
+        )}
 
         {/* Grid de Canais */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -159,7 +191,7 @@ export default function ChatbotMulticanal() {
             const Icone = canal.icone;
 
             return (
-              <Card key={canal.id} className={`relative overflow-hidden transition-all hover:shadow-lg ${
+              <Card key={canal.id} className={`relative h-full overflow-hidden transition-all hover:shadow-lg ${
                 status.status === 'ativo' ? 'ring-2 ring-green-500' : ''
               }`}>
                 {/* Indicador de Status */}
@@ -181,7 +213,11 @@ export default function ChatbotMulticanal() {
                     
                     <Switch
                       checked={config?.ativo || false}
-                      disabled={toggleCanalMutation.isPending}
+                      disabled={toggleCanalMutation.isPending || !contextoValido || !canEditCanais}
+                      data-action="alternar-canal"
+                      data-channel={canal.id}
+                      data-permission="Sistema.Integracoes.editar"
+                      data-context-required="group_id|empresa_id"
                       onCheckedChange={(checked) => {
                         toggleCanalMutation.mutate({ canalId: canal.id, ativo: checked });
                       }}
@@ -218,6 +254,10 @@ export default function ChatbotMulticanal() {
                     variant="outline"
                     size="sm"
                     className="w-full"
+                    disabled={!contextoValido || !canViewCanais}
+                    data-action="configurar-canal"
+                    data-channel={canal.id}
+                    data-permission="Sistema.Integracoes.visualizar"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
