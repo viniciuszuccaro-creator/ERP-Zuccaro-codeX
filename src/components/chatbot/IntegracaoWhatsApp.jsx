@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { MessageCircle, AlertTriangle, CheckCircle, Code } from "lucide-react";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * V21.5 - INTEGRAÇÃO WHATSAPP BUSINESS API
@@ -14,6 +16,13 @@ import { MessageCircle, AlertTriangle, CheckCircle, Code } from "lucide-react";
  * ⚠️ Requer Backend Functions habilitadas
  */
 export default function IntegracaoWhatsApp() {
+  const { hasPermission, isAdmin } = usePermissions();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const contextKey = empresaAtual?.id || grupoAtual?.id || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const canEditIntegracao = isAdmin() ||
+    hasPermission('Sistema', 'Integracoes', 'editar') ||
+    hasPermission('Sistema', 'Integracoes', 'executar');
   const [config, setConfig] = useState({
     token: '',
     phoneNumberId: '',
@@ -26,20 +35,35 @@ export default function IntegracaoWhatsApp() {
   const [statusConexao, setStatusConexao] = useState(null);
 
   const testarConexao = async () => {
+    if (!contextoValido || !canEditIntegracao) {
+      setStatusConexao({
+        conectado: false,
+        mensagem: 'Selecione grupo/empresa e confirme permissao de integracoes.'
+      });
+      return;
+    }
+
     setTestando(true);
     
     // Simulação - em produção, chamaria backend function
     setTimeout(() => {
+      const credenciaisPreenchidas = Boolean(config.token && config.phoneNumberId && config.businessAccountId);
       setStatusConexao({
-        conectado: false,
+        conectado: credenciaisPreenchidas,
         mensagem: 'Backend Functions não habilitadas'
+      });
+      setStatusConexao({
+        conectado: credenciaisPreenchidas,
+        mensagem: credenciaisPreenchidas
+          ? 'Credenciais preenchidas. A validacao real depende das Backend Functions habilitadas.'
+          : 'Preencha token, Phone Number ID e Business Account ID antes de validar a conexao.'
       });
       setTestando(false);
     }, 2000);
   };
 
   return (
-    <div className="w-full h-full p-6 overflow-auto">
+    <div className="w-full h-full p-6 overflow-auto" data-permission="Sistema.Integracoes.editar" data-context-required="group-or-company">
       <div className="max-w-3xl mx-auto space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
@@ -88,7 +112,8 @@ export default function IntegracaoWhatsApp() {
                 value={config.token}
                 onChange={(e) => setConfig({ ...config, token: e.target.value })}
                 placeholder="EAAxxxxxxxxxxxx"
-                disabled
+                disabled={!contextoValido || !canEditIntegracao}
+                data-sensitive="true"
               />
               <p className="text-xs text-slate-500 mt-1">
                 Token de acesso permanente da Meta Business
@@ -101,7 +126,8 @@ export default function IntegracaoWhatsApp() {
                 value={config.phoneNumberId}
                 onChange={(e) => setConfig({ ...config, phoneNumberId: e.target.value })}
                 placeholder="123456789012345"
-                disabled
+                disabled={!contextoValido || !canEditIntegracao}
+                data-sensitive="true"
               />
             </div>
 
@@ -111,12 +137,20 @@ export default function IntegracaoWhatsApp() {
                 value={config.businessAccountId}
                 onChange={(e) => setConfig({ ...config, businessAccountId: e.target.value })}
                 placeholder="123456789012345"
-                disabled
+                disabled={!contextoValido || !canEditIntegracao}
+                data-sensitive="true"
               />
             </div>
 
             <div className="pt-4 border-t">
-              <Button onClick={testarConexao} disabled={testando || true}>
+              <Button
+                onClick={testarConexao}
+                disabled={testando || !contextoValido || !canEditIntegracao}
+                data-action="IntegracaoWhatsApp.testarConexao"
+                data-permission="Sistema.Integracoes.executar"
+                data-context-required="group-or-company"
+                data-sensitive="true"
+              >
                 {testando ? 'Testando...' : 'Testar Conexão'}
               </Button>
             </div>

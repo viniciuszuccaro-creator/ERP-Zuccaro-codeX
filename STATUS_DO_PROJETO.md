@@ -1,3 +1,14 @@
+### Atendimento/Chatbot - Fase 8 Webhooks e WhatsApp
+- Seguido o plano de melhoria nos componentes existentes `WebhooksTester` e `IntegracaoWhatsApp`, sem criar tela, modulo, componente ou arquivo novo.
+- `WebhooksTester` removeu import Base44 inutilizado e passou a exigir contexto grupo/empresa e permissao de integracoes antes de executar teste de webhook.
+- Teste de webhook agora valida tamanho do payload, parse JSON e retorna `group_id`/`empresa_id` no resultado simulado para rastreabilidade multiempresa.
+- `IntegracaoWhatsApp` passou a usar contexto visual e RBAC de integracoes, mantendo a tela existente e habilitando campos/teste somente para perfis autorizados.
+- Botao `Testar Conexao`, que estava travado por `disabled={testando || true}`, agora funciona conforme contexto/permissao e valida preenchimento de token, Phone Number ID e Business Account ID.
+- Campos sensiveis e botoes receberam `data-sensitive`, `data-action`, `data-permission` e `data-context-required` quando aplicavel.
+- Mantida a Regra-Mae: nenhum fluxo foi removido; a integracao continua sinalizando dependencia de Backend Functions, mas agora com bloqueios e retorno funcional.
+- Build validado com sucesso via Vite; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: revisar os pontos restantes de `InvokeLLM`/uploads/auditoria nos componentes auxiliares do Chatbot e seguir para Administracao do Sistema quando Atendimento estiver fechado.
+
 ### Atendimento/Chatbot - Fase 8 Hub de Atendimento Central
 - Seguido o plano de melhoria na tela existente `HubAtendimento`, sem criar tela, modulo, componente ou arquivo novo.
 - `HubAtendimento` deixou de listar conversas, mensagens e metricas por chamadas diretas `base44.entities.*` e passou a usar `filterInContext` com chave por grupo/empresa.
