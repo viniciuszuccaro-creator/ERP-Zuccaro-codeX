@@ -1,3 +1,14 @@
+### Atendimento/Chatbot - Fase 8 Hub de Atendimento Central
+- Seguido o plano de melhoria na tela existente `HubAtendimento`, sem criar tela, modulo, componente ou arquivo novo.
+- `HubAtendimento` deixou de listar conversas, mensagens e metricas por chamadas diretas `base44.entities.*` e passou a usar `filterInContext` com chave por grupo/empresa.
+- A lista de conversas agora respeita o contexto do grupo/empresa antes de aplicar a regra de atendente atribuido ou conversa sem atribuicao; quem tem permissao de ver todas continua enxergando a fila contextual completa.
+- Envio de mensagem, assumir conversa e resolver conversa passaram a usar `createInContext`/`updateInContext`, reforcando sanitizacao, carimbo multiempresa e auditoria antes/depois.
+- Upload/anexo no atendimento foi mantido no fluxo atual, mas passou a ser bloqueado sem contexto valido ou permissao de anexo/edicao.
+- Botoes sensiveis de assumir, transferir, resolver, anexar e enviar receberam bloqueio por RBAC/contexto e marcadores `data-action`, `data-permission`, `data-context-required` e `data-sensitive`.
+- Mantida a Regra-Mae: fluxo visual do Hub Omnicanal foi preservado; apenas consultas, gravacoes, permissao e rastreabilidade foram reforcadas.
+- Build validado com sucesso via Vite; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar Fase 8 nos componentes restantes com `base44` direto/legado, priorizando `WebhooksTester`, `IntegracaoWhatsApp`, revisao final de `InvokeLLM` e pontos auxiliares de atendimento.
+
 ### Atendimento/Chatbot - Fase 8 Historico, IA Auxiliar e Transcricao
 - Seguido o plano de melhoria nos componentes existentes `HistoricoClienteChat`, `SugestoesIA`, `IAConversacional` e `TranscricaoAudio`, sem criar tela, modulo, componente ou arquivo novo.
 - `HistoricoClienteChat` deixou de usar `Cliente.get`, `Pedido.filter` e `ConversaOmnicanal.filter` diretos e passou a consultar cliente, pedidos e conversas anteriores por `filterInContext`.

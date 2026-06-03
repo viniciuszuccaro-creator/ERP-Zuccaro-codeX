@@ -106,7 +106,9 @@ export default function HubAtendimento() {
   
   const queryClient = useQueryClient();
   const { hasPermission, user, isAdmin } = usePermissions();
-  const { empresaAtual, filterInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
+  const contextKey = empresaAtual?.id || grupoAtual?.id || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
 
   // Auto-scroll para última mensagem
   useEffect(() => {
@@ -121,11 +123,14 @@ export default function HubAtendimento() {
   }, []);
 
   // Verificar permissão
-  const podeAtenderTransbordo = isAdmin() || hasPermission('chatbot', null, 'ver') || hasPermission('CRM', null, 'ver');
+  const podeAtenderTransbordo = isAdmin() || hasPermission('chatbot', null, 'ver') || hasPermission('CRM', null, 'ver') || hasPermission('CRM', 'Atendimento', 'visualizar');
+  const podeVerTodasConversas = isAdmin() || hasPermission('chatbot', 'ver_todas_conversas') || hasPermission('CRM', 'Atendimento', 'visualizar_todas');
+  const podeEditarAtendimento = isAdmin() || hasPermission('chatbot', null, 'editar') || hasPermission('CRM', 'Atendimento', 'editar');
+  const podeUsarAnexos = podeEditarAtendimento || hasPermission('CRM', 'Atendimento', 'anexar');
 
   // Buscar conversas
   const { data: conversas = [], isLoading } = useQuery({
-    queryKey: ['conversas-omnicanal', filtroStatus, filtroCanal, empresaAtual?.id],
+    queryKey: ['conversas-omnicanal', filtroStatus, filtroCanal, contextKey, user?.id, podeVerTodasConversas],
     queryFn: async () => {
       let filtros = {};
       
@@ -137,49 +142,46 @@ export default function HubAtendimento() {
         filtros.canal = filtroCanal;
       }
 
-      if (empresaAtual?.id) {
-        filtros.empresa_id = empresaAtual.id;
-      }
-
       // Apenas conversas atribuídas ao usuário ou não atribuídas
-      if (!hasPermission('chatbot', 'ver_todas_conversas')) {
-        filtros.$or = [
-          { atendente_id: user.id },
-          { atendente_id: { $exists: false } }
-        ];
-      }
-
-      return await base44.entities.ConversaOmnicanal.filter(
+      const conversasContextuais = await filterInContext(
+        'ConversaOmnicanal',
         filtros,
         '-data_ultima_mensagem',
         50
       );
+
+      if (podeVerTodasConversas) return conversasContextuais;
+
+      return conversasContextuais.filter((conversa) =>
+        conversa.atendente_id === user?.id ||
+        !conversa.atendente_id
+      );
     },
+    enabled: contextoValido && podeAtenderTransbordo,
     refetchInterval: 5000 // Atualizar a cada 5 segundos
   });
 
   // Buscar mensagens da conversa selecionada
   const { data: mensagens = [] } = useQuery({
-    queryKey: ['mensagens-conversa', conversaSelecionada?.id],
+    queryKey: ['mensagens-conversa', conversaSelecionada?.id, contextKey],
     queryFn: async () => {
       if (!conversaSelecionada) return [];
-      return await base44.entities.MensagemOmnicanal.filter(
+      return await filterInContext(
+        'MensagemOmnicanal',
         { conversa_id: conversaSelecionada.id },
         'data_envio',
         200
       );
     },
-    enabled: !!conversaSelecionada,
+    enabled: !!conversaSelecionada && contextoValido && podeAtenderTransbordo,
     refetchInterval: 3000
   });
 
   // Buscar métricas
   const { data: metricas } = useQuery({
-    queryKey: ['metricas-atendimento', empresaAtual?.id],
+    queryKey: ['metricas-atendimento', contextKey],
     queryFn: async () => {
-      const todasConversas = await base44.entities.ConversaOmnicanal.filter({
-        empresa_id: empresaAtual?.id
-      });
+      const todasConversas = await filterInContext('ConversaOmnicanal', {}, '-data_ultima_mensagem', 500);
 
       return {
         total: todasConversas.length,
@@ -195,12 +197,13 @@ export default function HubAtendimento() {
         taxaResolucaoBot: 78 // TODO: calcular real
       };
     },
+    enabled: contextoValido && podeAtenderTransbordo,
     refetchInterval: 10000
   });
 
   // KPIs SLA 24h (Chatbot)
   const { data: botSla = { chats: 0, sla_ok: 0, sla_total: 0 } } = useQuery({
-    queryKey: ['bot-sla-24h', empresaAtual?.id],
+    queryKey: ['bot-sla-24h', contextKey],
     queryFn: async () => {
       const since = Date.now() - 24 * 60 * 60 * 1000;
       const items = await filterInContext('ChatbotInteracao', {}, '-created_date', 500);
@@ -208,6 +211,7 @@ export default function HubAtendimento() {
       const acc = within.reduce((a,i)=>{ const ms=Number(i?.tempo_primeira_resposta_ms||0); if(!isNaN(ms)){a.total++; if(ms<=60000) a.ok++;} return a; }, {ok:0,total:0});
       return { chats: within.length, sla_ok: acc.ok, sla_total: acc.total };
     },
+    enabled: contextoValido && podeAtenderTransbordo,
     staleTime: 60000,
   });
 
@@ -215,18 +219,25 @@ export default function HubAtendimento() {
   const enviarMensagemMutation = useMutation({
     mutationFn: async ({ mensagem, arquivo }) => {
       if (!conversaSelecionada) return;
+      if (!contextoValido || !podeEditarAtendimento) {
+        throw new Error('Selecione grupo/empresa e confirme permissao de atendimento antes de enviar mensagem.');
+      }
 
       let arquivoUrl = null;
       if (arquivo) {
+        if (!podeUsarAnexos) {
+          throw new Error('Seu perfil nao tem permissao para anexar arquivos no atendimento.');
+        }
         const result = await base44.integrations.Core.UploadFile({ file: arquivo });
         arquivoUrl = result.file_url;
       }
 
       // Criar mensagem
-      const novaMensagem = await base44.entities.MensagemOmnicanal.create({
+      const novaMensagem = await createInContext('MensagemOmnicanal', {
         conversa_id: conversaSelecionada.id,
         empresa_id: conversaSelecionada.empresa_id || empresaAtual?.id,
-        group_id: empresaAtual?.group_id || null,
+        group_id: conversaSelecionada.group_id || grupoAtual?.id || empresaAtual?.group_id || null,
+        grupo_id: conversaSelecionada.grupo_id || grupoAtual?.id || empresaAtual?.group_id || null,
         sessao_id: conversaSelecionada.sessao_id,
         canal: conversaSelecionada.canal,
         tipo_remetente: 'Atendente',
@@ -240,7 +251,7 @@ export default function HubAtendimento() {
       });
 
       // Atualizar conversa
-      await base44.entities.ConversaOmnicanal.update(conversaSelecionada.id, {
+      await updateInContext('ConversaOmnicanal', conversaSelecionada.id, {
         data_ultima_mensagem: new Date().toISOString(),
         total_mensagens: (conversaSelecionada.total_mensagens || 0) + 1,
         mensagens_humano: (conversaSelecionada.mensagens_humano || 0) + 1,
@@ -254,13 +265,19 @@ export default function HubAtendimento() {
       queryClient.invalidateQueries({ queryKey: ['conversas-omnicanal'] });
       setMensagemAtendente("");
       toast.success("Mensagem enviada!");
+    },
+    onError: (error) => {
+      toast.error(error?.message || "Nao foi possivel enviar a mensagem.");
     }
   });
 
   // Assumir conversa
   const assumirConversaMutation = useMutation({
     mutationFn: async (conversaId) => {
-      await base44.entities.ConversaOmnicanal.update(conversaId, {
+      if (!contextoValido || !podeEditarAtendimento) {
+        throw new Error('Selecione grupo/empresa e confirme permissao antes de assumir conversa.');
+      }
+      await updateInContext('ConversaOmnicanal', conversaId, {
         atendente_id: user.id,
         atendente_nome: user.full_name,
         status: 'Em Progresso',
@@ -271,13 +288,19 @@ export default function HubAtendimento() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversas-omnicanal'] });
       toast.success("Conversa assumida!");
+    },
+    onError: (error) => {
+      toast.error(error?.message || "Nao foi possivel assumir a conversa.");
     }
   });
 
   // Resolver conversa
   const resolverConversaMutation = useMutation({
     mutationFn: async (conversaId) => {
-      await base44.entities.ConversaOmnicanal.update(conversaId, {
+      if (!contextoValido || !podeEditarAtendimento) {
+        throw new Error('Selecione grupo/empresa e confirme permissao antes de resolver conversa.');
+      }
+      await updateInContext('ConversaOmnicanal', conversaId, {
         status: 'Resolvida',
         resolvido: true,
         data_finalizacao: new Date().toISOString()
@@ -287,8 +310,13 @@ export default function HubAtendimento() {
       queryClient.invalidateQueries({ queryKey: ['conversas-omnicanal'] });
       setConversaSelecionada(null);
       toast.success("Conversa resolvida!");
+    },
+    onError: (error) => {
+      toast.error(error?.message || "Nao foi possivel resolver a conversa.");
     }
   });
+
+  const atendimentoBloqueado = !contextoValido || !podeEditarAtendimento;
 
   if (!podeAtenderTransbordo) {
     return (
@@ -298,6 +326,19 @@ export default function HubAtendimento() {
           <AlertDescription className="text-red-900">
             Você não tem permissão para acessar o Hub de Atendimento.
             Entre em contato com o administrador.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (!contextoValido) {
+    return (
+      <div className="w-full h-full min-h-screen p-6">
+        <Alert className="border-amber-300 bg-amber-50">
+          <AlertCircle className="w-5 h-5 text-amber-600" />
+          <AlertDescription className="text-amber-900">
+            Selecione um grupo ou empresa antes de acessar o Hub de Atendimento.
           </AlertDescription>
         </Alert>
       </div>
@@ -762,8 +803,12 @@ export default function HubAtendimento() {
                         <Button
                           size="sm"
                           onClick={() => assumirConversaMutation.mutate(conversaSelecionada.id)}
-                          disabled={assumirConversaMutation.isPending}
+                          disabled={assumirConversaMutation.isPending || atendimentoBloqueado}
                           className="bg-green-600 hover:bg-green-700"
+                          data-action="HubAtendimento.assumirConversa"
+                          data-permission="CRM.Atendimento.editar"
+                          data-context-required="group-or-company"
+                          data-sensitive="true"
                         >
                           <UserPlus className="w-4 h-4 lg:mr-2" />
                           <span className="hidden lg:inline">Assumir</span>
@@ -774,7 +819,12 @@ export default function HubAtendimento() {
                         size="sm"
                         variant="outline"
                         onClick={() => setExibirTransferir(true)}
+                        disabled={atendimentoBloqueado}
                         title="Transferir"
+                        data-action="HubAtendimento.transferirConversa"
+                        data-permission="CRM.Atendimento.editar"
+                        data-context-required="group-or-company"
+                        data-sensitive="true"
                       >
                         <ArrowRightLeft className="w-4 h-4" />
                       </Button>
@@ -783,8 +833,12 @@ export default function HubAtendimento() {
                         size="sm"
                         variant="outline"
                         onClick={() => resolverConversaMutation.mutate(conversaSelecionada.id)}
-                        disabled={resolverConversaMutation.isPending}
+                        disabled={resolverConversaMutation.isPending || atendimentoBloqueado}
                         className="text-green-600 hover:text-green-700"
+                        data-action="HubAtendimento.resolverConversa"
+                        data-permission="CRM.Atendimento.editar"
+                        data-context-required="group-or-company"
+                        data-sensitive="true"
                       >
                         <CheckCircle className="w-4 h-4 lg:mr-2" />
                         <span className="hidden lg:inline">Resolver</span>
@@ -878,6 +932,11 @@ export default function HubAtendimento() {
                       className="hidden"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
+                        if (file && !podeUsarAnexos) {
+                          toast.error('Seu perfil nao tem permissao para anexar arquivos.');
+                          e.target.value = '';
+                          return;
+                        }
                         if (file) {
                           setArquivoAnexo(file);
                           toast.success('Arquivo anexado!');
@@ -889,7 +948,12 @@ export default function HubAtendimento() {
                       variant="outline"
                       size="icon"
                       onClick={() => fileInputRef.current?.click()}
+                      disabled={!podeUsarAnexos || atendimentoBloqueado}
                       title="Anexar arquivo"
+                      data-action="HubAtendimento.anexarArquivo"
+                      data-permission="CRM.Atendimento.anexar"
+                      data-context-required="group-or-company"
+                      data-sensitive="true"
                     >
                       <Paperclip className="w-4 h-4" />
                     </Button>
@@ -907,7 +971,7 @@ export default function HubAtendimento() {
                         }
                       }}
                       placeholder="Digite sua mensagem... (Enter para enviar)"
-                      disabled={enviarMensagemMutation.isPending}
+                      disabled={enviarMensagemMutation.isPending || atendimentoBloqueado}
                       className="flex-1"
                     />
                     
@@ -930,8 +994,12 @@ export default function HubAtendimento() {
                           setArquivoAnexo(null);
                         }
                       }}
-                      disabled={(!mensagemAtendente.trim() && !arquivoAnexo) || enviarMensagemMutation.isPending}
+                      disabled={(!mensagemAtendente.trim() && !arquivoAnexo) || enviarMensagemMutation.isPending || atendimentoBloqueado}
                       className="bg-blue-600 hover:bg-blue-700"
+                      data-action="HubAtendimento.enviarMensagem"
+                      data-permission="CRM.Atendimento.editar"
+                      data-context-required="group-or-company"
+                      data-sensitive="true"
                     >
                       <Send className="w-4 h-4" />
                     </Button>
