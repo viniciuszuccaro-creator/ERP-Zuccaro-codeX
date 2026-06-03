@@ -32,7 +32,8 @@ const TAB_MAP = {
   // Auditoria
   auditoria: 'auditoria', logs: 'auditoria', trilha: 'auditoria', global: 'auditoria',
   // Ferramentas
-  ferramentas: 'ferramentas', tools: 'ferramentas', seed: 'ferramentas',
+  ferramenta: 'ferramentas', ferramentas: 'ferramentas', tool: 'ferramentas', tools: 'ferramentas',
+  seed: 'ferramentas', utilitarios: 'ferramentas', utilitários: 'ferramentas',
 };
 
 export default function AdministracaoSistema() {

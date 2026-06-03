@@ -9,6 +9,16 @@
 - Ao entrar no Windows, o atalho chama `start-erp-dev.cmd` minimizado para manter o servidor local disponivel para o Codex.
 - Validado e salvo no GitHub em `main` e `codex/sincronizar-projeto`.
 
+### Administracao do Sistema - Fase 8 Aba Ferramentas Administrativas
+- Verificada a aba `Ferramentas`: ela possui utilidade real para seed leve e backfill multiempresa, entao nao foi excluida.
+- A rota da Administracao do Sistema passou a aceitar `tab=ferramenta` no singular, alem de `tab=ferramentas`, `tools`, `tool`, `seed` e aliases de utilitarios.
+- `AdminFerramentas` passou a reforcar RBAC granular em seed, dry-run e aplicacao de backfill, mantendo os botoes existentes e bloqueando acoes sem permissao.
+- Auditoria das ferramentas administrativas deixou de usar `base44.entities.AuditLog.create` direto e passou a usar `createInContext('AuditLog')`, preservando `groupId`, `grupoId` e `empresaId`.
+- Bloqueios por falta de contexto/permissao agora tambem sao auditados, com metadados sanitizados.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; a aba existente foi corrigida e reforcada em seguranca, auditoria, RBAC e multiempresa.
+- Build validado com sucesso via `npm run build`; rota `http://localhost:5173/administracaosistema?tab=ferramenta` respondeu `200 OK`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em Administracao do Sistema revisando componentes filhos de integracoes e seguranca.
+
 ### Administracao do Sistema - Fase 8 Integracoes e Auditoria
 - Seguido o plano de melhoria no componente existente `IntegracoesIndex`, sem criar tela, modulo, componente ou arquivo novo.
 - Auditorias da aba de integracoes deixaram de usar `base44.entities.AuditLog.create` direto e passaram a usar `createInContext('AuditLog')`, preservando `groupId`, `grupoId` e `empresaId`.
