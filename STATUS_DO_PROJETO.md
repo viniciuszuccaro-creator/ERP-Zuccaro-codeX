@@ -9,6 +9,15 @@
 - Ao entrar no Windows, o atalho chama `start-erp-dev.cmd` minimizado para manter o servidor local disponivel para o Codex.
 - Validado e salvo no GitHub em `main` e `codex/sincronizar-projeto`.
 
+### Atendimento/Chatbot - Fase 8 IA, InvokeLLM e Auditoria Contextual
+- Seguido o plano de melhoria nos componentes existentes `IntentEngine`, `SugestoesIA`, `IAConversacional` e `TranscricaoAudio`, sem criar tela, modulo, componente ou arquivo novo.
+- Chamadas `InvokeLLM` passaram a usar mensagem/contexto sanitizados, com `groupId` e `empresaId` explicitos nos prompts quando aplicavel.
+- `IntentEngine` deixou de reenviar a propria deteccao de intent quando a IA falha, evitando repeticao de fallback e mantendo a analise local ja calculada.
+- `SugestoesIA`, `IAConversacional` e `TranscricaoAudio` passaram a registrar auditoria contextual com `createInContext('AuditLog')` sem salvar conteudo completo sensivel no log.
+- Mantida a Regra-Mae: fluxos atuais de sugestoes, analise conversacional, transcricao e fallback de intent foram preservados; apenas seguranca, contexto multiempresa e auditoria foram reforcados.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: fechar revisao final de Atendimento/Chatbot procurando chamadas diretas restantes de Base44/IA e, se limpo, seguir para Administracao do Sistema.
+
 ### Atendimento/Chatbot - Fase 8 Auditoria, Exportacao e Fluxos Auxiliares
 - Seguido o plano de melhoria nos componentes existentes `ExportarConversas`, `RelatoriosAtendimento`, `GerarBoletoChat` e `TransferirConversa`, sem criar tela, modulo, componente ou arquivo novo.
 - Auditorias de exportacao, relatorios, boleto no chat e transferencia deixaram de usar `base44.entities.AuditLog.create` direto e passaram a usar `createInContext('AuditLog')`.

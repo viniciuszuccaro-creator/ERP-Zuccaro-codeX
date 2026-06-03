@@ -17,6 +17,14 @@ import { motion } from 'framer-motion';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 
+const sanitizePromptText = (value, max = 1200) => String(value ?? '')
+  .replace(/[<>]/g, '')
+  .replace(/javascript:/gi, '')
+  .replace(/[\u0000-\u001F\u007F]/g, ' ')
+  .replace(/\s+/g, ' ')
+  .trim()
+  .slice(0, max);
+
 /**
  * V21.6 - SUGESTÕES INTELIGENTES DE IA
  * 
@@ -27,7 +35,7 @@ import usePermissions from '@/components/lib/usePermissions';
  * ✅ Oportunidades de venda
  */
 export default function SugestoesIA({ conversa, mensagens = [] }) {
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const empresaId = conversa?.empresa_id || empresaAtual?.id;
   const groupId = conversa?.group_id || conversa?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id;
@@ -50,18 +58,23 @@ export default function SugestoesIA({ conversa, mensagens = [] }) {
       if (!ultimaMensagemCliente) return null;
 
       try {
+        const mensagemCliente = sanitizePromptText(ultimaMensagemCliente.mensagem, 1200);
+        if (!mensagemCliente) return null;
+
         // Gerar sugestões usando IA
         const resultado = await base44.integrations.Core.InvokeLLM({
           prompt: `Você é um assistente de atendimento ao cliente de um ERP industrial.
 
 ÚLTIMA MENSAGEM DO CLIENTE:
-"${ultimaMensagemCliente.mensagem}"
+"${mensagemCliente}"
 
 CONTEXTO DA CONVERSA:
-- Canal: ${conversa.canal}
-- Sentimento detectado: ${conversa.sentimento_geral || 'Neutro'}
-- Intent principal: ${conversa.intent_principal || 'não identificado'}
-- Status: ${conversa.status}
+- GroupId: ${groupId || 'sem-grupo'}
+- EmpresaId: ${empresaId || 'sem-empresa'}
+- Canal: ${sanitizePromptText(conversa.canal, 80)}
+- Sentimento detectado: ${sanitizePromptText(conversa.sentimento_geral || 'Neutro', 80)}
+- Intent principal: ${sanitizePromptText(conversa.intent_principal || 'nao identificado', 120)}
+- Status: ${sanitizePromptText(conversa.status, 80)}
 
 Gere 3 respostas curtas e profissionais que o atendente pode usar.
 Também sugira 2 ações que o atendente deve considerar.`,
@@ -93,6 +106,24 @@ Também sugira 2 ações que o atendente deve considerar.`,
             }
           }
         });
+
+        await createInContext('AuditLog', {
+          ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
+          ...(empresaId ? { empresa_id: empresaId } : {}),
+          usuario: 'Sistema',
+          acao: 'Analise IA',
+          modulo: 'CRM',
+          entidade: 'ConversaOmnicanal',
+          registro_id: conversa.id,
+          descricao: 'Sugestoes de IA geradas para atendimento',
+          dados_anteriores: null,
+          dados_novos: {
+            tipo: 'sugestoes_atendimento',
+            mensagens_contexto: ultimasMensagens.length,
+            canal: sanitizePromptText(conversa.canal, 80)
+          },
+          data_hora: new Date().toISOString()
+        }).catch(() => null);
 
         return resultado;
       } catch (err) {

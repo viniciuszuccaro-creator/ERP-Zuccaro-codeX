@@ -20,7 +20,7 @@ import usePermissions from '@/components/lib/usePermissions';
  * ✅ Detecção de urgência por voz
  */
 export default function TranscricaoAudio({ onTranscricao }) {
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const [gravando, setGravando] = useState(false);
   const [duracao, setDuracao] = useState(0);
@@ -54,6 +54,10 @@ Transcreva este áudio e analise:
 4. Palavras-chave principais
 
 Retorne em JSON.
+
+Escopo obrigatorio da operacao:
+- GroupId: ${groupId || 'sem-grupo'}
+- EmpresaId: ${empresaId || 'sem-empresa'}
         `,
         file_urls: [uploadResult.file_url],
         response_json_schema: {
@@ -66,6 +70,25 @@ Retorne em JSON.
           }
         }
       });
+
+      await createInContext('AuditLog', {
+        ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
+        ...(empresaId ? { empresa_id: empresaId } : {}),
+        usuario: 'Sistema',
+        acao: 'Transcricao IA',
+        modulo: 'CRM',
+        entidade: 'ConversaOmnicanal',
+        registro_id: null,
+        descricao: 'Audio transcrito por IA no atendimento',
+        dados_anteriores: null,
+        dados_novos: {
+          tipo: 'transcricao_audio',
+          audio_url: uploadResult.file_url,
+          tom_voz: resultado?.tom_voz || null,
+          urgencia: resultado?.urgencia || null
+        },
+        data_hora: new Date().toISOString()
+      }).catch(() => null);
 
       return {
         ...resultado,

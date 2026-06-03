@@ -19,6 +19,14 @@ import { motion } from 'framer-motion';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 
+const sanitizePromptText = (value, max = 1200) => String(value ?? '')
+  .replace(/[<>]/g, '')
+  .replace(/javascript:/gi, '')
+  .replace(/[\u0000-\u001F\u007F]/g, ' ')
+  .replace(/\s+/g, ' ')
+  .trim()
+  .slice(0, max);
+
 /**
  * V21.6 - IA CONVERSACIONAL AVANÇADA
  * 
@@ -31,7 +39,7 @@ import usePermissions from '@/components/lib/usePermissions';
  * ✅ Análise de risco de churn
  */
 export default function IAConversacional({ conversa, mensagens = [], clienteId }) {
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const empresaId = conversa?.empresa_id || empresaAtual?.id;
   const groupId = conversa?.group_id || conversa?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id;
@@ -47,9 +55,9 @@ export default function IAConversacional({ conversa, mensagens = [], clienteId }
       if (!conversa || mensagens.length < 2 || !contextoValido || !canUseIA) return null;
 
       const ultimasMensagens = mensagens.slice(-10).map(m => ({
-        remetente: m.tipo_remetente,
-        mensagem: m.mensagem,
-        sentimento: m.sentimento
+        remetente: sanitizePromptText(m.tipo_remetente, 80),
+        mensagem: sanitizePromptText(m.mensagem, 1200),
+        sentimento: sanitizePromptText(m.sentimento, 80)
       }));
 
       try {
@@ -62,10 +70,12 @@ CONVERSA:
 ${ultimasMensagens.map(m => `[${m.remetente}]: ${m.mensagem}`).join('\n')}
 
 CONTEXTO:
-- Canal: ${conversa.canal}
-- Status: ${conversa.status}
-- Sentimento atual: ${conversa.sentimento_geral}
-- Intent principal: ${conversa.intent_principal || 'não identificado'}
+- GroupId: ${groupId || 'sem-grupo'}
+- EmpresaId: ${empresaId || 'sem-empresa'}
+- Canal: ${sanitizePromptText(conversa.canal, 80)}
+- Status: ${sanitizePromptText(conversa.status, 80)}
+- Sentimento atual: ${sanitizePromptText(conversa.sentimento_geral, 80)}
+- Intent principal: ${sanitizePromptText(conversa.intent_principal || 'nao identificado', 120)}
 
 Forneça:
 1. Resumo executivo (1 linha)
@@ -118,6 +128,24 @@ Forneça:
             }
           }
         });
+
+        await createInContext('AuditLog', {
+          ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
+          ...(empresaId ? { empresa_id: empresaId } : {}),
+          usuario: 'Sistema',
+          acao: 'Analise IA',
+          modulo: 'CRM',
+          entidade: 'ConversaOmnicanal',
+          registro_id: conversa.id,
+          descricao: 'Analise conversacional de IA gerada para atendimento',
+          dados_anteriores: null,
+          dados_novos: {
+            tipo: 'analise_conversacional',
+            mensagens_contexto: ultimasMensagens.length,
+            canal: sanitizePromptText(conversa.canal, 80)
+          },
+          data_hora: new Date().toISOString()
+        }).catch(() => null);
 
         return resultado;
       } catch (err) {

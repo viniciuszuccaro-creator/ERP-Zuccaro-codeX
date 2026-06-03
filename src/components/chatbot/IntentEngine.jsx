@@ -32,6 +32,29 @@ const canRunAutomaticAction = (contexto = {}) => {
   return hasContext(contexto) && contexto?.bloquearAcoesAutomaticas !== true;
 };
 
+const sanitizePromptText = (value, max = 1200) => String(value ?? '')
+  .replace(/[<>]/g, '')
+  .replace(/javascript:/gi, '')
+  .replace(/[\u0000-\u001F\u007F]/g, ' ')
+  .replace(/\s+/g, ' ')
+  .trim()
+  .slice(0, max);
+
+const buildSafeLLMContext = (contexto = {}) => {
+  const { groupId, empresaId } = getContextIds(contexto);
+  return {
+    groupId,
+    empresaId,
+    canal: sanitizePromptText(contexto.canal, 80),
+    status: sanitizePromptText(contexto.status, 80),
+    sentimento: sanitizePromptText(contexto.sentimento_geral || contexto.sentimento, 80),
+    intentPrincipal: sanitizePromptText(contexto.intent_principal || contexto.intent, 120),
+    cliente: contexto.dadosCliente?.nome ? {
+      nome: sanitizePromptText(contexto.dadosCliente.nome, 160)
+    } : undefined
+  };
+};
+
 /**
  * V21.6 - MOTOR DE INTENTS AVANÇADO
  * 
@@ -585,6 +608,13 @@ const IntentEngine = {
    */
   async analisarComIA(mensagem, contexto = {}) {
     try {
+      if (!hasContext(contexto) || contexto?.bloquearIA === true) {
+        return null;
+      }
+
+      const mensagemSanitizada = sanitizePromptText(mensagem, 1200);
+      if (!mensagemSanitizada) return null;
+
       const resultado = await base44.integrations.Core.InvokeLLM({
         prompt: `Analise a mensagem de um cliente e retorne:
 1. Intent principal (consultar_pedido, consultar_entrega, segunda_via_boleto, orcamento, suporte_tecnico, falar_atendente, cancelamento, saudacao, agradecimento, despedida, desconhecido)
@@ -593,9 +623,9 @@ const IntentEngine = {
 4. Entidades detectadas (CPF, CNPJ, número de pedido, valor, data, email, telefone)
 5. Se precisa de atendente humano
 
-Mensagem: "${mensagem}"
+Mensagem: "${mensagemSanitizada}"
 
-Contexto do cliente: ${JSON.stringify(contexto)}`,
+Contexto seguro: ${JSON.stringify(buildSafeLLMContext(contexto))}`,
         response_json_schema: {
           type: "object",
           properties: {
@@ -612,8 +642,7 @@ Contexto do cliente: ${JSON.stringify(contexto)}`,
       return resultado;
     } catch (error) {
       console.warn('IA indisponível, usando fallback:', error.message);
-      // Fallback para análise local
-      return this.detectarIntent(mensagem, null, contexto);
+      return null;
     }
   }
 };
