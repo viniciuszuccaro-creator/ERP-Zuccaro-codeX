@@ -70,6 +70,7 @@ export default function ChatbotWidgetAvancado({
     ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
     ...(empresaId ? { empresa_id: empresaId } : {})
   };
+  const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
   // Buscar configuração do canal
   const { data: configCanal } = useQuery({
@@ -210,6 +211,9 @@ export default function ChatbotWidgetAvancado({
       let arquivoTamanho = null;
       
       if (arquivo) {
+        if (arquivo.size > MAX_FILE_SIZE_BYTES) {
+          throw new Error('Arquivo muito grande para envio no chatbot.');
+        }
         const uploadResult = await base44.integrations.Core.UploadFile({ file: arquivo });
         arquivoUrl = uploadResult.file_url;
         arquivoTipo = arquivo.type;
@@ -324,15 +328,14 @@ export default function ChatbotWidgetAvancado({
 
       // Auditoria de interação (AuditLog)
       try {
-        await base44.entities.AuditLog.create({
+        await createInContext('AuditLog', {
+          ...contextoPayload,
           usuario: dadosCliente?.nome || 'Cliente',
           acao: 'Criação',
           modulo: 'Chatbot',
           tipo_auditoria: 'operacional',
           entidade: 'Conversa',
           descricao: `Intent: ${resultado.intent} (confiança ${resultado.confianca}%) • Canal: ${canal}`,
-          empresa_id: empresaId,
-          group_id: groupId,
           dados_novos: { intent: resultado.intent, confianca: resultado.confianca, sentimento: resultado.sentimento, acoes: resultado.acoes_sugeridas },
           data_hora: new Date().toISOString()
         });
@@ -425,7 +428,7 @@ export default function ChatbotWidgetAvancado({
   const handleAnexarArquivo = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 10 * 1024 * 1024) { // 10MB
+      if (file.size > MAX_FILE_SIZE_BYTES) {
         toast.error('Arquivo muito grande', {
           description: 'O tamanho máximo é 10MB'
         });

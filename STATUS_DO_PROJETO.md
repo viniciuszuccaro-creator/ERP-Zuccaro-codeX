@@ -1,3 +1,12 @@
+### Atendimento/Chatbot - Fase 8 Widgets do Chatbot
+- Seguido o plano de melhoria nos componentes existentes `ChatbotWidget` e `ChatbotWidgetAvancado`, sem criar tela, modulo, componente ou arquivo novo.
+- Upload de anexos passou a validar limite de 10MB antes de chamar `UploadFile`, reduzindo risco de envio pesado e falha silenciosa.
+- `ChatbotWidget` simples passou a mostrar feedback por toast ao anexar arquivo, bloquear arquivo grande e exibir erro de envio ao usuario.
+- Auditoria operacional dos widgets deixou de usar `base44.entities.AuditLog.create` direto e passou a usar `createInContext('AuditLog')`, mantendo carimbo grupo/empresa e fluxo de auditoria contextual.
+- Mantida a Regra-Mae: fluxo de abertura, envio de mensagem, transbordo, resposta do bot e avaliacao do widget avancado foi preservado; apenas seguranca, validacao e rastreabilidade foram reforcadas.
+- Build validado com sucesso via Vite; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: revisar os pontos restantes de auditoria/exportacao/relatorios do Chatbot e depois seguir para Administracao do Sistema quando Atendimento estiver fechado.
+
 ### Atendimento/Chatbot - Fase 8 Webhooks e WhatsApp
 - Seguido o plano de melhoria nos componentes existentes `WebhooksTester` e `IntegracaoWhatsApp`, sem criar tela, modulo, componente ou arquivo novo.
 - `WebhooksTester` removeu import Base44 inutilizado e passou a exigir contexto grupo/empresa e permissao de integracoes antes de executar teste de webhook.

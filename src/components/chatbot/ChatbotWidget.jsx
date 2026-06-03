@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { MessageCircle, Send, X, Bot, User, Paperclip, Smile, Phone, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 
 import IntentEngine from './IntentEngine';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
@@ -60,6 +61,7 @@ export default function ChatbotWidget({
     ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
     ...(empresaId ? { empresa_id: empresaId } : {})
   };
+  const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
   // Buscar configuração do canal
   const { data: configCanal } = useQuery({
@@ -174,6 +176,9 @@ export default function ChatbotWidget({
       let arquivoTamanho = null;
       
       if (arquivo) {
+        if (arquivo.size > MAX_FILE_SIZE_BYTES) {
+          throw new Error('Arquivo muito grande para envio no chatbot.');
+        }
         const uploadResult = await base44.integrations.Core.UploadFile({ file: arquivo });
         arquivoUrl = uploadResult.file_url;
         arquivoTipo = arquivo.type;
@@ -274,15 +279,14 @@ export default function ChatbotWidget({
 
       // Auditoria da conversa
       try {
-        await base44.entities.AuditLog.create({
+        await createInContext('AuditLog', {
+          ...contextoPayload,
           usuario: 'Cliente',
           acao: 'Criação',
           modulo: 'Chatbot',
           tipo_auditoria: 'operacional',
           entidade: 'Conversa',
           descricao: `Intent: ${resultado.intent} (confiança ${resultado.confianca}%) • Canal: ${canal}`,
-          empresa_id: empresaId,
-          group_id: groupId,
           dados_novos: { intent: resultado.intent, confianca: resultado.confianca, sentimento: resultado.sentimento },
           data_hora: new Date().toISOString()
         });
@@ -301,6 +305,7 @@ export default function ChatbotWidget({
     onError: (error) => {
       console.error('Erro ao enviar mensagem:', error);
       setProcessando(false);
+      toast.error(error?.message || 'Erro ao enviar mensagem');
     }
   });
 
@@ -367,7 +372,15 @@ export default function ChatbotWidget({
   const handleAnexarArquivo = (e) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        toast.error('Arquivo muito grande', {
+          description: 'O tamanho maximo e 10MB'
+        });
+        e.target.value = '';
+        return;
+      }
       setArquivoAnexo(file);
+      toast.success('Arquivo anexado!');
     }
   };
 
