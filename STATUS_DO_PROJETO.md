@@ -9,6 +9,16 @@
 - Ao entrar no Windows, o atalho chama `start-erp-dev.cmd` minimizado para manter o servidor local disponivel para o Codex.
 - Validado e salvo no GitHub em `main` e `codex/sincronizar-projeto`.
 
+### Atendimento/Chatbot - Fase 8 Hub de Atendimento e Anexos
+- Seguido o plano de melhoria no componente existente `HubAtendimento`, sem criar tela, modulo, componente ou arquivo novo.
+- Envio de anexos pelo atendente passou a validar limite de 10MB antes do upload, alinhando o Hub ao padrao ja aplicado nos widgets do Chatbot.
+- Mensagens com anexo passaram a gravar tipo, tamanho em KB e nome sanitizado do arquivo para rastreabilidade operacional.
+- Upload de anexo no Hub passou a registrar auditoria contextual com `createInContext('AuditLog')`, preservando `groupId`, `empresaId`, usuario, conversa e metadados sem expor conteudo do arquivo.
+- O seletor de arquivo agora bloqueia anexos grandes antes do envio e limpa o anexo/input apos envio bem-sucedido.
+- Mantida a Regra-Mae: fluxo atual de envio de mensagem/anexo do atendente foi preservado; apenas seguranca, contexto multiempresa, auditoria e usabilidade foram reforcados.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em Administracao do Sistema, revisando toggles/botoes globais e permissoes de integracoes/seguranca.
+
 ### Atendimento/Chatbot - Fase 8 IA, InvokeLLM e Auditoria Contextual
 - Seguido o plano de melhoria nos componentes existentes `IntentEngine`, `SugestoesIA`, `IAConversacional` e `TranscricaoAudio`, sem criar tela, modulo, componente ou arquivo novo.
 - Chamadas `InvokeLLM` passaram a usar mensagem/contexto sanitizados, com `groupId` e `empresaId` explicitos nos prompts quando aplicavel.

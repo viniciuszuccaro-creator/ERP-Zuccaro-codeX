@@ -73,6 +73,13 @@ const RelatoriosAtendimento = React.lazy(() => import("@/components/chatbot/Rela
 const ChatbotMulticanal = React.lazy(() => import("@/components/chatbot/ChatbotMulticanal"));
 const BaseConhecimento = React.lazy(() => import("@/components/chatbot/BaseConhecimento"));
 
+const MAX_ATTACHMENT_SIZE_BYTES = 10 * 1024 * 1024;
+const sanitizeAttachmentText = (value, max = 180) => String(value || "")
+  .replace(/[<>]/g, "")
+  .replace(/javascript:/gi, "")
+  .trim()
+  .slice(0, max);
+
 /**
  * V21.5 - HUB DE ATENDIMENTO OMNICANAL
  * 
@@ -224,12 +231,21 @@ export default function HubAtendimento() {
       }
 
       let arquivoUrl = null;
+      let arquivoTipo = null;
+      let arquivoTamanho = null;
+      let arquivoNome = null;
       if (arquivo) {
         if (!podeUsarAnexos) {
           throw new Error('Seu perfil nao tem permissao para anexar arquivos no atendimento.');
         }
+        if (arquivo.size > MAX_ATTACHMENT_SIZE_BYTES) {
+          throw new Error('Arquivo muito grande. O limite para anexos no atendimento e 10MB.');
+        }
         const result = await base44.integrations.Core.UploadFile({ file: arquivo });
         arquivoUrl = result.file_url;
+        arquivoTipo = sanitizeAttachmentText(arquivo.type || 'application/octet-stream', 120);
+        arquivoTamanho = Math.round(arquivo.size / 1024);
+        arquivoNome = sanitizeAttachmentText(arquivo.name, 180);
       }
 
       // Criar mensagem
@@ -246,9 +262,35 @@ export default function HubAtendimento() {
         mensagem,
         tipo_conteudo: arquivo ? 'documento' : 'texto',
         midia_url: arquivoUrl,
+        midia_tipo: arquivoTipo,
+        midia_tamanho_kb: arquivoTamanho,
+        nome_arquivo: arquivoNome,
         data_envio: new Date().toISOString(),
         resposta_automatica: false
       });
+
+      if (arquivo) {
+        await createInContext('AuditLog', {
+          empresa_id: conversaSelecionada.empresa_id || empresaAtual?.id,
+          group_id: conversaSelecionada.group_id || grupoAtual?.id || empresaAtual?.group_id || null,
+          grupo_id: conversaSelecionada.grupo_id || grupoAtual?.id || empresaAtual?.group_id || null,
+          usuario: user?.full_name || user?.email || 'Atendente',
+          usuario_id: user?.id || null,
+          acao: 'Upload Anexo',
+          modulo: 'CRM',
+          entidade: 'MensagemOmnicanal',
+          registro_id: novaMensagem.id,
+          descricao: 'Anexo enviado pelo atendente no Hub de Atendimento',
+          dados_anteriores: null,
+          dados_novos: {
+            conversa_id: conversaSelecionada.id,
+            arquivo_nome: arquivoNome,
+            arquivo_tipo: arquivoTipo,
+            arquivo_tamanho_kb: arquivoTamanho
+          },
+          data_hora: new Date().toISOString()
+        }).catch(() => null);
+      }
 
       // Atualizar conversa
       await updateInContext('ConversaOmnicanal', conversaSelecionada.id, {
@@ -264,6 +306,8 @@ export default function HubAtendimento() {
       queryClient.invalidateQueries({ queryKey: ['mensagens-conversa'] });
       queryClient.invalidateQueries({ queryKey: ['conversas-omnicanal'] });
       setMensagemAtendente("");
+      setArquivoAnexo(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
       toast.success("Mensagem enviada!");
     },
     onError: (error) => {
@@ -934,6 +978,11 @@ export default function HubAtendimento() {
                         const file = e.target.files?.[0];
                         if (file && !podeUsarAnexos) {
                           toast.error('Seu perfil nao tem permissao para anexar arquivos.');
+                          e.target.value = '';
+                          return;
+                        }
+                        if (file && file.size > MAX_ATTACHMENT_SIZE_BYTES) {
+                          toast.error('Arquivo muito grande. O limite para anexos no atendimento e 10MB.');
                           e.target.value = '';
                           return;
                         }
