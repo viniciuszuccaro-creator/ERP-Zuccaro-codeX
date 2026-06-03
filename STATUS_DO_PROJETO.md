@@ -9,6 +9,15 @@
 - Ao entrar no Windows, o atalho chama `start-erp-dev.cmd` minimizado para manter o servidor local disponivel para o Codex.
 - Validado e salvo no GitHub em `main` e `codex/sincronizar-projeto`.
 
+### Administracao do Sistema - Fase 8 Integracoes e Auditoria
+- Seguido o plano de melhoria no componente existente `IntegracoesIndex`, sem criar tela, modulo, componente ou arquivo novo.
+- Auditorias da aba de integracoes deixaram de usar `base44.entities.AuditLog.create` direto e passaram a usar `createInContext('AuditLog')`, preservando `groupId`, `grupoId` e `empresaId`.
+- Metadados simples de auditoria de integracoes agora sao sanitizados antes do registro, reduzindo risco de conteudo inseguro em logs.
+- Visualizacao/troca de abas de integracoes passou a registrar escopo contextual e tratar falha de auditoria sem quebrar a navegacao.
+- Mantida a Regra-Mae: botoes de criar estrutura base, copiar URL e testar webhooks continuam no fluxo atual; apenas contexto, seguranca e rastreabilidade foram reforcados.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em Administracao do Sistema, revisando componentes filhos de integracoes (`TesteNFe`, `TesteBoletos`, `ConfigWhatsAppBusiness`, transportadoras, maps e marketplaces`) para RBAC, contexto e auditoria.
+
 ### Atendimento/Chatbot - Fase 8 Hub de Atendimento e Anexos
 - Seguido o plano de melhoria no componente existente `HubAtendimento`, sem criar tela, modulo, componente ou arquivo novo.
 - Envio de anexos pelo atendente passou a validar limite de 10MB antes do upload, alinhando o Hub ao padrao ja aplicado nos widgets do Chatbot.

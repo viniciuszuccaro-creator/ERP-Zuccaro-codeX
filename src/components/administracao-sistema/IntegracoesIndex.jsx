@@ -22,8 +22,27 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import SincronizacaoMarketplacesAtiva from "@/components/integracoes/SincronizacaoMarketplacesAtiva";
 import usePermissions from "@/components/lib/usePermissions";
 
+const sanitizeAuditText = (value, max = 300) => String(value ?? "")
+  .replace(/[<>]/g, "")
+  .replace(/javascript:/gi, "")
+  .trim()
+  .slice(0, max);
+
+const sanitizeAuditPayload = (value) => {
+  if (Array.isArray(value)) return value.map(sanitizeAuditPayload);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [
+        sanitizeAuditText(key, 80),
+        sanitizeAuditPayload(item)
+      ])
+    );
+  }
+  return typeof value === "string" ? sanitizeAuditText(value, 500) : value;
+};
+
 export default function IntegracoesIndex({ initialTab }) {
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
   const { user } = useUser();
   const { isAdmin, hasPermission } = usePermissions();
   const queryClient = useQueryClient();
@@ -54,19 +73,20 @@ export default function IntegracoesIndex({ initialTab }) {
 
   const auditIntegracao = async ({ acao, descricao, dadosNovos }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext("AuditLog", {
         usuario: user?.full_name || user?.email || "Usuario local",
         usuario_id: user?.id || null,
         empresa_id: empresaAtual?.id || null,
         group_id: grupoAtivoId || null,
-        acao,
+        grupo_id: grupoAtivoId || null,
+        acao: sanitizeAuditText(acao, 120),
         modulo: "Integracoes",
         entidade: "ConfiguracaoSistema",
         registro_id: integracoesKey || null,
-        descricao,
-        dados_novos: dadosNovos || null,
+        descricao: sanitizeAuditText(descricao, 500),
+        dados_novos: sanitizeAuditPayload(dadosNovos || null),
         data_hora: new Date().toISOString(),
-      });
+      }).catch(() => null);
     } catch (error) {
       console.warn("Falha ao auditar integracao:", error);
     }
@@ -75,17 +95,19 @@ export default function IntegracoesIndex({ initialTab }) {
   const handleTabChange = (next) => {
     setTab(next);
     try {
-      base44.entities.AuditLog.create({
+      createInContext("AuditLog", {
         usuario: user?.full_name || user?.email || "Usuário",
         usuario_id: user?.id,
         empresa_id: empresaAtual?.id || null,
         group_id: grupoAtivoId || null,
+        grupo_id: grupoAtivoId || null,
         acao: "Visualização",
         modulo: "Sistema",
         entidade: "Integrações",
-        descricao: `Aba visualizada: ${next}`,
+        descricao: `Aba visualizada: ${sanitizeAuditText(next, 80)}`,
+        dados_novos: sanitizeAuditPayload({ tab: next, scope }),
         data_hora: new Date().toISOString(),
-      });
+      }).catch(() => null);
     } catch {}
   };
 
