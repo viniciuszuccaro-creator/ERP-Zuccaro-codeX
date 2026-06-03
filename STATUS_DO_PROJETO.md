@@ -7,7 +7,16 @@
 - Validado: `http://127.0.0.1:5173/` respondeu na porta local.
 - A tarefa agendada do Windows foi tentada, mas o Windows retornou `Acesso negado`; como alternativa sem admin, foi criado o atalho `ERP Zuccaro Codex AutoStart.lnk` na pasta Inicializar do usuario.
 - Ao entrar no Windows, o atalho chama `start-erp-dev.cmd` minimizado para manter o servidor local disponivel para o Codex.
-- Validacao pendente nesta etapa: executar `git diff --check` e salvar no GitHub.
+- Validado e salvo no GitHub em `main` e `codex/sincronizar-projeto`.
+
+### Atendimento/Chatbot - Fase 8 Auditoria, Exportacao e Fluxos Auxiliares
+- Seguido o plano de melhoria nos componentes existentes `ExportarConversas`, `RelatoriosAtendimento`, `GerarBoletoChat` e `TransferirConversa`, sem criar tela, modulo, componente ou arquivo novo.
+- Auditorias de exportacao, relatorios, boleto no chat e transferencia deixaram de usar `base44.entities.AuditLog.create` direto e passaram a usar `createInContext('AuditLog')`.
+- `ExportarConversas` passou a usar o usuario do contexto da aplicacao (`useUser`) para auditoria, evitando chamada direta `base44.auth.me()` no fluxo de exportacao.
+- Imports Base44 sem uso foram removidos dos componentes em que a auditoria direta deixou de existir.
+- Mantida a Regra-Mae: fluxos atuais de exportar CSV/JSON, exportar relatorio, gerar boleto pelo chat e transferir conversa foram preservados; apenas carimbo multiempresa e auditoria contextual foram reforcados.
+- Build validado com sucesso via Vite; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: revisar os pontos restantes de `InvokeLLM`/IntentEngine e fechar Atendimento/Chatbot antes de seguir para Administracao do Sistema.
 
 ### Atendimento/Chatbot - Fase 8 Widgets do Chatbot
 - Seguido o plano de melhoria nos componentes existentes `ChatbotWidget` e `ChatbotWidgetAvancado`, sem criar tela, modulo, componente ou arquivo novo.

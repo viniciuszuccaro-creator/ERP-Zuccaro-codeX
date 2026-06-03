@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -50,7 +49,7 @@ import { useUser } from '@/components/lib/UserContext';
  */
 export default function RelatoriosAtendimento() {
   const [periodo, setPeriodo] = useState('7dias');
-  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { filterInContext, createInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const { user } = useUser();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
@@ -150,7 +149,9 @@ export default function RelatoriosAtendimento() {
 
   const auditarExportacao = async (sucesso = true) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
+        ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
+        ...(empresaId ? { empresa_id: empresaId } : {}),
         acao: sucesso ? 'Exportacao' : 'Bloqueio',
         modulo: 'CRM',
         entidade: 'RelatoriosAtendimento',
@@ -159,9 +160,6 @@ export default function RelatoriosAtendimento() {
           : 'Bloqueio de exportacao de relatorio de atendimento por contexto ou RBAC',
         usuario_id: user?.id || null,
         usuario: user?.email || user?.full_name || 'Usuario',
-        empresa_id: empresaId,
-        group_id: groupId,
-        grupo_id: groupId,
         tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
         sucesso,
         dados_novos: {

@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -130,7 +129,8 @@ export default function TransferirConversa({ conversa, onTransferido }) {
         });
       }
 
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
+        ...contextoPayload,
         usuario: user?.full_name || user?.email || 'Usuario',
         usuario_id: user?.id || null,
         acao: 'Transferencia',
@@ -139,8 +139,6 @@ export default function TransferirConversa({ conversa, onTransferido }) {
         entidade: 'ConversaOmnicanal',
         registro_id: conversa.id,
         descricao: `Conversa transferida para ${tipo}`,
-        empresa_id: empresaId,
-        group_id: groupId,
         dados_anteriores: conversa,
         dados_novos: { ...updates, tipo_transferencia: tipo, destino_id: destinoId || null },
         data_hora: new Date().toISOString()

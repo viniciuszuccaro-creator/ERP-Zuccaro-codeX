@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,7 +39,7 @@ export default function GerarBoletoChat({ conversa, clienteId, onBoletoEnviado }
   const [copiado, setCopiado] = useState(false);
   const queryClient = useQueryClient();
   const { user } = useUser();
-  const { empresaAtual, grupoAtual, filterInContext, updateInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext, updateInContext, createInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
 
   const groupId = conversa?.group_id || conversa?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
@@ -54,7 +53,7 @@ export default function GerarBoletoChat({ conversa, clienteId, onBoletoEnviado }
 
   const auditBoletoChat = async (acao, sucesso, detalhes = {}) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext("AuditLog", {
         group_id: groupId,
         grupo_id: groupId,
         empresa_id: empresaId,

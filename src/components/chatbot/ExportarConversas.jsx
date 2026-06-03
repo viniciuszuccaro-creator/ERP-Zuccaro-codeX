@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +12,7 @@ import {
 import { toast } from 'sonner';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
+import { useUser } from '@/components/lib/UserContext';
 
 /**
  * V21.6 - EXPORTAÇÃO DE CONVERSAS
@@ -26,8 +26,9 @@ import usePermissions from '@/components/lib/usePermissions';
 export default function ExportarConversas() {
   const [exportando, setExportando] = useState(false);
   const [periodo, setPeriodo] = useState('7dias');
-  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
+  const { user } = useUser();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
   const contextoValido = Boolean(empresaId || groupId);
@@ -36,8 +37,9 @@ export default function ExportarConversas() {
 
   const auditarExportacao = async ({ formato, quantidade = 0, sucesso = true, motivo = null }) => {
     try {
-      const user = await base44.auth.me().catch(() => null);
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
+        ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
+        ...(empresaId ? { empresa_id: empresaId } : {}),
         usuario: user?.full_name || user?.email || 'Usuario',
         usuario_id: user?.id || null,
         acao: 'Exportacao',
@@ -47,8 +49,6 @@ export default function ExportarConversas() {
         descricao: sucesso
           ? `Exportacao ${formato} de conversas (${quantidade} registros).`
           : `Exportacao ${formato} de conversas bloqueada: ${motivo || 'sem permissao ou contexto'}.`,
-        group_id: groupId,
-        empresa_id: empresaId,
         dados_anteriores: null,
         dados_novos: { formato, quantidade, periodo, sucesso, motivo },
         data_hora: new Date().toISOString()
