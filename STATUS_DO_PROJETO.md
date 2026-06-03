@@ -1,3 +1,14 @@
+### Projeto/Codex - Abertura Automatica Local
+- Seguido o pedido de deixar o projeto abrir automaticamente no ambiente local, sem criar modulo, tela ou funcionalidade nova.
+- `start-erp-dev.cmd` foi melhorado para iniciar o ERP Zuccaro em `http://127.0.0.1:5173/`, usando Node local quando existir ou `npm.cmd` instalado no Windows como fallback.
+- `abrir-erp-hd.bat` foi integrado ao script principal `start-erp-dev.cmd`, evitando dois fluxos diferentes para iniciar o servidor.
+- Objetivo tecnico: quando o Codex abrir com a aba em `localhost:5173`, o servidor local ja deve estar disponivel se a tarefa automatica do Windows estiver ativa.
+- Observacao: o Codex/in-app browser pode nao permitir navegacao automatica por script externo; a automacao garante o servidor rodando, e a aba pode ser recarregada no endereco local.
+- Validado: `http://127.0.0.1:5173/` respondeu na porta local.
+- A tarefa agendada do Windows foi tentada, mas o Windows retornou `Acesso negado`; como alternativa sem admin, foi criado o atalho `ERP Zuccaro Codex AutoStart.lnk` na pasta Inicializar do usuario.
+- Ao entrar no Windows, o atalho chama `start-erp-dev.cmd` minimizado para manter o servidor local disponivel para o Codex.
+- Validacao pendente nesta etapa: executar `git diff --check` e salvar no GitHub.
+
 ### Atendimento/Chatbot - Fase 8 Widgets do Chatbot
 - Seguido o plano de melhoria nos componentes existentes `ChatbotWidget` e `ChatbotWidgetAvancado`, sem criar tela, modulo, componente ou arquivo novo.
 - Upload de anexos passou a validar limite de 10MB antes de chamar `UploadFile`, reduzindo risco de envio pesado e falha silenciosa.
