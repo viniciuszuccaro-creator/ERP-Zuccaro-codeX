@@ -4,7 +4,8 @@
 - Backup manual em `BackupAutomatico` passou a usar `createInContext` e `updateInContext`, mantendo inicio, conclusao simulada, toast, invalidacao de cache e fluxo visual existente.
 - As leituras/filtros existentes foram preservados para nao quebrar carregamento das configuracoes e espelhos de seguranca.
 - Mantida a Regra-Mae: melhoria nos componentes existentes, sem exclusao de botao, campo, aba ou funcionalidade.
-- Proximo passo sugerido: continuar em Administracao do Sistema revisando componentes de configuracao e manutencao restantes para remover chamadas diretas sensiveis quando houver helper contextual seguro.### Administracao do Sistema - Fase 8 Monitor e Validadores UI Contextuais
+- Proximo passo sugerido: continuar em Administracao do Sistema revisando componentes de configuracao e manutencao restantes para remover chamadas diretas sensiveis quando houver helper contextual seguro.
+### Administracao do Sistema - Fase 8 Monitor e Validadores UI Contextuais
 - Segui o proximo passo salvo em Gestao de Acessos/Admin, sem criar tela, modulo, componente ou arquivo novo.
 - `MonitorAcessoRealtime`, `ValidadorElementosInterativos` e `ValidadorLayoutResponsivo` deixaram de auditar por `base44.entities.AuditLog.create` direto e passaram a usar `createInContext('AuditLog')`.
 - A listagem de usuarios em `MonitorAcessoRealtime` foi preservada porque ainda passa pelo filtro local de escopo multiempresa existente.
