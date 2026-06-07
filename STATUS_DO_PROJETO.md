@@ -1,3 +1,11 @@
+### Administracao do Sistema - Fase 8 Heranca de Configuracoes Contextual
+- Segui a nova varredura do plano e avancei em Configuracoes Gerais, sem criar tela, modulo, componente ou arquivo novo.
+- `HerancaOverridesPanel` deixou de usar `base44.entities.ConfiguracaoSistema.*` e `base44.entities.AuditLog.create` direto.
+- Leituras de configuracoes de grupo/empresa passaram a usar `filterInContext`; criacao, atualizacao e remocao de overrides passaram a usar `createInContext`, `updateInContext` e `deleteInContext`.
+- Auditoria de overrides passou a ser registrada por `createInContext('AuditLog')`, preservando `groupId`, `empresaId`, usuario e antes/depois.
+- Botoes de criar/remover override mantiveram o fluxo atual e receberam `data-context-required`, reforcando RBAC/contexto sem remover funcionalidade.
+- Mantida a Regra-Mae: melhoria no componente existente, sem exclusao de tela, campo, aba ou acao.
+- Proximo passo sugerido: continuar em Configuracoes Gerais revisando `VersionamentoConfigPanel` e `ConflitosRevisaoPanel`, que ainda possuem restauracao/merge sensiveis com chamadas diretas.
 ### Administracao do Sistema - Fase 8 IA e WhatsApp em Contexto
 - Segui o proximo passo salvo na aba Integracoes, sem criar tela, modulo, componente ou arquivo novo.
 - `IALeituraProjeto` manteve as integracoes reais `UploadFile` e `InvokeLLM`, mas agora bloqueia processamento sem grupo/empresa ou permissao e audita leitura real/simulada sem gravar conteudo sensivel completo.
@@ -5,7 +13,7 @@
 - `TesteWhatsApp` deixou de importar Base44 sem uso, passou a validar telefone, bloquear envio/templates sem contexto ou permissao e auditar envio simulado com metadados seguros.
 - Botoes, campos, templates, tabelas e fluxos visuais foram preservados; apenas RBAC, contexto multiempresa e auditoria foram reforcados.
 - Mantida a Regra-Mae: melhoria nos componentes existentes, sem exclusao de funcionalidade.
-- Proximo passo sugerido: fazer nova varredura de `src/components/integracoes` e seguir para pontos de Integracoes/Administra??o que ainda tenham chamadas diretas ou acoes sensiveis sem contexto/RBAC.
+- Proximo passo sugerido: fazer nova varredura de `src/components/integracoes` e seguir para pontos de Integracoes/Administracao que ainda tenham chamadas diretas ou acoes sensiveis sem contexto/RBAC.
 ### Administracao do Sistema - Fase 8 Marketplaces Contextuais
 - Segui o proximo passo salvo na aba Integracoes, sem criar tela, modulo, componente ou arquivo novo.
 - `SincronizacaoMarketplacesAtiva` deixou de criar clientes, pedidos, pedidos externos e auditorias por chamadas diretas `base44.entities.*`.

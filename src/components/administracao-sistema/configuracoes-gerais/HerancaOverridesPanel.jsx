@@ -1,6 +1,5 @@
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,7 +9,7 @@ import { toast } from "sonner";
 import usePermissions from "@/components/lib/usePermissions";
 
 export default function HerancaOverridesPanel() {
-  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, filterInContext, createInContext, updateInContext, deleteInContext } = useContextoVisual();
   const { user } = useUser();
   const { isAdmin, hasPermission } = usePermissions();
   const queryClient = useQueryClient();
@@ -23,7 +22,7 @@ export default function HerancaOverridesPanel() {
 
   const registrarAuditoria = React.useCallback(async ({ acao, chave, registroId, dadosNovos, dadosAntigos }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || 'Usuario local',
         usuario_id: user?.id || null,
         empresa_id: scope.empresa_id || null,
@@ -40,18 +39,18 @@ export default function HerancaOverridesPanel() {
     } catch (error) {
       console.warn('Falha ao registrar auditoria de override:', error);
     }
-  }, [scope.empresa_id, scope.group_id, user?.email, user?.full_name, user?.id]);
+  }, [createInContext, scope.empresa_id, scope.group_id, user?.email, user?.full_name, user?.id]);
 
   const { data: cfgGrupo = [] } = useQuery({
     queryKey: ['cfg-sistema-grupo', scope.group_id],
     enabled: !!scope.group_id,
-    queryFn: async () => base44.entities.ConfiguracaoSistema.filter({ group_id: scope.group_id, empresa_id: null }, '-updated_date', 200)
+    queryFn: async () => filterInContext('ConfiguracaoSistema', { group_id: scope.group_id, empresa_id: null }, '-updated_date', 200)
   });
 
   const { data: cfgEmpresa = [] } = useQuery({
     queryKey: ['cfg-sistema-empresa', scope.empresa_id],
     enabled: contextoValidoParaOverride,
-    queryFn: async () => base44.entities.ConfiguracaoSistema.filter({ empresa_id: scope.empresa_id }, '-updated_date', 200)
+    queryFn: async () => filterInContext('ConfiguracaoSistema', { empresa_id: scope.empresa_id }, '-updated_date', 200)
   });
 
   const upsertMutation = useMutation({
@@ -75,17 +74,17 @@ export default function HerancaOverridesPanel() {
         chave_origem_grupo: registroGrupo.id || null
       };
       if (existente) {
-        await base44.entities.ConfiguracaoSistema.update(existente.id, payload);
+        const atualizado = await updateInContext('ConfiguracaoSistema', existente.id, payload);
         await registrarAuditoria({
           acao: 'Atualizacao Override',
           chave: registroGrupo.chave,
           registroId: existente.id,
           dadosAntigos: existente,
-          dadosNovos: payload
+          dadosNovos: atualizado || payload
         });
         return existente.id;
       }
-      const created = await base44.entities.ConfiguracaoSistema.create(payload);
+      const created = await createInContext('ConfiguracaoSistema', payload);
       await registrarAuditoria({
         acao: 'Criacao Override',
         chave: registroGrupo.chave,
@@ -116,7 +115,7 @@ export default function HerancaOverridesPanel() {
       if (!existente) {
         throw new Error('Override nao encontrado para esta empresa.');
       }
-      await base44.entities.ConfiguracaoSistema.delete(existente.id);
+      await deleteInContext('ConfiguracaoSistema', existente.id);
       await registrarAuditoria({
         acao: 'Remocao Override',
         chave,
@@ -145,9 +144,9 @@ export default function HerancaOverridesPanel() {
         </div>
         {contextoValidoParaOverride && (
           override ? (
-            <Button variant="outline" size="sm" onClick={() => removerOverrideMutation.mutate({ chave: g.chave })} disabled={removerOverrideMutation.isPending || !podeEditarOverrides} data-action="ConfigHeranca.override.remover" data-permission="Sistema.Configuracoes.editar" data-sensitive="true">Remover Override</Button>
+            <Button variant="outline" size="sm" onClick={() => removerOverrideMutation.mutate({ chave: g.chave })} disabled={removerOverrideMutation.isPending || !podeEditarOverrides} data-action="ConfigHeranca.override.remover" data-permission="Sistema.Configuracoes.editar" data-context-required="group-or-company" data-sensitive="true">Remover Override</Button>
           ) : (
-            <Button size="sm" onClick={() => upsertMutation.mutate({ registroGrupo: g })} disabled={upsertMutation.isPending || !podeEditarOverrides} data-action="ConfigHeranca.override.criar" data-permission="Sistema.Configuracoes.criar" data-sensitive="true">Criar Override</Button>
+            <Button size="sm" onClick={() => upsertMutation.mutate({ registroGrupo: g })} disabled={upsertMutation.isPending || !podeEditarOverrides} data-action="ConfigHeranca.override.criar" data-permission="Sistema.Configuracoes.criar" data-context-required="group-or-company" data-sensitive="true">Criar Override</Button>
           )
         )}
       </div>
@@ -184,7 +183,7 @@ export default function HerancaOverridesPanel() {
                       <div className="text-sm font-medium truncate">{e.chave || '(sem chave)'}</div>
                       <div className="text-xs text-slate-500 truncate">{JSON.stringify(e.valor || e, null, 0)}</div>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => removerOverrideMutation.mutate({ chave: e.chave })} disabled={removerOverrideMutation.isPending || !podeEditarOverrides} data-action="ConfigHeranca.override.removerEmpresa" data-permission="Sistema.Configuracoes.editar" data-sensitive="true">Remover</Button>
+                    <Button variant="outline" size="sm" onClick={() => removerOverrideMutation.mutate({ chave: e.chave })} disabled={removerOverrideMutation.isPending || !podeEditarOverrides} data-action="ConfigHeranca.override.removerEmpresa" data-permission="Sistema.Configuracoes.editar" data-context-required="group-or-company" data-sensitive="true">Remover</Button>
                   </div>
                 ))}
                 {(!cfgEmpresa || cfgEmpresa.length === 0) && (
