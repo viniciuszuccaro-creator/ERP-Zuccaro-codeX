@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +11,6 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import { useUser } from "@/components/lib/UserContext";
 import {
   UserPlus,
   Building2,
@@ -37,8 +35,7 @@ export default function GestaoUsuariosAvancada({
   onSuccess 
 }) {
   const queryClient = useQueryClient();
-  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
-  const { user: operador } = useUser();
+  const { empresaAtual, grupoAtual, contexto, updateInContext } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = contexto === "grupo" ? null : empresaAtual?.id || null;
   const contextoValido = contexto === "grupo" ? !!groupId : !!empresaId;
@@ -94,32 +91,7 @@ export default function GestaoUsuariosAvancada({
         ...(groupId ? { group_id: groupId } : {}),
         ...(empresaId ? { empresa_id: empresaId } : {})
       };
-      const result = await base44.entities.User.update(usuario.id, payload);
-      try {
-        await base44.entities.AuditLog.create({
-          usuario: operador?.full_name || operador?.email || "Usuario local",
-          usuario_id: operador?.id || null,
-          empresa_id: empresaId,
-          group_id: groupId,
-          acao: "Edicao",
-          modulo: "Controle de Acesso",
-          entidade: "User",
-          registro_id: usuario.id,
-          descricao: `Configuracao de acesso alterada para ${usuario?.email || usuario?.full_name || usuario.id}`,
-          dados_anteriores: {
-            perfil_acesso_id: usuario?.perfil_acesso_id || null,
-            nivel_acesso_contexto: usuario?.nivel_acesso_contexto || usuario?.escopo_acesso || null,
-            empresas_vinculadas: usuario?.empresas_vinculadas || [],
-            autenticacao_dois_fatores: usuario?.autenticacao_dois_fatores || false,
-            restricoes_adicionais: usuario?.restricoes_adicionais || null
-          },
-          dados_novos: payload,
-          data_hora: new Date().toISOString()
-        });
-      } catch (error) {
-        console.warn("Falha ao auditar alteracao de usuario:", error);
-      }
-      return result;
+      return updateInContext('User', usuario.id, payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['usuarios'] });

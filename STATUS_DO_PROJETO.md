@@ -1,3 +1,10 @@
+### Administracao do Sistema - Fase 8 Usuarios Avancados Contextual
+- Segui o proximo passo salvo em Gestao de Acessos/Admin, sem criar tela, modulo, componente ou arquivo novo.
+- `GestaoUsuariosAvancada` deixou de atualizar `User` por chamada direta e passou a usar `updateInContext('User')`.
+- A auditoria manual duplicada de alteracao de usuario foi removida porque `updateInContext` ja registra antes/depois, usuario, grupo e empresa quando disponivel.
+- O modal de gestao de usuario, perfil vinculado, empresas vinculadas, restricoes, dois fatores, cargo, departamento e telefone foram preservados.
+- Mantida a Regra-Mae: melhoria no componente existente, sem exclusao de botao, campo, aba ou funcionalidade.
+- Proximo passo sugerido: continuar em Gestao de Acessos revisando `GerenciamentoAcessosCompleto` para trocar salvamento/exclusao de perfis e auditorias diretas por helpers contextuais, com cuidado para nao quebrar modo avancado.
 ### Administracao do Sistema - Fase 8 Central de Perfis Contextual
 - Segui o proximo passo salvo em Gestao de Acessos/Admin, sem criar tela, modulo, componente ou arquivo novo.
 - `CentralPerfisAcesso` deixou de criar, editar e excluir `PerfilAcesso` por chamadas diretas e passou a usar `createInContext`, `updateInContext` e `deleteInContext`.
