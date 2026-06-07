@@ -1,6 +1,5 @@
 import React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +28,7 @@ import {
 export default function CentralIntegracoes() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
   const { user } = useUser();
   const { openWindow } = useWindow();
   const { isAdmin, hasPermission } = usePermissions();
@@ -59,7 +58,7 @@ export default function CentralIntegracoes() {
 
   const auditarIntegracao = async ({ acao, descricao, integracao, sucesso = true, dadosNovos = null }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext("AuditLog", {
         usuario: user?.full_name || user?.email || "Sistema",
         usuario_id: user?.id || null,
         empresa_id: scope?.empresa_id || null,
@@ -82,14 +81,14 @@ export default function CentralIntegracoes() {
   const { data: configs = [] } = useQuery({
     queryKey: ["configuracao-integracao-marketplace", scopeId || "sem-contexto"],
     enabled: !!scopeId,
-    queryFn: () => base44.entities.ConfiguracaoIntegracaoMarketplace.filter(scope, undefined, 500),
+    queryFn: () => filterInContext("ConfiguracaoIntegracaoMarketplace", {}, undefined, 500),
   });
 
   const { data: cfgIntegracoes } = useQuery({
     queryKey: ["cfg-integracoes", chaveIntegracoes, scopeId || "sem-contexto"],
     enabled: !!chaveIntegracoes,
     queryFn: async () => {
-      const existentes = await base44.entities.ConfiguracaoSistema.filter({ chave: chaveIntegracoes, ...scope }, undefined, 1);
+      const existentes = await filterInContext("ConfiguracaoSistema", { chave: chaveIntegracoes }, undefined, 1);
       return existentes?.[0] || null;
     },
   });
@@ -120,7 +119,7 @@ export default function CentralIntegracoes() {
 
     setSalvandoKey(key);
     try {
-      const existentes = await base44.entities.ConfiguracaoSistema.filter({ chave: chaveIntegracoes, ...scope }, undefined, 1);
+      const existentes = await filterInContext("ConfiguracaoSistema", { chave: chaveIntegracoes }, undefined, 1);
       const payload = {
         chave: chaveIntegracoes,
         categoria: "Integracoes",
@@ -129,9 +128,9 @@ export default function CentralIntegracoes() {
       };
 
       if (existentes && existentes.length > 0) {
-        await base44.entities.ConfiguracaoSistema.update(existentes[0].id, { ...existentes[0], ...payload });
+        await updateInContext("ConfiguracaoSistema", existentes[0].id, { ...existentes[0], ...payload });
       } else {
-        await base44.entities.ConfiguracaoSistema.create(payload);
+        await createInContext("ConfiguracaoSistema", payload);
       }
 
       await auditarIntegracao({

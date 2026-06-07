@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,6 +23,7 @@ import ConfiguracaoBoletosForm from '../cadastros/ConfiguracaoBoletosForm';
 import ConfiguracaoWhatsAppForm from '../cadastros/ConfiguracaoWhatsAppForm';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 /**
  * Painel de Status das Integrações Reais
@@ -34,6 +34,7 @@ function IntegrationConfigButtons({ integracao, empresaId, groupId }) {
   const { openWindow } = useWindow();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { filterInContext, createInContext, updateInContext } = useContextoVisual();
   const scopeId = empresaId || groupId || null;
   const scope = empresaId ? { empresa_id: empresaId } : groupId ? { group_id: groupId } : {};
 
@@ -66,13 +67,13 @@ function IntegrationConfigButtons({ integracao, empresaId, groupId }) {
       try {
         if (!scopeId) throw new Error('Selecione um grupo ou empresa.');
         const chave = `integracoes_${scopeId}`;
-        const existentes = await base44.entities.ConfiguracaoSistema.filter({ chave, ...scope }, undefined, 1);
+        const existentes = await filterInContext('ConfiguracaoSistema', { chave }, undefined, 1);
         const payload = { chave, categoria: 'Integracoes', ...scope, [cfg.key]: data };
         if (existentes && existentes.length > 0) {
-          await base44.entities.ConfiguracaoSistema.update(existentes[0].id, { ...existentes[0], ...payload });
+          await updateInContext('ConfiguracaoSistema', existentes[0].id, { ...existentes[0], ...payload });
           toast({ title: `✅ Integração atualizada!` });
         } else {
-          await base44.entities.ConfiguracaoSistema.create(payload);
+          await createInContext('ConfiguracaoSistema', payload);
           toast({ title: `✅ Integração criada!` });
         }
         queryClient.invalidateQueries({ queryKey: [cfg.queryKey] });
@@ -128,13 +129,14 @@ export default function StatusIntegracoes({ empresaId, groupId }) {
   const [statusNFe, setStatusNFe] = useState(null);
   const [statusBoleto, setStatusBoleto] = useState(null);
   const [statusWhatsApp, setStatusWhatsApp] = useState(null);
+  const { filterInContext } = useContextoVisual();
   const scopeId = empresaId || groupId || null;
   const scope = empresaId ? { empresa_id: empresaId } : groupId ? { group_id: groupId } : {};
 
   const verificarConfigLocal = async (key) => {
     if (!scopeId) return { configurado: false, erro: 'Selecione um grupo ou empresa.' };
     const chave = `integracoes_${scopeId}`;
-    const rows = await base44.entities.ConfiguracaoSistema.filter({ chave, ...scope }, undefined, 1);
+    const rows = await filterInContext('ConfiguracaoSistema', { chave }, undefined, 1);
     const cfg = rows?.[0]?.[key];
     const configurado = !!(cfg?.ativo || cfg?.api_key || cfg?.api_url || cfg?.provedor);
     return { configurado, conectado: configurado, integracao: cfg || null };

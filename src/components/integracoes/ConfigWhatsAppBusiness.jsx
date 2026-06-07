@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,7 +27,7 @@ export default function ConfigWhatsAppBusiness({ empresaId: empresaIdProp }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useUser();
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
   const { isAdmin, hasPermission } = usePermissions();
 
   const [config, setConfig] = useState({
@@ -56,7 +55,7 @@ export default function ConfigWhatsAppBusiness({ empresaId: empresaIdProp }) {
 
   const auditarWhatsApp = async (acao, descricao, dadosNovos = null, dadosAnteriores = null) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || 'Usuario local',
         usuario_id: user?.id || null,
         empresa_id: empresaId,
@@ -79,7 +78,7 @@ export default function ConfigWhatsAppBusiness({ empresaId: empresaIdProp }) {
     queryKey: ['config-whatsapp', chaveConfig],
     queryFn: async () => {
       if (!chaveConfig) return null;
-      const registros = await base44.entities.ConfiguracaoSistema.filter({ chave: chaveConfig, ...scope }, '-updated_date', 1);
+      const registros = await filterInContext('ConfiguracaoSistema', { chave: chaveConfig }, '-updated_date', 1);
       return registros?.[0] || null;
     },
     enabled: !!chaveConfig
@@ -108,8 +107,8 @@ export default function ConfigWhatsAppBusiness({ empresaId: empresaIdProp }) {
         ...scope
       };
       const salvo = configSalva?.id
-        ? await base44.entities.ConfiguracaoSistema.update(configSalva.id, payload)
-        : await base44.entities.ConfiguracaoSistema.create(payload);
+        ? await updateInContext('ConfiguracaoSistema', configSalva.id, payload)
+        : await createInContext('ConfiguracaoSistema', payload);
       await auditarWhatsApp('Salvar WhatsApp Business', 'Configuracao WhatsApp Business salva com escopo multiempresa.', payload, configSalva || null);
       return salvo;
     },

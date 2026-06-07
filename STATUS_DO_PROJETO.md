@@ -1,3 +1,11 @@
+### Administracao do Sistema - Fase 8 Integracoes Configuraveis em Contexto
+- Segui o proximo passo salvo nos filhos de Integracoes, sem criar tela, modulo, componente ou arquivo novo.
+- `ConfigWhatsAppBusiness`, `CentralIntegracoes` e `StatusIntegracoes` deixaram de usar chamadas diretas `base44.entities.*` para auditoria, leitura e gravacao de configuracoes.
+- Auditorias passaram a usar `createInContext('AuditLog')` e configuracoes passaram a usar `filterInContext`, `createInContext` e `updateInContext`, preservando escopo de grupo/empresa e sanitizacao local.
+- O fluxo visual de testes/status/configuracao de integracoes foi preservado; botoes, forms e janelas existentes continuam no mesmo caminho.
+- Mantida a Regra-Mae: apenas melhoria nos componentes existentes, reforcando multiempresa, RBAC ja existente e auditoria contextual.
+- Proximo passo sugerido: continuar em `SincronizacaoMarketplacesAtiva` e depois revisar os filhos restantes de Integracoes com chamadas diretas (`IALeituraProjeto`, `IAPrevisaoLogistica`, `SincronizacaoMarketplaces`, `TesteWhatsApp`), priorizando contexto/RBAC antes de qualquer mudanca visual.
+
 ### Administracao do Sistema - Fase 8 Testes de Integracoes Contextuais
 - Segui o proximo passo salvo em Administracao do Sistema: revisar componentes filhos da aba Integracoes sem criar tela, modulo, componente ou arquivo novo.
 - `TesteNFe`, `TesteBoletos`, `TesteGoogleMaps` e `TesteTransportadoras` deixaram de registrar auditoria por `base44.entities.AuditLog.create` direto.
