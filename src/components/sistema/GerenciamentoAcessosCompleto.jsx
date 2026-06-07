@@ -336,7 +336,7 @@ export default function GerenciamentoAcessosCompleto() {
   const [perfilHistorico, setPerfilHistorico] = useState(null);
 
   const queryClient = useQueryClient();
-  const { contexto, empresaAtual, grupoAtual, empresasDoGrupo = [], estaNoGrupo, filterInContext } = useContextoVisual();
+  const { contexto, empresaAtual, grupoAtual, empresasDoGrupo = [], estaNoGrupo, filterInContext, createInContext, updateInContext, deleteInContext } = useContextoVisual();
   const { hasPermission, isAdmin, user } = usePermissions();
   const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
     try { return localStorage.getItem('group_atual_id'); } catch { return null; }
@@ -347,7 +347,7 @@ export default function GerenciamentoAcessosCompleto() {
 
   const registrarAuditoriaAcesso = async ({ acao, entidade = "PerfilAcesso", registro_id, descricao, dados_anteriores, dados_novos }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || "Sistema",
         usuario_id: user?.id || null,
         empresa_id: empresaAtivaId || null,
@@ -463,12 +463,12 @@ export default function GerenciamentoAcessosCompleto() {
 
       if (perfilId) {
         console.log("  Modo: UPDATE (ID:", perfilId, ")");
-        const resultado = await base44.entities.PerfilAcesso.update(perfilId, data);
+        const resultado = await updateInContext('PerfilAcesso', perfilId, data);
         console.log("✅ UPDATE concluído:", resultado);
         return { ...resultado, __auditAction: "Edicao", __auditRegistroId: perfilId, __auditDadosAnteriores: editingPerfil || null };
       } else {
         console.log("  Modo: CREATE");
-        const resultado = await base44.entities.PerfilAcesso.create(data);
+        const resultado = await createInContext('PerfilAcesso', data);
         console.log("✅ CREATE concluído:", resultado);
         return { ...resultado, __auditAction: data.origem_configuracao === "importacao" ? "Importacao" : data.origem_configuracao === "template" ? "Template" : data.origem_configuracao === "clone" ? "Clonagem" : "Criacao" };
       }
@@ -511,7 +511,7 @@ export default function GerenciamentoAcessosCompleto() {
       if (!contextoValido) {
         throw new Error("Selecione um grupo ou empresa antes de configurar permissões.");
       }
-      return await base44.entities.PermissaoEmpresaModulo.create({
+      return await createInContext('PermissaoEmpresaModulo', {
         ...data,
         empresa_id: data.empresa_id || empresaAtivaId || null,
         group_id: grupoAtivoId || null
@@ -533,7 +533,7 @@ export default function GerenciamentoAcessosCompleto() {
 
   const atualizarUsuarioMutation = useMutation({
     mutationFn: async ({ id, data }) => {
-      return await base44.entities.User.update(id, data);
+      return await updateInContext('User', id, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['usuarios', scopeKey] });
@@ -547,7 +547,7 @@ export default function GerenciamentoAcessosCompleto() {
         throw new Error("Selecione um grupo ou empresa antes de excluir o perfil.");
       }
       const perfil = perfis.find((p) => p.id === id) || null;
-      const deleted = await base44.entities.PerfilAcesso.delete(id);
+      const deleted = await deleteInContext('PerfilAcesso', id);
       return { deleted, perfil, id };
     },
     onSuccess: async (result) => {

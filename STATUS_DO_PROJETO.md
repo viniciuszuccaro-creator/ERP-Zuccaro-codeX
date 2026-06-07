@@ -1,3 +1,11 @@
+### Administracao do Sistema - Fase 8 Acessos Avancados Contextuais
+- Segui o proximo passo salvo em Gestao de Acessos/Admin, sem criar tela, modulo, componente ou arquivo novo.
+- `GerenciamentoAcessosCompleto` deixou de criar, editar e excluir `PerfilAcesso` por chamadas diretas e passou a usar `createInContext`, `updateInContext` e `deleteInContext`.
+- A configuracao `PermissaoEmpresaModulo` e a atualizacao de `User` no modo avancado tambem passaram a usar helpers contextuais.
+- A auditoria local `registrarAuditoriaAcesso` deixou de usar `base44.entities.AuditLog.create` direto e passou a usar `createInContext('AuditLog')`.
+- As listagens de usuarios, filtros por escopo, dashboards, abas, modais e fluxos do modo avancado foram preservados.
+- Mantida a Regra-Mae: melhoria no componente existente, sem exclusao de botao, campo, aba ou funcionalidade.
+- Proximo passo sugerido: continuar em Gestao de Acessos revisando `ValidadorAcessoCompleto`, `MatrizPermissoesVisual` e `RelatorioPermissoes` para contextualizar auditorias diretas restantes.
 ### Administracao do Sistema - Fase 8 Usuarios Avancados Contextual
 - Segui o proximo passo salvo em Gestao de Acessos/Admin, sem criar tela, modulo, componente ou arquivo novo.
 - `GestaoUsuariosAvancada` deixou de atualizar `User` por chamada direta e passou a usar `updateInContext('User')`.
