@@ -12,7 +12,7 @@ import { toast } from "sonner";
 export default function SoDChecker() {
   const { isAdmin, hasPermission } = usePermissions();
   const { user } = useUser();
-  const { empresaAtual, grupoAtual, estaNoGrupo } = useContextoVisual();
+  const { empresaAtual, grupoAtual, estaNoGrupo, createInContext, updateInContext } = useContextoVisual();
   const podeExecutar = isAdmin() || hasPermission("Sistema", "Controle de Acesso", "editar");
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = estaNoGrupo ? null : empresaAtual?.id || null;
@@ -25,7 +25,7 @@ export default function SoDChecker() {
 
   const audit = async ({ acao, entidade, descricao, dadosNovos }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || "Usuario",
         usuario_id: user?.id || null,
         empresa_id: empresaId,
@@ -117,7 +117,7 @@ export default function SoDChecker() {
 
       const ids = Object.keys(porPerfil);
       for (const perfilId of ids) {
-        await base44.entities.PerfilAcesso.update(perfilId, {
+        await updateInContext('PerfilAcesso', perfilId, {
           conflitos_sod_detectados: porPerfil[perfilId],
           ...(groupId ? { group_id: groupId } : {}),
           ...(empresaId ? { empresa_id: empresaId } : {}),

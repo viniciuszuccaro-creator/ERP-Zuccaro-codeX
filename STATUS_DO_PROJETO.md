@@ -1,3 +1,11 @@
+### Administracao do Sistema - Fase 8 SoD Contextual
+- Segui o proximo passo salvo em Gestao de Acessos, sem criar tela, modulo, componente ou arquivo novo.
+- `SoDChecker` preservou a funcao existente `sodValidator` para analise de segregacao de funcoes.
+- Auditorias de analise, bloqueio, erro e persistencia SoD deixaram de usar `base44.entities.AuditLog.create` direto e passaram a usar `createInContext('AuditLog')`.
+- Persistencia de conflitos em `PerfilAcesso` deixou de usar `base44.entities.PerfilAcesso.update` direto e passou a usar `updateInContext('PerfilAcesso')`, preservando `group_id` e `empresa_id`.
+- Botoes, resultados, bloqueios por contexto/permissao e fluxo visual foram preservados.
+- Mantida a Regra-Mae: melhoria no componente existente, sem exclusao de botao, campo, aba ou funcionalidade.
+- Proximo passo sugerido: continuar em Gestao de Acessos revisando `GestaoAcessosIndex` e `UsuariosTab` para reduzir auditorias/listagens diretas restantes sem quebrar o fluxo atual.
 ### Administracao do Sistema - Fase 8 Seguranca e Monitoramento Contextuais
 - Segui o proximo passo salvo em Administracao do Sistema, sem criar tela, modulo, componente ou arquivo novo.
 - `SegurancaGovernancaIndex` deixou de registrar visualizacao de abas por `base44.entities.AuditLog.create` direto e passou a usar `createInContext('AuditLog')`.
