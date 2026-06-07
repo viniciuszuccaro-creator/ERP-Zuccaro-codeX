@@ -10,6 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { useUser } from "@/components/lib/UserContext";
+import usePermissions from "@/components/lib/usePermissions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
@@ -32,6 +35,33 @@ import {
 export default function IALeituraProjeto({ configuracao, windowMode = false }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useUser();
+  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
+  const { isAdmin, hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || user?.grupo_atual_id || user?.grupo_padrao_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeProcessar = isAdmin() || hasPermission("Sistema", "Integracoes", "editar");
+
+  const auditarLeituraProjeto = async (acao, descricao, dadosNovos = null) => {
+    try {
+      await createInContext('AuditLog', {
+        usuario: user?.full_name || user?.email || 'Usuario local',
+        usuario_id: user?.id || null,
+        empresa_id: empresaId,
+        group_id: groupId,
+        acao,
+        modulo: 'Integracoes',
+        entidade: 'IALeituraProjeto',
+        descricao,
+        dados_anteriores: null,
+        dados_novos: dadosNovos,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar leitura de projeto:', error);
+    }
+  };
   const [arquivo, setArquivo] = useState(null);
   const [processando, setProcessando] = useState(false);
   const [resultado, setResultado] = useState(null);
@@ -44,6 +74,18 @@ export default function IALeituraProjeto({ configuracao, windowMode = false }) {
         description: "Por favor, faça upload de um arquivo de projeto.",
         variant: "destructive"
       });
+      return;
+    }
+
+    if (!contextoValido) {
+      await auditarLeituraProjeto('Bloqueio sem contexto', 'Tentativa de processar leitura de projeto sem grupo ou empresa.', { nome_arquivo: arquivo?.name || null });
+      toast({ title: "Contexto obrigatorio", description: "Selecione grupo ou empresa antes de processar arquivos com IA.", variant: "destructive" });
+      return;
+    }
+
+    if (!podeProcessar) {
+      await auditarLeituraProjeto('Bloqueio por permissao', 'Tentativa de processar leitura de projeto sem permissao.', { nome_arquivo: arquivo?.name || null });
+      toast({ title: "Permissao negada", description: "Seu perfil nao permite processar projetos com IA.", variant: "destructive" });
       return;
     }
 
@@ -133,6 +175,15 @@ Forneça as dimensões em milímetros (mm) e espaçamento de estribos em centím
       confianca_geral: confiancaGeral
     });
 
+    await auditarLeituraProjeto('Processar Projeto com IA', 'Leitura real de projeto executada com escopo multiempresa.', {
+      modo: 'real',
+      modo_leitura: modoLeitura,
+      nome_arquivo: arquivo?.name || null,
+      tamanho_mb: arquivo?.size ? Number((arquivo.size / 1024 / 1024).toFixed(2)) : null,
+      elementos_identificados: resposta.elementos_identificados?.length || 0,
+      confianca_geral: Number(confiancaGeral.toFixed(2))
+    });
+
     toast({
       title: "✅ Sucesso na leitura com IA!",
       description: `${resposta.elementos_identificados.length} elementos identificados pela IA!`,
@@ -219,9 +270,18 @@ Forneça as dimensões em milímetros (mm) e espaçamento de estribos em centím
     setResultado({
       tipo_projeto: "residencial",
       elementos_identificados: elementosIdentificados,
-      observacoes: `Simulação concluída. Total de ${elementosIdentificados.length} elementos identificados. ${observacoesSimuladas}`,
+      observacoes: `Simulacao concluida. Total de ${elementosIdentificados.length} elementos identificados. ${observacoesSimuladas}`,
       modo: 'simulado',
       confianca_geral: confiancaGeral,
+    });
+
+    await auditarLeituraProjeto('Processar Projeto com IA', 'Leitura simulada de projeto executada com escopo multiempresa.', {
+      modo: 'simulado',
+      modo_leitura: modoLeitura,
+      nome_arquivo: arquivo?.name || null,
+      tamanho_mb: arquivo?.size ? Number((arquivo.size / 1024 / 1024).toFixed(2)) : null,
+      elementos_identificados: elementosIdentificados.length,
+      confianca_geral: Number(confiancaGeral.toFixed(2))
     });
 
     toast({
@@ -327,8 +387,12 @@ Forneça as dimensões em milímetros (mm) e espaçamento de estribos em centím
               </div>
               <Button
                 onClick={processarArquivo}
-                disabled={processando}
+                disabled={processando || !contextoValido || !podeProcessar}
                 className="bg-purple-600 hover:bg-purple-700"
+                data-action="Integracoes.IALeituraProjeto.processar"
+                data-permission="Sistema.Integracoes.editar"
+                data-context-required="group-or-company"
+                data-sensitive="true"
               >
                 {processando ? (
                   <>

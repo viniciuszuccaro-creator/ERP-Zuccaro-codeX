@@ -1,11 +1,13 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { Sparkles, TrendingUp, MapPin, Clock, AlertTriangle, CheckCircle, Zap } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { useUser } from "@/components/lib/UserContext";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -15,8 +17,45 @@ export default function IAPrevisaoLogistica({ windowMode = false }) {
   const [previsao, setPrevisao] = useState(null);
 
   const { toast } = useToast();
+  const { user } = useUser();
+  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
+  const { isAdmin, hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || user?.grupo_atual_id || user?.grupo_padrao_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeExecutarIA = isAdmin() || hasPermission("Sistema", "Integracoes", "editar");
+
+  const auditarPrevisao = async (acao, descricao, dadosNovos = null) => {
+    try {
+      await createInContext('AuditLog', {
+        usuario: user?.full_name || user?.email || 'Usuario local',
+        usuario_id: user?.id || null,
+        empresa_id: empresaId,
+        group_id: groupId,
+        acao,
+        modulo: 'Integracoes',
+        entidade: 'IAPrevisaoLogistica',
+        descricao,
+        dados_anteriores: null,
+        dados_novos: dadosNovos,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar previsao logistica:', error);
+    }
+  };
 
   const gerarPrevisao = async () => {
+    if (!contextoValido) {
+      await auditarPrevisao('Bloqueio sem contexto', 'Tentativa de gerar previsao logistica sem grupo ou empresa.');
+      toast({ title: "Contexto obrigatorio", description: "Selecione grupo ou empresa antes de executar a IA logistica.", variant: "destructive" });
+      return;
+    }
+    if (!podeExecutarIA) {
+      await auditarPrevisao('Bloqueio por permissao', 'Tentativa de gerar previsao logistica sem permissao.');
+      toast({ title: "Permissao negada", description: "Seu perfil nao permite executar previsoes logisticas com IA.", variant: "destructive" });
+      return;
+    }
     setAnalisando(true);
     setPrevisao(null);
 
@@ -103,6 +142,14 @@ export default function IAPrevisaoLogistica({ windowMode = false }) {
 
       setPrevisao(resultado);
 
+      await auditarPrevisao('Gerar Previsao Logistica', 'Previsao logistica gerada com escopo multiempresa.', {
+        entregas_previstas: resultado.proximo_mes.entregas_previstas,
+        taxa_pontualidade: resultado.proximo_mes.taxa_pontualidade,
+        entregas_criticas: resultado.proximo_mes.entregas_criticas,
+        rotas_otimizadas: resultado.proximo_mes.rotas_otimizadas,
+        sugestoes: resultado.sugestoes_ia.length
+      });
+
       toast({
         title: "✅ Previsão Gerada!",
         description: `${resultado.proximo_mes.entregas_previstas} entregas previstas com ${resultado.proximo_mes.taxa_pontualidade}% de pontualidade`
@@ -118,7 +165,17 @@ export default function IAPrevisaoLogistica({ windowMode = false }) {
     }
   };
 
-  const aplicarOtimizacao = (alerta) => {
+  const aplicarOtimizacao = async (alerta) => {
+    if (!contextoValido || !podeExecutarIA) {
+      toast({
+        title: !contextoValido ? "Contexto obrigatorio" : "Permissao negada",
+        description: !contextoValido ? "Selecione grupo ou empresa antes de aplicar sugestoes." : "Seu perfil nao permite aplicar sugestoes logisticas.",
+        variant: "destructive"
+      });
+      await auditarPrevisao(!contextoValido ? 'Bloqueio sem contexto' : 'Bloqueio por permissao', 'Tentativa de aplicar otimizacao logistica bloqueada.', { alerta: alerta?.titulo || null });
+      return;
+    }
+    await auditarPrevisao('Aplicar Otimizacao Logistica', 'Sugestao logistica marcada como aplicada com escopo multiempresa.', { titulo: alerta.titulo, acao: alerta.acao });
     toast({
       title: "✅ Otimização Aplicada!",
       description: alerta.acao
@@ -154,8 +211,12 @@ export default function IAPrevisaoLogistica({ windowMode = false }) {
 
           <Button
             onClick={gerarPrevisao}
-            disabled={analisando}
+            disabled={analisando || !contextoValido || !podeExecutarIA}
             className="w-full bg-indigo-600 hover:bg-indigo-700"
+            data-action="Integracoes.IAPrevisaoLogistica.gerar"
+            data-permission="Sistema.Integracoes.editar"
+            data-context-required="group-or-company"
+            data-sensitive="true"
           >
             {analisando ? (
               <>
@@ -246,6 +307,11 @@ export default function IAPrevisaoLogistica({ windowMode = false }) {
                               size="sm"
                               variant="outline"
                               onClick={() => aplicarOtimizacao(alerta)}
+                              disabled={!contextoValido || !podeExecutarIA}
+                              data-action="Integracoes.IAPrevisaoLogistica.aplicarOtimizacao"
+                              data-permission="Sistema.Integracoes.editar"
+                              data-context-required="group-or-company"
+                              data-sensitive="true"
                             >
                               {alerta.acao}
                             </Button>

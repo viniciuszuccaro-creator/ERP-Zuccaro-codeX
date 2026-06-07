@@ -1,3 +1,11 @@
+### Administracao do Sistema - Fase 8 IA e WhatsApp em Contexto
+- Segui o proximo passo salvo na aba Integracoes, sem criar tela, modulo, componente ou arquivo novo.
+- `IALeituraProjeto` manteve as integracoes reais `UploadFile` e `InvokeLLM`, mas agora bloqueia processamento sem grupo/empresa ou permissao e audita leitura real/simulada sem gravar conteudo sensivel completo.
+- `IAPrevisaoLogistica` deixou de importar Base44 sem uso, passou a exigir contexto/permissao para gerar previsoes e aplicar sugestoes, e registra auditoria contextual.
+- `TesteWhatsApp` deixou de importar Base44 sem uso, passou a validar telefone, bloquear envio/templates sem contexto ou permissao e auditar envio simulado com metadados seguros.
+- Botoes, campos, templates, tabelas e fluxos visuais foram preservados; apenas RBAC, contexto multiempresa e auditoria foram reforcados.
+- Mantida a Regra-Mae: melhoria nos componentes existentes, sem exclusao de funcionalidade.
+- Proximo passo sugerido: fazer nova varredura de `src/components/integracoes` e seguir para pontos de Integracoes/Administra??o que ainda tenham chamadas diretas ou acoes sensiveis sem contexto/RBAC.
 ### Administracao do Sistema - Fase 8 Marketplaces Contextuais
 - Segui o proximo passo salvo na aba Integracoes, sem criar tela, modulo, componente ou arquivo novo.
 - `SincronizacaoMarketplacesAtiva` deixou de criar clientes, pedidos, pedidos externos e auditorias por chamadas diretas `base44.entities.*`.
