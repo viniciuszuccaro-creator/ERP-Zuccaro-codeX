@@ -68,8 +68,8 @@ export default function CentralPerfisAcesso() {
   });
 
   const queryClient = useQueryClient();
-  const { contexto, empresaAtual, grupoAtual, empresasDoGrupo = [], filterInContext } = useContextoVisual();
-  const { user, hasPermission, isAdmin } = usePermissions();
+  const { contexto, empresaAtual, grupoAtual, empresasDoGrupo = [], filterInContext, createInContext, updateInContext, deleteInContext } = useContextoVisual();
+  const { hasPermission, isAdmin } = usePermissions();
   const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
     try { return localStorage.getItem('group_atual_id'); } catch { return null; }
   })();
@@ -126,33 +126,14 @@ export default function CentralPerfisAcesso() {
 
       const perfilId = perfilAberto?.id;
       if (perfilId && !perfilAberto.novo) {
-        const anterior = await base44.entities.PerfilAcesso.get(perfilId).catch(() => null);
-        const atualizado = await base44.entities.PerfilAcesso.update(perfilId, data);
-        return { ...atualizado, _dados_anteriores: anterior };
+        return updateInContext('PerfilAcesso', perfilId, data);
       }
-      return base44.entities.PerfilAcesso.create(data);
+      return createInContext('PerfilAcesso', data);
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['perfis-acesso', scopeKey] });
       const foiCriacao = perfilAberto?.novo;
       toast.success(foiCriacao ? "Perfil criado com sucesso!" : "Perfil atualizado com sucesso!");
-      try {
-        base44.entities.AuditLog.create({
-          usuario: user?.full_name || user?.email || 'Usuario',
-          usuario_id: user?.id || null,
-          empresa_id: empresaAtivaId || null,
-          group_id: grupoAtivoId || null,
-          acao: foiCriacao ? 'Criacao' : 'Edicao',
-          modulo: 'Controle de Acesso',
-          entidade: 'PerfilAcesso',
-          registro_id: result?.id || perfilAberto?.id,
-          descricao: (foiCriacao ? 'Criacao' : 'Atualizacao') + ` do perfil "${result?.nome_perfil || formPerfil.nome_perfil}"`,
-          dados_anteriores: result?._dados_anteriores || null,
-          dados_novos: result || formPerfil,
-          sucesso: true,
-          data_hora: new Date().toISOString()
-        });
-      } catch {}
       setTimeout(() => { setPerfilAberto(null); resetForm(); }, 300);
     },
     onError: (error) => toast.error("Erro ao salvar: " + error.message),
@@ -163,26 +144,11 @@ export default function CentralPerfisAcesso() {
       if (!contextoValido) {
         throw new Error('Selecione um grupo ou empresa antes de excluir o perfil.');
       }
-      return base44.entities.PerfilAcesso.delete(id);
+      return deleteInContext('PerfilAcesso', id);
     },
-    onSuccess: (_res, id) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['perfis-acesso', scopeKey] });
       toast.success("Perfil excluido!");
-      try {
-        base44.entities.AuditLog.create({
-          usuario: user?.full_name || user?.email || 'Usuario',
-          usuario_id: user?.id || null,
-          acao: 'Exclusao',
-          modulo: 'Controle de Acesso',
-          entidade: 'PerfilAcesso',
-          registro_id: id,
-          empresa_id: empresaAtivaId || null,
-          group_id: grupoAtivoId || null,
-          descricao: 'Perfil de acesso excluido',
-          sucesso: true,
-          data_hora: new Date().toISOString()
-        });
-      } catch {}
     },
     onError: (error) => toast.error("Erro: " + error.message),
   });

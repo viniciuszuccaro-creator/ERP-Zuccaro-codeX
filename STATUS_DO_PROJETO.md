@@ -1,3 +1,11 @@
+### Administracao do Sistema - Fase 8 Central de Perfis Contextual
+- Segui o proximo passo salvo em Gestao de Acessos/Admin, sem criar tela, modulo, componente ou arquivo novo.
+- `CentralPerfisAcesso` deixou de criar, editar e excluir `PerfilAcesso` por chamadas diretas e passou a usar `createInContext`, `updateInContext` e `deleteInContext`.
+- Auditorias manuais duplicadas de criacao, edicao e exclusao de perfil foram removidas porque os helpers contextuais ja registram antes/depois, grupo, empresa e usuario quando disponivel.
+- As listagens existentes de usuarios e o fallback de perfis foram preservados para nao quebrar compatibilidade do RBAC atual.
+- Botoes, busca, modal, confirmacao Regra-Mae, permissoes granulares e fluxo visual foram mantidos.
+- Mantida a Regra-Mae: melhoria no componente existente, sem exclusao de botao, campo, aba ou funcionalidade.
+- Proximo passo sugerido: continuar em Gestao de Acessos revisando `GerenciamentoAcessosCompleto`, `GestaoUsuariosAvancada` e validadores para trocar acoes sensiveis diretas por helpers contextuais quando seguro.
 ### Administracao do Sistema - Fase 8 Gestao de Acessos Contextual
 - Segui o proximo passo salvo em Gestao de Acessos, sem criar tela, modulo, componente ou arquivo novo.
 - `GestaoAcessosIndex` deixou de auditar troca de abas por `base44.entities.AuditLog.create` direto e passou a usar `createInContext('AuditLog')`.
