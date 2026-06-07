@@ -26,7 +26,7 @@ export default function ConfiguracaoNotificacoes({ empresaId, grupoId }) {
   const queryClient = useQueryClient();
   const [salvando, setSalvando] = useState(false);
   const [regras, setRegras] = useState(cloneRegrasPadrao);
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
   const { isAdmin, hasPermission } = usePermissions();
   const grupoAtivoId = grupoId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
     try { return localStorage.getItem('group_atual_id'); } catch { return null; }
@@ -111,20 +111,20 @@ export default function ConfiguracaoNotificacoes({ empresaId, grupoId }) {
       };
 
       if (config?.id) {
-        await base44.entities.ConfiguracaoSistema.update(config.id, { ...config, ...payload });
+        await updateInContext('ConfiguracaoSistema', config.id, { ...config, ...payload });
       } else {
-        await base44.entities.ConfiguracaoSistema.create(payload);
+        await createInContext('ConfiguracaoSistema', payload);
       }
 
       try {
         const me = await base44.auth.me();
-        await base44.entities.AuditLog.create({
+        await createInContext('AuditLog', {
           usuario: me?.full_name || me?.email || 'Usuario',
           usuario_id: me?.id || null,
           acao: config?.id ? 'Edicao' : 'Criacao',
           modulo: 'Notificacoes',
           entidade: 'ConfiguracaoSistema',
-          registro_id: config?.id || null,
+          registro_id: result?.id || config?.id || null,
           empresa_id: empresaAtivaId || null,
           group_id: grupoAtivoId || null,
           descricao: 'Regras de notificacao atualizadas',

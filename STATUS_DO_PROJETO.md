@@ -1,3 +1,11 @@
+### Administracao do Sistema - Fase 8 Manutencao e Notificacoes Contextuais
+- Segui o proximo passo salvo em Administracao do Sistema, sem criar tela, modulo, componente ou arquivo novo.
+- `ConfiguracaoNotificacoes` deixou de salvar `ConfiguracaoSistema` e auditar regras por chamadas diretas, usando `createInContext`, `updateInContext` e auditoria contextual com `registro_id` do resultado.
+- `HistoricoBackups` deixou de atualizar restauracoes/expiracao de `BackupAutomatico` e auditar por chamadas diretas, mantendo restauracao simulada, expiracao, modal e toasts existentes.
+- `GerenciadorSessoes` deixou de revogar/encerrar `SessaoUsuario` e auditar por chamadas diretas, preservando encerramento individual, encerramento em massa e filtros por usuario/contexto.
+- As leituras existentes foram mantidas porque ja filtram por usuario, grupo e/ou empresa no carregamento atual.
+- Mantida a Regra-Mae: melhoria nos componentes existentes, sem exclusao de botao, campo, aba ou funcionalidade.
+- Proximo passo sugerido: continuar em Administracao do Sistema revisando `GeradorRelatorios`, `DashboardSeguranca` e componentes de monitoramento para contextualizar auditorias diretas restantes sem alterar fluxo visual.
 ### Administracao do Sistema - Fase 8 Configuracoes Operacionais Contextuais
 - Segui o proximo passo salvo em Gestao de Acessos/Admin, sem criar tela, modulo, componente ou arquivo novo.
 - `ConfiguracaoBackup`, `ConfiguracaoMonitoramento` e `ConfiguracaoSeguranca` deixaram de criar/editar configuracoes e auditorias por chamadas diretas quando havia helper contextual seguro.

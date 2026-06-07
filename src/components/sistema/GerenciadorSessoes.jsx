@@ -30,7 +30,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  */
 export default function GerenciadorSessoes() {
   const { user } = useUser();
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
   const queryClient = useQueryClient();
   const [encerrandoTodas, setEncerrandoTodas] = useState(false);
   const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
@@ -62,14 +62,14 @@ export default function GerenciadorSessoes() {
     mutationFn: async (sessaoId) => {
       const now = new Date().toISOString();
       
-      await base44.entities.SessaoUsuario.update(sessaoId, {
+      await updateInContext('SessaoUsuario', sessaoId, {
         status: 'Encerrada',
         ativa: false,
         data_hora_encerramento: now,
         motivo_encerramento: 'Logout Remoto'
       });
       try {
-        await base44.entities.AuditLog.create({
+        await createInContext('AuditLog', {
           usuario: user?.full_name || user?.email || 'Usuario',
           usuario_id: user?.id || null,
           acao: 'Encerramento',
@@ -101,7 +101,7 @@ export default function GerenciadorSessoes() {
       );
 
       for (const sessao of sessoesParaEncerrar) {
-        await base44.entities.SessaoUsuario.update(sessao.id, {
+        await updateInContext('SessaoUsuario', sessao.id, {
           status: 'Revogada',
           ativa: false,
           data_hora_encerramento: new Date().toISOString(),
@@ -110,7 +110,7 @@ export default function GerenciadorSessoes() {
       }
 
       try {
-        await base44.entities.AuditLog.create({
+        await createInContext('AuditLog', {
           usuario: user?.full_name || user?.email || 'Usuario',
           usuario_id: user?.id || null,
           acao: 'Revogacao',

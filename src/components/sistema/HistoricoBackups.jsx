@@ -30,7 +30,7 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
   const [detalhesOpen, setDetalhesOpen] = useState(false);
   const [backupSelecionado, setBackupSelecionado] = useState(null);
   const queryClient = useQueryClient();
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
   const grupoAtivoId = grupoId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaAtivaId = empresaId || empresaAtual?.id || null;
   const scopeId = empresaAtivaId || grupoAtivoId || 'sem-contexto';
@@ -73,13 +73,13 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
         observacoes: 'Restauração simulada com sucesso'
       }];
 
-      await base44.entities.BackupAutomatico.update(backup.id, {
+      await updateInContext('BackupAutomatico', backup.id, {
         restauracoes
       });
 
       try {
         const me = await base44.auth.me();
-        await base44.entities.AuditLog.create({
+        await createInContext('AuditLog', {
           usuario: me?.full_name || me?.email || 'Usuario',
           usuario_id: me?.id || null,
           acao: 'Restauracao',
@@ -116,12 +116,12 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
         throw new Error('Selecione um grupo ou empresa antes de expirar backup.');
       }
 
-      await base44.entities.BackupAutomatico.update(backupId, {
+      await updateInContext('BackupAutomatico', backupId, {
         status: 'Expirado'
       });
       try {
         const me = await base44.auth.me();
-        await base44.entities.AuditLog.create({
+        await createInContext('AuditLog', {
           usuario: me?.full_name || me?.email || 'Usuario',
           usuario_id: me?.id || null,
           acao: 'Expiracao',
