@@ -1,3 +1,12 @@
+### Administracao do Sistema - Fase 8 IA/Otimizacao Contextual
+- Segui a varredura salva em Administracao do Sistema, sem criar tela, modulo, componente ou arquivo novo.
+- `IAOtimizacaoIndex` deixou de criar `IAConfig` por `base44.entities.IAConfig.create` direto e passou a usar `createInContext('IAConfig')`.
+- Auditoria de visualizacao de abas e criacao de configuracoes padrao de IA passou a usar `createInContext('AuditLog')`, preservando grupo/empresa e usuario.
+- A subscription existente de `ConfiguracaoSistema` foi preservada porque apenas observa atualizacoes em tempo real e nao grava dados.
+- O botao `Criar Padroes` manteve o fluxo visual atual e recebeu marcador de contexto obrigatorio.
+- Foram corrigidos pequenos textos/acento quebrados no mesmo painel, sem alterar fluxo, layout ou funcionalidade.
+- Mantida a Regra-Mae: melhoria no componente existente, sem exclusao de botao, campo, aba ou funcionalidade.
+- Proximo passo sugerido: continuar a varredura em Administracao do Sistema priorizando `SegurancaGovernancaIndex`, `MonitoramentoManutencaoIndex` e Gestao de Acessos para remover auditorias/listagens diretas sensiveis.
 ### Administracao do Sistema - Fase 8 Versionamento e Conflitos Contextuais
 - Segui o proximo passo salvo em Configuracoes Gerais, sem criar tela, modulo, componente ou arquivo novo.
 - `VersionamentoConfigPanel` deixou de restaurar `ConfiguracaoSistema` por `base44.entities.ConfiguracaoSistema.update` direto e passou a usar `updateInContext`.
