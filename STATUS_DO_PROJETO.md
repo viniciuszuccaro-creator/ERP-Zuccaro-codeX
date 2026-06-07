@@ -1,3 +1,10 @@
+### Administracao do Sistema - Fase 8 Validadores RBAC Contextuais
+- Segui o proximo passo salvo em Gestao de Acessos/Admin, sem criar tela, modulo, componente ou arquivo novo.
+- `ValidadorAcessoCompleto`, `MatrizPermissoesVisual` e `RelatorioPermissoes` deixaram de auditar por `base44.entities.AuditLog.create` direto e passaram a usar `createInContext('AuditLog')`.
+- A listagem de usuarios em `ValidadorAcessoCompleto` foi preservada porque ainda passa pelo filtro local de escopo multiempresa existente.
+- Exportacao de matriz CSV, relatorio JSON/TXT, validacao completa, botoes e fluxos visuais foram mantidos.
+- Mantida a Regra-Mae: melhoria nos componentes existentes, sem exclusao de botao, campo, aba ou funcionalidade.
+- Proximo passo sugerido: continuar em Gestao de Acessos revisando `MonitorAcessoRealtime`, `ValidadorElementosInterativos` e validadores de layout para contextualizar auditorias restantes sem quebrar validacoes.
 ### Administracao do Sistema - Fase 8 Acessos Avancados Contextuais
 - Segui o proximo passo salvo em Gestao de Acessos/Admin, sem criar tela, modulo, componente ou arquivo novo.
 - `GerenciamentoAcessosCompleto` deixou de criar, editar e excluir `PerfilAcesso` por chamadas diretas e passou a usar `createInContext`, `updateInContext` e `deleteInContext`.

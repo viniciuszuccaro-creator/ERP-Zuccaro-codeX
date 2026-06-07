@@ -28,7 +28,6 @@ import {
   Download
 } from "lucide-react";
 import { toast } from "sonner";
-import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 
@@ -55,7 +54,7 @@ export default function MatrizPermissoesVisual({ perfis = [], estruturaSistema }
   const [busca, setBusca] = useState("");
   const [perfilDetalhesOpen, setPerfilDetalhesOpen] = useState(false);
   const [perfilSelecionado, setPerfilSelecionado] = useState(null);
-  const { contexto, empresaAtual, grupoAtual } = useContextoVisual();
+  const { contexto, empresaAtual, grupoAtual, createInContext } = useContextoVisual();
   const { user } = usePermissions();
   const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
     try { return localStorage.getItem("group_atual_id"); } catch { return null; }
@@ -115,7 +114,7 @@ export default function MatrizPermissoesVisual({ perfis = [], estruturaSistema }
     URL.revokeObjectURL(url);
 
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || "Sistema",
         usuario_id: user?.id || null,
         empresa_id: empresaAtivaId || null,

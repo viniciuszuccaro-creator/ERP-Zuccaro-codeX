@@ -4,12 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Download, FileText, Eye, Shield, Users, Building2 } from "lucide-react";
 import { toast } from "sonner";
-import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 
 export default function RelatorioPermissoes({ perfis = [], usuarios = [], empresas = [] }) {
-  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, createInContext } = useContextoVisual();
   const { user, isAdmin, hasPermission } = usePermissions();
   const grupoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = contexto === "grupo" ? null : empresaAtual?.id || null;
@@ -18,7 +17,7 @@ export default function RelatorioPermissoes({ perfis = [], usuarios = [], empres
 
   const auditarExportacao = async (formato, resumo) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || "Sistema",
         usuario_id: user?.id || null,
         group_id: grupoId,

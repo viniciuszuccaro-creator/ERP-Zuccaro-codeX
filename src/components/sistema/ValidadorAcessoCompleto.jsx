@@ -26,7 +26,7 @@ import { toast } from "sonner";
 export default function ValidadorAcessoCompleto() {
   const [validando, setValidando] = useState(false);
   const [resultado, setResultado] = useState(null);
-  const { contexto, empresaAtual, grupoAtual, empresasDoGrupo = [], filterInContext } = useContextoVisual();
+  const { contexto, empresaAtual, grupoAtual, empresasDoGrupo = [], filterInContext, createInContext } = useContextoVisual();
   const { user } = usePermissions();
   const scopeId = empresaAtual?.id || grupoAtual?.id || 'sem-contexto';
   const contextoValido = scopeId !== 'sem-contexto';
@@ -163,7 +163,7 @@ export default function ValidadorAcessoCompleto() {
     setResultado(validacoes);
     setValidando(false);
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || "Sistema",
         usuario_id: user?.id || null,
         empresa_id: contexto === "grupo" ? null : empresaAtual?.id || null,
