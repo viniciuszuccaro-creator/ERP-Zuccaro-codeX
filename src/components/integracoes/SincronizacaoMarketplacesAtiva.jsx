@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,7 +28,7 @@ export default function SincronizacaoMarketplacesAtiva() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user } = useUser();
-  const { empresaAtual, grupoAtual, filterInContext, carimbarContexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
   const { isAdmin, hasPermission } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || user?.grupo_atual_id || user?.grupo_padrao_id || null;
   const empresaId = empresaAtual?.id || null;
@@ -42,7 +41,7 @@ export default function SincronizacaoMarketplacesAtiva() {
 
   const auditarMarketplace = async (acao, descricao, dadosNovos = null, dadosAnteriores = null) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || 'Usuario local',
         usuario_id: user?.id || null,
         empresa_id: empresaId,
@@ -91,7 +90,7 @@ export default function SincronizacaoMarketplacesAtiva() {
           clienteId = clientesExistentes[0].id;
         } else {
           // Criar cliente novo
-          const novoCliente = await base44.entities.Cliente.create(carimbarContexto({
+          const novoCliente = await createInContext('Cliente', {
             tipo: pedidoExterno.cliente_cpf_cnpj?.length === 14 ? 'Pessoa Física' : 'Pessoa Jurídica',
             status: 'Ativo',
             nome: pedidoExterno.cliente_nome,
@@ -108,13 +107,13 @@ export default function SincronizacaoMarketplacesAtiva() {
             }],
             origem_pedido: pedidoExterno.origem,
             ...scope
-          }));
+          });
           clienteId = novoCliente.id;
         }
       }
 
       // 2. Criar pedido no ERP
-      const pedidoERP = await base44.entities.Pedido.create(carimbarContexto({
+      const pedidoERP = await createInContext('Pedido', {
         numero_pedido: `${pedidoExterno.origem.substring(0, 3).toUpperCase()}-${pedidoExterno.numero_pedido_externo}`,
         cliente_id: clienteId,
         cliente_nome: pedidoExterno.cliente_nome,
@@ -142,10 +141,10 @@ export default function SincronizacaoMarketplacesAtiva() {
         forma_pagamento: pedidoExterno.forma_pagamento_externa || 'Marketplace',
         observacoes_publicas: `Importado de ${pedidoExterno.origem} - Pedido #${pedidoExterno.numero_pedido_externo}`,
         ...scope
-      }));
+      });
 
       // 3. Atualizar pedido externo
-      await base44.entities.PedidoExterno.update(pedidoExterno.id, {
+      await updateInContext('PedidoExterno', pedidoExterno.id, {
         status_importacao: 'Importado',
         validado: true,
         pedido_erp_id: pedidoERP.id,
@@ -232,7 +231,7 @@ export default function SincronizacaoMarketplacesAtiva() {
     ];
 
     for (const pedido of novosPedidos) {
-      await base44.entities.PedidoExterno.create({
+      await createInContext('PedidoExterno', {
         ...pedido,
         status_importacao: 'A Validar',
         json_completo: pedido,

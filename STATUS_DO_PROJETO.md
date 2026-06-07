@@ -1,3 +1,12 @@
+### Administracao do Sistema - Fase 8 Marketplaces Contextuais
+- Segui o proximo passo salvo na aba Integracoes, sem criar tela, modulo, componente ou arquivo novo.
+- `SincronizacaoMarketplacesAtiva` deixou de criar clientes, pedidos, pedidos externos e auditorias por chamadas diretas `base44.entities.*`.
+- Importacao e sincronizacao de pedidos marketplace agora usam `createInContext`, `updateInContext` e `filterInContext`, preservando `groupId`/`empresaId` e sanitizacao local.
+- `SincronizacaoMarketplaces` passou a listar pedidos externos por contexto, bloquear toggles/sincronizacao sem grupo/empresa ou permissao e auditar bloqueios/acoes sensiveis.
+- O fluxo visual, botoes, tabelas e comportamento de importacao/sincronizacao foram preservados; apenas contexto, RBAC e auditoria foram reforcados.
+- Mantida a Regra-Mae: melhoria nos componentes existentes, sem exclusao de funcionalidade.
+- Proximo passo sugerido: revisar os filhos restantes de Integracoes com chamadas diretas (`IALeituraProjeto`, `IAPrevisaoLogistica` e `TesteWhatsApp`), priorizando contexto/RBAC/auditoria antes de mudancas visuais.
+
 ### Administracao do Sistema - Fase 8 Integracoes Configuraveis em Contexto
 - Segui o proximo passo salvo nos filhos de Integracoes, sem criar tela, modulo, componente ou arquivo novo.
 - `ConfigWhatsAppBusiness`, `CentralIntegracoes` e `StatusIntegracoes` deixaram de usar chamadas diretas `base44.entities.*` para auditoria, leitura e gravacao de configuracoes.
