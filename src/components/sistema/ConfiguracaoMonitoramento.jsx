@@ -28,7 +28,7 @@ import usePermissions from '@/components/lib/usePermissions';
 export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
   const [salvando, setSalvando] = useState(false);
   const queryClient = useQueryClient();
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
   const { isAdmin, hasPermission } = usePermissions();
   const grupoAtivoId = grupoId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
     try { return localStorage.getItem('group_atual_id'); } catch { return null; }
@@ -100,11 +100,11 @@ export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
     mutationFn: async (data) => {
       const stamped = { ...data, empresa_id: empresaAtivaId || null, group_id: grupoAtivoId || null };
       const result = config?.id
-        ? await base44.entities.ConfiguracaoMonitoramento.update(config.id, stamped)
-        : await base44.entities.ConfiguracaoMonitoramento.create(stamped);
+        ? await updateInContext('ConfiguracaoMonitoramento', config.id, stamped)
+        : await createInContext('ConfiguracaoMonitoramento', stamped);
       try {
         const me = await base44.auth.me();
-        await base44.entities.AuditLog.create({
+        await createInContext('AuditLog', {
           usuario: me?.full_name || me?.email || 'Usuario',
           usuario_id: me?.id || null,
           acao: config?.id ? 'Edicao' : 'Criacao',

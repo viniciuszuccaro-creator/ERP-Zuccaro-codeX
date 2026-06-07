@@ -34,7 +34,7 @@ import usePermissions from '@/components/lib/usePermissions';
 export default function ConfiguracaoBackup({ empresaId, grupoId }) {
   const [salvando, setSalvando] = useState(false);
   const queryClient = useQueryClient();
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
   const { isAdmin, hasPermission } = usePermissions();
   const grupoAtivoId = grupoId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
     try { return localStorage.getItem('group_atual_id'); } catch { return null; }
@@ -97,11 +97,11 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
     mutationFn: async (data) => {
       const stamped = { ...data, empresa_id: empresaAtivaId || null, group_id: grupoAtivoId || null };
       const result = config?.id
-        ? await base44.entities.ConfiguracaoBackup.update(config.id, stamped)
-        : await base44.entities.ConfiguracaoBackup.create(stamped);
+        ? await updateInContext('ConfiguracaoBackup', config.id, stamped)
+        : await createInContext('ConfiguracaoBackup', stamped);
       try {
         const me = await base44.auth.me();
-        await base44.entities.AuditLog.create({
+        await createInContext('AuditLog', {
           usuario: me?.full_name || me?.email || 'Usuario',
           usuario_id: me?.id || null,
           acao: config?.id ? 'Edicao' : 'Criacao',
@@ -134,7 +134,7 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
       const numeroBackup = `BKP-${Date.now()}`;
       
       // Simular backup
-      const backup = await base44.entities.BackupAutomatico.create({
+      const backup = await createInContext('BackupAutomatico', {
         group_id: grupoAtivoId,
         empresa_id: empresaAtivaId,
         tipo_backup: 'Completo',
@@ -152,7 +152,7 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
 
       try {
         const me = await base44.auth.me();
-        await base44.entities.AuditLog.create({
+        await createInContext('AuditLog', {
           usuario: me?.full_name || me?.email || 'Usuario',
           usuario_id: me?.id || null,
           acao: 'Execucao',
@@ -170,7 +170,7 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
 
       // Simular conclusão após 3 segundos
       setTimeout(async () => {
-        await base44.entities.BackupAutomatico.update(backup.id, {
+        await updateInContext('BackupAutomatico', backup.id, {
           status: 'Concluído',
           data_hora_fim: new Date().toISOString(),
           duracao_segundos: 3,
@@ -190,7 +190,7 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
 
         try {
           const me = await base44.auth.me();
-          await base44.entities.AuditLog.create({
+          await createInContext('AuditLog', {
             usuario: me?.full_name || me?.email || 'Usuario',
             usuario_id: me?.id || null,
             acao: 'Conclusao',

@@ -130,7 +130,7 @@ const validateSecurityConfig = (data = {}) => {
 export default function ConfiguracaoSeguranca({ empresaId, grupoId }) {
   const [salvando, setSalvando] = useState(false);
   const queryClient = useQueryClient();
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
   const { isAdmin, hasPermission } = usePermissions();
   const { user } = useUser();
   const grupoAtivoId = grupoId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
@@ -145,7 +145,7 @@ export default function ConfiguracaoSeguranca({ empresaId, grupoId }) {
 
   const auditarSeguranca = async ({ acao, descricao, dadosNovos = null, dadosAnteriores = null }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || 'Usuario local',
         usuario_id: user?.id || null,
         acao,
@@ -258,12 +258,12 @@ export default function ConfiguracaoSeguranca({ empresaId, grupoId }) {
       };
       const before = config?.id ? await base44.entities.ConfiguracaoSeguranca.get(config.id).catch(() => null) : null;
       const result = config?.id
-        ? await base44.entities.ConfiguracaoSeguranca.update(config.id, stamped)
-        : await base44.entities.ConfiguracaoSeguranca.create(stamped);
+        ? await updateInContext('ConfiguracaoSeguranca', config.id, stamped)
+        : await createInContext('ConfiguracaoSeguranca', stamped);
       await syncSecurityMirrorConfigs(stamped);
       try {
         const me = await base44.auth.me();
-        await base44.entities.AuditLog.create({
+        await createInContext('AuditLog', {
           usuario: me?.full_name || me?.email || 'Usuario',
           usuario_id: me?.id || null,
           acao: config?.id ? 'Edicao' : 'Criacao',
