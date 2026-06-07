@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import ConversorModaisJanelas from './ConversorModaisJanelas';
-import { base44 } from '@/api/base44Client';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 
@@ -32,14 +31,14 @@ import usePermissions from '@/components/lib/usePermissions';
 export default function ValidadorLayoutResponsivo() {
   const [scanning, setScanning] = useState(false);
   const [results, setResults] = useState(null);
-  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, createInContext } = useContextoVisual();
   const { user } = usePermissions();
   const grupoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = contexto === 'grupo' ? null : empresaAtual?.id || null;
 
   const auditarLayout = async (acao, dados) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || 'Sistema',
         usuario_id: user?.id || null,
         group_id: grupoId,

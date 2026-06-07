@@ -26,7 +26,7 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 
 export default function MonitorAcessoRealtime() {
   const [tempoReal, setTempoReal] = useState(new Date());
-  const { contexto, empresaAtual, grupoAtual, empresasDoGrupo = [], filterInContext } = useContextoVisual();
+  const { contexto, empresaAtual, grupoAtual, empresasDoGrupo = [], filterInContext, createInContext } = useContextoVisual();
   const { user, isAdmin, hasPermission } = usePermissions();
   const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
     try { return localStorage.getItem('group_atual_id'); } catch { return null; }
@@ -72,7 +72,7 @@ export default function MonitorAcessoRealtime() {
 
   useEffect(() => {
     if (contextoValido && podeVisualizarMonitor) return;
-    base44.entities.AuditLog.create({
+    createInContext('AuditLog', {
       usuario: user?.full_name || user?.email || 'Usuario local',
       usuario_id: user?.id || null,
       acao: 'MonitorAcessoRealtime.bloqueado',
