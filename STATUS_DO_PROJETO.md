@@ -1,3 +1,11 @@
+### Administracao do Sistema - Fase 8 Gestao de Acessos Contextual
+- Segui o proximo passo salvo em Gestao de Acessos, sem criar tela, modulo, componente ou arquivo novo.
+- `GestaoAcessosIndex` deixou de auditar troca de abas por `base44.entities.AuditLog.create` direto e passou a usar `createInContext('AuditLog')`.
+- `UsuariosTab` deixou de auditar bloqueios e convites por chamada direta e passou a centralizar a auditoria em `auditarUsuario` com `createInContext('AuditLog')`.
+- O convite real por `base44.users.inviteUser`, as listagens existentes e os filtros por escopo foram preservados para nao quebrar o fluxo atual.
+- A aba RBAC, busca, filtros, botoes e modal de configuracao de usuarios foram mantidos.
+- Mantida a Regra-Mae: melhoria nos componentes existentes, sem exclusao de botao, campo, aba ou funcionalidade.
+- Proximo passo sugerido: continuar a varredura em Gestao de Acessos e Admin para reduzir fallback/listagens diretas restantes quando houver helper contextual seguro, sem afetar convite ou usuario real.
 ### Administracao do Sistema - Fase 8 SoD Contextual
 - Segui o proximo passo salvo em Gestao de Acessos, sem criar tela, modulo, componente ou arquivo novo.
 - `SoDChecker` preservou a funcao existente `sodValidator` para analise de segregacao de funcoes.

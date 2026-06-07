@@ -15,7 +15,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import { toast } from "sonner";
 
 export default function UsuariosTab() {
-  const { contexto, filterInContext, empresaAtual, grupoAtual, empresasDoGrupo = [] } = useContextoVisual();
+  const { contexto, filterInContext, createInContext, empresaAtual, grupoAtual, empresasDoGrupo = [] } = useContextoVisual();
   const { user } = useUser();
   const { hasPermission, isAdmin } = usePermissions();
   const podeConvidar = isAdmin() || hasPermission("Sistema", "Controle de Acesso", "criar");
@@ -35,7 +35,7 @@ export default function UsuariosTab() {
 
   const auditarUsuario = async ({ acao, descricao, dadosNovos }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || "Usuario local",
         usuario_id: user?.id || null,
         empresa_id: contexto === "grupo" ? null : empresaAtual?.id || null,
@@ -120,23 +120,11 @@ export default function UsuariosTab() {
 
     try {
       await base44.users.inviteUser(email, "user");
-      try {
-        await base44.entities.AuditLog.create({
-          usuario: user?.full_name || user?.email || "Usuario local",
-          usuario_id: user?.id || null,
-          empresa_id: contexto === "grupo" ? null : empresaAtual?.id || null,
-          group_id: grupoAtivoId || null,
-          acao: "Convite",
-          modulo: "Controle de Acesso",
-          entidade: "User",
-          registro_id: email,
-          descricao: `Convite enviado para usuario ${email}`,
-          dados_novos: { email, role: "user", contexto, empresa_id: empresaAtual?.id || null, group_id: grupoAtivoId || null },
-          data_hora: new Date().toISOString()
-        });
-      } catch (auditError) {
-        console.warn("Falha ao auditar convite de usuario:", auditError);
-      }
+      await auditarUsuario({
+        acao: "Convite",
+        descricao: `Convite enviado para usuario ${email}`,
+        dadosNovos: { email, role: "user", contexto, empresa_id: empresaAtual?.id || null, group_id: grupoAtivoId || null }
+      });
       toast.success(`Convite enviado para ${email}`);
       qc.invalidateQueries({ queryKey: ["usuarios-gestao", scopeKey] });
     } catch (e) {

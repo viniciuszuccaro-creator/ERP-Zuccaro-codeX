@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import usePermissions from "@/components/lib/usePermissions";
 import CentralPerfisAcesso from "@/components/sistema/CentralPerfisAcesso";
@@ -16,7 +16,7 @@ import { Card, CardContent } from "@/components/ui/card";
 export default function GestaoAcessosIndex() {
   const { hasPermission, isAdmin } = usePermissions();
   const podeVer = isAdmin() || hasPermission('Sistema', ['Controle de Acesso'], 'visualizar');
-  const { filterInContext, empresaAtual, grupoAtual, contexto, empresasDoGrupo = [] } = useContextoVisual();
+  const { filterInContext, createInContext, empresaAtual, grupoAtual, contexto, empresasDoGrupo = [] } = useContextoVisual();
   const { user } = useUser();
   const [tab, setTab] = React.useState('perfis');
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
@@ -28,7 +28,7 @@ export default function GestaoAcessosIndex() {
   const handleTabChange = (next) => {
     setTab(next);
     try {
-      base44.entities.AuditLog.create({
+      void createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || 'UsuÃ¡rio',
         usuario_id: user?.id,
         empresa_id: empresaAtual?.id || null,
@@ -40,7 +40,7 @@ export default function GestaoAcessosIndex() {
         entidade: 'Controle de Acesso',
         descricao: `Aba visualizada: ${next}`,
         data_hora: new Date().toISOString(),
-      });
+      }).catch((error) => console.warn("Falha ao auditar aba de gestao de acessos:", error));
     } catch {}
   };
 
