@@ -9,12 +9,11 @@ import ConfiguracaoBackup from "@/components/sistema/ConfiguracaoBackup";
 import ConfiguracaoMonitoramento from "@/components/sistema/ConfiguracaoMonitoramento";
 import MonitorAcessoRealtimeSection from "@/components/administracao-sistema/seguranca-governanca/MonitorAcessoRealtimeSection";
 import PainelGovernancaSection from "@/components/administracao-sistema/seguranca-governanca/PainelGovernancaSection";
-import { base44 } from "@/api/base44Client";
 import { useUser } from "@/components/lib/UserContext";
 import usePermissions from "@/components/lib/usePermissions";
 
 export default function MonitoramentoManutencaoIndex({ initialTab = "monitoramento" }) {
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
   const { user } = useUser();
   const { isAdmin, hasPermission } = usePermissions();
   const [tab, setTab] = React.useState(initialTab);
@@ -33,7 +32,7 @@ export default function MonitoramentoManutencaoIndex({ initialTab = "monitoramen
 
   const registrarAuditoriaMonitoramento = (acao, next, sucesso = true, detalhe = null) => {
     try {
-      base44.entities.AuditLog.create({
+      void createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || "Usuario local",
         usuario_id: user?.id || null,
         empresa_id: empresaAtual?.id || null,
@@ -51,7 +50,7 @@ export default function MonitoramentoManutencaoIndex({ initialTab = "monitoramen
           permissao_visualizacao: canViewTab(next)
         },
         data_hora: new Date().toISOString(),
-      });
+      }).catch((error) => console.warn("Falha ao auditar aba de monitoramento:", error));
     } catch (error) {
       console.warn("Falha ao auditar aba de monitoramento:", error);
     }

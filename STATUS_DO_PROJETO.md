@@ -1,3 +1,11 @@
+### Administracao do Sistema - Fase 8 Seguranca e Monitoramento Contextuais
+- Segui o proximo passo salvo em Administracao do Sistema, sem criar tela, modulo, componente ou arquivo novo.
+- `SegurancaGovernancaIndex` deixou de registrar visualizacao de abas por `base44.entities.AuditLog.create` direto e passou a usar `createInContext('AuditLog')`.
+- `MonitoramentoManutencaoIndex` deixou de registrar auditoria de abas/bloqueios por chamada direta e passou a usar `createInContext('AuditLog')`.
+- As auditorias contextuais agora preservam grupo/empresa, usuario, sucesso/falha e tratam erro assíncrono sem quebrar a navegacao.
+- As abas, permissoes visuais, `ProtectedSection`, banners de contexto/heranca e componentes existentes foram preservados.
+- Mantida a Regra-Mae: melhoria nos componentes existentes, sem exclusao de botao, campo, aba ou funcionalidade.
+- Proximo passo sugerido: continuar em Gestao de Acessos (`GestaoAcessosIndex`, `UsuariosTab`, `SoDChecker`) para trocar listagens/auditorias/updates diretos por helpers contextuais quando aplicavel.
 ### Administracao do Sistema - Fase 8 IA/Otimizacao Contextual
 - Segui a varredura salva em Administracao do Sistema, sem criar tela, modulo, componente ou arquivo novo.
 - `IAOtimizacaoIndex` deixou de criar `IAConfig` por `base44.entities.IAConfig.create` direto e passou a usar `createInContext('IAConfig')`.

@@ -2,7 +2,6 @@ import React from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import usePermissions from "@/components/lib/usePermissions";
-import { base44 } from "@/api/base44Client";
 import { useUser } from "@/components/lib/UserContext";
 import SegurancaDashboard from "@/components/administracao-sistema/seguranca-governanca/SegurancaDashboard";
 
@@ -17,7 +16,7 @@ import HerancaConfigNotice from "@/components/administracao-sistema/common/Heran
 
 export default function SegurancaGovernancaIndex() {
   const { isAdmin, hasPermission } = usePermissions();
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
   const { user } = useUser();
   const params = new URLSearchParams(window.location.search);
   const segTab = params.get('segTab') || 'politicas';
@@ -34,7 +33,7 @@ export default function SegurancaGovernancaIndex() {
     nextParams.set('segTab', value);
     window.history.replaceState(null, '', `${window.location.pathname}?${nextParams.toString()}`);
     try {
-      base44.entities.AuditLog.create({
+      void createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || "Usuario local",
         usuario_id: user?.id || null,
         empresa_id: empresaAtual?.id || null,
@@ -44,7 +43,7 @@ export default function SegurancaGovernancaIndex() {
         entidade: "Seguranca",
         descricao: `Aba de seguranca visualizada: ${value}`,
         data_hora: new Date().toISOString()
-      });
+      }).catch((error) => console.warn("Falha ao auditar aba de seguranca:", error));
     } catch {}
   };
 
