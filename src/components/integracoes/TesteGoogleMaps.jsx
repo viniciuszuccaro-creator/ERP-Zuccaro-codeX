@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { MapPin, Navigation, CheckCircle, AlertCircle, Send } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { base44 } from "@/api/base44Client";
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
@@ -23,7 +22,7 @@ export default function TesteGoogleMaps({ configuracao, windowMode = false }) {
 
   const { toast } = useToast();
   const { user } = useUser();
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
   const { isAdmin, hasPermission } = usePermissions();
 
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || user?.grupo_atual_id || user?.grupo_padrao_id || null;
@@ -33,7 +32,7 @@ export default function TesteGoogleMaps({ configuracao, windowMode = false }) {
 
   const auditarTeste = async (acao, descricao, dadosNovos = null) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext("AuditLog", {
         usuario: user?.full_name || user?.email || "Usuario local",
         usuario_id: user?.id || null,
         empresa_id: empresaId,

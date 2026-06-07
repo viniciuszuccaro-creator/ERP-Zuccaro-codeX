@@ -1,3 +1,11 @@
+### Administracao do Sistema - Fase 8 Testes de Integracoes Contextuais
+- Segui o proximo passo salvo em Administracao do Sistema: revisar componentes filhos da aba Integracoes sem criar tela, modulo, componente ou arquivo novo.
+- `TesteNFe`, `TesteBoletos`, `TesteGoogleMaps` e `TesteTransportadoras` deixaram de registrar auditoria por `base44.entities.AuditLog.create` direto.
+- As auditorias dos testes passaram a usar `createInContext('AuditLog')` via `useContextoVisual`, preservando `groupId`, `empresaId` e sanitizacao do padrao local.
+- Imports `base44` sem uso foram removidos desses quatro componentes.
+- Mantida a Regra-Mae: os testes, botoes, campos e fluxo visual continuam existindo; apenas auditoria contextual e limpeza de dependencias foram reforcadas.
+- Proximo passo sugerido: continuar nos filhos de Integracoes, priorizando `ConfigWhatsAppBusiness`, `CentralIntegracoes`, `StatusIntegracoes` e `SincronizacaoMarketplacesAtiva` para trocar chamadas diretas restantes por helpers de contexto.
+
 ### INSTRUCAO PERMANENTE - Abrir Projeto no Codex
 - Sempre que abrir este projeto no Codex, usar a copia local do GitHub em `C:\Users\cpaba\ERP-Zuccaro-codeX-local\ERP-Zuccaro-codeX`.
 - Antes de continuar qualquer melhoria, executar `git pull`, ler este `STATUS_DO_PROJETO.md` e seguir a Regra-Mae.
