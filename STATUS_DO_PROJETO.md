@@ -1,3 +1,12 @@
+### Administracao do Sistema - Fase 8 Versionamento e Conflitos Contextuais
+- Segui o proximo passo salvo em Configuracoes Gerais, sem criar tela, modulo, componente ou arquivo novo.
+- `VersionamentoConfigPanel` deixou de restaurar `ConfiguracaoSistema` por `base44.entities.ConfiguracaoSistema.update` direto e passou a usar `updateInContext`.
+- Auditoria de restauracao de configuracao passou a usar `createInContext('AuditLog')`, preservando usuario, grupo, empresa e antes/depois.
+- `ConflitosRevisaoPanel` deixou de auditar e aplicar merge por chamadas diretas de entidade; auditoria usa `createInContext('AuditLog')` e aplicacao usa `updateInContext`.
+- O nome dinamico da entidade no merge agora e validado antes de executar pre-visualizacao/aplicacao, reduzindo risco em acao sensivel.
+- Botoes de restaurar, pre-visualizar merge e aplicar merge mantiveram o fluxo visual atual e receberam marcadores de contexto obrigatorio.
+- Mantida a Regra-Mae: melhoria nos componentes existentes, sem exclusao de botao, campo, aba ou funcionalidade.
+- Proximo passo sugerido: fazer nova varredura em Configuracoes Gerais/Admin para localizar chamadas diretas restantes em acoes sensiveis e depois seguir para RBAC granular dos botoes internos.
 ### Administracao do Sistema - Fase 8 Heranca de Configuracoes Contextual
 - Segui a nova varredura do plano e avancei em Configuracoes Gerais, sem criar tela, modulo, componente ou arquivo novo.
 - `HerancaOverridesPanel` deixou de usar `base44.entities.ConfiguracaoSistema.*` e `base44.entities.AuditLog.create` direto.

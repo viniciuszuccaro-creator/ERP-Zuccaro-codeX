@@ -9,9 +9,11 @@ import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { toast } from "sonner";
 
+const ENTITY_NAME_PATTERN = /^[A-Za-z][A-Za-z0-9_]*$/;
+
 export default function ConflitosRevisaoPanel() {
   const { user } = useUser();
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const contextoValido = !!groupId && !!empresaAtual?.id;
   const [entityName, setEntityName] = React.useState("");
@@ -24,7 +26,7 @@ export default function ConflitosRevisaoPanel() {
 
   const audit = React.useCallback(async ({ acao, entidade, registro, descricao, dadosNovos }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext("AuditLog", {
         usuario: user?.full_name || user?.email || "Usuario",
         usuario_id: user?.id || null,
         empresa_id: empresaAtual?.id || null,
@@ -41,7 +43,15 @@ export default function ConflitosRevisaoPanel() {
     } catch (error) {
       console.warn("Falha ao registrar auditoria de conflitos:", error);
     }
-  }, [empresaAtual?.id, groupId, user?.email, user?.full_name, user?.id]);
+  }, [createInContext, empresaAtual?.id, groupId, user?.email, user?.full_name, user?.id]);
+
+  const getEntityNameSeguro = React.useCallback(() => {
+    const nome = String(entityName || "").trim();
+    if (!nome || !ENTITY_NAME_PATTERN.test(nome)) {
+      throw new Error("Informe uma entidade valida, sem espacos, pontos ou caracteres especiais.");
+    }
+    return nome;
+  }, [entityName]);
 
   const onPreview = async () => {
     setLoading(true);
@@ -50,10 +60,11 @@ export default function ConflitosRevisaoPanel() {
         throw new Error("Selecione um grupo e uma empresa para revisar conflitos.");
       }
 
+      const entidadeSegura = getEntityNameSeguro();
       const current = JSON.parse(currentJson || "{}");
       const incoming = JSON.parse(incomingJson || "{}");
       const payload = {
-        entity_name: entityName,
+        entity_name: entidadeSegura,
         group_id: groupId,
         empresa_id: empresaAtual.id,
         source,
@@ -65,9 +76,9 @@ export default function ConflitosRevisaoPanel() {
       setResult(data);
       await audit({
         acao: "Pre-visualizacao",
-        entidade: entityName,
+        entidade: entidadeSegura,
         registro: registroId || null,
-        descricao: `Pre-visualizacao de merge ${source} em ${entityName}`,
+        descricao: `Pre-visualizacao de merge ${source} em ${entidadeSegura}`,
         dadosNovos: { source, policy: data?.policy || null }
       });
       toast.success("Merge pre-visualizado com auditoria.");
@@ -88,20 +99,19 @@ export default function ConflitosRevisaoPanel() {
         throw new Error("Selecione um grupo e uma empresa para aplicar o merge.");
       }
 
-      const api = base44.entities?.[entityName];
-      if (!api?.update) throw new Error("Entidade invalida ou sem update.");
+      const entidadeSegura = getEntityNameSeguro();
       const scopedMerged = {
         ...result.merged,
         group_id: groupId,
         empresa_id: empresaAtual.id,
       };
 
-      await api.update(registroId, scopedMerged);
+      await updateInContext(entidadeSegura, registroId, scopedMerged);
       await audit({
         acao: "Aplicacao",
-        entidade: entityName,
+        entidade: entidadeSegura,
         registro: registroId,
-        descricao: `Merge aplicado ${source} em ${entityName}`,
+        descricao: `Merge aplicado ${source} em ${entidadeSegura}`,
         dadosNovos: scopedMerged
       });
 
@@ -156,8 +166,8 @@ export default function ConflitosRevisaoPanel() {
           </div>
 
           <div className="flex gap-2">
-            <Button onClick={onPreview} disabled={loading || !entityName || !contextoValido} className="bg-slate-800 hover:bg-slate-700" data-action="Conflitos.previewMerge" data-permission="Sistema.Configuracoes.executar">Pre-visualizar Merge</Button>
-            <Button onClick={onApply} disabled={loading || !entityName || !registroId || !result?.merged || !contextoValido} variant="outline" data-action="Conflitos.aplicarMerge" data-permission="Sistema.Configuracoes.editar" data-sensitive="true">Aplicar Merge</Button>
+            <Button onClick={onPreview} disabled={loading || !entityName || !contextoValido} className="bg-slate-800 hover:bg-slate-700" data-action="Conflitos.previewMerge" data-permission="Sistema.Configuracoes.executar" data-context-required="group-and-company">Pre-visualizar Merge</Button>
+            <Button onClick={onApply} disabled={loading || !entityName || !registroId || !result?.merged || !contextoValido} variant="outline" data-action="Conflitos.aplicarMerge" data-permission="Sistema.Configuracoes.editar" data-sensitive="true" data-context-required="group-and-company">Aplicar Merge</Button>
           </div>
 
           {result && (

@@ -1,6 +1,5 @@
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,7 +9,7 @@ import { toast } from "sonner";
 import usePermissions from "@/components/lib/usePermissions";
 
 export default function VersionamentoConfigPanel() {
-  const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { contexto, empresaAtual, grupoAtual, filterInContext, updateInContext, createInContext } = useContextoVisual();
   const { user } = useUser();
   const { isAdmin, hasPermission } = usePermissions();
   const queryClient = useQueryClient();
@@ -49,8 +48,8 @@ export default function VersionamentoConfigPanel() {
       // preserva contexto atual se existir
       if (grupoAtual?.id) payload.group_id = grupoAtual.id;
       if (empresaAtual?.id) payload.empresa_id = empresaAtual.id;
-      const result = await base44.entities.ConfiguracaoSistema.update(registroId, payload);
-      await base44.entities.AuditLog.create({
+      const result = await updateInContext('ConfiguracaoSistema', registroId, payload);
+      await createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || 'Usuario local',
         usuario_id: user?.id || null,
         empresa_id: empresaAtual?.id || null,
@@ -92,7 +91,7 @@ export default function VersionamentoConfigPanel() {
                   <div className="text-xs text-slate-500 truncate">{new Date(l.data_hora || l.created_date).toLocaleString('pt-BR')} • Usuário: {l.usuario}</div>
                 </div>
                 <Badge variant="outline" className="text-xs">{l.acao}</Badge>
-                <Button size="sm" variant="outline" onClick={() => restoreMutation.mutate(l)} disabled={restoreMutation.isPending || !contextoValido || !podeRestaurarConfig} data-action="ConfigVersionamento.restaurar" data-permission="Sistema.Configuracoes.editar" data-sensitive="true">
+                <Button size="sm" variant="outline" onClick={() => restoreMutation.mutate(l)} disabled={restoreMutation.isPending || !contextoValido || !podeRestaurarConfig} data-action="ConfigVersionamento.restaurar" data-permission="Sistema.Configuracoes.editar" data-sensitive="true" data-context-required="group-or-company">
                   Restaurar
                 </Button>
               </div>
