@@ -1,3 +1,10 @@
+### INSTRUCAO PERMANENTE - Abrir Projeto no Codex
+- Sempre que abrir este projeto no Codex, usar a copia local do GitHub em `C:\Users\cpaba\ERP-Zuccaro-codeX-local\ERP-Zuccaro-codeX`.
+- Antes de continuar qualquer melhoria, executar `git pull`, ler este `STATUS_DO_PROJETO.md` e seguir a Regra-Mae.
+- Para abrir o ERP no navegador interno do Codex, iniciar o servidor local pela pasta acima e acessar `http://localhost:5173/` ou `http://127.0.0.1:5173/`.
+- O HD externo nao deve ser alterado, e o GitHub so deve receber alteracoes quando o usuario pedir ou quando for necessario salvar o plano/status combinado.
+- Sempre registrar no `STATUS_DO_PROJETO.md` o que foi feito e o proximo passo para outro computador conseguir continuar.
+
 ### Projeto/Codex - Abertura Automatica Local
 - Seguido o pedido de deixar o projeto abrir automaticamente no ambiente local, sem criar modulo, tela ou funcionalidade nova.
 - `start-erp-dev.cmd` foi melhorado para iniciar o ERP Zuccaro em `http://127.0.0.1:5173/`, usando Node local quando existir ou `npm.cmd` instalado no Windows como fallback.
