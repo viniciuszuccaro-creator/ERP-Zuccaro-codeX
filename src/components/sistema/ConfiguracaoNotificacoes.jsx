@@ -109,12 +109,9 @@ export default function ConfiguracaoNotificacoes({ empresaId, grupoId }) {
           ultima_atualizacao: new Date().toISOString()
         }
       };
-
-      if (config?.id) {
-        await updateInContext('ConfiguracaoSistema', config.id, { ...config, ...payload });
-      } else {
-        await createInContext('ConfiguracaoSistema', payload);
-      }
+      const result = config?.id
+        ? await updateInContext('ConfiguracaoSistema', config.id, { ...config, ...payload })
+        : await createInContext('ConfiguracaoSistema', payload);
 
       try {
         const me = await base44.auth.me();
