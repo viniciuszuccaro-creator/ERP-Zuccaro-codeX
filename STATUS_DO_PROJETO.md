@@ -1,3 +1,12 @@
+### Administracao do Sistema - Fase 8 Notificacoes Contextuais
+- Segui o proximo passo de notificacoes/motor de alertas, sem criar tela, modulo, componente ou arquivo novo.
+- `MotorNotificacoes` passou a centralizar criacao de notificacoes em helper contextual local, carimbando `empresa_id`, `group_id`, `grupo_id` e `data_hora` a partir dos dados processados.
+- `NotificacoesAutomaticas` passou a centralizar criacao de notificacoes em helper contextual local, preservando todos os fluxos de pedido aprovado, entrega em transporte, entrega concluida, cobranca vencendo e OP atribuida.
+- As regras, canais de envio, WhatsApp, email, links, prioridades, destinatarios e entidades relacionadas foram preservados.
+- Mantida a Regra-Mae: nenhuma funcionalidade, metodo publico, botao ou fluxo foi removido; apenas contexto multiempresa e rastreabilidade foram reforcados em arquivos existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em Administracao do Sistema revisando componentes restantes de notificacoes/configuracoes e depois voltar para Cadastros Gerais ramificados.
+
 ### Administracao do Sistema - Fase 8 Performance APM Contextual
 - Segui o proximo passo de monitoramento/seguranca, sem criar tela, modulo, componente ou arquivo novo.
 - `DashboardPerformance` deixou de consultar `LogPerformance` e `AlertaPerformance` por chamadas diretas `base44.entities.*.filter` e passou a usar `filterInContext`.

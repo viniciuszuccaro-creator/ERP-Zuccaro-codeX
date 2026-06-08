@@ -7,6 +7,24 @@ import { base44 } from '@/api/base44Client';
 import { enviarEmail } from '../lib/integracaoEmail';
 import { enviarWhatsApp, enviarBoletoWhatsApp } from '../lib/integracaoWhatsApp';
 
+const getEscopoNotificacao = (dados = {}, empresaId = null) => {
+  const resolvedEmpresaId = empresaId || dados.empresa_id || dados.empresaId || null;
+  const resolvedGrupoId = dados.group_id || dados.grupo_id || dados.groupId || dados.grupoId || null;
+  return {
+    empresa_id: resolvedEmpresaId,
+    group_id: resolvedGrupoId,
+    grupo_id: resolvedGrupoId,
+  };
+};
+
+async function criarNotificacaoContextual(payload, dados = {}, empresaId = null) {
+  return base44.entities.Notificacao.create({
+    ...payload,
+    ...getEscopoNotificacao(dados, empresaId),
+    data_hora: payload.data_hora || new Date().toISOString(),
+  });
+}
+
 /**
  * Regras de Notificação Padrão
  */
@@ -209,7 +227,7 @@ async function dispararNotificacao(regra, entidade, dados, empresaId) {
     }
     
     // Registrar disparo
-    await base44.entities.Notificacao.create({
+    await criarNotificacaoContextual({
       titulo: `✅ ${regra.nome} - Disparada`,
       mensagem: `Regra "${regra.nome}" disparada para ${entidade} #${dados.id}`,
       tipo: 'sucesso',
@@ -217,18 +235,18 @@ async function dispararNotificacao(regra, entidade, dados, empresaId) {
       prioridade: regra.prioridade,
       entidade_relacionada: entidade,
       registro_id: dados.id
-    });
+    }, dados, empresaId);
     
   } catch (error) {
     console.error(`Erro ao disparar notificação ${regra.nome}:`, error);
     
-    await base44.entities.Notificacao.create({
+    await criarNotificacaoContextual({
       titulo: `❌ Erro: ${regra.nome}`,
       mensagem: `Falha ao enviar notificação: ${error.message}`,
       tipo: 'erro',
       categoria: 'Sistema',
       prioridade: 'Alta'
-    });
+    }, dados, empresaId);
   }
 }
 
@@ -330,7 +348,7 @@ _Mensagem automática do ERP Zuccaro_
  * Enviar notificação no Sistema
  */
 async function enviarNotificacaoSistema(regra, entidade, dados, empresaId) {
-  await base44.entities.Notificacao.create({
+  await criarNotificacaoContextual({
     titulo: `🔔 ${regra.nome}`,
     mensagem: `${regra.descricao}\n\nNúmero: ${dados.numero_pedido || dados.numero || dados.id}\nStatus: ${dados.status}`,
     tipo: regra.prioridade === 'Urgente' ? 'urgente' : 'info',
@@ -338,7 +356,7 @@ async function enviarNotificacaoSistema(regra, entidade, dados, empresaId) {
     prioridade: regra.prioridade,
     entidade_relacionada: entidade,
     registro_id: dados.id
-  });
+  }, dados, empresaId);
 }
 
 /**
