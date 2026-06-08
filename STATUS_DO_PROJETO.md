@@ -1,3 +1,12 @@
+### Projeto/Codex - Sincronizacao GitHub e Abertura Local Corrigida
+- Verificado que este computador estava 21 commits atras da `main` do GitHub; sincronizado por fast-forward para `ec128e55`.
+- Confirmado repositorio correto: `https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX.git`, branch principal `main`.
+- Corrigido o script existente `start-erp-dev.cmd` para usar fallback absoluto em `C:\Program Files\nodejs\npm.cmd` quando o Node local portatil nao existir.
+- Mantida a Regra-Mae: melhoria feita no script existente de abertura local, sem criar novo fluxo, modulo, tela ou funcionalidade.
+- Validado que `http://127.0.0.1:5173/` respondeu `200 OK` apos iniciar pelo script corrigido.
+- Observacao: o controle automatico do Browser interno do Codex falhou nesta sessao por problema do plugin/browser, mas o servidor local ficou ativo e a aba pode ser recarregada no endereco local.
+- Proximo passo sugerido: continuar o plano em Administracao do Sistema revisando `DashboardSeguranca`, `MonitorSistemaRealtime`, `MonitorPerformance` e componentes relacionados.
+
 ### Administracao do Sistema - Fase 8 Relatorios Contextuais
 - Segui o proximo passo salvo em Administracao do Sistema, sem criar tela, modulo, componente ou arquivo novo.
 - `GeradorRelatorios` deixou de auditar bloqueio RBAC e exportacao por `base44.entities.AuditLog.create` direto e passou a usar `createInContext('AuditLog')`.
