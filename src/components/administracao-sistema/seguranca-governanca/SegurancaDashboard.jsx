@@ -6,13 +6,14 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 
 export default function SegurancaDashboard() {
-  const { filterInContext, contexto, empresasDoGrupo = [], empresaAtual, grupoAtual } = useContextoVisual();
+  const { filterInContext, createInContext, contexto, empresasDoGrupo = [], empresaAtual, grupoAtual } = useContextoVisual();
   const { isAdmin, hasPermission } = usePermissions();
   const canView =
     isAdmin() ||
     hasPermission("Sistema", "Seguranca", "visualizar") ||
     hasPermission("Sistema", "Segurança", "visualizar");
   const scopeKey = empresaAtual?.id || grupoAtual?.id || "sem-contexto";
+  const contextoValido = scopeKey !== "sem-contexto";
 
   const usuarioNoEscopo = React.useCallback((usuario = {}) => {
     if (!usuario) return false;
@@ -32,10 +33,10 @@ export default function SegurancaDashboard() {
 
   const { data = {} } = useQuery({
     queryKey: ["seguranca-dashboard-real", scopeKey],
-    enabled: canView,
+    enabled: canView && contextoValido,
     queryFn: async () => {
       const [usuariosRaw, perfis, auditoriaAcessos] = await Promise.all([
-        base44.entities.User.list("-updated_date", 500),
+        filterInContext("User", {}, "-updated_date", 500).catch(() => base44.entities.User.list("-updated_date", 500)),
         filterInContext("PerfilAcesso", {}, "-updated_date", 500),
         filterInContext("AuditLog", {}, "-data_hora", 100),
       ]);
@@ -54,8 +55,38 @@ export default function SegurancaDashboard() {
     },
   });
 
+  React.useEffect(() => {
+    const acao = canView ? "visualizar_dashboard_seguranca" : "bloqueio_dashboard_seguranca";
+    if (!contextoValido && canView) return;
+    void createInContext("AuditLog", {
+      acao,
+      entidade: "DashboardSeguranca",
+      descricao: canView
+        ? "Visualizacao do dashboard de seguranca contextual"
+        : "Bloqueio de acesso ao dashboard de seguranca por RBAC",
+      severidade: canView ? "info" : "warning",
+      sucesso: canView,
+      group_id: grupoAtual?.id || null,
+      grupo_id: grupoAtual?.id || null,
+      empresa_id: empresaAtual?.id || null,
+      dados_novos: {
+        contexto: contexto || "indefinido",
+        escopo: scopeKey,
+        permissao: "Sistema.Seguranca.visualizar",
+      },
+    }).catch(() => {});
+  }, [canView, contexto, contextoValido, createInContext, empresaAtual?.id, grupoAtual?.id, scopeKey]);
+
   if (!canView) {
     return <div className="w-full h-full p-4 text-sm text-slate-500">Acesso restrito.</div>;
+  }
+
+  if (!contextoValido) {
+    return (
+      <div className="w-full h-full p-4 text-sm text-slate-500" data-context-required="true">
+        Selecione Grupo ou Empresa para visualizar o dashboard de seguranca.
+      </div>
+    );
   }
 
   return (

@@ -51,22 +51,37 @@ export default function MonitorPerformance() {
   
   const statusSistema = ultimaMetrica.status_geral || 'Saudável';
   const statusConfig = {
-    'Saudável': { cor: 'green', icone: CheckCircle },
-    'Atenção': { cor: 'yellow', icone: AlertTriangle },
-    'Crítico': { cor: 'red', icone: AlertTriangle },
-    'Offline': { cor: 'slate', icone: Activity }
+    'Saudável': { icone: CheckCircle, cardClass: 'border-green-200 bg-green-50', iconClass: 'text-green-600' },
+    'Atenção': { icone: AlertTriangle, cardClass: 'border-yellow-200 bg-yellow-50', iconClass: 'text-yellow-600' },
+    'Crítico': { icone: AlertTriangle, cardClass: 'border-red-200 bg-red-50', iconClass: 'text-red-600' },
+    'Offline': { icone: Activity, cardClass: 'border-slate-200 bg-slate-50', iconClass: 'text-slate-600' }
   };
   
-  const config = statusConfig[statusSistema];
+  const config = statusConfig[statusSistema] || statusConfig.Offline;
   const Icon = config.icone;
 
+  if (!contextoValido) {
+    return (
+      <div className="w-full h-full p-6 overflow-auto" data-context-required="true">
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardContent className="p-6 flex items-center gap-3 text-yellow-900">
+            <AlertTriangle className="w-5 h-5" />
+            <span className="text-sm font-medium">
+              Selecione Grupo ou Empresa para carregar as metricas de performance.
+            </span>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="w-full h-full space-y-6 p-6 overflow-auto">
       {/* Status Geral */}
-      <Card className={`border-${config.cor}-200 bg-${config.cor}-50`}>
+      <Card className={config.cardClass}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Icon className={`w-6 h-6 text-${config.cor}-600`} />
+            <Icon className={`w-6 h-6 ${config.iconClass}`} />
             Status do Sistema: {statusSistema}
           </CardTitle>
           <p className="text-sm text-slate-600 mt-1">
@@ -79,7 +94,7 @@ export default function MonitorPerformance() {
       </Card>
 
       {/* Métricas Atuais */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <Card className="border-blue-200 bg-blue-50">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">

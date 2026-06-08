@@ -113,7 +113,22 @@ export default function MonitorSistemaRealtime({ windowMode = false }) {
 
   const containerClass = windowMode 
     ? "w-full h-full flex flex-col overflow-auto" 
-    : "space-y-6 p-6";
+    : "w-full h-full space-y-6 p-6 overflow-auto";
+
+  if (!contextoValido) {
+    return (
+      <div className={containerClass} data-context-required="true">
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardContent className="p-6 flex items-center gap-3 text-yellow-900">
+            <AlertCircle className="w-5 h-5" />
+            <span className="text-sm font-medium">
+              Selecione Grupo ou Empresa para carregar o monitoramento do sistema.
+            </span>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className={containerClass}>
