@@ -1,3 +1,12 @@
+### Administracao do Sistema - Fase 8 Central de Configuracoes Contextual
+- Segui o proximo passo de configuracoes, sem criar tela, modulo, componente ou arquivo novo.
+- `ConfigCenter` recebeu reforco de layout `w-full h-full`, rolagem interna e marcadores de contexto/permissao no container principal e no botao de atualizacao.
+- O estado sem Grupo/Empresa selecionado passou a declarar contexto obrigatorio.
+- Imports e variaveis sem uso foram removidos, reduzindo ruido tecnico sem alterar abas, toggles, carregamento de configuracoes ou fluxo de IA/backup/seguranca.
+- Mantida a Regra-Mae: nenhuma funcionalidade, aba, toggle, botao ou fluxo foi removido; apenas layout, contexto e manutencao do arquivo existente foram reforcados.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: voltar para Cadastros Gerais ramificados, revisando filtros/contexto/RBAC sem criar novas telas.
+
 ### Administracao do Sistema - Fase 8 Notificacoes Contextuais
 - Segui o proximo passo de notificacoes/motor de alertas, sem criar tela, modulo, componente ou arquivo novo.
 - `MotorNotificacoes` passou a centralizar criacao de notificacoes em helper contextual local, carimbando `empresa_id`, `group_id`, `grupo_id` e `data_hora` a partir dos dados processados.

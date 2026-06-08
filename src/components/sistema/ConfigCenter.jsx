@@ -1,10 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/components/ui/use-toast';
 import { Settings, Sparkles, Cloud, Key, CheckCircle } from 'lucide-react';
 import { loadScopedConfiguracaoSistema, useToggleConfig } from '@/components/lib/useToggleConfig';
 import ToggleRow from '@/components/sistema/ToggleRow';
@@ -16,7 +14,6 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
  * evitando o erro 422 de empresa_id obrigatório no GovernancaEmpresa.
  */
 export default function ConfigCenter({ empresaId: empresaIdProp }) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
   const eId = empresaIdProp || empresaAtual?.id;
@@ -60,7 +57,7 @@ export default function ConfigCenter({ empresaId: empresaIdProp }) {
 
   if (!canLoad) {
     return (
-      <div className="p-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg">
+      <div className="w-full h-full p-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg" data-context-required="true">
         ⚠️ Selecione uma empresa ou grupo para carregar as configurações.
       </div>
     );
@@ -73,7 +70,7 @@ export default function ConfigCenter({ empresaId: empresaIdProp }) {
   }, {});
 
   return (
-    <div className="space-y-6">
+    <div className="w-full h-full space-y-6 overflow-auto" data-context-required="true" data-permission="Sistema.Configuracoes.visualizar">
       <Card className="border-0 shadow-lg bg-gradient-to-r from-blue-50 to-purple-50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -85,12 +82,12 @@ export default function ConfigCenter({ empresaId: empresaIdProp }) {
       </Card>
 
       <div className="flex justify-end">
-        <Button variant="outline" size="sm" disabled={isFetching || !canLoad} onClick={() => { queryClient.invalidateQueries({ queryKey: ['config-center-v2'] }); refetch(); }} data-action="ConfigCenter.atualizar">
+        <Button variant="outline" size="sm" disabled={isFetching || !canLoad} onClick={() => { queryClient.invalidateQueries({ queryKey: ['config-center-v2'] }); refetch(); }} data-action="ConfigCenter.atualizar" data-permission="Sistema.Configuracoes.visualizar">
           🔄 Atualizar
         </Button>
       </div>
 
-      <Tabs defaultValue="seguranca" className="space-y-4">
+      <Tabs defaultValue="seguranca" className="w-full space-y-4">
         <TabsList className="bg-white border">
           <TabsTrigger value="seguranca"><Key className="w-4 h-4 mr-2" />Segurança</TabsTrigger>
           <TabsTrigger value="ia"><Sparkles className="w-4 h-4 mr-2" />Inteligência Artificial</TabsTrigger>
