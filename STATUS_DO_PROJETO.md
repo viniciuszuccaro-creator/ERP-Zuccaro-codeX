@@ -1,3 +1,12 @@
+### Cadastros Gerais - Fase 9 Auditoria Contextual da Tela Principal
+- Segui o proximo passo salvo para Cadastros Gerais, sem criar tela, modulo, componente ou arquivo novo.
+- `pages/Cadastros.jsx` deixou de registrar auditoria por chamada direta em `base44.entities.AuditLog.create` e passou a usar `createInContext("AuditLog")`.
+- A auditoria de troca de abas, bloqueio de Apps Externos, abertura de blocos e busca universal agora reforca carimbo multiempresa com `group_id`, `grupo_id` e `empresa_id` pelo helper contextual existente.
+- A tela principal recebeu marcadores de contexto/permissao no container e no aviso sem Grupo/Empresa, alem de manter `w-full h-full` no fluxo de abas.
+- Mantida a Regra-Mae: nenhuma aba, bloco, card, busca, permissao visual ou fluxo de usuario foi removido; apenas seguranca, RBAC, auditoria e layout contextual foram reforcados no arquivo existente.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em Cadastros Gerais revisando os blocos `Bloco1Pessoas` a `Bloco6Tecnologia` para reforcar filtros/contexto/RBAC sem criar novas telas.
+
 ### Administracao do Sistema - Fase 8 Central de Configuracoes Contextual
 - Segui o proximo passo de configuracoes, sem criar tela, modulo, componente ou arquivo novo.
 - `ConfigCenter` recebeu reforco de layout `w-full h-full`, rolagem interna e marcadores de contexto/permissao no container principal e no botao de atualizacao.

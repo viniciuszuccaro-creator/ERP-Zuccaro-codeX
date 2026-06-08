@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import useCadastrosAllCounts from "@/components/cadastros/hooks/useCadastrosAllCounts";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -30,7 +29,7 @@ export default function Cadastros() {
   const [abaGerenciamento, setAbaGerenciamento] = useState("cadastros");
   const { counts: allCounts, totals, isLoading: countsLoading } = useCadastrosAllCounts();
   const { isAdmin, hasPermission } = usePermissions();
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
   const { user } = useUser();
   const { toast } = useToast();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
@@ -41,7 +40,7 @@ export default function Cadastros() {
 
   const registrarAuditoriaCadastros = async (descricao, extras = {}) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext("AuditLog", {
         usuario_id: user?.id,
         usuario: user?.full_name || user?.email || "Usuario",
         acao: extras.acao || "Visualizacao",
@@ -126,10 +125,10 @@ export default function Cadastros() {
   }
 
   return (
-    <div className="h-full w-full min-h-0 overflow-auto p-6 lg:p-8 space-y-6">
+    <div className="h-full w-full min-h-0 overflow-auto p-6 lg:p-8 space-y-6" data-context-required="true" data-permission="Cadastros.visualizar">
       <GerenciadorJanelas />
 
-      <Tabs value={abaGerenciamento} onValueChange={handleAbaChange}>
+      <Tabs value={abaGerenciamento} onValueChange={handleAbaChange} className="w-full h-full">
         <div className="overflow-x-auto pb-1">
           <TabsList className="inline-flex flex-nowrap min-w-max gap-2 mb-2">
             <TabsTrigger value="cadastros" data-permission="Cadastros.visualizar" data-action="abrir-aba-cadastros-gerais">📋 Cadastros Gerais</TabsTrigger>
@@ -145,7 +144,7 @@ export default function Cadastros() {
         {/* ABA: CADASTROS */}
         <TabsContent value="cadastros" className="space-y-6 mt-6">
           {!contextoAtivo && (
-            <Card className="rounded-sm border border-amber-200 bg-amber-50">
+            <Card className="rounded-sm border border-amber-200 bg-amber-50" data-context-required="true">
               <CardContent className="p-3 text-sm text-amber-900">
                 Selecione um grupo ou empresa para aplicar o filtro multiempresa nos cadastros.
               </CardContent>
