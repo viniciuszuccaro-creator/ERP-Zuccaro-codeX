@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -27,7 +26,7 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
 export default function DashboardPerformance({ empresaId, grupoId }) {
   const [periodo, setPeriodo] = useState('24h');
   const [moduloFiltro, setModuloFiltro] = useState('todos');
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
   const grupoAtivoId = grupoId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
     try { return localStorage.getItem('group_atual_id'); } catch { return null; }
   })();
@@ -45,17 +44,7 @@ export default function DashboardPerformance({ empresaId, grupoId }) {
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ['logs-performance', scopeId, periodo],
     queryFn: async () => {
-      const filter = empresaAtivaId 
-        ? { empresa_id: empresaAtivaId }
-        : grupoAtivoId 
-          ? { group_id: grupoAtivoId }
-          : {};
-
-      const result = await base44.entities.LogPerformance.filter(
-        filter,
-        '-timestamp',
-        1000
-      );
+      const result = await filterInContext('LogPerformance', {}, '-timestamp', 1000);
       
       return result.filter(log => new Date(log.timestamp) >= dataInicio);
     },
@@ -72,7 +61,8 @@ export default function DashboardPerformance({ empresaId, grupoId }) {
         status: { $in: ['Novo', 'Investigando', 'Em Correção'] }
       };
 
-      const result = await base44.entities.AlertaPerformance.filter(
+      const result = await filterInContext(
+        'AlertaPerformance',
         filter,
         '-data_hora',
         50
@@ -86,8 +76,21 @@ export default function DashboardPerformance({ empresaId, grupoId }) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
+      <div className="w-full h-full flex items-center justify-center py-12">
         <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!contextoValido) {
+    return (
+      <div className="w-full h-full p-6 overflow-auto" data-context-required="true">
+        <Alert className="border-yellow-300 bg-yellow-50">
+          <AlertTriangle className="w-5 h-5 text-yellow-700" />
+          <AlertDescription className="text-sm text-yellow-900">
+            Selecione Grupo ou Empresa para visualizar o dashboard de performance.
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
@@ -135,7 +138,7 @@ export default function DashboardPerformance({ empresaId, grupoId }) {
   const alertasWarning = alertas.filter(a => a.severidade === 'Warning').length;
 
   return (
-    <div className="space-y-6">
+    <div className="w-full h-full space-y-6 p-6 overflow-auto" data-context-required="true">
       {/* Status Banner */}
       <Alert className={
         alertasCriticos > 0 ? 'border-red-300 bg-red-50' :
@@ -180,7 +183,7 @@ export default function DashboardPerformance({ empresaId, grupoId }) {
       </Alert>
 
       {/* Filtros */}
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <select
           value={periodo}
           onChange={(e) => setPeriodo(e.target.value)}
@@ -210,7 +213,7 @@ export default function DashboardPerformance({ empresaId, grupoId }) {
       </div>
 
       {/* KPIs Principais */}
-      <div className="grid md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
         <Card className="border-2 border-blue-200">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">

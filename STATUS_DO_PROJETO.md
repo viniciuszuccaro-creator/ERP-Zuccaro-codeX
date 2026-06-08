@@ -1,3 +1,12 @@
+### Administracao do Sistema - Fase 8 Performance APM Contextual
+- Segui o proximo passo de monitoramento/seguranca, sem criar tela, modulo, componente ou arquivo novo.
+- `DashboardPerformance` deixou de consultar `LogPerformance` e `AlertaPerformance` por chamadas diretas `base44.entities.*.filter` e passou a usar `filterInContext`.
+- O dashboard de performance passou a bloquear visualizacao sem contexto Grupo/Empresa, mantendo o fluxo atual de filtros, KPIs, abas, listas de queries/APIs lentas, erros e alertas.
+- O layout do dashboard recebeu `w-full h-full`, rolagem interna e grid responsivo para KPIs, reforcando a regra de responsividade sem alterar a experiencia existente.
+- Mantida a Regra-Mae: nenhuma funcionalidade, botao, aba, card ou filtro foi removido; apenas contexto multiempresa, isolamento de dados e responsividade foram reforcados.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em Administracao do Sistema revisando notificacoes/motor de alertas e depois voltar para Cadastros Gerais ramificados.
+
 ### Administracao do Sistema - Fase 8 Dashboards e Monitores Contextuais
 - Segui o proximo passo salvo em Administracao do Sistema, sem criar tela, modulo, componente ou arquivo novo.
 - `SegurancaDashboard` passou a exigir contexto valido antes de carregar dados e a registrar visualizacao/bloqueio RBAC em `AuditLog` via `createInContext`.
