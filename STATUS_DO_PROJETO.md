@@ -1,3 +1,9 @@
+### Administracao do Sistema - Fase 8 Relatorios Contextuais
+- Segui o proximo passo salvo em Administracao do Sistema, sem criar tela, modulo, componente ou arquivo novo.
+- `GeradorRelatorios` deixou de auditar bloqueio RBAC e exportacao por `base44.entities.AuditLog.create` direto e passou a usar `createInContext('AuditLog')`.
+- As exportacoes Excel, filtros por `filterInContext`, permissoes, cards, botoes e mensagens visuais foram preservados.
+- Mantida a Regra-Mae: melhoria no componente existente, sem exclusao de botao, campo, aba ou funcionalidade.
+- Proximo passo sugerido: continuar em Administracao do Sistema revisando `DashboardSeguranca`, `MonitorSistemaRealtime`, `MonitorPerformance` e componentes relacionados para contextualizar auditorias/listagens restantes sem alterar fluxo visual.
 ### Administracao do Sistema - Fase 8 Manutencao e Notificacoes Contextuais
 - Segui o proximo passo salvo em Administracao do Sistema, sem criar tela, modulo, componente ou arquivo novo.
 - `ConfiguracaoNotificacoes` deixou de salvar `ConfiguracaoSistema` e auditar regras por chamadas diretas, usando `createInContext`, `updateInContext` e auditoria contextual com `registro_id` do resultado.

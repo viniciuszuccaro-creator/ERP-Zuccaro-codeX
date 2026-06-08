@@ -52,7 +52,7 @@ import {
 export default function GeradorRelatorios({ empresaId }) {
   const [gerando, setGerando] = useState(null);
   const { toast } = useToast();
-  const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { contexto, empresaAtual, grupoAtual, filterInContext, createInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const { user } = useUser();
   const scopeId = empresaId || empresaAtual?.id || grupoAtual?.id || 'sem-contexto';
@@ -221,7 +221,7 @@ export default function GeradorRelatorios({ empresaId }) {
         throw new Error('Selecione um grupo ou empresa antes de exportar.');
       }
       if (!canExportRelatorios) {
-        await base44.entities.AuditLog.create({
+        await createInContext('AuditLog', {
           acao: 'bloqueio_exportacao_relatorio',
           modulo: 'Sistema',
           entidade: 'GeradorRelatorios',
@@ -239,7 +239,7 @@ export default function GeradorRelatorios({ empresaId }) {
         throw new Error('Usuario sem permissao para exportar relatorios.');
       }
       await relatorio.exportaExcel();
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         acao: 'exportar_relatorio',
         modulo: 'Sistema',
         entidade: 'GeradorRelatorios',
