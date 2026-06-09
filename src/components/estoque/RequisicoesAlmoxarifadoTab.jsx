@@ -44,6 +44,16 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
       if (!contextoValido) throw new Error("Selecione grupo ou empresa antes de registrar requisicao.");
       if (!canCreateRequisicao) throw new Error("Sem permissao para registrar requisicao.");
       const itens = data.itens || [data];
+      for (const item of itens) {
+        const quantidade = Number(item.quantidade || 0);
+        if (!Number.isFinite(quantidade) || quantidade <= 0) {
+          throw new Error("Quantidade da requisicao deve ser maior que zero.");
+        }
+        const produto = produtos.find(p => p.id === item.produto_id);
+        if (produto && (produto.estoque_atual || 0) - quantidade < 0) {
+          throw new Error(`Requisicao deixaria estoque negativo para ${produto.descricao}.`);
+        }
+      }
       // Criar requisição como MovimentacaoEstoque
       for (const item of itens) {
         const quantidade = Number(item.quantidade || 0);
@@ -78,6 +88,22 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
           });
         }
       }
+
+      await createInContext('AuditLog', {
+        acao: 'Estoque.Requisicoes.registrada',
+        modulo: 'Estoque',
+        entidade: 'MovimentacaoEstoque',
+        descricao: `Requisicao de almoxarifado registrada: ${data.numero_requisicao || 'sem documento'}`,
+        dados_novos: {
+          ...data,
+          quantidade_itens: itens.length
+        },
+        group_id: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || contexto?.group_id || null,
+        grupo_id: grupoAtual?.id || empresaAtual?.grupo_id || empresaAtual?.group_id || contexto?.group_id || null,
+        empresa_id: empresaAtual?.id || null,
+        sucesso: true,
+        data_hora: new Date().toISOString()
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['movimentacoes'] });
@@ -181,7 +207,11 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
   });
 
   return (
-    <div className="space-y-6">
+    <div
+      className="w-full h-full space-y-6"
+      data-permission="Estoque.Requisicoes.visualizar"
+      data-context-required="group-or-company"
+    >
       <div className="flex justify-between items-center gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -190,6 +220,9 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-9"
+            data-permission="Estoque.Requisicoes.visualizar"
+            data-action="Estoque.Requisicoes.buscar"
+            data-context-required="group-or-company"
           />
         </div>
         {canCreateRequisicao && (
@@ -197,6 +230,9 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
             className="bg-orange-600 hover:bg-orange-700"
             disabled={!contextoValido}
             data-permission="Estoque.Requisicoes.criar"
+            data-action="Estoque.Requisicoes.abrirFormulario"
+            data-context-required="group-or-company"
+            data-sensitive="true"
             onClick={() => openWindow(RequisicaoAlmoxarifadoForm, {
             windowMode: true,
             onSubmit: async (data) => {
@@ -224,13 +260,26 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
 
         <Dialog open={false}>
           <DialogTrigger asChild>
-            <Button className="hidden">Removido</Button>
+            <Button
+              className="hidden"
+              data-permission="Estoque.Requisicoes.criar"
+              data-action="Estoque.Requisicoes.dialogLegado"
+              data-context-required="group-or-company"
+            >
+              Removido
+            </Button>
           </DialogTrigger>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto hidden">
             <DialogHeader>
               <DialogTitle>Requisição de Almoxarifado</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-4"
+              data-permission="Estoque.Requisicoes.criar"
+              data-action="Estoque.Requisicoes.formularioLegado"
+              data-context-required="group-or-company"
+            >
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="numero_requisicao">Nº Requisição</Label>
@@ -238,6 +287,9 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
                     id="numero_requisicao"
                     value={formData.numero_requisicao}
                     onChange={(e) => setFormData({ ...formData, numero_requisicao: e.target.value })}
+                    data-permission="Estoque.Requisicoes.criar"
+                    data-action="Estoque.Requisicoes.numero"
+                    data-context-required="group-or-company"
                   />
                 </div>
 
@@ -248,6 +300,9 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
                     type="date"
                     value={formData.data_requisicao}
                     onChange={(e) => setFormData({ ...formData, data_requisicao: e.target.value })}
+                    data-permission="Estoque.Requisicoes.criar"
+                    data-action="Estoque.Requisicoes.data"
+                    data-context-required="group-or-company"
                   />
                 </div>
 
@@ -258,6 +313,9 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
                     value={formData.solicitante}
                     onChange={(e) => setFormData({ ...formData, solicitante: e.target.value })}
                     required
+                    data-permission="Estoque.Requisicoes.criar"
+                    data-action="Estoque.Requisicoes.solicitante"
+                    data-context-required="group-or-company"
                   />
                 </div>
 
@@ -267,7 +325,11 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
                     value={formData.setor}
                     onValueChange={(value) => setFormData({ ...formData, setor: value })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger
+                      data-permission="Estoque.Requisicoes.criar"
+                      data-action="Estoque.Requisicoes.setor"
+                      data-context-required="group-or-company"
+                    >
                       <SelectValue placeholder="Selecione o setor" />
                     </SelectTrigger>
                     <SelectContent>
@@ -288,6 +350,9 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
                     id="finalidade"
                     value={formData.finalidade}
                     onChange={(e) => setFormData({ ...formData, finalidade: e.target.value })}
+                    data-permission="Estoque.Requisicoes.criar"
+                    data-action="Estoque.Requisicoes.finalidade"
+                    data-context-required="group-or-company"
                     placeholder="Ex: Manutenção preventiva, Uso interno..."
                   />
                 </div>
@@ -296,7 +361,15 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <Label>Itens da Requisição</Label>
-                  <Button type="button" size="sm" variant="outline" onClick={handleAddItem}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={handleAddItem}
+                    data-permission="Estoque.Requisicoes.criar"
+                    data-action="Estoque.Requisicoes.adicionarItem"
+                    data-context-required="group-or-company"
+                  >
                     <Plus className="w-4 h-4 mr-1" /> Adicionar Item
                   </Button>
                 </div>
@@ -309,7 +382,11 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
                           value={item.produto_id}
                           onValueChange={(value) => handleItemChange(index, 'produto_id', value)}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger
+                            data-permission="Estoque.Requisicoes.criar"
+                            data-action="Estoque.Requisicoes.itemProduto"
+                            data-context-required="group-or-company"
+                          >
                             <SelectValue placeholder="Selecione produto" />
                           </SelectTrigger>
                           <SelectContent>
@@ -327,6 +404,10 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
                           placeholder="Qtd"
                           value={item.quantidade}
                           onChange={(e) => handleItemChange(index, 'quantidade', parseFloat(e.target.value) || 0)}
+                          data-permission="Estoque.Requisicoes.criar"
+                          data-action="Estoque.Requisicoes.quantidade"
+                          data-context-required="group-or-company"
+                          data-sensitive="true"
                         />
                       </div>
                       <div className="col-span-2">
@@ -334,6 +415,9 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
                           value={item.unidade_medida}
                           readOnly
                           className="bg-slate-50"
+                          data-permission="Estoque.Requisicoes.visualizar"
+                          data-action="Estoque.Requisicoes.unidadeMedida"
+                          data-context-required="group-or-company"
                         />
                       </div>
                       <div className="col-span-1 flex items-center">
@@ -343,6 +427,9 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
                           variant="ghost"
                           onClick={() => handleRemoveItem(index)}
                           disabled={formData.itens.length === 1}
+                          data-permission="Estoque.Requisicoes.criar"
+                          data-action="Estoque.Requisicoes.removerItem"
+                          data-context-required="group-or-company"
                         >
                           ×
                         </Button>
@@ -359,11 +446,22 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
                   value={formData.observacoes}
                   onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
                   rows={3}
+                  data-permission="Estoque.Requisicoes.criar"
+                  data-action="Estoque.Requisicoes.observacoes"
+                  data-context-required="group-or-company"
                 />
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
-                <Button type="submit" disabled={createMutation.isPending} className="bg-indigo-600 hover:bg-indigo-700">
+                <Button
+                  type="submit"
+                  disabled={createMutation.isPending}
+                  className="bg-indigo-600 hover:bg-indigo-700"
+                  data-permission="Estoque.Requisicoes.criar"
+                  data-action="Estoque.Requisicoes.confirmar"
+                  data-context-required="group-or-company"
+                  data-sensitive="true"
+                >
                   {createMutation.isPending ? 'Salvando...' : 'Criar Requisição'}
                 </Button>
               </div>

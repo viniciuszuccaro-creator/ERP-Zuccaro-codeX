@@ -92,6 +92,22 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
           status: "Recebida"
         });
       }
+
+      await createInContext('AuditLog', {
+        acao: 'Estoque.Recebimento.registrado',
+        modulo: 'Estoque',
+        entidade: 'MovimentacaoEstoque',
+        descricao: `Recebimento registrado: ${data.numero_recebimento || data.numero_nf || 'sem documento'}`,
+        dados_novos: {
+          ...data,
+          quantidade_itens: itensRecebidos.length
+        },
+        group_id: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
+        grupo_id: grupoAtual?.id || empresaAtual?.grupo_id || empresaAtual?.group_id || null,
+        empresa_id: empresaAtual?.id || null,
+        sucesso: true,
+        data_hora: new Date().toISOString()
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['movimentacoes'] });
@@ -186,7 +202,11 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
   });
 
   return (
-    <div className="space-y-6">
+    <div
+      className="w-full h-full space-y-6"
+      data-permission="Estoque.Recebimento.visualizar"
+      data-context-required="group-or-company"
+    >
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -195,6 +215,9 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
+            data-permission="Estoque.Recebimento.visualizar"
+            data-action="Estoque.Recebimento.buscar"
+            data-context-required="group-or-company"
           />
         </div>
 
@@ -203,6 +226,9 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
             className="bg-green-600 hover:bg-green-700"
             disabled={!contextoValido}
             data-permission="Estoque.Recebimento.criar"
+            data-action="Estoque.Recebimento.abrirFormulario"
+            data-context-required="group-or-company"
+            data-sensitive="true"
             onClick={() => openWindow(RecebimentoForm, {
             windowMode: true,
             onSubmit: async (data) => {
@@ -230,13 +256,26 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
 
         <Dialog open={false}>
           <DialogTrigger asChild>
-            <Button className="hidden">Removido</Button>
+            <Button
+              className="hidden"
+              data-permission="Estoque.Recebimento.criar"
+              data-action="Estoque.Recebimento.dialogLegado"
+              data-context-required="group-or-company"
+            >
+              Removido
+            </Button>
           </DialogTrigger>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto hidden">
             <DialogHeader>
               <DialogTitle>Registrar Recebimento de Produtos</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-6"
+              data-permission="Estoque.Recebimento.criar"
+              data-action="Estoque.Recebimento.formularioLegado"
+              data-context-required="group-or-company"
+            >
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="numero_recebimento">Nº Recebimento</Label>
@@ -244,6 +283,9 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
                     id="numero_recebimento"
                     value={formData.numero_recebimento}
                     onChange={(e) => setFormData({ ...formData, numero_recebimento: e.target.value })}
+                    data-permission="Estoque.Recebimento.criar"
+                    data-action="Estoque.Recebimento.numero"
+                    data-context-required="group-or-company"
                   />
                 </div>
 
@@ -254,6 +296,9 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
                     type="date"
                     value={formData.data_recebimento}
                     onChange={(e) => setFormData({ ...formData, data_recebimento: e.target.value })}
+                    data-permission="Estoque.Recebimento.criar"
+                    data-action="Estoque.Recebimento.data"
+                    data-context-required="group-or-company"
                   />
                 </div>
 
@@ -263,7 +308,11 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
                     value={formData.ordem_compra_id}
                     onValueChange={handleOrdemCompraChange}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger
+                      data-permission="Estoque.Recebimento.criar"
+                      data-action="Estoque.Recebimento.ordemCompra"
+                      data-context-required="group-or-company"
+                    >
                       <SelectValue placeholder="Selecione uma OC" />
                     </SelectTrigger>
                     <SelectContent>
@@ -282,6 +331,9 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
                     id="fornecedor"
                     value={formData.fornecedor}
                     onChange={(e) => setFormData({ ...formData, fornecedor: e.target.value })}
+                    data-permission="Estoque.Recebimento.criar"
+                    data-action="Estoque.Recebimento.fornecedor"
+                    data-context-required="group-or-company"
                   />
                 </div>
 
@@ -291,6 +343,9 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
                     id="numero_nf"
                     value={formData.numero_nf}
                     onChange={(e) => setFormData({ ...formData, numero_nf: e.target.value })}
+                    data-permission="Estoque.Recebimento.criar"
+                    data-action="Estoque.Recebimento.notaFiscal"
+                    data-context-required="group-or-company"
                   />
                 </div>
 
@@ -300,6 +355,9 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
                     id="responsavel_recebimento"
                     value={formData.responsavel_recebimento}
                     onChange={(e) => setFormData({ ...formData, responsavel_recebimento: e.target.value })}
+                    data-permission="Estoque.Recebimento.criar"
+                    data-action="Estoque.Recebimento.responsavel"
+                    data-context-required="group-or-company"
                   />
                 </div>
               </div>
@@ -307,7 +365,15 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <Label>Itens do Recebimento</Label>
-                  <Button type="button" size="sm" variant="outline" onClick={handleAddItem}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={handleAddItem}
+                    data-permission="Estoque.Recebimento.criar"
+                    data-action="Estoque.Recebimento.adicionarItem"
+                    data-context-required="group-or-company"
+                  >
                     <Plus className="w-4 h-4 mr-1" /> Adicionar Item
                   </Button>
                 </div>
@@ -320,7 +386,11 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
                           value={item.produto_id}
                           onValueChange={(value) => handleItemChange(index, 'produto_id', value)}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger
+                            data-permission="Estoque.Recebimento.criar"
+                            data-action="Estoque.Recebimento.itemProduto"
+                            data-context-required="group-or-company"
+                          >
                             <SelectValue placeholder="Selecione produto" />
                           </SelectTrigger>
                           <SelectContent>
@@ -338,6 +408,10 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
                           placeholder="Qtd Pedida"
                           value={item.quantidade_pedida}
                           onChange={(e) => handleItemChange(index, 'quantidade_pedida', parseFloat(e.target.value) || 0)}
+                          data-permission="Estoque.Recebimento.criar"
+                          data-action="Estoque.Recebimento.quantidadePedida"
+                          data-context-required="group-or-company"
+                          data-sensitive="true"
                         />
                       </div>
                       <div className="col-span-2">
@@ -346,6 +420,10 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
                           placeholder="Qtd Recebida"
                           value={item.quantidade_recebida}
                           onChange={(e) => handleItemChange(index, 'quantidade_recebida', parseFloat(e.target.value) || 0)}
+                          data-permission="Estoque.Recebimento.criar"
+                          data-action="Estoque.Recebimento.quantidadeRecebida"
+                          data-context-required="group-or-company"
+                          data-sensitive="true"
                         />
                       </div>
                       <div className="col-span-3">
@@ -353,7 +431,11 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
                           value={item.status_item}
                           onValueChange={(value) => handleItemChange(index, 'status_item', value)}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger
+                            data-permission="Estoque.Recebimento.criar"
+                            data-action="Estoque.Recebimento.statusItem"
+                            data-context-required="group-or-company"
+                          >
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -370,6 +452,9 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
                           variant="ghost"
                           onClick={() => handleRemoveItem(index)}
                           disabled={formData.itens.length === 1}
+                          data-permission="Estoque.Recebimento.criar"
+                          data-action="Estoque.Recebimento.removerItem"
+                          data-context-required="group-or-company"
                         >
                           ×
                         </Button>
@@ -386,11 +471,22 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
                   value={formData.observacoes}
                   onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
                   rows={3}
+                  data-permission="Estoque.Recebimento.criar"
+                  data-action="Estoque.Recebimento.observacoes"
+                  data-context-required="group-or-company"
                 />
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
-                <Button type="submit" disabled={createMutation.isPending} className="bg-green-600 hover:bg-green-700">
+                <Button
+                  type="submit"
+                  disabled={createMutation.isPending}
+                  className="bg-green-600 hover:bg-green-700"
+                  data-permission="Estoque.Recebimento.criar"
+                  data-action="Estoque.Recebimento.confirmar"
+                  data-context-required="group-or-company"
+                  data-sensitive="true"
+                >
                   {createMutation.isPending ? 'Salvando...' : 'Registrar Recebimento'}
                 </Button>
               </div>
@@ -435,6 +531,9 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
                       variant="ghost"
                       size="icon"
                       onClick={() => setViewingRecebimento(rec)}
+                      data-permission="Estoque.Recebimento.visualizar"
+                      data-action="Estoque.Recebimento.visualizarDetalhes"
+                      data-context-required="group-or-company"
                     >
                       <Eye className="w-4 h-4" />
                     </Button>

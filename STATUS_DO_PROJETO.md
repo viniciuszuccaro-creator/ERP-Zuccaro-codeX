@@ -1,3 +1,15 @@
+### Estoque - Fase 9 Recebimentos e Requisicoes Contextuais
+- Segui o proximo passo salvo para `RecebimentoTab` e `RequisicoesAlmoxarifadoTab`, sem criar tela, modulo, componente ou arquivo novo.
+- `RecebimentoTab` passou a registrar auditoria contextual via `createInContext("AuditLog")` ao concluir recebimento, com grupo, empresa, dados novos, quantidade de itens, timestamp e sucesso.
+- `RecebimentoTab` recebeu `w-full h-full` e marcadores de permissao, acao, contexto obrigatorio e sensibilidade na busca, abertura do formulario, dialog legado preservado, campos de numero/data/OC/fornecedor/NF/responsavel, itens, quantidades, status, observacoes, confirmacao e visualizacao.
+- `RequisicoesAlmoxarifadoTab` passou a registrar auditoria contextual via `createInContext("AuditLog")` ao concluir requisicao de almoxarifado.
+- `RequisicoesAlmoxarifadoTab` agora valida todos os itens e estoque disponivel antes de criar movimentacoes, reduzindo risco de baixa parcial quando algum item deixaria estoque negativo.
+- `RequisicoesAlmoxarifadoTab` recebeu `w-full h-full` e marcadores de permissao, acao, contexto obrigatorio e sensibilidade na busca, abertura do formulario, dialog legado preservado, campos de numero/data/solicitante/setor/finalidade, itens, quantidade, unidade, observacoes e confirmacao.
+- Foram preservados janelas existentes, dialogs legados ocultos, criacao via `createInContext`, atualizacao de estoque via `updateInContext`, invalidacao de queries, toasts, filtros, tabelas e layout responsivo.
+- Mantida a Regra-Mae: nenhum botao, campo, dialog, tabela, fluxo de recebimento, requisicao ou movimentacao foi removido; apenas auditoria contextual, RBAC visual/acao, multiempresa e seguranca operacional foram reforcados nos arquivos existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar no Estoque revisando os formularios abertos por janela (`RecebimentoForm` e `RequisicaoAlmoxarifadoForm`) para completar marcadores RBAC/contexto internos sem criar novas telas.
+
 ### Estoque - Fase 9 Produtos e Transferencias Contextuais
 - Segui o proximo passo salvo para `ProdutosTab` e `TransferenciaEntreEmpresasForm`, sem criar tela, modulo, componente ou arquivo novo.
 - `ProdutosTab` deixou de auditar criacao de produto por `base44.entities.AuditLog.create` direto e passou a usar `createInContext("AuditLog")`, preservando a criacao por `createInContext("Produto")`.
