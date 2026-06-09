@@ -78,11 +78,40 @@ export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { empresaAtual, createInContext, updateInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, filterInContext, createInContext, updateInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const canCreateSolicitacao = hasPermission('Compras','SolicitacaoCompra','criar') || hasPermission('Compras', null, 'criar');
+  const canApproveSolicitacao = hasPermission('Compras','SolicitacaoCompra','aprovar') || hasPermission('Compras', null, 'aprovar');
+  const canRejectSolicitacao = hasPermission('Compras','SolicitacaoCompra','rejeitar') || hasPermission('Compras', null, 'rejeitar');
+  const canGerarOC = hasPermission('Compras','SolicitacaoCompra','gerar_oc') || hasPermission('Compras','OrdemCompra','criar');
+
+  const auditSolicitacaoCompra = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
+    try {
+      await createInContext('AuditLog', {
+        acao,
+        modulo: 'Compras',
+        entidade: 'SolicitacaoCompra',
+        tipo_auditoria: sucesso ? 'entidade' : 'seguranca',
+        descricao: motivo || 'Auditoria de solicitacao de compra.',
+        usuario: user?.email || user?.full_name || 'Sistema',
+        usuario_id: user?.id || null,
+        group_id: groupId || dados.group_id || null,
+        grupo_id: groupId || dados.group_id || null,
+        empresa_id: empresaId || dados.empresa_id || null,
+        dados_novos: dados,
+        sucesso,
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar solicitacao de compra:', error);
+    }
+  };
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryKey: ['produtos', groupId, empresaId],
+    queryFn: () => filterInContext('Produto', {}, '-updated_date', 9999),
   });
 
   const { data: user } = useQuery({
@@ -93,12 +122,17 @@ export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false
   const createMutation = useMutation({
     mutationFn: (data) => createInContext('SolicitacaoCompra', {
       ...data,
-      empresa_id: empresaAtual?.id,
-      group_id: empresaAtual?.grupo_id,
+      empresa_id: empresaId,
+      group_id: groupId,
+      grupo_id: groupId,
       solicitante: user?.full_name,
       solicitante_id: user?.id
     }),
-    onSuccess: () => {
+    onSuccess: async (oc) => {
+      await auditSolicitacaoCompra({
+        acao: 'SolicitacaoCompra.ordem_compra_gerada',
+        dados: { ordem_compra_id: oc?.id, numero_oc: oc?.numero_oc, solicitacao_compra_id: oc?.solicitacao_compra_id }
+      });
       queryClient.invalidateQueries({ queryKey: ['solicitacoes-compra'] });
       handleCloseDialog();
       toast({ title: "✅ Solicitação criada!" });
@@ -148,8 +182,9 @@ export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false
           valor_unitario: 0,
           valor_total: 0
         }],
-        empresa_id: empresaAtual?.id,
-        group_id: empresaAtual?.grupo_id
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId
       });
 
       // Atualizar solicitação
@@ -171,7 +206,7 @@ export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false
   const sugerirComprasIA = useMutation({
     mutationFn: async () => {
       // Buscar produtos com estoque baixo
-      const todosProdutos = await base44.entities.Produto.list();
+      const todosProdutos = await filterInContext('Produto', {}, '-updated_date', 9999);
       const produtosBaixos = todosProdutos.filter(p => 
         p.status === 'Ativo' && 
         (p.estoque_disponivel || p.estoque_atual || 0) <= (p.estoque_minimo || 0)
@@ -240,8 +275,9 @@ Retorne JSON com:
             status: "Pendente",
             solicitante: "IA - Sistema Automático",
             setor: "Estoque",
-            empresa_id: empresaAtual?.id,
-            group_id: empresaAtual?.grupo_id
+            empresa_id: empresaId,
+            group_id: groupId,
+            grupo_id: groupId
           });
           solicitacoesCriadas.push(sol);
         }
@@ -288,16 +324,31 @@ Retorne JSON com:
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!contextoValido || !canCreateSolicitacao) {
+      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de criar' : 'Sem permissao para criar', variant: 'destructive' });
+      auditSolicitacaoCompra({ acao: 'SolicitacaoCompra.criacao_bloqueada', sucesso: false, motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada', dados: { produto_id: formData.produto_id, produto_descricao: formData.produto_descricao } });
+      return;
+    }
     createMutation.mutate(formData);
   };
 
   const handleAprovar = (solicitacao) => {
+    if (!contextoValido || !canApproveSolicitacao) {
+      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de aprovar' : 'Sem permissao para aprovar', variant: 'destructive' });
+      auditSolicitacaoCompra({ acao: 'SolicitacaoCompra.aprovacao_bloqueada', sucesso: false, motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada', dados: { solicitacao_id: solicitacao.id, numero_solicitacao: solicitacao.numero_solicitacao } });
+      return;
+    }
     if (confirm(`Aprovar solicitação de ${solicitacao.produto_descricao}?`)) {
       aprovarMutation.mutate({ id: solicitacao.id });
     }
   };
 
   const handleRejeitar = (solicitacao) => {
+    if (!contextoValido || !canRejectSolicitacao) {
+      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de rejeitar' : 'Sem permissao para rejeitar', variant: 'destructive' });
+      auditSolicitacaoCompra({ acao: 'SolicitacaoCompra.rejeicao_bloqueada', sucesso: false, motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada', dados: { solicitacao_id: solicitacao.id, numero_solicitacao: solicitacao.numero_solicitacao } });
+      return;
+    }
     const motivo = prompt("Motivo da rejeição:");
     if (motivo) {
       rejeitarMutation.mutate({ id: solicitacao.id, motivo });
@@ -305,6 +356,11 @@ Retorne JSON com:
   };
 
   const handleGerarOC = (solicitacao) => {
+    if (!contextoValido || !canGerarOC) {
+      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de gerar OC' : 'Sem permissao para gerar OC', variant: 'destructive' });
+      auditSolicitacaoCompra({ acao: 'SolicitacaoCompra.geracao_oc_bloqueada', sucesso: false, motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada', dados: { solicitacao_id: solicitacao.id, numero_solicitacao: solicitacao.numero_solicitacao } });
+      return;
+    }
     if (confirm(`Gerar Ordem de Compra para ${solicitacao.produto_descricao}?`)) {
       gerarOCMutation.mutate(solicitacao);
     }
@@ -320,16 +376,25 @@ Retorne JSON com:
   };
 
   const content = (
-    <div className="space-y-1.5">
+    <div
+      className="w-full h-full space-y-1.5"
+      data-permission="Compras.SolicitacaoCompra.visualizar"
+      data-context-required="group-or-company"
+      data-context-mode={contexto}
+    >
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-bold">Solicitações de Compra</h2>
         <div className="flex gap-1">
           <Button
             onClick={() => sugerirComprasIA.mutate()}
-            disabled={sugerirComprasIA.isPending}
+            disabled={sugerirComprasIA.isPending || !contextoValido || !canCreateSolicitacao}
             variant="outline"
             size="sm"
             className="border-purple-300 text-purple-700 hover:bg-purple-50"
+            data-permission="Compras.SolicitacaoCompra.criar"
+            data-action="Compras.SolicitacaoCompra.sugerirIA"
+            data-context-required="group-or-company"
+            data-sensitive="true"
           >
             {sugerirComprasIA.isPending ? (
               <>
@@ -340,11 +405,15 @@ Retorne JSON com:
               <span className="text-xs">🤖 IA</span>
             )}
           </Button>
-          {hasPermission('Compras','SolicitacaoCompra','criar') && (
+          {canCreateSolicitacao && (
             <Button
               size="sm"
               className="bg-blue-600 hover:bg-blue-700"
               data-permission="Compras.SolicitacaoCompra.criar"
+              data-action="Compras.SolicitacaoCompra.abrirFormulario"
+              data-context-required="group-or-company"
+              data-sensitive="true"
+              disabled={!contextoValido}
               onClick={() => openWindow(SolicitacaoCompraForm, {
                 windowMode: true,
                 onSubmit: async (data) => {
@@ -369,13 +438,26 @@ Retorne JSON com:
           {/* BACKUP: Dialog removido */}
           <Dialog open={false}>
             <DialogTrigger asChild>
-              <Button className="hidden">Removido</Button>
+              <Button
+                className="hidden"
+                data-permission="Compras.SolicitacaoCompra.criar"
+                data-action="Compras.SolicitacaoCompra.dialogLegado"
+                data-context-required="group-or-company"
+              >
+                Removido
+              </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Nova Solicitação de Compra</DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form
+                onSubmit={handleSubmit}
+                className="space-y-4"
+                data-permission="Compras.SolicitacaoCompra.criar"
+                data-action="Compras.SolicitacaoCompra.formularioLegado"
+                data-context-required="group-or-company"
+              >
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Produto *</Label>
@@ -392,7 +474,11 @@ Retorne JSON com:
                       }}
                       required
                     >
-                      <SelectTrigger>
+                      <SelectTrigger
+                        data-permission="Compras.SolicitacaoCompra.criar"
+                        data-action="Compras.SolicitacaoCompra.produto"
+                        data-context-required="group-or-company"
+                      >
                         <SelectValue placeholder="Selecione..." />
                       </SelectTrigger>
                       <SelectContent>
@@ -415,6 +501,10 @@ Retorne JSON com:
                         value={formData.quantidade_solicitada}
                         onChange={(e) => setFormData({ ...formData, quantidade_solicitada: parseFloat(e.target.value) || 0 })}
                         required
+                        data-permission="Compras.SolicitacaoCompra.criar"
+                        data-action="Compras.SolicitacaoCompra.quantidade"
+                        data-context-required="group-or-company"
+                        data-sensitive="true"
                       />
                     </div>
                     <div>
@@ -423,6 +513,9 @@ Retorne JSON com:
                         value={formData.unidade_medida}
                         readOnly
                         className="bg-slate-50"
+                        data-permission="Compras.SolicitacaoCompra.visualizar"
+                        data-action="Compras.SolicitacaoCompra.unidade"
+                        data-context-required="group-or-company"
                       />
                     </div>
                   </div>
@@ -433,7 +526,13 @@ Retorne JSON com:
                       value={formData.prioridade}
                       onValueChange={(v) => setFormData({ ...formData, prioridade: v })}
                     >
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger
+                        data-permission="Compras.SolicitacaoCompra.criar"
+                        data-action="Compras.SolicitacaoCompra.prioridade"
+                        data-context-required="group-or-company"
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Baixa">Baixa</SelectItem>
                         <SelectItem value="Média">Média</SelectItem>
@@ -449,6 +548,9 @@ Retorne JSON com:
                       type="date"
                       value={formData.data_necessidade}
                       onChange={(e) => setFormData({ ...formData, data_necessidade: e.target.value })}
+                      data-permission="Compras.SolicitacaoCompra.criar"
+                      data-action="Compras.SolicitacaoCompra.dataNecessidade"
+                      data-context-required="group-or-company"
                     />
                   </div>
 
@@ -460,15 +562,32 @@ Retorne JSON com:
                       placeholder="Explique o motivo da compra..."
                       required
                       rows={3}
+                      data-permission="Compras.SolicitacaoCompra.criar"
+                      data-action="Compras.SolicitacaoCompra.justificativa"
+                      data-context-required="group-or-company"
                     />
                   </div>
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4 border-t">
-                  <Button type="button" variant="outline" onClick={handleCloseDialog}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCloseDialog}
+                    data-permission="Compras.SolicitacaoCompra.criar"
+                    data-action="Compras.SolicitacaoCompra.cancelar"
+                    data-context-required="group-or-company"
+                  >
                     Cancelar
                   </Button>
-                  <Button type="submit" disabled={createMutation.isPending}>
+                  <Button
+                    type="submit"
+                    disabled={createMutation.isPending || !contextoValido}
+                    data-permission="Compras.SolicitacaoCompra.criar"
+                    data-action="Compras.SolicitacaoCompra.confirmar"
+                    data-context-required="group-or-company"
+                    data-sensitive="true"
+                  >
                     Criar Solicitação
                   </Button>
                 </div>
@@ -517,20 +636,47 @@ Retorne JSON com:
                 <div className="flex gap-1">
                   {s.status === 'Pendente' && (
                     <>
-                      {hasPermission('Compras','SolicitacaoCompra','aprovar') && (
-                        <Button variant="ghost" size="icon" data-permission="Compras.SolicitacaoCompra.aprovar" onClick={() => handleAprovar(s)} title="Aprovar">
+                      {canApproveSolicitacao && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          data-permission="Compras.SolicitacaoCompra.aprovar"
+                          data-action="Compras.SolicitacaoCompra.aprovar"
+                          data-context-required="group-or-company"
+                          data-sensitive="true"
+                          onClick={() => handleAprovar(s)}
+                          title="Aprovar"
+                        >
                           <CheckCircle2 className="w-4 h-4 text-green-600" />
                         </Button>
                       )}
-                      {hasPermission('Compras','SolicitacaoCompra','rejeitar') && (
-                        <Button variant="ghost" size="icon" data-permission="Compras.SolicitacaoCompra.rejeitar" onClick={() => handleRejeitar(s)} title="Rejeitar">
+                      {canRejectSolicitacao && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          data-permission="Compras.SolicitacaoCompra.rejeitar"
+                          data-action="Compras.SolicitacaoCompra.rejeitar"
+                          data-context-required="group-or-company"
+                          data-sensitive="true"
+                          onClick={() => handleRejeitar(s)}
+                          title="Rejeitar"
+                        >
                           <XCircle className="w-4 h-4 text-red-600" />
                         </Button>
                       )}
                     </>
                   )}
-                  {s.status === 'Aprovada' && hasPermission('Compras','SolicitacaoCompra','gerar_oc') && (
-                    <Button variant="ghost" size="sm" data-permission="Compras.SolicitacaoCompra.gerar_oc" onClick={() => handleGerarOC(s)} className="text-purple-600">
+                  {s.status === 'Aprovada' && canGerarOC && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      data-permission="Compras.SolicitacaoCompra.gerar_oc"
+                      data-action="Compras.SolicitacaoCompra.gerarOC"
+                      data-context-required="group-or-company"
+                      data-sensitive="true"
+                      onClick={() => handleGerarOC(s)}
+                      className="text-purple-600"
+                    >
                       <ShoppingCart className="w-4 h-4 mr-1" /> Gerar OC
                     </Button>
                   )}

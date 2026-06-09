@@ -1,3 +1,15 @@
+### Compras - Fase 9 OCs e Solicitacoes Contextuais
+- Segui o proximo passo salvo para `OrdensCompraTab` e `SolicitacoesCompraTab`, usando os arquivos existentes em `src/components/compras`, sem criar tela, modulo, componente ou arquivo novo.
+- `OrdensCompraTab` deixou de auditar ordens de compra por `base44.entities.AuditLog.create` direto e passou a usar `createInContext("AuditLog")`.
+- O dialog legado preservado de OC recebeu marcadores de permissao, acao, contexto obrigatorio e sensibilidade nos campos de numero, fornecedor, datas, valor, prazo, condicao/forma de pagamento, observacoes, cancelamento e confirmacao.
+- `SolicitacoesCompraTab` passou a consultar produtos por `filterInContext("Produto")`, inclusive na sugestao por IA, evitando leitura global fora do Grupo/Empresa atual.
+- `SolicitacoesCompraTab` reforcou carimbo multiempresa com `groupId/grupoId/empresaId` em solicitacoes e OCs geradas.
+- Acoes de criar, aprovar, rejeitar, gerar OC e sugerir compras por IA receberam bloqueio por contexto/permissao e marcadores RBAC/contexto/sensibilidade.
+- Foram preservados cabecalho de OCs, tabela compacta, exportacao CSV, dialogs legados ocultos, geracao de OC por solicitacao, sugestao IA, aprovar/rejeitar, impressao, recebimento, avaliacao de fornecedor, paginacao e ordenacao.
+- Mantida a Regra-Mae: nenhum botao, campo, dialog, tabela, fluxo de compra, OC, solicitacao ou integracao com recebimento foi removido; apenas auditoria contextual, RBAC visual/acao, multiempresa e seguranca operacional foram reforcados nos arquivos existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em Compras revisando `OrdemCompraForm` e `SolicitacaoCompraForm` para completar marcadores RBAC/contexto internos dos formularios de janela.
+
 ### Estoque - Fase 9 Formularios de Janela Contextuais
 - Segui o proximo passo salvo para `RecebimentoForm` e `RequisicaoAlmoxarifadoForm`, sem criar tela, modulo, componente ou arquivo novo.
 - `RecebimentoForm` manteve `FormWrapper`, `filterInContext` e `carimbarContexto`, com reforco de marcadores de permissao, acao, contexto obrigatorio e sensibilidade no formulario, cards, ordem de compra, data, NF, transportadora, conferente, itens, quantidade recebida, observacoes e confirmacao.

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -111,7 +110,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
 
   const auditOrdemCompra = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         acao,
         modulo: 'Compras',
         entidade: 'OrdemCompra',
@@ -563,13 +562,26 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
         {/* BACKUP: Dialog removido */}
         <Dialog open={false}>
           <DialogTrigger asChild>
-            <Button className="hidden">Removido</Button>
+            <Button
+              className="hidden"
+              data-permission="Compras.OrdemCompra.criar"
+              data-action="Compras.OrdemCompra.dialogLegado"
+              data-context-required="group-or-company"
+            >
+              Removido
+            </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingOC ? 'Editar OC' : 'Nova Ordem de Compra'}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-4"
+              data-permission="Compras.OrdemCompra.criar"
+              data-action="Compras.OrdemCompra.formularioLegado"
+              data-context-required="group-or-company"
+            >
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="numero_oc">Número da OC *</Label>
@@ -578,6 +590,9 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
                     value={formData.numero_oc}
                     onChange={(e) => setFormData({...formData, numero_oc: e.target.value})}
                     required
+                    data-permission="Compras.OrdemCompra.criar"
+                    data-action="Compras.OrdemCompra.numero"
+                    data-context-required="group-or-company"
                   />
                 </div>
                 <div>
@@ -586,7 +601,11 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
                     value={formData.fornecedor_id}
                     onValueChange={(value) => setFormData({...formData, fornecedor_id: value})}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger
+                      data-permission="Compras.OrdemCompra.criar"
+                      data-action="Compras.OrdemCompra.fornecedor"
+                      data-context-required="group-or-company"
+                    >
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
@@ -606,6 +625,9 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
                     value={formData.data_solicitacao}
                     onChange={(e) => setFormData({...formData, data_solicitacao: e.target.value})}
                     required
+                    data-permission="Compras.OrdemCompra.criar"
+                    data-action="Compras.OrdemCompra.dataSolicitacao"
+                    data-context-required="group-or-company"
                   />
                 </div>
                 <div>
@@ -615,6 +637,9 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
                     type="date"
                     value={formData.data_entrega_prevista}
                     onChange={(e) => setFormData({...formData, data_entrega_prevista: e.target.value})}
+                    data-permission="Compras.OrdemCompra.criar"
+                    data-action="Compras.OrdemCompra.entregaPrevista"
+                    data-context-required="group-or-company"
                   />
                 </div>
                 <div>
@@ -626,6 +651,10 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
                     value={formData.valor_total}
                     onChange={(e) => setFormData({...formData, valor_total: e.target.value})}
                     required
+                    data-permission="Compras.OrdemCompra.criar"
+                    data-action="Compras.OrdemCompra.valorTotal"
+                    data-context-required="group-or-company"
+                    data-sensitive="true"
                   />
                 </div>
                 <div>
@@ -635,6 +664,9 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
                     type="number"
                     value={formData.prazo_entrega_acordado}
                     onChange={(e) => setFormData({...formData, prazo_entrega_acordado: e.target.value})}
+                    data-permission="Compras.OrdemCompra.criar"
+                    data-action="Compras.OrdemCompra.prazoEntrega"
+                    data-context-required="group-or-company"
                   />
                 </div>
                 <div>
@@ -643,7 +675,13 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
                     value={formData.condicao_pagamento}
                     onValueChange={(value) => setFormData({...formData, condicao_pagamento: value})}
                   >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger
+                      data-permission="Compras.OrdemCompra.criar"
+                      data-action="Compras.OrdemCompra.condicaoPagamento"
+                      data-context-required="group-or-company"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="À Vista">À Vista</SelectItem>
                       <SelectItem value="30 dias">30 dias</SelectItem>
@@ -658,7 +696,13 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
                     value={formData.forma_pagamento}
                     onValueChange={(value) => setFormData({...formData, forma_pagamento: value})}
                   >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger
+                      data-permission="Compras.OrdemCompra.criar"
+                      data-action="Compras.OrdemCompra.formaPagamento"
+                      data-context-required="group-or-company"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Boleto">Boleto</SelectItem>
                       <SelectItem value="Transferência">Transferência</SelectItem>
@@ -674,14 +718,30 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
                     value={formData.observacoes}
                     onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
                     rows={3}
+                    data-permission="Compras.OrdemCompra.criar"
+                    data-action="Compras.OrdemCompra.observacoes"
+                    data-context-required="group-or-company"
                   />
                 </div>
               </div>
               <div className="flex justify-end gap-2 pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                  data-permission="Compras.OrdemCompra.criar"
+                  data-action="Compras.OrdemCompra.cancelar"
+                  data-context-required="group-or-company"
+                >
                   Cancelar
                 </Button>
-                <Button type="submit">
+                <Button
+                  type="submit"
+                  data-permission="Compras.OrdemCompra.criar"
+                  data-action="Compras.OrdemCompra.confirmar"
+                  data-context-required="group-or-company"
+                  data-sensitive="true"
+                >
                   {editingOC ? 'Atualizar' : 'Criar'} OC
                 </Button>
               </div>
