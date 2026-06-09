@@ -1,8 +1,8 @@
-### Projeto/Codex - Abertura Local pelo Localhost Estabilizada
+### Projeto/Codex - Abertura Local IPv4 Estabilizada
 - Corrigida a abertura local do ERP para voltar a responder no endereco antigo `http://localhost:5173/`.
 - O script existente `start-erp-dev.cmd` deixou de depender do `npm.cmd` para manter a janela viva e passou a iniciar o Vite diretamente pelo `node.exe`.
-- O host permanece em `localhost`, mantendo o projeto restrito ao computador local.
-- Validado que `http://localhost:5173/` respondeu `200 OK` em duas checagens seguidas apos iniciar o servidor local pelo `node.exe`.
+- O host foi estabilizado em `127.0.0.1`, mantendo o projeto restrito ao computador local e tambem respondendo por `http://localhost:5173/`.
+- Validado que `http://127.0.0.1:5173/` e `http://localhost:5173/` responderam `200 OK` apos iniciar o servidor local pelo `cmd /k` com `node.exe`.
 - Mantida a Regra-Mae: melhoria feita no script existente de abertura local, sem criar novo fluxo, modulo, tela ou funcionalidade.
 - Observacao: o controle automatico da aba interna do Codex falhou nesta sessao por problema do plugin/browser, mas o servidor local ficou ativo e o endereco correto para recarregar e `http://localhost:5173/`.
 - Proximo passo sugerido: continuar o plano em `ImportacaoProdutoNFe` e `ImportarProdutosNFe` para reforcar marcadores RBAC/contexto e auditorias restantes sem criar novas telas.

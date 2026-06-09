@@ -2,7 +2,7 @@
 setlocal
 cd /d "%~dp0"
 set "VITE_LOCAL_ONLY=true"
-set "ERP_HOST=localhost"
+set "ERP_HOST=127.0.0.1"
 set "ERP_PORT=5173"
 set "LOCAL_NODE=C:\Users\cpaba\tools\node-v24.15.0-win-x64"
 
