@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Save, PackageCheck, Plus, Trash2 } from "lucide-react";
+import { Save, PackageCheck } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import FormWrapper from "@/components/common/FormWrapper";
 import { z } from 'zod';
@@ -82,8 +81,21 @@ export default function RecebimentoForm({ recebimento, onSubmit, windowMode = fa
   };
 
   const content = (
-    <FormWrapper schema={schema} defaultValues={formData} onSubmit={() => onSubmit(carimbarContexto(formData,'empresa_id'))} externalData={formData} className={`space-y-6 w-full h-full ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
-      <Card>
+    <FormWrapper
+      schema={schema}
+      defaultValues={formData}
+      onSubmit={() => onSubmit(carimbarContexto(formData,'empresa_id'))}
+      externalData={formData}
+      className={`space-y-6 w-full h-full ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}
+      data-permission="Estoque.Recebimento.criar"
+      data-action="Estoque.Recebimento.formularioJanela"
+      data-context-required="group-or-company"
+    >
+      <Card
+        data-permission="Estoque.Recebimento.criar"
+        data-action="Estoque.Recebimento.dadosCompra"
+        data-context-required="group-or-company"
+      >
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg flex items-center gap-2">
             <PackageCheck className="w-5 h-5 text-green-600" />
@@ -98,7 +110,11 @@ export default function RecebimentoForm({ recebimento, onSubmit, windowMode = fa
                 onValueChange={handleOCChange}
                 required
               >
-                <SelectTrigger>
+                <SelectTrigger
+                  data-permission="Estoque.Recebimento.criar"
+                  data-action="Estoque.Recebimento.ordemCompra"
+                  data-context-required="group-or-company"
+                >
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -117,6 +133,9 @@ export default function RecebimentoForm({ recebimento, onSubmit, windowMode = fa
                 type="date"
                 value={formData.data_recebimento}
                 onChange={(e) => setFormData({ ...formData, data_recebimento: e.target.value })}
+                data-permission="Estoque.Recebimento.criar"
+                data-action="Estoque.Recebimento.data"
+                data-context-required="group-or-company"
                 required
               />
             </div>
@@ -126,6 +145,9 @@ export default function RecebimentoForm({ recebimento, onSubmit, windowMode = fa
               <Input
                 value={formData.nota_fiscal}
                 onChange={(e) => setFormData({ ...formData, nota_fiscal: e.target.value })}
+                data-permission="Estoque.Recebimento.criar"
+                data-action="Estoque.Recebimento.notaFiscal"
+                data-context-required="group-or-company"
                 placeholder="NF-e número"
               />
             </div>
@@ -135,6 +157,9 @@ export default function RecebimentoForm({ recebimento, onSubmit, windowMode = fa
               <Input
                 value={formData.transportadora}
                 onChange={(e) => setFormData({ ...formData, transportadora: e.target.value })}
+                data-permission="Estoque.Recebimento.criar"
+                data-action="Estoque.Recebimento.transportadora"
+                data-context-required="group-or-company"
               />
             </div>
 
@@ -143,6 +168,9 @@ export default function RecebimentoForm({ recebimento, onSubmit, windowMode = fa
               <Input
                 value={formData.conferente}
                 onChange={(e) => setFormData({ ...formData, conferente: e.target.value })}
+                data-permission="Estoque.Recebimento.criar"
+                data-action="Estoque.Recebimento.conferente"
+                data-context-required="group-or-company"
                 placeholder="Responsável"
               />
             </div>
@@ -150,7 +178,11 @@ export default function RecebimentoForm({ recebimento, onSubmit, windowMode = fa
         </CardContent>
       </Card>
 
-      <Card>
+      <Card
+        data-permission="Estoque.Recebimento.criar"
+        data-action="Estoque.Recebimento.itens"
+        data-context-required="group-or-company"
+      >
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold">Itens Recebidos</h3>
 
@@ -181,6 +213,10 @@ export default function RecebimentoForm({ recebimento, onSubmit, windowMode = fa
                         setFormData({ ...formData, itens_recebidos: novosItens });
                       }}
                       className="w-24 text-sm"
+                      data-permission="Estoque.Recebimento.criar"
+                      data-action="Estoque.Recebimento.quantidadeRecebida"
+                      data-context-required="group-or-company"
+                      data-sensitive="true"
                     />
                   </TableCell>
                   <TableCell>
@@ -204,6 +240,9 @@ export default function RecebimentoForm({ recebimento, onSubmit, windowMode = fa
             <Textarea
               value={formData.observacoes}
               onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+              data-permission="Estoque.Recebimento.criar"
+              data-action="Estoque.Recebimento.observacoes"
+              data-context-required="group-or-company"
               rows={3}
               placeholder="Avarias, divergências, condições da entrega..."
             />
@@ -212,7 +251,14 @@ export default function RecebimentoForm({ recebimento, onSubmit, windowMode = fa
       </Card>
 
       <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
-        <Button type="submit" className="bg-green-600 hover:bg-green-700">
+        <Button
+          type="submit"
+          className="bg-green-600 hover:bg-green-700"
+          data-permission="Estoque.Recebimento.criar"
+          data-action="Estoque.Recebimento.confirmarJanela"
+          data-context-required="group-or-company"
+          data-sensitive="true"
+        >
           <Save className="w-4 h-4 mr-2" />
           Confirmar Recebimento
         </Button>
@@ -221,7 +267,15 @@ export default function RecebimentoForm({ recebimento, onSubmit, windowMode = fa
   );
 
   if (windowMode) {
-    return <div className="w-full h-full bg-white">{content}</div>;
+    return (
+      <div
+        className="w-full h-full bg-white"
+        data-permission="Estoque.Recebimento.criar"
+        data-context-required="group-or-company"
+      >
+        {content}
+      </div>
+    );
   }
 
   return content;

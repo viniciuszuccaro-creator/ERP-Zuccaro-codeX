@@ -1,3 +1,13 @@
+### Estoque - Fase 9 Formularios de Janela Contextuais
+- Segui o proximo passo salvo para `RecebimentoForm` e `RequisicaoAlmoxarifadoForm`, sem criar tela, modulo, componente ou arquivo novo.
+- `RecebimentoForm` manteve `FormWrapper`, `filterInContext` e `carimbarContexto`, com reforco de marcadores de permissao, acao, contexto obrigatorio e sensibilidade no formulario, cards, ordem de compra, data, NF, transportadora, conferente, itens, quantidade recebida, observacoes e confirmacao.
+- `RequisicaoAlmoxarifadoForm` manteve `FormWrapper`, `filterInContext` e `carimbarContexto`, com reforco de marcadores de permissao, acao, contexto obrigatorio e sensibilidade no formulario, card, numero, data, produto, quantidade, setor, solicitante, centro de custo, finalidade, observacoes e confirmacao.
+- Imports sem uso de `base44` foram removidos dos dois formularios e imports sem uso de icones foram removidos de `RecebimentoForm`, reduzindo ruido tecnico sem alterar o fluxo.
+- Foram preservados abertura em janela, validacao Zod, filtro contextual de ordens/produtos, preenchimento automatico de itens por OC, unidade de medida, divergencia de recebimento, carimbo multiempresa e layout `w-full h-full`.
+- Mantida a Regra-Mae: nenhum botao, campo, formulario, janela, validacao, consulta ou fluxo operacional foi removido; apenas RBAC visual/acao, contexto, rastreabilidade e manutencao foram reforcados nos arquivos existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar no Estoque revisando `OrdensCompraTab` e `SolicitacoesCompraTab` para reforcar RBAC/contexto e auditoria nos fluxos de compra integrados ao recebimento.
+
 ### Estoque - Fase 9 Recebimentos e Requisicoes Contextuais
 - Segui o proximo passo salvo para `RecebimentoTab` e `RequisicoesAlmoxarifadoTab`, sem criar tela, modulo, componente ou arquivo novo.
 - `RecebimentoTab` passou a registrar auditoria contextual via `createInContext("AuditLog")` ao concluir recebimento, com grupo, empresa, dados novos, quantidade de itens, timestamp e sucesso.

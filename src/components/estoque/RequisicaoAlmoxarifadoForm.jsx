@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,8 +59,21 @@ export default function RequisicaoAlmoxarifadoForm({ requisicao, onSubmit, windo
   };
 
   const content = (
-    <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className={`space-y-6 w-full h-full ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
-      <Card>
+    <FormWrapper
+      schema={schema}
+      defaultValues={formData}
+      onSubmit={handleSubmit}
+      externalData={formData}
+      className={`space-y-6 w-full h-full ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}
+      data-permission="Estoque.Requisicoes.criar"
+      data-action="Estoque.Requisicoes.formularioJanela"
+      data-context-required="group-or-company"
+    >
+      <Card
+        data-permission="Estoque.Requisicoes.criar"
+        data-action="Estoque.Requisicoes.dadosRequisicao"
+        data-context-required="group-or-company"
+      >
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg flex items-center gap-2">
             <PackageMinus className="w-5 h-5 text-orange-600" />
@@ -75,6 +87,9 @@ export default function RequisicaoAlmoxarifadoForm({ requisicao, onSubmit, windo
                 value={formData.numero_requisicao}
                 readOnly
                 className="bg-slate-50"
+                data-permission="Estoque.Requisicoes.visualizar"
+                data-action="Estoque.Requisicoes.numero"
+                data-context-required="group-or-company"
               />
             </div>
 
@@ -85,6 +100,9 @@ export default function RequisicaoAlmoxarifadoForm({ requisicao, onSubmit, windo
                 value={formData.data_requisicao}
                 onChange={(e) => setFormData({ ...formData, data_requisicao: e.target.value })}
                 required
+                data-permission="Estoque.Requisicoes.criar"
+                data-action="Estoque.Requisicoes.data"
+                data-context-required="group-or-company"
               />
             </div>
 
@@ -95,7 +113,11 @@ export default function RequisicaoAlmoxarifadoForm({ requisicao, onSubmit, windo
                 onValueChange={handleProdutoChange}
                 required
               >
-                <SelectTrigger>
+                <SelectTrigger
+                  data-permission="Estoque.Requisicoes.criar"
+                  data-action="Estoque.Requisicoes.produto"
+                  data-context-required="group-or-company"
+                >
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -118,6 +140,10 @@ export default function RequisicaoAlmoxarifadoForm({ requisicao, onSubmit, windo
                   onChange={(e) => setFormData({ ...formData, quantidade: parseFloat(e.target.value) || 0 })}
                   required
                   className="flex-1"
+                  data-permission="Estoque.Requisicoes.criar"
+                  data-action="Estoque.Requisicoes.quantidade"
+                  data-context-required="group-or-company"
+                  data-sensitive="true"
                 />
                 <span className="bg-slate-100 px-3 py-2 rounded border text-sm">
                   {formData.unidade_medida}
@@ -132,7 +158,13 @@ export default function RequisicaoAlmoxarifadoForm({ requisicao, onSubmit, windo
                 onValueChange={(v) => setFormData({ ...formData, setor_solicitante: v })}
                 required
               >
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger
+                  data-permission="Estoque.Requisicoes.criar"
+                  data-action="Estoque.Requisicoes.setorSolicitante"
+                  data-context-required="group-or-company"
+                >
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Produção">Produção</SelectItem>
                   <SelectItem value="Manutenção">Manutenção</SelectItem>
@@ -150,6 +182,9 @@ export default function RequisicaoAlmoxarifadoForm({ requisicao, onSubmit, windo
                 value={formData.solicitante}
                 onChange={(e) => setFormData({ ...formData, solicitante: e.target.value })}
                 placeholder="Nome"
+                data-permission="Estoque.Requisicoes.criar"
+                data-action="Estoque.Requisicoes.solicitante"
+                data-context-required="group-or-company"
               />
             </div>
 
@@ -158,6 +193,9 @@ export default function RequisicaoAlmoxarifadoForm({ requisicao, onSubmit, windo
               <Input
                 value={formData.centro_custo}
                 onChange={(e) => setFormData({ ...formData, centro_custo: e.target.value })}
+                data-permission="Estoque.Requisicoes.criar"
+                data-action="Estoque.Requisicoes.centroCusto"
+                data-context-required="group-or-company"
               />
             </div>
 
@@ -166,6 +204,9 @@ export default function RequisicaoAlmoxarifadoForm({ requisicao, onSubmit, windo
               <Textarea
                 value={formData.finalidade}
                 onChange={(e) => setFormData({ ...formData, finalidade: e.target.value })}
+                data-permission="Estoque.Requisicoes.criar"
+                data-action="Estoque.Requisicoes.finalidade"
+                data-context-required="group-or-company"
                 placeholder="Para que será utilizado..."
                 required
                 rows={2}
@@ -178,6 +219,9 @@ export default function RequisicaoAlmoxarifadoForm({ requisicao, onSubmit, windo
                 value={formData.observacoes}
                 onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
                 rows={2}
+                data-permission="Estoque.Requisicoes.criar"
+                data-action="Estoque.Requisicoes.observacoes"
+                data-context-required="group-or-company"
               />
             </div>
           </div>
@@ -185,7 +229,14 @@ export default function RequisicaoAlmoxarifadoForm({ requisicao, onSubmit, windo
       </Card>
 
       <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
-        <Button type="submit" className="bg-orange-600 hover:bg-orange-700">
+        <Button
+          type="submit"
+          className="bg-orange-600 hover:bg-orange-700"
+          data-permission="Estoque.Requisicoes.criar"
+          data-action="Estoque.Requisicoes.confirmarJanela"
+          data-context-required="group-or-company"
+          data-sensitive="true"
+        >
           <Save className="w-4 h-4 mr-2" />
           Registrar Requisição
         </Button>
@@ -194,7 +245,15 @@ export default function RequisicaoAlmoxarifadoForm({ requisicao, onSubmit, windo
   );
 
   if (windowMode) {
-    return <div className="w-full h-full bg-white">{content}</div>;
+    return (
+      <div
+        className="w-full h-full bg-white"
+        data-permission="Estoque.Requisicoes.criar"
+        data-context-required="group-or-company"
+      >
+        {content}
+      </div>
+    );
   }
 
   return content;
