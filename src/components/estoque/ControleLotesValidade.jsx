@@ -82,12 +82,19 @@ export default function ControleLotesValidade({ empresaId }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div
+      className="space-y-6 w-full h-full"
+      data-permission="Estoque.Lotes.visualizar"
+      data-context-required="group-or-company"
+    >
       {/* Alertas Resumo */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card 
           className={`cursor-pointer ${alertas.vencido > 0 ? 'border-2 border-red-500 bg-red-50' : ''}`}
           onClick={() => setFiltroAlerta("vencido")}
+          data-action="Estoque.Lotes.filtro.vencidos"
+          data-permission="Estoque.Lotes.visualizar"
+          data-context-required="group-or-company"
         >
           <CardContent className="p-4 text-center">
             <AlertTriangle className="w-6 h-6 mx-auto mb-2 text-red-600" />
@@ -99,6 +106,9 @@ export default function ControleLotesValidade({ empresaId }) {
         <Card 
           className={`cursor-pointer ${alertas.em7dias > 0 ? 'border-2 border-orange-500 bg-orange-50' : ''}`}
           onClick={() => setFiltroAlerta("7dias")}
+          data-action="Estoque.Lotes.filtro.7dias"
+          data-permission="Estoque.Lotes.visualizar"
+          data-context-required="group-or-company"
         >
           <CardContent className="p-4 text-center">
             <Clock className="w-6 h-6 mx-auto mb-2 text-orange-600" />
@@ -110,6 +120,9 @@ export default function ControleLotesValidade({ empresaId }) {
         <Card 
           className={`cursor-pointer ${alertas.em15dias > 0 ? 'border-2 border-yellow-500 bg-yellow-50' : ''}`}
           onClick={() => setFiltroAlerta("15dias")}
+          data-action="Estoque.Lotes.filtro.15dias"
+          data-permission="Estoque.Lotes.visualizar"
+          data-context-required="group-or-company"
         >
           <CardContent className="p-4 text-center">
             <Clock className="w-6 h-6 mx-auto mb-2 text-yellow-600" />
@@ -121,6 +134,9 @@ export default function ControleLotesValidade({ empresaId }) {
         <Card 
           className="cursor-pointer"
           onClick={() => setFiltroAlerta("30dias")}
+          data-action="Estoque.Lotes.filtro.30dias"
+          data-permission="Estoque.Lotes.visualizar"
+          data-context-required="group-or-company"
         >
           <CardContent className="p-4 text-center">
             <Clock className="w-6 h-6 mx-auto mb-2 text-blue-600" />
@@ -141,12 +157,18 @@ export default function ControleLotesValidade({ empresaId }) {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
+                data-action="Estoque.Lotes.buscar"
+                data-permission="Estoque.Lotes.visualizar"
+                data-context-required="group-or-company"
               />
             </div>
             <select
               value={filtroAlerta}
               onChange={(e) => setFiltroAlerta(e.target.value)}
               className="px-4 py-2 border rounded"
+              data-action="Estoque.Lotes.filtro.alerta"
+              data-permission="Estoque.Lotes.visualizar"
+              data-context-required="group-or-company"
             >
               <option value="todos">Todos os Lotes</option>
               <option value="vencido">Vencidos</option>

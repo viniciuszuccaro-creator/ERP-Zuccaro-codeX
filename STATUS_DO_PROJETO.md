@@ -1,3 +1,13 @@
+### Estoque - Fase 9 Lotes, Validade e Controle Operacional Contextual
+- Segui o proximo passo salvo para historico/lotes/validade e controles operacionais de Estoque, sem criar tela, modulo, componente ou arquivo novo.
+- `ControleEstoqueCompleto` deixou de auditar por `base44.entities.AuditLog.create` direto e passou a usar `createInContext("AuditLog")`, preservando usuario, modulo, entidade, sucesso e carimbos multiempresa.
+- `ControleEstoqueCompleto` recebeu `w-full h-full` e marcadores de permissao/contexto no container, abas de reservas/lotes/inventario/ABC, bloqueio de lote vencido e contagem rotativa.
+- `ControleLotesValidade` recebeu `w-full h-full` e marcadores de permissao, acao e contexto nos cards de alerta, busca e filtro de validade.
+- Foram preservados bloqueio de lote vencido, alertas de lote vencido/proximo ao vencimento, reservas, inventario rotativo, curva ABC, filtros por contexto, `createInContext`/`updateInContext`, toasts e tabelas atuais.
+- Mantida a Regra-Mae: nenhum card, aba, botao, filtro, tabela, lote, inventario ou relatorio operacional foi removido; apenas auditoria contextual, RBAC visual/acao, multiempresa e rastreabilidade foram reforcados nos arquivos existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar no Estoque revisando `ProdutosTab`, `RecebimentoTab`, `RequisicoesAlmoxarifadoTab` e `TransferenciaEntreEmpresasForm` para remover auditorias diretas restantes e completar marcadores RBAC/contexto.
+
 ### Estoque - Fase 9 Formularios Auxiliares Contextuais
 - Segui o proximo passo salvo para `MovimentacaoForm` e `InventarioContagem`, sem criar tela, modulo, componente ou arquivo novo.
 - `MovimentacaoForm` recebeu marcadores de permissao, acao e contexto obrigatorio no formulario, seletores, campos de quantidade/data/documento/responsavel/observacoes e botao de registro.

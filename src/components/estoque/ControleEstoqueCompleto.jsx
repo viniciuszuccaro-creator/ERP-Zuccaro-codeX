@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,7 +51,7 @@ export default function ControleEstoqueCompleto({ empresaId }) {
 
   const auditEstoqueControle = async (acao, detalhes = {}, sucesso = true) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || 'Usuario local',
         usuario_id: user?.id || null,
         acao,
@@ -228,7 +227,11 @@ export default function ControleEstoqueCompleto({ empresaId }) {
   });
 
   return (
-    <div className="space-y-6">
+    <div
+      className="space-y-6 w-full h-full"
+      data-permission="Estoque.Controle.visualizar"
+      data-context-required="group-or-company"
+    >
       {/* Alertas Críticos */}
       {(produtosVencidos.length > 0 || produtosBaixoEstoque.length > 0) && (
         <div className="grid md:grid-cols-2 gap-4">
@@ -249,6 +252,9 @@ export default function ControleEstoqueCompleto({ empresaId }) {
                       variant="destructive"
                       disabled={!contextoValido || !canBloquearLote}
                       data-permission="Estoque.Lotes.editar"
+                      data-action="Estoque.Lotes.bloquearVencido"
+                      data-context-required="group-or-company"
+                      data-sensitive="true"
                       onClick={() => bloquearLoteVencidoMutation.mutate({
                         produtoId: item.id,
                         numeroLote: item.lote.numero_lote
@@ -292,21 +298,21 @@ export default function ControleEstoqueCompleto({ empresaId }) {
         </div>
       )}
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full" data-permission="Estoque.Controle.visualizar" data-context-required="group-or-company">
         <TabsList className="bg-white border">
-          <TabsTrigger value="reservas">
+          <TabsTrigger value="reservas" data-action="Estoque.Controle.tab.reservas" data-permission="Estoque.Reservas.visualizar" data-context-required="group-or-company">
             <Lock className="w-4 h-4 mr-2" />
             Reservas ({reservas.length})
           </TabsTrigger>
-          <TabsTrigger value="lotes">
+          <TabsTrigger value="lotes" data-action="Estoque.Controle.tab.lotes" data-permission="Estoque.Lotes.visualizar" data-context-required="group-or-company">
             <Package className="w-4 h-4 mr-2" />
             Lotes/Validade
           </TabsTrigger>
-          <TabsTrigger value="inventario">
+          <TabsTrigger value="inventario" data-action="Estoque.Controle.tab.inventario" data-permission="Estoque.Inventario.visualizar" data-context-required="group-or-company">
             <FileText className="w-4 h-4 mr-2" />
             Inventário
           </TabsTrigger>
-          <TabsTrigger value="abc">
+          <TabsTrigger value="abc" data-action="Estoque.Controle.tab.abc" data-permission="Estoque.Relatorios.visualizar" data-context-required="group-or-company">
             <BarChart3 className="w-4 h-4 mr-2" />
             Curva ABC
           </TabsTrigger>
@@ -462,7 +468,14 @@ export default function ControleEstoqueCompleto({ empresaId }) {
               <CardTitle>Inventário Rotativo</CardTitle>
               <Dialog open={inventarioOpen} onOpenChange={setInventarioOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-blue-600">
+                  <Button
+                    className="bg-blue-600"
+                    disabled={!contextoValido || !canAjustarInventario}
+                    data-action="Estoque.Inventario.abrirContagemRotativa"
+                    data-permission="Estoque.Inventario.criar"
+                    data-context-required="group-or-company"
+                    data-sensitive="true"
+                  >
                     <FileText className="w-4 h-4 mr-2" />
                     Fazer Contagem
                   </Button>
@@ -484,7 +497,12 @@ export default function ControleEstoqueCompleto({ empresaId }) {
                     <div>
                       <Label>Produto *</Label>
                       <Select name="produto" required>
-                        <SelectTrigger className="mt-2">
+                        <SelectTrigger
+                          className="mt-2"
+                          data-action="Estoque.Inventario.contagemRotativa.produto"
+                          data-permission="Estoque.Inventario.criar"
+                          data-context-required="group-or-company"
+                        >
                           <SelectValue placeholder="Selecione o produto" />
                         </SelectTrigger>
                         <SelectContent>
@@ -506,6 +524,9 @@ export default function ControleEstoqueCompleto({ empresaId }) {
                           name="quantidade"
                           required
                           className="mt-2"
+                          data-action="Estoque.Inventario.contagemRotativa.quantidade"
+                          data-permission="Estoque.Inventario.criar"
+                          data-context-required="group-or-company"
                         />
                       </div>
                       <div>
@@ -514,6 +535,9 @@ export default function ControleEstoqueCompleto({ empresaId }) {
                           type="text"
                           name="lote"
                           className="mt-2"
+                          data-action="Estoque.Inventario.contagemRotativa.lote"
+                          data-permission="Estoque.Inventario.criar"
+                          data-context-required="group-or-company"
                         />
                       </div>
                     </div>
@@ -525,14 +549,29 @@ export default function ControleEstoqueCompleto({ empresaId }) {
                         name="observacao"
                         placeholder="Ex: Contagem física mensal"
                         className="mt-2"
+                        data-action="Estoque.Inventario.contagemRotativa.observacao"
+                        data-permission="Estoque.Inventario.criar"
+                        data-context-required="group-or-company"
                       />
                     </div>
 
                     <div className="flex justify-end gap-3 pt-4 border-t">
-                      <Button type="button" variant="outline" onClick={() => setInventarioOpen(false)}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setInventarioOpen(false)}
+                        data-action="Estoque.Inventario.contagemRotativa.cancelar"
+                      >
                         Cancelar
                       </Button>
-                      <Button type="submit" disabled={fazerInventarioMutation.isPending || !contextoValido || !canAjustarInventario} data-permission="Estoque.Inventario.criar">
+                      <Button
+                        type="submit"
+                        disabled={fazerInventarioMutation.isPending || !contextoValido || !canAjustarInventario}
+                        data-permission="Estoque.Inventario.criar"
+                        data-action="Estoque.Inventario.contagemRotativa.confirmar"
+                        data-context-required="group-or-company"
+                        data-sensitive="true"
+                      >
                         Confirmar Contagem
                       </Button>
                     </div>
