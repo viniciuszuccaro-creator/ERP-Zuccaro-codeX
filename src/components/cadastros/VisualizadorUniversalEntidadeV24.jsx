@@ -247,7 +247,7 @@ export default function VisualizadorUniversalEntidadeV24({
   const auditCadastroEvent = useCallback(async function(acao, descricao, extra) {
     try {
       const operador = await base44.auth.me().catch(function() { return null; });
-      await base44.entities.AuditLog.create({
+      await createInContext("AuditLog", {
         usuario: operador?.full_name || operador?.email || "Usuario local",
         usuario_id: operador?.id || null,
         acao,
@@ -257,11 +257,13 @@ export default function VisualizadorUniversalEntidadeV24({
         descricao,
         empresa_id: empresaId || null,
         group_id: groupId || null,
+        grupo_id: groupId || null,
         dados_novos: extra || null,
-        data_hora: new Date().toISOString()
+        data_hora: new Date().toISOString(),
+        sucesso: acao !== "Bloqueio"
       });
     } catch (_) {}
-  }, [ENTITY, empresaId, groupId]);
+  }, [ENTITY, empresaId, groupId, createInContext]);
 
   const COLUMNS = useMemo(function() {
     if (columns && columns.length > 0) return columns;

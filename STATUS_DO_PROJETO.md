@@ -1,3 +1,12 @@
+### Cadastros Gerais - Fase 9 Visualizador Universal com Auditoria Contextual
+- Segui o proximo passo dos visualizadores abertos pelos blocos de Cadastros Gerais, sem criar tela, modulo, componente ou arquivo novo.
+- `VisualizadorUniversalEntidadeV24` deixou de registrar eventos de auditoria por `base44.entities.AuditLog.create` direto e passou a usar `createInContext("AuditLog")`.
+- As auditorias de bloqueio por contexto, bloqueio por permissao, abertura de formulario de criacao e abertura de formulario de edicao agora reforcam `group_id`, `grupo_id`, `empresa_id` e `sucesso`.
+- Foram preservados filtros multiempresa, paginacao, busca, ordenacao, selecao em massa, criacao, edicao, exclusao, formularios e invalidacao de contagens.
+- Mantida a Regra-Mae: nenhuma funcionalidade, botao, coluna, acao, visualizador ou fluxo foi removido; apenas auditoria contextual e rastreabilidade foram reforcadas no arquivo existente.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: revisar `VisualizadorProdutos` e acoes em massa/importacao para reforcar auditoria/contexto sem criar novas telas.
+
 ### Cadastros Gerais - Fase 9 Pessoas e Produtos com Contexto/RBAC
 - Segui o proximo passo dos blocos iniciais de Cadastros Gerais, sem criar tela, modulo, componente ou arquivo novo.
 - `Bloco1Pessoas` passou a exigir Grupo/Empresa ativo antes de abrir clientes, fornecedores, transportadoras, colaboradores, representantes, contatos B2B, segmentos e regioes.
