@@ -1,3 +1,13 @@
+### Cadastros Gerais - Fase 9 Visualizador de Produtos Contextual
+- Segui o proximo passo do visualizador especializado de produtos, sem criar tela, modulo, componente ou arquivo novo.
+- `VisualizadorProdutos` passou a registrar auditoria contextual via `createInContext("AuditLog")` para inicio, conclusao e falha da atualizacao de setor em massa.
+- A acao sensivel de atualizar setor em massa recebeu marcadores de permissao, acao e contexto obrigatorio.
+- O container do visualizador passou a declarar contexto/permissao e imports sem uso foram removidos para reduzir ruido tecnico.
+- Foram preservados o `VisualizadorUniversalEntidadeV24`, filtros de setor via `filterInContext`, atualizacao de produtos via `updateInContext`, modal, toast, invalidacao de cache e fluxo visual atual.
+- Mantida a Regra-Mae: nenhuma funcionalidade, botao, modal, visualizador ou fluxo foi removido; apenas auditoria, contexto, RBAC visual e manutencao do arquivo existente foram reforcados.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: revisar importadores/acoes de produto usados em Cadastros e Estoque para reforcar auditoria/contexto sem criar novas telas.
+
 ### Cadastros Gerais - Fase 9 Visualizador Universal com Auditoria Contextual
 - Segui o proximo passo dos visualizadores abertos pelos blocos de Cadastros Gerais, sem criar tela, modulo, componente ou arquivo novo.
 - `VisualizadorUniversalEntidadeV24` deixou de registrar eventos de auditoria por `base44.entities.AuditLog.create` direto e passou a usar `createInContext("AuditLog")`.

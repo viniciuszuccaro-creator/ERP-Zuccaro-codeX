@@ -1,29 +1,47 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import VisualizadorUniversalEntidadeV24 from './VisualizadorUniversalEntidadeV24';
-import BotoesImportacaoProduto from './BotoesImportacaoProduto';
 import ProdutoFormV22_Completo from './ProdutoFormV22_Completo';
-import ImportadorProdutosPlanilha from '@/components/estoque/ImportadorProdutosPlanilha';
-import { useWindow } from '@/components/lib/useWindow';
-import { Package, Edit, Upload } from 'lucide-react';
+import { Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/components/ui/use-toast';
-import { base44 } from '@/api/base44Client';
 import usePermissions from '@/components/lib/usePermissions';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 export default function VisualizadorProdutos(props) {
   const queryClient = useQueryClient();
-  const { openWindow } = useWindow();
-  const { empresaAtual, grupoAtual, filterInContext, updateInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext, updateInContext, createInContext } = useContextoVisual();
   const { canEdit } = usePermissions();
   const [selectedProdutos, setSelectedProdutos] = useState(new Set());
   const [isSetorModalOpen, setIsSetorModalOpen] = useState(false);
   const [targetSetorId, setTargetSetorId] = useState(null);
   const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id);
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
   const podeEditarProduto = canEdit('Cadastros', 'Produto') || canEdit('Cadastros', null) || canEdit('Estoque', 'Produto') || canEdit('Estoque', null);
+
+  const registrarAuditoriaProduto = async (acao, descricao, dados = {}, sucesso = true) => {
+    try {
+      await createInContext('AuditLog', {
+        acao,
+        modulo: 'Cadastros',
+        entidade: 'Produto',
+        tipo_auditoria: sucesso ? 'cadastro' : 'seguranca',
+        descricao,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        dados_novos: {
+          origem: 'VisualizadorProdutos',
+          ...dados,
+        },
+        data_hora: new Date().toISOString(),
+        sucesso,
+      });
+    } catch (_) {}
+  };
 
   const { data: setores = [] } = useQuery({
     queryKey: ['setores-atividade', empresaAtual?.id || null, grupoAtual?.id || null],
@@ -35,6 +53,11 @@ export default function VisualizadorProdutos(props) {
     mutationFn: async ({ setorId, setorNome }) => {
       if (!contextoValido) throw new Error('Selecione um grupo ou empresa antes de atualizar produtos.');
       if (!podeEditarProduto) throw new Error('Seu perfil nao permite editar produtos.');
+      await registrarAuditoriaProduto('Atualizacao em massa', 'Inicio da atualizacao de setor em massa de produtos', {
+        setor_id: setorId,
+        setor_nome: setorNome,
+        quantidade: selectedProdutos.size,
+      });
       const updates = Array.from(selectedProdutos).map(produtoId => 
         updateInContext('Produto', produtoId, {
           setor_atividade_id: setorId,
@@ -44,12 +67,19 @@ export default function VisualizadorProdutos(props) {
       return Promise.all(updates);
     },
     onSuccess: () => {
+      registrarAuditoriaProduto('Atualizacao em massa', 'Atualizacao de setor em massa de produtos concluida', {
+        quantidade: selectedProdutos.size,
+      });
       toast({ title: '✅ Sucesso!', description: `${selectedProdutos.size} produtos atualizados.` });
       queryClient.invalidateQueries({ queryKey: ['produtos'] });
       setSelectedProdutos(new Set());
       setIsSetorModalOpen(false);
     },
     onError: (error) => {
+      registrarAuditoriaProduto('Bloqueio', 'Falha na atualizacao de setor em massa de produtos', {
+        erro: error?.message || String(error),
+        quantidade: selectedProdutos.size,
+      }, false);
       toast({ title: '❌ Erro', description: `Não foi possível atualizar os produtos: ${error.message}`, variant: 'destructive' });
     }
   });
@@ -76,7 +106,7 @@ export default function VisualizadorProdutos(props) {
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-slate-50">
+    <div className="flex flex-col h-full w-full bg-slate-50" data-context-required="true" data-permission="Cadastros.Produto.visualizar">
       <div className="p-4 border-b bg-white flex items-center gap-4 shrink-0">
       </div>
       <div className="flex-1 min-h-0 p-4 flex flex-col overflow-hidden">
@@ -111,6 +141,8 @@ export default function VisualizadorProdutos(props) {
               onClick={handleUpdateSetor}
               disabled={!targetSetorId || updateSetorMutation.isPending || !contextoValido || !podeEditarProduto}
               data-permission="Cadastros.Produto.editar"
+              data-action="Cadastros.Produto.atualizar-setor-massa"
+              data-context-required="group-or-company"
               data-sensitive
             >
               {updateSetorMutation.isPending ? 'Atualizando...' : 'Atualizar Produtos'}
