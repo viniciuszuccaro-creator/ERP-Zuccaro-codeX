@@ -6,7 +6,6 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
 import { useToast } from "@/components/ui/use-toast";
-import { base44 } from "@/api/base44Client";
 import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
 import { Building2, Spline, Users, Briefcase, Clock, Shield } from "lucide-react";
 import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado";
@@ -27,7 +26,7 @@ function filterTiles(tiles, searchTerm) {
 export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm = "" }) {
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
   const { user } = useUser();
   const { toast } = useToast();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
@@ -36,7 +35,7 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
 
   const registrarAuditoria = async (entidade, acao, sucesso = true) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext("AuditLog", {
         usuario_id: user?.id,
         usuario: user?.full_name || user?.email || "Usuario",
         acao,

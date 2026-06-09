@@ -1,3 +1,12 @@
+### Cadastros Gerais - Fase 9 Blocos com Auditoria Contextual
+- Segui o proximo passo dos blocos de Cadastros Gerais, sem criar tela, modulo, componente ou arquivo novo.
+- `Bloco3Financeiro`, `Bloco4Logistica`, `Bloco5Organizacional` e `Bloco6Tecnologia` deixaram de auditar por `base44.entities.AuditLog.create` direto e passaram a usar `createInContext("AuditLog")`.
+- Os bloqueios por ausencia de Grupo/Empresa, bloqueios por permissao, toasts, cards, botoes, app de motorista e abertura de janelas foram preservados.
+- As auditorias dos blocos financeiro/fiscal, logistica/frota/almoxarifado, estrutura organizacional e tecnologia/IA agora reforcam carimbo multiempresa e rastreabilidade pelo helper contextual existente.
+- Mantida a Regra-Mae: nenhuma funcionalidade, botao, card, formulario, visualizador ou fluxo foi removido; apenas seguranca, auditoria e multiempresa foram reforcados nos arquivos existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em Cadastros Gerais revisando `Bloco1Pessoas`, `Bloco2Produtos` e visualizadores universais para reforcar RBAC/contexto sem criar novas telas.
+
 ### Cadastros Gerais - Fase 9 Auditoria Contextual da Tela Principal
 - Segui o proximo passo salvo para Cadastros Gerais, sem criar tela, modulo, componente ou arquivo novo.
 - `pages/Cadastros.jsx` deixou de registrar auditoria por chamada direta em `base44.entities.AuditLog.create` e passou a usar `createInContext("AuditLog")`.
