@@ -215,7 +215,7 @@ const [suggesting, setSuggesting] = useState(false);
 
   const auditImportadorProdutos = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         acao,
         modulo: 'Estoque',
         entidade: 'Produto',
@@ -1443,7 +1443,7 @@ const [suggesting, setSuggesting] = useState(false);
           <div className="space-y-1">
             <Label>Grupo (opcional)</Label>
             <Select value={grupoId} onValueChange={(v) => { setGrupoId(v); setEmpresaId(''); }}>
-              <SelectTrigger>
+              <SelectTrigger data-permission="Estoque.Produtos.importar" data-action="Estoque.Produtos.importar.selecionar-grupo">
                 <SelectValue placeholder="Selecione o grupo (opcional)" />
               </SelectTrigger>
               <SelectContent>
@@ -1458,7 +1458,7 @@ const [suggesting, setSuggesting] = useState(false);
           <div className="space-y-1">
             <Label>Empresa de destino</Label>
             <Select value={empresaId} onValueChange={setEmpresaId} disabled={!!grupoId}>
-              <SelectTrigger>
+              <SelectTrigger data-permission="Estoque.Produtos.importar" data-action="Estoque.Produtos.importar.selecionar-empresa">
                 <SelectValue placeholder="Selecione a empresa" />
               </SelectTrigger>
               <SelectContent>
@@ -1478,6 +1478,9 @@ const [suggesting, setSuggesting] = useState(false);
             accept=".xls,.xlsx,.csv,text/csv"
             onChange={handleArquivo}
             disabled={processando || !hasDestinoImportacao || !canImportarProdutos}
+            data-permission="Estoque.Produtos.importar"
+            data-action="Estoque.Produtos.importar.selecionar-arquivo"
+            data-context-required="group-or-company"
           />
           {arquivo && (
             <p className="text-xs text-slate-500 mt-1">{arquivo.name}</p>
@@ -1499,11 +1502,11 @@ const [suggesting, setSuggesting] = useState(false);
               <div className="flex items-center justify-between mb-2">
                 <div className="text-xs text-slate-600">NCMs pendentes: {invalidNCMKeys.size}</div>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={sugerirNCMsIA} disabled={suggesting || invalidNCMKeys.size === 0} className="gap-1">
+                  <Button variant="outline" size="sm" onClick={sugerirNCMsIA} disabled={suggesting || invalidNCMKeys.size === 0} className="gap-1" data-permission="Estoque.Produtos.importar" data-action="Estoque.Produtos.importar.sugerir-ncm-ia">
                     {suggesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />} Sugerir NCMs (IA)
                   </Button>
                   {Object.keys(ncmSuggestions || {}).length > 0 && (
-                    <Button variant="secondary" size="sm" onClick={applyAllSuggestions}>Aplicar todos</Button>
+                    <Button variant="secondary" size="sm" onClick={applyAllSuggestions} data-permission="Estoque.Produtos.importar" data-action="Estoque.Produtos.importar.aplicar-ncm-ia">Aplicar todos</Button>
                   )}
                 </div>
               </div>
@@ -1557,7 +1560,7 @@ const [suggesting, setSuggesting] = useState(false);
               </div>
 
               <div className="flex items-center gap-3">
-                <Checkbox id="importar-grupo" checked={importarParaTodasEmpresas} onCheckedChange={(v) => setImportarParaTodasEmpresas(!!v)} />
+                <Checkbox id="importar-grupo" checked={importarParaTodasEmpresas} onCheckedChange={(v) => setImportarParaTodasEmpresas(!!v)} data-permission="Estoque.Produtos.importar" data-action="Estoque.Produtos.importar.todas-empresas" />
                 <Label htmlFor="importar-grupo" className="text-sm">
                   Importar para todas as empresas do grupo selecionado
                 </Label>
@@ -1722,10 +1725,10 @@ const [suggesting, setSuggesting] = useState(false);
         )}
 
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={() => closeSelf && closeSelf()} disabled={processando}>
+          <Button type="button" variant="outline" onClick={() => closeSelf && closeSelf()} disabled={processando} data-action="Estoque.Produtos.importar.cancelar">
             Cancelar
           </Button>
-          <Button type="button" onClick={importar} disabled={processando || !arquivo || (!empresaId && !grupoId) || checando || !canImportarProdutos} className="gap-2 bg-indigo-600 hover:bg-indigo-700">
+          <Button type="button" onClick={importar} disabled={processando || !arquivo || (!empresaId && !grupoId) || checando || !canImportarProdutos} className="gap-2 bg-indigo-600 hover:bg-indigo-700" data-permission="Estoque.Produtos.importar" data-action="Estoque.Produtos.importar.executar" data-context-required="group-or-company">
             {processando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
             {processando ? "Importando..." : "Importar Agora"}
           </Button>

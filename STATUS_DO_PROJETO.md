@@ -1,3 +1,14 @@
+### Cadastros/Estoque - Fase 9 Importacao de Produtos Contextual
+- Segui o proximo passo salvo para importadores e acoes de produto, sem criar tela, modulo, componente ou arquivo novo.
+- `BotoesImportacaoProduto` passou a validar Grupo/Empresa e permissao antes de abrir a importacao via NF-e, com toast de bloqueio e auditoria contextual via `createInContext("AuditLog")`.
+- O botao existente `Importar via NF-e` recebeu marcadores de contexto, permissao e acao para RBAC granular.
+- `ImportadorProdutosPlanilha` deixou de auditar importacao por `base44.entities.AuditLog.create` direto e passou a usar `createInContext("AuditLog")`.
+- Os controles sensiveis do importador de planilha receberam marcadores de permissao/acao: selecao de grupo/empresa, arquivo, sugestao NCM por IA, aplicar sugestoes, importar para empresas do grupo, cancelar e executar importacao.
+- Foram preservados upload, parse, preview, duplicidades, validacoes, criacao/atualizacao via helpers contextuais, importacao por grupo/empresa, IA de NCM, toasts e fechamento do modal.
+- Mantida a Regra-Mae: nenhuma importacao, botao, fluxo, modal ou funcionalidade foi removida; apenas contexto, RBAC visual/acao, auditoria e rastreabilidade foram reforcados nos arquivos existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: revisar `ImportacaoProdutoNFe` e `ImportarProdutosNFe` para reforcar marcadores RBAC/contexto e auditorias restantes sem criar novas telas.
+
 ### Cadastros Gerais - Fase 9 Visualizador de Produtos Contextual
 - Segui o proximo passo do visualizador especializado de produtos, sem criar tela, modulo, componente ou arquivo novo.
 - `VisualizadorProdutos` passou a registrar auditoria contextual via `createInContext("AuditLog")` para inicio, conclusao e falha da atualizacao de setor em massa.
