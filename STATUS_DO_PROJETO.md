@@ -1,3 +1,13 @@
+### Estoque - Fase 9 Formularios Auxiliares Contextuais
+- Segui o proximo passo salvo para `MovimentacaoForm` e `InventarioContagem`, sem criar tela, modulo, componente ou arquivo novo.
+- `MovimentacaoForm` recebeu marcadores de permissao, acao e contexto obrigatorio no formulario, seletores, campos de quantidade/data/documento/responsavel/observacoes e botao de registro.
+- `InventarioContagem` recebeu marcadores de permissao, acao, contexto obrigatorio e sensibilidade nas acoes de adicionar/remover item e nos campos de descricao, unidade, saldo, contagem e ajuste calculado.
+- Foi removido import sem uso de `base44` em `MovimentacaoForm`, reduzindo ruido tecnico sem alterar comportamento.
+- Foram preservados carimbo contextual via `FormWrapper`, validacao por `movimentacaoSchema`, carregamento contextual de produtos, calculo de ajuste, sanitizacao de texto, confirmacao de remocao e layout `w-full h-full`.
+- Mantida a Regra-Mae: nenhuma janela, formulario, campo, botao, contagem ou fluxo de estoque foi removido; apenas RBAC visual/acao, multiempresa e rastreabilidade foram reforcados nos arquivos existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar no Estoque revisando componentes de historico/lotes/validade e relatorios operacionais para remover auditorias diretas restantes e completar marcadores RBAC/contexto.
+
 ### Estoque - Fase 9 Movimentacoes, Inventario e Relatorios Contextuais
 - Segui o proximo passo salvo para `MovimentacoesTab`, `InventarioForm` e `RelatoriosEstoque`, sem criar tela, modulo, componente ou arquivo novo.
 - `MovimentacoesTab`, `InventarioForm` e `RelatoriosEstoque` deixaram de registrar auditoria direta por `base44.entities.AuditLog.create` e passaram a usar `createInContext("AuditLog")`.

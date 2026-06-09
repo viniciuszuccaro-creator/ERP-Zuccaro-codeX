@@ -44,10 +44,23 @@ export default function InventarioContagem({ itens = [], onChange, disabled = fa
   };
 
   return (
-    <div className="w-full h-full space-y-3" data-permission="Estoque.Inventario.Contagem">
+    <div
+      className="w-full h-full space-y-3"
+      data-permission="Estoque.Inventario.Contagem"
+      data-context-required="group-or-company"
+    >
       <div className="flex flex-wrap justify-between items-center gap-2">
         <h4 className="font-semibold">Itens do Inventário</h4>
-        <Button type="button" size="sm" variant="outline" disabled={disabled} onClick={adicionar}>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={disabled}
+          onClick={adicionar}
+          data-action="Estoque.Inventario.Contagem.adicionar"
+          data-permission="Estoque.Inventario.editar"
+          data-context-required="group-or-company"
+        >
           <Plus className="w-3 h-3 mr-1" />Adicionar
         </Button>
       </div>
@@ -80,6 +93,9 @@ export default function InventarioContagem({ itens = [], onChange, disabled = fa
                   onChange={(e) => atualizar(idx, { produto_descricao: sanitizeText(e.target.value) })}
                   placeholder="Descrição do produto"
                   aria-label="Descrição do produto"
+                  data-action="Estoque.Inventario.Contagem.produtoDescricao"
+                  data-permission="Estoque.Inventario.editar"
+                  data-context-required="group-or-company"
                 />
                 <Input
                   className="col-span-1"
@@ -87,6 +103,9 @@ export default function InventarioContagem({ itens = [], onChange, disabled = fa
                   disabled={disabled}
                   onChange={(e) => atualizar(idx, { unidade: sanitizeText(e.target.value).toUpperCase().slice(0, 6) })}
                   aria-label="Unidade"
+                  data-action="Estoque.Inventario.Contagem.unidade"
+                  data-permission="Estoque.Inventario.editar"
+                  data-context-required="group-or-company"
                 />
                 <Input
                   className="col-span-2"
@@ -95,6 +114,9 @@ export default function InventarioContagem({ itens = [], onChange, disabled = fa
                   disabled={disabled}
                   onChange={(e) => atualizar(idx, { saldo_sistema: toNumber(e.target.value) })}
                   aria-label="Saldo do sistema"
+                  data-action="Estoque.Inventario.Contagem.saldoSistema"
+                  data-permission="Estoque.Inventario.editar"
+                  data-context-required="group-or-company"
                 />
                 <Input
                   className="col-span-2"
@@ -103,10 +125,33 @@ export default function InventarioContagem({ itens = [], onChange, disabled = fa
                   disabled={disabled}
                   onChange={(e) => atualizar(idx, { contagem: toNumber(e.target.value) })}
                   aria-label="Contagem física"
+                  data-action="Estoque.Inventario.Contagem.contagemFisica"
+                  data-permission="Estoque.Inventario.editar"
+                  data-context-required="group-or-company"
                 />
-                <Input className="col-span-2" type="number" value={ajuste} readOnly aria-label="Ajuste calculado" />
+                <Input
+                  className="col-span-2"
+                  type="number"
+                  value={ajuste}
+                  readOnly
+                  aria-label="Ajuste calculado"
+                  data-action="Estoque.Inventario.Contagem.ajusteCalculado"
+                  data-permission="Estoque.Inventario.visualizar"
+                  data-context-required="group-or-company"
+                />
                 <div className="col-span-1 flex justify-end">
-                  <Button type="button" size="icon" variant="ghost" disabled={disabled} onClick={() => remover(idx)} aria-label="Remover item da contagem">
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    disabled={disabled}
+                    onClick={() => remover(idx)}
+                    aria-label="Remover item da contagem"
+                    data-action="Estoque.Inventario.Contagem.remover"
+                    data-permission="Estoque.Inventario.editar"
+                    data-context-required="group-or-company"
+                    data-sensitive="true"
+                  >
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
