@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -34,7 +33,7 @@ export default function ImportacaoProdutoNFe({ onProdutosCriados }) {
 
   const auditImportacaoProdutoNFe = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         acao,
         modulo: 'Cadastros',
         entidade: 'Produto',
@@ -162,8 +161,25 @@ export default function ImportacaoProdutoNFe({ onProdutosCriados }) {
         arquivo_url: file_url
       });
 
+      await auditImportacaoProdutoNFe({
+        acao: 'Produto.importacao_produto_nfe_processada',
+        sucesso: true,
+        dados: {
+          etapa: 'processamento',
+          total_produtos: produtosComStatus.length,
+          total_duplicados: produtosComStatus.filter((produto) => produto.duplicado).length,
+          numero_nfe: dadosExtraidos.numero_nfe,
+          fornecedor: dadosExtraidos.fornecedor?.razao_social || null,
+        }
+      });
       toast.success(`${produtosComStatus.length} produto(s) extra\u00eddo(s) da NF-e!`);
     } catch (error) {
+      await auditImportacaoProdutoNFe({
+        acao: 'Produto.importacao_produto_nfe_processamento_erro',
+        sucesso: false,
+        motivo: error?.message || 'Erro ao processar NF-e.',
+        dados: { etapa: 'processamento' }
+      });
       toast.error("Erro ao processar NF-e: " + error.message);
     } finally {
       setProcessando(false);
@@ -250,7 +266,7 @@ export default function ImportacaoProdutoNFe({ onProdutosCriados }) {
   };
 
   return (
-    <Card className="border-2 border-purple-200">
+    <Card className="border-2 border-purple-200 w-full h-full" data-context-required="group-or-company" data-permission="Cadastros.Produto.importar">
       <CardHeader className="bg-purple-50">
         <CardTitle className="flex items-center gap-2">
           <FileText className="w-5 h-5 text-purple-600" />
@@ -282,9 +298,20 @@ export default function ImportacaoProdutoNFe({ onProdutosCriados }) {
             className="hidden"
             id="nfe-upload"
             disabled={processando || !contextoValido || !podeCriarProduto}
+            data-permission="Cadastros.Produto.importar"
+            data-action="Cadastros.Produto.importar-nfe.selecionar-arquivo"
+            data-context-required="group-or-company"
           />
           <label htmlFor="nfe-upload">
-            <Button variant="outline" className="w-full" asChild disabled={processando || !contextoValido || !podeCriarProduto}>
+            <Button
+              variant="outline"
+              className="w-full"
+              asChild
+              disabled={processando || !contextoValido || !podeCriarProduto}
+              data-permission="Cadastros.Produto.importar"
+              data-action="Cadastros.Produto.importar-nfe.abrir-seletor"
+              data-context-required="group-or-company"
+            >
               <span>
                 <Upload className="w-4 h-4 mr-2" />
                 {arquivo ? arquivo.name : 'Selecionar XML ou PDF da NF-e'}
@@ -297,8 +324,9 @@ export default function ImportacaoProdutoNFe({ onProdutosCriados }) {
           <Button 
             onClick={processarNFe} 
             disabled={processando || !contextoValido || !podeCriarProduto}
-            data-permission="Cadastros.Produto.criar"
-            data-action="processar-produtos-nfe"
+            data-permission="Cadastros.Produto.importar"
+            data-action="Cadastros.Produto.importar-nfe.processar"
+            data-context-required="group-or-company"
             className="w-full bg-purple-600 hover:bg-purple-700"
           >
             {processando ? (
@@ -367,8 +395,9 @@ export default function ImportacaoProdutoNFe({ onProdutosCriados }) {
                 onClick={importarProdutos}
                 className="w-full bg-green-600 hover:bg-green-700"
                 disabled={processando || resultado.produtos.every(p => p.duplicado) || !contextoValido || !podeCriarProduto}
-                data-permission="Cadastros.Produto.criar"
-                data-action="importar-produtos-nfe-pdf"
+                data-permission="Cadastros.Produto.importar"
+                data-action="Cadastros.Produto.importar-nfe.criar-produtos"
+                data-context-required="group-or-company"
                 data-sensitive
               >
                 <CheckCircle2 className="w-4 h-4 mr-2" />

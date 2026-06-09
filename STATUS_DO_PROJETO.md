@@ -1,3 +1,14 @@
+### Cadastros/Estoque - Fase 9 NF-e de Produtos com Auditoria Contextual
+- Segui o proximo passo salvo para `ImportacaoProdutoNFe` e `ImportarProdutosNFe`, sem criar tela, modulo, componente ou arquivo novo.
+- Os dois importadores de produto por NF-e deixaram de auditar por `base44.entities.AuditLog.create` direto e passaram a usar `createInContext("AuditLog")`.
+- A leitura/processamento da NF-e agora registra auditoria contextual de sucesso e erro antes da etapa de criacao de produtos.
+- Os controles sensiveis receberam marcadores de permissao, acao e contexto obrigatorio: selecao de arquivo, abertura do seletor, processamento, selecao de itens, cancelamento e criacao de produtos.
+- Os containers principais receberam `w-full h-full` e marcadores de contexto/permissao, preservando o fluxo visual atual.
+- Foram preservados upload XML/PDF, IA/OCR, deteccao de duplicidade, selecao de itens, confirmacao, criacao por `createInContext("Produto")`, toasts, callbacks e fechamento do modal.
+- Mantida a Regra-Mae: nenhuma importacao, botao, campo, modal ou funcionalidade foi removida; apenas contexto, RBAC visual/acao, auditoria e rastreabilidade foram reforcados nos arquivos existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: revisar pontos de Estoque que ainda auditam movimentacoes/inventario diretamente, priorizando `MovimentacoesTab`, `InventarioForm` e `RelatoriosEstoque`.
+
 ### Projeto/Codex - Abertura Local IPv4 Estabilizada
 - Corrigida a abertura local do ERP para voltar a responder no endereco antigo `http://localhost:5173/`.
 - O script existente `start-erp-dev.cmd` deixou de depender do `npm.cmd` para manter a janela viva e passou a iniciar o Vite diretamente pelo `node.exe`.

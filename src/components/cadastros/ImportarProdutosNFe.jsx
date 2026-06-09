@@ -31,7 +31,7 @@ export default function ImportarProdutosNFe({ onProdutosCriados, onClose }) {
 
   const auditImportacaoNFe = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         acao,
         modulo: 'Cadastros',
         entidade: 'Produto',
@@ -134,8 +134,25 @@ IMPORTANTE: Extraia TODOS os itens, não apenas um exemplo.`,
 
       setItensParsed(itensComStatus);
       setItensSelecionados(itensComStatus.filter(i => i.criar_novo).map((_, idx) => idx));
+      await auditImportacaoNFe({
+        acao: 'Produto.importacao_nfe_processada',
+        sucesso: true,
+        dados: {
+          etapa: 'upload',
+          total_itens: itensComStatus.length,
+          total_existentes: itensComStatus.filter((item) => item.produto_existente).length,
+          numero_nfe: resultado.numero_nfe || null,
+          fornecedor: resultado.fornecedor || null,
+        }
+      });
       toast.success(`${itensComStatus.length} itens encontrados na NF-e`);
     } catch (error) {
+      await auditImportacaoNFe({
+        acao: 'Produto.importacao_nfe_processamento_erro',
+        sucesso: false,
+        motivo: error?.message || 'Erro ao processar XML.',
+        dados: { etapa: 'upload' }
+      });
       toast.error('Erro ao processar XML: ' + error.message);
     } finally {
       setProcessando(false);
@@ -215,7 +232,7 @@ IMPORTANTE: Extraia TODOS os itens, não apenas um exemplo.`,
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full h-full" data-context-required="group-or-company" data-permission="Cadastros.Produto.importar">
       <Alert className="border-blue-200 bg-blue-50">
         <FileText className="w-4 h-4 text-blue-600" />
         <AlertDescription className="text-sm text-blue-900">
@@ -243,9 +260,20 @@ IMPORTANTE: Extraia TODOS os itens, não apenas um exemplo.`,
               className="hidden"
               id="xml-upload"
               disabled={processando || !contextoValido || !podeCriarProduto}
+              data-permission="Cadastros.Produto.importar"
+              data-action="Cadastros.Produto.importar-xml.selecionar-arquivo"
+              data-context-required="group-or-company"
             />
             <label htmlFor="xml-upload">
-              <Button variant="outline" size="lg" disabled={processando || !contextoValido || !podeCriarProduto} asChild>
+              <Button
+                variant="outline"
+                size="lg"
+                disabled={processando || !contextoValido || !podeCriarProduto}
+                asChild
+                data-permission="Cadastros.Produto.importar"
+                data-action="Cadastros.Produto.importar-xml.abrir-seletor"
+                data-context-required="group-or-company"
+              >
                 <span>
                   {processando ? (
                     <Loader2 className="w-5 h-5 mr-2 animate-spin" />
@@ -283,6 +311,9 @@ IMPORTANTE: Extraia TODOS os itens, não apenas um exemplo.`,
                     checked={itensSelecionados.includes(idx)}
                     onCheckedChange={() => toggleItem(idx)}
                     disabled={!!item.produto_existente}
+                    data-permission="Cadastros.Produto.importar"
+                    data-action="Cadastros.Produto.importar-xml.selecionar-item"
+                    data-context-required="group-or-company"
                   />
 
                   <div className="flex-1">
@@ -326,14 +357,15 @@ IMPORTANTE: Extraia TODOS os itens, não apenas um exemplo.`,
               </p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={onClose}>
+              <Button variant="outline" onClick={onClose} data-action="Cadastros.Produto.importar-xml.cancelar">
                 Cancelar
               </Button>
               <Button 
                 onClick={handleCriarProdutos}
                 disabled={processando || itensSelecionados.length === 0 || !contextoValido || !podeCriarProduto}
-                data-permission="Cadastros.Produto.criar"
-                data-action="importar-produtos-nfe"
+                data-permission="Cadastros.Produto.importar"
+                data-action="Cadastros.Produto.importar-xml.criar-produtos"
+                data-context-required="group-or-company"
                 data-sensitive
                 className="bg-green-600 hover:bg-green-700"
               >
