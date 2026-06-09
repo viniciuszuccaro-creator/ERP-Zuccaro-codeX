@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,7 +31,7 @@ export default function TransferenciaEntreEmpresasForm({
 
   const auditTransferencia = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         acao,
         modulo: 'Estoque',
         entidade: 'TransferenciaFilial',
@@ -204,7 +203,7 @@ export default function TransferenciaEntreEmpresasForm({
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" data-permission="Estoque.Transferencias.criar" data-action="Estoque.Transferencias.formulario" data-context-required="group-or-company">
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label>Empresa Origem *</Label>
@@ -212,7 +211,7 @@ export default function TransferenciaEntreEmpresasForm({
               value={formData.empresa_origem_id}
               onValueChange={(v) => setFormData({ ...formData, empresa_origem_id: v })}
             >
-              <SelectTrigger>
+              <SelectTrigger data-permission="Estoque.Transferencias.criar" data-action="Estoque.Transferencias.empresaOrigem" data-context-required="group-or-company">
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
               <SelectContent>
@@ -231,7 +230,7 @@ export default function TransferenciaEntreEmpresasForm({
               value={formData.empresa_destino_id}
               onValueChange={(v) => setFormData({ ...formData, empresa_destino_id: v })}
             >
-              <SelectTrigger>
+              <SelectTrigger data-permission="Estoque.Transferencias.criar" data-action="Estoque.Transferencias.empresaDestino" data-context-required="group-or-company">
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
               <SelectContent>
@@ -258,7 +257,7 @@ export default function TransferenciaEntreEmpresasForm({
               });
             }}
           >
-            <SelectTrigger>
+            <SelectTrigger data-permission="Estoque.Transferencias.criar" data-action="Estoque.Transferencias.produto" data-context-required="group-or-company">
               <SelectValue placeholder="Selecione..." />
             </SelectTrigger>
             <SelectContent>
@@ -302,6 +301,9 @@ export default function TransferenciaEntreEmpresasForm({
               step="0.01"
               value={formData.quantidade}
               onChange={(e) => setFormData({ ...formData, quantidade: parseFloat(e.target.value) || 0 })}
+              data-permission="Estoque.Transferencias.criar"
+              data-action="Estoque.Transferencias.quantidade"
+              data-context-required="group-or-company"
             />
           </div>
 
@@ -311,6 +313,9 @@ export default function TransferenciaEntreEmpresasForm({
               value={formData.unidade}
               disabled
               className="bg-slate-100"
+              data-permission="Estoque.Transferencias.visualizar"
+              data-action="Estoque.Transferencias.unidade"
+              data-context-required="group-or-company"
             />
           </div>
         </div>
@@ -321,7 +326,7 @@ export default function TransferenciaEntreEmpresasForm({
             value={formData.motivo}
             onValueChange={(v) => setFormData({ ...formData, motivo: v })}
           >
-            <SelectTrigger>
+            <SelectTrigger data-permission="Estoque.Transferencias.criar" data-action="Estoque.Transferencias.motivo" data-context-required="group-or-company">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -343,6 +348,10 @@ export default function TransferenciaEntreEmpresasForm({
                 checked={formData.gerar_financeiro}
                 onChange={(e) => setFormData({ ...formData, gerar_financeiro: e.target.checked })}
                 className="w-4 h-4"
+                data-permission="Estoque.Transferencias.criar"
+                data-action="Estoque.Transferencias.gerarFinanceiroInterno"
+                data-context-required="group-or-company"
+                data-sensitive="true"
               />
               <Label htmlFor="gerar-financeiro" className="cursor-pointer font-normal">
                 Gerar financeiro interno (transferência cobra da empresa destino)
@@ -357,6 +366,9 @@ export default function TransferenciaEntreEmpresasForm({
             value={formData.observacoes}
             onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
             rows={3}
+            data-permission="Estoque.Transferencias.criar"
+            data-action="Estoque.Transferencias.observacoes"
+            data-context-required="group-or-company"
           />
         </div>
 
@@ -378,6 +390,10 @@ export default function TransferenciaEntreEmpresasForm({
             type="submit"
             disabled={createTransferenciaMutation.isPending || !contextoValido || !canCreateTransferencia}
             className="bg-purple-600 hover:bg-purple-700"
+            data-permission="Estoque.Transferencias.criar"
+            data-action="Estoque.Transferencias.confirmar"
+            data-context-required="group-or-company"
+            data-sensitive="true"
           >
             {createTransferenciaMutation.isPending ? (
               <>
@@ -397,7 +413,7 @@ export default function TransferenciaEntreEmpresasForm({
   );
 
   if (windowMode) {
-    return <div className="w-full h-full bg-white">{content}</div>;
+    return <div className="w-full h-full bg-white" data-permission="Estoque.Transferencias.criar" data-context-required="group-or-company">{content}</div>;
   }
 
   return content;

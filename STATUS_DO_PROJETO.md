@@ -1,3 +1,14 @@
+### Estoque - Fase 9 Produtos e Transferencias Contextuais
+- Segui o proximo passo salvo para `ProdutosTab` e `TransferenciaEntreEmpresasForm`, sem criar tela, modulo, componente ou arquivo novo.
+- `ProdutosTab` deixou de auditar criacao de produto por `base44.entities.AuditLog.create` direto e passou a usar `createInContext("AuditLog")`, preservando a criacao por `createInContext("Produto")`.
+- `ProdutosTab` recebeu marcadores de permissao, acao e contexto no container, filtro de estoque baixo, dashboard de producao, conversao em massa, importador de planilha e abertura de novo produto.
+- `TransferenciaEntreEmpresasForm` deixou de auditar por `base44.entities.AuditLog.create` direto e passou a usar `createInContext("AuditLog")`.
+- O formulario de transferencia recebeu marcadores de permissao, acao, contexto obrigatorio e sensibilidade nos seletores de empresas/produto, quantidade, unidade, motivo, gerar financeiro interno, observacoes e confirmacao.
+- Foram preservados contadores de produtos, filtros, janelas existentes, criacao contextual de produto, transferencia entre empresas, movimentacoes de origem/destino, financeiro interno, confirmacao, toasts e invalidacao de queries.
+- Mantida a Regra-Mae: nenhum botao, formulario, campo, janela, importador, conversao, produto ou transferencia foi removido; apenas auditoria contextual, RBAC visual/acao, multiempresa e rastreabilidade foram reforcados nos arquivos existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar no Estoque revisando `RecebimentoTab` e `RequisicoesAlmoxarifadoTab` para completar marcadores RBAC/contexto em dialogs, campos e botoes de criacao.
+
 ### Estoque - Fase 9 Lotes, Validade e Controle Operacional Contextual
 - Segui o proximo passo salvo para historico/lotes/validade e controles operacionais de Estoque, sem criar tela, modulo, componente ou arquivo novo.
 - `ControleEstoqueCompleto` deixou de auditar por `base44.entities.AuditLog.create` direto e passou a usar `createInContext("AuditLog")`, preservando usuario, modulo, entidade, sucesso e carimbos multiempresa.

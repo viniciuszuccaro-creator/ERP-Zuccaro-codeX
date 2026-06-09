@@ -107,7 +107,11 @@ export default function ProdutosTab(props) {
   }, [queryClient]);
 
   return (
-    <div className="w-full h-full flex flex-col space-y-4 overflow-auto">
+    <div
+      className="w-full h-full flex flex-col space-y-4 overflow-auto"
+      data-permission="Estoque.Produtos.visualizar"
+      data-context-required="group-or-company"
+    >
       <div className="w-full flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-blue-200 bg-blue-50">
           <CardContent className="p-4">
@@ -175,6 +179,9 @@ export default function ProdutosTab(props) {
                  variant="outline"
                  className="border-red-300 text-red-700 hover:bg-red-100"
                  onClick={() => setFiltroEstoqueBaixo(true)}
+                 data-permission="Estoque.Produtos.visualizar"
+                 data-action="Estoque.Produtos.filtrarEstoqueBaixo"
+                 data-context-required="group-or-company"
                >
                  <ShoppingCart className="w-4 h-4 mr-2" />
                  Ver Produtos
@@ -192,6 +199,8 @@ export default function ProdutosTab(props) {
               variant="outline"
               className="border-orange-300 text-orange-700 hover:bg-orange-50" 
               data-permission="Estoque.Produtos.visualizar"
+              data-action="Estoque.Produtos.abrirDashboardProducao"
+              data-context-required="group-or-company"
               onClick={() => openWindow(DashboardProdutosProducao, {
               windowMode: true,
               onAbrirConversao: () => {
@@ -222,6 +231,9 @@ export default function ProdutosTab(props) {
               variant="outline"
               className="border-purple-300 text-purple-700 hover:bg-purple-50" 
               data-permission="Estoque.Produtos.editar"
+              data-action="Estoque.Produtos.abrirConversaoMassa"
+              data-context-required="group-or-company"
+              data-sensitive="true"
               onClick={() => openWindow(ConversaoProducaoMassa, {
               windowMode: true,
               onConcluido: () => {
@@ -243,6 +255,8 @@ export default function ProdutosTab(props) {
               variant="outline"
               className="border-green-300 text-green-700 hover:bg-green-50"
               data-permission="Estoque.Produtos.criar"
+              data-action="Estoque.Produtos.abrirImportadorPlanilha"
+              data-context-required="group-or-company"
               onClick={() => openWindow(ImportadorProdutosPlanilha, {
               windowMode: true,
               onConcluido: () => {
@@ -263,13 +277,29 @@ export default function ProdutosTab(props) {
             <Button 
               className="bg-blue-600 hover:bg-blue-700" 
               data-permission="Estoque.Produtos.criar"
+              data-action="Estoque.Produtos.abrirNovoProduto"
+              data-context-required="group-or-company"
+              data-sensitive="true"
               onClick={() => openWindow(ProdutoFormV22_Completo, {
               windowMode: true,
               onSubmit: async (data) => {
                 try {
                   await createInContext('Produto', data);
                   queryClient.invalidateQueries({ queryKey: ['produtos'] });
-                  try { await base44.entities.AuditLog.create({ acao: 'Criação', modulo: 'Estoque', entidade: 'Produto', descricao: 'Produto criado', data_hora: new Date().toISOString() }); } catch(_) {}
+                  try {
+                    await createInContext('AuditLog', {
+                      acao: 'Produto.criado',
+                      modulo: 'Estoque',
+                      entidade: 'Produto',
+                      descricao: 'Produto criado pelo Estoque',
+                      dados_novos: data,
+                      group_id: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
+                      grupo_id: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
+                      empresa_id: empresaAtual?.id || data?.empresa_id || null,
+                      sucesso: true,
+                      data_hora: new Date().toISOString()
+                    });
+                  } catch(_) {}
                   toast({ title: "✅ Produto criado!" });
                 } catch (error) {
                   toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
