@@ -3,6 +3,9 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { useUser } from "@/components/lib/UserContext";
+import { useToast } from "@/components/ui/use-toast";
 import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
 import VisualizadorProdutos from "@/components/cadastros/VisualizadorProdutos";
 import { Package, Stars, Factory, Boxes, Award, TrendingUp, Globe, Ruler } from "lucide-react";
@@ -27,10 +30,76 @@ function filterTiles(tiles, searchTerm) {
 export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }) {
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
+  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
+  const { user } = useUser();
+  const { toast } = useToast();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
 
-  const openProdutos = () => openWindow(VisualizadorProdutos, { windowMode: true }, { title: 'Todos os Produtos', width: 1400, height: 800 });
+  const registrarAuditoria = async (entidade, acao, sucesso = true) => {
+    try {
+      await createInContext("AuditLog", {
+        usuario_id: user?.id,
+        usuario: user?.full_name || user?.email || "Usuario",
+        acao,
+        modulo: "Cadastros",
+        entidade,
+        tipo_auditoria: sucesso ? "acesso" : "seguranca",
+        descricao: `${acao} em cadastro de produtos e servicos: ${entidade}`,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        dados_novos: { bloco: "Produtos & Servicos", entidade },
+        data_hora: new Date().toISOString(),
+        sucesso,
+      });
+    } catch (_) {}
+  };
+
+  const openProdutos = () => {
+    if (!contextoValido) {
+      toast({
+        title: "Selecione grupo ou empresa",
+        description: "Cadastros de produtos e servicos precisam de contexto ativo para abrir.",
+        variant: "destructive",
+      });
+      registrarAuditoria("Produto", "Bloqueio sem contexto", false);
+      return;
+    }
+    if (!canViewEntity("Produto", "Estoque")) {
+      toast({
+        title: "Acesso negado",
+        description: "Seu perfil nao possui permissao para visualizar produtos.",
+        variant: "destructive",
+      });
+      registrarAuditoria("Produto", "Bloqueio por permissao", false);
+      return;
+    }
+    registrarAuditoria("Produto", "Visualizacao");
+    openWindow(VisualizadorProdutos, { windowMode: true }, { title: 'Todos os Produtos', width: 1400, height: 800 });
+  };
 
   const openList = (entidade, titulo, Icon, campos, FormComp) => () => {
+    if (!contextoValido) {
+      toast({
+        title: "Selecione grupo ou empresa",
+        description: "Cadastros de produtos e servicos precisam de contexto ativo para abrir.",
+        variant: "destructive",
+      });
+      registrarAuditoria(entidade, "Bloqueio sem contexto", false);
+      return;
+    }
+    if (!canViewEntity(entidade)) {
+      toast({
+        title: "Acesso negado",
+        description: "Seu perfil nao possui permissao para visualizar este cadastro.",
+        variant: "destructive",
+      });
+      registrarAuditoria(entidade, "Bloqueio por permissao", false);
+      return;
+    }
+    registrarAuditoria(entidade, "Visualizacao");
     openWindow(VisualizadorUniversalEntidadeV24, { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true }, { title: titulo, width: 1400, height: 800 });
   };
 
@@ -64,14 +133,17 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
             </CardTitle>
           </div>
         </CardHeader>
-        <CardContent className="p-4 text-sm text-slate-600">Total consolidado do grupo/empresa.</CardContent>
+        <CardContent className="p-4 text-sm text-slate-600">
+          {contextoValido ? "Total consolidado do grupo/empresa." : "Selecione grupo ou empresa para abrir cadastros de produtos e servicos."}
+        </CardContent>
       </Card>
 
       {/* Card Produtos (abre VisualizadorProdutos especializado) */}
       <Card className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
-        onClick={canViewEntity("Produto", "Estoque") ? openProdutos : undefined}
+        onClick={openProdutos}
         data-permission="Cadastros.Produto.visualizar"
-        data-action="Cadastros.Produto.abrir">
+        data-action="Cadastros.Produto.abrir"
+        data-context-required="group-or-company">
         <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
@@ -83,9 +155,10 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
             </CardTitle>
             <Button size="sm" className="bg-purple-600 hover:bg-purple-700 rounded-sm text-xs h-7"
               onClick={(e) => { e.stopPropagation(); openProdutos(); }}
-              disabled={!canViewEntity("Produto", "Estoque")}
+              disabled={!contextoValido || !canViewEntity("Produto", "Estoque")}
               data-permission="Cadastros.Produto.visualizar"
-              data-action="Cadastros.Produto.abrir">
+              data-action="Cadastros.Produto.abrir"
+              data-context-required="group-or-company">
               Abrir
             </Button>
           </div>
@@ -95,9 +168,10 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
 
       {filteredTiles.map(({ k, title, Icon, campos, form: FormComp }) => (
         <Card key={k} className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
-          onClick={canViewEntity(k) ? openList(k, title, Icon, campos, FormComp) : undefined}
+          onClick={openList(k, title, Icon, campos, FormComp)}
           data-permission={`Cadastros.${k}.visualizar`}
-          data-action={`Cadastros.${k}.abrir`}>
+          data-action={`Cadastros.${k}.abrir`}
+          data-context-required="group-or-company">
           <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
@@ -109,9 +183,10 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
               </CardTitle>
               <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); openList(k, title, Icon, campos, FormComp)(); }}
-                disabled={!canViewEntity(k)}
+                disabled={!contextoValido || !canViewEntity(k)}
                 data-permission={`Cadastros.${k}.visualizar`}
-                data-action={`Cadastros.${k}.abrir`}>
+                data-action={`Cadastros.${k}.abrir`}
+                data-context-required="group-or-company">
                 Abrir
               </Button>
             </div>

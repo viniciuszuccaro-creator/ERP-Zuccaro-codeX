@@ -1,3 +1,13 @@
+### Cadastros Gerais - Fase 9 Pessoas e Produtos com Contexto/RBAC
+- Segui o proximo passo dos blocos iniciais de Cadastros Gerais, sem criar tela, modulo, componente ou arquivo novo.
+- `Bloco1Pessoas` passou a exigir Grupo/Empresa ativo antes de abrir clientes, fornecedores, transportadoras, colaboradores, representantes, contatos B2B, segmentos e regioes.
+- `Bloco2Produtos` passou a exigir Grupo/Empresa ativo antes de abrir produtos, servicos, setores, grupos, marcas, tabelas, kits, catalogo web e unidades de medida.
+- Os bloqueios por ausencia de contexto e por permissao agora exibem toast e tentam registrar auditoria contextual via `createInContext("AuditLog")`.
+- Cards, botoes, visualizador especializado de produtos, visualizador universal, formularios e busca dos blocos foram preservados.
+- Mantida a Regra-Mae: nenhuma funcionalidade, botao, card, formulario, visualizador ou fluxo foi removido; apenas contexto multiempresa, RBAC visual/acao e auditoria foram reforcados nos arquivos existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: revisar `VisualizadorUniversalEntidadeV24` e `VisualizadorProdutos` para reforcar filtros/contexto/RBAC nas listagens abertas pelos blocos.
+
 ### Cadastros Gerais - Fase 9 Blocos com Auditoria Contextual
 - Segui o proximo passo dos blocos de Cadastros Gerais, sem criar tela, modulo, componente ou arquivo novo.
 - `Bloco3Financeiro`, `Bloco4Logistica`, `Bloco5Organizacional` e `Bloco6Tecnologia` deixaram de auditar por `base44.entities.AuditLog.create` direto e passaram a usar `createInContext("AuditLog")`.
