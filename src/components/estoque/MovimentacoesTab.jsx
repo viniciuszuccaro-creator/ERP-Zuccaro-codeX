@@ -132,7 +132,7 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
       resetForm();
       try {
         if (novaMov?.id) {
-          await base44.entities.AuditLog.create({
+          await createInContext('AuditLog', {
             acao: 'Criação', modulo: 'Estoque', entidade: 'MovimentacaoEstoque', registro_id: novaMov.id,
             usuario: authUser?.full_name || authUser?.email, usuario_id: authUser?.id,
             descricao: 'Movimentação registrada', dados_novos: novaMov,
@@ -191,7 +191,11 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div
+      className="space-y-6 w-full h-full"
+      data-permission="Estoque.Movimentacoes.visualizar"
+      data-context-required="group-or-company"
+    >
       <div className="flex justify-between items-center mb-4">
         <div className="relative flex-1 max-w-md mr-4">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -200,12 +204,18 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
+            data-permission="Estoque.Movimentacoes.visualizar"
+            data-action="Estoque.Movimentacoes.buscar"
+            data-context-required="group-or-company"
           />
         </div>
         {canCreateMovimentacao && (
           <Button 
             className="bg-indigo-600 hover:bg-indigo-700"
             data-permission="Estoque.Movimentacoes.criar"
+            data-action="Estoque.Movimentacoes.abrirFormulario"
+            data-context-required="group-or-company"
+            data-sensitive="true"
             disabled={!contextoValido}
             onClick={() => openWindow(MovimentacaoForm, {
             windowMode: true,
@@ -250,7 +260,11 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
                     value={novaMovimentacao.tipo_movimentacao}
                     onValueChange={(value) => setNovaMovimentacao({ ...novaMovimentacao, tipo_movimentacao: value })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger
+                      data-permission="Estoque.Movimentacoes.criar"
+                      data-action="Estoque.Movimentacoes.tipo"
+                      data-context-required="group-or-company"
+                    >
                       <SelectValue placeholder="Selecione o tipo" />
                     </SelectTrigger>
                     <SelectContent>
@@ -270,7 +284,11 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
                     onValueChange={handleProdutoChange}
                     required
                   >
-                    <SelectTrigger>
+                    <SelectTrigger
+                      data-permission="Estoque.Movimentacoes.criar"
+                      data-action="Estoque.Movimentacoes.produto"
+                      data-context-required="group-or-company"
+                    >
                       <SelectValue placeholder="Selecione um produto" />
                     </SelectTrigger>
                     <SelectContent>
@@ -294,6 +312,9 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
                       onChange={(e) => setNovaMovimentacao({ ...novaMovimentacao, quantidade: e.target.value })}
                       required
                       className="rounded-r-none"
+                      data-permission="Estoque.Movimentacoes.criar"
+                      data-action="Estoque.Movimentacoes.quantidade"
+                      data-context-required="group-or-company"
                     />
                     {novaMovimentacao.unidade_medida && (
                       <span className="bg-gray-100 border border-l-0 border-gray-300 px-3 py-2 rounded-r-md text-sm text-gray-600">
@@ -311,6 +332,9 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
                     value={novaMovimentacao.data_movimentacao}
                     onChange={(e) => setNovaMovimentacao({ ...novaMovimentacao, data_movimentacao: e.target.value })}
                     required
+                    data-permission="Estoque.Movimentacoes.criar"
+                    data-action="Estoque.Movimentacoes.data"
+                    data-context-required="group-or-company"
                   />
                 </div>
 
@@ -321,6 +345,9 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
                     value={novaMovimentacao.documento_referencia}
                     onChange={(e) => setNovaMovimentacao({ ...novaMovimentacao, documento_referencia: e.target.value })}
                     placeholder="NF, OC, etc."
+                    data-permission="Estoque.Movimentacoes.criar"
+                    data-action="Estoque.Movimentacoes.documento"
+                    data-context-required="group-or-company"
                   />
                 </div>
 
@@ -331,6 +358,9 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
                     value={novaMovimentacao.responsavel}
                     onChange={(e) => setNovaMovimentacao({ ...novaMovimentacao, responsavel: e.target.value })}
                     placeholder="Nome do responsável"
+                    data-permission="Estoque.Movimentacoes.criar"
+                    data-action="Estoque.Movimentacoes.responsavel"
+                    data-context-required="group-or-company"
                   />
                 </div>
 
@@ -341,12 +371,23 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
                     value={novaMovimentacao.observacoes}
                     onChange={(e) => setNovaMovimentacao({ ...novaMovimentacao, observacoes: e.target.value })}
                     rows={3}
+                    data-permission="Estoque.Movimentacoes.criar"
+                    data-action="Estoque.Movimentacoes.observacoes"
+                    data-context-required="group-or-company"
                   />
                 </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
-                <Button type="submit" disabled={createMutation.isPending} className="bg-indigo-600 hover:bg-indigo-700">
+                <Button
+                  type="submit"
+                  disabled={createMutation.isPending}
+                  className="bg-indigo-600 hover:bg-indigo-700"
+                  data-permission="Estoque.Movimentacoes.criar"
+                  data-action="Estoque.Movimentacoes.registrar"
+                  data-context-required="group-or-company"
+                  data-sensitive="true"
+                >
                   {createMutation.isPending ? 'Salvando...' : 'Registrar'}
                 </Button>
               </div>

@@ -15,10 +15,9 @@ import ProtectedField from "@/components/security/ProtectedField";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import ExportButton from "@/components/ExportButton";
-import { base44 } from "@/api/base44Client";
 
 export default function RelatoriosEstoque({ produtos, movimentacoes }) {
-  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, createInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
@@ -30,7 +29,7 @@ export default function RelatoriosEstoque({ produtos, movimentacoes }) {
 
   const auditRelatorioEstoque = async ({ acao, sucesso = true, motivo = null, detalhes = {} }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         acao,
         modulo: 'Estoque',
         entidade: 'RelatoriosEstoque',
@@ -213,17 +212,17 @@ export default function RelatoriosEstoque({ produtos, movimentacoes }) {
           </CardContent>
         </Card>
       )}
-      <Tabs defaultValue="abc">
+      <Tabs defaultValue="abc" className="w-full h-full" data-permission="Estoque.Relatorios.visualizar" data-context-required="group-or-company">
         <TabsList className="bg-white border flex-wrap h-auto">
-          <TabsTrigger value="abc">
+          <TabsTrigger value="abc" data-action="RelatoriosEstoque.tab_abc" data-permission="Estoque.Relatorios.visualizar" data-context-required="group-or-company">
             <TrendingUp className="w-4 h-4 mr-2" />
             Curva ABC
           </TabsTrigger>
-          <TabsTrigger value="giro">
+          <TabsTrigger value="giro" data-action="RelatoriosEstoque.tab_giro" data-permission="Estoque.Relatorios.visualizar" data-context-required="group-or-company">
             <TrendingDown className="w-4 h-4 mr-2" />
             Giro de Estoque
           </TabsTrigger>
-          <TabsTrigger value="parados">
+          <TabsTrigger value="parados" data-action="RelatoriosEstoque.tab_parados" data-permission="Estoque.Relatorios.visualizar" data-context-required="group-or-company">
             <AlertCircle className="w-4 h-4 mr-2" />
             Itens Parados
           </TabsTrigger>

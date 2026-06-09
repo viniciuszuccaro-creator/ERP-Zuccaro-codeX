@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import { base44 } from '@/api/base44Client';
 import InventarioContagem from './InventarioContagem';
 import { z } from 'zod';
 import FormWrapper from '@/components/common/FormWrapper';
@@ -26,7 +25,7 @@ export default function InventarioForm({ windowMode = true }) { // w-full/h-full
 
   const auditInventario = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         acao,
         modulo: 'Estoque',
         entidade: 'Inventario',
@@ -141,16 +140,36 @@ export default function InventarioForm({ windowMode = true }) { // w-full/h-full
         <div className="grid grid-cols-3 gap-3">
           <div>
             <label className="text-xs text-slate-600">Descrição</label>
-            <Input value={inv.descricao} disabled={controlesDesabilitados} onChange={(e)=>setInv({ ...inv, descricao: e.target.value })} placeholder="Inventário Mês/Ano" />
+            <Input
+              value={inv.descricao}
+              disabled={controlesDesabilitados}
+              onChange={(e)=>setInv({ ...inv, descricao: e.target.value })}
+              placeholder="Inventário Mês/Ano"
+              data-action="Estoque.Inventario.descricao"
+              data-permission="Estoque.Inventario.editar"
+              data-context-required="group-or-company"
+            />
           </div>
           <div>
             <label className="text-xs text-slate-600">Data de Referência</label>
-            <Input type="date" value={inv.data_referencia} disabled={controlesDesabilitados} onChange={(e)=>setInv({ ...inv, data_referencia: e.target.value })} />
+            <Input
+              type="date"
+              value={inv.data_referencia}
+              disabled={controlesDesabilitados}
+              onChange={(e)=>setInv({ ...inv, data_referencia: e.target.value })}
+              data-action="Estoque.Inventario.dataReferencia"
+              data-permission="Estoque.Inventario.editar"
+              data-context-required="group-or-company"
+            />
           </div>
           <div>
             <label className="text-xs text-slate-600">Status</label>
             <Select value={inv.status} disabled={controlesDesabilitados} onValueChange={(v)=>setInv({ ...inv, status: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger
+                data-action="Estoque.Inventario.status"
+                data-permission="Estoque.Inventario.editar"
+                data-context-required="group-or-company"
+              ><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="Aberto">Aberto</SelectItem>
                 <SelectItem value="Em Contagem">Em Contagem</SelectItem>
@@ -166,8 +185,25 @@ export default function InventarioForm({ windowMode = true }) { // w-full/h-full
         <InventarioContagem itens={inv.itens} disabled={controlesDesabilitados} onChange={(itens)=>setInv({ ...inv, itens })} />
 
         <div className="flex justify-end gap-2 pt-2 border-t">
-          <Button variant="outline" type="submit" disabled={controlesDesabilitados}>Salvar</Button>
-          <Button type="button" onClick={aprovar} className="bg-green-600 hover:bg-green-700" disabled={salvando || inv.status==='Concluído' || !contextoValido || !podeAprovar}>Aprovar e Aplicar Ajustes</Button>
+          <Button
+            variant="outline"
+            type="submit"
+            disabled={controlesDesabilitados}
+            data-action="Estoque.Inventario.salvar"
+            data-permission="Estoque.Inventario.editar"
+            data-context-required="group-or-company"
+            data-sensitive="true"
+          >Salvar</Button>
+          <Button
+            type="button"
+            onClick={aprovar}
+            className="bg-green-600 hover:bg-green-700"
+            disabled={salvando || inv.status==='Concluído' || !contextoValido || !podeAprovar}
+            data-action="Estoque.Inventario.aprovarAplicar"
+            data-permission="Estoque.Inventario.aprovar"
+            data-context-required="group-or-company"
+            data-sensitive="true"
+          >Aprovar e Aplicar Ajustes</Button>
         </div>
       </CardContent>
       </FormWrapper>

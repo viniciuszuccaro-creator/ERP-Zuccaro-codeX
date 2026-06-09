@@ -1,3 +1,13 @@
+### Estoque - Fase 9 Movimentacoes, Inventario e Relatorios Contextuais
+- Segui o proximo passo salvo para `MovimentacoesTab`, `InventarioForm` e `RelatoriosEstoque`, sem criar tela, modulo, componente ou arquivo novo.
+- `MovimentacoesTab`, `InventarioForm` e `RelatoriosEstoque` deixaram de registrar auditoria direta por `base44.entities.AuditLog.create` e passaram a usar `createInContext("AuditLog")`.
+- A busca, abertura de formulario, campos sensiveis, registro de movimentacao, salvamento/aprovacao de inventario e abas/exportacoes de relatorios receberam marcadores de permissao, acao e contexto obrigatorio.
+- Os containers principais de movimentacoes e relatorios receberam reforco de `w-full h-full`, preservando o layout responsivo e o fluxo visual atual.
+- Foram preservados criacao de movimentacao por janela, atualizacao contextual de estoque do produto, inventario com contagem, aprovacao, exportacoes ABC/giro/parados, filtros por contexto e protecao de campos financeiros.
+- Mantida a Regra-Mae: nenhuma movimentacao, campo, botao, aba, exportacao, inventario ou relatorio foi removido; apenas auditoria, RBAC visual/acao, multiempresa e rastreabilidade foram reforcados nos arquivos existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar no Estoque revisando formularios auxiliares (`MovimentacaoForm`, `InventarioContagem`) para completar marcadores RBAC/contexto em todos os inputs e acoes internas.
+
 ### Cadastros/Estoque - Fase 9 NF-e de Produtos com Auditoria Contextual
 - Segui o proximo passo salvo para `ImportacaoProdutoNFe` e `ImportarProdutosNFe`, sem criar tela, modulo, componente ou arquivo novo.
 - Os dois importadores de produto por NF-e deixaram de auditar por `base44.entities.AuditLog.create` direto e passaram a usar `createInContext("AuditLog")`.
