@@ -1,3 +1,13 @@
+### Compras - Fase 9 Importacao NF-e Contextual
+- Segui o proximo passo salvo para `ImportacaoNFeRecebimento`, sem criar tela, modulo, componente ou arquivo novo.
+- `ImportacaoNFeRecebimento` deixou de auditar por `base44.entities.AuditLog.create` direto e passou a usar `createInContext("AuditLog")`, mantendo groupId/grupoId/empresaId no registro.
+- O fluxo de processar XML, confirmar recebimento, criar `ImportacaoXMLNFe`, criar `MovimentacaoEstoque`, atualizar produto e invalidar queries foi preservado.
+- A selecao de XML ganhou bloqueio de seguranca para arquivos acima de 10 MB, com auditoria contextual do bloqueio antes de limpar o input.
+- Foram preservados card de upload, progresso, resultado da NF-e, avisos, tabela de itens, confirmacao de recebimento, RBAC por permissao e marcadores de contexto ja existentes.
+- Mantida a Regra-Mae: a melhoria ficou no arquivo existente, reforcou seguranca, auditoria, multiempresa e controle de permissao sem remover funcionalidade.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em Compras revisando `RecebimentoOCForm` e pontos de recebimento dentro de `OrdensCompraTab` para reforcar marcadores RBAC/contexto e auditoria antes/depois.
+
 ### Compras - Fase 9 Compra Rapida sem Auth Direto
 - Segui o proximo passo salvo para `SolicitarCompraRapidoModal` e `CotacoesTab`, sem criar tela, modulo, componente ou arquivo novo.
 - `SolicitarCompraRapidoModal` deixou de buscar usuario por `base44.auth.me()` direto e passou a reaproveitar o `useUser` existente no projeto, igual a outros fluxos de Compras, Estoque e Financeiro.

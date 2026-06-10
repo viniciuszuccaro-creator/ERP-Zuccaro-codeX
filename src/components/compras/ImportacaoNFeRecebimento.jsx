@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+
+const XML_MAX_SIZE_BYTES = 10 * 1024 * 1024;
 
 export default function ImportacaoNFeRecebimento({ windowMode = false }) {
   const [arquivo, setArquivo] = useState(null);
@@ -32,7 +33,7 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
 
   const auditImportacao = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         acao,
         modulo: 'Compras',
         entidade: 'ImportacaoXMLNFe',
@@ -232,7 +233,7 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
     }
   });
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
       if (!file.name.toLowerCase().endsWith('.xml')) {
@@ -241,6 +242,22 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
           description: "Por favor, selecione um arquivo XML",
           variant: "destructive"
         });
+        e.target.value = "";
+        return;
+      }
+      if (file.size > XML_MAX_SIZE_BYTES) {
+        await auditImportacao({
+          acao: 'ImportacaoNFe.arquivo_bloqueado',
+          sucesso: false,
+          motivo: 'arquivo_xml_muito_grande',
+          dados: { arquivo: file.name, tamanho_bytes: file.size }
+        });
+        toast({
+          title: "Arquivo muito grande",
+          description: "Selecione um XML de ate 10 MB para processar com seguranca.",
+          variant: "destructive"
+        });
+        e.target.value = "";
         return;
       }
       setArquivo(file);
