@@ -1,3 +1,14 @@
+### Compras - Fase 9 Recebimento OC com RBAC
+- Segui o proximo passo salvo para `RecebimentoOCForm` e pontos de recebimento em `OrdensCompraTab`, sem criar tela, modulo, componente ou arquivo novo.
+- `RecebimentoOCForm` passou a calcular `groupId/grupoId/empresaId`, validar contexto e permissao de recebimento, e bloquear envio quando faltar Grupo/Empresa ou RBAC.
+- O formulario de recebimento passou a auditar bloqueios via `createInContext("AuditLog")`, mantendo a auditoria contextual no mesmo fluxo de Ordem de Compra.
+- Campos de data, NF de entrada, observacoes, botao de confirmar e container em modo janela receberam marcadores de permissao, contexto e sensibilidade.
+- `OrdensCompraTab` passou a auditar tentativa bloqueada de abrir recebimento e abertura autorizada do formulario antes de chamar a janela existente.
+- Foram preservados recebimento de OC, confirmacao, atualizacao de estoque/produto, estatisticas do fornecedor, abertura de avaliacao e layout `w-full h-full`.
+- Mantida a Regra-Mae: nenhuma acao, botao, dialog, campo ou fluxo foi removido; apenas RBAC, multiempresa, seguranca e auditoria foram reforcados nos arquivos existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em Compras revisando `SolicitacoesCompraTab` e `SolicitacaoCompraForm` para reforcar permissao granular, contexto e auditoria antes/depois nas solicitacoes.
+
 ### Compras - Fase 9 Importacao NF-e Contextual
 - Segui o proximo passo salvo para `ImportacaoNFeRecebimento`, sem criar tela, modulo, componente ou arquivo novo.
 - `ImportacaoNFeRecebimento` deixou de auditar por `base44.entities.AuditLog.create` direto e passou a usar `createInContext("AuditLog")`, mantendo groupId/grupoId/empresaId no registro.

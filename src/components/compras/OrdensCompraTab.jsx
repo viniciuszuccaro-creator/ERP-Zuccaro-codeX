@@ -480,8 +480,21 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
     setIsDialogOpen(true);
   };
 
-  const handleReceberClick = (oc) => {
-    if (!contextoValido || !canReceiveOC) { toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de receber' : 'Sem permissao para receber', variant: 'destructive' }); return; }
+  const handleReceberClick = async (oc) => {
+    if (!contextoValido || !canReceiveOC) {
+      await auditOrdemCompra({
+        acao: 'OrdemCompra.recebimento_abertura_bloqueada',
+        sucesso: false,
+        motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+        dados: { ordem_compra_id: oc.id, numero_oc: oc.numero_oc }
+      });
+      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de receber' : 'Sem permissao para receber', variant: 'destructive' });
+      return;
+    }
+    await auditOrdemCompra({
+      acao: 'OrdemCompra.recebimento_aberto',
+      dados: { ordem_compra_id: oc.id, numero_oc: oc.numero_oc, status: oc.status }
+    });
     openWindow(RecebimentoOCForm, {
       ordemCompra: oc,
       windowMode: true,
