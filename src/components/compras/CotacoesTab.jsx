@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,7 +34,7 @@ export default function CotacoesTab({ windowMode = false }) {
 
   const auditCotacao = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         acao,
         modulo: 'Compras',
         entidade: 'Cotacao',
@@ -289,6 +288,9 @@ export default function CotacoesTab({ windowMode = false }) {
           <Button
             className="bg-cyan-600 hover:bg-cyan-700"
             disabled={!contextoValido || !canCreateCotacao}
+            data-permission="Compras.Cotacao.criar"
+            data-action="Compras.Cotacao.abrirJanela"
+            data-context-required="group-or-company"
             onClick={() => openWindow(CotacaoForm, {
               windowMode: true,
               onSubmit: async (data) => {
@@ -312,18 +314,34 @@ export default function CotacoesTab({ windowMode = false }) {
 
         <Dialog open={false}>
           <DialogTrigger asChild>
-            <Button className="hidden">Removido</Button>
+            <Button
+              className="hidden"
+              data-permission="Compras.Cotacao.criar"
+              data-action="Compras.Cotacao.dialogLegado"
+              data-context-required="group-or-company"
+            >
+              Removido
+            </Button>
           </DialogTrigger>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Nova Cotação de Compras</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-6"
+              data-permission="Compras.Cotacao.criar"
+              data-action="Compras.Cotacao.formularioLegado"
+              data-context-required="group-or-company"
+            >
               <div>
                 <Label>Descrição da Cotação *</Label>
                 <Input
                   value={formCotacao.descricao}
                   onChange={(e) => setFormCotacao({ ...formCotacao, descricao: e.target.value })}
+                  data-permission="Compras.Cotacao.criar"
+                  data-action="Compras.Cotacao.descricao"
+                  data-context-required="group-or-company"
                   placeholder="Ex: Cotação de Bitolas - Lote Fevereiro"
                   required
                 />
@@ -335,6 +353,9 @@ export default function CotacoesTab({ windowMode = false }) {
                   type="date"
                   value={formCotacao.data_limite_resposta}
                   onChange={(e) => setFormCotacao({ ...formCotacao, data_limite_resposta: e.target.value })}
+                  data-permission="Compras.Cotacao.criar"
+                  data-action="Compras.Cotacao.dataLimite"
+                  data-context-required="group-or-company"
                   required
                 />
               </div>
@@ -342,7 +363,15 @@ export default function CotacoesTab({ windowMode = false }) {
               <div>
                 <div className="flex justify-between items-center mb-3">
                   <Label>Itens para Cotação *</Label>
-                  <Button type="button" size="sm" variant="outline" onClick={adicionarItem}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={adicionarItem}
+                    data-permission="Compras.Cotacao.criar"
+                    data-action="Compras.Cotacao.adicionarItem"
+                    data-context-required="group-or-company"
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     Adicionar Item
                   </Button>
@@ -359,7 +388,11 @@ export default function CotacoesTab({ windowMode = false }) {
                             setFormCotacao({ ...formCotacao, itens: novosItens });
                           }}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger
+                            data-permission="Compras.Cotacao.criar"
+                            data-action="Compras.Cotacao.itemProduto"
+                            data-context-required="group-or-company"
+                          >
                             <SelectValue placeholder="Selecione o produto" />
                           </SelectTrigger>
                           <SelectContent>
@@ -381,6 +414,10 @@ export default function CotacoesTab({ windowMode = false }) {
                             setFormCotacao({ ...formCotacao, itens: novosItens });
                           }}
                           placeholder="Qtd"
+                          data-permission="Compras.Cotacao.criar"
+                          data-action="Compras.Cotacao.itemQuantidade"
+                          data-context-required="group-or-company"
+                          data-sensitive="true"
                         />
                       </div>
                       <div className="col-span-2">
@@ -392,7 +429,11 @@ export default function CotacoesTab({ windowMode = false }) {
                             setFormCotacao({ ...formCotacao, itens: novosItens });
                           }}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger
+                            data-permission="Compras.Cotacao.criar"
+                            data-action="Compras.Cotacao.itemUnidade"
+                            data-context-required="group-or-company"
+                          >
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -413,6 +454,9 @@ export default function CotacoesTab({ windowMode = false }) {
                             setFormCotacao({ ...formCotacao, itens: novosItens });
                           }}
                           placeholder="Obs"
+                          data-permission="Compras.Cotacao.criar"
+                          data-action="Compras.Cotacao.itemObservacoes"
+                          data-context-required="group-or-company"
                         />
                       </div>
                       <div className="col-span-1 flex items-center justify-center">
@@ -423,6 +467,9 @@ export default function CotacoesTab({ windowMode = false }) {
                             size="icon"
                             onClick={() => removerItem(idx)}
                             className="text-red-600"
+                            data-permission="Compras.Cotacao.criar"
+                            data-action="Compras.Cotacao.removerItem"
+                            data-context-required="group-or-company"
                           >
                             ×
                           </Button>
@@ -441,6 +488,9 @@ export default function CotacoesTab({ windowMode = false }) {
                       <Checkbox
                         checked={formCotacao.fornecedores_selecionados.includes(fornecedor.id)}
                         onCheckedChange={() => toggleFornecedor(fornecedor.id)}
+                        data-permission="Compras.Cotacao.criar"
+                        data-action="Compras.Cotacao.selecionarFornecedor"
+                        data-context-required="group-or-company"
                       />
                       <div className="flex-1">
                         <p className="font-medium text-sm">{fornecedor.nome}</p>
@@ -474,17 +524,31 @@ export default function CotacoesTab({ windowMode = false }) {
                   onChange={(e) => setFormCotacao({ ...formCotacao, observacoes_gerais: e.target.value })}
                   placeholder="Condições especiais, prazos, formas de pagamento..."
                   rows={3}
+                  data-permission="Compras.Cotacao.criar"
+                  data-action="Compras.Cotacao.observacoesGerais"
+                  data-context-required="group-or-company"
                 />
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setDialogOpen(false)}
+                  data-permission="Compras.Cotacao.criar"
+                  data-action="Compras.Cotacao.cancelar"
+                  data-context-required="group-or-company"
+                >
                   Cancelar
                 </Button>
                 <Button
                   type="submit"
                   disabled={criarCotacaoMutation.isPending || formCotacao.fornecedores_selecionados.length < 2}
                   className="bg-cyan-600 hover:bg-cyan-700"
+                  data-permission="Compras.Cotacao.criar"
+                  data-action="Compras.Cotacao.confirmar"
+                  data-context-required="group-or-company"
+                  data-sensitive="true"
                 >
                   <Send className="w-4 h-4 mr-2" />
                   {criarCotacaoMutation.isPending ? 'Enviando...' : 'Criar e Enviar'}
@@ -522,6 +586,9 @@ export default function CotacoesTab({ windowMode = false }) {
                   variant="outline"
                   size="sm"
                   onClick={() => setComparativoModal(cotacao)}
+                  data-permission="Compras.Cotacao.visualizar"
+                  data-action="Compras.Cotacao.verPropostas"
+                  data-context-required="group-or-company"
                 >
                   <Eye className="w-4 h-4 mr-2" />
                   Ver Propostas ({cotacao.propostas_recebidas}/{cotacao.fornecedores_convidados})
@@ -577,7 +644,14 @@ export default function CotacoesTab({ windowMode = false }) {
               <p className="text-xs text-slate-500 mb-3">
                 Compare propostas de fornecedores
               </p>
-              <Button size="sm" onClick={() => setDialogOpen(true)} className="bg-cyan-600 hover:bg-cyan-700">
+              <Button
+                size="sm"
+                onClick={() => setDialogOpen(true)}
+                className="bg-cyan-600 hover:bg-cyan-700"
+                data-permission="Compras.Cotacao.criar"
+                data-action="Compras.Cotacao.criarVazio"
+                data-context-required="group-or-company"
+              >
                 <Plus className="w-3 h-3 mr-1" />
                 Criar Cotação
               </Button>
@@ -707,6 +781,9 @@ export default function CotacoesTab({ windowMode = false }) {
                               <Button
                                 variant="outline"
                                 size="sm"
+                                data-permission="Compras.Cotacao.solicitar_esclarecimento"
+                                data-action="Compras.Cotacao.solicitarEsclarecimentos"
+                                data-context-required="group-or-company"
                                 onClick={() => {
                                   toast({
                                     title: "📧 E-mail Enviado",
@@ -723,6 +800,10 @@ export default function CotacoesTab({ windowMode = false }) {
                                   className="bg-green-600 hover:bg-green-700"
                                   onClick={() => gerarOrdemCompraMutation.mutate(proposta)}
                                   disabled={gerarOrdemCompraMutation.isPending || !contextoValido || !canGerarOC}
+                                  data-permission="Compras.Cotacao.gerar_oc"
+                                  data-action="Compras.Cotacao.gerarOrdemCompra"
+                                  data-context-required="group-or-company"
+                                  data-sensitive="true"
                                 >
                                   <ShoppingCart className="w-4 h-4 mr-2" />
                                   {gerarOrdemCompraMutation.isPending ? 'Gerando...' : 'Gerar Ordem de Compra'}

@@ -1,3 +1,14 @@
+### Compras - Fase 9 Cotacoes e Compra Rapida Contextuais
+- Segui o proximo passo salvo para `CotacoesTab` e `SolicitarCompraRapidoModal`, sem criar tela, modulo, componente ou arquivo novo.
+- `CotacoesTab` deixou de auditar cotacoes por `base44.entities.AuditLog.create` direto e passou a usar `createInContext("AuditLog")`.
+- O dialog legado de cotacao recebeu marcadores de permissao, acao, contexto obrigatorio e sensibilidade nos campos de descricao, data limite, itens, quantidade, unidade, observacoes, fornecedores, cancelamento e confirmacao.
+- A lista/comparativo de cotacoes recebeu marcadores de permissao, acao e contexto nos botoes de abrir janela, criar vazio, ver propostas, solicitar esclarecimentos e gerar ordem de compra.
+- `SolicitarCompraRapidoModal` reforcou carimbo `groupId/grupoId/empresaId`, auditoria contextual e marcadores RBAC/contexto/sensibilidade nos controles de compra rapida por estoque baixo.
+- Foram preservados cotacoes mock locais, comparativo de propostas, geracao de OC por cotacao, sugestao de compra rapida por estoque baixo, usuario logado, query invalidation, toasts, dialogs e layout responsivo.
+- Mantida a Regra-Mae: nenhum botao, campo, modal, cotacao, proposta, solicitacao rapida ou fluxo de geracao de OC foi removido; apenas auditoria contextual, RBAC visual/acao, multiempresa e rastreabilidade foram reforcados nos arquivos existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em Compras revisando `FornecedoresTab` e `DetalhesFornecedor` para reforcar contexto, RBAC e auditoria nos dados de fornecedor usados por cotacoes e OCs.
+
 ### Compras - Fase 9 Formularios de OC e Solicitacao Contextuais
 - Segui o proximo passo salvo para `OrdemCompraForm` e `SolicitacaoCompraForm`, sem criar tela, modulo, componente ou arquivo novo.
 - `OrdemCompraForm` manteve `FormWrapper`, `filterInContext` e `carimbarContexto`, com queries de fornecedores/produtos vinculadas ao `groupId/empresaId`.

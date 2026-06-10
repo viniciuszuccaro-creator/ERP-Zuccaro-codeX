@@ -23,11 +23,32 @@ export default function SolicitarCompraRapidoModal({ produto, isOpen, onClose, w
   const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
   const { canCreate, hasPermission } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
   const contextoValido = !!(empresaAtual?.id || groupId);
   const podeCriarSolicitacao = canCreate('Compras', 'SolicitacaoCompra') ||
     canCreate('Compras', 'Solicitação Compra') ||
     hasPermission('Compras', 'Solicitações de Compra', 'criar');
   const controlesBloqueados = !contextoValido || !podeCriarSolicitacao;
+
+  const auditSolicitacaoRapida = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
+    try {
+      await createInContext('AuditLog', {
+        acao,
+        modulo: 'Compras',
+        entidade: 'SolicitacaoCompra',
+        tipo_auditoria: sucesso ? 'entidade' : 'seguranca',
+        descricao: motivo || 'Auditoria de solicitacao rapida por estoque baixo.',
+        dados_novos: dados,
+        group_id: groupId,
+        grupo_id: groupId,
+        empresa_id: empresaId,
+        sucesso,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar solicitacao rapida de compra:', error);
+    }
+  };
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -52,25 +73,53 @@ export default function SolicitarCompraRapidoModal({ produto, isOpen, onClose, w
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => createInContext('SolicitacaoCompra', {
-      ...data,
-      ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
-      ...(groupId ? { group_id: groupId } : {}),
-      solicitante: user?.full_name,
-      solicitante_id: user?.id,
-      setor: "Estoque"
-    }),
+    mutationFn: async (data) => {
+      const criada = await createInContext('SolicitacaoCompra', {
+        ...data,
+        ...(empresaId ? { empresa_id: empresaId } : {}),
+        ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
+        solicitante: user?.full_name,
+        solicitante_id: user?.id,
+        setor: "Estoque"
+      });
+      await auditSolicitacaoRapida({
+        acao: 'SolicitacaoCompraRapida.criada',
+        dados: {
+          solicitacao_id: criada?.id,
+          produto_id: data.produto_id,
+          quantidade_solicitada: data.quantidade_solicitada,
+          prioridade: data.prioridade
+        }
+      });
+      return criada;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['solicitacoes-compra'] });
       toast({ title: "✅ Solicitação de compra criada!" });
       onClose();
     },
+    onError: (error) => {
+      toast({
+        title: "Solicitacao nao criada",
+        description: error?.message || "Erro ao criar solicitacao de compra.",
+        variant: "destructive"
+      });
+    },
   });
   const controlesDesabilitados = controlesBloqueados || createMutation.isPending;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!contextoValido || !podeCriarSolicitacao) {
+      await auditSolicitacaoRapida({
+        acao: 'SolicitacaoCompraRapida.criar_bloqueada',
+        sucesso: false,
+        motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+        dados: {
+          produto_id: produto.id,
+          quantidade_solicitada: formData.quantidade_solicitada
+        }
+      });
       toast({
         title: "Ação bloqueada",
         description: "Selecione um grupo/empresa e confirme sua permissão para criar solicitações.",
@@ -82,7 +131,14 @@ export default function SolicitarCompraRapidoModal({ produto, isOpen, onClose, w
   };
 
   const content = (
-    <form onSubmit={handleSubmit} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+    <form
+      onSubmit={handleSubmit}
+      className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}
+      data-permission="Compras.SolicitacaoCompra.criar"
+      data-action="Compras.SolicitacaoCompraRapida.formulario"
+      data-context-required="group-or-company"
+      data-context-mode={empresaId ? 'empresa' : 'grupo'}
+    >
       {!windowMode && (
         <div className="flex items-center gap-2 mb-4">
           <ShoppingCart className="w-5 h-5 text-orange-600" />
@@ -156,6 +212,10 @@ export default function SolicitarCompraRapidoModal({ produto, isOpen, onClose, w
                   disabled={controlesDesabilitados}
                   required
                   className="pr-16"
+                  data-permission="Compras.SolicitacaoCompra.criar"
+                  data-action="Compras.SolicitacaoCompraRapida.quantidade"
+                  data-context-required="group-or-company"
+                  data-sensitive="true"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">
                   {formData.unidade_medida}
@@ -176,6 +236,9 @@ export default function SolicitarCompraRapidoModal({ produto, isOpen, onClose, w
                   onChange={(e) => setFormData({ ...formData, data_necessidade: e.target.value })}
                   disabled={controlesDesabilitados}
                   required
+                  data-permission="Compras.SolicitacaoCompra.criar"
+                  data-action="Compras.SolicitacaoCompraRapida.dataNecessidade"
+                  data-context-required="group-or-company"
                 />
                 <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
               </div>
@@ -190,7 +253,11 @@ export default function SolicitarCompraRapidoModal({ produto, isOpen, onClose, w
               onValueChange={(v) => setFormData({ ...formData, prioridade: v })}
               disabled={controlesDesabilitados}
             >
-              <SelectTrigger>
+              <SelectTrigger
+                data-permission="Compras.SolicitacaoCompra.criar"
+                data-action="Compras.SolicitacaoCompraRapida.prioridade"
+                data-context-required="group-or-company"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -212,6 +279,10 @@ export default function SolicitarCompraRapidoModal({ produto, isOpen, onClose, w
               required
               rows={3}
               placeholder="Detalhe o motivo da compra..."
+              data-permission="Compras.SolicitacaoCompra.criar"
+              data-action="Compras.SolicitacaoCompraRapida.justificativa"
+              data-context-required="group-or-company"
+              data-sensitive="true"
             />
           </div>
 
@@ -238,7 +309,14 @@ export default function SolicitarCompraRapidoModal({ produto, isOpen, onClose, w
       {/* BOTÕES */}
       <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
         {!windowMode && (
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            data-permission="Compras.SolicitacaoCompra.criar"
+            data-action="Compras.SolicitacaoCompraRapida.cancelar"
+            data-context-required="group-or-company"
+          >
             Cancelar
           </Button>
         )}
@@ -246,6 +324,10 @@ export default function SolicitarCompraRapidoModal({ produto, isOpen, onClose, w
           type="submit" 
           disabled={controlesDesabilitados}
           className="bg-orange-600 hover:bg-orange-700"
+          data-permission="Compras.SolicitacaoCompra.criar"
+          data-action="Compras.SolicitacaoCompraRapida.confirmar"
+          data-context-required="group-or-company"
+          data-sensitive="true"
         >
           <ShoppingCart className="w-4 h-4 mr-2" />
           {createMutation.isPending ? 'Criando...' : 'Criar Solicitação'}
@@ -255,12 +337,25 @@ export default function SolicitarCompraRapidoModal({ produto, isOpen, onClose, w
   );
 
   if (windowMode) {
-    return <div className="w-full h-full bg-white">{content}</div>;
+    return (
+      <div
+        className="w-full h-full bg-white"
+        data-permission="Compras.SolicitacaoCompra.criar"
+        data-context-required="group-or-company"
+      >
+        {content}
+      </div>
+    );
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent
+        className="max-w-2xl"
+        data-permission="Compras.SolicitacaoCompra.criar"
+        data-action="Compras.SolicitacaoCompraRapida.dialog"
+        data-context-required="group-or-company"
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShoppingCart className="w-5 h-5 text-orange-600" />
