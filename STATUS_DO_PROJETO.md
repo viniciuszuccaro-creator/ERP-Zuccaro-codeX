@@ -1,3 +1,15 @@
+### Compras - Fase 9 Fornecedores Contextuais
+- Segui o proximo passo salvo para `FornecedoresTab` e `DetalhesFornecedor`, sem criar tela, modulo, componente ou arquivo novo.
+- `FornecedoresTab` foi limpo de imports, estados, filtros e helpers antigos que nao eram usados no fluxo atual do `VisualizadorUniversalEntidade`, reduzindo ruido tecnico sem remover funcionalidade.
+- `FornecedoresTab` recebeu marcadores de permissao, contexto, grupo e empresa no wrapper principal e no modo janela.
+- `DetalhesFornecedor` deixou de auditar por `base44.entities.AuditLog.create` direto e passou a usar `createInContext("AuditLog")`.
+- `DetalhesFornecedor` passou a auditar sucesso e falha de atualizacao do fornecedor, mantendo tambem os logs especificos de documento adicionado/removido/bloqueado/cancelado.
+- Abas, fechar detalhes, editar condicoes, upload de documentos, tipo, nome do arquivo, validade, observacao, adicionar, download, remover documento e editar dados bancarios receberam marcadores RBAC/contexto/sensibilidade.
+- Foram preservados visualizador universal de fornecedores, cadastro completo, queries contextuais de OC/NF/contas a pagar, historico, condicoes comerciais, documentos, pagamentos, dialogs, toasts e layout `w-full h-full`.
+- Mantida a Regra-Mae: nenhum fornecedor, aba, tabela, dialog, documento, consulta, botao ou fluxo de compra/pagamento foi removido; apenas manutencao, auditoria contextual, RBAC visual/acao, multiempresa e rastreabilidade foram reforcados nos arquivos existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em Compras revisando `CotacaoForm` e `AvaliacaoFornecedorForm` para reforcar auditoria/contexto nos formularios auxiliares ligados a fornecedores e cotacoes.
+
 ### Compras - Fase 9 Cotacoes e Compra Rapida Contextuais
 - Segui o proximo passo salvo para `CotacoesTab` e `SolicitarCompraRapidoModal`, sem criar tela, modulo, componente ou arquivo novo.
 - `CotacoesTab` deixou de auditar cotacoes por `base44.entities.AuditLog.create` direto e passou a usar `createInContext("AuditLog")`.

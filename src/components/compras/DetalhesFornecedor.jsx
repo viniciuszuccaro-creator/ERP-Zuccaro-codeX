@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,7 +44,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
 
   const queryClient = useQueryClient();
   const { hasPermission, canEdit } = usePermissions();
-  const { empresaAtual, grupoAtual, contexto, filterInContext, updateInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, filterInContext, updateInContext, createInContext } = useContextoVisual();
   const groupId = grupoAtual?.id || fornecedor?.group_id || fornecedor?.grupo_id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || fornecedor?.empresa_dona_id || fornecedor?.empresa_id || null;
   const contextoValido = Boolean(groupId || empresaId);
@@ -57,7 +56,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
 
   const auditFornecedor = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         acao,
         modulo: 'Compras',
         entidade: 'Fornecedor',
@@ -99,9 +98,25 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
 
   const updateFornecedorMutation = useMutation({
     mutationFn: ({ id, data }) => updateInContext('Fornecedor', id, data, 'empresa_dona_id'),
-    onSuccess: () => {
+    onSuccess: async (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
+      await auditFornecedor({
+        acao: 'Fornecedor.atualizado',
+        dados: {
+          fornecedor_id: variables?.id,
+          campos: Object.keys(variables?.data || {})
+        }
+      });
       toast.success("Fornecedor atualizado com sucesso!");
+    },
+    onError: async (error, variables) => {
+      await auditFornecedor({
+        acao: 'Fornecedor.atualizacao_falhou',
+        sucesso: false,
+        motivo: error?.message || 'erro_ao_atualizar_fornecedor',
+        dados: { fornecedor_id: variables?.id }
+      });
+      toast.error("Fornecedor nao atualizado. Verifique os dados e tente novamente.");
     },
   });
 
@@ -190,7 +205,14 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
               </p>
             </div>
             {!windowMode && (
-              <Button variant="ghost" size="icon" onClick={onClose}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                data-permission="Compras.Fornecedores.visualizar"
+                data-action="Compras.Fornecedores.fecharDetalhes"
+                data-context-required="group-or-company"
+              >
                 <X className="w-5 h-5" />
               </Button>
             )}
@@ -205,17 +227,37 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
               </CardContent>
             </Card>
           )}
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            data-permission="Compras.Fornecedores.visualizar"
+            data-context-required="group-or-company"
+          >
             <TabsList className="grid w-full grid-cols-3 mb-6">
-              <TabsTrigger value="historico">
+              <TabsTrigger
+                value="historico"
+                data-permission="Compras.Fornecedores.visualizar"
+                data-action="Compras.Fornecedores.abaHistorico"
+                data-context-required="group-or-company"
+              >
                 <FileText className="w-4 h-4 mr-2" />
                 Histórico de Compras
               </TabsTrigger>
-              <TabsTrigger value="condicoes">
+              <TabsTrigger
+                value="condicoes"
+                data-permission="Compras.Fornecedores.visualizar"
+                data-action="Compras.Fornecedores.abaCondicoes"
+                data-context-required="group-or-company"
+              >
                 <TrendingUp className="w-4 h-4 mr-2" />
                 Condições Comerciais
               </TabsTrigger>
-              <TabsTrigger value="documentos">
+              <TabsTrigger
+                value="documentos"
+                data-permission="Compras.Fornecedores.visualizar"
+                data-action="Compras.Fornecedores.abaDocumentos"
+                data-context-required="group-or-company"
+              >
                 <DollarSign className="w-4 h-4 mr-2" />
                 Documentos e Pagamentos
               </TabsTrigger>
@@ -339,7 +381,14 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
               )}
 
               {canManageFornecedor && (
-                <Button className="w-full">
+                <Button
+                  className="w-full"
+                  disabled={!contextoValido || !canManageFornecedor}
+                  data-permission="Compras.Fornecedores.editar"
+                  data-action="Compras.Fornecedores.editarCondicoes"
+                  data-context-required="group-or-company"
+                  data-sensitive="true"
+                >
                   <Edit className="w-4 h-4 mr-2" />
                   Editar Condições Comerciais
                 </Button>
@@ -384,12 +433,23 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                   {canManageFornecedor && (
                     <Dialog open={showDocumentoDialog} onOpenChange={setShowDocumentoDialog}>
                       <DialogTrigger asChild>
-                        <Button size="sm">
+                        <Button
+                          size="sm"
+                          disabled={!contextoValido || !canManageFornecedor}
+                          data-permission="Compras.Fornecedores.documentos"
+                          data-action="Compras.Fornecedores.abrirUploadDocumento"
+                          data-context-required="group-or-company"
+                          data-sensitive="true"
+                        >
                           <Plus className="w-4 h-4 mr-2" />
                           Upload Documento
                         </Button>
                       </DialogTrigger>
-                      <DialogContent>
+                      <DialogContent
+                        data-permission="Compras.Fornecedores.documentos"
+                        data-action="Compras.Fornecedores.dialogDocumento"
+                        data-context-required="group-or-company"
+                      >
                         <DialogHeader>
                           <DialogTitle>Adicionar Documento</DialogTitle>
                         </DialogHeader>
@@ -400,7 +460,11 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                               value={documentoForm.tipo}
                               onValueChange={(v) => setDocumentoForm({...documentoForm, tipo: v})}
                             >
-                              <SelectTrigger>
+                              <SelectTrigger
+                                data-permission="Compras.Fornecedores.documentos"
+                                data-action="Compras.Fornecedores.documentoTipo"
+                                data-context-required="group-or-company"
+                              >
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -418,6 +482,10 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                             <Input
                               value={documentoForm.nome_arquivo}
                               onChange={(e) => setDocumentoForm({...documentoForm, nome_arquivo: e.target.value})}
+                              data-permission="Compras.Fornecedores.documentos"
+                              data-action="Compras.Fornecedores.documentoNomeArquivo"
+                              data-context-required="group-or-company"
+                              data-sensitive="true"
                             />
                           </div>
                           <div>
@@ -426,6 +494,9 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                               type="date"
                               value={documentoForm.data_validade}
                               onChange={(e) => setDocumentoForm({...documentoForm, data_validade: e.target.value})}
+                              data-permission="Compras.Fornecedores.documentos"
+                              data-action="Compras.Fornecedores.documentoDataValidade"
+                              data-context-required="group-or-company"
                             />
                           </div>
                           <div>
@@ -433,9 +504,21 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                             <Textarea
                               value={documentoForm.observacao}
                               onChange={(e) => setDocumentoForm({...documentoForm, observacao: e.target.value})}
+                              data-permission="Compras.Fornecedores.documentos"
+                              data-action="Compras.Fornecedores.documentoObservacao"
+                              data-context-required="group-or-company"
+                              data-sensitive="true"
                             />
                           </div>
-                          <Button onClick={handleAdicionarDocumento} className="w-full">
+                          <Button
+                            onClick={handleAdicionarDocumento}
+                            className="w-full"
+                            disabled={!contextoValido || !canManageFornecedor || updateFornecedorMutation.isPending}
+                            data-permission="Compras.Fornecedores.documentos"
+                            data-action="Compras.Fornecedores.adicionarDocumento"
+                            data-context-required="group-or-company"
+                            data-sensitive="true"
+                          >
                             Adicionar
                           </Button>
                         </div>
@@ -465,7 +548,14 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                             )}
                           </div>
                           <div className="flex gap-2">
-                            <Button size="sm" variant="ghost" title="Download">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              title="Download"
+                              data-permission="Compras.Fornecedores.documentos"
+                              data-action="Compras.Fornecedores.downloadDocumento"
+                              data-context-required="group-or-company"
+                            >
                               <Download className="w-4 h-4" />
                             </Button>
                             {canManageFornecedor && (
@@ -473,6 +563,11 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => handleRemoverDocumento(index)}
+                                disabled={!contextoValido || !canManageFornecedor || updateFornecedorMutation.isPending}
+                                data-permission="Compras.Fornecedores.documentos"
+                                data-action="Compras.Fornecedores.removerDocumento"
+                                data-context-required="group-or-company"
+                                data-sensitive="true"
                               >
                                 <Trash2 className="w-4 h-4 text-red-500" />
                               </Button>
@@ -520,7 +615,14 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                     </>
                   )}
                   {canManageFornecedor && (
-                    <Button className="w-full mt-4">
+                    <Button
+                      className="w-full mt-4"
+                      disabled={!contextoValido || !canManageFornecedor}
+                      data-permission="Compras.Fornecedores.editar"
+                      data-action="Compras.Fornecedores.editarDadosBancarios"
+                      data-context-required="group-or-company"
+                      data-sensitive="true"
+                    >
                       <Edit className="w-4 h-4 mr-2" />
                       Editar Dados Bancários
                     </Button>
