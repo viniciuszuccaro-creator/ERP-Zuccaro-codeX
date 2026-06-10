@@ -1,3 +1,16 @@
+### Compras - Fase 9 Solicitacoes com RBAC e Auditoria
+- Segui o proximo passo salvo para `SolicitacoesCompraTab` e `SolicitacaoCompraForm`, sem criar tela, modulo, componente ou arquivo novo.
+- `SolicitacoesCompraTab` deixou de buscar usuario por `base44.auth.me()` direto e passou a usar o `useUser` existente, mantendo `base44` apenas para a integracao de IA ja existente.
+- A consulta de produtos para solicitacoes passou a depender de contexto valido e permissao de criacao.
+- A criacao de solicitacao passou a bloquear tambem dentro da mutation quando faltar Grupo/Empresa ou RBAC, com auditoria contextual de bloqueio e sucesso.
+- Aprovacao, rejeicao, geracao de OC e sugestao por IA passaram a registrar auditoria de sucesso; a IA tambem passou a bloquear por contexto/permissao dentro da propria action.
+- `SolicitacaoCompraForm` passou a validar contexto/permissao, auditar bloqueio de envio, limitar a consulta de produtos e desabilitar campos/confirmacao quando o usuario nao puder criar.
+- A lista passou a usar `solList` como fonte segura para contagem e exportacao, evitando quebra quando a prop externa vier vazia/indefinida.
+- Foram preservados formulario em janela, dialog legado, sugestao IA, aprovacao, rejeicao, geracao de OC, selecao/exportacao, paginacao e layout `w-full h-full`.
+- Mantida a Regra-Mae: nenhuma tela, botao, campo, dialog ou fluxo foi removido; apenas RBAC, multiempresa, seguranca e auditoria foram reforcados nos arquivos existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em Compras revisando `FornecedoresTabOptimized`/`useEntityListSorted` e demais listagens para garantir `enabled` por contexto/permissao quando aplicavel.
+
 ### Compras - Fase 9 Recebimento OC com RBAC
 - Segui o proximo passo salvo para `RecebimentoOCForm` e pontos de recebimento em `OrdensCompraTab`, sem criar tela, modulo, componente ou arquivo novo.
 - `RecebimentoOCForm` passou a calcular `groupId/grupoId/empresaId`, validar contexto e permissao de recebimento, e bloquear envio quando faltar Grupo/Empresa ou RBAC.

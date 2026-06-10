@@ -12,6 +12,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Save, ShoppingCart } from "lucide-react";
 import FormWrapper from "@/components/common/FormWrapper";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { useToast } from "@/components/ui/use-toast";
+import usePermissions from "@/components/lib/usePermissions";
 
 
 
@@ -34,9 +36,14 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  * V21.1.2: Solicitação Compra Form - Adaptado para Window Mode
  */
 export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMode = false }) {
-  const { carimbarContexto, filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { toast } = useToast();
+  const { hasPermission } = usePermissions();
+  const { carimbarContexto, filterInContext, createInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const canCreateSolicitacao = hasPermission('Compras', 'SolicitacaoCompra', 'criar') || hasPermission('Compras', null, 'criar');
+  const controlesBloqueados = !contextoValido || !canCreateSolicitacao;
   
   const scSchema = z.object({
     numero_solicitacao: z.string(),
@@ -74,6 +81,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos', groupId, empresaId],
     queryFn: () => filterInContext('Produto', {}, '-updated_date', 9999),
+    enabled: contextoValido && canCreateSolicitacao,
   });
 
   const handleProdutoChange = (produtoId) => {
@@ -85,7 +93,41 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
     }
   };
 
-  const onValid = (data) => {
+  const auditSolicitacaoForm = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
+    try {
+      await createInContext('AuditLog', {
+        acao,
+        modulo: 'Compras',
+        entidade: 'SolicitacaoCompra',
+        tipo_auditoria: sucesso ? 'entidade' : 'seguranca',
+        descricao: motivo || 'Auditoria do formulario de solicitacao de compra.',
+        dados_novos: dados,
+        group_id: groupId,
+        grupo_id: groupId,
+        empresa_id: empresaId,
+        sucesso,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar formulario de solicitacao de compra:', error);
+    }
+  };
+
+  const onValid = async (data) => {
+    if (controlesBloqueados) {
+      await auditSolicitacaoForm({
+        acao: 'SolicitacaoCompra.formulario_bloqueado',
+        sucesso: false,
+        motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+        dados: { produto_id: data?.produto_id, produto_descricao: data?.produto_descricao }
+      });
+      toast({
+        title: "Solicitacao bloqueada",
+        description: !contextoValido ? "Selecione grupo ou empresa antes de criar." : "Sem permissao para criar solicitacao de compra.",
+        variant: "destructive"
+      });
+      return;
+    }
     onSubmit(carimbarContexto(data, 'empresa_id'));
   };
   const unifiedSubmit = React.useCallback(() => handleSubmit(onValid)(), [handleSubmit, onValid]);
@@ -129,6 +171,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
               <Input
                 type="date"
                 {...register('data_solicitacao')}
+                disabled={controlesBloqueados}
                 data-permission="Compras.SolicitacaoCompra.criar"
                 data-action="Compras.SolicitacaoCompra.dataSolicitacao"
                 data-context-required="group-or-company"
@@ -142,7 +185,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
                 control={control}
                 name="produto_id"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={(v) => { field.onChange(v); handleProdutoChange(v); }}>
+                  <Select value={field.value} onValueChange={(v) => { field.onChange(v); handleProdutoChange(v); }} disabled={controlesBloqueados}>
                     <SelectTrigger
                       data-permission="Compras.SolicitacaoCompra.criar"
                       data-action="Compras.SolicitacaoCompra.produto"
@@ -172,6 +215,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
                   min="0.01"
                   {...register('quantidade_solicitada', { valueAsNumber: true })}
                   className="flex-1"
+                  disabled={controlesBloqueados}
                   data-permission="Compras.SolicitacaoCompra.criar"
                   data-action="Compras.SolicitacaoCompra.quantidade"
                   data-context-required="group-or-company"
@@ -190,7 +234,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
                 control={control}
                 name="prioridade"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select value={field.value} onValueChange={field.onChange} disabled={controlesBloqueados}>
                     <SelectTrigger
                       data-permission="Compras.SolicitacaoCompra.criar"
                       data-action="Compras.SolicitacaoCompra.prioridade"
@@ -214,6 +258,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
               <Input
                 type="date"
                 {...register('data_necessidade')}
+                disabled={controlesBloqueados}
                 data-permission="Compras.SolicitacaoCompra.criar"
                 data-action="Compras.SolicitacaoCompra.dataNecessidade"
                 data-context-required="group-or-company"
@@ -226,6 +271,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
                 {...register('justificativa')}
                 placeholder="Explique o motivo da compra..."
                 rows={3}
+                disabled={controlesBloqueados}
                 data-permission="Compras.SolicitacaoCompra.criar"
                 data-action="Compras.SolicitacaoCompra.justificativa"
                 data-context-required="group-or-company"
@@ -238,6 +284,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
               <Textarea
                 {...register('observacoes')}
                 rows={2}
+                disabled={controlesBloqueados}
                 data-permission="Compras.SolicitacaoCompra.criar"
                 data-action="Compras.SolicitacaoCompra.observacoes"
                 data-context-required="group-or-company"
@@ -251,6 +298,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
         <Button
           type="submit"
           className="bg-blue-600 hover:bg-blue-700"
+          disabled={controlesBloqueados}
           data-permission="Compras.SolicitacaoCompra.criar"
           data-action="Compras.SolicitacaoCompra.confirmarJanela"
           data-context-required="group-or-company"

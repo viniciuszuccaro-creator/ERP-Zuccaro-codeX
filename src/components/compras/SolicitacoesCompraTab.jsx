@@ -27,6 +27,7 @@ import useContextoVisual from "@/components/lib/useContextoVisual";
 import SolicitacaoCompraForm from "./SolicitacaoCompraForm";
 import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 import { toast as sonnerToast } from "sonner";
 import ERPDataTable from "@/components/ui/erp/DataTable";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
@@ -42,6 +43,7 @@ export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false
   const [editando, setEditando] = useState(null);
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
+  const { user } = useUser();
   // Seleção em massa + exportação
   const [selectedSolicitacoes, setSelectedSolicitacoes] = useState([]);
   const toggleSolicitacao = (id) => setSelectedSolicitacoes(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -112,30 +114,40 @@ export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos', groupId, empresaId],
     queryFn: () => filterInContext('Produto', {}, '-updated_date', 9999),
-  });
-
-  const { data: user } = useQuery({
-    queryKey: ['user'],
-    queryFn: () => base44.auth.me(),
+    enabled: contextoValido && canCreateSolicitacao,
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => createInContext('SolicitacaoCompra', {
+    mutationFn: async (data) => {
+      if (!contextoValido || !canCreateSolicitacao) {
+        await auditSolicitacaoCompra({
+          acao: 'SolicitacaoCompra.criacao_bloqueada',
+          sucesso: false,
+          motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+          dados: { produto_id: data?.produto_id, produto_descricao: data?.produto_descricao }
+        });
+        throw new Error(!contextoValido ? 'Selecione grupo ou empresa antes de criar solicitacao.' : 'Sem permissao para criar solicitacao.');
+      }
+      return createInContext('SolicitacaoCompra', {
       ...data,
       empresa_id: empresaId,
       group_id: groupId,
       grupo_id: groupId,
       solicitante: user?.full_name,
       solicitante_id: user?.id
-    }),
-    onSuccess: async (oc) => {
+      });
+    },
+    onSuccess: async (solicitacao) => {
       await auditSolicitacaoCompra({
-        acao: 'SolicitacaoCompra.ordem_compra_gerada',
-        dados: { ordem_compra_id: oc?.id, numero_oc: oc?.numero_oc, solicitacao_compra_id: oc?.solicitacao_compra_id }
+        acao: 'SolicitacaoCompra.criada',
+        dados: { solicitacao_id: solicitacao?.id, numero_solicitacao: solicitacao?.numero_solicitacao, produto_id: solicitacao?.produto_id }
       });
       queryClient.invalidateQueries({ queryKey: ['solicitacoes-compra'] });
       handleCloseDialog();
       toast({ title: "✅ Solicitação criada!" });
+    },
+    onError: (error) => {
+      toast({ title: "Solicitacao nao criada", description: error?.message || "Erro ao criar solicitacao.", variant: "destructive" });
     },
   });
 
@@ -145,7 +157,11 @@ export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false
       aprovador: user?.full_name,
       data_aprovacao: new Date().toISOString().split('T')[0]
     }),
-    onSuccess: () => {
+    onSuccess: async (_, { id }) => {
+      await auditSolicitacaoCompra({
+        acao: 'SolicitacaoCompra.aprovada',
+        dados: { solicitacao_id: id, aprovador_id: user?.id }
+      });
       queryClient.invalidateQueries({ queryKey: ['solicitacoes-compra'] });
       toast({ title: "✅ Solicitação aprovada!" });
     },
@@ -158,7 +174,11 @@ export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false
       data_aprovacao: new Date().toISOString().split('T')[0],
       observacoes: motivo
     }),
-    onSuccess: () => {
+    onSuccess: async (_, { id, motivo }) => {
+      await auditSolicitacaoCompra({
+        acao: 'SolicitacaoCompra.rejeitada',
+        dados: { solicitacao_id: id, motivo }
+      });
       queryClient.invalidateQueries({ queryKey: ['solicitacoes-compra'] });
       toast({ title: "❌ Solicitação rejeitada" });
     },
@@ -195,7 +215,11 @@ export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false
 
       return oc;
     },
-    onSuccess: () => {
+    onSuccess: async (oc) => {
+      await auditSolicitacaoCompra({
+        acao: 'SolicitacaoCompra.ordem_compra_gerada',
+        dados: { ordem_compra_id: oc?.id, numero_oc: oc?.numero_oc, solicitacao_compra_id: oc?.solicitacao_compra_id }
+      });
       queryClient.invalidateQueries({ queryKey: ['solicitacoes-compra'] });
       queryClient.invalidateQueries({ queryKey: ['ordensCompra'] });
       toast({ title: "✅ OC gerada!" });
@@ -205,6 +229,15 @@ export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false
   // BOTÃO IA - SUGERIR COMPRAS AUTOMÁTICAS
   const sugerirComprasIA = useMutation({
     mutationFn: async () => {
+      if (!contextoValido || !canCreateSolicitacao) {
+        await auditSolicitacaoCompra({
+          acao: 'SolicitacaoCompra.ia_bloqueada',
+          sucesso: false,
+          motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+          dados: { origem: 'sugestao_ia' }
+        });
+        throw new Error(!contextoValido ? 'Selecione grupo ou empresa antes de sugerir compras.' : 'Sem permissao para criar solicitacoes via IA.');
+      }
       // Buscar produtos com estoque baixo
       const todosProdutos = await filterInContext('Produto', {}, '-updated_date', 9999);
       const produtosBaixos = todosProdutos.filter(p => 
@@ -285,7 +318,11 @@ Retorne JSON com:
 
       return solicitacoesCriadas;
     },
-    onSuccess: (solicitacoes) => {
+    onSuccess: async (solicitacoes) => {
+      await auditSolicitacaoCompra({
+        acao: 'SolicitacaoCompra.ia_criada',
+        dados: { quantidade: solicitacoes.length, origem: 'sugestao_ia' }
+      });
       queryClient.invalidateQueries({ queryKey: ['solicitacoes-compra'] });
       toast({ 
         title: "✅ IA criou solicitações!",
@@ -599,7 +636,7 @@ Retorne JSON com:
 
       <Card className="border-0 shadow-md">
         <CardHeader className="bg-slate-50 border-b">
-          <CardTitle>Lista de Solicitações ({solicitacoes.length})</CardTitle>
+          <CardTitle>Lista de Solicitações ({solList.length})</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {selectedSolicitacoes.length > 0 && (
@@ -607,7 +644,7 @@ Retorne JSON com:
               <AlertDescription className="flex items-center justify-between">
                 <div className="text-blue-900 font-semibold">{selectedSolicitacoes.length} solicita e7 e3o(ões) selecionada(s)</div>
                 <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => exportarSolicitacoesCSV(solicitacoes.filter(s => selectedSolicitacoes.includes(s.id)))}>
+                  <Button variant="outline" onClick={() => exportarSolicitacoesCSV(solList.filter(s => selectedSolicitacoes.includes(s.id)))}>
                     <Download className="w-4 h-4 mr-2" /> Exportar CSV
                   </Button>
                   <Button variant="ghost" onClick={() => setSelectedSolicitacoes([])}>Limpar Seleção</Button>
