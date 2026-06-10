@@ -1,3 +1,16 @@
+### Compras - Fase 9 Formularios Auxiliares de Cotacao e Fornecedor
+- Segui o proximo passo salvo para `CotacaoForm` e `AvaliacaoFornecedorForm`, sem criar tela, modulo, componente ou arquivo novo.
+- `CotacaoForm` removeu import sem uso de `base44` e passou a calcular `groupId/grupoId/empresaId` pelo contexto visual e pela cotacao existente.
+- As consultas de produtos e fornecedores em `CotacaoForm` passaram a depender de `groupId/empresaId/contexto` e de permissao de criacao, evitando carregamento fora do Grupo/Empresa atual.
+- `CotacaoForm` passou a auditar envio e bloqueio por contexto/permissao via `createInContext("AuditLog")`, preservando o `onSubmit` recebido do fluxo pai.
+- Campos, seletores, fornecedores, itens, observacoes, adicionar/remover item, confirmacao e modo janela de `CotacaoForm` receberam marcadores RBAC/contexto/sensibilidade.
+- `AvaliacaoFornecedorForm` passou a carimbar `groupId/grupoId/empresaId`, `ordem_compra_id`, `fornecedor_id` e `nota_media` no payload enviado ao fluxo pai.
+- `AvaliacaoFornecedorForm` passou a auditar envio e bloqueio por contexto/permissao e recebeu marcadores RBAC/contexto/sensibilidade nas estrelas, comentario, confirmacao e modo janela.
+- Foram preservados validacao Zod/RHF da cotacao, field array de itens, selecao de fornecedores, calculo da nota media, layout `w-full h-full`, window mode, callbacks externos e textos do fluxo atual.
+- Mantida a Regra-Mae: nenhum formulario, campo, botao, estrela, fornecedor, produto, item ou callback foi removido; apenas auditoria contextual, RBAC visual/acao, multiempresa e rastreabilidade foram reforcados nos arquivos existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em Compras revisando `FornecedoresTabOptimized` e pontos restantes de fornecedor/cotacao para garantir que nao haja fluxo alternativo sem contexto, RBAC e auditoria.
+
 ### Compras - Fase 9 Fornecedores Contextuais
 - Segui o proximo passo salvo para `FornecedoresTab` e `DetalhesFornecedor`, sem criar tela, modulo, componente ou arquivo novo.
 - `FornecedoresTab` foi limpo de imports, estados, filtros e helpers antigos que nao eram usados no fluxo atual do `VisualizadorUniversalEntidade`, reduzindo ruido tecnico sem remover funcionalidade.

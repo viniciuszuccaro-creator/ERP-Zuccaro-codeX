@@ -1,5 +1,4 @@
 import React from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
-import { Save, TrendingUp, Plus, Trash2, Building2, AlertCircle } from "lucide-react";
+import { Save, TrendingUp, Plus, Trash2, AlertCircle } from "lucide-react";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,12 +15,38 @@ import { Badge } from "@/components/ui/badge";
 import FormWrapper from "@/components/common/FormWrapper";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import FormErrorSummary from "@/components/common/FormErrorSummary";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * V21.1.2: Cotação Form - Adaptado para Window Mode
  */
 export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
-  const { empresaAtual, filterInContext, carimbarContexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, filterInContext, carimbarContexto, createInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || cotacao?.group_id || cotacao?.grupo_id || null;
+  const empresaId = empresaAtual?.id || cotacao?.empresa_id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const canCreateCotacao = hasPermission('Compras', 'Cotacao', 'criar') || hasPermission('Compras', null, 'criar');
+
+  const auditCotacaoForm = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
+    try {
+      await createInContext('AuditLog', {
+        acao,
+        modulo: 'Compras',
+        entidade: 'Cotacao',
+        tipo_auditoria: sucesso ? 'entidade' : 'seguranca',
+        descricao: motivo || 'Auditoria do formulario de cotacao.',
+        dados_novos: dados,
+        group_id: groupId,
+        grupo_id: groupId,
+        empresa_id: empresaId,
+        sucesso,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar formulario de cotacao:', error);
+    }
+  };
   const schema = z.object({
     numero_cotacao: z.string(),
     descricao: z.string().min(3, 'Descrição obrigatória'),
@@ -63,23 +88,57 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
   };
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos', empresaAtual?.id],
+    queryKey: ['produtos', groupId, empresaId, contexto],
     queryFn: () => filterInContext('Produto', {}, '-updated_date', 9999),
+    enabled: contextoValido && canCreateCotacao,
   });
 
   const { data: fornecedores = [] } = useQuery({
-    queryKey: ['fornecedores', empresaAtual?.id],
+    queryKey: ['fornecedores', groupId, empresaId, contexto],
     queryFn: () => filterInContext('Fornecedor', {}, '-updated_date', 9999),
+    enabled: contextoValido && canCreateCotacao,
   });
 
 
-  const onValid = (data) => {
-    onSubmit(carimbarContexto(data, 'empresa_id'));
+  const onValid = async (data) => {
+    if (!contextoValido || !canCreateCotacao) {
+      await auditCotacaoForm({
+        acao: 'CotacaoForm.envio_bloqueado',
+        sucesso: false,
+        motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+        dados: { numero_cotacao: data.numero_cotacao, fornecedores: data.fornecedores_selecionados?.length || 0 }
+      });
+      throw new Error(!contextoValido ? 'Selecione grupo ou empresa antes de criar cotacao.' : 'Sem permissao para criar cotacao.');
+    }
+
+    const payload = carimbarContexto({
+      ...data,
+      group_id: groupId,
+      grupo_id: groupId,
+      empresa_id: empresaId
+    }, 'empresa_id');
+    await onSubmit(payload);
+    await auditCotacaoForm({
+      acao: 'CotacaoForm.enviada',
+      dados: {
+        numero_cotacao: data.numero_cotacao,
+        itens: data.itens?.length || 0,
+        fornecedores: data.fornecedores_selecionados?.length || 0
+      }
+    });
   };
   const unifiedSubmit = React.useCallback(() => handleSubmit(onValid)(), [handleSubmit, onValid]);
 
   const content = (
-    <FormWrapper onSubmit={unifiedSubmit} externalData={watch()} className={`space-y-6 w-full h-full ${windowMode ? 'p-6 overflow-auto' : ''}`}>
+    <FormWrapper
+      onSubmit={unifiedSubmit}
+      externalData={watch()}
+      className={`space-y-6 w-full h-full ${windowMode ? 'p-6 overflow-auto' : ''}`}
+      data-permission="Compras.Cotacao.criar"
+      data-action="Compras.CotacaoForm.formulario"
+      data-context-required="group-or-company"
+      data-context-mode={contexto}
+    >
       <FormErrorSummary messages={Object.values(errors || {}).map(e => e?.message).filter(Boolean)} />
       <Card>
         <CardContent className="p-6 space-y-4">
@@ -95,6 +154,9 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
                 {...register('numero_cotacao')}
                 readOnly
                 className="bg-slate-50"
+                data-permission="Compras.Cotacao.criar"
+                data-action="Compras.CotacaoForm.numero"
+                data-context-required="group-or-company"
               />
             </div>
 
@@ -103,6 +165,9 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
               <Input
                 type="date"
                 {...register('data_limite_resposta')}
+                data-permission="Compras.Cotacao.criar"
+                data-action="Compras.CotacaoForm.dataLimite"
+                data-context-required="group-or-company"
               />
               {errors.data_limite_resposta && <p className="text-red-600 text-xs mt-1">{errors.data_limite_resposta.message}</p>}
             </div>
@@ -112,6 +177,9 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
               <Input
                 {...register('descricao')}
                 placeholder="Ex: Cotação de Bitolas - Lote Fevereiro"
+                data-permission="Compras.Cotacao.criar"
+                data-action="Compras.CotacaoForm.descricao"
+                data-context-required="group-or-company"
               />
               {errors.descricao && <p className="text-red-600 text-xs mt-1">{errors.descricao.message}</p>}
             </div>
@@ -123,7 +191,16 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
         <CardContent className="p-6 space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="font-bold">Itens para Cotação</h3>
-            <Button type="button" size="sm" variant="outline" onClick={adicionarItem}>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={adicionarItem}
+              disabled={!contextoValido || !canCreateCotacao}
+              data-permission="Compras.Cotacao.criar"
+              data-action="Compras.CotacaoForm.adicionarItem"
+              data-context-required="group-or-company"
+            >
               <Plus className="w-4 h-4 mr-2" />
               Item
             </Button>
@@ -138,7 +215,11 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
                     name={`itens.${idx}.produto_descricao`}
                     render={({ field }) => (
                       <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger>
+                        <SelectTrigger
+                          data-permission="Compras.Cotacao.criar"
+                          data-action="Compras.CotacaoForm.itemProduto"
+                          data-context-required="group-or-company"
+                        >
                           <SelectValue placeholder="Produto" />
                         </SelectTrigger>
                         <SelectContent>
@@ -157,6 +238,10 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
                     type="number"
                     placeholder="Qtd"
                     {...register(`itens.${idx}.quantidade`, { valueAsNumber: true })}
+                    data-permission="Compras.Cotacao.criar"
+                    data-action="Compras.CotacaoForm.itemQuantidade"
+                    data-context-required="group-or-company"
+                    data-sensitive="true"
                   />
                   {errors.itens?.[idx]?.quantidade && <p className="text-red-600 text-xs mt-1">{errors.itens[idx].quantidade.message}</p>}
                 </div>
@@ -166,7 +251,11 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
                     name={`itens.${idx}.unidade`}
                     render={({ field }) => (
                       <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger>
+                        <SelectTrigger
+                          data-permission="Compras.Cotacao.criar"
+                          data-action="Compras.CotacaoForm.itemUnidade"
+                          data-context-required="group-or-company"
+                        >
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -183,6 +272,9 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
                   <Input
                     placeholder="Obs"
                     {...register(`itens.${idx}.observacoes`)}
+                    data-permission="Compras.Cotacao.criar"
+                    data-action="Compras.CotacaoForm.itemObservacoes"
+                    data-context-required="group-or-company"
                   />
                 </div>
                 <div className="col-span-1 flex items-center justify-center">
@@ -192,6 +284,10 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
                       variant="ghost"
                       size="icon"
                       onClick={() => removerItem(idx)}
+                      disabled={!contextoValido || !canCreateCotacao}
+                      data-permission="Compras.Cotacao.criar"
+                      data-action="Compras.CotacaoForm.removerItem"
+                      data-context-required="group-or-company"
                     >
                       <Trash2 className="w-4 h-4 text-red-600" />
                     </Button>
@@ -213,6 +309,9 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
                   <Checkbox
                     checked={selecionados.includes(fornecedor.id)}
                     onCheckedChange={() => toggleFornecedor(fornecedor.id)}
+                    data-permission="Compras.Cotacao.criar"
+                    data-action="Compras.CotacaoForm.selecionarFornecedor"
+                    data-context-required="group-or-company"
                   />
                   <div className="flex-1">
                     <p className="font-medium text-sm">{fornecedor.nome}</p>
@@ -237,6 +336,10 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
               {...register('observacoes_gerais')}
               rows={3}
               placeholder="Condições especiais, prazos..."
+              data-permission="Compras.Cotacao.criar"
+              data-action="Compras.CotacaoForm.observacoesGerais"
+              data-context-required="group-or-company"
+              data-sensitive="true"
             />
           </div>
         </CardContent>
@@ -246,7 +349,11 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
         <Button 
           type="submit" 
           className="bg-cyan-600 hover:bg-cyan-700"
-          disabled={selecionados.length < 2}
+          disabled={selecionados.length < 2 || !contextoValido || !canCreateCotacao}
+          data-permission="Compras.Cotacao.criar"
+          data-action="Compras.CotacaoForm.confirmar"
+          data-context-required="group-or-company"
+          data-sensitive="true"
         >
           <Save className="w-4 h-4 mr-2" />
           Criar e Enviar Cotação
@@ -256,7 +363,15 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
   );
 
   if (windowMode) {
-    return <div className="w-full h-full bg-white">{content}</div>;
+    return (
+      <div
+        className="w-full h-full bg-white"
+        data-permission="Compras.Cotacao.criar"
+        data-context-required="group-or-company"
+      >
+        {content}
+      </div>
+    );
   }
 
   return content;
