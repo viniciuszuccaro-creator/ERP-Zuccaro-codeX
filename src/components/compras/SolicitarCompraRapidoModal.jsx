@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import React, { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ import { AlertTriangle, ShoppingCart, Package, TrendingUp, Calendar } from "luci
 import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -22,6 +22,7 @@ export default function SolicitarCompraRapidoModal({ produto, isOpen, onClose, w
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
   const { canCreate, hasPermission } = usePermissions();
+  const { user } = useUser();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
   const contextoValido = !!(empresaAtual?.id || groupId);
@@ -49,11 +50,6 @@ export default function SolicitarCompraRapidoModal({ produto, isOpen, onClose, w
       console.warn('Falha ao auditar solicitacao rapida de compra:', error);
     }
   };
-
-  const { data: user } = useQuery({
-    queryKey: ['user'],
-    queryFn: () => base44.auth.me(),
-  });
 
   // Calcular quantidade sugerida
   const faltando = (produto.estoque_minimo || 0) - (produto.estoque_disponivel || produto.estoque_atual || 0);

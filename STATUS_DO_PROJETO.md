@@ -1,3 +1,13 @@
+### Compras - Fase 9 Compra Rapida sem Auth Direto
+- Segui o proximo passo salvo para `SolicitarCompraRapidoModal` e `CotacoesTab`, sem criar tela, modulo, componente ou arquivo novo.
+- `SolicitarCompraRapidoModal` deixou de buscar usuario por `base44.auth.me()` direto e passou a reaproveitar o `useUser` existente no projeto, igual a outros fluxos de Compras, Estoque e Financeiro.
+- O modal manteve a criacao contextual via `createInContext("SolicitacaoCompra")`, auditoria via `createInContext("AuditLog")`, validacao de `groupId/empresaId` e bloqueio por permissao antes de criar solicitacao.
+- Foram removidos apenas codigo morto e sem uso: `useEffect` no modal de compra rapida e estado de cotacao selecionada em `CotacoesTab`, sem retirar botao, aba, tabela, dialog, card, campo ou fluxo do usuario.
+- `CotacoesTab` foi revisado e permanece sem import direto de `base44`, preservando consultas contextuais de fornecedores/produtos, criacao de cotacao, comparativo, geracao de OC, auditoria, RBAC e layout atual.
+- Mantida a Regra-Mae: a melhoria ficou nos arquivos existentes, reforcou seguranca/manutencao/RBAC/multiempresa e nao criou caminho paralelo.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em Compras revisando `OrdensCompraTab`, `ImportacaoNFeRecebimento` e recebimentos para reduzir acessos diretos de `base44` onde houver alternativa contextual existente.
+
 ### Compras - Fase 9 Fornecedores Otimizados Contextuais
 - Segui o proximo passo salvo para `FornecedoresTabOptimized`, sem criar tela, modulo, componente ou arquivo novo.
 - `FornecedoresTabOptimized` passou a calcular `groupId/empresaId/contexto` e validar contexto antes de listar, contar, buscar, filtrar, criar ou editar fornecedores.

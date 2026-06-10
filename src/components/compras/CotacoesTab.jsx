@@ -20,7 +20,6 @@ import { toast as sonnerToast } from "sonner";
 
 export default function CotacoesTab({ windowMode = false }) {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [cotacaoSelecionada, setCotacaoSelecionada] = useState(null);
   const [comparativoModal, setComparativoModal] = useState(null);
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
