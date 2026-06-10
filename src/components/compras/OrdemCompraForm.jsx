@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -46,17 +45,19 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
     valor_total: 0
   });
 
-  const { empresaAtual, filterInContext, carimbarContexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, filterInContext, carimbarContexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
 
   // Zod schema (mantido)
 
   const { data: fornecedores = [] } = useQuery({
-    queryKey: ['fornecedores', empresaAtual?.id],
+    queryKey: ['fornecedores', groupId, empresaId],
     queryFn: () => filterInContext('Fornecedor', {}, '-updated_date', 9999),
   });
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos', empresaAtual?.id],
+    queryKey: ['produtos', groupId, empresaId],
     queryFn: () => filterInContext('Produto', {}, '-updated_date', 9999),
   });
 
@@ -138,9 +139,21 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
   const unifiedSubmit = React.useCallback(() => rhfHandleSubmit(onValid)(), [rhfHandleSubmit, onValid]);
 
   const content = (
-    <FormWrapper onSubmit={unifiedSubmit} externalData={watch()} className={`space-y-6 w-full h-full ${windowMode ? 'p-6 overflow-auto' : ''}`}>
+    <FormWrapper
+      onSubmit={unifiedSubmit}
+      externalData={watch()}
+      className={`space-y-6 w-full h-full ${windowMode ? 'p-6 overflow-auto' : ''}`}
+      data-permission="Compras.OrdemCompra.criar"
+      data-action="Compras.OrdemCompra.formularioJanela"
+      data-context-required="group-or-company"
+      data-context-mode={contexto}
+    >
       <FormErrorSummary messages={Object.values(errors || {}).map(e => e?.message).filter(Boolean)} />
-      <Card>
+      <Card
+        data-permission="Compras.OrdemCompra.criar"
+        data-action="Compras.OrdemCompra.dados"
+        data-context-required="group-or-company"
+      >
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg flex items-center gap-2">
             <ShoppingCart className="w-5 h-5 text-blue-600" />
@@ -152,6 +165,9 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
               <Label>Número OC *</Label>
               <Input
                 {...register('numero_oc')}
+                data-permission="Compras.OrdemCompra.criar"
+                data-action="Compras.OrdemCompra.numero"
+                data-context-required="group-or-company"
               />
               {errors.numero_oc && <p className="text-red-600 text-xs mt-1">{errors.numero_oc.message}</p>}
             </div>
@@ -170,7 +186,11 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
                       setValue('fornecedor_nome', forn?.nome || '', { shouldValidate: false });
                     }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger
+                      data-permission="Compras.OrdemCompra.criar"
+                      data-action="Compras.OrdemCompra.fornecedor"
+                      data-context-required="group-or-company"
+                    >
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -189,6 +209,9 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
               <Input
                 type="date"
                 {...register('data_solicitacao')}
+                data-permission="Compras.OrdemCompra.criar"
+                data-action="Compras.OrdemCompra.dataSolicitacao"
+                data-context-required="group-or-company"
               />
               {errors.data_solicitacao && <p className="text-red-600 text-xs mt-1">{errors.data_solicitacao.message}</p>}
             </div>
@@ -198,6 +221,9 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
               <Input
                 type="date"
                 {...register('data_entrega_prevista')}
+                data-permission="Compras.OrdemCompra.criar"
+                data-action="Compras.OrdemCompra.entregaPrevista"
+                data-context-required="group-or-company"
               />
             </div>
 
@@ -206,6 +232,9 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
               <Input
                 type="number"
                 {...register('prazo_entrega_acordado', { valueAsNumber: true })}
+                data-permission="Compras.OrdemCompra.criar"
+                data-action="Compras.OrdemCompra.prazoEntrega"
+                data-context-required="group-or-company"
               />
             </div>
 
@@ -216,7 +245,13 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
                 name="condicao_pagamento"
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger
+                      data-permission="Compras.OrdemCompra.criar"
+                      data-action="Compras.OrdemCompra.condicaoPagamento"
+                      data-context-required="group-or-company"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="À Vista">À Vista</SelectItem>
                       <SelectItem value="30 dias">30 dias</SelectItem>
@@ -233,13 +268,20 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
               <Textarea
                 {...register('observacoes')}
                 rows={2}
+                data-permission="Compras.OrdemCompra.criar"
+                data-action="Compras.OrdemCompra.observacoes"
+                data-context-required="group-or-company"
               />
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card
+        data-permission="Compras.OrdemCompra.criar"
+        data-action="Compras.OrdemCompra.itens"
+        data-context-required="group-or-company"
+      >
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg">Itens da OC</h3>
           {errors.itens && <p className="text-red-600 text-xs mt-1">{errors.itens.message}</p>}
@@ -248,7 +290,12 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
             <div>
               <Label className="text-xs">Produto</Label>
               <Select value={novoItem.produto_id} onValueChange={handleProdutoChange}>
-                <SelectTrigger className="h-9 text-xs">
+                <SelectTrigger
+                  className="h-9 text-xs"
+                  data-permission="Compras.OrdemCompra.criar"
+                  data-action="Compras.OrdemCompra.itemProduto"
+                  data-context-required="group-or-company"
+                >
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -269,6 +316,10 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
                 value={novoItem.quantidade_solicitada}
                 onChange={(e) => setNovoItem({ ...novoItem, quantidade_solicitada: parseFloat(e.target.value) || 0 })}
                 className="h-9 text-xs"
+                data-permission="Compras.OrdemCompra.criar"
+                data-action="Compras.OrdemCompra.itemQuantidade"
+                data-context-required="group-or-company"
+                data-sensitive="true"
               />
             </div>
 
@@ -278,6 +329,9 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
                 value={novoItem.unidade}
                 readOnly
                 className="h-9 text-xs bg-slate-100"
+                data-permission="Compras.OrdemCompra.visualizar"
+                data-action="Compras.OrdemCompra.itemUnidade"
+                data-context-required="group-or-company"
               />
             </div>
 
@@ -289,12 +343,25 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
                 value={novoItem.valor_unitario}
                 onChange={(e) => setNovoItem({ ...novoItem, valor_unitario: parseFloat(e.target.value) || 0 })}
                 className="h-9 text-xs"
+                data-permission="Compras.OrdemCompra.criar"
+                data-action="Compras.OrdemCompra.itemValorUnitario"
+                data-context-required="group-or-company"
+                data-sensitive="true"
               />
             </div>
 
             <div>
               <Label className="text-xs mb-1 block">Ação</Label>
-              <Button type="button" onClick={handleAddItem} size="sm" className="w-full h-9 bg-green-600 hover:bg-green-700">
+              <Button
+                type="button"
+                onClick={handleAddItem}
+                size="sm"
+                className="w-full h-9 bg-green-600 hover:bg-green-700"
+                data-permission="Compras.OrdemCompra.criar"
+                data-action="Compras.OrdemCompra.adicionarItem"
+                data-context-required="group-or-company"
+                data-sensitive="true"
+              >
                 <Plus className="w-3 h-3" />
               </Button>
             </div>
@@ -324,6 +391,10 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
                       size="icon"
                       onClick={() => handleRemoveItem(index)}
                       className="text-red-600"
+                      data-permission="Compras.OrdemCompra.criar"
+                      data-action="Compras.OrdemCompra.removerItem"
+                      data-context-required="group-or-company"
+                      data-sensitive="true"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -339,7 +410,13 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
             </div>
           )}
 
-          <div className="flex justify-end p-4 bg-blue-50 rounded-lg">
+          <div
+            className="flex justify-end p-4 bg-blue-50 rounded-lg"
+            data-permission="Compras.OrdemCompra.visualizar"
+            data-action="Compras.OrdemCompra.valorTotal"
+            data-context-required="group-or-company"
+            data-sensitive="true"
+          >
             <div className="text-right">
               <p className="text-sm text-blue-700">Valor Total</p>
               <p className="text-2xl font-bold text-blue-900">
@@ -351,7 +428,14 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
       </Card>
 
       <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
-        <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+        <Button
+          type="submit"
+          className="bg-blue-600 hover:bg-blue-700"
+          data-permission="Compras.OrdemCompra.criar"
+          data-action="Compras.OrdemCompra.confirmarJanela"
+          data-context-required="group-or-company"
+          data-sensitive="true"
+        >
           <Save className="w-4 h-4 mr-2" />
           {ordemCompra ? 'Atualizar' : 'Criar'} Ordem de Compra
         </Button>
@@ -360,7 +444,16 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
   );
 
   if (windowMode) {
-    return <div className="w-full h-full bg-white">{content}</div>;
+    return (
+      <div
+        className="w-full h-full bg-white"
+        data-permission="Compras.OrdemCompra.criar"
+        data-context-required="group-or-company"
+        data-context-mode={contexto}
+      >
+        {content}
+      </div>
+    );
   }
 
   return content;

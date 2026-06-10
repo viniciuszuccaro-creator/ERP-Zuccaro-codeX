@@ -1,3 +1,15 @@
+### Compras - Fase 9 Formularios de OC e Solicitacao Contextuais
+- Segui o proximo passo salvo para `OrdemCompraForm` e `SolicitacaoCompraForm`, sem criar tela, modulo, componente ou arquivo novo.
+- `OrdemCompraForm` manteve `FormWrapper`, `filterInContext` e `carimbarContexto`, com queries de fornecedores/produtos vinculadas ao `groupId/empresaId`.
+- `OrdemCompraForm` recebeu marcadores de permissao, acao, contexto obrigatorio e sensibilidade no formulario, cards, numero, fornecedor, datas, prazo, condicao de pagamento, observacoes, produto, quantidade, unidade, valor unitario, adicionar/remover item, total financeiro e confirmacao.
+- `SolicitacaoCompraForm` manteve `FormWrapper`, `filterInContext` e `carimbarContexto`, com query de produtos vinculada ao `groupId/empresaId`.
+- `SolicitacaoCompraForm` recebeu marcadores de permissao, acao, contexto obrigatorio e sensibilidade no formulario, card, numero, data, produto, quantidade, prioridade, data de necessidade, justificativa, observacoes e confirmacao.
+- Imports sem uso de `base44` foram removidos dos dois formularios, reduzindo ruido tecnico sem alterar comportamento.
+- Foram preservados validacao Zod/RHF, preenchimento automatico de fornecedor/produto/unidade, calculo de total da OC, inclusao/remocao de itens, carimbo multiempresa, abertura em janela e layout `w-full h-full`.
+- Mantida a Regra-Mae: nenhum botao, campo, formulario, janela, validacao, consulta contextual, item de compra ou fluxo de solicitacao/OC foi removido; apenas RBAC visual/acao, contexto, rastreabilidade e manutencao foram reforcados nos arquivos existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em Compras revisando `CotacoesTab` e `SolicitarCompraRapidoModal` para reforcar auditoria/contexto nos fluxos que geram solicitacao ou ordem de compra.
+
 ### Compras - Fase 9 OCs e Solicitacoes Contextuais
 - Segui o proximo passo salvo para `OrdensCompraTab` e `SolicitacoesCompraTab`, usando os arquivos existentes em `src/components/compras`, sem criar tela, modulo, componente ou arquivo novo.
 - `OrdensCompraTab` deixou de auditar ordens de compra por `base44.entities.AuditLog.create` direto e passou a usar `createInContext("AuditLog")`.

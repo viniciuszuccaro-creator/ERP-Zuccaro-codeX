@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
@@ -35,7 +34,9 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  * V21.1.2: Solicitação Compra Form - Adaptado para Window Mode
  */
 export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMode = false }) {
-  const { carimbarContexto, filterInContext, empresaAtual } = useContextoVisual();
+  const { carimbarContexto, filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
   
   const scSchema = z.object({
     numero_solicitacao: z.string(),
@@ -71,7 +72,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
   });
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos', empresaAtual?.id],
+    queryKey: ['produtos', groupId, empresaId],
     queryFn: () => filterInContext('Produto', {}, '-updated_date', 9999),
   });
 
@@ -90,8 +91,20 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
   const unifiedSubmit = React.useCallback(() => handleSubmit(onValid)(), [handleSubmit, onValid]);
 
   const content = (
-    <FormWrapper onSubmit={unifiedSubmit} externalData={watch()} className={`space-y-6 w-full h-full ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
-      <Card>
+    <FormWrapper
+      onSubmit={unifiedSubmit}
+      externalData={watch()}
+      className={`space-y-6 w-full h-full ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}
+      data-permission="Compras.SolicitacaoCompra.criar"
+      data-action="Compras.SolicitacaoCompra.formularioJanela"
+      data-context-required="group-or-company"
+      data-context-mode={contexto}
+    >
+      <Card
+        data-permission="Compras.SolicitacaoCompra.criar"
+        data-action="Compras.SolicitacaoCompra.dados"
+        data-context-required="group-or-company"
+      >
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg flex items-center gap-2">
             <ShoppingCart className="w-5 h-5 text-blue-600" />
@@ -105,6 +118,9 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
                 {...register('numero_solicitacao')}
                 readOnly
                 className="bg-slate-50"
+                data-permission="Compras.SolicitacaoCompra.visualizar"
+                data-action="Compras.SolicitacaoCompra.numero"
+                data-context-required="group-or-company"
               />
             </div>
 
@@ -113,6 +129,9 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
               <Input
                 type="date"
                 {...register('data_solicitacao')}
+                data-permission="Compras.SolicitacaoCompra.criar"
+                data-action="Compras.SolicitacaoCompra.dataSolicitacao"
+                data-context-required="group-or-company"
               />
               {errors.data_solicitacao && <p className="text-red-600 text-xs mt-1">{errors.data_solicitacao.message}</p>}
             </div>
@@ -124,7 +143,11 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
                 name="produto_id"
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={(v) => { field.onChange(v); handleProdutoChange(v); }}>
-                    <SelectTrigger>
+                    <SelectTrigger
+                      data-permission="Compras.SolicitacaoCompra.criar"
+                      data-action="Compras.SolicitacaoCompra.produto"
+                      data-context-required="group-or-company"
+                    >
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -149,6 +172,10 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
                   min="0.01"
                   {...register('quantidade_solicitada', { valueAsNumber: true })}
                   className="flex-1"
+                  data-permission="Compras.SolicitacaoCompra.criar"
+                  data-action="Compras.SolicitacaoCompra.quantidade"
+                  data-context-required="group-or-company"
+                  data-sensitive="true"
                 />
                 {errors.quantidade_solicitada && <p className="text-red-600 text-xs mt-1">{errors.quantidade_solicitada.message}</p>}
                 <span className="bg-slate-100 px-3 py-2 rounded border text-sm">
@@ -164,7 +191,13 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
                 name="prioridade"
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger
+                      data-permission="Compras.SolicitacaoCompra.criar"
+                      data-action="Compras.SolicitacaoCompra.prioridade"
+                      data-context-required="group-or-company"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Baixa">Baixa</SelectItem>
                       <SelectItem value="Média">Média</SelectItem>
@@ -181,6 +214,9 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
               <Input
                 type="date"
                 {...register('data_necessidade')}
+                data-permission="Compras.SolicitacaoCompra.criar"
+                data-action="Compras.SolicitacaoCompra.dataNecessidade"
+                data-context-required="group-or-company"
               />
             </div>
 
@@ -190,6 +226,9 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
                 {...register('justificativa')}
                 placeholder="Explique o motivo da compra..."
                 rows={3}
+                data-permission="Compras.SolicitacaoCompra.criar"
+                data-action="Compras.SolicitacaoCompra.justificativa"
+                data-context-required="group-or-company"
               />
               {errors.justificativa && <p className="text-red-600 text-xs mt-1">{errors.justificativa.message}</p>}
             </div>
@@ -199,6 +238,9 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
               <Textarea
                 {...register('observacoes')}
                 rows={2}
+                data-permission="Compras.SolicitacaoCompra.criar"
+                data-action="Compras.SolicitacaoCompra.observacoes"
+                data-context-required="group-or-company"
               />
             </div>
           </div>
@@ -206,7 +248,14 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
       </Card>
 
       <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
-        <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+        <Button
+          type="submit"
+          className="bg-blue-600 hover:bg-blue-700"
+          data-permission="Compras.SolicitacaoCompra.criar"
+          data-action="Compras.SolicitacaoCompra.confirmarJanela"
+          data-context-required="group-or-company"
+          data-sensitive="true"
+        >
           <Save className="w-4 h-4 mr-2" />
           {solicitacao ? 'Atualizar' : 'Criar'} Solicitação
         </Button>
@@ -215,7 +264,16 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
   );
 
   if (windowMode) {
-    return <div className="w-full h-full bg-white">{content}</div>;
+    return (
+      <div
+        className="w-full h-full bg-white"
+        data-permission="Compras.SolicitacaoCompra.criar"
+        data-context-required="group-or-company"
+        data-context-mode={contexto}
+      >
+        {content}
+      </div>
+    );
   }
 
   return content;
