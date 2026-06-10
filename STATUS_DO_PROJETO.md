@@ -1,3 +1,14 @@
+### Compras - Fase 9 Fornecedores Otimizados Contextuais
+- Segui o proximo passo salvo para `FornecedoresTabOptimized`, sem criar tela, modulo, componente ou arquivo novo.
+- `FornecedoresTabOptimized` passou a calcular `groupId/empresaId/contexto` e validar contexto antes de listar, contar, buscar, filtrar, criar ou editar fornecedores.
+- A contagem via `useCountEntities` e a listagem paginada por `entityListSorted` agora ficam habilitadas somente com contexto valido e permissao de visualizacao.
+- As acoes de criar e editar passaram por wrappers existentes no componente, com bloqueio por contexto/permissao e auditoria contextual via `createInContext("AuditLog")`.
+- Container, aviso de bloqueio, card de resumo, busca, filtro de status, criar fornecedor, item de fornecedor, editar fornecedor e paginacao receberam marcadores RBAC/contexto/sensibilidade.
+- Foram preservados paginacao server-side, contagem otimizada, filtros locais, cards de estatistica, lista paginada, callbacks `onCreate/onEdit`, status visual, nota media e layout `w-full h-full`.
+- Mantida a Regra-Mae: nenhum botao, card, filtro, chamada de listagem, paginacao, fornecedor ou callback foi removido; apenas contexto, RBAC, auditoria e rastreabilidade foram reforcados no arquivo existente.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em Compras revisando pontos restantes de `SolicitarCompraRapidoModal`, `CotacoesTab` e chamadas de fornecedor/cotacao para reduzir imports diretos restantes de `base44` apenas onde forem realmente necessarios.
+
 ### Compras - Fase 9 Formularios Auxiliares de Cotacao e Fornecedor
 - Segui o proximo passo salvo para `CotacaoForm` e `AvaliacaoFornecedorForm`, sem criar tela, modulo, componente ou arquivo novo.
 - `CotacaoForm` removeu import sem uso de `base44` e passou a calcular `groupId/grupoId/empresaId` pelo contexto visual e pela cotacao existente.

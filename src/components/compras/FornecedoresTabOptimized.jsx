@@ -5,17 +5,30 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Building2, Search, Plus, Edit, TrendingUp, Star } from 'lucide-react';
+import { Building2, Search, Plus, Edit, Star } from 'lucide-react';
 import { useCountEntities } from '@/components/lib/useCountEntities';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import PaginationControls from '@/components/ui/PaginationControls';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * V22.0 - FornecedoresTab Otimizado para Grandes Volumes
  * Suporta milhares de fornecedores com paginação server-side e contagem eficiente
  */
 export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
-  const { empresaAtual, getFiltroContexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, getFiltroContexto, createInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const canViewFornecedor = hasPermission('Compras', 'Fornecedores', 'visualizar') ||
+    hasPermission('Compras', null, 'visualizar');
+  const canCreateFornecedor = hasPermission('Compras', 'Fornecedores', 'criar') ||
+    hasPermission('Cadastros', 'Fornecedor', 'criar') ||
+    hasPermission('Compras', null, 'criar');
+  const canEditFornecedor = hasPermission('Compras', 'Fornecedores', 'editar') ||
+    hasPermission('Cadastros', 'Fornecedor', 'editar') ||
+    hasPermission('Compras', null, 'editar');
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(50);
@@ -24,16 +37,66 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
 
   const filtroBase = getFiltroContexto('empresa_dona_id', true);
 
+  const auditFornecedorOptimized = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
+    try {
+      await createInContext('AuditLog', {
+        acao,
+        modulo: 'Compras',
+        entidade: 'Fornecedor',
+        tipo_auditoria: sucesso ? 'entidade' : 'seguranca',
+        descricao: motivo || 'Auditoria da lista otimizada de fornecedores.',
+        dados_novos: dados,
+        group_id: groupId,
+        grupo_id: groupId,
+        empresa_id: empresaId,
+        sucesso,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar lista otimizada de fornecedores:', error);
+    }
+  };
+
+  const handleCreate = async () => {
+    if (!contextoValido || !canCreateFornecedor) {
+      await auditFornecedorOptimized({
+        acao: 'FornecedoresOptimized.criar_bloqueado',
+        sucesso: false,
+        motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada'
+      });
+      return;
+    }
+    await auditFornecedorOptimized({ acao: 'FornecedoresOptimized.abrir_criacao' });
+    onCreate?.();
+  };
+
+  const handleEdit = async (fornecedor) => {
+    if (!contextoValido || !canEditFornecedor) {
+      await auditFornecedorOptimized({
+        acao: 'FornecedoresOptimized.editar_bloqueado',
+        sucesso: false,
+        motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+        dados: { fornecedor_id: fornecedor?.id }
+      });
+      return;
+    }
+    await auditFornecedorOptimized({
+      acao: 'FornecedoresOptimized.abrir_edicao',
+      dados: { fornecedor_id: fornecedor?.id }
+    });
+    onEdit?.(fornecedor);
+  };
+
   // Contagem total otimizada
   const { count: totalFornecedores, isLoading: loadingCount } = useCountEntities(
     'Fornecedor',
     filtroBase,
-    { staleTime: 60000 }
+    { staleTime: 60000, enabled: contextoValido && canViewFornecedor }
   );
 
   // Busca paginada
   const { data: fornecedores = [], isLoading: loadingFornecedores } = useQuery({
-    queryKey: ['fornecedores-paginados', currentPage, itemsPerPage, empresaAtual?.id],
+    queryKey: ['fornecedores-paginados', currentPage, itemsPerPage, groupId, empresaId, contexto],
     queryFn: async () => {
       try {
         const skip = (currentPage - 1) * itemsPerPage;
@@ -52,7 +115,8 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
       }
     },
     staleTime: 30000,
-    retry: 2
+    retry: 2,
+    enabled: contextoValido && canViewFornecedor
   });
 
   // Filtros locais
@@ -103,9 +167,26 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
   };
 
   return (
-    <div className="w-full h-full flex flex-col gap-4 p-4">
+    <div
+      className="w-full h-full flex flex-col gap-4 p-4"
+      data-permission="Compras.Fornecedores.visualizar"
+      data-context-required="group-or-company"
+      data-context-mode={contexto}
+    >
+      {(!contextoValido || !canViewFornecedor) && (
+        <Card className="border-amber-300 bg-amber-50">
+          <CardContent className="p-4 text-sm text-amber-900">
+            Selecione grupo ou empresa e confirme permissao para visualizar fornecedores.
+          </CardContent>
+        </Card>
+      )}
       {/* Header com Estatísticas */}
-      <Card className="border-cyan-200 bg-gradient-to-r from-cyan-50 to-blue-50">
+      <Card
+        className="border-cyan-200 bg-gradient-to-r from-cyan-50 to-blue-50"
+        data-permission="Compras.Fornecedores.visualizar"
+        data-action="Compras.FornecedoresOptimized.resumo"
+        data-context-required="group-or-company"
+      >
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -155,12 +236,21 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
+            disabled={!contextoValido || !canViewFornecedor}
+            data-permission="Compras.Fornecedores.visualizar"
+            data-action="Compras.FornecedoresOptimized.buscar"
+            data-context-required="group-or-company"
+            data-sensitive="true"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           className="px-3 py-2 border rounded-md text-sm"
+          disabled={!contextoValido || !canViewFornecedor}
+          data-permission="Compras.Fornecedores.visualizar"
+          data-action="Compras.FornecedoresOptimized.filtrarStatus"
+          data-context-required="group-or-company"
         >
           <option value="todos">Todos Status</option>
           <option value="Ativo">Ativo</option>
@@ -169,7 +259,15 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
           <option value="Bloqueado">Bloqueado</option>
         </select>
         {onCreate && (
-          <Button onClick={onCreate} className="bg-cyan-600 hover:bg-cyan-700" data-permission="Compras.Fornecedores.criar" data-sensitive>
+          <Button
+            onClick={handleCreate}
+            className="bg-cyan-600 hover:bg-cyan-700"
+            disabled={!contextoValido || !canCreateFornecedor}
+            data-permission="Compras.Fornecedores.criar"
+            data-action="Compras.FornecedoresOptimized.criar"
+            data-context-required="group-or-company"
+            data-sensitive
+          >
             <Plus className="w-4 h-4 mr-2" />
             Novo Fornecedor
           </Button>
@@ -194,7 +292,13 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
         ) : (
           <div className="space-y-2">
             {fornecedoresFiltrados.map(fornecedor => (
-              <Card key={fornecedor.id} className="border hover:shadow-md transition-all">
+              <Card
+                key={fornecedor.id}
+                className="border hover:shadow-md transition-all"
+                data-permission="Compras.Fornecedores.visualizar"
+                data-action="Compras.FornecedoresOptimized.item"
+                data-context-required="group-or-company"
+              >
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
@@ -221,8 +325,11 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => onEdit(fornecedor)}
+                        onClick={() => handleEdit(fornecedor)}
+                        disabled={!contextoValido || !canEditFornecedor}
                         data-permission="Compras.Fornecedores.editar"
+                        data-action="Compras.FornecedoresOptimized.editar"
+                        data-context-required="group-or-company"
                         data-sensitive
                       >
                         <Edit className="w-4 h-4 text-cyan-600" />
@@ -237,14 +344,20 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
       </div>
 
       {/* Paginação */}
-      <PaginationControls
-        currentPage={currentPage}
-        totalItems={totalFornecedores}
-        itemsPerPage={itemsPerPage}
-        onPageChange={setCurrentPage}
-        onItemsPerPageChange={setItemsPerPage}
-        isLoading={loadingFornecedores || loadingCount}
-      />
+      <div
+        data-permission="Compras.Fornecedores.visualizar"
+        data-action="Compras.FornecedoresOptimized.paginar"
+        data-context-required="group-or-company"
+      >
+        <PaginationControls
+          currentPage={currentPage}
+          totalItems={totalFornecedores}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={setItemsPerPage}
+          isLoading={loadingFornecedores || loadingCount}
+        />
+      </div>
     </div>
   );
 }
