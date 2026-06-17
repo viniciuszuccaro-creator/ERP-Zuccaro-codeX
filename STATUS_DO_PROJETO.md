@@ -1,3 +1,15 @@
+### Comercial - Fase 9 Notificacoes e Aprovacao de Pedido
+- Segui o proximo passo salvo para `PedidosTab`, sem criar tela, modulo, componente ou arquivo novo.
+- As notificacoes de aprovacao por WhatsApp e Email passaram a validar contexto `groupId/empresaId` e permissao granular `Comercial.Pedido.notificar`.
+- Notificacoes agora auditam bloqueio, sucesso e falha com canal, total e ids dos pedidos envolvidos.
+- A edicao de pedido passou a usar helper seguro com `Comercial.Pedido.editar`, contexto obrigatorio e bloqueio quando houver aprovacao pendente sem permissao de aprovacao.
+- A mudanca de status para `Pronto para Faturar` passou a validar `Comercial.Pedido.marcarProntoFaturar`, usar `updateInContext` e auditar status anterior/novo.
+- A abertura da Central de Aprovacoes em botoes e menu passou a validar `Comercial.Pedido.aprovar`, registrar auditoria e bloquear tentativas sem contexto/RBAC.
+- Os botoes, menus, notificacoes e fluxo visual foram preservados; apenas foram fechados caminhos diretos sem auditoria contextual.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca e auditoria sem remover funcionalidade.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em `PedidosTab` revisando o botao `Fechar Pedido`/automacao e demais acoes de fluxo para permissao granular, contexto e auditoria antes de seguir para outras telas comerciais.
+
 ### Comercial - Fase 9 Consulta de Pedido com RBAC e Auditoria
 - Segui o proximo passo salvo para `PedidosTab`, sem criar tela, modulo, componente ou arquivo novo.
 - As acoes existentes de visualizar, imprimir e exportar CSV passaram a usar helpers seguros no proprio fluxo da tela.

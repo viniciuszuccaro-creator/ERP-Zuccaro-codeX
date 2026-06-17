@@ -52,9 +52,13 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
   const empresaContextoId = empresaId || empresaAtual?.id || null;
   const contextoValido = Boolean(groupId || empresaContextoId);
   const canViewPedido = hasPermission('Comercial', 'Pedido', 'visualizar') || hasPermission('Comercial', 'Pedidos', 'visualizar') || hasPermission('Comercial', null, 'visualizar');
+  const canEditPedido = canEdit('Comercial', 'Pedido') || canEdit('Comercial', 'Pedidos') || hasPermission('Comercial', null, 'editar');
+  const canApprovePedido = (canApprove && canApprove('Comercial', 'Pedido')) || hasPermission('Comercial', 'Pedido', 'aprovar') || hasPermission('Comercial', null, 'aprovar');
   const canDeletePedido = canDelete('Comercial', 'Pedido') || canDelete('Comercial', 'Pedidos') || hasPermission('Comercial', null, 'excluir');
   const canPrintPedido = hasPermission('Comercial', 'Pedido', 'imprimir') || hasPermission('Comercial', 'Pedidos', 'imprimir') || hasPermission('Comercial', null, 'exportar');
   const canExportPedido = hasPermission('Comercial', 'Pedido', 'exportar') || hasPermission('Comercial', 'Pedidos', 'exportar') || hasPermission('Comercial', null, 'exportar');
+  const canNotifyPedido = hasPermission('Comercial', 'Pedido', 'notificar') || hasPermission('Comercial', 'Pedidos', 'notificar') || hasPermission('Comercial', null, 'notificar') || canApprovePedido;
+  const canMarcarProntoFaturar = hasPermission('Comercial', 'Pedido', 'marcarProntoFaturar') || canEditPedido;
   const canGerarNFe = hasPermission('Comercial', 'Pedido', 'gerarNFe') || hasPermission('Fiscal', 'NotaFiscal', 'criar') || hasPermission('Fiscal', null, 'criar');
   const canCriarEntrega = hasPermission('Comercial', 'Pedido', 'criarEntrega') || hasPermission('ExpediÃ§Ã£o', 'Entrega', 'criar') || hasPermission('ExpediÃ§Ã£o', null, 'criar');
   const canGerarOP = hasPermission('Comercial', 'Pedido', 'gerarOP') || hasPermission('ProduÃ§Ã£o', 'OrdemProducao', 'criar') || hasPermission('ProduÃ§Ã£o', null, 'criar');
@@ -207,6 +211,62 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
     await auditPedido({ acao: 'Exportacao', descricao: `Exportados ${lista.length} pedidos`, detalhes: { total: lista.length } });
   };
 
+  const editarPedidoSeguro = async (pedido) => {
+    const bloqueadoPorAprovacao = pedido.status_aprovacao === 'pendente' && !canApprovePedido;
+    if (!contextoValido || !canEditPedido || bloqueadoPorAprovacao) {
+      await auditPedido({
+        acao: 'Edicao bloqueada',
+        pedido,
+        descricao: !contextoValido ? 'Edicao de pedido bloqueada por falta de contexto' : 'Edicao de pedido bloqueada por RBAC ou aprovacao pendente',
+        sucesso: false,
+        detalhes: { motivo: !contextoValido ? 'contexto_obrigatorio' : bloqueadoPorAprovacao ? 'aprovacao_pendente' : 'permissao_negada' }
+      });
+      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de editar' : 'Sem permissao para editar este pedido', variant: 'destructive' });
+      return;
+    }
+    await auditPedido({ acao: 'Edicao', pedido, descricao: 'Abrir editor de pedido' });
+    onEditPedido(pedido);
+  };
+
+  const marcarProntoParaFaturarSeguro = async (pedido) => {
+    if (!contextoValido || !canMarcarProntoFaturar) {
+      await auditPedido({
+        acao: 'Alteracao de status bloqueada',
+        pedido,
+        descricao: !contextoValido ? 'Mudanca para Pronto para Faturar bloqueada por falta de contexto' : 'Mudanca para Pronto para Faturar bloqueada por RBAC',
+        sucesso: false,
+        detalhes: { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada', status_anterior: pedido?.status, status_novo: 'Pronto para Faturar' }
+      });
+      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de alterar o status' : 'Sem permissao para alterar o status', variant: 'destructive' });
+      return;
+    }
+    try {
+      await updateInContext('Pedido', pedido.id, { status: 'Pronto para Faturar' });
+      toast({ title: 'Pedido fechado para entrega!' });
+      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+      await auditPedido({ acao: 'Alteracao de status', pedido, descricao: 'Status alterado para Pronto para Faturar', detalhes: { status_anterior: pedido?.status, status_novo: 'Pronto para Faturar' } });
+    } catch {
+      await auditPedido({ acao: 'Alteracao de status falhou', pedido, descricao: 'Falha ao alterar status para Pronto para Faturar', sucesso: false, detalhes: { status_anterior: pedido?.status, status_novo: 'Pronto para Faturar' } });
+      toast({ title: 'Erro ao fechar pedido', variant: 'destructive' });
+    }
+  };
+
+  const analisarAprovacaoSeguro = async (pedido) => {
+    if (!contextoValido || !canApprovePedido) {
+      await auditPedido({
+        acao: 'Analise de aprovacao bloqueada',
+        pedido,
+        descricao: !contextoValido ? 'Abertura da Central de Aprovacoes bloqueada por falta de contexto' : 'Abertura da Central de Aprovacoes bloqueada por RBAC',
+        sucesso: false,
+        detalhes: { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada' }
+      });
+      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de analisar' : 'Sem permissao para analisar aprovacao', variant: 'destructive' });
+      return;
+    }
+    await auditPedido({ acao: 'Analise de aprovacao', pedido, descricao: 'Abrir Central de Aprovacoes' });
+    openWindow(CentralAprovacoesManager, { windowMode: true, initialTab: 'descontos' }, { title: 'Central de Aprovações', width: 1200, height: 700 });
+  };
+
   const filteredPedidos = pedidosList.filter(p => {
     const matchStatus = statusFilter === "todos" || p.status === statusFilter;
     const searchLower = searchTerm.toLowerCase();
@@ -240,20 +300,46 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
   const notifyWhatsAppPendentes = async (ids) => {
     const alvo = (Array.isArray(ids) && ids.length ? ids : pedidosPendentesAprovacao.map(p=>p.id)).slice(0,50);
     if (!alvo.length) { toast({ title: 'Sem pendentes selecionados' }); return; }
+    if (!contextoValido || !canNotifyPedido) {
+      await auditPedido({
+        acao: 'Notificacao bloqueada',
+        descricao: !contextoValido ? 'WhatsApp de aprovacao bloqueado por falta de contexto' : 'WhatsApp de aprovacao bloqueado por RBAC',
+        sucesso: false,
+        detalhes: { canal: 'whatsapp', pedido_ids: alvo, motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada' }
+      });
+      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de notificar' : 'Sem permissao para notificar pedidos', variant: 'destructive' });
+      return;
+    }
     try {
       await base44.functions.invoke('whatsappSend', { template: 'aprovacao_pendente', pedido_ids: alvo });
       toast({ title: 'ðŸ“² WhatsApp enviado', description: `${alvo.length} pedido(s)` });
-      try { await base44.entities.AuditLog.create({ acao: 'NotificaÃ§Ã£o', modulo: 'Comercial', entidade: 'Pedido', descricao: `WhatsApp aprovaÃ§Ã£o pendente (${alvo.length})`, data_hora: new Date().toISOString() }); } catch {}
-    } catch { toast({ title: 'Falha ao notificar WhatsApp', variant: 'destructive' }); }
+      await auditPedido({ acao: 'Notificacao', descricao: `WhatsApp aprovacao pendente (${alvo.length})`, detalhes: { canal: 'whatsapp', pedido_ids: alvo, total: alvo.length } });
+    } catch {
+      await auditPedido({ acao: 'Notificacao falhou', descricao: 'Falha ao notificar aprovacao pendente por WhatsApp', sucesso: false, detalhes: { canal: 'whatsapp', pedido_ids: alvo, total: alvo.length } });
+      toast({ title: 'Falha ao notificar WhatsApp', variant: 'destructive' });
+    }
   };
   const notifyEmailPendentes = async (ids) => {
     const alvo = (Array.isArray(ids) && ids.length ? ids : pedidosPendentesAprovacao.map(p=>p.id)).slice(0,50);
     if (!alvo.length) { toast({ title: 'Sem pendentes selecionados' }); return; }
+    if (!contextoValido || !canNotifyPedido) {
+      await auditPedido({
+        acao: 'Notificacao bloqueada',
+        descricao: !contextoValido ? 'Email de aprovacao bloqueado por falta de contexto' : 'Email de aprovacao bloqueado por RBAC',
+        sucesso: false,
+        detalhes: { canal: 'email', pedido_ids: alvo, motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada' }
+      });
+      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de notificar' : 'Sem permissao para notificar pedidos', variant: 'destructive' });
+      return;
+    }
     try {
       await base44.functions.invoke('sendEmailProvider', { tipo: 'aprovacao_pendente', pedido_ids: alvo });
       toast({ title: 'âœ‰ï¸ E-mails enviados', description: `${alvo.length} pedido(s)` });
-      try { await base44.entities.AuditLog.create({ acao: 'NotificaÃ§Ã£o', modulo: 'Comercial', entidade: 'Pedido', descricao: `Email aprovaÃ§Ã£o pendente (${alvo.length})`, data_hora: new Date().toISOString() }); } catch {}
-    } catch { toast({ title: 'Falha ao notificar por email', variant: 'destructive' }); }
+      await auditPedido({ acao: 'Notificacao', descricao: `Email aprovacao pendente (${alvo.length})`, detalhes: { canal: 'email', pedido_ids: alvo, total: alvo.length } });
+    } catch {
+      await auditPedido({ acao: 'Notificacao falhou', descricao: 'Falha ao notificar aprovacao pendente por email', sucesso: false, detalhes: { canal: 'email', pedido_ids: alvo, total: alvo.length } });
+      toast({ title: 'Falha ao notificar por email', variant: 'destructive' });
+    }
   };
 
   const columns = React.useMemo(() => ([
@@ -322,11 +408,8 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
            size="sm"
            data-permission="Comercial.Pedido.editar"
            data-sensitive
-           disabled={pedido.status_aprovacao === 'pendente' && !(canApprove && canApprove('Comercial','Pedido'))}
-           onClick={async () => {
-             try { await base44.entities.AuditLog.create({ acao: 'EdiÃ§Ã£o', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Abrir editor de pedido', data_hora: new Date().toISOString() }); } catch {}
-             onEditPedido(pedido);
-           }}
+           disabled={!contextoValido || !canEditPedido || (pedido.status_aprovacao === 'pendente' && !canApprovePedido)}
+           onClick={() => editarPedidoSeguro(pedido)}
            title={pedido.status_aprovacao === 'pendente' ? 'EdiÃ§Ã£o bloqueada atÃ© aprovaÃ§Ã£o' : 'Editar Pedido'}
            className="h-8 px-2"
          >
@@ -339,16 +422,8 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
             <Button 
                variant="ghost" size="sm"
                data-permission="Comercial.Pedido.marcarProntoFaturar"
-               onClick={async () => {
-                try {
-                  await updateInContext('Pedido', pedido.id, { status: 'Pronto para Faturar' });
-                  toast({ title: 'âœ… Pedido fechado para entrega!' });
-                  queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-                  try { await base44.entities.AuditLog.create({ acao: 'EdiÃ§Ã£o', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Status â†’ Pronto para Faturar', data_hora: new Date().toISOString(), sucesso: true }); } catch {}
-                } catch {
-                  toast({ title: 'âŒ Erro ao fechar pedido', variant: 'destructive' });
-                }
-              }}
+               onClick={() => marcarProntoParaFaturarSeguro(pedido)}
+              disabled={!contextoValido || !canMarcarProntoFaturar}
               className="h-8 px-2 bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold border border-blue-200"
             >
               <Truck className="w-4 h-4 mr-1" />
@@ -393,7 +468,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
         </Button>
 
         {pedido.status_aprovacao === 'pendente' && (
-          <Button variant="ghost" size="sm" onClick={() => openWindow(CentralAprovacoesManager, { windowMode: true, initialTab: 'descontos' }, { title: 'ðŸ” Central de AprovaÃ§Ãµes', width: 1200, height: 700 })} title="Analisar AprovaÃ§Ã£o" className="h-8 px-2 text-orange-600 animate-pulse">
+          <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.aprovar" data-sensitive onClick={() => analisarAprovacaoSeguro(pedido)} disabled={!contextoValido || !canApprovePedido} title="Analisar AprovaÃ§Ã£o" className="h-8 px-2 text-orange-600 animate-pulse">
             <ShieldCheck className="w-3 h-3 mr-1" />
             <span className="text-xs">Analisar</span>
           </Button>
@@ -405,7 +480,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
         </Button>
       </div>
     )}
-]), [queryClient, toast, contextoValido, canViewPedido, canPrintPedido, canDeletePedido, canGerarNFe, canCriarEntrega, canGerarOP, deleteMutation.isPending, onEditPedido, empresas]);
+]), [queryClient, toast, contextoValido, canEditPedido, canApprovePedido, canViewPedido, canPrintPedido, canDeletePedido, canMarcarProntoFaturar, canGerarNFe, canCriarEntrega, canGerarOP, deleteMutation.isPending, onEditPedido, empresas, openWindow, updateInContext]);
 
   const menuItems = (pedido) => {
     const items = [];
@@ -422,7 +497,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
     }
     items.push({ key: 'excluir', label: 'Excluir', action: async () => solicitarExclusaoPedido(pedido) });
     if (pedido.status_aprovacao === 'pendente') {
-      items.push({ key: 'aprovar', label: 'Analisar AprovaÃ§Ã£o', action: () => openWindow(CentralAprovacoesManager, { windowMode: true, initialTab: 'descontos' }, { title: 'ðŸ” Central de AprovaÃ§Ãµes', width: 1200, height: 700 }) });
+      items.push({ key: 'aprovar', label: 'Analisar AprovaÃ§Ã£o', action: async () => analisarAprovacaoSeguro(pedido) });
     }
     return items;
   };
@@ -465,13 +540,13 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
               HÃ¡ <span className="font-semibold">{pedidosPendentesAprovacao.length}</span> pedido(s) aguardando aprovaÃ§Ã£o.
             </div>
             <div className="flex items-center gap-2">
-              <Button onClick={() => openWindow(CentralAprovacoesManager, { windowMode: true }, { title: 'ðŸ” Central de AprovaÃ§Ãµes', width: 1200, height: 700 })} className="bg-orange-600 hover:bg-orange-600/90">
+              <Button data-permission="Comercial.Pedido.aprovar" data-sensitive onClick={() => analisarAprovacaoSeguro(null)} disabled={!contextoValido || !canApprovePedido} className="bg-orange-600 hover:bg-orange-600/90">
                 Central de AprovaÃ§Ãµes
               </Button>
-              <Button variant="outline" onClick={() => notifyWhatsAppPendentes(selectedPedidos)}>
+              <Button variant="outline" data-permission="Comercial.Pedido.notificar" onClick={() => notifyWhatsAppPendentes(selectedPedidos)} disabled={!contextoValido || !canNotifyPedido}>
                 Notificar WhatsApp
               </Button>
-              <Button variant="outline" onClick={() => notifyEmailPendentes(selectedPedidos)}>
+              <Button variant="outline" data-permission="Comercial.Pedido.notificar" onClick={() => notifyEmailPendentes(selectedPedidos)} disabled={!contextoValido || !canNotifyPedido}>
                 Notificar Email
               </Button>
             </div>
@@ -570,8 +645,8 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                     <Download className="w-4 h-4 mr-2" /> Exportar CSV
                   </Button>
                   </ProtectedAction>
-                  <Button variant="outline" onClick={() => notifyWhatsAppPendentes(selectedPedidos)}>WhatsApp</Button>
-                  <Button variant="outline" onClick={() => notifyEmailPendentes(selectedPedidos)}>Email</Button>
+                  <Button variant="outline" data-permission="Comercial.Pedido.notificar" onClick={() => notifyWhatsAppPendentes(selectedPedidos)} disabled={!contextoValido || !canNotifyPedido}>WhatsApp</Button>
+                  <Button variant="outline" data-permission="Comercial.Pedido.notificar" onClick={() => notifyEmailPendentes(selectedPedidos)} disabled={!contextoValido || !canNotifyPedido}>Email</Button>
                   <Button variant="ghost" onClick={() => setSelectedPedidos([])}>Limpar SeleÃ§Ã£o</Button>
                 </div>
               </AlertDescription>
