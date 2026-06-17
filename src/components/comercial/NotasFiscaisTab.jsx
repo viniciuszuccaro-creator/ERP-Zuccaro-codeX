@@ -51,11 +51,22 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
   const [selectedNotas, setSelectedNotas] = useState([]);
   const toggleNota = (id) => setSelectedNotas(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   const toggleAllNotas = (checked, lista) => setSelectedNotas(checked ? lista.map(n => n.id) : []);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { empresaAtual, empresasDoGrupo, grupoAtual, createInContext, updateInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const canViewNota = hasPermission('Fiscal', 'NotaFiscal', 'visualizar') || hasPermission('Fiscal', 'Notas Fiscais', 'visualizar') || hasPermission('Fiscal', null, 'visualizar');
+  const canCreateNota = hasPermission('Fiscal', 'NotaFiscal', 'criar') || hasPermission('Fiscal', 'Notas Fiscais', 'criar') || hasPermission('Fiscal', null, 'criar');
+  const canEditNota = hasPermission('Fiscal', 'NotaFiscal', 'editar') || hasPermission('Fiscal', 'Notas Fiscais', 'editar') || hasPermission('Fiscal', null, 'editar');
+  const canCancelNota = hasPermission('Fiscal', 'NotaFiscal', 'cancelar') || hasPermission('Fiscal', 'Notas Fiscais', 'cancelar') || hasPermission('Fiscal', null, 'cancelar');
 
   // Paginação e ordenação persistente (backend)
   const { page, setPage, pageSize, setPageSize } = useBackendPagination('NotaFiscal', 20);
   const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('NotaFiscal', 'data_emissao', 'desc');
-  const { data: notasBackend = [] } = useEntityListSorted('NotaFiscal', {}, { sortField, sortDirection, page, pageSize, limit: pageSize });
+  const { data: notasBackend = [] } = useEntityListSorted('NotaFiscal', {}, { sortField, sortDirection, page, pageSize, limit: pageSize, enabled: contextoValido && canViewNota });
   const notasList = Array.isArray(notasFiscais) && notasFiscais.length ? notasFiscais : notasBackend;
 
   const exportarNotasCSV = (lista) => {
@@ -73,16 +84,6 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
     URL.revokeObjectURL(url);
   };
 
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const { empresaAtual, empresasDoGrupo, grupoAtual, createInContext, updateInContext } = useContextoVisual();
-  const { hasPermission } = usePermissions();
-  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
-  const empresaId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
-  const canCreateNota = hasPermission('Fiscal', 'NotaFiscal', 'criar') || hasPermission('Fiscal', 'Notas Fiscais', 'criar') || hasPermission('Fiscal', null, 'criar');
-  const canEditNota = hasPermission('Fiscal', 'NotaFiscal', 'editar') || hasPermission('Fiscal', 'Notas Fiscais', 'editar') || hasPermission('Fiscal', null, 'editar');
-  const canCancelNota = hasPermission('Fiscal', 'NotaFiscal', 'cancelar') || hasPermission('Fiscal', 'Notas Fiscais', 'cancelar') || hasPermission('Fiscal', null, 'cancelar');
   const sanitizeFiscalText = (value) => String(value || '').replace(/[<>]/g, '').replace(/javascript:/gi, '').trim();
   const withFiscalContext = (payload = {}) => ({
     ...payload,

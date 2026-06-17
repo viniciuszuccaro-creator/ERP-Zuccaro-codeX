@@ -1,3 +1,13 @@
+### Comercial - Fase 9 Listagens com RBAC de Visualizacao
+- Segui o proximo passo salvo para `NotasFiscaisTab` e `PedidosTab`, sem criar tela, modulo, componente ou arquivo novo.
+- `NotasFiscaisTab` passou a calcular contexto `groupId/empresaId` e permissao granular `Fiscal.NotaFiscal.visualizar` antes da consulta backend.
+- A listagem backend de notas fiscais agora envia `enabled: contextoValido && canViewNota` ao `useEntityListSorted`, preservando criacao, edicao, cancelamento, exportacao, DANFE e fluxo fiscal existente.
+- `PedidosTab` passou a calcular contexto pelo `empresaId` recebido ou pelo contexto visual atual, alem de validar `Comercial.Pedido.visualizar` antes da listagem backend.
+- A listagem backend de pedidos agora envia `enabled: contextoValido && canViewPedido` ao `useEntityListSorted`, mantendo paginacao, ordenacao, filtros, aprovacao, impressao, automacao e fallback por props externas.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; a melhoria reforcou multiempresa, RBAC e seguranca nas listagens existentes do Comercial/Fiscal.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar revisando outras consultas diretas em `NotasFiscaisTab`/`PedidosTab` para migrar auditoria e operacoes sensiveis para contexto/RBAC quando houver helper existente.
+
 ### Financeiro - Fase 9 Listagens com RBAC de Visualizacao
 - Segui o proximo passo salvo para listagens que usam `useEntityListSorted` fora de Compras, sem criar tela, modulo, componente ou arquivo novo.
 - `ContasReceberTab` passou a calcular contexto `groupId/empresaId` e permissao `Financeiro.ContaReceber.visualizar` antes da consulta backend.

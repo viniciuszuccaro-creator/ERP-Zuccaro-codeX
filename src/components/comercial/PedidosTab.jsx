@@ -45,21 +45,25 @@ import useBackendPagination from "@/components/lib/useBackendPagination";
 import { ProtectedAction } from "@/components/ProtectedAction";
 
 export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onCreatePedido, onEditPedido, empresaId = null }) {
-  const { canEdit, canCreate, canApprove, canDelete } = usePermissions();
+  const { canEdit, canCreate, canApprove, canDelete, hasPermission } = usePermissions();
+  const { openWindow, closeWindow } = useWindow();
+  const { empresaAtual, grupoAtual, updateInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaContextoId = empresaId || empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaContextoId);
+  const canViewPedido = hasPermission('Comercial', 'Pedido', 'visualizar') || hasPermission('Comercial', 'Pedidos', 'visualizar') || hasPermission('Comercial', null, 'visualizar');
   const { page, setPage, pageSize, setPageSize } = useBackendPagination('Pedido', 20);
   const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('Pedido', 'data_pedido', 'desc');
 
   // persistência de sort movida para usePersistedSort
 
-  const { data: pedidosBackend = [] } = useEntityListSorted('Pedido', {}, { sortField, sortDirection, page, pageSize, limit: pageSize, campo: 'empresa_id' });
+  const { data: pedidosBackend = [] } = useEntityListSorted('Pedido', {}, { sortField, sortDirection, page, pageSize, limit: pageSize, campo: 'empresa_id', enabled: contextoValido && canViewPedido });
   const pedidosList = Array.isArray(pedidos) && pedidos.length ? pedidos : pedidosBackend;
   // V21.6: Multi-empresa
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { openWindow, closeWindow } = useWindow();
-  const { updateInContext } = useContextoVisual();
 
   // Seleção em massa + exportação
   const [selectedPedidos, setSelectedPedidos] = useState([]);
