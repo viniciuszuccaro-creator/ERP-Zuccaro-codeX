@@ -47,11 +47,12 @@ import { ProtectedAction } from "@/components/ProtectedAction";
 export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onCreatePedido, onEditPedido, empresaId = null }) {
   const { canEdit, canCreate, canApprove, canDelete, hasPermission } = usePermissions();
   const { openWindow, closeWindow } = useWindow();
-  const { empresaAtual, grupoAtual, updateInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, updateInContext, deleteInContext } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaContextoId = empresaId || empresaAtual?.id || null;
   const contextoValido = Boolean(groupId || empresaContextoId);
   const canViewPedido = hasPermission('Comercial', 'Pedido', 'visualizar') || hasPermission('Comercial', 'Pedidos', 'visualizar') || hasPermission('Comercial', null, 'visualizar');
+  const canDeletePedido = canDelete('Comercial', 'Pedido') || canDelete('Comercial', 'Pedidos') || hasPermission('Comercial', null, 'excluir');
   const { page, setPage, pageSize, setPageSize } = useBackendPagination('Pedido', 20);
   const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('Pedido', 'data_pedido', 'desc');
 
@@ -64,6 +65,24 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
   const [statusFilter, setStatusFilter] = useState("todos");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const auditPedido = async ({ acao, pedido = null, descricao, sucesso = true, detalhes = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        acao,
+        modulo: 'Comercial',
+        entidade: 'Pedido',
+        registro_id: pedido?.id || detalhes?.pedido_id || null,
+        descricao,
+        empresa_id: pedido?.empresa_id || empresaContextoId,
+        group_id: pedido?.group_id || pedido?.grupo_id || groupId,
+        grupo_id: pedido?.grupo_id || pedido?.group_id || groupId,
+        tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
+        sucesso,
+        detalhes: { origem: 'PedidosTab', ...detalhes },
+        data_hora: new Date().toISOString()
+      });
+    } catch (_) {}
+  };
 
   // Seleção em massa + exportação
   const [selectedPedidos, setSelectedPedidos] = useState([]);
@@ -85,13 +104,39 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
   };
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Pedido.delete(id),
-    onSuccess: async (_data, id) => {
+    mutationFn: async (pedido) => {
+      if (!contextoValido || !canDeletePedido) {
+        await auditPedido({
+          acao: 'Exclusao bloqueada',
+          pedido,
+          descricao: !contextoValido ? 'Exclusao de pedido bloqueada por falta de contexto' : 'Exclusao de pedido bloqueada por RBAC',
+          sucesso: false,
+          detalhes: { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada' }
+        });
+        throw new Error(!contextoValido ? 'Selecione grupo ou empresa antes de excluir.' : 'Sem permissao para excluir pedido.');
+      }
+      await auditPedido({
+        acao: 'Exclusao solicitada',
+        pedido,
+        descricao: 'Exclusao solicitada via UI',
+        detalhes: { dados_anteriores: pedido }
+      });
+      return deleteInContext('Pedido', pedido.id);
+    },
+    onSuccess: async (_data, pedido) => {
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-      toast({ title: "✅ Pedido excluído!" });
-      try { await base44.entities.AuditLog.create({ acao: 'Exclusão', modulo: 'Comercial', entidade: 'Pedido', registro_id: id, descricao: 'Pedido excluído', data_hora: new Date().toISOString() }); } catch(_) {}
+      await auditPedido({ acao: 'Exclusao', pedido, descricao: 'Pedido excluido', detalhes: { dados_anteriores: pedido } });
+      toast({ title: 'Pedido excluido!' });
+    },
+    onError: (error) => {
+      toast({ title: error.message || 'Falha ao excluir pedido', variant: 'destructive' });
     },
   });
+
+  const solicitarExclusaoPedido = (pedido) => {
+    if (!confirm('Excluir pedido?')) return;
+    deleteMutation.mutate(pedido);
+  };
 
   const filteredPedidos = pedidosList.filter(p => {
     const matchStatus = statusFilter === "todos" || p.status === statusFilter;
@@ -285,13 +330,13 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
           </Button>
         )}
 
-        <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.excluir" data-sensitive onClick={async () => { if (confirm('Excluir pedido?')) { try { await base44.entities.AuditLog.create({ acao: 'Exclusão', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Exclusão solicitada via UI', data_hora: new Date().toISOString() }); } catch {} deleteMutation.mutate(pedido.id); } }} title="Excluir" className="h-8 px-2 text-red-600">
+        <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.excluir" data-sensitive onClick={() => solicitarExclusaoPedido(pedido)} disabled={!contextoValido || !canDeletePedido || deleteMutation.isPending} title="Excluir" className="h-8 px-2 text-red-600">
           <Trash2 className="w-3 h-3 mr-1" />
           <span className="text-xs">Excluir</span>
         </Button>
       </div>
     )}
-  ]), [queryClient, toast, onEditPedido]);
+  ]), [queryClient, toast, onEditPedido, contextoValido, canDeletePedido, deleteMutation.isPending]);
 
   const menuItems = (pedido) => {
     const items = [];
@@ -306,7 +351,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
     if ((pedido.tipo_pedido === 'Produção Sob Medida' || pedido.itens_corte_dobra?.length > 0 || pedido.itens_armado_padrao?.length > 0) && pedido.status !== 'Cancelado') {
       items.push({ key: 'op', label: 'Gerar OP', action: async () => { toast({ title: '🏭 Criando OP...' }); try { await base44.entities.AuditLog.create({ acao: 'Gerar OP', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Acionada geração de OP', data_hora: new Date().toISOString() }); } catch {} } });
     }
-    items.push({ key: 'excluir', label: 'Excluir', action: async () => { if (confirm('Excluir pedido?')) { try { await base44.entities.AuditLog.create({ acao: 'Exclusão', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Exclusão solicitada via UI', data_hora: new Date().toISOString() }); } catch {} deleteMutation.mutate(pedido.id); } } });
+    items.push({ key: 'excluir', label: 'Excluir', action: async () => solicitarExclusaoPedido(pedido) });
     if (pedido.status_aprovacao === 'pendente') {
       items.push({ key: 'aprovar', label: 'Analisar Aprovação', action: () => openWindow(CentralAprovacoesManager, { windowMode: true, initialTab: 'descontos' }, { title: '🔐 Central de Aprovações', width: 1200, height: 700 }) });
     }

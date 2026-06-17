@@ -1,3 +1,14 @@
+### Comercial - Fase 9 Exclusao de Pedido Contextual
+- Segui o proximo passo salvo para operacoes sensiveis em `PedidosTab`, sem criar tela, modulo, componente ou arquivo novo.
+- A exclusao de pedidos deixou de usar `base44.entities.Pedido.delete(id)` direto e passou a chamar `deleteInContext("Pedido", pedido.id)`.
+- `PedidosTab` passou a validar contexto `groupId/empresaId` e permissao granular `Comercial.Pedido.excluir` antes de excluir.
+- Tentativas bloqueadas por falta de contexto ou RBAC agora registram auditoria de seguranca com `groupId`, `grupoId`, `empresaId`, motivo e dados do pedido.
+- Exclusoes autorizadas registram auditoria antes da remocao e depois do sucesso, mantendo dados anteriores para rastreabilidade.
+- O botao e o menu de exclusao foram preservados; ambos agora passam pelo mesmo helper seguro e o botao fica desabilitado quando faltar contexto/permissao.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; a melhoria reforcou multiempresa, RBAC, seguranca e auditoria no fluxo existente de pedidos.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em `PedidosTab` revisando acoes sensiveis de NF-e, entrega, OP, impressao/exportacao e notificacoes para auditar com contexto completo e bloqueio granular quando aplicavel.
+
 ### Comercial - Fase 9 Listagens com RBAC de Visualizacao
 - Segui o proximo passo salvo para `NotasFiscaisTab` e `PedidosTab`, sem criar tela, modulo, componente ou arquivo novo.
 - `NotasFiscaisTab` passou a calcular contexto `groupId/empresaId` e permissao granular `Fiscal.NotaFiscal.visualizar` antes da consulta backend.
