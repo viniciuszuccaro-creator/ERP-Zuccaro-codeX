@@ -38,13 +38,14 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
   const contextoValido = Boolean(groupId || empresaId);
   const { page, setPage, pageSize, setPageSize } = useBackendPagination('OrdemCompra', 20);
   const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('OrdemCompra', 'data_solicitacao', 'desc');
+  const { user: authUser } = useUser();
+  const { hasPermission } = usePermissions();
+  const canViewOC = hasPermission('Compras','OrdemCompra','visualizar') || hasPermission('Compras', null, 'visualizar');
 
   // persistência de sort movida para usePersistedSort
 
-  const { data: ocBackend = [] } = useEntityListSorted('OrdemCompra', {}, { sortField, sortDirection, page, pageSize, limit: pageSize });
+  const { data: ocBackend = [] } = useEntityListSorted('OrdemCompra', {}, { sortField, sortDirection, page, pageSize, limit: pageSize, enabled: contextoValido && canViewOC });
   const ocList = Array.isArray(ordensCompra) && ordensCompra.length ? ordensCompra : ocBackend;
-  const { user: authUser } = useUser();
-  const { hasPermission } = usePermissions();
   const canCreateOC = hasPermission('Compras','OrdemCompra','criar') || hasPermission('Compras', null, 'criar');
   const canApproveOC = hasPermission('Compras','OrdemCompra','aprovar') || hasPermission('Compras', null, 'aprovar');
   const canSendOC = hasPermission('Compras','OrdemCompra','enviar_fornecedor') || hasPermission('Compras','OrdemCompra','editar');

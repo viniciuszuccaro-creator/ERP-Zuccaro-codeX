@@ -37,6 +37,7 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
     campo = "empresa_id",
     page = 1,
     pageSize = 100,
+    enabled = true,
   } = options || {};
 
   const filtroContextOutside = getFiltroContexto(campo, true);
@@ -80,7 +81,7 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
     (criterios && (criterios.group_id || criterios[campo])) || hasOr
   );
   const filtroFinal = hasCtxInCriterios ? { ...criterios } : { ...criterios, ...filtroContextOutside };
-  const enabledFlag = Boolean(
+  const enabledFlag = Boolean(enabled) && Boolean(
     (filtroFinal && (filtroFinal.group_id || filtroFinal[campo] || filtroFinal.$or)) ||
     (filtroContextOutside && (filtroContextOutside.group_id || filtroContextOutside[campo]))
   );

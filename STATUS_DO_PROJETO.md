@@ -1,3 +1,14 @@
+### Compras - Fase 9 Listagens com Enabled Externo
+- Segui o proximo passo salvo para `FornecedoresTabOptimized`, `useEntityListSorted` e listagens de Compras, sem criar tela, modulo, componente ou arquivo novo.
+- `useEntityListSorted` passou a aceitar `options.enabled`, combinando permissao externa com o bloqueio de contexto ja existente no hook.
+- O comportamento padrao foi preservado: callers que nao passarem `enabled` continuam usando o bloqueio atual por `groupId/empresaId/$or`.
+- `OrdensCompraTab` passou a calcular permissao granular de visualizacao (`Compras.OrdemCompra.visualizar`) antes da listagem backend e envia `enabled: contextoValido && canViewOC` ao `useEntityListSorted`.
+- `FornecedoresTabOptimized` foi revisado e ja permanecia com `enabled: contextoValido && canViewFornecedor` nas consultas principais, sem necessidade de alterar o fluxo.
+- Foram preservados cache em memoria, IDB, dedupe, throttle, backoff 429, paginacao, ordenacao e fallback de dados do hook.
+- Mantida a Regra-Mae: nenhum componente, botao, consulta ou fluxo foi removido; apenas foi adicionada uma trava opcional para reforcar RBAC/contexto em listagens existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar revisando listagens que usam `useEntityListSorted` fora de Compras para passar `enabled` granular quando o componente ja possuir contexto/permissao disponivel.
+
 ### Compras - Fase 9 Solicitacoes com RBAC e Auditoria
 - Segui o proximo passo salvo para `SolicitacoesCompraTab` e `SolicitacaoCompraForm`, sem criar tela, modulo, componente ou arquivo novo.
 - `SolicitacoesCompraTab` deixou de buscar usuario por `base44.auth.me()` direto e passou a usar o `useUser` existente, mantendo `base44` apenas para a integracao de IA ja existente.
