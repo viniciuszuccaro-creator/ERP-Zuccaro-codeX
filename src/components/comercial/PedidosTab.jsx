@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,10 +53,13 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
   const contextoValido = Boolean(groupId || empresaContextoId);
   const canViewPedido = hasPermission('Comercial', 'Pedido', 'visualizar') || hasPermission('Comercial', 'Pedidos', 'visualizar') || hasPermission('Comercial', null, 'visualizar');
   const canDeletePedido = canDelete('Comercial', 'Pedido') || canDelete('Comercial', 'Pedidos') || hasPermission('Comercial', null, 'excluir');
+  const canGerarNFe = hasPermission('Comercial', 'Pedido', 'gerarNFe') || hasPermission('Fiscal', 'NotaFiscal', 'criar') || hasPermission('Fiscal', null, 'criar');
+  const canCriarEntrega = hasPermission('Comercial', 'Pedido', 'criarEntrega') || hasPermission('ExpediÃ§Ã£o', 'Entrega', 'criar') || hasPermission('ExpediÃ§Ã£o', null, 'criar');
+  const canGerarOP = hasPermission('Comercial', 'Pedido', 'gerarOP') || hasPermission('ProduÃ§Ã£o', 'OrdemProducao', 'criar') || hasPermission('ProduÃ§Ã£o', null, 'criar');
   const { page, setPage, pageSize, setPageSize } = useBackendPagination('Pedido', 20);
   const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('Pedido', 'data_pedido', 'desc');
 
-  // persistência de sort movida para usePersistedSort
+  // persistÃªncia de sort movida para usePersistedSort
 
   const { data: pedidosBackend = [] } = useEntityListSorted('Pedido', {}, { sortField, sortDirection, page, pageSize, limit: pageSize, campo: 'empresa_id', enabled: contextoValido && canViewPedido });
   const pedidosList = Array.isArray(pedidos) && pedidos.length ? pedidos : pedidosBackend;
@@ -84,7 +87,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
     } catch (_) {}
   };
 
-  // Seleção em massa + exportação
+  // SeleÃ§Ã£o em massa + exportaÃ§Ã£o
   const [selectedPedidos, setSelectedPedidos] = useState([]);
   const togglePedido = (id) => setSelectedPedidos(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   const toggleAllPedidos = (checked, lista) => setSelectedPedidos(checked ? lista.map(p => p.id) : []);
@@ -138,6 +141,22 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
     deleteMutation.mutate(pedido);
   };
 
+  const executarAcaoSensivelPedido = async ({ pedido, permitido, acao, descricao, toastTitle }) => {
+    if (!contextoValido || !permitido) {
+      await auditPedido({
+        acao: `${acao} bloqueada`,
+        pedido,
+        descricao: !contextoValido ? `${descricao} bloqueada por falta de contexto` : `${descricao} bloqueada por RBAC`,
+        sucesso: false,
+        detalhes: { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada' }
+      });
+      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de continuar' : 'Sem permissao para executar esta acao', variant: 'destructive' });
+      return;
+    }
+    toast({ title: toastTitle });
+    await auditPedido({ acao, pedido, descricao, detalhes: { status: pedido?.status } });
+  };
+
   const filteredPedidos = pedidosList.filter(p => {
     const matchStatus = statusFilter === "todos" || p.status === statusFilter;
     const searchLower = searchTerm.toLowerCase();
@@ -156,12 +175,12 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
     return matchStatus && matchSearch && matchEmpresa;
   });
 
-  // ETAPA 4: Estatísticas de aprovação
+  // ETAPA 4: EstatÃ­sticas de aprovaÃ§Ã£o
   const pedidosPendentesAprovacao = pedidosList.filter(p => p.status_aprovacao === "pendente");
   const pedidosAprovados = pedidosList.filter(p => p.status_aprovacao === "aprovado");
   const pedidosNegados = pedidosList.filter(p => p.status_aprovacao === "negado");
 
-  // Seleção padronizada (todos os registros visíveis)
+  // SeleÃ§Ã£o padronizada (todos os registros visÃ­veis)
   const allSelected = React.useMemo(() => selectedPedidos.length === filteredPedidos.length && filteredPedidos.length > 0, [selectedPedidos, filteredPedidos]);
   const onToggleSelectAll = () => {
     if (!allSelected) setSelectedPedidos(filteredPedidos.map(p => p.id));
@@ -173,8 +192,8 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
     if (!alvo.length) { toast({ title: 'Sem pendentes selecionados' }); return; }
     try {
       await base44.functions.invoke('whatsappSend', { template: 'aprovacao_pendente', pedido_ids: alvo });
-      toast({ title: '📲 WhatsApp enviado', description: `${alvo.length} pedido(s)` });
-      try { await base44.entities.AuditLog.create({ acao: 'Notificação', modulo: 'Comercial', entidade: 'Pedido', descricao: `WhatsApp aprovação pendente (${alvo.length})`, data_hora: new Date().toISOString() }); } catch {}
+      toast({ title: 'ðŸ“² WhatsApp enviado', description: `${alvo.length} pedido(s)` });
+      try { await base44.entities.AuditLog.create({ acao: 'NotificaÃ§Ã£o', modulo: 'Comercial', entidade: 'Pedido', descricao: `WhatsApp aprovaÃ§Ã£o pendente (${alvo.length})`, data_hora: new Date().toISOString() }); } catch {}
     } catch { toast({ title: 'Falha ao notificar WhatsApp', variant: 'destructive' }); }
   };
   const notifyEmailPendentes = async (ids) => {
@@ -182,13 +201,13 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
     if (!alvo.length) { toast({ title: 'Sem pendentes selecionados' }); return; }
     try {
       await base44.functions.invoke('sendEmailProvider', { tipo: 'aprovacao_pendente', pedido_ids: alvo });
-      toast({ title: '✉️ E-mails enviados', description: `${alvo.length} pedido(s)` });
-      try { await base44.entities.AuditLog.create({ acao: 'Notificação', modulo: 'Comercial', entidade: 'Pedido', descricao: `Email aprovação pendente (${alvo.length})`, data_hora: new Date().toISOString() }); } catch {}
+      toast({ title: 'âœ‰ï¸ E-mails enviados', description: `${alvo.length} pedido(s)` });
+      try { await base44.entities.AuditLog.create({ acao: 'NotificaÃ§Ã£o', modulo: 'Comercial', entidade: 'Pedido', descricao: `Email aprovaÃ§Ã£o pendente (${alvo.length})`, data_hora: new Date().toISOString() }); } catch {}
     } catch { toast({ title: 'Falha ao notificar por email', variant: 'destructive' }); }
   };
 
   const columns = React.useMemo(() => ([
-    { key: 'numero_pedido', label: 'N° Pedido', render: (r) => <span className="font-semibold">{r.numero_pedido}</span> },
+    { key: 'numero_pedido', label: 'NÂ° Pedido', render: (r) => <span className="font-semibold">{r.numero_pedido}</span> },
     { key: 'cliente_nome', label: 'Cliente' },
     { key: 'data_pedido', label: 'Data', render: (r) => new Date(r.data_pedido).toLocaleDateString('pt-BR') },
     { key: 'origem_pedido', label: 'Origem', render: (r) => <BadgeOrigemPedido origemPedido={r.origem_pedido} showLock={true} /> },
@@ -196,19 +215,19 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
     { key: 'status', label: 'Status', render: (r) => (
       <Badge className={
         r.status === 'Entregue' ? 'bg-green-600 text-white' :
-        r.status === 'Em Trânsito' ? 'bg-purple-600 text-white' :
-        r.status === 'Em Expedição' ? 'bg-orange-600 text-white' :
+        r.status === 'Em TrÃ¢nsito' ? 'bg-purple-600 text-white' :
+        r.status === 'Em ExpediÃ§Ã£o' ? 'bg-orange-600 text-white' :
         r.status === 'Faturado' ? 'bg-blue-600 text-white' :
         r.status === 'Pronto para Faturar' ? 'bg-indigo-600 text-white' :
         r.status === 'Aprovado' ? 'bg-green-500 text-white' :
-        r.status === 'Aguardando Aprovação' ? 'bg-yellow-500 text-white' :
+        r.status === 'Aguardando AprovaÃ§Ã£o' ? 'bg-yellow-500 text-white' :
         r.status === 'Cancelado' ? 'bg-red-600 text-white' :
         'bg-slate-500 text-white'
       }>
         {r.status}
       </Badge>
     ) },
-    { key: 'aprovacao', label: 'Aprovação', render: (r) => (
+    { key: 'aprovacao', label: 'AprovaÃ§Ã£o', render: (r) => (
       r.status_aprovacao === 'pendente' ? (
         <Badge className="bg-orange-100 text-orange-700"><Clock className="w-3 h-3 mr-1" />Pendente</Badge>
       ) : r.status_aprovacao === 'aprovado' ? (
@@ -219,7 +238,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
         <Badge variant="outline" className="text-xs">-</Badge>
       )
     ) },
-    { key: 'actions', label: 'Ações Rápidas', render: (pedido) => (
+    { key: 'actions', label: 'AÃ§Ãµes RÃ¡pidas', render: (pedido) => (
       <div className="flex items-center gap-1">
         {pedido.status === 'Rascunho' && (
           <Button 
@@ -235,16 +254,16 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                     queryClient.invalidateQueries({ queryKey: ['movimentacoes'] });
                     queryClient.invalidateQueries({ queryKey: ['contas-receber'] });
                     queryClient.invalidateQueries({ queryKey: ['entregas'] });
-                    toast({ title: '✅ Pedido fechado com sucesso!' });
+                    toast({ title: 'âœ… Pedido fechado com sucesso!' });
                   }
                 },
-                { title: `🚀 Automação - Pedido ${pedido.numero_pedido}`, width: 1200, height: 700 }
+                { title: `ðŸš€ AutomaÃ§Ã£o - Pedido ${pedido.numero_pedido}`, width: 1200, height: 700 }
               );
             }}
             className="h-8 px-2 bg-gradient-to-r from-green-600 to-blue-600 text-white hover:from-green-700 hover:to-blue-700 font-semibold shadow-lg"
           >
             <CheckCircle2 className="w-3 h-3 mr-1" />
-            <span className="text-xs">🚀 Fechar Pedido</span>
+            <span className="text-xs">ðŸš€ Fechar Pedido</span>
           </Button>
         )}
 
@@ -255,10 +274,10 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
            data-sensitive
            disabled={pedido.status_aprovacao === 'pendente' && !(canApprove && canApprove('Comercial','Pedido'))}
            onClick={async () => {
-             try { await base44.entities.AuditLog.create({ acao: 'Edição', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Abrir editor de pedido', data_hora: new Date().toISOString() }); } catch {}
+             try { await base44.entities.AuditLog.create({ acao: 'EdiÃ§Ã£o', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Abrir editor de pedido', data_hora: new Date().toISOString() }); } catch {}
              onEditPedido(pedido);
            }}
-           title={pedido.status_aprovacao === 'pendente' ? 'Edição bloqueada até aprovação' : 'Editar Pedido'}
+           title={pedido.status_aprovacao === 'pendente' ? 'EdiÃ§Ã£o bloqueada atÃ© aprovaÃ§Ã£o' : 'Editar Pedido'}
            className="h-8 px-2"
          >
           <Edit2 className="w-3 h-3 mr-1" />
@@ -273,19 +292,19 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                onClick={async () => {
                 try {
                   await updateInContext('Pedido', pedido.id, { status: 'Pronto para Faturar' });
-                  toast({ title: '✅ Pedido fechado para entrega!' });
+                  toast({ title: 'âœ… Pedido fechado para entrega!' });
                   queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-                  try { await base44.entities.AuditLog.create({ acao: 'Edição', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Status → Pronto para Faturar', data_hora: new Date().toISOString(), sucesso: true }); } catch {}
+                  try { await base44.entities.AuditLog.create({ acao: 'EdiÃ§Ã£o', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Status â†’ Pronto para Faturar', data_hora: new Date().toISOString(), sucesso: true }); } catch {}
                 } catch {
-                  toast({ title: '❌ Erro ao fechar pedido', variant: 'destructive' });
+                  toast({ title: 'âŒ Erro ao fechar pedido', variant: 'destructive' });
                 }
               }}
               className="h-8 px-2 bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold border border-blue-200"
             >
               <Truck className="w-4 h-4 mr-1" />
-              <span className="text-xs">🚚 Fechar p/ Entrega</span>
+              <span className="text-xs">ðŸšš Fechar p/ Entrega</span>
             </Button>
-            <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.gerarNFe" data-sensitive onClick={async () => { toast({ title: '🚀 Gerando NF-e...' }); try { await base44.entities.AuditLog.create({ acao: 'Emissão NF-e', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Acionada geração de NF-e', data_hora: new Date().toISOString() }); } catch {} }} title="Gerar NF-e" className="h-8 px-2 text-green-600">
+            <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.gerarNFe" data-sensitive onClick={() => executarAcaoSensivelPedido({ pedido, permitido: canGerarNFe, acao: 'Emissao NF-e', descricao: 'Acionada geracao de NF-e', toastTitle: 'Gerando NF-e...' })} disabled={!contextoValido || !canGerarNFe} title="Gerar NF-e" className="h-8 px-2 text-green-600">
               <FileText className="w-3 h-3 mr-1" />
               <span className="text-xs">NF-e</span>
             </Button>
@@ -293,38 +312,38 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
         )}
 
         {pedido.status === 'Pronto para Faturar' && (
-          <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.gerarNFe" data-sensitive onClick={async () => { toast({ title: '🚀 Gerando NF-e...' }); try { await base44.entities.AuditLog.create({ acao: 'Emissão NF-e', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Acionada geração de NF-e', data_hora: new Date().toISOString() }); } catch {} }} title="Gerar NF-e" className="h-8 px-2 text-green-600">
+          <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.gerarNFe" data-sensitive onClick={() => executarAcaoSensivelPedido({ pedido, permitido: canGerarNFe, acao: 'Emissao NF-e', descricao: 'Acionada geracao de NF-e', toastTitle: 'Gerando NF-e...' })} disabled={!contextoValido || !canGerarNFe} title="Gerar NF-e" className="h-8 px-2 text-green-600">
             <FileText className="w-3 h-3 mr-1" />
             <span className="text-xs">NF-e</span>
           </Button>
         )}
 
         {pedido.status === 'Faturado' && (
-          <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.criarEntrega" data-sensitive onClick={async () => { toast({ title: '📦 Criando entrega...' }); try { await base44.entities.AuditLog.create({ acao: 'Criação Entrega', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Acionada criação de entrega', data_hora: new Date().toISOString() }); } catch {} }} title="Criar Entrega" className="h-8 px-2 text-blue-600">
+          <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.criarEntrega" data-sensitive onClick={() => executarAcaoSensivelPedido({ pedido, permitido: canCriarEntrega, acao: 'Criacao Entrega', descricao: 'Acionada criacao de entrega', toastTitle: 'Criando entrega...' })} disabled={!contextoValido || !canCriarEntrega} title="Criar Entrega" className="h-8 px-2 text-blue-600">
             <Truck className="w-3 h-3 mr-1" />
             <span className="text-xs">Entrega</span>
           </Button>
         )}
 
-        {(pedido.tipo_pedido === 'Produção Sob Medida' || pedido.itens_corte_dobra?.length > 0 || pedido.itens_armado_padrao?.length > 0) && pedido.status !== 'Cancelado' && (
-          <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.gerarOP" data-sensitive onClick={async () => { toast({ title: '🏭 Criando OP...' }); try { await base44.entities.AuditLog.create({ acao: 'Gerar OP', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Acionada geração de OP', data_hora: new Date().toISOString() }); } catch {} }} title="Gerar Ordem de Produção" className="h-8 px-2 text-purple-600">
+        {(pedido.tipo_pedido === 'ProduÃ§Ã£o Sob Medida' || pedido.itens_corte_dobra?.length > 0 || pedido.itens_armado_padrao?.length > 0) && pedido.status !== 'Cancelado' && (
+          <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.gerarOP" data-sensitive onClick={() => executarAcaoSensivelPedido({ pedido, permitido: canGerarOP, acao: 'Gerar OP', descricao: 'Acionada geracao de OP', toastTitle: 'Criando OP...' })} disabled={!contextoValido || !canGerarOP} title="Gerar Ordem de Produção" className="h-8 px-2 text-purple-600">
             <Factory className="w-3 h-3 mr-1" />
             <span className="text-xs">OP</span>
           </Button>
         )}
 
-        <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.imprimir" onClick={async () => { const empresa = empresas?.find(e => e.id === pedido.empresa_id); try { await base44.entities.AuditLog.create({ acao: 'Impressão', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Imprimir pedido', data_hora: new Date().toISOString() }); } catch {} ImprimirPedido({ pedido, empresa }); }} title="Imprimir Pedido" className="h-8 px-2 text-slate-600">
+        <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.imprimir" onClick={async () => { const empresa = empresas?.find(e => e.id === pedido.empresa_id); try { await base44.entities.AuditLog.create({ acao: 'ImpressÃ£o', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Imprimir pedido', data_hora: new Date().toISOString() }); } catch {} ImprimirPedido({ pedido, empresa }); }} title="Imprimir Pedido" className="h-8 px-2 text-slate-600">
           <Printer className="w-3 h-3 mr-1" />
           <span className="text-xs">Imprimir</span>
         </Button>
 
-        <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.visualizar" onClick={async () => { try { await base44.entities.AuditLog.create({ acao: 'Visualização', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Abrir visualização do pedido', data_hora: new Date().toISOString() }); } catch {} onEditPedido(pedido); }} title="Visualizar" className="h-8 px-2">
+        <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.visualizar" onClick={async () => { try { await base44.entities.AuditLog.create({ acao: 'VisualizaÃ§Ã£o', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Abrir visualizaÃ§Ã£o do pedido', data_hora: new Date().toISOString() }); } catch {} onEditPedido(pedido); }} title="Visualizar" className="h-8 px-2">
           <Eye className="w-3 h-3 mr-1" />
           <span className="text-xs">Ver</span>
         </Button>
 
         {pedido.status_aprovacao === 'pendente' && (
-          <Button variant="ghost" size="sm" onClick={() => openWindow(CentralAprovacoesManager, { windowMode: true, initialTab: 'descontos' }, { title: '🔐 Central de Aprovações', width: 1200, height: 700 })} title="Analisar Aprovação" className="h-8 px-2 text-orange-600 animate-pulse">
+          <Button variant="ghost" size="sm" onClick={() => openWindow(CentralAprovacoesManager, { windowMode: true, initialTab: 'descontos' }, { title: 'ðŸ” Central de AprovaÃ§Ãµes', width: 1200, height: 700 })} title="Analisar AprovaÃ§Ã£o" className="h-8 px-2 text-orange-600 animate-pulse">
             <ShieldCheck className="w-3 h-3 mr-1" />
             <span className="text-xs">Analisar</span>
           </Button>
@@ -336,68 +355,68 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
         </Button>
       </div>
     )}
-  ]), [queryClient, toast, onEditPedido, contextoValido, canDeletePedido, deleteMutation.isPending]);
+  ]), [queryClient, toast, onEditPedido, contextoValido, canDeletePedido, canGerarNFe, canCriarEntrega, canGerarOP, deleteMutation.isPending]);
 
   const menuItems = (pedido) => {
     const items = [];
-    items.push({ key: 'ver', label: 'Visualizar', action: async () => { try { await base44.entities.AuditLog.create({ acao: 'Visualização', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Abrir visualização do pedido', data_hora: new Date().toISOString() }); } catch {} onEditPedido(pedido); } });
-    items.push({ key: 'imprimir', label: 'Imprimir', action: async () => { const empresa = empresas?.find(e => e.id === pedido.empresa_id); try { await base44.entities.AuditLog.create({ acao: 'Impressão', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Imprimir pedido', data_hora: new Date().toISOString() }); } catch {} ImprimirPedido({ pedido, empresa }); } });
+    items.push({ key: 'ver', label: 'Visualizar', action: async () => { try { await base44.entities.AuditLog.create({ acao: 'VisualizaÃ§Ã£o', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Abrir visualizaÃ§Ã£o do pedido', data_hora: new Date().toISOString() }); } catch {} onEditPedido(pedido); } });
+    items.push({ key: 'imprimir', label: 'Imprimir', action: async () => { const empresa = empresas?.find(e => e.id === pedido.empresa_id); try { await base44.entities.AuditLog.create({ acao: 'ImpressÃ£o', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Imprimir pedido', data_hora: new Date().toISOString() }); } catch {} ImprimirPedido({ pedido, empresa }); } });
     if (pedido.status === 'Aprovado' || pedido.status === 'Pronto para Faturar') {
-      items.push({ key: 'nfe', label: 'Gerar NF-e', action: async () => { toast({ title: '🚀 Gerando NF-e...' }); try { await base44.entities.AuditLog.create({ acao: 'Emissão NF-e', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Acionada geração de NF-e', data_hora: new Date().toISOString() }); } catch {} } });
+      items.push({ key: 'nfe', label: 'Gerar NF-e', action: async () => executarAcaoSensivelPedido({ pedido, permitido: canGerarNFe, acao: 'Emissao NF-e', descricao: 'Acionada geracao de NF-e', toastTitle: 'Gerando NF-e...' }) });
     }
     if (pedido.status === 'Faturado') {
-      items.push({ key: 'entrega', label: 'Criar Entrega', action: async () => { toast({ title: '📦 Criando entrega...' }); try { await base44.entities.AuditLog.create({ acao: 'Criação Entrega', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Acionada criação de entrega', data_hora: new Date().toISOString() }); } catch {} } });
+      items.push({ key: 'entrega', label: 'Criar Entrega', action: async () => executarAcaoSensivelPedido({ pedido, permitido: canCriarEntrega, acao: 'Criacao Entrega', descricao: 'Acionada criacao de entrega', toastTitle: 'Criando entrega...' }) });
     }
-    if ((pedido.tipo_pedido === 'Produção Sob Medida' || pedido.itens_corte_dobra?.length > 0 || pedido.itens_armado_padrao?.length > 0) && pedido.status !== 'Cancelado') {
-      items.push({ key: 'op', label: 'Gerar OP', action: async () => { toast({ title: '🏭 Criando OP...' }); try { await base44.entities.AuditLog.create({ acao: 'Gerar OP', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Acionada geração de OP', data_hora: new Date().toISOString() }); } catch {} } });
+    if ((pedido.tipo_pedido === 'ProduÃ§Ã£o Sob Medida' || pedido.itens_corte_dobra?.length > 0 || pedido.itens_armado_padrao?.length > 0) && pedido.status !== 'Cancelado') {
+      items.push({ key: 'op', label: 'Gerar OP', action: async () => executarAcaoSensivelPedido({ pedido, permitido: canGerarOP, acao: 'Gerar OP', descricao: 'Acionada geracao de OP', toastTitle: 'Criando OP...' }) });
     }
     items.push({ key: 'excluir', label: 'Excluir', action: async () => solicitarExclusaoPedido(pedido) });
     if (pedido.status_aprovacao === 'pendente') {
-      items.push({ key: 'aprovar', label: 'Analisar Aprovação', action: () => openWindow(CentralAprovacoesManager, { windowMode: true, initialTab: 'descontos' }, { title: '🔐 Central de Aprovações', width: 1200, height: 700 }) });
+      items.push({ key: 'aprovar', label: 'Analisar AprovaÃ§Ã£o', action: () => openWindow(CentralAprovacoesManager, { windowMode: true, initialTab: 'descontos' }, { title: 'ðŸ” Central de AprovaÃ§Ãµes', width: 1200, height: 700 }) });
     }
     return items;
   };
 
   return (
     <div className="w-full h-full flex flex-col space-y-6">
-      {/* ETAPA 4: ALERTA DE APROVAÇÕES PENDENTES */}
+      {/* ETAPA 4: ALERTA DE APROVAÃ‡Ã•ES PENDENTES */}
       {pedidosPendentesAprovacao.length > 0 && (
         <Alert className="border-orange-300 bg-orange-50">
           <AlertDescription className="flex items-center justify-between">
             <div>
               <p className="font-semibold text-orange-900 flex items-center gap-2">
                 <AlertCircle className="w-5 h-5" />
-                {pedidosPendentesAprovacao.length} pedido(s) aguardando aprovação
+                {pedidosPendentesAprovacao.length} pedido(s) aguardando aprovaÃ§Ã£o
                 </p>
                 <p className="text-xs text-orange-700 mt-1">
-                Pedidos com descontos ou outras pendências financeiras aguardam sua análise.
+                Pedidos com descontos ou outras pendÃªncias financeiras aguardam sua anÃ¡lise.
                 </p>
                 </div>
                 <Button
                 onClick={() => openWindow(CentralAprovacoesManager, { windowMode: true }, {
-                title: '🔐 Central de Aprovações',
+                title: 'ðŸ” Central de AprovaÃ§Ãµes',
                 width: 1200,
                 height: 700
                 })}
                 className="bg-orange-600 hover:bg-orange-600/90"
             >
               <ShieldCheck className="w-4 h-4 mr-2" />
-              Gerenciar Aprovações
+              Gerenciar AprovaÃ§Ãµes
             </Button>
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Bloco Resumido de Aprovação + Notificações */}
+      {/* Bloco Resumido de AprovaÃ§Ã£o + NotificaÃ§Ãµes */}
       {pedidosPendentesAprovacao.length > 0 && (
         <Card className="bg-white/60 backdrop-blur-md border-white/40 shadow">
           <CardContent className="p-4 flex items-center justify-between">
             <div className="text-sm text-slate-700">
-              Há <span className="font-semibold">{pedidosPendentesAprovacao.length}</span> pedido(s) aguardando aprovação.
+              HÃ¡ <span className="font-semibold">{pedidosPendentesAprovacao.length}</span> pedido(s) aguardando aprovaÃ§Ã£o.
             </div>
             <div className="flex items-center gap-2">
-              <Button onClick={() => openWindow(CentralAprovacoesManager, { windowMode: true }, { title: '🔐 Central de Aprovações', width: 1200, height: 700 })} className="bg-orange-600 hover:bg-orange-600/90">
-                Central de Aprovações
+              <Button onClick={() => openWindow(CentralAprovacoesManager, { windowMode: true }, { title: 'ðŸ” Central de AprovaÃ§Ãµes', width: 1200, height: 700 })} className="bg-orange-600 hover:bg-orange-600/90">
+                Central de AprovaÃ§Ãµes
               </Button>
               <Button variant="outline" onClick={() => notifyWhatsAppPendentes(selectedPedidos)}>
                 Notificar WhatsApp
@@ -410,13 +429,13 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
         </Card>
       )}
 
-      {/* ESTATÍSTICAS DE APROVAÇÃO */}
+      {/* ESTATÃSTICAS DE APROVAÃ‡ÃƒO */}
       {(pedidosAprovados.length > 0 || pedidosNegados.length > 0 || pedidosPendentesAprovacao.length > 0) && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="bg-white/60 backdrop-blur-md border-white/40 shadow">
             <CardContent className="p-4 flex items-center justify-between">
               <div>
-                <p className="text-sm text-orange-700">Pendentes Aprovação</p>
+                <p className="text-sm text-orange-700">Pendentes AprovaÃ§Ã£o</p>
                 <p className="text-2xl font-bold text-orange-900">{pedidosPendentesAprovacao.length}</p>
               </div>
               <Clock className="w-8 h-8 text-orange-400" />
@@ -461,7 +480,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                 <SearchInput
                   value={searchTerm}
                   onChange={setSearchTerm}
-                  placeholder="Buscar por número, cliente, vendedor, tipo, origem, status..."
+                  placeholder="Buscar por nÃºmero, cliente, vendedor, tipo, origem, status..."
                   className="flex-1"
                 />
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -471,11 +490,11 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                   <SelectContent className="z-[99999]">
                     <SelectItem value="todos">Todos</SelectItem>
                     <SelectItem value="Rascunho">Rascunho</SelectItem>
-                    <SelectItem value="Aguardando Aprovação">Aguardando Aprovação</SelectItem>
+                    <SelectItem value="Aguardando AprovaÃ§Ã£o">Aguardando AprovaÃ§Ã£o</SelectItem>
                     <SelectItem value="Aprovado">Aprovado</SelectItem>
                     <SelectItem value="Pronto para Faturar">Pronto para Faturar</SelectItem>
                     <SelectItem value="Faturado">Faturado</SelectItem>
-                    <SelectItem value="Em Expedição">Em Expedição</SelectItem>
+                    <SelectItem value="Em ExpediÃ§Ã£o">Em ExpediÃ§Ã£o</SelectItem>
                     <SelectItem value="Entregue">Entregue</SelectItem>
                     <SelectItem value="Cancelado">Cancelado</SelectItem>
                   </SelectContent>
@@ -504,14 +523,14 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                     const blob = new Blob([csv], { type: 'text/csv' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a'); a.href = url; a.download = `pedidos_${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url);
-                    try { base44.entities.AuditLog.create({ acao: 'Exportação', modulo: 'Comercial', entidade: 'Pedido', descricao: `Exportados ${lista.length} pedidos`, data_hora: new Date().toISOString() }); } catch {}
+                    try { base44.entities.AuditLog.create({ acao: 'ExportaÃ§Ã£o', modulo: 'Comercial', entidade: 'Pedido', descricao: `Exportados ${lista.length} pedidos`, data_hora: new Date().toISOString() }); } catch {}
                   }}>
                     <Download className="w-4 h-4 mr-2" /> Exportar CSV
                   </Button>
                   </ProtectedAction>
                   <Button variant="outline" onClick={() => notifyWhatsAppPendentes(selectedPedidos)}>WhatsApp</Button>
                   <Button variant="outline" onClick={() => notifyEmailPendentes(selectedPedidos)}>Email</Button>
-                  <Button variant="ghost" onClick={() => setSelectedPedidos([])}>Limpar Seleção</Button>
+                  <Button variant="ghost" onClick={() => setSelectedPedidos([])}>Limpar SeleÃ§Ã£o</Button>
                 </div>
               </AlertDescription>
             </Alert>
@@ -536,7 +555,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
             onPageSizeChange={(n) => { setPageSize(n); setPage(1); }}
           />
 
-{/* paginação integrada ao ERPDataTable */}
+{/* paginaÃ§Ã£o integrada ao ERPDataTable */}
 
           {filteredPedidos.length === 0 && (
             <div className="text-center py-12 text-slate-500">

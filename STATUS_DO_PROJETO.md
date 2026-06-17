@@ -1,3 +1,15 @@
+### Comercial - Fase 9 Acoes Sensíveis de Pedido
+- Segui o proximo passo salvo para acoes sensiveis em `PedidosTab`, sem criar tela, modulo, componente ou arquivo novo.
+- As acoes de gerar NF-e, criar entrega e gerar OP passaram a usar um helper unico (`executarAcaoSensivelPedido`) com contexto, RBAC e auditoria contextual.
+- Os botoes e itens de menu dessas acoes foram preservados, mas agora bloqueiam quando faltar `groupId/empresaId` ou permissao granular aplicavel.
+- NF-e valida `Comercial.Pedido.gerarNFe` com fallback para permissao fiscal de criacao de `NotaFiscal`.
+- Entrega valida `Comercial.Pedido.criarEntrega` com fallback para permissao de criacao em Expedicao.
+- OP valida `Comercial.Pedido.gerarOP` com fallback para permissao de criacao em Producao.
+- Tentativas bloqueadas passam a registrar auditoria de seguranca com motivo, pedido, `groupId`, `grupoId` e `empresaId`; acoes autorizadas tambem ficam auditadas com contexto completo.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas foi eliminado caminho paralelo de auditoria direta em acoes sensiveis existentes.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em `PedidosTab` revisando impressao, visualizacao, exportacao e notificacoes de aprovacao para auditoria contextual/RBAC granular.
+
 ### Comercial - Fase 9 Exclusao de Pedido Contextual
 - Segui o proximo passo salvo para operacoes sensiveis em `PedidosTab`, sem criar tela, modulo, componente ou arquivo novo.
 - A exclusao de pedidos deixou de usar `base44.entities.Pedido.delete(id)` direto e passou a chamar `deleteInContext("Pedido", pedido.id)`.
