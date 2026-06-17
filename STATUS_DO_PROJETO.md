@@ -1,3 +1,13 @@
+### Financeiro - Fase 9 Listagens com RBAC de Visualizacao
+- Segui o proximo passo salvo para listagens que usam `useEntityListSorted` fora de Compras, sem criar tela, modulo, componente ou arquivo novo.
+- `ContasReceberTab` passou a calcular contexto `groupId/empresaId` e permissao `Financeiro.ContaReceber.visualizar` antes da consulta backend.
+- A listagem backend de contas a receber agora envia `enabled: contextoValido && podeVisualizarReceber` ao `useEntityListSorted`, impedindo busca sem Grupo/Empresa ou sem RBAC granular.
+- `ContasPagarTab` recebeu a mesma protecao com `Financeiro.ContaPagar.visualizar`, preservando paginacao, ordenacao, filtros, baixa, caixa, aprovacao, boleto e formularios existentes.
+- O fluxo padrao continua preservado quando as props externas `contas` ja vierem preenchidas, mantendo compatibilidade com chamadas atuais.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; a melhoria reforcou multiempresa, RBAC e seguranca nas listagens existentes do Financeiro.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em Comercial revisando `NotasFiscaisTab` e `PedidosTab` para aplicar `enabled` por contexto/permissao antes das listagens backend.
+
 ### Compras - Fase 9 Listagens com Enabled Externo
 - Segui o proximo passo salvo para `FornecedoresTabOptimized`, `useEntityListSorted` e listagens de Compras, sem criar tela, modulo, componente ou arquivo novo.
 - `useEntityListSorted` passou a aceitar `options.enabled`, combinando permissao externa com o bloqueio de contexto ja existente no hook.

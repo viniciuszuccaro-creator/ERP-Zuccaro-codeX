@@ -28,22 +28,23 @@ import usePersistedSort from "@/components/lib/usePersistedSort";
 
 export default function ContasReceberTab({ contas, empresas = [], windowMode = false }) {
   const { createInContext, updateInContext, empresaAtual, grupoAtual } = useContextoVisual();
-  const { page, setPage, pageSize, setPageSize } = useBackendPagination('ContaReceber', 20);
-  const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('ContaReceber', 'data_vencimento', 'asc');
-
-  // persistência de sort movida para usePersistedSort
-
-  const { data: contasBackend = [] } = useEntityListSorted('ContaReceber', {}, { sortField, sortDirection, page, pageSize, limit: pageSize });
-  const contasList = Array.isArray(contas) && contas.length ? contas : contasBackend;
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-  const { openWindow } = useWindow();
-  const { formasPagamento } = useFormasPagamento();
   const { user: authUser } = useUser();
   const { hasPermission } = usePermissions();
   const empresaId = empresaAtual?.id || null;
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const contextoValido = Boolean(groupId || empresaId);
+  const podeVisualizarReceber = hasPermission('Financeiro','ContaReceber','visualizar') || hasPermission('Financeiro', null, 'visualizar');
+  const { page, setPage, pageSize, setPageSize } = useBackendPagination('ContaReceber', 20);
+  const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('ContaReceber', 'data_vencimento', 'asc');
+
+  // persistência de sort movida para usePersistedSort
+
+  const { data: contasBackend = [] } = useEntityListSorted('ContaReceber', {}, { sortField, sortDirection, page, pageSize, limit: pageSize, enabled: contextoValido && podeVisualizarReceber });
+  const contasList = Array.isArray(contas) && contas.length ? contas : contasBackend;
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { openWindow } = useWindow();
+  const { formasPagamento } = useFormasPagamento();
   const podeBaixarReceber = hasPermission('Financeiro','ContaReceber','baixar') || hasPermission('Financeiro','ContaReceber','liquidar');
   const podeEnviarCaixaReceber = hasPermission('Financeiro','ContaReceber','enviar_caixa') || hasPermission('Financeiro','ContaReceber','editar');
   const podeExportarReceber = hasPermission('Financeiro','ContaReceber','exportar');

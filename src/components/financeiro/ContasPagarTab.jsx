@@ -25,22 +25,23 @@ import usePersistedSort from "@/components/lib/usePersistedSort";
 
 export default function ContasPagarTab({ contas, windowMode = false }) {
   const { createInContext, updateInContext, empresaAtual, grupoAtual } = useContextoVisual();
-  const { page, setPage, pageSize, setPageSize } = useBackendPagination('ContaPagar', 20);
-  const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('ContaPagar', 'data_vencimento', 'asc');
-
-  // persistência de sort movida para usePersistedSort
-
-  const { data: contasBackend = [] } = useEntityListSorted('ContaPagar', {}, { sortField, sortDirection, page, pageSize, limit: pageSize });
-  const contasList = Array.isArray(contas) && contas.length ? contas : contasBackend;
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const { openWindow } = useWindow();
-  const { formasPagamento } = useFormasPagamento();
   const { user: authUser } = useUser();
   const { hasPermission } = usePermissions();
   const empresaId = empresaAtual?.id || null;
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const contextoValido = Boolean(groupId || empresaId);
+  const podeVisualizarPagar = hasPermission('Financeiro','ContaPagar','visualizar') || hasPermission('Financeiro', null, 'visualizar');
+  const { page, setPage, pageSize, setPageSize } = useBackendPagination('ContaPagar', 20);
+  const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('ContaPagar', 'data_vencimento', 'asc');
+
+  // persistência de sort movida para usePersistedSort
+
+  const { data: contasBackend = [] } = useEntityListSorted('ContaPagar', {}, { sortField, sortDirection, page, pageSize, limit: pageSize, enabled: contextoValido && podeVisualizarPagar });
+  const contasList = Array.isArray(contas) && contas.length ? contas : contasBackend;
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { openWindow } = useWindow();
+  const { formasPagamento } = useFormasPagamento();
   const podeBaixarPagar = hasPermission('Financeiro','ContaPagar','baixar') || hasPermission('Financeiro','ContaPagar','liquidar');
   const podeEnviarCaixaPagar = hasPermission('Financeiro','ContaPagar','enviar_caixa') || hasPermission('Financeiro','ContaPagar','editar');
   const podeExportarPagar = hasPermission('Financeiro','ContaPagar','exportar');
