@@ -1,3 +1,14 @@
+### Comercial - Fase 9 Consulta de Pedido com RBAC e Auditoria
+- Segui o proximo passo salvo para `PedidosTab`, sem criar tela, modulo, componente ou arquivo novo.
+- As acoes existentes de visualizar, imprimir e exportar CSV passaram a usar helpers seguros no proprio fluxo da tela.
+- Visualizacao agora valida contexto `groupId/empresaId` e permissao granular `Comercial.Pedido.visualizar`, auditando sucesso e bloqueio.
+- Impressao agora valida `Comercial.Pedido.imprimir`, respeita contexto multiempresa e registra auditoria antes de chamar a impressao existente.
+- Exportacao CSV dos pedidos selecionados agora valida `Comercial.Pedido.exportar`, desabilita o botao quando faltar contexto/permissao e registra auditoria contextual.
+- Os menus e botoes foram preservados; apenas foi removido o caminho direto/paralelo de auditoria e exportacao dentro do clique.
+- Mantida a Regra-Mae: nenhuma funcionalidade foi removida; a melhoria reforcou RBAC, multiempresa, seguranca e auditoria nas acoes existentes de consulta de pedidos.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em `PedidosTab` revisando notificacoes de aprovacao por WhatsApp/Email, edicao e mudanca de status para auditoria contextual/RBAC granular.
+
 ### Comercial - Fase 9 Acoes Sensíveis de Pedido
 - Segui o proximo passo salvo para acoes sensiveis em `PedidosTab`, sem criar tela, modulo, componente ou arquivo novo.
 - As acoes de gerar NF-e, criar entrega e gerar OP passaram a usar um helper unico (`executarAcaoSensivelPedido`) com contexto, RBAC e auditoria contextual.

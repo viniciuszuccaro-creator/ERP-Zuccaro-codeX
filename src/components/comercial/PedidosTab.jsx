@@ -53,6 +53,8 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
   const contextoValido = Boolean(groupId || empresaContextoId);
   const canViewPedido = hasPermission('Comercial', 'Pedido', 'visualizar') || hasPermission('Comercial', 'Pedidos', 'visualizar') || hasPermission('Comercial', null, 'visualizar');
   const canDeletePedido = canDelete('Comercial', 'Pedido') || canDelete('Comercial', 'Pedidos') || hasPermission('Comercial', null, 'excluir');
+  const canPrintPedido = hasPermission('Comercial', 'Pedido', 'imprimir') || hasPermission('Comercial', 'Pedidos', 'imprimir') || hasPermission('Comercial', null, 'exportar');
+  const canExportPedido = hasPermission('Comercial', 'Pedido', 'exportar') || hasPermission('Comercial', 'Pedidos', 'exportar') || hasPermission('Comercial', null, 'exportar');
   const canGerarNFe = hasPermission('Comercial', 'Pedido', 'gerarNFe') || hasPermission('Fiscal', 'NotaFiscal', 'criar') || hasPermission('Fiscal', null, 'criar');
   const canCriarEntrega = hasPermission('Comercial', 'Pedido', 'criarEntrega') || hasPermission('ExpediÃ§Ã£o', 'Entrega', 'criar') || hasPermission('ExpediÃ§Ã£o', null, 'criar');
   const canGerarOP = hasPermission('Comercial', 'Pedido', 'gerarOP') || hasPermission('ProduÃ§Ã£o', 'OrdemProducao', 'criar') || hasPermission('ProduÃ§Ã£o', null, 'criar');
@@ -155,6 +157,54 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
     }
     toast({ title: toastTitle });
     await auditPedido({ acao, pedido, descricao, detalhes: { status: pedido?.status } });
+  };
+
+  const visualizarPedidoSeguro = async (pedido) => {
+    if (!contextoValido || !canViewPedido) {
+      await auditPedido({
+        acao: 'Visualizacao bloqueada',
+        pedido,
+        descricao: !contextoValido ? 'Visualizacao de pedido bloqueada por falta de contexto' : 'Visualizacao de pedido bloqueada por RBAC',
+        sucesso: false,
+        detalhes: { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada' }
+      });
+      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de visualizar' : 'Sem permissao para visualizar pedido', variant: 'destructive' });
+      return;
+    }
+    await auditPedido({ acao: 'Visualizacao', pedido, descricao: 'Abrir visualizacao do pedido' });
+    onEditPedido(pedido);
+  };
+
+  const imprimirPedidoSeguro = async (pedido) => {
+    if (!contextoValido || !canPrintPedido) {
+      await auditPedido({
+        acao: 'Impressao bloqueada',
+        pedido,
+        descricao: !contextoValido ? 'Impressao de pedido bloqueada por falta de contexto' : 'Impressao de pedido bloqueada por RBAC',
+        sucesso: false,
+        detalhes: { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada' }
+      });
+      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de imprimir' : 'Sem permissao para imprimir pedido', variant: 'destructive' });
+      return;
+    }
+    const empresa = empresas?.find(e => e.id === pedido.empresa_id);
+    await auditPedido({ acao: 'Impressao', pedido, descricao: 'Imprimir pedido' });
+    ImprimirPedido({ pedido, empresa });
+  };
+
+  const exportarPedidosSeguro = async (lista) => {
+    if (!contextoValido || !canExportPedido) {
+      await auditPedido({
+        acao: 'Exportacao bloqueada',
+        descricao: !contextoValido ? 'Exportacao de pedidos bloqueada por falta de contexto' : 'Exportacao de pedidos bloqueada por RBAC',
+        sucesso: false,
+        detalhes: { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada', total: lista.length }
+      });
+      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de exportar' : 'Sem permissao para exportar pedidos', variant: 'destructive' });
+      return;
+    }
+    exportarPedidosCSV(lista);
+    await auditPedido({ acao: 'Exportacao', descricao: `Exportados ${lista.length} pedidos`, detalhes: { total: lista.length } });
   };
 
   const filteredPedidos = pedidosList.filter(p => {
@@ -332,12 +382,12 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
           </Button>
         )}
 
-        <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.imprimir" onClick={async () => { const empresa = empresas?.find(e => e.id === pedido.empresa_id); try { await base44.entities.AuditLog.create({ acao: 'ImpressÃ£o', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Imprimir pedido', data_hora: new Date().toISOString() }); } catch {} ImprimirPedido({ pedido, empresa }); }} title="Imprimir Pedido" className="h-8 px-2 text-slate-600">
+        <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.imprimir" onClick={() => imprimirPedidoSeguro(pedido)} disabled={!contextoValido || !canPrintPedido} title="Imprimir Pedido" className="h-8 px-2 text-slate-600">
           <Printer className="w-3 h-3 mr-1" />
           <span className="text-xs">Imprimir</span>
         </Button>
 
-        <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.visualizar" onClick={async () => { try { await base44.entities.AuditLog.create({ acao: 'VisualizaÃ§Ã£o', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Abrir visualizaÃ§Ã£o do pedido', data_hora: new Date().toISOString() }); } catch {} onEditPedido(pedido); }} title="Visualizar" className="h-8 px-2">
+        <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.visualizar" onClick={() => visualizarPedidoSeguro(pedido)} disabled={!contextoValido || !canViewPedido} title="Visualizar" className="h-8 px-2">
           <Eye className="w-3 h-3 mr-1" />
           <span className="text-xs">Ver</span>
         </Button>
@@ -355,12 +405,12 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
         </Button>
       </div>
     )}
-  ]), [queryClient, toast, onEditPedido, contextoValido, canDeletePedido, canGerarNFe, canCriarEntrega, canGerarOP, deleteMutation.isPending]);
+]), [queryClient, toast, contextoValido, canViewPedido, canPrintPedido, canDeletePedido, canGerarNFe, canCriarEntrega, canGerarOP, deleteMutation.isPending, onEditPedido, empresas]);
 
   const menuItems = (pedido) => {
     const items = [];
-    items.push({ key: 'ver', label: 'Visualizar', action: async () => { try { await base44.entities.AuditLog.create({ acao: 'VisualizaÃ§Ã£o', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Abrir visualizaÃ§Ã£o do pedido', data_hora: new Date().toISOString() }); } catch {} onEditPedido(pedido); } });
-    items.push({ key: 'imprimir', label: 'Imprimir', action: async () => { const empresa = empresas?.find(e => e.id === pedido.empresa_id); try { await base44.entities.AuditLog.create({ acao: 'ImpressÃ£o', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Imprimir pedido', data_hora: new Date().toISOString() }); } catch {} ImprimirPedido({ pedido, empresa }); } });
+    items.push({ key: 'ver', label: 'Visualizar', action: async () => visualizarPedidoSeguro(pedido) });
+    items.push({ key: 'imprimir', label: 'Imprimir', action: async () => imprimirPedidoSeguro(pedido) });
     if (pedido.status === 'Aprovado' || pedido.status === 'Pronto para Faturar') {
       items.push({ key: 'nfe', label: 'Gerar NF-e', action: async () => executarAcaoSensivelPedido({ pedido, permitido: canGerarNFe, acao: 'Emissao NF-e', descricao: 'Acionada geracao de NF-e', toastTitle: 'Gerando NF-e...' }) });
     }
@@ -516,15 +566,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                 <div className="text-blue-900 font-semibold">{selectedPedidos.length} pedido(s) selecionado(s)</div>
                 <div className="flex gap-2">
                   <ProtectedAction module="Comercial" section="Pedido" action="exportar" mode="disable">
-                  <Button variant="outline" onClick={() => {
-                    const lista = filteredPedidos.filter(p => selectedPedidos.includes(p.id));
-                    const headers = ['numero_pedido','cliente_nome','empresa_id','data_pedido','valor_total','status','status_aprovacao'];
-                    const csv = [headers.join(','), ...lista.map(p => headers.map(h => JSON.stringify(p[h] ?? '')).join(','))].join('\n');
-                    const blob = new Blob([csv], { type: 'text/csv' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a'); a.href = url; a.download = `pedidos_${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url);
-                    try { base44.entities.AuditLog.create({ acao: 'ExportaÃ§Ã£o', modulo: 'Comercial', entidade: 'Pedido', descricao: `Exportados ${lista.length} pedidos`, data_hora: new Date().toISOString() }); } catch {}
-                  }}>
+                  <Button variant="outline" data-permission="Comercial.Pedido.exportar" onClick={() => exportarPedidosSeguro(filteredPedidos.filter(p => selectedPedidos.includes(p.id)))} disabled={!contextoValido || !canExportPedido}>
                     <Download className="w-4 h-4 mr-2" /> Exportar CSV
                   </Button>
                   </ProtectedAction>
