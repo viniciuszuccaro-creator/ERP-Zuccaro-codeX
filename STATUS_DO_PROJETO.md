@@ -1,3 +1,13 @@
+### Comercial - Fase 9 Fechamento de Pedido e Atalhos de Aprovacao
+- Segui o proximo passo salvo para `PedidosTab`, sem criar tela, modulo, componente ou arquivo novo.
+- O botao `Fechar Pedido` passou a validar contexto `groupId/empresaId` e permissao granular `Comercial.Pedido.fechar` antes de abrir a automacao existente.
+- A automacao de fechamento agora registra auditoria contextual ao iniciar, bloquear e concluir o fechamento, incluindo status do pedido e invalidacao dos caches ja existentes.
+- O atalho `Gerenciar Aprovacoes` do alerta de pendencias deixou de abrir a central diretamente e passou pelo helper seguro com `Comercial.Pedido.aprovar`.
+- Os botoes, janela de automacao, Central de Aprovacoes e fluxo de usuario foram preservados; apenas foram fechados caminhos sem RBAC/auditoria.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca e auditoria sem remover funcionalidade.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em `PedidosTab` revisando criacao de pedido (`onCreatePedido`) e demais atalhos superiores para contexto/RBAC antes de seguir para outras telas comerciais.
+
 ### Comercial - Fase 9 Notificacoes e Aprovacao de Pedido
 - Segui o proximo passo salvo para `PedidosTab`, sem criar tela, modulo, componente ou arquivo novo.
 - As notificacoes de aprovacao por WhatsApp e Email passaram a validar contexto `groupId/empresaId` e permissao granular `Comercial.Pedido.notificar`.

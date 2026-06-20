@@ -59,6 +59,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
   const canExportPedido = hasPermission('Comercial', 'Pedido', 'exportar') || hasPermission('Comercial', 'Pedidos', 'exportar') || hasPermission('Comercial', null, 'exportar');
   const canNotifyPedido = hasPermission('Comercial', 'Pedido', 'notificar') || hasPermission('Comercial', 'Pedidos', 'notificar') || hasPermission('Comercial', null, 'notificar') || canApprovePedido;
   const canMarcarProntoFaturar = hasPermission('Comercial', 'Pedido', 'marcarProntoFaturar') || canEditPedido;
+  const canFecharPedido = hasPermission('Comercial', 'Pedido', 'fechar') || hasPermission('Comercial', 'Pedidos', 'fechar') || canEditPedido;
   const canGerarNFe = hasPermission('Comercial', 'Pedido', 'gerarNFe') || hasPermission('Fiscal', 'NotaFiscal', 'criar') || hasPermission('Fiscal', null, 'criar');
   const canCriarEntrega = hasPermission('Comercial', 'Pedido', 'criarEntrega') || hasPermission('ExpediÃ§Ã£o', 'Entrega', 'criar') || hasPermission('ExpediÃ§Ã£o', null, 'criar');
   const canGerarOP = hasPermission('Comercial', 'Pedido', 'gerarOP') || hasPermission('ProduÃ§Ã£o', 'OrdemProducao', 'criar') || hasPermission('ProduÃ§Ã£o', null, 'criar');
@@ -267,6 +268,39 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
     openWindow(CentralAprovacoesManager, { windowMode: true, initialTab: 'descontos' }, { title: 'Central de Aprovações', width: 1200, height: 700 });
   };
 
+  const abrirAutomacaoFechamentoSeguro = async (pedido) => {
+    if (!contextoValido || !canFecharPedido) {
+      await auditPedido({
+        acao: 'Fechamento bloqueado',
+        pedido,
+        descricao: !contextoValido ? 'Automacao de fechamento bloqueada por falta de contexto' : 'Automacao de fechamento bloqueada por RBAC',
+        sucesso: false,
+        detalhes: { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada', status: pedido?.status }
+      });
+      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de fechar o pedido' : 'Sem permissao para fechar pedido', variant: 'destructive' });
+      return;
+    }
+    await auditPedido({ acao: 'Fechamento iniciado', pedido, descricao: 'Abrir automacao de fechamento do pedido', detalhes: { status: pedido?.status } });
+    openWindow(
+      AutomacaoFluxoPedido,
+      {
+        pedido,
+        empresaId: pedido.empresa_id,
+        windowMode: true,
+        onComplete: async () => {
+          queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+          queryClient.invalidateQueries({ queryKey: ['produtos'] });
+          queryClient.invalidateQueries({ queryKey: ['movimentacoes'] });
+          queryClient.invalidateQueries({ queryKey: ['contas-receber'] });
+          queryClient.invalidateQueries({ queryKey: ['entregas'] });
+          await auditPedido({ acao: 'Fechamento concluido', pedido, descricao: 'Automacao de fechamento concluida', detalhes: { status_anterior: pedido?.status } });
+          toast({ title: 'Pedido fechado com sucesso!' });
+        }
+      },
+      { title: `Automacao - Pedido ${pedido.numero_pedido}`, width: 1200, height: 700 }
+    );
+  };
+
   const filteredPedidos = pedidosList.filter(p => {
     const matchStatus = statusFilter === "todos" || p.status === statusFilter;
     const searchLower = searchTerm.toLowerCase();
@@ -380,22 +414,9 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
           <Button 
             variant="ghost" size="sm"
             data-permission="Comercial.Pedido.fechar"
-            onClick={() => {
-              const windowId = openWindow(
-                AutomacaoFluxoPedido,
-                { pedido, empresaId: pedido.empresa_id, windowMode: true,
-                  onComplete: () => {
-                    queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-                    queryClient.invalidateQueries({ queryKey: ['produtos'] });
-                    queryClient.invalidateQueries({ queryKey: ['movimentacoes'] });
-                    queryClient.invalidateQueries({ queryKey: ['contas-receber'] });
-                    queryClient.invalidateQueries({ queryKey: ['entregas'] });
-                    toast({ title: 'âœ… Pedido fechado com sucesso!' });
-                  }
-                },
-                { title: `ðŸš€ AutomaÃ§Ã£o - Pedido ${pedido.numero_pedido}`, width: 1200, height: 700 }
-              );
-            }}
+            data-sensitive
+            onClick={() => abrirAutomacaoFechamentoSeguro(pedido)}
+            disabled={!contextoValido || !canFecharPedido}
             className="h-8 px-2 bg-gradient-to-r from-green-600 to-blue-600 text-white hover:from-green-700 hover:to-blue-700 font-semibold shadow-lg"
           >
             <CheckCircle2 className="w-3 h-3 mr-1" />
@@ -480,7 +501,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
         </Button>
       </div>
     )}
-]), [queryClient, toast, contextoValido, canEditPedido, canApprovePedido, canViewPedido, canPrintPedido, canDeletePedido, canMarcarProntoFaturar, canGerarNFe, canCriarEntrega, canGerarOP, deleteMutation.isPending, onEditPedido, empresas, openWindow, updateInContext]);
+]), [queryClient, toast, contextoValido, canEditPedido, canApprovePedido, canViewPedido, canPrintPedido, canDeletePedido, canFecharPedido, canMarcarProntoFaturar, canGerarNFe, canCriarEntrega, canGerarOP, deleteMutation.isPending, onEditPedido, empresas, openWindow, updateInContext]);
 
   const menuItems = (pedido) => {
     const items = [];
@@ -518,11 +539,10 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                 </p>
                 </div>
                 <Button
-                onClick={() => openWindow(CentralAprovacoesManager, { windowMode: true }, {
-                title: 'ðŸ” Central de AprovaÃ§Ãµes',
-                width: 1200,
-                height: 700
-                })}
+                data-permission="Comercial.Pedido.aprovar"
+                data-sensitive
+                onClick={() => analisarAprovacaoSeguro(null)}
+                disabled={!contextoValido || !canApprovePedido}
                 className="bg-orange-600 hover:bg-orange-600/90"
             >
               <ShieldCheck className="w-4 h-4 mr-2" />
