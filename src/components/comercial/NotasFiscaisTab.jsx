@@ -389,7 +389,13 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
       createMutation.mutate(payload);
     }
   };
-  const handleEdit = (nota) => {
+  const handleEdit = async (nota) => {
+    if (!contextoValido || !canEditNota) {
+      await auditFiscalComercial('nota_fiscal_editar_bloqueada', { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada', nota_id: nota?.id, numero: nota?.numero }, false);
+      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de editar' : 'Sem permissao para editar NF-e', variant: 'destructive' });
+      return;
+    }
+    await auditFiscalComercial('nota_fiscal_edicao_aberta', { nota_id: nota?.id, numero: nota?.numero });
     setSelectedNF(nota); // Changed from setEditingNota
     setFormData(nota);
     setIsDialogOpen(true);
@@ -436,6 +442,11 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
     enviarNFeMutation.mutate(nfe);
   };
 
+  const fecharDetalhesSeguro = async () => {
+    await auditFiscalComercial('nota_fiscal_detalhes_fechados', { nota_id: viewingDetails?.id, numero: viewingDetails?.numero });
+    setViewingDetails(null);
+  };
+
   const filteredNotas = notasList.filter(n => {
     const searchLower = searchTerm.toLowerCase();
     const matchSearch = n.cliente_fornecedor?.toLowerCase().includes(searchLower) ||
@@ -459,7 +470,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
   const totalCancelada = notasList.filter(n => n.status === "Cancelada").reduce((sum, n) => sum + (n.valor_total || 0), 0);
 
   return (
-    <div className="space-y-6">
+    <div className="w-full h-full space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-0 shadow-md">
           <CardContent className="p-6">
@@ -714,6 +725,11 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
                   <Button variant="ghost" size="sm" data-permission="Fiscal.NotaFiscal.visualizar" onClick={() => visualizarNotaSeguro(nota)} disabled={!contextoValido || !canViewNota} title="Ver Detalhes" className="h-8 px-2">
                     <Eye className="w-3 h-3 mr-1" /> <span className="text-xs">Ver</span>
                   </Button>
+                  <ProtectedAction module="Fiscal" section="NotaFiscal" action="editar" mode="disable">
+                    <Button variant="ghost" size="sm" data-permission="Fiscal.NotaFiscal.editar" data-action="Fiscal.NotaFiscal.editar" data-context-required="true" data-sensitive="true" onClick={() => handleEdit(nota)} disabled={!contextoValido || !canEditNota} title="Editar NF-e" className="h-8 px-2 text-amber-600">
+                      <Edit className="w-3 h-3 mr-1" /> <span className="text-xs">Editar</span>
+                    </Button>
+                  </ProtectedAction>
                   <Button variant="ghost" size="sm" data-permission="Fiscal.NotaFiscal.imprimir" onClick={() => imprimirDanfeSeguro(nota)} disabled={!contextoValido || !canPrintNota} title="Imprimir DANFE" className="h-8 px-2 text-slate-600">
                     <Printer className="w-3 h-3 mr-1" /> <span className="text-xs">Imprimir</span>
                   </Button>
@@ -769,7 +785,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
       </Card>
 
       {viewingDetails && (
-        <Dialog open={!!viewingDetails} onOpenChange={() => setViewingDetails(null)}>
+        <Dialog open={!!viewingDetails} onOpenChange={(open) => { if (!open) fecharDetalhesSeguro(); }}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>📄 Detalhes NF-e {viewingDetails.numero}/{viewingDetails.serie}</DialogTitle>
@@ -823,7 +839,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
                     Baixar DANFE
                   </Button>
                 )}
-                <Button variant="outline" onClick={() => setViewingDetails(null)}>
+                <Button variant="outline" onClick={fecharDetalhesSeguro}>
                   Fechar
                 </Button>
               </div>

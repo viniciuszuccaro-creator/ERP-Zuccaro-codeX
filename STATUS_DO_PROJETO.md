@@ -1,3 +1,15 @@
+### Fiscal/Comercial - Fase 9 Edicao Visual de NF-e com RBAC
+- Segui o proximo passo salvo em `NotasFiscaisTab`, sem criar tela, modulo, componente ou arquivo novo.
+- O helper existente `handleEdit`, que ainda nao tinha caminho visual na tabela, passou a validar contexto `groupId/empresaId` e permissao `Fiscal.NotaFiscal.editar` antes de abrir o formulario.
+- A tabela de NF-e ganhou a acao visual `Editar` protegida por `ProtectedAction`, mantendo o formulario existente e sem alterar o fluxo de criacao/atualizacao.
+- A abertura da edicao agora registra auditoria contextual; tentativas bloqueadas por falta de contexto ou RBAC tambem ficam auditadas.
+- O fechamento do modal de detalhes passou por `fecharDetalhesSeguro`, registrando auditoria antes de limpar a visualizacao.
+- O container raiz de `NotasFiscaisTab` recebeu `w-full h-full`, reforcando a regra obrigatoria de layout sem mudar a estrutura visual.
+- Os botoes, tabela, modal e cancelamento de NF-e foram preservados; apenas foram fechados caminhos visuais sem RBAC/auditoria.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca, auditoria e layout obrigatorio sem remover funcionalidade.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: seguir para `ComissoesTab` e aplicar o mesmo pente fino em acoes de calculo, aprovacao, exportacao e logs comerciais.
+
 ### Fiscal/Comercial - Fase 9 Envio de NF-e com RBAC e Log Fiscal
 - Segui o proximo passo salvo em `NotasFiscaisTab`, sem criar tela, modulo, componente ou arquivo novo.
 - O botao externo `Nova NF-e` deixou de chamar `onCreateNFe` diretamente e passou pelo helper seguro `criarNFeExternaSeguro`.
