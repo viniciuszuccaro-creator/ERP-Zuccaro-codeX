@@ -1,3 +1,15 @@
+### Fiscal/Comercial - Fase 9 Envio de NF-e com RBAC e Log Fiscal
+- Segui o proximo passo salvo em `NotasFiscaisTab`, sem criar tela, modulo, componente ou arquivo novo.
+- O botao externo `Nova NF-e` deixou de chamar `onCreateNFe` diretamente e passou pelo helper seguro `criarNFeExternaSeguro`.
+- A abertura do fluxo externo de criacao de NF-e agora valida empresa faturadora, contexto `groupId/empresaId`, permissao `Fiscal.NotaFiscal.criar` e auditoria de bloqueio/sucesso.
+- O botao `Enviar NF-e`, que existia na listagem de notas pendentes, foi conectado ao fluxo existente de emissao simulada via `mockEmitirNFe`.
+- O envio agora valida `Fiscal.NotaFiscal.enviar`, contexto multiempresa, status `Pendente`, confirmacao do usuario, atualizacao contextual da nota, historico da NF-e e `LogFiscal`.
+- Tentativas bloqueadas ou canceladas pelo usuario passam a ser auditadas com motivo, nota, numero, grupo e empresa.
+- Os botoes, tabela, modal e fluxo fiscal existente foram preservados; a melhoria apenas fez funcionar e proteger o caminho ja presente.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca, auditoria e log fiscal sem remover funcionalidade.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em `NotasFiscaisTab` revisando edicao visual, cancelamento e detalhes/modal para consolidar RBAC visual completo antes de seguir para `ComissoesTab`.
+
 ### Fiscal/Comercial - Fase 9 Consulta e DANFE com RBAC
 - Segui o proximo passo salvo saindo de `PedidosTab` para `NotasFiscaisTab`, sem criar tela, modulo, componente ou arquivo novo.
 - Exportacao CSV de NF-e selecionadas passou pelo helper seguro `exportarNotasSeguro`, com contexto `groupId/empresaId`, permissao `Fiscal.NotaFiscal.exportar` e auditoria de bloqueio/cancelamento/sucesso.

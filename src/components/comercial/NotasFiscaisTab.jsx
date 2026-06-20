@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import GerarNFeModal from "./GerarNFeModal";
 import useContextoVisual from "@/components/lib/useContextoVisual";
-import { mockCancelarNFe } from "@/components/integracoes/MockIntegracoes";
+import { mockCancelarNFe, mockEmitirNFe } from "@/components/integracoes/MockIntegracoes";
 import usePermissions from "@/components/lib/usePermissions";
 import { ProtectedAction } from "@/components/ProtectedAction";
 import { ImprimirDANFESimplificado } from "@/components/lib/impressao";
@@ -65,6 +65,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
   const canExportNota = hasPermission('Fiscal', 'NotaFiscal', 'exportar') || hasPermission('Fiscal', 'Notas Fiscais', 'exportar') || hasPermission('Fiscal', null, 'exportar');
   const canPrintNota = hasPermission('Fiscal', 'NotaFiscal', 'imprimir') || hasPermission('Fiscal', 'Notas Fiscais', 'imprimir') || canExportNota;
   const canDownloadDanfe = hasPermission('Fiscal', 'NotaFiscal', 'baixar_pdf') || hasPermission('Fiscal', 'Notas Fiscais', 'baixar_pdf') || canPrintNota;
+  const canSendNota = hasPermission('Fiscal', 'NotaFiscal', 'enviar') || hasPermission('Fiscal', 'Notas Fiscais', 'enviar') || hasPermission('Fiscal', null, 'enviar');
 
   // Paginação e ordenação persistente (backend)
   const { page, setPage, pageSize, setPageSize } = useBackendPagination('NotaFiscal', 20);
@@ -170,6 +171,16 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
     await auditFiscalComercial('nota_fiscal_exportada', { total: lista.length, nota_ids: lista.map(n => n.id) });
   };
 
+  const criarNFeExternaSeguro = async () => {
+    if (!contextoValido || !canCreateNota || !empresaId) {
+      await auditFiscalComercial('nota_fiscal_criacao_externa_bloqueada', { motivo: !empresaId ? 'empresa_faturadora_obrigatoria' : 'contexto_ou_permissao' }, false);
+      toast({ title: !empresaId ? 'Selecione a empresa faturadora' : 'Sem permissao para criar NF-e', variant: 'destructive' });
+      return;
+    }
+    await auditFiscalComercial('nota_fiscal_criacao_externa_aberta', { origem_fluxo: 'onCreateNFe' });
+    onCreateNFe?.();
+  };
+
   const [formData, setFormData] = useState({
     tipo: "NF-e (Saída)",
     cliente_fornecedor: "",
@@ -220,6 +231,76 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
       resetForm();
       toast({ title: 'Nota Fiscal atualizada!' });
     },
+  });
+
+  const enviarNFeMutation = useMutation({
+    mutationFn: async (nfe) => {
+      if (!contextoValido || !canSendNota) {
+        await auditFiscalComercial('nota_fiscal_enviar_bloqueada', { motivo: 'contexto_ou_permissao', nota_id: nfe?.id, numero: nfe?.numero }, false);
+        throw new Error('Sem contexto ou permissao para enviar NF-e.');
+      }
+      if (nfe?.status !== 'Pendente') {
+        await auditFiscalComercial('nota_fiscal_enviar_bloqueada', { motivo: 'status_invalido', nota_id: nfe?.id, status: nfe?.status }, false);
+        throw new Error('Somente NF-e pendente pode ser enviada.');
+      }
+
+      await auditFiscalComercial('nota_fiscal_envio_iniciado', { nota_id: nfe.id, numero: nfe.numero });
+      const resultado = await mockEmitirNFe({
+        empresa_id: nfe.empresa_id || empresaId,
+        pedido: nfe,
+        ambiente: nfe.ambiente || 'Homologacao'
+      });
+
+      const payloadAtualizacao = withFiscalContext({
+        status: resultado.status || 'Autorizada',
+        numero: nfe.numero || resultado.numero_nfe,
+        serie: nfe.serie || resultado.serie,
+        chave_acesso: resultado.chave_acesso,
+        protocolo_autorizacao: resultado.protocolo,
+        data_autorizacao: resultado.data_autorizacao,
+        xml_url: resultado.xml_url,
+        danfe_url: resultado.pdf_url,
+        ambiente: resultado.ambiente || nfe.ambiente,
+        historico: [
+          ...(nfe.historico || []),
+          {
+            data_hora: new Date().toISOString(),
+            evento: 'NF-e Enviada (Simulacao)',
+            usuario: 'Sistema',
+            detalhes: resultado.mensagem_sefaz
+          }
+        ]
+      });
+
+      await updateInContext('NotaFiscal', nfe.id, payloadAtualizacao);
+      await base44.entities.LogFiscal.create({
+        empresa_id: nfe.empresa_id || empresaId,
+        group_id: nfe.group_id || groupId,
+        grupo_id: nfe.grupo_id || nfe.group_id || groupId,
+        nfe_id: nfe.id,
+        numero_nfe: payloadAtualizacao.numero,
+        chave_acesso: resultado.chave_acesso,
+        data_hora: new Date().toISOString(),
+        acao: 'enviar',
+        provedor: 'Mock/Simulacao',
+        ambiente: resultado.ambiente || nfe.ambiente,
+        status: 'sucesso',
+        mensagem: resultado.mensagem_sefaz,
+        retorno_recebido: resultado,
+        usuario_nome: 'Sistema'
+      });
+
+      return resultado;
+    },
+    onError: (error) => {
+      toast({ title: error.message || 'Falha ao enviar NF-e', variant: 'destructive' });
+    },
+    onSuccess: async (resultado, nfe) => {
+      await auditFiscalComercial('nota_fiscal_enviada', { entidade: 'NotaFiscal', nota_id: nfe?.id, numero: nfe?.numero, protocolo: resultado?.protocolo }, true);
+      queryClient.invalidateQueries({ queryKey: ['notasfiscais'] });
+      queryClient.invalidateQueries({ queryKey: ['notasFiscais'] });
+      toast({ title: 'NF-e enviada e autorizada (Simulacao)' });
+    }
   });
 
   const cancelarNFeMutation = useMutation({
@@ -347,6 +428,14 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
     cancelarNFeMutation.mutate({ nfe, motivo });
   };
 
+  const handleEnviarNFe = (nfe) => {
+    if (!window.confirm(`Confirmar envio da NF-e ${nfe.numero || ''}?`)) {
+      auditFiscalComercial('nota_fiscal_envio_cancelado', { motivo: 'confirmacao_cancelada', nota_id: nfe.id, numero: nfe.numero }, false);
+      return;
+    }
+    enviarNFeMutation.mutate(nfe);
+  };
+
   const filteredNotas = notasList.filter(n => {
     const searchLower = searchTerm.toLowerCase();
     const matchSearch = n.cliente_fornecedor?.toLowerCase().includes(searchLower) ||
@@ -457,7 +546,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
                 data-action="Fiscal.NotaFiscal.criar"
                 data-context-required="true"
                 data-sensitive="true"
-                onClick={onCreateNFe}
+                onClick={criarNFeExternaSeguro}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Nova NF-e
@@ -633,8 +722,8 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
                       <Download className="w-3 h-3 mr-1" /> <span className="text-xs">PDF</span>
                     </Button>
                   )}
-                  {nota.status === 'Pendente' && hasPermission('Fiscal','NotaFiscal','enviar') && (
-                    <Button variant="ghost" size="sm" title="Enviar NF-e" className="h-8 px-2 text-green-600" data-permission="Fiscal.NotaFiscal.enviar">
+                  {nota.status === 'Pendente' && canSendNota && (
+                    <Button variant="ghost" size="sm" title="Enviar NF-e" className="h-8 px-2 text-green-600" data-permission="Fiscal.NotaFiscal.enviar" data-action="Fiscal.NotaFiscal.enviar" data-context-required="true" data-sensitive="true" onClick={() => handleEnviarNFe(nota)} disabled={!contextoValido || !canSendNota || enviarNFeMutation.isPending}>
                       <Send className="w-3 h-3 mr-1" /> <span className="text-xs">Enviar</span>
                     </Button>
                   )}
