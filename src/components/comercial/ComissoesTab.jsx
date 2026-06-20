@@ -21,7 +21,8 @@ import {
   Edit,
   Trash2,
   Calculator,
-  Printer
+  Printer,
+  Download
 } from "lucide-react";
 import { ImprimirComissao } from "@/components/lib/ImprimirComissao";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -66,6 +67,8 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
   const canRejectComissao = hasPermission('Comercial', 'Comissao', 'recusar') || hasPermission('Comercial', 'Comissões', 'recusar') || canApproveComissao;
   const canPayComissao = hasPermission('Comercial', 'Comissao', 'pagar') || hasPermission('Comercial', 'Comissões', 'pagar') || hasPermission('Financeiro', 'ContaPagar', 'criar');
   const canPrintComissao = hasPermission('Comercial', 'Comissao', 'imprimir') || hasPermission('Comercial', 'Comissões', 'imprimir') || canViewComissao;
+  const canViewRelatorioComissao = hasPermission('Comercial', 'Comissao', 'relatorio') || hasPermission('Comercial', 'Comissões', 'relatorio') || canViewComissao;
+  const canExportComissao = hasPermission('Comercial', 'Comissao', 'exportar') || hasPermission('Comercial', 'Comissões', 'exportar') || canViewRelatorioComissao;
 
   const withComissaoContext = (payload = {}) => ({
     ...payload,
@@ -287,6 +290,32 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
       if (c.status === 'Paga') porVendedor[vendedor].pagas++;
     });
     return Object.values(porVendedor);
+  };
+
+  const exportarRelatorioVendedorSeguro = async () => {
+    const linhas = relatorioPorVendedor();
+    if (!contextoValido || !canExportComissao) {
+      await auditComissao('comissao_relatorio_exportar_bloqueado', { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada', total: linhas.length }, false);
+      sonnerToast.error(!contextoValido ? 'Selecione grupo ou empresa antes de exportar' : 'Sem permissao para exportar relatorio de comissoes');
+      return;
+    }
+    if (!linhas.length) {
+      sonnerToast.info('Nenhum dado de comissao para exportar');
+      return;
+    }
+    const headers = ['vendedor', 'total_vendas', 'total_comissao', 'pendentes', 'aprovadas', 'pagas'];
+    const csv = [
+      headers.join(','),
+      ...linhas.map(item => headers.map(h => JSON.stringify(item[h] ?? '')).join(','))
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `relatorio_comissoes_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    await auditComissao('comissao_relatorio_exportado', { total: linhas.length });
   };
 
   const statusColors = {
@@ -530,10 +559,27 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
       {/* Relatório por Vendedor */}
       <Card className="border-0 shadow-md">
         <CardHeader className="border-b bg-slate-50">
-          <CardTitle>Relatório por Vendedor</CardTitle>
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle>Relatório por Vendedor</CardTitle>
+            <ProtectedAction module="Comercial" section="Comissao" action="exportar" mode="disable">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportarRelatorioVendedorSeguro}
+                disabled={!contextoValido || !canExportComissao || !relatorioPorVendedor().length}
+                data-action="Comercial.Comissao.exportar"
+                data-permission="Comercial.Comissao.exportar"
+                data-context-required="true"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Exportar CSV
+              </Button>
+            </ProtectedAction>
+          </div>
         </CardHeader>
         <CardContent className="p-6">
-          <Table>
+          {canViewRelatorioComissao ? (
+          <Table data-action="Comercial.Comissao.relatorio" data-permission="Comercial.Comissao.relatorio" data-context-required="true">
             <TableHeader>
               <TableRow className="bg-slate-50">
                 <TableHead>Vendedor</TableHead>
@@ -567,7 +613,12 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
               ))}
             </TableBody>
           </Table>
-          {relatorioPorVendedor().length === 0 && (
+          ) : (
+            <div className="text-center py-8 text-slate-500">
+              <p>Sem permissao para visualizar relatorio de comissoes</p>
+            </div>
+          )}
+          {canViewRelatorioComissao && relatorioPorVendedor().length === 0 && (
             <div className="text-center py-8 text-slate-500">
               <p>Nenhum dado para exibir</p>
             </div>

@@ -1,3 +1,14 @@
+### Comercial - Fase 9 Relatorio de Comissoes com Exportacao Segura
+- Segui o proximo passo salvo em `ComissoesTab`, sem criar tela, modulo, componente ou arquivo novo.
+- O relatorio por vendedor passou a ter permissao visual granular `Comercial.Comissao.relatorio`, mantendo a tabela existente e exibindo bloqueio visual quando faltar acesso.
+- A exportacao CSV do relatorio foi adicionada ao cabecalho existente com `ProtectedAction`, contexto obrigatorio e permissao `Comercial.Comissao.exportar`.
+- A exportacao passa pelo helper seguro `exportarRelatorioVendedorSeguro`, validando `groupId/empresaId`, RBAC e existencia de dados antes de gerar o arquivo.
+- Tentativas bloqueadas e exportacoes concluidas passam a registrar auditoria contextual em `AuditLog`.
+- Os dados do relatorio por vendedor foram preservados; apenas foi reforcado o fluxo de acesso, auditoria e exportacao.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca, auditoria e layout sem remover funcionalidade.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: seguir para outra tela comercial com acoes diretas semelhantes, revisando exportacoes, impressao, criacao e status com RBAC/auditoria contextual.
+
 ### Comercial - Fase 9 Comissoes com RBAC e Auditoria
 - Segui o proximo passo salvo para `ComissoesTab`, sem criar tela, modulo, componente ou arquivo novo.
 - `ComissoesTab` passou a usar contexto visual com `groupId/empresaId`, helper contextual e auditoria propria em `AuditLog`.
