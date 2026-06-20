@@ -1,3 +1,15 @@
+### Comercial - Fase 9 Pedidos Externos com RBAC e Auditoria
+- Segui o proximo passo salvo apos `ComissoesTab`, sem criar tela, modulo, componente ou arquivo novo.
+- `ValidarPedidosExternos` passou a carregar pedidos externos via `filterInContext`, reforcando consulta por `groupId/empresaId`.
+- A tela recebeu contexto obrigatorio e permissao visual `Comercial.PedidoExterno.visualizar`, com aviso quando faltar grupo/empresa ou acesso.
+- As acoes existentes `Atualizar`, `Importar`, `Validar` e `Excluir` passaram por validacao de contexto, RBAC, `ProtectedAction`, `data-action`, `data-permission`, `data-context-required` e `data-sensitive` quando aplicavel.
+- Importacao de pedido externo agora cria `Pedido` com `createInContext` e atualiza o `PedidoExterno` com `updateInContext`, preservando a propagacao multiempresa.
+- Validacao e exclusao de pedido externo passaram a usar `updateInContext` e `deleteInContext`, com bloqueio seguro quando faltar permissao.
+- Tentativas bloqueadas e acoes concluidas agora registram auditoria contextual em `AuditLog`, incluindo motivo, status anterior e pedido gerado quando houver importacao.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca, auditoria e layout `w-full h-full`, sem remover funcionalidade.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar no Comercial revisando outras telas de fluxo externo/automacao, como `AutomacaoFluxoPedido` ou `CentralAprovacoesManager`, para fechar RBAC/auditoria em acoes sensiveis.
+
 ### Comercial - Fase 9 Relatorio de Comissoes com Exportacao Segura
 - Segui o proximo passo salvo em `ComissoesTab`, sem criar tela, modulo, componente ou arquivo novo.
 - O relatorio por vendedor passou a ter permissao visual granular `Comercial.Comissao.relatorio`, mantendo a tabela existente e exibindo bloqueio visual quando faltar acesso.
