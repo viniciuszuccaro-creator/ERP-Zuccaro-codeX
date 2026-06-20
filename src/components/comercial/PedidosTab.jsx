@@ -521,19 +521,25 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
 
   const menuItems = (pedido) => {
     const items = [];
-    items.push({ key: 'ver', label: 'Visualizar', action: async () => visualizarPedidoSeguro(pedido) });
-    items.push({ key: 'imprimir', label: 'Imprimir', action: async () => imprimirPedidoSeguro(pedido) });
-    if (pedido.status === 'Aprovado' || pedido.status === 'Pronto para Faturar') {
+    if (contextoValido && canViewPedido) {
+      items.push({ key: 'ver', label: 'Visualizar', action: async () => visualizarPedidoSeguro(pedido) });
+    }
+    if (contextoValido && canPrintPedido) {
+      items.push({ key: 'imprimir', label: 'Imprimir', action: async () => imprimirPedidoSeguro(pedido) });
+    }
+    if (contextoValido && canGerarNFe && (pedido.status === 'Aprovado' || pedido.status === 'Pronto para Faturar')) {
       items.push({ key: 'nfe', label: 'Gerar NF-e', action: async () => executarAcaoSensivelPedido({ pedido, permitido: canGerarNFe, acao: 'Emissao NF-e', descricao: 'Acionada geracao de NF-e', toastTitle: 'Gerando NF-e...' }) });
     }
-    if (pedido.status === 'Faturado') {
+    if (contextoValido && canCriarEntrega && pedido.status === 'Faturado') {
       items.push({ key: 'entrega', label: 'Criar Entrega', action: async () => executarAcaoSensivelPedido({ pedido, permitido: canCriarEntrega, acao: 'Criacao Entrega', descricao: 'Acionada criacao de entrega', toastTitle: 'Criando entrega...' }) });
     }
-    if ((pedido.tipo_pedido === 'ProduÃ§Ã£o Sob Medida' || pedido.itens_corte_dobra?.length > 0 || pedido.itens_armado_padrao?.length > 0) && pedido.status !== 'Cancelado') {
+    if (contextoValido && canGerarOP && (pedido.tipo_pedido === 'ProduÃ§Ã£o Sob Medida' || pedido.itens_corte_dobra?.length > 0 || pedido.itens_armado_padrao?.length > 0) && pedido.status !== 'Cancelado') {
       items.push({ key: 'op', label: 'Gerar OP', action: async () => executarAcaoSensivelPedido({ pedido, permitido: canGerarOP, acao: 'Gerar OP', descricao: 'Acionada geracao de OP', toastTitle: 'Criando OP...' }) });
     }
-    items.push({ key: 'excluir', label: 'Excluir', action: async () => solicitarExclusaoPedido(pedido) });
-    if (pedido.status_aprovacao === 'pendente') {
+    if (contextoValido && canDeletePedido) {
+      items.push({ key: 'excluir', label: 'Excluir', action: async () => solicitarExclusaoPedido(pedido) });
+    }
+    if (contextoValido && canApprovePedido && pedido.status_aprovacao === 'pendente') {
       items.push({ key: 'aprovar', label: 'Analisar AprovaÃ§Ã£o', action: async () => analisarAprovacaoSeguro(pedido) });
     }
     return items;

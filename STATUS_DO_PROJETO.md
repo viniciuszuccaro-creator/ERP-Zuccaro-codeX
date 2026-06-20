@@ -1,3 +1,12 @@
+### Comercial - Fase 9 Menu Contextual de Pedidos com RBAC Visual
+- Segui o proximo passo salvo para consolidar `PedidosTab`, sem criar tela, modulo, componente ou arquivo novo.
+- O menu de contexto da tabela passou a montar somente acoes permitidas pelo contexto `groupId/empresaId` e permissao granular aplicavel.
+- Visualizar, imprimir, gerar NF-e, criar entrega, gerar OP, excluir e analisar aprovacao agora so aparecem no menu quando o usuario tiver acesso ao fluxo.
+- Os helpers seguros existentes continuam protegendo as acoes, mas o usuario sem acesso deixa de ver atalhos indevidos no menu contextual.
+- Mantida a Regra-Mae: nenhum comando foi removido para usuarios autorizados; apenas foi reforcado RBAC visual no componente existente.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: seguir para outra tela comercial com chamadas diretas semelhantes, priorizando `NotasFiscaisTab` ou `ComissoesTab`.
+
 ### Comercial - Fase 9 Criacao de Pedido com Contexto e RBAC
 - Segui o proximo passo salvo para `PedidosTab`, sem criar tela, modulo, componente ou arquivo novo.
 - O botao `Novo Pedido` deixou de chamar `onCreatePedido` diretamente e passou pelo helper seguro `criarPedidoSeguro`.
