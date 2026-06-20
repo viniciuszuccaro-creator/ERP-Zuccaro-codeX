@@ -1,3 +1,16 @@
+### Comercial - Fase 9 Comissoes com RBAC e Auditoria
+- Segui o proximo passo salvo para `ComissoesTab`, sem criar tela, modulo, componente ou arquivo novo.
+- `ComissoesTab` passou a usar contexto visual com `groupId/empresaId`, helper contextual e auditoria propria em `AuditLog`.
+- O calculo de comissoes deixou de abrir a janela diretamente e passou por `abrirCalculoComissoesSeguro`, validando contexto, permissao `Comercial.Comissao.calcular` e auditoria de abertura/conclusao/cancelamento.
+- Impressao e detalhes passaram por helpers seguros, com bloqueio por contexto/RBAC e auditoria de sucesso/bloqueio.
+- Aprovacao, recusa e geracao de pagamento passaram a validar permissao granular antes da acao e registrar auditoria operacional/seguranca.
+- Atualizacao de comissao e criacao de `ContaPagar` agora usam wrappers contextuais (`updateInContext`/`createInContext`) com `groupId/empresaId`.
+- Os botoes sensiveis receberam `data-action`, `data-permission`, `data-context-required` e `data-sensitive`, mantendo o fluxo visual atual.
+- O container raiz recebeu `w-full h-full`, reforcando a regra obrigatoria de layout sem mudar a tela.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca, auditoria e layout obrigatorio sem remover funcionalidade.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em `ComissoesTab` revisando permissao visual por relatorio de vendedor e possivel exportacao/relatorio, depois seguir para outra tela comercial com acoes diretas.
+
 ### Fiscal/Comercial - Fase 9 Edicao Visual de NF-e com RBAC
 - Segui o proximo passo salvo em `NotasFiscaisTab`, sem criar tela, modulo, componente ou arquivo novo.
 - O helper existente `handleEdit`, que ainda nao tinha caminho visual na tabela, passou a validar contexto `groupId/empresaId` e permissao `Fiscal.NotaFiscal.editar` antes de abrir o formulario.
