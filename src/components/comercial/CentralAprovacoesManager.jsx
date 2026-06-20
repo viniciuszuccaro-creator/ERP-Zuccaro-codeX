@@ -27,6 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { base44 } from "@/api/base44Client";
 
 /**
  * 🔐 CENTRAL DE APROVAÇÕES V21.5
@@ -61,6 +62,34 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
     hasPermission("Comercial.Pedido.editar");
   const consultaHabilitada = Boolean(contextoValido && podeVisualizarAprovacoes);
 
+  const auditAprovacao = async ({ acao, pedido = null, descricao, sucesso = true, detalhes = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Sistema",
+        usuario_id: user?.id || null,
+        acao,
+        modulo: "Comercial",
+        entidade: "Pedido",
+        registro_id: pedido?.id || detalhes?.pedido_id || null,
+        descricao,
+        empresa_id: pedido?.empresa_id || empresaContextoId,
+        group_id: pedido?.group_id || pedido?.grupo_id || groupId,
+        grupo_id: pedido?.grupo_id || pedido?.group_id || groupId,
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        sucesso,
+        detalhes: {
+          origem: "CentralAprovacoesManager",
+          contexto,
+          numero_pedido: pedido?.numero_pedido,
+          status_anterior: pedido?.status,
+          status_aprovacao_anterior: pedido?.status_aprovacao,
+          ...detalhes
+        },
+        data_hora: new Date().toISOString()
+      });
+    } catch (_) {}
+  };
+
   const { data: pedidos = [] } = useQuery({
     queryKey: ["pedidos-aprovacoes-contexto", empresaContextoId, groupId, contexto],
     queryFn: () => filterInContext("Pedido", empresaContextoId ? { empresa_id: empresaContextoId } : {}, "-created_date", 500),
@@ -72,6 +101,12 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
   const aprovarPedidoMutation = useMutation({
     mutationFn: async ({ pedidoId, dados, executarFechamento = false }) => {
       if (!contextoValido || !podeEditarAprovacoes) {
+        await auditAprovacao({
+          acao: "Aprovacao bloqueada",
+          descricao: "Bloqueio ao aprovar pedido na central de aprovacoes",
+          sucesso: false,
+          detalhes: { pedido_id: pedidoId, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada", executarFechamento }
+        });
         throw new Error("Sem contexto ou permissao para aprovar pedido.");
       }
 
@@ -106,6 +141,20 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
         ...(itensArmadoAtualizados.length > 0 && { itens_armado_padrao: itensArmadoAtualizados }),
         ...(itensCorteAtualizados.length > 0 && { itens_corte_dobra: itensCorteAtualizados }),
       });
+      await auditAprovacao({
+        acao: executarFechamento ? "Aprovacao com fechamento" : "Aprovacao",
+        pedido,
+        descricao: executarFechamento ? "Pedido aprovado com solicitacao de fechamento automatico" : "Pedido aprovado pela central de aprovacoes",
+        detalhes: {
+          executarFechamento,
+          desconto_percentual: dados.descontoGeralPercentual || 0,
+          desconto_valor: dados.descontoGeralValor || 0,
+          valor_final: dados.valorFinal || 0,
+          margem_media: dados.margemMedia || 0,
+          status_novo: "Aprovado",
+          status_aprovacao_novo: "aprovado"
+        }
+      });
 
       // V21.6: Se solicitado, executar fechamento completo
       if (executarFechamento) {
@@ -128,6 +177,12 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
 
       // V21.6: Se deve executar fechamento, abrir modal de automação
       if (resultado.executarFechamento && resultado.pedido) {
+        void auditAprovacao({
+          acao: "Automacao de fechamento aberta",
+          pedido: resultado.pedido,
+          descricao: "Abrir automacao de fechamento apos aprovacao",
+          detalhes: { executarFechamento: true }
+        });
         setTimeout(() => {
           if (window.__currentOpenWindow) {
             window.__currentOpenWindow(
@@ -158,14 +213,31 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
   const negarPedidoMutation = useMutation({
     mutationFn: async ({ pedidoId, comentarios }) => {
       if (!contextoValido || !podeEditarAprovacoes) {
+        await auditAprovacao({
+          acao: "Negacao bloqueada",
+          descricao: "Bloqueio ao negar pedido na central de aprovacoes",
+          sucesso: false,
+          detalhes: { pedido_id: pedidoId, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" }
+        });
         throw new Error("Sem contexto ou permissao para negar pedido.");
       }
+      const pedidosCompletos = await filterInContext("Pedido", { id: pedidoId }, undefined, 1);
+      const pedido = pedidosCompletos[0];
 
       await updateInContext("Pedido", pedidoId, {
         status_aprovacao: "negado",
         usuario_aprovador_id: user?.id,
         data_aprovacao: new Date().toISOString(),
         comentarios_aprovacao: comentarios
+      });
+      await auditAprovacao({
+        acao: "Negacao",
+        pedido,
+        descricao: "Pedido negado pela central de aprovacoes",
+        detalhes: {
+          comentarios,
+          status_aprovacao_novo: "negado"
+        }
       });
     },
     onSuccess: () => {
@@ -330,6 +402,12 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
                             <Button
                               size="sm"
                               onClick={() => {
+                                void auditAprovacao({
+                                  acao: "Analise iniciada",
+                                  pedido,
+                                  descricao: "Abrir analise de aprovacao de pedido",
+                                  detalhes: { executarFechamento: false }
+                                });
                                 openWindow(
                                   AnalisePedidoAprovacao,
                                   {
@@ -364,6 +442,7 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
                               disabled={!contextoValido || !podeEditarAprovacoes}
                               data-permission="Comercial.Pedido.aprovar"
                               data-action="analisar-aprovacao-desconto"
+                              data-context-required="true"
                               data-sensitive="true"
                             >
                               <ShieldCheck className="w-4 h-4 mr-1" />
@@ -374,6 +453,12 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
                             <Button
                               size="sm"
                               onClick={() => {
+                                void auditAprovacao({
+                                  acao: "Analise com fechamento iniciada",
+                                  pedido,
+                                  descricao: "Abrir analise para aprovar e fechar pedido",
+                                  detalhes: { executarFechamento: true }
+                                });
                                 openWindow(
                                   AnalisePedidoAprovacao,
                                   {
@@ -409,6 +494,7 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
                               title="Aprovar e Fechar Pedido Automaticamente"
                               data-permission="Comercial.Pedido.aprovar"
                               data-action="aprovar-e-fechar-pedido"
+                              data-context-required="true"
                               data-sensitive="true"
                             >
                               <Zap className="w-4 h-4 mr-1" />

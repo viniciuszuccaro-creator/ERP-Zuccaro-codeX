@@ -1,3 +1,15 @@
+### Comercial - Fase 9 Central de Aprovacoes com Auditoria
+- Segui o proximo passo salvo em `AutomacaoFluxoPedido`, sem criar tela, modulo, componente ou arquivo novo.
+- `CentralAprovacoesManager` recebeu auditoria contextual propria em `AuditLog` para analise, aprovacao, negacao, bloqueios e abertura da automacao de fechamento.
+- Bloqueios por falta de contexto `groupId/empresaId` ou permissao comercial agora sao registrados com motivo `contexto_obrigatorio` ou `permissao_negada`.
+- A aprovacao registra desconto percentual, desconto em valor, valor final, margem media, status novo e se o fechamento automatico foi solicitado.
+- A negacao registra comentario/motivo, pedido, status anterior e novo status de aprovacao.
+- Os botoes existentes `Analisar` e `Aprovar + Fechar` passaram a registrar abertura da analise e receberam `data-context-required`, mantendo `data-permission`, `data-action` e `data-sensitive`.
+- A abertura da automacao apos aprovacao com fechamento tambem passou a ser auditada antes de abrir `AutomacaoFluxoPedido`.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca, auditoria e layout `w-full h-full`, sem remover funcionalidade.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar no Comercial revisando `AprovacaoDescontosManager` ou `AprovacaoDescontos`, alinhando auditoria e RBAC com a Central de Aprovacoes.
+
 ### Comercial - Fase 9 Automacao de Pedido com Auditoria
 - Segui o proximo passo salvo apos pedidos externos, sem criar tela, modulo, componente ou arquivo novo.
 - `AutomacaoFluxoPedido` recebeu auditoria contextual propria em `AuditLog` para inicio, bloqueio, conclusao e falha do fechamento automatico.
