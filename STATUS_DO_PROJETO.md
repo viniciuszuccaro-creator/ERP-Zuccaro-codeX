@@ -1,3 +1,14 @@
+### Comercial - Fase 9 Criacao de Pedido com Contexto e RBAC
+- Segui o proximo passo salvo para `PedidosTab`, sem criar tela, modulo, componente ou arquivo novo.
+- O botao `Novo Pedido` deixou de chamar `onCreatePedido` diretamente e passou pelo helper seguro `criarPedidoSeguro`.
+- A criacao de pedido agora valida contexto `groupId/empresaId` e permissao granular `Comercial.Pedido.criar` antes de abrir o formulario existente.
+- Tentativas bloqueadas por falta de contexto ou RBAC passam a registrar auditoria de seguranca com motivo.
+- A abertura autorizada do formulario de novo pedido passa a registrar auditoria operacional contextual.
+- O fluxo visual, o botao e o formulario existente foram preservados; apenas foi fechado o caminho sem auditoria/contexto.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca e auditoria sem remover funcionalidade.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar revisando `PedidosTab` para consolidar menus/atalhos restantes e depois seguir para outra tela comercial com chamadas diretas semelhantes.
+
 ### Comercial - Fase 9 Fechamento de Pedido e Atalhos de Aprovacao
 - Segui o proximo passo salvo para `PedidosTab`, sem criar tela, modulo, componente ou arquivo novo.
 - O botao `Fechar Pedido` passou a validar contexto `groupId/empresaId` e permissao granular `Comercial.Pedido.fechar` antes de abrir a automacao existente.

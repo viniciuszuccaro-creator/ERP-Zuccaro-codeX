@@ -52,6 +52,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
   const empresaContextoId = empresaId || empresaAtual?.id || null;
   const contextoValido = Boolean(groupId || empresaContextoId);
   const canViewPedido = hasPermission('Comercial', 'Pedido', 'visualizar') || hasPermission('Comercial', 'Pedidos', 'visualizar') || hasPermission('Comercial', null, 'visualizar');
+  const canCreatePedido = canCreate('Comercial', 'Pedido') || canCreate('Comercial', 'Pedidos') || hasPermission('Comercial', null, 'criar');
   const canEditPedido = canEdit('Comercial', 'Pedido') || canEdit('Comercial', 'Pedidos') || hasPermission('Comercial', null, 'editar');
   const canApprovePedido = (canApprove && canApprove('Comercial', 'Pedido')) || hasPermission('Comercial', 'Pedido', 'aprovar') || hasPermission('Comercial', null, 'aprovar');
   const canDeletePedido = canDelete('Comercial', 'Pedido') || canDelete('Comercial', 'Pedidos') || hasPermission('Comercial', null, 'excluir');
@@ -299,6 +300,21 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
       },
       { title: `Automacao - Pedido ${pedido.numero_pedido}`, width: 1200, height: 700 }
     );
+  };
+
+  const criarPedidoSeguro = async () => {
+    if (!contextoValido || !canCreatePedido) {
+      await auditPedido({
+        acao: 'Criacao bloqueada',
+        descricao: !contextoValido ? 'Criacao de pedido bloqueada por falta de contexto' : 'Criacao de pedido bloqueada por RBAC',
+        sucesso: false,
+        detalhes: { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada' }
+      });
+      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de criar pedido' : 'Sem permissao para criar pedido', variant: 'destructive' });
+      return;
+    }
+    await auditPedido({ acao: 'Criacao iniciada', descricao: 'Abrir formulario de novo pedido' });
+    onCreatePedido();
   };
 
   const filteredPedidos = pedidosList.filter(p => {
@@ -611,7 +627,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
 
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Pedidos</h2>
-        <Button className="bg-blue-600 hover:bg-blue-700" onClick={onCreatePedido} data-permission="Comercial.Pedido.criar">
+        <Button className="bg-blue-600 hover:bg-blue-700" onClick={criarPedidoSeguro} data-permission="Comercial.Pedido.criar" data-sensitive disabled={!contextoValido || !canCreatePedido}>
           <Plus className="w-4 h-4 mr-2" />
           Novo Pedido
         </Button>
