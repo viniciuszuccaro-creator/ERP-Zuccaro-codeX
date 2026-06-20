@@ -17,6 +17,7 @@ import {
   ShoppingCart
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { base44 } from '@/api/base44Client';
 import { executarFechamentoCompleto } from '@/components/lib/useFluxoPedido';
 import { useUser } from '@/components/lib/UserContext';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
@@ -65,6 +66,34 @@ export default function AutomacaoFluxoPedido({
     hasPermission('Comercial.Pedido.aprovar') ||
     hasPermission('Comercial.Pedido.editar');
   const permitido = Boolean(contextoValido && podeExecutarFechamento);
+
+  const auditFluxoPedido = async ({ acao, descricao, sucesso = true, detalhes = {} }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Sistema',
+        usuario_id: user?.id || null,
+        acao,
+        modulo: 'Comercial',
+        entidade: 'Pedido',
+        registro_id: pedido?.id || null,
+        descricao,
+        empresa_id: pedido?.empresa_id || empresaProcessamento || empresaAtual?.id || null,
+        group_id: pedido?.group_id || pedido?.grupo_id || groupId,
+        grupo_id: pedido?.grupo_id || pedido?.group_id || groupId,
+        tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
+        sucesso,
+        detalhes: {
+          origem: 'AutomacaoFluxoPedido',
+          numero_pedido: pedido?.numero_pedido,
+          status_anterior: pedido?.status,
+          autoExecute,
+          windowMode,
+          ...detalhes
+        },
+        data_hora: new Date().toISOString()
+      });
+    } catch (_) {}
+  };
 
   const adicionarLog = (mensagem, tipo = 'info') => {
     setLogs(prev => [...prev, { mensagem, tipo, timestamp: new Date() }]);
@@ -154,6 +183,12 @@ export default function AutomacaoFluxoPedido({
       adicionarLog(`✅ Estoque baixado: ${totalBaixado} itens processados`, 'success');
       return true;
     } catch (error) {
+      await auditFluxoPedido({
+        acao: 'Fechamento automatico falhou',
+        descricao: 'Falha na baixa de estoque do fechamento automatico',
+        sucesso: false,
+        detalhes: { erro: error.message }
+      });
       adicionarLog(`❌ Erro ao baixar estoque: ${error.message}`, 'error');
       throw error;
     }
@@ -286,6 +321,12 @@ export default function AutomacaoFluxoPedido({
   const executarFluxoCompleto = async () => {
     if (executando || !permitido) {
       if (!permitido) {
+        await auditFluxoPedido({
+          acao: 'Fechamento automatico bloqueado',
+          descricao: 'Bloqueio ao executar fechamento automatico do pedido',
+          sucesso: false,
+          detalhes: { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada' }
+        });
         toast.error('❌ Sem permissão para executar fechamento automático');
       }
       return;
@@ -294,6 +335,10 @@ export default function AutomacaoFluxoPedido({
     setExecutando(true);
     setProgresso(0);
     setLogs([]);
+    await auditFluxoPedido({
+      acao: 'Fechamento automatico iniciado',
+      descricao: 'Inicio do fluxo automatico de fechamento do pedido'
+    });
 
     try {
       await executarFechamentoCompleto(
@@ -309,6 +354,12 @@ export default function AutomacaoFluxoPedido({
             toast.success('✅ Fluxo de pedido concluído com sucesso!');
             adicionarLog('🎉 AUTOMAÇÃO CONCLUÍDA! Fechando em 2s...', 'success');
 
+            auditFluxoPedido({
+              acao: 'Fechamento automatico concluido',
+              descricao: 'Fluxo automatico de fechamento do pedido concluido',
+              detalhes: { resultados, status_novo: 'Pronto para Faturar' }
+            });
+
             // Aguardar 2s e fechar janela/modal
             setTimeout(() => {
               if (onComplete) {
@@ -317,6 +368,12 @@ export default function AutomacaoFluxoPedido({
             }, 2000);
           },
           onError: (error) => {
+            auditFluxoPedido({
+              acao: 'Fechamento automatico falhou',
+              descricao: 'Falha durante fluxo automatico de fechamento do pedido',
+              sucesso: false,
+              detalhes: { erro: error.message }
+            });
             toast.error(`❌ Erro na automação: ${error.message}`);
           }
         }
@@ -324,6 +381,12 @@ export default function AutomacaoFluxoPedido({
     } catch (error) {
       toast.error(`❌ Erro crítico: ${error.message}`);
       adicionarLog(`❌ FALHA CRÍTICA: ${error.message}`, 'error');
+      await auditFluxoPedido({
+        acao: 'Fechamento automatico falhou',
+        descricao: 'Falha critica no fluxo automatico de fechamento do pedido',
+        sucesso: false,
+        detalhes: { erro: error.message }
+      });
     } finally {
       setExecutando(false);
     }

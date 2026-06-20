@@ -1,3 +1,15 @@
+### Comercial - Fase 9 Automacao de Pedido com Auditoria
+- Segui o proximo passo salvo apos pedidos externos, sem criar tela, modulo, componente ou arquivo novo.
+- `AutomacaoFluxoPedido` recebeu auditoria contextual propria em `AuditLog` para inicio, bloqueio, conclusao e falha do fechamento automatico.
+- Bloqueios por falta de contexto `groupId/empresaId` ou permissao comercial agora ficam auditados com motivo `contexto_obrigatorio` ou `permissao_negada`.
+- A conclusao do fluxo registra numero do pedido, status anterior, status novo esperado e resultados retornados pelo fechamento automatico.
+- Falhas do fluxo centralizado e da baixa de estoque passaram a registrar auditoria operacional/seguranca antes do feedback visual.
+- Foi mantida a regra de permissao ja existente do componente, aceitando `marcarProntoFaturar`, `aprovar` ou `editar`, para nao bloquear perfis validos por uma acao unica.
+- O botao principal preserva `data-permission`, `data-action`, `data-context-required` e `data-sensitive`, mantendo rastreabilidade visual sem quebrar o fluxo atual.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca, auditoria e layout `w-full h-full`, sem remover funcionalidade.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em `CentralAprovacoesManager`, reforcando auditoria contextual de aprovacao/negacao e abertura de automacao.
+
 ### Comercial - Fase 9 Pedidos Externos com RBAC e Auditoria
 - Segui o proximo passo salvo apos `ComissoesTab`, sem criar tela, modulo, componente ou arquivo novo.
 - `ValidarPedidosExternos` passou a carregar pedidos externos via `filterInContext`, reforcando consulta por `groupId/empresaId`.
