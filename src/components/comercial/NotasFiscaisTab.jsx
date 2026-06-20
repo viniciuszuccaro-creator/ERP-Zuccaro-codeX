@@ -62,6 +62,9 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
   const canCreateNota = hasPermission('Fiscal', 'NotaFiscal', 'criar') || hasPermission('Fiscal', 'Notas Fiscais', 'criar') || hasPermission('Fiscal', null, 'criar');
   const canEditNota = hasPermission('Fiscal', 'NotaFiscal', 'editar') || hasPermission('Fiscal', 'Notas Fiscais', 'editar') || hasPermission('Fiscal', null, 'editar');
   const canCancelNota = hasPermission('Fiscal', 'NotaFiscal', 'cancelar') || hasPermission('Fiscal', 'Notas Fiscais', 'cancelar') || hasPermission('Fiscal', null, 'cancelar');
+  const canExportNota = hasPermission('Fiscal', 'NotaFiscal', 'exportar') || hasPermission('Fiscal', 'Notas Fiscais', 'exportar') || hasPermission('Fiscal', null, 'exportar');
+  const canPrintNota = hasPermission('Fiscal', 'NotaFiscal', 'imprimir') || hasPermission('Fiscal', 'Notas Fiscais', 'imprimir') || canExportNota;
+  const canDownloadDanfe = hasPermission('Fiscal', 'NotaFiscal', 'baixar_pdf') || hasPermission('Fiscal', 'Notas Fiscais', 'baixar_pdf') || canPrintNota;
 
   // Paginação e ordenação persistente (backend)
   const { page, setPage, pageSize, setPageSize } = useBackendPagination('NotaFiscal', 20);
@@ -111,6 +114,60 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
     } catch (error) {
       console.warn('Falha ao auditar nota fiscal comercial:', error);
     }
+  };
+
+  const visualizarNotaSeguro = async (nota) => {
+    if (!contextoValido || !canViewNota) {
+      await auditFiscalComercial('nota_fiscal_visualizar_bloqueada', { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada', nota_id: nota?.id, numero: nota?.numero }, false);
+      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de visualizar' : 'Sem permissao para visualizar NF-e', variant: 'destructive' });
+      return;
+    }
+    await auditFiscalComercial('nota_fiscal_visualizada', { nota_id: nota?.id, numero: nota?.numero });
+    setViewingDetails(nota);
+  };
+
+  const imprimirDanfeSeguro = async (nota) => {
+    if (!contextoValido || !canPrintNota) {
+      await auditFiscalComercial('nota_fiscal_imprimir_bloqueada', { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada', nota_id: nota?.id, numero: nota?.numero }, false);
+      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de imprimir' : 'Sem permissao para imprimir DANFE', variant: 'destructive' });
+      return;
+    }
+    const empresa = empresasDoGrupo?.find(e => e.id === nota.empresa_id);
+    await auditFiscalComercial('nota_fiscal_danfe_impressa', { nota_id: nota?.id, numero: nota?.numero, empresa_id: nota?.empresa_id });
+    ImprimirDANFESimplificado({ nfe: nota, empresa });
+  };
+
+  const baixarDanfeSeguro = async (nota) => {
+    const danfeUrl = sanitizeFiscalText(nota?.danfe_url);
+    if (!danfeUrl) {
+      toast({ title: 'DANFE indisponivel', variant: 'destructive' });
+      return;
+    }
+    if (!contextoValido || !canDownloadDanfe) {
+      await auditFiscalComercial('nota_fiscal_danfe_bloqueada', { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada', nota_id: nota?.id, numero: nota?.numero }, false);
+      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de baixar' : 'Sem permissao para baixar DANFE', variant: 'destructive' });
+      return;
+    }
+    await auditFiscalComercial('nota_fiscal_danfe_baixada', { nota_id: nota?.id, numero: nota?.numero });
+    window.open(danfeUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const exportarNotasSeguro = async (lista) => {
+    if (!contextoValido || !canExportNota) {
+      await auditFiscalComercial('nota_fiscal_exportar_bloqueada', { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada', total: lista.length }, false);
+      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de exportar' : 'Sem permissao para exportar NF-e', variant: 'destructive' });
+      return;
+    }
+    if (!lista.length) {
+      toast({ title: 'Nenhuma NF-e selecionada para exportar' });
+      return;
+    }
+    if (!window.confirm("Confirmar exportacao das NF-e selecionadas?")) {
+      await auditFiscalComercial('nota_fiscal_exportacao_cancelada', { motivo: 'confirmacao_cancelada', total: lista.length }, false);
+      return;
+    }
+    exportarNotasCSV(lista);
+    await auditFiscalComercial('nota_fiscal_exportada', { total: lista.length, nota_ids: lista.map(n => n.id) });
   };
 
   const [formData, setFormData] = useState({
@@ -533,7 +590,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
                 <div className="text-blue-900 font-semibold">{selectedNotas.length} NF selecionada(s)</div>
                 <div className="flex gap-2">
                   <ProtectedAction module="Fiscal" section="NotaFiscal" action="exportar" mode="disable">
-                    <Button variant="outline" data-action="Fiscal.NotaFiscal.exportar" data-permission="Fiscal.NotaFiscal.exportar" data-context-required="true" onClick={() => { if (window.confirm("Confirmar exportacao das NF-e selecionadas?")) exportarNotasCSV(filteredNotas.filter(n => selectedNotas.includes(n.id))); }}>
+                    <Button variant="outline" data-action="Fiscal.NotaFiscal.exportar" data-permission="Fiscal.NotaFiscal.exportar" data-context-required="true" onClick={() => exportarNotasSeguro(filteredNotas.filter(n => selectedNotas.includes(n.id)))} disabled={!contextoValido || !canExportNota}>
                       <Download className="w-4 h-4 mr-2" /> Exportar CSV
                     </Button>
                   </ProtectedAction>
@@ -565,14 +622,14 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
               ) },
               { key: 'actions', label: 'Ações', render: (nota) => (
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" data-permission="Fiscal.NotaFiscal.visualizar" onClick={() => setViewingDetails(nota)} title="Ver Detalhes" className="h-8 px-2">
+                  <Button variant="ghost" size="sm" data-permission="Fiscal.NotaFiscal.visualizar" onClick={() => visualizarNotaSeguro(nota)} disabled={!contextoValido || !canViewNota} title="Ver Detalhes" className="h-8 px-2">
                     <Eye className="w-3 h-3 mr-1" /> <span className="text-xs">Ver</span>
                   </Button>
-                  <Button variant="ghost" size="sm" data-permission="Fiscal.NotaFiscal.imprimir" onClick={() => { const empresa = empresasDoGrupo?.find(e => e.id === nota.empresa_id); ImprimirDANFESimplificado({ nfe: nota, empresa }); }} title="Imprimir DANFE" className="h-8 px-2 text-slate-600">
+                  <Button variant="ghost" size="sm" data-permission="Fiscal.NotaFiscal.imprimir" onClick={() => imprimirDanfeSeguro(nota)} disabled={!contextoValido || !canPrintNota} title="Imprimir DANFE" className="h-8 px-2 text-slate-600">
                     <Printer className="w-3 h-3 mr-1" /> <span className="text-xs">Imprimir</span>
                   </Button>
                   {nota.danfe_url && (
-                    <Button variant="ghost" size="sm" data-permission="Fiscal.NotaFiscal.baixar_pdf" onClick={() => window.open(nota.danfe_url, '_blank')} title="Baixar DANFE" className="h-8 px-2 text-blue-600">
+                    <Button variant="ghost" size="sm" data-permission="Fiscal.NotaFiscal.baixar_pdf" onClick={() => baixarDanfeSeguro(nota)} disabled={!contextoValido || !canDownloadDanfe} title="Baixar DANFE" className="h-8 px-2 text-blue-600">
                       <Download className="w-3 h-3 mr-1" /> <span className="text-xs">PDF</span>
                     </Button>
                   )}
@@ -672,7 +729,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
               )}
               <div className="flex gap-2 pt-4">
                 {viewingDetails.danfe_url && (
-                  <Button onClick={() => window.open(viewingDetails.danfe_url, '_blank')}>
+                  <Button onClick={() => baixarDanfeSeguro(viewingDetails)} disabled={!contextoValido || !canDownloadDanfe}>
                     <Download className="w-4 h-4 mr-2" />
                     Baixar DANFE
                   </Button>

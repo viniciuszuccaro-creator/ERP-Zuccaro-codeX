@@ -1,3 +1,14 @@
+### Fiscal/Comercial - Fase 9 Consulta e DANFE com RBAC
+- Segui o proximo passo salvo saindo de `PedidosTab` para `NotasFiscaisTab`, sem criar tela, modulo, componente ou arquivo novo.
+- Exportacao CSV de NF-e selecionadas passou pelo helper seguro `exportarNotasSeguro`, com contexto `groupId/empresaId`, permissao `Fiscal.NotaFiscal.exportar` e auditoria de bloqueio/cancelamento/sucesso.
+- Visualizacao de detalhes passou por `visualizarNotaSeguro`, validando `Fiscal.NotaFiscal.visualizar` e auditando abertura/bloqueio.
+- Impressao da DANFE passou por `imprimirDanfeSeguro`, validando `Fiscal.NotaFiscal.imprimir`, contexto e auditoria contextual.
+- Download da DANFE passou por `baixarDanfeSeguro`, validando `Fiscal.NotaFiscal.baixar_pdf`, sanitizando a URL e auditando bloqueio/sucesso.
+- Os botoes, modal de detalhes e fluxo fiscal foram preservados; apenas foram fechados caminhos diretos sem RBAC/auditoria.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca e auditoria sem remover funcionalidade.
+- Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
+- Proximo passo sugerido: continuar em `NotasFiscaisTab` revisando criacao externa `onCreateNFe`, envio de NF-e pendente e cancelamento/log fiscal para fechar RBAC/auditoria visual.
+
 ### Comercial - Fase 9 Menu Contextual de Pedidos com RBAC Visual
 - Segui o proximo passo salvo para consolidar `PedidosTab`, sem criar tela, modulo, componente ou arquivo novo.
 - O menu de contexto da tabela passou a montar somente acoes permitidas pelo contexto `groupId/empresaId` e permissao granular aplicavel.
