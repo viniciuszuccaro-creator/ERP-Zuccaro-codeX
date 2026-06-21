@@ -17,7 +17,6 @@ import {
   ShoppingCart
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { base44 } from '@/api/base44Client';
 import { executarFechamentoCompleto } from '@/components/lib/useFluxoPedido';
 import { useUser } from '@/components/lib/UserContext';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
@@ -69,7 +68,7 @@ export default function AutomacaoFluxoPedido({
 
   const auditFluxoPedido = async ({ acao, descricao, sucesso = true, detalhes = {} }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || 'Sistema',
         usuario_id: user?.id || null,
         acao,

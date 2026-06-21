@@ -1,3 +1,10 @@
+### Comercial - Fase 9 Automacao de Pedido com Auditoria Contextual
+- Segui o proximo passo salvo apos `CentralAprovacoesManager`, sem criar tela, modulo, componente ou arquivo novo.
+- `AutomacaoFluxoPedido` deixou de gravar `AuditLog` diretamente pelo cliente `base44` e passou a usar `createInContext('AuditLog')` no helper existente `auditFluxoPedido`.
+- A auditoria do fechamento automatico agora fica alinhada ao contexto visual multiempresa, preservando `groupId`, `empresaId`, usuario, bloqueios, falhas, inicio e conclusao do fluxo.
+- Removi apenas o import direto de `base44` que ficou desnecessario nesse arquivo, sem alterar etapas, botoes, logs visuais ou automacao do pedido.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca e auditoria, sem criar duplicidade.
+- Proximo passo sugerido: continuar o alinhamento da auditoria direta restante em `ComissoesTab`, usando `createInContext` quando seguro.
 ### Comercial - Fase 9 Central de Aprovacoes com Auditoria Contextual
 - Segui o proximo passo salvo apos `AprovacaoDescontos`, sem criar tela, modulo, componente ou arquivo novo.
 - `CentralAprovacoesManager` deixou de gravar `AuditLog` diretamente pelo cliente `base44` e passou a usar `createInContext("AuditLog")` no helper existente `auditAprovacao`.
