@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +33,7 @@ import DetalhesComissao from "./DetalhesComissao";
 import { useWindow } from "@/components/lib/useWindow";
 import { toast as sonnerToast } from "sonner";
 import useContextoVisual from "@/components/lib/useContextoVisual";
+import { useUser } from "@/components/lib/UserContext";
 import { sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
 
 export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
@@ -56,6 +56,7 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
   });
 
   const queryClient = useQueryClient();
+  const { user } = useUser();
   const { hasPermission } = usePermissions();
   const { empresaAtual, grupoAtual, updateInContext, createInContext } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
@@ -78,27 +79,30 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
 
   const auditComissao = async (acao, detalhes = {}, sucesso = true) => {
     try {
-      const usuario = await base44.auth.me().catch(() => null);
-      await base44.entities.AuditLog.create({
-        usuario_id: usuario?.id || null,
-        usuario: usuario?.full_name || usuario?.email || 'Sistema',
+      await createInContext('AuditLog', {
+        usuario_id: user?.id || null,
+        usuario: user?.full_name || user?.email || 'Sistema',
         acao,
         modulo: 'Comercial/Comissoes',
         tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
         entidade: detalhes.entidade || 'Comissao',
         descricao: detalhes.descricao || acao,
-        empresa_id: empresaId,
-        group_id: groupId,
-        grupo_id: groupId,
+        empresa_id: detalhes.empresa_id || empresaId,
+        group_id: detalhes.group_id || detalhes.grupo_id || groupId,
+        grupo_id: detalhes.grupo_id || detalhes.group_id || groupId,
         sucesso,
-        detalhes: { origem: 'ComissoesTab', ...detalhes },
+        detalhes: {
+          origem: 'ComissoesTab',
+          vendedor: detalhes.vendedor,
+          comissao_id: detalhes.comissao_id,
+          ...detalhes
+        },
         data_hora: new Date().toISOString(),
       });
     } catch (error) {
       console.warn('Falha ao auditar comissao:', error);
     }
   };
-
 
 
   const aprovarComissaoMutation = useMutation({

@@ -1,3 +1,10 @@
+### Comercial - Fase 9 Comissoes com Auditoria Contextual
+- Segui o proximo passo salvo apos `AutomacaoFluxoPedido`, sem criar tela, modulo, componente ou arquivo novo.
+- `ComissoesTab` deixou de usar `base44.auth.me()` e `base44.entities.AuditLog.create` diretamente no helper `auditComissao`.
+- A auditoria de comissoes agora usa `useUser` e `createInContext('AuditLog')`, preservando usuario, `groupId`, `empresaId`, bloqueios, aprovacoes, recusas, pagamentos, impressao, visualizacao e exportacao.
+- Removi apenas o import direto de `base44` que ficou desnecessario nesse arquivo, sem alterar botoes, filtros, relatorios ou fluxo financeiro de pagamento.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca e auditoria, sem criar duplicidade.
+- Proximo passo sugerido: revisar o Comercial em busca de outras gravacoes diretas de auditoria ou iniciar novo bloco do plano em Administracao do Sistema, conforme status salvo e prioridade.
 ### Comercial - Fase 9 Automacao de Pedido com Auditoria Contextual
 - Segui o proximo passo salvo apos `CentralAprovacoesManager`, sem criar tela, modulo, componente ou arquivo novo.
 - `AutomacaoFluxoPedido` deixou de gravar `AuditLog` diretamente pelo cliente `base44` e passou a usar `createInContext('AuditLog')` no helper existente `auditFluxoPedido`.
