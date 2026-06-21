@@ -42,7 +42,7 @@ export default function AprovacaoDescontos({ windowMode = false, empresaId = nul
   console.warn('⚠️ AprovacaoDescontos está DEPRECATED. Use CentralAprovacoesManager.jsx');
   const { user } = useUser();
   const queryClient = useQueryClient();
-  const { filterInContext, updateInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { filterInContext, updateInContext, createInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const { hasPermission } = usePermissions();
 
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
@@ -59,6 +59,34 @@ export default function AprovacaoDescontos({ windowMode = false, empresaId = nul
     hasPermission("Comercial.Pedido.aprovar") ||
     hasPermission("Comercial.Pedido.editar");
   const consultaHabilitada = Boolean(contextoValido && podeVisualizarAprovacoes);
+
+  const auditAprovacaoSimples = async ({ acao, pedido = null, descricao, sucesso = true, detalhes = {} }) => {
+    try {
+      await createInContext("AuditLog", {
+        usuario: user?.full_name || user?.email || "Sistema",
+        usuario_id: user?.id || null,
+        acao,
+        modulo: "Comercial",
+        entidade: "Pedido",
+        registro_id: pedido?.id || detalhes?.pedido_id || null,
+        descricao,
+        empresa_id: pedido?.empresa_id || empresaContextoId,
+        group_id: pedido?.group_id || pedido?.grupo_id || groupId,
+        grupo_id: pedido?.grupo_id || pedido?.group_id || groupId,
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        sucesso,
+        detalhes: {
+          origem: "AprovacaoDescontos",
+          contexto,
+          legacy: true,
+          numero_pedido: pedido?.numero_pedido || pedido?.numero,
+          status_aprovacao_anterior: pedido?.status_aprovacao,
+          ...detalhes
+        },
+        data_hora: new Date().toISOString()
+      });
+    } catch (_) {}
+  };
   const [filtros, setFiltros] = useState({
     empresa_id: "",
     vendedor: "",
@@ -90,18 +118,25 @@ export default function AprovacaoDescontos({ windowMode = false, empresaId = nul
   // Mutation para aprovar/rejeitar
   const aprovarRejeitar = useMutation({
     mutationFn: async ({ pedidoId, acao, desconto_ajustado, comentarios }) => {
+      const pedido = pedidosPendentes.find(p => p.id === pedidoId) || null;
+
       if (!contextoValido || !podeEditarAprovacoes) {
+        await auditAprovacaoSimples({
+          acao: "Decisao bloqueada",
+          pedido,
+          descricao: "Bloqueio ao registrar decisao de desconto no componente legacy simples",
+          sucesso: false,
+          detalhes: { pedido_id: pedidoId, decisao: acao, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" }
+        });
         throw new Error("Sem contexto ou permissao para registrar decisao de desconto.");
       }
-
-      const pedido = pedidosPendentes.find(p => p.id === pedidoId);
       
       let novoStatus = "";
-      let descontoAprovado = pedido.desconto_solicitado_percentual;
+      let descontoAprovado = pedido?.desconto_solicitado_percentual || 0;
       
       if (acao === "aprovar") {
         novoStatus = "aprovado";
-        descontoAprovado = pedido.desconto_solicitado_percentual;
+        descontoAprovado = pedido?.desconto_solicitado_percentual || 0;
       } else if (acao === "aprovar_parcial") {
         novoStatus = "aprovado";
         descontoAprovado = desconto_ajustado;
@@ -114,12 +149,24 @@ export default function AprovacaoDescontos({ windowMode = false, empresaId = nul
       await updateInContext("Pedido", pedidoId, {
         status_aprovacao: novoStatus,
         desconto_aprovado_percentual: descontoAprovado,
-        usuario_aprovador_id: user.id,
+        usuario_aprovador_id: user?.id || null,
         data_aprovacao: new Date().toISOString(),
         comentarios_aprovacao: comentarios
       });
 
-      return { pedidoId, acao };
+      await auditAprovacaoSimples({
+        acao: acao === "rejeitar" ? "Rejeicao" : "Aprovacao",
+        pedido,
+        descricao: "Decisao de desconto registrada no componente legacy simples",
+        detalhes: {
+          decisao: acao,
+          desconto_aprovado_percentual: descontoAprovado,
+          comentarios,
+          status_aprovacao_novo: novoStatus
+        }
+      });
+
+      return { pedidoId, acao, status: novoStatus };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pedidos-aprovacao-legacy-simples-contexto"] });
@@ -239,7 +286,14 @@ export default function AprovacaoDescontos({ windowMode = false, empresaId = nul
             className={`cursor-pointer transition-all hover:shadow-lg ${
               pedidoSelecionado?.id === pedido.id ? 'ring-2 ring-blue-500' : ''
             }`}
-            onClick={() => setPedidoSelecionado(pedido)}
+            onClick={() => {
+              void auditAprovacaoSimples({
+                acao: "Analise iniciada",
+                pedido,
+                descricao: "Selecionar pedido para decisao de desconto legacy simples"
+              });
+              setPedidoSelecionado(pedido);
+            }}
           >
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
@@ -354,6 +408,7 @@ export default function AprovacaoDescontos({ windowMode = false, empresaId = nul
                 disabled={!contextoValido || !podeEditarAprovacoes || aprovarRejeitar.isPending}
                 data-permission="Comercial.Pedido.aprovar"
                 data-action="aprovar-desconto-integral-legacy"
+                data-context-required="true"
                 data-sensitive="true"
               >
                 <CheckCircle2 className="w-4 h-4 mr-2" />
@@ -365,6 +420,7 @@ export default function AprovacaoDescontos({ windowMode = false, empresaId = nul
                 disabled={!contextoValido || !podeEditarAprovacoes || aprovarRejeitar.isPending}
                 data-permission="Comercial.Pedido.aprovar"
                 data-action="aprovar-desconto-parcial-legacy"
+                data-context-required="true"
                 data-sensitive="true"
               >
                 <Percent className="w-4 h-4 mr-2" />
@@ -377,6 +433,7 @@ export default function AprovacaoDescontos({ windowMode = false, empresaId = nul
                 disabled={!contextoValido || !podeEditarAprovacoes || aprovarRejeitar.isPending}
                 data-permission="Comercial.Pedido.aprovar"
                 data-action="rejeitar-desconto-legacy"
+                data-context-required="true"
                 data-sensitive="true"
               >
                 <XCircle className="w-4 h-4 mr-2" />

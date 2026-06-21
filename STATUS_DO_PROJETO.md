@@ -1,3 +1,12 @@
+### Comercial - Fase 9 Aprovacao de Descontos Simples Auditada
+- Segui o proximo passo salvo apos `AprovacaoDescontosManager`, sem criar tela, modulo, componente ou arquivo novo.
+- `AprovacaoDescontos` legacy simples recebeu auditoria contextual propria em `AuditLog` via `createInContext` para selecao de pedido, decisao aprovada/rejeitada e bloqueios por contexto/permissao.
+- A decisao de desconto agora registra status novo, percentual aprovado, comentarios, usuario, `groupId` e `empresaId`, mantendo a compatibilidade com a Central de Aprovacoes.
+- O fluxo passou a tolerar pedido ausente sem quebrar a tela e evita acesso direto a `user.id` quando o usuario ainda nao estiver carregado.
+- Botoes sensiveis de aprovar integral, aprovar parcial e rejeitar receberam `data-context-required`, mantendo `data-permission`, `data-action` e `data-sensitive`.
+- O aviso de componente deprecated, layout `w-full h-full` e fluxo visual existente foram preservados.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca e auditoria, sem remover funcionalidade.
+- Proximo passo sugerido: alinhar auditorias diretas restantes em `CentralAprovacoesManager`, `AutomacaoFluxoPedido` e `ComissoesTab` para usar helpers contextuais quando seguro.
 ### Comercial - Fase 9 Aprovacao de Descontos Legacy Auditada
 - Segui o proximo passo salvo apos `CentralAprovacoesManager`, sem criar tela, modulo, componente ou arquivo novo.
 - `AprovacaoDescontosManager` recebeu auditoria contextual propria em `AuditLog` via `createInContext` para abertura de analise, aprovacao, negacao e bloqueios por contexto/permissao.
