@@ -27,7 +27,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
-import { base44 } from "@/api/base44Client";
 
 /**
  * 🔐 CENTRAL DE APROVAÇÕES V21.5
@@ -44,7 +43,7 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
   const { toast } = useToast();
   const { openWindow } = useWindow();
   const { user } = useUser();
-  const { filterInContext, updateInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { filterInContext, updateInContext, createInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const { hasPermission } = usePermissions();
 
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
@@ -64,7 +63,7 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
 
   const auditAprovacao = async ({ acao, pedido = null, descricao, sucesso = true, detalhes = {} }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext("AuditLog", {
         usuario: user?.full_name || user?.email || "Sistema",
         usuario_id: user?.id || null,
         acao,

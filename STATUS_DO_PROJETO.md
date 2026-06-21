@@ -1,3 +1,10 @@
+### Comercial - Fase 9 Central de Aprovacoes com Auditoria Contextual
+- Segui o proximo passo salvo apos `AprovacaoDescontos`, sem criar tela, modulo, componente ou arquivo novo.
+- `CentralAprovacoesManager` deixou de gravar `AuditLog` diretamente pelo cliente `base44` e passou a usar `createInContext("AuditLog")` no helper existente `auditAprovacao`.
+- A auditoria da central agora fica alinhada ao fluxo multiempresa do contexto visual, preservando `groupId`, `empresaId`, usuario, status anterior, status novo, bloqueios e abertura da automacao.
+- Removi apenas o import direto de `base44` que ficou desnecessario nesse arquivo, sem remover funcionalidade, botoes, abas ou fluxo visual.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca e auditoria, sem criar duplicidade.
+- Proximo passo sugerido: continuar o alinhamento das auditorias diretas restantes em `AutomacaoFluxoPedido` e depois `ComissoesTab`, usando `createInContext` quando seguro.
 ### Comercial - Fase 9 Aprovacao de Descontos Simples Auditada
 - Segui o proximo passo salvo apos `AprovacaoDescontosManager`, sem criar tela, modulo, componente ou arquivo novo.
 - `AprovacaoDescontos` legacy simples recebeu auditoria contextual propria em `AuditLog` via `createInContext` para selecao de pedido, decisao aprovada/rejeitada e bloqueios por contexto/permissao.
