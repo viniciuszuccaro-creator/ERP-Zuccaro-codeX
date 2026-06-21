@@ -1,3 +1,11 @@
+### Comercial - Fase 9 Aprovacao de Descontos Legacy Auditada
+- Segui o proximo passo salvo apos `CentralAprovacoesManager`, sem criar tela, modulo, componente ou arquivo novo.
+- `AprovacaoDescontosManager` recebeu auditoria contextual propria em `AuditLog` via `createInContext` para abertura de analise, aprovacao, negacao e bloqueios por contexto/permissao.
+- O fluxo legacy de aprovacao agora preserva `valor_total`, margem e desconto existentes quando o modal antigo nao envia todos os campos, evitando sobrescrever valores com zero.
+- Botoes sensiveis do dialog e da tabela receberam `data-context-required`, mantendo `data-permission`, `data-action` e `data-sensitive`.
+- O aviso de componente deprecated e a compatibilidade com `CentralAprovacoesManager` foram preservados.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca, auditoria e layout `w-full h-full`, sem remover funcionalidade.
+- Proximo passo sugerido: continuar no Comercial revisando `AprovacaoDescontos` legacy simples ou alinhar auditorias diretas restantes em `AutomacaoFluxoPedido`, `CentralAprovacoesManager` e `ComissoesTab` para helpers contextuais quando seguro.
 ### Comercial - Fase 9 Central de Aprovacoes com Auditoria
 - Segui o proximo passo salvo em `AutomacaoFluxoPedido`, sem criar tela, modulo, componente ou arquivo novo.
 - `CentralAprovacoesManager` recebeu auditoria contextual propria em `AuditLog` para analise, aprovacao, negacao, bloqueios e abertura da automacao de fechamento.

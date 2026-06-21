@@ -53,7 +53,7 @@ function AprovacaoDescontosManager({ windowMode = false, empresaId = null }) {
   const { toast } = useToast();
   const { openWindow } = useWindow();
   const { user } = useUser();
-  const { filterInContext, updateInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { filterInContext, updateInContext, createInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const { hasPermission } = usePermissions();
 
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
@@ -71,6 +71,34 @@ function AprovacaoDescontosManager({ windowMode = false, empresaId = null }) {
     hasPermission("Comercial.Pedido.editar");
   const consultaHabilitada = Boolean(contextoValido && podeVisualizarAprovacoes);
 
+  const auditAprovacaoLegacy = async ({ acao, pedido = null, descricao, sucesso = true, detalhes = {} }) => {
+    try {
+      await createInContext("AuditLog", {
+        usuario: user?.full_name || user?.email || "Sistema",
+        usuario_id: user?.id || null,
+        acao,
+        modulo: "Comercial",
+        entidade: "Pedido",
+        registro_id: pedido?.id || detalhes?.pedido_id || null,
+        descricao,
+        empresa_id: pedido?.empresa_id || empresaContextoId,
+        group_id: pedido?.group_id || pedido?.grupo_id || groupId,
+        grupo_id: pedido?.grupo_id || pedido?.group_id || groupId,
+        tipo_auditoria: sucesso ? "operacional" : "seguranca",
+        sucesso,
+        detalhes: {
+          origem: "AprovacaoDescontosManager",
+          contexto,
+          legacy: true,
+          numero_pedido: pedido?.numero_pedido,
+          status_aprovacao_anterior: pedido?.status_aprovacao,
+          ...detalhes
+        },
+        data_hora: new Date().toISOString()
+      });
+    } catch (_) {}
+  };
+
   // V21.6: Multi-empresa
   const { data: pedidos = [] } = useQuery({
     queryKey: ["pedidos-aprovacao-legacy-contexto", empresaContextoId, groupId, contexto],
@@ -82,14 +110,21 @@ function AprovacaoDescontosManager({ windowMode = false, empresaId = null }) {
   const aprovarPedidoMutation = useMutation({
     mutationFn: async ({ pedidoId, dados }) => {
       if (!contextoValido || !podeEditarAprovacoes) {
+        await auditAprovacaoLegacy({
+          acao: "Aprovacao bloqueada",
+          descricao: "Bloqueio ao aprovar desconto no componente legacy",
+          sucesso: false,
+          detalhes: { pedido_id: pedidoId, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" }
+        });
         throw new Error("Sem contexto ou permissao para aprovar pedido.");
       }
+
+      const pedido = pedidos.find((p) => p.id === pedidoId) || null;
 
       // Preparar itens atualizados com descontos
       const itensRevendaAtualizados = [];
       const itensArmadoAtualizados = [];
       const itensCorteAtualizados = [];
-
       if (dados.itensAtualizados) {
         dados.itensAtualizados.forEach(item => {
           if (item.tipo === "Revenda") {
@@ -102,19 +137,37 @@ function AprovacaoDescontosManager({ windowMode = false, empresaId = null }) {
         });
       }
 
+      const descontoPercentual = dados.descontoGeralPercentual ?? dados.desconto_aprovado_percentual ?? descontoAprovado ?? 0;
+      const descontoValor = dados.descontoGeralValor ?? pedido?.desconto_geral_pedido_valor ?? 0;
+      const valorFinal = dados.valorFinal ?? pedido?.valor_total ?? 0;
+      const margemMedia = dados.margemMedia ?? pedido?.margem_aplicada_vendedor ?? 0;
+      const comentarios = dados.comentarios ?? dados.comentarios_aprovacao ?? "";
+
       await updateInContext("Pedido", pedidoId, {
         status_aprovacao: "aprovado",
         usuario_aprovador_id: user?.id,
         data_aprovacao: new Date().toISOString(),
-        desconto_aprovado_percentual: dados.descontoGeralPercentual || 0,
-        desconto_geral_pedido_percentual: dados.descontoGeralPercentual || 0,
-        desconto_geral_pedido_valor: dados.descontoGeralValor || 0,
-        valor_total: dados.valorFinal || 0,
-        margem_aplicada_vendedor: dados.margemMedia || 0,
-        comentarios_aprovacao: dados.comentarios || "",
+        desconto_aprovado_percentual: descontoPercentual,
+        desconto_geral_pedido_percentual: descontoPercentual,
+        desconto_geral_pedido_valor: descontoValor,
+        valor_total: valorFinal,
+        margem_aplicada_vendedor: margemMedia,
+        comentarios_aprovacao: comentarios,
         ...(itensRevendaAtualizados.length > 0 && { itens_revenda: itensRevendaAtualizados }),
         ...(itensArmadoAtualizados.length > 0 && { itens_armado_padrao: itensArmadoAtualizados }),
         ...(itensCorteAtualizados.length > 0 && { itens_corte_dobra: itensCorteAtualizados }),
+      });
+      await auditAprovacaoLegacy({
+        acao: "Aprovacao",
+        pedido,
+        descricao: "Desconto aprovado no componente legacy",
+        detalhes: {
+          desconto_percentual: descontoPercentual,
+          desconto_valor: descontoValor,
+          valor_final: valorFinal,
+          margem_media: margemMedia,
+          status_aprovacao_novo: "aprovado"
+        }
       });
     },
     onSuccess: () => {
@@ -131,14 +184,31 @@ function AprovacaoDescontosManager({ windowMode = false, empresaId = null }) {
   const negarPedidoMutation = useMutation({
     mutationFn: async ({ pedidoId, comentarios }) => {
       if (!contextoValido || !podeEditarAprovacoes) {
+        await auditAprovacaoLegacy({
+          acao: "Negacao bloqueada",
+          descricao: "Bloqueio ao negar desconto no componente legacy",
+          sucesso: false,
+          detalhes: { pedido_id: pedidoId, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" }
+        });
         throw new Error("Sem contexto ou permissao para negar pedido.");
       }
+
+      const pedido = pedidos.find((p) => p.id === pedidoId) || null;
 
       await updateInContext("Pedido", pedidoId, {
         status_aprovacao: "negado",
         usuario_aprovador_id: user?.id,
         data_aprovacao: new Date().toISOString(),
         comentarios_aprovacao: comentarios
+      });
+      await auditAprovacaoLegacy({
+        acao: "Negacao",
+        pedido,
+        descricao: "Desconto negado no componente legacy",
+        detalhes: {
+          comentarios,
+          status_aprovacao_novo: "negado"
+        }
       });
     },
     onSuccess: () => {
@@ -155,6 +225,11 @@ function AprovacaoDescontosManager({ windowMode = false, empresaId = null }) {
   const pedidosNegados = pedidos.filter(p => p.status_aprovacao === "negado");
 
   const handleAbrirAprovacao = (pedido) => {
+    void auditAprovacaoLegacy({
+      acao: "Analise iniciada",
+      pedido,
+      descricao: "Abrir dialog de analise de desconto legacy"
+    });
     setPedidoSelecionado(pedido);
     setDescontoAprovado(pedido.desconto_solicitado_percentual || 0);
     setComentariosAprovacao("");
@@ -332,6 +407,11 @@ function AprovacaoDescontosManager({ windowMode = false, empresaId = null }) {
                       <Button
                         size="sm"
                         onClick={() => {
+                          void auditAprovacaoLegacy({
+                            acao: "Analise detalhada iniciada",
+                            pedido,
+                            descricao: "Abrir analise detalhada de desconto legacy"
+                          });
                           openWindow(
                             AnalisePedidoAprovacao,
                             {
@@ -366,6 +446,7 @@ function AprovacaoDescontosManager({ windowMode = false, empresaId = null }) {
                         data-permission="Comercial.Pedido.aprovar"
                         data-action="analisar-aprovacao-desconto-legacy"
                         data-sensitive="true"
+                        data-context-required="true"
                       >
                         <ShieldCheck className="w-4 h-4 mr-1" />
                         Analisar
@@ -546,7 +627,11 @@ function AprovacaoDescontosManager({ windowMode = false, empresaId = null }) {
                   variant="outline"
                   onClick={handleNegar}
                   className="border-red-300 text-red-600 hover:bg-red-50"
-                  disabled={negarPedidoMutation.isPending}
+                  disabled={!contextoValido || !podeEditarAprovacoes || negarPedidoMutation.isPending}
+                  data-permission="Comercial.Pedido.aprovar"
+                  data-action="negar-desconto-dialog-legacy"
+                  data-context-required="true"
+                  data-sensitive="true"
                 >
                   <XCircle className="w-4 h-4 mr-2" />
                   Negar Desconto
@@ -554,7 +639,11 @@ function AprovacaoDescontosManager({ windowMode = false, empresaId = null }) {
                 <Button
                   className="bg-green-600 hover:bg-green-700"
                   onClick={handleAprovar}
-                  disabled={aprovarPedidoMutation.isPending}
+                  disabled={!contextoValido || !podeEditarAprovacoes || aprovarPedidoMutation.isPending}
+                  data-permission="Comercial.Pedido.aprovar"
+                  data-action="aprovar-desconto-dialog-legacy"
+                  data-context-required="true"
+                  data-sensitive="true"
                 >
                   <CheckCircle2 className="w-4 h-4 mr-2" />
                   Aprovar Desconto
