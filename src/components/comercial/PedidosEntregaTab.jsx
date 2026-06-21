@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -94,7 +93,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
 
   const auditEntrega = async ({ acao, sucesso = true, motivo = null, detalhes = {}, dadosAnteriores = null, dadosNovos = null, registroId = null }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext("AuditLog", {
         usuario: user?.full_name || user?.email || "Usuario",
         usuario_id: user?.id,
         acao,
@@ -108,7 +107,12 @@ export default function PedidosEntregaTab({ windowMode = false }) {
         sucesso,
         resultado: sucesso ? "sucesso" : "bloqueado",
         motivo,
-        detalhes,
+        detalhes: {
+          origem: "PedidosEntregaTab",
+          pedido_id: detalhes?.pedido_id || registroId,
+          entrega_id: detalhes?.entrega_id || null,
+          ...detalhes
+        },
         dados_anteriores: dadosAnteriores,
         dados_novos: dadosNovos,
         data_hora: new Date().toISOString()

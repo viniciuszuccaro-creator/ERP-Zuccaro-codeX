@@ -1,3 +1,10 @@
+### Comercial - Fase 9 Pedidos Entrega com Auditoria Contextual
+- Segui o proximo passo salvo apos `PedidosTab`, sem criar tela, modulo, componente ou arquivo novo.
+- `PedidosEntregaTab` deixou de gravar `AuditLog` diretamente pelo cliente `base44` e passou a usar `createInContext("AuditLog")` no helper existente `auditEntrega`.
+- A auditoria de pedidos para entrega agora preserva usuario, `groupId`, `empresaId`, pedido, entrega, motivo, antes/depois, bloqueios, dialogos, romaneio, status e confirmacoes.
+- Removi apenas o import direto de `base44` que ficou desnecessario nesse arquivo, sem alterar botoes, paineis, roteirizacao, romaneio, ocorrencias, comprovante ou movimentacao de estoque.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca e auditoria, sem criar duplicidade.
+- Proximo passo sugerido: continuar a varredura Comercial nos pontos restantes com auditoria direta: `FechamentoFinanceiroTab`, `NotasFiscaisTab`, `PedidoFormCompleto`, `PedidoTabsContainer` e `src/pages/Comercial.jsx`.
 ### Comercial - Fase 9 Pedidos com Auditoria Contextual
 - Segui o proximo passo salvo apos `ValidarPedidosExternos`, sem criar tela, modulo, componente ou arquivo novo.
 - `PedidosTab` deixou de gravar `AuditLog` diretamente pelo cliente `base44` e passou a usar `createInContext("AuditLog")` no helper existente `auditPedido`.
