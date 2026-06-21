@@ -1,6 +1,5 @@
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RefreshCw, CheckCircle2, XCircle, Upload } from "lucide-react";
 import useContextoVisual from "@/components/lib/useContextoVisual";
+import { useUser } from "@/components/lib/UserContext";
 import usePermissions from "@/components/lib/usePermissions";
 import { ProtectedAction } from "@/components/ProtectedAction";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ export default function ValidarPedidosExternos({ windowMode = true }) {
   const queryClient = useQueryClient();
   const { createInContext, updateInContext, deleteInContext, filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { hasPermission } = usePermissions();
+  const { user } = useUser();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaContextoId = empresaAtual?.id || null;
   const contextoValido = Boolean(groupId || empresaContextoId);
@@ -26,7 +27,9 @@ export default function ValidarPedidosExternos({ windowMode = true }) {
 
   const auditPedidoExterno = async ({ acao, ext = null, descricao, sucesso = true, detalhes = {} }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext("AuditLog", {
+        usuario: user?.full_name || user?.email || "Sistema",
+        usuario_id: user?.id || null,
         acao,
         modulo: "Comercial",
         entidade: "PedidoExterno",
@@ -37,7 +40,12 @@ export default function ValidarPedidosExternos({ windowMode = true }) {
         grupo_id: ext?.grupo_id || ext?.group_id || groupId,
         tipo_auditoria: sucesso ? "operacional" : "seguranca",
         sucesso,
-        detalhes: { origem: "ValidarPedidosExternos", ...detalhes },
+        detalhes: {
+          origem: "ValidarPedidosExternos",
+          numero_pedido_externo: ext?.numero_pedido_externo,
+          status_importacao_anterior: ext?.status_importacao,
+          ...detalhes
+        },
         data_hora: new Date().toISOString()
       });
     } catch (_) {}

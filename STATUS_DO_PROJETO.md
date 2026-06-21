@@ -1,3 +1,10 @@
+### Comercial - Fase 9 Pedidos Externos com Auditoria Contextual
+- Segui o proximo passo salvo apos `ComissoesTab`, revisando gravacoes diretas de auditoria no Comercial sem criar tela, modulo, componente ou arquivo novo.
+- `ValidarPedidosExternos` deixou de gravar `AuditLog` diretamente pelo cliente `base44` e passou a usar `createInContext("AuditLog")` no helper existente `auditPedidoExterno`.
+- A auditoria de pedidos externos agora registra usuario via `useUser`, `groupId`, `empresaId`, numero externo, status anterior, bloqueios, consulta, validacao, exclusao e importacao.
+- Removi apenas o import direto de `base44` que ficou desnecessario nesse arquivo, sem alterar botoes, filtros, importacao, validacao ou exclusao.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca e auditoria, sem criar duplicidade.
+- Proximo passo sugerido: continuar a varredura Comercial nos pontos restantes com auditoria direta: `PedidosTab`, `PedidosEntregaTab`, `FechamentoFinanceiroTab`, `NotasFiscaisTab`, `PedidoFormCompleto`, `PedidoTabsContainer` e `src/pages/Comercial.jsx`.
 ### Comercial - Fase 9 Comissoes com Auditoria Contextual
 - Segui o proximo passo salvo apos `AutomacaoFluxoPedido`, sem criar tela, modulo, componente ou arquivo novo.
 - `ComissoesTab` deixou de usar `base44.auth.me()` e `base44.entities.AuditLog.create` diretamente no helper `auditComissao`.
