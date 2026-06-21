@@ -36,6 +36,7 @@ import SearchInput from "../ui/SearchInput";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useWindow } from "@/components/lib/useWindow";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { useUser } from "@/components/lib/UserContext";
 import CentralAprovacoesManager from "./CentralAprovacoesManager";
 import usePermissions from "@/components/lib/usePermissions";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
@@ -45,9 +46,10 @@ import useBackendPagination from "@/components/lib/useBackendPagination";
 import { ProtectedAction } from "@/components/ProtectedAction";
 
 export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onCreatePedido, onEditPedido, empresaId = null }) {
+  const { user } = useUser();
   const { canEdit, canCreate, canApprove, canDelete, hasPermission } = usePermissions();
   const { openWindow, closeWindow } = useWindow();
-  const { empresaAtual, grupoAtual, updateInContext, deleteInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, updateInContext, deleteInContext, createInContext } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaContextoId = empresaId || empresaAtual?.id || null;
   const contextoValido = Boolean(groupId || empresaContextoId);
@@ -78,7 +80,9 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
   const queryClient = useQueryClient();
   const auditPedido = async ({ acao, pedido = null, descricao, sucesso = true, detalhes = {} }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext("AuditLog", {
+        usuario: user?.full_name || user?.email || 'Sistema',
+        usuario_id: user?.id || null,
         acao,
         modulo: 'Comercial',
         entidade: 'Pedido',
@@ -89,7 +93,13 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
         grupo_id: pedido?.grupo_id || pedido?.group_id || groupId,
         tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
         sucesso,
-        detalhes: { origem: 'PedidosTab', ...detalhes },
+        detalhes: {
+          origem: 'PedidosTab',
+          numero_pedido: pedido?.numero_pedido,
+          status_anterior: pedido?.status,
+          status_aprovacao_anterior: pedido?.status_aprovacao,
+          ...detalhes
+        },
         data_hora: new Date().toISOString()
       });
     } catch (_) {}
