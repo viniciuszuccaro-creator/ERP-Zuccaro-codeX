@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useEffect } from "react";
 import ModuleLayout from "@/components/layout/ModuleLayout";
 import ModuleContent from "@/components/layout/ModuleContent";
 import usePermissions from "@/components/lib/usePermissions";
@@ -39,14 +39,53 @@ const TAB_MAP = {
 export default function AdministracaoSistema() {
   const { isAdmin } = usePermissions();
   const { user } = useUser();
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
 
   const params = new URLSearchParams(window.location.search);
   const rawTab = (params.get("tab") || "gerais").toLowerCase().trim();
   const initialTab = TAB_MAP[rawTab] || 'gerais';
+  const isAdminUser = isAdmin();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+
+  const auditAdminPage = async (acao, detalhes = {}, sucesso = true) => {
+    try {
+      await createInContext('AuditLog', {
+        acao,
+        entidade: 'AdministracaoSistema',
+        entidade_id: `admin-sistema-${initialTab}`,
+        tipo: sucesso ? 'acesso' : 'seguranca',
+        usuario_id: user?.id || user?.email || 'sistema',
+        usuario_nome: user?.full_name || user?.name || user?.email || 'Sistema',
+        detalhes: {
+          tela: 'AdministracaoSistema',
+          aba_inicial: initialTab,
+          aba_solicitada: rawTab,
+          groupId,
+          empresaId,
+          ...detalhes
+        },
+        sucesso,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('[AdministracaoSistema] Falha ao registrar auditoria contextual:', error);
+    }
+  };
+
+  useEffect(() => {
+    auditAdminPage(
+      isAdminUser ? 'admin_sistema_aberto' : 'admin_sistema_redirecionado_portal',
+      {
+        motivo: isAdminUser ? 'acesso_admin_autorizado' : 'usuario_sem_permissao_admin',
+        permissao: 'Sistema.visualizar'
+      },
+      isAdminUser
+    );
+  }, [isAdminUser, initialTab, rawTab, groupId, empresaId, user?.id, user?.email]);
 
   // Usuários não-admin são redirecionados ao Portal do Cliente
-  if (!isAdmin()) {
+  if (!isAdminUser) {
     return (
       <div className="w-full h-full">
         <Suspense fallback={

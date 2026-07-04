@@ -1,3 +1,11 @@
+### Administracao do Sistema - Fase 10 Acesso com Auditoria Contextual
+- Segui o proximo passo salvo apos `Comercial.jsx`, iniciando o bloco de Administracao do Sistema sem criar tela, modulo, componente ou arquivo novo.
+- `src/pages/AdministracaoSistema.jsx` passou a auditar a abertura da tela com `createInContext("AuditLog")`, preservando usuario, `groupId`, `empresaId`, aba solicitada, aba inicial resolvida e permissao `Sistema.visualizar`.
+- O redirecionamento de usuarios sem perfil admin para o Portal do Cliente tambem passa a ser registrado como evento de seguranca, mantendo o fluxo atual sem bloquear o usuario.
+- A tela continua protegida por `ProtectedSection module="Sistema" action="visualizar"` e mantendo o layout `w-full h-full`.
+- Mantida a Regra-Mae: melhoria feita no arquivo existente, reforcando multiempresa, RBAC, seguranca e auditoria, sem criar duplicidade.
+- Proximo passo sugerido: continuar em Administracao do Sistema nas abas e acoes internas, priorizando ferramentas, acessos/RBAC e integracoes que ainda tiverem botao sem efeito, auditoria direta ou falta de contexto.
+
 ### Comercial - Fase 9 Pagina Comercial com Auditoria Contextual
 - Segui o proximo passo salvo apos `PedidoTabsContainer`, sem criar tela, modulo, componente ou arquivo novo.
 - `src/pages/Comercial.jsx` deixou de gravar `AuditLog` diretamente pelo cliente `base44` na abertura dos modulos do Comercial.
