@@ -1,3 +1,12 @@
+### Cadastros Gerais - Fase 11 Bloco Pessoas com Auditoria Detalhada
+- Segui o proximo passo salvo apos busca e blocos em Cadastros, sem criar tela, modulo, componente ou arquivo novo.
+- `Bloco1Pessoas.jsx` passou a auditar abertura de cadastros com contexto multiempresa, permissao granular, titulo, campos principais e total conhecido da entidade.
+- Bloqueios por falta de contexto ou permissao agora registram motivo padronizado, `groupId`, `empresaId`, nome do grupo/empresa e entidade afetada.
+- Filtro aplicado no bloco Pessoas & Parceiros agora gera auditoria com termo sanitizado, total de itens do bloco, total filtrado e entidades filtradas.
+- O fluxo visual, cards, botoes, janelas flutuantes e formulários existentes foram preservados.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando RBAC, seguranca, auditoria e multiempresa, sem criar duplicidade.
+- Proximo passo sugerido: continuar em Cadastros Gerais revisando `Bloco2Produtos`, mantendo o mesmo padrao de auditoria/contexto nos itens internos.
+
 ### Cadastros Gerais - Fase 11 Busca e Blocos com Auditoria Contextual
 - Segui o proximo passo salvo apos auditoria de contexto em Cadastros, sem criar tela, modulo, componente ou arquivo novo.
 - `Cadastros.jsx` passou a auditar abertura/fechamento dos blocos com nome do bloco, permissao granular, totais exibidos, blocos abertos e contexto multiempresa.
