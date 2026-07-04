@@ -4,6 +4,8 @@ import PedidoTabsNav from './PedidoTabsNav';
 import ProtectedSection from '@/components/security/ProtectedSection';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import useContextoVisual from '@/components/lib/useContextoVisual';
+import { useUser } from '@/components/lib/UserContext';
 
 // Lazy-loaded tabs (keep same split as original)
 const WizardEtapa1Cliente = React.lazy(() => import('../wizard/WizardEtapa1Cliente'));
@@ -27,6 +29,8 @@ export default function PedidoTabsContainer({
   errors,
   pedido,
 }) {
+  const { user } = useUser();
+  const { createInContext, filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const abas = [
     { id: 'identificacao', label: 'Identificação', icon: null, valido: validacoes?.identificacao },
     { id: 'revenda', label: 'Itens Revenda', icon: null, count: formData?.itens_revenda?.length || 0 },
@@ -41,6 +45,31 @@ export default function PedidoTabsContainer({
 
   const [conformidade, setConformidade] = useState({ ok: false, motivos: [] });
 
+  const auditTabsPedido = async (acao, detalhes = {}, sucesso = true) => {
+    const empresaId = formData?.empresa_id || empresaAtual?.id || null;
+    const groupId = formData?.group_id || formData?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+    try {
+      await createInContext("AuditLog", {
+        usuario_id: user?.id || null,
+        usuario: user?.full_name || user?.email || 'Sistema',
+        acao,
+        modulo: 'Comercial/PedidoTabsContainer',
+        tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
+        entidade: detalhes.entidade || 'Pedido',
+        registro_id: pedido?.id || formData?.id || null,
+        descricao: detalhes.descricao || acao,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        sucesso,
+        detalhes: { origem: 'PedidoTabsContainer', pedido_id: pedido?.id || formData?.id || null, numero_pedido: formData?.numero_pedido || null, ...detalhes },
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar abas do pedido:', error);
+    }
+  };
+
   useEffect(() => {
     let cancel = false;
     const run = async () => {
@@ -48,13 +77,13 @@ export default function PedidoTabsContainer({
       const motivos = [];
       try {
         if (formData?.cliente_id) {
-          const cli = await base44.entities.Cliente.filter({ id: formData.cliente_id });
+          const cli = await filterInContext('Cliente', { id: formData.cliente_id });
           const c = Array.isArray(cli) ? cli[0] : null;
           const limite = c?.condicao_comercial?.limite_credito || 0;
           if (limite > 0 && (Number(formData?.valor_total) || 0) > limite) {
             ok = false; motivos.push('Estouro de limite de crédito');
           }
-          const atrasados = await base44.entities.ContaReceber.filter({ cliente_id: formData.cliente_id, status: 'Atrasado' });
+          const atrasados = await filterInContext('ContaReceber', { cliente_id: formData.cliente_id, status: 'Atrasado' });
           if (Array.isArray(atrasados) && atrasados.length > 0) {
             ok = false; motivos.push('Cliente com títulos em atraso');
           }
@@ -82,7 +111,7 @@ export default function PedidoTabsContainer({
 
   const liberarEdicaoVendedor = async () => {
     setFormData(prev => ({ ...prev, __liberado_vendedor: true }));
-    try { await base44.entities.AuditLog.create({ acao: 'Aprovação', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido?.id, descricao: 'Vendedor liberou edição (conformidade + à vista)', data_hora: new Date().toISOString() }); } catch {}
+    await auditTabsPedido('pedido_edicao_liberada_vendedor', { motivo: 'conformidade_e_pagamento_a_vista' }, true);
     toast.success('Edição liberada (vendedor)');
   };
 
@@ -95,16 +124,17 @@ export default function PedidoTabsContainer({
   const solicitarLiberacao = async () => {
     try {
       await base44.functions.invoke('solicitacoesAprovacao', { tipo: 'pedido_edicao_em_transito', entidade: 'Pedido', entidade_id: pedido?.id });
-      try { await base44.entities.AuditLog.create({ acao: 'Aprovação', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido?.id, descricao: 'Solicitada liberação de edição (status bloqueado)', data_hora: new Date().toISOString() }); } catch {}
+      await auditTabsPedido('pedido_edicao_liberacao_solicitada', { motivo: 'status_bloqueado', status: formData?.status }, true);
       toast.success('Solicitação enviada ao gerente');
     } catch (e) {
+      await auditTabsPedido('pedido_edicao_liberacao_falhou', { motivo: 'falha_solicitacao', erro: e?.message || 'erro_desconhecido' }, false);
       toast.error('Falha ao solicitar liberação');
     }
   };
 
   const liberarEdicaoLocal = async () => {
     setFormData(prev => ({ ...prev, __liberado_gerencia: true }));
-    try { await base44.entities.AuditLog.create({ acao: 'Aprovação', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido?.id, descricao: 'Gerente liberou edição local', data_hora: new Date().toISOString() }); } catch {}
+    await auditTabsPedido('pedido_edicao_liberada_gerencia', { motivo: 'liberacao_local_gerente', status: formData?.status }, true);
   };
 
    return (

@@ -1,3 +1,13 @@
+### Comercial - Fase 9 Abas do Pedido com Auditoria e Contexto
+- Segui o proximo passo salvo apos `PedidoFormCompleto`, sem criar tela, modulo, componente ou arquivo novo.
+- `PedidoTabsContainer` deixou de gravar `AuditLog` diretamente pelo cliente `base44` nos fluxos de liberacao de edicao por vendedor, solicitacao ao gerente e liberacao local por gerente.
+- A auditoria das abas do pedido agora usa `useUser` e `createInContext("AuditLog")`, preservando usuario, `groupId`, `empresaId`, pedido, numero do pedido, status, motivo, sucesso e falha.
+- As consultas de cliente e contas a receber em atraso passaram a usar `filterInContext`, reforcando multiempresa na verificacao de conformidade financeira.
+- Mantive `base44.functions.invoke` para `iaFinanceAnomalyScan` e `solicitacoesAprovacao`, porque esses fluxos backend existentes continuam sendo necessarios.
+- Botoes, bloqueios visuais, abas, ProtectedSection, lazy loading e comportamento autorizado foram preservados.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca e auditoria, sem criar duplicidade.
+- Proximo passo sugerido: continuar a varredura Comercial em `src/pages/Comercial.jsx`.
+
 ### Comercial - Fase 9 Pedido Completo com Auditoria Contextual
 - Segui o proximo passo salvo apos `NotasFiscaisTab`, sem criar tela, modulo, componente ou arquivo novo.
 - `PedidoFormCompleto` deixou de gravar `AuditLog` diretamente pelo cliente `base44` no fluxo de solicitacao de aprovacao.
