@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +11,7 @@ import GerarNFeModal from './GerarNFeModal';
 import { useFormasPagamento } from '@/components/lib/useFormasPagamento';
 import useContextoVisual from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
+import { useUser } from '@/components/lib/UserContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 /**
@@ -20,7 +20,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
  */
 export default function FechamentoFinanceiroTab({ formData, setFormData, onNext }) {
   const [modalNFeOpen, setModalNFeOpen] = useState(false);
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { user } = useUser();
+  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const empresaId = formData?.empresa_id || empresaAtual?.id || null;
   const groupId = formData?.group_id || formData?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
@@ -31,10 +32,9 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
   const sanitizeInteiro = (value, fallback = 0) => Math.max(0, Number.parseInt(value, 10) || fallback);
   const auditFechamento = async (acao, detalhes = {}, sucesso = true) => {
     try {
-      const usuario = await base44.auth.me().catch(() => null);
-      await base44.entities.AuditLog.create({
-        usuario_id: usuario?.id || null,
-        usuario: usuario?.full_name || usuario?.email || 'Sistema',
+      await createInContext('AuditLog', {
+        usuario_id: user?.id || null,
+        usuario: user?.full_name || user?.email || 'Sistema',
         acao,
         modulo: 'Comercial/FechamentoFinanceiro',
         tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
@@ -56,6 +56,7 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
       await auditFechamento('nfe_fechamento_abrir_bloqueada', { motivo: !empresaId ? 'empresa_faturadora_obrigatoria' : 'contexto_ou_permissao' }, false);
       return;
     }
+    await auditFechamento('nfe_fechamento_abrir', { entidade: 'NotaFiscal', escopo: 'pedido_ou_etapa' }, true);
     setModalNFeOpen(true);
   };
 
@@ -75,7 +76,7 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
   const percentualFaturado = valorTotal > 0 ? (valorFaturado / valorTotal) * 100 : 0;
 
   return (
-    <div className="space-y-6" role="region" aria-label="Fechamento Financeiro do Pedido">
+    <div className="w-full h-full space-y-6" role="region" aria-label="Fechamento Financeiro do Pedido">
       {/* V21.1: Barra de Progresso do Faturamento */}
       {etapas.length > 0 && (
         <Card className="border-2 border-purple-300 bg-purple-50">

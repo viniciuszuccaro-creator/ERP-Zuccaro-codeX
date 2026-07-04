@@ -1,3 +1,13 @@
+### Comercial - Fase 9 Fechamento Financeiro com Auditoria Contextual
+- Segui o proximo passo salvo apos `PedidosEntregaTab`, sem criar tela, modulo, componente ou arquivo novo.
+- `FechamentoFinanceiroTab` deixou de gravar `AuditLog` diretamente pelo cliente `base44` e passou a usar `createInContext('AuditLog')` no helper existente `auditFechamento`.
+- A auditoria do fechamento financeiro agora usa `useUser`, preserva usuario, `groupId`, `empresaId`, pedido, entidade, escopo de NF-e, sucesso/bloqueio e motivo operacional.
+- A abertura autorizada do modal de NF-e agora tambem fica auditada, alem dos bloqueios por empresa faturadora, contexto ou permissao fiscal.
+- O container raiz recebeu `w-full h-full`, reforcando a regra obrigatoria de layout sem alterar o fluxo visual.
+- Removi apenas o import direto de `base44` que ficou desnecessario nesse arquivo, sem alterar campos, calculos, descontos, formas de pagamento, observacoes, modal ou emissao de NF-e.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca e auditoria, sem criar duplicidade.
+- Proximo passo sugerido: continuar a varredura Comercial nos pontos restantes com auditoria direta: `NotasFiscaisTab`, `PedidoFormCompleto`, `PedidoTabsContainer` e `src/pages/Comercial.jsx`.
+
 ### Comercial - Fase 9 Pedidos Entrega com Auditoria Contextual
 - Segui o proximo passo salvo apos `PedidosTab`, sem criar tela, modulo, componente ou arquivo novo.
 - `PedidosEntregaTab` deixou de gravar `AuditLog` diretamente pelo cliente `base44` e passou a usar `createInContext("AuditLog")` no helper existente `auditEntrega`.
