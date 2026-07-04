@@ -1,3 +1,11 @@
+### Administracao do Sistema - Fase 10 Limpeza de Auditoria Legada em Acessos
+- Segui o proximo passo salvo apos auditoria de consultas em Gestao de Acessos, sem criar tela, modulo, componente ou arquivo novo.
+- `GestaoAcessosIndex.jsx` teve removido o trecho legado inacessivel que ficava apos `return` dentro de `handleTabChange`.
+- A auditoria nova de troca de abas foi preservada, mantendo contexto ativo, `groupId`, `empresaId`, aba anterior e aba solicitada.
+- A remocao reduz codigo morto e risco de manutencao confusa sem alterar fluxo visual, abas, consultas, RBAC ou layout.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando organizacao, seguranca, auditoria e multiempresa, sem criar duplicidade.
+- Proximo passo sugerido: seguir para Cadastros Gerais com foco em relatorios, contexto multiempresa, RBAC granular e auditoria de acoes bloqueadas.
+
 ### Administracao do Sistema - Fase 10 Gestao de Acessos com Auditoria de Consultas
 - Segui o proximo passo salvo apos SoD, sem criar tela, modulo, componente ou arquivo novo.
 - `GestaoAcessosIndex.jsx` passou a auditar acesso bloqueado por falta de permissao de visualizacao.

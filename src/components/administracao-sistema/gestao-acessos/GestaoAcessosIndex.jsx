@@ -99,22 +99,6 @@ export default function GestaoAcessosIndex() {
       sucesso: contextoValido,
       tipo: 'ui',
     });
-    return;
-    try {
-      void createInContext('AuditLog', {
-        usuario: user?.full_name || user?.email || 'UsuÃ¡rio',
-        usuario_id: user?.id,
-        empresa_id: empresaAtual?.id || null,
-        group_id: groupId,
-        empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
-        acao: 'VisualizaÃ§Ã£o',
-        modulo: 'Sistema',
-        tipo_auditoria: 'ui',
-        entidade: 'Controle de Acesso',
-        descricao: `Aba visualizada: ${next}`,
-        data_hora: new Date().toISOString(),
-      }).catch((error) => console.warn("Falha ao auditar aba de gestao de acessos:", error));
-    } catch {}
   };
 
   // Hooks SEMPRE antes de qualquer return condicional
