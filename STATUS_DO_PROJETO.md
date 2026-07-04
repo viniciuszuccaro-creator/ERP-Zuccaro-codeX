@@ -1,3 +1,12 @@
+### Administracao do Sistema - Fase 10 Gestao de Acessos com Fallback Multiempresa
+- Segui o proximo passo salvo apos `AdminTabs`, focando Gestao de Acessos e Usuarios sem criar tela, modulo, componente ou arquivo novo.
+- `GestaoAcessosIndex.jsx` agora filtra pelo escopo ativo quando precisa usar fallback direto de `PerfilAcesso.list`, evitando expor perfis de outro grupo/empresa quando `filterInContext` nao retorna dados.
+- `UsuariosTab.jsx` recebeu a mesma protecao de escopo no fallback de perfis, considerando `group_id`, `grupo_id`, `empresa_id`, `empresa_atual_id` e empresas vinculadas.
+- Registros sem marcador de escopo deixam de passar no fallback direto, reforcando a regra de Multiempresa Absoluta.
+- O fluxo visual, abas, convites, configuracao de usuarios, SoD, relatorios e auditorias existentes foram preservados.
+- Mantida a Regra-Mae: melhoria feita nos componentes existentes, reforcando multiempresa, RBAC, seguranca e auditoria, sem criar duplicidade.
+- Proximo passo sugerido: continuar em `UsuariosTab` e `GestaoUsuariosAvancada`, priorizando liberacao por Grupo, Empresas e Setores com auditoria antes/depois.
+
 ### Administracao do Sistema - Fase 10 Abas com RBAC e Auditoria Contextual
 - Segui o proximo passo salvo apos a auditoria de acesso da pagina, sem criar tela, modulo, componente ou arquivo novo.
 - `src/components/administracao-sistema/AdminTabs.jsx` passou a auditar trocas de aba com `createInContext("AuditLog")`, registrando usuario, `groupId`, `empresaId`, aba anterior, aba solicitada, sucesso e tentativa bloqueada.

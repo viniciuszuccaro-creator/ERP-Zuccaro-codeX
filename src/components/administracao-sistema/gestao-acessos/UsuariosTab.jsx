@@ -32,6 +32,21 @@ export default function UsuariosTab() {
   const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
     .map((item) => (typeof item === "string" ? item : item?.empresa_id || item?.id))
     .filter(Boolean);
+  const registroNoEscopo = (registro) => {
+    const empresasVinculadas = normalizeEmpresaIds(registro.empresas_vinculadas || registro.empresas || registro.empresas_ids);
+    const registroGroupId = registro.group_id || registro.grupo_id || registro.groupId || registro.grupoId;
+    const registroEmpresaId = registro.empresa_id || registro.empresaId || registro.empresa_atual_id;
+    const temMarcadorEscopo = Boolean(registroGroupId || registroEmpresaId || empresasVinculadas.length);
+
+    if (!temMarcadorEscopo) return false;
+    if (contexto === "grupo") {
+      const empresasIds = empresasDoGrupo.map((e) => e.id);
+      return registroGroupId === grupoAtivoId || empresasVinculadas.some((id) => empresasIds.includes(id));
+    }
+    return registroGroupId === grupoAtivoId
+      || registroEmpresaId === empresaAtual?.id
+      || empresasVinculadas.includes(empresaAtual?.id);
+  };
 
   const auditarUsuario = async ({ acao, descricao, dadosNovos }) => {
     try {
@@ -84,7 +99,8 @@ export default function UsuariosTab() {
     queryFn: async () => {
       const scoped = contextoValido ? await filterInContext("PerfilAcesso", {}, "-updated_date", 500) : [];
       if (scoped.length) return scoped;
-      return base44.entities.PerfilAcesso.list("-updated_date", 500);
+      const rows = await base44.entities.PerfilAcesso.list("-updated_date", 500);
+      return rows.filter(registroNoEscopo);
     },
     enabled: true,
   });
