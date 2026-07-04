@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,6 +38,7 @@ import usePersistedSort from "@/components/lib/usePersistedSort";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
 import useBackendPagination from "@/components/lib/useBackendPagination";
 import { sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
+import { useUser } from "@/components/lib/UserContext";
 
 export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCreateNFe }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -53,6 +53,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
   const toggleAllNotas = (checked, lista) => setSelectedNotas(checked ? lista.map(n => n.id) : []);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useUser();
   const { empresaAtual, empresasDoGrupo, grupoAtual, createInContext, updateInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
@@ -96,10 +97,9 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
   });
   const auditFiscalComercial = async (acao, detalhes = {}, sucesso = true) => {
     try {
-      const usuario = await base44.auth.me().catch(() => null);
-      await base44.entities.AuditLog.create({
-        usuario_id: usuario?.id || null,
-        usuario: usuario?.full_name || usuario?.email || 'Sistema',
+      await createInContext('AuditLog', {
+        usuario_id: user?.id || null,
+        usuario: user?.full_name || user?.email || 'Sistema',
         acao,
         modulo: 'Comercial/Fiscal',
         tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
@@ -273,7 +273,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
       });
 
       await updateInContext('NotaFiscal', nfe.id, payloadAtualizacao);
-      await base44.entities.LogFiscal.create({
+      await createInContext('LogFiscal', {
         empresa_id: nfe.empresa_id || empresaId,
         group_id: nfe.group_id || groupId,
         grupo_id: nfe.grupo_id || nfe.group_id || groupId,
@@ -340,7 +340,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
       }));
 
       // Log fiscal
-      await base44.entities.LogFiscal.create({
+      await createInContext('LogFiscal', {
         empresa_id: nfe.empresa_id || empresaId,
         group_id: nfe.group_id || groupId,
         grupo_id: nfe.grupo_id || nfe.group_id || groupId,

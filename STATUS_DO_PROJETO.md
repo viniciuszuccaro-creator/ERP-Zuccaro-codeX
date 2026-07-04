@@ -1,3 +1,13 @@
+### Comercial/Fiscal - Fase 9 NF-e com Auditoria e Log Fiscal Contextual
+- Segui o proximo passo salvo apos `FechamentoFinanceiroTab`, sem criar tela, modulo, componente ou arquivo novo.
+- `NotasFiscaisTab` deixou de importar e usar `base44` diretamente para gravar `AuditLog` e `LogFiscal`.
+- A auditoria fiscal/comercial agora usa `useUser` e `createInContext('AuditLog')`, preservando usuario, `groupId`, `empresaId`, nota, numero, bloqueios, envio, cancelamento, edicao, exportacao, DANFE e visualizacao.
+- Os logs fiscais de envio e cancelamento passaram a ser gravados via `createInContext('LogFiscal')`, reforcando carimbo multiempresa e sanitizacao do helper contextual existente.
+- Mantive os fluxos existentes de emissao simulada, cancelamento, atualizacao de NF-e, DANFE, modal, tabela, filtros, botoes e RBAC visual.
+- Removi apenas o import direto de `base44` que ficou desnecessario nesse arquivo, sem alterar layout, campos, permissao ou comportamento autorizado.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca e auditoria, sem criar duplicidade.
+- Proximo passo sugerido: continuar a varredura Comercial nos pontos restantes com auditoria direta: `PedidoFormCompleto`, `PedidoTabsContainer` e `src/pages/Comercial.jsx`.
+
 ### Comercial - Fase 9 Fechamento Financeiro com Auditoria Contextual
 - Segui o proximo passo salvo apos `PedidosEntregaTab`, sem criar tela, modulo, componente ou arquivo novo.
 - `FechamentoFinanceiroTab` deixou de gravar `AuditLog` diretamente pelo cliente `base44` e passou a usar `createInContext('AuditLog')` no helper existente `auditFechamento`.
