@@ -1,3 +1,12 @@
+### Comercial - Fase 9 Pedido Completo com Auditoria Contextual
+- Segui o proximo passo salvo apos `NotasFiscaisTab`, sem criar tela, modulo, componente ou arquivo novo.
+- `PedidoFormCompleto` deixou de gravar `AuditLog` diretamente pelo cliente `base44` no fluxo de solicitacao de aprovacao.
+- A auditoria do formulario completo agora usa `useUser` e `createInContext("AuditLog")`, preservando usuario, `groupId`, `empresaId`, pedido, numero do pedido, solicitacao de aprovacao, sucesso e falha.
+- Mantive `base44.functions.invoke` para `solicitacoesAprovacao` e `applyOrderStockMovements`, porque esses fluxos backend existentes continuam sendo necessarios.
+- O formulario, abas, validacoes, footer de acoes, automacao de fechamento, rascunho e envio para faturamento foram preservados.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca e auditoria, sem criar duplicidade.
+- Proximo passo sugerido: continuar a varredura Comercial nos pontos restantes: `PedidoTabsContainer` e `src/pages/Comercial.jsx`.
+
 ### Comercial/Fiscal - Fase 9 NF-e com Auditoria e Log Fiscal Contextual
 - Segui o proximo passo salvo apos `FechamentoFinanceiroTab`, sem criar tela, modulo, componente ou arquivo novo.
 - `NotasFiscaisTab` deixou de importar e usar `base44` diretamente para gravar `AuditLog` e `LogFiscal`.

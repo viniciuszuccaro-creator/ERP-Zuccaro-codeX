@@ -30,6 +30,7 @@ import { base44 } from '@/api/base44Client';
 import { useOrigemPedido } from '@/components/lib/useOrigemPedido';
 import ProtectedSection from '@/components/security/ProtectedSection';
 import useContextoVisual from '@/components/lib/useContextoVisual';
+import { useUser } from '@/components/lib/UserContext';
 
 // Validações avançadas movidas para ./pedido/pedidoSchema
 
@@ -67,7 +68,8 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
   
   // V21.6 FINAL: Hook de detecção AUTOMÁTICA OBRIGATÓRIA
   const { origemPedido, bloquearEdicao } = useOrigemPedido();
-  const { carimbarContexto } = useContextoVisual();
+  const { user } = useUser();
+  const { carimbarContexto, createInContext, empresaAtual, grupoAtual } = useContextoVisual();
   
   const defaultValues = { ...getDefaultPedidoValues(pedido), ...(pedido || {}) };
 
@@ -107,6 +109,31 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
   useTotais(formData, setFormData);
 
+    const auditPedidoForm = async (acao, detalhes = {}, sucesso = true) => {
+      const empresaId = formData?.empresa_id || empresaAtual?.id || null;
+      const groupId = formData?.group_id || formData?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+      try {
+        await createInContext("AuditLog", {
+          usuario_id: user?.id || null,
+          usuario: user?.full_name || user?.email || 'Sistema',
+          acao,
+          modulo: 'Comercial/PedidoFormCompleto',
+          tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
+          entidade: detalhes.entidade || 'Pedido',
+          registro_id: formData?.id || null,
+          descricao: detalhes.descricao || acao,
+          empresa_id: empresaId,
+          group_id: groupId,
+          grupo_id: groupId,
+          sucesso,
+          detalhes: { origem: 'PedidoFormCompleto', pedido_id: formData?.id || null, numero_pedido: formData?.numero_pedido || null, ...detalhes },
+          data_hora: new Date().toISOString(),
+        });
+      } catch (error) {
+        console.warn('Falha ao auditar pedido completo:', error);
+      }
+    };
+
     const canSolicitarAprovacao = (formData?.status_aprovacao !== 'aprovado') && (validacoes.identificacao && validacoes.itens);
 
     const solicitarAprovacao = async () => {
@@ -121,8 +148,10 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
           dados_propostos: { status_aprovacao: 'pendente', status: 'Aguardando Aprovação' },
           justificativa: formData.justificativa_desconto || 'Solicitação de aprovação do pedido'
         });
-        try { await base44.entities.AuditLog.create({ acao: 'Aprovação', modulo: 'Comercial', entidade: 'Pedido', registro_id: formData?.id, descricao: `Solicitada aprovação do pedido (#${solicitacao?.id || ''})`, data_hora: new Date().toISOString() }); } catch {}
-      } catch (e) {}
+        await auditPedidoForm('pedido_aprovacao_solicitada', { solicitacao_id: solicitacao?.id || null, status_aprovacao: 'pendente' }, true);
+      } catch (e) {
+        await auditPedidoForm('pedido_aprovacao_solicitacao_falhou', { erro: e?.message || 'falha_ao_solicitar_aprovacao' }, false);
+      }
     };
 
     const handleSubmit = async () => {
