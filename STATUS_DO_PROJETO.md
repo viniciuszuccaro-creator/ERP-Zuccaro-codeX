@@ -1,3 +1,12 @@
+### Administracao do Sistema - Fase 10 Gestao de Acessos com Auditoria de Consultas
+- Segui o proximo passo salvo apos SoD, sem criar tela, modulo, componente ou arquivo novo.
+- `GestaoAcessosIndex.jsx` passou a auditar acesso bloqueado por falta de permissao de visualizacao.
+- Trocas de aba agora registram contexto ativo, `groupId`, `empresaId`, aba anterior, aba solicitada e alerta quando o contexto esta incompleto.
+- Fallback direto de perfis RBAC agora fica auditado com total bruto e total filtrado no escopo, preservando a protecao multiempresa existente.
+- Consulta de usuarios agora registra alerta quando encontra usuarios sem marcador multiempresa explicito, mantendo o fluxo atual para revisao gradual.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando RBAC, seguranca, auditoria e multiempresa, sem criar duplicidade.
+- Proximo passo sugerido: continuar em Administracao do Sistema removendo o trecho legado inacessivel de auditoria antiga em `GestaoAcessosIndex` apos validacao visual, ou seguir para Cadastros Gerais com foco em relatorios e contexto.
+
 ### Administracao do Sistema - Fase 10 SoD com Auditoria de Bloqueios e Erros
 - Segui o proximo passo salvo apos relatorios RBAC, sem criar tela, modulo, componente ou arquivo novo.
 - `SoDChecker.jsx` agora audita abertura bloqueada por falta de permissao de edicao.

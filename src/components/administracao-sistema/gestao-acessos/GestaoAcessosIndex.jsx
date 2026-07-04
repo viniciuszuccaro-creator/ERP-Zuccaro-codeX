@@ -21,6 +21,7 @@ export default function GestaoAcessosIndex() {
   const [tab, setTab] = React.useState('perfis');
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const scopeKey = contexto === 'grupo' ? (groupId || 'sem-grupo') : (empresaAtual?.id || groupId || 'sem-contexto');
+  const contextoValido = contexto === 'grupo' ? Boolean(groupId) : Boolean(groupId && empresaAtual?.id);
   const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
     .map((item) => (typeof item === 'string' ? item : item?.empresa_id || item?.id))
     .filter(Boolean);
@@ -40,8 +41,65 @@ export default function GestaoAcessosIndex() {
       || empresasVinculadas.includes(empresaAtual?.id);
   };
 
+  const getDadosContexto = () => ({
+    contexto: contexto || 'sem-contexto',
+    contexto_valido: contextoValido,
+    group_id: groupId,
+    empresa_id: empresaAtual?.id || null,
+    empresas_grupo: empresasDoGrupo.length,
+    permissao: 'Sistema.Controle de Acesso.visualizar',
+    pode_visualizar: podeVer,
+  });
+
+  const auditarGestaoAcessos = async ({ acao, descricao, dadosNovos = {}, sucesso = true, tipo = 'seguranca' }) => {
+    try {
+      await createInContext('AuditLog', {
+        usuario: user?.full_name || user?.email || 'Usuario',
+        usuario_id: user?.id || null,
+        empresa_id: empresaAtual?.id || null,
+        group_id: groupId,
+        empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
+        acao,
+        modulo: 'Sistema',
+        tipo_auditoria: tipo,
+        entidade: 'Controle de Acesso',
+        descricao,
+        dados_novos: {
+          ...getDadosContexto(),
+          ...(dadosNovos || {}),
+        },
+        sucesso,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar gestao de acessos:", error);
+    }
+  };
+
+  React.useEffect(() => {
+    if (podeVer) return;
+    void auditarGestaoAcessos({
+      acao: 'Bloqueio por permissao',
+      descricao: 'Tentativa de acessar Gestao de Acessos sem permissao de visualizacao.',
+      dadosNovos: { motivo: 'permissao_negada' },
+      sucesso: false,
+    });
+  }, [podeVer, groupId, empresaAtual?.id]);
+
   const handleTabChange = (next) => {
     setTab(next);
+    void auditarGestaoAcessos({
+      acao: contextoValido ? 'Visualizacao' : 'Alerta contexto incompleto',
+      descricao: `Aba visualizada: ${next}`,
+      dadosNovos: {
+        aba_anterior: tab,
+        aba_solicitada: next,
+        motivo: contextoValido ? null : 'contexto_obrigatorio',
+      },
+      sucesso: contextoValido,
+      tipo: 'ui',
+    });
+    return;
     try {
       void createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || 'UsuÃ¡rio',
@@ -66,7 +124,19 @@ export default function GestaoAcessosIndex() {
       const scoped = await filterInContext('PerfilAcesso', {}, '-updated_date', 500);
       if (scoped.length) return scoped;
       const rows = await base44.entities.PerfilAcesso.list('-updated_date', 500);
-      return rows.filter(registroNoEscopo);
+      const filtrados = rows.filter(registroNoEscopo);
+      void auditarGestaoAcessos({
+        acao: 'Fallback consulta perfis RBAC',
+        descricao: 'Consulta de perfis usou fallback direto e filtragem de escopo no cliente.',
+        dadosNovos: {
+          total_bruto: rows.length,
+          total_no_escopo: filtrados.length,
+          motivo: 'filterInContext_sem_resultado',
+        },
+        sucesso: true,
+        tipo: 'seguranca',
+      });
+      return filtrados;
     },
     enabled: podeVer,
   });
@@ -74,12 +144,16 @@ export default function GestaoAcessosIndex() {
     queryKey: ['usuarios', scopeKey],
     queryFn: async () => {
       const rows = await base44.entities.User.list();
-      return rows.filter((u) => {
+      let usuariosSemMarcadorEscopo = 0;
+      const filtrados = rows.filter((u) => {
         const empresasVinculadas = normalizeEmpresaIds(u.empresas_vinculadas);
         const temMarcadorEscopo = Boolean(
           u.group_id || u.grupo_id || u.grupo_atual_id || u.empresa_id || u.empresa_atual_id || empresasVinculadas.length
         );
-        if (!temMarcadorEscopo) return true;
+        if (!temMarcadorEscopo) {
+          usuariosSemMarcadorEscopo += 1;
+          return true;
+        }
         if (contexto === 'grupo') {
           const empresasIds = empresasDoGrupo.map((e) => e.id);
           return u.group_id === groupId
@@ -91,6 +165,20 @@ export default function GestaoAcessosIndex() {
           || u.empresa_atual_id === empresaAtual?.id
           || empresasVinculadas.includes(empresaAtual?.id);
       });
+      if (usuariosSemMarcadorEscopo > 0) {
+        void auditarGestaoAcessos({
+          acao: 'Alerta usuarios sem escopo',
+          descricao: 'Consulta de usuarios encontrou registros sem marcador multiempresa explicito. Fluxo preservado para revisao gradual.',
+          dadosNovos: {
+            total_bruto: rows.length,
+            total_no_escopo: filtrados.length,
+            usuarios_sem_marcador_escopo: usuariosSemMarcadorEscopo,
+          },
+          sucesso: false,
+          tipo: 'seguranca',
+        });
+      }
+      return filtrados;
     },
     enabled: podeVer && scopeKey !== 'sem-contexto',
   });
