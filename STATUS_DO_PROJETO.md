@@ -1,3 +1,12 @@
+### Administracao do Sistema - Fase 10 Propagacao Grupo/Empresas em Usuarios
+- Segui o proximo passo salvo apos convites de usuario, sem criar tela, modulo, componente ou arquivo novo.
+- `GestaoUsuariosAvancada.jsx` agora resolve empresas vinculadas de forma efetiva antes de salvar o usuario.
+- Quando o escopo for `grupo_empresa` no contexto de Grupo e nenhuma empresa estiver marcada manualmente, o usuario passa a receber todas as empresas disponiveis do grupo.
+- Quando o escopo for `empresa`, `setores` ou `grupo_empresa` no contexto de empresa e nenhuma empresa estiver marcada, a empresa atual e preservada como vinculo efetivo quando disponivel.
+- O payload salvo recebeu `propagacao_grupo_empresas` e `origem_contexto`, e a auditoria antes/depois passou a registrar esses marcadores.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca, auditoria e propagacao Grupo/Empresas, sem criar duplicidade.
+- Proximo passo sugerido: continuar em `GestaoUsuariosAvancada`, revisando sanitizacao dos campos de cargo/departamento/setores/centros de custo e auditoria de bloqueios nos toggles.
+
 ### Administracao do Sistema - Fase 10 Convites de Usuario com Sanitizacao e Auditoria
 - Segui o proximo passo salvo apos auditoria antes/depois de usuarios, sem criar tela, modulo, componente ou arquivo novo.
 - `UsuariosTab.jsx` passou a sanitizar e validar o e-mail antes de chamar `base44.users.inviteUser`.

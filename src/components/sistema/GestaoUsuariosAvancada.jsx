@@ -45,6 +45,22 @@ export default function GestaoUsuariosAvancada({
   const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
     .map((item) => (typeof item === "string" ? item : item?.empresa_id || item?.id))
     .filter(Boolean);
+  const resolveEmpresasVinculadas = ({ escopoAcesso, empresasSelecionadas, empresasPermitidas, acessoEmpresas }) => {
+    if (!acessoEmpresas) return [];
+
+    const empresasFiltradas = empresasSelecionadas.filter((id) => empresasPermitidas.has(id));
+    if (empresasFiltradas.length) return empresasFiltradas;
+
+    if (contexto === "grupo" && escopoAcesso === "grupo_empresa") {
+      return [...empresasPermitidas];
+    }
+
+    if (contexto !== "grupo" && empresaAtual?.id && (escopoAcesso === "empresa" || escopoAcesso === "setores" || escopoAcesso === "grupo_empresa")) {
+      return empresasPermitidas.has(empresaAtual.id) ? [empresaAtual.id] : [];
+    }
+
+    return [];
+  };
   const auditSnapshot = (data = {}) => ({
     perfil_acesso_id: data.perfil_acesso_id || null,
     perfil_acesso_nome: data.perfil_acesso_nome || null,
@@ -55,7 +71,9 @@ export default function GestaoUsuariosAvancada({
     restricoes_adicionais: data.restricoes_adicionais || null,
     autenticacao_dois_fatores: !!data.autenticacao_dois_fatores,
     cargo: data.cargo || "",
-    departamento: data.departamento || ""
+    departamento: data.departamento || "",
+    propagacao_grupo_empresas: !!data.propagacao_grupo_empresas,
+    origem_contexto: data.origem_contexto || contexto || null
   });
   const auditarAlteracaoUsuario = async ({ antes, depois }) => {
     try {
@@ -111,14 +129,20 @@ export default function GestaoUsuariosAvancada({
       }
       const perfilId = data.perfil_acesso_id === "sem-perfil" ? null : data.perfil_acesso_id;
       const perfilSelecionado = perfis.find(p => p.id === perfilId);
-      const empresasPermitidas = new Set(empresas.map((empresa) => empresa.id));
-      const empresasVinculadas = normalizeEmpresaIds(data.empresas_vinculadas).filter((id) => empresasPermitidas.has(id));
-      const empresasNomes = empresas
-        .filter(e => empresasVinculadas.includes(e.id))
-        .map(e => e.nome_fantasia || e.razao_social);
       const escopoAcesso = data.nivel_acesso_contexto || "empresa";
       const acessoGrupo = escopoAcesso === "grupo" || escopoAcesso === "grupo_empresa";
       const acessoEmpresas = escopoAcesso === "empresa" || escopoAcesso === "grupo_empresa" || escopoAcesso === "setores";
+      const empresasPermitidas = new Set(empresas.map((empresa) => empresa.id).filter(Boolean));
+      const empresasSelecionadas = normalizeEmpresaIds(data.empresas_vinculadas);
+      const empresasVinculadas = resolveEmpresasVinculadas({
+        escopoAcesso,
+        empresasSelecionadas,
+        empresasPermitidas,
+        acessoEmpresas
+      });
+      const empresasNomes = empresas
+        .filter(e => empresasVinculadas.includes(e.id))
+        .map(e => e.nome_fantasia || e.razao_social);
 
       const antes = auditSnapshot(usuario);
       const payload = {
@@ -131,6 +155,8 @@ export default function GestaoUsuariosAvancada({
         perfil_acesso_nome: perfilSelecionado?.nome_perfil || null,
         empresas_vinculadas: acessoEmpresas ? empresasVinculadas : [],
         empresas_vinculadas_nomes: acessoEmpresas ? empresasNomes : [],
+        propagacao_grupo_empresas: escopoAcesso === "grupo_empresa",
+        origem_contexto: contexto,
         ...(groupId ? { group_id: groupId } : {}),
         ...(empresaId ? { empresa_id: empresaId } : {})
       };
