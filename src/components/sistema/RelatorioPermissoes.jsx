@@ -15,37 +15,66 @@ export default function RelatorioPermissoes({ perfis = [], usuarios = [], empres
   const contextoValido = !!(grupoId || empresaId);
   const podeExportar = isAdmin() || hasPermission("Sistema", "Controle de Acesso", "exportar");
 
-  const auditarExportacao = async (formato, resumo) => {
+  const getResumoContexto = () => ({
+    contexto: contexto || "sem-contexto",
+    group_id: grupoId,
+    empresa_id: empresaId,
+    empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
+    grupo_nome: grupoAtual?.nome || grupoAtual?.nome_grupo || null,
+  });
+
+  const auditarRelatorio = async ({ formato, resumo, sucesso = true, descricao, motivo }) => {
     try {
       await createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || "Sistema",
         usuario_id: user?.id || null,
         group_id: grupoId,
         empresa_id: empresaId,
-        acao: "Exportacao",
+        acao: sucesso ? "Exportacao" : "Bloqueio Exportacao",
         modulo: "Controle de Acesso",
         entidade: "RelatorioPermissoes",
-        descricao: `Exportacao de relatorio de permissoes em ${formato}`,
-        dados_novos: resumo,
-        sucesso: true,
+        descricao: descricao || `Exportacao de relatorio de permissoes em ${formato}`,
+        dados_novos: {
+          ...getResumoContexto(),
+          formato,
+          motivo: motivo || null,
+          ...(resumo || {}),
+        },
+        sucesso,
         data_hora: new Date().toISOString(),
       });
     } catch (error) {
-      console.warn("[RBAC] Falha ao auditar exportacao:", error);
+      console.warn("[RBAC] Falha ao auditar relatorio de permissoes:", error);
     }
+  };
+
+  const bloquearExportacao = (motivo, mensagem) => {
+    toast.error(mensagem);
+    void auditarRelatorio({
+      formato: "bloqueado",
+      sucesso: false,
+      motivo,
+      descricao: mensagem,
+      resumo: {
+        total_perfis: perfis.length,
+        total_usuarios: usuarios.length,
+        total_empresas: empresas.length,
+      },
+    });
   };
   const gerarRelatorio = () => {
     if (!contextoValido) {
-      toast.error("Selecione um grupo ou empresa antes de exportar.");
+      bloquearExportacao("contexto_obrigatorio", "Selecione um grupo ou empresa antes de exportar.");
       return;
     }
     if (!podeExportar) {
-      toast.error("Sem permissao para exportar relatorio de permissoes.");
+      bloquearExportacao("permissao_negada", "Sem permissao para exportar relatorio de permissoes.");
       return;
     }
 
     const relatorio = {
       data_geracao: new Date().toISOString(),
+      contexto: getResumoContexto(),
       resumo: {
         total_perfis: perfis.length,
         total_usuarios: usuarios.length,
@@ -75,23 +104,26 @@ export default function RelatorioPermissoes({ perfis = [], usuarios = [], empres
     a.download = `relatorio-permissoes-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    auditarExportacao("JSON", relatorio.resumo);
+    void auditarRelatorio({ formato: "JSON", resumo: relatorio.resumo });
     
     toast.success("Relatório exportado!");
   };
 
   const gerarRelatorioSimplificado = () => {
     if (!contextoValido) {
-      toast.error("Selecione um grupo ou empresa antes de exportar.");
+      bloquearExportacao("contexto_obrigatorio", "Selecione um grupo ou empresa antes de exportar.");
       return;
     }
     if (!podeExportar) {
-      toast.error("Sem permissao para exportar relatorio de permissoes.");
+      bloquearExportacao("permissao_negada", "Sem permissao para exportar relatorio de permissoes.");
       return;
     }
 
     let texto = `RELATÓRIO DE PERMISSÕES E ACESSOS\n`;
     texto += `Gerado em: ${new Date().toLocaleString('pt-BR')}\n\n`;
+    texto += `Contexto: ${contexto || "sem-contexto"}\n`;
+    texto += `GroupId: ${grupoId || "-"}\n`;
+    texto += `EmpresaId: ${empresaId || "-"}\n\n`;
     texto += `====================\n`;
     texto += `RESUMO GERAL\n`;
     texto += `====================\n`;
@@ -127,17 +159,17 @@ export default function RelatorioPermissoes({ perfis = [], usuarios = [], empres
     a.download = `relatorio-permissoes-${new Date().toISOString().split('T')[0]}.txt`;
     a.click();
     URL.revokeObjectURL(url);
-    auditarExportacao("TXT", {
+    void auditarRelatorio({ formato: "TXT", resumo: {
       total_perfis: perfis.length,
       total_usuarios: usuarios.length,
       total_empresas: empresas.length,
-    });
+    } });
     
     toast.success("Relatório TXT exportado!");
   };
 
   return (
-    <Card>
+    <Card className="w-full h-full">
       <CardHeader className="bg-slate-50 border-b">
         <CardTitle className="text-base flex items-center gap-2">
           <FileText className="w-4 h-4 text-blue-600" />
@@ -170,6 +202,9 @@ export default function RelatorioPermissoes({ perfis = [], usuarios = [], empres
             variant="outline"
             disabled={!contextoValido || !podeExportar}
             data-action="RBAC.Relatorio.exportarJson"
+            data-permission="Sistema.Controle de Acesso.exportar"
+            data-context-required="group-or-company"
+            data-sensitive="true"
           >
             <Download className="w-4 h-4 mr-2" />
             Exportar Relatório Completo (JSON)
@@ -181,6 +216,9 @@ export default function RelatorioPermissoes({ perfis = [], usuarios = [], empres
             variant="outline"
             disabled={!contextoValido || !podeExportar}
             data-action="RBAC.Relatorio.exportarTxt"
+            data-permission="Sistema.Controle de Acesso.exportar"
+            data-context-required="group-or-company"
+            data-sensitive="true"
           >
             <FileText className="w-4 h-4 mr-2" />
             Exportar Relatório Simplificado (TXT)

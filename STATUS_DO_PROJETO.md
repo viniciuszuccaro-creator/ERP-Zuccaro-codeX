@@ -1,3 +1,12 @@
+### Administracao do Sistema - Fase 10 Relatorios RBAC com Contexto e Auditoria
+- Segui o proximo passo salvo apos auditoria de bloqueios RBAC, sem criar tela, modulo, componente ou arquivo novo.
+- `RelatorioPermissoes.jsx` agora audita tambem tentativas bloqueadas de exportacao por falta de contexto ou permissao.
+- Exportacoes JSON e TXT passam a carregar marcadores de contexto (`groupId`, `empresaId` e contexto ativo), reforcando Multiempresa Absoluta.
+- Os botoes de exportacao receberam marcadores granulares de RBAC, contexto obrigatorio e acao sensivel.
+- O card principal do relatorio foi alinhado ao layout obrigatorio com `w-full h-full`.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando RBAC, seguranca, auditoria e multiempresa, sem criar duplicidade.
+- Proximo passo sugerido: continuar em Administracao do Sistema revisando `SoDChecker` e `GestaoAcessosIndex` para auditar bloqueios de execucao, escopo e persistencia.
+
 ### Administracao do Sistema - Fase 10 Auditoria de Bloqueios RBAC de Usuario
 - Segui o proximo passo salvo apos sanitizacao de campos RBAC, sem criar tela, modulo, componente ou arquivo novo.
 - `GestaoUsuariosAvancada.jsx` passou a auditar tentativas bloqueadas de alterar empresas vinculadas sem contexto/permissao.
