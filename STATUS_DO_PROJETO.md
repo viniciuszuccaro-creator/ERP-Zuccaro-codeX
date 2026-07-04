@@ -1,3 +1,12 @@
+### Administracao do Sistema - Fase 10 Convites de Usuario com Sanitizacao e Auditoria
+- Segui o proximo passo salvo apos auditoria antes/depois de usuarios, sem criar tela, modulo, componente ou arquivo novo.
+- `UsuariosTab.jsx` passou a sanitizar e validar o e-mail antes de chamar `base44.users.inviteUser`.
+- Convites com e-mail invalido agora sao bloqueados antes da API e auditados com contexto, `groupId`, `empresaId` e empresas do grupo quando o escopo ativo e Grupo.
+- Falhas retornadas pela API de convite agora tambem ficam registradas em `AuditLog`, preservando e-mail sanitizado, erro e escopo ativo.
+- Os bloqueios por permissao e por falta de contexto passaram a reutilizar o pacote padronizado de contexto multiempresa.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca e auditoria, sem criar duplicidade.
+- Proximo passo sugerido: continuar em `GestaoUsuariosAvancada`, revisando propagacao real de Grupo/Empresas e melhorias de auditoria nos controles de setores/centros de custo.
+
 ### Administracao do Sistema - Fase 10 Usuarios com Auditoria Antes/Depois
 - Segui o proximo passo salvo apos o fallback multiempresa de perfis, sem criar tela, modulo, componente ou arquivo novo.
 - `GestaoUsuariosAvancada.jsx` passou a registrar `AuditLog` contextual quando altera perfil RBAC, escopo de acesso, empresas vinculadas, restricoes adicionais, 2FA, cargo e departamento do usuario.

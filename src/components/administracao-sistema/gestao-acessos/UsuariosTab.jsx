@@ -32,6 +32,20 @@ export default function UsuariosTab() {
   const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
     .map((item) => (typeof item === "string" ? item : item?.empresa_id || item?.id))
     .filter(Boolean);
+  const sanitizeEmail = (value) => String(value || "")
+    .replace(/[<>"'`;\\]/g, "")
+    .replace(/\s+/g, "")
+    .trim()
+    .toLowerCase()
+    .slice(0, 254);
+  const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value);
+  const dadosContextoConvite = (extras = {}) => ({
+    contexto,
+    group_id: grupoAtivoId || null,
+    empresa_id: contexto === "grupo" ? null : empresaAtual?.id || null,
+    empresas_grupo_ids: contexto === "grupo" ? empresasDoGrupo.map((empresa) => empresa.id).filter(Boolean) : [],
+    ...extras
+  });
   const registroNoEscopo = (registro) => {
     const empresasVinculadas = normalizeEmpresaIds(registro.empresas_vinculadas || registro.empresas || registro.empresas_ids);
     const registroGroupId = registro.group_id || registro.grupo_id || registro.groupId || registro.grupoId;
@@ -117,7 +131,7 @@ export default function UsuariosTab() {
       await auditarUsuario({
         acao: "Bloqueio por permissao",
         descricao: "Tentativa de convidar usuario sem permissao.",
-        dadosNovos: { contexto, group_id: grupoAtivoId || null, empresa_id: empresaAtual?.id || null }
+        dadosNovos: dadosContextoConvite()
       });
       return;
     }
@@ -126,24 +140,39 @@ export default function UsuariosTab() {
       await auditarUsuario({
         acao: "Bloqueio sem contexto",
         descricao: "Tentativa de convidar usuario sem grupo ou empresa.",
-        dadosNovos: { contexto }
+        dadosNovos: dadosContextoConvite()
       });
       return;
     }
 
-    const email = prompt("E-mail do novo usuario:");
+    const emailInformado = prompt("E-mail do novo usuario:");
+    const email = sanitizeEmail(emailInformado);
     if (!email) return;
+    if (!isValidEmail(email)) {
+      toast.error("E-mail invalido para convite.");
+      await auditarUsuario({
+        acao: "Bloqueio email invalido",
+        descricao: "Tentativa de convidar usuario com e-mail invalido.",
+        dadosNovos: dadosContextoConvite({ email })
+      });
+      return;
+    }
 
     try {
       await base44.users.inviteUser(email, "user");
       await auditarUsuario({
         acao: "Convite",
         descricao: `Convite enviado para usuario ${email}`,
-        dadosNovos: { email, role: "user", contexto, empresa_id: empresaAtual?.id || null, group_id: grupoAtivoId || null }
+        dadosNovos: dadosContextoConvite({ email, role: "user" })
       });
       toast.success(`Convite enviado para ${email}`);
       qc.invalidateQueries({ queryKey: ["usuarios-gestao", scopeKey] });
     } catch (e) {
+      await auditarUsuario({
+        acao: "Falha no convite",
+        descricao: `Falha ao convidar usuario ${email}`,
+        dadosNovos: dadosContextoConvite({ email, erro: e.message })
+      });
       toast.error("Erro ao convidar: " + e.message);
     }
   };
