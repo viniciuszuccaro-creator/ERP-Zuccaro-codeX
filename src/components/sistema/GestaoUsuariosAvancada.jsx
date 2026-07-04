@@ -123,6 +123,36 @@ export default function GestaoUsuariosAvancada({
       console.warn("Falha ao auditar alteracao avancada de usuario:", error);
     }
   };
+  const auditarBloqueioUsuario = async ({ acao, motivo, detalhes = {} }) => {
+    try {
+      await createInContext("AuditLog", {
+        usuario: user?.full_name || user?.name || user?.email || "Usuario local",
+        usuario_id: user?.id || user?.email || null,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        acao,
+        modulo: "Controle de Acesso",
+        entidade: "User",
+        entidade_id: usuario?.id || null,
+        tipo_auditoria: "seguranca",
+        descricao: motivo,
+        dados_novos: {
+          contexto,
+          groupId,
+          empresaId,
+          canEdit,
+          contextoValido,
+          alvo_usuario_id: usuario?.id || null,
+          alvo_usuario_email: usuario?.email || null,
+          ...detalhes
+        },
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar bloqueio de usuario:", error);
+    }
+  };
   const [formData, setFormData] = useState({
     perfil_acesso_id: usuario?.perfil_acesso_id || "sem-perfil",
     nivel_acesso_contexto: usuario?.nivel_acesso_contexto || usuario?.escopo_acesso || "empresa",
@@ -210,10 +240,20 @@ export default function GestaoUsuariosAvancada({
   const toggleEmpresa = (empresaId) => {
     if (controlesDesabilitados) {
       toast.error("Sem permissao para alterar empresas vinculadas.");
+      void auditarBloqueioUsuario({
+        acao: "Bloqueio empresas vinculadas",
+        motivo: "Tentativa de alterar empresas vinculadas sem contexto ou permissao.",
+        detalhes: { empresa_tentada_id: empresaId, nivel_acesso_contexto: formData.nivel_acesso_contexto }
+      });
       return;
     }
     if (formData.nivel_acesso_contexto === "grupo") {
       toast.error("Acesso somente grupo nao permite vincular empresas.");
+      void auditarBloqueioUsuario({
+        acao: "Bloqueio empresas em acesso somente grupo",
+        motivo: "Tentativa de vincular empresa quando o usuario esta com acesso somente grupo.",
+        detalhes: { empresa_tentada_id: empresaId, nivel_acesso_contexto: formData.nivel_acesso_contexto }
+      });
       return;
     }
     setFormData(prev => {
@@ -247,10 +287,18 @@ export default function GestaoUsuariosAvancada({
     e.preventDefault();
     if (!contextoValido) {
       toast.error("Selecione um grupo ou empresa antes de alterar acesso de usuario.");
+      void auditarBloqueioUsuario({
+        acao: "Bloqueio salvar usuario sem contexto",
+        motivo: "Tentativa de salvar usuario RBAC sem grupo ou empresa ativo."
+      });
       return;
     }
     if (!canEdit) {
       toast.error("Sem permissao para alterar acesso de usuario.");
+      void auditarBloqueioUsuario({
+        acao: "Bloqueio salvar usuario sem permissao",
+        motivo: "Tentativa de salvar usuario RBAC sem permissao de edicao."
+      });
       return;
     }
     atualizarUsuarioMutation.mutate(formData);

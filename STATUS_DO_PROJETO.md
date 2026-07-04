@@ -1,3 +1,12 @@
+### Administracao do Sistema - Fase 10 Auditoria de Bloqueios RBAC de Usuario
+- Segui o proximo passo salvo apos sanitizacao de campos RBAC, sem criar tela, modulo, componente ou arquivo novo.
+- `GestaoUsuariosAvancada.jsx` passou a auditar tentativas bloqueadas de alterar empresas vinculadas sem contexto/permissao.
+- Tentativas de vincular empresa quando o usuario esta em escopo `grupo` tambem passam a gerar `AuditLog` de seguranca.
+- Salvamento bloqueado por falta de contexto ou falta de permissao agora fica auditado com usuario executor, usuario alvo, `groupId`, `empresaId`, contexto ativo e motivo.
+- O comportamento visual atual foi preservado: os toasts continuam aparecendo e os controles continuam desabilitados quando necessario.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando RBAC, seguranca, auditoria e multiempresa, sem criar duplicidade.
+- Proximo passo sugerido: continuar em Administracao do Sistema, revisando `GestaoAcessosIndex`, `SoDChecker` e relatorios de permissoes para cobrir auditoria/contexto em consultas e persistencias.
+
 ### Administracao do Sistema - Fase 10 Sanitizacao de Campos RBAC de Usuario
 - Segui o proximo passo salvo apos propagacao Grupo/Empresas em usuarios, sem criar tela, modulo, componente ou arquivo novo.
 - `GestaoUsuariosAvancada.jsx` passou a sanitizar `cargo`, `departamento`, `telefone`, setores permitidos e centros de custo antes de salvar.
