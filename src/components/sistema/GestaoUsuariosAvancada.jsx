@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { useUser } from "@/components/lib/UserContext";
 import {
   UserPlus,
   Building2,
@@ -35,7 +36,8 @@ export default function GestaoUsuariosAvancada({
   onSuccess 
 }) {
   const queryClient = useQueryClient();
-  const { empresaAtual, grupoAtual, contexto, updateInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, updateInContext, createInContext } = useContextoVisual();
+  const { user } = useUser();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = contexto === "grupo" ? null : empresaAtual?.id || null;
   const contextoValido = contexto === "grupo" ? !!groupId : !!empresaId;
@@ -43,6 +45,46 @@ export default function GestaoUsuariosAvancada({
   const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
     .map((item) => (typeof item === "string" ? item : item?.empresa_id || item?.id))
     .filter(Boolean);
+  const auditSnapshot = (data = {}) => ({
+    perfil_acesso_id: data.perfil_acesso_id || null,
+    perfil_acesso_nome: data.perfil_acesso_nome || null,
+    nivel_acesso_contexto: data.nivel_acesso_contexto || data.escopo_acesso || null,
+    acesso_grupo: !!data.acesso_grupo,
+    acesso_empresas: !!data.acesso_empresas,
+    empresas_vinculadas: normalizeEmpresaIds(data.empresas_vinculadas),
+    restricoes_adicionais: data.restricoes_adicionais || null,
+    autenticacao_dois_fatores: !!data.autenticacao_dois_fatores,
+    cargo: data.cargo || "",
+    departamento: data.departamento || ""
+  });
+  const auditarAlteracaoUsuario = async ({ antes, depois }) => {
+    try {
+      await createInContext("AuditLog", {
+        usuario: user?.full_name || user?.name || user?.email || "Usuario local",
+        usuario_id: user?.id || user?.email || null,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        acao: "Alteracao de acesso de usuario",
+        modulo: "Controle de Acesso",
+        entidade: "User",
+        entidade_id: usuario?.id || null,
+        descricao: `Alteracao de RBAC e escopo do usuario ${usuario?.email || usuario?.full_name || usuario?.id}`,
+        dados_anteriores: antes,
+        dados_novos: depois,
+        detalhes: {
+          contexto,
+          groupId,
+          empresaId,
+          alvo_usuario_id: usuario?.id || null,
+          alvo_usuario_email: usuario?.email || null
+        },
+        data_hora: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar alteracao avancada de usuario:", error);
+    }
+  };
   const [formData, setFormData] = useState({
     perfil_acesso_id: usuario?.perfil_acesso_id || "sem-perfil",
     nivel_acesso_contexto: usuario?.nivel_acesso_contexto || usuario?.escopo_acesso || "empresa",
@@ -78,6 +120,7 @@ export default function GestaoUsuariosAvancada({
       const acessoGrupo = escopoAcesso === "grupo" || escopoAcesso === "grupo_empresa";
       const acessoEmpresas = escopoAcesso === "empresa" || escopoAcesso === "grupo_empresa" || escopoAcesso === "setores";
 
+      const antes = auditSnapshot(usuario);
       const payload = {
         ...data,
         nivel_acesso_contexto: escopoAcesso,
@@ -91,7 +134,9 @@ export default function GestaoUsuariosAvancada({
         ...(groupId ? { group_id: groupId } : {}),
         ...(empresaId ? { empresa_id: empresaId } : {})
       };
-      return updateInContext('User', usuario.id, payload);
+      const result = await updateInContext('User', usuario.id, payload);
+      await auditarAlteracaoUsuario({ antes, depois: auditSnapshot(payload) });
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['usuarios'] });

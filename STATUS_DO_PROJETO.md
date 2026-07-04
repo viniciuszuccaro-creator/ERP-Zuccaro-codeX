@@ -1,3 +1,11 @@
+### Administracao do Sistema - Fase 10 Usuarios com Auditoria Antes/Depois
+- Segui o proximo passo salvo apos o fallback multiempresa de perfis, sem criar tela, modulo, componente ou arquivo novo.
+- `GestaoUsuariosAvancada.jsx` passou a registrar `AuditLog` contextual quando altera perfil RBAC, escopo de acesso, empresas vinculadas, restricoes adicionais, 2FA, cargo e departamento do usuario.
+- A auditoria grava dados anteriores e dados novos, usuario executor, usuario alvo, `groupId`, `empresaId` e contexto ativo.
+- O fluxo existente de `updateInContext("User")`, validacao de contexto, permissoes, empresas vinculadas, setores e centros de custo foi preservado.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca e auditoria, sem criar duplicidade.
+- Proximo passo sugerido: continuar em `GestaoUsuariosAvancada` e `UsuariosTab`, revisando bloqueios/convites para sanitizacao de e-mail, auditoria de falhas e propagacao Grupo/Empresas.
+
 ### Administracao do Sistema - Fase 10 Gestao de Acessos com Fallback Multiempresa
 - Segui o proximo passo salvo apos `AdminTabs`, focando Gestao de Acessos e Usuarios sem criar tela, modulo, componente ou arquivo novo.
 - `GestaoAcessosIndex.jsx` agora filtra pelo escopo ativo quando precisa usar fallback direto de `PerfilAcesso.list`, evitando expor perfis de outro grupo/empresa quando `filterInContext` nao retorna dados.
