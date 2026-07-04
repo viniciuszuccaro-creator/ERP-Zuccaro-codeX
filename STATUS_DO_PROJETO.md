@@ -1,3 +1,12 @@
+### Cadastros Gerais - Fase 11 Busca e Blocos com Auditoria Contextual
+- Segui o proximo passo salvo apos auditoria de contexto em Cadastros, sem criar tela, modulo, componente ou arquivo novo.
+- `Cadastros.jsx` passou a auditar abertura/fechamento dos blocos com nome do bloco, permissao granular, totais exibidos, blocos abertos e contexto multiempresa.
+- Busca universal passou a sanitizar o termo auditado, limitar tamanho e registrar totais por bloco, total geral, blocos abertos e se o contexto obrigatorio estava atendido.
+- Cards principais de Cadastros e a Busca Universal receberam `data-context-required="group-or-company"`, reforcando rastreio de contexto.
+- O fluxo visual, accordions, contadores, busca e abas existentes foram preservados.
+- Mantida a Regra-Mae: melhoria feita na pagina existente, reforcando RBAC, seguranca, auditoria e multiempresa, sem criar duplicidade.
+- Proximo passo sugerido: continuar em Cadastros Gerais revisando os blocos `Bloco1Pessoas` a `Bloco6Tecnologia` para padronizar auditoria/contexto nos itens internos.
+
 ### Cadastros Gerais - Fase 11 Auditoria de Contexto e Bloqueios
 - Segui o proximo passo salvo apos Administracao do Sistema, iniciando Cadastros Gerais sem criar tela, modulo, componente ou arquivo novo.
 - `Cadastros.jsx` passou a incluir pacote padronizado de contexto em todas as auditorias da tela: contexto ativo, `groupId`, `empresaId`, nomes de grupo/empresa e permissoes relevantes.

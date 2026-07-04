@@ -37,6 +37,16 @@ export default function Cadastros() {
   const podeVerCadastros = isAdmin?.() || hasPermission("Cadastros", null, "visualizar") || hasPermission("Cadastros", null, "ver") || hasPermission("Cadastros", "Cadastros Gerais", "visualizar") || hasPermission("Cadastros", "Cadastros Gerais", "ver");
   const podeVerAppsExternos = isAdmin?.() || hasPermission("Sistema", "Integracoes", "visualizar") || hasPermission("Sistema", "Integracoes", "ver");
   const contextoAtivo = Boolean(empresaAtual?.id || grupoAtual?.id);
+  const blocosMeta = {
+    bloco1: { nome: "Pessoas e Parceiros", permissao: "Cadastros.Pessoas.visualizar" },
+    bloco2: { nome: "Produtos e Servicos", permissao: "Cadastros.Produtos.visualizar" },
+    bloco3: { nome: "Financeiro e Fiscal", permissao: "Cadastros.Financeiro.visualizar" },
+    bloco4: { nome: "Logistica", permissao: "Cadastros.Logistica.visualizar" },
+    bloco5: { nome: "Organizacional", permissao: "Cadastros.Organizacional.visualizar" },
+    bloco6: { nome: "Tecnologia", permissao: "Cadastros.Tecnologia.visualizar" },
+  };
+
+  const getTotalBloco = (blocoId) => Number(totals?.[blocoId] || 0);
 
   const getDadosContextoCadastros = () => ({
     contexto: grupoAtual?.id ? "grupo" : empresaAtual?.id ? "empresa" : "sem-contexto",
@@ -128,28 +138,57 @@ export default function Cadastros() {
   };
 
   const handleCardClick = (blocoId) => {
+    const estavaAberto = acordeonAberto.includes(blocoId);
+    const proximosAbertos = estavaAberto
+      ? acordeonAberto.filter((id) => id !== blocoId)
+      : [...acordeonAberto, blocoId];
+
     if (acordeonAberto.includes(blocoId)) {
-      setAcordeonAberto(acordeonAberto.filter((id) => id !== blocoId));
+      setAcordeonAberto(proximosAbertos);
     } else {
-      setAcordeonAberto([...acordeonAberto, blocoId]);
+      setAcordeonAberto(proximosAbertos);
     }
     registrarAuditoriaCadastros(`Alternar bloco de Cadastros: ${blocoId}`, {
       entidade: "Bloco Cadastros",
-      dados_novos: { bloco: blocoId },
+      dados_novos: {
+        bloco: blocoId,
+        bloco_nome: blocosMeta[blocoId]?.nome || blocoId,
+        permissao_bloco: blocosMeta[blocoId]?.permissao || null,
+        acao_visual: estavaAberto ? "fechar" : "abrir",
+        blocos_abertos: proximosAbertos,
+        total_exibido_bloco: getTotalBloco(blocoId),
+        contexto_obrigatorio_atendido: contextoAtivo,
+      },
+      sucesso: contextoAtivo,
     });
   };
 
   useEffect(() => {
-    const termo = searchTerm.trim();
+    const termo = searchTerm.trim().replace(/\s+/g, " ").slice(0, 120);
     if (termo.length < 3) return;
     const timeout = setTimeout(() => {
       registrarAuditoriaCadastros("Busca universal em Cadastros Gerais", {
         entidade: "Busca Cadastros",
-        dados_novos: { termo },
+        dados_novos: {
+          termo,
+          tamanho_termo: termo.length,
+          blocos_abertos: acordeonAberto,
+          totais_blocos: {
+            bloco1: getTotalBloco("bloco1"),
+            bloco2: getTotalBloco("bloco2"),
+            bloco3: getTotalBloco("bloco3"),
+            bloco4: getTotalBloco("bloco4"),
+            bloco5: getTotalBloco("bloco5"),
+            bloco6: getTotalBloco("bloco6"),
+          },
+          total_geral: Number(totals?.geral || Object.values(totals || {}).reduce((acc, value) => acc + Number(value || 0), 0)),
+          contexto_obrigatorio_atendido: contextoAtivo,
+        },
+        sucesso: contextoAtivo,
       });
     }, 900);
     return () => clearTimeout(timeout);
-  }, [searchTerm]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchTerm, contextoAtivo, acordeonAberto, totals]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!podeVerCadastros) {
     return (
@@ -192,7 +231,7 @@ export default function Cadastros() {
 
           {/* DASHBOARD DE TOTAIS */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-blue-50 to-blue-100" onClick={() => handleCardClick('bloco1')} data-permission="Cadastros.Pessoas.visualizar" data-action="alternar-bloco-pessoas">
+            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-blue-50 to-blue-100" onClick={() => handleCardClick('bloco1')} data-permission="Cadastros.Pessoas.visualizar" data-action="alternar-bloco-pessoas" data-context-required="group-or-company">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Users className="w-5 h-5 text-blue-600" />
@@ -202,7 +241,7 @@ export default function Cadastros() {
                 <p className="text-xs text-blue-700">& Parceiros</p>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-purple-50 to-purple-100" onClick={() => handleCardClick('bloco2')} data-permission="Cadastros.Produtos.visualizar" data-action="alternar-bloco-produtos">
+            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-purple-50 to-purple-100" onClick={() => handleCardClick('bloco2')} data-permission="Cadastros.Produtos.visualizar" data-action="alternar-bloco-produtos" data-context-required="group-or-company">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Package className="w-5 h-5 text-purple-600" />
@@ -212,7 +251,7 @@ export default function Cadastros() {
                 <p className="text-xs text-purple-700">& Serviços</p>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-green-50 to-green-100" onClick={() => handleCardClick('bloco3')} data-permission="Cadastros.Financeiro.visualizar" data-action="alternar-bloco-financeiro-fiscal">
+            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-green-50 to-green-100" onClick={() => handleCardClick('bloco3')} data-permission="Cadastros.Financeiro.visualizar" data-action="alternar-bloco-financeiro-fiscal" data-context-required="group-or-company">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <DollarSign className="w-5 h-5 text-green-600" />
@@ -222,7 +261,7 @@ export default function Cadastros() {
                 <p className="text-xs text-green-700">& Fiscal</p>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-orange-50 to-orange-100" onClick={() => handleCardClick('bloco4')} data-permission="Cadastros.Logistica.visualizar" data-action="alternar-bloco-logistica">
+            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-orange-50 to-orange-100" onClick={() => handleCardClick('bloco4')} data-permission="Cadastros.Logistica.visualizar" data-action="alternar-bloco-logistica" data-context-required="group-or-company">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Truck className="w-5 h-5 text-orange-600" />
@@ -232,7 +271,7 @@ export default function Cadastros() {
                 <p className="text-xs text-orange-700">Frota & Almox.</p>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-indigo-50 to-indigo-100" onClick={() => handleCardClick('bloco5')} data-permission="Cadastros.Organizacional.visualizar" data-action="alternar-bloco-organizacional">
+            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-indigo-50 to-indigo-100" onClick={() => handleCardClick('bloco5')} data-permission="Cadastros.Organizacional.visualizar" data-action="alternar-bloco-organizacional" data-context-required="group-or-company">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Building2 className="w-5 h-5 text-indigo-600" />
@@ -242,7 +281,7 @@ export default function Cadastros() {
                 <p className="text-xs text-indigo-700">Estrutura</p>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-cyan-50 to-cyan-100" onClick={() => handleCardClick('bloco6')} data-permission="Cadastros.Tecnologia.visualizar" data-action="alternar-bloco-tecnologia">
+            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-cyan-50 to-cyan-100" onClick={() => handleCardClick('bloco6')} data-permission="Cadastros.Tecnologia.visualizar" data-action="alternar-bloco-tecnologia" data-context-required="group-or-company">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Cpu className="w-5 h-5 text-cyan-600" />
@@ -262,6 +301,7 @@ export default function Cadastros() {
             className="h-12 text-base shadow-md border-slate-300"
             data-permission="Cadastros.Busca.visualizar"
             data-action="buscar-cadastros-gerais"
+            data-context-required="group-or-company"
           />
 
           {/* ACCORDIONS - 6 BLOCOS */}
