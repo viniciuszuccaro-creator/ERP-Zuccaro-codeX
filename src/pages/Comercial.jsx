@@ -43,11 +43,35 @@ export default function Comercial() {
   );
   const canSeeComercial = canViewComercial();
   const { openWindow, closeWindow } = useWindow();
-  const { filterInContext, getFiltroContexto, createInContext, updateInContext, empresaAtual, grupoAtual, estaNoGrupo } = useContextoVisual();
+  const { filterInContext, createInContext, updateInContext, empresaAtual, grupoAtual, estaNoGrupo } = useContextoVisual();
   const { user } = useUser();
   const queryClient = useQueryClient();
 
   const bloqueadoSemEmpresa = !estaNoGrupo && !empresaAtual;
+
+  const auditComercial = async (acao, detalhes = {}, sucesso = true) => {
+    const empresaId = empresaAtual?.id || null;
+    const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+    try {
+      await createInContext('AuditLog', {
+        usuario_id: user?.id || null,
+        usuario: user?.full_name || user?.email || 'Sistema',
+        acao,
+        modulo: 'Comercial',
+        tipo_auditoria: sucesso ? 'acesso' : 'seguranca',
+        entidade: detalhes.entidade || 'Secao',
+        descricao: detalhes.descricao || acao,
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        sucesso,
+        detalhes: { origem: 'Comercial.jsx', ...detalhes },
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn('Falha ao auditar pagina Comercial:', error);
+    }
+  };
 
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
@@ -356,28 +380,12 @@ export default function Comercial() {
 
    const handleModuleClick = (module) => {
     if (!canViewComercial(module.sectionKey || module.title)) {
+      auditComercial('comercial_modulo_bloqueado', { modulo: module.title, sectionKey: module.sectionKey || module.title, motivo: 'permissao_negada' }, false);
       toast.error('Sem permissao para visualizar esta area do Comercial.');
       return;
     }
     React.startTransition(() => {
-      // Auditoria de abertura de seção (somente se autenticado)
-      (async () => {
-        try {
-          if (await base44.auth.isAuthenticated()) {
-            await base44.entities.AuditLog.create({
-              usuario: user?.full_name || user?.email || 'Usuário',
-              acao: 'Visualização',
-              modulo: 'Comercial',
-              tipo_auditoria: 'acesso',
-              entidade: 'Seção',
-              descricao: `Abrir seção: ${module.title}`,
-              empresa_id: empresaAtual?.id || null,
-              group_id: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
-              data_hora: new Date().toISOString(),
-            });
-          }
-        } catch (_) {}
-      })();
+      auditComercial('comercial_modulo_aberto', { modulo: module.title, sectionKey: module.sectionKey || module.title, entidade: 'Secao', descricao: `Abrir secao: ${module.title}` }, true);
       openWindow(
         module.component,
         { ...(module.props || {}), windowMode: true },

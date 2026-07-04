@@ -1,3 +1,13 @@
+### Comercial - Fase 9 Pagina Comercial com Auditoria Contextual
+- Segui o proximo passo salvo apos `PedidoTabsContainer`, sem criar tela, modulo, componente ou arquivo novo.
+- `src/pages/Comercial.jsx` deixou de gravar `AuditLog` diretamente pelo cliente `base44` na abertura dos modulos do Comercial.
+- A auditoria da pagina Comercial agora usa `createInContext("AuditLog")`, preservando usuario, `groupId`, `empresaId`, modulo aberto, sectionKey, sucesso e bloqueio por permissao.
+- Tentativas bloqueadas por permissao em `handleModuleClick` agora tambem ficam auditadas como seguranca.
+- Removi apenas `getFiltroContexto` da desestruturacao do contexto visual porque nao era usado na pagina.
+- Mantive subscriptions realtime, abertura de janelas, criacao/edicao de pedidos, filtros contextuais, ProtectedSection e layout `w-full h-full` existentes.
+- Mantida a Regra-Mae: melhoria feita no arquivo existente, reforcando multiempresa, RBAC, seguranca e auditoria, sem criar duplicidade.
+- Proximo passo sugerido: iniciar novo bloco do plano em Administracao do Sistema ou Cadastros Gerais, priorizando acoes diretas sem contexto/auditoria.
+
 ### Comercial - Fase 9 Abas do Pedido com Auditoria e Contexto
 - Segui o proximo passo salvo apos `PedidoFormCompleto`, sem criar tela, modulo, componente ou arquivo novo.
 - `PedidoTabsContainer` deixou de gravar `AuditLog` diretamente pelo cliente `base44` nos fluxos de liberacao de edicao por vendedor, solicitacao ao gerente e liberacao local por gerente.
