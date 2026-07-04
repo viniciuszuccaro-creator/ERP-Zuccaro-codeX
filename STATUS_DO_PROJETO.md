@@ -1,3 +1,12 @@
+### Administracao do Sistema - Fase 10 Abas com RBAC e Auditoria Contextual
+- Segui o proximo passo salvo apos a auditoria de acesso da pagina, sem criar tela, modulo, componente ou arquivo novo.
+- `src/components/administracao-sistema/AdminTabs.jsx` passou a auditar trocas de aba com `createInContext("AuditLog")`, registrando usuario, `groupId`, `empresaId`, aba anterior, aba solicitada, sucesso e tentativa bloqueada.
+- O handler de abas agora valida a aba solicitada contra as abas permitidas antes de atualizar estado e URL, reforcando RBAC sem alterar o fluxo autorizado.
+- Os triggers de abas receberam `data-permission` granular para facilitar rastreio e padronizacao de permissoes em tela, abas, botoes e acoes.
+- O container da aba Gestao de Acessos foi alinhado ao layout obrigatorio com `w-full h-full`.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca e auditoria, sem criar duplicidade.
+- Proximo passo sugerido: continuar em Administracao do Sistema revisando `GestaoAcessosIndex` e `UsuariosTab`, priorizando liberacao por Grupo, Empresas e Setores com auditoria/contexto.
+
 ### Administracao do Sistema - Fase 10 Acesso com Auditoria Contextual
 - Segui o proximo passo salvo apos `Comercial.jsx`, iniciando o bloco de Administracao do Sistema sem criar tela, modulo, componente ou arquivo novo.
 - `src/pages/AdministracaoSistema.jsx` passou a auditar a abertura da tela com `createInContext("AuditLog")`, preservando usuario, `groupId`, `empresaId`, aba solicitada, aba inicial resolvida e permissao `Sistema.visualizar`.

@@ -49,16 +49,56 @@ const sanitizeFerramentaPayload = (value) => {
 
 export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtual }) {
   const { hasPermission } = usePermissions();
+  const { user } = useUser();
+  const { createInContext } = useContextoVisual();
   const isAdminUser = typeof isAdmin === 'function' ? isAdmin() : !!isAdmin;
   const [activeTab, setActiveTab] = useState(initialTab || "gerais");
+  const grupoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
 
   // Sync com URL param ao navegar externamente
   useEffect(() => {
     if (initialTab && initialTab !== activeTab) setActiveTab(initialTab);
   }, [initialTab]);
 
+  const auditTabChange = async ({ tab, permitido, motivo }) => {
+    try {
+      await createInContext("AuditLog", {
+        acao: permitido ? "admin_tab_acessada" : "admin_tab_bloqueada",
+        entidade: "AdministracaoSistemaTabs",
+        entidade_id: `admin-tab-${sanitizeFerramentaText(tab, 80)}`,
+        tipo: permitido ? "acesso" : "seguranca",
+        usuario_id: user?.id || user?.email || "sistema",
+        usuario_nome: user?.full_name || user?.name || user?.email || "Sistema",
+        group_id: grupoId,
+        grupo_id: grupoId,
+        empresa_id: empresaId,
+        detalhes: {
+          aba: sanitizeFerramentaText(tab, 80),
+          aba_anterior: activeTab,
+          motivo,
+          permissao: "Sistema.visualizar",
+          groupId: grupoId,
+          empresaId
+        },
+        sucesso: permitido,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn("[AdminTabs] Falha ao auditar troca de aba:", error);
+    }
+  };
+
   // Atualiza URL sem recarregar a página
   const handleTabChange = (val) => {
+    const permitido = allowedTabValues.has(val);
+    auditTabChange({
+      tab: val,
+      permitido,
+      motivo: permitido ? "aba_disponivel_para_usuario" : "aba_sem_permissao_ou_inexistente"
+    });
+    if (!permitido) return;
+
     setActiveTab(val);
     try {
       const url = new URL(window.location.href);
@@ -93,6 +133,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
             key={value}
             value={value}
             data-action={`AdminTabs.${value}`}
+            data-permission={`Sistema.${value}.visualizar`}
             className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all ${triggerClass(color)}`}
           >
             <Icon className="w-4 h-4 shrink-0" />
@@ -103,6 +144,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
           <TabsTrigger
             value="ferramentas"
             data-action="AdminTabs.ferramentas"
+            data-permission="Sistema.ferramentas.visualizar"
             className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium data-[state=active]:bg-orange-600 data-[state=active]:text-white"
           >
             <Wrench className="w-4 h-4 shrink-0" />
@@ -146,7 +188,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
           module="Sistema" section={["Controle de Acesso"]} action="visualizar"
           fallback={<p className="p-4 text-sm text-slate-500">Acesso restrito à Gestão de Acessos.</p>}
         >
-          <div className="w-full overflow-hidden">
+          <div className="w-full h-full overflow-hidden">
             <GestaoAcessosIndex />
           </div>
         </ProtectedSection>
