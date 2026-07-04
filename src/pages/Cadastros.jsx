@@ -38,6 +38,18 @@ export default function Cadastros() {
   const podeVerAppsExternos = isAdmin?.() || hasPermission("Sistema", "Integracoes", "visualizar") || hasPermission("Sistema", "Integracoes", "ver");
   const contextoAtivo = Boolean(empresaAtual?.id || grupoAtual?.id);
 
+  const getDadosContextoCadastros = () => ({
+    contexto: grupoAtual?.id ? "grupo" : empresaAtual?.id ? "empresa" : "sem-contexto",
+    contexto_valido: contextoAtivo,
+    group_id: groupId,
+    empresa_id: empresaId,
+    empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
+    grupo_nome: grupoAtual?.nome || grupoAtual?.nome_grupo || null,
+    permissao: "Cadastros.visualizar",
+    pode_visualizar_cadastros: podeVerCadastros,
+    pode_visualizar_apps_externos: podeVerAppsExternos,
+  });
+
   const registrarAuditoriaCadastros = async (descricao, extras = {}) => {
     try {
       await createInContext("AuditLog", {
@@ -51,12 +63,35 @@ export default function Cadastros() {
         empresa_id: empresaId,
         group_id: groupId,
         grupo_id: groupId,
-        dados_novos: extras.dados_novos,
+        dados_novos: {
+          ...getDadosContextoCadastros(),
+          ...(extras.dados_novos || {}),
+        },
         data_hora: new Date().toISOString(),
         sucesso: extras.sucesso ?? true,
       });
     } catch (_) {}
   };
+
+  useEffect(() => {
+    if (podeVerCadastros) return;
+    void registrarAuditoriaCadastros("Bloqueio de acesso a Cadastros Gerais", {
+      acao: "Bloqueio",
+      tipo_auditoria: "seguranca",
+      sucesso: false,
+      dados_novos: { motivo: "permissao_negada" },
+    });
+  }, [podeVerCadastros, groupId, empresaId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!podeVerCadastros || contextoAtivo) return;
+    void registrarAuditoriaCadastros("Cadastros Gerais aberto sem contexto multiempresa selecionado", {
+      acao: "Alerta contexto incompleto",
+      tipo_auditoria: "seguranca",
+      sucesso: false,
+      dados_novos: { motivo: "contexto_obrigatorio" },
+    });
+  }, [podeVerCadastros, contextoAtivo, groupId, empresaId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -74,8 +109,9 @@ export default function Cadastros() {
       });
       registrarAuditoriaCadastros("Bloqueio de acesso a Apps, Portais & Ambientes Externos", {
         acao: "Bloqueio",
+        tipo_auditoria: "seguranca",
         sucesso: false,
-        dados_novos: { aba: value },
+        dados_novos: { aba: value, motivo: "permissao_negada" },
       });
       return;
     }
@@ -85,7 +121,10 @@ export default function Cadastros() {
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
     try { localStorage.setItem('Cadastros_tab', value); } catch {}
-    registrarAuditoriaCadastros(`Troca de aba em Cadastros: ${value}`, { dados_novos: { aba: value } });
+    registrarAuditoriaCadastros(`Troca de aba em Cadastros: ${value}`, {
+      dados_novos: { aba: value, contexto_obrigatorio_atendido: contextoAtivo },
+      sucesso: contextoAtivo,
+    });
   };
 
   const handleCardClick = (blocoId) => {

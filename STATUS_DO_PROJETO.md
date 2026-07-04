@@ -1,3 +1,13 @@
+### Cadastros Gerais - Fase 11 Auditoria de Contexto e Bloqueios
+- Segui o proximo passo salvo apos Administracao do Sistema, iniciando Cadastros Gerais sem criar tela, modulo, componente ou arquivo novo.
+- `Cadastros.jsx` passou a incluir pacote padronizado de contexto em todas as auditorias da tela: contexto ativo, `groupId`, `empresaId`, nomes de grupo/empresa e permissoes relevantes.
+- Acesso bloqueado a Cadastros Gerais por falta de permissao agora gera `AuditLog` de seguranca.
+- Abertura de Cadastros sem grupo/empresa selecionado agora gera alerta auditado, preservando o aviso visual existente.
+- Bloqueio da aba Apps, Portais & Ambientes Externos passou a registrar motivo `permissao_negada` e tipo de auditoria de seguranca.
+- Trocas de aba passam a registrar se o contexto multiempresa obrigatorio estava atendido.
+- Mantida a Regra-Mae: melhoria feita na pagina existente, reforcando RBAC, seguranca, auditoria e multiempresa, sem criar duplicidade.
+- Proximo passo sugerido: continuar em Cadastros Gerais revisando busca universal, contadores e blocos para auditar consultas/filtros e reforcar `data-context-required`.
+
 ### Administracao do Sistema - Fase 10 Limpeza de Auditoria Legada em Acessos
 - Segui o proximo passo salvo apos auditoria de consultas em Gestao de Acessos, sem criar tela, modulo, componente ou arquivo novo.
 - `GestaoAcessosIndex.jsx` teve removido o trecho legado inacessivel que ficava apos `return` dentro de `handleTabChange`.
