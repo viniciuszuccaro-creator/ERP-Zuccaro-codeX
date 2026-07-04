@@ -1,3 +1,12 @@
+### Administracao do Sistema - Fase 10 Sanitizacao de Campos RBAC de Usuario
+- Segui o proximo passo salvo apos propagacao Grupo/Empresas em usuarios, sem criar tela, modulo, componente ou arquivo novo.
+- `GestaoUsuariosAvancada.jsx` passou a sanitizar `cargo`, `departamento`, `telefone`, setores permitidos e centros de custo antes de salvar.
+- O limite de aprovacao agora e normalizado para numero seguro, sem valor negativo e com teto operacional.
+- A sanitizacao tambem foi aplicada nos handlers de entrada, reduzindo risco de gravar texto malicioso ou lixo operacional no cadastro de usuario.
+- A auditoria antes/depois existente passa a registrar os dados ja normalizados no payload final.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando seguranca, RBAC, auditoria, multiempresa e fluxo atual, sem criar duplicidade.
+- Proximo passo sugerido: revisar bloqueios dos toggles e checkboxes em `GestaoUsuariosAvancada`, auditando tentativas bloqueadas por falta de permissao/contexto.
+
 ### Administracao do Sistema - Fase 10 Propagacao Grupo/Empresas em Usuarios
 - Segui o proximo passo salvo apos convites de usuario, sem criar tela, modulo, componente ou arquivo novo.
 - `GestaoUsuariosAvancada.jsx` agora resolve empresas vinculadas de forma efetiva antes de salvar o usuario.

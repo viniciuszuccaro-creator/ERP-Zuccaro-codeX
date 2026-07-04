@@ -45,6 +45,26 @@ export default function GestaoUsuariosAvancada({
   const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
     .map((item) => (typeof item === "string" ? item : item?.empresa_id || item?.id))
     .filter(Boolean);
+  const sanitizeText = (value, max = 120) => String(value || "")
+    .replace(/[<>]/g, "")
+    .replace(/javascript:/gi, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max);
+  const sanitizePhone = (value) => String(value || "")
+    .replace(/[^\d()+\-\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 30);
+  const sanitizeList = (values = []) => (Array.isArray(values) ? values : [])
+    .map((item) => sanitizeText(item, 60))
+    .filter(Boolean)
+    .slice(0, 50);
+  const sanitizeCurrencyLimit = (value) => {
+    const parsed = Number.parseFloat(value);
+    if (!Number.isFinite(parsed) || parsed < 0) return 0;
+    return Math.min(parsed, 999999999.99);
+  };
   const resolveEmpresasVinculadas = ({ escopoAcesso, empresasSelecionadas, empresasPermitidas, acessoEmpresas }) => {
     if (!acessoEmpresas) return [];
 
@@ -132,6 +152,12 @@ export default function GestaoUsuariosAvancada({
       const escopoAcesso = data.nivel_acesso_contexto || "empresa";
       const acessoGrupo = escopoAcesso === "grupo" || escopoAcesso === "grupo_empresa";
       const acessoEmpresas = escopoAcesso === "empresa" || escopoAcesso === "grupo_empresa" || escopoAcesso === "setores";
+      const restricoesSanitizadas = {
+        ...data.restricoes_adicionais,
+        limite_aprovacao_valor: sanitizeCurrencyLimit(data.restricoes_adicionais?.limite_aprovacao_valor),
+        departamentos_permitidos: sanitizeList(data.restricoes_adicionais?.departamentos_permitidos),
+        centros_custo_permitidos: sanitizeList(data.restricoes_adicionais?.centros_custo_permitidos)
+      };
       const empresasPermitidas = new Set(empresas.map((empresa) => empresa.id).filter(Boolean));
       const empresasSelecionadas = normalizeEmpresaIds(data.empresas_vinculadas);
       const empresasVinculadas = resolveEmpresasVinculadas({
@@ -147,6 +173,10 @@ export default function GestaoUsuariosAvancada({
       const antes = auditSnapshot(usuario);
       const payload = {
         ...data,
+        cargo: sanitizeText(data.cargo, 120),
+        departamento: sanitizeText(data.departamento, 120),
+        telefone: sanitizePhone(data.telefone),
+        restricoes_adicionais: restricoesSanitizadas,
         nivel_acesso_contexto: escopoAcesso,
         escopo_acesso: escopoAcesso,
         acesso_grupo: acessoGrupo,
@@ -201,8 +231,9 @@ export default function GestaoUsuariosAvancada({
   const setRestricaoLista = (campo, valor) => {
     const lista = String(valor || "")
       .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
+      .map((item) => sanitizeText(item, 60))
+      .filter(Boolean)
+      .slice(0, 50);
     setFormData({
       ...formData,
       restricoes_adicionais: {
@@ -250,7 +281,7 @@ export default function GestaoUsuariosAvancada({
               <Input
                 value={formData.cargo}
                 disabled={controlesDesabilitados}
-                onChange={(e) => setFormData({ ...formData, cargo: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, cargo: sanitizeText(e.target.value, 120) })}
                 placeholder="Ex: Vendedor"
                 className="mt-1"
                 data-permission="Sistema.Controle de Acesso.editar"
@@ -262,7 +293,7 @@ export default function GestaoUsuariosAvancada({
               <Input
                 value={formData.departamento}
                 disabled={controlesDesabilitados}
-                onChange={(e) => setFormData({ ...formData, departamento: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, departamento: sanitizeText(e.target.value, 120) })}
                 placeholder="Ex: Comercial"
                 className="mt-1"
                 data-permission="Sistema.Controle de Acesso.editar"
@@ -274,7 +305,7 @@ export default function GestaoUsuariosAvancada({
               <Input
                 value={formData.telefone}
                 disabled={controlesDesabilitados}
-                onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, telefone: sanitizePhone(e.target.value) })}
                 placeholder="(00) 00000-0000"
                 className="mt-1"
                 data-permission="Sistema.Controle de Acesso.editar"
@@ -453,7 +484,7 @@ export default function GestaoUsuariosAvancada({
                 ...formData,
                 restricoes_adicionais: {
                   ...formData.restricoes_adicionais,
-                  limite_aprovacao_valor: parseFloat(e.target.value) || 0
+                  limite_aprovacao_valor: sanitizeCurrencyLimit(e.target.value)
                 }
               })}
               className="mt-1"
