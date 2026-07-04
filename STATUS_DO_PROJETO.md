@@ -1,3 +1,12 @@
+### Administracao do Sistema - Fase 10 SoD com Auditoria de Bloqueios e Erros
+- Segui o proximo passo salvo apos relatorios RBAC, sem criar tela, modulo, componente ou arquivo novo.
+- `SoDChecker.jsx` agora audita abertura bloqueada por falta de permissao de edicao.
+- Tentativas de executar analise SoD ou persistir conflitos sem permissao/contexto agora registram `AuditLog` com `groupId`, `empresaId`, contexto, permissao exigida e motivo.
+- Falhas na analise e na persistencia de conflitos passam a ser auditadas como eventos sem sucesso, preservando o erro retornado.
+- Auditorias de execucao e persistencia agora incluem pacote padronizado de contexto multiempresa e status de permissao.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando RBAC, seguranca, auditoria e multiempresa, sem criar duplicidade.
+- Proximo passo sugerido: continuar em `GestaoAcessosIndex`, revisando auditoria das consultas/fallbacks de perfis e usuarios e bloqueios de troca de aba por escopo.
+
 ### Administracao do Sistema - Fase 10 Relatorios RBAC com Contexto e Auditoria
 - Segui o proximo passo salvo apos auditoria de bloqueios RBAC, sem criar tela, modulo, componente ou arquivo novo.
 - `RelatorioPermissoes.jsx` agora audita tambem tentativas bloqueadas de exportacao por falta de contexto ou permissao.

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { base44 } from "@/api/base44Client";
@@ -23,7 +23,15 @@ export default function SoDChecker() {
   const [erro, setErro] = useState(null);
   const [persistindo, setPersistindo] = useState(false);
 
-  const audit = async ({ acao, entidade, descricao, dadosNovos }) => {
+  const getDadosContexto = () => ({
+    contexto: estaNoGrupo ? "grupo" : "empresa",
+    group_id: groupId,
+    empresa_id: empresaId,
+    permissao: "Sistema.Controle de Acesso.editar",
+    pode_executar: podeExecutar,
+  });
+
+  const audit = async ({ acao, entidade, descricao, dadosNovos, sucesso = true, tipo = "seguranca" }) => {
     try {
       await createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || "Usuario",
@@ -34,7 +42,12 @@ export default function SoDChecker() {
         modulo: "Sistema",
         entidade,
         descricao,
-        dados_novos: dadosNovos || null,
+        tipo_auditoria: tipo,
+        dados_novos: {
+          ...getDadosContexto(),
+          ...(dadosNovos || {}),
+        },
+        sucesso,
         data_hora: new Date().toISOString(),
       });
     } catch (error) {
@@ -42,16 +55,39 @@ export default function SoDChecker() {
     }
   };
 
+  useEffect(() => {
+    if (podeExecutar) return;
+    void audit({
+      acao: "Bloqueio por permissao",
+      entidade: "SoD",
+      descricao: "Tentativa de visualizar execucao SoD sem permissao de edicao.",
+      dadosNovos: { motivo: "permissao_negada" },
+      sucesso: false,
+    });
+  }, [podeExecutar, groupId, empresaId]);
+
   const executarAnalise = async () => {
     setLoading(true);
     setErro(null);
     try {
+      if (!podeExecutar) {
+        await audit({
+          acao: "Bloqueio por permissao",
+          entidade: "SoD",
+          descricao: "Tentativa de executar analise SoD sem permissao.",
+          dadosNovos: { motivo: "permissao_negada" },
+          sucesso: false,
+        });
+        throw new Error("Sem permissao para executar analise SoD.");
+      }
+
       if (!hasValidScope) {
         await audit({
           acao: "Bloqueio sem contexto",
           entidade: "SoD",
           descricao: "Tentativa de executar analise SoD sem contexto valido.",
-          dadosNovos: { group_id: groupId || null, empresa_id: empresaId || null, scope: estaNoGrupo ? "grupo" : "empresa" }
+          dadosNovos: { motivo: "contexto_obrigatorio" },
+          sucesso: false,
         });
         throw new Error("Selecione um grupo e uma empresa antes de analisar SoD.");
       }
@@ -68,7 +104,8 @@ export default function SoDChecker() {
         acao: "Visualizacao",
         entidade: "SoD",
         descricao: `Analise SoD executada (${estaNoGrupo ? "grupo" : "empresa"})`,
-        dadosNovos: data || null
+        dadosNovos: data || null,
+        tipo: "ui",
       });
       toast.success("Analise SoD executada e auditada.");
     } catch (e) {
@@ -78,7 +115,8 @@ export default function SoDChecker() {
         acao: "Erro Analise SoD",
         entidade: "SoD",
         descricao: message,
-        dadosNovos: { group_id: groupId || null, empresa_id: empresaId || null }
+        dadosNovos: { erro: message },
+        sucesso: false,
       });
       toast.error(message);
     } finally {
@@ -91,12 +129,24 @@ export default function SoDChecker() {
     setPersistindo(true);
     setErro(null);
     try {
+      if (!podeExecutar) {
+        await audit({
+          acao: "Bloqueio por permissao",
+          entidade: "PerfilAcesso",
+          descricao: "Tentativa de persistir conflitos SoD sem permissao.",
+          dadosNovos: { motivo: "permissao_negada" },
+          sucesso: false,
+        });
+        throw new Error("Sem permissao para persistir conflitos SoD.");
+      }
+
       if (!hasValidScope) {
         await audit({
           acao: "Bloqueio sem contexto",
           entidade: "PerfilAcesso",
           descricao: "Tentativa de persistir conflitos SoD sem contexto valido.",
-          dadosNovos: { group_id: groupId || null, empresa_id: empresaId || null }
+          dadosNovos: { motivo: "contexto_obrigatorio" },
+          sucesso: false,
         });
         throw new Error("Selecione um grupo e uma empresa antes de persistir conflitos.");
       }
@@ -128,12 +178,19 @@ export default function SoDChecker() {
         acao: "Edicao",
         entidade: "PerfilAcesso",
         descricao: `Conflitos SoD persistidos para ${ids.length} perfis`,
-        dadosNovos: porPerfil
+        dadosNovos: { perfis_afetados: ids.length, conflitos_por_perfil: porPerfil }
       });
       toast.success(`Conflitos SoD persistidos em ${ids.length} perfil(is).`);
     } catch (e) {
       const message = e?.message || "Falha ao persistir conflitos SoD";
       setErro(message);
+      await audit({
+        acao: "Erro Persistencia SoD",
+        entidade: "PerfilAcesso",
+        descricao: message,
+        dadosNovos: { erro: message },
+        sucesso: false,
+      });
       toast.error(message);
     } finally {
       setPersistindo(false);
