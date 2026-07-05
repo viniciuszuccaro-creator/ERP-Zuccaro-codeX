@@ -1,3 +1,12 @@
+### Cadastros Gerais - Fase 11 Formularios Sensiveis com Contexto e Sanitizacao
+- Segui o proximo passo salvo apos o Visualizador Universal, sem criar tela, modulo, componente ou arquivo novo.
+- `RepresentanteForm.jsx`, `UsuarioForm.jsx` e `CadastroFiscalForm.jsx` passaram a aceitar os aliases do visualizador universal (`item`, `data`, `initialData` e `defaultValues`), evitando perda de dados ao abrir registros existentes.
+- Os tres formularios agora validam contexto grupo/empresa antes de salvar e carimbam `group_id` e `empresa_id` no payload enviado ao fluxo existente.
+- Entradas de texto, documentos, telefones, e-mails, codigos fiscais e percentuais passaram por sanitizacao local antes do `onSubmit`, reduzindo risco de XSS/injecao em cadastros sensiveis.
+- Botoes, campos e seletores receberam reforco visual de RBAC com `data-permission`, `data-action` e `data-sensitive`, alem de bloqueio quando o perfil nao pode criar/editar.
+- Mantida a Regra-Mae: melhoria feita somente nos formularios existentes e integrada ao Visualizador Universal, preservando fluxo, layout e componentes atuais.
+- Proximo passo sugerido: continuar revisando formularios simples restantes de Cadastros Gerais que ainda enviam `formData` cru ou nao bloqueiam salvamento sem contexto.
+
 ### Cadastros Gerais - Fase 11 Visualizador Universal com Auditoria de Acoes
 - Segui o proximo passo salvo apos o bloco Tecnologia, sem criar tela, modulo, componente ou arquivo novo.
 - `VisualizadorUniversalEntidadeV24.jsx` passou a padronizar o pacote de auditoria com contexto multiempresa, permissoes RBAC, entidade, titulo e total conhecido.
