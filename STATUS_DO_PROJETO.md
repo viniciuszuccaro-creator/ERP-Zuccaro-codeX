@@ -1,3 +1,13 @@
+### Cadastros Gerais - Fase 11 Produtos com Contexto e Sanitizacao
+- Segui o proximo passo salvo apos grupos/empresas/contatos, sem criar tela, modulo, componente ou arquivo novo.
+- `ProdutoForm.jsx` deixou de enviar `formData` cru e passou a montar payload sanitizado antes do `onSubmit`.
+- O formulario principal de produtos agora aceita aliases do Visualizador Universal quando aplicavel (`item`, `data`, `initialData` e `defaultValues`), preservando edicao de registros existentes.
+- Salvamento agora valida permissao de criar/editar, exige contexto grupo/empresa e carimba `group_id` e `empresa_id` no fluxo existente.
+- Campos de descricao, codigo, grupo, unidade, fatores de conversao, pesos/dimensoes, fiscal e status passam por sanitizacao/conversao antes do envio.
+- `ProdutoFormCompleto.jsx` passou a repassar o registro normalizado para o formulario principal, abas de conversao/e-commerce e historico, evitando perda de dados ao abrir pelo Visualizador Universal.
+- Mantida a Regra-Mae: melhoria feita somente nos formularios existentes de produto, sem duplicar fluxo, tela ou arquivo.
+- Proximo passo sugerido: continuar revisando produtos em componentes auxiliares e depois voltar para demais itens ainda listados em `onSubmit(formData)`.
+
 ### Cadastros Gerais - Fase 11 Grupos Empresas e Contatos com Contexto
 - Segui o proximo passo salvo apos formularios comerciais/financeiros, sem criar tela, modulo, componente ou arquivo novo.
 - `ContatoB2BForm.jsx`, `EmpresaForm.jsx` e `GrupoEmpresarialForm.jsx` deixaram de enviar `formData` cru e passaram a montar payload sanitizado antes do salvamento.

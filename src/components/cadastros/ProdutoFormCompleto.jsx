@@ -1,12 +1,12 @@
-import React, { useState, Suspense } from "react";
+﻿import React, { useState, Suspense } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { 
+import {
   Package, Calculator, Globe, TrendingUp
 } from "lucide-react";
 import ProdutoFormHeader from "./produto/ProdutoFormHeader";
-import ProtectedSection from "@/components/security/ProtectedSection"; // mantido para futuras proteções de abas
+import ProtectedSection from "@/components/security/ProtectedSection"; // mantido para futuras proteÃ§Ãµes de abas
 
 import ProdutoForm from "./ProdutoForm";
 const AbaConversoesProduto = React.lazy(() => import("./AbaConversoesProduto"));
@@ -18,21 +18,22 @@ import { toast } from "sonner";
 
 /**
  * V21.1.2-R2 - CADASTRO COMPLETO DE PRODUTOS
- * ✅ Abas organizadas (Dados Gerais, Conversões, E-Commerce, Histórico)
- * ✅ Importação NF-e e Lote integradas
- * ✅ Mantém 100% do formulário original
- * ✅ Adiciona funcionalidades avançadas
+ * âœ… Abas organizadas (Dados Gerais, ConversÃµes, E-Commerce, HistÃ³rico)
+ * âœ… ImportaÃ§Ã£o NF-e e Lote integradas
+ * âœ… MantÃ©m 100% do formulÃ¡rio original
+ * âœ… Adiciona funcionalidades avanÃ§adas
  */
-export default function ProdutoFormCompleto({ produto, onSubmit, isSubmitting, onProdutosCriados }) {
+export default function ProdutoFormCompleto({ produto, item, data, initialData, defaultValues, onSubmit, isSubmitting, onProdutosCriados }) {
+  const dadosIniciais = item || data || initialData || defaultValues || produto;
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
   const [modoImportacao, setModoImportacao] = useState(null); // 'nfe' | 'lote' | null
 
   const handleSubmit = (formData) => {
-    onSubmit(formData);
+    if (onSubmit) onSubmit(formData);
   };
 
   const handleProdutosCriadosImportacao = (produtos) => {
-    toast.success(`✅ ${produtos.length} produto(s) importado(s)!`);
+    toast.success(`âœ… ${produtos.length} produto(s) importado(s)!`);
     if (onProdutosCriados) {
       onProdutosCriados(produtos);
     }
@@ -59,7 +60,7 @@ export default function ProdutoFormCompleto({ produto, onSubmit, isSubmitting, o
     return (
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-bold">Importação em Lote</h2>
+          <h2 className="text-xl font-bold">ImportaÃ§Ã£o em Lote</h2>
           <Button variant="outline" onClick={() => setModoImportacao(null)}>
             Voltar ao Cadastro
           </Button>
@@ -73,14 +74,14 @@ export default function ProdutoFormCompleto({ produto, onSubmit, isSubmitting, o
 
   return (
     <div className="space-y-6 w-full h-full overflow-auto">
-      {/* Header com Botões de Importação */}
+      {/* Header com BotÃµes de ImportaÃ§Ã£o */}
       <ProdutoFormHeader
-        produto={produto}
+        produto={dadosIniciais}
         onImportarNFe={() => setModoImportacao('nfe')}
         onImportarLote={() => setModoImportacao('lote')}
       />
 
-      {/* Abas do Formulário */}
+      {/* Abas do FormulÃ¡rio */}
       <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="w-full h-full">
         <TabsList className="grid grid-cols-4 w-full bg-slate-100">
           <TabsTrigger value="dados-gerais" className="flex items-center gap-2">
@@ -89,25 +90,25 @@ export default function ProdutoFormCompleto({ produto, onSubmit, isSubmitting, o
           </TabsTrigger>
           <TabsTrigger value="conversoes" className="flex items-center gap-2">
             <Calculator className="w-4 h-4" />
-            Conversões
+            ConversÃµes
           </TabsTrigger>
           <TabsTrigger value="ecommerce" className="flex items-center gap-2">
             <Globe className="w-4 h-4" />
             E-Commerce
           </TabsTrigger>
-          {produto && (
+          {dadosIniciais && (
             <TabsTrigger value="historico" className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
-              Histórico
+              HistÃ³rico
             </TabsTrigger>
           )}
         </TabsList>
 
         <TabsContent value="dados-gerais">
-          <ProdutoForm 
-            produto={produto} 
-            onSubmit={handleSubmit} 
-            isSubmitting={isSubmitting} 
+          <ProdutoForm
+            produto={dadosIniciais}
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
           />
         </TabsContent>
 
@@ -115,9 +116,9 @@ export default function ProdutoFormCompleto({ produto, onSubmit, isSubmitting, o
           <Card>
             <div className="p-6">
               <Suspense fallback={<div className="h-24 rounded-md bg-slate-100 animate-pulse" />}>
-                <AbaConversoesProduto 
-                  formData={produto || {}} 
-                  setFormData={() => {}} 
+                <AbaConversoesProduto
+                  formData={dadosIniciais || {}}
+                  setFormData={() => {}}
                 />
               </Suspense>
             </div>
@@ -129,19 +130,19 @@ export default function ProdutoFormCompleto({ produto, onSubmit, isSubmitting, o
           <Card>
             <div className="p-6">
               <Suspense fallback={<div className="h-24 rounded-md bg-slate-100 animate-pulse" />}>
-                <AbaEcommerceProduto 
-                  formData={produto || {}} 
-                  setFormData={() => {}} 
+                <AbaEcommerceProduto
+                  formData={dadosIniciais || {}}
+                  setFormData={() => {}}
                 />
               </Suspense>
             </div>
           </Card>
         </TabsContent>
 
-        {produto && (
+        {dadosIniciais && (
           <TabsContent value="historico">
             <Suspense fallback={<div className="h-24 rounded-md bg-slate-100 animate-pulse" />}>
-              <HistoricoProduto produtoId={produto.id} produto={produto} />
+              <HistoricoProduto produtoId={produto.id} produto={dadosIniciais} />
             </Suspense>
           </TabsContent>
         )}

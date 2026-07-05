@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -14,23 +14,38 @@ import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 import ProtectedField from "@/components/security/ProtectedField";
 import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
- * V21.6 - EVOLUÇÃO DO CADASTRO DE PRODUTOS
- * ✅ Toggle "Preencher manualmente" (ignorar IA)
- * ✅ Campos de peso líquido/bruto + dimensões (frete/e-commerce)
- * ✅ Suporte para cadastro via NF-e e em lote (botões preparados)
- * ✅ NOVO: Botão "Enviar para Produção" - converte produtos de Revenda para Matéria-Prima
- * V22.0: REGRA MESTRE DE CONVERSÃO DE UNIDADES
- * Este formulário é o HUB central que define como o produto pode ser vendido/comprado
+ * V21.6 - EVOLUÃ‡ÃƒO DO CADASTRO DE PRODUTOS
+ * âœ… Toggle "Preencher manualmente" (ignorar IA)
+ * âœ… Campos de peso lÃ­quido/bruto + dimensÃµes (frete/e-commerce)
+ * âœ… Suporte para cadastro via NF-e e em lote (botÃµes preparados)
+ * âœ… NOVO: BotÃ£o "Enviar para ProduÃ§Ã£o" - converte produtos de Revenda para MatÃ©ria-Prima
+ * V22.0: REGRA MESTRE DE CONVERSÃƒO DE UNIDADES
+ * Este formulÃ¡rio Ã© o HUB central que define como o produto pode ser vendido/comprado
  */
-export default function ProdutoForm({ produto, onSubmit, isSubmitting }) {
+const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
+const sanitizeCode = (value, max = 80) => String(value ?? "").replace(/[^0-9A-Za-z_.\-/\s]/g, "").slice(0, max).trim();
+const toNumber = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
+const sanitizeArray = (values, max = 20) => Array.isArray(values) ? values.map((value) => sanitizeText(value, 40)).filter(Boolean).slice(0, max) : [];
+
+export default function ProdutoForm({ produto, item, data, initialData, defaultValues, onSubmit, isSubmitting }) {
+  const dadosIniciais = item || data || initialData || defaultValues || produto;
+  const { canCreate, canEdit } = usePermissions();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
+  const podeCriar = canCreate("Cadastros", "Produto") || canCreate("Estoque", "Produto") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "Produto") || canEdit("Estoque", "Produto") || canEdit("Cadastros", null);
+  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const [formData, setFormData] = useState(() => {
-    if (produto) {
+    if (dadosIniciais) {
       return {
-        ...produto,
-        unidades_secundarias: produto.unidades_secundarias || ['KG'],
-        fatores_conversao: produto.fatores_conversao || {
+        ...dadosIniciais,
+        unidades_secundarias: dadosIniciais.unidades_secundarias || ['KG'],
+        fatores_conversao: dadosIniciais.fatores_conversao || {
           kg_por_peca: 0,
           kg_por_metro: 0,
           metros_por_peca: 0,
@@ -38,14 +53,14 @@ export default function ProdutoForm({ produto, onSubmit, isSubmitting }) {
           kg_por_ton: 1000
         },
         // V21.1.2: NOVOS CAMPOS
-        peso_liquido_kg: produto.peso_liquido_kg || 0,
-        peso_bruto_kg: produto.peso_bruto_kg || 0,
-        altura_cm: produto.altura_cm || 0,
-        largura_cm: produto.largura_cm || 0,
-        comprimento_cm: produto.comprimento_cm || 0
+        peso_liquido_kg: dadosIniciais.peso_liquido_kg || 0,
+        peso_bruto_kg: dadosIniciais.peso_bruto_kg || 0,
+        altura_cm: dadosIniciais.altura_cm || 0,
+        largura_cm: dadosIniciais.largura_cm || 0,
+        comprimento_cm: dadosIniciais.comprimento_cm || 0
       };
     }
-    
+
     return {
       descricao: '',
       codigo: '',
@@ -87,7 +102,7 @@ export default function ProdutoForm({ produto, onSubmit, isSubmitting }) {
   const [uploadingFoto, setUploadingFoto] = useState(false);
   const [calculoConversao, setCalculoConversao] = useState(null);
   const [sugestoesIA, setSugestoesIA] = useState({});
-  
+
   // V21.1.2: NOVO TOGGLE
   const [modoManual, setModoManual] = useState(false);
   const debounceTimeoutRef = useRef(null);
@@ -109,7 +124,7 @@ export default function ProdutoForm({ produto, onSubmit, isSubmitting }) {
     }
   }, [formData.altura_cm, formData.largura_cm, formData.comprimento_cm, formData.volume_m3]);
 
-  // V22.1: Self-Healing automático (debounced)
+  // V22.1: Self-Healing automÃ¡tico (debounced)
   useEffect(() => {
     if (modoManual) {
       setIaSugestao(null);
@@ -128,14 +143,14 @@ export default function ProdutoForm({ produto, onSubmit, isSubmitting }) {
     };
   }, [formData.descricao, modoManual]);
 
-  // V22.0: MOTOR DE CONVERSÃO AUTOMÁTICA
+  // V22.0: MOTOR DE CONVERSÃƒO AUTOMÃTICA
   const recalcularFatoresConversao = () => {
     const pesoKgM = formData.peso_teorico_kg_m || 0;
     const comprimentoM = formData.comprimento_barra_padrao_m || 12;
-    
+
     const kgPorPeca = pesoKgM * comprimentoM;
     const pecaPorTon = kgPorPeca > 0 ? (1000 / kgPorPeca) : 0;
-    
+
     const novosFatores = {
       kg_por_metro: pesoKgM,
       kg_por_peca: kgPorPeca,
@@ -152,19 +167,19 @@ export default function ProdutoForm({ produto, onSubmit, isSubmitting }) {
     setCalculoConversao(novosFatores);
   };
 
-  // IA de Classificação Mestra (V18.0 + V22.0 Melhorado)
+  // IA de ClassificaÃ§Ã£o Mestra (V18.0 + V22.0 Melhorado)
   const analisarDescricaoIA = async (descricao) => {
     if (!descricao || descricao.length < 5) return;
-    
+
     setProcessandoIA(true);
-    
+
     try {
       const resultado = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analise esta descrição de produto: "${descricao}".
+        prompt: `Analise esta descriÃ§Ã£o de produto: "${descricao}".
 
-Se for uma bitola de aço (ex: "Barra 8mm 12m CA-50", "Vergalhão 10mm"), retorne:
+Se for uma bitola de aÃ§o (ex: "Barra 8mm 12m CA-50", "VergalhÃ£o 10mm"), retorne:
 - eh_bitola: true
-- peso_teorico_kg_m: peso teórico em kg/m (tabela oficial):
+- peso_teorico_kg_m: peso teÃ³rico em kg/m (tabela oficial):
   * 6.3mm = 0.245 kg/m
   * 8mm = 0.395 kg/m
   * 10mm = 0.617 kg/m
@@ -173,17 +188,17 @@ Se for uma bitola de aço (ex: "Barra 8mm 12m CA-50", "Vergalhão 10mm"), retorn
   * 20mm = 2.466 kg/m
   * 25mm = 3.853 kg/m
   * 32mm = 6.313 kg/m
-- bitola_diametro_mm: diâmetro em mm
+- bitola_diametro_mm: diÃ¢metro em mm
 - tipo_aco: CA-25, CA-50 ou CA-60
-- ncm: "7214.20.00" (vergalhões)
+- ncm: "7214.20.00" (vergalhÃµes)
 - grupo_produto: "Bitola"
-- comprimento_barra_m: 12 (padrão)
+- comprimento_barra_m: 12 (padrÃ£o)
 - unidade_principal: "KG"
-- unidades_secundarias: ["PÇ", "KG", "MT"] (sempre essas 3 para bitolas)
+- unidades_secundarias: ["PÃ‡", "KG", "MT"] (sempre essas 3 para bitolas)
 
-Caso contrário, sugira:
+Caso contrÃ¡rio, sugira:
 - grupo_produto adequado
-- ncm provável
+- ncm provÃ¡vel
 - unidade_principal e unidades_secundarias apropriadas`,
         response_json_schema: {
           type: "object",
@@ -206,7 +221,7 @@ Caso contrário, sugira:
       });
 
       setIaSugestao(resultado);
-      toast.success('✨ IA analisou o produto!');
+      toast.success('âœ¨ IA analisou o produto!');
     } catch (error) {
       toast.error('Erro ao processar IA');
     } finally {
@@ -216,7 +231,7 @@ Caso contrário, sugira:
 
   const aplicarSugestaoIA = () => {
     if (!iaSugestao || modoManual) return;
-    
+
     setFormData(prev => ({
       ...prev,
       eh_bitola: iaSugestao.eh_bitola || false,
@@ -229,8 +244,8 @@ Caso contrário, sugira:
       unidade_principal: iaSugestao.unidade_principal || 'KG',
       unidades_secundarias: iaSugestao.unidades_secundarias || ['KG']
     }));
-    
-    toast.success('✅ Sugestões aplicadas!');
+
+    toast.success('âœ… SugestÃµes aplicadas!');
     setIaSugestao(null);
   };
 
@@ -240,11 +255,11 @@ Caso contrário, sugira:
     if (!file) return;
 
     setUploadingFoto(true);
-    
+
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setFormData({ ...formData, foto_produto_url: file_url });
-      toast.success('✅ Foto carregada!');
+      toast.success('âœ… Foto carregada!');
     } catch (error) {
       toast.error('Erro ao fazer upload');
     } finally {
@@ -252,7 +267,7 @@ Caso contrário, sugira:
     }
   };
 
-  // Toggle de unidades secundárias
+  // Toggle de unidades secundÃ¡rias
   const toggleUnidadeSecundaria = (unidade) => {
     const unidades = formData.unidades_secundarias || [];
     if (unidades.includes(unidade)) {
@@ -268,7 +283,7 @@ Caso contrário, sugira:
     }
   };
 
-  // NOVO: Handler para busca automática de NCM
+  // NOVO: Handler para busca automÃ¡tica de NCM
   const handleDadosNCM = (dados) => {
     setFormData((prev) => ({
       ...prev,
@@ -285,41 +300,93 @@ Caso contrário, sugira:
     toast.success("NCM encontrado!", { description: dados.descricao });
   };
 
-  // V21.6: NOVO - Enviar para Produção
+  // V21.6: NOVO - Enviar para ProduÃ§Ã£o
   const enviarParaProducao = () => {
-    setFormData(prev => ({ 
-      ...prev, 
-      tipo_item: 'Matéria-Prima Produção',
+    setFormData(prev => ({
+      ...prev,
+      tipo_item: 'MatÃ©ria-Prima ProduÃ§Ã£o',
       setor_atividade_id: 'setor-fabrica-001',
-      setor_atividade_nome: 'Fábrica'
+      setor_atividade_nome: 'FÃ¡brica'
     }));
     setModoManual(false);
-    toast.success('🏭 Produto movido para Produção!', {
-      description: 'Lembre-se de salvar as alterações'
+    toast.success('ðŸ­ Produto movido para ProduÃ§Ã£o!', {
+      description: 'Lembre-se de salvar as alteraÃ§Ãµes'
     });
   };
 
   const produtoSchema = z.object({
-    descricao: z.string().min(3, 'Descrição é obrigatória'),
+    descricao: z.string().min(3, 'DescriÃ§Ã£o Ã© obrigatÃ³ria'),
     unidades_secundarias: z.array(z.string()).min(1, 'Selecione pelo menos 1 unidade'),
     eh_bitola: z.boolean().optional().default(false),
     peso_teorico_kg_m: z.number().optional().transform(v => v ?? 0)
   }).refine((data) => !data.eh_bitola || (data.peso_teorico_kg_m || 0) > 0, {
-    message: 'Bitolas precisam ter peso teórico preenchido'
+    message: 'Bitolas precisam ter peso teÃ³rico preenchido'
+  });
+
+  const buildPayload = () => ({
+    ...formData,
+    descricao: sanitizeText(formData.descricao, 240),
+    nome: sanitizeText(formData.descricao, 240),
+    codigo: sanitizeCode(formData.codigo, 80),
+    tipo_item: sanitizeText(formData.tipo_item, 80),
+    grupo: sanitizeText(formData.grupo, 120),
+    tipo_aco: sanitizeText(formData.tipo_aco, 40),
+    unidade_principal: sanitizeText(formData.unidade_principal, 20),
+    unidades_secundarias: sanitizeArray(formData.unidades_secundarias),
+    fatores_conversao: {
+      kg_por_peca: toNumber(formData.fatores_conversao?.kg_por_peca, 0),
+      kg_por_metro: toNumber(formData.fatores_conversao?.kg_por_metro, 0),
+      metros_por_peca: toNumber(formData.fatores_conversao?.metros_por_peca, 0),
+      peca_por_ton: toNumber(formData.fatores_conversao?.peca_por_ton, 0),
+      kg_por_ton: toNumber(formData.fatores_conversao?.kg_por_ton, 1000)
+    },
+    peso_teorico_kg_m: toNumber(formData.peso_teorico_kg_m, 0),
+    bitola_diametro_mm: toNumber(formData.bitola_diametro_mm, 0),
+    comprimento_barra_padrao_m: toNumber(formData.comprimento_barra_padrao_m, 12),
+    custo_aquisicao: toNumber(formData.custo_aquisicao, 0),
+    preco_venda: toNumber(formData.preco_venda, 0),
+    estoque_minimo: toNumber(formData.estoque_minimo, 0),
+    peso_liquido_kg: toNumber(formData.peso_liquido_kg, 0),
+    peso_bruto_kg: toNumber(formData.peso_bruto_kg, 0),
+    altura_cm: toNumber(formData.altura_cm, 0),
+    largura_cm: toNumber(formData.largura_cm, 0),
+    comprimento_cm: toNumber(formData.comprimento_cm, 0),
+    volume_m3: toNumber(formData.volume_m3, 0),
+    ncm: sanitizeCode(formData.ncm, 12),
+    cest: sanitizeCode(formData.cest, 14),
+    unidade_medida: sanitizeText(formData.unidade_medida, 20),
+    foto_produto_url: sanitizeText(formData.foto_produto_url, 500),
+    status: sanitizeText(formData.status || "Ativo", 40),
+    group_id: groupId || formData.group_id,
+    empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id
   });
 
   const handleSubmit = async (_, __) => {
-    onSubmit(formData);
+    if (!podeSalvar) {
+      toast.error(dadosIniciais?.id ? "Sem permissao para editar produtos." : "Sem permissao para criar produtos.");
+      return;
+    }
+    if (!contextoValido) {
+      toast.error("Selecione um grupo ou empresa antes de salvar o produto.");
+      return;
+    }
+
+    const payload = buildPayload();
+    if (!payload.descricao) {
+      toast.error("Descricao do produto e obrigatoria.");
+      return;
+    }
+    onSubmit(payload);
   };
 
   return (
-    <FormWrapper schema={produtoSchema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className="space-y-6 w-full h-full">
+    <FormWrapper schema={produtoSchema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className="space-y-6 w-full h-full" data-permission="Cadastros.Produto.editar" data-sensitive>
       {/* V21.1.2: TOGGLE MODO MANUAL */}
       <Alert className="border-blue-300 bg-blue-50">
         <AlertDescription>
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-semibold text-sm text-blue-900">🤖 Assistência de IA</p>
+              <p className="font-semibold text-sm text-blue-900">ðŸ¤– AssistÃªncia de IA</p>
               <p className="text-xs text-blue-700">A IA pode sugerir NCM, grupo, bitola e unidades automaticamente</p>
             </div>
             <div className="flex items-center gap-3">
@@ -333,21 +400,21 @@ Caso contrário, sugira:
         </AlertDescription>
       </Alert>
 
-      {/* SEÇÃO 1: Identificação */}
+      {/* SEÃ‡ÃƒO 1: IdentificaÃ§Ã£o */}
       <Card className="border-purple-200 bg-purple-50">
         <CardContent className="p-4 space-y-4">
           <h3 className="font-bold flex items-center gap-2 text-purple-900">
             <Package className="w-5 h-5" />
-            Identificação do Produto
+            IdentificaÃ§Ã£o do Produto
           </h3>
 
           <div>
-            <Label>Descrição do Produto *</Label>
+            <Label>DescriÃ§Ã£o do Produto *</Label>
             <div className="flex gap-2">
               <Input
                 value={formData.descricao}
                 onChange={(e) => setFormData(prev => ({...prev, descricao: e.target.value}))}
-                placeholder="Ex: Vergalhão 8mm 12m CA-50"
+                placeholder="Ex: VergalhÃ£o 8mm 12m CA-50"
                 className="flex-1"
               />
               <Button
@@ -360,7 +427,7 @@ Caso contrário, sugira:
                 {processandoIA ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
               </Button>
             </div>
-            <p className="text-xs text-slate-500 mt-1">✨ IA preenche automaticamente NCM, peso e unidades</p>
+            <p className="text-xs text-slate-500 mt-1">âœ¨ IA preenche automaticamente NCM, peso e unidades</p>
           </div>
 
           {iaSugestao && !modoManual && (
@@ -368,18 +435,18 @@ Caso contrário, sugira:
               <AlertDescription>
                 <div className="flex justify-between items-start mb-2">
                   <div>
-                    <p className="font-semibold text-sm text-purple-900 mb-1">🤖 IA Classificou:</p>
+                    <p className="font-semibold text-sm text-purple-900 mb-1">ðŸ¤– IA Classificou:</p>
                     <p className="text-xs text-purple-800">{iaSugestao.explicacao}</p>
                     <div className="text-xs text-purple-700 mt-2 space-y-1">
-                      {iaSugestao.eh_bitola && <p>• <strong>É bitola:</strong> Sim</p>}
-                      {iaSugestao.peso_teorico_kg_m > 0 && <p>• <strong>Peso Teórico (kg/m):</strong> {iaSugestao.peso_teorico_kg_m}</p>}
-                      {iaSugestao.bitola_diametro_mm > 0 && <p>• <strong>Diâmetro (mm):</strong> {iaSugestao.bitola_diametro_mm}</p>}
-                      {iaSugestao.tipo_aco && <p>• <strong>Tipo de Aço:</strong> {iaSugestao.tipo_aco}</p>}
-                      {iaSugestao.ncm && <p>• <strong>NCM:</strong> {iaSugestao.ncm}</p>}
-                      {iaSugestao.grupo_produto && <p>• <strong>Grupo:</strong> {iaSugestao.grupo_produto}</p>}
-                      {iaSugestao.unidade_principal && <p>• <strong>Unidade Principal:</strong> {iaSugestao.unidade_principal}</p>}
+                      {iaSugestao.eh_bitola && <p>â€¢ <strong>Ã‰ bitola:</strong> Sim</p>}
+                      {iaSugestao.peso_teorico_kg_m > 0 && <p>â€¢ <strong>Peso TeÃ³rico (kg/m):</strong> {iaSugestao.peso_teorico_kg_m}</p>}
+                      {iaSugestao.bitola_diametro_mm > 0 && <p>â€¢ <strong>DiÃ¢metro (mm):</strong> {iaSugestao.bitola_diametro_mm}</p>}
+                      {iaSugestao.tipo_aco && <p>â€¢ <strong>Tipo de AÃ§o:</strong> {iaSugestao.tipo_aco}</p>}
+                      {iaSugestao.ncm && <p>â€¢ <strong>NCM:</strong> {iaSugestao.ncm}</p>}
+                      {iaSugestao.grupo_produto && <p>â€¢ <strong>Grupo:</strong> {iaSugestao.grupo_produto}</p>}
+                      {iaSugestao.unidade_principal && <p>â€¢ <strong>Unidade Principal:</strong> {iaSugestao.unidade_principal}</p>}
                       {iaSugestao.unidades_secundarias && iaSugestao.unidades_secundarias.length > 0 && (
-                        <p>• <strong>Unidades Habilitadas:</strong> {iaSugestao.unidades_secundarias.join(', ')}</p>
+                        <p>â€¢ <strong>Unidades Habilitadas:</strong> {iaSugestao.unidades_secundarias.join(', ')}</p>
                       )}
                     </div>
                   </div>
@@ -394,8 +461,8 @@ Caso contrário, sugira:
           {modoManual && iaSugestao && (
             <Alert className="border-orange-200 bg-orange-50">
               <AlertDescription className="text-sm text-orange-900">
-                ℹ️ <strong>Modo Manual Ativo:</strong> IA encontrou sugestões, mas não as aplicará automaticamente.
-                Você pode revisar: {iaSugestao.explicacao}
+                â„¹ï¸ <strong>Modo Manual Ativo:</strong> IA encontrou sugestÃµes, mas nÃ£o as aplicarÃ¡ automaticamente.
+                VocÃª pode revisar: {iaSugestao.explicacao}
               </AlertDescription>
             </Alert>
           )}
@@ -404,14 +471,14 @@ Caso contrário, sugira:
             <Alert className="border-blue-200 bg-blue-50">
               <AlertDescription className="flex items-center text-sm text-blue-900">
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                <span>Analisando descrição com IA...</span>
+                <span>Analisando descriÃ§Ã£o com IA...</span>
               </AlertDescription>
             </Alert>
           )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Código/SKU</Label>
+              <Label>CÃ³digo/SKU</Label>
               <Input
                 value={formData.codigo}
                 onChange={(e) => setFormData(prev => ({...prev, codigo: e.target.value}))}
@@ -423,7 +490,7 @@ Caso contrário, sugira:
               <Label>Tipo de Item</Label>
               <Select value={formData.tipo_item} onValueChange={(v) => {
                 setFormData(prev => ({...prev, tipo_item: v}));
-                if (v === 'Matéria-Prima Produção') {
+                if (v === 'MatÃ©ria-Prima ProduÃ§Ã£o') {
                   setModoManual(false);
                 }
               }}>
@@ -432,22 +499,22 @@ Caso contrário, sugira:
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Revenda">Revenda</SelectItem>
-                  <SelectItem value="Matéria-Prima Produção">Matéria-Prima Produção</SelectItem>
+                  <SelectItem value="MatÃ©ria-Prima ProduÃ§Ã£o">MatÃ©ria-Prima ProduÃ§Ã£o</SelectItem>
                   <SelectItem value="Produto Acabado">Produto Acabado</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          {/* V21.6: NOVO BOTÃO - ENVIAR PARA PRODUÇÃO */}
-          {formData.tipo_item !== 'Matéria-Prima Produção' && (
+          {/* V21.6: NOVO BOTÃƒO - ENVIAR PARA PRODUÃ‡ÃƒO */}
+          {formData.tipo_item !== 'MatÃ©ria-Prima ProduÃ§Ã£o' && (
             <Alert className="border-orange-300 bg-gradient-to-r from-orange-50 to-amber-50">
               <AlertDescription>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-semibold text-sm text-orange-900 mb-1">🏭 Usar este produto na Produção?</p>
+                    <p className="font-semibold text-sm text-orange-900 mb-1">ðŸ­ Usar este produto na ProduÃ§Ã£o?</p>
                     <p className="text-xs text-orange-700">
-                      Converte para Matéria-Prima e habilita uso em Ordens de Produção
+                      Converte para MatÃ©ria-Prima e habilita uso em Ordens de ProduÃ§Ã£o
                     </p>
                   </div>
                   <Button
@@ -457,18 +524,18 @@ Caso contrário, sugira:
                     onClick={enviarParaProducao}
                   >
                     <Factory className="w-4 h-4 mr-2" />
-                    Enviar para Produção
+                    Enviar para ProduÃ§Ã£o
                   </Button>
                 </div>
               </AlertDescription>
             </Alert>
           )}
 
-          {formData.tipo_item === 'Matéria-Prima Produção' && (
+          {formData.tipo_item === 'MatÃ©ria-Prima ProduÃ§Ã£o' && (
             <Alert className="border-green-300 bg-green-50">
               <CheckCircle2 className="w-4 h-4 text-green-700" />
               <AlertDescription className="text-sm text-green-900">
-                ✅ <strong>Produto configurado para Produção</strong> - Disponível em Ordens de Produção e Fábrica
+                âœ… <strong>Produto configurado para ProduÃ§Ã£o</strong> - DisponÃ­vel em Ordens de ProduÃ§Ã£o e FÃ¡brica
               </AlertDescription>
             </Alert>
           )}
@@ -498,16 +565,16 @@ Caso contrário, sugira:
                 </label>
               </div>
             </div>
-            <p className="text-xs text-slate-500 mt-1">📸 Usada em Pedidos, E-commerce e Portal</p>
+            <p className="text-xs text-slate-500 mt-1">ðŸ“¸ Usada em Pedidos, E-commerce e Portal</p>
           </div>
         </CardContent>
       </Card>
 
-      {/* SEÇÃO 2: É BITOLA? */}
+      {/* SEÃ‡ÃƒO 2: Ã‰ BITOLA? */}
       <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border-2 border-dashed">
         <div>
-          <Label className="text-base font-semibold">É uma Bitola de Aço?</Label>
-          <p className="text-xs text-slate-500">Habilita campos específicos e conversão PÇ ↔ KG ↔ MT</p>
+          <Label className="text-base font-semibold">Ã‰ uma Bitola de AÃ§o?</Label>
+          <p className="text-xs text-slate-500">Habilita campos especÃ­ficos e conversÃ£o PÃ‡ â†” KG â†” MT</p>
         </div>
         <Switch
           checked={formData.eh_bitola}
@@ -517,23 +584,23 @@ Caso contrário, sugira:
               setFormData(prev => ({
                 ...prev,
                 unidade_principal: 'KG',
-                unidades_secundarias: ['PÇ', 'KG', 'MT'],
-                tipo_item: 'Matéria-Prima Produção'
+                unidades_secundarias: ['PÃ‡', 'KG', 'MT'],
+                tipo_item: 'MatÃ©ria-Prima ProduÃ§Ã£o'
               }));
             }
           }}
         />
       </div>
 
-      {/* SEÇÃO 3: CAMPOS DE BITOLA */}
+      {/* SEÃ‡ÃƒO 3: CAMPOS DE BITOLA */}
       {formData.eh_bitola && (
         <Card className="border-blue-300 bg-blue-50">
           <CardContent className="p-4 space-y-4">
-            <h3 className="font-bold text-blue-900">📏 Especificações da Bitola</h3>
-            
+            <h3 className="font-bold text-blue-900">ðŸ“ EspecificaÃ§Ãµes da Bitola</h3>
+
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <Label>Diâmetro (mm) *</Label>
+                <Label>DiÃ¢metro (mm) *</Label>
                 <Input
                   type="number"
                   step="0.1"
@@ -544,7 +611,7 @@ Caso contrário, sugira:
               </div>
 
               <div>
-                <Label>Peso Teórico (kg/m) *</Label>
+                <Label>Peso TeÃ³rico (kg/m) *</Label>
                 <Input
                   type="number"
                   step="0.001"
@@ -556,7 +623,7 @@ Caso contrário, sugira:
               </div>
 
               <div>
-                <Label>Tipo de Aço</Label>
+                <Label>Tipo de AÃ§o</Label>
                 <Select value={formData.tipo_aco} onValueChange={(v) => setFormData(prev => ({...prev, tipo_aco: v}))}>
                   <SelectTrigger>
                     <SelectValue />
@@ -570,7 +637,7 @@ Caso contrário, sugira:
               </div>
 
               <div className="col-span-3">
-                <Label>Comprimento Padrão da Barra (metros)</Label>
+                <Label>Comprimento PadrÃ£o da Barra (metros)</Label>
                 <Input
                   type="number"
                   step="0.1"
@@ -578,24 +645,24 @@ Caso contrário, sugira:
                   onChange={(e) => setFormData(prev => ({...prev, comprimento_barra_padrao_m: parseFloat(e.target.value) || 12}))}
                   placeholder="12"
                 />
-                <p className="text-xs text-slate-500 mt-1">🔧 Usado para calcular kg_por_peca automaticamente</p>
+                <p className="text-xs text-slate-500 mt-1">ðŸ”§ Usado para calcular kg_por_peca automaticamente</p>
               </div>
             </div>
 
-            {/* V22.0: PREVIEW DE CONVERSÃO */}
+            {/* V22.0: PREVIEW DE CONVERSÃƒO */}
             {calculoConversao && (
               <Alert className="border-green-300 bg-green-50">
                 <Calculator className="w-4 h-4 text-green-700" />
                 <AlertDescription>
-                  <p className="font-semibold text-sm text-green-900 mb-2">✅ Conversões Calculadas:</p>
+                  <p className="font-semibold text-sm text-green-900 mb-2">âœ… ConversÃµes Calculadas:</p>
                   <div className="grid grid-cols-2 gap-2 text-xs text-green-800">
-                    <p>• 1 PÇ (barra) = <strong>{calculoConversao.kg_por_peca.toFixed(2)} KG</strong></p>
-                    <p>• 1 MT = <strong>{calculoConversao.kg_por_metro.toFixed(3)} KG</strong></p>
-                    <p>• 1 TON = <strong>{calculoConversao.peca_por_ton.toFixed(1)} PÇ</strong></p>
-                    <p>• 1 PÇ = <strong>{calculoConversao.metros_por_peca} MT</strong></p>
+                    <p>â€¢ 1 PÃ‡ (barra) = <strong>{calculoConversao.kg_por_peca.toFixed(2)} KG</strong></p>
+                    <p>â€¢ 1 MT = <strong>{calculoConversao.kg_por_metro.toFixed(3)} KG</strong></p>
+                    <p>â€¢ 1 TON = <strong>{calculoConversao.peca_por_ton.toFixed(1)} PÃ‡</strong></p>
+                    <p>â€¢ 1 PÃ‡ = <strong>{calculoConversao.metros_por_peca} MT</strong></p>
                   </div>
                   <p className="text-xs text-green-700 mt-2">
-                    💡 Essas conversões serão usadas em Vendas, Compras e Estoque automaticamente
+                    ðŸ’¡ Essas conversÃµes serÃ£o usadas em Vendas, Compras e Estoque automaticamente
                   </p>
                 </AlertDescription>
               </Alert>
@@ -604,29 +671,29 @@ Caso contrário, sugira:
         </Card>
       )}
 
-      {/* SEÇÃO 4: UNIDADES - V22.0 CRÍTICO */}
+      {/* SEÃ‡ÃƒO 4: UNIDADES - V22.0 CRÃTICO */}
       <Card className="border-indigo-300 bg-indigo-50">
         <CardContent className="p-4 space-y-4">
           <h3 className="font-bold text-indigo-900 flex items-center gap-2">
             <Calculator className="w-5 h-5" />
-            V22.0: Unidades e Conversões
+            V22.0: Unidades e ConversÃµes
           </h3>
 
           <Alert className="border-indigo-400 bg-indigo-100">
             <AlertDescription className="text-sm text-indigo-900">
-              🎯 <strong>REGRA MESTRE:</strong> As unidades selecionadas aqui estarão disponíveis em Vendas, Compras e Movimentações
+              ðŸŽ¯ <strong>REGRA MESTRE:</strong> As unidades selecionadas aqui estarÃ£o disponÃ­veis em Vendas, Compras e MovimentaÃ§Ãµes
             </AlertDescription>
           </Alert>
 
           <div>
-            <Label>Unidade Principal (Relatórios e Dashboard)</Label>
+            <Label>Unidade Principal (RelatÃ³rios e Dashboard)</Label>
             <Select value={formData.unidade_principal} onValueChange={(v) => setFormData(prev => ({...prev, unidade_principal: v}))}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="UN">Unidade (UN)</SelectItem>
-                <SelectItem value="PÇ">Peça (PÇ)</SelectItem>
+                <SelectItem value="PÃ‡">PeÃ§a (PÃ‡)</SelectItem>
                 <SelectItem value="KG">Quilograma (KG)</SelectItem>
                 <SelectItem value="MT">Metro (MT)</SelectItem>
                 <SelectItem value="TON">Tonelada (TON)</SelectItem>
@@ -639,7 +706,7 @@ Caso contrário, sugira:
           <div>
             <Label>Unidades Habilitadas (Multi-Select) *</Label>
             <div className="flex flex-wrap gap-2 p-3 border rounded-lg bg-white">
-              {['UN', 'PÇ', 'KG', 'MT', 'TON', 'CX', 'BARRA'].map(unidade => (
+              {['UN', 'PÃ‡', 'KG', 'MT', 'TON', 'CX', 'BARRA'].map(unidade => (
                 <Badge
                   key={unidade}
                   className={`cursor-pointer transition-all ${
@@ -655,22 +722,22 @@ Caso contrário, sugira:
               ))}
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              ✅ Selecionadas: {(formData.unidades_secundarias || []).join(', ')}
+              âœ… Selecionadas: {(formData.unidades_secundarias || []).join(', ')}
             </p>
           </div>
 
-          {/* V22.0: Visualização de Como Será Usado */}
+          {/* V22.0: VisualizaÃ§Ã£o de Como SerÃ¡ Usado */}
           {formData.unidades_secundarias && formData.unidades_secundarias.length > 0 && (
             <Alert className="border-blue-200 bg-blue-50">
               <AlertDescription className="text-sm text-blue-900">
-                <p className="font-semibold mb-2">📦 Como será usado nos módulos:</p>
+                <p className="font-semibold mb-2">ðŸ“¦ Como serÃ¡ usado nos mÃ³dulos:</p>
                 <div className="space-y-1 text-xs">
-                  <p>• <strong>Vendas:</strong> Dropdown terá opções: {formData.unidades_secundarias.join(', ')}</p>
-                  <p>• <strong>Compras:</strong> Dropdown terá opções: {formData.unidades_secundarias.join(', ')}</p>
-                  <p>• <strong>Estoque:</strong> Saldo sempre em KG (conversão automática)</p>
-                  <p>• <strong>NF-e:</strong> Unidade do pedido + equivalente KG</p>
-                  {formData.tipo_item === 'Matéria-Prima Produção' && (
-                    <p className="text-orange-700 font-semibold">• <strong>Produção:</strong> ✅ Disponível em OPs</p>
+                  <p>â€¢ <strong>Vendas:</strong> Dropdown terÃ¡ opÃ§Ãµes: {formData.unidades_secundarias.join(', ')}</p>
+                  <p>â€¢ <strong>Compras:</strong> Dropdown terÃ¡ opÃ§Ãµes: {formData.unidades_secundarias.join(', ')}</p>
+                  <p>â€¢ <strong>Estoque:</strong> Saldo sempre em KG (conversÃ£o automÃ¡tica)</p>
+                  <p>â€¢ <strong>NF-e:</strong> Unidade do pedido + equivalente KG</p>
+                  {formData.tipo_item === 'MatÃ©ria-Prima ProduÃ§Ã£o' && (
+                    <p className="text-orange-700 font-semibold">â€¢ <strong>ProduÃ§Ã£o:</strong> âœ… DisponÃ­vel em OPs</p>
                   )}
                 </div>
               </AlertDescription>
@@ -679,18 +746,18 @@ Caso contrário, sugira:
         </CardContent>
       </Card>
 
-      {/* SEÇÃO 5: Precificação */}
+      {/* SEÃ‡ÃƒO 5: PrecificaÃ§Ã£o */}
       <Card className="border-green-200 bg-green-50">
         <CardContent className="p-4 space-y-4">
           <h3 className="font-bold text-green-900 flex items-center gap-2">
             <TrendingUp className="w-5 h-5" />
-            💰 Precificação
+            ðŸ’° PrecificaÃ§Ã£o
           </h3>
 
           <div className="grid grid-cols-3 gap-4">
             <ProtectedField module="Estoque" submodule="Produto" tab="Precificacao" field="custo_aquisicao" action="visualizar" asText>
               <div>
-                <Label>Custo Aquisição</Label>
+                <Label>Custo AquisiÃ§Ã£o</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -702,7 +769,7 @@ Caso contrário, sugira:
             </ProtectedField>
 
             <div>
-              <Label>Preço Venda</Label>
+              <Label>PreÃ§o Venda</Label>
               <Input
                 type="number"
                 step="0.01"
@@ -727,23 +794,23 @@ Caso contrário, sugira:
         </CardContent>
       </Card>
 
-      {/* V21.1.2: NOVA SEÇÃO - PESO E DIMENSÕES (FRETE/E-COMMERCE) */}
+      {/* V21.1.2: NOVA SEÃ‡ÃƒO - PESO E DIMENSÃ•ES (FRETE/E-COMMERCE) */}
       <Card className="border-orange-200 bg-orange-50">
         <CardContent className="p-4 space-y-4">
           <h3 className="font-bold text-orange-900 flex items-center gap-2">
             <Package className="w-5 h-5" />
-            Peso e Dimensões (Logística & E-commerce)
+            Peso e DimensÃµes (LogÃ­stica & E-commerce)
           </h3>
 
           <Alert className="border-orange-300 bg-orange-100">
             <AlertDescription className="text-xs text-orange-900">
-              📦 <strong>Usado em:</strong> Cálculo de frete, cubagem de caminhão, catálogo de marketplace (ML, Shopee), Portal do Cliente
+              ðŸ“¦ <strong>Usado em:</strong> CÃ¡lculo de frete, cubagem de caminhÃ£o, catÃ¡logo de marketplace (ML, Shopee), Portal do Cliente
             </AlertDescription>
           </Alert>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Peso Líquido (kg)</Label>
+              <Label>Peso LÃ­quido (kg)</Label>
               <Input
                 type="number"
                 step="0.001"
@@ -802,7 +869,7 @@ Caso contrário, sugira:
             </div>
 
             <div>
-              <Label>Volume (m³)</Label>
+              <Label>Volume (mÂ³)</Label>
               <Input
                 type="number"
                 value={formData.volume_m3?.toFixed(6) || 0}
@@ -816,26 +883,26 @@ Caso contrário, sugira:
           {formData.volume_m3 > 0 && (
             <Alert className="border-green-300 bg-green-50">
               <AlertDescription className="text-xs text-green-900">
-                ✅ <strong>Cubagem:</strong> {formData.volume_m3.toFixed(6)} m³ por unidade
-                {formData.peso_bruto_kg > 0 && ` • Peso taxado: ${Math.max(formData.peso_bruto_kg, formData.volume_m3 * 300).toFixed(2)} kg`}
+                âœ… <strong>Cubagem:</strong> {formData.volume_m3.toFixed(6)} mÂ³ por unidade
+                {formData.peso_bruto_kg > 0 && ` â€¢ Peso taxado: ${Math.max(formData.peso_bruto_kg, formData.volume_m3 * 300).toFixed(2)} kg`}
               </AlertDescription>
             </Alert>
           )}
         </CardContent>
       </Card>
 
-      {/* SEÇÃO: FISCAL */}
+      {/* SEÃ‡ÃƒO: FISCAL */}
       <Card>
         <CardHeader className="bg-slate-50 border-b">
           <CardTitle className="text-base flex items-center gap-2">
             <FileText className="w-5 h-5 text-purple-600" />
-            Configuração Fiscal
+            ConfiguraÃ§Ã£o Fiscal
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4 space-y-4">
           <div className="grid grid-cols-2 gap-4 items-end">
             <div>
-              <Label htmlFor="ncm">NCM (Código Fiscal)</Label>
+              <Label htmlFor="ncm">NCM (CÃ³digo Fiscal)</Label>
               <Input
                 id="ncm"
                 value={formData.ncm || ""}
@@ -845,7 +912,7 @@ Caso contrário, sugira:
               />
               {sugestoesIA.ncm_info && (
                 <p className="text-xs text-blue-600 mt-1">
-                  ℹ️ {sugestoesIA.ncm_info}
+                  â„¹ï¸ {sugestoesIA.ncm_info}
                 </p>
               )}
             </div>
@@ -902,9 +969,9 @@ Caso contrário, sugira:
 
       {/* SUBMIT */}
       <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="submit" disabled={isSubmitting} className="bg-purple-600 hover:bg-purple-700">
+        <Button type="submit" disabled={isSubmitting || !podeSalvar || !contextoValido} className="bg-purple-600 hover:bg-purple-700" data-permission="Cadastros.Produto.salvar" data-action="salvar-produto" data-sensitive>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {produto ? 'Atualizar Produto' : 'Criar Produto'}
+          {dadosIniciais ? 'Atualizar Produto' : 'Criar Produto'}
         </Button>
       </div>
 
@@ -912,14 +979,14 @@ Caso contrário, sugira:
       {formData.eh_bitola && calculoConversao && (
         <Alert className="border-purple-300 bg-purple-100">
           <AlertDescription>
-            <p className="font-semibold text-sm text-purple-900 mb-2">🎯 Resumo da Configuração:</p>
+            <p className="font-semibold text-sm text-purple-900 mb-2">ðŸŽ¯ Resumo da ConfiguraÃ§Ã£o:</p>
             <div className="grid grid-cols-2 gap-2 text-xs text-purple-800">
-              <p>✅ Produto: <strong>{formData.descricao || 'Não informado'}</strong></p>
-              <p>✅ Unidade Principal: <strong>{formData.unidade_principal}</strong></p>
-              <p>✅ Venda/Compra em: <strong>{(formData.unidades_secundarias || []).join(', ')}</strong></p>
-              <p>✅ Estoque sempre em: <strong>KG</strong></p>
-              <p>✅ 1 Peça = <strong>{calculoConversao.kg_por_peca.toFixed(2)} KG</strong></p>
-              <p>✅ 1 Metro = <strong>{calculoConversao.kg_por_metro.toFixed(3)} KG</strong></p>
+              <p>âœ… Produto: <strong>{formData.descricao || 'NÃ£o informado'}</strong></p>
+              <p>âœ… Unidade Principal: <strong>{formData.unidade_principal}</strong></p>
+              <p>âœ… Venda/Compra em: <strong>{(formData.unidades_secundarias || []).join(', ')}</strong></p>
+              <p>âœ… Estoque sempre em: <strong>KG</strong></p>
+              <p>âœ… 1 PeÃ§a = <strong>{calculoConversao.kg_por_peca.toFixed(2)} KG</strong></p>
+              <p>âœ… 1 Metro = <strong>{calculoConversao.kg_por_metro.toFixed(3)} KG</strong></p>
             </div>
           </AlertDescription>
         </Alert>
