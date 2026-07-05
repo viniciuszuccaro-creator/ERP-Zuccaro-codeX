@@ -1,3 +1,11 @@
+### Cadastros Gerais - Fase 11 Bloco Produtos com Auditoria Detalhada
+- Segui o proximo passo salvo apos `Bloco1Pessoas`, sem criar tela, modulo, componente ou arquivo novo.
+- `Bloco2Produtos.jsx` passou a auditar abertura de Produtos, Servicos, Setores, Grupos, Marcas, Tabelas, Kits, Catalogo Web e Unidades com contexto multiempresa detalhado.
+- Bloqueios por falta de contexto ou permissao agora registram motivo padronizado, `groupId`, `empresaId`, nome do grupo/empresa, titulo, permissao e total conhecido da entidade.
+- Filtro aplicado no bloco Produtos & Servicos agora gera auditoria com termo sanitizado, total de itens do bloco, total filtrado e entidades filtradas.
+- O fluxo visual, cards, botoes, janelas flutuantes e visualizadores existentes foram preservados.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando RBAC, seguranca, auditoria e multiempresa, sem criar duplicidade.
+- Proximo passo sugerido: continuar em Cadastros Gerais revisando `Bloco3Fiscal`, mantendo o mesmo padrao de auditoria/contexto nos itens internos.
 ### Cadastros Gerais - Fase 11 Bloco Pessoas com Auditoria Detalhada
 - Segui o proximo passo salvo apos busca e blocos em Cadastros, sem criar tela, modulo, componente ou arquivo novo.
 - `Bloco1Pessoas.jsx` passou a auditar abertura de cadastros com contexto multiempresa, permissao granular, titulo, campos principais e total conhecido da entidade.

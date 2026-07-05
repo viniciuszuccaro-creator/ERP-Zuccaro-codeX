@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useWindow } from "@/components/lib/useWindow";
@@ -37,7 +37,19 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
   const empresaId = empresaAtual?.id || null;
   const contextoValido = Boolean(groupId || empresaId);
 
-  const registrarAuditoria = async (entidade, acao, sucesso = true) => {
+  const getTotalEntidade = (entidade) => Number(allCounts?.[entidade] || 0);
+
+  const getDadosContexto = () => ({
+    bloco: "Produtos & Servicos",
+    contexto: grupoAtual?.id ? "grupo" : empresaAtual?.id ? "empresa" : "sem-contexto",
+    contexto_valido: contextoValido,
+    group_id: groupId,
+    empresa_id: empresaId,
+    empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
+    grupo_nome: grupoAtual?.nome || grupoAtual?.nome_grupo || null,
+  });
+
+  const registrarAuditoria = async (entidade, acao, sucesso = true, extras = {}) => {
     try {
       await createInContext("AuditLog", {
         usuario_id: user?.id,
@@ -50,7 +62,13 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
         empresa_id: empresaId,
         group_id: groupId,
         grupo_id: groupId,
-        dados_novos: { bloco: "Produtos & Servicos", entidade },
+        dados_novos: {
+          ...getDadosContexto(),
+          entidade,
+          permissao: `Cadastros.${entidade}.visualizar`,
+          total_entidade: getTotalEntidade(entidade),
+          ...(extras || {}),
+        },
         data_hora: new Date().toISOString(),
         sucesso,
       });
@@ -64,7 +82,7 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
         description: "Cadastros de produtos e servicos precisam de contexto ativo para abrir.",
         variant: "destructive",
       });
-      registrarAuditoria("Produto", "Bloqueio sem contexto", false);
+      registrarAuditoria("Produto", "Bloqueio sem contexto", false, { motivo: "contexto_obrigatorio", titulo: "Todos os Produtos", modulo_permissao: "Estoque" });
       return;
     }
     if (!canViewEntity("Produto", "Estoque")) {
@@ -73,10 +91,10 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
         description: "Seu perfil nao possui permissao para visualizar produtos.",
         variant: "destructive",
       });
-      registrarAuditoria("Produto", "Bloqueio por permissao", false);
+      registrarAuditoria("Produto", "Bloqueio por permissao", false, { motivo: "permissao_negada", titulo: "Todos os Produtos", modulo_permissao: "Estoque" });
       return;
     }
-    registrarAuditoria("Produto", "Visualizacao");
+    registrarAuditoria("Produto", "Visualizacao", true, { titulo: "Todos os Produtos", modulo_permissao: "Estoque", visualizador: "VisualizadorProdutos", window_mode: true });
     openWindow(VisualizadorProdutos, { windowMode: true }, { title: 'Todos os Produtos', width: 1400, height: 800 });
   };
 
@@ -87,7 +105,7 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
         description: "Cadastros de produtos e servicos precisam de contexto ativo para abrir.",
         variant: "destructive",
       });
-      registrarAuditoria(entidade, "Bloqueio sem contexto", false);
+      registrarAuditoria(entidade, "Bloqueio sem contexto", false, { motivo: "contexto_obrigatorio", titulo });
       return;
     }
     if (!canViewEntity(entidade)) {
@@ -96,10 +114,10 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
         description: "Seu perfil nao possui permissao para visualizar este cadastro.",
         variant: "destructive",
       });
-      registrarAuditoria(entidade, "Bloqueio por permissao", false);
+      registrarAuditoria(entidade, "Bloqueio por permissao", false, { motivo: "permissao_negada", titulo });
       return;
     }
-    registrarAuditoria(entidade, "Visualizacao");
+    registrarAuditoria(entidade, "Visualizacao", true, { titulo, campos_principais: campos, visualizador: "VisualizadorUniversalEntidadeV24", window_mode: true });
     openWindow(VisualizadorUniversalEntidadeV24, { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true }, { title: titulo, width: 1400, height: 800 });
   };
 
@@ -122,6 +140,18 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
     { k: 'UnidadeMedida',  title: 'Unidades de Medida',       Icon: Ruler,     campos: ['sigla','nome','descricao'],                     form: UnidadeMedidaForm },
   ];
   const filteredTiles = filterTiles(tiles, searchTerm);
+
+  useEffect(() => {
+    const termo = String(searchTerm || "").trim().replace(/\s+/g, " ").slice(0, 120);
+    if (termo.length < 3) return;
+    void registrarAuditoria("Bloco2Produtos", "Filtro aplicado", contextoValido, {
+      termo,
+      total_itens_bloco: tiles.length + 1,
+      total_itens_filtrados: filteredTiles.length + 1,
+      entidades_filtradas: ["Produto", ...filteredTiles.map(({ k }) => k)],
+      motivo: contextoValido ? null : "contexto_obrigatorio",
+    });
+  }, [searchTerm, contextoValido, filteredTiles.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
