@@ -1,3 +1,14 @@
+### Cadastros Gerais - Fase 11 Grupos Empresas e Contatos com Contexto
+- Segui o proximo passo salvo apos formularios comerciais/financeiros, sem criar tela, modulo, componente ou arquivo novo.
+- `ContatoB2BForm.jsx`, `EmpresaForm.jsx` e `GrupoEmpresarialForm.jsx` deixaram de enviar `formData` cru e passaram a montar payload sanitizado antes do salvamento.
+- Os tres formularios passaram a aceitar aliases do Visualizador Universal quando aplicavel (`item`, `data`, `initialData` e `defaultValues`), preservando edicao de registros existentes.
+- Salvamento agora valida permissao de criar/editar, exige contexto grupo/empresa quando necessario e carimba `group_id` e/ou `empresa_id` no fluxo existente.
+- Grupo Empresarial preserva compatibilidade com campos legados `nome_do_grupo`/`cnpj_opcional`, filtra empresas pelo grupo atual e reforca vinculacao de empresas com RBAC visual.
+- Empresa passa a sanitizar dados fiscais e certificado digital antes do `onSubmit`, mantendo alerta de vencimento do certificado.
+- Campos, selects, switches, checkboxes e botoes receberam reforco visual de RBAC com `data-permission`, `data-action` e `data-sensitive`.
+- Mantida a Regra-Mae: melhoria feita somente nos formularios existentes, sem duplicar fluxo, tela ou arquivo.
+- Proximo passo sugerido: continuar nos formularios de produtos que ainda aparecem na busca por `onSubmit(formData)`, priorizando `ProdutoForm.jsx` e `ProdutoFormCompleto.jsx`.
+
 ### Cadastros Gerais - Fase 11 Formularios Comerciais/Financeiros com Contexto
 - Segui o proximo passo salvo apos Boletos e WhatsApp, sem criar tela, modulo, componente ou arquivo novo.
 - `SegmentoClienteForm.jsx`, `FilialForm.jsx` e `FormaPagamentoForm.jsx` deixaram de enviar `formData` cru e passaram a montar payload sanitizado antes do salvamento.
