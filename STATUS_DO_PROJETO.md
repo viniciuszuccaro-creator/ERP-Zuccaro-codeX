@@ -1,3 +1,13 @@
+### Cadastros Gerais - Fase 11 Formularios Comerciais/Financeiros com Contexto
+- Segui o proximo passo salvo apos Boletos e WhatsApp, sem criar tela, modulo, componente ou arquivo novo.
+- `SegmentoClienteForm.jsx`, `FilialForm.jsx` e `FormaPagamentoForm.jsx` deixaram de enviar `formData` cru e passaram a montar payload sanitizado antes do salvamento.
+- Os tres formularios passaram a aceitar aliases do Visualizador Universal quando aplicavel (`item`, `data`, `initialData` e `defaultValues`), preservando edicao de registros existentes.
+- Salvamento agora exige contexto grupo/empresa, valida permissao de criar/editar e carimba `group_id` e `empresa_id` no fluxo existente.
+- Filial filtra matrizes pelo grupo atual quando existe contexto, reduzindo mistura de empresas fora do grupo.
+- Campos, selects, switches e botoes receberam reforco visual de RBAC com `data-permission`, `data-action` e `data-sensitive`.
+- Mantida a Regra-Mae: melhoria feita somente nos formularios existentes, sem duplicar fluxo, tela ou arquivo.
+- Proximo passo sugerido: continuar nos formularios restantes que ainda aparecem na busca por `onSubmit(formData)`, priorizando `ContatoB2BForm.jsx`, `EmpresaForm.jsx`, `GrupoEmpresarialForm.jsx` e produtos.
+
 ### Cadastros Gerais - Fase 11 Boletos e WhatsApp com Contexto e RBAC
 - Segui o proximo passo salvo apos integracoes, sem criar tela, modulo, componente ou arquivo novo.
 - `ConfiguracaoBoletosForm.jsx` passou a aceitar aliases do Visualizador Universal (`item`, `data`, `initialData` e `defaultValues`), evitando perda de dados em edicao.
