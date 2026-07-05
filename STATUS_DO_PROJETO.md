@@ -1,3 +1,11 @@
+### Cadastros Gerais - Fase 11 Bloco Tecnologia com Auditoria Detalhada
+- Segui o proximo passo salvo apos `Bloco5Organizacional`, sem criar tela, modulo, componente ou arquivo novo.
+- `Bloco6Tecnologia.jsx` passou a auditar abertura de APIs Externas, Canais Chatbot, Intents, Gateways de Pagamento, Jobs Agendados, Webhooks, Configuracoes NF-e e Eventos/Notificacoes com contexto multiempresa detalhado.
+- Bloqueios por falta de contexto ou permissao agora registram motivo padronizado, `groupId`, `empresaId`, nome do grupo/empresa, titulo, permissao de Cadastros, permissao alternativa Sistema e total conhecido da entidade.
+- Filtro aplicado no bloco Tecnologia, IA & Parametros agora gera auditoria com termo sanitizado, total de itens do bloco, total filtrado e entidades filtradas.
+- O fluxo visual, cards, botoes, janelas flutuantes e visualizadores existentes foram preservados.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando RBAC, seguranca, auditoria e multiempresa, sem criar duplicidade.
+- Proximo passo sugerido: concluir a varredura de Cadastros Gerais revisando `VisualizadorUniversalEntidadeV24` e formularios mais sensiveis para padronizar salvar/editar/excluir com auditoria antes/depois e contexto obrigatorio.
 ### Cadastros Gerais - Fase 11 Bloco Organizacional com Auditoria Detalhada
 - Segui o proximo passo salvo apos `Bloco4Logistica`, sem criar tela, modulo, componente ou arquivo novo.
 - `Bloco5Organizacional.jsx` passou a auditar abertura de Grupos Empresariais, Empresas, Departamentos, Cargos, Turnos e Perfis de Acesso com contexto multiempresa detalhado.
