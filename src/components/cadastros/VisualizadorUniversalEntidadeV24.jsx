@@ -244,26 +244,6 @@ export default function VisualizadorUniversalEntidadeV24({
   const canCreateCadastro = canCreate("Cadastros", ENTITY) || canCreate("Cadastros", null);
   const canEditCadastro = canEdit("Cadastros", ENTITY) || canEdit("Cadastros", null);
   const canDeleteCadastro = canDelete("Cadastros", ENTITY) || canDelete("Cadastros", null);
-  const auditCadastroEvent = useCallback(async function(acao, descricao, extra) {
-    try {
-      const operador = await base44.auth.me().catch(function() { return null; });
-      await createInContext("AuditLog", {
-        usuario: operador?.full_name || operador?.email || "Usuario local",
-        usuario_id: operador?.id || null,
-        acao,
-        modulo: "Cadastros Gerais",
-        tipo_auditoria: "cadastro",
-        entidade: ENTITY,
-        descricao,
-        empresa_id: empresaId || null,
-        group_id: groupId || null,
-        grupo_id: groupId || null,
-        dados_novos: extra || null,
-        data_hora: new Date().toISOString(),
-        sucesso: acao !== "Bloqueio"
-      });
-    } catch (_) {}
-  }, [ENTITY, empresaId, groupId, createInContext]);
 
   const COLUMNS = useMemo(function() {
     if (columns && columns.length > 0) return columns;
@@ -312,6 +292,46 @@ export default function VisualizadorUniversalEntidadeV24({
   // Contagem
   const { counts, isLoading: countsLoading } = useEntityCounts(ENTITY ? [ENTITY] : []);
   const totalCount = Number((counts && counts[ENTITY]) || 0);
+
+  const buildAuditPayload = useCallback(function(extra) {
+    return Object.assign({
+      origem: "VisualizadorUniversalEntidadeV24",
+      entidade: ENTITY,
+      titulo: TITULO,
+      contexto_valido: contextoValido,
+      groupId: groupId || null,
+      empresaId: empresaId || null,
+      permissao_visualizar: canViewCadastro,
+      permissao_criar: canCreateCadastro,
+      permissao_editar: canEditCadastro,
+      permissao_excluir: canDeleteCadastro,
+      total_conhecido: totalCount
+    }, extra || {});
+  }, [ENTITY, TITULO, contextoValido, groupId, empresaId, canViewCadastro, canCreateCadastro, canEditCadastro, canDeleteCadastro, totalCount]);
+
+  const auditCadastroEvent = useCallback(async function(acao, descricao, extra) {
+    try {
+      const payload = buildAuditPayload(extra);
+      const operador = await base44.auth.me().catch(function() { return null; });
+      await createInContext("AuditLog", {
+        usuario: operador?.full_name || operador?.email || "Usuario local",
+        usuario_id: operador?.id || null,
+        acao,
+        modulo: "Cadastros Gerais",
+        tipo_auditoria: "cadastro",
+        entidade: ENTITY,
+        descricao,
+        empresa_id: empresaId || null,
+        group_id: groupId || null,
+        grupo_id: groupId || null,
+        dados_anteriores: payload.dados_anteriores || payload.antes || null,
+        dados_novos: payload.dados_novos || payload.depois || payload,
+        data_hora: new Date().toISOString(),
+        sucesso: typeof payload.sucesso === "boolean" ? payload.sucesso : (acao !== "Bloqueio" && acao !== "Falha")
+      });
+    } catch (_) {}
+  }, [ENTITY, empresaId, groupId, createInContext, buildAuditPayload]);
+
 
   const skip = (page - 1) * pageSize;
 
@@ -458,13 +478,29 @@ export default function VisualizadorUniversalEntidadeV24({
   const handlePersistSubmit = useCallback(async function(formData) {
     if (!formData || !ENTITY) return;
     if (formData._action === "delete") {
-      if (!canDeleteCadastro) throw new Error("Sem permissÃ£o para excluir.");
-      if (formData.id) { try { await deleteInContext(ENTITY, formData.id); } catch (_) {} }
+      if (!canDeleteCadastro) {
+        await auditCadastroEvent("Bloqueio", "Tentativa de excluir cadastro pelo formulario sem permissao", { registro_id: formData.id || null, permissao: `Cadastros.${ENTITY}.excluir`, sucesso: false });
+        throw new Error("Sem permissao para excluir.");
+      }
+      if (formData.id) {
+        try {
+          await deleteInContext(ENTITY, formData.id);
+          await auditCadastroEvent("Exclusao", "Cadastro excluido pelo formulario", { registro_id: formData.id, antes: editItem || formData, acao_sensivel: true });
+        } catch (e) {
+          await auditCadastroEvent("Falha", "Falha ao excluir cadastro pelo formulario", { registro_id: formData.id, erro: (e && e.message) || String(e), sucesso: false, acao_sensivel: true });
+        }
+      }
       handleCloseForm(true);
       return;
     }
-    if (editItem && editItem.id && !canEditCadastro) throw new Error("Sem permissÃ£o para editar.");
-    if ((!editItem || !editItem.id) && !canCreateCadastro) throw new Error("Sem permissÃ£o para criar.");
+    if (editItem && editItem.id && !canEditCadastro) {
+      await auditCadastroEvent("Bloqueio", "Tentativa de editar cadastro sem permissao", { registro_id: editItem.id, permissao: `Cadastros.${ENTITY}.editar`, sucesso: false });
+      throw new Error("Sem permissao para editar.");
+    }
+    if ((!editItem || !editItem.id) && !canCreateCadastro) {
+      await auditCadastroEvent("Bloqueio", "Tentativa de criar cadastro sem permissao", { permissao: `Cadastros.${ENTITY}.criar`, sucesso: false });
+      throw new Error("Sem permissao para criar.");
+    }
     setIsSaving(true);
     try {
       const clean = Object.assign({}, formData);
@@ -475,16 +511,19 @@ export default function VisualizadorUniversalEntidadeV24({
       }
       if (editItem && editItem.id) {
         await updateInContext(ENTITY, editItem.id, clean, ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id");
+        await auditCadastroEvent("Edicao", "Cadastro editado pelo formulario", { registro_id: editItem.id, antes: editItem, depois: clean, acao_sensivel: true });
       } else {
-        await createInContext(ENTITY, clean, ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id");
+        const created = await createInContext(ENTITY, clean, ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id");
+        await auditCadastroEvent("Criacao", "Cadastro criado pelo formulario", { registro_id: (created && created.id) || clean.id || null, depois: clean, acao_sensivel: true });
       }
       handleCloseForm(true);
     } catch (e) {
+      await auditCadastroEvent("Falha", "Falha ao salvar cadastro pelo formulario", { registro_id: (editItem && editItem.id) || formData.id || null, erro: (e && e.message) || String(e), sucesso: false, acao_sensivel: true });
       alert("Erro ao salvar: " + ((e && e.message) || String(e)));
     } finally {
       setIsSaving(false);
     }
-  }, [ENTITY, editItem, empresaId, groupId, handleCloseForm, isSimple, canCreateCadastro, canEditCadastro, canDeleteCadastro, createInContext, updateInContext, deleteInContext]);
+  }, [ENTITY, editItem, empresaId, groupId, handleCloseForm, isSimple, canCreateCadastro, canEditCadastro, canDeleteCadastro, createInContext, updateInContext, deleteInContext, auditCadastroEvent]);
 
   const handleNewItem = useCallback(function() {
     if (!contextoValido) {
@@ -533,23 +572,42 @@ export default function VisualizadorUniversalEntidadeV24({
   const handleDelete = useCallback(async function(item) {
     const label = item.nome || item.razao_social || item.nome_completo || item.descricao || item.id;
     if (!window.confirm('Regra-Mae: confirma excluir "' + label + '" de ' + TITULO + '? Esta acao sensivel sera auditada.')) return;
-    if (!canDeleteCadastro) {
-      alert("Sem permissÃ£o para excluir.");
+    if (!contextoValido) {
+      await auditCadastroEvent("Bloqueio", "Tentativa de excluir cadastro sem contexto grupo/empresa", { registro_id: item.id, motivo: "sem_contexto", sucesso: false, acao_sensivel: true });
+      alert("Selecione um grupo ou empresa antes de excluir.");
       return;
     }
-    try { await deleteInContext(ENTITY, item.id); }
-    catch (e) { alert("Erro: " + ((e && e.message) || String(e))); return; }
-    // Atualiza lastGoodData imediatamente (remove item deletado da lista visível)
+    if (!canDeleteCadastro) {
+      await auditCadastroEvent("Bloqueio", "Tentativa de excluir cadastro sem permissao", { registro_id: item.id, permissao: `Cadastros.${ENTITY}.excluir`, sucesso: false, acao_sensivel: true });
+      alert("Sem permissao para excluir.");
+      return;
+    }
+    try {
+      await deleteInContext(ENTITY, item.id);
+      await auditCadastroEvent("Exclusao", "Cadastro excluido pela grade", { registro_id: item.id, antes: item, acao_sensivel: true });
+    }
+    catch (e) {
+      await auditCadastroEvent("Falha", "Falha ao excluir cadastro pela grade", { registro_id: item.id, erro: (e && e.message) || String(e), sucesso: false, acao_sensivel: true });
+      alert("Erro: " + ((e && e.message) || String(e)));
+      return;
+    }
+    // Atualiza lastGoodData imediatamente (remove item deletado da lista visivel)
     lastGoodData.current = lastGoodData.current.filter(function(i) { return i.id !== item.id; });
     setSelectedIds(function(prev) { const n = new Set(prev); n.delete(item.id); return n; });
     if (items.length <= 1 && page > 1) setPage(function(p) { return Math.max(1, p - 1); });
     invalidateAll(queryClient, ENTITY);
-  }, [ENTITY, queryClient, items.length, page, canDeleteCadastro, deleteInContext]);
+  }, [ENTITY, TITULO, queryClient, items.length, page, canDeleteCadastro, contextoValido, deleteInContext, auditCadastroEvent]);
 
   // ── exclusão em massa ────────────────────────────────────────────────────────
   const handleDeleteSelected = useCallback(async function() {
+    if (!contextoValido) {
+      await auditCadastroEvent("Bloqueio", "Tentativa de exclusao em lote sem contexto grupo/empresa", { motivo: "sem_contexto", sucesso: false, acao_sensivel: true });
+      alert("Selecione um grupo ou empresa antes de excluir.");
+      return;
+    }
     if (!canDeleteCadastro) {
-      alert("Sem permissÃ£o para excluir.");
+      await auditCadastroEvent("Bloqueio", "Tentativa de exclusao em lote sem permissao", { permissao: `Cadastros.${ENTITY}.excluir`, sucesso: false, acao_sensivel: true });
+      alert("Sem permissao para excluir.");
       return;
     }
     const effCount = crossPageAll
@@ -592,14 +650,24 @@ export default function VisualizadorUniversalEntidadeV24({
           })
         );
       }
-    } catch (e) { alert("Erro ao excluir: " + ((e && e.message) || String(e))); return; }
+      await auditCadastroEvent("Exclusao em lote", "Cadastros excluidos pela grade", {
+        quantidade: idsToDelete.length,
+        ids_amostra: idsToDelete.slice(0, 50),
+        selecionou_todas_paginas: crossPageAll,
+        acao_sensivel: true
+      });
+    } catch (e) {
+      await auditCadastroEvent("Falha", "Falha na exclusao em lote pela grade", { erro: (e && e.message) || String(e), sucesso: false, acao_sensivel: true });
+      alert("Erro ao excluir: " + ((e && e.message) || String(e)));
+      return;
+    }
 
     setSelectedIds(new Set());
     setDeselectedIds(new Set());
     setCrossPageAll(false);
     setPage(1);
     invalidateAll(queryClient, ENTITY);
-  }, [ENTITY, crossPageAll, totalCount, selectedIds, deselectedIds, readFilter, queryClient, items.length, deleteInContext, canDeleteCadastro]);
+  }, [ENTITY, TITULO, crossPageAll, totalCount, selectedIds, deselectedIds, readFilter, queryClient, items.length, deleteInContext, canDeleteCadastro, contextoValido, auditCadastroEvent]);
 
   // ── seleção ──────────────────────────────────────────────────────────────────
   const isItemSelected = useCallback(function(id) {
@@ -715,7 +783,7 @@ export default function VisualizadorUniversalEntidadeV24({
                 ref={function(el) { if (el) el.indeterminate = somePageSelected && !allPageSelected; }}
                 checked={allPageSelected}
                 onChange={handleToggleSelectPage}
-                disabled={!canDeleteCadastro}
+                disabled={!contextoValido || !canDeleteCadastro}
                 data-permission={`Cadastros.${ENTITY}.excluir`}
                 data-sensitive="true"
                 className="w-4 h-4 cursor-pointer accent-blue-600"
@@ -751,7 +819,7 @@ export default function VisualizadorUniversalEntidadeV24({
                     type="checkbox"
                     checked={checked}
                     onChange={function(e) { handleItemCheck(item.id, e.target.checked); }}
-                    disabled={!canDeleteCadastro}
+                    disabled={!contextoValido || !canDeleteCadastro}
                     data-permission={`Cadastros.${ENTITY}.excluir`}
                     data-sensitive="true"
                     className="w-4 h-4 cursor-pointer accent-blue-600"
@@ -785,7 +853,7 @@ export default function VisualizadorUniversalEntidadeV24({
                       type="button"
                       onClick={function() { handleDelete(item); }}
                       title="Excluir"
-                      disabled={!canDeleteCadastro}
+                      disabled={!contextoValido || !canDeleteCadastro}
                       data-permission={`Cadastros.${ENTITY}.excluir`}
                       data-sensitive="true"
                       className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
@@ -898,7 +966,7 @@ export default function VisualizadorUniversalEntidadeV24({
             size="sm"
             variant="destructive"
             onClick={handleDeleteSelected}
-            disabled={!canDeleteCadastro}
+            disabled={!contextoValido || !canDeleteCadastro}
             className="h-9 rounded-sm gap-1 shrink-0"
             data-permission={`Cadastros.${ENTITY}.excluir`}
             data-action={`Cadastros.${ENTITY}.excluir-selecionados`}

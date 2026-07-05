@@ -1,3 +1,12 @@
+### Cadastros Gerais - Fase 11 Visualizador Universal com Auditoria de Acoes
+- Segui o proximo passo salvo apos o bloco Tecnologia, sem criar tela, modulo, componente ou arquivo novo.
+- `VisualizadorUniversalEntidadeV24.jsx` passou a padronizar o pacote de auditoria com contexto multiempresa, permissoes RBAC, entidade, titulo e total conhecido.
+- Criacao, edicao, exclusao pelo formulario, exclusao pela grade e exclusao em lote agora registram auditoria com antes/depois quando disponivel, usuario, groupId, empresaId e acao sensivel.
+- Bloqueios e falhas de salvar/excluir passaram a gerar `AuditLog` com motivo, permissao esperada e erro retornado, reforcando a Regra-Mae antes de qualquer acao sensivel.
+- Checkboxes e botoes de exclusao agora tambem ficam bloqueados quando nao houver contexto grupo/empresa valido, mantendo o comportamento visual existente.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando RBAC, seguranca, auditoria e multiempresa, sem duplicar fluxo.
+- Proximo passo sugerido: revisar os formularios sensiveis mais usados em Cadastros Gerais para garantir que todos enviem dados limpos e contexto explicito ao visualizador universal.
+
 ### Cadastros Gerais - Fase 11 Bloco Tecnologia com Auditoria Detalhada
 - Segui o proximo passo salvo apos `Bloco5Organizacional`, sem criar tela, modulo, componente ou arquivo novo.
 - `Bloco6Tecnologia.jsx` passou a auditar abertura de APIs Externas, Canais Chatbot, Intents, Gateways de Pagamento, Jobs Agendados, Webhooks, Configuracoes NF-e e Eventos/Notificacoes com contexto multiempresa detalhado.
