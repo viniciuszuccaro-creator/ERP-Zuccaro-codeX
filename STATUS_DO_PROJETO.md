@@ -1,3 +1,12 @@
+### Cadastros Gerais - Fase 11 Bloco Logistica com Auditoria Detalhada
+- Segui o proximo passo salvo apos `Bloco3Financeiro`, sem criar tela, modulo, componente ou arquivo novo.
+- `Bloco4Logistica.jsx` passou a auditar abertura de Veiculos, Motoristas, Tipos de Frete, Locais de Estoque, Rotas Padrao e Modelos de Documento com contexto multiempresa detalhado.
+- Bloqueios por falta de contexto ou permissao agora registram motivo padronizado, `groupId`, `empresaId`, nome do grupo/empresa, titulo, permissao de Cadastros, permissao alternativa Expedicao e total conhecido da entidade.
+- Filtro aplicado no bloco Logistica, Frotas & Almoxarifado agora gera auditoria com termo sanitizado, total de itens do bloco, total filtrado e entidades filtradas.
+- O botao existente `App Motorista` agora tambem audita visualizacao e bloqueios, preservando a mesma janela flutuante do app.
+- O fluxo visual, cards, botoes, janelas flutuantes e visualizadores existentes foram preservados.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando RBAC, seguranca, auditoria e multiempresa, sem criar duplicidade.
+- Proximo passo sugerido: continuar em Cadastros Gerais revisando `Bloco5Organizacional`, mantendo o mesmo padrao de auditoria/contexto nos itens internos.
 ### Cadastros Gerais - Fase 11 Bloco Financeiro/Fiscal com Auditoria Detalhada
 - Segui o proximo passo salvo como `Bloco3Fiscal`; no projeto existente o arquivo correto e `Bloco3Financeiro.jsx`, sem criar tela, modulo, componente ou arquivo novo.
 - `Bloco3Financeiro.jsx` passou a auditar abertura de Bancos, Formas de Pagamento, Plano de Contas, Centros, Tipos de Despesa, Moedas, Operadores, Despesas Recorrentes, Tabelas Fiscais e Condicoes Comerciais com contexto multiempresa detalhado.
