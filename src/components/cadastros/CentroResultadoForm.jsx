@@ -6,15 +6,21 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Target } from 'lucide-react';
 import usePermissions from '@/components/lib/usePermissions';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
-export default function CentroResultadoForm({ centro, centroResultado, item, data, onSubmit, onSave, onClose, windowMode = false }) {
-  const dadosIniciais = item || data || centroResultado || centro;
+const sanitizeText = (value, max = 255) => String(value ?? '').replace(/[<>]/g, '').slice(0, max).trim();
+const sanitizeCode = (value) => String(value ?? '').replace(/[^0-9A-Za-z._-]/g, '').slice(0, 40).trim().toUpperCase();
+
+export default function CentroResultadoForm({ centro, centroResultado, item, data, initialData, defaultValues, onSubmit, onSave, onClose, windowMode = false }) {
+  const dadosIniciais = item || data || initialData || defaultValues || centroResultado || centro;
   const { canCreate, canEdit } = usePermissions();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = canCreate("Cadastros", "CentroResultado") || canCreate("Financeiro", "CentroResultado") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "CentroResultado") || canEdit("Financeiro", "CentroResultado") || canEdit("Cadastros", null);
-  const [formData, setFormData] = useState(dadosIniciais || {
-    codigo: '', nome: '', descricao: '', ativo: true
-  });
+  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
+  const [formData, setFormData] = useState(dadosIniciais || { codigo: '', nome: '', descricao: '', ativo: true });
 
   useEffect(() => {
     if (dadosIniciais?.id) setFormData({ ...dadosIniciais });
@@ -22,17 +28,28 @@ export default function CentroResultadoForm({ centro, centroResultado, item, dat
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (dadosIniciais?.id && !podeEditar) {
-      alert("Sem permissao para editar centros de resultado.");
+    if (!podeSalvar) {
+      alert(dadosIniciais?.id ? "Sem permissao para editar centros de resultado." : "Sem permissao para criar centros de resultado.");
       return;
     }
-    if (!dadosIniciais?.id && !podeCriar) {
-      alert("Sem permissao para criar centros de resultado.");
+    if (!contextoValido) {
+      alert("Selecione um grupo ou empresa antes de salvar.");
       return;
     }
-    if (onSubmit) {
-      onSubmit(formData);
-    } else {
+    const payload = {
+      ...formData,
+      codigo: sanitizeCode(formData.codigo),
+      nome: sanitizeText(formData.nome, 180),
+      descricao: sanitizeText(formData.descricao, 1000),
+      group_id: groupId || formData.group_id,
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id
+    };
+    if (!payload.codigo || !payload.nome) {
+      alert('Preencha codigo e nome.');
+      return;
+    }
+    if (onSubmit) onSubmit(payload);
+    else {
       if (onSave) onSave();
       if (onClose) onClose();
     }
@@ -42,32 +59,26 @@ export default function CentroResultadoForm({ centro, centroResultado, item, dat
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label>Código *</Label>
-          <Input value={formData.codigo} onChange={(e) => setFormData({ ...formData, codigo: e.target.value })} required />
+          <Label>Codigo *</Label>
+          <Input value={formData.codigo} onChange={(e) => setFormData({ ...formData, codigo: e.target.value })} required disabled={!podeSalvar} data-permission="Cadastros.CentroResultado.editar" data-action="editar-codigo-centro-resultado" data-sensitive />
         </div>
         <div>
           <Label>Nome *</Label>
-          <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} required />
+          <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} required disabled={!podeSalvar} data-permission="Cadastros.CentroResultado.editar" data-action="editar-nome-centro-resultado" data-sensitive />
         </div>
       </div>
 
       <div>
-        <Label>Descrição</Label>
-        <Textarea value={formData.descricao || ''} onChange={(e) => setFormData({ ...formData, descricao: e.target.value })} rows={2} />
+        <Label>Descricao</Label>
+        <Textarea value={formData.descricao || ''} onChange={(e) => setFormData({ ...formData, descricao: e.target.value })} rows={2} disabled={!podeSalvar} data-permission="Cadastros.CentroResultado.editar" data-action="editar-descricao-centro-resultado" data-sensitive />
       </div>
 
       <div className="flex items-center justify-between p-3 border rounded bg-slate-50">
         <Label className="font-semibold">Centro Ativo</Label>
-        <Switch checked={!!formData.ativo} onCheckedChange={(v) => setFormData({ ...formData, ativo: v })} />
+        <Switch checked={!!formData.ativo} onCheckedChange={(v) => setFormData({ ...formData, ativo: v })} disabled={!podeSalvar} data-permission="Cadastros.CentroResultado.alterarStatus" data-action="alternar-status-centro-resultado" data-sensitive />
       </div>
 
-      <Button
-        type="submit"
-        className="w-full bg-teal-600 hover:bg-teal-700"
-        disabled={dadosIniciais?.id ? !podeEditar : !podeCriar}
-        data-permission="Cadastros.CentroResultado.salvar"
-        data-sensitive
-      >
+      <Button type="submit" className="w-full bg-teal-600 hover:bg-teal-700" disabled={!contextoValido || !podeSalvar} data-permission="Cadastros.CentroResultado.salvar" data-action="salvar-centro-resultado" data-sensitive>
         {dadosIniciais ? 'Atualizar' : 'Criar Centro de Resultado'}
       </Button>
     </form>

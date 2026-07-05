@@ -1,3 +1,12 @@
+### Cadastros Gerais - Fase 11 Formularios Operacionais com Contexto e RBAC
+- Segui o proximo passo salvo apos os formularios sensiveis, sem criar tela, modulo, componente ou arquivo novo.
+- `CentroOperacaoForm.jsx`, `CentroResultadoForm.jsx` e `TabelaPrecoForm.jsx` passaram a aceitar aliases do Visualizador Universal (`item`, `data`, `initialData` e `defaultValues`), evitando perda de dados ao editar registros existentes.
+- Os tres formularios agora bloqueiam salvamento sem contexto grupo/empresa e carimbam `group_id` e `empresa_id` no payload enviado ao fluxo existente.
+- Entradas de nomes, codigos, descricoes, datas, endereco e geolocalizacao passaram por sanitizacao local antes do `onSubmit`.
+- Campos, seletores, switches e botoes receberam reforco de RBAC visual com `data-permission`, `data-action` e `data-sensitive`, mantendo layout e componentes existentes.
+- Mantida a Regra-Mae: melhoria feita somente nos formularios existentes, sem duplicar fluxo, tela ou arquivo.
+- Proximo passo sugerido: continuar revisando formularios simples restantes em Cadastros Gerais, especialmente integracoes/boletos/WhatsApp que ainda enviam `formData` cru.
+
 ### Cadastros Gerais - Fase 11 Formularios Sensiveis com Contexto e Sanitizacao
 - Segui o proximo passo salvo apos o Visualizador Universal, sem criar tela, modulo, componente ou arquivo novo.
 - `RepresentanteForm.jsx`, `UsuarioForm.jsx` e `CadastroFiscalForm.jsx` passaram a aceitar os aliases do visualizador universal (`item`, `data`, `initialData` e `defaultValues`), evitando perda de dados ao abrir registros existentes.
