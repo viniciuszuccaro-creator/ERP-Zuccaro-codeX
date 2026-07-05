@@ -1,3 +1,11 @@
+### Cadastros Gerais - Fase 11 Auxiliares de Produto Sanitizados
+- Segui o proximo passo salvo apos o formulario principal de produtos, sem criar tela, modulo, componente ou arquivo novo.
+- `PrecosSection.jsx` e `PesoDimensoesSection.jsx` passaram a converter numeros com helper seguro antes de atualizar o estado do produto.
+- `FiscalContabilSection.jsx` passou a sanitizar codigos fiscais/contabeis e converter aliquotas com helper seguro antes de atualizar o estado.
+- Foram preservados os controles de contexto e RBAC visual ja existentes nos auxiliares de produto.
+- Mantida a Regra-Mae: melhoria feita somente nos componentes existentes de produto, sem duplicar fluxo, tela ou arquivo.
+- Proximo passo sugerido: voltar aos formularios restantes listados em `onSubmit(formData)`, priorizando `CadastroClienteCompleto.jsx`, `CadastroFornecedorCompleto.jsx`, `EmpresaFormCompleto.jsx` e `RegiaoAtendimentoForm.jsx`.
+
 ### Cadastros Gerais - Fase 11 Produtos com Contexto e Sanitizacao
 - Segui o proximo passo salvo apos grupos/empresas/contatos, sem criar tela, modulo, componente ou arquivo novo.
 - `ProdutoForm.jsx` deixou de enviar `formData` cru e passou a montar payload sanitizado antes do `onSubmit`.
