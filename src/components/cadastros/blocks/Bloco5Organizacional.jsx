@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useWindow } from "@/components/lib/useWindow";
@@ -33,7 +33,19 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
   const empresaId = empresaAtual?.id || null;
   const contextoValido = Boolean(groupId || empresaId);
 
-  const registrarAuditoria = async (entidade, acao, sucesso = true) => {
+  const getTotalEntidade = (entidade) => Number(allCounts?.[entidade] || 0);
+
+  const getDadosContexto = () => ({
+    bloco: "Estrutura Organizacional",
+    contexto: grupoAtual?.id ? "grupo" : empresaAtual?.id ? "empresa" : "sem-contexto",
+    contexto_valido: contextoValido,
+    group_id: groupId,
+    empresa_id: empresaId,
+    empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
+    grupo_nome: grupoAtual?.nome || grupoAtual?.nome_grupo || null,
+  });
+
+  const registrarAuditoria = async (entidade, acao, sucesso = true, extras = {}) => {
     try {
       await createInContext("AuditLog", {
         usuario_id: user?.id,
@@ -46,7 +58,15 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
         empresa_id: empresaId,
         group_id: groupId,
         grupo_id: groupId,
-        dados_novos: { bloco: "Estrutura Organizacional", entidade },
+        dados_novos: {
+          ...getDadosContexto(),
+          entidade,
+          permissao: `Cadastros.${entidade}.visualizar`,
+          permissao_alternativa: `Sistema.${entidade}.visualizar`,
+          total_entidade: getTotalEntidade(entidade),
+          contexto_exigido: entidade === "GrupoEmpresarial" ? "grupo" : "group-or-company",
+          ...(extras || {}),
+        },
         data_hora: new Date().toISOString(),
         sucesso,
       });
@@ -60,7 +80,7 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
         description: "Cadastros organizacionais precisam de contexto ativo para abrir.",
         variant: "destructive",
       });
-      registrarAuditoria(entidade, "Bloqueio sem contexto", false);
+      registrarAuditoria(entidade, "Bloqueio sem contexto", false, { motivo: "contexto_obrigatorio", titulo });
       return;
     }
     if (!canViewEntity(entidade)) {
@@ -69,10 +89,10 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
         description: "Seu perfil nao possui permissao para visualizar este cadastro.",
         variant: "destructive",
       });
-      registrarAuditoria(entidade, "Bloqueio por permissao", false);
+      registrarAuditoria(entidade, "Bloqueio por permissao", false, { motivo: "permissao_negada", titulo });
       return;
     }
-    registrarAuditoria(entidade, "Visualizacao");
+    registrarAuditoria(entidade, "Visualizacao", true, { titulo, campos_principais: campos, visualizador: "VisualizadorUniversalEntidadeV24", window_mode: true });
     openWindow(VisualizadorUniversalEntidadeV24, { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true }, { title: titulo, width: 1400, height: 800 });
   };
 
@@ -86,6 +106,18 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
     { k: 'PerfilAcesso',     t: 'Perfis de Acesso',     i: Shield,    c: ['nome_perfil','nivel_perfil','descricao','ativo'],        f: PerfilAcessoForm },
   ];
   const filteredTiles = filterTiles(tiles, searchTerm);
+
+  useEffect(() => {
+    const termo = String(searchTerm || "").trim().replace(/\s+/g, " ").slice(0, 120);
+    if (termo.length < 3) return;
+    void registrarAuditoria("Bloco5Organizacional", "Filtro aplicado", contextoValido, {
+      termo,
+      total_itens_bloco: tiles.length,
+      total_itens_filtrados: filteredTiles.length,
+      entidades_filtradas: filteredTiles.map(({ k }) => k),
+      motivo: contextoValido ? null : "contexto_obrigatorio",
+    });
+  }, [searchTerm, contextoValido, filteredTiles.length]); // eslint-disable-line react-hooks/exhaustive-deps
   const canViewEntity = (entidade) =>
     hasPermission("Cadastros", entidade, "visualizar") ||
     hasPermission("Cadastros", null, "visualizar") ||
