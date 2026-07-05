@@ -1,3 +1,13 @@
+### Cadastros Gerais - Fase 11 Boletos e WhatsApp com Contexto e RBAC
+- Segui o proximo passo salvo apos integracoes, sem criar tela, modulo, componente ou arquivo novo.
+- `ConfiguracaoBoletosForm.jsx` passou a aceitar aliases do Visualizador Universal (`item`, `data`, `initialData` e `defaultValues`), evitando perda de dados em edicao.
+- `ConfiguracaoWhatsAppForm.jsx` passou a aceitar os mesmos aliases e preserva o fluxo atual de criacao/edicao.
+- Os dois formularios agora exigem contexto grupo/empresa antes de salvar e carimbam `group_id` e `empresa_id` no payload enviado ao fluxo existente.
+- Provedor, URLs, tokens, wallet, instancia, telefone, percentuais, prazos, templates e observacoes passam por sanitizacao/conversao antes do `onSubmit`.
+- Campos, switches e botoes receberam reforco visual de RBAC com `data-permission`, `data-action` e `data-sensitive`, bloqueando edicao quando o perfil nao pode criar/editar.
+- Mantida a Regra-Mae: melhoria feita somente nos formularios existentes de Boletos e WhatsApp, sem duplicar fluxo, tela ou arquivo.
+- Proximo passo sugerido: continuar procurando formularios simples restantes em Cadastros Gerais que ainda enviam `formData` cru ou nao bloqueiam salvamento sem contexto.
+
 ### Cadastros Gerais - Fase 11 Integracoes com Contexto e Seguranca
 - Segui o proximo passo salvo apos formularios operacionais, sem criar tela, modulo, componente ou arquivo novo.
 - `ConfiguracaoIntegracaoForm.jsx` passou a aceitar aliases do Visualizador Universal (`item`, `data`, `initialData` e `defaultValues`), evitando perda de dados em edicao.
