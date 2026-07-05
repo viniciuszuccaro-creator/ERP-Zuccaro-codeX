@@ -1,3 +1,11 @@
+### Cadastros Gerais - Fase 11 Bloco Financeiro/Fiscal com Auditoria Detalhada
+- Segui o proximo passo salvo como `Bloco3Fiscal`; no projeto existente o arquivo correto e `Bloco3Financeiro.jsx`, sem criar tela, modulo, componente ou arquivo novo.
+- `Bloco3Financeiro.jsx` passou a auditar abertura de Bancos, Formas de Pagamento, Plano de Contas, Centros, Tipos de Despesa, Moedas, Operadores, Despesas Recorrentes, Tabelas Fiscais e Condicoes Comerciais com contexto multiempresa detalhado.
+- Bloqueios por falta de contexto ou permissao agora registram motivo padronizado, `groupId`, `empresaId`, nome do grupo/empresa, titulo, permissao de Cadastros, permissao alternativa Financeiro e total conhecido da entidade.
+- Filtro aplicado no bloco Financeiro & Fiscal agora gera auditoria com termo sanitizado, total de itens do bloco, total filtrado e entidades filtradas.
+- O fluxo visual, cards, botoes, janelas flutuantes e visualizadores existentes foram preservados.
+- Mantida a Regra-Mae: melhoria feita no componente existente, reforcando RBAC, seguranca, auditoria e multiempresa, sem criar duplicidade.
+- Proximo passo sugerido: continuar em Cadastros Gerais revisando `Bloco4Logistica`, mantendo o mesmo padrao de auditoria/contexto nos itens internos.
 ### Cadastros Gerais - Fase 11 Bloco Produtos com Auditoria Detalhada
 - Segui o proximo passo salvo apos `Bloco1Pessoas`, sem criar tela, modulo, componente ou arquivo novo.
 - `Bloco2Produtos.jsx` passou a auditar abertura de Produtos, Servicos, Setores, Grupos, Marcas, Tabelas, Kits, Catalogo Web e Unidades com contexto multiempresa detalhado.
