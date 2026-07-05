@@ -1,3 +1,13 @@
+### Cadastros Gerais - Fase 11 Empresa Completa com Contexto
+- Segui o proximo passo salvo apos regioes de atendimento, sem criar tela, modulo, componente ou arquivo novo.
+- `EmpresaFormCompleto.jsx` deixou de enviar `formData` cru e passou a montar payload sanitizado antes do `onSubmit`.
+- O formulario completo de empresa agora aceita aliases do Visualizador Universal (`item`, `data`, `initialData` e `defaultValues`), preservando edicao de registros existentes.
+- Salvamento agora valida permissao de criar/editar, exige contexto grupo/empresa e carimba `group_id` e `empresa_id`.
+- Razao social, fantasia, CNPJ, IE, endereco, certificado, configuracao fiscal e webhooks passam por sanitizacao/conversao antes do envio.
+- Exclusao e alternancia de status respeitam permissao e contexto antes da acao.
+- Mantida a Regra-Mae: melhoria feita somente no formulario existente, sem duplicar fluxo, tela ou arquivo.
+- Proximo passo sugerido: continuar em `CadastroClienteCompleto.jsx` e `CadastroFornecedorCompleto.jsx`.
+
 ### Cadastros Gerais - Fase 11 Regioes de Atendimento com Contexto
 - Segui o proximo passo salvo apos auxiliares de produto, sem criar tela, modulo, componente ou arquivo novo.
 - `RegiaoAtendimentoForm.jsx` deixou de enviar `formData` cru e passou a montar payload sanitizado antes do `onSubmit`.

@@ -12,13 +12,32 @@ import { Building2, FileText, MapPin, Webhook, Sparkles, Upload, Calendar, Trash
 import { toast } from "sonner";
 import BuscaCEP from "../comercial/BuscaCEP";
 import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+
+const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
+const sanitizeCode = (value, max = 80) => String(value ?? "").replace(/[^0-9A-Za-z_.\-/\s]/g, "").slice(0, max).trim();
+const sanitizeUrl = (value, max = 500) => String(value ?? "").replace(/[<>\"']/g, "").slice(0, max).trim();
+const toNumber = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
+const sanitizeEndereco = (endereco = {}) => ({
+  logradouro: sanitizeText(endereco.logradouro, 180),
+  numero: sanitizeCode(endereco.numero, 30),
+  complemento: sanitizeText(endereco.complemento, 120),
+  bairro: sanitizeText(endereco.bairro, 120),
+  cidade: sanitizeText(endereco.cidade, 120),
+  estado: sanitizeCode(endereco.estado, 2),
+  cep: sanitizeCode(endereco.cep, 12)
+});
 
 /**
  * Formulário Completo de Empresa - V16.1
  * Com abas internas e IA Fiscal
  */
-export default function EmpresaFormCompleto({ empresa, onSubmit, isSubmitting }) {
+export default function EmpresaFormCompleto({ empresa, item, data, initialData, defaultValues, onSubmit, isSubmitting }) {
   const { canCreate, canEdit, canDelete } = usePermissions();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const dadosIniciaisProps = empresa || item || data || initialData || defaultValues || null;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciaisProps?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciaisProps?.empresa_id || dadosIniciaisProps?.group_id);
   const podeCriar = canCreate("Cadastros", "Empresa") || canCreate("Cadastros", null) || canCreate("Sistema", "Empresas");
   const podeEditar = canEdit("Cadastros", "Empresa") || canEdit("Cadastros", null) || canEdit("Sistema", "Empresas");
   const podeExcluir = canDelete("Cadastros", "Empresa") || canDelete("Cadastros", null) || canDelete("Sistema", "Empresas");
@@ -38,7 +57,7 @@ export default function EmpresaFormCompleto({ empresa, onSubmit, isSubmitting })
     },
     urls_webhook_padrao: {},
     status: 'Ativa',
-    ...empresa
+    ...dadosIniciaisProps
   });
 
   const handleCEPFound = (endereco) => {
@@ -66,21 +85,54 @@ export default function EmpresaFormCompleto({ empresa, onSubmit, isSubmitting })
     toast.success('✅ Certificado enviado! A IA validará o CNPJ e a validade.');
   };
 
+  const buildPayload = () => ({
+    ...formData,
+    razao_social: sanitizeText(formData.razao_social, 180),
+    nome_fantasia: sanitizeText(formData.nome_fantasia, 180),
+    cnpj: sanitizeCode(formData.cnpj, 24),
+    inscricao_estadual: sanitizeCode(formData.inscricao_estadual, 40),
+    regime_tributario: sanitizeText(formData.regime_tributario, 80),
+    endereco: sanitizeEndereco(formData.endereco),
+    certificado_digital: {
+      ...formData.certificado_digital,
+      arquivo_certificado: sanitizeUrl(formData.certificado_digital?.arquivo_certificado, 500),
+      tipo: sanitizeCode(formData.certificado_digital?.tipo || "A1", 20)
+    },
+    configuracao_fiscal: {
+      ambiente_nfe: sanitizeText(formData.configuracao_fiscal?.ambiente_nfe, 80),
+      serie_nfe: sanitizeCode(formData.configuracao_fiscal?.serie_nfe, 20),
+      proximo_numero_nfe: toNumber(formData.configuracao_fiscal?.proximo_numero_nfe, 1)
+    },
+    urls_webhook_padrao: {
+      pagamento_recebido: sanitizeUrl(formData.urls_webhook_padrao?.pagamento_recebido, 500),
+      nfe_emitida: sanitizeUrl(formData.urls_webhook_padrao?.nfe_emitida, 500)
+    },
+    status: sanitizeText(formData.status || "Ativa", 40),
+    group_id: groupId || formData.group_id,
+    empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id
+  });
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (empresa && !podeEditar) {
+    const editando = Boolean(dadosIniciaisProps?.id);
+    if (editando && !podeEditar) {
       toast.error('Seu perfil nao permite editar empresas.');
       return;
     }
-    if (!empresa && !podeCriar) {
+    if (!editando && !podeCriar) {
       toast.error('Seu perfil nao permite criar empresas.');
       return;
     }
-    if (!formData.razao_social || !formData.cnpj) {
-      toast.error('❌ Preencha Razão Social e CNPJ');
+    if (!contextoValido) {
+      toast.error('Selecione um grupo ou empresa antes de salvar a empresa.');
       return;
     }
-    onSubmit(formData);
+    const payload = buildPayload();
+    if (!payload.razao_social || !payload.cnpj) {
+      toast.error('Preencha Razao Social e CNPJ');
+      return;
+    }
+    onSubmit(payload);
   };
 
   const handleExcluir = () => {
@@ -88,11 +140,19 @@ export default function EmpresaFormCompleto({ empresa, onSubmit, isSubmitting })
       toast.error('Seu perfil nao permite excluir empresas.');
       return;
     }
-    if (!window.confirm(`Tem certeza que deseja excluir a empresa "${formData.razao_social}"? Esta ação não pode ser desfeita.`)) return;
-    if (onSubmit) onSubmit({ ...formData, _action: 'delete' });
+    if (!contextoValido) {
+      toast.error('Selecione um grupo ou empresa antes de excluir a empresa.');
+      return;
+    }
+    if (!window.confirm(`Tem certeza que deseja excluir a empresa "${formData.razao_social}"? Esta acao nao pode ser desfeita.`)) return;
+    if (onSubmit) onSubmit({ ...buildPayload(), _action: 'delete' });
   };
 
   const handleAlternarStatus = () => {
+    if (!podeEditar) {
+      toast.error('Seu perfil nao permite alterar status de empresas.');
+      return;
+    }
     setFormData({ ...formData, status: formData.status === 'Ativa' ? 'Inativa' : 'Ativa' });
   };
 
@@ -231,13 +291,13 @@ export default function EmpresaFormCompleto({ empresa, onSubmit, isSubmitting })
       </Tabs>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
-        {empresa && (
+        {dadosIniciaisProps?.id && (
           <>
             <Button
               type="button"
               variant="outline"
               onClick={handleAlternarStatus}
-              disabled={!podeEditar}
+              disabled={!podeEditar || !contextoValido}
               data-permission="Cadastros.Empresa.alterarStatus"
               data-sensitive
               className={formData.status === 'Ativa' ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
@@ -248,7 +308,7 @@ export default function EmpresaFormCompleto({ empresa, onSubmit, isSubmitting })
               type="button"
               variant="destructive"
               onClick={handleExcluir}
-              disabled={!podeExcluir}
+              disabled={!podeExcluir || !contextoValido}
               data-permission="Cadastros.Empresa.excluir"
               data-sensitive
             ><Trash2 className="w-4 h-4 mr-2" />Excluir</Button>
@@ -256,7 +316,7 @@ export default function EmpresaFormCompleto({ empresa, onSubmit, isSubmitting })
         )}
         <Button
           type="submit"
-          disabled={isSubmitting || (empresa ? !podeEditar : !podeCriar)}
+          disabled={isSubmitting || !contextoValido || (dadosIniciaisProps?.id ? !podeEditar : !podeCriar)}
           data-permission="Cadastros.Empresa.salvar"
           data-sensitive
           className="bg-blue-600 hover:bg-blue-700"
