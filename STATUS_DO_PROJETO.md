@@ -1,3 +1,12 @@
+### Cadastros Gerais - Fase 11 Integracoes com Contexto e Seguranca
+- Segui o proximo passo salvo apos formularios operacionais, sem criar tela, modulo, componente ou arquivo novo.
+- `ConfiguracaoIntegracaoForm.jsx` passou a aceitar aliases do Visualizador Universal (`item`, `data`, `initialData` e `defaultValues`), evitando perda de dados em edicao.
+- Salvamento agora exige contexto grupo/empresa, valida permissao de criar/editar e carimba `group_id` e `empresa_id` no payload existente.
+- Marketplace, nome, tipo, descricao, URL, token/API key, timeout, retry e observacoes passam por sanitizacao/conversao antes do `onSubmit`.
+- Campos sensiveis receberam RBAC visual com `data-permission`, `data-action` e `data-sensitive`, preservando o formulario atual.
+- Mantida a Regra-Mae: melhoria feita somente no formulario existente, sem duplicar fluxo, tela ou arquivo.
+- Proximo passo sugerido: continuar em `ConfiguracaoBoletosForm.jsx` e `ConfiguracaoWhatsAppForm.jsx`, que ainda precisam do mesmo padrao.
+
 ### Cadastros Gerais - Fase 11 Formularios Operacionais com Contexto e RBAC
 - Segui o proximo passo salvo apos os formularios sensiveis, sem criar tela, modulo, componente ou arquivo novo.
 - `CentroOperacaoForm.jsx`, `CentroResultadoForm.jsx` e `TabelaPrecoForm.jsx` passaram a aceitar aliases do Visualizador Universal (`item`, `data`, `initialData` e `defaultValues`), evitando perda de dados ao editar registros existentes.
