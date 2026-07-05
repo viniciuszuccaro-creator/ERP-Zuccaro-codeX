@@ -13,6 +13,18 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+
+const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
+const sanitizeCode = (value, max = 80) => String(value ?? "").replace(/[^0-9A-Za-z_.\-/\s#]/g, "").slice(0, max).trim();
+const toNumber = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
+const sanitizeList = (values, max = 100) => Array.isArray(values) ? values.map((value) => sanitizeText(value, 120)).filter(Boolean).slice(0, max) : [];
+const sanitizeCidades = (values) => Array.isArray(values) ? values.map((cidade) => ({
+  cidade: sanitizeText(cidade?.cidade, 120),
+  estado: sanitizeCode(cidade?.estado, 2),
+  cep_inicial: sanitizeCode(cidade?.cep_inicial, 12),
+  cep_final: sanitizeCode(cidade?.cep_final, 12)
+})).filter((cidade) => cidade.cidade && cidade.estado) : [];
 
 const ESTADOS_BRASIL = [
   "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
@@ -20,10 +32,16 @@ const ESTADOS_BRASIL = [
   "RS", "RO", "RR", "SC", "SP", "SE", "TO"
 ];
 
-export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, item, data, open, onOpenChange, onSubmit, onSave, onClose, windowMode = false }) {
-  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
-  const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id);
-  const dadosIniciaisProps = regiaoAtendimento || item || data;
+export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, item, data, initialData, defaultValues, open, onOpenChange, onSubmit, onSave, onClose, windowMode = false }) {
+  const { filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { canCreate, canEdit, canDelete } = usePermissions();
+  const dadosIniciaisProps = item || data || initialData || defaultValues || regiaoAtendimento;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciaisProps?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciaisProps?.empresa_id || dadosIniciaisProps?.group_id);
+  const podeCriar = canCreate("Cadastros", "RegiaoAtendimento") || canCreate("Logistica", "RegiaoAtendimento") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "RegiaoAtendimento") || canEdit("Logistica", "RegiaoAtendimento") || canEdit("Cadastros", null);
+  const podeExcluir = canDelete("Cadastros", "RegiaoAtendimento") || canDelete("Logistica", "RegiaoAtendimento") || canDelete("Cadastros", null);
+  const podeSalvar = dadosIniciaisProps?.id || regiaoId ? podeEditar : podeCriar;
   const [formData, setFormData] = useState(dadosIniciaisProps || {
     nome_regiao: "",
     codigo_regiao: "",
@@ -111,34 +129,81 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
     }
   }, [regiaoId, open]);
 
+  const buildPayload = () => ({
+    ...formData,
+    nome_regiao: sanitizeText(formData.nome_regiao, 180),
+    nome: sanitizeText(formData.nome_regiao, 180),
+    codigo_regiao: sanitizeCode(formData.codigo_regiao, 80),
+    descricao: sanitizeText(formData.descricao, 1000),
+    tipo_regiao: sanitizeText(formData.tipo_regiao, 80),
+    estados_abrangidos: sanitizeList(formData.estados_abrangidos, 27),
+    cidades_abrangidas: sanitizeCidades(formData.cidades_abrangidas),
+    cor_identificacao: sanitizeCode(formData.cor_identificacao || "#3B82F6", 12),
+    vendedores_ids: sanitizeList(formData.vendedores_ids, 200),
+    transportadoras_preferenciais_ids: sanitizeList(formData.transportadoras_preferenciais_ids, 200),
+    logistica: {
+      prazo_entrega_padrao_dias: toNumber(formData.logistica?.prazo_entrega_padrao_dias, 0),
+      custo_frete_base: toNumber(formData.logistica?.custo_frete_base, 0),
+      permite_entrega_expressa: Boolean(formData.logistica?.permite_entrega_expressa),
+      prazo_entrega_expressa_dias: toNumber(formData.logistica?.prazo_entrega_expressa_dias, 0),
+      acrescimo_frete_expresso_percentual: toNumber(formData.logistica?.acrescimo_frete_expresso_percentual, 0),
+      distancia_centro_distribuicao_km: toNumber(formData.logistica?.distancia_centro_distribuicao_km, 0),
+      dificuldade_acesso: sanitizeText(formData.logistica?.dificuldade_acesso || "Facil", 40)
+    },
+    comercial: {
+      meta_vendas_mensal: toNumber(formData.comercial?.meta_vendas_mensal, 0),
+      comissao_extra_percentual: toNumber(formData.comercial?.comissao_extra_percentual, 0),
+      desconto_maximo_permitido_percentual: toNumber(formData.comercial?.desconto_maximo_permitido_percentual, 0),
+      exige_aprovacao_acima_valor: toNumber(formData.comercial?.exige_aprovacao_acima_valor, 0),
+      prioridade_atendimento: sanitizeText(formData.comercial?.prioridade_atendimento || "Normal", 40)
+    },
+    ativo: Boolean(formData.ativo),
+    observacoes: sanitizeText(formData.observacoes, 1000),
+    group_id: groupId || formData.group_id,
+    empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id
+  });
+
   const handleSubmit = (e) => {
     e?.preventDefault();
-    if (!contextoValido) {
-      toast.error("Selecione um grupo ou empresa antes de salvar a regiÃ£o.");
+    if (!podeSalvar) {
+      toast.error(dadosIniciaisProps?.id || regiaoId ? "Sem permissao para editar regiao." : "Sem permissao para criar regiao.");
       return;
     }
-    if (!formData.nome_regiao) {
-      toast.error("Nome da região é obrigatório");
+    if (!contextoValido) {
+      toast.error("Selecione um grupo ou empresa antes de salvar a regiao.");
+      return;
+    }
+    const payload = buildPayload();
+    if (!payload.nome_regiao) {
+      toast.error("Nome da regiao e obrigatorio");
       return;
     }
     if (onSubmit) {
-      onSubmit(formData);
+      onSubmit(payload);
       if (onOpenChange) onOpenChange(false);
     } else {
       if (onOpenChange) onOpenChange(false);
-      if (onSave) onSave();
+      if (onSave) onSave(payload);
       if (onClose) onClose();
     }
   };
 
   const handleExcluir = () => {
-    if (window.confirm("Tem certeza que deseja excluir esta região?")) {
-      onSubmit({ ...formData, _delete: true });
+    if (!podeExcluir) {
+      toast.error("Sem permissao para excluir regiao.");
+      return;
+    }
+    if (window.confirm("Tem certeza que deseja excluir esta regiao?")) {
+      onSubmit({ ...buildPayload(), _delete: true });
       onOpenChange(false);
     }
   };
 
   const handleAlternarStatus = () => {
+    if (!podeEditar) {
+      toast.error("Sem permissao para alterar status da regiao.");
+      return;
+    }
     setFormData({ ...formData, ativo: !formData.ativo });
   };
 
@@ -574,19 +639,20 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
                 type="button"
                 variant={formData.ativo ? "outline" : "default"}
                 onClick={handleAlternarStatus}
+                disabled={!podeEditar}
                 data-permission="Cadastros.RegiaoAtendimento.editar"
                 data-action="Cadastros.RegiaoAtendimento.alternar-status"
                 data-sensitive="true"
               >
                 {formData.ativo ? "Inativar" : "Ativar"}
               </Button>
-              <Button type="button" variant="destructive" onClick={handleExcluir} data-permission="Cadastros.RegiaoAtendimento.excluir" data-action="Cadastros.RegiaoAtendimento.excluir" data-sensitive="true">
+              <Button type="button" variant="destructive" onClick={handleExcluir} disabled={!podeExcluir} data-permission="Cadastros.RegiaoAtendimento.excluir" data-action="Cadastros.RegiaoAtendimento.excluir" data-sensitive="true">
                 Excluir
               </Button>
             </>
           )}
         </div>
-        <Button type="submit" disabled={!contextoValido} data-permission="Cadastros.RegiaoAtendimento.editar" data-action="Cadastros.RegiaoAtendimento.salvar" data-sensitive="true">
+        <Button type="submit" disabled={!contextoValido || !podeSalvar} data-permission="Cadastros.RegiaoAtendimento.editar" data-action="Cadastros.RegiaoAtendimento.salvar" data-sensitive="true">
           {regiaoId || dadosIniciaisProps ? "Atualizar" : "Criar"} Região
         </Button>
       </div>

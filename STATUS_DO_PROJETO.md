@@ -1,3 +1,13 @@
+### Cadastros Gerais - Fase 11 Regioes de Atendimento com Contexto
+- Segui o proximo passo salvo apos auxiliares de produto, sem criar tela, modulo, componente ou arquivo novo.
+- `RegiaoAtendimentoForm.jsx` deixou de enviar `formData` cru e passou a montar payload sanitizado antes do `onSubmit`.
+- O formulario passou a aceitar aliases do Visualizador Universal (`item`, `data`, `initialData` e `defaultValues`), preservando edicao de registros existentes.
+- Salvamento agora valida permissao de criar/editar, exige contexto grupo/empresa e carimba `group_id` e `empresa_id`.
+- Estados, cidades/CEPs, logistica, comercial, observacoes, vendedores e transportadoras passam por sanitizacao/conversao antes do envio.
+- Exclusao e alternancia de status respeitam permissao granular antes da acao.
+- Mantida a Regra-Mae: melhoria feita somente no formulario existente, sem duplicar fluxo, tela ou arquivo.
+- Proximo passo sugerido: continuar em `EmpresaFormCompleto.jsx`, `CadastroClienteCompleto.jsx` e `CadastroFornecedorCompleto.jsx`.
+
 ### Cadastros Gerais - Fase 11 Auxiliares de Produto Sanitizados
 - Segui o proximo passo salvo apos o formulario principal de produtos, sem criar tela, modulo, componente ou arquivo novo.
 - `PrecosSection.jsx` e `PesoDimensoesSection.jsx` passaram a converter numeros com helper seguro antes de atualizar o estado do produto.
