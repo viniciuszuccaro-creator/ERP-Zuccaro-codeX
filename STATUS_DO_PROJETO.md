@@ -1,3 +1,13 @@
+### Cadastros Gerais - Fase 11 Fornecedor Completo com Sanitizacao
+- Segui o proximo passo salvo apos Empresa Completa, sem criar tela, modulo, componente ou arquivo novo.
+- `CadastroFornecedorCompleto.jsx` deixou de repassar `formData` cru no callback e passou a usar payload sanitizado.
+- O formulario completo de fornecedor agora aceita aliases do Visualizador Universal (`item`, `data`, `initialData` e `defaultValues`), preservando edicao de registros existentes.
+- Salvamento reforca contexto grupo/empresa, reaplica `group_id`, `empresa_id` e `empresa_dona_id` no payload existente.
+- Nome, razao social, CNPJ, IE, RNTRC, contato, endereco, categoria, prazos, status e avaliacoes passam por sanitizacao/conversao antes do envio.
+- Alternancia de status agora bloqueia perfis sem permissao de editar e respeita contexto visual.
+- Mantida a Regra-Mae: melhoria feita somente no formulario existente, sem duplicar fluxo, tela ou arquivo.
+- Proximo passo sugerido: continuar em `CadastroClienteCompleto.jsx`.
+
 ### Cadastros Gerais - Fase 11 Empresa Completa com Contexto
 - Segui o proximo passo salvo apos regioes de atendimento, sem criar tela, modulo, componente ou arquivo novo.
 - `EmpresaFormCompleto.jsx` deixou de enviar `formData` cru e passou a montar payload sanitizado antes do `onSubmit`.

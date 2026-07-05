@@ -23,8 +23,20 @@ import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 
-export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp, item, data, isOpen, onClose, onSuccess, windowMode = false, onSubmit, onSave }) {
-  const fornecedor = fornecedorProp || item || data || null;
+const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
+const sanitizeCode = (value, max = 80) => String(value ?? "").replace(/[^0-9A-Za-z_.\-/\s@()+]/g, "").slice(0, max).trim();
+const sanitizeEmail = (value) => sanitizeCode(value, 180).toLowerCase();
+const toNumber = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
+const sanitizeAvaliacoes = (values) => Array.isArray(values) ? values.slice(0, 100).map((avaliacao) => ({
+  ...avaliacao,
+  nota: toNumber(avaliacao?.nota, 0),
+  comentario: sanitizeText(avaliacao?.comentario, 1000),
+  avaliador: sanitizeText(avaliacao?.avaliador, 180),
+  ordem_compra_id: sanitizeCode(avaliacao?.ordem_compra_id, 120)
+})) : [];
+
+export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp, item, data, initialData, defaultValues, isOpen, onClose, onSuccess, windowMode = false, onSubmit, onSave }) {
+  const fornecedor = fornecedorProp || item || data || initialData || defaultValues || null;
   const onCloseNorm = onClose || onSave || onSubmit;
   const [activeTab, setActiveTab] = useState("dados-gerais");
   
@@ -38,8 +50,8 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     deleteInContext
   } = useContextoVisual();
   const { canCreate, canEdit, canDelete } = usePermissions();
-  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
-  const contextoValido = Boolean(empresaAtual?.id || groupId);
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || fornecedor?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || fornecedor?.empresa_id || fornecedor?.empresa_dona_id || fornecedor?.group_id);
   const podeCriar = canCreate("Cadastros", "Fornecedor") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Fornecedor") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "Fornecedor") || canDelete("Cadastros", null);
@@ -71,18 +83,41 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     group_id: groupId
   });
 
+  const buildPayload = (data = formData) => ({
+    ...data,
+    nome: sanitizeText(data.nome, 180),
+    razao_social: sanitizeText(data.razao_social, 180),
+    nome_fantasia: sanitizeText(data.nome_fantasia, 180),
+    cnpj: sanitizeCode(data.cnpj, 24),
+    inscricao_estadual: sanitizeCode(data.inscricao_estadual, 40),
+    rntrc: sanitizeCode(data.rntrc, 40),
+    email: sanitizeEmail(data.email),
+    telefone: sanitizeCode(data.telefone, 40),
+    whatsapp: sanitizeCode(data.whatsapp, 40),
+    contato_responsavel: sanitizeText(data.contato_responsavel, 180),
+    endereco: sanitizeText(data.endereco, 300),
+    cidade: sanitizeText(data.cidade, 120),
+    estado: sanitizeCode(data.estado, 2),
+    cep: sanitizeCode(data.cep, 12),
+    tipo_fornecedor: sanitizeText(data.tipo_fornecedor, 80),
+    categoria: sanitizeText(data.categoria, 80),
+    prazo_entrega_padrao: toNumber(data.prazo_entrega_padrao, 0),
+    status_fornecedor: sanitizeText(data.status_fornecedor, 80),
+    status: sanitizeText(data.status || "Ativo", 40),
+    avaliacoes: sanitizeAvaliacoes(data.avaliacoes),
+    nota_media: toNumber(data.nota_media, 0),
+    empresa_id: data.empresa_id || empresaAtual?.id,
+    empresa_dona_id: data.empresa_dona_id || data.empresa_id || empresaAtual?.id,
+    group_id: data.group_id || groupId
+  });
+
   const saveMutation = useMutation({
     mutationFn: async (data) => {
       if (!contextoValido) {
         throw new Error("Selecione um grupo ou empresa antes de salvar o fornecedor.");
       }
 
-      const payload = {
-        ...data,
-        ...(empresaAtual?.id && !data.empresa_id ? { empresa_id: empresaAtual.id } : {}),
-        ...(empresaAtual?.id && !data.empresa_dona_id ? { empresa_dona_id: data.empresa_id || empresaAtual.id } : {}),
-        ...(groupId && !data.group_id ? { group_id: groupId } : {})
-      };
+      const payload = buildPayload(data);
 
       if (fornecedor?.id) {
         if (!podeEditar) throw new Error("Seu perfil nao permite editar fornecedores.");
@@ -96,7 +131,7 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
       queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
       toast({ title: `✅ Fornecedor ${fornecedor?.id ? 'atualizado' : 'criado'} com sucesso!` });
       if (onSuccess) onSuccess();
-      if (onSubmit) onSubmit(formData);
+      if (onSubmit) onSubmit(buildPayload(formData));
       if (onCloseNorm) onCloseNorm();
     },
     onError: (error) => {
@@ -136,12 +171,16 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
   };
 
   const handleAlternarStatus = () => {
+    if (!podeEditar) {
+      toast({ title: "Seu perfil nao permite alterar status de fornecedores.", variant: "destructive" });
+      return;
+    }
     const novoStatus = formData.status === 'Ativo' ? 'Inativo' : 'Ativo';
     setFormData({ ...formData, status: novoStatus });
   };
 
   const handleSave = () => {
-    saveMutation.mutate(formData);
+    saveMutation.mutate(buildPayload(formData));
   };
 
   const handleDadosCNPJ = (dados) => {
@@ -236,6 +275,7 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
                   data-permission="Cadastros.Fornecedor.alterarStatus"
                   data-sensitive
                   onClick={handleAlternarStatus}
+                  disabled={!podeEditar || !contextoValido}
                   className={formData.status === 'Ativo' ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
                 >
                   {formData.status === 'Ativo' ? (
