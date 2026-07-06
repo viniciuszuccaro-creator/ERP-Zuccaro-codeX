@@ -1,3 +1,12 @@
+### Cadastros Gerais - Fase 11 Representante Completo com Contexto
+- Segui o proximo passo salvo apos Cliente Completo, sem criar tela, modulo, componente ou arquivo novo.
+- `RepresentanteFormCompleto.jsx` passou a aceitar aliases do Visualizador Universal (`item`, `data`, `initialData` e `defaultValues`), preservando edicao de registros existentes.
+- Salvamento deixou de enviar estado cru e passou a montar payload sanitizado antes do `createInContext`, `updateInContext` e callback `onSubmit`.
+- Dados pessoais/juridicos, contato, endereco, regioes de atendimento, comissao, dados bancarios, contrato, status e observacoes passam por sanitizacao/conversao antes do envio.
+- Exclusao e alteracao de status agora exigem contexto grupo/empresa e respeitam RBAC granular antes da acao.
+- Mantida a Regra-Mae: melhoria feita somente no formulario existente, reforcando multiempresa, RBAC e seguranca sem duplicar fluxo.
+- Proximo passo sugerido: revisar `ProdutoFormCompleto.jsx`, que ainda repassa `formData` direto no wrapper de submit.
+
 ### Cadastros Gerais - Fase 11 Cliente Completo com Contexto
 - Segui o proximo passo salvo apos Fornecedor Completo, sem criar tela, modulo, componente ou arquivo novo.
 - `CadastroClienteCompleto.jsx` passou a aceitar aliases do Visualizador Universal (`item`, `data`, `initialData` e `defaultValues`), preservando edicao de registros existentes.

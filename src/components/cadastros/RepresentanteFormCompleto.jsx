@@ -30,8 +30,30 @@ import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 
-export default function RepresentanteFormCompleto({ representante: representanteProp, item, data, isOpen, onClose, onSuccess, windowMode = false, onSave, onSubmit }) {
-  const representante = representanteProp || item || data || null;
+const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
+const sanitizeCode = (value, max = 80) => String(value ?? "").replace(/[^0-9A-Za-z_.\-/\s@()+]/g, "").slice(0, max).trim();
+const toNumber = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
+const sanitizeEndereco = (endereco = {}) => ({
+  ...endereco,
+  cep: sanitizeCode(endereco.cep, 12),
+  logradouro: sanitizeText(endereco.logradouro, 180),
+  numero: sanitizeCode(endereco.numero, 30),
+  bairro: sanitizeText(endereco.bairro, 120),
+  cidade: sanitizeText(endereco.cidade, 120),
+  estado: sanitizeCode(endereco.estado, 2)
+});
+const sanitizeDadosBancarios = (dados = {}) => ({
+  ...dados,
+  banco: sanitizeText(dados.banco, 120),
+  agencia: sanitizeCode(dados.agencia, 30),
+  conta: sanitizeCode(dados.conta, 40),
+  tipo_conta: sanitizeText(dados.tipo_conta || "Corrente", 40),
+  pix_chave: sanitizeText(dados.pix_chave, 180),
+  tipo_pix: sanitizeText(dados.tipo_pix || "CPF", 40)
+});
+
+export default function RepresentanteFormCompleto({ representante: representanteProp, item, data, initialData, defaultValues, isOpen, onClose, onSuccess, windowMode = false, onSave, onSubmit }) {
+  const representante = representanteProp || item || data || initialData || defaultValues || null;
   const onCloseNorm = onClose || onSave || onSubmit;
   const [activeTab, setActiveTab] = useState("dados-gerais");
   const { toast } = useToast();
@@ -45,9 +67,9 @@ export default function RepresentanteFormCompleto({ representante: representante
     deleteInContext
   } = useContextoVisual();
   const { canCreate, canEdit, canDelete } = usePermissions();
-  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || representante?.group_id || null;
   const contextKey = empresaAtual?.id || groupId || "sem-contexto";
-  const contextoValido = contextKey !== "sem-contexto";
+  const contextoValido = Boolean(empresaAtual?.id || groupId || representante?.empresa_id || representante?.group_id);
   const podeCriar = canCreate("Cadastros", "Representante") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Representante") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "Representante") || canDelete("Cadastros", null);
@@ -95,6 +117,38 @@ export default function RepresentanteFormCompleto({ representante: representante
     group_id: groupId
   });
 
+  const buildPayload = (data = formData) => ({
+    ...data,
+    tipo_pessoa: sanitizeText(data.tipo_pessoa || "Pessoa Fisica", 60),
+    tipo_representante: sanitizeText(data.tipo_representante || "Representante Comercial", 100),
+    nome: sanitizeText(data.nome, 180),
+    razao_social: sanitizeText(data.razao_social, 180),
+    cpf: sanitizeCode(data.cpf, 18),
+    cnpj: sanitizeCode(data.cnpj, 24),
+    crea_cau: sanitizeCode(data.crea_cau, 40),
+    registro_profissional: sanitizeCode(data.registro_profissional, 80),
+    email: sanitizeText(data.email, 180).toLowerCase(),
+    telefone: sanitizeCode(data.telefone, 40),
+    whatsapp: sanitizeCode(data.whatsapp, 40),
+    endereco: sanitizeEndereco(data.endereco),
+    regioes_atendimento: Array.isArray(data.regioes_atendimento)
+      ? data.regioes_atendimento.slice(0, 100).map((id) => sanitizeCode(id, 120)).filter(Boolean)
+      : [],
+    tipo_comissao: sanitizeText(data.tipo_comissao || "Percentual", 60),
+    percentual_comissao: toNumber(data.percentual_comissao, 0),
+    valor_fixo_comissao: toNumber(data.valor_fixo_comissao, 0),
+    percentual_cashback: toNumber(data.percentual_cashback, 0),
+    limite_mensal_comissao: toNumber(data.limite_mensal_comissao, 0),
+    forma_pagamento_comissao: sanitizeText(data.forma_pagamento_comissao || "PIX", 60),
+    dados_bancarios: sanitizeDadosBancarios(data.dados_bancarios),
+    data_inicio_contrato: sanitizeCode(data.data_inicio_contrato, 20),
+    data_fim_contrato: sanitizeCode(data.data_fim_contrato, 20),
+    status: sanitizeText(data.status || "Ativo", 40),
+    observacoes: sanitizeText(data.observacoes, 2000),
+    empresa_id: data.empresa_id || empresaAtual?.id,
+    group_id: data.group_id || groupId
+  });
+
   const { data: regioes = [] } = useQuery({
     queryKey: ['regioes', contextKey],
     queryFn: () => filterInContext('RegiaoAtendimento', {}, 'nome', 200),
@@ -129,11 +183,7 @@ export default function RepresentanteFormCompleto({ representante: representante
       if (!contextoValido) {
         throw new Error("Selecione um grupo ou empresa antes de salvar o representante.");
       }
-      const payload = {
-        ...data,
-        ...(empresaAtual?.id && !data.empresa_id ? { empresa_id: empresaAtual.id } : {}),
-        ...(groupId && !data.group_id ? { group_id: groupId } : {})
-      };
+      const payload = buildPayload(data);
 
       if (representante?.id) {
         if (!podeEditar) throw new Error("Seu perfil nao permite editar representantes.");
@@ -142,10 +192,11 @@ export default function RepresentanteFormCompleto({ representante: representante
       if (!podeCriar) throw new Error("Seu perfil nao permite criar representantes.");
       return createInContext('Representante', payload);
     },
-    onSuccess: () => {
+    onSuccess: (_result, savedPayload) => {
       queryClient.invalidateQueries({ queryKey: ['representantes'] });
       toast({ title: `✅ Representante ${representante?.id ? 'atualizado' : 'criado'} com sucesso!` });
       if (onSuccess) onSuccess();
+      if (onSubmit) onSubmit(savedPayload || buildPayload(formData));
       if (onCloseNorm) onCloseNorm();
     },
     onError: (error) => {
@@ -155,6 +206,7 @@ export default function RepresentanteFormCompleto({ representante: representante
 
   const deleteMutation = useMutation({
     mutationFn: (id) => {
+      if (!contextoValido) throw new Error("Selecione um grupo ou empresa antes de excluir representantes.");
       if (!podeExcluir) throw new Error("Seu perfil nao permite excluir representantes.");
       return deleteInContext('Representante', id);
     },
@@ -166,13 +218,21 @@ export default function RepresentanteFormCompleto({ representante: representante
     }
   });
 
-  const handleSave = () => saveMutation.mutate(formData);
+  const handleSave = () => saveMutation.mutate(buildPayload(formData));
   const handleExcluir = () => {
     if (window.confirm(`Excluir "${formData.nome}"?`)) {
       deleteMutation.mutate(representante.id);
     }
   };
   const handleAlternarStatus = () => {
+    if (!podeEditar) {
+      toast({ title: "Seu perfil nao permite alterar status de representantes.", variant: "destructive" });
+      return;
+    }
+    if (!contextoValido) {
+      toast({ title: "Selecione grupo ou empresa antes de alterar status.", variant: "destructive" });
+      return;
+    }
     setFormData({ ...formData, status: formData.status === 'Ativo' ? 'Inativo' : 'Ativo' });
   };
 
