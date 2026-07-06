@@ -40,7 +40,7 @@ export default function GestaoUsuariosAvancada({
   const { user } = useUser();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = contexto === "grupo" ? null : empresaAtual?.id || null;
-  const contextoValido = contexto === "grupo" ? !!groupId : !!empresaId;
+  const contextoValido = contexto === "grupo" ? !!groupId : !!(groupId && empresaId);
   const controlesDesabilitados = !contextoValido || !canEdit;
   const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
     .map((item) => (typeof item === "string" ? item : item?.empresa_id || item?.id))
@@ -112,6 +112,7 @@ export default function GestaoUsuariosAvancada({
         dados_novos: depois,
         detalhes: {
           contexto,
+          contexto_valido: contextoValido,
           groupId,
           empresaId,
           alvo_usuario_id: usuario?.id || null,
@@ -139,6 +140,7 @@ export default function GestaoUsuariosAvancada({
         descricao: motivo,
         dados_novos: {
           contexto,
+          contexto_valido: contextoValido,
           groupId,
           empresaId,
           canEdit,
@@ -172,7 +174,7 @@ export default function GestaoUsuariosAvancada({
   const atualizarUsuarioMutation = useMutation({
     mutationFn: async (data) => {
       if (!contextoValido) {
-        throw new Error("Selecione um grupo ou empresa antes de alterar acesso de usuario.");
+        throw new Error("Selecione um grupo ou uma empresa vinculada ao grupo antes de alterar acesso de usuario.");
       }
       if (!canEdit) {
         throw new Error("Sem permissao para alterar acesso de usuario.");
@@ -286,10 +288,10 @@ export default function GestaoUsuariosAvancada({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!contextoValido) {
-      toast.error("Selecione um grupo ou empresa antes de alterar acesso de usuario.");
+      toast.error("Selecione um grupo ou uma empresa vinculada ao grupo antes de alterar acesso de usuario.");
       void auditarBloqueioUsuario({
         acao: "Bloqueio salvar usuario sem contexto",
-        motivo: "Tentativa de salvar usuario RBAC sem grupo ou empresa ativo."
+        motivo: "Tentativa de salvar usuario RBAC sem grupo ou empresa vinculada ao grupo."
       });
       return;
     }

@@ -1,3 +1,12 @@
+### Administracao do Sistema - Fase 12 Gestao de Acessos com Escopo Estrito
+- Continuei o proximo passo salvo em Administracao do Sistema, sem criar tela, modulo, componente ou arquivo novo.
+- `UsuariosTab.jsx` agora exige escopo multiempresa completo: no Grupo exige `groupId`; na Empresa exige `groupId` e `empresaId`.
+- Convites de usuario passam a auditar `contexto_valido`, motivo padronizado de bloqueio, falhas de convite e e-mail invalido com sucesso/falha explicito.
+- `GestaoUsuariosAvancada.jsx` passou a bloquear alteracao de acesso quando a empresa nao estiver vinculada a um grupo ativo, alinhando salvamento de RBAC com a Regra-Mae multiempresa.
+- Auditoria de alteracao/bloqueio de usuario agora inclui `contexto_valido`, reforcando rastreabilidade de Grupo/Empresa.
+- Mantida a Regra-Mae: melhoria feita somente nos componentes existentes de Gestao de Acessos, sem duplicar fluxo e sem remover funcionalidade.
+- Proximo passo sugerido: continuar em Gestao de Acessos revisando propagacao efetiva de perfis entre Grupo e Empresas e relatorios RBAC.
+
 ### Administracao do Sistema - Fase 12 Ferramentas com Auditoria Robusta
 - Voltei ao proximo passo salvo apos Cadastros Gerais, sem criar tela, modulo, componente ou arquivo novo.
 - `AdminTabs.jsx` manteve a aba existente de Ferramentas e reforcou permissoes granulares `Sistema.Ferramentas.criar/executar/editar`, preservando compatibilidade com permissoes antigas de Configuracoes.

@@ -27,8 +27,12 @@ export default function UsuariosTab() {
   const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
     try { return localStorage.getItem("group_atual_id"); } catch { return null; }
   })();
-  const scopeKey = (contexto === "grupo" ? grupoAtivoId : empresaAtual?.id) || "sem-contexto";
-  const contextoValido = scopeKey !== "sem-contexto";
+  const contextoValido = contexto === "grupo"
+    ? Boolean(grupoAtivoId)
+    : Boolean(grupoAtivoId && empresaAtual?.id);
+  const scopeKey = contextoValido
+    ? (contexto === "grupo" ? grupoAtivoId : empresaAtual?.id)
+    : "sem-contexto";
   const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
     .map((item) => (typeof item === "string" ? item : item?.empresa_id || item?.id))
     .filter(Boolean);
@@ -43,6 +47,7 @@ export default function UsuariosTab() {
     contexto,
     group_id: grupoAtivoId || null,
     empresa_id: contexto === "grupo" ? null : empresaAtual?.id || null,
+    contexto_valido: contextoValido,
     empresas_grupo_ids: contexto === "grupo" ? empresasDoGrupo.map((empresa) => empresa.id).filter(Boolean) : [],
     ...extras
   });
@@ -62,7 +67,7 @@ export default function UsuariosTab() {
       || empresasVinculadas.includes(empresaAtual?.id);
   };
 
-  const auditarUsuario = async ({ acao, descricao, dadosNovos }) => {
+  const auditarUsuario = async ({ acao, descricao, dadosNovos, sucesso = true }) => {
     try {
       await createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || "Usuario local",
@@ -74,6 +79,7 @@ export default function UsuariosTab() {
         entidade: "User",
         descricao,
         dados_novos: dadosNovos || null,
+        sucesso,
         data_hora: new Date().toISOString()
       });
     } catch (error) {
@@ -131,7 +137,8 @@ export default function UsuariosTab() {
       await auditarUsuario({
         acao: "Bloqueio por permissao",
         descricao: "Tentativa de convidar usuario sem permissao.",
-        dadosNovos: dadosContextoConvite()
+        dadosNovos: dadosContextoConvite({ motivo: "permissao_negada" }),
+        sucesso: false
       });
       return;
     }
@@ -140,7 +147,8 @@ export default function UsuariosTab() {
       await auditarUsuario({
         acao: "Bloqueio sem contexto",
         descricao: "Tentativa de convidar usuario sem grupo ou empresa.",
-        dadosNovos: dadosContextoConvite()
+        dadosNovos: dadosContextoConvite({ motivo: "contexto_obrigatorio" }),
+        sucesso: false
       });
       return;
     }
@@ -153,7 +161,8 @@ export default function UsuariosTab() {
       await auditarUsuario({
         acao: "Bloqueio email invalido",
         descricao: "Tentativa de convidar usuario com e-mail invalido.",
-        dadosNovos: dadosContextoConvite({ email })
+        dadosNovos: dadosContextoConvite({ email, motivo: "email_invalido" }),
+        sucesso: false
       });
       return;
     }
@@ -171,7 +180,8 @@ export default function UsuariosTab() {
       await auditarUsuario({
         acao: "Falha no convite",
         descricao: `Falha ao convidar usuario ${email}`,
-        dadosNovos: dadosContextoConvite({ email, erro: e.message })
+        dadosNovos: dadosContextoConvite({ email, erro: e.message }),
+        sucesso: false
       });
       toast.error("Erro ao convidar: " + e.message);
     }
@@ -190,7 +200,7 @@ export default function UsuariosTab() {
     <div className="w-full h-full min-h-0 space-y-4">
       {!contextoValido && (
         <div className="w-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-          Selecione um grupo ou empresa para carregar e alterar usuarios do escopo correto.
+          Selecione um grupo ou uma empresa vinculada ao grupo para carregar e alterar usuarios do escopo correto.
         </div>
       )}
       <div className="flex flex-wrap gap-3 items-center justify-between">
