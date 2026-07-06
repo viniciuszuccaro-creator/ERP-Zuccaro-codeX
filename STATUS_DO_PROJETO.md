@@ -1,3 +1,12 @@
+### Cadastros Gerais - Fase 11 Cliente Completo com Contexto
+- Segui o proximo passo salvo apos Fornecedor Completo, sem criar tela, modulo, componente ou arquivo novo.
+- `CadastroClienteCompleto.jsx` passou a aceitar aliases do Visualizador Universal (`item`, `data`, `initialData` e `defaultValues`), preservando edicao de registros existentes.
+- Salvamento deixou de enviar `formData` cru e passou a montar payload sanitizado antes do `createInContext`, `updateInContext` e callback `onSubmit`.
+- Nome, documentos fiscais, endereco principal, contatos, locais de entrega, condicao comercial, configuracao fiscal, observacoes e documentos passam por sanitizacao/conversao antes do envio.
+- Acoes de salvar, excluir e alterar status agora exigem contexto grupo/empresa e respeitam RBAC granular de criar, editar e excluir.
+- Mantida a Regra-Mae: melhoria feita somente no formulario existente, reforcando multiempresa, RBAC, seguranca e auditoria indireta do fluxo atual.
+- Proximo passo sugerido: continuar buscando formularios restantes em Cadastros Gerais que ainda enviam `formData` cru ou nao bloqueiam acoes sem contexto.
+
 ### Cadastros Gerais - Fase 11 Fornecedor Completo com Sanitizacao
 - Segui o proximo passo salvo apos Empresa Completa, sem criar tela, modulo, componente ou arquivo novo.
 - `CadastroFornecedorCompleto.jsx` deixou de repassar `formData` cru no callback e passou a usar payload sanitizado.

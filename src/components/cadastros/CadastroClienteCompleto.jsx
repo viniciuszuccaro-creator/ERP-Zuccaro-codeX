@@ -39,10 +39,40 @@ const HistoricoOrigemCliente = React.lazy(() => import("@/components/comercial/H
 const TimelineCliente = React.lazy(() => import("@/components/cliente/TimelineCliente").then(m => ({ default: m.default || m.TimelineCliente })));
 const ResumoHistorico = React.lazy(() => import("@/components/cliente/TimelineCliente").then(m => ({ default: m.ResumoHistorico })));
 
+const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
+const sanitizeCode = (value, max = 80) => String(value ?? "").replace(/[^0-9A-Za-z_.\-/\s@()+]/g, "").slice(0, max).trim();
+const sanitizeBoolean = (value) => Boolean(value);
+const toNumber = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
+const sanitizeEndereco = (endereco = {}) => ({
+  ...endereco,
+  cep: sanitizeCode(endereco.cep, 12),
+  logradouro: sanitizeText(endereco.logradouro, 180),
+  numero: sanitizeCode(endereco.numero, 30),
+  complemento: sanitizeText(endereco.complemento, 120),
+  bairro: sanitizeText(endereco.bairro, 120),
+  cidade: sanitizeText(endereco.cidade, 120),
+  estado: sanitizeCode(endereco.estado, 2),
+  latitude: endereco.latitude === null || endereco.latitude === undefined ? null : toNumber(endereco.latitude, null),
+  longitude: endereco.longitude === null || endereco.longitude === undefined ? null : toNumber(endereco.longitude, null),
+  mapa_url: sanitizeText(endereco.mapa_url, 300)
+});
+const sanitizeContatos = (contatos) => Array.isArray(contatos) ? contatos.slice(0, 50).map((contato) => ({
+  ...contato,
+  tipo: sanitizeText(contato?.tipo, 60),
+  valor: sanitizeText(contato?.valor, 180),
+  principal: sanitizeBoolean(contato?.principal)
+})) : [];
+const sanitizeDocumentos = (documentos) => Array.isArray(documentos) ? documentos.slice(0, 100).map((doc) => ({
+  ...doc,
+  nome_arquivo: sanitizeText(doc?.nome_arquivo, 180),
+  tipo: sanitizeText(doc?.tipo, 80),
+  url_arquivo: sanitizeText(doc?.url_arquivo, 500),
+  upload_por: sanitizeText(doc?.upload_por, 180)
+})) : [];
 
-export default function CadastroClienteCompleto({ cliente: clienteProp, item, data, isOpen, onClose, onSuccess, windowMode = false, onSubmit, onSave }) {
+export default function CadastroClienteCompleto({ cliente: clienteProp, item, data, initialData, defaultValues, isOpen, onClose, onSuccess, windowMode = false, onSubmit, onSave }) {
   // Normaliza: aceita tanto "cliente" (legado) quanto "item"/"data" (novo Visualizador)
-  const cliente = clienteProp || item || data || null;
+  const cliente = clienteProp || item || data || initialData || defaultValues || null;
   const onCloseNorm = onClose || onSave || onSubmit;
   const [activeTab, setActiveTab] = useState("dados-gerais");
   const [isSaving, setIsSaving] = useState(false);
@@ -58,9 +88,9 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     deleteInContext
   } = useContextoVisual();
   const { canCreate, canEdit, canDelete } = usePermissions();
-  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || cliente?.group_id || null;
   const contextKey = empresaAtual?.id || groupId || "sem-contexto";
-  const contextoValido = contextKey !== "sem-contexto";
+  const contextoValido = Boolean(empresaAtual?.id || groupId || cliente?.empresa_id || cliente?.group_id);
   const podeCriar = canCreate("Cadastros", "Cliente") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Cliente") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "Cliente") || canDelete("Cadastros", null);
@@ -114,6 +144,53 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     observacoes: "",
     empresa_id: empresaAtual?.id,
     group_id: groupId
+  });
+
+  const buildPayload = (data = formData) => ({
+    ...data,
+    tipo: sanitizeText(data.tipo || "Pessoa Fisica", 40),
+    status: sanitizeText(data.status || "Prospect", 40),
+    nome: sanitizeText(data.nome, 180),
+    razao_social: sanitizeText(data.razao_social, 180),
+    nome_fantasia: sanitizeText(data.nome_fantasia, 180),
+    cpf: sanitizeCode(data.cpf, 18),
+    cnpj: sanitizeCode(data.cnpj, 24),
+    rg: sanitizeCode(data.rg, 30),
+    inscricao_estadual: sanitizeCode(data.inscricao_estadual, 40),
+    inscricao_municipal: sanitizeCode(data.inscricao_municipal, 40),
+    regiao_atendimento: sanitizeText(data.regiao_atendimento, 120),
+    regiao_atendimento_id: sanitizeCode(data.regiao_atendimento_id, 120),
+    vendedor_responsavel: sanitizeText(data.vendedor_responsavel, 180),
+    vendedor_responsavel_id: sanitizeCode(data.vendedor_responsavel_id, 120),
+    indicador_id: sanitizeCode(data.indicador_id, 120),
+    motivo_inatividade: sanitizeText(data.motivo_inatividade, 500),
+    observacoes: sanitizeText(data.observacoes, 2000),
+    endereco_principal: sanitizeEndereco(data.endereco_principal),
+    contatos: sanitizeContatos(data.contatos),
+    locais_entrega: Array.isArray(data.locais_entrega) ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco) : [],
+    condicao_comercial: {
+      ...(data.condicao_comercial || {}),
+      tabela_preco_id: sanitizeCode(data.condicao_comercial?.tabela_preco_id, 120),
+      forma_pagamento_padrao_id: sanitizeCode(data.condicao_comercial?.forma_pagamento_padrao_id, 120),
+      percentual_desconto: toNumber(data.condicao_comercial?.percentual_desconto, 0),
+      condicao_pagamento: sanitizeText(data.condicao_comercial?.condicao_pagamento || "A Vista", 80),
+      limite_credito: toNumber(data.condicao_comercial?.limite_credito, 0),
+      limite_credito_utilizado: toNumber(data.condicao_comercial?.limite_credito_utilizado, 0),
+      situacao_credito: sanitizeText(data.condicao_comercial?.situacao_credito || calcularSituacaoCredito(), 40)
+    },
+    configuracao_fiscal: {
+      ...(data.configuracao_fiscal || {}),
+      regime_tributario: sanitizeText(data.configuracao_fiscal?.regime_tributario || "Simples Nacional", 80),
+      cfop_padrao_venda: sanitizeCode(data.configuracao_fiscal?.cfop_padrao_venda || "5102", 12),
+      contribuinte_icms: sanitizeBoolean(data.configuracao_fiscal?.contribuinte_icms),
+      tipo_contribuinte: sanitizeText(data.configuracao_fiscal?.tipo_contribuinte || "1 - Contribuinte", 80),
+      isento_ipi: sanitizeBoolean(data.configuracao_fiscal?.isento_ipi),
+      isento_icms: sanitizeBoolean(data.configuracao_fiscal?.isento_icms),
+      observacoes_fiscais: sanitizeText(data.configuracao_fiscal?.observacoes_fiscais, 1000)
+    },
+    documentos: sanitizeDocumentos(data.documentos),
+    empresa_id: data.empresa_id || empresaAtual?.id,
+    group_id: data.group_id || groupId
   });
 
   const { data: tabelasPreco = [] } = useQuery({
@@ -185,11 +262,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
         throw new Error("Selecione um grupo ou empresa antes de salvar o cliente.");
       }
 
-      const payload = {
-        ...data,
-        ...(empresaAtual?.id && !data.empresa_id ? { empresa_id: empresaAtual.id } : {}),
-        ...(groupId && !data.group_id ? { group_id: groupId } : {})
-      };
+      const payload = buildPayload(data);
 
       if (cliente?.id) {
         if (!podeEditar) throw new Error("Seu perfil nao permite editar clientes.");
@@ -199,11 +272,11 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       if (!podeCriar) throw new Error("Seu perfil nao permite criar clientes.");
       return createInContext('Cliente', payload);
     },
-    onSuccess: () => {
+    onSuccess: (_result, savedPayload) => {
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
       toast({ title: `✅ Cliente ${cliente?.id ? 'atualizado' : 'criado'} com sucesso!` });
       if (onSuccess) onSuccess();
-      if (onSubmit) onSubmit(formData);
+      if (onSubmit) onSubmit(savedPayload || buildPayload(formData));
       if (onCloseNorm) onCloseNorm();
     },
     onError: (error) => {
@@ -217,6 +290,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
+      if (!contextoValido) throw new Error("Selecione um grupo ou empresa antes de excluir clientes.");
       if (!podeExcluir) throw new Error("Seu perfil nao permite excluir clientes.");
       return deleteInContext('Cliente', id);
     },
@@ -243,13 +317,23 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   };
 
   const handleAlternarStatus = () => {
+    if (!podeEditar) {
+      toast({ title: "Seu perfil nao permite alterar status de clientes.", variant: "destructive" });
+      return;
+    }
+    if (!contextoValido) {
+      toast({ title: "Selecione grupo ou empresa antes de alterar status.", variant: "destructive" });
+      return;
+    }
     const novoStatus = formData.status === 'Ativo' ? 'Inativo' : 'Ativo';
     setFormData({ ...formData, status: novoStatus });
   };
 
   const handleSave = () => {
     setIsSaving(true);
-    saveMutation.mutate(formData);
+    saveMutation.mutate(buildPayload(formData), {
+      onSettled: () => setIsSaving(false)
+    });
   };
 
   const calcularSituacaoCredito = () => {
@@ -412,6 +496,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                                     data-permission="Cadastros.Cliente.alterarStatus"
                                     data-sensitive
                                     onClick={handleAlternarStatus}
+                                    disabled={!podeEditar || !contextoValido}
                                     className={formData.status === 'Ativo' ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
                   >
                     {formData.status === 'Ativo' ? (
@@ -443,7 +528,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 onClick={handleSave}
                 data-permission="Cadastros.Cliente.salvar"
                 data-sensitive
-                disabled={saveMutation.isPending || !contextoValido || (cliente?.id ? !podeEditar : !podeCriar)}
+                disabled={isSaving || saveMutation.isPending || !contextoValido || (cliente?.id ? !podeEditar : !podeCriar)}
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 <Save className="w-4 h-4 mr-2" />
