@@ -1,3 +1,12 @@
+### Administracao do Sistema - Fase 12 Central RBAC com Helpers de Escopo
+- Continuei a refatoracao obrigatoria de `CentralPerfisAcesso.jsx`, sem criar nova tela, modulo ou fluxo.
+- Extraidos helpers puros de escopo para `src/components/sistema/central-perfis-acesso/rbacScopeUtils.js`.
+- `normalizeEmpresaIds`, `perfilNoEscopo` e `usuarioNoEscopo` agora ficam reutilizaveis e isolados da UI, preservando a regra multiempresa Grupo/Empresa.
+- `CentralPerfisAcesso.jsx` passou a importar os helpers e manteve o mesmo comportamento de consulta, fallback filtrado, auditoria, salvamento e exclusao.
+- O componente principal reduziu de 568 para 549 linhas, mantendo `w-full/h-full`, botoes, abas e fluxo atual.
+- Mantida a Regra-Mae: refatoracao feita sobre a central existente, sem remover funcionalidade ou duplicar componente.
+- Proximo passo sugerido: continuar separando helpers de auditoria/salvamento da `CentralPerfisAcesso.jsx` quando for seguro.
+
 ### Administracao do Sistema - Fase 12 Central de Perfis RBAC Refatorada
 - Continuei o proximo passo salvo da Regra-Mae: refatorar `CentralPerfisAcesso.jsx` por estar grande, sem criar nova tela, modulo ou fluxo.
 - Extraida a configuracao estatica de modulos, acoes e classes de cor para `src/components/sistema/central-perfis-acesso/rbacPerfilConfig.jsx`.

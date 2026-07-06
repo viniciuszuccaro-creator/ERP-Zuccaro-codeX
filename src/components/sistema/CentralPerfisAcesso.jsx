@@ -20,6 +20,7 @@ import {
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { ACOES, COR_CLASS, ESTRUTURA_SISTEMA } from "@/components/sistema/central-perfis-acesso/rbacPerfilConfig";
+import { normalizeEmpresaIds, perfilNoEscopo, usuarioNoEscopo } from "@/components/sistema/central-perfis-acesso/rbacScopeUtils";
 
 export default function CentralPerfisAcesso() {
   const [perfilAberto, setPerfilAberto] = useState(null);
@@ -43,9 +44,6 @@ export default function CentralPerfisAcesso() {
     try { return localStorage.getItem('group_atual_id'); } catch { return null; }
   })();
   const empresaAtivaId = contexto === 'grupo' ? null : empresaAtual?.id;
-  const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
-    .map((item) => (typeof item === 'string' ? item : item?.empresa_id || item?.id))
-    .filter(Boolean);
   const empresasGrupoIds = normalizeEmpresaIds(empresasDoGrupo);
   const scopeKey = contexto === 'grupo' ? (grupoAtivoId || 'sem-contexto') : (empresaAtivaId || grupoAtivoId || 'sem-contexto');
   const contextoValido = contexto === 'grupo' ? Boolean(grupoAtivoId) : Boolean(grupoAtivoId && empresaAtivaId);
@@ -86,26 +84,19 @@ export default function CentralPerfisAcesso() {
     }
   };
 
-  const perfilNoEscopo = (perfil) => {
-    if (!perfil) return false;
-    const vinculadas = normalizeEmpresaIds(perfil.empresas_vinculadas || perfil.empresas || perfil.empresas_ids || perfil.empresas_grupo_ids);
-    const perfilGroupId = perfil.group_id || perfil.grupo_id || perfil.groupId || perfil.grupoId;
-    const perfilEmpresaId = perfil.empresa_id || perfil.empresaId || perfil.empresa_atual_id;
-    const temMarcacaoEscopo = Boolean(perfilGroupId || perfilEmpresaId || vinculadas.length);
-    if (!temMarcacaoEscopo) return false;
-    if (contexto === 'grupo') {
-      return perfilGroupId === grupoAtivoId || vinculadas.some((id) => empresasGrupoIds.includes(id));
-    }
-    return perfilGroupId === grupoAtivoId || perfilEmpresaId === empresaAtivaId || vinculadas.includes(empresaAtivaId);
-  };
-
   const { data: perfis = [] } = useQuery({
     queryKey: ['perfis-acesso', scopeKey],
     queryFn: async () => {
       const scoped = contextoValido ? await filterInContext('PerfilAcesso', {}, '-updated_date', 500) : [];
       if (scoped.length) return scoped;
       const rows = await base44.entities.PerfilAcesso.list('-updated_date', 500);
-      const filtrados = rows.filter(perfilNoEscopo);
+      const filtrados = rows.filter((perfil) => perfilNoEscopo({
+        perfil,
+        contexto,
+        grupoAtivoId,
+        empresaAtivaId,
+        empresasGrupoIds,
+      }));
       void auditarPerfil({
         acao: 'Fallback consulta perfis RBAC',
         descricao: 'Consulta de perfis usou fallback direto com filtro de escopo no cliente.',
@@ -120,28 +111,18 @@ export default function CentralPerfisAcesso() {
     },
     enabled: contextoValido,
   });
-  const usuarioNoEscopo = (u) => {
-    if (!u) return false;
-    const vinculadas = normalizeEmpresaIds(u.empresas_vinculadas);
-    const temMarcacaoEscopo = u.group_id || u.grupo_id || u.grupo_atual_id || u.empresa_id || u.empresa_atual_id || vinculadas.length > 0;
-    if (!temMarcacaoEscopo) return true;
-    if (contexto === 'grupo') {
-      const empresasIds = empresasDoGrupo.map((e) => e.id);
-      return u.group_id === grupoAtivoId ||
-        u.grupo_id === grupoAtivoId ||
-        u.grupo_atual_id === grupoAtivoId ||
-        vinculadas.some((id) => empresasIds.includes(id));
-    }
-    return u.empresa_id === empresaAtivaId ||
-      u.empresa_atual_id === empresaAtivaId ||
-      vinculadas.includes(empresaAtivaId);
-  };
 
   const { data: usuarios = [] } = useQuery({
     queryKey: ['usuarios', scopeKey],
     queryFn: async () => {
       const rows = await base44.entities.User.list();
-      return rows.filter(usuarioNoEscopo);
+      return rows.filter((usuario) => usuarioNoEscopo({
+        usuario,
+        contexto,
+        grupoAtivoId,
+        empresaAtivaId,
+        empresasGrupoIds,
+      }));
     },
     enabled: contextoValido,
   });
