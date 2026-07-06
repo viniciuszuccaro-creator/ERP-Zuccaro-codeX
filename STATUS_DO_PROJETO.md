@@ -1,3 +1,12 @@
+### Administracao do Sistema - Fase 12 Ferramentas com Auditoria Robusta
+- Voltei ao proximo passo salvo apos Cadastros Gerais, sem criar tela, modulo, componente ou arquivo novo.
+- `AdminTabs.jsx` manteve a aba existente de Ferramentas e reforcou permissoes granulares `Sistema.Ferramentas.criar/executar/editar`, preservando compatibilidade com permissoes antigas de Configuracoes.
+- Execucoes de seed, dry-run e aplicacao de backfill agora auditam contexto multiempresa completo, payload sanitizado, sucesso/falha e erro quando a funcao falhar.
+- Bloqueios por falta de contexto ou permissao e cancelamento manual do backfill agora ficam registrados em auditoria com `groupId`, `empresaId`, grupo/empresa e motivo.
+- Botoes da aba Ferramentas receberam `data-permission` e `data-context-required` especificos, reforcando RBAC visual e rastreabilidade.
+- Mantida a Regra-Mae: melhoria feita no componente existente, sem duplicar aba, modulo ou fluxo, e sem remover funcionalidades.
+- Proximo passo sugerido: continuar em Administracao do Sistema revisando Gestao de Acessos/RBAC e propagacao Grupo-Empresas.
+
 ### Cadastros Gerais - Fase 11 Produto Completo com Wrapper Seguro
 - Segui o proximo passo salvo apos Representante Completo, sem criar tela, modulo, componente ou arquivo novo.
 - `ProdutoFormCompleto.jsx` deixou de repassar `formData` direto e passou a validar contexto grupo/empresa e permissao de criar/editar antes do callback `onSubmit`.
