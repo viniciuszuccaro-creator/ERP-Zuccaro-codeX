@@ -1,3 +1,13 @@
+### Cadastros Gerais - Fase 11 Produto Completo com Wrapper Seguro
+- Segui o proximo passo salvo apos Representante Completo, sem criar tela, modulo, componente ou arquivo novo.
+- `ProdutoFormCompleto.jsx` deixou de repassar `formData` direto e passou a validar contexto grupo/empresa e permissao de criar/editar antes do callback `onSubmit`.
+- O wrapper completo agora sanitiza descricao, codigo, grupo, unidades, fatores de conversao, medidas, NCM/CEST, status e contexto antes de enviar o payload.
+- Importacoes por NF-e/lote agora passam por sanitizacao e bloqueiam execucao sem contexto ou sem permissao de criar produto.
+- `ProdutoFormHeader.jsx` recebeu bloqueio visual/RBAC nos botoes de importacao, mantendo o componente existente e sem duplicar fluxo.
+- Historico do produto no wrapper completo agora usa o registro normalizado (`dadosIniciais.id`), preservando abertura pelo Visualizador Universal.
+- Mantida a Regra-Mae: melhoria feita somente nos componentes existentes, reforcando multiempresa, RBAC e seguranca.
+- Proximo passo sugerido: procurar novos pontos com `onSubmit(formData)` em Cadastros Gerais e, se nao houver, voltar para Administracao do Sistema.
+
 ### Cadastros Gerais - Fase 11 Representante Completo com Contexto
 - Segui o proximo passo salvo apos Cliente Completo, sem criar tela, modulo, componente ou arquivo novo.
 - `RepresentanteFormCompleto.jsx` passou a aceitar aliases do Visualizador Universal (`item`, `data`, `initialData` e `defaultValues`), preservando edicao de registros existentes.

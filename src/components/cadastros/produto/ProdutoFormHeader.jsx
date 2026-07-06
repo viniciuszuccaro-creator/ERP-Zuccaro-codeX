@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { FileText, Upload } from "lucide-react";
 
-export default function ProdutoFormHeader({ produto, onImportarNFe, onImportarLote }) {
+export default function ProdutoFormHeader({ produto, onImportarNFe, onImportarLote, disabledImportacoes = false }) {
   return (
     <div className="flex justify-between items-center w-full">
       <div>
@@ -17,7 +17,11 @@ export default function ProdutoFormHeader({ produto, onImportarNFe, onImportarLo
           <Button
             variant="outline"
             onClick={onImportarNFe}
+            disabled={disabledImportacoes}
             className="border-purple-300"
+            data-permission="Cadastros.Produto.criar"
+            data-action="importar-produto-nfe"
+            data-sensitive
           >
             <FileText className="w-4 h-4 mr-2" />
             Via NF-e
@@ -25,7 +29,11 @@ export default function ProdutoFormHeader({ produto, onImportarNFe, onImportarLo
           <Button
             variant="outline"
             onClick={onImportarLote}
+            disabled={disabledImportacoes}
             className="border-green-300"
+            data-permission="Cadastros.Produto.criar"
+            data-action="importar-produto-lote"
+            data-sensitive
           >
             <Upload className="w-4 h-4 mr-2" />
             Em Lote
