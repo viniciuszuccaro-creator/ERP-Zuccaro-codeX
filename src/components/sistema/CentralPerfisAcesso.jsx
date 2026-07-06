@@ -69,28 +69,87 @@ export default function CentralPerfisAcesso() {
 
   const queryClient = useQueryClient();
   const { contexto, empresaAtual, grupoAtual, empresasDoGrupo = [], filterInContext, createInContext, updateInContext, deleteInContext } = useContextoVisual();
-  const { hasPermission, isAdmin } = usePermissions();
+  const { hasPermission, isAdmin, user } = usePermissions();
   const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
     try { return localStorage.getItem('group_atual_id'); } catch { return null; }
   })();
   const empresaAtivaId = contexto === 'grupo' ? null : empresaAtual?.id;
-  const scopeKey = empresaAtivaId || grupoAtivoId || 'sem-contexto';
-  const contextoValido = scopeKey !== 'sem-contexto';
-  const podeCriarPerfil = isAdmin() || hasPermission('Sistema', ['Controle de Acesso'], 'criar');
-  const podeEditarPerfil = isAdmin() || hasPermission('Sistema', ['Controle de Acesso'], 'editar');
-  const podeExcluirPerfil = isAdmin() || hasPermission('Sistema', ['Controle de Acesso'], 'excluir');
   const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
     .map((item) => (typeof item === 'string' ? item : item?.empresa_id || item?.id))
     .filter(Boolean);
+  const empresasGrupoIds = normalizeEmpresaIds(empresasDoGrupo);
+  const scopeKey = contexto === 'grupo' ? (grupoAtivoId || 'sem-contexto') : (empresaAtivaId || grupoAtivoId || 'sem-contexto');
+  const contextoValido = contexto === 'grupo' ? Boolean(grupoAtivoId) : Boolean(grupoAtivoId && empresaAtivaId);
+  const podeCriarPerfil = isAdmin() || hasPermission('Sistema', ['Controle de Acesso'], 'criar');
+  const podeEditarPerfil = isAdmin() || hasPermission('Sistema', ['Controle de Acesso'], 'editar');
+  const podeExcluirPerfil = isAdmin() || hasPermission('Sistema', ['Controle de Acesso'], 'excluir');
+
+  const getDadosContextoRBAC = () => ({
+    contexto: contexto || 'sem-contexto',
+    contexto_valido: contextoValido,
+    group_id: grupoAtivoId || null,
+    empresa_id: empresaAtivaId || null,
+    empresas_grupo_ids: empresasGrupoIds,
+    permissao_base: 'Sistema.Controle de Acesso',
+  });
+
+  const auditarPerfil = async ({ acao, descricao, dadosNovos = {}, sucesso = true }) => {
+    try {
+      await createInContext('AuditLog', {
+        usuario: user?.full_name || user?.email || 'Usuario',
+        usuario_id: user?.id || null,
+        group_id: grupoAtivoId || null,
+        empresa_id: empresaAtivaId || null,
+        acao,
+        modulo: 'Sistema',
+        entidade: 'PerfilAcesso',
+        tipo_auditoria: 'seguranca',
+        descricao,
+        dados_novos: {
+          ...getDadosContextoRBAC(),
+          ...(dadosNovos || {}),
+        },
+        sucesso,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn('[RBAC] Falha ao auditar perfil de acesso:', error);
+    }
+  };
+
+  const perfilNoEscopo = (perfil) => {
+    if (!perfil) return false;
+    const vinculadas = normalizeEmpresaIds(perfil.empresas_vinculadas || perfil.empresas || perfil.empresas_ids || perfil.empresas_grupo_ids);
+    const perfilGroupId = perfil.group_id || perfil.grupo_id || perfil.groupId || perfil.grupoId;
+    const perfilEmpresaId = perfil.empresa_id || perfil.empresaId || perfil.empresa_atual_id;
+    const temMarcacaoEscopo = Boolean(perfilGroupId || perfilEmpresaId || vinculadas.length);
+    if (!temMarcacaoEscopo) return false;
+    if (contexto === 'grupo') {
+      return perfilGroupId === grupoAtivoId || vinculadas.some((id) => empresasGrupoIds.includes(id));
+    }
+    return perfilGroupId === grupoAtivoId || perfilEmpresaId === empresaAtivaId || vinculadas.includes(empresaAtivaId);
+  };
 
   const { data: perfis = [] } = useQuery({
     queryKey: ['perfis-acesso', scopeKey],
     queryFn: async () => {
       const scoped = contextoValido ? await filterInContext('PerfilAcesso', {}, '-updated_date', 500) : [];
       if (scoped.length) return scoped;
-      return base44.entities.PerfilAcesso.list('-updated_date', 500);
+      const rows = await base44.entities.PerfilAcesso.list('-updated_date', 500);
+      const filtrados = rows.filter(perfilNoEscopo);
+      void auditarPerfil({
+        acao: 'Fallback consulta perfis RBAC',
+        descricao: 'Consulta de perfis usou fallback direto com filtro de escopo no cliente.',
+        dadosNovos: {
+          total_bruto: rows.length,
+          total_no_escopo: filtrados.length,
+          motivo: 'filterInContext_sem_resultado',
+        },
+        sucesso: true,
+      });
+      return filtrados;
     },
-    enabled: true,
+    enabled: contextoValido,
   });
   const usuarioNoEscopo = (u) => {
     if (!u) return false;
@@ -121,14 +180,53 @@ export default function CentralPerfisAcesso() {
   const salvarPerfilMutation = useMutation({
     mutationFn: async (data) => {
       if (!contextoValido) {
-        throw new Error('Selecione um grupo ou empresa antes de salvar o perfil.');
+        await auditarPerfil({
+          acao: 'Bloqueio sem contexto',
+          descricao: 'Tentativa de salvar perfil RBAC sem contexto multiempresa completo.',
+          dadosNovos: { motivo: 'contexto_obrigatorio', perfil: data?.nome_perfil || null },
+          sucesso: false,
+        });
+        throw new Error(contexto === 'grupo' ? 'Selecione um grupo antes de salvar o perfil.' : 'Selecione uma empresa vinculada a um grupo antes de salvar o perfil.');
       }
 
       const perfilId = perfilAberto?.id;
-      if (perfilId && !perfilAberto.novo) {
-        return updateInContext('PerfilAcesso', perfilId, data);
+      const criando = !perfilId || perfilAberto?.novo;
+      if ((criando && !podeCriarPerfil) || (!criando && !podeEditarPerfil)) {
+        await auditarPerfil({
+          acao: 'Bloqueio por permissao',
+          descricao: 'Tentativa de salvar perfil RBAC sem permissao granular.',
+          dadosNovos: { motivo: 'permissao_negada', perfil_id: perfilId || null, criando },
+          sucesso: false,
+        });
+        throw new Error('Sem permissao para salvar perfil de acesso.');
       }
-      return createInContext('PerfilAcesso', data);
+
+      const payload = {
+        ...data,
+        contexto_valido: contextoValido,
+        group_id: grupoAtivoId || null,
+        grupo_id: grupoAtivoId || null,
+        ...(empresaAtivaId ? { empresa_id: empresaAtivaId } : {}),
+        ...(contexto === 'grupo' ? { empresas_grupo_ids: empresasGrupoIds } : {}),
+      };
+
+      const resultado = criando
+        ? await createInContext('PerfilAcesso', payload)
+        : await updateInContext('PerfilAcesso', perfilId, payload);
+
+      await auditarPerfil({
+        acao: criando ? 'Criacao' : 'Edicao',
+        descricao: criando ? 'Perfil RBAC criado com escopo multiempresa.' : 'Perfil RBAC atualizado com escopo multiempresa.',
+        dadosNovos: {
+          perfil_id: resultado?.id || perfilId || null,
+          nome_perfil: payload.nome_perfil,
+          escopo_acesso: payload.escopo_acesso,
+          permissoes_total: contarPermissoesTotal(),
+        },
+        sucesso: true,
+      });
+
+      return resultado;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['perfis-acesso', scopeKey] });
@@ -140,11 +238,37 @@ export default function CentralPerfisAcesso() {
   });
 
   const excluirPerfilMutation = useMutation({
-    mutationFn: (id) => {
+    mutationFn: async (id) => {
       if (!contextoValido) {
-        throw new Error('Selecione um grupo ou empresa antes de excluir o perfil.');
+        await auditarPerfil({
+          acao: 'Bloqueio sem contexto',
+          descricao: 'Tentativa de excluir perfil RBAC sem contexto multiempresa completo.',
+          dadosNovos: { motivo: 'contexto_obrigatorio', perfil_id: id },
+          sucesso: false,
+        });
+        throw new Error(contexto === 'grupo' ? 'Selecione um grupo antes de excluir o perfil.' : 'Selecione uma empresa vinculada a um grupo antes de excluir o perfil.');
       }
-      return deleteInContext('PerfilAcesso', id);
+      if (!podeExcluirPerfil) {
+        await auditarPerfil({
+          acao: 'Bloqueio por permissao',
+          descricao: 'Tentativa de excluir perfil RBAC sem permissao granular.',
+          dadosNovos: { motivo: 'permissao_negada', perfil_id: id },
+          sucesso: false,
+        });
+        throw new Error('Sem permissao para excluir perfil de acesso.');
+      }
+      const perfil = perfis.find((item) => item.id === id);
+      const resultado = await deleteInContext('PerfilAcesso', id);
+      await auditarPerfil({
+        acao: 'Exclusao',
+        descricao: 'Perfil RBAC excluido apos validacao de escopo e permissao.',
+        dadosNovos: {
+          perfil_id: id,
+          nome_perfil: perfil?.nome_perfil || perfil?.nome || null,
+        },
+        sucesso: true,
+      });
+      return resultado;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['perfis-acesso', scopeKey] });
@@ -269,7 +393,9 @@ export default function CentralPerfisAcesso() {
         <Alert className="border-amber-200 bg-amber-50">
           <AlertTriangle className="w-4 h-4 text-amber-600" />
           <AlertDescription className="text-xs text-amber-800">
-            Selecione um grupo ou empresa para criar, editar ou excluir perfis de acesso no escopo correto.
+            {contexto === 'grupo'
+              ? 'Selecione um grupo para criar, editar ou excluir perfis de acesso no escopo correto.'
+              : 'Selecione uma empresa vinculada a um grupo para criar, editar ou excluir perfis de acesso no escopo correto.'}
           </AlertDescription>
         </Alert>
       )}
@@ -310,7 +436,7 @@ export default function CentralPerfisAcesso() {
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <Badge className="bg-purple-100 text-purple-700 text-xs">{usuarios.filter(u => u.perfil_acesso_id === perfil.id).length} usuários</Badge>
                       <div className="flex gap-1">
-                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" disabled={!podeEditarPerfil} onClick={() => abrirEdicaoPerfil(perfil)} data-action="RBAC.Perfil.editar" data-permission="Sistema.Controle de Acesso.editar" data-sensitive="true">
+                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" disabled={!contextoValido || !podeEditarPerfil} onClick={() => abrirEdicaoPerfil(perfil)} data-action="RBAC.Perfil.editar" data-permission="Sistema.Controle de Acesso.editar" data-context-required="group-or-company" data-sensitive="true">
                           <Edit className="w-3 h-3 mr-1" />Editar
                         </Button>
                         <Button size="sm" variant="destructive" className="h-7 px-2" disabled={excluirPerfilMutation.isPending || !contextoValido || !podeExcluirPerfil} data-action="RBAC.Perfil.excluir" data-permission="Sistema.Controle de Acesso.excluir" data-sensitive="true" onClick={() => {

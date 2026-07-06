@@ -1,3 +1,13 @@
+### Administracao do Sistema - Fase 12 Central de Perfis RBAC com Auditoria
+- Continuei o proximo passo salvo em Gestao de Acessos, sem criar tela, modulo, componente ou arquivo novo.
+- `CentralPerfisAcesso.jsx` agora exige escopo multiempresa completo: no Grupo exige `groupId`; na Empresa exige `groupId` e `empresaId`.
+- Consulta fallback de `PerfilAcesso` deixou de retornar lista global sem filtro e agora filtra por `group_id`, `empresa_id` e empresas vinculadas ao grupo.
+- Salvamento de perfil RBAC passou a bloquear falta de contexto/permissao, carimbar `contexto_valido`, `group_id`, `grupo_id`, `empresa_id` e `empresas_grupo_ids` quando aplicavel.
+- Criacao, edicao, exclusao e bloqueios de perfil RBAC agora geram auditoria com usuario, timestamp, Grupo/Empresa, motivo e totais relevantes.
+- Botao de editar perfil tambem respeita contexto valido e recebeu marcador `data-context-required`.
+- Mantida a Regra-Mae: melhoria feita somente na central existente de perfis, sem duplicar modulo, tela ou componente.
+- Proximo passo sugerido: revisar o componente grande `CentralPerfisAcesso.jsx` para separar funcoes internas quando for seguro, preservando comportamento atual.
+
 ### Administracao do Sistema - Fase 12 Relatorio RBAC com Escopo Estrito
 - Continuei o proximo passo salvo em Gestao de Acessos, sem criar tela, modulo, componente ou arquivo novo.
 - `RelatorioPermissoes.jsx` agora exige escopo multiempresa completo: no Grupo exige `groupId`; na Empresa exige `groupId` e `empresaId`.
