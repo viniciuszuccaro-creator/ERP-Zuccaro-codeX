@@ -24,7 +24,7 @@ export default function SoDResults({ resultado }) {
             <CardContent className="p-4 space-y-1">
               <div className="text-sm font-medium text-slate-800">{c?.perfil_nome || c?.perfil_id || 'Perfil'}</div>
               <div className="text-xs text-slate-600">Tipo: {c?.tipo_conflito || 'Indefinido'}</div>
-              <div className="text-xs text-slate-600">Severidade: {c?.severidade || 'Média'}</div>
+              <div className="text-xs text-slate-600">Severidade: {c?.severidade || 'Media'}</div>
               {c?.descricao && <div className="text-xs text-slate-500">{c.descricao}</div>}
             </CardContent>
           </Card>

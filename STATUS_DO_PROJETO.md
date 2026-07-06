@@ -1,3 +1,13 @@
+### Administracao do Sistema - Fase 12 SoD com Escopo e Propagacao Auditavel
+- Continuei o proximo passo de Gestao de Acessos/RBAC, sem criar tela, modulo, componente ou arquivo novo.
+- `SoDChecker.jsx` agora diferencia a exigencia de contexto: no Grupo exige `groupId`; na Empresa exige `groupId` e `empresaId`.
+- A chamada da analise SoD passou a carregar `empresas_grupo_ids` quando executada no Grupo, preservando rastreabilidade para propagacao Grupo-Empresas.
+- Persistencia de conflitos SoD agora grava contexto, `group_id`, `empresa_id`, empresas do grupo, data da ultima analise e indicador de propagacao auditavel.
+- Auditoria SoD passou a incluir `contexto_valido` e lista de empresas do grupo, reforcando seguranca, RBAC e multiempresa.
+- `SoDResults.jsx` corrigiu texto de severidade com encoding quebrado, mantendo o componente existente.
+- Mantida a Regra-Mae: melhoria feita somente no fluxo SoD existente, sem remover botoes, abas ou funcionalidades.
+- Proximo passo sugerido: continuar em Gestao de Acessos revisando `RelatorioPermissoes` para garantir filtros e auditoria por Grupo/Empresa.
+
 ### Administracao do Sistema - Fase 12 Gestao de Acessos com Escopo Estrito
 - Continuei o proximo passo salvo em Administracao do Sistema, sem criar tela, modulo, componente ou arquivo novo.
 - `UsuariosTab.jsx` agora exige escopo multiempresa completo: no Grupo exige `groupId`; na Empresa exige `groupId` e `empresaId`.

@@ -12,11 +12,18 @@ import { toast } from "sonner";
 export default function SoDChecker() {
   const { isAdmin, hasPermission } = usePermissions();
   const { user } = useUser();
-  const { empresaAtual, grupoAtual, estaNoGrupo, createInContext, updateInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, estaNoGrupo, empresasDoGrupo = [], createInContext, updateInContext } = useContextoVisual();
   const podeExecutar = isAdmin() || hasPermission("Sistema", "Controle de Acesso", "editar");
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = estaNoGrupo ? null : empresaAtual?.id || null;
+  const empresasGrupoIds = (empresasDoGrupo.length ? empresasDoGrupo : grupoAtual?.empresas || [])
+    .map((empresa) => (typeof empresa === "string" ? empresa : empresa?.empresa_id || empresa?.id))
+    .filter(Boolean);
   const hasValidScope = estaNoGrupo ? Boolean(groupId) : Boolean(groupId && empresaId);
+  const contextoLabel = estaNoGrupo ? "grupo" : "empresa";
+  const mensagemContextoObrigatorio = estaNoGrupo
+    ? "Selecione um grupo antes de analisar SoD."
+    : "Selecione uma empresa vinculada a um grupo antes de analisar SoD.";
 
   const [loading, setLoading] = useState(false);
   const [resultado, setResultado] = useState(null);
@@ -24,9 +31,11 @@ export default function SoDChecker() {
   const [persistindo, setPersistindo] = useState(false);
 
   const getDadosContexto = () => ({
-    contexto: estaNoGrupo ? "grupo" : "empresa",
+    contexto: contextoLabel,
+    contexto_valido: hasValidScope,
     group_id: groupId,
     empresa_id: empresaId,
+    empresas_grupo_ids: empresasGrupoIds,
     permissao: "Sistema.Controle de Acesso.editar",
     pode_executar: podeExecutar,
   });
@@ -89,13 +98,14 @@ export default function SoDChecker() {
           dadosNovos: { motivo: "contexto_obrigatorio" },
           sucesso: false,
         });
-        throw new Error("Selecione um grupo e uma empresa antes de analisar SoD.");
+        throw new Error(mensagemContextoObrigatorio);
       }
 
       const { data } = await base44.functions.invoke("sodValidator", {
-        scope: estaNoGrupo ? "grupo" : "empresa",
+        scope: contextoLabel,
         group_id: groupId || undefined,
         empresa_id: empresaId || undefined,
+        empresas_grupo_ids: estaNoGrupo ? empresasGrupoIds : undefined,
         requested_by: user?.id,
       });
 
@@ -103,7 +113,7 @@ export default function SoDChecker() {
       await audit({
         acao: "Visualizacao",
         entidade: "SoD",
-        descricao: `Analise SoD executada (${estaNoGrupo ? "grupo" : "empresa"})`,
+        descricao: `Analise SoD executada (${contextoLabel})`,
         dadosNovos: data || null,
         tipo: "ui",
       });
@@ -148,7 +158,7 @@ export default function SoDChecker() {
           dadosNovos: { motivo: "contexto_obrigatorio" },
           sucesso: false,
         });
-        throw new Error("Selecione um grupo e uma empresa antes de persistir conflitos.");
+        throw new Error(mensagemContextoObrigatorio.replace("analisar", "persistir"));
       }
 
       const conflicts = Array.isArray(resultado?.conflicts) ? resultado.conflicts : [];
@@ -161,6 +171,10 @@ export default function SoDChecker() {
           descricao: c?.descricao,
           severidade: c?.severidade || "Media",
           data_deteccao: new Date().toISOString(),
+          contexto: contextoLabel,
+          group_id: groupId,
+          empresa_id: empresaId,
+          empresas_grupo_ids: estaNoGrupo ? empresasGrupoIds : [],
         });
         return acc;
       }, {});
@@ -169,8 +183,11 @@ export default function SoDChecker() {
       for (const perfilId of ids) {
         await updateInContext('PerfilAcesso', perfilId, {
           conflitos_sod_detectados: porPerfil[perfilId],
+          ultima_analise_sod_em: new Date().toISOString(),
+          ultima_analise_sod_contexto: contextoLabel,
           ...(groupId ? { group_id: groupId } : {}),
           ...(empresaId ? { empresa_id: empresaId } : {}),
+          ...(estaNoGrupo ? { empresas_grupo_ids: empresasGrupoIds } : {}),
         });
       }
 
@@ -178,7 +195,11 @@ export default function SoDChecker() {
         acao: "Edicao",
         entidade: "PerfilAcesso",
         descricao: `Conflitos SoD persistidos para ${ids.length} perfis`,
-        dadosNovos: { perfis_afetados: ids.length, conflitos_por_perfil: porPerfil }
+        dadosNovos: {
+          perfis_afetados: ids.length,
+          conflitos_por_perfil: porPerfil,
+          propagacao_grupo_empresas: estaNoGrupo,
+        }
       });
       toast.success(`Conflitos SoD persistidos em ${ids.length} perfil(is).`);
     } catch (e) {
@@ -225,7 +246,7 @@ export default function SoDChecker() {
 
       {!hasValidScope && (
         <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
-          Selecione um contexto valido antes de executar SoD.
+          {mensagemContextoObrigatorio}
         </div>
       )}
 
