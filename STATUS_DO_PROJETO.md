@@ -1,3 +1,12 @@
+### Administracao do Sistema - Fase 12 Central de Perfis RBAC Refatorada
+- Continuei o proximo passo salvo da Regra-Mae: refatorar `CentralPerfisAcesso.jsx` por estar grande, sem criar nova tela, modulo ou fluxo.
+- Extraida a configuracao estatica de modulos, acoes e classes de cor para `src/components/sistema/central-perfis-acesso/rbacPerfilConfig.jsx`.
+- `CentralPerfisAcesso.jsx` deixou de carregar o mapa completo de estrutura RBAC dentro do componente e passou a importar `ESTRUTURA_SISTEMA`, `ACOES` e `COR_CLASS`.
+- Removido import antigo nao usado de tooltip junto da limpeza de imports, preservando todos os botoes, abas, permissoes e fluxo de salvamento/exclusao.
+- O componente principal reduziu de 599 para 568 linhas e a configuracao ficou isolada em arquivo pequeno de 66 linhas.
+- Mantida a Regra-Mae: refatoracao feita apenas sobre a central existente, sem duplicar funcionalidade e sem remover recursos.
+- Proximo passo sugerido: continuar refatorando `CentralPerfisAcesso.jsx` separando helpers de escopo/auditoria quando for seguro.
+
 ### Administracao do Sistema - Fase 12 Central de Perfis RBAC com Auditoria
 - Continuei o proximo passo salvo em Gestao de Acessos, sem criar tela, modulo, componente ou arquivo novo.
 - `CentralPerfisAcesso.jsx` agora exige escopo multiempresa completo: no Grupo exige `groupId`; na Empresa exige `groupId` e `empresaId`.
