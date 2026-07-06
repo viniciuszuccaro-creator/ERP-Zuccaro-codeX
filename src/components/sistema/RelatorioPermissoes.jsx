@@ -8,17 +8,26 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 
 export default function RelatorioPermissoes({ perfis = [], usuarios = [], empresas = [] }) {
-  const { empresaAtual, grupoAtual, contexto, createInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, empresasDoGrupo = [], createInContext } = useContextoVisual();
   const { user, isAdmin, hasPermission } = usePermissions();
   const grupoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = contexto === "grupo" ? null : empresaAtual?.id || null;
-  const contextoValido = !!(grupoId || empresaId);
+  const contextoValido = contexto === "grupo" ? Boolean(grupoId) : Boolean(grupoId && empresaId);
+  const empresasGrupoIds = (empresasDoGrupo.length ? empresasDoGrupo : empresas)
+    .map((empresa) => (typeof empresa === "string" ? empresa : empresa?.empresa_id || empresa?.id))
+    .filter(Boolean);
   const podeExportar = isAdmin() || hasPermission("Sistema", "Controle de Acesso", "exportar");
+  const mensagemContextoObrigatorio = contexto === "grupo"
+    ? "Selecione um grupo antes de exportar relatorio de permissoes."
+    : "Selecione uma empresa vinculada a um grupo antes de exportar relatorio de permissoes.";
 
   const getResumoContexto = () => ({
     contexto: contexto || "sem-contexto",
+    contexto_valido: contextoValido,
     group_id: grupoId,
     empresa_id: empresaId,
+    empresas_grupo_ids: empresasGrupoIds,
+    empresas_grupo_total: empresasGrupoIds.length,
     empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
     grupo_nome: grupoAtual?.nome || grupoAtual?.nome_grupo || null,
   });
@@ -64,7 +73,7 @@ export default function RelatorioPermissoes({ perfis = [], usuarios = [], empres
   };
   const gerarRelatorio = () => {
     if (!contextoValido) {
-      bloquearExportacao("contexto_obrigatorio", "Selecione um grupo ou empresa antes de exportar.");
+      bloquearExportacao("contexto_obrigatorio", mensagemContextoObrigatorio);
       return;
     }
     if (!podeExportar) {
@@ -79,20 +88,29 @@ export default function RelatorioPermissoes({ perfis = [], usuarios = [], empres
         total_perfis: perfis.length,
         total_usuarios: usuarios.length,
         total_empresas: empresas.length,
+        empresas_grupo_total: empresasGrupoIds.length,
         usuarios_sem_perfil: usuarios.filter(u => !u.perfil_acesso_id).length
       },
       perfis: perfis.map(p => ({
+        id: p.id,
         nome: p.nome_perfil,
         nivel: p.nivel_perfil,
+        group_id: p.group_id || p.grupo_id || grupoId,
+        empresa_id: p.empresa_id || null,
+        empresas_grupo_ids: p.empresas_grupo_ids || empresasGrupoIds,
         usuarios_vinculados: usuarios.filter(u => u.perfil_acesso_id === p.id).length,
         conflitos_sod: p.conflitos_sod_detectados?.length || 0,
         ativo: p.ativo
       })),
       usuarios: usuarios.map(u => ({
+        id: u.id,
         nome: u.full_name,
         email: u.email,
+        group_id: u.group_id || u.grupo_id || u.grupo_atual_id || grupoId,
+        empresa_id: u.empresa_id || u.empresa_atual_id || null,
         perfil: perfis.find(p => p.id === u.perfil_acesso_id)?.nome_perfil || "Sem perfil",
         empresas: u.empresas_vinculadas?.length || 0,
+        empresas_vinculadas: u.empresas_vinculadas || [],
         role: u.role
       }))
     };
@@ -111,7 +129,7 @@ export default function RelatorioPermissoes({ perfis = [], usuarios = [], empres
 
   const gerarRelatorioSimplificado = () => {
     if (!contextoValido) {
-      bloquearExportacao("contexto_obrigatorio", "Selecione um grupo ou empresa antes de exportar.");
+      bloquearExportacao("contexto_obrigatorio", mensagemContextoObrigatorio);
       return;
     }
     if (!podeExportar) {
@@ -122,8 +140,10 @@ export default function RelatorioPermissoes({ perfis = [], usuarios = [], empres
     let texto = `RELATÓRIO DE PERMISSÕES E ACESSOS\n`;
     texto += `Gerado em: ${new Date().toLocaleString('pt-BR')}\n\n`;
     texto += `Contexto: ${contexto || "sem-contexto"}\n`;
+    texto += `Contexto valido: ${contextoValido ? "sim" : "nao"}\n`;
     texto += `GroupId: ${grupoId || "-"}\n`;
     texto += `EmpresaId: ${empresaId || "-"}\n\n`;
+    texto += `Empresas do grupo: ${empresasGrupoIds.length}\n\n`;
     texto += `====================\n`;
     texto += `RESUMO GERAL\n`;
     texto += `====================\n`;
@@ -136,6 +156,8 @@ export default function RelatorioPermissoes({ perfis = [], usuarios = [], empres
     texto += `====================\n`;
     perfis.forEach(p => {
       texto += `\n${p.nome_perfil} (${p.nivel_perfil})\n`;
+      texto += `  GroupId: ${p.group_id || p.grupo_id || grupoId || "-"}\n`;
+      texto += `  EmpresaId: ${p.empresa_id || "-"}\n`;
       texto += `  Status: ${p.ativo ? 'Ativo' : 'Inativo'}\n`;
       texto += `  Usuários: ${usuarios.filter(u => u.perfil_acesso_id === p.id).length}\n`;
       texto += `  Conflitos SoD: ${p.conflitos_sod_detectados?.length || 0}\n`;
@@ -147,6 +169,8 @@ export default function RelatorioPermissoes({ perfis = [], usuarios = [], empres
     usuarios.forEach(u => {
       const perfil = perfis.find(p => p.id === u.perfil_acesso_id);
       texto += `\n${u.full_name} (${u.email})\n`;
+      texto += `  GroupId: ${u.group_id || u.grupo_id || u.grupo_atual_id || grupoId || "-"}\n`;
+      texto += `  EmpresaId: ${u.empresa_id || u.empresa_atual_id || "-"}\n`;
       texto += `  Perfil: ${perfil?.nome_perfil || 'Sem perfil'}\n`;
       texto += `  Role: ${u.role}\n`;
       texto += `  Empresas: ${u.empresas_vinculadas?.length || 0}\n`;
@@ -163,6 +187,7 @@ export default function RelatorioPermissoes({ perfis = [], usuarios = [], empres
       total_perfis: perfis.length,
       total_usuarios: usuarios.length,
       total_empresas: empresas.length,
+      empresas_grupo_total: empresasGrupoIds.length,
     } });
     
     toast.success("Relatório TXT exportado!");
@@ -177,7 +202,7 @@ export default function RelatorioPermissoes({ perfis = [], usuarios = [], empres
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4 space-y-4">
-        <div className="grid grid-cols-3 gap-4 text-center">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
           <div className="p-4 border rounded-lg">
             <Shield className="w-8 h-8 text-blue-600 mx-auto mb-2" />
             <p className="text-2xl font-bold text-slate-900">{perfis.length}</p>
@@ -194,6 +219,12 @@ export default function RelatorioPermissoes({ perfis = [], usuarios = [], empres
             <p className="text-xs text-slate-500">Empresas</p>
           </div>
         </div>
+
+        {!contextoValido && (
+          <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+            {mensagemContextoObrigatorio}
+          </div>
+        )}
 
         <div className="space-y-2">
           <Button

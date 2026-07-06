@@ -1,3 +1,13 @@
+### Administracao do Sistema - Fase 12 Relatorio RBAC com Escopo Estrito
+- Continuei o proximo passo salvo em Gestao de Acessos, sem criar tela, modulo, componente ou arquivo novo.
+- `RelatorioPermissoes.jsx` agora exige escopo multiempresa completo: no Grupo exige `groupId`; na Empresa exige `groupId` e `empresaId`.
+- Exportacoes JSON/TXT passam a registrar `contexto_valido`, `group_id`, `empresa_id`, total e IDs das empresas do grupo.
+- O JSON exportado agora inclui identificadores de perfis/usuarios, vinculos de Grupo/Empresa e empresas vinculadas, reforcando rastreabilidade RBAC.
+- O TXT exportado passou a mostrar GroupId/EmpresaId por perfil e usuario, alem do resumo de empresas do grupo.
+- Bloqueio de exportacao sem contexto usa mensagem especifica para Grupo ou Empresa e fica auditado com motivo padronizado.
+- Mantida a Regra-Mae: melhoria feita somente no componente existente de relatorio RBAC, sem remover botoes ou criar fluxo paralelo.
+- Proximo passo sugerido: continuar em Gestao de Acessos revisando `CentralPerfisAcesso` para propagacao efetiva de perfis entre Grupo e Empresas.
+
 ### Administracao do Sistema - Fase 12 SoD com Escopo e Propagacao Auditavel
 - Continuei o proximo passo de Gestao de Acessos/RBAC, sem criar tela, modulo, componente ou arquivo novo.
 - `SoDChecker.jsx` agora diferencia a exigencia de contexto: no Grupo exige `groupId`; na Empresa exige `groupId` e `empresaId`.
