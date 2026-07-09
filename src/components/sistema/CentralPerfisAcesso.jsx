@@ -20,7 +20,7 @@ import {
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { ACOES, COR_CLASS, ESTRUTURA_SISTEMA } from "@/components/sistema/central-perfis-acesso/rbacPerfilConfig";
-import { buildPerfilRbacPayload, buildRbacContextData, normalizeEmpresaIds, perfilNoEscopo, usuarioNoEscopo } from "@/components/sistema/central-perfis-acesso/rbacScopeUtils";
+import { buildPerfilAuditPayload, buildPerfilRbacPayload, normalizeEmpresaIds, perfilNoEscopo, usuarioNoEscopo } from "@/components/sistema/central-perfis-acesso/rbacScopeUtils";
 
 export default function CentralPerfisAcesso() {
   const [perfilAberto, setPerfilAberto] = useState(null);
@@ -54,23 +54,18 @@ export default function CentralPerfisAcesso() {
 
   const auditarPerfil = async ({ acao, descricao, dadosNovos = {}, sucesso = true }) => {
     try {
-      await createInContext('AuditLog', {
-        usuario: user?.full_name || user?.email || 'Usuario',
-        usuario_id: user?.id || null,
-        group_id: grupoAtivoId || null,
-        empresa_id: empresaAtivaId || null,
+      await createInContext('AuditLog', buildPerfilAuditPayload({
         acao,
-        modulo: 'Sistema',
-        entidade: 'PerfilAcesso',
-        tipo_auditoria: 'seguranca',
         descricao,
-        dados_novos: {
-          ...buildRbacContextData({ contexto, contextoValido, grupoAtivoId, empresaAtivaId, empresasGrupoIds }),
-          ...(dadosNovos || {}),
-        },
+        dadosNovos,
         sucesso,
-        data_hora: new Date().toISOString(),
-      });
+        user,
+        contexto,
+        contextoValido,
+        grupoAtivoId,
+        empresaAtivaId,
+        empresasGrupoIds,
+      }));
     } catch (error) {
       console.warn('[RBAC] Falha ao auditar perfil de acesso:', error);
     }

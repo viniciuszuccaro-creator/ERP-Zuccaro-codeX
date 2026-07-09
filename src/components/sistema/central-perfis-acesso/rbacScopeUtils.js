@@ -55,6 +55,36 @@ export const buildRbacContextData = ({ contexto, contextoValido, grupoAtivoId, e
   permissao_base: "Sistema.Controle de Acesso",
 });
 
+export const buildPerfilAuditPayload = ({
+  acao,
+  descricao,
+  dadosNovos = {},
+  sucesso = true,
+  user,
+  contexto,
+  contextoValido,
+  grupoAtivoId,
+  empresaAtivaId,
+  empresasGrupoIds = [],
+  timestamp = new Date().toISOString(),
+}) => ({
+  usuario: user?.full_name || user?.email || "Usuario",
+  usuario_id: user?.id || null,
+  group_id: grupoAtivoId || null,
+  empresa_id: empresaAtivaId || null,
+  acao,
+  modulo: "Sistema",
+  entidade: "PerfilAcesso",
+  tipo_auditoria: "seguranca",
+  descricao,
+  dados_novos: {
+    ...buildRbacContextData({ contexto, contextoValido, grupoAtivoId, empresaAtivaId, empresasGrupoIds }),
+    ...(dadosNovos || {}),
+  },
+  sucesso,
+  data_hora: timestamp,
+});
+
 export const buildPerfilRbacPayload = ({ data = {}, contexto, contextoValido, grupoAtivoId, empresaAtivaId, empresasGrupoIds = [] }) => ({
   ...data,
   contexto_valido: Boolean(contextoValido),

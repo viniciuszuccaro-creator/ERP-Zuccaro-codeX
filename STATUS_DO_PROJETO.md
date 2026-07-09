@@ -1,3 +1,11 @@
+### Administracao do Sistema - Fase 12 Central RBAC com Auditoria Extraida
+- Continuei a refatoracao obrigatoria de `CentralPerfisAcesso.jsx`, sem criar nova tela, modulo ou fluxo.
+- `rbacScopeUtils.js` agora centraliza tambem `buildPerfilAuditPayload`, mantendo usuario, timestamp, grupo, empresa, contexto e dados auditaveis em helper puro.
+- `CentralPerfisAcesso.jsx` preserva a chamada a `createInContext('AuditLog')`, mas deixou de montar manualmente o objeto completo da auditoria.
+- Auditorias de bloqueio, fallback, criacao, edicao e exclusao de perfis continuam usando o mesmo fluxo e a mesma entidade `AuditLog`.
+- Mantida a Regra-Mae: refatoracao feita somente na central e utilitario existentes, sem remover funcionalidade ou duplicar componente.
+- Proximo passo sugerido: continuar separando validacoes de salvamento/exclusao da `CentralPerfisAcesso.jsx` quando for seguro.
+
 ### Administracao do Sistema - Fase 12 Central RBAC com Payload Extraido
 - Continuei a refatoracao obrigatoria de `CentralPerfisAcesso.jsx`, sem criar nova tela, modulo ou fluxo.
 - `rbacScopeUtils.js` agora tambem centraliza `buildRbacContextData` e `buildPerfilRbacPayload`.
