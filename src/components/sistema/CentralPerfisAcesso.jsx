@@ -20,7 +20,15 @@ import {
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { ACOES, COR_CLASS, ESTRUTURA_SISTEMA } from "@/components/sistema/central-perfis-acesso/rbacPerfilConfig";
-import { buildPerfilAuditPayload, buildPerfilRbacPayload, normalizeEmpresaIds, perfilNoEscopo, usuarioNoEscopo } from "@/components/sistema/central-perfis-acesso/rbacScopeUtils";
+import {
+  buildPerfilAuditPayload,
+  buildPerfilDeleteBlock,
+  buildPerfilRbacPayload,
+  buildPerfilSaveBlock,
+  normalizeEmpresaIds,
+  perfilNoEscopo,
+  usuarioNoEscopo
+} from "@/components/sistema/central-perfis-acesso/rbacScopeUtils";
 
 export default function CentralPerfisAcesso() {
   const [perfilAberto, setPerfilAberto] = useState(null);
@@ -116,26 +124,26 @@ export default function CentralPerfisAcesso() {
 
   const salvarPerfilMutation = useMutation({
     mutationFn: async (data) => {
-      if (!contextoValido) {
-        await auditarPerfil({
-          acao: 'Bloqueio sem contexto',
-          descricao: 'Tentativa de salvar perfil RBAC sem contexto multiempresa completo.',
-          dadosNovos: { motivo: 'contexto_obrigatorio', perfil: data?.nome_perfil || null },
-          sucesso: false,
-        });
-        throw new Error(contexto === 'grupo' ? 'Selecione um grupo antes de salvar o perfil.' : 'Selecione uma empresa vinculada a um grupo antes de salvar o perfil.');
-      }
-
       const perfilId = perfilAberto?.id;
       const criando = !perfilId || perfilAberto?.novo;
-      if ((criando && !podeCriarPerfil) || (!criando && !podeEditarPerfil)) {
+      const bloqueio = buildPerfilSaveBlock({
+        data,
+        contexto,
+        contextoValido,
+        perfilId,
+        criando,
+        podeCriarPerfil,
+        podeEditarPerfil,
+      });
+
+      if (bloqueio) {
         await auditarPerfil({
-          acao: 'Bloqueio por permissao',
-          descricao: 'Tentativa de salvar perfil RBAC sem permissao granular.',
-          dadosNovos: { motivo: 'permissao_negada', perfil_id: perfilId || null, criando },
+          acao: bloqueio.acao,
+          descricao: bloqueio.descricao,
+          dadosNovos: bloqueio.dadosNovos,
           sucesso: false,
         });
-        throw new Error('Sem permissao para salvar perfil de acesso.');
+        throw new Error(bloqueio.mensagem);
       }
 
       const payload = buildPerfilRbacPayload({ data, contexto, contextoValido, grupoAtivoId, empresaAtivaId, empresasGrupoIds });
@@ -169,23 +177,21 @@ export default function CentralPerfisAcesso() {
 
   const excluirPerfilMutation = useMutation({
     mutationFn: async (id) => {
-      if (!contextoValido) {
+      const bloqueio = buildPerfilDeleteBlock({
+        contexto,
+        contextoValido,
+        podeExcluirPerfil,
+        perfilId: id,
+      });
+
+      if (bloqueio) {
         await auditarPerfil({
-          acao: 'Bloqueio sem contexto',
-          descricao: 'Tentativa de excluir perfil RBAC sem contexto multiempresa completo.',
-          dadosNovos: { motivo: 'contexto_obrigatorio', perfil_id: id },
+          acao: bloqueio.acao,
+          descricao: bloqueio.descricao,
+          dadosNovos: bloqueio.dadosNovos,
           sucesso: false,
         });
-        throw new Error(contexto === 'grupo' ? 'Selecione um grupo antes de excluir o perfil.' : 'Selecione uma empresa vinculada a um grupo antes de excluir o perfil.');
-      }
-      if (!podeExcluirPerfil) {
-        await auditarPerfil({
-          acao: 'Bloqueio por permissao',
-          descricao: 'Tentativa de excluir perfil RBAC sem permissao granular.',
-          dadosNovos: { motivo: 'permissao_negada', perfil_id: id },
-          sucesso: false,
-        });
-        throw new Error('Sem permissao para excluir perfil de acesso.');
+        throw new Error(bloqueio.mensagem);
       }
       const perfil = perfis.find((item) => item.id === id);
       const resultado = await deleteInContext('PerfilAcesso', id);

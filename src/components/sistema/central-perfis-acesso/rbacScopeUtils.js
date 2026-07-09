@@ -85,6 +85,61 @@ export const buildPerfilAuditPayload = ({
   data_hora: timestamp,
 });
 
+export const buildPerfilSaveBlock = ({
+  data = {},
+  contexto,
+  contextoValido,
+  perfilId,
+  criando,
+  podeCriarPerfil,
+  podeEditarPerfil,
+}) => {
+  if (!contextoValido) {
+    return {
+      acao: "Bloqueio sem contexto",
+      descricao: "Tentativa de salvar perfil RBAC sem contexto multiempresa completo.",
+      dadosNovos: { motivo: "contexto_obrigatorio", perfil: data?.nome_perfil || null },
+      mensagem: contexto === "grupo"
+        ? "Selecione um grupo antes de salvar o perfil."
+        : "Selecione uma empresa vinculada a um grupo antes de salvar o perfil.",
+    };
+  }
+
+  if ((criando && !podeCriarPerfil) || (!criando && !podeEditarPerfil)) {
+    return {
+      acao: "Bloqueio por permissao",
+      descricao: "Tentativa de salvar perfil RBAC sem permissao granular.",
+      dadosNovos: { motivo: "permissao_negada", perfil_id: perfilId || null, criando },
+      mensagem: "Sem permissao para salvar perfil de acesso.",
+    };
+  }
+
+  return null;
+};
+
+export const buildPerfilDeleteBlock = ({ contexto, contextoValido, podeExcluirPerfil, perfilId }) => {
+  if (!contextoValido) {
+    return {
+      acao: "Bloqueio sem contexto",
+      descricao: "Tentativa de excluir perfil RBAC sem contexto multiempresa completo.",
+      dadosNovos: { motivo: "contexto_obrigatorio", perfil_id: perfilId },
+      mensagem: contexto === "grupo"
+        ? "Selecione um grupo antes de excluir o perfil."
+        : "Selecione uma empresa vinculada a um grupo antes de excluir o perfil.",
+    };
+  }
+
+  if (!podeExcluirPerfil) {
+    return {
+      acao: "Bloqueio por permissao",
+      descricao: "Tentativa de excluir perfil RBAC sem permissao granular.",
+      dadosNovos: { motivo: "permissao_negada", perfil_id: perfilId },
+      mensagem: "Sem permissao para excluir perfil de acesso.",
+    };
+  }
+
+  return null;
+};
 export const buildPerfilRbacPayload = ({ data = {}, contexto, contextoValido, grupoAtivoId, empresaAtivaId, empresasGrupoIds = [] }) => ({
   ...data,
   contexto_valido: Boolean(contextoValido),

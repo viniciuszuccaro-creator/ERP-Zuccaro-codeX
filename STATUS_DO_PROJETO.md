@@ -1,3 +1,10 @@
+### Administracao do Sistema - Fase 12 Central RBAC com Bloqueios Extraidos
+- Continuei a refatoracao obrigatoria de `CentralPerfisAcesso.jsx`, sem criar nova tela, modulo ou fluxo.
+- `rbacScopeUtils.js` agora centraliza `buildPerfilSaveBlock` e `buildPerfilDeleteBlock` para validar contexto multiempresa e permissao granular antes de salvar/excluir perfis.
+- `CentralPerfisAcesso.jsx` preserva as mesmas chamadas de auditoria, `createInContext`, `updateInContext` e `deleteInContext`, mas deixou de duplicar os objetos de bloqueio dentro das mutations.
+- Bloqueios por falta de Grupo/Empresa e por falta de permissao continuam auditados com motivo, perfil, acao e sucesso falso.
+- Mantida a Regra-Mae: melhoria feita somente na central e utilitario existentes, sem remover funcionalidade, botao, aba ou fluxo.
+- Proximo passo sugerido: continuar reduzindo a `CentralPerfisAcesso.jsx` separando payload do formulario ou controles de permissao quando for seguro.
 ### Administracao do Sistema - Fase 12 Central RBAC com Auditoria Extraida
 - Continuei a refatoracao obrigatoria de `CentralPerfisAcesso.jsx`, sem criar nova tela, modulo ou fluxo.
 - `rbacScopeUtils.js` agora centraliza tambem `buildPerfilAuditPayload`, mantendo usuario, timestamp, grupo, empresa, contexto e dados auditaveis em helper puro.
