@@ -30,6 +30,10 @@ import {
   countPermissoesTotal,
   normalizeEmpresaIds,
   perfilNoEscopo,
+  toggleGlobalPermissoesState,
+  toggleModuloPermissoesState,
+  togglePermissaoState,
+  toggleSecaoPermissoesState,
   usuarioNoEscopo
 } from "@/components/sistema/central-perfis-acesso/rbacScopeUtils";
 
@@ -238,50 +242,43 @@ export default function CentralPerfisAcesso() {
 
   const togglePermissao = (modulo, secao, acao) => {
     if (!canManageOpenProfile) { toast.error('Sem permissao para alterar permissoes deste perfil.'); return; }
-    setFormPerfil(prev => {
-      const novasPerms = { ...prev.permissoes };
-      if (!novasPerms[modulo]) novasPerms[modulo] = {};
-      if (!novasPerms[modulo][secao]) novasPerms[modulo][secao] = [];
-      const idx = novasPerms[modulo][secao].indexOf(acao);
-      novasPerms[modulo][secao] = idx > -1 ? novasPerms[modulo][secao].filter(a => a !== acao) : [...novasPerms[modulo][secao], acao];
-      return { ...prev, permissoes: novasPerms };
-    });
+    setFormPerfil(prev => ({
+      ...prev,
+      permissoes: togglePermissaoState({ permissoes: prev.permissoes, modulo, secao, acao }),
+    }));
   };
 
   const selecionarTudoSecao = (modulo, secao) => {
     if (!canManageOpenProfile) { toast.error('Sem permissao para alterar permissoes deste perfil.'); return; }
-    setFormPerfil(prev => {
-      const novasPerms = { ...prev.permissoes };
-      if (!novasPerms[modulo]) novasPerms[modulo] = {};
-      const todasAcoes = ACOES.map(a => a.id);
-      const temTodas = todasAcoes.every(a => novasPerms[modulo][secao]?.includes(a));
-      novasPerms[modulo][secao] = temTodas ? [] : [...todasAcoes];
-      return { ...prev, permissoes: novasPerms };
-    });
+    setFormPerfil(prev => ({
+      ...prev,
+      permissoes: toggleSecaoPermissoesState({ permissoes: prev.permissoes, modulo, secao, acoes: ACOES }),
+    }));
   };
 
   const selecionarTudoModulo = (modulo) => {
     if (!canManageOpenProfile) { toast.error('Sem permissao para alterar permissoes deste perfil.'); return; }
-    setFormPerfil(prev => {
-      const novasPerms = { ...prev.permissoes };
-      const todasAcoes = ACOES.map(a => a.id);
-      const secoes = Object.keys(ESTRUTURA_SISTEMA[modulo].secoes);
-      const tudoMarcado = secoes.every(s => todasAcoes.every(a => novasPerms[modulo]?.[s]?.includes(a)));
-      novasPerms[modulo] = {};
-      secoes.forEach(s => { novasPerms[modulo][s] = tudoMarcado ? [] : [...todasAcoes]; });
-      return { ...prev, permissoes: novasPerms };
-    });
+    setFormPerfil(prev => ({
+      ...prev,
+      permissoes: toggleModuloPermissoesState({
+        permissoes: prev.permissoes,
+        modulo,
+        estruturaSistema: ESTRUTURA_SISTEMA,
+        acoes: ACOES,
+      }),
+    }));
   };
 
   const selecionarTudoGlobal = () => {
     if (!canManageOpenProfile) { toast.error('Sem permissao para alterar permissoes deste perfil.'); return; }
-    setFormPerfil(prev => {
-      const todasAcoes = ACOES.map(a => a.id);
-      const algumVazio = Object.keys(ESTRUTURA_SISTEMA).some(m => Object.keys(ESTRUTURA_SISTEMA[m].secoes).some(s => !prev.permissoes?.[m]?.[s] || prev.permissoes[m][s].length < todasAcoes.length));
-      const novasPerms = {};
-      Object.keys(ESTRUTURA_SISTEMA).forEach(m => { novasPerms[m] = {}; Object.keys(ESTRUTURA_SISTEMA[m].secoes).forEach(s => { novasPerms[m][s] = algumVazio ? [...todasAcoes] : []; }); });
-      return { ...prev, permissoes: novasPerms };
-    });
+    setFormPerfil(prev => ({
+      ...prev,
+      permissoes: toggleGlobalPermissoesState({
+        permissoes: prev.permissoes,
+        estruturaSistema: ESTRUTURA_SISTEMA,
+        acoes: ACOES,
+      }),
+    }));
   };
 
   const temPermissao = (modulo, secao, acao) => formPerfil.permissoes?.[modulo]?.[secao]?.includes(acao) || false;

@@ -1,3 +1,10 @@
+### Administracao do Sistema - Fase 12 Central RBAC com Selecao de Permissoes Extraida
+- Continuei a refatoracao obrigatoria de `CentralPerfisAcesso.jsx`, sem criar nova tela, modulo ou fluxo.
+- `rbacScopeUtils.js` agora centraliza `togglePermissaoState`, `toggleSecaoPermissoesState`, `toggleModuloPermissoesState` e `toggleGlobalPermissoesState`.
+- `CentralPerfisAcesso.jsx` preserva as mesmas verificacoes de permissao, mensagens e botoes, mas deixou de montar manualmente as estruturas de permissoes dentro do componente.
+- A selecao individual, por secao, por modulo e global continua usando `ACOES` e `ESTRUTURA_SISTEMA` existentes, mantendo RBAC granular.
+- Mantida a Regra-Mae: melhoria feita somente na central e utilitario existentes, sem remover funcionalidade, botao, aba ou comportamento.
+- Proximo passo sugerido: continuar reduzindo a `CentralPerfisAcesso.jsx` separando normalizacao de setores/formulario ou revisando outra aba de Gestao de Acessos quando for seguro.
 ### Administracao do Sistema - Fase 12 Central RBAC com Payload de Formulario Extraido
 - Continuei a refatoracao obrigatoria de `CentralPerfisAcesso.jsx`, sem criar nova tela, modulo ou fluxo.
 - `rbacScopeUtils.js` agora centraliza `countPermissoesTotal`, `countPermissoesModulo` e `buildPerfilFormSubmitPayload`.

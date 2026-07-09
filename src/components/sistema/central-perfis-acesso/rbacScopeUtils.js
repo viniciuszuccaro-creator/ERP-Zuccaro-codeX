@@ -63,6 +63,60 @@ export const buildPerfilFormSubmitPayload = ({ formPerfil = {}, grupoAtivoId, em
   grupo_id: grupoAtivoId || null,
   ...(empresaAtivaId ? { empresa_id: empresaAtivaId } : {}),
 });
+export const togglePermissaoState = ({ permissoes = {}, modulo, secao, acao }) => {
+  const novasPerms = { ...permissoes };
+  if (!novasPerms[modulo]) novasPerms[modulo] = {};
+  if (!novasPerms[modulo][secao]) novasPerms[modulo][secao] = [];
+
+  const marcada = novasPerms[modulo][secao].includes(acao);
+  novasPerms[modulo][secao] = marcada
+    ? novasPerms[modulo][secao].filter((item) => item !== acao)
+    : [...novasPerms[modulo][secao], acao];
+
+  return novasPerms;
+};
+
+export const toggleSecaoPermissoesState = ({ permissoes = {}, modulo, secao, acoes = [] }) => {
+  const novasPerms = { ...permissoes };
+  if (!novasPerms[modulo]) novasPerms[modulo] = {};
+
+  const todasAcoes = acoes.map((item) => item.id);
+  const temTodas = todasAcoes.every((acao) => novasPerms[modulo][secao]?.includes(acao));
+  novasPerms[modulo][secao] = temTodas ? [] : [...todasAcoes];
+
+  return novasPerms;
+};
+
+export const toggleModuloPermissoesState = ({ permissoes = {}, modulo, estruturaSistema = {}, acoes = [] }) => {
+  const novasPerms = { ...permissoes };
+  const todasAcoes = acoes.map((item) => item.id);
+  const secoes = Object.keys(estruturaSistema[modulo]?.secoes || {});
+  const tudoMarcado = secoes.every((secao) => todasAcoes.every((acao) => novasPerms[modulo]?.[secao]?.includes(acao)));
+
+  novasPerms[modulo] = {};
+  secoes.forEach((secao) => {
+    novasPerms[modulo][secao] = tudoMarcado ? [] : [...todasAcoes];
+  });
+
+  return novasPerms;
+};
+
+export const toggleGlobalPermissoesState = ({ permissoes = {}, estruturaSistema = {}, acoes = [] }) => {
+  const todasAcoes = acoes.map((item) => item.id);
+  const algumVazio = Object.keys(estruturaSistema).some((modulo) => Object.keys(estruturaSistema[modulo].secoes)
+    .some((secao) => !permissoes?.[modulo]?.[secao] || permissoes[modulo][secao].length < todasAcoes.length));
+  const novasPerms = {};
+
+  Object.keys(estruturaSistema).forEach((modulo) => {
+    novasPerms[modulo] = {};
+    Object.keys(estruturaSistema[modulo].secoes).forEach((secao) => {
+      novasPerms[modulo][secao] = algumVazio ? [...todasAcoes] : [];
+    });
+  });
+
+  return novasPerms;
+};
+
 export const buildRbacContextData = ({ contexto, contextoValido, grupoAtivoId, empresaAtivaId, empresasGrupoIds = [] }) => ({
   contexto: contexto || "sem-contexto",
   contexto_valido: Boolean(contextoValido),
