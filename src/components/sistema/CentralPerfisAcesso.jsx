@@ -23,8 +23,11 @@ import { ACOES, COR_CLASS, ESTRUTURA_SISTEMA } from "@/components/sistema/centra
 import {
   buildPerfilAuditPayload,
   buildPerfilDeleteBlock,
+  buildPerfilFormSubmitPayload,
   buildPerfilRbacPayload,
   buildPerfilSaveBlock,
+  countPermissoesModulo,
+  countPermissoesTotal,
   normalizeEmpresaIds,
   perfilNoEscopo,
   usuarioNoEscopo
@@ -159,7 +162,7 @@ export default function CentralPerfisAcesso() {
           perfil_id: resultado?.id || perfilId || null,
           nome_perfil: payload.nome_perfil,
           escopo_acesso: payload.escopo_acesso,
-          permissoes_total: contarPermissoesTotal(),
+          permissoes_total: countPermissoesTotal(payload.permissoes),
         },
         sucesso: true,
       });
@@ -282,8 +285,6 @@ export default function CentralPerfisAcesso() {
   };
 
   const temPermissao = (modulo, secao, acao) => formPerfil.permissoes?.[modulo]?.[secao]?.includes(acao) || false;
-  const contarPermissoesModulo = (modulo) => Object.values(formPerfil.permissoes?.[modulo] || {}).reduce((t, s) => t + (s?.length || 0), 0);
-  const contarPermissoesTotal = () => Object.values(formPerfil.permissoes || {}).reduce((t, m) => t + Object.values(m || {}).reduce((s, sec) => s + (sec?.length || 0), 0), 0);
 
   const abrirEdicaoPerfil = (perfil) => {
     setPerfilAberto(perfil);
@@ -349,7 +350,7 @@ export default function CentralPerfisAcesso() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {perfisFiltrados.map(perfil => {
-              const qtd = Object.values(perfil.permissoes || {}).reduce((s, m) => s + Object.values(m || {}).reduce((ss, sec) => ss + (sec?.length || 0), 0), 0);
+              const qtd = countPermissoesTotal(perfil.permissoes);
               return (
                 <Card key={perfil.id} className="hover:shadow-md transition-all">
                   <CardHeader className="bg-slate-50 border-b pb-3">
@@ -399,7 +400,7 @@ export default function CentralPerfisAcesso() {
             <div className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-blue-600" />
               <h3 className="font-bold">{perfilAberto.novo ? 'Novo Perfil' : `Editar: ${perfilAberto.nome_perfil}`}</h3>
-              {contarPermissoesTotal() > 0 && <Badge className="bg-blue-600 text-white">{contarPermissoesTotal()} perm.</Badge>}
+              {countPermissoesTotal(formPerfil.permissoes) > 0 && <Badge className="bg-blue-600 text-white">{countPermissoesTotal(formPerfil.permissoes)} perm.</Badge>}
             </div>
             <Button variant="ghost" size="sm" onClick={() => setPerfilAberto(null)} data-action="RBAC.Perfil.fechar">✕</Button>
           </div>
@@ -407,16 +408,11 @@ export default function CentralPerfisAcesso() {
             <form onSubmit={(e) => {
               e.preventDefault();
               if (!formPerfil.nome_perfil) { toast.error("Nome é obrigatório"); return; }
-              salvarPerfilMutation.mutate({
-                ...formPerfil,
-                nivel_acesso_contexto: formPerfil.escopo_acesso,
-                acesso_grupo: formPerfil.escopo_acesso === "grupo" || formPerfil.escopo_acesso === "grupo_empresa",
-                acesso_empresas: ["empresa", "grupo_empresa", "setores"].includes(formPerfil.escopo_acesso),
-                departamentos_permitidos: formPerfil.setores_permitidos || [],
-                group_id: grupoAtivoId || null,
-                grupo_id: grupoAtivoId || null,
-                ...(empresaAtivaId ? { empresa_id: empresaAtivaId } : {}),
-              });
+              salvarPerfilMutation.mutate(buildPerfilFormSubmitPayload({
+                formPerfil,
+                grupoAtivoId,
+                empresaAtivaId,
+              }));
             }} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div><Label className="text-xs">Nome *</Label><Input value={formPerfil.nome_perfil} onChange={(e) => setFormPerfil({ ...formPerfil, nome_perfil: e.target.value })} placeholder="Ex: Vendedor" className="mt-1" required disabled={!canManageOpenProfile} data-permission={perfilAberto?.novo ? "Sistema.Controle de Acesso.criar" : "Sistema.Controle de Acesso.editar"} /></div>
@@ -453,12 +449,12 @@ export default function CentralPerfisAcesso() {
                   <Label className="font-bold">Permissões Granulares</Label>
                   <Button type="button" variant="outline" size="sm" disabled={!canManageOpenProfile} onClick={selecionarTudoGlobal} data-action="RBAC.Permissoes.tudoNada" data-permission={perfilAberto?.novo ? "Sistema.Controle de Acesso.criar" : "Sistema.Controle de Acesso.editar"} data-sensitive="true"><CheckSquare className="w-3 h-3 mr-1" />Tudo/Nada</Button>
                 </div>
-                <Alert className="mb-3 border-blue-200 bg-blue-50 py-2"><Info className="w-3 h-3 text-blue-600" /><AlertDescription className="text-xs text-blue-800">{contarPermissoesTotal()} permissões selecionadas</AlertDescription></Alert>
+                <Alert className="mb-3 border-blue-200 bg-blue-50 py-2"><Info className="w-3 h-3 text-blue-600" /><AlertDescription className="text-xs text-blue-800">{countPermissoesTotal(formPerfil.permissoes)} permissões selecionadas</AlertDescription></Alert>
                 <div className="border rounded-lg bg-slate-50 max-h-[50vh] overflow-auto">
                   <Accordion type="multiple" value={modulosExpandidos} onValueChange={setModulosExpandidos}>
                     {Object.entries(ESTRUTURA_SISTEMA).map(([modId, mod]) => {
                       const Icone = mod.icone;
-                      const qtd = contarPermissoesModulo(modId);
+                      const qtd = countPermissoesModulo(formPerfil.permissoes, modId);
                       return (
                         <AccordionItem key={modId} value={modId} className="border-b">
                           <AccordionTrigger className="px-3 py-2 hover:bg-white/50">
@@ -515,7 +511,7 @@ export default function CentralPerfisAcesso() {
               </div>
 
               <div className="flex justify-between items-center pt-3 border-t">
-                <Badge className="bg-slate-100 text-slate-700 text-xs">{contarPermissoesTotal()} perm. • {Object.keys(formPerfil.permissoes).length} módulos</Badge>
+                <Badge className="bg-slate-100 text-slate-700 text-xs">{countPermissoesTotal(formPerfil.permissoes)} perm. • {Object.keys(formPerfil.permissoes).length} módulos</Badge>
                 <div className="flex gap-2">
                   <Button type="button" variant="outline" onClick={() => setPerfilAberto(null)} data-action="RBAC.Perfil.cancelar">Cancelar</Button>
                   <Button type="submit" disabled={salvarPerfilMutation.isPending || !formPerfil.nome_perfil || !contextoValido || !(perfilAberto?.novo ? podeCriarPerfil : podeEditarPerfil)} className="bg-blue-600 hover:bg-blue-700" data-action="RBAC.Perfil.salvar" data-permission={perfilAberto?.novo ? "Sistema.Controle de Acesso.criar" : "Sistema.Controle de Acesso.editar"} data-sensitive="true">

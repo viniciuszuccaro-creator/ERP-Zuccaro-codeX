@@ -46,6 +46,23 @@ export const usuarioNoEscopo = ({ usuario, contexto, grupoAtivoId, empresaAtivaI
     vinculadas.includes(empresaAtivaId);
 };
 
+export const countPermissoesTotal = (permissoes = {}) => Object.values(permissoes || {})
+  .reduce((total, modulo) => total + Object.values(modulo || {})
+    .reduce((subtotal, secao) => subtotal + (secao?.length || 0), 0), 0);
+
+export const countPermissoesModulo = (permissoes = {}, modulo) => Object.values(permissoes?.[modulo] || {})
+  .reduce((total, secao) => total + (secao?.length || 0), 0);
+
+export const buildPerfilFormSubmitPayload = ({ formPerfil = {}, grupoAtivoId, empresaAtivaId }) => ({
+  ...formPerfil,
+  nivel_acesso_contexto: formPerfil.escopo_acesso,
+  acesso_grupo: formPerfil.escopo_acesso === "grupo" || formPerfil.escopo_acesso === "grupo_empresa",
+  acesso_empresas: ["empresa", "grupo_empresa", "setores"].includes(formPerfil.escopo_acesso),
+  departamentos_permitidos: formPerfil.setores_permitidos || [],
+  group_id: grupoAtivoId || null,
+  grupo_id: grupoAtivoId || null,
+  ...(empresaAtivaId ? { empresa_id: empresaAtivaId } : {}),
+});
 export const buildRbacContextData = ({ contexto, contextoValido, grupoAtivoId, empresaAtivaId, empresasGrupoIds = [] }) => ({
   contexto: contexto || "sem-contexto",
   contexto_valido: Boolean(contextoValido),
@@ -140,6 +157,7 @@ export const buildPerfilDeleteBlock = ({ contexto, contextoValido, podeExcluirPe
 
   return null;
 };
+
 export const buildPerfilRbacPayload = ({ data = {}, contexto, contextoValido, grupoAtivoId, empresaAtivaId, empresasGrupoIds = [] }) => ({
   ...data,
   contexto_valido: Boolean(contextoValido),

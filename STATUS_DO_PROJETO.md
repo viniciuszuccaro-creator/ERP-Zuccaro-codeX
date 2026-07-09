@@ -1,3 +1,10 @@
+### Administracao do Sistema - Fase 12 Central RBAC com Payload de Formulario Extraido
+- Continuei a refatoracao obrigatoria de `CentralPerfisAcesso.jsx`, sem criar nova tela, modulo ou fluxo.
+- `rbacScopeUtils.js` agora centraliza `countPermissoesTotal`, `countPermissoesModulo` e `buildPerfilFormSubmitPayload`.
+- `CentralPerfisAcesso.jsx` passou a usar helpers puros para contagem de permissoes e montagem do payload do formulario antes de salvar.
+- O submit preserva `nivel_acesso_contexto`, `acesso_grupo`, `acesso_empresas`, departamentos e IDs de Grupo/Empresa no mesmo fluxo existente.
+- Mantida a Regra-Mae: melhoria feita somente na central e utilitario existentes, sem remover funcionalidade, botao, aba ou comportamento.
+- Proximo passo sugerido: continuar reduzindo a `CentralPerfisAcesso.jsx` separando controles de selecao de permissoes quando for seguro.
 ### Administracao do Sistema - Fase 12 Central RBAC com Bloqueios Extraidos
 - Continuei a refatoracao obrigatoria de `CentralPerfisAcesso.jsx`, sem criar nova tela, modulo ou fluxo.
 - `rbacScopeUtils.js` agora centraliza `buildPerfilSaveBlock` e `buildPerfilDeleteBlock` para validar contexto multiempresa e permissao granular antes de salvar/excluir perfis.
