@@ -1,3 +1,10 @@
+### Administracao do Sistema - Fase 12 Central RBAC com Formulario Normalizado
+- Continuei a refatoracao obrigatoria de `CentralPerfisAcesso.jsx`, sem criar nova tela, modulo ou fluxo.
+- `rbacScopeUtils.js` agora centraliza `PERFIL_FORM_DEFAULT`, `normalizeSetoresPerfil` e `buildPerfilFormState`.
+- `CentralPerfisAcesso.jsx` passou a usar o formulario padrao compartilhado no estado inicial/reset e normaliza setores por helper antes de gravar no estado.
+- A abertura de edicao de perfil agora monta o estado do formulario por helper puro, preservando nome, descricao, nivel, escopo, setores, permissoes e status ativo.
+- Mantida a Regra-Mae: melhoria feita somente na central e utilitario existentes, sem remover funcionalidade, botao, aba ou comportamento.
+- Proximo passo sugerido: continuar reduzindo `CentralPerfisAcesso.jsx` separando estatisticas/filtro de perfis ou revisar outra aba de Gestao de Acessos quando for seguro.
 ### Administracao do Sistema - Fase 12 Central RBAC com Selecao de Permissoes Extraida
 - Continuei a refatoracao obrigatoria de `CentralPerfisAcesso.jsx`, sem criar nova tela, modulo ou fluxo.
 - `rbacScopeUtils.js` agora centraliza `togglePermissaoState`, `toggleSecaoPermissoesState`, `toggleModuloPermissoesState` e `toggleGlobalPermissoesState`.

@@ -26,10 +26,13 @@ import {
   buildPerfilFormSubmitPayload,
   buildPerfilRbacPayload,
   buildPerfilSaveBlock,
+  buildPerfilFormState,
   countPermissoesModulo,
   countPermissoesTotal,
   normalizeEmpresaIds,
+  normalizeSetoresPerfil,
   perfilNoEscopo,
+  PERFIL_FORM_DEFAULT,
   toggleGlobalPermissoesState,
   toggleModuloPermissoesState,
   togglePermissaoState,
@@ -42,15 +45,7 @@ export default function CentralPerfisAcesso() {
   const [usuarioAberto, setUsuarioAberto] = useState(null);
   const [busca, setBusca] = useState("");
   const [modulosExpandidos, setModulosExpandidos] = useState([]);
-  const [formPerfil, setFormPerfil] = useState({
-    nome_perfil: "",
-    descricao: "",
-    nivel_perfil: "Operacional",
-    escopo_acesso: "grupo_empresa",
-    setores_permitidos: [],
-    permissoes: {},
-    ativo: true
-  });
+  const [formPerfil, setFormPerfil] = useState(PERFIL_FORM_DEFAULT);
 
   const queryClient = useQueryClient();
   const { contexto, empresaAtual, grupoAtual, empresasDoGrupo = [], filterInContext, createInContext, updateInContext, deleteInContext } = useContextoVisual();
@@ -222,22 +217,10 @@ export default function CentralPerfisAcesso() {
 
 
 
-  const resetForm = () => setFormPerfil({
-    nome_perfil: "",
-    descricao: "",
-    nivel_perfil: "Operacional",
-    escopo_acesso: "grupo_empresa",
-    setores_permitidos: [],
-    permissoes: {},
-    ativo: true
-  });
+  const resetForm = () => setFormPerfil(PERFIL_FORM_DEFAULT);
 
   const setSetoresPerfil = (valor) => {
-    const setores = String(valor || "")
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
-    setFormPerfil({ ...formPerfil, setores_permitidos: setores });
+    setFormPerfil({ ...formPerfil, setores_permitidos: normalizeSetoresPerfil(valor) });
   };
 
   const togglePermissao = (modulo, secao, acao) => {
@@ -285,15 +268,7 @@ export default function CentralPerfisAcesso() {
 
   const abrirEdicaoPerfil = (perfil) => {
     setPerfilAberto(perfil);
-    setFormPerfil({
-      nome_perfil: perfil.nome_perfil || "",
-      descricao: perfil.descricao || "",
-      nivel_perfil: perfil.nivel_perfil || "Operacional",
-      escopo_acesso: perfil.escopo_acesso || perfil.nivel_acesso_contexto || "grupo_empresa",
-      setores_permitidos: perfil.setores_permitidos || perfil.departamentos_permitidos || [],
-      permissoes: perfil.permissoes || {},
-      ativo: perfil.ativo !== false
-    });
+    setFormPerfil(buildPerfilFormState(perfil));
   };
 
   const stats = useMemo(() => {

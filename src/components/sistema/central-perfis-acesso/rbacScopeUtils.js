@@ -46,6 +46,32 @@ export const usuarioNoEscopo = ({ usuario, contexto, grupoAtivoId, empresaAtivaI
     vinculadas.includes(empresaAtivaId);
 };
 
+export const PERFIL_FORM_DEFAULT = {
+  nome_perfil: "",
+  descricao: "",
+  nivel_perfil: "Operacional",
+  escopo_acesso: "grupo_empresa",
+  setores_permitidos: [],
+  permissoes: {},
+  ativo: true,
+};
+
+export const normalizeSetoresPerfil = (valor = []) => {
+  const origem = Array.isArray(valor) ? valor : String(valor || "").split(",");
+  return origem
+    .map((item) => String(item || "").trim())
+    .filter(Boolean);
+};
+
+export const buildPerfilFormState = (perfil = {}) => ({
+  nome_perfil: perfil.nome_perfil || "",
+  descricao: perfil.descricao || "",
+  nivel_perfil: perfil.nivel_perfil || "Operacional",
+  escopo_acesso: perfil.escopo_acesso || perfil.nivel_acesso_contexto || "grupo_empresa",
+  setores_permitidos: normalizeSetoresPerfil(perfil.setores_permitidos || perfil.departamentos_permitidos || []),
+  permissoes: perfil.permissoes || {},
+  ativo: perfil.ativo !== false,
+});
 export const countPermissoesTotal = (permissoes = {}) => Object.values(permissoes || {})
   .reduce((total, modulo) => total + Object.values(modulo || {})
     .reduce((subtotal, secao) => subtotal + (secao?.length || 0), 0), 0);
@@ -63,6 +89,7 @@ export const buildPerfilFormSubmitPayload = ({ formPerfil = {}, grupoAtivoId, em
   grupo_id: grupoAtivoId || null,
   ...(empresaAtivaId ? { empresa_id: empresaAtivaId } : {}),
 });
+
 export const togglePermissaoState = ({ permissoes = {}, modulo, secao, acao }) => {
   const novasPerms = { ...permissoes };
   if (!novasPerms[modulo]) novasPerms[modulo] = {};
