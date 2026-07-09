@@ -26,9 +26,11 @@ import {
   buildPerfilFormSubmitPayload,
   buildPerfilRbacPayload,
   buildPerfilSaveBlock,
+  buildPerfilStats,
   buildPerfilFormState,
   countPermissoesModulo,
   countPermissoesTotal,
+  filterPerfisByBusca,
   normalizeEmpresaIds,
   normalizeSetoresPerfil,
   perfilNoEscopo,
@@ -271,15 +273,9 @@ export default function CentralPerfisAcesso() {
     setFormPerfil(buildPerfilFormState(perfil));
   };
 
-  const stats = useMemo(() => {
-    const totalUsuarios = usuarios.length;
-    const usuariosComPerfil = usuarios.filter(u => u.perfil_acesso_id).length;
-    const usuariosSemPerfil = totalUsuarios - usuariosComPerfil;
-    const cobertura = totalUsuarios > 0 ? Math.round((usuariosComPerfil / totalUsuarios) * 100) : 0;
-    return { totalPerfis: perfis.length, perfisAtivos: perfis.filter(p => p.ativo !== false).length, totalUsuarios, usuariosComPerfil, usuariosSemPerfil, cobertura };
-  }, [perfis, usuarios]);
+  const stats = useMemo(() => buildPerfilStats({ perfis, usuarios }), [perfis, usuarios]);
 
-  const perfisFiltrados = perfis.filter(p => !busca || p.nome_perfil?.toLowerCase().includes(busca.toLowerCase()));
+  const perfisFiltrados = useMemo(() => filterPerfisByBusca(perfis, busca), [perfis, busca]);
   const canManageOpenProfile = perfilAberto?.novo ? podeCriarPerfil : podeEditarPerfil;
 
   return (

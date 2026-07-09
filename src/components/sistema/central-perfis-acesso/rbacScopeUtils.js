@@ -72,6 +72,29 @@ export const buildPerfilFormState = (perfil = {}) => ({
   permissoes: perfil.permissoes || {},
   ativo: perfil.ativo !== false,
 });
+
+export const buildPerfilStats = ({ perfis = [], usuarios = [] }) => {
+  const totalUsuarios = usuarios.length;
+  const usuariosComPerfil = usuarios.filter((usuario) => usuario.perfil_acesso_id).length;
+  const usuariosSemPerfil = totalUsuarios - usuariosComPerfil;
+  const cobertura = totalUsuarios > 0 ? Math.round((usuariosComPerfil / totalUsuarios) * 100) : 0;
+
+  return {
+    totalPerfis: perfis.length,
+    perfisAtivos: perfis.filter((perfil) => perfil.ativo !== false).length,
+    totalUsuarios,
+    usuariosComPerfil,
+    usuariosSemPerfil,
+    cobertura,
+  };
+};
+
+export const filterPerfisByBusca = (perfis = [], busca = "") => {
+  const termo = String(busca || "").trim().toLowerCase();
+  if (!termo) return perfis;
+  return perfis.filter((perfil) => String(perfil.nome_perfil || "").toLowerCase().includes(termo));
+};
+
 export const countPermissoesTotal = (permissoes = {}) => Object.values(permissoes || {})
   .reduce((total, modulo) => total + Object.values(modulo || {})
     .reduce((subtotal, secao) => subtotal + (secao?.length || 0), 0), 0);

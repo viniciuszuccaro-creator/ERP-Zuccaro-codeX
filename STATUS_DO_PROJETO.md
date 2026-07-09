@@ -1,3 +1,10 @@
+### Administracao do Sistema - Fase 12 Central RBAC com Estatisticas Extraidas
+- Continuei a refatoracao obrigatoria de `CentralPerfisAcesso.jsx`, sem criar nova tela, modulo ou fluxo.
+- `rbacScopeUtils.js` agora centraliza `buildPerfilStats` e `filterPerfisByBusca`.
+- `CentralPerfisAcesso.jsx` preserva o mesmo painel de total de perfis, cobertura e busca, mas deixou de calcular estatisticas e filtro diretamente no componente.
+- O filtro de busca continua usando `nome_perfil` e a cobertura continua considerando usuarios com `perfil_acesso_id`.
+- Mantida a Regra-Mae: melhoria feita somente na central e utilitario existentes, sem remover funcionalidade, botao, aba ou comportamento.
+- Proximo passo sugerido: revisar outra aba de Gestao de Acessos ou continuar reduzindo a central RBAC separando renderizacao de cards quando for seguro.
 ### Administracao do Sistema - Fase 12 Central RBAC com Formulario Normalizado
 - Continuei a refatoracao obrigatoria de `CentralPerfisAcesso.jsx`, sem criar nova tela, modulo ou fluxo.
 - `rbacScopeUtils.js` agora centraliza `PERFIL_FORM_DEFAULT`, `normalizeSetoresPerfil` e `buildPerfilFormState`.
