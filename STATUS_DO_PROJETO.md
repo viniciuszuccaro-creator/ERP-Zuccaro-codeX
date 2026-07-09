@@ -1,3 +1,12 @@
+### Administracao do Sistema - Fase 12 Central RBAC com Payload Extraido
+- Continuei a refatoracao obrigatoria de `CentralPerfisAcesso.jsx`, sem criar nova tela, modulo ou fluxo.
+- `rbacScopeUtils.js` agora tambem centraliza `buildRbacContextData` e `buildPerfilRbacPayload`.
+- `CentralPerfisAcesso.jsx` deixou de manter helper local duplicado de contexto RBAC e passou a importar o payload auditavel do utilitario existente.
+- Salvamento de perfil preserva o mesmo fluxo de criacao/edicao, mas monta `contexto_valido`, `group_id`, `grupo_id`, `empresa_id` e `empresas_grupo_ids` por helper reutilizavel.
+- Auditoria de perfil preserva usuario, timestamp, grupo/empresa e permissao base, agora com helper de contexto compartilhado.
+- Mantida a Regra-Mae: refatoracao feita somente na central e utilitario existentes, sem remover funcionalidade ou duplicar componente.
+- Proximo passo sugerido: continuar separando helpers de auditoria/salvamento da `CentralPerfisAcesso.jsx` quando for seguro ou voltar aos cadastros restantes se a prioridade mudar.
+
 ### Administracao do Sistema - Fase 12 Central RBAC com Helpers de Escopo
 - Continuei a refatoracao obrigatoria de `CentralPerfisAcesso.jsx`, sem criar nova tela, modulo ou fluxo.
 - Extraidos helpers puros de escopo para `src/components/sistema/central-perfis-acesso/rbacScopeUtils.js`.

@@ -45,3 +45,21 @@ export const usuarioNoEscopo = ({ usuario, contexto, grupoAtivoId, empresaAtivaI
     usuario.empresa_atual_id === empresaAtivaId ||
     vinculadas.includes(empresaAtivaId);
 };
+
+export const buildRbacContextData = ({ contexto, contextoValido, grupoAtivoId, empresaAtivaId, empresasGrupoIds = [] }) => ({
+  contexto: contexto || "sem-contexto",
+  contexto_valido: Boolean(contextoValido),
+  group_id: grupoAtivoId || null,
+  empresa_id: empresaAtivaId || null,
+  empresas_grupo_ids: empresasGrupoIds,
+  permissao_base: "Sistema.Controle de Acesso",
+});
+
+export const buildPerfilRbacPayload = ({ data = {}, contexto, contextoValido, grupoAtivoId, empresaAtivaId, empresasGrupoIds = [] }) => ({
+  ...data,
+  contexto_valido: Boolean(contextoValido),
+  group_id: grupoAtivoId || null,
+  grupo_id: grupoAtivoId || null,
+  ...(empresaAtivaId ? { empresa_id: empresaAtivaId } : {}),
+  ...(contexto === "grupo" ? { empresas_grupo_ids: empresasGrupoIds } : {}),
+});

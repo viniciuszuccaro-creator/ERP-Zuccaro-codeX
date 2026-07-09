@@ -20,7 +20,7 @@ import {
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { ACOES, COR_CLASS, ESTRUTURA_SISTEMA } from "@/components/sistema/central-perfis-acesso/rbacPerfilConfig";
-import { normalizeEmpresaIds, perfilNoEscopo, usuarioNoEscopo } from "@/components/sistema/central-perfis-acesso/rbacScopeUtils";
+import { buildPerfilRbacPayload, buildRbacContextData, normalizeEmpresaIds, perfilNoEscopo, usuarioNoEscopo } from "@/components/sistema/central-perfis-acesso/rbacScopeUtils";
 
 export default function CentralPerfisAcesso() {
   const [perfilAberto, setPerfilAberto] = useState(null);
@@ -51,14 +51,6 @@ export default function CentralPerfisAcesso() {
   const podeEditarPerfil = isAdmin() || hasPermission('Sistema', ['Controle de Acesso'], 'editar');
   const podeExcluirPerfil = isAdmin() || hasPermission('Sistema', ['Controle de Acesso'], 'excluir');
 
-  const getDadosContextoRBAC = () => ({
-    contexto: contexto || 'sem-contexto',
-    contexto_valido: contextoValido,
-    group_id: grupoAtivoId || null,
-    empresa_id: empresaAtivaId || null,
-    empresas_grupo_ids: empresasGrupoIds,
-    permissao_base: 'Sistema.Controle de Acesso',
-  });
 
   const auditarPerfil = async ({ acao, descricao, dadosNovos = {}, sucesso = true }) => {
     try {
@@ -73,7 +65,7 @@ export default function CentralPerfisAcesso() {
         tipo_auditoria: 'seguranca',
         descricao,
         dados_novos: {
-          ...getDadosContextoRBAC(),
+          ...buildRbacContextData({ contexto, contextoValido, grupoAtivoId, empresaAtivaId, empresasGrupoIds }),
           ...(dadosNovos || {}),
         },
         sucesso,
@@ -151,14 +143,7 @@ export default function CentralPerfisAcesso() {
         throw new Error('Sem permissao para salvar perfil de acesso.');
       }
 
-      const payload = {
-        ...data,
-        contexto_valido: contextoValido,
-        group_id: grupoAtivoId || null,
-        grupo_id: grupoAtivoId || null,
-        ...(empresaAtivaId ? { empresa_id: empresaAtivaId } : {}),
-        ...(contexto === 'grupo' ? { empresas_grupo_ids: empresasGrupoIds } : {}),
-      };
+      const payload = buildPerfilRbacPayload({ data, contexto, contextoValido, grupoAtivoId, empresaAtivaId, empresasGrupoIds });
 
       const resultado = criando
         ? await createInContext('PerfilAcesso', payload)
@@ -545,5 +530,3 @@ export default function CentralPerfisAcesso() {
     </div>
   );
 }
-
-
