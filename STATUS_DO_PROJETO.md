@@ -1,3 +1,11 @@
+### Dashboards em Tempo Real - Contexto Estrito e RBAC
+- Revisei DashboardTempoReal, DashboardEntregasRealtime e DashboardProducaoRealtime sem criar nova tela, modulo ou fluxo.
+- O modo Grupo agora exige groupId; o modo Empresa exige groupId e empresaId, com mensagem especifica quando o contexto estiver incompleto.
+- Os dashboards bloqueiam consultas sem permissao de visualizacao e usam chaves de consulta com contexto, Grupo e Empresa.
+- Os hooks useRealtimeKPIs, useRealtimePedidos e useRealtimeEntregas deixaram de consultar listas globais quando nao houver contexto e agora recebem habilitacao explicita.
+- Entregas e Producao receberam polling controlado com cache contextual, sem atualizacao em segundo plano.
+- Mantida a Regra-Mae: melhoria nos dashboards e hooks existentes, sem remover cards, graficos, botoes ou comportamento autorizado.
+- Proximo passo sugerido: finalizar os relatorios operacionais de Logistica, Producao e Estoque com contexto estrito, RBAC, auditoria, sanitizacao e textos corrigidos.
 ### Administracao do Sistema - Fase 12 Central RBAC com Dados de Cards Extraidos
 - Continuei a refatoracao obrigatoria de `CentralPerfisAcesso.jsx`, sem criar nova tela, modulo ou fluxo.
 - `rbacScopeUtils.js` agora centraliza `buildPerfilCardInfo` para calcular permissoes totais, usuarios vinculados, status ativo e nome de exibicao dos cards de perfil.

@@ -23,12 +23,14 @@ import usePermissions from "@/components/lib/usePermissions";
  */
 
 function DashboardProducaoRealtime({ empresaId, windowMode = false }) {
-  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const empresaOperacionalId = empresaId || empresaAtual?.id || null;
   const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
-  const contextoValido = Boolean(groupId || empresaOperacionalId);
-  const contextKey = groupId ? `grupo:${groupId}` : `empresa:${empresaOperacionalId || "sem-empresa"}`;
+  const contextoValido = contexto === 'grupo'
+    ? Boolean(groupId)
+    : Boolean(groupId && empresaOperacionalId);
+  const contextKey = `${contexto || "sem-contexto"}:grupo:${groupId || "sem-grupo"}:empresa:${empresaOperacionalId || "sem-empresa"}`;
   const canViewDashboard = hasPermission("Produção", "Dashboard", "visualizar") ||
     hasPermission("Produção", "Dashboard", "ver") ||
     hasPermission("Produção", null, "visualizar") ||
@@ -47,12 +49,18 @@ function DashboardProducaoRealtime({ empresaId, windowMode = false }) {
     queryKey: ['ordens-producao-dashboard', contextKey],
     queryFn: () => filterInContext('OrdemProducao', {}, '-created_date', 500),
     enabled: contextoValido && canViewDashboard,
+    staleTime: 15000,
+    refetchInterval: 30000,
+    refetchIntervalInBackground: false,
   });
 
   const { data: apontamentos = [] } = useQuery({
     queryKey: ['apontamentos-producao-dashboard', contextKey],
     queryFn: () => filterInContext('ApontamentoProducao', {}, '-created_date', 500),
     enabled: contextoValido && canViewDashboard,
+    staleTime: 15000,
+    refetchInterval: 30000,
+    refetchIntervalInBackground: false,
   });
 
   // Calcular métricas em tempo real
@@ -114,11 +122,11 @@ function DashboardProducaoRealtime({ empresaId, windowMode = false }) {
 
   if (!contextoValido || !canViewDashboard) {
     return (
-      <div className={containerClass} data-permission="Producao.Dashboard.visualizar" data-context-required="true">
+      <div className={containerClass} data-permission="Producao.Dashboard.visualizar" data-context-required="group-or-company">
         <Card className="border-amber-200 bg-amber-50">
           <CardContent className="p-6 flex items-center gap-3 text-amber-800">
             <AlertTriangle className="w-5 h-5" />
-            <span>{!contextoValido ? "Selecione um grupo ou empresa para visualizar o dashboard de produção." : "Seu perfil não possui permissão para visualizar o dashboard de produção."}</span>
+            <span>{!contextoValido ? (contexto === 'grupo' ? "Selecione um grupo para visualizar o dashboard de produção." : "Selecione uma empresa vinculada a um grupo para visualizar o dashboard de produção.") : "Seu perfil não possui permissão para visualizar o dashboard de produção."}</span>
           </CardContent>
         </Card>
       </div>
@@ -126,7 +134,7 @@ function DashboardProducaoRealtime({ empresaId, windowMode = false }) {
   }
 
   return (
-    <div className={containerClass} data-permission="Producao.Dashboard.visualizar" data-context-required="true">
+    <div className={containerClass} data-permission="Producao.Dashboard.visualizar" data-context-required="group-or-company">
       <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
       {/* KPIs Principais */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">

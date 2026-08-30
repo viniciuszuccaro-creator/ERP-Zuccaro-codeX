@@ -20,12 +20,14 @@ import usePermissions from "@/components/lib/usePermissions";
  * Consolidacao e melhoria do modulo de expedicao.
  */
 function DashboardEntregasRealtime({ empresaId, windowMode = false }) {
-  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { contexto, filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { hasPermission } = usePermissions();
 
   const effectiveEmpresaId = empresaId || empresaAtual?.id || null;
   const effectiveGroupId = grupoAtual?.id || empresaAtual?.group_id || null;
-  const contextoValido = Boolean(effectiveGroupId || effectiveEmpresaId);
+  const contextoValido = contexto === 'grupo'
+    ? Boolean(effectiveGroupId)
+    : Boolean(effectiveGroupId && effectiveEmpresaId);
   const canViewDashboard = hasPermission("Expedicao", "Dashboard", "visualizar")
     || hasPermission("Expedicao", "Entregas", "visualizar")
     || hasPermission("Expedicao", "Painel Logistico", "visualizar");
@@ -34,14 +36,18 @@ function DashboardEntregasRealtime({ empresaId, windowMode = false }) {
     queryKey: ["dashboard-entregas-realtime", effectiveGroupId, effectiveEmpresaId],
     queryFn: () => filterInContext("Entrega", {}, "-updated_date", 500),
     enabled: contextoValido && canViewDashboard,
-    staleTime: 15000
+    staleTime: 15000,
+    refetchInterval: 30000,
+    refetchIntervalInBackground: false
   });
 
   const { data: rotas = [] } = useQuery({
     queryKey: ["dashboard-rotas-realtime", effectiveGroupId, effectiveEmpresaId],
     queryFn: () => filterInContext("RoteirizacaoInteligente", {}, "-updated_date", 300),
     enabled: contextoValido && canViewDashboard,
-    staleTime: 15000
+    staleTime: 15000,
+    refetchInterval: 30000,
+    refetchIntervalInBackground: false
   });
 
   const metricas = useMemo(() => {
@@ -92,10 +98,14 @@ function DashboardEntregasRealtime({ empresaId, windowMode = false }) {
 
   if (!contextoValido || !canViewDashboard) {
     return (
-      <div className={containerClass} data-permission="Expedicao.Dashboard.visualizar" data-context-required="true">
-        <Card className="border-yellow-200 bg-yellow-50" data-permission="Expedicao.Dashboard.visualizar" data-context-required="true">
+      <div className={containerClass} data-permission="Expedicao.Dashboard.visualizar" data-context-required="group-or-company">
+        <Card className="border-yellow-200 bg-yellow-50" data-permission="Expedicao.Dashboard.visualizar" data-context-required="group-or-company">
           <CardContent className="p-4 text-sm text-yellow-800">
-            Selecione um contexto grupo/empresa e confirme permissao para visualizar o dashboard de entregas.
+            {!contextoValido
+              ? (contexto === 'grupo'
+                ? 'Selecione um grupo para visualizar o dashboard de entregas.'
+                : 'Selecione uma empresa vinculada a um grupo para visualizar o dashboard de entregas.')
+              : 'Seu perfil não possui permissão para visualizar o dashboard de entregas.'}
           </CardContent>
         </Card>
       </div>
@@ -103,7 +113,7 @@ function DashboardEntregasRealtime({ empresaId, windowMode = false }) {
   }
 
   return (
-    <div className={containerClass} data-permission="Expedicao.Dashboard.visualizar" data-context-required="true">
+    <div className={containerClass} data-permission="Expedicao.Dashboard.visualizar" data-context-required="group-or-company">
       <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <Card><CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600">Entregas Hoje</CardTitle></CardHeader><CardContent><div className="flex items-center gap-2"><Truck className="w-5 h-5 text-blue-600" /><span className="text-2xl font-bold">{metricas.entregasHoje}</span></div></CardContent></Card>

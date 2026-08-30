@@ -89,7 +89,7 @@ export function useRealtimeData(queryKey, queryFn, options = {}) {
 /**
  * Hook para KPIs em tempo real
  */
-export function useRealtimeKPIs(empresaId, intervalo = 30000, groupId = null) {
+export function useRealtimeKPIs(empresaId, intervalo = 30000, groupId = null, enabled = true) {
   const defaultKPIs = {
     pedidos: { hoje: 0, valorHoje: 0, aguardandoAprovacao: 0, emProducao: 0 },
     financeiro: { vencendoHoje: 0, valorHoje: 0, atrasados: 0, recebidosHoje: 0 },
@@ -105,7 +105,7 @@ export function useRealtimeKPIs(empresaId, intervalo = 30000, groupId = null) {
         const getByContext = (entity, order, limit) => {
           if (empresaId) return base44.entities[entity].filter({ empresa_id: empresaId }, order, limit);
           if (groupId) return base44.entities[entity].filter({ group_id: groupId }, order, limit);
-          return base44.entities[entity].list(order, limit);
+          return Promise.resolve([]);
         };
         const results = await Promise.allSettled([
           getByContext('Pedido', '-created_date', 20),
@@ -113,7 +113,7 @@ export function useRealtimeKPIs(empresaId, intervalo = 30000, groupId = null) {
           (base44.entities.OrdemProducao?.filter || base44.entities.OrdemProducao?.list)
             ? (empresaId || groupId
                 ? base44.entities.OrdemProducao.filter({ [empresaId ? 'empresa_id' : 'group_id']: empresaId || groupId }, '-data_emissao', 20)
-                : base44.entities.OrdemProducao.list('-data_emissao', 20))
+                : Promise.resolve([]))
             : Promise.resolve([]),
           getByContext('Entrega', '-created_date', 10)
         ]);
@@ -219,14 +219,14 @@ export function useRealtimeKPIs(empresaId, intervalo = 30000, groupId = null) {
         };
       }
     },
-    { refetchInterval: intervalo, enabled: true, initialData: defaultKPIs, retry: false }
+    { refetchInterval: intervalo, enabled: enabled && Boolean(empresaId || groupId), initialData: defaultKPIs, retry: false }
   );
 }
 
 /**
  * Hook para Status de Pedidos em tempo real
  */
-export function useRealtimePedidos(empresaId, limite = 10, groupId = null) {
+export function useRealtimePedidos(empresaId, limite = 10, groupId = null, enabled = true) {
   const { filterInContext } = useContextoVisual();
   return useRealtimeData(
     ['pedidos-realtime', empresaId, groupId],
@@ -235,11 +235,11 @@ export function useRealtimePedidos(empresaId, limite = 10, groupId = null) {
         ? base44.entities.Pedido.filter({ empresa_id: empresaId }, '-created_date', limite)
         : groupId
           ? base44.entities.Pedido.filter({ group_id: groupId }, '-created_date', limite)
-          : base44.entities.Pedido.list('-created_date', limite)
+          : Promise.resolve([])
     ),
     { 
       refetchInterval: 30000,
-      enabled: true,
+      enabled: enabled && Boolean(empresaId || groupId),
       initialData: [],
       retry: false,
       onUpdate: (novos, anteriores) => {
@@ -260,7 +260,7 @@ export function useRealtimePedidos(empresaId, limite = 10, groupId = null) {
 /**
  * Hook para Entregas em tempo real
  */
-export function useRealtimeEntregas(empresaId, groupId = null) {
+export function useRealtimeEntregas(empresaId, groupId = null, enabled = true) {
   const { filterInContext } = useContextoVisual();
   return useRealtimeData(
     ['entregas-realtime', empresaId, groupId],
@@ -270,12 +270,12 @@ export function useRealtimeEntregas(empresaId, groupId = null) {
           ? base44.entities.Entrega.filter({ empresa_id: empresaId }, '-created_date', 20)
           : groupId
             ? base44.entities.Entrega.filter({ group_id: groupId }, '-created_date', 20)
-            : base44.entities.Entrega.list('-created_date', 20)
+            : Promise.resolve([])
       );
       
       return entregas.filter(e => !['Entregue', 'Cancelado', 'Devolvido'].includes(e.status));
     },
-    { refetchInterval: 35000, enabled: true, initialData: [], retry: false }
+    { refetchInterval: 35000, enabled: enabled && Boolean(empresaId || groupId), initialData: [], retry: false }
     );
 }
 

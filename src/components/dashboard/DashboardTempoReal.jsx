@@ -20,6 +20,7 @@ import { useRealtimeKPIs, useRealtimePedidos, useRealtimeEntregas } from '@/comp
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * Dashboard em Tempo Real
@@ -27,16 +28,25 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
  */
 function DashboardTempoReal({ empresaId, windowMode = false }) {
   const [pulseActive, setPulseActive] = useState(false);
-  const { empresaAtual, estaNoGrupo, grupoAtual, filtrarPorContexto } = useContextoVisual();
+  const { contexto, empresaAtual, estaNoGrupo, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
   
   // Usar empresa do contexto se não fornecida
   const empresaIdFinal = empresaId || empresaAtual?.id;
-  const groupIdFinal = estaNoGrupo ? (grupoAtual?.id || null) : null;
+  const groupIdFinal = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextoValido = contexto === 'grupo' || estaNoGrupo
+    ? Boolean(groupIdFinal)
+    : Boolean(groupIdFinal && empresaIdFinal);
+  const canViewDashboard = hasPermission('Dashboard', 'Tempo Real', 'visualizar') ||
+    hasPermission('Dashboard', null, 'visualizar') ||
+    hasPermission('Sistema', 'Dashboard', 'visualizar');
+  const canRefreshDashboard = canViewDashboard || hasPermission('Dashboard', 'Tempo Real', 'atualizar');
+  const dashboardEnabled = contextoValido && canViewDashboard;
   
   // Dados em tempo real
-  const { data: kpis, isLoading, hasChanges, error: kpiError, refetch } = useRealtimeKPIs(empresaIdFinal, 45000, groupIdFinal);
-  const { data: pedidosRecentes } = useRealtimePedidos(empresaIdFinal, 5, groupIdFinal);
-  const { data: entregasAtivas } = useRealtimeEntregas(empresaIdFinal, groupIdFinal) || {};
+  const { data: kpis, isLoading, hasChanges, error: kpiError, refetch } = useRealtimeKPIs(empresaIdFinal, 45000, groupIdFinal, dashboardEnabled);
+  const { data: pedidosRecentes } = useRealtimePedidos(empresaIdFinal, 5, groupIdFinal, dashboardEnabled);
+  const { data: entregasAtivas } = useRealtimeEntregas(empresaIdFinal, groupIdFinal, dashboardEnabled) || {};
 
   const semDadosKPI = (kpis?.pedidos?.hoje || 0) + (kpis?.financeiro?.vencendoHoje || 0) + (kpis?.producao?.opsEmAndamento || 0) + (kpis?.expedicao?.entregasHoje || 0) === 0;
 
@@ -47,6 +57,23 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
       setTimeout(() => setPulseActive(false), 1000);
     }
   }, [hasChanges]);
+
+  if (!dashboardEnabled) {
+    return (
+      <div className="w-full h-full" data-permission="Dashboard.Tempo Real.visualizar" data-context-required="group-or-company">
+        <Alert className="border-amber-200 bg-amber-50">
+          <AlertTriangle className="w-4 h-4 text-amber-600" />
+          <AlertDescription className="text-amber-800">
+            {!contextoValido
+              ? (contexto === 'grupo' || estaNoGrupo
+                ? 'Selecione um grupo para visualizar o dashboard em tempo real.'
+                : 'Selecione uma empresa vinculada a um grupo para visualizar o dashboard em tempo real.')
+              : 'Seu perfil não possui permissão para visualizar o dashboard em tempo real.'}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   if (!kpis) {
     return (
@@ -66,7 +93,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
   const containerClass = "w-full h-full flex flex-col"; // layout adaptativo garantido
 
   return (
-    <div className={`${containerClass}`}>
+    <div className={`${containerClass}`} data-permission="Dashboard.Tempo Real.visualizar" data-context-required="group-or-company">
       <div className="p-6 space-y-6 flex-1 overflow-auto">
       {/* Header com Status */}
       <Alert className="border-green-300 bg-green-50">
@@ -97,7 +124,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
         <Alert className="border-red-300 bg-red-50">
           <AlertDescription className="flex items-center justify-between gap-3">
             <span>Erro ao carregar dados em tempo real (possível limite de requisições).</span>
-            <Button size="sm" variant="outline" onClick={() => refetch()}>Tentar novamente</Button>
+            <Button size="sm" variant="outline" onClick={() => canRefreshDashboard && refetch()} disabled={!canRefreshDashboard} data-permission="Dashboard.Tempo Real.atualizar">Tentar novamente</Button>
           </AlertDescription>
         </Alert>
       )}
@@ -105,7 +132,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
         <Alert className="border-amber-300 bg-amber-50">
           <AlertDescription className="flex items-center justify-between gap-3">
             <span>Nenhum dado recente por enquanto.</span>
-            <Button size="sm" variant="outline" onClick={() => refetch()}>Atualizar</Button>
+            <Button size="sm" variant="outline" onClick={() => canRefreshDashboard && refetch()} disabled={!canRefreshDashboard} data-permission="Dashboard.Tempo Real.atualizar">Atualizar</Button>
           </AlertDescription>
         </Alert>
       )}
