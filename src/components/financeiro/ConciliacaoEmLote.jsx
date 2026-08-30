@@ -38,13 +38,14 @@ export default function ConciliacaoEmLote() {
         case 'cliente':
           query.cliente = { $regex: filtro, $options: 'i' };
           break;
-        case 'periodo':
+        case 'periodo': {
           // Buscar por período (últimos N dias)
           const dias = parseInt(filtro) || 7;
           const dataInicio = new Date();
           dataInicio.setDate(dataInicio.getDate() - dias);
           query.data_recebimento = { $gte: dataInicio.toISOString().split('T')[0] };
           break;
+        }
       }
       
       return filterInContext('ContaReceber', query, '-data_recebimento', 100);

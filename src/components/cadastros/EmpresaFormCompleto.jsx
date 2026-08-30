@@ -16,7 +16,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeCode = (value, max = 80) => String(value ?? "").replace(/[^0-9A-Za-z_.\-/\s]/g, "").slice(0, max).trim();
-const sanitizeUrl = (value, max = 500) => String(value ?? "").replace(/[<>\"']/g, "").slice(0, max).trim();
+const sanitizeUrl = (value, max = 500) => String(value ?? "").replace(/[<>"']/g, "").slice(0, max).trim();
 const toNumber = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const sanitizeEndereco = (endereco = {}) => ({
   logradouro: sanitizeText(endereco.logradouro, 180),

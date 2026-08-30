@@ -3349,3 +3349,19 @@ Checklist inicial:
 - Avisos preexistentes de CSS, Browserslist, imports mistos e bundle grande permanecem registrados para estabilizacao posterior.
 - Nenhuma tela, funcionalidade ou dado foi removido; o projeto do HD externo nao foi alterado.
 - Proximo passo obrigatorio: corrigir a divida de lint/typecheck por lotes pequenos, iniciando por erros reais de sintaxe e variaveis na fundacao, sem alterar arquivos-documentacao em massa.
+
+### Plano Mestre - Lote 6: Validacao Operacional Confiavel
+
+- Trabalho executado somente no clone interno `C:\Users\cpaba\ERP-Zuccaro-codeX-local\ERP-Zuccaro-codeX`; o projeto do HD externo nao foi acessado nem alterado.
+- Documentos historicos foram preservados com seus nomes e conteudos originais.
+- O ESLint agora separa dinamicamente arquivos `.md.jsx`, conteudo Markdown e os artefatos JSON conhecidos da validacao operacional.
+- O `audit:baseline` continua inventariando esses arquivos e passou a detectar se algum deles for importado por codigo executavel.
+- Inventario atual: 1.411 arquivos-fonte, 1.238 componentes, 312 artefatos historicos e zero importacoes desses artefatos pelo runtime.
+- Corrigidos filtro indefinido do RH, nomes dos componentes de portal que usam hooks, blocos `case`, JSX do mapa logistico, propriedades de estilo invalidas, escapes desnecessarios e textos quebrados na Gestao de Acessos.
+- `import.meta.env` passou a receber os tipos oficiais de `vite/client`, mantendo `checkJs` ativo.
+- Lint operacional caiu de 580 para 248 erros; 246 sao catches vazios reservados ao Lote 8 e 2 pertencem ao guard desativado do botao compartilhado, tambem reservado ao Lote 8. Permanecem 20 avisos de diretivas antigas.
+- Typecheck permanece aberto sem ocultacao: TS2322 8.111, TS2559 3.173, TS2339 1.759 e TS2741 555 sao as maiores familias para o Lote 7.
+- Validacao: 20 testes executados e aprovados, `git diff --check` aprovado e build completo aprovado com 3.785 modulos transformados.
+- O build preserva avisos preexistentes de CSS, Browserslist, imports mistos e bundle principal grande.
+- Nenhuma tela, funcionalidade, documento ou dado foi removido.
+- Proximo passo obrigatorio: executar o Lote 7, tipando por JSDoc os componentes compartilhados existentes e o contrato dinamico Base44, com prioridade para TS2322, TS2559, TS2339 e TS2741.

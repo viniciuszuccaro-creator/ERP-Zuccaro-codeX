@@ -345,6 +345,38 @@ Resultado esperado:
 
 - Sistema mais limpo, responsivo e facil de usar.
 
+## Plano Mestre - Lotes de Fundacao em Execucao
+
+### Lote 6 - Validacao operacional confiavel (concluido em 2026-08-30)
+
+1. Manter documentos historicos `.jsx`, `.md.jsx` e relatorios JSON no repositorio.
+2. Excluir esses artefatos somente do lint operacional, por classificacao de conteudo.
+3. Continuar contabilizando todos no `audit:baseline` e detectar importacao pelo runtime.
+4. Corrigir erros reais de JSX, filtros, hooks, `case`, estilos e codificacao encontrados no lote.
+5. Manter o typecheck com `checkJs` e adicionar os tipos de `vite/client`.
+
+Resultado: 312 artefatos historicos preservados, zero importacoes pelo runtime, 20 testes aprovados e build completo aprovado.
+
+### Lote 7 - Contratos compartilhados (proximo)
+
+1. Tipar por JSDoc as primitivas de interface existentes, comecando por Button, Input, Tabs, Select, Dialog, Card e formularios.
+2. Preservar como opcionais apenas propriedades que ja funcionam dessa forma.
+3. Padronizar o contrato dinamico do cliente Base44 sem criar um `any` global.
+4. Atacar primeiro TS2322, TS2559, TS2339 e TS2741.
+
+### Lote 8 - Controles, erros e seguranca visual
+
+1. Ativar o guard backend do botao compartilhado e falhar fechado.
+2. Revisar catches vazios por criticidade, com erro visivel ou auditoria em persistencia, acesso e operacoes criticas.
+3. Validar botoes, toggles, selecoes, formularios e reabertura dos dados.
+
+### Lote 9 - Qualidade verde
+
+1. Zerar erros e avisos do lint operacional.
+2. Zerar diagnosticos de typecheck sem desligar `checkJs`.
+3. Corrigir CSS invalido, imports mistos e bundle principal.
+4. Configurar E2E para contexto, RBAC, persistencia e fluxos criticos.
+
 ## Fase 11 - Duplicidades
 
 Objetivo: evitar que o ERP cresca com telas, funcoes e componentes repetidos.

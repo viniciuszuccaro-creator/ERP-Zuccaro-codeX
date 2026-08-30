@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 
-export default function portal() {
+export default function Portal() {
   useEffect(() => {
     const qs = window.location.search || '';
     const hash = window.location.hash || '';

@@ -337,7 +337,7 @@ export default function EtiquetaCNC({ item, pedido }) {
         </div>
       )}
 
-      <style jsx>{`
+      <style>{`
         @media print {
           .no-print {
             display: none !important;

@@ -258,9 +258,9 @@ export default function GestaoAcessosIndex() {
             </TabsTrigger>
             <TabsTrigger value="usuarios" data-action="RBAC.tab.usuarios" data-permission="Sistema.Controle de Acesso.visualizar" className="text-xs px-2.5 sm:px-4 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <Users className="w-3.5 h-3.5 mr-1" />
-              UsuÃ¡rios
+              Usuarios
               {usuariosSemPerfil > 0 && (
-                <Badge className="ml-1.5 text-[9px] bg-amber-100 text-amber-700 px-1">{usuariosSemPerfil} âš </Badge>
+                <Badge className="ml-1.5 text-[9px] bg-amber-100 text-amber-700 px-1">{usuariosSemPerfil} pendentes</Badge>
               )}
             </TabsTrigger>
             <TabsTrigger value="sod" data-action="RBAC.tab.sod" data-permission="Sistema.Controle de Acesso.visualizar" className="text-xs px-2.5 sm:px-4 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">

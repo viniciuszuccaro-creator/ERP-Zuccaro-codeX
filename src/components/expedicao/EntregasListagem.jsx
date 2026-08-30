@@ -16,6 +16,8 @@ import { useWindow } from '@/components/lib/useWindow';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import { useUser } from '@/components/lib/UserContext';
 import usePermissions from '@/components/lib/usePermissions';
+
+const EXIBIR_TABELA_LEGADA = false;
 import { ProtectedAction } from '@/components/ProtectedAction';
 import FormularioEntrega from './FormularioEntrega';
 import DetalhesEntregaView from './DetalhesEntregaView';
@@ -262,7 +264,7 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
             onPageChange={(p) => setPage(p)}
             onPageSizeChange={(n) => { setPageSize(n); setPage(1); }}
           />
-          {false && (<Table>
+          {EXIBIR_TABELA_LEGADA && (<Table>
             <TableHeader className="sticky top-0 bg-slate-50 z-10">
               <TableRow>
                 <TableHead className="w-10"><Checkbox /></TableHead>

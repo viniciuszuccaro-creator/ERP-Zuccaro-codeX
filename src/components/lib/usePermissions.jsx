@@ -24,7 +24,7 @@ export default function usePermissions() {
       return String(s)
         .normalize('NFD').replace(/\p{Diacritic}/gu, '') // remove acentos
         .toLowerCase()
-        .replace(/[^a-z0-9\.]/g, '');
+        .replace(/[^a-z0-9.]/g, '');
     };
 
     const MODULE_ALIASES = {

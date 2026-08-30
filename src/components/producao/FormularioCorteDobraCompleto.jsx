@@ -93,15 +93,17 @@ export default function FormularioCorteDobraCompleto({ onSalvar, onCancelar, ite
       case "L":
         comprimentoTotal = (medidas.comprimento || 0) + (medidas.dobra || 0);
         break;
-      case "estribo":
+      case "estribo": {
         const largura = medidas.largura || 0;
         const altura = medidas.altura || 0;
         comprimentoTotal = (largura * 2) + (altura * 2) + 15; // +15cm para dobra/gancho
         break;
-      case "estribo_circular":
+      }
+      case "estribo_circular": {
         const diametro = medidas.diametro || 0;
         comprimentoTotal = Math.PI * diametro + 15;
         break;
+      }
       case "gancho":
         comprimentoTotal = (medidas.comprimento || 0) + (medidas.gancho || 0);
         break;

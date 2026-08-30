@@ -158,7 +158,7 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
     const escapeCsv = (value) => {
       const semQuebras = String(value ?? "").replace(/\r?\n|\r/g, " ");
       const seguro = /^[=+\-@]/.test(semQuebras.trimStart()) ? `'${semQuebras}` : semQuebras;
-      return "\"" + seguro.replace(/\"/g, "\"\"") + "\"";
+      return "\"" + seguro.replace(/"/g, "\"\"") + "\"";
     };
     const csv = [headers, ...rows].map(row => row.map(escapeCsv).join(";")).join("\n");
     const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });

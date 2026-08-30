@@ -190,7 +190,7 @@ export default function RomaneioImpressao({ romaneio, entregas, empresa }) {
       </div>
 
       {/* Estilos de Impressão */}
-      <style jsx>{`
+      <style>{`
         @media print {
           body { margin: 0; }
           .print\\:hidden { display: none !important; }

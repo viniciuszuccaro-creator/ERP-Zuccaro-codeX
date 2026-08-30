@@ -148,8 +148,8 @@ export default function ConflitosRevisaoPanel() {
             <div className="space-y-1">
               <label className="text-xs text-slate-600">Direcao</label>
               <select className="w-full border rounded-md h-9 px-2 text-sm" value={source} onChange={(e) => setSource(e.target.value)} data-action="Conflitos.direcao">
-                <option value="up">Empresa -> Grupo (up)</option>
-                <option value="down">Grupo -> Empresa (down)</option>
+                <option value="up">Empresa -&gt; Grupo (up)</option>
+                <option value="down">Grupo -&gt; Empresa (down)</option>
               </select>
             </div>
           </div>

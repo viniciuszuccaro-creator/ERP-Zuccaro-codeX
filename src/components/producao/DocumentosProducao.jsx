@@ -371,7 +371,7 @@ export default function DocumentosProducao({ pedido, itensProducao }) {
         </TabsContent>
       </Tabs>
 
-      <style jsx>{`
+      <style>{`
         @media print {
           .no-print {
             display: none !important;

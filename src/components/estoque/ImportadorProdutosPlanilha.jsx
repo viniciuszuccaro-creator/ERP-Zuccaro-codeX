@@ -659,6 +659,8 @@ const [suggesting, setSuggesting] = useState(false);
         text = decodeWith('utf-8');
       }
       // heurística: se tiver muitos \u0000 ou �, tenta alternativas
+      // A deteccao de byte nulo e intencional para reconhecer UTF-16.
+      // eslint-disable-next-line no-control-regex
       const hasNulls = text && /\u0000/.test(text);
       const manyReplacement = text && ((text.match(/\uFFFD/g)?.length) || 0) > 5;
       if (!text || hasNulls || manyReplacement) {
@@ -1230,7 +1232,7 @@ const [suggesting, setSuggesting] = useState(false);
                     await sleep(200);
                     return await createInContext('Produto', withProdutoContexto({ ...d.novo, codigo: d.codigo }, d.novo));
                   } catch (err2) {
-                    throw err2;
+                    throw new Error('Falha ao substituir produto apos nova tentativa.', { cause: err2 });
                   }
                 }
                 throw err;

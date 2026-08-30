@@ -35,6 +35,8 @@ const canRunAutomaticAction = (contexto = {}) => {
 const sanitizePromptText = (value, max = 1200) => String(value ?? '')
   .replace(/[<>]/g, '')
   .replace(/javascript:/gi, '')
+  // Caracteres de controle nao podem seguir para prompts externos.
+  // eslint-disable-next-line no-control-regex
   .replace(/[\u0000-\u001F\u007F]/g, ' ')
   .replace(/\s+/g, ' ')
   .trim()

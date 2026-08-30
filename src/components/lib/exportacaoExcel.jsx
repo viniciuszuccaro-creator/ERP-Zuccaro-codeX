@@ -28,11 +28,7 @@ function converterParaCSV(dados, colunas) {
       
       // Datas
       if (col.tipo === 'date' && valor) {
-        try {
-          valor = new Date(valor).toLocaleDateString('pt-BR');
-        } catch (e) {
-          valor = valor;
-        }
+        valor = new Date(valor).toLocaleDateString('pt-BR');
       }
       
       // Números/Moeda

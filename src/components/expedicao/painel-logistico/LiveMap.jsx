@@ -75,6 +75,7 @@ export default function LiveMap({ posicao, entregaId, height = 340, contextoVali
           </Marker>
         )}
       </MapContainer>
+      )}
     </div>
   );
 }
