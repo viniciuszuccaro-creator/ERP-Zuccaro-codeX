@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
+import { normalizeGuardAction, resolveGuardPermission } from './_lib/security/entityGuardPolicy.js';
 
 // Rate-limit por IP
 const __RL = globalThis.__egRate || (globalThis.__egRate = new Map());
@@ -55,23 +56,6 @@ Deno.serve(async (req) => {
 
     if (!user) return Response.json({ allowed: false, error: 'Unauthorized' }, { status: 401 });
 
-    // Admin sempre tem acesso
-    if (user?.role === 'admin') {
-      return Response.json({ allowed: true });
-    }
-
-    const normalize = (a) => {
-      if (!a) return 'visualizar';
-      const s = String(a).toLowerCase();
-      const map = {
-        ver: 'visualizar', view: 'visualizar', read: 'visualizar', listar: 'visualizar',
-        delete: 'excluir', remove: 'excluir', apagar: 'excluir',
-        create: 'criar', add: 'criar', update: 'editar', edit: 'editar',
-        approve: 'aprovar', aprovar: 'aprovar', export: 'exportar', exportar: 'exportar'
-      };
-      return map[s] || s;
-    };
-
     const normalizeModule = (s) => {
       if (!s) return 'Sistema';
       const norm = String(s).normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -92,63 +76,43 @@ Deno.serve(async (req) => {
 
     const moduleName = normalizeModule(body?.module || 'Sistema');
     const section = body?.section || null;
-    const desired = normalize(body?.action || 'visualizar');
+    const desired = normalizeGuardAction(body?.action);
 
     // Proteção de entidades críticas
     const targetEntity = body?.entity_name;
-    if (targetEntity && (targetEntity === 'AuditLog' || targetEntity === 'PerfilAcesso')) {
-      if (['criar', 'editar', 'excluir'].includes(desired)) {
-        return Response.json({ allowed: false }, { status: 403 });
-      }
+    if (targetEntity === 'AuditLog' && ['criar', 'editar', 'excluir'].includes(desired)) {
+      return Response.json({ allowed: false, error: 'audit_log_immutable' }, { status: 403 });
     }
 
-    // Verifica perfil de acesso (sem chamada extra se não tiver perfil)
-    let allowed = false;
+    // Administradores podem gerir perfis, mas não alterar o log imutável.
+    if (user?.role === 'admin') {
+      return Response.json({ allowed: true, reason: 'admin' });
+    }
+
+    if (!user?.perfil_acesso_id) {
+      return Response.json({ allowed: false, error: 'access_profile_required' }, { status: 403 });
+    }
+
+    let perfil = null;
     try {
-      if (user?.perfil_acesso_id) {
-        const perfil = await base44.asServiceRole.entities.PerfilAcesso.get(user.perfil_acesso_id);
-        const perms = perfil?.permissoes;
-        if (perms) {
-          const modNode = perms[moduleName];
-          if (modNode) {
-            if (!section) {
-              allowed = Object.values(modNode).some((node) => {
-                if (Array.isArray(node)) return node.includes(desired) || node.includes('visualizar');
-                if (node && typeof node === 'object') return Object.values(node).some((v) => Array.isArray(v) && (v.includes(desired) || v.includes('visualizar')));
-                return false;
-              });
-            } else {
-              const path = Array.isArray(section) ? section : String(section).split('.').filter(Boolean);
-              let cursor = modNode;
-              for (const seg of path) { if (!cursor) break; cursor = cursor[seg]; }
-              if (Array.isArray(cursor)) allowed = cursor.includes(desired) || cursor.includes('visualizar');
-              else if (cursor && typeof cursor === 'object') {
-                const stack = [cursor];
-                while (stack.length && !allowed) {
-                  const node = stack.pop();
-                  if (Array.isArray(node)) { if (node.includes(desired) || node.includes('visualizar')) allowed = true; }
-                  else if (node && typeof node === 'object') Object.values(node).forEach(v => stack.push(v));
-                }
-              }
-            }
-          }
-        }
-      } else {
-        // Sem perfil configurado → permite (usuário sem restrições explícitas)
-        allowed = true;
-      }
+      perfil = await base44.asServiceRole.entities.PerfilAcesso.get(user.perfil_acesso_id);
     } catch {
-      // Em caso de erro ao buscar perfil, permite para não bloquear o usuário
-      allowed = true;
+      return Response.json({ allowed: false, error: 'access_profile_unavailable' }, { status: 503 });
     }
 
-    // Sem escopo multiempresa → permite (o frontend já valida o contexto)
-    // NÃO bloquear por falta de empresa_id pois algumas entidades são globais
+    const allowed = resolveGuardPermission({
+      permissions: perfil?.permissoes,
+      moduleName,
+      section,
+      action: desired,
+    });
 
-    return Response.json({ allowed });
+    return Response.json(
+      { allowed, reason: allowed ? 'profile_permission' : 'permission_denied' },
+      { status: allowed ? 200 : 403 },
+    );
 
   } catch (err) {
-    // Em caso de erro interno, PERMITE (fail-open) para não bloquear operações
-    return Response.json({ allowed: true, _fallback: true });
+    return Response.json({ allowed: false, error: 'guard_unavailable' }, { status: 503 });
   }
 });

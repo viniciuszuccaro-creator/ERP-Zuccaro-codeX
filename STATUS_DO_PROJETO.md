@@ -3297,3 +3297,15 @@ Checklist inicial:
 - O build mantem avisos preexistentes de CSS, imports mistos e bundle principal grande; esses itens entram na fila de estabilizacao sem remocao automatica.
 - Nenhuma funcionalidade, tela, botao, entidade ou dado foi excluido.
 - Proximo passo obrigatorio: corrigir o comportamento fail-open do `entityGuard` e dos wrappers do `Layout.jsx`, com testes para mutacoes e funcoes sensiveis.
+
+### Plano Mestre - Lote 2: RBAC Fail-Closed em Operacoes Sensiveis
+- Centralizada a decisao pura de permissoes do backend em `entityGuardPolicy`, reutilizando a funcao existente `entityGuard` sem criar tela ou modulo paralelo.
+- A permissao `visualizar` nao autoriza mais `editar`, `excluir`, `aprovar`, `executar` ou qualquer outra mutacao.
+- Usuario nao administrador sem perfil de acesso agora recebe bloqueio; falha ao carregar o perfil retorna indisponibilidade segura em vez de acesso liberado.
+- O `AuditLog` permanece imutavel para criacao, edicao e exclusao via guard; administradores continuam autorizados a gerir perfis de acesso.
+- O wrapper global em `Layout.jsx` exige resposta `allowed: true`; mutacoes e funcoes sensiveis sao bloqueadas quando o guard estiver indisponivel.
+- Leituras simples mantem tolerancia a indisponibilidade transitoria para evitar derrubar a navegacao, sem liberar escrita.
+- Adicionados 4 testes de aliases, acao exata, modulo/secao e separacao entre leitura e mutacao.
+- Suite total apos o lote: 9 testes executados, 9 aprovados e nenhuma falha.
+- Nenhuma permissao foi concedida automaticamente, nenhuma tela foi removida e nenhum dado foi alterado.
+- Proximo passo obrigatorio: padronizar e testar o contrato canonico `groupId`, `empresaId` e `scopeType` no frontend e backend.

@@ -30,7 +30,7 @@ Regras de entrega por lote:
 - [x] Criar inventario estatico reproduzivel em `scripts/audit-baseline.mjs`.
 - [x] Configurar testes nativos do Node sem adicionar dependencia externa.
 - [x] Cobrir o inventario e os helpers puros da Central de Perfis RBAC.
-- [ ] Corrigir o comportamento fail-open do guard de permissoes para mutacoes e funcoes sensiveis.
+- [x] Corrigir o comportamento fail-open do guard de permissoes para mutacoes e funcoes sensiveis.
 - [ ] Padronizar o contrato canonico `{ groupId, empresaId, scopeType }` no frontend e backend.
 - [ ] Ampliar testes de isolamento entre Grupo CPA, CPA Ferro e Aco e 3Z LTDA.
 

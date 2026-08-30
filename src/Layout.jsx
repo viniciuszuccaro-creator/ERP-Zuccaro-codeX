@@ -752,15 +752,17 @@ function LayoutContent({ children, currentPageName }) {
           group_id: scope.group_id || null,
         };
         const res = await base44.functions.invoke('entityGuard', payload);
-        const allowed = !(res?.data?.allowed === false);
+        const allowed = res?.data?.allowed === true;
         __rbacCache.set(cacheKey, { allowed, ts: now });
         if (!allowed) throw new Error('RBAC backend: ação negada');
       } catch (err) {
-        // Só bloqueia em 403 explícito — erros de rede/créditos não bloqueiam
+        // Leituras podem continuar durante indisponibilidade; mutações falham fechadas.
         if (err?.message === 'RBAC backend: ação negada' || err?.response?.status === 403) {
           throw new Error('RBAC backend: ação negada');
         }
-        // Qualquer outro erro (402, 500, rede) → fail-open (não bloqueia operação)
+        if (action !== 'visualizar') {
+          throw new Error('RBAC backend indisponível: operação sensível bloqueada');
+        }
       }
     };
 
@@ -919,7 +921,7 @@ function LayoutContent({ children, currentPageName }) {
                 group_id: scope.group_id || null,
               };
               const res = await origInvoke('entityGuard', guardPayload);
-              if (res?.data && res.data.allowed === false) {
+              if (res?.data?.allowed !== true) {
                 try { await base44.entities.AuditLog.create({
                   acao: 'Bloqueio', modulo: contextRef.current.moduleName || 'Sistema', tipo_auditoria: 'seguranca',
                   entidade: 'Function', descricao: `Acesso negado à função ${functionName}`, data_hora: new Date().toISOString(),
@@ -927,8 +929,8 @@ function LayoutContent({ children, currentPageName }) {
                 throw new Error('RBAC backend: ação negada');
               }
             } catch (err) {
-              if (err?.response?.status === 403) throw err;
-              // Se o guard falhar por indisponibilidade, não bloquear a UI
+              if (err?.message === 'RBAC backend: ação negada' || err?.response?.status === 403) throw err;
+              throw new Error(`RBAC backend indisponível: função sensível ${functionName} bloqueada`);
             }
           }
 
