@@ -72,6 +72,7 @@ export async function buildInventory(root = process.cwd()) {
       actions: (content.match(/data-action=/g) || []).length,
       permissions: (content.match(/data-permission=/g) || []).length,
       imports: [...content.matchAll(/(?:from\s*|import\s*\()\s*['"]([^'"]+)['"]/g)].map((match) => match[1]),
+      emptyCatches: (content.match(/catch\s*(?:\([^)]*\))?\s*\{\s*\}/g) || []).length,
     });
   }
 
@@ -99,7 +100,11 @@ export async function buildInventory(root = process.cwd()) {
     controls: acc.controls + item.controls,
     actions: acc.actions + item.actions,
     permissions: acc.permissions + item.permissions,
-  }), { controls: 0, actions: 0, permissions: 0 });
+    emptyCatches: acc.emptyCatches + item.emptyCatches,
+  }), { controls: 0, actions: 0, permissions: 0, emptyCatches: 0 });
+  const filesWithEmptyCatches = details
+    .filter((item) => !item.historicalArtifact && item.emptyCatches > 0)
+    .sort((a, b) => b.emptyCatches - a.emptyCatches);
 
   return {
     generatedAt: new Date().toISOString(),
@@ -118,6 +123,7 @@ export async function buildInventory(root = process.cwd()) {
       interactiveControls: totals.controls,
       controlsWithActionMarker: totals.actions,
       controlsWithPermissionMarker: totals.permissions,
+      operationalEmptyCatches: filesWithEmptyCatches.reduce((sum, item) => sum + item.emptyCatches, 0),
     },
     priorities: {
       largeFiles: largeFiles.slice(0, 30).map(({ path: file, lines }) => ({ path: file, lines })),
@@ -125,6 +131,7 @@ export async function buildInventory(root = process.cwd()) {
       legacyCandidates: legacyCandidates.slice(0, 100).map((item) => item.path),
       historicalArtifacts: historicalArtifacts.map((item) => item.path),
       historicalArtifactImports: historicalArtifactsImportedByRuntime,
+      emptyCatchFiles: filesWithEmptyCatches.map((item) => ({ path: item.path, count: item.emptyCatches })),
     },
   };
 }

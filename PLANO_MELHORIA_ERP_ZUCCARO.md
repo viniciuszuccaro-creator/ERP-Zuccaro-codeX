@@ -372,6 +372,8 @@ Resultado: primitivas de alta reutilizacao e cliente Base44 tipados; diagnostico
 2. Revisar catches vazios por criticidade, com erro visivel ou auditoria em persistencia, acesso e operacoes criticas.
 3. Validar botoes, toggles, selecoes, formularios e reabertura dos dados.
 
+Andamento 8A em 2026-08-30: guard fail-closed ativado e unificado em Button, ProtectedAction e ProtectedSection; falhas criticas de contexto, backup, sessoes e App Motorista deixaram de ser silenciosas. O inventario passou a acompanhar catches vazios por arquivo para a continuacao 8B/9.
+
 ### Lote 9 - Qualidade verde
 
 1. Zerar erros e avisos do lint operacional.

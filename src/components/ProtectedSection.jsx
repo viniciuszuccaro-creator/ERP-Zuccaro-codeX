@@ -47,7 +47,9 @@ export default function ProtectedSection({
           },
         },
       });
-    } catch {}
+    } catch (error) {
+      console.error('[Auditoria] Falha ao registrar secao negada.', error);
+    }
   }
 
   if (mode === "disable") {

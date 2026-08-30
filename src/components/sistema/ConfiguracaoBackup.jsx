@@ -115,7 +115,9 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
           sucesso: true,
           data_hora: new Date().toISOString()
         });
-      } catch {}
+      } catch (error) {
+        console.error('[Auditoria] Falha ao registrar configuracao de backup.', error);
+      }
       return result;
     },
     onSuccess: () => {
@@ -166,7 +168,9 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
           sucesso: true,
           data_hora: new Date().toISOString()
         });
-      } catch {}
+      } catch (error) {
+        console.error('[Auditoria] Falha ao registrar inicio do backup.', error);
+      }
 
       // Simular conclusão após 3 segundos
       setTimeout(async () => {
@@ -204,7 +208,9 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
             sucesso: true,
             data_hora: new Date().toISOString()
           });
-        } catch {}
+        } catch (error) {
+          console.error('[Auditoria] Falha ao registrar conclusao do backup.', error);
+        }
 
         queryClient.invalidateQueries({ queryKey: ['backups', scopeId] });
         toast.success('✅ Backup concluído com sucesso!');

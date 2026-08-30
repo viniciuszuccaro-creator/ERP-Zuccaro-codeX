@@ -23,7 +23,7 @@ export function useContextoGrupoEmpresa() {
       const grupos = await base44.entities.GrupoEmpresarial.filter({ id: grupoId });
       if (grupos[0]) {
         setGrupoAtual(grupos[0]);
-        try { localStorage.setItem('group_atual_id', grupos[0].id); } catch {}
+        try { localStorage.setItem('group_atual_id', grupos[0].id); } catch { /* Estado em memoria permanece valido. */ }
         return grupos[0];
       }
     }
@@ -33,7 +33,7 @@ export function useContextoGrupoEmpresa() {
       const ativo = todos.find(g => g.status === 'Ativo') || todos[0];
       if (ativo) {
         setGrupoAtual(ativo);
-        try { localStorage.setItem('group_atual_id', ativo.id); } catch {}
+        try { localStorage.setItem('group_atual_id', ativo.id); } catch { /* Estado em memoria permanece valido. */ }
         return ativo;
       }
     }
@@ -57,7 +57,7 @@ export function useContextoGrupoEmpresa() {
       })();
       const ctx = currentUser.contexto_atual || ctxPersistido || 'empresa';
       setContexto(ctx);
-      try { localStorage.setItem('contexto_atual', ctx); } catch {}
+      try { localStorage.setItem('contexto_atual', ctx); } catch { /* Estado em memoria permanece valido. */ }
 
       if (ctx === 'grupo') {
         // Tenta user > localStorage
@@ -76,7 +76,7 @@ export function useContextoGrupoEmpresa() {
             const ativa = todasEmpresas.find(e => e.status === 'Ativa') || todasEmpresas[0];
             if (ativa) {
               setEmpresaAtual(ativa);
-              try { localStorage.setItem('empresa_atual_id', ativa.id); } catch {}
+              try { localStorage.setItem('empresa_atual_id', ativa.id); } catch { /* Estado em memoria permanece valido. */ }
             }
           }
         } else if (isRemoteApiKeyMode || currentUser?.role === 'admin') {
@@ -84,7 +84,7 @@ export function useContextoGrupoEmpresa() {
           const ativa = empresas.find(e => e.status === 'Ativa') || empresas[0];
           if (ativa) {
             setEmpresaAtual(ativa);
-            try { localStorage.setItem('empresa_atual_id', ativa.id); } catch {}
+            try { localStorage.setItem('empresa_atual_id', ativa.id); } catch { /* Estado em memoria permanece valido. */ }
           }
         }
       }
@@ -139,8 +139,8 @@ export function useContextoGrupoEmpresa() {
       setGrupoAtual(grupo);
       setEmpresaAtual(null);
       setUser((prev) => prev ? { ...prev, contexto_atual: 'grupo', grupo_atual_id: grupo?.id || prev.grupo_atual_id } : prev);
-      try { localStorage.setItem('contexto_atual', 'grupo'); } catch {}
-      try { if (grupo?.id) localStorage.setItem('group_atual_id', grupo.id); } catch {}
+      try { localStorage.setItem('contexto_atual', 'grupo'); } catch { /* Estado em memoria permanece valido. */ }
+      try { if (grupo?.id) localStorage.setItem('group_atual_id', grupo.id); } catch { /* Estado em memoria permanece valido. */ }
       queryClient.invalidateQueries();
       // Evitar reload completo; atualizar queries e deixar GuardRails liberar
     },
@@ -190,8 +190,8 @@ export function useContextoGrupoEmpresa() {
       setContexto('empresa');
       setEmpresaAtual(empresa);
       setUser((prev) => prev ? { ...prev, contexto_atual: 'empresa', empresa_atual_id: empresa?.id || prev.empresa_atual_id } : prev);
-      try { localStorage.setItem('contexto_atual', 'empresa'); } catch {}
-      try { if (empresa?.id) localStorage.setItem('empresa_atual_id', empresa.id); } catch {}
+      try { localStorage.setItem('contexto_atual', 'empresa'); } catch { /* Estado em memoria permanece valido. */ }
+      try { if (empresa?.id) localStorage.setItem('empresa_atual_id', empresa.id); } catch { /* Estado em memoria permanece valido. */ }
       queryClient.invalidateQueries();
       // Sem reload completo
     },

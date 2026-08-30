@@ -7,6 +7,7 @@ import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import usePermissions from "@/components/lib/usePermissions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { buildSensitiveGuardRequest, getSensitiveGuardState, isSensitiveGuardAllowed } from "@/components/lib/sensitiveActionGuardPolicy";
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
@@ -106,39 +107,43 @@ function withUIAudit(props) {
   const isSensitive = !!(props?.__sensitive || props?.__perm);
 
   // Reuso de cache/dedupe global do entityGuard (se existir)
-  /** @type {Map<string, {allowed: boolean, ts: number}>} */
-  const __guardCache = typeof window !== 'undefined'
-    ? (getGuardWindow().__entityGuardCache ||= new Map())
-    : new Map();
-  /** @type {Map<string, Promise<void>>} */
-  const __guardInflight = typeof window !== 'undefined'
-    ? (getGuardWindow().__entityGuardInflight ||= new Map())
-    : new Map();
+  const { cache: __guardCache, inflight: __guardInflight } = getSensitiveGuardState();
   const GUARD_TTL_MS = 120_000;
-  const getGuardKey = (module, section, action) => `${module || '-'}|${section || '-'}|${action || '-'}`;
-
   const wrapIfDenied = (onClick) => async (e) => {
-    try {
-      if (false && isSensitive) {
-        const path = typeof window !== 'undefined' ? window.location.pathname : '';
-        const page = (path.split('/').pop() || '').replace(/^\//,'');
-        const pageToModule = { CRM: 'CRM', Comercial: 'Comercial', Estoque: 'Estoque', Compras: 'Compras', Financeiro: 'Financeiro', Fiscal: 'Fiscal', RH: 'RH', Expedicao: 'Expedição', Producao: 'Produção' };
-        const moduleName = pageToModule[page] || 'Sistema';
-        const key = getGuardKey(moduleName, null, 'executar');
-        const now = Date.now();
-        const cached = __guardCache.get(key);
-        if (cached && (now - cached.ts < GUARD_TTL_MS)) {
-          if (cached.allowed === false) { e?.preventDefault?.(); e?.stopPropagation?.(); try { toast.error('Permissão negada'); } catch {} ; return; }
-        } else if (!__guardInflight.has(key)) {
-          const p = base44.functions.invoke('entityGuard', { module: moduleName, action: 'executar' })
-            .then(({ data }) => { __guardCache.set(key, { allowed: data?.allowed === true, ts: Date.now() }); })
-            .catch(() => { /* fallback otimista em 429/erro */ });
-          __guardInflight.set(key, p);
-          p.finally(() => __guardInflight.delete(key));
+    if (isSensitive) {
+      const request = buildSensitiveGuardRequest({
+        permission: props?.__perm,
+        actionName: props?.['data-action'],
+        path: typeof window !== 'undefined' ? window.location.pathname : '',
+        storage: typeof window !== 'undefined' ? window.localStorage : null,
+      });
+      let allowed = false;
+
+      if (request.valid) {
+        const cached = __guardCache.get(request.key);
+        if (cached && Date.now() - cached.ts < GUARD_TTL_MS) {
+          allowed = cached.allowed === true;
+        } else {
+          let pending = __guardInflight.get(request.key);
+          if (!pending) {
+            pending = base44.functions.invoke('entityGuard', request.payload)
+              .then((response) => isSensitiveGuardAllowed(response))
+              .catch(() => false);
+            __guardInflight.set(request.key, pending);
+          }
+          allowed = await pending;
+          __guardCache.set(request.key, { allowed, ts: Date.now() });
+          __guardInflight.delete(request.key);
         }
-        // Fallback otimista: não bloquear clique enquanto valida
       }
-    } catch (_) {}
+
+      if (!allowed) {
+        e?.preventDefault?.();
+        e?.stopPropagation?.();
+        toast.error(request.valid ? 'Permissão negada ou indisponível' : 'Selecione Grupo e Empresa');
+        return;
+      }
+    }
     return onClick?.(e);
   };
 
@@ -158,16 +163,6 @@ function withUIAudit(props) {
   if ('__toastSuccess' in p) delete p.__toastSuccess;
   if ('__successMessage' in p) delete p.__successMessage;
   return p;
-}
-
-/**
- * @returns {Window & {
- *   __entityGuardCache?: Map<string, {allowed: boolean, ts: number}>,
- *   __entityGuardInflight?: Map<string, Promise<void>>
- * }}
- */
-function getGuardWindow() {
-  return window;
 }
 
 export { Button, buttonVariants }

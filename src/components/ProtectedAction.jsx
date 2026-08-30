@@ -7,13 +7,11 @@ import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { getSensitiveGuardState, isSensitiveGuardAllowed } from "@/components/lib/sensitiveActionGuardPolicy";
 
 // Cache global leve para decisões do entityGuard (TTL: 120s) + dedupe
-const __guardCache = (typeof window !== 'undefined' ? (window.__entityGuardCache || (window.__entityGuardCache = new Map())) : new Map());
-const __guardInflight = (typeof window !== 'undefined' ? (window.__entityGuardInflight || (window.__entityGuardInflight = new Map())) : new Map());
-const __guardLastAt = (typeof window !== 'undefined' ? (window.__entityGuardLastAt || (window.__entityGuardLastAt = new Map())) : new Map());
+const { cache: __guardCache, inflight: __guardInflight } = getSensitiveGuardState();
 const GUARD_TTL_MS = 300_000; // 5 min
-const MIN_GAP_MS = 1200; // throttle backend guard per key
 
 function getGuardKey(module, section, action, empresaId, groupId) {
   return `${module || '-'}|${section || '-'}|${action || '-'}|${empresaId || '-'}|${groupId || '-'}`;
@@ -49,28 +47,25 @@ export function ProtectedAction({
       return;
     }
 
-    // 2) Avaliação local imediata
+    // 2) A permissao local e pre-requisito; a decisao final continua no backend.
     const localAllowed = hasPermission(module, section, action);
-    setAllowedFinal(localAllowed);
-    // Se local já permite, não chama backend (evita 429 em massa)
-    if (localAllowed) return;
+    if (!localAllowed) {
+      setAllowedFinal(false);
+      return;
+    }
+    setAllowedFinal(null);
 
     // 3) Deduplica chamadas concorrentes por chave
     if (__guardInflight.has(key)) {
-      __guardInflight.get(key).then((res) => {
-        const allowed = Boolean(res?.data?.allowed) && hasPermission(module, section, action);
-        __guardCache.set(key, { allowed: res?.data?.allowed === true, ts: Date.now() });
-        setAllowedFinal(allowed);
-      }).catch(() => {/* mantém valor otimista */});
+      __guardInflight.get(key).then((backendAllowed) => {
+        __guardCache.set(key, { allowed: backendAllowed, ts: Date.now() });
+        setAllowedFinal(backendAllowed && hasPermission(module, section, action));
+      }).catch((error) => {
+        console.warn('[RBAC] Guard indisponivel; acao protegida bloqueada.', error);
+        setAllowedFinal(false);
+      });
       return;
     }
-
-    const lastAt = __guardLastAt.get(key) || 0;
-    if (now - lastAt < MIN_GAP_MS) {
-      // pula chamada backend; mantém valor otimista e cache atual
-      return;
-    }
-    __guardLastAt.set(key, now);
 
     const p = base44.functions.invoke('entityGuard', {
       module,
@@ -78,21 +73,15 @@ export function ProtectedAction({
       action,
       empresa_id: empresaAtual?.id || null,
       group_id: grupoAtual?.id || null,
+    }).then(isSensitiveGuardAllowed).catch((error) => {
+      console.warn('[RBAC] Guard indisponivel; acao protegida bloqueada.', error);
+      return false;
     });
     __guardInflight.set(key, p);
 
-    p.then(({ data }) => {
-      const backendAllowed = data?.allowed === true;
+    p.then((backendAllowed) => {
       __guardCache.set(key, { allowed: backendAllowed, ts: Date.now() });
       setAllowedFinal(backendAllowed && hasPermission(module, section, action));
-    }).catch((err) => {
-      const status = err?.response?.status || err?.status;
-      // Em 429 ou falha, mantemos valor otimista local para não travar botões
-      if (status === 429) {
-        setAllowedFinal(hasPermission(module, section, action));
-      } else {
-        setAllowedFinal(hasPermission(module, section, action));
-      }
     }).finally(() => {
       __guardInflight.delete(key);
     });
@@ -129,7 +118,9 @@ export function ProtectedAction({
             },
           },
         });
-      } catch {}
+      } catch (error) {
+        console.error('[Auditoria] Falha ao registrar tentativa de acao negada.', error);
+      }
     }
 
     if (mode === "hide") {

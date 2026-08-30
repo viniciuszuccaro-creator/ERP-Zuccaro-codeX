@@ -58,7 +58,7 @@ export default function AppEntregasMotorista() {
     let drawing = false; let lastX = 0; let lastY = 0;
     const start = (x, y) => { drawing = true; lastX = x; lastY = y; };
     const move = (x, y) => { if (!drawing) return; ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke(); lastX = x; lastY = y; };
-    const end = () => { drawing = false; try { setAssinaturaBase64(canvas.toDataURL('image/png')); } catch {} };
+    const end = () => { drawing = false; try { setAssinaturaBase64(canvas.toDataURL('image/png')); } catch (error) { console.error('[Entrega] Falha ao capturar assinatura.', error); toast.error('Nao foi possivel capturar a assinatura.'); } };
     const getPos = (e) => { if (e.touches?.[0]) { const rect = canvas.getBoundingClientRect(); return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top }; } const rect = canvas.getBoundingClientRect(); return { x: e.offsetX ?? 0, y: e.offsetY ?? 0 }; };
     const mdown = (e) => { const p = getPos(e); start(p.x, p.y); };
     const mmove = (e) => { const p = getPos(e); move(p.x, p.y); e.preventDefault(); };
@@ -175,7 +175,7 @@ export default function AppEntregasMotorista() {
       group_id: entrega.group_id || null,
       acao: 'Edição', modulo: 'Expedição', tipo_auditoria: 'ui', entidade: 'Entrega', registro_id: entrega.id,
       descricao: 'Entrega iniciada no app do motorista', data_hora: new Date().toISOString()
-    }); } catch (_) {}
+    }); } catch (error) { console.error('[Auditoria] Falha ao registrar inicio da entrega.', error); }
     refetch();
     toast.success('🚚 Entrega iniciada!');
   };
@@ -215,7 +215,11 @@ export default function AppEntregasMotorista() {
     try {
       const canvas = document.getElementById('assinatura-canvas');
       if (canvas) assinatura = canvas.toDataURL('image/png');
-    } catch {}
+    } catch (error) {
+      console.error('[Entrega] Falha ao preparar assinatura.', error);
+      toast.error('Nao foi possivel preparar a assinatura da entrega.');
+      return;
+    }
 
     await base44.entities.Entrega.update(entregaAtual.id, {
       status: 'Entregue',
@@ -253,7 +257,7 @@ export default function AppEntregasMotorista() {
       group_id: entregaAtual?.group_id || null,
       acao: 'Edição', modulo: 'Expedição', tipo_auditoria: 'ui', entidade: 'Entrega', registro_id: entregaAtual?.id,
       descricao: 'Entrega confirmada (foto + assinatura) no app do motorista', data_hora: new Date().toISOString()
-    }); } catch (_) {}
+    }); } catch (error) { console.error('[Auditoria] Falha ao registrar confirmacao da entrega.', error); }
     refetch();
     toast.success('✅ Entrega confirmada com sucesso!');
   };

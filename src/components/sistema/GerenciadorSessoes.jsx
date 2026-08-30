@@ -82,7 +82,9 @@ export default function GerenciadorSessoes() {
           dados_novos: { sessao_id: sessaoId, motivo_encerramento: 'Logout Remoto' },
           data_hora: now
         });
-      } catch {}
+      } catch (error) {
+        console.error('[Auditoria] Falha ao registrar encerramento de sessao.', error);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessoes-usuario'] });
@@ -122,7 +124,9 @@ export default function GerenciadorSessoes() {
           dados_novos: { quantidade: sessoesParaEncerrar.length },
           data_hora: new Date().toISOString()
         });
-      } catch {}
+      } catch (error) {
+        console.error('[Auditoria] Falha ao registrar encerramento em lote.', error);
+      }
 
       return sessoesParaEncerrar.length;
     },

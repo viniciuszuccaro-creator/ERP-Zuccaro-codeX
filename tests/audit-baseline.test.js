@@ -16,7 +16,7 @@ test('buildInventory classifies pages, components, functions and risks', async (
   await mkdir(path.join(root, 'base44', 'entities'), { recursive: true });
 
   await writeFile(path.join(root, 'src', 'pages', 'Dashboard.jsx'), '<button data-action="open" data-permission="Dashboard.visualizar">Open</button>');
-  await writeFile(path.join(root, 'src', 'components', 'Legacy.old.jsx'), `export default '${'\u00c3'}';\n${'x\n'.repeat(601)}`);
+  await writeFile(path.join(root, 'src', 'components', 'Legacy.old.jsx'), `try { throw new Error(); } catch {}\nexport default '${'\u00c3'}';\n${'x\n'.repeat(601)}`);
   await writeFile(path.join(root, 'src', 'components', 'STATUS.md.jsx'), '# Status historico');
   await writeFile(path.join(root, 'base44', 'functions', 'guard', 'entry.ts'), 'export {};');
   await writeFile(path.join(root, 'base44', 'entities', 'config.jsonc'), '{}');
@@ -35,6 +35,10 @@ test('buildInventory classifies pages, components, functions and risks', async (
   assert.equal(inventory.summary.interactiveControls, 1);
   assert.equal(inventory.summary.controlsWithActionMarker, 1);
   assert.equal(inventory.summary.controlsWithPermissionMarker, 1);
+  assert.equal(inventory.summary.operationalEmptyCatches, 1);
+  assert.deepEqual(inventory.priorities.emptyCatchFiles, [
+    { path: 'src/components/Legacy.old.jsx', count: 1 },
+  ]);
 });
 
 test('historical artifacts stay inventoried and are identified for operational validation', async (t) => {

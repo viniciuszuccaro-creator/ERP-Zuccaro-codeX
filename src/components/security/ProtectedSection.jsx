@@ -5,10 +5,10 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { getSensitiveGuardState, isSensitiveGuardAllowed } from "@/components/lib/sensitiveActionGuardPolicy";
 
 // Cache / dedupe global para entityGuard (TTL 120s)
-const __guardCache = (typeof window !== 'undefined' ? (window.__entityGuardCache || (window.__entityGuardCache = new Map())) : new Map());
-const __guardInflight = (typeof window !== 'undefined' ? (window.__entityGuardInflight || (window.__entityGuardInflight = new Map())) : new Map());
+const { cache: __guardCache, inflight: __guardInflight } = getSensitiveGuardState();
 const GUARD_TTL_MS = 120_000;
 const getGuardKey = (module, section, action, empresaId, groupId) => `${module || '-'}|${section || '-'}|${action || '-'}|${empresaId || '-'}|${groupId || '-'}`;
 
@@ -45,17 +45,22 @@ export default function ProtectedSection({
       return;
     }
 
-    // Valor otimista para não bloquear UI
-    setAllowedFinal(allowed);
+    if (!allowed) {
+      setAllowedFinal(false);
+      return;
+    }
+    setAllowedFinal(null);
 
     if (__guardInflight.has(key)) {
       __guardInflight.get(key)
-        .then(({ data }) => {
-          const backendAllowed = data?.allowed === true;
+        .then((backendAllowed) => {
           __guardCache.set(key, { allowed: backendAllowed, ts: Date.now() });
           setAllowedFinal(backendAllowed && allowed);
         })
-        .catch(() => {/* mantém otimista */});
+        .catch((error) => {
+          console.warn('[RBAC] Guard indisponivel; secao protegida bloqueada.', error);
+          setAllowedFinal(false);
+        });
       return;
     }
 
@@ -65,16 +70,15 @@ export default function ProtectedSection({
       action,
       empresa_id: empresaAtual?.id || null,
       group_id: grupoAtual?.id || null,
+    }).then(isSensitiveGuardAllowed).catch((error) => {
+      console.warn('[RBAC] Guard indisponivel; secao protegida bloqueada.', error);
+      return false;
     });
     __guardInflight.set(key, p);
 
-    p.then(({ data }) => {
-      const backendAllowed = data?.allowed === true;
+    p.then((backendAllowed) => {
       __guardCache.set(key, { allowed: backendAllowed, ts: Date.now() });
       setAllowedFinal(backendAllowed && allowed);
-    }).catch((err) => {
-      // fallback em 429/erro
-      setAllowedFinal(allowed);
     }).finally(() => {
       __guardInflight.delete(key);
     });
@@ -97,7 +101,9 @@ export default function ProtectedSection({
           descricao: `Acesso negado: ${modulo}.${section}.${action}`,
           data_hora: new Date().toISOString(),
         });
-      } catch (_) {}
+      } catch (error) {
+        console.error('[Auditoria] Falha ao registrar acesso negado.', error);
+      }
     }
   }, [isLoading, allowedFinal, action, modulo, section, user?.id, empresaAtual?.id]);
 

@@ -3378,3 +3378,19 @@ Checklist inicial:
 - Validacao: 20 testes aprovados, lint sem regressao (248 erros e 20 avisos ja registrados), `git diff --check` e build completo com 3.785 modulos.
 - Nenhuma tela, funcionalidade, dado ou permissao foi removido; o projeto do HD externo nao foi acessado.
 - Proximo passo obrigatorio: executar o Lote 8, ativando o guard backend fail-closed do Button e classificando catches vazios por criticidade antes de corrigir o restante do typecheck no Lote 9.
+
+### Plano Mestre - Lote 8A: Guard Fail-Closed e Erros Criticos
+
+- O `Button` compartilhado deixou de executar a acao enquanto o guard ainda responde; somente `allowed: true` libera o handler sensivel.
+- Negacao, indisponibilidade ou contexto incompleto agora bloqueiam o clique e exibem mensagem ao usuario.
+- A permissao estavel `modulo.recurso.acao` e transformada em payload com `group_id`, `empresa_id` e `scope_type` canonicos.
+- `Button`, `ProtectedAction` e `ProtectedSection` passaram a compartilhar cache e requisicoes em voo no formato unico `Promise<boolean>`, evitando mistura de respostas.
+- Os wrappers `ProtectedAction` e `ProtectedSection` deixaram de aceitar permissao local como decisao final e falham fechados se o backend estiver indisponivel.
+- Falhas de auditoria em contexto multiempresa, backup, encerramento de sessoes e App Motorista agora sao informadas no console; falha ao preparar assinatura bloqueia a confirmacao da entrega e informa o motorista.
+- Falhas opcionais de `localStorage` no contexto foram justificadas no codigo porque o estado em memoria permanece ativo.
+- `audit:baseline` passou a contar catches vazios operacionais por arquivo: foram encontrados 436 no frontend e backend; 217 ainda estao no escopo atual do ESLint.
+- Adicionados 4 testes para contexto do guard sensivel, negacao/indisponibilidade e compartilhamento do cache. Suite total: 24 testes aprovados.
+- Lint operacional caiu de 248 para 217 erros, todos `no-empty`; permanecem 20 avisos de diretivas antigas.
+- `git diff --check` aprovado e build completo aprovado com 3.786 modulos transformados.
+- Nenhuma tela, acao ou dado foi removido; o projeto do HD externo nao foi acessado.
+- Proximo passo obrigatorio: Lote 8B, revisar catches vazios das funcoes backend por risco, comecando por `solicitacoesAprovacao`, `iaFinanceAnomalyScan`, `legacyIntegrationsMirror`, eventos de pedido/NF-e, pagamentos, fiscal e roteirizacao; depois iniciar o Lote 9.

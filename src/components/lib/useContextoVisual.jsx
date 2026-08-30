@@ -267,7 +267,9 @@ export function useContextoVisual() {
         dados_anteriores: null, dados_novos: created,
         data_hora: new Date().toISOString()
       });
-    } catch {}
+    } catch (error) {
+      console.error('[Auditoria] Falha ao registrar criacao contextual.', error);
+    }
     return created;
   };
   const bulkCreateInContext = async (entityName, lista, campo = 'empresa_id') => {
@@ -288,7 +290,9 @@ export function useContextoVisual() {
         dados_anteriores: null, dados_novos: { count: res?.length || stampedList.length },
         data_hora: new Date().toISOString()
       });
-    } catch {}
+    } catch (error) {
+      console.error('[Auditoria] Falha ao registrar exclusao contextual.', error);
+    }
     return res;
   };
   const updateInContext = async (entityName, id, dados, campo = 'empresa_id') => {
@@ -307,7 +311,9 @@ export function useContextoVisual() {
         dados_anteriores: before, dados_novos: updated,
         data_hora: new Date().toISOString()
       });
-    } catch {}
+    } catch (error) {
+      console.error('[Auditoria] Falha ao registrar atualizacao contextual.', error);
+    }
     return updated;
   };
   const deleteInContext = async (entityName, id) => {
@@ -322,7 +328,9 @@ export function useContextoVisual() {
         dados_anteriores: before, dados_novos: null,
         data_hora: new Date().toISOString()
       });
-    } catch {}
+    } catch (error) {
+      console.error('[Auditoria] Falha ao registrar exclusao contextual.', error);
+    }
     return res;
   };
   const DEFAULT_SORTS = {
@@ -360,7 +368,9 @@ export function useContextoVisual() {
             try {
               const s = { ...sort, sortField: normalizeSortField(entityName, sort?.sortField) };
               localStorage.setItem(`sort_${entityName}`, JSON.stringify(s));
-            } catch {}
+            } catch {
+              // Persistencia local e opcional; o estado React mantem a ordenacao atual.
+            }
           };
 
           const filterInContext = async (entityName, criterios = {}, order = undefined, limit = undefined, campo = 'empresa_id') => {
@@ -380,7 +390,9 @@ export function useContextoVisual() {
                      const props = sch?.properties || {};
                      hasGroupField = Object.prototype.hasOwnProperty.call(props, 'group_id');
                      hasCtxField = Object.prototype.hasOwnProperty.call(props, ctxCampo);
-                   } catch {}
+                   } catch {
+                     // Schema remoto indisponivel: a verificacao conservadora abaixo permanece ativa.
+                   }
                    const noContext = !hasGroupField && !hasCtxField;
 
                    if (!groupId && !empresaId && !noContext) return [];
