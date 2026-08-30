@@ -1,8 +1,38 @@
 # Plano de Melhoria Geral do ERP Zuccaro
 
-Atualizado em: 2026-05-10
+Atualizado em: 2026-08-30
 
 Este plano organiza o que deve ser feito para melhorar o ERP Zuccaro respeitando a regra-mae: melhorar o existente, nao duplicar, nao apagar funcionalidades, perguntar antes de incluir ou excluir, manter multiempresa, RBAC, seguranca e auditoria.
+
+## Plano Mestre incorporado
+
+O Plano Mestre de Evolucao passa a ser executado neste arquivo, sem criar plano concorrente. O Volume 01 de Fundacao e referencia metodologica; o clone `ERP-Zuccaro-codeX` e o GitHub sao a fonte de verdade do codigo.
+
+Ordem de liberacao aprovada:
+
+1. Baseline, inventario, testes e seguranca.
+2. Contrato multiempresa e RBAC backend/frontend.
+3. Simplificacao e ramificacao dos setores.
+4. Projetos tecnicos, BOM e produtos.
+5. Site existente e Mercado Livre.
+6. Roteirizacao e App Motorista PWA existente.
+7. IA governada e observabilidade.
+
+Regras de entrega por lote:
+
+1. Atualizar `STATUS_DO_PROJETO.md` com concluido, pendencias, testes e proximo passo.
+2. Executar `npm run audit:baseline`, `npm test`, `npm run lint`, `npm run typecheck`, `npm run build` e `git diff --check` conforme o escopo do lote.
+3. Fazer commit separado e push no GitHub depois das validacoes obrigatorias.
+4. Nunca trabalhar no projeto do HD externo; usar somente o clone interno vinculado ao GitHub.
+
+### Baseline reproduzivel - Lote 1
+
+- [x] Criar inventario estatico reproduzivel em `scripts/audit-baseline.mjs`.
+- [x] Configurar testes nativos do Node sem adicionar dependencia externa.
+- [x] Cobrir o inventario e os helpers puros da Central de Perfis RBAC.
+- [ ] Corrigir o comportamento fail-open do guard de permissoes para mutacoes e funcoes sensiveis.
+- [ ] Padronizar o contrato canonico `{ groupId, empresaId, scopeType }` no frontend e backend.
+- [ ] Ampliar testes de isolamento entre Grupo CPA, CPA Ferro e Aco e 3Z LTDA.
 
 ## Objetivo central
 

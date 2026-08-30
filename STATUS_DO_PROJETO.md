@@ -3283,3 +3283,17 @@ Checklist inicial:
 - `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
 - Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar Fase 8 nos dashboards realtime e relatorios de logistica/producao/estoque, priorizando a revisao final de `DashboardTempoReal`, `DashboardEntregasRealtime`, `DashboardProducaoRealtime`, `RelatoriosLogistica`, `RelatoriosProducao` e `RelatoriosEstoque` para auditoria de visualizacao/exportacao, RBAC granular e contexto multiempresa.
+### Plano Mestre - Lote 1: Baseline Reproduzivel e Testes Iniciais
+- Trabalho executado somente no clone interno `C:\Users\cpaba\ERP-Zuccaro-codeX-local\ERP-Zuccaro-codeX`; o projeto do HD externo nao foi alterado.
+- Adicionado `npm run audit:baseline`, que inventaria paginas, componentes, funcoes, schemas locais, arquivos grandes, marcadores de codificacao, candidatos legados e controles interativos.
+- Linha de base em 2026-08-30: 46 paginas, 1.237 componentes, 70 funcoes Base44, 1.405 arquivos-fonte, 88 arquivos acima de 600 linhas e 423 arquivos com marcadores de codificacao quebrada.
+- O inventario encontrou 3.704 controles interativos, 1.325 marcadores `data-action`, 1.501 marcadores `data-permission` e 291 candidatos legados que exigem revisao antes de qualquer exclusao.
+- Configurado `npm test` com o test runner nativo do Node, sem instalar bibliotecas novas.
+- Criados 5 testes para o inventario, isolamento de perfis RBAC, bloqueio de exclusao sem contexto/permissao e estatisticas dos cards.
+- Validacao inicial: 5 testes executados, 5 aprovados e nenhuma falha.
+- `git diff --check` aprovado e build de producao aprovado com 3.784 modulos transformados.
+- Baseline de qualidade preexistente: lint global falha com 581 erros e 20 avisos; typecheck global falha com 14.003 diagnosticos.
+- As falhas de lint concentram arquivos de documentacao gravados como `.jsx`, blocos vazios e alguns erros reais de sintaxe/variaveis; nenhuma regra foi desativada para ocultar a divida.
+- O build mantem avisos preexistentes de CSS, imports mistos e bundle principal grande; esses itens entram na fila de estabilizacao sem remocao automatica.
+- Nenhuma funcionalidade, tela, botao, entidade ou dado foi excluido.
+- Proximo passo obrigatorio: corrigir o comportamento fail-open do `entityGuard` e dos wrappers do `Layout.jsx`, com testes para mutacoes e funcoes sensiveis.
