@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 import { z } from 'npm:zod@3.24.2';
+import { requireEntityGuard } from './_lib/security/guardCallPolicy.js';
 
 // Política de conflitos multiempresa: define prevalência e merge auditável
 // Regras padrão: empresa > grupo para campos operacionais; grupo > empresa para catálogos/configs
@@ -10,18 +11,6 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    // RBAC granular: apenas perfis autorizados podem aplicar política de conflitos
-    try {
-      const guard = await base44.functions.invoke('entityGuard', {
-        module: 'Sistema',
-        section: 'ConflictPolicy',
-        action: 'executar'
-      });
-      if (guard?.data && guard.data.allowed === false) {
-        return Response.json({ error: 'Forbidden' }, { status: 403 });
-      }
-    } catch (_) {}
 
     const raw = await req.json().catch(() => ({}));
     const Schema = z.object({
@@ -35,6 +24,12 @@ Deno.serve(async (req) => {
     const parsed = Schema.safeParse(raw);
     if (!parsed.success) return Response.json({ error: 'Payload inválido', issues: parsed.error.issues }, { status: 400 });
     const { entity_name, group_id, empresa_id, source, current, incoming } = parsed.data;
+
+    // RBAC granular: apenas perfis autorizados podem aplicar política de conflitos
+    const guardFailure = await requireEntityGuard(base44, {
+      module: 'Sistema', section: 'ConflictPolicy', action: 'executar', group_id, empresa_id,
+    });
+    if (guardFailure) return guardFailure;
 
     const CATALOG_ENTS = new Set(['Produto','TabelaPreco','PlanoDeContas','CentroCusto','FormaPagamento','ConfiguracaoSistema']);
     const isCatalog = CATALOG_ENTS.has(entity_name);

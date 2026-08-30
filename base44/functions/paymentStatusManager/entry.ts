@@ -1,17 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { requireEntityGuard } from './_lib/security/guardCallPolicy.js';
 // Inline helpers to avoid local imports
 async function getUserAndPerfil(base44){
   const user = await base44.auth.me();
   return { user, perfil: null };
 }
-async function assertPermission(base44, ctx, module, entity, action){
-  try {
-    const res = await base44.functions.invoke('entityGuard', { module, section: entity, action });
-    if (res?.data && res.data.allowed === false) {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
-    }
-  } catch(_) {}
-  return null;
+async function assertPermission(base44, ctx, module, entity, action, scope){
+  return requireEntityGuard(base44, { module, section: entity, action, ...scope });
 }
 async function audit(base44, user, log){
   try {
@@ -325,7 +320,10 @@ Deno.serve(async (req) => {
 
     // RBAC por módulo Financeiro
     const entityForPerm = action === 'conciliar_extrato' ? 'ContaReceber' : entity;
-    const perm = await assertPermission(base44, ctx, 'Financeiro', entityForPerm, 'editar');
+    const permissionScope = action === 'conciliar_extrato'
+      ? { ...body, ...(conciliacao || {}) }
+      : body;
+    const perm = await assertPermission(base44, ctx, 'Financeiro', entityForPerm, 'editar', permissionScope);
     if (perm) return perm;
 
     // Conciliação automática por extrato bancário

@@ -3323,3 +3323,16 @@ Checklist inicial:
 - Permanecem avisos preexistentes de CSS, imports mistos, Browserslist e bundle grande, sem ampliacao neste lote.
 - Nenhuma tela, funcionalidade ou dado foi removido; o projeto do HD externo nao foi alterado.
 - Proximo passo obrigatorio: ampliar os testes de isolamento e endurecer as funcoes backend que ainda chamam o guard sem propagar o contexto canonico.
+
+### Plano Mestre - Lote 4: Guard Obrigatorio em Funcoes Criticas
+- Centralizada em `guardCallPolicy` a chamada backend ao `entityGuard`, a conclusao de `group_id` a partir da Empresa e a exigencia de resposta explicita `allowed: true`.
+- A politica de conflitos multiempresa agora valida o payload antes do guard e nao continua quando houver negacao ou indisponibilidade.
+- `nfeActions` exige Empresa fiscal, completa o Grupo e valida permissao antes de emitir, cancelar, consultar ou corrigir NF-e.
+- `piiEncryptor` carrega o registro, extrai seu contexto e bloqueia criptografia ou descriptografia quando o guard nao autorizar.
+- `paymentStatusManager` passou a enviar o contexto canonico nas baixas e conciliacoes financeiras e deixou de ignorar falhas do guard.
+- Adicionados 4 testes para aliases, conclusao do Grupo pela Empresa, bloqueio por contexto ausente, negacao, indisponibilidade e autorizacao explicita.
+- Suite total apos o lote: 18 testes executados, 18 aprovados e nenhuma falha.
+- Sintaxe das quatro funcoes e do helper validada; `git diff --check` aprovado e build completo aprovado com 3.785 modulos.
+- Permanecem para o proximo lote as chamadas em eventos fiscais, roteirizacao, boleto, IA financeira e integracoes legadas, alem da validacao de pertencimento do registro ao contexto informado.
+- Nenhuma tela, fluxo ou dado foi removido; o projeto do HD externo nao foi alterado.
+- Proximo passo obrigatorio: aplicar o helper estrito nas chamadas backend restantes e testar que IDs de outra Empresa/Grupo sejam recusados.

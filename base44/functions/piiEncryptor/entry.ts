@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { requireEntityGuard } from './_lib/security/guardCallPolicy.js';
 
 // Encrypt/decrypt PII fields for selected entities using AES-GCM with BACKUP_ENCRYPTION_KEY
 // Payload: { entity_name: 'Cliente'|'Colaborador', id: string, action?: 'encrypt'|'decrypt', fields?: string[] }
@@ -53,12 +54,17 @@ Deno.serve(async (req) => {
     const entity = body.entity_name; const id = body.id; const action = body.action || 'encrypt';
     if (!entity || !id) return Response.json({ error: 'Missing entity_name/id' }, { status: 400 });
 
-    // RBAC soft-guard via existing guard (best-effort)
-    try { await base44.functions.invoke('entityGuard', { module: 'Sistema', section: 'Seguranca', action: 'executar', function_name: 'piiEncryptor' }); } catch {}
-
-    const key = await getKey();
     const rec = await base44.asServiceRole.entities[entity].get(id);
     if (!rec) return Response.json({ error: 'Record not found' }, { status: 404 });
+
+    const guardFailure = await requireEntityGuard(base44, {
+      module: 'Sistema', section: 'Seguranca', action: 'executar', function_name: 'piiEncryptor',
+      empresa_id: body?.empresa_id || rec?.empresa_id || rec?.empresa_dona_id || null,
+      group_id: body?.group_id || rec?.group_id || rec?.grupo_id || null,
+    });
+    if (guardFailure) return guardFailure;
+
+    const key = await getKey();
 
     const fields = Array.isArray(body.fields) && body.fields.length ? body.fields : (DEFAULT_FIELDS[entity] || []);
     if (!fields.length) return Response.json({ ok: true, skipped: 'no-fields' });

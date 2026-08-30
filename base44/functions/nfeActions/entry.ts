@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { requireEntityGuard } from './_lib/security/guardCallPolicy.js';
 
 Deno.serve(async (req) => {
   try {
@@ -9,14 +10,6 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { action = 'emitir', nfe, empresaId, nfeId, justificativa, correcao } = body || {};
 
-    // RBAC
-    try {
-      const guard = await base44.functions.invoke('entityGuard', { module: 'Fiscal', section: 'NF-e', action, empresa_id: empresaId || nfe?.empresa_faturamento_id || null, group_id: nfe?.group_id || null });
-      if (guard?.data && guard.data.allowed === false) {
-        return Response.json({ error: 'Permissão negada' }, { status: 403 });
-      }
-    } catch (_) {}
-
     // Empresa requerida (proíbe emissão no grupo)
     let empresaIdResolved = empresaId || nfe?.empresa_faturamento_id || nfe?.empresa_id || null;
     if (!empresaIdResolved && nfe?.pedido_id) {
@@ -25,6 +18,13 @@ Deno.serve(async (req) => {
     if (!empresaIdResolved) {
       return Response.json({ error: 'Emissão NF-e no GRUPO bloqueada. Selecione uma EMPRESA (empresa_faturamento_id).' }, { status: 400 });
     }
+
+    const guardFailure = await requireEntityGuard(base44, {
+      module: 'Fiscal', section: 'NF-e', action,
+      empresa_id: empresaIdResolved,
+      group_id: body?.group_id || nfe?.group_id || null,
+    });
+    if (guardFailure) return guardFailure;
 
     // Carrega integração NF-e da empresa (Integracoes → integracao_nfe)
     let integracao = null;
