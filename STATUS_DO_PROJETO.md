@@ -3422,3 +3422,12 @@ Checklist inicial:
 - Permanecem os avisos preexistentes de Browserslist, imports mistos e bundle principal grande.
 - Nenhuma tela, funcionalidade ou dado foi removido; o projeto do HD externo nao foi acessado.
 - Proximo passo obrigatorio: concluir os catches opcionais de PWA, cache e telemetria do `Layout.jsx`, depois seguir pelos arquivos com maior concentracao de erros de lint.
+
+### Plano Mestre - Lote 9B: PWA, Cache e Telemetria
+
+- O `Layout.jsx` encerrou o sublote com zero catches vazios.
+- Falhas auxiliares do React Query, PWA, Service Worker, cache offline, captura global de erros, navegacao, prefetch e telemetria agora sao registradas sem interromper a interface.
+- O comportamento offline e as atualizacoes do PWA foram preservados; nenhuma funcionalidade foi removida.
+- Lint operacional caiu de 200 para 160 erros; permanecem 20 avisos. O inventario global de catches vazios caiu de 313 para 273.
+- Validacao: 24 testes aprovados, `git diff --check` aprovado e build completo aprovado com 3.786 modulos.
+- Proximo passo obrigatorio: seguir pelos arquivos com maior concentracao de erros, iniciando por `AprovacaoComAssinatura.jsx`, `localBase44Client.js` e `uiAudit.jsx`, e retomar a reducao do typecheck por contratos de dominio.

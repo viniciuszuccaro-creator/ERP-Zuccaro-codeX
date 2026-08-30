@@ -202,9 +202,9 @@ function LayoutContent({ children, currentPageName }) {
                                                                         metadata: { queryKey: 'unknown' }
                                                                       });
                                                                     }
-                                                                  } catch (_) {}
+                                                                  } catch (auditError) { reportLayoutFailure('Falha ao auditar erro de query', auditError); }
                                                                 })();
-                                                              } catch (_) {}
+                                                              } catch (error) { reportLayoutFailure('Falha ao preparar auditoria de query', error); }
                                                             }
               },
               mutations: {
@@ -231,13 +231,13 @@ function LayoutContent({ children, currentPageName }) {
                                                                         metadata: { mutation: true }
                                                                       });
                                                                     }
-                                                                  } catch (_) {}
+                                                                  } catch (auditError) { reportLayoutFailure('Falha ao auditar erro de mutation', auditError); }
                                                                 })();
-                                                              } catch (_) {}
+                                                              } catch (error) { reportLayoutFailure('Falha ao preparar auditoria de mutation', error); }
                                                             }
               }
             });
-          } catch (_) {}
+          } catch (error) { reportLayoutFailure('Falha ao configurar React Query', error); }
         }, [user?.id, empresaAtual?.id, grupoAtual?.id, moduleName, currentPageName]);
 
         const prefetchForItem = (title) => {
@@ -276,7 +276,7 @@ function LayoutContent({ children, currentPageName }) {
                             default:
                               break;
                           }
-                        } catch (_) {}
+                        } catch (error) { reportLayoutFailure('Falha no prefetch do menu', error, { title }); }
                         };
 
                         // pageToModule/moduleName já declarados acima (remoção da duplicata para evitar TDZ)
@@ -392,16 +392,16 @@ function LayoutContent({ children, currentPageName }) {
         csp.setAttribute('http-equiv', 'Content-Security-Policy');
         csp.setAttribute('content', "upgrade-insecure-requests; default-src 'self' https: data: blob:; connect-src 'self' https: wss:; img-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https:; frame-ancestors 'self'; object-src 'none'");
         if (!csp.parentElement) document.head.appendChild(csp);
-      } catch (_) {}
+      } catch (error) { reportLayoutFailure('Falha ao configurar CSP do PWA', error); }
       
       // Enforce HTTPS at client as fallback (HSTS at edge)
       try {
         if (window.location.protocol === 'http:' && window.location.hostname !== 'localhost') {
           window.location.replace('https://' + window.location.host + window.location.pathname + window.location.search + window.location.hash);
         }
-      } catch (_) {}
+      } catch (error) { reportLayoutFailure('Falha ao aplicar redirecionamento HTTPS', error); }
     
-    } catch (_) {}
+    } catch (error) { reportLayoutFailure('Falha ao preparar metadados do PWA', error); }
 
     // Registrar service worker com estratégia de atualização
     if ('serviceWorker' in navigator) {
@@ -420,14 +420,14 @@ function LayoutContent({ children, currentPageName }) {
                       empresa_id: empresaAtual?.id || null, group_id: grupoAtual?.id || null,
                     });
                   }
-                } catch {}
+                } catch (error) { reportLayoutFailure('Falha ao auditar ausencia do Service Worker', error); }
               })();
-            } catch {}
+            } catch (error) { reportLayoutFailure('Falha ao preparar auditoria do Service Worker', error); }
             return;
           }
           navigator.serviceWorker.register('/functions/pwaSw').then((reg) => {
             // Força ativação da nova versão quando disponível
-            if (reg && reg.waiting) { try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch {} }
+            if (reg && reg.waiting) { try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch (error) { reportLayoutFailure('Falha ao ativar atualizacao do Service Worker', error); } }
             reg.onupdatefound = () => {
               const nw = reg.installing;
               if (!nw) return;
@@ -444,16 +444,16 @@ function LayoutContent({ children, currentPageName }) {
                             empresa_id: empresaAtual?.id || null, group_id: grupoAtual?.id || null,
                           });
                         }
-                      } catch {}
+                      } catch (error) { reportLayoutFailure('Falha ao auditar nova versao do PWA', error); }
                     })();
-                  } catch {}
+                  } catch (error) { reportLayoutFailure('Falha ao preparar auditoria da nova versao do PWA', error); }
                 }
               };
             };
             // Checagens periódicas por atualização (1h)
             try {
-              setInterval(() => { try { reg.update(); } catch {} }, 60 * 60 * 1000);
-            } catch {}
+              setInterval(() => { try { reg.update(); } catch (error) { reportLayoutFailure('Falha ao atualizar Service Worker', error); } }, 60 * 60 * 1000);
+            } catch (error) { reportLayoutFailure('Falha ao agendar atualizacao do Service Worker', error); }
             // Auditoria quando o SW assumir controle (atualização aplicada)
             try {
               navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -462,11 +462,11 @@ function LayoutContent({ children, currentPageName }) {
                   descricao: 'Service Worker atualizado e ativo', data_hora: new Date().toISOString(),
                   usuario: user?.full_name || 'Usuário', usuario_id: user?.id || null,
                   empresa_id: empresaAtual?.id || null, group_id: grupoAtual?.id || null,
-                }); } } catch {} })(); } catch {}
+                }); } } catch (error) { reportLayoutFailure('Falha ao auditar ativacao do Service Worker', error); } })(); } catch (error) { reportLayoutFailure('Falha ao preparar auditoria de ativacao do Service Worker', error); }
               });
-            } catch {}
-          }).catch(() => {});
-        }).catch(() => {});
+            } catch (error) { reportLayoutFailure('Falha ao observar ativacao do Service Worker', error); }
+          }).catch((error) => reportLayoutFailure('Falha ao registrar Service Worker', error));
+        }).catch((error) => reportLayoutFailure('Falha ao verificar Service Worker', error));
       });
     }
     }, []);
@@ -481,7 +481,7 @@ function LayoutContent({ children, currentPageName }) {
           curr.push(k);
           localStorage.setItem(indexKey, JSON.stringify(curr));
         }
-      } catch (_) {}
+      } catch (error) { reportLayoutFailure('Falha ao atualizar indice do cache offline', error); }
     };
     const sub = cache.subscribe((event) => {
       try {
@@ -494,7 +494,7 @@ function LayoutContent({ children, currentPageName }) {
         const storageKey = `rq_${JSON.stringify(q.queryKey)}_${scopeEmpresa}_${scopeGrupo}`;
         localStorage.setItem(storageKey, JSON.stringify(state.data));
         addToIndex(storageKey);
-      } catch (_) {}
+      } catch (error) { reportLayoutFailure('Falha ao persistir cache offline', error); }
     });
     // Hydrate when offline (cold start)
     if (isOffline) {
@@ -511,9 +511,9 @@ function LayoutContent({ children, currentPageName }) {
                 queryClient.setQueryData(qk, val);
               }
             }
-          } catch (_) {}
+          } catch (error) { reportLayoutFailure('Falha ao restaurar item do cache offline', error, { storageKey: k }); }
         });
-      } catch (_) {}
+      } catch (error) { reportLayoutFailure('Falha ao restaurar indice do cache offline', error); }
     }
     return () => { if (typeof sub === 'function') sub(); };
   }, [queryClient, isOffline, empresaAtual?.id, grupoAtual?.id]);
@@ -542,9 +542,9 @@ function LayoutContent({ children, currentPageName }) {
                                     metadata: { source: e?.filename, lineno: e?.lineno, colno: e?.colno }
                                   });
                                 }
-                              } catch (_) {}
+                              } catch (auditError) { reportLayoutFailure('Falha ao auditar erro global', auditError); }
                             })();
-                } catch (e) {}
+                } catch (error) { reportLayoutFailure('Falha ao processar erro global', error); }
               };
     const onUnhandled = (e) => {
                                     try {
@@ -567,9 +567,9 @@ function LayoutContent({ children, currentPageName }) {
                                     metadata: { reason: e?.reason }
                                   });
                                 }
-                              } catch (_) {}
+                              } catch (auditError) { reportLayoutFailure('Falha ao auditar promise rejeitada', auditError); }
                             })();
-                } catch (e) {}
+                } catch (error) { reportLayoutFailure('Falha ao processar promise rejeitada', error); }
               };
     window.addEventListener('error', onError);
     window.addEventListener('unhandledrejection', onUnhandled);
@@ -1075,9 +1075,9 @@ function LayoutContent({ children, currentPageName }) {
               data_hora: new Date().toISOString(),
             });
           }
-        } catch (_) {}
+        } catch (error) { reportLayoutFailure('Falha ao auditar navegacao', error, { path: location.pathname }); }
       })();
-    } catch (_) {}
+    } catch (error) { reportLayoutFailure('Falha ao preparar auditoria de navegacao', error, { path: location.pathname }); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, user?.id, empresaAtual?.id, moduleName]);
   useEffect(() => {
@@ -1103,7 +1103,7 @@ function LayoutContent({ children, currentPageName }) {
           descricao: `Click: ${label}`,
           data_hora: new Date().toISOString(),
         });
-      } catch (_) {}
+      } catch (error) { reportLayoutFailure('Falha ao auditar clique', error); }
     };
 
     const handlerChange = (e) => {
@@ -1128,7 +1128,7 @@ function LayoutContent({ children, currentPageName }) {
           descricao: `Change: ${name}`,
           data_hora: new Date().toISOString(),
         });
-      } catch (_) {}
+      } catch (error) { reportLayoutFailure('Falha ao auditar alteracao de campo', error); }
     };
 
     document.addEventListener('click', handlerClick, true);
@@ -1158,7 +1158,7 @@ function LayoutContent({ children, currentPageName }) {
         if (hasPermission('Estoque', null, 'ver')) {
           queryClient.prefetchQuery({ queryKey: ['produtos', empresaAtual?.id, grupoAtual?.id, contexto], queryFn: () => filterInContext('Produto', {}, '-updated_date', 20) });
         }
-      } catch (_) {}
+      } catch (error) { reportLayoutFailure('Falha no prefetch ocioso', error); }
     };
     if ('requestIdleCallback' in window) {
       window.requestIdleCallback(run, { timeout: 2000 });
@@ -1169,7 +1169,7 @@ function LayoutContent({ children, currentPageName }) {
 
   // Fase 3: Limpeza do IDB expirado no idle (uma vez por sessão)
   useEffect(() => {
-    const cleanup = () => { try { idbClearExpired(); } catch (_) {} };
+    const cleanup = () => { try { idbClearExpired(); } catch (error) { reportLayoutFailure('Falha ao limpar cache IDB expirado', error); } };
     if ('requestIdleCallback' in window) {
       window.requestIdleCallback(cleanup, { timeout: 10000 });
     } else {
@@ -1181,7 +1181,7 @@ function LayoutContent({ children, currentPageName }) {
   useEffect(() => {
     try {
       // Auditoria de deploy/app load (não bloqueante)
-      setTimeout(() => { (async () => { try { if (await base44.auth.isAuthenticated()) { await base44.functions.invoke('deployAudit', { event: 'app_loaded', module: moduleName || 'Sistema', page: currentPageName }); } } catch {} })(); }, 0);
+      setTimeout(() => { (async () => { try { if (await base44.auth.isAuthenticated()) { await base44.functions.invoke('deployAudit', { event: 'app_loaded', module: moduleName || 'Sistema', page: currentPageName }); } } catch (error) { reportLayoutFailure('Falha ao auditar carregamento do app', error); } })(); }, 0);
       const audits = [];
       if (typeof PerformanceObserver !== 'undefined') {
         // LCP
@@ -1192,7 +1192,7 @@ function LayoutContent({ children, currentPageName }) {
             audits.push({ type: 'LCP', value: entry.startTime });
           }
         });
-        try { lcpObs.observe({ type: 'largest-contentful-paint', buffered: true }); } catch {}
+        try { lcpObs.observe({ type: 'largest-contentful-paint', buffered: true }); } catch (error) { reportLayoutFailure('Falha ao observar LCP', error); }
         // Long tasks
         const ltObs = new PerformanceObserver((list) => {
           const longs = list.getEntries().filter((e) => e.duration > 200);
@@ -1201,7 +1201,7 @@ function LayoutContent({ children, currentPageName }) {
             audits.push({ type: 'longtask', count: longs.length, max });
           }
         });
-        try { ltObs.observe({ type: 'longtask', buffered: true }); } catch {}
+        try { ltObs.observe({ type: 'longtask', buffered: true }); } catch (error) { reportLayoutFailure('Falha ao observar tarefas longas', error); }
         // Flush once after 5s
         setTimeout(() => {
           if (audits.length) {
@@ -1217,11 +1217,11 @@ function LayoutContent({ children, currentPageName }) {
               descricao: 'Métricas de desempenho',
               dados_novos: { audits },
               data_hora: new Date().toISOString(),
-            }); } } catch {} })(); } catch {}
+            }); } } catch (error) { reportLayoutFailure('Falha ao auditar metricas de desempenho', error); } })(); } catch (error) { reportLayoutFailure('Falha ao preparar auditoria de desempenho', error); }
           }
         }, 5000);
       }
-    } catch (_) {}
+    } catch (error) { reportLayoutFailure('Falha ao configurar telemetria de desempenho', error); }
   }, [user?.id, empresaAtual?.id, grupoAtual?.id, moduleName]);
 
   const titleToModule = {
@@ -1260,7 +1260,7 @@ function LayoutContent({ children, currentPageName }) {
                         descricao: `Acesso negado ao módulo ${moduleName} (${currentPageName})`,
                       });
       }
-    } catch (e) {}
+    } catch (error) { reportLayoutFailure('Falha ao auditar bloqueio de pagina', error, { moduleName, currentPageName }); }
   }, [moduleName, currentPageName, user?.id, empresaAtual?.id]);
 
 

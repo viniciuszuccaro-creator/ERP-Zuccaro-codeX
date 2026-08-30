@@ -387,6 +387,8 @@ Conclusao 8B em 2026-08-30: fiscal, NF-e, roteirizacao e manutencao de frota tam
 
 Andamento 9A em 2026-08-30: corrigido o seletor global que gerava CSS invalido; o build nao apresenta mais o aviso Unexpected button. O trecho critico do Layout passou a registrar falhas de contexto, auditoria e criptografia, e a sanitizacao de chamadas backend agora falha fechada. O lint caiu de 217 para 200 erros e o inventario global de catches vazios caiu de 330 para 313.
 
+Andamento 9B em 2026-08-30: concluidos os tratamentos de PWA, cache offline, erros globais, navegacao e telemetria do Layout. O arquivo ficou com zero catches vazios, o lint caiu para 160 erros e o inventario global caiu para 273.
+
 ## Fase 11 - Duplicidades
 
 Objetivo: evitar que o ERP cresca com telas, funcoes e componentes repetidos.
