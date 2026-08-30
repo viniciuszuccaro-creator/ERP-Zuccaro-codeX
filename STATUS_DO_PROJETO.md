@@ -3406,4 +3406,6 @@ Checklist inicial:
 - Lint permanece com 217 erros `no-empty` no frontend e 20 avisos; typecheck permanece com 1.788 diagnosticos. Essa divida ja esta delimitada para o Lote 9 e nao foi ocultada nem desabilitada.
 - Permanecem os avisos preexistentes de seletor CSS, dados Browserslist, imports mistos e bundle principal grande.
 - Nenhuma tela, funcionalidade ou dado foi removido; o projeto do HD externo nao foi acessado.
-- Proximo passo obrigatorio: concluir o backend do Lote 8B em `fleetMaintenance`, `fiscalValidation`, `nfeActions` e `optimizeDeliveryRoute`; depois iniciar o Lote 9 pelo `Layout.jsx` e pelo seletor CSS invalido.
+- O sublote final tambem eliminou 22 catches vazios de `fleetMaintenance`, `fiscalValidation`, `nfeActions` e `optimizeDeliveryRoute`, encerrando o inventario do Lote 8B em 330 ocorrencias.
+- Sintaxe das quatro funcoes aprovada, 24 testes aprovados, `git diff --check` aprovado e build completo aprovado com 3.786 modulos.
+- Proximo passo obrigatorio: iniciar o Lote 9 pelo `Layout.jsx` e pelo seletor CSS invalido, mantendo a reducao do lint e typecheck em lotes verificaveis.

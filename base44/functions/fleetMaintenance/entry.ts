@@ -1,5 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
+const reportFleetFailure = (error) => {
+  console.error('[fleetMaintenance] Falha em operacao auxiliar', error?.message || String(error));
+};
+
 // Haversine distance in kilometers
 function haversineKm(lat1, lon1, lat2, lon2) {
   const toRad = (v) => (v * Math.PI) / 180;
@@ -39,7 +43,7 @@ async function audit(base44, { modulo = 'Expedição', entidade = 'Frota', descr
       group_id,
       data_hora: new Date().toISOString(),
     });
-  } catch (_) {}
+  } catch (error) { reportFleetFailure(error); }
 }
 
 async function processVehicle(base44, v, { empresaId, groupId, fuelPrice }) {
@@ -61,7 +65,7 @@ async function processVehicle(base44, v, { empresaId, groupId, fuelPrice }) {
         distKm += haversineKm(lat1, lon1, lat2, lon2);
       }
     }
-  } catch (_) {}
+  } catch (error) { reportFleetFailure(error); }
 
   // 2) Atualizar km total e métricas simples
   const patch = {};
@@ -78,7 +82,7 @@ async function processVehicle(base44, v, { empresaId, groupId, fuelPrice }) {
       patch.custo_km_estimado = Number(custoKm.toFixed(4));
       if (distKm > 0) patch.custo_rodada_estimado = Number((custoKm * distKm).toFixed(2));
     }
-  } catch (_) {}
+  } catch (error) { reportFleetFailure(error); }
 
   // 4) Checagem de revisão preventiva
   const ultimaRevKm = Number(v?.ultima_revisao_km) || 0;
@@ -92,7 +96,7 @@ async function processVehicle(base44, v, { empresaId, groupId, fuelPrice }) {
   }
 
   if (Object.keys(patch).length > 0) {
-    try { await base44.asServiceRole.entities.Veiculo.update(v.id, patch); } catch (_) {}
+    try { await base44.asServiceRole.entities.Veiculo.update(v.id, patch); } catch (error) { reportFleetFailure(error); }
   }
 
   if (needsReview) {
@@ -127,7 +131,7 @@ Deno.serve(async (req) => {
         try {
           const pos = await base44.asServiceRole.entities.PosicaoVeiculo.get(posId);
           focusVehicleId = pos?.veiculo_id || null;
-        } catch (_) {}
+        } catch (error) { reportFleetFailure(error); }
       }
     }
 
@@ -140,7 +144,7 @@ Deno.serve(async (req) => {
       try {
         const v = await base44.asServiceRole.entities.Veiculo.get(focusVehicleId);
         if (v) veiculos = [v];
-      } catch (_) {}
+      } catch (error) { reportFleetFailure(error); }
     } else {
       const criteria = { ...(groupId ? { group_id: groupId } : {}), ...(empresaId ? { empresa_id: empresaId } : {}) };
       veiculos = await base44.asServiceRole.entities.Veiculo.filter(criteria, '-updated_date', 200);
@@ -155,7 +159,7 @@ Deno.serve(async (req) => {
     // Integra: reconciliação de custos (opcional, se existir função)
     try {
       await base44.asServiceRole.functions.invoke('reconcileLogisticaCosts', { empresa_id: empresaId, group_id: groupId });
-    } catch (_) {}
+    } catch (error) { reportFleetFailure(error); }
 
     return Response.json({ ok: true, processed: results.length, results });
   } catch (error) {

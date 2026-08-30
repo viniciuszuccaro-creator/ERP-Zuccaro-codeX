@@ -1,6 +1,10 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 import { requireEntityGuard } from './_lib/security/guardCallPolicy.js';
 
+const reportNfeFailure = (error) => {
+  console.error('[nfeActions] Falha em operacao auxiliar', error?.message || String(error));
+};
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -13,7 +17,7 @@ Deno.serve(async (req) => {
     // Empresa requerida (proíbe emissão no grupo)
     let empresaIdResolved = empresaId || nfe?.empresa_faturamento_id || nfe?.empresa_id || null;
     if (!empresaIdResolved && nfe?.pedido_id) {
-      try { const ped = await base44.asServiceRole.entities.Pedido.get(nfe.pedido_id); empresaIdResolved = ped?.empresa_id || null; } catch (_) {}
+      try { const ped = await base44.asServiceRole.entities.Pedido.get(nfe.pedido_id); empresaIdResolved = ped?.empresa_id || null; } catch (error) { reportNfeFailure(error); }
     }
     if (!empresaIdResolved) {
       return Response.json({ error: 'Emissão NF-e no GRUPO bloqueada. Selecione uma EMPRESA (empresa_faturamento_id).' }, { status: 400 });
@@ -32,7 +36,7 @@ Deno.serve(async (req) => {
       const rows = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({ categoria: 'Integracoes', chave: `integracoes_${empresaIdResolved}` }, undefined, 1);
       const doc = rows?.[0] || null;
       integracao = doc?.integracao_nfe || doc?.nfe || null;
-    } catch (_) {}
+    } catch (error) { reportNfeFailure(error); }
 
     // Simulado quando não configurado
     if (!integracao || integracao.ativa === false) {
@@ -57,7 +61,7 @@ Deno.serve(async (req) => {
             protocolo_autorizacao: fake.protocolo, pdf_danfe: fake.danfeUrl, xml_nfe: fake.xmlUrl,
             data_autorizacao: fake.dataAutorizacao
           });
-        } } catch (_) {}
+        } } catch (error) { reportNfeFailure(error); }
         return Response.json(fake);
       }
       if (action === 'status') return Response.json({ status: 'Autorizada', modo: 'simulado' });
@@ -84,7 +88,7 @@ Deno.serve(async (req) => {
             protocolo_autorizacao: j?.protocolo || null, pdf_danfe: j?.danfeUrl || j?.pdf_url || null, xml_nfe: j?.xmlUrl || null,
             data_autorizacao: j?.dataAutorizacao || new Date().toISOString()
           });
-        } } catch (_) {}
+        } } catch (error) { reportNfeFailure(error); }
         return Response.json({ ...j, modo: 'real' });
       }
       if (action === 'status') {
@@ -122,7 +126,7 @@ Deno.serve(async (req) => {
             status: j?.status || 'Autorizada', numero: j?.number || j?.numero || null, serie: j?.series || j?.serie || null, chave_acesso: j?.accessKey || j?.chave || null,
             protocolo_autorizacao: j?.protocol || j?.protocolo || null, pdf_danfe: j?.danfeUrl || j?.pdfUrl || null, xml_nfe: j?.xmlUrl || null, data_autorizacao: j?.authorizedAt || new Date().toISOString()
           });
-        } } catch (_) {}
+        } } catch (error) { reportNfeFailure(error); }
         return Response.json({ ...j, modo: 'real' });
       }
       if (action === 'status') {

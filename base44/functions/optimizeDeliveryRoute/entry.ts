@@ -3,6 +3,10 @@ import { requireEntityGuard } from './_lib/security/guardCallPolicy.js';
 
 import { z } from 'npm:zod@3.24.2';
 
+const reportRouteFailure = (error) => {
+  console.error('[optimizeDeliveryRoute] Falha em operacao auxiliar', error?.message || String(error));
+};
+
 // Otimização de rotas de entrega (multiempresa) usando Google Directions API
 // Payload esperado:
 // {
@@ -148,12 +152,12 @@ Deno.serve(async (req) => {
                   e.regiao_entrega_id = r.id; // atualiza em memória
                   e.regiao_entrega_nome = r.nome || r.descricao || null;
                   // melhor esforço: persistir
-                  try { await base44.asServiceRole.entities.Entrega.update(e.id, { regiao_entrega_id: r.id, regiao_entrega_nome: e.regiao_entrega_nome }); } catch (_) {}
+                  try { await base44.asServiceRole.entities.Entrega.update(e.id, { regiao_entrega_id: r.id, regiao_entrega_nome: e.regiao_entrega_nome }); } catch (error) { reportRouteFailure(error); }
                 }
               }
             }
           }
-        } catch (_) {}
+        } catch (error) { reportRouteFailure(error); }
 
         const groups = new Map();
         for (const e of entregas) {
@@ -195,7 +199,7 @@ Deno.serve(async (req) => {
             await base44.asServiceRole.entities.Entrega.update(e.id, { regiao_entrega_id: regiaoId, regiao_entrega_nome: reg?.nome || reg?.descricao || null });
           }
         }
-      } catch (_) {}
+      } catch (error) { reportRouteFailure(error); }
     }
 
     if (!entregas || entregas.length === 0) {
@@ -354,7 +358,7 @@ Deno.serve(async (req) => {
           ]
         });
       }
-    } catch (_) {}
+    } catch (error) { reportRouteFailure(error); }
 
     // Auditoria
     try {
@@ -372,7 +376,7 @@ Deno.serve(async (req) => {
         data_hora: new Date().toISOString(),
         sucesso: true
       });
-    } catch {}
+    } catch (error) { reportRouteFailure(error); }
 
     return Response.json({ ok: true, total_distance_m, total_duration_s, ordered, api_mode: modo, unassigned });
   } catch (error) {
