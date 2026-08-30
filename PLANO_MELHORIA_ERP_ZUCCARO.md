@@ -31,7 +31,7 @@ Regras de entrega por lote:
 - [x] Configurar testes nativos do Node sem adicionar dependencia externa.
 - [x] Cobrir o inventario e os helpers puros da Central de Perfis RBAC.
 - [x] Corrigir o comportamento fail-open do guard de permissoes para mutacoes e funcoes sensiveis.
-- [ ] Padronizar o contrato canonico `{ groupId, empresaId, scopeType }` no frontend e backend.
+- [x] Padronizar o contrato canonico `{ groupId, empresaId, scopeType }` no frontend e backend.
 - [ ] Ampliar testes de isolamento entre Grupo CPA, CPA Ferro e Aco e 3Z LTDA.
 
 ## Objetivo central

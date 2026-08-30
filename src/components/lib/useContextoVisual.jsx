@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useUser } from "./UserContext";
 import useContextoGrupoEmpresa from "./useContextoGrupoEmpresa";
+import { normalizeMultiempresaContext, validateMultiempresaContext } from "./contextoMultiempresaPolicy";
 
 export function useContextoVisual() {
   const { user, isLoading: loadingUser } = useUser();
@@ -49,6 +50,12 @@ export function useContextoVisual() {
   const empresaAtual = (contexto === 'grupo') ? null : (empresas.find(empresa => empresa.id === empresaAtualId) || empresaContexto || null);
   const empresasDoGrupo = empresas.filter(empresa => empresa.group_id === grupoAtual?.id);
   const estaNoGrupo = contexto === 'grupo';
+  const contextoCanonico = normalizeMultiempresaContext({
+    scopeType: contexto,
+    groupId: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id,
+    empresaId: empresaAtual?.id,
+  });
+  const validacaoContexto = validateMultiempresaContext(contextoCanonico);
 
   useEffect(() => {
             try {
@@ -208,20 +215,24 @@ export function useContextoVisual() {
   // Helpers: multiempresa stamping and server-side filter
   const getFiltroContexto = (campo = 'empresa_id', incluirGrupo = false) => {
     const filtro = {};
-    if (incluirGrupo && grupoAtual?.id) filtro.group_id = grupoAtual.id;
-    if (contexto === 'grupo') {
+    if (!validacaoContexto.valid) return filtro;
+    if (incluirGrupo) filtro.group_id = contextoCanonico.groupId;
+    if (contextoCanonico.scopeType === 'grupo') {
       if (filtroEmpresa !== 'todas') filtro[campo] = filtroEmpresa;
-    } else if (empresaAtual?.id) {
-      filtro[campo] = empresaAtual.id;
+    } else {
+      filtro[campo] = contextoCanonico.empresaId;
     }
     return filtro;
   };
 
   const carimbarContexto = (dados, campo = 'empresa_id') => {
+    if (!validacaoContexto.valid) {
+      throw new Error(validacaoContexto.error);
+    }
     return {
       ...dados,
-      ...(grupoAtual?.id && !dados?.group_id ? { group_id: grupoAtual.id } : {}),
-      ...((contexto !== 'grupo') && empresaAtual?.id && !dados?.[campo] ? { [campo]: empresaAtual.id } : {}),
+      ...(!dados?.group_id ? { group_id: contextoCanonico.groupId } : {}),
+      ...((contextoCanonico.scopeType === 'empresa') && !dados?.[campo] ? { [campo]: contextoCanonico.empresaId } : {}),
     };
   };
 
@@ -454,6 +465,9 @@ export function useContextoVisual() {
 
   return {
     contexto,
+    contextoCanonico,
+    contextoValido: validacaoContexto.valid,
+    erroContexto: validacaoContexto.error,
     empresaAtual,
     empresasDoGrupo,
     estaNoGrupo: contexto === 'grupo',

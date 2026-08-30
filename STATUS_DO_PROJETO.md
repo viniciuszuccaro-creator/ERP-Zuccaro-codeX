@@ -3309,3 +3309,17 @@ Checklist inicial:
 - Suite total apos o lote: 9 testes executados, 9 aprovados e nenhuma falha.
 - Nenhuma permissao foi concedida automaticamente, nenhuma tela foi removida e nenhum dado foi alterado.
 - Proximo passo obrigatorio: padronizar e testar o contrato canonico `groupId`, `empresaId` e `scopeType` no frontend e backend.
+
+### Plano Mestre - Lote 3: Contrato Canonico Multiempresa
+- Criado o helper interno `contextoMultiempresaPolicy` para normalizar aliases e expor o contrato unico `{ groupId, empresaId, scopeType }` no frontend.
+- O contexto Grupo exige `groupId`; o contexto Empresa exige simultaneamente `groupId` e `empresaId`.
+- `useContextoVisual` agora entrega `contextoCanonico`, `contextoValido` e `erroContexto`, preservando os helpers e telas existentes.
+- Consultas globais via wrappers de `list` e `filter` retornam vazio quando o contexto estiver incompleto, sem misturar dados entre empresas.
+- Gravacoes e verificacoes RBAC sao bloqueadas antes da operacao quando faltar Grupo ou Empresa obrigatoria.
+- O `Layout.jsx` injeta `scope_type`, `group_id` e `empresa_id` nas chamadas protegidas, inclusive chamadas diretas ao `entityGuard` feitas por componentes existentes.
+- O backend `entityGuard` normaliza os mesmos aliases e rejeita contexto incompleto antes de avaliar administrador ou perfil.
+- Adicionados 5 testes de contrato e isolamento; suite total apos o lote: 14 testes executados, 14 aprovados e nenhuma falha.
+- `git diff --check`, verificacoes de sintaxe e build completo aprovados; servidor local do clone interno respondeu HTTP 200.
+- Permanecem avisos preexistentes de CSS, imports mistos, Browserslist e bundle grande, sem ampliacao neste lote.
+- Nenhuma tela, funcionalidade ou dado foi removido; o projeto do HD externo nao foi alterado.
+- Proximo passo obrigatorio: ampliar os testes de isolamento e endurecer as funcoes backend que ainda chamam o guard sem propagar o contexto canonico.

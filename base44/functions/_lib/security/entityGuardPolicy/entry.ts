@@ -21,6 +21,29 @@ export const normalizeGuardAction = (action) => {
 
 export const isReadOnlyGuardAction = (action) => normalizeGuardAction(action) === 'visualizar';
 
+const firstValue = (...values) => values.find((value) => value !== undefined && value !== null && value !== '');
+
+export const normalizeGuardContext = (input = {}) => {
+  const groupId = firstValue(input.groupId, input.group_id, input.grupoId, input.grupo_id) || null;
+  const rawEmpresaId = firstValue(input.empresaId, input.empresa_id, input.companyId, input.company_id) || null;
+  const rawScope = String(firstValue(input.scopeType, input.scope_type, input.contexto) || '').trim().toLowerCase();
+  const scopeType = ['grupo', 'group'].includes(rawScope)
+    ? 'grupo'
+    : (['empresa', 'company'].includes(rawScope) ? 'empresa' : (rawEmpresaId ? 'empresa' : (groupId ? 'grupo' : null)));
+
+  return { groupId, empresaId: scopeType === 'grupo' ? null : rawEmpresaId, scopeType };
+};
+
+export const validateGuardContext = (input = {}) => {
+  const context = normalizeGuardContext(input);
+  if (!context.scopeType) return { ...context, valid: false, error: 'scope_type_required' };
+  if (!context.groupId) return { ...context, valid: false, error: 'group_id_required' };
+  if (context.scopeType === 'empresa' && !context.empresaId) {
+    return { ...context, valid: false, error: 'empresa_id_required' };
+  }
+  return { ...context, valid: true, error: null };
+};
+
 const actionListAllows = (actions, desired) => Array.isArray(actions)
   && actions.map(normalizeGuardAction).includes(desired);
 

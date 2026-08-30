@@ -6,6 +6,8 @@ import {
   normalizeGuardAction,
   permissionNodeAllows,
   resolveGuardPermission,
+  normalizeGuardContext,
+  validateGuardContext,
 } from '../base44/functions/_lib/security/entityGuardPolicy/entry.ts';
 
 test('guard action aliases normalize to the canonical action', () => {
@@ -37,4 +39,24 @@ test('only visualizar and its read aliases are read-only', () => {
   assert.equal(isReadOnlyGuardAction('visualizar'), true);
   assert.equal(isReadOnlyGuardAction('exportar'), false);
   assert.equal(isReadOnlyGuardAction('executar'), false);
+});
+
+test('guard context normalizes aliases to the canonical contract', () => {
+  assert.deepEqual(normalizeGuardContext({ grupo_id: 'grupo-cpa', empresa_id: 'cpa-aco' }), {
+    groupId: 'grupo-cpa',
+    empresaId: 'cpa-aco',
+    scopeType: 'empresa',
+  });
+  assert.deepEqual(normalizeGuardContext({ scope_type: 'grupo', group_id: 'grupo-cpa', empresa_id: 'ignorada' }), {
+    groupId: 'grupo-cpa',
+    empresaId: null,
+    scopeType: 'grupo',
+  });
+});
+
+test('group and company contexts require their complete identifiers', () => {
+  assert.equal(validateGuardContext({ scopeType: 'grupo', groupId: 'grupo-cpa' }).valid, true);
+  assert.equal(validateGuardContext({ scopeType: 'empresa', groupId: 'grupo-cpa', empresaId: '3z' }).valid, true);
+  assert.equal(validateGuardContext({ scopeType: 'grupo' }).error, 'group_id_required');
+  assert.equal(validateGuardContext({ scopeType: 'empresa', groupId: 'grupo-cpa' }).error, 'empresa_id_required');
 });

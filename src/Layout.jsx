@@ -66,6 +66,7 @@ import { useInvalidationBus } from "@/components/lib/useInvalidationBus";
 import { useNavHistory } from "@/components/lib/useNavHistory";
 import { usePredictivePrefetch } from "@/components/lib/usePredictivePrefetch";
 import { idbClearExpired } from "@/components/lib/useIndexedDBCache";
+import { toEntityScope, toGuardScope } from "@/components/lib/contextoMultiempresaPolicy";
 
 
 const navigationItems = [
@@ -698,15 +699,16 @@ function LayoutContent({ children, currentPageName }) {
     };
 
     const getScope = () => {
-      const scope = {};
       try {
         const ctx = contextRef.current;
-        if (ctx.grupoAtual?.id) scope.group_id = ctx.grupoAtual.id;
-        if (ctx.contexto !== 'grupo' && ctx.empresaAtual?.id) scope.empresa_id = ctx.empresaAtual.id;
-        // Strict scope: mark blocked when no empresa in empresa-context
-        if (ctx.contexto !== 'grupo' && !ctx.empresaAtual?.id) scope.__blocked = true;
-      } catch (_) {}
-      return scope;
+        return toGuardScope({
+          scopeType: ctx.contexto,
+          groupId: ctx.grupoAtual?.id || ctx.empresaAtual?.group_id || ctx.empresaAtual?.grupo_id,
+          empresaId: ctx.empresaAtual?.id,
+        });
+      } catch (_) {
+        return toGuardScope({});
+      }
     };
 
     // Cache local de permissões RBAC (evita chamadas repetidas ao backend)
@@ -715,6 +717,8 @@ function LayoutContent({ children, currentPageName }) {
 
     const checkRBAC = async (entityName, action, sectionHint = null, op = null) => {
       try {
+        const scope = getScope();
+        if (scope.__blocked) throw new Error(scope.__error || 'Contexto multiempresa obrigatório');
         // Proteção imediata de entidades críticas (sem chamada backend)
         if (entityName === 'AuditLog' || entityName === 'PerfilAcesso') {
           if (['criar','editar','excluir'].includes(action)) throw new Error('RBAC: entidade protegida');
@@ -733,7 +737,6 @@ function LayoutContent({ children, currentPageName }) {
           PerfilAcesso: 'Administração', User: 'Administração', Evento: 'Agenda'
         };
         const modName = map[entityName] || 'Sistema';
-        const scope = getScope();
         const cacheKey = `${modName}|${sectionHint || entityName}|${action}|${scope.empresa_id || ''}|${scope.group_id || ''}`;
         const now = Date.now();
         const cached = __rbacCache.get(cacheKey);
@@ -750,12 +753,16 @@ function LayoutContent({ children, currentPageName }) {
           operation: op,
           empresa_id: scope.empresa_id || null,
           group_id: scope.group_id || null,
+          scope_type: scope.scope_type,
         };
         const res = await base44.functions.invoke('entityGuard', payload);
         const allowed = res?.data?.allowed === true;
         __rbacCache.set(cacheKey, { allowed, ts: now });
         if (!allowed) throw new Error('RBAC backend: ação negada');
       } catch (err) {
+        if (err?.message?.includes('Contexto') || err?.message?.includes('Grupo obrigatório') || err?.message?.includes('Empresa obrigatória')) {
+          throw err;
+        }
         // Leituras podem continuar durante indisponibilidade; mutações falham fechadas.
         if (err?.message === 'RBAC backend: ação negada' || err?.response?.status === 403) {
           throw new Error('RBAC backend: ação negada');
@@ -860,22 +867,22 @@ function LayoutContent({ children, currentPageName }) {
       // Multiempresa em list/filter por padrão + STRICT empresa_id
       if (orig.filter) {
         api.filter = async (criteria = {}, order, limit, skip) => {
-          const ctx = contextRef.current;
-          if (ctx.contexto !== 'grupo' && !ctx.empresaAtual?.id) { return []; }
           const scope = getScope();
+          if (scope.__blocked) return [];
+          const entityScope = toEntityScope(scope);
           // Se o filtro já contém $or/$and ou campos de escopo, não injetar AND adicional
           const hasScope = !!criteria?.empresa_id || !!criteria?.group_id || !!criteria?.$or || !!criteria?.$and;
-          const merged = (!hasScope) ? { ...criteria, ...scope } : criteria;
+          const merged = (!hasScope) ? { ...criteria, ...entityScope } : criteria;
           return await orig.filter(merged, order, limit, skip);
         };
       }
 
       if (orig.list) {
         api.list = async (order, limit, skip) => {
-          const ctx = contextRef.current;
-          if (ctx.contexto !== 'grupo' && !ctx.empresaAtual?.id) { return []; }
+          const scope = getScope();
+          if (scope.__blocked) return [];
           if (orig.filter) {
-            return await orig.filter(getScope(), order, limit, skip);
+            return await orig.filter(toEntityScope(scope), order, limit, skip);
           }
           return await orig.list(order, limit, skip);
         };
@@ -919,6 +926,7 @@ function LayoutContent({ children, currentPageName }) {
                 function_name: functionName,
                 empresa_id: scope.empresa_id || null,
                 group_id: scope.group_id || null,
+                scope_type: scope.scope_type,
               };
               const res = await origInvoke('entityGuard', guardPayload);
               if (res?.data?.allowed !== true) {
@@ -936,12 +944,13 @@ function LayoutContent({ children, currentPageName }) {
 
           // Injetar contexto multiempresa em chamadas de função — NÃO injeta em funções que já têm scope explícito
           // (upsertConfig, getEntityRecord e similares passam scope próprio e não devem ser contaminados)
-          const SKIP_AUTO_SCOPE = new Set(['upsertConfig', 'getEntityRecord', 'entityGuard', 'entityListSorted', 'propagateGroupConfigs', 'auditError', 'deployAudit', 'piiEncryptor', 'portalToken']);
+          const SKIP_AUTO_SCOPE = new Set(['upsertConfig', 'getEntityRecord', 'entityListSorted', 'propagateGroupConfigs', 'auditError', 'deployAudit', 'piiEncryptor', 'portalToken']);
           try {
             const ctx = getScope ? getScope() : {};
             if (!SKIP_AUTO_SCOPE.has(functionName) && params && typeof params === 'object' && !Array.isArray(params)) {
               params = { ...params };
               if (ctx?.group_id && (params.group_id === undefined || params.group_id === null)) params.group_id = ctx.group_id;
+              if (ctx?.scope_type && (params.scope_type === undefined || params.scope_type === null)) params.scope_type = ctx.scope_type;
               // aceitar alias empresaId, mas padronizar empresa_id
               const hasEmpresa = !(params.empresa_id === undefined || params.empresa_id === null) || !(params.empresaId === undefined || params.empresaId === null);
               if (ctx?.empresa_id && !hasEmpresa) params.empresa_id = ctx.empresa_id;

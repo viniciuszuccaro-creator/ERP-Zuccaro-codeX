@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
-import { normalizeGuardAction, resolveGuardPermission } from './_lib/security/entityGuardPolicy.js';
+import { normalizeGuardAction, resolveGuardPermission, validateGuardContext } from './_lib/security/entityGuardPolicy.js';
 
 // Rate-limit por IP
 const __RL = globalThis.__egRate || (globalThis.__egRate = new Map());
@@ -77,6 +77,11 @@ Deno.serve(async (req) => {
     const moduleName = normalizeModule(body?.module || 'Sistema');
     const section = body?.section || null;
     const desired = normalizeGuardAction(body?.action);
+    const guardContext = validateGuardContext(body);
+
+    if (!guardContext.valid) {
+      return Response.json({ allowed: false, error: guardContext.error }, { status: 400 });
+    }
 
     // Proteção de entidades críticas
     const targetEntity = body?.entity_name;
