@@ -23,6 +23,11 @@ const badgeVariants = cva(
   }
 )
 
+/**
+ * @param {React.HTMLAttributes<HTMLDivElement> & {
+ *   variant?: 'default'|'secondary'|'destructive'|'outline'|null
+ * }} props
+ */
 function Badge({
   className,
   variant,

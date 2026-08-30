@@ -357,12 +357,14 @@ Resultado esperado:
 
 Resultado: 312 artefatos historicos preservados, zero importacoes pelo runtime, 20 testes aprovados e build completo aprovado.
 
-### Lote 7 - Contratos compartilhados (proximo)
+### Lote 7 - Contratos compartilhados (concluido em 2026-08-30)
 
 1. Tipar por JSDoc as primitivas de interface existentes, comecando por Button, Input, Tabs, Select, Dialog, Card e formularios.
 2. Preservar como opcionais apenas propriedades que ja funcionam dessa forma.
 3. Padronizar o contrato dinamico do cliente Base44 sem criar um `any` global.
 4. Atacar primeiro TS2322, TS2559, TS2339 e TS2741.
+
+Resultado: primitivas de alta reutilizacao e cliente Base44 tipados; diagnosticos reduzidos de 14.003 para 1.788 sem desligar `checkJs`.
 
 ### Lote 8 - Controles, erros e seguranca visual
 

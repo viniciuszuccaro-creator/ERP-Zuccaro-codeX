@@ -3,6 +3,14 @@ import { cn } from "@/lib/utils"
 import { uiAuditWrap, logUIIssue } from "@/components/lib/uiAudit"
 import usePermissions from "@/components/lib/usePermissions";
 
+/**
+ * @typedef {React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
+ *   'data-permission'?: string,
+ *   __wrapped_audit?: boolean
+ * }} TextareaProps
+ */
+
+/** @type {React.ForwardRefExoticComponent<TextareaProps & React.RefAttributes<HTMLTextAreaElement>>} */
 const Textarea = React.forwardRef(({ className, onChange, onBlur, ...props }, ref) => {
   const { hasPermissionKey } = usePermissions();
   React.useEffect(() => {

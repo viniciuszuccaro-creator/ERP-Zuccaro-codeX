@@ -2,6 +2,7 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
+/** @type {React.ForwardRefExoticComponent<React.LabelHTMLAttributes<HTMLLabelElement> & React.RefAttributes<HTMLLabelElement>>} */
 const Label = React.forwardRef(({ className, ...props }, ref) => (
   <label
     ref={ref}

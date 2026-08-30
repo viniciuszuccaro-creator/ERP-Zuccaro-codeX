@@ -38,6 +38,19 @@ const buttonVariants = cva(
   }
 )
 
+/**
+ * @typedef {React.ButtonHTMLAttributes<HTMLButtonElement> & {
+ *   asChild?: boolean,
+ *   variant?: 'default'|'destructive'|'outline'|'secondary'|'ghost'|'link'|null,
+ *   size?: 'default'|'sm'|'lg'|'icon'|null,
+ *   'data-permission'?: string,
+ *   'data-sensitive'?: boolean|string,
+ *   'data-toast-success'?: boolean|string,
+ *   'data-success-message'?: string
+ * }} ButtonProps
+ */
+
+/** @type {React.ForwardRefExoticComponent<ButtonProps & React.RefAttributes<HTMLButtonElement>>} */
 const Button = React.forwardRef(({ className, variant, size, asChild = false, ...props }, ref) => {
   const Comp = asChild ? Slot : "button";
   const { hasPermissionKey } = usePermissions();
@@ -93,8 +106,14 @@ function withUIAudit(props) {
   const isSensitive = !!(props?.__sensitive || props?.__perm);
 
   // Reuso de cache/dedupe global do entityGuard (se existir)
-  const __guardCache = (typeof window !== 'undefined' ? (window.__entityGuardCache || (window.__entityGuardCache = new Map())) : new Map());
-  const __guardInflight = (typeof window !== 'undefined' ? (window.__entityGuardInflight || (window.__entityGuardInflight = new Map())) : new Map());
+  /** @type {Map<string, {allowed: boolean, ts: number}>} */
+  const __guardCache = typeof window !== 'undefined'
+    ? (getGuardWindow().__entityGuardCache ||= new Map())
+    : new Map();
+  /** @type {Map<string, Promise<void>>} */
+  const __guardInflight = typeof window !== 'undefined'
+    ? (getGuardWindow().__entityGuardInflight ||= new Map())
+    : new Map();
   const GUARD_TTL_MS = 120_000;
   const getGuardKey = (module, section, action) => `${module || '-'}|${section || '-'}|${action || '-'}`;
 
@@ -139,6 +158,16 @@ function withUIAudit(props) {
   if ('__toastSuccess' in p) delete p.__toastSuccess;
   if ('__successMessage' in p) delete p.__successMessage;
   return p;
+}
+
+/**
+ * @returns {Window & {
+ *   __entityGuardCache?: Map<string, {allowed: boolean, ts: number}>,
+ *   __entityGuardInflight?: Map<string, Promise<void>>
+ * }}
+ */
+function getGuardWindow() {
+  return window;
 }
 
 export { Button, buttonVariants }

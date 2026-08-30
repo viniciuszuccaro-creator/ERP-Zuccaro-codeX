@@ -103,11 +103,15 @@ const makeId = (prefix = 'local') => {
   return `${prefix}_${Date.now().toString(36)}_${rand}`;
 };
 
+/** @type {import('@base44/sdk').User} */
 export const localApiUser = {
   id: 'local-admin-user',
   email: 'admin@erp-local.test',
   full_name: 'Administrador Local',
   role: 'admin',
+  app_id: 'erp-zuccaro-local',
+  is_service: false,
+  _app_role: 'admin',
   disabled: false,
   is_verified: true,
   created_date: now(),

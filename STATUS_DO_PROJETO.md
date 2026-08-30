@@ -3365,3 +3365,16 @@ Checklist inicial:
 - O build preserva avisos preexistentes de CSS, Browserslist, imports mistos e bundle principal grande.
 - Nenhuma tela, funcionalidade, documento ou dado foi removido.
 - Proximo passo obrigatorio: executar o Lote 7, tipando por JSDoc os componentes compartilhados existentes e o contrato dinamico Base44, com prioridade para TS2322, TS2559, TS2339 e TS2741.
+
+### Plano Mestre - Lote 7: Contratos dos Componentes Compartilhados
+
+- Tipados por JSDoc os componentes existentes de Button, Input, Tabs, Select, Dialog, Card, Form, Tooltip, Badge, Label, Alert, Textarea, Checkbox, Switch, Popover, Table e Dropdown Menu.
+- Os contratos reutilizam tipos nativos do React e das primitivas Radix; propriedades opcionais permanecem opcionais conforme o comportamento atual.
+- O ponto publico `base44` passou a usar o contrato oficial `Base44Client` do SDK para entidades dinamicas, funcoes, autenticacao e integracoes, sem criar `any` global no ERP.
+- O usuario local recebeu os campos obrigatorios do contrato oficial de autenticacao, preservando os campos customizados de Grupo e Empresa.
+- O cache compartilhado do guard no `window` recebeu contrato explicito, sem alterar TTL ou comportamento neste lote.
+- Typecheck caiu de 14.003 para 1.788 diagnosticos, reducao aproximada de 87%; TS2322 caiu de 8.111 para 166, TS2559 de 3.173 para 30 e TS2741 de 555 para 63.
+- TS2339 permanece como maior familia, agora concentrada em componentes de dominio, primitivas secundarias e objetos locais que exigem contratos especificos.
+- Validacao: 20 testes aprovados, lint sem regressao (248 erros e 20 avisos ja registrados), `git diff --check` e build completo com 3.785 modulos.
+- Nenhuma tela, funcionalidade, dado ou permissao foi removido; o projeto do HD externo nao foi acessado.
+- Proximo passo obrigatorio: executar o Lote 8, ativando o guard backend fail-closed do Button e classificando catches vazios por criticidade antes de corrigir o restante do typecheck no Lote 9.

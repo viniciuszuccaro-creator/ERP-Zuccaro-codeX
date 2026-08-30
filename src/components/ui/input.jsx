@@ -4,6 +4,14 @@ import { cn } from "@/lib/utils"
 import { uiAuditWrap, logUIIssue } from "@/components/lib/uiAudit";
 import usePermissions from "@/components/lib/usePermissions";
 
+/**
+ * @typedef {React.InputHTMLAttributes<HTMLInputElement> & {
+ *   'data-permission'?: string,
+ *   __wrapped_audit?: boolean
+ * }} InputProps
+ */
+
+/** @type {React.ForwardRefExoticComponent<InputProps & React.RefAttributes<HTMLInputElement>>} */
 const Input = React.forwardRef(({ className, type, onChange, onBlur, ...props }, ref) => {
   React.useEffect(() => {
     if (!onChange) {

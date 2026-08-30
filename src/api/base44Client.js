@@ -13,6 +13,13 @@ export const localApiUser = isLocalOnlyMode ? localOnlyUser : {
   email: 'local-api@erp-integra.local',
   full_name: 'Usuario Local API',
   role: 'admin',
+  app_id: appId || 'erp-zuccaro-local',
+  is_service: false,
+  _app_role: 'admin',
+  disabled: false,
+  is_verified: true,
+  created_date: new Date(0).toISOString(),
+  updated_date: new Date(0).toISOString(),
   pode_operar_em_grupo: true,
   pode_ver_todas_empresas: true,
   empresas_vinculadas: [],
@@ -29,7 +36,14 @@ const remoteBase44 = isLocalOnlyMode ? null : createClient({
   requiresAuth: false
 });
 
-export const base44 = isLocalOnlyMode ? localBase44 : remoteBase44;
+/**
+ * Contrato publico unico para os clientes remoto e local. O SDK mantem o
+ * registro dinamico de entidades sem apagar os contratos de auth, funcoes e integracoes.
+ * @type {import('@base44/sdk').Base44Client}
+ */
+export const base44 = /** @type {import('@base44/sdk').Base44Client} */ (
+  isLocalOnlyMode ? localBase44 : remoteBase44
+);
 
 if (!isLocalOnlyMode && isApiKeyMode && base44?.auth) {
   const originalUpdateMe = base44.auth.updateMe?.bind(base44.auth);

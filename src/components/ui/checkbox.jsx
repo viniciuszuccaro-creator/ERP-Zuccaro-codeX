@@ -5,6 +5,16 @@ import { Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 import usePermissions from "@/components/lib/usePermissions";
 
+/**
+ * @typedef {React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root> & {
+ *   'data-permission'?: string,
+ *   'data-action'?: string,
+ *   'data-toast-success'?: boolean|string,
+ *   __wrapped_audit?: boolean
+ * }} CheckboxProps
+ */
+
+/** @type {React.ForwardRefExoticComponent<CheckboxProps & React.RefAttributes<React.ElementRef<typeof CheckboxPrimitive.Root>>>} */
  const Checkbox = React.forwardRef(({ className, ...props }, ref) => (
    <CheckboxPrimitive.Root
     ref={ref}
@@ -24,6 +34,7 @@ import { uiAuditWrap } from "@/components/lib/uiAudit";
 
 // decorate onCheckedChange if present
 const _orig = Checkbox; // keep ref
+/** @type {React.ForwardRefExoticComponent<CheckboxProps & React.RefAttributes<React.ElementRef<typeof CheckboxPrimitive.Root>>>} */
 const WrappedCheckbox = React.forwardRef((props, ref) => {
   const { hasPermissionKey } = usePermissions();
   const p = { ...props };

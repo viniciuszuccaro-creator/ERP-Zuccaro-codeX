@@ -3,6 +3,18 @@ import { cn } from "@/lib/utils"
 import { uiAuditWrap } from "@/components/lib/uiAudit";
 import usePermissions from "@/components/lib/usePermissions";
 
+/**
+ * @typedef {React.ButtonHTMLAttributes<HTMLButtonElement> & {
+ *   checked?: boolean,
+ *   onCheckedChange?: (checked: boolean) => void,
+ *   'data-permission'?: string,
+ *   'data-action'?: string,
+ *   'data-toast-success'?: boolean|string,
+ *   __wrapped_audit?: boolean
+ * }} SwitchProps
+ */
+
+/** @type {React.ForwardRefExoticComponent<SwitchProps & React.RefAttributes<HTMLButtonElement>>} */
 const Switch = React.forwardRef(({ className, checked, onCheckedChange, disabled, ...props }, ref) => {
   const handleClick = () => {
     if (!disabled && onCheckedChange) {
@@ -37,6 +49,7 @@ const Switch = React.forwardRef(({ className, checked, onCheckedChange, disabled
 
 Switch.displayName = "Switch"
 
+/** @type {React.ForwardRefExoticComponent<SwitchProps & React.RefAttributes<HTMLButtonElement>>} */
 const AuditedSwitch = React.forwardRef(({ onCheckedChange, ...props }, ref) => {
   const { hasPermissionKey } = usePermissions();
   const actionName = props?.['data-action'] || 'Switch.onCheckedChange';
