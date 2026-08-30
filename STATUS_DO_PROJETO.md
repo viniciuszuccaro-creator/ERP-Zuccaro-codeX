@@ -3336,3 +3336,16 @@ Checklist inicial:
 - Permanecem para o proximo lote as chamadas em eventos fiscais, roteirizacao, boleto, IA financeira e integracoes legadas, alem da validacao de pertencimento do registro ao contexto informado.
 - Nenhuma tela, fluxo ou dado foi removido; o projeto do HD externo nao foi alterado.
 - Proximo passo obrigatorio: aplicar o helper estrito nas chamadas backend restantes e testar que IDs de outra Empresa/Grupo sejam recusados.
+
+### Plano Mestre - Lote 5: Cobertura Total das Chamadas ao Guard
+- Todas as chamadas backend ao `entityGuard` agora passam exclusivamente por `guardCallPolicy`; nenhuma funcao operacional mantem chamada direta ou tratamento permissivo.
+- Reforcados os fluxos existentes de boleto, IA financeira, integracoes legadas, autorizacao fiscal, pedido pronto para faturar e otimizacao de rota.
+- Chamadas de usuario exigem permissao explicita; automacoes internas podem manter seu fluxo autenticado, mas nunca executam consulta financeira global sem `group_id`.
+- `paymentStatusManager` compara Grupo e Empresa do registro com o contexto solicitado antes de efetuar baixa, aprovacao, cancelamento ou conciliacao.
+- Um registro da 3Z LTDA e recusado quando processado no contexto da CPA Ferro e Aco; outro Grupo e registro sem `group_id` tambem sao recusados.
+- Adicionado teste de pertencimento multiempresa; suite total apos o lote: 19 testes executados, 19 aprovados e nenhuma falha.
+- Busca estatica confirmou zero chamadas diretas restantes ao `entityGuard` fora do helper central.
+- Sintaxe das oito funcoes validada, `git diff --check` aprovado e build completo aprovado com 3.785 modulos.
+- Avisos preexistentes de CSS, Browserslist, imports mistos e bundle grande permanecem registrados para estabilizacao posterior.
+- Nenhuma tela, funcionalidade ou dado foi removido; o projeto do HD externo nao foi alterado.
+- Proximo passo obrigatorio: corrigir a divida de lint/typecheck por lotes pequenos, iniciando por erros reais de sintaxe e variaveis na fundacao, sem alterar arquivos-documentacao em massa.

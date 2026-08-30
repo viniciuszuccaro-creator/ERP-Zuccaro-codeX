@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { requireEntityGuard } from './_lib/security/guardCallPolicy.js';
+import { recordMatchesGuardScope, requireEntityGuard } from './_lib/security/guardCallPolicy.js';
 // Inline helpers to avoid local imports
 async function getUserAndPerfil(base44){
   const user = await base44.auth.me();
@@ -342,6 +342,9 @@ Deno.serve(async (req) => {
     const resultados = [];
     for (const alvoId of idsList){
       const registro = await api.get(alvoId);
+      if (!recordMatchesGuardScope(registro, permissionScope)) {
+        return Response.json({ error: 'Registro fora do contexto multiempresa informado' }, { status: 403 });
+      }
       let updates = {};
       if (isCP(entity)) {
         updates = computeUpdatesForContaPagar(action, justificativa, registro) || {};

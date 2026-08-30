@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { requireEntityGuard } from './_lib/security/guardCallPolicy.js';
 
 import { z } from 'npm:zod@3.24.2';
 
@@ -65,19 +66,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Contexto ausente: empresa_id obrigatório' }, { status: 400 });
     }
 
-    // RBAC: módulo Expedição → Roteirização (executar)
-    try {
-      const guard = await base44.functions.invoke('entityGuard', {
-        module: 'Expedição',
-        section: 'Roteirizacao',
-        action: 'executar',
-        empresa_id,
-        group_id
-      });
-      if (guard?.data && guard.data.allowed === false) {
-        return Response.json({ error: 'Forbidden' }, { status: 403 });
-      }
-    } catch (_) {}
+    const guardFailure = await requireEntityGuard(base44, {
+      module: 'Expedição', section: 'Roteirizacao', action: 'executar', empresa_id, group_id,
+    });
+    if (guardFailure) return guardFailure;
 
     // Carregar entregas alvo com filtros e restrições (inclui janelas, prioridade, capacidade)
     const constraints = body?.constraints || {};

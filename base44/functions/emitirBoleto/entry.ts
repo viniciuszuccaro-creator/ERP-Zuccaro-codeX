@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { jsPDF } from 'npm:jspdf@4.0.0';
+import { requireEntityGuard } from './_lib/security/guardCallPolicy.js';
 
 Deno.serve(async (req) => {
   try {
@@ -31,19 +32,11 @@ Deno.serve(async (req) => {
     } catch (_) {}
 
     if (!isPortalSelfAccess) {
-      try {
-        const guard = await base44.asServiceRole.functions.invoke('entityGuard', {
-          module: 'Financeiro', section: 'ContaReceber', action: 'emitir',
-          empresa_id: cr.empresa_id || null, group_id: cr.group_id || null,
-        });
-        if (guard?.data && guard.data.allowed === false) {
-          return Response.json({ error: 'Forbidden' }, { status: 403 });
-        }
-      } catch (_) { /* se indisponível, segue padrão permissivo apenas para admins */
-        if (me?.role !== 'admin') {
-          return Response.json({ error: 'Forbidden' }, { status: 403 });
-        }
-      }
+      const guardFailure = await requireEntityGuard(base44, {
+        module: 'Financeiro', section: 'ContaReceber', action: 'emitir',
+        empresa_id: cr.empresa_id || null, group_id: cr.group_id || null,
+      });
+      if (guardFailure) return guardFailure;
     }
 
     // Contexto multiempresa obrigatório

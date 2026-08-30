@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { requireEntityGuard } from './_lib/security/guardCallPolicy.js';
 
 Deno.serve(async (req) => {
   try {
@@ -18,19 +19,10 @@ Deno.serve(async (req) => {
     const groupId = data?.group_id || null;
     if (!empresaId) return Response.json({ error: 'Empresa não definida no pedido' }, { status: 400 });
 
-    // RBAC backend (bloqueio definitivo)
-    try {
-      const guard = await base44.functions.invoke('entityGuard', {
-        module: 'Fiscal',
-        section: 'NF-e',
-        action: 'criar',
-        empresa_id: empresaId,
-        group_id: groupId,
-      });
-      if (guard?.data && guard.data.allowed === false) {
-        return Response.json({ error: 'Permissão negada' }, { status: 403 });
-      }
-    } catch (_) {}
+    const guardFailure = await requireEntityGuard(base44, {
+      module: 'Fiscal', section: 'NF-e', action: 'criar', empresa_id: empresaId, group_id: groupId,
+    });
+    if (guardFailure) return guardFailure;
 
     // Dispara webhook ERP (se configurado) antes da emissão
     try {

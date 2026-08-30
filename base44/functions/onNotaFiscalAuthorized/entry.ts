@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { requireEntityGuard } from './_lib/security/guardCallPolicy.js';
 
 Deno.serve(async (req) => {
   try {
@@ -15,13 +16,14 @@ Deno.serve(async (req) => {
     const empresaId = data?.empresa_faturamento_id || data?.empresa_id || data?.empresa_origem_id || null;
     const groupId = data?.group_id || null;
 
-    // RBAC checks (Comissão e Estoque)
-    try {
-      const g1 = await base44.functions.invoke('entityGuard', { module: 'Comercial', section: 'Comissao', action: 'criar', empresa_id: empresaId, group_id: groupId });
-      if (g1?.data && g1.data.allowed === false) return Response.json({ error: 'Permissão negada (Comissão)' }, { status: 403 });
-      const g2 = await base44.functions.invoke('entityGuard', { module: 'Estoque', section: 'MovimentacaoEstoque', action: 'criar', empresa_id: empresaId, group_id: groupId });
-      if (g2?.data && g2.data.allowed === false) return Response.json({ error: 'Permissão negada (Estoque)' }, { status: 403 });
-    } catch (_) {}
+    const commissionGuardFailure = await requireEntityGuard(base44, {
+      module: 'Comercial', section: 'Comissao', action: 'criar', empresa_id: empresaId, group_id: groupId,
+    });
+    if (commissionGuardFailure) return commissionGuardFailure;
+    const stockGuardFailure = await requireEntityGuard(base44, {
+      module: 'Estoque', section: 'MovimentacaoEstoque', action: 'criar', empresa_id: empresaId, group_id: groupId,
+    });
+    if (stockGuardFailure) return stockGuardFailure;
 
     // Localiza pedido ligado (opcional)
     let pedido = null;

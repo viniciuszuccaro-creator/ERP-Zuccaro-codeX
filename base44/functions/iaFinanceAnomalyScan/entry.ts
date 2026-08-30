@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { loadAnomalyConfig, computeIssues } from './_lib/anomalyUtils.js';
 import * as ss from 'npm:simple-statistics@7.8.3';
 import { notify } from './_lib/notificationService.js';
+import { requireEntityGuard } from './_lib/security/guardCallPolicy.js';
 
 // Detecção de anomalias financeiras (ML leve) com alerta no NotificationCenter
 // === Helpers IA Estratégica Setorial (Ferro & Aço) - v1 ===
@@ -106,24 +107,17 @@ Deno.serve(async (req) => {
     let body = {};
     try { body = await req.json(); } catch { body = {}; }
     const filtros = (body?.filtros && (body.filtros.empresa_id || body.filtros.group_id)) ? body.filtros : {};
+    if (!filtros?.group_id) {
+      return Response.json({ error: 'Contexto multiempresa obrigatorio para analise financeira' }, { status: 400 });
+    }
 
         // RBAC granular via entityGuard (permite não-admin com permissão)
         if (!isScheduled) {
-          try {
-            const intentModule = body?.previsao_estoque?.enabled ? 'Estoque' : 'Financeiro';
-            const guard = await base44.asServiceRole.functions.invoke('entityGuard', {
-              module: intentModule,
-              section: 'IA',
-              action: 'visualizar',
-              empresa_id: filtros?.empresa_id || null,
-              group_id: filtros?.group_id || null,
-            });
-            if (!guard?.data?.allowed) {
-              return Response.json({ error: 'Forbidden' }, { status: 403 });
-            }
-          } catch (_) {
-            return Response.json({ error: 'Forbidden' }, { status: 403 });
-          }
+          const intentModule = body?.previsao_estoque?.enabled ? 'Estoque' : 'Financeiro';
+          const guardFailure = await requireEntityGuard(base44, {
+            module: intentModule, section: 'IA', action: 'visualizar', ...filtros,
+          });
+          if (guardFailure) return guardFailure;
         }
 
          // Coleta com escopo (quando fornecido)

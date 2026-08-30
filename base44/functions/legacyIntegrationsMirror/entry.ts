@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { requireEntityGuard } from './_lib/security/guardCallPolicy.js';
 
 Deno.serve(async (req) => {
   try {
@@ -21,12 +22,10 @@ Deno.serve(async (req) => {
 
       // RBAC quando houver usuário (actions sensíveis exigem executar)
       if (user) {
-        try {
-          const guard = await base44.asServiceRole.functions.invoke('entityGuard', {
-            module: 'Integrações', section: 'API', action: 'executar', empresa_id, group_id
-          });
-          if (!guard?.data?.allowed) return Response.json({ error: 'Forbidden' }, { status: 403 });
-        } catch { return Response.json({ error: 'Forbidden' }, { status: 403 }); }
+        const guardFailure = await requireEntityGuard(base44, {
+          module: 'Integrações', section: 'API', action: 'executar', empresa_id, group_id,
+        });
+        if (guardFailure) return guardFailure;
       }
 
       if (action === 'status_pedido') {

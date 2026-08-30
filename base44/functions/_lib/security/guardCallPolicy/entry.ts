@@ -19,6 +19,21 @@ export const completeGuardCallScope = async (base44, input = {}) => {
   return scope;
 };
 
+export const recordMatchesGuardScope = (record = {}, input = {}) => {
+  const scope = normalizeGuardCallScope(input);
+  const recordGroupId = firstValue(record.group_id, record.grupo_id) || null;
+  const recordEmpresaId = firstValue(
+    record.empresa_id,
+    record.empresa_dona_id,
+    record.empresa_faturamento_id,
+    record.empresa_origem_id,
+  ) || null;
+
+  if (!scope.groupId || !recordGroupId || scope.groupId !== recordGroupId) return false;
+  if (scope.scopeType === 'empresa') return Boolean(recordEmpresaId && recordEmpresaId === scope.empresaId);
+  return true;
+};
+
 export const requireEntityGuard = async (base44, payload = {}, functionsApi = null) => {
   const scope = await completeGuardCallScope(base44, payload);
   if (!scope.groupId || (scope.scopeType === 'empresa' && !scope.empresaId)) {

@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   completeGuardCallScope,
   normalizeGuardCallScope,
+  recordMatchesGuardScope,
   requireEntityGuard,
 } from '../base44/functions/_lib/security/guardCallPolicy/entry.ts';
 
@@ -40,4 +41,12 @@ test('guard caller proceeds only with an explicit allowed response', async () =>
     asServiceRole: { entities: { Empresa: { filter: async () => [] } } },
   };
   assert.equal(await requireEntityGuard(base44, { module: 'Financeiro', group_id: 'grupo-cpa' }), null);
+});
+
+test('record ownership rejects another company or group', () => {
+  const registro3z = { group_id: 'grupo-cpa', empresa_id: '3z' };
+  assert.equal(recordMatchesGuardScope(registro3z, { group_id: 'grupo-cpa', empresa_id: '3z' }), true);
+  assert.equal(recordMatchesGuardScope(registro3z, { group_id: 'grupo-cpa', empresa_id: 'cpa-aco' }), false);
+  assert.equal(recordMatchesGuardScope(registro3z, { group_id: 'outro-grupo', empresa_id: '3z' }), false);
+  assert.equal(recordMatchesGuardScope({ empresa_id: '3z' }, { group_id: 'grupo-cpa', empresa_id: '3z' }), false);
 });
