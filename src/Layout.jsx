@@ -68,6 +68,12 @@ import { usePredictivePrefetch } from "@/components/lib/usePredictivePrefetch";
 import { idbClearExpired } from "@/components/lib/useIndexedDBCache";
 import { toEntityScope, toGuardScope } from "@/components/lib/contextoMultiempresaPolicy";
 
+const reportLayoutFailure = (operation, error, context = {}) => {
+  console.error('[Layout] ' + operation, {
+    error: error?.message || String(error),
+    ...context,
+  });
+};
 
 const navigationItems = [
         { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
@@ -656,7 +662,9 @@ function LayoutContent({ children, currentPageName }) {
                   });
                 }
               }
-            } catch (_) {}
+            } catch (error) {
+              reportLayoutFailure('Falha ao propagar configuracao do Grupo', error, { entity: name, id: evt?.id });
+            }
           }
 
           // Invalidação de queries relacionadas ao evento (sync frontend↔backend)
@@ -673,11 +681,15 @@ function LayoutContent({ children, currentPageName }) {
               NotaFiscal: [['notasFiscais']],
             };
             (map[name] || []).forEach((qk) => {
-              try { queryClient.invalidateQueries({ queryKey: qk }); } catch (_) {}
+              try { queryClient.invalidateQueries({ queryKey: qk }); } catch (error) { reportLayoutFailure('Falha ao invalidar consulta', error, { entity: name, queryKey: qk }); }
             });
-          } catch (_) {}
+          } catch (error) {
+            reportLayoutFailure('Falha ao processar invalidacao de consultas', error, { entity: name });
+          }
 
-        } catch (e) { /* auditoria nunca deve quebrar a UI */ }
+        } catch (error) {
+          reportLayoutFailure('Falha no evento de auditoria da entidade', error, { entity: name, id: evt?.id });
+        }
       });
     }).filter(Boolean);
 
@@ -694,7 +706,9 @@ function LayoutContent({ children, currentPageName }) {
         const ctx = contextRef.current;
         if (ctx.grupoAtual?.id && !out.group_id) out.group_id = ctx.grupoAtual.id;
         if (ctx.contexto !== 'grupo' && ctx.empresaAtual?.id && !out.empresa_id) out.empresa_id = ctx.empresaAtual.id;
-      } catch (_) {}
+      } catch (error) {
+        reportLayoutFailure('Falha ao aplicar contexto multiempresa', error);
+      }
       return out;
     };
 
@@ -799,13 +813,13 @@ function LayoutContent({ children, currentPageName }) {
             entidade: name, registro_id: res?.id, dados_novos: res,
             empresa_id: empresaAtual?.id || null,
             data_hora: new Date().toISOString(),
-          }); } catch (_) {}
+          }); } catch (error) { reportLayoutFailure('Falha ao auditar criacao', error, { entity: name, id: res?.id }); }
           // PII encryption pass (server-side) for sensitive entities
           try {
             if (name === 'Cliente' || name === 'Colaborador') {
               await base44.functions.invoke('piiEncryptor', { entity_name: name, id: res?.id, action: 'encrypt' });
             }
-          } catch (_) {}
+          } catch (error) { reportLayoutFailure('Falha ao criptografar dados pessoais apos criacao', error, { entity: name, id: res?.id }); }
           return res;
         };
       }
@@ -821,7 +835,7 @@ function LayoutContent({ children, currentPageName }) {
             entidade: name, descricao: `bulkCreate`,
             empresa_id: empresaAtual?.id || null,
             data_hora: new Date().toISOString(),
-          }); } catch (_) {}
+          }); } catch (error) { reportLayoutFailure('Falha ao auditar criacao em lote', error, { entity: name }); }
           return res;
         };
       }
@@ -837,13 +851,13 @@ function LayoutContent({ children, currentPageName }) {
             entidade: name, registro_id: id, dados_novos: data,
             empresa_id: empresaAtual?.id || null,
             data_hora: new Date().toISOString(),
-          }); } catch (_) {}
+          }); } catch (error) { reportLayoutFailure('Falha ao auditar edicao', error, { entity: name, id }); }
           // PII encryption pass (server-side) for sensitive entities
           try {
             if (name === 'Cliente' || name === 'Colaborador') {
               await base44.functions.invoke('piiEncryptor', { entity_name: name, id, action: 'encrypt' });
             }
-          } catch (_) {}
+          } catch (error) { reportLayoutFailure('Falha ao criptografar dados pessoais apos edicao', error, { entity: name, id }); }
           return res;
         };
       }
@@ -859,7 +873,7 @@ function LayoutContent({ children, currentPageName }) {
             entidade: name, registro_id: id,
             empresa_id: empresaAtual?.id || null,
             data_hora: new Date().toISOString(),
-          }); } catch (_) {}
+          }); } catch (error) { reportLayoutFailure('Falha ao auditar exclusao', error, { entity: name, id }); }
           return res;
         };
       }
@@ -893,7 +907,9 @@ function LayoutContent({ children, currentPageName }) {
 
     try {
       Object.keys(base44.entities).forEach((name) => wrapEntity(base44.entities[name], name));
-    } catch (_) {}
+    } catch (error) {
+      reportLayoutFailure('Falha ao instalar wrappers de entidades', error);
+    }
 
     // Phase 4: RBAC + Auditoria + Strict empresa scope para chamadas de funções backend
     try {
@@ -933,7 +949,7 @@ function LayoutContent({ children, currentPageName }) {
                 try { await base44.entities.AuditLog.create({
                   acao: 'Bloqueio', modulo: contextRef.current.moduleName || 'Sistema', tipo_auditoria: 'seguranca',
                   entidade: 'Function', descricao: `Acesso negado à função ${functionName}`, data_hora: new Date().toISOString(),
-                }); } catch {}
+                }); } catch (error) { reportLayoutFailure('Falha ao auditar bloqueio de funcao', error, { functionName }); }
                 throw new Error('RBAC backend: ação negada');
               }
             } catch (err) {
@@ -955,9 +971,12 @@ function LayoutContent({ children, currentPageName }) {
               const hasEmpresa = !(params.empresa_id === undefined || params.empresa_id === null) || !(params.empresaId === undefined || params.empresaId === null);
               if (ctx?.empresa_id && !hasEmpresa) params.empresa_id = ctx.empresa_id;
             }
-          } catch (_) {}
+          } catch (error) {
+            reportLayoutFailure('Falha ao injetar contexto na funcao', error, { functionName });
+            if (shouldGuard) throw new Error('Contexto indisponivel: funcao sensivel bloqueada');
+          }
           // Sanitização hardening (anti-XSS/injeção)
-          try { params = sanitizeOnWrite(params); } catch (_) {}
+          params = sanitizeOnWrite(params);
 
           // De-duplicação + retry com backoff para 429/500
           // upsertConfig e outras escritas NUNCA são deduplicadas (cada chamada é uma mutação distinta)
@@ -1005,7 +1024,7 @@ function LayoutContent({ children, currentPageName }) {
                 duracao_ms: dur,
               });
             }
-          } catch (_) {}
+          } catch (error) { reportLayoutFailure('Falha ao auditar latencia de funcao', error, { functionName }); }
 
           // Auditoria (throttle 3s)
           try {
@@ -1021,14 +1040,16 @@ function LayoutContent({ children, currentPageName }) {
                 entidade: 'Function', descricao: `Função ${functionName} chamada`, dados_novos: { params }, data_hora: new Date().toISOString(),
               });
             }
-          } catch {}
+          } catch (error) { reportLayoutFailure('Falha ao auditar chamada de funcao', error, { functionName }); }
           return result;
         };
 
         base44.functions.__wrappedPhase4 = true;
         // Nota: performance logs visíveis em Auditoria > Logs; usar este sinal para detectar gargalos.
       }
-    } catch (_) {}
+    } catch (error) {
+      reportLayoutFailure('Falha ao instalar wrapper de funcoes', error);
+    }
     }, [user?.id, empresaAtual?.id, grupoAtual?.id, contexto]);
 
 

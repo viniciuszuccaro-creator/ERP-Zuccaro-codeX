@@ -3409,3 +3409,16 @@ Checklist inicial:
 - O sublote final tambem eliminou 22 catches vazios de `fleetMaintenance`, `fiscalValidation`, `nfeActions` e `optimizeDeliveryRoute`, encerrando o inventario do Lote 8B em 330 ocorrencias.
 - Sintaxe das quatro funcoes aprovada, 24 testes aprovados, `git diff --check` aprovado e build completo aprovado com 3.786 modulos.
 - Proximo passo obrigatorio: iniciar o Lote 9 pelo `Layout.jsx` e pelo seletor CSS invalido, mantendo a reducao do lint e typecheck em lotes verificaveis.
+
+### Plano Mestre - Lote 9A: Layout e CSS Operacionais
+
+- O seletor global de botao passou a usar correspondencia por token de classe, preservando o estilo primario e evitando a combinacao invalida com variantes Tailwind.
+- O build deixou de emitir o aviso CSS Unexpected button.
+- Falhas de propagacao do Grupo, invalidacao de consultas, auditoria de entidades, criptografia de dados pessoais e wrappers globais do Layout agora sao rastreaveis.
+- A sanitizacao de parametros de funcoes backend deixou de continuar silenciosamente quando falhar; a chamada e bloqueada antes de chegar ao backend.
+- Falha ao injetar contexto tambem bloqueia funcoes sensiveis, preservando o comportamento fail-closed.
+- Lint operacional caiu de 217 para 200 erros; permanecem 20 avisos. O inventario de catches vazios caiu de 330 para 313.
+- Validacao: 24 testes aprovados, `git diff --check` aprovado e build completo aprovado com 3.786 modulos.
+- Permanecem os avisos preexistentes de Browserslist, imports mistos e bundle principal grande.
+- Nenhuma tela, funcionalidade ou dado foi removido; o projeto do HD externo nao foi acessado.
+- Proximo passo obrigatorio: concluir os catches opcionais de PWA, cache e telemetria do `Layout.jsx`, depois seguir pelos arquivos com maior concentracao de erros de lint.

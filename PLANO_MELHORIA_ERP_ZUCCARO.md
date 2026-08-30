@@ -385,6 +385,8 @@ Conclusao 8B em 2026-08-30: fiscal, NF-e, roteirizacao e manutencao de frota tam
 3. Corrigir CSS invalido, imports mistos e bundle principal.
 4. Configurar E2E para contexto, RBAC, persistencia e fluxos criticos.
 
+Andamento 9A em 2026-08-30: corrigido o seletor global que gerava CSS invalido; o build nao apresenta mais o aviso Unexpected button. O trecho critico do Layout passou a registrar falhas de contexto, auditoria e criptografia, e a sanitizacao de chamadas backend agora falha fechada. O lint caiu de 217 para 200 erros e o inventario global de catches vazios caiu de 330 para 313.
+
 ## Fase 11 - Duplicidades
 
 Objetivo: evitar que o ERP cresca com telas, funcoes e componentes repetidos.
