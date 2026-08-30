@@ -3394,3 +3394,16 @@ Checklist inicial:
 - `git diff --check` aprovado e build completo aprovado com 3.786 modulos transformados.
 - Nenhuma tela, acao ou dado foi removido; o projeto do HD externo nao foi acessado.
 - Proximo passo obrigatorio: Lote 8B, revisar catches vazios das funcoes backend por risco, comecando por `solicitacoesAprovacao`, `iaFinanceAnomalyScan`, `legacyIntegrationsMirror`, eventos de pedido/NF-e, pagamentos, fiscal e roteirizacao; depois iniciar o Lote 9.
+
+### Plano Mestre - Lote 8B: Falhas Backend Rastreaveis
+
+- As funcoes existentes `solicitacoesAprovacao`, `iaFinanceAnomalyScan`, `legacyIntegrationsMirror`, `onNotaFiscalAuthorized`, `onPedidoCreated` e `paymentStatusManager` deixaram de ignorar falhas auxiliares.
+- A central de aprovacoes registra falhas de auditoria, politica, notificacao, escalonamento de nivel e aplicacao da decisao ao pedido com os identificadores disponiveis.
+- Eventos de pedido e NF-e, pagamentos e integracoes legadas registram a operacao, Grupo, Empresa e documento relacionados, sem interromper notificacoes de melhor esforco.
+- A analise financeira continua quando uma fonte secundaria falhar, mas agora devolve warnings no resultado e registra cada etapa incompleta; assim, resultado parcial nao e apresentado como analise integral.
+- O inventario de catches vazios operacionais caiu de 436 para 352, reducao de 84 ocorrencias neste lote. As seis funcoes tratadas ficaram com zero catches vazios.
+- Validacao: sintaxe das funcoes alteradas aprovada, 24 testes aprovados, `git diff --check` aprovado e build completo aprovado com 3.786 modulos.
+- Lint permanece com 217 erros `no-empty` no frontend e 20 avisos; typecheck permanece com 1.788 diagnosticos. Essa divida ja esta delimitada para o Lote 9 e nao foi ocultada nem desabilitada.
+- Permanecem os avisos preexistentes de seletor CSS, dados Browserslist, imports mistos e bundle principal grande.
+- Nenhuma tela, funcionalidade ou dado foi removido; o projeto do HD externo nao foi acessado.
+- Proximo passo obrigatorio: concluir o backend do Lote 8B em `fleetMaintenance`, `fiscalValidation`, `nfeActions` e `optimizeDeliveryRoute`; depois iniciar o Lote 9 pelo `Layout.jsx` e pelo seletor CSS invalido.

@@ -374,6 +374,8 @@ Resultado: primitivas de alta reutilizacao e cliente Base44 tipados; diagnostico
 
 Andamento 8A em 2026-08-30: guard fail-closed ativado e unificado em Button, ProtectedAction e ProtectedSection; falhas criticas de contexto, backup, sessoes e App Motorista deixaram de ser silenciosas. O inventario passou a acompanhar catches vazios por arquivo para a continuacao 8B/9.
 
+Andamento 8B em 2026-08-30: removidos os silenciamentos das funcoes criticas de aprovacao, analise financeira, integracoes legadas, autorizacao de NF-e, eventos de pedido e pagamentos. Cada falha agora registra operacao e contexto disponivel; a IA financeira informa warnings quando a analise for parcial. O inventario caiu de 436 para 352 catches vazios operacionais, sem alterar o comportamento principal dos fluxos. Proxima frente: funcoes fiscais, roteirizacao e manutencao de frota, seguida pelos catches do frontend no Lote 9.
+
 ### Lote 9 - Qualidade verde
 
 1. Zerar erros e avisos do lint operacional.

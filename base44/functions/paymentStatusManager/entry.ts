@@ -1,5 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { recordMatchesGuardScope, requireEntityGuard } from './_lib/security/guardCallPolicy.js';
+
+const reportPaymentFailure = (operation, error, context = {}) => {
+  console.error(`[paymentStatusManager] ${operation}`, { error: error?.message || String(error), ...context });
+};
 // Inline helpers to avoid local imports
 async function getUserAndPerfil(base44){
   const user = await base44.auth.me();
@@ -25,7 +29,9 @@ async function audit(base44, user, log){
       dados_novos: log.dados_novos || null,
       data_hora: new Date().toISOString()
     });
-  } catch(_) {}
+  } catch (error) {
+    reportPaymentFailure('auditoria', error, { entidade: payload?.entidade, registro_id: payload?.registro_id });
+  }
 }
 // Inline minimal compute helpers (avoid external local imports)
 function computeUpdatesForContaPagar(action, justificativa, registro){
@@ -174,7 +180,9 @@ Deno.serve(async (req) => {
       try {
         await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId, groupId, clienteId: cr.cliente_id || null, mensagem, internal_token: Deno.env.get('DEPLOY_AUDIT_TOKEN') || '' });
         await audit(base44, { id: 'Service' }, { acao: 'Criação', modulo: 'Financeiro', entidade: 'ContaReceber', registro_id: cr.id, descricao: 'Lembrete de cobrança enviado (automação)', empresa_id: empresaId, group_id: groupId, dados_novos: { diffDays } });
-      } catch (_) {}
+      } catch (error) {
+        reportPaymentFailure('lembrete_cobranca', error, { conta_receber_id: cr.id });
+      }
       return Response.json({ ok: true, reminder: true, diffDays });
     }
 
@@ -211,7 +219,9 @@ Deno.serve(async (req) => {
             await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId: eid, groupId: groupIdIn || r.group_id || null, clienteId: r.cliente_id || null, mensagem: msg, internal_token: Deno.env.get('DEPLOY_AUDIT_TOKEN') || '' });
             await audit(base44, { id: 'Service' }, { acao: 'Criação', modulo: 'Financeiro', entidade: 'ContaReceber', registro_id: r.id, descricao: 'Lembrete de cobrança enviado (varredura)', empresa_id: eid, group_id: groupIdIn || r.group_id || null, dados_novos: { diffDays: diff } });
             enviados++;
-          } catch (_) {}
+          } catch (error) {
+            reportPaymentFailure('lembrete_varredura', error, { conta_receber_id: r.id });
+          }
         }
       }
       return Response.json({ ok: true, enviados });
@@ -231,7 +241,9 @@ Deno.serve(async (req) => {
       try {
         const cfgs = await base44.asServiceRole.entities.ConfiguracaoGatewayPagamento.filter({ empresa_id: empresaId, ativo: true }, undefined, 1);
         cfg = cfgs?.[0] || null;
-      } catch (_) {}
+      } catch (error) {
+        reportPaymentFailure('consulta_gateway', error, { empresa_id: empresaId });
+      }
       // Gera link de pagamento via função existente (emitirBoleto como fallback)
       let url_fatura = null;
       try {
@@ -245,7 +257,9 @@ Deno.serve(async (req) => {
         };
         const res = await base44.functions.invoke('emitirBoleto', payload);
         url_fatura = res?.data?.url || res?.data?.url_boleto || res?.data?.pix_qrcode || null;
-      } catch (_) {}
+      } catch (error) {
+        reportPaymentFailure('emissao_cobranca', error, { conta_receber_id: contaReceberId });
+      }
       // Atualiza CR com link (se houver)
       try {
         if (url_fatura) {
@@ -255,7 +269,9 @@ Deno.serve(async (req) => {
             data_envio_cobranca: new Date().toISOString()
           });
         }
-      } catch (_) {}
+      } catch (error) {
+        reportPaymentFailure('persistencia_link_pagamento', error, { conta_receber_id: contaReceberId });
+      }
       // Auditoria
       try {
         await audit(base44, user, {
@@ -267,7 +283,9 @@ Deno.serve(async (req) => {
           empresa_id: empresaId,
           dados_novos: { conta_receber_id: contaReceberId, valor, url_fatura }
         });
-      } catch (_) {}
+      } catch (error) {
+        reportPaymentFailure('auditoria_link_pagamento', error, { conta_receber_id: contaReceberId });
+      }
       return Response.json({ ok: true, url_fatura });
     }
 
@@ -296,7 +314,9 @@ Deno.serve(async (req) => {
           if (quitado && pedidoId) {
             await base44.functions.invoke('nfeActions', { action: 'emitir_pos_pagamento', pedido_id: pedidoId, empresa_id: empresaId });
           }
-        } catch (_) {}
+        } catch (error) {
+          reportPaymentFailure('emissao_fiscal_pos_pagamento', error, { pedido_id: pedidoId, empresa_id: empresaId });
+        }
         await audit(base44, user, {
           acao: 'Edição',
           modulo: 'Financeiro',

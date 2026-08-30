@@ -7,6 +7,13 @@ import { stockAudit } from './_lib/estoque/auditUtils.js';
 import { notify } from './_lib/notificationService.js';
 import { emitPedidoMovementsGenerated } from './_lib/pedido/pedidoEvents.js';
 
+const reportPedidoFailure = (operation, error, context = {}) => {
+  console.error('[onPedidoCreated] ' + operation, {
+    error: error?.message || String(error),
+    ...context,
+  });
+};
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -60,7 +67,9 @@ Deno.serve(async (req) => {
           action: 'sendText', empresaId, groupId, clienteId, pedidoId: dataEnriched?.id,
           templateKey: 'pedido_criado', vars, internal_token
         });
-      } catch (_) {}
+      } catch (error) {
+        reportPedidoFailure('Falha ao notificar pedido criado', error, { pedido_id: dataEnriched?.id });
+      }
 
       // WhatsApp proativo: alerta de estoque baixo para itens do pedido (envio para admin - multiempresa)
       try {
@@ -87,7 +96,9 @@ Deno.serve(async (req) => {
             });
           }
         }
-      } catch (_) {}
+      } catch (error) {
+        reportPedidoFailure('Falha ao verificar ou notificar estoque baixo', error, { pedido_id: dataEnriched?.id });
+      }
 
       // Otimização de rota logística (multiempresa) ao criar pedido
       try {
@@ -109,8 +120,12 @@ Deno.serve(async (req) => {
             empresa_id: dataEnriched?.empresa_id || null, group_id: dataEnriched?.group_id || null,
             dados_novos: { pedido_id: dataEnriched?.id }, data_hora: new Date().toISOString(), sucesso: true
           });
-        } catch (_) {}
-      } catch (_) {}
+        } catch (error) {
+          reportPedidoFailure('Falha ao auditar roteirizacao', error, { pedido_id: dataEnriched?.id });
+        }
+      } catch (error) {
+        reportPedidoFailure('Falha ao otimizar rota', error, { pedido_id: dataEnriched?.id });
+      }
 
       // API-First: webhook e-commerce (create)
       try {
@@ -121,10 +136,12 @@ Deno.serve(async (req) => {
           const url = cfg?.webhook_url; const secret = cfg?.shared_secret;
           if (url) {
             await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-shared-secret': secret || '' }, body: JSON.stringify({ type: 'pedido_created', empresa_id: empresaId, group_id: dataEnriched?.group_id || null, pedido: { id: dataEnriched?.id, numero_pedido: dataEnriched?.numero_pedido, valor_total: dataEnriched?.valor_total } }) });
-            try { await base44.asServiceRole.entities.AuditLog.create({ usuario: user.full_name || 'Sistema', usuario_id: user.id, acao: 'Criação', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: 'site_webhook', descricao: 'Pedido criado enviado ao site', empresa_id: empresaId, data_hora: new Date().toISOString(), sucesso: true }); } catch {}
+            try { await base44.asServiceRole.entities.AuditLog.create({ usuario: user.full_name || 'Sistema', usuario_id: user.id, acao: 'Criação', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: 'site_webhook', descricao: 'Pedido criado enviado ao site', empresa_id: empresaId, data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportPedidoFailure('Falha ao auditar webhook de pedido criado', error, { pedido_id: dataEnriched?.id, empresa_id: empresaId }); }
           }
         }
-      } catch (_) {}
+      } catch (error) {
+        reportPedidoFailure('Falha ao enviar webhook de pedido criado', error, { pedido_id: dataEnriched?.id, empresa_id: dataEnriched?.empresa_id });
+      }
     }
 
     if (event.type === 'update') {
@@ -140,8 +157,10 @@ Deno.serve(async (req) => {
         const vars = { cliente: novo.cliente_nome || '', pedido: novo.numero_pedido || novo.id || '', data_prevista: novo.data_prevista_entrega || '', rastreio: novo.link_rastreamento || '' };
         try {
           await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId, groupId, clienteId, pedidoId: novo.id, templateKey: 'pedido_em_transito', vars, internal_token });
-        } catch (_) {}
-        try { await base44.asServiceRole.entities.AuditLog.create({ usuario: user.full_name || 'Sistema', usuario_id: user.id, acao: 'Criação', modulo: 'Comercial', tipo_auditoria: 'integracao', entidade: 'WhatsApp', descricao: 'Aviso de pedido em trânsito enviado', empresa_id: empresaId, group_id: groupId, dados_novos: { pedido_id: novo.id, numero_pedido: novo.numero_pedido }, data_hora: new Date().toISOString(), sucesso: true }); } catch {}
+        } catch (error) {
+          reportPedidoFailure('Falha ao notificar pedido em transito', error, { pedido_id: novo.id, empresa_id: empresaId });
+        }
+        try { await base44.asServiceRole.entities.AuditLog.create({ usuario: user.full_name || 'Sistema', usuario_id: user.id, acao: 'Criação', modulo: 'Comercial', tipo_auditoria: 'integracao', entidade: 'WhatsApp', descricao: 'Aviso de pedido em trânsito enviado', empresa_id: empresaId, group_id: groupId, dados_novos: { pedido_id: novo.id, numero_pedido: novo.numero_pedido }, data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportPedidoFailure('Falha ao auditar aviso de pedido em transito', error, { pedido_id: novo.id, empresa_id: empresaId }); }
 
         // API-First: webhook e-commerce (status update)
         try {
@@ -153,7 +172,9 @@ Deno.serve(async (req) => {
               await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-shared-secret': secret || '' }, body: JSON.stringify({ type: 'pedido_status', empresa_id: empresaId, group_id: groupId || null, pedido: { id: novo.id, numero_pedido: novo.numero_pedido, status: statusNovo } }) });
             }
           }
-        } catch (_) {}
+        } catch (error) {
+          reportPedidoFailure('Falha ao enviar webhook de status do pedido', error, { pedido_id: novo.id, empresa_id: empresaId });
+        }
         }
 
         // 2) Em Expedição / Pronto para Expedir → mensagem explícita
@@ -163,8 +184,8 @@ Deno.serve(async (req) => {
         const empresaId = novo.empresa_id || null;
         const groupId = novo.group_id || null;
         const mensagem = `Olá ${novo.cliente_nome || ''}! Seu pedido ${novo.numero_pedido || novo.id || ''} está em expedição.`.trim();
-        try { await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId, groupId, clienteId, pedidoId: novo.id, mensagem, internal_token }); } catch (_) {}
-        try { await base44.asServiceRole.entities.AuditLog.create({ usuario: user.full_name || 'Sistema', usuario_id: user.id, acao: 'Criação', modulo: 'Comercial', tipo_auditoria: 'integracao', entidade: 'WhatsApp', descricao: 'Aviso de pedido em expedição enviado', empresa_id: empresaId, group_id: groupId, dados_novos: { pedido_id: novo.id, numero_pedido: novo.numero_pedido }, data_hora: new Date().toISOString(), sucesso: true }); } catch {}
+        try { await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId, groupId, clienteId, pedidoId: novo.id, mensagem, internal_token }); } catch (error) { reportPedidoFailure('Falha ao notificar pedido em expedicao', error, { pedido_id: novo.id, empresa_id: empresaId }); }
+        try { await base44.asServiceRole.entities.AuditLog.create({ usuario: user.full_name || 'Sistema', usuario_id: user.id, acao: 'Criação', modulo: 'Comercial', tipo_auditoria: 'integracao', entidade: 'WhatsApp', descricao: 'Aviso de pedido em expedição enviado', empresa_id: empresaId, group_id: groupId, dados_novos: { pedido_id: novo.id, numero_pedido: novo.numero_pedido }, data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportPedidoFailure('Falha ao auditar aviso de pedido em expedicao', error, { pedido_id: novo.id, empresa_id: empresaId }); }
         }
 
         // 3) Entregue/Concluído → mensagem explícita
@@ -174,8 +195,8 @@ Deno.serve(async (req) => {
         const empresaId = novo.empresa_id || null;
         const groupId = novo.group_id || null;
         const mensagem = `Olá ${novo.cliente_nome || ''}! Seu pedido ${novo.numero_pedido || novo.id || ''} foi entregue. Obrigado pela preferência!`.trim();
-        try { await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId, groupId, clienteId, pedidoId: novo.id, mensagem, internal_token }); } catch (_) {}
-        try { await base44.asServiceRole.entities.AuditLog.create({ usuario: user.full_name || 'Sistema', usuario_id: user.id, acao: 'Criação', modulo: 'Comercial', tipo_auditoria: 'integracao', entidade: 'WhatsApp', descricao: 'Aviso de pedido entregue enviado', empresa_id: empresaId, group_id: groupId, dados_novos: { pedido_id: novo.id, numero_pedido: novo.numero_pedido }, data_hora: new Date().toISOString(), sucesso: true }); } catch {}
+        try { await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId, groupId, clienteId, pedidoId: novo.id, mensagem, internal_token }); } catch (error) { reportPedidoFailure('Falha ao notificar pedido entregue', error, { pedido_id: novo.id, empresa_id: empresaId }); }
+        try { await base44.asServiceRole.entities.AuditLog.create({ usuario: user.full_name || 'Sistema', usuario_id: user.id, acao: 'Criação', modulo: 'Comercial', tipo_auditoria: 'integracao', entidade: 'WhatsApp', descricao: 'Aviso de pedido entregue enviado', empresa_id: empresaId, group_id: groupId, dados_novos: { pedido_id: novo.id, numero_pedido: novo.numero_pedido }, data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportPedidoFailure('Falha ao auditar aviso de pedido entregue', error, { pedido_id: novo.id, empresa_id: empresaId }); }
         }
         }
 

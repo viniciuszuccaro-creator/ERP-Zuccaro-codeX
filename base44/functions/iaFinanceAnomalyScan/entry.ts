@@ -99,6 +99,16 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const t0 = Date.now();
+    const warnings = [];
+    const reportScanFailure = (operation, error, context = {}) => {
+      const warning = {
+        operation,
+        error: error?.message || String(error),
+        ...context,
+      };
+      warnings.push(warning);
+      console.error('[iaFinanceAnomalyScan] ' + operation, warning);
+    };
     let user = null;
     try { user = await base44.auth.me(); } catch { user = null; }
     const isScheduled = !user;
@@ -129,11 +139,11 @@ Deno.serve(async (req) => {
 
     // Ferro & Aço: detectar órfãos/inconsistências de estoque/produto + contexto ampliado
     let produtos = [], movs = [], fornecedores = [], pedidos = [], entregas = [];
-    try { produtos = await base44.asServiceRole.entities.Produto.filter(filtros, '-updated_date', 300); } catch(_) {}
-    try { movs = await base44.asServiceRole.entities.MovimentacaoEstoque.filter(filtros, '-updated_date', 300); } catch(_) {}
-    try { fornecedores = await base44.asServiceRole.entities.Fornecedor.filter(filtros, '-updated_date', 200); } catch(_) {}
-    try { pedidos = await base44.asServiceRole.entities.Pedido.filter(filtros, '-updated_date', 200); } catch(_) {}
-    try { entregas = await base44.asServiceRole.entities.Entrega.filter(filtros, '-updated_date', 200); } catch(_) {}
+    try { produtos = await base44.asServiceRole.entities.Produto.filter(filtros, '-updated_date', 300); } catch (error) { reportScanFailure('Falha ao carregar produtos', error, filtros); }
+    try { movs = await base44.asServiceRole.entities.MovimentacaoEstoque.filter(filtros, '-updated_date', 300); } catch (error) { reportScanFailure('Falha ao carregar movimentacoes de estoque', error, filtros); }
+    try { fornecedores = await base44.asServiceRole.entities.Fornecedor.filter(filtros, '-updated_date', 200); } catch (error) { reportScanFailure('Falha ao carregar fornecedores', error, filtros); }
+    try { pedidos = await base44.asServiceRole.entities.Pedido.filter(filtros, '-updated_date', 200); } catch (error) { reportScanFailure('Falha ao carregar pedidos', error, filtros); }
+    try { entregas = await base44.asServiceRole.entities.Entrega.filter(filtros, '-updated_date', 200); } catch (error) { reportScanFailure('Falha ao carregar entregas', error, filtros); }
 
     const orphanProdutos = produtos.filter(p => p.eh_bitola === true && !p.empresa_id);
     const estoqueSemFilial = movs.filter(m => !m.empresa_id || !m.localizacao_destino);
@@ -151,7 +161,9 @@ Deno.serve(async (req) => {
         m?.produto_id
       ));
       bigSteel.forEach(m => issues.push({ entidade: 'MovimentacaoEstoque', tipo: 'estoque_aco_grande_variacao', severity: 'alto', id: m.id, data: { id: m.id, quantidade: m.quantidade, produto: m.produto_descricao } }));
-    } catch (_) {}
+    } catch (error) {
+      reportScanFailure('Falha ao analisar variacoes de estoque', error, filtros);
+    }
 
     // Tentativas repetidas (ajustes frequentes por responsável nas últimas 48h)
     try {
@@ -162,7 +174,9 @@ Deno.serve(async (req) => {
       Object.entries(byResp).forEach(([resp, cnt]) => {
         if (cnt >= 5) issues.push({ entidade: 'MovimentacaoEstoque', tipo: 'ajustes_repetidos_responsavel', severity: 'medio', responsavel: resp, quantidade: cnt });
       });
-    } catch (_) {}
+    } catch (error) {
+      reportScanFailure('Falha ao analisar ajustes repetidos', error, filtros);
+    }
 
     // Regras configuráveis + detecções já existentes
           const cfg = await loadAnomalyConfig(base44);
@@ -171,19 +185,19 @@ Deno.serve(async (req) => {
           try {
             const r1 = detectSteelPriceOscillation(produtos, fornecedores);
             issues = issues.concat(r1.issues); sugestoes = sugestoes.concat(r1.sugestoes);
-          } catch(_) {}
+          } catch (error) { reportScanFailure('Falha ao analisar oscilacao de preco', error, filtros); }
           try {
             const r2 = analyzeObraConsumption(pedidos, movs);
             issues = issues.concat(r2.issues); sugestoes = sugestoes.concat(r2.sugestoes);
-          } catch(_) {}
+          } catch (error) { reportScanFailure('Falha ao analisar consumo por obra', error, filtros); }
           try {
             const r3 = analyzeLogistics(entregas);
             issues = issues.concat(r3.issues); sugestoes = sugestoes.concat(r3.sugestoes);
-          } catch(_) {}
+          } catch (error) { reportScanFailure('Falha ao analisar logistica', error, filtros); }
           try {
             const r4 = profileClients(receber);
             issues = issues.concat(r4.issues); sugestoes = sugestoes.concat(r4.sugestoes);
-          } catch(_) {}
+          } catch (error) { reportScanFailure('Falha ao analisar perfil de clientes', error, filtros); }
 
           // 2.0: Persistir flags em títulos de Pagar quando aplicável (service role)
           try {
@@ -195,7 +209,9 @@ Deno.serve(async (req) => {
                 ...idsDup.map(id => base44.asServiceRole.entities.ContaPagar.update(id, { duplicidade_detectada: true }))
               ]);
             }
-          } catch (_) {}
+          } catch (error) {
+            reportScanFailure('Falha ao persistir alertas financeiros', error, filtros);
+          }
 
     // ML leve: outliers por Z-Score (valor)
     const valoresRec = Array.isArray(receber) ? receber.map(r => Number(r.valor || 0)).filter(v => v > 0) : [];
@@ -331,9 +347,13 @@ Deno.serve(async (req) => {
             dados_novos: { params: { ...body?.previsao_estoque, estoque_params }, amostra: previsoes.slice(0, 20) },
             data_hora: new Date().toISOString(),
           });
-        } catch (_) {}
+        } catch (error) {
+          reportScanFailure('Falha ao auditar previsao de estoque', error, filtros);
+        }
       }
-    } catch (_) {}
+    } catch (error) {
+      reportScanFailure('Falha ao calcular previsao de estoque', error, filtros);
+    }
 
     // Auditoria + Alerta no NotificationCenter
     if (issues.length > 0) {
@@ -375,12 +395,14 @@ Deno.serve(async (req) => {
             groupId: filtros?.group_id || null,
           });
         }
-      } catch (_) {}
+      } catch (error) {
+        reportScanFailure('Falha ao enviar alerta financeiro por WhatsApp', error, filtros);
+      }
     }
 
     const durationMs = Date.now() - t0;
-    try { if (durationMs > 500) { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Sistema', acao: 'Visualização', modulo: body?.previsao_estoque?.enabled ? 'Estoque' : 'Financeiro', tipo_auditoria: 'sistema', entidade: 'Performance', descricao: `iaFinanceAnomalyScan demorou ${durationMs}ms`, dados_novos: { durationMs, filtros }, data_hora: new Date().toISOString() }); } } catch (_) {}
-    return Response.json({ ok: true, issues: issues.length, details: issues, previsoes });
+    try { if (durationMs > 500) { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Sistema', acao: 'Visualização', modulo: body?.previsao_estoque?.enabled ? 'Estoque' : 'Financeiro', tipo_auditoria: 'sistema', entidade: 'Performance', descricao: `iaFinanceAnomalyScan demorou ${durationMs}ms`, dados_novos: { durationMs, filtros }, data_hora: new Date().toISOString() }); } } catch (error) { reportScanFailure('Falha ao auditar desempenho da analise', error, filtros); }
+    return Response.json({ ok: true, issues: issues.length, details: issues, previsoes, warnings });
   } catch (error) {
     return Response.json({ error: String(error?.message || error) }, { status: 500 });
   }
