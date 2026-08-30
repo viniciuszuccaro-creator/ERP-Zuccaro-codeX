@@ -99,6 +99,18 @@ export const countPermissoesTotal = (permissoes = {}) => Object.values(permissoe
   .reduce((total, modulo) => total + Object.values(modulo || {})
     .reduce((subtotal, secao) => subtotal + (secao?.length || 0), 0), 0);
 
+export const buildPerfilCardInfo = ({ perfil = {}, usuarios = [] }) => {
+  const usuariosVinculados = usuarios.filter((usuario) => usuario.perfil_acesso_id === perfil.id);
+
+  return {
+    permissoesTotal: countPermissoesTotal(perfil.permissoes),
+    usuariosVinculados,
+    usuariosVinculadosTotal: usuariosVinculados.length,
+    ativo: perfil.ativo !== false,
+    nome: perfil.nome_perfil || perfil.nome || "Perfil",
+  };
+};
+
 export const countPermissoesModulo = (permissoes = {}, modulo) => Object.values(permissoes?.[modulo] || {})
   .reduce((total, secao) => total + (secao?.length || 0), 0);
 

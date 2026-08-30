@@ -23,6 +23,7 @@ import { ACOES, COR_CLASS, ESTRUTURA_SISTEMA } from "@/components/sistema/centra
 import {
   buildPerfilAuditPayload,
   buildPerfilDeleteBlock,
+  buildPerfilCardInfo,
   buildPerfilFormSubmitPayload,
   buildPerfilRbacPayload,
   buildPerfilSaveBlock,
@@ -318,7 +319,7 @@ export default function CentralPerfisAcesso() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {perfisFiltrados.map(perfil => {
-              const qtd = countPermissoesTotal(perfil.permissoes);
+              const cardInfo = buildPerfilCardInfo({ perfil, usuarios });
               return (
                 <Card key={perfil.id} className="hover:shadow-md transition-all">
                   <CardHeader className="bg-slate-50 border-b pb-3">
@@ -329,25 +330,25 @@ export default function CentralPerfisAcesso() {
                           <p className="font-semibold text-sm">{perfil.nome_perfil}</p>
                           <div className="flex gap-1 flex-wrap mt-1">
                             <Badge variant="outline" className="text-xs">{perfil.nivel_perfil}</Badge>
-                            {qtd > 0 && <Badge className="bg-blue-100 text-blue-700 text-xs">{qtd} permissões</Badge>}
+                            {cardInfo.permissoesTotal > 0 && <Badge className="bg-blue-100 text-blue-700 text-xs">{cardInfo.permissoesTotal} permissões</Badge>}
                           </div>
                         </div>
                       </div>
-                      {perfil.ativo !== false ? <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" /> : <XCircle className="w-4 h-4 text-slate-400 flex-shrink-0" />}
+                      {cardInfo.ativo ? <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" /> : <XCircle className="w-4 h-4 text-slate-400 flex-shrink-0" />}
                     </div>
                   </CardHeader>
                   <CardContent className="p-3">
                     {perfil.descricao && <p className="text-xs text-slate-600 mb-2">{perfil.descricao}</p>}
                     <div className="flex items-center justify-between flex-wrap gap-2">
-                      <Badge className="bg-purple-100 text-purple-700 text-xs">{usuarios.filter(u => u.perfil_acesso_id === perfil.id).length} usuários</Badge>
+                      <Badge className="bg-purple-100 text-purple-700 text-xs">{cardInfo.usuariosVinculadosTotal} usuários</Badge>
                       <div className="flex gap-1">
                         <Button size="sm" variant="outline" className="h-7 px-2 text-xs" disabled={!contextoValido || !podeEditarPerfil} onClick={() => abrirEdicaoPerfil(perfil)} data-action="RBAC.Perfil.editar" data-permission="Sistema.Controle de Acesso.editar" data-context-required="group-or-company" data-sensitive="true">
                           <Edit className="w-3 h-3 mr-1" />Editar
                         </Button>
                         <Button size="sm" variant="destructive" className="h-7 px-2" disabled={excluirPerfilMutation.isPending || !contextoValido || !podeExcluirPerfil} data-action="RBAC.Perfil.excluir" data-permission="Sistema.Controle de Acesso.excluir" data-sensitive="true" onClick={() => {
-                          const using = usuarios.filter(u => u.perfil_acesso_id === perfil.id);
+                          const using = cardInfo.usuariosVinculados;
                           if (using.length > 0) { toast.error(`❌ ${using.length} usuário(s) usando este perfil`); return; }
-                          if (confirm(`Regra-Mae: confirma exclusao do perfil "${perfil.nome_perfil || perfil.nome}"? Esta acao sensivel sera auditada e nao pode remover funcionalidades do sistema.`)) excluirPerfilMutation.mutate(perfil.id);
+                          if (confirm(`Regra-Mae: confirma exclusao do perfil "${cardInfo.nome}"? Esta acao sensivel sera auditada e nao pode remover funcionalidades do sistema.`)) excluirPerfilMutation.mutate(perfil.id);
                         }}>
                           <Trash2 className="w-3 h-3" />
                         </Button>

@@ -1,3 +1,10 @@
+### Administracao do Sistema - Fase 12 Central RBAC com Dados de Cards Extraidos
+- Continuei a refatoracao obrigatoria de `CentralPerfisAcesso.jsx`, sem criar nova tela, modulo ou fluxo.
+- `rbacScopeUtils.js` agora centraliza `buildPerfilCardInfo` para calcular permissoes totais, usuarios vinculados, status ativo e nome de exibicao dos cards de perfil.
+- `CentralPerfisAcesso.jsx` preserva a renderizacao dos mesmos cards, botoes, badges e confirmacao de exclusao, mas deixou de calcular esses dados diretamente no JSX.
+- A protecao contra exclusao de perfil em uso continua usando os mesmos usuarios vinculados e a mesma mensagem de bloqueio.
+- Mantida a Regra-Mae: melhoria feita somente na central e utilitario existentes, sem remover funcionalidade, botao, aba ou comportamento.
+- Proximo passo sugerido: revisar os dashboards em tempo real para reforcar contexto Grupo/Empresa, RBAC e isolamento das consultas.
 ### Administracao do Sistema - Fase 12 Central RBAC com Estatisticas Extraidas
 - Continuei a refatoracao obrigatoria de `CentralPerfisAcesso.jsx`, sem criar nova tela, modulo ou fluxo.
 - `rbacScopeUtils.js` agora centraliza `buildPerfilStats` e `filterPerfisByBusca`.
