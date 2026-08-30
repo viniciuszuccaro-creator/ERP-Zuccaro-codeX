@@ -35,15 +35,17 @@ import {
 export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
   const [periodoInicio, setPeriodoInicio] = useState("");
   const [periodoFim, setPeriodoFim] = useState("");
-  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const { user } = useUser();
   const canViewReports = hasPermission("Expedicao", "Relatorios", "ver") || hasPermission("Expedicao", "Relatorios", "visualizar") || hasPermission("Expedicao", "Relatorio", "visualizar");
   const canExportReports = hasPermission("Expedicao", "Relatorios", "exportar") || hasPermission("Expedicao", "Entrega", "exportar");
-  const activeEmpresaId = empresaId || empresaAtual?.id || null;
+  const activeEmpresaId = contexto === 'grupo' ? null : (empresaId || empresaAtual?.id || null);
   const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
-  const contextoValido = Boolean(activeEmpresaId || groupId);
-  const contextKey = groupId ? `grupo:${groupId}` : `empresa:${activeEmpresaId || "sem-empresa"}`;
+  const contextoValido = contexto === 'grupo'
+    ? Boolean(groupId)
+    : Boolean(groupId && activeEmpresaId);
+  const contextKey = `${contexto || "sem-contexto"}:grupo:${groupId || "sem-grupo"}:empresa:${activeEmpresaId || "sem-empresa"}`;
 
   const auditRelatorio = async ({ acao, sucesso = true, motivo = null, detalhes = {} }) => {
     try {
@@ -79,13 +81,18 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
   });
 
   const romaneiosFiltrados = romaneios.filter(r => {
-    if (activeEmpresaId && r.empresa_id !== activeEmpresaId && r.empresa_responsavel_id !== activeEmpresaId) return false;
-    if (groupId && r.group_id && r.group_id !== groupId) return false;
+    const registroGroupId = r.group_id || r.grupo_id;
+    const registroEmpresaId = r.empresa_id || r.empresa_responsavel_id;
+    if (registroGroupId !== groupId) return false;
+    if (activeEmpresaId && registroEmpresaId !== activeEmpresaId) return false;
     return true;
   });
 
   const entregasFiltradas = entregas.filter(e => {
-    if (activeEmpresaId && e.empresa_id !== activeEmpresaId && e.empresa_responsavel_id !== activeEmpresaId) return false;
+    const registroGroupId = e.group_id || e.grupo_id;
+    const registroEmpresaId = e.empresa_id || e.empresa_responsavel_id;
+    if (registroGroupId !== groupId) return false;
+    if (activeEmpresaId && registroEmpresaId !== activeEmpresaId) return false;
     if (periodoInicio && e.data_saida < periodoInicio) return false;
     if (periodoFim && e.data_saida > periodoFim) return false;
     return true;
@@ -148,7 +155,11 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
       ["taxa_sucesso", taxaSucesso],
       ["tempo_medio_horas", tempoMedio.toFixed(1)],
     ];
-    const escapeCsv = (value) => "\"" + String(value ?? "").replace(/\"/g, "\"\"") + "\"";
+    const escapeCsv = (value) => {
+      const semQuebras = String(value ?? "").replace(/\r?\n|\r/g, " ");
+      const seguro = /^[=+\-@]/.test(semQuebras.trimStart()) ? `'${semQuebras}` : semQuebras;
+      return "\"" + seguro.replace(/\"/g, "\"\"") + "\"";
+    };
     const csv = [headers, ...rows].map(row => row.map(escapeCsv).join(";")).join("\n");
     const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -167,13 +178,13 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
 
   return (
-    <div className={containerClass} data-permission="Expedicao.Relatorios.visualizar" data-context-required="true">
+    <div className={containerClass} data-permission="Expedicao.Relatorios.visualizar" data-context-required="group-or-company">
       <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
         {(!contextoValido || !canViewReports) && (
           <Card className="bg-red-50 border-red-300">
             <CardContent className="p-4 text-sm text-red-800">
               <p className="font-semibold">Relatorio bloqueado</p>
-              <p>{!contextoValido ? "Selecione um grupo/empresa para visualizar os indicadores logisticos." : "Seu perfil nao tem permissao para visualizar relatorios logisticos."}</p>
+              <p>{!contextoValido ? (contexto === 'grupo' ? 'Selecione um grupo para visualizar os indicadores logisticos.' : 'Selecione uma empresa vinculada a um grupo para visualizar os indicadores logisticos.') : "Seu perfil nao tem permissao para visualizar relatorios logisticos."}</p>
             </CardContent>
           </Card>
         )}
@@ -206,7 +217,7 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
               disabled={!contextoValido || !canExportReports}
               data-permission="Expedicao.Relatorios.exportar"
               data-action="Logistica.relatorio.exportar_csv"
-              data-context-required="true"
+              data-context-required="group-or-company"
               data-sensitive="true"
             >
               <Download className="w-4 h-4 mr-2" /> CSV

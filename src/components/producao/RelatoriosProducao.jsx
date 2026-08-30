@@ -30,27 +30,31 @@ import { useUser } from "@/components/lib/UserContext";
 import usePermissions from "@/components/lib/usePermissions";
 
 export default function RelatoriosProducao({ ops = [] }) {
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { contexto, empresaAtual, grupoAtual } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const { user } = useUser();
   const { toast } = useToast();
-  const empresaId = empresaAtual?.id || null;
+  const empresaId = contexto === 'grupo' ? null : (empresaAtual?.id || null);
   const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
-  const contextoValido = Boolean(groupId || empresaId);
-  const canViewReports = hasPermission("ProduÃ§Ã£o", "RelatÃ³rios", "visualizar") ||
-    hasPermission("ProduÃ§Ã£o", "RelatÃ³rios", "ver") ||
+  const contextoValido = contexto === 'grupo'
+    ? Boolean(groupId)
+    : Boolean(groupId && empresaId);
+  const canViewReports = hasPermission("Produção", "Relatórios", "visualizar") ||
+    hasPermission("Produção", "Relatórios", "ver") ||
     hasPermission("Producao", "Relatorios", "visualizar") ||
     hasPermission("Producao", "Relatorios", "ver") ||
     hasPermission("Producao", null, "visualizar");
-  const canExportReports = hasPermission("ProduÃ§Ã£o", "RelatÃ³rios", "exportar") ||
+  const canExportReports = hasPermission("Produção", "Relatórios", "exportar") ||
     hasPermission("Producao", "Relatorios", "exportar") ||
     hasPermission("Producao", null, "exportar");
   const [periodoInicio, setPeriodoInicio] = useState("");
   const [periodoFim, setPeriodoFim] = useState("");
 
   const opsContextuais = Array.isArray(ops) ? ops.filter(op => {
-    if (groupId && op.group_id && op.group_id !== groupId) return false;
-    if (empresaId && op.empresa_id && op.empresa_id !== empresaId) return false;
+    const registroGroupId = op.group_id || op.grupo_id;
+    const registroEmpresaId = op.empresa_id || op.empresa_dona_id;
+    if (registroGroupId !== groupId) return false;
+    if (empresaId && registroEmpresaId !== empresaId) return false;
     return true;
   }) : [];
 
@@ -106,7 +110,7 @@ export default function RelatoriosProducao({ ops = [] }) {
   const porOperador = {};
   opsFiltradas.forEach(op => {
     (op.apontamentos || []).forEach(apt => {
-      const operador = apt.operador || "NÃ£o informado";
+      const operador = apt.operador || "Não informado";
       if (!porOperador[operador]) {
         porOperador[operador] = { operador, ops: 0, peso: 0, tempo: 0, refugo: 0 };
       }
@@ -122,9 +126,9 @@ export default function RelatoriosProducao({ ops = [] }) {
     try {
       await base44.entities.AuditLog.create({
         usuario_id: user?.id,
-        usuario: user?.full_name || user?.email || 'UsuÃ¡rio',
+        usuario: user?.full_name || user?.email || 'Usuário',
         acao,
-        modulo: 'ProduÃ§Ã£o',
+        modulo: 'Produção',
         tipo_auditoria: sucesso ? 'relatorio' : 'seguranca',
         entidade: 'RelatoriosProducao',
         descricao,
@@ -137,13 +141,13 @@ export default function RelatoriosProducao({ ops = [] }) {
           periodoInicio,
           periodoFim,
           quantidade_ops: opsFiltradas.length,
-          contexto: empresaId ? 'empresa' : 'grupo',
+          contexto,
           ...dadosNovos,
         },
         data_hora: new Date().toISOString(),
       });
     } catch (error) {
-      console.warn('Falha ao auditar relatÃ³rio de produÃ§Ã£o:', error);
+      console.warn('Falha ao auditar relatório de produção:', error);
     }
   };
 
@@ -151,15 +155,26 @@ export default function RelatoriosProducao({ ops = [] }) {
     if (!contextoValido || !canViewReports || !canExportReports) {
       await auditRelatorioProducao({
         acao: 'RelatoriosProducao.exportar_bloqueado',
-        descricao: 'Tentativa de exportar relatÃ³rio de produÃ§Ã£o sem contexto ou permissÃ£o.',
+        descricao: 'Tentativa de exportar relatório de produção sem contexto ou permissão.',
         sucesso: false,
         dadosNovos: { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada' },
       });
-      toast({ title: 'Acesso negado', description: 'Selecione contexto vÃ¡lido e confirme permissÃ£o de exportaÃ§Ã£o.', variant: 'destructive' });
+      toast({ title: 'Acesso negado', description: 'Selecione contexto válido e confirme permissão de exportação.', variant: 'destructive' });
       return;
     }
 
-    const headers = ['numero_op', 'status', 'tipo_producao', 'data_emissao', 'peso_teorico_total_kg', 'peso_real_total_kg', 'perda_kg_real', 'custo_previsto', 'custo_real'];
+    const confirmado = window.confirm(`Confirma exportar ${opsFiltradas.length} ordens de producao para CSV?`);
+    if (!confirmado) {
+      await auditRelatorioProducao({
+        acao: 'RelatoriosProducao.exportar_cancelado',
+        descricao: 'Exportacao CSV cancelada pelo usuario.',
+        sucesso: false,
+        dadosNovos: { motivo: 'confirmacao_cancelada', quantidade_ops: opsFiltradas.length },
+      });
+      return;
+    }
+
+    const headers = ['numero_op', 'status', 'tipo_producao', 'data_emissao', 'peso_teorico_total_kg', 'peso_real_total_kg', 'perda_kg_real', 'custo_previsto', 'custo_real', 'group_id', 'grupo_id', 'empresa_id'];
     const linhas = opsFiltradas.map(op => [
       op.numero_op || op.numero || op.id || '',
       op.status || '',
@@ -170,9 +185,16 @@ export default function RelatoriosProducao({ ops = [] }) {
       op.perda_kg_real || 0,
       op.custos_previstos?.total || 0,
       op.custos_reais?.total || 0,
+      groupId || '',
+      groupId || '',
+      empresaId || '',
     ]);
     const csv = [headers, ...linhas]
-      .map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(';'))
+      .map(row => row.map(value => {
+        const semQuebras = String(value ?? '').replace(/\r?\n|\r/g, ' ');
+        const seguro = /^[=+\-@]/.test(semQuebras.trimStart()) ? `'${semQuebras}` : semQuebras;
+        return `"${seguro.replace(/"/g, '""')}"`;
+      }).join(';'))
       .join('\n');
     const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -185,27 +207,27 @@ export default function RelatoriosProducao({ ops = [] }) {
     URL.revokeObjectURL(url);
 
     await auditRelatorioProducao({
-      acao: 'ExportaÃ§Ã£o',
-      descricao: 'ExportaÃ§Ã£o CSV de relatÃ³rio de produÃ§Ã£o.',
+      acao: 'Exportação',
+      descricao: 'Exportação CSV de relatório de produção.',
       dadosNovos: { formato: 'csv', quantidade_ops: opsFiltradas.length },
     });
-    toast({ title: 'ExportaÃ§Ã£o concluÃ­da', description: `${opsFiltradas.length} OPs exportadas.` });
+    toast({ title: 'Exportação concluída', description: `${opsFiltradas.length} OPs exportadas.` });
   };
 
   const handleImprimirRelatorio = async () => {
     if (!contextoValido || !canViewReports) {
       await auditRelatorioProducao({
         acao: 'RelatoriosProducao.imprimir_bloqueado',
-        descricao: 'Tentativa de imprimir relatÃ³rio de produÃ§Ã£o sem contexto ou permissÃ£o.',
+        descricao: 'Tentativa de imprimir relatório de produção sem contexto ou permissão.',
         sucesso: false,
         dadosNovos: { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada' },
       });
-      toast({ title: 'Acesso negado', description: 'Selecione contexto vÃ¡lido e confirme permissÃ£o de visualizaÃ§Ã£o.', variant: 'destructive' });
+      toast({ title: 'Acesso negado', description: 'Selecione contexto válido e confirme permissão de visualização.', variant: 'destructive' });
       return;
     }
     await auditRelatorioProducao({
-      acao: 'ImpressÃ£o',
-      descricao: 'ImpressÃ£o de relatÃ³rio de produÃ§Ã£o acionada.',
+      acao: 'Impressão',
+      descricao: 'Impressão de relatório de produção acionada.',
       dadosNovos: { quantidade_ops: opsFiltradas.length },
     });
     window.print();
@@ -213,20 +235,20 @@ export default function RelatoriosProducao({ ops = [] }) {
 
   if (!contextoValido || !canViewReports) {
     return (
-      <Alert className="border-red-200 bg-red-50" data-permission="Producao.Relatorios.visualizar" data-context-required="true">
+      <Alert className="border-red-200 bg-red-50" data-permission="Producao.Relatorios.visualizar" data-context-required="group-or-company">
         <AlertTriangle className="h-5 w-5 text-red-600" />
-        <AlertDescription>Selecione um contexto vÃ¡lido e confirme sua permissÃ£o para visualizar relatÃ³rios de produÃ§Ã£o.</AlertDescription>
+        <AlertDescription>{!contextoValido ? (contexto === 'grupo' ? "Selecione um grupo para visualizar relatórios de produção." : "Selecione uma empresa vinculada a um grupo para visualizar relatórios de produção.") : "Seu perfil não possui permissão para visualizar relatórios de produção."}</AlertDescription>
       </Alert>
     );
   }
   return (
-    <div className="space-y-6 w-full h-full" data-permission="Producao.Relatorios.visualizar" data-context-required="true">
+    <div className="space-y-6 w-full h-full" data-permission="Producao.Relatorios.visualizar" data-context-required="group-or-company">
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div className="flex gap-4">
               <div>
-                <Label>PerÃ­odo InÃ­cio</Label>
+                <Label>Período Início</Label>
                 <Input
                   type="date"
                   value={periodoInicio}
@@ -235,7 +257,7 @@ export default function RelatoriosProducao({ ops = [] }) {
                 />
               </div>
               <div>
-                <Label>PerÃ­odo Fim</Label>
+                <Label>Período Fim</Label>
                 <Input
                   type="date"
                   value={periodoFim}
@@ -245,11 +267,11 @@ export default function RelatoriosProducao({ ops = [] }) {
               </div>
             </div>
             <div className="flex gap-2 no-print">
-              <Button type="button" variant="outline" onClick={handleImprimirRelatorio} data-permission="Producao.Relatorios.visualizar" data-action="RelatoriosProducao.imprimir" data-context-required="true">
+              <Button type="button" variant="outline" onClick={handleImprimirRelatorio} data-permission="Producao.Relatorios.visualizar" data-action="RelatoriosProducao.imprimir" data-context-required="group-or-company">
                 <Printer className="w-4 h-4 mr-2" />
                 Imprimir
               </Button>
-              <Button type="button" onClick={handleExportarCSV} disabled={!canExportReports} data-permission="Producao.Relatorios.exportar" data-action="RelatoriosProducao.exportar_csv" data-context-required="true" data-sensitive>
+              <Button type="button" onClick={handleExportarCSV} disabled={!canExportReports} data-permission="Producao.Relatorios.exportar" data-action="RelatoriosProducao.exportar_csv" data-context-required="group-or-company" data-sensitive>
                 <Download className="w-4 h-4 mr-2" />
                 Exportar CSV
               </Button>
@@ -301,7 +323,7 @@ export default function RelatoriosProducao({ ops = [] }) {
         <Card className="bg-blue-50">
           <CardContent className="p-4 text-center">
             <Clock className="w-6 h-6 mx-auto mb-2 text-blue-600" />
-            <p className="text-xs text-blue-700">EficiÃªncia</p>
+            <p className="text-xs text-blue-700">Eficiência</p>
             <p className="text-2xl font-bold text-blue-900">{eficienciaMedia}%</p>
             <p className="text-xs text-blue-600">
               {tempoReal.toFixed(0)}h reais
@@ -310,7 +332,7 @@ export default function RelatoriosProducao({ ops = [] }) {
         </Card>
       </div>
 
-      <Tabs defaultValue="geral" data-permission="Producao.Relatorios.visualizar" data-context-required="true">
+      <Tabs defaultValue="geral" data-permission="Producao.Relatorios.visualizar" data-context-required="group-or-company">
         <TabsList className="bg-white border flex-wrap h-auto">
           <TabsTrigger value="geral">Geral</TabsTrigger>
           <TabsTrigger value="tipo">Por Tipo</TabsTrigger>
@@ -321,7 +343,7 @@ export default function RelatoriosProducao({ ops = [] }) {
         <TabsContent value="geral">
           <Card>
             <CardHeader className="bg-slate-50 border-b">
-              <CardTitle className="text-base">DistribuiÃ§Ã£o por Status</CardTitle>
+              <CardTitle className="text-base">Distribuição por Status</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               <ResponsiveContainer width="100%" height={300}>
@@ -349,7 +371,7 @@ export default function RelatoriosProducao({ ops = [] }) {
         <TabsContent value="tipo">
           <Card>
             <CardHeader className="bg-slate-50 border-b">
-              <CardTitle className="text-base">ProduÃ§Ã£o por Tipo</CardTitle>
+              <CardTitle className="text-base">Produção por Tipo</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               <ResponsiveContainer width="100%" height={300}>
@@ -446,7 +468,7 @@ export default function RelatoriosProducao({ ops = [] }) {
 
             <Card>
               <CardHeader className="bg-purple-50">
-                <CardTitle className="text-base">AnÃ¡lise de VariaÃ§Ã£o</CardTitle>
+                <CardTitle className="text-base">Análise de Variação</CardTitle>
               </CardHeader>
               <CardContent className="p-6">
                 <div className="space-y-4">
@@ -464,7 +486,7 @@ export default function RelatoriosProducao({ ops = [] }) {
                   </div>
                   <div className="h-px bg-slate-300"></div>
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-900 font-semibold">VariaÃ§Ã£o:</span>
+                    <span className="text-slate-900 font-semibold">Variação:</span>
                     <span className={`font-bold text-xl ${parseFloat(variacaoCusto) > 0 ? 'text-red-600' : 'text-green-600'}`}>
                       {parseFloat(variacaoCusto) > 0 ? '+' : ''}{variacaoCusto}%
                     </span>
@@ -474,8 +496,8 @@ export default function RelatoriosProducao({ ops = [] }) {
                     <Alert className="border-red-200 bg-red-50 mt-4">
                       <AlertTriangle className="h-5 w-5 text-red-600" />
                       <AlertDescription>
-                        <strong>AtenÃ§Ã£o:</strong> Custo real {parseFloat(variacaoCusto)}% acima do previsto.
-                        Revisar perdas e tempos de produÃ§Ã£o.
+                        <strong>Atenção:</strong> Custo real {parseFloat(variacaoCusto)}% acima do previsto.
+                        Revisar perdas e tempos de produção.
                       </AlertDescription>
                     </Alert>
                   )}

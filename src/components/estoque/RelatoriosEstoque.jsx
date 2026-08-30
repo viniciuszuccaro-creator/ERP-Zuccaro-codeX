@@ -20,8 +20,10 @@ export default function RelatoriosEstoque({ produtos, movimentacoes }) {
   const { empresaAtual, grupoAtual, contexto, createInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
-  const empresaId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const empresaId = contexto === 'grupo' ? null : (empresaAtual?.id || null);
+  const contextoValido = contexto === 'grupo'
+    ? Boolean(groupId)
+    : Boolean(groupId && empresaId);
   const canViewRelatorios = hasPermission('Estoque', 'Relatorios', 'visualizar') ||
     hasPermission('Estoque', null, 'visualizar');
   const canExportRelatorios = hasPermission('Estoque', 'Relatorios', 'exportar') ||
@@ -50,16 +52,12 @@ export default function RelatoriosEstoque({ produtos, movimentacoes }) {
   const pertenceAoContexto = (item = {}) => {
     if (!contextoValido) return false;
     if (empresaId) {
-      return item.empresa_id === empresaId ||
-        item.empresa_dona_id === empresaId ||
-        item.group_id === groupId ||
-        item.grupo_id === groupId ||
-        item.compartilhado_grupo === true;
+      const pertenceEmpresa = item.empresa_id === empresaId || item.empresa_dona_id === empresaId;
+      const compartilhadoDoGrupo = (item.group_id === groupId || item.grupo_id === groupId) &&
+        (item.compartilhado_grupo === true || item.origem === 'grupo');
+      return pertenceEmpresa || compartilhadoDoGrupo;
     }
-    return item.group_id === groupId ||
-      item.grupo_id === groupId ||
-      item.compartilhado_grupo === true ||
-      item.origem === 'grupo';
+    return item.group_id === groupId || item.grupo_id === groupId;
   };
 
   const produtosFiltrados = Array.isArray(produtos) && canViewRelatorios

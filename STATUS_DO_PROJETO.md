@@ -1,3 +1,12 @@
+### Relatorios Operacionais - Contexto Estrito e Exportacoes Seguras
+- Revisei os relatorios existentes de Logistica, Producao e Estoque sem criar nova tela, modulo ou fluxo.
+- O modo Grupo exige groupId e consolida o grupo; o modo Empresa exige groupId e empresaId e nao mistura registros de outras empresas.
+- O filtro de Estoque deixou de aceitar qualquer item do mesmo grupo na visao Empresa e agora admite somente a empresa ativa ou cadastros explicitamente compartilhados pelo Grupo.
+- Os CSVs de Logistica e Producao neutralizam formulas e removem quebras de linha; Producao agora confirma a exportacao e inclui Grupo/Empresa no arquivo.
+- Chaves e marcadores de contexto foram alinhados a Grupo/Empresa, mantendo RBAC, auditoria e confirmacoes existentes.
+- Textos com codificacao quebrada em Relatorios de Producao foram normalizados sem alterar status ou valores gravados.
+- Mantida a Regra-Mae: nenhuma funcionalidade, aba, botao, grafico ou formato existente foi removido.
+- Proximo passo sugerido: revisar testes automatizados de isolamento multiempresa e fluxos de persistencia mais sensiveis.
 ### Dashboards em Tempo Real - Contexto Estrito e RBAC
 - Revisei DashboardTempoReal, DashboardEntregasRealtime e DashboardProducaoRealtime sem criar nova tela, modulo ou fluxo.
 - O modo Grupo agora exige groupId; o modo Empresa exige groupId e empresaId, com mensagem especifica quando o contexto estiver incompleto.
