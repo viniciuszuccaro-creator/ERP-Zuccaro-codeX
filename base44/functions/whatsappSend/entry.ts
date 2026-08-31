@@ -1,4 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { requireEntityGuard } from './_lib/security/guardCallPolicy.js';
+
+const reportWhatsappFailure = (operation, error, context = {}) => {
+  console.error('[whatsappSend] ' + operation, {
+    error: error?.message || String(error),
+    ...context,
+  });
+};
 
 Deno.serve(async (req) => {
   try {
@@ -18,7 +26,18 @@ Deno.serve(async (req) => {
           const p = await base44.asServiceRole.entities.Pedido.filter({ id: pedidoId }, undefined, 1);
           empresaId = p?.[0]?.empresa_id || null;
         }
-      } catch (_) {}
+      } catch (error) { reportWhatsappFailure('Falha ao resolver Empresa pelo pedido', error, { pedidoId, groupId }); }
+    }
+
+    if (!trustedInternal) {
+      const guardFailure = await requireEntityGuard(base44, {
+        module: 'Atendimento',
+        section: 'WhatsApp',
+        action: 'executar',
+        empresa_id: empresaId || null,
+        group_id: groupId || null,
+      });
+      if (guardFailure) return guardFailure;
     }
 
     // Resolve configuração WhatsApp
@@ -51,9 +70,12 @@ Deno.serve(async (req) => {
           const contato = Array.isArray(cli?.contatos) ? cli.contatos.find(c => /whatsapp|celular|telefone/i.test(c?.tipo || '') && c?.valor) : null;
           destinatario = contato?.valor || '';
         }
-      } catch (_) {}
+      } catch (error) { reportWhatsappFailure('Falha ao resolver destinatario', error, { pedidoId, clienteId, empresaId, groupId }); }
     }
     destinatario = String(destinatario || '').replace(/\D/g, '');
+    if (!destinatario) {
+      return Response.json({ error: 'Numero de WhatsApp obrigatorio' }, { status: 400 });
+    }
 
     // Resolve mensagem via template simples
     const templates = (config?.templates || {});
@@ -70,7 +92,7 @@ Deno.serve(async (req) => {
         acao: 'Criação', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: 'WhatsApp',
         descricao: 'Envio simulado (sem configuração)', empresa_id: empresaId || null, group_id: groupId || null,
         dados_novos: { numero: destinatario, mensagem }
-      }); } catch {}
+      }); } catch (error) { reportWhatsappFailure('Falha ao auditar envio simulado', error, { empresaId, groupId }); }
       return Response.json({ sucesso: true, modo: 'simulado', messageId: `SIM_${Date.now()}`, status: 'sent' });
     }
 
@@ -88,7 +110,7 @@ Deno.serve(async (req) => {
         acao: 'Criação', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: 'WhatsApp',
         descricao: 'Mídia enviada', empresa_id: empresaId || null, group_id: groupId || null,
         dados_novos: { numero: destinatario, action: 'sendMedia' }
-      }); } catch {}
+      }); } catch (error) { reportWhatsappFailure('Falha ao auditar envio de midia', error, { empresaId, groupId }); }
       return Response.json({ sucesso: true, messageId: res.key?.id, status: 'sent', modo: 'real' });
     }
 
@@ -103,7 +125,7 @@ Deno.serve(async (req) => {
       acao: 'Criação', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: 'WhatsApp',
       descricao: 'Texto enviado', empresa_id: empresaId || null, group_id: groupId || null,
       dados_novos: { numero: destinatario, mensagem }
-    }); } catch {}
+    }); } catch (error) { reportWhatsappFailure('Falha ao auditar envio de texto', error, { empresaId, groupId }); }
 
     return Response.json({ sucesso: true, messageId: res.key?.id, status: 'sent', modo: 'real' });
   } catch (error) {

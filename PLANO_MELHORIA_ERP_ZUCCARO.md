@@ -391,6 +391,8 @@ Andamento 9B em 2026-08-30: concluidos os tratamentos de PWA, cache offline, err
 
 Andamento 9C em 2026-08-31: aprovacao com assinatura, cliente Base44 local e auditoria de UI ficaram sem catches vazios. A sanitizacao local agora falha fechada, o lint global ficou com 139 erros, o inventario caiu para 241 e o typecheck para 1.778 diagnosticos.
 
+Andamento 9D em 2026-08-31: guard backend, consolidacao de Grupo e envio WhatsApp ficaram sem catches vazios. Validacao SoD e conclusao de contexto passaram a falhar fechadas, a consolidacao exige contexto inclusive para administrador e o WhatsApp recebeu verificacao backend para chamadas de usuario. O inventario caiu para 227 ocorrencias.
+
 ## Fase 11 - Duplicidades
 
 Objetivo: evitar que o ERP cresca com telas, funcoes e componentes repetidos.

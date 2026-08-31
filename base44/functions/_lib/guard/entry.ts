@@ -1,5 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
+const reportGuardFailure = (operation, error, context = {}) => {
+  console.error('[guard] ' + operation, {
+    error: error?.message || String(error),
+    ...context,
+  });
+};
+
 // RBAC + Multiempresa helpers para backend functions
 // Uso: import { getUserAndPerfil, hasPermission, assertPermission, assertContext, audit } from './_lib/guard.js'
 
@@ -10,7 +17,7 @@ export async function getUserAndPerfil(base44) {
     if (user?.perfil_acesso_id) {
       perfil = await base44.asServiceRole.entities.PerfilAcesso.get(user.perfil_acesso_id);
     }
-  } catch {}
+  } catch (error) { reportGuardFailure('Falha ao carregar perfil de acesso', error, { user_id: user?.id }); }
   return { user, perfil };
 }
 
@@ -83,7 +90,7 @@ export async function assertPermission(base44, { user, perfil }, moduleName, sec
         descricao: `Ação negada no backend: ${moduleName}/${section || '-'} → ${action}`,
         data_hora: new Date().toISOString(),
       });
-    } catch {}
+    } catch (error) { reportGuardFailure('Falha ao auditar permissao negada', error, { moduleName, section, action }); }
     return Response.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -105,10 +112,13 @@ export async function assertPermission(base44, { user, perfil }, moduleName, sec
           descricao: `Bloqueio SoD: ${moduleName}/${section || '-'} → ${action}`,
           data_hora: new Date().toISOString(),
         });
-      } catch {}
+      } catch (error) { reportGuardFailure('Falha ao auditar bloqueio SoD', error, { moduleName, section, action }); }
       return Response.json({ error: 'Forbidden: Bloqueado por regra SoD' }, { status: 403 });
     }
-  } catch {}
+  } catch (error) {
+    reportGuardFailure('Falha ao validar segregacao de funcoes', error, { moduleName, section, action });
+    return Response.json({ error: 'Validacao SoD indisponivel' }, { status: 503 });
+  }
 
   return null;
 }
@@ -149,8 +159,9 @@ export async function ensureContextFields(base44, data, requireEmpresa = true) {
       if (emp?.group_id) enriched.group_id = emp.group_id;
     }
     return enriched;
-  } catch (_) {
-    return data;
+  } catch (error) {
+    reportGuardFailure('Falha ao completar contexto multiempresa', error, { empresa_id: data?.empresa_id, group_id: data?.group_id });
+    return Response.json({ error: 'Contexto multiempresa indisponivel' }, { status: 503 });
   }
 }
 
@@ -168,6 +179,5 @@ export async function audit(base44, user, { acao = 'Ação', modulo = 'Sistema',
       dados_novos: Object.keys(payloadDados).length ? payloadDados : null,
       data_hora: new Date().toISOString(),
     });
-  } catch {}
-}
+  } catch (error) { reportGuardFailure('Falha ao persistir auditoria', error, { modulo, entidade, registro_id }); }
 }

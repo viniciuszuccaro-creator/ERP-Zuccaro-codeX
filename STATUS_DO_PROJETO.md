@@ -3444,3 +3444,16 @@ Checklist inicial:
 - Permanecem os avisos preexistentes de Browserslist, imports mistos e bundle principal grande.
 - Nenhuma tela, funcionalidade ou dado foi removido; o projeto do HD externo nao foi acessado.
 - Proximo passo obrigatorio: continuar pelos arquivos com maior numero de catches vazios no inventario e corrigir contratos de dominio TS2339/TS2741 em lotes separados.
+
+### Plano Mestre - Lote 9D: Guard, Consolidacao e WhatsApp
+
+- O guard backend compartilhado ficou sem catches vazios e teve removido um fechamento de bloco excedente.
+- Falha ao validar segregacao de funcoes (SoD) agora bloqueia a operacao com status 503, em vez de permitir silenciosamente.
+- Falha ao completar `group_id` a partir da Empresa tambem retorna indisponibilidade segura, sem devolver dados sem contexto.
+- `groupConsolidation` exige Grupo ou Empresa para todos os usuarios, inclusive administradores, e aceita os aliases canonicos no nivel superior ou dentro de `filtros`.
+- `whatsappSend` passou a validar RBAC backend em chamadas de usuario, preservando automacoes autenticadas pelo token interno, e bloqueia envio sem numero resolvido.
+- As tres funcoes ficaram com zero catches vazios; o inventario global caiu de 241 para 227 ocorrencias.
+- Validacao: sintaxe das funcoes aprovada, 24 testes aprovados, `git diff --check` aprovado e build completo aprovado com 3.786 modulos em 42,56 segundos.
+- Lint frontend permanece com 139 erros e typecheck com 1.778 diagnosticos, sem regressao neste sublote backend.
+- Nenhuma tela, funcionalidade ou dado foi removido; o projeto do HD externo nao foi acessado.
+- Proximo passo obrigatorio: tratar `IntentEngine.jsx`, importador de produtos, portal de chamados e os contratos TS2339/TS2741 de maior propagacao.
