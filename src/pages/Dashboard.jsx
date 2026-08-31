@@ -75,10 +75,16 @@ import ResizableRow from "@/components/dashboard/ResizableRow";
 import { ResizablePanelGroup as PanelGroup, ResizablePanel as Panel, ResizableHandle as PanelResizeHandle } from "@/components/ui/resizable";
 import useDashboardDerivedData from "@/components/dashboard/hooks/useDashboardDerivedData";
 
+const reportDashboardFailure = (operation, error, context = {}) => {
+  console.error('[Dashboard] ' + operation, {
+    error: error?.message || String(error),
+    ...context,
+  });
+};
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { empresaAtual, estaNoGrupo, grupoAtual, filterInContext, getFiltroContexto, alternarContexto } = useContextoVisual();
+  const { empresaAtual, estaNoGrupo, grupoAtual, filterInContext, getFiltroContexto, alternarContexto, createInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const canSeeFinanceiro = hasPermission('Financeiro', null, 'ver');
   const canSeeCRM = hasPermission('CRM', null, 'ver');
@@ -91,10 +97,24 @@ export default function Dashboard() {
   const canSeeDashboard = hasPermission('Dashboard', null, 'ver') || hasPermission('Dashboard', null, 'visualizar');
   const canSeeFiscal = hasPermission('Fiscal', null, 'ver') || hasPermission('Fiscal', null, 'visualizar');
   const canSeeSistema = hasPermission('Sistema', null, 'ver') || hasPermission('Sistema', null, 'visualizar');
+  const empresaId = empresaAtual?.id || null;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const scopeType = estaNoGrupo ? 'grupo' : 'empresa';
+  const hasContextoAtivo = Boolean(groupId && (scopeType === 'grupo' || empresaId));
+  const contextQueryKey = [scopeType, groupId, empresaId];
 
   const auditDashboardAction = async (acao, detalhes = {}) => {
+    if (!hasContextoAtivo) {
+      reportDashboardFailure('Auditoria ignorada por contexto incompleto', new Error('Contexto multiempresa incompleto'), {
+        acao,
+        scopeType,
+        groupId,
+        empresaId,
+      });
+      return;
+    }
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         acao,
         modulo: 'Dashboard',
         entidade: 'Dashboard',
@@ -102,12 +122,14 @@ export default function Dashboard() {
         tipo_auditoria: 'navegacao',
         descricao: `Dashboard: ${acao}`,
         detalhes,
-        group_id: grupoAtual?.id || empresaAtual?.grupo_id || empresaAtual?.group_id || null,
-        grupo_id: grupoAtual?.id || empresaAtual?.grupo_id || empresaAtual?.group_id || null,
-        empresa_id: empresaAtual?.id || null,
+        group_id: groupId,
+        grupo_id: groupId,
+        empresa_id: empresaId,
         data_hora: new Date().toISOString()
       });
-    } catch (_) {}
+    } catch (error) {
+      reportDashboardFailure('Falha ao auditar acao', error, { acao, scopeType, groupId, empresaId });
+    }
   };
 
   const [periodo, setPeriodo] = useState(() => {
@@ -125,7 +147,13 @@ export default function Dashboard() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     let initial = params.get('tab');
-    if (!initial) { try { initial = localStorage.getItem('Dashboard_tab'); } catch {} }
+    if (!initial) {
+      try {
+        initial = localStorage.getItem('Dashboard_tab');
+      } catch (error) {
+        reportDashboardFailure('Falha ao carregar aba salva', error);
+      }
+    }
     if (initial) setActiveTab(initial);
   }, []);
   const handleTabChange = (value) => {
@@ -133,7 +161,11 @@ export default function Dashboard() {
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
-    try { localStorage.setItem('Dashboard_tab', value); } catch {}
+    try {
+      localStorage.setItem('Dashboard_tab', value);
+    } catch (error) {
+      reportDashboardFailure('Falha ao salvar aba ativa', error, { aba: value });
+    }
     auditDashboardAction('alterar_aba', { aba: value });
   }; // New state for active tab
 
@@ -148,14 +180,13 @@ export default function Dashboard() {
 
   const [autoRefresh, setAutoRefresh] = useState(true);
   const queryClient = useQueryClient();
-  const hasContextoAtivo = Boolean(empresaAtual?.id || estaNoGrupo || grupoAtual?.id);
-  const refetchInterval = (empresaAtual?.id || estaNoGrupo) ? ((activeTab === 'resumo' && autoRefresh) ? 60000 : 0) : false; // evita zero-dados sem contexto
+  const refetchInterval = hasContextoAtivo ? ((activeTab === 'resumo' && autoRefresh) ? 60000 : 0) : false;
 
   const { data: pedidos = [] } = useQuery({
       enabled: Boolean(canSeeComercial && hasContextoAtivo),
-      queryKey: ['pedidos', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+      queryKey: ['pedidos', ...contextQueryKey],
       queryFn: async () => {
-        if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
+        if (!hasContextoAtivo) return [];
         return await filterInContext('Pedido', {}, '-created_date', 9999);
       },
     refetchInterval,
@@ -169,9 +200,9 @@ export default function Dashboard() {
 
   const { data: contasReceber = [] } = useQuery({
       enabled: Boolean(canSeeFinanceiro && hasContextoAtivo),
-      queryKey: ['contasReceber', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+      queryKey: ['contasReceber', ...contextQueryKey],
       queryFn: async () => {
-        if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
+        if (!hasContextoAtivo) return [];
         return await filterInContext('ContaReceber', {}, '-data_vencimento', 9999);
       },
     refetchInterval,
@@ -185,9 +216,9 @@ export default function Dashboard() {
 
   const { data: contasPagar = [] } = useQuery({
       enabled: Boolean(canSeeFinanceiro && hasContextoAtivo),
-      queryKey: ['contasPagar', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+      queryKey: ['contasPagar', ...contextQueryKey],
       queryFn: async () => {
-        if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
+        if (!hasContextoAtivo) return [];
         return await filterInContext('ContaPagar', {}, '-data_vencimento', 9999);
       },
     refetchInterval,
@@ -201,9 +232,9 @@ export default function Dashboard() {
 
   const { data: entregas = [] } = useQuery({
       enabled: Boolean(canSeeExpedicao && hasContextoAtivo),
-      queryKey: ['entregas', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+      queryKey: ['entregas', ...contextQueryKey],
       queryFn: async () => {
-        if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
+        if (!hasContextoAtivo) return [];
         return await filterInContext('Entrega', {}, '-created_date', 9999);
       },
     refetchInterval,
@@ -217,9 +248,9 @@ export default function Dashboard() {
 
   const { data: colaboradores = [] } = useQuery({
       enabled: Boolean(canSeeRH && hasContextoAtivo),
-      queryKey: ['colaboradores', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+      queryKey: ['colaboradores', ...contextQueryKey],
       queryFn: async () => {
-        if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
+        if (!hasContextoAtivo) return [];
         return await filterInContext('Colaborador', {}, '-created_date', 9999);
       },
     refetchInterval,
@@ -233,9 +264,9 @@ export default function Dashboard() {
 
   const { data: produtos = [] } = useQuery({
       enabled: Boolean(canSeeEstoque && hasContextoAtivo),
-      queryKey: ['produtos', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+      queryKey: ['produtos', ...contextQueryKey],
       queryFn: async () => {
-        if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
+        if (!hasContextoAtivo) return [];
         return await filterInContext('Produto', {}, '-created_date', 9999);
       },
     refetchInterval,
@@ -249,7 +280,7 @@ export default function Dashboard() {
 
   const { data: totalProdutos = 0 } = useQuery({
     enabled: Boolean(hasContextoAtivo && canSeeEstoque),
-    queryKey: ['produtos-count-dash', empresaAtual?.id, grupoAtual?.id],
+    queryKey: ['produtos-count-dash', ...contextQueryKey],
     queryFn: async () => {
       try {
         const filtro = getFiltroContexto('empresa_id');
@@ -258,7 +289,8 @@ export default function Dashboard() {
           filter: filtro
         });
         return response.data?.count || produtos.length;
-      } catch {
+      } catch (error) {
+        reportDashboardFailure('Falha ao contar produtos; usando lista carregada', error, { scopeType, groupId, empresaId });
         return produtos.length;
       }
     },
@@ -268,9 +300,9 @@ export default function Dashboard() {
 
   const { data: clientes = [] } = useQuery({
       enabled: Boolean(canSeeCRM && hasContextoAtivo),
-      queryKey: ['clientes', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+      queryKey: ['clientes', ...contextQueryKey],
       queryFn: async () => {
-        if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
+        if (!hasContextoAtivo) return [];
         return await filterInContext('Cliente', {}, '-created_date', 9999);
       },
     refetchInterval,
@@ -284,7 +316,7 @@ export default function Dashboard() {
 
   const { data: totalClientes = 0 } = useQuery({
     enabled: Boolean(hasContextoAtivo && canSeeCRM),
-    queryKey: ['clientes-count', empresaAtual?.id, grupoAtual?.id],
+    queryKey: ['clientes-count', ...contextQueryKey],
     queryFn: async () => {
       try {
         const filtro = getFiltroContexto('empresa_id', true);
@@ -293,7 +325,8 @@ export default function Dashboard() {
           filter: filtro
         });
         return response.data?.count || clientes.length;
-      } catch {
+      } catch (error) {
+        reportDashboardFailure('Falha ao contar clientes; usando lista carregada', error, { scopeType, groupId, empresaId });
         return clientes.length;
       }
     },
@@ -303,7 +336,7 @@ export default function Dashboard() {
 
   const { data: totalColaboradoresDash = 0 } = useQuery({
     enabled: Boolean(hasContextoAtivo && canSeeRH),
-    queryKey: ['colaboradores-count-dash', empresaAtual?.id, grupoAtual?.id],
+    queryKey: ['colaboradores-count-dash', ...contextQueryKey],
     queryFn: async () => {
       try {
         const filtro = getFiltroContexto('empresa_alocada_id', true);
@@ -312,7 +345,8 @@ export default function Dashboard() {
           filter: filtro
         });
         return response.data?.count || colaboradores.length;
-      } catch {
+      } catch (error) {
+        reportDashboardFailure('Falha ao contar colaboradores; usando lista carregada', error, { scopeType, groupId, empresaId });
         return colaboradores.length;
       }
     },
@@ -322,9 +356,9 @@ export default function Dashboard() {
 
   const { data: ordensProducao = [] } = useQuery({
       enabled: Boolean(canSeeProducao && hasContextoAtivo),
-      queryKey: ['ordensProducao', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+      queryKey: ['ordensProducao', ...contextQueryKey],
       queryFn: async () => {
-        if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
+        if (!hasContextoAtivo) return [];
         return await filterInContext('OrdemProducao', {}, '-data_emissao', 9999);
       },
     refetchInterval,
@@ -338,9 +372,9 @@ export default function Dashboard() {
 
   const { data: notasFiscais = [] } = useQuery({
       enabled: Boolean((canSeeFinanceiro || canSeeFiscal || canSeeComercial) && hasContextoAtivo),
-      queryKey: ['notasFiscais', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+      queryKey: ['notasFiscais', ...contextQueryKey],
       queryFn: async () => {
-        if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
+        if (!hasContextoAtivo) return [];
         return await filterInContext('NotaFiscal', {}, '-created_date', 9999);
       },
     refetchInterval,
@@ -355,9 +389,9 @@ export default function Dashboard() {
 
   const { data: cobrancas = [] } = useQuery({
       enabled: Boolean(canSeeFinanceiro && hasContextoAtivo),
-      queryKey: ['cobrancas', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+      queryKey: ['cobrancas', ...contextQueryKey],
       queryFn: async () => {
-        if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
+        if (!hasContextoAtivo) return [];
         return await filterInContext('ContaReceber', {}, '-data_vencimento', 9999);
       },
     refetchInterval,
@@ -418,9 +452,9 @@ export default function Dashboard() {
   // Dados e gráficos agora são providos por useDashboardDerivedData()
 
   const { data: previsoesIA = {}, isLoading: loadingPrevIA } = useQuery({
-    queryKey: ['iaPrevEstoque14', empresaAtual?.id, grupoAtual?.id, periodo],
+    queryKey: ['iaPrevEstoque14', ...contextQueryKey, periodo],
     queryFn: async () => {
-      if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return { previsoes: [] };
+      if (!hasContextoAtivo) return { previsoes: [] };
       const filtros = getFiltroContexto('empresa_id', true);
       const res = await base44.functions.invoke('iaFinanceAnomalyScan', {
         filtros,
@@ -433,9 +467,9 @@ export default function Dashboard() {
   });
 
   const { data: previsoesIA30 = {} } = useQuery({
-    queryKey: ['iaPrevEstoque30', empresaAtual?.id, grupoAtual?.id, periodo],
+    queryKey: ['iaPrevEstoque30', ...contextQueryKey, periodo],
     queryFn: async () => {
-      if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return { previsoes: [] };
+      if (!hasContextoAtivo) return { previsoes: [] };
       const filtros = getFiltroContexto('empresa_id', true);
       const res = await base44.functions.invoke('iaFinanceAnomalyScan', {
         filtros,
@@ -448,9 +482,9 @@ export default function Dashboard() {
   });
 
   const { data: anomaliasIA = {}, isLoading: loadingAnomIA } = useQuery({
-    queryKey: ['iaAnomaliasFinanceiro', empresaAtual?.id, grupoAtual?.id],
+    queryKey: ['iaAnomaliasFinanceiro', ...contextQueryKey],
     queryFn: async () => {
-      if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return { details: [] };
+      if (!hasContextoAtivo) return { details: [] };
       const filtros = getFiltroContexto('empresa_id', true);
       const res = await base44.functions.invoke('iaFinanceAnomalyScan', { filtros });
       return res?.data || { details: [] };
@@ -463,7 +497,7 @@ export default function Dashboard() {
 
   // Command Center metrics (24h window) from AuditLog
   const { data: ccMetrics = { errors: 0, funcs: 0, secAlerts: 0 } } = useQuery({
-    queryKey: ['command-center', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+    queryKey: ['command-center', ...contextQueryKey],
     queryFn: async () => {
       const since = Date.now() - 24 * 60 * 60 * 1000;
       const logs = await filterInContext('AuditLog', {}, '-data_hora', 500);
@@ -483,7 +517,7 @@ export default function Dashboard() {
 
   // KPIs Chatbot / SLA últimas 24h
   const { data: botMetrics = { chats: 0, sla_ok: 0, sla_total: 0 } } = useQuery({
-    queryKey: ['bot-metrics-24h', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+    queryKey: ['bot-metrics-24h', ...contextQueryKey],
     queryFn: async () => {
       const since = Date.now() - 24 * 60 * 60 * 1000;
       const items = await filterInContext('ChatbotInteracao', {}, '-created_date', 500);
@@ -501,21 +535,51 @@ export default function Dashboard() {
 
   // Assinaturas realtime locais (reforço) para invalidar KPIs do Dashboard
   useEffect(() => {
-    if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return;
+    if (!hasContextoAtivo || !canSeeDashboard) return;
     const subs = [];
-    const add = (api, key) => { if (!api?.subscribe) return; const un = api.subscribe(() => {
-      try { queryClient.invalidateQueries({ queryKey: [key] }); } catch (_) {}
-    }); subs.push(un); };
-    add(base44.entities?.Pedido, 'pedidos');
-    add(base44.entities?.ContaReceber, 'contasReceber');
-    add(base44.entities?.ContaPagar, 'contasPagar');
-    add(base44.entities?.Entrega, 'entregas');
-    add(base44.entities?.Produto, 'produtos');
-    add(base44.entities?.Cliente, 'clientes');
-    add(base44.entities?.OrdemProducao, 'ordensProducao');
-    add(base44.entities?.NotaFiscal, 'notasFiscais');
-    return () => { subs.forEach(u => { try { u && u(); } catch (_) {} }); };
-  }, [empresaAtual?.id, grupoAtual?.id, estaNoGrupo]);
+    const add = (api, key, allowed) => {
+      if (!allowed || !api?.subscribe) return;
+      const unsubscribe = api.subscribe(() => {
+        try {
+          queryClient.invalidateQueries({ queryKey: [key, ...contextQueryKey] });
+        } catch (error) {
+          reportDashboardFailure('Falha ao atualizar cache realtime', error, { key, scopeType, groupId, empresaId });
+        }
+      });
+      subs.push({ key, unsubscribe });
+    };
+    add(base44.entities?.Pedido, 'pedidos', canSeeComercial);
+    add(base44.entities?.ContaReceber, 'contasReceber', canSeeFinanceiro);
+    add(base44.entities?.ContaPagar, 'contasPagar', canSeeFinanceiro);
+    add(base44.entities?.Entrega, 'entregas', canSeeExpedicao);
+    add(base44.entities?.Produto, 'produtos', canSeeEstoque);
+    add(base44.entities?.Cliente, 'clientes', canSeeCRM);
+    add(base44.entities?.OrdemProducao, 'ordensProducao', canSeeProducao);
+    add(base44.entities?.NotaFiscal, 'notasFiscais', canSeeFiscal || canSeeFinanceiro || canSeeComercial);
+    return () => {
+      subs.forEach(({ key, unsubscribe }) => {
+        try {
+          if (unsubscribe) unsubscribe();
+        } catch (error) {
+          reportDashboardFailure('Falha ao encerrar assinatura realtime', error, { key, scopeType, groupId, empresaId });
+        }
+      });
+    };
+  }, [
+    hasContextoAtivo,
+    canSeeDashboard,
+    canSeeComercial,
+    canSeeFinanceiro,
+    canSeeExpedicao,
+    canSeeEstoque,
+    canSeeCRM,
+    canSeeProducao,
+    canSeeFiscal,
+    scopeType,
+    groupId,
+    empresaId,
+    queryClient,
+  ]);
 
   // Pré-computos para seções avançadas (evita recalcular em cada render de subcomponente)
   // Pré-cálculos fornecidos pelo hook useDashboardDerivedData

@@ -395,6 +395,8 @@ Andamento 9D em 2026-08-31: guard backend, consolidacao de Grupo e envio WhatsAp
 
 Andamento 9E em 2026-08-31: o motor de intents, o importador de produtos e os chamados do Portal ficaram sem catches vazios. Falhas dos fallbacks de IA e leitura de planilha agora sao rastreaveis; a criacao automatica de unidades e ignorada quando nao for possivel verificar duplicidades; chamados exigem Grupo e Empresa e recebem sanitizacao antes da gravacao. O lint caiu para 122 erros, sem avisos, e o inventario para 210 ocorrencias. Proxima frente: paginas Comercial e Dashboard e funcoes backend com maior concentracao de excecoes silenciosas, mantendo os contratos TS2339/TS2741 em lotes separados.
 
+Andamento 9F em 2026-08-31: Comercial e Dashboard passaram a exigir contexto canonico completo, usar chaves de cache com tipo de escopo, Grupo e Empresa e ativar assinaturas realtime apenas quando houver permissao do setor. Falhas de auditoria, cache, armazenamento local e encerramento de assinaturas agora sao rastreaveis. O lint caiu para 112 erros, sem avisos, e o inventario para 200 ocorrencias. Proxima frente: endurecer syncGroupCompany e upsertConfig contra escopo global, vazamento entre Grupos e sucesso falso.
+
 ## Fase 11 - Duplicidades
 
 Objetivo: evitar que o ERP cresca com telas, funcoes e componentes repetidos.

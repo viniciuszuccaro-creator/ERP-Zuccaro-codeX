@@ -3472,3 +3472,17 @@ Checklist inicial:
 - Permanecem avisos preexistentes de dados Browserslist desatualizados, imports mistos e bundle principal grande.
 - Nenhuma tela, botao, funcionalidade ou dado foi removido.
 - Proximo passo obrigatorio: tratar as excecoes silenciosas das paginas `Comercial.jsx` e `Dashboard.jsx` e das funcoes backend com maior concentracao, depois continuar os contratos TS2339/TS2741 em lote separado.
+
+### Plano Mestre - Lote 9F: Comercial e Dashboard Contextuais
+
+- O trabalho foi executado somente no clone interno C:\Users\cpaba\ERP-Zuccaro-codeX-local\ERP-Zuccaro-codeX; o projeto do HD externo nao foi acessado nem alterado.
+- Comercial e Dashboard agora consideram valido o modo Grupo somente com groupId e o modo Empresa somente com groupId e empresaId.
+- Todas as consultas e invalidacoes alteradas usam chaves com scopeType, Grupo e Empresa, impedindo reaproveitamento de cache entre CPA Ferro e Aco, 3Z LTDA e a visao consolidada.
+- Assinaturas realtime do Dashboard so sao abertas para entidades cujo setor o usuario pode visualizar; Comercial aplica a mesma regra para Pedidos, Comissoes e Notas Fiscais.
+- Auditorias sem contexto nao geram registro global. Falhas de cache, auditoria, armazenamento local e encerramento das assinaturas deixaram de ser silenciosas.
+- As duas paginas ficaram com zero catches vazios e passaram no ESLint direcionado sem erros ou avisos.
+- O inventario global caiu de 210 para 200 catches vazios. O lint global caiu de 122 para 112 erros e zero avisos; o typecheck permaneceu em 1.778 diagnosticos.
+- Validacao: 24 testes aprovados, git diff --check aprovado e build completo aprovado com 3.786 modulos em 16,05 segundos.
+- Permanecem avisos preexistentes de dados Browserslist desatualizados, imports mistos e bundle principal grande.
+- Nenhuma tela, grafico, card, aba, filtro, atualizacao automatica, funcionalidade ou dado foi removido.
+- Proximo passo obrigatorio: executar o Lote 9G em syncGroupCompany e upsertConfig, com testes de isolamento, retentativa e autorizacao backend.

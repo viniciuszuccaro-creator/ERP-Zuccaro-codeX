@@ -33,6 +33,13 @@ const PedidosEntregaTab = React.lazy(() => import("../components/comercial/Pedid
 const PedidosRetiradaTab = React.lazy(() => import("../components/comercial/PedidosRetiradaTab"));
 const MonitoramentoCanaisRealtime = React.lazy(() => import("@/components/comercial/MonitoramentoCanaisRealtime"));
 
+const reportComercialRealtimeFailure = (operation, error, context = {}) => {
+  console.error('[Comercial] ' + operation, {
+    error: error?.message || String(error),
+    ...context,
+  });
+};
+
 export default function Comercial() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const canViewComercial = (section = null) => (
@@ -47,11 +54,23 @@ export default function Comercial() {
   const { user } = useUser();
   const queryClient = useQueryClient();
 
-  const bloqueadoSemEmpresa = !estaNoGrupo && !empresaAtual;
+  const empresaId = empresaAtual?.id || null;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const scopeType = estaNoGrupo ? 'grupo' : 'empresa';
+  const contextoValido = Boolean(groupId && (scopeType === 'grupo' || empresaId));
+  const contextQueryKey = [scopeType, groupId, empresaId];
+  const bloqueadoSemEmpresa = !contextoValido;
 
   const auditComercial = async (acao, detalhes = {}, sucesso = true) => {
-    const empresaId = empresaAtual?.id || null;
-    const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+    if (!contextoValido) {
+      reportComercialRealtimeFailure('Auditoria ignorada por contexto incompleto', new Error('Contexto multiempresa incompleto'), {
+        acao,
+        scopeType,
+        groupId,
+        empresaId,
+      });
+      return;
+    }
     try {
       await createInContext('AuditLog', {
         usuario_id: user?.id || null,
@@ -74,9 +93,9 @@ export default function Comercial() {
   };
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
+    queryKey: ['clientes', ...contextQueryKey],
     queryFn: async () => {
-      if (!(empresaAtual?.id || estaNoGrupo)) return [];
+      if (!contextoValido) return [];
       return await filterInContext('Cliente', {}, '-created_date', 100);
     },
     staleTime: 30000,
@@ -85,9 +104,9 @@ export default function Comercial() {
   });
 
   const pedidosQuery = useQuery({
-    queryKey: ['pedidos', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
+    queryKey: ['pedidos', ...contextQueryKey],
     queryFn: async () => {
-      if (!(empresaAtual?.id || estaNoGrupo)) return [];
+      if (!contextoValido) return [];
       return await filterInContext('Pedido', {}, '-created_date', 100);
     },
     staleTime: 30000,
@@ -99,36 +118,62 @@ export default function Comercial() {
 
   // Realtime: atualiza pedidos em tempo real via subscribe (multiempresa + RBAC já aplicados no wrapper do Layout)
   useEffect(() => {
-    if (!(empresaAtual?.id || estaNoGrupo)) return;
+    if (!contextoValido || !canViewComercial('Pedidos')) return;
     if (!base44.entities?.Pedido?.subscribe) return;
-    const un = base44.entities.Pedido.subscribe((evt) => {
+    const un = base44.entities.Pedido.subscribe(() => {
       // Invalida apenas a lista de pedidos do contexto atual
-      try { queryClient.invalidateQueries({ queryKey: ['pedidos', empresaAtual?.id, estaNoGrupo, grupoAtual?.id] }); } catch (_) {}
+      try {
+        queryClient.invalidateQueries({ queryKey: ['pedidos', ...contextQueryKey] });
+      } catch (error) {
+        reportComercialRealtimeFailure('Falha ao atualizar cache de pedidos', error, { scopeType, groupId, empresaId });
+      }
     });
-    return () => { try { un && un(); } catch (_) {} };
-  }, [empresaAtual?.id, grupoAtual?.id, estaNoGrupo]);
+    return () => {
+      try {
+        if (un) un();
+      } catch (error) {
+        reportComercialRealtimeFailure('Falha ao encerrar assinatura de pedidos', error, { scopeType, groupId, empresaId });
+      }
+    };
+  }, [contextoValido, scopeType, groupId, empresaId, canSeeComercial, queryClient]);
 
   // Realtime adicional: Comissões e NF-e
   useEffect(() => {
-    if (!(empresaAtual?.id || estaNoGrupo)) return;
+    if (!contextoValido) return;
     const unsubs = [];
-    if (base44.entities?.Comissao?.subscribe) {
+    if (canViewComercial('Comissões') && base44.entities?.Comissao?.subscribe) {
       unsubs.push(base44.entities.Comissao.subscribe(() => {
-        try { queryClient.invalidateQueries({ queryKey: ['comissoes'] }); } catch (_) {}
+        try {
+          queryClient.invalidateQueries({ queryKey: ['comissoes', ...contextQueryKey] });
+        } catch (error) {
+          reportComercialRealtimeFailure('Falha ao atualizar cache de comissoes', error, { scopeType, groupId, empresaId });
+        }
       }));
     }
-    if (base44.entities?.NotaFiscal?.subscribe) {
+    if (canViewComercial('Notas Fiscais') && base44.entities?.NotaFiscal?.subscribe) {
       unsubs.push(base44.entities.NotaFiscal.subscribe(() => {
-        try { queryClient.invalidateQueries({ queryKey: ['notasFiscais'] }); } catch (_) {}
+        try {
+          queryClient.invalidateQueries({ queryKey: ['notasFiscais', ...contextQueryKey] });
+        } catch (error) {
+          reportComercialRealtimeFailure('Falha ao atualizar cache de notas fiscais', error, { scopeType, groupId, empresaId });
+        }
       }));
     }
-    return () => { unsubs.forEach(u => { try { u && u(); } catch (_) {} }); };
-  }, [empresaAtual?.id, grupoAtual?.id, estaNoGrupo]);
+    return () => {
+      unsubs.forEach((unsubscribe) => {
+        try {
+          if (unsubscribe) unsubscribe();
+        } catch (error) {
+          reportComercialRealtimeFailure('Falha ao encerrar assinatura comercial', error, { scopeType, groupId, empresaId });
+        }
+      });
+    };
+  }, [contextoValido, scopeType, groupId, empresaId, canSeeComercial, queryClient]);
 
   const { data: comissoes = [] } = useQuery({
-    queryKey: ['comissoes', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
+    queryKey: ['comissoes', ...contextQueryKey],
     queryFn: async () => {
-      if (!(empresaAtual?.id || estaNoGrupo)) return [];
+      if (!contextoValido) return [];
       return await filterInContext('Comissao', {}, '-created_date', 50);
     },
     staleTime: 30000,
@@ -137,9 +182,9 @@ export default function Comercial() {
   });
 
   const { data: notasFiscais = [] } = useQuery({
-    queryKey: ['notasFiscais', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
+    queryKey: ['notasFiscais', ...contextQueryKey],
     queryFn: async () => {
-      if (!(empresaAtual?.id || estaNoGrupo)) return [];
+      if (!contextoValido) return [];
       return await filterInContext('NotaFiscal', {}, '-created_date', 50, 'empresa_faturamento_id');
     },
     staleTime: 30000,
@@ -148,9 +193,9 @@ export default function Comercial() {
   });
 
   const { data: tabelasPreco = [] } = useQuery({
-    queryKey: ['tabelas-preco', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
+    queryKey: ['tabelas-preco', ...contextQueryKey],
     queryFn: async () => {
-      if (!(empresaAtual?.id || estaNoGrupo)) return [];
+      if (!contextoValido) return [];
       return await filterInContext('TabelaPreco', {}, '-updated_date', 50);
     },
     staleTime: 30000,
@@ -159,20 +204,20 @@ export default function Comercial() {
   });
 
   const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
+    queryKey: ['empresas', ...contextQueryKey],
     queryFn: async () => {
-      if (!(empresaAtual?.id || estaNoGrupo)) return [];
+      if (!contextoValido) return [];
       return await filterInContext('Empresa', {}, '-created_date', 9999);
     },
     staleTime: 60000,
     retry: 1,
-    enabled: Boolean(canSeeComercial && (empresaAtual?.id || estaNoGrupo))
+    enabled: Boolean(canSeeComercial && contextoValido)
   });
 
   const { data: pedidosExternos = [] } = useQuery({
-    queryKey: ['pedidos-externos', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
+    queryKey: ['pedidos-externos', ...contextQueryKey],
     queryFn: async () => {
-      if (!(empresaAtual?.id || estaNoGrupo)) return [];
+      if (!contextoValido) return [];
       return await filterInContext('PedidoExterno', {}, '-created_date', 30);
     },
     staleTime: 30000,
