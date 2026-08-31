@@ -2,12 +2,20 @@ import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
 let _cachedUser = null;
+const reportUIAuditFailure = (operation, error, context = {}) => {
+  console.error('[uiAudit] ' + operation, {
+    error: error?.message || String(error),
+    ...context,
+  });
+};
+
 async function getUserSafe() {
   try {
     if (_cachedUser) return _cachedUser;
     _cachedUser = await base44.auth.me();
     return _cachedUser;
-  } catch (_) {
+  } catch (error) {
+    reportUIAuditFailure('Falha ao carregar usuario', error);
     return null;
   }
 }
@@ -17,7 +25,8 @@ function getContextSafe() {
     const empresa_id = typeof localStorage !== 'undefined' ? localStorage.getItem('empresa_atual_id') : null;
     const group_id = typeof localStorage !== 'undefined' ? localStorage.getItem('group_atual_id') : null;
     return { empresa_id, group_id };
-  } catch (_) {
+  } catch (error) {
+    reportUIAuditFailure('Falha ao carregar contexto', error);
     return {};
   }
 }
@@ -29,11 +38,11 @@ export function logUIAction({ component, action, status, meta }) {
     if (status === 'start') {
       // noop (evitar ruído)
     } else if (status === 'success' && meta?.toastSuccess) {
-      try { toast.success(`${action} concluído`); } catch {}
+      try { toast.success(`${action} concluído`); } catch (error) { reportUIAuditFailure('Falha ao exibir confirmacao', error, { action }); }
     } else if (status === 'error') {
-      try { toast.error(`Falha em ${action}`, { description: meta?.error || '' }); } catch {}
+      try { toast.error(`Falha em ${action}`, { description: meta?.error || '' }); } catch (error) { reportUIAuditFailure('Falha ao exibir erro', error, { action }); }
     }
-  } catch {}
+  } catch (error) { reportUIAuditFailure('Falha no feedback visual', error, { action }); }
 
   try {
     const descricao = `[${component}] ${action} • ${status}`;
@@ -56,8 +65,8 @@ export function logUIAction({ component, action, status, meta }) {
           url: typeof window !== 'undefined' ? window.location.pathname : undefined,
         },
       });
-    });
-  } catch (_) {}
+    }).catch((error) => reportUIAuditFailure('Falha ao persistir acao de UI', error, { component, action }));
+  } catch (error) { reportUIAuditFailure('Falha ao preparar auditoria de UI', error, { component, action }); }
 }
 
 export function logUIIssue({ component, issue, severity = "warn", meta }) {
@@ -82,8 +91,8 @@ export function logUIIssue({ component, issue, severity = "warn", meta }) {
           url: typeof window !== 'undefined' ? window.location.pathname : undefined,
         },
       });
-    });
-  } catch (_) {}
+    }).catch((error) => reportUIAuditFailure('Falha ao persistir problema de UI', error, { component, issue }));
+  } catch (error) { reportUIAuditFailure('Falha ao preparar problema de UI', error, { component, issue }); }
 }
 
 function sanitizeMeta(meta) {
@@ -123,7 +132,7 @@ function uiAuditWrapLegacy(actionName, handler, baseMeta = {}) {
       Promise.resolve().then(() => {
         if (AUDIT_VERBOSE) logUIAction({ component: inferComponent(actionName), action: actionName, status: "success", meta: baseMeta });
         if (baseMeta && baseMeta.toastSuccess) {
-          try { toast.success(`${actionName} concluído`); } catch (_) {}
+          try { toast.success(`${actionName} concluído`); } catch (error) { reportUIAuditFailure('Falha ao exibir confirmacao legada', error, { actionName }); }
         }
       });
       
@@ -133,7 +142,7 @@ function uiAuditWrapLegacy(actionName, handler, baseMeta = {}) {
       
       // Log de erro não-bloqueante
       Promise.resolve().then(() => {
-        try { toast.error(`Falha: ${actionName}`, { description: msg }); } catch (_) {}
+        try { toast.error(`Falha: ${actionName}`, { description: msg }); } catch (toastError) { reportUIAuditFailure('Falha ao exibir erro legado', toastError, { actionName }); }
         if (AUDIT_VERBOSE) logUIAction({ component: inferComponent(actionName), action: actionName, status: "error", meta: { ...baseMeta, error: msg } });
       });
       
@@ -153,13 +162,13 @@ export function uiAuditWrap(actionName, handler, baseMeta = {}) {
         logUIAction({ component: inferComponent(actionName), action: actionName, status: "success", meta: baseMeta });
       }
       if (baseMeta?.toastSuccess) {
-        try { toast.success(baseMeta.successMessage || `${actionName} concluido`); } catch (_) {}
+        try { toast.success(baseMeta.successMessage || `${actionName} concluido`); } catch (error) { reportUIAuditFailure('Falha ao exibir confirmacao', error, { actionName }); }
       }
     };
 
     const logError = (error) => {
       const msg = String(error?.message || error) || 'Erro';
-      try { toast.error(`Falha: ${actionName}`, { description: msg }); } catch (_) {}
+      try { toast.error(`Falha: ${actionName}`, { description: msg }); } catch (toastError) { reportUIAuditFailure('Falha ao exibir erro', toastError, { actionName }); }
       if (AUDIT_VERBOSE || shouldPersistUIAudit(actionName, baseMeta)) {
         logUIAction({ component: inferComponent(actionName), action: actionName, status: "error", meta: { ...baseMeta, error: msg } });
       }

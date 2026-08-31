@@ -1,5 +1,12 @@
 import { sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
 
+const reportLocalClientFailure = (operation, error, context = {}) => {
+  console.error('[base44-local] ' + operation, {
+    error: error?.message || String(error),
+    ...context,
+  });
+};
+
 const STORAGE_KEY = 'erp_integra_local_db_v1';
 const USER_KEY = 'erp_integra_local_user_v1';
 const SNAPSHOT_IMPORT_KEY = 'erp_integra_base44_snapshot_imported_v5_core_compact';
@@ -412,7 +419,7 @@ const loadDb = () => {
       const db = ensureLocalTopology(JSON.parse(raw));
       saveDb(db);
       return db;
-    } catch {}
+    } catch (error) { reportLocalClientFailure('Falha ao carregar banco local; usando dados iniciais', error); }
   }
   const seeded = seedRecords();
   saveDb(seeded);
@@ -420,7 +427,7 @@ const loadDb = () => {
     safeStorage.setItem('contexto_atual', 'empresa');
     safeStorage.setItem('empresa_atual_id', seeded.Empresa[0].id);
     safeStorage.setItem('group_atual_id', seeded.GrupoEmpresarial[0].id);
-  } catch {}
+  } catch (error) { reportLocalClientFailure('Falha ao salvar contexto local inicial', error); }
   return seeded;
 };
 
@@ -435,7 +442,7 @@ const readUser = () => {
       const user = normalizeLocalUser(JSON.parse(raw));
       safeStorage.setItem(USER_KEY, JSON.stringify(user));
       return user;
-    } catch {}
+    } catch (error) { reportLocalClientFailure('Falha ao carregar usuario local', error); }
   }
   const db = loadDb();
   return normalizeLocalUser(db.User?.[0] || {});
@@ -573,16 +580,7 @@ const shouldStampEmpresa = (entityName) => ![
 ].includes(entityName);
 
 const sanitizeRecord = (value) => {
-  try {
-    return sanitizeOnWrite(value);
-  } catch {}
-  if (Array.isArray(value)) return value.map(sanitizeRecord);
-  if (!value || typeof value !== 'object') {
-    return typeof value === 'string'
-      ? value.replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, '').replace(/javascript:\s*/gi, '')
-      : value;
-  }
-  return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, sanitizeRecord(item)]));
+  return sanitizeOnWrite(value);
 };
 
 const stampRecordContext = (entityName, data = {}) => {
@@ -628,7 +626,7 @@ const auditLocalMutation = (entityName, action, { before = null, after = null, r
     });
     saveDb(db);
     notify('AuditLog', 'create', audit[0]);
-  } catch {}
+  } catch (error) { reportLocalClientFailure('Falha ao auditar mutacao local', error, { entityName, action, recordId }); }
 };
 
 const expandLocalContextFilter = (entityName, filter = {}) => {
@@ -871,7 +869,7 @@ const auditLocalPermissionDenied = (entityName, action, recordId = null) => {
     });
     saveDb(db);
     notify('AuditLog', 'create', audit[0]);
-  } catch {}
+  } catch (error) { reportLocalClientFailure('Falha ao auditar permissao local negada', error, { entityName, action, recordId }); }
 };
 
 const assertLocalMutationAllowed = (entityName, action, recordId = null) => {
@@ -914,7 +912,7 @@ const notify = (entityName, type, data) => {
   set.forEach((listener) => {
     try {
       listener({ type, data });
-    } catch {}
+    } catch (error) { reportLocalClientFailure('Falha em listener local', error, { entityName, type }); }
   });
 };
 
@@ -1131,7 +1129,7 @@ export const hydrateLocalBase44FromSnapshot = async ({ force = false, includeAud
       local: true,
       data_hora: now(),
     });
-  } catch {}
+  } catch (error) { reportLocalClientFailure('Falha ao auditar importacao do snapshot', error, { snapshotId }); }
 
   return { imported: true, snapshotId, summary };
 };
@@ -1371,7 +1369,7 @@ export const localBase44 = {
           data_hora: now(),
           local: true,
         });
-      } catch {}
+      } catch (error) { reportLocalClientFailure('Falha ao registrar navegacao local', error, { pageName }); }
       return { success: true, local: true };
     },
   },
@@ -1389,7 +1387,7 @@ export const localBase44 = {
           data_hora: now(),
           local: true,
         });
-      } catch {}
+      } catch (error) { reportLocalClientFailure('Falha ao registrar analytics local', error, { eventName: event?.eventName || event?.name }); }
       return { success: true, local: true };
     },
   },
@@ -1420,7 +1418,7 @@ export const localBase44 = {
         if (updates.contexto_atual) safeStorage.setItem('contexto_atual', updates.contexto_atual);
         if (updates.empresa_atual_id) safeStorage.setItem('empresa_atual_id', updates.empresa_atual_id);
         if (updates.grupo_atual_id) safeStorage.setItem('group_atual_id', updates.grupo_atual_id);
-      } catch {}
+      } catch (error) { reportLocalClientFailure('Falha ao atualizar contexto do usuario local', error, { user_id: user?.id }); }
       return user;
     },
     logout() {

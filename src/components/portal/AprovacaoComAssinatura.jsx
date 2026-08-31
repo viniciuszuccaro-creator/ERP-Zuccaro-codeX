@@ -15,6 +15,13 @@ import {
 import { toast } from "sonner";
 import { format } from "date-fns";
 
+const reportApprovalSignatureFailure = (operation, error, context = {}) => {
+  console.error('[AprovacaoComAssinatura] ' + operation, {
+    error: error?.message || String(error),
+    ...context,
+  });
+};
+
 /**
  * V21.5 - Aprovação de Orçamentos com Assinatura Eletrônica COMPLETO
  * ✅ Canvas para assinatura digital (mouse + touch)
@@ -130,7 +137,7 @@ export default function AprovacaoComAssinatura({ clienteId }) {
           empresa_id: cli?.empresa_id || undefined,
           group_id: cli?.group_id || undefined
         });
-      } catch (_) {}
+      } catch (error) { reportApprovalSignatureFailure('Falha ao iniciar alcada de aprovacao', error, { orcamento_id: orcamento.id, pedido_id: pedido.id }); }
 
       // 4. Vincular pedido
       await base44.entities.OrcamentoCliente.update(orcamento.id, {
@@ -148,20 +155,20 @@ export default function AprovacaoComAssinatura({ clienteId }) {
           empresa_id: cli?.empresa_id || undefined,
           group_id: cli?.group_id || undefined
         });
-      } catch (_) {}
+      } catch (error) { reportApprovalSignatureFailure('Falha ao auditar aceite do orcamento', error, { orcamento_id: orcamento.id, pedido_id: pedido.id }); }
       try {
         await base44.functions.invoke('sendEmailProvider', {
           to: orcamento.email_contato || orcamento.cliente_email || 'noreply@invalid.local',
           subject: `Orçamento aprovado • ${orcamento.numero_orcamento}`,
           body: `O orçamento ${orcamento.numero_orcamento} foi aprovado. Pedido ${pedido.numero_pedido} criado e aguarda aprovação.`
         });
-      } catch (_) {}
+      } catch (error) { reportApprovalSignatureFailure('Falha ao enviar email de aceite', error, { orcamento_id: orcamento.id, pedido_id: pedido.id }); }
       try {
         await base44.functions.invoke('whatsappSend', {
           to: orcamento.whatsapp_contato || '',
           message: `✅ Orçamento ${orcamento.numero_orcamento} aprovado. Pedido ${pedido.numero_pedido} gerado e aguardando aprovação.`
         });
-      } catch (_) {}
+      } catch (error) { reportApprovalSignatureFailure('Falha ao enviar WhatsApp de aceite', error, { orcamento_id: orcamento.id, pedido_id: pedido.id }); }
 
       return { orcamento, pedido, assinaturaUrl: file_url };
     },
@@ -184,14 +191,14 @@ export default function AprovacaoComAssinatura({ clienteId }) {
         try { await base44.entities.AuditLog.create({
           acao: 'Edição', modulo: 'Portal', tipo_auditoria: 'entidade', entidade: 'Cliente', registro_id: clienteId,
           descricao: 'Gamificação: aprovação de orçamento (+50)', dados_novos: { pontos_fidelidade: novo }, data_hora: new Date().toISOString()
-        }); } catch {}
-      } catch (_) {}
+        }); } catch (error) { reportApprovalSignatureFailure('Falha ao auditar pontos de fidelidade', error, { cliente_id: clienteId }); }
+      } catch (error) { reportApprovalSignatureFailure('Falha ao atualizar pontos de fidelidade', error, { cliente_id: clienteId }); }
 
-      try { await queryClient.invalidateQueries({ queryKey: ['cliente-portal'] }); } catch {}
-      try { await queryClient.invalidateQueries({ queryKey: ['orcamentos-aprovados-flag'] }); } catch {}
+      try { await queryClient.invalidateQueries({ queryKey: ['cliente-portal'] }); } catch (error) { reportApprovalSignatureFailure('Falha ao atualizar cache do cliente', error, { cliente_id: clienteId }); }
+      try { await queryClient.invalidateQueries({ queryKey: ['orcamentos-aprovados-flag'] }); } catch (error) { reportApprovalSignatureFailure('Falha ao atualizar cache de orcamentos', error, { cliente_id: clienteId }); }
 
       toast.success(`✅ Orçamento aprovado! Pedido ${pedido.numero_pedido} criado.`);
-      try { window.location.href = createPageUrl('PortalCliente?tab=meus-pedidos'); } catch (_) {}
+      try { window.location.href = createPageUrl('PortalCliente?tab=meus-pedidos'); } catch (error) { reportApprovalSignatureFailure('Falha ao abrir pedidos do portal', error, { pedido_id: pedido.id }); }
     },
     onError: (error) => {
       toast.error('Erro ao aprovar orçamento: ' + error.message);
@@ -211,7 +218,7 @@ export default function AprovacaoComAssinatura({ clienteId }) {
           descricao: `Solicitação de revisão do orçamento ${orcamento.numero_orcamento}`,
           dados_novos: { comentario_revisao: motivo }, data_hora: new Date().toISOString()
         });
-      } catch (_) {}
+      } catch (error) { reportApprovalSignatureFailure('Falha ao auditar solicitacao de revisao', error, { orcamento_id: orcamento.id }); }
       try {
         await base44.functions.invoke('sendEmailProvider', {
           to: orcamento.email_contato || orcamento.cliente_email || 'noreply@invalid.local',
@@ -219,13 +226,13 @@ export default function AprovacaoComAssinatura({ clienteId }) {
           body: `O cliente solicitou revisão do orçamento ${orcamento.numero_orcamento}.
 Motivo: ${motivo || 'Não informado'}`
         });
-      } catch (_) {}
+      } catch (error) { reportApprovalSignatureFailure('Falha ao enviar email de revisao', error, { orcamento_id: orcamento.id }); }
       try {
         await base44.functions.invoke('whatsappSend', {
           to: orcamento.whatsapp_contato || '',
           message: `⚠️ Revisão solicitada no orçamento ${orcamento.numero_orcamento}. Motivo: ${motivo || 'Não informado'}`
         });
-      } catch (_) {}
+      } catch (error) { reportApprovalSignatureFailure('Falha ao enviar WhatsApp de revisao', error, { orcamento_id: orcamento.id }); }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['orcamentos-aprovacao']);

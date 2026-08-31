@@ -3431,3 +3431,16 @@ Checklist inicial:
 - Lint operacional caiu de 200 para 160 erros; permanecem 20 avisos. O inventario global de catches vazios caiu de 313 para 273.
 - Validacao: 24 testes aprovados, `git diff --check` aprovado e build completo aprovado com 3.786 modulos.
 - Proximo passo obrigatorio: seguir pelos arquivos com maior concentracao de erros, iniciando por `AprovacaoComAssinatura.jsx`, `localBase44Client.js` e `uiAudit.jsx`, e retomar a reducao do typecheck por contratos de dominio.
+
+### Plano Mestre - Lote 9C: Assinatura, Cliente Local e Auditoria UI
+
+- `AprovacaoComAssinatura.jsx`, `localBase44Client.js` e `uiAudit.jsx` ficaram com zero catches vazios e passaram no ESLint direcionado.
+- O fluxo de assinatura registra falhas de alcada, auditoria, notificacoes, fidelidade, cache e navegacao com os identificadores do orcamento, pedido ou cliente.
+- O cliente Base44 local deixou de continuar com sanitizacao alternativa quando `sanitizeOnWrite` falhar; a gravacao agora falha fechada.
+- Falhas de banco local, usuario, auditoria, listeners, snapshot, analytics e contexto deixaram de ser silenciosas.
+- A auditoria de UI passou a capturar tambem rejeicoes assincronas na persistencia de acoes e problemas.
+- Inventario global de catches vazios caiu de 273 para 241. Lint global encerrou com 139 erros e o typecheck caiu de 1.788 para 1.778 diagnosticos.
+- Validacao: 24 testes aprovados, ESLint direcionado aprovado, `git diff --check` aprovado e build completo aprovado com 3.786 modulos em 46,10 segundos.
+- Permanecem os avisos preexistentes de Browserslist, imports mistos e bundle principal grande.
+- Nenhuma tela, funcionalidade ou dado foi removido; o projeto do HD externo nao foi acessado.
+- Proximo passo obrigatorio: continuar pelos arquivos com maior numero de catches vazios no inventario e corrigir contratos de dominio TS2339/TS2741 em lotes separados.

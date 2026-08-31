@@ -389,6 +389,8 @@ Andamento 9A em 2026-08-30: corrigido o seletor global que gerava CSS invalido; 
 
 Andamento 9B em 2026-08-30: concluidos os tratamentos de PWA, cache offline, erros globais, navegacao e telemetria do Layout. O arquivo ficou com zero catches vazios, o lint caiu para 160 erros e o inventario global caiu para 273.
 
+Andamento 9C em 2026-08-31: aprovacao com assinatura, cliente Base44 local e auditoria de UI ficaram sem catches vazios. A sanitizacao local agora falha fechada, o lint global ficou com 139 erros, o inventario caiu para 241 e o typecheck para 1.778 diagnosticos.
+
 ## Fase 11 - Duplicidades
 
 Objetivo: evitar que o ERP cresca com telas, funcoes e componentes repetidos.
