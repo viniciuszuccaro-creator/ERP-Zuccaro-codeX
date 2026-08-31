@@ -13,7 +13,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/components/ui/use-toast";
 import { Plus, Eye, MessageSquare, Star, CheckCircle2, XCircle } from "lucide-react";
 import { format } from "date-fns";
+import { sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
 const ChatbotWidgetAvancado = React.lazy(() => import("@/components/chatbot/ChatbotWidgetAvancado"));
+
+const reportCustomerTicketFailure = (operation, error, context = {}) => {
+  console.error('[ChamadosCliente] ' + operation, {
+    error: error?.message || String(error),
+    ...context,
+  });
+};
 
 /**
  * V21.5 - Chamados/Suporte Cliente COMPLETO
@@ -48,9 +56,11 @@ export default function ChamadosCliente({ clienteId, clienteNome }) {
 
   const { data: chamados = [] } = useQuery({
     queryKey: ['chamados', clienteId, clienteData?.empresa_id, clienteData?.group_id],
-    enabled: !!clienteId,
+    enabled: Boolean(clienteId && clienteData?.empresa_id && clienteData?.group_id),
     queryFn: async () => {
-      if (!clienteId) return [];
+      if (!clienteId || !clienteData?.empresa_id || !clienteData?.group_id) {
+        throw new Error('Contexto de Grupo e Empresa obrigatorio para consultar chamados.');
+      }
       const filtros = {
         cliente_id: clienteId,
         ...(clienteData?.empresa_id ? { empresa_id: clienteData.empresa_id } : {}),
@@ -63,18 +73,22 @@ export default function ChamadosCliente({ clienteId, clienteNome }) {
   const criarChamadoMutation = useMutation({
     mutationFn: async (data) => {
       const cli = clienteData || (await base44.entities.Cliente.filter({ id: clienteId }).then(r=>r?.[0]));
-      return base44.entities.Chamado.create({
+      if (!cli?.group_id || !cli?.empresa_id) {
+        throw new Error('Contexto de Grupo e Empresa obrigatorio para abrir chamado.');
+      }
+      const payload = sanitizeOnWrite({
         ...data,
         cliente_id: clienteId,
         cliente_nome: clienteNome,
         status: 'Aberto',
         data_abertura: new Date().toISOString().split('T')[0],
         mensagens: [],
-        empresa_id: cli?.empresa_id || undefined,
-        group_id: cli?.group_id || undefined,
+        empresa_id: cli.empresa_id,
+        group_id: cli.group_id,
       });
+      return base44.entities.Chamado.create(payload);
     },
-    onSuccess: async () => {
+    onSuccess: async (chamado) => {
       queryClient.invalidateQueries({ queryKey: ['chamados', clienteId] });
       setDialogOpen(false);
       resetForm();
@@ -84,8 +98,24 @@ export default function ChamadosCliente({ clienteId, clienteNome }) {
       });
       try { await base44.entities.AuditLog.create({
         acao: 'Criação', modulo: 'Portal', tipo_auditoria: 'entidade', entidade: 'Chamado',
+        registro_id: chamado?.id,
         descricao: 'Chamado aberto via Portal', data_hora: new Date().toISOString(),
-      }); } catch (_) {}
+        empresa_id: clienteData?.empresa_id,
+        group_id: clienteData?.group_id,
+      }); } catch (error) {
+        reportCustomerTicketFailure('Falha ao auditar abertura de chamado', error, {
+          chamadoId: chamado?.id,
+          clienteId,
+        });
+      }
+    },
+    onError: (error) => {
+      reportCustomerTicketFailure('Falha ao abrir chamado', error, { clienteId });
+      toast({
+        title: 'Não foi possível abrir o chamado',
+        description: error?.message || 'Revise o contexto e tente novamente.',
+        variant: 'destructive',
+      });
     },
   });
 
@@ -106,11 +136,25 @@ export default function ChamadosCliente({ clienteId, clienteNome }) {
         });
         try { await base44.entities.AuditLog.create({
           acao: 'Edição', modulo: 'Portal', tipo_auditoria: 'entidade', entidade: 'Cliente', registro_id: clienteId,
-          descricao: 'Gamificação: feedback registrado (+10)', dados_novos: { pontos_fidelidade: novo }, data_hora: new Date().toISOString()
-        }); } catch {}
-      } catch (_) {}
-      try { await queryClient.invalidateQueries({ queryKey: ['portal-has-feedback'] }); } catch {}
-      try { await queryClient.invalidateQueries({ queryKey: ['cliente-portal'] }); } catch {}
+          descricao: 'Gamificação: feedback registrado (+10)', dados_novos: { pontos_fidelidade: novo }, data_hora: new Date().toISOString(),
+          empresa_id: cli?.empresa_id,
+          group_id: cli?.group_id,
+        }); } catch (error) {
+          reportCustomerTicketFailure('Falha ao auditar pontos de feedback', error, { clienteId });
+        }
+      } catch (error) {
+        reportCustomerTicketFailure('Falha ao atualizar pontos de feedback', error, { clienteId });
+      }
+      try {
+        await queryClient.invalidateQueries({ queryKey: ['portal-has-feedback'] });
+      } catch (error) {
+        reportCustomerTicketFailure('Falha ao atualizar cache de feedback', error, { clienteId });
+      }
+      try {
+        await queryClient.invalidateQueries({ queryKey: ['cliente-portal'] });
+      } catch (error) {
+        reportCustomerTicketFailure('Falha ao atualizar cache do cliente', error, { clienteId });
+      }
     },
   });
 

@@ -393,6 +393,8 @@ Andamento 9C em 2026-08-31: aprovacao com assinatura, cliente Base44 local e aud
 
 Andamento 9D em 2026-08-31: guard backend, consolidacao de Grupo e envio WhatsApp ficaram sem catches vazios. Validacao SoD e conclusao de contexto passaram a falhar fechadas, a consolidacao exige contexto inclusive para administrador e o WhatsApp recebeu verificacao backend para chamadas de usuario. O inventario caiu para 227 ocorrencias.
 
+Andamento 9E em 2026-08-31: o motor de intents, o importador de produtos e os chamados do Portal ficaram sem catches vazios. Falhas dos fallbacks de IA e leitura de planilha agora sao rastreaveis; a criacao automatica de unidades e ignorada quando nao for possivel verificar duplicidades; chamados exigem Grupo e Empresa e recebem sanitizacao antes da gravacao. O lint caiu para 122 erros, sem avisos, e o inventario para 210 ocorrencias. Proxima frente: paginas Comercial e Dashboard e funcoes backend com maior concentracao de excecoes silenciosas, mantendo os contratos TS2339/TS2741 em lotes separados.
+
 ## Fase 11 - Duplicidades
 
 Objetivo: evitar que o ERP cresca com telas, funcoes e componentes repetidos.

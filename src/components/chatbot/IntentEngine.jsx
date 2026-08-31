@@ -1,5 +1,12 @@
 import { base44 } from '@/api/base44Client';
 
+const reportIntentFailure = (operation, error, context = {}) => {
+  console.error('[IntentEngine] ' + operation, {
+    error: error?.message || String(error),
+    ...context,
+  });
+};
+
 const getContextIds = (contexto = {}) => ({
   groupId: contexto.groupId || contexto.grupoId || contexto.group_id || contexto.grupo_id || null,
   empresaId: contexto.empresaId || contexto.empresa_id || null,
@@ -194,7 +201,9 @@ const IntentEngine = {
           }
         }
       }
-    } catch (_) {}
+    } catch (error) {
+      reportIntentFailure('Falha ao carregar intents dinamicas', error, getContextIds(contexto));
+    }
 
     // Se confiança baixa, usar IA como fallback para melhorar detecção
     if (confianca < 50) {
@@ -205,7 +214,9 @@ const IntentEngine = {
           confianca = Math.round(byIA.confianca);
           melhorMatch = { prioridade: 3, requer_humano: !!byIA.necessita_atendente };
         }
-      } catch (_) {}
+      } catch (error) {
+        reportIntentFailure('Falha no fallback de classificacao por IA', error, getContextIds(contexto));
+      }
     }
 
     // Analisar sentimento
@@ -481,7 +492,12 @@ const IntentEngine = {
           try {
             const c = await base44.entities.Cliente.filter(withContextFilter({ id: clienteId }, contexto));
             if (c?.[0]?.nome) clienteNome = c[0].nome;
-          } catch {}
+          } catch (error) {
+            reportIntentFailure('Falha ao carregar cliente para criacao de pedido', error, {
+              clienteId,
+              ...getContextIds(contexto),
+            });
+          }
 
           const numero = `WEB-${Date.now()}`;
           const valor = Number(entidades?.valor || 0);
@@ -511,7 +527,12 @@ const IntentEngine = {
               dados_novos: pedido,
               data_hora: new Date().toISOString(),
             });
-          } catch {}
+          } catch (error) {
+            reportIntentFailure('Falha ao auditar pedido criado pelo chatbot', error, {
+              pedidoId: pedido.id,
+              ...getContextIds(contexto),
+            });
+          }
 
           return {
             tipo: 'pedido_criado',
@@ -538,13 +559,17 @@ const IntentEngine = {
           try {
             const centros = await base44.entities.CentroCusto.filter(withContextFilter({ status: 'Ativo' }, contexto), '-updated_date', 1);
             centroId = centros?.[0]?.id;
-          } catch {}
+          } catch (error) {
+            reportIntentFailure('Falha ao carregar centro de custo do boleto', error, getContextIds(contexto));
+          }
           try {
             const planos = await base44.entities.PlanoDeContas
               ? await base44.entities.PlanoDeContas.filter(withContextFilter({}, contexto), '-updated_date', 20)
               : [];
             planoId = planos?.[0]?.id;
-          } catch {}
+          } catch (error) {
+            reportIntentFailure('Falha ao carregar plano de contas do boleto', error, getContextIds(contexto));
+          }
 
           if (!centroId || !planoId) {
             return { tipo: 'erro', mensagem: 'Não consegui emitir boleto: configure Centro de Custo e Plano de Contas padrão para a empresa.' };
@@ -571,7 +596,10 @@ const IntentEngine = {
               await base44.entities.ContaReceber.update(cr.id, withContextPayload({ url_boleto_pdf: data.url }, contexto));
             }
           } catch (e) {
-            // mantém registro sem URL se falhar
+            reportIntentFailure('Falha ao emitir PDF do boleto', e, {
+              contaReceberId: cr.id,
+              ...getContextIds(contexto),
+            });
           }
 
           try {
@@ -587,7 +615,12 @@ const IntentEngine = {
               dados_novos: cr,
               data_hora: new Date().toISOString(),
             });
-          } catch {}
+          } catch (error) {
+            reportIntentFailure('Falha ao auditar boleto criado pelo chatbot', error, {
+              contaReceberId: cr.id,
+              ...getContextIds(contexto),
+            });
+          }
 
           return {
             tipo: 'boleto_gerado',

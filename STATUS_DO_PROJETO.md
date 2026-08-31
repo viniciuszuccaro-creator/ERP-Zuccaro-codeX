@@ -3457,3 +3457,18 @@ Checklist inicial:
 - Lint frontend permanece com 139 erros e typecheck com 1.778 diagnosticos, sem regressao neste sublote backend.
 - Nenhuma tela, funcionalidade ou dado foi removido; o projeto do HD externo nao foi acessado.
 - Proximo passo obrigatorio: tratar `IntentEngine.jsx`, importador de produtos, portal de chamados e os contratos TS2339/TS2741 de maior propagacao.
+
+### Plano Mestre - Lote 9E: Intents, Importacao de Produtos e Chamados
+
+- O trabalho foi executado somente no clone interno `C:\Users\cpaba\ERP-Zuccaro-codeX-local\ERP-Zuccaro-codeX`; o projeto do HD externo nao foi acessado nem alterado.
+- `IntentEngine.jsx` registra falhas ao carregar intents dinamicas, usar IA, consultar cadastros auxiliares, emitir boleto e persistir auditorias, preservando os fallbacks existentes.
+- `ImportadorProdutosPlanilha.jsx` registra falhas de codificacao e dos extratores alternativos sem interromper a leitura por outro formato.
+- A criacao automatica de unidades de medida agora e ignorada quando a consulta das unidades existentes falha, evitando duplicidades; o preview permanece disponivel e informa o usuario.
+- `ChamadosCliente.jsx` exige `group_id` e `empresa_id` para consultar e criar chamados, sanitiza o payload e grava o mesmo contexto nas auditorias.
+- Falhas de abertura, gamificacao, auditoria e atualizacao de cache do Portal deixaram de ser silenciosas e apresentam mensagem quando a operacao principal falhar.
+- Os tres componentes ficaram com zero catches vazios e passaram no ESLint direcionado sem erros ou avisos.
+- O inventario global caiu de 227 para 210 catches vazios. O lint global caiu de 139 para 122 erros e zero avisos; o typecheck permaneceu em 1.778 diagnosticos, sem regressao.
+- Validacao: 24 testes aprovados, `git diff --check` aprovado e build completo aprovado com 3.786 modulos em 15,32 segundos.
+- Permanecem avisos preexistentes de dados Browserslist desatualizados, imports mistos e bundle principal grande.
+- Nenhuma tela, botao, funcionalidade ou dado foi removido.
+- Proximo passo obrigatorio: tratar as excecoes silenciosas das paginas `Comercial.jsx` e `Dashboard.jsx` e das funcoes backend com maior concentracao, depois continuar os contratos TS2339/TS2741 em lote separado.

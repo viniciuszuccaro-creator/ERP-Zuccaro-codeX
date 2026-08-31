@@ -29,6 +29,13 @@ const sanitize = (v) => {
 };
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const reportProductImportFailure = (operation, error, context = {}) => {
+  console.error('[ImportadorProdutosPlanilha] ' + operation, {
+    error: error?.message || String(error),
+    ...context,
+  });
+};
+
 const removeDiacritics = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const get = (row, keys) => {
   const normKey = (s) => removeDiacritics(String(s || '').toLowerCase().trim().replace(/^\uFEFF/, ''));
@@ -521,7 +528,6 @@ const [suggesting, setSuggesting] = useState(false);
       setChecando(false);
     };
     validar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baseProdutos, empresaId, grupoId, importarParaTodasEmpresas, empresas?.length]);
 
   const detectEncoding = async (file) => {
@@ -531,7 +537,11 @@ const [suggesting, setSuggesting] = useState(false);
       if (b[0] === 0xFF && b[1] === 0xFE) return 'UTF-16LE';
       if (b[0] === 0xFE && b[1] === 0xFF) return 'UTF-16BE';
       if (b[0] === 0xEF && b[1] === 0xBB && b[2] === 0xBF) return 'UTF-8';
-    } catch (_) {}
+    } catch (error) {
+      reportProductImportFailure('Falha ao detectar codificacao; usando UTF-8', error, {
+        arquivo: file?.name,
+      });
+    }
     return 'UTF-8';
   };
 
@@ -721,7 +731,11 @@ const [suggesting, setSuggesting] = useState(false);
           });
           if (objetos.length > 0) return objetos.filter((o) => Object.keys(o).length > 0);
         }
-      } catch (_) {}
+      } catch (error) {
+        reportProductImportFailure('Falha no extrator tabular de CSV', error, {
+          arquivo: file?.name,
+        });
+      }
 
       // 3) Fallback final: extrair como objeto genérico e procurar arrays de objetos
       try {
@@ -741,7 +755,11 @@ const [suggesting, setSuggesting] = useState(false);
         };
         const rows = pickArrayOfObjects(out);
         if (Array.isArray(rows) && rows.length) return rows;
-      } catch (_) {}
+      } catch (error) {
+        reportProductImportFailure('Falha no extrator generico de CSV', error, {
+          arquivo: file?.name,
+        });
+      }
 
       return [];
       }
@@ -752,7 +770,11 @@ const [suggesting, setSuggesting] = useState(false);
         const { data } = await base44.functions.invoke('parseSpreadsheet', { file_url });
         const rows = Array.isArray(data?.rows) ? data.rows : [];
         return rows;
-      } catch (_) {}
+      } catch (error) {
+        reportProductImportFailure('Falha no primeiro processamento de planilha', error, {
+          arquivo: file?.name,
+        });
+      }
     }
       const { data } = await base44.functions.invoke('parseSpreadsheet', { file_url });
       const rows = Array.isArray(data?.rows) ? data.rows : [];
@@ -904,7 +926,14 @@ const [suggesting, setSuggesting] = useState(false);
           let existentes = [];
           try {
             existentes = await filterInContext('UnidadeMedida', {}, 'sigla', 500);
-          } catch (_) {}
+          } catch (error) {
+            reportProductImportFailure('Falha ao consultar unidades existentes', error, {
+              arquivo: f.name,
+              grupoId,
+              empresaId,
+            });
+            throw error;
+          }
           const existentesSet = new Set((existentes || []).map(u => String(u.sigla || '').toUpperCase().trim()));
           const novosUM = Array.from(unidadesDetectadas).filter(s => !existentesSet.has(s));
           if (novosUM.length) {
@@ -928,7 +957,14 @@ const [suggesting, setSuggesting] = useState(false);
             }
           }
         }
-      } catch (_) { /* não bloquear import preview por UM */ }
+      } catch (error) {
+        reportProductImportFailure('Criacao automatica de unidades ignorada com seguranca', error, {
+          arquivo: f.name,
+          grupoId,
+          empresaId,
+        });
+        toast.warning('Não foi possível validar as unidades existentes. A criação automática de unidades foi ignorada para evitar duplicidades.');
+      }
 
       // Captura e salva os cabeçalhos disponíveis para auto-mapeamento
       const headersDetectados = Array.from(
