@@ -165,6 +165,7 @@ Deno.serve(async (req) => {
           direction: 'grupo_to_empresas',
           entidades: ['PlanoDeContas','CentroCusto'],
           strategy,
+          internal_token: Deno.env.get('DEPLOY_AUDIT_TOKEN') || undefined,
         });
         propagation = res?.data || { ok: true };
       } catch (_) {

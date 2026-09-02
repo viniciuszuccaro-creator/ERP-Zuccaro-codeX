@@ -1,3 +1,13 @@
+### Fiscal/Importação - Escopo e Auditoria Segura
+- Continuei o próximo lote salvo nos fluxos existentes de autorização de NF-e, leitura de planilhas e propagação Grupo/Empresas.
+- `onNotaFiscalAuthorized` agora resolve e valida `group_id`/`empresa_id` e rejeita NotaFiscal, Pedido, Produto e Cliente fora do contexto.
+- A auditoria pós-autorização registra somente metadados e flags de DANFE/XML/chave, sem links ou payload fiscal completo.
+- `parseSpreadsheet` valida URL HTTPS sem credenciais, bloqueia redirecionamentos e limita arquivos a 10 MB; a auditoria registra apenas origem, extensão, planilha, linhas e contexto.
+- `propagateGroupConfigs` exige `DEPLOY_AUDIT_TOKEN` para automações sem usuário, valida todas as empresas no grupo e audita resultados resumidos.
+- A chamada interna existente de `seedMultiCompanyData` passou a enviar o token de automação.
+- Mantida a Regra-Mãe: melhorias nos fluxos existentes, sem criar telas, módulos ou rotas e sem remover funcionalidades.
+- Validações concluídas: `node --check`, `npm test` (27/27), `npm run build`, `npm run audit:baseline` e `git diff --check` passaram.
+- Próximo passo sugerido: revisar os fluxos restantes de Administração do Sistema, persistência sensível e testes de isolamento multiempresa.
 ### Comercial/Fiscal - Hooks Operacionais com Contexto e Auditoria Resumida
 - Continuei o proximo passo salvo: revisar hooks operacionais (`onOrcamentoConfirmed`, `onOportunidadeStageChanged`, `onPedidoReadyToInvoice`) para reduzir logs com payloads completos e reforcar propagacao Grupo/Empresa.
 - `onOrcamentoConfirmed` agora completa `group_id` a partir da empresa antes de criar Pedido, mantendo o fluxo existente de conversao de orcamento confirmado.

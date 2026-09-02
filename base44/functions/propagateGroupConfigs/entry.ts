@@ -1,5 +1,13 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
+const reportPropagationFailure = (operation, error, context = {}) => {
+  console.error(`[propagateGroupConfigs] ${operation}`, { error: error?.message || String(error), ...context });
+};
+
+const summarizeResults = (results) => results.map(({ entity, created, updated, skipped, total_source, direction }) => ({
+  entity, created, updated, skipped, total_source, direction,
+}));
+
 // Admin-only function to propagate configurations/data between group and companies
 // Body formats supported:
 // 1) Direct call: { group_id, empresa_id?, direction?: 'grupo_to_empresas'|'empresa_to_grupo', entidades?: string[], strategy?: 'skip'|'merge'|'override' }
@@ -8,17 +16,22 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const raw = await req.json().catch(() => ({}));
     // Suporta dois modos:
     // 1) Chamada por usuário autenticado (admin) — requer role=admin
     // 2) Chamada por automação agendada (sem auth) — permitida via service role
     let user = null;
-    try { user = await base44.auth.me(); } catch (_) {}
-    const isScheduledAutomation = !user; // sem auth → automação agendada
+    try { user = await base44.auth.me(); } catch (error) { reportPropagationFailure('autenticacao', error); }
+    const internalToken = raw?.internal_token || req.headers.get('x-internal-token') || null;
+    const expectedToken = Deno.env.get('DEPLOY_AUDIT_TOKEN') || null;
+    const trustedInternal = Boolean(internalToken && expectedToken && internalToken === expectedToken);
+    if (!user && !trustedInternal) {
+      return Response.json({ error: 'Forbidden: internal automation token required' }, { status: 403 });
+    }
     if (user && user.role !== 'admin') {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
-    const raw = await req.json().catch(() => ({}));
     const event = raw?.event || null;
     const data = raw?.data || null;
 
@@ -54,7 +67,16 @@ Deno.serve(async (req) => {
     if (!groupId) return Response.json({ error: 'group_id obrigatório (ou empresa_id que pertença a um grupo)' }, { status: 400 });
 
     const empresas = await base44.asServiceRole.entities.Empresa.filter({ group_id: groupId }, undefined, 500);
-    const targetEmpresas = Array.isArray(empresas_ids) && empresas_ids.length ? empresas.filter(e => empresas_ids.includes(e.id)) : empresas;
+    const empresasDoGrupo = new Map((empresas || []).map((empresa) => [empresa.id, empresa]));
+    const requestedEmpresaIds = Array.isArray(empresas_ids) && empresas_ids.length ? empresas_ids : null;
+    const idsForaDoGrupo = (requestedEmpresaIds || []).filter((id) => !empresasDoGrupo.has(id));
+    if (idsForaDoGrupo.length) {
+      return Response.json({ error: 'Empresa fora do grupo informado', empresas_ids: idsForaDoGrupo }, { status: 403 });
+    }
+    if (empresaId && !empresasDoGrupo.has(empresaId)) {
+      return Response.json({ error: 'empresa_id fora do grupo informado' }, { status: 403 });
+    }
+    const targetEmpresas = requestedEmpresaIds ? requestedEmpresaIds.map((id) => empresasDoGrupo.get(id)) : empresas;
 
     // Helpers
     const keyFieldsByEntity = (en) => {
@@ -148,6 +170,7 @@ Deno.serve(async (req) => {
       const ids = Array.isArray(empresas_ids) && empresas_ids.length ? empresas_ids : (empresaId ? [empresaId] : []);
       if (!ids.length) return Response.json({ error: 'empresa_id ou empresas_ids obrigatório para empresa_to_grupo' }, { status: 400 });
       for (const eid of ids) {
+        if (!empresasDoGrupo.has(eid)) return Response.json({ error: 'Empresa de origem fora do grupo informado' }, { status: 403 });
         for (const en of entidades) if (base44.asServiceRole.entities?.[en]) results.push(await copyEmpresaToGroup(en, eid));
       }
     }
@@ -157,7 +180,7 @@ Deno.serve(async (req) => {
       usuario: user ? (user.full_name || user.email || 'Admin') : 'Sistema Agendado',
       usuario_id: user?.id || null,
       acao: 'Execução', modulo: 'Sistema', tipo_auditoria: 'sistema', entidade: 'PropagacaoGrupo',
-      descricao: `Propagação ${direction} (${entidades.join(', ')})`, dados_novos: { group_id: groupId, empresa_id: empresaId || null, direction, strategy, results },
+      descricao: `Propagação ${direction} (${entidades.join(', ')})`, dados_novos: { group_id: groupId, empresa_id: empresaId || null, direction, strategy, resultados: summarizeResults(results) },
       data_hora: new Date().toISOString()
     }); } catch {}
 
