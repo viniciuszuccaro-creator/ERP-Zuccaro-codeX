@@ -83,6 +83,46 @@ const buildRetornoCobrancaLogPayload = (resultado = {}) => ({
   expiracao: resultado.expiracao || null,
 });
 
+const buildOperacaoCobrancaAuditPayload = (resultado = {}) => ({
+  sucesso: resultado.sucesso === true || resultado.deleted === true,
+  id: resultado.id || null,
+  status: resultado.status || null,
+  dataRecebimento: resultado.dataRecebimento || resultado.paymentDate || null,
+  valorRecebido: resultado.valorRecebido ?? resultado.value ?? null,
+  formaPagamento: resultado.formaPagamento || resultado.billingType || null,
+  deletado: resultado.deleted ?? resultado.deletado ?? null,
+});
+
+async function auditarOperacaoCobranca({ acao, cobrancaId, empresaId, config, resultado }) {
+  try {
+    const usuario = await base44.auth.me().catch(() => null);
+    const scopedEmpresaId = normalizeIdentifier(empresaId);
+    const groupId = normalizeIdentifier(config?.group_id) || normalizeIdentifier(config?.grupo_id) || null;
+
+    await base44.entities.AuditLog.create({
+      usuario: usuario?.full_name || usuario?.email || 'Sistema',
+      usuario_id: usuario?.id || null,
+      acao,
+      modulo: 'Financeiro',
+      tipo_auditoria: 'integracao',
+      entidade: 'LogCobranca',
+      registro_id: normalizeIdentifier(cobrancaId),
+      descricao: `${acao} de cobranca executada na integracao de pagamentos`,
+      empresa_id: scopedEmpresaId,
+      group_id: groupId,
+      dados_novos: {
+        cobranca_id: normalizeIdentifier(cobrancaId),
+        provedor: config?.integracao_boletos?.provedor || null,
+        retorno: buildOperacaoCobrancaAuditPayload(resultado),
+      },
+      data_hora: new Date().toISOString(),
+      sucesso: true,
+    });
+  } catch (error) {
+    console.warn('Falha ao auditar operacao de cobranca', error);
+  }
+}
+
 async function auditarVinculoClienteAsaas({ cliente, conta, resultado }) {
   try {
     const usuario = await base44.auth.me().catch(() => null);
@@ -292,14 +332,15 @@ async function consultarStatusPagamento(cobrancaId, empresaId) {
   }
 
   const resultado = await response.json();
-  
-  return {
+  const retorno = {
     sucesso: true,
     status: resultado.status, // PENDING, CONFIRMED, RECEIVED, etc.
     dataRecebimento: resultado.paymentDate,
     valorRecebido: resultado.value,
     formaPagamento: resultado.billingType
   };
+  await auditarOperacaoCobranca({ acao: 'Consulta', cobrancaId, empresaId, config: verificacao.config, resultado: retorno });
+  return retorno;
 }
 
 /**
@@ -410,12 +451,13 @@ export async function cancelarCobranca(cobrancaId, empresaId) {
   }
 
   const resultado = await response.json();
-  
-  return {
+  const retorno = {
     sucesso: true,
     status: resultado.status,
     deletado: resultado.deleted
   };
+  await auditarOperacaoCobranca({ acao: 'Cancelamento', cobrancaId, empresaId, config: verificacao.config, resultado: retorno });
+  return retorno;
 }
 
 export default {

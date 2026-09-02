@@ -1,3 +1,10 @@
+### Integracoes - Auditoria de Consulta e Cancelamento de Cobrancas
+- Continuei o proximo passo salvo: revisar cancelamento/consulta de cobrancas para registrar auditoria de integracao com empresa/grupo e retorno minimo.
+- `consultarStatusPagamento` agora registra `AuditLog` com acao de consulta, empresa, grupo da configuracao, cobranca e retorno resumido.
+- `cancelarCobranca` agora registra `AuditLog` com acao de cancelamento, empresa, grupo da configuracao, cobranca e retorno resumido.
+- A auditoria evita payload externo completo e e tolerante a falhas, preservando o fluxo operacional de cobranca.
+- Mantida a Regra-Mae: melhoria feita no helper existente de Boletos/PIX, sem criar modulo, tela, rota ou remover funcionalidade.
+- Proximo passo sugerido: revisar os helpers de envio WhatsApp/Email para auditar disparos com retorno minimo e contexto Grupo/Empresa.
 ### Integracoes - LogCobranca com Payload Seguro
 - Continuei o proximo passo salvo: revisar logs de cobranca para reduzir payload sensivel e incluir `group_id` quando disponivel.
 - No helper existente de Boletos/PIX, `LogCobranca.create` deixa de gravar a conta completa e passa a registrar somente campos necessarios para auditoria: IDs, empresa, grupo, tipo, valor, vencimento e descricao.
