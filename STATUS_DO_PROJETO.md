@@ -1,3 +1,10 @@
+### Integracoes - LogCobranca com Payload Seguro
+- Continuei o proximo passo salvo: revisar logs de cobranca para reduzir payload sensivel e incluir `group_id` quando disponivel.
+- No helper existente de Boletos/PIX, `LogCobranca.create` deixa de gravar a conta completa e passa a registrar somente campos necessarios para auditoria: IDs, empresa, grupo, tipo, valor, vencimento e descricao.
+- `LogCobranca.update` deixa de guardar o retorno completo da integracao e passa a salvar um resumo sem QR Code/base64 e sem payload externo integral.
+- O log de cobranca agora inclui `group_id` quando a conta trouxer `group_id` ou `grupo_id`, reforcando rastreabilidade Grupo/Empresa.
+- Mantida a Regra-Mae: melhoria feita no fluxo existente de Boletos/PIX, sem criar modulo, tela ou remover comportamento operacional.
+- Proximo passo sugerido: revisar cancelamento/consulta de cobrancas para registrar auditoria de integracao com empresa/grupo e retorno minimo.
 ### Integracoes - Auditoria do Vinculo Asaas
 - Continuei o proximo passo salvo: revisar updates sensiveis de integracao com retorno externo e alteracao local.
 - No helper existente de Boletos/PIX, a gravacao de `cliente_asaas_id` no cadastro de Cliente agora registra auditoria de integracao com antes/depois, usuario, timestamp, empresa e grupo.

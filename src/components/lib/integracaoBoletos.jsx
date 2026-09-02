@@ -62,6 +62,27 @@ async function buscarClienteDaEmpresa(clienteId, empresaId) {
   throw new Error('Cliente nao pertence a empresa da cobranca');
 }
 
+const buildContaReceberLogPayload = (conta, tipo) => ({
+  id: conta?.id || null,
+  cliente_id: normalizeIdentifier(conta?.cliente_id),
+  empresa_id: normalizeIdentifier(conta?.empresa_id),
+  group_id: normalizeIdentifier(conta?.group_id) || normalizeIdentifier(conta?.grupo_id) || null,
+  tipo,
+  valor: conta?.valor ?? null,
+  data_vencimento: conta?.data_vencimento || null,
+  descricao: conta?.descricao || null,
+});
+
+const buildRetornoCobrancaLogPayload = (resultado = {}) => ({
+  sucesso: resultado.sucesso === true,
+  id: resultado.id || null,
+  status: resultado.status || null,
+  url_boleto: resultado.url_boleto || null,
+  url_fatura: resultado.url_fatura || null,
+  nossoNumero: resultado.nossoNumero || null,
+  expiracao: resultado.expiracao || null,
+});
+
 async function auditarVinculoClienteAsaas({ cliente, conta, resultado }) {
   try {
     const usuario = await base44.auth.me().catch(() => null);
@@ -315,11 +336,12 @@ export async function gerarCobranca(contaReceber, tipo = 'BOLETO') {
   // 3. Log da tentativa
   const logId = await base44.entities.LogCobranca.create({
     empresa_id: contaReceber.empresa_id,
+    group_id: normalizeIdentifier(contaReceber.group_id) || normalizeIdentifier(contaReceber.grupo_id) || null,
     conta_receber_id: contaReceber.id,
     tipo_operacao: tipo === 'BOLETO' ? 'gerar_boleto' : 'gerar_pix',
     provedor: verificacao.integracao.provedor,
     data_hora: new Date().toISOString(),
-    payload_enviado: { conta: contaReceber, tipo },
+    payload_enviado: buildContaReceberLogPayload(contaReceber, tipo),
     status_operacao: 'pendente'
   });
 
@@ -339,7 +361,7 @@ export async function gerarCobranca(contaReceber, tipo = 'BOLETO') {
 
     // 5. Atualizar log de sucesso
     await base44.entities.LogCobranca.update(logId.id, {
-      retorno_recebido: resultado,
+      retorno_recebido: buildRetornoCobrancaLogPayload(resultado),
       status_operacao: 'sucesso',
       id_cobranca_externa: resultado.id,
       linha_digitavel: resultado.linha_digitavel,
