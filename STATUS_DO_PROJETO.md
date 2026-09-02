@@ -1,3 +1,11 @@
+### Integracoes - NF-e Backend com Contexto e Auditoria Segura
+- Continuei o proximo passo salvo: revisar funcoes backend de integracao financeira/fiscal com chamadas externas para padronizar payload seguro, RBAC e propagacao Grupo/Empresa.
+- `nfeActions` agora aceita aliases de contexto (`empresa_id`, `group_id`, `grupo_id`) e resolve `groupId` pela empresa antes do guard fiscal.
+- A busca de configuracao NF-e passou a exigir `empresa_id`, evitando usar configuracao de outra empresa com a mesma chave.
+- Emissao, consulta de status, cancelamento e carta de correcao agora registram auditoria resumida com empresa, grupo, acao, nota/pedido, status, numero, serie, protocolo e flags de DANFE/XML.
+- O `AuditLog` fiscal nao grava o objeto completo da NF-e nem retorno externo integral do provedor, reduzindo exposicao de dados fiscais sensiveis.
+- Mantida a Regra-Mae: melhoria feita na funcao fiscal existente, sem criar modulo, tela, rota ou remover funcionalidade.
+- Proximo passo sugerido: revisar `emitirBoleto` para aplicar payload seguro e contexto estrito em configuracao, updates e auditoria financeira.
 ### Integracoes - Backend WhatsApp e Email com Escopo/Auditoria
 - Continuei o proximo passo salvo: revisar funcoes backend `whatsappSend` e `sendEmailProvider` para garantir contexto Grupo/Empresa e auditoria tambem no servidor.
 - `whatsappSend` agora completa `groupId` a partir da empresa antes do guard e usa auditoria sanitizada com numero mascarado, tipo de envio, flags de midia e retorno resumido.
