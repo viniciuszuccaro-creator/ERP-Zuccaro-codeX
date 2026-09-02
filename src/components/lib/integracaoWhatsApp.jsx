@@ -62,6 +62,42 @@ async function buscarClienteDaEmpresa(clienteId, empresaId) {
   throw new Error('Cliente nao pertence a empresa da mensagem');
 }
 
+const buildWhatsAppAuditPayload = (dados = {}, retorno = {}) => ({
+  action: dados.tipo === 'arquivo' && dados.arquivoUrl ? 'sendMedia' : 'sendText',
+  numero_destino: dados.numero ? String(dados.numero).replace(/\d(?=\d{4})/g, '*') : null,
+  tipo: dados.tipo || 'texto',
+  tem_arquivo: Boolean(dados.arquivoUrl),
+  tem_legenda: Boolean(dados.legenda),
+  tamanho_mensagem: dados.mensagem ? String(dados.mensagem).length : 0,
+  retorno: {
+    sucesso: retorno?.sucesso ?? retorno?.success ?? null,
+    id: retorno?.id || retorno?.messageId || null,
+    status: retorno?.status || null,
+  },
+});
+
+async function auditarEnvioWhatsApp(dados, retorno) {
+  try {
+    const usuario = await base44.auth.me().catch(() => null);
+    await base44.entities.AuditLog.create({
+      usuario: usuario?.full_name || usuario?.email || 'Sistema',
+      usuario_id: usuario?.id || null,
+      acao: 'Envio',
+      modulo: 'Comercial',
+      tipo_auditoria: 'integracao',
+      entidade: 'WhatsApp',
+      descricao: 'Mensagem WhatsApp enviada pela integracao',
+      empresa_id: normalizeIdentifier(dados?.empresaId) || normalizeIdentifier(dados?.empresa_id) || null,
+      group_id: normalizeIdentifier(dados?.groupId) || normalizeIdentifier(dados?.group_id) || normalizeIdentifier(dados?.grupo_id) || null,
+      dados_novos: buildWhatsAppAuditPayload(dados, retorno),
+      data_hora: new Date().toISOString(),
+      sucesso: true,
+    });
+  } catch (error) {
+    console.warn('Falha ao auditar envio WhatsApp', error);
+  }
+}
+
 async function enviarMensagemEvolution(numero, mensagem, config) {
   const { data } = await base44.functions.invoke('whatsappSend', { action: 'sendText', numero, mensagem });
   return data;
@@ -98,6 +134,7 @@ export async function enviarWhatsApp(dados) {
     arquivoUrl,
     legenda,
   });
+  await auditarEnvioWhatsApp(dados, data);
   return data;
   }
 
@@ -131,7 +168,8 @@ Qualquer dúvida, estamos à disposição! 😊
   return await enviarWhatsApp({
     numero: whatsapp,
     mensagem,
-    empresaId,
+    empresaId: empresaId || conta.empresa_id,
+    groupId: conta.group_id || conta.grupo_id || null,
     tipo: 'texto'
   });
 }
@@ -159,7 +197,8 @@ Acompanhe seu pedido em tempo real! 📦
   return await enviarWhatsApp({
     numero: whatsapp,
     mensagem,
-    empresaId,
+    empresaId: empresaId || pedido.empresa_id,
+    groupId: pedido.group_id || pedido.grupo_id || null,
     tipo: 'texto'
   });
 }

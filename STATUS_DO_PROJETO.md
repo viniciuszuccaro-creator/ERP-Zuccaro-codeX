@@ -1,3 +1,11 @@
+### Integracoes - Auditoria de Envios WhatsApp e Email
+- Continuei o proximo passo salvo: revisar helpers de envio WhatsApp/Email para auditar disparos com retorno minimo e contexto Grupo/Empresa.
+- `enviarWhatsApp` agora registra `AuditLog` com empresa, grupo, tipo de envio, destino mascarado, tamanho da mensagem e retorno resumido.
+- `enviarEmail` agora registra `AuditLog` com empresa, grupo, destinatario, assunto, tipo de conteudo, tamanho da mensagem e retorno resumido.
+- Os logs evitam gravar corpo completo do email, mensagem completa, arquivo/base64 ou payload externo integral.
+- Notificacoes automaticas existentes passam a encaminhar `groupId` quando o documento trouxer `group_id`/`grupo_id`.
+- Mantida a Regra-Mae: melhoria feita nos helpers existentes, sem criar modulo, tela, rota ou remover funcionalidade.
+- Proximo passo sugerido: revisar funcoes backend `whatsappSend` e `sendEmailProvider` para garantir RBAC/contexto/auditoria tambem no servidor.
 ### Integracoes - Auditoria de Consulta e Cancelamento de Cobrancas
 - Continuei o proximo passo salvo: revisar cancelamento/consulta de cobrancas para registrar auditoria de integracao com empresa/grupo e retorno minimo.
 - `consultarStatusPagamento` agora registra `AuditLog` com acao de consulta, empresa, grupo da configuracao, cobranca e retorno resumido.

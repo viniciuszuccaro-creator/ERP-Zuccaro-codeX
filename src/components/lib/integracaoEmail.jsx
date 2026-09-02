@@ -61,6 +61,41 @@ async function buscarClienteDaEmpresa(clienteId, empresaId) {
   return recordMatchesEmpresaScope(cliente, scopedEmpresaId) ? cliente : null;
 }
 
+const buildEmailAuditPayload = (dados = {}, retorno = {}) => ({
+  destinatario: dados.destinatario || null,
+  destinatario_nome: dados.destinatario_nome || null,
+  assunto: dados.assunto || null,
+  tipo_conteudo: dados.tipo_conteudo || null,
+  tamanho_mensagem: dados.mensagem ? String(dados.mensagem).length : 0,
+  retorno: {
+    sucesso: retorno?.sucesso ?? retorno?.success ?? null,
+    id: retorno?.id || retorno?.messageId || null,
+    status: retorno?.status || null,
+  },
+});
+
+async function auditarEnvioEmail(dados, retorno) {
+  try {
+    const usuario = await base44.auth.me().catch(() => null);
+    await base44.entities.AuditLog.create({
+      usuario: usuario?.full_name || usuario?.email || 'Sistema',
+      usuario_id: usuario?.id || null,
+      acao: 'Envio',
+      modulo: 'Comercial',
+      tipo_auditoria: 'integracao',
+      entidade: 'Email',
+      descricao: 'Email enviado pela integracao',
+      empresa_id: normalizeIdentifier(dados?.empresaId) || normalizeIdentifier(dados?.empresa_id) || null,
+      group_id: normalizeIdentifier(dados?.groupId) || normalizeIdentifier(dados?.group_id) || normalizeIdentifier(dados?.grupo_id) || null,
+      dados_novos: buildEmailAuditPayload(dados, retorno),
+      data_hora: new Date().toISOString(),
+      sucesso: true,
+    });
+  } catch (error) {
+    console.warn('Falha ao auditar envio de email', error);
+  }
+}
+
 async function enviarEmailSendGrid(dados, config) {
   const { data } = await base44.functions.invoke('sendEmailProvider', dados);
   return data;
@@ -79,6 +114,7 @@ async function enviarEmailAWSSES(dados, config) {
  */
 export async function enviarEmail(dados) {
   const { data } = await base44.functions.invoke('sendEmailProvider', dados);
+  await auditarEnvioEmail(dados, data);
   return data;
 }
 
@@ -238,7 +274,8 @@ export async function notificarPedidoAprovado(pedido, empresaId) {
   const template = TEMPLATES_EMAIL.PEDIDO_APROVADO;
   
   return await enviarEmail({
-    empresaId,
+    empresaId: empresaId || pedido.empresa_id,
+    groupId: pedido.group_id || pedido.grupo_id || null,
     destinatario: email,
     destinatario_nome: clienteData.nome,
     assunto: processarTemplate(template.assunto, {
@@ -272,7 +309,8 @@ export async function notificarBoletoGerado(conta, empresaId) {
   const template = TEMPLATES_EMAIL.BOLETO_GERADO;
   
   return await enviarEmail({
-    empresaId,
+    empresaId: empresaId || conta.empresa_id,
+    groupId: conta.group_id || conta.grupo_id || null,
     destinatario: email,
     destinatario_nome: clienteData.nome,
     assunto: processarTemplate(template.assunto, {
@@ -305,7 +343,8 @@ export async function notificarNFeEmitida(nfe, empresaId) {
   const template = TEMPLATES_EMAIL.NF_EMITIDA;
   
   return await enviarEmail({
-    empresaId,
+    empresaId: empresaId || nfe.empresa_id,
+    groupId: nfe.group_id || nfe.grupo_id || null,
     destinatario: email,
     destinatario_nome: clienteData.nome,
     assunto: processarTemplate(template.assunto, {
