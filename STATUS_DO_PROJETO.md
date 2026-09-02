@@ -1,3 +1,11 @@
+### Integracoes - Estoque Baixo e Mirror de Configuracoes Auditados
+- Continuei o proximo passo salvo: revisar `legacyIntegrationsMirror` no alerta de estoque baixo e espelho de configuracoes para auditar alteracoes de `ConfiguracaoSistema` com antes/depois resumido.
+- O alerta de estoque baixo agora resolve `groupId` pela empresa antes de chamar `whatsappSend`, preservando o fluxo existente.
+- A auditoria do alerta deixou de gravar descricao completa do produto e passou a registrar apenas produto_id, codigo, disponivel, minimo e flag abaixo_minimo.
+- O espelho de configuracoes para `ConfiguracaoSistema` agora registra auditoria ao atualizar ou criar consolidacoes de Integracoes.
+- A auditoria de configuracao guarda antes/depois resumido com chave, categoria, empresa, grupo e tipo da configuracao, sem gravar o documento completo.
+- Mantida a Regra-Mae: melhoria feita na funcao existente `legacyIntegrationsMirror`, sem criar modulo, tela, rota ou remover funcionalidade.
+- Proximo passo sugerido: revisar funcoes backend restantes com `AuditLog.create` para reduzir payloads sensiveis e completar `group_id` quando ausente.
 ### Integracoes - Actions Internas com Escopo Estrito
 - Continuei o proximo passo salvo: revisar actions internas de API em `legacyIntegrationsMirror` para exigir escopo estrito nas consultas `status_pedido` e `cotar_aco`.
 - As actions internas agora resolvem `groupId` pela empresa antes do RBAC, aceitando aliases `group_id` e `grupo_id` sem abrir consulta global.

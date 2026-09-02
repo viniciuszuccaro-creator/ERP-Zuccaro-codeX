@@ -41,6 +41,33 @@ const buildPaymentWebhookAuditPayload = ({ provider, externalId, statusRaw, upda
   tem_detalhes_pagamento: Boolean(updates.detalhes_pagamento),
 });
 
+const buildStockAlertAuditPayload = (data = {}, disponivel = 0, minimo = 0) => ({
+  produto_id: data?.id || null,
+  codigo: data?.codigo || null,
+  disponivel: Number(disponivel || 0),
+  minimo: Number(minimo || 0),
+  abaixo_minimo: Number(disponivel || 0) <= Number(minimo || 0),
+});
+
+const buildConfigMirrorAuditSnapshot = (config = {}, keyName = null) => ({
+  id: config?.id || null,
+  chave: config?.chave || null,
+  categoria: config?.categoria || null,
+  empresa_id: config?.empresa_id || null,
+  group_id: config?.group_id || config?.grupo_id || null,
+  key_name: keyName,
+  tem_configuracao: Boolean(keyName && config?.[keyName]),
+});
+
+const buildConfigMirrorAuditPayload = (payloadCfg = {}, keyName = null, action = null) => ({
+  action,
+  chave: payloadCfg?.chave || null,
+  categoria: payloadCfg?.categoria || null,
+  empresa_id: payloadCfg?.empresa_id || null,
+  group_id: payloadCfg?.group_id || null,
+  key_name: keyName,
+  tem_configuracao: Boolean(keyName && payloadCfg?.[keyName]),
+});
 const resolveScopeOrReject = async (base44, input = {}, errorLabel = 'contexto_multiempresa_incompleto') => {
   const scope = await completeGuardCallScope(base44, input || {});
   if (!scope.groupId || (scope.scopeType === 'empresa' && !scope.empresaId)) {
@@ -345,10 +372,13 @@ Deno.serve(async (req) => {
       const disp = Number(data.estoque_disponivel || data.estoque_atual || 0);
       const minimo = Number(data.estoque_minimo || 0);
       if (empresaId && minimo > 0 && disp <= minimo) {
+        const { scope: stockScope, error: stockScopeError } = await resolveScopeOrReject(base44, { empresa_id: empresaId, group_id: groupId }, 'contexto_multiempresa_estoque_incompleto');
+        if (stockScopeError) return stockScopeError;
+        const stockGroupId = stockScope.groupId;
         const internal_token = Deno.env.get('DEPLOY_AUDIT_TOKEN') || '';
         const vars = { produto: data.descricao || data.codigo || data.id, disponivel: disp, minimo };
-        try { await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId, groupId, templateKey: 'estoque_baixo', vars, internal_token }); } catch (error) { reportIntegrationFailure('alerta_estoque_baixo', error, { produto_id: data.id }); }
-        try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Criação', modulo: 'Estoque', tipo_auditoria: 'integracao', entidade: 'WhatsApp', descricao: 'Alerta de estoque baixo enviado', empresa_id: empresaId, group_id: groupId, dados_novos: { produto_id: data.id, descricao: data.descricao, disponivel: disp, minimo }, data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportIntegrationFailure('auditoria_alerta_estoque', error, { produto_id: data.id }); }
+        try { await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId, groupId: stockGroupId, templateKey: 'estoque_baixo', vars, internal_token }); } catch (error) { reportIntegrationFailure('alerta_estoque_baixo', error, { produto_id: data.id }); }
+        try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Criacao', modulo: 'Estoque', tipo_auditoria: 'integracao', entidade: 'WhatsApp', descricao: 'Alerta de estoque baixo enviado', empresa_id: empresaId, group_id: stockGroupId, dados_novos: buildStockAlertAuditPayload(data, disp, minimo), data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportIntegrationFailure('auditoria_alerta_estoque', error, { produto_id: data.id }); }
       }
     }
 
@@ -389,10 +419,13 @@ Deno.serve(async (req) => {
     };
 
     if (existentes && existentes.length > 0) {
+      const beforeConfig = buildConfigMirrorAuditSnapshot(existentes[0], keyName);
       await base44.asServiceRole.entities.ConfiguracaoSistema.update(existentes[0].id, payloadCfg);
+      try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Edicao', modulo: 'Integracoes', tipo_auditoria: 'integracao', entidade: 'ConfiguracaoSistema', registro_id: existentes[0].id, descricao: `Mirror configuracao ${keyName}`, empresa_id: configScope.empresaId || null, group_id: configScope.groupId, dados_anteriores: beforeConfig, dados_novos: buildConfigMirrorAuditPayload(payloadCfg, keyName, 'update'), data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportIntegrationFailure('auditoria_configuracao_mirror', error, { keyName }); }
       return Response.json({ ok: true, action: 'update', keyName });
     } else {
-      await base44.asServiceRole.entities.ConfiguracaoSistema.create(payloadCfg);
+      const created = await base44.asServiceRole.entities.ConfiguracaoSistema.create(payloadCfg);
+      try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Criacao', modulo: 'Integracoes', tipo_auditoria: 'integracao', entidade: 'ConfiguracaoSistema', registro_id: created?.id || null, descricao: `Mirror configuracao ${keyName}`, empresa_id: configScope.empresaId || null, group_id: configScope.groupId, dados_anteriores: null, dados_novos: buildConfigMirrorAuditPayload(payloadCfg, keyName, 'create'), data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportIntegrationFailure('auditoria_configuracao_mirror', error, { keyName }); }
       return Response.json({ ok: true, action: 'create', keyName });
     }
   } catch (error) {
