@@ -99,13 +99,21 @@ Deno.serve(async (req) => {
 
     const res = await base44.asServiceRole.entities[entity].update(id, updated);
 
+    const auditEmpresaId = body?.empresa_id || rec?.empresa_id || rec?.empresa_dona_id || null;
+    const auditGroupId = body?.group_id || rec?.group_id || rec?.grupo_id || null;
+    const changedFields = Object.keys(updated);
+
     try { await base44.asServiceRole.entities.AuditLog.create({
       usuario: user.full_name || user.email || 'Usuário', usuario_id: user.id,
-      acao: 'Edição', modulo: 'Sistema', tipo_auditoria: 'seguranca', entidade: entity, registro_id: id,
-      descricao: `PII ${action} aplicada em ${entity}`, dados_novos: Object.keys(updated), data_hora: new Date().toISOString()
+      empresa_id: auditEmpresaId,
+      group_id: auditGroupId,
+      acao: 'Edicao', modulo: 'Sistema', tipo_auditoria: 'seguranca', entidade: entity, registro_id: id,
+      descricao: `PII ${action} aplicada em ${entity}`,
+      dados_novos: { action, campos: changedFields, quantidade_campos: changedFields.length },
+      data_hora: new Date().toISOString()
     }); } catch {}
 
-    return Response.json({ ok: true, updated: Object.keys(updated), data: res });
+    return Response.json({ ok: true, updated: changedFields, data: res });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

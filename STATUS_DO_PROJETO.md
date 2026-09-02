@@ -1,3 +1,12 @@
+### Sistema - Erros e PII com Auditoria Sanitizada
+- Continuei o proximo passo salvo: revisar `piiEncryptor`, `auditError` e funcoes de IA para reduzir logs com stack, metadata, recomendacoes e amostras completas.
+- `auditError` passou a gravar `group_id` no campo correto do `AuditLog` e a reduzir stack para contagem/tamanho/topo limitado.
+- Metadata de erro deixou de ser gravada completa; agora registra somente chaves, quantidade e quais campos parecem sensiveis.
+- Mensagens de erro ficaram limitadas em tamanho para evitar vazamento acidental de payloads longos.
+- `piiEncryptor` agora audita com `empresa_id` e `group_id` resolvidos pelo payload ou registro protegido.
+- Auditoria de criptografia/descriptografia de PII registra apenas acao, lista de campos e quantidade, sem valores sensiveis.
+- Mantida a Regra-Mae: melhorias feitas nas funcoes existentes `auditError` e `piiEncryptor`, sem criar modulo, tela, rota ou remover funcionalidade.
+- Proximo passo sugerido: revisar funcoes de IA (`iaFinanceAnomalyScan`, `iaChurnAnalyzer`, `permissionOptimizer`) para reduzir logs com recomendacoes, sugestoes e amostras completas.
 ### Comercial - Solicitacoes de Aprovacao com Auditoria Segura
 - Continuei o proximo passo salvo: revisar `solicitacoesAprovacao` para reduzir auditorias completas de politicas, solicitacoes e pedidos aprovados.
 - As auditorias de politicas de aprovacao agora registram apenas entidades, quantidade de faixas e quantidade de niveis, sem gravar toda a regra operacional.
