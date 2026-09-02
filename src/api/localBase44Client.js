@@ -1,3 +1,4 @@
+import { toEntityScope, validateMultiempresaContext } from "@/components/lib/contextoMultiempresaPolicy";
 import { sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
 
 const reportLocalClientFailure = (operation, error, context = {}) => {
@@ -1247,14 +1248,26 @@ const entities = new Proxy({}, {
   },
 });
 
+const normalizeLocalConfigScope = (scope = {}) => {
+  const context = validateMultiempresaContext(scope);
+  if (!context.valid) return { valid: false, error: context.error, scope: {} };
+  return { valid: true, error: null, scope: toEntityScope(context) };
+};
+
 const upsertConfig = async ({ chave, data = {}, scope = {} }) => {
-  const filter = { chave, ...scope };
+  const normalizedScope = normalizeLocalConfigScope(scope);
+  if (!chave) throw new Error('Chave obrigatoria para ConfiguracaoSistema local');
+  if (!normalizedScope.valid) {
+    throw new Error(`Contexto multiempresa obrigatorio para ConfiguracaoSistema local: ${normalizedScope.error}`);
+  }
+
+  const filter = { chave, ...normalizedScope.scope };
   const existing = await entities.ConfiguracaoSistema.filter(filter, '-updated_date', 1);
   const payload = {
     chave,
     categoria: data.categoria || 'Sistema',
     ...data,
-    ...scope,
+    ...normalizedScope.scope,
     updated_date: now(),
   };
   const record = existing[0]

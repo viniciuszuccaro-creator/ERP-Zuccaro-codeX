@@ -33,5 +33,6 @@ test('entity and guard scopes expose only normalized identifiers', () => {
     group_id: 'grupo-cpa', empresa_id: '3z',
   });
   assert.deepEqual(toEntityScope({ contexto: 'grupo', group_id: 'grupo-cpa' }), { group_id: 'grupo-cpa' });
+  assert.deepEqual(toEntityScope({ group_id: ' grupo-cpa ' }), { group_id: 'grupo-cpa' });
   assert.equal(toGuardScope({ contexto: 'empresa', group_id: 'grupo-cpa' }).__blocked, true);
 });

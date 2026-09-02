@@ -1,3 +1,11 @@
+### Multiempresa - ConfiguracaoSistema Local com Escopo Obrigatorio
+- Continuei o proximo passo salvo em persistencia sensivel no `localBase44Client.js`.
+- `upsertConfig` local deixou de aceitar escopo vazio ou aliases em branco para `ConfiguracaoSistema`, bloqueando criacao/edicao global acidental.
+- O escopo recebido agora passa por `validateMultiempresaContext` e `toEntityScope`, normalizando `group_id`/`empresa_id` antes de consultar ou salvar.
+- Grupo continua salvando com `group_id`; Empresa exige `group_id` e `empresa_id`, preservando a regra Grupo/Empresa sem criar fluxo paralelo.
+- Teste existente de politica multiempresa cobre tambem escopo de grupo normalizado com espacos antes de persistencia.
+- Mantida a Regra-Mae: melhoria feita no cliente local e helper existentes, sem criar tela, modulo, botao ou funcionalidade duplicada.
+- Proximo passo sugerido: revisar chamadas diretas a `ConfiguracaoSistema.filter/create/update` que ainda podem depender de consulta global sem contexto.
 ### Multiempresa - IDs Canonicos em Testes e Persistencia Sensivel
 - Continuei o checkpoint salvo de testes de isolamento multiempresa e persistencia sensivel.
 - `contextoMultiempresaPolicy.js` agora normaliza `groupId`/`empresaId` por trim e trata aliases vazios como contexto ausente, evitando validar strings em branco.
