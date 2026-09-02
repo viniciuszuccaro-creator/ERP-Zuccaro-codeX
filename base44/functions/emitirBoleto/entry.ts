@@ -1,7 +1,42 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { jsPDF } from 'npm:jspdf@4.0.0';
-import { requireEntityGuard } from './_lib/security/guardCallPolicy.js';
+import { completeGuardCallScope, requireEntityGuard } from './_lib/security/guardCallPolicy.js';
 
+const reportBoletoFailure = (operation, error, context = {}) => {
+  console.error('[emitirBoleto] ' + operation, {
+    error: error?.message || String(error),
+    ...context,
+  });
+};
+
+const buildBoletoAuditPayload = ({ provider, billingType, externalId, pdf, linha, pix, forma_cobranca, projeto_obra }) => ({
+  provider,
+  billingType: billingType || null,
+  external_id: externalId || null,
+  tem_pdf: Boolean(pdf),
+  tem_linha_digitavel: Boolean(linha),
+  tem_pix: Boolean(pix),
+  forma_cobranca: forma_cobranca || null,
+  projeto_obra: projeto_obra || null,
+});
+
+async function auditBoleto(base44, user, { contaReceberId, empresaId, groupId, descricao, payload }) {
+  await base44.asServiceRole.entities.AuditLog.create({
+    usuario: user?.full_name || user?.email || 'Usuario',
+    usuario_id: user?.id || null,
+    acao: 'Criacao',
+    modulo: 'Financeiro',
+    tipo_auditoria: 'integracao',
+    entidade: 'ContaReceber',
+    registro_id: contaReceberId,
+    descricao,
+    empresa_id: empresaId || null,
+    group_id: groupId || null,
+    dados_novos: payload,
+    data_hora: new Date().toISOString(),
+    sucesso: true,
+  });
+}
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -10,7 +45,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { conta_receber_id, forma_cobranca, projeto_obra, simular } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const { conta_receber_id, forma_cobranca, projeto_obra, simular } = body || {};
     const me = await base44.auth.me();
     if (!conta_receber_id) {
       return Response.json({ error: 'conta_receber_id é obrigatório' }, { status: 400 });
@@ -21,6 +57,16 @@ Deno.serve(async (req) => {
     const cr = crList?.[0];
     if (!cr) {
       return Response.json({ error: 'ContaReceber não encontrada' }, { status: 404 });
+    }
+
+    // Contexto multiempresa obrigatorio
+    if (!cr.empresa_id) {
+      return Response.json({ error: 'empresa_id ausente no titulo' }, { status: 400 });
+    }
+    const resolvedScope = await completeGuardCallScope(base44, { empresaId: cr.empresa_id, groupId: cr.group_id || cr.grupo_id || body?.group_id || body?.grupo_id || null });
+    const groupIdResolved = cr.group_id || cr.grupo_id || resolvedScope.groupId || null;
+    if (!groupIdResolved) {
+      return Response.json({ error: 'group_id ausente no titulo ou cadastro da empresa' }, { status: 400 });
     }
 
     // Permissão: libera autoatendimento do cliente (portal) para seus próprios títulos visíveis no portal
@@ -34,22 +80,18 @@ Deno.serve(async (req) => {
     if (!isPortalSelfAccess) {
       const guardFailure = await requireEntityGuard(base44, {
         module: 'Financeiro', section: 'ContaReceber', action: 'emitir',
-        empresa_id: cr.empresa_id || null, group_id: cr.group_id || null,
+        empresa_id: cr.empresa_id || null, group_id: groupIdResolved,
       });
       if (guardFailure) return guardFailure;
     }
 
-    // Contexto multiempresa obrigatório
-    if (!cr.empresa_id) {
-      return Response.json({ error: 'empresa_id ausente no título' }, { status: 400 });
-    }
     // Integração real: Asaas / Juno (quando configurado)
     try {
       let cfgDoc = null;
       try {
-        cfgDoc = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({ chave: `integracoes_${cr.empresa_id}` }, undefined, 1);
+        cfgDoc = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({ categoria: 'Integracoes', chave: `integracoes_${cr.empresa_id}`, empresa_id: cr.empresa_id }, undefined, 1);
         cfgDoc = cfgDoc?.[0] || null;
-      } catch (_) { cfgDoc = null; }
+      } catch (error) { reportBoletoFailure('consulta_configuracao', error, { empresa_id: cr.empresa_id, group_id: groupIdResolved }); cfgDoc = null; }
       const payCfg = cfgDoc?.integracao_boletos || cfgDoc?.integracao_pagamentos || null;
 
       if (payCfg?.ativo) {
@@ -80,13 +122,12 @@ Deno.serve(async (req) => {
                 status_cobranca: 'gerada',
                 data_envio_cobranca: new Date().toISOString()
               });
-              await base44.asServiceRole.entities.AuditLog.create({
-                usuario: me?.full_name || me?.email || 'Usuário', usuario_id: me?.id || null,
-                acao: 'Criação', modulo: 'Financeiro', tipo_auditoria: 'entidade',
-                entidade: 'ContaReceber', registro_id: conta_receber_id,
-                descricao: `Cobrança criada via Asaas (${billingType})`,
-                empresa_id: cr.empresa_id || null, group_id: cr.group_id || null,
-                dados_novos: { external_id: j?.id, billingType }, data_hora: new Date().toISOString()
+              await auditBoleto(base44, me, {
+                contaReceberId: conta_receber_id,
+                empresaId: cr.empresa_id,
+                groupId: groupIdResolved,
+                descricao: `Cobranca criada via Asaas (${billingType})`,
+                payload: buildBoletoAuditPayload({ provider: 'Asaas', billingType, externalId: j?.id, pdf, linha, pix, forma_cobranca, projeto_obra }),
               });
               return Response.json({ url: pdf || j?.invoiceUrl || null, provider: 'Asaas', id: j?.id });
             }
@@ -116,18 +157,18 @@ Deno.serve(async (req) => {
               status_cobranca: 'gerada',
               data_envio_cobranca: new Date().toISOString()
             });
-            await base44.asServiceRole.entities.AuditLog.create({
-              usuario: me?.full_name || me?.email || 'Usuário', usuario_id: me?.id || null,
-              acao: 'Criação', modulo: 'Financeiro', tipo_auditoria: 'entidade',
-              entidade: 'ContaReceber', registro_id: conta_receber_id,
-              descricao: 'Boleto criado via Juno', empresa_id: cr.empresa_id || null, group_id: cr.group_id || null,
-              dados_novos: { external_id: ch?.id }, data_hora: new Date().toISOString()
+            await auditBoleto(base44, me, {
+              contaReceberId: conta_receber_id,
+              empresaId: cr.empresa_id,
+              groupId: groupIdResolved,
+              descricao: 'Boleto criado via Juno',
+              payload: buildBoletoAuditPayload({ provider: 'Juno', externalId: ch?.id, pdf, linha, pix: null, forma_cobranca, projeto_obra }),
             });
             return Response.json({ url: pdf, provider: 'Juno', id: ch?.id });
           }
         }
       }
-    } catch (_) { /* fallback para simulado abaixo */ }
+    } catch (error) { reportBoletoFailure('integracao_pagamento_real', error, { conta_receber_id, empresa_id: cr.empresa_id, group_id: groupIdResolved }); /* fallback para simulado abaixo */ }
 
     // Gerar PDF simples do boleto (simulado)
     const doc = new jsPDF();
@@ -176,14 +217,12 @@ Deno.serve(async (req) => {
     });
 
     // Auditoria
-    await base44.asServiceRole.entities.AuditLog.create({
-      usuario: me?.full_name || me?.email || 'Usuário', usuario_id: me?.id || null,
-      acao: 'Criação', modulo: 'Financeiro', tipo_auditoria: 'entidade',
-      entidade: 'ContaReceber', registro_id: conta_receber_id,
+    await auditBoleto(base44, me, {
+      contaReceberId: conta_receber_id,
+      empresaId: cr.empresa_id,
+      groupId: groupIdResolved,
       descricao: 'Boleto PDF emitido e URL assinada gerada',
-      empresa_id: cr.empresa_id || null, group_id: cr.group_id || null,
-      dados_novos: { forma_cobranca: forma_cobranca||cr.forma_cobranca||'Boleto', projeto_obra: projeto_obra||cr.projeto_obra||null, gateway: { nome: 'Boleto (Simulado)', id: 'simulado', provedor: 'boleto_simulado' } },
-      data_hora: new Date().toISOString()
+      payload: buildBoletoAuditPayload({ provider: 'Boleto (Simulado)', externalId: null, pdf: signedUrl, linha: true, pix: null, forma_cobranca: forma_cobranca || cr.forma_cobranca || 'Boleto', projeto_obra: projeto_obra || cr.projeto_obra || null }),
     });
 
     return Response.json({ url: signedUrl });

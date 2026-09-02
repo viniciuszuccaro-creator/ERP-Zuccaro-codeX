@@ -1,3 +1,11 @@
+### Integracoes - Boleto Backend com Contexto e Auditoria Segura
+- Continuei o proximo passo salvo: revisar `emitirBoleto` para aplicar payload seguro e contexto estrito em configuracao, updates e auditoria financeira.
+- `emitirBoleto` agora resolve `groupId` pela empresa do titulo antes do guard financeiro e bloqueia titulo sem `empresa_id` ou sem grupo resolvido.
+- A consulta de `ConfiguracaoSistema` para boletos/pagamentos passou a exigir categoria `Integracoes`, chave da empresa e `empresa_id`.
+- Auditorias de Asaas, Juno e boleto simulado foram centralizadas em helper existente no proprio arquivo, registrando somente metadados minimos.
+- O `AuditLog` financeiro nao grava PIX copia/cola, linha digitavel completa, dados do cliente ou payload externo integral; registra apenas flags, provedor, tipo e ID externo.
+- Mantida a Regra-Mae: melhoria feita na funcao financeira existente, sem criar modulo, tela, rota ou remover funcionalidade.
+- Proximo passo sugerido: revisar `paymentStatusManager` para reduzir payload de auditoria em baixas/conciliacao e garantir `group_id` em todos os logs financeiros.
 ### Integracoes - NF-e Backend com Contexto e Auditoria Segura
 - Continuei o proximo passo salvo: revisar funcoes backend de integracao financeira/fiscal com chamadas externas para padronizar payload seguro, RBAC e propagacao Grupo/Empresa.
 - `nfeActions` agora aceita aliases de contexto (`empresa_id`, `group_id`, `grupo_id`) e resolve `groupId` pela empresa antes do guard fiscal.
