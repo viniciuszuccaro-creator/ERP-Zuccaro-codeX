@@ -1,3 +1,15 @@
+### Comercial/Fiscal - Hooks Operacionais com Contexto e Auditoria Resumida
+- Continuei o proximo passo salvo: revisar hooks operacionais (`onOrcamentoConfirmed`, `onOportunidadeStageChanged`, `onPedidoReadyToInvoice`) para reduzir logs com payloads completos e reforcar propagacao Grupo/Empresa.
+- `onOrcamentoConfirmed` agora completa `group_id` a partir da empresa antes de criar Pedido, mantendo o fluxo existente de conversao de orcamento confirmado.
+- Auditoria do Pedido gerado deixou de gravar o payload completo e passou a salvar resumo com pedido, orcamento, cliente, valor, empresa, grupo e quantidade de itens.
+- `onOportunidadeStageChanged` agora completa contexto Grupo/Empresa antes de criar OrcamentoCliente e aceita a etapa com acento e sem acento para preservar compatibilidade.
+- Auditoria do OrcamentoCliente gerado por oportunidade agora registra resumo de oportunidade, cliente, valor, empresa, grupo, etapa e status, sem payload completo.
+- `onPedidoReadyToInvoice` agora resolve `group_id` pela empresa antes do guard fiscal, bloqueia pedido sem grupo e envia o grupo para `nfeActions`.
+- Consulta de configuracao de integracao ERP passou a filtrar tambem por `empresa_id` ou `group_id`, reduzindo risco de usar configuracao de outro escopo.
+- Auditorias de webhook ERP e NF-e automatica agora gravam metadados minimos, flags de DANFE/XML e resumo de itens, sem salvar NF-e completa nem retorno externo integral.
+- Falhas auxiliares de webhook/auditoria deixaram de ser silenciosas e passam a registrar contexto tecnico no console, preservando o fluxo principal.
+- Mantida a Regra-Mae: melhorias feitas somente nos hooks existentes, sem criar modulo, tela, rota ou remover funcionalidade.
+- Proximo passo sugerido: revisar `onNotaFiscalAuthorized`, `parseSpreadsheet` e `propagateGroupConfigs` para reduzir payloads completos e reforcar auditoria/escopo.
 ### Estoque - Movimentos Operacionais com Escopo e Auditoria Resumida
 - Continuei o proximo passo salvo: revisar funcoes operacionais de estoque/producao (`applyOrderStockMovements`, `applyAdjustmentsHandler`, `auditPedidoReserva`) para reduzir logs com movimentos completos e reforcar escopo Grupo/Empresa.
 - `applyOrderStockMovements` agora completa `group_id` a partir da empresa usando helper existente antes de criar movimentacoes e auditorias.
