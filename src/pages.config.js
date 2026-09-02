@@ -74,7 +74,6 @@ import ProducaoMobile from './pages/ProducaoMobile';
 import RH from './pages/RH';
 import Relatorios from './pages/Relatorios';
 import portal from './pages/portal';
-import portalcliente from './pages/portalcliente';
 import __Layout from './Layout.jsx';
 
 
@@ -106,7 +105,6 @@ export const PAGES = {
     "RH": RH,
     "Relatorios": Relatorios,
     "portal": portal,
-    "portalcliente": portalcliente,
 }
 
 export const pagesConfig = {

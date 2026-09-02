@@ -1,3 +1,10 @@
+### Setup Local e Portal Cliente - Caminho Fixo no Codex
+- Troquei a configuracao local do Codex para usar `C:\Users\cpaba\ERP Zuccaro` como pasta fixa do projeto ERP Zuccaro, mantendo backup dos arquivos de estado antes da alteracao.
+- Confirmei que o clone local esta ligado ao GitHub `viniciuszuccaro-creator/ERP-Zuccaro-codeX.git` e atualizado com `origin/main` antes da melhoria.
+- Corrigi a duplicidade de rota `PortalCliente.jsx`/`portalcliente.jsx` no controle Git, mantendo `PortalCliente.jsx` como rota oficial e preservando o redirecionamento existente para Dashboard.
+- `pages.config.js` deixou de importar e registrar a rota duplicada `portalcliente`, evitando conflito em Windows sem alterar a rota principal `PortalCliente`.
+- Mantida a Regra-Mae: melhoria feita em arquivos existentes, com exclusao apenas da duplicidade identica que prejudicava clone/abertura em outros computadores.
+- Proximo passo sugerido: instalar dependencias no clone fixo, validar build e seguir para testes de isolamento multiempresa e persistencia sensivel.
 ### Relatorios Operacionais - Contexto Estrito e Exportacoes Seguras
 - Revisei os relatorios existentes de Logistica, Producao e Estoque sem criar nova tela, modulo ou fluxo.
 - O modo Grupo exige groupId e consolida o grupo; o modo Empresa exige groupId e empresaId e nao mistura registros de outras empresas.
