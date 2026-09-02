@@ -20,6 +20,13 @@ test('company scope is invalid without both group and company', () => {
   assert.equal(validateMultiempresaContext({ scopeType: 'empresa', empresaId: 'cpa-aco' }).valid, false);
   assert.equal(validateMultiempresaContext({ scopeType: 'empresa', groupId: 'grupo-cpa' }).valid, false);
 });
+test('multiempresa identifiers are trimmed and blank aliases fail closed', () => {
+  assert.deepEqual(normalizeMultiempresaContext({ scopeType: ' empresa ', groupId: ' grupo-cpa ', empresaId: ' 3z ' }), {
+    groupId: 'grupo-cpa', empresaId: '3z', scopeType: 'empresa',
+  });
+  assert.equal(validateMultiempresaContext({ scopeType: 'empresa', groupId: '   ', empresaId: '3z' }).valid, false);
+  assert.deepEqual(toEntityScope({ contexto: 'empresa', group_id: 'grupo-cpa', empresa_id: '   ' }), {});
+});
 
 test('entity and guard scopes expose only normalized identifiers', () => {
   assert.deepEqual(toEntityScope({ contexto: 'empresa', grupo_id: 'grupo-cpa', empresa_id: '3z' }), {

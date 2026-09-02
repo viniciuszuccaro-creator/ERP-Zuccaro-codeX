@@ -1,4 +1,10 @@
-const firstValue = (...values) => values.find((value) => value !== undefined && value !== null && value !== '');
+const normalizeIdentifier = (value) => {
+  if (value === undefined || value === null) return null;
+  const normalized = String(value).trim();
+  return normalized || null;
+};
+
+const firstValue = (...values) => values.map(normalizeIdentifier).find(Boolean) || null;
 
 export const normalizeScopeType = (value) => {
   const normalized = String(value || '').trim().toLowerCase();

@@ -1,3 +1,10 @@
+### Multiempresa - IDs Canonicos em Testes e Persistencia Sensivel
+- Continuei o checkpoint salvo de testes de isolamento multiempresa e persistencia sensivel.
+- `contextoMultiempresaPolicy.js` agora normaliza `groupId`/`empresaId` por trim e trata aliases vazios como contexto ausente, evitando validar strings em branco.
+- `toEntityScope` passa a falhar fechado quando o escopo Empresa vier sem empresa real, reforcando consultas e escritas com contexto explicito.
+- Testes nativos cobrem IDs com espacos, aliases vazios e bloqueio de escopo invalido antes de persistir ou chamar guard.
+- Mantida a Regra-Mae: melhoria feita no helper multiempresa existente e nos testes existentes, sem criar tela, modulo ou fluxo paralelo.
+- Proximo passo sugerido: aplicar o mesmo rigor nos fluxos sensiveis de `localBase44Client.js` e guards backend com maior risco de escopo global.
 ### Setup Local e Portal Cliente - Caminho Fixo no Codex
 - Troquei a configuracao local do Codex para usar `C:\Users\cpaba\ERP Zuccaro` como pasta fixa do projeto ERP Zuccaro, mantendo backup dos arquivos de estado antes da alteracao.
 - Confirmei que o clone local esta ligado ao GitHub `viniciuszuccaro-creator/ERP-Zuccaro-codeX.git` e atualizado com `origin/main` antes da melhoria.
