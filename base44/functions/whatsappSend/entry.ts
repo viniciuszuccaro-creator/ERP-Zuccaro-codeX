@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
-import { requireEntityGuard } from './_lib/security/guardCallPolicy.js';
+import { completeGuardCallScope, requireEntityGuard } from './_lib/security/guardCallPolicy.js';
 
 const reportWhatsappFailure = (operation, error, context = {}) => {
   console.error('[whatsappSend] ' + operation, {
@@ -7,6 +7,47 @@ const reportWhatsappFailure = (operation, error, context = {}) => {
     ...context,
   });
 };
+
+const maskPhone = (value) => {
+  const digits = String(value || '').replace(/\D/g, '');
+  return digits ? digits.replace(/\d(?=\d{4})/g, '*') : null;
+};
+
+const buildWhatsappAuditPayload = ({ action, destinatario, mensagem, arquivoUrl, legenda, retorno }) => ({
+  action,
+  numero_destino: maskPhone(destinatario),
+  tipo: action === 'sendMedia' ? 'arquivo' : 'texto',
+  tem_arquivo: Boolean(arquivoUrl),
+  tem_legenda: Boolean(legenda),
+  tamanho_mensagem: mensagem ? String(mensagem).length : 0,
+  retorno: retorno ? {
+    sucesso: retorno.sucesso ?? retorno.success ?? null,
+    id: retorno.messageId || retorno.id || null,
+    status: retorno.status || null,
+    modo: retorno.modo || null,
+  } : null,
+});
+
+async function auditWhatsapp(base44, user, { descricao, empresaId, groupId, auditPayload }) {
+  try {
+    await base44.asServiceRole.entities.AuditLog.create({
+      usuario: user?.full_name || user?.email || 'Service',
+      usuario_id: user?.id || null,
+      acao: 'Criacao',
+      modulo: 'Integracoes',
+      tipo_auditoria: 'integracao',
+      entidade: 'WhatsApp',
+      descricao,
+      empresa_id: empresaId || null,
+      group_id: groupId || null,
+      dados_novos: auditPayload,
+      data_hora: new Date().toISOString(),
+      sucesso: true,
+    });
+  } catch (error) {
+    reportWhatsappFailure('Falha ao auditar WhatsApp', error, { empresaId, groupId });
+  }
+}
 
 Deno.serve(async (req) => {
   try {
@@ -28,6 +69,10 @@ Deno.serve(async (req) => {
         }
       } catch (error) { reportWhatsappFailure('Falha ao resolver Empresa pelo pedido', error, { pedidoId, groupId }); }
     }
+
+    const resolvedScope = await completeGuardCallScope(base44, { empresaId, groupId });
+    empresaId = empresaId || resolvedScope.empresaId;
+    groupId = groupId || resolvedScope.groupId;
 
     if (!trustedInternal) {
       const guardFailure = await requireEntityGuard(base44, {
@@ -85,17 +130,17 @@ Deno.serve(async (req) => {
     }
     if (!mensagem) mensagem = `Mensagem automática do sistema. (${new Date().toLocaleString('pt-BR')})`;
 
-    // Simulado quando não configurado
+    // Simulado quando nao configurado
     if (!config || config.ativo === false || config.simulacao_ativa === true) {
-      try { await base44.asServiceRole.entities.AuditLog.create({
-        usuario: (user?.full_name || 'Service'), usuario_id: user?.id || null,
-        acao: 'Criação', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: 'WhatsApp',
-        descricao: 'Envio simulado (sem configuração)', empresa_id: empresaId || null, group_id: groupId || null,
-        dados_novos: { numero: destinatario, mensagem }
-      }); } catch (error) { reportWhatsappFailure('Falha ao auditar envio simulado', error, { empresaId, groupId }); }
-      return Response.json({ sucesso: true, modo: 'simulado', messageId: `SIM_${Date.now()}`, status: 'sent' });
+      const result = { sucesso: true, modo: 'simulado', messageId: `SIM_${Date.now()}`, status: 'sent' };
+      await auditWhatsapp(base44, user, {
+        descricao: 'Envio simulado sem configuracao ativa',
+        empresaId,
+        groupId,
+        auditPayload: buildWhatsappAuditPayload({ action, destinatario, mensagem, arquivoUrl, legenda, retorno: result }),
+      });
+      return Response.json(result);
     }
-
     const apiKey = config.api_key;
     const apiUrl = config.api_url || 'https://evolution-api.com';
     const instanceName = config.instance_name;
@@ -105,13 +150,14 @@ Deno.serve(async (req) => {
       const r = await fetch(`${apiUrl}/message/sendMedia/${instanceName}`, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: apiKey }, body: JSON.stringify(body) });
       if (!r.ok) return Response.json({ error: await r.text() }, { status: 502 });
       const res = await r.json();
-      try { await base44.asServiceRole.entities.AuditLog.create({
-        usuario: (user?.full_name || 'Service'), usuario_id: user?.id || null,
-        acao: 'Criação', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: 'WhatsApp',
-        descricao: 'Mídia enviada', empresa_id: empresaId || null, group_id: groupId || null,
-        dados_novos: { numero: destinatario, action: 'sendMedia' }
-      }); } catch (error) { reportWhatsappFailure('Falha ao auditar envio de midia', error, { empresaId, groupId }); }
-      return Response.json({ sucesso: true, messageId: res.key?.id, status: 'sent', modo: 'real' });
+      const result = { sucesso: true, messageId: res.key?.id, status: 'sent', modo: 'real' };
+      await auditWhatsapp(base44, user, {
+        descricao: 'Midia enviada',
+        empresaId,
+        groupId,
+        auditPayload: buildWhatsappAuditPayload({ action: 'sendMedia', destinatario, mensagem, arquivoUrl, legenda, retorno: result }),
+      });
+      return Response.json(result);
     }
 
     // sendText
@@ -120,14 +166,15 @@ Deno.serve(async (req) => {
     if (!r.ok) return Response.json({ error: await r.text() }, { status: 502 });
     const res = await r.json();
 
-    try { await base44.asServiceRole.entities.AuditLog.create({
-      usuario: (user?.full_name || 'Service'), usuario_id: user?.id || null,
-      acao: 'Criação', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: 'WhatsApp',
-      descricao: 'Texto enviado', empresa_id: empresaId || null, group_id: groupId || null,
-      dados_novos: { numero: destinatario, mensagem }
-    }); } catch (error) { reportWhatsappFailure('Falha ao auditar envio de texto', error, { empresaId, groupId }); }
+    const result = { sucesso: true, messageId: res.key?.id, status: 'sent', modo: 'real' };
+    await auditWhatsapp(base44, user, {
+      descricao: 'Texto enviado',
+      empresaId,
+      groupId,
+      auditPayload: buildWhatsappAuditPayload({ action: 'sendText', destinatario, mensagem, arquivoUrl, legenda, retorno: result }),
+    });
 
-    return Response.json({ sucesso: true, messageId: res.key?.id, status: 'sent', modo: 'real' });
+    return Response.json(result);
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

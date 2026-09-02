@@ -1,3 +1,13 @@
+### Integracoes - Backend WhatsApp e Email com Escopo/Auditoria
+- Continuei o proximo passo salvo: revisar funcoes backend `whatsappSend` e `sendEmailProvider` para garantir contexto Grupo/Empresa e auditoria tambem no servidor.
+- `whatsappSend` agora completa `groupId` a partir da empresa antes do guard e usa auditoria sanitizada com numero mascarado, tipo de envio, flags de midia e retorno resumido.
+- O envio simulado, envio de texto e envio de midia deixam de gravar mensagem completa ou numero completo no `AuditLog` do backend.
+- `sendEmailProvider` agora aceita aliases `empresa_id`, `group_id` e `grupo_id`, resolve `groupId` pela empresa quando necessario e aplica RBAC de visualizar para status e criar para envio.
+- O helper backend de auditoria passa a persistir `group_id`, permitindo rastrear logs sensiveis por Grupo/Empresa.
+- As auditorias de email no backend passam a registrar somente metadados: destinatario, assunto, tipo de conteudo, quantidade de anexos e retorno resumido, sem corpo ou base64.
+- Mantida a Regra-Mae: melhoria feita nas funcoes e helper existentes, sem criar modulo, tela, rota ou remover funcionalidade.
+- Proximo passo sugerido: revisar funcoes backend de integracao financeira/fiscal com chamadas externas para padronizar payload seguro, RBAC e propagacao Grupo/Empresa.
+
 ### Integracoes - Auditoria de Envios WhatsApp e Email
 - Continuei o proximo passo salvo: revisar helpers de envio WhatsApp/Email para auditar disparos com retorno minimo e contexto Grupo/Empresa.
 - `enviarWhatsApp` agora registra `AuditLog` com empresa, grupo, tipo de envio, destino mascarado, tamanho da mensagem e retorno resumido.

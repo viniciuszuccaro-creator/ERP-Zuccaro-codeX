@@ -165,7 +165,7 @@ export async function ensureContextFields(base44, data, requireEmpresa = true) {
   }
 }
 
-export async function audit(base44, user, { acao = 'Ação', modulo = 'Sistema', entidade = '-', registro_id = null, descricao = '', dados_novos = null, empresa_id = null, empresa_nome = null, duracao_ms = null }, meta = null) {
+export async function audit(base44, user, { acao = 'Ação', modulo = 'Sistema', entidade = '-', registro_id = null, descricao = '', dados_novos = null, empresa_id = null, group_id = null, empresa_nome = null, duracao_ms = null }, meta = null) {
   try {
     const payloadDados = (dados_novos && typeof dados_novos === 'object') ? { ...dados_novos } : {};
     if (meta) payloadDados._meta = meta; // ip, user_agent, request_id
@@ -174,6 +174,7 @@ export async function audit(base44, user, { acao = 'Ação', modulo = 'Sistema',
       usuario_id: user?.id,
       acao, modulo, entidade, registro_id, descricao,
       empresa_id: empresa_id || null,
+      group_id: group_id || null,
       empresa_nome: empresa_nome || null,
       duracao_ms: typeof duracao_ms === 'number' ? duracao_ms : null,
       dados_novos: Object.keys(payloadDados).length ? payloadDados : null,
