@@ -1,3 +1,13 @@
+### Estoque - Movimentos Operacionais com Escopo e Auditoria Resumida
+- Continuei o proximo passo salvo: revisar funcoes operacionais de estoque/producao (`applyOrderStockMovements`, `applyAdjustmentsHandler`, `auditPedidoReserva`) para reduzir logs com movimentos completos e reforcar escopo Grupo/Empresa.
+- `applyOrderStockMovements` agora completa `group_id` a partir da empresa usando helper existente antes de criar movimentacoes e auditorias.
+- Movimentacoes de estoque geradas por pedido passaram a receber `group_id`, mantendo rastreabilidade multiempresa.
+- Auditorias de bloqueio RBAC e baixa por pedido agora incluem `empresa_id` e `group_id`.
+- A auditoria de baixa por pedido deixou de gravar detalhes de todos os movimentos e passou a registrar pedido, quantidade processada, IDs de produtos e quantidade total.
+- `applyAdjustmentsHandler` agora audita ajustes de inventario com empresa/grupo e resumo de movimentos, sem gravar array completo.
+- `stockAudit` passou a repassar `group_id` ao helper central de auditoria, e `auditPedidoReserva` passou a enviar grupo do pedido.
+- Mantida a Regra-Mae: melhorias feitas em funcoes/helpers existentes de estoque, sem criar modulo, tela, rota ou remover funcionalidade.
+- Proximo passo sugerido: revisar hooks operacionais (`onOrcamentoConfirmed`, `onOportunidadeStageChanged`, `onPedidoReadyToInvoice`) para reduzir logs com payloads completos e reforcar propagacao Grupo/Empresa.
 ### IA - Auditorias de Churn, Anomalias e RBAC Sanitizadas
 - Continuei o proximo passo salvo: revisar funcoes de IA (`iaFinanceAnomalyScan`, `iaChurnAnalyzer`, `permissionOptimizer`) para reduzir logs com recomendacoes, sugestoes e amostras completas.
 - `iaChurnAnalyzer` passou a auditar recomendacao de churn como metadados minimos e incluir `group_id` no `AuditLog`.

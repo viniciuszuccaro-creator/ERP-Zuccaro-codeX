@@ -1,6 +1,18 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { getUserAndPerfil, backendHasPermission, assertContextPresence } from './_lib/guard.js';
+import { getUserAndPerfil, backendHasPermission, assertContextPresence, ensureContextFields } from './_lib/guard.js';
 
+function buildOrderStockAuditPayload(pedido = {}, movimentos = []) {
+  const list = Array.isArray(movimentos) ? movimentos : [];
+  return {
+    pedido_id: pedido?.id || null,
+    numero_pedido: pedido?.numero_pedido || null,
+    empresa_id: pedido?.empresa_id || null,
+    group_id: pedido?.group_id || pedido?.grupo_id || null,
+    itens_processados: list.length,
+    produtos_ids: list.map((item) => item.produto_id).filter(Boolean).slice(0, 50),
+    quantidade_total: list.reduce((total, item) => total + Number(item.quantidade || 0), 0),
+  };
+}
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -20,6 +32,9 @@ Deno.serve(async (req) => {
     // Multiempresa e RBAC
     const ctxErr = assertContextPresence(pedido || {}, true);
     if (ctxErr) return ctxErr;
+    const scopedPedido = await ensureContextFields(base44, pedido, true);
+    if (scopedPedido instanceof Response) return scopedPedido;
+    Object.assign(pedido, scopedPedido);
 
     const allowed = backendHasPermission(perfil, 'Comercial', 'Pedido', 'editar', user.role);
     if (!allowed) {
@@ -28,6 +43,7 @@ Deno.serve(async (req) => {
           usuario: user.full_name || user.email || 'Usuário',
           usuario_id: user.id,
           empresa_id: pedido.empresa_id || null,
+          group_id: pedido.group_id || pedido.grupo_id || null,
           acao: 'Bloqueio',
           modulo: 'Comercial',
           tipo_auditoria: 'seguranca',
@@ -61,6 +77,7 @@ Deno.serve(async (req) => {
 
       await base44.entities.MovimentacaoEstoque.create({
         empresa_id: pedido.empresa_id,
+        group_id: pedido.group_id || pedido.grupo_id || null,
         tipo_movimento: 'saida',
         origem_movimento: 'pedido',
         origem_documento_id: pedido.id || `temp_${Date.now()}`,
@@ -96,13 +113,14 @@ Deno.serve(async (req) => {
       usuario: user.full_name || user.email || 'Usuário',
       usuario_id: user.id,
       empresa_id: pedido.empresa_id,
-      acao: 'Edição',
+      group_id: pedido.group_id || pedido.grupo_id || null,
+      acao: 'Edicao',
       modulo: 'Estoque',
       tipo_auditoria: 'entidade',
       entidade: 'MovimentacaoEstoque',
       registro_id: pedido.id || null,
       descricao: `Baixa de estoque por aprovação de pedido (#movimentos=${movimentos})`,
-      dados_novos: { pedido_id: pedido.id, numero_pedido: pedido.numero_pedido, itens_processados: movimentos, movimentos: movimentosDetalhes },
+      dados_novos: buildOrderStockAuditPayload(pedido, movimentosDetalhes),
       ip_address: ip,
       user_agent: userAgent,
       data_hora: new Date().toISOString(),
