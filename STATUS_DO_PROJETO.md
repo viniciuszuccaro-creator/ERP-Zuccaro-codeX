@@ -1,3 +1,13 @@
+### Financeiro - PaymentStatusManager com Escopo e Auditoria Segura
+- Continuei o proximo passo salvo: revisar `paymentStatusManager` para reduzir payload de auditoria em baixas/conciliacao e garantir `group_id` nos logs financeiros.
+- O helper de auditoria do backend financeiro deixou de referenciar variavel inexistente no `catch`, evitando erro secundario quando o log falhar.
+- `checkout_iniciado` agora resolve `groupId` pela empresa, valida se a ContaReceber pertence ao contexto Grupo/Empresa e encaminha `group_id` para `emitirBoleto`.
+- A auditoria do checkout nao grava URL completa da fatura; registra apenas metadados minimos como provedor, valor e flag de link gerado.
+- `webhook_pagamento` agora valida a ContaReceber contra empresa/grupo antes da baixa, envia `group_id` para NF-e pos-pagamento e audita antes/depois resumido.
+- `conciliar_extrato` usa escopo resolvido para conciliar e audita apenas quantidade de conciliados/divergencias, sem gravar extrato, arquivo ou retorno completo.
+- Baixas de ContaPagar/ContaReceber continuam no fluxo existente, mas o AuditLog passou a registrar snapshot financeiro minimo e resumo do pagamento, sem gravar o registro inteiro nem detalhes completos de multimeios/parcelas.
+- Mantida a Regra-Mae: melhoria feita na funcao financeira existente, sem criar modulo, tela, rota ou remover funcionalidade.
+- Proximo passo sugerido: revisar `legacyIntegrationsMirror` para sanitizar webhooks e auditorias com payload externo, mantendo Grupo/Empresa e RBAC.
 ### Integracoes - Boleto Backend com Contexto e Auditoria Segura
 - Continuei o proximo passo salvo: revisar `emitirBoleto` para aplicar payload seguro e contexto estrito em configuracao, updates e auditoria financeira.
 - `emitirBoleto` agora resolve `groupId` pela empresa do titulo antes do guard financeiro e bloqueia titulo sem `empresa_id` ou sem grupo resolvido.

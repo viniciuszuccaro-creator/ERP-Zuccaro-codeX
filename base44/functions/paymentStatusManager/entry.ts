@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { recordMatchesGuardScope, requireEntityGuard } from './_lib/security/guardCallPolicy.js';
+import { completeGuardCallScope, recordMatchesGuardScope, requireEntityGuard } from './_lib/security/guardCallPolicy.js';
 
 const reportPaymentFailure = (operation, error, context = {}) => {
   console.error(`[paymentStatusManager] ${operation}`, { error: error?.message || String(error), ...context });
@@ -30,7 +30,7 @@ async function audit(base44, user, log){
       data_hora: new Date().toISOString()
     });
   } catch (error) {
-    reportPaymentFailure('auditoria', error, { entidade: payload?.entidade, registro_id: payload?.registro_id });
+    reportPaymentFailure('auditoria', error, { entidade: log?.entidade, registro_id: log?.registro_id });
   }
 }
 // Inline minimal compute helpers (avoid external local imports)
@@ -65,6 +65,52 @@ function normalizePagamento(p){
   };
 }
 
+const resolveFinancialScope = async (base44, input = {}) => completeGuardCallScope(base44, input || {});
+
+const buildContaFinanceiraAuditSnapshot = (registro = {}) => ({
+  id: registro?.id || null,
+  empresa_id: registro?.empresa_id || null,
+  group_id: registro?.group_id || registro?.grupo_id || null,
+  status: registro?.status || null,
+  status_pagamento: registro?.status_pagamento || null,
+  status_cobranca: registro?.status_cobranca || null,
+  valor: Number(registro?.valor || 0),
+  valor_pago: Number(registro?.valor_pago || 0),
+  valor_recebido: Number(registro?.valor_recebido || 0),
+  data_vencimento: registro?.data_vencimento || null,
+  data_pagamento: registro?.data_pagamento || null,
+  data_recebimento: registro?.data_recebimento || null,
+});
+
+const buildPaymentAuditPayload = ({ action, updates = {}, justificativa = null, pagamento = null } = {}) => ({
+  action: action || null,
+  status: updates.status || null,
+  status_pagamento: updates.status_pagamento || null,
+  status_cobranca: updates.status_cobranca || null,
+  valor_pago: updates.valor_pago ?? null,
+  valor_recebido: updates.valor_recebido ?? null,
+  data_pagamento: updates.data_pagamento || null,
+  data_recebimento: updates.data_recebimento || null,
+  motivo_cancelamento: updates.motivo_cancelamento || null,
+  motivo_rejeicao: updates.motivo_rejeicao || null,
+  tem_justificativa: Boolean(justificativa),
+  pagamento: pagamento ? {
+    meio: pagamento.meio || null,
+    valor: Number(pagamento.valor || 0),
+    data: pagamento.data || null,
+    parcelas: Array.isArray(pagamento.parcelas) ? pagamento.parcelas.length : 0,
+    multiplos_meios: Array.isArray(pagamento.multiplos_meios) ? pagamento.multiplos_meios.length : 0,
+    obra_id: pagamento.obra_id || null,
+    fornecedor_id: pagamento.fornecedor_id || null,
+  } : null,
+});
+
+const buildConciliacaoAuditPayload = (result = {}) => ({
+  ok: result?.ok === true,
+  conciliados: Number(result?.conciliados || 0),
+  divergencias: Array.isArray(result?.divergencias) ? result.divergencias.length : 0,
+  origem: 'paymentStatusManager',
+});
 async function conciliarExtrato(base44, ctx, conc){
   if (!conc?.file_url) return { ok:false, error:'file_url obrigatório' };
   const toleranciaDias = Number(conc?.tolerancia_dias)||2;
@@ -236,6 +282,15 @@ Deno.serve(async (req) => {
       if (!empresaId || !pedidoId || !contaReceberId || !(valor > 0)) {
         return Response.json({ error: 'Parâmetros inválidos (checkout_iniciado)' }, { status: 400 });
       }
+      const checkoutScope = await resolveFinancialScope(base44, body);
+      const checkoutGroupId = checkoutScope.groupId || null;
+      if (!checkoutGroupId) {
+        return Response.json({ error: 'group_id ausente para checkout_iniciado' }, { status: 400 });
+      }
+      const checkoutCr = await base44.asServiceRole.entities.ContaReceber.get(contaReceberId);
+      if (!recordMatchesGuardScope(checkoutCr, { group_id: checkoutGroupId, empresa_id: empresaId })) {
+        return Response.json({ error: 'ContaReceber fora do contexto multiempresa informado' }, { status: 403 });
+      }
       // Busca config do gateway ativo
       let cfg = null;
       try {
@@ -249,6 +304,7 @@ Deno.serve(async (req) => {
       try {
         const payload = {
           empresa_id: empresaId,
+          group_id: checkoutGroupId,
           conta_receber_id: contaReceberId,
           pedido_id: pedidoId,
           valor,
@@ -281,7 +337,8 @@ Deno.serve(async (req) => {
           registro_id: pedidoId,
           descricao: 'Checkout iniciado (link gerado)',
           empresa_id: empresaId,
-          dados_novos: { conta_receber_id: contaReceberId, valor, url_fatura }
+          group_id: checkoutGroupId,
+          dados_novos: { conta_receber_id: contaReceberId, valor, tem_url_fatura: Boolean(url_fatura), provider: cfg?.provedor || cfg?.gateway || 'Asaas' }
         });
       } catch (error) {
         reportPaymentFailure('auditoria_link_pagamento', error, { conta_receber_id: contaReceberId });
@@ -301,6 +358,15 @@ Deno.serve(async (req) => {
       }
       try {
         const cr = await base44.asServiceRole.entities.ContaReceber.get(contaReceberId);
+        const webhookScope = await resolveFinancialScope(base44, { ...body, group_id: body?.group_id || cr?.group_id || cr?.grupo_id || null, empresa_id: empresaId });
+        const webhookGroupId = webhookScope.groupId || null;
+        if (!webhookGroupId) {
+          return Response.json({ error: 'group_id ausente para webhook_pagamento' }, { status: 400 });
+        }
+        if (!recordMatchesGuardScope(cr, { group_id: webhookGroupId, empresa_id: empresaId })) {
+          return Response.json({ error: 'ContaReceber fora do contexto multiempresa informado' }, { status: 403 });
+        }
+        const beforeWebhook = buildContaFinanceiraAuditSnapshot(cr);
         const novo = Number(cr?.valor_recebido || 0) + (valorPago > 0 ? valorPago : 0);
         const quitado = novo + 0.005 >= Number(cr?.valor || 0);
         await base44.asServiceRole.entities.ContaReceber.update(contaReceberId, {
@@ -312,7 +378,7 @@ Deno.serve(async (req) => {
         // NF-e pós-pagamento (best-effort)
         try {
           if (quitado && pedidoId) {
-            await base44.functions.invoke('nfeActions', { action: 'emitir_pos_pagamento', pedido_id: pedidoId, empresa_id: empresaId });
+            await base44.functions.invoke('nfeActions', { action: 'emitir_pos_pagamento', pedido_id: pedidoId, empresa_id: empresaId, group_id: webhookGroupId });
           }
         } catch (error) {
           reportPaymentFailure('emissao_fiscal_pos_pagamento', error, { pedido_id: pedidoId, empresa_id: empresaId });
@@ -324,7 +390,9 @@ Deno.serve(async (req) => {
           registro_id: contaReceberId,
           descricao: 'Confirmação pagamento (webhook)',
           empresa_id: empresaId,
-          dados_novos: { status, valorPago }
+          group_id: webhookGroupId,
+          dados_anteriores: beforeWebhook,
+          dados_novos: { status, valorPago, valor_recebido: novo, status_final: quitado ? 'Recebido' : (status === 'pago' ? 'Recebido' : cr?.status || 'Pendente') }
         });
       } catch (e) {
         return Response.json({ error: e.message }, { status: 500 });
@@ -343,13 +411,25 @@ Deno.serve(async (req) => {
     const permissionScope = action === 'conciliar_extrato'
       ? { ...body, ...(conciliacao || {}) }
       : body;
-    const perm = await assertPermission(base44, ctx, 'Financeiro', entityForPerm, 'editar', permissionScope);
+    const resolvedPermissionScope = await resolveFinancialScope(base44, permissionScope);
+    const scopedPermissionScope = { ...permissionScope, group_id: resolvedPermissionScope.groupId, empresa_id: resolvedPermissionScope.empresaId };
+    const perm = await assertPermission(base44, ctx, 'Financeiro', entityForPerm, 'editar', scopedPermissionScope);
     if (perm) return perm;
 
-    // Conciliação automática por extrato bancário
+    // Conciliacao automatica por extrato bancario
     if (action === 'conciliar_extrato') {
-      const result = await conciliarExtrato(base44, ctx, conciliacao);
-      await audit(base44, user, { acao:'Edição', modulo:'Financeiro', entidade:'Conciliação', registro_id: null, descricao: `Conciliação automática executada (${result.conciliados} itens)`, empresa_id: conciliacao?.empresa_id || null, dados_novos: { ...result, origem:'paymentStatusManager' } });
+      const scopedConciliacao = { ...(conciliacao || {}), group_id: resolvedPermissionScope.groupId, empresa_id: resolvedPermissionScope.empresaId };
+      const result = await conciliarExtrato(base44, ctx, scopedConciliacao);
+      await audit(base44, user, {
+        acao:'Edi��o',
+        modulo:'Financeiro',
+        entidade:'Concilia��o',
+        registro_id: null,
+        descricao: `Conciliacao automatica executada (${result.conciliados} itens)`,
+        empresa_id: scopedConciliacao?.empresa_id || null,
+        group_id: scopedConciliacao?.group_id || null,
+        dados_novos: buildConciliacaoAuditPayload(result)
+      });
       return Response.json(result);
     }
 
@@ -362,7 +442,7 @@ Deno.serve(async (req) => {
     const resultados = [];
     for (const alvoId of idsList){
       const registro = await api.get(alvoId);
-      if (!recordMatchesGuardScope(registro, permissionScope)) {
+      if (!recordMatchesGuardScope(registro, scopedPermissionScope)) {
         return Response.json({ error: 'Registro fora do contexto multiempresa informado' }, { status: 403 });
       }
       let updates = {};
@@ -396,8 +476,9 @@ Deno.serve(async (req) => {
         acao: 'Edição', modulo: 'Financeiro', entidade: entity, registro_id: alvoId,
         descricao: idsList.length>1 ? `Baixa em lote: ${action}` : `Transição pagamento: ${action}`,
         empresa_id: registro?.empresa_id || null,
-        dados_anteriores: registro,
-        dados_novos: { ...updates, __justificativa: justificativa || null, __pagamento: pagamento }
+        group_id: registro?.group_id || registro?.grupo_id || scopedPermissionScope.group_id || null,
+        dados_anteriores: buildContaFinanceiraAuditSnapshot(registro),
+        dados_novos: buildPaymentAuditPayload({ action, updates, justificativa, pagamento })
       });
 
       resultados.push({ id: alvoId, ok: true });
