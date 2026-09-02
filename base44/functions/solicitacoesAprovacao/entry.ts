@@ -32,6 +32,67 @@ function assertContextPresence(ctx, requireEmpresa) {
   return null;
 }
 
+function summarizeText(value) {
+  if (!value) return null;
+  return { informado: true, tamanho: String(value).length };
+}
+
+function summarizeApprovalPolicies(policies = {}) {
+  const entidades = Object.keys(policies || {});
+  const total_faixas = entidades.reduce((total, entidade) => total + (Array.isArray(policies?.[entidade]) ? policies[entidade].length : 0), 0);
+  const total_niveis = entidades.reduce((total, entidade) => {
+    const faixas = Array.isArray(policies?.[entidade]) ? policies[entidade] : [];
+    return total + faixas.reduce((sum, faixa) => sum + (Array.isArray(faixa?.niveis) ? faixa.niveis.length : 0), 0);
+  }, 0);
+  return { entidades, total_entidades: entidades.length, total_faixas, total_niveis };
+}
+
+function summarizeProposedData(dados = {}) {
+  return {
+    operation: dados?.operation || null,
+    valor: Number(dados?.valor || 0),
+    nivel_index: dados?.nivel_index ?? null,
+    niveis_total: dados?.niveis_total ?? (Array.isArray(dados?.faixa?.niveis) ? dados.faixa.niveis.length : null),
+    tem_faixa: Boolean(dados?.faixa),
+    campos: Object.keys(dados || {}).filter((key) => !['faixa'].includes(key)),
+  };
+}
+
+function buildApprovalAuditSnapshot(record = {}, action = null) {
+  return {
+    action,
+    id: record?.id || null,
+    group_id: record?.group_id || null,
+    empresa_id: record?.empresa_id || null,
+    status: record?.status || null,
+    tipo_solicitacao: record?.tipo_solicitacao || null,
+    entidade_alvo: record?.entidade_alvo || null,
+    entidade_alvo_id: record?.entidade_alvo_id || null,
+    solicitante_id: record?.solicitante_id || null,
+    aprovador_id: record?.aprovador_id || null,
+    perfil_aprovador_necessario: record?.perfil_aprovador_necessario || null,
+    dados_propostos: summarizeProposedData(record?.dados_propostos || {}),
+    tem_justificativa: Boolean(record?.justificativa),
+    comentarios_aprovacao: summarizeText(record?.comentarios_aprovacao),
+  };
+}
+
+function buildPedidoAuditSnapshot(pedido = {}, action = null) {
+  return {
+    action,
+    id: pedido?.id || null,
+    numero_pedido: pedido?.numero_pedido || null,
+    tipo: pedido?.tipo || null,
+    status: pedido?.status || null,
+    status_aprovacao: pedido?.status_aprovacao || null,
+    empresa_id: pedido?.empresa_id || null,
+    group_id: pedido?.group_id || pedido?.grupo_id || null,
+    cliente_id: pedido?.cliente_id || null,
+    valor_total: Number(pedido?.valor_total || 0),
+    tem_observacoes_publicas: Boolean(pedido?.observacoes_publicas),
+  };
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -81,7 +142,7 @@ Deno.serve(async (req) => {
       } else {
         cfg = await base44.entities.ConfiguracaoSistema.create({ ...filtro, valor_json: policies });
       }
-      try { await base44.entities.AuditLog.create({ usuario: user.full_name || user.email, usuario_id: user.id, empresa_id: empresa_id || null, group_id: group_id || null, acao: 'Edição', modulo: 'Sistema', entidade: 'ConfiguracaoSistema', registro_id: cfg.id, descricao: 'Atualização de políticas de aprovação', dados_novos: policies, data_hora: new Date().toISOString() }); } catch (error) { reportApprovalFailure('Falha ao auditar politica de aprovacao', error, { group_id, empresa_id, registro_id: cfg.id }); }
+      try { await base44.entities.AuditLog.create({ usuario: user.full_name || user.email, usuario_id: user.id, empresa_id: empresa_id || null, group_id: group_id || null, acao: 'Edicao', modulo: 'Sistema', entidade: 'ConfiguracaoSistema', registro_id: cfg.id, descricao: 'Atualizacao de politicas de aprovacao', dados_novos: summarizeApprovalPolicies(policies), data_hora: new Date().toISOString() }); } catch (error) { reportApprovalFailure('Falha ao auditar politica de aprovacao', error, { group_id, empresa_id, registro_id: cfg.id }); }
       return Response.json({ sucesso: true, id: cfg.id });
     }
 
@@ -109,7 +170,7 @@ Deno.serve(async (req) => {
         data_solicitacao: new Date().toISOString()
       });
 
-      try { await base44.entities.AuditLog.create({ usuario: user.full_name || user.email, usuario_id: user.id, empresa_id: empresa_id || null, group_id: group_id || null, acao: 'Criação', modulo: 'Comercial', entidade: 'SolicitacaoAprovacao', registro_id: record.id, descricao: `Solicitação (${tipo_solicitacao}) para ${entidade_alvo}#${entidade_alvo_id}`, dados_novos: record, data_hora: new Date().toISOString() }); } catch (error) { reportApprovalFailure('Falha ao auditar criacao de solicitacao', error, { group_id, empresa_id, solicitacao_id: record.id }); }
+      try { await base44.entities.AuditLog.create({ usuario: user.full_name || user.email, usuario_id: user.id, empresa_id: empresa_id || null, group_id: group_id || null, acao: 'Criacao', modulo: 'Comercial', entidade: 'SolicitacaoAprovacao', registro_id: record.id, descricao: `Solicitacao (${tipo_solicitacao}) para ${entidade_alvo}#${entidade_alvo_id}`, dados_novos: buildApprovalAuditSnapshot(record, 'create'), data_hora: new Date().toISOString() }); } catch (error) { reportApprovalFailure('Falha ao auditar criacao de solicitacao', error, { group_id, empresa_id, solicitacao_id: record.id }); }
       try { await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId: empresa_id || null, groupId: group_id || null, intent: 'aprovacao_criada', vars: { entidade: entidade_alvo, id: entidade_alvo_id || 'novo' } }); } catch (error) { reportApprovalFailure('Falha ao notificar solicitacao por WhatsApp', error, { group_id, empresa_id, solicitacao_id: record.id }); }
       try { await base44.asServiceRole.functions.invoke('sendEmailProvider', { empresaId: empresa_id || null, assunto: 'Aprovação criada', destinatario: user.email || 'noreply@local', mensagem: `Solicitação de aprovação (${tipo_solicitacao}) aberta para ${entidade_alvo} ${entidade_alvo_id || 'novo'}.` }); } catch (error) { reportApprovalFailure('Falha ao notificar solicitacao por email', error, { group_id, empresa_id, solicitacao_id: record.id }); }
       return Response.json(record);
@@ -156,7 +217,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      try { await base44.entities.AuditLog.create({ usuario: user.full_name || user.email, usuario_id: user.id, empresa_id: s.empresa_id || null, group_id: s.group_id || null, acao: action === 'approve' ? 'Aprovação' : 'Rejeição', modulo: 'Comercial', entidade: 'SolicitacaoAprovacao', registro_id: solicitacao_id, descricao: `${novoStatus} para ${s.entidade_alvo}#${s.entidade_alvo_id}`, dados_anteriores: s, dados_novos: updated, data_hora: new Date().toISOString() }); } catch (error) { reportApprovalFailure('Falha ao auditar decisao de aprovacao', error, { solicitacao_id, status: novoStatus }); }
+      try { await base44.entities.AuditLog.create({ usuario: user.full_name || user.email, usuario_id: user.id, empresa_id: s.empresa_id || null, group_id: s.group_id || null, acao: action === 'approve' ? 'Aprovacao' : 'Rejeicao', modulo: 'Comercial', entidade: 'SolicitacaoAprovacao', registro_id: solicitacao_id, descricao: `${novoStatus} para ${s.entidade_alvo}#${s.entidade_alvo_id}`, dados_anteriores: buildApprovalAuditSnapshot(s, 'before_decision'), dados_novos: buildApprovalAuditSnapshot(updated, 'decision'), data_hora: new Date().toISOString() }); } catch (error) { reportApprovalFailure('Falha ao auditar decisao de aprovacao', error, { solicitacao_id, status: novoStatus }); }
       try { await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId: s.empresa_id || null, groupId: s.group_id || null, intent: novoStatus === 'aprovado' ? 'aprovacao_concedida' : 'aprovacao_recusada', vars: { entidade: s.entidade_alvo, id: s.entidade_alvo_id || 'novo' } }); } catch (error) { reportApprovalFailure('Falha ao notificar decisao por WhatsApp', error, { solicitacao_id, status: novoStatus }); }
       try { await base44.asServiceRole.functions.invoke('sendEmailProvider', { empresaId: s.empresa_id || null, assunto: `Solicitação ${novoStatus}`, destinatario: user.email || 'noreply@local', mensagem: `Sua solicitação ${solicitacao_id} foi ${novoStatus}.` }); } catch (error) { reportApprovalFailure('Falha ao notificar decisao por email', error, { solicitacao_id, status: novoStatus }); }
 
@@ -193,7 +254,7 @@ Deno.serve(async (req) => {
         observacoes_publicas: (pedido.observacoes_publicas ? (pedido.observacoes_publicas + '\n') : '') + `Aceito pelo cliente via Portal: ${user.full_name || user.email}${comments ? ' — ' + comments : ''}`
       });
 
-      try { await base44.entities.AuditLog.create({ usuario: user.full_name || user.email, usuario_id: user.id, empresa_id: pedido.empresa_id || null, group_id: pedido.group_id || null, acao: 'Aprovação', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido_id, descricao: 'Orçamento aceito pelo cliente no Portal', dados_anteriores: pedido, dados_novos: updated, data_hora: new Date().toISOString() }); } catch (error) { reportApprovalFailure('Falha ao auditar aceite de orcamento', error, { pedido_id }); }
+      try { await base44.entities.AuditLog.create({ usuario: user.full_name || user.email, usuario_id: user.id, empresa_id: pedido.empresa_id || null, group_id: pedido.group_id || null, acao: 'Aprovacao', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido_id, descricao: 'Orcamento aceito pelo cliente no Portal', dados_anteriores: buildPedidoAuditSnapshot(pedido, 'before_accept_budget'), dados_novos: buildPedidoAuditSnapshot(updated, 'accept_budget'), data_hora: new Date().toISOString() }); } catch (error) { reportApprovalFailure('Falha ao auditar aceite de orcamento', error, { pedido_id }); }
 
       // Notificações (melhor esforço)
       try {
@@ -222,7 +283,7 @@ Deno.serve(async (req) => {
         observacoes_publicas: (pedido.observacoes_publicas ? (pedido.observacoes_publicas + '\n') : '') + `Revisão solicitada pelo cliente via Portal: ${comments || ''}`
       });
 
-      try { await base44.entities.AuditLog.create({ usuario: user.full_name || user.email, usuario_id: user.id, empresa_id: pedido.empresa_id || null, group_id: pedido.group_id || null, acao: 'Criação', modulo: 'Comercial', entidade: 'SolicitacaoAprovacao', registro_id: pedido.id, descricao: 'Cliente solicitou revisão de orçamento via Portal', dados_novos: { pedido_id, comments }, data_hora: new Date().toISOString() }); } catch (error) { reportApprovalFailure('Falha ao auditar revisao de orcamento', error, { pedido_id }); }
+      try { await base44.entities.AuditLog.create({ usuario: user.full_name || user.email, usuario_id: user.id, empresa_id: pedido.empresa_id || null, group_id: pedido.group_id || null, acao: 'Criacao', modulo: 'Comercial', entidade: 'SolicitacaoAprovacao', registro_id: pedido.id, descricao: 'Cliente solicitou revisao de orcamento via Portal', dados_novos: { pedido_id, comentarios: summarizeText(comments) }, data_hora: new Date().toISOString() }); } catch (error) { reportApprovalFailure('Falha ao auditar revisao de orcamento', error, { pedido_id }); }
       try {
         const vars = { cliente: pedido.cliente_nome || '', pedido: pedido.numero_pedido || pedido.id };
         await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId: pedido.empresa_id || null, groupId: pedido.group_id || null, intent: 'orcamento_revisao', vars, pedidoId: pedido.id });
@@ -306,7 +367,7 @@ Deno.serve(async (req) => {
           data_solicitacao: new Date().toISOString(),
           perfil_aprovador_necessario: 'aprovar',
         });
-        try { await base44.entities.AuditLog.create({ usuario: user.full_name || user.email, usuario_id: user.id, empresa_id: empresa_id || null, group_id: group_id || null, acao: 'Criação', modulo: moduleName, entidade: 'SolicitacaoAprovacao', registro_id: rec.id, descricao: `Avaliação de aprovação criada (${entity_name} ${entity_id || ''})`, dados_novos: rec, data_hora: new Date().toISOString() }); } catch (error) { reportApprovalFailure('Falha ao auditar avaliacao de aprovacao', error, { solicitacao_id: rec.id, entity_name, entity_id }); }
+        try { await base44.entities.AuditLog.create({ usuario: user.full_name || user.email, usuario_id: user.id, empresa_id: empresa_id || null, group_id: group_id || null, acao: 'Criacao', modulo: moduleName, entidade: 'SolicitacaoAprovacao', registro_id: rec.id, descricao: `Avaliacao de aprovacao criada (${entity_name} ${entity_id || ''})`, dados_novos: buildApprovalAuditSnapshot(rec, 'auto_create'), data_hora: new Date().toISOString() }); } catch (error) { reportApprovalFailure('Falha ao auditar avaliacao de aprovacao', error, { solicitacao_id: rec.id, entity_name, entity_id }); }
         // Notifica solicitante
         try { await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId: empresa_id || null, groupId: group_id || null, intent: 'aprovacao_pendente', vars: { entidade: entity_name, id: entity_id || 'novo', valor: valorBase } }); } catch (error) { reportApprovalFailure('Falha ao notificar aprovacao pendente por WhatsApp', error, { solicitacao_id: rec.id }); }
         try { await base44.asServiceRole.functions.invoke('sendEmailProvider', { empresaId: empresa_id || null, assunto: 'Aprovação pendente', destinatario: user.email || 'noreply@local', mensagem: `Gerada solicitação de aprovação para ${entity_name} (${entity_id || 'novo'}), valor ${valorBase}.` }); } catch (error) { reportApprovalFailure('Falha ao notificar aprovacao pendente por email', error, { solicitacao_id: rec.id }); }
@@ -345,7 +406,7 @@ Deno.serve(async (req) => {
           data_solicitacao: new Date().toISOString(),
           perfil_aprovador_necessario: 'aprovar',
         });
-        try { await base44.entities.AuditLog.create({ usuario: user.full_name || user.email, usuario_id: user.id, empresa_id: empresa_id || null, group_id: group_id || null, acao: 'Criação', modulo: moduleName, entidade: 'SolicitacaoAprovacao', registro_id: rec.id, descricao: `Solicitação por valor (${valorBase}) para ${entity_name} ${entity_id || ''} • Nível ${nivel_index + 1}/${niveis.length || 1}` , dados_novos: rec, data_hora: new Date().toISOString() }); } catch (error) { reportApprovalFailure('Falha ao auditar solicitacao por valor', error, { solicitacao_id: rec.id, entity_name, entity_id }); }
+        try { await base44.entities.AuditLog.create({ usuario: user.full_name || user.email, usuario_id: user.id, empresa_id: empresa_id || null, group_id: group_id || null, acao: 'Criacao', modulo: moduleName, entidade: 'SolicitacaoAprovacao', registro_id: rec.id, descricao: `Solicitacao por valor (${valorBase}) para ${entity_name} ${entity_id || ''} • Nivel ${nivel_index + 1}/${niveis.length || 1}` , dados_novos: buildApprovalAuditSnapshot(rec, 'auto_create'), data_hora: new Date().toISOString() }); } catch (error) { reportApprovalFailure('Falha ao auditar solicitacao por valor', error, { solicitacao_id: rec.id, entity_name, entity_id }); }
         // Notifica solicitante (melhor esforço)
         try { await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId: empresa_id || null, groupId: group_id || null, intent: 'aprovacao_pendente', vars: { entidade: entity_name, id: entity_id || 'novo', valor: valorBase } }); } catch (error) { reportApprovalFailure('Falha ao notificar solicitacao por valor', error, { solicitacao_id: rec.id }); }
         

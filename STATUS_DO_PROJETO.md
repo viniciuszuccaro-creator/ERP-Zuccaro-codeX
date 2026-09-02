@@ -1,3 +1,12 @@
+### Comercial - Solicitacoes de Aprovacao com Auditoria Segura
+- Continuei o proximo passo salvo: revisar `solicitacoesAprovacao` para reduzir auditorias completas de politicas, solicitacoes e pedidos aprovados.
+- As auditorias de politicas de aprovacao agora registram apenas entidades, quantidade de faixas e quantidade de niveis, sem gravar toda a regra operacional.
+- Criacao, avaliacao, aprovacao e rejeicao de `SolicitacaoAprovacao` passaram a auditar snapshot resumido com status, escopo Grupo/Empresa, entidade alvo, solicitante/aprovador e metadados de dados propostos.
+- Aceite de orcamento pelo Portal passou a auditar snapshot minimo do Pedido, sem salvar observacoes completas nem o registro inteiro.
+- Pedido de revisao pelo Portal passou a registrar apenas existencia e tamanho do comentario, sem salvar o texto completo na auditoria.
+- Notificacoes por WhatsApp e email foram preservadas no fluxo existente.
+- Mantida a Regra-Mae: melhoria feita na funcao existente `solicitacoesAprovacao`, sem criar modulo, tela, rota ou remover funcionalidade.
+- Proximo passo sugerido: revisar `piiEncryptor`, `auditError` e funcoes de IA para reduzir logs com stack, metadata, recomendacoes e amostras completas.
 ### Sistema - upsertConfig com Auditoria Resumida
 - Continuei o proximo passo salvo: revisar funcoes backend restantes com `AuditLog.create` para reduzir payloads sensiveis e completar `group_id` quando ausente.
 - O fluxo existente `upsertConfig` passou a auditar tambem o update direto por ID de `ConfiguracaoSistema`.
