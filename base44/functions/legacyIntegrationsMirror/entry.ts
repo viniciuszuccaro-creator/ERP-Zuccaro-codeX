@@ -66,11 +66,15 @@ Deno.serve(async (req) => {
       let user = null; try { user = await base44.auth.me(); } catch { user = null; }
       if (!trustedInternal && !user) { return Response.json({ error: 'Unauthorized' }, { status: 401 }); }
       if (!empresa_id && !group_id) { return Response.json({ error: 'escopo_multiempresa_obrigatorio' }, { status: 400 }); }
+      const { scope: apiScope, error: apiScopeError } = await resolveScopeOrReject(base44, { empresa_id, group_id }, 'contexto_multiempresa_api_incompleto');
+      if (apiScopeError) return apiScopeError;
+      const scopedEmpresaId = apiScope.empresaId || null;
+      const scopedGroupId = apiScope.groupId;
 
       // RBAC quando houver usuário (actions sensíveis exigem executar)
       if (user) {
         const guardFailure = await requireEntityGuard(base44, {
-          module: 'Integrações', section: 'API', action: 'executar', empresa_id, group_id,
+          module: 'Integrações', section: 'API', action: 'executar', empresa_id: scopedEmpresaId, group_id: scopedGroupId,
         });
         if (guardFailure) return guardFailure;
       }
@@ -78,19 +82,25 @@ Deno.serve(async (req) => {
       if (action === 'status_pedido') {
         const pedido_id = payload.pedido_id || null;
         const numero_pedido = payload.numero_pedido || null;
-        let q = { empresa_id }; if (numero_pedido) q.numero_pedido = numero_pedido; if (pedido_id) q.id = pedido_id;
+        const q = scopedEmpresaId ? { empresa_id: scopedEmpresaId } : { group_id: scopedGroupId };
+        if (numero_pedido) q.numero_pedido = numero_pedido;
+        if (pedido_id) q.id = pedido_id;
         const ped = await base44.asServiceRole.entities.Pedido.filter(q, undefined, 1).then(r => r?.[0] || null);
         if (!ped) return Response.json({ ok: false, error: 'pedido_nao_encontrado' }, { status: 404 });
+        if (!recordMatchesGuardScope(ped, { group_id: scopedGroupId, empresa_id: scopedEmpresaId })) {
+          return Response.json({ error: 'pedido_fora_do_contexto_multiempresa' }, { status: 403 });
+        }
         const resumo = { id: ped.id, numero_pedido: ped.numero_pedido, status: ped.status, data_prevista_entrega: ped.data_prevista_entrega, cliente: ped.cliente_nome };
-        try { await base44.asServiceRole.entities.AuditLog.create({ usuario: user?.full_name || 'Service', acao: 'Visualização', modulo: 'Comercial', tipo_auditoria: 'integracao', entidade: 'status_pedido', descricao: 'Consulta status pedido (API)', empresa_id, group_id, dados_novos: { pedido_id: resumo.id }, data_hora: new Date().toISOString() }); } catch (error) { reportIntegrationFailure('auditoria_status_pedido', error, { pedido_id: resumo.id }); }
+        try { await base44.asServiceRole.entities.AuditLog.create({ usuario: user?.full_name || 'Service', acao: 'Visualizacao', modulo: 'Comercial', tipo_auditoria: 'integracao', entidade: 'status_pedido', descricao: 'Consulta status pedido (API)', empresa_id: scopedEmpresaId, group_id: scopedGroupId, dados_novos: { pedido_id: resumo.id, numero_pedido: resumo.numero_pedido || null, scope_type: apiScope.scopeType }, data_hora: new Date().toISOString() }); } catch (error) { reportIntegrationFailure('auditoria_status_pedido', error, { pedido_id: resumo.id }); }
         return Response.json({ ok: true, pedido: resumo });
       }
 
       if (action === 'cotar_aco') {
-        const filtro = { empresa_id };
-        const prods = await base44.asServiceRole.entities.Produto.filter(filtro, '-updated_date', 50).then(arr => (arr || []).filter(p => p.eh_bitola === true));
+        const filtro = scopedEmpresaId ? { empresa_id: scopedEmpresaId } : { group_id: scopedGroupId };
+        const prods = await base44.asServiceRole.entities.Produto.filter(filtro, '-updated_date', 50)
+          .then(arr => (arr || []).filter(p => p.eh_bitola === true && recordMatchesGuardScope(p, { group_id: scopedGroupId, empresa_id: scopedEmpresaId })));
         const itens = prods.map(p => ({ id: p.id, descricao: p.descricao, tipo_aco: p.tipo_aco, bitola_mm: p.bitola_diametro_mm, preco_venda: p.preco_venda, estoque_disponivel: (p.estoque_disponivel ?? (p.estoque_atual - (p.estoque_reservado || 0))) }));
-        try { await base44.asServiceRole.entities.AuditLog.create({ usuario: user?.full_name || 'Service', acao: 'Visualização', modulo: 'Comercial', tipo_auditoria: 'integracao', entidade: 'cotar_aco', descricao: 'Cotação via API', empresa_id, group_id, dados_novos: { itens: itens.slice(0, 5) }, data_hora: new Date().toISOString() }); } catch (error) { reportIntegrationFailure('auditoria_cotacao_aco', error); }
+        try { await base44.asServiceRole.entities.AuditLog.create({ usuario: user?.full_name || 'Service', acao: 'Visualizacao', modulo: 'Comercial', tipo_auditoria: 'integracao', entidade: 'cotar_aco', descricao: 'Cotacao via API', empresa_id: scopedEmpresaId, group_id: scopedGroupId, dados_novos: { quantidade_itens: itens.length, scope_type: apiScope.scopeType }, data_hora: new Date().toISOString() }); } catch (error) { reportIntegrationFailure('auditoria_cotacao_aco', error); }
         return Response.json({ ok: true, itens });
       }
 

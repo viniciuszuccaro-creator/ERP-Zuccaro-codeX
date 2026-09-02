@@ -1,3 +1,12 @@
+### Integracoes - Actions Internas com Escopo Estrito
+- Continuei o proximo passo salvo: revisar actions internas de API em `legacyIntegrationsMirror` para exigir escopo estrito nas consultas `status_pedido` e `cotar_aco`.
+- As actions internas agora resolvem `groupId` pela empresa antes do RBAC, aceitando aliases `group_id` e `grupo_id` sem abrir consulta global.
+- `status_pedido` passou a consultar por empresa quando houver empresa ativa ou por grupo quando o acesso for consolidado, validando o pedido retornado contra o contexto multiempresa.
+- `cotar_aco` passou a filtrar produtos por empresa/grupo resolvido e descartar registros fora do contexto antes de montar o retorno.
+- Auditoria de `cotar_aco` deixou de salvar amostra de produtos e agora registra somente quantidade de itens e tipo de escopo.
+- Auditoria de `status_pedido` registra apenas identificadores minimos e escopo, mantendo rastreabilidade sem expor dados completos do pedido.
+- Mantida a Regra-Mae: melhoria feita na action interna existente, sem criar rota, modulo, tela ou remover funcionalidade.
+- Proximo passo sugerido: revisar `legacyIntegrationsMirror` no alerta de estoque baixo e espelho de configuracoes para auditar alteracoes de ConfiguracaoSistema com antes/depois resumido.
 ### Integracoes - Legacy Mirror com Webhooks Sanitizados
 - Continuei o proximo passo salvo: revisar `legacyIntegrationsMirror` para sanitizar webhooks e auditorias com payload externo, mantendo Grupo/Empresa e RBAC.
 - O mirror passou a reutilizar `completeGuardCallScope` e `recordMatchesGuardScope` existentes para resolver e validar contexto multiempresa em webhooks sensiveis.
