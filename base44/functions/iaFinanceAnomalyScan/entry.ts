@@ -12,6 +12,61 @@ const safeNum = (v, d = 0) => {
 };
 const groupBy = (arr, keyFn) => arr.reduce((acc, x) => { const k = keyFn(x); (acc[k] = acc[k] || []).push(x); return acc; }, {});
 
+function summarizeBy(items = [], key = 'severity') {
+  return (Array.isArray(items) ? items : []).reduce((acc, item) => {
+    const name = item?.[key] || 'indefinido';
+    acc[name] = (acc[name] || 0) + 1;
+    return acc;
+  }, {});
+}
+
+function summarizeIssuesForAudit(issues = []) {
+  const list = Array.isArray(issues) ? issues : [];
+  return {
+    total: list.length,
+    por_severidade: summarizeBy(list, 'severity'),
+    por_entidade: summarizeBy(list, 'entidade'),
+    por_tipo: summarizeBy(list, 'tipo'),
+    ids_amostra: list.map((item) => item?.id).filter(Boolean).slice(0, 30),
+  };
+}
+
+function summarizeSuggestionsForAudit(sugestoes = []) {
+  const list = Array.isArray(sugestoes) ? sugestoes : [];
+  return {
+    total: list.length,
+    por_tipo: summarizeBy(list, 'tipo'),
+    motivos: Array.from(new Set(list.map((item) => item?.motivo).filter(Boolean))).slice(0, 20),
+  };
+}
+
+function summarizeForecastForAudit(previsoes = [], bodyPrevisao = {}, estoqueParams = {}) {
+  const list = Array.isArray(previsoes) ? previsoes : [];
+  return {
+    total_itens: list.length,
+    horizonte_dias: Number(bodyPrevisao?.horizon_days ?? 14),
+    filtros_parametros: Object.keys(estoqueParams || {}),
+    por_risco_ruptura: summarizeBy(list, 'risco_ruptura'),
+    recomendacoes: summarizeBy(list, 'recomendacao'),
+    produtos_ids_amostra: list.map((item) => item?.produto_id).filter(Boolean).slice(0, 30),
+  };
+}
+
+function summarizeNotificationPayload(issues = [], sugestoes = []) {
+  return {
+    resumoSeveridade: summarizeBy(issues, 'severity'),
+    issues: summarizeIssuesForAudit(issues),
+    sugestoes: summarizeSuggestionsForAudit(sugestoes),
+  };
+}
+
+function summarizeScanPerformance(durationMs, filtros = {}) {
+  return {
+    durationMs,
+    empresa_id: filtros?.empresa_id || null,
+    group_id: filtros?.group_id || null,
+  };
+}
 function detectSteelPriceOscillation(produtos = [], fornecedores = []) {
   const fornById = fornecedores.reduce((m, f) => { m[f.id] = f; return m; }, {});
   const issues = [];
@@ -344,7 +399,7 @@ Deno.serve(async (req) => {
             descricao: `Previsões geradas para ${previsoes.length} itens`,
             empresa_id: filtros?.empresa_id || null,
             group_id: filtros?.group_id || null,
-            dados_novos: { params: { ...body?.previsao_estoque, estoque_params }, amostra: previsoes.slice(0, 20) },
+            dados_novos: summarizeForecastForAudit(previsoes, body?.previsao_estoque, estoqueParams),
             data_hora: new Date().toISOString(),
           });
         } catch (error) {
@@ -366,8 +421,9 @@ Deno.serve(async (req) => {
         modulo: 'Financeiro',
         entidade: 'Monitoramento',
         descricao: `Anomalias detectadas: ${issues.length}`,
-        dados_novos: { issues: issues.slice(0, 50), sugestoes: (sugestoes || []).slice(0, 50) },
+        dados_novos: { issues: summarizeIssuesForAudit(issues), sugestoes: summarizeSuggestionsForAudit(sugestoes) },
         empresa_id: alvoEmpresaId || null,
+        group_id: filtros?.group_id || null,
         data_hora: new Date().toISOString(),
       });
 
@@ -380,7 +436,7 @@ Deno.serve(async (req) => {
         categoria: 'Financeiro',
         prioridade: 'Alta',
         empresa_id: alvoEmpresaId,
-        dados: { resumoSeveridade, exemplos: issues.slice(0, 5), sugestoes: (sugestoes || []).slice(0, 5) }
+        dados: summarizeNotificationPayload(issues, sugestoes)
       }, { whatsapp: true });
 
       // Canal opcional: WhatsApp (se configurado em Configuração do Sistema)
@@ -401,7 +457,7 @@ Deno.serve(async (req) => {
     }
 
     const durationMs = Date.now() - t0;
-    try { if (durationMs > 500) { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Sistema', acao: 'Visualização', modulo: body?.previsao_estoque?.enabled ? 'Estoque' : 'Financeiro', tipo_auditoria: 'sistema', entidade: 'Performance', descricao: `iaFinanceAnomalyScan demorou ${durationMs}ms`, dados_novos: { durationMs, filtros }, data_hora: new Date().toISOString() }); } } catch (error) { reportScanFailure('Falha ao auditar desempenho da analise', error, filtros); }
+    try { if (durationMs > 500) { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Sistema', acao: 'Visualização', modulo: body?.previsao_estoque?.enabled ? 'Estoque' : 'Financeiro', tipo_auditoria: 'sistema', entidade: 'Performance', descricao: `iaFinanceAnomalyScan demorou ${durationMs}ms`, dados_novos: summarizeScanPerformance(durationMs, filtros), group_id: filtros?.group_id || null, data_hora: new Date().toISOString() }); } } catch (error) { reportScanFailure('Falha ao auditar desempenho da analise', error, filtros); }
     return Response.json({ ok: true, issues: issues.length, details: issues, previsoes, warnings });
   } catch (error) {
     return Response.json({ error: String(error?.message || error) }, { status: 500 });

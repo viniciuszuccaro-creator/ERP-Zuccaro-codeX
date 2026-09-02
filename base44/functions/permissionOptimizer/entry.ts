@@ -1,5 +1,15 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
+function buildPermissionOptimizationAudit(sugestoes = {}, blocksByModule = {}) {
+  const entries = Object.entries(sugestoes || {});
+  return {
+    perfis_atualizados: entries.length,
+    perfis_ids: entries.map(([id]) => id).slice(0, 50),
+    perfis_com_aprovacao_especial: entries.filter(([, item]) => item?.requer_aprovacao_especial).length,
+    modulos_com_bloqueio: Object.keys(blocksByModule || {}),
+    total_bloqueios: Object.values(blocksByModule || {}).reduce((sum, value) => sum + Number(value || 0), 0),
+  };
+}
 Deno.serve(async (req) => {
   const t0 = Date.now();
   try {
@@ -42,11 +52,11 @@ Deno.serve(async (req) => {
     try {
       await base44.asServiceRole.entities.AuditLog.create({
         usuario: 'automacao',
-        acao: 'Edição',
+        acao: 'Edicao',
         modulo: 'Sistema',
         entidade: 'PerfilAcesso',
         descricao: 'Otimização de permissões sugerida por IA (RBAC granular + SoD + multiempresa)',
-        dados_novos: sugestoes,
+        dados_novos: buildPermissionOptimizationAudit(sugestoes, blocksByModule),
         duracao_ms: Date.now() - t0,
       });
     } catch {}

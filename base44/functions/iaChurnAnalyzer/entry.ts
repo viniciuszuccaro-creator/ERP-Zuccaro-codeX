@@ -3,6 +3,23 @@ import { getUserAndPerfil, assertPermission } from './_lib/guard.js';
 import { loadChurnConfig, evaluateChurnRisk } from './_lib/churnUtils.js';
 
 // Sinalização de churn no CRM: analisa Oportunidades e gera alerts no AuditLog
+function buildChurnAuditPayload(evalRes = {}) {
+  return {
+    recomendacao_tipo: evalRes?.recomendacao?.tipo || null,
+    probabilidade: evalRes?.detalhes?.probabilidade ?? null,
+    dias_sem_contato: evalRes?.detalhes?.dias_sem_contato ?? null,
+    atraso_previsto: evalRes?.detalhes?.atraso_prev ?? null,
+  };
+}
+
+function buildSlowPayersAuditPayload(tops = []) {
+  return {
+    quantidade_clientes: tops.length,
+    clientes_ids: tops.map((item) => item.cliente_id).slice(0, 20),
+    maior_total: tops.length ? Math.max(...tops.map((item) => Number(item.total || 0))) : 0,
+    maior_media_dias: tops.length ? Math.max(...tops.map((item) => Number(item.media || 0))) : 0,
+  };
+}
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -25,8 +42,9 @@ Deno.serve(async (req) => {
           usuario: 'Sistema',
           acao: 'Visualização', modulo: 'CRM', entidade: 'Oportunidade', registro_id: o.id,
           descricao: `Sinal de churn: dias_sem_contato=${evalRes.detalhes.dias_sem_contato}, prob=${evalRes.detalhes.probabilidade}, atrasoPrev=${evalRes.detalhes.atraso_prev}`,
-          dados_novos: { recomendacao: evalRes.recomendacao },
+          dados_novos: buildChurnAuditPayload(evalRes),
           empresa_id: o?.empresa_id ?? (filtros?.empresa_id ?? null),
+          group_id: o?.group_id ?? (filtros?.group_id ?? null),
           data_hora: new Date().toISOString(),
         });
         await base44.asServiceRole.entities.Notificacao?.create?.({
@@ -57,7 +75,7 @@ try {
     await base44.asServiceRole.entities.AuditLog.create({
       usuario: 'Sistema', acao: 'Visualização', modulo: 'CRM', entidade: 'PerfilCliente',
       descricao: `Pagadores lentos e alto valor: ${tops.length}`,
-      dados_novos: { clientes: tops }, empresa_id: (filtros?.empresa_id ?? null), data_hora: new Date().toISOString()
+      dados_novos: buildSlowPayersAuditPayload(tops), empresa_id: (filtros?.empresa_id ?? null), group_id: (filtros?.group_id ?? null), data_hora: new Date().toISOString()
     });
     await base44.asServiceRole.entities.Notificacao?.create?.({
       titulo: 'Clientes com Risco Financeiro (CRM)',

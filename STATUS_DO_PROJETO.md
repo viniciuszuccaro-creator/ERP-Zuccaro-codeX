@@ -1,3 +1,12 @@
+### IA - Auditorias de Churn, Anomalias e RBAC Sanitizadas
+- Continuei o proximo passo salvo: revisar funcoes de IA (`iaFinanceAnomalyScan`, `iaChurnAnalyzer`, `permissionOptimizer`) para reduzir logs com recomendacoes, sugestoes e amostras completas.
+- `iaChurnAnalyzer` passou a auditar recomendacao de churn como metadados minimos e incluir `group_id` no `AuditLog`.
+- Perfil de pagadores lentos no CRM deixou de gravar a lista completa de clientes e agora registra quantidade, IDs amostrados e maiores indicadores agregados.
+- `permissionOptimizer` deixou de gravar todas as sugestoes por perfil e passou a auditar totais, IDs de perfis, bloqueios por modulo e quantidade de perfis marcados para aprovacao especial.
+- `iaFinanceAnomalyScan` deixou de persistir amostras completas de previsoes, issues e sugestoes em auditoria/notificacao, mantendo resumos por severidade, entidade, tipo, risco e recomendacao.
+- Auditoria de performance do scanner financeiro passou a registrar apenas duracao e escopo Grupo/Empresa, sem carregar filtros completos.
+- Mantida a Regra-Mae: melhorias feitas nas funcoes existentes de IA/RBAC, sem criar modulo, tela, rota ou remover funcionalidade.
+- Proximo passo sugerido: revisar funcoes operacionais de estoque/producao (`applyOrderStockMovements`, `applyAdjustmentsHandler`, `auditPedidoReserva`) para reduzir logs com movimentos completos e reforcar escopo Grupo/Empresa.
 ### Sistema - Erros e PII com Auditoria Sanitizada
 - Continuei o proximo passo salvo: revisar `piiEncryptor`, `auditError` e funcoes de IA para reduzir logs com stack, metadata, recomendacoes e amostras completas.
 - `auditError` passou a gravar `group_id` no campo correto do `AuditLog` e a reduzir stack para contagem/tamanho/topo limitado.
