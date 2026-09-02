@@ -1,3 +1,13 @@
+### Integracoes - Legacy Mirror com Webhooks Sanitizados
+- Continuei o proximo passo salvo: revisar `legacyIntegrationsMirror` para sanitizar webhooks e auditorias com payload externo, mantendo Grupo/Empresa e RBAC.
+- O mirror passou a reutilizar `completeGuardCallScope` e `recordMatchesGuardScope` existentes para resolver e validar contexto multiempresa em webhooks sensiveis.
+- Auditorias de recebimento de webhook deixam de gravar payload externo completo e passam a registrar somente metadados: provedor, evento, token valido, flags de pagamento/pedido/itens e contagens.
+- Webhooks Asaas e Juno agora filtram cobranca por empresa quando informada, validam a ContaReceber encontrada contra grupo/empresa e auditam antes/depois resumido.
+- Webhook fiscal de eNotas/NFe.io agora valida a NotaFiscal no contexto Grupo/Empresa, propaga `group_id` para pos-autorizacao e audita apenas status/flags de XML, PDF e chave.
+- Webhooks de marketplace passam a resolver `group_id` pela empresa, criar pedidos com grupo resolvido e bloquear update de pedido/produto fora do contexto.
+- O espelho antigo de configuracoes para `ConfiguracaoSistema` passou a filtrar por categoria + chave + empresa/grupo e salvar `empresa_id`/`group_id` no documento consolidado.
+- Mantida a Regra-Mae: melhoria feita na funcao de integracao existente, sem criar modulo, tela, rota ou remover funcionalidade.
+- Proximo passo sugerido: revisar actions internas de API em `legacyIntegrationsMirror` para exigir escopo estrito tambem nas consultas `status_pedido` e `cotar_aco`.
 ### Financeiro - PaymentStatusManager com Escopo e Auditoria Segura
 - Continuei o proximo passo salvo: revisar `paymentStatusManager` para reduzir payload de auditoria em baixas/conciliacao e garantir `group_id` nos logs financeiros.
 - O helper de auditoria do backend financeiro deixou de referenciar variavel inexistente no `catch`, evitando erro secundario quando o log falhar.

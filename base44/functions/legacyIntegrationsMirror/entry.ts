@@ -1,10 +1,53 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
-import { requireEntityGuard } from './_lib/security/guardCallPolicy.js';
+import { completeGuardCallScope, recordMatchesGuardScope, requireEntityGuard } from './_lib/security/guardCallPolicy.js';
 
 const reportIntegrationFailure = (operation, error, context = {}) => {
   console.error(`[legacyIntegrationsMirror] ${operation}`, { error: error?.message || String(error), ...context });
 };
 
+const providerEvent = (payload = {}) => String(payload?.event || payload?.type || payload?.status || payload?.evento || 'evento').slice(0, 80);
+
+const buildWebhookAuditPayload = ({ provider, payload = {}, trusted = false } = {}) => ({
+  provider: provider || null,
+  event: providerEvent(payload),
+  trusted: trusted === true,
+  has_payment: Boolean(payload?.payment),
+  has_charge: Boolean(payload?.charge || payload?.data?.charge),
+  has_order: Boolean(payload?.order || payload?.pedido),
+  items_count: Array.isArray(payload?.items) ? payload.items.length : 0,
+  has_inventory_updates: Array.isArray(payload?.ajustes_estoque) || Array.isArray(payload?.inventory_updates),
+  has_pricing_updates: Array.isArray(payload?.pricing_updates),
+});
+
+const buildContaReceberAuditSnapshot = (registro = {}) => ({
+  id: registro?.id || null,
+  empresa_id: registro?.empresa_id || null,
+  group_id: registro?.group_id || registro?.grupo_id || null,
+  status: registro?.status || null,
+  status_cobranca: registro?.status_cobranca || null,
+  valor: Number(registro?.valor || 0),
+  valor_recebido: Number(registro?.valor_recebido || 0),
+  data_recebimento: registro?.data_recebimento || null,
+});
+
+const buildPaymentWebhookAuditPayload = ({ provider, externalId, statusRaw, updates = {} } = {}) => ({
+  provider: provider || null,
+  external_id: externalId || null,
+  status_cobranca: updates.status_cobranca || String(statusRaw || '').toLowerCase() || null,
+  status: updates.status || null,
+  valor_recebido: updates.valor_recebido ?? null,
+  data_recebimento: updates.data_recebimento || null,
+  data_retorno_pagamento: updates.data_retorno_pagamento || null,
+  tem_detalhes_pagamento: Boolean(updates.detalhes_pagamento),
+});
+
+const resolveScopeOrReject = async (base44, input = {}, errorLabel = 'contexto_multiempresa_incompleto') => {
+  const scope = await completeGuardCallScope(base44, input || {});
+  if (!scope.groupId || (scope.scopeType === 'empresa' && !scope.empresaId)) {
+    return { error: Response.json({ error: errorLabel }, { status: 400 }) };
+  }
+  return { scope };
+};
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -16,7 +59,7 @@ Deno.serve(async (req) => {
     if (payload?.action && !payload?.provider) {
       const action = String(payload.action || '').toLowerCase();
       const empresa_id = payload.empresa_id || payload.company_id || null;
-      const group_id = payload.group_id || null;
+      const group_id = payload.group_id || payload.grupo_id || null;
       const internal_token = payload.internal_token || null;
       const trustedInternal = internal_token && Deno.env.get('DEPLOY_AUDIT_TOKEN') && internal_token === Deno.env.get('DEPLOY_AUDIT_TOKEN');
 
@@ -61,16 +104,23 @@ Deno.serve(async (req) => {
     const expected = Deno.env.get('DEPLOY_AUDIT_TOKEN') || null;
     const trusted = !!(expected && hdrToken === expected);
     const empresa_id = payload.empresa_id || payload.company_id || null;
-    const group_id = payload.group_id || null;
-    try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Criação', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: prov, descricao: `Webhook recebido`, empresa_id, group_id, dados_novos: { payload, trusted }, data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportIntegrationFailure('auditoria_webhook_recebido', error, { provedor: prov }); }
+    const group_id = payload.group_id || payload.grupo_id || null;
+    try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Criação', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: prov, descricao: `Webhook recebido`, empresa_id, group_id, dados_novos: buildWebhookAuditPayload({ provider: prov, payload, trusted }), data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportIntegrationFailure('auditoria_webhook_recebido', error, { provedor: prov }); }
 
     if (prov === 'asaas') {
       const p = payload?.payment || payload?.data || payload || {};
       const extId = p?.id || payload?.id || null;
       if (extId) {
-        const crList = await base44.asServiceRole.entities.ContaReceber.filter({ id_cobranca_externa: extId }, undefined, 1);
+        const crFilter = { id_cobranca_externa: extId };
+        if (empresa_id) crFilter.empresa_id = empresa_id;
+        const crList = await base44.asServiceRole.entities.ContaReceber.filter(crFilter, undefined, 1);
         const cr = crList?.[0] || null;
         if (cr) {
+          const { scope, error } = await resolveScopeOrReject(base44, { group_id: group_id || cr.group_id || cr.grupo_id || null, empresa_id: empresa_id || cr.empresa_id || null }, 'contexto_multiempresa_cobranca_incompleto');
+          if (error) return error;
+          if (!recordMatchesGuardScope(cr, { group_id: scope.groupId, empresa_id: scope.empresaId || cr.empresa_id || null })) {
+            return Response.json({ error: 'cobranca_fora_do_contexto_multiempresa' }, { status: 403 });
+          }
           const statusRaw = (p?.status || payload?.event || '').toString().toUpperCase();
           const pago = /RECEIVED|CONFIRMED|RECEIVED_IN_CASH|PAID/.test(statusRaw);
           const updates = {
@@ -84,8 +134,9 @@ Deno.serve(async (req) => {
             updates.data_recebimento = d;
             updates.detalhes_pagamento = { ...(cr.detalhes_pagamento||{}), forma_pagamento: 'Boleto/PIX', numero_autorizacao: p?.transactionReceipt || null, status_compensacao: 'Conciliado' };
           }
+          const before = buildContaReceberAuditSnapshot(cr);
           await base44.asServiceRole.entities.ContaReceber.update(cr.id, updates);
-          try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Edição', modulo: 'Financeiro', tipo_auditoria: 'integracao', entidade: 'Asaas', descricao: `Atualização cobrança ${extId}`, empresa_id, group_id, dados_novos: updates, data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportIntegrationFailure('auditoria_asaas', error, { external_id: extId }); }
+          try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Edicao', modulo: 'Financeiro', tipo_auditoria: 'integracao', entidade: 'Asaas', descricao: `Atualizacao cobranca ${extId}`, empresa_id: cr.empresa_id || scope.empresaId || null, group_id: scope.groupId, dados_anteriores: before, dados_novos: buildPaymentWebhookAuditPayload({ provider: 'Asaas', externalId: extId, statusRaw, updates }), data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportIntegrationFailure('auditoria_asaas', error, { external_id: extId }); }
         }
       }
       return Response.json({ ok: true, action: 'asaas_webhook_processed' });
@@ -95,9 +146,16 @@ Deno.serve(async (req) => {
       const ch = payload?.data?.charge || payload?.charge || payload || {};
       const extId = ch?.id || payload?.id || null;
       if (extId) {
-        const crList = await base44.asServiceRole.entities.ContaReceber.filter({ id_cobranca_externa: extId }, undefined, 1);
+        const crFilter = { id_cobranca_externa: extId };
+        if (empresa_id) crFilter.empresa_id = empresa_id;
+        const crList = await base44.asServiceRole.entities.ContaReceber.filter(crFilter, undefined, 1);
         const cr = crList?.[0] || null;
         if (cr) {
+          const { scope, error } = await resolveScopeOrReject(base44, { group_id: group_id || cr.group_id || cr.grupo_id || null, empresa_id: empresa_id || cr.empresa_id || null }, 'contexto_multiempresa_cobranca_incompleto');
+          if (error) return error;
+          if (!recordMatchesGuardScope(cr, { group_id: scope.groupId, empresa_id: scope.empresaId || cr.empresa_id || null })) {
+            return Response.json({ error: 'cobranca_fora_do_contexto_multiempresa' }, { status: 403 });
+          }
           const statusRaw = (ch?.status || payload?.event || '').toString().toUpperCase();
           const pago = /PAID|CONFIRMED|COMPLETED/.test(statusRaw);
           const updates = {
@@ -111,8 +169,9 @@ Deno.serve(async (req) => {
             updates.data_recebimento = d;
             updates.detalhes_pagamento = { ...(cr.detalhes_pagamento||{}), forma_pagamento: 'Boleto', status_compensacao: 'Conciliado' };
           }
+          const before = buildContaReceberAuditSnapshot(cr);
           await base44.asServiceRole.entities.ContaReceber.update(cr.id, updates);
-          try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Edição', modulo: 'Financeiro', tipo_auditoria: 'integracao', entidade: 'Juno', descricao: `Atualização cobrança ${extId}`, empresa_id, group_id, dados_novos: updates, data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportIntegrationFailure('auditoria_juno', error, { external_id: extId }); }
+          try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Edicao', modulo: 'Financeiro', tipo_auditoria: 'integracao', entidade: 'Juno', descricao: `Atualizacao cobranca ${extId}`, empresa_id: cr.empresa_id || scope.empresaId || null, group_id: scope.groupId, dados_anteriores: before, dados_novos: buildPaymentWebhookAuditPayload({ provider: 'Juno', externalId: extId, statusRaw, updates }), data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportIntegrationFailure('auditoria_juno', error, { external_id: extId }); }
         }
       }
       return Response.json({ ok: true, action: 'juno_webhook_processed' });
@@ -122,14 +181,22 @@ Deno.serve(async (req) => {
       const nfId = payload?.nfeId || payload?.id || payload?.nota_id || null;
       const status = (payload?.status || payload?.evento || '').toString();
       if (nfId) {
+        let nf = null;
+        try { nf = await base44.asServiceRole.entities.NotaFiscal.get(nfId); } catch (error) { reportIntegrationFailure('consulta_nfe_webhook', error, { nota_fiscal_id: nfId }); }
+        const { scope, error } = await resolveScopeOrReject(base44, { group_id: group_id || nf?.group_id || nf?.grupo_id || null, empresa_id: empresa_id || nf?.empresa_id || null }, 'contexto_multiempresa_nfe_incompleto');
+        if (error) return error;
+        if (nf && !recordMatchesGuardScope(nf, { group_id: scope.groupId, empresa_id: scope.empresaId || nf.empresa_id || null })) {
+          return Response.json({ error: 'nota_fiscal_fora_do_contexto_multiempresa' }, { status: 403 });
+        }
         const map = { autorizada: 'Autorizada', autorizadauso: 'Autorizada', cancelada: 'Cancelada', denegada: 'Denegada', rejeitada: 'Rejeitada' };
         const statusKey = status.toLowerCase().replace(/\s/g,'');
         const nfStatus = map[statusKey] || status;
-        await base44.asServiceRole.entities.NotaFiscal.update(nfId, { status: nfStatus, mensagem_sefaz: payload?.mensagem || null, codigo_status_sefaz: String(payload?.codigo || payload?.statusCode || ''), xml_nfe: payload?.xmlUrl || payload?.xml || null, pdf_danfe: payload?.pdfUrl || payload?.danfeUrl || null, chave_acesso: payload?.chave || payload?.chaveAcesso || null });
+        const nfUpdates = { status: nfStatus, mensagem_sefaz: payload?.mensagem || null, codigo_status_sefaz: String(payload?.codigo || payload?.statusCode || ''), xml_nfe: payload?.xmlUrl || payload?.xml || null, pdf_danfe: payload?.pdfUrl || payload?.danfeUrl || null, chave_acesso: payload?.chave || payload?.chaveAcesso || null };
+        await base44.asServiceRole.entities.NotaFiscal.update(nfId, nfUpdates);
         if (/autorizad/i.test(nfStatus)) {
-          try { await base44.asServiceRole.functions.invoke('onNotaFiscalAuthorized', { nota_fiscal_id: nfId, empresa_id }); } catch (error) { reportIntegrationFailure('pos_autorizacao_nfe', error, { nota_fiscal_id: nfId }); }
+          try { await base44.asServiceRole.functions.invoke('onNotaFiscalAuthorized', { nota_fiscal_id: nfId, empresa_id: scope.empresaId || empresa_id || nf?.empresa_id || null, group_id: scope.groupId }); } catch (error) { reportIntegrationFailure('pos_autorizacao_nfe', error, { nota_fiscal_id: nfId }); }
         }
-        try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Edição', modulo: 'Fiscal', tipo_auditoria: 'integracao', entidade: prov, descricao: `Atualização NF-e ${nfId}`, empresa_id, group_id, dados_novos: { status: nfStatus }, data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportIntegrationFailure('auditoria_nfe', error, { nota_fiscal_id: nfId }); }
+        try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Edicao', modulo: 'Fiscal', tipo_auditoria: 'integracao', entidade: prov, descricao: `Atualizacao NF-e ${nfId}`, empresa_id: scope.empresaId || empresa_id || nf?.empresa_id || null, group_id: scope.groupId, dados_anteriores: nf ? { id: nf.id, empresa_id: nf.empresa_id || null, group_id: nf.group_id || nf.grupo_id || null, status: nf.status || null, codigo_status_sefaz: nf.codigo_status_sefaz || null } : null, dados_novos: { status: nfStatus, codigo_status_sefaz: nfUpdates.codigo_status_sefaz, tem_xml: Boolean(nfUpdates.xml_nfe), tem_pdf: Boolean(nfUpdates.pdf_danfe), tem_chave_acesso: Boolean(nfUpdates.chave_acesso) }, data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportIntegrationFailure('auditoria_nfe', error, { nota_fiscal_id: nfId }); }
       }
       return Response.json({ ok: true, action: 'nfe_webhook_processed' });
     }
@@ -145,7 +212,7 @@ Deno.serve(async (req) => {
 
       if (['mercado_livre','amazon','shopee','magalu','ecommerce_site'].includes(prov)) {
         const empresa_id = payload.empresa_id || payload.company_id || null;
-        const group_id = payload.group_id || null;
+        const group_id = payload.group_id || payload.grupo_id || null;
 
         // Token/assinatura obrigatória (Zero Trust)
         const hdrToken = req.headers.get('x-internal-token') || req.headers.get('x-webhook-token') || null;
@@ -157,6 +224,9 @@ Deno.serve(async (req) => {
         }
 
         if (!empresa_id) { return Response.json({ error: 'empresa_id_obrigatorio' }, { status: 400 }); }
+        const { scope: marketplaceScope, error: marketplaceScopeError } = await resolveScopeOrReject(base44, { empresa_id, group_id }, 'contexto_multiempresa_marketplace_incompleto');
+        if (marketplaceScopeError) return marketplaceScopeError;
+        const scopedGroupId = marketplaceScope.groupId;
 
         const clean = (v) => {
           if (typeof v === 'string') return v.replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi,'').replace(/on[a-z]+\s*=\s*(["']).*?\1/gi,'').replace(/javascript:\s*/gi,'').slice(0, 4000);
@@ -164,7 +234,7 @@ Deno.serve(async (req) => {
         };
         const safeNum = (n, d=0) => { const x = Number(n); return isFinite(x) ? x : d; };
 
-        try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Criação', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: prov, descricao: `Webhook recebido: ${payload.event || 'evento'}`, empresa_id, group_id, dados_novos: { provider: prov }, data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportIntegrationFailure('auditoria_evento', error, { provedor: prov }); }
+        try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Criacao', modulo: 'Integracoes', tipo_auditoria: 'integracao', entidade: prov, descricao: `Webhook recebido: ${providerEvent(payload)}`, empresa_id, group_id: scopedGroupId, dados_novos: buildWebhookAuditPayload({ provider: prov, payload, trusted }), data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportIntegrationFailure('auditoria_evento', error, { provedor: prov }); }
 
         // 1) Pedido (order) - upsert por origem_externa_id
         const order = payload.order || payload.pedido || null;
@@ -182,6 +252,9 @@ Deno.serve(async (req) => {
 
             const found = await base44.asServiceRole.entities.Pedido.filter({ empresa_id, origem_pedido: 'Marketplace', origem_externa_id: extId }, undefined, 1).then(r=>r?.[0]||null);
             if (found) {
+              if (!recordMatchesGuardScope(found, { group_id: scopedGroupId, empresa_id })) {
+                return Response.json({ error: 'pedido_fora_do_contexto_multiempresa' }, { status: 403 });
+              }
               await base44.asServiceRole.entities.Pedido.update(found.id, { status, valor_total: total });
               pedidoResult = { action: 'update', id: found.id };
             } else {
@@ -190,14 +263,14 @@ Deno.serve(async (req) => {
                 cliente_nome: cliente,
                 data_pedido,
                 valor_total: total,
-                empresa_id, group_id,
+                empresa_id, group_id: scopedGroupId,
                 origem_pedido: 'Marketplace',
                 origem_externa_id: extId,
                 tipo: 'Pedido'
               });
               pedidoResult = { action: 'create', id: novo.id };
             }
-            try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: pedidoResult.action === 'create' ? 'Criação' : 'Edição', modulo: 'Comercial', tipo_auditoria: 'integracao', entidade: prov, descricao: `Sync pedido ${extId}`, empresa_id, group_id, dados_novos: { pedidoResult }, data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportIntegrationFailure('auditoria_sync_pedido', error, { external_id: extId }); }
+            try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: pedidoResult.action === 'create' ? 'Criacao' : 'Edicao', modulo: 'Comercial', tipo_auditoria: 'integracao', entidade: prov, descricao: `Sync pedido ${extId}`, empresa_id, group_id: scopedGroupId, dados_novos: { pedidoResult, external_id: extId, status, valor_total: total }, data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportIntegrationFailure('auditoria_sync_pedido', error, { external_id: extId }); }
           }
         }
 
@@ -215,13 +288,14 @@ Deno.serve(async (req) => {
                 if (pid) target = await base44.asServiceRole.entities.Produto.filter({ id: pid, empresa_id }, undefined, 1).then(r=>r?.[0]||null);
                 if (!target && codigo) target = await base44.asServiceRole.entities.Produto.filter({ codigo, empresa_id }, undefined, 1).then(r=>r?.[0]||null);
                 if (target && qtd != null) {
+                  if (!recordMatchesGuardScope(target, { group_id: scopedGroupId, empresa_id })) { continue; }
                   await base44.asServiceRole.entities.Produto.update(target.id, { estoque_atual: qtd });
                   invCount++;
                 }
-              } catch (error) { reportIntegrationFailure('sync_estoque_item', error, { sku }); }
+              } catch (error) { reportIntegrationFailure('sync_estoque_item', error, { codigo }); }
             }
           }
-          try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Edição', modulo: 'Estoque', tipo_auditoria: 'integracao', entidade: prov, descricao: `Atualização de estoque (${invCount})`, empresa_id, group_id, dados_novos: { invCount }, data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportIntegrationFailure('auditoria_sync_estoque', error, { quantidade: invCount }); }
+          try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Edicao', modulo: 'Estoque', tipo_auditoria: 'integracao', entidade: prov, descricao: `Atualizacao de estoque (${invCount})`, empresa_id, group_id: scopedGroupId, dados_novos: { invCount }, data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportIntegrationFailure('auditoria_sync_estoque', error, { quantidade: invCount }); }
         }
 
         // 3) Preços (pricing)
@@ -239,11 +313,11 @@ Deno.serve(async (req) => {
                 let target = null;
                 if (pid) target = await base44.asServiceRole.entities.Produto.filter({ id: pid, empresa_id }, undefined, 1).then(r=>r?.[0]||null);
                 if (!target && codigo) target = await base44.asServiceRole.entities.Produto.filter({ codigo, empresa_id }, undefined, 1).then(r=>r?.[0]||null);
-                if (target) { await base44.asServiceRole.entities.Produto.update(target.id, patch); priceCount++; }
-              } catch (error) { reportIntegrationFailure('sync_preco_item', error, { sku, codigo }); }
+                if (target && recordMatchesGuardScope(target, { group_id: scopedGroupId, empresa_id })) { await base44.asServiceRole.entities.Produto.update(target.id, patch); priceCount++; }
+              } catch (error) { reportIntegrationFailure('sync_preco_item', error, { codigo }); }
             }
           }
-          try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Edição', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: prov, descricao: `Atualização de preços (${priceCount})`, empresa_id, group_id, dados_novos: { priceCount }, data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportIntegrationFailure('auditoria_sync_precos', error, { quantidade: priceCount }); }
+          try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Edicao', modulo: 'Integracoes', tipo_auditoria: 'integracao', entidade: prov, descricao: `Atualizacao de precos (${priceCount})`, empresa_id, group_id: scopedGroupId, dados_novos: { priceCount }, data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportIntegrationFailure('auditoria_sync_precos', error, { quantidade: priceCount }); }
         }
 
         return Response.json({ ok: true, action: 'marketplace_webhook_processed', provider: prov, results: { pedido: pedidoResult, invCount, priceCount } });
@@ -257,7 +331,7 @@ Deno.serve(async (req) => {
     // Alerta de Estoque Baixo via WhatsApp (Produto atualizado)
     if (evt.entity_name === 'Produto' && evt.type === 'update' && data) {
       const empresaId = data.empresa_id || null;
-      const groupId = data.group_id || null;
+      const groupId = data.group_id || data.grupo_id || null;
       const disp = Number(data.estoque_disponivel || data.estoque_atual || 0);
       const minimo = Number(data.estoque_minimo || 0);
       if (empresaId && minimo > 0 && disp <= minimo) {
@@ -285,14 +359,24 @@ Deno.serve(async (req) => {
     if (!data) return Response.json({ ok: false, error: 'No data' }, { status: 400 });
 
     const empresaId = data.empresa_id || null;
-    const groupId = data.group_id || null;
+    const groupId = data.group_id || data.grupo_id || null;
+    const { scope: configScope, error: configScopeError } = await resolveScopeOrReject(base44, { empresa_id: empresaId, group_id: groupId }, 'contexto_multiempresa_configuracao_incompleto');
+    if (configScopeError) return configScopeError;
 
-    const chave = empresaId ? `integracoes_${empresaId}` : (groupId ? `integracoes_group_${groupId}` : null);
-    if (!chave) return Response.json({ ok: false, error: 'Sem empresa_id ou group_id' }, { status: 400 });
+    const chave = configScope.empresaId ? `integracoes_${configScope.empresaId}` : `integracoes_group_${configScope.groupId}`;
+    const filtroConfig = configScope.empresaId
+      ? { chave, categoria: 'Integracoes', empresa_id: configScope.empresaId }
+      : { chave, categoria: 'Integracoes', group_id: configScope.groupId };
 
-    const existentes = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({ chave }, undefined, 1);
+    const existentes = await base44.asServiceRole.entities.ConfiguracaoSistema.filter(filtroConfig, undefined, 1);
 
-    const payloadCfg = { chave, categoria: 'Integracoes', [keyName]: data };
+    const payloadCfg = {
+      chave,
+      categoria: 'Integracoes',
+      empresa_id: configScope.empresaId || null,
+      group_id: configScope.groupId,
+      [keyName]: data
+    };
 
     if (existentes && existentes.length > 0) {
       await base44.asServiceRole.entities.ConfiguracaoSistema.update(existentes[0].id, payloadCfg);
