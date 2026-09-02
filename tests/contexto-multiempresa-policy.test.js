@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   normalizeIdentifier,
   normalizeMultiempresaContext,
+  recordMatchesEmpresaScope,
   toEntityScope,
   toGuardScope,
   validateMultiempresaContext,
@@ -41,4 +42,12 @@ test('normalizeIdentifier trims identifiers and rejects blank values', () => {
   assert.equal(normalizeIdentifier('  local_empresa_3z  '), 'local_empresa_3z');
   assert.equal(normalizeIdentifier('   '), null);
   assert.equal(normalizeIdentifier(null), null);
+});
+
+test('recordMatchesEmpresaScope accepts canonical and shared company ownership', () => {
+  assert.equal(recordMatchesEmpresaScope({ empresa_id: ' 3z ' }, '3z'), true);
+  assert.equal(recordMatchesEmpresaScope({ empresa_dona_id: 'cpa-ferro' }, 'cpa-ferro'), true);
+  assert.equal(recordMatchesEmpresaScope({ empresas_compartilhadas_ids: ['3z', 'cpa-ferro'] }, 'cpa-ferro'), true);
+  assert.equal(recordMatchesEmpresaScope({ empresa_id: '3z' }, 'cpa-ferro'), false);
+  assert.equal(recordMatchesEmpresaScope({ group_id: 'grupo-cpa' }, '3z'), false);
 });

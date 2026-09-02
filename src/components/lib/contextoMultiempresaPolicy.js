@@ -56,3 +56,23 @@ export const toGuardScope = (input = {}) => {
     __error: context.error,
   };
 };
+
+export const recordMatchesEmpresaScope = (record = {}, empresaId) => {
+  const scopedEmpresaId = normalizeIdentifier(empresaId);
+  if (!scopedEmpresaId || !record) return false;
+
+  const recordEmpresaId = firstValue(
+    record.empresa_id,
+    record.empresa_dona_id,
+    record.empresa_faturamento_id,
+    record.empresa_origem_id,
+  );
+
+  if (recordEmpresaId) return recordEmpresaId === scopedEmpresaId;
+
+  const empresasCompartilhadas = Array.isArray(record.empresas_compartilhadas_ids)
+    ? record.empresas_compartilhadas_ids.map(normalizeIdentifier).filter(Boolean)
+    : [];
+
+  return empresasCompartilhadas.includes(scopedEmpresaId);
+};

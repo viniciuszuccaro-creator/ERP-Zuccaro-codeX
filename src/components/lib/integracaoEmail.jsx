@@ -4,7 +4,7 @@
  */
 
 import { base44 } from '@/api/base44Client';
-import { normalizeIdentifier } from '@/components/lib/contextoMultiempresaPolicy';
+import { normalizeIdentifier, recordMatchesEmpresaScope } from '@/components/lib/contextoMultiempresaPolicy';
 
 /**
  * Verifica configuração de email
@@ -42,6 +42,25 @@ async function verificarConfiguracao(empresaId) {
 /**
  * Enviar Email via SendGrid
  */
+async function buscarClienteDaEmpresa(clienteId, empresaId) {
+  const scopedClienteId = normalizeIdentifier(clienteId);
+  const scopedEmpresaId = normalizeIdentifier(empresaId);
+
+  if (!scopedClienteId || !scopedEmpresaId) return null;
+
+  const clientesDiretos = await base44.entities.Cliente.filter({ id: scopedClienteId, empresa_id: scopedEmpresaId }, undefined, 1);
+  const clienteDireto = clientesDiretos?.[0];
+  if (clienteDireto) return clienteDireto;
+
+  const clientesDono = await base44.entities.Cliente.filter({ id: scopedClienteId, empresa_dona_id: scopedEmpresaId }, undefined, 1);
+  const clienteDono = clientesDono?.[0];
+  if (clienteDono) return clienteDono;
+
+  const clientes = await base44.entities.Cliente.filter({ id: scopedClienteId }, undefined, 1);
+  const cliente = clientes?.[0];
+  return recordMatchesEmpresaScope(cliente, scopedEmpresaId) ? cliente : null;
+}
+
 async function enviarEmailSendGrid(dados, config) {
   const { data } = await base44.functions.invoke('sendEmailProvider', dados);
   return data;
@@ -205,8 +224,7 @@ export const TEMPLATES_EMAIL = {
  * Enviar notificação de Pedido Aprovado
  */
 export async function notificarPedidoAprovado(pedido, empresaId) {
-  const cliente = await base44.entities.Cliente.filter({ id: pedido.cliente_id });
-  const clienteData = cliente[0];
+  const clienteData = await buscarClienteDaEmpresa(pedido.cliente_id, empresaId || pedido.empresa_id);
   
   if (!clienteData) return;
   
@@ -243,8 +261,7 @@ export async function notificarPedidoAprovado(pedido, empresaId) {
  * Enviar notificação de Boleto Gerado
  */
 export async function notificarBoletoGerado(conta, empresaId) {
-  const cliente = await base44.entities.Cliente.filter({ id: conta.cliente_id });
-  const clienteData = cliente[0];
+  const clienteData = await buscarClienteDaEmpresa(conta.cliente_id, empresaId || conta.empresa_id);
   
   if (!clienteData) return;
   
@@ -277,8 +294,7 @@ export async function notificarBoletoGerado(conta, empresaId) {
  * Enviar notificação de NF-e Emitida
  */
 export async function notificarNFeEmitida(nfe, empresaId) {
-  const cliente = await base44.entities.Cliente.filter({ id: nfe.cliente_fornecedor_id });
-  const clienteData = cliente[0];
+  const clienteData = await buscarClienteDaEmpresa(nfe.cliente_fornecedor_id, empresaId || nfe.empresa_id);
   
   if (!clienteData) return;
   

@@ -4,7 +4,7 @@
  */
 
 import { base44 } from '@/api/base44Client';
-import { normalizeIdentifier } from '@/components/lib/contextoMultiempresaPolicy';
+import { normalizeIdentifier, recordMatchesEmpresaScope } from '@/components/lib/contextoMultiempresaPolicy';
 
 /**
  * Verifica configuração do gateway
@@ -39,6 +39,29 @@ async function verificarConfiguracao(empresaId) {
 /**
  * Gerar Boleto via Asaas
  */
+async function buscarClienteDaEmpresa(clienteId, empresaId) {
+  const scopedClienteId = normalizeIdentifier(clienteId);
+  const scopedEmpresaId = normalizeIdentifier(empresaId);
+
+  if (!scopedClienteId || !scopedEmpresaId) {
+    throw new Error('Cliente e empresa obrigatorios para integracao de cobranca');
+  }
+
+  const clientesDiretos = await base44.entities.Cliente.filter({ id: scopedClienteId, empresa_id: scopedEmpresaId }, undefined, 1);
+  const clienteDireto = clientesDiretos?.[0];
+  if (clienteDireto) return clienteDireto;
+
+  const clientesDono = await base44.entities.Cliente.filter({ id: scopedClienteId, empresa_dona_id: scopedEmpresaId }, undefined, 1);
+  const clienteDono = clientesDono?.[0];
+  if (clienteDono) return clienteDono;
+
+  const clientes = await base44.entities.Cliente.filter({ id: scopedClienteId }, undefined, 1);
+  const cliente = clientes?.[0];
+  if (recordMatchesEmpresaScope(cliente, scopedEmpresaId)) return cliente;
+
+  throw new Error('Cliente nao pertence a empresa da cobranca');
+}
+
 async function gerarBoletoAsaas(conta, config) {
   const apiKey = config.api_key;
   const urlBase = config.api_url || 'https://www.asaas.com/api/v3';
@@ -147,13 +170,8 @@ async function criarClienteAsaas(conta, config) {
   const apiKey = config.api_key;
   const urlBase = config.api_url || 'https://www.asaas.com/api/v3';
 
-  // Buscar dados do cliente
-  const clientes = await base44.entities.Cliente.filter({ id: conta.cliente_id });
-  const cliente = clientes[0];
-
-  if (!cliente) {
-    throw new Error('Cliente não encontrado');
-  }
+  // Buscar dados do cliente com escopo da conta
+  const cliente = await buscarClienteDaEmpresa(conta.cliente_id, conta.empresa_id);
 
   const payload = {
     name: cliente.nome || cliente.razao_social,

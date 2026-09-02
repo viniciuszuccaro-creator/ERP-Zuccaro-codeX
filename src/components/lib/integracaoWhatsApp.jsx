@@ -4,7 +4,7 @@
  */
 
 import { base44 } from '@/api/base44Client';
-import { normalizeIdentifier } from '@/components/lib/contextoMultiempresaPolicy';
+import { normalizeIdentifier, recordMatchesEmpresaScope } from '@/components/lib/contextoMultiempresaPolicy';
 
 /**
  * Verifica configuração do WhatsApp
@@ -39,6 +39,29 @@ async function verificarConfiguracao(empresaId) {
 /**
  * Enviar Mensagem via Evolution API
  */
+async function buscarClienteDaEmpresa(clienteId, empresaId) {
+  const scopedClienteId = normalizeIdentifier(clienteId);
+  const scopedEmpresaId = normalizeIdentifier(empresaId);
+
+  if (!scopedClienteId || !scopedEmpresaId) {
+    throw new Error('Cliente e empresa obrigatorios para integracao WhatsApp');
+  }
+
+  const clientesDiretos = await base44.entities.Cliente.filter({ id: scopedClienteId, empresa_id: scopedEmpresaId }, undefined, 1);
+  const clienteDireto = clientesDiretos?.[0];
+  if (clienteDireto) return clienteDireto;
+
+  const clientesDono = await base44.entities.Cliente.filter({ id: scopedClienteId, empresa_dona_id: scopedEmpresaId }, undefined, 1);
+  const clienteDono = clientesDono?.[0];
+  if (clienteDono) return clienteDono;
+
+  const clientes = await base44.entities.Cliente.filter({ id: scopedClienteId }, undefined, 1);
+  const cliente = clientes?.[0];
+  if (recordMatchesEmpresaScope(cliente, scopedEmpresaId)) return cliente;
+
+  throw new Error('Cliente nao pertence a empresa da mensagem');
+}
+
 async function enviarMensagemEvolution(numero, mensagem, config) {
   const { data } = await base44.functions.invoke('whatsappSend', { action: 'sendText', numero, mensagem });
   return data;
@@ -82,12 +105,7 @@ export async function enviarWhatsApp(dados) {
  * Enviar Boleto por WhatsApp
  */
 export async function enviarBoletoWhatsApp(conta, empresaId) {
-  const clientes = await base44.entities.Cliente.filter({ id: conta.cliente_id });
-  const cliente = clientes[0];
-  
-  if (!cliente) {
-    throw new Error('Cliente não encontrado');
-  }
+  const cliente = await buscarClienteDaEmpresa(conta.cliente_id, empresaId || conta.empresa_id);
 
   const whatsapp = cliente.contatos?.find(c => c.tipo === 'WhatsApp')?.valor;
   

@@ -1,3 +1,12 @@
+### Integracoes - Clientes com Escopo de Empresa
+- Continuei o proximo passo salvo: revisar leituras diretas de clientes nas integracoes antes de chamadas externas.
+- A politica multiempresa existente ganhou `recordMatchesEmpresaScope`, reutilizando normalizacao de identificadores para aceitar `empresa_id`, `empresa_dona_id`, campos operacionais de empresa e compartilhamento explicito por `empresas_compartilhadas_ids`.
+- Boletos/PIX agora busca cliente primeiro por `id + empresa_id`, depois por `id + empresa_dona_id`, e bloqueia uso de cliente que nao pertence a empresa da conta.
+- WhatsApp de boleto aplica a mesma validacao antes de montar a mensagem e enviar para contato do cliente.
+- Emails automaticos de pedido aprovado, boleto gerado e NF-e emitida deixam de usar cliente por ID solto e exigem compatibilidade com a empresa do documento.
+- Teste nativo cobre cliente direto, dono, compartilhado e bloqueio de empresa divergente.
+- Mantida a Regra-Mae: melhoria feita em helpers existentes, sem criar tela, modulo, rota ou remover funcionalidade.
+- Proximo passo sugerido: revisar updates sensiveis de integracao para incluir auditoria antes/depois quando houver retorno externo e alteracao local.
 ### Integracoes - Configuracoes com Empresa Obrigatoria
 - Continuei a revisao de chamadas diretas a `ConfiguracaoSistema.filter/create/update` com risco de consulta global sem contexto.
 - Helpers existentes de NF-e, Boletos/PIX, WhatsApp e Email agora normalizam `empresaId`, bloqueiam empresa vazia e filtram configuracao por `empresa_id` alem da chave/categoria.
