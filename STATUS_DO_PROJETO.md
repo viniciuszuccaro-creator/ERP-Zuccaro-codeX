@@ -1,3 +1,11 @@
+### Sistema - upsertConfig com Auditoria Resumida
+- Continuei o proximo passo salvo: revisar funcoes backend restantes com `AuditLog.create` para reduzir payloads sensiveis e completar `group_id` quando ausente.
+- O fluxo existente `upsertConfig` passou a auditar tambem o update direto por ID de `ConfiguracaoSistema`.
+- Auditorias de criacao e edicao de configuracoes deixaram de gravar o documento completo e passaram a registrar snapshot resumido com chave, categoria, empresa, grupo, campos alterados e marcacao de campos sensiveis.
+- Valores de tokens, senhas, API keys, certificados e secrets ficam protegidos no log, mantendo apenas metadados de rastreabilidade.
+- O merge, retorno ao frontend e comportamento dos toggles foram preservados.
+- Mantida a Regra-Mae: melhoria feita na funcao existente `upsertConfig`, sem criar modulo, tela, rota ou remover funcionalidade.
+- Proximo passo sugerido: revisar `solicitacoesAprovacao` para reduzir auditorias completas de politicas, solicitacoes e pedidos aprovados.
 ### Integracoes - Estoque Baixo e Mirror de Configuracoes Auditados
 - Continuei o proximo passo salvo: revisar `legacyIntegrationsMirror` no alerta de estoque baixo e espelho de configuracoes para auditar alteracoes de `ConfiguracaoSistema` com antes/depois resumido.
 - O alerta de estoque baixo agora resolve `groupId` pela empresa antes de chamar `whatsappSend`, preservando o fluxo existente.

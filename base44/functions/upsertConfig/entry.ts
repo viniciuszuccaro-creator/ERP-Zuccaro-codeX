@@ -10,7 +10,40 @@
  *  - { chave, data, scope }         → upsert por chave+scope
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-// upsertConfig v2 — escopo exato, sem fallback cross-scope, auditoria completa
+// upsertConfig v2 — escopo exato, sem fallback cross-scope, auditoria resumida
+
+const SYSTEM_FIELDS = new Set(['id','created_date','updated_date','created_by','created_by_id','is_sample']);
+const SENSITIVE_CONFIG_KEY = /(token|senha|password|secret|api[_-]?key|client[_-]?secret|access[_-]?token|refresh[_-]?token|certificado|private|webhook[_-]?secret)/i;
+
+const summarizeConfigValue = (value) => {
+  if (value === null || value === undefined) return null;
+  if (Array.isArray(value)) return { tipo: 'array', quantidade: value.length };
+  if (typeof value === 'object') return { tipo: 'object', chaves: Object.keys(value).length };
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value;
+  return { tipo: 'string', tamanho: String(value).length };
+};
+
+const buildConfigAuditSnapshot = (config = {}, action = null) => {
+  const keys = Object.keys(config || {}).filter((key) => !SYSTEM_FIELDS.has(key));
+  const changedKeys = keys.filter((key) => !['chave','categoria','empresa_id','group_id','grupo_id'].includes(key));
+  const sensitiveKeys = changedKeys.filter((key) => SENSITIVE_CONFIG_KEY.test(key));
+  const safeValues = {};
+  for (const key of changedKeys) {
+    safeValues[key] = SENSITIVE_CONFIG_KEY.test(key) ? { protegido: true } : summarizeConfigValue(config[key]);
+  }
+  return {
+    action,
+    id: config?.id || null,
+    chave: config?.chave || null,
+    categoria: config?.categoria || null,
+    empresa_id: config?.empresa_id || null,
+    group_id: config?.group_id || config?.grupo_id || null,
+    campos: changedKeys,
+    campos_sensiveis: sensitiveKeys,
+    valores: safeValues,
+  };
+};
 
 Deno.serve(async (req) => {
   try {
@@ -47,7 +80,6 @@ Deno.serve(async (req) => {
       // Merge cuidadoso: apenas os campos enviados em data são atualizados
       const updatePayload = {};
       // Copia campos existentes que NÃO foram enviados em data
-      const SYSTEM_FIELDS = new Set(['id','created_date','updated_date','created_by','created_by_id','is_sample']);
       for (const [k, v] of Object.entries(existing)) {
         if (!SYSTEM_FIELDS.has(k)) updatePayload[k] = v;
       }
@@ -61,6 +93,25 @@ Deno.serve(async (req) => {
       if (scope?.empresa_id) updatePayload.empresa_id = scope.empresa_id;
 
       const updated = await api.update(id, updatePayload);
+
+      try {
+        await base44.asServiceRole.entities.AuditLog.create({
+          usuario: user?.full_name || user?.email || 'Sistema',
+          usuario_id: user?.id || null,
+          empresa_id: updatePayload.empresa_id || existing.empresa_id || null,
+          group_id: updatePayload.group_id || existing.group_id || existing.grupo_id || null,
+          acao: 'Edicao',
+          modulo: 'Sistema',
+          tipo_auditoria: 'entidade',
+          entidade: 'ConfiguracaoSistema',
+          registro_id: updated?.id || id,
+          descricao: `Configuracao ${updatePayload.chave || existing.chave || id} atualizada por ID`,
+          dados_anteriores: buildConfigAuditSnapshot(existing, 'before_update_by_id'),
+          dados_novos: buildConfigAuditSnapshot(updatePayload, 'update_by_id'),
+          data_hora: new Date().toISOString(),
+        });
+      } catch (_) {}
+
       return Response.json({ record: updated, id: updated.id || id, mode: 'update', _ts: Date.now() });
     }
 
@@ -98,7 +149,6 @@ Deno.serve(async (req) => {
     if (match?.id) {
       // ATUALIZA — merge dos campos existentes com os novos, nunca perde dados
       // AUDITORIA: Log em AuditLog
-      const SYSTEM_FIELDS = new Set(['id','created_date','updated_date','created_by','created_by_id','is_sample']);
       const updatePayload = {};
       for (const [k, v] of Object.entries(match)) {
         if (!SYSTEM_FIELDS.has(k)) updatePayload[k] = v;
@@ -123,14 +173,14 @@ Deno.serve(async (req) => {
           usuario_id: user?.id || null,
           empresa_id: eId || null,
           group_id: gId || null,
-          acao: 'Edição',
+          acao: 'Edicao',
           modulo: 'Sistema',
           tipo_auditoria: 'entidade',
           entidade: 'ConfiguracaoSistema',
           registro_id: match.id,
           descricao: `Configuração ${chave} atualizada`,
-          dados_anteriores: match,
-          dados_novos: updated,
+          dados_anteriores: buildConfigAuditSnapshot(match, 'before_update'),
+          dados_novos: buildConfigAuditSnapshot(updatePayload, 'update'),
           data_hora: new Date().toISOString(),
         });
       } catch (_) {}
@@ -151,13 +201,13 @@ Deno.serve(async (req) => {
           usuario_id: user?.id || null,
           empresa_id: eId || null,
           group_id: gId || null,
-          acao: 'Criação',
+          acao: 'Criacao',
           modulo: 'Sistema',
           tipo_auditoria: 'entidade',
           entidade: 'ConfiguracaoSistema',
           registro_id: created.id,
           descricao: `Configuração ${chave} criada`,
-          dados_novos: created,
+          dados_novos: buildConfigAuditSnapshot(createPayload, 'create'),
           data_hora: new Date().toISOString(),
         });
       } catch (_) {}
