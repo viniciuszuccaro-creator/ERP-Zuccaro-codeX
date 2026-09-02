@@ -4,13 +4,19 @@
  */
 
 import { base44 } from '@/api/base44Client';
+import { normalizeIdentifier } from '@/components/lib/contextoMultiempresaPolicy';
 
 /**
  * Verifica se a integração está configurada
  */
 async function verificarConfiguracao(empresaId) {
-  const chave = `integracoes_${empresaId}`;
-  const registros = await base44.entities.ConfiguracaoSistema.filter({ chave, categoria: 'Integracoes' }, undefined, 1);
+  const scopedEmpresaId = normalizeIdentifier(empresaId);
+  if (!scopedEmpresaId) {
+    return { configurado: false, erro: 'Empresa obrigatoria para configuracao de integracoes' };
+  }
+
+  const chave = `integracoes_${scopedEmpresaId}`;
+  const registros = await base44.entities.ConfiguracaoSistema.filter({ chave, categoria: 'Integracoes', empresa_id: scopedEmpresaId }, undefined, 1);
 
   if (!registros || registros.length === 0) {
     return { configurado: false, erro: 'Configuração de integrações não encontrada' };

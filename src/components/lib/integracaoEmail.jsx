@@ -4,14 +4,21 @@
  */
 
 import { base44 } from '@/api/base44Client';
+import { normalizeIdentifier } from '@/components/lib/contextoMultiempresaPolicy';
 
 /**
  * Verifica configuração de email
  */
 async function verificarConfiguracao(empresaId) {
+  const scopedEmpresaId = normalizeIdentifier(empresaId);
+  if (!scopedEmpresaId) {
+    return { configurado: false, erro: 'Empresa obrigatoria para configuracao de email' };
+  }
+
   const configs = await base44.entities.ConfiguracaoSistema.filter({
     categoria: 'Email',
-    chave: `email_${empresaId}`
+    chave: `email_${scopedEmpresaId}`,
+    empresa_id: scopedEmpresaId
   });
   
   if (!configs || configs.length === 0) {

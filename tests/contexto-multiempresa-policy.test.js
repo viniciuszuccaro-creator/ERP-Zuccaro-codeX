@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  normalizeIdentifier,
   normalizeMultiempresaContext,
   toEntityScope,
   toGuardScope,
@@ -35,4 +36,9 @@ test('entity and guard scopes expose only normalized identifiers', () => {
   assert.deepEqual(toEntityScope({ contexto: 'grupo', group_id: 'grupo-cpa' }), { group_id: 'grupo-cpa' });
   assert.deepEqual(toEntityScope({ group_id: ' grupo-cpa ' }), { group_id: 'grupo-cpa' });
   assert.equal(toGuardScope({ contexto: 'empresa', group_id: 'grupo-cpa' }).__blocked, true);
+});
+test('normalizeIdentifier trims identifiers and rejects blank values', () => {
+  assert.equal(normalizeIdentifier('  local_empresa_3z  '), 'local_empresa_3z');
+  assert.equal(normalizeIdentifier('   '), null);
+  assert.equal(normalizeIdentifier(null), null);
 });

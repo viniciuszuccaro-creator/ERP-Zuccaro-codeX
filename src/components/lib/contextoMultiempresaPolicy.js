@@ -1,4 +1,4 @@
-const normalizeIdentifier = (value) => {
+export const normalizeIdentifier = (value) => {
   if (value === undefined || value === null) return null;
   const normalized = String(value).trim();
   return normalized || null;

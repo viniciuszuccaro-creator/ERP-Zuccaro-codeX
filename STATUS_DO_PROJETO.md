@@ -1,3 +1,11 @@
+### Integracoes - Configuracoes com Empresa Obrigatoria
+- Continuei a revisao de chamadas diretas a `ConfiguracaoSistema.filter/create/update` com risco de consulta global sem contexto.
+- Helpers existentes de NF-e, Boletos/PIX, WhatsApp e Email agora normalizam `empresaId`, bloqueiam empresa vazia e filtram configuracao por `empresa_id` alem da chave/categoria.
+- `normalizeIdentifier` passou a ser exportado da politica multiempresa existente para reutilizacao sem duplicar sanitizacao de IDs.
+- A busca de configuracao `integracoes_<empresaId>` e `email_<empresaId>` permanece no fluxo atual, mas deixa de aceitar dados de outra empresa por chave solta.
+- Teste nativo cobre o normalizador de identificadores usado nesses fluxos sensiveis.
+- Mantida a Regra-Mae: melhoria feita nos helpers existentes, sem criar modulo/tela/componente e sem remover funcionalidade.
+- Proximo passo sugerido: revisar leituras diretas de clientes nas integracoes para garantir que cliente e conta pertencem ao mesmo grupo/empresa antes de chamadas externas.
 ### Multiempresa - ConfiguracaoSistema Local com Escopo Obrigatorio
 - Continuei o proximo passo salvo em persistencia sensivel no `localBase44Client.js`.
 - `upsertConfig` local deixou de aceitar escopo vazio ou aliases em branco para `ConfiguracaoSistema`, bloqueando criacao/edicao global acidental.
