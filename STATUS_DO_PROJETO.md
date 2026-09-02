@@ -1,3 +1,10 @@
+### Integracoes - Auditoria do Vinculo Asaas
+- Continuei o proximo passo salvo: revisar updates sensiveis de integracao com retorno externo e alteracao local.
+- No helper existente de Boletos/PIX, a gravacao de `cliente_asaas_id` no cadastro de Cliente agora registra auditoria de integracao com antes/depois, usuario, timestamp, empresa e grupo.
+- A auditoria e tolerante a falhas: se o log falhar, o fluxo principal de cobranca nao e interrompido, mas o erro fica registrado no console para diagnostico.
+- O payload auditado evita registrar o retorno externo completo e guarda somente dados necessarios do vinculo, conta e status.
+- Mantida a Regra-Mae: melhoria no helper existente, sem criar modulo, tela, rota ou remover funcionalidade.
+- Proximo passo sugerido: revisar logs de cobranca para reduzir payload sensivel e incluir group_id quando disponivel.
 ### Integracoes - Clientes com Escopo de Empresa
 - Continuei o proximo passo salvo: revisar leituras diretas de clientes nas integracoes antes de chamadas externas.
 - A politica multiempresa existente ganhou `recordMatchesEmpresaScope`, reutilizando normalizacao de identificadores para aceitar `empresa_id`, `empresa_dona_id`, campos operacionais de empresa e compartilhamento explicito por `empresas_compartilhadas_ids`.

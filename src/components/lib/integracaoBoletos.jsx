@@ -62,6 +62,38 @@ async function buscarClienteDaEmpresa(clienteId, empresaId) {
   throw new Error('Cliente nao pertence a empresa da cobranca');
 }
 
+async function auditarVinculoClienteAsaas({ cliente, conta, resultado }) {
+  try {
+    const usuario = await base44.auth.me().catch(() => null);
+    const clienteAnterior = { id: cliente.id, cliente_asaas_id: cliente.cliente_asaas_id || null };
+    const clienteNovo = { id: cliente.id, cliente_asaas_id: resultado.id };
+
+    await base44.entities.AuditLog.create({
+      usuario: usuario?.full_name || usuario?.email || 'Sistema',
+      usuario_id: usuario?.id || null,
+      acao: 'Edicao',
+      modulo: 'Financeiro',
+      tipo_auditoria: 'integracao',
+      entidade: 'Cliente',
+      registro_id: cliente.id,
+      descricao: 'Vinculo de cliente externo Asaas atualizado apos retorno da integracao',
+      empresa_id: normalizeIdentifier(conta.empresa_id) || normalizeIdentifier(cliente.empresa_id) || normalizeIdentifier(cliente.empresa_dona_id) || null,
+      group_id: normalizeIdentifier(conta.group_id) || normalizeIdentifier(conta.grupo_id) || normalizeIdentifier(cliente.group_id) || normalizeIdentifier(cliente.grupo_id) || null,
+      dados_anteriores: clienteAnterior,
+      dados_novos: {
+        ...clienteNovo,
+        provedor: 'Asaas',
+        conta_receber_id: conta.id || null,
+        retorno: { id: resultado.id, status: resultado.status || null },
+      },
+      data_hora: new Date().toISOString(),
+      sucesso: true,
+    });
+  } catch (error) {
+    console.warn('Falha ao auditar vinculo Asaas do cliente', error);
+  }
+}
+
 async function gerarBoletoAsaas(conta, config) {
   const apiKey = config.api_key;
   const urlBase = config.api_url || 'https://www.asaas.com/api/v3';
@@ -207,6 +239,7 @@ async function criarClienteAsaas(conta, config) {
   await base44.entities.Cliente.update(cliente.id, {
     cliente_asaas_id: resultado.id
   });
+  await auditarVinculoClienteAsaas({ cliente, conta, resultado });
   
   return resultado.id;
 }
