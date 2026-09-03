@@ -28,13 +28,16 @@ const sanitizeAuditText = (value, max = 300) => String(value ?? "")
   .trim()
   .slice(0, max);
 
-const sanitizeAuditPayload = (value) => {
-  if (Array.isArray(value)) return value.map(sanitizeAuditPayload);
+const SENSITIVE_AUDIT_KEY = /(token|senha|password|secret|api[_-]?key|client[_-]?secret|access[_-]?token|refresh[_-]?token|certificado|private|webhook[_-]?url)/i;
+
+const sanitizeAuditPayload = (value, keyName = "") => {
+  if (SENSITIVE_AUDIT_KEY.test(keyName)) return { protegido: true };
+  if (Array.isArray(value)) return value.map((item) => sanitizeAuditPayload(item, keyName));
   if (value && typeof value === "object") {
     return Object.fromEntries(
       Object.entries(value).map(([key, item]) => [
         sanitizeAuditText(key, 80),
-        sanitizeAuditPayload(item)
+        sanitizeAuditPayload(item, key)
       ])
     );
   }
@@ -60,14 +63,14 @@ export default function IntegracoesIndex({ initialTab }) {
     })();
   const scopeId = empresaAtual?.id || grupoAtivoId || null;
   const scope = empresaAtual?.id
-    ? { empresa_id: empresaAtual.id }
+    ? { empresa_id: empresaAtual.id, group_id: grupoAtivoId || null }
     : grupoAtivoId
       ? { group_id: grupoAtivoId }
       : {};
   const scopeLabel = empresaAtual?.id ? "empresa atual" : grupoAtivoId ? "grupo atual" : "contexto atual";
   const integracoesKey = scopeId ? `integracoes_${scopeId}` : null;
   const integracoesQueryKey = ["configuracaoSistema", "integracoes", scopeId || "sem-contexto"];
-  const contextoValido = !!scopeId;
+  const contextoValido = !!grupoAtivoId;
   const podeEditarIntegracoes = isAdmin() || hasPermission("Sistema", "Integrações", "editar") || hasPermission("Sistema", "Integracoes", "editar");
   const podeCriarIntegracoes = isAdmin() || hasPermission("Sistema", "Integrações", "criar") || hasPermission("Sistema", "Integracoes", "criar");
 
@@ -86,7 +89,7 @@ export default function IntegracoesIndex({ initialTab }) {
         descricao: sanitizeAuditText(descricao, 500),
         dados_novos: sanitizeAuditPayload(dadosNovos || null),
         data_hora: new Date().toISOString(),
-      }).catch(() => null);
+      });
     } catch (error) {
       console.warn("Falha ao auditar integracao:", error);
     }
@@ -94,21 +97,11 @@ export default function IntegracoesIndex({ initialTab }) {
 
   const handleTabChange = (next) => {
     setTab(next);
-    try {
-      createInContext("AuditLog", {
-        usuario: user?.full_name || user?.email || "Usuário",
-        usuario_id: user?.id,
-        empresa_id: empresaAtual?.id || null,
-        group_id: grupoAtivoId || null,
-        grupo_id: grupoAtivoId || null,
-        acao: "Visualização",
-        modulo: "Sistema",
-        entidade: "Integrações",
-        descricao: `Aba visualizada: ${sanitizeAuditText(next, 80)}`,
-        dados_novos: sanitizeAuditPayload({ tab: next, scope }),
-        data_hora: new Date().toISOString(),
-      }).catch(() => null);
-    } catch {}
+    void auditIntegracao({
+      acao: "Visualizacao",
+      descricao: `Aba visualizada: ${sanitizeAuditText(next, 80)}`,
+      dadosNovos: { tab: next },
+    });
   };
 
   const { data: configuracao } = useQuery({
@@ -118,14 +111,24 @@ export default function IntegracoesIndex({ initialTab }) {
       try {
         const res = await base44.functions.invoke('getEntityRecord', {
           entityName: 'ConfiguracaoSistema',
+          group_id: grupoAtivoId || null,
+          empresa_id: empresaAtual?.id || null,
           filter: { chave: integracoesKey, ...scope },
           limit: 1,
         });
         const list = Array.isArray(res?.data) ? res.data : [];
         return list[0] || null;
-      } catch (_) { return null; }
+      } catch (error) {
+        console.warn("[IntegracoesIndex] Falha ao consultar configuracao:", error);
+        await auditIntegracao({
+          acao: "Erro ao consultar",
+          descricao: "Falha ao consultar configuracao de integracoes.",
+          dadosNovos: { operacao: "consultar_configuracao" },
+        });
+        return null;
+      }
     },
-    enabled: !!integracoesKey,
+    enabled: contextoValido && !!integracoesKey,
     staleTime: 60000,
   });
 
@@ -169,12 +172,18 @@ export default function IntegracoesIndex({ initialTab }) {
       await auditIntegracao({
         acao: "Criacao Base",
         descricao: `Estrutura base de integracoes criada para ${scopeLabel}`,
-        dadosNovos: payload
+        dadosNovos: { operacao: "criar_base", categoria: "Integracoes", possui_nfe: true, possui_boletos: true }
       });
       await queryClient.invalidateQueries({ queryKey: integracoesQueryKey, exact: true });
       toast.success(`Estrutura base criada para ${scopeLabel}.`);
     } catch (err) {
-      toast.error("Erro ao criar estrutura base", { description: String(err?.message || err) });
+      console.warn("[IntegracoesIndex] Falha ao criar estrutura base:", err);
+      await auditIntegracao({
+        acao: "Erro Criacao Base",
+        descricao: "Falha ao criar estrutura base de integracoes.",
+        dadosNovos: { operacao: "criar_base" },
+      });
+      toast.error("Erro ao criar estrutura base.");
     } finally {
       setCriandoBase(false);
     }
@@ -210,11 +219,17 @@ export default function IntegracoesIndex({ initialTab }) {
       await auditIntegracao({
         acao: "Teste Webhook",
         descricao: `Webhook Asaas simulado para ${scopeLabel}`,
-        dadosNovos: payload
+        dadosNovos: { provider: "asaas", evento: "payment_received", simulacao: true }
       });
       toast.success(`Webhook Asaas simulado para ${scopeLabel}.`);
     } catch (err) {
-      toast.error("Erro ao simular webhook Asaas", { description: String(err?.message || err) });
+      console.warn("[IntegracoesIndex] Falha ao simular webhook Asaas:", err);
+      await auditIntegracao({
+        acao: "Erro Teste Webhook",
+        descricao: "Falha ao simular webhook Asaas.",
+        dadosNovos: { provider: "asaas", simulacao: true },
+      });
+      toast.error("Erro ao simular webhook Asaas.");
     } finally {
       setTestandoWebhook(null);
     }
@@ -251,11 +266,17 @@ export default function IntegracoesIndex({ initialTab }) {
       await auditIntegracao({
         acao: "Teste Webhook",
         descricao: `Webhook NF-e simulado para ${scopeLabel}`,
-        dadosNovos: payload
+        dadosNovos: { provider: "enotas", evento: "nfe_authorized", simulacao: true }
       });
       toast.success(`Webhook NF-e simulado para ${scopeLabel}.`);
     } catch (err) {
-      toast.error("Erro ao simular webhook NF-e", { description: String(err?.message || err) });
+      console.warn("[IntegracoesIndex] Falha ao simular webhook NF-e:", err);
+      await auditIntegracao({
+        acao: "Erro Teste Webhook",
+        descricao: "Falha ao simular webhook NF-e.",
+        dadosNovos: { provider: "enotas", simulacao: true },
+      });
+      toast.error("Erro ao simular webhook NF-e.");
     } finally {
       setTestandoWebhook(null);
     }
@@ -267,7 +288,7 @@ export default function IntegracoesIndex({ initialTab }) {
       await auditIntegracao({
         acao: contextoValido ? "Bloqueio por permissao" : "Bloqueio sem contexto",
         descricao: "Tentativa de copiar URL de webhook sem contexto/permissao.",
-        dadosNovos: { webhookUrl: text },
+        dadosNovos: { recurso: "legacyIntegrationsMirror" },
       });
       return;
     }
@@ -276,10 +297,16 @@ export default function IntegracoesIndex({ initialTab }) {
       await auditIntegracao({
         acao: "Copiar URL Webhook",
         descricao: `URL de webhook copiada para ${scopeLabel}`,
-        dadosNovos: { webhookUrl: text },
+        dadosNovos: { recurso: "legacyIntegrationsMirror" },
       });
       toast.success("URL copiada.");
-    } catch (_) {
+    } catch (error) {
+      console.warn("[IntegracoesIndex] Falha ao copiar URL:", error);
+      await auditIntegracao({
+        acao: "Erro Copiar URL Webhook",
+        descricao: "Falha ao copiar URL de webhook.",
+        dadosNovos: { recurso: "legacyIntegrationsMirror" },
+      });
       toast.error("Nao foi possivel copiar a URL.");
     }
   };

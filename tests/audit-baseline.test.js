@@ -183,3 +183,21 @@ test('integration toggles reflect persisted state and enforce the real write per
   assert.match(source, /auditarIntegracao\(\{ acao: "Erro ao salvar"/);
   assert.doesNotMatch(source, /Erro ao salvar integracao", description: String\(error/);
 });
+
+test('integration administration keeps explicit context and summarized audits', async () => {
+  const source = await readFile(new URL('../src/components/administracao-sistema/IntegracoesIndex.jsx', import.meta.url), 'utf8');
+
+  assert.match(source, /SENSITIVE_AUDIT_KEY/);
+  assert.match(source, /empresa_id: empresaAtual.id, group_id: grupoAtivoId \|\| null/);
+  assert.match(source, /const contextoValido = !!grupoAtivoId/);
+  assert.match(source, /enabled: contextoValido && !!integracoesKey/);
+  assert.match(source, /group_id: grupoAtivoId \|\| null,[\s\S]*?empresa_id: empresaAtual\?\.id \|\| null,[\s\S]*?filter: \{ chave: integracoesKey, \.\.\.scope \}/);
+  assert.doesNotMatch(source, /\.catch\(\(\) => null\)|catch \{\}|catch \(_\)/);
+  assert.doesNotMatch(source, /dadosNovos: payload|dadosNovos: \{ webhookUrl: text \}/);
+  assert.match(source, /dadosNovos: \{ operacao: "criar_base", categoria: "Integracoes"/);
+  assert.match(source, /dadosNovos: \{ provider: "asaas", evento: "payment_received", simulacao: true \}/);
+  assert.match(source, /dadosNovos: \{ provider: "enotas", evento: "nfe_authorized", simulacao: true \}/);
+  assert.match(source, /acao: "Erro ao consultar"/);
+  assert.match(source, /acao: "Erro Copiar URL Webhook"/);
+  assert.doesNotMatch(source, /description: String\(err\?\.message \|\| err\)/);
+});

@@ -1,3 +1,18 @@
+### Integracoes - Contexto Explicito e Auditoria Resumida
+- Continuei o plano salvo a partir do commit `1e9c8cf1`, fortalecendo o fluxo existente da Administracao de Integracoes.
+- A consulta de `ConfiguracaoSistema` agora envia `group_id` e `empresa_id` explicitamente, alem de manter o filtro pelo escopo selecionado.
+- O contexto de empresa passou a exigir e transportar os dois identificadores; consultas ficam desabilitadas quando o `group_id` nao puder ser resolvido.
+- O sanitizador de auditoria passou a redigir valores associados a token, senha, segredo, API key, certificado e URL de webhook.
+- A troca de abas reutiliza o helper central de auditoria e deixou de ocultar falhas assincronas.
+- A criacao da estrutura base e os testes de webhook Asaas/NF-e registram somente operacao, provedor, evento e indicadores, sem copiar os payloads completos.
+- A copia do endereco de webhook registra apenas o recurso acessado; a URL completa deixou de ser persistida inclusive nas tentativas bloqueadas.
+- Falhas de consulta, criacao, simulacao e copia agora geram diagnostico tecnico e auditoria resumida, enquanto a interface mostra mensagens genericas sem excecao bruta.
+- O teste de baseline existente foi ampliado para impedir regressao do contexto, da redacao, das capturas silenciosas e das auditorias resumidas.
+- Validacoes concluidas: teste direcionado (1/1), `npm test` (36/36), `npm run build`, `npm run audit:baseline` e `git diff --check` passaram.
+- O baseline de capturas operacionais silenciosas caiu de 180 para 179.
+- Mantida a Regra-Mae: somente componente, teste e status existentes foram melhorados; nenhuma tela, funcionalidade, rota, modulo ou arquivo de projeto foi criado ou removido.
+- Proximo passo sugerido: revisar `StatusIntegracoes` e os componentes existentes de teste tecnico, garantindo escopo Grupo/Empresa, RBAC por acao e auditoria sem credenciais.
+
 ### Integracoes - Toggles Persistentes com RBAC por Operacao
 - Continuei o plano salvo a partir do commit `fa351485`, corrigindo os toggles existentes da Central de Integracoes.
 - Os cards de NFe, Boletos e WhatsApp agora exibem estado inativo ate que a configuracao persistida confirme a ativacao.
