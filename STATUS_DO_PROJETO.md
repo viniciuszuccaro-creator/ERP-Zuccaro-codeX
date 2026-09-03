@@ -10,6 +10,7 @@
 - Os containers principais dos quatro componentes foram alinhados a `w-full h-full`, preservando o uso em janela e o fluxo visual atual.
 - O teste de baseline existente foi ampliado para impedir regressao de contexto, RBAC por execucao, auditoria segura e funcionamento dos botoes de documentos.
 - Validacoes concluidas: teste direcionado (1/1), `npm test` (38/38), `npm run build`, `npm run audit:baseline` e `git diff --check` passaram.
+- Commit funcional publicado na `main`: `4f56b169` (`Protege testes tecnicos de integracoes`).
 - O baseline permaneceu em 179 capturas operacionais silenciosas; controles com marcador de permissao aumentaram de 1506 para 1507.
 - Mantida a Regra-Mae: somente componentes, teste e status existentes foram melhorados; nenhuma tela, funcionalidade, rota, modulo ou arquivo de projeto foi criado ou removido.
 - Proximo passo sugerido: revisar as configuracoes existentes de WhatsApp Business e sincronizacao de marketplaces, reforcando contexto Grupo/Empresa, RBAC por acao, persistencia minima e auditoria sem credenciais.
