@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   CheckCircle2, 
@@ -11,115 +10,36 @@ import {
   FileText, 
   DollarSign, 
   MessageCircle,
-  Settings,
   Zap
 } from 'lucide-react';
 import integracaoNFe from '../lib/integracaoNFe';
 import integracaoBoletos from '../lib/integracaoBoletos';
 import integracaoWhatsApp from '../lib/integracaoWhatsApp';
-import { useWindow } from '../lib/useWindow';
-import ConfiguracaoNFeForm from '../cadastros/ConfiguracaoNFeForm';
-import ConfiguracaoBoletosForm from '../cadastros/ConfiguracaoBoletosForm';
-import ConfiguracaoWhatsAppForm from '../cadastros/ConfiguracaoWhatsAppForm';
-import { useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/components/ui/use-toast';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
+import { useUser } from '@/components/lib/UserContext';
+import IntegrationConfigButtons from '@/components/integracoes/IntegrationConfigButtons';
 
 /**
  * Painel de Status das Integrações Reais
  * Mostra status de NF-e, Boletos/PIX e WhatsApp
  */
-// Component helper para botões de configuração
-function IntegrationConfigButtons({ integracao, empresaId, groupId }) {
-  const { openWindow } = useWindow();
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-  const { filterInContext, createInContext, updateInContext } = useContextoVisual();
-  const scopeId = empresaId || groupId || null;
-  const scope = empresaId ? { empresa_id: empresaId } : groupId ? { group_id: groupId } : {};
+const summarizeIntegrationStatus = (resultado = {}) => {
+  const provedor = resultado?.integracao?.provedor || resultado?.whatsapp?.provedor || null;
+  const qrcode = typeof resultado?.qrcode === 'string'
+    && (/^https:\/\//i.test(resultado.qrcode) || /^data:image\/(png|jpeg|webp);base64,/i.test(resultado.qrcode))
+    ? resultado.qrcode
+    : null;
 
-  const handleConfigurar = () => {
-    const entityMap = {
-      'nfe': { 
-        form: ConfiguracaoNFeForm,
-        key: 'integracao_nfe',
-        queryKey: 'configs-integracoes',
-        title: '⚙️ Configurar NF-e'
-      },
-      'boleto': { 
-        form: ConfiguracaoBoletosForm,
-        key: 'integracao_boletos',
-        queryKey: 'configs-integracoes',
-        title: '⚙️ Configurar Boletos & PIX'
-      },
-      'whatsapp': { 
-        form: ConfiguracaoWhatsAppForm,
-        key: 'integracao_whatsapp',
-        queryKey: 'configs-integracoes',
-        title: '⚙️ Configurar WhatsApp Business'
-      }
-    };
-
-    const cfg = entityMap[integracao.id];
-    if (!cfg) return;
-
-    const handleSubmit = async (data) => {
-      try {
-        if (!scopeId) throw new Error('Selecione um grupo ou empresa.');
-        const chave = `integracoes_${scopeId}`;
-        const existentes = await filterInContext('ConfiguracaoSistema', { chave }, undefined, 1);
-        const payload = { chave, categoria: 'Integracoes', ...scope, [cfg.key]: data };
-        if (existentes && existentes.length > 0) {
-          await updateInContext('ConfiguracaoSistema', existentes[0].id, { ...existentes[0], ...payload });
-          toast({ title: `✅ Integração atualizada!` });
-        } else {
-          await createInContext('ConfiguracaoSistema', payload);
-          toast({ title: `✅ Integração criada!` });
-        }
-        queryClient.invalidateQueries({ queryKey: [cfg.queryKey] });
-        queryClient.invalidateQueries({ queryKey: ['status-integracoes', scopeId] });
-      } catch (error) {
-        toast({ title: `❌ Erro ao salvar`, description: error.message, variant: "destructive" });
-      }
-    };
-
-    openWindow(cfg.form, { 
-      windowMode: true,
-      onSubmit: handleSubmit,
-      empresaId: empresaId || null,
-      groupId: groupId || null,
-      scope,
-    }, {
-      title: cfg.title,
-      width: 1000,
-      height: 700
-    });
+  return {
+    configurado: resultado?.configurado === true,
+    conectado: resultado?.conectado === true,
+    erro: resultado?.erro ? 'Configuracao pendente ou conexao indisponivel.' : null,
+    integracao: provedor ? { provedor } : null,
+    whatsapp: provedor ? { provedor } : null,
+    qrcode,
   };
-
-  return (
-    <div className="flex gap-2">
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={integracao.onVerificar}
-        disabled={integracao.verificando}
-        className="flex-1"
-        data-action={`IntegracoesStatus.${integracao.id}.verificar`}
-      >
-        {integracao.verificando ? 'Verificando...' : 'Verificar'}
-      </Button>
-      <Button
-        size="sm"
-        onClick={handleConfigurar}
-        className="flex-1"
-        data-action={`IntegracoesStatus.${integracao.id}.configurar`}
-      >
-        <Settings className="w-4 h-4 mr-1" />
-        Configurar
-      </Button>
-    </div>
-  );
-}
+};
 
 export default function StatusIntegracoes({ empresaId, groupId }) {
   const [verificandoNFe, setVerificandoNFe] = useState(false);
@@ -129,27 +49,65 @@ export default function StatusIntegracoes({ empresaId, groupId }) {
   const [statusNFe, setStatusNFe] = useState(null);
   const [statusBoleto, setStatusBoleto] = useState(null);
   const [statusWhatsApp, setStatusWhatsApp] = useState(null);
-  const { filterInContext } = useContextoVisual();
+  const { filterInContext, createInContext } = useContextoVisual();
+  const { user } = useUser();
+  const { isAdmin, hasPermission } = usePermissions();
   const scopeId = empresaId || groupId || null;
-  const scope = empresaId ? { empresa_id: empresaId } : groupId ? { group_id: groupId } : {};
+  const scope = empresaId ? { empresa_id: empresaId, group_id: groupId || null } : groupId ? { group_id: groupId } : {};
+  const contextoValido = !!groupId;
+  const podeExecutarIntegracoes = isAdmin() || hasPermission('Sistema', 'Integracoes', 'executar') || hasPermission('Sistema', 'Integrações', 'executar');
+
+  const auditStatus = async ({ acao, integracao, sucesso, operacao = null, configurado = null, conectado = null }) => {
+    try {
+      await createInContext('AuditLog', {
+        usuario: user?.full_name || user?.email || 'Usuario local',
+        usuario_id: user?.id || null,
+        empresa_id: empresaId || null,
+        group_id: groupId || null,
+        grupo_id: groupId || null,
+        acao,
+        modulo: 'Integracoes',
+        entidade: 'ConfiguracaoSistema',
+        registro_id: scopeId ? `integracoes_${scopeId}` : null,
+        descricao: `${acao} na integracao ${integracao}`,
+        dados_novos: { integracao, operacao, configurado, conectado },
+        sucesso,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn('[StatusIntegracoes] Falha ao registrar auditoria:', error);
+    }
+  };
 
   const verificarConfigLocal = async (key) => {
-    if (!scopeId) return { configurado: false, erro: 'Selecione um grupo ou empresa.' };
+    if (!contextoValido) return summarizeIntegrationStatus({ erro: true });
     const chave = `integracoes_${scopeId}`;
-    const rows = await filterInContext('ConfiguracaoSistema', { chave }, undefined, 1);
+    const rows = await filterInContext('ConfiguracaoSistema', { chave, ...scope }, undefined, 1);
     const cfg = rows?.[0]?.[key];
     const configurado = !!(cfg?.ativo || cfg?.api_key || cfg?.api_url || cfg?.provedor);
-    return { configurado, conectado: configurado, integracao: cfg || null };
+    return summarizeIntegrationStatus({ configurado, conectado: configurado, integracao: { provedor: cfg?.provedor || null } });
+  };
+
+  const podeVerificar = async (integracao, setStatus) => {
+    if (contextoValido && podeExecutarIntegracoes) return true;
+    setStatus(summarizeIntegrationStatus({ erro: true }));
+    await auditStatus({ acao: contextoValido ? 'Bloqueio por permissao' : 'Bloqueio sem contexto', integracao, sucesso: false });
+    return false;
   };
 
   // Verificar NFe
   const handleVerificarNFe = async () => {
+    if (!await podeVerificar('nfe', setStatusNFe)) return;
     setVerificandoNFe(true);
     try {
-      const resultado = empresaId ? await integracaoNFe.verificarConfiguracao(empresaId) : await verificarConfigLocal('integracao_nfe');
-      setStatusNFe(resultado);
+      const resultado = empresaId ? await integracaoNFe.verificarConfiguracao(empresaId, groupId) : await verificarConfigLocal('integracao_nfe');
+      const statusSeguro = summarizeIntegrationStatus(resultado);
+      setStatusNFe(statusSeguro);
+      await auditStatus({ acao: 'Verificacao', integracao: 'nfe', sucesso: true, configurado: statusSeguro.configurado });
     } catch (error) {
-      setStatusNFe({ configurado: false, erro: error.message });
+      console.warn('[StatusIntegracoes] Falha ao verificar NFe:', error);
+      setStatusNFe(summarizeIntegrationStatus({ erro: true }));
+      await auditStatus({ acao: 'Erro na verificacao', integracao: 'nfe', sucesso: false });
     } finally {
       setVerificandoNFe(false);
     }
@@ -157,12 +115,17 @@ export default function StatusIntegracoes({ empresaId, groupId }) {
 
   // Verificar Boletos
   const handleVerificarBoleto = async () => {
+    if (!await podeVerificar('boleto', setStatusBoleto)) return;
     setVerificandoBoleto(true);
     try {
-      const resultado = empresaId ? await integracaoBoletos.verificarConfiguracao(empresaId) : await verificarConfigLocal('integracao_boletos');
-      setStatusBoleto(resultado);
+      const resultado = empresaId ? await integracaoBoletos.verificarConfiguracao(empresaId, groupId) : await verificarConfigLocal('integracao_boletos');
+      const statusSeguro = summarizeIntegrationStatus(resultado);
+      setStatusBoleto(statusSeguro);
+      await auditStatus({ acao: 'Verificacao', integracao: 'boleto', sucesso: true, configurado: statusSeguro.configurado });
     } catch (error) {
-      setStatusBoleto({ configurado: false, erro: error.message });
+      console.warn('[StatusIntegracoes] Falha ao verificar boleto:', error);
+      setStatusBoleto(summarizeIntegrationStatus({ erro: true }));
+      await auditStatus({ acao: 'Erro na verificacao', integracao: 'boleto', sucesso: false });
     } finally {
       setVerificandoBoleto(false);
     }
@@ -170,24 +133,32 @@ export default function StatusIntegracoes({ empresaId, groupId }) {
 
   // Verificar WhatsApp
   const handleVerificarWhatsApp = async () => {
+    if (!await podeVerificar('whatsapp', setStatusWhatsApp)) return;
     setVerificandoWhatsApp(true);
     try {
-      const resultado = empresaId ? await integracaoWhatsApp.verificarConexao(empresaId) : await verificarConfigLocal('integracao_whatsapp');
-      setStatusWhatsApp(resultado);
+      const resultado = empresaId ? await integracaoWhatsApp.verificarConexao(empresaId, groupId) : await verificarConfigLocal('integracao_whatsapp');
+      const statusSeguro = summarizeIntegrationStatus(resultado);
+      setStatusWhatsApp(statusSeguro);
+      await auditStatus({ acao: 'Verificacao', integracao: 'whatsapp', sucesso: true, conectado: statusSeguro.conectado });
     } catch (error) {
-      setStatusWhatsApp({ conectado: false, erro: error.message });
+      console.warn('[StatusIntegracoes] Falha ao verificar WhatsApp:', error);
+      setStatusWhatsApp(summarizeIntegrationStatus({ erro: true }));
+      await auditStatus({ acao: 'Erro na verificacao', integracao: 'whatsapp', sucesso: false });
     } finally {
       setVerificandoWhatsApp(false);
     }
   };
 
   useEffect(() => {
-    if (scopeId) {
-      handleVerificarNFe();
-      handleVerificarBoleto();
-      handleVerificarWhatsApp();
+    setStatusNFe(null);
+    setStatusBoleto(null);
+    setStatusWhatsApp(null);
+    if (contextoValido && podeExecutarIntegracoes) {
+      void handleVerificarNFe();
+      void handleVerificarBoleto();
+      void handleVerificarWhatsApp();
     }
-  }, [scopeId]);
+  }, [scopeId, groupId, podeExecutarIntegracoes]);
 
   const integracoes = [
     {
@@ -229,7 +200,7 @@ export default function StatusIntegracoes({ empresaId, groupId }) {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="w-full h-full space-y-6">
       <Alert className="border-blue-300 bg-blue-50">
         <Zap className="w-5 h-5 text-blue-600" />
         <AlertDescription>
@@ -314,7 +285,7 @@ export default function StatusIntegracoes({ empresaId, groupId }) {
                 </div>
 
                 {/* Botões */}
-                <IntegrationConfigButtons integracao={integracao} empresaId={empresaId} groupId={groupId} />
+                <IntegrationConfigButtons integracao={integracao} empresaId={empresaId} groupId={groupId} onAudit={auditStatus} />
               </CardContent>
             </Card>
           );
@@ -333,7 +304,7 @@ export default function StatusIntegracoes({ empresaId, groupId }) {
               <div>
                 <p className="font-semibold text-blue-900">1. NF-e (eNotas.io ou NFe.io)</p>
                 <p className="text-sm text-blue-700 mt-1">
-                  • Crie conta em <a href="https://enotas.com.br" target="_blank" className="underline">eNotas.com.br</a> ou <a href="https://nfe.io" target="_blank" className="underline">NFe.io</a><br/>
+                  • Crie conta em <a href="https://enotas.com.br" target="_blank" rel="noreferrer" className="underline">eNotas.com.br</a> ou <a href="https://nfe.io" target="_blank" rel="noreferrer" className="underline">NFe.io</a><br/>
                   • Obtenha sua API Key<br/>
                   • Configure em: <strong>Fiscal → Configurações → Integração NF-e</strong><br/>
                   • Faça upload do Certificado Digital A1
@@ -346,7 +317,7 @@ export default function StatusIntegracoes({ empresaId, groupId }) {
               <div>
                 <p className="font-semibold text-green-900">2. Boletos/PIX (Asaas)</p>
                 <p className="text-sm text-green-700 mt-1">
-                  • Crie conta em <a href="https://asaas.com" target="_blank" className="underline">Asaas.com</a><br/>
+                  • Crie conta em <a href="https://asaas.com" target="_blank" rel="noreferrer" className="underline">Asaas.com</a><br/>
                   • Ative sua conta (necessita CNPJ e documentos)<br/>
                   • Obtenha API Key em: Integrações → Sua Chave de API<br/>
                   • Configure em: <strong>Financeiro → Configurações → Gateway de Pagamento</strong>

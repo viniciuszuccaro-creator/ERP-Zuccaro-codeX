@@ -9,14 +9,15 @@ import { normalizeIdentifier, recordMatchesEmpresaScope } from '@/components/lib
 /**
  * Verifica configuração do gateway
  */
-async function verificarConfiguracao(empresaId) {
+async function verificarConfiguracao(empresaId, groupId) {
   const scopedEmpresaId = normalizeIdentifier(empresaId);
-  if (!scopedEmpresaId) {
-    return { configurado: false, erro: 'Empresa obrigatoria para configuracao de integracoes' };
+  const scopedGroupId = normalizeIdentifier(groupId);
+  if (!scopedEmpresaId || !scopedGroupId) {
+    return { configurado: false, erro: 'Grupo e empresa obrigatorios para configuracao de integracoes' };
   }
 
   const chave = `integracoes_${scopedEmpresaId}`;
-  const registros = await base44.entities.ConfiguracaoSistema.filter({ chave, categoria: 'Integracoes', empresa_id: scopedEmpresaId }, undefined, 1);
+  const registros = await base44.entities.ConfiguracaoSistema.filter({ chave, categoria: 'Integracoes', empresa_id: scopedEmpresaId, group_id: scopedGroupId }, undefined, 1);
 
   if (!registros || registros.length === 0) {
     return { configurado: false, erro: 'Configuração de integrações não encontrada' };
@@ -308,8 +309,8 @@ async function criarClienteAsaas(conta, config) {
 /**
  * Consultar Status de Pagamento
  */
-async function consultarStatusPagamento(cobrancaId, empresaId) {
-  const verificacao = await verificarConfiguracao(empresaId);
+async function consultarStatusPagamento(cobrancaId, empresaId, groupId) {
+  const verificacao = await verificarConfiguracao(empresaId, groupId);
 
   if (!verificacao.configurado) {
     return {
@@ -348,7 +349,10 @@ async function consultarStatusPagamento(cobrancaId, empresaId) {
  */
 export async function gerarCobranca(contaReceber, tipo = 'BOLETO') {
   // 1. Verificar configuração
-  const verificacao = await verificarConfiguracao(contaReceber.empresa_id);
+  const verificacao = await verificarConfiguracao(
+    contaReceber.empresa_id,
+    normalizeIdentifier(contaReceber.group_id) || normalizeIdentifier(contaReceber.grupo_id)
+  );
   
   // 2. Modo simulado se não configurado
   if (!verificacao.configurado) {
@@ -429,8 +433,8 @@ export async function gerarCobranca(contaReceber, tipo = 'BOLETO') {
 /**
  * Cancelar Cobrança
  */
-export async function cancelarCobranca(cobrancaId, empresaId) {
-  const verificacao = await verificarConfiguracao(empresaId);
+export async function cancelarCobranca(cobrancaId, empresaId, groupId) {
+  const verificacao = await verificarConfiguracao(empresaId, groupId);
 
   if (!verificacao.configurado) {
     return { sucesso: true, modo: 'simulado', mensagem: 'Cancelado localmente' };

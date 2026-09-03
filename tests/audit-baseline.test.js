@@ -201,3 +201,29 @@ test('integration administration keeps explicit context and summarized audits', 
   assert.match(source, /acao: "Erro Copiar URL Webhook"/);
   assert.doesNotMatch(source, /description: String\(err\?\.message \|\| err\)/);
 });
+
+test('integration status enforces scope, RBAC and credential-free results', async () => {
+  const statusSource = await readFile(new URL('../src/components/integracoes/StatusIntegracoes.jsx', import.meta.url), 'utf8');
+  const nfeSource = await readFile(new URL('../src/components/lib/integracaoNFe.jsx', import.meta.url), 'utf8');
+  const boletoSource = await readFile(new URL('../src/components/lib/integracaoBoletos.jsx', import.meta.url), 'utf8');
+  const whatsappSource = await readFile(new URL('../src/components/lib/integracaoWhatsApp.jsx', import.meta.url), 'utf8');
+  const buttonsSource = await readFile(new URL('../src/components/integracoes/IntegrationConfigButtons.jsx', import.meta.url), 'utf8');
+
+  assert.match(statusSource, /empresa_id: empresaId, group_id: groupId \|\| null/);
+  assert.match(buttonsSource, /empresa_id: empresaId, group_id: groupId \|\| null/);
+  assert.match(buttonsSource, /data-permission="Sistema\.Integracoes\.executar"/);
+  assert.match(buttonsSource, /Sistema\.Integracoes\.criar\|Sistema\.Integracoes\.editar/);
+  assert.match(buttonsSource, /operacao === 'editar' \? podeEditar : podeCriar/);
+  assert.match(buttonsSource, /updateInContext\('ConfiguracaoSistema', existentes\[0\]\.id, payload\)/);
+  assert.doesNotMatch(buttonsSource, /\.\.\.existentes\[0\]|description: error\.message/);
+  assert.match(statusSource, /summarizeIntegrationStatus/);
+  assert.match(statusSource, /setStatusNFe\(null\)[\s\S]*?setStatusBoleto\(null\)[\s\S]*?setStatusWhatsApp\(null\)/);
+  assert.match(statusSource, /className="w-full h-full space-y-6"/);
+
+  for (const source of [nfeSource, boletoSource, whatsappSource]) {
+    assert.match(source, /verificarConfiguracao\(empresaId, groupId\)/);
+    assert.match(source, /empresa_id: scopedEmpresaId, group_id: scopedGroupId/);
+  }
+  assert.match(whatsappSource, /verificarConexao\(empresaId, groupId\)[\s\S]*?verificarConfiguracao\(empresaId, groupId\)/);
+  assert.doesNotMatch(whatsappSource, /invoke\('whatsappSend', \{ action: 'status'/);
+});

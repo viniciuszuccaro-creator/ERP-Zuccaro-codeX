@@ -9,14 +9,15 @@ import { normalizeIdentifier } from '@/components/lib/contextoMultiempresaPolicy
 /**
  * Verifica se a integração está configurada
  */
-async function verificarConfiguracao(empresaId) {
+async function verificarConfiguracao(empresaId, groupId) {
   const scopedEmpresaId = normalizeIdentifier(empresaId);
-  if (!scopedEmpresaId) {
-    return { configurado: false, erro: 'Empresa obrigatoria para configuracao de integracoes' };
+  const scopedGroupId = normalizeIdentifier(groupId);
+  if (!scopedEmpresaId || !scopedGroupId) {
+    return { configurado: false, erro: 'Grupo e empresa obrigatorios para configuracao de integracoes' };
   }
 
   const chave = `integracoes_${scopedEmpresaId}`;
-  const registros = await base44.entities.ConfiguracaoSistema.filter({ chave, categoria: 'Integracoes', empresa_id: scopedEmpresaId }, undefined, 1);
+  const registros = await base44.entities.ConfiguracaoSistema.filter({ chave, categoria: 'Integracoes', empresa_id: scopedEmpresaId, group_id: scopedGroupId }, undefined, 1);
 
   if (!registros || registros.length === 0) {
     return { configurado: false, erro: 'Configuração de integrações não encontrada' };

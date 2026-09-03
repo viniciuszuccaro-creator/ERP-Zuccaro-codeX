@@ -1,3 +1,20 @@
+### Integracoes - Status Seguro, RBAC e Verificadores Multiempresa
+- Continuei o plano salvo a partir do commit `b212afa0`, fortalecendo o painel existente `StatusIntegracoes` e seus tres verificadores.
+- Consultas e persistencia de configuracoes agora exigem e transportam `group_id` e `empresa_id` no contexto de empresa; o contexto de Grupo permanece restrito ao `group_id`.
+- Os botoes Verificar e Configurar passaram a exigir contexto valido e RBAC granular de executar, criar ou editar.
+- A operacao real de criar/editar e conferida novamente no envio do formulario, impedindo que uma permissao seja usada no lugar da outra.
+- Atualizacoes deixaram de reenviar o registro completo e persistem somente a chave, categoria, contexto e configuracao alterada.
+- Verificacoes e salvamentos agora geram auditoria resumida com integracao, operacao e indicadores, sem credenciais ou payloads completos; erros brutos ficam fora da interface.
+- Estados retornados sao reduzidos a configurado/conectado/provedor e QR Code validado; tokens e configuracoes completas nao permanecem no estado visual.
+- O estado das tres integracoes e limpo ao trocar Grupo/Empresa, evitando exibir resultado do contexto anterior.
+- O verificador de WhatsApp deixou de chamar a acao backend `status`, que nao existia e exigia destinatario; agora valida a configuracao no mesmo escopo, sem enviar mensagem.
+- Os verificadores de NF-e, Boletos e WhatsApp passaram a exigir Grupo+Empresa; geracao, consulta e cancelamento de cobrancas foram alinhados ao novo contrato.
+- Pela Regra-Mae, o helper interno de botoes foi extraido para `IntegrationConfigButtons.jsx`: o painel caiu de 516 para 386 linhas e o helper ficou com 134 linhas, sem duplicar funcionalidade.
+- O teste de baseline existente foi ampliado para impedir regressao de escopo, RBAC, persistencia minima, estado seguro e chamada WhatsApp inexistente.
+- Validacoes concluidas: teste direcionado (1/1), `npm test` (37/37), `npm run build`, `npm run audit:baseline` e `git diff --check` passaram.
+- O baseline permaneceu em 179 capturas silenciosas; controles com marcador de permissao aumentaram de 1503 para 1506.
+- Proximo passo sugerido: revisar os componentes existentes `TesteNFe`, `TesteBoletos`, `TesteTransportadoras` e `TesteGoogleMaps`, aplicando contexto completo, RBAC por acao e auditoria sem credenciais.
+
 ### Integracoes - Contexto Explicito e Auditoria Resumida
 - Continuei o plano salvo a partir do commit `1e9c8cf1`, fortalecendo o fluxo existente da Administracao de Integracoes.
 - A consulta de `ConfiguracaoSistema` agora envia `group_id` e `empresa_id` explicitamente, alem de manter o filtro pelo escopo selecionado.

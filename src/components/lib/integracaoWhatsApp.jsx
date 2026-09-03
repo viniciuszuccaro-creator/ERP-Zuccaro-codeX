@@ -9,14 +9,15 @@ import { normalizeIdentifier, recordMatchesEmpresaScope } from '@/components/lib
 /**
  * Verifica configuração do WhatsApp
  */
-async function verificarConfiguracao(empresaId) {
+async function verificarConfiguracao(empresaId, groupId) {
   const scopedEmpresaId = normalizeIdentifier(empresaId);
-  if (!scopedEmpresaId) {
-    return { configurado: false, erro: 'Empresa obrigatoria para configuracao de integracoes' };
+  const scopedGroupId = normalizeIdentifier(groupId);
+  if (!scopedEmpresaId || !scopedGroupId) {
+    return { configurado: false, erro: 'Grupo e empresa obrigatorios para configuracao de integracoes' };
   }
 
   const chave = `integracoes_${scopedEmpresaId}`;
-  const registros = await base44.entities.ConfiguracaoSistema.filter({ chave, categoria: 'Integracoes', empresa_id: scopedEmpresaId }, undefined, 1);
+  const registros = await base44.entities.ConfiguracaoSistema.filter({ chave, categoria: 'Integracoes', empresa_id: scopedEmpresaId, group_id: scopedGroupId }, undefined, 1);
   
   if (!registros || registros.length === 0) {
     return { configurado: false, erro: 'Configuração WhatsApp não encontrada' };
@@ -114,9 +115,9 @@ async function enviarArquivoEvolution(numero, arquivoUrl, legenda, config) {
 /**
  * Verificar Status da Conexão
  */
-async function verificarConexao(empresaId) {
-  const { data } = await base44.functions.invoke('whatsappSend', { action: 'status', empresaId });
-  return data;
+async function verificarConexao(empresaId, groupId) {
+  const resultado = await verificarConfiguracao(empresaId, groupId);
+  return { ...resultado, conectado: resultado.configurado === true };
 }
 
 /**
