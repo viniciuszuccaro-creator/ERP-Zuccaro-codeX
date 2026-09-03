@@ -12,6 +12,7 @@
 - Pela refatoracao obrigatoria da Regra-Mae, os componentes principais cairam para 370 e 323 linhas; eventos, tabela e dados simulados foram extraidos para tres auxiliares pequenos, sem criar tela, rota, modulo ou funcionalidade.
 - O teste de baseline existente foi ampliado para impedir regressao de contexto, RBAC, duplicidade, auditoria segura, abertura externa e persistencia minima.
 - Validacoes concluidas: teste direcionado (1/1), `npm test` (39/39), `npm run build`, `npm run audit:baseline` e `git diff --check` passaram.
+- Commit funcional publicado na `main`: `185c62c8` (`Protege WhatsApp e marketplaces por contexto`).
 - O baseline permaneceu em 179 capturas operacionais silenciosas e 1507 controles com marcador de permissao; a reducao de controles brutos reflete a consolidacao dos toggles repetidos.
 - Proximo passo sugerido: revisar os componentes existentes `TesteWhatsApp` e `SincronizacaoMarketplaces`, aplicando o mesmo contexto estrito, RBAC por execucao, persistencia real dos toggles e auditoria sem telefone ou erro bruto.
 
