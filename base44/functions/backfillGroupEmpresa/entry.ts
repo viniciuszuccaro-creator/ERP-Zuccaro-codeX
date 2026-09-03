@@ -1,91 +1,205 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { completeGuardCallScope, requireEntityGuard } from './_lib/security/guardCallPolicy.js';
 
-function chunk(arr, size) { const out = []; for (let i=0;i<arr.length;i+=size) out.push(arr.slice(i,i+size)); return out; }
-
-async function getEmpresaById(sr, id) {
-  if (!id) return null;
-  try { const emp = await sr.entities.Empresa.filter({ id }, undefined, 1); return emp?.[0] || null; } catch { return null; }
-}
+const reportBackfillFailure = (operation, error, context = {}) => {
+  console.error('[backfillGroupEmpresa] ' + operation, {
+    error: error?.message || String(error),
+    ...context,
+  });
+};
 
 const DEFAULT_ENTITIES = [
   'Cliente','Fornecedor','Produto','Pedido','Entrega','ContaPagar','ContaReceber','OrdemCompra','MovimentacaoEstoque','SolicitacaoCompra','Transportadora','Colaborador','CentroCusto','Oportunidade','Interacao','NotaFiscal' // NF será apenas validada (sem alterar)
 ];
+const ALLOWED_ENTITIES = new Set(DEFAULT_ENTITIES);
+const READ_ONLY_ENTITIES = new Set(['NotaFiscal']);
+
+function companyFieldFor(entityName) {
+  if (entityName === 'Fornecedor' || entityName === 'Transportadora') return 'empresa_dona_id';
+  if (entityName === 'Colaborador') return 'empresa_alocada_id';
+  if (entityName === 'NotaFiscal') return 'empresa_faturamento_id';
+  return 'empresa_id';
+}
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    if (user?.role !== 'admin') return Response.json({ error: 'Forbidden: Admin only' }, { status: 403 });
-
     const body = await req.json().catch(() => ({}));
-    const entities = Array.isArray(body?.entities) && body.entities.length ? body.entities : DEFAULT_ENTITIES;
+
+    let user = null;
+    try {
+      user = await base44.auth.me();
+    } catch (error) {
+      reportBackfillFailure('autenticacao', error);
+    }
+    const internalToken = body?.internal_token || req.headers.get('x-internal-token') || null;
+    const expectedToken = Deno.env.get('DEPLOY_AUDIT_TOKEN') || null;
+    const trustedInternal = Boolean(internalToken && expectedToken && internalToken === expectedToken);
+    if (!user && !trustedInternal) {
+      return Response.json({ error: 'Forbidden: internal automation token required' }, { status: 403 });
+    }
+    if (user && user.role !== 'admin') {
+      return Response.json({ error: 'Forbidden: Admin only' }, { status: 403 });
+    }
+
+    const requestedEntities = Array.isArray(body?.entities) && body.entities.length ? body.entities : DEFAULT_ENTITIES;
+    const invalidEntities = requestedEntities.filter((entityName) => !ALLOWED_ENTITIES.has(entityName));
+    if (invalidEntities.length) {
+      return Response.json({ error: 'Entidade nao permitida no backfill', entities: invalidEntities }, { status: 400 });
+    }
+    const entities = [...new Set(requestedEntities)];
     const dryRun = body?.dryRun !== false; // default true
-    // For execução sob automação: honrar preferência de dry-run via flag forçada
     const forceDryRun = body?.forceDryRun === true;
-    const apply = !forceDryRun && (body?.apply === true && dryRun === false); // only when explicitly requested and not dryRun
-    const limitPerEntity = Number(body?.limitPerEntity) > 0 ? Number(body.limitPerEntity) : 1000;
+    const apply = !forceDryRun && body?.apply === true && dryRun === false;
+    const requestedLimit = Number(body?.limitPerEntity);
+    const limitPerEntity = Number.isFinite(requestedLimit) && requestedLimit > 0
+      ? Math.min(5000, Math.floor(requestedLimit))
+      : 1000;
+
+    const scope = await completeGuardCallScope(base44, body || {});
+    if (!scope.groupId) {
+      return Response.json({ error: 'Contexto multiempresa incompleto' }, { status: 400 });
+    }
 
     const sr = base44.asServiceRole;
+    const empresas = await sr.entities.Empresa.filter({ group_id: scope.groupId }, undefined, 500);
+    const empresasById = new Map((empresas || []).map((empresa) => [empresa.id, empresa]));
+    if (scope.empresaId && !empresasById.has(scope.empresaId)) {
+      return Response.json({ error: 'Empresa fora do grupo informado' }, { status: 403 });
+    }
+    const targetEmpresas = scope.empresaId ? [empresasById.get(scope.empresaId)] : [...empresasById.values()];
+
+    if (user) {
+      const guardFailure = await requireEntityGuard(base44, {
+        module: 'Sistema',
+        section: 'Ferramentas',
+        action: apply ? 'editar' : 'executar',
+        group_id: scope.groupId,
+        empresa_id: scope.empresaId,
+      });
+      if (guardFailure) return guardFailure;
+    }
+
     const summary = [];
 
     for (const entityName of entities) {
-      const result = { entity: entityName, scanned: 0, toUpdate: 0, updated: 0, skipped: 0, errors: 0 };
+      const result = {
+        entity: entityName,
+        scanned: 0,
+        toUpdate: 0,
+        updated: 0,
+        skipped: 0,
+        errors: 0,
+        readOnly: READ_ONLY_ENTITIES.has(entityName),
+      };
+      const entityApi = sr.entities?.[entityName];
+      const companyField = companyFieldFor(entityName);
 
-      // Paginação simples por skip
-      let skip = 0; const page = 500;
-      while (true) {
-        const batch = await sr.entities[entityName].filter({}, '-updated_date', page, skip).catch(() => []);
-        if (!batch?.length) break;
-        skip += page; result.scanned += batch.length;
-
-        const candidates = batch.filter(r => (r?.empresa_id && !r?.group_id) || (!r?.empresa_id && r?.group_id));
-        if (!candidates.length) continue;
-
-        // Hard cap por entidade por execução
-        const capped = result.toUpdate + candidates.length > limitPerEntity ? candidates.slice(0, Math.max(0, limitPerEntity - result.toUpdate)) : candidates;
-        result.toUpdate += capped.length;
-
-        for (const rec of capped) {
+      for (const empresa of targetEmpresas) {
+        let skip = 0;
+        const page = 500;
+        while (result.toUpdate < limitPerEntity) {
+          let batch;
           try {
-            // Caso 1: empresa_id presente e group_id ausente -> preencher group_id a partir da Empresa
-            if (rec?.empresa_id && !rec?.group_id) {
-              const emp = await getEmpresaById(sr, rec.empresa_id);
-              if (!emp?.group_id) { result.skipped++; continue; }
-              const patch = { group_id: emp.group_id };
-              if (!dryRun && apply) {
-                await sr.entities[entityName].update(rec.id, patch);
-                result.updated++;
-              }
+            batch = await entityApi.filter({ [companyField]: empresa.id }, '-updated_date', page, skip);
+          } catch (error) {
+            result.errors += 1;
+            reportBackfillFailure('listar-registros', error, {
+              entity_name: entityName,
+              group_id: scope.groupId,
+              empresa_id: empresa.id,
+            });
+            break;
+          }
+          if (!batch?.length) break;
+          skip += page;
+          result.scanned += batch.length;
+
+          for (const record of batch) {
+            if (result.toUpdate >= limitPerEntity) break;
+            if (record?.[companyField] !== empresa.id) {
+              result.errors += 1;
+              reportBackfillFailure('registro-fora-da-empresa', new Error('Contexto divergente'), {
+                entity_name: entityName,
+                group_id: scope.groupId,
+                empresa_id: empresa.id,
+                record_id: record?.id || null,
+              });
               continue;
             }
-            // Caso 2: group_id presente e empresa_id ausente -> manter escopo de grupo (não forçar empresa)
-            if (rec?.group_id && !rec?.empresa_id) {
-              // Sem alteração; apenas contabiliza como válido
-              result.skipped++;
+            if (record?.group_id && record.group_id !== scope.groupId) {
+              result.errors += 1;
+              reportBackfillFailure('registro-fora-do-grupo', new Error('Contexto divergente'), {
+                entity_name: entityName,
+                group_id: scope.groupId,
+                empresa_id: empresa.id,
+                record_id: record?.id || null,
+              });
               continue;
             }
-          } catch (_) {
-            result.errors++;
+            if (record?.group_id === scope.groupId) {
+              result.skipped += 1;
+              continue;
+            }
+
+            result.toUpdate += 1;
+            if (result.readOnly || !apply) {
+              result.skipped += 1;
+              continue;
+            }
+            try {
+              await entityApi.update(record.id, { group_id: scope.groupId });
+              result.updated += 1;
+            } catch (error) {
+              result.errors += 1;
+              reportBackfillFailure('atualizar-registro', error, {
+                entity_name: entityName,
+                group_id: scope.groupId,
+                empresa_id: empresa.id,
+                record_id: record?.id || null,
+              });
+            }
           }
         }
-
-        if (result.toUpdate >= limitPerEntity) break; // respeita limite
       }
 
       summary.push(result);
-      // Auditoria por entidade
       try {
         await sr.entities.AuditLog.create({
-          usuario: user.full_name || user.email || 'Admin', usuario_id: user.id,
-          acao: apply ? 'Edição' : 'Visualização', modulo: 'Sistema', tipo_auditoria: 'sistema', entidade: 'BackfillMultiempresa',
-          descricao: `${entityName}: scanned=${result.scanned} toUpdate=${result.toUpdate} ${apply ? 'updated='+result.updated : '(dry-run)'} skipped=${result.skipped}`,
+          usuario: user ? (user.full_name || user.email || 'Admin') : 'Sistema Agendado',
+          usuario_id: user?.id || null,
+          acao: apply ? 'Edicao' : 'Visualizacao',
+          modulo: 'Sistema',
+          tipo_auditoria: 'sistema',
+          entidade: 'BackfillMultiempresa',
+          descricao: 'Backfill multiempresa processado com escopo estrito',
+          dados_novos: {
+            group_id: scope.groupId,
+            empresa_id: scope.empresaId || null,
+            dry_run: !apply,
+            resultado: result,
+          },
+          group_id: scope.groupId,
+          empresa_id: scope.empresaId || null,
           data_hora: new Date().toISOString(),
         });
-      } catch {}
+      } catch (error) {
+        reportBackfillFailure('auditoria', error, {
+          entity_name: entityName,
+          group_id: scope.groupId,
+          empresa_id: scope.empresaId || null,
+        });
+      }
     }
 
-    return Response.json({ ok: true, dryRun: forceDryRun ? true : dryRun, apply, summary });
+    return Response.json({
+      ok: true,
+      dryRun: forceDryRun ? true : dryRun,
+      apply,
+      group_id: scope.groupId,
+      empresa_id: scope.empresaId || null,
+      summary,
+    });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

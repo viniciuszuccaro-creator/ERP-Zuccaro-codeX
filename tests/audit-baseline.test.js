@@ -84,3 +84,19 @@ test('group company synchronization fails closed outside the resolved scope', as
   assert.doesNotMatch(syncSource, /note: 'no scope'/);
   assert.doesNotMatch(syncSource, /catch \(_\) \{\}/);
 });
+
+test('multi-company backfill only scans the resolved group and known entities', async () => {
+  const backfillSource = await readFile(new URL('../base44/functions/backfillGroupEmpresa/entry.ts', import.meta.url), 'utf8');
+  const adminSource = await readFile(new URL('../src/components/administracao-sistema/AdminTabs.jsx', import.meta.url), 'utf8');
+
+  assert.match(backfillSource, /DEPLOY_AUDIT_TOKEN/);
+  assert.match(backfillSource, /requireEntityGuard/);
+  assert.match(backfillSource, /ALLOWED_ENTITIES/);
+  assert.match(backfillSource, /READ_ONLY_ENTITIES = new Set\(\['NotaFiscal'\]\)/);
+  assert.match(backfillSource, /Empresa\.filter\(\{ group_id: scope\.groupId \}/);
+  assert.match(backfillSource, /entityApi\.filter\(\{ \[companyField\]: empresa\.id \}/);
+  assert.match(backfillSource, /Empresa fora do grupo informado/);
+  assert.doesNotMatch(backfillSource, /\.filter\(\{\}, '-updated_date'/);
+  assert.doesNotMatch(backfillSource, /catch \(_\)|catch \{\}/);
+  assert.match(adminSource, /backfillGroupEmpresa'[\s\S]*?group_id: grupoId, empresa_id: empresaId/);
+});

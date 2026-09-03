@@ -1,3 +1,18 @@
+### Sistema - Backfill Multiempresa com Varredura Segura
+- Continuei o plano salvo a partir do commit `5ce6bfe0`, fortalecendo a funcao existente `backfillGroupEmpresa`.
+- Chamadas sem usuario agora exigem `DEPLOY_AUDIT_TOKEN`; usuarios autenticados continuam exigindo perfil administrador e passam pelo RBAC granular de Sistema/Ferramentas.
+- O backfill exige contexto `group_id`/`empresa_id` valido e rejeita empresa que nao pertenca ao grupo informado.
+- A varredura global `filter({})` foi removida; cada entidade e consultada somente pelas empresas do grupo, usando seu campo de propriedade correto.
+- A lista de entidades aceitas ficou fechada nas entidades operacionais ja atendidas, bloqueando nomes arbitrarios recebidos no payload.
+- `NotaFiscal` permanece somente leitura: inconsistencias sao contabilizadas, mas o backfill nao altera registros fiscais.
+- Registros com grupo divergente sao rejeitados e relatados; somente registros sem grupo e vinculados a empresa validada podem receber o `group_id`.
+- Limite por entidade foi normalizado e limitado a 5.000 registros para reduzir abuso e sobrecarga.
+- Auditorias agora incluem Grupo/Empresa e resumo de processados, atualizados, ignorados e erros, sem copiar registros completos.
+- O teste de baseline existente foi ampliado e tambem confirma que a aba Ferramentas continua enviando Grupo/Empresa.
+- Validacoes concluidas: `node --check`, teste direcionado (5/5), `npm test` (30/30), `npm run build`, `npm run audit:baseline` e `git diff --check` passaram.
+- O baseline de capturas operacionais silenciosas caiu de 191 para 190.
+- Mantida a Regra-Mae: somente funcao, teste e status existentes foram melhorados, sem criar tela, modulo ou rota e sem remover o fluxo de dry-run/aplicacao.
+- Proximo passo sugerido: endurecer `seedMultiCompanyData`, eliminando deteccao global ambigua de grupo, validando empresas de destino e resumindo falhas/auditoria sem payloads extensos.
 ### Sistema - Sincronizacao Grupo/Empresas com Escopo Estrito
 - Continuei o plano salvo a partir do commit `5a979f3d`, fortalecendo o fluxo existente `syncGroupCompany`.
 - Chamadas sem usuario autenticado agora exigem `DEPLOY_AUDIT_TOKEN` no corpo ou no header `x-internal-token`; chamadas humanas passam pelo RBAC granular de Sistema/SyncGroupCompany.
