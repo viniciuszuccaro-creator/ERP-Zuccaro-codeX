@@ -1,3 +1,17 @@
+### Sistema - Sincronizacao Grupo/Empresas com Escopo Estrito
+- Continuei o plano salvo a partir do commit `5a979f3d`, fortalecendo o fluxo existente `syncGroupCompany`.
+- Chamadas sem usuario autenticado agora exigem `DEPLOY_AUDIT_TOKEN` no corpo ou no header `x-internal-token`; chamadas humanas passam pelo RBAC granular de Sistema/SyncGroupCompany.
+- O contexto `group_id`/`empresa_id` e obrigatorio, e a empresa de origem precisa pertencer ao grupo resolvido.
+- Foi removido o fallback que listava todas as empresas ativas quando a consulta por grupo falhava ou voltava vazia.
+- Consultas e operacoes de `SyncMap` ficaram limitadas ao `group_id`, descartando mapas de empresas externas ao grupo.
+- Sincronizacoes `up` e `down` validam o registro de destino antes de atualizar e persistem explicitamente Grupo/Empresa no escopo correto.
+- Exclusoes agora removem somente espelhos cujo contexto corresponde ao mapa; falhas sao registradas sem apagar o mapa pendente.
+- Auditorias registram apenas entidade, evento, direcao, IDs e totais, sem copiar o payload completo do registro.
+- O teste de baseline existente foi ampliado para impedir retorno do fallback global, ausencia de token/RBAC e mapas sem filtro de grupo.
+- Validacoes concluidas: `node --check`, teste direcionado (4/4), `npm test` (29/29), `npm run build`, `npm run audit:baseline` e `git diff --check` passaram.
+- O baseline de capturas operacionais silenciosas caiu de 195 para 191.
+- Mantida a Regra-Mae: somente funcao, teste e status existentes foram melhorados, sem criar tela, modulo ou rota e sem remover funcionalidade.
+- Proximo passo sugerido: revisar `backfillGroupEmpresa`, `seedMultiCompanyData` e as automacoes externas que chamam `syncGroupCompany`, garantindo token interno e escopo estrito na origem.
 ### Financeiro - Persistência Interempresas com Escopo Estrito
 - Continuei o plano salvo revisando persistência sensível e isolamento entre empresas.
 - `intercompanyTransfer` deixou de conter a declaração duplicada de usuário que tornava o arquivo inválido.

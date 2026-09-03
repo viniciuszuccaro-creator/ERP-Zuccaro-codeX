@@ -69,3 +69,18 @@ test('sensitive intercompany persistence keeps group scope and summarized auditi
   assert.doesNotMatch(conflictSource, /dados_anteriores:\s*current/);
   assert.match(conflictSource, /total_campos_alterados/);
 });
+
+test('group company synchronization fails closed outside the resolved scope', async () => {
+  const syncSource = await readFile(new URL('../base44/functions/syncGroupCompany/entry.ts', import.meta.url), 'utf8');
+
+  assert.match(syncSource, /DEPLOY_AUDIT_TOKEN/);
+  assert.match(syncSource, /internal automation token required/);
+  assert.match(syncSource, /requireEntityGuard/);
+  assert.match(syncSource, /recordMatchesGuardScope/);
+  assert.match(syncSource, /SyncMap\.filter\(\{[\s\S]*?entity_name: entityName,[\s\S]*?group_id: groupId/);
+  assert.match(syncSource, /Empresa fora do grupo informado/);
+  assert.match(syncSource, /companies_total/);
+  assert.doesNotMatch(syncSource, /Empresa\.filter\(\{ status: 'Ativa' \}\)/);
+  assert.doesNotMatch(syncSource, /note: 'no scope'/);
+  assert.doesNotMatch(syncSource, /catch \(_\) \{\}/);
+});
