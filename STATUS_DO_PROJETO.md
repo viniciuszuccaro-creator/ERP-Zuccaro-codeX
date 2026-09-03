@@ -1,3 +1,19 @@
+### Sistema - Seed Multiempresa com Contexto Explicito
+- Continuei o plano salvo a partir do commit `0ca084fb`, fortalecendo a funcao existente `seedMultiCompanyData`.
+- Foi removida a escolha automatica do primeiro grupo encontrado; execucoes normais agora exigem `group_id` explicito.
+- A inicializacao de Grupo/Empresas foi preservada, mas exige `initialize_if_empty: true`, ausencia total de empresas e `DEPLOY_AUDIT_TOKEN` valido.
+- Chamadas sem usuario exigem token interno; usuarios autenticados continuam exigindo administrador e passam pelo RBAC granular de Sistema/Ferramentas.
+- `empresa_id` e `empresas_ids` sao validados contra o grupo, bloqueando qualquer destino externo.
+- Quantidades de clientes, produtos e fornecedores foram normalizadas e limitadas a 500 por tipo; a inicializacao foi limitada a 20 empresas.
+- Falhas de configuracao, criacao e propagacao deixaram de ser silenciosas e agora registram somente operacao, Grupo/Empresa e contexto tecnico minimo.
+- Contadores de criacao so aumentam apos sucesso e o resumo por empresa passou a separar criados de falhas.
+- A propagacao existente de Plano de Contas/Centro de Custo continua enviando o token interno.
+- Auditoria final inclui Grupo/Empresa, IDs de empresas, contagens e resultados resumidos, sem copiar registros criados.
+- O teste de baseline existente foi ampliado para impedir selecao global ambigua, bootstrap sem token e empresa fora do grupo.
+- Validacoes concluidas: `node --check`, teste direcionado (6/6), `npm test` (31/31), `npm run build`, `npm run audit:baseline` e `git diff --check` passaram.
+- O baseline de capturas operacionais silenciosas caiu de 190 para 186.
+- Mantida a Regra-Mae: somente funcao, teste e status existentes foram melhorados; o bootstrap foi preservado de forma controlada e nenhuma tela, modulo ou rota foi criada.
+- Proximo passo sugerido: endurecer o `seedData` existente, removendo inferencia global de empresa, validando Grupo/Empresa e reduzindo auditorias de erro com payload e stack completos.
 ### Sistema - Backfill Multiempresa com Varredura Segura
 - Continuei o plano salvo a partir do commit `5ce6bfe0`, fortalecendo a funcao existente `backfillGroupEmpresa`.
 - Chamadas sem usuario agora exigem `DEPLOY_AUDIT_TOKEN`; usuarios autenticados continuam exigindo perfil administrador e passam pelo RBAC granular de Sistema/Ferramentas.

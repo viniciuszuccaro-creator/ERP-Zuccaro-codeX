@@ -100,3 +100,19 @@ test('multi-company backfill only scans the resolved group and known entities', 
   assert.doesNotMatch(backfillSource, /catch \(_\)|catch \{\}/);
   assert.match(adminSource, /backfillGroupEmpresa'[\s\S]*?group_id: grupoId, empresa_id: empresaId/);
 });
+
+test('multi-company seed requires explicit scope or controlled empty initialization', async () => {
+  const seedSource = await readFile(new URL('../base44/functions/seedMultiCompanyData/entry.ts', import.meta.url), 'utf8');
+
+  assert.match(seedSource, /DEPLOY_AUDIT_TOKEN/);
+  assert.match(seedSource, /requireEntityGuard/);
+  assert.match(seedSource, /group_id obrigatorio para seed multiempresa/);
+  assert.match(seedSource, /initialize_if_empty/);
+  assert.match(seedSource, /Inicializacao exige token interno/);
+  assert.match(seedSource, /Empresa\.filter\(\{ group_id: groupId \}/);
+  assert.match(seedSource, /Empresa fora do grupo informado/);
+  assert.match(seedSource, /normalizeCount\(body\?\.empresas, minimal \? 1 : 3, 20\)/);
+  assert.match(seedSource, /internal_token: Deno\.env\.get\('DEPLOY_AUDIT_TOKEN'\)/);
+  assert.doesNotMatch(seedSource, /comGrupo\[0\]/);
+  assert.doesNotMatch(seedSource, /catch \(_\)|catch \{\}|catch\(\(\) => \{\}\)/);
+});
