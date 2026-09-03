@@ -11,6 +11,7 @@
 - Classes de cor passaram a ser estaticas para geracao correta pelo Tailwind; cards, acoes e tabela receberam ajustes responsivos e `w-full h-full`.
 - O teste de baseline existente foi ampliado para impedir regressao de escopo, persistencia, RBAC por acao, auditoria segura e layout.
 - Validacoes concluidas: teste direcionado (1/1), `npm test` (40/40), `npm run build`, `npm run audit:baseline` e `git diff --check` passaram.
+- Commit funcional publicado na `main`: `886173bc` (`Persiste toggles e protege teste WhatsApp`).
 - O baseline permaneceu em 179 capturas operacionais silenciosas; controles com marcador de permissao aumentaram de 1507 para 1512.
 - Proximo passo sugerido: revisar os filhos existentes `IALeituraProjeto` e `IAPrevisaoLogistica`, reforcando Grupo/Empresa, RBAC por acao e auditorias sem payload tecnico sensivel.
 
