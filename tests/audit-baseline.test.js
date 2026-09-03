@@ -169,3 +169,17 @@ test('generic read callers send canonical group and company context', async () =
   assert.equal((viewerSource.match(/group_id: groupId,/g) || []).length >= 2, true);
   assert.equal((viewerSource.match(/empresa_id: empresaId,/g) || []).length >= 2, true);
 });
+
+test('integration toggles reflect persisted state and enforce the real write permission', async () => {
+  const source = await readFile(new URL('../src/components/integracoes/CentralIntegracoes.jsx', import.meta.url), 'utf8');
+
+  assert.match(source, /operacao = existentes\?\.length \? "editar" : "criar"/);
+  assert.match(source, /operacao === "editar" \? podeEditarIntegracoes : podeCriarIntegracoes/);
+  assert.match(source, /updateInContext\("ConfiguracaoSistema", existentes\[0\]\.id, payload\)/);
+  assert.doesNotMatch(source, /updateInContext\("ConfiguracaoSistema", existentes\[0\]\.id, \{ \.\.\.existentes\[0\]/);
+  assert.match(source, /cfgIntegracoes \? !podeEditarIntegracoes : !podeCriarIntegracoes/);
+  assert.match(source, /data-permission=\{cfgIntegracoes \? "Sistema\.Integracoes\.editar" : "Sistema\.Integracoes\.criar"\}/);
+  assert.equal((source.match(/status: "Inativo"/g) || []).length >= 3, true);
+  assert.match(source, /auditarIntegracao\(\{ acao: "Erro ao salvar"/);
+  assert.doesNotMatch(source, /Erro ao salvar integracao", description: String\(error/);
+});

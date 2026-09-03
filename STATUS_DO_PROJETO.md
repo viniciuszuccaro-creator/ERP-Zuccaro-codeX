@@ -1,3 +1,16 @@
+### Integracoes - Toggles Persistentes com RBAC por Operacao
+- Continuei o plano salvo a partir do commit `fa351485`, corrigindo os toggles existentes da Central de Integracoes.
+- Os cards de NFe, Boletos e WhatsApp agora exibem estado inativo ate que a configuracao persistida confirme a ativacao.
+- A permissao exigida passa a acompanhar a operacao real: `Sistema.Integracoes.criar` para a primeira configuracao e `Sistema.Integracoes.editar` para configuracoes existentes.
+- O bloqueio visual e o marcador `data-permission` dos toggles foram alinhados a mesma decisao de autorizacao.
+- Atualizacoes deixaram de reenviar o registro completo existente e persistem somente o payload minimo de contexto e ativacao.
+- Falhas de ativacao/desativacao agora geram auditoria resumida com Grupo/Empresa e estado solicitado, sem expor mensagem bruta ao usuario.
+- O teste de baseline existente foi ampliado para impedir regressao do estado persistido, do RBAC por operacao, da atualizacao minima e da auditoria de falha.
+- Validacoes concluidas: teste direcionado (1/1), `npm test` (35/35), `npm run build`, `npm run audit:baseline` e `git diff --check` passaram.
+- O baseline de capturas operacionais silenciosas permaneceu em 180.
+- Mantida a Regra-Mae: somente componente, teste e status existentes foram melhorados; nenhuma tela, funcionalidade, rota, modulo ou arquivo de projeto foi criado ou removido.
+- Proximo passo sugerido: revisar o fluxo existente de configuracao detalhada em `IntegracoesIndex`, eliminando capturas silenciosas, explicitando contexto Grupo/Empresa e resumindo auditorias sem segredos.
+
 ### Multiempresa - Contexto Explicito nos Chamadores Genericos
 - Continuei o plano salvo a partir do commit `08072655`, preparando os fluxos existentes de `getEntityRecord` e `entityListSorted` para validacao backend estrita.
 - O alerta fiscal do `Layout` agora envia explicitamente `group_id` e `empresa_id` ao consultar `ConfiguracaoSistema`.

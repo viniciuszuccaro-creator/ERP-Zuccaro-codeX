@@ -120,6 +120,14 @@ export default function CentralIntegracoes() {
     setSalvandoKey(key);
     try {
       const existentes = await filterInContext("ConfiguracaoSistema", { chave: chaveIntegracoes }, undefined, 1);
+      const operacao = existentes?.length ? "editar" : "criar";
+      const permitido = operacao === "editar" ? podeEditarIntegracoes : podeCriarIntegracoes;
+      if (!permitido) {
+        await auditarIntegracao({ acao: "Bloqueio por permissao", descricao: "Permissao incompativel com a operacao real da integracao.", integracao: key, sucesso: false, dadosNovos: { ativo, operacao } });
+        toast({ title: "Acesso negado", description: "Seu perfil nao permite " + operacao + " esta integracao.", variant: "destructive" });
+        return;
+      }
+
       const payload = {
         chave: chaveIntegracoes,
         categoria: "Integracoes",
@@ -128,7 +136,7 @@ export default function CentralIntegracoes() {
       };
 
       if (existentes && existentes.length > 0) {
-        await updateInContext("ConfiguracaoSistema", existentes[0].id, { ...existentes[0], ...payload });
+        await updateInContext("ConfiguracaoSistema", existentes[0].id, payload);
       } else {
         await createInContext("ConfiguracaoSistema", payload);
       }
@@ -144,7 +152,9 @@ export default function CentralIntegracoes() {
       await queryClient.invalidateQueries({ queryKey: ["cfg-integracoes", chaveIntegracoes, scopeId || "sem-contexto"] });
       await queryClient.invalidateQueries({ queryKey: ["configuracaoSistema"] });
     } catch (error) {
-      toast({ title: "Erro ao salvar integracao", description: String(error?.message || error), variant: "destructive" });
+      console.warn("[CentralIntegracoes] Falha ao salvar toggle:", error);
+      await auditarIntegracao({ acao: "Erro ao salvar", descricao: "Falha ao persistir estado da integracao.", integracao: key, sucesso: false, dadosNovos: { ativo } });
+      toast({ title: "Erro ao salvar integracao", variant: "destructive" });
     } finally {
       setSalvandoKey(null);
     }
@@ -201,7 +211,7 @@ export default function CentralIntegracoes() {
     {
       nome: "NF-e / SEFAZ",
       tipo: "Fiscal",
-      status: "Configurado",
+      status: "Inativo",
       icon: FileText,
       cor: "text-blue-600",
       descricao: "Emissao e validacao de NF-e",
@@ -212,7 +222,7 @@ export default function CentralIntegracoes() {
     {
       nome: "Boletos & Pagamentos",
       tipo: "Financeiro",
-      status: "Configurado",
+      status: "Inativo",
       icon: CreditCard,
       cor: "text-green-600",
       descricao: "Geracao de boletos e links de pagamento",
@@ -223,7 +233,7 @@ export default function CentralIntegracoes() {
     {
       nome: "WhatsApp Business",
       tipo: "Comunicacao",
-      status: "Ativo",
+      status: "Inativo",
       icon: MessageCircle,
       cor: "text-green-600",
       descricao: "Chatbot e notificacoes automaticas",
@@ -321,9 +331,9 @@ export default function CentralIntegracoes() {
                       size="sm"
                       variant="outline"
                       onClick={() => setAtivo(integracao.key, !ativo)}
-                      disabled={!contextoValido || salvando || (!podeEditarIntegracoes && !podeCriarIntegracoes)}
+                      disabled={!contextoValido || salvando || (cfgIntegracoes ? !podeEditarIntegracoes : !podeCriarIntegracoes)}
                       data-action={`Integracoes.${integracao.key}.toggle`}
-                      data-permission="Sistema.Integracoes.editar"
+                      data-permission={cfgIntegracoes ? "Sistema.Integracoes.editar" : "Sistema.Integracoes.criar"}
                       data-context-required="group-or-company"
                       data-sensitive="true"
                     >
