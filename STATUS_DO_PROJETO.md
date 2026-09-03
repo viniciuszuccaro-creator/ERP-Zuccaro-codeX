@@ -1,3 +1,20 @@
+### Integracoes - WhatsApp Business e Marketplaces com Escopo Estrito
+- Continuei o plano salvo a partir do commit `b41abb4e`, fortalecendo as configuracoes existentes de WhatsApp Business e a sincronizacao ativa de marketplaces.
+- WhatsApp passou a exigir Grupo valido, separar RBAC de criar, editar e executar e limpar o estado local ao trocar o contexto, evitando exibicao de configuracao anterior.
+- Telefone, token e dias de antecedencia agora sao normalizados e limitados antes da persistencia; numero, token, payload completo e erros brutos nao entram na auditoria.
+- Auditorias de salvar e testar registram somente operacao, indicadores de configuracao, quantidade de eventos e tipo tecnico de falha.
+- Marketplaces agora exige Grupo+Empresa para consultar, buscar e importar pedidos operacionais, com permissao de visualizar, executar e criar+editar conforme cada acao.
+- Importacao rejeita pedido fora do Grupo/Empresa, estado nao importavel, pedido ja vinculado, pedido ERP duplicado, documento invalido, lista de itens vazia e cliente vinculado fora do escopo.
+- A classificacao de CPF/Pessoa Fisica e CNPJ/Pessoa Juridica foi corrigida apos normalizacao do documento.
+- O campo duplicado `json_completo` deixou de persistir outra copia dos dados pessoais do pedido simulado; o fluxo operacional e os campos utilizados foram preservados.
+- Sincronizacao usa `try/finally`, registra falha resumida e sempre libera o estado de carregamento; links externos usam identificador codificado, `noopener,noreferrer` e validacao de escopo/RBAC.
+- Layouts principais foram alinhados a `w-full h-full`, acoes do WhatsApp ficaram responsivas e a tabela de marketplace preserva rolagem horizontal.
+- Pela refatoracao obrigatoria da Regra-Mae, os componentes principais cairam para 370 e 323 linhas; eventos, tabela e dados simulados foram extraidos para tres auxiliares pequenos, sem criar tela, rota, modulo ou funcionalidade.
+- O teste de baseline existente foi ampliado para impedir regressao de contexto, RBAC, duplicidade, auditoria segura, abertura externa e persistencia minima.
+- Validacoes concluidas: teste direcionado (1/1), `npm test` (39/39), `npm run build`, `npm run audit:baseline` e `git diff --check` passaram.
+- O baseline permaneceu em 179 capturas operacionais silenciosas e 1507 controles com marcador de permissao; a reducao de controles brutos reflete a consolidacao dos toggles repetidos.
+- Proximo passo sugerido: revisar os componentes existentes `TesteWhatsApp` e `SincronizacaoMarketplaces`, aplicando o mesmo contexto estrito, RBAC por execucao, persistencia real dos toggles e auditoria sem telefone ou erro bruto.
+
 ### Integracoes - Testes Tecnicos com Escopo e Acoes Funcionais
 - Continuei o plano salvo a partir do commit `d67da533`, fortalecendo os quatro testes tecnicos existentes de NF-e, boletos, transportadoras e Google Maps.
 - Todos os testes agora exigem `group_id`; quando o escopo selecionado for Empresa, o `empresa_id` continua obrigatorio e vinculado ao Grupo.

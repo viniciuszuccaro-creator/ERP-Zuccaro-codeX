@@ -19,6 +19,7 @@ import WhatsAppBusinessEngine from '../sistema/WhatsAppBusinessEngine';
 import { useUser } from '@/components/lib/UserContext';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
+import WhatsAppEventToggles from './WhatsAppEventToggles';
 
 /**
  * Configuração WhatsApp Business
@@ -30,7 +31,7 @@ export default function ConfigWhatsAppBusiness({ empresaId: empresaIdProp }) {
   const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
   const { isAdmin, hasPermission } = usePermissions();
 
-  const [config, setConfig] = useState({
+  const configInicial = {
     ativo: false,
     api_url: 'https://api.whatsapp.com/send',
     api_token: '',
@@ -40,13 +41,17 @@ export default function ConfigWhatsAppBusiness({ empresaId: empresaIdProp }) {
     enviar_entrega_concluida: true,
     enviar_cobranca: true,
     enviar_cobranca_dias_antes: 3
-  });
+  };
+  const [config, setConfig] = useState(configInicial);
 
   const [testando, setTestando] = useState(false);
   const empresaId = empresaIdProp || empresaAtual?.id || null;
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || user?.grupo_atual_id || user?.grupo_padrao_id || null;
-  const contextoValido = Boolean(groupId || empresaId);
-  const podeEditar = isAdmin() || hasPermission("Sistema", "Integracoes", "editar") || hasPermission("Sistema", "Integrações", "editar");
+  const contextoValido = Boolean(groupId);
+  const admin = isAdmin();
+  const podeCriar = admin || hasPermission("Sistema", "Integracoes", "criar") || hasPermission("Sistema", "Integrações", "criar");
+  const podeEditar = admin || hasPermission("Sistema", "Integracoes", "editar") || hasPermission("Sistema", "Integrações", "editar");
+  const podeExecutar = admin || hasPermission("Sistema", "Integracoes", "executar") || hasPermission("Sistema", "Integrações", "executar");
   const chaveConfig = empresaId ? `whatsapp_business_${empresaId}` : groupId ? `whatsapp_business_${groupId}` : null;
   const scope = {
     ...(groupId ? { group_id: groupId } : {}),
@@ -65,6 +70,7 @@ export default function ConfigWhatsAppBusiness({ empresaId: empresaIdProp }) {
         entidade: 'ConfiguracaoSistema',
         registro_id: chaveConfig,
         descricao,
+        sucesso: !/^(Bloqueio|Erro)/.test(acao),
         dados_anteriores: dadosAnteriores,
         dados_novos: dadosNovos,
         data_hora: new Date().toISOString()
@@ -81,45 +87,75 @@ export default function ConfigWhatsAppBusiness({ empresaId: empresaIdProp }) {
       const registros = await filterInContext('ConfiguracaoSistema', { chave: chaveConfig }, '-updated_date', 1);
       return registros?.[0] || null;
     },
-    enabled: !!chaveConfig
+    enabled: contextoValido && !!chaveConfig
   });
+  const operacaoSalvar = configSalva?.id ? 'editar' : 'criar';
+  const podeSalvar = operacaoSalvar === 'editar' ? podeEditar : podeCriar;
 
   useEffect(() => {
     if (configSalva?.integracao_whatsapp) {
-      setConfig((prev) => ({ ...prev, ...configSalva.integracao_whatsapp }));
+      setConfig({ ...configInicial, ...configSalva.integracao_whatsapp });
+    } else {
+      setConfig(configInicial);
     }
-  }, [configSalva]);
+  }, [chaveConfig, configSalva]);
 
   const salvarMutation = useMutation({
     mutationFn: async (dados) => {
       if (!contextoValido) {
-        await auditarWhatsApp('Bloqueio sem contexto', 'Tentativa de salvar WhatsApp Business sem grupo ou empresa.', dados);
+        await auditarWhatsApp('Bloqueio sem contexto', 'Tentativa de salvar WhatsApp Business sem grupo.', { configuracao_informada: Boolean(dados) });
         throw new Error('Selecione grupo ou empresa antes de salvar.');
       }
-      if (!podeEditar) {
-        await auditarWhatsApp('Bloqueio por permissao', 'Tentativa de salvar WhatsApp Business sem permissao.', dados);
+      if (!podeSalvar) {
+        await auditarWhatsApp('Bloqueio por permissao', 'Tentativa de salvar WhatsApp Business sem permissao.', { operacao: operacaoSalvar });
         throw new Error('Seu perfil nao permite salvar integracoes.');
       }
+      const telefoneNormalizado = String(dados.numero_whatsapp || '').replace(/\D/g, '').slice(0, 13);
+      if (telefoneNormalizado && (telefoneNormalizado.length < 10 || telefoneNormalizado.length > 13)) {
+        throw new Error('Telefone invalido');
+      }
+      const configuracaoSegura = {
+        ...dados,
+        numero_whatsapp: telefoneNormalizado,
+        api_token: String(dados.api_token || '').trim().slice(0, 500),
+        enviar_cobranca_dias_antes: Math.min(30, Math.max(0, Number(dados.enviar_cobranca_dias_antes) || 0)),
+      };
       const payload = {
         chave: chaveConfig,
         categoria: 'Integracoes',
-        integracao_whatsapp: dados,
+        integracao_whatsapp: configuracaoSegura,
         ...scope
       };
       const salvo = configSalva?.id
         ? await updateInContext('ConfiguracaoSistema', configSalva.id, payload)
         : await createInContext('ConfiguracaoSistema', payload);
-      await auditarWhatsApp('Salvar WhatsApp Business', 'Configuracao WhatsApp Business salva com escopo multiempresa.', payload, configSalva || null);
+      await auditarWhatsApp('Salvar WhatsApp Business', 'Configuracao WhatsApp Business salva com escopo multiempresa.', {
+        operacao: operacaoSalvar,
+        ativo: Boolean(configuracaoSegura.ativo),
+        token_configurado: Boolean(configuracaoSegura.api_token),
+        numero_configurado: Boolean(configuracaoSegura.numero_whatsapp),
+        eventos_ativos: [
+          configuracaoSegura.enviar_pedido_aprovado,
+          configuracaoSegura.enviar_saida_entrega,
+          configuracaoSegura.enviar_entrega_concluida,
+          configuracaoSegura.enviar_cobranca,
+        ].filter(Boolean).length,
+      }, { configuracao_existente: Boolean(configSalva?.id) });
       return salvo;
     },
     onSuccess: () => {
       toast({ title: '✅ Configuração salva!' });
       queryClient.invalidateQueries({ queryKey: ['config-whatsapp', chaveConfig] });
     },
-    onError: (error) => {
+    onError: async (error) => {
+      console.warn('Falha ao salvar WhatsApp Business:', error);
+      await auditarWhatsApp('Erro Salvar WhatsApp Business', 'Falha ao persistir configuracao WhatsApp Business.', {
+        operacao: operacaoSalvar,
+        tipo_erro: 'persistence_error',
+      });
       toast({
         title: 'Erro ao salvar',
-        description: error.message,
+        description: 'Nao foi possivel salvar a configuracao.',
         variant: 'destructive'
       });
     }
@@ -135,7 +171,7 @@ export default function ConfigWhatsAppBusiness({ empresaId: empresaIdProp }) {
       await auditarWhatsApp('Bloqueio sem contexto', 'Tentativa de testar WhatsApp Business sem grupo ou empresa.');
       return;
     }
-    if (!podeEditar) {
+    if (!podeExecutar) {
       toast({
         title: 'Permissao negada',
         description: 'Seu perfil nao permite testar integracoes.',
@@ -144,18 +180,24 @@ export default function ConfigWhatsAppBusiness({ empresaId: empresaIdProp }) {
       await auditarWhatsApp('Bloqueio por permissao', 'Tentativa de testar WhatsApp Business sem permissao.');
       return;
     }
+    const telefoneNormalizado = String(config.numero_whatsapp || '').replace(/\D/g, '');
+    if (telefoneNormalizado.length < 10 || telefoneNormalizado.length > 13) {
+      toast({ title: 'Telefone invalido', description: 'Informe um telefone com DDD antes de testar.', variant: 'destructive' });
+      await auditarWhatsApp('Bloqueio telefone invalido', 'Teste WhatsApp bloqueado por telefone invalido.', { telefone_informado: Boolean(telefoneNormalizado) });
+      return;
+    }
     setTestando(true);
 
     try {
       const resultado = await WhatsAppBusinessEngine.enviarMensagem(
-        config.numero_whatsapp,
+        telefoneNormalizado,
         `🎉 *Teste de Integração WhatsApp Business*\n\nOlá!\n\nEste é um teste de envio automático do ERP Zuccaro.\n\nSe você recebeu esta mensagem, a integração está funcionando perfeitamente! ✅`,
         { tipo: 'teste', empresa_id: empresaId, group_id: groupId }
       );
       await auditarWhatsApp(resultado.sucesso ? 'Teste WhatsApp Business' : 'Erro Teste WhatsApp Business', 'Teste de envio WhatsApp Business executado.', {
-        sucesso: resultado.sucesso,
-        erro: resultado.erro || null,
-        numero_whatsapp: config.numero_whatsapp
+        envio_concluido: Boolean(resultado.sucesso),
+        tipo_erro: resultado.sucesso ? null : 'provider_error',
+        numero_informado: Boolean(telefoneNormalizado)
       });
 
       if (resultado.sucesso) {
@@ -166,16 +208,17 @@ export default function ConfigWhatsAppBusiness({ empresaId: empresaIdProp }) {
       } else {
         toast({ 
           title: '❌ Erro no teste',
-          description: resultado.erro,
+          description: 'O provedor nao confirmou o envio.',
           variant: 'destructive'
         });
       }
 
     } catch (error) {
-      await auditarWhatsApp('Erro Teste WhatsApp Business', 'Falha ao testar envio WhatsApp Business.', { erro: error.message, numero_whatsapp: config.numero_whatsapp });
+      console.warn('Falha ao testar WhatsApp Business:', error);
+      await auditarWhatsApp('Erro Teste WhatsApp Business', 'Falha ao testar envio WhatsApp Business.', { tipo_erro: 'unexpected_error', numero_informado: Boolean(telefoneNormalizado) });
       toast({ 
         title: '❌ Erro',
-        description: error.message,
+        description: 'Nao foi possivel concluir o teste.',
         variant: 'destructive'
       });
     } finally {
@@ -184,7 +227,7 @@ export default function ConfigWhatsAppBusiness({ empresaId: empresaIdProp }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full h-full space-y-6">
       <Card className="border-green-200 bg-green-50">
         <CardHeader className="bg-white/80 border-b">
           <CardTitle className="flex items-center gap-2">
@@ -234,9 +277,9 @@ export default function ConfigWhatsAppBusiness({ empresaId: empresaIdProp }) {
               <Switch
                 checked={config.ativo}
                 onCheckedChange={(checked) => setConfig({ ...config, ativo: checked })}
-                disabled={!contextoValido || !podeEditar}
+                disabled={!contextoValido || !podeSalvar}
                 data-action="Integracoes.WhatsApp.ativo"
-                data-permission="Sistema.Integracoes.editar"
+                data-permission={`Sistema.Integracoes.${operacaoSalvar}`}
                 data-context-required="group-or-company"
               />
             </div>
@@ -247,9 +290,10 @@ export default function ConfigWhatsAppBusiness({ empresaId: empresaIdProp }) {
                 value={config.numero_whatsapp}
                 onChange={(e) => setConfig({ ...config, numero_whatsapp: e.target.value })}
                 placeholder="(11) 98765-4321"
-                disabled={!contextoValido || !podeEditar}
+                maxLength={20}
+                disabled={!contextoValido || !podeSalvar}
                 data-action="Integracoes.WhatsApp.numero"
-                data-permission="Sistema.Integracoes.editar"
+                data-permission={`Sistema.Integracoes.${operacaoSalvar}`}
                 data-context-required="group-or-company"
               />
               <p className="text-xs text-slate-500 mt-1">
@@ -264,90 +308,32 @@ export default function ConfigWhatsAppBusiness({ empresaId: empresaIdProp }) {
                 value={config.api_token}
                 onChange={(e) => setConfig({ ...config, api_token: e.target.value })}
                 placeholder="Token da API WhatsApp Business"
-                disabled={!contextoValido || !podeEditar}
+                maxLength={500}
+                disabled={!contextoValido || !podeSalvar}
                 data-action="Integracoes.WhatsApp.apiToken"
-                data-permission="Sistema.Integracoes.editar"
+                data-permission={`Sistema.Integracoes.${operacaoSalvar}`}
                 data-context-required="group-or-company"
                 data-sensitive="true"
               />
             </div>
 
-            <div className="border-t pt-4">
-              <p className="font-semibold mb-3">Eventos Automáticos</p>
-              
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-white rounded border">
-                  <div>
-                    <p className="text-sm font-medium">Pedido Aprovado</p>
-                    <p className="text-xs text-slate-600">Notificar cliente quando pedido for aprovado</p>
-                  </div>
-                  <Switch
-                    checked={config.enviar_pedido_aprovado}
-                    onCheckedChange={(checked) => setConfig({ ...config, enviar_pedido_aprovado: checked })}
-                    disabled={!contextoValido || !podeEditar}
-                    data-action="Integracoes.WhatsApp.pedidoAprovado"
-                    data-permission="Sistema.Integracoes.editar"
-                    data-context-required="group-or-company"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-white rounded border">
-                  <div>
-                    <p className="text-sm font-medium">Saída para Entrega</p>
-                    <p className="text-xs text-slate-600">Enviar rastreamento quando sair para entrega</p>
-                  </div>
-                  <Switch
-                    checked={config.enviar_saida_entrega}
-                    onCheckedChange={(checked) => setConfig({ ...config, enviar_saida_entrega: checked })}
-                    disabled={!contextoValido || !podeEditar}
-                    data-action="Integracoes.WhatsApp.saidaEntrega"
-                    data-permission="Sistema.Integracoes.editar"
-                    data-context-required="group-or-company"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-white rounded border">
-                  <div>
-                    <p className="text-sm font-medium">Entrega Concluída</p>
-                    <p className="text-xs text-slate-600">Confirmar entrega realizada</p>
-                  </div>
-                  <Switch
-                    checked={config.enviar_entrega_concluida}
-                    onCheckedChange={(checked) => setConfig({ ...config, enviar_entrega_concluida: checked })}
-                    disabled={!contextoValido || !podeEditar}
-                    data-action="Integracoes.WhatsApp.entregaConcluida"
-                    data-permission="Sistema.Integracoes.editar"
-                    data-context-required="group-or-company"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-white rounded border">
-                  <div>
-                    <p className="text-sm font-medium">Cobrança (Boleto/PIX)</p>
-                    <p className="text-xs text-slate-600">Enviar cobrança automaticamente</p>
-                  </div>
-                  <Switch
-                    checked={config.enviar_cobranca}
-                    onCheckedChange={(checked) => setConfig({ ...config, enviar_cobranca: checked })}
-                    disabled={!contextoValido || !podeEditar}
-                    data-action="Integracoes.WhatsApp.cobranca"
-                    data-permission="Sistema.Integracoes.editar"
-                    data-context-required="group-or-company"
-                  />
-                </div>
-              </div>
-            </div>
+            <WhatsAppEventToggles
+              config={config}
+              disabled={!contextoValido || !podeSalvar}
+              permission={`Sistema.Integracoes.${operacaoSalvar}`}
+              onChange={(field, checked) => setConfig((current) => ({ ...current, [field]: checked }))}
+            />
           </div>
 
           {/* Ações */}
-          <div className="flex gap-3 pt-4 border-t">
+          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
             <Button
               onClick={testarEnvio}
-              disabled={testando || !config.numero_whatsapp || !contextoValido || !podeEditar}
+              disabled={testando || !config.numero_whatsapp || !contextoValido || !podeExecutar}
               variant="outline"
               className="flex-1"
               data-action="Integracoes.WhatsApp.testarEnvio"
-              data-permission="Sistema.Integracoes.editar"
+              data-permission="Sistema.Integracoes.executar"
               data-context-required="group-or-company"
               data-sensitive="true"
             >
@@ -366,10 +352,10 @@ export default function ConfigWhatsAppBusiness({ empresaId: empresaIdProp }) {
 
             <Button
               onClick={() => salvarMutation.mutate(config)}
-              disabled={salvarMutation.isPending || !contextoValido || !podeEditar}
+              disabled={salvarMutation.isPending || !contextoValido || !podeSalvar}
               className="flex-1 bg-green-600 hover:bg-green-700"
               data-action="Integracoes.WhatsApp.salvar"
-              data-permission="Sistema.Integracoes.editar"
+              data-permission={`Sistema.Integracoes.${operacaoSalvar}`}
               data-context-required="group-or-company"
               data-sensitive="true"
             >

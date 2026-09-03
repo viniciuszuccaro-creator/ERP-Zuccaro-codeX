@@ -251,3 +251,33 @@ test('technical integration tests require execution permission and safe auditing
   assert.match(transportadoras, /origem_informada: Boolean\(cepOrigem\)/);
   assert.match(maps, /endereco_informado: Boolean\(enderecoTeste\)/);
 });
+
+
+test('WhatsApp and marketplace integrations keep strict scope RBAC and safe audits', async () => {
+  const whatsapp = await readFile(new URL('../src/components/integracoes/ConfigWhatsAppBusiness.jsx', import.meta.url), 'utf8');
+  const marketplace = await readFile(new URL('../src/components/integracoes/SincronizacaoMarketplacesAtiva.jsx', import.meta.url), 'utf8');
+  const marketplaceTable = await readFile(new URL('../src/components/integracoes/MarketplacePendingOrders.jsx', import.meta.url), 'utf8');
+
+  assert.match(whatsapp, /const contextoValido = Boolean\(groupId\)/);
+  assert.match(whatsapp, /operacaoSalvar = configSalva\?\.id \? 'editar' : 'criar'/);
+  assert.match(whatsapp, /hasPermission\("Sistema", "Integracoes", "executar"\)/);
+  assert.match(whatsapp, /data-permission="Sistema\.Integracoes\.executar"/);
+  assert.match(whatsapp, /token_configurado: Boolean\(configuracaoSegura\.api_token\)/);
+  assert.match(whatsapp, /setConfig\(configInicial\)/);
+  assert.match(whatsapp, /w-full h-full space-y-6/);
+  assert.doesNotMatch(whatsapp, /dadosNovos.*payload|numero_whatsapp: config\.numero_whatsapp|erro: error\.message|description: error\.message/);
+
+  assert.match(marketplace, /const contextoValido = Boolean\(groupId && empresaId\)/);
+  assert.match(marketplace, /const podeImportar = podeCriar && podeEditar/);
+  assert.match(marketplace, /pedidoExterno\?\.group_id === groupId && pedidoExterno\?\.empresa_id === empresaId/);
+  assert.match(marketplace, /filterInContext\('Pedido', \{ origem_externa_id: pedidoExterno\.id_externo \}/);
+  assert.match(marketplace, /filterInContext\('Cliente', \{ id: clienteId \}/);
+  assert.match(marketplace, /documento\.length === 11 \? 'Pessoa Física' : 'Pessoa Jurídica'/);
+  assert.match(marketplace, /finally \{[\s\S]*?setSincronizando\(false\)/);
+  assert.match(marketplace, /encodeURIComponent\(String\(pedidoExterno\.id_externo\)\)/);
+  assert.match(marketplace, /'noopener,noreferrer'/);
+  assert.match(marketplace, /w-full h-full space-y-4/);
+  assert.doesNotMatch(marketplace, /json_completo: pedido|\}, pedidoExterno\);|description: error\.message/);
+  assert.match(marketplaceTable, /data-permission="Sistema\.Integracoes\.criar\|Sistema\.Integracoes\.editar"/);
+  assert.match(marketplaceTable, /data-permission="Sistema\.Integracoes\.visualizar"/);
+});

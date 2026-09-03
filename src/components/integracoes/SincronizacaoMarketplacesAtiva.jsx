@@ -1,23 +1,14 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  RefreshCw, 
-  CheckCircle2, 
-  AlertCircle, 
-  ShoppingCart,
-  ExternalLink,
-  Download,
-  Upload
-} from 'lucide-react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { RefreshCw } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useUser } from '@/components/lib/UserContext';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
+import { createMarketplaceSimulationOrders } from './marketplaceSimulationData';
+import MarketplacePendingOrders from './MarketplacePendingOrders';
 
 /**
  * Sincronização ATIVA de Marketplaces
@@ -32,8 +23,13 @@ export default function SincronizacaoMarketplacesAtiva() {
   const { isAdmin, hasPermission } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || user?.grupo_atual_id || user?.grupo_padrao_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
-  const podeOperar = isAdmin() || hasPermission("Sistema", "Integracoes", "editar") || hasPermission("Sistema", "Integrações", "editar");
+  const contextoValido = Boolean(groupId && empresaId);
+  const admin = isAdmin();
+  const podeVisualizar = admin || hasPermission("Sistema", "Integracoes", "visualizar") || hasPermission("Sistema", "Integrações", "visualizar");
+  const podeSincronizar = admin || hasPermission("Sistema", "Integracoes", "executar") || hasPermission("Sistema", "Integrações", "executar");
+  const podeCriar = admin || hasPermission("Sistema", "Integracoes", "criar") || hasPermission("Sistema", "Integrações", "criar");
+  const podeEditar = admin || hasPermission("Sistema", "Integracoes", "editar") || hasPermission("Sistema", "Integrações", "editar");
+  const podeImportar = podeCriar && podeEditar;
   const scope = {
     ...(groupId ? { group_id: groupId } : {}),
     ...(empresaId ? { empresa_id: empresaId } : {}),
@@ -50,6 +46,7 @@ export default function SincronizacaoMarketplacesAtiva() {
         modulo: 'Integracoes',
         entidade: 'PedidoExterno',
         descricao,
+        sucesso: !/^(Bloqueio|Erro)/.test(acao),
         dados_anteriores: dadosAnteriores,
         dados_novos: dadosNovos,
         data_hora: new Date().toISOString()
@@ -64,7 +61,7 @@ export default function SincronizacaoMarketplacesAtiva() {
     queryFn: () => filterInContext('PedidoExterno', {
       status_importacao: ['A Validar', 'Em Revisão']
     }, '-created_date', 100),
-    enabled: contextoValido,
+    enabled: contextoValido && podeVisualizar,
     refetchInterval: 30000 // Atualiza a cada 30s
   });
 
@@ -74,16 +71,47 @@ export default function SincronizacaoMarketplacesAtiva() {
         await auditarMarketplace('Bloqueio sem contexto', 'Tentativa de importar pedido externo sem grupo ou empresa.', { pedido_externo_id: pedidoExterno?.id });
         throw new Error('Selecione grupo ou empresa antes de importar pedidos.');
       }
-      if (!podeOperar) {
+      if (!podeImportar) {
         await auditarMarketplace('Bloqueio por permissao', 'Tentativa de importar pedido externo sem permissao.', { pedido_externo_id: pedidoExterno?.id });
         throw new Error('Seu perfil nao permite importar pedidos externos.');
       }
+      const pedidoNoEscopo = pedidoExterno?.group_id === groupId && pedidoExterno?.empresa_id === empresaId;
+      if (!pedidoNoEscopo || !['A Validar', 'Em Revisão'].includes(pedidoExterno?.status_importacao) || pedidoExterno?.pedido_erp_id) {
+        await auditarMarketplace('Bloqueio pedido invalido', 'Pedido externo rejeitado por escopo ou estado invalido.', {
+          pedido_externo_id: pedidoExterno?.id || null,
+          pertence_ao_escopo: pedidoNoEscopo,
+          estado_importavel: ['A Validar', 'Em Revisão'].includes(pedidoExterno?.status_importacao),
+        });
+        throw new Error('Pedido externo invalido');
+      }
+      const documento = String(pedidoExterno.cliente_cpf_cnpj || '').replace(/\D/g, '');
+      if (![11, 14].includes(documento.length) || !Array.isArray(pedidoExterno.itens) || pedidoExterno.itens.length === 0) {
+        await auditarMarketplace('Bloqueio dados invalidos', 'Pedido externo rejeitado por dados obrigatorios invalidos.', {
+          pedido_externo_id: pedidoExterno.id,
+          documento_valido: [11, 14].includes(documento.length),
+          possui_itens: Array.isArray(pedidoExterno.itens) && pedidoExterno.itens.length > 0,
+        });
+        throw new Error('Dados obrigatorios invalidos');
+      }
+      const pedidosExistentes = await filterInContext('Pedido', { origem_externa_id: pedidoExterno.id_externo }, '-updated_date', 1);
+      if (pedidosExistentes.length > 0) {
+        await auditarMarketplace('Bloqueio pedido duplicado', 'Importacao bloqueada para pedido externo ja existente.', { pedido_externo_id: pedidoExterno.id });
+        throw new Error('Pedido ja importado');
+      }
+
       // 1. Verificar se cliente existe
       let clienteId = pedidoExterno.cliente_erp_id;
-      
-      if (!clienteId) {
+      let clienteCriado = false;
+
+      if (clienteId) {
+        const clienteVinculado = await filterInContext('Cliente', { id: clienteId }, '-updated_date', 1);
+        if (!clienteVinculado.length) {
+          await auditarMarketplace('Bloqueio cliente fora do escopo', 'Cliente vinculado ao pedido externo nao pertence ao contexto.', { pedido_externo_id: pedidoExterno.id });
+          throw new Error('Cliente fora do escopo');
+        }
+      } else {
         const clientesExistentes = await filterInContext('Cliente', {
-          cnpj: pedidoExterno.cliente_cpf_cnpj
+          [documento.length === 11 ? 'cpf' : 'cnpj']: documento
         }, '-updated_date', 20);
 
         if (clientesExistentes.length > 0) {
@@ -91,13 +119,13 @@ export default function SincronizacaoMarketplacesAtiva() {
         } else {
           // Criar cliente novo
           const novoCliente = await createInContext('Cliente', {
-            tipo: pedidoExterno.cliente_cpf_cnpj?.length === 14 ? 'Pessoa Física' : 'Pessoa Jurídica',
+            tipo: documento.length === 11 ? 'Pessoa Física' : 'Pessoa Jurídica',
             status: 'Ativo',
             nome: pedidoExterno.cliente_nome,
             razao_social: pedidoExterno.cliente_nome,
             nome_fantasia: pedidoExterno.cliente_nome,
-            cpf: pedidoExterno.cliente_cpf_cnpj?.length === 11 ? pedidoExterno.cliente_cpf_cnpj : undefined,
-            cnpj: pedidoExterno.cliente_cpf_cnpj?.length === 14 ? pedidoExterno.cliente_cpf_cnpj : undefined,
+            cpf: documento.length === 11 ? documento : undefined,
+            cnpj: documento.length === 14 ? documento : undefined,
             email: pedidoExterno.cliente_email,
             endereco_principal: pedidoExterno.endereco_entrega,
             contatos: [{
@@ -109,6 +137,7 @@ export default function SincronizacaoMarketplacesAtiva() {
             ...scope
           });
           clienteId = novoCliente.id;
+          clienteCriado = true;
         }
       }
 
@@ -155,10 +184,13 @@ export default function SincronizacaoMarketplacesAtiva() {
       await auditarMarketplace('Importar Pedido Marketplace', 'Pedido externo importado para o ERP com escopo multiempresa.', {
         pedido_externo_id: pedidoExterno.id,
         pedido_erp_id: pedidoERP.id,
-        cliente_id: clienteId,
         origem: pedidoExterno.origem,
-        valor_total: pedidoExterno.valor_total,
-      }, pedidoExterno);
+        cliente_criado: clienteCriado,
+        itens_importados: pedidoExterno.itens.length,
+      }, {
+        status_importacao: pedidoExterno.status_importacao,
+        ja_possuia_cliente: Boolean(pedidoExterno.cliente_erp_id),
+      });
 
       return { pedidoERP, clienteId };
     },
@@ -166,10 +198,14 @@ export default function SincronizacaoMarketplacesAtiva() {
       queryClient.invalidateQueries({ queryKey: ['pedidos-externos-pendentes'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
     },
-    onError: (error) => {
+    onError: async (error) => {
+      console.warn('Falha ao importar pedido marketplace:', error);
+      await auditarMarketplace('Erro Importar Pedido Marketplace', 'Falha ao importar pedido externo.', {
+        tipo_erro: 'import_error',
+      });
       toast({
         title: 'Importacao bloqueada',
-        description: error.message,
+        description: 'Nao foi possivel importar o pedido neste contexto.',
         variant: 'destructive'
       });
     }
@@ -185,7 +221,7 @@ export default function SincronizacaoMarketplacesAtiva() {
       await auditarMarketplace('Bloqueio sem contexto', 'Tentativa de sincronizar marketplaces sem grupo ou empresa.');
       return;
     }
-    if (!podeOperar) {
+    if (!podeSincronizar) {
       toast({
         title: 'Permissao negada',
         description: 'Seu perfil nao permite sincronizar marketplaces.',
@@ -196,94 +232,65 @@ export default function SincronizacaoMarketplacesAtiva() {
     }
     setSincronizando(true);
 
-    // Simular busca de novos pedidos
-    // Em produção, aqui chamaria as APIs dos marketplaces
-    const novosPedidos = [
-      {
-        origem: 'Mercado Livre',
-        id_externo: `ML-${Date.now()}`,
-        numero_pedido_externo: `${Math.floor(Math.random() * 100000)}`,
-        data_pedido_externo: new Date().toISOString(),
-        cliente_nome: 'João Silva Marketplace',
-        cliente_cpf_cnpj: '123.456.789-00',
-        cliente_email: 'joao@email.com',
-        cliente_telefone: '(11) 98765-4321',
-        endereco_entrega: {
-          cep: '01310-100',
-          logradouro: 'Av Paulista',
-          numero: '1000',
-          bairro: 'Bela Vista',
-          cidade: 'São Paulo',
-          estado: 'SP'
-        },
-        itens: [{
-          descricao: 'Viga V1 - 300cm',
-          sku_externo: 'VIGA-300',
-          quantidade: 10,
-          preco_unitario: 150,
-          valor_total: 1500
-        }],
-        valor_produtos: 1500,
-        valor_frete: 50,
-        valor_total: 1550,
-        status_externo: 'payment_approved'
+    try {
+      // Em producao, este retorno sera substituido pelas APIs dos marketplaces.
+      const novosPedidos = createMarketplaceSimulationOrders();
+
+      for (const pedido of novosPedidos) {
+        await createInContext('PedidoExterno', {
+          ...pedido,
+          status_importacao: 'A Validar',
+          ...scope
+        });
       }
-    ];
+      await auditarMarketplace('Sincronizar Marketplaces', 'Busca simulada de pedidos externos executada com escopo multiempresa.', { quantidade: novosPedidos.length });
 
-    for (const pedido of novosPedidos) {
-      await createInContext('PedidoExterno', {
-        ...pedido,
-        status_importacao: 'A Validar',
-        json_completo: pedido,
-        ...scope
-      });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-externos-pendentes'] });
+    } catch (error) {
+      console.warn('Falha ao sincronizar marketplaces:', error);
+      await auditarMarketplace('Erro Sincronizar Marketplaces', 'Falha na busca de pedidos externos.', { tipo_erro: 'unexpected_error' });
+      toast({ title: 'Erro na sincronizacao', description: 'Nao foi possivel buscar novos pedidos.', variant: 'destructive' });
+    } finally {
+      setSincronizando(false);
     }
-    await auditarMarketplace('Sincronizar Marketplaces', 'Busca simulada de pedidos externos executada com escopo multiempresa.', { quantidade: novosPedidos.length, ...scope });
-
-    queryClient.invalidateQueries({ queryKey: ['pedidos-externos-pendentes'] });
-    setSincronizando(false);
-  };
-
-  const getOrigemBadge = (origem) => {
-    const config = {
-      'Mercado Livre': { cor: 'bg-yellow-100 text-yellow-700', emoji: '🛒' },
-      'Shopee': { cor: 'bg-orange-100 text-orange-700', emoji: '🛍️' },
-      'Amazon': { cor: 'bg-blue-100 text-blue-700', emoji: '📦' },
-      'Site': { cor: 'bg-purple-100 text-purple-700', emoji: '🌐' }
-    };
-    const cfg = config[origem] || { cor: 'bg-slate-100 text-slate-700', emoji: '🛒' };
-
-    return (
-      <Badge className={cfg.cor}>
-        {cfg.emoji} {origem}
-      </Badge>
-    );
   };
 
   const abrirPedidoExterno = async (pedidoExterno) => {
+    const pedidoNoEscopo = pedidoExterno?.group_id === groupId && pedidoExterno?.empresa_id === empresaId;
+    if (!contextoValido || !podeVisualizar || !pedidoNoEscopo || !pedidoExterno?.id_externo) {
+      await auditarMarketplace('Bloqueio link externo', 'Abertura de pedido marketplace bloqueada.', {
+        pedido_externo_id: pedidoExterno?.id || null,
+        pertence_ao_escopo: pedidoNoEscopo,
+      });
+      return;
+    }
     await auditarMarketplace('Abrir Pedido Marketplace', 'Link externo de pedido marketplace aberto.', {
       pedido_externo_id: pedidoExterno.id,
-      id_externo: pedidoExterno.id_externo,
       origem: pedidoExterno.origem,
-    }, pedidoExterno);
-    window.open(`https://marketplace.com/pedido/${pedidoExterno.id_externo}`, '_blank');
+    });
+    const novaJanela = window.open(
+      `https://marketplace.com/pedido/${encodeURIComponent(String(pedidoExterno.id_externo))}`,
+      '_blank',
+      'noopener,noreferrer'
+    );
+    if (novaJanela) novaJanela.opener = null;
   };
 
   return (
-    <div className="space-y-4">
+    <div className="w-full h-full space-y-4">
       <Card className="border-blue-200 bg-blue-50">
         <CardHeader className="bg-white/80 border-b">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <CardTitle className="text-base">
               Sincronização de Marketplaces
             </CardTitle>
             <Button
               onClick={sincronizarTodos}
-              disabled={sincronizando || !contextoValido || !podeOperar}
+              disabled={sincronizando || !contextoValido || !podeSincronizar}
               size="sm"
               className="bg-blue-600 hover:bg-blue-700"
               data-action="Integracoes.Marketplaces.sincronizar"
-              data-permission="Sistema.Integracoes.editar"
+              data-permission="Sistema.Integracoes.executar"
               data-context-required="group-or-company"
               data-sensitive="true"
             >
@@ -303,105 +310,14 @@ export default function SincronizacaoMarketplacesAtiva() {
         </CardHeader>
       </Card>
 
-      {pedidosExternos.length > 0 ? (
-        <Card>
-          <CardHeader className="bg-slate-50 border-b">
-            <CardTitle className="text-base">
-              Pedidos Pendentes de Importação ({pedidosExternos.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-slate-50">
-                  <TableHead>Origem</TableHead>
-                  <TableHead>Nº Pedido</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-center">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pedidosExternos.map((pe) => (
-                  <TableRow key={pe.id}>
-                    <TableCell>
-                      {getOrigemBadge(pe.origem)}
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">
-                      {pe.numero_pedido_externo}
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-semibold text-sm">{pe.cliente_nome}</p>
-                        <p className="text-xs text-slate-500">{pe.cliente_cpf_cnpj}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {new Date(pe.data_pedido_externo).toLocaleDateString('pt-BR')}
-                    </TableCell>
-                    <TableCell className="font-semibold text-green-600">
-                      R$ {pe.valor_total?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={
-                        pe.status_importacao === 'A Validar' ? 'bg-yellow-100 text-yellow-700' :
-                        pe.status_importacao === 'Importado' ? 'bg-green-100 text-green-700' :
-                        'bg-blue-100 text-blue-700'
-                      }>
-                        {pe.status_importacao}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2 justify-center">
-                        <Button
-                          size="sm"
-                          onClick={() => importarPedidoMutation.mutate(pe)}
-                          disabled={importarPedidoMutation.isPending || !contextoValido || !podeOperar}
-                          className="bg-green-600 hover:bg-green-700"
-                          data-action="Integracoes.Marketplaces.importarPedido"
-                          data-permission="Sistema.Integracoes.editar"
-                          data-context-required="group-or-company"
-                          data-sensitive="true"
-                        >
-                          <Download className="w-4 h-4 mr-1" />
-                          Importar
-                        </Button>
-                        {pe.id_externo && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => abrirPedidoExterno(pe)}
-                            data-action="Integracoes.Marketplaces.abrirPedidoExterno"
-                            data-permission="Sistema.Integracoes.visualizar"
-                            data-context-required="group-or-company"
-                            data-sensitive="true"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      ) : (
-        <Alert className="border-green-300 bg-green-50">
-          <CheckCircle2 className="w-5 h-5 text-green-600" />
-          <AlertDescription>
-            <p className="font-semibold text-green-900">
-              ✅ Nenhum pedido pendente de importação
-            </p>
-            <p className="text-sm text-green-700 mt-1">
-              Todos os pedidos externos foram processados
-            </p>
-          </AlertDescription>
-        </Alert>
-      )}
+      <MarketplacePendingOrders
+        contextValid={contextoValido}
+        canImport={podeImportar}
+        canView={podeVisualizar}
+        importMutation={importarPedidoMutation}
+        onOpen={abrirPedidoExterno}
+        orders={pedidosExternos}
+      />
     </div>
   );
 }
