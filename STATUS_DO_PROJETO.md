@@ -1,3 +1,19 @@
+### Integracoes - Leitura de Projetos e Previsao Logistica Seguras
+- Continuei o plano salvo a partir do commit `0775f4f7`, fortalecendo os componentes existentes `IALeituraProjeto` e `IAPrevisaoLogistica`.
+- A leitura de projetos agora exige Grupo valido e RBAC `Sistema.Integracoes.executar` para selecionar modo, carregar arquivo e processar com IA.
+- Arquivos vazios, maiores que 10 MB ou fora dos formatos permitidos sao rejeitados; a resposta de upload sem URL e a resposta de IA fora do contrato falham de forma controlada.
+- O retorno da IA e normalizado, limitado a 500 elementos, com textos truncados e numeros/confianca saneados antes de entrar no estado visual.
+- Auditorias registram somente tipo/tamanho do arquivo, modo, totais, confianca e tipo tecnico de erro; nome do arquivo, URL temporaria e mensagem bruta nao sao persistidos.
+- A previsao logistica passou a exigir Grupo+Empresa e permissao de execucao tanto para gerar previsoes quanto para aplicar sugestoes.
+- Os botoes de sugestao agora registram a aplicacao no resultado atual, mudam para `Aplicada` e ficam bloqueados contra repeticao; o estado e limpo ao trocar Grupo/Empresa ou gerar nova previsao.
+- Auditorias de aplicacao guardam apenas tipo e indice da sugestao, sem titulo, descricao ou acao livre; falhas exibem mensagem generica.
+- Grades, cabecalhos, regioes e indicadores foram ajustados para celular, tablet e desktop, mantendo `w-full h-full` nos containers principais.
+- Pela refatoracao obrigatoria da Regra-Mae, os componentes principais cairam de 519 para 336 linhas e de 408 para 352 linhas; esquema, simulacoes e resultado tabular foram extraidos para auxiliares internos, sem criar tela, rota, modulo ou nova funcionalidade.
+- O teste de baseline existente foi ampliado para impedir regressao de escopo, RBAC por execucao, saneamento da resposta, auditoria segura, estado dos botoes e layout.
+- Validacoes concluidas: teste direcionado (1/1), `npm test` (41/41), `npm run build`, `npm run audit:baseline` e `git diff --check` passaram.
+- Commit funcional publicado na `main`: `d158ce0c` (`Protege fluxos de IA das integracoes`).
+- O baseline permaneceu em 179 capturas operacionais silenciosas e passou a registrar 1515 controles com marcador de permissao.
+- Proximo passo sugerido: revisar os componentes existentes `BancosOpenBankingWIP` e `MockIntegracoes`, confirmando utilidade real, contexto Grupo/Empresa, RBAC por acao e ausencia de controles apenas visuais.
 ### Integracoes - Teste WhatsApp e Toggles de Marketplaces Persistentes
 - Continuei o plano salvo a partir do commit `6bac57ce`, fortalecendo os componentes existentes `TesteWhatsApp` e `SincronizacaoMarketplaces`.
 - O teste WhatsApp passou a exigir Grupo valido e RBAC `Sistema.Integracoes.executar` nos campos, templates e envio, sem reutilizar permissao de edicao.
