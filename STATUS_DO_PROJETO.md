@@ -1,3 +1,18 @@
+### Administracao - Ferramentas com RBAC Granular e Fluxo Seguro
+- Continuei o plano salvo a partir do commit `4d7044ab`, alinhando a aba Ferramentas e os backends existentes `seedData` e `backfillGroupEmpresa`.
+- A aba agora aparece para administradores ou perfis com `Sistema.Ferramentas.visualizar`, preservando o controle granular de acesso.
+- Usuarios autenticados deixaram de depender do papel global de administrador e passam a ser autorizados pelo `entityGuard`; automacoes sem usuario continuam exigindo `DEPLOY_AUDIT_TOKEN`.
+- O seed foi alinhado a permissao `Sistema.Ferramentas.editar` no frontend e backend.
+- No contexto de Grupo, o seed existente passa a usar o modo multiempresa e replica os dados para todas as empresas validas do grupo; no contexto de Empresa, permanece restrito a empresa selecionada.
+- As permissoes alternativas de Configuracoes foram removidas da decisao dos botoes para impedir liberacao indireta de operacoes sensiveis.
+- A aplicacao do backfill agora so e liberada apos dry-run bem-sucedido no mesmo Grupo/Empresa e volta a ser bloqueada depois da aplicacao.
+- Auditorias e mensagens de sucesso passaram a usar totais resumidos, sem copiar payloads ou listas completas retornadas pelas funcoes.
+- Mensagens brutas de excecao deixaram de ser persistidas na auditoria frontend, e a captura silenciosa da sincronizacao da URL foi substituida por registro tecnico.
+- O teste de baseline existente foi ampliado para proteger visibilidade, acoes RBAC, propagacao de Grupo, pre-requisito de dry-run e auditoria resumida.
+- Validacoes concluidas: `node --check`, teste direcionado (1/1), `npm test` (33/33), `npm run build`, `npm run audit:baseline` e `git diff --check` passaram.
+- O baseline de capturas operacionais silenciosas caiu de 181 para 180.
+- Mantida a Regra-Mae: somente tela, funcoes, teste e status existentes foram melhorados; nenhuma funcionalidade, rota, modulo ou arquivo de projeto foi criado ou removido.
+- Proximo passo sugerido: revisar endpoints genericos existentes que usam service role, com prioridade para `getEntityRecord` e `entityListSorted`, garantindo lista fechada de entidades, contexto Grupo/Empresa, RBAC e auditoria segura.
 ### Sistema - Seed Administrativo com Escopo Estrito
 - Continuei o plano salvo a partir do commit `d3f8ad1f`, fortalecendo a funcao existente `seedData` usada pela aba Ferramentas.
 - Foi removida a inferencia silenciosa da primeira empresa global e a criacao automatica de Grupo/Empresa; o bootstrap controlado continua preservado em `seedMultiCompanyData`.

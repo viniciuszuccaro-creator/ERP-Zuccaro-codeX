@@ -38,10 +38,6 @@ Deno.serve(async (req) => {
     if (!user && !trustedInternal) {
       return Response.json({ error: 'Forbidden: internal automation token required' }, { status: 403 });
     }
-    if (user && user.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: Admin only' }, { status: 403 });
-    }
-
     const requestedEntities = Array.isArray(body?.entities) && body.entities.length ? body.entities : DEFAULT_ENTITIES;
     const invalidEntities = requestedEntities.filter((entityName) => !ALLOWED_ENTITIES.has(entityName));
     if (invalidEntities.length) {

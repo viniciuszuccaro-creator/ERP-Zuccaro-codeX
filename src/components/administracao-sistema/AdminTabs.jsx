@@ -104,15 +104,18 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
       const url = new URL(window.location.href);
       url.searchParams.set("tab", val);
       window.history.replaceState({}, "", url.toString());
-    } catch (_) {}
+    } catch (error) {
+      console.warn("[AdminTabs] Falha ao sincronizar aba na URL:", error);
+    }
   };
 
   const canAccess = (perm) => isAdminUser || hasPermission('Sistema', perm, 'visualizar');
 
   const visibleTabs = TAB_DEFS.filter(t => canAccess(t.perm));
+  const canAccessFerramentas = canAccess("Ferramentas");
   const allowedTabValues = new Set([
     ...visibleTabs.map((tab) => tab.value),
-    ...(isAdminUser ? ["ferramentas"] : []),
+    ...(canAccessFerramentas ? ["ferramentas"] : []),
   ]);
 
   // Garante que o tab ativo seja válido
@@ -140,7 +143,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
             <span className="hidden sm:inline">{label}</span>
           </TabsTrigger>
         ))}
-        {isAdminUser && (
+        {canAccessFerramentas && (
           <TabsTrigger
             value="ferramentas"
             data-action="AdminTabs.ferramentas"
@@ -231,7 +234,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
       </TabsContent>
 
       {/* ── FERRAMENTAS (admin only) ── */}
-      {isAdminUser && (
+      {canAccessFerramentas && (
         <TabsContent value="ferramentas" className="mt-4">
           <AdminFerramentas empresaAtual={empresaAtual} grupoAtual={grupoAtual} />
         </TabsContent>
@@ -247,22 +250,14 @@ function AdminFerramentas({ empresaAtual, grupoAtual }) {
   const [loadingSeed, setLoadingSeed] = useState(false);
   const [loadingBackfillDry, setLoadingBackfillDry] = useState(false);
   const [loadingBackfillApply, setLoadingBackfillApply] = useState(false);
+  const [ultimoDryRunContexto, setUltimoDryRunContexto] = useState(null);
   const grupoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextoValido = !!(grupoId || empresaId);
+  const contextoValido = !!grupoId;
+  const contextoKey = grupoId ? grupoId + ":" + (empresaId || "grupo") : null;
   const isAdminUser = typeof isAdmin === "function" ? isAdmin() : false;
-  const podeCriarFerramenta = isAdminUser ||
-    hasPermission("Sistema", "Ferramentas", "criar") ||
-    hasPermission("Sistema", "Configuracoes", "criar") ||
-    hasPermission("Sistema", "Configurações", "criar");
-  const podeExecutarFerramenta = isAdminUser ||
-    hasPermission("Sistema", "Ferramentas", "executar") ||
-    hasPermission("Sistema", "Configuracoes", "executar") ||
-    hasPermission("Sistema", "Configurações", "executar");
-  const podeEditarFerramenta = isAdminUser ||
-    hasPermission("Sistema", "Ferramentas", "editar") ||
-    hasPermission("Sistema", "Configuracoes", "editar") ||
-    hasPermission("Sistema", "Configurações", "editar");
+  const podeExecutarFerramenta = isAdminUser || hasPermission("Sistema", "Ferramentas", "executar");
+  const podeEditarFerramenta = isAdminUser || hasPermission("Sistema", "Ferramentas", "editar");
 
   const dadosContextoFerramenta = () => ({
     contexto: grupoAtual?.id ? "grupo" : empresaAtual?.id ? "empresa" : "sem-contexto",
@@ -289,7 +284,7 @@ function AdminFerramentas({ empresaAtual, grupoAtual }) {
         dados_novos: sanitizeFerramentaPayload({
           ...dadosContextoFerramenta(),
           ...(dadosNovos || {}),
-          erro: erro ? sanitizeFerramentaText(erro, 500) : null,
+          erro_tipo: erro ? "erro_operacional" : null,
         }),
         sucesso,
         data_hora: new Date().toISOString(),
@@ -310,12 +305,12 @@ function AdminFerramentas({ empresaAtual, grupoAtual }) {
       });
       return;
     }
-    if (!podeCriarFerramenta) {
+    if (!podeEditarFerramenta) {
       toast.error("Seu perfil nao permite executar seed administrativo.");
       await auditFerramenta({
         acao: "Bloqueio por permissao",
         descricao: "Tentativa de executar seed leve sem permissao.",
-        dadosNovos: { ferramenta: "seedData", permissao: "Sistema.Ferramentas.criar" },
+        dadosNovos: { ferramenta: "seedData", permissao: "Sistema.Ferramentas.editar" },
         sucesso: false
       });
       return;
@@ -326,14 +321,21 @@ function AdminFerramentas({ empresaAtual, grupoAtual }) {
         counts: { clientes: 5, produtos: 10, colaboradores: 5 },
         group_id: grupoId,
         empresa_id: empresaId,
+        multiCompany: !empresaId,
       };
       const res = await base44.functions.invoke('seedData', payload);
       await auditFerramenta({
         acao: "Seed",
         descricao: "Seed leve executado em ferramentas administrativas",
-        dadosNovos: { ferramenta: "seedData", payload, summary: res?.data?.summary || null }
+        dadosNovos: {
+          ferramenta: "seedData",
+          escopo: empresaId ? "empresa" : "grupo",
+          empresas_processadas: Array.isArray(res?.data?.results) ? res.data.results.length : 1,
+          criados: res?.data?.created || null,
+        }
       });
-      toast.success('Seed concluído: ' + JSON.stringify(res?.data?.summary || {}, null, 2));
+      const empresasProcessadas = Array.isArray(res?.data?.results) ? res.data.results.length : 1;
+      toast.success("Seed concluido em " + empresasProcessadas + " empresa(s).");
     } catch (err) {
       await auditFerramenta({
         acao: "Erro no seed",
@@ -373,12 +375,19 @@ function AdminFerramentas({ empresaAtual, grupoAtual }) {
     try {
       const payload = { dryRun: true, apply: false, limitPerEntity: 1000, group_id: grupoId, empresa_id: empresaId };
       const res = await base44.functions.invoke('backfillGroupEmpresa', payload);
+      setUltimoDryRunContexto(contextoKey);
       await auditFerramenta({
         acao: "Backfill Dry-run",
         descricao: "Dry-run de backfill multiempresa executado",
-        dadosNovos: { payload, summary: res?.data?.summary || null }
+        dadosNovos: {
+          ferramenta: "backfillGroupEmpresa", dry_run: true,
+          entidades_processadas: Array.isArray(res?.data?.summary) ? res.data.summary.length : 0,
+          total_para_atualizar: (res?.data?.summary || []).reduce((total, item) => total + Number(item?.toUpdate || 0), 0),
+          total_erros: (res?.data?.summary || []).reduce((total, item) => total + Number(item?.errors || 0), 0),
+        }
       });
-      toast.success('Dry-run: ' + JSON.stringify(res?.data?.summary || {}, null, 2));
+      const totalPendente = (res?.data?.summary || []).reduce((total, item) => total + Number(item?.toUpdate || 0), 0);
+      toast.success("Dry-run concluido: " + totalPendente + " registro(s) para revisar.");
     } catch (err) {
       await auditFerramenta({
         acao: "Erro no backfill dry-run",
@@ -414,6 +423,16 @@ function AdminFerramentas({ empresaAtual, grupoAtual }) {
       });
       return;
     }
+    if (ultimoDryRunContexto !== contextoKey) {
+      toast.error("Execute o dry-run neste mesmo Grupo/Empresa antes de aplicar.");
+      await auditFerramenta({
+        acao: "Bloqueio sem dry-run",
+        descricao: "Tentativa de aplicar backfill sem dry-run valido no contexto atual.",
+        dadosNovos: { ferramenta: "backfillGroupEmpresa", apply: true },
+        sucesso: false
+      });
+      return;
+    }
     if (!confirm('Aplicar correcoes de multiempresa? Esta acao sera auditada e deve ser usada somente apos dry-run.')) {
       await auditFerramenta({
         acao: "Backfill cancelado",
@@ -430,9 +449,16 @@ function AdminFerramentas({ empresaAtual, grupoAtual }) {
       await auditFerramenta({
         acao: "Backfill Aplicado",
         descricao: "Backfill multiempresa aplicado",
-        dadosNovos: { payload, summary: res?.data?.summary || null }
+        dadosNovos: {
+          ferramenta: "backfillGroupEmpresa", apply: true,
+          entidades_processadas: Array.isArray(res?.data?.summary) ? res.data.summary.length : 0,
+          total_atualizado: (res?.data?.summary || []).reduce((total, item) => total + Number(item?.updated || 0), 0),
+          total_erros: (res?.data?.summary || []).reduce((total, item) => total + Number(item?.errors || 0), 0),
+        }
       });
-      toast.success('Aplicado: ' + JSON.stringify(res?.data?.summary || {}, null, 2));
+      setUltimoDryRunContexto(null);
+      const totalAtualizado = (res?.data?.summary || []).reduce((total, item) => total + Number(item?.updated || 0), 0);
+      toast.success("Backfill aplicado: " + totalAtualizado + " registro(s) atualizado(s).");
     } catch (err) {
       await auditFerramenta({
         acao: "Erro no backfill aplicado",
@@ -462,7 +488,7 @@ function AdminFerramentas({ empresaAtual, grupoAtual }) {
           <CardContent className="p-4 space-y-3">
             <h3 className="font-semibold text-slate-900">Seed de Dados (Teste)</h3>
             <p className="text-xs text-slate-500">Cria clientes, produtos e colaboradores de teste com contexto multiempresa atual.</p>
-            <Button variant="outline" onClick={runSeed} disabled={loadingSeed || !contextoValido || !podeCriarFerramenta} data-action="AdminFerramentas.seedLeve" data-permission="Sistema.Ferramentas.criar" data-context-required="group-or-company" data-sensitive="true">
+            <Button variant="outline" onClick={runSeed} disabled={loadingSeed || !contextoValido || !podeEditarFerramenta} data-action="AdminFerramentas.seedLeve" data-permission="Sistema.Ferramentas.editar" data-context-required="group-or-company" data-sensitive="true">
               {loadingSeed ? 'Executando…' : 'Executar Seed Leve'}
             </Button>
           </CardContent>
@@ -479,7 +505,7 @@ function AdminFerramentas({ empresaAtual, grupoAtual }) {
               <Button
                 className="bg-orange-600 hover:bg-orange-700 text-white"
                 onClick={runBackfillApply}
-                disabled={loadingBackfillApply || !contextoValido || !podeEditarFerramenta}
+                disabled={loadingBackfillApply || !contextoValido || !podeEditarFerramenta || ultimoDryRunContexto !== contextoKey}
                 data-action="AdminFerramentas.backfillAplicar"
                 data-permission="Sistema.Ferramentas.editar"
                 data-context-required="group-or-company"

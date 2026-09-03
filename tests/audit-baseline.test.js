@@ -136,3 +136,21 @@ test('administrative seed requires explicit multi-company scope and safe auditin
   assert.doesNotMatch(seedSource, /catch \(_\)|catch \{\}|catch\(\(\) => \{\}\)/);
   assert.match(adminSource, /seedData'[\s\S]*?group_id: grupoId,[\s\S]*?empresa_id: empresaId/);
 });
+
+test('administrative tools align granular RBAC, group propagation and dry-run safety', async () => {
+  const adminSource = await readFile(new URL('../src/components/administracao-sistema/AdminTabs.jsx', import.meta.url), 'utf8');
+  const seedSource = await readFile(new URL('../base44/functions/seedData/entry.ts', import.meta.url), 'utf8');
+  const backfillSource = await readFile(new URL('../base44/functions/backfillGroupEmpresa/entry.ts', import.meta.url), 'utf8');
+
+  assert.match(adminSource, /canAccessFerramentas = canAccess\("Ferramentas"\)/);
+  assert.match(adminSource, /podeExecutarFerramenta = isAdminUser \|\| hasPermission\("Sistema", "Ferramentas", "executar"\)/);
+  assert.match(adminSource, /podeEditarFerramenta = isAdminUser \|\| hasPermission\("Sistema", "Ferramentas", "editar"\)/);
+  assert.match(adminSource, /multiCompany: !empresaId/);
+  assert.match(adminSource, /ultimoDryRunContexto !== contextoKey/);
+  assert.match(adminSource, /data-permission="Sistema\.Ferramentas\.editar"/);
+  assert.doesNotMatch(adminSource, /dadosNovos: \{ payload, summary:/);
+  assert.doesNotMatch(seedSource, /user && user\.role !== 'admin'/);
+  assert.doesNotMatch(backfillSource, /user && user\.role !== 'admin'/);
+  assert.match(seedSource, /requireEntityGuard[\s\S]*?section: 'Ferramentas'/);
+  assert.match(backfillSource, /requireEntityGuard[\s\S]*?section: 'Ferramentas'/);
+});
