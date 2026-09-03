@@ -1,3 +1,19 @@
+### Integracoes - Teste WhatsApp e Toggles de Marketplaces Persistentes
+- Continuei o plano salvo a partir do commit `6bac57ce`, fortalecendo os componentes existentes `TesteWhatsApp` e `SincronizacaoMarketplaces`.
+- O teste WhatsApp passou a exigir Grupo valido e RBAC `Sistema.Integracoes.executar` nos campos, templates e envio, sem reutilizar permissao de edicao.
+- Telefone e resultado sao limpos ao trocar Grupo/Empresa; telefone e mensagem possuem limites e os templates se adaptam a celular, tablet e desktop.
+- A leitura do status aceita a chave persistida `ativo` e preserva compatibilidade com a chave legada `ativa`.
+- Auditorias do teste registram somente indicadores, tamanho da mensagem, configuracao e tipo tecnico de erro; telefone e erro bruto nao sao persistidos.
+- Os toggles de Mercado Livre, Shopee e Amazon deixaram de ser somente visuais e agora criam ou atualizam `ConfiguracaoIntegracaoMarketplace` no Grupo+Empresa selecionado.
+- Cada toggle resolve a operacao real e exige RBAC granular de criar ou editar; a sincronizacao manual exige executar e a listagem exige visualizar.
+- Auditorias dos toggles usam a entidade correta, registro, operacao e estado antes/depois, sem token ou payload completo; falhas mostram mensagem generica.
+- Configuracoes e pedidos sao consultados somente com Grupo+Empresa, e o estado visual e reconstruido da persistencia ao trocar contexto.
+- Classes de cor passaram a ser estaticas para geracao correta pelo Tailwind; cards, acoes e tabela receberam ajustes responsivos e `w-full h-full`.
+- O teste de baseline existente foi ampliado para impedir regressao de escopo, persistencia, RBAC por acao, auditoria segura e layout.
+- Validacoes concluidas: teste direcionado (1/1), `npm test` (40/40), `npm run build`, `npm run audit:baseline` e `git diff --check` passaram.
+- O baseline permaneceu em 179 capturas operacionais silenciosas; controles com marcador de permissao aumentaram de 1507 para 1512.
+- Proximo passo sugerido: revisar os filhos existentes `IALeituraProjeto` e `IAPrevisaoLogistica`, reforcando Grupo/Empresa, RBAC por acao e auditorias sem payload tecnico sensivel.
+
 ### Integracoes - WhatsApp Business e Marketplaces com Escopo Estrito
 - Continuei o plano salvo a partir do commit `b41abb4e`, fortalecendo as configuracoes existentes de WhatsApp Business e a sincronizacao ativa de marketplaces.
 - WhatsApp passou a exigir Grupo valido, separar RBAC de criar, editar e executar e limpar o estado local ao trocar o contexto, evitando exibicao de configuracao anterior.

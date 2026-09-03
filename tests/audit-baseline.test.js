@@ -281,3 +281,31 @@ test('WhatsApp and marketplace integrations keep strict scope RBAC and safe audi
   assert.match(marketplaceTable, /data-permission="Sistema\.Integracoes\.criar\|Sistema\.Integracoes\.editar"/);
   assert.match(marketplaceTable, /data-permission="Sistema\.Integracoes\.visualizar"/);
 });
+
+
+test('remaining WhatsApp and marketplace controls persist safely with action RBAC', async () => {
+  const whatsapp = await readFile(new URL('../src/components/integracoes/TesteWhatsApp.jsx', import.meta.url), 'utf8');
+  const marketplace = await readFile(new URL('../src/components/integracoes/SincronizacaoMarketplaces.jsx', import.meta.url), 'utf8');
+
+  assert.match(whatsapp, /const contextoValido = Boolean\(groupId\)/);
+  assert.match(whatsapp, /hasPermission\("Sistema", "Integracoes", "executar"\)/);
+  assert.equal((whatsapp.match(/data-permission="Sistema\.Integracoes\.executar"/g) || []).length, 4);
+  assert.match(whatsapp, /telefone_informado: Boolean\(telefoneNormalizado\)/);
+  assert.match(whatsapp, /setTelefone\(''\)[\s\S]*?setResultado\(null\)/);
+  assert.match(whatsapp, /w-full h-full space-y-4/);
+  assert.doesNotMatch(whatsapp, /auditarWhatsApp\([^;]*telefone: telefoneNormalizado|description: error\.message/);
+
+  assert.match(marketplace, /const contextoValido = Boolean\(groupId && empresaId\)/);
+  assert.match(marketplace, /filterInContext\('ConfiguracaoIntegracaoMarketplace'/);
+  assert.match(marketplace, /updateInContext\('ConfiguracaoIntegracaoMarketplace'/);
+  assert.match(marketplace, /createInContext\('ConfiguracaoIntegracaoMarketplace'/);
+  assert.match(marketplace, /operacao === 'editar' \? podeEditar : podeCriar/);
+  assert.match(marketplace, /hasPermission\('Sistema', 'Integracoes', 'executar'\)/);
+  assert.match(marketplace, /data-permission="Sistema\.Integracoes\.executar"/);
+  assert.match(marketplace, /data-permission=\{`Sistema\.Integracoes\.\$\{operacao\}`\}/);
+  assert.match(marketplace, /entidade = 'PedidoExterno'/);
+  assert.match(marketplace, /'ConfiguracaoIntegracaoMarketplace',[\s\S]*?existente\?\.id \|\| null/);
+  assert.match(marketplace, /dados_anteriores: dadosAnteriores/);
+  assert.match(marketplace, /w-full h-full space-y-6/);
+  assert.doesNotMatch(marketplace, /description: error\.message|bg-\$\{mp\.cor\}|text-\$\{mp\.cor\}/);
+});

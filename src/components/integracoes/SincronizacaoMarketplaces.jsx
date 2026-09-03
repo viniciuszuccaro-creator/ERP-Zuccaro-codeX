@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,15 +20,27 @@ export default function SincronizacaoMarketplaces({ empresaId: empresaIdProp }) 
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useUser();
-  const { empresaAtual, grupoAtual, filterInContext, createInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
   const { isAdmin, hasPermission } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || user?.grupo_atual_id || user?.grupo_padrao_id || null;
   const empresaId = empresaAtual?.id || empresaIdProp || null;
-  const contextoValido = Boolean(groupId || empresaId);
-  const podeVisualizar = isAdmin() || hasPermission('Sistema', 'Integracoes', 'visualizar');
-  const podeEditar = isAdmin() || hasPermission('Sistema', 'Integracoes', 'editar');
+  const contextoValido = Boolean(groupId && empresaId);
+  const admin = isAdmin();
+  const podeVisualizar = admin || hasPermission('Sistema', 'Integracoes', 'visualizar') || hasPermission('Sistema', 'Integrações', 'visualizar');
+  const podeCriar = admin || hasPermission('Sistema', 'Integracoes', 'criar') || hasPermission('Sistema', 'Integrações', 'criar');
+  const podeEditar = admin || hasPermission('Sistema', 'Integracoes', 'editar') || hasPermission('Sistema', 'Integrações', 'editar');
+  const podeExecutar = admin || hasPermission('Sistema', 'Integracoes', 'executar') || hasPermission('Sistema', 'Integrações', 'executar');
+  const scope = { group_id: groupId, empresa_id: empresaId };
+  const [salvandoMarketplace, setSalvandoMarketplace] = useState(null);
 
-  const auditarMarketplace = async (acao, descricao, dadosNovos = null) => {
+  const auditarMarketplace = async (
+    acao,
+    descricao,
+    dadosNovos = null,
+    dadosAnteriores = null,
+    entidade = 'PedidoExterno',
+    registroId = null
+  ) => {
     try {
       await createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || 'Usuario local',
@@ -37,9 +49,11 @@ export default function SincronizacaoMarketplaces({ empresaId: empresaIdProp }) 
         group_id: groupId,
         acao,
         modulo: 'Integracoes',
-        entidade: 'PedidoExterno',
+        entidade,
+        registro_id: registroId,
         descricao,
-        dados_anteriores: null,
+        sucesso: !/^(Bloqueio|Erro)/.test(acao),
+        dados_anteriores: dadosAnteriores,
         dados_novos: dadosNovos,
         data_hora: new Date().toISOString()
       });
@@ -53,6 +67,29 @@ export default function SincronizacaoMarketplaces({ empresaId: empresaIdProp }) 
     amazon: { ativo: false, token: '' }
   });
 
+  const { data: configuracoesSalvas = [] } = useQuery({
+    queryKey: ['marketplace-configuracoes', groupId || 'sem-grupo', empresaId || 'sem-empresa'],
+    queryFn: () => filterInContext('ConfiguracaoIntegracaoMarketplace', {}, '-updated_date', 100),
+    enabled: contextoValido && podeVisualizar,
+  });
+
+  const encontrarConfiguracao = (marketplaceId) => configuracoesSalvas.find((item) =>
+    [item.marketplace_id, item.marketplace, item.chave].includes(marketplaceId)
+  );
+
+  useEffect(() => {
+    const proximo = {
+      mercado_livre: { ativo: false, token: '' },
+      shopee: { ativo: false, token: '' },
+      amazon: { ativo: false, token: '' }
+    };
+    for (const marketplaceId of Object.keys(proximo)) {
+      const salva = encontrarConfiguracao(marketplaceId);
+      if (salva) proximo[marketplaceId].ativo = Boolean(salva.ativo);
+    }
+    setConfig(proximo);
+  }, [groupId, empresaId, configuracoesSalvas]);
+
   const { data: pedidosExternos = [] } = useQuery({
     queryKey: ['pedidos-externos-config', groupId || 'sem-grupo', empresaId || 'sem-empresa'],
     queryFn: () => filterInContext('PedidoExterno', {}, '-created_date', 100),
@@ -65,7 +102,7 @@ export default function SincronizacaoMarketplaces({ empresaId: empresaIdProp }) 
         await auditarMarketplace('Bloqueio sem contexto', 'Tentativa de sincronizar marketplace sem grupo ou empresa.', { marketplace });
         throw new Error('Selecione grupo ou empresa antes de sincronizar marketplaces.');
       }
-      if (!podeEditar) {
+      if (!podeExecutar) {
         await auditarMarketplace('Bloqueio por permissao', 'Tentativa de sincronizar marketplace sem permissao.', { marketplace });
         throw new Error('Seu perfil nao permite sincronizar marketplaces.');
       }
@@ -75,9 +112,7 @@ export default function SincronizacaoMarketplaces({ empresaId: empresaIdProp }) 
       const resultado = {
         marketplace,
         novos_pedidos: 0,
-        atualizados: 0,
-        group_id: groupId,
-        empresa_id: empresaId
+        atualizados: 0
       };
       await auditarMarketplace('Sincronizar Marketplace', 'Sincronizacao manual de marketplace executada com escopo multiempresa.', resultado);
       return resultado;
@@ -89,30 +124,70 @@ export default function SincronizacaoMarketplaces({ empresaId: empresaIdProp }) 
         description: `${resultado.novos_pedidos} pedidos novos`
       });
     },
-    onError: (error) => {
+    onError: async (error) => {
+      console.warn('Falha ao sincronizar marketplace:', error);
+      await auditarMarketplace('Erro Sincronizar Marketplace', 'Falha ao sincronizar marketplace.', { tipo_erro: error?.name || 'Error' });
       toast({
         title: 'Sincronizacao bloqueada',
-        description: error.message,
+        description: 'Nao foi possivel concluir a sincronizacao.',
         variant: 'destructive'
       });
     }
   });
 
   const alterarStatusMarketplace = async (mp, ativo) => {
-    if (!contextoValido || !podeEditar) {
+    const existente = encontrarConfiguracao(mp.id);
+    const operacao = existente ? 'editar' : 'criar';
+    const permitido = operacao === 'editar' ? podeEditar : podeCriar;
+    if (!contextoValido || !permitido) {
       toast({
         title: !contextoValido ? 'Contexto obrigatorio' : 'Permissao negada',
-        description: !contextoValido ? 'Selecione grupo ou empresa antes de alterar marketplaces.' : 'Seu perfil nao permite alterar marketplaces.',
+        description: !contextoValido ? 'Selecione grupo e empresa antes de alterar marketplaces.' : `Seu perfil nao permite ${operacao} esta configuracao.`,
         variant: 'destructive'
       });
-      await auditarMarketplace(!contextoValido ? 'Bloqueio sem contexto' : 'Bloqueio por permissao', 'Tentativa de alterar status de marketplace bloqueada.', { marketplace: mp.nome, ativo });
+      await auditarMarketplace(
+        !contextoValido ? 'Bloqueio sem contexto' : 'Bloqueio por permissao',
+        'Tentativa de alterar status de marketplace bloqueada.',
+        { marketplace: mp.nome, ativo, operacao },
+        null,
+        'ConfiguracaoIntegracaoMarketplace',
+        existente?.id || null
+      );
       return;
     }
-    setConfig((atual) => ({
-      ...atual,
-      [mp.id]: { ...atual[mp.id], ativo }
-    }));
-    await auditarMarketplace('Alterar Status Marketplace', 'Status visual de marketplace alterado com escopo multiempresa.', { marketplace: mp.nome, ativo });
+
+    setSalvandoMarketplace(mp.id);
+    try {
+      const payload = { marketplace_id: mp.id, nome: mp.nome, ativo: Boolean(ativo), ...scope };
+      if (existente) {
+        await updateInContext('ConfiguracaoIntegracaoMarketplace', existente.id, payload);
+      } else {
+        await createInContext('ConfiguracaoIntegracaoMarketplace', payload);
+      }
+      setConfig((atual) => ({ ...atual, [mp.id]: { ...atual[mp.id], ativo: Boolean(ativo) } }));
+      await queryClient.invalidateQueries({ queryKey: ['marketplace-configuracoes'] });
+      await auditarMarketplace(
+        'Alterar Status Marketplace',
+        'Status de marketplace persistido com escopo multiempresa.',
+        { marketplace: mp.nome, ativo: Boolean(ativo), operacao },
+        { ativo: Boolean(existente?.ativo) },
+        'ConfiguracaoIntegracaoMarketplace',
+        existente?.id || null
+      );
+    } catch (error) {
+      console.warn('Falha ao salvar marketplace:', error);
+      await auditarMarketplace(
+        'Erro Alterar Status Marketplace',
+        'Falha ao persistir status de marketplace.',
+        { marketplace: mp.nome, ativo: Boolean(ativo), operacao, tipo_erro: error?.name || 'Error' },
+        { ativo: Boolean(existente?.ativo) },
+        'ConfiguracaoIntegracaoMarketplace',
+        existente?.id || null
+      );
+      toast({ title: 'Erro ao salvar marketplace', description: 'Nao foi possivel alterar o status.', variant: 'destructive' });
+    } finally {
+      setSalvandoMarketplace(null);
+    }
   };
 
   const marketplaces = [
@@ -120,21 +195,24 @@ export default function SincronizacaoMarketplaces({ empresaId: empresaIdProp }) 
       id: 'mercado_livre',
       nome: 'Mercado Livre',
       icone: ShoppingCart,
-      cor: 'yellow',
+      containerClass: 'bg-yellow-100',
+      iconClass: 'text-yellow-700',
       descricao: 'Maior marketplace da América Latina'
     },
     {
       id: 'shopee',
       nome: 'Shopee',
       icone: Package,
-      cor: 'orange',
+      containerClass: 'bg-orange-100',
+      iconClass: 'text-orange-700',
       descricao: 'Marketplace asiático em crescimento'
     },
     {
       id: 'amazon',
       nome: 'Amazon',
       icone: ShoppingCart,
-      cor: 'blue',
+      containerClass: 'bg-blue-100',
+      iconClass: 'text-blue-700',
       descricao: 'Marketplace global'
     }
   ];
@@ -144,7 +222,7 @@ export default function SincronizacaoMarketplaces({ empresaId: empresaIdProp }) 
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full h-full space-y-6">
       <Card>
         <CardHeader className="bg-blue-50 border-b">
           <CardTitle>Integração com Marketplaces</CardTitle>
@@ -156,11 +234,14 @@ export default function SincronizacaoMarketplaces({ empresaId: empresaIdProp }) 
           {marketplaces.map((mp) => {
             const Icon = mp.icone;
             const ativo = config[mp.id]?.ativo || false;
+            const existente = encontrarConfiguracao(mp.id);
+            const operacao = existente ? 'editar' : 'criar';
+            const podeAlterar = operacao === 'editar' ? podeEditar : podeCriar;
 
             return (
-              <div key={mp.id} className="flex items-start gap-4 p-4 border rounded-lg">
-                <div className={`w-12 h-12 bg-${mp.cor}-100 rounded-lg flex items-center justify-center`}>
-                  <Icon className={`w-6 h-6 text-${mp.cor}-600`} />
+              <div key={mp.id} className="flex flex-col sm:flex-row items-start gap-4 p-4 border rounded-lg">
+                <div className={`w-12 h-12 ${mp.containerClass} rounded-lg flex items-center justify-center`}>
+                  <Icon className={`w-6 h-6 ${mp.iconClass}`} />
                 </div>
                 
                 <div className="flex-1">
@@ -172,12 +253,15 @@ export default function SincronizacaoMarketplaces({ empresaId: empresaIdProp }) 
                   </div>
                   <p className="text-sm text-slate-600 mb-3">{mp.descricao}</p>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
                     <div className="flex items-center gap-2">
                       <Switch
                         checked={ativo}
                         onCheckedChange={(v) => alterarStatusMarketplace(mp, v)}
-                        disabled={!contextoValido || !podeEditar}
+                        disabled={salvandoMarketplace === mp.id || !contextoValido || !podeAlterar}
+                        data-action="Integracoes.Marketplaces.alterarStatus"
+                        data-permission={`Sistema.Integracoes.${operacao}`}
+                        data-context-required="company"
                       />
                       <Label className="text-sm">
                         {ativo ? 'Ativo' : 'Inativo'}
@@ -189,7 +273,10 @@ export default function SincronizacaoMarketplaces({ empresaId: empresaIdProp }) 
                         size="sm"
                         variant="outline"
                         onClick={() => sincronizarMutation.mutate(mp.nome)}
-                        disabled={sincronizarMutation.isPending || !contextoValido || !podeEditar}
+                        disabled={sincronizarMutation.isPending || !contextoValido || !podeExecutar}
+                        data-action="Integracoes.Marketplaces.sincronizar"
+                        data-permission="Sistema.Integracoes.executar"
+                        data-context-required="company"
                       >
                         <RefreshCw className={`w-4 h-4 mr-1 ${sincronizarMutation.isPending ? 'animate-spin' : ''}`} />
                         Sincronizar Agora
@@ -208,7 +295,7 @@ export default function SincronizacaoMarketplaces({ empresaId: empresaIdProp }) 
         <CardHeader className="bg-slate-50 border-b">
           <CardTitle className="text-base">Últimos Pedidos Externos</CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50">

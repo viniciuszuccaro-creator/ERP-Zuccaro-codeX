@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,8 +25,15 @@ export default function TesteWhatsApp({ configuracao, windowMode = false }) {
   const { isAdmin, hasPermission } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || user?.grupo_atual_id || user?.grupo_padrao_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
-  const podeTestar = isAdmin() || hasPermission("Sistema", "Integracoes", "editar");
+  const contextoValido = Boolean(groupId);
+  const podeTestar = isAdmin() || hasPermission("Sistema", "Integracoes", "executar") || hasPermission("Sistema", "Integrações", "executar");
+  const configuracaoAtiva = Boolean(configuracao?.integracao_whatsapp?.ativo ?? configuracao?.integracao_whatsapp?.ativa);
+  const provedor = configuracao?.integracao_whatsapp?.provedor || 'Não configurado';
+
+  useEffect(() => {
+    setTelefone('');
+    setResultado(null);
+  }, [groupId, empresaId]);
 
   const auditarWhatsApp = async (acao, descricao, dadosNovos = null) => {
     try {
@@ -39,6 +46,7 @@ export default function TesteWhatsApp({ configuracao, windowMode = false }) {
         modulo: 'Integracoes',
         entidade: 'TesteWhatsApp',
         descricao,
+        sucesso: !/^(Bloqueio|Erro)/.test(acao),
         dados_anteriores: null,
         dados_novos: dadosNovos,
         data_hora: new Date().toISOString()
@@ -51,16 +59,17 @@ export default function TesteWhatsApp({ configuracao, windowMode = false }) {
   const enviarMensagem = async () => {
     const telefoneNormalizado = telefone.replace(/\D/g, '');
     if (!contextoValido) {
-      await auditarWhatsApp('Bloqueio sem contexto', 'Tentativa de enviar teste WhatsApp sem grupo ou empresa.', { telefone: telefoneNormalizado });
+      await auditarWhatsApp('Bloqueio sem contexto', 'Tentativa de enviar teste WhatsApp sem grupo ou empresa.', { telefone_informado: Boolean(telefoneNormalizado) });
       toast({ title: "Contexto obrigatorio", description: "Selecione grupo ou empresa antes de testar WhatsApp.", variant: "destructive" });
       return;
     }
     if (!podeTestar) {
-      await auditarWhatsApp('Bloqueio por permissao', 'Tentativa de enviar teste WhatsApp sem permissao.', { telefone: telefoneNormalizado });
+      await auditarWhatsApp('Bloqueio por permissao', 'Tentativa de enviar teste WhatsApp sem permissao.', { telefone_informado: Boolean(telefoneNormalizado) });
       toast({ title: "Permissao negada", description: "Seu perfil nao permite testar WhatsApp.", variant: "destructive" });
       return;
     }
     if (telefoneNormalizado.length < 10 || telefoneNormalizado.length > 13) {
+      await auditarWhatsApp('Bloqueio telefone invalido', 'Teste WhatsApp bloqueado por telefone invalido.', { telefone_informado: Boolean(telefoneNormalizado) });
       toast({ title: "Telefone invalido", description: "Informe telefone com DDD antes de enviar o teste.", variant: "destructive" });
       return;
     }
@@ -82,10 +91,10 @@ export default function TesteWhatsApp({ configuracao, windowMode = false }) {
 
       await auditarWhatsApp('Enviar Teste WhatsApp', 'Mensagem de teste WhatsApp simulada com escopo multiempresa.', {
         message_id: resposta.message_id,
-        telefone: telefoneNormalizado,
+        telefone_informado: Boolean(telefoneNormalizado),
         tamanho_mensagem: mensagem.length,
-        provedor: configuracao?.integracao_whatsapp?.provedor || null,
-        configuracao_ativa: Boolean(configuracao?.integracao_whatsapp?.ativa)
+        provedor_configurado: provedor !== 'Não configurado',
+        configuracao_ativa: configuracaoAtiva
       });
 
       toast({
@@ -93,9 +102,11 @@ export default function TesteWhatsApp({ configuracao, windowMode = false }) {
         description: `WhatsApp enviado para ${telefone}`
       });
     } catch (error) {
+      console.warn('Falha ao executar teste WhatsApp:', error);
+      await auditarWhatsApp('Erro Teste WhatsApp', 'Falha ao executar teste WhatsApp.', { tipo_erro: error?.name || 'Error' });
       toast({
         title: "❌ Erro no Envio",
-        description: error.message,
+        description: 'Nao foi possivel concluir o teste.',
         variant: "destructive"
       });
     } finally {
@@ -119,7 +130,7 @@ export default function TesteWhatsApp({ configuracao, windowMode = false }) {
   ];
 
   return (
-    <div className={`space-y-4 ${windowMode ? 'w-full h-full overflow-auto p-6 bg-white' : ''}`}>
+    <div className={`w-full h-full space-y-4 ${windowMode ? 'overflow-auto p-6 bg-white' : ''}`}>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -130,10 +141,10 @@ export default function TesteWhatsApp({ configuracao, windowMode = false }) {
         <CardContent className="space-y-4">
           <div className="p-3 bg-green-50 rounded border border-green-200">
             <p className="text-sm text-green-900">
-              <strong>Provedor:</strong> {configuracao?.integracao_whatsapp?.provedor || 'Não configurado'}
+              <strong>Provedor:</strong> {provedor}
             </p>
             <p className="text-sm text-green-900">
-              <strong>Status:</strong> {configuracao?.integracao_whatsapp?.ativa ? '✓ Conectado' : '⚠️ Desconectado'}
+              <strong>Status:</strong> {configuracaoAtiva ? '✓ Conectado' : '⚠️ Desconectado'}
             </p>
           </div>
 
@@ -144,9 +155,11 @@ export default function TesteWhatsApp({ configuracao, windowMode = false }) {
               value={telefone}
               onChange={(e) => setTelefone(e.target.value)}
               placeholder="11999999999"
+              inputMode="tel"
+              maxLength={20}
               disabled={!contextoValido || !podeTestar}
               data-action="Integracoes.TesteWhatsApp.telefone"
-              data-permission="Sistema.Integracoes.editar"
+              data-permission="Sistema.Integracoes.executar"
               data-context-required="group-or-company"
             />
           </div>
@@ -158,16 +171,17 @@ export default function TesteWhatsApp({ configuracao, windowMode = false }) {
               value={mensagem}
               onChange={(e) => setMensagem(e.target.value)}
               rows={4}
+              maxLength={500}
               disabled={!contextoValido || !podeTestar}
               data-action="Integracoes.TesteWhatsApp.mensagem"
-              data-permission="Sistema.Integracoes.editar"
+              data-permission="Sistema.Integracoes.executar"
               data-context-required="group-or-company"
             />
           </div>
 
           <div>
             <Label>Templates Prontos</Label>
-            <div className="grid grid-cols-3 gap-2 mt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
               {templatesWhatsApp.map((template, idx) => (
                 <Button
                   key={idx}
@@ -176,7 +190,7 @@ export default function TesteWhatsApp({ configuracao, windowMode = false }) {
                   onClick={() => setMensagem(template.texto)}
                   disabled={!contextoValido || !podeTestar}
                   data-action="Integracoes.TesteWhatsApp.template"
-                  data-permission="Sistema.Integracoes.editar"
+                  data-permission="Sistema.Integracoes.executar"
                   data-context-required="group-or-company"
                 >
                   {template.nome}
@@ -190,7 +204,7 @@ export default function TesteWhatsApp({ configuracao, windowMode = false }) {
             disabled={testando || !telefone || !mensagem || !contextoValido || !podeTestar}
             className="w-full bg-green-600 hover:bg-green-700"
             data-action="Integracoes.TesteWhatsApp.enviar"
-            data-permission="Sistema.Integracoes.editar"
+            data-permission="Sistema.Integracoes.executar"
             data-context-required="group-or-company"
             data-sensitive="true"
           >
