@@ -116,3 +116,23 @@ test('multi-company seed requires explicit scope or controlled empty initializat
   assert.doesNotMatch(seedSource, /comGrupo\[0\]/);
   assert.doesNotMatch(seedSource, /catch \(_\)|catch \{\}|catch\(\(\) => \{\}\)/);
 });
+
+test('administrative seed requires explicit multi-company scope and safe auditing', async () => {
+  const seedSource = await readFile(new URL('../base44/functions/seedData/entry.ts', import.meta.url), 'utf8');
+  const adminSource = await readFile(new URL('../src/components/administracao-sistema/AdminTabs.jsx', import.meta.url), 'utf8');
+
+  assert.match(seedSource, /DEPLOY_AUDIT_TOKEN/);
+  assert.match(seedSource, /completeGuardCallScope/);
+  assert.match(seedSource, /requireEntityGuard/);
+  assert.match(seedSource, /group_id obrigatorio para seed/);
+  assert.match(seedSource, /empresa_id obrigatorio para seed/);
+  assert.match(seedSource, /Empresa\.filter\(\{ group_id: resolvedScope\.groupId \}/);
+  assert.match(seedSource, /Empresa fora do grupo informado/);
+  assert.match(seedSource, /normalizeCount\(counts\?\.clientes, 5\)/);
+  assert.match(seedSource, /internal_token: Deno\.env\.get\('DEPLOY_AUDIT_TOKEN'\)/);
+  assert.doesNotMatch(seedSource, /Empresa\.list\('-updated_date', 1\)/);
+  assert.doesNotMatch(seedSource, /GrupoEmpresarial\.create/);
+  assert.doesNotMatch(seedSource, /dados_novos: raw|stack: error\?\.stack/);
+  assert.doesNotMatch(seedSource, /catch \(_\)|catch \{\}|catch\(\(\) => \{\}\)/);
+  assert.match(adminSource, /seedData'[\s\S]*?group_id: grupoId,[\s\S]*?empresa_id: empresaId/);
+});

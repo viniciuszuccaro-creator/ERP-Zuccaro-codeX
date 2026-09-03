@@ -1,3 +1,17 @@
+### Sistema - Seed Administrativo com Escopo Estrito
+- Continuei o plano salvo a partir do commit `d3f8ad1f`, fortalecendo a funcao existente `seedData` usada pela aba Ferramentas.
+- Foi removida a inferencia silenciosa da primeira empresa global e a criacao automatica de Grupo/Empresa; o bootstrap controlado continua preservado em `seedMultiCompanyData`.
+- Execucoes agora exigem `group_id` explicito e, no modo de empresa unica, tambem `empresa_id`; empresas externas ao grupo sao bloqueadas.
+- Chamadas sem usuario exigem `DEPLOY_AUDIT_TOKEN`; usuarios autenticados continuam exigindo administrador e passam pelo RBAC granular de Sistema/Ferramentas.
+- O modo multiempresa foi preservado e continua semeando todas as empresas do grupo, repassando o token interno nas chamadas existentes.
+- Quantidades de clientes, produtos e colaboradores foram normalizadas, inteiras e limitadas a 500 por tipo.
+- Falhas por entidade deixaram de gravar o registro completo; auditorias agora contem somente Grupo/Empresa, tipo de erro e identificacao da operacao.
+- Stack, payload bruto e mensagens de erro nas respostas multiempresa foram removidos; falhas auxiliares de estoque e auditoria deixaram de ser silenciosas.
+- O teste de baseline existente foi ampliado para impedir retorno da selecao global, bootstrap automatico, empresa fora do grupo, ausencia de token/RBAC e auditoria com payload/stack.
+- Validacoes concluidas: `node --check`, teste direcionado (1/1), `npm test` (32/32), `npm run build`, `npm run audit:baseline` e `git diff --check` passaram.
+- O baseline de capturas operacionais silenciosas caiu de 186 para 181.
+- Mantida a Regra-Mae: somente funcao, teste e status existentes foram melhorados; nenhuma tela, modulo, rota ou funcionalidade foi criada ou removida.
+- Proximo passo sugerido: revisar as demais operacoes existentes da aba Ferramentas e os chamadores administrativos, garantindo escopo explicito, RBAC backend e auditoria resumida de ponta a ponta.
 ### Sistema - Seed Multiempresa com Contexto Explicito
 - Continuei o plano salvo a partir do commit `0ca084fb`, fortalecendo a funcao existente `seedMultiCompanyData`.
 - Foi removida a escolha automatica do primeiro grupo encontrado; execucoes normais agora exigem `group_id` explicito.
