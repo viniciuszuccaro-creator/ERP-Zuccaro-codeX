@@ -1,3 +1,15 @@
+### Multiempresa - Contexto Explicito nos Chamadores Genericos
+- Continuei o plano salvo a partir do commit `08072655`, preparando os fluxos existentes de `getEntityRecord` e `entityListSorted` para validacao backend estrita.
+- O alerta fiscal do `Layout` agora envia explicitamente `group_id` e `empresa_id` ao consultar `ConfiguracaoSistema`.
+- A barra de status da Administracao tambem envia Grupo/Empresa e deixou de ocultar silenciosamente falhas da consulta.
+- O hook central `useEntityListSorted` passou a enviar o contexto canonico junto do filtro em todas as listagens que o utilizam.
+- O Visualizador Universal envia Grupo/Empresa tanto na listagem normal quanto na busca paginada usada pela exclusao em lote.
+- Os filtros e chaves de cache existentes foram preservados, mantendo separacao visual entre Grupo e Empresa e o comportamento atual das telas.
+- O teste de baseline existente foi ampliado para impedir que esses quatro chamadores voltem a depender apenas de filtros implicitos.
+- Validacoes concluidas: teste direcionado (1/1), `npm test` (34/34), `npm run build`, `npm run audit:baseline` e `git diff --check` passaram.
+- O baseline de capturas operacionais silenciosas permaneceu em 180; uma captura da barra administrativa foi substituida por diagnostico, mas a classificacao agregada nao mudou por outras ocorrencias do arquivo.
+- Mantida a Regra-Mae: somente chamadores, teste e status existentes foram melhorados; nenhuma tela, funcionalidade, rota, modulo ou arquivo de projeto foi criado ou removido.
+- Proximo passo sugerido: endurecer `getEntityRecord` e depois `entityListSorted` no backend, com lista fechada de entidades, validacao Grupo/Empresa, RBAC e retorno filtrado por escopo. Essa alteracao de autorizacao exige confirmacao explicita do usuario.
 ### Administracao - Ferramentas com RBAC Granular e Fluxo Seguro
 - Continuei o plano salvo a partir do commit `4d7044ab`, alinhando a aba Ferramentas e os backends existentes `seedData` e `backfillGroupEmpresa`.
 - A aba agora aparece para administradores ou perfis com `Sistema.Ferramentas.visualizar`, preservando o controle granular de acesso.

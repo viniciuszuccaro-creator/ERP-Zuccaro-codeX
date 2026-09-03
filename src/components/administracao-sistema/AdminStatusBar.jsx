@@ -27,11 +27,14 @@ export default function AdminStatusBar() {
         const res = await base44.functions.invoke("getEntityRecord", {
           entityName: "ConfiguracaoSistema",
           filter: orConds.length > 1 ? { $or: orConds } : (orConds[0] || {}),
+          group_id: gId || null,
+          empresa_id: eId || null,
           limit: 200,
           sort: "-updated_date",
         });
         return Array.isArray(res?.data) ? res.data : [];
-      } catch (_) {
+      } catch (error) {
+        console.warn("[AdminStatusBar] Falha ao consultar configuracoes:", error);
         return [];
       }
     },

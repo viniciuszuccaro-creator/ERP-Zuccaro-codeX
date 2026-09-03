@@ -385,6 +385,8 @@ export default function VisualizadorUniversalEntidadeV24({
       const res = await base44.functions.invoke("entityListSorted", {
         entityName: ENTITY,
         filter: readFilter,
+        group_id: groupId,
+        empresa_id: empresaId,
         search: debouncedSearch && debouncedSearch.trim() ? debouncedSearch.trim() : undefined,
         sortField: backendSortField,
         sortDirection: backendSortDir,
@@ -628,6 +630,8 @@ export default function VisualizadorUniversalEntidadeV24({
           const res = await base44.functions.invoke("entityListSorted", {
             entityName: ENTITY,
             filter: readFilter,
+            group_id: groupId,
+            empresa_id: empresaId,
             sortField: "id", sortDirection: "asc",
             limit: 500, skip: skipAcc,
           });

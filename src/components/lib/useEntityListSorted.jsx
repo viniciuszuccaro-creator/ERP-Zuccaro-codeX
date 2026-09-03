@@ -29,7 +29,7 @@ function stableStringify(value) {
 }
 
 export default function useEntityListSorted(entityName, criterios = {}, options = {}) {
-  const { getFiltroContexto } = useContextoVisual();
+  const { getFiltroContexto, grupoAtual, empresaAtual } = useContextoVisual();
   const {
     sortField = undefined,
     sortDirection = undefined,
@@ -136,6 +136,8 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
             const res = await base44.functions.invoke("entityListSorted", {
               entityName,
               filter: filtro,
+              group_id: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
+              empresa_id: empresaAtual?.id || null,
               sortField: finalSortField,
               sortDirection: finalSortDirection,
               limit: effLimit,

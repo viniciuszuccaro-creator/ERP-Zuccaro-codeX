@@ -154,3 +154,18 @@ test('administrative tools align granular RBAC, group propagation and dry-run sa
   assert.match(seedSource, /requireEntityGuard[\s\S]*?section: 'Ferramentas'/);
   assert.match(backfillSource, /requireEntityGuard[\s\S]*?section: 'Ferramentas'/);
 });
+
+test('generic read callers send canonical group and company context', async () => {
+  const layoutSource = await readFile(new URL('../src/Layout.jsx', import.meta.url), 'utf8');
+  const statusSource = await readFile(new URL('../src/components/administracao-sistema/AdminStatusBar.jsx', import.meta.url), 'utf8');
+  const sortedHookSource = await readFile(new URL('../src/components/lib/useEntityListSorted.jsx', import.meta.url), 'utf8');
+  const viewerSource = await readFile(new URL('../src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', import.meta.url), 'utf8');
+
+  assert.match(layoutSource, /getEntityRecord'[\s\S]*?group_id: empresaAtual\?\.group_id[\s\S]*?empresa_id: empresaAtual\?\.id/);
+  assert.match(statusSource, /getEntityRecord"[\s\S]*?group_id: gId \|\| null,[\s\S]*?empresa_id: eId \|\| null/);
+  assert.doesNotMatch(statusSource, /catch \(_\)/);
+  assert.match(sortedHookSource, /entityListSorted"[\s\S]*?group_id: grupoAtual\?\.id[\s\S]*?empresa_id: empresaAtual\?\.id/);
+  assert.equal((viewerSource.match(/entityListSorted"/g) || []).length >= 2, true);
+  assert.equal((viewerSource.match(/group_id: groupId,/g) || []).length >= 2, true);
+  assert.equal((viewerSource.match(/empresa_id: empresaId,/g) || []).length >= 2, true);
+});

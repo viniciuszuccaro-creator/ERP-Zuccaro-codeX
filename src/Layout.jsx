@@ -332,6 +332,8 @@ function LayoutContent({ children, currentPageName }) {
         const res = await base44.functions.invoke('getEntityRecord', {
           entityName: 'ConfiguracaoSistema',
           filter: { chave },
+          group_id: empresaAtual?.group_id || empresaAtual?.grupo_id || null,
+          empresa_id: empresaAtual?.id || null,
           limit: 1,
         });
         const cfg = Array.isArray(res?.data) ? (res.data[0] || null) : null;
