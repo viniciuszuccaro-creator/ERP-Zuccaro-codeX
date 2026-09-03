@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -57,4 +57,15 @@ test('historical artifacts stay inventoried and are identified for operational v
     'src/components/README.md.jsx',
     'src/components/reports/rhf_zod_report.jsx',
   ]);
+});
+
+test('sensitive intercompany persistence keeps group scope and summarized auditing', async () => {
+  const transferSource = await readFile(new URL('../base44/functions/intercompanyTransfer/entry.ts', import.meta.url), 'utf8');
+  const conflictSource = await readFile(new URL('../base44/functions/conflictPolicy/entry.ts', import.meta.url), 'utf8');
+
+  assert.match(transferSource, /fromGroupId !== toGroupId/);
+  assert.match(transferSource, /group_id: groupId/);
+  assert.match(transferSource, /requireEntityGuard/);
+  assert.doesNotMatch(conflictSource, /dados_anteriores:\s*current/);
+  assert.match(conflictSource, /total_campos_alterados/);
 });

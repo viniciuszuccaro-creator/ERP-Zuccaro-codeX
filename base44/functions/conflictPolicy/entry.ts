@@ -2,6 +2,16 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 import { z } from 'npm:zod@3.24.2';
 import { requireEntityGuard } from './_lib/security/guardCallPolicy.js';
 
+const reportConflictPolicyFailure = (operation, error, context = {}) => {
+  console.error('[conflictPolicy] ' + operation, { error: error?.message || String(error), ...context });
+};
+
+const summarizeMerge = (current, merged) => {
+  const keys = new Set([...Object.keys(current || {}), ...Object.keys(merged || {})]);
+  const changedFields = [...keys].filter((key) => current?.[key] !== merged?.[key]);
+  return { campos_alterados: changedFields.slice(0, 100), total_campos_alterados: changedFields.length };
+};
+
 // Política de conflitos multiempresa: define prevalência e merge auditável
 // Regras padrão: empresa > grupo para campos operacionais; grupo > empresa para catálogos/configs
 // Payload: { entity_name, group_id?, empresa_id?, source: 'up'|'down', current, incoming }
@@ -59,11 +69,10 @@ Deno.serve(async (req) => {
         tipo_auditoria: 'sistema',
         entidade: 'ConflictPolicy',
         descricao: `Merge ${entity_name} (${source})`,
-        dados_anteriores: current,
-        dados_novos: merged,
+        dados_novos: { entity_name, source, ...summarizeMerge(current, merged) },
         data_hora: new Date().toISOString()
       });
-    } catch (_) {}
+    } catch (error) { reportConflictPolicyFailure('auditoria', error, { entity_name, group_id, empresa_id }); }
 
     return Response.json({ ok: true, merged, policy: { entity_name, source, preferIncoming } });
   } catch (error) {

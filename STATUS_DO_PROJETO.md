@@ -1,3 +1,17 @@
+### Financeiro - Persistência Interempresas com Escopo Estrito
+- Continuei o plano salvo revisando persistência sensível e isolamento entre empresas.
+- `intercompanyTransfer` deixou de conter a declaração duplicada de usuário que tornava o arquivo inválido.
+- A transferência agora exige empresas distintas, existentes e pertencentes ao mesmo `group_id`.
+- O RBAC backend é validado separadamente para a empresa de origem e a empresa de destino.
+- `ContaPagar` e `ContaReceber` passam a ser criadas com `group_id` e `empresa_id`, preservando a ligação atual entre os lançamentos.
+- A descrição recebida é sanitizada e limitada antes da persistência.
+- Auditorias da transferência incluem Grupo/Empresa e identificadores mínimos, sem gravar a descrição livre.
+- `conflictPolicy` deixou de registrar os documentos completos antes/depois e agora audita somente nomes e quantidade de campos alterados.
+- Falhas auxiliares de auditoria deixaram de ser silenciosas e passaram a registrar contexto técnico seguro.
+- O teste existente de baseline foi ampliado para proteger escopo interempresas e auditoria resumida.
+- Validações concluídas: `node --check`, `npm test` (28/28), `npm run build`, `npm run audit:baseline` e `git diff --check` passaram.
+- Mantida a Regra-Mãe: somente fluxos e testes existentes foram melhorados, sem criar módulo, tela ou rota e sem remover funcionalidade.
+- Próximo passo sugerido: endurecer `syncGroupCompany`, removendo fallback global de empresas, exigindo autorização interna/RBAC e restringindo mapas ao Grupo/Empresa.
 ### Fiscal/Importação - Escopo e Auditoria Segura
 - Continuei o próximo lote salvo nos fluxos existentes de autorização de NF-e, leitura de planilhas e propagação Grupo/Empresas.
 - `onNotaFiscalAuthorized` agora resolve e valida `group_id`/`empresa_id` e rejeita NotaFiscal, Pedido, Produto e Cliente fora do contexto.
