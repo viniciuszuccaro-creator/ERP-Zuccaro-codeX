@@ -28,8 +28,9 @@ export default function TesteBoletos({ configuracao, windowMode = false }) {
 
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || user?.grupo_atual_id || user?.grupo_padrao_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
-  const podeTestar = isAdmin() || hasPermission("Sistema", "Integracoes", "editar") || hasPermission("Sistema", "Integrações", "editar");
+  const contextoValido = Boolean(groupId);
+  const podeTestar = isAdmin() || hasPermission("Sistema", "Integracoes", "executar") || hasPermission("Sistema", "Integrações", "executar");
+  const podeVisualizar = isAdmin() || hasPermission("Sistema", "Integracoes", "visualizar") || hasPermission("Sistema", "Integrações", "visualizar");
 
   const auditarTeste = async (acao, descricao, dadosNovos = null) => {
     try {
@@ -43,6 +44,7 @@ export default function TesteBoletos({ configuracao, windowMode = false }) {
         entidade: "TesteBoletos",
         descricao,
         dados_novos: dadosNovos,
+        sucesso: !/^(Bloqueio|Erro)/.test(acao),
         data_hora: new Date().toISOString(),
       });
     } catch (error) {
@@ -57,7 +59,7 @@ export default function TesteBoletos({ configuracao, windowMode = false }) {
         description: "Selecione grupo ou empresa antes de testar boleto/PIX.",
         variant: "destructive"
       });
-      await auditarTeste("Bloqueio sem contexto", "Tentativa de testar boleto/PIX sem grupo ou empresa.", { valor_teste: valorTeste, cliente_teste: clienteTeste });
+      await auditarTeste("Bloqueio sem contexto", "Tentativa de testar boleto/PIX sem grupo ou empresa.", { valor_informado: Boolean(valorTeste), cliente_informado: Boolean(clienteTeste) });
       return;
     }
     if (!podeTestar) {
@@ -66,7 +68,7 @@ export default function TesteBoletos({ configuracao, windowMode = false }) {
         description: "Seu perfil nao permite executar testes de integracoes.",
         variant: "destructive"
       });
-      await auditarTeste("Bloqueio por permissao", "Tentativa de testar boleto/PIX sem permissao.", { valor_teste: valorTeste, cliente_teste: clienteTeste });
+      await auditarTeste("Bloqueio por permissao", "Tentativa de testar boleto/PIX sem permissao.", { valor_informado: Boolean(valorTeste), cliente_informado: Boolean(clienteTeste) });
       return;
     }
     if (!valorTeste || parseFloat(valorTeste) <= 0) {
@@ -108,7 +110,7 @@ export default function TesteBoletos({ configuracao, windowMode = false }) {
       setResultado(boletoSimulado);
       await auditarTeste("Teste Boleto PIX", "Teste simulado de boleto e PIX executado.", {
         valor: boletoSimulado.valor,
-        cliente: boletoSimulado.cliente,
+        cliente_informado: Boolean(boletoSimulado.cliente),
         provedor: boletoSimulado.provedor,
         id_cobranca: boletoSimulado.id_cobranca,
       });
@@ -118,15 +120,12 @@ export default function TesteBoletos({ configuracao, windowMode = false }) {
         description: `Boleto e PIX gerados com sucesso`
       });
     } catch (error) {
-      setResultado({
-        status: 'error',
-        mensagem: error.message
-      });
-      await auditarTeste("Erro Teste Boleto PIX", "Falha no teste simulado de boleto e PIX.", { erro: error.message, valor_teste: valorTeste, cliente_teste: clienteTeste });
-      
+      console.warn("[TesteBoletos] Falha na simulacao:", error);
+      setResultado({ status: 'error', mensagem: 'Nao foi possivel concluir o teste de boleto e PIX.' });
+      await auditarTeste("Erro Teste Boleto PIX", "Falha no teste simulado de boleto e PIX.", { valor_informado: Boolean(valorTeste), cliente_informado: Boolean(clienteTeste), tipo_erro: error?.name || 'Error' });
       toast({
-        title: "❌ Erro na Geração",
-        description: error.message,
+        title: "Erro na geracao de teste",
+        description: "Nao foi possivel concluir o teste de boleto e PIX.",
         variant: "destructive"
       });
     } finally {
@@ -145,17 +144,39 @@ export default function TesteBoletos({ configuracao, windowMode = false }) {
       return;
     }
     if (resultado?.pix?.copia_cola) {
-      navigator.clipboard.writeText(resultado.pix.copia_cola);
-      await auditarTeste("Copiar PIX", "Codigo PIX copia e cola copiado em teste.", { id_cobranca: resultado?.id_cobranca || null });
-      toast({
-        title: "✅ Código PIX Copiado!",
-        description: "Cole no app do seu banco"
-      });
+      try {
+        await navigator.clipboard.writeText(resultado.pix.copia_cola);
+        await auditarTeste("Copiar PIX", "Codigo PIX copia e cola copiado em teste.", { id_cobranca: resultado?.id_cobranca || null });
+        toast({ title: "Codigo PIX copiado!", description: "Cole no app do seu banco" });
+      } catch (error) {
+        console.warn("[TesteBoletos] Falha ao copiar PIX:", error);
+        await auditarTeste("Erro Copiar PIX", "Falha ao copiar codigo PIX de teste.", { id_cobranca: resultado?.id_cobranca || null, tipo_erro: error?.name || 'Error' });
+        toast({ title: "Nao foi possivel copiar o codigo PIX.", variant: "destructive" });
+      }
+    }
+  };
+
+  const abrirBoleto = async () => {
+    if (!contextoValido || !podeVisualizar) {
+      await auditarTeste(contextoValido ? "Bloqueio por permissao" : "Bloqueio sem contexto", "Tentativa de abrir boleto de teste.");
+      toast({ title: "Acao bloqueada", variant: "destructive" });
+      return;
+    }
+    try {
+      const destino = new URL(resultado?.boleto?.url_pdf || '');
+      if (destino.protocol !== 'https:') throw new Error('protocolo_invalido');
+      const novaJanela = window.open(destino.toString(), '_blank', 'noopener,noreferrer');
+      if (novaJanela) novaJanela.opener = null;
+      await auditarTeste("Visualizacao Boleto", "Boleto PDF de teste aberto.", { id_cobranca: resultado?.id_cobranca || null });
+    } catch (error) {
+      console.warn("[TesteBoletos] Falha ao abrir boleto:", error);
+      await auditarTeste("Erro Visualizacao Boleto", "Falha ao abrir boleto PDF de teste.", { id_cobranca: resultado?.id_cobranca || null, tipo_erro: error?.name || 'Error' });
+      toast({ title: "Nao foi possivel abrir o boleto.", variant: "destructive" });
     }
   };
 
   return (
-    <div className={`space-y-4 ${windowMode ? 'w-full h-full overflow-auto p-6 bg-white' : ''}`}>
+    <div className={`w-full h-full space-y-4 ${windowMode ? 'overflow-auto p-6 bg-white' : ''}`}>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -173,7 +194,7 @@ export default function TesteBoletos({ configuracao, windowMode = false }) {
             </AlertDescription>
           </Alert>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="valor_teste">Valor do Teste (R$)</Label>
               <Input
@@ -185,7 +206,7 @@ export default function TesteBoletos({ configuracao, windowMode = false }) {
                 placeholder="150.00"
                 disabled={!contextoValido || !podeTestar}
                 data-action="Integracoes.TesteBoletos.valorTeste"
-                data-permission="Sistema.Integracoes.editar"
+                data-permission="Sistema.Integracoes.executar"
                 data-context-required="group-or-company"
               />
             </div>
@@ -196,9 +217,10 @@ export default function TesteBoletos({ configuracao, windowMode = false }) {
                 value={clienteTeste}
                 onChange={(e) => setClienteTeste(e.target.value)}
                 placeholder="Nome do cliente..."
+                maxLength={120}
                 disabled={!contextoValido || !podeTestar}
                 data-action="Integracoes.TesteBoletos.clienteTeste"
-                data-permission="Sistema.Integracoes.editar"
+                data-permission="Sistema.Integracoes.executar"
                 data-context-required="group-or-company"
               />
             </div>
@@ -221,7 +243,7 @@ export default function TesteBoletos({ configuracao, windowMode = false }) {
             disabled={testando || !contextoValido || !podeTestar}
             className="w-full bg-green-600 hover:bg-green-700"
             data-action="Integracoes.TesteBoletos.executar"
-            data-permission="Sistema.Integracoes.editar"
+            data-permission="Sistema.Integracoes.executar"
             data-context-required="group-or-company"
             data-sensitive="true"
           >
@@ -256,7 +278,7 @@ export default function TesteBoletos({ configuracao, windowMode = false }) {
                       {resultado.boleto.linha_digitavel}
                     </p>
                   </div>
-                  <Button size="sm" variant="outline" className="w-full" data-action="Integracoes.TesteBoletos.verPdf" data-permission="Sistema.Integracoes.visualizar" data-context-required="group-or-company" data-sensitive="true">
+                  <Button size="sm" variant="outline" className="w-full" onClick={abrirBoleto} disabled={!contextoValido || !podeVisualizar} data-action="Integracoes.TesteBoletos.verPdf" data-permission="Sistema.Integracoes.visualizar" data-context-required="group-or-company" data-sensitive="true">
                     <Eye className="w-4 h-4 mr-1" />
                     Ver Boleto PDF
                   </Button>
@@ -291,7 +313,7 @@ export default function TesteBoletos({ configuracao, windowMode = false }) {
                     className="w-full bg-green-600 hover:bg-green-700"
                     disabled={!contextoValido || !podeTestar}
                     data-action="Integracoes.TesteBoletos.copiarPix"
-                    data-permission="Sistema.Integracoes.editar"
+                    data-permission="Sistema.Integracoes.executar"
                     data-context-required="group-or-company"
                     data-sensitive="true"
                   >

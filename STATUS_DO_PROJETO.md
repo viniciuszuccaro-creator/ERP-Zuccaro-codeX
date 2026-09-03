@@ -1,3 +1,19 @@
+### Integracoes - Testes Tecnicos com Escopo e Acoes Funcionais
+- Continuei o plano salvo a partir do commit `d67da533`, fortalecendo os quatro testes tecnicos existentes de NF-e, boletos, transportadoras e Google Maps.
+- Todos os testes agora exigem `group_id`; quando o escopo selecionado for Empresa, o `empresa_id` continua obrigatorio e vinculado ao Grupo.
+- A execucao deixou de reutilizar permissao de edicao e passou a exigir `Sistema.Integracoes.executar`; a visualizacao de XML, DANFE e boleto exige permissao granular de visualizar.
+- Os botoes existentes Ver XML, Ver DANFE e Ver Boleto PDF passaram a funcionar com validacao de URL HTTPS, isolamento da janela aberta e auditoria resumida.
+- A copia do PIX passou a aguardar o clipboard, tratar falhas e registrar somente o tipo da operacao.
+- Auditorias de bloqueio e erro agora sao marcadas como malsucedidas e registram apenas indicadores, tipo de erro e contexto Grupo/Empresa.
+- Numero de pedido, cliente, CEP, enderecos, coordenadas e mensagens brutas de excecao deixaram de ser persistidos nas auditorias.
+- Campos livres receberam limites de tamanho e grades de boleto e transportadora foram ajustadas para celular, tablet e desktop.
+- Os containers principais dos quatro componentes foram alinhados a `w-full h-full`, preservando o uso em janela e o fluxo visual atual.
+- O teste de baseline existente foi ampliado para impedir regressao de contexto, RBAC por execucao, auditoria segura e funcionamento dos botoes de documentos.
+- Validacoes concluidas: teste direcionado (1/1), `npm test` (38/38), `npm run build`, `npm run audit:baseline` e `git diff --check` passaram.
+- O baseline permaneceu em 179 capturas operacionais silenciosas; controles com marcador de permissao aumentaram de 1506 para 1507.
+- Mantida a Regra-Mae: somente componentes, teste e status existentes foram melhorados; nenhuma tela, funcionalidade, rota, modulo ou arquivo de projeto foi criado ou removido.
+- Proximo passo sugerido: revisar as configuracoes existentes de WhatsApp Business e sincronizacao de marketplaces, reforcando contexto Grupo/Empresa, RBAC por acao, persistencia minima e auditoria sem credenciais.
+
 ### Integracoes - Status Seguro, RBAC e Verificadores Multiempresa
 - Continuei o plano salvo a partir do commit `b212afa0`, fortalecendo o painel existente `StatusIntegracoes` e seus tres verificadores.
 - Consultas e persistencia de configuracoes agora exigem e transportam `group_id` e `empresa_id` no contexto de empresa; o contexto de Grupo permanece restrito ao `group_id`.

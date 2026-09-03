@@ -27,8 +27,8 @@ export default function TesteGoogleMaps({ configuracao, windowMode = false }) {
 
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || user?.grupo_atual_id || user?.grupo_padrao_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
-  const podeTestar = isAdmin() || hasPermission("Sistema", "Integracoes", "editar") || hasPermission("Sistema", "Integrações", "editar");
+  const contextoValido = Boolean(groupId);
+  const podeTestar = isAdmin() || hasPermission("Sistema", "Integracoes", "executar") || hasPermission("Sistema", "Integrações", "executar");
 
   const auditarTeste = async (acao, descricao, dadosNovos = null) => {
     try {
@@ -42,6 +42,7 @@ export default function TesteGoogleMaps({ configuracao, windowMode = false }) {
         entidade: "TesteGoogleMaps",
         descricao,
         dados_novos: dadosNovos,
+        sucesso: !/^(Bloqueio|Erro)/.test(acao),
         data_hora: new Date().toISOString(),
       });
     } catch (error) {
@@ -56,7 +57,7 @@ export default function TesteGoogleMaps({ configuracao, windowMode = false }) {
         description: "Selecione grupo ou empresa antes de testar Maps.",
         variant: "destructive"
       });
-      await auditarTeste("Bloqueio sem contexto", "Tentativa de testar Google Maps sem grupo ou empresa.", { endereco_teste: enderecoTeste });
+      await auditarTeste("Bloqueio sem contexto", "Tentativa de testar Google Maps sem grupo ou empresa.", { endereco_informado: Boolean(enderecoTeste) });
       return;
     }
     if (!podeTestar) {
@@ -65,7 +66,7 @@ export default function TesteGoogleMaps({ configuracao, windowMode = false }) {
         description: "Seu perfil nao permite executar testes de integracoes.",
         variant: "destructive"
       });
-      await auditarTeste("Bloqueio por permissao", "Tentativa de testar Google Maps sem permissao.", { endereco_teste: enderecoTeste });
+      await auditarTeste("Bloqueio por permissao", "Tentativa de testar Google Maps sem permissao.", { endereco_informado: Boolean(enderecoTeste) });
       return;
     }
     if (!enderecoTeste) {
@@ -116,9 +117,8 @@ export default function TesteGoogleMaps({ configuracao, windowMode = false }) {
         rota: rotaSimulada
       });
       await auditarTeste("Teste Google Maps", "Teste simulado de geocodificacao e rota executado.", {
-        endereco: enderecoTeste,
-        latitude: lat,
-        longitude: lng,
+        endereco_informado: Boolean(enderecoTeste),
+        rota_calculada: true,
         distancia_km: rotaSimulada.distancia_km,
       });
 
@@ -127,15 +127,12 @@ export default function TesteGoogleMaps({ configuracao, windowMode = false }) {
         description: `Coordenadas encontradas: ${lat.toFixed(6)}, ${lng.toFixed(6)}`
       });
     } catch (error) {
-      setResultado({
-        status: 'error',
-        mensagem: error.message
-      });
-      await auditarTeste("Erro Teste Google Maps", "Falha no teste simulado de Google Maps.", { erro: error.message, endereco_teste: enderecoTeste });
-      
+      console.warn("[TesteGoogleMaps] Falha na simulacao:", error);
+      setResultado({ status: 'error', mensagem: 'Nao foi possivel concluir o teste do Google Maps.' });
+      await auditarTeste("Erro Teste Google Maps", "Falha no teste simulado de Google Maps.", { endereco_informado: Boolean(enderecoTeste), tipo_erro: error?.name || 'Error' });
       toast({
-        title: "❌ Erro no Teste",
-        description: error.message,
+        title: "Erro no teste",
+        description: "Nao foi possivel concluir o teste do Google Maps.",
         variant: "destructive"
       });
     } finally {
@@ -144,7 +141,7 @@ export default function TesteGoogleMaps({ configuracao, windowMode = false }) {
   };
 
   return (
-    <div className={`space-y-4 ${windowMode ? 'w-full h-full overflow-auto p-6 bg-white' : ''}`}>
+    <div className={`w-full h-full space-y-4 ${windowMode ? 'overflow-auto p-6 bg-white' : ''}`}>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -169,9 +166,10 @@ export default function TesteGoogleMaps({ configuracao, windowMode = false }) {
               value={enderecoTeste}
               onChange={(e) => setEnderecoTeste(e.target.value)}
               placeholder="Digite um endereço completo..."
+              maxLength={200}
               disabled={!contextoValido || !podeTestar}
               data-action="Integracoes.TesteGoogleMaps.enderecoTeste"
-              data-permission="Sistema.Integracoes.editar"
+              data-permission="Sistema.Integracoes.executar"
               data-context-required="group-or-company"
             />
           </div>
@@ -190,7 +188,7 @@ export default function TesteGoogleMaps({ configuracao, windowMode = false }) {
             disabled={testando || !contextoValido || !podeTestar}
             className="w-full bg-red-600 hover:bg-red-700"
             data-action="Integracoes.TesteGoogleMaps.executar"
-            data-permission="Sistema.Integracoes.editar"
+            data-permission="Sistema.Integracoes.executar"
             data-context-required="group-or-company"
             data-sensitive="true"
           >

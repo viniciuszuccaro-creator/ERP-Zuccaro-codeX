@@ -29,8 +29,8 @@ export default function TesteTransportadoras({ configuracao, windowMode = false 
 
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || user?.grupo_atual_id || user?.grupo_padrao_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
-  const podeTestar = isAdmin() || hasPermission("Sistema", "Integracoes", "editar") || hasPermission("Sistema", "Integrações", "editar");
+  const contextoValido = Boolean(groupId);
+  const podeTestar = isAdmin() || hasPermission("Sistema", "Integracoes", "executar") || hasPermission("Sistema", "Integrações", "executar");
 
   const auditarTeste = async (acao, descricao, dadosNovos = null) => {
     try {
@@ -44,6 +44,7 @@ export default function TesteTransportadoras({ configuracao, windowMode = false 
         entidade: "TesteTransportadoras",
         descricao,
         dados_novos: dadosNovos,
+        sucesso: !/^(Bloqueio|Erro)/.test(acao),
         data_hora: new Date().toISOString(),
       });
     } catch (error) {
@@ -58,7 +59,7 @@ export default function TesteTransportadoras({ configuracao, windowMode = false 
         description: "Selecione grupo ou empresa antes de testar transportadoras.",
         variant: "destructive"
       });
-      await auditarTeste("Bloqueio sem contexto", "Tentativa de testar transportadoras sem grupo ou empresa.", { cep_origem: cepOrigem, cep_destino: cepDestino, peso });
+      await auditarTeste("Bloqueio sem contexto", "Tentativa de testar transportadoras sem grupo ou empresa.", { origem_informada: Boolean(cepOrigem), destino_informado: Boolean(cepDestino), peso_informado: Boolean(peso) });
       return;
     }
     if (!podeTestar) {
@@ -67,7 +68,7 @@ export default function TesteTransportadoras({ configuracao, windowMode = false 
         description: "Seu perfil nao permite executar testes de integracoes.",
         variant: "destructive"
       });
-      await auditarTeste("Bloqueio por permissao", "Tentativa de testar transportadoras sem permissao.", { cep_origem: cepOrigem, cep_destino: cepDestino, peso });
+      await auditarTeste("Bloqueio por permissao", "Tentativa de testar transportadoras sem permissao.", { origem_informada: Boolean(cepOrigem), destino_informado: Boolean(cepDestino), peso_informado: Boolean(peso) });
       return;
     }
     if (!cepOrigem || !cepDestino || !peso) {
@@ -121,8 +122,8 @@ export default function TesteTransportadoras({ configuracao, windowMode = false 
         peso_kg: parseFloat(peso)
       });
       await auditarTeste("Teste Transportadoras", "Teste simulado de cotacao de frete executado.", {
-        cep_origem: cepOrigem,
-        cep_destino: cepDestino,
+        origem_informada: Boolean(cepOrigem),
+        destino_informado: Boolean(cepDestino),
         peso_kg: parseFloat(peso),
         opcoes: fretes.length,
       });
@@ -132,15 +133,12 @@ export default function TesteTransportadoras({ configuracao, windowMode = false 
         description: `${fretes.length} opções de frete encontradas`
       });
     } catch (error) {
-      setResultado({
-        status: 'error',
-        mensagem: error.message
-      });
-      await auditarTeste("Erro Teste Transportadoras", "Falha no teste simulado de transportadoras.", { erro: error.message, cep_origem: cepOrigem, cep_destino: cepDestino, peso });
-      
+      console.warn("[TesteTransportadoras] Falha na simulacao:", error);
+      setResultado({ status: 'error', mensagem: 'Nao foi possivel concluir o teste de frete.' });
+      await auditarTeste("Erro Teste Transportadoras", "Falha no teste simulado de transportadoras.", { origem_informada: Boolean(cepOrigem), destino_informado: Boolean(cepDestino), peso_informado: Boolean(peso), tipo_erro: error?.name || 'Error' });
       toast({
-        title: "❌ Erro na Cotação",
-        description: error.message,
+        title: "Erro na cotacao de teste",
+        description: "Nao foi possivel concluir o teste de frete.",
         variant: "destructive"
       });
     } finally {
@@ -149,7 +147,7 @@ export default function TesteTransportadoras({ configuracao, windowMode = false 
   };
 
   return (
-    <div className={`space-y-4 ${windowMode ? 'w-full h-full overflow-auto p-6 bg-white' : ''}`}>
+    <div className={`w-full h-full space-y-4 ${windowMode ? 'overflow-auto p-6 bg-white' : ''}`}>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -167,7 +165,7 @@ export default function TesteTransportadoras({ configuracao, windowMode = false 
             </AlertDescription>
           </Alert>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="cep_origem">CEP Origem</Label>
               <Input
@@ -178,7 +176,7 @@ export default function TesteTransportadoras({ configuracao, windowMode = false 
                 maxLength="9"
                 disabled={!contextoValido || !podeTestar}
                 data-action="Integracoes.TesteTransportadoras.cepOrigem"
-                data-permission="Sistema.Integracoes.editar"
+                data-permission="Sistema.Integracoes.executar"
                 data-context-required="group-or-company"
               />
             </div>
@@ -192,7 +190,7 @@ export default function TesteTransportadoras({ configuracao, windowMode = false 
                 maxLength="9"
                 disabled={!contextoValido || !podeTestar}
                 data-action="Integracoes.TesteTransportadoras.cepDestino"
-                data-permission="Sistema.Integracoes.editar"
+                data-permission="Sistema.Integracoes.executar"
                 data-context-required="group-or-company"
               />
             </div>
@@ -207,7 +205,7 @@ export default function TesteTransportadoras({ configuracao, windowMode = false 
                 placeholder="25.0"
                 disabled={!contextoValido || !podeTestar}
                 data-action="Integracoes.TesteTransportadoras.peso"
-                data-permission="Sistema.Integracoes.editar"
+                data-permission="Sistema.Integracoes.executar"
                 data-context-required="group-or-company"
               />
             </div>
@@ -227,7 +225,7 @@ export default function TesteTransportadoras({ configuracao, windowMode = false 
             disabled={testando || !contextoValido || !podeTestar}
             className="w-full bg-orange-600 hover:bg-orange-700"
             data-action="Integracoes.TesteTransportadoras.executar"
-            data-permission="Sistema.Integracoes.editar"
+            data-permission="Sistema.Integracoes.executar"
             data-context-required="group-or-company"
             data-sensitive="true"
           >

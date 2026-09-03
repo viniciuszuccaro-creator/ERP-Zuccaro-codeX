@@ -227,3 +227,27 @@ test('integration status enforces scope, RBAC and credential-free results', asyn
   assert.match(whatsappSource, /verificarConexao\(empresaId, groupId\)[\s\S]*?verificarConfiguracao\(empresaId, groupId\)/);
   assert.doesNotMatch(whatsappSource, /invoke\('whatsappSend', \{ action: 'status'/);
 });
+
+test('technical integration tests require execution permission and safe auditing', async () => {
+  const files = ['TesteNFe.jsx', 'TesteBoletos.jsx', 'TesteTransportadoras.jsx', 'TesteGoogleMaps.jsx'];
+  const sources = await Promise.all(files.map((file) => readFile(new URL(`../src/components/integracoes/${file}`, import.meta.url), 'utf8')));
+
+  for (const source of sources) {
+    assert.match(source, /const contextoValido = Boolean\(groupId\)/);
+    assert.match(source, /hasPermission\("Sistema", "Integracoes", "executar"\)/);
+    assert.match(source, /data-permission="Sistema\.Integracoes\.executar"/);
+    assert.match(source, /sucesso: !\/\^\(Bloqueio\|Erro\)\//);
+    assert.match(source, /w-full h-full space-y-4/);
+    assert.doesNotMatch(source, /mensagem: error\.message|description: error\.message|erro: error\.message/);
+  }
+
+  const [nfe, boletos, transportadoras, maps] = sources;
+  assert.match(nfe, /onClick=\{\(\) => abrirDocumento\(resultado\.xml_url, 'xml'\)\}/);
+  assert.match(nfe, /onClick=\{\(\) => abrirDocumento\(resultado\.pdf_url, 'danfe'\)\}/);
+  assert.doesNotMatch(nfe, /pedido_teste: pedidoTeste/);
+  assert.match(boletos, /onClick=\{abrirBoleto\}/);
+  assert.match(boletos, /await navigator\.clipboard\.writeText/);
+  assert.doesNotMatch(boletos, /cliente_teste: clienteTeste|cliente: boletoSimulado\.cliente/);
+  assert.match(transportadoras, /origem_informada: Boolean\(cepOrigem\)/);
+  assert.match(maps, /endereco_informado: Boolean\(enderecoTeste\)/);
+});

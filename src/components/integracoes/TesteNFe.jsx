@@ -27,8 +27,9 @@ export default function TesteNFe({ configuracao, windowMode = false }) {
 
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || user?.grupo_atual_id || user?.grupo_padrao_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
-  const podeTestar = isAdmin() || hasPermission("Sistema", "Integracoes", "editar") || hasPermission("Sistema", "Integrações", "editar");
+  const contextoValido = Boolean(groupId);
+  const podeTestar = isAdmin() || hasPermission("Sistema", "Integracoes", "executar") || hasPermission("Sistema", "Integrações", "executar");
+  const podeVisualizar = isAdmin() || hasPermission("Sistema", "Integracoes", "visualizar") || hasPermission("Sistema", "Integrações", "visualizar");
 
   const auditarTeste = async (acao, descricao, dadosNovos = null) => {
     try {
@@ -42,6 +43,7 @@ export default function TesteNFe({ configuracao, windowMode = false }) {
         entidade: "TesteNFe",
         descricao,
         dados_novos: dadosNovos,
+        sucesso: !/^(Bloqueio|Erro)/.test(acao),
         data_hora: new Date().toISOString(),
       });
     } catch (error) {
@@ -56,7 +58,7 @@ export default function TesteNFe({ configuracao, windowMode = false }) {
         description: "Selecione grupo ou empresa antes de testar NF-e.",
         variant: "destructive"
       });
-      await auditarTeste("Bloqueio sem contexto", "Tentativa de testar NF-e sem grupo ou empresa.", { pedido_teste: pedidoTeste || null });
+      await auditarTeste("Bloqueio sem contexto", "Tentativa de testar NF-e sem grupo ou empresa.", { pedido_informado: Boolean(pedidoTeste) });
       return;
     }
     if (!podeTestar) {
@@ -65,7 +67,7 @@ export default function TesteNFe({ configuracao, windowMode = false }) {
         description: "Seu perfil nao permite executar testes de integracoes.",
         variant: "destructive"
       });
-      await auditarTeste("Bloqueio por permissao", "Tentativa de testar NF-e sem permissao.", { pedido_teste: pedidoTeste || null });
+      await auditarTeste("Bloqueio por permissao", "Tentativa de testar NF-e sem permissao.", { pedido_informado: Boolean(pedidoTeste) });
       return;
     }
 
@@ -92,7 +94,6 @@ export default function TesteNFe({ configuracao, windowMode = false }) {
 
       setResultado(nfeSimulada);
       await auditarTeste("Teste NF-e", "Teste simulado de emissao NF-e executado.", {
-        pedido_teste: pedidoTeste || null,
         numero: nfeSimulada.numero,
         serie: nfeSimulada.serie,
         ambiente: nfeSimulada.ambiente,
@@ -104,15 +105,12 @@ export default function TesteNFe({ configuracao, windowMode = false }) {
         description: `Nota fiscal ${nfeSimulada.numero} emitida com sucesso`
       });
     } catch (error) {
-      setResultado({
-        status: 'error',
-        mensagem: error.message
-      });
-      await auditarTeste("Erro Teste NF-e", "Falha no teste simulado de NF-e.", { erro: error.message, pedido_teste: pedidoTeste || null });
-      
+      console.warn("[TesteNFe] Falha na simulacao:", error);
+      setResultado({ status: 'error', mensagem: 'Nao foi possivel concluir o teste de NF-e.' });
+      await auditarTeste("Erro Teste NF-e", "Falha no teste simulado de NF-e.", { pedido_informado: Boolean(pedidoTeste), tipo_erro: error?.name || 'Error' });
       toast({
-        title: "❌ Erro na Emissão",
-        description: error.message,
+        title: "Erro na emissao de teste",
+        description: "Nao foi possivel concluir o teste de NF-e.",
         variant: "destructive"
       });
     } finally {
@@ -120,8 +118,27 @@ export default function TesteNFe({ configuracao, windowMode = false }) {
     }
   };
 
+  const abrirDocumento = async (url, tipo) => {
+    if (!contextoValido || !podeVisualizar) {
+      await auditarTeste(contextoValido ? "Bloqueio por permissao" : "Bloqueio sem contexto", "Tentativa de abrir documento fiscal de teste.", { tipo });
+      toast({ title: "Acao bloqueada", variant: "destructive" });
+      return;
+    }
+    try {
+      const destino = new URL(url);
+      if (destino.protocol !== 'https:') throw new Error('protocolo_invalido');
+      const novaJanela = window.open(destino.toString(), '_blank', 'noopener,noreferrer');
+      if (novaJanela) novaJanela.opener = null;
+      await auditarTeste("Visualizacao documento", "Documento fiscal de teste aberto.", { tipo });
+    } catch (error) {
+      console.warn("[TesteNFe] Falha ao abrir documento:", error);
+      await auditarTeste("Erro Visualizacao documento", "Falha ao abrir documento fiscal de teste.", { tipo, tipo_erro: error?.name || 'Error' });
+      toast({ title: "Nao foi possivel abrir o documento.", variant: "destructive" });
+    }
+  };
+
   return (
-    <div className={`space-y-4 ${windowMode ? 'w-full h-full overflow-auto p-6 bg-white' : ''}`}>
+    <div className={`w-full h-full space-y-4 ${windowMode ? 'overflow-auto p-6 bg-white' : ''}`}>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -146,9 +163,10 @@ export default function TesteNFe({ configuracao, windowMode = false }) {
               value={pedidoTeste}
               onChange={(e) => setPedidoTeste(e.target.value)}
               placeholder="PED-2025-001"
+              maxLength={80}
               disabled={!contextoValido || !podeTestar}
               data-action="Integracoes.TesteNFe.pedidoTeste"
-              data-permission="Sistema.Integracoes.editar"
+              data-permission="Sistema.Integracoes.executar"
               data-context-required="group-or-company"
             />
           </div>
@@ -170,7 +188,7 @@ export default function TesteNFe({ configuracao, windowMode = false }) {
             disabled={testando || !contextoValido || !podeTestar}
             className="w-full bg-blue-600 hover:bg-blue-700"
             data-action="Integracoes.TesteNFe.executar"
-            data-permission="Sistema.Integracoes.editar"
+            data-permission="Sistema.Integracoes.executar"
             data-context-required="group-or-company"
             data-sensitive="true"
           >
@@ -205,11 +223,11 @@ export default function TesteNFe({ configuracao, windowMode = false }) {
                     <p className="text-xs text-green-700 mt-2">{resultado.mensagem_sefaz}</p>
                   </div>
                   <div className="flex gap-2 mt-3">
-                    <Button size="sm" variant="outline" data-action="Integracoes.TesteNFe.verXml" data-permission="Sistema.Integracoes.visualizar" data-context-required="group-or-company" data-sensitive="true">
+                    <Button size="sm" variant="outline" onClick={() => abrirDocumento(resultado.xml_url, 'xml')} disabled={!contextoValido || !podeVisualizar} data-action="Integracoes.TesteNFe.verXml" data-permission="Sistema.Integracoes.visualizar" data-context-required="group-or-company" data-sensitive="true">
                       <Eye className="w-4 h-4 mr-1" />
                       Ver XML
                     </Button>
-                    <Button size="sm" variant="outline" data-action="Integracoes.TesteNFe.verDanfe" data-permission="Sistema.Integracoes.visualizar" data-context-required="group-or-company" data-sensitive="true">
+                    <Button size="sm" variant="outline" onClick={() => abrirDocumento(resultado.pdf_url, 'danfe')} disabled={!contextoValido || !podeVisualizar} data-action="Integracoes.TesteNFe.verDanfe" data-permission="Sistema.Integracoes.visualizar" data-context-required="group-or-company" data-sensitive="true">
                       <FileText className="w-4 h-4 mr-1" />
                       Ver DANFE
                     </Button>
