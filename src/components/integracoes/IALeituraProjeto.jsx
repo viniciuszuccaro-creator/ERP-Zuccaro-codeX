@@ -1,32 +1,18 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
 import usePermissions from "@/components/lib/usePermissions";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import {
-  Upload,
-  FileText,
-  Sparkles,
-  CheckCircle,
-  AlertCircle,
-  Eye,
-  Edit,
-  Trash2,
-  Copy,
-  Loader2
-} from "lucide-react";
+import IALeituraProjetoResultado from "./IALeituraProjetoResultado";
+import { PROJECT_READING_SCHEMA, createSimulatedProjectReading, normalizeProjectReadingResponse } from "./iaLeituraProjetoData";
+import { FileText, Sparkles, AlertCircle, Loader2 } from "lucide-react";
 
 /**
  * IA de Leitura de Projeto
@@ -34,14 +20,13 @@ import {
  */
 export default function IALeituraProjeto({ configuracao, windowMode = false }) {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const { user } = useUser();
   const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
   const { isAdmin, hasPermission } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || user?.grupo_atual_id || user?.grupo_padrao_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
-  const podeProcessar = isAdmin() || hasPermission("Sistema", "Integracoes", "editar");
+  const contextoValido = Boolean(groupId);
+  const podeProcessar = isAdmin() || hasPermission("Sistema", "Integracoes", "executar");
 
   const auditarLeituraProjeto = async (acao, descricao, dadosNovos = null) => {
     try {
@@ -54,6 +39,7 @@ export default function IALeituraProjeto({ configuracao, windowMode = false }) {
         modulo: 'Integracoes',
         entidade: 'IALeituraProjeto',
         descricao,
+        sucesso: !/^(Bloqueio|Erro)/.test(acao),
         dados_anteriores: null,
         dados_novos: dadosNovos,
         data_hora: new Date().toISOString()
@@ -66,6 +52,16 @@ export default function IALeituraProjeto({ configuracao, windowMode = false }) {
   const [processando, setProcessando] = useState(false);
   const [resultado, setResultado] = useState(null);
   const [modoLeitura, setModoLeitura] = useState('leitura_mista');
+  useEffect(() => {
+    setArquivo(null);
+    setResultado(null);
+  }, [groupId, empresaId]);
+
+  const resumoArquivo = () => ({
+    tipo_arquivo: arquivo?.type || arquivo?.name?.split('.').pop()?.toLowerCase() || 'desconhecido',
+    tamanho_mb: arquivo?.size ? Number((arquivo.size / 1024 / 1024).toFixed(2)) : null,
+    modo_leitura: modoLeitura
+  });
 
   const processarArquivo = async () => {
     if (!arquivo) {
@@ -78,13 +74,13 @@ export default function IALeituraProjeto({ configuracao, windowMode = false }) {
     }
 
     if (!contextoValido) {
-      await auditarLeituraProjeto('Bloqueio sem contexto', 'Tentativa de processar leitura de projeto sem grupo ou empresa.', { nome_arquivo: arquivo?.name || null });
-      toast({ title: "Contexto obrigatorio", description: "Selecione grupo ou empresa antes de processar arquivos com IA.", variant: "destructive" });
+      await auditarLeituraProjeto('Bloqueio sem contexto', 'Tentativa de processar leitura de projeto sem grupo.', resumoArquivo());
+      toast({ title: "Contexto obrigatorio", description: "Selecione um grupo antes de processar arquivos com IA.", variant: "destructive" });
       return;
     }
 
     if (!podeProcessar) {
-      await auditarLeituraProjeto('Bloqueio por permissao', 'Tentativa de processar leitura de projeto sem permissao.', { nome_arquivo: arquivo?.name || null });
+      await auditarLeituraProjeto('Bloqueio por permissao', 'Tentativa de processar leitura de projeto sem permissao.', resumoArquivo());
       toast({ title: "Permissao negada", description: "Seu perfil nao permite processar projetos com IA.", variant: "destructive" });
       return;
     }
@@ -103,10 +99,14 @@ export default function IALeituraProjeto({ configuracao, windowMode = false }) {
         await processarSimulado();
       }
     } catch (error) {
-      console.error("Erro ao processar arquivo:", error);
+      console.warn("Falha tecnica ao processar projeto com IA:", error);
+      await auditarLeituraProjeto('Erro ao Processar Projeto com IA', 'A leitura de projeto falhou por erro tecnico.', {
+        ...resumoArquivo(),
+        tipo_erro: error?.name || 'Error'
+      });
       toast({
-        title: "❌ Erro no processamento",
-        description: error.message || 'Ocorreu um erro ao processar o arquivo.',
+        title: "Erro no processamento",
+        description: 'Nao foi possivel processar o arquivo. Tente novamente.',
         variant: "destructive"
       });
     } finally {
@@ -116,40 +116,7 @@ export default function IALeituraProjeto({ configuracao, windowMode = false }) {
 
   const processarComIAReal = async () => {
     const { file_url } = await base44.integrations.Core.UploadFile({ file: arquivo });
-
-    const schema = {
-      type: "object",
-      properties: {
-        tipo_projeto: { type: "string", enum: ["residencial", "comercial", "industrial", "outro"], description: "Tipo geral do projeto" },
-        elementos_identificados: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              elemento: { type: "string", description: "Identificador do elemento (Ex: V1, C2)" },
-              tipo_peca: {
-                type: "string",
-                enum: ["Coluna", "Viga", "Bloco", "Sapata", "Laje", "Estaca", "Estribo", "Pilar"],
-                description: "Tipo de peça estrutural"
-              },
-              posicao: { type: "string", description: "Posição ou nível do elemento" },
-              bitola_principal: { type: "string", description: "Bitola do ferro principal (Ex: 12.5mm, 16.0mm)" },
-              quantidade_barras: { type: "number", description: "Quantidade de barras de ferro principal" },
-              comprimento_mm: { type: "number", description: "Comprimento do elemento em milímetros" },
-              largura_mm: { type: "number", description: "Largura da seção transversal em milímetros" },
-              altura_mm: { type: "number", description: "Altura da seção transversal em milímetros" },
-              estribo_bitola: { type: "string", description: "Bitola do estribo (Ex: 5.0mm, 6.3mm)" },
-              estribo_espacamento: { type: "number", description: "Espaçamento dos estribos em centímetros" },
-              confianca: { type: "number", description: "Nível de confiança da IA (0-100)" }
-            },
-            required: ["elemento", "tipo_peca", "bitola_principal", "quantidade_barras", "comprimento_mm", "confianca"]
-          },
-          description: "Lista de todos os elementos estruturais identificados"
-        },
-        observacoes: { type: "string", description: "Observações gerais sobre a leitura do projeto" }
-      },
-      required: ["elementos_identificados"]
-    };
+    if (!file_url) throw new Error('InvalidUploadResponse');
 
     const promptIA = `
 Você é um engenheiro especialista em leitura de projetos estruturais.
@@ -163,30 +130,31 @@ Forneça as dimensões em milímetros (mm) e espaçamento de estribos em centím
     const resposta = await base44.integrations.Core.InvokeLLM({
       prompt: promptIA,
       file_urls: [file_url],
-      response_json_schema: schema
+      response_json_schema: PROJECT_READING_SCHEMA
     });
 
-    const totalConfianca = resposta.elementos_identificados.reduce((sum, el) => sum + el.confianca, 0);
-    const confiancaGeral = resposta.elementos_identificados.length > 0 ? totalConfianca / resposta.elementos_identificados.length : 0;
+    const respostaNormalizada = normalizeProjectReadingResponse(resposta);
+    const totalConfianca = respostaNormalizada.elementos_identificados.reduce((sum, el) => sum + el.confianca, 0);
+    const confiancaGeral = respostaNormalizada.elementos_identificados.length > 0
+      ? totalConfianca / respostaNormalizada.elementos_identificados.length
+      : 0;
 
     setResultado({
-      ...resposta,
+      ...respostaNormalizada,
       modo: 'real',
       confianca_geral: confiancaGeral
     });
 
     await auditarLeituraProjeto('Processar Projeto com IA', 'Leitura real de projeto executada com escopo multiempresa.', {
       modo: 'real',
-      modo_leitura: modoLeitura,
-      nome_arquivo: arquivo?.name || null,
-      tamanho_mb: arquivo?.size ? Number((arquivo.size / 1024 / 1024).toFixed(2)) : null,
-      elementos_identificados: resposta.elementos_identificados?.length || 0,
+      ...resumoArquivo(),
+      elementos_identificados: respostaNormalizada.elementos_identificados.length,
       confianca_geral: Number(confiancaGeral.toFixed(2))
     });
 
     toast({
       title: "✅ Sucesso na leitura com IA!",
-      description: `${resposta.elementos_identificados.length} elementos identificados pela IA!`,
+      description: `${respostaNormalizada.elementos_identificados.length} elementos identificados pela IA!`,
       variant: "default"
     });
   };
@@ -194,92 +162,14 @@ Forneça as dimensões em milímetros (mm) e espaçamento de estribos em centím
   const processarSimulado = async () => {
     await new Promise(resolve => setTimeout(resolve, 3000));
 
-    const pecasSimuladas = [
-      {
-        elemento: "V1",
-        posicao: "N1",
-        tipo_peca: "Viga",
-        quantidade: 4,
-        comprimento: 4500,
-        largura: 150,
-        altura: 400,
-        ferro_principal_bitola: "12.5mm",
-        ferro_principal_quantidade: 4,
-        estribo_bitola: "6.3mm",
-        estribo_largura: 150,
-        estribo_altura: 400,
-        estribo_distancia: 15,
-        confianca: 95,
-        status_leitura: "completo",
-        observacoes_ia: "Viga identificada com alta confiança"
-      },
-      {
-        elemento: "C1",
-        posicao: "N1",
-        tipo_peca: "Coluna",
-        quantidade: 8,
-        comprimento: 3000,
-        largura: 200,
-        altura: 200,
-        ferro_principal_bitola: "16.0mm",
-        ferro_principal_quantidade: 8,
-        estribo_bitola: "6.3mm",
-        estribo_largura: 200,
-        estribo_altura: 200,
-        estribo_distancia: 10,
-        confianca: 88,
-        status_leitura: "completo",
-        observacoes_ia: "Coluna com seção quadrada"
-      },
-      {
-        elemento: "V2",
-        posicao: "N1",
-        tipo_peca: "Viga",
-        quantidade: 2,
-        comprimento: 6500,
-        largura: 120,
-        altura: 350,
-        ferro_principal_bitola: "10.0mm",
-        ferro_principal_quantidade: 3,
-        estribo_bitola: "5.0mm",
-        estribo_distancia: 20,
-        confianca: 72,
-        status_leitura: "parcial",
-        observacoes_ia: "Largura do estribo não identificada - preencher manualmente"
-      }
-    ];
-
-    const elementosIdentificados = pecasSimuladas.map(p => ({
-      elemento: p.elemento,
-      tipo_peca: p.tipo_peca,
-      posicao: p.posicao,
-      bitola_principal: p.ferro_principal_bitola,
-      quantidade_barras: p.ferro_principal_quantidade,
-      comprimento_mm: p.comprimento,
-      largura_mm: p.largura,
-      altura_mm: p.altura,
-      estribo_bitola: p.estribo_bitola,
-      estribo_espacamento: p.estribo_distancia,
-      confianca: p.confianca
-    }));
-
-    const totalConfianca = elementosIdentificados.reduce((sum, el) => sum + el.confianca, 0);
-    const confiancaGeral = elementosIdentificados.length > 0 ? totalConfianca / elementosIdentificados.length : 0;
-    const observacoesSimuladas = elementosIdentificados.map(el => `[Simulado] ${el.elemento}: ${el.confianca}% de confiança.`).join(' ');
-
-    setResultado({
-      tipo_projeto: "residencial",
-      elementos_identificados: elementosIdentificados,
-      observacoes: `Simulacao concluida. Total de ${elementosIdentificados.length} elementos identificados. ${observacoesSimuladas}`,
-      modo: 'simulado',
-      confianca_geral: confiancaGeral,
-    });
+    const resultadoSimulado = createSimulatedProjectReading();
+    const elementosIdentificados = resultadoSimulado.elementos_identificados;
+    const confiancaGeral = resultadoSimulado.confianca_geral;
+    setResultado(resultadoSimulado);
 
     await auditarLeituraProjeto('Processar Projeto com IA', 'Leitura simulada de projeto executada com escopo multiempresa.', {
       modo: 'simulado',
-      modo_leitura: modoLeitura,
-      nome_arquivo: arquivo?.name || null,
-      tamanho_mb: arquivo?.size ? Number((arquivo.size / 1024 / 1024).toFixed(2)) : null,
+      ...resumoArquivo(),
       elementos_identificados: elementosIdentificados.length,
       confianca_geral: Number(confiancaGeral.toFixed(2))
     });
@@ -295,7 +185,9 @@ Forneça as dimensões em milímetros (mm) e espaçamento de estribos em centím
     if (!file) return;
 
     const tiposAceitos = ['application/pdf', 'image/png', 'image/jpeg', 'application/dwg', 'application/dxf'];
-    if (!tiposAceitos.some(type => file.type.includes(type)) && !file.name.match(/\.(pdf|dwg|dxf|png|jpg|jpeg)$/i)) {
+    if (!tiposAceitos.includes(file.type) && !file.name.match(/\.(pdf|dwg|dxf|png|jpg|jpeg)$/i)) {
+      setArquivo(null);
+      setResultado(null);
       toast({
         title: "⚠️ Tipo de arquivo não suportado",
         description: "Use PDF, DWG, DXF, PNG ou JPG",
@@ -304,7 +196,9 @@ Forneça as dimensões em milímetros (mm) e espaçamento de estribos em centím
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size === 0 || file.size > 10 * 1024 * 1024) {
+      setArquivo(null);
+      setResultado(null);
       toast({
         title: "⚠️ Arquivo muito grande",
         description: "Tamanho máximo: 10MB",
@@ -318,7 +212,7 @@ Forneça as dimensões em milímetros (mm) e espaçamento de estribos em centím
   };
 
   return (
-    <div className={`space-y-6 ${windowMode ? 'w-full h-full overflow-auto p-6 bg-white' : ''}`}>
+    <div className={`w-full h-full space-y-6 ${windowMode ? 'overflow-auto p-6 bg-white' : ''}`}>
       <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -348,10 +242,10 @@ Forneça as dimensões em milímetros (mm) e espaçamento de estribos em centím
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <Label htmlFor="modoLeitura">Modo de Leitura</Label>
-              <Select value={modoLeitura} onValueChange={setModoLeitura} id="modoLeitura">
+              <Select value={modoLeitura} onValueChange={setModoLeitura} disabled={!contextoValido || !podeProcessar}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o modo de leitura" />
                 </SelectTrigger>
@@ -370,6 +264,9 @@ Forneça as dimensões em milímetros (mm) e espaçamento de estribos em centím
                 type="file"
                 accept=".pdf,.dwg,.dxf,.png,.jpg,.jpeg"
                 onChange={handleUpload}
+                disabled={!contextoValido || !podeProcessar}
+                data-permission="Sistema.Integracoes.executar"
+                data-context-required="group"
               />
             </div>
           </div>
@@ -390,8 +287,8 @@ Forneça as dimensões em milímetros (mm) e espaçamento de estribos em centím
                 disabled={processando || !contextoValido || !podeProcessar}
                 className="bg-purple-600 hover:bg-purple-700"
                 data-action="Integracoes.IALeituraProjeto.processar"
-                data-permission="Sistema.Integracoes.editar"
-                data-context-required="group-or-company"
+                data-permission="Sistema.Integracoes.executar"
+                data-context-required="group"
                 data-sensitive="true"
               >
                 {processando ? (
@@ -411,87 +308,7 @@ Forneça as dimensões em milímetros (mm) e espaçamento de estribos em centím
         </CardContent>
       </Card>
 
-      {resultado && resultado.elementos_identificados && resultado.elementos_identificados.length > 0 && (
-        <Card className="border-2 border-green-200">
-          <CardHeader className="bg-green-50 border-b">
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                  Elementos Identificados: {resultado.elementos_identificados.length} Peças
-                </CardTitle>
-                <p className="text-sm text-slate-600 mt-1">
-                  Revisão dos elementos detectados pela inteligência artificial.
-                  <span className="ml-2 font-medium">Confiança Média: {resultado.confianca_geral.toFixed(0)}%</span>
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => setResultado(null)}
-              >
-                Limpar Resultados
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-slate-50">
-                    <TableHead>Elemento</TableHead>
-                    <TableHead>Posição</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Bitola Principal</TableHead>
-                    <TableHead>Barras</TableHead>
-                    <TableHead>C (mm)</TableHead>
-                    <TableHead>L (mm)</TableHead>
-                    <TableHead>A (mm)</TableHead>
-                    <TableHead>Estribo</TableHead>
-                    <TableHead>Espaçamento (cm)</TableHead>
-                    <TableHead>Confiança</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {resultado.elementos_identificados.map((peca, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell className="font-medium">{peca.elemento}</TableCell>
-                      <TableCell>{peca.posicao || '-'}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{peca.tipo_peca}</Badge>
-                      </TableCell>
-                      <TableCell>{peca.bitola_principal}</TableCell>
-                      <TableCell>{peca.quantidade_barras}</TableCell>
-                      <TableCell>{peca.comprimento_mm}</TableCell>
-                      <TableCell>{peca.largura_mm || '-'}</TableCell>
-                      <TableCell>{peca.altura_mm || '-'}</TableCell>
-                      <TableCell>{peca.estribo_bitola || '-'}</TableCell>
-                      <TableCell>{peca.estribo_espacamento || '-'}</TableCell>
-                      <TableCell>
-                        <Badge
-                          className={
-                            peca.confianca >= 90
-                              ? 'bg-green-100 text-green-700'
-                              : peca.confianca >= 75
-                                ? 'bg-yellow-100 text-yellow-700'
-                                : 'bg-red-100 text-red-700'
-                          }
-                        >
-                          {peca.confianca}%
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            {resultado.observacoes && (
-              <div className="p-4 border-t bg-slate-50 text-sm text-slate-700">
-                <strong>Observações da IA:</strong> {resultado.observacoes}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      <IALeituraProjetoResultado resultado={resultado} onClear={() => setResultado(null)} />
 
       <Card className="bg-purple-50 border-purple-200">
         <CardContent className="p-6">

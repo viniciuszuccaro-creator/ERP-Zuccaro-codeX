@@ -309,3 +309,29 @@ test('remaining WhatsApp and marketplace controls persist safely with action RBA
   assert.match(marketplace, /w-full h-full space-y-6/);
   assert.doesNotMatch(marketplace, /description: error\.message|bg-\$\{mp\.cor\}|text-\$\{mp\.cor\}/);
 });
+
+test('project reading and logistics AI enforce scoped execution with safe audits', async () => {
+  const leitura = await readFile(new URL('../src/components/integracoes/IALeituraProjeto.jsx', import.meta.url), 'utf8');
+  const leituraData = await readFile(new URL('../src/components/integracoes/iaLeituraProjetoData.js', import.meta.url), 'utf8');
+  const previsao = await readFile(new URL('../src/components/integracoes/IAPrevisaoLogistica.jsx', import.meta.url), 'utf8');
+
+  assert.match(leitura, /const contextoValido = Boolean\(groupId\)/);
+  assert.match(leitura, /hasPermission\("Sistema", "Integracoes", "executar"\)/);
+  assert.equal((leitura.match(/data-permission="Sistema\.Integracoes\.executar"/g) || []).length, 2);
+  assert.match(leitura, /sucesso: !\/\^\(Bloqueio\|Erro\)\//);
+  assert.match(leitura, /normalizeProjectReadingResponse\(resposta\)/);
+  assert.match(leitura, /if \(!file_url\) throw new Error\('InvalidUploadResponse'\)/);
+  assert.match(leitura, /w-full h-full space-y-6/);
+  assert.doesNotMatch(leitura, /nome_arquivo:|description: error\.message/);
+  assert.match(leituraData, /slice\(0, 500\)/);
+  assert.match(leituraData, /Math\.min\(100, Math\.max\(0,/);
+
+  assert.match(previsao, /const contextoValido = Boolean\(groupId && empresaId\)/);
+  assert.match(previsao, /hasPermission\("Sistema", "Integracoes", "executar"\)/);
+  assert.equal((previsao.match(/data-permission="Sistema\.Integracoes\.executar"/g) || []).length, 2);
+  assert.match(previsao, /sucesso: !\/\^\(Bloqueio\|Erro\)\//);
+  assert.match(previsao, /setOtimizacoesAplicadas\(\(atuais\) => new Set\(atuais\)\.add\(indice\)\)/);
+  assert.match(previsao, /otimizacoesAplicadas\.has\(idx\) \? 'Aplicada' : alerta\.acao/);
+  assert.match(previsao, /w-full h-full space-y-4/);
+  assert.doesNotMatch(previsao, /\{ titulo: alerta\.titulo, acao: alerta\.acao \}|description: error\.message/);
+});

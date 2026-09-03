@@ -1,13 +1,14 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { Sparkles, TrendingUp, MapPin, Clock, AlertTriangle, CheckCircle, Zap } from "lucide-react";
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { Sparkles, TrendingUp, MapPin, AlertTriangle, CheckCircle, Zap } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
 import usePermissions from "@/components/lib/usePermissions";
+import { createLogisticsForecastSimulation } from "./iaPrevisaoLogisticaData";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -15,6 +16,7 @@ import usePermissions from "@/components/lib/usePermissions";
 export default function IAPrevisaoLogistica({ windowMode = false }) {
   const [analisando, setAnalisando] = useState(false);
   const [previsao, setPrevisao] = useState(null);
+  const [otimizacoesAplicadas, setOtimizacoesAplicadas] = useState(() => new Set());
 
   const { toast } = useToast();
   const { user } = useUser();
@@ -22,8 +24,8 @@ export default function IAPrevisaoLogistica({ windowMode = false }) {
   const { isAdmin, hasPermission } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || user?.grupo_atual_id || user?.grupo_padrao_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
-  const podeExecutarIA = isAdmin() || hasPermission("Sistema", "Integracoes", "editar");
+  const contextoValido = Boolean(groupId && empresaId);
+  const podeExecutarIA = isAdmin() || hasPermission("Sistema", "Integracoes", "executar");
 
   const auditarPrevisao = async (acao, descricao, dadosNovos = null) => {
     try {
@@ -36,6 +38,7 @@ export default function IAPrevisaoLogistica({ windowMode = false }) {
         modulo: 'Integracoes',
         entidade: 'IAPrevisaoLogistica',
         descricao,
+        sucesso: !/^(Bloqueio|Erro)/.test(acao),
         dados_anteriores: null,
         dados_novos: dadosNovos,
         data_hora: new Date().toISOString()
@@ -45,10 +48,15 @@ export default function IAPrevisaoLogistica({ windowMode = false }) {
     }
   };
 
+  useEffect(() => {
+    setPrevisao(null);
+    setOtimizacoesAplicadas(new Set());
+  }, [groupId, empresaId]);
+
   const gerarPrevisao = async () => {
     if (!contextoValido) {
-      await auditarPrevisao('Bloqueio sem contexto', 'Tentativa de gerar previsao logistica sem grupo ou empresa.');
-      toast({ title: "Contexto obrigatorio", description: "Selecione grupo ou empresa antes de executar a IA logistica.", variant: "destructive" });
+      await auditarPrevisao('Bloqueio sem contexto', 'Tentativa de gerar previsao logistica sem grupo e empresa.');
+      toast({ title: "Contexto obrigatorio", description: "Selecione grupo e empresa antes de executar a IA logistica.", variant: "destructive" });
       return;
     }
     if (!podeExecutarIA) {
@@ -58,6 +66,7 @@ export default function IAPrevisaoLogistica({ windowMode = false }) {
     }
     setAnalisando(true);
     setPrevisao(null);
+    setOtimizacoesAplicadas(new Set());
 
     try {
       toast({
@@ -67,78 +76,7 @@ export default function IAPrevisaoLogistica({ windowMode = false }) {
 
       await new Promise(resolve => setTimeout(resolve, 3000));
 
-      const resultado = {
-        proximo_mes: {
-          entregas_previstas: 287,
-          taxa_pontualidade: 94,
-          entregas_criticas: 12,
-          rotas_otimizadas: 45
-        },
-        tendencias: [
-          {
-            mes: "Jan",
-            entregas: 245,
-            pontualidade: 92,
-            criticas: 18
-          },
-          {
-            mes: "Fev",
-            entregas: 267,
-            pontualidade: 91,
-            criticas: 22
-          },
-          {
-            mes: "Mar",
-            entregas: 289,
-            pontualidade: 93,
-            criticas: 15
-          },
-          {
-            mes: "Abr (Prev)",
-            entregas: 287,
-            pontualidade: 94,
-            criticas: 12
-          }
-        ],
-        alertas: [
-          {
-            tipo: "warning",
-            titulo: "Pico de Demanda Detectado",
-            descricao: "Aumento de 15% nas entregas na região Sul previsto para semana 2",
-            acao: "Aumentar capacidade de frota"
-          },
-          {
-            tipo: "info",
-            titulo: "Rota Otimizada Sugerida",
-            descricao: "Nova rota entre SP-RJ economiza 45min e 12km",
-            acao: "Aplicar otimização"
-          },
-          {
-            tipo: "success",
-            titulo: "Melhoria na Pontualidade",
-            descricao: "Taxa de entregas no prazo aumentou 3% no último mês",
-            acao: "Manter padrão"
-          }
-        ],
-        regioes_criticas: [
-          { regiao: "Zona Sul - SP", entregas: 45, risco: "Alto", dias_criticos: "Sexta-feira" },
-          { regiao: "Centro - RJ", entregas: 32, risco: "Médio", dias_criticos: "Segunda-feira" },
-          { regiao: "Norte - BH", entregas: 28, risco: "Baixo", dias_criticos: "-" }
-        ],
-        sugestoes_ia: [
-          "Contratar motorista adicional para região Sul às sextas-feiras",
-          "Antecipar carregamento de pedidos da Zona Sul para quinta à tarde",
-          "Implementar janela de entrega diferenciada para Centro-RJ",
-          "Avaliar parceria com transportadora local em BH",
-          "Criar rota express para entregas críticas (prazo <24h)"
-        ],
-        economia_prevista: {
-          km_economizados: 1250,
-          tempo_economizado_horas: 89,
-          custo_combustivel_economizado: 3750.00,
-          reducao_atrasos_percentual: 18
-        }
-      };
+      const resultado = createLogisticsForecastSimulation();
 
       setPrevisao(resultado);
 
@@ -155,9 +93,13 @@ export default function IAPrevisaoLogistica({ windowMode = false }) {
         description: `${resultado.proximo_mes.entregas_previstas} entregas previstas com ${resultado.proximo_mes.taxa_pontualidade}% de pontualidade`
       });
     } catch (error) {
+      console.warn('Falha tecnica ao gerar previsao logistica:', error);
+      await auditarPrevisao('Erro ao Gerar Previsao Logistica', 'A previsao logistica falhou por erro tecnico.', {
+        tipo_erro: error?.name || 'Error'
+      });
       toast({
-        title: "❌ Erro na Análise",
-        description: error.message,
+        title: "Erro na Analise",
+        description: 'Nao foi possivel gerar a previsao. Tente novamente.',
         variant: "destructive"
       });
     } finally {
@@ -165,25 +107,27 @@ export default function IAPrevisaoLogistica({ windowMode = false }) {
     }
   };
 
-  const aplicarOtimizacao = async (alerta) => {
+  const aplicarOtimizacao = async (alerta, indice) => {
     if (!contextoValido || !podeExecutarIA) {
       toast({
         title: !contextoValido ? "Contexto obrigatorio" : "Permissao negada",
-        description: !contextoValido ? "Selecione grupo ou empresa antes de aplicar sugestoes." : "Seu perfil nao permite aplicar sugestoes logisticas.",
+        description: !contextoValido ? "Selecione grupo e empresa antes de aplicar sugestoes." : "Seu perfil nao permite aplicar sugestoes logisticas.",
         variant: "destructive"
       });
-      await auditarPrevisao(!contextoValido ? 'Bloqueio sem contexto' : 'Bloqueio por permissao', 'Tentativa de aplicar otimizacao logistica bloqueada.', { alerta: alerta?.titulo || null });
+      await auditarPrevisao(!contextoValido ? 'Bloqueio sem contexto' : 'Bloqueio por permissao', 'Tentativa de aplicar otimizacao logistica bloqueada.', {
+        alerta_tipo: alerta?.tipo || 'desconhecido', indice
+      });
       return;
     }
-    await auditarPrevisao('Aplicar Otimizacao Logistica', 'Sugestao logistica marcada como aplicada com escopo multiempresa.', { titulo: alerta.titulo, acao: alerta.acao });
-    toast({
-      title: "✅ Otimização Aplicada!",
-      description: alerta.acao
+    await auditarPrevisao('Aplicar Otimizacao Logistica', 'Sugestao logistica marcada como aplicada com escopo multiempresa.', {
+      alerta_tipo: alerta?.tipo || 'desconhecido', indice
     });
+    setOtimizacoesAplicadas((atuais) => new Set(atuais).add(indice));
+    toast({ title: "Otimizacao Aplicada!", description: "A sugestao foi registrada neste resultado." });
   };
 
   return (
-    <div className={`space-y-4 ${windowMode ? 'w-full h-full overflow-auto p-6 bg-white' : ''}`}>
+    <div className={`w-full h-full space-y-4 ${windowMode ? 'overflow-auto p-6 bg-white' : ''}`}>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -214,8 +158,8 @@ export default function IAPrevisaoLogistica({ windowMode = false }) {
             disabled={analisando || !contextoValido || !podeExecutarIA}
             className="w-full bg-indigo-600 hover:bg-indigo-700"
             data-action="Integracoes.IAPrevisaoLogistica.gerar"
-            data-permission="Sistema.Integracoes.editar"
-            data-context-required="group-or-company"
+            data-permission="Sistema.Integracoes.executar"
+            data-context-required="group-and-company"
             data-sensitive="true"
           >
             {analisando ? (
@@ -234,7 +178,7 @@ export default function IAPrevisaoLogistica({ windowMode = false }) {
           {previsao && (
             <div className="space-y-4">
               {/* KPIs Previstos */}
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <Card className="bg-blue-50 border-blue-200">
                   <CardContent className="p-4 text-center">
                     <p className="text-xs text-blue-700 mb-1">Entregas Previstas</p>
@@ -306,14 +250,14 @@ export default function IAPrevisaoLogistica({ windowMode = false }) {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => aplicarOtimizacao(alerta)}
-                              disabled={!contextoValido || !podeExecutarIA}
+                              onClick={() => aplicarOtimizacao(alerta, idx)}
+                              disabled={!contextoValido || !podeExecutarIA || otimizacoesAplicadas.has(idx)}
                               data-action="Integracoes.IAPrevisaoLogistica.aplicarOtimizacao"
-                              data-permission="Sistema.Integracoes.editar"
-                              data-context-required="group-or-company"
+                              data-permission="Sistema.Integracoes.executar"
+                              data-context-required="group-and-company"
                               data-sensitive="true"
                             >
-                              {alerta.acao}
+                              {otimizacoesAplicadas.has(idx) ? 'Aplicada' : alerta.acao}
                             </Button>
                           </div>
                         </div>
@@ -334,7 +278,7 @@ export default function IAPrevisaoLogistica({ windowMode = false }) {
                 <CardContent>
                   <div className="space-y-2">
                     {previsao.regioes_criticas.map((regiao, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded">
+                      <div key={idx} className="flex flex-col gap-2 rounded bg-slate-50 p-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                           <p className="font-medium text-sm">{regiao.regiao}</p>
                           <p className="text-xs text-slate-600">Dias críticos: {regiao.dias_criticos}</p>
@@ -377,7 +321,7 @@ export default function IAPrevisaoLogistica({ windowMode = false }) {
               <Card className="bg-emerald-50 border-emerald-200">
                 <CardContent className="p-4">
                   <h4 className="font-semibold text-emerald-900 mb-3">💰 Economia Prevista com Otimizações</h4>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
                     <div>
                       <p className="text-emerald-700">KM Economizados</p>
                       <p className="font-bold text-emerald-900">{previsao.economia_prevista.km_economizados.toLocaleString()} km</p>
