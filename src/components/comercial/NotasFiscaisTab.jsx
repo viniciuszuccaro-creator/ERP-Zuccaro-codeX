@@ -39,6 +39,7 @@ import useEntityListSorted from "@/components/lib/useEntityListSorted";
 import useBackendPagination from "@/components/lib/useBackendPagination";
 import { sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
 import { useUser } from "@/components/lib/UserContext";
+import { assertFaturamentoDentroDoPedido } from "@/components/lib/pedidoFaturamentoPolicy";
 
 export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCreateNFe }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -197,6 +198,18 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
       if (!contextoValido || !canCreateNota || !empresaId) {
         await auditFiscalComercial('nota_fiscal_criar_bloqueada', { motivo: !empresaId ? 'empresa_faturadora_obrigatoria' : 'contexto_ou_permissao' }, false);
         throw new Error('Selecione uma empresa faturadora e confirme permissao para criar NF-e.');
+      }
+      const pedidoId = data?.pedido_id;
+      if (pedidoId) {
+        const pedido = (pedidos || []).find((item) => String(item.id) === String(pedidoId));
+        if (!pedido) {
+          throw new Error('Pedido obrigatorio para faturar.');
+        }
+        assertFaturamentoDentroDoPedido({
+          pedido,
+          notasExistentes: notasList.filter((nota) => String(nota.pedido_id) === String(pedidoId)),
+          notaNova: data,
+        });
       }
       return createInContext('NotaFiscal', withFiscalContext(data));
     },

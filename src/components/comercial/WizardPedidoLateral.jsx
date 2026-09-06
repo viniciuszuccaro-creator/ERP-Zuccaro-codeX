@@ -34,7 +34,7 @@ export default function WizardPedidoLateral({
 }) {
   const [etapaAtual, setEtapaAtual] = useState(1);
   const [dadosPedido, setDadosPedido] = useState(pedido || {
-    numero_pedido: `PED-${Date.now()}`,
+    numero_pedido: '',
     data_pedido: new Date().toISOString().split('T')[0],
     tipo: 'Pedido',
     tipo_pedido: 'Revenda',

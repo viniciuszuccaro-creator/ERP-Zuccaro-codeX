@@ -67,9 +67,13 @@ export default function GerarNFeModal({ open, onClose, pedidoData, onEmitir, win
       return;
     }
 
-    await Promise.resolve(onEmitir?.(dadosNFe));
-    await registrarAuditoria('nfe_modal_emitida', { pedido_id: pedidoData?.id, escopo, etapa_id: dadosNFe.etapa_id }, true);
-    toast.success('NF-e sera gerada com os dados informados');
+    try {
+      await Promise.resolve(onEmitir?.(dadosNFe));
+      await registrarAuditoria('nfe_modal_emitida', { pedido_id: pedidoData?.id, escopo, etapa_id: dadosNFe.etapa_id }, true);
+    } catch (error) {
+      await registrarAuditoria('nfe_modal_emitir_falhou', { pedido_id: pedidoData?.id, escopo, motivo: error?.code || 'persistencia' }, false);
+      toast.error(error?.message || 'Falha ao emitir NF-e.');
+    }
   };
 
   const etapaEscolhida = etapas.find(e => e.id === etapaSelecionada);

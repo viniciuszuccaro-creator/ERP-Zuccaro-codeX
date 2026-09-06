@@ -85,15 +85,6 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
         setFormData(prev => {
           const newFormData = { ...prev };
 
-          if (!newFormData.numero_pedido) {
-            const ano = new Date().getFullYear();
-            const mes = String(new Date().getMonth() + 1).padStart(2, '0');
-            const dia = String(new Date().getDate()).padStart(2, '0');
-            const hora = String(new Date().getHours()).padStart(2, '0');
-            const minuto = String(new Date().getMinutes()).padStart(2, '0');
-            const segundo = String(new Date().getSeconds()).padStart(2, '0');
-            newFormData.numero_pedido = `PED-${ano}${mes}${dia}${hora}${minuto}${segundo}`;
-          }
           if (!newFormData.data_pedido) {
             newFormData.data_pedido = new Date().toISOString().split('T')[0];
           }
@@ -173,7 +164,7 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
             id="numero-pedido"
             value={formData.numero_pedido || ''}
             onChange={(e) => setFormData(prev => ({ ...prev, numero_pedido: e.target.value }))}
-            placeholder="Gerado automaticamente"
+            placeholder="Gerado ao salvar"
             readOnly
             className="bg-slate-100 font-semibold text-slate-700"
           />
@@ -318,7 +309,7 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
       <div className="flex justify-end pt-4 border-t">
         <Button
           onClick={onNext}
-          disabled={!formData.cliente_id || !formData.numero_pedido || !formData.data_pedido}
+          disabled={!formData.cliente_id || !formData.data_pedido}
           className="bg-blue-600 hover:bg-blue-700"
         >
           Próximo: Adicionar Itens

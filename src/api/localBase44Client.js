@@ -7,7 +7,7 @@ import {
 } from "@/components/lib/contextoMultiempresaPolicy";
 import { sanitizeAuditPayload, sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
 import { createAuthDeniedError, evaluateLocalUserSession } from "@/api/localAuthSessionPolicy";
-import { applyMasterCadastroOnCreate, MASTER_CODE_SPECS, sequenceKeyFor } from "@/api/localCadastroMasterPolicy";
+import { applyMasterCadastroOnCreate, MASTER_CODE_SPECS, parseNumericCode, sequenceKeyFor } from "@/api/localCadastroMasterPolicy";
 import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows } from "../../base44/functions/_lib/security/entityGuardPolicy/entry.ts";
 
 const reportLocalClientFailure = (operation, error, context = {}) => {
@@ -889,8 +889,8 @@ const applyLocalMasterCadastro = (db, entityName, record) => {
   });
   const spec = MASTER_CODE_SPECS[entityName];
   if (spec) {
-    const used = Number.parseInt(String(nextRecord[spec.field] || ''), 10);
-    if (Number.isFinite(used)) {
+    const used = parseNumericCode(nextRecord[spec.field]);
+    if (used > 0) {
       const nextValue = Math.max(sequenceValue, used);
       if (seqRow) {
         seqRow.valor_numero = nextValue;

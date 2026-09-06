@@ -5,20 +5,27 @@ export const MASTER_CODE_SPECS = {
   Cliente: { field: 'codigo', width: 6 },
   Fornecedor: { field: 'codigo', width: 6 },
   Transportadora: { field: 'codigo', width: 6 },
+  Pedido: { field: 'numero_pedido', width: 6, prefix: 'PED-' },
 };
 
 export const sequenceKeyFor = (entityName, groupId) => `seq_codigo_${entityName}_${groupId || 'grupo'}`;
 
 export const normalizeDocumento = (value) => String(value || '').replace(/\D/g, '');
 
+export const parseNumericCode = (value) => {
+  const match = String(value || '').match(/(\d+)(?!.*\d)/);
+  const parsed = Number.parseInt(match?.[1] || '', 10);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
 export const maxNumericCode = (records = [], field = 'codigo') => records.reduce((max, item) => {
-  const parsed = Number.parseInt(String(item?.[field] || ''), 10);
-  return Number.isFinite(parsed) && parsed > max ? parsed : max;
+  const parsed = parseNumericCode(item?.[field]);
+  return parsed > max ? parsed : max;
 }, 0);
 
-export const resolveNextSequentialCode = ({ records = [], field = 'codigo', width = 4, currentMax = 0 } = {}) => {
+export const resolveNextSequentialCode = ({ records = [], field = 'codigo', width = 4, currentMax = 0, prefix = '' } = {}) => {
   const next = Math.max(currentMax, maxNumericCode(records, field)) + 1;
-  return String(next).padStart(width, '0');
+  return `${prefix}${String(next).padStart(width, '0')}`;
 };
 
 export const applyCodigoOnCreate = ({ entityName, record = {}, records = [], sequenceValue = 0 } = {}) => {
@@ -30,6 +37,7 @@ export const applyCodigoOnCreate = ({ entityName, record = {}, records = [], seq
     field: spec.field,
     width: spec.width,
     currentMax: sequenceValue,
+    prefix: spec.prefix || '',
   });
   if (!incoming) {
     return { ...record, [spec.field]: next };

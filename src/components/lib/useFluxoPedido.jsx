@@ -1,4 +1,5 @@
 import { base44 } from "@/api/base44Client";
+import { assertFaturamentoDentroDoPedido } from "@/components/lib/pedidoFaturamentoPolicy";
 
 // Auditoria helpers
 async function getUsuarioAtual() {
@@ -376,8 +377,17 @@ export async function faturarPedidoCompleto(pedido, nfe, empresaId) {
     erros: []
   };
 
+  const contextoOperacao = normalizarContextoOperacao(pedido, empresaId);
+  if (!contextoOperacao.empresaId) {
+    throw new Error('Empresa obrigatoria para faturar pedido.');
+  }
+
+  const notasExistentes = (await filterScoped('NotaFiscal', { pedido_id: pedido.id }, contextoOperacao))
+    .filter((nota) => String(nota.id) !== String(nfe?.id || ''));
+  const notaNova = nfe || { valor_total: pedido.valor_total || pedido.valor_produtos || 0, pedido_id: pedido.id };
+  const { status } = assertFaturamentoDentroDoPedido({ pedido, notasExistentes, notaNova });
+
   try {
-    const contextoOperacao = normalizarContextoOperacao(pedido, empresaId);
 
     if (pedido.itens_revenda?.length > 0) {
       for (const item of pedido.itens_revenda) {
@@ -425,9 +435,9 @@ export async function faturarPedidoCompleto(pedido, nfe, empresaId) {
     resultados.entrega = entrega;
 
     const { before: pedidoAntes, updated: pedidoAtualizado } = await updateScoped('Pedido', pedido.id, {
-      status: 'Faturado',
+      status,
       ordem_expedicao_id: entrega.id,
-      data_entrega_realizada: new Date().toISOString().split('T')[0]
+      data_entrega_realizada: status === 'Faturado' ? new Date().toISOString().split('T')[0] : pedido.data_entrega_realizada || null
     }, contextoOperacao);
     await auditar('Comercial', 'Pedido', 'update', pedido.id, `Pedido ${pedido.numero_pedido} faturado`, contextoOperacao.empresaId, pedidoAntes, pedidoAtualizado, contextoOperacao.groupId);
 

@@ -9,7 +9,7 @@ export default function DetalhesPedidoHeader({ control, register, setValue, erro
     <div className="grid grid-cols-2 gap-4">
       <div>
         <Label htmlFor="numero_pedido">Nº Pedido</Label>
-        <Input id="numero_pedido" {...register("numero_pedido")} />
+        <Input id="numero_pedido" placeholder="Gerado ao salvar" {...register("numero_pedido")} />
         {errors?.numero_pedido && (
           <p className="text-xs text-red-600 mt-1">{errors.numero_pedido.message}</p>
         )}

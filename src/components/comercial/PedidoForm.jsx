@@ -30,7 +30,7 @@ const itemSchema = z
 
 const pedidoSchema = z
   .object({
-    numero_pedido: z.string().min(3, "Número inválido"),
+    numero_pedido: z.string().optional().default(""),
     cliente_id: z.string().min(1, "Cliente é obrigatório"),
     cliente_nome: z.string().min(1, "Cliente é obrigatório"),
     data_pedido: z
@@ -69,7 +69,7 @@ export default function PedidoForm({ clientes = [], onSubmit, isSubmitting }) {
 
   const defaultValues = useMemo(
     () => ({
-      numero_pedido: `PED-${Date.now()}`,
+      numero_pedido: "",
       cliente_nome: "",
       cliente_id: "",
       data_pedido: new Date().toISOString().split("T")[0],

@@ -1,3 +1,15 @@
+### Gate 6 - Comercial: faturamento parcial e teto do pedido
+- Objetivo: cumprir o Gate 6 de `PLANO_GO_LIVE.md` no fluxo existente (pedido → NF), sem tela comercial paralela.
+- Diagnostico: emitir NF-e no fechamento so fazia `console.log`; `faturarPedidoCompleto` marcava `Faturado` no valor cheio sem saldo; numero do pedido nascia com `Date.now()`.
+- Causa raiz: faturamento sem persistencia nem confronto com NFs ja emitidas do mesmo pedido.
+- Arquivos alterados: `pedidoFaturamentoPolicy.js` (extracao de `useFluxoPedido.jsx`, acima de 900 linhas), `useFluxoPedido.jsx`, `FechamentoFinanceiroTab.jsx`, `GerarNFeModal.jsx`, `NotasFiscaisTab.jsx`, `PedidoForm.jsx`, `DetalhesPedidoHeader.jsx`, `WizardPedidoLateral.jsx`, `WizardEtapa1Cliente.jsx`, `localCadastroMasterPolicy.js`, `localBase44Client.js`, testes.
+- Reutilizado: modal de escopo pedido/etapa, `createInContext('NotaFiscal')`, reserva de codigo mestre, fluxo de estoque/entrega ja existente.
+- Alteracoes: NF gravada com empresa faturadora; valor acima do saldo e recusado; status `Faturado Parcial` ou `Faturado`; baixa de estoque so no faturamento do pedido inteiro; `PED-000001` reservado na gravacao.
+- Multiempresa: NF operacional exige empresa; grupo nao emite.
+- Pendencia: baixa de estoque por etapa/item ainda nao recorta quantidade; financeiro titular permanece no fluxo de aprovacao existente (Gate 8).
+- Validacoes: `node --test`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 7 Estoque.
+
 ### Gate 5 - Cadastros mestres com codigo reservado no backend
 - Objetivo: cumprir o Gate 5 de `PLANO_GO_LIVE.md` no cadastro existente, sem tela ou cadastro paralelo.
 - Diagnostico: o formulario de produto gerava SKU com `ultimoCodigo + 1` na primeira pagina da lista; o `create` local aceitava documento repetido no mesmo grupo; importacao com codigo conflitante podia sobrescrever.

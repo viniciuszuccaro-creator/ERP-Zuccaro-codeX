@@ -7,11 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DollarSign, Percent, FileText, Receipt, CheckCircle, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
 import GerarNFeModal from './GerarNFeModal';
 import { useFormasPagamento } from '@/components/lib/useFormasPagamento';
 import useContextoVisual from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { useUser } from '@/components/lib/UserContext';
+import { faturarPedidoCompleto } from '@/components/lib/useFluxoPedido';
+import { assertFaturamentoDentroDoPedido } from '@/components/lib/pedidoFaturamentoPolicy';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 /**
@@ -21,7 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 export default function FechamentoFinanceiroTab({ formData, setFormData, onNext }) {
   const [modalNFeOpen, setModalNFeOpen] = useState(false);
   const { user } = useUser();
-  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext, updateInContext, filterInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const empresaId = formData?.empresa_id || empresaAtual?.id || null;
   const groupId = formData?.group_id || formData?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
@@ -413,9 +416,55 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
         groupId={groupId}
         onAudit={auditFechamento}
         onEmitir={async (dadosNFe) => {
-          await auditFechamento('nfe_fechamento_emitida', { entidade: 'NotaFiscal', escopo: dadosNFe?.escopo, etapa_id: dadosNFe?.etapa_id }, true);
-          console.log('Emitir NF-e:', dadosNFe);
+          if (!formData?.id) {
+            toast.error('Salve o pedido antes de emitir a NF-e.');
+            throw new Error('Pedido ainda nao gravado.');
+          }
+          if (!empresaId) {
+            toast.error('Selecione a empresa faturadora.');
+            throw new Error('Empresa obrigatoria para emitir NF-e.');
+          }
+          const notas = await filterInContext('NotaFiscal', { pedido_id: formData.id }, '-created_date', 200);
+          const pedidoValorado = { ...formData, valor_total: valorTotal };
+          const { status } = assertFaturamentoDentroDoPedido({
+            pedido: pedidoValorado,
+            notasExistentes: notas,
+            notaNova: dadosNFe,
+          });
+          const nota = await createInContext('NotaFiscal', {
+            tipo: 'NF-e (Saida)',
+            pedido_id: dadosNFe.pedido_id,
+            numero_pedido: dadosNFe.numero_pedido,
+            cliente_id: dadosNFe.cliente_id,
+            cliente_fornecedor: dadosNFe.cliente_nome,
+            valor_produtos: dadosNFe.valor_total,
+            valor_total: dadosNFe.valor_total,
+            status: 'Pendente',
+            empresa_id: empresaId,
+            empresa_faturamento_id: empresaId,
+            group_id: groupId,
+            grupo_id: groupId,
+            etapa_id: dadosNFe.etapa_id || null,
+            itens: dadosNFe.itens || [],
+            observacoes: dadosNFe.observacoes_nfe || '',
+          }, 'empresa_faturamento_id');
+          const etapasAtualizadas = (formData.etapas_entrega || []).map((etapa) => (
+            etapa.id === dadosNFe.etapa_id ? { ...etapa, faturada: true } : etapa
+          ));
+          await updateInContext('Pedido', formData.id, {
+            status,
+            etapas_entrega: etapasAtualizadas,
+          });
+          setFormData((prev) => ({ ...prev, status, etapas_entrega: etapasAtualizadas }));
+          if (dadosNFe.escopo === 'pedido_inteiro') {
+            const resultado = await faturarPedidoCompleto({ ...pedidoValorado, status }, nota, empresaId);
+            if (resultado?.erros?.length) {
+              throw new Error(resultado.erros[0]);
+            }
+          }
+          await auditFechamento('nfe_fechamento_emitida', { entidade: 'NotaFiscal', escopo: dadosNFe?.escopo, etapa_id: dadosNFe?.etapa_id, nota_id: nota.id }, true);
           setModalNFeOpen(false);
+          toast.success(status === 'Faturado' ? 'Pedido faturado.' : 'Faturamento parcial gravado.');
         }}
       />
     </div>
