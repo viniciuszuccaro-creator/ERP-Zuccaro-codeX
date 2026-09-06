@@ -1,3 +1,15 @@
+### Gate 7 - Estoque: saldo, origem e historico
+- Objetivo: cumprir o Gate 7 de `PLANO_GO_LIVE.md` na persistencia existente, sem tela de estoque paralela.
+- Diagnostico: a aba de movimentacao gravava a NF/movimento e so depois conferia saldo; retry e exclusao apagavam historico; saida podia ir a negativo; produto de uma empresa aceitava movimento de outra.
+- Causa raiz: saldo e trilha tratados no frontend, fora do ponto unico de gravacao.
+- Arquivos alterados: `estoqueMovimentoPolicy.js` (extracao, `localBase44Client.js` ja passa de 1400 linhas), `localBase44Client.js`, `MovimentacoesTab.jsx`, `MovimentacaoForm.jsx`, `movimentacaoSchema.jsx`, `RecebimentoTab.jsx`, `OrdensCompraTab.jsx`, `entityGuardPolicy/entry.ts`, testes.
+- Reutilizado: `MovimentacaoEstoque`, `Produto.estoque_atual`, `createInContext` e a tela de movimentacao ja existente.
+- Alteracoes: gravacao aplica saldo, recusa negativo sem politica, recusa empresa divergente, idempotencia por origem/documento, bloqueio de exclusao de movimento/auditoria; ajuste exige alçada (`aprovar`); recebimento deixa de somar estoque duas vezes.
+- Multiempresa: movimento operacional exige empresa; produto com empresa dona nao aceita movimento de outra.
+- Pendencia: saldo ainda e um campo no produto mestre, nao por local; transferencia entre empresas nao decompõe estoque por deposito.
+- Validacoes: `node --test`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 8 Financeiro.
+
 ### Gate 6 - Comercial: faturamento parcial e teto do pedido
 - Objetivo: cumprir o Gate 6 de `PLANO_GO_LIVE.md` no fluxo existente (pedido → NF), sem tela comercial paralela.
 - Diagnostico: emitir NF-e no fechamento so fazia `console.log`; `faturarPedidoCompleto` marcava `Faturado` no valor cheio sem saldo; numero do pedido nascia com `Date.now()`.

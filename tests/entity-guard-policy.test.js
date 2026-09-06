@@ -15,6 +15,7 @@ test('guard action aliases normalize to the canonical action', () => {
   assert.equal(normalizeGuardAction('view'), 'visualizar');
   assert.equal(normalizeGuardAction('update'), 'editar');
   assert.equal(normalizeGuardAction('delete'), 'excluir');
+  assert.equal(normalizeGuardAction('ajustar'), 'aprovar');
 });
 
 test('visualizar permission never grants a mutation', () => {

@@ -24,7 +24,7 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { openWindow } = useWindow();
-  const { empresaAtual, grupoAtual, getFiltroContexto, createInContext, updateInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, getFiltroContexto, createInContext } = useContextoVisual();
   const { canCreate } = usePermissions();
   const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id);
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
@@ -96,32 +96,11 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
         responsavel: data.responsavel
       };
 
-      const novaMovimentacao = await createInContext('MovimentacaoEstoque', movimentacaoData);
-      
-      const produto = produtos.find(p => p.id === data.produto_id);
-      if (produto) {
-        const qtd = quantidade;
-        let novoEstoque = produto.estoque_atual || 0;
-        
-        if (data.tipo_movimentacao === 'Entrada' || data.tipo_movimentacao === 'Devolução') {
-          novoEstoque += qtd;
-        } else if (data.tipo_movimentacao === 'Saída') {
-          novoEstoque -= qtd;
-        } else if (data.tipo_movimentacao === 'Ajuste') {
-          novoEstoque = qtd;
-        } else if (data.tipo_movimentacao === 'Inventário') {
-          novoEstoque = qtd;
-        }
-        
-        if (novoEstoque < 0) {
-          throw new Error("Movimentacao deixaria o estoque negativo.");
-        }
-
-        await updateInContext('Produto', produto.id, {
-          estoque_atual: novoEstoque
-        });
-      }
-      
+      const novaMovimentacao = await createInContext('MovimentacaoEstoque', {
+        ...movimentacaoData,
+        origem_movimento: data.origem_movimento || 'manual',
+        documento: data.documento_referencia || data.documento,
+      });
       return novaMovimentacao;
     },
     onSuccess: async (novaMov) => {

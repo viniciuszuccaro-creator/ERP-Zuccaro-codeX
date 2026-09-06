@@ -34,7 +34,8 @@ export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = 
     responsavel: '',
     responsavel_id: '',
     empresa_id: '',
-    group_id: ''
+    group_id: '',
+    origem_movimento: 'manual',
   });
 
   React.useEffect(() => {

@@ -296,6 +296,8 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
             produto_id: item.produto_id,
             produto_descricao: item.descricao,
             tipo_movimentacao: 'Entrada',
+            origem_movimento: 'compra',
+            origem_documento_id: oc.id,
             quantidade: item.quantidade_solicitada,
             data_movimentacao: dados.data_entrega_real,
             documento: `OC-${oc.numero_oc}`,
@@ -306,13 +308,11 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
             observacoes: dados.observacoes
           });
 
-          // Atualizar estoque do produto
           if (item.produto_id) {
             const produto = await filterInContext('Produto', { id: item.produto_id }, 'descricao', 1);
             if (produto && produto.length > 0) {
               const produtoAtual = produto[0];
               await updateInContext('Produto', item.produto_id, {
-                estoque_atual: (Number(produtoAtual.estoque_atual) || 0) + Number(item.quantidade_solicitada || 0),
                 ultima_compra: dados.data_entrega_real,
                 ultimo_preco_compra: item.valor_unitario,
                 group_id: produtoAtual.group_id || groupId,

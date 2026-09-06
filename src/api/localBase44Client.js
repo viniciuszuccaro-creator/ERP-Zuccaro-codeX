@@ -8,6 +8,7 @@ import {
 import { sanitizeAuditPayload, sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
 import { createAuthDeniedError, evaluateLocalUserSession } from "@/api/localAuthSessionPolicy";
 import { applyMasterCadastroOnCreate, MASTER_CODE_SPECS, parseNumericCode, sequenceKeyFor } from "@/api/localCadastroMasterPolicy";
+import { assertMovimentacaoEstoque, configAllowsNegativeStock, HISTORICO_ESTOQUE_ENTITIES, isAjusteEstoque } from "@/components/lib/estoqueMovimentoPolicy";
 import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows } from "../../base44/functions/_lib/security/entityGuardPolicy/entry.ts";
 
 const reportLocalClientFailure = (operation, error, context = {}) => {
@@ -913,6 +914,33 @@ const applyLocalMasterCadastro = (db, entityName, record) => {
   return nextRecord;
 };
 
+const applyLocalEstoqueMovimento = (db, entityName, record) => {
+  if (entityName !== 'MovimentacaoEstoque') return { record, reuse: null };
+  const produtoId = String(record.produto_id || '');
+  const produto = produtoId
+    ? getEntityStore(db, 'Produto').find((item) => String(item.id) === produtoId)
+    : null;
+  const permiteNegativo = configAllowsNegativeStock(getEntityStore(db, 'ConfiguracaoSistema'));
+  return assertMovimentacaoEstoque({
+    record,
+    produto,
+    movements: getEntityStore(db, 'MovimentacaoEstoque'),
+    permiteNegativo,
+  });
+};
+
+const applyLocalEstoqueProdutoPatch = (db, produtoId, patch) => {
+  if (!produtoId || !patch) return;
+  const produtos = getEntityStore(db, 'Produto');
+  const index = produtos.findIndex((item) => String(item.id) === String(produtoId));
+  if (index < 0) return;
+  produtos[index] = {
+    ...produtos[index],
+    ...patch,
+    updated_date: now(),
+  };
+};
+
 const mergeSnapshotRecords = (db, entityName, incoming = []) => {
   if (!Array.isArray(incoming) || incoming.length === 0) return { created: 0, updated: 0 };
   const records = getEntityStore(db, entityName);
@@ -1158,9 +1186,15 @@ const createEntityApi = (entityName) => ({
 
   async create(data = {}) {
     assertLocalMutationAllowed(entityName, 'criar');
+    if (entityName === 'MovimentacaoEstoque' && isAjusteEstoque(data)) {
+      assertLocalMutationAllowed(entityName, 'ajustar');
+    }
     const db = loadDb();
     const records = getEntityStore(db, entityName);
-    const payload = applyLocalMasterCadastro(db, entityName, stampRecordContext(entityName, data));
+    const stamped = applyLocalMasterCadastro(db, entityName, stampRecordContext(entityName, data));
+    const estoque = applyLocalEstoqueMovimento(db, entityName, stamped);
+    if (estoque.reuse) return estoque.reuse;
+    const payload = estoque.record || stamped;
     const record = {
       ...payload,
       id: payload.id || makeId(entityName.toLowerCase()),
@@ -1168,6 +1202,9 @@ const createEntityApi = (entityName) => ({
       updated_date: now(),
     };
     records.unshift(record);
+    if (entityName === 'MovimentacaoEstoque') {
+      applyLocalEstoqueProdutoPatch(db, record.produto_id, estoque.produtoPatch);
+    }
     saveDb(db);
     notify(entityName, 'create', record);
     auditLocalMutation(entityName, 'Criacao', { after: record, recordId: record.id });
@@ -1195,6 +1232,9 @@ const createEntityApi = (entityName) => ({
   },
 
   async delete(id) {
+    if (HISTORICO_ESTOQUE_ENTITIES.includes(entityName)) {
+      throw new Error('Exclusao de historico bloqueada.');
+    }
     assertLocalMutationAllowed(entityName, 'excluir', id);
     const db = loadDb();
     const records = getEntityStore(db, entityName);

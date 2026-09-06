@@ -5,7 +5,7 @@ export const movimentacaoSchema = z.object({
   produto_id: z.string().min(1, 'Produto é obrigatório'),
   quantidade: z.number().positive('Quantidade > 0'),
   data_movimentacao: z.string().min(4, 'Data é obrigatória'),
-  empresa_id: z.string().optional(),
+  empresa_id: z.string().min(1, 'Empresa é obrigatória'),
   documento_referencia: z.string().optional().nullable(),
   observacoes: z.string().optional().nullable(),
 });

@@ -51,6 +51,8 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
       // Criar recebimento
       await createInContext('MovimentacaoEstoque', {
         tipo_movimentacao: "Entrada",
+        origem_movimento: "compra",
+        origem_documento_id: data.ordem_compra_id || data.numero_recebimento,
         empresa_id: empresaAtual?.id,
         data_movimentacao: data.data_recebimento,
         documento: data.numero_nf || data.numero_recebimento,
@@ -65,16 +67,13 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
         if (quantidadeRecebida > 0) {
           const produto = produtos.find(p => p.id === item.produto_id);
           if (produto) {
-            await updateInContext('Produto', produto.id, {
-              estoque_atual: (produto.estoque_atual || 0) + quantidadeRecebida
-            });
-
-            // Criar movimentação individual
             await createInContext('MovimentacaoEstoque', {
               empresa_id: empresaAtual?.id,
               produto_id: item.produto_id,
               produto_descricao: item.produto_descricao,
               tipo_movimentacao: "Entrada",
+              origem_movimento: "compra",
+              origem_documento_id: data.ordem_compra_id || data.numero_recebimento,
               quantidade: quantidadeRecebida,
               data_movimentacao: data.data_recebimento,
               documento: data.numero_nf || data.numero_recebimento,
