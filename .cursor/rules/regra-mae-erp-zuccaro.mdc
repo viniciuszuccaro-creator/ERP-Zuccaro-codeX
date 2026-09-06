@@ -1,0 +1,87 @@
+---
+description: Regra-Mae obrigatoria e inviolavel para todas as alteracoes no ERP Zuccaro
+alwaysApply: true
+---
+
+# REGRA-MAE (OBRIGATORIA E INVIOLAVEL)
+
+Fonte: `PLANO_MELHORIA_ERP_ZUCCARO.md`. Melhorar o existente. Nao duplicar. Nao apagar. Perguntar antes de incluir ou excluir.
+
+## 1. Proibicao absoluta de criacao nova
+
+Proibido criar modulo, tela, funcionalidade, componente ou arquivo novo quando ja existir algo com o mesmo proposito, nome igual ou similar. Atender somente melhorando o existente.
+
+## 2. Melhoria sempre no existente
+
+Toda alteracao, otimizacao ou correcao deve ser feita exclusivamente no modulo, tela, arquivo ou funcionalidade ja existente.
+
+## 3. Refatoracao obrigatoria quando grande
+
+Se o arquivo/componente passar de 400–600 linhas, ou a legibilidade ficar comprometida, refatorar em arquivos, funcoes, hooks, componentes ou submodulos reutilizaveis, mantendo logica e comportamento originais.
+
+## 4. Nunca apagar funcionalidades
+
+Nunca apagar, remover ou desativar funcionalidade, botao, aba, campo, fluxo ou codigo existente. Apenas reorganizar, conectar, tornar mais seguro, legivel e performatico.
+
+## 5. Requisitos obrigatorios em TODA alteracao
+
+- **Multiempresa absoluta:** consultas, criacoes, atualizacoes e relatorios com `groupId` e `empresaId`. Nenhuma operacao sem contexto de grupo/empresa explicito.
+- **RBAC granular:** tela, aba, botao, acao, campo editavel e endpoint com permissao no frontend (esconder/desabilitar) e no backend (bloqueio definitivo). Chaves por modulo/submodulo/aba/acao (ex.: `comercial.pedido.aprovar`, `financeiro.caixa.baixa-manual`).
+- **Seguranca:** sanitizacao (`sanitizeOnWrite.ts` ou equivalente), validacao, protecao XSS/injecao, validacao dupla em acoes sensiveis.
+- **Auditoria:** criar, editar, aprovar, excluir, emitir, baixar com log antes/depois, usuario, timestamp, groupId e empresaId (`auditEntityEvents.ts`, `securityAlerts.ts`).
+
+## 6. Proibicao de quebrar o existente
+
+Nenhuma alteracao pode quebrar telas, interromper o fluxo atual ou prejudicar o layout responsivo.
+
+## 7. Layout obrigatorio
+
+Telas, paginas, modais e containers principais com `w-full` e `h-full`. Responsivo (celular, tablet, desktop). Componentes principais redimensionaveis via flex/grid/resizable, exceto abas (abas fixas). Consistencia visual e comportamental.
+
+## 8. Integracao ao fluxo atual
+
+Toda melhoria deve se integrar ao fluxo existente (ex.: pedido criar → ajustar estoque → mudar status → emitir NF → enviar WhatsApp), preservando o comportamento do usuario.
+
+## 9. Ramificacao Grupo x Empresas
+
+- Tudo feito no **grupo** passa para as empresas cadastradas, mas o cadastro/operacao deve **especificar a empresa**.
+- Tudo feito em **cada empresa** deve aparecer no consolidado do **grupo**.
+- Faturamento pode iniciar no grupo; **emissao da nota fiscal somente na empresa**.
+
+Antes de criar ou excluir qualquer coisa, perguntar ao usuario.
+
+## 10. Ordem obrigatoria de trabalho
+
+Diagnosticar o que ja existe → verificar duplicidades → melhorar somente o existente. Se houver dois com o mesmo proposito: documentar, perguntar, nao apagar o outro automaticamente. Consolidar so no existente aprovado pelo usuario.
+
+## 11. Arquivo novo so na extracao
+
+Arquivo, hook ou submodulo novo so e permitido para extrair logica ja existente de um arquivo grande (item 3). Proibido criar tela, rota, modulo, fluxo ou funcionalidade nova.
+
+## 12. Contrato canonico multiempresa
+
+Usar `{ groupId, empresaId, scopeType }`. Relatorio no grupo consolida as empresas; relatorio na empresa nao mistura outra empresa. Cadastro compartilhado do grupo pode ser usado nas empresas. Cadastros Gerais e a base dos setores e relatorios; nao inventar cadastro paralelo.
+
+## 13. Fail-closed
+
+Sem contexto de grupo/empresa ou sem permissao: bloquear. Nunca liberar operacao porque o guard falhou, ficou indisponivel ou o perfil e administrador sem escopo.
+
+## 14. Persistencia real
+
+Botao, toggle, select e formulario devem salvar de verdade e recarregar com o valor gravado. Corrigir persistencia antes de seguir para a proxima tela.
+
+## 15. Entrega por lote
+
+Atualizar `STATUS_DO_PROJETO.md` com concluido, pendencias, testes e proximo passo. Validar conforme o escopo: `npm run audit:baseline`, `npm test`, `npm run lint`, `npm run typecheck`, `npm run build` e `git diff --check`. Trabalhar somente neste clone interno vinculado ao GitHub; nunca no projeto do HD externo.
+
+## 16. Checklist por alteracao
+
+1. A tela abre.
+2. O fluxo antigo continua funcionando.
+3. Nao criou duplicidade.
+4. Grupo/empresa estao corretos.
+5. Permissao funciona.
+6. Botao/toggle/select salva e recarrega.
+7. Auditoria e gerada quando necessario.
+8. Build passa.
+9. O usuario aprovou inclusao ou exclusao, se houver.
