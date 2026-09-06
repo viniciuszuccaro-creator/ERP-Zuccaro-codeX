@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,12 +29,10 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  */
 export default function GerenciadorSessoes() {
   const { user } = useUser();
-  const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext, updateInContext, filterInContext } = useContextoVisual();
   const queryClient = useQueryClient();
   const [encerrandoTodas, setEncerrandoTodas] = useState(false);
-  const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
-    try { return localStorage.getItem('group_atual_id'); } catch { return null; }
-  })();
+  const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const sessaoLocalId = (() => {
     try { return localStorage.getItem('sessao_id'); } catch { return null; }
   })();
@@ -45,7 +42,7 @@ export default function GerenciadorSessoes() {
   const { data: sessoes = [], isLoading } = useQuery({
     queryKey: ['sessoes-usuario', user?.id, empresaAtivaId, grupoAtivoId],
     queryFn: async () => {
-      const result = await base44.entities.SessaoUsuario.filter({
+      const result = await filterInContext('SessaoUsuario', {
         usuario_id: user.id,
         ativa: true,
         ...(empresaAtivaId ? { empresa_id: empresaAtivaId } : {}),
@@ -385,7 +382,7 @@ export default function GerenciadorSessoes() {
       )}
 
       {/* Histórico de Sessões Recentes */}
-      <HistoricoSessoesRecentes usuarioId={user?.id} empresaId={empresaAtivaId} grupoId={grupoAtivoId} />
+      <HistoricoSessoesRecentes usuarioId={user?.id} empresaId={empresaAtivaId} grupoId={grupoAtivoId} filterInContext={filterInContext} />
 
       {outrasSessoes.length === 0 && (
         <Card className="border-0 shadow-md">
@@ -405,11 +402,11 @@ export default function GerenciadorSessoes() {
 /**
  * Histórico de Sessões Recentes (últimas 10)
  */
-function HistoricoSessoesRecentes({ usuarioId, empresaId, grupoId }) {
+function HistoricoSessoesRecentes({ usuarioId, empresaId, grupoId, filterInContext }) {
   const { data: historico = [], isLoading } = useQuery({
     queryKey: ['sessoes-historico', usuarioId, empresaId, grupoId],
     queryFn: async () => {
-      const result = await base44.entities.SessaoUsuario.filter({
+      const result = await filterInContext('SessaoUsuario', {
         usuario_id: usuarioId,
         ativa: false,
         ...(empresaId ? { empresa_id: empresaId } : {}),

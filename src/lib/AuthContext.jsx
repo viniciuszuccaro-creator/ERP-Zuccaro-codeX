@@ -18,9 +18,20 @@ export const AuthProvider = ({ children }) => {
 
   const checkAppState = async () => {
     if (isLocalOnlyMode) {
-      setUser(await base44.auth.me());
-      setIsAuthenticated(true);
-      setAuthError(null);
+      try {
+        const currentUser = await base44.auth.me();
+        const authenticated = await base44.auth.isAuthenticated();
+        setUser(authenticated ? currentUser : null);
+        setIsAuthenticated(Boolean(authenticated));
+        setAuthError(authenticated ? null : { type: 'auth_required', message: 'Authentication required' });
+      } catch (error) {
+        setUser(null);
+        setIsAuthenticated(false);
+        setAuthError({
+          type: error?.authType || 'auth_required',
+          message: error?.message || 'Authentication required'
+        });
+      }
       setAppPublicSettings({ id: appParams.appId, public_settings: {} });
       setIsLoadingPublicSettings(false);
       setIsLoadingAuth(false);
@@ -120,12 +131,10 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(false);
       
       // If user auth fails, it might be an expired token
-      if (error.status === 401 || error.status === 403) {
         setAuthError({
-          type: 'auth_required',
-          message: 'Authentication required'
+          type: error?.authType || (error.status === 401 || error.status === 403 ? 'auth_required' : 'unknown'),
+          message: error?.message || 'Authentication required'
         });
-      }
     }
   };
 

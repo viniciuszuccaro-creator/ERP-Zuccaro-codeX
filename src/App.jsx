@@ -31,18 +31,45 @@ const AuthenticatedApp = () => {
     );
   }
 
-  // Handle authentication errors
-  if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
-      navigateToLogin();
-      return null;
+  const blockedMessages = {
+    user_not_registered: {
+      title: 'Acesso restrito',
+      message: 'Você não está registrado neste aplicativo. Solicite acesso ao administrador.',
+    },
+    account_inactive: {
+      title: 'Usuário inativo',
+      message: 'Esta conta está inativa ou desligada. O acesso interno foi bloqueado.',
+    },
+    account_disabled: {
+      title: 'Usuário desativado',
+      message: 'Esta conta está desativada. O acesso interno foi bloqueado.',
+    },
+    missing_group: {
+      title: 'Grupo obrigatório',
+      message: 'O perfil não possui grupo. Sem contexto de grupo o ERP não libera dados internos.',
+    },
+    missing_company: {
+      title: 'Empresa obrigatória',
+      message: 'O perfil não possui empresa. Sem empresa autorizada o ERP não libera dados internos.',
+    },
+  };
+
+  if (!isAuthenticated) {
+    const blocked = blockedMessages[authError?.type];
+    if (blocked) {
+      return <UserNotRegisteredError title={blocked.title} message={blocked.message} />;
     }
+    if (authError?.type === 'auth_required' || !authError) {
+      navigateToLogin();
+    }
+    return (
+      <UserNotRegisteredError
+        title="Sessão inválida"
+        message="Faça login novamente. Usuário não autenticado não acessa dados internos."
+      />
+    );
   }
 
-  // Render the main app
   return (
     <Routes>
       <Route path="/" element={

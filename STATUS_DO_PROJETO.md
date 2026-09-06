@@ -1,4 +1,16 @@
-### Integracoes - Leitura de Projetos e Previsao Logistica Seguras
+### P0 Gate 1 - Autenticacao local fail-closed
+- Objetivo: iniciar a ordem do `AGENTS.md` (P0.1 seguranca / Gate 1 de `PLANO_GO_LIVE.md`) sem criar tela, modulo ou fluxo paralelo.
+- Diagnostico: `AuthContext` no modo local autenticava sempre; `auth.me` e `isAuthenticated` do cliente local liberavam usuario inativo, desativado, sem grupo/empresa e sessao revogada; `App.jsx` renderizava rotas internas mesmo sem autenticacao; `GerenciadorSessoes` consultava sessao direto e usava `localStorage` como fallback de grupo.
+- Causa raiz: confianca no frontend/localStorage e autenticacao incondicional no modo local.
+- Arquivos alterados: `src/api/localAuthSessionPolicy.js` (extracao da regra, porque `localBase44Client.js` ja ultrapassa 1400 linhas), `src/api/localBase44Client.js`, `src/lib/AuthContext.jsx`, `src/App.jsx`, `src/components/UserNotRegisteredError.jsx`, `src/components/sistema/GerenciadorSessoes.jsx`, `tests/local-auth-session-policy.test.js`.
+- Componentes reutilizados: `UserNotRegisteredError`, `filterInContext`, `GerenciadorSessoes`.
+- Alteracoes: avaliacao canonica de sessao/usuario; `auth.me` falha fechado; rotas internas so com `isAuthenticated`; bloqueio visual para inativo, desativado, sem grupo e sem empresa; sessoes filtradas no contexto e sem fallback de `localStorage`.
+- Multiempresa: perfil sem grupo e perfil operacional sem empresa nao entram no ERP.
+- RBAC/seguranca/auditoria: autenticacao deixa de ser sempre verdadeira; consultas de sessao passam por `filterInContext`; auditoria de encerramento existente foi preservada.
+- Validacoes: `node --test` 47/47, `git diff --check`, `npm run build` e `audit:baseline` executados neste lote.
+- Proximo passo da ordem P0: Gate 2 RBAC granular (matriz frontend + backend), depois multiempresa, auditoria e Cadastros Gerais.
+
+
 - Continuei o plano salvo a partir do commit `0775f4f7`, fortalecendo os componentes existentes `IALeituraProjeto` e `IAPrevisaoLogistica`.
 - A leitura de projetos agora exige Grupo valido e RBAC `Sistema.Integracoes.executar` para selecionar modo, carregar arquivo e processar com IA.
 - Arquivos vazios, maiores que 10 MB ou fora dos formatos permitidos sao rejeitados; a resposta de upload sem URL e a resposta de IA fora do contrato falham de forma controlada.

@@ -1,5 +1,6 @@
 import { toEntityScope, validateMultiempresaContext } from "@/components/lib/contextoMultiempresaPolicy";
 import { sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
+import { createAuthDeniedError, evaluateLocalUserSession } from "@/api/localAuthSessionPolicy";
 
 const reportLocalClientFailure = (operation, error, context = {}) => {
   console.error('[base44-local] ' + operation, {
@@ -1420,10 +1421,14 @@ export const localBase44 = {
   },
   auth: {
     async me() {
-      return readUser();
+      const user = readUser();
+      const evaluation = evaluateLocalUserSession(user);
+      if (!evaluation.allowed) throw createAuthDeniedError(evaluation);
+      return user;
     },
     async isAuthenticated() {
-      return true;
+      const user = readUser();
+      return evaluateLocalUserSession(user).allowed;
     },
     async updateMe(updates = {}) {
       const user = writeUser(updates);
