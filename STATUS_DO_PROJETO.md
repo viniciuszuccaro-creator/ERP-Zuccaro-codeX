@@ -1,3 +1,14 @@
+### Gate 5 - Cadastros mestres com codigo reservado no backend
+- Objetivo: cumprir o Gate 5 de `PLANO_GO_LIVE.md` no cadastro existente, sem tela ou cadastro paralelo.
+- Diagnostico: o formulario de produto gerava SKU com `ultimoCodigo + 1` na primeira pagina da lista; o `create` local aceitava documento repetido no mesmo grupo; importacao com codigo conflitante podia sobrescrever.
+- Causa raiz: numeracao no frontend e ausencia de reserva/duplicidade no ponto unico de persistencia.
+- Arquivos alterados: `localCadastroMasterPolicy.js` (extracao, `localBase44Client.js` ja passa de 1400 linhas), `localBase44Client.js`, `ProdutoFormV22_Completo.jsx`, `useEntityCounts.jsx`, testes.
+- Reutilizado: `ConfiguracaoSistema` como contador por entidade+grupo, `create` local, formulario de produto ja existente.
+- Alteracoes: codigo interno reservado na gravacao; conflito de importacao preserva `codigo_origem`/`codigo_legado`; CPF/CNPJ duplicado no grupo e bloqueado; contagem deixa de falhar em silencio.
+- Pendencia: demais formularios de cadastro ainda aceitam codigo digitado sem reserva propria; inativar/restaurar universal permanece no visualizador existente.
+- Validacoes: `node --test`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 6 Comercial.
+
 ### Gate 4 - Auditoria operacional sem falha silenciosa
 - Objetivo: cumprir o Gate 4 de `PLANO_GO_LIVE.md`: acoes criticas rastreaveis e erros visiveis, sem criar tela ou modulo novo.
 - Diagnostico: liquidacao, cobranca, link de pagamento e configuracao de seguranca gravavam `AuditLog` dentro de `catch {}`; mutacao local persistia token/segredo no log; conformidade de credito do pedido falhava aberto; `auditEntityEvents` devolvia `err.message`.

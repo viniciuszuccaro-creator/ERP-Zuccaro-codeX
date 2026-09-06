@@ -189,28 +189,6 @@ function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, w
   const [gerandoDescricaoSEO, setGerandoDescricaoSEO] = useState(false);
   const [gerandoImagem, setGerandoImagem] = useState(false);
 
-  // V22.0: Query de produtos para auto-incremento
-  const { data: todosProdutos = [] } = useQuery({
-    queryKey: ['produtos-codes-sample', contextKey],
-    queryFn: () => filterInContext('Produto', {}, '-created_date', 100),
-    staleTime: 300000,
-    keepPreviousData: true,
-    refetchOnWindowFocus: false,
-    enabled: !produto && abaAtiva === 'dados-gerais' && contextoValido,
-  });
-
-  useEffect(() => {
-    if (!produto && !formData.codigo && Array.isArray(todosProdutos)) {
-      const ultimoCodigo = todosProdutos
-        .map(p => p.codigo)
-        .filter(c => c && /^\d+$/.test(c))
-        .map(c => parseInt(c))
-        .sort((a, b) => b - a)[0] || 0;
-      const proximoCodigo = (ultimoCodigo + 1).toString().padStart(4, '0');
-      setFormData(prev => ({ ...prev, codigo: proximoCodigo }));
-    }
-  }, [todosProdutos, produto, formData.codigo]);
-
   // V21.2 FASE 2: Queries dos estruturantes
   const { data: setores = [] } = useQuery({
     queryKey: ['setores-atividade', contextKey],
@@ -848,12 +826,11 @@ Caso contrário, sugira:
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label>Código/SKU *</Label>
+                  <Label>Código/SKU</Label>
                   <Input
                     value={formData.codigo}
                     onChange={(e) => setFormData(prev => ({...prev, codigo: e.target.value}))}
-                    placeholder="0001"
-                    required
+                    placeholder="Gerado ao salvar"
                     data-permission="Cadastros.Produto.editar"
                     data-action="editar-codigo-produto"
                     data-sensitive

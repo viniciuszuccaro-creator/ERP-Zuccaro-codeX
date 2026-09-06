@@ -7,6 +7,7 @@ import {
 } from "@/components/lib/contextoMultiempresaPolicy";
 import { sanitizeAuditPayload, sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
 import { createAuthDeniedError, evaluateLocalUserSession } from "@/api/localAuthSessionPolicy";
+import { applyMasterCadastroOnCreate, MASTER_CODE_SPECS, sequenceKeyFor } from "@/api/localCadastroMasterPolicy";
 import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows } from "../../base44/functions/_lib/security/entityGuardPolicy/entry.ts";
 
 const reportLocalClientFailure = (operation, error, context = {}) => {
@@ -866,6 +867,52 @@ const getEntityStore = (db, entityName) => {
   return db[entityName];
 };
 
+const applyLocalMasterCadastro = (db, entityName, record) => {
+  const needsCode = Boolean(MASTER_CODE_SPECS[entityName]);
+  const needsDuplicate = ['Cliente', 'Fornecedor', 'Transportadora'].includes(entityName);
+  if (!needsCode && !needsDuplicate) return record;
+
+  const groupId = record.group_id || record.grupo_id || null;
+  const records = getEntityStore(db, entityName).filter((item) => {
+    if (!groupId) return true;
+    return String(item.group_id || item.grupo_id || '') === String(groupId);
+  });
+  const configs = getEntityStore(db, 'ConfiguracaoSistema');
+  const chave = sequenceKeyFor(entityName, groupId);
+  const seqRow = configs.find((item) => item.chave === chave);
+  const sequenceValue = Number(seqRow?.valor_numero) || 0;
+  const nextRecord = applyMasterCadastroOnCreate({
+    entityName,
+    record,
+    records,
+    sequenceValue,
+  });
+  const spec = MASTER_CODE_SPECS[entityName];
+  if (spec) {
+    const used = Number.parseInt(String(nextRecord[spec.field] || ''), 10);
+    if (Number.isFinite(used)) {
+      const nextValue = Math.max(sequenceValue, used);
+      if (seqRow) {
+        seqRow.valor_numero = nextValue;
+        seqRow.valor = String(nextValue);
+        seqRow.updated_date = now();
+      } else {
+        configs.unshift({
+          id: makeId('seq'),
+          chave,
+          categoria: 'Cadastros',
+          valor_numero: nextValue,
+          valor: String(nextValue),
+          group_id: groupId,
+          created_date: now(),
+          updated_date: now(),
+        });
+      }
+    }
+  }
+  return nextRecord;
+};
+
 const mergeSnapshotRecords = (db, entityName, incoming = []) => {
   if (!Array.isArray(incoming) || incoming.length === 0) return { created: 0, updated: 0 };
   const records = getEntityStore(db, entityName);
@@ -1113,7 +1160,7 @@ const createEntityApi = (entityName) => ({
     assertLocalMutationAllowed(entityName, 'criar');
     const db = loadDb();
     const records = getEntityStore(db, entityName);
-    const payload = stampRecordContext(entityName, data);
+    const payload = applyLocalMasterCadastro(db, entityName, stampRecordContext(entityName, data));
     const record = {
       ...payload,
       id: payload.id || makeId(entityName.toLowerCase()),

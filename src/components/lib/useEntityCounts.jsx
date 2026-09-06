@@ -56,8 +56,9 @@ async function countSingle(entityName, filter) {
     });
     const d = res?.data;
     if (typeof d?.count === 'number') return d.count;
-  } catch (_) {}
-  // Fallback via listagem
+  } catch (error) {
+    console.error('[useEntityCounts] Falha na contagem individual', error, { entityName });
+  }
   try {
     const res = await base44.functions.invoke('entityListSorted', {
       entityName,
@@ -67,7 +68,9 @@ async function countSingle(entityName, filter) {
       limit: 2000,
     });
     return Array.isArray(res?.data) ? res.data.length : 0;
-  } catch (_) {}
+  } catch (error) {
+    console.error('[useEntityCounts] Falha na contagem por listagem', error, { entityName });
+  }
   return 0;
 }
 
