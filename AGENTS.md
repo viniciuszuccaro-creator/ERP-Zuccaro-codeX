@@ -1,599 +1,389 @@
-# AGENTS.md — ERP ZuCCARO
+# AGENTS.md — ERP ZUCCARO
 
-## 0. FINALIDADE DESTE ARQUIVO
+## 0. FINALIDADE, ESCOPO E PRIORIDADE
 
-Este arquivo contém as regras permanentes e obrigatórias para qualquer agente de IA, Codex, Cursor, automação, desenvolvedor ou ferramenta que altere este repositório.
+Este arquivo contém as regras permanentes e obrigatórias para Codex, Cursor, agentes de IA, automações e desenvolvedores que alterem este repositório. Seu escopo é todo o repositório, salvo instrução mais específica em `AGENTS.md` localizado em subdiretório.
 
-Estas instruções têm prioridade operacional dentro do projeto. Antes de criar, alterar, mover, refatorar, excluir, integrar, migrar ou testar qualquer parte do ERP, o agente deve ler este arquivo integralmente e seguir todas as regras abaixo.
+Antes de alterar código, ler este arquivo e cumprir as regras aplicáveis. Não repetir no chat todo o conteúdo deste arquivo: usá-lo como contexto permanente.
 
-O objetivo é evoluir o ERP Zuccaro sem criar módulos paralelos, sem quebrar o que já existe, sem perder dados, sem enfraquecer segurança, e mantendo multiempresa, RBAC, auditoria, rastreabilidade, responsividade e integração entre todos os módulos.
+Objetivo: evoluir o ERP Zuccaro rapidamente e com baixo consumo de contexto, sem duplicar estruturas, quebrar fluxos, perder dados ou enfraquecer multiempresa, RBAC, segurança, auditoria, rastreabilidade, responsividade e integrações.
+
+Quando houver conflito entre conveniência técnica e estas regras, preservar segurança, integridade de dados e Regra-Mãe. Se uma solicitação exigir violação de regra crítica, parar e registrar `BLOCKED`, motivo e alternativa segura.
 
 ---
 
 # 1. REGRA-MÃE — OBRIGATÓRIA E INVIOLÁVEL
 
-## 1.1 Proibição absoluta de criação paralela
+## 1.1 Proibição de criação paralela
 
-É proibido criar módulo, tela, página, funcionalidade, componente, hook, serviço, entidade, endpoint, função backend, relatório, dashboard, rotina, automação ou arquivo novo quando já existir implementação com propósito, nome ou função igual ou semelhante.
+É proibido criar módulo, tela, página, funcionalidade, componente, hook, serviço, entidade, endpoint, função backend, relatório, dashboard, rotina ou automação quando já existir implementação com propósito igual ou semelhante.
 
-Antes de criar qualquer coisa, o agente deve:
+Antes de criar algo:
+1. pesquisar nomes e finalidades relacionadas;
+2. localizar implementação existente e consumidores;
+3. verificar rotas, imports, hooks, entidades, funções e integrações;
+4. melhorar/refatorar o existente;
+5. criar somente se não houver equivalente viável ou se a extração for necessária à refatoração.
 
-1. pesquisar todo o repositório;
-2. localizar nomes iguais e similares;
-3. localizar componentes com finalidade equivalente;
-4. mapear consumidores existentes;
-5. verificar rotas, imports, hooks, funções, entidades e integrações relacionadas;
-6. decidir se o requisito pode ser atendido melhorando o existente;
-7. somente criar algo novo quando não existir equivalente técnico viável e quando a nova criação for indispensável à refatoração ou à infraestrutura.
+Se for indispensável criar arquivo/componente auxiliar, registrar por que não havia equivalente, o que foi reutilizado e como se integra ao fluxo atual.
 
-Mesmo em caso de criação tecnicamente necessária, o agente deve registrar no relatório final:
+Não criar versões como `ComercialV2`, `FinanceiroNovo`, `DashboardNovo`, `PortalCliente2`, `RoteirizadorNovo`, `ChatbotNovo` para evitar corrigir o existente.
 
-- por que não havia equivalente;
-- por que a criação era indispensável;
-- quais componentes existentes foram reutilizados;
-- como a nova estrutura se integra ao fluxo atual.
+## 1.2 Refatoração de estruturas grandes
 
-## 1.2 Melhorar sempre no existente
+Arquivos acima de aproximadamente 400–600 linhas, ou cuja complexidade comprometa manutenção/testes, devem ser divididos quando forem tocados e quando isso for seguro. Extrair hooks, helpers, schemas, validators, componentes, serviços e funções puras reutilizáveis, preservando interface pública e comportamento.
 
-Toda correção, melhoria, otimização ou evolução funcional deve acontecer prioritariamente nos módulos, telas, arquivos, entidades e fluxos já existentes.
+## 1.3 Nunca apagar funcionalidades
 
-Não criar `ComercialV2`, `FinanceiroNovo`, `DashboardNovo`, `PortalCliente2`, `RoteirizadorNovo`, `ChatbotNovo`, `PedidosNovaVersao` ou equivalentes apenas para evitar corrigir a estrutura atual.
+Não apagar/remover/desativar de forma irreversível funcionalidades, botões, abas, campos, páginas, relatórios, integrações, dados históricos ou código legado ainda consumido.
 
-## 1.3 Refatoração obrigatória de arquivos grandes
+Antes de retirar algo: inventário → consumidores → equivalência → migração → testes → homologação → autorização.
 
-Quando um arquivo, componente ou módulo ultrapassar aproximadamente 400–600 linhas, ou quando sua legibilidade, manutenção, teste ou compreensão estiver comprometida, ele deve ser refatorado.
+## 1.4 Não quebrar fluxos existentes
 
-A refatoração pode extrair:
-
-- hooks;
-- helpers;
-- validadores;
-- schemas;
-- componentes internos;
-- serviços;
-- adaptadores;
-- funções puras;
-- tabelas auxiliares;
-- utilitários.
-
-A refatoração deve preservar:
-
-- comportamento atual;
-- props públicas;
-- fluxos do usuário;
-- rotas;
-- permissões;
-- auditoria;
-- multiempresa;
-- integrações;
-- responsividade.
-
-## 1.4 Nunca apagar funcionalidades
-
-Não apagar, remover, esconder permanentemente, desativar ou substituir de forma irreversível:
-
-- funcionalidades;
-- botões;
-- abas;
-- campos;
-- fluxos;
-- páginas;
-- relatórios;
-- integrações;
-- códigos legados ainda consumidos;
-- dados históricos.
-
-Antes de retirar algo de navegação ou de uso, deve existir:
-
-1. inventário;
-2. análise de consumidores;
-3. equivalência funcional comprovada;
-4. migração;
-5. testes;
-6. homologação;
-7. autorização explícita.
-
-## 1.5 Não quebrar o fluxo existente
-
-Nenhuma alteração pode interromper o fluxo operacional já existente.
-
-Exemplos de fluxos que devem permanecer íntegros:
-
+Preservar fluxos como:
 - pedido → estoque → aprovação → faturamento → NF → financeiro → entrega → WhatsApp;
 - compra → recebimento → estoque → financeiro;
 - produção → apontamento → estoque → expedição;
-- entrega → motorista → prova de entrega → ocorrência → retorno ao ERP.
+- entrega → motorista → prova → ocorrência → ERP.
 
 ---
 
-# 2. MULTIEMPRESA ABSOLUTA
+# 2. POLÍTICA DE ECONOMIA DE CRÉDITOS, TOKENS E CONTEXTO
+
+Esta política é obrigatória para Codex e deve ser seguida também no Cursor sempre que a ferramenta suportar comportamento equivalente.
+
+## 2.1 Princípio
+
+Usar o menor contexto e o menor número de operações necessários para resolver completamente a tarefa atual, sem reduzir segurança ou qualidade.
+
+## 2.2 Antes de trabalhar
+
+1. Ler `AGENTS.md` como regra permanente.
+2. Ler somente a parte necessária de `PLANO_GO_LIVE.md`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md` relacionada à tarefa.
+3. Não reler documentos inteiros quando a seção/tarefa já estiver identificada.
+4. Não auditar o repositório inteiro para tarefa localizada.
+5. Começar pelos arquivos explicitamente relacionados à tarefa.
+6. Expandir a busca apenas quando dependência real exigir.
+7. Reutilizar diagnóstico já registrado no status quando ainda for válido.
+
+## 2.3 Unidade de trabalho
+
+Trabalhar em UMA tarefa, Gate, subgate ou defeito por vez, salvo quando dependências inseparáveis exigirem um lote pequeno conjunto.
+
+Não avançar automaticamente para a próxima tarefa.
+
+Não aproveitar uma tarefa para “melhorar” módulos não relacionados.
+
+Não refatorar código saudável fora do escopo apenas por preferência estética.
+
+## 2.4 Busca econômica
+
+Preferir esta sequência:
+1. arquivo/caminho informado;
+2. símbolos/imports diretamente relacionados;
+3. consumidores diretos;
+4. testes relacionados;
+5. somente então busca mais ampla.
+
+Não abrir dezenas de arquivos apenas para produzir relatório. Não repetir pesquisas que já deram resposta suficiente.
+
+## 2.5 Respostas econômicas
+
+Ao concluir, responder de forma objetiva. Não repetir código inteiro nem este AGENTS.md. Informar apenas diagnóstico, arquivos alterados, mudança, testes, resultado, pendências e próximo passo.
+
+## 2.6 Testes em duas camadas
+
+Durante desenvolvimento de lote pequeno:
+- executar primeiro testes focados e baratos;
+- usar lint/typecheck direcionados quando disponíveis;
+- não executar repetidamente a suíte completa após cada edição mínima.
+
+No fechamento de lote/Gate ou antes de commit de mudança relevante, executar os checks obrigatórios definidos na seção 16.
+
+Mudança exclusivamente documental pode dispensar testes de aplicação quando comprovadamente não altera runtime; nesse caso executar ao menos `git diff --check` e registrar a justificativa. Mudança de código não pode usar essa exceção.
+
+## 2.7 Evitar trabalho duplicado entre Codex e Cursor
+
+Antes de iniciar, verificar `STATUS_DO_PROJETO.md` e commits recentes relacionados à tarefa. Não reimplementar nem reaudar integralmente trabalho já homologado sem evidência de regressão.
+
+Codex deve ser preferido para lotes autônomos e completos; Cursor pode ser usado para correções locais e edição assistida. Não fazer os dois analisarem o mesmo módulo inteiro sem necessidade.
+
+## 2.8 Limite de expansão
+
+Se a tarefa inicialmente localizada revelar impacto amplo:
+- não transformar silenciosamente em auditoria geral;
+- registrar dependências encontradas;
+- corrigir apenas o necessário para manter integridade;
+- propor tarefa separada para o restante.
+
+---
+
+# 3. PROTOCOLO OBRIGATÓRIO DE EXECUÇÃO
+
+## 3.1 Antes da edição
+
+O agente deve determinar:
+- objetivo exato;
+- problema atual;
+- causa provável ou confirmada;
+- estruturas existentes a reutilizar;
+- arquivos diretamente envolvidos;
+- entidades e campos afetados;
+- consumidores downstream;
+- risco multiempresa;
+- permissões necessárias;
+- auditoria necessária;
+- testes mínimos.
+
+## 3.2 Durante a edição
+
+Fazer a menor alteração segura que resolva completamente a tarefa. Preservar compatibilidade. Evitar mudanças massivas de formatação, renomeações sem necessidade e diffs ruidosos.
+
+## 3.3 Quando parar
+
+Parar e marcar `BLOCKED` quando faltar requisito indispensável, credencial, contrato de API, decisão fiscal/financeira, dado de produção, acesso ou quando a única forma de continuar violar segurança/integridade.
+
+Não inventar comportamento para contornar bloqueio.
+
+## 3.4 Concorrência entre agentes
+
+Codex e Cursor podem trabalhar no mesmo repositório, mas não devem editar simultaneamente o mesmo arquivo/lote sem coordenação. Antes de alterar arquivo crítico, verificar estado/commit recente. Evitar sobrescrever trabalho de outro agente. Nunca desfazer mudança desconhecida apenas para fazer a própria solução passar.
+
+---
+
+# 4. MULTIEMPRESA ABSOLUTA
 
 Toda leitura, criação, alteração, exclusão lógica, aprovação, relatório, importação, exportação, integração, job, webhook, IA e automação deve operar com contexto explícito de Grupo e Empresa quando aplicável.
 
-## 2.1 Contrato canônico
+## 4.1 Contrato canônico
 
-Toda operação deve trabalhar com:
-
+Toda operação deve considerar:
 - `groupId` / `group_id`;
 - `empresaId` / `empresa_id`;
-- `scopeType` quando existir contexto Grupo ou Empresa;
+- `scopeType` quando aplicável;
 - usuário autenticado;
 - permissões efetivas.
 
-Nomes legados devem ser normalizados progressivamente sem quebrar consumidores.
+Normalizar nomes legados progressivamente sem quebrar consumidores.
 
-## 2.2 Regra Grupo → Empresas
+## 4.2 Grupo → Empresas
 
-Tudo que for feito no Grupo e for cadastro compartilhado deve ficar automaticamente disponível para as empresas selecionadas ou pertencentes ao grupo conforme regra da entidade.
+Cadastro compartilhado criado no Grupo deve ficar disponível às empresas autorizadas/selecionadas conforme regra da entidade. Isso não significa copiar fisicamente operações para todas as empresas. Preferir mestre + vínculo/visibilidade/parametrização.
 
-Isso não significa copiar fisicamente registros operacionais para todas as empresas.
+## 4.3 Empresa → Grupo
 
-Cadastros mestres devem ser compartilhados por vínculo, visibilidade ou parametrização, evitando duplicação desnecessária.
+Operação criada na Empresa aparece consolidada no Grupo preservando a empresa proprietária. O Grupo consolida; a Empresa opera.
 
-## 2.3 Regra Empresa → Grupo
+## 4.4 Faturamento pelo Grupo
 
-Tudo que for feito em uma Empresa deve aparecer no Grupo em visão consolidada, preservando a empresa proprietária original.
+Faturamento iniciado na visão do Grupo deve emitir NF exclusivamente pela empresa jurídica responsável, usando identidade fiscal, certificado, série, estoque e regras daquela empresa. Nunca emitir NF por identidade genérica do Grupo.
 
-O Grupo consolida; a Empresa opera.
+## 4.5 Bloqueios
 
-## 2.4 Faturamento no Grupo
-
-Quando o usuário iniciar faturamento pela visão do Grupo, a Nota Fiscal deve ser emitida exclusivamente pela empresa jurídica responsável pela operação.
-
-Nunca emitir NF usando identidade fiscal genérica do Grupo.
-
-## 2.5 Bloqueios obrigatórios
-
-O backend deve bloquear:
-
-- `empresaId` que não pertence ao `groupId`;
+Backend deve bloquear:
+- empresa que não pertence ao grupo;
 - empresa não autorizada ao usuário;
-- troca manual de IDs em request;
-- tentativa de acesso via localStorage manipulado;
-- acesso cruzado entre empresas sem permissão;
-- acesso de cliente a dados de outro cliente;
-- acesso de motorista a entrega não atribuída.
+- IDs adulterados na request;
+- localStorage manipulado;
+- acesso cruzado indevido;
+- cliente acessando outro cliente;
+- motorista acessando entrega não atribuída;
+- export/download fora do escopo.
 
-Frontend não é segurança. Toda regra deve ser validada novamente no backend.
+Frontend não é mecanismo de segurança.
 
 ---
 
-# 3. RBAC GRANULAR — FRONTEND E BACKEND
+# 5. RBAC GRANULAR — FRONTEND E BACKEND
 
 Toda tela, módulo, submódulo, aba, seção, campo, botão, ação, endpoint, exportação, importação, integração e dado sensível deve ter controle de permissão.
 
-## 3.1 Padrão de chave
-
-Preferir chaves granulares como:
-
+Preferir chaves granulares, por exemplo:
 - `comercial.pedido.visualizar`
 - `comercial.pedido.criar`
 - `comercial.pedido.editar`
 - `comercial.pedido.aprovar`
 - `comercial.pedido.desconto.aprovar`
-- `financeiro.caixa.visualizar`
 - `financeiro.caixa.baixa-manual`
 - `financeiro.contas-pagar.aprovar`
 - `fiscal.nota.emitir`
 - `fiscal.nota.cancelar`
-- `administracao.acessos.visualizar`
 - `administracao.acessos.editar`
-- `sistema.integracoes.executar`
 
-## 3.2 Ações que não devem ser agrupadas indevidamente
+Separar visualizar, criar, editar, inativar, restaurar, aprovar, rejeitar, emitir, cancelar, receber, pagar, conciliar, estornar, importar, exportar, configurar, executar e administrar acessos.
 
-Separar sempre que houver risco operacional:
+Dados sensíveis como custo, margem, salário e dados bancários exigem permissão própria quando aplicável.
 
-- visualizar;
-- criar;
-- editar;
-- inativar;
-- restaurar;
-- aprovar;
-- rejeitar;
-- emitir;
-- cancelar;
-- receber;
-- pagar;
-- conciliar;
-- estornar;
-- importar;
-- exportar;
-- configurar;
-- executar;
-- administrar acessos;
-- visualizar custo;
-- visualizar margem;
-- visualizar salário;
-- visualizar dados bancários.
+Segregação de funções:
+- criador não aprova o próprio pagamento quando política exigir;
+- desconto fora da alçada exige outro aprovador;
+- criador da compra não aprova a própria compra quando política exigir;
+- administrador de permissões não pode apagar auditoria;
+- cancelamento fiscal exige permissão específica.
 
-## 3.3 Segregação de funções
-
-Evitar que a mesma pessoa execute ponta a ponta um processo crítico sem alçada.
-
-Exemplos:
-
-- quem cria pagamento não aprova o próprio pagamento;
-- quem concede desconto fora da alçada não aprova o próprio desconto;
-- quem cria compra não aprova a mesma compra;
-- quem administra permissões não pode apagar auditoria;
-- quem emite NF não cancela sem permissão específica.
+Permissões devem ser fail-closed em operações sensíveis: enquanto perfil/permissão não estiver carregado, não liberar ação crítica.
 
 ---
 
-# 4. SEGURANÇA OBRIGATÓRIA
+# 6. SEGURANÇA OBRIGATÓRIA
 
-Toda alteração deve reforçar segurança, nunca reduzi-la.
+Toda alteração deve reforçar segurança.
 
-## 4.1 Entrada de dados
+Backend deve aplicar schema, sanitização, allowlist de campos, limites, validação de documentos, datas, valores, percentuais, IDs, URLs e arquivos.
 
-Aplicar no backend:
+Nunca confiar em input do frontend, importação, webhook, XML, planilha, site, marketplace, chatbot ou IA.
 
-- schema de validação;
-- sanitização;
-- allowlist de campos;
-- limites de tamanho;
-- validação de CPF/CNPJ;
-- e-mail;
-- telefone;
-- datas;
-- valores;
-- percentuais;
-- IDs;
-- URLs;
-- arquivos.
+Uploads: validar extensão, MIME, tamanho, conteúdo, quantidade, origem, permissão e Grupo/Empresa. Não gravar segredo, token ou URL temporária em auditoria.
 
-## 4.2 Proteção contra XSS e injeção
+Perfis privilegiados devem usar política forte de sessão; quando suportado, MFA, expiração, revogação e controle de dispositivo.
 
-Nunca confiar em input recebido do frontend, importação, webhook, planilha, XML, site, marketplace, chatbot ou IA.
+Webhooks/integrações: assinatura, idempotência, proteção contra replay, timeout, retry limitado, fila morta, logs sanitizados e alerta de falha persistente.
 
-Sanitizar no write path e escapar no render path quando necessário.
-
-## 4.3 Uploads
-
-Validar:
-
-- extensão;
-- MIME;
-- tamanho;
-- conteúdo;
-- quantidade;
-- origem;
-- permissão;
-- vínculo Grupo/Empresa.
-
-Não persistir URLs temporárias ou credenciais em auditoria.
-
-## 4.4 Sessões e perfis sensíveis
-
-Exigir política mais forte para:
-
-- administradores;
-- financeiro;
-- fiscal;
-- usuários com acesso a permissões;
-- integrações;
-- certificados;
-- configurações de segurança.
-
-Quando suportado, utilizar MFA, expiração de sessão, revogação e controle de dispositivo.
-
-## 4.5 Webhooks e integrações
-
-Implementar:
-
-- assinatura;
-- idempotência;
-- proteção contra replay;
-- timeout;
-- retry;
-- fila morta;
-- logs sanitizados;
-- alerta em falha persistente.
+Nunca colocar segredo/API key/token em código frontend, commit, log, prompt, screenshot ou documentação.
 
 ---
 
-# 5. AUDITORIA COMPLETA E CONFIÁVEL
+# 7. AUDITORIA COMPLETA
 
-Toda ação relevante deve gerar log de auditoria.
-
-Registrar pelo menos:
-
-- usuário;
-- perfil;
+Ações relevantes devem registrar:
+- usuário/perfil;
 - data/hora;
-- módulo;
-- entidade;
-- registro;
+- módulo/entidade/registro;
 - ação;
-- antes;
-- depois;
-- `groupId`;
-- `empresaId`;
+- antes/depois;
+- `groupId` e `empresaId`;
 - origem;
-- identificador de correlação;
+- correlação;
 - sucesso/falha;
 - justificativa quando necessária.
 
-## 5.1 Ações obrigatoriamente auditadas
+Auditar criar, editar, aprovar, rejeitar, inativar, restaurar, emitir, cancelar, receber, pagar, conciliar, estornar, preço, desconto, permissão, integração, export sensível, importação e migração.
 
-- criar;
-- editar;
-- aprovar;
-- rejeitar;
-- inativar;
-- restaurar;
-- emitir;
-- cancelar;
-- receber;
-- pagar;
-- conciliar;
-- estornar;
-- alterar preço;
-- alterar desconto;
-- alterar permissão;
-- alterar integração;
-- exportar informação sensível;
-- importar dados;
-- migração.
-
-## 5.2 Catch vazio proibido em operação crítica
-
-Não utilizar `catch {}` para ignorar falha operacional, auditoria, integração, permissão, persistência ou segurança.
-
-Falhas devem:
-
-1. ser tratadas;
-2. gerar mensagem apropriada;
-3. ser registradas de forma segura;
-4. reverter ou bloquear a operação quando necessário.
+`catch {}` ou equivalente silencioso é proibido em persistência, auditoria, integração, segurança e operação crítica. Falha deve ser tratada, comunicada, registrada e causar rollback/bloqueio quando necessário.
 
 ---
 
-# 6. CADASTROS GERAIS COMO FONTE MESTRE
+# 8. CADASTROS GERAIS COMO FONTE MESTRE
 
-Cadastros Gerais deve ser a fonte única e confiável para dados mestres consumidos pelo ERP.
+Cadastros Gerais é a fonte mestre consumida por Comercial, Financeiro, Compras, Estoque, Fiscal, Produção, Logística, RH, Chatbot, Portal, Site e Marketplace.
 
-## 6.1 Não duplicar cadastros por módulo
+Não criar cadastro paralelo em cada módulo.
 
-Comercial, Financeiro, Compras, Estoque, Fiscal, Produção, Logística, RH, Chatbot, Portal, Site e Marketplace devem reutilizar os cadastros mestres existentes.
+Todo registro que exija código deve ter código interno sequencial único controlado pelo backend. Nunca usar `count + 1` no frontend. Reserva deve ser segura contra concorrência.
 
-## 6.2 Código sequencial
-
-Todo registro que exija código deve possuir código interno sequencial, único e controlado pelo backend.
-
-Nunca gerar código com base apenas em `count + 1` no frontend.
-
-A reserva deve ser atômica ou segura contra concorrência.
-
-## 6.3 Importação do ERP antigo
-
-Quando importar registro com código já existente:
-
-1. preservar o código original em campo de origem/legado;
+Importação do ERP antigo com conflito:
+1. preservar código original/legado;
 2. detectar conflito;
-3. gerar próximo código interno disponível;
-4. registrar o mapeamento;
+3. reservar próximo código interno;
+4. registrar mapeamento;
 5. impedir sobrescrita silenciosa;
-6. registrar auditoria;
-7. produzir relatório de conflitos.
+6. auditar;
+7. gerar relatório de conflito.
 
-## 6.4 Duplicidade
-
-A validação deve considerar, conforme entidade:
-
-- código;
-- descrição normalizada;
-- documento;
-- e-mail;
-- identificador externo;
-- chaves compostas.
-
-Comparação deve tratar espaços, caixa e outras normalizações necessárias sem destruir o valor original exibido.
+Duplicidade deve considerar, conforme entidade, código, descrição normalizada, documento, e-mail, identificador externo e chaves compostas. Não mesclar destrutivamente de forma automática.
 
 ---
 
-# 7. FUNCIONALIDADE DE PONTA A PONTA
+# 9. FUNCIONALIDADE DE PONTA A PONTA
 
-Uma tela não é considerada pronta apenas porque renderiza.
+Tela aberta não significa funcionalidade pronta. Todo fluxo deve comprovar:
+entrada → validação → autorização → persistência → estado → integração downstream → auditoria → tratamento de erro → reabertura correta → relatório/KPI correto.
 
-Todo fluxo deve comprovar:
+Todo botão, switch, toggle, checkbox, radio, select, combobox, input, upload, menu e ação de tabela deve ser funcional. Testar visualização, permissão, interação, loading, persistência, reabertura, Grupo/Empresa, erro, auditoria e duplo clique/idempotência.
 
-1. entrada;
-2. validação;
-3. autorização;
-4. persistência;
-5. atualização de estado;
-6. integração com módulos relacionados;
-7. auditoria;
-8. erro controlado;
-9. reabertura com estado correto;
-10. relatório ou indicador correto quando aplicável.
+Controle que muda visualmente e não persiste é defeito.
 
 ---
 
-# 8. LAYOUT, RESPONSIVIDADE E MULTITAREFA
+# 10. LAYOUT, RESPONSIVIDADE E MULTITAREFA
 
-Todas as telas, páginas, modais e containers principais devem respeitar:
+Telas, páginas, modais e containers principais devem respeitar `w-full`, `h-full`, flex/grid responsivo, redimensionamento, tablet/desktop/celular quando aplicável, abas fixas, conteúdo rolável e rodapé acessível.
 
-- `w-full`;
-- `h-full`;
-- flex/grid responsivo;
-- redimensionamento;
-- tablet;
-- desktop;
-- celular quando aplicável;
-- abas fixas;
-- conteúdo rolável;
-- rodapé de ações acessível.
-
-Evitar alturas rígidas que cortem conteúdo em janelas menores.
-
-Preservar multitarefa e estado quando minimizar/maximizar/restaurar janelas.
+Evitar alturas rígidas que cortem conteúdo. Preservar estado ao minimizar/maximizar/restaurar janelas quando o fluxo existente oferecer multitarefa.
 
 ---
 
-# 9. CONTROLES INTERATIVOS
+# 11. CONSULTAS, PAGINAÇÃO, CACHE E KPIs
 
-Todo botão, switch, toggle, checkbox, radio, select, combobox, input, upload, menu e ação de tabela deve ser funcional.
+Não calcular total/KPI usando apenas primeira página carregada.
 
-O agente deve testar:
-
-1. visualização correta;
-2. permissão;
-3. clique/interação;
-4. loading;
-5. persistência;
-6. reabertura;
-7. Grupo/Empresa;
-8. erro;
-9. auditoria;
-10. duplo clique/idempotência.
-
-Controle que muda apenas visualmente e não persiste deve ser tratado como defeito.
-
----
-
-# 10. CONSULTAS, PAGINAÇÃO E KPIs
-
-Não calcular KPI total usando apenas registros carregados na primeira página.
-
-Regras:
-
+Usar:
 - paginação server-side;
-- busca server-side para volumes grandes;
-- contagem separada da listagem;
-- agregação no backend;
-- queryKey por usuário + grupo + empresa + filtros;
-- invalidação correta ao trocar contexto;
+- busca server-side em grandes volumes;
+- contagem/agregação separada da listagem;
+- queryKey incluindo usuário + grupo + empresa + filtros relevantes;
+- cancelamento/invalidação ao trocar contexto;
 - exportação de todos os registros filtrados;
-- drill-down deve reproduzir exatamente o KPI.
+- drill-down reproduzindo exatamente o KPI.
+
+Evitar N+1 e carregamento integral de entidade apenas para contar/somar.
 
 ---
 
-# 11. IA NO ERP
+# 12. IA E AGENTES NO ERP
 
-A IA deve ser integrada de forma governada ao sistema inteiro, reutilizando componentes existentes.
+IA deve reutilizar a camada existente e respeitar RBAC/multiempresa do usuário.
 
-A IA pode:
+Pode sugerir, classificar, prever, resumir, detectar anomalias, auxiliar preenchimento, interpretar projeto, recomendar compra, prever atraso, explicar indicador e apoiar migração.
 
-- sugerir;
-- classificar;
-- prever;
-- resumir;
-- detectar anomalias;
-- responder dúvidas;
-- auxiliar preenchimento;
-- interpretar projeto;
-- recomendar compra;
-- prever atraso;
-- explicar indicadores;
-- apoiar migração.
+Não executar sem política, autorização e confirmação: pagamento, baixa, emissão/cancelamento NF, alteração de preço, desconto, permissão, estoque, fiscal, bloqueio de cliente ou inativação crítica.
 
-A IA não deve executar automaticamente, sem política e autorização:
+Agentes previstos quando a arquitetura existente suportar: Comercial, Financeiro, Fiscal, Compras, Estoque, Produção, Logística, Atendimento, Auditoria, Segurança, Migração e Diretoria.
 
-- pagamento;
-- baixa financeira;
-- emissão/cancelamento de NF;
-- alteração de preço;
-- aprovação de desconto;
-- alteração de permissão;
-- exclusão/inativação crítica;
-- bloqueio de cliente;
-- alteração de estoque;
-- alteração fiscal.
-
-Toda ação sensível sugerida por IA deve ter confirmação, RBAC e auditoria.
+Princípio do menor privilégio: agente nunca recebe mais acesso que o usuário que o invocou. Registrar ferramentas usadas, ação proposta/executada, contexto e resultado em operações sensíveis.
 
 ---
 
-# 12. AGENTES ESPECIALIZADOS
+# 13. SITE, CHATBOT, PORTAL, MARKETPLACE, ROTEIRIZADOR E MOTORISTA
 
-Quando a arquitetura existente suportar agentes, eles devem reutilizar a camada de IA, RBAC e contexto existente.
+Site próprio já existente deve ser integrado; não criar outro site.
 
-Agentes previstos:
+Chatbot: reutilizar/consolidar `ChatbotAtendimento`, `HubAtendimento` e estruturas equivalentes existentes; não criar terceiro centro paralelo.
 
-- Comercial;
-- Financeiro;
-- Fiscal;
-- Compras;
-- Estoque;
-- Produção;
-- Logística;
-- Atendimento;
-- Auditoria;
-- Segurança;
-- Migração do ERP antigo;
-- Diretoria.
+Portal: melhorar `PortalCliente`/portal existente; não criar outro.
 
-Cada agente deve receber somente dados permitidos ao usuário que o invocou.
+Marketplace: completar estrutura existente de catálogo, estoque, preço, pedido, cliente, frete, NF, taxas, conciliação, devolução e erros.
 
-Nunca conceder ao agente privilégio maior que o do usuário.
-
----
-
-# 13. SITE, CHATBOT, PORTAL, MARKETPLACE E APP MOTORISTA
-
-## 13.1 Site
-
-O site próprio já existente deve ser integrado ao ERP.
-
-É proibido criar outro site apenas para facilitar a integração.
-
-## 13.2 Chatbot
-
-Reutilizar e consolidar `ChatbotAtendimento`, `HubAtendimento` e componentes existentes.
-
-Não criar um terceiro centro paralelo.
-
-## 13.3 Portal do Cliente
-
-Melhorar o portal existente.
-
-Não criar novo portal.
-
-## 13.4 Marketplaces
-
-Reutilizar a estrutura existente de integrações e sincronização.
-
-Completar catálogo, estoque, preço, pedidos, cliente, frete, NF, taxas, conciliação, devolução e erros.
-
-## 13.5 Roteirizador e App Motorista
-
-Roteirizador e App Motorista devem formar fluxo único:
-
-ERP → rota → veículo → motorista → app → entrega → prova → ocorrência → retorno ERP.
+Roteirizador + App Motorista devem formar fluxo único: ERP → rota → veículo → motorista → app → entrega → prova → ocorrência/reversa → ERP.
 
 ---
 
 # 14. MIGRAÇÃO DO ERP ANTIGO
 
-A migração deve priorizar:
-
-1. exportação nativa do ERP antigo;
+Prioridade:
+1. exportação nativa;
 2. CSV/Excel/XML/PDF estruturado;
 3. Power Automate Desktop para telas sem exportação;
-4. agente visual apenas como apoio;
-5. validação amostral e reconciliação.
+4. agente visual como apoio/exceção;
+5. staging;
+6. validação e reconciliação;
+7. lote piloto;
+8. produção.
 
-Nunca migrar diretamente para produção sem staging, validação e relatório de divergência.
+Preservar ID/código antigo, origem, data, lote, mapeamento antigo→novo, responsável e status de validação.
 
-Preservar:
-
-- identificador antigo;
-- origem;
-- data de importação;
-- lote de migração;
-- mapeamento código antigo → código novo;
-- usuário/automação responsável;
-- status da validação.
+Nunca migrar diretamente para produção sem staging e relatório de divergência. Migração deve ser reexecutável/idempotente sempre que tecnicamente possível.
 
 ---
 
-# 15. TESTES OBRIGATÓRIOS ANTES DE CONCLUIR QUALQUER LOTE
+# 15. BANCO, INTEGRIDADE E OPERAÇÕES DESTRUTIVAS
 
-Executar conforme escopo:
+Preferir inativação/arquivamento a delete físico. Não executar migração destrutiva, drop, truncate, limpeza em massa, renumeração automática, merge destrutivo ou sobrescrita de produção sem plano de rollback, backup e autorização.
 
+Mudanças de schema devem preservar compatibilidade durante transição quando houver consumidores ativos. Operações financeiras, fiscais, estoque e auditoria exigem rastreabilidade e reversão por fluxo de negócio, não apagamento.
+
+---
+
+# 16. TESTES E VALIDAÇÃO
+
+## 16.1 Desenvolvimento focado
+
+Durante edição, executar testes diretamente relacionados à mudança primeiro.
+
+## 16.2 Fechamento de lote de código
+
+Executar conforme scripts disponíveis e aplicabilidade:
 1. `npm run audit:baseline`
 2. `npm test`
 3. `npm run lint`
@@ -601,56 +391,64 @@ Executar conforme escopo:
 5. `npm run build`
 6. `git diff --check`
 
-Além disso, testar manualmente ou por automação o fluxo alterado.
+Não inventar sucesso. Se um comando não existir, falhar por infraestrutura ou possuir erro anterior não relacionado, registrar exatamente.
 
-## 15.1 Testes mínimos de segurança
+## 16.3 Segurança mínima
 
+Testar quando aplicável:
 - usuário autorizado;
-- usuário não autorizado;
+- não autorizado;
 - Grupo;
-- Empresa A;
-- Empresa B;
-- tentativa de trocar ID;
-- tentativa de acessar URL diretamente;
-- tentativa de repetir ação;
-- falha de backend;
+- Empresa A/B;
+- ID adulterado;
+- URL direta;
+- repetição/duplo clique;
+- falha backend;
 - auditoria.
 
+## 16.4 Não mascarar baseline
+
+Não alterar teste, regra de lint, baseline, configuração ou expectativa apenas para fazer pipeline ficar verde sem corrigir a causa. Mudança de baseline exige justificativa técnica explícita.
+
 ---
 
-# 16. REGRA DE STATUS E ENTREGA
+# 17. GIT, COMMITS E DIFERENÇAS
 
-Ao concluir cada lote, atualizar `STATUS_DO_PROJETO.md` com:
+Antes de editar, verificar estado atual. Não sobrescrever alterações de terceiros.
 
+Preferir commits pequenos, coerentes e reversíveis. Não misturar vários módulos independentes no mesmo commit. Não fazer formatação global ou alteração de fim de linha que produza diff gigante sem necessidade.
+
+Não reescrever histórico, fazer force push, reset destrutivo ou apagar branch sem autorização explícita.
+
+Mensagem de commit deve descrever a finalidade, não apenas “ajustes”.
+
+---
+
+# 18. STATUS E RELATÓRIO DE ENTREGA
+
+Ao concluir lote relevante, atualizar `STATUS_DO_PROJETO.md` sem reescrever histórico desnecessariamente.
+
+Registrar:
+- tarefa/ID;
 - objetivo;
-- diagnóstico;
 - causa raiz;
 - arquivos alterados;
-- componentes reutilizados;
-- alterações implementadas;
-- regras de negócio afetadas;
-- multiempresa;
-- RBAC;
-- segurança;
-- auditoria;
-- testes executados;
-- resultado dos testes;
+- estruturas reutilizadas;
+- mudança implementada;
+- multiempresa/RBAC/segurança/auditoria afetados;
+- testes e resultados;
 - commit;
-- pendências;
-- riscos;
-- próximo passo.
+- pendências/riscos;
+- próximo passo recomendado.
 
-Nunca encerrar uma tarefa apenas com “implementado”, “feito” ou “funcionando”.
+Resposta final do agente deve ser curta e verificável. Nunca apenas “implementado com sucesso”.
 
 ---
 
-# 17. ORDEM DE PRIORIDADE DO PROJETO
+# 19. ORDEM DE PRIORIDADE ATÉ GO-LIVE
 
-Enquanto o sistema não estiver liberado para operação real, seguir esta ordem:
-
-## P0 — BLOQUEADORES DE GO-LIVE
-
-1. segurança;
+## P0 — BLOQUEADORES
+1. segurança/autenticação;
 2. RBAC;
 3. multiempresa;
 4. auditoria;
@@ -660,71 +458,55 @@ Enquanto o sistema não estiver liberado para operação real, seguir esta ordem
 8. Financeiro;
 9. Fiscal;
 10. Produção essencial;
-11. Expedição/entrega essencial;
+11. Expedição essencial;
 12. backup/rollback;
 13. testes;
 14. migração piloto.
 
 ## P1 — OPERAÇÃO COMPLETA
+Compras, CRM, logística avançada, roteirizador, app motorista, portal, chatbot, site integrado, marketplaces e relatórios executivos.
 
-1. Compras;
-2. CRM;
-3. Logística avançada;
-4. Roteirizador;
-5. App Motorista;
-6. Portal Cliente;
-7. Chatbot;
-8. Site integrado;
-9. Marketplace;
-10. relatórios executivos.
+## P2 — AUTOMAÇÃO/INTELIGÊNCIA
+IA transversal, agentes, previsões, anomalias e automações avançadas.
 
-## P2 — AUTOMAÇÃO E INTELIGÊNCIA
-
-1. IA transversal;
-2. agentes especializados;
-3. previsões;
-4. detecção de anomalias;
-5. automações avançadas;
-6. otimizações.
+Não iniciar P1/P2 amplo se houver P0 crítico aberto, exceto tarefa explicitamente autorizada ou necessária para fechar P0.
 
 ---
 
-# 18. CRITÉRIO DE PRONTO
+# 20. CRITÉRIO DE PRONTO
 
-Uma tarefa só está pronta quando:
-
-- funciona em produção simulada/homologação;
+Tarefa só está pronta quando:
+- resolve o requisito;
 - não quebra fluxo existente;
 - respeita Grupo/Empresa;
-- respeita RBAC frontend e backend;
-- valida e sanitiza dados;
+- respeita RBAC frontend/backend;
+- valida/sanitiza;
 - audita ações relevantes;
-- persiste corretamente;
-- reabre corretamente;
+- persiste/reabre corretamente;
 - trata falhas;
-- não cria duplicidade;
-- não introduz regressão;
-- passa testes obrigatórios;
-- atualiza o status do projeto.
+- evita duplicidade;
+- não introduz regressão conhecida;
+- passa testes aplicáveis;
+- atualiza status quando necessário.
 
 ---
 
-# 19. PROIBIÇÕES FINAIS
+# 21. PROIBIÇÕES FINAIS
 
 É proibido:
-
-- duplicar módulo;
-- criar versão paralela sem necessidade;
-- confiar apenas no frontend para segurança;
+- duplicar módulo/versão;
+- confiar só no frontend para segurança;
 - usar localStorage como autorização;
-- ignorar erro;
-- esconder erro crítico;
+- ignorar/esconder erro crítico;
 - usar mock como solução definitiva;
-- apagar dado histórico;
+- apagar histórico;
 - emitir NF pelo Grupo;
-- misturar dados de empresas;
-- permitir IA com privilégio superior ao usuário;
-- migrar dados sem rastreabilidade;
-- marcar como concluído sem testes.
+- misturar empresas;
+- conceder à IA privilégio maior que o usuário;
+- migrar sem rastreabilidade;
+- alterar teste para esconder defeito;
+- executar comando destrutivo sem autorização;
+- ampliar silenciosamente o escopo;
+- marcar concluído sem validação.
 
-Estas regras devem ser consideradas parte permanente da arquitetura e da governança do ERP Zuccaro.
+Estas regras fazem parte permanente da arquitetura e governança do ERP Zuccaro.
