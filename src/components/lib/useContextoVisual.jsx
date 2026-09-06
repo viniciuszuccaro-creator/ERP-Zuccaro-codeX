@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useUser } from "./UserContext";
 import useContextoGrupoEmpresa from "./useContextoGrupoEmpresa";
-import { normalizeMultiempresaContext, validateMultiempresaContext } from "./contextoMultiempresaPolicy";
+import { buildMultiempresaReadFilter, entityRequiresEmpresaOnWrite, normalizeMultiempresaContext, resolveEmpresaIdOnWrite, validateMultiempresaContext } from "./contextoMultiempresaPolicy";
 
 export function useContextoVisual() {
   const { user, isLoading: loadingUser } = useUser();
@@ -29,9 +29,18 @@ export function useContextoVisual() {
     setContexto(estaNoGrupoContexto ? 'grupo' : 'empresa');
   }, [estaNoGrupoContexto]);
 
+  const groupIdForEmpresas = grupoAtual?.id || empresaContexto?.group_id || empresaContexto?.grupo_id;
   const { data: empresas = [], isLoading: loadingEmpresas } = useQuery({
-    queryKey: ['empresas'],
-    queryFn: () => base44.entities.Empresa.list(),
+    queryKey: ['empresas', groupIdForEmpresas],
+    queryFn: () => groupIdForEmpresas
+      ? base44.entities.Empresa.filter({
+          $or: [
+            { group_id: groupIdForEmpresas },
+            { grupo_id: groupIdForEmpresas },
+          ],
+        })
+      : Promise.resolve([]),
+    enabled: Boolean(groupIdForEmpresas),
     staleTime: 300000,
   });
 
@@ -114,7 +123,10 @@ export function useContextoVisual() {
 
     if (estaNoGrupo) {
       if (filtroEmpresa !== 'todas') {
-        return dados.filter(item => item[campo] === filtroEmpresa || item.group_id === grupoAtual?.id);
+        return dados.filter(item => (
+          (item[campo] === filtroEmpresa || item.empresa_id === filtroEmpresa)
+          && (!grupoAtual?.id || !item.group_id || item.group_id === grupoAtual.id)
+        ));
       }
       return dados.filter(item =>
         item.group_id === grupoAtual?.id ||
@@ -123,10 +135,12 @@ export function useContextoVisual() {
     }
 
     if (estaEmEmpresa && empresaAtual) {
-      return dados.filter(item =>
-        item[campo] === empresaAtual.id ||
-        (item.group_id && item.documento_grupo_id && item[campo] === empresaAtual.id)
-      );
+      const gid = grupoAtual?.id || empresaAtual.group_id || empresaAtual.grupo_id;
+      return dados.filter(item => {
+        const recordGroup = item.group_id || item.grupo_id;
+        const groupOk = !gid || !recordGroup || recordGroup === gid;
+        return groupOk && (item[campo] === empresaAtual.id || item.empresa_id === empresaAtual.id);
+      });
     }
 
     return dados;
@@ -204,6 +218,9 @@ export function useContextoVisual() {
   };
 
   const selecionarEmpresa = (empresaId) => {
+    const permitida = empresasDoGrupo.some((empresa) => empresa.id === empresaId)
+      || empresaAtual?.id === empresaId;
+    if (!permitida) return;
     setEmpresaAtualId(empresaId);
     try {
       localStorage.setItem('empresa_atual_id', empresaId);
@@ -229,10 +246,13 @@ export function useContextoVisual() {
     if (!validacaoContexto.valid) {
       throw new Error(validacaoContexto.error);
     }
+    const empresaId = contextoCanonico.scopeType === 'empresa'
+      ? contextoCanonico.empresaId
+      : (filtroEmpresa !== 'todas' ? filtroEmpresa : null);
     return {
       ...dados,
       ...(!dados?.group_id ? { group_id: contextoCanonico.groupId } : {}),
-      ...((contextoCanonico.scopeType === 'empresa') && !dados?.[campo] ? { [campo]: contextoCanonico.empresaId } : {}),
+      ...(empresaId && !dados?.[campo] ? { [campo]: empresaId } : {}),
     };
   };
 
@@ -257,6 +277,9 @@ export function useContextoVisual() {
     if (!stamped.group_id && !stamped[campo]) {
       throw new Error('Contexto multiempresa obrigatório: defina grupo ou empresa');
     }
+    if (entityRequiresEmpresaOnWrite(entityName) && !resolveEmpresaIdOnWrite(stamped)) {
+      throw new Error('Empresa obrigatoria para operacao nesta entidade.');
+    }
     const created = await base44.entities[entityName].create(stamped);
     try {
       await base44.entities.AuditLog.create({
@@ -277,6 +300,9 @@ export function useContextoVisual() {
       const s = carimbarContexto(sanitizeOnWrite(item), campo);
       if (!s.group_id && !s[campo]) {
         throw new Error('Contexto multiempresa obrigatório em item da lista');
+      }
+      if (entityRequiresEmpresaOnWrite(entityName) && !resolveEmpresaIdOnWrite(s)) {
+        throw new Error('Empresa obrigatoria para operacao nesta entidade.');
       }
       return s;
     });
@@ -398,60 +424,31 @@ export function useContextoVisual() {
                    if (!groupId && !empresaId && !noContext) return [];
 
                    const rest = { ...criterios };
-                   const orConds = [];
-
-                   if (empresaId) {
-                     if (entityName === 'Cliente') {
-                       orConds.push(
-                         { empresa_id: empresaId },
-                         { empresa_dona_id: empresaId },
-                         { empresas_compartilhadas_ids: { $in: [empresaId] } }
-                       );
-                     } else {
-                       orConds.push({ [ctxCampo]: empresaId });
-                       if (SHARED_SET.has(entityName)) {
-                         orConds.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
-                       }
-                     }
+                   const extraGroupOr = [];
+                   if (!empresaId && entityName === 'PerfilAcesso' && groupId) {
+                     extraGroupOr.push(
+                       { grupo_id: groupId },
+                       { group_id: null },
+                       { grupo_id: null },
+                       { group_id: '' },
+                       { grupo_id: '' },
+                       { group_id: 'grupo_001' },
+                       { grupo_id: 'grupo_001' }
+                     );
                    }
-                   if (groupId) {
-                     orConds.push({ group_id: groupId });
-                     if (entityName === 'PerfilAcesso') {
-                       orConds.push(
-                         { grupo_id: groupId },
-                         { group_id: null },
-                         { grupo_id: null },
-                         { group_id: '' },
-                         { grupo_id: '' },
-                         { group_id: 'grupo_001' },
-                         { grupo_id: 'grupo_001' }
-                       );
-                     }
-                     // Contexto do grupo sem empresa explícita → incluir todas empresas do grupo
-                     if (!empresaId && Array.isArray(empresasDoGrupo) && empresasDoGrupo.length) {
-                       const empresasIds = empresasDoGrupo.map(e => e.id).filter(Boolean);
-                       if (empresasIds.length) {
-                         if (entityName === 'Cliente') {
-                           orConds.push(
-                             { empresa_id: { $in: empresasIds } },
-                             { empresa_dona_id: { $in: empresasIds } },
-                             { empresas_compartilhadas_ids: { $in: empresasIds } }
-                           );
-                         } else if (entityName === 'Fornecedor' || entityName === 'Transportadora') {
-                           orConds.push(
-                             { empresa_dona_id: { $in: empresasIds } },
-                             { empresas_compartilhadas_ids: { $in: empresasIds } }
-                           );
-                         } else if (entityName === 'Colaborador') {
-                           orConds.push({ empresa_alocada_id: { $in: empresasIds } });
-                         } else {
-                           orConds.push({ [ctxCampo]: { $in: empresasIds } });
-                         }
-                       }
-                     }
-                   }
-
-                   const filtro = noContext ? { ...rest } : { ...rest, ...(orConds.length ? { $or: orConds } : {}) };
+                   const filtro = noContext
+                     ? { ...rest }
+                     : buildMultiempresaReadFilter({
+                       groupId,
+                       empresaId,
+                       ctxField: ctxCampo,
+                       shared: entityName === 'Cliente' || SHARED_SET.has(entityName),
+                       rest,
+                       empresaIdsDoGrupo: (!empresaId && Array.isArray(empresasDoGrupo))
+                         ? empresasDoGrupo.map((empresa) => empresa.id)
+                         : [],
+                       extraGroupOr,
+                     });
 
                    // Derivar sort
                    let sortField, sortDirection;

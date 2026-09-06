@@ -1,3 +1,15 @@
+### Gate 3 - Multiempresa sem vazamento entre empresas
+- Objetivo: cumprir o Gate 3 de `PLANO_GO_LIVE.md` no codigo existente, com grupo consolidando e empresa operando.
+- Diagnostico: a leitura com empresa ativa usava `$or` com `group_id`, devolvendo todos os registros do grupo; cadastros relaxados zeravam o filtro; o seletor de contexto carregava qualquer grupo/empresa via `list()` e atalho de admin; operacao fiscal/comercial podia nascer no grupo sem empresa emitente.
+- Causa raiz: consolidacao do grupo misturada na visao da empresa, e troca de contexto sem validar vinculo e dono do grupo.
+- Arquivos alterados: `contextoMultiempresaPolicy.js`, `localBase44Client.js`, `useContextoVisual.jsx`, `useContextoGrupoEmpresa.jsx`, `tests/contexto-multiempresa-policy.test.js`.
+- Reutilizado: `filterInContext`, `carimbarContexto`, `stampRecordContext` e o seletor de grupo/empresa ja existente, sem tela ou modulo novo.
+- Alteracoes: leitura de empresa exige grupo e empresa juntos (`$and`); consolidado do grupo permanece `$or` nas empresas autorizadas; troca de contexto recusa empresa de outro grupo; NF/pedido/financeiro/estoque operacional exigem empresa na gravacao.
+- Multiempresa: zero mistura na visao da empresa; grupo continua vendo a operacao das empresas do mesmo grupo.
+- Pendencia: Gate 4 auditoria/seguranca/erros; `entity.list()` ainda nao e o caminho principal das telas.
+- Validacoes: `node --test`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 4 auditoria, seguranca e erros.
+
 ### Governanca - Commit e push obrigatorios no AGENTS.md
 - Inclui a secao 16.1 no `AGENTS.md`: todo lote validado deve ter commit e `git push origin HEAD`, sem deixar so local.
 - A ordem P0/P1/P2 passa a ser seguida em sequencia; "proxima ordem" e o proximo Gate aberto em `PLANO_GO_LIVE.md`.

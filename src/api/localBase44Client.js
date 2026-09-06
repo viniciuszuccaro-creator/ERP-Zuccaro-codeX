@@ -1,4 +1,10 @@
-import { toEntityScope, validateMultiempresaContext } from "@/components/lib/contextoMultiempresaPolicy";
+import {
+  buildMultiempresaReadFilter,
+  entityRequiresEmpresaOnWrite,
+  resolveEmpresaIdOnWrite,
+  toEntityScope,
+  validateMultiempresaContext,
+} from "@/components/lib/contextoMultiempresaPolicy";
 import { sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
 import { createAuthDeniedError, evaluateLocalUserSession } from "@/api/localAuthSessionPolicy";
 import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows } from "../../base44/functions/_lib/security/entityGuardPolicy/entry.ts";
@@ -45,16 +51,6 @@ const LOCAL_ENTITY_CONTEXT_FIELD = {
   Colaborador: 'empresa_alocada_id',
 };
 const LOCAL_SHARED_ENTITIES = new Set(['Cliente', 'Fornecedor', 'Transportadora']);
-const LOCAL_RELAXED_CONTEXT_ENTITIES = new Set([
-  'Cliente',
-  'Fornecedor',
-  'Transportadora',
-  'Colaborador',
-  'Representante',
-  'ContatoB2B',
-  'SegmentoCliente',
-  'RegiaoAtendimento',
-]);
 
 const now = () => new Date().toISOString();
 
@@ -507,13 +503,6 @@ const matchesFilter = (record, filter = {}) => {
   });
 };
 
-const uniqueCondition = (conditions, condition) => {
-  const key = JSON.stringify(condition);
-  if (!conditions.some((item) => JSON.stringify(item) === key)) {
-    conditions.push(condition);
-  }
-};
-
 const getCurrentGroupId = () => {
   try {
     return (
@@ -597,13 +586,22 @@ const stampRecordContext = (entityName, data = {}) => {
   const record = sanitizeRecord(data || {});
   const { contexto, groupId, empresaId } = getCurrentContext();
   const ctxField = ENTITY_CONTEXT_FIELD_BY_NAME[entityName] || 'empresa_id';
+  const contextEmpresaId = contexto === 'grupo' ? null : empresaId;
 
   if (groupId && !record.group_id && !record.grupo_id && entityName !== 'GrupoEmpresarial') {
     record.group_id = groupId;
   }
-  if (contexto !== 'grupo' && empresaId && shouldStampEmpresa(entityName) && !record[ctxField] && !record.empresa_id) {
-    record[ctxField] = empresaId;
-    if (ctxField !== 'empresa_id') record.empresa_id = record.empresa_id || empresaId;
+  if (shouldStampEmpresa(entityName) && !record[ctxField] && !record.empresa_id && contextEmpresaId) {
+    record[ctxField] = contextEmpresaId;
+    if (ctxField !== 'empresa_id') record.empresa_id = record.empresa_id || contextEmpresaId;
+  }
+  if (entityRequiresEmpresaOnWrite(entityName)) {
+    const effectiveEmpresa = resolveEmpresaIdOnWrite(record, contextEmpresaId);
+    if (!effectiveEmpresa) {
+      throw new Error('Empresa obrigatoria para operacao nesta entidade.');
+    }
+    if (!record[ctxField]) record[ctxField] = effectiveEmpresa;
+    if (ctxField !== 'empresa_id' && !record.empresa_id) record.empresa_id = effectiveEmpresa;
   }
   return record;
 };
@@ -641,17 +639,6 @@ const auditLocalMutation = (entityName, action, { before = null, after = null, r
 
 const expandLocalContextFilter = (entityName, filter = {}) => {
   if (!isPlainObject(filter)) return filter || {};
-  if (LOCAL_RELAXED_CONTEXT_ENTITIES.has(entityName)) {
-    if (
-      filter.$or ||
-      filter.empresa_id ||
-      filter.group_id ||
-      filter.grupo_id ||
-      filter.grupo_empresarial_id
-    ) {
-      return {};
-    }
-  }
   if (filter.$or || filter.$and) return filter || {};
 
   const empresaId = filter.empresa_id;
@@ -663,25 +650,9 @@ const expandLocalContextFilter = (entityName, filter = {}) => {
   delete rest.grupo_id;
   delete rest.grupo_empresarial_id;
 
-  const orConds = [];
-  if (empresaId) {
-    const ctxField = LOCAL_ENTITY_CONTEXT_FIELD[entityName] || 'empresa_id';
-    uniqueCondition(orConds, { [ctxField]: empresaId });
-    uniqueCondition(orConds, { empresa_id: empresaId });
-    if (entityName === 'Cliente' || LOCAL_SHARED_ENTITIES.has(entityName)) {
-      uniqueCondition(orConds, { empresa_dona_id: empresaId });
-      uniqueCondition(orConds, { empresas_compartilhadas_ids: { $in: [empresaId] } });
-    }
-  }
-
-  if (groupId) {
-    uniqueCondition(orConds, { group_id: groupId });
-    uniqueCondition(orConds, { grupo_id: groupId });
-    uniqueCondition(orConds, { grupo_empresarial_id: groupId });
-  }
-
-  if (!orConds.length) return filter || {};
-  return { ...rest, $or: orConds };
+  const ctxField = LOCAL_ENTITY_CONTEXT_FIELD[entityName] || 'empresa_id';
+  const shared = entityName === 'Cliente' || LOCAL_SHARED_ENTITIES.has(entityName);
+  return buildMultiempresaReadFilter({ groupId, empresaId, ctxField, shared, rest });
 };
 
 const normalizePermissionText = (value) => String(value || '')
@@ -1124,7 +1095,8 @@ const createEntityApi = (entityName) => ({
       order = undefined;
     }
     const db = loadDb();
-    const records = getEntityStore(db, entityName).filter((record) => matchesFilter(record, filter));
+    const scopedFilter = expandLocalContextFilter(entityName, filter);
+    const records = getEntityStore(db, entityName).filter((record) => matchesFilter(record, scopedFilter));
     return sortRecords(records, order).slice(skip || 0, limit ? (skip || 0) + limit : undefined);
   },
 

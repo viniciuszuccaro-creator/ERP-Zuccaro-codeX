@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44, isApiKeyMode, isLocalOnlyMode, localApiUser } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { empresaPertenceAoGrupo, userTemAcessoEmpresa, userTemAcessoGrupo } from "./contextoMultiempresaPolicy";
 
 export function useContextoGrupoEmpresa() {
   const isRemoteApiKeyMode = isApiKeyMode && !isLocalOnlyMode;
@@ -19,23 +20,15 @@ export function useContextoGrupoEmpresa() {
 
   const carregarGrupoPorIdOuPadrao = async (currentUser) => {
     const grupoId = currentUser?.grupo_atual_id || currentUser?.grupo_padrao_id || localStorage.getItem('group_atual_id');
-    if (grupoId) {
-      const grupos = await base44.entities.GrupoEmpresarial.filter({ id: grupoId });
-      if (grupos[0]) {
-        setGrupoAtual(grupos[0]);
-        try { localStorage.setItem('group_atual_id', grupos[0].id); } catch { /* Estado em memoria permanece valido. */ }
-        return grupos[0];
-      }
+    if (!grupoId || !userTemAcessoGrupo(currentUser, grupoId)) {
+      return null;
     }
 
-    if (isRemoteApiKeyMode || currentUser?.role === 'admin') {
-      const todos = await base44.entities.GrupoEmpresarial.list();
-      const ativo = todos.find(g => g.status === 'Ativo') || todos[0];
-      if (ativo) {
-        setGrupoAtual(ativo);
-        try { localStorage.setItem('group_atual_id', ativo.id); } catch { /* Estado em memoria permanece valido. */ }
-        return ativo;
-      }
+    const grupos = await base44.entities.GrupoEmpresarial.filter({ id: grupoId });
+    if (grupos[0]) {
+      setGrupoAtual(grupos[0]);
+      try { localStorage.setItem('group_atual_id', grupos[0].id); } catch { /* Estado em memoria permanece valido. */ }
+      return grupos[0];
     }
 
     return null;
@@ -60,31 +53,19 @@ export function useContextoGrupoEmpresa() {
       try { localStorage.setItem('contexto_atual', ctx); } catch { /* Estado em memoria permanece valido. */ }
 
       if (ctx === 'grupo') {
-        // Tenta user > localStorage
         await carregarGrupoPorIdOuPadrao(currentUser);
       } else {
-        // Mesmo no contexto Empresa, manter o Grupo ativo para herança de configurações.
-        await carregarGrupoPorIdOuPadrao(currentUser);
-
+        const grupo = await carregarGrupoPorIdOuPadrao(currentUser);
+        const groupId = grupo?.id || currentUser.grupo_atual_id || currentUser.grupo_padrao_id;
         const empresaId = currentUser.empresa_atual_id || currentUser.empresa_padrao_id || localStorage.getItem('empresa_atual_id');
-        if (empresaId) {
+        if (empresaId && groupId) {
           const empresas = await base44.entities.Empresa.filter({ id: empresaId });
-          if (empresas[0]) {
-            setEmpresaAtual(empresas[0]);
-          } else if (isRemoteApiKeyMode || currentUser?.role === 'admin') {
-            const todasEmpresas = await base44.entities.Empresa.list();
-            const ativa = todasEmpresas.find(e => e.status === 'Ativa') || todasEmpresas[0];
-            if (ativa) {
-              setEmpresaAtual(ativa);
-              try { localStorage.setItem('empresa_atual_id', ativa.id); } catch { /* Estado em memoria permanece valido. */ }
-            }
-          }
-        } else if (isRemoteApiKeyMode || currentUser?.role === 'admin') {
-          const empresas = await base44.entities.Empresa.list();
-          const ativa = empresas.find(e => e.status === 'Ativa') || empresas[0];
-          if (ativa) {
-            setEmpresaAtual(ativa);
-            try { localStorage.setItem('empresa_atual_id', ativa.id); } catch { /* Estado em memoria permanece valido. */ }
+          const empresa = empresas[0];
+          if (empresa && empresaPertenceAoGrupo(empresa, groupId) && userTemAcessoEmpresa(currentUser, empresa)) {
+            setEmpresaAtual(empresa);
+            try { localStorage.setItem('empresa_atual_id', empresa.id); } catch { /* Estado em memoria permanece valido. */ }
+          } else {
+            try { localStorage.removeItem('empresa_atual_id'); } catch { /* Estado em memoria permanece valido. */ }
           }
         }
       }
@@ -101,26 +82,20 @@ export function useContextoGrupoEmpresa() {
 
   const trocarParaGrupo = useMutation({
     mutationFn: async (grupoId) => {
-      if (isRemoteApiKeyMode) {
-        const grupos = await base44.entities.GrupoEmpresarial.filter({ id: grupoId });
-        return grupos[0] || null;
+      const grupos = await base44.entities.GrupoEmpresarial.filter({ id: grupoId });
+      const grupo = grupos[0];
+      if (!grupo || !userTemAcessoGrupo(user, grupoId)) {
+        throw new Error("Você não tem acesso a este grupo. Configure os vínculos em Cadastros > Acesso.");
       }
 
-      // V21.7 FIX: Verificar se usuário tem acesso ao grupo
-      const temAcesso = user?.role === 'admin' || 
-        user?.grupos_vinculados?.some(v => v.grupo_id === grupoId && v.ativo);
-
-      if (!temAcesso) {
-        throw new Error("Você não tem acesso a este grupo. Configure os vínculos em Cadastros > Acesso.");
+      if (isRemoteApiKeyMode) {
+        return grupo;
       }
 
       await base44.auth.updateMe({
         contexto_atual: 'grupo',
         grupo_atual_id: grupoId
       });
-
-      const grupos = await base44.entities.GrupoEmpresarial.filter({ id: grupoId });
-      const grupo = grupos[0];
       
       await base44.entities.AuditLog.create({
         usuario: user.full_name,
@@ -153,26 +128,20 @@ export function useContextoGrupoEmpresa() {
 
   const trocarParaEmpresa = useMutation({
     mutationFn: async (empresaId) => {
-      if (isRemoteApiKeyMode) {
-        const empresas = await base44.entities.Empresa.filter({ id: empresaId });
-        return empresas[0] || null;
+      const empresas = await base44.entities.Empresa.filter({ id: empresaId });
+      const empresa = empresas[0];
+      if (!empresa || !userTemAcessoEmpresa(user, empresa)) {
+        throw new Error("Você não tem acesso a esta empresa. Configure os vínculos em Cadastros > Acesso.");
       }
 
-      // V21.7 FIX: Verificar se usuário tem acesso à empresa
-      const temAcesso = user?.role === 'admin' || 
-        user?.empresas_vinculadas?.some(v => v.empresa_id === empresaId && v.ativo);
-
-      if (!temAcesso) {
-        throw new Error("Você não tem acesso a esta empresa. Configure os vínculos em Cadastros > Acesso.");
+      if (isRemoteApiKeyMode) {
+        return empresa;
       }
 
       await base44.auth.updateMe({
         contexto_atual: 'empresa',
         empresa_atual_id: empresaId
       });
-
-      const empresas = await base44.entities.Empresa.filter({ id: empresaId });
-      const empresa = empresas[0];
       
       await base44.entities.AuditLog.create({
         usuario: user.full_name,
@@ -207,11 +176,14 @@ export function useContextoGrupoEmpresa() {
     queryFn: async () => {
       if (!grupoAtual?.id) return [];
       return await base44.entities.Empresa.filter({
-        grupo_id: grupoAtual.id,
+        $or: [
+          { group_id: grupoAtual.id },
+          { grupo_id: grupoAtual.id },
+        ],
         status: 'Ativa'
       });
     },
-    enabled: !!grupoAtual && contexto === 'grupo',
+    enabled: !!grupoAtual?.id,
   });
 
   const obterPoliticaPadrao = async (tipoDocumento) => {
