@@ -14,7 +14,14 @@ export const completeGuardCallScope = async (base44, input = {}) => {
       const empresas = await base44.asServiceRole.entities.Empresa.filter({ id: scope.empresaId }, undefined, 1);
       const empresa = Array.isArray(empresas) ? empresas[0] : null;
       scope.groupId = empresa?.group_id || empresa?.grupo_id || null;
-    } catch {}
+    } catch (error) {
+      return {
+        groupId: null,
+        empresaId: scope.empresaId,
+        scopeType: 'empresa',
+        error: error?.message || 'empresa_lookup_failed',
+      };
+    }
   }
   return scope;
 };

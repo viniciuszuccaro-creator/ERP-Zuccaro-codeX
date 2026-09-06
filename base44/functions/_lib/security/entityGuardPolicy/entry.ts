@@ -1,17 +1,46 @@
+export const GRANULAR_PERMISSION_ACTIONS = [
+  'visualizar',
+  'criar',
+  'editar',
+  'inativar',
+  'restaurar',
+  'aprovar',
+  'rejeitar',
+  'emitir',
+  'cancelar',
+  'receber',
+  'pagar',
+  'conciliar',
+  'estornar',
+  'importar',
+  'exportar',
+  'configurar',
+  'executar',
+  'excluir',
+];
+
 const ACTION_ALIASES = {
   ver: 'visualizar',
   view: 'visualizar',
   read: 'visualizar',
   listar: 'visualizar',
+  consultar: 'visualizar',
+  status: 'visualizar',
   delete: 'excluir',
   remove: 'excluir',
   apagar: 'excluir',
+  destroy: 'excluir',
   create: 'criar',
   add: 'criar',
   update: 'editar',
   edit: 'editar',
+  corrigir: 'editar',
   approve: 'aprovar',
+  approvar: 'aprovar',
   export: 'exportar',
+  imprimir: 'exportar',
+  print: 'exportar',
+  cancel: 'cancelar',
 };
 
 export const normalizeGuardAction = (action) => {
@@ -64,6 +93,7 @@ export const permissionNodeAllows = (node, action) => {
 
 export const resolveGuardPermission = ({ permissions, moduleName, section, action }) => {
   if (!permissions || typeof permissions !== 'object') return false;
+  if (permissionNodeAllows(permissions['*'], action)) return true;
   const moduleNode = permissions[moduleName];
   if (!moduleNode) return false;
 

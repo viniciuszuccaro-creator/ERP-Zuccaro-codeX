@@ -1,4 +1,15 @@
-### P0 Gate 1 - Autenticacao local fail-closed
+### P0 Gate 2 - RBAC granular sem atalho de admin
+- Objetivo: seguir a ordem do `AGENTS.md` apos o Gate 1, no Gate 2 de `PLANO_GO_LIVE.md`.
+- Diagnostico: `entityGuard`, `usePermissions` e o cliente local liberavam qualquer acao quando `role === 'admin'`; `executar`, `emitir` e `importar` eram colapsados em editar/criar; lookup de empresa no guard engolia erro.
+- Causa raiz: atalho de papel no lugar da matriz de perfil, e aliases perigosos.
+- Arquivos alterados: `entityGuardPolicy`, `entityGuard`, `guardCallPolicy`, `usePermissions.jsx`, `localBase44Client.js`, testes existentes.
+- Reutilizado: `PerfilAcesso` local `local_perfil_admin` com wildcard `*` das acoes granulares, sem tela ou modulo novo.
+- Multiempresa/RBAC: papel admin nao autoriza sozinho; perfil sem permissao falha fechado; wildcard so no perfil administrador local.
+- Pendencia: atalhos `isAdmin()` em algumas telas ainda existem e entram no proximo recorte de RBAC visual; `solicitacoesAprovacao` ainda tem atalho de admin.
+- Validacoes: `node --test` 51/51, `git diff --check` e `npm run build` passaram.
+- Proximo passo da ordem P0: Gate 3 multiempresa (vazamento entre empresas / consolidacao do grupo).
+
+
 - Objetivo: iniciar a ordem do `AGENTS.md` (P0.1 seguranca / Gate 1 de `PLANO_GO_LIVE.md`) sem criar tela, modulo ou fluxo paralelo.
 - Diagnostico: `AuthContext` no modo local autenticava sempre; `auth.me` e `isAuthenticated` do cliente local liberavam usuario inativo, desativado, sem grupo/empresa e sessao revogada; `App.jsx` renderizava rotas internas mesmo sem autenticacao; `GerenciadorSessoes` consultava sessao direto e usava `localStorage` como fallback de grupo.
 - Causa raiz: confianca no frontend/localStorage e autenticacao incondicional no modo local.

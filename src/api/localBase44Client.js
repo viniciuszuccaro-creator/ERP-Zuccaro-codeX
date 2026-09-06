@@ -1,6 +1,7 @@
 import { toEntityScope, validateMultiempresaContext } from "@/components/lib/contextoMultiempresaPolicy";
 import { sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
 import { createAuthDeniedError, evaluateLocalUserSession } from "@/api/localAuthSessionPolicy";
+import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows } from "../../base44/functions/_lib/security/entityGuardPolicy/entry.ts";
 
 const reportLocalClientFailure = (operation, error, context = {}) => {
   console.error('[base44-local] ' + operation, {
@@ -120,7 +121,7 @@ export const localApiUser = {
   role: 'admin',
   app_id: 'erp-zuccaro-local',
   is_service: false,
-  _app_role: 'admin',
+  perfil_acesso_id: 'local_perfil_admin',
   disabled: false,
   is_verified: true,
   created_date: now(),
@@ -227,7 +228,7 @@ const seedRecords = () => {
         id: 'local_perfil_admin',
         nome: 'Administrador Local',
         ativo: true,
-        permissoes: {},
+        permissoes: { '*': [...GRANULAR_PERMISSION_ACTIONS] },
         group_id: groupId,
         created_date: now(),
         updated_date: now(),
@@ -300,7 +301,8 @@ const normalizeLocalUser = (user = {}) => {
   return {
     ...localApiUser,
     ...user,
-    role: user.role || 'admin',
+    role: user.id === localApiUser.id ? (user.role || 'admin') : (user.role || 'user'),
+    perfil_acesso_id: user.perfil_acesso_id || (user.id === localApiUser.id ? 'local_perfil_admin' : null),
     contexto_atual: user.contexto_atual || 'empresa',
     empresa_atual_id: user.empresa_atual_id || empresaIds[0],
     empresa_padrao_id: user.empresa_padrao_id || empresaIds[0],
@@ -396,11 +398,16 @@ const ensureLocalTopology = (db) => {
   db.PerfilAcesso = (db.PerfilAcesso || []).map((item) => {
     const hasScope = Boolean(item.group_id || item.grupo_id || item.empresa_id || item.empresa_atual_id);
     const legacyGroup = item.group_id === 'grupo_001' || item.grupo_id === 'grupo_001';
+    const isLocalAdminProfile = String(item.id) === 'local_perfil_admin';
+    const permissoes = isLocalAdminProfile && !item?.permissoes?.['*']
+      ? { ...item.permissoes, '*': [...GRANULAR_PERMISSION_ACTIONS] }
+      : item.permissoes;
     if (hasScope && !legacyGroup) {
       return {
         ...item,
         nome: item.nome || item.nome_perfil,
         grupo_id: item.grupo_id || item.group_id || canonicalGroupId,
+        permissoes,
       };
     }
     return {
@@ -408,6 +415,7 @@ const ensureLocalTopology = (db) => {
       nome: item.nome || item.nome_perfil,
       group_id: canonicalGroupId,
       grupo_id: canonicalGroupId,
+      permissoes,
     };
   });
 
@@ -682,30 +690,7 @@ const normalizePermissionText = (value) => String(value || '')
   .toLowerCase()
   .replace(/[^a-z0-9.]/g, '');
 
-const normalizePermissionAction = (action = 'visualizar') => {
-  const key = normalizePermissionText(action);
-  const map = {
-    ver: 'visualizar',
-    view: 'visualizar',
-    read: 'visualizar',
-    listar: 'visualizar',
-    consultar: 'visualizar',
-    create: 'criar',
-    add: 'criar',
-    importar: 'criar',
-    update: 'editar',
-    edit: 'editar',
-    executar: 'editar',
-    gerenciar: 'editar',
-    delete: 'excluir',
-    remove: 'excluir',
-    apagar: 'excluir',
-    approve: 'aprovar',
-    export: 'exportar',
-    imprimir: 'exportar',
-  };
-  return map[key] || key || 'visualizar';
-};
+const normalizePermissionAction = (action = 'visualizar') => normalizeGuardAction(action);
 
 const LOCAL_MODULE_ALIASES = {
   dashboard: 'dashboard',
@@ -760,21 +745,6 @@ const LOCAL_SECTION_ALIASES = {
   pessoasparceiros: 'pessoas',
 };
 
-const permissionNodeAllows = (node, action) => {
-  if (Array.isArray(node)) return node.map(normalizePermissionAction).includes(action);
-  if (!node || typeof node !== 'object') return false;
-  const stack = [node];
-  while (stack.length) {
-    const current = stack.pop();
-    if (Array.isArray(current)) {
-      if (current.map(normalizePermissionAction).includes(action)) return true;
-    } else if (current && typeof current === 'object') {
-      Object.values(current).forEach((value) => stack.push(value));
-    }
-  }
-  return false;
-};
-
 const findPermissionNode = (root, key) => {
   if (!root || typeof root !== 'object') return undefined;
   const normalizedKey = normalizePermissionText(key);
@@ -796,7 +766,6 @@ const evaluateLocalPermission = ({ module, section, entityName, action } = {}) =
   const db = loadDb();
   const user = readUser();
   if (!user) return { allowed: false, reason: 'usuario-local-ausente' };
-  if (user.role === 'admin') return { allowed: true, reason: 'admin-local' };
 
   const perfilId = user.perfil_acesso_id;
   const perfil = perfilId
@@ -804,13 +773,14 @@ const evaluateLocalPermission = ({ module, section, entityName, action } = {}) =
     : null;
   const permissoes = perfil?.permissoes;
   if (!permissoes || typeof permissoes !== 'object') return { allowed: false, reason: 'perfil-sem-permissoes' };
+  const desired = normalizePermissionAction(action);
+  if (permissionNodeAllows(permissoes['*'], desired)) return { allowed: true, reason: 'perfil-wildcard' };
 
   const moduleKey = LOCAL_MODULE_ALIASES[normalizePermissionText(module || entityName)] || normalizePermissionText(module || entityName);
   const sectionPath = Array.isArray(section)
     ? section
     : String(section || entityName || '').split('.').filter(Boolean);
   const sectionKey = LOCAL_SECTION_ALIASES[normalizePermissionText(sectionPath[0] || entityName)] || normalizePermissionText(sectionPath[0] || entityName);
-  const desired = normalizePermissionAction(action);
   const moduleNode = findPermissionNode(permissoes, moduleKey);
   if (!moduleNode) return { allowed: false, reason: 'modulo-negado' };
   if (!sectionKey) return { allowed: permissionNodeAllows(moduleNode, desired), reason: 'modulo' };

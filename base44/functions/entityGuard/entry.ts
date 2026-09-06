@@ -89,11 +89,6 @@ Deno.serve(async (req) => {
       return Response.json({ allowed: false, error: 'audit_log_immutable' }, { status: 403 });
     }
 
-    // Administradores podem gerir perfis, mas não alterar o log imutável.
-    if (user?.role === 'admin') {
-      return Response.json({ allowed: true, reason: 'admin' });
-    }
-
     if (!user?.perfil_acesso_id) {
       return Response.json({ allowed: false, error: 'access_profile_required' }, { status: 403 });
     }

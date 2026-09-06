@@ -1,6 +1,7 @@
 import { useUser } from "./UserContext";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { normalizeGuardAction } from "../../../base44/functions/_lib/security/entityGuardPolicy/entry.ts";
 
 export default function usePermissions() {
   const { user, isLoading: loadingUser } = useUser();
@@ -139,7 +140,6 @@ export default function usePermissions() {
 
   const hasPermission = (module, section, action = "visualizar") => {
     if (!user) return false;
-    if (user.role === "admin") return true;
     const perms = perfilAcesso?.permissoes;
     if (!perms) return false;
     if (!section && typeof module === "string" && module.includes(".")) {
@@ -149,28 +149,8 @@ export default function usePermissions() {
       action = parsed.action;
     }
 
-    // normaliza alias (sinônimos → ação canônica)
-    const normalize = (a) => {
-      if (!a) return 'visualizar';
-      const map = {
-        // visualizar
-        ver: 'visualizar', view: 'visualizar', read: 'visualizar', listar: 'visualizar', status: 'visualizar', consultar: 'visualizar',
-        // excluir
-        delete: 'excluir', remove: 'excluir', destroy: 'excluir', apagar: 'excluir',
-        // cancelar
-        cancel: 'cancelar', cancelar: 'cancelar',
-        // criar
-        create: 'criar', add: 'criar', emitir: 'criar', enviar: 'criar', importar: 'criar',
-        // editar
-        update: 'editar', edit: 'editar', carta: 'editar', corrigir: 'editar', gerenciar: 'editar', executar: 'editar',
-        // aprovar
-        approve: 'aprovar', aprovar: 'aprovar', approvar: 'aprovar',
-        // exportar
-        export: 'exportar', exportar: 'exportar', imprimir: 'exportar', print: 'exportar'
-      };
-      return map[a] || a;
-    };
-    const desired = normalize(action);
+    const desired = normalizeGuardAction(action);
+    if (nodeHasAction(perms['*'], desired)) return true;
 
     const modNode = getRootNode(perms, module);
     if (!modNode) return false;

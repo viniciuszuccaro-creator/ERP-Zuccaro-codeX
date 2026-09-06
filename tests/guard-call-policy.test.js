@@ -43,6 +43,15 @@ test('guard caller proceeds only with an explicit allowed response', async () =>
   assert.equal(await requireEntityGuard(base44, { module: 'Financeiro', group_id: 'grupo-cpa' }), null);
 });
 
+test('guard caller fails closed when company lookup throws', async () => {
+  const base44 = {
+    asServiceRole: { entities: { Empresa: { filter: async () => { throw new Error('offline'); } } } },
+  };
+  const scope = await completeGuardCallScope(base44, { empresa_id: '3z' });
+  assert.equal(scope.groupId, null);
+  assert.equal(scope.empresaId, '3z');
+});
+
 test('record ownership rejects another company or group', () => {
   const registro3z = { group_id: 'grupo-cpa', empresa_id: '3z' };
   assert.equal(recordMatchesGuardScope(registro3z, { group_id: 'grupo-cpa', empresa_id: '3z' }), true);

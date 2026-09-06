@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import {
@@ -20,6 +21,29 @@ test('visualizar permission never grants a mutation', () => {
   assert.equal(permissionNodeAllows(['visualizar'], 'editar'), false);
   assert.equal(permissionNodeAllows(['visualizar'], 'excluir'), false);
   assert.equal(permissionNodeAllows(['visualizar', 'editar'], 'editar'), true);
+});
+
+test('executar, emitir and importar stay distinct from editar and criar', () => {
+  assert.equal(normalizeGuardAction('executar'), 'executar');
+  assert.equal(normalizeGuardAction('emitir'), 'emitir');
+  assert.equal(normalizeGuardAction('importar'), 'importar');
+  assert.equal(permissionNodeAllows(['visualizar', 'editar'], 'executar'), false);
+  assert.equal(permissionNodeAllows(['visualizar', 'criar'], 'emitir'), false);
+});
+
+test('wildcard profile grants explicit actions without a module shortcut by role', () => {
+  assert.equal(resolveGuardPermission({
+    permissions: { '*': ['visualizar', 'executar'] },
+    moduleName: 'Financeiro',
+    section: 'Caixa',
+    action: 'executar',
+  }), true);
+  assert.equal(resolveGuardPermission({
+    permissions: { '*': ['visualizar'] },
+    moduleName: 'Financeiro',
+    section: 'Caixa',
+    action: 'baixa-manual',
+  }), false);
 });
 
 test('permission resolution requires the requested module and section', () => {
@@ -59,4 +83,17 @@ test('group and company contexts require their complete identifiers', () => {
   assert.equal(validateGuardContext({ scopeType: 'empresa', groupId: 'grupo-cpa', empresaId: '3z' }).valid, true);
   assert.equal(validateGuardContext({ scopeType: 'grupo' }).error, 'group_id_required');
   assert.equal(validateGuardContext({ scopeType: 'empresa', groupId: 'grupo-cpa' }).error, 'empresa_id_required');
+});
+
+test('entityGuard and local RBAC no longer allow every action by admin role', async () => {
+  const guard = await readFile(new URL('../base44/functions/entityGuard/entry.ts', import.meta.url), 'utf8');
+  const permissions = await readFile(new URL('../src/components/lib/usePermissions.jsx', import.meta.url), 'utf8');
+  const localClient = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
+
+  assert.doesNotMatch(guard, /role === 'admin'[\s\S]{0,80}allowed: true/);
+  assert.match(guard, /perfil_acesso_id/);
+  assert.doesNotMatch(permissions, /user\.role === "admin"\) return true/);
+  assert.doesNotMatch(localClient, /admin-local/);
+  assert.match(localClient, /perfil-wildcard/);
+  assert.match(permissions, /normalizeGuardAction/);
 });
