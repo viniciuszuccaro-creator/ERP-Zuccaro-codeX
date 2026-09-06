@@ -10,6 +10,8 @@ Objetivo: evoluir o ERP Zuccaro rapidamente e com baixo consumo de contexto, sem
 
 Quando houver conflito entre conveniência técnica e estas regras, preservar segurança, integridade de dados e Regra-Mãe. Se uma solicitação exigir violação de regra crítica, parar e registrar `BLOCKED`, motivo e alternativa segura.
 
+Após cada lote válido: atualizar status, commitar e fazer push para o GitHub. Não encerrar lote só no disco local.
+
 ---
 
 # 1. REGRA-MÃE — OBRIGATÓRIA E INVIOLÁVEL
@@ -420,6 +422,8 @@ Preferir commits pequenos, coerentes e reversíveis. Não misturar vários módu
 
 Não reescrever histórico, fazer force push, reset destrutivo ou apagar branch sem autorização explícita.
 
+Após commit de lote válido: `git push origin main`. Não deixar commits só na máquina local. Não esperar o usuário pedir push. Se as validações do lote falharem, não commitar nem enviar.
+
 Mensagem de commit deve descrever a finalidade, não apenas “ajustes”.
 
 ---
@@ -443,9 +447,34 @@ Registrar:
 
 Resposta final do agente deve ser curta e verificável. Nunca apenas “implementado com sucesso”.
 
+## 18.1 COMMIT E PUSH OBRIGATÓRIOS EM TODO LOTE
+
+Cada lote concluído com validações deve ser gravado no GitHub imediatamente. Não deixar commit só na máquina local. Não esperar o usuário pedir “push”.
+
+Sequência obrigatória:
+
+1. Atualizar `STATUS_DO_PROJETO.md` com o lote, testes e o próximo passo da ordem P0/P1/P2.
+2. Executar as validações da seção 16 conforme o escopo.
+3. Se as validações do lote falharem: não fazer commit e não fazer push.
+4. `git add` somente dos arquivos do lote.
+5. `git commit` com mensagem curta em português, no estilo do repositório, explicando o porquê.
+6. `git push origin main`.
+7. Informar o hash do commit e confirmar que o push chegou ao remoto.
+
+Regras:
+
+- Trabalhar somente neste clone interno `ERP-Zuccaro-codeX` ligado a `origin`. Nunca no projeto do HD externo.
+- Não misturar lotes não relacionados no mesmo commit.
+- Não usar `--no-verify`, force push, amend de commit já enviado, nem alterar `git config`.
+- Se o push falhar (auth, divergência, rede), reportar o erro e o comando; não marcar o lote como entregue no GitHub.
+
 ---
 
 # 19. ORDEM DE PRIORIDADE ATÉ GO-LIVE
+
+Enquanto o sistema não estiver liberado para operação real, seguir esta ordem sem pular etapa.
+
+Ao concluir um item, seguir automaticamente o próximo da lista, a menos que o usuário peça parar. “Próxima ordem” significa o próximo número ainda aberto em P0, depois P1, depois P2. Consultar `PLANO_GO_LIVE.md` para o Gate correspondente (Gate 1 autenticação, Gate 2 RBAC, Gate 3 multiempresa, Gate 4 auditoria, e assim por diante).
 
 ## P0 — BLOQUEADORES
 1. segurança/autenticação;

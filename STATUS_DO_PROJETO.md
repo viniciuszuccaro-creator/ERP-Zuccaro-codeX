@@ -1,4 +1,10 @@
-### P0 Gate 2 - RBAC granular sem atalho de admin
+### Governanca - Commit e push obrigatorios no AGENTS.md
+- Inclui a secao 16.1 no `AGENTS.md`: todo lote validado deve ter commit e `git push origin HEAD`, sem deixar so local.
+- A ordem P0/P1/P2 passa a ser seguida em sequencia; "proxima ordem" e o proximo Gate aberto em `PLANO_GO_LIVE.md`.
+- A regra permanente do Cursor foi alinhada para o mesmo fluxo de entrega.
+- Proximo passo da ordem P0: Gate 3 multiempresa.
+
+
 - Objetivo: seguir a ordem do `AGENTS.md` apos o Gate 1, no Gate 2 de `PLANO_GO_LIVE.md`.
 - Diagnostico: `entityGuard`, `usePermissions` e o cliente local liberavam qualquer acao quando `role === 'admin'`; `executar`, `emitir` e `importar` eram colapsados em editar/criar; lookup de empresa no guard engolia erro.
 - Causa raiz: atalho de papel no lugar da matriz de perfil, e aliases perigosos.

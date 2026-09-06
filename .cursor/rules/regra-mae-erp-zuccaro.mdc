@@ -74,6 +74,8 @@ Botao, toggle, select e formulario devem salvar de verdade e recarregar com o va
 
 Atualizar `STATUS_DO_PROJETO.md` com concluido, pendencias, testes e proximo passo. Validar conforme o escopo: `npm run audit:baseline`, `npm test`, `npm run lint`, `npm run typecheck`, `npm run build` e `git diff --check`. Trabalhar somente neste clone interno vinculado ao GitHub; nunca no projeto do HD externo.
 
+Depois das validacoes do lote: `git commit` e `git push origin main` imediatamente. Nao deixar commit so local. Nao esperar o usuario pedir push. Se o teste do lote falhar, nao commitar nem enviar.
+
 ## 16. Checklist por alteracao
 
 1. A tela abre.
