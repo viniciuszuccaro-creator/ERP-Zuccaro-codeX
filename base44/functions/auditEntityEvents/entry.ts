@@ -26,16 +26,20 @@ function safeTrimPayload(input, depth = 0) {
   if (typeof input === 'string') return input.slice(0, 4000);
   if (typeof input === 'number' || typeof input === 'boolean') return input;
   if (Array.isArray(input)) {
-    const max = 50; // corta arrays muito grandes
+    const max = 50;
     return input.slice(0, max).map((v) => safeTrimPayload(v, depth + 1));
   }
   if (typeof input === 'object') {
     const out = {};
     const entries = Object.entries(input);
-    const limit = 100; // evita objetos gigantes
+    const limit = 100;
+    const sensitive = /(token|senha|password|secret|api[_-]?key|authorization|certificado|private|webhook[_-]?url)/i;
     for (let i = 0; i < Math.min(entries.length, limit); i++) {
       const [k, v] = entries[i];
-      // Nunca loga blobs/base64
+      if (sensitive.test(k)) {
+        out[k] = { protegido: true };
+        continue;
+      }
       if (typeof v === 'string' && v.length > 200000) continue;
       out[k] = safeTrimPayload(v, depth + 1);
     }
@@ -103,7 +107,9 @@ Deno.serve(async (req) => {
         const rows = await base44.asServiceRole.entities?.[event.entity_name]?.filter?.({ id: event.entity_id }, undefined, 1);
         recordData = rows?.[0] || recordData;
       }
-    } catch (_) {}
+    } catch (error) {
+      console.error('[auditEntityEvents] Falha ao recuperar registro para auditoria', error);
+    }
 
     const entidade = event.entity_name;
     const tipoEvento = event.type; // create | update | delete
@@ -191,11 +197,14 @@ Deno.serve(async (req) => {
           dados_novos: { entidade, tipoEvento, dur },
           data_hora: new Date().toISOString(),
         });
-      } catch (_) {}
+      } catch (error) {
+        console.error('[auditEntityEvents] Falha ao registrar telemetria de performance', error);
+      }
     }
 
     return Response.json({ ok: true });
   } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 });
+    console.error('[auditEntityEvents]', err?.message || err);
+    return Response.json({ error: 'Falha ao registrar auditoria' }, { status: 500 });
   }
 });

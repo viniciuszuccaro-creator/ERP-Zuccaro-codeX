@@ -93,8 +93,14 @@ export default function PedidoTabsContainer({
             const res = await base44.functions.invoke('iaFinanceAnomalyScan', { pedido_id: pedido.id });
             if (res?.data?.anomaly === true) { ok = false; motivos.push('Anomalia financeira (IA)'); }
           }
-        } catch {}
-      } catch {}
+        } catch (error) {
+          console.error('[PedidoTabsContainer] Falha no scan de anomalia financeira', error);
+        }
+      } catch (error) {
+        ok = false;
+        motivos.push('Nao foi possivel validar credito');
+        console.error('[PedidoTabsContainer] Falha ao validar conformidade financeira', error);
+      }
       if (!cancel) setConformidade({ ok, motivos });
     };
     run();

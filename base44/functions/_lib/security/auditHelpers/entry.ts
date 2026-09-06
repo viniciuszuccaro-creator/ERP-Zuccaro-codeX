@@ -15,14 +15,15 @@ export function getModuleForEntity(entidade) {
 export function safeTrimPayload(obj, maxKeys = 200) {
   try {
     if (!obj || typeof obj !== 'object') return obj;
+    const sensitive = /(token|senha|password|secret|api[_-]?key|authorization|certificado|private|webhook[_-]?url)/i;
     const keys = Object.keys(obj);
-    if (keys.length <= maxKeys) return obj;
     const trimmed = {};
-    for (let i = 0; i < maxKeys; i++) {
+    const limit = Math.min(keys.length, maxKeys);
+    for (let i = 0; i < limit; i++) {
       const k = keys[i];
-      trimmed[k] = obj[k];
+      trimmed[k] = sensitive.test(k) ? { protegido: true } : obj[k];
     }
-    trimmed.__trimmed__ = { kept: maxKeys, total: keys.length };
+    if (keys.length > maxKeys) trimmed.__trimmed__ = { kept: maxKeys, total: keys.length };
     return trimmed;
   } catch (_) {
     return obj;

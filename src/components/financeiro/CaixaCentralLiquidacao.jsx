@@ -1,13 +1,11 @@
 import React, { Suspense } from "react";
 import { Wallet, Calendar, List, Clock, FileText, TrendingUp, CreditCard, Building2, AlertCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
-import { useUser } from "@/components/lib/UserContext";
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { persistOperationalAudit } from "@/components/lib/uiAudit";
 import { useWindow } from "@/components/lib/useWindow";
 import CaixaCentralHeader from "./caixa-central/CaixaCentralHeader";
 import KPIsFinanceiros from "./caixa-central/KPIsFinanceiros";
@@ -26,7 +24,6 @@ const ConciliacaoBancariaTab = React.lazy(() => import("./ConciliacaoBancariaTab
 export default function CaixaCentralLiquidacao({ windowMode = false }) {
   const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { hasPermission, canCreate } = usePermissions();
-  const { user } = useUser();
   const { toast } = useToast();
   const { openWindow } = useWindow();
 
@@ -52,20 +49,16 @@ export default function CaixaCentralLiquidacao({ windowMode = false }) {
   });
 
   const auditCaixa = async (acao, sucesso, detalhes = {}) => {
-    try {
-      await base44.entities.AuditLog.create(withContext({
-        usuario_id: user?.id || null,
-        usuario_nome: user?.full_name || user?.email || "Usuario",
-        acao,
-        modulo: "Financeiro",
-        entidade: "CaixaCentralLiquidacao",
-        tipo_auditoria: sucesso ? "ui" : "seguranca",
-        descricao: `Caixa Central: ${acao}`,
-        sucesso,
-        detalhes,
-        data_hora: new Date().toISOString()
-      }));
-    } catch {}
+    await persistOperationalAudit({
+      acao,
+      sucesso,
+      detalhes,
+      modulo: "Financeiro",
+      entidade: "CaixaCentralLiquidacao",
+      descricao: `Caixa Central: ${acao}`,
+      empresa_id: empresaId,
+      group_id: groupId,
+    });
   };
 
   const { data: contasReceber = [] } = useQuery({

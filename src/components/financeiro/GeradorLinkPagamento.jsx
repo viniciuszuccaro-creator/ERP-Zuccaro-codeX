@@ -17,6 +17,7 @@ import { Link2, Copy, Check, QrCode, AlertTriangle } from "lucide-react";
 import { useUser } from "@/components/lib/UserContext";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { persistOperationalAudit } from "@/components/lib/uiAudit";
 import { toast } from "sonner";
 
 const sanitizeText = (value) => String(value || "")
@@ -68,21 +69,17 @@ export default function GeradorLinkPagamento({ titulo, pedido, onClose }) {
   });
 
   const auditLink = async (acao, sucesso, detalhes = {}) => {
-    try {
-      await base44.entities.AuditLog.create(withContext({
-        usuario_id: user?.id || null,
-        usuario_nome: user?.full_name || user?.email || "Usuario",
-        acao,
-        modulo: "Financeiro",
-        entidade: "PagamentoOmnichannel",
-        registro_id: detalhes?.pagamento_id || null,
-        tipo_auditoria: sucesso ? "entidade" : "seguranca",
-        descricao: `Gerador de link de pagamento: ${acao}`,
-        sucesso,
-        detalhes,
-        data_hora: new Date().toISOString()
-      }));
-    } catch {}
+    await persistOperationalAudit({
+      acao,
+      sucesso,
+      detalhes,
+      modulo: "Financeiro",
+      entidade: "PagamentoOmnichannel",
+      registro_id: detalhes?.pagamento_id || titulo?.id || pedido?.id || null,
+      descricao: `Gerador de link de pagamento: ${acao}`,
+      empresa_id: empresaId,
+      group_id: groupId,
+    });
   };
 
   const gerarLink = useMutation({

@@ -1,3 +1,14 @@
+### Gate 4 - Auditoria operacional sem falha silenciosa
+- Objetivo: cumprir o Gate 4 de `PLANO_GO_LIVE.md`: acoes criticas rastreaveis e erros visiveis, sem criar tela ou modulo novo.
+- Diagnostico: liquidacao, cobranca, link de pagamento e configuracao de seguranca gravavam `AuditLog` dentro de `catch {}`; mutacao local persistia token/segredo no log; conformidade de credito do pedido falhava aberto; `auditEntityEvents` devolvia `err.message`.
+- Causa raiz: auditoria tratada como opcional e payload bruto reutilizado como trilha.
+- Arquivos alterados: `sanitizeOnWrite.jsx`, `uiAudit.jsx`, `localBase44Client.js`, fluxos financeiros de caixa/cobranca, `ConfiguracaoSeguranca.jsx`, `PedidoTabsContainer.jsx`, `ImportarXMLNFe.jsx`, `IntegracoesIndex.jsx`, `auditEntityEvents`, `auditHelpers`, testes.
+- Reutilizado: `AuditLog`, `uiAudit` e o sanitizador de escrita ja existentes.
+- Alteracoes: `persistOperationalAudit` registra usuario, modulo, acao, grupo/empresa e correlacao; falha de auditoria vai para log tecnico; payloads redigem token/senha/certificado; credito do pedido falha fechado se a consulta quebrar.
+- Pendencia: ainda existem `catch {}` de persistencia visual (aba, localStorage) fora deste recorte operacional.
+- Validacoes: `node --test`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 5 Cadastros Gerais.
+
 ### Gate 3 - Multiempresa sem vazamento entre empresas
 - Objetivo: cumprir o Gate 3 de `PLANO_GO_LIVE.md` no codigo existente, com grupo consolidando e empresa operando.
 - Diagnostico: a leitura com empresa ativa usava `$or` com `group_id`, devolvendo todos os registros do grupo; cadastros relaxados zeravam o filtro; o seletor de contexto carregava qualquer grupo/empresa via `list()` e atalho de admin; operacao fiscal/comercial podia nascer no grupo sem empresa emitente.

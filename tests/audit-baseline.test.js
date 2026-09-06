@@ -187,7 +187,8 @@ test('integration toggles reflect persisted state and enforce the real write per
 test('integration administration keeps explicit context and summarized audits', async () => {
   const source = await readFile(new URL('../src/components/administracao-sistema/IntegracoesIndex.jsx', import.meta.url), 'utf8');
 
-  assert.match(source, /SENSITIVE_AUDIT_KEY/);
+  assert.match(source, /sanitizeAuditPayload/);
+  assert.match(source, /sanitizeOnWrite/);
   assert.match(source, /empresa_id: empresaAtual.id, group_id: grupoAtivoId \|\| null/);
   assert.match(source, /const contextoValido = !!grupoAtivoId/);
   assert.match(source, /enabled: contextoValido && !!integracoesKey/);

@@ -7,10 +7,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Copy, Link2, CheckCircle2, Loader2, AlertTriangle } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { persistOperationalAudit } from "@/components/lib/uiAudit";
 import { toast } from "sonner";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
-import { useUser } from "@/components/lib/UserContext";
 
 const sanitizeText = (value) => String(value || "")
   .replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, "")
@@ -29,7 +29,6 @@ const isSafeUrl = (value) => {
 export default function GerarLinkPagamentoModal({ isOpen, onClose, contaReceber }) {
   const queryClient = useQueryClient();
   const [linkGerado, setLinkGerado] = useState(null);
-  const { user } = useUser();
   const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
 
@@ -42,24 +41,17 @@ export default function GerarLinkPagamentoModal({ isOpen, onClose, contaReceber 
     || hasPermission("Financeiro", null, "editar");
 
   const auditLinkPagamento = async (acao, sucesso, detalhes = {}) => {
-    try {
-      await base44.entities.AuditLog.create({
-        group_id: groupId,
-        grupo_id: groupId,
-        empresa_id: empresaId,
-        usuario_id: user?.id || null,
-        usuario_nome: user?.full_name || user?.email || "Usuario",
-        acao,
-        modulo: "Financeiro",
-        entidade: "ContaReceber",
-        registro_id: contaReceber?.id || null,
-        tipo_auditoria: sucesso ? "entidade" : "seguranca",
-        descricao: `Link de pagamento: ${acao}`,
-        sucesso,
-        detalhes,
-        data_hora: new Date().toISOString()
-      });
-    } catch {}
+    await persistOperationalAudit({
+      acao,
+      sucesso,
+      detalhes,
+      modulo: "Financeiro",
+      entidade: "ContaReceber",
+      registro_id: contaReceber?.id || null,
+      descricao: `Link de pagamento: ${acao}`,
+      empresa_id: empresaId,
+      group_id: groupId,
+    });
   };
 
   const withContext = (payload = {}) => ({

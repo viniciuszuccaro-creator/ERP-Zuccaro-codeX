@@ -5,7 +5,7 @@ import {
   toEntityScope,
   validateMultiempresaContext,
 } from "@/components/lib/contextoMultiempresaPolicy";
-import { sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
+import { sanitizeAuditPayload, sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
 import { createAuthDeniedError, evaluateLocalUserSession } from "@/api/localAuthSessionPolicy";
 import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows } from "../../base44/functions/_lib/security/entityGuardPolicy/entry.ts";
 
@@ -612,8 +612,9 @@ const auditLocalMutation = (entityName, action, { before = null, after = null, r
     const db = loadDb();
     const audit = getEntityStore(db, 'AuditLog');
     const { user, groupId, empresaId } = getCurrentContext();
+    const correlacaoId = makeId('audit');
     audit.unshift({
-      id: makeId('audit'),
+      id: correlacaoId,
       usuario: user?.full_name || user?.email || 'Administrador Local',
       usuario_id: user?.id || null,
       acao: action,
@@ -624,8 +625,9 @@ const auditLocalMutation = (entityName, action, { before = null, after = null, r
       descricao: `${action} local em ${entityName}`,
       empresa_id: after?.empresa_id || after?.empresa_dona_id || after?.empresa_alocada_id || before?.empresa_id || empresaId || null,
       group_id: after?.group_id || after?.grupo_id || before?.group_id || groupId || null,
-      dados_anteriores: before,
-      dados_novos: after,
+      correlacao_id: correlacaoId,
+      dados_anteriores: sanitizeAuditPayload(before) || null,
+      dados_novos: sanitizeAuditPayload(after) || null,
       sucesso: true,
       local: true,
       created_date: now(),

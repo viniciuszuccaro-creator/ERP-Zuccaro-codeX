@@ -22,6 +22,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { persistOperationalAudit } from '@/components/lib/uiAudit';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { useUser } from '@/components/lib/UserContext';
@@ -261,24 +262,18 @@ export default function ConfiguracaoSeguranca({ empresaId, grupoId }) {
         ? await updateInContext('ConfiguracaoSeguranca', config.id, stamped)
         : await createInContext('ConfiguracaoSeguranca', stamped);
       await syncSecurityMirrorConfigs(stamped);
-      try {
-        const me = await base44.auth.me();
-        await createInContext('AuditLog', {
-          usuario: me?.full_name || me?.email || 'Usuario',
-          usuario_id: me?.id || null,
-          acao: config?.id ? 'Edicao' : 'Criacao',
-          modulo: 'Seguranca',
-          entidade: 'ConfiguracaoSeguranca',
-          registro_id: result?.id || config?.id,
-          empresa_id: empresaAtivaId || null,
-          group_id: grupoAtivoId || null,
-          descricao: 'Configuracao de seguranca atualizada',
-          dados_anteriores: before,
-          dados_novos: stamped,
-          sucesso: true,
-          data_hora: new Date().toISOString()
-        });
-      } catch {}
+      await persistOperationalAudit({
+        acao: config?.id ? 'Edicao' : 'Criacao',
+        modulo: 'Seguranca',
+        entidade: 'ConfiguracaoSeguranca',
+        registro_id: result?.id || config?.id,
+        empresa_id: empresaAtivaId || null,
+        group_id: grupoAtivoId || null,
+        descricao: 'Configuracao de seguranca atualizada',
+        dados_anteriores: before,
+        dados_novos: stamped,
+        sucesso: true,
+      });
       return result;
     },
     onSuccess: () => {

@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import GeradorLinkPagamento from "./GeradorLinkPagamento";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
-import { useUser } from "@/components/lib/UserContext";
+import { persistOperationalAudit } from "@/components/lib/uiAudit";
 
 const sanitizeText = (value) => String(value || "")
   .replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, "")
@@ -34,7 +34,6 @@ export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
   const [tipoCobranca, setTipoCobranca] = useState("pix");
   const [gerando, setGerando] = useState(false);
   const [cobrancaGerada, setCobrancaGerada] = useState(null);
-  const { user } = useUser();
   const {
     empresaAtual,
     grupoAtual,
@@ -64,21 +63,17 @@ export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
   });
 
   const auditCobranca = async (acao, sucesso, detalhes = {}) => {
-    try {
-      await base44.entities.AuditLog.create(withContext({
-        usuario_id: user?.id || null,
-        usuario_nome: user?.full_name || user?.email || "Usuario",
-        acao,
-        modulo: "Financeiro",
-        entidade: "ContaReceber",
-        registro_id: contaReceber?.id || null,
-        tipo_auditoria: sucesso ? "entidade" : "seguranca",
-        descricao: `Geracao de cobranca: ${acao}`,
-        sucesso,
-        detalhes,
-        data_hora: new Date().toISOString()
-      }));
-    } catch {}
+    await persistOperationalAudit({
+      acao,
+      sucesso,
+      detalhes,
+      modulo: "Financeiro",
+      entidade: "ContaReceber",
+      registro_id: contaReceber?.id || null,
+      descricao: `Geracao de cobranca: ${acao}`,
+      empresa_id: empresaId,
+      group_id: groupId,
+    });
   };
 
   const validarAcaoSensivel = async (tipo) => {

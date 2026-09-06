@@ -21,28 +21,7 @@ import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import SincronizacaoMarketplacesAtiva from "@/components/integracoes/SincronizacaoMarketplacesAtiva";
 import usePermissions from "@/components/lib/usePermissions";
-
-const sanitizeAuditText = (value, max = 300) => String(value ?? "")
-  .replace(/[<>]/g, "")
-  .replace(/javascript:/gi, "")
-  .trim()
-  .slice(0, max);
-
-const SENSITIVE_AUDIT_KEY = /(token|senha|password|secret|api[_-]?key|client[_-]?secret|access[_-]?token|refresh[_-]?token|certificado|private|webhook[_-]?url)/i;
-
-const sanitizeAuditPayload = (value, keyName = "") => {
-  if (SENSITIVE_AUDIT_KEY.test(keyName)) return { protegido: true };
-  if (Array.isArray(value)) return value.map((item) => sanitizeAuditPayload(item, keyName));
-  if (value && typeof value === "object") {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, item]) => [
-        sanitizeAuditText(key, 80),
-        sanitizeAuditPayload(item, key)
-      ])
-    );
-  }
-  return typeof value === "string" ? sanitizeAuditText(value, 500) : value;
-};
+import { sanitizeAuditPayload, sanitizeAuditText } from "@/components/lib/sanitizeOnWrite";
 
 export default function IntegracoesIndex({ initialTab }) {
   const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();

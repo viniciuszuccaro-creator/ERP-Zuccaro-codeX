@@ -11,7 +11,7 @@ import { base44 } from "@/api/base44Client";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
-import { useToast } from "@/components/ui/use-toast";
+import { persistOperationalAudit } from "@/components/lib/uiAudit";
 import {
   TrendingUp,
   TrendingDown,
@@ -58,20 +58,16 @@ export default function LiquidarReceberPagar() {
   });
 
   const auditLiquidacao = async (acao, sucesso, detalhes = {}) => {
-    try {
-      await base44.entities.AuditLog.create(withContext({
-        usuario_id: user?.id || null,
-        usuario_nome: user?.full_name || user?.email || "Usuario",
-        acao,
-        modulo: "Financeiro",
-        entidade: "CaixaOrdemLiquidacao",
-        tipo_auditoria: sucesso ? "entidade" : "seguranca",
-        descricao: `Liquidacao receber/pagar: ${acao}`,
-        sucesso,
-        detalhes,
-        data_hora: new Date().toISOString()
-      }));
-    } catch {}
+    await persistOperationalAudit({
+      acao,
+      sucesso,
+      detalhes,
+      modulo: "Financeiro",
+      entidade: "CaixaOrdemLiquidacao",
+      descricao: `Liquidacao receber/pagar: ${acao}`,
+      empresa_id: empresaId,
+      group_id: groupId,
+    });
   };
 
   const { data: contasReceber = [] } = useQuery({

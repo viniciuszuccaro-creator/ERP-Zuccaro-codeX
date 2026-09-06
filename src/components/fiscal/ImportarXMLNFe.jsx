@@ -343,7 +343,12 @@ export default function ImportarXMLNFe({ empresaId }) {
             const mapFornecedor = mapa[chave] || {};
             centro_custo_id = mapFornecedor?.centro_custo_id || null;
             plano_contas_id = mapFornecedor?.plano_contas_id || null;
-          } catch {}
+          } catch (error) {
+            console.error('[ImportarXMLNFe] Falha ao carregar mapa de centro de custo do XML', error, {
+              empresa_id: empresaSelecionadaId,
+              group_id: groupId,
+            });
+          }
 
           const conta = await createInContext('ContaPagar', {
             empresa_id: empresaSelecionadaId,

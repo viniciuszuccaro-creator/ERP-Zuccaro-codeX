@@ -1,5 +1,6 @@
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import { sanitizeAuditPayload } from "@/components/lib/sanitizeOnWrite";
 
 let _cachedUser = null;
 const reportUIAuditFailure = (operation, error, context = {}) => {
@@ -96,12 +97,54 @@ export function logUIIssue({ component, issue, severity = "warn", meta }) {
 }
 
 function sanitizeMeta(meta) {
+  return sanitizeAuditPayload(meta) || null;
+}
+
+export async function persistOperationalAudit({
+  acao,
+  modulo = 'Sistema',
+  entidade = 'AuditLog',
+  registro_id = null,
+  sucesso = true,
+  descricao,
+  detalhes = null,
+  dados_anteriores = null,
+  dados_novos = null,
+  empresa_id = null,
+  group_id = null,
+} = {}) {
+  const user = await getUserSafe();
+  const ctx = getContextSafe();
+  const payload = {
+    usuario: user?.full_name || user?.email || 'Usuario',
+    usuario_id: user?.id || null,
+    acao,
+    modulo,
+    entidade,
+    registro_id,
+    tipo_auditoria: sucesso ? 'entidade' : 'seguranca',
+    descricao: String(descricao || acao || 'Auditoria').slice(0, 500),
+    sucesso,
+    empresa_id: empresa_id || ctx.empresa_id || null,
+    group_id: group_id || ctx.group_id || null,
+    correlacao_id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `audit-${Date.now()}`,
+    dados_anteriores: sanitizeAuditPayload(dados_anteriores) || null,
+    dados_novos: sanitizeAuditPayload(detalhes ?? dados_novos) || null,
+    data_hora: new Date().toISOString(),
+  };
+
   try {
-    if (!meta) return null;
-    const clone = JSON.parse(JSON.stringify(meta));
-    return clone;
-  } catch (_) {
-    return null;
+    await base44.entities.AuditLog.create(payload);
+  } catch (error) {
+    reportUIAuditFailure('Falha ao persistir auditoria operacional', error, {
+      modulo,
+      acao,
+      entidade,
+      registro_id,
+      group_id: payload.group_id,
+      empresa_id: payload.empresa_id,
+      correlacao_id: payload.correlacao_id,
+    });
   }
 }
 
