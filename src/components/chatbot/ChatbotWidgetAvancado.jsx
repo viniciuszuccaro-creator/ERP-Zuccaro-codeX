@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import IntentEngine from './IntentEngine';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
+import { resolveSessaoEstavel } from '@/components/lib/atendimentoConversaPolicy';
 
 /**
  * V21.5 FINAL - Widget de Chatbot OMNICANAL AVANÇADO
@@ -49,7 +50,11 @@ export default function ChatbotWidgetAvancado({
 }) {
   const [aberto, setAberto] = useState(!exibirBotaoFlutuante);
   const [mensagemAtual, setMensagemAtual] = useState('');
-  const [sessaoId] = useState(() => conversaIdProp || `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
+  const [sessaoId] = useState(() => resolveSessaoEstavel({
+    conversaId: conversaIdProp,
+    canal,
+    clienteId,
+  }));
   const [processando, setProcessando] = useState(false);
   const [arquivoAnexo, setArquivoAnexo] = useState(null);
   const [exibirEmojis, setExibirEmojis] = useState(false);

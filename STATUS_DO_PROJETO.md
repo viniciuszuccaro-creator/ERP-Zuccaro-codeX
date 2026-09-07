@@ -1,3 +1,15 @@
+### Gate 12 - Chatbot: canal externo entra no Hub e humano assume
+- Objetivo: cumprir o Gate 12 de `PLANO_GO_LIVE.md` no Hub e no chatbot existentes, sem terceiro centro de atendimento.
+- Diagnostico: webhook so simulava JSON; sessao do widget nascia com `Date.now()`; transbordo sem equipe nao ia para a fila; Hub filtrava so `Em Progresso`.
+- Causa raiz: ingestao de canal e identidade da conversa fora do ponto unico de persistencia.
+- Arquivos alterados: `atendimentoConversaPolicy.js` (extracao), `localBase44Client.js`, `contextoMultiempresaPolicy.js`, `WebhooksTester.jsx`, `HubAtendimento.jsx`, `ChatbotWidget.jsx`, `ChatbotWidgetAvancado.jsx`, `ChatbotAtendimento.jsx`, testes.
+- Reutilizado: `ConversaOmnicanal`, `MensagemOmnicanal`, Hub, widget e testador de webhook ja existentes.
+- Alteracoes: conversa exige empresa e reusa canal+sessao/telefone; webhook grava conversa `Aguardando`; cliente e ligado por telefone/e-mail; transbordo vai para o Hub mesmo sem equipe; atendente assume com auditoria.
+- Multiempresa: conversa e mensagem operacionais exigem empresa.
+- Pendencia: Instagram/Messenger reais e fila SLA por canal ainda dependem do provedor externo.
+- Validacoes: `node --test`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 13 Portal do Cliente.
+
 ### Gate 11 - Expedicao: romaneio, motorista e prova de entrega
 - Objetivo: cumprir o Gate 11 de `PLANO_GO_LIVE.md` no fluxo existente (separacao → romaneio → app motorista → comprovante), sem modulo paralelo.
 - Diagnostico: SEP/ROM/ENT usavam `Date.now()`; romaneio nao gravava motorista na entrega; app listava todas as entregas; status `Entregue` podia gravar sem prova.

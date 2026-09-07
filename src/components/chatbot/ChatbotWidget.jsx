@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import IntentEngine from './IntentEngine';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
+import { resolveSessaoEstavel } from '@/components/lib/atendimentoConversaPolicy';
 
 /**
  * V21.5 - Widget de Chatbot OMNICANAL COMPLETO
@@ -43,7 +44,11 @@ export default function ChatbotWidget({
 }) {
   const [aberto, setAberto] = useState(!exibirBotaoFlutuante);
   const [mensagemAtual, setMensagemAtual] = useState('');
-  const [sessaoId] = useState(() => conversaIdProp || `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
+  const [sessaoId] = useState(() => resolveSessaoEstavel({
+    conversaId: conversaIdProp,
+    canal,
+    clienteId,
+  }));
   const [processando, setProcessando] = useState(false);
   const [arquivoAnexo, setArquivoAnexo] = useState(null);
   const [exibirEmojis, setExibirEmojis] = useState(false);
@@ -313,15 +318,8 @@ export default function ChatbotWidget({
     try {
       // Buscar atendente disponível
       const atendentes = configCanal?.equipe_atendimento_ids || [];
-      
-      if (atendentes.length === 0) {
-        return; // Sem atendentes configurados
-      }
+      const atendenteId = atendentes[0] || null;
 
-      // Selecionar atendente (round-robin simples)
-      const atendenteId = atendentes[0];
-
-      // Atualizar conversa
       await updateInContext('ConversaOmnicanal', conversaId, {
         ...contextoPayload,
         tipo_atendimento: 'Humano',
@@ -331,7 +329,8 @@ export default function ChatbotWidget({
         prioridade: resultado.sentimento === 'Frustrado' ? 'Urgente' : 'Alta'
       });
 
-      // Criar notificação
+      if (!atendenteId) return;
+
       await createInContext('Notificacao', {
         ...contextoPayload,
         titulo: '🚨 Nova Conversa - Transbordo Chatbot',

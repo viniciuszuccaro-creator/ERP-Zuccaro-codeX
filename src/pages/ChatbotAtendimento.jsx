@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { resolveSessaoEstavel } from "@/components/lib/atendimentoConversaPolicy";
 
 /**
  * V21.6 - Chatbot ERP-Cêntrico - 100% COMPLETO
@@ -66,11 +67,9 @@ export default function ChatbotAtendimento() {
   // Inicializar sessão
   useEffect(() => {
     if (!sessaoAtual) {
-      setSessaoAtual(`sessao-${Date.now()}`);
-      // Simulação de autenticação do cliente para testes
-      // setClienteAutenticado({ id: 'cli123', nome: 'Cliente Teste', vendedor_responsavel_id: 'user456' });
+      setSessaoAtual(resolveSessaoEstavel({ canal: 'Portal', empresaId: empresaAtual?.id, clienteId: clienteAutenticado?.id }));
     }
-  }, []); // Run once on mount
+  }, []);
 
   const enviarMensagemMutation = useMutation({
     mutationFn: async (msg) => {

@@ -96,7 +96,7 @@ const sanitizeAttachmentText = (value, max = 180) => String(value || "")
  */
 export default function HubAtendimento() {
   const [abaAtiva, setAbaAtiva] = useState("atendimento");
-  const [filtroStatus, setFiltroStatus] = useState("Em Progresso");
+  const [filtroStatus, setFiltroStatus] = useState("Todas");
   const [filtroCanal, setFiltroCanal] = useState("Todos");
   const [filtroPrioridade, setFiltroPrioridade] = useState("Todas");
   const [buscaTexto, setBuscaTexto] = useState("");
@@ -321,12 +321,32 @@ export default function HubAtendimento() {
       if (!contextoValido || !podeEditarAtendimento) {
         throw new Error('Selecione grupo/empresa e confirme permissao antes de assumir conversa.');
       }
+      const atual = conversaSelecionada?.id === conversaId ? conversaSelecionada : null;
+      if (atual?.atendente_id && atual.atendente_id !== user.id && !podeVerTodasConversas) {
+        throw new Error('Conversa ja atribuida a outro atendente.');
+      }
+      if (atual?.empresa_id && empresaAtual?.id && atual.empresa_id !== empresaAtual.id) {
+        throw new Error('Conversa de outra empresa.');
+      }
       await updateInContext('ConversaOmnicanal', conversaId, {
         atendente_id: user.id,
         atendente_nome: user.full_name,
         status: 'Em Progresso',
         tipo_atendimento: 'Humano',
         transferido_em: new Date().toISOString()
+      });
+      await createInContext('AuditLog', {
+        empresa_id: atual?.empresa_id || empresaAtual?.id,
+        group_id: atual?.group_id || grupoAtual?.id,
+        usuario: user?.full_name || user?.email,
+        usuario_id: user?.id,
+        acao: 'Edicao',
+        modulo: 'Atendimento',
+        entidade: 'ConversaOmnicanal',
+        registro_id: conversaId,
+        descricao: 'Conversa assumida por atendente humano',
+        data_hora: new Date().toISOString(),
+        sucesso: true
       });
     },
     onSuccess: () => {

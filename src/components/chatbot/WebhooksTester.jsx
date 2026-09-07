@@ -9,6 +9,7 @@ import { Webhook, Send, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import usePermissions from '@/components/lib/usePermissions';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import { ingestCanalExterno } from '@/components/lib/atendimentoConversaPolicy';
 
 /**
  * V21.6 - TESTADOR DE WEBHOOKS
@@ -20,7 +21,7 @@ export default function WebhooksTester({ canalConfig }) {
   const [payload, setPayload] = useState('{\n  "type": "message",\n  "text": "Teste"\n}');
   const [resposta, setResposta] = useState(null);
   const { hasPermission, isAdmin } = usePermissions();
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
   const contextKey = empresaAtual?.id || grupoAtual?.id || 'sem-contexto';
   const contextoValido = contextKey !== 'sem-contexto';
   const canTestWebhook = isAdmin() ||
@@ -34,13 +35,12 @@ export default function WebhooksTester({ canalConfig }) {
       if (!contextoValido || !canTestWebhook) {
         throw new Error('Selecione grupo/empresa e confirme permissao de integracoes antes de testar webhook.');
       }
+      if (!empresaAtual?.id) {
+        throw new Error('Selecione a empresa do atendimento antes de ingestir o canal.');
+      }
 
       // Simular recebimento de webhook
-      const webhookUrl = canalConfig?.webhook_url;
-      
-      if (!webhookUrl) {
-        throw new Error('URL de webhook não configurada');
-      }
+      const webhookUrl = canalConfig?.webhook_url || 'local-ingest';
 
       if (payload.length > MAX_PAYLOAD_CHARS) {
         throw new Error('Payload muito grande para teste local de webhook');
@@ -48,14 +48,30 @@ export default function WebhooksTester({ canalConfig }) {
 
       // Parse do payload
       const data = JSON.parse(payload);
-      
+      const empresaId = empresaAtual?.id || canalConfig?.empresa_id || null;
+      const groupId = grupoAtual?.id || canalConfig?.group_id || null;
+      const inbound = ingestCanalExterno({
+        payload: data,
+        canal: canalConfig?.canal || 'WhatsApp',
+        empresaId,
+        groupId,
+      });
+      const conversa = await createInContext('ConversaOmnicanal', inbound.conversa);
+      const mensagem = await createInContext('MensagemOmnicanal', {
+        ...inbound.mensagem,
+        conversa_id: conversa.id,
+        data_envio: new Date().toISOString(),
+      });
+
       return {
         success: true,
         data,
+        conversa_id: conversa.id,
+        mensagem_id: mensagem.id,
         timestamp: new Date().toISOString(),
         webhook_url: webhookUrl,
-        group_id: grupoAtual?.id || canalConfig?.group_id || null,
-        empresa_id: empresaAtual?.id || canalConfig?.empresa_id || null
+        group_id: groupId,
+        empresa_id: empresaId
       };
     },
     onSuccess: (data) => {

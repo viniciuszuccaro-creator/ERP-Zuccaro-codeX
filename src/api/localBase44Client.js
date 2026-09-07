@@ -24,6 +24,7 @@ import {
 } from "@/components/lib/notaFiscalEmissaoPolicy";
 import { assertOpOnCreate } from "@/components/lib/ordemProducaoPolicy";
 import { applyExpedicaoCreate, assertEntregaOnUpdate, syncEntregaNumero } from "@/components/lib/expedicaoEntregaPolicy";
+import { applyAtendimentoCreate } from "@/components/lib/atendimentoConversaPolicy";
 import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows } from "../../base44/functions/_lib/security/entityGuardPolicy/entry.ts";
 
 const reportLocalClientFailure = (operation, error, context = {}) => {
@@ -1012,6 +1013,11 @@ const applyLocalExpedicaoCreate = (db, entityName, record) => applyExpedicaoCrea
   separacoes: getEntityStore(db, 'SeparacaoConferencia'),
 });
 
+const applyLocalAtendimentoCreate = (db, entityName, record) => applyAtendimentoCreate(entityName, record, {
+  conversas: getEntityStore(db, 'ConversaOmnicanal'),
+  clientes: getEntityStore(db, 'Cliente'),
+});
+
 const mergeSnapshotRecords = (db, entityName, incoming = []) => {
   if (!Array.isArray(incoming) || incoming.length === 0) return { created: 0, updated: 0 };
   const records = getEntityStore(db, entityName);
@@ -1267,9 +1273,11 @@ const createEntityApi = (entityName) => ({
     if (ordem.reuse) return ordem.reuse;
     const expedicao = applyLocalExpedicaoCreate(db, entityName, ordem.record || scoped);
     if (expedicao.reuse) return expedicao.reuse;
+    const atendimento = applyLocalAtendimentoCreate(db, entityName, expedicao.record || ordem.record || scoped);
+    if (atendimento.reuse) return atendimento.reuse;
     const stamped = syncEntregaNumero(
       entityName,
-      applyLocalMasterCadastro(db, entityName, expedicao.record || ordem.record || scoped),
+      applyLocalMasterCadastro(db, entityName, atendimento.record || expedicao.record || ordem.record || scoped),
     );
     const estoque = applyLocalEstoqueMovimento(db, entityName, stamped);
     if (estoque.reuse) return estoque.reuse;

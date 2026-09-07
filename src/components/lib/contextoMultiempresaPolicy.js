@@ -104,6 +104,8 @@ export const OPERACAO_EXIGE_EMPRESA_ENTITIES = new Set([
   'Entrega',
   'Romaneio',
   'SeparacaoConferencia',
+  'ConversaOmnicanal',
+  'MensagemOmnicanal',
   'MovimentacaoEstoque',
   'CaixaMovimento',
   'ConciliacaoBancaria',
