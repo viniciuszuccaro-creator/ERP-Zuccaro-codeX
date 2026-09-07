@@ -28,6 +28,7 @@ import { applyAtendimentoCreate } from "@/components/lib/atendimentoConversaPoli
 import { applyPortalReadScope, resolvePortalClienteId } from "@/components/lib/portalClientePolicy";
 import { applySiteOrigemOnCreate } from "@/components/lib/siteOrigemPolicy";
 import { applyMarketplaceCreate } from "@/components/lib/marketplacePedidoPolicy";
+import { assertIaInvocation } from "@/components/lib/iaTransversalPolicy";
 import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows } from "../../base44/functions/_lib/security/entityGuardPolicy/entry.ts";
 
 const reportLocalClientFailure = (operation, error, context = {}) => {
@@ -1527,9 +1528,29 @@ const functions = {
 
 const Core = {
   async InvokeLLM(payload = {}) {
+    const user = readUser();
+    const evaluation = evaluateLocalUserSession(user);
+    if (!evaluation.allowed) throw createAuthDeniedError(evaluation);
+    const stamped = assertIaInvocation({
+      payload,
+      groupId: payload.group_id || payload.grupo_id || getCurrentGroupId(),
+      empresaId: payload.empresa_id || getCurrentEmpresaId(),
+    });
+    auditLocalMutation('LogsIA', 'Sugestao', {
+      after: {
+        tipo_ia: stamped.tipo_ia || 'InvokeLLM',
+        modo: stamped.modo,
+        group_id: stamped.group_id,
+        empresa_id: stamped.empresa_id,
+        prompt_tamanho: String(stamped.prompt || '').length,
+      },
+    });
     return {
-      response: payload.response_json_schema ? {} : 'Resposta simulada localmente. Configure um provedor local de IA para respostas reais.',
-      data: payload.response_json_schema ? {} : undefined,
+      response: stamped.response_json_schema ? {} : 'Resposta simulada localmente. Configure um provedor local de IA para respostas reais.',
+      data: stamped.response_json_schema ? {} : undefined,
+      modo: stamped.modo,
+      group_id: stamped.group_id,
+      empresa_id: stamped.empresa_id,
       local: true,
     };
   },

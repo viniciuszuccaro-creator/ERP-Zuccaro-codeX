@@ -1,3 +1,15 @@
+### Gate 16 - IA transversal: sugere, nao executa sozinha
+- Objetivo: cumprir o Gate 16 de `PLANO_GO_LIVE.md` na IA existente, sem criar outra camada de agentes.
+- Diagnostico: `InvokeLLM` local nao exigia grupo; churn gravava cliente e oportunidade sem confirmacao (`resultado: Automatico`).
+- Causa raiz: invocacao de IA e persistencia sensivel misturadas, fora de um carimbo unico de sugestao.
+- Arquivos alterados: `iaTransversalPolicy.js` (extracao), `localBase44Client.js`, `IAChurnMonitoramento.jsx`, `IAPriceBrain.jsx`, `IntentEngine.jsx`, testes.
+- Reutilizado: telas de churn, precificacao, chatbot e `AuditLog`/`LogsIA` ja existentes.
+- Alteracoes: invoke exige grupo, recusa executar/baixa/NF/estoque/preco, sanitiza prompt e marca `sugestao`; churn so grava apos confirmacao.
+- Multiempresa: IA carimba `group_id`/`empresa_id` da sessao ou do payload.
+- Pendencia: provedor real de LLM, campanhas de recompra e conciliacao/liquidacao ainda nao sao acoes confirmadas item a item em todos os modulos.
+- Validacoes: `node --test`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 17 Agentes.
+
 ### Gate 15 - Marketplaces: origem e identificador externo no pedido
 - Objetivo: cumprir o Gate 15 de `PLANO_GO_LIVE.md` na sincronizacao existente, sem criar outro modulo de marketplace.
 - Diagnostico: busca simulada usava `Date.now`/`random`; importacao inventava numero e recusava retry; pedido comercial externo nao gravava marketplace nem id externo.

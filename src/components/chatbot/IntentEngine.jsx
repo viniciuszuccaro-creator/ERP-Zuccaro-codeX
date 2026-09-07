@@ -650,6 +650,7 @@ const IntentEngine = {
       const mensagemSanitizada = sanitizePromptText(mensagem, 1200);
       if (!mensagemSanitizada) return null;
 
+      const { groupId, empresaId } = getContextIds(contexto);
       const resultado = await base44.integrations.Core.InvokeLLM({
         prompt: `Analise a mensagem de um cliente e retorne:
 1. Intent principal (consultar_pedido, consultar_entrega, segunda_via_boleto, orcamento, suporte_tecnico, falar_atendente, cancelamento, saudacao, agradecimento, despedida, desconhecido)
@@ -661,6 +662,8 @@ const IntentEngine = {
 Mensagem: "${mensagemSanitizada}"
 
 Contexto seguro: ${JSON.stringify(buildSafeLLMContext(contexto))}`,
+        group_id: groupId,
+        empresa_id: empresaId,
         response_json_schema: {
           type: "object",
           properties: {

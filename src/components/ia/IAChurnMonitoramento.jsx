@@ -1,5 +1,4 @@
 import React from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,11 +7,13 @@ import { AlertTriangle, TrendingDown, Phone, Mail, MessageSquare } from 'lucide-
 import { toast } from 'sonner';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import { useUser } from '@/components/lib/UserContext';
+import { buildChurnOportunidade, buildChurnSuggestions } from '@/components/lib/iaTransversalPolicy';
 
 export default function IAChurnMonitoramento() {
   const queryClient = useQueryClient();
-  const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { contexto, empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
   const { user } = useUser();
+  const [sugestoes, setSugestoes] = React.useState([]);
   const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
     try { return localStorage.getItem('group_atual_id'); } catch { return null; }
   })();
@@ -37,77 +38,9 @@ export default function IAChurnMonitoramento() {
         throw new Error('Selecione um grupo ou empresa antes de executar a analise de churn.');
       }
 
-      const clientesEmRisco = [];
-      const hoje = new Date();
+      const clientesEmRisco = buildChurnSuggestions({ clientes, pedidos });
 
-      for (const cliente of clientes.filter(c => c.status === 'Ativo')) {
-        const pedidosCliente = pedidos.filter(p => p.cliente_id === cliente.id);
-        const ultimaCompra = cliente.data_ultima_compra ? new Date(cliente.data_ultima_compra) : null;
-        const diasSemComprar = ultimaCompra 
-          ? Math.floor((hoje - ultimaCompra) / (1000 * 60 * 60 * 24))
-          : 999;
-
-        let riscoChurn = 'Baixo';
-        if (diasSemComprar > 180) riscoChurn = 'Crítico';
-        else if (diasSemComprar > 120) riscoChurn = 'Alto';
-        else if (diasSemComprar > 60) riscoChurn = 'Médio';
-
-        const scoreAtual = cliente.score_saude_cliente || 100;
-        let novoScore = scoreAtual;
-
-        // Reduzir score baseado em inatividade
-        if (diasSemComprar > 60) novoScore -= (diasSemComprar - 60) * 0.5;
-        if (novoScore < 0) novoScore = 0;
-
-        // Atualizar cliente
-        await base44.entities.Cliente.update(cliente.id, {
-          dias_sem_comprar: diasSemComprar,
-          risco_churn: riscoChurn,
-          score_saude_cliente: Math.round(novoScore),
-          empresa_id: cliente.empresa_id || empresaAtivaId || null,
-          group_id: cliente.group_id || grupoAtivoId || null,
-        });
-
-        if (riscoChurn === 'Alto' || riscoChurn === 'Crítico') {
-          clientesEmRisco.push({
-            ...cliente,
-            dias_sem_comprar: diasSemComprar,
-            risco_churn: riscoChurn,
-            score_saude: Math.round(novoScore)
-          });
-
-          // Criar oportunidade no CRM
-          await base44.entities.Oportunidade.create({
-            cliente_id: cliente.id,
-            titulo: `Recuperação - ${cliente.nome}`,
-            descricao: `Cliente em risco de churn (${riscoChurn}) - ${diasSemComprar} dias sem comprar`,
-            valor_estimado: cliente.ticket_medio || 0,
-            probabilidade: riscoChurn === 'Crítico' ? 20 : 40,
-            origem: 'IA - Detecção de Churn',
-            status: 'Nova',
-            responsavel_id: cliente.vendedor_responsavel_id,
-            proxima_acao: 'Ligar para o cliente e entender motivo da inatividade',
-            empresa_id: cliente.empresa_id || empresaAtivaId || null,
-            group_id: cliente.group_id || grupoAtivoId || null,
-          });
-
-          // Log da IA
-          await base44.entities.LogsIA.create({
-            tipo_ia: 'IA_Churn',
-            contexto_execucao: 'Comercial',
-            entidade_relacionada: 'Cliente',
-            entidade_id: cliente.id,
-            acao_sugerida: `Cliente ${cliente.nome} identificado com risco ${riscoChurn} de churn`,
-            resultado: 'Automático',
-            confianca_ia: 88,
-            dados_saida: { dias_sem_comprar: diasSemComprar, score: Math.round(novoScore) },
-            empresa_id: cliente.empresa_id || empresaAtivaId || null,
-            group_id: cliente.group_id || grupoAtivoId || null,
-          });
-        }
-      }
-
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || 'Sistema',
         usuario_id: user?.id || null,
         empresa_id: empresaAtivaId || null,
@@ -115,7 +48,7 @@ export default function IAChurnMonitoramento() {
         acao: 'Analise',
         modulo: 'IA',
         entidade: 'IA_Churn',
-        descricao: 'Analise de churn executada',
+        descricao: 'Analise de churn gerou sugestoes sem autonomia de gravacao',
         dados_novos: { clientes_analisados: clientes.length, clientes_em_risco: clientesEmRisco.length },
         sucesso: true,
         data_hora: new Date().toISOString(),
@@ -124,16 +57,46 @@ export default function IAChurnMonitoramento() {
       return clientesEmRisco;
     },
     onSuccess: (clientesEmRisco) => {
-      queryClient.invalidateQueries({ queryKey: ['clientes'] });
-      queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
-      toast.success(`Análise concluída: ${clientesEmRisco.length} clientes em risco identificados`);
+      setSugestoes(clientesEmRisco);
+      toast.success(`Análise concluída: ${clientesEmRisco.length} clientes em risco sugeridos. Confirme para gravar.`);
     },
     onError: (error) => {
       toast.error(String(error?.message || error));
     }
   });
 
-  const clientesRisco = clientes.filter(c => c.risco_churn === 'Alto' || c.risco_churn === 'Crítico');
+  const aplicarSugestaoMutation = useMutation({
+    mutationFn: async (cliente) => {
+      if (!contextoValido) {
+        throw new Error('Selecione um grupo ou empresa antes de gravar a sugestao.');
+      }
+      const confirmado = window.confirm(`Gravar sugestao de churn para ${cliente.nome}? Isso atualiza o cadastro e cria oportunidade.`);
+      if (!confirmado) {
+        throw new Error('Gravacao cancelada.');
+      }
+      await updateInContext('Cliente', cliente.id, {
+        dias_sem_comprar: cliente.dias_sem_comprar,
+        risco_churn: cliente.risco_churn,
+        score_saude_cliente: cliente.score_saude_cliente,
+      });
+      await createInContext('Oportunidade', buildChurnOportunidade(cliente));
+      return cliente.id;
+    },
+    onSuccess: (clienteId) => {
+      setSugestoes((atual) => atual.filter((item) => item.id !== clienteId));
+      queryClient.invalidateQueries({ queryKey: ['clientes'] });
+      queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
+      toast.success('Sugestao de churn gravada apos confirmacao.');
+    },
+    onError: (error) => {
+      if (String(error?.message || '').includes('cancelada')) return;
+      toast.error(String(error?.message || error));
+    }
+  });
+
+  const clientesRisco = sugestoes.length
+    ? sugestoes
+    : clientes.filter(c => c.risco_churn === 'Alto' || c.risco_churn === 'Crítico');
 
   return (
     <div className="w-full h-full p-6 space-y-6 overflow-auto">
@@ -143,7 +106,7 @@ export default function IAChurnMonitoramento() {
             <TrendingDown className="w-7 h-7 text-orange-600" />
             IA de Monitoramento de Churn
           </h2>
-          <p className="text-slate-600 mt-1">Identificação automática de clientes em risco</p>
+          <p className="text-slate-600 mt-1">Sugestão de clientes em risco. A IA não grava sozinha.</p>
         </div>
         <Button
           onClick={() => calcularChurnMutation.mutate()}
@@ -174,7 +137,7 @@ export default function IAChurnMonitoramento() {
               <div>
                 <p className="text-sm text-slate-600">Críticos</p>
                 <p className="text-2xl font-bold text-red-700">
-                  {clientes.filter(c => c.risco_churn === 'Crítico').length}
+                  {clientesRisco.filter(c => c.risco_churn === 'Crítico').length}
                 </p>
               </div>
               <TrendingDown className="w-8 h-8 text-red-600" />
@@ -188,7 +151,7 @@ export default function IAChurnMonitoramento() {
               <div>
                 <p className="text-sm text-slate-600">Altos</p>
                 <p className="text-2xl font-bold text-orange-600">
-                  {clientes.filter(c => c.risco_churn === 'Alto').length}
+                  {clientesRisco.filter(c => c.risco_churn === 'Alto').length}
                 </p>
               </div>
               <TrendingDown className="w-8 h-8 text-orange-500" />
@@ -226,6 +189,15 @@ export default function IAChurnMonitoramento() {
                 </div>
                 
                 <div className="flex gap-2 mt-3">
+                  <Button
+                    size="sm"
+                    className="flex-1 bg-orange-600 hover:bg-orange-700"
+                    disabled={!contextoValido || aplicarSugestaoMutation.isPending}
+                    onClick={() => aplicarSugestaoMutation.mutate(cliente)}
+                    data-action="IA.Churn.confirmar"
+                  >
+                    Confirmar e gravar
+                  </Button>
                   <Button size="sm" variant="outline" className="flex-1">
                     <Phone className="w-4 h-4 mr-2" />
                     Ligar

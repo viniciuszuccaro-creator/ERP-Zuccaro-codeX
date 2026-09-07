@@ -82,6 +82,8 @@ export default function IAPriceBrain({ tabelaPrecoId, produtoId, onSugestaoAplic
 
       const resultado = await base44.integrations.Core.InvokeLLM({
         prompt,
+        group_id: grupoAtivoId,
+        empresa_id: empresaAtivaId,
         response_json_schema: {
           type: 'object',
           properties: {
