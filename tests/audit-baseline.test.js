@@ -234,7 +234,7 @@ test('technical integration tests require execution permission and safe auditing
   const sources = await Promise.all(files.map((file) => readFile(new URL(`../src/components/integracoes/${file}`, import.meta.url), 'utf8')));
 
   for (const source of sources) {
-    assert.match(source, /const contextoValido = Boolean\(groupId\)/);
+    assert.match(source, /const contextoValido = Boolean\(groupId(?: && empresaId)?\)/);
     assert.match(source, /hasPermission\("Sistema", "Integracoes", "executar"\)/);
     assert.match(source, /data-permission="Sistema\.Integracoes\.executar"/);
     assert.match(source, /sucesso: !\/\^\(Bloqueio\|Erro\)\//);

@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { assertEmissaoNFe, isAmbienteProducao, isProducaoAutorizada } from "@/components/lib/notaFiscalEmissaoPolicy";
 
 /**
  * Teste de Emissão de NF-e
@@ -27,7 +28,7 @@ export default function TesteNFe({ configuracao, windowMode = false }) {
 
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || user?.grupo_atual_id || user?.grupo_padrao_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId);
+  const contextoValido = Boolean(groupId && empresaId);
   const podeTestar = isAdmin() || hasPermission("Sistema", "Integracoes", "executar") || hasPermission("Sistema", "Integrações", "executar");
   const podeVisualizar = isAdmin() || hasPermission("Sistema", "Integracoes", "visualizar") || hasPermission("Sistema", "Integrações", "visualizar");
 
@@ -55,7 +56,7 @@ export default function TesteNFe({ configuracao, windowMode = false }) {
     if (!contextoValido) {
       toast({
         title: "Contexto obrigatorio",
-        description: "Selecione grupo ou empresa antes de testar NF-e.",
+        description: "Selecione grupo e empresa emitente antes de testar NF-e.",
         variant: "destructive"
       });
       await auditarTeste("Bloqueio sem contexto", "Tentativa de testar NF-e sem grupo ou empresa.", { pedido_informado: Boolean(pedidoTeste) });
@@ -75,7 +76,18 @@ export default function TesteNFe({ configuracao, windowMode = false }) {
     setResultado(null);
 
     try {
-      // Simular emissão de NF-e
+      const ambiente = configuracao?.parametros_fiscais?.ambiente_nfe || configuracao?.ambiente || 'Homologação';
+      assertEmissaoNFe({
+        empresaId,
+        ambiente,
+        producaoAutorizada: isProducaoAutorizada(configuracao?.autoriza_emissao_producao, configuracao?.parametros_fiscais?.autoriza_emissao_producao),
+        provedorConfigurado: Boolean(configuracao?.api_key),
+        nfe: { empresa_id: empresaId, cfop: '5102', ambiente },
+      });
+      if (isAmbienteProducao(ambiente)) {
+        throw new Error('Teste simulado so e permitido em homologacao.');
+      }
+
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       const nfeSimulada = {

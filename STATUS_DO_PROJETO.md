@@ -1,3 +1,15 @@
+### Gate 9 - Fiscal: homologacao simula, producao exige autorizacao
+- Objetivo: cumprir o Gate 9 de `PLANO_GO_LIVE.md` na emissao existente, sem tela fiscal paralela.
+- Diagnostico: enviar NF-e sempre chamava mock e autorizava ate em producao; `nfeActions` simulava quando o provedor faltava; numero da nota era aleatorio; NF autorizada podia ser apagada.
+- Causa raiz: simulacao usada como emissao real, sem empresa/serie/autorizacao no ponto de envio.
+- Arquivos alterados: `notaFiscalEmissaoPolicy.js` (extracao), `localBase44Client.js`, `nfeActions/entry.ts`, `NotasFiscaisTab.jsx`, `MockIntegracoes.jsx`, `FechamentoFinanceiroTab.jsx`, `ConfiguracaoNFeForm.jsx`, `EmpresaFormCompleto.jsx`, `EmpresaForm.jsx`, `TesteNFe.jsx`, testes.
+- Reutilizado: aba de notas, mock de homologacao, `emitirNFe`, cadastro fiscal da empresa.
+- Alteracoes: numero reservado por empresa+serie; homologacao continua simulada; producao exige flag explicita e provedor; falha marca `Rejeitada`; exclusao de NF autorizada/cancelada bloqueada; CFOP gravado no fechamento.
+- Multiempresa: NF so com empresa emitente.
+- Pendencia: tributos (NCM/CST/totalizadores) ainda nao sao validados item a item no SEFAZ real.
+- Validacoes: `node --test`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 10 Producao.
+
 ### Gate 8 - Financeiro: baixa, estorno e vinculo do titulo
 - Objetivo: cumprir o Gate 8 de `PLANO_GO_LIVE.md` nos titulos existentes, sem tela financeira paralela.
 - Diagnostico: liquidacao em lote gravava direto na entidade sem permissao nem idempotencia; titulo liquidado podia ter valor/pedido alterados; exclusao fisica nao distinguia liquidado; parcelas do pedido podiam nascer duplicadas no fechamento.

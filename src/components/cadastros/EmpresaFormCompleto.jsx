@@ -53,7 +53,8 @@ export default function EmpresaFormCompleto({ empresa, item, data, initialData, 
     configuracao_fiscal: {
       ambiente_nfe: 'Homologação',
       serie_nfe: '1',
-      proximo_numero_nfe: 1
+      proximo_numero_nfe: 1,
+      autoriza_emissao_producao: false
     },
     urls_webhook_padrao: {},
     status: 'Ativa',
@@ -101,7 +102,8 @@ export default function EmpresaFormCompleto({ empresa, item, data, initialData, 
     configuracao_fiscal: {
       ambiente_nfe: sanitizeText(formData.configuracao_fiscal?.ambiente_nfe, 80),
       serie_nfe: sanitizeCode(formData.configuracao_fiscal?.serie_nfe, 20),
-      proximo_numero_nfe: toNumber(formData.configuracao_fiscal?.proximo_numero_nfe, 1)
+      proximo_numero_nfe: toNumber(formData.configuracao_fiscal?.proximo_numero_nfe, 1),
+      autoriza_emissao_producao: Boolean(formData.configuracao_fiscal?.autoriza_emissao_producao)
     },
     urls_webhook_padrao: {
       pagamento_recebido: sanitizeUrl(formData.urls_webhook_padrao?.pagamento_recebido, 500),
@@ -221,6 +223,20 @@ export default function EmpresaFormCompleto({ empresa, item, data, initialData, 
               </SelectContent>
             </Select>
           </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={Boolean(formData.configuracao_fiscal?.autoriza_emissao_producao)}
+              onChange={(e) => setFormData({
+                ...formData,
+                configuracao_fiscal: {
+                  ...formData.configuracao_fiscal,
+                  autoriza_emissao_producao: e.target.checked,
+                },
+              })}
+            />
+            Autorizar emissao em producao
+          </label>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Série NF-e</Label>

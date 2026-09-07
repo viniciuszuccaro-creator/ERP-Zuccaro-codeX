@@ -16,6 +16,12 @@ import {
   isTituloFinanceiroEntity,
   tituloSettlementAction,
 } from "@/components/lib/financeiroTituloPolicy";
+import {
+  applyNumeroNfeOnCreate,
+  assertNotaFiscalOnDelete,
+  nfeSequenceKey,
+  NOTA_FISCAL_ENTITIES,
+} from "@/components/lib/notaFiscalEmissaoPolicy";
 import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows } from "../../base44/functions/_lib/security/entityGuardPolicy/entry.ts";
 
 const reportLocalClientFailure = (operation, error, context = {}) => {
@@ -956,6 +962,40 @@ const applyLocalFinanceiroTituloCreate = (db, entityName, record) => {
   });
 };
 
+const applyLocalNotaFiscalCreate = (db, entityName, record) => {
+  if (!NOTA_FISCAL_ENTITIES.includes(entityName)) return record;
+  const empresaId = record.empresa_id || record.empresa_faturamento_id;
+  const serie = record.serie || record.serie_nfe || '1';
+  const chave = nfeSequenceKey(empresaId, serie);
+  const configs = getEntityStore(db, 'ConfiguracaoSistema');
+  const seqRow = configs.find((item) => item.chave === chave);
+  const sequenceValue = Number(seqRow?.valor_numero) || 0;
+  const notes = getEntityStore(db, entityName);
+  const nextRecord = applyNumeroNfeOnCreate({ record, records: notes, sequenceValue });
+  const used = Number.parseInt(String(nextRecord.numero || ''), 10);
+  if (Number.isFinite(used) && used > 0) {
+    const nextValue = Math.max(sequenceValue, used);
+    if (seqRow) {
+      seqRow.valor_numero = nextValue;
+      seqRow.valor = String(nextValue);
+      seqRow.updated_date = now();
+    } else {
+      configs.unshift({
+        id: makeId('seqnfe'),
+        chave,
+        categoria: 'Fiscal',
+        valor_numero: nextValue,
+        valor: String(nextValue),
+        empresa_id: empresaId,
+        group_id: record.group_id || record.grupo_id || null,
+        created_date: now(),
+        updated_date: now(),
+      });
+    }
+  }
+  return nextRecord;
+};
+
 const mergeSnapshotRecords = (db, entityName, incoming = []) => {
   if (!Array.isArray(incoming) || incoming.length === 0) return { created: 0, updated: 0 };
   const records = getEntityStore(db, entityName);
@@ -1211,7 +1251,7 @@ const createEntityApi = (entityName) => ({
     if (estoque.reuse) return estoque.reuse;
     const financeiro = applyLocalFinanceiroTituloCreate(db, entityName, estoque.record || stamped);
     if (financeiro.reuse) return financeiro.reuse;
-    const payload = financeiro.record || estoque.record || stamped;
+    const payload = applyLocalNotaFiscalCreate(db, entityName, financeiro.record || estoque.record || stamped);
     const record = {
       ...payload,
       id: payload.id || makeId(entityName.toLowerCase()),
@@ -1279,6 +1319,11 @@ const createEntityApi = (entityName) => ({
       const dbPreview = loadDb();
       const current = getEntityStore(dbPreview, entityName).find((item) => String(item.id) === String(id));
       assertTituloOnDelete(current || {});
+    }
+    if (NOTA_FISCAL_ENTITIES.includes(entityName)) {
+      const dbPreview = loadDb();
+      const current = getEntityStore(dbPreview, entityName).find((item) => String(item.id) === String(id));
+      assertNotaFiscalOnDelete(current || {});
     }
     assertLocalMutationAllowed(entityName, 'excluir', id);
     const db = loadDb();

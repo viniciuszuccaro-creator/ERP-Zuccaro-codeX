@@ -96,7 +96,8 @@ export default function EmpresaForm({ empresa, item, data, initialData, defaultV
     configuracao_fiscal: {
       ambiente_nfe: sanitizeText(formData.configuracao_fiscal?.ambiente_nfe || "Homologacao", 40),
       serie_nfe: sanitizeText(formData.configuracao_fiscal?.serie_nfe || "1", 20),
-      proximo_numero_nfe: toInteger(formData.configuracao_fiscal?.proximo_numero_nfe, 1)
+      proximo_numero_nfe: toInteger(formData.configuracao_fiscal?.proximo_numero_nfe, 1),
+      autoriza_emissao_producao: Boolean(formData.configuracao_fiscal?.autoriza_emissao_producao)
     },
     group_id: groupId || formData.group_id,
     empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id

@@ -446,6 +446,8 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
             grupo_id: groupId,
             etapa_id: dadosNFe.etapa_id || null,
             itens: dadosNFe.itens || [],
+            cfop: dadosNFe.cfop || formData.cfop_pedido || '5102',
+            ambiente: 'Homologacao',
             observacoes: dadosNFe.observacoes_nfe || '',
           }, 'empresa_faturamento_id');
           const etapasAtualizadas = (formData.etapas_entrega || []).map((etapa) => (

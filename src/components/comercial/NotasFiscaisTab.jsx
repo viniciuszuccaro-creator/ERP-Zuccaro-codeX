@@ -30,6 +30,12 @@ import {
 import GerarNFeModal from "./GerarNFeModal";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import { mockCancelarNFe, mockEmitirNFe } from "@/components/integracoes/MockIntegracoes";
+import { emitirNFe } from "@/components/lib/integracaoNFe";
+import {
+  assertEmissaoNFe,
+  isProducaoAutorizada,
+  isProvedorFiscalConfigurado,
+} from "@/components/lib/notaFiscalEmissaoPolicy";
 import usePermissions from "@/components/lib/usePermissions";
 import { ProtectedAction } from "@/components/ProtectedAction";
 import { ImprimirDANFESimplificado } from "@/components/lib/impressao";
@@ -256,13 +262,41 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
         await auditFiscalComercial('nota_fiscal_enviar_bloqueada', { motivo: 'status_invalido', nota_id: nfe?.id, status: nfe?.status }, false);
         throw new Error('Somente NF-e pendente pode ser enviada.');
       }
-
-      await auditFiscalComercial('nota_fiscal_envio_iniciado', { nota_id: nfe.id, numero: nfe.numero });
-      const resultado = await mockEmitirNFe({
-        empresa_id: nfe.empresa_id || empresaId,
-        pedido: nfe,
-        ambiente: nfe.ambiente || 'Homologacao'
+      const emitenteId = nfe?.empresa_id || nfe?.empresa_faturamento_id || empresaId;
+      const empresaEmitente = empresasDoGrupo?.find((item) => String(item.id) === String(emitenteId)) || empresaAtual;
+      const ambiente = nfe.ambiente || empresaEmitente?.configuracao_fiscal?.ambiente_nfe || 'Homologacao';
+      const producaoAutorizada = isProducaoAutorizada(
+        nfe.autoriza_emissao_producao,
+        empresaEmitente?.configuracao_fiscal?.autoriza_emissao_producao,
+      );
+      const check = assertEmissaoNFe({
+        empresaId: emitenteId,
+        ambiente,
+        producaoAutorizada,
+        provedorConfigurado: isProvedorFiscalConfigurado(empresaEmitente?.integracao_nfe || {}),
+        nfe,
       });
+
+      await auditFiscalComercial('nota_fiscal_envio_iniciado', { nota_id: nfe.id, numero: nfe.numero, ambiente: check.ambiente });
+      let resultado;
+      try {
+        resultado = check.permiteSimulacao
+          ? await mockEmitirNFe({ empresa_id: emitenteId, pedido: nfe, ambiente: 'Homologacao' })
+          : await emitirNFe({ ...nfe, ambiente: 'Producao', autoriza_emissao_producao: true }, emitenteId);
+      } catch (error) {
+        await updateInContext('NotaFiscal', nfe.id, withFiscalContext({
+          status: 'Rejeitada',
+          historico: [
+            ...(nfe.historico || []),
+            { data_hora: new Date().toISOString(), evento: 'NF-e rejeitada', detalhes: error?.message || 'falha_emissao' },
+          ],
+        }));
+        throw error;
+      }
+      if (resultado?.sucesso === false || resultado?.error) {
+        await updateInContext('NotaFiscal', nfe.id, withFiscalContext({ status: 'Rejeitada' }));
+        throw new Error(resultado.error || 'Falha ao emitir NF-e.');
+      }
 
       const payloadAtualizacao = withFiscalContext({
         status: resultado.status || 'Autorizada',

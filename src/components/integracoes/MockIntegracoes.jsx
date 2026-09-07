@@ -12,11 +12,17 @@
  * 📄 NF-e - Emissão Simulada
  */
 export async function mockEmitirNFe({ empresa_id, pedido, ambiente = "Homologação" }) {
-  // Simula tempo de processamento
+  const ambienteNormalizado = String(ambiente || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (ambienteNormalizado.startsWith('prod')) {
+    throw new Error('Emissao em producao exige autorizacao explicita.');
+  }
+  if (!empresa_id) {
+    throw new Error('Empresa emitente obrigatoria para NF-e.');
+  }
   await new Promise(resolve => setTimeout(resolve, 2000));
 
-  const numero = Math.floor(100000 + Math.random() * 900000);
-  const serie = "1";
+  const numero = String(pedido?.numero || pedido?.numero_nfe || Math.floor(100000 + Math.random() * 900000));
+  const serie = String(pedido?.serie || "1");
   const chaveAcesso = Array(44).fill(0).map(() => Math.floor(Math.random() * 10)).join('');
   
   return {

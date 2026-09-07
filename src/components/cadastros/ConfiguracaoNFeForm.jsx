@@ -28,6 +28,7 @@ export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, wi
     emitir_automatico: false,
     enviar_email_automatico: true,
     ativo: true,
+    autoriza_emissao_producao: false,
     observacoes: ""
   });
   const grupoIdAtual = groupId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
@@ -184,6 +185,15 @@ export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, wi
               <Switch
                 checked={formData.enviar_email_automatico}
                 onCheckedChange={(val) => setFormData({ ...formData, enviar_email_automatico: val })}
+                disabled={!contextoValido || salvando}
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
+              <Label>Autorizar emissao em producao</Label>
+              <Switch
+                checked={Boolean(formData.autoriza_emissao_producao)}
+                onCheckedChange={(val) => setFormData({ ...formData, autoriza_emissao_producao: val })}
                 disabled={!contextoValido || salvando}
               />
             </div>

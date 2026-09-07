@@ -82,16 +82,32 @@ Deno.serve(async (req) => {
       integracao = doc?.integracao_nfe || doc?.nfe || null;
     } catch (error) { reportNfeFailure(error, { empresaId: empresaIdResolved, groupId: groupIdResolved }); }
 
-    // Simulado quando não configurado
+    const ambienteNfe = String(nfe?.ambiente || integracao?.ambiente || 'Homologacao');
+    const producao = /^prod/i.test(ambienteNfe.normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+    const autorizada = integracao?.autoriza_emissao_producao === true || nfe?.autoriza_emissao_producao === true;
+    if (action === 'emitir' && producao && !autorizada) {
+      return Response.json({ error: 'Emissao em producao exige autorizacao explicita.', sucesso: false }, { status: 409 });
+    }
+
+    // Simulado quando não configurado — so homologacao. Producao exige autorizacao e provedor.
     if (!integracao || integracao.ativa === false) {
+      const ambienteNfe = String(nfe?.ambiente || integracao?.ambiente || 'Homologacao');
+      const producao = /^prod/i.test(ambienteNfe.normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+      const autorizada = integracao?.autoriza_emissao_producao === true || nfe?.autoriza_emissao_producao === true;
+      if (producao) {
+        return Response.json({
+          error: 'Emissao em producao exige provedor fiscal configurado.',
+          sucesso: false,
+        }, { status: 409 });
+      }
       if (action === 'emitir') {
         const fake = {
           id: nfe?.id || null,
           sucesso: true,
           modo: 'simulado',
           status: 'Autorizada',
-          numero: String(Math.floor(Math.random() * 999999)).padStart(6, '0'),
-          serie: '1',
+          numero: String(nfe?.numero || nfe?.numero_nfe || '').trim() || String(Math.floor(Math.random() * 999999)).padStart(6, '0'),
+          serie: String(nfe?.serie || '1'),
           chave: '00000000000000000000000000000000000000000000',
           protocolo: `SIM${Date.now()}`,
           dataAutorizacao: new Date().toISOString(),
