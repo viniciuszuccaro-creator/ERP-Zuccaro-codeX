@@ -29,7 +29,7 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
   const { user } = useUser();
   const effectiveEmpresaId = empresaId || empresaAtual?.id || null;
   const effectiveGroupId = grupoAtual?.id || empresaAtual?.group_id || null;
-  const contextoValido = Boolean(effectiveGroupId || effectiveEmpresaId);
+  const contextoValido = Boolean(effectiveGroupId && effectiveEmpresaId);
   const canGerarRomaneio =
     hasPermission("Expedicao", "Romaneios", "criar") ||
     hasPermission("Expedicao", "Romaneio", "criar") ||
@@ -109,7 +109,7 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
     mutationFn: async () => {
       if (!contextoValido) {
         await auditRomaneio({ acao: "Romaneio.gerar.bloqueado", sucesso: false, motivo: "contexto_obrigatorio" });
-        throw new Error("Selecione um grupo ou empresa antes de gerar o romaneio.");
+        throw new Error("Selecione a empresa da expedicao antes de gerar o romaneio.");
       }
 
       if (!canGerarRomaneio) {
@@ -145,10 +145,16 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
         throw new Error("A entrega selecionada nao pertence ao contexto ativo.");
       }
 
+      if (!String(formData.motorista || '').trim()) {
+        throw new Error("Informe o motorista.");
+      }
+      if (!String(formData.veiculo || '').trim() && !String(formData.placa || '').trim()) {
+        throw new Error("Informe o veiculo ou a placa.");
+      }
+
       const pesoTotal = entregasSelecionadas.reduce((sum, e) => sum + (e.peso_total_kg || 0), 0);
       const volumesTotal = entregasSelecionadas.reduce((sum, e) => sum + (e.volumes || 0), 0);
       const valorTotal = entregasSelecionadas.reduce((sum, e) => sum + (e.valor_mercadoria || 0), 0);
-      const numeroRomaneio = "ROM-" + Date.now();
       const now = new Date().toISOString();
       const groupId = effectiveGroupId || entregasSelecionadas[0].group_id || null;
       const selectedEmpresaId = effectiveEmpresaId || entregasSelecionadas[0].empresa_id || null;
@@ -157,7 +163,6 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
         group_id: groupId,
         grupo_id: groupId,
         empresa_id: selectedEmpresaId,
-        numero_romaneio: numeroRomaneio,
         data_romaneio: now.split('T')[0],
         data_saida: now,
         motorista: formData.motorista,
@@ -183,6 +188,10 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
           grupo_id: groupId,
           empresa_id: selectedEmpresaId,
           romaneio_id: romaneio.id,
+          motorista: formData.motorista,
+          motorista_telefone: formData.motorista_telefone,
+          veiculo: formData.veiculo,
+          placa: formData.placa,
           status: "Saiu para Entrega",
           data_saida: now,
           historico_status: [
@@ -192,7 +201,7 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
               data_hora: now,
               usuario: user?.full_name || user?.email || "Sistema",
               usuario_id: user?.id || user?.email || null,
-              observacao: "Incluido no romaneio " + numeroRomaneio
+              observacao: "Incluido no romaneio " + (romaneio.numero_romaneio || romaneio.id)
             }
           ]
         });
@@ -202,7 +211,7 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
         acao: "Romaneio.gerar",
         sucesso: true,
         dadosAnteriores: { entregas: entregasSelecionadas.map(e => ({ id: e.id, status: e.status, romaneio_id: e.romaneio_id || null })) },
-        dadosNovos: { romaneio_id: romaneio.id, numero_romaneio: numeroRomaneio, entregas_ids: formData.entregas_selecionadas }
+        dadosNovos: { romaneio_id: romaneio.id, numero_romaneio: romaneio.numero_romaneio, entregas_ids: formData.entregas_selecionadas }
       });
 
       return romaneio;

@@ -1,3 +1,15 @@
+### Gate 11 - Expedicao: romaneio, motorista e prova de entrega
+- Objetivo: cumprir o Gate 11 de `PLANO_GO_LIVE.md` no fluxo existente (separacao → romaneio → app motorista → comprovante), sem modulo paralelo.
+- Diagnostico: SEP/ROM/ENT usavam `Date.now()`; romaneio nao gravava motorista na entrega; app listava todas as entregas; status `Entregue` podia gravar sem prova.
+- Causa raiz: numeracao e comprovante fora do ponto unico de persistencia, e atribuicao do motorista so no formulario.
+- Arquivos alterados: `expedicaoEntregaPolicy.js` (extracao), `localCadastroMasterPolicy.js`, `localBase44Client.js`, `contextoMultiempresaPolicy.js`, `useFluxoPedido.jsx`, `RomaneioForm.jsx`, `RoteirizacaoMapa.jsx`, `SeparacaoConferencia.jsx`, `SeparacaoConferenciaIA.jsx`, `AppEntregasMotorista.jsx`, testes.
+- Reutilizado: telas de romaneio, separacao, roteirizador e app do motorista ja existentes.
+- Alteracoes: `ENT-`/`ROM-`/`SEP-` reservados na gravacao; retry reusa entrega/romaneio; romaneio exige empresa, motorista e veiculo/placa; entrega `Entregue` exige comprovante; app filtra por contexto e atribuicao.
+- Multiempresa: entrega, romaneio e separacao exigem empresa; app nao usa `Entrega.list()`.
+- Pendencia: geocodificacao real, fila offline e vinculo formal motorista x usuario de login.
+- Validacoes: `node --test`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 12 Chatbot e Hub de Atendimento.
+
 ### Gate 10 - Producao: OP numerada, apontamento e conferencia
 - Objetivo: cumprir o Gate 10 de `PLANO_GO_LIVE.md` no fluxo existente (pedido → OP → apontamento → conferencia → pedido pronto), sem modulo de producao paralelo.
 - Diagnostico: numero da OP usava `Date.now()`; retry do mesmo pedido gerava outra OP; formulario recusava numero vazio; apontamento gravava so no JSON da OP e nao chamava `concluirOPCompleto`; baixa de estoque no 100% atualizava produto de novo.

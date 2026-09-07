@@ -426,7 +426,6 @@ export async function faturarPedidoCompleto(pedido, nfe, empresaId) {
       prioridade: pedido.prioridade || 'Normal',
       usuario_responsavel: (user?.full_name || user?.email || 'Sistema'),
       usuario_responsavel_id: user?.id,
-      qr_code: `ENT-${Date.now()}`,
       historico_status: [{
         status: 'Pronto para Expedir',
         data_hora: new Date().toISOString(),

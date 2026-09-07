@@ -23,6 +23,7 @@ import {
   NOTA_FISCAL_ENTITIES,
 } from "@/components/lib/notaFiscalEmissaoPolicy";
 import { assertOpOnCreate } from "@/components/lib/ordemProducaoPolicy";
+import { applyExpedicaoCreate, assertEntregaOnUpdate, syncEntregaNumero } from "@/components/lib/expedicaoEntregaPolicy";
 import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows } from "../../base44/functions/_lib/security/entityGuardPolicy/entry.ts";
 
 const reportLocalClientFailure = (operation, error, context = {}) => {
@@ -1005,6 +1006,12 @@ const applyLocalOrdemProducaoCreate = (db, entityName, record) => {
   });
 };
 
+const applyLocalExpedicaoCreate = (db, entityName, record) => applyExpedicaoCreate(entityName, record, {
+  entregas: getEntityStore(db, 'Entrega'),
+  romaneios: getEntityStore(db, 'Romaneio'),
+  separacoes: getEntityStore(db, 'SeparacaoConferencia'),
+});
+
 const mergeSnapshotRecords = (db, entityName, incoming = []) => {
   if (!Array.isArray(incoming) || incoming.length === 0) return { created: 0, updated: 0 };
   const records = getEntityStore(db, entityName);
@@ -1258,7 +1265,12 @@ const createEntityApi = (entityName) => ({
     const scoped = stampRecordContext(entityName, data);
     const ordem = applyLocalOrdemProducaoCreate(db, entityName, scoped);
     if (ordem.reuse) return ordem.reuse;
-    const stamped = applyLocalMasterCadastro(db, entityName, ordem.record || scoped);
+    const expedicao = applyLocalExpedicaoCreate(db, entityName, ordem.record || scoped);
+    if (expedicao.reuse) return expedicao.reuse;
+    const stamped = syncEntregaNumero(
+      entityName,
+      applyLocalMasterCadastro(db, entityName, expedicao.record || ordem.record || scoped),
+    );
     const estoque = applyLocalEstoqueMovimento(db, entityName, stamped);
     if (estoque.reuse) return estoque.reuse;
     const financeiro = applyLocalFinanceiroTituloCreate(db, entityName, estoque.record || stamped);
@@ -1290,12 +1302,19 @@ const createEntityApi = (entityName) => ({
     if (index < 0) throw new Error(`${entityName} local nao encontrado: ${id}`);
     const before = { ...records[index] };
     const payload = stampRecordContext(entityName, data);
-    if (isTituloFinanceiroEntity(entityName) && before.empresa_id && !Object.prototype.hasOwnProperty.call(data || {}, 'empresa_id')) {
+    if ((isTituloFinanceiroEntity(entityName) || entityName === 'Entrega') && before.empresa_id && !Object.prototype.hasOwnProperty.call(data || {}, 'empresa_id')) {
       payload.empresa_id = before.empresa_id;
       if (before.group_id) payload.group_id = before.group_id;
       if (before.grupo_id) payload.grupo_id = before.grupo_id;
     }
+    if (entityName === 'Entrega' && before.empresa_id) {
+      payload.empresa_id = before.empresa_id;
+    }
     let nextPayload = payload;
+    if (entityName === 'Entrega') {
+      nextPayload = assertEntregaOnUpdate({ before, patch: payload });
+      if (before.empresa_id) nextPayload.empresa_id = before.empresa_id;
+    }
     if (isTituloFinanceiroEntity(entityName)) {
       const decision = assertTituloOnUpdate({ before, patch: payload });
       if (decision.reuse) {

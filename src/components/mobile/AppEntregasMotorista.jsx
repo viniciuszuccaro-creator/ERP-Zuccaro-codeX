@@ -26,6 +26,8 @@ import { useUser } from '@/components/lib/UserContext';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import { entregaAtribuidaAoMotorista, hasProvaEntrega } from '@/components/lib/expedicaoEntregaPolicy';
 
 /**
  * App Mobile Completo para Motoristas
@@ -33,6 +35,7 @@ import { createPageUrl } from '@/utils';
  */
 export default function AppEntregasMotorista() {
   const { user } = useUser();
+  const { filterInContext, grupoAtual, empresaAtual } = useContextoVisual();
   const [entregas, setEntregas] = useState([]);
   const [entregaAtual, setEntregaAtual] = useState(null);
   const [localizacao, setLocalizacao] = useState(null);
@@ -73,15 +76,15 @@ export default function AppEntregasMotorista() {
 
   // Buscar entregas do motorista
   const { data: minhasEntregas = [], refetch } = useQuery({
-    queryKey: ['entregas-motorista'],
+    queryKey: ['entregas-motorista', user?.id, grupoAtual?.id, empresaAtual?.id],
     queryFn: async () => {
-      const todas = await base44.entities.Entrega.list('-data_saida');
-      return todas.filter(e => 
-        e.motorista_id === user?.id && 
-        ['Saiu para Entrega', 'Em Trânsito'].includes(e.status)
-      );
+      const todas = await filterInContext('Entrega', {}, '-data_saida', 500);
+      return todas.filter((entrega) => (
+        entregaAtribuidaAoMotorista(entrega, user)
+        && ['Saiu para Entrega', 'Em Trânsito'].includes(entrega.status)
+      ));
     },
-    enabled: !!user,
+    enabled: !!user && Boolean(grupoAtual?.id && empresaAtual?.id),
     refetchInterval: 30000
   });
 
@@ -221,18 +224,24 @@ export default function AppEntregasMotorista() {
       return;
     }
 
+    const comprovante = {
+      foto_comprovante: fotoComprovante,
+      assinatura_digital: assinatura,
+      nome_recebedor: nomeRecebedor,
+      documento_recebedor: documentoRecebedor,
+      data_hora_recebimento: new Date().toISOString(),
+      latitude_entrega: localizacao?.latitude,
+      longitude_entrega: localizacao?.longitude
+    };
+    if (!hasProvaEntrega({ ...entregaAtual, comprovante_entrega: comprovante })) {
+      toast.error('Informe recebedor e comprovante (foto, assinatura ou documento).');
+      return;
+    }
+
     await base44.entities.Entrega.update(entregaAtual.id, {
       status: 'Entregue',
       data_entrega: new Date().toISOString(),
-      comprovante_entrega: {
-        foto_comprovante: fotoComprovante,
-        assinatura_digital: assinatura,
-        nome_recebedor: nomeRecebedor,
-        documento_recebedor: documentoRecebedor,
-        data_hora_recebimento: new Date().toISOString(),
-        latitude_entrega: localizacao?.latitude,
-        longitude_entrega: localizacao?.longitude
-      },
+      comprovante_entrega: comprovante,
       historico_status: [
         ...(entregaAtual.historico_status || []),
         {

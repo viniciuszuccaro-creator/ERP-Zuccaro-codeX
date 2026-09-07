@@ -52,7 +52,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
   const dadosParaSeparacao = pedido || entrega;
   const effectiveEmpresaId = dadosParaSeparacao?.empresa_id || empresaId || empresaAtual?.id || null;
   const effectiveGroupId = dadosParaSeparacao?.group_id || dadosParaSeparacao?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || null;
-  const contextoValido = Boolean(effectiveGroupId || effectiveEmpresaId);
+  const contextoValido = Boolean(effectiveGroupId && effectiveEmpresaId);
 
   const auditarSeparacao = async ({ acao, descricao, sucesso = true, dadosNovos = {}, dadosAnteriores = null, registroId = null }) => {
     try {
@@ -138,7 +138,6 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
         group_id: effectiveGroupId,
         grupo_id: effectiveGroupId,
         empresa_id: effectiveEmpresaId,
-        numero_separacao: `SEP-${Date.now()}`,
         pedido_id: dadosParaSeparacao.id,
         numero_pedido: dadosParaSeparacao.numero_pedido || dadosParaSeparacao.numero_entrega,
         cliente_id: dadosParaSeparacao.cliente_id,

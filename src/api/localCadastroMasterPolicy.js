@@ -7,6 +7,9 @@ export const MASTER_CODE_SPECS = {
   Transportadora: { field: 'codigo', width: 6 },
   Pedido: { field: 'numero_pedido', width: 6, prefix: 'PED-' },
   OrdemProducao: { field: 'numero_op', width: 6, prefix: 'OP-' },
+  Entrega: { field: 'qr_code', width: 6, prefix: 'ENT-' },
+  Romaneio: { field: 'numero_romaneio', width: 6, prefix: 'ROM-' },
+  SeparacaoConferencia: { field: 'numero_separacao', width: 6, prefix: 'SEP-' },
 };
 
 export const sequenceKeyFor = (entityName, groupId) => `seq_codigo_${entityName}_${groupId || 'grupo'}`;

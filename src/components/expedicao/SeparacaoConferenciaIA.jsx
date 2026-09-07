@@ -252,7 +252,6 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
         group_id: effectiveGroupId,
         grupo_id: effectiveGroupId,
         empresa_id: effectiveEmpresaId,
-        numero_separacao: `SEP-IA-${Date.now()}`,
         pedido_id: pedido.id,
         numero_pedido: pedido.numero_pedido,
         cliente_id: pedido.cliente_id,

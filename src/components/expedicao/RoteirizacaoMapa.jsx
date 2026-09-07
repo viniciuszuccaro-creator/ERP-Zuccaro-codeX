@@ -254,14 +254,18 @@ export default function RoteirizacaoMapa({ entregas = [], motoristas = [], veicu
       });
 
       // Criar Romaneio
+      const motoristaRota = motoristas.find((m) => m.id === motoristaSelecionado);
+      const veiculoRota = veiculos.find((v) => v.id === veiculoSelecionado);
       const romaneio = await createInContext("Romaneio", {
         empresa_id: empresaId,
         group_id: groupId,
         grupo_id: groupId,
-        numero_romaneio: `ROM-${Date.now()}`,
         data_romaneio: new Date().toISOString().split('T')[0],
         motorista_id: motoristaSelecionado,
+        motorista: motoristaRota?.nome_completo || motoristaRota?.nome || motoristaRota?.full_name || '',
         veiculo_id: veiculoSelecionado,
+        veiculo: veiculoRota?.descricao || veiculoRota?.modelo || veiculoRota?.placa || veiculoSelecionado,
+        placa: veiculoRota?.placa || '',
         rota_id: rota.id,
         entregas_ids: rotaOtimizada.pontos.map(p => p.id),
         quantidade_entregas: rotaOtimizada.pontos.length,
@@ -279,6 +283,10 @@ export default function RoteirizacaoMapa({ entregas = [], motoristas = [], veicu
           empresa_id: empresaId || ponto.empresa_id,
           rota_id: rota.id,
           romaneio_id: romaneio.id,
+          motorista_id: motoristaSelecionado,
+          motorista: motoristaRota?.nome_completo || motoristaRota?.nome || motoristaRota?.full_name || '',
+          veiculo: veiculoRota?.descricao || veiculoRota?.modelo || veiculoRota?.placa || veiculoSelecionado,
+          placa: veiculoRota?.placa || '',
           status: 'Pronto para Expedir'
         });
       }
