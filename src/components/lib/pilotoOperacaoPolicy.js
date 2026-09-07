@@ -1,3 +1,5 @@
+import { assertChecklistVirada } from "./viradaProducaoPolicy.js";
+
 const firstText = (...values) => values.map((value) => String(value || '').trim()).find(Boolean) || '';
 
 const strip = (value) => firstText(value).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -99,6 +101,9 @@ export const assertViradaProducao = ({
   users = [],
   cenariosExecutados = [],
   incidentesCriticosAbertos = [],
+  backups = [],
+  configBackup = {},
+  configs = [],
 } = {}) => {
   const cobertos = papeisPilotoCobertos(users);
   if (cobertos.length < PAPEIS_PILOTO.length) {
@@ -113,14 +118,30 @@ export const assertViradaProducao = ({
   if (abertos.length > 0) {
     throw new Error('Virada para producao bloqueada enquanto houver erro critico aberto.');
   }
+  assertChecklistVirada({ backups, configBackup, configs });
   return { permitido: true, modo: 'producao' };
 };
 
-export const applyModoOperacaoOnWrite = ({ record = {}, users = [], cenariosExecutados = [], incidentesCriticosAbertos = [] } = {}) => {
+export const applyModoOperacaoOnWrite = ({
+  record = {},
+  users = [],
+  cenariosExecutados = [],
+  incidentesCriticosAbertos = [],
+  backups = [],
+  configBackup = {},
+  configs = [],
+} = {}) => {
   if (firstText(record.chave) !== MODO_OPERACAO_CHAVE) return record;
   const modo = resolveModoOperacao([record]);
   if (modo === 'producao') {
-    assertViradaProducao({ users, cenariosExecutados, incidentesCriticosAbertos });
+    assertViradaProducao({
+      users,
+      cenariosExecutados,
+      incidentesCriticosAbertos,
+      backups,
+      configBackup,
+      configs,
+    });
   }
   return { ...record, chave: MODO_OPERACAO_CHAVE, valor: modo, valor_texto: modo, categoria: record.categoria || 'Sistema' };
 };

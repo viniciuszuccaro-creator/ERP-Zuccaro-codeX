@@ -156,6 +156,7 @@ export default function ConfigCenter({ empresaId: empresaIdProp }) {
             </CardHeader>
             <CardContent className="p-6 space-y-4">
               <ToggleRow configs={configs} chave="cc_backup_automatico" categoria="Sistema" label="Backup Automático Diário" desc="Backup incremental de todas as entidades" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} disabled={!canLoad} />
+              <ToggleRow configs={configs} chave="janela_migracao_congelada" categoria="Sistema" label="Congelar janela de migracao" desc="Bloqueia migracao confirmada ate a virada" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} disabled={!canLoad} />
               <ToggleRow configs={configs} chave="cc_criptografia_dados" categoria="Seguranca" label="Criptografia de Dados Sensíveis" desc="Criptografa CPF, CNPJ e salários (AES-256)" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} disabled={!canLoad} />
 
               {getConfig('cc_backup_automatico')?.updated_date && (

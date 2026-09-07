@@ -1,3 +1,15 @@
+### Gate 20 - Virada: backup real, janela congelada e checklist
+- Objetivo: cumprir o Gate 20 de `PLANO_GO_LIVE.md` no backup e na configuracao existentes, sem criar tela de virada.
+- Diagnostico: backup manual usava `Date.now`/`Math.random` e concluia de mentira; virada nao exigia backup, freeze nem reconciliacao.
+- Causa raiz: cutover tratado como toggle, fora do backup e da janela de migracao.
+- Arquivos alterados: `viradaProducaoPolicy.js` (extracao), `pilotoOperacaoPolicy.js`, `localBase44Client.js`, `ConfiguracaoBackup.jsx`, `ConfigCenter.jsx`, testes.
+- Reutilizado: `BackupAutomatico`, central de configuracoes e trava `modo_operacao` do Gate 19.
+- Alteracoes: backup do ERP novo grava resumo e hash; numero `BKP-` sequencial; janela congelada bloqueia migracao; virada exige checklist, backup legado confirmado e zero P0.
+- Multiempresa: backup e sequencia no grupo; empresa opcional no escopo.
+- Pendencia: backup criptografado real do legado, monitoramento de filas/incidentes no primeiro dia/semana e reconciliacao operacional apos a virada.
+- Validacoes: `node --test`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gates P0 encerrados neste lote; seguir pendencias operacionais da virada ou P1 autorizado.
+
 ### Gate 19 - Piloto: usuarios designados e virada bloqueada
 - Objetivo: cumprir o Gate 19 de `PLANO_GO_LIVE.md` no controle de acesso e na NF existentes, sem criar tela de piloto.
 - Diagnostico: qualquer usuario autorizado podia emitir NF de producao; nao havia papeis piloto nem trava de virada.

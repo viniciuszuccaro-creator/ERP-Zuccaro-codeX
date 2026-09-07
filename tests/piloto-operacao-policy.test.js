@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
+import { VIRADA_CHECKLIST } from '../src/components/lib/viradaProducaoPolicy.js';
 import {
   applyModoOperacaoOnWrite,
   applyUsuarioPilotoOnWrite,
@@ -20,6 +21,21 @@ const usersCompletos = PAPEIS_PILOTO.map((papel, index) => ({
 }));
 
 const cenariosOk = CENARIOS_PILOTO.map((id) => ({ id, ok: true }));
+const backupOk = [{
+  group_id: 'g1',
+  status: 'Concluido',
+  numero_backup: 'BKP-000001',
+  hash_integridade: 'fnv1a:abc',
+  quantidade_total_registros: 4,
+}];
+const checklistOk = Object.fromEntries(VIRADA_CHECKLIST.map((campo) => [campo, true]));
+const viradaPronta = {
+  users: usersCompletos,
+  cenariosExecutados: cenariosOk,
+  backups: backupOk,
+  configBackup: checklistOk,
+  configs: [{ chave: 'janela_migracao_congelada', ativa: true, valor: 'congelada' }],
+};
 
 test('operacao critica no piloto exige usuario piloto', () => {
   assert.throws(
@@ -49,7 +65,7 @@ test('virada para producao exige papeis, cenarios e zero P0', () => {
     }),
     /erro critico/,
   );
-  assert.equal(assertViradaProducao({ users: usersCompletos, cenariosExecutados: cenariosOk }).modo, 'producao');
+  assert.equal(assertViradaProducao(viradaPronta).modo, 'producao');
 });
 
 test('configuracao nao vira producao sozinha', () => {

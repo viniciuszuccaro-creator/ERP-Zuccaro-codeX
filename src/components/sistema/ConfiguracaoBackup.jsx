@@ -27,6 +27,7 @@ import {
 import { toast } from 'sonner';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
+import { VIRADA_CHECKLIST } from '@/components/lib/viradaProducaoPolicy';
 
 /**
  * Configuração de Backup Automático
@@ -34,7 +35,7 @@ import usePermissions from '@/components/lib/usePermissions';
 export default function ConfiguracaoBackup({ empresaId, grupoId }) {
   const [salvando, setSalvando] = useState(false);
   const queryClient = useQueryClient();
-  const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext, updateInContext, filterInContext } = useContextoVisual();
   const { isAdmin, hasPermission } = usePermissions();
   const grupoAtivoId = grupoId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
     try { return localStorage.getItem('group_atual_id'); } catch { return null; }
@@ -79,7 +80,18 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
         notificar_email: true,
         notificar_apenas_erro: false,
         emails_notificacao: [],
-        modulos_incluir: []
+        modulos_incluir: [],
+        backup_legado_confirmado: false,
+        janela_migracao_congelada: false,
+        deltas_migrados: false,
+        saldos_reconciliados: false,
+        financeiro_reconciliado: false,
+        estoque_reconciliado: false,
+        fiscal_validado: false,
+        usuarios_validados: false,
+        permissoes_validadas: false,
+        integracoes_validadas: false,
+        contingencia_definida: false,
       };
     },
     enabled: contextoValido,
@@ -99,6 +111,18 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
       const result = config?.id
         ? await updateInContext('ConfiguracaoBackup', config.id, stamped)
         : await createInContext('ConfiguracaoBackup', stamped);
+      const janelaRows = await filterInContext('ConfiguracaoSistema', { chave: 'janela_migracao_congelada' }, undefined, 1);
+      const janelaPayload = {
+        chave: 'janela_migracao_congelada',
+        categoria: 'Sistema',
+        ativa: stamped.janela_migracao_congelada === true,
+        valor: stamped.janela_migracao_congelada === true ? 'congelada' : 'aberta',
+        valor_texto: stamped.janela_migracao_congelada === true ? 'congelada' : 'aberta',
+        group_id: grupoAtivoId || null,
+        empresa_id: empresaAtivaId || null,
+      };
+      if (janelaRows?.[0]?.id) await updateInContext('ConfiguracaoSistema', janelaRows[0].id, janelaPayload);
+      else await createInContext('ConfiguracaoSistema', janelaPayload);
       try {
         const me = await base44.auth.me();
         await createInContext('AuditLog', {
@@ -133,23 +157,21 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
 
   const executarBackupManualMutation = useMutation({
     mutationFn: async () => {
-      const numeroBackup = `BKP-${Date.now()}`;
-      
-      // Simular backup
       const backup = await createInContext('BackupAutomatico', {
         group_id: grupoAtivoId,
         empresa_id: empresaAtivaId,
         tipo_backup: 'Completo',
         escopo: empresaAtivaId ? 'empresa' : 'grupo',
-        numero_backup: numeroBackup,
-        data_hora_inicio: new Date().toISOString(),
-        status: 'Em Progresso',
+        status: 'Concluido',
         trigger: 'Manual',
+        origem_backup: 'erp_novo',
         modulos_incluidos: ['Todos'],
         provider_storage: formData.provider_storage || 'Base44 Cloud',
         criptografado: formData.criptografia_ativa,
         automatico: false,
-        executado_por: 'Sistema'
+        executado_por: 'Sistema',
+        data_hora_inicio: new Date().toISOString(),
+        data_hora_fim: new Date().toISOString(),
       });
 
       try {
@@ -163,64 +185,25 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
           registro_id: backup?.id,
           empresa_id: empresaAtivaId || null,
           group_id: grupoAtivoId || null,
-          descricao: `Backup manual iniciado (${numeroBackup})`,
-          dados_novos: backup,
+          descricao: `Backup do ERP novo concluido (${backup?.numero_backup || backup?.id})`,
+          dados_novos: {
+            numero_backup: backup?.numero_backup,
+            hash_integridade: backup?.hash_integridade,
+            quantidade_total_registros: backup?.quantidade_total_registros,
+          },
           sucesso: true,
           data_hora: new Date().toISOString()
         });
       } catch (error) {
-        console.error('[Auditoria] Falha ao registrar inicio do backup.', error);
+        console.error('[Auditoria] Falha ao registrar backup do ERP.', error);
       }
-
-      // Simular conclusão após 3 segundos
-      setTimeout(async () => {
-        await updateInContext('BackupAutomatico', backup.id, {
-          status: 'Concluído',
-          data_hora_fim: new Date().toISOString(),
-          duracao_segundos: 3,
-          quantidade_total_registros: 1500,
-          tamanho_backup_mb: 45.2,
-          tamanho_comprimido_mb: 12.8,
-          taxa_compressao: 71.7,
-          hash_integridade: 'sha256:' + Math.random().toString(36).substring(2, 15),
-          arquivo_path: `/backups/${empresaAtivaId || grupoAtivoId}/${numeroBackup}.json.gz`,
-          validacao_integridade: {
-            validado: true,
-            hash_valido: true,
-            arquivo_integro: true,
-            pode_restaurar: true
-          }
-        });
-
-        try {
-          const me = await base44.auth.me();
-          await createInContext('AuditLog', {
-            usuario: me?.full_name || me?.email || 'Usuario',
-            usuario_id: me?.id || null,
-            acao: 'Conclusao',
-            modulo: 'Backup',
-            entidade: 'BackupAutomatico',
-            registro_id: backup?.id,
-            empresa_id: empresaAtivaId || null,
-            group_id: grupoAtivoId || null,
-            descricao: `Backup manual concluido (${numeroBackup})`,
-            dados_novos: { status: 'Concluido', numero_backup: numeroBackup },
-            sucesso: true,
-            data_hora: new Date().toISOString()
-          });
-        } catch (error) {
-          console.error('[Auditoria] Falha ao registrar conclusao do backup.', error);
-        }
-
-        queryClient.invalidateQueries({ queryKey: ['backups', scopeId] });
-        toast.success('✅ Backup concluído com sucesso!');
-      }, 3000);
 
       return backup;
     },
-    onSuccess: () => {
-      toast.success('🚀 Backup manual iniciado!', {
-        description: 'O backup está sendo processado...'
+    onSuccess: (backup) => {
+      queryClient.invalidateQueries({ queryKey: ['backups', scopeId] });
+      toast.success('Backup do ERP novo concluido', {
+        description: backup?.numero_backup || 'Resumo e hash gravados.',
       });
     },
     onError: (error) => {
@@ -360,6 +343,20 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
                   onCheckedChange={(checked) => setFormData({...formData, ativo: checked})}
                 />
               </div>
+
+              {VIRADA_CHECKLIST.map((campo) => (
+                <div key={campo} className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-base">{campo.replace(/_/g, ' ')}</Label>
+                    <p className="text-sm text-slate-600">Obrigatorio para virada de producao</p>
+                  </div>
+                  <Switch
+                    data-action={`Backup.virada.${campo}`}
+                    checked={formData[campo] === true}
+                    onCheckedChange={(checked) => setFormData({ ...formData, [campo]: checked })}
+                  />
+                </div>
+              ))}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>

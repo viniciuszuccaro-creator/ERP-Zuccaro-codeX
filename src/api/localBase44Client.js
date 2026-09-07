@@ -36,6 +36,13 @@ import {
   MODO_OPERACAO_CHAVE,
   resolveModoOperacao,
 } from "@/components/lib/pilotoOperacaoPolicy";
+import {
+  applyBackupOnCreate,
+  assertJanelaMigracao,
+  BACKUP_COUNT_ENTITIES,
+  backupSequenceKey,
+  buildBackupResumo,
+} from "@/components/lib/viradaProducaoPolicy";
 import { assertIaInvocation } from "@/components/lib/iaTransversalPolicy";
 import { AGENT_FUNCTION_MAP, AGENTES, assertAgentMayAct, assertMappedAgentFunction, resolveAgentScope } from "@/components/lib/agenteAutorizacaoPolicy";
 import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows } from "../../base44/functions/_lib/security/entityGuardPolicy/entry.ts";
@@ -1045,6 +1052,11 @@ const applyLocalMigracaoCreate = (db, entityName, record) => {
     records: getEntityStore(db, entityName),
   });
   if (result.reuse) return result;
+  assertJanelaMigracao({
+    configs: getEntityStore(db, 'ConfiguracaoSistema'),
+    configBackup: getEntityStore(db, 'ConfiguracaoBackup')[0] || {},
+    migracaoConfirmada: record.confirmado === true || result.record?.confirmado === true,
+  });
   if (record.confirmado === true || result.record?.confirmado === true) {
     assertOperacaoPiloto({
       user: readUser(),
@@ -1068,9 +1080,51 @@ const applyLocalPilotoWrite = (db, entityName, record, before = null) => {
       users: getEntityStore(db, 'User'),
       cenariosExecutados: Array.isArray(cenarios?.valor_json) ? cenarios.valor_json : [],
       incidentesCriticosAbertos: incidentes,
+      backups: getEntityStore(db, 'BackupAutomatico'),
+      configBackup: getEntityStore(db, 'ConfiguracaoBackup')[0] || {},
+      configs: getEntityStore(db, 'ConfiguracaoSistema'),
     });
   }
   return next;
+};
+
+const applyLocalBackupWrite = (db, entityName, record, before = null) => {
+  if (entityName !== 'BackupAutomatico') return record;
+  const merged = { ...(before || {}), ...record };
+  const stores = Object.fromEntries(BACKUP_COUNT_ENTITIES.map((name) => [name, getEntityStore(db, name)]));
+  const resumo = buildBackupResumo(stores);
+  const groupId = merged.group_id || merged.grupo_id || null;
+  const configs = getEntityStore(db, 'ConfiguracaoSistema');
+  const chave = backupSequenceKey(groupId);
+  const seqRow = configs.find((item) => item.chave === chave);
+  const sequenceValue = Number(seqRow?.valor_numero) || 0;
+  const nextRecord = applyBackupOnCreate({
+    record: merged,
+    records: getEntityStore(db, 'BackupAutomatico'),
+    resumo,
+    sequenceValue,
+  });
+  const used = Number.parseInt(String(nextRecord.numero_backup || '').replace(/\D/g, ''), 10);
+  if (Number.isFinite(used) && used > 0 && used < 1e11) {
+    const nextValue = Math.max(sequenceValue, used);
+    if (seqRow) {
+      seqRow.valor_numero = nextValue;
+      seqRow.valor = String(nextValue);
+      seqRow.updated_date = now();
+    } else {
+      configs.unshift({
+        id: makeId('seqbkp'),
+        chave,
+        categoria: 'Sistema',
+        valor_numero: nextValue,
+        valor: String(nextValue),
+        group_id: groupId,
+        created_date: now(),
+        updated_date: now(),
+      });
+    }
+  }
+  return nextRecord;
 };
 
 const applyLocalPortalReadScope = (db, entityName, records) => {
@@ -1354,9 +1408,10 @@ const createEntityApi = (entityName) => ({
     const migracao = applyLocalMigracaoCreate(db, entityName, marketplace.record || withSiteOrigem);
     if (migracao.reuse) return migracao.reuse;
     const withPiloto = applyLocalPilotoWrite(db, entityName, migracao.record || marketplace.record || withSiteOrigem);
+    const withBackup = applyLocalBackupWrite(db, entityName, withPiloto);
     const stamped = syncEntregaNumero(
       entityName,
-      applyLocalMasterCadastro(db, entityName, withPiloto),
+      applyLocalMasterCadastro(db, entityName, withBackup),
     );
     const estoque = applyLocalEstoqueMovimento(db, entityName, stamped);
     if (estoque.reuse) return estoque.reuse;
@@ -1397,7 +1452,7 @@ const createEntityApi = (entityName) => ({
     if (entityName === 'Entrega' && before.empresa_id) {
       payload.empresa_id = before.empresa_id;
     }
-    let nextPayload = applyLocalPilotoWrite(db, entityName, payload, before);
+    let nextPayload = applyLocalBackupWrite(db, entityName, applyLocalPilotoWrite(db, entityName, payload, before), before);
     if (entityName === 'Entrega') {
       nextPayload = assertEntregaOnUpdate({ before, patch: payload });
       if (before.empresa_id) nextPayload.empresa_id = before.empresa_id;
