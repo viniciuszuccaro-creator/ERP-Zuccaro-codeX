@@ -53,6 +53,8 @@ export const assertEmissaoNFe = ({
   producaoAutorizada = false,
   provedorConfigurado = false,
   nfe = {},
+  modoOperacao = 'piloto',
+  usuarioPiloto = false,
 } = {}) => {
   if (!firstText(empresaId, nfe.empresa_id, nfe.empresa_faturamento_id)) {
     throw new Error('Empresa emitente obrigatoria para NF-e.');
@@ -67,6 +69,10 @@ export const assertEmissaoNFe = ({
   }
   if (!provedorConfigurado) {
     throw new Error('Emissao em producao exige provedor fiscal configurado.');
+  }
+  const modo = String(modoOperacao || 'piloto').trim().toLowerCase();
+  if (modo !== 'producao' && usuarioPiloto !== true) {
+    throw new Error('Emissao em producao no piloto exige usuario piloto designado.');
   }
   return { ambiente: 'producao', permiteSimulacao: false };
 };

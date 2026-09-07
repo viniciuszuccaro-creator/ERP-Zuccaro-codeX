@@ -36,6 +36,7 @@ import {
   isProducaoAutorizada,
   isProvedorFiscalConfigurado,
 } from "@/components/lib/notaFiscalEmissaoPolicy";
+import { isUsuarioPiloto } from "@/components/lib/pilotoOperacaoPolicy";
 import usePermissions from "@/components/lib/usePermissions";
 import { ProtectedAction } from "@/components/ProtectedAction";
 import { ImprimirDANFESimplificado } from "@/components/lib/impressao";
@@ -275,6 +276,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
         producaoAutorizada,
         provedorConfigurado: isProvedorFiscalConfigurado(empresaEmitente?.integracao_nfe || {}),
         nfe,
+        usuarioPiloto: isUsuarioPiloto(user),
       });
 
       await auditFiscalComercial('nota_fiscal_envio_iniciado', { nota_id: nfe.id, numero: nfe.numero, ambiente: check.ambiente });

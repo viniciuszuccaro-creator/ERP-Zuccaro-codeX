@@ -88,6 +88,17 @@ Deno.serve(async (req) => {
     if (action === 'emitir' && producao && !autorizada) {
       return Response.json({ error: 'Emissao em producao exige autorizacao explicita.', sucesso: false }, { status: 409 });
     }
+    if (action === 'emitir' && producao && user?.usuario_piloto !== true) {
+      let modoOperacao = 'piloto';
+      try {
+        const modoRows = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({ chave: 'modo_operacao', group_id: groupIdResolved }, undefined, 1);
+        const raw = String(modoRows?.[0]?.valor || modoRows?.[0]?.valor_texto || 'piloto');
+        if (/^prod/i.test(raw.normalize('NFD').replace(/[\u0300-\u036f]/g, ''))) modoOperacao = 'producao';
+      } catch (error) { reportNfeFailure(error, { empresaId: empresaIdResolved, groupId: groupIdResolved, action: 'modo_operacao' }); }
+      if (modoOperacao !== 'producao') {
+        return Response.json({ error: 'Emissao em producao no piloto exige usuario piloto designado.', sucesso: false }, { status: 403 });
+      }
+    }
 
     // Simulado quando não configurado — so homologacao. Producao exige autorizacao e provedor.
     if (!integracao || integracao.ativa === false) {

@@ -29,6 +29,13 @@ import { applyPortalReadScope, resolvePortalClienteId } from "@/components/lib/p
 import { applySiteOrigemOnCreate } from "@/components/lib/siteOrigemPolicy";
 import { applyMarketplaceCreate } from "@/components/lib/marketplacePedidoPolicy";
 import { applyMigracaoOnCreate, stripSegredosMigracao } from "@/components/lib/migracaoErpPolicy";
+import {
+  applyModoOperacaoOnWrite,
+  applyUsuarioPilotoOnWrite,
+  assertOperacaoPiloto,
+  MODO_OPERACAO_CHAVE,
+  resolveModoOperacao,
+} from "@/components/lib/pilotoOperacaoPolicy";
 import { assertIaInvocation } from "@/components/lib/iaTransversalPolicy";
 import { AGENT_FUNCTION_MAP, AGENTES, assertAgentMayAct, assertMappedAgentFunction, resolveAgentScope } from "@/components/lib/agenteAutorizacaoPolicy";
 import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows } from "../../base44/functions/_lib/security/entityGuardPolicy/entry.ts";
@@ -1031,11 +1038,40 @@ const applyLocalMarketplaceCreate = (db, entityName, record) => applyMarketplace
   pedidosExternos: getEntityStore(db, 'PedidoExterno'),
 });
 
-const applyLocalMigracaoCreate = (db, entityName, record) => applyMigracaoOnCreate({
-  entityName,
-  record,
-  records: getEntityStore(db, entityName),
-});
+const applyLocalMigracaoCreate = (db, entityName, record) => {
+  const result = applyMigracaoOnCreate({
+    entityName,
+    record,
+    records: getEntityStore(db, entityName),
+  });
+  if (result.reuse) return result;
+  if (record.confirmado === true || result.record?.confirmado === true) {
+    assertOperacaoPiloto({
+      user: readUser(),
+      modoOperacao: resolveModoOperacao(getEntityStore(db, 'ConfiguracaoSistema')),
+      acao: 'migracao_producao',
+    });
+  }
+  return result;
+};
+
+const applyLocalPilotoWrite = (db, entityName, record, before = null) => {
+  let next = record;
+  if (entityName === 'User') {
+    next = applyUsuarioPilotoOnWrite({ ...(before || {}), ...record });
+  }
+  if (entityName === 'ConfiguracaoSistema' && String(record.chave || before?.chave || '') === MODO_OPERACAO_CHAVE) {
+    const cenarios = getEntityStore(db, 'ConfiguracaoSistema').find((item) => item.chave === 'piloto_cenarios');
+    const incidentes = getEntityStore(db, 'AuditLog').filter((item) => item.severidade === 'P0' && item.sucesso === false && item.aberto !== false);
+    next = applyModoOperacaoOnWrite({
+      record: { ...(before || {}), ...record },
+      users: getEntityStore(db, 'User'),
+      cenariosExecutados: Array.isArray(cenarios?.valor_json) ? cenarios.valor_json : [],
+      incidentesCriticosAbertos: incidentes,
+    });
+  }
+  return next;
+};
 
 const applyLocalPortalReadScope = (db, entityName, records) => {
   const portalClienteId = resolvePortalClienteId(getEntityStore(db, 'Cliente'), readUser());
@@ -1143,6 +1179,10 @@ const normalizeSnapshotRecord = (entityName, raw, topology) => {
     }];
     if (!record.empresa_atual_id && empresaIds[0]) record.empresa_atual_id = empresaIds[0];
     if (!record.empresa_padrao_id && empresaIds[0]) record.empresa_padrao_id = empresaIds[0];
+    if (record.role === 'admin' && record.usuario_piloto == null) {
+      record.usuario_piloto = true;
+      record.papel_piloto = 'administrador';
+    }
     return stripSegredosMigracao(record);
   }
 
@@ -1313,9 +1353,10 @@ const createEntityApi = (entityName) => ({
     if (marketplace.reuse) return marketplace.reuse;
     const migracao = applyLocalMigracaoCreate(db, entityName, marketplace.record || withSiteOrigem);
     if (migracao.reuse) return migracao.reuse;
+    const withPiloto = applyLocalPilotoWrite(db, entityName, migracao.record || marketplace.record || withSiteOrigem);
     const stamped = syncEntregaNumero(
       entityName,
-      applyLocalMasterCadastro(db, entityName, migracao.record || marketplace.record || withSiteOrigem),
+      applyLocalMasterCadastro(db, entityName, withPiloto),
     );
     const estoque = applyLocalEstoqueMovimento(db, entityName, stamped);
     if (estoque.reuse) return estoque.reuse;
@@ -1356,7 +1397,7 @@ const createEntityApi = (entityName) => ({
     if (entityName === 'Entrega' && before.empresa_id) {
       payload.empresa_id = before.empresa_id;
     }
-    let nextPayload = payload;
+    let nextPayload = applyLocalPilotoWrite(db, entityName, payload, before);
     if (entityName === 'Entrega') {
       nextPayload = assertEntregaOnUpdate({ before, patch: payload });
       if (before.empresa_id) nextPayload.empresa_id = before.empresa_id;

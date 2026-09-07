@@ -995,7 +995,7 @@ Forneça recomendações práticas de segurança.`,
   return (
     <div className="w-full h-full space-y-6">
       {/* Status Widget */}
-      <StatusControleAcesso />
+      <StatusControleAcesso usuarios={usuarios} />
 
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
@@ -1900,6 +1900,7 @@ Forneça recomendações práticas de segurança.`,
                     <TableHead>Perfil de Acesso</TableHead>
                     <TableHead>Empresas Vinculadas</TableHead>
                     <TableHead>Role</TableHead>
+                    <TableHead>Piloto</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -1947,6 +1948,13 @@ Forneça recomendações práticas de segurança.`,
                           <Badge className={usuario.role === 'admin' ? 'bg-purple-600 text-white' : 'bg-slate-600 text-white'}>
                             {usuario.role}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {usuario.usuario_piloto ? (
+                            <Badge className="bg-amber-100 text-amber-800">{usuario.papel_piloto || 'piloto'}</Badge>
+                          ) : (
+                            <span className="text-xs text-slate-400">-</span>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Button 

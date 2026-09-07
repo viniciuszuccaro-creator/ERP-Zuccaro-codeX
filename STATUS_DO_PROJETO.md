@@ -1,3 +1,15 @@
+### Gate 19 - Piloto: usuarios designados e virada bloqueada
+- Objetivo: cumprir o Gate 19 de `PLANO_GO_LIVE.md` no controle de acesso e na NF existentes, sem criar tela de piloto.
+- Diagnostico: qualquer usuario autorizado podia emitir NF de producao; nao havia papeis piloto nem trava de virada.
+- Causa raiz: operacao controlada misturada com perfil admin, sem designacao nem criterio de saida.
+- Arquivos alterados: `pilotoOperacaoPolicy.js` (extracao), `localBase44Client.js`, `notaFiscalEmissaoPolicy.js`, `nfeActions/entry.ts`, `NotasFiscaisTab.jsx`, `GestaoUsuariosAvancada.jsx`, `GerenciamentoAcessosCompleto.jsx`, `StatusControleAcesso.jsx`, testes.
+- Reutilizado: gestao avancada de usuario, aba de NF e configuracao `modo_operacao`.
+- Alteracoes: 6 papeis piloto no cadastro de usuario; NF de producao no modo piloto exige usuario piloto; virada para producao so com cobertura, cenarios e sem P0.
+- Multiempresa: modo e usuarios continuam no grupo; NF segue exigindo empresa emitente.
+- Pendencia: executar os 10 cenarios com usuarios reais e reconciliar financeiro/fiscal/estoque antes da virada.
+- Validacoes: `node --test`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 20 Virada para producao.
+
 ### Gate 18 - Migracao do ERP antigo: staging, legado e lote idempotente
 - Objetivo: cumprir o Gate 18 de `PLANO_GO_LIVE.md` na importacao CSV/planilha ja existente, sem criar outro modulo de migracao.
 - Diagnostico: lote e planilha gravavam direto, sem lote estavel, sem codigo legado obrigatorio e sem recusar senha/retry.

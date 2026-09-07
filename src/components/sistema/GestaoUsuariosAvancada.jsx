@@ -26,6 +26,7 @@ import {
   Settings,
   Eye
 } from "lucide-react";
+import { PAPEIS_PILOTO, stampUsuarioPiloto } from "@/components/lib/pilotoOperacaoPolicy";
 
 export default function GestaoUsuariosAvancada({ 
   usuario, 
@@ -92,6 +93,8 @@ export default function GestaoUsuariosAvancada({
     autenticacao_dois_fatores: !!data.autenticacao_dois_fatores,
     cargo: data.cargo || "",
     departamento: data.departamento || "",
+    usuario_piloto: !!data.usuario_piloto,
+    papel_piloto: data.papel_piloto || null,
     propagacao_grupo_empresas: !!data.propagacao_grupo_empresas,
     origem_contexto: data.origem_contexto || contexto || null
   });
@@ -168,7 +171,9 @@ export default function GestaoUsuariosAvancada({
     autenticacao_dois_fatores: usuario?.autenticacao_dois_fatores || false,
     telefone: usuario?.telefone || "",
     cargo: usuario?.cargo || "",
-    departamento: usuario?.departamento || ""
+    departamento: usuario?.departamento || "",
+    usuario_piloto: usuario?.usuario_piloto === true,
+    papel_piloto: usuario?.papel_piloto || "",
   });
 
   const atualizarUsuarioMutation = useMutation({
@@ -220,7 +225,8 @@ export default function GestaoUsuariosAvancada({
         propagacao_grupo_empresas: escopoAcesso === "grupo_empresa",
         origem_contexto: contexto,
         ...(groupId ? { group_id: groupId } : {}),
-        ...(empresaId ? { empresa_id: empresaId } : {})
+        ...(empresaId ? { empresa_id: empresaId } : {}),
+        ...stampUsuarioPiloto({}, { piloto: data.usuario_piloto === true, papel: data.papel_piloto }),
       };
       const result = await updateInContext('User', usuario.id, payload);
       await auditarAlteracaoUsuario({ antes, depois: auditSnapshot(payload) });
@@ -375,6 +381,34 @@ export default function GestaoUsuariosAvancada({
                 <Fingerprint className="w-4 h-4 text-green-600" />
                 Autenticação 2FA
               </Label>
+            </div>
+            <div className="flex items-center gap-2 mt-6">
+              <Switch
+                checked={formData.usuario_piloto === true}
+                disabled={controlesDesabilitados}
+                onCheckedChange={(v) => setFormData({ ...formData, usuario_piloto: v, papel_piloto: v ? formData.papel_piloto : '' })}
+                data-permission="Sistema.Controle de Acesso.editar"
+                data-action="RBAC.Usuario.piloto"
+                data-sensitive="true"
+              />
+              <Label className="cursor-pointer">Usuario piloto</Label>
+            </div>
+            <div>
+              <Label>Papel no piloto</Label>
+              <Select
+                value={formData.papel_piloto || ''}
+                disabled={controlesDesabilitados || !formData.usuario_piloto}
+                onValueChange={(v) => setFormData({ ...formData, papel_piloto: v })}
+              >
+                <SelectTrigger className="mt-1" data-action="RBAC.Usuario.papel_piloto">
+                  <SelectValue placeholder="Selecione o papel" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAPEIS_PILOTO.map((papel) => (
+                    <SelectItem key={papel} value={papel}>{papel}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardContent>

@@ -35,6 +35,19 @@ test('production emit without fiscal provider is blocked even when authorized', 
   );
 });
 
+test('production emit in piloto without designated user is blocked', () => {
+  assert.throws(
+    () => assertEmissaoNFe({
+      empresaId: 'cpa-aco',
+      ambiente: 'Producao',
+      producaoAutorizada: true,
+      provedorConfigurado: true,
+      nfe: { cfop: '5102' },
+    }),
+    /usuario piloto/,
+  );
+});
+
 test('homologation emit is allowed as simulation when company and CFOP exist', () => {
   const check = assertEmissaoNFe({
     empresaId: 'cpa-aco',
