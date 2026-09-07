@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
@@ -10,6 +11,9 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { ShoppingCart, Search, Store, ShieldCheck, CreditCard, Truck } from "lucide-react";
+import { createPageUrl } from "@/utils";
+import ChatbotWidget from "@/components/chatbot/ChatbotWidget";
+import { assertSiteCheckout, buildSiteLeadPayload, stampSiteOrigem } from "@/components/lib/siteOrigemPolicy";
 
 export default function OrcamentoSite() {
   const queryClient = useQueryClient();
@@ -91,17 +95,13 @@ export default function OrcamentoSite() {
   // Checkout mutation: cria Pedido + ContaReceber, aciona fluxo de pagamento e auditoria
   const checkoutMutation = useMutation({
     mutationFn: async () => {
-      if (!empresaAtual?.id) throw new Error("Selecione uma empresa/filial");
-      if (!cartItems.length) throw new Error("Carrinho vazio");
-      if (!cfgGateway) throw new Error("Gateway não configurado para a filial");
+      assertSiteCheckout({ empresaId: empresaAtual?.id, itens: cartItems });
 
-      // Antifraude básico (heurísticas simples)
       const risco = [];
       if (subtotal > 20000) risco.push("valor_alto");
       if (cartItems.length > 25) risco.push("muitos_itens");
       if (cartItems.some(it => (it.produto?.estoque_disponivel || 0) <= 0)) risco.push("estoque_baixo");
 
-      // Monta itens de pedido (revenda)
       const itens_revenda = cartItems.map((it) => ({
         produto_id: it.produto.id,
         produto_descricao: it.produto.descricao,
@@ -113,19 +113,22 @@ export default function OrcamentoSite() {
         valor_total: it.precoUnit * it.qty,
       }));
 
-      // Cria Pedido (tipo Orçamento) – carimbo multiempresa via wrapper interno
-      const pedido = await createInContext("Pedido", {
+      const pedido = await createInContext("Pedido", stampSiteOrigem({
         tipo: "Orçamento",
-        origem_pedido: "E-commerce",
         data_pedido: new Date().toISOString().slice(0, 10),
         cliente_nome: "Visitante",
         valor_total: subtotal,
         itens_revenda,
         prioridade: "Normal",
         pode_ver_no_portal: true,
-      });
+      }));
 
-      // Cria Conta a Receber para o checkout com Link de Pagamento
+      await createInContext("Oportunidade", buildSiteLeadPayload({
+        nome: "Visitante",
+        valor: subtotal,
+        pedidoId: pedido.id,
+      }));
+
       const conta = await createInContext("ContaReceber", {
         descricao: `Checkout OrcamentoSite #${pedido.numero_pedido || pedido.id}`,
         cliente: "Visitante",
@@ -137,7 +140,6 @@ export default function OrcamentoSite() {
         status_integracao: cfgGateway ? "gerado" : "pendente_configuracao",
       });
 
-      // Notifica pipeline de pagamentos/observabilidade
       try {
         await base44.functions.invoke("paymentStatusManager", {
           action: "checkout_iniciado",
@@ -148,9 +150,10 @@ export default function OrcamentoSite() {
           group_id: grupoAtual?.id || null,
           antifraude_flags: risco,
         });
-      } catch (_) {}
+      } catch (error) {
+        console.error("Falha ao notificar pagamento do checkout do site", error);
+      }
 
-      // Auditoria
       try {
         await base44.entities.AuditLog.create({
           usuario: (await base44.auth.me())?.full_name || "Usuário",
@@ -161,16 +164,19 @@ export default function OrcamentoSite() {
           descricao: `Checkout iniciado – Pedido ${pedido.id}, CR ${conta.id}`,
           empresa_id: empresaAtual.id,
           group_id: grupoAtual?.id || null,
-          dados_novos: { subtotal, itens: itens_revenda.length, tabela_preco_id: tabelaId === "auto" ? (tabelas?.[0]?.id || null) : tabelaId },
+          dados_novos: { subtotal, itens: itens_revenda.length, tabela_preco_id: tabelaId === "auto" ? (tabelas?.[0]?.id || null) : tabelaId, origem: "site" },
           data_hora: new Date().toISOString(),
         });
-      } catch (_) {}
+      } catch (error) {
+        console.error("Falha ao auditar checkout do site", error);
+      }
 
-      return { pedidoId: pedido.id, contaId: conta.id };
+      return { pedidoId: pedido.id, contaId: conta.id, semGateway: !cfgGateway };
     },
-    onSuccess: ({ pedidoId }) => {
-      toast.success("Checkout iniciado! Você poderá concluir o pagamento pelo link enviado.");
-      // Limpa carrinho e atualiza cache
+    onSuccess: ({ semGateway }) => {
+      toast.success(semGateway
+        ? "Orçamento gravado. O pagamento será gerado quando o gateway da filial estiver configurado."
+        : "Checkout iniciado! Você poderá concluir o pagamento pelo link enviado.");
       setCart({});
       queryClient.invalidateQueries({ queryKey: ["pedidos"] });
     },
@@ -213,6 +219,9 @@ export default function OrcamentoSite() {
               </SelectContent>
             </Select>
             <Badge variant="outline" className="text-xs">Filial: {empresaAtual?.nome_fantasia || empresaAtual?.razao_social || empresaAtual?.id || "-"}</Badge>
+            <Button asChild variant="outline" size="sm">
+              <Link to={createPageUrl('PortalCliente')}>Portal do cliente</Link>
+            </Button>
           </div>
         </header>
 
@@ -304,6 +313,7 @@ export default function OrcamentoSite() {
             </Card>
           </div>
         </div>
+        <ChatbotWidget canal="Site" exibirBotaoFlutuante />
       </div>
     </div>
   );

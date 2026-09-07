@@ -83,6 +83,7 @@ export function useOrigemPedido() {
       'API': 'API',
       'Importado': 'API',
       'Site': 'Site',
+      'site': 'Site',
       'App': 'App Mobile',
       'WhatsApp': 'WhatsApp',
       'Portal': 'Portal Cliente',

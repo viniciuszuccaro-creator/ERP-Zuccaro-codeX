@@ -1,3 +1,15 @@
+### Gate 14 - Site proprio: origem site em lead, orcamento e pedido
+- Objetivo: cumprir o Gate 14 de `PLANO_GO_LIVE.md` no site existente (`OrcamentoSite` / `OrcamentoAutomaticoIA`), sem criar outro site.
+- Diagnostico: checkout gravava `E-commerce` e abortava sem gateway; formulario de IA usava `Site Base44` sem `createInContext`; nao havia lead.
+- Causa raiz: origem e persistencia do site fora do carimbo canonico e da empresa.
+- Arquivos alterados: `siteOrigemPolicy.js` (extracao), `localBase44Client.js`, `contextoMultiempresaPolicy.js`, `useOrigemPedido.jsx`, `OrcamentoSite.jsx`, `OrcamentoAutomaticoIA.jsx`, testes.
+- Reutilizado: catalogo `exibir_no_site`, tabela de preco, `Pedido` tipo orcamento, `Oportunidade` como lead, `ChatbotWidget` e rota do portal.
+- Alteracoes: origem `site` na gravacao; lead no checkout e no orcamento IA; orcamento persiste sem gateway; IA exige empresa e casa cliente por e-mail/CPF; catalogo liga chatbot canal `Site` e o portal.
+- Multiempresa: `OrcamentoSite` exige empresa; checkout e IA usam `createInContext`.
+- Pendencia: pagamento real e match de visitante anonimo ainda dependem do gateway e de cadastro do cliente.
+- Validacoes: `node --test`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 15 Marketplaces.
+
 ### Gate 13 - Portal do Cliente: estados explicitos e isolamento
 - Objetivo: cumprir o Gate 13 de `PLANO_GO_LIVE.md` no portal existente, sem criar outro portal.
 - Diagnostico: `PortalCliente` redirecionava para o Dashboard; sem vinculo o dashboard girava spinner para sempre; `cliente_id` na URL/prop era aceito no modo cliente.

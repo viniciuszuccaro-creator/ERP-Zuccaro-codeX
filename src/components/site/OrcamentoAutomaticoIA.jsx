@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import { buildSiteLeadPayload, matchClienteSite, stampSiteOrigem } from '@/components/lib/siteOrigemPolicy';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +16,7 @@ import { Sparkles, Upload, CheckCircle, Loader2 } from 'lucide-react';
  */
 export default function OrcamentoAutomaticoIA({ onOrcamentoCriado }) {
   const { toast } = useToast();
+  const { empresaAtual, filterInContext, createInContext } = useContextoVisual();
   const [etapa, setEtapa] = useState(1);
 
   const [dados, setDados] = useState({
@@ -29,14 +32,16 @@ export default function OrcamentoAutomaticoIA({ onOrcamentoCriado }) {
   const [processando, setProcessando] = useState(false);
   const [erro, setErro] = useState(null);
 
-  const origem = 'Site Base44';
-
   const processarComIA = async () => {
     setProcessando(true);
     setErro(null);
     setEtapa(2);
 
     try {
+      if (!empresaAtual?.id) {
+        throw new Error('Empresa obrigatoria para operacao do site.');
+      }
+
       let arquivoUrl = null;
       if (dados.arquivo) {
         const uploadResult = await base44.integrations.Core.UploadFile({
@@ -100,8 +105,15 @@ Retorne em JSON estruturado com todas as peças e um resumo.
         });
       }
 
-      const novoOrcamento = await base44.entities.OrcamentoSite.create({
-        origem: origem,
+      const clientes = await filterInContext('Cliente', {}, undefined, 200);
+      const cliente = matchClienteSite({
+        clientes,
+        email: dados.email,
+        documento: dados.cpf_cnpj,
+      });
+
+      const novoOrcamento = await createInContext('OrcamentoSite', stampSiteOrigem({
+        cliente_id: cliente?.id,
         cliente_nome: dados.nome,
         cliente_email: dados.email,
         cliente_telefone: dados.telefone,
@@ -118,7 +130,17 @@ Retorne em JSON estruturado com todas as peças e um resumo.
         prazo_estimado_dias: visionAIResult?.resumo?.prazo_dias || 15,
         status: visionAIResult ? 'Orçamento Gerado' : 'Processando IA',
         data_validade: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-      });
+      }));
+
+      await createInContext('Oportunidade', buildSiteLeadPayload({
+        nome: dados.nome,
+        email: dados.email,
+        telefone: dados.telefone,
+        documento: dados.cpf_cnpj,
+        valor: visionAIResult?.resumo?.valor_estimado || 0,
+        orcamentoId: novoOrcamento.id,
+        clienteId: cliente?.id,
+      }));
 
       if (visionAIResult) {
         await base44.entities.AuditoriaIA.create({
@@ -139,7 +161,7 @@ Retorne em JSON estruturado com todas as peças e um resumo.
 
       await base44.entities.Notificacao.create({
         titulo: '🎯 Novo Orçamento Site com IA',
-        mensagem: `Novo orçamento gerado via ${origem}!\n\nCliente: ${dados.nome}\nEmail: ${dados.email}\nPeças detectadas: ${visionAIResult?.resumo?.total_pecas || 0}\nValor estimado: R$ ${(visionAIResult?.resumo?.valor_estimado || 0).toLocaleString('pt-BR')}\n\nConfiança IA: ${visionAIResult?.confianca || 0}%`,
+        mensagem: `Novo orçamento gerado via site!\n\nCliente: ${dados.nome}\nEmail: ${dados.email}\nPeças detectadas: ${visionAIResult?.resumo?.total_pecas || 0}\nValor estimado: R$ ${(visionAIResult?.resumo?.valor_estimado || 0).toLocaleString('pt-BR')}\n\nConfiança IA: ${visionAIResult?.confianca || 0}%`,
         tipo: 'info',
         categoria: 'Comercial',
         prioridade: (visionAIResult?.confianca || 0) >= 80 ? 'Alta' : 'Normal',
