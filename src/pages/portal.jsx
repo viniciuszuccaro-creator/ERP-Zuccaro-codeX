@@ -1,14 +1,10 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import DashboardCliente from '@/components/portal/DashboardCliente';
 
 export default function Portal() {
-  useEffect(() => {
-    const qs = window.location.search || '';
-    const hash = window.location.hash || '';
-    window.location.replace('/Dashboard' + qs + hash);
-  }, []);
   return (
-    <div className="w-full h-full flex items-center justify-center p-6 text-sm text-slate-600">
-      Redirecionando para o Dashboard...
+    <div className="w-full h-full overflow-auto p-4">
+      <DashboardCliente />
     </div>
   );
 }

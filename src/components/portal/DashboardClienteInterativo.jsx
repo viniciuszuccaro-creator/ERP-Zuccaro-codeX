@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/components/lib/UserContext";
 import { format } from "date-fns";
+import { resolvePortalSessionState } from "@/components/lib/portalClientePolicy";
 
 /**
  * V21.5 - Dashboard Interativo COMPLETO com Tempo Real
@@ -24,18 +25,30 @@ import { format } from "date-fns";
  * ✅ 100% Responsivo w-full h-full
  */
 export default function DashboardClienteInterativo() {
-  const { user } = useUser();
+  const { user, isLoading: authLoading, error: authError } = useUser();
+  const startedAtRef = React.useRef(Date.now());
   const [autoRefresh, setAutoRefresh] = React.useState(true);
 
-  const { data: cliente } = useQuery({
+  const vinculoQuery = useQuery({
     queryKey: ['cliente-portal', user?.id],
     queryFn: async () => {
       const clientes = await base44.entities.Cliente.filter({ portal_usuario_id: user.id });
-      return clientes[0];
+      return clientes[0] || null;
     },
-    enabled: !!user?.id,
-    refetchInterval: 30000 // Atualiza a cada 30s
+    enabled: !!user?.id && !authLoading,
+    refetchInterval: 30000
   });
+  const session = resolvePortalSessionState({
+    authLoading,
+    authError,
+    user,
+    vinculoLoading: vinculoQuery.isLoading,
+    vinculoFetched: vinculoQuery.isFetched,
+    vinculoError: vinculoQuery.error,
+    vinculoCliente: vinculoQuery.data || null,
+    elapsedMs: Date.now() - startedAtRef.current,
+  });
+  const cliente = session.state === 'pronto' ? session.cliente : null;
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos-dashboard', cliente?.id],
@@ -83,10 +96,16 @@ export default function DashboardClienteInterativo() {
     refetchInterval: 30000
   });
 
-  if (!cliente) {
+  if (session.state !== 'pronto' || !cliente) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-12 h-12 animate-spin text-blue-600" />
+      <div className="flex items-center justify-center min-h-[400px] w-full h-full p-6" data-portal-state={session.state}>
+        <div className="text-center space-y-2">
+          {['autenticando', 'vinculando', 'carregando'].includes(session.state)
+            ? <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto" />
+            : <AlertCircle className="w-12 h-12 text-amber-600 mx-auto" />}
+          <p className="font-semibold text-slate-900">{session.title}</p>
+          <p className="text-sm text-slate-600">{session.message}</p>
+        </div>
       </div>
     );
   }

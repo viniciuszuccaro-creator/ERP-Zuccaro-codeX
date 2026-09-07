@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,44 +11,70 @@ import {
 } from "lucide-react";
 import { useUser } from "@/components/lib/UserContext";
 import { Link } from "react-router-dom";
+import {
+  resolvePortalSessionState,
+  sanitizePortalClienteId,
+} from "@/components/lib/portalClientePolicy";
 
-/**
- * Dashboard do Portal do Cliente
- * V12.0 - Completo e funcional
- */
+function PortalSessionScreen({ session }) {
+  const isWait = ['autenticando', 'vinculando', 'carregando', 'timeout'].includes(session.state);
+  return (
+    <div className="w-full h-full min-h-[400px] flex items-center justify-center p-6" data-portal-state={session.state}>
+      <Card className="max-w-md w-full">
+        <CardContent className="p-8 text-center space-y-3">
+          {isWait ? <Loader2 className="w-10 h-10 mx-auto animate-spin text-blue-600" /> : <AlertCircle className="w-10 h-10 mx-auto text-amber-600" />}
+          <p className="font-semibold text-slate-900">{session.title}</p>
+          <p className="text-sm text-slate-600">{session.message}</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export default function DashboardCliente({ clienteId: propClienteId, adminMode = false }) {
-  const { user } = useUser();
-  const [cliente, setCliente] = useState(null);
+  const { user, isLoading: authLoading, error: authError } = useUser();
+  const startedAtRef = React.useRef(Date.now());
+  const [nowTs, setNowTs] = React.useState(Date.now());
+  const requestedClienteId = sanitizePortalClienteId({ requestedClienteId: propClienteId, adminMode });
 
-  // Carrega cliente via prop (modo admin)
-  useEffect(() => {
-    const loadCliente = async () => {
-      if (propClienteId) {
-        const res = await base44.entities.Cliente.filter({ id: propClienteId });
-        setCliente(res[0] || null);
+  const vinculoQuery = useQuery({
+    queryKey: ['meu-cliente', user?.id, requestedClienteId, adminMode],
+    queryFn: async () => {
+      if (requestedClienteId) {
+        const res = await base44.entities.Cliente.filter({ id: requestedClienteId });
+        return res[0] || null;
       }
-    };
-    loadCliente();
-  }, [propClienteId]);
-
-  const { data: clientes = [] } = useQuery({
-    queryKey: ['meu-cliente', user?.id],
-    queryFn: () => base44.entities.Cliente.filter({ portal_usuario_id: user?.id }),
-    enabled: !propClienteId && !!user,
-    staleTime: Infinity,
+      const res = await base44.entities.Cliente.filter({ portal_usuario_id: user.id });
+      return res[0] || null;
+    },
+    enabled: !!user && !authLoading,
   });
 
-  useEffect(() => {
-    if (!propClienteId && clientes.length > 0) {
-      setCliente(clientes[0]);
-    }
-  }, [clientes, propClienteId]);
+  const session = resolvePortalSessionState({
+    authLoading,
+    authError,
+    user,
+    vinculoLoading: vinculoQuery.isLoading,
+    vinculoFetched: vinculoQuery.isFetched,
+    vinculoError: vinculoQuery.error,
+    vinculoCliente: vinculoQuery.data || null,
+    requestedClienteId: propClienteId,
+    adminMode,
+    elapsedMs: nowTs - startedAtRef.current,
+  });
+
+  React.useEffect(() => {
+    if (['pronto', 'sem_vinculo', 'sem_permissao', 'erro'].includes(session.state)) return undefined;
+    const timer = setInterval(() => setNowTs(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [session.state]);
+  const cliente = session.state === 'pronto' ? session.cliente : null;
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ['meus-pedidos', cliente?.id],
-    queryFn: () => base44.entities.Pedido.filter({ 
+    queryFn: () => base44.entities.Pedido.filter({
       cliente_id: cliente?.id,
-      pode_ver_no_portal: true 
+      pode_ver_no_portal: true
     }, '-data_pedido', 50),
     enabled: !!cliente
   });
@@ -104,28 +130,8 @@ export default function DashboardCliente({ clienteId: propClienteId, adminMode =
     ['Aberto', 'Em Andamento'].includes(c.status)
   );
 
-  if (!cliente) {
-    if (adminMode) {
-      return (
-        <div className="min-h-[400px] flex items-center justify-center">
-          <Card className="max-w-md w-full">
-            <CardContent className="p-8 text-center">
-              <AlertCircle className="w-10 h-10 text-blue-600 mx-auto mb-3" />
-              <p className="font-semibold text-slate-900 mb-1">Portal do Cliente (Pré-visualização)</p>
-              <p className="text-sm text-slate-600">Selecione um cliente em Cadastros ▸ Pessoas & Parceiros para pré-visualizar, ou vincule um usuário ao cliente.</p>
-            </CardContent>
-          </Card>
-        </div>
-      );
-    }
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin text-blue-600" />
-          <p className="text-slate-600">Carregando seus dados...</p>
-        </div>
-      </div>
-    );
+  if (session.state !== 'pronto' || !cliente) {
+    return <PortalSessionScreen session={session.state === 'pronto' ? { ...session, state: 'carregando', title: 'Carregando', message: 'Carregando seus dados.' } : session} />;
   }
 
   return (

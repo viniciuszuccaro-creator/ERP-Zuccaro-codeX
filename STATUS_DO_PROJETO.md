@@ -1,3 +1,15 @@
+### Gate 13 - Portal do Cliente: estados explicitos e isolamento
+- Objetivo: cumprir o Gate 13 de `PLANO_GO_LIVE.md` no portal existente, sem criar outro portal.
+- Diagnostico: `PortalCliente` redirecionava para o Dashboard; sem vinculo o dashboard girava spinner para sempre; `cliente_id` na URL/prop era aceito no modo cliente.
+- Causa raiz: pagina do portal esvaziada e vinculo tratado como carregamento eterno.
+- Arquivos alterados: `portalClientePolicy.js` (extracao), `localBase44Client.js`, `PortalCliente.jsx`, `portal.jsx`, `DashboardCliente.jsx`, `DashboardClienteInterativo.jsx`, testes.
+- Reutilizado: `DashboardCliente` e consultas por `portal_usuario_id` ja existentes (pedidos, saldo, NF, boletos, entrega, orcamento, chamados, historico).
+- Alteracoes: rota do portal volta a abrir o dashboard; estados autenticando/vinculando/pronto/sem vinculo/sem permissao/timeout/erro; ID de outro cliente e recusado na leitura.
+- Multiempresa: pedidos/NF/titulos/entregas do portal ficam no cliente vinculado ao usuario.
+- Pendencia: PIX e segunda via real ainda dependem do provedor financeiro/fiscal do Gate 8/9.
+- Validacoes: `node --test`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 14 Site proprio.
+
 ### Gate 12 - Chatbot: canal externo entra no Hub e humano assume
 - Objetivo: cumprir o Gate 12 de `PLANO_GO_LIVE.md` no Hub e no chatbot existentes, sem terceiro centro de atendimento.
 - Diagnostico: webhook so simulava JSON; sessao do widget nascia com `Date.now()`; transbordo sem equipe nao ia para a fila; Hub filtrava so `Em Progresso`.

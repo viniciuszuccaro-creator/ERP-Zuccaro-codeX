@@ -25,6 +25,7 @@ import {
 import { assertOpOnCreate } from "@/components/lib/ordemProducaoPolicy";
 import { applyExpedicaoCreate, assertEntregaOnUpdate, syncEntregaNumero } from "@/components/lib/expedicaoEntregaPolicy";
 import { applyAtendimentoCreate } from "@/components/lib/atendimentoConversaPolicy";
+import { applyPortalReadScope, resolvePortalClienteId } from "@/components/lib/portalClientePolicy";
 import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows } from "../../base44/functions/_lib/security/entityGuardPolicy/entry.ts";
 
 const reportLocalClientFailure = (operation, error, context = {}) => {
@@ -1018,6 +1019,11 @@ const applyLocalAtendimentoCreate = (db, entityName, record) => applyAtendimento
   clientes: getEntityStore(db, 'Cliente'),
 });
 
+const applyLocalPortalReadScope = (db, entityName, records) => {
+  const portalClienteId = resolvePortalClienteId(getEntityStore(db, 'Cliente'), readUser());
+  return applyPortalReadScope({ entityName, records, portalClienteId });
+};
+
 const mergeSnapshotRecords = (db, entityName, incoming = []) => {
   if (!Array.isArray(incoming) || incoming.length === 0) return { created: 0, updated: 0 };
   const records = getEntityStore(db, entityName);
@@ -1250,7 +1256,11 @@ const createEntityApi = (entityName) => ({
     }
     const db = loadDb();
     const scopedFilter = expandLocalContextFilter(entityName, filter);
-    const records = getEntityStore(db, entityName).filter((record) => matchesFilter(record, scopedFilter));
+    const records = applyLocalPortalReadScope(
+      db,
+      entityName,
+      getEntityStore(db, entityName).filter((record) => matchesFilter(record, scopedFilter)),
+    );
     return sortRecords(records, order).slice(skip || 0, limit ? (skip || 0) + limit : undefined);
   },
 
@@ -1258,7 +1268,9 @@ const createEntityApi = (entityName) => ({
     const db = loadDb();
     const record = getEntityStore(db, entityName).find((item) => String(item.id) === String(id));
     if (!record) throw new Error(`${entityName} local nao encontrado: ${id}`);
-    return record;
+    const scoped = applyLocalPortalReadScope(db, entityName, [record]);
+    if (!scoped.length) throw new Error(`${entityName} local nao encontrado: ${id}`);
+    return scoped[0];
   },
 
   async create(data = {}) {
