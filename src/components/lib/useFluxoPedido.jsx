@@ -284,7 +284,9 @@ async function baixarEstoqueItemAprovacao(item, pedido, empresaId) {
 
 async function gerarOPAutomatica(pedido, empresaId) {
   const contextoOperacao = normalizarContextoOperacao(pedido, empresaId);
-  const numeroOP = `OP-${Date.now()}`;
+  if (!contextoOperacao.empresaId) {
+    throw new Error('Empresa obrigatoria para gerar ordem de producao.');
+  }
   const materiaisNecessarios = [];
   let pesoTotal = 0;
 
@@ -303,7 +305,6 @@ async function gerarOPAutomatica(pedido, empresaId) {
   const op = await createScoped('OrdemProducao', {
     empresa_id: contextoOperacao.empresaId,
     group_id: contextoOperacao.groupId,
-    numero_op: numeroOP,
     pedido_id: pedido.id,
     numero_pedido: pedido.numero_pedido,
     cliente_id: pedido.cliente_id,
@@ -326,8 +327,10 @@ async function gerarOPAutomatica(pedido, empresaId) {
     historico_status: [{ status_anterior: null, status_novo: 'Liberada', data_hora: new Date().toISOString(), usuario: (user?.full_name || user?.email || 'Sistema'), observacao: 'OP gerada automaticamente na aprovacao do pedido' }]
   }, contextoOperacao);
 
-  await auditar('Producao', 'OrdemProducao', 'create', op.id, `OP ${numeroOP} gerada do Pedido ${pedido.numero_pedido}`, contextoOperacao.empresaId, null, op, contextoOperacao.groupId);
-  await updateScoped('Pedido', pedido.id, { ordem_producao_ids: [...(pedido.ordem_producao_ids || []), op.id], status: 'Em Producao' }, contextoOperacao);
+  await auditar('Producao', 'OrdemProducao', 'create', op.id, `OP ${op.numero_op} gerada do Pedido ${pedido.numero_pedido}`, contextoOperacao.empresaId, null, op, contextoOperacao.groupId);
+  const ordemIds = [...(pedido.ordem_producao_ids || [])];
+  if (!ordemIds.includes(op.id)) ordemIds.push(op.id);
+  await updateScoped('Pedido', pedido.id, { ordem_producao_ids: ordemIds, status: 'Em Producao' }, contextoOperacao);
   return op;
 }
 
@@ -513,8 +516,14 @@ export async function concluirOPCompleto(op, empresaId) {
 
   try {
     const contextoOperacao = normalizarContextoOperacao(op, empresaId);
+    if (!contextoOperacao.empresaId) {
+      throw new Error('Empresa obrigatoria para concluir ordem de producao.');
+    }
+    if (String(op.status || '').toLowerCase().includes('finaliz')) {
+      return { ...resultados, jaFinalizada: true };
+    }
 
-    if (op.materiais_necessarios?.length > 0) {
+    if (op.materiais_necessarios?.length > 0 && !op.estoque_baixado) {
       for (const material of op.materiais_necessarios) {
         try {
           const baixa = await baixarMaterialProducao(material, op, contextoOperacao.empresaId);
@@ -548,11 +557,14 @@ export async function concluirOPCompleto(op, empresaId) {
       const { before: pedidoAntes, updated: pedidoAtualizado } = await updateScoped('Pedido', op.pedido_id, {
         status: 'Pronto para Faturar'
       }, contextoOperacao);
-      await auditar('Comercial', 'Pedido', 'update', op.pedido_id, `Pedido ${op.numero_pedido || ''} pronto para faturar (via OP ${op.numero_op})`, contextoOperacao.empresaId, pedidoAntes, pedidoAtualizado, contextoOperacao.groupId);
+      await auditar('Comercial', 'Pedido', 'update', op.pedido_id, `Pedido ${op.numero_pedido || ''} liberado para expedicao (via OP ${op.numero_op})`, contextoOperacao.empresaId, pedidoAntes, pedidoAtualizado, contextoOperacao.groupId);
     }
 
   } catch (error) {
     resultados.erros.push(`Erro ao concluir OP: ${error.message}`);
+    if (String(error.message || '').includes('Empresa obrigatoria')) {
+      throw error;
+    }
   }
 
   return resultados;

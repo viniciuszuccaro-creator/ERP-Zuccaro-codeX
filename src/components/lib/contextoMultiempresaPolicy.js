@@ -100,6 +100,7 @@ export const OPERACAO_EXIGE_EMPRESA_ENTITIES = new Set([
   'OrdemCompra',
   'SolicitacaoCompra',
   'OrdemProducao',
+  'ApontamentoProducao',
   'Entrega',
   'MovimentacaoEstoque',
   'CaixaMovimento',

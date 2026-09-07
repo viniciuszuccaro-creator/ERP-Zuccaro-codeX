@@ -157,8 +157,6 @@ export default function GerarOPModal({ isOpen, onClose, pedido, windowMode = fal
         throw new Error("Pedido sem itens de produção");
       }
 
-      const numeroOP = `OP-${Date.now()}`;
-      
       // Calcular BOM (Bill of Materials) for the entire pedido
       const materiaisNecessarios = [];
       const bitolaMap = {};
@@ -245,7 +243,6 @@ export default function GerarOPModal({ isOpen, onClose, pedido, windowMode = fal
       const op = await base44.entities.OrdemProducao.create({
         group_id: pedido.group_id,
         empresa_id: pedido.empresa_id,
-        numero_op: numeroOP,
         pedido_id: pedido.id,
         numero_pedido: pedido.numero_pedido,
         cliente_id: pedido.cliente_id,
@@ -328,7 +325,7 @@ export default function GerarOPModal({ isOpen, onClose, pedido, windowMode = fal
             disponivel_anterior: (currentProduct.estoque_atual || 0) - (currentProduct.estoque_reservado || 0),
             disponivel_atual: (currentProduct.estoque_atual || 0) - ((currentProduct.estoque_reservado || 0) + material.quantidade_kg),
             data_movimentacao: new Date().toISOString(),
-            documento: numeroOP,
+            documento: op.numero_op,
             motivo: "Reserva para produção",
             responsavel: user?.full_name || "Sistema"
           });
@@ -363,10 +360,10 @@ export default function GerarOPModal({ isOpen, onClose, pedido, windowMode = fal
         modulo_origem: "Producao",
         referencia_id: op.id,
         referencia_tipo: "OrdemProducao",
-        referencia_numero: numeroOP,
+        referencia_numero: op.numero_op,
         tipo_evento: "Criacao",
         titulo_evento: "OP gerada automaticamente",
-        descricao_detalhada: `Ordem de Produção ${numeroOP} gerada a partir do pedido ${pedido.numero_pedido}. Peso teórico: ${pesoTeorico.toFixed(2)} kg${faltaEstoque ? '. ATENÇÃO: Falta material em estoque.' : ''}`,
+        descricao_detalhada: `Ordem de Produção ${op.numero_op} gerada a partir do pedido ${pedido.numero_pedido}. Peso teórico: ${pesoTeorico.toFixed(2)} kg${faltaEstoque ? '. ATENÇÃO: Falta material em estoque.' : ''}`,
         usuario_responsavel: user?.full_name || "Sistema",
         data_evento: new Date().toISOString()
       });

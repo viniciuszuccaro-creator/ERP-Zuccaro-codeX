@@ -279,11 +279,6 @@ Retorne sugestões de:
       return;
     }
 
-    if (!formData.numero_op?.trim()) {
-      toast.error("Informe o número da OP.");
-      return;
-    }
-
     if (!formData.empresa_id) {
       toast.error("Informe a empresa de produção.");
       return;
@@ -321,12 +316,11 @@ Retorne sugestões de:
             <TabsContent value="geral" className="space-y-4 mt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Número OP *</Label>
+                  <Label>Número OP</Label>
                   <Input
                     value={formData.numero_op}
                     onChange={(e) => setFormData({ ...formData, numero_op: e.target.value })}
-                    placeholder="OP-2025-001"
-                    required
+                    placeholder="Gerado ao salvar"
                   />
                 </div>
 

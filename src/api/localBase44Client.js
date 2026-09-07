@@ -22,6 +22,7 @@ import {
   nfeSequenceKey,
   NOTA_FISCAL_ENTITIES,
 } from "@/components/lib/notaFiscalEmissaoPolicy";
+import { assertOpOnCreate } from "@/components/lib/ordemProducaoPolicy";
 import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows } from "../../base44/functions/_lib/security/entityGuardPolicy/entry.ts";
 
 const reportLocalClientFailure = (operation, error, context = {}) => {
@@ -996,6 +997,14 @@ const applyLocalNotaFiscalCreate = (db, entityName, record) => {
   return nextRecord;
 };
 
+const applyLocalOrdemProducaoCreate = (db, entityName, record) => {
+  if (entityName !== 'OrdemProducao') return { record, reuse: null };
+  return assertOpOnCreate({
+    record,
+    ops: getEntityStore(db, 'OrdemProducao'),
+  });
+};
+
 const mergeSnapshotRecords = (db, entityName, incoming = []) => {
   if (!Array.isArray(incoming) || incoming.length === 0) return { created: 0, updated: 0 };
   const records = getEntityStore(db, entityName);
@@ -1246,7 +1255,10 @@ const createEntityApi = (entityName) => ({
     }
     const db = loadDb();
     const records = getEntityStore(db, entityName);
-    const stamped = applyLocalMasterCadastro(db, entityName, stampRecordContext(entityName, data));
+    const scoped = stampRecordContext(entityName, data);
+    const ordem = applyLocalOrdemProducaoCreate(db, entityName, scoped);
+    if (ordem.reuse) return ordem.reuse;
+    const stamped = applyLocalMasterCadastro(db, entityName, ordem.record || scoped);
     const estoque = applyLocalEstoqueMovimento(db, entityName, stamped);
     if (estoque.reuse) return estoque.reuse;
     const financeiro = applyLocalFinanceiroTituloCreate(db, entityName, estoque.record || stamped);

@@ -1,3 +1,15 @@
+### Gate 10 - Producao: OP numerada, apontamento e conferencia
+- Objetivo: cumprir o Gate 10 de `PLANO_GO_LIVE.md` no fluxo existente (pedido → OP → apontamento → conferencia → pedido pronto), sem modulo de producao paralelo.
+- Diagnostico: numero da OP usava `Date.now()`; retry do mesmo pedido gerava outra OP; formulario recusava numero vazio; apontamento gravava so no JSON da OP e nao chamava `concluirOPCompleto`; baixa de estoque no 100% atualizava produto de novo.
+- Causa raiz: numeracao e conferencia fora do ponto unico de persistencia.
+- Arquivos alterados: `ordemProducaoPolicy.js` (extracao de `useFluxoPedido.jsx`), `localCadastroMasterPolicy.js`, `localBase44Client.js`, `useFluxoPedido.jsx`, `GerarOPModal.jsx`, `FormularioOrdemProducao.jsx`, `ApontamentoProducao.jsx`, `contextoMultiempresaPolicy.js`, testes.
+- Reutilizado: OP, apontamento, `concluirOPCompleto` e reserva de codigo mestre.
+- Alteracoes: `OP-000001` reservado na gravacao; retry reusa OP do pedido; apontamento exige empresa, persiste entidade e entra em conferencia em 100%; botao existente "Conferir e liberar" finaliza a OP; pedido segue `Pronto para Faturar`.
+- Multiempresa: OP e apontamento exigem empresa de producao.
+- Pendencia: etiqueta/lote/rastreio por peca e saldo por deposito ficam para lotes seguintes; Gate 11 trata romaneio/motorista.
+- Validacoes: `node --test`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 11 Expedicao.
+
 ### Gate 9 - Fiscal: homologacao simula, producao exige autorizacao
 - Objetivo: cumprir o Gate 9 de `PLANO_GO_LIVE.md` na emissao existente, sem tela fiscal paralela.
 - Diagnostico: enviar NF-e sempre chamava mock e autorizava ate em producao; `nfeActions` simulava quando o provedor faltava; numero da nota era aleatorio; NF autorizada podia ser apagada.

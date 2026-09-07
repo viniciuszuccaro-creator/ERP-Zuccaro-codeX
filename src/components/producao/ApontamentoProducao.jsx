@@ -13,6 +13,8 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
 import usePermissions from "@/components/lib/usePermissions";
 import { Clock, CheckCircle, Play, Pause, AlertTriangle } from "lucide-react";
+import { assertApontamento, resolveStatusAposApontamento, shouldLiberarExpedicao } from "@/components/lib/ordemProducaoPolicy";
+import { concluirOPCompleto } from "@/components/lib/useFluxoPedido";
 
 /**
  * Apontamento de Produção - Chão de Fábrica
@@ -25,11 +27,15 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
   const groupId = op?.group_id || grupoAtual?.id || empresaAtual?.group_id || null;
   const empresaId = op?.empresa_id || empresaAtual?.id || null;
   const ordemId = opId || op?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const contextoValido = Boolean(groupId && empresaId);
   const canApontar = hasPermission("Produção", "Apontamento", "criar") ||
     hasPermission("Produção", "Ordens Produção", "editar") ||
     hasPermission("Producao", "Apontamento", "criar") ||
     hasPermission("Producao", "Ordens Producao", "editar");
+  const canConferir = hasPermission("Produção", "Ordens Produção", "editar") ||
+    hasPermission("Producao", "Ordens Producao", "editar") ||
+    hasPermission("Produção", "Ordens Produção", "aprovar") ||
+    hasPermission("Producao", "Ordens Producao", "aprovar");
 
   // Assuming the first collaborator is the current user for this context.
   // In a real application, you might use a dedicated authentication hook like `useUser`.
@@ -91,7 +97,7 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
           sucesso: false,
           dadosNovos: formApontamento
         });
-        throw new Error("Selecione um grupo ou empresa antes de apontar produção.");
+        throw new Error("Selecione a empresa de produção antes de apontar.");
       }
       if (!canApontar) {
         await auditarApontamento({
@@ -103,6 +109,7 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
         throw new Error("Seu perfil nao possui permissao para registrar apontamento.");
       }
       if (!ordemId) throw new Error("OP obrigatoria para registrar apontamento.");
+      assertApontamento({ op, apontamento: formApontamento, empresaId });
 
       const novoApontamento = {
         data_hora: new Date().toISOString(),
@@ -172,7 +179,7 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
         perda_kg_real: (op.perda_kg_real || 0) + formApontamento.peso_refugado_kg,
         itens_concluidos: itensConcluidos,
         percentual_conclusao: percentual,
-        status: percentual === 100 ? "Em Conferência" : formApontamento.setor,
+        status: resolveStatusAposApontamento({ percentual, statusAtual: formApontamento.setor }),
         data_inicio_real: op.data_inicio_real || new Date().toISOString(),
         custos_reais: custosReais,
         tempo_real_horas: (op.tempo_real_horas || 0) + (formApontamento.tempo_minutos / 60)
@@ -249,21 +256,20 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
               sucesso: true
             });
             baixas.push(movBaixa.id);
-
-            // Atualizar produto
-            const produto = await base44.entities.Produto.filter({ id: material.produto_id });
-            if (produto[0]) {
-              await base44.entities.Produto.update(material.produto_id, {
-                estoque_atual: (produto[0].estoque_atual || 0) - material.quantidade_kg,
-                estoque_reservado: (produto[0].estoque_reservado || 0) - material.quantidade_kg
-              });
-            }
           }
 
           dadosAtualizados.estoque_baixado = true;
           dadosAtualizados.baixa_estoque_ids = baixas;
         }
       }
+
+      await base44.entities.ApontamentoProducao.create({
+        empresa_id: empresaId,
+        group_id: groupId,
+        ordem_producao_id: ordemId,
+        numero_op: op.numero_op,
+        ...novoApontamento,
+      });
 
       const opAtualizada = await base44.entities.OrdemProducao.update(ordemId, dadosAtualizados);
       await base44.entities.AuditLog.create({
@@ -308,6 +314,38 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
     onError: (error) => {
       toast({
         title: "❌ Erro ao registrar apontamento",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const conferirLiberarMutation = useMutation({
+    mutationFn: async () => {
+      if (!contextoValido) throw new Error("Selecione a empresa de produção antes de conferir.");
+      if (!canConferir) throw new Error("Seu perfil nao possui permissao para conferir a OP.");
+      if (!shouldLiberarExpedicao(op)) throw new Error("Apontamento precisa chegar a 100% e entrar em conferencia.");
+      const resultado = await concluirOPCompleto(op, empresaId);
+      if (resultado.erros?.length) {
+        throw new Error(resultado.erros.join('; '));
+      }
+      await auditarApontamento({
+        acao: "Conferencia",
+        descricao: `OP ${op.numero_op} conferida e liberada para expedicao.`,
+        dadosNovos: { status: "Finalizada" },
+        dadosAnteriores: { status: op.status },
+      });
+      return resultado;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+      toast({ title: "✅ OP conferida e liberada para expedição." });
+      onApontamentoSalvo?.();
+    },
+    onError: (error) => {
+      toast({
+        title: "❌ Erro ao conferir OP",
         description: error.message,
         variant: "destructive",
       });
@@ -462,6 +500,21 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t">
+            {shouldLiberarExpedicao(op) && String(op.status || '').toLowerCase() !== 'finalizada' && (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={conferirLiberarMutation.isPending || !contextoValido || !canConferir}
+                onClick={() => conferirLiberarMutation.mutate()}
+                data-action="Producao.OrdemProducao.conferir"
+                data-permission="Producao.OrdemProducao.editar"
+                data-context-required="true"
+                data-sensitive="true"
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                {conferirLiberarMutation.isPending ? "Conferindo..." : "Conferir e liberar"}
+              </Button>
+            )}
             <Button
               type="submit"
               disabled={salvarApontamentoMutation.isPending || !contextoValido || !canApontar}
