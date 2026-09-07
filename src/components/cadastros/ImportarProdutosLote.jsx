@@ -9,6 +9,7 @@ import { Upload, Loader2, FileSpreadsheet, CheckCircle2, AlertTriangle } from 'l
 import { toast } from 'sonner';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
+import { buildReconciliacaoMigracao, stampMigracaoRecord } from '@/components/lib/migracaoErpPolicy';
 
 const sanitizeText = (value, max = 240) => String(value ?? '').replace(/[<>]/g, '').slice(0, max).trim();
 const toNumber = (value) => {
@@ -46,7 +47,9 @@ export default function ImportarProdutosLote({ onProdutosCriados, onClose }) {
         sucesso,
         data_hora: new Date().toISOString(),
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error('[ImportarProdutosLote] Falha ao auditar importacao', error?.message || error);
+    }
   };
   const [processando, setProcessando] = useState(false);
   const [dadosParsed, setDadosParsed] = useState(null);
@@ -138,9 +141,48 @@ export default function ImportarProdutosLote({ onProdutosCriados, onClose }) {
       return;
     }
 
-    const confirmado = window.confirm('Criar ' + dadosParsed.linhas.length + ' produto(s) no contexto selecionado? Esta a\u00e7\u00e3o ser\u00e1 auditada.');
+    const payloadsStaging = dadosParsed.linhas.map((linha) => {
+      const codigoLegado = mapeamento.codigo ? sanitizeText(linha[mapeamento.codigo], 80) : '';
+      const novoProduto = stampMigracaoRecord({
+        descricao: sanitizeText(linha[mapeamento.descricao], 240),
+        codigo: codigoLegado,
+        ncm: mapeamento.ncm ? sanitizeText(linha[mapeamento.ncm], 20) : '',
+        unidade_medida: mapeamento.unidade_medida ? sanitizeText(linha[mapeamento.unidade_medida], 12).toUpperCase() : 'UN',
+        unidade_principal: mapeamento.unidade_medida ? sanitizeText(linha[mapeamento.unidade_medida], 12).toUpperCase() : 'UN',
+        unidades_secundarias: mapeamento.unidade_medida ? [sanitizeText(linha[mapeamento.unidade_medida], 12).toUpperCase()] : ['UN'],
+        custo_aquisicao: mapeamento.custo_aquisicao ? toNumber(linha[mapeamento.custo_aquisicao]) : 0,
+        preco_venda: mapeamento.preco_venda ? toNumber(linha[mapeamento.preco_venda]) : 0,
+        peso_teorico_kg_m: mapeamento.peso_teorico_kg_m ? toNumber(linha[mapeamento.peso_teorico_kg_m]) : 0,
+        grupo: mapeamento.grupo ? sanitizeText(linha[mapeamento.grupo], 120) : 'Outros',
+        tipo_item: 'Revenda',
+        status: 'Ativo',
+        group_id: groupId,
+        grupo_id: groupId,
+        empresa_id: empresaId,
+        codigo_legado: codigoLegado,
+      }, {
+        arquivoNome: arquivo?.name,
+        entidade: 'Produto',
+        confirmado: false,
+        destino: 'staging',
+      });
+      if (novoProduto.peso_teorico_kg_m > 0 && novoProduto.descricao.toLowerCase().includes('barra')) {
+        novoProduto.eh_bitola = true;
+      }
+      return novoProduto;
+    }).filter((produto) => produto.descricao);
+
+    const previewReconciliacao = buildReconciliacaoMigracao({
+      origem: payloadsStaging,
+      gravados: [],
+      campoValor: 'preco_venda',
+    });
+    const confirmado = window.confirm(
+      'Staging com ' + previewReconciliacao.quantidade_origem
+      + ' linha(s). Confirmar gravacao no contexto selecionado? Esta acao sera auditada e o codigo legado sera preservado.',
+    );
     if (!confirmado) {
-      await auditImportacaoProdutos({ acao: 'Produto.importacao_lote_cancelada', sucesso: false, motivo: 'Confirma\u00e7\u00e3o cancelada pelo usu\u00e1rio.', dados: { total_linhas: dadosParsed.linhas.length } });
+      await auditImportacaoProdutos({ acao: 'Produto.importacao_lote_cancelada', sucesso: false, motivo: 'Confirmacao cancelada pelo usuario.', dados: { total_linhas: dadosParsed.linhas.length, reconciliacao: previewReconciliacao } });
       return;
     }
 
@@ -148,38 +190,32 @@ export default function ImportarProdutosLote({ onProdutosCriados, onClose }) {
 
     try {
       const produtosCriados = [];
+      const produtosReusados = [];
+      const idsVistos = new Set();
 
-      for (const linha of dadosParsed.linhas) {
-        const novoProduto = {
-          descricao: sanitizeText(linha[mapeamento.descricao], 240),
-          codigo: mapeamento.codigo ? sanitizeText(linha[mapeamento.codigo], 80) : '',
-          ncm: mapeamento.ncm ? sanitizeText(linha[mapeamento.ncm], 20) : '',
-          unidade_medida: mapeamento.unidade_medida ? sanitizeText(linha[mapeamento.unidade_medida], 12).toUpperCase() : 'UN',
-          unidade_principal: mapeamento.unidade_medida ? sanitizeText(linha[mapeamento.unidade_medida], 12).toUpperCase() : 'UN',
-          unidades_secundarias: mapeamento.unidade_medida ? [sanitizeText(linha[mapeamento.unidade_medida], 12).toUpperCase()] : ['UN'],
-          custo_aquisicao: mapeamento.custo_aquisicao ? toNumber(linha[mapeamento.custo_aquisicao]) : 0,
-          preco_venda: mapeamento.preco_venda ? toNumber(linha[mapeamento.preco_venda]) : 0,
-          peso_teorico_kg_m: mapeamento.peso_teorico_kg_m ? toNumber(linha[mapeamento.peso_teorico_kg_m]) : 0,
-          grupo: mapeamento.grupo ? sanitizeText(linha[mapeamento.grupo], 120) : 'Outros',
-          tipo_item: 'Revenda',
-          status: 'Ativo',
-          group_id: groupId,
-          grupo_id: groupId,
-          empresa_id: empresaId
-        };
-
-        // IA pode sugerir eh_bitola se tiver peso_teorico
-        if (novoProduto.peso_teorico_kg_m > 0 && novoProduto.descricao.toLowerCase().includes('barra')) {
-          novoProduto.eh_bitola = true;
+      for (const staging of payloadsStaging) {
+        const produtoCriado = await createInContext('Produto', stampMigracaoRecord(staging, {
+          arquivoNome: arquivo?.name,
+          entidade: 'Produto',
+          confirmado: true,
+          destino: 'producao',
+        }));
+        if (produtoCriado?.id && idsVistos.has(produtoCriado.id)) {
+          produtosReusados.push(produtoCriado);
+        } else {
+          if (produtoCriado?.id) idsVistos.add(produtoCriado.id);
+          produtosCriados.push(produtoCriado);
         }
-
-        if (!novoProduto.descricao) continue;
-        const produtoCriado = await createInContext('Produto', novoProduto);
-        produtosCriados.push(produtoCriado);
       }
 
-      await auditImportacaoProdutos({ acao: 'Produto.importacao_lote_concluida', sucesso: true, dados: { total_linhas: dadosParsed.linhas.length, total_criados: produtosCriados.length, codigos: produtosCriados.map((p) => p?.codigo).filter(Boolean).slice(0, 50) } });
-      toast.success(`${produtosCriados.length} produtos criados!`);
+      const reconciliacao = buildReconciliacaoMigracao({
+        origem: payloadsStaging,
+        gravados: produtosCriados,
+        reusos: produtosReusados,
+        campoValor: 'preco_venda',
+      });
+      await auditImportacaoProdutos({ acao: 'Produto.importacao_lote_concluida', sucesso: true, dados: { total_linhas: dadosParsed.linhas.length, total_criados: produtosCriados.length, reconciliacao, codigos: produtosCriados.map((p) => p?.codigo).filter(Boolean).slice(0, 50) } });
+      toast.success(`${produtosCriados.length} produtos gravados. Reuso: ${produtosReusados.length}.`);
       onProdutosCriados && onProdutosCriados(produtosCriados);
       onClose && onClose();
     } catch (error) {
@@ -372,8 +408,8 @@ export default function ImportarProdutosLote({ onProdutosCriados, onClose }) {
           {/* AÇÕES */}
           <div className="flex items-center justify-between p-4 bg-slate-50 border rounded-lg">
             <div className="text-sm">
-              <p className="font-semibold text-slate-900">{dadosParsed.linhas.length} produtos serão criados</p>
-              <p className="text-xs text-slate-600">IA pode sugerir melhorias durante a criação</p>
+              <p className="font-semibold text-slate-900">{dadosParsed.linhas.length} produtos em staging</p>
+              <p className="text-xs text-slate-600">Codigo legado e lote ficam gravados. Retry reusa o mesmo registro.</p>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={onClose}>Cancelar</Button>

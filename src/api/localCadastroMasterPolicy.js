@@ -47,6 +47,14 @@ export const applyCodigoOnCreate = ({ entityName, record = {}, records = [], seq
     return { ...record, [spec.field]: next };
   }
   const conflict = records.some((item) => firstText(item[spec.field]) === incoming);
+  const isMigracao = Boolean(record.origem_migracao || record.lote_migracao || record.importacao_erp);
+  if (isMigracao && !conflict) {
+    return {
+      ...record,
+      codigo_origem: record.codigo_origem || incoming,
+      codigo_legado: record.codigo_legado || incoming,
+    };
+  }
   if (!conflict) return record;
   return {
     ...record,

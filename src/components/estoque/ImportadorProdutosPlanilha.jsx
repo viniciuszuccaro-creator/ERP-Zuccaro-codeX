@@ -14,6 +14,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { stampMigracaoRecord } from "@/components/lib/migracaoErpPolicy";
 
 // Helpers
 const num = (v) => {
@@ -214,10 +215,16 @@ const [suggesting, setSuggesting] = useState(false);
     hasPermission('Estoque', null, 'criar') ||
     hasPermission('Cadastros', null, 'criar');
 
-  const withProdutoContexto = (payload = {}, produtoBase = {}) => ({
+  const withProdutoContexto = (payload = {}, produtoBase = {}) => stampMigracaoRecord({
     ...payload,
     empresa_id: produtoBase.empresa_id || payload.empresa_id || empresaId || empresaAtual?.id || null,
     group_id: produtoBase.group_id || payload.group_id || contextoGrupoId || null,
+    codigo_legado: produtoBase.codigo_legado || payload.codigo_legado || payload.codigo || produtoBase.codigo,
+  }, {
+    arquivoNome: arquivo?.name,
+    entidade: 'Produto',
+    confirmado: true,
+    destino: 'producao',
   });
 
   const auditImportadorProdutos = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
@@ -855,6 +862,8 @@ const [suggesting, setSuggesting] = useState(false);
     const produto = {
       empresa_id: empresaId,
       codigo: sanitize(getWithMap(row, 'codigo')),
+      codigo_legado: sanitize(getWithMap(row, 'codigo')),
+      id_antigo: sanitize(getWithMap(row, 'codigo')),
       descricao: sanitize(getWithMap(row, 'descricao'))?.slice(0, 250),
       unidade_medida: mapUnidade(getWithMap(row, 'unidade_medida')),
       estoque_minimo: num(getWithMap(row, 'estoque_minimo')) || 0,

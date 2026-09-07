@@ -1,3 +1,15 @@
+### Gate 18 - Migracao do ERP antigo: staging, legado e lote idempotente
+- Objetivo: cumprir o Gate 18 de `PLANO_GO_LIVE.md` na importacao CSV/planilha ja existente, sem criar outro modulo de migracao.
+- Diagnostico: lote e planilha gravavam direto, sem lote estavel, sem codigo legado obrigatorio e sem recusar senha/retry.
+- Causa raiz: persistencia de importacao fora de um carimbo unico de migracao.
+- Arquivos alterados: `migracaoErpPolicy.js` (extracao), `localCadastroMasterPolicy.js`, `localBase44Client.js`, `ImportarProdutosLote.jsx`, `ImportadorProdutosPlanilha.jsx`, testes.
+- Reutilizado: importadores de produto, sequencia de cadastro mestre e snapshot local.
+- Alteracoes: CSV/planilha passam por staging e so gravam apos confirmacao; codigo legado e lote estavel; retry reusa o registro; usuario importado nao traz senha; snapshot de User/Colaborador remove segredo.
+- Multiempresa: migracao exige grupo e reusa so na mesma empresa.
+- Pendencia: PAD/agente visual, pedidos/financeiro/fiscal historicos e reconciliacao piloto com arquivo real do ERP antigo.
+- Validacoes: `node --test`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 19 Piloto.
+
 ### Gate 17 - Agentes: herdam permissao do usuario e confirmam acao critica
 - Objetivo: cumprir o Gate 17 de `PLANO_GO_LIVE.md` nos agentes ja existentes (funcoes de IA/otimizacao), sem criar 12 telas novas.
 - Diagnostico: otimizador de preco e orquestrador rodavam sem usuario ou so com `role === admin`; invoke local nao revalidava heranca.

@@ -28,6 +28,7 @@ import { applyAtendimentoCreate } from "@/components/lib/atendimentoConversaPoli
 import { applyPortalReadScope, resolvePortalClienteId } from "@/components/lib/portalClientePolicy";
 import { applySiteOrigemOnCreate } from "@/components/lib/siteOrigemPolicy";
 import { applyMarketplaceCreate } from "@/components/lib/marketplacePedidoPolicy";
+import { applyMigracaoOnCreate, stripSegredosMigracao } from "@/components/lib/migracaoErpPolicy";
 import { assertIaInvocation } from "@/components/lib/iaTransversalPolicy";
 import { AGENT_FUNCTION_MAP, AGENTES, assertAgentMayAct, assertMappedAgentFunction, resolveAgentScope } from "@/components/lib/agenteAutorizacaoPolicy";
 import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows } from "../../base44/functions/_lib/security/entityGuardPolicy/entry.ts";
@@ -1030,6 +1031,12 @@ const applyLocalMarketplaceCreate = (db, entityName, record) => applyMarketplace
   pedidosExternos: getEntityStore(db, 'PedidoExterno'),
 });
 
+const applyLocalMigracaoCreate = (db, entityName, record) => applyMigracaoOnCreate({
+  entityName,
+  record,
+  records: getEntityStore(db, entityName),
+});
+
 const applyLocalPortalReadScope = (db, entityName, records) => {
   const portalClienteId = resolvePortalClienteId(getEntityStore(db, 'Cliente'), readUser());
   return applyPortalReadScope({ entityName, records, portalClienteId });
@@ -1136,7 +1143,10 @@ const normalizeSnapshotRecord = (entityName, raw, topology) => {
     }];
     if (!record.empresa_atual_id && empresaIds[0]) record.empresa_atual_id = empresaIds[0];
     if (!record.empresa_padrao_id && empresaIds[0]) record.empresa_padrao_id = empresaIds[0];
+    return stripSegredosMigracao(record);
   }
+
+  if (entityName === 'Colaborador') return stripSegredosMigracao(record);
 
   return record;
 };
@@ -1301,9 +1311,11 @@ const createEntityApi = (entityName) => ({
     const withSiteOrigem = applyLocalSiteOrigemCreate(entityName, atendimento.record || expedicao.record || ordem.record || scoped);
     const marketplace = applyLocalMarketplaceCreate(db, entityName, withSiteOrigem);
     if (marketplace.reuse) return marketplace.reuse;
+    const migracao = applyLocalMigracaoCreate(db, entityName, marketplace.record || withSiteOrigem);
+    if (migracao.reuse) return migracao.reuse;
     const stamped = syncEntregaNumero(
       entityName,
-      applyLocalMasterCadastro(db, entityName, marketplace.record || withSiteOrigem),
+      applyLocalMasterCadastro(db, entityName, migracao.record || marketplace.record || withSiteOrigem),
     );
     const estoque = applyLocalEstoqueMovimento(db, entityName, stamped);
     if (estoque.reuse) return estoque.reuse;
