@@ -27,6 +27,7 @@ import { applyExpedicaoCreate, assertEntregaOnUpdate, syncEntregaNumero } from "
 import { applyAtendimentoCreate } from "@/components/lib/atendimentoConversaPolicy";
 import { applyPortalReadScope, resolvePortalClienteId } from "@/components/lib/portalClientePolicy";
 import { applySiteOrigemOnCreate } from "@/components/lib/siteOrigemPolicy";
+import { applyMarketplaceCreate } from "@/components/lib/marketplacePedidoPolicy";
 import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows } from "../../base44/functions/_lib/security/entityGuardPolicy/entry.ts";
 
 const reportLocalClientFailure = (operation, error, context = {}) => {
@@ -1022,6 +1023,11 @@ const applyLocalAtendimentoCreate = (db, entityName, record) => applyAtendimento
 
 const applyLocalSiteOrigemCreate = (entityName, record) => applySiteOrigemOnCreate(entityName, record);
 
+const applyLocalMarketplaceCreate = (db, entityName, record) => applyMarketplaceCreate(entityName, record, {
+  pedidos: getEntityStore(db, 'Pedido'),
+  pedidosExternos: getEntityStore(db, 'PedidoExterno'),
+});
+
 const applyLocalPortalReadScope = (db, entityName, records) => {
   const portalClienteId = resolvePortalClienteId(getEntityStore(db, 'Cliente'), readUser());
   return applyPortalReadScope({ entityName, records, portalClienteId });
@@ -1291,9 +1297,11 @@ const createEntityApi = (entityName) => ({
     const atendimento = applyLocalAtendimentoCreate(db, entityName, expedicao.record || ordem.record || scoped);
     if (atendimento.reuse) return atendimento.reuse;
     const withSiteOrigem = applyLocalSiteOrigemCreate(entityName, atendimento.record || expedicao.record || ordem.record || scoped);
+    const marketplace = applyLocalMarketplaceCreate(db, entityName, withSiteOrigem);
+    if (marketplace.reuse) return marketplace.reuse;
     const stamped = syncEntregaNumero(
       entityName,
-      applyLocalMasterCadastro(db, entityName, withSiteOrigem),
+      applyLocalMasterCadastro(db, entityName, marketplace.record || withSiteOrigem),
     );
     const estoque = applyLocalEstoqueMovimento(db, entityName, stamped);
     if (estoque.reuse) return estoque.reuse;

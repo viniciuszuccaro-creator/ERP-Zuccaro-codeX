@@ -1,3 +1,15 @@
+### Gate 15 - Marketplaces: origem e identificador externo no pedido
+- Objetivo: cumprir o Gate 15 de `PLANO_GO_LIVE.md` na sincronizacao existente, sem criar outro modulo de marketplace.
+- Diagnostico: busca simulada usava `Date.now`/`random`; importacao inventava numero e recusava retry; pedido comercial externo nao gravava marketplace nem id externo.
+- Causa raiz: carimbo de origem e idempotencia fora do ponto unico de persistencia.
+- Arquivos alterados: `marketplacePedidoPolicy.js` (extracao), `localBase44Client.js`, `SincronizacaoMarketplacesAtiva.jsx`, `marketplaceSimulationData.js`, `ValidarPedidosExternos.jsx`, testes.
+- Reutilizado: `PedidoExterno`, `ConfiguracaoIntegracaoMarketplace`, importacao ativa e validacao comercial.
+- Alteracoes: pedido e pedido externo exigem marketplace e id externo; retry reusa o mesmo registro; numero interno continua `PED-`; simulacao com ids estaveis.
+- Multiempresa: reuse so na mesma empresa.
+- Pendencia: OAuth/catalogo/estoque/preco reais, NF, conciliacao, cancelamento e devolucao ainda dependem das APIs dos marketplaces.
+- Validacoes: `node --test`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 16 IA transversal.
+
 ### Gate 14 - Site proprio: origem site em lead, orcamento e pedido
 - Objetivo: cumprir o Gate 14 de `PLANO_GO_LIVE.md` no site existente (`OrcamentoSite` / `OrcamentoAutomaticoIA`), sem criar outro site.
 - Diagnostico: checkout gravava `E-commerce` e abortava sem gateway; formulario de IA usava `Site Base44` sem `createInContext`; nao havia lead.

@@ -11,6 +11,7 @@ import { useUser } from "@/components/lib/UserContext";
 import usePermissions from "@/components/lib/usePermissions";
 import { ProtectedAction } from "@/components/ProtectedAction";
 import { toast } from "sonner";
+import { stampMarketplacePedido } from "@/components/lib/marketplacePedidoPolicy";
 
 export default function ValidarPedidosExternos({ windowMode = true }) {
   const queryClient = useQueryClient();
@@ -111,9 +112,8 @@ export default function ValidarPedidosExternos({ windowMode = true }) {
         throw new Error(!contextoValido ? "Selecione grupo ou empresa antes de importar." : "Sem permissao para importar pedido externo.");
       }
       // Map mínimo para Pedido
-      const numero = ext.numero_pedido_externo || `EXT-${(ext.id || "").toString().slice(-6) || Date.now()}`;
       const cliente_nome = ext.cliente_nome || "Cliente Externo";
-      const data_pedido = (ext.data_pedido || new Date().toISOString()).split("T")[0];
+      const data_pedido = (ext.data_pedido || ext.data_pedido_externo || new Date().toISOString()).toString().split("T")[0];
 
       const valor_total = (() => {
         if (typeof ext.valor_total === "number") return ext.valor_total;
@@ -128,20 +128,23 @@ export default function ValidarPedidosExternos({ windowMode = true }) {
         return 0;
       })();
 
-      const payload = {
-        numero_pedido: numero,
+      const payload = stampMarketplacePedido({
         tipo: "Pedido",
         origem_pedido: ext.origem || ext.canal || "API",
+        origem: ext.origem || ext.canal || "API",
+        marketplace: ext.origem || ext.canal,
+        origem_externa_id: ext.id_externo || ext.id,
+        id_externo: ext.id_externo || ext.id,
         cliente_nome,
         cliente_id: ext.cliente_id || undefined,
         data_pedido,
         valor_total,
         status: "Rascunho",
-      };
+      });
 
       const created = await createInContext("Pedido", payload, "empresa_id");
       await updateInContext("PedidoExterno", ext.id, { status_importacao: "Importado", pedido_id: created.id });
-      await auditPedidoExterno({ acao: "Importacao", ext, descricao: "Pedido externo importado como pedido comercial", detalhes: { pedido_id: created.id, numero_pedido: numero } });
+      await auditPedidoExterno({ acao: "Importacao", ext, descricao: "Pedido externo importado como pedido comercial", detalhes: { pedido_id: created.id, origem_externa_id: payload.origem_externa_id } });
       return created;
     },
     onSuccess: async () => {

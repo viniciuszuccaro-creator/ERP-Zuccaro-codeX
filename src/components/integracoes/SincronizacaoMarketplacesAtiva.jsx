@@ -9,6 +9,7 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { createMarketplaceSimulationOrders } from './marketplaceSimulationData';
 import MarketplacePendingOrders from './MarketplacePendingOrders';
+import { buildErpPedidoFromExterno } from '@/components/lib/marketplacePedidoPolicy';
 
 /**
  * Sincronização ATIVA de Marketplaces
@@ -76,11 +77,11 @@ export default function SincronizacaoMarketplacesAtiva() {
         throw new Error('Seu perfil nao permite importar pedidos externos.');
       }
       const pedidoNoEscopo = pedidoExterno?.group_id === groupId && pedidoExterno?.empresa_id === empresaId;
-      if (!pedidoNoEscopo || !['A Validar', 'Em Revisão'].includes(pedidoExterno?.status_importacao) || pedidoExterno?.pedido_erp_id) {
+      if (!pedidoNoEscopo || !['A Validar', 'Em Revisão', 'Importado'].includes(pedidoExterno?.status_importacao)) {
         await auditarMarketplace('Bloqueio pedido invalido', 'Pedido externo rejeitado por escopo ou estado invalido.', {
           pedido_externo_id: pedidoExterno?.id || null,
           pertence_ao_escopo: pedidoNoEscopo,
-          estado_importavel: ['A Validar', 'Em Revisão'].includes(pedidoExterno?.status_importacao),
+          estado_importavel: ['A Validar', 'Em Revisão', 'Importado'].includes(pedidoExterno?.status_importacao),
         });
         throw new Error('Pedido externo invalido');
       }
@@ -95,8 +96,20 @@ export default function SincronizacaoMarketplacesAtiva() {
       }
       const pedidosExistentes = await filterInContext('Pedido', { origem_externa_id: pedidoExterno.id_externo }, '-updated_date', 1);
       if (pedidosExistentes.length > 0) {
-        await auditarMarketplace('Bloqueio pedido duplicado', 'Importacao bloqueada para pedido externo ja existente.', { pedido_externo_id: pedidoExterno.id });
-        throw new Error('Pedido ja importado');
+        await updateInContext('PedidoExterno', pedidoExterno.id, {
+          status_importacao: 'Importado',
+          validado: true,
+          pedido_erp_id: pedidosExistentes[0].id,
+          cliente_erp_id: pedidosExistentes[0].cliente_id || pedidoExterno.cliente_erp_id,
+          data_validacao: new Date().toISOString(),
+          ...scope
+        });
+        await auditarMarketplace('Importar Pedido Marketplace', 'Pedido externo reutilizado por identificador externo.', {
+          pedido_externo_id: pedidoExterno.id,
+          pedido_erp_id: pedidosExistentes[0].id,
+          origem: pedidoExterno.origem,
+        });
+        return { pedidoERP: pedidosExistentes[0], clienteId: pedidosExistentes[0].cliente_id || pedidoExterno.cliente_erp_id };
       }
 
       // 1. Verificar se cliente existe
@@ -143,32 +156,7 @@ export default function SincronizacaoMarketplacesAtiva() {
 
       // 2. Criar pedido no ERP
       const pedidoERP = await createInContext('Pedido', {
-        numero_pedido: `${pedidoExterno.origem.substring(0, 3).toUpperCase()}-${pedidoExterno.numero_pedido_externo}`,
-        cliente_id: clienteId,
-        cliente_nome: pedidoExterno.cliente_nome,
-        cliente_cpf_cnpj: pedidoExterno.cliente_cpf_cnpj,
-        data_pedido: new Date(pedidoExterno.data_pedido_externo).toISOString().split('T')[0],
-        tipo: 'Pedido',
-        tipo_pedido: 'Revenda',
-        origem_pedido: pedidoExterno.origem,
-        origem_externa_id: pedidoExterno.id_externo,
-        status: 'Aprovado',
-        pode_ver_no_portal: true,
-        endereco_entrega_principal: pedidoExterno.endereco_entrega,
-        itens_revenda: pedidoExterno.itens.map(item => ({
-          produto_id: item.produto_id,
-          codigo_sku: item.sku_interno || item.sku_externo,
-          descricao: item.descricao,
-          quantidade: item.quantidade,
-          preco_unitario: item.preco_unitario,
-          valor_item: item.valor_total,
-          unidade: 'UN'
-        })),
-        valor_produtos: pedidoExterno.valor_produtos,
-        valor_frete: pedidoExterno.valor_frete,
-        valor_total: pedidoExterno.valor_total,
-        forma_pagamento: pedidoExterno.forma_pagamento_externa || 'Marketplace',
-        observacoes_publicas: `Importado de ${pedidoExterno.origem} - Pedido #${pedidoExterno.numero_pedido_externo}`,
+        ...buildErpPedidoFromExterno({ ...pedidoExterno, cliente_erp_id: clienteId }),
         ...scope
       });
 
