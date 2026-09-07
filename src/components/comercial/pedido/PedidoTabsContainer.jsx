@@ -90,7 +90,12 @@ export default function PedidoTabsContainer({
         }
         try {
           if (pedido?.id) {
-            const res = await base44.functions.invoke('iaFinanceAnomalyScan', { pedido_id: pedido.id });
+            const res = await base44.functions.invoke('iaFinanceAnomalyScan', {
+              pedido_id: pedido.id,
+              agente: 'financeiro',
+              group_id: formData?.group_id || formData?.grupo_id || grupoAtual?.id || empresaAtual?.group_id,
+              empresa_id: empresaAtual?.id || formData?.empresa_id,
+            });
             if (res?.data?.anomaly === true) { ok = false; motivos.push('Anomalia financeira (IA)'); }
           }
         } catch (error) {

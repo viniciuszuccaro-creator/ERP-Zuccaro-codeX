@@ -81,15 +81,17 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Autenticação: permitir usuário final OU execução em lote (agendamento) sem usuário logado
+    // Autenticação: o agente herda o usuário. Sem usuário não executa.
     const user = await base44.auth.me().catch(() => null);
     let ctx = null;
-    if (user) {
-      ctx = await getUserAndPerfil(base44).catch(() => null);
-      const perm = await assertPermission(base44, ctx, 'Comercial', 'Produto', 'editar');
-      if (perm) return perm; // retorna 403 padronizado do guard quando não autorizado
-    } else if (!event && !isBatch) {
+    if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    ctx = await getUserAndPerfil(base44).catch(() => null);
+    const perm = await assertPermission(base44, ctx, 'Comercial', 'Produto', 'editar');
+    if (perm) return perm;
+    if (payload?.confirmado !== true && payload?.simulate !== true && !event) {
+      return Response.json({ error: 'Acao critica do agente exige confirmacao humana.' }, { status: 403 });
     }
 
     // Execução em lote (sem produto_id): processa N produtos por execução para evitar timeouts // v2

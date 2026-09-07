@@ -128,7 +128,9 @@ Forneça:
                 items: { type: "string" }
               }
             }
-          }
+          },
+          group_id: groupId,
+          empresa_id: empresaId,
         });
 
         await createInContext('AuditLog', {

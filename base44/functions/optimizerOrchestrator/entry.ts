@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { getUserAndPerfil, assertPermission } from './_lib/guard.js';
 
 Deno.serve(async (req) => {
   const t0 = Date.now();
@@ -7,23 +8,32 @@ Deno.serve(async (req) => {
 
     let payload; try { payload = await req.json(); } catch { payload = {}; }
     const user = await base44.auth.me().catch(() => null);
-
-    // Admin-only when invoked by a user; allow scheduler (no user)
-    if (user && user.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const ctx = await getUserAndPerfil(base44);
+    const perm = await assertPermission(base44, ctx, 'Comercial', 'Produto', 'editar');
+    if (perm) return perm;
+    if (payload?.confirmado !== true) {
+      return Response.json({ error: 'Acao critica do agente exige confirmacao humana.' }, { status: 403 });
     }
 
     const limitPerEmpresa = Math.min(Math.max(Number(payload?.limit_per_empresa) || 1000, 1), 5000);
     const filtroBase = payload?.filter || { status: 'Ativo' };
 
-    const empresas = await base44.asServiceRole.entities.Empresa.list();
+    const groupId = user.grupo_atual_id || user.grupo_padrao_id || user.group_id || payload?.group_id || null;
+    const empresas = groupId
+      ? await base44.asServiceRole.entities.Empresa.filter({ group_id: groupId }, '-id', 200)
+      : [];
     let aggregate = { empresas: empresas.length, total: 0, updated: 0, skipped: 0, failed: 0 };
 
     for (const emp of empresas) {
       try {
-        const resp = await base44.asServiceRole.functions.invoke('productPriceOptimizer', {
+        const resp = await base44.functions.invoke('productPriceOptimizer', {
           limit: limitPerEmpresa,
-          filter: { ...filtroBase, empresa_id: emp.id }
+          filter: { ...filtroBase, empresa_id: emp.id },
+          confirmado: true,
+          agente: 'comercial',
         });
         const res = resp?.data || {};
         aggregate.total += res?.total || 0;
@@ -43,7 +53,7 @@ Deno.serve(async (req) => {
         modulo: 'Comercial',
         tipo_auditoria: 'sistema',
         entidade: 'Produto',
-        descricao: 'Otimização de preços - Orquestração (todas empresas)',
+        descricao: 'Otimização de preços - Orquestração no grupo do usuario',
         dados_novos: { ...aggregate },
         data_hora: new Date().toISOString(),
         duracao_ms: Date.now() - t0,

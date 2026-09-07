@@ -1,3 +1,15 @@
+### Gate 17 - Agentes: herdam permissao do usuario e confirmam acao critica
+- Objetivo: cumprir o Gate 17 de `PLANO_GO_LIVE.md` nos agentes ja existentes (funcoes de IA/otimizacao), sem criar 12 telas novas.
+- Diagnostico: otimizador de preco e orquestrador rodavam sem usuario ou so com `role === admin`; invoke local nao revalidava heranca.
+- Causa raiz: agente tratado como automacao privilegiada, fora do usuario invocador.
+- Arquivos alterados: `agenteAutorizacaoPolicy.js` (extracao), `localBase44Client.js`, `PrecosSection.jsx`, `Dashboard.jsx`, `PedidoTabsContainer.jsx`, `IAConversacional.jsx`, `productPriceOptimizer/entry.ts`, `optimizerOrchestrator/entry.ts`, testes.
+- Reutilizado: funcoes `iaFinanceAnomalyScan`, `productPriceOptimizer`, `optimizerOrchestrator` e InvokeLLM ja existentes.
+- Alteracoes: catalogo dos 12 agentes mapeados a modulo/secao do usuario; acao critica exige `confirmado`; sem usuario o otimizador recusa; orquestrador deixa de ser atalho de admin e restringe empresas do grupo.
+- Multiempresa: orquestracao filtra empresas do grupo do usuario.
+- Pendencia: leitura `asServiceRole` residual nas funcoes Deno e provedor real de LLM.
+- Validacoes: `node --test`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 18 Migracao do ERP antigo.
+
 ### Gate 16 - IA transversal: sugere, nao executa sozinha
 - Objetivo: cumprir o Gate 16 de `PLANO_GO_LIVE.md` na IA existente, sem criar outra camada de agentes.
 - Diagnostico: `InvokeLLM` local nao exigia grupo; churn gravava cliente e oportunidade sem confirmacao (`resultado: Automatico`).

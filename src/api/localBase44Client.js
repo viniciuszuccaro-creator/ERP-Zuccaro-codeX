@@ -29,6 +29,7 @@ import { applyPortalReadScope, resolvePortalClienteId } from "@/components/lib/p
 import { applySiteOrigemOnCreate } from "@/components/lib/siteOrigemPolicy";
 import { applyMarketplaceCreate } from "@/components/lib/marketplacePedidoPolicy";
 import { assertIaInvocation } from "@/components/lib/iaTransversalPolicy";
+import { AGENT_FUNCTION_MAP, AGENTES, assertAgentMayAct, assertMappedAgentFunction, resolveAgentScope } from "@/components/lib/agenteAutorizacaoPolicy";
 import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows } from "../../base44/functions/_lib/security/entityGuardPolicy/entry.ts";
 
 const reportLocalClientFailure = (operation, error, context = {}) => {
@@ -1469,6 +1470,28 @@ const countEntity = async (entityName, filter = {}) => {
 
 const functions = {
   async invoke(name, payload = {}) {
+    const mapped = AGENT_FUNCTION_MAP[name];
+    if (mapped) {
+      const user = readUser();
+      const evaluation = evaluateLocalUserSession(user);
+      if (!evaluation.allowed) throw createAuthDeniedError(evaluation);
+      const scope = resolveAgentScope(payload.agente || mapped.agent, mapped);
+      const perm = evaluateLocalPermission({
+        module: scope.modulo,
+        section: scope.secao,
+        action: mapped.action,
+      });
+      const permModulo = evaluateLocalPermission({
+        module: scope.modulo,
+        action: mapped.action,
+      });
+      assertMappedAgentFunction({
+        functionName: name,
+        agent: scope.agent,
+        userAllowed: perm.allowed || permModulo.allowed,
+        confirmed: payload.confirmado === true,
+      });
+    }
     switch (name) {
       case 'getEntityRecord': {
         if (!payload.entityName) return { data: [] };
@@ -1536,6 +1559,20 @@ const Core = {
       groupId: payload.group_id || payload.grupo_id || getCurrentGroupId(),
       empresaId: payload.empresa_id || getCurrentEmpresaId(),
     });
+    if (payload.agente) {
+      const def = AGENTES[payload.agente];
+      const perm = evaluateLocalPermission({
+        module: def?.modulo || 'Comercial',
+        section: def?.secao || 'Pedido',
+        action: payload.acao || 'visualizar',
+      });
+      assertAgentMayAct({
+        agent: payload.agente,
+        userAllowed: perm.allowed,
+        action: payload.acao || 'visualizar',
+        confirmed: payload.confirmado === true,
+      });
+    }
     auditLocalMutation('LogsIA', 'Sugestao', {
       after: {
         tipo_ia: stamped.tipo_ia || 'InvokeLLM',

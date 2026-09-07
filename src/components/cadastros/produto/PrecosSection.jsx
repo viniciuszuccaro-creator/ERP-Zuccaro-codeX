@@ -23,7 +23,13 @@ export default function PrecosSection({ formData, setFormData }) {
     if (!canOptimize || optimizing) return;
     setOptimizing(true);
     try {
-      const { data } = await base44.functions.invoke('productPriceOptimizer', { produto_id: formData.id });
+      const { data } = await base44.functions.invoke('productPriceOptimizer', {
+        produto_id: formData.id,
+        confirmado: true,
+        agente: 'comercial',
+        group_id: grupoAtual?.id || formData?.group_id,
+        empresa_id: empresaAtual?.id || formData?.empresa_id,
+      });
       if (data?.updated) {
         setFormData(prev => ({ ...prev, ...data.updated }));
       }

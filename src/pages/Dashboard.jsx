@@ -458,7 +458,8 @@ export default function Dashboard() {
       const filtros = getFiltroContexto('empresa_id', true);
       const res = await base44.functions.invoke('iaFinanceAnomalyScan', {
         filtros,
-        previsao_estoque: { enabled: true, horizon_days: 14 }
+        previsao_estoque: { enabled: true, horizon_days: 14 },
+        agente: 'estoque',
       });
       return res?.data || { previsoes: [] };
     },
@@ -473,7 +474,8 @@ export default function Dashboard() {
       const filtros = getFiltroContexto('empresa_id', true);
       const res = await base44.functions.invoke('iaFinanceAnomalyScan', {
         filtros,
-        previsao_estoque: { enabled: true, horizon_days: 30 }
+        previsao_estoque: { enabled: true, horizon_days: 30 },
+        agente: 'estoque',
       });
       return res?.data || { previsoes: [] };
     },
@@ -486,7 +488,7 @@ export default function Dashboard() {
     queryFn: async () => {
       if (!hasContextoAtivo) return { details: [] };
       const filtros = getFiltroContexto('empresa_id', true);
-      const res = await base44.functions.invoke('iaFinanceAnomalyScan', { filtros });
+      const res = await base44.functions.invoke('iaFinanceAnomalyScan', { filtros, agente: 'financeiro' });
       return res?.data || { details: [] };
     },
     staleTime: 120000,
