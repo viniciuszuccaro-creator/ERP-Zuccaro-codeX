@@ -9,6 +9,13 @@ import { sanitizeAuditPayload, sanitizeOnWrite } from "@/components/lib/sanitize
 import { createAuthDeniedError, evaluateLocalUserSession } from "@/api/localAuthSessionPolicy";
 import { applyMasterCadastroOnCreate, MASTER_CODE_SPECS, parseNumericCode, sequenceKeyFor } from "@/api/localCadastroMasterPolicy";
 import { assertMovimentacaoEstoque, configAllowsNegativeStock, HISTORICO_ESTOQUE_ENTITIES, isAjusteEstoque } from "@/components/lib/estoqueMovimentoPolicy";
+import {
+  assertTituloOnCreate,
+  assertTituloOnDelete,
+  assertTituloOnUpdate,
+  isTituloFinanceiroEntity,
+  tituloSettlementAction,
+} from "@/components/lib/financeiroTituloPolicy";
 import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows } from "../../base44/functions/_lib/security/entityGuardPolicy/entry.ts";
 
 const reportLocalClientFailure = (operation, error, context = {}) => {
@@ -941,6 +948,14 @@ const applyLocalEstoqueProdutoPatch = (db, produtoId, patch) => {
   };
 };
 
+const applyLocalFinanceiroTituloCreate = (db, entityName, record) => {
+  if (!isTituloFinanceiroEntity(entityName)) return { record, reuse: null };
+  return assertTituloOnCreate({
+    record,
+    titles: getEntityStore(db, entityName),
+  });
+};
+
 const mergeSnapshotRecords = (db, entityName, incoming = []) => {
   if (!Array.isArray(incoming) || incoming.length === 0) return { created: 0, updated: 0 };
   const records = getEntityStore(db, entityName);
@@ -1194,7 +1209,9 @@ const createEntityApi = (entityName) => ({
     const stamped = applyLocalMasterCadastro(db, entityName, stampRecordContext(entityName, data));
     const estoque = applyLocalEstoqueMovimento(db, entityName, stamped);
     if (estoque.reuse) return estoque.reuse;
-    const payload = estoque.record || stamped;
+    const financeiro = applyLocalFinanceiroTituloCreate(db, entityName, estoque.record || stamped);
+    if (financeiro.reuse) return financeiro.reuse;
+    const payload = financeiro.record || estoque.record || stamped;
     const record = {
       ...payload,
       id: payload.id || makeId(entityName.toLowerCase()),
@@ -1212,16 +1229,39 @@ const createEntityApi = (entityName) => ({
   },
 
   async update(id, data = {}) {
-    assertLocalMutationAllowed(entityName, 'editar', id);
+    if (!isTituloFinanceiroEntity(entityName)) {
+      assertLocalMutationAllowed(entityName, 'editar', id);
+    }
     const db = loadDb();
     const records = getEntityStore(db, entityName);
     const index = records.findIndex((item) => String(item.id) === String(id));
     if (index < 0) throw new Error(`${entityName} local nao encontrado: ${id}`);
     const before = { ...records[index] };
     const payload = stampRecordContext(entityName, data);
+    if (isTituloFinanceiroEntity(entityName) && before.empresa_id && !Object.prototype.hasOwnProperty.call(data || {}, 'empresa_id')) {
+      payload.empresa_id = before.empresa_id;
+      if (before.group_id) payload.group_id = before.group_id;
+      if (before.grupo_id) payload.grupo_id = before.grupo_id;
+    }
+    let nextPayload = payload;
+    if (isTituloFinanceiroEntity(entityName)) {
+      const decision = assertTituloOnUpdate({ before, patch: payload });
+      if (decision.reuse) {
+        assertLocalMutationAllowed(entityName, tituloSettlementAction(entityName), id);
+        return decision.reuse;
+      }
+      if (decision.settlement) {
+        assertLocalMutationAllowed(entityName, tituloSettlementAction(entityName), id);
+      } else if (decision.estorno) {
+        assertLocalMutationAllowed(entityName, 'estornar', id);
+      } else {
+        assertLocalMutationAllowed(entityName, 'editar', id);
+      }
+      nextPayload = decision.record;
+    }
     records[index] = {
       ...records[index],
-      ...payload,
+      ...nextPayload,
       id: records[index].id,
       updated_date: now(),
     };
@@ -1234,6 +1274,11 @@ const createEntityApi = (entityName) => ({
   async delete(id) {
     if (HISTORICO_ESTOQUE_ENTITIES.includes(entityName)) {
       throw new Error('Exclusao de historico bloqueada.');
+    }
+    if (isTituloFinanceiroEntity(entityName)) {
+      const dbPreview = loadDb();
+      const current = getEntityStore(dbPreview, entityName).find((item) => String(item.id) === String(id));
+      assertTituloOnDelete(current || {});
     }
     assertLocalMutationAllowed(entityName, 'excluir', id);
     const db = loadDb();

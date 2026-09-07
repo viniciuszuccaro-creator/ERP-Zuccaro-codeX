@@ -45,7 +45,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
   const { toast } = useToast();
   const { openWindow } = useWindow();
   const { formasPagamento } = useFormasPagamento();
-  const podeBaixarReceber = hasPermission('Financeiro','ContaReceber','baixar') || hasPermission('Financeiro','ContaReceber','liquidar');
+  const podeBaixarReceber = hasPermission('Financeiro','ContaReceber','receber') || hasPermission('Financeiro','ContaReceber','baixar') || hasPermission('Financeiro','ContaReceber','liquidar');
   const podeEnviarCaixaReceber = hasPermission('Financeiro','ContaReceber','enviar_caixa') || hasPermission('Financeiro','ContaReceber','editar');
   const podeExportarReceber = hasPermission('Financeiro','ContaReceber','exportar');
   const sanitizeText = (value) => String(value || "")

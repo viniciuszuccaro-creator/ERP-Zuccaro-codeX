@@ -1,3 +1,15 @@
+### Gate 8 - Financeiro: baixa, estorno e vinculo do titulo
+- Objetivo: cumprir o Gate 8 de `PLANO_GO_LIVE.md` nos titulos existentes, sem tela financeira paralela.
+- Diagnostico: liquidacao em lote gravava direto na entidade sem permissao nem idempotencia; titulo liquidado podia ter valor/pedido alterados; exclusao fisica nao distinguia liquidado; parcelas do pedido podiam nascer duplicadas no fechamento.
+- Causa raiz: regras de titulo so no frontend, fora do `create`/`update`/`delete` local.
+- Arquivos alterados: `financeiroTituloPolicy.js` (extracao, `localBase44Client.js` ja passa de 1400 linhas), `localBase44Client.js`, `useFluxoPedido.jsx`, `ContasReceberTab.jsx`, `ContasPagarTab.jsx`, `LiquidacaoEmLote.jsx`, testes.
+- Reutilizado: `ContaReceber`/`ContaPagar`, baixa manual das abas, geracao de CR no fluxo do pedido.
+- Alteracoes: nao exclui liquidado/estornado; estorno conserva valor, empresa e pedido; baixa exige `receber`/`pagar`; empresa do titulo nao troca; retry de parcela/baixa e idempotente.
+- Multiempresa: grupo nao altera a empresa dona do titulo.
+- Pendencia: conciliarcao bancaria e caixa PDV ainda podem liquidar por outros caminhos visuais; rateio multiempresa permanece na tela existente.
+- Validacoes: `node --test`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 9 Fiscal.
+
 ### Gate 7 - Estoque: saldo, origem e historico
 - Objetivo: cumprir o Gate 7 de `PLANO_GO_LIVE.md` na persistencia existente, sem tela de estoque paralela.
 - Diagnostico: a aba de movimentacao gravava a NF/movimento e so depois conferia saldo; retry e exclusao apagavam historico; saida podia ir a negativo; produto de uma empresa aceitava movimento de outra.

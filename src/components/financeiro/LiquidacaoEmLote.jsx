@@ -5,8 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CheckCircle, DollarSign, Filter } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 import { toast } from 'sonner';
 
 /**
@@ -14,7 +14,8 @@ import { toast } from 'sonner';
  * Permite liquidar múltiplas contas simultaneamente com diferentes critérios
  */
 export default function LiquidacaoEmLote({ onClose }) {
-  const { filterInContext } = useContextoVisual();
+  const { filterInContext, updateInContext, empresaAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
   const [tipo, setTipo] = useState('receber'); // 'receber' ou 'pagar'
   const [selecionados, setSelecionados] = useState([]);
@@ -43,14 +44,26 @@ export default function LiquidacaoEmLote({ onClose }) {
   const liquidarMutation = useMutation({
     mutationFn: async () => {
       const entity = tipo === 'receber' ? 'ContaReceber' : 'ContaPagar';
+      const podeBaixar = tipo === 'receber'
+        ? (hasPermission('Financeiro', 'ContaReceber', 'receber') || hasPermission('Financeiro', 'ContaReceber', 'baixar') || hasPermission('Financeiro', 'ContaReceber', 'liquidar'))
+        : (hasPermission('Financeiro', 'ContaPagar', 'pagar') || hasPermission('Financeiro', 'ContaPagar', 'baixar') || hasPermission('Financeiro', 'ContaPagar', 'liquidar'));
+      if (!podeBaixar) {
+        throw new Error('Sem permissao para baixa manual.');
+      }
+      if (!empresaAtual?.id) {
+        throw new Error('Selecione a empresa do pagamento.');
+      }
       const campo = tipo === 'receber' ? 'data_recebimento' : 'data_pagamento';
-      const promises = selecionados.map(id =>
-        base44.entities[entity].update(id, {
+      const atualizados = [];
+      for (const id of selecionados) {
+        const atualizado = await updateInContext(entity, id, {
           status: tipo === 'receber' ? 'Recebido' : 'Pago',
           [campo]: new Date().toISOString().split('T')[0],
-        })
-      );
-      return Promise.all(promises);
+          empresa_id: empresaAtual.id,
+        });
+        atualizados.push(atualizado);
+      }
+      return atualizados;
     },
     onSuccess: () => {
       toast.success(`${selecionados.length} título(s) liquidado(s) com sucesso!`);
