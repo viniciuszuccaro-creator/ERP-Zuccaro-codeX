@@ -23,6 +23,7 @@ import {
   NOTA_FISCAL_ENTITIES,
 } from "@/components/lib/notaFiscalEmissaoPolicy";
 import { assertOpOnCreate } from "@/components/lib/ordemProducaoPolicy";
+import { applyComprasCreate, assertRecebimentoOc } from "@/components/lib/comprasOrdemPolicy";
 import { applyExpedicaoCreate, assertEntregaOnUpdate, syncEntregaNumero } from "@/components/lib/expedicaoEntregaPolicy";
 import { applyAtendimentoCreate } from "@/components/lib/atendimentoConversaPolicy";
 import { applyPortalReadScope, resolvePortalClienteId } from "@/components/lib/portalClientePolicy";
@@ -1027,6 +1028,10 @@ const applyLocalOrdemProducaoCreate = (db, entityName, record) => {
   });
 };
 
+const applyLocalComprasCreate = (db, entityName, record) => applyComprasCreate(entityName, record, {
+  ordensCompra: getEntityStore(db, 'OrdemCompra'),
+});
+
 const applyLocalExpedicaoCreate = (db, entityName, record) => applyExpedicaoCreate(entityName, record, {
   entregas: getEntityStore(db, 'Entrega'),
   romaneios: getEntityStore(db, 'Romaneio'),
@@ -1398,9 +1403,11 @@ const createEntityApi = (entityName) => ({
     const scoped = stampRecordContext(entityName, data);
     const ordem = applyLocalOrdemProducaoCreate(db, entityName, scoped);
     if (ordem.reuse) return ordem.reuse;
-    const expedicao = applyLocalExpedicaoCreate(db, entityName, ordem.record || scoped);
+    const compras = applyLocalComprasCreate(db, entityName, ordem.record || scoped);
+    if (compras.reuse) return compras.reuse;
+    const expedicao = applyLocalExpedicaoCreate(db, entityName, compras.record || ordem.record || scoped);
     if (expedicao.reuse) return expedicao.reuse;
-    const atendimento = applyLocalAtendimentoCreate(db, entityName, expedicao.record || ordem.record || scoped);
+    const atendimento = applyLocalAtendimentoCreate(db, entityName, expedicao.record || compras.record || ordem.record || scoped);
     if (atendimento.reuse) return atendimento.reuse;
     const withSiteOrigem = applyLocalSiteOrigemCreate(entityName, atendimento.record || expedicao.record || ordem.record || scoped);
     const marketplace = applyLocalMarketplaceCreate(db, entityName, withSiteOrigem);
@@ -1444,17 +1451,23 @@ const createEntityApi = (entityName) => ({
     if (index < 0) throw new Error(`${entityName} local nao encontrado: ${id}`);
     const before = { ...records[index] };
     const payload = stampRecordContext(entityName, data);
-    if ((isTituloFinanceiroEntity(entityName) || entityName === 'Entrega') && before.empresa_id && !Object.prototype.hasOwnProperty.call(data || {}, 'empresa_id')) {
+    if ((isTituloFinanceiroEntity(entityName) || entityName === 'Entrega' || entityName === 'OrdemCompra') && before.empresa_id && !Object.prototype.hasOwnProperty.call(data || {}, 'empresa_id')) {
       payload.empresa_id = before.empresa_id;
       if (before.group_id) payload.group_id = before.group_id;
       if (before.grupo_id) payload.grupo_id = before.grupo_id;
     }
-    if (entityName === 'Entrega' && before.empresa_id) {
+    if ((entityName === 'Entrega' || entityName === 'OrdemCompra') && before.empresa_id) {
       payload.empresa_id = before.empresa_id;
     }
     let nextPayload = applyLocalBackupWrite(db, entityName, applyLocalPilotoWrite(db, entityName, payload, before), before);
     if (entityName === 'Entrega') {
       nextPayload = assertEntregaOnUpdate({ before, patch: payload });
+      if (before.empresa_id) nextPayload.empresa_id = before.empresa_id;
+    }
+    if (entityName === 'OrdemCompra') {
+      const decision = assertRecebimentoOc({ before, patch: payload });
+      if (decision.reuse) return decision.reuse;
+      nextPayload = decision.record;
       if (before.empresa_id) nextPayload.empresa_id = before.empresa_id;
     }
     if (isTituloFinanceiroEntity(entityName)) {

@@ -48,7 +48,7 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
     }
   };
   const schema = z.object({
-    numero_cotacao: z.string(),
+    numero_cotacao: z.string().optional(),
     descricao: z.string().min(3, 'Descrição obrigatória'),
     data_criacao: z.string(),
     data_limite_resposta: z.string().min(8, 'Informe a data limite'),
@@ -65,7 +65,7 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
   const { register, handleSubmit, control, setValue, watch, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: cotacao || {
-      numero_cotacao: `COT-${Date.now()}`,
+      numero_cotacao: '',
       descricao: '',
       data_criacao: new Date().toISOString().split('T')[0],
       data_limite_resposta: '',

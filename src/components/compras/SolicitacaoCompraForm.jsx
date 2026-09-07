@@ -46,7 +46,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
   const controlesBloqueados = !contextoValido || !canCreateSolicitacao;
   
   const scSchema = z.object({
-    numero_solicitacao: z.string(),
+    numero_solicitacao: z.string().optional(),
     data_solicitacao: z.string().min(8, 'Data inválida'),
     produto_id: z.string().min(1, 'Produto é obrigatório'),
     produto_descricao: z.string().optional(),
@@ -62,7 +62,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
   const { register, handleSubmit, control, setValue, watch, formState: { errors } } = useForm({
     resolver: zodResolver(scSchema),
     defaultValues: solicitacao || {
-      numero_solicitacao: `SC-${Date.now()}`,
+      numero_solicitacao: '',
       data_solicitacao: new Date().toISOString().split('T')[0],
       solicitante: '',
       setor: '',

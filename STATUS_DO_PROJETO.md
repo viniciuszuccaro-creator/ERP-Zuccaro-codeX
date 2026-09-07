@@ -1,3 +1,15 @@
+### P1.1 - Compras avancadas: SC/COT/OC reservados e recebimento idempotente
+- Objetivo: cumprir P1 Compras avancadas de `PLANO_GO_LIVE.md` no fluxo existente (solicitacao → cotacao → OC → recebimento → estoque), sem modulo paralelo.
+- Diagnostico: SC/COT/OC usavam `Date.now`/`count+1`; cotacao ficava so em mock de tela; retry de OC pela solicitacao criava duplicata; recebimento nao carimbava empresa na movimentacao.
+- Causa raiz: numeracao e idempotencia fora do ponto unico de persistencia.
+- Arquivos alterados: `comprasOrdemPolicy.js` (extracao), `localCadastroMasterPolicy.js`, `localBase44Client.js`, `OrdemCompraForm.jsx`, `OrdensCompraTab.jsx`, `SolicitacaoCompraForm.jsx`, `SolicitacoesCompraTab.jsx`, `CotacaoForm.jsx`, `CotacoesTab.jsx`, testes.
+- Reutilizado: sequencia mestre, `MovimentacaoEstoque` e telas de compras ja existentes.
+- Alteracoes: `OC-`/`SC-`/`COT-` reservados na gravacao; OC exige empresa e reusa a mesma solicitacao/cotacao; cotacao persiste no contexto; recebimento idempotente e movimento com grupo/empresa.
+- Multiempresa: OC operacional exige empresa; cotacao/solicitacao exigem grupo ou empresa.
+- Pendencia: Contas a Pagar automatica no recebimento e avaliacao de fornecedor ponta a ponta ainda podem evoluir no mesmo modulo.
+- Validacoes: `node --test`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P1: CRM completo.
+
 ### Gate 20 - Virada: backup real, janela congelada e checklist
 - Objetivo: cumprir o Gate 20 de `PLANO_GO_LIVE.md` no backup e na configuracao existentes, sem criar tela de virada.
 - Diagnostico: backup manual usava `Date.now`/`Math.random` e concluia de mentira; virada nao exigia backup, freeze nem reconciliacao.

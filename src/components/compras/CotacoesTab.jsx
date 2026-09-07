@@ -73,55 +73,14 @@ export default function CotacoesTab({ windowMode = false }) {
     enabled: contextoValido && canViewCotacao,
   });
 
-  // Criar entidade Cotacao (mock local)
-  const [cotacoes, setCotacoes] = useState([
-    {
-      id: "1",
-      numero_cotacao: "COT-001",
-      descricao: "Cotação de Bitolas - Lote Janeiro",
-      data_criacao: "2025-01-15",
-      data_limite: "2025-01-20",
-      status: "Aguardando Propostas",
-      fornecedores_convidados: 3,
-      propostas_recebidas: 2,
-      itens: [
-        { produto_descricao: "Barra 12.5mm CA-50", quantidade: 500, unidade: "KG" },
-        { produto_descricao: "Barra 10.0mm CA-50", quantidade: 300, unidade: "KG" }
-      ],
-      propostas: [
-        {
-          fornecedor_id: "f1",
-          fornecedor_nome: "Aços Fortes Ltda",
-          data_proposta: "2025-01-16",
-          valor_total: 15500.00,
-          prazo_entrega: 7,
-          forma_pagamento: "30 dias",
-          itens: [
-            { produto_descricao: "Barra 12.5mm CA-50", preco_unitario: 25.00, valor_total: 12500.00 },
-            { produto_descricao: "Barra 10.0mm CA-50", preco_unitario: 10.00, valor_total: 3000.00 }
-          ],
-          observacoes: "Entrega em 3 lotes"
-        },
-        {
-          fornecedor_id: "f2",
-          fornecedor_nome: "Metalúrgica São Paulo",
-          data_proposta: "2025-01-17",
-          valor_total: 14800.00,
-          prazo_entrega: 10,
-          forma_pagamento: "À Vista",
-          itens: [
-            { produto_descricao: "Barra 12.5mm CA-50", preco_unitario: 24.00, valor_total: 12000.00 },
-            { produto_descricao: "Barra 10.0mm CA-50", preco_unitario: 9.33, valor_total: 2800.00 }
-          ],
-          observacoes: "Entrega única, frete incluso"
-        }
-      ]
-    }
-  ]);
+  const { data: cotacoes = [] } = useQuery({
+    queryKey: ['cotacoes-compra', groupId, empresaId, contexto],
+    queryFn: () => filterInContext('Cotacao', {}, '-created_date', 200),
+    enabled: contextoValido && canViewCotacao,
+  });
 
   const criarCotacaoMutation = useMutation({
     mutationFn: async (data) => {
-      await new Promise(resolve => setTimeout(resolve, 1000));
       if (!contextoValido || !canCreateCotacao) {
         await auditCotacao({
           acao: 'Cotacao.criar_bloqueada',
@@ -132,9 +91,7 @@ export default function CotacoesTab({ windowMode = false }) {
         throw new Error(!contextoValido ? 'Selecione grupo ou empresa antes de criar cotacao.' : 'Sem permissao para criar cotacao.');
       }
 
-      const novaCotacao = {
-        id: Date.now().toString(),
-        numero_cotacao: `COT-${String(cotacoes.length + 1).padStart(3, '0')}`,
+      const novaCotacao = await createInContext('Cotacao', {
         descricao: data.descricao,
         data_criacao: new Date().toISOString().split('T')[0],
         data_limite: data.data_limite_resposta,
@@ -146,13 +103,13 @@ export default function CotacoesTab({ windowMode = false }) {
         group_id: groupId,
         grupo_id: groupId,
         empresa_id: empresaId
-      };
+      });
 
-      setCotacoes([novaCotacao, ...cotacoes]);
-      await auditCotacao({ acao: 'Cotacao.criada', dados: { cotacao_id: novaCotacao.id, fornecedores: novaCotacao.fornecedores_convidados, itens: novaCotacao.itens.length } });
+      await auditCotacao({ acao: 'Cotacao.criada', dados: { cotacao_id: novaCotacao.id, numero_cotacao: novaCotacao.numero_cotacao, fornecedores: novaCotacao.fornecedores_convidados, itens: novaCotacao.itens?.length || 0 } });
       return novaCotacao;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cotacoes-compra'] });
       setDialogOpen(false);
       resetForm();
       toast({
@@ -199,6 +156,7 @@ export default function CotacoesTab({ windowMode = false }) {
         condicao_pagamento: proposta.forma_pagamento,
         prazo_entrega_acordado: proposta.prazo_entrega,
         origem: 'cotacao',
+        cotacao_id: comparativoModal?.id,
         group_id: groupId,
         grupo_id: groupId,
         empresa_id: empresaId

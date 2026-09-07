@@ -21,7 +21,7 @@ import FormErrorSummary from "@/components/common/FormErrorSummary";
 export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = false }) {
   // React Hook Form + Zod
   const defaultValues = ordemCompra || {
-    numero_oc: `OC-${Date.now()}`,
+    numero_oc: '',
     fornecedor_id: '',
     fornecedor_nome: '',
     data_solicitacao: new Date().toISOString().split('T')[0],
@@ -107,7 +107,7 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
   };
 
   const ocSchema = z.object({
-    numero_oc: z.string().min(3),
+    numero_oc: z.string().optional(),
     fornecedor_id: z.string().min(1, 'Fornecedor é obrigatório'),
     fornecedor_nome: z.string().optional(),
     data_solicitacao: z.string().min(8, 'Data inválida'),
@@ -162,14 +162,15 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Número OC *</Label>
+              <Label>Número OC</Label>
               <Input
                 {...register('numero_oc')}
+                placeholder="Gerado ao salvar"
+                disabled={!ordemCompra?.numero_oc}
                 data-permission="Compras.OrdemCompra.criar"
                 data-action="Compras.OrdemCompra.numero"
                 data-context-required="group-or-company"
               />
-              {errors.numero_oc && <p className="text-red-600 text-xs mt-1">{errors.numero_oc.message}</p>}
             </div>
 
             <div>

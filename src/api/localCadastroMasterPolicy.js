@@ -10,6 +10,9 @@ export const MASTER_CODE_SPECS = {
   Entrega: { field: 'qr_code', width: 6, prefix: 'ENT-' },
   Romaneio: { field: 'numero_romaneio', width: 6, prefix: 'ROM-' },
   SeparacaoConferencia: { field: 'numero_separacao', width: 6, prefix: 'SEP-' },
+  OrdemCompra: { field: 'numero_oc', width: 6, prefix: 'OC-' },
+  SolicitacaoCompra: { field: 'numero_solicitacao', width: 6, prefix: 'SC-' },
+  Cotacao: { field: 'numero_cotacao', width: 6, prefix: 'COT-' },
 };
 
 export const sequenceKeyFor = (entityName, groupId) => `seq_codigo_${entityName}_${groupId || 'grupo'}`;

@@ -30,6 +30,7 @@ import useEntityListSorted from "@/components/lib/useEntityListSorted";
 import { toast as sonnerToast } from "sonner";
 import { ImprimirOrdemCompra } from "@/components/lib/ImprimirOrdemCompra";
 import { useUser } from "@/components/lib/UserContext";
+import { stampMovimentacaoRecebimentoOc } from "@/components/lib/comprasOrdemPolicy";
 
 export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas = [], windowMode = false }) {
   const { createInContext, updateInContext, filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
@@ -292,21 +293,11 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
       // Criar movimentação de estoque (entrada) para cada item
       if (oc.itens && oc.itens.length > 0) {
         for (const item of oc.itens) {
-          await createInContext('MovimentacaoEstoque', {
-            produto_id: item.produto_id,
-            produto_descricao: item.descricao,
-            tipo_movimentacao: 'Entrada',
-            origem_movimento: 'compra',
-            origem_documento_id: oc.id,
-            quantidade: item.quantidade_solicitada,
-            data_movimentacao: dados.data_entrega_real,
-            documento: `OC-${oc.numero_oc}`,
-            motivo: `Recebimento de Ordem de Compra`,
-            valor_unitario: item.valor_unitario,
-            valor_total: item.valor_total,
-            responsavel: 'Sistema',
-            observacoes: dados.observacoes
-          });
+          await createInContext('MovimentacaoEstoque', stampMovimentacaoRecebimentoOc({
+            oc,
+            item,
+            dataRecebimento: dados.data_entrega_real,
+          }));
 
           if (item.produto_id) {
             const produto = await filterInContext('Produto', { id: item.produto_id }, 'descricao', 1);
@@ -598,12 +589,12 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
             >
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="numero_oc">Número da OC *</Label>
+                  <Label htmlFor="numero_oc">Número da OC</Label>
                   <Input
                     id="numero_oc"
                     value={formData.numero_oc}
+                    placeholder="Gerado ao salvar"
                     onChange={(e) => setFormData({...formData, numero_oc: e.target.value})}
-                    required
                     data-permission="Compras.OrdemCompra.criar"
                     data-action="Compras.OrdemCompra.numero"
                     data-context-required="group-or-company"

@@ -63,7 +63,7 @@ export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false
     URL.revokeObjectURL(url);
   };
   const [formData, setFormData] = useState({
-    numero_solicitacao: `SC-${Date.now()}`,
+    numero_solicitacao: '',
     data_solicitacao: new Date().toISOString().split('T')[0],
     solicitante: "",
     setor: "",
@@ -188,7 +188,6 @@ export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false
     mutationFn: async (solicitacao) => {
       // Criar Ordem de Compra
       const oc = await createInContext('OrdemCompra', {
-        numero_oc: `OC-${Date.now()}`,
         fornecedor_nome: "A definir",
         solicitacao_compra_id: solicitacao.id,
         data_solicitacao: new Date().toISOString().split('T')[0],
@@ -296,7 +295,7 @@ Retorne JSON com:
         const produto = produtosBaixos.find(p => p.codigo === sug.produto_codigo);
         if (produto) {
           const sol = await createInContext('SolicitacaoCompra', {
-            numero_solicitacao: `SC-IA-${Date.now()}-${solicitacoesCriadas.length}`,
+            origem: 'sugestao_ia',
             data_solicitacao: new Date().toISOString().split('T')[0],
             produto_id: produto.id,
             produto_descricao: produto.descricao,
@@ -343,7 +342,7 @@ Retorne JSON com:
     setIsDialogOpen(false);
     setEditando(null);
     setFormData({
-      numero_solicitacao: `SC-${Date.now()}`,
+      numero_solicitacao: '',
       data_solicitacao: new Date().toISOString().split('T')[0],
       solicitante: "",
       setor: "",
