@@ -154,6 +154,27 @@ export default function MotoristaForm({ motorista, item, data, initialData, defa
       </div>
 
       <div>
+        <Label>E-mail (login do motorista)</Label>
+        <Input
+          type="email"
+          value={formData.email || ''}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          placeholder="motorista@empresa.com"
+          data-permission="Cadastros.Motorista.salvar"
+        />
+      </div>
+
+      <div>
+        <Label>ID do usuario de login (opcional)</Label>
+        <Input
+          value={formData.usuario_id || ''}
+          onChange={(e) => setFormData({ ...formData, usuario_id: e.target.value })}
+          placeholder="ID do User vinculado ao app"
+          data-permission="Cadastros.Motorista.salvar"
+        />
+      </div>
+
+      <div>
         <Label>Vincular a Colaborador</Label>
         <Select value={formData.colaborador_id} onValueChange={(v) => setFormData({...formData, colaborador_id: v})}>
           <SelectTrigger>

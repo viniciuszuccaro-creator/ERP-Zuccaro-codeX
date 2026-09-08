@@ -5,6 +5,7 @@ import { useWindow } from "@/components/lib/useWindow";
 import { createPageUrl } from "@/utils";
 import { Link } from "react-router-dom";
 import { MessageCircle, Truck, Users, Zap, Factory, Smartphone, ShoppingCart, ExternalLink } from "lucide-react";
+import { toast } from "sonner";
 
 // Apps e ferramentas já existentes no projeto
 import ChatbotDashboard from "@/components/chatbot/ChatbotDashboard";
@@ -14,16 +15,38 @@ import ApontamentoProducao from "@/components/producao/ApontamentoProducao";
 import ChatCliente from "@/components/portal/ChatCliente";
 import ProducaoMobile from "@/pages/ProducaoMobile";
 import OrcamentoSite from "@/pages/OrcamentoSite";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 export default function ExternalAppsHub() {
   const { openWindow } = useWindow();
+  const { grupoAtual, empresaAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const contextoValido = Boolean((grupoAtual?.id || empresaAtual?.group_id) && empresaAtual?.id);
+  const canAppMotorista =
+    hasPermission('Expedicao', 'Entrega', 'entregar')
+    || hasPermission('Expedicao', 'Entrega', 'editar')
+    || hasPermission('Expedicao', 'Motorista', 'visualizar')
+    || hasPermission('Cadastros', 'Motorista', 'visualizar');
 
   const launch = (Component, props, options) => () => openWindow(Component, { windowMode: true, ...(props || {}) }, { width: 1200, height: 720, ...(options || {}) });
+
+  const launchAppMotorista = () => {
+    if (!contextoValido) {
+      toast.error('Selecione grupo e empresa antes de abrir o App Motorista');
+      return;
+    }
+    if (!canAppMotorista) {
+      toast.error('Sem permissao para o App Motorista');
+      return;
+    }
+    openWindow(AppEntregasMotorista, { windowMode: true }, { title: "Apontamento de Entregas", width: 420, height: 800 });
+  };
 
   const items = [
     { title: "Portal do Cliente", icon: Users, color: "text-sky-600", bg: "from-sky-50 to-sky-100", action: launch(DashboardCliente, {}, { title: "Portal do Cliente" }), desc: "Acesso do cliente aos pedidos e financeiro", route: createPageUrl("PortalCliente") },
     { title: "Chatbot Dashboard", icon: MessageCircle, color: "text-purple-600", bg: "from-purple-50 to-purple-100", action: launch(ChatbotDashboard, {}, { title: "Chatbot Dashboard" }), desc: "Central de atendimento automatizado", route: createPageUrl("HubAtendimento") },
-    { title: "App Motorista", icon: Truck, color: "text-amber-600", bg: "from-amber-50 to-amber-100", action: launch(AppEntregasMotorista, {}, { title: "Apontamento de Entregas" }), desc: "App de entrega para motoristas", route: createPageUrl("EntregasMobile") },
+    { title: "App Motorista", icon: Truck, color: "text-amber-600", bg: "from-amber-50 to-amber-100", action: launchAppMotorista, desc: "App de entrega para motoristas", route: createPageUrl("EntregasMobile") },
     { title: "Apontamento da Produção", icon: Factory, color: "text-emerald-600", bg: "from-emerald-50 to-emerald-100", action: launch(ApontamentoProducao, {}, { title: "Apontamento da Produção" }), desc: "Registro de produção no chão de fábrica", route: createPageUrl("Producao") },
     { title: "Apontamento Mobile", icon: Smartphone, color: "text-teal-600", bg: "from-teal-50 to-teal-100", action: launch(ProducaoMobile, {}, { title: "Apontamento Mobile" }), desc: "Versão mobile para produção", route: createPageUrl("ProducaoMobile") },
     { title: "Chat do Cliente", icon: MessageCircle, color: "text-indigo-600", bg: "from-indigo-50 to-indigo-100", action: launch(ChatCliente, {}, { title: "Chat do Cliente" }), desc: "Chat em tempo real com o cliente" },

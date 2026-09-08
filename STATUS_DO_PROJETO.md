@@ -1,3 +1,15 @@
+### P1.5 - App Motorista: offline/sync, stamp ID e assert vivo
+- Objetivo: fechar residual P1 App Motorista completo no app existente (ERP → atribuicao → offline → sync → prova).
+- Diagnostico: chegada bypassava fila; sync sem `updateInContext`; Romaneio so gravava nome; `assertEntregaMotoristaOnUpdate` morto; match so por nome/user.id; entradas sem RBAC; prova exigia foto online.
+- Causa raiz: atribuicao e sync desconectados do fluxo fail-closed do motorista.
+- Arquivos alterados: `appMotoristaPolicy.js`, `AppEntregasMotorista.jsx`, `localBase44Client.js`, `expedicaoEntregaPolicy.js`, `RomaneioForm.jsx`, `MotoristaForm.jsx`, `EntregasMobile.jsx`, `ExternalAppsHub.jsx`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: fila offline, build*Patch, `filterInContext`/`updateInContext`, Bloco4 entry.
+- Alteracoes: vinculo usuario/colaborador/email; stamp `motorista_id`+`sequencia_rota` no romaneio; chegada/sync via fila+contexto; assert motorista no client; auditoria das acoes; prova com foto|assinatura|doc; RBAC nas entradas.
+- Multiempresa/RBAC: fila com group/empresa; app exige grupo+empresa; chegada=alçada entregar.
+- Pendencia: PWA/IndexedDB media; turn-by-turn Maps; Portal Cliente (proximo P1).
+- Validacoes: `node --test tests/app-motorista-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P1: Portal Cliente.
+
 ### P1.4 - Roteirizador avancado: stamp Entrega + IA fail-closed
 - Objetivo: fechar residual P1 Roteirizador avancado no fluxo existente (ERP → rota IA → motorista/sequencia nas Entregas → App Motorista).
 - Diagnostico: IA criava so `RoteirizacaoInteligente` sem stamp em Entrega; create IA sem motorista/veiculo/grupo; UI auto-escolhia `motoristas[0]`/`veiculos[0]`; `MapaRoteirizacaoIA` usava `Pedido.list()`; catch silencioso no LLM/auditoria.

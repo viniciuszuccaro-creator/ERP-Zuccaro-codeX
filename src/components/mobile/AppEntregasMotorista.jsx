@@ -27,6 +27,7 @@ import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 import {
   buildChegadaPatch,
   buildConfirmacaoPatch,
@@ -47,7 +48,8 @@ import {
  */
 export default function AppEntregasMotorista() {
   const { user } = useUser();
-  const { filterInContext, grupoAtual, empresaAtual } = useContextoVisual();
+  const { filterInContext, updateInContext, grupoAtual, empresaAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
   const [entregaAtual, setEntregaAtual] = useState(null);
   const [localizacao, setLocalizacao] = useState(null);
   const [rastreando, setRastreando] = useState(false);
@@ -65,7 +67,39 @@ export default function AppEntregasMotorista() {
   const [reversaQtd, setReversaQtd] = useState(0);
   const [reversaValor, setReversaValor] = useState(0);
   const queryClient = useQueryClient();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId && empresaId);
+  const canUsarApp =
+    hasPermission('Expedicao', 'Entrega', 'entregar')
+    || hasPermission('Expedicao', 'Entrega', 'editar')
+    || hasPermission('Expedicao', 'Motorista', 'visualizar')
+    || hasPermission('Cadastros', 'Motorista', 'visualizar')
+    || hasPermission('Logistica', 'Entrega', 'entregar');
+  const canAgirEntrega =
+    hasPermission('Expedicao', 'Entrega', 'entregar')
+    || hasPermission('Expedicao', 'Entrega', 'editar')
+    || hasPermission('Expedicao', 'Entrega', 'ocorrencia')
+    || hasPermission('Logistica', 'Entrega', 'entregar');
 
+  const auditMotorista = async ({ acao, sucesso = true, motivo = null, entregaId = null, detalhes = {} }) => {
+    await base44.entities.AuditLog.create({
+      acao,
+      modulo: 'Expedicao',
+      entidade: 'Entrega',
+      tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
+      usuario_id: user?.id || user?.email || null,
+      usuario_nome: user?.full_name || user?.email || 'Motorista',
+      group_id: groupId,
+      grupo_id: groupId,
+      empresa_id: empresaId || detalhes.empresa_id || null,
+      registro_id: entregaId,
+      resultado: sucesso ? 'sucesso' : 'bloqueado',
+      motivo,
+      detalhes,
+      data_hora: new Date().toISOString(),
+    });
+  };
   // Captura de assinatura no canvas
   React.useEffect(() => {
     const canvas = document.getElementById('assinatura-canvas');
@@ -87,18 +121,25 @@ export default function AppEntregasMotorista() {
     };
   }, []);
 
+  // Buscar cadastro Motorista para vinculo usuario/colaborador/email
+  const { data: motoristasCadastro = [] } = useQuery({
+    queryKey: ['motoristas-app', groupId, empresaId],
+    queryFn: () => filterInContext('Motorista', {}, 'nome_completo', 200),
+    enabled: !!user && contextoValido && canUsarApp,
+  });
+
   // Buscar entregas do motorista
   const { data: minhasEntregas = [], refetch } = useQuery({
-    queryKey: ['entregas-motorista', user?.id, grupoAtual?.id, empresaAtual?.id],
+    queryKey: ['entregas-motorista', user?.id, groupId, empresaId, motoristasCadastro.length],
     queryFn: async () => {
       const todas = await filterInContext('Entrega', {}, '-data_saida', 500);
-      return ordenarEntregasRota(filtrarEntregasDoMotorista(todas, user));
+      return ordenarEntregasRota(filtrarEntregasDoMotorista(todas, user, motoristasCadastro));
     },
-    enabled: !!user && Boolean(grupoAtual?.id || empresaAtual?.id),
+    enabled: !!user && contextoValido && canUsarApp,
     refetchInterval: 30000
   });
 
-  const proxima = proximaParada(minhasEntregas, user);
+  const proxima = proximaParada(minhasEntregas, user, motoristasCadastro);
 
   const syncFilaOffline = async () => {
     const queue = readMotoristaQueue();
@@ -106,10 +147,29 @@ export default function AppEntregasMotorista() {
     if (!queue.length || (typeof navigator !== 'undefined' && !navigator.onLine)) return;
     for (const action of queue) {
       try {
-        await base44.entities.Entrega.update(action.entrega_id, action.patch);
+        await updateInContext('Entrega', action.entrega_id, {
+          ...action.patch,
+          group_id: action.group_id || action.patch?.group_id || groupId,
+          empresa_id: action.empresa_id || action.patch?.empresa_id || empresaId,
+        });
         dequeueMotoristaAction(action.id);
+        await auditMotorista({
+          acao: 'Motorista.sync',
+          entregaId: action.entrega_id,
+          detalhes: { tipo: action.tipo, idempotency_key: action.idempotency_key },
+        });
       } catch (error) {
         console.error('[Motorista] Falha ao sincronizar acao offline.', error);
+        try {
+          await auditMotorista({
+            acao: 'Motorista.sync.erro',
+            sucesso: false,
+            motivo: error?.message || 'sync_falhou',
+            entregaId: action.entrega_id,
+          });
+        } catch (auditError) {
+          console.error(auditError);
+        }
         break;
       }
     }
@@ -117,22 +177,47 @@ export default function AppEntregasMotorista() {
     refetch();
   };
 
-  const aplicarPatchEntrega = async (entrega, patch, sucessoMsg) => {
+  const aplicarPatchEntrega = async (entrega, patch, sucessoMsg, acaoAudit, options = {}) => {
+    if (!contextoValido || !canAgirEntrega) {
+      await auditMotorista({
+        acao: `${acaoAudit || 'Motorista.acao'}.bloqueado`,
+        sucesso: false,
+        motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+        entregaId: entrega?.id,
+      });
+      throw new Error('Contexto ou permissao obrigatoria para acao do motorista.');
+    }
+    const stampedPatch = {
+      ...patch,
+      group_id: entrega.group_id || groupId,
+      grupo_id: entrega.grupo_id || groupId,
+      empresa_id: entrega.empresa_id || empresaId,
+    };
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       const queued = enqueueMotoristaAction({
         tipo: patch.status,
         entrega_id: entrega.id,
-        patch,
+        patch: stampedPatch,
         idempotency_key: patch.idempotency_key,
+        group_id: stampedPatch.group_id,
+        empresa_id: stampedPatch.empresa_id,
+        usuario_id: user?.id || null,
       });
       setFilaOffline(queued.queue);
       toast.success(queued.reused ? 'Acao ja estava na fila offline' : 'Acao salva offline para sincronizar');
-      setEntregaAtual(null);
+      if (!options.keepOpen) setEntregaAtual(null);
+      else setEntregaAtual({ ...entrega, ...stampedPatch });
       return;
     }
-    await base44.entities.Entrega.update(entrega.id, patch);
+    await updateInContext('Entrega', entrega.id, stampedPatch);
+    await auditMotorista({
+      acao: acaoAudit || 'Motorista.acao',
+      entregaId: entrega.id,
+      detalhes: { status: stampedPatch.status, idempotency_key: stampedPatch.idempotency_key },
+    });
     toast.success(sucessoMsg);
-    setEntregaAtual(null);
+    if (!options.keepOpen) setEntregaAtual(null);
+    else setEntregaAtual({ ...entrega, ...stampedPatch });
     refetch();
   };
 
@@ -180,16 +265,21 @@ export default function AppEntregasMotorista() {
         setLocalizacao(novaLocalizacao);
 
         // Enviar posição para servidor
-        if (entregaAtual) {
+        if (entregaAtual && contextoValido) {
           base44.entities.PosicaoVeiculo.create({
+            group_id: groupId,
+            grupo_id: groupId,
+            empresa_id: entregaAtual.empresa_id || empresaId,
             entrega_id: entregaAtual.id,
             romaneio_id: entregaAtual.romaneio_id,
-            motorista_id: user.id,
+            motorista_id: entregaAtual.motorista_id || user.id,
             motorista_nome: user.full_name,
             placa: entregaAtual.placa,
             ...novaLocalizacao,
             bateria_nivel: 0,
             conectividade: navigator.connection?.effectiveType || '4G'
+          }).catch((error) => {
+            console.error('[Motorista] Falha ao gravar PosicaoVeiculo.', error);
           });
         }
       },
@@ -209,30 +299,12 @@ export default function AppEntregasMotorista() {
 
   const iniciarEntrega = async (entrega) => {
     try {
-      const patch = buildInicioPatch({ entrega, user, localizacao });
-      if (typeof navigator !== 'undefined' && !navigator.onLine) {
-        const queued = enqueueMotoristaAction({
-          tipo: 'inicio',
-          entrega_id: entrega.id,
-          patch,
-          idempotency_key: patch.idempotency_key,
-        });
-        setFilaOffline(queued.queue);
-        toast.success('Inicio salvo offline');
-      } else {
-        await base44.entities.Entrega.update(entrega.id, patch);
+      if (!contextoValido || !canAgirEntrega) {
+        await auditMotorista({ acao: 'Motorista.inicio.bloqueado', sucesso: false, motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada', entregaId: entrega?.id });
+        throw new Error('Contexto ou permissao obrigatoria para iniciar entrega.');
       }
-      setEntregaAtual({ ...entrega, ...patch });
-      try { await base44.entities.AuditLog.create({
-        usuario: user?.full_name || user?.email || 'Motorista',
-        usuario_id: user?.id,
-        empresa_id: entrega.empresa_id || null,
-        group_id: entrega.group_id || null,
-        acao: 'Edição', modulo: 'Expedição', tipo_auditoria: 'ui', entidade: 'Entrega', registro_id: entrega.id,
-        descricao: 'Entrega iniciada no app do motorista', data_hora: new Date().toISOString()
-      }); } catch (error) { console.error('[Auditoria] Falha ao registrar inicio da entrega.', error); }
-      refetch();
-      toast.success('🚚 Entrega iniciada!');
+      const patch = buildInicioPatch({ entrega, user, localizacao, motoristas: motoristasCadastro });
+      await aplicarPatchEntrega(entrega, patch, '🚚 Entrega iniciada!', 'Motorista.inicio', { keepOpen: true });
     } catch (error) {
       toast.error(error?.message || 'Nao foi possivel iniciar a entrega');
     }
@@ -240,11 +312,8 @@ export default function AppEntregasMotorista() {
 
   const registrarChegada = async () => {
     try {
-      const patch = buildChegadaPatch({ entrega: entregaAtual, user, localizacao });
-      await base44.entities.Entrega.update(entregaAtual.id, patch);
-      setEntregaAtual({ ...entregaAtual, ...patch });
-      toast.success('📍 Chegada registrada');
-      refetch();
+      const patch = buildChegadaPatch({ entrega: entregaAtual, user, localizacao, motoristas: motoristasCadastro });
+      await aplicarPatchEntrega(entregaAtual, patch, '📍 Chegada registrada', 'Motorista.chegada', { keepOpen: true });
     } catch (error) {
       toast.error(error?.message || 'Falha ao registrar chegada');
     }
@@ -261,11 +330,30 @@ export default function AppEntregasMotorista() {
       if (!file) return;
 
       try {
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            setFotoComprovante(String(reader.result || ''));
+            toast.success('Foto salva offline (sera enviada no sync)');
+          };
+          reader.onerror = () => toast.error('Falha ao ler foto offline');
+          reader.readAsDataURL(file);
+          return;
+        }
         const { file_url } = await base44.integrations.Core.UploadFile({ file });
         setFotoComprovante(file_url);
         toast.success('✅ Foto capturada!');
       } catch (error) {
-        toast.error('Erro ao fazer upload da foto');
+        try {
+          const reader = new FileReader();
+          reader.onload = () => {
+            setFotoComprovante(String(reader.result || ''));
+            toast.success('Upload falhou; foto guardada localmente');
+          };
+          reader.readAsDataURL(file);
+        } catch {
+          toast.error('Erro ao fazer upload da foto');
+        }
       }
     };
 
@@ -290,6 +378,7 @@ export default function AppEntregasMotorista() {
         localizacao,
         parcial: entregaParcial,
         quantidade_entregue: qtdParcial,
+        motoristas: motoristasCadastro,
         comprovante: {
           foto_comprovante: fotoComprovante,
           assinatura_digital: assinatura,
@@ -301,6 +390,7 @@ export default function AppEntregasMotorista() {
         entregaAtual,
         patch,
         entregaParcial ? 'Entrega parcial confirmada' : '✅ Entrega confirmada com sucesso!',
+        entregaParcial ? 'Motorista.parcial' : 'Motorista.confirmacao',
       );
       setFotoComprovante(null);
       setAssinaturaBase64(null);
@@ -308,15 +398,6 @@ export default function AppEntregasMotorista() {
       setDocumentoRecebedor('');
       setEntregaParcial(false);
       setQtdParcial(0);
-      try { await base44.entities.AuditLog.create({
-        usuario: user?.full_name || user?.email || 'Motorista',
-        usuario_id: user?.id,
-        empresa_id: entregaAtual?.empresa_id || null,
-        group_id: entregaAtual?.group_id || null,
-        acao: 'Edição', modulo: 'Expedição', tipo_auditoria: 'ui', entidade: 'Entrega', registro_id: entregaAtual?.id,
-        descricao: entregaParcial ? 'Entrega parcial no app do motorista' : 'Entrega confirmada (foto + assinatura) no app do motorista',
-        data_hora: new Date().toISOString()
-      }); } catch (error) { console.error('[Auditoria] Falha ao registrar confirmacao da entrega.', error); }
     } catch (error) {
       toast.error(error?.message || 'Falha ao confirmar entrega');
     }
@@ -330,12 +411,28 @@ export default function AppEntregasMotorista() {
         localizacao,
         motivo,
         foto: fotoComprovante,
+        motoristas: motoristasCadastro,
       });
-      await aplicarPatchEntrega(entregaAtual, patch, '❌ Ocorrência registrada');
+      await aplicarPatchEntrega(entregaAtual, patch, '❌ Ocorrência registrada', 'Motorista.ocorrencia');
     } catch (error) {
       toast.error(error?.message || 'Falha ao registrar ocorrencia');
     }
   };
+
+  if (!contextoValido || !canUsarApp) {
+    return (
+      <div className="min-h-screen bg-slate-50 p-4 flex items-center justify-center" data-context-required="true">
+        <Card className="w-full max-w-md border-amber-200 bg-amber-50">
+          <CardContent className="p-6 space-y-2 text-sm text-amber-950">
+            <p className="font-semibold">App Motorista bloqueado</p>
+            <p>Selecione grupo e empresa e garanta permissao de entrega/motorista.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const podeConfirmar = Boolean(nomeRecebedor && (fotoComprovante || assinaturaBase64 || documentoRecebedor));
 
   if (!entregaAtual) {
     return (
@@ -667,8 +764,10 @@ export default function AppEntregasMotorista() {
 
         <Button
           onClick={confirmarEntrega}
-          disabled={!fotoComprovante || !nomeRecebedor}
+          disabled={!podeConfirmar || !canAgirEntrega}
           className="w-full bg-green-600 hover:bg-green-700 h-14 text-lg"
+          data-permission="Expedicao.Entrega.entregar"
+          data-context-required="true"
         >
           <CheckCircle className="w-5 h-5 mr-2" />
           {entregaParcial ? 'Confirmar Entrega Parcial' : 'Confirmar Entrega'}
@@ -720,8 +819,9 @@ export default function AppEntregasMotorista() {
                     motivo: reversaMotivo,
                     quantidade: reversaQtd,
                     valor: reversaValor,
+                    motoristas: motoristasCadastro,
                   });
-                  await aplicarPatchEntrega(entregaAtual, patch, '🔁 Logística reversa registrada');
+                  await aplicarPatchEntrega(entregaAtual, patch, '🔁 Logística reversa registrada', 'Motorista.reversa');
                 } catch (error) {
                   toast.error(error?.message || 'Falha ao registrar reversa');
                 }

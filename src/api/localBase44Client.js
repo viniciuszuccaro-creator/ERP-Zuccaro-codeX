@@ -30,6 +30,7 @@ import { applyComprasCreate, assertOrdemCompraOnUpdate, ocStatusPermissionAction
 import { applyCrmCreate, assertOportunidadeOnUpdate, oportunidadeStatusPermissionActions } from "@/components/lib/crmOportunidadePolicy";
 import { applyRoteirizacaoCreate } from "@/components/lib/roteirizacaoPolicy";
 import { applyExpedicaoCreate, assertEntregaOnDelete, assertEntregaOnUpdate, entregaStatusPermissionActions, syncEntregaNumero } from "@/components/lib/expedicaoEntregaPolicy";
+import { assertEntregaMotoristaOnUpdate, isMotoristaIdempotencyKey } from "@/components/lib/appMotoristaPolicy";
 import { applyAtendimentoCreate } from "@/components/lib/atendimentoConversaPolicy";
 import { applyPortalReadScope, resolvePortalClienteId } from "@/components/lib/portalClientePolicy";
 import { applySiteOrigemOnCreate } from "@/components/lib/siteOrigemPolicy";
@@ -1650,6 +1651,16 @@ const createEntityApi = (entityName) => ({
       assertLocalPermissionAny(entityName, entregaStatusPermissionActions(decision.action), id);
       nextPayload = decision.record;
       if (before.empresa_id) nextPayload.empresa_id = before.empresa_id;
+      if (isMotoristaIdempotencyKey(payload.idempotency_key) || isMotoristaIdempotencyKey(nextPayload.idempotency_key)) {
+        const motoristas = getEntityStore(db, 'Motorista');
+        nextPayload = assertEntregaMotoristaOnUpdate({
+          before,
+          patch: nextPayload,
+          user: readUser(),
+          motoristas,
+        });
+        if (before.empresa_id) nextPayload.empresa_id = before.empresa_id;
+      }
     }
     if (entityName === 'OrdemCompra') {
       const decision = assertOrdemCompraOnUpdate({ before, patch: payload });

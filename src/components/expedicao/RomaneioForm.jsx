@@ -38,6 +38,8 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
 
   const [formData, setFormData] = useState({
     motorista: "",
+    motorista_id: "",
+    motorista_email: "",
     motorista_telefone: "",
     veiculo: "",
     placa: "",
@@ -54,6 +56,12 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
     observacoes: ""
   });
   const checklistCompleto = checklist.documentos_ok && checklist.veiculo_ok && checklist.carga_conferida && checklist.combustivel_ok;
+
+  const { data: motoristas = [] } = useQuery({
+    queryKey: ['motoristas-romaneio', effectiveEmpresaId, effectiveGroupId],
+    queryFn: () => filterInContext('Motorista', {}, 'nome_completo', 200),
+    enabled: (isOpen || windowMode) && contextoValido && canGerarRomaneio,
+  });
 
   const { data: entregas = [] } = useQuery({
     queryKey: ['entregas-para-romaneio', effectiveEmpresaId, effectiveGroupId],
@@ -145,7 +153,7 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
         throw new Error("A entrega selecionada nao pertence ao contexto ativo.");
       }
 
-      if (!String(formData.motorista || '').trim()) {
+      if (!String(formData.motorista_id || '').trim() && !String(formData.motorista || '').trim()) {
         throw new Error("Informe o motorista.");
       }
       if (!String(formData.veiculo || '').trim() && !String(formData.placa || '').trim()) {
@@ -159,14 +167,21 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
       const groupId = effectiveGroupId || entregasSelecionadas[0].group_id || null;
       const selectedEmpresaId = effectiveEmpresaId || entregasSelecionadas[0].empresa_id || null;
 
+      const motoristaCadastro = motoristas.find((m) => String(m.id) === String(formData.motorista_id));
+      const motoristaNome = motoristaCadastro?.nome_completo || motoristaCadastro?.nome || formData.motorista;
+      const motoristaEmail = motoristaCadastro?.email || formData.motorista_email || '';
+      const motoristaTelefone = motoristaCadastro?.whatsapp || motoristaCadastro?.telefone || formData.motorista_telefone;
+
       const romaneio = await createInContext("Romaneio", {
         group_id: groupId,
         grupo_id: groupId,
         empresa_id: selectedEmpresaId,
         data_romaneio: now.split('T')[0],
         data_saida: now,
-        motorista: formData.motorista,
-        motorista_telefone: formData.motorista_telefone,
+        motorista_id: formData.motorista_id || motoristaCadastro?.id || null,
+        motorista: motoristaNome,
+        motorista_email: motoristaEmail,
+        motorista_telefone: motoristaTelefone,
         veiculo: formData.veiculo,
         placa: formData.placa,
         tipo_veiculo: formData.tipo_veiculo,
@@ -182,16 +197,21 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
         entregas_frustradas: 0
       });
 
-      for (const entrega of entregasSelecionadas) {
+      for (let idx = 0; idx < entregasSelecionadas.length; idx += 1) {
+        const entrega = entregasSelecionadas[idx];
         await updateInContext("Entrega", entrega.id, {
           group_id: groupId,
           grupo_id: groupId,
           empresa_id: selectedEmpresaId,
           romaneio_id: romaneio.id,
-          motorista: formData.motorista,
-          motorista_telefone: formData.motorista_telefone,
+          motorista_id: formData.motorista_id || motoristaCadastro?.id || null,
+          motorista: motoristaNome,
+          motorista_email: motoristaEmail,
+          motorista_telefone: motoristaTelefone,
+          motorista_usuario_id: motoristaCadastro?.usuario_id || null,
           veiculo: formData.veiculo,
           placa: formData.placa,
+          sequencia_rota: idx + 1,
           status: "Saiu para Entrega",
           data_saida: now,
           historico_status: [
@@ -275,12 +295,37 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Motorista *</Label>
-                  <Input
-                    value={formData.motorista}
-                    onChange={(e) => setFormData({ ...formData, motorista: e.target.value })}
+                  <select
+                    value={formData.motorista_id}
+                    onChange={(e) => {
+                      const selected = motoristas.find((m) => String(m.id) === String(e.target.value));
+                      setFormData({
+                        ...formData,
+                        motorista_id: e.target.value,
+                        motorista: selected?.nome_completo || selected?.nome || '',
+                        motorista_email: selected?.email || '',
+                        motorista_telefone: selected?.whatsapp || selected?.telefone || formData.motorista_telefone,
+                      });
+                    }}
                     required
-                    className="mt-2"
-                  />
+                    className="mt-2 w-full border rounded-md px-3 py-2 text-sm"
+                    data-permission="Expedicao.Romaneios.criar"
+                    data-context-required="true"
+                  >
+                    <option value="">Selecione o motorista...</option>
+                    {motoristas.map((m) => (
+                      <option key={m.id} value={m.id}>{m.nome_completo || m.nome || m.id}</option>
+                    ))}
+                  </select>
+                  {!motoristas.length ? (
+                    <Input
+                      value={formData.motorista}
+                      onChange={(e) => setFormData({ ...formData, motorista: e.target.value })}
+                      required
+                      className="mt-2"
+                      placeholder="Nome do motorista (cadastro vazio)"
+                    />
+                  ) : null}
                 </div>
                 <div>
                   <Label>Telefone Motorista</Label>

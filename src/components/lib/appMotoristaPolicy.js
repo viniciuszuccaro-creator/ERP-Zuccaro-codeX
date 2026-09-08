@@ -19,14 +19,40 @@ export const isStatusAtivoMotorista = (status) => {
     || statusOf({ status: value }).includes('saiu');
 };
 
-export const entregaAtribuidaAoMotoristaLocal = (entrega = {}, user = {}) => {
-  if (!entrega?.id || !user) return false;
-  if (firstText(entrega.motorista_id) && firstText(entrega.motorista_id) === firstText(user.id)) return true;
-  const motoristaNome = firstText(entrega.motorista, entrega.motorista_nome).toLowerCase();
-  const userNome = firstText(user.full_name, user.email).toLowerCase();
-  if (motoristaNome && userNome && motoristaNome === userNome) return true;
+export const resolveMotoristaIdsForUser = (user = {}, motoristas = []) => {
+  const userId = firstText(user.id, user.usuario_id);
   const email = firstText(user.email).toLowerCase();
-  return Boolean(email && firstText(entrega.motorista_email).toLowerCase() === email);
+  const colaboradorId = firstText(user.colaborador_id);
+  const ids = new Set();
+  if (userId) ids.add(userId);
+  if (firstText(user.motorista_id)) ids.add(firstText(user.motorista_id));
+  for (const motorista of (Array.isArray(motoristas) ? motoristas : [])) {
+    const mid = firstText(motorista.id);
+    if (!mid) continue;
+    if (userId && (firstText(motorista.usuario_id) === userId || mid === userId)) ids.add(mid);
+    if (email && firstText(motorista.email).toLowerCase() === email) ids.add(mid);
+    if (colaboradorId && firstText(motorista.colaborador_id) === colaboradorId) ids.add(mid);
+  }
+  return [...ids].filter(Boolean);
+};
+
+export const entregaAtribuidaAoMotoristaLocal = (entrega = {}, user = {}, motoristas = []) => {
+  if (!entrega?.id || !user) return false;
+  const allowedIds = resolveMotoristaIdsForUser(user, motoristas);
+  const motoristaId = firstText(entrega.motorista_id);
+  if (motoristaId && allowedIds.includes(motoristaId)) return true;
+  if (firstText(entrega.motorista_usuario_id) && firstText(entrega.motorista_usuario_id) === firstText(user.id)) {
+    return true;
+  }
+  const email = firstText(user.email).toLowerCase();
+  if (email && firstText(entrega.motorista_email).toLowerCase() === email) return true;
+  // Legado: nome so quando a entrega nao tem motorista_id
+  if (!motoristaId) {
+    const motoristaNome = firstText(entrega.motorista, entrega.motorista_nome).toLowerCase();
+    const userNome = firstText(user.full_name, user.email).toLowerCase();
+    if (motoristaNome && userNome && motoristaNome === userNome) return true;
+  }
+  return false;
 };
 
 export const entregaAtribuidaAoMotorista = entregaAtribuidaAoMotoristaLocal;
@@ -41,9 +67,9 @@ export const hasProvaEntregaLocal = (record = {}) => {
 
 export const hasProvaEntrega = hasProvaEntregaLocal;
 
-export const filtrarEntregasDoMotorista = (entregas = [], user = {}) => (
+export const filtrarEntregasDoMotorista = (entregas = [], user = {}, motoristas = []) => (
   (Array.isArray(entregas) ? entregas : []).filter((entrega) => (
-    entregaAtribuidaAoMotoristaLocal(entrega, user)
+    entregaAtribuidaAoMotoristaLocal(entrega, user, motoristas)
     && isStatusAtivoMotorista(entrega.status)
   ))
 );
@@ -57,8 +83,8 @@ export const ordenarEntregasRota = (entregas = []) => (
   })
 );
 
-export const proximaParada = (entregas = [], user = {}) => {
-  const ordenadas = ordenarEntregasRota(filtrarEntregasDoMotorista(entregas, user));
+export const proximaParada = (entregas = [], user = {}, motoristas = []) => {
+  const ordenadas = ordenarEntregasRota(filtrarEntregasDoMotorista(entregas, user, motoristas));
   return ordenadas.find((item) => !statusOf(item).includes('entregue') && !statusOf(item).includes('frustr') && !statusOf(item).includes('devolv')) || null;
 };
 
@@ -80,18 +106,18 @@ export const buildHistoricoStatus = (entrega = {}, status, user = {}, localizaca
   },
 ]);
 
-export const assertMotoristaPodeAgir = ({ entrega = {}, user = {} } = {}) => {
+export const assertMotoristaPodeAgir = ({ entrega = {}, user = {}, motoristas = [] } = {}) => {
   if (!firstText(user?.id, user?.email, user?.full_name)) {
     throw new Error('Motorista nao autenticado.');
   }
-  if (!entregaAtribuidaAoMotoristaLocal(entrega, user)) {
+  if (!entregaAtribuidaAoMotoristaLocal(entrega, user, motoristas)) {
     throw new Error('Entrega nao atribuida a este motorista.');
   }
   return true;
 };
 
-export const buildChegadaPatch = ({ entrega = {}, user = {}, localizacao = null } = {}) => {
-  assertMotoristaPodeAgir({ entrega, user });
+export const buildChegadaPatch = ({ entrega = {}, user = {}, localizacao = null, motoristas = [] } = {}) => {
+  assertMotoristaPodeAgir({ entrega, user, motoristas });
   return {
     status: 'Chegada no Cliente',
     data_chegada: new Date().toISOString(),
@@ -108,9 +134,9 @@ export const buildConfirmacaoPatch = ({
   comprovante = {},
   parcial = false,
   quantidade_entregue = null,
+  motoristas = [],
 } = {}) => {
-  assertMotoristaPodeAgir({ entrega, user });
-  const nextComprovante = {
+  assertMotoristaPodeAgir({ entrega, user, motoristas });  const nextComprovante = {
     ...(entrega.comprovante_entrega || {}),
     ...comprovante,
     data_hora_recebimento: new Date().toISOString(),
@@ -158,8 +184,9 @@ export const buildOcorrenciaPatch = ({
   localizacao = null,
   motivo = '',
   foto = null,
+  motoristas = [],
 } = {}) => {
-  assertMotoristaPodeAgir({ entrega, user });
+  assertMotoristaPodeAgir({ entrega, user, motoristas });
   if (!firstText(motivo)) throw new Error('Motivo da ocorrencia obrigatorio.');
   return {
     status: 'Entrega Frustrada',
@@ -182,8 +209,9 @@ export const buildReversaPatch = ({
   motivo = '',
   quantidade = 0,
   valor = 0,
+  motoristas = [],
 } = {}) => {
-  assertMotoristaPodeAgir({ entrega, user });
+  assertMotoristaPodeAgir({ entrega, user, motoristas });
   if (!firstText(motivo)) throw new Error('Motivo da devolucao obrigatorio.');
   if (!(Number(quantidade) > 0) && !(Number(valor) > 0)) {
     throw new Error('Informe quantidade ou valor devolvido.');
@@ -201,8 +229,8 @@ export const buildReversaPatch = ({
   };
 };
 
-export const buildInicioPatch = ({ entrega = {}, user = {}, localizacao = null } = {}) => {
-  assertMotoristaPodeAgir({ entrega, user });
+export const buildInicioPatch = ({ entrega = {}, user = {}, localizacao = null, motoristas = [] } = {}) => {
+  assertMotoristaPodeAgir({ entrega, user, motoristas });
   return {
     status: 'Em Trânsito',
     historico_status: buildHistoricoStatus(entrega, 'Em Trânsito', user, localizacao, 'Entrega iniciada no app do motorista'),
@@ -236,6 +264,9 @@ export const enqueueMotoristaAction = (action = {}, storage = globalThis.localSt
   const nextAction = {
     id: `mq-${Date.now()}-${queue.length + 1}`,
     created_at: new Date().toISOString(),
+    group_id: firstText(action.group_id, action.patch?.group_id) || null,
+    empresa_id: firstText(action.empresa_id, action.patch?.empresa_id) || null,
+    usuario_id: firstText(action.usuario_id) || null,
     ...action,
     idempotency_key: key,
   };
@@ -250,7 +281,9 @@ export const dequeueMotoristaAction = (actionId, storage = globalThis.localStora
   return queue;
 };
 
-export const assertEntregaMotoristaOnUpdate = ({ before = {}, patch = {}, user = null } = {}) => {
+export const isMotoristaIdempotencyKey = (key) => String(key || '').startsWith('motorista|');
+
+export const assertEntregaMotoristaOnUpdate = ({ before = {}, patch = {}, user = null, motoristas = [] } = {}) => {
   const next = {
     ...before,
     ...patch,
@@ -260,16 +293,21 @@ export const assertEntregaMotoristaOnUpdate = ({ before = {}, patch = {}, user =
     throw new Error('Empresa da entrega nao pode ser alterada.');
   }
 
+  if (firstText(patch.idempotency_key) && firstText(before.idempotency_key) === firstText(patch.idempotency_key)) {
+    return before;
+  }
+
   const status = statusOf(next);
   if (user && (
-    status.includes('entregue')
+    isMotoristaIdempotencyKey(patch.idempotency_key)
+    || status.includes('entregue')
     || status.includes('frustr')
     || status.includes('devolv')
     || status.includes('chegada')
     || status.includes('transito')
     || status.includes('parcial')
   )) {
-    assertMotoristaPodeAgir({ entrega: before, user });
+    assertMotoristaPodeAgir({ entrega: before, user, motoristas });
   }
 
   if (status.includes('entregue') && !status.includes('frustr') && !hasProvaEntregaLocal(next)) {

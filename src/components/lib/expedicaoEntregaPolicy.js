@@ -121,6 +121,9 @@ export const assertEntregaOnUpdate = ({ before = {}, patch = {} } = {}) => {
     ? classifyEntregaStatusTransition(before.status, patch.status)
     : 'editar';
 
+  if (firstText(patch.idempotency_key) && firstText(before.idempotency_key) === firstText(patch.idempotency_key)) {
+    return { reuse: before, record: before, action: 'retry' };
+  }
   if (isEntregue(before) || statusOf(before).includes('frustr') || statusOf(before).includes('devolv')) {
     const frozen = ['empresa_id', 'pedido_id', 'qr_code', 'numero_entrega'];
     const frozenHit = frozen.some((field) => {
@@ -183,7 +186,7 @@ export const classifyEntregaStatusTransition = (beforeStatus, nextStatus) => {
   if (!next || before === next) return 'retry';
   if (next.includes('cancel')) return 'cancelar';
   if (next.includes('frustr') || next.includes('ocorr') || next.includes('devolv')) return 'ocorrencia';
-  if (next.includes('entregue') || next.includes('parcial')) return 'entregar';
+  if (next.includes('entregue') || next.includes('parcial') || next.includes('chegada')) return 'entregar';
   if (next.includes('separ') || next.includes('confer') || next.includes('pronto')) return 'conferir';
   if (next.includes('transito') || next.includes('saiu') || next.includes('rota')) return 'expedir';
   return 'editar';
