@@ -11,6 +11,7 @@ import { z } from 'zod';
 import FormWrapper from '@/components/common/FormWrapper';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
+import { base44 } from '@/api/base44Client';
 
 export default function InventarioForm({ windowMode = true }) { // w-full/h-full garantidos no container pai
   const { carimbarContexto, empresaAtual, grupoAtual, contexto, createInContext, updateInContext } = useContextoVisual();
@@ -19,7 +20,7 @@ export default function InventarioForm({ windowMode = true }) { // w-full/h-full
   const [salvando, setSalvando] = useState(false);
   const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id);
   const podeSalvar = canCreate('Estoque', 'Inventário') || canCreate('Estoque', 'Inventario') || canEdit('Estoque', 'Inventário') || canEdit('Estoque', 'Inventario');
-  const podeAprovar = canApprove('Estoque', 'Inventário') || canApprove('Estoque', 'Inventario') || canEdit('Estoque', 'Inventário') || canEdit('Estoque', 'Inventario');
+  const podeAprovar = canApprove('Estoque', 'Inventário') || canApprove('Estoque', 'Inventario');
   const controlesDesabilitados = !contextoValido || !podeSalvar || salvando;
   const grupoContextoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || inv.group_id || null;
 
@@ -45,7 +46,9 @@ export default function InventarioForm({ windowMode = true }) { // w-full/h-full
         sucesso,
         data_hora: new Date().toISOString(),
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error('[InventarioForm] Falha ao auditar inventario', error);
+    }
   };
 
   const schema = z.object({
@@ -65,6 +68,10 @@ export default function InventarioForm({ windowMode = true }) { // w-full/h-full
     if (!podeSalvar) {
       await auditInventario({ acao: 'Inventario.salvar_negado', sucesso: false, motivo: 'Permissao negada para salvar inventario.', dados: { status } });
       return toast.error('Sem permissao para salvar inventario.');
+    }
+    if (status === 'Aprovado' && !podeAprovar) {
+      await auditInventario({ acao: 'Inventario.salvar_negado', sucesso: false, motivo: 'Permissao de aprovar obrigatoria.', dados: { status } });
+      return toast.error('Sem permissao para aprovar inventario.');
     }
     if (statusSensivel && options.confirmar !== false) {
       const confirmado = window.confirm(`Confirma alterar o inventario para "${status}"? Esta acao sera auditada.`);
@@ -118,7 +125,28 @@ export default function InventarioForm({ windowMode = true }) { // w-full/h-full
       return toast.error('Salve o inventario antes de aprovar');
     }
     await salvar('Aprovado');
-    toast.info('Ajustes serao aplicados automaticamente');
+    try {
+      const res = await base44.functions.invoke('applyInventoryAdjustments', {
+        inventario_id: inv.id,
+        data: { id: inv.id, status: 'Aprovado' },
+      });
+      if (res?.data?.error) throw new Error(res.data.error);
+      await auditInventario({
+        acao: 'Inventario.ajustes_aplicados',
+        sucesso: true,
+        motivo: 'Ajustes de inventario aplicados apos aprovacao.',
+        dados: { registro_id: inv.id, status: 'Aprovado', movimentos_count: res?.data?.movimentos_count },
+      });
+      toast.success(`Ajustes aplicados (${res?.data?.movimentos_count || 0} movimentos)`);
+    } catch (error) {
+      await auditInventario({
+        acao: 'Inventario.ajustes_falha',
+        sucesso: false,
+        motivo: error?.message || 'Falha ao aplicar ajustes',
+        dados: { registro_id: inv.id, status: 'Aprovado' },
+      });
+      toast.error(error?.message || 'Falha ao aplicar ajustes do inventario');
+    }
   };
 
   return (
@@ -164,7 +192,17 @@ export default function InventarioForm({ windowMode = true }) { // w-full/h-full
           </div>
           <div>
             <label className="text-xs text-slate-600">Status</label>
-            <Select value={inv.status} disabled={controlesDesabilitados} onValueChange={(v)=>setInv({ ...inv, status: v })}>
+            <Select
+              value={inv.status}
+              disabled={controlesDesabilitados}
+              onValueChange={(v) => {
+                if (v === 'Aprovado' && !podeAprovar) {
+                  toast.error('Sem permissao para aprovar inventario.');
+                  return;
+                }
+                setInv({ ...inv, status: v });
+              }}
+            >
               <SelectTrigger
                 data-action="Estoque.Inventario.status"
                 data-permission="Estoque.Inventario.editar"
@@ -174,7 +212,7 @@ export default function InventarioForm({ windowMode = true }) { // w-full/h-full
                 <SelectItem value="Aberto">Aberto</SelectItem>
                 <SelectItem value="Em Contagem">Em Contagem</SelectItem>
                 <SelectItem value="Em Aprovação">Em Aprovação</SelectItem>
-                <SelectItem value="Aprovado">Aprovado</SelectItem>
+                {podeAprovar && <SelectItem value="Aprovado">Aprovado</SelectItem>}
                 <SelectItem value="Concluído">Concluído</SelectItem>
                 <SelectItem value="Cancelado">Cancelado</SelectItem>
               </SelectContent>

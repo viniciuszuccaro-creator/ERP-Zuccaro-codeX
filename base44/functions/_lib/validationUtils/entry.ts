@@ -1,4 +1,4 @@
-export function ensureEventType(event, expectedType) {
+﻿export function ensureEventType(event, expectedType) {
   return event?.type === expectedType;
 }
 
@@ -14,7 +14,8 @@ export function resolveEntityIdFromPayload(payload, keys = []) {
 }
 
 export function isApprovedStatus(data, field = 'status', approved = 'Aprovado') {
-  if (!data) return true;
+  if (!data || typeof data !== 'object') return false;
   const s = data?.[field];
-  return !s || s === approved;
+  if (!s) return false;
+  return String(s).trim().toLowerCase() === String(approved).trim().toLowerCase();
 }

@@ -54,20 +54,36 @@ export const resolveSignedQuantity = (record = {}) => {
   const qty = toQty(record.quantidade);
   if (qty < 0) return qty;
   const tipo = normalizeTipoMovimento(record);
+  if (!tipo) {
+    const error = new Error('Tipo de movimentacao obrigatorio.');
+    error.code = 'ESTOQUE_TIPO_OBRIGATORIO';
+    throw error;
+  }
   if (SET_TIPOS.has(tipo)) return null;
   if (tipo === 'liberacao_reserva' || tipo === 'reserva') return 0;
   if (tipo === 'transferencia' || tipo === 'transferencia_entrada') return qty;
   if (tipo === 'transferencia_saida') return -qty;
   if (OUT_TIPOS.has(tipo)) return -qty;
-  if (IN_TIPOS.has(tipo) || !tipo) return qty;
-  return qty;
+  if (IN_TIPOS.has(tipo)) return qty;
+  const error = new Error(`Tipo de movimentacao nao suportado: ${tipo}`);
+  error.code = 'ESTOQUE_TIPO_INVALIDO';
+  throw error;
 };
 
-export const configAllowsNegativeStock = (configs = []) => (Array.isArray(configs) ? configs : []).some((item) => {
-  if (String(item?.chave || '') !== 'estoque_permite_saldo_negativo') return false;
-  const raw = String(item.valor ?? item.valor_texto ?? item.valor_booleano ?? '').trim().toLowerCase();
-  return item.valor_booleano === true || raw === '1' || raw === 'true' || raw === 'sim';
-});
+export const configAllowsNegativeStock = (configs = [], { groupId = null, empresaId = null } = {}) => (
+  (Array.isArray(configs) ? configs : []).some((item) => {
+    if (String(item?.chave || '') !== 'estoque_permite_saldo_negativo') return false;
+    const cfgGroup = firstText(item.group_id, item.grupo_id);
+    const cfgEmpresa = firstText(item.empresa_id);
+    // Fail-closed: config global sem escopo nao libera saldo negativo
+    if (!cfgGroup && !cfgEmpresa) return false;
+    if (groupId && cfgGroup && cfgGroup !== String(groupId)) return false;
+    if (empresaId && cfgEmpresa && cfgEmpresa !== String(empresaId)) return false;
+    if (groupId && !cfgGroup && cfgEmpresa && empresaId && cfgEmpresa !== String(empresaId)) return false;
+    const raw = String(item.valor ?? item.valor_texto ?? item.valor_booleano ?? '').trim().toLowerCase();
+    return item.valor_booleano === true || raw === '1' || raw === 'true' || raw === 'sim';
+  })
+);
 
 export const resolveNextEstoque = ({ produto = {}, record = {}, permiteNegativo = false } = {}) => {
   const current = toQty(produto.estoque_atual);
@@ -114,6 +130,15 @@ export const assertMovimentacaoEstoque = ({ record = {}, produto = null, movemen
     const error = new Error('Movimentacao em empresa errada.');
     error.code = 'ESTOQUE_EMPRESA_ERRADA';
     throw error;
+  }
+  if (!produtoEmpresa) {
+    const produtoGroup = firstText(produto.group_id, produto.grupo_id);
+    const movimentoGroup = firstText(record.group_id, record.grupo_id);
+    if (!produtoGroup || !movimentoGroup || produtoGroup !== movimentoGroup) {
+      const error = new Error('Produto sem empresa proprietaria exige group_id compativel.');
+      error.code = 'ESTOQUE_EMPRESA_ERRADA';
+      throw error;
+    }
   }
 
   const qty = toQty(record.quantidade);

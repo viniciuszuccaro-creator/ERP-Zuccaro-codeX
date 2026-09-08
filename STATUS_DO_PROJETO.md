@@ -1,3 +1,15 @@
+### P0.7 - Gate 7 Estoque residual: tipo, alcada e transferencia
+- Objetivo: cumprir residual do Gate 7 / P0 Estoque sem EstoqueV2.
+- Diagnostico: MovimentacoesTab perdia `tipo_movimento` (saida virava entrada); inventário aprovava com `editar`; `applyInventoryAdjustments` usava `editar` e `isApprovedStatus` fail-open; transferencia usava tipo ambiguo e OR de criar; config de saldo negativo era global.
+- Causa raiz: wiring UI/backend fora da policy e alçada fraca.
+- Arquivos alterados: `estoqueMovimentoPolicy.js`, `localBase44Client.js`, `MovimentacoesTab.jsx`, `InventarioForm.jsx`, `TransferenciaEntreEmpresasForm.jsx`, `ControleEstoqueCompleto.jsx`, `applyInventoryAdjustments`, `validationUtils`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: `assertMovimentacaoEstoque`, `applyLocalEstoqueMovimento`, handler de inventário existente.
+- Alteracoes: tipo obrigatorio; inventário so `aprovar` + invoke de ajustes; transferencia saida/entrada com falha reportada; RBAC Estoque no client local; config negativa por escopo.
+- Multiempresa/RBAC: movimento exige empresa; inventário/ajuste com alçada; transferencia sem criar global.
+- Pendencia: saldo por local; estoque fisico multiempresa por produto; KPIs de movimentacao limit 50.
+- Validacoes: `node --test tests/estoque-movimento-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 8 Financeiro (baixa, conciliação, CR/CP).
+
 ### P0.6 - Gate 6 Comercial residual: estoque unico, credito e aprovacao
 - Objetivo: cumprir residual do Gate 6 / P0 Comercial sem ComercialV2.
 - Diagnostico: saida de estoque na aprovacao/save/fechamento e de novo no faturamento; Central aprovava com `editar`; credito liberava cliente ausente e limite zero; `applyOrderStockMovements` fazia saida com clamp.

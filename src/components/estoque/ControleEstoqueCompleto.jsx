@@ -42,11 +42,11 @@ export default function ControleEstoqueCompleto({ empresaId }) {
   const queryClient = useQueryClient();
   const { user } = useUser();
   const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
-  const { canCreate, canEdit } = usePermissions();
+  const { canEdit, canApprove } = usePermissions();
   const empresaOperacionalId = empresaId || empresaAtual?.id || null;
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const contextoValido = Boolean(empresaOperacionalId || groupId);
-  const canAjustarInventario = canCreate('Estoque', 'Inventario') || canCreate('Estoque', 'InventÃ¡rio') || canEdit('Estoque', 'Inventario') || canEdit('Estoque', 'InventÃ¡rio');
+  const canAjustarInventario = canApprove('Estoque', 'Inventario') || canApprove('Estoque', 'Inventário');
   const canBloquearLote = canEdit('Estoque', 'Lotes') || canEdit('Estoque', 'Lotes e Validade');
 
   const auditEstoqueControle = async (acao, detalhes = {}, sucesso = true) => {
@@ -66,7 +66,9 @@ export default function ControleEstoqueCompleto({ empresaId }) {
         sucesso,
         data_hora: new Date().toISOString(),
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error('[ControleEstoqueCompleto] Falha ao auditar', error);
+    }
   };
 
   const { data: produtos = [] } = useQuery({
@@ -132,9 +134,10 @@ export default function ControleEstoqueCompleto({ empresaId }) {
 
       const diferenca = quantidadeContada - (produto.estoque_atual || 0);
 
-      // Criar movimentação de ajuste
+      // Criar movimentação de ajuste (policy local ja atualiza saldo do produto)
       await createInContext('MovimentacaoEstoque', {
         empresa_id: empresaOperacionalId,
+        group_id: groupId,
         tipo_movimento: "ajuste",
         origem_movimento: "inventario",
         produto_id: produtoId,
@@ -150,11 +153,6 @@ export default function ControleEstoqueCompleto({ empresaId }) {
         motivo: `Inventário rotativo - ${observacao || 'Contagem física'}`,
         responsavel: "Sistema",
         observacoes: `Diferença: ${diferenca > 0 ? '+' : ''}${diferenca}`
-      });
-
-      // Atualizar produto
-      await updateInContext('Produto', produtoId, {
-        estoque_atual: quantidadeContada
       });
 
       return { produto, diferenca };

@@ -84,8 +84,13 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
       if (!Number.isFinite(quantidade) || quantidade <= 0) {
         throw new Error("Quantidade da movimentacao deve ser maior que zero.");
       }
+      const tipoMovimento = data.tipo_movimento || data.tipo_movimentacao;
+      if (!tipoMovimento) {
+        throw new Error("Tipo de movimentacao obrigatorio.");
+      }
       const movimentacaoData = {
-        tipo_movimentacao: data.tipo_movimentacao,
+        tipo_movimento: tipoMovimento,
+        tipo_movimentacao: tipoMovimento,
         empresa_id: data.empresa_id || empresaAtual?.id,
         produto_id: data.produto_id,
         produto_descricao: data.produto_nome,
@@ -121,7 +126,9 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
             data_hora: new Date().toISOString(), sucesso: true
           });
         }
-      } catch (_) {}
+      } catch (error) {
+        console.error('[MovimentacoesTab] Falha ao auditar movimentacao', error);
+      }
     },
   });
 

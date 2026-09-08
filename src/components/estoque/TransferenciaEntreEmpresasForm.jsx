@@ -23,11 +23,11 @@ export default function TransferenciaEntreEmpresasForm({
   windowMode = false
 }) {
   const queryClient = useQueryClient();
-  const { canCreate, hasPermission } = usePermissions();
+  const { canCreate } = usePermissions();
   const { empresaAtual, grupoAtual, contexto, createInContext } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const contextoValido = Boolean(groupId || empresasDoGrupo.length > 0);
-  const canCreateTransferencia = canCreate('Estoque', 'Transferencias') || hasPermission('Estoque', null, 'criar');
+  const canCreateTransferencia = canCreate('Estoque', 'Transferencias');
 
   const auditTransferencia = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
@@ -84,30 +84,47 @@ export default function TransferenciaEntreEmpresasForm({
         gerar_cobranca_interna: data.gerar_financeiro
       });
 
-      // Criar movimentações de estoque
+      // Criar movimentações de estoque (saida origem + entrada destino)
       await createInContext('MovimentacaoEstoque', {
         empresa_id: data.empresa_origem_id,
         group_id: empresaOrigem.group_id,
         produto_id: data.produto_id,
-        tipo_movimento: "transferencia",
+        tipo_movimento: "transferencia_saida",
         origem_movimento: "transferencia",
         origem_documento_id: transferencia.id,
-        quantidade: -data.quantidade,
+        quantidade: data.quantidade,
+        documento: transferencia.id,
         observacoes: `Transferência para ${empresaDestino.nome_fantasia}`,
         data_movimentacao: new Date().toISOString()
       });
 
-      await createInContext('MovimentacaoEstoque', {
-        empresa_id: data.empresa_destino_id,
-        group_id: empresaDestino.group_id,
-        produto_id: data.produto_id,
-        tipo_movimento: "transferencia",
-        origem_movimento: "transferencia",
-        origem_documento_id: transferencia.id,
-        quantidade: data.quantidade,
-        observacoes: `Transferência de ${empresaOrigem.nome_fantasia}`,
-        data_movimentacao: new Date().toISOString()
-      });
+      try {
+        await createInContext('MovimentacaoEstoque', {
+          empresa_id: data.empresa_destino_id,
+          group_id: empresaDestino.group_id,
+          produto_id: data.produto_id,
+          tipo_movimento: "transferencia_entrada",
+          origem_movimento: "transferencia",
+          origem_documento_id: transferencia.id,
+          quantidade: data.quantidade,
+          documento: transferencia.id,
+          observacoes: `Transferência de ${empresaOrigem.nome_fantasia}`,
+          data_movimentacao: new Date().toISOString()
+        });
+      } catch (destError) {
+        await auditTransferencia({
+          acao: 'TransferenciaEntreEmpresas.destino_falhou',
+          sucesso: false,
+          motivo: destError?.message || 'Falha na perna de destino',
+          dados: {
+            transferencia_id: transferencia?.id,
+            empresa_origem_id: data.empresa_origem_id,
+            empresa_destino_id: data.empresa_destino_id,
+            produto_id: data.produto_id,
+          },
+        });
+        throw new Error(`Transferencia incompleta: origem ok, destino falhou (${destError?.message || destError})`);
+      }
 
       await auditTransferencia({
         acao: 'TransferenciaEntreEmpresas.confirmada',

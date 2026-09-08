@@ -891,6 +891,9 @@ const ENTITY_PERMISSION_SCOPE = {
   Representante: { module: 'Cadastros', section: 'Pessoas' },
   ContatoB2B: { module: 'Cadastros', section: 'Pessoas' },
   Produto: { module: 'Estoque', section: 'Produtos' },
+  MovimentacaoEstoque: { module: 'Estoque', section: 'Movimentacoes' },
+  Inventario: { module: 'Estoque', section: 'Inventario' },
+  TransferenciaFilial: { module: 'Estoque', section: 'Transferencias' },
   GrupoProduto: { module: 'Cadastros', section: 'Produtos' },
   Marca: { module: 'Cadastros', section: 'Produtos' },
   FormaPagamento: { module: 'Cadastros', section: 'Financeiro' },
@@ -1034,7 +1037,12 @@ const applyLocalEstoqueMovimento = (db, entityName, record) => {
   const produto = produtoId
     ? getEntityStore(db, 'Produto').find((item) => String(item.id) === produtoId)
     : null;
-  const permiteNegativo = configAllowsNegativeStock(getEntityStore(db, 'ConfiguracaoSistema'));
+  const groupId = record.group_id || record.grupo_id || produto?.group_id || produto?.grupo_id || null;
+  const empresaId = record.empresa_id || null;
+  const permiteNegativo = configAllowsNegativeStock(getEntityStore(db, 'ConfiguracaoSistema'), {
+    groupId,
+    empresaId,
+  });
   return assertMovimentacaoEstoque({
     record,
     produto,
