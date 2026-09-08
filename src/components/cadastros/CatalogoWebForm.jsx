@@ -38,10 +38,15 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
       alert('Sem permissão para salvar catálogo web.');
       return;
     }
+    const empresaId = empresaAtual?.id || formData.empresa_id || dadosIniciais?.empresa_id;
+    if (!empresaId) {
+      alert('Empresa obrigatoria para catalogo do site.');
+      return;
+    }
     onSubmit({
       ...syncFlagsCatalogoProduto(formData),
       group_id: groupId || formData.group_id,
-      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
+      empresa_id: empresaId,
       nome: formData.nome_catalogo || formData.nome || ''
     });
   };

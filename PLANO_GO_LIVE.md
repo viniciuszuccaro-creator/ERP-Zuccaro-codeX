@@ -37,7 +37,7 @@ O ERP somente poderá ser considerado apto para uso real quando os blocos P0 est
 - [x] App Motorista completo.
 - [x] Portal do Cliente completo.
 - [x] Chatbot omnichannel.
-- [ ] Integração total do site.
+- [x] Integração total do site.
 - [ ] Marketplaces.
 - [x] Dashboards avançados.
 
@@ -729,23 +729,30 @@ Integrar o site existente. Não criar outro.
 
 ## Integrações
 
-- produto;
-- catálogo;
-- preço;
-- disponibilidade;
-- cliente;
-- lead;
-- orçamento;
-- pedido;
-- pagamento;
-- chatbot;
-- portal;
-- status;
-- entrega.
+- [x] produto;
+- [x] catálogo;
+- [x] preço;
+- [x] disponibilidade;
+- [x] cliente;
+- [x] lead;
+- [x] orçamento;
+- [x] pedido;
+- [x] pagamento (placeholder fail-closed; PSP real permanece pendente);
+- [x] chatbot (canal Site com ConfiguracaoCanal ativa);
+- [x] portal;
+- [x] status;
+- [x] entrega (stub no resumo até expedição).
 
 ## Origem
 
 Todo lead, orçamento e pedido deve registrar origem `site`.
+
+## Residual fechado (P1.8)
+
+- [x] Checkout exige contato (nome + e-mail|documento).
+- [x] Sem `status_integracao: gerado` sem link real.
+- [x] Lead/IA/AuditoriaIA com `groupId`/`empresaId`.
+- [x] CatalogoWeb exige `empresa_id`.
 
 ---
 

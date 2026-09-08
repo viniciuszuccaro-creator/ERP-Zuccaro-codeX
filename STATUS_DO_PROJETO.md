@@ -1,3 +1,15 @@
+﻿### P1.8 - Site proprio: checkout fail-closed, pagamento honesto e canal Site
+- Objetivo: fechar residual Gate 14 / P1 Integracao total do site no `OrcamentoSite` existente (sem SiteV2).
+- Diagnostico: checkout sem contato; ContaReceber com status `gerado` sem link; auditoria engolida; lead/IA sem empresa; CatalogoWeb em grupo sem `empresa_id`; widget Site so via CRM.
+- Causa raiz: guards de contato/pagamento/contexto incompletos apos o lote de catalogo/estoque.
+- Arquivos alterados: `siteOrigemPolicy.js`, `OrcamentoSite.jsx`, `OrcamentoAutomaticoIA.jsx`, `CatalogoWebForm.jsx`, `ChatbotWidget.jsx`, `contextoMultiempresaPolicy.js`, `tests/site-origem-policy.test.js`, `PLANO_GO_LIVE.md`.
+- Reutilizado: catalogo/preco/estoque do lote site anterior, portal, chatbot canal Site, ContaReceber/Pedido.
+- Alteracoes: `assertSiteContato` no checkout; pagamento `pendente_configuracao`/`aguardando_*`; AuditLog via `createInContext`; lead+IA com empresa/grupo; CatalogoWeb exige empresa; Site canal exige ConfiguracaoCanal; Oportunidade exige empresa no write.
+- Multiempresa/RBAC: operacoes do site com empresa da filial; canal Site visitante so com config ativa + empresa.
+- Pendencia: PSP/gateway real; visitante anonimo fora da sessao ERP; Marketplaces (proximo P1 checklist).
+- Validacoes: `node --test tests/site-origem-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P1: Marketplaces.
+
 ### P1.7 - Chatbot omnichannel: canal/empresa fail-closed e roteamento vivo
 - Objetivo: fechar residual P1 Chatbot omnichannel no Hub/Chatbot existentes (Gate 12).
 - Diagnostico: canal sem config liberava; ChatbotAtendimento/interacoes sem empresa; sessao widget sem empresaId; escalate engolia erro; IntentEngine lia ERP sem contexto; regras de roteamento nao hidratavam nem rodavam no ingest.

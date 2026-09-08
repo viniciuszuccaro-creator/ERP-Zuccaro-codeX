@@ -132,7 +132,11 @@ export default function OrcamentoSite() {
 
   const checkoutMutation = useMutation({
     mutationFn: async () => {
-      assertSiteCheckout({ empresaId: empresaAtual?.id, itens: cartItems });
+      assertSiteCheckout({
+        empresaId: empresaAtual?.id,
+        itens: cartItems,
+        contato,
+      });
 
       const clientes = await filterInContext("Cliente", {}, undefined, 500);
       const cliente = matchClienteSite({
@@ -157,11 +161,12 @@ export default function OrcamentoSite() {
         valor_total: it.precoUnit * it.qty,
       }));
 
+      const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
       const pedido = await createInContext("Pedido", stampSiteOrigem({
         tipo: "Orçamento",
         data_pedido: new Date().toISOString().slice(0, 10),
         cliente_id: cliente?.id,
-        cliente_nome: contato.nome || cliente?.nome || cliente?.razao_social || "Visitante",
+        cliente_nome: contato.nome || cliente?.nome || cliente?.razao_social,
         cliente_email: contato.email || cliente?.email,
         cliente_telefone: contato.telefone || cliente?.telefone,
         valor_total: subtotal,
@@ -172,25 +177,29 @@ export default function OrcamentoSite() {
       }));
 
       await createInContext("Oportunidade", buildSiteLeadPayload({
-        nome: contato.nome || cliente?.nome || "Visitante",
+        nome: contato.nome || cliente?.nome,
         email: contato.email,
         telefone: contato.telefone,
         documento: contato.documento,
         valor: subtotal,
         pedidoId: pedido.id,
         clienteId: cliente?.id,
+        empresaId: empresaAtual.id,
+        groupId,
       }));
 
+      const pagamentoLink = cfgGateway?.url_checkout || cfgGateway?.link_pagamento || null;
       const conta = await createInContext("ContaReceber", stampSiteOrigem({
         descricao: `Checkout OrcamentoSite #${pedido.numero_pedido || pedido.id}`,
-        cliente: contato.nome || cliente?.nome || "Visitante",
+        cliente: contato.nome || cliente?.nome,
         cliente_id: cliente?.id,
         valor: subtotal,
         data_emissao: new Date().toISOString().slice(0, 10),
         data_vencimento: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
         forma_cobranca: "Link de Pagamento",
         status: "Pendente",
-        status_integracao: cfgGateway ? "gerado" : "pendente_configuracao",
+        status_integracao: pagamentoLink ? "aguardando_gateway" : (cfgGateway ? "aguardando_configuracao_link" : "pendente_configuracao"),
+        link_pagamento: pagamentoLink || undefined,
         pedido_id: pedido.id,
       }));
 
@@ -199,6 +208,7 @@ export default function OrcamentoSite() {
         contaId: conta.id,
         valor: subtotal,
         gatewayAtivo: Boolean(cfgGateway),
+        pagamentoUrl: pagamentoLink,
         numeroPedido: pedido.numero_pedido,
       });
 
@@ -209,7 +219,7 @@ export default function OrcamentoSite() {
           conta_receber_id: conta.id,
           valor: subtotal,
           empresa_id: empresaAtual.id,
-          group_id: grupoAtual?.id || null,
+          group_id: groupId,
           antifraude_flags: risco,
           pagamento_placeholder: pagamento,
         });
@@ -217,28 +227,25 @@ export default function OrcamentoSite() {
         console.error("Falha ao notificar pagamento do checkout do site", error);
       }
 
-      try {
-        await base44.entities.AuditLog.create({
-          usuario: (await base44.auth.me())?.full_name || "Usuário",
-          acao: "Criação",
-          modulo: "Comercial",
-          tipo_auditoria: "ui",
-          entidade: "Checkout",
-          descricao: `Checkout iniciado – Pedido ${pedido.id}, CR ${conta.id}`,
-          empresa_id: empresaAtual.id,
-          group_id: grupoAtual?.id || null,
-          dados_novos: {
-            subtotal,
-            itens: itens_revenda.length,
-            tabela_preco_id: tabelaId === "auto" ? (tabelas?.[0]?.id || null) : tabelaId,
-            origem: "site",
-            pagamento,
-          },
-          data_hora: new Date().toISOString(),
-        });
-      } catch (error) {
-        console.error("Falha ao auditar checkout do site", error);
-      }
+      await createInContext("AuditLog", {
+        usuario: (await base44.auth.me())?.full_name || "Usuário",
+        acao: "Site.checkout",
+        modulo: "Comercial",
+        tipo_auditoria: "ui",
+        entidade: "Pedido",
+        registro_id: pedido.id,
+        descricao: `Checkout site – Pedido ${pedido.id}, CR ${conta.id}`,
+        empresa_id: empresaAtual.id,
+        group_id: groupId,
+        dados_novos: {
+          subtotal,
+          itens: itens_revenda.length,
+          tabela_preco_id: tabelaId === "auto" ? (tabelas?.[0]?.id || null) : tabelaId,
+          origem: "site",
+          pagamento,
+        },
+        data_hora: new Date().toISOString(),
+      });
 
       const statusResumo = buildSitePedidoStatusResumo({
         pedido,
@@ -247,13 +254,21 @@ export default function OrcamentoSite() {
         portalPath: createPageUrl("PortalCliente"),
       });
 
-      return { pedidoId: pedido.id, contaId: conta.id, semGateway: !cfgGateway, statusResumo };
+      return {
+        pedidoId: pedido.id,
+        contaId: conta.id,
+        semGateway: !cfgGateway,
+        aguardandoLink: Boolean(cfgGateway) && !pagamentoLink,
+        statusResumo,
+      };
     },
-    onSuccess: ({ semGateway, statusResumo }) => {
+    onSuccess: ({ semGateway, aguardandoLink, statusResumo }) => {
       setUltimoStatus(statusResumo);
       toast.success(semGateway
         ? "Orçamento gravado. O pagamento será gerado quando o gateway da filial estiver configurado."
-        : "Checkout iniciado! Você poderá concluir o pagamento pelo link enviado.");
+        : aguardandoLink
+          ? "Checkout gravado. Gateway ativo, mas o link ainda será gerado pelo financeiro."
+          : "Checkout iniciado! Você poderá concluir o pagamento pelo link enviado.");
       setCart({});
       queryClient.invalidateQueries({ queryKey: ["pedidos"] });
     },

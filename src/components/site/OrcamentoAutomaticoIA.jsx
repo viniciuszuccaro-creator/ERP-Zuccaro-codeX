@@ -16,7 +16,7 @@ import { Sparkles, Upload, CheckCircle, Loader2 } from 'lucide-react';
  */
 export default function OrcamentoAutomaticoIA({ onOrcamentoCriado }) {
   const { toast } = useToast();
-  const { empresaAtual, filterInContext, createInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext } = useContextoVisual();
   const [etapa, setEtapa] = useState(1);
 
   const [dados, setDados] = useState({
@@ -140,10 +140,14 @@ Retorne em JSON estruturado com todas as peças e um resumo.
         valor: visionAIResult?.resumo?.valor_estimado || 0,
         orcamentoId: novoOrcamento.id,
         clienteId: cliente?.id,
+        empresaId: empresaAtual?.id,
+        groupId: grupoAtual?.id || empresaAtual?.group_id || null,
       }));
 
       if (visionAIResult) {
-        await base44.entities.AuditoriaIA.create({
+        await createInContext('AuditoriaIA', {
+          group_id: grupoAtual?.id || empresaAtual?.group_id || null,
+          empresa_id: empresaAtual?.id,
           modulo: 'Site',
           funcionalidade: 'leitura_projeto',
           input_dados: {
@@ -159,7 +163,9 @@ Retorne em JSON estruturado com todas as peças e um resumo.
         });
       }
 
-      await base44.entities.Notificacao.create({
+      await createInContext('Notificacao', {
+        group_id: grupoAtual?.id || empresaAtual?.group_id || null,
+        empresa_id: empresaAtual?.id,
         titulo: '🎯 Novo Orçamento Site com IA',
         mensagem: `Novo orçamento gerado via site!\n\nCliente: ${dados.nome}\nEmail: ${dados.email}\nPeças detectadas: ${visionAIResult?.resumo?.total_pecas || 0}\nValor estimado: R$ ${(visionAIResult?.resumo?.valor_estimado || 0).toLocaleString('pt-BR')}\n\nConfiança IA: ${visionAIResult?.confianca || 0}%`,
         tipo: 'info',

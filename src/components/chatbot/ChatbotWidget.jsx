@@ -48,7 +48,10 @@ export default function ChatbotWidget({
   const empresaId = empresaAtual?.id || null;
   const contextKey = empresaId || groupId || 'sem-contexto';
   const contextoValido = Boolean(groupId && empresaId);
-  const canUseChatbot = hasPermission('CRM', 'Atendimento', 'visualizar') || hasPermission('Sistema', 'Integracoes', 'visualizar');
+  const isSiteCanal = String(canal || '').toLowerCase() === 'site';
+  const canUseChatbot = hasPermission('CRM', 'Atendimento', 'visualizar')
+    || hasPermission('Sistema', 'Integracoes', 'visualizar')
+    || (isSiteCanal && Boolean(empresaId));
   const contextoPayload = {
     ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
     ...(empresaId ? { empresa_id: empresaId } : {})
@@ -122,8 +125,12 @@ export default function ChatbotWidget({
   const inicializarConversa = async () => {
     try {
       if (!contextoValido || !canUseChatbot) return;
-      if (configCanal) {
-        assertCanalAtivo({ canal, configs: [configCanal], empresaId });
+      if (isSiteCanal && !configCanal) {
+        console.error('Canal Site sem ConfiguracaoCanal ativa para a empresa.');
+        return;
+      }
+      if (configCanal || isSiteCanal) {
+        assertCanalAtivo({ canal, configs: configCanal ? [configCanal] : [], empresaId });
       }
 
       const novaConversa = await createInContext('ConversaOmnicanal', {

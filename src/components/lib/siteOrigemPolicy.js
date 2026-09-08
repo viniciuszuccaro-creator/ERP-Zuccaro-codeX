@@ -101,13 +101,14 @@ export const filtrarProdutosSite = (produtos = [], { busca = '', precoMap = null
     });
 };
 
-export const assertSiteCheckout = ({ empresaId, itens = [] } = {}) => {
+export const assertSiteCheckout = ({ empresaId, itens = [], contato = {} } = {}) => {
   if (!firstText(empresaId)) {
     throw new Error('Empresa obrigatoria para operacao do site.');
   }
   if (!Array.isArray(itens) || itens.length === 0) {
     throw new Error('Carrinho vazio.');
   }
+  assertSiteContato(contato);
   itens.forEach((item, index) => {
     const produto = item.produto || item;
     const qty = Number(item.qty || item.quantidade || 1) || 1;
@@ -119,6 +120,20 @@ export const assertSiteCheckout = ({ empresaId, itens = [] } = {}) => {
       throw new Error(`Item ${index + 1} indisponivel no estoque online.`);
     }
   });
+  return true;
+};
+
+export const assertSiteContato = (contato = {}) => {
+  const nome = firstText(contato.nome, contato.cliente_nome);
+  const email = firstText(contato.email, contato.cliente_email);
+  const documento = digitsOnly(contato.documento || contato.cpf_cnpj || contato.cnpj || contato.cpf);
+  if (!nome) throw new Error('Nome obrigatorio para checkout do site.');
+  if (!email && !documento) {
+    throw new Error('Informe e-mail ou CPF/CNPJ para checkout do site.');
+  }
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error('E-mail invalido para checkout do site.');
+  }
   return true;
 };
 
@@ -144,41 +159,58 @@ export const buildSiteLeadPayload = ({
   pedidoId,
   orcamentoId,
   clienteId,
-} = {}) => stampSiteOrigem({
-  titulo: `Lead site ${firstText(nome, email, pedidoId, orcamentoId, 'visitante')}`,
-  descricao: 'Lead gerado pelo site proprio existente.',
-  cliente_id: clienteId || undefined,
-  cliente_nome: firstText(nome, 'Visitante'),
-  cliente_email: firstText(email) || undefined,
-  cliente_telefone: firstText(telefone) || undefined,
-  cliente_cpf_cnpj: firstText(documento) || undefined,
-  valor_estimado: Number(valor) || 0,
-  etapa: 'Prospecção',
-  probabilidade: 30,
-  data_abertura: new Date().toISOString().slice(0, 10),
-  status: 'Aberto',
-  pedido_id: pedidoId || undefined,
-  orcamento_site_id: orcamentoId || undefined,
-});
+  empresaId,
+  groupId,
+} = {}) => {
+  assertSiteContato({ nome, email, documento });
+  if (!firstText(empresaId)) {
+    throw new Error('Empresa obrigatoria para lead do site.');
+  }
+  return stampSiteOrigem({
+    titulo: `Lead site ${firstText(nome, email, pedidoId, orcamentoId, 'visitante')}`,
+    descricao: 'Lead gerado pelo site proprio existente.',
+    empresa_id: empresaId,
+    group_id: groupId || undefined,
+    grupo_id: groupId || undefined,
+    cliente_id: clienteId || undefined,
+    cliente_nome: firstText(nome),
+    cliente_email: firstText(email) || undefined,
+    cliente_telefone: firstText(telefone) || undefined,
+    cliente_cpf_cnpj: firstText(documento) || undefined,
+    valor_estimado: Number(valor) || 0,
+    etapa: 'Prospecção',
+    probabilidade: 30,
+    data_abertura: new Date().toISOString().slice(0, 10),
+    status: 'Aberto',
+    pedido_id: pedidoId || undefined,
+    orcamento_site_id: orcamentoId || undefined,
+  });
+};
 
 export const buildSitePagamentoPlaceholder = ({
   pedidoId,
   contaId,
   valor = 0,
   gatewayAtivo = false,
+  pagamentoUrl = null,
+  pagamentoReferencia = null,
   numeroPedido,
 } = {}) => {
   const id = firstText(pedidoId, numeroPedido, 'pedido');
+  const linkReal = firstText(pagamentoUrl, pagamentoReferencia);
   return {
-    status: gatewayAtivo ? 'aguardando_gateway' : 'pendente_configuracao',
-    mensagem: gatewayAtivo
-      ? 'Pagamento sera liberado pelo gateway da filial.'
-      : 'Gateway nao configurado. Orcamento gravado; financeiro gera o link depois.',
+    status: linkReal ? 'aguardando_gateway' : (gatewayAtivo ? 'aguardando_configuracao_link' : 'pendente_configuracao'),
+    mensagem: linkReal
+      ? 'Pagamento aguardando confirmacao do gateway.'
+      : gatewayAtivo
+        ? 'Gateway ativo, mas o link ainda nao foi gerado. Financeiro conclui o pagamento.'
+        : 'Gateway nao configurado. Orcamento gravado; financeiro gera o link depois.',
     valor: Number(valor) || 0,
     pedido_id: firstText(pedidoId) || null,
     conta_receber_id: firstText(contaId) || null,
     referencia: `site|${id}|${firstText(contaId) || 'cr'}`,
-    forma: gatewayAtivo ? 'Link de Pagamento' : 'Pendente configuracao',
+    url: linkReal || null,
+    forma: linkReal ? 'Link de Pagamento' : 'Pendente configuracao',
   };
 };
 
@@ -186,27 +218,42 @@ export const buildSitePedidoStatusResumo = ({
   pedido = {},
   conta = {},
   pagamento = null,
+  entrega = null,
   portalPath = '/PortalCliente',
 } = {}) => {
   const pagamentoInfo = pagamento || buildSitePagamentoPlaceholder({
     pedidoId: pedido.id,
     contaId: conta.id,
     valor: pedido.valor_total || conta.valor,
-    gatewayAtivo: firstText(conta.status_integracao) === 'gerado',
+    gatewayAtivo: Boolean(firstText(conta.url_boleto_pdf, conta.link_pagamento, conta.pix_copia_cola)),
+    pagamentoUrl: firstText(conta.url_boleto_pdf, conta.link_pagamento),
     numeroPedido: pedido.numero_pedido,
   });
+  const entregaInfo = entrega
+    ? {
+      id: entrega.id || null,
+      status: firstText(entrega.status, 'Pendente'),
+      sequencia_rota: entrega.sequencia_rota || null,
+      previsao: firstText(entrega.data_previsao, entrega.previsao_entrega) || null,
+    }
+    : {
+      id: null,
+      status: 'Aguardando expedicao',
+      sequencia_rota: null,
+      previsao: null,
+    };
   return {
     pedido_id: pedido.id || null,
     numero_pedido: firstText(pedido.numero_pedido, pedido.id),
     status_pedido: firstText(pedido.status, pedido.tipo, 'Orçamento'),
     valor_total: Number(pedido.valor_total || conta.valor || 0) || 0,
     pagamento: pagamentoInfo,
+    entrega: entregaInfo,
     portal_url: portalPath,
     pode_ver_no_portal: pedido.pode_ver_no_portal !== false,
     mensagem: `Pedido ${firstText(pedido.numero_pedido, pedido.id)} registrado. Acompanhe no portal.`,
   };
 };
-
 export const applySiteOrigemOnCreate = (entityName, record = {}) => {
   const fromEntity = entityName === 'OrcamentoSite';
   const fromField = isSiteOrigemValue(record.origem)
