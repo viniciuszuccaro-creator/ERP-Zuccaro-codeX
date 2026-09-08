@@ -1,3 +1,15 @@
+### P0.13 - Testes e homologacao: cenarios piloto persistidos
+- Objetivo: cumprir residual P0 Testes/homologacao no piloto existente, sem TestesV2.
+- Diagnostico: `piloto_cenarios` so era lido na virada; StatusControleAcesso mostrava so papeis; admin virava piloto no hydrate; nfeActions aceitava flag sem papel.
+- Causa raiz: homologacao Gate 19 sem caminho de persistencia no UI existente.
+- Arquivos alterados: `pilotoOperacaoPolicy.js`, `localBase44Client.js`, `StatusControleAcesso.jsx`, `nfeActions/entry.ts`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: GestaoUsuariosAvancada, upsertConfig, assertViradaProducao, GerenciamentoAcessosCompleto.
+- Alteracoes: allowlist+save dos 10 cenarios; homologacao = papeis+cenarios; NF com papel piloto; sem auto-piloto no snapshot.
+- Multiempresa/RBAC: cenarios por grupo/empresa; edicao exige Configuracoes/Acessos; auditoria obrigatoria.
+- Pendencia: execucao humana dos 10 cenarios em ambiente piloto; Migração piloto (proximo P0).
+- Validacoes: `node --test tests/piloto-operacao-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Migração piloto validada.
+
 ### P0.12 - Backup e rollback: snapshot real e restore fail-closed
 - Objetivo: cumprir residual P0 Backup/rollback no backup existente, sem BackupV2.
 - Diagnostico: Gate 20 gravava hash/resumo sem payload; HistoricoBackups simulava restore; status `Concluido` vs `Concluído` escondia acoes; autoBackup sem group_id e catch silencioso; update reestampava backup.

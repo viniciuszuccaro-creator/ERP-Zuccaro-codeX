@@ -26,7 +26,21 @@ export const CENARIOS_PILOTO = [
   'cancelamento_controlado',
 ];
 
+export const CENARIO_PILOTO_LABELS = {
+  venda_a_vista: 'Venda a vista',
+  venda_a_prazo: 'Venda a prazo',
+  pedido_com_producao: 'Pedido com producao',
+  pedido_com_entrega: 'Pedido com entrega',
+  faturamento_parcial: 'Faturamento parcial',
+  recebimento: 'Recebimento',
+  compra_entrada: 'Compra / entrada',
+  pagamento: 'Pagamento',
+  devolucao_ocorrencia: 'Devolucao / ocorrencia',
+  cancelamento_controlado: 'Cancelamento controlado',
+};
+
 export const MODO_OPERACAO_CHAVE = 'modo_operacao';
+export const PILOTO_CENARIOS_CHAVE = 'piloto_cenarios';
 
 export const normalizePapelPiloto = (value) => {
   const raw = strip(value);
@@ -87,6 +101,59 @@ export const evaluateCenariosPiloto = (executados = []) => {
   );
   const faltando = CENARIOS_PILOTO.filter((cenario) => !ok.has(cenario));
   return { ok: faltando.length === 0, faltando };
+};
+
+export const normalizeCenarioPiloto = (value) => {
+  const raw = strip(value);
+  return CENARIOS_PILOTO.includes(raw) ? raw : null;
+};
+
+export const applyPilotoCenariosOnWrite = ({ record = {}, user = null } = {}) => {
+  if (firstText(record.chave) !== PILOTO_CENARIOS_CHAVE) return record;
+  const incoming = Array.isArray(record.valor_json) ? record.valor_json : [];
+  const normalized = [];
+  const seen = new Set();
+  incoming.forEach((item) => {
+    const id = normalizeCenarioPiloto(
+      typeof item === 'string' ? item : (item?.id || item?.cenario || item?.codigo),
+    );
+    if (!id) {
+      throw new Error(`Cenario piloto invalido: ${typeof item === 'string' ? item : (item?.id || JSON.stringify(item))}`);
+    }
+    if (seen.has(id)) return;
+    seen.add(id);
+    const ok = item === id
+      ? true
+      : (item?.ok === true || item?.sucesso === true || item?.status === 'ok');
+    normalized.push({
+      id,
+      ok,
+      sucesso: ok,
+      status: ok ? 'ok' : 'pendente',
+      marcado_por: firstText(item?.marcado_por, user?.email, user?.full_name) || null,
+      marcado_em: firstText(item?.marcado_em) || (ok ? new Date().toISOString() : null),
+    });
+  });
+  const concluidos = normalized.filter((item) => item.ok).length;
+  return {
+    ...record,
+    chave: PILOTO_CENARIOS_CHAVE,
+    categoria: record.categoria || 'Sistema',
+    valor: `${concluidos}/${CENARIOS_PILOTO.length}`,
+    valor_texto: `${concluidos}/${CENARIOS_PILOTO.length}`,
+    valor_json: normalized,
+  };
+};
+
+export const evaluateHomologacaoPiloto = ({ users = [], cenariosExecutados = [] } = {}) => {
+  const papeis = papeisPilotoCobertos(users);
+  const cenarios = evaluateCenariosPiloto(cenariosExecutados);
+  return {
+    ok: papeis.length === PAPEIS_PILOTO.length && cenarios.ok,
+    papeis,
+    papeisFaltando: PAPEIS_PILOTO.filter((papel) => !papeis.includes(papel)),
+    cenarios,
+  };
 };
 
 export const assertOperacaoPiloto = ({ user, modoOperacao = 'piloto', acao = 'operacao_critica' } = {}) => {

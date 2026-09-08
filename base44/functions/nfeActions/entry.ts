@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
     if (action === 'emitir' && producao && !autorizada) {
       return Response.json({ error: 'Emissao em producao exige autorizacao explicita.', sucesso: false }, { status: 409 });
     }
-    if (action === 'emitir' && producao && user?.usuario_piloto !== true) {
+    if (action === 'emitir' && producao && !(user?.usuario_piloto === true && String(user?.papel_piloto || '').trim() && user?.ativo !== false)) {
       let modoOperacao = 'piloto';
       try {
         const modoRows = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({ chave: 'modo_operacao', group_id: groupIdResolved }, undefined, 1);

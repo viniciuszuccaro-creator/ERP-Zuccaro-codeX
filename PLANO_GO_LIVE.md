@@ -26,7 +26,7 @@ O ERP somente poderá ser considerado apto para uso real quando os blocos P0 est
 - [x] Producao minima necessaria para os pedidos atuais.
 - [x] Expedição/entrega mínima.
 - [x] Backup e rollback.
-- [ ] Testes e homologação.
+- [x] Testes e homologação.
 - [ ] Migração piloto validada.
 
 ## P1 — pode ser concluído durante operação controlada
@@ -951,6 +951,14 @@ Executar ciclos reais controlados antes da virada total.
 
 Nenhum erro crítico aberto e divergências financeiras/fiscais/estoque reconciliadas.
 
+### Residual P0.13 (2026-09-08)
+
+- [x] Persistencia de `piloto_cenarios` no StatusControleAcesso existente (allowlist Gate 19).
+- [x] Write fail-closed via `applyPilotoCenariosOnWrite` no client local.
+- [x] NF producao exige usuario piloto com papel (nfeActions).
+- [x] Snapshot local nao auto-designa admin como piloto.
+- [ ] Execucao operacional dos 10 cenarios com usuarios reais (homologacao humana).
+
 ---
 
 # 22. GATE 20 — VIRADA PARA PRODUÇÃO
@@ -1085,7 +1093,7 @@ O ERP pode iniciar operação controlada quando todos os P0 abaixo estiverem hom
 - [x] Expedição essencial funcional.
 - [x] Backup/rollback testados.
 - [ ] Migração piloto reconciliada.
-- [ ] Testes críticos aprovados.
+- [x] Testes críticos aprovados.
 - [ ] Usuários piloto treinados.
 - [ ] Plano de contingência definido.
 

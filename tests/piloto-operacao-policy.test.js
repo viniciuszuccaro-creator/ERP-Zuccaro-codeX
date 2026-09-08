@@ -5,12 +5,15 @@ import test from 'node:test';
 import { BACKUP_COUNT_ENTITIES, buildBackupEntitySnapshot, VIRADA_CHECKLIST } from '../src/components/lib/viradaProducaoPolicy.js';
 import {
   applyModoOperacaoOnWrite,
+  applyPilotoCenariosOnWrite,
   applyUsuarioPilotoOnWrite,
   assertOperacaoPiloto,
   assertViradaProducao,
   CENARIOS_PILOTO,
+  evaluateHomologacaoPiloto,
   PAPEIS_PILOTO,
   papeisPilotoCobertos,
+  PILOTO_CENARIOS_CHAVE,
 } from '../src/components/lib/pilotoOperacaoPolicy.js';
 
 const usersCompletos = PAPEIS_PILOTO.map((papel, index) => ({
@@ -91,11 +94,41 @@ test('usuario piloto sem papel e recusado', () => {
   assert.equal(stamped.papel_piloto, 'vendedor');
 });
 
-test('telas existentes designam piloto e NF producao revalida', async () => {
+test('cenarios piloto so aceitam allowlist e homologacao exige papeis+cenarios', () => {
+  assert.throws(
+    () => applyPilotoCenariosOnWrite({
+      record: { chave: PILOTO_CENARIOS_CHAVE, valor_json: [{ id: 'cenario_inventado', ok: true }] },
+    }),
+    /invalido/,
+  );
+  const saved = applyPilotoCenariosOnWrite({
+    record: {
+      chave: PILOTO_CENARIOS_CHAVE,
+      valor_json: CENARIOS_PILOTO.map((id) => ({ id, ok: true })),
+    },
+    user: { email: 'qa@local' },
+  });
+  assert.equal(saved.valor, '10/10');
+  assert.equal(saved.valor_json.length, 10);
+  const incompleto = evaluateHomologacaoPiloto({ users: usersCompletos, cenariosExecutados: [] });
+  assert.equal(incompleto.ok, false);
+  const completo = evaluateHomologacaoPiloto({ users: usersCompletos, cenariosExecutados: cenariosOk });
+  assert.equal(completo.ok, true);
+});
+
+test('telas existentes designam piloto, registram cenarios e NF exige papel', async () => {
   const gestao = await readFile(new URL('../src/components/sistema/GestaoUsuariosAvancada.jsx', import.meta.url), 'utf8');
+  const status = await readFile(new URL('../src/components/sistema/StatusControleAcesso.jsx', import.meta.url), 'utf8');
   const tab = await readFile(new URL('../src/components/comercial/NotasFiscaisTab.jsx', import.meta.url), 'utf8');
   const actions = await readFile(new URL('../base44/functions/nfeActions/entry.ts', import.meta.url), 'utf8');
+  const client = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
   assert.match(gestao, /usuario_piloto/);
+  assert.match(status, /PILOTO_CENARIOS_CHAVE/);
+  assert.match(status, /upsertConfig/);
+  assert.match(status, /CENARIOS_PILOTO\.map/);
   assert.match(tab, /usuarioPiloto: isUsuarioPiloto\(user\)/);
+  assert.match(actions, /papel_piloto/);
   assert.match(actions, /usuario piloto designado/);
+  assert.match(client, /applyPilotoCenariosOnWrite/);
+  assert.doesNotMatch(client, /role === 'admin' && record\.usuario_piloto == null/);
 });

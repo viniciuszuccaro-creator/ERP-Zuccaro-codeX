@@ -37,9 +37,11 @@ import { applyMarketplaceCreate } from "@/components/lib/marketplacePedidoPolicy
 import { applyMigracaoOnCreate, stripSegredosMigracao } from "@/components/lib/migracaoErpPolicy";
 import {
   applyModoOperacaoOnWrite,
+  applyPilotoCenariosOnWrite,
   applyUsuarioPilotoOnWrite,
   assertOperacaoPiloto,
   MODO_OPERACAO_CHAVE,
+  PILOTO_CENARIOS_CHAVE,
   resolveModoOperacao,
 } from "@/components/lib/pilotoOperacaoPolicy";
 import {
@@ -1219,18 +1221,27 @@ const applyLocalPilotoWrite = (db, entityName, record, before = null) => {
   if (entityName === 'User') {
     next = applyUsuarioPilotoOnWrite({ ...(before || {}), ...record });
   }
-  if (entityName === 'ConfiguracaoSistema' && String(record.chave || before?.chave || '') === MODO_OPERACAO_CHAVE) {
-    const cenarios = getEntityStore(db, 'ConfiguracaoSistema').find((item) => item.chave === 'piloto_cenarios');
-    const incidentes = getEntityStore(db, 'AuditLog').filter((item) => item.severidade === 'P0' && item.sucesso === false && item.aberto !== false);
-    next = applyModoOperacaoOnWrite({
-      record: { ...(before || {}), ...record },
-      users: getEntityStore(db, 'User'),
-      cenariosExecutados: Array.isArray(cenarios?.valor_json) ? cenarios.valor_json : [],
-      incidentesCriticosAbertos: incidentes,
-      backups: getEntityStore(db, 'BackupAutomatico'),
-      configBackup: getEntityStore(db, 'ConfiguracaoBackup')[0] || {},
-      configs: getEntityStore(db, 'ConfiguracaoSistema'),
-    });
+  if (entityName === 'ConfiguracaoSistema') {
+    const chave = String(record.chave || before?.chave || '');
+    if (chave === PILOTO_CENARIOS_CHAVE) {
+      next = applyPilotoCenariosOnWrite({
+        record: { ...(before || {}), ...record, chave: PILOTO_CENARIOS_CHAVE },
+        user: readUser(),
+      });
+    }
+    if (chave === MODO_OPERACAO_CHAVE) {
+      const cenarios = getEntityStore(db, 'ConfiguracaoSistema').find((item) => item.chave === PILOTO_CENARIOS_CHAVE);
+      const incidentes = getEntityStore(db, 'AuditLog').filter((item) => item.severidade === 'P0' && item.sucesso === false && item.aberto !== false);
+      next = applyModoOperacaoOnWrite({
+        record: { ...(before || {}), ...record },
+        users: getEntityStore(db, 'User'),
+        cenariosExecutados: Array.isArray(cenarios?.valor_json) ? cenarios.valor_json : [],
+        incidentesCriticosAbertos: incidentes,
+        backups: getEntityStore(db, 'BackupAutomatico'),
+        configBackup: getEntityStore(db, 'ConfiguracaoBackup')[0] || {},
+        configs: getEntityStore(db, 'ConfiguracaoSistema'),
+      });
+    }
   }
   return next;
 };
@@ -1387,10 +1398,7 @@ const normalizeSnapshotRecord = (entityName, raw, topology) => {
     }];
     if (!record.empresa_atual_id && empresaIds[0]) record.empresa_atual_id = empresaIds[0];
     if (!record.empresa_padrao_id && empresaIds[0]) record.empresa_padrao_id = empresaIds[0];
-    if (record.role === 'admin' && record.usuario_piloto == null) {
-      record.usuario_piloto = true;
-      record.papel_piloto = 'administrador';
-    }
+    // Piloto so por designacao explicita (GestaoUsuarios) — nao auto-marcar admin.
     return stripSegredosMigracao(record);
   }
 
