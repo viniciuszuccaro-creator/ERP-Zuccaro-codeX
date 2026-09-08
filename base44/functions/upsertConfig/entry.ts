@@ -110,7 +110,9 @@ Deno.serve(async (req) => {
           dados_novos: buildConfigAuditSnapshot(updatePayload, 'update_by_id'),
           data_hora: new Date().toISOString(),
         });
-      } catch (_) {}
+      } catch (error) {
+        console.error('[upsertConfig] Falha ao auditar update por ID', error?.message || error);
+      }
 
       return Response.json({ record: updated, id: updated.id || id, mode: 'update', _ts: Date.now() });
     }
@@ -183,7 +185,9 @@ Deno.serve(async (req) => {
           dados_novos: buildConfigAuditSnapshot(updatePayload, 'update'),
           data_hora: new Date().toISOString(),
         });
-      } catch (_) {}
+      } catch (error) {
+        console.error('[upsertConfig] Falha ao auditar update por chave', error?.message || error);
+      }
 
       return Response.json({ record: updated, id: updated.id || match.id, mode: 'update', _ts: Date.now() });
     } else {
@@ -210,7 +214,9 @@ Deno.serve(async (req) => {
           dados_novos: buildConfigAuditSnapshot(createPayload, 'create'),
           data_hora: new Date().toISOString(),
         });
-      } catch (_) {}
+      } catch (error) {
+        console.error('[upsertConfig] Falha ao auditar criacao de config', error?.message || error);
+      }
 
       return Response.json({ record: created, id: created.id, mode: 'create', _ts: Date.now() });
     }

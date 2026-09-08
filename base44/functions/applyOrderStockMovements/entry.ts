@@ -54,7 +54,9 @@ Deno.serve(async (req) => {
           user_agent: userAgent,
           data_hora: new Date().toISOString(),
         });
-      } catch (_) {}
+      } catch (error) {
+        console.error('[applyOrderStockMovements] Falha ao auditar bloqueio RBAC', error?.message || error);
+      }
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 

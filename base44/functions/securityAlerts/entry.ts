@@ -51,12 +51,13 @@ Deno.serve(async (req) => {
     };
 
     const inScope = (l) => {
+      const gid = l?.group_id ?? l?.dados_novos?.group_id ?? null;
+      // Fail-closed: orphan sem group_id nao entra na janela de nenhum grupo
+      if (!gid || gid !== groupId) return false;
       if (empresaId) {
         const eid = l?.empresa_id ?? l?.dados_novos?.empresa_id ?? null;
         if (eid && eid !== empresaId) return false;
       }
-      const gid = l?.group_id ?? l?.dados_novos?.group_id ?? null;
-      if (gid && gid !== groupId) return false;
       return true;
     };
 
@@ -126,28 +127,30 @@ Deno.serve(async (req) => {
       });
     }
 
-    await base44.asServiceRole.entities.AuditLog.create({
-      usuario: user?.full_name || user?.email || 'automacao',
-      usuario_id: user?.id || null,
-      acao: 'Analise',
-      modulo: 'Sistema',
-      tipo_auditoria: 'seguranca',
-      entidade: 'SecurityAlerts',
-      descricao: suspicious.length
-        ? `Alertas de seguranca sugeridos (${suspicious.length}) na janela de ${WINDOW_MIN} min`
-        : `Analise de seguranca sem alertas (${WINDOW_MIN} min)`,
-      dados_novos: {
-        suspicious,
-        totais: byAction,
-        analisados: recent.length,
-        modo: 'sugestao',
-      },
-      group_id: groupId,
-      empresa_id: empresaId,
-      data_hora: new Date().toISOString(),
-    }).catch((error) => {
+    try {
+      await base44.asServiceRole.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'automacao',
+        usuario_id: user?.id || null,
+        acao: 'Analise',
+        modulo: 'Sistema',
+        tipo_auditoria: 'seguranca',
+        entidade: 'SecurityAlerts',
+        descricao: suspicious.length
+          ? `Alertas de seguranca sugeridos (${suspicious.length}) na janela de ${WINDOW_MIN} min`
+          : `Analise de seguranca sem alertas (${WINDOW_MIN} min)`,
+        dados_novos: {
+          suspicious,
+          totais: byAction,
+          analisados: recent.length,
+          modo: 'sugestao',
+        },
+        group_id: groupId,
+        empresa_id: empresaId,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
       console.error('[securityAlerts] Falha ao auditar analise', error?.message || error);
-    });
+    }
 
     if (suspicious.length === 0) {
       return Response.json({
@@ -164,7 +167,13 @@ Deno.serve(async (req) => {
     let recipients = 0;
     if (confirmado) {
       const admins = await base44.asServiceRole.entities.User.filter({ role: 'admin' }, undefined, 100);
-      const toList = (admins || []).map((u) => u.email).filter(Boolean);
+      const adminInGroup = (u) => {
+        if (!u) return false;
+        if (u.grupo_atual_id === groupId || u.grupo_padrao_id === groupId || u.group_id === groupId) return true;
+        const vinculos = Array.isArray(u.grupos_vinculados) ? u.grupos_vinculados : [];
+        return vinculos.some((v) => v?.grupo_id === groupId && v?.ativo !== false);
+      };
+      const toList = (admins || []).filter(adminInGroup).map((u) => u.email).filter(Boolean);
       recipients = toList.length;
       const highAlerts = suspicious.filter((s) => s.severidade === 'Alta');
       if (toList.length > 0 && highAlerts.length > 0) {

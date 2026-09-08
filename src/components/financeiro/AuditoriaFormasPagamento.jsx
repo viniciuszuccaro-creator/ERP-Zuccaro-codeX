@@ -3,9 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Shield, AlertTriangle, CheckCircle2, Clock, User, Edit, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * AUDITORIA DE FORMAS DE PAGAMENTO V21.8
@@ -13,22 +14,22 @@ import { format } from 'date-fns';
  */
 export default function AuditoriaFormasPagamento() {
   const [filtroTipo, setFiltroTipo] = useState('todas');
+  const { filterInContext, empresaAtual, grupoAtual, contexto, contextoValido } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const scopeId = empresaAtual?.id || grupoAtual?.id || 'sem-contexto';
+  const canView = hasPermission('Sistema', 'Auditoria', 'visualizar')
+    || hasPermission('Financeiro', 'FormaPagamento', 'visualizar');
 
   const { data: auditLogs = [] } = useQuery({
-    queryKey: ['audit-logs-formas-pagamento'],
-    queryFn: async () => {
-      const logs = await base44.entities.AuditLog.filter(
-        { entity_name: 'FormaPagamento' },
-        '-created_date',
-        100
-      );
-      return logs;
-    },
+    queryKey: ['audit-logs-formas-pagamento', scopeId, contexto],
+    queryFn: () => filterInContext('AuditLog', { entidade: 'FormaPagamento' }, '-created_date', 100),
+    enabled: !!contextoValido && scopeId !== 'sem-contexto' && canView,
   });
 
   const { data: formasPagamento = [] } = useQuery({
-    queryKey: ['formas-pagamento'],
-    queryFn: () => base44.entities.FormaPagamento.list(),
+    queryKey: ['formas-pagamento', scopeId, contexto],
+    queryFn: () => filterInContext('FormaPagamento', {}, '-updated_date', 100),
+    enabled: !!contextoValido && scopeId !== 'sem-contexto' && canView,
   });
 
   const agruparPorAcao = () => {

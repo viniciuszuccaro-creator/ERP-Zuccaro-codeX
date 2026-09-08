@@ -70,7 +70,9 @@ Deno.serve(async (req) => {
           descricao: `Token validado para ${payload.subject || payload.sub || 'desconhecido'}`,
           data_hora: new Date().toISOString(), group_id: payload.group_id || null, empresa_id: payload.empresa_id || null,
         });
-      } catch {}
+      } catch (error) {
+        console.error('[portalToken] Falha ao auditar validacao de token', error?.message || error);
+      }
 
       return Response.json({ valid: true, ...payload }, { status: 200 });
     }
@@ -121,7 +123,9 @@ Deno.serve(async (req) => {
           descricao: `Token emitido para ${payload.subject}`,
           data_hora: new Date().toISOString(), group_id: group_id || null, empresa_id: empresa_id || null,
         });
-      } catch {}
+      } catch (error) {
+        console.error('[portalToken] Falha ao auditar emissao de token', error?.message || error);
+      }
 
       return Response.json({ token, exp });
     }

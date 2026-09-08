@@ -96,7 +96,12 @@ Deno.serve(async (req) => {
     const ip = req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip') || req.headers.get('x-real-ip') || '';
 
     if (!event?.entity_name || !event?.entity_id || !event?.type) {
-      return Response.json({ ok: true, skipped: true, reason: 'payload incompleto' });
+      console.error('[auditEntityEvents] Payload incompleto; auditoria nao registrada', {
+        entity_name: event?.entity_name || null,
+        entity_id: event?.entity_id || null,
+        type: event?.type || null,
+      });
+      return Response.json({ ok: false, skipped: true, reason: 'payload incompleto' }, { status: 400 });
     }
 
     // Recupera registro quando payload é grande/ausente
@@ -195,6 +200,8 @@ Deno.serve(async (req) => {
           entidade: 'Performance',
           descricao: `auditEntityEvents lento: ${dur}ms`,
           dados_novos: { entidade, tipoEvento, dur },
+          group_id: group_id || null,
+          empresa_id: empresa_id || null,
           data_hora: new Date().toISOString(),
         });
       } catch (error) {

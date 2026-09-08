@@ -169,13 +169,15 @@ export default async function ConsultarCNPJ({ cnpj, cfg }) {
 
     const result = await ConsultarCNPJ({ cnpj, cfg });
 
-    // Auditoria da consulta (multiempresa, não bloqueante)
-    const empresaIdCtx = body?.empresa_id || null;
+    // Auditoria da consulta (multiempresa, nao silenciosa)
+    const empresaIdCtx = body?.empresa_id || user?.empresa_atual_id || user?.empresa_padrao_id || null;
+    const groupIdCtx = body?.group_id || body?.grupo_id || user?.grupo_atual_id || user?.grupo_padrao_id || user?.group_id || null;
     try {
       await base44.asServiceRole.entities.AuditLog.create({
         usuario: user?.full_name || user?.email || 'Usuário',
         usuario_id: user?.id,
         empresa_id: empresaIdCtx,
+        group_id: groupIdCtx,
         acao: 'Visualização',
         modulo: 'Cadastros',
         tipo_auditoria: 'integracao',
@@ -184,7 +186,9 @@ export default async function ConsultarCNPJ({ cnpj, cfg }) {
         dados_novos: { sucesso: !!result?.sucesso, fonte: result?.fonte || null },
         data_hora: new Date().toISOString(),
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error('[ConsultarCNPJ] Falha ao registrar auditoria da consulta', error?.message || error);
+    }
 
     return Response.json(result);
   } catch (error) {

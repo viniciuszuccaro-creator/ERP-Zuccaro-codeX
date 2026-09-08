@@ -28,11 +28,15 @@ Deno.serve(async (req) => {
         const res = await base44.asServiceRole.functions.invoke('whatsappSend', params);
         return res?.data || { ok: true };
       } catch (e) {
-        try { await base44.asServiceRole.entities.AuditLog.create({
-          acao: 'Erro', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: 'WhatsApp',
-          descricao: e?.message || String(e), empresa_id: empresaId || null, group_id: groupId || null,
-          data_hora: new Date().toISOString()
-        }); } catch {}
+        try {
+          await base44.asServiceRole.entities.AuditLog.create({
+            acao: 'Erro', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: 'WhatsApp',
+            descricao: e?.message || String(e), empresa_id: empresaId || null, group_id: groupId || null,
+            data_hora: new Date().toISOString()
+          });
+        } catch (auditError) {
+          console.error('[onEntityWhatsappNotify] Falha ao auditar erro WhatsApp', auditError?.message || auditError);
+        }
         return { error: e?.message || String(e) };
       }
     }

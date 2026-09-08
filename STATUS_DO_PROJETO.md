@@ -1,3 +1,15 @@
+### P0.4 - Gate 4 Auditoria residual: catches silenciosos e escopo
+- Objetivo: cumprir residual do Gate 4 / P0 Auditoria de `PLANO_GO_LIVE.md` sem AuditV2.
+- Diagnostico: convite/export/estoque/config/CNPJ/portal/WhatsApp engoliam falha de AuditLog; `securityAlerts` aceitava orphan sem group_id e e-mail global; painéis financeiros e prefetch do Layout liam AuditLog sem contexto; `auditEntityEvents` marcava skip como ok.
+- Causa raiz: auditoria tratada como opcional e leituras fora do contrato multiempresa.
+- Arquivos alterados: `adminInviteUser`, `exportEstoqueAco`, `applyOrderStockMovements`, `upsertConfig`, `ConsultarCNPJ`, `portalToken`, `onEntityWhatsappNotify`, `securityAlerts`, `auditEntityEvents`, `Layout.jsx`, `AuditoriaLiquidacoes.jsx`, `AuditoriaFormasPagamento.jsx`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: `filterInContext`, `AuditLog`, padrao de report via `console.error` / `reportLayoutFailure`.
+- Alteracoes: catches reportam; export/convite falham se auditoria critica falhar; group_id nos writes do Layout; UIs financeiras com escopo+RBAC; securityAlerts fail-closed e admins do grupo.
+- Multiempresa/RBAC: leituras e alertas so no grupo; email so a admins vinculados.
+- Pendencia: matriz pagina-a-pagina de acoes criticas; `orderFlowAuditor` global; limpeza `isAdmin||` residual.
+- Validacoes: `node --test tests/sanitize-audit-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 5 Cadastros Gerais (base mestre / paginação / códigos).
+
 ### P0.3 - Gate 3 Multiempresa residual: switcher e contexto fail-closed
 - Objetivo: fechar vazamento residual do Gate 3 / P0 Multiempresa sem MultiempresaV2.
 - Diagnostico: `EmpresaSwitcher` listava Grupo/Empresa global para admin/API-key; `getCurrentContext` inventava `local_grupo_cpa`; `expandLocalContextFilter` e `entity.list` abriam escopo; `filtrarPorContexto` devolvia lista crua; `PerfilAcesso` aceitava group null/`grupo_001`; leitura so por `empresaId`; rateio com `group_id: null`.

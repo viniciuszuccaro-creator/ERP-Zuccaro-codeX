@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Shield, TrendingUp, DollarSign, Calendar } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 /**
@@ -11,21 +10,24 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
  * Rastreamento completo de todas as liquidações realizadas
  */
 export default function AuditoriaLiquidacoes() {
-  const { filterInContext } = useContextoVisual();
+  const { filterInContext, empresaAtual, grupoAtual, contexto, contextoValido } = useContextoVisual();
+  const scopeId = empresaAtual?.id || grupoAtual?.id || 'sem-contexto';
 
   const { data: auditorias = [] } = useQuery({
-    queryKey: ['auditoria-liquidacoes'],
-    queryFn: () => base44.entities.AuditLog.filter({
+    queryKey: ['auditoria-liquidacoes', scopeId, contexto],
+    queryFn: () => filterInContext('AuditLog', {
       modulo: 'Financeiro',
       acao: { $in: ['Edição', 'Criação'] },
       descricao: { $regex: 'liquidação|baixa|recebimento|pagamento', $options: 'i' }
     }, '-data_hora', 100),
+    enabled: !!contextoValido && scopeId !== 'sem-contexto',
   });
 
   // Buscar ordens de liquidação
   const { data: ordensLiquidacao = [] } = useQuery({
-    queryKey: ['ordens-liquidacao-auditoria'],
+    queryKey: ['ordens-liquidacao-auditoria', scopeId, contexto],
     queryFn: () => filterInContext('CaixaOrdemLiquidacao', {}, '-created_date', 50),
+    enabled: !!contextoValido && scopeId !== 'sem-contexto',
   });
 
   const estatisticas = {

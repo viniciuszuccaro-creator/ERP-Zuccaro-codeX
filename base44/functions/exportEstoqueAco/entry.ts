@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
     if (permErr) return permErr;
 
     let body = {};
-    try { body = await req.json(); } catch {}
+    try { body = await req.json(); } catch (error) { body = {}; }
 
     const filtros = body?.filtros || {};
 
@@ -108,7 +108,10 @@ Deno.serve(async (req) => {
 
     const pdfBytes = doc.output('arraybuffer');
 
-    // Audit trail
+    // Audit trail (exportacao sensivel: falha de auditoria nao e silenciosa)
+    const groupId = filtros?.group_id || filtros?.grupo_id
+      || user?.grupo_atual_id || user?.grupo_padrao_id || user?.group_id || null;
+    const empresaId = filtros?.empresa_id || user?.empresa_atual_id || user?.empresa_padrao_id || null;
     try {
       await base44.entities.AuditLog.create({
         usuario: user.full_name || user.email || 'Usuário',
@@ -118,11 +121,18 @@ Deno.serve(async (req) => {
         tipo_auditoria: 'entidade',
         entidade: 'Produto',
         descricao: `Exportou relatório de aço/bitolas (${totalItens} itens).`,
-        dados_novos: { filtros, total_itens: totalItens },
-        empresa_id: filtros?.empresa_id || null,
+        dados_novos: { total_itens: totalItens, tem_filtros: !!filtros && Object.keys(filtros).length > 0 },
+        empresa_id: empresaId,
+        group_id: groupId,
         data_hora: new Date().toISOString(),
       });
-    } catch {}
+    } catch (error) {
+      console.error('[exportEstoqueAco] Falha ao registrar auditoria de exportacao', error?.message || error);
+      return Response.json({
+        error: 'Falha ao registrar auditoria da exportacao sensivel',
+        detail: String(error?.message || error),
+      }, { status: 500 });
+    }
 
     return new Response(pdfBytes, {
       status: 200,

@@ -244,7 +244,10 @@ function LayoutContent({ children, currentPageName }) {
                         try {
                           switch (title) {
                             case 'Dashboard':
-                              queryClient.prefetchQuery({ queryKey: ['dash', 'kpis'], queryFn: () => base44.entities.AuditLog.filter({}, '-data_hora', 5) });
+                              queryClient.prefetchQuery({
+                                queryKey: ['dash', 'kpis', empresaAtual?.id, grupoAtual?.id, contexto],
+                                queryFn: () => filterInContext('AuditLog', {}, '-data_hora', 5),
+                              });
                               queryClient.prefetchQuery({
                                 queryKey: ['dash', 'groupConsolidation', empresaAtual?.id, grupoAtual?.id, contexto],
                                 queryFn: async () => {
@@ -814,6 +817,7 @@ function LayoutContent({ children, currentPageName }) {
             acao: 'Criação', modulo: 'Sistema', tipo_auditoria: 'entidade',
             entidade: name, registro_id: res?.id, dados_novos: res,
             empresa_id: empresaAtual?.id || null,
+            group_id: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
             data_hora: new Date().toISOString(),
           }); } catch (error) { reportLayoutFailure('Falha ao auditar criacao', error, { entity: name, id: res?.id }); }
           // PII encryption pass (server-side) for sensitive entities
@@ -836,6 +840,7 @@ function LayoutContent({ children, currentPageName }) {
             acao: 'Criação', modulo: 'Sistema', tipo_auditoria: 'entidade',
             entidade: name, descricao: `bulkCreate`,
             empresa_id: empresaAtual?.id || null,
+            group_id: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
             data_hora: new Date().toISOString(),
           }); } catch (error) { reportLayoutFailure('Falha ao auditar criacao em lote', error, { entity: name }); }
           return res;
@@ -852,6 +857,7 @@ function LayoutContent({ children, currentPageName }) {
             acao: 'Edição', modulo: 'Sistema', tipo_auditoria: 'entidade',
             entidade: name, registro_id: id, dados_novos: data,
             empresa_id: empresaAtual?.id || null,
+            group_id: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
             data_hora: new Date().toISOString(),
           }); } catch (error) { reportLayoutFailure('Falha ao auditar edicao', error, { entity: name, id }); }
           // PII encryption pass (server-side) for sensitive entities
@@ -874,6 +880,7 @@ function LayoutContent({ children, currentPageName }) {
             acao: 'Exclusão', modulo: 'Sistema', tipo_auditoria: 'entidade',
             entidade: name, registro_id: id,
             empresa_id: empresaAtual?.id || null,
+            group_id: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
             data_hora: new Date().toISOString(),
           }); } catch (error) { reportLayoutFailure('Falha ao auditar exclusao', error, { entity: name, id }); }
           return res;
