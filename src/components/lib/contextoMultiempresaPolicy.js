@@ -111,6 +111,8 @@ export const OPERACAO_EXIGE_EMPRESA_ENTITIES = new Set([
   'CaixaMovimento',
   'ConciliacaoBancaria',
   'Comissao',
+  'Rota',
+  'RoteirizacaoInteligente',
 ]);
 
 export const entityRequiresEmpresaOnWrite = (entityName) => OPERACAO_EXIGE_EMPRESA_ENTITIES.has(entityName);

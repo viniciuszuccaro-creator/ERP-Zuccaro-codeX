@@ -16,6 +16,7 @@ export const MASTER_CODE_SPECS = {
   Oportunidade: { field: 'codigo_oportunidade', width: 6, prefix: 'OPP-' },
   Interacao: { field: 'codigo_interacao', width: 6, prefix: 'INT-' },
   Campanha: { field: 'codigo_campanha', width: 6, prefix: 'CAMP-' },
+  Rota: { field: 'codigo_rota', width: 6, prefix: 'ROT-' },
 };
 
 export const sequenceKeyFor = (entityName, groupId) => `seq_codigo_${entityName}_${groupId || 'grupo'}`;

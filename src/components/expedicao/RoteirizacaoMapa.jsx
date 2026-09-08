@@ -6,64 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
-import { Map, Route, Zap, MapPin, Clock, TrendingUp, AlertCircle, Package, FileText } from "lucide-react";
+import { Map, Route, Zap, MapPin, Clock, TrendingUp, AlertCircle, Package, FileText, ArrowUp, ArrowDown } from "lucide-react";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-
-/**
- * Algoritmo de Otimização de Rotas - Nearest Neighbor
- * Encontra a rota mais curta visitando todos os pontos
- */
-function otimizarRotaNN(pontos, origem) {
-  if (!pontos || pontos.length === 0) return [];
-  if (pontos.length === 1) return pontos;
-
-  const calcularDistancia = (p1, p2) => {
-    const R = 6371; // Raio da Terra em km
-    const dLat = (p2.latitude - p1.latitude) * Math.PI / 180;
-    const dLon = (p2.longitude - p1.longitude) * Math.PI / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(p1.latitude * Math.PI / 180) * Math.cos(p2.latitude * Math.PI / 180) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  };
-
-  const pontosRestantes = [...pontos];
-  const rotaOtimizada = [];
-  let pontoAtual = origem;
-
-  while (pontosRestantes.length > 0) {
-    let menorDistancia = Infinity;
-    let indiceMaisProximo = -1; // Initialize with -1 to indicate no point found yet
-
-    pontosRestantes.forEach((ponto, idx) => {
-      const distancia = calcularDistancia(pontoAtual, ponto);
-      if (distancia < menorDistancia) {
-        menorDistancia = distancia;
-        indiceMaisProximo = idx;
-      }
-    });
-
-    // If no point was found (shouldn't happen if pontosRestantes is not empty), break to prevent infinite loop
-    if (indiceMaisProximo === -1) break;
-
-    const pontoMaisProximo = pontosRestantes.splice(indiceMaisProximo, 1)[0];
-    rotaOtimizada.push({
-      ...pontoMaisProximo,
-      sequencia: rotaOtimizada.length + 1,
-      distancia_anterior_km: menorDistancia
-    });
-    pontoAtual = pontoMaisProximo;
-  }
-
-  return rotaOtimizada;
-}
+import {
+  buildRotaRecord,
+  otimizarRotaAvancada,
+  reordenarPontosRota,
+  resolveCoordenadas,
+} from "@/components/lib/roteirizacaoPolicy";
 
 export default function RoteirizacaoMapa({ entregas = [], motoristas = [], veiculos = [], windowMode = false }) {
   const [entregasSelecionadas, setEntregasSelecionadas] = useState([]);
@@ -135,68 +89,68 @@ export default function RoteirizacaoMapa({ entregas = [], motoristas = [], veicu
       return;
     }
 
-    setIsOptimizing(true);
-
-    // Simular delay de processamento
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // Origem: empresa atual
-    const origem = {
-      latitude: empresaAtual?.endereco?.latitude || -23.550520, // Default to SP if not found
-      longitude: empresaAtual?.endereco?.longitude || -46.633308 // Default to SP if not found
-    };
-
-    // Preparar pontos com coordenadas
-    const pontosComCoordenadas = entregasSelecionadas
-      .filter(e => e.endereco_entrega_completo?.latitude && e.endereco_entrega_completo?.longitude)
-      .map(e => ({
-        ...e,
-        latitude: e.endereco_entrega_completo.latitude,
-        longitude: e.endereco_entrega_completo.longitude
-      }));
-
-    if (pontosComCoordenadas.length === 0) {
+    if (!empresaId) {
       toast({
-        title: "⚠️ Entregas sem coordenadas GPS",
-        description: "Cadastre latitude/longitude nos endereços das entregas selecionadas para otimização.",
+        title: "Empresa obrigatoria",
+        description: "Selecione a empresa operacional para otimizar e gravar a rota.",
         variant: "destructive"
       });
-      await auditRota({ acao: "Rota.otimizar.bloqueado", sucesso: false, motivo: "entregas_sem_coordenadas", detalhes: { selecionadas: entregasSelecionadas.length } });
-      setIsOptimizing(false);
       return;
     }
 
-    // OTIMIZAR com algoritmo Nearest Neighbor
-    const rotaCalculada = otimizarRotaNN(pontosComCoordenadas, origem);
+    setIsOptimizing(true);
 
-    // Calcular totais
-    // The first point in rotaCalculada already includes the distance from the origin.
-    // Summing `distancia_anterior_km` will give the total distance from origin to all points in sequence.
-    const distanciaTotal = rotaCalculada.reduce((sum, p) => sum + (p.distancia_anterior_km || 0), 0);
-    // Tempo estimado: 40km/h de velocidade média + 15min por parada
-    const velocidadeMediaKmH = 40;
-    const tempoPorParadaMinutos = 15;
-    const tempoViagemMinutos = (distanciaTotal / velocidadeMediaKmH) * 60;
-    const tempoTotalParadasMinutos = rotaCalculada.length * tempoPorParadaMinutos;
-    const tempoEstimado = tempoViagemMinutos + tempoTotalParadasMinutos;
+    try {
+      const origem = resolveCoordenadas(empresaAtual?.endereco || empresaAtual) || {
+        latitude: -23.550520,
+        longitude: -46.633308,
+      };
+      const veiculo = veiculos.find((item) => item.id === veiculoSelecionado) || {};
+      const resultadoOtimizado = otimizarRotaAvancada({
+        origem,
+        entregas: entregasSelecionadas,
+        veiculo,
+        parametros: {
+          priorizar_urgencia: true,
+          considerar_janela_horario: true,
+          tempo_medio_entrega_minutos: 15,
+          velocidade_media_kmh: 40,
+        },
+      });
 
-    const resultadoOtimizado = {
-      pontos: rotaCalculada,
-      distancia_total_km: distanciaTotal,
-      tempo_estimado_minutos: Math.round(tempoEstimado),
-      algoritmo: 'Nearest Neighbor',
-      data_calculo: new Date().toISOString()
-    };
+      setRotaOtimizada(resultadoOtimizado);
+      await auditRota({
+        acao: "Rota.otimizar",
+        detalhes: {
+          entregas: resultadoOtimizado.pontos.length,
+          distancia_total_km: resultadoOtimizado.distancia_total_km,
+          tempo_estimado_minutos: resultadoOtimizado.tempo_estimado_minutos,
+          alertas: resultadoOtimizado.alertas,
+        },
+      });
 
-    setRotaOtimizada(resultadoOtimizado);
-    await auditRota({ acao: "Rota.otimizar", detalhes: { entregas: rotaCalculada.length, distancia_total_km: distanciaTotal, tempo_estimado_minutos: Math.round(tempoEstimado) } });
+      toast({
+        title: resultadoOtimizado.alertas?.length ? "Rota otimizada com alertas" : "✅ Rota otimizada!",
+        description: `${resultadoOtimizado.pontos.length} entregas • ${resultadoOtimizado.distancia_total_km.toFixed(1)} km • ${resultadoOtimizado.tempo_estimado_minutos} min${resultadoOtimizado.alertas?.[0] ? ` • ${resultadoOtimizado.alertas[0]}` : ""}`,
+        variant: resultadoOtimizado.alertas?.length ? "destructive" : "default",
+      });
+    } catch (error) {
+      await auditRota({ acao: "Rota.otimizar.bloqueado", sucesso: false, motivo: error?.message || "erro_otimizacao" });
+      toast({
+        title: "Falha na otimizacao",
+        description: error?.message || "Nao foi possivel otimizar a rota.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsOptimizing(false);
+    }
+  };
 
-    setIsOptimizing(false);
-
-    toast({
-      title: "✅ Rota otimizada!",
-      description: `${rotaCalculada.length} entregas • ${distanciaTotal.toFixed(1)} km • ${Math.round(tempoEstimado)} min`
-    });
+  const moverPonto = (fromIndex, direction) => {
+    if (!rotaOtimizada?.pontos) return;
+    const toIndex = fromIndex + direction;
+    const pontos = reordenarPontosRota(rotaOtimizada.pontos, fromIndex, toIndex);
+    setRotaOtimizada({ ...rotaOtimizada, pontos, ajuste_manual: true });
   };
 
   const handleGerarRomaneio = async () => {
@@ -215,47 +169,35 @@ export default function RoteirizacaoMapa({ entregas = [], motoristas = [], veicu
       return;
     }
 
+    if (!empresaId) {
+      toast({
+        title: "Empresa obrigatoria",
+        description: "A rota operacional exige empresa selecionada.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (!window.confirm("Confirmar criacao da rota e do romaneio para as entregas selecionadas?")) {
       await auditRota({ acao: "Rota.gerar_romaneio.cancelado", sucesso: false, motivo: "confirmacao_cancelada", detalhes: { entregas: rotaOtimizada.pontos.length } });
       return;
     }
 
     try {
-      // Criar Rota
-      const rota = await createInContext("Rota", {
-        empresa_id: empresaId,
-        group_id: groupId,
-        grupo_id: groupId,
-        nome_rota: `Rota ${new Date().toLocaleDateString('pt-BR')} - ${motoristas.find(m => m.id === motoristaSelecionado)?.nome_completo || 'Motorista Desconhecido'}`,
-        data_rota: new Date().toISOString().split('T')[0],
-        motorista_id: motoristaSelecionado,
-        veiculo_id: veiculoSelecionado,
-        pontos_entrega: rotaOtimizada.pontos.map(p => ({
-          sequencia: p.sequencia,
-          entrega_id: p.id,
-          cliente_nome: p.cliente_nome,
-          endereco_completo: `${p.endereco_entrega_completo?.logradouro || ''}, ${p.endereco_entrega_completo?.numero || ''} - ${p.endereco_entrega_completo?.cidade || ''}`,
-          latitude: p.latitude,
-          longitude: p.longitude,
-          status: 'Pendente',
-          tempo_estimado_parada_minutos: 15, // Default stop time
-          horario_previsto: null // This would be calculated by a real routing service
-        })),
-        distancia_total_km: rotaOtimizada.distancia_total_km,
-        tempo_total_previsto_minutos: rotaOtimizada.tempo_estimado_minutos,
-        otimizada: true,
-        algoritmo_usado: 'Nearest Neighbor',
-        google_maps_route_url: null, // This would be generated by a real routing service
-        status: 'Planejada',
-        progresso_percentual: 0,
-        entregas_concluidas: 0,
-        entregas_frustradas: 0,
-        criado_por: user?.full_name || user?.email || "Sistema"
-      });
-
-      // Criar Romaneio
       const motoristaRota = motoristas.find((m) => m.id === motoristaSelecionado);
       const veiculoRota = veiculos.find((v) => v.id === veiculoSelecionado);
+      const rotaPayload = buildRotaRecord({
+        otimizacao: rotaOtimizada,
+        motorista: motoristaRota,
+        veiculo: veiculoRota,
+        empresaId,
+        groupId,
+        dataRota: new Date().toISOString().split('T')[0],
+        usuario: user?.full_name || user?.email || "Sistema",
+      });
+
+      const rota = await createInContext("Rota", rotaPayload);
+
       const romaneio = await createInContext("Romaneio", {
         empresa_id: empresaId,
         group_id: groupId,
@@ -275,7 +217,6 @@ export default function RoteirizacaoMapa({ entregas = [], motoristas = [], veicu
         criado_por: user?.full_name || user?.email || "Sistema"
       });
 
-      // Atualizar entregas com o romaneio e rota
       for (const ponto of rotaOtimizada.pontos) {
         await updateInContext("Entrega", ponto.id, {
           group_id: groupId,
@@ -287,6 +228,7 @@ export default function RoteirizacaoMapa({ entregas = [], motoristas = [], veicu
           motorista: motoristaRota?.nome_completo || motoristaRota?.nome || motoristaRota?.full_name || '',
           veiculo: veiculoRota?.descricao || veiculoRota?.modelo || veiculoRota?.placa || veiculoSelecionado,
           placa: veiculoRota?.placa || '',
+          sequencia_rota: ponto.sequencia || ponto.ordem_sequencia,
           status: 'Pronto para Expedir'
         });
       }
@@ -299,10 +241,9 @@ export default function RoteirizacaoMapa({ entregas = [], motoristas = [], veicu
 
       toast({
         title: "✅ Romaneio gerado!",
-        description: `Rota "${rota.nome_rota}" com ${rotaOtimizada.pontos.length} entregas criada.`
+        description: `Rota "${rota.codigo_rota || rota.nome_rota}" com ${rotaOtimizada.pontos.length} entregas criada.`
       });
 
-      // Resetar estados
       setEntregasSelecionadas([]);
       setRotaOtimizada(null);
       setMotoristaSelecionado("");
@@ -313,7 +254,7 @@ export default function RoteirizacaoMapa({ entregas = [], motoristas = [], veicu
       console.error("Erro ao gerar romaneio:", error);
       toast({
         title: "❌ Erro ao gerar romaneio",
-        description: "Ocorreu um erro ao salvar a rota e o romaneio. Tente novamente.",
+        description: error?.message || "Ocorreu um erro ao salvar a rota e o romaneio. Tente novamente.",
         variant: "destructive"
       });
     }
@@ -524,18 +465,37 @@ export default function RoteirizacaoMapa({ entregas = [], motoristas = [], veicu
                     </div>
                   </div>
 
+                  {Array.isArray(rotaOtimizada.alertas) && rotaOtimizada.alertas.length > 0 && (
+                    <Alert className="mt-4 border-amber-300 bg-amber-50">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        {rotaOtimizada.alertas.join(' ')}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
                   {/* SEQUÊNCIA OTIMIZADA */}
                   <div className="mt-4 pt-4 border-t border-green-300">
                     <p className="font-semibold text-green-900 mb-3">Sequência Otimizada:</p>
                     <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {rotaOtimizada.pontos.map((ponto) => (
+                      {rotaOtimizada.pontos.map((ponto, index) => (
                         <div key={ponto.id} className="flex items-center gap-3 p-2 bg-white rounded">
                           <Badge className="bg-green-600">#{ponto.sequencia}</Badge>
                           <div className="flex-1">
                             <p className="font-medium text-sm">{ponto.cliente_nome}</p>
                             <p className="text-xs text-slate-600">
                               {ponto.endereco_entrega_completo?.cidade || 'Cidade não informada'}
+                              {ponto.prioridade ? ` • ${ponto.prioridade}` : ''}
+                              {ponto.peso_kg ? ` • ${ponto.peso_kg} kg` : ''}
                             </p>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button type="button" size="icon" variant="ghost" disabled={index === 0} onClick={() => moverPonto(index, -1)}>
+                              <ArrowUp className="w-4 h-4" />
+                            </Button>
+                            <Button type="button" size="icon" variant="ghost" disabled={index === rotaOtimizada.pontos.length - 1} onClick={() => moverPonto(index, 1)}>
+                              <ArrowDown className="w-4 h-4" />
+                            </Button>
                           </div>
                           <div className="text-right text-xs text-slate-600">
                             {ponto.distancia_anterior_km > 0 && (

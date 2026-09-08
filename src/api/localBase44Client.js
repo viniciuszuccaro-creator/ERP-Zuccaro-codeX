@@ -25,6 +25,7 @@ import {
 import { assertOpOnCreate } from "@/components/lib/ordemProducaoPolicy";
 import { applyComprasCreate, assertRecebimentoOc } from "@/components/lib/comprasOrdemPolicy";
 import { applyCrmCreate, assertOportunidadeOnUpdate } from "@/components/lib/crmOportunidadePolicy";
+import { applyRoteirizacaoCreate } from "@/components/lib/roteirizacaoPolicy";
 import { applyExpedicaoCreate, assertEntregaOnUpdate, syncEntregaNumero } from "@/components/lib/expedicaoEntregaPolicy";
 import { applyAtendimentoCreate } from "@/components/lib/atendimentoConversaPolicy";
 import { applyPortalReadScope, resolvePortalClienteId } from "@/components/lib/portalClientePolicy";
@@ -1038,6 +1039,18 @@ const applyLocalCrmCreate = (db, entityName, record) => applyCrmCreate(entityNam
   oportunidades: getEntityStore(db, 'Oportunidade'),
 });
 
+const applyLocalRoteirizacaoCreate = (db, entityName, record) => {
+  const veiculoId = record?.veiculo_id;
+  const veiculo = veiculoId
+    ? getEntityStore(db, 'Veiculo').find((item) => String(item.id) === String(veiculoId))
+    : null;
+  return applyRoteirizacaoCreate(entityName, record, {
+    rotas: getEntityStore(db, 'Rota'),
+    roteirizacoes: getEntityStore(db, 'RoteirizacaoInteligente'),
+    veiculo,
+  });
+};
+
 const applyLocalExpedicaoCreate = (db, entityName, record) => applyExpedicaoCreate(entityName, record, {
   entregas: getEntityStore(db, 'Entrega'),
   romaneios: getEntityStore(db, 'Romaneio'),
@@ -1417,7 +1430,9 @@ const createEntityApi = (entityName) => ({
     if (atendimento.reuse) return atendimento.reuse;
     const crm = applyLocalCrmCreate(db, entityName, atendimento.record || expedicao.record || compras.record || ordem.record || scoped);
     if (crm.reuse) return crm.reuse;
-    const withSiteOrigem = applyLocalSiteOrigemCreate(entityName, crm.record || atendimento.record || expedicao.record || ordem.record || scoped);
+    const roteirizacao = applyLocalRoteirizacaoCreate(db, entityName, crm.record || atendimento.record || expedicao.record || compras.record || ordem.record || scoped);
+    if (roteirizacao.reuse) return roteirizacao.reuse;
+    const withSiteOrigem = applyLocalSiteOrigemCreate(entityName, roteirizacao.record || crm.record || atendimento.record || expedicao.record || ordem.record || scoped);
     const marketplace = applyLocalMarketplaceCreate(db, entityName, withSiteOrigem);
     if (marketplace.reuse) return marketplace.reuse;
     const migracao = applyLocalMigracaoCreate(db, entityName, marketplace.record || withSiteOrigem);

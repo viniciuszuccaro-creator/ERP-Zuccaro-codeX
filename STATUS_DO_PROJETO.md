@@ -1,3 +1,15 @@
+### P1.3 - Roteirizador avancado: prioridade, capacidade e rota persistida
+- Objetivo: cumprir P1 Roteirizador avancado de `PLANO_GO_LIVE.md` no fluxo existente (`RoteirizacaoMapa` / `RoteirizacaoInteligente`), sem modulo de rotas paralelo.
+- Diagnostico: otimizacao usava so nearest-neighbor local; ignorava peso/volume/capacidade/janela/prioridade; `Rota` nao tinha codigo/idempotencia no ponto unico; IA nao tinha fallback local.
+- Causa raiz: regras de roteirizacao espalhadas na tela, fora de um carimbo unico de persistencia.
+- Arquivos alterados: `roteirizacaoPolicy.js` (extracao), `localCadastroMasterPolicy.js`, `contextoMultiempresaPolicy.js`, `localBase44Client.js`, `RoteirizacaoMapa.jsx`, `RoteirizacaoInteligente.jsx`, testes.
+- Reutilizado: mapa de roteirizacao, romaneio, veiculos com `capacidade_kg`/`capacidade_m3` e parametros ja existentes.
+- Alteracoes: codigo `ROT-`; rota exige empresa/motorista/veiculo; otimizacao por faixa de prioridade + NN; alerta de capacidade; ajuste manual de sequencia; gravacao idempotente; IA com fallback local.
+- Multiempresa: `Rota` e `RoteirizacaoInteligente` exigem empresa operacional.
+- Pendencia: geocodificacao/Google Maps reais e trafego ao vivo ainda dependem da API externa; App Motorista completo e o proximo P1.
+- Validacoes: `node --test tests/roteirizacao-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P1: App Motorista completo.
+
 ### P1.2 - CRM completo: oportunidades, interacoes e campanhas operacionais
 - Objetivo: cumprir P1 CRM completo de `PLANO_GO_LIVE.md` no modulo CRM existente, sem funil/portal/CRM paralelo.
 - Diagnostico: listagens de Oportunidades/Interacoes/Campanhas estavam como placeholder; funis avancados liam `Oportunidade.list()` sem contexto; drag do Funil Visual nao persistia; nao havia codigo/idempotencia/conversao no ponto unico de gravacao.

@@ -10,6 +10,7 @@ import TesteGoogleMaps from "@/components/integracoes/TesteGoogleMaps";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
+import { otimizarRotaAvancada, resolveCoordenadas } from "@/components/lib/roteirizacaoPolicy";
 
 export default function RoteirizacaoInteligente({ windowMode = false }) {
   const queryClient = useQueryClient();
@@ -72,8 +73,13 @@ export default function RoteirizacaoInteligente({ windowMode = false }) {
 
       const entregasSelecionadas = entregas.filter(e => entregasIds.includes(e.id));
       
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Otimize a rota de entrega considerando:
+      const motorista = motoristas.find(m => m.id === motoristaId);
+      const veiculo = veiculos.find(v => v.id === veiculoId);
+
+      let result;
+      try {
+        result = await base44.integrations.Core.InvokeLLM({
+          prompt: `Otimize a rota de entrega considerando:
 
 Entregas: ${JSON.stringify(entregasSelecionadas.map(e => ({
   cliente: e.cliente_nome,
@@ -84,20 +90,35 @@ Entregas: ${JSON.stringify(entregasSelecionadas.map(e => ({
 })))}
 
 Retorne a melhor sequência de entregas, distância total, tempo estimado e custo.`,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            sequencia_otimizada: { type: "array", items: { type: "string" } },
-            distancia_total_km: { type: "number" },
-            tempo_total_minutos: { type: "number" },
-            custo_estimado: { type: "number" },
-            economia_vs_manual: { type: "object" }
+          response_json_schema: {
+            type: "object",
+            properties: {
+              sequencia_otimizada: { type: "array", items: { type: "string" } },
+              distancia_total_km: { type: "number" },
+              tempo_total_minutos: { type: "number" },
+              custo_estimado: { type: "number" },
+              economia_vs_manual: { type: "object" }
+            }
           }
-        }
+        });
+      } catch {
+        result = null;
+      }
+
+      const fallback = otimizarRotaAvancada({
+        origem: resolveCoordenadas(empresaAtual?.endereco || empresaAtual) || { latitude: -23.55052, longitude: -46.633308 },
+        entregas: entregasSelecionadas,
+        veiculo,
+        parametros: { priorizar_urgencia: true, considerar_janela_horario: true },
       });
 
-      const motorista = motoristas.find(m => m.id === motoristaId);
-      const veiculo = veiculos.find(v => v.id === veiculoId);
+      const sequenciaIds = Array.isArray(result?.sequencia_otimizada) && result.sequencia_otimizada.length
+        ? result.sequencia_otimizada
+        : fallback.pontos.map((p) => p.id);
+      const entregasOrdenadas = sequenciaIds
+        .map((id) => entregasSelecionadas.find((e) => String(e.id) === String(id)))
+        .filter(Boolean);
+      const pontosFinais = entregasOrdenadas.length ? entregasOrdenadas : fallback.pontos;
 
       const rotaCriada = await createInContext("RoteirizacaoInteligente", {
         group_id: groupId,
@@ -105,27 +126,29 @@ Retorne a melhor sequência de entregas, distância total, tempo estimado e cust
         empresa_id: empresaId,
         data_rota: dataRota,
         motorista_id: motoristaId,
-        motorista_nome: motorista?.nome || "",
+        motorista_nome: motorista?.nome || motorista?.nome_completo || "",
         veiculo_id: veiculoId,
         veiculo_placa: veiculo?.placa || "",
-        entregas_vinculadas: entregasSelecionadas.map((e, idx) => ({
+        entregas_ids: pontosFinais.map((e) => e.id),
+        entregas_vinculadas: pontosFinais.map((e, idx) => ({
           entrega_id: e.id,
           pedido_id: e.pedido_id,
           cliente_nome: e.cliente_nome,
-          endereco_completo: `${e.endereco_entrega_completo?.logradouro}, ${e.endereco_entrega_completo?.numero}`,
-          latitude: e.endereco_entrega_completo?.latitude,
-          longitude: e.endereco_entrega_completo?.longitude,
+          endereco_completo: `${e.endereco_entrega_completo?.logradouro || ''}, ${e.endereco_entrega_completo?.numero || ''}`,
+          latitude: e.latitude || e.endereco_entrega_completo?.latitude,
+          longitude: e.longitude || e.endereco_entrega_completo?.longitude,
           ordem_sequencia: idx + 1,
-          peso_kg: e.peso_total_kg,
+          peso_kg: e.peso_total_kg || e.peso_kg,
           prioridade: e.prioridade
         })),
         otimizacao_ia: {
-          distancia_total_km: result.distancia_total_km,
-          tempo_total_estimado_minutos: result.tempo_total_minutos,
-          custo_estimado_frete: result.custo_estimado,
-          algoritmo_usado: "IA Base44 LLM",
-          fatores_considerados: ["Distância", "Janela de Entrega", "Trânsito", "Prioridade", "Peso"],
-          economia_vs_rota_manual: result.economia_vs_manual
+          distancia_total_km: result?.distancia_total_km ?? fallback.distancia_total_km,
+          tempo_total_estimado_minutos: result?.tempo_total_minutos ?? fallback.tempo_estimado_minutos,
+          custo_estimado_frete: result?.custo_estimado,
+          algoritmo_usado: result ? "IA + fallback local" : fallback.algoritmo,
+          fatores_considerados: ["Distância", "Janela de Entrega", "Prioridade", "Peso", "Capacidade"],
+          economia_vs_rota_manual: result?.economia_vs_manual,
+          alertas: fallback.alertas,
         },
         status: "Planejada",
         criado_por: user?.full_name || user?.email || "Sistema"
