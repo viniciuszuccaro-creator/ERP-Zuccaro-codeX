@@ -9,7 +9,11 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { createMarketplaceSimulationOrders } from './marketplaceSimulationData';
 import MarketplacePendingOrders from './MarketplacePendingOrders';
-import { buildErpPedidoFromExterno } from '@/components/lib/marketplacePedidoPolicy';
+import {
+  buildErpPedidoFromExterno,
+  filtrarPedidosSimuladosAtivos,
+  MARKETPLACE_STATUS_PENDENTES,
+} from '@/components/lib/marketplacePedidoPolicy';
 
 /**
  * Sincronização ATIVA de Marketplaces
@@ -60,10 +64,22 @@ export default function SincronizacaoMarketplacesAtiva() {
   const { data: pedidosExternos = [] } = useQuery({
     queryKey: ['pedidos-externos-pendentes', groupId || 'sem-grupo', empresaId || 'sem-empresa'],
     queryFn: () => filterInContext('PedidoExterno', {
-      status_importacao: ['A Validar', 'Em Revisão']
+      status_importacao: MARKETPLACE_STATUS_PENDENTES
     }, '-created_date', 100),
     enabled: contextoValido && podeVisualizar,
     refetchInterval: 30000 // Atualiza a cada 30s
+  });
+
+  const { data: configsMarketplace = [] } = useQuery({
+    queryKey: ['marketplace-configuracoes-ativa', groupId || 'sem-grupo', empresaId || 'sem-empresa'],
+    queryFn: () => filterInContext('ConfiguracaoIntegracaoMarketplace', {}, '-updated_date', 100),
+    enabled: contextoValido && podeVisualizar,
+  });
+
+  const { data: produtosSku = [] } = useQuery({
+    queryKey: ['produtos-sku-marketplace', groupId || 'sem-grupo', empresaId || 'sem-empresa'],
+    queryFn: () => filterInContext('Produto', {}, 'codigo', 500),
+    enabled: contextoValido && podeImportar,
   });
 
   const importarPedidoMutation = useMutation({
@@ -156,7 +172,7 @@ export default function SincronizacaoMarketplacesAtiva() {
 
       // 2. Criar pedido no ERP
       const pedidoERP = await createInContext('Pedido', {
-        ...buildErpPedidoFromExterno({ ...pedidoExterno, cliente_erp_id: clienteId }),
+        ...buildErpPedidoFromExterno({ ...pedidoExterno, cliente_erp_id: clienteId }, { produtos: produtosSku }),
         ...scope
       });
 
@@ -222,18 +238,45 @@ export default function SincronizacaoMarketplacesAtiva() {
 
     try {
       // Em producao, este retorno sera substituido pelas APIs dos marketplaces.
-      const novosPedidos = createMarketplaceSimulationOrders();
+      const novosPedidos = filtrarPedidosSimuladosAtivos(
+        createMarketplaceSimulationOrders(),
+        configsMarketplace,
+      );
 
-      for (const pedido of novosPedidos) {
-        await createInContext('PedidoExterno', {
-          ...pedido,
-          status_importacao: 'A Validar',
-          ...scope
+      if (!novosPedidos.length) {
+        toast({
+          title: 'Nenhum canal ativo',
+          description: 'Ative ao menos um marketplace na configuracao antes de sincronizar.',
+          variant: 'destructive'
         });
+        await auditarMarketplace('Bloqueio marketplace inativo', 'Sincronizacao sem canais ativos.');
+        return;
       }
-      await auditarMarketplace('Sincronizar Marketplaces', 'Busca simulada de pedidos externos executada com escopo multiempresa.', { quantidade: novosPedidos.length });
+
+      let criados = 0;
+      for (const pedido of novosPedidos) {
+        if (String(pedido.status_externo || '').toLowerCase().includes('cancel')) {
+          await createInContext('PedidoExterno', {
+            ...pedido,
+            status_importacao: 'Cancelado',
+            ...scope
+          });
+        } else {
+          await createInContext('PedidoExterno', {
+            ...pedido,
+            status_importacao: 'A Validar',
+            ...scope
+          });
+        }
+        criados += 1;
+      }
+      await auditarMarketplace('Sincronizar Marketplaces', 'Busca simulada de pedidos externos executada com escopo multiempresa.', { quantidade: criados });
 
       queryClient.invalidateQueries({ queryKey: ['pedidos-externos-pendentes'] });
+      toast({
+        title: 'Sincronizacao concluida',
+        description: `${criados} pedido(s) processado(s) nos canais ativos.`
+      });
     } catch (error) {
       console.warn('Falha ao sincronizar marketplaces:', error);
       await auditarMarketplace('Erro Sincronizar Marketplaces', 'Falha na busca de pedidos externos.', { tipo_erro: 'unexpected_error' });

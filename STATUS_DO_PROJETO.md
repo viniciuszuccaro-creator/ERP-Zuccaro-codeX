@@ -1,3 +1,15 @@
+### P1.8 - Marketplaces: sync ativo, SKU e conciliacao local
+- Objetivo: cumprir P1 Marketplaces de `PLANO_GO_LIVE.md` na sincronizacao existente, sem modulo paralelo.
+- Diagnostico: Gate 15 cobria id externo/idempotencia; sync da config era noop; Ativa ignorava canais inativos; Validar importava sem itens/`buildErpPedidoFromExterno`; sem SKU, cancelamento nem resumo de taxas.
+- Causa raiz: operacao de sync/status fora de `marketplacePedidoPolicy`.
+- Arquivos alterados: `marketplacePedidoPolicy.js`, `marketplaceSimulationData.js`, `SincronizacaoMarketplacesAtiva.jsx`, `SincronizacaoMarketplaces.jsx`, `ValidarPedidosExternos.jsx`, testes.
+- Reutilizado: PedidoExterno, ConfiguracaoIntegracaoMarketplace, simulacao e telas de sync/validacao ja existentes.
+- Alteracoes: sync so em canal ativo; SKU→produto; cancelamento/devolucao idempotentes; conciliacao local de comissao/taxa; Validar alinhado a Em Revisao + import completo.
+- Multiempresa: create/update no contexto; reuse por empresa+id externo.
+- Pendencia: OAuth/NF/recebivel reais das APIs; Dashboards avancados e o proximo P1.
+- Validacoes: `node --test tests/marketplace-pedido-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P1: Dashboards avancados.
+
 ### P1.7 - Integracao total do site: catalogo, estoque e status
 - Objetivo: cumprir P1 Integracao total do site de `PLANO_GO_LIVE.md` no site existente (`OrcamentoSite`), sem criar outro site.
 - Diagnostico: Gate 14 cobria origem `site`; CatalogoWeb/exibir_site ficava orfao; estoque_minimo_online nao bloqueava; checkout sem status/pagamento estavel; OrcamentoAutomaticoIA desconectado da pagina.

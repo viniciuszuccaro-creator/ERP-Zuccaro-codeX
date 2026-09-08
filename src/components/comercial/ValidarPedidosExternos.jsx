@@ -11,7 +11,7 @@ import { useUser } from "@/components/lib/UserContext";
 import usePermissions from "@/components/lib/usePermissions";
 import { ProtectedAction } from "@/components/ProtectedAction";
 import { toast } from "sonner";
-import { stampMarketplacePedido } from "@/components/lib/marketplacePedidoPolicy";
+import { buildErpPedidoFromExterno, stampMarketplacePedido } from "@/components/lib/marketplacePedidoPolicy";
 
 export default function ValidarPedidosExternos({ windowMode = true }) {
   const queryClient = useQueryClient();
@@ -71,8 +71,8 @@ export default function ValidarPedidosExternos({ windowMode = true }) {
         await auditPedidoExterno({ acao: "Validacao bloqueada", ext, descricao: "Bloqueio ao validar pedido externo", sucesso: false, detalhes: { motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" } });
         throw new Error(!contextoValido ? "Selecione grupo ou empresa antes de validar." : "Sem permissao para validar pedido externo.");
       }
-      const updated = await updateInContext("PedidoExterno", ext.id, { status_importacao: "Validado" });
-      await auditPedidoExterno({ acao: "Validacao", ext: updated || ext, descricao: "Pedido externo marcado como validado", detalhes: { status_anterior: ext.status_importacao, status_novo: "Validado" } });
+      const updated = await updateInContext("PedidoExterno", ext.id, { status_importacao: "Em Revisão" });
+      await auditPedidoExterno({ acao: "Validacao", ext: updated || ext, descricao: "Pedido externo marcado como validado", detalhes: { status_anterior: ext.status_importacao, status_novo: "Em Revisão" } });
       return updated;
     },
     onSuccess: async () => {
@@ -111,39 +111,38 @@ export default function ValidarPedidosExternos({ windowMode = true }) {
         await auditPedidoExterno({ acao: "Importacao bloqueada", ext, descricao: "Bloqueio ao importar pedido externo", sucesso: false, detalhes: { motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" } });
         throw new Error(!contextoValido ? "Selecione grupo ou empresa antes de importar." : "Sem permissao para importar pedido externo.");
       }
-      // Map mínimo para Pedido
-      const cliente_nome = ext.cliente_nome || "Cliente Externo";
-      const data_pedido = (ext.data_pedido || ext.data_pedido_externo || new Date().toISOString()).toString().split("T")[0];
 
-      const valor_total = (() => {
-        if (typeof ext.valor_total === "number") return ext.valor_total;
-        if (Array.isArray(ext.itens)) {
-          return ext.itens.reduce((s, i) => {
-            const v = typeof i?.valor_total === "number"
-              ? i.valor_total
-              : (Number(i?.preco_unitario) || 0) * (Number(i?.quantidade) || 0);
-            return s + v;
-          }, 0);
-        }
-        return 0;
-      })();
+      const produtos = await filterInContext("Produto", {}, "codigo", 500);
+      const pedidosExistentes = await filterInContext("Pedido", {
+        origem_externa_id: ext.id_externo || ext.id,
+      }, "-updated_date", 1);
+      if (pedidosExistentes?.[0]) {
+        await updateInContext("PedidoExterno", ext.id, {
+          status_importacao: "Importado",
+          pedido_id: pedidosExistentes[0].id,
+          pedido_erp_id: pedidosExistentes[0].id,
+        });
+        await auditPedidoExterno({
+          acao: "Importacao",
+          ext,
+          descricao: "Pedido externo reutilizado por identificador externo",
+          detalhes: { pedido_id: pedidosExistentes[0].id, reutilizado: true },
+        });
+        return pedidosExistentes[0];
+      }
 
       const payload = stampMarketplacePedido({
-        tipo: "Pedido",
-        origem_pedido: ext.origem || ext.canal || "API",
-        origem: ext.origem || ext.canal || "API",
-        marketplace: ext.origem || ext.canal,
-        origem_externa_id: ext.id_externo || ext.id,
-        id_externo: ext.id_externo || ext.id,
-        cliente_nome,
-        cliente_id: ext.cliente_id || undefined,
-        data_pedido,
-        valor_total,
-        status: "Rascunho",
+        ...buildErpPedidoFromExterno(ext, { produtos }),
+        status: "Aprovado",
       });
 
       const created = await createInContext("Pedido", payload, "empresa_id");
-      await updateInContext("PedidoExterno", ext.id, { status_importacao: "Importado", pedido_id: created.id });
+      await updateInContext("PedidoExterno", ext.id, {
+        status_importacao: "Importado",
+        pedido_id: created.id,
+        pedido_erp_id: created.id,
+        validado: true,
+      });
       await auditPedidoExterno({ acao: "Importacao", ext, descricao: "Pedido externo importado como pedido comercial", detalhes: { pedido_id: created.id, origem_externa_id: payload.origem_externa_id } });
       return created;
     },
@@ -151,6 +150,7 @@ export default function ValidarPedidosExternos({ windowMode = true }) {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["pedidos-externos"] }),
         queryClient.invalidateQueries({ queryKey: ["pedidos"] }),
+        queryClient.invalidateQueries({ queryKey: ["pedidos-externos-pendentes"] }),
       ]);
       toast.success("Pedido externo importado.");
     },

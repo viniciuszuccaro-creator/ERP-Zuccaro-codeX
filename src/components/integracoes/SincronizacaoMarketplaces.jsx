@@ -11,6 +11,11 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import { useUser } from '@/components/lib/UserContext';
 import usePermissions from '@/components/lib/usePermissions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { createMarketplaceSimulationOrders } from './marketplaceSimulationData';
+import {
+  assertMarketplaceAtivo,
+  filtrarPedidosSimuladosAtivos,
+} from '@/components/lib/marketplacePedidoPolicy';
 
 /**
  * Sincronização com Marketplaces
@@ -106,12 +111,33 @@ export default function SincronizacaoMarketplaces({ empresaId: empresaIdProp }) 
         await auditarMarketplace('Bloqueio por permissao', 'Tentativa de sincronizar marketplace sem permissao.', { marketplace });
         throw new Error('Seu perfil nao permite sincronizar marketplaces.');
       }
-      // Simulacao de sincronizacao
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      assertMarketplaceAtivo({ configs: configuracoesSalvas, origem: marketplace });
+
+      const simulados = filtrarPedidosSimuladosAtivos(
+        createMarketplaceSimulationOrders().filter((pedido) => {
+          const origem = String(pedido.origem || '').toLowerCase();
+          const alvo = String(marketplace || '').toLowerCase();
+          return origem === alvo || origem.includes(alvo) || alvo.includes(origem);
+        }),
+        configuracoesSalvas,
+      );
+
+      let novos = 0;
+      for (const pedido of simulados) {
+        const statusImportacao = String(pedido.status_externo || '').toLowerCase().includes('cancel')
+          ? 'Cancelado'
+          : 'A Validar';
+        await createInContext('PedidoExterno', {
+          ...pedido,
+          status_importacao: statusImportacao,
+          ...scope,
+        });
+        novos += 1;
+      }
 
       const resultado = {
         marketplace,
-        novos_pedidos: 0,
+        novos_pedidos: novos,
         atualizados: 0
       };
       await auditarMarketplace('Sincronizar Marketplace', 'Sincronizacao manual de marketplace executada com escopo multiempresa.', resultado);
@@ -119,6 +145,7 @@ export default function SincronizacaoMarketplaces({ empresaId: empresaIdProp }) 
     },
     onSuccess: (resultado) => {
       queryClient.invalidateQueries({ queryKey: ['pedidos-externos-config'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-externos-pendentes'] });
       toast({
         title: `✅ ${resultado.marketplace} sincronizado!`,
         description: `${resultado.novos_pedidos} pedidos novos`
@@ -126,10 +153,10 @@ export default function SincronizacaoMarketplaces({ empresaId: empresaIdProp }) 
     },
     onError: async (error) => {
       console.warn('Falha ao sincronizar marketplace:', error);
-      await auditarMarketplace('Erro Sincronizar Marketplace', 'Falha ao sincronizar marketplace.', { tipo_erro: error?.name || 'Error' });
+      await auditarMarketplace('Erro Sincronizar Marketplace', 'Falha ao sincronizar marketplace.', { tipo_erro: error?.name || 'Error', mensagem: error?.message });
       toast({
         title: 'Sincronizacao bloqueada',
-        description: 'Nao foi possivel concluir a sincronizacao.',
+        description: error?.message || 'Nao foi possivel concluir a sincronizacao.',
         variant: 'destructive'
       });
     }

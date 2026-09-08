@@ -1,6 +1,7 @@
 const firstText = (...values) => values.map((value) => String(value || '').trim()).find(Boolean) || '';
 
 export const MARKETPLACE_ORIGENS = ['Mercado Livre', 'Shopee', 'Amazon'];
+export const MARKETPLACE_STATUS_PENDENTES = ['A Validar', 'Em Revisão'];
 
 export const isMarketplaceOrigem = (value) => {
   const normalized = firstText(value).toLowerCase();
@@ -81,25 +82,141 @@ export const assertPedidoMarketplaceOnCreate = ({ record = {}, pedidos = [] } = 
   return { reuse: null, record: stamped };
 };
 
-export const buildErpPedidoFromExterno = (pedidoExterno = {}) => stampMarketplacePedido({
-  cliente_id: pedidoExterno.cliente_erp_id || pedidoExterno.cliente_id,
-  cliente_nome: pedidoExterno.cliente_nome,
-  cliente_cpf_cnpj: pedidoExterno.cliente_cpf_cnpj,
-  data_pedido: pedidoExterno.data_pedido_externo
-    ? new Date(pedidoExterno.data_pedido_externo).toISOString().split('T')[0]
-    : new Date().toISOString().split('T')[0],
-  tipo: 'Pedido',
-  tipo_pedido: 'Revenda',
-  origem: pedidoExterno.origem,
-  origem_pedido: pedidoExterno.origem,
-  marketplace: pedidoExterno.origem,
-  origem_externa_id: pedidoExterno.id_externo,
-  id_externo: pedidoExterno.id_externo,
-  status: 'Aprovado',
-  pode_ver_no_portal: true,
-  endereco_entrega_principal: pedidoExterno.endereco_entrega,
-  itens_revenda: Array.isArray(pedidoExterno.itens)
-    ? pedidoExterno.itens.map((item) => ({
+export const isMarketplaceAtivo = (configs = [], origem) => {
+  const nome = firstText(origem).toLowerCase();
+  if (!nome) return false;
+  const list = Array.isArray(configs) ? configs : [];
+  if (!list.length) return true;
+  const match = list.find((item) => {
+    const candidatos = [item.nome, item.marketplace, item.marketplace_id, item.chave]
+      .map((value) => firstText(value).toLowerCase());
+    return candidatos.some((value) => value && (value === nome || nome.includes(value) || value.includes(nome)));
+  });
+  if (!match) return true;
+  return match.ativo !== false && match.ativo !== 'false' && match.ativo !== 0;
+};
+
+export const assertMarketplaceAtivo = ({ configs = [], origem } = {}) => {
+  if (!isMarketplaceAtivo(configs, origem)) {
+    throw new Error(`Marketplace ${firstText(origem) || 'desconhecido'} inativo na configuracao.`);
+  }
+  return true;
+};
+
+export const filtrarPedidosSimuladosAtivos = (pedidos = [], configs = []) => (
+  (Array.isArray(pedidos) ? pedidos : []).filter((pedido) => isMarketplaceAtivo(configs, pedido.origem || pedido.marketplace))
+);
+
+export const resolveSkuMarketplace = (item = {}, produtos = []) => {
+  const sku = firstText(item.sku_interno, item.sku_externo, item.codigo_sku, item.codigo);
+  if (!sku) return { ...item, produto_id: item.produto_id || null, sku_resolvido: false };
+  const list = Array.isArray(produtos) ? produtos : [];
+  const found = list.find((produto) => {
+    const codes = [
+      produto.codigo,
+      produto.sku,
+      produto.sku_interno,
+      produto.codigo_sku,
+      produto.codigo_barras,
+    ].map((value) => firstText(value).toLowerCase());
+    return codes.includes(sku.toLowerCase()) || firstText(produto.id) === firstText(item.produto_id);
+  });
+  return {
+    ...item,
+    sku_interno: firstText(item.sku_interno, found?.codigo, found?.sku, sku),
+    produto_id: firstText(item.produto_id, found?.id) || undefined,
+    sku_resolvido: Boolean(found || item.produto_id),
+  };
+};
+
+export const mapItensMarketplaceComSku = (itens = [], produtos = []) => (
+  (Array.isArray(itens) ? itens : []).map((item) => resolveSkuMarketplace(item, produtos))
+);
+
+export const buildConciliacaoResumo = (pedido = {}) => {
+  const produtos = Number(pedido.valor_produtos || 0) || 0;
+  const frete = Number(pedido.valor_frete || 0) || 0;
+  const total = Number(pedido.valor_total || produtos + frete) || 0;
+  const comissao = Number(pedido.comissao_marketplace || 0) || 0;
+  const taxa = Number(pedido.taxa_marketplace || 0) || 0;
+  const liquido = total - comissao - taxa;
+  return {
+    valor_bruto: total,
+    comissao_marketplace: comissao,
+    taxa_marketplace: taxa,
+    valor_liquido_estimado: Number(liquido.toFixed(2)),
+    conciliado: Boolean(pedido.conciliado),
+    referencia_conciliacao: [
+      'mkt',
+      firstText(pedido.origem, pedido.marketplace, 'mp'),
+      firstText(pedido.id_externo, pedido.origem_externa_id, pedido.id),
+    ].join('|'),
+  };
+};
+
+export const applyStatusExternoMarketplace = ({
+  pedidoExterno = {},
+  acao = '',
+  motivo = '',
+} = {}) => {
+  if (!pedidoExterno?.id && !firstText(pedidoExterno.id_externo)) {
+    throw new Error('Pedido externo obrigatorio.');
+  }
+  const action = firstText(acao).toLowerCase();
+  const when = new Date().toISOString();
+  if (action.includes('cancel')) {
+    if (String(pedidoExterno.status_externo || '').toLowerCase().includes('cancel')) {
+      return { reuse: true, patch: pedidoExterno };
+    }
+    return {
+      reuse: false,
+      patch: {
+        status_externo: 'cancelled',
+        status_importacao: 'Cancelado',
+        cancelado_em: when,
+        motivo_cancelamento: firstText(motivo) || 'Cancelamento marketplace',
+        portal_marketplace_status_key: `cancel|${firstText(pedidoExterno.id, pedidoExterno.id_externo)}`,
+      },
+    };
+  }
+  if (action.includes('devolv') || action.includes('return')) {
+    if (String(pedidoExterno.status_externo || '').toLowerCase().includes('return')) {
+      return { reuse: true, patch: pedidoExterno };
+    }
+    return {
+      reuse: false,
+      patch: {
+        status_externo: 'returned',
+        status_importacao: 'Devolvido',
+        devolvido_em: when,
+        motivo_devolucao: firstText(motivo) || 'Devolucao marketplace',
+        portal_marketplace_status_key: `return|${firstText(pedidoExterno.id, pedidoExterno.id_externo)}`,
+      },
+    };
+  }
+  throw new Error('Acao de status marketplace invalida.');
+};
+
+export const buildErpPedidoFromExterno = (pedidoExterno = {}, { produtos = [] } = {}) => {
+  const itensMapeados = mapItensMarketplaceComSku(pedidoExterno.itens, produtos);
+  return stampMarketplacePedido({
+    cliente_id: pedidoExterno.cliente_erp_id || pedidoExterno.cliente_id,
+    cliente_nome: pedidoExterno.cliente_nome,
+    cliente_cpf_cnpj: pedidoExterno.cliente_cpf_cnpj,
+    data_pedido: pedidoExterno.data_pedido_externo
+      ? new Date(pedidoExterno.data_pedido_externo).toISOString().split('T')[0]
+      : new Date().toISOString().split('T')[0],
+    tipo: 'Pedido',
+    tipo_pedido: 'Revenda',
+    origem: pedidoExterno.origem,
+    origem_pedido: pedidoExterno.origem,
+    marketplace: pedidoExterno.origem,
+    origem_externa_id: pedidoExterno.id_externo,
+    id_externo: pedidoExterno.id_externo,
+    status: 'Aprovado',
+    pode_ver_no_portal: true,
+    endereco_entrega_principal: pedidoExterno.endereco_entrega,
+    itens_revenda: itensMapeados.map((item) => ({
       produto_id: item.produto_id,
       codigo_sku: item.sku_interno || item.sku_externo,
       descricao: item.descricao,
@@ -107,16 +224,17 @@ export const buildErpPedidoFromExterno = (pedidoExterno = {}) => stampMarketplac
       preco_unitario: item.preco_unitario,
       valor_item: item.valor_total,
       unidade: 'UN',
-    }))
-    : [],
-  valor_produtos: pedidoExterno.valor_produtos,
-  valor_frete: pedidoExterno.valor_frete,
-  valor_total: pedidoExterno.valor_total,
-  comissao_marketplace: pedidoExterno.comissao_marketplace,
-  taxa_marketplace: pedidoExterno.taxa_marketplace,
-  forma_pagamento: pedidoExterno.forma_pagamento_externa || 'Marketplace',
-  observacoes_publicas: `Importado de ${pedidoExterno.origem} - Pedido #${pedidoExterno.numero_pedido_externo || pedidoExterno.id_externo}`,
-});
+    })),
+    valor_produtos: pedidoExterno.valor_produtos,
+    valor_frete: pedidoExterno.valor_frete,
+    valor_total: pedidoExterno.valor_total,
+    comissao_marketplace: pedidoExterno.comissao_marketplace,
+    taxa_marketplace: pedidoExterno.taxa_marketplace,
+    forma_pagamento: pedidoExterno.forma_pagamento_externa || 'Marketplace',
+    observacoes_publicas: `Importado de ${pedidoExterno.origem} - Pedido #${pedidoExterno.numero_pedido_externo || pedidoExterno.id_externo}`,
+    ...buildConciliacaoResumo(pedidoExterno),
+  });
+};
 
 export const applyMarketplaceCreate = (entityName, record, stores = {}) => {
   if (entityName === 'PedidoExterno') {

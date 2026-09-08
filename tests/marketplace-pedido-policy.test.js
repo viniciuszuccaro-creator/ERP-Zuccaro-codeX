@@ -5,9 +5,15 @@ import test from 'node:test';
 import { createMarketplaceSimulationOrders } from '../src/components/integracoes/marketplaceSimulationData.js';
 import {
   applyMarketplaceCreate,
+  applyStatusExternoMarketplace,
+  assertMarketplaceAtivo,
   assertPedidoExternoOnCreate,
   assertPedidoMarketplaceOnCreate,
+  buildConciliacaoResumo,
   buildErpPedidoFromExterno,
+  filtrarPedidosSimuladosAtivos,
+  isMarketplaceAtivo,
+  resolveSkuMarketplace,
 } from '../src/components/lib/marketplacePedidoPolicy.js';
 
 test('pedido externo exige empresa, marketplace e id externo', () => {
@@ -42,31 +48,72 @@ test('pedido interno sem marketplace nao e carimbado', () => {
   assert.equal(decision.record.marketplace, undefined);
 });
 
-test('importacao carimba marketplace e identificador externo', () => {
+test('importacao carimba marketplace, sku e conciliacao', () => {
   const payload = buildErpPedidoFromExterno({
     origem: 'Amazon',
     id_externo: 'AZ-99',
     numero_pedido_externo: '9',
     cliente_nome: 'Ana',
-    itens: [],
+    itens: [{ sku_externo: 'VIGA-300', descricao: 'Viga', quantidade: 1, preco_unitario: 10, valor_total: 10 }],
+    valor_produtos: 10,
+    valor_frete: 0,
     valor_total: 10,
-  });
+    comissao_marketplace: 1,
+    taxa_marketplace: 0.5,
+  }, { produtos: [{ id: 'prod-1', codigo: 'VIGA-300' }] });
   assert.equal(payload.marketplace, 'Amazon');
   assert.equal(payload.origem_pedido, 'Amazon');
   assert.equal(payload.origem_externa_id, 'AZ-99');
   assert.equal(payload.numero_pedido, undefined);
+  assert.equal(payload.itens_revenda[0].produto_id, 'prod-1');
+  assert.equal(payload.valor_liquido_estimado, 8.5);
+  assert.match(payload.referencia_conciliacao, /mkt\|Amazon\|AZ-99/);
+});
+
+test('config inativa bloqueia canal e status cancel/return sao idempotentes', () => {
+  assert.equal(isMarketplaceAtivo([{ nome: 'Shopee', ativo: false }], 'Shopee'), false);
+  assert.throws(() => assertMarketplaceAtivo({ configs: [{ nome: 'Shopee', ativo: false }], origem: 'Shopee' }), /inativo/);
+  const ativos = filtrarPedidosSimuladosAtivos(createMarketplaceSimulationOrders(), [
+    { nome: 'Mercado Livre', ativo: true },
+    { nome: 'Shopee', ativo: false },
+    { nome: 'Amazon', ativo: true },
+  ]);
+  assert.deepEqual(ativos.map((item) => item.origem).sort(), ['Amazon', 'Mercado Livre']);
+
+  const sku = resolveSkuMarketplace({ sku_externo: 'BLOCO-2040' }, [{ id: 'p2', codigo: 'BLOCO-2040' }]);
+  assert.equal(sku.produto_id, 'p2');
+
+  const first = applyStatusExternoMarketplace({
+    pedidoExterno: { id: 'px1', id_externo: 'X1', status_externo: 'payment_approved' },
+    acao: 'cancelar',
+  });
+  assert.equal(first.reuse, false);
+  assert.equal(first.patch.status_importacao, 'Cancelado');
+  const again = applyStatusExternoMarketplace({
+    pedidoExterno: { id: 'px1', id_externo: 'X1', ...first.patch },
+    acao: 'cancelar',
+  });
+  assert.equal(again.reuse, true);
+  assert.equal(buildConciliacaoResumo({ valor_total: 100, comissao_marketplace: 10, taxa_marketplace: 5 }).valor_liquido_estimado, 85);
 });
 
 test('simulacao e telas existentes deixam de inventar id e numero', async () => {
   const sim = createMarketplaceSimulationOrders();
   assert.equal(sim[0].id_externo, 'ML-SIM-001');
+  assert.ok(sim.some((item) => item.status_externo === 'cancelled'));
   assert.doesNotMatch(JSON.stringify(sim), /Date\.now|Math\.random/);
 
   const ativa = await readFile(new URL('../src/components/integracoes/SincronizacaoMarketplacesAtiva.jsx', import.meta.url), 'utf8');
+  const sync = await readFile(new URL('../src/components/integracoes/SincronizacaoMarketplaces.jsx', import.meta.url), 'utf8');
   const comercial = await readFile(new URL('../src/components/comercial/ValidarPedidosExternos.jsx', import.meta.url), 'utf8');
   assert.match(ativa, /buildErpPedidoFromExterno/);
+  assert.match(ativa, /filtrarPedidosSimuladosAtivos/);
   assert.match(ativa, /reutilizado por identificador externo/);
   assert.doesNotMatch(ativa, /substring\(0, 3\)/);
-  assert.match(comercial, /stampMarketplacePedido/);
+  assert.match(sync, /assertMarketplaceAtivo/);
+  assert.match(sync, /createMarketplaceSimulationOrders/);
+  assert.doesNotMatch(sync, /setTimeout\(resolve, 2000\)/);
+  assert.match(comercial, /buildErpPedidoFromExterno/);
+  assert.match(comercial, /Em Revisão/);
   assert.doesNotMatch(comercial, /numero_pedido: numero/);
 });
