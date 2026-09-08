@@ -37,15 +37,8 @@ export function usePermissoesEmpresa() {
    * @returns {boolean}
    */
   const temPermissao = (modulo, acao, submodulo = null, aba = null) => {
-    // Admin sempre tem permissão total
-    if (user?.role === 'admin') {
-      return true;
-    }
-
-    // Verificar se tem acesso consolidado (visualização global)
-    if (user?.acesso_consolidado && acao === 'visualizar') {
-      return true;
-    }
+    // Fail-closed: role admin / acesso_consolidado nao bypassam matriz
+    if (!user) return false;
 
     if (!permissoes || permissoes.length === 0) {
       return false;
@@ -124,10 +117,6 @@ export function usePermissoesEmpresa() {
    * Obtém o nível de acesso para um módulo
    */
   const obterNivelAcesso = (modulo, submodulo = null, aba = null) => {
-    if (user?.role === 'admin') {
-      return 'Aprovar';
-    }
-
     const permissao = permissoes.find(p => {
       let match = p.modulo === modulo;
       if (submodulo) match = match && p.submodulo === submodulo;

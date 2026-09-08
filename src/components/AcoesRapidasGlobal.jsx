@@ -140,11 +140,11 @@ export default function AcoesRapidasGlobal() {
 
   const acoes = ModuleMap.quickActions
     .filter((qa) => {
-      if (loadingPerms) return true;
+      if (loadingPerms || !user) return false;
       try {
-        return hasPermission(qa.module || qa.modulo || '', null, qa.perm || 'criar') || (user?.role === 'admin');
+        return hasPermission(qa.module || qa.modulo || '', null, qa.perm || 'criar');
       } catch {
-        return true;
+        return false;
       }
     })
     .map((qa) => ({

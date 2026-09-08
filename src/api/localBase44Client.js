@@ -865,9 +865,10 @@ const evaluateLocalPermission = ({ module, section, entityName, action } = {}) =
   if (!moduleNode) return { allowed: false, reason: 'modulo-negado' };
   if (!sectionKey) return { allowed: permissionNodeAllows(moduleNode, desired), reason: 'modulo' };
   const sectionNode = findPermissionNodeByPath(moduleNode, sectionPath.length ? sectionPath : [sectionKey]);
+  if (!sectionNode) return { allowed: false, reason: 'secao-negada' };
   return {
-    allowed: permissionNodeAllows(sectionNode || moduleNode, desired),
-    reason: sectionNode ? 'secao' : 'modulo-fallback',
+    allowed: permissionNodeAllows(sectionNode, desired),
+    reason: 'secao',
   };
 };
 

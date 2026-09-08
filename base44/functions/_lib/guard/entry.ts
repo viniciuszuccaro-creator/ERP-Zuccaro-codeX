@@ -28,19 +28,23 @@ const normalize = (a) => {
     ver: 'visualizar', view: 'visualizar', read: 'visualizar', listar: 'visualizar', status: 'visualizar',
     delete: 'excluir', remove: 'excluir', destroy: 'excluir', apagar: 'excluir',
     cancel: 'cancelar', cancelar: 'cancelar',
-    create: 'criar', add: 'criar', emitir: 'criar', enviar: 'criar',
+    create: 'criar', add: 'criar',
     update: 'editar', edit: 'editar', carta: 'editar', corrigir: 'editar',
     approve: 'aprovar', aprovar: 'aprovar',
     export: 'exportar', exportar: 'exportar'
   };
+  // emitir/enviar/executar permanecem granulares (nao colapsam em criar)
   return map[s] || s;
 };
 
-export function backendHasPermission(perfil, moduleName, section, action = 'visualizar', userRole = null) {
-  if (userRole === 'admin') return true;
+export function backendHasPermission(perfil, moduleName, section, action = 'visualizar', _userRole = null) {
+  // Fail-closed: role admin nao bypassa matriz de PerfilAcesso
   const perms = perfil?.permissoes;
   if (!perms) return false;
   const desired = normalize(action);
+  if (Array.isArray(perms['*']) && (perms['*'].includes(desired) || (desired === 'visualizar' && perms['*'].includes('ver')))) {
+    return true;
+  }
   const modNode = perms[moduleName];
   if (!modNode) return false;
 

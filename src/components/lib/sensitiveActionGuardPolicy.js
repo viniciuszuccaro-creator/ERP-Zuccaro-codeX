@@ -28,13 +28,26 @@ const readStorage = (storage, key) => {
  *   storage?: Pick<Storage, 'getItem'>|null
  * }} options
  */
-export function buildSensitiveGuardRequest({ permission, actionName, path = '', storage } = {}) {
+export function buildSensitiveGuardRequest({
+  permission,
+  actionName,
+  path = '',
+  storage,
+  groupId: groupIdProp = null,
+  empresaId: empresaIdProp = null,
+  scopeType: scopeTypeProp = null,
+} = {}) {
   const permissionParts = String(permission || '').split('.').filter(Boolean);
   const actionParts = String(actionName || '').split('.').filter(Boolean);
   const page = String(path).split('/').filter(Boolean).pop() || '';
-  const scopeType = readStorage(storage, 'contexto_atual') === 'grupo' ? 'group' : 'company';
-  const groupId = readStorage(storage, 'group_atual_id');
-  const empresaId = readStorage(storage, 'empresa_atual_id');
+  // Preferir contexto explicito; localStorage so como fallback legado
+  const scopeType = scopeTypeProp === 'grupo' || scopeTypeProp === 'group'
+    ? 'group'
+    : (scopeTypeProp === 'empresa' || scopeTypeProp === 'company'
+      ? 'company'
+      : (readStorage(storage, 'contexto_atual') === 'grupo' ? 'group' : 'company'));
+  const groupId = groupIdProp || readStorage(storage, 'group_atual_id');
+  const empresaId = empresaIdProp || readStorage(storage, 'empresa_atual_id');
   const module = permissionParts[0] || actionParts[0] || PAGE_MODULES[page] || 'Sistema';
   const action = permissionParts.length > 1
     ? permissionParts[permissionParts.length - 1]

@@ -1,3 +1,15 @@
+### P0.2 - Gate 2 RBAC residual: admin bypass e fail-open de loading
+- Objetivo: cumprir residual do Gate 2 / P0 RBAC de `PLANO_GO_LIVE.md` no guard e nas UIs existentes, sem PermissionV2.
+- Diagnostico: `backendHasPermission` liberava `role===admin`; `solicitacoesAprovacao` bypassava perfil; AcoesRapidas falhava aberto no loading; aprovacoes comerciais usavam admin/gerente; `usePermissoesEmpresa` bypassava; entityGuard local fazia fallback de secao para modulo; botao sensivel lia so localStorage.
+- Causa raiz: atalhos de role e loading fail-open fora da matriz `PerfilAcesso`.
+- Arquivos alterados: `guard/entry.ts`, `solicitacoesAprovacao/entry.ts`, `AcoesRapidasGlobal.jsx`, `CentralAprovacoesManager.jsx`, `AprovacaoDescontos*.jsx`, `usePermissoesEmpresa.jsx`, `localBase44Client.js`, `sensitiveActionGuardPolicy.js`, `button.jsx`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: `PerfilAcesso`, `hasPermission`, `entityGuard`, `buildSensitiveGuardRequest`.
+- Alteracoes: permissao so por perfil (+ wildcard `*`); emitir granular; UI fail-closed; aprovacao por chave Comercial/Pedido; secao obrigatoria no local; contexto explicito no botao sensivel.
+- Multiempresa/RBAC: fail-closed sem perfil/loading; escopo preferencial sobre localStorage.
+- Pendencia: limpar `isAdmin()||hasPermission` em telas admin remanescentes; Gate 3 vazamento de escopo no switcher.
+- Validacoes: `node --test tests/rbac-gate2-residual.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 3 Multiempresa (vazamento residual / consolidacao).
+
 ### P0.1 - Seguranca/autenticacao: sessao local, logout e API-key fail-closed
 - Objetivo: retomar P0 Gate 1 de `PLANO_GO_LIVE.md` fechando fail-open restante no auth existente (sem loginV2).
 - Diagnostico: `me`/`isAuthenticated` locais ignoravam `SessaoUsuario`; logout era noop; modo API-key remoto autenticava admin sintetico com `isAuthenticated => true`; `ProtectedRoute` pedia `authChecked`/`checkUserAuth` ausentes no AuthContext.

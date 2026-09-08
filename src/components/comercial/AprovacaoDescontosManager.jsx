@@ -60,13 +60,13 @@ function AprovacaoDescontosManager({ windowMode = false, empresaId = null }) {
   const empresaContextoId = empresaId || (contexto === "empresa" ? empresaAtual?.id : null);
   const contextoValido = Boolean(groupId || empresaContextoId);
   const podeVisualizarAprovacoes =
-    user?.role === "admin" ||
-    user?.role === "gerente" ||
+    hasPermission("Comercial", "Pedido", "visualizar") ||
+    hasPermission("Comercial", "Pedido", "aprovar") ||
     hasPermission("Comercial.Pedido.visualizar") ||
     hasPermission("Comercial.Pedido.aprovar");
   const podeEditarAprovacoes =
-    user?.role === "admin" ||
-    user?.role === "gerente" ||
+    hasPermission("Comercial", "Pedido", "aprovar") ||
+    hasPermission("Comercial", "Pedido", "editar") ||
     hasPermission("Comercial.Pedido.aprovar") ||
     hasPermission("Comercial.Pedido.editar");
   const consultaHabilitada = Boolean(contextoValido && podeVisualizarAprovacoes);

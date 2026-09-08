@@ -10,17 +10,25 @@ const reportApprovalFailure = (operation, error, context = {}) => {
 // Self-contained guards (no local imports per platform rules)
 async function hasPermission(base44, user, moduleName, section, action) {
   try {
-    if (user?.role === 'admin') return true;
     const pid = user?.perfil_acesso_id;
     if (!pid) return false;
     const perfil = await base44.asServiceRole.entities.PerfilAcesso.get(pid);
-    const mod = perfil?.permissoes?.[moduleName];
+    const perms = perfil?.permissoes;
+    if (!perms) return false;
+    const desired = String(action || 'visualizar').toLowerCase();
+    if (Array.isArray(perms['*']) && (perms['*'].includes(desired) || (desired === 'visualizar' && perms['*'].includes('ver')))) {
+      return true;
+    }
+    const mod = perms?.[moduleName];
     if (!mod) return false;
     const actions = Array.isArray(mod?.[section]) ? mod[section] : Array.isArray(mod?.['*']) ? mod['*'] : [];
     const aliases = { visualizar: ['ver', 'visualizar'], aprovar: ['aprovar', 'gerir'], criar: ['criar', 'inserir', 'abrir'] };
-    const list = aliases[action] || [action];
-    return actions.some(a => list.includes(String(a).toLowerCase()));
-  } catch { return false; }
+    const list = aliases[desired] || [desired];
+    return actions.some((a) => list.includes(String(a).toLowerCase()));
+  } catch (error) {
+    reportApprovalFailure('Falha ao avaliar permissao', error, { moduleName, section, action, user_id: user?.id });
+    return false;
+  }
 }
 
 function assertContextPresence(ctx, requireEmpresa) {

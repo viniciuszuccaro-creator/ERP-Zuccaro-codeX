@@ -116,6 +116,9 @@ function withUIAudit(props) {
         actionName: props?.['data-action'],
         path: typeof window !== 'undefined' ? window.location.pathname : '',
         storage: typeof window !== 'undefined' ? window.localStorage : null,
+        groupId: props?.__groupId || props?.['data-group-id'] || null,
+        empresaId: props?.__empresaId || props?.['data-empresa-id'] || null,
+        scopeType: props?.__scopeType || props?.['data-scope-type'] || null,
       });
       let allowed = false;
 
