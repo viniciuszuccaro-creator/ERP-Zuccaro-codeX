@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Globe } from 'lucide-react';
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { syncFlagsCatalogoProduto } from "@/components/lib/siteOrigemPolicy";
 
 export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windowMode = false }) {
   const dadosIniciais = catalogoWeb || catalogo;
@@ -38,7 +39,7 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
       return;
     }
     onSubmit({
-      ...formData,
+      ...syncFlagsCatalogoProduto(formData),
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
       nome: formData.nome_catalogo || formData.nome || ''
@@ -86,7 +87,7 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
             data-permission="Cadastros.CatalogoWeb.editar"
             data-action="alternar-exibir-site-catalogo-web"
             data-sensitive="true"
-            onCheckedChange={(v) => setFormData({ ...formData, exibir_site: v })}
+            onCheckedChange={(v) => setFormData(syncFlagsCatalogoProduto({ ...formData, exibir_site: v, exibir_no_site: v }))}
           />
         </div>
         <div className="flex items-center justify-between p-3 border rounded">
@@ -97,7 +98,7 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
             data-permission="Cadastros.CatalogoWeb.editar"
             data-action="alternar-exibir-marketplace-catalogo-web"
             data-sensitive="true"
-            onCheckedChange={(v) => setFormData({ ...formData, exibir_marketplace: v })}
+            onCheckedChange={(v) => setFormData(syncFlagsCatalogoProduto({ ...formData, exibir_marketplace: v, exibir_no_marketplace: v }))}
           />
         </div>
       </div>

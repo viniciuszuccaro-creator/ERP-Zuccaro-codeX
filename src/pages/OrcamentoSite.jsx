@@ -13,7 +13,19 @@ import { toast } from "sonner";
 import { ShoppingCart, Search, Store, ShieldCheck, CreditCard, Truck } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import ChatbotWidget from "@/components/chatbot/ChatbotWidget";
-import { assertSiteCheckout, buildSiteLeadPayload, stampSiteOrigem } from "@/components/lib/siteOrigemPolicy";
+import OrcamentoAutomaticoIA from "@/components/site/OrcamentoAutomaticoIA";
+import {
+  assertSiteCheckout,
+  buildSiteLeadPayload,
+  buildSitePagamentoPlaceholder,
+  buildSitePedidoStatusResumo,
+  estoqueDisponivelSite,
+  filtrarProdutosSite,
+  isProdutoDisponivelSite,
+  matchClienteSite,
+  resolvePrecoSite,
+  stampSiteOrigem,
+} from "@/components/lib/siteOrigemPolicy";
 
 export default function OrcamentoSite() {
   const queryClient = useQueryClient();
@@ -21,9 +33,10 @@ export default function OrcamentoSite() {
 
   const [busca, setBusca] = React.useState("");
   const [tabelaId, setTabelaId] = React.useState("auto");
-  const [cart, setCart] = React.useState({}); // { produtoId: { produto, qty, precoUnit } }
+  const [cart, setCart] = React.useState({});
+  const [contato, setContato] = React.useState({ nome: "", email: "", telefone: "", documento: "" });
+  const [ultimoStatus, setUltimoStatus] = React.useState(null);
 
-  // Tabelas de preço da filial
   const { data: tabelas = [] } = useQuery({
     queryKey: ["tabelas", empresaAtual?.id],
     queryFn: async () => filterInContext("TabelaPreco", {}, undefined, 50),
@@ -31,7 +44,6 @@ export default function OrcamentoSite() {
     staleTime: 60000,
   });
 
-  // Itens da tabela de preço selecionada
   const { data: itensTabela = [] } = useQuery({
     queryKey: ["tabela-itens", tabelaId, empresaAtual?.id],
     queryFn: async () => {
@@ -53,18 +65,19 @@ export default function OrcamentoSite() {
     return map;
   }, [itensTabela]);
 
-  // Produtos da filial (somente exibíveis no site)
-  const { data: produtos = [], isLoading } = useQuery({
+  const { data: catalogPayload = { produtos: [], catalogos: [] }, isLoading } = useQuery({
     queryKey: ["produtos-site", empresaAtual?.id],
     queryFn: async () => {
-      const list = await filterInContext("Produto", { exibir_no_site: true }, "-updated_date", 400);
-      return list;
+      const [produtos, catalogos] = await Promise.all([
+        filterInContext("Produto", {}, "-updated_date", 400),
+        filterInContext("CatalogoWeb", {}, "ordem_exibicao", 200),
+      ]);
+      return { produtos, catalogos };
     },
     enabled: !!empresaAtual?.id,
     staleTime: 30000,
   });
 
-  // Configuração do gateway da filial
   const { data: cfgGateway } = useQuery({
     queryKey: ["cfg-gateway", empresaAtual?.id],
     queryFn: async () => {
@@ -75,32 +88,63 @@ export default function OrcamentoSite() {
     staleTime: 120000,
   });
 
+  const produtosFiltrados = React.useMemo(() => filtrarProdutosSite(catalogPayload.produtos, {
+    busca,
+    precoMap,
+    catalogos: catalogPayload.catalogos,
+  }), [catalogPayload, busca, precoMap]);
+
   const addToCart = (produto, qty = 1) => {
+    const preco = resolvePrecoSite(produto, precoMap) || produto._precoResolvido || 0;
+    const enriched = { ...produto, _precoResolvido: preco };
+    if (!isProdutoDisponivelSite(enriched, qty)) {
+      toast.error("Produto indisponivel no estoque online ou sem preco.");
+      return;
+    }
     const id = produto.id;
-    const preco = typeof precoMap.get(id) === "number" && precoMap.get(id) > 0 ? precoMap.get(id) : (produto.preco_venda || 0);
     setCart((prev) => {
       const curr = prev[id]?.qty || 0;
-      return { ...prev, [id]: { produto, qty: curr + qty, precoUnit: preco } };
+      const nextQty = curr + qty;
+      if (!isProdutoDisponivelSite(enriched, nextQty)) {
+        toast.error("Quantidade acima do estoque online.");
+        return prev;
+      }
+      return { ...prev, [id]: { produto: enriched, qty: nextQty, precoUnit: preco } };
     });
   };
 
   const updateQty = (id, qty) => {
-    setCart((prev) => ({ ...prev, [id]: { ...prev[id], qty: Math.max(0, Number(qty) || 0) } }));
+    setCart((prev) => {
+      const item = prev[id];
+      if (!item) return prev;
+      const nextQty = Math.max(0, Number(qty) || 0);
+      if (nextQty > 0 && !isProdutoDisponivelSite({ ...item.produto, _precoResolvido: item.precoUnit }, nextQty)) {
+        toast.error("Quantidade acima do estoque online.");
+        return prev;
+      }
+      return { ...prev, [id]: { ...item, qty: nextQty } };
+    });
   };
   const removeItem = (id) => setCart((prev) => { const cp = { ...prev }; delete cp[id]; return cp; });
 
   const cartItems = Object.values(cart).filter((x) => x.qty > 0);
   const subtotal = cartItems.reduce((s, it) => s + it.qty * (it.precoUnit || 0), 0);
 
-  // Checkout mutation: cria Pedido + ContaReceber, aciona fluxo de pagamento e auditoria
   const checkoutMutation = useMutation({
     mutationFn: async () => {
       assertSiteCheckout({ empresaId: empresaAtual?.id, itens: cartItems });
 
+      const clientes = await filterInContext("Cliente", {}, undefined, 500);
+      const cliente = matchClienteSite({
+        clientes,
+        email: contato.email,
+        documento: contato.documento,
+      });
+
       const risco = [];
       if (subtotal > 20000) risco.push("valor_alto");
       if (cartItems.length > 25) risco.push("muitos_itens");
-      if (cartItems.some(it => (it.produto?.estoque_disponivel || 0) <= 0)) risco.push("estoque_baixo");
+      if (cartItems.some((it) => estoqueDisponivelSite(it.produto) <= 0)) risco.push("estoque_baixo");
 
       const itens_revenda = cartItems.map((it) => ({
         produto_id: it.produto.id,
@@ -116,28 +160,46 @@ export default function OrcamentoSite() {
       const pedido = await createInContext("Pedido", stampSiteOrigem({
         tipo: "Orçamento",
         data_pedido: new Date().toISOString().slice(0, 10),
-        cliente_nome: "Visitante",
+        cliente_id: cliente?.id,
+        cliente_nome: contato.nome || cliente?.nome || cliente?.razao_social || "Visitante",
+        cliente_email: contato.email || cliente?.email,
+        cliente_telefone: contato.telefone || cliente?.telefone,
         valor_total: subtotal,
         itens_revenda,
         prioridade: "Normal",
         pode_ver_no_portal: true,
+        status: "Aberto",
       }));
 
       await createInContext("Oportunidade", buildSiteLeadPayload({
-        nome: "Visitante",
+        nome: contato.nome || cliente?.nome || "Visitante",
+        email: contato.email,
+        telefone: contato.telefone,
+        documento: contato.documento,
         valor: subtotal,
         pedidoId: pedido.id,
+        clienteId: cliente?.id,
       }));
 
-      const conta = await createInContext("ContaReceber", {
+      const conta = await createInContext("ContaReceber", stampSiteOrigem({
         descricao: `Checkout OrcamentoSite #${pedido.numero_pedido || pedido.id}`,
-        cliente: "Visitante",
+        cliente: contato.nome || cliente?.nome || "Visitante",
+        cliente_id: cliente?.id,
         valor: subtotal,
         data_emissao: new Date().toISOString().slice(0, 10),
         data_vencimento: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
         forma_cobranca: "Link de Pagamento",
         status: "Pendente",
         status_integracao: cfgGateway ? "gerado" : "pendente_configuracao",
+        pedido_id: pedido.id,
+      }));
+
+      const pagamento = buildSitePagamentoPlaceholder({
+        pedidoId: pedido.id,
+        contaId: conta.id,
+        valor: subtotal,
+        gatewayAtivo: Boolean(cfgGateway),
+        numeroPedido: pedido.numero_pedido,
       });
 
       try {
@@ -149,6 +211,7 @@ export default function OrcamentoSite() {
           empresa_id: empresaAtual.id,
           group_id: grupoAtual?.id || null,
           antifraude_flags: risco,
+          pagamento_placeholder: pagamento,
         });
       } catch (error) {
         console.error("Falha ao notificar pagamento do checkout do site", error);
@@ -164,16 +227,30 @@ export default function OrcamentoSite() {
           descricao: `Checkout iniciado – Pedido ${pedido.id}, CR ${conta.id}`,
           empresa_id: empresaAtual.id,
           group_id: grupoAtual?.id || null,
-          dados_novos: { subtotal, itens: itens_revenda.length, tabela_preco_id: tabelaId === "auto" ? (tabelas?.[0]?.id || null) : tabelaId, origem: "site" },
+          dados_novos: {
+            subtotal,
+            itens: itens_revenda.length,
+            tabela_preco_id: tabelaId === "auto" ? (tabelas?.[0]?.id || null) : tabelaId,
+            origem: "site",
+            pagamento,
+          },
           data_hora: new Date().toISOString(),
         });
       } catch (error) {
         console.error("Falha ao auditar checkout do site", error);
       }
 
-      return { pedidoId: pedido.id, contaId: conta.id, semGateway: !cfgGateway };
+      const statusResumo = buildSitePedidoStatusResumo({
+        pedido,
+        conta,
+        pagamento,
+        portalPath: createPageUrl("PortalCliente"),
+      });
+
+      return { pedidoId: pedido.id, contaId: conta.id, semGateway: !cfgGateway, statusResumo };
     },
-    onSuccess: ({ semGateway }) => {
+    onSuccess: ({ semGateway, statusResumo }) => {
+      setUltimoStatus(statusResumo);
       toast.success(semGateway
         ? "Orçamento gravado. O pagamento será gerado quando o gateway da filial estiver configurado."
         : "Checkout iniciado! Você poderá concluir o pagamento pelo link enviado.");
@@ -184,15 +261,6 @@ export default function OrcamentoSite() {
       toast.error(e?.message || "Falha no checkout");
     }
   });
-
-  const produtosFiltrados = React.useMemo(() => {
-    const q = (busca || "").toLowerCase();
-    return (produtos || []).filter(p =>
-      !q ||
-      String(p.descricao || "").toLowerCase().includes(q) ||
-      String(p.codigo || "").toLowerCase().includes(q)
-    );
-  }, [produtos, busca]);
 
   return (
     <div className="w-full h-full min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 lg:p-6">
@@ -225,8 +293,25 @@ export default function OrcamentoSite() {
           </div>
         </header>
 
+        {ultimoStatus && (
+          <Card className="border-emerald-200 bg-emerald-50" data-site-status="checkout">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base text-emerald-900">Status do pedido no site</CardTitle>
+              <CardDescription>{ultimoStatus.mensagem}</CardDescription>
+            </CardHeader>
+            <CardContent className="text-sm space-y-1">
+              <p><strong>Pedido:</strong> {ultimoStatus.numero_pedido}</p>
+              <p><strong>Status:</strong> {ultimoStatus.status_pedido}</p>
+              <p><strong>Pagamento:</strong> {ultimoStatus.pagamento?.mensagem}</p>
+              <p><strong>Referência:</strong> {ultimoStatus.pagamento?.referencia}</p>
+              <Button asChild size="sm" variant="outline" className="mt-2">
+                <Link to={ultimoStatus.portal_url || createPageUrl('PortalCliente')}>Abrir portal</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-          {/* Lista de produtos */}
           <div className="lg:col-span-2 space-y-3">
             {isLoading ? (
               <div className="p-6 text-slate-500">Carregando produtos...</div>
@@ -235,8 +320,9 @@ export default function OrcamentoSite() {
             ) : (
               <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-4">
                 {produtosFiltrados.map((p) => {
-                  const preco = typeof precoMap.get(p.id) === "number" && precoMap.get(p.id) > 0 ? precoMap.get(p.id) : (p.preco_venda || 0);
-                  const estoque = p.estoque_disponivel ?? p.estoque_atual ?? 0;
+                  const preco = resolvePrecoSite(p, precoMap) || p._precoResolvido || 0;
+                  const estoque = estoqueDisponivelSite(p);
+                  const disponivel = isProdutoDisponivelSite({ ...p, _precoResolvido: preco }, 1);
                   return (
                     <Card key={p.id} className="flex flex-col">
                       <CardHeader className="pb-2">
@@ -246,18 +332,26 @@ export default function OrcamentoSite() {
                       <CardContent className="flex-1">
                         <div className="flex items-center justify-between text-sm">
                           <div className="font-semibold text-slate-900">R$ {Number(preco).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
-                          <Badge variant="outline" className={estoque > 0 ? "text-emerald-700" : "text-rose-700"}>{estoque > 0 ? `Em estoque (${Math.round(estoque)})` : "Sem estoque"}</Badge>
+                          <Badge variant="outline" className={disponivel ? "text-emerald-700" : "text-rose-700"}>
+                            {disponivel ? `Em estoque (${Math.round(estoque)})` : "Indisponivel"}
+                          </Badge>
                         </div>
                       </CardContent>
                       <CardFooter className="pt-2">
                         <div className="flex items-center gap-2 w-full">
                           <Input type="number" min={1} defaultValue={1} className="w-20" onChange={(e) => { const v = Math.max(1, Number(e.target.value)||1); e.target.dataset.q = String(v); }} />
-                          <Button className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={(e) => {
-                            const qtyInput = e.currentTarget.parentElement?.querySelector("input[type='number']");
-                            const qty = Number(qtyInput?.dataset?.q || qtyInput?.value || 1) || 1;
-                            addToCart(p, qty);
-                            toast.success("Adicionado ao carrinho");
-                          }}>
+                          <Button
+                            className="flex-1 bg-blue-600 hover:bg-blue-700"
+                            disabled={!disponivel}
+                            onClick={(e) => {
+                              const qtyInput = e.currentTarget.parentElement?.querySelector("input[type='number']");
+                              const qty = Number(qtyInput?.dataset?.q || qtyInput?.value || 1) || 1;
+                              addToCart(p, qty);
+                              if (isProdutoDisponivelSite({ ...p, _precoResolvido: preco }, qty)) {
+                                toast.success("Adicionado ao carrinho");
+                              }
+                            }}
+                          >
                             <ShoppingCart className="w-4 h-4 mr-2"/> Adicionar
                           </Button>
                         </div>
@@ -269,14 +363,13 @@ export default function OrcamentoSite() {
             )}
           </div>
 
-          {/* Carrinho */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-4">
             <Card className="sticky top-4">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><ShoppingCart className="w-5 h-5 text-blue-600"/> Carrinho</CardTitle>
                 <CardDescription>Revise os itens antes de finalizar</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3 max-h-[60vh] overflow-auto">
+              <CardContent className="space-y-3 max-h-[40vh] overflow-auto">
                 {cartItems.length === 0 ? (
                   <div className="text-slate-500 text-sm">Seu carrinho está vazio.</div>
                 ) : cartItems.map((it) => (
@@ -293,6 +386,12 @@ export default function OrcamentoSite() {
                     <div className="text-right font-semibold">R$ {(it.qty * it.precoUnit).toLocaleString("pt-BR", {minimumFractionDigits:2})}</div>
                   </div>
                 ))}
+                <div className="space-y-2 pt-2 border-t">
+                  <Input placeholder="Nome" value={contato.nome} onChange={(e) => setContato((c) => ({ ...c, nome: e.target.value }))} />
+                  <Input placeholder="E-mail" value={contato.email} onChange={(e) => setContato((c) => ({ ...c, email: e.target.value }))} />
+                  <Input placeholder="Telefone" value={contato.telefone} onChange={(e) => setContato((c) => ({ ...c, telefone: e.target.value }))} />
+                  <Input placeholder="CPF/CNPJ" value={contato.documento} onChange={(e) => setContato((c) => ({ ...c, documento: e.target.value }))} />
+                </div>
               </CardContent>
               <Separator />
               <CardFooter className="flex flex-col gap-2">
@@ -313,6 +412,26 @@ export default function OrcamentoSite() {
             </Card>
           </div>
         </div>
+
+        <OrcamentoAutomaticoIA
+          onOrcamentoCriado={(orcamento) => {
+            setUltimoStatus(buildSitePedidoStatusResumo({
+              pedido: {
+                id: orcamento?.id,
+                numero_pedido: orcamento?.numero || orcamento?.id,
+                tipo: 'Orçamento',
+                valor_total: orcamento?.valor_total,
+                pode_ver_no_portal: true,
+              },
+              pagamento: buildSitePagamentoPlaceholder({
+                pedidoId: orcamento?.id,
+                valor: orcamento?.valor_total,
+                gatewayAtivo: false,
+              }),
+              portalPath: createPageUrl('PortalCliente'),
+            }));
+          }}
+        />
         <ChatbotWidget canal="Site" exibirBotaoFlutuante />
       </div>
     </div>

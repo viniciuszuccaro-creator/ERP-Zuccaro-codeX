@@ -1,3 +1,15 @@
+### P1.7 - Integracao total do site: catalogo, estoque e status
+- Objetivo: cumprir P1 Integracao total do site de `PLANO_GO_LIVE.md` no site existente (`OrcamentoSite`), sem criar outro site.
+- Diagnostico: Gate 14 cobria origem `site`; CatalogoWeb/exibir_site ficava orfao; estoque_minimo_online nao bloqueava; checkout sem status/pagamento estavel; OrcamentoAutomaticoIA desconectado da pagina.
+- Causa raiz: regras de catalogo/disponibilidade/status fora de `siteOrigemPolicy`.
+- Arquivos alterados: `siteOrigemPolicy.js`, `OrcamentoSite.jsx`, `AbaEcommerceProduto.jsx`, `CatalogoWebForm.jsx`, testes.
+- Reutilizado: tabela de preco, CatalogoWeb, portal, chatbot canal Site e orcamento IA ja existentes.
+- Alteracoes: sync `exibir_no_site`/`exibir_site`; filtro com CatalogoWeb; preco/disponibilidade fail-closed; match de cliente; placeholder de pagamento e resumo de status; IA montada no catalogo.
+- Multiempresa: checkout continua exigindo empresa da filial.
+- Pendencia: gateway/PSP real e OAuth do visitante anonimo; Marketplaces e o proximo P1.
+- Validacoes: `node --test tests/site-origem-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P1: Marketplaces.
+
 ### P1.6 - Chatbot omnichannel: ciclo de vida, canal e fila
 - Objetivo: cumprir P1 Chatbot omnichannel de `PLANO_GO_LIVE.md` no Hub/chatbot existentes, sem terceiro centro de atendimento.
 - Diagnostico: Gate 12 cobria ingresso; assumir/transferir/fechar e escala ficavam ad-hoc; canal inativo ainda ingeria; fila so listava `Aguardando` sem Assumir; transbordo do chatbot so criava Notificacao.

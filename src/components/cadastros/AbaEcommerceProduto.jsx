@@ -112,7 +112,11 @@ export default function AbaEcommerceProduto({ formData, setFormData }) {
               </div>
               <Switch
                 checked={formData.exibir_no_site || false}
-                onCheckedChange={(v) => setFormData(prev => ({...prev, exibir_no_site: v}))}
+                onCheckedChange={(v) => setFormData(prev => ({
+                  ...prev,
+                  exibir_no_site: v,
+                  exibir_site: v,
+                }))}
               />
             </div>
 
@@ -123,7 +127,11 @@ export default function AbaEcommerceProduto({ formData, setFormData }) {
               </div>
               <Switch
                 checked={formData.exibir_no_marketplace || false}
-                onCheckedChange={(v) => setFormData(prev => ({...prev, exibir_no_marketplace: v}))}
+                onCheckedChange={(v) => setFormData(prev => ({
+                  ...prev,
+                  exibir_no_marketplace: v,
+                  exibir_marketplace: v,
+                }))}
               />
             </div>
           </div>
