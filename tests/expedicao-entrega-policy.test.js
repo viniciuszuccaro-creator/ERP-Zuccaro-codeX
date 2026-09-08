@@ -91,5 +91,6 @@ test('expedicao existente reserva numero e o app nao lista todas as entregas', a
   assert.doesNotMatch(fluxo, /ENT-\$\{Date\.now\(\)\}/);
   assert.match(app, /filterInContext\('Entrega'/);
   assert.doesNotMatch(app, /Entrega\.list\(/);
-  assert.match(app, /hasProvaEntrega/);
+  assert.match(app, /appMotoristaPolicy/);
+  assert.match(app, /buildConfirmacaoPatch/);
 });

@@ -1,3 +1,15 @@
+### P1.4 - App Motorista completo: fila offline, chegada e parcial
+- Objetivo: cumprir P1 App Motorista completo de `PLANO_GO_LIVE.md` no app existente (`AppEntregasMotorista`), sem app paralelo.
+- Diagnostico: app so listava Saiu/Em Transito; sem proxima parada por sequencia; sem chegada/parcial; offline so SMS; confirmacao/ocorrencia/reversa sem idempotencia nem fila de sync.
+- Causa raiz: acoes do motorista fora de um carimbo unico com fila offline.
+- Arquivos alterados: `appMotoristaPolicy.js` (extracao), `expedicaoEntregaPolicy.js`, `AppEntregasMotorista.jsx`, testes.
+- Reutilizado: app mobile, prova de entrega, GPS e tela `EntregasMobile` ja existentes.
+- Alteracoes: filtro/ordem por atribuicao e `sequencia_rota`; proxima parada; chegada; entrega parcial; ocorrencia/reversa validadas; fila offline idempotente com sync ao voltar online.
+- Multiempresa: continua via `filterInContext`; update da entrega preserva empresa.
+- Pendencia: navegacao turn-by-turn e upload offline de midia ainda dependem de PWA/storage de arquivos; Portal do Cliente completo e o proximo P1.
+- Validacoes: `node --test tests/app-motorista-policy.test.js tests/expedicao-entrega-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P1: Portal do Cliente completo.
+
 ### P1.3 - Roteirizador avancado: prioridade, capacidade e rota persistida
 - Objetivo: cumprir P1 Roteirizador avancado de `PLANO_GO_LIVE.md` no fluxo existente (`RoteirizacaoMapa` / `RoteirizacaoInteligente`), sem modulo de rotas paralelo.
 - Diagnostico: otimizacao usava so nearest-neighbor local; ignorava peso/volume/capacidade/janela/prioridade; `Rota` nao tinha codigo/idempotencia no ponto unico; IA nao tinha fallback local.

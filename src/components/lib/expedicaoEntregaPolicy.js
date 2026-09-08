@@ -109,6 +109,18 @@ export const assertEntregaOnUpdate = ({ before = {}, patch = {} } = {}) => {
   if (isEntregue(next) && !hasProvaEntrega(next)) {
     throw new Error('Entrega exige comprovante (recebedor e prova).');
   }
+  if (statusOf(next).includes('parcial') && !hasProvaEntrega(next)) {
+    throw new Error('Entrega parcial exige comprovante (recebedor e prova).');
+  }
+  if (statusOf(next).includes('devolv')) {
+    const reversa = next.logistica_reversa || {};
+    if (!firstText(reversa.motivo) || (!(Number(reversa.quantidade_devolvida) > 0) && !(Number(reversa.valor_devolvido) > 0))) {
+      throw new Error('Devolucao exige motivo e quantidade ou valor.');
+    }
+  }
+  if (statusOf(next).includes('frustr') && !firstText(next.entrega_frustrada?.motivo)) {
+    throw new Error('Ocorrencia exige motivo.');
+  }
   return next;
 };
 

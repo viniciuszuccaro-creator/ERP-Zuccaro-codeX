@@ -27,16 +27,27 @@ import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
-import { entregaAtribuidaAoMotorista, hasProvaEntrega } from '@/components/lib/expedicaoEntregaPolicy';
+import {
+  buildChegadaPatch,
+  buildConfirmacaoPatch,
+  buildInicioPatch,
+  buildOcorrenciaPatch,
+  buildReversaPatch,
+  dequeueMotoristaAction,
+  enqueueMotoristaAction,
+  filtrarEntregasDoMotorista,
+  ordenarEntregasRota,
+  proximaParada,
+  readMotoristaQueue,
+} from '@/components/lib/appMotoristaPolicy';
 
 /**
  * App Mobile Completo para Motoristas
- * V12.0 - Com GPS, foto e assinatura digital
+ * V12.0 - Com GPS, foto, assinatura, fila offline e idempotencia
  */
 export default function AppEntregasMotorista() {
   const { user } = useUser();
   const { filterInContext, grupoAtual, empresaAtual } = useContextoVisual();
-  const [entregas, setEntregas] = useState([]);
   const [entregaAtual, setEntregaAtual] = useState(null);
   const [localizacao, setLocalizacao] = useState(null);
   const [rastreando, setRastreando] = useState(false);
@@ -46,8 +57,10 @@ export default function AppEntregasMotorista() {
   const [assinaturaBase64, setAssinaturaBase64] = useState(null);
   const [nomeRecebedor, setNomeRecebedor] = useState('');
   const [documentoRecebedor, setDocumentoRecebedor] = useState('');
+  const [entregaParcial, setEntregaParcial] = useState(false);
+  const [qtdParcial, setQtdParcial] = useState(0);
+  const [filaOffline, setFilaOffline] = useState([]);
   // Logística reversa (UI)
-  const [reversaAtiva, setReversaAtiva] = useState(false);
   const [reversaMotivo, setReversaMotivo] = useState('Recusa Total');
   const [reversaQtd, setReversaQtd] = useState(0);
   const [reversaValor, setReversaValor] = useState(0);
@@ -79,21 +92,60 @@ export default function AppEntregasMotorista() {
     queryKey: ['entregas-motorista', user?.id, grupoAtual?.id, empresaAtual?.id],
     queryFn: async () => {
       const todas = await filterInContext('Entrega', {}, '-data_saida', 500);
-      return todas.filter((entrega) => (
-        entregaAtribuidaAoMotorista(entrega, user)
-        && ['Saiu para Entrega', 'Em Trânsito'].includes(entrega.status)
-      ));
+      return ordenarEntregasRota(filtrarEntregasDoMotorista(todas, user));
     },
-    enabled: !!user && Boolean(grupoAtual?.id && empresaAtual?.id),
+    enabled: !!user && Boolean(grupoAtual?.id || empresaAtual?.id),
     refetchInterval: 30000
   });
 
+  const proxima = proximaParada(minhasEntregas, user);
+
+  const syncFilaOffline = async () => {
+    const queue = readMotoristaQueue();
+    setFilaOffline(queue);
+    if (!queue.length || (typeof navigator !== 'undefined' && !navigator.onLine)) return;
+    for (const action of queue) {
+      try {
+        await base44.entities.Entrega.update(action.entrega_id, action.patch);
+        dequeueMotoristaAction(action.id);
+      } catch (error) {
+        console.error('[Motorista] Falha ao sincronizar acao offline.', error);
+        break;
+      }
+    }
+    setFilaOffline(readMotoristaQueue());
+    refetch();
+  };
+
+  const aplicarPatchEntrega = async (entrega, patch, sucessoMsg) => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      const queued = enqueueMotoristaAction({
+        tipo: patch.status,
+        entrega_id: entrega.id,
+        patch,
+        idempotency_key: patch.idempotency_key,
+      });
+      setFilaOffline(queued.queue);
+      toast.success(queued.reused ? 'Acao ja estava na fila offline' : 'Acao salva offline para sincronizar');
+      setEntregaAtual(null);
+      return;
+    }
+    await base44.entities.Entrega.update(entrega.id, patch);
+    toast.success(sucessoMsg);
+    setEntregaAtual(null);
+    refetch();
+  };
+
   // Iniciar rastreamento GPS
   useEffect(() => {
-    const goOnline = () => setIsOffline(false);
+    const goOnline = () => {
+      setIsOffline(false);
+      syncFilaOffline();
+    };
     const goOffline = () => setIsOffline(true);
     window.addEventListener('online', goOnline);
     window.addEventListener('offline', goOffline);
+    setFilaOffline(readMotoristaQueue());
     return () => { window.removeEventListener('online', goOnline); window.removeEventListener('offline', goOffline); };
   }, []);
 
@@ -156,31 +208,46 @@ export default function AppEntregasMotorista() {
   };
 
   const iniciarEntrega = async (entrega) => {
-    setEntregaAtual(entrega);
-    
-    await base44.entities.Entrega.update(entrega.id, {
-      status: 'Em Trânsito',
-      historico_status: [
-        ...(entrega.historico_status || []),
-        {
-          status: 'Em Trânsito',
-          data_hora: new Date().toISOString(),
-          usuario: user.full_name,
-          localizacao: localizacao
-        }
-      ]
-    });
+    try {
+      const patch = buildInicioPatch({ entrega, user, localizacao });
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        const queued = enqueueMotoristaAction({
+          tipo: 'inicio',
+          entrega_id: entrega.id,
+          patch,
+          idempotency_key: patch.idempotency_key,
+        });
+        setFilaOffline(queued.queue);
+        toast.success('Inicio salvo offline');
+      } else {
+        await base44.entities.Entrega.update(entrega.id, patch);
+      }
+      setEntregaAtual({ ...entrega, ...patch });
+      try { await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Motorista',
+        usuario_id: user?.id,
+        empresa_id: entrega.empresa_id || null,
+        group_id: entrega.group_id || null,
+        acao: 'Edição', modulo: 'Expedição', tipo_auditoria: 'ui', entidade: 'Entrega', registro_id: entrega.id,
+        descricao: 'Entrega iniciada no app do motorista', data_hora: new Date().toISOString()
+      }); } catch (error) { console.error('[Auditoria] Falha ao registrar inicio da entrega.', error); }
+      refetch();
+      toast.success('🚚 Entrega iniciada!');
+    } catch (error) {
+      toast.error(error?.message || 'Nao foi possivel iniciar a entrega');
+    }
+  };
 
-    try { await base44.entities.AuditLog.create({
-      usuario: user?.full_name || user?.email || 'Motorista',
-      usuario_id: user?.id,
-      empresa_id: entrega.empresa_id || null,
-      group_id: entrega.group_id || null,
-      acao: 'Edição', modulo: 'Expedição', tipo_auditoria: 'ui', entidade: 'Entrega', registro_id: entrega.id,
-      descricao: 'Entrega iniciada no app do motorista', data_hora: new Date().toISOString()
-    }); } catch (error) { console.error('[Auditoria] Falha ao registrar inicio da entrega.', error); }
-    refetch();
-    toast.success('🚚 Entrega iniciada!');
+  const registrarChegada = async () => {
+    try {
+      const patch = buildChegadaPatch({ entrega: entregaAtual, user, localizacao });
+      await base44.entities.Entrega.update(entregaAtual.id, patch);
+      setEntregaAtual({ ...entregaAtual, ...patch });
+      toast.success('📍 Chegada registrada');
+      refetch();
+    } catch (error) {
+      toast.error(error?.message || 'Falha ao registrar chegada');
+    }
   };
 
   const tirarFoto = async () => {
@@ -206,14 +273,6 @@ export default function AppEntregasMotorista() {
   };
 
   const confirmarEntrega = async () => {
-    if (!nomeRecebedor) {
-      toast.error('Informe o nome de quem recebeu');
-      return;
-    }
-    if (!fotoComprovante) {
-      toast.error('Tire uma foto do comprovante');
-      return;
-    }
     let assinatura = assinaturaBase64;
     try {
       const canvas = document.getElementById('assinatura-canvas');
@@ -224,78 +283,58 @@ export default function AppEntregasMotorista() {
       return;
     }
 
-    const comprovante = {
-      foto_comprovante: fotoComprovante,
-      assinatura_digital: assinatura,
-      nome_recebedor: nomeRecebedor,
-      documento_recebedor: documentoRecebedor,
-      data_hora_recebimento: new Date().toISOString(),
-      latitude_entrega: localizacao?.latitude,
-      longitude_entrega: localizacao?.longitude
-    };
-    if (!hasProvaEntrega({ ...entregaAtual, comprovante_entrega: comprovante })) {
-      toast.error('Informe recebedor e comprovante (foto, assinatura ou documento).');
-      return;
+    try {
+      const patch = buildConfirmacaoPatch({
+        entrega: entregaAtual,
+        user,
+        localizacao,
+        parcial: entregaParcial,
+        quantidade_entregue: qtdParcial,
+        comprovante: {
+          foto_comprovante: fotoComprovante,
+          assinatura_digital: assinatura,
+          nome_recebedor: nomeRecebedor,
+          documento_recebedor: documentoRecebedor,
+        },
+      });
+      await aplicarPatchEntrega(
+        entregaAtual,
+        patch,
+        entregaParcial ? 'Entrega parcial confirmada' : '✅ Entrega confirmada com sucesso!',
+      );
+      setFotoComprovante(null);
+      setAssinaturaBase64(null);
+      setNomeRecebedor('');
+      setDocumentoRecebedor('');
+      setEntregaParcial(false);
+      setQtdParcial(0);
+      try { await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Motorista',
+        usuario_id: user?.id,
+        empresa_id: entregaAtual?.empresa_id || null,
+        group_id: entregaAtual?.group_id || null,
+        acao: 'Edição', modulo: 'Expedição', tipo_auditoria: 'ui', entidade: 'Entrega', registro_id: entregaAtual?.id,
+        descricao: entregaParcial ? 'Entrega parcial no app do motorista' : 'Entrega confirmada (foto + assinatura) no app do motorista',
+        data_hora: new Date().toISOString()
+      }); } catch (error) { console.error('[Auditoria] Falha ao registrar confirmacao da entrega.', error); }
+    } catch (error) {
+      toast.error(error?.message || 'Falha ao confirmar entrega');
     }
-
-    await base44.entities.Entrega.update(entregaAtual.id, {
-      status: 'Entregue',
-      data_entrega: new Date().toISOString(),
-      comprovante_entrega: comprovante,
-      historico_status: [
-        ...(entregaAtual.historico_status || []),
-        {
-          status: 'Entregue',
-          data_hora: new Date().toISOString(),
-          usuario: user.full_name,
-          localizacao: localizacao,
-          observacao: `Recebido por: ${nomeRecebedor}`
-        }
-      ]
-    });
-
-    setEntregaAtual(null);
-    setFotoComprovante(null);
-    setAssinaturaBase64(null);
-    setNomeRecebedor('');
-    setDocumentoRecebedor('');
-    try { await base44.entities.AuditLog.create({
-      usuario: user?.full_name || user?.email || 'Motorista',
-      usuario_id: user?.id,
-      empresa_id: entregaAtual?.empresa_id || null,
-      group_id: entregaAtual?.group_id || null,
-      acao: 'Edição', modulo: 'Expedição', tipo_auditoria: 'ui', entidade: 'Entrega', registro_id: entregaAtual?.id,
-      descricao: 'Entrega confirmada (foto + assinatura) no app do motorista', data_hora: new Date().toISOString()
-    }); } catch (error) { console.error('[Auditoria] Falha ao registrar confirmacao da entrega.', error); }
-    refetch();
-    toast.success('✅ Entrega confirmada com sucesso!');
   };
 
   const registrarOcorrencia = async (motivo) => {
-    await base44.entities.Entrega.update(entregaAtual.id, {
-      status: 'Entrega Frustrada',
-      entrega_frustrada: {
+    try {
+      const patch = buildOcorrenciaPatch({
+        entrega: entregaAtual,
+        user,
+        localizacao,
         motivo,
-        detalhes: '',
-        tentativa_numero: 1,
-        reagendamento: null,
-        foto_ocorrencia: fotoComprovante
-      },
-      historico_status: [
-        ...(entregaAtual.historico_status || []),
-        {
-          status: 'Entrega Frustrada',
-          data_hora: new Date().toISOString(),
-          usuario: user.full_name,
-          localizacao: localizacao,
-          observacao: motivo
-        }
-      ]
-    });
-
-    setEntregaAtual(null);
-    refetch();
-    toast.error('❌ Ocorrência registrada');
+        foto: fotoComprovante,
+      });
+      await aplicarPatchEntrega(entregaAtual, patch, '❌ Ocorrência registrada');
+    } catch (error) {
+      toast.error(error?.message || 'Falha ao registrar ocorrencia');
+    }
   };
 
   if (!entregaAtual) {
@@ -311,10 +350,23 @@ export default function AppEntregasMotorista() {
               <div className="text-right">
                 <p className="text-2xl font-bold">{minhasEntregas.length}</p>
                 <p className="text-xs opacity-90">pendentes</p>
+                {filaOffline.length > 0 && (
+                  <p className="text-xs opacity-90 mt-1">{filaOffline.length} na fila offline</p>
+                )}
               </div>
             </div>
           </CardContent>
         </Card>
+
+        {proxima && (
+          <Alert className="mb-4 border-blue-300 bg-blue-50">
+            <Navigation className="w-4 h-4 text-blue-600" />
+            <AlertDescription className="text-sm text-blue-800">
+              Proxima parada: <strong>{proxima.cliente_nome}</strong>
+              {proxima.sequencia_rota ? ` · seq #${proxima.sequencia_rota}` : ''}
+            </AlertDescription>
+          </Alert>
+        )}
 
         {localizacao && (
           <Alert className="mb-4 border-green-300 bg-green-50">
@@ -348,8 +400,8 @@ export default function AppEntregasMotorista() {
         )}
 
         <div className="space-y-3">
-          {minhasEntregas.map((entrega, idx) => (
-            <Card key={entrega.id} className="border-2 hover:shadow-lg transition-all">
+          {minhasEntregas.map((entrega) => (
+            <Card key={entrega.id} className={`border-2 hover:shadow-lg transition-all ${proxima?.id === entrega.id ? 'border-blue-500' : ''}`}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div>
@@ -358,7 +410,7 @@ export default function AppEntregasMotorista() {
                       Pedido: {entrega.numero_pedido}
                     </p>
                   </div>
-                  <Badge className="bg-blue-600">#{idx + 1}</Badge>
+                  <Badge className="bg-blue-600">#{entrega.sequencia_rota || entrega.ordem_sequencia || '-'}</Badge>
                 </div>
 
                 <div className="space-y-2 mb-4">
@@ -534,6 +586,25 @@ export default function AppEntregasMotorista() {
             />
           </div>
 
+          <div className="flex items-center justify-between gap-3 border rounded p-3">
+            <div>
+              <Label>Entrega parcial</Label>
+              <p className="text-xs text-slate-500">Marque se apenas parte dos volumes foi entregue</p>
+            </div>
+            <input type="checkbox" checked={entregaParcial} onChange={(e) => setEntregaParcial(e.target.checked)} />
+          </div>
+          {entregaParcial && (
+            <div>
+              <Label>Quantidade entregue *</Label>
+              <Input
+                type="number"
+                value={qtdParcial}
+                onChange={(e) => setQtdParcial(parseFloat(e.target.value) || 0)}
+                className="mt-1"
+              />
+            </div>
+          )}
+
           <div>
             <Label className="mb-2 block">Assinatura Digital</Label>
             <div className="border-2 border-dashed rounded-lg p-4 bg-white">
@@ -586,12 +657,21 @@ export default function AppEntregasMotorista() {
 
       <div className="space-y-3">
         <Button
+          onClick={registrarChegada}
+          variant="outline"
+          className="w-full h-12"
+        >
+          <MapPin className="w-5 h-5 mr-2" />
+          Registrar Chegada
+        </Button>
+
+        <Button
           onClick={confirmarEntrega}
           disabled={!fotoComprovante || !nomeRecebedor}
           className="w-full bg-green-600 hover:bg-green-700 h-14 text-lg"
         >
           <CheckCircle className="w-5 h-5 mr-2" />
-          Confirmar Entrega
+          {entregaParcial ? 'Confirmar Entrega Parcial' : 'Confirmar Entrega'}
         </Button>
 
         <details className="bg-white rounded-lg border">
@@ -632,22 +712,19 @@ export default function AppEntregasMotorista() {
               variant="outline"
               className="w-full border-red-300 text-red-700"
               onClick={async ()=>{
-                await base44.entities.Entrega.update(entregaAtual.id, {
-                  status: 'Devolvido',
-                  logistica_reversa: {
-                    ativada: true,
+                try {
+                  const patch = buildReversaPatch({
+                    entrega: entregaAtual,
+                    user,
+                    localizacao,
                     motivo: reversaMotivo,
-                    quantidade_devolvida: reversaQtd,
-                    valor_devolvido: reversaValor
-                  },
-                  historico_status: [
-                    ...(entregaAtual.historico_status || []),
-                    { status: 'Devolvido', data_hora: new Date().toISOString(), usuario: user.full_name, observacao: reversaMotivo }
-                  ]
-                });
-                setEntregaAtual(null);
-                refetch();
-                toast.success('🔁 Logística reversa registrada');
+                    quantidade: reversaQtd,
+                    valor: reversaValor,
+                  });
+                  await aplicarPatchEntrega(entregaAtual, patch, '🔁 Logística reversa registrada');
+                } catch (error) {
+                  toast.error(error?.message || 'Falha ao registrar reversa');
+                }
               }}
             >
               Registrar Reversa
