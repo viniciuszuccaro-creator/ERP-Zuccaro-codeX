@@ -402,6 +402,9 @@ const IntentEngine = {
     try {
       switch (intent) {
         case 'consultar_pedido': {
+          if (!hasContext(contexto)) {
+            return { tipo: 'erro', mensagem: 'Contexto de grupo/empresa obrigatorio para consultar pedidos.' };
+          }
           if (!clienteId) {
             return { tipo: 'erro', mensagem: 'Para consultar pedidos, preciso identificar você. Qual seu CPF ou CNPJ?' };
           }
@@ -428,6 +431,9 @@ const IntentEngine = {
         }
         
         case 'consultar_entrega': {
+          if (!hasContext(contexto)) {
+            return { tipo: 'erro', mensagem: 'Contexto de grupo/empresa obrigatorio para consultar entregas.' };
+          }
           if (!clienteId) {
             return { tipo: 'erro', mensagem: 'Para consultar entregas, preciso identificar você.' };
           }
@@ -454,6 +460,9 @@ const IntentEngine = {
         }
         
         case 'segunda_via_boleto': {
+          if (!hasContext(contexto)) {
+            return { tipo: 'erro', mensagem: 'Contexto de grupo/empresa obrigatorio para consultar boletos.' };
+          }
           if (!clienteId) {
             return { tipo: 'erro', mensagem: 'Para consultar boletos, preciso identificar você.' };
           }

@@ -48,11 +48,25 @@ export default function ChatbotWidgetAvancado({
   tema = 'light',
   habilitarAvaliacao = true
 }) {
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextKey = empresaId || groupId || 'sem-contexto';
+  const contextoValido = Boolean(groupId && empresaId);
+  const canUseChatbot = hasPermission('CRM', 'Atendimento', 'visualizar') || hasPermission('Sistema', 'Integracoes', 'visualizar');
+  const contextoPayload = {
+    ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
+    ...(empresaId ? { empresa_id: empresaId } : {})
+  };
+  const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+
   const [aberto, setAberto] = useState(!exibirBotaoFlutuante);
   const [mensagemAtual, setMensagemAtual] = useState('');
   const [sessaoId] = useState(() => resolveSessaoEstavel({
     conversaId: conversaIdProp,
     canal,
+    empresaId,
     clienteId,
   }));
   const [processando, setProcessando] = useState(false);
@@ -64,18 +78,6 @@ export default function ChatbotWidgetAvancado({
   const [avaliacaoSelecionada, setAvaliacaoSelecionada] = useState(0);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
-  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
-  const { hasPermission } = usePermissions();
-  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
-  const empresaId = empresaAtual?.id || null;
-  const contextKey = empresaId || groupId || 'sem-contexto';
-  const contextoValido = contextKey !== 'sem-contexto';
-  const canUseChatbot = hasPermission('CRM', 'Atendimento', 'visualizar') || hasPermission('Sistema', 'Integracoes', 'visualizar');
-  const contextoPayload = {
-    ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
-    ...(empresaId ? { empresa_id: empresaId } : {})
-  };
-  const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
   // Buscar configuração do canal
   const { data: configCanal } = useQuery({
@@ -332,19 +334,17 @@ export default function ChatbotWidgetAvancado({
       });
 
       // Auditoria de interação (AuditLog)
-      try {
-        await createInContext('AuditLog', {
-          ...contextoPayload,
-          usuario: dadosCliente?.nome || 'Cliente',
-          acao: 'Criação',
-          modulo: 'Chatbot',
-          tipo_auditoria: 'operacional',
-          entidade: 'Conversa',
-          descricao: `Intent: ${resultado.intent} (confiança ${resultado.confianca}%) • Canal: ${canal}`,
-          dados_novos: { intent: resultado.intent, confianca: resultado.confianca, sentimento: resultado.sentimento, acoes: resultado.acoes_sugeridas },
-          data_hora: new Date().toISOString()
-        });
-      } catch (_) {}
+      await createInContext('AuditLog', {
+        ...contextoPayload,
+        usuario: dadosCliente?.nome || 'Cliente',
+        acao: 'Criação',
+        modulo: 'Chatbot',
+        tipo_auditoria: 'operacional',
+        entidade: 'Conversa',
+        descricao: `Intent: ${resultado.intent} (confiança ${resultado.confianca}%) • Canal: ${canal}`,
+        dados_novos: { intent: resultado.intent, confianca: resultado.confianca, sentimento: resultado.sentimento, acoes: resultado.acoes_sugeridas },
+        data_hora: new Date().toISOString()
+      });
 
       return {
         ...resultado,

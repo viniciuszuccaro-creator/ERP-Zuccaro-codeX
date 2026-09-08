@@ -1,3 +1,15 @@
+### P1.7 - Chatbot omnichannel: canal/empresa fail-closed e roteamento vivo
+- Objetivo: fechar residual P1 Chatbot omnichannel no Hub/Chatbot existentes (Gate 12).
+- Diagnostico: canal sem config liberava; ChatbotAtendimento/interacoes sem empresa; sessao widget sem empresaId; escalate engolia erro; IntentEngine lia ERP sem contexto; regras de roteamento nao hidratavam nem rodavam no ingest.
+- Causa raiz: omnichannel com guards fail-open e roteamento desconectado do ingest.
+- Arquivos alterados: `atendimentoConversaPolicy.js`, `contextoMultiempresaPolicy.js`, `localBase44Client.js`, `ChatbotAtendimento.jsx`, `ChatbotWidget.jsx`, `ChatbotWidgetAvancado.jsx`, `RoteamentoInteligente.jsx`, `WebhooksTester.jsx`, `IntentEngine.jsx`, `HubAtendimento.jsx`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: Hub assume/transfer/close, `ingestCanalExterno`, fila, widgets existentes.
+- Alteracoes: canal fail-closed; interacao exige empresa; escalate/audit obrigatorios; sessao+empresa; roteamento apply no webhook; IntentEngine com hasContext nas leituras.
+- Multiempresa/RBAC: ChatbotInteracao/ConfiguracaoCanal exigem empresa; escopo CRM.Atendimento.
+- Pendencia: Meta/WhatsApp real; SLA KPI real no Hub; Site proprio (proximo P1).
+- Validacoes: `node --test tests/atendimento-conversa-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P1: Site proprio integrado.
+
 ### P1.6 - Portal Cliente: shell de abas + write/NFe fail-closed
 - Objetivo: fechar residual P1 Portal do Cliente completo no portal existente (Gate 13 funcoes alcançaveis).
 - Diagnostico: `PortalCliente` so montava Dashboard; `PortalTabsNav` orfao; links `?tab=` mortos; NF so por `cliente_id`; ContaReceber update sem assert portal; DANFE sem policy; config UI-only/spinner infinito.

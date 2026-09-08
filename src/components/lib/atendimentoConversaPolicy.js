@@ -70,17 +70,108 @@ export const assertCanalAtivo = ({ canal, configs = [], empresaId } = {}) => {
   if (!canalNome) throw new Error('Canal obrigatorio.');
   const list = Array.isArray(configs) ? configs : [];
   if (!list.length) return true;
-  const scoped = list.filter((item) => {
-    const itemEmpresa = firstText(item.empresa_id);
-    if (!empresaId || !itemEmpresa) return firstText(item.canal) === canalNome;
-    return firstText(item.canal) === canalNome && itemEmpresa === firstText(empresaId);
-  });
-  if (!scoped.length) return true;
+  const empresaScoped = firstText(empresaId)
+    ? list.filter((item) => !firstText(item.empresa_id) || firstText(item.empresa_id) === firstText(empresaId))
+    : list;
+  if (!empresaScoped.length) return true;
+  const scoped = empresaScoped.filter((item) => firstText(item.canal) === canalNome);
+  if (!scoped.length) {
+    throw new Error(`Canal ${canalNome} nao configurado para a empresa.`);
+  }
   const ativo = scoped.some((item) => item.ativo !== false && item.ativo !== 'false' && item.ativo !== 0);
   if (!ativo) throw new Error(`Canal ${canalNome} inativo para a empresa.`);
   return true;
 };
 
+export const assertChatbotInteracaoOnCreate = ({ record = {} } = {}) => {
+  if (!firstText(record.empresa_id)) {
+    throw new Error('Empresa obrigatoria para interacao do chatbot.');
+  }
+  if (!firstText(record.sessao_id)) {
+    throw new Error('Sessao obrigatoria para interacao do chatbot.');
+  }
+  return {
+    reuse: null,
+    record: {
+      ...record,
+      canal: firstText(record.canal) || 'Portal',
+      data_hora: firstText(record.data_hora) || new Date().toISOString(),
+    },
+  };
+};
+
+export const selecionarAtendenteRoteamento = ({
+  regras = {},
+  atendentes = [],
+  conversas = [],
+  clienteId = null,
+} = {}) => {
+  const max = Number(regras.max_conversas_simultaneas) || 5;
+  const tipo = firstText(regras.tipo_roteamento) || 'round-robin';
+  const list = Array.isArray(atendentes) ? atendentes : [];
+  if (!list.length) return null;
+
+  const stats = list.map((atendente) => {
+    const id = firstText(atendente.id, atendente.atendente_id);
+    const doAtendente = (Array.isArray(conversas) ? conversas : []).filter(
+      (c) => firstText(c.atendente_id) === id && conversaAberta(c),
+    );
+    return {
+      id,
+      nome: firstText(atendente.full_name, atendente.nome, atendente.email),
+      ativas: doAtendente.length,
+      disponivel: doAtendente.length < max,
+      ultimoCliente: clienteId
+        ? doAtendente.some((c) => firstText(c.cliente_id) === firstText(clienteId))
+        : false,
+    };
+  });
+
+  const disponiveis = stats.filter((item) => item.disponivel && item.id);
+  if (!disponiveis.length) return null;
+
+  if (regras.priorizar_ultimo_atendente && clienteId) {
+    const ultimo = disponiveis.find((item) => item.ultimoCliente);
+    if (ultimo) return { atendente_id: ultimo.id, atendente_nome: ultimo.nome, motivo: 'ultimo_atendente' };
+  }
+
+  let escolhido = disponiveis[0];
+  if (tipo === 'por-carga' || regras.considerar_carga_trabalho) {
+    escolhido = [...disponiveis].sort((a, b) => a.ativas - b.ativas)[0];
+  }
+  return {
+    atendente_id: escolhido.id,
+    atendente_nome: escolhido.nome,
+    motivo: tipo,
+  };
+};
+
+export const aplicarRoteamentoIngest = ({
+  conversa = {},
+  regras = {},
+  atendentes = [],
+  conversas = [],
+} = {}) => {
+  if (!conversa?.id && !firstText(conversa.sessao_id)) return { applied: false, patch: null };
+  const pick = selecionarAtendenteRoteamento({
+    regras,
+    atendentes,
+    conversas,
+    clienteId: conversa.cliente_id,
+  });
+  if (!pick) return { applied: false, patch: null };
+  return {
+    applied: true,
+    patch: {
+      atendente_id: pick.atendente_id,
+      atendente_nome: pick.atendente_nome,
+      status: 'Aguardando',
+      tipo_atendimento: 'Humano',
+      roteado_em: new Date().toISOString(),
+      motivo_roteamento: pick.motivo,
+    },
+  };
+};
 export const ingestCanalExterno = ({ payload = {}, canal = 'WhatsApp', empresaId, groupId, configs } = {}) => {
   if (!firstText(empresaId)) {
     throw new Error('Empresa obrigatoria para ingestao de canal.');
@@ -354,6 +445,9 @@ export const applyAtendimentoCreate = (entityName, record, stores = {}) => {
   }
   if (entityName === 'MensagemOmnicanal') {
     return assertMensagemOnCreate({ record });
+  }
+  if (entityName === 'ChatbotInteracao') {
+    return assertChatbotInteracaoOnCreate({ record });
   }
   return { reuse: null, record };
 };

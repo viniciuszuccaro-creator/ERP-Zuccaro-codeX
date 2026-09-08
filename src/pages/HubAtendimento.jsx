@@ -290,7 +290,7 @@ export default function HubAtendimento() {
             arquivo_tamanho_kb: arquivoTamanho
           },
           data_hora: new Date().toISOString()
-        }).catch(() => null);
+        });
       }
 
       // Atualizar conversa

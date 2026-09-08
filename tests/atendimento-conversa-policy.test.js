@@ -64,6 +64,38 @@ test('canal inativo bloqueia ingestao', () => {
   );
 });
 
+test('canal nao configurado para empresa falha fechado', async () => {
+  const { assertCanalAtivo, assertChatbotInteracaoOnCreate, aplicarRoteamentoIngest } = await import('../src/components/lib/atendimentoConversaPolicy.js');
+  assert.throws(
+    () => assertCanalAtivo({
+      canal: 'Instagram',
+      empresaId: 'e1',
+      configs: [{ canal: 'WhatsApp', empresa_id: 'e1', ativo: true }],
+    }),
+    /nao configurado/,
+  );
+  assert.throws(
+    () => assertChatbotInteracaoOnCreate({ record: { sessao_id: 's1' } }),
+    /Empresa obrigatoria/,
+  );
+  const ok = assertChatbotInteracaoOnCreate({
+    record: { sessao_id: 's1', empresa_id: 'e1', mensagem_usuario: 'oi' },
+  });
+  assert.equal(ok.record.canal, 'Portal');
+
+  const routed = aplicarRoteamentoIngest({
+    conversa: { id: 'c1', cliente_id: 'cli-1', status: 'Aguardando' },
+    regras: { tipo_roteamento: 'por-carga', max_conversas_simultaneas: 5, considerar_carga_trabalho: true },
+    atendentes: [{ id: 'a1', full_name: 'Ana' }, { id: 'a2', full_name: 'Bruno' }],
+    conversas: [
+      { id: 'x1', atendente_id: 'a1', status: 'Em Progresso' },
+      { id: 'x2', atendente_id: 'a1', status: 'Em Progresso' },
+    ],
+  });
+  assert.equal(routed.applied, true);
+  assert.equal(routed.patch.atendente_id, 'a2');
+});
+
 test('assumir transferir e fechar sao idempotentes no ciclo de vida', () => {
   const conversa = {
     id: 'c1',
@@ -151,16 +183,28 @@ test('hub e webhook persistem canal externo no atendimento existente', async () 
   const widget = await readFile(new URL('../src/components/chatbot/ChatbotWidget.jsx', import.meta.url), 'utf8');
   const fila = await readFile(new URL('../src/components/chatbot/ChatbotFilaEspera.jsx', import.meta.url), 'utf8');
   const chatbot = await readFile(new URL('../src/pages/ChatbotAtendimento.jsx', import.meta.url), 'utf8');
+  const roteamento = await readFile(new URL('../src/components/chatbot/RoteamentoInteligente.jsx', import.meta.url), 'utf8');
+  const intent = await readFile(new URL('../src/components/chatbot/IntentEngine.jsx', import.meta.url), 'utf8');
   assert.match(tester, /ingestCanalExterno/);
+  assert.match(tester, /aplicarRoteamentoIngest/);
   assert.match(tester, /createInContext\('ConversaOmnicanal'/);
   assert.match(tester, /ConfiguracaoCanal/);
   assert.doesNotMatch(tester, /!canalConfig\?\.webhook_url/);
   assert.match(hub, /buildAssumirConversa/);
   assert.match(hub, /buildFecharConversa/);
   assert.match(hub, /Conversa assumida por atendente humano/);
+  assert.doesNotMatch(hub, /\.catch\(\(\) => null\)/);
   assert.match(widget, /resolveSessaoEstavel/);
+  assert.match(widget, /empresaId/);
+  assert.match(widget, /buildEscalarParaHub/);
+  assert.doesNotMatch(widget, /catch \(_\) \{\}/);
   assert.doesNotMatch(widget, /atendentes\.length === 0/);
   assert.match(fila, /ordenarFilaAtendimento/);
   assert.match(fila, /buildAssumirConversa/);
   assert.match(chatbot, /buildEscalarParaHub/);
+  assert.match(chatbot, /createInContext\('ChatbotInteracao'/);
+  assert.match(chatbot, /contextoValido/);
+  assert.match(roteamento, /regras_roteamento/);
+  assert.match(roteamento, /selecionarAtendenteRoteamento/);
+  assert.match(intent, /hasContext\(contexto\)/);
 });

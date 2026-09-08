@@ -9,7 +9,7 @@ import { Webhook, Send, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import usePermissions from '@/components/lib/usePermissions';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
-import { ingestCanalExterno } from '@/components/lib/atendimentoConversaPolicy';
+import { aplicarRoteamentoIngest, ingestCanalExterno } from '@/components/lib/atendimentoConversaPolicy';
 
 /**
  * V21.6 - TESTADOR DE WEBHOOKS
@@ -21,7 +21,7 @@ export default function WebhooksTester({ canalConfig }) {
   const [payload, setPayload] = useState('{\n  "type": "message",\n  "text": "Teste",\n  "from": "11999990000",\n  "name": "Cliente Teste"\n}');
   const [resposta, setResposta] = useState(null);
   const { hasPermission, isAdmin } = usePermissions();
-  const { empresaAtual, grupoAtual, createInContext, filterInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext, filterInContext, updateInContext } = useContextoVisual();
   const contextKey = empresaAtual?.id || grupoAtual?.id || 'sem-contexto';
   const contextoValido = contextKey !== 'sem-contexto';
   const canTestWebhook = isAdmin() ||
@@ -65,11 +65,30 @@ export default function WebhooksTester({ canalConfig }) {
         data_envio: new Date().toISOString(),
       });
 
+      let roteadoPara = null;
+      const equipeIds = canalConfig?.equipe_atendimento_ids || [];
+      if (equipeIds.length && conversa?.id) {
+        const users = await filterInContext('User', {}, 'full_name', 200);
+        const atendentes = users.filter((u) => equipeIds.includes(u.id));
+        const conversasAbertas = await filterInContext('ConversaOmnicanal', {}, '-created_date', 200);
+        const routed = aplicarRoteamentoIngest({
+          conversa,
+          regras: canalConfig?.regras_roteamento || {},
+          atendentes,
+          conversas: conversasAbertas,
+        });
+        if (routed.applied) {
+          await updateInContext('ConversaOmnicanal', conversa.id, routed.patch);
+          roteadoPara = routed.patch.atendente_id;
+        }
+      }
+
       return {
         success: true,
         data,
         conversa_id: conversa.id,
         mensagem_id: mensagem.id,
+        roteado_para: roteadoPara,
         timestamp: new Date().toISOString(),
         webhook_url: webhookUrl,
         group_id: groupId,

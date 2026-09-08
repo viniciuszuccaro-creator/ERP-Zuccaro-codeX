@@ -36,7 +36,7 @@ O ERP somente poderá ser considerado apto para uso real quando os blocos P0 est
 - [x] Roteirizador avançado.
 - [x] App Motorista completo.
 - [x] Portal do Cliente completo.
-- [ ] Chatbot omnichannel.
+- [x] Chatbot omnichannel.
 - [ ] Integração total do site.
 - [ ] Marketplaces.
 - [x] Dashboards avançados.
@@ -668,6 +668,13 @@ Não criar novo módulo. Consolidar estruturas existentes.
 ## Critério de saída
 
 Atendimento iniciado em canal externo aparece no Hub, pode ser assumido por humano e mantém histórico ligado ao cliente.
+
+### Residual P1.7 (2026-09-08)
+
+- [x] `assertCanalAtivo` fail-closed quando canal nao configurado/inativo na empresa.
+- [x] `ChatbotInteracao` exige empresa; sessao widget com `empresaId`.
+- [x] Escalacao Hub sem catch silencioso; IntentEngine bloqueia leitura sem contexto.
+- [x] Regras de roteamento hidratam e aplicam no ingest local (`aplicarRoteamentoIngest`).
 
 ---
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Settings2, Users, TrendingUp, Settings, Brain } from 'lucide-react';
 import { toast } from 'sonner';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
+import { selecionarAtendenteRoteamento } from '@/components/lib/atendimentoConversaPolicy';
 
 /**
  * V21.6 - ROTEAMENTO INTELIGENTE DE CONVERSAS
@@ -43,6 +44,17 @@ export default function RoteamentoInteligente({ canalConfig }) {
     usar_ia_matching: false,
     considerar_carga_trabalho: true
   });
+
+  useEffect(() => {
+    const saved = canalConfig?.regras_roteamento;
+    if (!saved || typeof saved !== 'object') return;
+    setRegras((prev) => ({
+      ...prev,
+      ...saved,
+      tipo_roteamento: saved.tipo_roteamento || prev.tipo_roteamento,
+      max_conversas_simultaneas: Number(saved.max_conversas_simultaneas) || prev.max_conversas_simultaneas,
+    }));
+  }, [canalConfig?.id, canalConfig?.updated_date]);
 
   const { data: atendentes = [] } = useQuery({
     queryKey: ['atendentes-equipe', contextKey, canalConfig?.id],
@@ -101,26 +113,33 @@ export default function RoteamentoInteligente({ canalConfig }) {
   });
 
   const selecionarProximoAtendente = async (conversaId) => {
-    let atendenteEscolhido = null;
+    const conversas = await filterInContext('ConversaOmnicanal', {}, '-data_inicio', 500);
+    const pick = selecionarAtendenteRoteamento({
+      regras,
+      atendentes,
+      conversas,
+    });
+    let atendenteEscolhido = pick
+      ? { atendente_id: pick.atendente_id, nome: pick.atendente_nome }
+      : null;
 
-    if (regras.tipo_roteamento === 'round-robin') {
-      // Rotativo simples
+    if (!atendenteEscolhido && regras.tipo_roteamento === 'round-robin') {
       const disponiveis = estatisticas.filter(e => e.disponivel);
       if (disponiveis.length > 0) {
-        atendenteEscolhido = disponiveis[0];
+        atendenteEscolhido = { atendente_id: disponiveis[0].atendente_id, nome: disponiveis[0].nome };
       }
-    } else if (regras.tipo_roteamento === 'por-carga') {
-      // Menor carga de trabalho
+    } else if (!atendenteEscolhido && regras.tipo_roteamento === 'por-carga') {
       const menosCarga = [...estatisticas].sort((a, b) => a.conversas_ativas - b.conversas_ativas)[0];
       if (menosCarga?.disponivel) {
-        atendenteEscolhido = menosCarga;
+        atendenteEscolhido = { atendente_id: menosCarga.atendente_id, nome: menosCarga.nome };
       }
-    } else if (regras.tipo_roteamento === 'por-performance') {
-      // Melhor avaliação
+    } else if (!atendenteEscolhido && regras.tipo_roteamento === 'por-performance') {
       const melhorAvaliacao = [...estatisticas]
         .filter(e => e.disponivel)
         .sort((a, b) => parseFloat(b.avaliacao_media) - parseFloat(a.avaliacao_media))[0];
-      atendenteEscolhido = melhorAvaliacao;
+      if (melhorAvaliacao) {
+        atendenteEscolhido = { atendente_id: melhorAvaliacao.atendente_id, nome: melhorAvaliacao.nome };
+      }
     }
 
     if (atendenteEscolhido) {
@@ -129,7 +148,9 @@ export default function RoteamentoInteligente({ canalConfig }) {
       await updateInContext('ConversaOmnicanal', conversaId, {
         atendente_id: atendenteEscolhido.atendente_id,
         atendente_nome: atendenteEscolhido.nome,
-        status: 'Em Progresso'
+        status: 'Aguardando',
+        tipo_atendimento: 'Humano',
+        roteado_em: new Date().toISOString(),
       });
       
       toast.success(`Conversa atribuída a ${atendenteEscolhido.nome}`);

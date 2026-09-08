@@ -41,45 +41,60 @@ export default function ChatbotAtendimento() {
   const [clienteAutenticado, setClienteAutenticado] = useState(null);
   const [vendedorAtendendo, setVendedorAtendendo] = useState(null);
   const queryClient = useQueryClient();
-  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext, filterInContext } = useContextoVisual();
   const { hasPermission, isAdmin } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId && empresaId);
+  const canUseChatbot =
+    hasPermission('CRM', 'Atendimento', 'visualizar')
+    || hasPermission('CRM', 'Atendimento', 'ver')
+    || hasPermission('CRM', null, 'ver')
+    || hasPermission('Sistema', 'Integracoes', 'visualizar');
 
   // V21.1: Buscar intents configurados
   const { data: intentsConfig = [] } = useQuery({
-    queryKey: ['chatbot-intents'],
-    queryFn: () => base44.entities.ChatbotIntents.filter({ ativo: true }),
+    queryKey: ['chatbot-intents', empresaId, groupId],
+    queryFn: () => filterInContext('ChatbotIntent', { ativo: true }, '-updated_date', 100),
+    enabled: contextoValido && canUseChatbot,
   });
 
   const { data: interacoes = [] } = useQuery({
-    queryKey: ['chatbot-interacoes', sessaoAtual],
+    queryKey: ['chatbot-interacoes', sessaoAtual, empresaId],
     queryFn: () => {
-      if (!sessaoAtual) return [];
-      const filtro = empresaAtual?.id ? { sessao_id: sessaoAtual, empresa_id: empresaAtual.id } : { sessao_id: sessaoAtual };
-      return base44.entities.ChatbotInteracao.filter(
-        filtro,
+      if (!sessaoAtual || !empresaId) return [];
+      return filterInContext(
+        'ChatbotInteracao',
+        { sessao_id: sessaoAtual, empresa_id: empresaId },
         '-data_hora',
         50
       );
     },
-    enabled: !!sessaoAtual
+    enabled: !!sessaoAtual && contextoValido && canUseChatbot,
   });
 
   // Inicializar sessão
   useEffect(() => {
-    if (!sessaoAtual) {
-      setSessaoAtual(resolveSessaoEstavel({ canal: 'Portal', empresaId: empresaAtual?.id, clienteId: clienteAutenticado?.id }));
+    if (!sessaoAtual && empresaId) {
+      setSessaoAtual(resolveSessaoEstavel({ canal: 'Portal', empresaId, clienteId: clienteAutenticado?.id }));
     }
-  }, []);
+  }, [empresaId, clienteAutenticado?.id]);
 
   const enviarMensagemMutation = useMutation({
     mutationFn: async (msg) => {
+      if (!contextoValido || !canUseChatbot) {
+        throw new Error('Contexto (grupo+empresa) ou permissao obrigatoria para o chatbot.');
+      }
+      if (!sessaoAtual) {
+        throw new Error('Sessao do chatbot nao inicializada.');
+      }
       const intent = await detectarIntent(msg);
       
       if (intent.requer_autenticacao && !clienteAutenticado) {
-        return await base44.entities.ChatbotInteracao.create({
+        return await createInContext('ChatbotInteracao', {
           sessao_id: sessaoAtual,
-          empresa_id: empresaAtual?.id,
-          group_id: empresaAtual?.group_id || null,
+          empresa_id: empresaId,
+          group_id: groupId,
           canal: 'Portal',
           mensagem_usuario: msg,
           intent_detectado: intent.nome,
@@ -99,8 +114,10 @@ export default function ChatbotAtendimento() {
 
       const resposta = await processarIntent(intent, msg);
 
-      return await base44.entities.ChatbotInteracao.create({
+      return await createInContext('ChatbotInteracao', {
         sessao_id: sessaoAtual,
+        empresa_id: empresaId,
+        group_id: groupId,
         canal: 'Portal',
         cliente_id: clienteAutenticado?.id,
         cliente_nome: clienteAutenticado?.nome,
@@ -116,7 +133,7 @@ export default function ChatbotAtendimento() {
         data_hora: new Date().toISOString()
       });
     },
-    onError: () => { toast.error('Falha ao enviar mensagem'); },
+    onError: (error) => { toast.error(error?.message || 'Falha ao enviar mensagem'); },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chatbot-interacoes'] });
       setMensagem('');
@@ -236,7 +253,13 @@ export default function ChatbotAtendimento() {
       }
     }
 
-    await base44.entities.Notificacao.create({
+    if (!empresaId) {
+      throw new Error('Empresa obrigatoria para escalar ao Hub.');
+    }
+
+    await createInContext('Notificacao', {
+      group_id: groupId,
+      empresa_id: empresaId,
       titulo: '🚨 Cliente Frustrado - Transbordo Urgente',
       mensagem: `Cliente demonstrou ${sentimento.tipo.toLowerCase()}: "${msg}".\n\nPalavras detectadas: ${sentimento.palavras.join(', ')}\n\n👉 Sessão ID: ${sessaoAtual}`,
       tipo: 'urgente',
@@ -252,41 +275,49 @@ export default function ChatbotAtendimento() {
       }
     });
 
-    if (empresaAtual?.id) {
-      try {
-        const escalado = buildEscalarParaHub({
-          sessaoId: sessaoAtual,
-          empresaId: empresaAtual.id,
-          groupId: grupoAtual?.id || empresaAtual.group_id || empresaAtual.grupo_id,
-          canal: 'Portal',
-          cliente: clienteAutenticado,
-          mensagem: msg,
-          sentimento,
-        });
-        const conversa = await createInContext('ConversaOmnicanal', escalado.conversa);
-        if (escalado.mensagem) {
-          await createInContext('MensagemOmnicanal', {
-            ...escalado.mensagem,
-            conversa_id: conversa.id,
-          });
-        }
-      } catch (error) {
-        console.error('Falha ao gravar conversa no Hub no transbordo:', error);
-      }
+    const escalado = buildEscalarParaHub({
+      sessaoId: sessaoAtual,
+      empresaId,
+      groupId,
+      canal: 'Portal',
+      cliente: clienteAutenticado,
+      mensagem: msg,
+      sentimento,
+    });
+    const conversa = await createInContext('ConversaOmnicanal', escalado.conversa);
+    if (escalado.mensagem) {
+      await createInContext('MensagemOmnicanal', {
+        ...escalado.mensagem,
+        conversa_id: conversa.id,
+      });
     }
+    await createInContext('AuditLog', {
+      group_id: groupId,
+      empresa_id: empresaId,
+      acao: 'Chatbot.escalar',
+      modulo: 'CRM',
+      entidade: 'ConversaOmnicanal',
+      registro_id: conversa.id,
+      resultado: 'sucesso',
+      detalhes: { sessao_id: sessaoAtual, sentimento: sentimento.tipo },
+      data_hora: new Date().toISOString(),
+    });
 
     setVendedorAtendendo(vendedorDestino);
     toast.error(`🚨 Cliente ${sentimento.tipo} - Transferindo para ${vendedorDestino}`);
   };
 
   const processarIntent = async (intent, msg) => {
+    if (!contextoValido) {
+      return 'Selecione grupo e empresa para consultar dados no chatbot.';
+    }
     switch (intent.nome) {
       case '2_via_boleto':
         if (clienteAutenticado) {
-          const titulos = await base44.entities.ContaReceber.filter({
+          const titulos = await filterInContext('ContaReceber', {
             cliente_id: clienteAutenticado.id,
             status: 'Pendente'
-          });
+          }, '-data_vencimento', 20);
           
           if (titulos.length > 0) {
             return `📄 ${titulos.length} título(s) em aberto:\n\n${titulos.map(t => 
@@ -299,13 +330,13 @@ export default function ChatbotAtendimento() {
       
       case 'rastrear_entrega':
         if (clienteAutenticado) {
-          const entregas = await base44.entities.Entrega.filter({
-            cliente_id: clienteAutenticado.id,
-            status: { $in: ['Em Trânsito', 'Saiu para Entrega'] }
-          });
+          const entregas = await filterInContext('Entrega', {
+            cliente_id: clienteAutenticado.id
+          }, '-created_date', 20);
+          const emAndamento = entregas.filter((e) => ['Em Trânsito', 'Saiu para Entrega', 'Chegada no Cliente'].includes(e.status));
           
-          if (entregas.length > 0) {
-            return `🚚 ${entregas.length} entrega(s) em andamento:\n\n${entregas.map(e => 
+          if (emAndamento.length > 0) {
+            return `🚚 ${emAndamento.length} entrega(s) em andamento:\n\n${emAndamento.map((e) =>
               `Pedido ${e.numero_pedido} - Status: ${e.status}`
             ).join('\n')}`;
           }
@@ -329,12 +360,16 @@ export default function ChatbotAtendimento() {
 
   const handleEnviar = () => {
     if (!mensagem.trim()) return;
+    if (!contextoValido || !canUseChatbot) {
+      toast.error('Selecione grupo/empresa e garanta permissao de atendimento');
+      return;
+    }
     enviarMensagemMutation.mutate(mensagem);
   };
 
   const ultimasInteracoes = interacoes.slice().reverse(); // Reverse for chronological display
 
-  if (!hasPermission('CRM', null, 'ver')) {
+  if (!canUseChatbot) {
     return (
       <div className="p-6 w-full h-full">
         <div className="max-w-2xl mx-auto w-full">
@@ -346,8 +381,18 @@ export default function ChatbotAtendimento() {
       </div>
     );
   }
-  return (
-    <div className="w-full h-full min-h-screen p-4 lg:p-6 bg-gradient-to-br from-slate-50 to-blue-50 overflow-auto">
+
+  if (!contextoValido) {
+    return (
+      <div className="p-6 w-full h-full" data-context-required="true">
+        <div className="max-w-2xl mx-auto w-full rounded-xl border border-amber-200 bg-amber-50 p-6">
+          <h2 className="text-lg font-semibold text-amber-950">Contexto obrigatorio</h2>
+          <p className="text-amber-900 mt-1 text-sm">Selecione grupo e empresa antes de usar o chatbot.</p>
+        </div>
+      </div>
+    );
+  }
+  return (    <div className="w-full h-full min-h-screen p-4 lg:p-6 bg-gradient-to-br from-slate-50 to-blue-50 overflow-auto">
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex justify-between items-start">
           <div>

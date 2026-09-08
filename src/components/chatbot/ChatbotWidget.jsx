@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import IntentEngine from './IntentEngine';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
-import { resolveSessaoEstavel } from '@/components/lib/atendimentoConversaPolicy';
+import { assertCanalAtivo, buildEscalarParaHub, resolveSessaoEstavel } from '@/components/lib/atendimentoConversaPolicy';
 
 /**
  * V21.5 - Widget de Chatbot OMNICANAL COMPLETO
@@ -42,11 +42,25 @@ export default function ChatbotWidget({
   exibirBotaoFlutuante = true,
   configuracoes = {}
 }) {
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextKey = empresaId || groupId || 'sem-contexto';
+  const contextoValido = Boolean(groupId && empresaId);
+  const canUseChatbot = hasPermission('CRM', 'Atendimento', 'visualizar') || hasPermission('Sistema', 'Integracoes', 'visualizar');
+  const contextoPayload = {
+    ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
+    ...(empresaId ? { empresa_id: empresaId } : {})
+  };
+  const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+
   const [aberto, setAberto] = useState(!exibirBotaoFlutuante);
   const [mensagemAtual, setMensagemAtual] = useState('');
   const [sessaoId] = useState(() => resolveSessaoEstavel({
     conversaId: conversaIdProp,
     canal,
+    empresaId,
     clienteId,
   }));
   const [processando, setProcessando] = useState(false);
@@ -55,18 +69,6 @@ export default function ChatbotWidget({
   const [conversaAtiva, setConversaAtiva] = useState(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
-  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
-  const { hasPermission } = usePermissions();
-  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
-  const empresaId = empresaAtual?.id || null;
-  const contextKey = empresaId || groupId || 'sem-contexto';
-  const contextoValido = contextKey !== 'sem-contexto';
-  const canUseChatbot = hasPermission('CRM', 'Atendimento', 'visualizar') || hasPermission('Sistema', 'Integracoes', 'visualizar');
-  const contextoPayload = {
-    ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
-    ...(empresaId ? { empresa_id: empresaId } : {})
-  };
-  const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
   // Buscar configuração do canal
   const { data: configCanal } = useQuery({
@@ -120,6 +122,9 @@ export default function ChatbotWidget({
   const inicializarConversa = async () => {
     try {
       if (!contextoValido || !canUseChatbot) return;
+      if (configCanal) {
+        assertCanalAtivo({ canal, configs: [configCanal], empresaId });
+      }
 
       const novaConversa = await createInContext('ConversaOmnicanal', {
         ...contextoPayload,
@@ -283,19 +288,17 @@ export default function ChatbotWidget({
       });
 
       // Auditoria da conversa
-      try {
-        await createInContext('AuditLog', {
-          ...contextoPayload,
-          usuario: 'Cliente',
-          acao: 'Criação',
-          modulo: 'Chatbot',
-          tipo_auditoria: 'operacional',
-          entidade: 'Conversa',
-          descricao: `Intent: ${resultado.intent} (confiança ${resultado.confianca}%) • Canal: ${canal}`,
-          dados_novos: { intent: resultado.intent, confianca: resultado.confianca, sentimento: resultado.sentimento },
-          data_hora: new Date().toISOString()
-        });
-      } catch (_) {}
+      await createInContext('AuditLog', {
+        ...contextoPayload,
+        usuario: 'Cliente',
+        acao: 'Criação',
+        modulo: 'Chatbot',
+        tipo_auditoria: 'operacional',
+        entidade: 'Conversa',
+        descricao: `Intent: ${resultado.intent} (confiança ${resultado.confianca}%) • Canal: ${canal}`,
+        dados_novos: { intent: resultado.intent, confianca: resultado.confianca, sentimento: resultado.sentimento },
+        data_hora: new Date().toISOString()
+      });
 
       return {
         ...resultado,
@@ -316,17 +319,43 @@ export default function ChatbotWidget({
 
   const transferirParaAtendente = async (conversaId, resultado) => {
     try {
-      // Buscar atendente disponível
+      if (!empresaId) throw new Error('Empresa obrigatoria para transferir ao Hub.');
+      const escalado = buildEscalarParaHub({
+        sessaoId,
+        empresaId,
+        groupId,
+        canal,
+        cliente: clienteId ? { id: clienteId } : null,
+        mensagem: resultado?.mensagem_usuario || resultado?.intent || 'Transbordo widget',
+        sentimento: { tipo: resultado?.sentimento, frustrado: resultado?.sentimento === 'Frustrado' },
+      });
       const atendentes = configCanal?.equipe_atendimento_ids || [];
       const atendenteId = atendentes[0] || null;
-
       await updateInContext('ConversaOmnicanal', conversaId, {
         ...contextoPayload,
+        ...escalado.conversa,
         tipo_atendimento: 'Humano',
         atendente_id: atendenteId,
-        transferido_em: new Date().toISOString(),
         status: 'Aguardando',
-        prioridade: resultado.sentimento === 'Frustrado' ? 'Urgente' : 'Alta'
+        prioridade: resultado.sentimento === 'Frustrado' ? 'Urgente' : 'Alta',
+      });
+
+      if (escalado.mensagem) {
+        await createInContext('MensagemOmnicanal', {
+          ...escalado.mensagem,
+          conversa_id: conversaId,
+        });
+      }
+
+      await createInContext('AuditLog', {
+        ...contextoPayload,
+        acao: 'Chatbot.transferir',
+        modulo: 'CRM',
+        entidade: 'ConversaOmnicanal',
+        registro_id: conversaId,
+        resultado: 'sucesso',
+        detalhes: { intent: resultado?.intent, sentimento: resultado?.sentimento },
+        data_hora: new Date().toISOString(),
       });
 
       if (!atendenteId) return;
@@ -348,6 +377,8 @@ export default function ChatbotWidget({
       });
     } catch (error) {
       console.error('Erro ao transferir para atendente:', error);
+      toast.error(error?.message || 'Falha ao transferir para o Hub');
+      throw error;
     }
   };
 

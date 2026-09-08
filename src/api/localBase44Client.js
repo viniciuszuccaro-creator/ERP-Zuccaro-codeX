@@ -933,6 +933,10 @@ const ENTITY_PERMISSION_SCOPE = {
   RoteirizacaoInteligente: { module: 'Expedicao', section: 'Roteirizacao' },
   Motorista: { module: 'Expedicao', section: 'Motorista' },
   Veiculo: { module: 'Expedicao', section: 'Veiculo' },
+  ConversaOmnicanal: { module: 'CRM', section: 'Atendimento' },
+  MensagemOmnicanal: { module: 'CRM', section: 'Atendimento' },
+  ChatbotInteracao: { module: 'CRM', section: 'Atendimento' },
+  ConfiguracaoCanal: { module: 'CRM', section: 'Atendimento' },
 };
 
 const getEntityPermissionScope = (entityName) => {
