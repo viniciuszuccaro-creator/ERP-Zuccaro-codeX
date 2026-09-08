@@ -357,18 +357,36 @@ export const assertRoteirizacaoInteligenteOnCreate = ({ record = {}, rotas = [] 
   if (!firstText(record.empresa_id)) {
     throw new Error('Empresa obrigatoria para roteirizacao inteligente.');
   }
+  if (!firstText(record.group_id, record.grupo_id)) {
+    throw new Error('Grupo obrigatorio para roteirizacao inteligente.');
+  }
+  if (!firstText(record.motorista_id, record.motorista, record.motorista_nome)) {
+    throw new Error('Motorista obrigatorio para roteirizacao inteligente.');
+  }
+  if (!firstText(record.veiculo_id, record.veiculo, record.veiculo_placa, record.placa)) {
+    throw new Error('Veiculo obrigatorio para roteirizacao inteligente.');
+  }
   const vinculados = Array.isArray(record.entregas_vinculadas) ? record.entregas_vinculadas : [];
   if (!vinculados.length && !sortedEntregaIdsKey(record.entregas_ids)) {
     throw new Error('Selecione entregas para roteirizacao inteligente.');
   }
   const stamped = {
     ...record,
+    group_id: firstText(record.group_id, record.grupo_id),
+    grupo_id: firstText(record.grupo_id, record.group_id),
     data_rota: firstText(record.data_rota) || new Date().toISOString().slice(0, 10),
     entregas_ids: Array.isArray(record.entregas_ids) && record.entregas_ids.length
       ? record.entregas_ids
       : vinculados.map((item) => firstText(item.entrega_id, item.id)).filter(Boolean),
     status: firstText(record.status) || 'Planejada',
   };
+  stamped.entregas_vinculadas = (Array.isArray(stamped.entregas_vinculadas) ? stamped.entregas_vinculadas : [])
+    .map((item, idx) => ({
+      ...item,
+      entrega_id: firstText(item.entrega_id, item.id),
+      ordem_sequencia: item.ordem_sequencia || item.sequencia || idx + 1,
+      sequencia: item.sequencia || item.ordem_sequencia || idx + 1,
+    }));
   stamped.idempotency_key = rotaIdempotencyKey({
     ...stamped,
     pontos_entrega: stamped.entregas_ids.map((id) => ({ entrega_id: id })),
@@ -376,6 +394,43 @@ export const assertRoteirizacaoInteligenteOnCreate = ({ record = {}, rotas = [] 
   const reuse = findDuplicateRota(stamped, rotas);
   if (reuse) return { reuse, record: stamped };
   return { reuse: null, record: stamped };
+};
+
+export const stampEntregaAtribuicaoRota = ({
+  entrega = {},
+  rota = {},
+  motorista = {},
+  veiculo = {},
+  sequencia,
+} = {}) => {
+  const entregaId = firstText(entrega.id, entrega.entrega_id);
+  if (!entregaId) throw new Error('Entrega obrigatoria para atribuicao de rota.');
+  const seq = Number(sequencia || entrega.sequencia_rota || entrega.ordem_sequencia) || 1;
+  return {
+    group_id: firstText(rota.group_id, entrega.group_id, rota.grupo_id),
+    grupo_id: firstText(rota.grupo_id, rota.group_id, entrega.grupo_id, entrega.group_id),
+    empresa_id: firstText(rota.empresa_id, entrega.empresa_id),
+    rota_id: firstText(rota.id, rota.rota_id),
+    roteirizacao_id: firstText(rota.id),
+    motorista_id: firstText(rota.motorista_id, motorista.id, entrega.motorista_id),
+    motorista: firstText(
+      rota.motorista_nome,
+      motorista.nome_completo,
+      motorista.nome,
+      motorista.full_name,
+      entrega.motorista,
+    ),
+    veiculo: firstText(
+      rota.veiculo_placa,
+      veiculo.descricao,
+      veiculo.modelo,
+      veiculo.placa,
+      entrega.veiculo,
+    ),
+    placa: firstText(rota.veiculo_placa, veiculo.placa, entrega.placa),
+    sequencia_rota: seq,
+    status: firstText(entrega.status) || 'Pronto para Expedir',
+  };
 };
 
 export const applyRoteirizacaoCreate = (entityName, record = {}, stores = {}) => {

@@ -10,33 +10,31 @@ import TesteGoogleMaps from "@/components/integracoes/TesteGoogleMaps";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
-import { otimizarRotaAvancada, resolveCoordenadas } from "@/components/lib/roteirizacaoPolicy";
+import { otimizarRotaAvancada, resolveCoordenadas, stampEntregaAtribuicaoRota } from "@/components/lib/roteirizacaoPolicy";
 
 export default function RoteirizacaoInteligente({ windowMode = false }) {
   const queryClient = useQueryClient();
   const [dataRota, setDataRota] = useState(new Date().toISOString().split('T')[0]);
-  const { empresaAtual, grupoAtual, filterInContext, createInContext } = useContextoVisual();
+  const [motoristaSelecionado, setMotoristaSelecionado] = useState("");
+  const [veiculoSelecionado, setVeiculoSelecionado] = useState("");
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const { user } = useUser();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const contextoValido = Boolean(groupId && empresaId);
   const canViewRoteirizacao = hasPermission("Expedicao", "Roteirizacao", "visualizar") || hasPermission("Expedicao", "Rotas", "visualizar") || hasPermission("Expedicao", "Rotas", "ver");
   const canGenerateRoteirizacao = hasPermission("Expedicao", "Roteirizacao", "criar") || hasPermission("Expedicao", "Rotas", "criar") || hasPermission("Expedicao", "Rotas", "editar");
 
   const auditIA = async ({ acao, sucesso = true, motivo = null, detalhes = {} }) => {
-    try {
-      await base44.entities.AuditLog.create({
-        acao, modulo: "Expedicao", entidade: "RoteirizacaoInteligente",
-        tipo_auditoria: sucesso ? "operacional" : "seguranca",
-        usuario_id: user?.id || user?.email || null,
-        usuario_nome: user?.full_name || user?.email || "Sistema",
-        group_id: groupId, grupo_id: groupId, empresa_id: empresaId,
-        resultado: sucesso ? "sucesso" : "bloqueado", motivo, detalhes, data_hora: new Date().toISOString()
-      });
-    } catch (error) {
-      console.warn("Falha ao auditar roteirizacao IA", error);
-    }
+    await base44.entities.AuditLog.create({
+      acao, modulo: "Expedicao", entidade: "RoteirizacaoInteligente",
+      tipo_auditoria: sucesso ? "operacional" : "seguranca",
+      usuario_id: user?.id || user?.email || null,
+      usuario_nome: user?.full_name || user?.email || "Sistema",
+      group_id: groupId, grupo_id: groupId, empresa_id: empresaId,
+      resultado: sucesso ? "sucesso" : "bloqueado", motivo, detalhes, data_hora: new Date().toISOString()
+    });
   };
   const { data: entregas = [] } = useQuery({
     queryKey: ["entregas", groupId, empresaId],
@@ -68,15 +66,26 @@ export default function RoteirizacaoInteligente({ windowMode = false }) {
         await auditIA({ acao: "RoteirizacaoIA.gerar.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
         throw new Error("Contexto ou permissao obrigatoria para gerar rota com IA.");
       }
+      if (!motoristaId || !veiculoId) {
+        await auditIA({ acao: "RoteirizacaoIA.gerar.bloqueado", sucesso: false, motivo: "motorista_veiculo_obrigatorios" });
+        throw new Error("Selecione motorista e veiculo antes de gerar a rota.");
+      }
 
       toast.info("🤖 IA otimizando rota...");
 
       const entregasSelecionadas = entregas.filter(e => entregasIds.includes(e.id));
-      
+      if (!entregasSelecionadas.length) {
+        throw new Error("Nenhuma entrega pendente para roteirizar.");
+      }
+
       const motorista = motoristas.find(m => m.id === motoristaId);
       const veiculo = veiculos.find(v => v.id === veiculoId);
+      if (!motorista || !veiculo) {
+        throw new Error("Motorista ou veiculo invalido no contexto.");
+      }
 
-      let result;
+      let result = null;
+      let llmFalhou = false;
       try {
         result = await base44.integrations.Core.InvokeLLM({
           prompt: `Otimize a rota de entrega considerando:
@@ -101,7 +110,14 @@ Retorne a melhor sequência de entregas, distância total, tempo estimado e cust
             }
           }
         });
-      } catch {
+      } catch (error) {
+        llmFalhou = true;
+        await auditIA({
+          acao: "RoteirizacaoIA.llm.fallback",
+          sucesso: false,
+          motivo: error?.message || "llm_indisponivel",
+          detalhes: { entregas: entregasSelecionadas.length },
+        });
         result = null;
       }
 
@@ -138,6 +154,7 @@ Retorne a melhor sequência de entregas, distância total, tempo estimado e cust
           latitude: e.latitude || e.endereco_entrega_completo?.latitude,
           longitude: e.longitude || e.endereco_entrega_completo?.longitude,
           ordem_sequencia: idx + 1,
+          sequencia: idx + 1,
           peso_kg: e.peso_total_kg || e.peso_kg,
           prioridade: e.prioridade
         })),
@@ -149,20 +166,47 @@ Retorne a melhor sequência de entregas, distância total, tempo estimado e cust
           fatores_considerados: ["Distância", "Janela de Entrega", "Prioridade", "Peso", "Capacidade"],
           economia_vs_rota_manual: result?.economia_vs_manual,
           alertas: fallback.alertas,
+          llm_fallback: llmFalhou,
         },
         status: "Planejada",
         criado_por: user?.full_name || user?.email || "Sistema"
       });
 
-      await auditIA({ acao: "RoteirizacaoIA.gerar", detalhes: { rota_id: rotaCriada.id, entregas: entregasSelecionadas.length, motoristaId, veiculoId } });
+      for (let idx = 0; idx < pontosFinais.length; idx += 1) {
+        const ponto = pontosFinais[idx];
+        const patch = stampEntregaAtribuicaoRota({
+          entrega: ponto,
+          rota: rotaCriada,
+          motorista,
+          veiculo,
+          sequencia: idx + 1,
+        });
+        await updateInContext("Entrega", ponto.id, patch);
+      }
+
+      await auditIA({
+        acao: "RoteirizacaoIA.gerar",
+        detalhes: {
+          rota_id: rotaCriada.id,
+          entregas: pontosFinais.length,
+          motoristaId,
+          veiculoId,
+          llm_fallback: llmFalhou,
+        },
+      });
       return rotaCriada;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["roteirizacao-inteligente"] });
+      queryClient.invalidateQueries({ queryKey: ["entregas"] });
       toast.success("✅ Rota otimizada gerada com IA!");
     },
     onError: async (error) => {
-      await auditIA({ acao: "RoteirizacaoIA.gerar.erro", sucesso: false, motivo: error?.message || "erro_ia" });
+      try {
+        await auditIA({ acao: "RoteirizacaoIA.gerar.erro", sucesso: false, motivo: error?.message || "erro_ia" });
+      } catch (auditError) {
+        console.error("Falha ao auditar erro de roteirizacao IA", auditError);
+      }
       toast.error(error?.message || "Erro ao gerar rota com IA");
     },
   });
@@ -176,43 +220,89 @@ Retorne a melhor sequência de entregas, distância total, tempo estimado e cust
   return (
     <div className={containerClass} data-permission="Expedicao.Rotas.visualizar" data-context-required="true">
       <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Roteirização Inteligente</h2>
-          <p className="text-sm text-slate-600 mt-1">Otimização de rotas com IA</p>
+          <p className="text-sm text-slate-600 mt-1">Otimização de rotas com IA — atribui motorista e sequência às entregas</p>
         </div>
 
-        <Button
-          onClick={() => {
-            if (!contextoValido || !canGenerateRoteirizacao) {
-              auditIA({ acao: "RoteirizacaoIA.gerar.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
-              toast.error("Contexto ou permissao obrigatoria para gerar rota com IA");
-              return;
-            }
-            if (!window.confirm("Confirmar geracao de rota com IA para as entregas pendentes?")) {
-              auditIA({ acao: "RoteirizacaoIA.gerar.cancelado", sucesso: false, motivo: "confirmacao_cancelada" });
-              return;
-            }
-            if (entregasPendentes.length > 0 && motoristas.length > 0 && veiculos.length > 0) {
+        <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-end">
+          <label className="text-sm text-slate-700 flex flex-col gap-1 min-w-[160px]">
+            Data da rota
+            <input
+              type="date"
+              value={dataRota}
+              onChange={(e) => setDataRota(e.target.value)}
+              className="border rounded-md px-3 py-2 text-sm"
+              data-context-required="true"
+            />
+          </label>
+          <label className="text-sm text-slate-700 flex flex-col gap-1 min-w-[180px]">
+            Motorista
+            <select
+              value={motoristaSelecionado}
+              onChange={(e) => setMotoristaSelecionado(e.target.value)}
+              className="border rounded-md px-3 py-2 text-sm"
+              data-permission="Expedicao.Rotas.criar"
+              data-context-required="true"
+            >
+              <option value="">Selecione...</option>
+              {motoristas.map((m) => (
+                <option key={m.id} value={m.id}>{m.nome_completo || m.nome || m.full_name || m.id}</option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm text-slate-700 flex flex-col gap-1 min-w-[160px]">
+            Veículo
+            <select
+              value={veiculoSelecionado}
+              onChange={(e) => setVeiculoSelecionado(e.target.value)}
+              className="border rounded-md px-3 py-2 text-sm"
+              data-permission="Expedicao.Rotas.criar"
+              data-context-required="true"
+            >
+              <option value="">Selecione...</option>
+              {veiculos.map((v) => (
+                <option key={v.id} value={v.id}>{v.placa || v.descricao || v.modelo || v.id}</option>
+              ))}
+            </select>
+          </label>
+          <Button
+            onClick={() => {
+              if (!contextoValido || !canGenerateRoteirizacao) {
+                auditIA({ acao: "RoteirizacaoIA.gerar.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
+                toast.error("Contexto (grupo+empresa) ou permissao obrigatoria para gerar rota com IA");
+                return;
+              }
+              if (!motoristaSelecionado || !veiculoSelecionado) {
+                toast.error("Selecione motorista e veiculo antes de gerar a rota");
+                return;
+              }
+              if (!entregasPendentes.length) {
+                toast.error("Cadastre entregas pendentes primeiro");
+                return;
+              }
+              if (!window.confirm("Confirmar geracao de rota com IA para as entregas pendentes?")) {
+                auditIA({ acao: "RoteirizacaoIA.gerar.cancelado", sucesso: false, motivo: "confirmacao_cancelada" });
+                return;
+              }
               gerarRotaIAMutation.mutate({
                 entregasIds: entregasPendentes.slice(0, 5).map(e => e.id),
-                motoristaId: motoristas[0].id,
-                veiculoId: veiculos[0].id
+                motoristaId: motoristaSelecionado,
+                veiculoId: veiculoSelecionado,
               });
-            } else {
-              toast.error("Cadastre entregas, motoristas e veículos primeiro");
-            }
-          }}
-          disabled={gerarRotaIAMutation.isPending || !contextoValido || !canGenerateRoteirizacao}
-          data-action="RoteirizacaoIA.gerar"
-          data-permission="Expedicao.Rotas.criar"
-          data-context-required="true"
-          data-sensitive="true"
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          <Zap className="w-4 h-4 mr-2" />
-          Gerar Rota com IA
-        </Button>
+            }}
+            disabled={gerarRotaIAMutation.isPending || !contextoValido || !canGenerateRoteirizacao || !motoristaSelecionado || !veiculoSelecionado}
+            data-action="RoteirizacaoIA.gerar"
+            data-permission="Expedicao.Rotas.criar"
+            data-context-required="true"
+            data-sensitive="true"
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Zap className="w-4 h-4 mr-2" />
+            Gerar Rota com IA
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-4">

@@ -15,6 +15,10 @@ import {
   Eye
 } from "lucide-react";
 import { toast } from "sonner";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
+import { otimizarRotaAvancada, resolveCoordenadas } from "@/components/lib/roteirizacaoPolicy";
 
 /**
  * 🗺️ MAPA DE ROTEIRIZAÇÃO COM IA V21.5
@@ -23,23 +27,69 @@ import { toast } from "sonner";
 export default function MapaRoteirizacaoIA({ pedidosSelecionados = [], windowMode = false }) {
   const [rotaOtimizada, setRotaOtimizada] = useState(null);
   const [otimizando, setOtimizando] = useState(false);
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId && empresaId);
+  const canView = hasPermission("Expedicao", "Roteirizacao", "visualizar")
+    || hasPermission("Expedicao", "Rotas", "visualizar")
+    || hasPermission("Expedicao", "Rotas", "ver")
+    || hasPermission("Logistica", "Roteirizacao", "visualizar");
+
+  const auditMapa = async ({ acao, sucesso = true, motivo = null, detalhes = {} }) => {
+    await base44.entities.AuditLog.create({
+      acao,
+      modulo: "Expedicao",
+      entidade: "MapaRoteirizacaoIA",
+      tipo_auditoria: sucesso ? "operacional" : "seguranca",
+      usuario_id: user?.id || user?.email || null,
+      usuario_nome: user?.full_name || user?.email || "Sistema",
+      group_id: groupId,
+      grupo_id: groupId,
+      empresa_id: empresaId,
+      resultado: sucesso ? "sucesso" : "bloqueado",
+      motivo,
+      detalhes,
+      data_hora: new Date().toISOString(),
+    });
+  };
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list('-created_date'),
+    queryKey: ['pedidos-roteirizacao-ia', groupId, empresaId],
+    queryFn: () => filterInContext("Pedido", {}, "-created_date", 500),
+    enabled: contextoValido && canView,
   });
 
   // Pedidos elegíveis para roteirização
   const pedidosRoteirizaveis = useMemo(() => {
-    return pedidos.filter(p => 
+    const base = pedidosSelecionados.length
+      ? pedidos.filter((p) => pedidosSelecionados.includes(p.id) || pedidosSelecionados.some((s) => s?.id === p.id))
+      : pedidos;
+    return base.filter((p) =>
       (p.tipo_frete === 'CIF' || p.tipo_frete === 'FOB') &&
       ['Faturado', 'Em Expedição'].includes(p.status) &&
       p.endereco_entrega_principal?.latitude &&
       p.endereco_entrega_principal?.longitude
     );
-  }, [pedidos]);
+  }, [pedidos, pedidosSelecionados]);
 
   const otimizarRotaComIA = async () => {
+    if (!contextoValido || !canView) {
+      toast.error("Contexto (grupo+empresa) ou permissao obrigatoria");
+      try {
+        await auditMapa({ acao: "MapaRoteirizacaoIA.otimizar.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
+      } catch (e) {
+        console.error(e);
+      }
+      return;
+    }
+    if (!pedidosRoteirizaveis.length) {
+      toast.error("Nenhum pedido elegivel para roteirizacao");
+      return;
+    }
+
     setOtimizando(true);
     
     try {
@@ -56,8 +106,10 @@ export default function MapaRoteirizacaoIA({ pedidosSelecionados = [], windowMod
         valor: p.valor_total || 0
       }));
 
-      const resultado = await base44.integrations.Core.InvokeLLM({
-        prompt: `Você é um sistema de otimização de rotas logísticas.
+      let resultado = null;
+      try {
+        resultado = await base44.integrations.Core.InvokeLLM({
+          prompt: `Você é um sistema de otimização de rotas logísticas.
 
 Analise os seguintes pontos de entrega e sugira a melhor sequência para minimizar:
 1. Distância total percorrida
@@ -75,22 +127,53 @@ Retorne a rota otimizada com:
 - tempo_total_estimado_min: número
 - motivo_otimizacao: string explicando a lógica
 - alertas: array de strings com avisos (ex: sobrepeso, área de risco)`,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            sequencia_pedidos: { type: "array", items: { type: "string" } },
-            distancia_total_estimada_km: { type: "number" },
-            tempo_total_estimado_min: { type: "number" },
-            motivo_otimizacao: { type: "string" },
-            alertas: { type: "array", items: { type: "string" } }
+          response_json_schema: {
+            type: "object",
+            properties: {
+              sequencia_pedidos: { type: "array", items: { type: "string" } },
+              distancia_total_estimada_km: { type: "number" },
+              tempo_total_estimado_min: { type: "number" },
+              motivo_otimizacao: { type: "string" },
+              alertas: { type: "array", items: { type: "string" } }
+            }
           }
-        }
-      });
+        });
+      } catch (llmError) {
+        await auditMapa({
+          acao: "MapaRoteirizacaoIA.llm.fallback",
+          sucesso: false,
+          motivo: llmError?.message || "llm_indisponivel",
+          detalhes: { pedidos: pedidosRoteirizaveis.length },
+        });
+        const fallback = otimizarRotaAvancada({
+          origem: resolveCoordenadas(empresaAtual?.endereco || empresaAtual) || { latitude: -23.55052, longitude: -46.633308 },
+          entregas: pedidosRoteirizaveis.map((p) => ({
+            id: p.id,
+            prioridade: p.prioridade,
+            peso_total_kg: p.peso_total_kg,
+            endereco_entrega_completo: p.endereco_entrega_principal,
+          })),
+          parametros: { priorizar_urgencia: true },
+        });
+        resultado = {
+          sequencia_pedidos: fallback.pontos.map((p) => p.id),
+          distancia_total_estimada_km: fallback.distancia_total_km,
+          tempo_total_estimado_min: fallback.tempo_estimado_minutos,
+          motivo_otimizacao: `Fallback local (${fallback.algoritmo}) — LLM indisponivel`,
+          alertas: fallback.alertas || [],
+        };
+      }
 
       setRotaOtimizada(resultado);
+      await auditMapa({ acao: "MapaRoteirizacaoIA.otimizar", detalhes: { pedidos: pedidosRoteirizaveis.length } });
       toast.success("🤖 Rota otimizada com IA!");
       
     } catch (error) {
+      try {
+        await auditMapa({ acao: "MapaRoteirizacaoIA.otimizar.erro", sucesso: false, motivo: error?.message || "erro" });
+      } catch (auditError) {
+        console.error(auditError);
+      }
       toast.error("Erro ao otimizar rota: " + error.message);
     } finally {
       setOtimizando(false);
@@ -115,8 +198,15 @@ Retorne a rota otimizada com:
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
 
   return (
-    <div className={containerClass}>
+    <div className={containerClass} data-permission="Expedicao.Rotas.visualizar" data-context-required="true">
       <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
+      {!contextoValido || !canView ? (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="p-4 text-sm text-amber-900">
+            Selecione grupo e empresa e garanta permissao de roteirizacao para otimizar rotas.
+          </CardContent>
+        </Card>
+      ) : null}
       <Card className="border-0 shadow-xl">
         <CardHeader className="bg-gradient-to-r from-purple-500 to-blue-600 text-white">
           <CardTitle className="flex items-center gap-2">
@@ -131,9 +221,12 @@ Retorne a rota otimizada com:
           {/* Botão de Otimização */}
           <Button
             onClick={otimizarRotaComIA}
-            disabled={otimizando || pedidosRoteirizaveis.length === 0}
+            disabled={otimizando || pedidosRoteirizaveis.length === 0 || !contextoValido || !canView}
             className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
             size="lg"
+            data-action="MapaRoteirizacaoIA.otimizar"
+            data-permission="Expedicao.Rotas.visualizar"
+            data-context-required="true"
           >
             <Zap className="w-5 h-5 mr-2" />
             {otimizando ? '🤖 Otimizando com IA...' : '🚀 Otimizar Rota com IA'}

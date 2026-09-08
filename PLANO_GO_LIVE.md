@@ -33,7 +33,7 @@ O ERP somente poderá ser considerado apto para uso real quando os blocos P0 est
 
 - [x] Compras avançadas.
 - [x] CRM completo.
-- [ ] Roteirizador avançado.
+- [x] Roteirizador avançado.
 - [ ] App Motorista completo.
 - [ ] Portal do Cliente completo.
 - [ ] Chatbot omnichannel.
@@ -630,7 +630,7 @@ Entrega sai do ERP, chega ao motorista e retorna com prova e status correto.
 - [x] `assertEntregaOnUpdate` com alçada por transição (entregar/conferir/expedir/ocorrencia) e prova obrigatória.
 - [x] `assertEntregaOnDelete` fail-closed; delete bloqueado após finalização/trânsito.
 - [x] UI: PedidosEntregaTab / DetalhesEntregaView / SeparacaoConferencia com alçada granular.
-- [ ] Roteirizador avançado (P1).
+- [x] Roteirizador avançado (P1).
 - [ ] App Motorista offline/sync completo (P1).
 
 ---

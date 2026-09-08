@@ -1,3 +1,15 @@
+### P1.4 - Roteirizador avancado: stamp Entrega + IA fail-closed
+- Objetivo: fechar residual P1 Roteirizador avancado no fluxo existente (ERP → rota IA → motorista/sequencia nas Entregas → App Motorista).
+- Diagnostico: IA criava so `RoteirizacaoInteligente` sem stamp em Entrega; create IA sem motorista/veiculo/grupo; UI auto-escolhia `motoristas[0]`/`veiculos[0]`; `MapaRoteirizacaoIA` usava `Pedido.list()`; catch silencioso no LLM/auditoria.
+- Causa raiz: atribuicao de rota desconectada do App Motorista e guards incompletos na IA.
+- Arquivos alterados: `roteirizacaoPolicy.js`, `RoteirizacaoInteligente.jsx`, `MapaRoteirizacaoIA.jsx`, `localBase44Client.js`, `tests/roteirizacao-policy.test.js`, `PLANO_GO_LIVE.md`.
+- Reutilizado: `otimizarRotaAvancada`, mapa/romaneio que ja stampava Entrega, `createInContext`/`updateInContext`.
+- Alteracoes: `assertRoteirizacaoInteligenteOnCreate` exige grupo+motorista+veiculo; `stampEntregaAtribuicaoRota`; UI com selecao explicita; stamp pos-create; mapa IA com `filterInContext`+RBAC+fallback auditado; escopo Rota/Roteirizacao no client.
+- Multiempresa/RBAC: contexto groupId+empresaId; permissoes Expedicao.Rotas/Roteirizacao.
+- Pendencia: Google Maps/trafego real; App Motorista offline/sync completo (proximo P1).
+- Validacoes: `node --test tests/roteirizacao-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P1: App Motorista completo.
+
 ### P1.3 - CRM: update fail-closed, escopo e funis contextuais
 - Objetivo: fechar residual P1 CRM completo no modulo existente (policy de update viva + RBAC CRM).
 - Diagnostico: `assertOportunidadeOnUpdate` importado e nao chamado; entidades CRM caíam em Cadastros; funis IA/Avancado usavam `entities.update`; CRM.jsx engolia erro de listagem; conversao so com `editar`.

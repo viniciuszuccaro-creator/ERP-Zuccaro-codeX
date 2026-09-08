@@ -928,6 +928,10 @@ const ENTITY_PERMISSION_SCOPE = {
   Oportunidade: { module: 'CRM', section: 'Oportunidade' },
   Interacao: { module: 'CRM', section: 'Interacao' },
   Campanha: { module: 'CRM', section: 'Campanha' },
+  Rota: { module: 'Expedicao', section: 'Rotas' },
+  RoteirizacaoInteligente: { module: 'Expedicao', section: 'Roteirizacao' },
+  Motorista: { module: 'Expedicao', section: 'Motorista' },
+  Veiculo: { module: 'Expedicao', section: 'Veiculo' },
 };
 
 const getEntityPermissionScope = (entityName) => {
