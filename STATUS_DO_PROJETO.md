@@ -1,3 +1,15 @@
+### P0.14 - Migracao piloto: reconciliacao fail-closed
+- Objetivo: cumprir residual P0 Migracao piloto no importador existente, sem MigracaoV2.
+- Diagnostico: planilha gravava `confirmado:true` sem staging; lote aceitava contexto so com empresa; sem codigo legado; reconciliacao nao bloqueava divergencia; auditoria engolia erro.
+- Causa raiz: confirmacao tratada como toast, fora de `assertReconciliacaoMigracao`.
+- Arquivos alterados: `migracaoErpPolicy.js`, `ImportarProdutosLote.jsx`, `ImportadorProdutosPlanilha.jsx`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: stamp/lote migracao, janela congelada, createInContext Produto.
+- Alteracoes: legado+grupo obrigatorios; staging→confirm→reconciliar; falhas de lote/planilha nao concluem como sucesso; auditoria obrigatoria.
+- Multiempresa/RBAC: migracao exige `group_id`; reuso por legado na mesma empresa.
+- Pendencia: PAD/agente; historicos amplos; execucao humana com export real do ERP antigo.
+- Validacoes: `node --test tests/migracao-erp-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo: P0 checklist fechado no codigo; seguir P1 operacional ou Gate 20 virada com evidencia humana.
+
 ### P0.13 - Testes e homologacao: cenarios piloto persistidos
 - Objetivo: cumprir residual P0 Testes/homologacao no piloto existente, sem TestesV2.
 - Diagnostico: `piloto_cenarios` so era lido na virada; StatusControleAcesso mostrava so papeis; admin virava piloto no hydrate; nfeActions aceitava flag sem papel.

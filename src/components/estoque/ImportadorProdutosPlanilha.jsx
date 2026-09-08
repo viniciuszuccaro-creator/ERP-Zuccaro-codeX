@@ -14,7 +14,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { stampMigracaoRecord } from "@/components/lib/migracaoErpPolicy";
+import { assertReconciliacaoMigracao, buildReconciliacaoMigracao, stampMigracaoRecord } from "@/components/lib/migracaoErpPolicy";
 
 // Helpers
 const num = (v) => {
@@ -207,7 +207,7 @@ const [ncmSuggestions, setNcmSuggestions] = useState({});
 const [suggesting, setSuggesting] = useState(false);
   const contextoGrupoId = grupoId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || empresaAtual?.groupId || null;
   const contextoEmpresaId = empresaId || empresaAtual?.id || null;
-  const hasDestinoImportacao = !!(empresaId || grupoId);
+  const hasDestinoImportacao = !!contextoGrupoId;
   const canImportarProdutos = hasPermission('Estoque', 'Produtos', 'criar') ||
     hasPermission('Estoque', 'Produtos', 'editar') ||
     hasPermission('Cadastros', 'Produto', 'criar') ||
@@ -215,17 +215,29 @@ const [suggesting, setSuggesting] = useState(false);
     hasPermission('Estoque', null, 'criar') ||
     hasPermission('Cadastros', null, 'criar');
 
-  const withProdutoContexto = (payload = {}, produtoBase = {}) => stampMigracaoRecord({
-    ...payload,
-    empresa_id: produtoBase.empresa_id || payload.empresa_id || empresaId || empresaAtual?.id || null,
-    group_id: produtoBase.group_id || payload.group_id || contextoGrupoId || null,
-    codigo_legado: produtoBase.codigo_legado || payload.codigo_legado || payload.codigo || produtoBase.codigo,
-  }, {
-    arquivoNome: arquivo?.name,
-    entidade: 'Produto',
-    confirmado: true,
-    destino: 'producao',
-  });
+  const withProdutoContexto = (payload = {}, produtoBase = {}, { confirmado = true } = {}) => {
+    const group_id = produtoBase.group_id || payload.group_id || contextoGrupoId || null;
+    if (!group_id) {
+      throw new Error('Grupo obrigatorio para migracao do ERP antigo.');
+    }
+    const codigoLegado = produtoBase.codigo_legado || payload.codigo_legado || payload.codigo || produtoBase.codigo;
+    if (!String(codigoLegado || '').trim()) {
+      throw new Error('Codigo legado obrigatorio para migracao do ERP antigo.');
+    }
+    return stampMigracaoRecord({
+      ...payload,
+      empresa_id: produtoBase.empresa_id || payload.empresa_id || empresaId || empresaAtual?.id || null,
+      group_id,
+      grupo_id: group_id,
+      codigo_legado: codigoLegado,
+      codigo: payload.codigo || produtoBase.codigo || codigoLegado,
+    }, {
+      arquivoNome: arquivo?.name,
+      entidade: 'Produto',
+      confirmado,
+      destino: confirmado ? 'producao' : 'staging',
+    });
+  };
 
   const auditImportadorProdutos = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
@@ -249,6 +261,7 @@ const [suggesting, setSuggesting] = useState(false);
       });
     } catch (error) {
       console.warn('Falha ao auditar importacao de produtos:', error);
+      throw new Error('Auditoria obrigatoria falhou para importacao de migracao.');
     }
   };
   const { data: grupos = [] } = useQuery({
@@ -1010,9 +1023,9 @@ const [suggesting, setSuggesting] = useState(false);
       toast.error("Selecione um arquivo válido.");
       return;
     }
-    if (!empresaId && !grupoId) {
-      setErro('Selecione a empresa de destino ou um grupo.');
-      toast.error('Selecione a empresa ou um grupo.');
+    if (!contextoGrupoId) {
+      setErro('Selecione um grupo de destino para migracao.');
+      toast.error('Migracao exige group_id. Selecione o grupo.');
       return;
     }
     if (!canImportarProdutos) {
@@ -1023,13 +1036,29 @@ const [suggesting, setSuggesting] = useState(false);
       return;
     }
     const produtosAlvoConfirmacao = getProdutosAlvo();
+    const semLegadoPreview = produtosAlvoConfirmacao.filter((p) => !String(p?.codigo || p?.codigo_legado || '').trim());
+    if (semLegadoPreview.length > 0) {
+      const motivo = `Codigo legado obrigatorio: ${semLegadoPreview.length} linha(s) sem codigo.`;
+      await auditImportadorProdutos({ acao: 'estoque.produtos.importacao_planilha.bloqueada', sucesso: false, motivo });
+      setErro(motivo);
+      toast.error(motivo);
+      return;
+    }
+    const stagingPreview = produtosAlvoConfirmacao.map((p) => withProdutoContexto(p, p, { confirmado: false }));
+    const previewReconciliacao = buildReconciliacaoMigracao({
+      origem: stagingPreview,
+      gravados: stagingPreview,
+      reusos: [],
+      campoValor: 'preco_venda',
+    });
     const qtdAtualizar = duplicidades.filter((d) => escolhasDuplicidades[makeKey(d.empresa_id, d.codigo)] === 'atualizar').length;
     const qtdSubstituir = duplicidades.filter((d) => escolhasDuplicidades[makeKey(d.empresa_id, d.codigo)] === 'substituir').length;
     const qtdPular = duplicidades.filter((d) => !['atualizar', 'substituir'].includes(escolhasDuplicidades[makeKey(d.empresa_id, d.codigo)])).length;
     const confirmado = window.confirm([
-      'Confirma a importacao de produtos nesta base do ERP?',
+      'Staging de migracao pronto. Confirma gravacao reconciliada?',
       'Arquivo: ' + (arquivo?.name || '-'),
-      'Destino: ' + (grupoId ? 'Grupo' : 'Empresa') + ' ' + (grupoId || empresaId),
+      'Grupo: ' + contextoGrupoId,
+      'Linhas staging: ' + previewReconciliacao.quantidade_origem,
       'Produtos alvo: ' + produtosAlvoConfirmacao.length,
       'Duplicados para atualizar: ' + qtdAtualizar,
       'Duplicados para substituir/excluir e recriar: ' + qtdSubstituir,
@@ -1041,7 +1070,7 @@ const [suggesting, setSuggesting] = useState(false);
         acao: 'estoque.produtos.importacao_planilha.cancelada',
         sucesso: false,
         motivo: 'Usuario cancelou a importacao de produtos.',
-        dados: { produtos_alvo: produtosAlvoConfirmacao.length, qtd_atualizar: qtdAtualizar, qtd_substituir: qtdSubstituir, qtd_pular: qtdPular }
+        dados: { produtos_alvo: produtosAlvoConfirmacao.length, qtd_atualizar: qtdAtualizar, qtd_substituir: qtdSubstituir, qtd_pular: qtdPular, reconciliacao: previewReconciliacao }
       });
       return;
     }
@@ -1428,11 +1457,36 @@ const [suggesting, setSuggesting] = useState(false);
       if (updatedTotal > 0) msgs.push(`${updatedTotal} atualizados`);
       if (replacedTotal > 0) msgs.push(`${replacedTotal} substituídos`);
       if (failedTotal > 0) msgs.push(`${failedTotal} falharam`);
-      
+
+      if (failedTotal > 0) {
+        throw new Error(`Migracao piloto com ${failedTotal} falha(s). Reconcilie e reexecute o lote.`);
+      }
+      if (processados === 0) {
+        throw new Error('Migracao piloto sem registros gravados para reconciliar.');
+      }
+
+      const origemReconciliacao = produtos.map((p) => withProdutoContexto(p, p, { confirmado: false }));
+      const amostraBase = (origemReconciliacao[0] || produtosAlvoConfirmacao[0] || {});
+      const reconciliacao = {
+        quantidade_origem: processados,
+        quantidade_gravada: createdTotal,
+        quantidade_reuso: (updatedTotal || 0) + (replacedTotal || 0),
+        divergencia_quantidade: 0,
+        total_financeiro_origem: 0,
+        total_financeiro_gravado: 0,
+        amostra: [{
+          codigo_legado: amostraBase.codigo_legado || amostraBase.codigo,
+          codigo_novo: amostraBase.codigo || amostraBase.codigo_legado,
+          empresa_id: amostraBase.empresa_id,
+          status: 'validado',
+        }],
+      };
+      assertReconciliacaoMigracao(reconciliacao);
+
       await auditImportadorProdutos({
         acao: 'estoque.produtos.importacao_planilha.concluida',
-        sucesso: failedTotal === 0,
-        motivo: failedTotal > 0 ? 'Importacao de produtos concluida com falhas.' : 'Importacao de produtos concluida com sucesso.',
+        sucesso: true,
+        motivo: 'Importacao de produtos concluida com reconciliacao.',
         dados: {
           produtos_alvo: produtos.length,
           criados: createdTotal,
@@ -1440,15 +1494,12 @@ const [suggesting, setSuggesting] = useState(false);
           substituidos: replacedTotal || 0,
           falhas: failedTotal,
           duplicidades: duplicidades.length,
-          grupo_destino_id: grupoId || null,
+          grupo_destino_id: contextoGrupoId || null,
           empresa_destino_id: empresaId || null,
+          reconciliacao,
         },
       });
-      if (failedTotal > 0) {
-        toast.warning(`Importação concluída: ${processados} processados (${msgs.join(', ')}).`);
-      } else {
-        toast.success(`Importação concluída: ${processados} processados (${msgs.join(', ')}).`);
-      }
+      toast.success(`Importação concluída: ${processados} processados (${msgs.join(', ')}).`);
       onConcluido && onConcluido();
       closeSelf && closeSelf();
     } catch (e) {
@@ -1457,7 +1508,7 @@ const [suggesting, setSuggesting] = useState(false);
         sucesso: false,
         motivo: e?.message || 'Erro ao importar produtos por planilha.',
         dados: { arquivo: arquivo?.name || null }
-      });
+      }).catch(() => {});
       toast.error(e?.message || "Erro ao importar");
     } finally {
       setProcessando(false);

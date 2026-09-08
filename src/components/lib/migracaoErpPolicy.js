@@ -107,6 +107,27 @@ export const buildReconciliacaoMigracao = ({ origem = [], gravados = [], reusos 
   };
 };
 
+export const assertReconciliacaoMigracao = (report = {}) => {
+  if (!report || typeof report !== 'object') {
+    throw new Error('Reconciliacao de migracao obrigatoria.');
+  }
+  if (!(Number(report.quantidade_origem) > 0)) {
+    throw new Error('Migracao piloto exige ao menos uma linha de origem.');
+  }
+  if (Number(report.divergencia_quantidade) !== 0) {
+    throw new Error(`Migracao com divergencia de quantidade: ${report.divergencia_quantidade}.`);
+  }
+  const amostra = Array.isArray(report.amostra) ? report.amostra : [];
+  if (amostra.length === 0 && Number(report.quantidade_gravada) > 0) {
+    throw new Error('Reconciliacao exige amostra com codigo legado e codigo novo.');
+  }
+  const semLegado = amostra.find((item) => !firstText(item?.codigo_legado));
+  if (semLegado) {
+    throw new Error('Amostra da reconciliacao exige codigo legado.');
+  }
+  return true;
+};
+
 export const applyMigracaoOnCreate = ({ entityName, record = {}, records = [] } = {}) => {
   if (!isMigracaoRecord(record)) return { reuse: null, record };
   const stripped = stripSegredosMigracao(record);
@@ -120,6 +141,10 @@ export const applyMigracaoOnCreate = ({ entityName, record = {}, records = [] } 
     confirmado: stripped.confirmado === true,
     destino: stripped.destino_migracao,
   });
+
+  if (!firstText(stamped.codigo_legado, stamped.id_antigo)) {
+    throw new Error('Codigo legado obrigatorio para migracao do ERP antigo.');
+  }
 
   if (stamped.confirmado !== true) {
     throw new Error('Migracao para producao exige staging, reconciliacao e confirmacao.');

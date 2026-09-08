@@ -27,7 +27,7 @@ O ERP somente poderá ser considerado apto para uso real quando os blocos P0 est
 - [x] Expedição/entrega mínima.
 - [x] Backup e rollback.
 - [x] Testes e homologação.
-- [ ] Migração piloto validada.
+- [x] Migração piloto validada.
 
 ## P1 — pode ser concluído durante operação controlada
 
@@ -913,6 +913,14 @@ Para cada lote comparar:
 - status;
 - datas.
 
+### Residual P0.14 (2026-09-08)
+
+- [x] `assertReconciliacaoMigracao` fail-closed (divergencia/amostra/legado).
+- [x] Codigo legado obrigatorio em `applyMigracaoOnCreate`.
+- [x] ImportarProdutosLote exige group_id, legado e reconciliacao apos gravar.
+- [x] ImportadorProdutosPlanilha com staging confirm + reconciliacao (sem gravar falhas como sucesso).
+- [ ] PAD/agente visual; historicos pedidos/financeiro/fiscal em massa; rodada humana com arquivo real do ERP antigo.
+
 ---
 
 # 21. GATE 19 — PILOTO
@@ -1092,7 +1100,7 @@ O ERP pode iniciar operação controlada quando todos os P0 abaixo estiverem hom
 - [x] Producao essencial funcional.
 - [x] Expedição essencial funcional.
 - [x] Backup/rollback testados.
-- [ ] Migração piloto reconciliada.
+- [x] Migração piloto reconciliada.
 - [x] Testes críticos aprovados.
 - [ ] Usuários piloto treinados.
 - [ ] Plano de contingência definido.

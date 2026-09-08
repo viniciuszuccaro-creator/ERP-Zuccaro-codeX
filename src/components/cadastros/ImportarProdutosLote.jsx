@@ -9,7 +9,7 @@ import { Upload, Loader2, FileSpreadsheet, CheckCircle2, AlertTriangle } from 'l
 import { toast } from 'sonner';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
-import { buildReconciliacaoMigracao, stampMigracaoRecord } from '@/components/lib/migracaoErpPolicy';
+import { assertReconciliacaoMigracao, buildReconciliacaoMigracao, stampMigracaoRecord } from '@/components/lib/migracaoErpPolicy';
 
 const sanitizeText = (value, max = 240) => String(value ?? '').replace(/[<>]/g, '').slice(0, max).trim();
 const toNumber = (value) => {
@@ -27,7 +27,7 @@ export default function ImportarProdutosLote({ onProdutosCriados, onClose }) {
   const { canCreate } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = contexto === 'empresa' ? empresaAtual?.id : null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const contextoValido = Boolean(groupId);
   const podeCriarProduto = canCreate('Cadastros', 'Produto') || canCreate('Estoque', 'Produto') || canCreate('Cadastros', null);
 
   const auditImportacaoProdutos = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
@@ -49,6 +49,7 @@ export default function ImportarProdutosLote({ onProdutosCriados, onClose }) {
       });
     } catch (error) {
       console.error('[ImportarProdutosLote] Falha ao auditar importacao', error?.message || error);
+      throw new Error('Auditoria obrigatoria falhou para importacao de migracao.');
     }
   };
   const [processando, setProcessando] = useState(false);
@@ -131,8 +132,8 @@ export default function ImportarProdutosLote({ onProdutosCriados, onClose }) {
     }
 
     if (!contextoValido) {
-      await auditImportacaoProdutos({ acao: 'Produto.importacao_lote_bloqueada', sucesso: false, motivo: 'Contexto de grupo ou empresa obrigat\u00f3rio.', dados: { total_linhas: dadosParsed?.linhas?.length || 0 } });
-      toast.error('Selecione um grupo ou empresa antes de importar produtos.');
+      await auditImportacaoProdutos({ acao: 'Produto.importacao_lote_bloqueada', sucesso: false, motivo: 'Contexto de grupo obrigatorio.', dados: { total_linhas: dadosParsed?.linhas?.length || 0 } });
+      toast.error('Selecione um grupo antes de importar produtos (migracao exige group_id).');
       return;
     }
     if (!podeCriarProduto) {
@@ -172,14 +173,27 @@ export default function ImportarProdutosLote({ onProdutosCriados, onClose }) {
       return novoProduto;
     }).filter((produto) => produto.descricao);
 
+    const semLegado = payloadsStaging.filter((produto) => !String(produto.codigo_legado || '').trim());
+    if (semLegado.length > 0) {
+      await auditImportacaoProdutos({
+        acao: 'Produto.importacao_lote_bloqueada',
+        sucesso: false,
+        motivo: 'Codigo legado obrigatorio em todas as linhas.',
+        dados: { total_linhas: payloadsStaging.length, sem_legado: semLegado.length },
+      });
+      toast.error(`Mapeie a coluna de codigo: ${semLegado.length} linha(s) sem codigo legado.`);
+      return;
+    }
+
     const previewReconciliacao = buildReconciliacaoMigracao({
       origem: payloadsStaging,
-      gravados: [],
+      gravados: payloadsStaging,
+      reusos: [],
       campoValor: 'preco_venda',
     });
     const confirmado = window.confirm(
       'Staging com ' + previewReconciliacao.quantidade_origem
-      + ' linha(s). Confirmar gravacao no contexto selecionado? Esta acao sera auditada e o codigo legado sera preservado.',
+      + ' linha(s). Confirmar gravacao reconciliada no grupo selecionado? Codigo legado sera preservado e a acao sera auditada.',
     );
     if (!confirmado) {
       await auditImportacaoProdutos({ acao: 'Produto.importacao_lote_cancelada', sucesso: false, motivo: 'Confirmacao cancelada pelo usuario.', dados: { total_linhas: dadosParsed.linhas.length, reconciliacao: previewReconciliacao } });
@@ -214,12 +228,13 @@ export default function ImportarProdutosLote({ onProdutosCriados, onClose }) {
         reusos: produtosReusados,
         campoValor: 'preco_venda',
       });
+      assertReconciliacaoMigracao(reconciliacao);
       await auditImportacaoProdutos({ acao: 'Produto.importacao_lote_concluida', sucesso: true, dados: { total_linhas: dadosParsed.linhas.length, total_criados: produtosCriados.length, reconciliacao, codigos: produtosCriados.map((p) => p?.codigo).filter(Boolean).slice(0, 50) } });
       toast.success(`${produtosCriados.length} produtos gravados. Reuso: ${produtosReusados.length}.`);
       onProdutosCriados && onProdutosCriados(produtosCriados);
       onClose && onClose();
     } catch (error) {
-      await auditImportacaoProdutos({ acao: 'Produto.importacao_lote_erro', sucesso: false, motivo: error?.message || 'Erro ao criar produtos.', dados: { total_linhas: dadosParsed?.linhas?.length || 0 } });
+      await auditImportacaoProdutos({ acao: 'Produto.importacao_lote_erro', sucesso: false, motivo: error?.message || 'Erro ao criar produtos.', dados: { total_linhas: dadosParsed?.linhas?.length || 0 } }).catch(() => {});
       toast.error('Erro ao criar produtos: ' + error.message);
     } finally {
       setProcessando(false);

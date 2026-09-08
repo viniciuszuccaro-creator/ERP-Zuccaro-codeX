@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import { applyCodigoOnCreate } from '../src/api/localCadastroMasterPolicy.js';
 import {
   applyMigracaoOnCreate,
+  assertReconciliacaoMigracao,
   buildLoteMigracaoId,
   buildReconciliacaoMigracao,
   stampMigracaoRecord,
@@ -35,12 +37,30 @@ test('migracao sem confirmacao nao grava em producao', () => {
         group_id: 'g1',
         empresa_id: 'e1',
         codigo: 'SKU-1',
+        codigo_legado: 'SKU-1',
         origem_migracao: 'erp_antigo',
         lote_migracao: 'MIG-1',
       },
       records: [],
     }),
     /confirmacao/,
+  );
+});
+
+test('migracao exige codigo legado', () => {
+  assert.throws(
+    () => applyMigracaoOnCreate({
+      entityName: 'Produto',
+      record: {
+        group_id: 'g1',
+        empresa_id: 'e1',
+        origem_migracao: 'erp_antigo',
+        lote_migracao: 'MIG-1',
+        confirmado: true,
+      },
+      records: [],
+    }),
+    /Codigo legado/,
   );
 });
 
@@ -73,6 +93,7 @@ test('senha legada e removida na migracao de usuario', () => {
   const stamped = stampMigracaoRecord({
     group_id: 'g1',
     email: 'user@example.com',
+    codigo_legado: 'user@example.com',
     senha: 'secret-legado',
     password: 'secret-legado',
   }, { entidade: 'User', confirmado: true });
@@ -103,7 +124,7 @@ test('codigo legado permanece mesmo sem conflito interno', () => {
   assert.equal(record.codigo_legado, 'SKU-LEGADO');
 });
 
-test('reconciliacao compara quantidade e total financeiro', () => {
+test('reconciliacao compara quantidade e bloqueia divergencia', () => {
   const report = buildReconciliacaoMigracao({
     origem: [{ preco_venda: 10 }, { preco_venda: 20 }],
     gravados: [{ preco_venda: 10, codigo: '0001', codigo_legado: 'A' }],
@@ -114,4 +135,25 @@ test('reconciliacao compara quantidade e total financeiro', () => {
   assert.equal(report.quantidade_reuso, 1);
   assert.equal(report.divergencia_quantidade, 0);
   assert.equal(report.total_financeiro_origem, 30);
+  assert.equal(assertReconciliacaoMigracao(report), true);
+  assert.throws(
+    () => assertReconciliacaoMigracao({
+      ...report,
+      divergencia_quantidade: 1,
+    }),
+    /divergencia/,
+  );
+});
+
+test('importadores existentes fazem staging e reconciliam', async () => {
+  const lote = await readFile(new URL('../src/components/cadastros/ImportarProdutosLote.jsx', import.meta.url), 'utf8');
+  const planilha = await readFile(new URL('../src/components/estoque/ImportadorProdutosPlanilha.jsx', import.meta.url), 'utf8');
+  assert.match(lote, /assertReconciliacaoMigracao/);
+  assert.match(lote, /confirmado: false/);
+  assert.match(lote, /Boolean\(groupId\)/);
+  assert.match(lote, /Codigo legado obrigatorio/);
+  assert.match(planilha, /assertReconciliacaoMigracao/);
+  assert.match(planilha, /confirmado: false/);
+  assert.match(planilha, /contextoGrupoId/);
+  assert.match(planilha, /Auditoria obrigatoria falhou/);
 });
