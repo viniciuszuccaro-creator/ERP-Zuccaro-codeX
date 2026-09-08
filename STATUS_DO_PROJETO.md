@@ -1,3 +1,15 @@
+### P2.3 - Previsoes: reposicao, recompra, caixa e atraso com contexto
+- Objetivo: cumprir P2 Previsoes de `PLANO_GO_LIVE.md` nas telas de previsao existentes, sem hub PrevisoesV2.
+- Diagnostico: `IAReposicao` criava SC sem confirmacao; `IAVendasPreditivas` usava localStorage e LogsIA Automatico; caixa aceitava so grupo OU empresa; formulario de entrega aplicava data da IA sozinho; logistica 100% mock.
+- Causa raiz: regras de previsao fora da policy compartilhada e apply silencioso em mutacoes.
+- Arquivos alterados: `iaTransversalPolicy.js`, `IAReposicao.jsx`, `IAVendasPreditivas.jsx`, `FluxoCaixaProjetado.jsx`, `FormularioEntrega.jsx`, `IAPrevisaoLogistica.jsx`, `iaPrevisaoLogisticaData.js`, testes.
+- Reutilizado: `assertIaUiContext`/`requireIaHumanConfirm`, `filterInContext`/`createInContext`, InvokeLLM carimbado.
+- Alteracoes: helpers de reposicao/recompra/caixa; SC so com confirm; recompra com RBAC e audit contextual; caixa fail-closed; data de entrega so apos confirm; logistica hibrida com amostra do escopo.
+- Multiempresa/RBAC: queryKeys com usuario+grupo+empresa; sem contexto ou permissao bloqueia.
+- Pendencia: ML logistico real; campanha de recompra; previsao de material de producao dedicada.
+- Validacoes: `node --test tests/ia-transversal-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P2: Deteccao de anomalias (alinhar demais detectores ao contrato de sugestao).
+
 ### P2.2 - Agentes especializados: heranca RBAC e confirmacao nos mapeados
 - Objetivo: cumprir P2 Agentes especializados de `PLANO_GO_LIVE.md` (Gate 17+) nos agentes/funcoes ja existentes, sem criar 12 telas novas.
 - Diagnostico: `permissionOptimizer` era admin-only e gravava perfis sem `confirmado`; `oportunidadeScorer` sem usuario/RBAC; scan financeiro persistia flags sozinho; `PrecosSection` carimbava `confirmado: true` sem confirm humano; otimizador aceitava `simulate` como bypass.

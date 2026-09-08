@@ -112,11 +112,14 @@ Peso: ${Number(formData.peso_total_kg || 0)} kg
 Prioridade: ${sanitizePromptValue(formData.prioridade)}
 Tipo Frete: ${sanitizePromptValue(formData.tipo_frete)}
 
-Retorne:
+Retorne apenas sugestao (nao altere o pedido):
 - data_prevista (formato YYYY-MM-DD)
 - prazo_dias (número inteiro)
 - horario_previsto (HH:MM)
 - confianca_percentual (0-100)`,
+        group_id: groupId,
+        empresa_id: empresaId,
+        tipo_ia: 'previsao_entrega_formulario',
         response_json_schema: {
           type: "object",
           properties: {
@@ -135,12 +138,8 @@ Retorne:
       });
 
       setPrevisaoIA(resultado);
-      setFormData(prev => ({
-        ...prev,
-        data_previsao: resultado.data_prevista
-      }));
-      
-      sonnerToast.success("🤖 Previsão calculada com IA!");
+      // Nao aplica data_previsao automaticamente — usuario confirma abaixo
+      sonnerToast.success("Previsao sugerida pela IA. Confirme para aplicar no formulario.");
       
     } catch (error) {
       await auditEntrega({ acao: "Entrega.previsao_ia.erro", sucesso: false, motivo: error?.message || "erro_ia" });
@@ -148,6 +147,23 @@ Retorne:
     } finally {
       setCalculandoPrevisao(false);
     }
+  };
+
+  const aplicarPrevisaoIA = async () => {
+    if (!previsaoIA?.data_prevista) return;
+    if (!window.confirm("Aplicar a data prevista sugerida pela IA no formulario de entrega?")) {
+      return;
+    }
+    setFormData((prev) => ({
+      ...prev,
+      data_previsao: previsaoIA.data_prevista,
+    }));
+    await auditEntrega({
+      acao: "Entrega.previsao_ia.aplicar",
+      sucesso: true,
+      dadosNovos: { data_previsao: previsaoIA.data_prevista },
+    });
+    sonnerToast.success("Data prevista aplicada apos confirmacao.");
   };
 
   const createMutation = useMutation({
@@ -494,9 +510,21 @@ Retorne no formato JSON.`,
               </Button>
             </div>
             {previsaoIA && (
-              <p className="text-xs text-green-600 mt-1">
-                🤖 IA: {previsaoIA.prazo_dias} dia(s) • {previsaoIA.confianca_percentual}% confiança
-              </p>
+              <div className="mt-2 space-y-1">
+                <p className="text-xs text-green-700">
+                  IA sugeriu: {previsaoIA.data_prevista || '—'} · {previsaoIA.prazo_dias} dia(s) · {previsaoIA.confianca_percentual}% confiança
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs border-green-300 text-green-800"
+                  onClick={aplicarPrevisaoIA}
+                  data-action="Entrega.previsao_ia.aplicar"
+                >
+                  Confirmar e aplicar data sugerida
+                </Button>
+              </div>
             )}
           </div>
           <div>

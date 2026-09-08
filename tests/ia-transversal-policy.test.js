@@ -5,10 +5,14 @@ import test from 'node:test';
 import {
   assertIaInvocation,
   assertIaUiContext,
+  assertForecastUiContext,
   buildChurnSuggestions,
   buildConciliacaoMatchSuggestions,
   buildCrmAbcChurnSuggestions,
   buildFinanceAnomalySuggestions,
+  buildFluxoCaixaProjection,
+  buildReposicaoSuggestions,
+  buildVendasRecompraSuggestions,
   isSensitiveIaExecution,
 } from '../src/components/lib/iaTransversalPolicy.js';
 
@@ -103,5 +107,68 @@ test('P2 IA transversal: CRM, financeiro e logistica usam sugestao com contexto'
   assert.match(anomUi, /buildFinanceAnomalySuggestions/);
   assert.match(prevUi, /assertIaUiContext/);
   assert.match(prevUi, /group_id: groupId/);
-  assert.match(sim, /fonte: 'simulacao'/);
+  assert.match(sim, /fonte: realAggregates/);
+});
+
+test('P2 previsoes: reposicao, recompra e caixa usam policy com sugestao', async () => {
+  assert.throws(() => assertForecastUiContext({ groupId: 'g1', empresaId: '', scopeType: 'empresa' }), /Empresa/);
+
+  const repos = buildReposicaoSuggestions({
+    produtos: [{
+      id: 'p1',
+      descricao: 'Bitola',
+      status: 'Ativo',
+      estoque_atual: 2,
+      estoque_reservado: 0,
+      estoque_minimo: 10,
+    }],
+    movimentacoes: [],
+  });
+  assert.equal(repos.modo, 'sugestao');
+  assert.equal(repos.sugestoes.length, 1);
+  assert.ok(repos.sugestoes[0].quantidade_sugerida >= 8);
+
+  const hoje = new Date('2026-09-07T12:00:00.000Z');
+  const recompra = buildVendasRecompraSuggestions({
+    hoje,
+    clientes: [{
+      id: 'c1',
+      nome: 'Ana',
+      status: 'Ativo',
+      data_ultima_compra: '2026-08-01',
+      classificacao_abc: 'A',
+      ticket_medio: 1000,
+    }],
+    pedidos: [
+      { cliente_id: 'c1', data_pedido: '2026-06-01' },
+      { cliente_id: 'c1', data_pedido: '2026-07-01' },
+      { cliente_id: 'c1', data_pedido: '2026-08-01' },
+    ],
+  });
+  assert.equal(recompra.modo, 'sugestao');
+  assert.ok(recompra.previsoes.length >= 1);
+
+  const caixa = buildFluxoCaixaProjection({
+    contasReceber: [{ status: 'Pendente', valor: 100, data_vencimento: '2026-09-15' }],
+    contasPagar: [{ status: 'Pendente', valor: 40, data_vencimento: '2026-09-20' }],
+    mesesProjecao: 1,
+    hoje: new Date('2026-09-01T12:00:00.000Z'),
+  });
+  assert.equal(caixa.modo, 'sugestao');
+  assert.equal(caixa.meses.length, 1);
+  assert.equal(caixa.meses[0].receitaPrevista, 100);
+
+  const reposUi = await readFile(new URL('../src/components/estoque/IAReposicao.jsx', import.meta.url), 'utf8');
+  const vendasUi = await readFile(new URL('../src/components/ia/IAVendasPreditivas.jsx', import.meta.url), 'utf8');
+  const formEntrega = await readFile(new URL('../src/components/expedicao/FormularioEntrega.jsx', import.meta.url), 'utf8');
+  const fluxo = await readFile(new URL('../src/components/relatorios/FluxoCaixaProjetado.jsx', import.meta.url), 'utf8');
+
+  assert.match(reposUi, /buildReposicaoSuggestions/);
+  assert.match(reposUi, /requireIaHumanConfirm/);
+  assert.match(vendasUi, /buildVendasRecompraSuggestions/);
+  assert.doesNotMatch(vendasUi, /localStorage\.getItem\('group_atual_id'\)/);
+  assert.doesNotMatch(vendasUi, /resultado: 'Automatico'/);
+  assert.match(formEntrega, /aplicarPrevisaoIA/);
+  assert.doesNotMatch(formEntrega, /data_previsao: resultado\.data_prevista/);
+  assert.match(fluxo, /scopeType === 'grupo'/);
 });

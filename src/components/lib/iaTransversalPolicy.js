@@ -286,3 +286,174 @@ export const requireIaHumanConfirm = (mensagem) => {
   }
   return Boolean(window.confirm(String(mensagem || 'Confirmar aplicacao da sugestao de IA?')));
 };
+
+/** Fail-closed context for forecast UIs (caixa, reposicao, recompra, atraso). */
+export const assertForecastUiContext = ({ groupId, empresaId, scopeType = 'empresa' } = {}) => (
+  assertIaUiContext({ groupId, empresaId, scopeType })
+);
+
+export const buildReposicaoSuggestions = ({
+  produtos = [],
+  movimentacoes = [],
+  empresaId = null,
+  hoje = new Date(),
+} = {}) => {
+  const now = hoje instanceof Date ? hoje : new Date(hoje);
+  const ha30Dias = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const sugestoes = [];
+
+  (produtos || [])
+    .filter((p) => (!empresaId || p.empresa_id === empresaId) && String(p.status || 'Ativo') === 'Ativo')
+    .forEach((produto) => {
+      const disponivel = (Number(produto.estoque_atual) || 0) - (Number(produto.estoque_reservado) || 0);
+      const minimo = Number(produto.estoque_minimo) || 0;
+      const saidas = (movimentacoes || []).filter((m) => (
+        m.produto_id === produto.id
+        && String(m.tipo_movimento || '').toLowerCase() === 'saida'
+        && m.data_movimentacao
+        && new Date(m.data_movimentacao) >= ha30Dias
+      ));
+      const consumoTotal = saidas.reduce((sum, m) => sum + (Number(m.quantidade) || 0), 0);
+      const consumoMedioDiario = consumoTotal / 30;
+      const consumoProjetado30Dias = consumoMedioDiario * 30;
+      if (disponivel < minimo || consumoProjetado30Dias > disponivel) {
+        const quantidadeSugerida = Math.ceil(Math.max(
+          minimo - disponivel,
+          consumoProjetado30Dias - disponivel,
+        ));
+        sugestoes.push({
+          produto_id: produto.id,
+          produto_descricao: produto.descricao,
+          produto_codigo: produto.codigo,
+          estoque_atual: produto.estoque_atual,
+          estoque_disponivel: disponivel,
+          estoque_minimo: minimo,
+          consumo_medio_diario: Number(consumoMedioDiario.toFixed(2)),
+          consumo_projetado_30d: Number(consumoProjetado30Dias.toFixed(2)),
+          quantidade_sugerida: quantidadeSugerida,
+          criticidade: disponivel < minimo ? 'alta' : 'media',
+          motivo: disponivel < minimo
+            ? 'Estoque abaixo do minimo'
+            : 'Consumo projetado excede disponivel',
+        });
+      }
+    });
+
+  sugestoes.sort((a, b) => (b.criticidade === 'alta' ? 1 : 0) - (a.criticidade === 'alta' ? 1 : 0));
+  return stampIaSuggestion({
+    sugestoes,
+    total: sugestoes.length,
+    fonte: 'previsao_reposicao_local',
+  });
+};
+
+export const buildVendasRecompraSuggestions = ({
+  clientes = [],
+  pedidos = [],
+  hoje = new Date(),
+  probabilidadeMinima = 60,
+} = {}) => {
+  const now = hoje instanceof Date ? hoje : new Date(hoje);
+  const previsoes = [];
+
+  (clientes || [])
+    .filter((c) => String(c.status || 'Ativo') === 'Ativo' && c.data_ultima_compra)
+    .forEach((cliente) => {
+      const pedidosCliente = (pedidos || []).filter((p) => p.cliente_id === cliente.id);
+      if (pedidosCliente.length < 2) return;
+
+      const datas = pedidosCliente
+        .map((p) => new Date(p.data_pedido))
+        .filter((d) => !Number.isNaN(d.getTime()))
+        .sort((a, b) => a - b);
+      if (datas.length < 2) return;
+
+      const intervalos = [];
+      for (let i = 1; i < datas.length; i += 1) {
+        intervalos.push(Math.floor((datas[i] - datas[i - 1]) / (1000 * 60 * 60 * 24)));
+      }
+      const cicloMedio = intervalos.reduce((sum, i) => sum + i, 0) / intervalos.length;
+      if (!cicloMedio) return;
+
+      const diasDesdeUltima = Math.floor(
+        (now - new Date(cliente.data_ultima_compra)) / (1000 * 60 * 60 * 24),
+      );
+      let probabilidade = Math.min(100, Math.max(0, (diasDesdeUltima / cicloMedio) * 100));
+      if (cliente.classificacao_abc === 'A') probabilidade += 10;
+      if (Number(cliente.score_pagamento) > 90) probabilidade += 5;
+      if (diasDesdeUltima > cicloMedio * 1.5) probabilidade -= 20;
+      probabilidade = Math.min(100, Math.max(0, probabilidade));
+
+      if (probabilidade >= probabilidadeMinima) {
+        previsoes.push({
+          cliente_id: cliente.id,
+          cliente_nome: cliente.nome,
+          probabilidade: Number(probabilidade.toFixed(0)),
+          ciclo_medio_dias: Number(cicloMedio.toFixed(0)),
+          dias_desde_ultima: diasDesdeUltima,
+          ticket_medio: Number(cliente.ticket_medio) || 0,
+          produtos_preferidos: cliente.produtos_mais_comprados?.slice(0, 3) || [],
+          temperatura: probabilidade > 80 ? 'Quente' : probabilidade > 60 ? 'Morno' : 'Frio',
+        });
+      }
+    });
+
+  previsoes.sort((a, b) => b.probabilidade - a.probabilidade);
+  return stampIaSuggestion({
+    previsoes,
+    total: previsoes.length,
+    fonte: 'previsao_recompra_local',
+  });
+};
+
+export const buildFluxoCaixaProjection = ({
+  contasReceber = [],
+  contasPagar = [],
+  mesesProjecao = 6,
+  hoje = new Date(),
+} = {}) => {
+  const now = hoje instanceof Date ? hoje : new Date(hoje);
+  const recebido = (contasReceber || [])
+    .filter((c) => c.status === 'Recebido')
+    .reduce((sum, c) => sum + (Number(c.valor_recebido) || Number(c.valor) || 0), 0);
+  const pago = (contasPagar || [])
+    .filter((c) => c.status === 'Pago')
+    .reduce((sum, c) => sum + (Number(c.valor_pago) || Number(c.valor) || 0), 0);
+  let saldoAcumulado = recebido - pago;
+  const meses = Math.min(Math.max(Number(mesesProjecao) || 6, 1), 24);
+  const dados = [];
+
+  for (let i = 0; i < meses; i += 1) {
+    const mesRef = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    const inicio = new Date(mesRef.getFullYear(), mesRef.getMonth(), 1);
+    const fim = new Date(mesRef.getFullYear(), mesRef.getMonth() + 1, 0, 23, 59, 59, 999);
+    const inMes = (raw) => {
+      const d = new Date(raw);
+      return !Number.isNaN(d.getTime()) && d >= inicio && d <= fim;
+    };
+    const receitaPrevista = (contasReceber || [])
+      .filter((c) => (c.status === 'Pendente' || c.status === 'Atrasado') && inMes(c.data_vencimento))
+      .reduce((sum, c) => sum + (Number(c.valor) || 0), 0);
+    const despesaPrevista = (contasPagar || [])
+      .filter((c) => (c.status === 'Pendente' || c.status === 'Atrasado') && inMes(c.data_vencimento))
+      .reduce((sum, c) => sum + (Number(c.valor) || 0), 0);
+    const saldoMes = receitaPrevista - despesaPrevista;
+    saldoAcumulado += saldoMes;
+    dados.push({
+      mes: mesRef.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
+      mesCompleto: `${mesRef.getFullYear()}-${String(mesRef.getMonth() + 1).padStart(2, '0')}`,
+      receitaPrevista,
+      despesaPrevista,
+      saldoMes,
+      saldoAcumulado,
+      deficitPrevisto: saldoAcumulado < 0,
+      alertaNivel: saldoAcumulado < 0 ? 'critico' : saldoAcumulado < 10000 ? 'alerta' : 'ok',
+    });
+  }
+
+  return stampIaSuggestion({
+    saldoInicial: recebido - pago,
+    meses: dados,
+    fonte: 'previsao_caixa_local',
+  });
+};

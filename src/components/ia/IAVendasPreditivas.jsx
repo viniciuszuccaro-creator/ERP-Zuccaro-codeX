@@ -1,131 +1,102 @@
-import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sparkles, TrendingUp, Target, Zap, Brain } from 'lucide-react';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
-import { useUser } from '@/components/lib/UserContext';
+import usePermissions from '@/components/lib/usePermissions';
 import { toast } from 'sonner';
+import {
+  assertForecastUiContext,
+  buildVendasRecompraSuggestions,
+} from '@/components/lib/iaTransversalPolicy';
 
 /**
- * IA de Vendas Preditivas
- * Identifica clientes propensos à recompra
+ * IA de Vendas Preditivas — sugere recompra; não cria campanha automaticamente.
  */
-export default function IAVendasPreditivas({ empresaId }) {
+export default function IAVendasPreditivas({ empresaId: empresaIdProp }) {
   const [previsoes, setPrevisoes] = useState([]);
   const [analisando, setAnalisando] = useState(false);
-  const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
-  const { user } = useUser();
-  const eId = empresaId || (contexto === 'grupo' ? null : empresaAtual?.id);
-  const gId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
-    try { return localStorage.getItem('group_atual_id'); } catch { return null; }
-  })();
-  const contextoValido = !!(eId || gId);
+  const { empresaAtual, grupoAtual, estaNoGrupo, filterInContext, createInContext } = useContextoVisual();
+  const { hasPermission, isAdmin, user } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaIdProp || empresaAtual?.id || null;
+  const scopeType = estaNoGrupo && !empresaIdProp ? 'grupo' : 'empresa';
+  const contextoValido = Boolean(groupId && (scopeType === 'grupo' || empresaId));
+  const canView = isAdmin?.()
+    || hasPermission('Comercial', null, 'visualizar')
+    || hasPermission('Comercial', null, 'ver')
+    || hasPermission('CRM', null, 'visualizar')
+    || hasPermission('CRM', null, 'ver');
+  const userId = user?.id || user?.email || 'anon';
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes', 'ia-vendas-preditivas', eId || 'sem', gId || 'sem'],
+    queryKey: ['clientes', 'ia-vendas-preditivas', userId, groupId, empresaId, scopeType],
     queryFn: () => filterInContext('Cliente', {}, 'nome', 1000),
-    enabled: contextoValido,
+    enabled: contextoValido && canView,
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos', 'ia-vendas-preditivas', eId || 'sem', gId || 'sem'],
+    queryKey: ['pedidos', 'ia-vendas-preditivas', userId, groupId, empresaId, scopeType],
     queryFn: () => filterInContext('Pedido', {}, '-data_pedido', 500),
-    enabled: contextoValido,
+    enabled: contextoValido && canView,
   });
 
   const analisarProbabilidadeRecompra = async () => {
-    if (!contextoValido) {
-      toast.error('Selecione um grupo ou empresa antes de executar a analise.');
-      return;
-    }
-
-    setAnalisando(true);
-
-    const hoje = new Date();
-    const previsoesGeradas = [];
-
-    clientes
-      .filter(c => c.status === 'Ativo' && c.data_ultima_compra)
-      .forEach(cliente => {
-        const pedidosCliente = pedidos.filter(p => p.cliente_id === cliente.id);
-        
-        if (pedidosCliente.length < 2) return;
-
-        // Calcular ciclo médio de compra
-        const datas = pedidosCliente
-          .map(p => new Date(p.data_pedido))
-          .sort((a, b) => a - b);
-
-        const intervalos = [];
-        for (let i = 1; i < datas.length; i++) {
-          const dias = Math.floor((datas[i] - datas[i-1]) / (1000 * 60 * 60 * 24));
-          intervalos.push(dias);
-        }
-
-        const cicloMedio = intervalos.reduce((sum, i) => sum + i, 0) / intervalos.length;
-        const diasDesdeUltima = Math.floor(
-          (hoje - new Date(cliente.data_ultima_compra)) / (1000 * 60 * 60 * 24)
-        );
-
-        // Calcular probabilidade
-        const fatorCiclo = (diasDesdeUltima / cicloMedio) * 100;
-        let probabilidade = Math.min(100, Math.max(0, fatorCiclo));
-
-        // Ajustes baseados em outros fatores
-        if (cliente.classificacao_abc === 'A') probabilidade += 10;
-        if (cliente.score_pagamento > 90) probabilidade += 5;
-        if (diasDesdeUltima > cicloMedio * 1.5) probabilidade -= 20;
-
-        probabilidade = Math.min(100, Math.max(0, probabilidade));
-
-        if (probabilidade >= 60) {
-          previsoesGeradas.push({
-            cliente_id: cliente.id,
-            cliente_nome: cliente.nome,
-            probabilidade: probabilidade.toFixed(0),
-            ciclo_medio_dias: cicloMedio.toFixed(0),
-            dias_desde_ultima: diasDesdeUltima,
-            ticket_medio: cliente.ticket_medio || 0,
-            produtos_preferidos: cliente.produtos_mais_comprados?.slice(0, 3) || [],
-            temperatura: probabilidade > 80 ? 'Quente' : probabilidade > 60 ? 'Morno' : 'Frio'
-          });
-        }
-      });
-
-    setPrevisoes(previsoesGeradas.sort((a, b) => b.probabilidade - a.probabilidade));
     try {
-      await base44.entities.LogsIA.create({
+      assertForecastUiContext({ groupId, empresaId, scopeType });
+      if (!canView) throw new Error('Sem permissao para analisar recompra.');
+      setAnalisando(true);
+      const resultado = buildVendasRecompraSuggestions({ clientes, pedidos });
+      setPrevisoes(resultado.previsoes || []);
+      await createInContext('LogsIA', {
         tipo_ia: 'IA_Vendas_Preditivas',
         contexto_execucao: 'Comercial',
         entidade_relacionada: 'Cliente',
-        resultado: 'Automatico',
+        resultado: 'Sugestao',
         confianca_ia: 82,
         dados_entrada: { clientes: clientes.length, pedidos: pedidos.length },
-        dados_saida: { previsoes: previsoesGeradas.length },
-        empresa_id: eId || null,
-        group_id: gId || null,
+        dados_saida: { previsoes: (resultado.previsoes || []).length, modo: resultado.modo },
+        empresa_id: scopeType === 'grupo' ? null : empresaId,
+        group_id: groupId,
       });
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || 'Sistema',
         usuario_id: user?.id || null,
-        empresa_id: eId || null,
-        group_id: gId || null,
+        empresa_id: scopeType === 'grupo' ? null : empresaId,
+        group_id: groupId,
         acao: 'Analise',
-        modulo: 'IA',
+        modulo: 'Comercial',
         entidade: 'IA_Vendas_Preditivas',
-        descricao: 'Analise de probabilidade de recompra executada',
-        dados_novos: { previsoes: previsoesGeradas.length },
+        descricao: 'Previsao de recompra gerou sugestoes sem criar campanha',
+        dados_novos: { previsoes: (resultado.previsoes || []).length, modo: resultado.modo },
         sucesso: true,
         data_hora: new Date().toISOString(),
       });
+      toast.success(`Sugestao: ${(resultado.previsoes || []).length} cliente(s) com alta probabilidade.`);
     } catch (error) {
-      console.warn('[IA] Falha ao registrar log de vendas preditivas:', error);
+      toast.error(String(error?.message || error));
+    } finally {
+      setAnalisando(false);
     }
-    setAnalisando(false);
   };
+
+  if (!contextoValido) {
+    return (
+      <div className="p-4 rounded-lg border border-amber-200 bg-amber-50 text-amber-900 text-sm">
+        Selecione grupo e empresa para usar a previsao de recompra.
+      </div>
+    );
+  }
+
+  if (!canView) {
+    return (
+      <div className="p-4 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 text-sm">
+        Sem permissao para visualizar vendas preditivas.
+      </div>
+    );
+  }
 
   return (
     <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50">
@@ -133,9 +104,10 @@ export default function IAVendasPreditivas({ empresaId }) {
         <CardTitle className="flex items-center gap-2 text-base">
           <Brain className="w-5 h-5 text-purple-600" />
           IA de Vendas Preditivas
+          <Badge variant="outline" className="text-purple-700 border-purple-300">Sugestão</Badge>
         </CardTitle>
         <p className="text-xs text-slate-600 mt-1">
-          Clientes com alta probabilidade de recompra
+          Clientes com alta probabilidade de recompra (sem campanha automática)
         </p>
       </CardHeader>
       <CardContent className="p-6 space-y-4">
@@ -164,23 +136,20 @@ export default function IAVendasPreditivas({ empresaId }) {
               <p className="font-semibold text-purple-900">
                 {previsoes.length} cliente(s) detectado(s)
               </p>
-              <Badge className="bg-purple-600">
-                Alta Conversão
-              </Badge>
+              <Badge className="bg-purple-600">Alta Conversão</Badge>
             </div>
 
             <div className="space-y-2 max-h-96 overflow-y-auto">
-              {previsoes.map((prev, idx) => {
+              {previsoes.map((prev) => {
                 const temperaturaConfig = {
-                  'Quente': { cor: 'red', bgClass: 'bg-red-50', borderClass: 'border-red-300' },
-                  'Morno': { cor: 'orange', bgClass: 'bg-orange-50', borderClass: 'border-orange-300' },
-                  'Frio': { cor: 'blue', bgClass: 'bg-blue-50', borderClass: 'border-blue-300' }
+                  Quente: { cor: 'red', bgClass: 'bg-red-50', borderClass: 'border-red-300' },
+                  Morno: { cor: 'orange', bgClass: 'bg-orange-50', borderClass: 'border-orange-300' },
+                  Frio: { cor: 'blue', bgClass: 'bg-blue-50', borderClass: 'border-blue-300' },
                 };
-
-                const config = temperaturaConfig[prev.temperatura];
+                const config = temperaturaConfig[prev.temperatura] || temperaturaConfig.Morno;
 
                 return (
-                  <Card key={idx} className={`${config.bgClass} ${config.borderClass}`}>
+                  <Card key={prev.cliente_id} className={`${config.bgClass} ${config.borderClass}`}>
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
@@ -196,16 +165,16 @@ export default function IAVendasPreditivas({ empresaId }) {
 
                       <div className="flex items-center gap-2 text-xs text-slate-700">
                         <Target className="w-3 h-3" />
-                        <span>Ticket Médio: R$ {prev.ticket_medio.toLocaleString('pt-BR')}</span>
+                        <span>Ticket Médio: R$ {Number(prev.ticket_medio).toLocaleString('pt-BR')}</span>
                       </div>
 
-                      {prev.produtos_preferidos.length > 0 && (
+                      {(prev.produtos_preferidos || []).length > 0 && (
                         <div className="mt-2">
                           <p className="text-xs text-slate-600 mb-1">Produtos Preferidos:</p>
                           <div className="flex gap-1 flex-wrap">
                             {prev.produtos_preferidos.map((prod, i) => (
                               <Badge key={i} variant="outline" className="text-xs">
-                                {prod.descricao}
+                                {prod.descricao || prod}
                               </Badge>
                             ))}
                           </div>
@@ -234,7 +203,7 @@ export default function IAVendasPreditivas({ empresaId }) {
         {previsoes.length === 0 && !analisando && (
           <div className="text-center py-8 text-purple-600">
             <Sparkles className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p className="text-sm">Clique em "Analisar" para identificar oportunidades</p>
+            <p className="text-sm">Clique em &quot;Analisar&quot; para identificar oportunidades</p>
           </div>
         )}
       </CardContent>

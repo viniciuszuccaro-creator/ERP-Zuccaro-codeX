@@ -1,8 +1,14 @@
-export function createLogisticsForecastSimulation() {
-  return {
+/**
+ * Simulation fallback for logistics forecast.
+ * When realAggregates is provided, blends counts into the suggestion payload.
+ */
+export function createLogisticsForecastSimulation(realAggregates = null) {
+  const base = {
     modo: 'sugestao',
-    fonte: 'simulacao',
-    aviso: 'Resultado simulado. Nao altera rotas, frota nem pedidos automaticamente.',
+    fonte: realAggregates ? 'hibrido_simulacao_mais_escopo' : 'simulacao',
+    aviso: realAggregates
+      ? 'Parcialmente baseado no escopo atual; volume futuro ainda e estimativa.'
+      : 'Resultado simulado. Nao altera rotas, frota nem pedidos automaticamente.',
     proximo_mes: { entregas_previstas: 287, taxa_pontualidade: 94, entregas_criticas: 12, rotas_otimizadas: 45 },
     tendencias: [
       { mes: 'Jan', entregas: 245, pontualidade: 92, criticas: 18 },
@@ -28,5 +34,30 @@ export function createLogisticsForecastSimulation() {
       'Criar rota express para entregas criticas (prazo <24h)'
     ],
     economia_prevista: { km_economizados: 1250, tempo_economizado_horas: 89, custo_combustivel_economizado: 3750, reducao_atrasos_percentual: 18 }
+  };
+
+  if (!realAggregates || typeof realAggregates !== 'object') {
+    return base;
+  }
+
+  const total = Number(realAggregates.totalEntregas) || 0;
+  const noPrazo = Number(realAggregates.entregasNoPrazo) || 0;
+  const criticas = Number(realAggregates.entregasCriticas) || 0;
+  const pontualidade = total > 0 ? Math.round((noPrazo / total) * 100) : base.proximo_mes.taxa_pontualidade;
+  const previstas = total > 0 ? Math.max(total, Math.round(total * 1.05)) : base.proximo_mes.entregas_previstas;
+
+  return {
+    ...base,
+    proximo_mes: {
+      ...base.proximo_mes,
+      entregas_previstas: previstas,
+      taxa_pontualidade: pontualidade,
+      entregas_criticas: criticas || base.proximo_mes.entregas_criticas,
+    },
+    escopo: {
+      group_id: realAggregates.groupId || null,
+      empresa_id: realAggregates.empresaId || null,
+      amostra_entregas: total,
+    },
   };
 }

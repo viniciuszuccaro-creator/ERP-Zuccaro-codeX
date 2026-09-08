@@ -21,7 +21,7 @@ export default function IAPrevisaoLogistica({ windowMode = false }) {
 
   const { toast } = useToast();
   const { user } = useUser();
-  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext, filterInContext } = useContextoVisual();
   const { isAdmin, hasPermission } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || user?.grupo_atual_id || user?.grupo_padrao_id || null;
   const empresaId = empresaAtual?.id || null;
@@ -75,9 +75,32 @@ export default function IAPrevisaoLogistica({ windowMode = false }) {
         description: "Processando dados históricos e padrões logísticos"
       });
 
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await new Promise(resolve => setTimeout(resolve, 800));
 
-      const resultado = createLogisticsForecastSimulation();
+      let realAggregates = null;
+      try {
+        const entregas = await filterInContext('Entrega', {}, '-created_date', 500);
+        const totalEntregas = (entregas || []).length;
+        const entregasNoPrazo = (entregas || []).filter((e) => {
+          if (!e.data_previsao || !e.data_entrega) return false;
+          return new Date(e.data_entrega) <= new Date(e.data_previsao);
+        }).length;
+        const entregasCriticas = (entregas || []).filter((e) =>
+          ['Atrasada', 'Ocorrencia', 'Ocorrência'].includes(String(e.status || ''))
+          || String(e.prioridade || '') === 'Urgente'
+        ).length;
+        realAggregates = {
+          totalEntregas,
+          entregasNoPrazo,
+          entregasCriticas,
+          groupId,
+          empresaId,
+        };
+      } catch (_) {
+        realAggregates = null;
+      }
+
+      const resultado = createLogisticsForecastSimulation(realAggregates);
 
       setPrevisao(resultado);
 

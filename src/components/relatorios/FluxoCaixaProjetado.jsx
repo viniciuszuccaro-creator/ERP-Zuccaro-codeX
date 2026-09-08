@@ -16,12 +16,13 @@ import { useUser } from "@/components/lib/UserContext";
 
 export default function FluxoCaixaProjetado({ windowMode = false }) {
   const [mesesProjecao, setMesesProjecao] = useState(6);
-  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { filterInContext, empresaAtual, grupoAtual, estaNoGrupo, createInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const { user } = useUser();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const scopeType = estaNoGrupo ? 'grupo' : 'empresa';
+  const contextoValido = Boolean(groupId && (scopeType === 'grupo' || empresaId));
   const canViewRelatorio = hasPermission("Financeiro", "Relatorios", "visualizar") ||
     hasPermission("Financeiro", "Fluxo Caixa", "visualizar") ||
     hasPermission("Financeiro", null, "visualizar");
@@ -114,15 +115,16 @@ export default function FluxoCaixaProjetado({ windowMode = false }) {
 
 
   const auditarRelatorio = async ({ acao, descricao, dadosNovos, sucesso = true }) => {
+    if (!contextoValido) return;
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         acao,
         modulo: "Financeiro",
         entidade: "FluxoCaixaProjetado",
         descricao,
         usuario_id: user?.id || null,
         usuario: user?.full_name || user?.email || "Usuario local",
-        empresa_id: empresaId,
+        empresa_id: scopeType === 'grupo' ? null : empresaId,
         group_id: groupId,
         grupo_id: groupId,
         tipo_auditoria: sucesso ? "operacional" : "seguranca",
@@ -174,7 +176,11 @@ export default function FluxoCaixaProjetado({ windowMode = false }) {
       {(!contextoValido || !canViewRelatorio) && (
         <Alert className="border-amber-300 bg-amber-50" data-permission="Financeiro.Relatorios.visualizar" data-context-required="true">
           <AlertTriangle className="h-5 w-5 text-amber-600" />
-          <AlertDescription>Selecione grupo ou empresa e confirme permissao para visualizar o fluxo de caixa projetado.</AlertDescription>
+          <AlertDescription>
+            {!contextoValido
+              ? 'Selecione grupo e empresa para visualizar a previsao de caixa.'
+              : 'Sem permissao para visualizar o fluxo de caixa projetado.'}
+          </AlertDescription>
         </Alert>
       )}
       <div className="flex justify-between items-center">
