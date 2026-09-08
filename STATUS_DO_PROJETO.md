@@ -1,3 +1,15 @@
+### P2.2 - Agentes especializados: heranca RBAC e confirmacao nos mapeados
+- Objetivo: cumprir P2 Agentes especializados de `PLANO_GO_LIVE.md` (Gate 17+) nos agentes/funcoes ja existentes, sem criar 12 telas novas.
+- Diagnostico: `permissionOptimizer` era admin-only e gravava perfis sem `confirmado`; `oportunidadeScorer` sem usuario/RBAC; scan financeiro persistia flags sozinho; `PrecosSection` carimbava `confirmado: true` sem confirm humano; otimizador aceitava `simulate` como bypass.
+- Causa raiz: contrato Gate 17 na policy local nao era revalidado nas funcoes Deno restantes nem na UI de preco.
+- Arquivos alterados: `agenteAutorizacaoPolicy.js`, `permissionOptimizer/entry.ts`, `oportunidadeScorer/entry.ts`, `iaFinanceAnomalyScan/entry.ts`, `productPriceOptimizer/entry.ts`, `PrecosSection.jsx`, testes.
+- Reutilizado: catalogo de 12 agentes, `assertMappedAgentFunction`, `assertPermission`/`getUserAndPerfil`, InvokeLLM carimbado.
+- Alteracoes: otimizador de permissao e scorer com usuario+RBAC+sugestao/confirmacao; flags de ContaPagar so com `confirmado`; UI de preco com `requireAgentHumanConfirm`; churn analyzer alinhado ao agente atendimento.
+- Multiempresa/RBAC: falha fechada sem usuario; heranca do perfil; auditoria de analise vs edicao.
+- Pendencia: reduzir `asServiceRole` residual; carimbar `agente` em mais InvokeLLM; provedor LLM real.
+- Validacoes: `node --test tests/agente-autorizacao-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P2: Previsoes (melhorar previsoes existentes com dados reais/contexto).
+
 ### P2.1 - IA transversal: sugestao com contexto nos modulos irmaos
 - Objetivo: cumprir P2 IA transversal de `PLANO_GO_LIVE.md` na IA existente (Gate 16+), sem criar IAV2 nem hub paralelo.
 - Diagnostico: CRM churn criava oportunidades sozinho; conciliacao aplicava sem confirmacao/contexto; anomalias sem RBAC/queryKey contextual; previsao logistica sem rotulo de simulacao; previsao de entrega sem groupId no InvokeLLM.

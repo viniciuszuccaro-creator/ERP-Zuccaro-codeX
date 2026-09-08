@@ -44,7 +44,7 @@ O ERP somente poderá ser considerado apto para uso real quando os blocos P0 est
 ## P2 — evolução inteligente
 
 - [x] IA transversal.
-- [ ] Agentes especializados.
+- [x] Agentes especializados.
 - [ ] Previsões.
 - [ ] Detecção de anomalias.
 - [ ] Automações avançadas.

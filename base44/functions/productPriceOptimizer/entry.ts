@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
     ctx = await getUserAndPerfil(base44).catch(() => null);
     const perm = await assertPermission(base44, ctx, 'Comercial', 'Produto', 'editar');
     if (perm) return perm;
-    if (payload?.confirmado !== true && payload?.simulate !== true && !event) {
+    if (payload?.confirmado !== true && !event) {
       return Response.json({ error: 'Acao critica do agente exige confirmacao humana.' }, { status: 403 });
     }
 

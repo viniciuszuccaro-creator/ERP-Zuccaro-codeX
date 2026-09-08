@@ -254,15 +254,23 @@ Deno.serve(async (req) => {
             issues = issues.concat(r4.issues); sugestoes = sugestoes.concat(r4.sugestoes);
           } catch (error) { reportScanFailure('Falha ao analisar perfil de clientes', error, filtros); }
 
-          // 2.0: Persistir flags em títulos de Pagar quando aplicável (service role)
+          // Persistir flags so em ContaPagar com confirmacao humana (agente nao amplia privilegio)
           try {
             const idsDiverg = Array.from(new Set(issues.filter(i => i.entidade === 'ContaPagar' && i.tipo === 'taxa_marketplace_divergente' && i.id).map(i => i.id))).slice(0, 50);
             const idsDup = Array.from(new Set(issues.filter(i => i.entidade === 'ContaPagar' && i.tipo === 'duplicidade_pagar' && i.id).map(i => i.id))).slice(0, 50);
-            if (idsDiverg.length || idsDup.length) {
+            const podePersistirAlertas = body?.confirmado === true && !isScheduled;
+            if ((idsDiverg.length || idsDup.length) && podePersistirAlertas) {
               await Promise.all([
                 ...idsDiverg.map(id => base44.asServiceRole.entities.ContaPagar.update(id, { alerta_taxa_divergente: true })),
                 ...idsDup.map(id => base44.asServiceRole.entities.ContaPagar.update(id, { duplicidade_detectada: true }))
               ]);
+            } else if ((idsDiverg.length || idsDup.length) && !podePersistirAlertas) {
+              warnings.push({
+                operation: 'alertas_financeiros_pendentes_confirmacao',
+                error: 'Flags de ContaPagar nao persistidos: exige confirmado=true do usuario',
+                ids_diverg: idsDiverg.length,
+                ids_dup: idsDup.length,
+              });
             }
           } catch (error) {
             reportScanFailure('Falha ao persistir alertas financeiros', error, filtros);

@@ -24,11 +24,11 @@ export const resolveAgentKey = (value) => {
 
 export const AGENT_FUNCTION_MAP = {
   iaFinanceAnomalyScan: { agent: 'financeiro', action: 'visualizar', critical: false },
-  iaChurnAnalyzer: { agent: 'comercial', action: 'visualizar', critical: false },
-  oportunidadeScorer: { agent: 'comercial', action: 'editar', critical: true },
+  iaChurnAnalyzer: { agent: 'atendimento', modulo: 'CRM', secao: 'Atendimento', action: 'visualizar', critical: false },
+  oportunidadeScorer: { agent: 'comercial', modulo: 'CRM', secao: 'Oportunidade', action: 'editar', critical: true },
   productPriceOptimizer: { agent: 'comercial', modulo: 'Comercial', secao: 'Produto', action: 'editar', critical: true },
   optimizerOrchestrator: { agent: 'comercial', modulo: 'Comercial', secao: 'Produto', action: 'editar', critical: true },
-  permissionOptimizer: { agent: 'seguranca', action: 'editar', critical: true },
+  permissionOptimizer: { agent: 'seguranca', modulo: 'Sistema', secao: 'Controle de Acesso', action: 'editar', critical: true },
 };
 
 export const resolveAgentScope = (agent, functionSpec = null) => {
@@ -95,4 +95,43 @@ export const assertMappedAgentFunction = ({ functionName, userAllowed, confirmed
     confirmed,
     functionSpec: spec,
   });
+};
+
+/** UI helper: human confirmation before stamping confirmado on agent invokes. */
+export const requireAgentHumanConfirm = (mensagem) => {
+  if (typeof window === 'undefined' || typeof window.confirm !== 'function') {
+    return false;
+  }
+  return Boolean(window.confirm(String(mensagem || 'Confirmar acao critica do agente?')));
+};
+
+export const buildAgentInvokePayload = ({
+  agente,
+  functionName = null,
+  confirmed = false,
+  groupId = null,
+  empresaId = null,
+  extra = {},
+} = {}) => {
+  const spec = functionName ? AGENT_FUNCTION_MAP[functionName] : null;
+  const scope = resolveAgentScope(agente || spec?.agent, spec);
+  return {
+    ...extra,
+    agente: scope.agent,
+    confirmado: confirmed === true,
+    group_id: firstText(groupId) || null,
+    empresa_id: firstText(empresaId) || null,
+    modo: 'heranca_usuario',
+  };
+};
+
+/** Backend-oriented: mutations from agents require explicit confirmado (fail-closed). */
+export const assertAgentMutationConfirmed = ({ confirmed = false, simulate = false } = {}) => {
+  if (simulate === true) {
+    return { ok: true, modo: 'simulacao', confirmed: false };
+  }
+  if (confirmed !== true) {
+    throw new Error('Acao critica do agente exige confirmacao humana.');
+  }
+  return { ok: true, modo: 'confirmado', confirmed: true };
 };

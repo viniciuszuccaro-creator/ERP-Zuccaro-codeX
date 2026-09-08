@@ -4,8 +4,11 @@ import test from 'node:test';
 
 import {
   AGENTES,
+  AGENT_FUNCTION_MAP,
   assertAgentMayAct,
+  assertAgentMutationConfirmed,
   assertMappedAgentFunction,
+  buildAgentInvokePayload,
 } from '../src/components/lib/agenteAutorizacaoPolicy.js';
 
 test('agente herda permissao do usuario e nao amplia', () => {
@@ -29,6 +32,8 @@ test('acao critica do agente exige confirmacao humana', () => {
     confirmed: true,
   });
   assert.equal(ok.agent, 'comercial');
+  assert.throws(() => assertAgentMutationConfirmed({ confirmed: false }), /confirmacao humana/);
+  assert.equal(assertAgentMutationConfirmed({ simulate: true }).modo, 'simulacao');
 });
 
 test('scan de anomalia nao exige confirmacao e orquestrador deixa de ser admin-only', async () => {
@@ -45,5 +50,42 @@ test('scan de anomalia nao exige confirmacao e orquestrador deixa de ser admin-o
   assert.doesNotMatch(orchestrator, /user\.role !== 'admin'/);
   assert.match(optimizer, /Unauthorized/);
   assert.doesNotMatch(optimizer, /permitir usuário final OU execução em lote/);
-  assert.match(precos, /confirmado: true/);
+  assert.doesNotMatch(optimizer, /simulate !== true/);
+  assert.match(precos, /requireAgentHumanConfirm/);
+  assert.match(precos, /buildAgentInvokePayload/);
+  assert.match(precos, /confirmed: true/);
+});
+
+test('P2 agentes: permissionOptimizer e oportunidadeScorer exigem usuario e confirmacao', async () => {
+  assert.equal(AGENT_FUNCTION_MAP.permissionOptimizer.critical, true);
+  assert.equal(AGENT_FUNCTION_MAP.oportunidadeScorer.critical, true);
+  assert.equal(AGENT_FUNCTION_MAP.iaChurnAnalyzer.agent, 'atendimento');
+
+  const stamp = buildAgentInvokePayload({
+    functionName: 'permissionOptimizer',
+    confirmed: true,
+    groupId: 'g1',
+    empresaId: 'e1',
+  });
+  assert.equal(stamp.agente, 'seguranca');
+  assert.equal(stamp.confirmado, true);
+  assert.equal(stamp.group_id, 'g1');
+
+  const permOpt = await readFile(new URL('../base44/functions/permissionOptimizer/entry.ts', import.meta.url), 'utf8');
+  const oppScorer = await readFile(new URL('../base44/functions/oportunidadeScorer/entry.ts', import.meta.url), 'utf8');
+  const scan = await readFile(new URL('../base44/functions/iaFinanceAnomalyScan/entry.ts', import.meta.url), 'utf8');
+
+  assert.match(permOpt, /Unauthorized/);
+  assert.match(permOpt, /assertPermission/);
+  assert.match(permOpt, /confirmacao humana/);
+  assert.doesNotMatch(permOpt, /Admin required/);
+  assert.match(permOpt, /modo: 'sugestao'/);
+
+  assert.match(oppScorer, /Unauthorized/);
+  assert.match(oppScorer, /assertPermission/);
+  assert.match(oppScorer, /confirmacao humana/);
+  assert.match(oppScorer, /modo: 'sugestao'/);
+
+  assert.match(scan, /podePersistirAlertas/);
+  assert.match(scan, /confirmado === true/);
 });

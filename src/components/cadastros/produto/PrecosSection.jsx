@@ -7,6 +7,7 @@ import { base44 } from "@/api/base44Client";
 import { Loader2 } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { buildAgentInvokePayload, requireAgentHumanConfirm } from "@/components/lib/agenteAutorizacaoPolicy";
 
 const toNumber = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 
@@ -21,15 +22,22 @@ export default function PrecosSection({ formData, setFormData }) {
   const canOptimize = Boolean(formData?.id) && contextoValido && podeUsarIA;
   const handleOptimize = async () => {
     if (!canOptimize || optimizing) return;
+    if (!requireAgentHumanConfirm('Aplicar sugestao do agente Comercial ao preco deste produto?')) {
+      return;
+    }
     setOptimizing(true);
     try {
-      const { data } = await base44.functions.invoke('productPriceOptimizer', {
-        produto_id: formData.id,
-        confirmado: true,
-        agente: 'comercial',
-        group_id: grupoAtual?.id || formData?.group_id,
-        empresa_id: empresaAtual?.id || formData?.empresa_id,
-      });
+      const { data } = await base44.functions.invoke(
+        'productPriceOptimizer',
+        buildAgentInvokePayload({
+          functionName: 'productPriceOptimizer',
+          agente: 'comercial',
+          confirmed: true,
+          groupId: grupoAtual?.id || formData?.group_id,
+          empresaId: empresaAtual?.id || formData?.empresa_id,
+          extra: { produto_id: formData.id },
+        }),
+      );
       if (data?.updated) {
         setFormData(prev => ({ ...prev, ...data.updated }));
       }
