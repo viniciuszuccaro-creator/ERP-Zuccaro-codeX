@@ -1,3 +1,15 @@
+### P0.3 - Gate 3 Multiempresa residual: switcher e contexto fail-closed
+- Objetivo: fechar vazamento residual do Gate 3 / P0 Multiempresa sem MultiempresaV2.
+- Diagnostico: `EmpresaSwitcher` listava Grupo/Empresa global para admin/API-key; `getCurrentContext` inventava `local_grupo_cpa`; `expandLocalContextFilter` e `entity.list` abriam escopo; `filtrarPorContexto` devolvia lista crua; `PerfilAcesso` aceitava group null/`grupo_001`; leitura so por `empresaId`; rateio com `group_id: null`.
+- Causa raiz: atalhos admin e fallbacks fail-open fora do contrato `{ groupId, empresaId, scopeType }`.
+- Arquivos alterados: `EmpresaSwitcher.jsx`, `localBase44Client.js`, `contextoMultiempresaPolicy.js`, `useContextoVisual.jsx`, `useContextoGrupoEmpresa.jsx`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: `buildMultiempresaReadFilter`, vinculos do usuario, hooks de contexto existentes.
+- Alteracoes: switcher so por vinculos; sem group inventado; `list` via `filter`+expand; `$or/$and` compostos com escopo; filtros e UI fail-closed; rateio preserva grupo.
+- Multiempresa/RBAC: leitura sem grupo/empresa bloqueia; admin nao bypassa listagem cross-grupo.
+- Pendencia: consumidores remanescentes de `entity.list` sem contexto na UI; Gate 4 auditoria.
+- Validacoes: `node --test tests/contexto-multiempresa-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 4 Auditoria (cobertura residual / securityAlerts).
+
 ### P0.2 - Gate 2 RBAC residual: admin bypass e fail-open de loading
 - Objetivo: cumprir residual do Gate 2 / P0 RBAC de `PLANO_GO_LIVE.md` no guard e nas UIs existentes, sem PermissionV2.
 - Diagnostico: `backendHasPermission` liberava `role===admin`; `solicitacoesAprovacao` bypassava perfil; AcoesRapidas falhava aberto no loading; aprovacoes comerciais usavam admin/gerente; `usePermissoesEmpresa` bypassava; entityGuard local fazia fallback de secao para modulo; botao sensivel lia so localStorage.

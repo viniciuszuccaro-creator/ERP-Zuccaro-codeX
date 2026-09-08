@@ -122,28 +122,30 @@ export function useContextoVisual() {
     if (!dados || dados.length === 0) return [];
 
     if (estaNoGrupo) {
+      if (!grupoAtual?.id) return [];
       if (filtroEmpresa !== 'todas') {
         return dados.filter(item => (
           (item[campo] === filtroEmpresa || item.empresa_id === filtroEmpresa)
-          && (!grupoAtual?.id || !item.group_id || item.group_id === grupoAtual.id)
+          && (!item.group_id || item.group_id === grupoAtual.id)
         ));
       }
       return dados.filter(item =>
-        item.group_id === grupoAtual?.id ||
-        empresasDoGrupo.some(emp => emp.id === item[campo])
+        item.group_id === grupoAtual.id ||
+        empresasDoGrupo.some(emp => emp.id === item[campo] || emp.id === item.empresa_id)
       );
     }
 
-    if (estaEmEmpresa && empresaAtual) {
+    if (estaEmEmpresa && empresaAtual?.id) {
       const gid = grupoAtual?.id || empresaAtual.group_id || empresaAtual.grupo_id;
       return dados.filter(item => {
         const recordGroup = item.group_id || item.grupo_id;
-        const groupOk = !gid || !recordGroup || recordGroup === gid;
-        return groupOk && (item[campo] === empresaAtual.id || item.empresa_id === empresaAtual.id);
+        if (gid && recordGroup && recordGroup !== gid) return false;
+        return item[campo] === empresaAtual.id || item.empresa_id === empresaAtual.id;
       });
     }
 
-    return dados;
+    // Sem contexto valido: fail-closed (nao devolver lista crua)
+    return [];
   };
 
   const obterLabelOrigem = (item) => {
@@ -424,18 +426,6 @@ export function useContextoVisual() {
                    if (!groupId && !empresaId && !noContext) return [];
 
                    const rest = { ...criterios };
-                   const extraGroupOr = [];
-                   if (!empresaId && entityName === 'PerfilAcesso' && groupId) {
-                     extraGroupOr.push(
-                       { grupo_id: groupId },
-                       { group_id: null },
-                       { grupo_id: null },
-                       { group_id: '' },
-                       { grupo_id: '' },
-                       { group_id: 'grupo_001' },
-                       { grupo_id: 'grupo_001' }
-                     );
-                   }
                    const filtro = noContext
                      ? { ...rest }
                      : buildMultiempresaReadFilter({
@@ -447,7 +437,6 @@ export function useContextoVisual() {
                        empresaIdsDoGrupo: (!empresaId && Array.isArray(empresasDoGrupo))
                          ? empresasDoGrupo.map((empresa) => empresa.id)
                          : [],
-                       extraGroupOr,
                      });
 
                    // Derivar sort

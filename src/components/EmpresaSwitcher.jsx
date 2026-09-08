@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44, isApiKeyMode } from "@/api/base44Client";
+import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import {
   Select,
@@ -36,25 +36,24 @@ export default function EmpresaSwitcher() {
   const [open, setOpen] = useState(false);
   const [termo, setTermo] = useState("");
 
-  // Buscar grupos disponíveis para o usuário
+  // Buscar grupos disponíveis para o usuário (somente vínculos; sem listagem global)
   const { data: gruposDisponiveis = [] } = useQuery({
     queryKey: ['grupos-usuario', user?.id],
     queryFn: async () => {
-      if (isApiKeyMode || user?.role === 'admin') {
-        const grupos = await base44.entities.GrupoEmpresarial.list();
-        return grupos.filter(g => !g.status || g.status === 'Ativo');
-      }
-
       if (!user?.grupos_vinculados || user.grupos_vinculados.length === 0) {
         return [];
       }
-      
+
       const grupos = [];
       for (const vinculo of user.grupos_vinculados) {
-        if (vinculo.ativo) {
-          const grupo = await base44.entities.GrupoEmpresarial.get(vinculo.grupo_id);
-          if (grupo && grupo.status === 'Ativo') {
-            grupos.push(grupo);
+        if (vinculo.ativo !== false && vinculo.grupo_id) {
+          try {
+            const grupo = await base44.entities.GrupoEmpresarial.get(vinculo.grupo_id);
+            if (grupo && (!grupo.status || grupo.status === 'Ativo')) {
+              grupos.push(grupo);
+            }
+          } catch (error) {
+            console.warn(`Grupo ${vinculo.grupo_id} nao encontrado:`, error);
           }
         }
       }
@@ -63,20 +62,10 @@ export default function EmpresaSwitcher() {
     enabled: !!user,
   });
 
-  // V21.7 FIX: Buscar empresas disponíveis para o usuário - com tratamento robusto
+  // Empresas disponíveis: somente empresas_vinculadas do usuario (sem Empresa.list global)
   const { data: empresasDisponiveis = [] } = useQuery({
     queryKey: ['empresas-usuario', user?.id],
     queryFn: async () => {
-      // Se admin, listar todas as empresas ativas
-      if (user?.role === 'admin') {
-        const todasEmpresas = await base44.entities.Empresa.list();
-        return todasEmpresas.filter(e => e.status === 'Ativa').map(e => ({
-          ...e,
-          nivel_acesso: 'Administrador'
-        }));
-      }
-
-      // Se usuário tem empresas_vinculadas
       if (user?.empresas_vinculadas && user.empresas_vinculadas.length > 0) {
         const empresas = [];
         for (const rawVinculo of user.empresas_vinculadas) {
@@ -99,8 +88,7 @@ export default function EmpresaSwitcher() {
         }
         return empresas;
       }
-      
-      // Fallback: se não tem vínculos, retornar array vazio
+
       return [];
     },
     enabled: !!user,

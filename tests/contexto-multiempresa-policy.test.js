@@ -108,20 +108,57 @@ test('fiscal and commercial operations require an emitting company', () => {
   assert.equal(resolveEmpresaIdOnWrite({ empresa_faturamento_id: 'local_empresa_3z' }), 'local_empresa_3z');
 });
 
+test('company-only or empty scope fails closed', () => {
+  const empresaOnly = buildMultiempresaReadFilter({
+    empresaId: 'local_empresa_3z',
+    rest: { status: 'Aberto' },
+  });
+  assert.equal(empresaOnly.id, '__grupo_obrigatorio_escopo_empresa__');
+  assert.equal(empresaOnly.status, 'Aberto');
+  assert.equal(empresaOnly.$or, undefined);
+
+  const open = buildMultiempresaReadFilter({ rest: { status: 'Aberto' } });
+  assert.equal(open.id, '__escopo_multiempresa_obrigatorio__');
+  assert.equal(open.status, 'Aberto');
+});
+
+test('caller $or/$and is composed with group scope instead of bypassing it', () => {
+  const filter = buildMultiempresaReadFilter({
+    groupId: 'local_grupo_cpa',
+    rest: { $or: [{ status: 'Aberto' }, { status: 'Pago' }] },
+  });
+  assert.ok(Array.isArray(filter.$and));
+  assert.ok(filter.$and.some((part) => part.$or?.some((item) => item.group_id === 'local_grupo_cpa')));
+  assert.ok(filter.$and.some((part) => part.$or?.some((item) => item.status === 'Aberto')));
+});
+
 test('existing multiempresa call sites fail closed against cross-company leak', async () => {
   const policy = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
   const visual = await readFile(new URL('../src/components/lib/useContextoVisual.jsx', import.meta.url), 'utf8');
   const grupo = await readFile(new URL('../src/components/lib/useContextoGrupoEmpresa.jsx', import.meta.url), 'utf8');
+  const switcher = await readFile(new URL('../src/components/EmpresaSwitcher.jsx', import.meta.url), 'utf8');
 
   assert.match(policy, /buildMultiempresaReadFilter/);
   assert.match(policy, /Empresa obrigatoria para operacao nesta entidade/);
   assert.doesNotMatch(policy, /LOCAL_RELAXED_CONTEXT_ENTITIES/);
+  assert.doesNotMatch(policy, /user\?\.grupo_padrao_id \|\| 'local_grupo_cpa'/);
+  assert.match(policy, /nunca inventar groupId padrao/);
+  assert.match(policy, /this\.filter\(\{\}/);
+  assert.doesNotMatch(policy, /if \(filter\.\$or \|\| filter\.\$and\) return filter/);
   assert.match(visual, /buildMultiempresaReadFilter/);
   assert.doesNotMatch(visual, /Empresa\.list\(\)/);
   assert.match(visual, /item\[campo\] === filtroEmpresa \|\| item\.empresa_id === filtroEmpresa/);
+  assert.match(visual, /Sem contexto valido: fail-closed/);
+  assert.doesNotMatch(visual, /group_id: null/);
+  assert.doesNotMatch(visual, /grupo_001/);
   assert.match(grupo, /userTemAcessoEmpresa/);
   assert.match(grupo, /userTemAcessoGrupo/);
   assert.doesNotMatch(grupo, /currentUser\?\.role === 'admin'/);
   assert.doesNotMatch(grupo, /Empresa\.list\(\)/);
   assert.doesNotMatch(grupo, /GrupoEmpresarial\.list\(\)/);
+  assert.match(grupo, /group_id: docOriginal\.group_id \|\| docOriginal\.grupo_id/);
+  assert.doesNotMatch(switcher, /GrupoEmpresarial\.list\(\)/);
+  assert.doesNotMatch(switcher, /Empresa\.list\(\)/);
+  assert.doesNotMatch(switcher, /role === 'admin'/);
+  assert.doesNotMatch(switcher, /isApiKeyMode/);
 });

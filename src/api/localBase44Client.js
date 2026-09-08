@@ -641,7 +641,8 @@ const getCurrentContext = () => {
   return {
     user,
     contexto: safeStorage.getItem('contexto_atual') || user?.contexto_atual || 'empresa',
-    groupId: getCurrentGroupId() || user?.grupo_atual_id || user?.grupo_padrao_id || 'local_grupo_cpa',
+    // Fail-closed: nunca inventar groupId padrao (ex.: local_grupo_cpa)
+    groupId: getCurrentGroupId() || user?.grupo_atual_id || user?.grupo_padrao_id || null,
     empresaId: getCurrentEmpresaId() || user?.empresa_atual_id || user?.empresa_padrao_id || null,
   };
 };
@@ -748,11 +749,15 @@ const auditLocalMutation = (entityName, action, { before = null, after = null, r
 
 const expandLocalContextFilter = (entityName, filter = {}) => {
   if (!isPlainObject(filter)) return filter || {};
-  if (filter.$or || filter.$and) return filter || {};
 
-  const empresaId = filter.empresa_id;
+  const { contexto, groupId: ctxGroupId, empresaId: ctxEmpresaId } = getCurrentContext();
+  const hasEmpresaKey = Object.prototype.hasOwnProperty.call(filter, 'empresa_id');
+  const empresaId = hasEmpresaKey
+    ? filter.empresa_id
+    : (contexto === 'empresa' ? ctxEmpresaId : null);
   const explicitGroupId = filter.group_id || filter.grupo_id || filter.grupo_empresarial_id;
-  const groupId = explicitGroupId || (empresaId ? getCurrentGroupId() : null);
+  const groupId = explicitGroupId || ctxGroupId || null;
+
   const rest = { ...filter };
   delete rest.empresa_id;
   delete rest.group_id;
@@ -761,6 +766,7 @@ const expandLocalContextFilter = (entityName, filter = {}) => {
 
   const ctxField = LOCAL_ENTITY_CONTEXT_FIELD[entityName] || 'empresa_id';
   const shared = entityName === 'Cliente' || LOCAL_SHARED_ENTITIES.has(entityName);
+  // Sempre compoe escopo (inclusive quando caller traz $or/$and)
   return buildMultiempresaReadFilter({ groupId, empresaId, ctxField, shared, rest });
 };
 
@@ -1444,13 +1450,8 @@ export const hydrateLocalBase44FromSnapshot = async ({ force = false, includeAud
 
 const createEntityApi = (entityName) => ({
   async list(order, limit, skip = 0) {
-    if (typeof order === 'number') {
-      limit = order;
-      order = undefined;
-    }
-    const db = loadDb();
-    const records = sortRecords(getEntityStore(db, entityName), order);
-    return records.slice(skip || 0, limit ? (skip || 0) + limit : undefined);
+    // Sempre passa por filter+expand (fail-closed sem contexto)
+    return this.filter({}, order, limit, skip);
   },
 
   async filter(filter = {}, order, limit, skip = 0) {

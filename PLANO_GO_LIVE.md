@@ -16,7 +16,7 @@ O ERP somente poderá ser considerado apto para uso real quando os blocos P0 est
 
 - [x] Segurança e autenticação.
 - [x] RBAC granular frontend + backend.
-- [ ] Multiempresa Grupo/Empresas.
+- [x] Multiempresa Grupo/Empresas.
 - [ ] Auditoria e logs.
 - [ ] Cadastros Gerais confiáveis.
 - [ ] Comercial mínimo operacional.

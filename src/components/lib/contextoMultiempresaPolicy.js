@@ -177,12 +177,32 @@ export const buildMultiempresaReadFilter = ({
     }
   }
 
+  const mergeScoped = (scopePart) => {
+    if (!rest.$or && !rest.$and) {
+      return { ...rest, ...scopePart };
+    }
+    const { $or: callerOr, $and: callerAnd, ...restFields } = rest;
+    const parts = [];
+    if (scopePart.$and) parts.push(...scopePart.$and);
+    else if (scopePart.$or) parts.push({ $or: scopePart.$or });
+    else if (scopePart.id) parts.push({ id: scopePart.id });
+    if (callerAnd) parts.push(...(Array.isArray(callerAnd) ? callerAnd : [callerAnd]));
+    if (callerOr) parts.push({ $or: callerOr });
+    return { ...restFields, $and: parts };
+  };
+
   if (scopedEmpresaId && scopedGroupId) {
-    return { ...rest, $and: [{ $or: groupConds }, { $or: empresaConds }] };
+    return mergeScoped({ $and: [{ $or: groupConds }, { $or: empresaConds }] });
   }
-  if (scopedEmpresaId) return { ...rest, $or: empresaConds };
-  if (scopedGroupId) return { ...rest, $or: groupConds };
-  return { ...rest };
+  // Empresa sem grupo: nunca abrir leitura so por empresa_id (vazamento cross-grupo)
+  if (scopedEmpresaId) {
+    return mergeScoped({ id: '__grupo_obrigatorio_escopo_empresa__' });
+  }
+  if (scopedGroupId) {
+    return mergeScoped({ $or: groupConds });
+  }
+  // Sem grupo/empresa: fail-closed (nao devolver filtro aberto)
+  return mergeScoped({ id: '__escopo_multiempresa_obrigatorio__' });
 };
 
 export const recordMatchesEmpresaScope = (record = {}, empresaId) => {

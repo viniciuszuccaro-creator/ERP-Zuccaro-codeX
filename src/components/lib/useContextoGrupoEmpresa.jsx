@@ -251,7 +251,8 @@ export function useContextoGrupoEmpresa() {
         id: undefined,
         created_date: undefined,
         updated_date: undefined,
-        group_id: null,
+        // Preserva o grupo do documento original (nunca ratear com group_id null)
+        group_id: docOriginal.group_id || docOriginal.grupo_id || grupoAtual?.id || null,
         empresa_id: dist.empresa_id,
         origem: 'empresa',
         documento_grupo_id: documentoId,
