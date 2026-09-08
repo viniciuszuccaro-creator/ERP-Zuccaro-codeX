@@ -24,13 +24,20 @@ const FunilComercialInteligente = React.lazy(() => import("@/components/crm/Funi
 const FunilVendasAvancado = React.lazy(() => import("@/components/crm/FunilVendasAvancado"));
 const IALeadsPriorizacao = React.lazy(() => import("../components/crm/IALeadsPriorizacao"));
 const IAChurnDetection = React.lazy(() => import("../components/crm/IAChurnDetection"));
+const OportunidadesLista = React.lazy(() => import("@/components/crm/OportunidadesLista"));
+const InteracoesLista = React.lazy(() => import("@/components/crm/InteracoesLista"));
+const CampanhasLista = React.lazy(() => import("@/components/crm/CampanhasLista"));
 
 export default function CRMPage() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
-  const { filtrarPorContexto, filterInContext, getFiltroContexto, empresaAtual, estaNoGrupo } = useContextoVisual();
+  const { filtrarPorContexto, getFiltroContexto, empresaAtual, estaNoGrupo, updateInContext } = useContextoVisual();
   const bloqueadoSemEmpresa = !estaNoGrupo && !empresaAtual;
   const { openWindow } = useWindow();
   const { user } = useUser();
+
+  const moverEtapaOportunidade = async (oportunidadeId, novaEtapa) => {
+    await updateInContext('Oportunidade', oportunidadeId, { etapa: novaEtapa, etapa_funil: novaEtapa });
+  };
 
   const { data: oportunidades = [] } = useQuery({
     queryKey: ['oportunidades', empresaAtual?.id],
@@ -151,7 +158,11 @@ export default function CRMPage() {
       windowTitle: '🎯 Funil Visual',
       width: 1600,
       height: 900,
-      props: { oportunidades: oportunidadesFiltradas, windowMode: true }
+      props: {
+        oportunidades: oportunidadesFiltradas,
+        windowMode: true,
+        onMoverEtapa: moverEtapaOportunidade,
+      }
     },
     {
       title: 'Funil IA',
@@ -180,30 +191,33 @@ export default function CRMPage() {
       description: 'Gestão completa',
       icon: Target,
       color: 'indigo',
-      component: () => <div className="p-4">Listagem Oportunidades (em desenvolvimento)</div>,
+      component: OportunidadesLista,
       windowTitle: '📊 Oportunidades',
       width: 1500,
       height: 850,
+      props: { oportunidades: oportunidadesFiltradas, windowMode: true }
     },
     {
       title: 'Interações',
       description: 'Histórico contatos',
       icon: MessageSquare,
       color: 'green',
-      component: () => <div className="p-4">Histórico Interações (em desenvolvimento)</div>,
+      component: InteracoesLista,
       windowTitle: '💬 Interações',
       width: 1400,
       height: 800,
+      props: { interacoes: interacoesFiltradas, windowMode: true }
     },
     {
       title: 'Campanhas',
       description: 'Marketing ativo',
       icon: Mail,
       color: 'pink',
-      component: () => <div className="p-4">Campanhas Marketing (em desenvolvimento)</div>,
+      component: CampanhasLista,
       windowTitle: '📧 Campanhas',
       width: 1400,
       height: 800,
+      props: { campanhas: campanhasFiltradas, windowMode: true }
     },
     {
       title: 'IA Leads',
@@ -260,7 +274,7 @@ export default function CRMPage() {
   return (
     <ProtectedSection module="CRM" action="visualizar">
     <ErrorBoundary>
-      <ModuleLayout title="CRM - Relacionamento" subtitle="Relacionamento, funil e campanhas" actions={<div className="flex items-center gap-2"><Button size="sm" onClick={() => base44.analytics.track({ eventName: 'crm_primary_action' })}>Novo</Button></div>}>
+      <ModuleLayout title="CRM - Relacionamento" subtitle="Relacionamento, funil e campanhas" actions={<div className="flex items-center gap-2"><Button size="sm" onClick={() => openWindow(OportunidadesLista, { oportunidades: oportunidadesFiltradas, windowMode: true }, { title: '📊 Oportunidades', width: 1500, height: 850, uniqueKey: 'crm-oportunidades-nova' })}>Novo</Button></div>}>
         <ModuleKPIs>
           <KPIsCRM
             oportunidadesAbertas={oportunidadesAbertas}

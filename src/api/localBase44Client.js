@@ -24,6 +24,7 @@ import {
 } from "@/components/lib/notaFiscalEmissaoPolicy";
 import { assertOpOnCreate } from "@/components/lib/ordemProducaoPolicy";
 import { applyComprasCreate, assertRecebimentoOc } from "@/components/lib/comprasOrdemPolicy";
+import { applyCrmCreate, assertOportunidadeOnUpdate } from "@/components/lib/crmOportunidadePolicy";
 import { applyExpedicaoCreate, assertEntregaOnUpdate, syncEntregaNumero } from "@/components/lib/expedicaoEntregaPolicy";
 import { applyAtendimentoCreate } from "@/components/lib/atendimentoConversaPolicy";
 import { applyPortalReadScope, resolvePortalClienteId } from "@/components/lib/portalClientePolicy";
@@ -583,6 +584,7 @@ const ENTITY_CONTEXT_FIELD_BY_NAME = {
   Fornecedor: 'empresa_dona_id',
   Transportadora: 'empresa_dona_id',
   Colaborador: 'empresa_alocada_id',
+  Campanha: 'empresa_dona_id',
 };
 
 const shouldStampEmpresa = (entityName) => ![
@@ -1032,6 +1034,10 @@ const applyLocalComprasCreate = (db, entityName, record) => applyComprasCreate(e
   ordensCompra: getEntityStore(db, 'OrdemCompra'),
 });
 
+const applyLocalCrmCreate = (db, entityName, record) => applyCrmCreate(entityName, record, {
+  oportunidades: getEntityStore(db, 'Oportunidade'),
+});
+
 const applyLocalExpedicaoCreate = (db, entityName, record) => applyExpedicaoCreate(entityName, record, {
   entregas: getEntityStore(db, 'Entrega'),
   romaneios: getEntityStore(db, 'Romaneio'),
@@ -1409,7 +1415,9 @@ const createEntityApi = (entityName) => ({
     if (expedicao.reuse) return expedicao.reuse;
     const atendimento = applyLocalAtendimentoCreate(db, entityName, expedicao.record || compras.record || ordem.record || scoped);
     if (atendimento.reuse) return atendimento.reuse;
-    const withSiteOrigem = applyLocalSiteOrigemCreate(entityName, atendimento.record || expedicao.record || ordem.record || scoped);
+    const crm = applyLocalCrmCreate(db, entityName, atendimento.record || expedicao.record || compras.record || ordem.record || scoped);
+    if (crm.reuse) return crm.reuse;
+    const withSiteOrigem = applyLocalSiteOrigemCreate(entityName, crm.record || atendimento.record || expedicao.record || ordem.record || scoped);
     const marketplace = applyLocalMarketplaceCreate(db, entityName, withSiteOrigem);
     if (marketplace.reuse) return marketplace.reuse;
     const migracao = applyLocalMigracaoCreate(db, entityName, marketplace.record || withSiteOrigem);
@@ -1451,7 +1459,7 @@ const createEntityApi = (entityName) => ({
     if (index < 0) throw new Error(`${entityName} local nao encontrado: ${id}`);
     const before = { ...records[index] };
     const payload = stampRecordContext(entityName, data);
-    if ((isTituloFinanceiroEntity(entityName) || entityName === 'Entrega' || entityName === 'OrdemCompra') && before.empresa_id && !Object.prototype.hasOwnProperty.call(data || {}, 'empresa_id')) {
+    if ((isTituloFinanceiroEntity(entityName) || entityName === 'Entrega' || entityName === 'OrdemCompra' || entityName === 'Oportunidade') && before.empresa_id && !Object.prototype.hasOwnProperty.call(data || {}, 'empresa_id')) {
       payload.empresa_id = before.empresa_id;
       if (before.group_id) payload.group_id = before.group_id;
       if (before.grupo_id) payload.grupo_id = before.grupo_id;

@@ -1,3 +1,15 @@
+### P1.2 - CRM completo: oportunidades, interacoes e campanhas operacionais
+- Objetivo: cumprir P1 CRM completo de `PLANO_GO_LIVE.md` no modulo CRM existente, sem funil/portal/CRM paralelo.
+- Diagnostico: listagens de Oportunidades/Interacoes/Campanhas estavam como placeholder; funis avancados liam `Oportunidade.list()` sem contexto; drag do Funil Visual nao persistia; nao havia codigo/idempotencia/conversao no ponto unico de gravacao.
+- Causa raiz: persistencia e listagens fora de um carimbo unico de CRM no cliente local.
+- Arquivos alterados: `crmOportunidadePolicy.js` (extracao), `localCadastroMasterPolicy.js`, `localBase44Client.js`, `CRM.jsx`, `OportunidadesLista.jsx`, `InteracoesLista.jsx`, `CampanhasLista.jsx`, `FunilComercialInteligente.jsx`, `FunilVendasAvancado.jsx`, testes.
+- Reutilizado: `OportunidadeForm`, `InteracaoForm`, `CampanhaForm`, `ConverterOportunidade`, funis e KPIs ja existentes.
+- Alteracoes: codigos `OPP-`/`INT-`/`CAMP-`; oportunidade/interacao/campanha exigem grupo ou empresa; lead aberto e idempotente; etapa sincroniza `etapa`/`etapa_funil`; conversao gera orcamento/pedido e fecha como Ganho; listagens reais no launchpad; funis leem no contexto.
+- Multiempresa: CRM operacional carimba grupo/empresa; campanha usa `empresa_dona_id`; conversao exige empresa.
+- Pendencia: scoring/IA real dos funis e campanhas ainda dependem do provedor LLM; avaliacao de ROI de campanha ponta a ponta pode evoluir no mesmo modulo.
+- Validacoes: `node --test tests/crm-oportunidade-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P1: Roteirizador avancado.
+
 ### P1.1 - Compras avancadas: SC/COT/OC reservados e recebimento idempotente
 - Objetivo: cumprir P1 Compras avancadas de `PLANO_GO_LIVE.md` no fluxo existente (solicitacao → cotacao → OC → recebimento → estoque), sem modulo paralelo.
 - Diagnostico: SC/COT/OC usavam `Date.now`/`count+1`; cotacao ficava so em mock de tela; retry de OC pela solicitacao criava duplicata; recebimento nao carimbava empresa na movimentacao.

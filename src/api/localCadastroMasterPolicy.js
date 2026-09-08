@@ -13,6 +13,9 @@ export const MASTER_CODE_SPECS = {
   OrdemCompra: { field: 'numero_oc', width: 6, prefix: 'OC-' },
   SolicitacaoCompra: { field: 'numero_solicitacao', width: 6, prefix: 'SC-' },
   Cotacao: { field: 'numero_cotacao', width: 6, prefix: 'COT-' },
+  Oportunidade: { field: 'codigo_oportunidade', width: 6, prefix: 'OPP-' },
+  Interacao: { field: 'codigo_interacao', width: 6, prefix: 'INT-' },
+  Campanha: { field: 'codigo_campanha', width: 6, prefix: 'CAMP-' },
 };
 
 export const sequenceKeyFor = (entityName, groupId) => `seq_codigo_${entityName}_${groupId || 'grupo'}`;

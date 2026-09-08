@@ -19,6 +19,8 @@ import {
   CheckCircle,
   Award
 } from "lucide-react";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import { normalizeEtapaCrm } from "@/components/lib/crmOportunidadePolicy";
 
 /**
  * ETAPA 10: FUNIL DE VENDAS AVANÇADO V21.4
@@ -37,26 +39,32 @@ import {
  */
 
 const etapas = [
-  { id: 'prospecção', nome: 'Prospecção', cor: 'bg-slate-100' },
-  { id: 'qualificação', nome: 'Qualificação', cor: 'bg-blue-100' },
-  { id: 'proposta', nome: 'Proposta', cor: 'bg-yellow-100' },
-  { id: 'negociação', nome: 'Negociação', cor: 'bg-orange-100' },
-  { id: 'fechamento', nome: 'Fechamento', cor: 'bg-green-100' }
+  { id: 'Prospecção', nome: 'Prospecção', cor: 'bg-slate-100' },
+  { id: 'Qualificação', nome: 'Qualificação', cor: 'bg-blue-100' },
+  { id: 'Proposta', nome: 'Proposta', cor: 'bg-yellow-100' },
+  { id: 'Negociação', nome: 'Negociação', cor: 'bg-orange-100' },
+  { id: 'Fechamento', nome: 'Fechamento', cor: 'bg-green-100' }
 ];
 
-export default function FunilVendasAvancado() {
+export default function FunilVendasAvancado({ windowMode = false }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { filtrarPorContexto, empresaAtual, estaNoGrupo } = useContextoVisual();
+  const contextoPronto = estaNoGrupo || Boolean(empresaAtual);
 
   const { data: oportunidades = [] } = useQuery({
-    queryKey: ['oportunidades'],
-    queryFn: () => base44.entities.Oportunidade.list()
+    queryKey: ['oportunidades', empresaAtual?.id],
+    queryFn: () => filtrarPorContexto('Oportunidade', {}, '-created_date', 200),
+    enabled: contextoPronto,
   });
 
   const updateEtapaMutation = useMutation({
-    mutationFn: ({ id, etapa }) => base44.entities.Oportunidade.update(id, { etapa_funil: etapa }),
+    mutationFn: ({ id, etapa }) => base44.entities.Oportunidade.update(id, {
+      etapa,
+      etapa_funil: etapa,
+    }),
     onSuccess: () => {
-      queryClient.invalidateQueries(['oportunidades']);
+      queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
       toast({ title: "✅ Etapa atualizada" });
     }
   });
@@ -105,7 +113,7 @@ Calcule:
   const calcularMetricas = () => {
     const totalValor = oportunidades.reduce((acc, op) => acc + (op.valor_estimado || 0), 0);
     const taxaConversao = oportunidades.length > 0 
-      ? ((oportunidades.filter(op => op.etapa_funil === 'fechamento').length / oportunidades.length) * 100).toFixed(0)
+      ? ((oportunidades.filter(op => normalizeEtapaCrm(op.etapa_funil || op.etapa) === 'Fechamento').length / oportunidades.length) * 100).toFixed(0)
       : 0;
     
     return { totalValor, taxaConversao, total: oportunidades.length };
@@ -173,7 +181,7 @@ Calcule:
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {etapas.map(etapa => {
-            const opsEtapa = oportunidades.filter(op => op.etapa_funil === etapa.id);
+            const opsEtapa = oportunidades.filter(op => normalizeEtapaCrm(op.etapa_funil || op.etapa) === etapa.id);
             const valorEtapa = opsEtapa.reduce((acc, op) => acc + (op.valor_estimado || 0), 0);
 
             return (

@@ -8,6 +8,7 @@ import { Zap, TrendingUp, Users, Target, DollarSign } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { toast } from "sonner";
 import { useWindow } from "@/components/lib/useWindow";
+import useContextoVisual from "@/components/lib/useContextoVisual";
 
 const etapasFunil = [
   { id: "Prospecção", nome: "Prospecção", cor: "bg-slate-100" },
@@ -21,10 +22,13 @@ const etapasFunil = [
 export default function FunilComercialInteligente({ windowMode = false }) {
   const queryClient = useQueryClient();
   const { openWindow } = useWindow();
+  const { filtrarPorContexto, empresaAtual, estaNoGrupo } = useContextoVisual();
+  const contextoPronto = estaNoGrupo || Boolean(empresaAtual);
 
   const { data: oportunidades = [], isLoading } = useQuery({
-    queryKey: ["oportunidades"],
-    queryFn: () => base44.entities.Oportunidade.list(),
+    queryKey: ["oportunidades", empresaAtual?.id],
+    queryFn: () => filtrarPorContexto('Oportunidade', {}, '-created_date', 200),
+    enabled: contextoPronto,
   });
 
   const updateEtapaMutation = useMutation({
@@ -32,21 +36,22 @@ export default function FunilComercialInteligente({ windowMode = false }) {
       const opp = oportunidades.find(o => o.id === id);
       return base44.entities.Oportunidade.update(id, {
         etapa,
+        etapa_funil: etapa,
         historico_mudancas_etapa: [
           ...(opp?.historico_mudancas_etapa || []),
           {
-            etapa_anterior: opp?.etapa,
+            etapa_anterior: opp?.etapa || opp?.etapa_funil,
             etapa_nova: etapa,
             data: new Date().toISOString(),
-            usuario: "Sistema"
-          }
-        ]
+          },
+        ],
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["oportunidades"]);
-      toast.success("Etapa atualizada!");
+      queryClient.invalidateQueries({ queryKey: ["oportunidades"] });
+      toast.success("Etapa atualizada");
     },
+    onError: (error) => toast.error(error?.message || "Falha ao mover oportunidade"),
   });
 
   const priorizarIAMutation = useMutation({
