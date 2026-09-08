@@ -27,6 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { validarLimiteCredito } from "@/components/lib/useFluxoPedido";
 
 /**
  * 🔐 CENTRAL DE APROVAÇÕES V21.5
@@ -56,9 +57,7 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
     hasPermission("Comercial.Pedido.aprovar");
   const podeEditarAprovacoes =
     hasPermission("Comercial", "Pedido", "aprovar") ||
-    hasPermission("Comercial", "Pedido", "editar") ||
-    hasPermission("Comercial.Pedido.aprovar") ||
-    hasPermission("Comercial.Pedido.editar");
+    hasPermission("Comercial.Pedido.aprovar");
   const consultaHabilitada = Boolean(contextoValido && podeVisualizarAprovacoes);
 
   const auditAprovacao = async ({ acao, pedido = null, descricao, sucesso = true, detalhes = {} }) => {
@@ -111,7 +110,31 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
 
       const pedidosCompletos = await filterInContext("Pedido", { id: pedidoId }, undefined, 1);
       const pedido = pedidosCompletos[0];
-      
+      if (!pedido) {
+        throw new Error("Pedido nao encontrado no contexto.");
+      }
+
+      const pedidoParaCredito = {
+        ...pedido,
+        valor_total: dados.valorFinal || pedido.valor_total || 0,
+      };
+      const credito = await validarLimiteCredito(pedidoParaCredito, {
+        groupId: pedido.group_id || pedido.grupo_id || groupId,
+        empresaId: pedido.empresa_id || empresaContextoId,
+      }, {
+        permitirOverride: hasPermission("Comercial", "Pedido", "aprovar") || hasPermission("Comercial.Pedido.aprovar"),
+      });
+      if (!credito.aprovado) {
+        await auditAprovacao({
+          acao: "Aprovacao bloqueada",
+          pedido,
+          descricao: "Bloqueio por limite de credito na central de aprovacoes",
+          sucesso: false,
+          detalhes: { pedido_id: pedidoId, motivo: credito.motivo, credito }
+        });
+        throw new Error(credito.motivo || "Limite de credito insuficiente.");
+      }
+
       const itensRevendaAtualizados = [];
       const itensArmadoAtualizados = [];
       const itensCorteAtualizados = [];

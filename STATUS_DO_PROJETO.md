@@ -1,3 +1,15 @@
+### P0.6 - Gate 6 Comercial residual: estoque unico, credito e aprovacao
+- Objetivo: cumprir residual do Gate 6 / P0 Comercial sem ComercialV2.
+- Diagnostico: saida de estoque na aprovacao/save/fechamento e de novo no faturamento; Central aprovava com `editar`; credito liberava cliente ausente e limite zero; `applyOrderStockMovements` fazia saida com clamp.
+- Causa raiz: baixa fisica cedo demais e fail-open de credito/RBAC fora do fluxo canonico reserva→NF.
+- Arquivos alterados: `pedidoFaturamentoPolicy.js`, `useFluxoPedido.jsx`, `PedidoFormCompleto.jsx`, `CentralAprovacoesManager.jsx`, `applyOrderStockMovements/entry.ts`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: `orderReservationUtils`, teto de faturamento, Central/fluxo existentes.
+- Alteracoes: aprovacao/fechamento so reservam; saida idempotente no faturamento; credito fail-closed; Central so `aprovar` + valida credito; backend de estoque em modo reserva.
+- Multiempresa/RBAC: empresa obrigatoria no faturar; estoque exige `Comercial.Pedido.aprovar`.
+- Pendencia: baixa parcial por etapa; alçada de margem/desconto por perfil; harmonizar `onNotaFiscalAuthorized`.
+- Validacoes: `node --test tests/pedido-faturamento-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 7 Estoque (saldo, reserva, transferencia, inventário).
+
 ### P0.5 - Gate 5 Cadastros residual: escopo, codigo e duplicidade
 - Objetivo: cumprir residual do Gate 5 / P0 Cadastros Gerais sem CadastrosV2.
 - Diagnostico: Visualizador listava mestres do grupo inteiro na visao empresa (`$or` com `group_id`); SIMPLE_CATALOG contava/listava sem escopo; create mestre aceitava sem `group_id`; Produto nao rejeitava codigo duplicado e falhava aberto na checagem.

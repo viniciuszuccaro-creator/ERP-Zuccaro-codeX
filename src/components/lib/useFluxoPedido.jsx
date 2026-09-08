@@ -1,5 +1,10 @@
 import { base44 } from "@/api/base44Client";
-import { assertFaturamentoDentroDoPedido } from "@/components/lib/pedidoFaturamentoPolicy";
+import {
+  assertFaturamentoDentroDoPedido,
+  evaluatePedidoCredito,
+  pedidoJaTemReservaEstoque,
+  pedidoJaTemSaidaEstoque,
+} from "@/components/lib/pedidoFaturamentoPolicy";
 
 // Auditoria helpers
 async function getUsuarioAtual() {
@@ -130,10 +135,11 @@ export async function aprovarPedidoCompleto(pedido, empresaId) {
     if (pedido.itens_revenda?.length > 0) {
       for (const item of pedido.itens_revenda) {
         try {
-          const baixa = await baixarEstoqueItemAprovacao(item, pedido, contextoOperacao.empresaId);
+          // Aprovacao apenas RESERVA; saida fisica ocorre no faturamento
+          const baixa = await reservarEstoqueItemAprovacao(item, pedido, contextoOperacao.empresaId);
           baixasEstoque.push(baixa);
         } catch (error) {
-          resultados.erros.push(`Erro ao baixar estoque ${item.descricao}: ${error.message}`);
+          resultados.erros.push(`Erro ao reservar estoque ${item.descricao}: ${error.message}`);
         }
       }
     }
@@ -181,7 +187,7 @@ export async function aprovarPedidoCompleto(pedido, empresaId) {
       referencia_numero: pedido.numero_pedido,
       tipo_evento: 'Aprovacao',
       titulo_evento: 'Pedido Aprovado e Processado',
-      descricao_detalhada: `Pedido aprovado. ${resultados.reservasEstoque.length} baixas de estoque, ${resultados.opsGeradas.length} OPs geradas`,
+      descricao_detalhada: `Pedido aprovado. ${resultados.reservasEstoque.length} reservas de estoque, ${resultados.opsGeradas.length} OPs geradas`,
       usuario_responsavel: (userHC?.full_name || userHC?.email || 'Sistema'),
       data_evento: new Date().toISOString(),
       valor_relacionado: pedido.valor_total
@@ -193,46 +199,18 @@ export async function aprovarPedidoCompleto(pedido, empresaId) {
   return resultados;
 }
 
-async function validarLimiteCredito(pedido, contextoOperacao = null) {
+export async function validarLimiteCredito(pedido, contextoOperacao = null, { permitirOverride = false } = {}) {
   if (!pedido.cliente_id) {
-    return { aprovado: true, motivo: 'Sem cliente vinculado' };
+    return evaluatePedidoCredito({ pedido, cliente: null, permitirOverride });
   }
 
   const contexto = contextoOperacao || normalizarContextoOperacao(pedido);
   const clientes = await filterScoped('Cliente', { id: pedido.cliente_id }, contexto);
-  const cliente = clientes[0];
-
-  if (!cliente) {
-    return { aprovado: true, motivo: 'Cliente nao encontrado' };
-  }
-
-  const limiteTotal = cliente.condicao_comercial?.limite_credito || 0;
-  const limiteUtilizado = cliente.condicao_comercial?.limite_credito_utilizado || 0;
-  const limiteDisponivel = limiteTotal - limiteUtilizado;
-
-  if (pedido.limite_credito_override) {
-    return {
-      aprovado: true,
-      limite_total: limiteTotal,
-      limite_utilizado: limiteUtilizado,
-      limite_disponivel: limiteDisponivel,
-      motivo: `Override aprovado: ${pedido.limite_credito_justificativa}`
-    };
-  }
-
-  const aprovado = pedido.valor_total <= limiteDisponivel || limiteTotal === 0;
-
-  return {
-    aprovado,
-    limite_total: limiteTotal,
-    limite_utilizado: limiteUtilizado,
-    limite_disponivel: limiteDisponivel,
-    valor_pedido: pedido.valor_total,
-    motivo: aprovado ? 'Credito aprovado' : 'Limite insuficiente'
-  };
+  const cliente = clientes[0] || null;
+  return evaluatePedidoCredito({ pedido, cliente, permitirOverride });
 }
 
-async function baixarEstoqueItemAprovacao(item, pedido, empresaId) {
+async function reservarEstoqueItemAprovacao(item, pedido, empresaId) {
   const contextoOperacao = normalizarContextoOperacao(pedido, empresaId);
   const produtos = await filterScoped('Produto', { id: item.produto_id }, contextoOperacao);
   const produto = produtos[0];
@@ -241,44 +219,60 @@ async function baixarEstoqueItemAprovacao(item, pedido, empresaId) {
     throw new Error('Produto nao encontrado no estoque');
   }
 
-  const estoqueAtual = produto.estoque_atual || 0;
-
-  if (estoqueAtual < item.quantidade) {
-    throw new Error(`Estoque insuficiente. Disponivel: ${estoqueAtual} ${item.unidade}`);
+  const movimentosExistentes = await filterScoped('MovimentacaoEstoque', {
+    origem_documento_id: pedido.id,
+    produto_id: item.produto_id,
+  }, contextoOperacao);
+  if (pedidoJaTemReservaEstoque({ movimentos: movimentosExistentes, pedidoId: pedido.id, produtoId: item.produto_id })) {
+    return movimentosExistentes.find((mov) => String(mov.tipo_movimento || '').toLowerCase() === 'reserva') || { skipped: true, produto_id: item.produto_id };
   }
 
-  const novoEstoque = estoqueAtual - item.quantidade;
+  const estoqueAtual = Number(produto.estoque_atual || 0);
+  const reservadoAtual = Number(produto.estoque_reservado || 0);
+  const disponivel = estoqueAtual - reservadoAtual;
+  const qtd = Number(item.quantidade || 0);
+
+  if (qtd <= 0) {
+    throw new Error('Quantidade invalida para reserva');
+  }
+  if (disponivel < qtd) {
+    throw new Error(`Estoque insuficiente para reserva. Disponivel: ${disponivel} ${item.unidade || ''}`);
+  }
+
+  const novoReservado = reservadoAtual + qtd;
   const user = await getUsuarioAtual();
   const movimentacao = await createScoped('MovimentacaoEstoque', {
     empresa_id: contextoOperacao.empresaId,
     group_id: contextoOperacao.groupId,
-    tipo_movimento: 'saida',
+    tipo_movimento: 'reserva',
     origem_movimento: 'pedido',
     origem_documento_id: pedido.id,
     produto_id: item.produto_id,
     produto_descricao: item.descricao || item.produto_descricao,
     codigo_produto: item.codigo_sku,
-    quantidade: item.quantidade,
+    quantidade: qtd,
     unidade_medida: item.unidade,
     estoque_anterior: estoqueAtual,
-    estoque_atual: novoEstoque,
-    reservado_anterior: 0,
-    reservado_atual: 0,
-    disponivel_anterior: estoqueAtual,
-    disponivel_atual: novoEstoque,
+    estoque_atual: estoqueAtual,
+    reservado_anterior: reservadoAtual,
+    reservado_atual: novoReservado,
+    disponivel_anterior: disponivel,
+    disponivel_atual: disponivel - qtd,
     data_movimentacao: new Date().toISOString(),
     documento: pedido.numero_pedido,
-    motivo: `Baixa automatica - Pedido ${pedido.numero_pedido} aprovado`,
+    motivo: `Reserva automatica - Pedido ${pedido.numero_pedido} aprovado`,
     responsavel: (user?.full_name || user?.email || 'Sistema'),
     responsavel_id: user?.id,
     valor_unitario: item.preco_unitario || item.valor_unitario,
-    valor_total: item.valor_total || (item.quantidade * (item.preco_unitario || 0)),
+    valor_total: item.valor_total || (qtd * (item.preco_unitario || 0)),
     aprovado: true
   }, contextoOperacao);
 
-  const { before: produtoAntes, updated: produtoAtualizado } = await updateScoped('Produto', item.produto_id, { estoque_atual: novoEstoque }, contextoOperacao);
-  await auditar('Estoque', 'MovimentacaoEstoque', 'create', movimentacao.id, `Baixa por aprovacao - Pedido ${pedido.numero_pedido}`, contextoOperacao.empresaId, null, movimentacao, contextoOperacao.groupId);
-  await auditar('Estoque', 'Produto', 'update', item.produto_id, `Estoque atualizado por aprovacao - Pedido ${pedido.numero_pedido}`, contextoOperacao.empresaId, produtoAntes, produtoAtualizado, contextoOperacao.groupId);
+  const { before: produtoAntes, updated: produtoAtualizado } = await updateScoped('Produto', item.produto_id, {
+    estoque_reservado: novoReservado,
+  }, contextoOperacao);
+  await auditar('Estoque', 'MovimentacaoEstoque', 'create', movimentacao.id, `Reserva por aprovacao - Pedido ${pedido.numero_pedido}`, contextoOperacao.empresaId, null, movimentacao, contextoOperacao.groupId);
+  await auditar('Estoque', 'Produto', 'update', item.produto_id, `Reserva atualizada por aprovacao - Pedido ${pedido.numero_pedido}`, contextoOperacao.empresaId, produtoAntes, produtoAtualizado, contextoOperacao.groupId);
   return movimentacao;
 }
 
@@ -461,6 +455,17 @@ async function baixarEstoqueItem(item, pedido, empresaId) {
 
   if (!produto) {
     throw new Error('Produto nao encontrado');
+  }
+
+  const movimentosExistentes = await filterScoped('MovimentacaoEstoque', {
+    origem_documento_id: pedido.id,
+    produto_id: item.produto_id,
+  }, contextoOperacao);
+  if (pedidoJaTemSaidaEstoque({ movimentos: movimentosExistentes, pedidoId: pedido.id, produtoId: item.produto_id })) {
+    return movimentosExistentes.find((mov) => {
+      const tipo = String(mov?.tipo_movimento || '').toLowerCase();
+      return tipo === 'saida' || tipo.includes('liberacao');
+    }) || { skipped: true, produto_id: item.produto_id };
   }
 
   const novoReservado = Math.max(0, (produto.estoque_reservado || 0) - item.quantidade);
@@ -731,8 +736,8 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
     onLog('🚀 Iniciando fechamento automático...', 'info');
     onProgresso(0);
 
-    // ETAPA 1: Baixar Estoque
-    onLog('📦 Processando baixa de estoque...', 'info');
+    // ETAPA 1: Reservar estoque (saida fisica somente no faturamento)
+    onLog('📦 Processando reserva de estoque...', 'info');
     try {
       const itens = [
         ...(pedido.itens_revenda || []),
@@ -743,9 +748,9 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
       for (const item of itens) {
         if (item.produto_id) {
           try {
-            const baixa = await baixarEstoqueItemAprovacao(item, pedido, contextoOperacao.empresaId);
+            const baixa = await reservarEstoqueItemAprovacao(item, pedido, contextoOperacao.empresaId);
             resultados.estoque.itens.push(baixa);
-            onLog(`✅ ${item.descricao}: ${item.quantidade} ${item.unidade} baixado(s)`, 'success');
+            onLog(`✅ ${item.descricao}: ${item.quantidade} ${item.unidade} reservado(s)`, 'success');
           } catch (error) {
             resultados.estoque.erros.push(error.message);
             onLog(`⚠️ ${item.descricao}: ${error.message}`, 'warning');
@@ -753,12 +758,12 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
         }
       }
       
-      resultados.estoque.sucesso = true;
-      onEtapaConcluida('estoque', true);
+      resultados.estoque.sucesso = resultados.estoque.erros.length === 0;
+      onEtapaConcluida('estoque', resultados.estoque.sucesso);
       onProgresso(25);
     } catch (error) {
       resultados.estoque.erros.push(error.message);
-      onLog(`❌ Erro na baixa de estoque: ${error.message}`, 'error');
+      onLog(`❌ Erro na reserva de estoque: ${error.message}`, 'error');
     }
 
     // ETAPA 2: Gerar Financeiro
@@ -854,9 +859,12 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
       onLog(`❌ Erro ao criar logística: ${error.message}`, 'error');
     }
 
-    // ETAPA 4: Atualizar Status
+    // ETAPA 4: Atualizar Status (so se reserva de estoque nao falhou)
     onLog('📝 Atualizando status do pedido...', 'info');
     try {
+      if (!resultados.estoque.sucesso) {
+        throw new Error('Reserva de estoque incompleta; pedido nao marcado como pronto para faturar.');
+      }
       const { before: pedidoAntes, updated: pedidoAtualizado } = await updateScoped('Pedido', pedido.id, {
         status: 'Pronto para Faturar',
         observacoes_internas: (pedido.observacoes_internas || '') +

@@ -182,13 +182,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
     setSalvando(true);
 
     try {
-      // V21.5: BAIXAR ESTOQUE SE STATUS FOR APROVADO (migrado para função backend)
-      if (formData.status === 'Aprovado' && formData.itens_revenda?.length > 0) {
-        await base44.functions.invoke('applyOrderStockMovements', {
-          pedido: carimbarContexto(formData, 'empresa_id')
-        });
-        toast.success('Pedido salvo e estoque baixado!');
-      }
+      // Estoque: saida fisica somente no faturamento (nao baixar ao salvar Aprovado)
       
       // ETAPA 4: Validar aprovação de desconto
       if (formData.desconto_geral_pedido_percentual > 0) {
