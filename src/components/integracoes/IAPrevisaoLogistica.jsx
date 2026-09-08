@@ -9,6 +9,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
 import usePermissions from "@/components/lib/usePermissions";
 import { createLogisticsForecastSimulation } from "./iaPrevisaoLogisticaData";
+import { requireIaHumanConfirm } from "@/components/lib/iaTransversalPolicy";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -80,7 +81,9 @@ export default function IAPrevisaoLogistica({ windowMode = false }) {
 
       setPrevisao(resultado);
 
-      await auditarPrevisao('Gerar Previsao Logistica', 'Previsao logistica gerada com escopo multiempresa.', {
+      await auditarPrevisao('Gerar Previsao Logistica', 'Previsao logistica simulada (somente sugestao).', {
+        fonte: resultado.fonte,
+        modo: resultado.modo,
         entregas_previstas: resultado.proximo_mes.entregas_previstas,
         taxa_pontualidade: resultado.proximo_mes.taxa_pontualidade,
         entregas_criticas: resultado.proximo_mes.entregas_criticas,
@@ -89,8 +92,8 @@ export default function IAPrevisaoLogistica({ windowMode = false }) {
       });
 
       toast({
-        title: "✅ Previsão Gerada!",
-        description: `${resultado.proximo_mes.entregas_previstas} entregas previstas com ${resultado.proximo_mes.taxa_pontualidade}% de pontualidade`
+        title: "Previsão simulada gerada",
+        description: `${resultado.proximo_mes.entregas_previstas} entregas previstas (fonte simulacao — nao altera operacao)`
       });
     } catch (error) {
       console.warn('Falha tecnica ao gerar previsao logistica:', error);
@@ -119,11 +122,15 @@ export default function IAPrevisaoLogistica({ windowMode = false }) {
       });
       return;
     }
-    await auditarPrevisao('Aplicar Otimizacao Logistica', 'Sugestao logistica marcada como aplicada com escopo multiempresa.', {
-      alerta_tipo: alerta?.tipo || 'desconhecido', indice
+    if (!requireIaHumanConfirm('Registrar esta sugestao simulada como aplicada neste resultado? Nao altera rotas reais.')) {
+      toast({ title: "Cancelado", description: "Sugestao nao registrada." });
+      return;
+    }
+    await auditarPrevisao('Aplicar Otimizacao Logistica', 'Sugestao simulada marcada como aplicada (sem efeito operacional).', {
+      alerta_tipo: alerta?.tipo || 'desconhecido', indice, fonte: 'simulacao', modo: 'sugestao'
     });
     setOtimizacoesAplicadas((atuais) => new Set(atuais).add(indice));
-    toast({ title: "Otimizacao Aplicada!", description: "A sugestao foi registrada neste resultado." });
+    toast({ title: "Sugestao registrada", description: "Marcacao local apenas — operacao real permanece inalterada." });
   };
 
   return (
@@ -133,6 +140,7 @@ export default function IAPrevisaoLogistica({ windowMode = false }) {
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-indigo-600" />
             IA - Previsão e Otimização Logística
+            <Badge variant="outline" className="text-amber-700 border-amber-300 bg-amber-50">Simulação</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -140,8 +148,8 @@ export default function IAPrevisaoLogistica({ windowMode = false }) {
             <div className="flex items-start gap-3">
               <Zap className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-indigo-900">
-                <p className="font-semibold mb-1">Machine Learning Preditivo</p>
-                <p>Nossa IA analisa padrões históricos de entregas para:</p>
+                <p className="font-semibold mb-1">Previsão assistida (fonte simulada até ML real)</p>
+                <p>Gera sugestões de volume, rotas e alertas sem alterar frota, rotas ou pedidos automaticamente.</p>
                 <ul className="list-disc list-inside mt-2 space-y-1">
                   <li>Prever volume de entregas futuras</li>
                   <li>Identificar rotas críticas e gargalos</li>

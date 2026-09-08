@@ -1,105 +1,145 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Sparkles, TrendingDown, Loader2, Zap } from 'lucide-react';
+import { AlertTriangle, Sparkles, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
+import {
+  assertIaUiContext,
+  buildCrmAbcChurnOportunidade,
+  buildCrmAbcChurnSuggestions,
+  requireIaHumanConfirm,
+} from '@/components/lib/iaTransversalPolicy';
 
 /**
- * V21.1 - IA de Detecção de Churn
- * Analisa clientes A/B sem movimento e cria Oportunidades
+ * IA de Detecção de Churn (CRM)
+ * Sugere oportunidades; grava somente após confirmação humana.
  */
 export default function IAChurnDetection({ clientes = [] }) {
-  const [executando, setExecutando] = useState(false);
   const [resultado, setResultado] = useState(null);
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, estaNoGrupo, createInContext, filterInContext } = useContextoVisual();
+  const { hasPermission, isAdmin, user } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const scopeType = estaNoGrupo ? 'grupo' : 'empresa';
+  const canView = isAdmin?.() || hasPermission('CRM', null, 'ver') || hasPermission('CRM', null, 'visualizar');
+  const canExecutar = isAdmin?.() || hasPermission('CRM', null, 'criar') || hasPermission('CRM', null, 'editar');
 
-  const executarAnaliseChurn = async () => {
-    setExecutando(true);
-    setResultado(null);
+  const analisarMutation = useMutation({
+    mutationFn: async () => {
+      assertIaUiContext({ groupId, empresaId, scopeType });
+      if (!canView) throw new Error('Sem permissao para analisar churn.');
+      const sugestao = buildCrmAbcChurnSuggestions({ clientes });
+      await createInContext('AuditLog', {
+        usuario: user?.full_name || user?.email || 'Sistema',
+        usuario_id: user?.id || null,
+        empresa_id: scopeType === 'grupo' ? null : empresaId,
+        group_id: groupId,
+        acao: 'Analise',
+        modulo: 'CRM',
+        entidade: 'IA_Churn_CRM',
+        descricao: 'Analise CRM de churn gerou sugestoes sem gravacao automatica',
+        dados_novos: {
+          total_analisados: sugestao.total_analisados,
+          clientes_risco: sugestao.clientes_risco,
+          modo: sugestao.modo,
+        },
+        sucesso: true,
+        data_hora: new Date().toISOString(),
+      });
+      return sugestao;
+    },
+    onSuccess: (sugestao) => {
+      setResultado(sugestao);
+      toast.success(`IA sugeriu ${sugestao.clientes_risco} clientes em risco. Confirme para gravar.`);
+    },
+    onError: (error) => toast.error(String(error?.message || error)),
+  });
 
-    try {
-      const clientesRisco = [];
-      const hoje = new Date();
-
-      // Filtrar clientes A e B sem movimento > 30 dias
-      for (const cliente of clientes) {
-        if (!cliente.classificacao_abc || !['A', 'B'].includes(cliente.classificacao_abc)) continue;
-        if (cliente.status !== 'Ativo') continue;
-
-        const diasSemCompra = cliente.dias_sem_comprar || 0;
-        const valorHistorico = cliente.valor_compras_12meses || 0;
-
-        if (diasSemCompra > 30 && valorHistorico > 5000) {
-          clientesRisco.push({
-            ...cliente,
-            motivo_risco: diasSemCompra > 90 ? 'Crítico - 90+ dias' :
-                          diasSemCompra > 60 ? 'Alto - 60+ dias' :
-                          'Médio - 30+ dias',
-            prioridade_crm: diasSemCompra > 90 ? 'Urgente' : 'Alta'
-          });
-        }
+  const gravarMutation = useMutation({
+    mutationFn: async () => {
+      assertIaUiContext({ groupId, empresaId, scopeType });
+      if (!canExecutar) throw new Error('Sem permissao para gravar oportunidades.');
+      const sugestoes = resultado?.sugestoes || [];
+      if (!sugestoes.length) throw new Error('Nenhuma sugestao para gravar.');
+      if (!requireIaHumanConfirm(`Gravar ${sugestoes.length} oportunidade(s) de churn sugeridas pela IA?`)) {
+        throw new Error('Gravacao cancelada.');
       }
 
-      // Criar oportunidades de reativação
-      const oportunidadesCriadas = [];
+      const criadas = [];
+      for (const cliente of sugestoes) {
+        const existentes = await filterInContext(
+          'Oportunidade',
+          { cliente_id: cliente.id },
+          '-created_date',
+          20
+        );
+        const aberta = (existentes || []).some((opp) =>
+          ['Aberto', 'Em Andamento', 'Nova'].includes(String(opp.status || ''))
+        );
+        if (aberta) continue;
 
-      for (const cliente of clientesRisco.slice(0, 10)) { // Limitar a 10 por execução
-        // Verificar se já existe oportunidade aberta
-        const oppExistente = await base44.entities.Oportunidade.filter({
-          cliente_id: cliente.id,
-          status: { $in: ['Aberto', 'Em Andamento'] }
-        });
-
-        if (oppExistente.length === 0) {
-          const novaOpp = await base44.entities.Oportunidade.create({
-            titulo: `⚠️ Risco Churn - ${cliente.nome_fantasia || cliente.nome}`,
-            descricao: `Cliente classe ${cliente.classificacao_abc} sem comprar há ${cliente.dias_sem_comprar} dias. Valor histórico: R$ ${cliente.valor_compras_12meses.toLocaleString('pt-BR')}`,
-            cliente_id: cliente.id,
-            cliente_nome: cliente.nome_fantasia || cliente.nome,
-            cliente_email: cliente.contatos?.find(c => c.tipo === 'Email')?.valor,
-            cliente_telefone: cliente.contatos?.find(c => c.tipo === 'WhatsApp')?.valor,
-            origem: 'IA Churn',
-            responsavel: cliente.vendedor_responsavel || 'Vendedor Principal',
-            responsavel_id: cliente.vendedor_responsavel_id,
-            etapa: 'Reativação',
-            valor_estimado: Math.round(cliente.ticket_medio || cliente.valor_compras_12meses / 12),
-            probabilidade: 40,
-            temperatura: 'Morno',
-            data_abertura: new Date().toISOString().split('T')[0],
-            data_previsao: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            status: 'Aberto',
-            score: 60,
-            proxima_acao: `Contatar cliente - Risco de churn (${cliente.dias_sem_comprar} dias sem compra)`,
-            data_proxima_acao: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            observacoes: `🤖 Criado automaticamente pela IA de Churn Detection.\n\nMotivo: ${cliente.motivo_risco}\nClassificação ABC: ${cliente.classificacao_abc}\nÚltima compra: ${new Date(cliente.data_ultima_compra).toLocaleDateString('pt-BR')}`
-          });
-
-          oportunidadesCriadas.push(novaOpp);
-        }
+        const payload = {
+          ...buildCrmAbcChurnOportunidade(cliente),
+          group_id: groupId,
+          empresa_id: scopeType === 'grupo' ? (cliente.empresa_id || empresaId) : empresaId,
+          data_abertura: new Date().toISOString().split('T')[0],
+        };
+        const nova = await createInContext('Oportunidade', payload);
+        criadas.push(nova);
       }
 
-      setResultado({
-        total_analisados: clientes.length,
-        clientes_risco: clientesRisco.length,
-        oportunidades_criadas: oportunidadesCriadas.length,
-        lista_criadas: oportunidadesCriadas
+      if (!criadas.length) {
+        throw new Error('Nenhuma oportunidade nova para gravar (ja existem abertas ou lista vazia).');
+      }
+
+      await createInContext('AuditLog', {
+        usuario: user?.full_name || user?.email || 'Sistema',
+        usuario_id: user?.id || null,
+        empresa_id: scopeType === 'grupo' ? null : empresaId,
+        group_id: groupId,
+        acao: 'Criar',
+        modulo: 'CRM',
+        entidade: 'Oportunidade',
+        descricao: 'Oportunidades de churn gravadas apos confirmacao humana',
+        dados_novos: { quantidade: criadas.length },
+        sucesso: true,
+        data_hora: new Date().toISOString(),
       });
 
+      return criadas;
+    },
+    onSuccess: (criadas) => {
+      setResultado((prev) => prev ? { ...prev, oportunidades_criadas: criadas.length, lista_criadas: criadas } : prev);
       queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
+      toast.success(`${criadas.length} oportunidade(s) gravadas.`);
+    },
+    onError: (error) => toast.error(String(error?.message || error)),
+  });
 
-      toast.success(`🧠 IA detectou ${clientesRisco.length} clientes em risco - ${oportunidadesCriadas.length} oportunidades criadas`);
+  if (!groupId || (scopeType !== 'grupo' && !empresaId)) {
+    return (
+      <Card className="border-amber-300 bg-amber-50">
+        <CardContent className="p-4 text-sm text-amber-900">
+          Selecione grupo e empresa para usar a IA de churn do CRM.
+        </CardContent>
+      </Card>
+    );
+  }
 
-    } catch (error) {
-      toast.error('Erro na análise de churn');
-      console.error(error);
-    } finally {
-      setExecutando(false);
-    }
-  };
+  if (!canView) {
+    return (
+      <Card className="border-slate-200">
+        <CardContent className="p-4 text-sm text-slate-700">
+          Sem permissão para visualizar a detecção de churn.
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="border-orange-300 bg-gradient-to-br from-orange-50 to-red-50">
@@ -109,23 +149,23 @@ export default function IAChurnDetection({ clientes = [] }) {
           IA de Detecção de Churn
         </CardTitle>
         <p className="text-sm text-orange-700 mt-1">
-          Analisa clientes A/B sem movimento e cria oportunidades automáticas de reativação
+          Analisa clientes A/B sem movimento e sugere oportunidades (grava só com confirmação)
         </p>
       </CardHeader>
       <CardContent className="p-6 space-y-4">
-        <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
+        <div className="flex items-center justify-between p-4 bg-white rounded-lg border gap-3 flex-wrap">
           <div>
-            <p className="font-semibold text-slate-900 mb-1">Executar Análise de Churn</p>
+            <p className="font-semibold text-slate-900 mb-1">Analisar risco de churn</p>
             <p className="text-xs text-slate-600">
-              Detecta clientes classe A/B com + de 30 dias sem compra
+              Detecta clientes classe A/B com + de 30 dias sem compra — modo sugestão
             </p>
           </div>
           <Button
-            onClick={executarAnaliseChurn}
-            disabled={executando}
+            onClick={() => analisarMutation.mutate()}
+            disabled={analisarMutation.isPending}
             className="bg-orange-600 hover:bg-orange-700"
           >
-            {executando ? (
+            {analisarMutation.isPending ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Analisando...
@@ -133,7 +173,7 @@ export default function IAChurnDetection({ clientes = [] }) {
             ) : (
               <>
                 <Sparkles className="w-4 h-4 mr-2" />
-                Executar IA
+                Sugerir com IA
               </>
             )}
           </Button>
@@ -143,32 +183,40 @@ export default function IAChurnDetection({ clientes = [] }) {
           <Alert className="border-green-300 bg-green-50">
             <AlertDescription>
               <div className="space-y-2">
-                <p className="font-semibold text-green-900">✅ Análise Concluída!</p>
+                <p className="font-semibold text-green-900">Análise concluída (sugestão)</p>
                 <div className="grid grid-cols-3 gap-3 text-sm">
                   <div>
-                    <p className="text-green-700">Clientes Analisados</p>
+                    <p className="text-green-700">Clientes analisados</p>
                     <p className="text-xl font-bold text-green-900">{resultado.total_analisados}</p>
                   </div>
                   <div>
-                    <p className="text-orange-700">Em Risco</p>
+                    <p className="text-orange-700">Em risco</p>
                     <p className="text-xl font-bold text-orange-600">{resultado.clientes_risco}</p>
                   </div>
                   <div>
-                    <p className="text-blue-700">Oportunidades Criadas</p>
-                    <p className="text-xl font-bold text-blue-600">{resultado.oportunidades_criadas}</p>
+                    <p className="text-blue-700">Oportunidades gravadas</p>
+                    <p className="text-xl font-bold text-blue-600">{resultado.oportunidades_criadas || 0}</p>
                   </div>
                 </div>
 
-                {resultado.oportunidades_criadas > 0 && (
-                  <div className="mt-3 p-3 bg-white rounded border">
-                    <p className="text-xs text-slate-600 mb-2">Oportunidades criadas:</p>
-                    <div className="space-y-1">
-                      {resultado.lista_criadas.slice(0, 5).map((opp, idx) => (
-                        <p key={idx} className="text-xs text-slate-700">
-                          • {opp.cliente_nome} - {opp.dias_sem_contato || 0} dias
-                        </p>
-                      ))}
-                    </div>
+                {(resultado.sugestoes || []).length > 0 && (
+                  <div className="mt-3 p-3 bg-white rounded border space-y-2">
+                    <p className="text-xs text-slate-600">Sugestões (não gravadas automaticamente):</p>
+                    {(resultado.sugestoes || []).slice(0, 5).map((item) => (
+                      <p key={item.id || item.nome} className="text-xs text-slate-700">
+                        • {item.nome_fantasia || item.nome} — {item.motivo_risco}
+                      </p>
+                    ))}
+                    {canExecutar && (
+                      <Button
+                        size="sm"
+                        className="mt-2 bg-blue-600 hover:bg-blue-700"
+                        disabled={gravarMutation.isPending || (resultado.oportunidades_criadas || 0) > 0}
+                        onClick={() => gravarMutation.mutate()}
+                      >
+                        {gravarMutation.isPending ? 'Gravando...' : 'Confirmar e gravar oportunidades'}
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>

@@ -89,3 +89,200 @@ export const buildChurnOportunidade = (cliente = {}) => ({
   responsavel_id: cliente.vendedor_responsavel_id,
   proxima_acao: 'Ligar para o cliente e entender motivo da inatividade',
 });
+
+/** Fail-closed UI guard for module IA surfaces (Gate 16 / P2). */
+export const assertIaUiContext = ({ groupId, empresaId, scopeType = 'empresa' } = {}) => {
+  if (!firstText(groupId)) {
+    throw new Error('Grupo obrigatorio para IA.');
+  }
+  if (scopeType !== 'grupo' && !firstText(empresaId)) {
+    throw new Error('Empresa obrigatoria para IA no escopo empresa.');
+  }
+  return {
+    group_id: firstText(groupId),
+    empresa_id: firstText(empresaId) || null,
+    scopeType: firstText(scopeType) || 'empresa',
+    modo: IA_MODO_SUGESTAO,
+  };
+};
+
+export const stampIaSuggestion = (payload = {}) => ({
+  ...payload,
+  modo: IA_MODO_SUGESTAO,
+  fonte: firstText(payload.fonte) || 'ia_local',
+});
+
+/**
+ * CRM ABC churn: suggest only (no create). Aligns sibling screen with Gate 16.
+ */
+export const buildCrmAbcChurnSuggestions = ({ clientes = [], limite = 10 } = {}) => {
+  const risco = (clientes || [])
+    .filter((cliente) => {
+      if (!cliente?.classificacao_abc || !['A', 'B'].includes(cliente.classificacao_abc)) return false;
+      if (String(cliente.status || 'Ativo') !== 'Ativo') return false;
+      const dias = Number(cliente.dias_sem_comprar) || 0;
+      const valorHistorico = Number(cliente.valor_compras_12meses) || 0;
+      return dias > 30 && valorHistorico > 5000;
+    })
+    .map((cliente) => {
+      const dias = Number(cliente.dias_sem_comprar) || 0;
+      const motivo_risco = dias > 90 ? 'Crítico - 90+ dias' : dias > 60 ? 'Alto - 60+ dias' : 'Médio - 30+ dias';
+      return {
+        ...cliente,
+        motivo_risco,
+        prioridade_crm: dias > 90 ? 'Urgente' : 'Alta',
+        risco_churn: dias > 90 ? 'Crítico' : dias > 60 ? 'Alto' : 'Médio',
+      };
+    })
+    .slice(0, Math.max(1, Number(limite) || 10));
+
+  return stampIaSuggestion({
+    total_analisados: (clientes || []).length,
+    clientes_risco: risco.length,
+    sugestoes: risco,
+    oportunidades_criadas: 0,
+  });
+};
+
+export const buildCrmAbcChurnOportunidade = (cliente = {}) => ({
+  titulo: `Risco Churn - ${cliente.nome_fantasia || cliente.nome || 'Cliente'}`,
+  descricao: `Sugestao de IA: cliente classe ${cliente.classificacao_abc} sem comprar ha ${cliente.dias_sem_comprar} dias. Valor historico: R$ ${Number(cliente.valor_compras_12meses || 0).toLocaleString('pt-BR')}`,
+  cliente_id: cliente.id,
+  cliente_nome: cliente.nome_fantasia || cliente.nome,
+  origem: 'IA Churn',
+  responsavel_id: cliente.vendedor_responsavel_id,
+  etapa: 'Reativação',
+  valor_estimado: Math.round(Number(cliente.ticket_medio) || Number(cliente.valor_compras_12meses || 0) / 12),
+  probabilidade: 40,
+  temperatura: 'Morno',
+  status: 'Aberto',
+  score: 60,
+  proxima_acao: `Contatar cliente - Risco de churn (${cliente.dias_sem_comprar} dias sem compra)`,
+  observacoes: `Sugestao IA (confirmada pelo usuario). Motivo: ${cliente.motivo_risco || ''}`,
+});
+
+export const buildFinanceAnomalySuggestions = ({ receber = [], pagar = [], limite = 20 } = {}) => {
+  const detectadas = [];
+  const valores = [...receber, ...pagar].map((c) => c.valor || 0).filter((v) => v > 0);
+  const media = valores.length ? valores.reduce((a, b) => a + b, 0) / valores.length : 0;
+  const desvio = valores.length
+    ? Math.sqrt(valores.map((v) => Math.pow(v - media, 2)).reduce((a, b) => a + b, 0) / valores.length)
+    : 0;
+
+  [...receber, ...pagar].forEach((conta) => {
+    if ((conta.valor || 0) > media + (3 * desvio) && desvio > 0) {
+      detectadas.push({
+        tipo: 'Valor Atípico',
+        severidade: 'alta',
+        conta,
+        descricao: `Valor R$ ${Number(conta.valor).toLocaleString('pt-BR')} e 3x acima da media (R$ ${media.toFixed(2)})`,
+        recomendacao: 'Verificar se o valor esta correto e se nao e duplicidade',
+      });
+    }
+  });
+
+  const mapa = {};
+  [...receber, ...pagar].forEach((conta) => {
+    const chave = `${conta.descricao}_${conta.valor}_${conta.data_vencimento}`;
+    if (!mapa[chave]) mapa[chave] = [];
+    mapa[chave].push(conta);
+  });
+  Object.values(mapa).forEach((grupo) => {
+    if (grupo.length > 1) {
+      detectadas.push({
+        tipo: 'Possível Duplicidade',
+        severidade: 'media',
+        conta: grupo[0],
+        descricao: `${grupo.length} titulos com descricao, valor e vencimento identicos`,
+        recomendacao: 'Verificar se nao sao lancamentos duplicados',
+        relacionados: grupo.slice(1).map((c) => c.id),
+      });
+    }
+  });
+
+  pagar.forEach((conta, idx) => {
+    if (idx > 0 && conta.fornecedor === pagar[idx - 1].fornecedor) {
+      const diff = Math.abs(
+        new Date(conta.created_date).getTime() - new Date(pagar[idx - 1].created_date).getTime()
+      ) / (1000 * 60);
+      if (diff < 5) {
+        detectadas.push({
+          tipo: 'Lançamentos Sequenciais',
+          severidade: 'baixa',
+          conta,
+          descricao: `2 lancamentos para ${conta.fornecedor} em ${Math.round(diff)} minutos`,
+          recomendacao: 'Verificar se ambos sao necessarios',
+        });
+      }
+    }
+  });
+
+  receber.forEach((conta) => {
+    const taxa = conta.detalhes_pagamento?.taxa_operadora || 0;
+    if (taxa > 5 && String(conta.forma_recebimento || '').includes('Cartão Débito')) {
+      detectadas.push({
+        tipo: 'Taxa Elevada',
+        severidade: 'media',
+        conta,
+        descricao: `Taxa de ${taxa}% em cartao debito (esperado: 1-2%)`,
+        recomendacao: 'Revisar taxa cobrada pela operadora',
+      });
+    }
+    if (taxa > 8 && String(conta.forma_recebimento || '').includes('Cartão Crédito')) {
+      detectadas.push({
+        tipo: 'Taxa Elevada',
+        severidade: 'media',
+        conta,
+        descricao: `Taxa de ${taxa}% em cartao credito (esperado: 2-5%)`,
+        recomendacao: 'Revisar taxa cobrada pela operadora',
+      });
+    }
+  });
+
+  return stampIaSuggestion({
+    anomalias: detectadas.slice(0, Math.max(1, Number(limite) || 20)),
+    fonte: 'ia_financeira_local',
+  });
+};
+
+export const buildConciliacaoMatchSuggestions = ({ extratos = [], movimentos = [] } = {}) => {
+  const matches = [];
+  let conciliados = 0;
+  let divergencias = 0;
+  const usados = new Set();
+
+  (extratos || []).forEach((extrato) => {
+    const movimentoMatch = (movimentos || []).find((mov) => {
+      if (usados.has(mov.id)) return false;
+      const diferencaValor = Math.abs(Math.abs(extrato.valor) - Math.abs(mov.valor));
+      const diferencaDias = Math.abs(
+        new Date(extrato.data_movimento).getTime() - new Date(mov.data_movimento).getTime()
+      ) / (1000 * 60 * 60 * 24);
+      return diferencaValor < 1 && diferencaDias <= 3;
+    });
+
+    if (movimentoMatch) {
+      usados.add(movimentoMatch.id);
+      const exato = Math.abs(Number(extrato.valor) - Number(movimentoMatch.valor)) < 0.01;
+      if (exato) conciliados += 1;
+      else divergencias += 1;
+      matches.push({ extrato, movimento: movimentoMatch, exato });
+    }
+  });
+
+  return stampIaSuggestion({
+    total_analisados: (extratos || []).length,
+    conciliados,
+    divergencias,
+    sem_match: (extratos || []).length - matches.length,
+    matches,
+    fonte: 'ia_conciliacao_local',
+  });
+};
+
+export const requireIaHumanConfirm = (mensagem) => {
+  if (typeof window === 'undefined' || typeof window.confirm !== 'function') {
+    return false;
+  }
+  return Boolean(window.confirm(String(mensagem || 'Confirmar aplicacao da sugestao de IA?')));
+};

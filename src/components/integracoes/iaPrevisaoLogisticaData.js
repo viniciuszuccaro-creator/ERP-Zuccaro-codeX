@@ -1,5 +1,8 @@
 export function createLogisticsForecastSimulation() {
   return {
+    modo: 'sugestao',
+    fonte: 'simulacao',
+    aviso: 'Resultado simulado. Nao altera rotas, frota nem pedidos automaticamente.',
     proximo_mes: { entregas_previstas: 287, taxa_pontualidade: 94, entregas_criticas: 12, rotas_otimizadas: 45 },
     tendencias: [
       { mes: 'Jan', entregas: 245, pontualidade: 92, criticas: 18 },

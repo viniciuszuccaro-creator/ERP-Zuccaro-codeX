@@ -1,3 +1,15 @@
+### P2.1 - IA transversal: sugestao com contexto nos modulos irmaos
+- Objetivo: cumprir P2 IA transversal de `PLANO_GO_LIVE.md` na IA existente (Gate 16+), sem criar IAV2 nem hub paralelo.
+- Diagnostico: CRM churn criava oportunidades sozinho; conciliacao aplicava sem confirmacao/contexto; anomalias sem RBAC/queryKey contextual; previsao logistica sem rotulo de simulacao; previsao de entrega sem groupId no InvokeLLM.
+- Causa raiz: contrato de sugestao/confirmacao ficava so em parte das telas (`IAChurnMonitoramento` / InvokeLLM), fora dos irmaos de modulo.
+- Arquivos alterados: `iaTransversalPolicy.js`, `IAChurnDetection.jsx`, `ConciliacaoAutomaticaIA.jsx`, `IADetectorAnomalias.jsx`, `IAPrevisaoEntrega.jsx`, `IAPrevisaoLogistica.jsx`, `iaPrevisaoLogisticaData.js`, testes.
+- Reutilizado: policy Gate 16, `useContextoVisual`, `createInContext`/`filterInContext`/`updateInContext`, InvokeLLM carimbado.
+- Alteracoes: helpers CRM/financeiro/conciliacao; gravacao so com `requireIaHumanConfirm`; fail-closed de contexto/RBAC; simulacao logistica marcada; previsao de entrega com grupo/empresa.
+- Multiempresa/RBAC: consultas e auditoria no escopo; sem grupo/empresa ou permissao bloqueia.
+- Pendencia: provedor LLM real; ML logistico real no lugar da simulacao; demais telas IA (upsell, recompra, leads) ainda a alinhar.
+- Validacoes: `node --test tests/ia-transversal-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P2: Agentes especializados (reforcar heranca RBAC/confirmacao nos agentes restantes).
+
 ### P1.9 - Dashboards avancados: KPIs confiaveis, contexto e drill-down
 - Objetivo: cumprir P1 Dashboards avancados de `PLANO_GO_LIVE.md` nos dashboards existentes, sem DashboardV2.
 - Diagnostico: totais pela primeira pagina/lista capped; queryKeys sem usuario+grupo+empresa; BI com serie de vendas mock; PainelMetricasRealtime global; meta fixa 20/50000.

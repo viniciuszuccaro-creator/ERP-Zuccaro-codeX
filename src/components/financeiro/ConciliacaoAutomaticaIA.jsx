@@ -4,70 +4,69 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Sparkles, Zap, CheckCircle2, AlertTriangle, TrendingUp, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
+import {
+  assertIaUiContext,
+  buildConciliacaoMatchSuggestions,
+  requireIaHumanConfirm,
+} from '@/components/lib/iaTransversalPolicy';
 
-export default function ConciliacaoAutomaticaIA({ empresaId }) {
+export default function ConciliacaoAutomaticaIA({ empresaId: empresaIdProp }) {
   const queryClient = useQueryClient();
   const [processando, setProcessando] = useState(false);
   const [resultados, setResultados] = useState(null);
+  const { empresaAtual, grupoAtual, estaNoGrupo, filterInContext, updateInContext, createInContext } = useContextoVisual();
+  const { hasPermission, isAdmin, user } = usePermissions();
+
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaIdProp || empresaAtual?.id || null;
+  const scopeType = estaNoGrupo && !empresaIdProp ? 'grupo' : 'empresa';
+  const contextoValido = Boolean(groupId && (scopeType === 'grupo' || empresaId));
+  const canView = isAdmin?.() || hasPermission('Financeiro', null, 'ver') || hasPermission('Financeiro', null, 'visualizar');
+  const canExecutar = isAdmin?.() || hasPermission('Financeiro', 'Conciliacao', 'editar') || hasPermission('Financeiro', null, 'editar');
 
   const { data: extratos = [] } = useQuery({
-    queryKey: ['extratos-pendentes', empresaId],
-    queryFn: () => empresaId 
-      ? base44.entities.ExtratoBancario.filter({ empresa_id: empresaId, conciliado: false })
-      : base44.entities.ExtratoBancario.filter({ conciliado: false }),
+    queryKey: ['extratos-pendentes', groupId, empresaId, scopeType],
+    queryFn: () => filterInContext('ExtratoBancario', { conciliado: false }, '-data_movimento', 500),
+    enabled: contextoValido && canView,
   });
 
   const { data: movimentos = [] } = useQuery({
-    queryKey: ['movimentos-nao-conciliados', empresaId],
-    queryFn: () => empresaId
-      ? base44.entities.CaixaMovimento.filter({ empresa_id: empresaId, conciliado: false })
-      : base44.entities.CaixaMovimento.filter({ conciliado: false }),
+    queryKey: ['movimentos-nao-conciliados', groupId, empresaId, scopeType],
+    queryFn: () => filterInContext('CaixaMovimento', { conciliado: false }, '-data_movimento', 500),
+    enabled: contextoValido && canView,
   });
 
   const executarConciliacaoIA = async () => {
-    setProcessando(true);
     try {
-      // Simular processamento IA
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      const matches = [];
-      let conciliados = 0;
-      let divergencias = 0;
-
-      extratos.forEach(extrato => {
-        const movimentoMatch = movimentos.find(mov => {
-          const diferencaValor = Math.abs(Math.abs(extrato.valor) - Math.abs(mov.valor));
-          const diferencaDias = Math.abs(
-            new Date(extrato.data_movimento).getTime() - new Date(mov.data_movimento).getTime()
-          ) / (1000 * 60 * 60 * 24);
-
-          return diferencaValor < 1 && diferencaDias <= 3;
-        });
-
-        if (movimentoMatch) {
-          if (Math.abs(extrato.valor - movimentoMatch.valor) < 0.01) {
-            conciliados++;
-          } else {
-            divergencias++;
-          }
-          matches.push({ extrato, movimento: movimentoMatch, exato: Math.abs(extrato.valor - movimentoMatch.valor) < 0.01 });
-        }
+      assertIaUiContext({ groupId, empresaId, scopeType });
+      if (!canExecutar) throw new Error('Sem permissao para executar conciliacao assistida.');
+      setProcessando(true);
+      const sugestao = buildConciliacaoMatchSuggestions({ extratos, movimentos });
+      setResultados(sugestao);
+      await createInContext('AuditLog', {
+        usuario: user?.full_name || user?.email || 'Sistema',
+        usuario_id: user?.id || null,
+        empresa_id: scopeType === 'grupo' ? null : empresaId,
+        group_id: groupId,
+        acao: 'Analise',
+        modulo: 'Financeiro',
+        entidade: 'ConciliacaoIA',
+        descricao: 'IA gerou sugestoes de conciliacao sem aplicar automaticamente',
+        dados_novos: {
+          total_analisados: sugestao.total_analisados,
+          conciliados: sugestao.conciliados,
+          modo: sugestao.modo,
+        },
+        sucesso: true,
+        data_hora: new Date().toISOString(),
       });
-
-      setResultados({
-        total_analisados: extratos.length,
-        conciliados,
-        divergencias,
-        sem_match: extratos.length - matches.length,
-        matches
-      });
-
-      toast.success(`✅ IA processou ${extratos.length} extratos - ${conciliados} matches exatos!`);
+      toast.success(`IA sugeriu ${sugestao.conciliados} matches exatos. Confirme para aplicar.`);
     } catch (error) {
-      toast.error('Erro ao processar IA: ' + error.message);
+      toast.error(String(error?.message || error));
     } finally {
       setProcessando(false);
     }
@@ -75,52 +74,91 @@ export default function ConciliacaoAutomaticaIA({ empresaId }) {
 
   const aplicarConciliacoes = useMutation({
     mutationFn: async () => {
-      for (const match of resultados.matches.filter(m => m.exato)) {
-        await base44.entities.ExtratoBancario.update(match.extrato.id, {
+      assertIaUiContext({ groupId, empresaId, scopeType });
+      if (!canExecutar) throw new Error('Sem permissao para aplicar conciliacao.');
+      const matchesExatos = (resultados?.matches || []).filter((m) => m.exato);
+      if (!matchesExatos.length) throw new Error('Nenhum match exato para aplicar.');
+      if (!requireIaHumanConfirm(`Aplicar ${matchesExatos.length} conciliacao(oes) sugeridas pela IA?`)) {
+        throw new Error('Aplicacao cancelada.');
+      }
+
+      for (const match of matchesExatos) {
+        await updateInContext('ExtratoBancario', match.extrato.id, {
           conciliado: true,
           movimento_vinculado_id: match.movimento.id,
-          data_conciliacao: new Date().toISOString()
+          data_conciliacao: new Date().toISOString(),
         });
-
-        await base44.entities.CaixaMovimento.update(match.movimento.id, {
+        await updateInContext('CaixaMovimento', match.movimento.id, {
           conciliado: true,
-          extrato_vinculado_id: match.extrato.id
+          extrato_vinculado_id: match.extrato.id,
         });
-
-        await base44.entities.ConciliacaoBancaria.create({
-          empresa_id: match.extrato.empresa_id,
+        await createInContext('ConciliacaoBancaria', {
+          empresa_id: match.extrato.empresa_id || empresaId,
+          group_id: groupId,
           extrato_bancario_id: match.extrato.id,
           movimento_caixa_id: match.movimento.id,
           data_conciliacao: new Date().toISOString(),
           valor_extrato: match.extrato.valor,
           valor_movimento: match.movimento.valor,
+          valor_diferencia: 0,
           valor_diferenca: 0,
           tem_divergencia: false,
           status: 'conciliado',
           conciliado_por_ia: true,
-          observacoes: 'Conciliação automática via IA'
+          observacoes: 'Conciliacao assistida por IA (confirmada pelo usuario)',
         });
       }
+
+      await createInContext('AuditLog', {
+        usuario: user?.full_name || user?.email || 'Sistema',
+        usuario_id: user?.id || null,
+        empresa_id: scopeType === 'grupo' ? null : empresaId,
+        group_id: groupId,
+        acao: 'Conciliar',
+        modulo: 'Financeiro',
+        entidade: 'ConciliacaoBancaria',
+        descricao: 'Conciliacoes aplicadas apos confirmacao humana',
+        dados_novos: { quantidade: matchesExatos.length },
+        sucesso: true,
+        data_hora: new Date().toISOString(),
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['extratos-pendentes']);
-      queryClient.invalidateQueries(['movimentos-nao-conciliados']);
-      queryClient.invalidateQueries(['conciliacoes-bancarias']);
-      toast.success('✅ Conciliações aplicadas com sucesso!');
+      queryClient.invalidateQueries({ queryKey: ['extratos-pendentes'] });
+      queryClient.invalidateQueries({ queryKey: ['movimentos-nao-conciliados'] });
+      queryClient.invalidateQueries({ queryKey: ['conciliacoes-bancarias'] });
+      toast.success('Conciliacoes aplicadas com sucesso.');
       setResultados(null);
-    }
+    },
+    onError: (error) => toast.error(String(error?.message || error)),
   });
 
+  if (!contextoValido) {
+    return (
+      <div className="p-4 rounded-lg border border-amber-200 bg-amber-50 text-amber-900 text-sm">
+        Selecione grupo e empresa para usar a conciliacao assistida por IA.
+      </div>
+    );
+  }
+
+  if (!canView) {
+    return (
+      <div className="p-4 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 text-sm">
+        Sem permissao para visualizar conciliacao assistida.
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50">
         <CardHeader className="bg-purple-100/50 border-b border-purple-200">
           <CardTitle className="flex items-center gap-2 text-purple-900">
             <Sparkles className="w-6 h-6" />
-            Motor de Conciliação Automática com IA
+            Motor de Conciliação Assistida com IA
           </CardTitle>
           <p className="text-sm text-purple-700 mt-1">
-            Pareamento inteligente por valor, data e padrões de descrição
+            Pareamento inteligente por valor e data — aplica somente após confirmação
           </p>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
@@ -135,9 +173,9 @@ export default function ConciliacaoAutomaticaIA({ empresaId }) {
             </div>
           </div>
 
-          <Button 
+          <Button
             onClick={executarConciliacaoIA}
-            disabled={processando || extratos.length === 0}
+            disabled={processando || extratos.length === 0 || !canExecutar}
             className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
             size="lg"
           >
@@ -149,7 +187,7 @@ export default function ConciliacaoAutomaticaIA({ empresaId }) {
             ) : (
               <>
                 <Sparkles className="w-5 h-5 mr-2" />
-                Executar Conciliação Automática
+                Sugerir Conciliação Assistida
               </>
             )}
           </Button>
@@ -170,7 +208,7 @@ export default function ConciliacaoAutomaticaIA({ empresaId }) {
           <CardHeader className="bg-green-50 border-b border-green-200">
             <CardTitle className="flex items-center gap-2 text-green-900">
               <TrendingUp className="w-5 h-5" />
-              Resultados da IA
+              Resultados da IA (sugestão)
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
@@ -202,7 +240,7 @@ export default function ConciliacaoAutomaticaIA({ empresaId }) {
                       <div className="flex-1">
                         <p className="font-medium text-sm">{match.extrato.descricao}</p>
                         <p className="text-xs text-slate-600 mt-1">
-                          Extrato: R$ {Math.abs(match.extrato.valor).toFixed(2)} • 
+                          Extrato: R$ {Math.abs(match.extrato.valor).toFixed(2)} •
                           Movimento: R$ {Math.abs(match.movimento.valor).toFixed(2)}
                         </p>
                       </div>
@@ -228,7 +266,7 @@ export default function ConciliacaoAutomaticaIA({ empresaId }) {
               </div>
             )}
 
-            {resultados.conciliados > 0 && (
+            {resultados.conciliados > 0 && canExecutar && (
               <Button
                 onClick={() => aplicarConciliacoes.mutate()}
                 disabled={aplicarConciliacoes.isPending}
@@ -236,7 +274,7 @@ export default function ConciliacaoAutomaticaIA({ empresaId }) {
                 size="lg"
               >
                 <CheckCircle2 className="w-5 h-5 mr-2" />
-                Aplicar {resultados.conciliados} Conciliações Automáticas
+                Confirmar e aplicar {resultados.conciliados} conciliações
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             )}
