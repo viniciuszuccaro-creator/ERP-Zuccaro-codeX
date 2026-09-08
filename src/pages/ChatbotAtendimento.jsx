@@ -25,7 +25,7 @@ import { toast } from "sonner";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
-import { resolveSessaoEstavel } from "@/components/lib/atendimentoConversaPolicy";
+import { buildEscalarParaHub, resolveSessaoEstavel } from "@/components/lib/atendimentoConversaPolicy";
 
 /**
  * V21.6 - Chatbot ERP-Cêntrico - 100% COMPLETO
@@ -41,7 +41,7 @@ export default function ChatbotAtendimento() {
   const [clienteAutenticado, setClienteAutenticado] = useState(null);
   const [vendedorAtendendo, setVendedorAtendendo] = useState(null);
   const queryClient = useQueryClient();
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
   const { hasPermission, isAdmin } = usePermissions();
 
   // V21.1: Buscar intents configurados
@@ -243,7 +243,7 @@ export default function ChatbotAtendimento() {
       categoria: 'Comercial',
       prioridade: 'Urgente',
       destinatario_id: vendedorId,
-      link_acao: `/chatbot-atendimento?sessao=${sessaoAtual}`,
+      link_acao: `/HubAtendimento`,
       dados_adicionais: { 
         tag: '#TRANSBORDO_CHATBOT',
         sessao_id: sessaoAtual,
@@ -251,6 +251,29 @@ export default function ChatbotAtendimento() {
         verificacao_permissao: true
       }
     });
+
+    if (empresaAtual?.id) {
+      try {
+        const escalado = buildEscalarParaHub({
+          sessaoId: sessaoAtual,
+          empresaId: empresaAtual.id,
+          groupId: grupoAtual?.id || empresaAtual.group_id || empresaAtual.grupo_id,
+          canal: 'Portal',
+          cliente: clienteAutenticado,
+          mensagem: msg,
+          sentimento,
+        });
+        const conversa = await createInContext('ConversaOmnicanal', escalado.conversa);
+        if (escalado.mensagem) {
+          await createInContext('MensagemOmnicanal', {
+            ...escalado.mensagem,
+            conversa_id: conversa.id,
+          });
+        }
+      } catch (error) {
+        console.error('Falha ao gravar conversa no Hub no transbordo:', error);
+      }
+    }
 
     setVendedorAtendendo(vendedorDestino);
     toast.error(`🚨 Cliente ${sentimento.tipo} - Transferindo para ${vendedorDestino}`);

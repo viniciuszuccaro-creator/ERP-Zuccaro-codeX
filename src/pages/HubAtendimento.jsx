@@ -51,6 +51,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
+import { buildAssumirConversa, buildFecharConversa } from "@/components/lib/atendimentoConversaPolicy";
 
 const ChatbotDashboard = React.lazy(() => import("@/components/chatbot/ChatbotDashboard"));
 const ConfiguracaoCanais = React.lazy(() => import("@/components/chatbot/ConfiguracaoCanais"));
@@ -321,36 +322,40 @@ export default function HubAtendimento() {
       if (!contextoValido || !podeEditarAtendimento) {
         throw new Error('Selecione grupo/empresa e confirme permissao antes de assumir conversa.');
       }
-      const atual = conversaSelecionada?.id === conversaId ? conversaSelecionada : null;
+      const atual = conversaSelecionada?.id === conversaId
+        ? conversaSelecionada
+        : (conversas || []).find((item) => item.id === conversaId);
+      if (!atual) throw new Error('Conversa nao encontrada no contexto.');
       if (atual?.atendente_id && atual.atendente_id !== user.id && !podeVerTodasConversas) {
         throw new Error('Conversa ja atribuida a outro atendente.');
       }
-      if (atual?.empresa_id && empresaAtual?.id && atual.empresa_id !== empresaAtual.id) {
-        throw new Error('Conversa de outra empresa.');
+      const decision = buildAssumirConversa({
+        conversa: atual,
+        user,
+        empresaId: empresaAtual?.id,
+      });
+      if (!decision.reuse) {
+        await updateInContext('ConversaOmnicanal', conversaId, decision.patch);
+        await createInContext('AuditLog', {
+          empresa_id: atual?.empresa_id || empresaAtual?.id,
+          group_id: atual?.group_id || grupoAtual?.id,
+          usuario: user?.full_name || user?.email,
+          usuario_id: user?.id,
+          acao: 'Edicao',
+          modulo: 'Atendimento',
+          entidade: 'ConversaOmnicanal',
+          registro_id: conversaId,
+          descricao: 'Conversa assumida por atendente humano',
+          dados_anteriores: { status: atual.status, atendente_id: atual.atendente_id },
+          dados_novos: decision.patch,
+          data_hora: new Date().toISOString(),
+          sucesso: true
+        });
       }
-      await updateInContext('ConversaOmnicanal', conversaId, {
-        atendente_id: user.id,
-        atendente_nome: user.full_name,
-        status: 'Em Progresso',
-        tipo_atendimento: 'Humano',
-        transferido_em: new Date().toISOString()
-      });
-      await createInContext('AuditLog', {
-        empresa_id: atual?.empresa_id || empresaAtual?.id,
-        group_id: atual?.group_id || grupoAtual?.id,
-        usuario: user?.full_name || user?.email,
-        usuario_id: user?.id,
-        acao: 'Edicao',
-        modulo: 'Atendimento',
-        entidade: 'ConversaOmnicanal',
-        registro_id: conversaId,
-        descricao: 'Conversa assumida por atendente humano',
-        data_hora: new Date().toISOString(),
-        sucesso: true
-      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversas-omnicanal'] });
+      queryClient.invalidateQueries({ queryKey: ['fila-espera'] });
       toast.success("Conversa assumida!");
     },
     onError: (error) => {
@@ -364,14 +369,37 @@ export default function HubAtendimento() {
       if (!contextoValido || !podeEditarAtendimento) {
         throw new Error('Selecione grupo/empresa e confirme permissao antes de resolver conversa.');
       }
-      await updateInContext('ConversaOmnicanal', conversaId, {
-        status: 'Resolvida',
-        resolvido: true,
-        data_finalizacao: new Date().toISOString()
+      const atual = conversaSelecionada?.id === conversaId
+        ? conversaSelecionada
+        : (conversas || []).find((item) => item.id === conversaId);
+      if (!atual) throw new Error('Conversa nao encontrada no contexto.');
+      const decision = buildFecharConversa({
+        conversa: atual,
+        user,
+        empresaId: empresaAtual?.id,
       });
+      if (!decision.reuse) {
+        await updateInContext('ConversaOmnicanal', conversaId, decision.patch);
+        await createInContext('AuditLog', {
+          empresa_id: atual?.empresa_id || empresaAtual?.id,
+          group_id: atual?.group_id || grupoAtual?.id,
+          usuario: user?.full_name || user?.email,
+          usuario_id: user?.id,
+          acao: 'Edicao',
+          modulo: 'Atendimento',
+          entidade: 'ConversaOmnicanal',
+          registro_id: conversaId,
+          descricao: 'Conversa resolvida no Hub de Atendimento',
+          dados_anteriores: { status: atual.status, resolvido: atual.resolvido },
+          dados_novos: decision.patch,
+          data_hora: new Date().toISOString(),
+          sucesso: true
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversas-omnicanal'] });
+      queryClient.invalidateQueries({ queryKey: ['fila-espera'] });
       setConversaSelecionada(null);
       toast.success("Conversa resolvida!");
     },

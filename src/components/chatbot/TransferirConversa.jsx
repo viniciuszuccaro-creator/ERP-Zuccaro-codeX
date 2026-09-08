@@ -16,6 +16,7 @@ import {
 import { toast } from 'sonner';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
+import { buildTransferirConversa } from '@/components/lib/atendimentoConversaPolicy';
 
 /**
  * V21.6 - TRANSFERIR CONVERSA
@@ -70,50 +71,30 @@ export default function TransferirConversa({ conversa, onTransferido }) {
         throw new Error('Usuario sem permissao para transferir conversa.');
       }
 
-      const updates = {
-        ...contextoPayload,
-        status: tipo === 'fila' ? 'Não Atribuída' : 'Aguardando',
-        transferido_em: new Date().toISOString(),
-        transferido_por: user?.id,
-        motivo_transferencia: nota || 'Transferência manual',
-        observacoes_internas: nota 
-          ? `${conversa.observacoes_internas || ''}\n[${new Date().toLocaleString('pt-BR')}] Transferido por ${user?.full_name}: ${nota}`
-          : conversa.observacoes_internas
-      };
-
-      if (tipo === 'atendente') {
-        const atendente = atendentes.find(a => a.id === destinoId);
-        updates.atendente_id = destinoId;
-        updates.atendente_nome = atendente?.full_name;
-      } else if (tipo === 'departamento') {
-        updates.departamento = destinoId;
-        updates.atendente_id = null;
-        updates.atendente_nome = null;
-      } else {
-        updates.atendente_id = null;
-        updates.atendente_nome = null;
-        updates.departamento = null;
-      }
-
-      await updateInContext('ConversaOmnicanal', conversa.id, updates);
-
-      // Criar mensagem de sistema
-      await createInContext('MensagemOmnicanal', {
-        ...contextoPayload,
-        conversa_id: conversa.id,
-        sessao_id: conversa.sessao_id,
-        canal: conversa.canal,
-        tipo_remetente: 'Sistema',
-        remetente_nome: 'Sistema',
-        mensagem: tipo === 'atendente' 
-          ? `Conversa transferida para ${atendentes.find(a => a.id === destinoId)?.full_name}`
-          : tipo === 'departamento'
-          ? `Conversa transferida para o departamento ${destinoId}`
-          : 'Conversa retornada para a fila geral',
-        tipo_conteudo: 'texto',
-        data_envio: new Date().toISOString(),
-        interno: true
+      const atendente = tipo === 'atendente' ? atendentes.find(a => a.id === destinoId) : null;
+      const decision = buildTransferirConversa({
+        conversa,
+        user,
+        tipo,
+        destinoId,
+        destinoNome: atendente?.full_name,
+        departamento: destinoId,
+        nota,
+        empresaId,
       });
+
+      if (!decision.reuse) {
+        await updateInContext('ConversaOmnicanal', conversa.id, {
+          ...contextoPayload,
+          ...decision.patch,
+        });
+        if (decision.systemMessage) {
+          await createInContext('MensagemOmnicanal', {
+            ...contextoPayload,
+            ...decision.systemMessage,
+          });
+        }
+      }
 
       // Notificar novo atendente
       if (tipo === 'atendente' && destinoId) {
@@ -139,14 +120,25 @@ export default function TransferirConversa({ conversa, onTransferido }) {
         entidade: 'ConversaOmnicanal',
         registro_id: conversa.id,
         descricao: `Conversa transferida para ${tipo}`,
-        dados_anteriores: conversa,
-        dados_novos: { ...updates, tipo_transferencia: tipo, destino_id: destinoId || null },
+        dados_anteriores: {
+          status: conversa.status,
+          atendente_id: conversa.atendente_id,
+          departamento: conversa.departamento,
+        },
+        dados_novos: {
+          ...decision.patch,
+          tipo_transferencia: tipo,
+          destino_id: destinoId || null,
+        },
         data_hora: new Date().toISOString()
       });
+
+      return decision;
     },
     onSuccess: () => {
       toast.success('Conversa transferida!');
       queryClient.invalidateQueries({ queryKey: ['conversas-omnicanal'] });
+      queryClient.invalidateQueries({ queryKey: ['fila-espera'] });
       onTransferido?.();
     },
     onError: (error) => {

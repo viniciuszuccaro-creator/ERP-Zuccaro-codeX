@@ -18,10 +18,10 @@ import { ingestCanalExterno } from '@/components/lib/atendimentoConversaPolicy';
  * ✅ Layout responsivo w-full h-full
  */
 export default function WebhooksTester({ canalConfig }) {
-  const [payload, setPayload] = useState('{\n  "type": "message",\n  "text": "Teste"\n}');
+  const [payload, setPayload] = useState('{\n  "type": "message",\n  "text": "Teste",\n  "from": "11999990000",\n  "name": "Cliente Teste"\n}');
   const [resposta, setResposta] = useState(null);
   const { hasPermission, isAdmin } = usePermissions();
-  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext, filterInContext } = useContextoVisual();
   const contextKey = empresaAtual?.id || grupoAtual?.id || 'sem-contexto';
   const contextoValido = contextKey !== 'sem-contexto';
   const canTestWebhook = isAdmin() ||
@@ -50,11 +50,13 @@ export default function WebhooksTester({ canalConfig }) {
       const data = JSON.parse(payload);
       const empresaId = empresaAtual?.id || canalConfig?.empresa_id || null;
       const groupId = grupoAtual?.id || canalConfig?.group_id || null;
+      const configs = await filterInContext('ConfiguracaoCanal', {}, 'canal', 100);
       const inbound = ingestCanalExterno({
         payload: data,
-        canal: canalConfig?.canal || 'WhatsApp',
+        canal: canalConfig?.canal || data.canal || 'WhatsApp',
         empresaId,
         groupId,
+        configs,
       });
       const conversa = await createInContext('ConversaOmnicanal', inbound.conversa);
       const mensagem = await createInContext('MensagemOmnicanal', {
@@ -80,7 +82,7 @@ export default function WebhooksTester({ canalConfig }) {
     },
     onError: (error) => {
       setResposta({ success: false, error: error.message });
-      toast.error('Erro ao testar webhook');
+      toast.error(error?.message || 'Erro ao testar webhook');
     }
   });
 
@@ -96,7 +98,7 @@ export default function WebhooksTester({ canalConfig }) {
         <div>
           <p className="text-sm text-slate-600 mb-2">URL do Webhook:</p>
           <Input
-            value={canalConfig?.webhook_url || 'Não configurado'}
+            value={canalConfig?.webhook_url || 'local-ingest (sem URL externa)'}
             disabled
             className="font-mono text-xs"
           />
@@ -114,7 +116,7 @@ export default function WebhooksTester({ canalConfig }) {
 
         <Button
           onClick={() => testarMutation.mutate()}
-          disabled={testarMutation.isPending || !canalConfig?.webhook_url || !contextoValido || !canTestWebhook}
+          disabled={testarMutation.isPending || !contextoValido || !canTestWebhook}
           className="w-full bg-blue-600"
           data-action="WebhooksTester.testarWebhook"
           data-permission="Sistema.Integracoes.executar"

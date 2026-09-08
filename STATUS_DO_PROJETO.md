@@ -1,3 +1,15 @@
+### P1.6 - Chatbot omnichannel: ciclo de vida, canal e fila
+- Objetivo: cumprir P1 Chatbot omnichannel de `PLANO_GO_LIVE.md` no Hub/chatbot existentes, sem terceiro centro de atendimento.
+- Diagnostico: Gate 12 cobria ingresso; assumir/transferir/fechar e escala ficavam ad-hoc; canal inativo ainda ingeria; fila so listava `Aguardando` sem Assumir; transbordo do chatbot so criava Notificacao.
+- Causa raiz: ciclo de vida omnicanal fora de `atendimentoConversaPolicy`.
+- Arquivos alterados: `atendimentoConversaPolicy.js`, `HubAtendimento.jsx`, `TransferirConversa.jsx`, `ChatbotFilaEspera.jsx`, `WebhooksTester.jsx`, `ChatbotAtendimento.jsx`, testes.
+- Reutilizado: `ConversaOmnicanal`, `MensagemOmnicanal`, Hub, fila, webhook tester e chatbot ja existentes.
+- Alteracoes: canal ativo fail-closed na ingestao; assumir/transferir/fechar idempotentes; fila unificada com prioridade e Assumir; transbordo grava conversa `Aguardando` no Hub; webhook local sem exigir URL externa.
+- Multiempresa: operacoes exigem empresa; updates preservam contexto.
+- Pendencia: Instagram/Messenger/Telegram reais e roteamento automatico por regra ainda dependem do provedor externo; Integracao total do site e o proximo P1.
+- Validacoes: `node --test tests/atendimento-conversa-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P1: Integracao total do site.
+
 ### P1.5 - Portal do Cliente completo: PIX e segunda via operacional
 - Objetivo: cumprir P1 Portal do Cliente completo de `PLANO_GO_LIVE.md` no portal existente, sem portal paralelo.
 - Diagnostico: Gate 13 cobria sessao/isolamento; boletos ainda invocavam `emitirBoleto` quebrado; sem PIX copia-cola nem 2ª via idempotente; documentos e saldo sem carimbo unico de escopo.
