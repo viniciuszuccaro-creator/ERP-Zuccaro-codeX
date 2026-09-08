@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileText, Download, Search, CreditCard, Eye, Calendar } from 'lucide-react';
+import { toast } from 'sonner';
+import {
+  applyPortalReadScope,
+  buildPortalDocumentoLinks,
+  buildSegundaViaPortal,
+  filtrarTitulosPortal,
+  resolvePortalClienteId,
+} from '@/components/lib/portalClientePolicy';
 
 /**
  * V21.5 - Documentos & Boletos COMPLETO
@@ -18,36 +26,64 @@ import { FileText, Download, Search, CreditCard, Eye, Calendar } from 'lucide-re
  */
 export default function DocumentosCliente() {
   const [searchTerm, setSearchTerm] = useState('');
+  const qc = useQueryClient();
 
-  const { data: notasFiscais = [], isLoading: loadingNFe } = useQuery({
-    queryKey: ['minhas-nfes'],
+  const { data: contexto = {}, isLoading: loadingCtx } = useQuery({
+    queryKey: ['portal-docs-contexto'],
     queryFn: async () => {
       const user = await base44.auth.me();
       const clientes = await base44.entities.Cliente.filter({ portal_usuario_id: user.id });
-      const cliente = clientes[0];
-      
-      if (!cliente) return [];
-      
-      return await base44.entities.NotaFiscal.filter({ 
-        cliente_fornecedor_id: cliente.id 
+      const cliente = clientes[0] || null;
+      return { user, cliente, clienteId: resolvePortalClienteId(clientes, user) };
+    },
+  });
+
+  const cliente = contexto.cliente;
+  const clienteId = contexto.clienteId;
+
+  const { data: notasFiscais = [], isLoading: loadingNFe } = useQuery({
+    queryKey: ['minhas-nfes', clienteId],
+    enabled: !!clienteId,
+    queryFn: async () => {
+      const list = await base44.entities.NotaFiscal.filter({
+        cliente_fornecedor_id: clienteId,
       }, '-data_emissao', 100);
+      return applyPortalReadScope({
+        entityName: 'NotaFiscal',
+        portalClienteId: clienteId,
+        records: list.map((item) => ({ ...item, cliente_id: item.cliente_id || item.cliente_fornecedor_id })),
+      });
     },
   });
 
   const { data: contasReceber = [], isLoading: loadingBoletos } = useQuery({
-    queryKey: ['meus-boletos'],
+    queryKey: ['meus-boletos', clienteId],
+    enabled: !!clienteId,
     queryFn: async () => {
-      const user = await base44.auth.me();
-      const clientes = await base44.entities.Cliente.filter({ portal_usuario_id: user.id });
-      const cliente = clientes[0];
-      
-      if (!cliente) return [];
-      
-      return await base44.entities.ContaReceber.filter({ 
-        cliente_id: cliente.id,
-        visivel_no_portal: true 
-      }, '-data_vencimento', 100);
+      const list = await base44.entities.ContaReceber.filter({ cliente_id: clienteId }, '-data_vencimento', 100);
+      return filtrarTitulosPortal(list, clienteId);
     },
+  });
+
+  const emitirSegundaVia = useMutation({
+    mutationFn: async (titulo) => {
+      const decision = buildSegundaViaPortal({ titulo, cliente });
+      if (decision.reuse) return decision.record;
+      return base44.entities.ContaReceber.update(titulo.id, {
+        visivel_no_portal: decision.record.visivel_no_portal,
+        url_boleto_pdf: decision.record.url_boleto_pdf,
+        linha_digitavel: decision.record.linha_digitavel,
+        pix_copia_cola: decision.record.pix_copia_cola,
+        portal_segunda_via_em: decision.record.portal_segunda_via_em,
+        portal_segunda_via_key: decision.record.portal_segunda_via_key,
+        idempotency_key: decision.record.idempotency_key,
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['meus-boletos', clienteId] });
+      toast.success('2ª via / PIX gerados');
+    },
+    onError: (error) => toast.error(error?.message || 'Falha na 2ª via'),
   });
 
   const statusColorBoleto = {
@@ -58,29 +94,36 @@ export default function DocumentosCliente() {
   };
 
   const handleDownloadNFe = async (nfe) => {
-    if (nfe.xml_url) {
-      window.open(nfe.xml_url, '_blank');
-    } else {
-      alert('XML não disponível');
+    try {
+      const links = buildPortalDocumentoLinks({ nfe, clienteId });
+      if (links.xml) window.open(links.xml, '_blank');
+      else toast.error('XML nao disponivel');
+    } catch (error) {
+      toast.error(error?.message || 'Download bloqueado');
     }
   };
 
   const handleVisualizarBoleto = (conta) => {
-    if (conta.url_boleto_pdf) {
+    if (conta.url_boleto_pdf && !String(conta.url_boleto_pdf).startsWith('portal://')) {
       window.open(conta.url_boleto_pdf, '_blank');
     } else if (conta.linha_digitavel) {
-      alert(`Linha Digitável: ${conta.linha_digitavel}`);
+      toast.message(`Linha digitavel: ${conta.linha_digitavel}`);
     } else {
-      alert('Boleto não disponível');
+      emitirSegundaVia.mutate(conta);
     }
   };
 
-  const handleCopiarPix = (conta) => {
-    if (conta.pix_copia_cola) {
-      navigator.clipboard.writeText(conta.pix_copia_cola);
-      alert('Código PIX copiado!');
-    } else {
-      alert('PIX não disponível');
+  const handleCopiarPix = async (conta) => {
+    try {
+      let pix = conta.pix_copia_cola;
+      if (!pix) {
+        const updated = await emitirSegundaVia.mutateAsync(conta);
+        pix = updated.pix_copia_cola;
+      }
+      await navigator.clipboard.writeText(pix);
+      toast.success('Codigo PIX copiado');
+    } catch (error) {
+      toast.error(error?.message || 'PIX nao disponivel');
     }
   };
 
@@ -93,6 +136,14 @@ export default function DocumentosCliente() {
     conta.numero_documento?.includes(searchTerm) ||
     conta.descricao?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (loadingCtx) {
+    return <div className="p-6 text-sm text-slate-500">Carregando documentos do portal...</div>;
+  }
+
+  if (!clienteId) {
+    return <div className="p-6 text-sm text-amber-700">Usuario sem vinculo de cliente no portal.</div>;
+  }
 
   return (
     <div className="space-y-6 w-full h-full">
@@ -232,28 +283,25 @@ export default function DocumentosCliente() {
                       </div>
 
                       {conta.status === 'Pendente' && (
-                        <div className="flex gap-2">
-                          {conta.linha_digitavel && (
-                            <Button
-                              size="sm"
-                              onClick={() => handleVisualizarBoleto(conta)}
-                              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-                            >
-                              <Eye className="w-4 h-4" />
-                              Ver Boleto
-                            </Button>
-                          )}
-                          {conta.pix_copia_cola && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleCopiarPix(conta)}
-                              className="flex items-center gap-2"
-                            >
-                              <Download className="w-4 h-4" />
-                              Copiar PIX
-                            </Button>
-                          )}
+                        <div className="flex gap-2 flex-wrap">
+                          <Button
+                            size="sm"
+                            onClick={() => handleVisualizarBoleto(conta)}
+                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                          >
+                            <Eye className="w-4 h-4" />
+                            {conta.linha_digitavel || conta.url_boleto_pdf ? 'Ver Boleto' : 'Gerar 2ª via'}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleCopiarPix(conta)}
+                            className="flex items-center gap-2"
+                            disabled={emitirSegundaVia.isPending}
+                          >
+                            <Download className="w-4 h-4" />
+                            {conta.pix_copia_cola ? 'Copiar PIX' : 'Gerar PIX'}
+                          </Button>
                           {conta.url_fatura && (
                             <Button
                               size="sm"

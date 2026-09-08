@@ -14,7 +14,9 @@ import { Link } from "react-router-dom";
 import {
   resolvePortalSessionState,
   sanitizePortalClienteId,
+  calcularSaldoPortal,
 } from "@/components/lib/portalClientePolicy";
+import BoletosList from "@/components/portal/BoletosList";
 
 function PortalSessionScreen({ session }) {
   const isWait = ['autenticando', 'vinculando', 'carregando', 'timeout'].includes(session.state);
@@ -125,6 +127,7 @@ export default function DashboardCliente({ clienteId: propClienteId, adminMode =
   const contasAtrasadas = contasAbertas.filter(c => 
     new Date(c.data_vencimento) < new Date()
   );
+  const saldoPortal = calcularSaldoPortal(contasReceber, cliente?.id);
 
   const chamadosAbertos = chamados.filter(c => 
     ['Aberto', 'Em Andamento'].includes(c.status)
@@ -175,7 +178,11 @@ export default function DashboardCliente({ clienteId: propClienteId, adminMode =
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-600">Contas Abertas</p>
-                <p className="text-3xl font-bold text-orange-600">{contasAbertas.length}</p>
+                <p className="text-3xl font-bold text-orange-600">{saldoPortal.quantidade}</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  R$ {saldoPortal.aberto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  {saldoPortal.atrasado > 0 ? ` • atrasado R$ ${saldoPortal.atrasado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}
+                </p>
               </div>
               <DollarSign className="w-10 h-10 text-orange-200" />
             </div>
@@ -295,6 +302,18 @@ export default function DashboardCliente({ clienteId: propClienteId, adminMode =
           </CardContent>
         </Card>
       </div>
+
+      <Card className="shadow-md">
+        <CardHeader className="border-b">
+          <CardTitle className="flex items-center gap-2">
+            <DollarSign className="w-5 h-5" />
+            Boletos e PIX
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4">
+          <BoletosList cliente={cliente} />
+        </CardContent>
+      </Card>
 
       <Card className="border-2 border-blue-300 bg-blue-50 shadow-md">
         <CardHeader>

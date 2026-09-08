@@ -1,3 +1,15 @@
+### P1.5 - Portal do Cliente completo: PIX e segunda via operacional
+- Objetivo: cumprir P1 Portal do Cliente completo de `PLANO_GO_LIVE.md` no portal existente, sem portal paralelo.
+- Diagnostico: Gate 13 cobria sessao/isolamento; boletos ainda invocavam `emitirBoleto` quebrado; sem PIX copia-cola nem 2ª via idempotente; documentos e saldo sem carimbo unico de escopo.
+- Causa raiz: financeiro do portal fora de `portalClientePolicy`.
+- Arquivos alterados: `portalClientePolicy.js`, `BoletosList.jsx`, `DocumentosCliente.jsx`, `DashboardCliente.jsx`, testes.
+- Reutilizado: portal, ContaReceber, NF e estados de sessao ja existentes.
+- Alteracoes: assert de titulo/NF do cliente; filtro e saldo do portal; PIX copia-cola e linha digitavel locais estaveis; 2ª via idempotente em ContaReceber; links de documento escopados; dashboard com saldo e BoletosList.
+- Multiempresa: leituras e updates seguem `cliente_id` do vinculo; admin preview continua separado.
+- Pendencia: PSP/banco real para PIX/boleto registrado; Chatbot omnichannel e o proximo P1.
+- Validacoes: `node --test tests/portal-cliente-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P1: Chatbot omnichannel.
+
 ### P1.4 - App Motorista completo: fila offline, chegada e parcial
 - Objetivo: cumprir P1 App Motorista completo de `PLANO_GO_LIVE.md` no app existente (`AppEntregasMotorista`), sem app paralelo.
 - Diagnostico: app so listava Saiu/Em Transito; sem proxima parada por sequencia; sem chegada/parcial; offline so SMS; confirmacao/ocorrencia/reversa sem idempotencia nem fila de sync.
