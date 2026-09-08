@@ -28,15 +28,14 @@ export default function ConfiguracaoNotificacoes({ empresaId, grupoId }) {
   const [regras, setRegras] = useState(cloneRegrasPadrao);
   const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
   const { isAdmin, hasPermission } = usePermissions();
-  const grupoAtivoId = grupoId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
-    try { return localStorage.getItem('group_atual_id'); } catch { return null; }
-  })();
+  const grupoAtivoId = grupoId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaAtivaId = empresaId || empresaAtual?.id || null;
   const scopeId = empresaAtivaId || grupoAtivoId || 'sem-contexto';
-  const scope = empresaAtivaId ? { empresa_id: empresaAtivaId } : grupoAtivoId ? { group_id: grupoAtivoId } : {};
+  const scope = empresaAtivaId ? { empresa_id: empresaAtivaId, group_id: grupoAtivoId } : grupoAtivoId ? { group_id: grupoAtivoId } : {};
   const chave = `notificacoes_${scopeId}`;
   const contextoValido = scopeId !== 'sem-contexto';
   const podeEditarNotificacoes = isAdmin() || hasPermission('Sistema', 'Notificacoes', 'editar') || hasPermission('Sistema', 'Notificações', 'editar') || hasPermission('Sistema', 'Configuracoes', 'editar') || hasPermission('Sistema', 'Configurações', 'editar');
+  const podeVerNotificacoes = isAdmin() || hasPermission('Sistema', 'Notificacoes', 'visualizar') || hasPermission('Sistema', 'Notificações', 'visualizar') || hasPermission('Sistema', 'Configuracoes', 'visualizar') || hasPermission('Sistema', 'Configurações', 'visualizar') || podeEditarNotificacoes;
 
   const { data: config } = useQuery({
     queryKey: ['config-notificacoes', scopeId],
@@ -129,7 +128,9 @@ export default function ConfiguracaoNotificacoes({ empresaId, grupoId }) {
           sucesso: true,
           data_hora: new Date().toISOString()
         });
-      } catch {}
+      } catch (error) {
+        console.warn('Falha ao auditar configuracao de notificacoes:', error);
+      }
 
       await queryClient.invalidateQueries({ queryKey: ['config-notificacoes', scopeId] });
       
@@ -191,6 +192,22 @@ export default function ConfiguracaoNotificacoes({ empresaId, grupoId }) {
     };
     return cores[prioridade] || 'bg-slate-100 text-slate-700';
   };
+
+  if (!contextoValido) {
+    return (
+      <div className="w-full p-4 rounded-lg border border-amber-200 bg-amber-50 text-amber-900 text-sm">
+        Selecione grupo ou empresa para configurar notificacoes automaticas.
+      </div>
+    );
+  }
+
+  if (!podeVerNotificacoes) {
+    return (
+      <div className="w-full p-4 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 text-sm">
+        Sem permissao para visualizar configuracao de notificacoes.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

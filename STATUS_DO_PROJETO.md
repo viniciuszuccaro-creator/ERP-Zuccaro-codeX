@@ -1,3 +1,15 @@
+### P2.5 - Automacoes avancadas: fail-closed, flag NF-e e UIs reativadas
+- Objetivo: cumprir P2 Automacoes avancadas de `PLANO_GO_LIVE.md` nas automacoes existentes, sem hub AutomationV2/scheduler novo.
+- Diagnostico: `onPedidoReadyToInvoice` emitia NF-e ignorando `emitir_automatico`; `paymentStatusManager` podia varrer todas as empresas; `ReguaCobrancaIA`/`ConfiguracaoNotificacoes`/`HistoricoBackups` orfaos; regua com intervalo silencioso mutando CR.
+- Causa raiz: automacao critica sem opt-in de config, escopo multiempresa falho e UIs desconectadas do fluxo.
+- Arquivos alterados: `automacaoAvancadaPolicy.js` (extracao), `onPedidoReadyToInvoice/entry.ts`, `paymentStatusManager/entry.ts`, `ConfiguracaoNFeForm.jsx`, `ReguaCobrancaIA.jsx`, `Financeiro.jsx`, `MonitoramentoManutencaoIndex.jsx`, `ConfiguracaoNotificacoes.jsx`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: ConfiguracaoNFe, launchpad Financeiro, Monitoramento/Backup, NotificacoesAutomaticas pattern de sugestao/confirm.
+- Alteracoes: NF auto so com flag; lembretes com token+group/empresa; regua com RBAC/confirm sem timer; notificacoes e historico de backup montados; toggle NF com confirm.
+- Multiempresa/RBAC: fail-closed sem contexto; cobranca nunca global; abas com permissao.
+- Pendencia: runner real de JobAgendado/AgendamentoRelatorios; PAD migracao; unificar dialog duplicado de agendamento em Relatorios.
+- Validacoes: `node --test tests/automacao-avancada-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo: P2 checklist encerrado neste nucleo; retomar P0 bloqueadores de go-live conforme `PLANO_GO_LIVE.md` / `AGENTS.md` secao 19.
+
 ### P2.4 - Deteccao de anomalias: sugestao, contexto e RBAC
 - Objetivo: cumprir P2 Deteccao de anomalias de `PLANO_GO_LIVE.md` nos detectores existentes, sem modulo AnomaliasV2.
 - Diagnostico: `IADetectorAnomalias` orfao do launchpad; scan financeiro alertava WhatsApp sem confirm; Dashboard/pedido com contrato fraco de `anomaly`; `securityAlerts` sem group_id fail-closed e catch silencioso; mock local generico.

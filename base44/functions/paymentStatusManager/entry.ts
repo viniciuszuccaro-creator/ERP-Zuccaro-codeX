@@ -15,9 +15,9 @@ async function assertPermission(base44, ctx, module, entity, action, scope){
 async function audit(base44, user, log){
   try {
     await base44.asServiceRole.entities.AuditLog.create({
-      usuario: user?.full_name || user?.email || 'Usuário',
+      usuario: user?.full_name || user?.email || 'UsuÃ¡rio',
       usuario_id: user?.id || null,
-      acao: log.acao || 'Execução',
+      acao: log.acao || 'ExecuÃ§Ã£o',
       modulo: log.modulo || 'Sistema',
       tipo_auditoria: log.tipo_auditoria || 'sistema',
       entidade: log.entidade || 'Function',
@@ -112,9 +112,9 @@ const buildConciliacaoAuditPayload = (result = {}) => ({
   origem: 'paymentStatusManager',
 });
 async function conciliarExtrato(base44, ctx, conc){
-  if (!conc?.file_url) return { ok:false, error:'file_url obrigatório' };
+  if (!conc?.file_url) return { ok:false, error:'file_url obrigatÃ³rio' };
   const toleranciaDias = Number(conc?.tolerancia_dias)||2;
-  const tolerancia = Number(conc?.tolerancia_centavos)||1; // até 1 centavo
+  const tolerancia = Number(conc?.tolerancia_centavos)||1; // atÃ© 1 centavo
   const filtroBase = {};
   if (conc?.empresa_id) filtroBase.empresa_id = conc.empresa_id;
   if (conc?.group_id) filtroBase.group_id = conc.group_id;
@@ -134,11 +134,11 @@ async function conciliarExtrato(base44, ctx, conc){
   for (const l of linhas){
     const valor = Number(l.valor ?? l.amount ?? l.valor_transacao ?? 0);
     const dataStr = (l.data || l.date || '').slice(0,10);
-    const alvoCR = valor>0; // crédito => receber, débito => pagar
+    const alvoCR = valor>0; // crÃ©dito => receber, dÃ©bito => pagar
     const pool = alvoCR ? abrirCR : abrirCP;
     const valAbs = toAbs(valor);
 
-    // match por valor exato +- tolerancia e data próxima a vencimento
+    // match por valor exato +- tolerancia e data prÃ³xima a vencimento
     let melhor = null; let melhorGap = 9999;
     for (const r of pool){
       const alvo = toAbs(r.valor);
@@ -151,7 +151,7 @@ async function conciliarExtrato(base44, ctx, conc){
     }
 
     if (!melhor){
-      divergencias.push({ descricao: 'Sem correspondência', valor, data: dataStr, tipo: alvoCR?'CR':'CP' });
+      divergencias.push({ descricao: 'Sem correspondÃªncia', valor, data: dataStr, tipo: alvoCR?'CR':'CP' });
       continue;
     }
 
@@ -163,7 +163,7 @@ async function conciliarExtrato(base44, ctx, conc){
           valor_recebido: novoReceb,
           data_recebimento: new Date().toISOString().slice(0,10),
           status: quitado ? 'Recebido' : 'Parcial',
-          detalhes_pagamento: { ...(melhor.detalhes_pagamento||{}), forma_pagamento: 'Conciliação', valor_liquido: novoReceb, status_compensacao: 'Conciliado' }
+          detalhes_pagamento: { ...(melhor.detalhes_pagamento||{}), forma_pagamento: 'ConciliaÃ§Ã£o', valor_liquido: novoReceb, status_compensacao: 'Conciliado' }
         });
       } else {
         const novoPago = Number(melhor.valor_pago||0) + Math.abs(valor);
@@ -172,7 +172,7 @@ async function conciliarExtrato(base44, ctx, conc){
           valor_pago: novoPago,
           data_pagamento: new Date().toISOString().slice(0,10),
           status: quitado ? 'Pago' : 'Parcelado',
-          detalhes_pagamento: { ...(melhor.detalhes_pagamento||{}), forma_pagamento: 'Conciliação', valor_liquido: novoPago, status_compensacao: 'Conciliado' }
+          detalhes_pagamento: { ...(melhor.detalhes_pagamento||{}), forma_pagamento: 'ConciliaÃ§Ã£o', valor_liquido: novoPago, status_compensacao: 'Conciliado' }
         });
       }
       conciliados++;
@@ -181,12 +181,12 @@ async function conciliarExtrato(base44, ctx, conc){
     }
   }
 
-  // Análise inteligente de divergências via IA Financeira
+  // AnÃ¡lise inteligente de divergÃªncias via IA Financeira
   try{
     if (divergencias.length){
       await base44.asServiceRole.functions.invoke('iaFinanceAnomalyScan', { filtros: filtroBase, origem: 'conciliacao', divergencias });
     }
-  } catch(_){/* não bloquear conciliação */}
+  } catch(_){/* nÃ£o bloquear conciliaÃ§Ã£o */}
 
   return { ok:true, conciliados, divergencias };
 }
@@ -194,24 +194,32 @@ async function conciliarExtrato(base44, ctx, conc){
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const ctx = await getUserAndPerfil(base44);
-    const user = ctx.user;
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    let body = {};
+    try { body = await req.json(); } catch { body = {}; }
 
-    const body = await req.json();
-    if (!user && !body?.action) body.action = 'lembretes_cobranca';
-    const { entity, id, ids, action, justificativa, pagamento: pagamentoIn, conciliacao } = body || {};
     const internalToken = body?.internal_token || req.headers.get('x-internal-token') || null;
     const trustedInternal = !!(internalToken && Deno.env.get('DEPLOY_AUDIT_TOKEN') && internalToken === Deno.env.get('DEPLOY_AUDIT_TOKEN'));
 
-    // Automação por evento (Entity Automation): lembretes de cobrança ao criar/atualizar CR perto do vencimento
+    let user = null;
+    let ctx = { user: null, perfil: null };
+    try {
+      ctx = await getUserAndPerfil(base44);
+      user = ctx.user;
+    } catch {
+      user = null;
+    }
+
+    if (!user && !body?.action && trustedInternal) body.action = 'lembretes_cobranca';
+    const { entity, id, ids, action, justificativa, pagamento: pagamentoIn, conciliacao } = body || {};
+
+    // Automacao por evento (Entity Automation): lembretes ao criar/atualizar CR perto do vencimento
     if (body?.event?.entity_name === 'ContaReceber' && (body.event.type === 'create' || body.event.type === 'update') && body?.data) {
       const cr = body.data;
       const empresaId = cr.empresa_id || null;
-      const groupId = cr.group_id || null;
+      const groupId = cr.group_id || cr.grupo_id || null;
       const status = String(cr.status || '').toLowerCase();
-      if (!empresaId || !cr.data_vencimento || !['pendente','atrasado','parcial'].includes(status)) {
-        return Response.json({ ok: true, skipped: true });
+      if (!empresaId || !groupId || !cr.data_vencimento || !['pendente','atrasado','parcial'].includes(status)) {
+        return Response.json({ ok: true, skipped: true, reason: !groupId ? 'group_id_ausente' : 'filtros' });
       }
       const onlyDate = (d) => new Date(new Date(d).toISOString().slice(0,10));
       const diffDays = Math.floor((onlyDate(cr.data_vencimento).getTime() - onlyDate(new Date()).getTime()) / (1000*60*60*24));
@@ -220,58 +228,67 @@ Deno.serve(async (req) => {
       }
       const valorFmt = Number(cr.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
       let mensagem = '';
-      if (diffDays === 3) mensagem = `Lembrete: sua cobrança ${cr.numero_documento || cr.id} vence em 3 dias (R$ ${valorFmt}).`;
-      if (diffDays === 0) mensagem = `Hoje vence sua cobrança ${cr.numero_documento || cr.id} (R$ ${valorFmt}).`;
-      if (diffDays === -3) mensagem = `Aviso: sua cobrança ${cr.numero_documento || cr.id} venceu há 3 dias (R$ ${valorFmt}).`;
+      if (diffDays === 3) mensagem = `Lembrete: sua cobranca ${cr.numero_documento || cr.id} vence em 3 dias (R$ ${valorFmt}).`;
+      if (diffDays === 0) mensagem = `Hoje vence sua cobranca ${cr.numero_documento || cr.id} (R$ ${valorFmt}).`;
+      if (diffDays === -3) mensagem = `Aviso: sua cobranca ${cr.numero_documento || cr.id} venceu ha 3 dias (R$ ${valorFmt}).`;
       try {
         await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId, groupId, clienteId: cr.cliente_id || null, mensagem, internal_token: Deno.env.get('DEPLOY_AUDIT_TOKEN') || '' });
-        await audit(base44, { id: 'Service' }, { acao: 'Criação', modulo: 'Financeiro', entidade: 'ContaReceber', registro_id: cr.id, descricao: 'Lembrete de cobrança enviado (automação)', empresa_id: empresaId, group_id: groupId, dados_novos: { diffDays } });
+        await audit(base44, { id: 'Service' }, { acao: 'Criação', modulo: 'Financeiro', entidade: 'ContaReceber', registro_id: cr.id, descricao: 'Lembrete de cobranca enviado (automacao)', empresa_id: empresaId, group_id: groupId, dados_novos: { diffDays } });
       } catch (error) {
         reportPaymentFailure('lembrete_cobranca', error, { conta_receber_id: cr.id });
       }
       return Response.json({ ok: true, reminder: true, diffDays });
     }
 
-    // Execução agendada/service: varredura de CR e envio de lembretes (requer internal_token)
-    if (action === 'lembretes_cobranca' && (trustedInternal || !user)) {
+    // Execucao agendada/service: exige token interno + escopo explicito (fail-closed)
+    if (action === 'lembretes_cobranca') {
+      if (!trustedInternal) {
+        return Response.json({ error: 'lembretes_cobranca exige internal_token confiavel.' }, { status: 403 });
+      }
       const empresaIdIn = body.empresa_id || null;
       const groupIdIn = body.group_id || null;
+      if (!groupIdIn && !empresaIdIn) {
+        return Response.json({ error: 'group_id ou empresa_id obrigatorio para lembretes de cobranca.' }, { status: 400 });
+      }
       let empresas = [];
       if (groupIdIn) {
         const emps = await base44.asServiceRole.entities.Empresa.filter({ group_id: groupIdIn }, undefined, 500);
-        empresas = (emps || []).map(e => e.id);
-      } else if (empresaIdIn) {
-        empresas = [empresaIdIn];
+        empresas = (emps || []).map((e) => e.id);
+        if (empresaIdIn) empresas = empresas.filter((idEmp) => idEmp === empresaIdIn);
       } else {
-        // Sem escopo explícito: varre todas as empresas (multiempresa absoluta)
-        const empsAll = await base44.asServiceRole.entities.Empresa.filter({}, undefined, 500);
-        empresas = (empsAll || []).map(e => e.id);
+        empresas = [empresaIdIn];
       }
       let enviados = 0;
       const onlyDate = (d) => new Date(new Date(d).toISOString().slice(0,10));
       for (const eid of empresas) {
         const lista = await base44.asServiceRole.entities.ContaReceber.filter({ empresa_id: eid }, '-data_vencimento', 1000);
         for (const r of (lista || [])) {
+          if (groupIdIn) {
+            const gid = r.group_id || r.grupo_id || null;
+            if (gid && gid !== groupIdIn) continue;
+          }
           const st = String(r.status || '').toLowerCase();
           if (!r.data_vencimento || !['pendente','atrasado','parcial'].includes(st)) continue;
           const diff = Math.floor((onlyDate(r.data_vencimento).getTime() - onlyDate(new Date()).getTime()) / (1000*60*60*24));
           if (![3,0,-3].includes(diff)) continue;
           const valorFmt = Number(r.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
           let msg = '';
-          if (diff === 3) msg = `Lembrete: sua cobrança ${r.numero_documento || r.id} vence em 3 dias (R$ ${valorFmt}).`;
-          if (diff === 0) msg = `Hoje vence sua cobrança ${r.numero_documento || r.id} (R$ ${valorFmt}).`;
-          if (diff === -3) msg = `Aviso: sua cobrança ${r.numero_documento || r.id} venceu há 3 dias (R$ ${valorFmt}).`;
+          if (diff === 3) msg = `Lembrete: sua cobranca ${r.numero_documento || r.id} vence em 3 dias (R$ ${valorFmt}).`;
+          if (diff === 0) msg = `Hoje vence sua cobranca ${r.numero_documento || r.id} (R$ ${valorFmt}).`;
+          if (diff === -3) msg = `Aviso: sua cobranca ${r.numero_documento || r.id} venceu ha 3 dias (R$ ${valorFmt}).`;
           try {
             await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId: eid, groupId: groupIdIn || r.group_id || null, clienteId: r.cliente_id || null, mensagem: msg, internal_token: Deno.env.get('DEPLOY_AUDIT_TOKEN') || '' });
-            await audit(base44, { id: 'Service' }, { acao: 'Criação', modulo: 'Financeiro', entidade: 'ContaReceber', registro_id: r.id, descricao: 'Lembrete de cobrança enviado (varredura)', empresa_id: eid, group_id: groupIdIn || r.group_id || null, dados_novos: { diffDays: diff } });
+            await audit(base44, { id: 'Service' }, { acao: 'Criação', modulo: 'Financeiro', entidade: 'ContaReceber', registro_id: r.id, descricao: 'Lembrete de cobranca enviado (varredura)', empresa_id: eid, group_id: groupIdIn || r.group_id || null, dados_novos: { diffDays: diff } });
             enviados++;
           } catch (error) {
             reportPaymentFailure('lembrete_varredura', error, { conta_receber_id: r.id });
           }
         }
       }
-      return Response.json({ ok: true, enviados });
+      return Response.json({ ok: true, enviados, modo: 'escopo_explicito', group_id: groupIdIn, empresa_id: empresaIdIn });
     }
+
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     // Checkout iniciado: gera link de pagamento e dispara mensageria
     if (action === 'checkout_iniciado') {
@@ -280,7 +297,7 @@ Deno.serve(async (req) => {
       const contaReceberId = body?.conta_receber_id || null;
       const valor = Number(body?.valor || 0);
       if (!empresaId || !pedidoId || !contaReceberId || !(valor > 0)) {
-        return Response.json({ error: 'Parâmetros inválidos (checkout_iniciado)' }, { status: 400 });
+        return Response.json({ error: 'ParÃ¢metros invÃ¡lidos (checkout_iniciado)' }, { status: 400 });
       }
       const checkoutScope = await resolveFinancialScope(base44, body);
       const checkoutGroupId = checkoutScope.groupId || null;
@@ -299,7 +316,7 @@ Deno.serve(async (req) => {
       } catch (error) {
         reportPaymentFailure('consulta_gateway', error, { empresa_id: empresaId });
       }
-      // Gera link de pagamento via função existente (emitirBoleto como fallback)
+      // Gera link de pagamento via funÃ§Ã£o existente (emitirBoleto como fallback)
       let url_fatura = null;
       try {
         const payload = {
@@ -331,7 +348,7 @@ Deno.serve(async (req) => {
       // Auditoria
       try {
         await audit(base44, user, {
-          acao: 'Criação',
+          acao: 'CriaÃ§Ã£o',
           modulo: 'Comercial',
           entidade: 'Checkout',
           registro_id: pedidoId,
@@ -346,7 +363,7 @@ Deno.serve(async (req) => {
       return Response.json({ ok: true, url_fatura });
     }
 
-    // Webhook confirmação de pagamento do gateway
+    // Webhook confirmaÃ§Ã£o de pagamento do gateway
     if (action === 'webhook_pagamento') {
       const empresaId = body?.empresa_id || null;
       const contaReceberId = body?.conta_receber_id || null;
@@ -354,7 +371,7 @@ Deno.serve(async (req) => {
       const status = String(body?.status || '').toLowerCase();
       const valorPago = Number(body?.valor_pago || body?.valor || 0);
       if (!empresaId || !contaReceberId || !status) {
-        return Response.json({ error: 'Parâmetros inválidos (webhook_pagamento)' }, { status: 400 });
+        return Response.json({ error: 'ParÃ¢metros invÃ¡lidos (webhook_pagamento)' }, { status: 400 });
       }
       try {
         const cr = await base44.asServiceRole.entities.ContaReceber.get(contaReceberId);
@@ -375,7 +392,7 @@ Deno.serve(async (req) => {
           status: quitado ? 'Recebido' : (status === 'pago' ? 'Recebido' : cr?.status || 'Pendente'),
           status_cobranca: status === 'pago' ? 'paga' : status
         });
-        // NF-e pós-pagamento (best-effort)
+        // NF-e pÃ³s-pagamento (best-effort)
         try {
           if (quitado && pedidoId) {
             await base44.functions.invoke('nfeActions', { action: 'emitir_pos_pagamento', pedido_id: pedidoId, empresa_id: empresaId, group_id: webhookGroupId });
@@ -384,11 +401,11 @@ Deno.serve(async (req) => {
           reportPaymentFailure('emissao_fiscal_pos_pagamento', error, { pedido_id: pedidoId, empresa_id: empresaId });
         }
         await audit(base44, user, {
-          acao: 'Edição',
+          acao: 'EdiÃ§Ã£o',
           modulo: 'Financeiro',
           entidade: 'ContaReceber',
           registro_id: contaReceberId,
-          descricao: 'Confirmação pagamento (webhook)',
+          descricao: 'ConfirmaÃ§Ã£o pagamento (webhook)',
           empresa_id: empresaId,
           group_id: webhookGroupId,
           dados_anteriores: beforeWebhook,
@@ -403,10 +420,10 @@ Deno.serve(async (req) => {
     if (action === 'conciliar_extrato') {
       // validaremos adiante
     } else if (!['ContaPagar','ContaReceber'].includes(entity) || (!id && (!ids || !Array.isArray(ids) || ids.length === 0))) {
-      return Response.json({ error: 'Parâmetros inválidos' }, { status: 400 });
+      return Response.json({ error: 'ParÃ¢metros invÃ¡lidos' }, { status: 400 });
     }
 
-    // RBAC por módulo Financeiro
+    // RBAC por mÃ³dulo Financeiro
     const entityForPerm = action === 'conciliar_extrato' ? 'ContaReceber' : entity;
     const permissionScope = action === 'conciliar_extrato'
       ? { ...body, ...(conciliacao || {}) }
@@ -421,9 +438,9 @@ Deno.serve(async (req) => {
       const scopedConciliacao = { ...(conciliacao || {}), group_id: resolvedPermissionScope.groupId, empresa_id: resolvedPermissionScope.empresaId };
       const result = await conciliarExtrato(base44, ctx, scopedConciliacao);
       await audit(base44, user, {
-        acao:'Edi��o',
+        acao:'Edição',
         modulo:'Financeiro',
-        entidade:'Concilia��o',
+        entidade:'Conciliação',
         registro_id: null,
         descricao: `Conciliacao automatica executada (${result.conciliados} itens)`,
         empresa_id: scopedConciliacao?.empresa_id || null,
@@ -473,8 +490,8 @@ Deno.serve(async (req) => {
       const updated = await api.update(alvoId, updates);
 
       await audit(base44, user, {
-        acao: 'Edição', modulo: 'Financeiro', entidade: entity, registro_id: alvoId,
-        descricao: idsList.length>1 ? `Baixa em lote: ${action}` : `Transição pagamento: ${action}`,
+        acao: 'EdiÃ§Ã£o', modulo: 'Financeiro', entidade: entity, registro_id: alvoId,
+        descricao: idsList.length>1 ? `Baixa em lote: ${action}` : `TransiÃ§Ã£o pagamento: ${action}`,
         empresa_id: registro?.empresa_id || null,
         group_id: registro?.group_id || registro?.grupo_id || scopedPermissionScope.group_id || null,
         dados_anteriores: buildContaFinanceiraAuditSnapshot(registro),

@@ -10,6 +10,7 @@ import { FileText, Save, Upload } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { requireAutomacaoHumanConfirm } from "@/components/lib/automacaoAvancadaPolicy";
 
 export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, windowMode = false, empresaId, groupId, scope: scopeProp }) {
   const { toast } = useToast();
@@ -172,10 +173,22 @@ export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, wi
 
           <div className="space-y-3 border-t pt-4">
             <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
-              <Label>Emitir Automaticamente após Faturamento</Label>
+              <div>
+                <Label>Emitir Automaticamente após Faturamento</Label>
+                <p className="text-xs text-slate-500 mt-1">
+                  Só dispara NF-e no pedido se esta flag estiver ativa na empresa.
+                </p>
+              </div>
               <Switch
                 checked={formData.emitir_automatico}
-                onCheckedChange={(val) => setFormData({ ...formData, emitir_automatico: val })}
+                onCheckedChange={(val) => {
+                  if (val && !requireAutomacaoHumanConfirm(
+                    'Ativar emissao automatica de NF-e ao aprovar/faturar pedido? Acao fiscal critica.',
+                  )) {
+                    return;
+                  }
+                  setFormData({ ...formData, emitir_automatico: val });
+                }}
                 disabled={!contextoValido || salvando}
               />
             </div>

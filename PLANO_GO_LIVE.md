@@ -47,7 +47,7 @@ O ERP somente poderá ser considerado apto para uso real quando os blocos P0 est
 - [x] Agentes especializados.
 - [x] Previs�es.
 - [x] Detecção de anomalias.
-- [ ] Automações avançadas.
+- [x] Automações avançadas.
 
 ---
 

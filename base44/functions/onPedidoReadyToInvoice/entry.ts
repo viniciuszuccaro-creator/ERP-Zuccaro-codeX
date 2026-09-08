@@ -72,6 +72,7 @@ Deno.serve(async (req) => {
     });
     if (guardFailure) return guardFailure;
 
+    // Webhook ERP (nao fiscal) pode rodar mesmo sem emitir_automatico
     try {
       let cfg = null;
       if (empresaId) {
@@ -111,6 +112,55 @@ Deno.serve(async (req) => {
       }
     } catch (error) {
       reportReadyToInvoiceFailure('Falha ao preparar webhook ERP', error, { pedido_id: data?.id, empresa_id: empresaId, group_id: groupId });
+    }
+
+    // NF-e automatica so se ConfiguracaoNFe.emitir_automatico estiver ativo no escopo
+    let nfeConfigs = [];
+    try {
+      nfeConfigs = await base44.asServiceRole.entities.ConfiguracaoNFe.filter(
+        { empresa_id: empresaId, ativo: true },
+        undefined,
+        20,
+      );
+      if (!nfeConfigs?.length) {
+        nfeConfigs = await base44.asServiceRole.entities.ConfiguracaoNFe.filter(
+          { group_id: groupId, ativo: true },
+          undefined,
+          20,
+        );
+      }
+    } catch (error) {
+      reportReadyToInvoiceFailure('Falha ao carregar ConfiguracaoNFe', error, { empresa_id: empresaId, group_id: groupId });
+      nfeConfigs = [];
+    }
+    const emitirAutomatico = (nfeConfigs || []).some((cfg) => (
+      cfg && cfg.ativo !== false && (cfg.emitir_automatico === true || cfg.emitir_automaticamente === true)
+    ));
+    if (!emitirAutomatico) {
+      try {
+        await base44.asServiceRole.entities.AuditLog.create({
+          usuario: user?.full_name || user?.email || 'Usuario', usuario_id: user?.id,
+          acao: 'Analise', modulo: 'Fiscal', tipo_auditoria: 'sistema', entidade: 'NotaFiscal',
+          descricao: `NF-e automatica omitida: emitir_automatico desligado (Pedido ${data.numero_pedido})`,
+          empresa_id: empresaId, group_id: groupId,
+          dados_novos: {
+            pedido_id: data?.id,
+            numero_pedido: data?.numero_pedido,
+            modo: 'sugestao',
+            executado: false,
+            emitir_automatico: false,
+          },
+        });
+      } catch (error) {
+        reportReadyToInvoiceFailure('Falha ao auditar skip NF-e automatica', error, { pedido_id: data?.id });
+      }
+      return Response.json({
+        ok: true,
+        skipped: true,
+        reason: 'emitir_automatico_desligado',
+        modo: 'sugestao',
+        executado: false,
+      });
     }
 
     const itens = [];

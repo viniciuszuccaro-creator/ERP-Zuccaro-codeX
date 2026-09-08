@@ -6,6 +6,8 @@ import HerancaConfigNotice from "@/components/administracao-sistema/common/Heran
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ProtectedSection from "@/components/security/ProtectedSection";
 import ConfiguracaoBackup from "@/components/sistema/ConfiguracaoBackup";
+import HistoricoBackups from "@/components/sistema/HistoricoBackups";
+import ConfiguracaoNotificacoes from "@/components/sistema/ConfiguracaoNotificacoes";
 import ConfiguracaoMonitoramento from "@/components/sistema/ConfiguracaoMonitoramento";
 import MonitorAcessoRealtimeSection from "@/components/administracao-sistema/seguranca-governanca/MonitorAcessoRealtimeSection";
 import PainelGovernancaSection from "@/components/administracao-sistema/seguranca-governanca/PainelGovernancaSection";
@@ -24,6 +26,7 @@ export default function MonitoramentoManutencaoIndex({ initialTab = "monitoramen
     const mapa = {
       monitoramento: [['Seguranca', 'Monitoramento'], ['Segurança', 'Monitoramento'], 'Monitoramento'],
       backup: [['Seguranca', 'Backup'], ['Segurança', 'Backup'], 'Backup'],
+      notificacoes: ['Notificacoes', 'Notificações', 'Configuracoes', 'Configurações'],
       acesso: [['Seguranca', 'Monitoramento', 'AcessoRealtime'], ['Segurança', 'Monitoramento', 'AcessoRealtime'], 'AcessoRealtime'],
       governanca: [['Seguranca', 'Governanca'], ['Segurança', 'Governança'], 'Governanca'],
     };
@@ -78,6 +81,7 @@ export default function MonitoramentoManutencaoIndex({ initialTab = "monitoramen
         <TabsList className="flex flex-wrap gap-2">
           <TabsTrigger value="monitoramento" disabled={!contextoValido || !canViewTab("monitoramento")} data-action="Monitoramento.tab.monitoramento" data-permission="Sistema.Monitoramento.visualizar" data-context-required="true">Monitoramento</TabsTrigger>
           <TabsTrigger value="backup" disabled={!contextoValido || !canViewTab("backup")} data-action="Monitoramento.tab.backup" data-permission="Sistema.Backup.visualizar" data-context-required="true">Backup</TabsTrigger>
+          <TabsTrigger value="notificacoes" disabled={!contextoValido || !canViewTab("notificacoes")} data-action="Monitoramento.tab.notificacoes" data-permission="Sistema.Notificacoes.visualizar" data-context-required="true">Notificações</TabsTrigger>
           <TabsTrigger value="acesso" disabled={!contextoValido || !canViewTab("acesso")} data-action="Monitoramento.tab.acesso" data-permission="Sistema.Seguranca.Monitoramento.AcessoRealtime.visualizar" data-context-required="true">Acesso em Tempo Real</TabsTrigger>
           <TabsTrigger value="governanca" disabled={!contextoValido || !canViewTab("governanca")} data-action="Monitoramento.tab.governanca" data-permission="Sistema.Seguranca.Governanca.visualizar" data-context-required="true">Governança</TabsTrigger>
         </TabsList>
@@ -100,7 +104,22 @@ export default function MonitoramentoManutencaoIndex({ initialTab = "monitoramen
               <ContextoConfigBanner />
               <HerancaConfigNotice />
               <ProtectedSection module="Sistema" section={["Segurança","Backup"]} action="visualizar">
-                <ConfiguracaoBackup empresaId={empresaAtual?.id} grupoId={grupoAtual?.id} />
+                <div className="w-full space-y-4">
+                  <ConfiguracaoBackup empresaId={empresaAtual?.id} grupoId={grupoAtual?.id} />
+                  <HistoricoBackups empresaId={empresaAtual?.id} grupoId={grupoAtual?.id || grupoAtivoId} />
+                </div>
+              </ProtectedSection>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="notificacoes" className="mt-4">
+          <Card className="w-full">
+            <CardContent className="p-4">
+              <ContextoConfigBanner />
+              <HerancaConfigNotice />
+              <ProtectedSection module="Sistema" section={["Notificacoes","Notificações","Configuracoes","Configurações"]} action="visualizar">
+                <ConfiguracaoNotificacoes empresaId={empresaAtual?.id} grupoId={grupoAtual?.id || grupoAtivoId} />
               </ProtectedSection>
             </CardContent>
           </Card>

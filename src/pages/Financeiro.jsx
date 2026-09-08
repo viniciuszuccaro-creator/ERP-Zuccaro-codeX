@@ -31,6 +31,7 @@ const VendasMulticanal = React.lazy(() => import("../components/financeiro/Venda
 const RateioMultiempresa = React.lazy(() => import("../components/financeiro/RateioMultiempresa"));
 const AlertasFinanceirosEmpresa = React.lazy(() => import("../components/financeiro/AlertasFinanceirosEmpresa"));
 const IADetectorAnomalias = React.lazy(() => import("../components/financeiro/IADetectorAnomalias"));
+const ReguaCobrancaIA = React.lazy(() => import("../components/financeiro/ReguaCobrancaIA"));
 const RelatorioFinanceiro = React.lazy(() => import("../components/financeiro/RelatorioFinanceiro"));
 const DashboardFormasPagamento = React.lazy(() => import("../components/financeiro/DashboardFormasPagamento"));
 const LogisticaFinanceiroPanel = React.lazy(() => import("../components/expedicao/financeiro/LogisticaFinanceiroPanel"));
@@ -373,6 +374,18 @@ export default function Financeiro() {
       width: 1400,
       height: 850,
       sectionKey: 'Alertas por Empresa',
+    },
+    {
+      title: 'Régua de Cobrança IA',
+      description: 'Sugestões por faixa de atraso (com confirmação)',
+      icon: Wallet,
+      color: 'violet',
+      component: ReguaCobrancaIA,
+      windowTitle: 'Régua de Cobrança IA',
+      width: 1200,
+      height: 800,
+      sectionKey: 'Contas a Receber',
+      props: { empresaId: empresaAtual?.id },
     },
   ];
 
