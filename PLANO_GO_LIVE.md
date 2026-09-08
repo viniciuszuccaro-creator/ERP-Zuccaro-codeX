@@ -46,7 +46,7 @@ O ERP somente poderá ser considerado apto para uso real quando os blocos P0 est
 - [x] IA transversal.
 - [x] Agentes especializados.
 - [x] Previs�es.
-- [ ] Detecção de anomalias.
+- [x] Detecção de anomalias.
 - [ ] Automações avançadas.
 
 ---

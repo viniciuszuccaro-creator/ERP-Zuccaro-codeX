@@ -990,6 +990,7 @@ export default function Dashboard() {
                 <CardTitle className="flex items-center gap-2">
                   <AlertCircle className="w-5 h-5 text-rose-600" />
                   Anomalias Financeiras Detectadas
+                  <Badge variant="outline" className="ml-2 text-rose-700 border-rose-200">Sugestão</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -998,13 +999,23 @@ export default function Dashboard() {
                 ) : (
                   (() => {
                     const list = anomaliasIA?.details || [];
-                    if (!list.length) return <p className="text-sm text-slate-600">Nenhuma anomalia relevante.</p>;
+                    const hasAnomaly = anomaliasIA?.anomaly === true || list.length > 0;
+                    if (!hasAnomaly) {
+                      return (
+                        <p className="text-sm text-slate-600">
+                          Nenhuma anomalia relevante{anomaliasIA?.modo === 'sugestao' ? ' (modo sugestão)' : ''}.
+                        </p>
+                      );
+                    }
                     const resumo = list.reduce((acc, i) => { acc[i.severity || 'baixo'] = (acc[i.severity || 'baixo'] || 0) + 1; return acc; }, {});
                     return (
-                      <div className="flex flex-wrap gap-2 text-sm">
+                      <div className="flex flex-wrap gap-2 text-sm items-center">
                         <Badge className="bg-red-100 text-red-700">Alta: {resumo.alto || 0}</Badge>
                         <Badge className="bg-amber-100 text-amber-700">Média: {resumo.medio || 0}</Badge>
                         <Badge variant="outline">Baixa: {resumo.baixo || 0}</Badge>
+                        {Number(anomaliasIA?.issues) > 0 && (
+                          <span className="text-xs text-slate-500">issues: {anomaliasIA.issues}</span>
+                        )}
                       </div>
                     );
                   })()

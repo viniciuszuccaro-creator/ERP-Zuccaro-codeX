@@ -1,3 +1,15 @@
+### P2.4 - Deteccao de anomalias: sugestao, contexto e RBAC
+- Objetivo: cumprir P2 Deteccao de anomalias de `PLANO_GO_LIVE.md` nos detectores existentes, sem modulo AnomaliasV2.
+- Diagnostico: `IADetectorAnomalias` orfao do launchpad; scan financeiro alertava WhatsApp sem confirm; Dashboard/pedido com contrato fraco de `anomaly`; `securityAlerts` sem group_id fail-closed e catch silencioso; mock local generico.
+- Causa raiz: contrato de sugestao/confirmacao parcial fora das funcoes e UIs irmas.
+- Arquivos alterados: `iaTransversalPolicy.js`, `iaFinanceAnomalyScan/entry.ts`, `securityAlerts/entry.ts`, `IADetectorAnomalias.jsx`, `Financeiro.jsx`, `Dashboard.jsx`, `PedidoTabsContainer.jsx`, `localBase44Client.js`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: detector financeiro, scan Deno, alertas de seguranca, Dashboard e pedido ja existentes.
+- Alteracoes: helpers `assertAnomalyScanContext`/`stampAnomalyScanResult`/`buildSecurityAnomalySuggestions`; notify/WhatsApp so com confirm; securityAlerts com grupo+RBAC+modo sugestao; tile no Financeiro; Dashboard/pedido consomem `anomaly`/`details`; mocks carimbados.
+- Multiempresa/RBAC: scans e UI fail-closed sem grupo/empresa; Auditoria/Controle de Acesso no backend de seguranca.
+- Pendencia: unificar heuristica UI vs ML do scan; diagnostico de equipamentos/RH ponto; Automações avançadas (ultimo P2).
+- Validacoes: `node --test tests/ia-transversal-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P2: Automacoes avancadas (melhorar automacoes existentes, sem hub paralelo).
+
 ### P2.3 - Previsoes: reposicao, recompra, caixa e atraso com contexto
 - Objetivo: cumprir P2 Previsoes de `PLANO_GO_LIVE.md` nas telas de previsao existentes, sem hub PrevisoesV2.
 - Diagnostico: `IAReposicao` criava SC sem confirmacao; `IAVendasPreditivas` usava localStorage e LogsIA Automatico; caixa aceitava so grupo OU empresa; formulario de entrega aplicava data da IA sozinho; logistica 100% mock.

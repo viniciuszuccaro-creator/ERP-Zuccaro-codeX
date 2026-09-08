@@ -90,13 +90,24 @@ export default function PedidoTabsContainer({
         }
         try {
           if (pedido?.id) {
+            const groupId = formData?.group_id || formData?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id;
+            const empresaId = empresaAtual?.id || formData?.empresa_id;
             const res = await base44.functions.invoke('iaFinanceAnomalyScan', {
-              pedido_id: pedido.id,
               agente: 'financeiro',
-              group_id: formData?.group_id || formData?.grupo_id || grupoAtual?.id || empresaAtual?.group_id,
-              empresa_id: empresaAtual?.id || formData?.empresa_id,
+              filtros: {
+                group_id: groupId,
+                empresa_id: empresaId,
+              },
+              group_id: groupId,
+              empresa_id: empresaId,
+              pedido_id: pedido.id,
             });
-            if (res?.data?.anomaly === true) { ok = false; motivos.push('Anomalia financeira (IA)'); }
+            const details = res?.data?.details || [];
+            const hasAnomaly = res?.data?.anomaly === true || (Array.isArray(details) && details.length > 0);
+            if (hasAnomaly) {
+              ok = false;
+              motivos.push('Anomalia financeira sugerida pela IA (revisar antes de liberar)');
+            }
           }
         } catch (error) {
           console.error('[PedidoTabsContainer] Falha no scan de anomalia financeira', error);

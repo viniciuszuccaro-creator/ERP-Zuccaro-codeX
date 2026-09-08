@@ -287,6 +287,97 @@ export const requireIaHumanConfirm = (mensagem) => {
   return Boolean(window.confirm(String(mensagem || 'Confirmar aplicacao da sugestao de IA?')));
 };
 
+/** Fail-closed context for anomaly scans (financeiro/seguranca). */
+export const assertAnomalyScanContext = ({ groupId, empresaId, scopeType = 'empresa' } = {}) => (
+  assertIaUiContext({ groupId, empresaId, scopeType })
+);
+
+export const stampAnomalyScanResult = ({
+  issues = null,
+  details = null,
+  sugestoes = [],
+  previsoes = [],
+  warnings = [],
+  ok = true,
+  extra = {},
+} = {}) => {
+  const list = Array.isArray(details)
+    ? details
+    : (Array.isArray(issues) ? issues : []);
+  let issueCount = list.length;
+  if (typeof issues === 'number' && Number.isFinite(issues)) {
+    issueCount = issues;
+  } else if (Array.isArray(issues) && issues.length > 0 && typeof issues[0] !== 'object') {
+    issueCount = issues.length;
+  }
+  return stampIaSuggestion({
+    ok: ok !== false,
+    anomaly: list.length > 0 || issueCount > 0,
+    issues: issueCount,
+    details: list,
+    sugestoes: Array.isArray(sugestoes) ? sugestoes : [],
+    previsoes: Array.isArray(previsoes) ? previsoes : [],
+    warnings: Array.isArray(warnings) ? warnings : [],
+    fonte: firstText(extra.fonte) || 'anomalia_local',
+    ...extra,
+  });
+};
+
+export const buildSecurityAnomalySuggestions = ({
+  logs = [],
+  windowMinutes = 15,
+  agora = new Date(),
+} = {}) => {
+  const now = agora instanceof Date ? agora : new Date(agora);
+  const windowStart = new Date(now.getTime() - (Number(windowMinutes) || 15) * 60 * 1000);
+  const getLogDate = (l) => {
+    if (l?.data_hora) return new Date(l.data_hora);
+    if (l?.created_date) return new Date(l.created_date);
+    return null;
+  };
+  const recent = (logs || []).filter((l) => {
+    const d = getLogDate(l);
+    return d && d >= windowStart;
+  });
+  const byAction = recent.reduce((acc, l) => {
+    const k = l.acao || '';
+    acc[k] = (acc[k] || 0) + 1;
+    return acc;
+  }, {});
+  const suspicious = [];
+  if ((byAction.Exclusao || byAction['Exclusão'] || 0) >= 5) {
+    suspicious.push({
+      tipo: 'Exclusoes em massa',
+      severidade: 'Alta',
+      detalhes: `Exclusoes recentes: ${byAction.Exclusao || byAction['Exclusão'] || 0}`,
+    });
+  }
+  const perfilChanges = recent.filter((l) => (
+    l.entidade === 'PerfilAcesso' && (l.acao === 'Criacao' || l.acao === 'Criação' || l.acao === 'Edicao' || l.acao === 'Edição')
+  ));
+  if (perfilChanges.length >= 3) {
+    suspicious.push({
+      tipo: 'Mudancas frequentes de perfil',
+      severidade: 'Media',
+      detalhes: `${perfilChanges.length} mudancas em ${windowMinutes} min`,
+    });
+  }
+  const blocks = recent.filter((l) => l.acao === 'Bloqueio');
+  if (blocks.length >= 10) {
+    suspicious.push({
+      tipo: 'Muitos bloqueios de acesso',
+      severidade: 'Media',
+      detalhes: `${blocks.length} bloqueios em ${windowMinutes} min`,
+    });
+  }
+  return stampIaSuggestion({
+    alerts: suspicious,
+    analyzed: recent.length,
+    anomaly: suspicious.length > 0,
+    fonte: 'anomalia_seguranca_local',
+  });
+};
+
 /** Fail-closed context for forecast UIs (caixa, reposicao, recompra, atraso). */
 export const assertForecastUiContext = ({ groupId, empresaId, scopeType = 'empresa' } = {}) => (
   assertIaUiContext({ groupId, empresaId, scopeType })

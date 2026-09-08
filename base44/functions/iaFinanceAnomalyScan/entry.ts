@@ -418,55 +418,75 @@ Deno.serve(async (req) => {
       reportScanFailure('Falha ao calcular previsao de estoque', error, filtros);
     }
 
-    // Auditoria + Alerta no NotificationCenter
+    // Auditoria + alerta externo so com confirmacao/flag explicita (sugestao por padrao)
     if (issues.length > 0) {
-      // Usa empresa do primeiro título como contexto padrão
       const alvoEmpresaId = (filtros?.empresa_id) || (receber[0]?.empresa_id) || (pagar[0]?.empresa_id) || null;
+      const podeAlertarExternamente = body?.confirmado === true || body?.alertar === true;
 
       await base44.asServiceRole.entities.AuditLog.create({
-        usuario: 'Sistema',
+        usuario: user?.full_name || 'Sistema',
         acao: 'Visualização',
         modulo: 'Financeiro',
         entidade: 'Monitoramento',
-        descricao: `Anomalias detectadas: ${issues.length}`,
-        dados_novos: { issues: summarizeIssuesForAudit(issues), sugestoes: summarizeSuggestionsForAudit(sugestoes) },
+        descricao: `Anomalias detectadas (sugestao): ${issues.length}`,
+        dados_novos: {
+          issues: summarizeIssuesForAudit(issues),
+          sugestoes: summarizeSuggestionsForAudit(sugestoes),
+          modo: 'sugestao',
+          alertar_externo: podeAlertarExternamente,
+        },
         empresa_id: alvoEmpresaId || null,
         group_id: filtros?.group_id || null,
         data_hora: new Date().toISOString(),
       });
 
-      const resumoSeveridade = issues.reduce((acc, i) => { acc[i.severity] = (acc[i.severity] || 0) + 1; return acc; }, {});
+      if (podeAlertarExternamente) {
+        const resumoSeveridade = issues.reduce((acc, i) => { acc[i.severity] = (acc[i.severity] || 0) + 1; return acc; }, {});
 
-      await notify(base44, {
-        titulo: 'Anomalias Financeiras Detectadas',
-        mensagem: `${issues.length} ocorrência(s) (Alta:${resumoSeveridade.alto || 0} • Média:${resumoSeveridade.medio || 0} • Baixa:${resumoSeveridade.baixo || 0}).`,
-        tipo: 'alerta',
-        categoria: 'Financeiro',
-        prioridade: 'Alta',
-        empresa_id: alvoEmpresaId,
-        dados: summarizeNotificationPayload(issues, sugestoes)
-      }, { whatsapp: true });
+        await notify(base44, {
+          titulo: 'Anomalias Financeiras Detectadas',
+          mensagem: `${issues.length} ocorrência(s) (Alta:${resumoSeveridade.alto || 0} • Média:${resumoSeveridade.medio || 0} • Baixa:${resumoSeveridade.baixo || 0}).`,
+          tipo: 'alerta',
+          categoria: 'Financeiro',
+          prioridade: 'Alta',
+          empresa_id: alvoEmpresaId,
+          dados: summarizeNotificationPayload(issues, sugestoes)
+        }, { whatsapp: true });
 
-      // Canal opcional: WhatsApp (se configurado em Configuração do Sistema)
-      try {
-        if (cfg?.finance?.alerts?.whatsapp?.enabled && cfg.finance.alerts.whatsapp.to) {
-          const msg = `Financeiro: ${issues.length} anomalia(s). Alta:${resumoSeveridade.alto || 0} • Média:${resumoSeveridade.medio || 0} • Baixa:${resumoSeveridade.baixo || 0}.`;
-          await base44.asServiceRole.functions.invoke('whatsappSend', {
-            action: 'sendText',
-            numero: cfg.finance.alerts.whatsapp.to,
-            mensagem: msg,
-            empresaId: alvoEmpresaId || null,
-            groupId: filtros?.group_id || null,
-          });
+        try {
+          if (cfg?.finance?.alerts?.whatsapp?.enabled && cfg.finance.alerts.whatsapp.to) {
+            const msg = `Financeiro: ${issues.length} anomalia(s). Alta:${resumoSeveridade.alto || 0} • Média:${resumoSeveridade.medio || 0} • Baixa:${resumoSeveridade.baixo || 0}.`;
+            await base44.asServiceRole.functions.invoke('whatsappSend', {
+              action: 'sendText',
+              numero: cfg.finance.alerts.whatsapp.to,
+              mensagem: msg,
+              empresaId: alvoEmpresaId || null,
+              groupId: filtros?.group_id || null,
+            });
+          }
+        } catch (error) {
+          reportScanFailure('Falha ao enviar alerta financeiro por WhatsApp', error, filtros);
         }
-      } catch (error) {
-        reportScanFailure('Falha ao enviar alerta financeiro por WhatsApp', error, filtros);
+      } else {
+        warnings.push({
+          operation: 'alerta_externo_pendente_confirmacao',
+          error: 'Notify/WhatsApp nao enviados: exige confirmado=true ou alertar=true',
+        });
       }
     }
 
     const durationMs = Date.now() - t0;
     try { if (durationMs > 500) { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Sistema', acao: 'Visualização', modulo: body?.previsao_estoque?.enabled ? 'Estoque' : 'Financeiro', tipo_auditoria: 'sistema', entidade: 'Performance', descricao: `iaFinanceAnomalyScan demorou ${durationMs}ms`, dados_novos: summarizeScanPerformance(durationMs, filtros), group_id: filtros?.group_id || null, data_hora: new Date().toISOString() }); } } catch (error) { reportScanFailure('Falha ao auditar desempenho da analise', error, filtros); }
-    return Response.json({ ok: true, issues: issues.length, details: issues, previsoes, warnings });
+    return Response.json({
+      ok: true,
+      modo: 'sugestao',
+      anomaly: issues.length > 0,
+      issues: issues.length,
+      details: issues,
+      previsoes,
+      warnings,
+      fonte: 'ia_finance_anomaly_scan',
+    });
   } catch (error) {
     return Response.json({ error: String(error?.message || error) }, { status: 500 });
   }

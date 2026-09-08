@@ -6,14 +6,17 @@ import {
   assertIaInvocation,
   assertIaUiContext,
   assertForecastUiContext,
+  assertAnomalyScanContext,
   buildChurnSuggestions,
   buildConciliacaoMatchSuggestions,
   buildCrmAbcChurnSuggestions,
   buildFinanceAnomalySuggestions,
   buildFluxoCaixaProjection,
   buildReposicaoSuggestions,
+  buildSecurityAnomalySuggestions,
   buildVendasRecompraSuggestions,
   isSensitiveIaExecution,
+  stampAnomalyScanResult,
 } from '../src/components/lib/iaTransversalPolicy.js';
 
 test('IA exige grupo e nao executa acao sensivel', () => {
@@ -171,4 +174,55 @@ test('P2 previsoes: reposicao, recompra e caixa usam policy com sugestao', async
   assert.match(formEntrega, /aplicarPrevisaoIA/);
   assert.doesNotMatch(formEntrega, /data_previsao: resultado\.data_prevista/);
   assert.match(fluxo, /scopeType === 'grupo'/);
+});
+
+test('P2 anomalias: stamp, seguranca e UIs no contrato de sugestao', async () => {
+  assert.throws(() => assertAnomalyScanContext({ groupId: '', empresaId: 'e1' }), /Grupo/);
+  assert.throws(() => assertAnomalyScanContext({ groupId: 'g1', empresaId: '', scopeType: 'empresa' }), /Empresa/);
+
+  const stamped = stampAnomalyScanResult({
+    details: [{ entidade: 'ContaReceber', severity: 'alto' }],
+    warnings: [{ operation: 'alerta_externo_pendente_confirmacao' }],
+    extra: { fonte: 'teste' },
+  });
+  assert.equal(stamped.modo, 'sugestao');
+  assert.equal(stamped.anomaly, true);
+  assert.equal(stamped.issues, 1);
+  assert.equal(stamped.fonte, 'teste');
+
+  const sec = buildSecurityAnomalySuggestions({
+    windowMinutes: 15,
+    agora: new Date('2026-09-08T12:00:00.000Z'),
+    logs: Array.from({ length: 5 }, (_, i) => ({
+      acao: 'Exclusão',
+      data_hora: '2026-09-08T11:55:00.000Z',
+      id: `l${i}`,
+    })),
+  });
+  assert.equal(sec.modo, 'sugestao');
+  assert.equal(sec.anomaly, true);
+  assert.ok(sec.alerts.some((a) => /Exclusoes/i.test(a.tipo)));
+
+  const anomUi = await readFile(new URL('../src/components/financeiro/IADetectorAnomalias.jsx', import.meta.url), 'utf8');
+  const fin = await readFile(new URL('../src/pages/Financeiro.jsx', import.meta.url), 'utf8');
+  const dash = await readFile(new URL('../src/pages/Dashboard.jsx', import.meta.url), 'utf8');
+  const pedido = await readFile(new URL('../src/components/comercial/pedido/PedidoTabsContainer.jsx', import.meta.url), 'utf8');
+  const scan = await readFile(new URL('../base44/functions/iaFinanceAnomalyScan/entry.ts', import.meta.url), 'utf8');
+  const secFn = await readFile(new URL('../base44/functions/securityAlerts/entry.ts', import.meta.url), 'utf8');
+  const local = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
+
+  assert.match(anomUi, /assertAnomalyScanContext/);
+  assert.match(anomUi, /Sugestão — sem baixa automática/);
+  assert.match(fin, /IADetectorAnomalias/);
+  assert.match(dash, /Sugestão/);
+  assert.match(dash, /anomaliasIA\?\.anomaly/);
+  assert.match(pedido, /filtros:\s*\{[\s\S]*group_id/);
+  assert.match(pedido, /res\?\.data\?\.anomaly === true/);
+  assert.match(scan, /modo: 'sugestao'/);
+  assert.match(scan, /confirmado === true \|\| body\?\.alertar === true/);
+  assert.match(secFn, /Grupo obrigatorio/);
+  assert.match(secFn, /modo: 'sugestao'/);
+  assert.match(local, /case 'iaFinanceAnomalyScan'/);
+  assert.match(local, /modo: 'sugestao'/);
+  assert.match(local, /case 'securityAlerts'/);
 });

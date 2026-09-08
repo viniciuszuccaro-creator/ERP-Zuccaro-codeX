@@ -1681,6 +1681,32 @@ const functions = {
       case 'verifyTotp':
         return { data: { valid: true, local: true } };
       case 'iaFinanceAnomalyScan':
+        return {
+          data: {
+            ok: true,
+            local: true,
+            modo: 'sugestao',
+            anomaly: false,
+            issues: 0,
+            details: [],
+            previsoes: [],
+            warnings: [],
+            fonte: 'simulacao_local',
+            message: 'Scan de anomalia simulado localmente (somente sugestao).',
+          },
+        };
+      case 'securityAlerts':
+        return {
+          data: {
+            ok: true,
+            local: true,
+            modo: 'sugestao',
+            anomaly: false,
+            alerts: 0,
+            details: [],
+            message: 'Alertas de seguranca simulados localmente (somente sugestao).',
+          },
+        };
       case 'groupConsolidation':
       case 'conflictPolicy':
       case 'sodValidator':

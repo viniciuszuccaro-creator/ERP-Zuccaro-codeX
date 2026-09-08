@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import {
-  assertIaUiContext,
+  assertAnomalyScanContext,
   buildFinanceAnomalySuggestions,
 } from '@/components/lib/iaTransversalPolicy';
 
@@ -27,7 +27,7 @@ export default function IADetectorAnomalias() {
   const { data: anomalias = [], isLoading } = useQuery({
     queryKey: ['ia-anomalias-financeiras', groupId, empresaId, scopeType, periodo],
     queryFn: async () => {
-      assertIaUiContext({ groupId, empresaId, scopeType });
+      assertAnomalyScanContext({ groupId, empresaId, scopeType });
       const [receber, pagar] = await Promise.all([
         filterInContext('ContaReceber', {}, '-created_date', 200),
         filterInContext('ContaPagar', {}, '-created_date', 200),

@@ -30,6 +30,7 @@ const GestaoRemessaRetorno = React.lazy(() => import("../components/financeiro/G
 const VendasMulticanal = React.lazy(() => import("../components/financeiro/VendasMulticanal"));
 const RateioMultiempresa = React.lazy(() => import("../components/financeiro/RateioMultiempresa"));
 const AlertasFinanceirosEmpresa = React.lazy(() => import("../components/financeiro/AlertasFinanceirosEmpresa"));
+const IADetectorAnomalias = React.lazy(() => import("../components/financeiro/IADetectorAnomalias"));
 const RelatorioFinanceiro = React.lazy(() => import("../components/financeiro/RelatorioFinanceiro"));
 const DashboardFormasPagamento = React.lazy(() => import("../components/financeiro/DashboardFormasPagamento"));
 const LogisticaFinanceiroPanel = React.lazy(() => import("../components/expedicao/financeiro/LogisticaFinanceiroPanel"));
@@ -361,6 +362,17 @@ export default function Financeiro() {
       width: 1400,
       height: 800,
       props: { empresaId: empresaAtual?.id, groupId: empresasDoGrupo[0]?.group_id }
+    },
+    {
+      title: 'IA Anomalias',
+      description: 'Sugestões de risco financeiro (sem baixa automática)',
+      icon: Wallet,
+      color: 'rose',
+      component: IADetectorAnomalias,
+      windowTitle: '🛡️ IA Detector de Anomalias',
+      width: 1400,
+      height: 850,
+      sectionKey: 'Alertas por Empresa',
     },
   ];
 
