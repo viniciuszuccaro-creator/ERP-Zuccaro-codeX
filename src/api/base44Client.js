@@ -1,6 +1,10 @@
 import { createClient } from '@base44/sdk';
 import { appParams } from '@/lib/app-params';
 import { localBase44, localApiUser as localOnlyUser } from './localBase44Client';
+import {
+  assertInteractiveAuthAllowed,
+  createAuthDeniedError,
+} from './localAuthSessionPolicy';
 
 const { appId, serverUrl, token, functionsVersion } = appParams;
 const apiKey = import.meta.env.VITE_BASE44_API_KEY;
@@ -26,14 +30,20 @@ export const localApiUser = isLocalOnlyMode ? localOnlyUser : {
   grupos_vinculados: []
 };
 
-//Create a client with authentication required only when the app is not in local-only mode.
+const interactiveAuth = assertInteractiveAuthAllowed({
+  isLocalOnlyMode,
+  hasApiKey: Boolean(apiKey),
+  hasUserToken: Boolean(token),
+});
+
+// Sessao interativa exige auth de usuario; API key sozinha nao libera browser.
 const remoteBase44 = isLocalOnlyMode ? null : createClient({
   appId,
   serverUrl,
   token,
   headers: apiKey ? { api_key: apiKey } : undefined,
   functionsVersion,
-  requiresAuth: false
+  requiresAuth: interactiveAuth.allowed ? Boolean(token) : true,
 });
 
 /**
@@ -46,16 +56,34 @@ export const base44 = /** @type {import('@base44/sdk').Base44Client} */ (
 );
 
 if (!isLocalOnlyMode && isApiKeyMode && base44?.auth) {
+  const originalMe = base44.auth.me?.bind(base44.auth);
   const originalUpdateMe = base44.auth.updateMe?.bind(base44.auth);
-  base44.auth.me = async () => localApiUser;
-  base44.auth.isAuthenticated = async () => true;
-  base44.auth.updateMe = async (updates = {}) => {
-    Object.assign(localApiUser, updates);
+  const originalIsAuthenticated = base44.auth.isAuthenticated?.bind(base44.auth);
+
+  base44.auth.me = async () => {
+    if (!interactiveAuth.allowed) {
+      throw createAuthDeniedError(interactiveAuth);
+    }
+    if (originalMe) return originalMe();
+    throw createAuthDeniedError({ reason: 'auth_required', type: 'auth_required' });
+  };
+
+  base44.auth.isAuthenticated = async () => {
+    if (!interactiveAuth.allowed) return false;
+    if (originalIsAuthenticated) return originalIsAuthenticated();
     try {
-      if (updates.contexto_atual) localStorage.setItem('contexto_atual', updates.contexto_atual);
-      if (updates.empresa_atual_id) localStorage.setItem('empresa_atual_id', updates.empresa_atual_id);
-      if (updates.grupo_atual_id) localStorage.setItem('group_atual_id', updates.grupo_atual_id);
-    } catch {}
-    return originalUpdateMe ? localApiUser : localApiUser;
+      await base44.auth.me();
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  base44.auth.updateMe = async (updates = {}) => {
+    if (!interactiveAuth.allowed) {
+      throw createAuthDeniedError(interactiveAuth);
+    }
+    if (originalUpdateMe) return originalUpdateMe(updates);
+    return updates;
   };
 }

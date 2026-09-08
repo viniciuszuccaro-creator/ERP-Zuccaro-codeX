@@ -1,3 +1,15 @@
+### P0.1 - Seguranca/autenticacao: sessao local, logout e API-key fail-closed
+- Objetivo: retomar P0 Gate 1 de `PLANO_GO_LIVE.md` fechando fail-open restante no auth existente (sem loginV2).
+- Diagnostico: `me`/`isAuthenticated` locais ignoravam `SessaoUsuario`; logout era noop; modo API-key remoto autenticava admin sintetico com `isAuthenticated => true`; `ProtectedRoute` pedia `authChecked`/`checkUserAuth` ausentes no AuthContext.
+- Causa raiz: contrato de sessao/logout incompleto e bypass interativo por API key.
+- Arquivos alterados: `localAuthSessionPolicy.js`, `localBase44Client.js`, `base44Client.js`, `AuthContext.jsx`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: `evaluateLocalUserSession`, `SessaoUsuario`, `GerenciadorSessoes`, App autenticado existente.
+- Alteracoes: estado `logged_in` + bind/revoga sessao; logout/redirect reais; API key sem token nao autentica UI; AuthContext exporta `authChecked`/`checkUserAuth`.
+- Multiempresa/RBAC: continua exigindo grupo/empresa no perfil; sessao carrega group/empresa do usuario.
+- Pendencia: MFA no login; recuperacao de senha; Gate 2 RBAC residual; marcar demais itens P0 do checklist apos homologacao.
+- Validacoes: `node --test tests/local-auth-session-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 2 RBAC granular (matriz frontend + backend residual).
+
 ### P2.5 - Automacoes avancadas: fail-closed, flag NF-e e UIs reativadas
 - Objetivo: cumprir P2 Automacoes avancadas de `PLANO_GO_LIVE.md` nas automacoes existentes, sem hub AutomationV2/scheduler novo.
 - Diagnostico: `onPedidoReadyToInvoice` emitia NF-e ignorando `emitir_automatico`; `paymentStatusManager` podia varrer todas as empresas; `ReguaCobrancaIA`/`ConfiguracaoNotificacoes`/`HistoricoBackups` orfaos; regua com intervalo silencioso mutando CR.

@@ -3,9 +3,13 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import {
+  assertInteractiveAuthAllowed,
   evaluateLocalUserSession,
+  markLocalLoggedOut,
+  readLocalAuthState,
   resolveUserEmpresaId,
   resolveUserGroupId,
+  writeLocalAuthState,
 } from '../src/api/localAuthSessionPolicy.js';
 
 const admin = {
@@ -57,19 +61,42 @@ test('linked group and company ids resolve from active vinculos', () => {
   assert.equal(resolveUserEmpresaId({ empresas_vinculadas: [{ empresa_id: 'e1', ativo: false }, { empresa_id: 'e2', ativo: true }] }), 'e2');
 });
 
-test('local auth stack fails closed for inactive users and unauthenticated app routes', async () => {
+test('auth state logout and api-key interactive gate', () => {
+  const mem = new Map();
+  const storage = {
+    getItem: (k) => (mem.has(k) ? mem.get(k) : null),
+    setItem: (k, v) => { mem.set(k, String(v)); },
+    removeItem: (k) => { mem.delete(k); },
+  };
+  writeLocalAuthState({ logged_in: true, sessao_id: 's1' }, storage);
+  assert.equal(readLocalAuthState(storage).logged_in, true);
+  markLocalLoggedOut(storage);
+  assert.equal(readLocalAuthState(storage).logged_in, false);
+  assert.equal(readLocalAuthState(storage).sessao_id, null);
+
+  assert.equal(assertInteractiveAuthAllowed({ isLocalOnlyMode: true, hasApiKey: true, hasUserToken: false }).allowed, true);
+  assert.equal(assertInteractiveAuthAllowed({ isLocalOnlyMode: false, hasApiKey: true, hasUserToken: false }).allowed, false);
+  assert.equal(assertInteractiveAuthAllowed({ isLocalOnlyMode: false, hasApiKey: true, hasUserToken: true }).allowed, true);
+});
+
+test('local auth stack binds session and refuses api-key browser bypass', async () => {
   const policy = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
+  const client = await readFile(new URL('../src/api/base44Client.js', import.meta.url), 'utf8');
   const auth = await readFile(new URL('../src/lib/AuthContext.jsx', import.meta.url), 'utf8');
   const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8');
+  const route = await readFile(new URL('../src/components/ProtectedRoute.jsx', import.meta.url), 'utf8');
   const sessoes = await readFile(new URL('../src/components/sistema/GerenciadorSessoes.jsx', import.meta.url), 'utf8');
 
-  assert.match(policy, /evaluateLocalUserSession/);
-  assert.match(policy, /createAuthDeniedError/);
-  assert.match(policy, /async isAuthenticated\(\)/);
-  assert.match(policy, /return evaluateLocalUserSession\(user\)\.allowed/);
-  assert.match(auth, /const currentUser = await base44\.auth\.me\(\)/);
-  assert.match(auth, /setIsAuthenticated\(false\)/);
-  assert.match(auth, /error\?\.authType \|\| 'auth_required'/);
+  assert.match(policy, /ensureLocalActiveSession/);
+  assert.match(policy, /markLocalLoggedOut/);
+  assert.match(policy, /evaluateLocalUserSession\(user, session\)/);
+  assert.match(policy, /async logout\(\)/);
+  assert.match(client, /assertInteractiveAuthAllowed/);
+  assert.doesNotMatch(client, /isAuthenticated = async \(\) => true/);
+  assert.match(auth, /authChecked/);
+  assert.match(auth, /checkUserAuth/);
+  assert.match(auth, /api_key_not_interactive|API key nao autentica/);
+  assert.match(route, /authChecked/);
   assert.match(app, /if \(!isAuthenticated\)/);
   assert.match(app, /account_inactive/);
   assert.doesNotMatch(sessoes, /localStorage\.getItem\('group_atual_id'\)/);

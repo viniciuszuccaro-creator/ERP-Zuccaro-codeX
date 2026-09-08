@@ -14,7 +14,7 @@ O ERP somente poderá ser considerado apto para uso real quando os blocos P0 est
 
 ## P0 — bloqueia entrada em produção
 
-- [ ] Segurança e autenticação.
+- [x] Segurança e autenticação.
 - [ ] RBAC granular frontend + backend.
 - [ ] Multiempresa Grupo/Empresas.
 - [ ] Auditoria e logs.

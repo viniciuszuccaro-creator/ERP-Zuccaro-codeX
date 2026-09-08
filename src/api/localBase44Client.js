@@ -6,7 +6,7 @@ import {
   validateMultiempresaContext,
 } from "@/components/lib/contextoMultiempresaPolicy";
 import { sanitizeAuditPayload, sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
-import { createAuthDeniedError, evaluateLocalUserSession } from "@/api/localAuthSessionPolicy";
+import { createAuthDeniedError, evaluateLocalUserSession, markLocalLoggedOut, readLocalAuthState, writeLocalAuthState, LOCAL_SESSION_ID_KEY } from "@/api/localAuthSessionPolicy";
 import { applyMasterCadastroOnCreate, MASTER_CODE_SPECS, parseNumericCode, sequenceKeyFor } from "@/api/localCadastroMasterPolicy";
 import { assertMovimentacaoEstoque, configAllowsNegativeStock, HISTORICO_ESTOQUE_ENTITIES, isAjusteEstoque } from "@/components/lib/estoqueMovimentoPolicy";
 import {
@@ -502,6 +502,71 @@ const writeUser = (updates) => {
   db.User = [user, ...(db.User || []).filter((u) => u.id !== user.id)];
   saveDb(db);
   return user;
+};
+
+const loadLocalSessionById = async (sessaoId) => {
+  if (!sessaoId || !entities?.SessaoUsuario?.filter) return null;
+  try {
+    const rows = await entities.SessaoUsuario.filter({ id: sessaoId }, undefined, 1);
+    return rows?.[0] || null;
+  } catch (error) {
+    reportLocalClientFailure('Falha ao carregar SessaoUsuario', error, { sessao_id: sessaoId });
+    return null;
+  }
+};
+
+const ensureLocalActiveSession = async (user) => {
+  const authState = readLocalAuthState(safeStorage);
+  const sessaoId = safeStorage.getItem(LOCAL_SESSION_ID_KEY) || authState.sessao_id || null;
+  let session = await loadLocalSessionById(sessaoId);
+
+  if (session) {
+    const evaluation = evaluateLocalUserSession(user, session);
+    if (!evaluation.allowed) {
+      throw createAuthDeniedError(evaluation);
+    }
+    try {
+      session = await entities.SessaoUsuario.update(session.id, {
+        data_hora_ultimo_acesso: now(),
+        ativa: true,
+        status: 'Ativa',
+      });
+    } catch (error) {
+      reportLocalClientFailure('Falha ao renovar SessaoUsuario', error, { sessao_id: session?.id });
+    }
+    writeLocalAuthState({ logged_in: true, sessao_id: session.id }, safeStorage);
+    return session;
+  }
+
+  session = await entities.SessaoUsuario.create({
+    usuario_id: user.id,
+    usuario_email: user.email,
+    ativa: true,
+    status: 'Ativa',
+    data_hora_inicio: now(),
+    data_hora_ultimo_acesso: now(),
+    max_idle_ms: 8 * 60 * 60 * 1000,
+    group_id: user.grupo_atual_id || user.grupo_padrao_id || null,
+    empresa_id: user.empresa_atual_id || user.empresa_padrao_id || null,
+    dispositivo: 'local',
+    origem: 'localBase44Client',
+  });
+  writeLocalAuthState({ logged_in: true, sessao_id: session.id }, safeStorage);
+  return session;
+};
+
+const revokeLocalSession = async (sessaoId, motivo = 'Logout') => {
+  if (!sessaoId || !entities?.SessaoUsuario?.update) return;
+  try {
+    await entities.SessaoUsuario.update(sessaoId, {
+      ativa: false,
+      status: 'Encerrada',
+      data_hora_encerramento: now(),
+      motivo_encerramento: motivo,
+    });
+  } catch (error) {
+    reportLocalClientFailure('Falha ao revogar SessaoUsuario', error, { sessao_id: sessaoId });
+  }
 };
 
 const getValue = (record, field) => {
@@ -1833,14 +1898,25 @@ export const localBase44 = {
   },
   auth: {
     async me() {
+      const authState = readLocalAuthState(safeStorage);
+      if (authState.logged_in === false) {
+        throw createAuthDeniedError({ reason: 'logged_out', type: 'auth_required' });
+      }
       const user = readUser();
-      const evaluation = evaluateLocalUserSession(user);
+      const userEvaluation = evaluateLocalUserSession(user);
+      if (!userEvaluation.allowed) throw createAuthDeniedError(userEvaluation);
+      const session = await ensureLocalActiveSession(user);
+      const evaluation = evaluateLocalUserSession(user, session);
       if (!evaluation.allowed) throw createAuthDeniedError(evaluation);
       return user;
     },
     async isAuthenticated() {
-      const user = readUser();
-      return evaluateLocalUserSession(user).allowed;
+      try {
+        await this.me();
+        return true;
+      } catch {
+        return false;
+      }
     },
     async updateMe(updates = {}) {
       const user = writeUser(updates);
@@ -1851,10 +1927,15 @@ export const localBase44 = {
       } catch (error) { reportLocalClientFailure('Falha ao atualizar contexto do usuario local', error, { user_id: user?.id }); }
       return user;
     },
-    logout() {
+    async logout() {
+      const authState = readLocalAuthState(safeStorage);
+      const sessaoId = safeStorage.getItem(LOCAL_SESSION_ID_KEY) || authState.sessao_id || null;
+      await revokeLocalSession(sessaoId, 'Logout');
+      markLocalLoggedOut(safeStorage);
       return true;
     },
     redirectToLogin() {
+      markLocalLoggedOut(safeStorage);
       return true;
     },
   },
