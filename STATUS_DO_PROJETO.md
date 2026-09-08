@@ -1,3 +1,15 @@
+### P0.12 - Backup e rollback: snapshot real e restore fail-closed
+- Objetivo: cumprir residual P0 Backup/rollback no backup existente, sem BackupV2.
+- Diagnostico: Gate 20 gravava hash/resumo sem payload; HistoricoBackups simulava restore; status `Concluido` vs `Concluído` escondia acoes; autoBackup sem group_id e catch silencioso; update reestampava backup.
+- Causa raiz: rollback tratado como toast, sem snapshot restauravel.
+- Arquivos alterados: `viradaProducaoPolicy.js`, `localBase44Client.js`, `HistoricoBackups.jsx`, `autoBackup/entry.ts`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: `BackupAutomatico`, `mergeSnapshotRecords`, ConfiguracaoBackup/Monitoramento existentes.
+- Alteracoes: snapshot por entidade no create; `restore()` aplica merge; expire/restaurar com RBAC; autoBackup exige grupo e grava controle+auditoria; update preserva integridade.
+- Multiempresa/RBAC: snapshot filtrado por grupo/empresa; restore/expirar com `restaurar`/`excluir`.
+- Pendencia: backup criptografado do legado operacional; reconciliacao pos-virada (Gate 20 residual).
+- Validacoes: `node --test tests/virada-producao-policy.test.js tests/piloto-operacao-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Testes e homologacao (checklist) / Migração piloto.
+
 ### P0.11 - Gate 11 Expedicao residual: entrega, prova e escopo
 - Objetivo: cumprir residual do Gate 11 / P0 Expedicao sem ExpedicaoV2.
 - Diagnostico: Entrega caia em Cadastros/`editar`; update sem alçada por status; delete sem policy; Entregue sem prova; Separacao concluia com `editar`; baixa de estoque na confirmação atualizava Produto fora do movimento.

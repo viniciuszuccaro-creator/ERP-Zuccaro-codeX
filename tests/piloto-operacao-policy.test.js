@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-import { VIRADA_CHECKLIST } from '../src/components/lib/viradaProducaoPolicy.js';
+import { BACKUP_COUNT_ENTITIES, buildBackupEntitySnapshot, VIRADA_CHECKLIST } from '../src/components/lib/viradaProducaoPolicy.js';
 import {
   applyModoOperacaoOnWrite,
   applyUsuarioPilotoOnWrite,
@@ -21,12 +21,17 @@ const usersCompletos = PAPEIS_PILOTO.map((papel, index) => ({
 }));
 
 const cenariosOk = CENARIOS_PILOTO.map((id) => ({ id, ok: true }));
+const snapshotPiloto = buildBackupEntitySnapshot(
+  Object.fromEntries(BACKUP_COUNT_ENTITIES.map((name) => [name, []])),
+  { groupId: 'g1' },
+);
 const backupOk = [{
   group_id: 'g1',
   status: 'Concluido',
   numero_backup: 'BKP-000001',
   hash_integridade: 'fnv1a:abc',
   quantidade_total_registros: 4,
+  snapshot_dados: snapshotPiloto,
 }];
 const checklistOk = Object.fromEntries(VIRADA_CHECKLIST.map((campo) => [campo, true]));
 const viradaPronta = {

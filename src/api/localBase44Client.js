@@ -44,9 +44,13 @@ import {
 } from "@/components/lib/pilotoOperacaoPolicy";
 import {
   applyBackupOnCreate,
+  applyBackupOnUpdate,
+  assertBackupExpire,
+  assertBackupRestore,
   assertJanelaMigracao,
   BACKUP_COUNT_ENTITIES,
   backupSequenceKey,
+  buildBackupEntitySnapshot,
   buildBackupResumo,
 } from "@/components/lib/viradaProducaoPolicy";
 import { assertIaInvocation } from "@/components/lib/iaTransversalPolicy";
@@ -914,6 +918,8 @@ const ENTITY_PERMISSION_SCOPE = {
   Entrega: { module: 'Expedicao', section: 'Entrega' },
   Romaneio: { module: 'Expedicao', section: 'Romaneio' },
   SeparacaoConferencia: { module: 'Expedicao', section: 'Separacao' },
+  BackupAutomatico: { module: 'Sistema', section: 'Backup' },
+  ConfiguracaoBackup: { module: 'Sistema', section: 'Backup' },
 };
 
 const getEntityPermissionScope = (entityName) => {
@@ -1231,10 +1237,16 @@ const applyLocalPilotoWrite = (db, entityName, record, before = null) => {
 
 const applyLocalBackupWrite = (db, entityName, record, before = null) => {
   if (entityName !== 'BackupAutomatico') return record;
+  if (before) {
+    const preserved = applyBackupOnUpdate({ before, patch: record });
+    if (preserved) return preserved;
+  }
   const merged = { ...(before || {}), ...record };
-  const stores = Object.fromEntries(BACKUP_COUNT_ENTITIES.map((name) => [name, getEntityStore(db, name)]));
-  const resumo = buildBackupResumo(stores);
   const groupId = merged.group_id || merged.grupo_id || null;
+  const empresaId = merged.empresa_id || null;
+  const stores = Object.fromEntries(BACKUP_COUNT_ENTITIES.map((name) => [name, getEntityStore(db, name)]));
+  const snapshotDados = buildBackupEntitySnapshot(stores, { groupId, empresaId });
+  const resumo = buildBackupResumo(snapshotDados.entities);
   const configs = getEntityStore(db, 'ConfiguracaoSistema');
   const chave = backupSequenceKey(groupId);
   const seqRow = configs.find((item) => item.chave === chave);
@@ -1243,6 +1255,7 @@ const applyLocalBackupWrite = (db, entityName, record, before = null) => {
     record: merged,
     records: getEntityStore(db, 'BackupAutomatico'),
     resumo,
+    snapshotDados,
     sequenceValue,
   });
   const used = Number.parseInt(String(nextRecord.numero_backup || '').replace(/\D/g, ''), 10);
@@ -1577,7 +1590,7 @@ const createEntityApi = (entityName) => ({
   },
 
   async update(id, data = {}) {
-    if (!isTituloFinanceiroEntity(entityName) && !NOTA_FISCAL_ENTITIES.includes(entityName) && entityName !== 'OrdemProducao' && entityName !== 'Entrega') {
+    if (!isTituloFinanceiroEntity(entityName) && !NOTA_FISCAL_ENTITIES.includes(entityName) && entityName !== 'OrdemProducao' && entityName !== 'Entrega' && entityName !== 'BackupAutomatico') {
       assertLocalMutationAllowed(entityName, 'editar', id);
     }
     const db = loadDb();
@@ -1593,6 +1606,17 @@ const createEntityApi = (entityName) => ({
     }
     if ((entityName === 'Entrega' || entityName === 'OrdemCompra' || NOTA_FISCAL_ENTITIES.includes(entityName) || entityName === 'OrdemProducao') && before.empresa_id) {
       payload.empresa_id = before.empresa_id;
+    }
+    if (entityName === 'BackupAutomatico') {
+      const statusPatch = Object.prototype.hasOwnProperty.call(payload, 'status')
+        ? String(payload.status || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        : '';
+      if (statusPatch === 'expirado') {
+        assertBackupExpire(before);
+        assertLocalPermissionAny(entityName, ['excluir', 'editar'], id);
+      } else {
+        assertLocalPermissionAny(entityName, ['editar', 'restaurar', 'executar'], id);
+      }
     }
     let nextPayload = applyLocalBackupWrite(db, entityName, applyLocalPilotoWrite(db, entityName, payload, before), before);
     if (entityName === 'Entrega') {
@@ -1710,6 +1734,51 @@ const createEntityApi = (entityName) => ({
     notify(entityName, 'delete', removed);
     auditLocalMutation(entityName, 'Exclusao', { before: removed, recordId: removed?.id || id });
     return { success: true };
+  },
+
+  async restore(id, options = {}) {
+    if (entityName !== 'BackupAutomatico') {
+      throw new Error(`restore nao suportado para ${entityName}`);
+    }
+    assertLocalPermissionAny(entityName, ['restaurar', 'executar'], id);
+    const db = loadDb();
+    const records = getEntityStore(db, entityName);
+    const index = records.findIndex((item) => String(item.id) === String(id));
+    if (index < 0) throw new Error(`${entityName} local nao encontrado: ${id}`);
+    const backup = records[index];
+    const { groupId, empresaId, user } = getCurrentContext();
+    const entitiesSnapshot = assertBackupRestore({
+      backup,
+      groupId: options.group_id || groupId,
+      empresaId: options.empresa_id || empresaId,
+    });
+    const summary = {};
+    BACKUP_COUNT_ENTITIES.forEach((name) => {
+      summary[name] = mergeSnapshotRecords(db, name, entitiesSnapshot[name] || []);
+    });
+    const restauracao = {
+      data_hora: now(),
+      usuario: user?.full_name || user?.email || 'Sistema',
+      usuario_id: user?.id || null,
+      tipo_restauracao: 'Completa',
+      sucesso: true,
+      observacoes: `Restauracao aplicada do backup ${backup.numero_backup || backup.id}`,
+      resumo: summary,
+    };
+    records[index] = {
+      ...backup,
+      restauracoes: [...(backup.restauracoes || []), restauracao],
+      updated_date: now(),
+    };
+    saveDb(db);
+    notify(entityName, 'update', records[index]);
+    auditLocalMutation(entityName, 'Restauracao', {
+      before: backup,
+      after: records[index],
+      recordId: records[index].id,
+      detalhes: summary,
+    });
+    return { backup: records[index], summary };
   },
 
   async bulkCreate(items = []) {

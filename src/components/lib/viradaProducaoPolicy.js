@@ -43,6 +43,47 @@ export const buildBackupResumo = (stores = {}) => {
   return { quantidade_total_registros, por_entidade };
 };
 
+const recordInBackupScope = (record = {}, { groupId = null, empresaId = null } = {}) => {
+  const group = firstText(groupId);
+  const empresa = firstText(empresaId);
+  if (empresa) {
+    const recordEmpresa = firstText(record.empresa_id, record.empresa_dona_id, record.empresa_alocada_id);
+    if (recordEmpresa && recordEmpresa !== empresa) return false;
+  }
+  if (group) {
+    const recordGroup = firstText(record.group_id, record.grupo_id);
+    if (recordGroup && recordGroup !== group) return false;
+  }
+  return true;
+};
+
+export const buildBackupEntitySnapshot = (stores = {}, { groupId = null, empresaId = null } = {}) => {
+  const entities = {};
+  BACKUP_COUNT_ENTITIES.forEach((name) => {
+    const rows = Array.isArray(stores[name]) ? stores[name] : [];
+    entities[name] = rows
+      .filter((row) => recordInBackupScope(row, { groupId, empresaId }))
+      .map((row) => ({ ...row }));
+  });
+  return {
+    version: 1,
+    generated_at: new Date().toISOString(),
+    scope: { group_id: firstText(groupId) || null, empresa_id: firstText(empresaId) || null },
+    entities,
+  };
+};
+
+export const hasBackupSnapshot = (backup = {}) => {
+  const entities = backup?.snapshot_dados?.entities || backup?.entidades;
+  if (!entities || typeof entities !== 'object') return false;
+  return BACKUP_COUNT_ENTITIES.every((name) => Array.isArray(entities[name]));
+};
+
+export const getBackupSnapshotEntities = (backup = {}) => {
+  if (!hasBackupSnapshot(backup)) return null;
+  return backup.snapshot_dados?.entities || backup.entidades;
+};
+
 export const hashBackupResumo = (resumo = {}) => {
   const text = JSON.stringify(resumo);
   let hash = 2166136261;
@@ -65,7 +106,8 @@ export const isBackupErpValido = (backup = {}) => {
   if (!numero.startsWith('BKP-') || /BKP-\d{13,}/.test(numero)) return false;
   if (!firstText(backup.hash_integridade) || firstText(backup.hash_integridade).includes('random')) return false;
   const total = Number(backup.quantidade_total_registros);
-  return Number.isFinite(total) && total >= 0;
+  if (!(Number.isFinite(total) && total >= 0)) return false;
+  return hasBackupSnapshot(backup);
 };
 
 export const isJanelaMigracaoCongelada = ({ configs = [], configBackup = {} } = {}) => {
@@ -87,12 +129,19 @@ export const assertJanelaMigracao = ({ configs = [], configBackup = {}, migracao
   return true;
 };
 
-export const applyBackupOnCreate = ({ record = {}, records = [], resumo = null, sequenceValue = 0 } = {}) => {
+export const applyBackupOnCreate = ({
+  record = {},
+  records = [],
+  resumo = null,
+  snapshotDados = null,
+  sequenceValue = 0,
+} = {}) => {
   const groupId = firstText(record.group_id, record.grupo_id);
   if (!groupId) {
     throw new Error('Grupo obrigatorio para backup do ERP.');
   }
-  const snapshot = resumo || buildBackupResumo({});
+  const snapshotPayload = snapshotDados || record.snapshot_dados || buildBackupEntitySnapshot({}, { groupId, empresaId: record.empresa_id });
+  const snapshot = resumo || buildBackupResumo(snapshotPayload.entities || {});
   const hash = hashBackupResumo(snapshot);
   const usedMax = (Array.isArray(records) ? records : []).reduce((max, item) => {
     const parsed = Number.parseInt(String(item?.numero_backup || '').replace(/\D/g, ''), 10);
@@ -114,18 +163,73 @@ export const applyBackupOnCreate = ({ record = {}, records = [], resumo = null, 
     quantidade_total_registros: snapshot.quantidade_total_registros,
     resumo_entidades: snapshot.por_entidade,
     hash_integridade: hash,
+    snapshot_dados: snapshotPayload,
     status,
     validacao_integridade: {
       validado: true,
       hash_valido: true,
       arquivo_integro: true,
-      pode_restaurar: true,
+      pode_restaurar: hasBackupSnapshot({ snapshot_dados: snapshotPayload }),
     },
   };
   if (isStatusBackupConcluido(status) && !isBackupErpValido(stamped)) {
-    throw new Error('Backup do ERP novo exige resumo, hash e numero estavel.');
+    throw new Error('Backup do ERP novo exige snapshot, resumo, hash e numero estavel.');
   }
   return stamped;
+};
+
+export const assertBackupRestore = ({ backup = {}, groupId = null, empresaId = null } = {}) => {
+  if (!firstText(backup.id)) throw new Error('Backup obrigatorio para restauracao.');
+  if (!isBackupErpValido(backup)) {
+    throw new Error('Backup invalido ou sem snapshot restauravel.');
+  }
+  const backupGroup = firstText(backup.group_id, backup.grupo_id);
+  const ctxGroup = firstText(groupId);
+  if (ctxGroup && backupGroup && ctxGroup !== backupGroup) {
+    throw new Error('Backup fora do grupo do contexto.');
+  }
+  const backupEmpresa = firstText(backup.empresa_id);
+  const ctxEmpresa = firstText(empresaId);
+  if (ctxEmpresa && backupEmpresa && ctxEmpresa !== backupEmpresa) {
+    throw new Error('Backup fora da empresa do contexto.');
+  }
+  if (backup.validacao_integridade?.pode_restaurar === false) {
+    throw new Error('Backup marcado como nao restauravel.');
+  }
+  return getBackupSnapshotEntities(backup);
+};
+
+export const assertBackupExpire = (backup = {}) => {
+  if (!firstText(backup.id, backup.numero_backup)) {
+    throw new Error('Backup obrigatorio para expiracao.');
+  }
+  if (strip(backup.status) === 'expirado') {
+    throw new Error('Backup ja expirado.');
+  }
+  return true;
+};
+
+export const applyBackupOnUpdate = ({ before = {}, patch = {} } = {}) => {
+  if (!firstText(before.numero_backup) || !firstText(before.hash_integridade)) {
+    return null;
+  }
+  const next = {
+    ...before,
+    ...patch,
+    numero_backup: before.numero_backup,
+    hash_integridade: before.hash_integridade,
+    snapshot_dados: before.snapshot_dados,
+    resumo_entidades: before.resumo_entidades,
+    quantidade_total_registros: before.quantidade_total_registros,
+    origem_backup: before.origem_backup,
+    group_id: before.group_id,
+    grupo_id: before.grupo_id || before.group_id,
+  };
+  if (Object.prototype.hasOwnProperty.call(patch, 'status') && strip(patch.status) === 'expirado') {
+    assertBackupExpire(before);
+    next.status = 'Expirado';
+  }
+  return next;
 };
 
 export const assertChecklistVirada = ({

@@ -25,7 +25,7 @@ O ERP somente poderá ser considerado apto para uso real quando os blocos P0 est
 - [x] Fiscal/NF-e mínimo operacional.
 - [x] Producao minima necessaria para os pedidos atuais.
 - [x] Expedição/entrega mínima.
-- [ ] Backup e rollback.
+- [x] Backup e rollback.
 - [ ] Testes e homologação.
 - [ ] Migração piloto validada.
 
@@ -1083,7 +1083,7 @@ O ERP pode iniciar operação controlada quando todos os P0 abaixo estiverem hom
 - [x] Fiscal homologado.
 - [x] Producao essencial funcional.
 - [x] Expedição essencial funcional.
-- [ ] Backup/rollback testados.
+- [x] Backup/rollback testados.
 - [ ] Migração piloto reconciliada.
 - [ ] Testes críticos aprovados.
 - [ ] Usuários piloto treinados.

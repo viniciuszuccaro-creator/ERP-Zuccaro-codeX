@@ -22,6 +22,9 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
+import { useUser } from '@/components/lib/UserContext';
+import { isStatusBackupConcluido } from '@/components/lib/viradaProducaoPolicy';
 
 /**
  * Histórico de Backups
@@ -31,10 +34,14 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
   const [backupSelecionado, setBackupSelecionado] = useState(null);
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
   const grupoAtivoId = grupoId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaAtivaId = empresaId || empresaAtual?.id || null;
   const scopeId = empresaAtivaId || grupoAtivoId || 'sem-contexto';
   const contextoValido = scopeId !== 'sem-contexto';
+  const canRestaurar = hasPermission('Sistema', 'Backup', 'restaurar') || hasPermission('Sistema', 'Backup', 'executar') || hasPermission('Seguranca', 'Backup', 'restaurar');
+  const canExpirar = hasPermission('Sistema', 'Backup', 'excluir') || hasPermission('Sistema', 'Backup', 'editar') || hasPermission('Seguranca', 'Backup', 'excluir');
 
   const { data: backups = [], isLoading } = useQuery({
     queryKey: ['backups', scopeId],
@@ -53,60 +60,74 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
     enabled: contextoValido,
   });
 
+  const auditBackup = async ({ acao, sucesso = true, motivo = null, detalhes = {}, registroId = null }) => {
+    try {
+      await createInContext('AuditLog', {
+        usuario: user?.full_name || user?.email || 'Usuario',
+        usuario_id: user?.id || null,
+        acao,
+        modulo: 'Backup',
+        entidade: 'BackupAutomatico',
+        registro_id: registroId,
+        empresa_id: empresaAtivaId || null,
+        group_id: grupoAtivoId || null,
+        descricao: motivo || acao,
+        dados_novos: detalhes,
+        sucesso,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[Auditoria] Falha ao registrar acao de backup.', error);
+      throw new Error('Auditoria obrigatoria falhou para operacao de backup.');
+    }
+  };
+
   const restaurarMutation = useMutation({
     mutationFn: async (backup) => {
       if (!contextoValido) {
         throw new Error('Selecione um grupo ou empresa antes de restaurar backup.');
       }
+      if (!canRestaurar) {
+        await auditBackup({
+          acao: 'Backup.restaurar_bloqueado',
+          sucesso: false,
+          motivo: 'permissao_negada',
+          registroId: backup?.id,
+        });
+        throw new Error('Sem permissao para restaurar backup.');
+      }
+      if (!isStatusBackupConcluido(backup?.status)) {
+        throw new Error('Somente backup concluido pode ser restaurado.');
+      }
 
-      // Simular restauração
       toast.success('🔄 Iniciando restauração...', {
         description: 'Este processo pode levar alguns minutos'
       });
 
-      // Atualizar histórico
-      const restauracoes = [...(backup.restauracoes || []), {
-        data_hora: new Date().toISOString(),
-        usuario: 'Sistema',
-        tipo_restauracao: 'Completa',
-        sucesso: true,
-        observacoes: 'Restauração simulada com sucesso'
-      }];
-
-      await updateInContext('BackupAutomatico', backup.id, {
-        restauracoes
+      const result = await base44.entities.BackupAutomatico.restore(backup.id, {
+        group_id: grupoAtivoId,
+        empresa_id: empresaAtivaId,
       });
 
-      try {
-        const me = await base44.auth.me();
-        await createInContext('AuditLog', {
-          usuario: me?.full_name || me?.email || 'Usuario',
-          usuario_id: me?.id || null,
-          acao: 'Restauracao',
-          modulo: 'Backup',
-          entidade: 'BackupAutomatico',
-          registro_id: backup.id,
-          empresa_id: empresaAtivaId || null,
-          group_id: grupoAtivoId || null,
-          descricao: `Restauracao solicitada para backup ${backup.numero_backup || backup.id}`,
-          dados_novos: { restauracoes },
-          sucesso: true,
-          data_hora: new Date().toISOString()
-        });
-      } catch {}
+      await auditBackup({
+        acao: 'Backup.restaurar',
+        motivo: `Restauracao aplicada para backup ${backup.numero_backup || backup.id}`,
+        detalhes: { summary: result?.summary, numero_backup: backup.numero_backup },
+        registroId: backup.id,
+      });
 
-      return backup;
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['backups', scopeId] });
       toast.success('✅ Restauração concluída!', {
-        description: 'Dados restaurados com sucesso'
+        description: 'Dados restaurados a partir do snapshot do backup'
       });
       setDetalhesOpen(false);
     },
     onError: (error) => {
       console.error('Erro ao restaurar:', error);
-      toast.error('❌ Erro ao restaurar backup');
+      toast.error(error?.message || '❌ Erro ao restaurar backup');
     }
   });
 
@@ -115,26 +136,24 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
       if (!contextoValido) {
         throw new Error('Selecione um grupo ou empresa antes de expirar backup.');
       }
+      if (!canExpirar) {
+        await auditBackup({
+          acao: 'Backup.expirar_bloqueado',
+          sucesso: false,
+          motivo: 'permissao_negada',
+          registroId: backupId,
+        });
+        throw new Error('Sem permissao para expirar backup.');
+      }
 
       await updateInContext('BackupAutomatico', backupId, {
         status: 'Expirado'
       });
-      try {
-        const me = await base44.auth.me();
-        await createInContext('AuditLog', {
-          usuario: me?.full_name || me?.email || 'Usuario',
-          usuario_id: me?.id || null,
-          acao: 'Expiracao',
-          modulo: 'Backup',
-          entidade: 'BackupAutomatico',
-          registro_id: backupId,
-          empresa_id: empresaAtivaId || null,
-          group_id: grupoAtivoId || null,
-          descricao: 'Backup marcado como expirado',
-          sucesso: true,
-          data_hora: new Date().toISOString()
-        });
-      } catch {}
+      await auditBackup({
+        acao: 'Backup.expirar',
+        motivo: 'Backup marcado como expirado',
+        registroId: backupId,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['backups', scopeId] });
@@ -190,7 +209,7 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
               <div>
                 <p className="text-xs text-green-700">Concluídos</p>
                 <p className="text-2xl font-bold text-green-900">
-                  {backups.filter(b => b.status === 'Concluído').length}
+                  {backups.filter(b => isStatusBackupConcluido(b.status)).length}
                 </p>
               </div>
             </div>
@@ -288,7 +307,7 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
                   </TableCell>
                   <TableCell>
                     <Badge className={
-                      backup.status === 'Concluído' ? 'bg-green-100 text-green-700' :
+                      isStatusBackupConcluido(backup.status) ? 'bg-green-100 text-green-700' :
                       backup.status === 'Em Progresso' ? 'bg-blue-100 text-blue-700' :
                       backup.status === 'Erro' ? 'bg-red-100 text-red-700' :
                       'bg-slate-100 text-slate-700'
@@ -310,7 +329,7 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
-                      {backup.status === 'Concluído' && (
+                      {isStatusBackupConcluido(backup.status) && (
                         <>
                           <Button
                             variant="ghost"
@@ -323,7 +342,7 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
                             title="Restaurar"
                             className="text-blue-600 hover:text-blue-700"
                             data-action="Backup.Historico.restaurar"
-                            disabled={restaurarMutation.isPending || !contextoValido}
+                            disabled={restaurarMutation.isPending || !contextoValido || !canRestaurar}
                           >
                             <RefreshCw className="w-4 h-4" />
                           </Button>
@@ -338,7 +357,7 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
                             title="Excluir"
                             className="text-red-600 hover:text-red-700"
                             data-action="Backup.Historico.expirar"
-                            disabled={excluirMutation.isPending || !contextoValido}
+                            disabled={excluirMutation.isPending || !contextoValido || !canExpirar}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -568,14 +587,14 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
 
               {/* Ações */}
               <div className="flex justify-end gap-3 pt-4 border-t">
-                {backupSelecionado.status === 'Concluído' && (
+                {isStatusBackupConcluido(backupSelecionado.status) && (
                   <Button
                     onClick={() => {
                       if (confirm('⚠️ ATENÇÃO!\n\nA restauração irá substituir TODOS os dados atuais pelos dados deste backup.\n\nEsta ação NÃO pode ser desfeita.\n\nTem certeza que deseja continuar?')) {
                         restaurarMutation.mutate(backupSelecionado);
                       }
                     }}
-                    disabled={restaurarMutation.isPending || !contextoValido}
+                    disabled={restaurarMutation.isPending || !contextoValido || !canRestaurar}
                     className="bg-orange-600 hover:bg-orange-700"
                   >
                     {restaurarMutation.isPending ? (
