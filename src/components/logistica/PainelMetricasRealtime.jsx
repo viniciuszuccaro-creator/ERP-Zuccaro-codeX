@@ -1,31 +1,60 @@
-import React, { useEffect, useState } from "react";
-import { base44 } from "@/api/base44Client";
+import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, Zap, Clock, Package, Truck, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import {
+  buildDashboardQueryKey,
+  resolveMetaOperacional,
+  DASHBOARD_REALTIME_LIMIT,
+} from "@/components/lib/dashboardKpiPolicy";
 
 /**
- * 📊 PAINEL DE MÉTRICAS EM TEMPO REAL V21.5
- * Atualiza a cada 30 segundos com refetch automático
+ * Painel de métricas em tempo real (logística).
+ * Escopo por grupo/empresa; meta derivada do dia (fail-closed sem contexto).
  */
 export default function PainelMetricasRealtime({ windowMode = false }) {
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState(new Date());
+  const { empresaAtual, grupoAtual, estaNoGrupo, filterInContext } = useContextoVisual();
+  const { hasPermission, user } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const scopeType = estaNoGrupo ? "grupo" : "empresa";
+  const contextoValido = Boolean(groupId && (scopeType === "grupo" || empresaId));
+  const canView =
+    hasPermission("Dashboard", null, "visualizar") ||
+    hasPermission("Dashboard", null, "ver") ||
+    hasPermission("Expedição", null, "visualizar") ||
+    hasPermission("Expedição", null, "ver") ||
+    hasPermission("Logística", null, "visualizar") ||
+    hasPermission("Logística", null, "ver");
+  const contextKey = buildDashboardQueryKey({
+    prefix: "painel-metricas",
+    userId: user?.id || user?.email,
+    groupId,
+    empresaId,
+    scopeType,
+  });
 
   const { data: pedidos = [], refetch: refetchPedidos } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list('-created_date', 1000),
-    refetchInterval: 30000, // Atualiza a cada 30s
+    queryKey: ["painel-metricas-pedidos", ...contextKey],
+    queryFn: () => filterInContext("Pedido", {}, "-created_date", DASHBOARD_REALTIME_LIMIT),
+    refetchInterval: 30000,
+    enabled: contextoValido && canView,
   });
 
   const { data: entregas = [], refetch: refetchEntregas } = useQuery({
-    queryKey: ['entregas'],
-    queryFn: () => base44.entities.Entrega.list('-created_date', 1000),
+    queryKey: ["painel-metricas-entregas", ...contextKey],
+    queryFn: () => filterInContext("Entrega", {}, "-created_date", DASHBOARD_REALTIME_LIMIT),
     refetchInterval: 30000,
+    enabled: contextoValido && canView,
   });
 
   useEffect(() => {
+    if (!contextoValido || !canView) return undefined;
     const interval = setInterval(() => {
       setUltimaAtualizacao(new Date());
       refetchPedidos();
@@ -33,45 +62,70 @@ export default function PainelMetricasRealtime({ windowMode = false }) {
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [refetchPedidos, refetchEntregas]);
+  }, [contextoValido, canView, refetchPedidos, refetchEntregas]);
 
-  // Métricas em tempo real
-  const hoje = new Date();
-  const inicioDoDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  const metricasHoje = useMemo(() => {
+    const empty = {
+      pedidosAprovados: 0,
+      emExpedicao: 0,
+      emTransito: 0,
+      entreguesHoje: 0,
+      ocorrenciasHoje: 0,
+      prontosFaturar: 0,
+      valorEmTransito: 0,
+    };
+    if (!contextoValido || !canView) return empty;
 
-  const metricasHoje = {
-    pedidosAprovados: pedidos.filter(p => 
-      p.status === 'Aprovado' && 
-      new Date(p.updated_date) >= inicioDoDia
-    ).length,
-    
-    emExpedicao: pedidos.filter(p => p.status === 'Em Expedição').length,
-    emTransito: pedidos.filter(p => p.status === 'Em Trânsito').length,
-    
-    entreguesHoje: pedidos.filter(p => 
-      p.status === 'Entregue' && 
-      new Date(p.updated_date) >= inicioDoDia
-    ).length,
-    
-    ocorrenciasHoje: entregas.filter(e => 
-      e.ocorrencias?.some(o => new Date(o.data_hora) >= inicioDoDia)
-    ).length,
-    
-    prontosFaturar: pedidos.filter(p => p.status === 'Pronto para Faturar').length,
-    
-    valorEmTransito: pedidos
-      .filter(p => p.status === 'Em Trânsito')
-      .reduce((sum, p) => sum + (p.valor_total || 0), 0),
-  };
+    const hoje = new Date();
+    const inicioDoDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
 
-  const meta = {
-    entregasDia: 20,
-    valorDia: 50000
-  };
+    return {
+      pedidosAprovados: pedidos.filter(
+        (p) => p.status === "Aprovado" && new Date(p.updated_date) >= inicioDoDia
+      ).length,
+      emExpedicao: pedidos.filter((p) => p.status === "Em Expedição").length,
+      emTransito: pedidos.filter((p) => p.status === "Em Trânsito").length,
+      entreguesHoje: pedidos.filter(
+        (p) => p.status === "Entregue" && new Date(p.updated_date) >= inicioDoDia
+      ).length,
+      ocorrenciasHoje: entregas.filter((e) =>
+        e.ocorrencias?.some((o) => new Date(o.data_hora) >= inicioDoDia)
+      ).length,
+      prontosFaturar: pedidos.filter((p) => p.status === "Pronto para Faturar").length,
+      valorEmTransito: pedidos
+        .filter((p) => p.status === "Em Trânsito")
+        .reduce((sum, p) => sum + (p.valor_total || 0), 0),
+    };
+  }, [contextoValido, canView, pedidos, entregas]);
+
+  const meta = resolveMetaOperacional({
+    entregasHoje: metricasHoje.entreguesHoje,
+    valorHoje: metricasHoje.valorEmTransito,
+  });
 
   const progressoEntregas = Math.min((metricasHoje.entreguesHoje / meta.entregasDia) * 100, 100);
 
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
+
+  if (!contextoValido) {
+    return (
+      <div className={containerClass}>
+        <div className="p-4 rounded-lg border border-amber-200 bg-amber-50 text-amber-900 text-sm">
+          Selecione grupo e empresa para ver métricas em tempo real.
+        </div>
+      </div>
+    );
+  }
+
+  if (!canView) {
+    return (
+      <div className={containerClass}>
+        <div className="p-4 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 text-sm">
+          Sem permissão para visualizar o painel de métricas.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={containerClass}>
@@ -89,7 +143,7 @@ export default function PainelMetricasRealtime({ windowMode = false }) {
             </Badge>
           </div>
           <p className="text-sm opacity-90">
-            Última atualização: {ultimaAtualizacao.toLocaleTimeString('pt-BR')}
+            Última atualização: {ultimaAtualizacao.toLocaleTimeString("pt-BR")} · escopo grupo/empresa
           </p>
         </CardHeader>
       </Card>

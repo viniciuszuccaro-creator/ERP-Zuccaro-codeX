@@ -39,7 +39,7 @@ O ERP somente poderá ser considerado apto para uso real quando os blocos P0 est
 - [ ] Chatbot omnichannel.
 - [ ] Integração total do site.
 - [ ] Marketplaces.
-- [ ] Dashboards avançados.
+- [x] Dashboards avançados.
 
 ## P2 — evolução inteligente
 

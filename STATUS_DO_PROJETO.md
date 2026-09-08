@@ -1,3 +1,15 @@
+### P1.9 - Dashboards avancados: KPIs confiaveis, contexto e drill-down
+- Objetivo: cumprir P1 Dashboards avancados de `PLANO_GO_LIVE.md` nos dashboards existentes, sem DashboardV2.
+- Diagnostico: totais pela primeira pagina/lista capped; queryKeys sem usuario+grupo+empresa; BI com serie de vendas mock; PainelMetricasRealtime global; meta fixa 20/50000.
+- Causa raiz: regras de KPI/contexto/drill-down fora de policy compartilhada.
+- Arquivos alterados: `dashboardKpiPolicy.js` (extracao), `Dashboard.jsx`, `useDashboardDerivedData.jsx`, `useRealtimeData.jsx`, `DashboardOperacionalBI.jsx`, `PainelMetricasRealtime.jsx`, testes.
+- Reutilizado: Dashboard, BI operacional, hooks realtime e painel logistico ja existentes.
+- Alteracoes: count preferido a lista; queryKey canonica; drill-down com kpi/periodo/grupo/empresa; vendas mensais reais; realtime fail-closed; painel com escopo/RBAC e meta derivada.
+- Multiempresa/RBAC: fail-closed sem grupo/empresa ou permissao de visualizacao.
+- Pendencia: agregacao server-side dedicada em volumes muito altos; OAuth/API marketplace e PSP do site seguem abertos.
+- Validacoes: `node --test tests/dashboard-kpi-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem: P1 encerrado; iniciar P2 — IA transversal (melhorar IA existente, sem modulo paralelo).
+
 ### P1.8 - Marketplaces: sync ativo, SKU e conciliacao local
 - Objetivo: cumprir P1 Marketplaces de `PLANO_GO_LIVE.md` na sincronizacao existente, sem modulo paralelo.
 - Diagnostico: Gate 15 cobria id externo/idempotencia; sync da config era noop; Ativa ignorava canais inativos; Validar importava sem itens/`buildErpPedidoFromExterno`; sem SKU, cancelamento nem resumo de taxas.

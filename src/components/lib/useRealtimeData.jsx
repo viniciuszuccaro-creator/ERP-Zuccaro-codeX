@@ -7,6 +7,11 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useEffect, useState } from 'react';
 import { useContextoVisual } from './useContextoVisual';
+import {
+  buildDashboardQueryKey,
+  computeRealtimeKpisFromStores,
+  DASHBOARD_REALTIME_LIMIT,
+} from './dashboardKpiPolicy';
 
 /**
  * Hook principal de tempo real
@@ -89,7 +94,7 @@ export function useRealtimeData(queryKey, queryFn, options = {}) {
 /**
  * Hook para KPIs em tempo real
  */
-export function useRealtimeKPIs(empresaId, intervalo = 30000, groupId = null, enabled = true) {
+export function useRealtimeKPIs(empresaId, intervalo = 30000, groupId = null, enabled = true, userId = null) {
   const defaultKPIs = {
     pedidos: { hoje: 0, valorHoje: 0, aguardandoAprovacao: 0, emProducao: 0 },
     financeiro: { vencendoHoje: 0, valorHoje: 0, atrasados: 0, recebidosHoje: 0 },
@@ -99,23 +104,32 @@ export function useRealtimeKPIs(empresaId, intervalo = 30000, groupId = null, en
   };
   const { filterInContext } = useContextoVisual();
   return useRealtimeData(
-    ['kpis-realtime', empresaId, groupId],
+    buildDashboardQueryKey({
+      prefix: 'kpis-realtime',
+      userId,
+      groupId,
+      empresaId,
+      scopeType: empresaId ? 'empresa' : 'grupo',
+    }),
     async () => {
       try {
-        const getByContext = (entity, order, limit) => {
+        if (!empresaId && !groupId) {
+          throw new Error('Contexto de grupo ou empresa obrigatorio para KPIs.');
+        }
+        const limit = DASHBOARD_REALTIME_LIMIT;
+        const getByContext = async (entity, order) => {
+          if (typeof filterInContext === 'function') {
+            return filterInContext(entity, {}, order, limit);
+          }
           if (empresaId) return base44.entities[entity].filter({ empresa_id: empresaId }, order, limit);
           if (groupId) return base44.entities[entity].filter({ group_id: groupId }, order, limit);
-          return Promise.resolve([]);
+          return [];
         };
         const results = await Promise.allSettled([
-          getByContext('Pedido', '-created_date', 20),
-          getByContext('ContaReceber', '-data_vencimento', 20),
-          (base44.entities.OrdemProducao?.filter || base44.entities.OrdemProducao?.list)
-            ? (empresaId || groupId
-                ? base44.entities.OrdemProducao.filter({ [empresaId ? 'empresa_id' : 'group_id']: empresaId || groupId }, '-data_emissao', 20)
-                : Promise.resolve([]))
-            : Promise.resolve([]),
-          getByContext('Entrega', '-created_date', 10)
+          getByContext('Pedido', '-created_date'),
+          getByContext('ContaReceber', '-data_vencimento'),
+          getByContext('OrdemProducao', '-data_emissao'),
+          getByContext('Entrega', '-created_date'),
         ]);
 
         const rejectedCount = results.filter(r => r.status === 'rejected').length;
@@ -131,92 +145,10 @@ export function useRealtimeKPIs(empresaId, intervalo = 30000, groupId = null, en
         const ops     = results[2].status === 'fulfilled' ? results[2].value : [];
         const entregas= results[3].status === 'fulfilled' ? results[3].value : [];
 
-        // Pedidos
-        const pedidosHoje = pedidos.filter(p => {
-          const hoje = new Date().toISOString().split('T')[0];
-          const data = (p.data_pedido || p.created_date || '').split('T')[0];
-          return data === hoje;
-        });
-
-        const valorPedidosHoje = pedidosHoje.reduce((sum, p) => sum + (p.valor_total || 0), 0);
-
-        // Financeiro
-        const contasVencendoHoje = contas.filter(c => {
-          const hoje = new Date().toISOString().split('T')[0];
-          return c.data_vencimento === hoje && c.status === 'Pendente';
-        });
-
-        const valorAReceberHoje = contasVencendoHoje.reduce((sum, c) => sum + (c.valor || 0), 0);
-
-        // Produção
-        const opsEmAndamento = (ops || []).filter(op => 
-          ['Liberada', 'Em Corte', 'Em Dobra', 'Em Armação', 'Em Produção', 'Produzindo'].includes(op.status)
-        );
-
-        const mediaPercentualConclusao = opsEmAndamento.length > 0
-          ? opsEmAndamento.reduce((sum, op) => sum + (op.percentual_conclusao || 0), 0) / opsEmAndamento.length
-          : 0;
-
-        // Expedição
-        const entregasHoje = (entregas || []).filter(e => {
-          const hoje = new Date().toISOString().split('T')[0];
-          const prev = e.data_previsao || e.data_prevista; // compat
-          const entrega = e.data_entrega || e.data_entrega_real;
-          return (prev === hoje) || (entrega && entrega.split('T')[0] === hoje);
-        });
-
-        const entregasPendentes = entregasHoje.filter(e => 
-          ['Aguardando Separação', 'Em Separação', 'Pronto para Expedir', 'Saiu para Entrega', 'Em Trânsito'].includes(e.status)
-        ).length;
-
-        const entregasRealizadas = entregasHoje.filter(e => e.status === 'Entregue').length;
-
-        return {
-          pedidos: {
-            hoje: pedidosHoje.length,
-            valorHoje: valorPedidosHoje,
-            aguardandoAprovacao: pedidos.filter(p => p.status === 'Aguardando Aprovação').length,
-            emProducao: pedidos.filter(p => p.status === 'Em Produção').length
-          },
-          financeiro: {
-            vencendoHoje: contasVencendoHoje.length,
-            valorHoje: valorAReceberHoje,
-            atrasados: contas.filter(c => c.status === 'Atrasado').length,
-            recebidosHoje: contas.filter(c => {
-              const hoje = new Date().toISOString().split('T')[0];
-              return c.data_recebimento?.split('T')[0] === hoje;
-            }).length
-          },
-          producao: {
-            opsEmAndamento: opsEmAndamento.length,
-            percentualMedio: Math.round(mediaPercentualConclusao),
-            opsAtrasadas: ops.filter(op => {
-              if (!op.data_prevista_conclusao) return false;
-              const hoje = new Date();
-              const previsao = new Date(op.data_prevista_conclusao);
-              return previsao < hoje && !['Finalizada', 'Cancelada'].includes(op.status);
-            }).length,
-            opsFinalizadasHoje: ops.filter(op => {
-              const hoje = new Date().toISOString().split('T')[0];
-              return op.data_conclusao_real?.split('T')[0] === hoje;
-            }).length
-          },
-          expedicao: {
-            entregasHoje: entregasHoje.length,
-            pendentes: entregasPendentes,
-            realizadas: entregasRealizadas,
-            emRota: entregas.filter(e => ['Saiu para Entrega', 'Em Trânsito'].includes(e.status)).length
-          },
-          ultimaAtualizacao: new Date().toISOString()
-        };
+        return computeRealtimeKpisFromStores({ pedidos, contas, ops, entregas });
       } catch (e) {
-        return {
-          pedidos: { hoje: 0, valorHoje: 0, aguardandoAprovacao: 0, emProducao: 0 },
-          financeiro: { vencendoHoje: 0, valorHoje: 0, atrasados: 0, recebidosHoje: 0 },
-          producao: { opsEmAndamento: 0, percentualMedio: 0, opsAtrasadas: 0, opsFinalizadasHoje: 0 },
-          expedicao: { entregasHoje: 0, pendentes: 0, realizadas: 0, emRota: 0 },
-          ultimaAtualizacao: new Date().toISOString()
-        };
+        // Fail-closed: propaga falha em vez de zerar silenciosamente como se nao houvesse dados.
+        throw e;
       }
     },
     { refetchInterval: intervalo, enabled: enabled && Boolean(empresaId || groupId), initialData: defaultKPIs, retry: false }

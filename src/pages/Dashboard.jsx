@@ -74,6 +74,13 @@ import WidgetEstoqueCritico from "@/components/estoque/WidgetEstoqueCritico";
 import ResizableRow from "@/components/dashboard/ResizableRow";
 import { ResizablePanelGroup as PanelGroup, ResizablePanel as Panel, ResizableHandle as PanelResizeHandle } from "@/components/ui/resizable";
 import useDashboardDerivedData from "@/components/dashboard/hooks/useDashboardDerivedData";
+import {
+  assertDashboardContext,
+  buildDashboardQueryKey,
+  buildKpiDrillDownParams,
+  buildKpiDrillDownUrl,
+  resolveDashboardCount,
+} from "@/components/lib/dashboardKpiPolicy";
 
 const reportDashboardFailure = (operation, error, context = {}) => {
   console.error('[Dashboard] ' + operation, {
@@ -85,7 +92,7 @@ const reportDashboardFailure = (operation, error, context = {}) => {
 export default function Dashboard() {
   const navigate = useNavigate();
   const { empresaAtual, estaNoGrupo, grupoAtual, filterInContext, getFiltroContexto, alternarContexto, createInContext } = useContextoVisual();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, user } = usePermissions();
   const canSeeFinanceiro = hasPermission('Financeiro', null, 'ver');
   const canSeeCRM = hasPermission('CRM', null, 'ver');
   const canSeeComercial = hasPermission('Comercial', null, 'ver');
@@ -101,7 +108,14 @@ export default function Dashboard() {
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const scopeType = estaNoGrupo ? 'grupo' : 'empresa';
   const hasContextoAtivo = Boolean(groupId && (scopeType === 'grupo' || empresaId));
-  const contextQueryKey = [scopeType, groupId, empresaId];
+  const userId = user?.id || null;
+  const contextQueryKey = buildDashboardQueryKey({
+    prefix: 'dash',
+    userId,
+    groupId,
+    empresaId,
+    scopeType,
+  });
 
   const auditDashboardAction = async (acao, detalhes = {}) => {
     if (!hasContextoAtivo) {
@@ -288,10 +302,10 @@ export default function Dashboard() {
           entityName: 'Produto',
           filter: filtro
         });
-        return response.data?.count || produtos.length;
+        return resolveDashboardCount({ countValue: response.data?.count, list: produtos }).total;
       } catch (error) {
         reportDashboardFailure('Falha ao contar produtos; usando lista carregada', error, { scopeType, groupId, empresaId });
-        return produtos.length;
+        return resolveDashboardCount({ list: produtos }).total;
       }
     },
     staleTime: 120000,
@@ -324,10 +338,10 @@ export default function Dashboard() {
           entityName: 'Cliente',
           filter: filtro
         });
-        return response.data?.count || clientes.length;
+        return resolveDashboardCount({ countValue: response.data?.count, list: clientes }).total;
       } catch (error) {
         reportDashboardFailure('Falha ao contar clientes; usando lista carregada', error, { scopeType, groupId, empresaId });
-        return clientes.length;
+        return resolveDashboardCount({ list: clientes }).total;
       }
     },
     staleTime: 120000,
@@ -344,10 +358,10 @@ export default function Dashboard() {
           entityName: 'Colaborador',
           filter: filtro
         });
-        return response.data?.count || colaboradores.length;
+        return resolveDashboardCount({ countValue: response.data?.count, list: colaboradores }).total;
       } catch (error) {
         reportDashboardFailure('Falha ao contar colaboradores; usando lista carregada', error, { scopeType, groupId, empresaId });
-        return colaboradores.length;
+        return resolveDashboardCount({ list: colaboradores }).total;
       }
     },
     staleTime: 120000,
@@ -586,10 +600,25 @@ export default function Dashboard() {
   // Pré-computos para seções avançadas (evita recalcular em cada render de subcomponente)
   // Pré-cálculos fornecidos pelo hook useDashboardDerivedData
 
-  // DRILL-DOWN - Função para navegar ao clicar em KPI
-  const handleDrillDown = (rota) => {
-    auditDashboardAction('abrir_modulo_por_dashboard', { rota });
-    navigate(rota);
+  // DRILL-DOWN - Função para navegar ao clicar em KPI (params reproduzem o KPI)
+  const handleDrillDown = (rota, kpiMeta = {}) => {
+    try {
+      assertDashboardContext({ groupId, empresaId, scopeType });
+    } catch (error) {
+      reportDashboardFailure('Drill-down bloqueado', error, { rota, scopeType, groupId, empresaId });
+      return;
+    }
+    const params = buildKpiDrillDownParams({
+      kpi: kpiMeta.kpi || rota,
+      periodo,
+      status: kpiMeta.status,
+      groupId,
+      empresaId,
+      scopeType,
+    });
+    const url = buildKpiDrillDownUrl(rota, params);
+    auditDashboardAction('abrir_modulo_por_dashboard', { rota: url, ...params });
+    navigate(url);
   };
 
   const statsCards = [
@@ -602,7 +631,7 @@ export default function Dashboard() {
       bgColor: "bg-green-50",
       textColor: "text-green-600",
       link: createPageUrl("Comercial"),
-      drillDown: () => handleDrillDown(createPageUrl("Comercial"))
+      drillDown: () => handleDrillDown(createPageUrl("Comercial"), { kpi: 'vendas_periodo' })
     },
     {
       title: "Ticket Médio",
@@ -613,7 +642,7 @@ export default function Dashboard() {
       bgColor: "bg-blue-50",
       textColor: "text-blue-600",
       link: createPageUrl("Comercial"),
-      drillDown: () => handleDrillDown(createPageUrl("Comercial"))
+      drillDown: () => handleDrillDown(createPageUrl("Comercial"), { kpi: 'ticket_medio' })
     },
     {
       title: "Fluxo de Caixa",

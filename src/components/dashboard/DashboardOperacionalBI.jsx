@@ -24,21 +24,34 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import {
+  buildDashboardQueryKey,
+  buildVendasPorMesFromPedidos,
+  computeDashboardDerivedKpis,
+} from "@/components/lib/dashboardKpiPolicy";
 
 function DashboardOperacionalBI({ windowMode = false }) {
   const [periodoFiltro, setPeriodoFiltro] = useState("mes");
   const { empresaAtual, grupoAtual, estaNoGrupo, filtrarPorContexto, filterInContext } = useContextoVisual();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, user } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextKey = empresaId || groupId || "sem-contexto";
-  const contextoValido = contextKey !== "sem-contexto";
+  const scopeType = estaNoGrupo ? 'grupo' : 'empresa';
+  const contextKey = buildDashboardQueryKey({
+    prefix: 'bi',
+    userId: user?.id,
+    groupId,
+    empresaId,
+    scopeType,
+    periodo: periodoFiltro,
+  });
+  const contextoValido = Boolean(groupId && (scopeType === 'grupo' || empresaId));
   const canViewDashboard = hasPermission("Dashboard", "Operacional", "visualizar") ||
     hasPermission("Dashboard", null, "visualizar") ||
     hasPermission("Sistema", "Dashboard", "visualizar");
 
   const { data: pedidos = [], isError: errPedidos } = useQuery({
-    queryKey: ["bi-pedidos", contextKey],
+    queryKey: ["bi-pedidos", ...contextKey],
     queryFn: () => filterInContext('Pedido', {}, '-created_date', 9999),
     enabled: contextoValido && canViewDashboard,
     initialData: [],
@@ -50,7 +63,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
   });
 
   const { data: ops = [], isError: errOps } = useQuery({
-    queryKey: ["bi-ordens-producao", contextKey],
+    queryKey: ["bi-ordens-producao", ...contextKey],
     queryFn: () => filterInContext('OrdemProducao', {}, '-data_emissao', 9999),
     enabled: contextoValido && canViewDashboard,
     initialData: [],
@@ -62,7 +75,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
   });
 
   const { data: entregas = [], isError: errEntregas } = useQuery({
-    queryKey: ["bi-entregas", contextKey],
+    queryKey: ["bi-entregas", ...contextKey],
     queryFn: () => filterInContext('Entrega', {}, '-created_date', 9999),
     enabled: contextoValido && canViewDashboard,
     initialData: [],
@@ -74,7 +87,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
   });
 
   const { data: contasReceber = [], isError: errCR } = useQuery({
-    queryKey: ["bi-contasReceber", contextKey],
+    queryKey: ["bi-contasReceber", ...contextKey],
     queryFn: () => filterInContext('ContaReceber', {}, '-data_vencimento', 9999),
     enabled: contextoValido && canViewDashboard,
     initialData: [],
@@ -86,7 +99,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
   });
 
   const { data: produtos = [], isError: errProdutos } = useQuery({
-    queryKey: ["bi-produtos", contextKey],
+    queryKey: ["bi-produtos", ...contextKey],
     queryFn: () => filterInContext('Produto', {}, '-created_date', 9999),
     enabled: contextoValido && canViewDashboard,
     initialData: [],
@@ -98,7 +111,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
   });
 
   const { data: clientes = [], isError: errClientes } = useQuery({
-    queryKey: ["bi-clientes", contextKey],
+    queryKey: ["bi-clientes", ...contextKey],
     queryFn: () => filterInContext('Cliente', {}, '-created_date', 9999),
     enabled: contextoValido && canViewDashboard,
     initialData: [],
@@ -117,16 +130,23 @@ function DashboardOperacionalBI({ windowMode = false }) {
   const clientesFiltrados = filtrarPorContexto(clientes, 'empresa_id');
   const contasReceberFiltradas = filtrarPorContexto(contasReceber, 'empresa_id');
 
-  const totalVendas = pedidosFiltrados.reduce((acc, p) => acc + (p.valor_total || 0), 0);
+  const derived = computeDashboardDerivedKpis({
+    pedidos: pedidosFiltrados,
+    contasReceber: contasReceberFiltradas,
+    entregas: entregasFiltradas,
+    ordensProducao: opsFiltradas,
+    clientes: clientesFiltrados,
+    produtos: produtosFiltrados,
+    periodo: periodoFiltro,
+  });
+  const totalVendas = derived.totalVendas;
   const pedidosAbertos = pedidosFiltrados.filter(p => 
     p.status !== "Entregue" && p.status !== "Cancelado"
   ).length;
   const opsEmProducao = opsFiltradas.filter(op => 
     op.status !== "Concluída" && op.status !== "Cancelada"
   ).length;
-  const entregasPendentes = entregasFiltradas.filter(e => 
-    e.status !== "Entregue"
-  ).length;
+  const entregasPendentes = derived.entregasPendentes;
   const contasAtrasadas = contasReceberFiltradas.filter(c => c.status === "Atrasado").length;
 
   // IA: Análises Preditivas
@@ -163,14 +183,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
     .every(arr => (arr?.length || 0) === 0);
   const erroGeral = errPedidos || errOps || errEntregas || errCR || errProdutos || errClientes;
 
-  const dadosVendasMes = [
-    { mes: "Jan", valor: 45000 },
-    { mes: "Fev", valor: 52000 },
-    { mes: "Mar", valor: 48000 },
-    { mes: "Abr", valor: 61000 },
-    { mes: "Mai", valor: 55000 },
-    { mes: "Jun", valor: 67000 },
-  ];
+  const dadosVendasMes = buildVendasPorMesFromPedidos(pedidosFiltrados);
 
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "w-full space-y-6 p-6 bg-gradient-to-br from-slate-50 to-blue-50";
 
