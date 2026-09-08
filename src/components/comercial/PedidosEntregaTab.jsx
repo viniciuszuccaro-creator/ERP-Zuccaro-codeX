@@ -76,12 +76,13 @@ export default function PedidosEntregaTab({ windowMode = false }) {
   const contextoValido = Boolean(effectiveGroupId || effectiveEmpresaId);
   const canView = hasPermission("Comercial", "Pedido", "visualizar") || hasPermission("Expedicao", "Entregas", "visualizar") || hasPermission("Expedicao", "Painel Logistico", "visualizar");
   const canEdit = hasPermission("Comercial", "Pedido", "editar") || hasPermission("Expedicao", "Entregas", "editar") || hasPermission("Expedicao", "Entrega", "editar");
+  const canEntregar = hasPermission("Expedicao", "Entrega", "entregar") || hasPermission("Expedicao", "Entregas", "entregar") || hasPermission("Expedicao", "Entrega", "confirmar");
   const canStockMove = hasPermission("Estoque", "Movimentacoes", "criar") || hasPermission("Estoque", "Produto", "editar");
   const canNotify = hasPermission("Expedicao", "Entrega", "notificar") || hasPermission("Expedicao", "Entregas", "editar") || canEdit;
   const canCreateRomaneio = permissoes.podeCriarRomaneio && (hasPermission("Expedicao", "Romaneio", "criar") || hasPermission("Expedicao", "Entregas", "editar") || canEdit);
   const canRoute = hasPermission("Expedicao", "Roteirizacao", "executar") || hasPermission("Expedicao", "Painel Logistico", "editar") || canEdit;
-  const canRegisterProof = permissoes.podeConfirmarEntrega && canEdit;
-  const canRegisterOccurrence = permissoes.podeRegistrarOcorrencia && (hasPermission("Expedicao", "Ocorrencias", "criar") || canEdit);
+  const canRegisterProof = permissoes.podeConfirmarEntrega && (canEntregar || canEdit);
+  const canRegisterOccurrence = permissoes.podeRegistrarOcorrencia && (hasPermission("Expedicao", "Ocorrencias", "criar") || hasPermission("Expedicao", "Entrega", "ocorrencia") || canEdit);
   const sanitizeText = (value) => String(value || "").replace(/[<>]/g, "").replace(/javascript:/gi, "").trim();
   const isSafeExternalUrl = (value) => /^https?:\/\//i.test(String(value || ""));
   const withContextData = (payload = {}) => ({
@@ -232,21 +233,23 @@ export default function PedidosEntregaTab({ windowMode = false }) {
     mutationFn: async ({ pedido, pedidoId, entrega, novoStatus, motivo }) => {
       const pedidoAlvo = pedido || pedidos.find(p => p.id === pedidoId);
       if (!pedidoAlvo) throw new Error("Pedido nao encontrado para atualizar status.");
-      if (!contextoValido || !canEdit) {
+      if (!contextoValido || !(canEdit || canEntregar)) {
         await auditEntrega({ acao: "PedidoEntrega.status_bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada", detalhes: { pedido_id: pedidoAlvo.id, novoStatus }, registroId: pedidoAlvo.id });
         throw new Error("Contexto e permissao sao obrigatorios para alterar status.");
+      }
+      if (String(novoStatus || '').toLowerCase().includes('entregue')) {
+        if (!canEntregar && !canRegisterProof) {
+          throw new Error("Sem permissao para confirmar entrega.");
+        }
+        const prova = entrega?.comprovante_entrega || {};
+        if (!String(prova.nome_recebedor || '').trim()) {
+          throw new Error("Registre o comprovante (recebedor) antes de marcar como Entregue.");
+        }
       }
       if (!window.confirm(`Confirma alterar o status do pedido para ${novoStatus}?`)) {
         await auditEntrega({ acao: "PedidoEntrega.status_cancelado", sucesso: false, motivo: "confirmacao_cancelada", detalhes: { pedido_id: pedidoAlvo.id, novoStatus }, registroId: pedidoAlvo.id });
         throw new Error("Alteracao cancelada pelo usuario.");
       }
-      const pedidoAtualizado = await updateInContext("Pedido", pedidoAlvo.id, withContextData({
-        status: novoStatus,
-        group_id: pedidoAlvo.group_id || effectiveGroupId,
-        grupo_id: pedidoAlvo.grupo_id || pedidoAlvo.group_id || effectiveGroupId,
-        empresa_id: pedidoAlvo.empresa_id || effectiveEmpresaId,
-        historico_status: [...(pedidoAlvo.historico_status || []), { status: novoStatus, data_hora: new Date().toISOString(), usuario: user?.full_name || user?.email || "Sistema", usuario_id: user?.id, observacao: motivo || `Status alterado para ${novoStatus}.` }]
-      }));
       const entregaAlvo = entrega || entregas.find(e => e.pedido_id === pedidoAlvo.id);
       let entregaAtualizada = null;
       if (entregaAlvo?.id) {
@@ -257,7 +260,16 @@ export default function PedidosEntregaTab({ windowMode = false }) {
           empresa_id: entregaAlvo.empresa_id || pedidoAlvo.empresa_id || effectiveEmpresaId,
           historico_status: [...(entregaAlvo.historico_status || []), { status: novoStatus, data_hora: new Date().toISOString(), usuario: user?.full_name || user?.email || "Sistema", usuario_id: user?.id, observacao: motivo || `Status sincronizado com pedido ${pedidoAlvo.numero_pedido}.` }]
         }));
+      } else if (String(novoStatus || '').toLowerCase().includes('entregue')) {
+        throw new Error("Crie a entrega e registre o comprovante antes de marcar o pedido como Entregue.");
       }
+      const pedidoAtualizado = await updateInContext("Pedido", pedidoAlvo.id, withContextData({
+        status: novoStatus,
+        group_id: pedidoAlvo.group_id || effectiveGroupId,
+        grupo_id: pedidoAlvo.grupo_id || pedidoAlvo.group_id || effectiveGroupId,
+        empresa_id: pedidoAlvo.empresa_id || effectiveEmpresaId,
+        historico_status: [...(pedidoAlvo.historico_status || []), { status: novoStatus, data_hora: new Date().toISOString(), usuario: user?.full_name || user?.email || "Sistema", usuario_id: user?.id, observacao: motivo || `Status alterado para ${novoStatus}.` }]
+      }));
       await auditEntrega({ acao: "PedidoEntrega.alterar_status", detalhes: { pedido_id: pedidoAlvo.id, entrega_id: entregaAlvo?.id, novoStatus }, dadosAnteriores: { pedido: pedidoAlvo, entrega: entregaAlvo }, dadosNovos: { pedido: pedidoAtualizado, entrega: entregaAtualizada }, registroId: pedidoAlvo.id });
       return { pedidoAtualizado, entregaAtualizada };
     },
@@ -767,9 +779,13 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                       onClick={async () => {
                         const pedido = entregaSelecionada.pedido;
                         const entrega = entregaSelecionada.entrega;
-                        if (!contextoValido || !canEdit || !canStockMove) {
+                        if (!contextoValido || !(canEntregar || canRegisterProof) || !canStockMove) {
                           await auditEntrega({ acao: "PedidoEntrega.confirmar_bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada", detalhes: { pedido_id: pedido.id }, registroId: pedido.id });
                           toast.error("Contexto e permissoes de entrega/estoque sao obrigatorios.");
+                          return;
+                        }
+                        if (!entrega?.comprovante_entrega?.nome_recebedor) {
+                          toast.error("Registre o comprovante antes de confirmar a entrega.");
                           return;
                         }
                         if (!window.confirm("Confirma a entrega e a baixa automatica de estoque deste pedido?")) {
@@ -805,12 +821,6 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                             documento: pedido.numero_pedido,
                             motivo: "Entrega confirmada",
                             aprovado: true
-                          }));
-                          await updateInContext("Produto", item.produto_id, withContextData({
-                            estoque_atual: novoEstoque,
-                            group_id: produto.group_id || pedido.group_id || effectiveGroupId,
-                            grupo_id: produto.grupo_id || produto.group_id || pedido.group_id || effectiveGroupId,
-                            empresa_id: produto.empresa_id || pedido.empresa_id || effectiveEmpresaId
                           }));
                         }
                         atualizarStatusMutation.mutate({ pedido, entrega, novoStatus: 'Entregue', motivo: 'Entrega confirmada com baixa automatica de estoque.' });

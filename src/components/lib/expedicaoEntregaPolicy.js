@@ -102,10 +102,38 @@ export const assertSeparacaoOnCreate = ({ record = {}, separacoes = [] } = {}) =
 };
 
 export const assertEntregaOnUpdate = ({ before = {}, patch = {} } = {}) => {
-  const next = { ...before, ...patch, comprovante_entrega: patch.comprovante_entrega || before.comprovante_entrega };
-  if (firstText(before.empresa_id) && firstText(next.empresa_id) && firstText(before.empresa_id) !== firstText(next.empresa_id)) {
+  if (!firstText(before.empresa_id) && !firstText(patch.empresa_id)) {
+    throw new Error('Empresa obrigatoria para entrega.');
+  }
+  if (firstText(before.empresa_id) && firstText(patch.empresa_id) && firstText(before.empresa_id) !== firstText(patch.empresa_id)) {
     throw new Error('Empresa da entrega nao pode ser alterada.');
   }
+
+  const next = {
+    ...before,
+    ...patch,
+    empresa_id: before.empresa_id || patch.empresa_id,
+    comprovante_entrega: patch.comprovante_entrega || before.comprovante_entrega,
+  };
+
+  const statusChanging = Object.prototype.hasOwnProperty.call(patch, 'status');
+  let transition = statusChanging
+    ? classifyEntregaStatusTransition(before.status, patch.status)
+    : 'editar';
+
+  if (isEntregue(before) || statusOf(before).includes('frustr') || statusOf(before).includes('devolv')) {
+    const frozen = ['empresa_id', 'pedido_id', 'qr_code', 'numero_entrega'];
+    const frozenHit = frozen.some((field) => {
+      if (!Object.prototype.hasOwnProperty.call(patch, field)) return false;
+      const previous = firstText(before[field]);
+      const value = firstText(patch[field]);
+      return Boolean(previous) && (!value || value !== previous);
+    });
+    if (frozenHit && transition !== 'cancelar') {
+      throw new Error('Entrega finalizada nao pode ser recalculada.');
+    }
+  }
+
   if (isEntregue(next) && !hasProvaEntrega(next)) {
     throw new Error('Entrega exige comprovante (recebedor e prova).');
   }
@@ -118,10 +146,56 @@ export const assertEntregaOnUpdate = ({ before = {}, patch = {} } = {}) => {
       throw new Error('Devolucao exige motivo e quantidade ou valor.');
     }
   }
-  if (statusOf(next).includes('frustr') && !firstText(next.entrega_frustrada?.motivo)) {
+  if (statusOf(next).includes('frustr') && !firstText(next.entrega_frustrada?.motivo, patch.entrega_frustrada?.motivo)) {
     throw new Error('Ocorrencia exige motivo.');
   }
-  return next;
+
+  if (transition === 'retry') {
+    const extraKeys = Object.keys(patch).filter((key) => !['status', 'historico_status', 'updated_date', 'id'].includes(key));
+    if (extraKeys.length === 0) {
+      return { reuse: before, record: before, action: 'retry' };
+    }
+    transition = 'editar';
+  }
+
+  return {
+    reuse: null,
+    action: transition,
+    record: next,
+  };
+};
+
+const normalizeEntregaStatus = (status) => String(status || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+export const assertEntregaOnDelete = (record = {}) => {
+  const status = normalizeEntregaStatus(record.status);
+  if (isEntregue(record) || status.includes('frustr') || status.includes('devolv') || hasProvaEntrega(record)) {
+    throw new Error('Nao excluir entrega finalizada ou com comprovante.');
+  }
+  if (status.includes('transito') || status.includes('saiu')) {
+    throw new Error('Nao excluir entrega em transito.');
+  }
+};
+
+export const classifyEntregaStatusTransition = (beforeStatus, nextStatus) => {
+  const before = normalizeEntregaStatus(beforeStatus);
+  const next = normalizeEntregaStatus(nextStatus);
+  if (!next || before === next) return 'retry';
+  if (next.includes('cancel')) return 'cancelar';
+  if (next.includes('frustr') || next.includes('ocorr') || next.includes('devolv')) return 'ocorrencia';
+  if (next.includes('entregue') || next.includes('parcial')) return 'entregar';
+  if (next.includes('separ') || next.includes('confer') || next.includes('pronto')) return 'conferir';
+  if (next.includes('transito') || next.includes('saiu') || next.includes('rota')) return 'expedir';
+  return 'editar';
+};
+
+export const entregaStatusPermissionActions = (action) => {
+  if (action === 'entregar') return ['entregar', 'confirmar'];
+  if (action === 'conferir') return ['conferir', 'editar'];
+  if (action === 'expedir') return ['expedir', 'editar'];
+  if (action === 'ocorrencia') return ['ocorrencia', 'criar', 'editar'];
+  if (action === 'cancelar') return ['cancelar'];
+  return ['editar'];
 };
 
 export const applyExpedicaoCreate = (entityName, record, stores = {}) => {

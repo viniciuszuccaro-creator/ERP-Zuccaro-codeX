@@ -24,7 +24,7 @@ O ERP somente poderá ser considerado apto para uso real quando os blocos P0 est
 - [x] Financeiro mínimo operacional.
 - [x] Fiscal/NF-e mínimo operacional.
 - [x] Producao minima necessaria para os pedidos atuais.
-- [ ] Expedição/entrega mínima.
+- [x] Expedição/entrega mínima.
 - [ ] Backup e rollback.
 - [ ] Testes e homologação.
 - [ ] Migração piloto validada.
@@ -624,6 +624,15 @@ Evoluir o app existente para:
 
 Entrega sai do ERP, chega ao motorista e retorna com prova e status correto.
 
+### Residual P0.11 (2026-09-08)
+
+- [x] Escopo Expedicao para Entrega/Romaneio/SeparacaoConferencia no client local.
+- [x] `assertEntregaOnUpdate` com alçada por transição (entregar/conferir/expedir/ocorrencia) e prova obrigatória.
+- [x] `assertEntregaOnDelete` fail-closed; delete bloqueado após finalização/trânsito.
+- [x] UI: PedidosEntregaTab / DetalhesEntregaView / SeparacaoConferencia com alçada granular.
+- [ ] Roteirizador avançado (P1).
+- [ ] App Motorista offline/sync completo (P1).
+
 ---
 
 # 14. GATE 12 — CHATBOT E HUB DE ATENDIMENTO
@@ -1073,7 +1082,7 @@ O ERP pode iniciar operação controlada quando todos os P0 abaixo estiverem hom
 - [x] Financeiro reconciliável.
 - [x] Fiscal homologado.
 - [x] Producao essencial funcional.
-- [ ] Expedição essencial funcional.
+- [x] Expedição essencial funcional.
 - [ ] Backup/rollback testados.
 - [ ] Migração piloto reconciliada.
 - [ ] Testes críticos aprovados.

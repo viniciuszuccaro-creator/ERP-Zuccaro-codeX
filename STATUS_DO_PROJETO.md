@@ -1,3 +1,15 @@
+### P0.11 - Gate 11 Expedicao residual: entrega, prova e escopo
+- Objetivo: cumprir residual do Gate 11 / P0 Expedicao sem ExpedicaoV2.
+- Diagnostico: Entrega caia em Cadastros/`editar`; update sem alçada por status; delete sem policy; Entregue sem prova; Separacao concluia com `editar`; baixa de estoque na confirmação atualizava Produto fora do movimento.
+- Causa raiz: transicao de entrega sem policy e alçada fraca de entregar/conferir.
+- Arquivos alterados: `expedicaoEntregaPolicy.js`, `localBase44Client.js`, `entityGuardPolicy`, `PedidosEntregaTab`, `DetalhesEntregaView`, `SeparacaoConferencia`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: `assertEntregaOnCreate`, Romaneio/Separacao/App Motorista existentes.
+- Alteracoes: update/delete fail-closed; escopo Expedicao; entregar/conferir/expedir/ocorrencia granulares; prova antes de Entregue; estoque so via MovimentacaoEstoque.
+- Multiempresa/RBAC: entrega exige empresa; confirmar entrega nao usa so `editar`; delete bloqueado apos finalizacao.
+- Pendencia: roteirizador avancado; App Motorista offline/sync (P1).
+- Validacoes: `node --test tests/expedicao-entrega-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 12 Chatbot/Hub (ou Backup/rollback conforme checklist P0 residual).
+
 ### P0.10 - Gate 10 Producao residual: OP status, alcada e estoque unico
 - Objetivo: cumprir residual do Gate 10 / P0 Producao sem ProducaoV2.
 - Diagnostico: OrdemProducao caia em Cadastros/`editar`; sem `assertOpOnUpdate/Delete`; apontar/conferir com `editar`; Kanban listava global; consumo de OP atualizava Produto fora da policy; PedidosTab com encoding quebrado em Produção.

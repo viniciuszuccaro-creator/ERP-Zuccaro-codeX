@@ -4,9 +4,12 @@ import test from 'node:test';
 
 import {
   assertEntregaOnCreate,
+  assertEntregaOnDelete,
   assertEntregaOnUpdate,
   assertRomaneioOnCreate,
+  classifyEntregaStatusTransition,
   entregaAtribuidaAoMotorista,
+  entregaStatusPermissionActions,
   hasProvaEntrega,
 } from '../src/components/lib/expedicaoEntregaPolicy.js';
 
@@ -70,7 +73,38 @@ test('update nao entrega sem comprovante e nao troca empresa', () => {
     before: { empresa_id: 'e1', status: 'Em Trânsito' },
     patch: { status: 'Entregue', comprovante_entrega: { nome_recebedor: 'Maria', foto_comprovante: 'https://img' } },
   });
-  assert.equal(next.status, 'Entregue');
+  assert.equal(next.record.status, 'Entregue');
+  assert.equal(next.action, 'entregar');
+});
+
+test('classifica transicao e alçada de status', () => {
+  assert.equal(classifyEntregaStatusTransition('Em Trânsito', 'Entregue'), 'entregar');
+  assert.equal(classifyEntregaStatusTransition('Separacao', 'Conferido'), 'conferir');
+  assert.equal(classifyEntregaStatusTransition('Pronto', 'Em Trânsito'), 'expedir');
+  assert.equal(classifyEntregaStatusTransition('Em Trânsito', 'Frustrada'), 'ocorrencia');
+  assert.deepEqual(entregaStatusPermissionActions('entregar'), ['entregar', 'confirmar']);
+  assert.deepEqual(entregaStatusPermissionActions('conferir'), ['conferir', 'editar']);
+});
+
+test('delete bloqueia entrega finalizada ou em transito', () => {
+  assert.throws(
+    () => assertEntregaOnDelete({ status: 'Entregue', comprovante_entrega: { nome_recebedor: 'A', foto_comprovante: 'x' } }),
+    /Nao excluir/,
+  );
+  assert.throws(() => assertEntregaOnDelete({ status: 'Em Trânsito' }), /transito/);
+  assert.doesNotThrow(() => assertEntregaOnDelete({ status: 'Aguardando', empresa_id: 'e1' }));
+});
+
+test('ocorrencia exige motivo e frustrada congela campos-chave', () => {
+  assert.throws(
+    () => assertEntregaOnUpdate({ before: { empresa_id: 'e1', status: 'Em Trânsito' }, patch: { status: 'Frustrada' } }),
+    /Ocorrencia exige motivo/,
+  );
+  const ok = assertEntregaOnUpdate({
+    before: { empresa_id: 'e1', status: 'Em Trânsito' },
+    patch: { status: 'Frustrada', entrega_frustrada: { motivo: 'Cliente ausente' } },
+  });
+  assert.equal(ok.action, 'ocorrencia');
 });
 
 test('motorista so ve entrega atribuida', () => {
@@ -85,6 +119,9 @@ test('expedicao existente reserva numero e o app nao lista todas as entregas', a
   const romaneio = await readFile(new URL('../src/components/expedicao/RomaneioForm.jsx', import.meta.url), 'utf8');
   const app = await readFile(new URL('../src/components/mobile/AppEntregasMotorista.jsx', import.meta.url), 'utf8');
   const fluxo = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
+  const client = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
+  const pedidos = await readFile(new URL('../src/components/comercial/PedidosEntregaTab.jsx', import.meta.url), 'utf8');
+  const separacao = await readFile(new URL('../src/components/expedicao/SeparacaoConferencia.jsx', import.meta.url), 'utf8');
   assert.match(cadastro, /Romaneio: \{ field: 'numero_romaneio'/);
   assert.match(cadastro, /Entrega: \{ field: 'qr_code'/);
   assert.doesNotMatch(romaneio, /ROM-" \+ Date\.now/);
@@ -93,4 +130,9 @@ test('expedicao existente reserva numero e o app nao lista todas as entregas', a
   assert.doesNotMatch(app, /Entrega\.list\(/);
   assert.match(app, /appMotoristaPolicy/);
   assert.match(app, /buildConfirmacaoPatch/);
+  assert.match(client, /Entrega: \{ module: 'Expedicao', section: 'Entrega' \}/);
+  assert.match(client, /assertEntregaOnDelete/);
+  assert.match(client, /entregaStatusPermissionActions/);
+  assert.match(pedidos, /canEntregar/);
+  assert.match(separacao, /Separacao", "conferir"/);
 });

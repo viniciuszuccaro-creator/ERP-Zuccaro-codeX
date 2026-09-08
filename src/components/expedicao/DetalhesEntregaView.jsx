@@ -36,6 +36,8 @@ export default function DetalhesEntregaView({
   const empresaId = entrega?.empresa_id || empresaAtual?.id || null;
   const contextoValido = Boolean(groupId || empresaId);
   const canUpdateEntrega = hasPermission("Expedicao", "Entrega", "editar") || hasPermission("Expedicao", "Entregas", "editar") || hasPermission("Expedicao", "Painel Logistico", "editar");
+  const canEntregar = hasPermission("Expedicao", "Entrega", "entregar") || hasPermission("Expedicao", "Entregas", "entregar") || hasPermission("Expedicao", "Entrega", "confirmar");
+  const canOcorrencia = hasPermission("Expedicao", "Entrega", "ocorrencia") || hasPermission("Expedicao", "Ocorrencias", "criar") || canUpdateEntrega;
 
   const auditarEntrega = async ({ acao, descricao, sucesso = true, dadosNovos = {}, dadosAnteriores = entrega }) => {
     try {
@@ -62,7 +64,16 @@ export default function DetalhesEntregaView({
   };
 
   const handleStatusChangeLocal = async (novoStatus) => {
-    if (!contextoValido || !canUpdateEntrega) {
+    const statusNorm = String(novoStatus || '').toLowerCase();
+    const precisaEntregar = statusNorm.includes('entregue') || statusNorm.includes('parcial');
+    const precisaOcorrencia = statusNorm.includes('frustr') || statusNorm.includes('ocorr') || statusNorm.includes('devolv');
+    const podeAgir = precisaEntregar
+      ? canEntregar
+      : precisaOcorrencia
+        ? canOcorrencia
+        : canUpdateEntrega;
+
+    if (!contextoValido || !podeAgir) {
       await auditarEntrega({
         acao: "DetalhesEntrega.status_bloqueado",
         descricao: "Tentativa de alterar status da entrega sem contexto ou permissao.",
@@ -71,6 +82,19 @@ export default function DetalhesEntregaView({
       });
       toast.error("Selecione contexto valido e confirme permissao para alterar a entrega.");
       return;
+    }
+
+    let motivoOcorrencia = '';
+    if (precisaOcorrencia) {
+      if (!canOcorrencia) {
+        toast.error("Sem permissao para registrar ocorrencia.");
+        return;
+      }
+      motivoOcorrencia = window.prompt("Informe o motivo da entrega frustrada:");
+      if (!String(motivoOcorrencia || '').trim()) {
+        toast.error("Ocorrencia exige motivo.");
+        return;
+      }
     }
 
     const confirmado = window.confirm("Confirma alterar o status desta entrega para " + novoStatus + "?");
@@ -99,6 +123,7 @@ export default function DetalhesEntregaView({
       group_id: groupId,
       grupo_id: groupId,
       empresa_id: empresaId,
+      ...(motivoOcorrencia ? { entrega_frustrada: { ...(entrega.entrega_frustrada || {}), motivo: motivoOcorrencia } } : {}),
       historico_status: [
         ...(entrega.historico_status || []),
         {
@@ -106,7 +131,7 @@ export default function DetalhesEntregaView({
           data_hora: new Date().toISOString(),
           usuario: user?.full_name || user?.email || "Sistema",
           usuario_id: user?.id,
-          observacao: `Status alterado pela tela de detalhes para ${novoStatus}.`,
+          observacao: motivoOcorrencia || `Status alterado pela tela de detalhes para ${novoStatus}.`,
         }
       ]
     };
@@ -126,8 +151,8 @@ export default function DetalhesEntregaView({
       if (!contextoValido) {
         throw new Error("Contexto multiempresa obrigatorio para confirmar entrega.");
       }
-      if (!canUpdateEntrega) {
-        throw new Error("Seu perfil nao pode alterar entregas.");
+      if (!canEntregar) {
+        throw new Error("Seu perfil nao pode confirmar entregas.");
       }
       const confirmado = window.confirm("Confirma registrar a assinatura digital e marcar esta entrega como entregue?");
       if (!confirmado) {

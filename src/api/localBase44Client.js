@@ -29,7 +29,7 @@ import { assertOpOnCreate, assertOpOnDelete, assertOpOnUpdate, opStatusPermissio
 import { applyComprasCreate, assertRecebimentoOc } from "@/components/lib/comprasOrdemPolicy";
 import { applyCrmCreate, assertOportunidadeOnUpdate } from "@/components/lib/crmOportunidadePolicy";
 import { applyRoteirizacaoCreate } from "@/components/lib/roteirizacaoPolicy";
-import { applyExpedicaoCreate, assertEntregaOnUpdate, syncEntregaNumero } from "@/components/lib/expedicaoEntregaPolicy";
+import { applyExpedicaoCreate, assertEntregaOnDelete, assertEntregaOnUpdate, entregaStatusPermissionActions, syncEntregaNumero } from "@/components/lib/expedicaoEntregaPolicy";
 import { applyAtendimentoCreate } from "@/components/lib/atendimentoConversaPolicy";
 import { applyPortalReadScope, resolvePortalClienteId } from "@/components/lib/portalClientePolicy";
 import { applySiteOrigemOnCreate } from "@/components/lib/siteOrigemPolicy";
@@ -911,6 +911,9 @@ const ENTITY_PERMISSION_SCOPE = {
   ConfiguracaoNFe: { module: 'Fiscal', section: 'ConfiguracaoNFe' },
   OrdemProducao: { module: 'Producao', section: 'OrdemProducao' },
   ApontamentoProducao: { module: 'Producao', section: 'Apontamento' },
+  Entrega: { module: 'Expedicao', section: 'Entrega' },
+  Romaneio: { module: 'Expedicao', section: 'Romaneio' },
+  SeparacaoConferencia: { module: 'Expedicao', section: 'Separacao' },
 };
 
 const getEntityPermissionScope = (entityName) => {
@@ -1574,7 +1577,7 @@ const createEntityApi = (entityName) => ({
   },
 
   async update(id, data = {}) {
-    if (!isTituloFinanceiroEntity(entityName) && !NOTA_FISCAL_ENTITIES.includes(entityName) && entityName !== 'OrdemProducao') {
+    if (!isTituloFinanceiroEntity(entityName) && !NOTA_FISCAL_ENTITIES.includes(entityName) && entityName !== 'OrdemProducao' && entityName !== 'Entrega') {
       assertLocalMutationAllowed(entityName, 'editar', id);
     }
     const db = loadDb();
@@ -1593,7 +1596,17 @@ const createEntityApi = (entityName) => ({
     }
     let nextPayload = applyLocalBackupWrite(db, entityName, applyLocalPilotoWrite(db, entityName, payload, before), before);
     if (entityName === 'Entrega') {
-      nextPayload = assertEntregaOnUpdate({ before, patch: payload });
+      const decision = assertEntregaOnUpdate({ before, patch: payload });
+      if (decision.reuse) {
+        assertLocalPermissionAny(entityName, ['editar', 'entregar', 'conferir', 'expedir'], id);
+        return decision.reuse;
+      }
+      if (decision.action === 'retry') {
+        assertLocalPermissionAny(entityName, ['editar', 'entregar', 'conferir', 'expedir'], id);
+        return before;
+      }
+      assertLocalPermissionAny(entityName, entregaStatusPermissionActions(decision.action), id);
+      nextPayload = decision.record;
       if (before.empresa_id) nextPayload.empresa_id = before.empresa_id;
     }
     if (entityName === 'OrdemCompra') {
@@ -1675,6 +1688,11 @@ const createEntityApi = (entityName) => ({
       const dbPreview = loadDb();
       const current = getEntityStore(dbPreview, entityName).find((item) => String(item.id) === String(id));
       assertOpOnDelete(current || {});
+    }
+    if (entityName === 'Entrega') {
+      const dbPreview = loadDb();
+      const current = getEntityStore(dbPreview, entityName).find((item) => String(item.id) === String(id));
+      assertEntregaOnDelete(current || {});
     }
     if (NOTA_FISCAL_ENTITIES.includes(entityName)) {
       const dbPreview = loadDb();
