@@ -1,3 +1,15 @@
+### P1.3 - CRM: update fail-closed, escopo e funis contextuais
+- Objetivo: fechar residual P1 CRM completo no modulo existente (policy de update viva + RBAC CRM).
+- Diagnostico: `assertOportunidadeOnUpdate` importado e nao chamado; entidades CRM caíam em Cadastros; funis IA/Avancado usavam `entities.update`; CRM.jsx engolia erro de listagem; conversao so com `editar`.
+- Causa raiz: persistencia de etapa/conversao fora da policy e escopo errado.
+- Arquivos alterados: `crmOportunidadePolicy.js`, `localBase44Client.js`, `entityGuardPolicy`, `CRM.jsx`, `FunilComercialInteligente`, `FunilVendasAvancado`, `OportunidadesLista`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: create CRM, `buildDocumentoFromOportunidade`, Funil Visual com `updateInContext`.
+- Alteracoes: update com alcada mover_etapa/converter; bloqueio de opp fechada; escopo CRM; funis via `updateInContext`; listagens fail-closed.
+- Multiempresa/RBAC: conversao exige empresa; permissoes CRM granulares no client.
+- Pendencia: scoring/ROI de campanha com LLM (STATUS anterior).
+- Validacoes: `node --test tests/crm-oportunidade-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P1: Roteirizador avancado.
+
 ### P1.2 - Compras: ContaPagar no recebimento e alcada OC
 - Objetivo: fechar residual P1 Compras avancadas (AP automatica + RBAC receber/aprovar) no fluxo existente.
 - Diagnostico: recebimento atualizava estoque sem ContaPagar; OC update so exigia `editar`; UI OR liberava receber via Estoque/criar; RecebimentoOCForm engolia falha de auditoria.

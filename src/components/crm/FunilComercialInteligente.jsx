@@ -22,7 +22,7 @@ const etapasFunil = [
 export default function FunilComercialInteligente({ windowMode = false }) {
   const queryClient = useQueryClient();
   const { openWindow } = useWindow();
-  const { filtrarPorContexto, empresaAtual, estaNoGrupo } = useContextoVisual();
+  const { filtrarPorContexto, empresaAtual, estaNoGrupo, updateInContext } = useContextoVisual();
   const contextoPronto = estaNoGrupo || Boolean(empresaAtual);
 
   const { data: oportunidades = [], isLoading } = useQuery({
@@ -32,21 +32,10 @@ export default function FunilComercialInteligente({ windowMode = false }) {
   });
 
   const updateEtapaMutation = useMutation({
-    mutationFn: ({ id, etapa }) => {
-      const opp = oportunidades.find(o => o.id === id);
-      return base44.entities.Oportunidade.update(id, {
-        etapa,
-        etapa_funil: etapa,
-        historico_mudancas_etapa: [
-          ...(opp?.historico_mudancas_etapa || []),
-          {
-            etapa_anterior: opp?.etapa || opp?.etapa_funil,
-            etapa_nova: etapa,
-            data: new Date().toISOString(),
-          },
-        ],
-      });
-    },
+    mutationFn: ({ id, etapa }) => updateInContext('Oportunidade', id, {
+      etapa,
+      etapa_funil: etapa,
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["oportunidades"] });
       toast.success("Etapa atualizada");

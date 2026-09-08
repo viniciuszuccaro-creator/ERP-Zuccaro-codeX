@@ -19,6 +19,8 @@ export const GRANULAR_PERMISSION_ACTIONS = [
   'conferir',
   'expedir',
   'ocorrencia',
+  'converter',
+  'mover_etapa',
   'importar',
   'exportar',
   'configurar',

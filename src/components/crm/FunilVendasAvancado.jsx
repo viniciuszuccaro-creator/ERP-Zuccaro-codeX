@@ -40,6 +40,7 @@ import { normalizeEtapaCrm } from "@/components/lib/crmOportunidadePolicy";
 
 const etapas = [
   { id: 'Prospecção', nome: 'Prospecção', cor: 'bg-slate-100' },
+  { id: 'Contato Inicial', nome: 'Contato Inicial', cor: 'bg-cyan-100' },
   { id: 'Qualificação', nome: 'Qualificação', cor: 'bg-blue-100' },
   { id: 'Proposta', nome: 'Proposta', cor: 'bg-yellow-100' },
   { id: 'Negociação', nome: 'Negociação', cor: 'bg-orange-100' },
@@ -49,7 +50,7 @@ const etapas = [
 export default function FunilVendasAvancado({ windowMode = false }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { filtrarPorContexto, empresaAtual, estaNoGrupo } = useContextoVisual();
+  const { filtrarPorContexto, empresaAtual, estaNoGrupo, updateInContext } = useContextoVisual();
   const contextoPronto = estaNoGrupo || Boolean(empresaAtual);
 
   const { data: oportunidades = [] } = useQuery({
@@ -59,14 +60,17 @@ export default function FunilVendasAvancado({ windowMode = false }) {
   });
 
   const updateEtapaMutation = useMutation({
-    mutationFn: ({ id, etapa }) => base44.entities.Oportunidade.update(id, {
+    mutationFn: ({ id, etapa }) => updateInContext('Oportunidade', id, {
       etapa,
       etapa_funil: etapa,
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
       toast({ title: "✅ Etapa atualizada" });
-    }
+    },
+    onError: (error) => {
+      toast({ title: "Falha ao mover oportunidade", description: error?.message || 'Erro', variant: 'destructive' });
+    },
   });
 
   const priorizarIAMutation = useMutation({

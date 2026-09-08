@@ -41,15 +41,7 @@ export default function CRMPage() {
 
   const { data: oportunidades = [] } = useQuery({
     queryKey: ['oportunidades', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await filtrarPorContexto('Oportunidade', {}, '-created_date', 100);
-      } catch (err) {
-        console.error('Erro ao buscar oportunidades:', err);
-        return [];
-      }
-    },
+    queryFn: async () => filtrarPorContexto('Oportunidade', {}, '-created_date', 100),
     staleTime: 30000,
     retry: 2,
     enabled: !bloqueadoSemEmpresa
@@ -57,15 +49,7 @@ export default function CRMPage() {
 
   const { data: interacoes = [] } = useQuery({
     queryKey: ['interacoes', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await filtrarPorContexto('Interacao', {}, '-created_date', 100);
-      } catch (err) {
-        console.error('Erro ao buscar interações:', err);
-        return [];
-      }
-    },
+    queryFn: async () => filtrarPorContexto('Interacao', {}, '-created_date', 100),
     staleTime: 30000,
     retry: 1,
     enabled: !bloqueadoSemEmpresa
@@ -73,15 +57,7 @@ export default function CRMPage() {
 
   const { data: campanhas = [] } = useQuery({
     queryKey: ['campanhas', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_dona_id: empresaAtual.id } : {};
-        return await filtrarPorContexto('Campanha', {}, '-created_date', 50, 'empresa_dona_id');
-      } catch (err) {
-        console.error('Erro ao buscar campanhas:', err);
-        return [];
-      }
-    },
+    queryFn: async () => filtrarPorContexto('Campanha', {}, '-created_date', 50, 'empresa_dona_id'),
     staleTime: 30000,
     retry: 1,
     enabled: !bloqueadoSemEmpresa
@@ -89,15 +65,7 @@ export default function CRMPage() {
 
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await filtrarPorContexto('Cliente', {}, '-created_date', 100);
-      } catch (err) {
-        console.error('Erro ao buscar clientes:', err);
-        return [];
-      }
-    },
+    queryFn: async () => filtrarPorContexto('Cliente', {}, '-created_date', 100),
     staleTime: 30000,
     retry: 1,
     enabled: !bloqueadoSemEmpresa
@@ -106,18 +74,15 @@ export default function CRMPage() {
   const { data: totalClientes = 0 } = useQuery({
     queryKey: ['clientes-count-crm', empresaAtual?.id],
     queryFn: async () => {
-      try {
-        const response = await base44.functions.invoke('countEntities', {
-          entityName: 'Cliente',
-          filter: getFiltroContexto('empresa_id')
-        });
-        return response.data?.count || clientes.length;
-      } catch {
-        return clientes.length;
-      }
+      const response = await base44.functions.invoke('countEntities', {
+        entityName: 'Cliente',
+        filter: getFiltroContexto('empresa_id')
+      });
+      return response.data?.count ?? 0;
     },
     staleTime: 60000,
-    retry: 1
+    retry: 1,
+    enabled: !bloqueadoSemEmpresa
   });
 
   // Dados já vêm filtrados do servidor

@@ -27,7 +27,7 @@ import {
 } from "@/components/lib/notaFiscalEmissaoPolicy";
 import { assertOpOnCreate, assertOpOnDelete, assertOpOnUpdate, opStatusPermissionActions } from "@/components/lib/ordemProducaoPolicy";
 import { applyComprasCreate, assertOrdemCompraOnUpdate, ocStatusPermissionActions } from "@/components/lib/comprasOrdemPolicy";
-import { applyCrmCreate, assertOportunidadeOnUpdate } from "@/components/lib/crmOportunidadePolicy";
+import { applyCrmCreate, assertOportunidadeOnUpdate, oportunidadeStatusPermissionActions } from "@/components/lib/crmOportunidadePolicy";
 import { applyRoteirizacaoCreate } from "@/components/lib/roteirizacaoPolicy";
 import { applyExpedicaoCreate, assertEntregaOnDelete, assertEntregaOnUpdate, entregaStatusPermissionActions, syncEntregaNumero } from "@/components/lib/expedicaoEntregaPolicy";
 import { applyAtendimentoCreate } from "@/components/lib/atendimentoConversaPolicy";
@@ -925,6 +925,9 @@ const ENTITY_PERMISSION_SCOPE = {
   OrdemCompra: { module: 'Compras', section: 'OrdemCompra' },
   SolicitacaoCompra: { module: 'Compras', section: 'SolicitacaoCompra' },
   Cotacao: { module: 'Compras', section: 'Cotacao' },
+  Oportunidade: { module: 'CRM', section: 'Oportunidade' },
+  Interacao: { module: 'CRM', section: 'Interacao' },
+  Campanha: { module: 'CRM', section: 'Campanha' },
 };
 
 const getEntityPermissionScope = (entityName) => {
@@ -1601,7 +1604,7 @@ const createEntityApi = (entityName) => ({
   },
 
   async update(id, data = {}) {
-    if (!isTituloFinanceiroEntity(entityName) && !NOTA_FISCAL_ENTITIES.includes(entityName) && entityName !== 'OrdemProducao' && entityName !== 'Entrega' && entityName !== 'BackupAutomatico' && entityName !== 'OrdemCompra') {
+    if (!isTituloFinanceiroEntity(entityName) && !NOTA_FISCAL_ENTITIES.includes(entityName) && entityName !== 'OrdemProducao' && entityName !== 'Entrega' && entityName !== 'BackupAutomatico' && entityName !== 'OrdemCompra' && entityName !== 'Oportunidade') {
       assertLocalMutationAllowed(entityName, 'editar', id);
     }
     const db = loadDb();
@@ -1651,6 +1654,16 @@ const createEntityApi = (entityName) => ({
         return decision.reuse || before;
       }
       assertLocalPermissionAny(entityName, ocStatusPermissionActions(decision.action), id);
+      nextPayload = decision.record;
+      if (before.empresa_id) nextPayload.empresa_id = before.empresa_id;
+    }
+    if (entityName === 'Oportunidade') {
+      const decision = assertOportunidadeOnUpdate({ before, patch: payload });
+      if (decision.reuse || decision.action === 'retry') {
+        assertLocalPermissionAny(entityName, ['editar', 'mover_etapa', 'converter'], id);
+        return decision.reuse || before;
+      }
+      assertLocalPermissionAny(entityName, oportunidadeStatusPermissionActions(decision.action), id);
       nextPayload = decision.record;
       if (before.empresa_id) nextPayload.empresa_id = before.empresa_id;
     }

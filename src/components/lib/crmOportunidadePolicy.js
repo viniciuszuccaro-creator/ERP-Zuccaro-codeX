@@ -140,6 +140,29 @@ export const assertCampanhaOnCreate = ({ record = {} } = {}) => {
 };
 
 export const assertOportunidadeOnUpdate = ({ before = {}, patch = {} } = {}) => {
+  if (!before?.id && !firstText(before.codigo_oportunidade)) {
+    throw new Error('Oportunidade nao encontrada.');
+  }
+
+  const statusChanging = Object.prototype.hasOwnProperty.call(patch, 'status');
+  const nextStatusProbe = firstText(patch.status, before.status);
+  const closingNow = oportunidadeAberta(before) && !oportunidadeAberta({ status: nextStatusProbe });
+  const converting = statusChanging && (
+    String(patch.status || '').toLowerCase().includes('ganh')
+    || String(patch.status || '').toLowerCase().includes('convert')
+    || Boolean(patch.convertido_em)
+  );
+
+  if (!oportunidadeAberta(before) && !converting) {
+    const keys = Object.keys(patch || {}).filter((key) => !['updated_date', 'id', 'historico_mudancas_etapa'].includes(key));
+    const onlyRetryStatus = keys.length === 1 && statusChanging
+      && String(patch.status || '').toLowerCase() === String(before.status || '').toLowerCase();
+    if (keys.length > 0 && !onlyRetryStatus) {
+      throw new Error('Oportunidade fechada ou convertida nao pode ser recalculada.');
+    }
+    return { reuse: before, record: before, action: 'retry' };
+  }
+
   const merged = { ...before, ...patch };
   if (before.empresa_id) merged.empresa_id = before.empresa_id;
   if (before.group_id) merged.group_id = before.group_id;
@@ -165,7 +188,30 @@ export const assertOportunidadeOnUpdate = ({ before = {}, patch = {} } = {}) => 
     }
   }
 
-  return { reuse: null, record: stampOportunidadeDefaults(merged) };
+  let action = 'editar';
+  if (converting || closingNow) action = 'converter';
+  else if (etapaIncoming && normalizeEtapaCrm(etapaIncoming) !== normalizeEtapaCrm(before.etapa || before.etapa_funil)) {
+    action = 'mover_etapa';
+  } else if (statusChanging && String(patch.status || '').toLowerCase().includes('perd')) {
+    action = 'perder';
+  }
+
+  if (action === 'converter' && !firstText(merged.empresa_id)) {
+    throw new Error('Empresa obrigatoria para converter oportunidade.');
+  }
+
+  return {
+    reuse: null,
+    action,
+    record: stampOportunidadeDefaults(merged),
+  };
+};
+
+export const oportunidadeStatusPermissionActions = (action) => {
+  if (action === 'converter') return ['converter', 'aprovar', 'editar'];
+  if (action === 'mover_etapa') return ['mover_etapa', 'editar'];
+  if (action === 'perder') return ['rejeitar', 'cancelar', 'editar'];
+  return ['editar'];
 };
 
 export const assertConversaoOportunidade = ({ oportunidade = {}, tipo = 'orcamento', empresaId } = {}) => {

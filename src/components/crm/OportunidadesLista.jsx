@@ -26,6 +26,9 @@ export default function OportunidadesLista({ oportunidades = [], windowMode = fa
 
   const canCreate = hasPermission("CRM", null, "criar") || hasPermission("CRM", "Oportunidade", "criar");
   const canEdit = hasPermission("CRM", null, "editar") || hasPermission("CRM", "Oportunidade", "editar");
+  const canConvert = hasPermission("CRM", "Oportunidade", "converter")
+    || hasPermission("CRM", "Oportunidade", "aprovar")
+    || canEdit;
 
   const lista = useMemo(() => {
     const termo = busca.trim().toLowerCase();
@@ -57,6 +60,7 @@ export default function OportunidadesLista({ oportunidades = [], windowMode = fa
 
   const convertMutation = useMutation({
     mutationFn: async ({ oportunidade, tipo }) => {
+      if (!canConvert) throw new Error("Sem permissao para converter oportunidade.");
       const documento = await createInContext(
         "Pedido",
         buildDocumentoFromOportunidade(oportunidade, tipo, empresaAtual?.id || oportunidade.empresa_id),
@@ -147,9 +151,9 @@ export default function OportunidadesLista({ oportunidades = [], windowMode = fa
                   Abrir
                 </Button>
               )}
-              {canEdit && oportunidadeAberta(item) && (
-                <Button size="sm" variant="secondary" onClick={() => setConvertendo(item)}>
-                  <ArrowRightLeft className="w-4 h-4 mr-1" /> Converter
+          {canConvert && oportunidadeAberta(item) && (
+            <Button size="sm" variant="secondary" onClick={() => setConvertendo(item)}>
+              <ArrowRightLeft className="w-4 h-4 mr-1" /> Converter
                 </Button>
               )}
             </div>

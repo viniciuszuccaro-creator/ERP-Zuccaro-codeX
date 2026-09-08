@@ -77,6 +77,15 @@ test('update sincroniza etapa e conversao gera pedido/orcamento', () => {
   });
   assert.equal(updated.record.etapa, 'Proposta');
   assert.equal(updated.record.etapa_funil, 'Proposta');
+  assert.equal(updated.action, 'mover_etapa');
+
+  assert.throws(
+    () => assertOportunidadeOnUpdate({
+      before: { id: 'o1', empresa_id: 'e1', status: 'Ganho', titulo: 'X' },
+      patch: { etapa: 'Proposta' },
+    }),
+    /fechada ou convertida/,
+  );
 
   assert.throws(
     () => assertConversaoOportunidade({ oportunidade: { status: 'Aberto', titulo: 'X' }, tipo: 'pedido' }),
@@ -102,16 +111,26 @@ test('update sincroniza etapa e conversao gera pedido/orcamento', () => {
   assert.equal(closed.pedido_id, 'p1');
 });
 
-test('CRM deixa de usar placeholders e funis leem no contexto', async () => {
+test('CRM deixa de usar placeholders, funis usam updateInContext e client aplica policy', async () => {
   const page = await readFile(new URL('../src/pages/CRM.jsx', import.meta.url), 'utf8');
   const funilIa = await readFile(new URL('../src/components/crm/FunilComercialInteligente.jsx', import.meta.url), 'utf8');
   const funilAv = await readFile(new URL('../src/components/crm/FunilVendasAvancado.jsx', import.meta.url), 'utf8');
+  const lista = await readFile(new URL('../src/components/crm/OportunidadesLista.jsx', import.meta.url), 'utf8');
+  const client = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
   assert.match(page, /OportunidadesLista/);
   assert.match(page, /InteracoesLista/);
   assert.match(page, /CampanhasLista/);
   assert.match(page, /onMoverEtapa/);
   assert.doesNotMatch(page, /em desenvolvimento/);
+  assert.doesNotMatch(page, /return \[\]/);
   assert.match(funilIa, /filtrarPorContexto\('Oportunidade'/);
+  assert.match(funilIa, /updateInContext\('Oportunidade'/);
+  assert.doesNotMatch(funilIa, /entities\.Oportunidade\.update/);
   assert.match(funilAv, /filtrarPorContexto\('Oportunidade'/);
-  assert.match(funilAv, /etapa:/);
+  assert.match(funilAv, /updateInContext\('Oportunidade'/);
+  assert.match(funilAv, /Contato Inicial/);
+  assert.match(lista, /canConvert/);
+  assert.match(client, /assertOportunidadeOnUpdate/);
+  assert.match(client, /oportunidadeStatusPermissionActions/);
+  assert.match(client, /Oportunidade: \{ module: 'CRM', section: 'Oportunidade' \}/);
 });
