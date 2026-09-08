@@ -35,7 +35,7 @@ O ERP somente poderá ser considerado apto para uso real quando os blocos P0 est
 - [x] CRM completo.
 - [x] Roteirizador avançado.
 - [x] App Motorista completo.
-- [ ] Portal do Cliente completo.
+- [x] Portal do Cliente completo.
 - [ ] Chatbot omnichannel.
 - [ ] Integração total do site.
 - [ ] Marketplaces.
@@ -703,6 +703,14 @@ Eliminar carregamento infinito e criar estados explícitos:
 ## Segurança
 
 Cliente nunca pode consultar outro cliente alterando URL, token ou ID.
+
+### Residual P1.6 (2026-09-08)
+
+- [x] Shell `PortalCliente` remonta `PortalTabsNav` + abas existentes (`?tab=`).
+- [x] Escopo NF por `cliente_id`/`cliente_fornecedor_id`/`destinatario_id`.
+- [x] Write de ContaReceber do portal com `assertPortalTituloWrite`.
+- [x] DANFE via `buildPortalDocumentoLinks`; config com preferencias persistidas.
+- [x] Preview admin com `adminMode` no ExternalAppsHub.
 
 ---
 

@@ -328,7 +328,7 @@ export default function DashboardCliente({ clienteId: propClienteId, adminMode =
               </Button>
             </Link>
             
-            <Link to={'/PortalCliente?tab=documentos'}>
+            <Link to={'/PortalCliente?tab=projetos'}>
               <Button variant="outline" className="w-full">
                 <Upload className="w-4 h-4 mr-2" />
                 Enviar Projeto
@@ -342,7 +342,7 @@ export default function DashboardCliente({ clienteId: propClienteId, adminMode =
               </Button>
             </Link>
 
-            <Link to={'/PortalCliente?tab=documentos'}>
+            <Link to={'/PortalCliente?tab=documentos-novos'}>
               <Button variant="outline" className="w-full">
                 <Download className="w-4 h-4 mr-2" />
                 Baixar Documentos

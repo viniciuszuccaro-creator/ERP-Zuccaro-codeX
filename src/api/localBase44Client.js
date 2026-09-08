@@ -32,7 +32,7 @@ import { applyRoteirizacaoCreate } from "@/components/lib/roteirizacaoPolicy";
 import { applyExpedicaoCreate, assertEntregaOnDelete, assertEntregaOnUpdate, entregaStatusPermissionActions, syncEntregaNumero } from "@/components/lib/expedicaoEntregaPolicy";
 import { assertEntregaMotoristaOnUpdate, isMotoristaIdempotencyKey } from "@/components/lib/appMotoristaPolicy";
 import { applyAtendimentoCreate } from "@/components/lib/atendimentoConversaPolicy";
-import { applyPortalReadScope, resolvePortalClienteId } from "@/components/lib/portalClientePolicy";
+import { applyPortalReadScope, assertPortalTituloWrite, resolvePortalClienteId } from "@/components/lib/portalClientePolicy";
 import { applySiteOrigemOnCreate } from "@/components/lib/siteOrigemPolicy";
 import { applyMarketplaceCreate } from "@/components/lib/marketplacePedidoPolicy";
 import { applyMigracaoOnCreate, stripSegredosMigracao } from "@/components/lib/migracaoErpPolicy";
@@ -1683,6 +1683,10 @@ const createEntityApi = (entityName) => ({
       if (before.empresa_id) nextPayload.empresa_id = before.empresa_id;
     }
     if (isTituloFinanceiroEntity(entityName)) {
+      const portalClienteId = resolvePortalClienteId(getEntityStore(db, 'Cliente'), readUser());
+      if (portalClienteId && entityName === 'ContaReceber') {
+        assertPortalTituloWrite({ before, patch: payload, portalClienteId });
+      }
       const decision = assertTituloOnUpdate({ before, patch: payload });
       if (decision.reuse) {
         assertLocalTituloSettlementAllowed(entityName, id);

@@ -10,7 +10,7 @@ import { toast } from "sonner";
 // Apps e ferramentas já existentes no projeto
 import ChatbotDashboard from "@/components/chatbot/ChatbotDashboard";
 import AppEntregasMotorista from "@/components/mobile/AppEntregasMotorista";
-import DashboardCliente from "@/components/portal/DashboardCliente";
+import PortalCliente from "@/pages/PortalCliente";
 import ApontamentoProducao from "@/components/producao/ApontamentoProducao";
 import ChatCliente from "@/components/portal/ChatCliente";
 import ProducaoMobile from "@/pages/ProducaoMobile";
@@ -44,7 +44,13 @@ export default function ExternalAppsHub() {
   };
 
   const items = [
-    { title: "Portal do Cliente", icon: Users, color: "text-sky-600", bg: "from-sky-50 to-sky-100", action: launch(DashboardCliente, {}, { title: "Portal do Cliente" }), desc: "Acesso do cliente aos pedidos e financeiro", route: createPageUrl("PortalCliente") },
+    { title: "Portal do Cliente", icon: Users, color: "text-sky-600", bg: "from-sky-50 to-sky-100", action: () => {
+      if (!contextoValido) {
+        toast.error('Selecione grupo e empresa antes de abrir o Portal');
+        return;
+      }
+      openWindow(PortalCliente, { windowMode: true, adminMode: true }, { title: "Portal do Cliente", width: 1200, height: 720 });
+    }, desc: "Acesso do cliente aos pedidos e financeiro", route: createPageUrl("PortalCliente") },
     { title: "Chatbot Dashboard", icon: MessageCircle, color: "text-purple-600", bg: "from-purple-50 to-purple-100", action: launch(ChatbotDashboard, {}, { title: "Chatbot Dashboard" }), desc: "Central de atendimento automatizado", route: createPageUrl("HubAtendimento") },
     { title: "App Motorista", icon: Truck, color: "text-amber-600", bg: "from-amber-50 to-amber-100", action: launchAppMotorista, desc: "App de entrega para motoristas", route: createPageUrl("EntregasMobile") },
     { title: "Apontamento da Produção", icon: Factory, color: "text-emerald-600", bg: "from-emerald-50 to-emerald-100", action: launch(ApontamentoProducao, {}, { title: "Apontamento da Produção" }), desc: "Registro de produção no chão de fábrica", route: createPageUrl("Producao") },

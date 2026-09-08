@@ -38,6 +38,12 @@ export const resolvePortalClienteId = (clientes = [], user = {}) => {
   return mine?.id || null;
 };
 
+export const clienteIdFromNfe = (nfe = {}) => firstText(
+  nfe.cliente_id,
+  nfe.cliente_fornecedor_id,
+  nfe.destinatario_id,
+);
+
 export const applyPortalReadScope = ({ entityName, records = [], portalClienteId } = {}) => {
   if (!portalClienteId) return records;
   const list = Array.isArray(records) ? records : [];
@@ -45,6 +51,9 @@ export const applyPortalReadScope = ({ entityName, records = [], portalClienteId
     return list.filter((item) => firstText(item.id) === firstText(portalClienteId));
   }
   if (!PORTAL_SCOPED_ENTITIES.has(entityName)) return list;
+  if (entityName === 'NotaFiscal' || entityName === 'NFe') {
+    return list.filter((item) => clienteIdFromNfe(item) === firstText(portalClienteId));
+  }
   return list.filter((item) => firstText(item.cliente_id) === firstText(portalClienteId));
 };
 
@@ -85,18 +94,22 @@ export const resolvePortalSessionState = ({
   return { state: 'pronto', cliente: vinculoCliente, title: 'Pronto', message: '' };
 };
 
-export const clienteIdFromNfe = (nfe = {}) => firstText(
-  nfe.cliente_id,
-  nfe.cliente_fornecedor_id,
-  nfe.destinatario_id,
-);
-
 export const assertPortalTituloDoCliente = ({ titulo = {}, clienteId } = {}) => {
   const scoped = firstText(clienteId);
   if (!scoped) throw new Error('Cliente do portal obrigatorio.');
   if (!titulo?.id) throw new Error('Titulo obrigatorio.');
   if (firstText(titulo.cliente_id) !== scoped) {
     throw new Error('Titulo nao pertence ao cliente do portal.');
+  }
+  return true;
+};
+
+export const assertPortalTituloWrite = ({ before = {}, patch = {}, portalClienteId } = {}) => {
+  assertPortalTituloDoCliente({ titulo: before, clienteId: portalClienteId });
+  if (Object.prototype.hasOwnProperty.call(patch, 'cliente_id')
+    && firstText(patch.cliente_id)
+    && firstText(patch.cliente_id) !== firstText(portalClienteId)) {
+    throw new Error('Cliente do titulo nao pode ser alterado pelo portal.');
   }
   return true;
 };

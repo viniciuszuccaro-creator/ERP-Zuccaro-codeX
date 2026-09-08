@@ -1,3 +1,15 @@
+### P1.6 - Portal Cliente: shell de abas + write/NFe fail-closed
+- Objetivo: fechar residual P1 Portal do Cliente completo no portal existente (Gate 13 funcoes alcançaveis).
+- Diagnostico: `PortalCliente` so montava Dashboard; `PortalTabsNav` orfao; links `?tab=` mortos; NF so por `cliente_id`; ContaReceber update sem assert portal; DANFE sem policy; config UI-only/spinner infinito.
+- Causa raiz: shell desconectado dos modulos ja existentes e escopo financeiro/fiscal incompleto.
+- Arquivos alterados: `PortalCliente.jsx`, `portal.jsx`, `portalClientePolicy.js`, `localBase44Client.js`, `DocumentosCliente.jsx`, `ConfiguracoesPortal.jsx`, `DashboardCliente.jsx`, `ExternalAppsHub.jsx`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: `PortalTabsNav`, `PortalHeader`, Pedidos/Docs/Chamados/Orcamentos/etc. existentes, policy de sessao/PIX.
+- Alteracoes: shell com `?tab=`; escopo NFe alias; assert write titulo; DANFE assertado; preferencias/LGPD persistidas+audit; preview adminMode.
+- Multiempresa/RBAC: isolamento por `portal_usuario_id`; URL cliente_id so em adminMode.
+- Pendencia: PSP/boleto real; magic-link UI; Chatbot (proximo P1).
+- Validacoes: `node --test tests/portal-cliente-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P1: Chatbot/Hub de atendimento.
+
 ### P1.5 - App Motorista: offline/sync, stamp ID e assert vivo
 - Objetivo: fechar residual P1 App Motorista completo no app existente (ERP → atribuicao → offline → sync → prova).
 - Diagnostico: chegada bypassava fila; sync sem `updateInContext`; Romaneio so gravava nome; `assertEntregaMotoristaOnUpdate` morto; match so por nome/user.id; entradas sem RBAC; prova exigia foto online.

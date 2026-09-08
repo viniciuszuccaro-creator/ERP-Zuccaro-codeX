@@ -94,12 +94,60 @@ test('segunda via e pix do portal sao escopados e idempotentes', async () => {
   assert.equal(filtrarTitulosPortal([titulo, { id: 'x', cliente_id: 'cli-b', status: 'Pendente' }], 'cli-a').length, 1);
 });
 
+test('nfe alias e write de titulo sao escopados ao cliente do portal', async () => {
+  const {
+    applyPortalReadScope,
+    assertPortalTituloWrite,
+    buildPortalDocumentoLinks,
+  } = await import('../src/components/lib/portalClientePolicy.js');
+
+  const nfes = applyPortalReadScope({
+    entityName: 'NotaFiscal',
+    portalClienteId: 'cli-a',
+    records: [
+      { id: 'n1', cliente_fornecedor_id: 'cli-a' },
+      { id: 'n2', destinatario_id: 'cli-b' },
+      { id: 'n3', cliente_id: 'cli-a' },
+    ],
+  });
+  assert.deepEqual(nfes.map((item) => item.id).sort(), ['n1', 'n3']);
+
+  assert.throws(
+    () => assertPortalTituloWrite({
+      before: { id: 'cr1', cliente_id: 'cli-b' },
+      patch: { pix_copia_cola: 'x' },
+      portalClienteId: 'cli-a',
+    }),
+    /nao pertence/,
+  );
+
+  assert.throws(
+    () => assertPortalTituloWrite({
+      before: { id: 'cr1', cliente_id: 'cli-a' },
+      patch: { cliente_id: 'cli-b' },
+      portalClienteId: 'cli-a',
+    }),
+    /nao pode ser alterado/,
+  );
+
+  const links = buildPortalDocumentoLinks({
+    nfe: { id: 'n1', cliente_fornecedor_id: 'cli-a', danfe_url: 'https://x/danfe.pdf', xml_url: 'https://x/xml.xml' },
+    clienteId: 'cli-a',
+  });
+  assert.equal(links.danfe, 'https://x/danfe.pdf');
+});
+
 test('portal page no longer redirects to dashboard and dashboard stops infinite spinner', async () => {
   const page = await readFile(new URL('../src/pages/PortalCliente.jsx', import.meta.url), 'utf8');
   const dash = await readFile(new URL('../src/components/portal/DashboardCliente.jsx', import.meta.url), 'utf8');
   const boletos = await readFile(new URL('../src/components/portal/BoletosList.jsx', import.meta.url), 'utf8');
   const docs = await readFile(new URL('../src/components/portal/DocumentosCliente.jsx', import.meta.url), 'utf8');
+  const client = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
+  const config = await readFile(new URL('../src/components/portal/ConfiguracoesPortal.jsx', import.meta.url), 'utf8');
+  assert.match(page, /PortalTabsNav/);
   assert.match(page, /DashboardCliente/);
+  assert.match(page, /searchParams/);
+  assert.match(page, /documentos-novos/);
   assert.doesNotMatch(page, /location\.replace\('\/Dashboard'/);
   assert.match(dash, /data-portal-state/);
   assert.match(dash, /resolvePortalSessionState/);
@@ -108,4 +156,7 @@ test('portal page no longer redirects to dashboard and dashboard stops infinite 
   assert.doesNotMatch(boletos, /emitirBoleto/);
   assert.match(docs, /buildSegundaViaPortal/);
   assert.match(docs, /buildPortalDocumentoLinks/);
+  assert.match(client, /assertPortalTituloWrite/);
+  assert.match(config, /portal_preferencias/);
+  assert.match(config, /sem_vinculo/);
 });

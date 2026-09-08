@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
-import { Settings, Bell, Mail, MessageCircle, Save, CheckCircle2 } from 'lucide-react';
+import { Settings, Bell, Mail, MessageCircle, Save, CheckCircle2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 /**
@@ -19,21 +19,6 @@ import { toast } from 'sonner';
 export default function ConfiguracoesPortal() {
   const queryClient = useQueryClient();
   const [salvando, setSalvando] = useState(false);
-
-  const { data: user } = useQuery({
-    queryKey: ['portal-user-config'],
-    queryFn: () => base44.auth.me(),
-  });
-
-  const { data: cliente } = useQuery({
-    queryKey: ['cliente-config', user?.id],
-    queryFn: async () => {
-      const clientes = await base44.entities.Cliente.filter({ portal_usuario_id: user.id });
-      return clientes[0];
-    },
-    enabled: !!user?.id,
-  });
-
   const [config, setConfig] = useState({
     notif_pedidos: true,
     notif_entregas: true,
@@ -44,25 +29,83 @@ export default function ConfiguracoesPortal() {
     whatsapp_marketing: false,
   });
 
+  const { data: user, isLoading: loadingUser, isFetched: userFetched } = useQuery({
+    queryKey: ['portal-user-config'],
+    queryFn: () => base44.auth.me(),
+  });
+
+  const { data: cliente, isLoading: loadingCliente, isFetched: clienteFetched } = useQuery({
+    queryKey: ['cliente-config', user?.id],
+    queryFn: async () => {
+      const clientes = await base44.entities.Cliente.filter({ portal_usuario_id: user.id });
+      return clientes[0] || null;
+    },
+    enabled: !!user?.id,
+  });
+
+  useEffect(() => {
+    if (!cliente) return;
+    const prefs = cliente.portal_preferencias || {};
+    const lgpd = cliente.lgpd_autorizacoes || {};
+    setConfig({
+      notif_pedidos: prefs.notif_pedidos !== false,
+      notif_entregas: prefs.notif_entregas !== false,
+      notif_boletos: prefs.notif_boletos !== false,
+      notif_orcamentos: prefs.notif_orcamentos !== false,
+      canal_preferencial: cliente.canal_preferencial || prefs.canal_preferencial || 'E-mail',
+      email_marketing: Boolean(lgpd.autoriza_email_marketing),
+      whatsapp_marketing: Boolean(lgpd.autoriza_whatsapp_marketing),
+    });
+  }, [cliente?.id, cliente?.updated_date]);
+
   const salvarMutation = useMutation({
     mutationFn: async (dados) => {
       if (!cliente?.id) throw new Error('Cliente não encontrado');
 
       await base44.entities.Cliente.update(cliente.id, {
         canal_preferencial: dados.canal_preferencial,
-        'lgpd_autorizacoes.autoriza_email_marketing': dados.email_marketing,
-        'lgpd_autorizacoes.autoriza_whatsapp_marketing': dados.whatsapp_marketing,
+        portal_preferencias: {
+          notif_pedidos: dados.notif_pedidos,
+          notif_entregas: dados.notif_entregas,
+          notif_boletos: dados.notif_boletos,
+          notif_orcamentos: dados.notif_orcamentos,
+          canal_preferencial: dados.canal_preferencial,
+        },
+        lgpd_autorizacoes: {
+          ...(cliente.lgpd_autorizacoes || {}),
+          autoriza_email_marketing: dados.email_marketing,
+          autoriza_whatsapp_marketing: dados.whatsapp_marketing,
+        },
+      });
+
+      await base44.entities.AuditLog.create({
+        acao: 'Portal.configurar',
+        modulo: 'Portal',
+        entidade: 'Cliente',
+        registro_id: cliente.id,
+        usuario_id: user?.id || null,
+        group_id: cliente.group_id || null,
+        empresa_id: cliente.empresa_id || null,
+        resultado: 'sucesso',
+        detalhes: {
+          canal_preferencial: dados.canal_preferencial,
+          notif_pedidos: dados.notif_pedidos,
+          notif_entregas: dados.notif_entregas,
+          notif_boletos: dados.notif_boletos,
+          notif_orcamentos: dados.notif_orcamentos,
+        },
+        data_hora: new Date().toISOString(),
       });
 
       return dados;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['cliente-config']);
+      queryClient.invalidateQueries({ queryKey: ['cliente-config'] });
       toast.success('✅ Configurações salvas com sucesso!');
       setSalvando(false);
     },
-    onError: () => {
-      toast.error('Erro ao salvar configurações');
+    onError: (error) => {
+      toast.error(error?.message || 'Erro ao salvar configurações');
       setSalvando(false);
     },
   });
@@ -72,8 +115,24 @@ export default function ConfiguracoesPortal() {
     salvarMutation.mutate(config);
   };
 
-  if (!cliente) {
-    return <div className="p-6">Carregando configurações...</div>;
+  if (loadingUser || (user?.id && loadingCliente)) {
+    return <div className="p-6" data-portal-state="carregando">Carregando configurações...</div>;
+  }
+
+  if (userFetched && (!user || (clienteFetched && !cliente))) {
+    return (
+      <div className="p-6" data-portal-state="sem_vinculo">
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="p-6 flex items-start gap-3 text-amber-950">
+            <AlertCircle className="w-5 h-5 mt-0.5" />
+            <div>
+              <p className="font-semibold">Sem vínculo</p>
+              <p className="text-sm">Seu usuário não está vinculado a um cliente do portal.</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -86,7 +145,6 @@ export default function ConfiguracoesPortal() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-6 w-full">
-          {/* Notificações */}
           <div>
             <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
               <Bell className="w-5 h-5 text-purple-600" />
@@ -139,7 +197,6 @@ export default function ConfiguracoesPortal() {
             </div>
           </div>
 
-          {/* Canal Preferencial */}
           <div>
             <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
               <MessageCircle className="w-5 h-5 text-blue-600" />
@@ -149,6 +206,7 @@ export default function ConfiguracoesPortal() {
               {['E-mail', 'WhatsApp', 'Portal'].map((canal) => (
                 <button
                   key={canal}
+                  type="button"
                   onClick={() => setConfig({ ...config, canal_preferencial: canal })}
                   className={`p-4 rounded-lg border-2 transition-all ${
                     config.canal_preferencial === canal
@@ -170,7 +228,6 @@ export default function ConfiguracoesPortal() {
             </div>
           </div>
 
-          {/* LGPD */}
           <div>
             <h3 className="font-semibold text-lg mb-4">Privacidade e Consentimentos (LGPD)</h3>
             <div className="space-y-4">
@@ -198,7 +255,6 @@ export default function ConfiguracoesPortal() {
             </div>
           </div>
 
-          {/* Dados do Perfil */}
           <div>
             <h3 className="font-semibold text-lg mb-4">Meus Dados</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -224,11 +280,10 @@ export default function ConfiguracoesPortal() {
             </p>
           </div>
 
-          {/* Botão Salvar */}
           <div className="flex justify-end pt-4 border-t">
             <Button
               onClick={handleSalvar}
-              disabled={salvando}
+              disabled={salvando || !cliente?.id}
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
             >
               {salvando ? (

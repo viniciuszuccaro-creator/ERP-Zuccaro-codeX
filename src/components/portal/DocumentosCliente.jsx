@@ -212,17 +212,24 @@ export default function DocumentosCliente() {
                         <Download className="w-4 h-4" />
                         Download XML
                       </Button>
-                      {nfe.danfe_url && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => window.open(nfe.danfe_url, '_blank')}
-                          className="flex items-center gap-2"
-                        >
-                          <Eye className="w-4 h-4" />
-                          Ver DANFE
-                        </Button>
-                      )}
+                      {(() => {
+                        try {
+                          const links = buildPortalDocumentoLinks({ nfe, clienteId });
+                          return links.danfe ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => window.open(links.danfe, '_blank')}
+                              className="flex items-center gap-2"
+                            >
+                              <Eye className="w-4 h-4" />
+                              Ver DANFE
+                            </Button>
+                          ) : null;
+                        } catch {
+                          return null;
+                        }
+                      })()}
                     </div>
                   </CardContent>
                 </Card>
