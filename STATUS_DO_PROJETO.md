@@ -1,3 +1,15 @@
+### P1.2 - Compras: ContaPagar no recebimento e alcada OC
+- Objetivo: fechar residual P1 Compras avancadas (AP automatica + RBAC receber/aprovar) no fluxo existente.
+- Diagnostico: recebimento atualizava estoque sem ContaPagar; OC update so exigia `editar`; UI OR liberava receber via Estoque/criar; RecebimentoOCForm engolia falha de auditoria.
+- Causa raiz: financeiro desconectado do recebimento e alçada fraca no client.
+- Arquivos alterados: `comprasOrdemPolicy.js`, `localBase44Client.js`, `OrdensCompraTab.jsx`, `RecebimentoOCForm.jsx`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: `assertRecebimentoOc`, stamp de movimento, `assertTituloOnCreate`/ContaPagar, telas de OC existentes.
+- Alteracoes: stamp+find ContaPagar por OC; create idempotente no receber; OC update com receber/aprovar/enviar; escopo Compras no client.
+- Multiempresa/RBAC: CP herda empresa/grupo da OC; receber so `Compras.OrdemCompra.receber`.
+- Pendencia: avaliacao de fornecedor ponta a ponta com auditoria/RBAC rigorosos.
+- Validacoes: `node --test tests/compras-ordem-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P1: CRM completo.
+
 ### P0.14 - Migracao piloto: reconciliacao fail-closed
 - Objetivo: cumprir residual P0 Migracao piloto no importador existente, sem MigracaoV2.
 - Diagnostico: planilha gravava `confirmado:true` sem staging; lote aceitava contexto so com empresa; sem codigo legado; reconciliacao nao bloqueava divergencia; auditoria engolia erro.

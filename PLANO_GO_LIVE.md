@@ -31,7 +31,7 @@ O ERP somente poderá ser considerado apto para uso real quando os blocos P0 est
 
 ## P1 — pode ser concluído durante operação controlada
 
-- [ ] Compras avançadas.
+- [x] Compras avançadas.
 - [ ] CRM completo.
 - [ ] Roteirizador avançado.
 - [ ] App Motorista completo.

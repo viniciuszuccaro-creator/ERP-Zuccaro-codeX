@@ -23,9 +23,7 @@ export default function RecebimentoOCForm({ ordemCompra, onSubmit, windowMode = 
   const groupId = ordemCompra?.group_id || ordemCompra?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = ordemCompra?.empresa_id || empresaAtual?.id || null;
   const contextoValido = Boolean(groupId || empresaId);
-  const canReceiveOC = hasPermission('Compras', 'OrdemCompra', 'receber') ||
-    hasPermission('Estoque', 'Movimentacoes', 'criar') ||
-    hasPermission('Compras', null, 'criar');
+  const canReceiveOC = hasPermission('Compras', 'OrdemCompra', 'receber');
   const controlesBloqueados = !contextoValido || !canReceiveOC;
 
   const schema = z.object({
@@ -60,6 +58,7 @@ export default function RecebimentoOCForm({ ordemCompra, onSubmit, windowMode = 
       });
     } catch (error) {
       console.warn('Falha ao auditar formulario de recebimento de OC:', error);
+      throw new Error('Auditoria obrigatoria falhou para recebimento de OC.');
     }
   };
 

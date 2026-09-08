@@ -26,7 +26,7 @@ import {
   NOTA_FISCAL_ENTITIES,
 } from "@/components/lib/notaFiscalEmissaoPolicy";
 import { assertOpOnCreate, assertOpOnDelete, assertOpOnUpdate, opStatusPermissionActions } from "@/components/lib/ordemProducaoPolicy";
-import { applyComprasCreate, assertRecebimentoOc } from "@/components/lib/comprasOrdemPolicy";
+import { applyComprasCreate, assertOrdemCompraOnUpdate, ocStatusPermissionActions } from "@/components/lib/comprasOrdemPolicy";
 import { applyCrmCreate, assertOportunidadeOnUpdate } from "@/components/lib/crmOportunidadePolicy";
 import { applyRoteirizacaoCreate } from "@/components/lib/roteirizacaoPolicy";
 import { applyExpedicaoCreate, assertEntregaOnDelete, assertEntregaOnUpdate, entregaStatusPermissionActions, syncEntregaNumero } from "@/components/lib/expedicaoEntregaPolicy";
@@ -922,6 +922,9 @@ const ENTITY_PERMISSION_SCOPE = {
   SeparacaoConferencia: { module: 'Expedicao', section: 'Separacao' },
   BackupAutomatico: { module: 'Sistema', section: 'Backup' },
   ConfiguracaoBackup: { module: 'Sistema', section: 'Backup' },
+  OrdemCompra: { module: 'Compras', section: 'OrdemCompra' },
+  SolicitacaoCompra: { module: 'Compras', section: 'SolicitacaoCompra' },
+  Cotacao: { module: 'Compras', section: 'Cotacao' },
 };
 
 const getEntityPermissionScope = (entityName) => {
@@ -1598,7 +1601,7 @@ const createEntityApi = (entityName) => ({
   },
 
   async update(id, data = {}) {
-    if (!isTituloFinanceiroEntity(entityName) && !NOTA_FISCAL_ENTITIES.includes(entityName) && entityName !== 'OrdemProducao' && entityName !== 'Entrega' && entityName !== 'BackupAutomatico') {
+    if (!isTituloFinanceiroEntity(entityName) && !NOTA_FISCAL_ENTITIES.includes(entityName) && entityName !== 'OrdemProducao' && entityName !== 'Entrega' && entityName !== 'BackupAutomatico' && entityName !== 'OrdemCompra') {
       assertLocalMutationAllowed(entityName, 'editar', id);
     }
     const db = loadDb();
@@ -1642,8 +1645,12 @@ const createEntityApi = (entityName) => ({
       if (before.empresa_id) nextPayload.empresa_id = before.empresa_id;
     }
     if (entityName === 'OrdemCompra') {
-      const decision = assertRecebimentoOc({ before, patch: payload });
-      if (decision.reuse) return decision.reuse;
+      const decision = assertOrdemCompraOnUpdate({ before, patch: payload });
+      if (decision.reuse || decision.action === 'retry') {
+        assertLocalPermissionAny(entityName, ['editar', 'receber', 'aprovar', 'enviar_fornecedor'], id);
+        return decision.reuse || before;
+      }
+      assertLocalPermissionAny(entityName, ocStatusPermissionActions(decision.action), id);
       nextPayload = decision.record;
       if (before.empresa_id) nextPayload.empresa_id = before.empresa_id;
     }

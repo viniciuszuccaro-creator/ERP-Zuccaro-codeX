@@ -6,7 +6,12 @@ import { MASTER_CODE_SPECS, applyCodigoOnCreate } from '../src/api/localCadastro
 import {
   applyComprasCreate,
   assertOrdemCompraOnCreate,
+  assertOrdemCompraOnUpdate,
   assertRecebimentoOc,
+  classifyOcStatusTransition,
+  findContaPagarOc,
+  ocStatusPermissionActions,
+  stampContaPagarRecebimentoOc,
   stampMovimentacaoRecebimentoOc,
 } from '../src/components/lib/comprasOrdemPolicy.js';
 
@@ -65,12 +70,42 @@ test('recebimento de OC e idempotente e carimba empresa na movimentacao', () => 
   assert.equal(mov.documento, 'OC-000001');
 });
 
-test('telas de compras deixam de inventar SC/OC/COT com Date.now', async () => {
+test('recebimento gera ContaPagar idempotente e alçada de status', () => {
+  const oc = {
+    id: 'oc1',
+    empresa_id: 'e1',
+    group_id: 'g1',
+    fornecedor_id: 'f1',
+    fornecedor_nome: 'Fornecedor A',
+    numero_oc: 'OC-000001',
+    valor_total: 150,
+    data_entrega_real: '2026-09-07',
+    status: 'Recebida',
+  };
+  const stamped = stampContaPagarRecebimentoOc({ oc });
+  assert.equal(stamped.origem_tipo, 'ordem_compra');
+  assert.equal(stamped.origem_documento_id, 'oc1');
+  assert.equal(stamped.valor, 150);
+  assert.equal(findContaPagarOc(oc, [{ id: 'cp1', origem_tipo: 'ordem_compra', origem_documento_id: 'oc1' }])?.id, 'cp1');
+  assert.throws(() => stampContaPagarRecebimentoOc({ oc: { ...oc, valor_total: 0 } }), /Valor/);
+  assert.equal(classifyOcStatusTransition('Enviada', 'Recebida'), 'receber');
+  assert.equal(classifyOcStatusTransition('Rascunho', 'Aprovada'), 'aprovar');
+  assert.deepEqual(ocStatusPermissionActions('receber'), ['receber']);
+  const update = assertOrdemCompraOnUpdate({
+    before: { id: 'oc1', empresa_id: 'e1', status: 'Aprovada', itens: [{ produto_id: 'p1' }] },
+    patch: { status: 'Recebida' },
+  });
+  assert.equal(update.action, 'receber');
+});
+
+test('telas de compras deixam de inventar SC/OC/COT com Date.now e geram CP no recebimento', async () => {
   const ocForm = await readFile(new URL('../src/components/compras/OrdemCompraForm.jsx', import.meta.url), 'utf8');
   const scForm = await readFile(new URL('../src/components/compras/SolicitacaoCompraForm.jsx', import.meta.url), 'utf8');
   const cotForm = await readFile(new URL('../src/components/compras/CotacaoForm.jsx', import.meta.url), 'utf8');
   const scTab = await readFile(new URL('../src/components/compras/SolicitacoesCompraTab.jsx', import.meta.url), 'utf8');
   const cotTab = await readFile(new URL('../src/components/compras/CotacoesTab.jsx', import.meta.url), 'utf8');
+  const ocTab = await readFile(new URL('../src/components/compras/OrdensCompraTab.jsx', import.meta.url), 'utf8');
+  const client = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
   assert.doesNotMatch(ocForm, /OC-\$\{Date\.now/);
   assert.doesNotMatch(scForm, /SC-\$\{Date\.now/);
   assert.doesNotMatch(cotForm, /COT-\$\{Date\.now/);
@@ -79,4 +114,10 @@ test('telas de compras deixam de inventar SC/OC/COT com Date.now', async () => {
   assert.doesNotMatch(cotTab, /cotacoes\.length \+ 1/);
   assert.match(cotTab, /createInContext\('Cotacao'/);
   assert.match(scTab, /solicitacao_compra_id: solicitacao\.id/);
+  assert.match(ocTab, /stampContaPagarRecebimentoOc/);
+  assert.match(ocTab, /createInContext\('ContaPagar'/);
+  assert.match(ocTab, /hasPermission\('Compras','OrdemCompra','receber'\)/);
+  assert.match(client, /assertOrdemCompraOnUpdate/);
+  assert.match(client, /ocStatusPermissionActions/);
+  assert.match(client, /OrdemCompra: \{ module: 'Compras', section: 'OrdemCompra' \}/);
 });

@@ -30,7 +30,7 @@ import useEntityListSorted from "@/components/lib/useEntityListSorted";
 import { toast as sonnerToast } from "sonner";
 import { ImprimirOrdemCompra } from "@/components/lib/ImprimirOrdemCompra";
 import { useUser } from "@/components/lib/UserContext";
-import { stampMovimentacaoRecebimentoOc } from "@/components/lib/comprasOrdemPolicy";
+import { findContaPagarOc, stampContaPagarRecebimentoOc, stampMovimentacaoRecebimentoOc } from "@/components/lib/comprasOrdemPolicy";
 
 export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas = [], windowMode = false }) {
   const { createInContext, updateInContext, filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
@@ -50,7 +50,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
   const canCreateOC = hasPermission('Compras','OrdemCompra','criar') || hasPermission('Compras', null, 'criar');
   const canApproveOC = hasPermission('Compras','OrdemCompra','aprovar') || hasPermission('Compras', null, 'aprovar');
   const canSendOC = hasPermission('Compras','OrdemCompra','enviar_fornecedor') || hasPermission('Compras','OrdemCompra','editar');
-  const canReceiveOC = hasPermission('Compras','OrdemCompra','receber') || hasPermission('Estoque','Movimentacoes','criar');
+  const canReceiveOC = hasPermission('Compras','OrdemCompra','receber');
   const canEvaluateSupplier = hasPermission('Compras','OrdemCompra','avaliar_fornecedor') || hasPermission('Compras','Fornecedor','editar');
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -315,23 +315,64 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
         }
       }
 
-      return { leadTimeReal, fornecedorNome: oc.fornecedor_nome, ordemCompraId: id, numeroOC: oc.numero_oc, itensRecebidos: oc.itens?.length || 0 };
+      // Conta a Pagar automatica (idempotente por origem OC)
+      const ocRecebida = {
+        ...oc,
+        status: 'Recebida',
+        data_entrega_real: dados.data_entrega_real,
+        nota_fiscal_entrada: dados.nota_fiscal_entrada,
+        empresa_id: oc.empresa_id || empresaId,
+        group_id: oc.group_id || groupId,
+        grupo_id: oc.grupo_id || oc.group_id || groupId,
+      };
+      const existentesCp = await filterInContext('ContaPagar', {
+        origem_documento_id: id,
+      }, undefined, 20);
+      const cpExistente = findContaPagarOc(ocRecebida, existentesCp);
+      let contaPagarId = cpExistente?.id || null;
+      if (!cpExistente) {
+        const stampedCp = stampContaPagarRecebimentoOc({
+          oc: ocRecebida,
+          dataVencimento: dados.data_entrega_real,
+        });
+        const criada = await createInContext('ContaPagar', stampedCp);
+        contaPagarId = criada?.id || null;
+      }
+
+      return {
+        leadTimeReal,
+        fornecedorNome: oc.fornecedor_nome,
+        ordemCompraId: id,
+        numeroOC: oc.numero_oc,
+        itensRecebidos: oc.itens?.length || 0,
+        contaPagarId,
+        contaPagarReuso: Boolean(cpExistente),
+      };
     },
-    onSuccess: async ({ leadTimeReal, fornecedorNome, ordemCompraId, numeroOC, itensRecebidos }) => {
+    onSuccess: async ({ leadTimeReal, fornecedorNome, ordemCompraId, numeroOC, itensRecebidos, contaPagarId, contaPagarReuso }) => {
       await auditOrdemCompra({
         acao: 'OrdemCompra.recebida',
-        dados: { ordem_compra_id: ordemCompraId, numero_oc: numeroOC, lead_time_real: leadTimeReal, itens_recebidos: itensRecebidos }
+        dados: {
+          ordem_compra_id: ordemCompraId,
+          numero_oc: numeroOC,
+          lead_time_real: leadTimeReal,
+          itens_recebidos: itensRecebidos,
+          conta_pagar_id: contaPagarId,
+          conta_pagar_reuso: contaPagarReuso,
+        }
       });
       queryClient.invalidateQueries(['ordensCompra']);
       queryClient.invalidateQueries(['fornecedores']);
       queryClient.invalidateQueries(['movimentacoes']);
       queryClient.invalidateQueries(['produtos']);
+      queryClient.invalidateQueries(['contasPagar']);
+      queryClient.invalidateQueries(['ContaPagar']);
       
       setIsRecebimentoDialogOpen(false);
       
       toast({ 
         title: "✅ Recebimento Registrado!",
-        description: `Lead time: ${leadTimeReal} dias | Estoque atualizado`
+        description: `Lead time: ${leadTimeReal} dias | Estoque e Contas a Pagar atualizados`
       });
 
       // Abrir dialog de avaliação
