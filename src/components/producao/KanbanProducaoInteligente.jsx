@@ -33,11 +33,14 @@ export default function KanbanProducaoInteligente({ windowMode = false }) {
   const { user } = useUser();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const contextoValido = Boolean(groupId && empresaId);
   const contextKey = groupId ? `grupo:${groupId}` : `empresa:${empresaId || "sem-empresa"}`;
   const canViewKanban = hasPermission("Produção", "Kanban", "visualizar") || hasPermission("Produção", "Kanban", "ver") || hasPermission("Produção", null, "visualizar") || hasPermission("Produção", null, "ver") || hasPermission("Producao", "Kanban", "visualizar") || hasPermission("Producao", null, "visualizar");
   const canEditOP = hasPermission("Produção", "Ordens Produção", "editar") || hasPermission("Produção", "OrdemProducao", "editar") || hasPermission("Producao", "Ordens Producao", "editar") || hasPermission("Producao", "OrdemProducao", "editar");
+  const canApontarOP = hasPermission("Produção", "OrdemProducao", "apontar") || hasPermission("Producao", "OrdemProducao", "apontar") || hasPermission("Produção", "Apontamento", "criar") || hasPermission("Producao", "Apontamento", "criar");
+  const canAprovarOP = hasPermission("Produção", "Ordens Produção", "aprovar") || hasPermission("Produção", "OrdemProducao", "aprovar") || hasPermission("Producao", "Ordens Producao", "aprovar") || hasPermission("Producao", "OrdemProducao", "aprovar");
   const canCreateOP = hasPermission("Produção", "Ordens Produção", "criar") || hasPermission("Produção", "OrdemProducao", "criar") || hasPermission("Producao", "Ordens Producao", "criar") || hasPermission("Producao", "OrdemProducao", "criar");
+  const canMoverOP = canEditOP || canApontarOP || canAprovarOP;
 
   const auditarKanban = async ({ acao, descricao, sucesso = true, dadosNovos = null, dadosAnteriores = null, registroId = null }) => {
     try {
@@ -82,9 +85,16 @@ export default function KanbanProducaoInteligente({ windowMode = false }) {
         await auditarKanban({ acao: "Kanban.bloqueado", descricao: "Tentativa de mover OP sem contexto grupo/empresa.", sucesso: false, dadosNovos: { id, status }, dadosAnteriores: opAtual, registroId: id });
         throw new Error("Contexto multiempresa obrigatório.");
       }
-      if (!canEditOP) {
+      if (!canMoverOP) {
         await auditarKanban({ acao: "Kanban.bloqueado", descricao: "Tentativa de mover OP sem permissão.", sucesso: false, dadosNovos: { id, status }, dadosAnteriores: opAtual, registroId: id });
         throw new Error("Seu perfil não pode alterar OP.");
+      }
+      const statusNorm = String(status || '').toLowerCase();
+      if ((statusNorm.includes('pronta') || statusNorm.includes('exped') || statusNorm.includes('conclu')) && !canAprovarOP) {
+        throw new Error("Sem permissao para liberar OP para expedicao.");
+      }
+      if ((statusNorm.includes('corte') || statusNorm.includes('dobra') || statusNorm.includes('montag') || statusNorm.includes('inspec') || statusNorm.includes('confer')) && !(canApontarOP || canEditOP || canAprovarOP)) {
+        throw new Error("Sem permissao para apontar progresso da OP.");
       }
       const dadosStatus = {
         status,
@@ -128,7 +138,7 @@ export default function KanbanProducaoInteligente({ windowMode = false }) {
       toast.error("Selecione um grupo ou empresa antes de mover OP.");
       return;
     }
-    if (!canEditOP) {
+    if (!canMoverOP) {
       auditarKanban({ acao: "Kanban.bloqueado", descricao: "Tentativa de mover OP no Kanban sem permissão.", sucesso: false, dadosNovos: { draggableId: result.draggableId } });
       toast.error("Seu perfil não pode mover OP no Kanban.");
       return;

@@ -1,3 +1,15 @@
+### P0.10 - Gate 10 Producao residual: OP status, alcada e estoque unico
+- Objetivo: cumprir residual do Gate 10 / P0 Producao sem ProducaoV2.
+- Diagnostico: OrdemProducao caia em Cadastros/`editar`; sem `assertOpOnUpdate/Delete`; apontar/conferir com `editar`; Kanban listava global; consumo de OP atualizava Produto fora da policy; PedidosTab com encoding quebrado em Produção.
+- Causa raiz: transicao de status de OP sem policy e alçada fraca de apontar/aprovar.
+- Arquivos alterados: `ordemProducaoPolicy.js`, `localBase44Client.js`, `ApontamentoProducao`, `FormularioOrdemProducao`, `KanbanProducao`, `KanbanProducaoInteligente`, `GerarOPModal`, `PedidosTab`, `useFluxoPedido`, `entityGuardPolicy`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: `assertOpOnCreate`, `assertApontamento`, `concluirOPCompleto`, Kanban/Form existentes.
+- Alteracoes: update/delete fail-closed; escopo Producao; apontar/aprovar sem `editar`; Kanban com contexto; baixa de material so via MovimentacaoEstoque.
+- Multiempresa/RBAC: OP exige empresa; liberacao para expedicao exige aprovar; Kanban exige grupo+empresa.
+- Pendencia: etiqueta/lote/rastreio item a item; ApontamentoProducaoAvancado residual; carta/CC-e fiscal fora deste gate.
+- Validacoes: `node --test tests/ordem-producao-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 11 Expedicao essencial.
+
 ### P0.9 - Gate 9 Fiscal residual: emit/cancel, escopo e producao
 - Objetivo: cumprir residual do Gate 9 / P0 Fiscal sem FiscalV2.
 - Diagnostico: NotaFiscal caia em Cadastros/`editar`; EventosNFe cancelava sem RBAC; `nfeActions` aceitava `autoriza_emissao_producao` do client e secao `NF-e`; config NF-e salvava so com grupo; UI emitia com `criar`.

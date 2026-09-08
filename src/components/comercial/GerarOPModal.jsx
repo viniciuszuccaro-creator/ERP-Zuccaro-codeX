@@ -14,11 +14,8 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-
-// Assuming a useAuth hook exists for user information, otherwise 'user' needs to be mocked or passed.
-// For this implementation, we'll assume a placeholder for user.
-// In a real application, you might have: import { useAuth } from "@/hooks/useAuth";
-const useAuth = () => ({ user: { full_name: "Sistema", id: "system-user" } }); // Mock for demonstration if useAuth is not provided in context
+import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -42,7 +39,13 @@ export default function GerarOPModal({ isOpen, onClose, pedido, windowMode = fal
   const [configProducao, setConfigProducao] = useState(null);
 
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useUser();
+  const { hasPermission } = usePermissions();
+  const canGerarOP = hasPermission('Comercial', 'Pedido', 'gerarOP')
+    || hasPermission('Producao', 'OrdemProducao', 'criar')
+    || hasPermission('Produção', 'OrdemProducao', 'criar')
+    || hasPermission('Producao', 'Ordens Producao', 'criar')
+    || hasPermission('Produção', 'Ordens Produção', 'criar');
 
   // Fetch all active products for the company to look up bitolas
   const { data: produtos = [] } = useQuery({
@@ -153,6 +156,12 @@ export default function GerarOPModal({ isOpen, onClose, pedido, windowMode = fal
   // Gerar OPs (single automatic OP)
   const gerarOPAutomaticaMutation = useMutation({
     mutationFn: async () => {
+      if (!canGerarOP) {
+        throw new Error("Sem permissao para gerar ordem de producao.");
+      }
+      if (!pedido?.empresa_id) {
+        throw new Error("Empresa do pedido obrigatoria para gerar OP.");
+      }
       if (!pedido || !pedido.itens_producao || pedido.itens_producao.length === 0) {
         throw new Error("Pedido sem itens de produção");
       }

@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,7 +65,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
   const canFecharPedido = hasPermission('Comercial', 'Pedido', 'fechar') || hasPermission('Comercial', 'Pedidos', 'fechar') || canEditPedido;
   const canGerarNFe = hasPermission('Comercial', 'Pedido', 'gerarNFe') || hasPermission('Fiscal', 'NotaFiscal', 'emitir') || hasPermission('Fiscal', 'Notas Fiscais', 'emitir') || hasPermission('Fiscal', 'NotaFiscal', 'enviar');
   const canCriarEntrega = hasPermission('Comercial', 'Pedido', 'criarEntrega') || hasPermission('ExpediÃ§Ã£o', 'Entrega', 'criar') || hasPermission('ExpediÃ§Ã£o', null, 'criar');
-  const canGerarOP = hasPermission('Comercial', 'Pedido', 'gerarOP') || hasPermission('ProduÃ§Ã£o', 'OrdemProducao', 'criar') || hasPermission('ProduÃ§Ã£o', null, 'criar');
+  const canGerarOP = hasPermission('Comercial', 'Pedido', 'gerarOP') || hasPermission('Producao', 'OrdemProducao', 'criar') || hasPermission('Produção', 'OrdemProducao', 'criar') || hasPermission('Producao', 'Ordens Producao', 'criar') || hasPermission('Produção', 'Ordens Produção', 'criar');
   const { page, setPage, pageSize, setPageSize } = useBackendPagination('Pedido', 20);
   const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('Pedido', 'data_pedido', 'desc');
 

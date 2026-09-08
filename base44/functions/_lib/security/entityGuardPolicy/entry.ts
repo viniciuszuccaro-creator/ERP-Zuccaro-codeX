@@ -5,6 +5,7 @@ export const GRANULAR_PERMISSION_ACTIONS = [
   'inativar',
   'restaurar',
   'aprovar',
+  'apontar',
   'rejeitar',
   'emitir',
   'cancelar',

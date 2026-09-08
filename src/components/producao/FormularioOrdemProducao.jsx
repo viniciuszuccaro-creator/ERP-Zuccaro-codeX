@@ -30,10 +30,11 @@ export default function FormularioOrdemProducao({ op, onClose }) {
   const { user } = useUser();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || op?.group_id || null;
   const empresaId = op?.empresa_id || empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const contextoValido = Boolean(groupId && empresaId);
   const contextKey = groupId ? `grupo:${groupId}` : `empresa:${empresaId || "sem-empresa"}`;
   const canCreateOP = hasPermission("Produção", "Ordens Produção", "criar") || hasPermission("Produção", "OrdemProducao", "criar") || hasPermission("Producao", "Ordens Producao", "criar") || hasPermission("Producao", "OrdemProducao", "criar");
   const canEditOP = hasPermission("Produção", "Ordens Produção", "editar") || hasPermission("Produção", "OrdemProducao", "editar") || hasPermission("Producao", "Ordens Producao", "editar") || hasPermission("Producao", "OrdemProducao", "editar");
+  const canAprovarOP = hasPermission("Produção", "Ordens Produção", "aprovar") || hasPermission("Produção", "OrdemProducao", "aprovar") || hasPermission("Producao", "Ordens Producao", "aprovar") || hasPermission("Producao", "OrdemProducao", "aprovar");
   const canUseIA = hasPermission("Produção", "IA", "executar") || hasPermission("Produção", "Ordens Produção", "ia") || hasPermission("Producao", "IA", "executar") || hasPermission("Producao", "Ordens Producao", "ia");
   const [formData, setFormData] = useState(op || {
     numero_op: "",
@@ -108,13 +109,18 @@ export default function FormularioOrdemProducao({ op, onClose }) {
         await auditarOP({ acao: "OP.bloqueada", descricao: "Tentativa de salvar OP sem empresa de produção.", sucesso: false, dadosNovos: data });
         throw new Error("Empresa de produção obrigatória.");
       }
-      if (op?.id && !canEditOP) {
+      if (op?.id && !canEditOP && !canAprovarOP) {
         await auditarOP({ acao: "OP.bloqueada", descricao: "Tentativa de editar OP sem permissão.", sucesso: false, dadosNovos: data, dadosAnteriores: op });
         throw new Error("Seu perfil não pode editar OP.");
       }
       if (!op?.id && !canCreateOP) {
         await auditarOP({ acao: "OP.bloqueada", descricao: "Tentativa de criar OP sem permissão.", sucesso: false, dadosNovos: data });
         throw new Error("Seu perfil não pode criar OP.");
+      }
+      const statusNorm = String(data.status || '').toLowerCase();
+      if ((statusNorm.includes('conclu') || statusNorm.includes('pronta') || statusNorm.includes('exped')) && !canAprovarOP) {
+        await auditarOP({ acao: "OP.bloqueada", descricao: "Tentativa de concluir/liberar OP sem aprovacao.", sucesso: false, dadosNovos: data });
+        throw new Error("Sem permissao para concluir ou liberar OP.");
       }
       const stamped = {
         ...data,
@@ -415,8 +421,17 @@ Retorne sugestões de:
                   <Label>Status</Label>
                   <select
                     value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    onChange={(e) => {
+                      const next = e.target.value;
+                      const nextNorm = String(next || '').toLowerCase();
+                      if ((nextNorm.includes('conclu') || nextNorm.includes('pronta') || nextNorm.includes('exped')) && !canAprovarOP) {
+                        toast.error('Sem permissao para concluir ou liberar OP.');
+                        return;
+                      }
+                      setFormData({ ...formData, status: next });
+                    }}
                     className="w-full px-3 py-2 border rounded-lg"
+                    disabled={op?.id ? !(canEditOP || canAprovarOP) : !canCreateOP}
                   >
                     <option>Planejada</option>
                     <option>Aguardando Matéria-Prima</option>
@@ -424,8 +439,8 @@ Retorne sugestões de:
                     <option>Em Dobra</option>
                     <option>Em Montagem</option>
                     <option>Inspeção</option>
-                    <option>Pronto para Expedição</option>
-                    <option>Concluída</option>
+                    {canAprovarOP && <option>Pronto para Expedição</option>}
+                    {canAprovarOP && <option>Concluída</option>}
                   </select>
                 </div>
               </div>

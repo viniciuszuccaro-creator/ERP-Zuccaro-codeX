@@ -607,10 +607,6 @@ async function baixarMaterialProducao(material, op, empresaId) {
   }, contextoOperacao);
 
   await auditar('Estoque', 'MovimentacaoEstoque', 'create', movConsumo.id, `Consumo na producao - OP ${op.numero_op}`, contextoOperacao.empresaId, null, movConsumo, contextoOperacao.groupId);
-  const { before: produtoAntes, updated: produtoAtualizado } = await updateScoped('Produto', produto.id, {
-    estoque_atual: Math.max(0, novoEstoque)
-  }, contextoOperacao);
-  await auditar('Estoque', 'Produto', 'update', produto.id, `Estoque atualizado por consumo de producao - OP ${op.numero_op}`, contextoOperacao.empresaId, produtoAntes, produtoAtualizado, contextoOperacao.groupId);
   return movConsumo;
 }
 

@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { 
-  Clock, 
-  User, 
+import {
+  Clock,
+  User,
   Package,
   AlertCircle,
   CheckCircle,
   Eye
 } from 'lucide-react';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
+import { useUser } from '@/components/lib/UserContext';
+import { toast } from 'sonner';
 
 /**
  * Kanban de Produção
@@ -20,27 +23,53 @@ import {
  */
 export default function KanbanProducao({ onViewOP }) {
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, filterInContext, updateInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId && empresaId);
+  const canView = hasPermission('Producao', 'Kanban', 'visualizar') || hasPermission('Produção', 'Kanban', 'visualizar') || hasPermission('Producao', null, 'visualizar') || hasPermission('Produção', null, 'visualizar');
+  const canApontar = hasPermission('Producao', 'OrdemProducao', 'apontar') || hasPermission('Produção', 'OrdemProducao', 'apontar') || hasPermission('Producao', 'Apontamento', 'criar') || hasPermission('Produção', 'Apontamento', 'criar');
+  const canAprovar = hasPermission('Producao', 'OrdemProducao', 'aprovar') || hasPermission('Produção', 'Ordens Produção', 'aprovar') || hasPermission('Producao', 'Ordens Producao', 'aprovar');
+  const canEdit = hasPermission('Producao', 'OrdemProducao', 'editar') || hasPermission('Produção', 'Ordens Produção', 'editar');
+  const canMover = canEdit || canApontar || canAprovar;
 
   const { data: ops = [] } = useQuery({
-    queryKey: ['ops-kanban'],
-    queryFn: () => base44.entities.OrdemProducao.list('-data_emissao'),
+    queryKey: ['ops-kanban', groupId, empresaId],
+    queryFn: () => filterInContext('OrdemProducao', {}, '-data_emissao', 500),
+    enabled: contextoValido && canView,
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ opId, novoStatus }) => 
-      base44.entities.OrdemProducao.update(opId, { 
+    mutationFn: async ({ opId, novoStatus }) => {
+      if (!contextoValido) throw new Error('Selecione grupo e empresa antes de mover OP.');
+      if (!canMover) throw new Error('Sem permissao para alterar OP no Kanban.');
+      const statusNorm = String(novoStatus || '').toLowerCase();
+      if ((statusNorm.includes('pronta') || statusNorm.includes('exped') || statusNorm.includes('conclu')) && !canAprovar) {
+        throw new Error('Sem permissao para liberar OP para expedicao.');
+      }
+      const atual = ops.find(op => op.id === opId);
+      return updateInContext('OrdemProducao', opId, {
         status: novoStatus,
+        empresa_id: atual?.empresa_id || empresaId,
+        group_id: atual?.group_id || groupId,
         historico_status: [
+          ...(Array.isArray(atual?.historico_status) ? atual.historico_status : []),
           {
-            status_anterior: ops.find(op => op.id === opId)?.status,
+            status_anterior: atual?.status,
             status_novo: novoStatus,
             data_hora: new Date().toISOString(),
-            usuario: 'Sistema - Kanban'
+            usuario: user?.full_name || user?.email || 'Sistema - Kanban'
           }
         ]
-      }),
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ops-kanban'] });
+    },
+    onError: (error) => {
+      toast.error(error?.message || 'Falha ao atualizar status da OP');
     }
   });
 
@@ -77,6 +106,10 @@ export default function KanbanProducao({ onViewOP }) {
 
   const handleDragEnd = (result) => {
     if (!result.destination) return;
+    if (!contextoValido || !canMover) {
+      toast.error(!contextoValido ? 'Selecione grupo e empresa.' : 'Sem permissao para mover OP.');
+      return;
+    }
 
     const sourceColuna = colunas.find(c => c.id === result.source.droppableId);
     const destColuna = colunas.find(c => c.id === result.destination.droppableId);
@@ -89,8 +122,22 @@ export default function KanbanProducao({ onViewOP }) {
     updateStatusMutation.mutate({ opId, novoStatus });
   };
 
+  if (!contextoValido || !canView) {
+    return (
+      <div className="p-6 w-full h-full">
+        <Card>
+          <CardContent className="p-6 text-sm text-slate-600">
+            {!canView
+              ? 'Sem permissao para visualizar o Kanban de producao.'
+              : 'Selecione grupo e empresa antes de operar o Kanban de producao.'}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6">
+    <div className="p-6 w-full h-full">
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="grid grid-cols-4 gap-4">
           {colunas.map((coluna) => {
@@ -107,7 +154,7 @@ export default function KanbanProducao({ onViewOP }) {
                       </Badge>
                     </CardTitle>
                   </CardHeader>
-                  
+
                   <Droppable droppableId={coluna.id}>
                     {(provided, snapshot) => (
                       <div
@@ -160,7 +207,7 @@ export default function KanbanProducao({ onViewOP }) {
                                           Urgente
                                         </Badge>
                                       )}
-                                      
+
                                       <div className="flex items-center gap-1 text-xs text-slate-600">
                                         <User className="w-3 h-3" />
                                         <span>{op.operador_responsavel || 'Sem operador'}</span>
@@ -194,7 +241,7 @@ export default function KanbanProducao({ onViewOP }) {
                                             <span className="font-semibold">{op.percentual_conclusao}%</span>
                                           </div>
                                           <div className="w-full bg-slate-200 rounded-full h-1.5">
-                                            <div 
+                                            <div
                                               className="bg-blue-600 h-1.5 rounded-full transition-all"
                                               style={{ width: `${op.percentual_conclusao}%` }}
                                             />

@@ -25,7 +25,7 @@ import {
   nfeSequenceKey,
   NOTA_FISCAL_ENTITIES,
 } from "@/components/lib/notaFiscalEmissaoPolicy";
-import { assertOpOnCreate } from "@/components/lib/ordemProducaoPolicy";
+import { assertOpOnCreate, assertOpOnDelete, assertOpOnUpdate, opStatusPermissionActions } from "@/components/lib/ordemProducaoPolicy";
 import { applyComprasCreate, assertRecebimentoOc } from "@/components/lib/comprasOrdemPolicy";
 import { applyCrmCreate, assertOportunidadeOnUpdate } from "@/components/lib/crmOportunidadePolicy";
 import { applyRoteirizacaoCreate } from "@/components/lib/roteirizacaoPolicy";
@@ -909,6 +909,8 @@ const ENTITY_PERMISSION_SCOPE = {
   NotaFiscal: { module: 'Fiscal', section: 'NotaFiscal' },
   NFe: { module: 'Fiscal', section: 'NotaFiscal' },
   ConfiguracaoNFe: { module: 'Fiscal', section: 'ConfiguracaoNFe' },
+  OrdemProducao: { module: 'Producao', section: 'OrdemProducao' },
+  ApontamentoProducao: { module: 'Producao', section: 'Apontamento' },
 };
 
 const getEntityPermissionScope = (entityName) => {
@@ -1572,7 +1574,7 @@ const createEntityApi = (entityName) => ({
   },
 
   async update(id, data = {}) {
-    if (!isTituloFinanceiroEntity(entityName) && !NOTA_FISCAL_ENTITIES.includes(entityName)) {
+    if (!isTituloFinanceiroEntity(entityName) && !NOTA_FISCAL_ENTITIES.includes(entityName) && entityName !== 'OrdemProducao') {
       assertLocalMutationAllowed(entityName, 'editar', id);
     }
     const db = loadDb();
@@ -1581,12 +1583,12 @@ const createEntityApi = (entityName) => ({
     if (index < 0) throw new Error(`${entityName} local nao encontrado: ${id}`);
     const before = { ...records[index] };
     const payload = stampRecordContext(entityName, data);
-    if ((isTituloFinanceiroEntity(entityName) || NOTA_FISCAL_ENTITIES.includes(entityName) || entityName === 'Entrega' || entityName === 'OrdemCompra' || entityName === 'Oportunidade') && before.empresa_id && !Object.prototype.hasOwnProperty.call(data || {}, 'empresa_id')) {
+    if ((isTituloFinanceiroEntity(entityName) || NOTA_FISCAL_ENTITIES.includes(entityName) || entityName === 'OrdemProducao' || entityName === 'Entrega' || entityName === 'OrdemCompra' || entityName === 'Oportunidade') && before.empresa_id && !Object.prototype.hasOwnProperty.call(data || {}, 'empresa_id')) {
       payload.empresa_id = before.empresa_id;
       if (before.group_id) payload.group_id = before.group_id;
       if (before.grupo_id) payload.grupo_id = before.grupo_id;
     }
-    if ((entityName === 'Entrega' || entityName === 'OrdemCompra' || NOTA_FISCAL_ENTITIES.includes(entityName)) && before.empresa_id) {
+    if ((entityName === 'Entrega' || entityName === 'OrdemCompra' || NOTA_FISCAL_ENTITIES.includes(entityName) || entityName === 'OrdemProducao') && before.empresa_id) {
       payload.empresa_id = before.empresa_id;
     }
     let nextPayload = applyLocalBackupWrite(db, entityName, applyLocalPilotoWrite(db, entityName, payload, before), before);
@@ -1634,6 +1636,20 @@ const createEntityApi = (entityName) => ({
       if (before.empresa_id) nextPayload.empresa_id = before.empresa_id;
       if (before.empresa_faturamento_id) nextPayload.empresa_faturamento_id = before.empresa_faturamento_id;
     }
+    if (entityName === 'OrdemProducao') {
+      const decision = assertOpOnUpdate({ before, patch: payload });
+      if (decision.reuse) {
+        assertLocalPermissionAny(entityName, ['editar', 'apontar', 'aprovar', 'criar'], id);
+        return decision.reuse;
+      }
+      if (decision.action === 'retry') {
+        assertLocalPermissionAny(entityName, ['editar', 'apontar', 'aprovar', 'criar'], id);
+        return before;
+      }
+      assertLocalPermissionAny(entityName, opStatusPermissionActions(decision.action), id);
+      nextPayload = decision.record;
+      if (before.empresa_id) nextPayload.empresa_id = before.empresa_id;
+    }
     records[index] = {
       ...records[index],
       ...nextPayload,
@@ -1654,6 +1670,11 @@ const createEntityApi = (entityName) => ({
       const dbPreview = loadDb();
       const current = getEntityStore(dbPreview, entityName).find((item) => String(item.id) === String(id));
       assertTituloOnDelete(current || {});
+    }
+    if (entityName === 'OrdemProducao') {
+      const dbPreview = loadDb();
+      const current = getEntityStore(dbPreview, entityName).find((item) => String(item.id) === String(id));
+      assertOpOnDelete(current || {});
     }
     if (NOTA_FISCAL_ENTITIES.includes(entityName)) {
       const dbPreview = loadDb();

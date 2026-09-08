@@ -29,13 +29,17 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
   const ordemId = opId || op?.id || null;
   const contextoValido = Boolean(groupId && empresaId);
   const canApontar = hasPermission("Produção", "Apontamento", "criar") ||
-    hasPermission("Produção", "Ordens Produção", "editar") ||
+    hasPermission("Produção", "Apontamento", "apontar") ||
     hasPermission("Producao", "Apontamento", "criar") ||
-    hasPermission("Producao", "Ordens Producao", "editar");
-  const canConferir = hasPermission("Produção", "Ordens Produção", "editar") ||
-    hasPermission("Producao", "Ordens Producao", "editar") ||
-    hasPermission("Produção", "Ordens Produção", "aprovar") ||
-    hasPermission("Producao", "Ordens Producao", "aprovar");
+    hasPermission("Producao", "Apontamento", "apontar") ||
+    hasPermission("Produção", "OrdemProducao", "apontar") ||
+    hasPermission("Producao", "OrdemProducao", "apontar");
+  const canConferir = hasPermission("Produção", "Ordens Produção", "aprovar") ||
+    hasPermission("Producao", "Ordens Producao", "aprovar") ||
+    hasPermission("Produção", "OrdemProducao", "aprovar") ||
+    hasPermission("Producao", "OrdemProducao", "aprovar") ||
+    hasPermission("Produção", "OrdemProducao", "liberar") ||
+    hasPermission("Producao", "OrdemProducao", "liberar");
 
   // Assuming the first collaborator is the current user for this context.
   // In a real application, you might use a dedicated authentication hook like `useUser`.
