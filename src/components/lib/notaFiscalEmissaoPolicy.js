@@ -101,3 +101,96 @@ export const assertNotaFiscalOnDelete = (record = {}) => {
     throw new Error('Exclusao de NF autorizada bloqueada.');
   }
 };
+
+const normalizeNfeStatus = (status) => String(status || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+const statusIncludes = (status, token) => normalizeNfeStatus(status).includes(token);
+
+const FROZEN_AFTER_AUTORIZADA = [
+  'numero',
+  'serie',
+  'chave_acesso',
+  'valor_total',
+  'pedido_id',
+  'empresa_id',
+  'empresa_faturamento_id',
+];
+
+const moneyOrTextChanged = (before, patch, field) => {
+  if (!Object.prototype.hasOwnProperty.call(patch, field)) return false;
+  if (patch[field] === undefined || patch[field] === null || patch[field] === '') {
+    return Boolean(firstText(before[field]));
+  }
+  return firstText(patch[field]) !== firstText(before[field]);
+};
+
+export const assertNotaFiscalOnUpdate = ({ before = {}, patch = {} } = {}) => {
+  if (!before?.id) throw new Error('Nota fiscal nao encontrada.');
+
+  const beforeEmpresa = firstText(before.empresa_id, before.empresa_faturamento_id);
+  const patchEmpresa = firstText(patch.empresa_id, patch.empresa_faturamento_id);
+  if (patchEmpresa && beforeEmpresa && patchEmpresa !== beforeEmpresa) {
+    throw new Error('NF-e deve pertencer a empresa emitente correta.');
+  }
+
+  const nextStatus = firstText(patch.status) || before.status;
+  const becomingAutorizada = !statusIncludes(before.status, 'autorizada') && statusIncludes(nextStatus, 'autorizada');
+  const becomingCancelada = !statusIncludes(before.status, 'cancelada') && statusIncludes(nextStatus, 'cancelada');
+  const retryAutorizada = statusIncludes(before.status, 'autorizada')
+    && Object.prototype.hasOwnProperty.call(patch, 'status')
+    && statusIncludes(patch.status, 'autorizada')
+    && !becomingCancelada;
+  const retryCancelada = statusIncludes(before.status, 'cancelada')
+    && Object.prototype.hasOwnProperty.call(patch, 'status')
+    && statusIncludes(patch.status, 'cancelada');
+
+  const frozenHit = FROZEN_AFTER_AUTORIZADA.some((field) => moneyOrTextChanged(before, patch, field));
+  const finalizada = ['autorizada', 'cancelada', 'denegada'].some((token) => statusIncludes(before.status, token));
+
+  if (finalizada && frozenHit && !becomingCancelada) {
+    throw new Error('NF autorizada nao pode ser recalculada.');
+  }
+
+  if (retryAutorizada || retryCancelada) {
+    return { reuse: before, record: before, emit: false, cancel: false };
+  }
+
+  if (becomingAutorizada) {
+    return {
+      reuse: null,
+      emit: true,
+      cancel: false,
+      record: {
+        ...patch,
+        empresa_id: before.empresa_id || patch.empresa_id,
+        empresa_faturamento_id: before.empresa_faturamento_id || patch.empresa_faturamento_id || before.empresa_id,
+        pedido_id: before.pedido_id || patch.pedido_id,
+        numero: before.numero || patch.numero,
+        serie: before.serie || patch.serie,
+      },
+    };
+  }
+
+  if (becomingCancelada) {
+    return {
+      reuse: null,
+      emit: false,
+      cancel: true,
+      record: {
+        ...patch,
+        empresa_id: before.empresa_id,
+        empresa_faturamento_id: before.empresa_faturamento_id || before.empresa_id,
+        pedido_id: before.pedido_id,
+        numero: before.numero,
+        serie: before.serie,
+        chave_acesso: before.chave_acesso,
+        status: 'Cancelada',
+      },
+    };
+  }
+
+  return { reuse: null, record: patch, emit: false, cancel: false };
+};
+
+export const nfeEmitPermissionActions = () => ['emitir', 'enviar', 'gerarNFe'];
+export const nfeCancelPermissionActions = () => ['cancelar'];

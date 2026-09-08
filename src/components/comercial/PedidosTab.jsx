@@ -63,7 +63,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
   const canNotifyPedido = hasPermission('Comercial', 'Pedido', 'notificar') || hasPermission('Comercial', 'Pedidos', 'notificar') || hasPermission('Comercial', null, 'notificar') || canApprovePedido;
   const canMarcarProntoFaturar = hasPermission('Comercial', 'Pedido', 'marcarProntoFaturar') || canEditPedido;
   const canFecharPedido = hasPermission('Comercial', 'Pedido', 'fechar') || hasPermission('Comercial', 'Pedidos', 'fechar') || canEditPedido;
-  const canGerarNFe = hasPermission('Comercial', 'Pedido', 'gerarNFe') || hasPermission('Fiscal', 'NotaFiscal', 'criar') || hasPermission('Fiscal', null, 'criar');
+  const canGerarNFe = hasPermission('Comercial', 'Pedido', 'gerarNFe') || hasPermission('Fiscal', 'NotaFiscal', 'emitir') || hasPermission('Fiscal', 'Notas Fiscais', 'emitir') || hasPermission('Fiscal', 'NotaFiscal', 'enviar');
   const canCriarEntrega = hasPermission('Comercial', 'Pedido', 'criarEntrega') || hasPermission('ExpediÃ§Ã£o', 'Entrega', 'criar') || hasPermission('ExpediÃ§Ã£o', null, 'criar');
   const canGerarOP = hasPermission('Comercial', 'Pedido', 'gerarOP') || hasPermission('ProduÃ§Ã£o', 'OrdemProducao', 'criar') || hasPermission('ProduÃ§Ã£o', null, 'criar');
   const { page, setPage, pageSize, setPageSize } = useBackendPagination('Pedido', 20);

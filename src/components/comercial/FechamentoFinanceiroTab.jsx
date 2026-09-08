@@ -29,7 +29,7 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
   const empresaId = formData?.empresa_id || empresaAtual?.id || null;
   const groupId = formData?.group_id || formData?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const contextoValido = Boolean(groupId || empresaId);
-  const canEmitirNFe = hasPermission('Fiscal', 'NotaFiscal', 'emitir') || hasPermission('Fiscal', 'NotaFiscal', 'criar') || hasPermission('Fiscal', null, 'criar');
+  const canEmitirNFe = hasPermission('Fiscal', 'NotaFiscal', 'emitir') || hasPermission('Fiscal', 'NotaFiscal', 'enviar') || hasPermission('Fiscal', 'Notas Fiscais', 'emitir');
   const sanitizeText = (value) => String(value || '').replace(/[<>]/g, '').replace(/javascript:/gi, '').trim();
   const sanitizePercentual = (value) => Math.min(100, Math.max(0, Number.parseFloat(value) || 0));
   const sanitizeInteiro = (value, fallback = 0) => Math.max(0, Number.parseInt(value, 10) || fallback);

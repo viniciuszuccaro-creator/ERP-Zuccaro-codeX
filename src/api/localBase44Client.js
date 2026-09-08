@@ -19,6 +19,9 @@ import {
 import {
   applyNumeroNfeOnCreate,
   assertNotaFiscalOnDelete,
+  assertNotaFiscalOnUpdate,
+  nfeCancelPermissionActions,
+  nfeEmitPermissionActions,
   nfeSequenceKey,
   NOTA_FISCAL_ENTITIES,
 } from "@/components/lib/notaFiscalEmissaoPolicy";
@@ -903,6 +906,9 @@ const ENTITY_PERMISSION_SCOPE = {
   ContaPagar: { module: 'Financeiro', section: 'ContaPagar' },
   CaixaOrdemLiquidacao: { module: 'Financeiro', section: 'Caixa' },
   CaixaMovimento: { module: 'Financeiro', section: 'Caixa' },
+  NotaFiscal: { module: 'Fiscal', section: 'NotaFiscal' },
+  NFe: { module: 'Fiscal', section: 'NotaFiscal' },
+  ConfiguracaoNFe: { module: 'Fiscal', section: 'ConfiguracaoNFe' },
 };
 
 const getEntityPermissionScope = (entityName) => {
@@ -955,6 +961,16 @@ const assertLocalTituloSettlementAllowed = (entityName, recordId = null) => {
   if (!allowed) {
     auditLocalPermissionDenied(entityName, actions[0], recordId);
     throw new Error(`Permissao negada para ${actions[0]} em ${entityName}.`);
+  }
+};
+
+const assertLocalPermissionAny = (entityName, actions = [], recordId = null) => {
+  const scope = getEntityPermissionScope(entityName);
+  const allowed = actions.some((action) => evaluateLocalPermission({ ...scope, entityName, action }).allowed);
+  if (!allowed) {
+    const primary = actions[0] || 'editar';
+    auditLocalPermissionDenied(entityName, primary, recordId);
+    throw new Error(`Permissao negada para ${primary} em ${entityName}.`);
   }
 };
 
@@ -1556,7 +1572,7 @@ const createEntityApi = (entityName) => ({
   },
 
   async update(id, data = {}) {
-    if (!isTituloFinanceiroEntity(entityName)) {
+    if (!isTituloFinanceiroEntity(entityName) && !NOTA_FISCAL_ENTITIES.includes(entityName)) {
       assertLocalMutationAllowed(entityName, 'editar', id);
     }
     const db = loadDb();
@@ -1565,12 +1581,12 @@ const createEntityApi = (entityName) => ({
     if (index < 0) throw new Error(`${entityName} local nao encontrado: ${id}`);
     const before = { ...records[index] };
     const payload = stampRecordContext(entityName, data);
-    if ((isTituloFinanceiroEntity(entityName) || entityName === 'Entrega' || entityName === 'OrdemCompra' || entityName === 'Oportunidade') && before.empresa_id && !Object.prototype.hasOwnProperty.call(data || {}, 'empresa_id')) {
+    if ((isTituloFinanceiroEntity(entityName) || NOTA_FISCAL_ENTITIES.includes(entityName) || entityName === 'Entrega' || entityName === 'OrdemCompra' || entityName === 'Oportunidade') && before.empresa_id && !Object.prototype.hasOwnProperty.call(data || {}, 'empresa_id')) {
       payload.empresa_id = before.empresa_id;
       if (before.group_id) payload.group_id = before.group_id;
       if (before.grupo_id) payload.grupo_id = before.grupo_id;
     }
-    if ((entityName === 'Entrega' || entityName === 'OrdemCompra') && before.empresa_id) {
+    if ((entityName === 'Entrega' || entityName === 'OrdemCompra' || NOTA_FISCAL_ENTITIES.includes(entityName)) && before.empresa_id) {
       payload.empresa_id = before.empresa_id;
     }
     let nextPayload = applyLocalBackupWrite(db, entityName, applyLocalPilotoWrite(db, entityName, payload, before), before);
@@ -1600,6 +1616,23 @@ const createEntityApi = (entityName) => ({
         assertLocalMutationAllowed(entityName, 'editar', id);
       }
       nextPayload = decision.record;
+    }
+    if (NOTA_FISCAL_ENTITIES.includes(entityName)) {
+      const decision = assertNotaFiscalOnUpdate({ before, patch: payload });
+      if (decision.reuse) {
+        assertLocalPermissionAny(entityName, [...nfeEmitPermissionActions(), ...nfeCancelPermissionActions()], id);
+        return decision.reuse;
+      }
+      if (decision.emit) {
+        assertLocalPermissionAny(entityName, nfeEmitPermissionActions(), id);
+      } else if (decision.cancel) {
+        assertLocalPermissionAny(entityName, nfeCancelPermissionActions(), id);
+      } else {
+        assertLocalMutationAllowed(entityName, 'editar', id);
+      }
+      nextPayload = decision.record;
+      if (before.empresa_id) nextPayload.empresa_id = before.empresa_id;
+      if (before.empresa_faturamento_id) nextPayload.empresa_faturamento_id = before.empresa_faturamento_id;
     }
     records[index] = {
       ...records[index],

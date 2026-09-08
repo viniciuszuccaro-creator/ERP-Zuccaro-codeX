@@ -8,6 +8,23 @@ const reportNfeFailure = (error, context = {}) => {
   });
 };
 
+
+async function persistNfeCancelamento(base44, { nfe, nfeId, justificativa, protocolo }) {
+  const targetId = nfe?.id || nfeId;
+  if (!targetId) return;
+  await base44.asServiceRole.entities.NotaFiscal.update(targetId, {
+    status: 'Cancelada',
+    data_cancelamento: new Date().toISOString(),
+    protocolo_cancelamento: protocolo || null,
+    cancelamento: {
+      data_cancelamento: new Date().toISOString(),
+      protocolo_cancelamento: protocolo || null,
+      motivo: 'Cancelamento solicitado',
+      justificativa: justificativa || 'Cancelado pelo sistema',
+    },
+  });
+}
+
 const buildNfeAuditPayload = ({ action, nfe, nfeId, result }) => ({
   action,
   nfe_id: nfe?.id || nfeId || null,
@@ -68,7 +85,7 @@ Deno.serve(async (req) => {
     const groupIdResolved = groupId || resolvedScope.groupId || null;
 
     const guardFailure = await requireEntityGuard(base44, {
-      module: 'Fiscal', section: 'NF-e', action,
+      module: 'Fiscal', section: 'NotaFiscal', action,
       empresa_id: empresaIdResolved,
       group_id: groupIdResolved,
     });
@@ -84,7 +101,7 @@ Deno.serve(async (req) => {
 
     const ambienteNfe = String(nfe?.ambiente || integracao?.ambiente || 'Homologacao');
     const producao = /^prod/i.test(ambienteNfe.normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
-    const autorizada = integracao?.autoriza_emissao_producao === true || nfe?.autoriza_emissao_producao === true;
+    const autorizada = integracao?.autoriza_emissao_producao === true;
     if (action === 'emitir' && producao && !autorizada) {
       return Response.json({ error: 'Emissao em producao exige autorizacao explicita.', sucesso: false }, { status: 409 });
     }
@@ -104,7 +121,7 @@ Deno.serve(async (req) => {
     if (!integracao || integracao.ativa === false) {
       const ambienteNfe = String(nfe?.ambiente || integracao?.ambiente || 'Homologacao');
       const producao = /^prod/i.test(ambienteNfe.normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
-      const autorizada = integracao?.autoriza_emissao_producao === true || nfe?.autoriza_emissao_producao === true;
+      const autorizada = integracao?.autoriza_emissao_producao === true;
       if (producao) {
         return Response.json({
           error: 'Emissao em producao exige provedor fiscal configurado.',
@@ -137,7 +154,12 @@ Deno.serve(async (req) => {
         return Response.json(fake);
       }
       if (action === 'status') { const result = { status: 'Autorizada', modo: 'simulado' }; await auditNfeAction(base44, user, { action, empresaId: empresaIdResolved, groupId: groupIdResolved, nfe, nfeId, result, descricao: 'Status NF-e consultado em modo simulado' }); return Response.json(result); }
-      if (action === 'cancelar') { const result = { sucesso: true, protocolo: `SIMC${Date.now()}`, modo: 'simulado' }; await auditNfeAction(base44, user, { action, empresaId: empresaIdResolved, groupId: groupIdResolved, nfe, nfeId, result, descricao: 'NF-e cancelada em modo simulado' }); return Response.json(result); }
+      if (action === 'cancelar') {
+        const result = { sucesso: true, protocolo: `SIMC${Date.now()}`, modo: 'simulado', status: 'Cancelada' };
+        try { await persistNfeCancelamento(base44, { nfe, nfeId, justificativa, protocolo: result.protocolo }); } catch (error) { reportNfeFailure(error, { empresaId: empresaIdResolved, groupId: groupIdResolved, action: 'cancelar' }); }
+        await auditNfeAction(base44, user, { action, empresaId: empresaIdResolved, groupId: groupIdResolved, nfe, nfeId, result, descricao: 'NF-e cancelada em modo simulado' });
+        return Response.json(result);
+      }
       if (action === 'carta') { const result = { sucesso: true, protocolo: `SIMK${Date.now()}`, modo: 'simulado' }; await auditNfeAction(base44, user, { action, empresaId: empresaIdResolved, groupId: groupIdResolved, nfe, nfeId, result, descricao: 'Carta de correcao NF-e simulada' }); return Response.json(result); }
     }
 
@@ -176,7 +198,8 @@ Deno.serve(async (req) => {
         const r = await fetch(`${baseUrl}/empresas/${empresaProvId}/nfes/${nfeId}/cancelamento`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Basic ${btoa(apiKey + ':')}` }, body: JSON.stringify({ motivo: justificativa || 'Cancelado pelo sistema' }) });
         if (!r.ok) return Response.json({ error: await r.text() }, { status: 502 });
         const j = await r.json();
-        const result = { sucesso: true, protocolo: j?.protocolo || null };
+        const result = { sucesso: true, protocolo: j?.protocolo || null , status: 'Cancelada' };
+        try { await persistNfeCancelamento(base44, { nfe, nfeId, justificativa, protocolo: result.protocolo }); } catch (error) { reportNfeFailure(error, { empresaId: empresaIdResolved, groupId: groupIdResolved, action: 'cancelar' }); }
         await auditNfeAction(base44, user, { action, empresaId: empresaIdResolved, groupId: groupIdResolved, nfe, nfeId, result, descricao: 'NF-e cancelada no provedor fiscal' });
         return Response.json(result);
       }
@@ -221,7 +244,8 @@ Deno.serve(async (req) => {
         const r = await fetch(`${baseUrl}/nfe/${nfeId}/cancel`, { method: 'POST', headers, body: JSON.stringify({ reason: justificativa || 'Cancelado pelo sistema' }) });
         if (!r.ok) return Response.json({ error: await r.text() }, { status: 502 });
         const j = await r.json();
-        const result = { sucesso: true, protocolo: j?.protocol || j?.protocolo || null };
+        const result = { sucesso: true, protocolo: j?.protocol || j?.protocolo || null , status: 'Cancelada' };
+        try { await persistNfeCancelamento(base44, { nfe, nfeId, justificativa, protocolo: result.protocolo }); } catch (error) { reportNfeFailure(error, { empresaId: empresaIdResolved, groupId: groupIdResolved, action: 'cancelar' }); }
         await auditNfeAction(base44, user, { action, empresaId: empresaIdResolved, groupId: groupIdResolved, nfe, nfeId, result, descricao: 'NF-e cancelada no provedor fiscal' });
         return Response.json(result);
       }

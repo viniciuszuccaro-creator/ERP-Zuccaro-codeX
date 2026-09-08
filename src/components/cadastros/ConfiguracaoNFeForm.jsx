@@ -15,7 +15,7 @@ import { requireAutomacaoHumanConfirm } from "@/components/lib/automacaoAvancada
 export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, windowMode = false, empresaId, groupId, scope: scopeProp }) {
   const { toast } = useToast();
   const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
-  const { canCreate, canEdit } = usePermissions();
+  const { canCreate, canEdit, hasPermission } = usePermissions();
   const [localSubmitting, setLocalSubmitting] = useState(false);
   const [formData, setFormData] = useState(config || {
     provedor: "eNotas",
@@ -34,25 +34,33 @@ export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, wi
   });
   const grupoIdAtual = groupId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaIdAtual = empresaId || empresaAtual?.id || null;
-  const scope = scopeProp || (empresaIdAtual ? { empresa_id: empresaIdAtual, group_id: grupoIdAtual } : grupoIdAtual ? { group_id: grupoIdAtual } : null);
-  const contextoValido = !!scope;
+  const scope = scopeProp || (empresaIdAtual ? { empresa_id: empresaIdAtual, group_id: grupoIdAtual } : null);
+  const contextoValido = Boolean(empresaIdAtual && (grupoIdAtual || scope?.group_id));
   const salvando = !!isSubmitting || localSubmitting;
   const podeSalvar = config?.id
-    ? (canEdit("Fiscal", "ConfiguracaoNFe") || canEdit("Fiscal", "NF-e") || canEdit("Cadastros", null))
-    : (canCreate("Fiscal", "ConfiguracaoNFe") || canCreate("Fiscal", "NF-e") || canCreate("Cadastros", null));
+    ? (canEdit("Fiscal", "ConfiguracaoNFe") || canEdit("Fiscal", "NF-e") || canEdit("Fiscal", "NotaFiscal"))
+    : (canCreate("Fiscal", "ConfiguracaoNFe") || canCreate("Fiscal", "NF-e") || canCreate("Fiscal", "NotaFiscal"));
+  const podeAutorizarProducao = hasPermission("Fiscal", "ConfiguracaoNFe", "configurar")
+    || hasPermission("Fiscal", "NF-e", "configurar")
+    || hasPermission("Fiscal", "NotaFiscal", "configurar")
+    || podeSalvar;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!contextoValido) {
-      toast({ title: "Selecione um grupo ou empresa antes de salvar NF-e.", variant: "destructive" });
+      toast({ title: "Selecione a empresa emitente antes de salvar NF-e.", variant: "destructive" });
       return;
     }
     if (!podeSalvar) {
       toast({ title: "Seu perfil nao permite salvar configuracao de NF-e.", variant: "destructive" });
       return;
     }
+    if (formData.autoriza_emissao_producao && !podeAutorizarProducao) {
+      toast({ title: "Sem permissao para autorizar emissao em producao.", variant: "destructive" });
+      return;
+    }
 
-    const payload = { ...formData, nome: formData.nome || (formData.provedor + ' - ' + formData.ambiente), ...scope };
+    const payload = { ...formData, nome: formData.nome || (formData.provedor + ' - ' + formData.ambiente), ...scope, empresa_id: empresaIdAtual, group_id: grupoIdAtual || scope?.group_id };
 
     if (onSubmit) {
       await onSubmit(payload);
@@ -206,8 +214,15 @@ export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, wi
               <Label>Autorizar emissao em producao</Label>
               <Switch
                 checked={Boolean(formData.autoriza_emissao_producao)}
-                onCheckedChange={(val) => setFormData({ ...formData, autoriza_emissao_producao: val })}
-                disabled={!contextoValido || salvando}
+                onCheckedChange={(val) => {
+                  if (val && !requireAutomacaoHumanConfirm(
+                    'Autorizar emissao de NF-e em PRODUCAO? Confirme somente com certificado e provedor validos.',
+                  )) {
+                    return;
+                  }
+                  setFormData({ ...formData, autoriza_emissao_producao: val });
+                }}
+                disabled={!contextoValido || salvando || !podeAutorizarProducao}
               />
             </div>
 

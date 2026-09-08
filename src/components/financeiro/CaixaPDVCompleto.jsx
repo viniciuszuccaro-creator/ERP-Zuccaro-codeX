@@ -65,7 +65,7 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
   const podeLiquidarTitulos = podeLiquidarTitulosReceber || podeLiquidarTitulosPagar;  const controlesDesabilitados = !contextoValido || !podeOperarCaixa;
   const empresaId = empresaAtual?.id || null;
   const podeCriarEntregaPDV = hasPermission('Expedicao', 'Entrega', 'criar') || hasPermission('Expedicao', 'Entregas', 'criar') || hasPermission('Expedição', 'Entregas', 'criar');
-  const podeEmitirNFePDV = hasPermission('Fiscal', 'Notas Fiscais', 'emitir') || hasPermission('Fiscal', 'Notas Fiscais', 'criar') || hasPermission('Fiscal', null, 'emitir');
+  const podeEmitirNFePDV = hasPermission('Fiscal', 'NotaFiscal', 'emitir') || hasPermission('Fiscal', 'Notas Fiscais', 'emitir') || hasPermission('Fiscal', 'NotaFiscal', 'enviar');
   const podeCriarReceberPDV = canCreate('Financeiro', 'Contas a Receber') || hasPermission('Financeiro', 'Contas a Receber', 'criar') || hasPermission('Financeiro', null, 'criar');
   const nfeBloqueada = emitirNFe && (!empresaId || !podeEmitirNFePDV || !clienteSelecionado);
   const entregaBloqueada = tipoEntrega === 'Entrega' && (!empresaId || !clienteSelecionado || !podeCriarEntregaPDV);

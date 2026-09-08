@@ -1,3 +1,15 @@
+### P0.9 - Gate 9 Fiscal residual: emit/cancel, escopo e producao
+- Objetivo: cumprir residual do Gate 9 / P0 Fiscal sem FiscalV2.
+- Diagnostico: NotaFiscal caia em Cadastros/`editar`; EventosNFe cancelava sem RBAC; `nfeActions` aceitava `autoriza_emissao_producao` do client e secao `NF-e`; config NF-e salvava so com grupo; UI emitia com `criar`.
+- Causa raiz: transicao de status fiscal sem policy e alçada fraca de emitir/cancelar.
+- Arquivos alterados: `notaFiscalEmissaoPolicy.js`, `localBase44Client.js`, `nfeActions`, `EventosNFe`, `ConfiguracaoNFeForm`, `NotasFiscaisTab`, `FechamentoFinanceiroTab`, `PedidosTab`, `CaixaPDVCompleto`, `integracaoNFe`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: `assertEmissaoNFe`, `nfeActions`, NotasFiscaisTab e cancelarNFe existentes.
+- Alteracoes: `assertNotaFiscalOnUpdate`; escopo Fiscal; producao so por config servidor; cancel persiste; emit UI exige emitir/enviar.
+- Multiempresa/RBAC: NF so com empresa; cancelar/emitir granulares; config exige empresa emitente.
+- Pendencia: validacao tributaria item a item (NCM/CST/totalizadores); e2e SEFAZ homologacao real; `fiscalValidation` com auth.me.
+- Validacoes: `node --test tests/nota-fiscal-emissao-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 10 Producao essencial.
+
 ### P0.8 - Gate 8 Financeiro residual: baixa, caixa e conciliacao
 - Objetivo: cumprir residual do Gate 8 / P0 Financeiro sem FinanceiroV2.
 - Diagnostico: ContaReceber/ContaPagar caíam no escopo Cadastros; caixa/PDV liquidavam com `canEdit`; conciliacao em lote sem `conciliar`; `valor_recebido`/`valor_pago` nao congelavam; `paymentStatusManager` usava `editar` e cancelava titulo liquidado.

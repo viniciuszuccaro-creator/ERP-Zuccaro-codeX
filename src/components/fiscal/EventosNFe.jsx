@@ -18,6 +18,10 @@ import {
   Clock,
   Download
 } from "lucide-react";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
+import { cancelarNFe } from "@/components/lib/integracaoNFe";
 
 /**
  * Componente para Gerenciar Eventos de NF-e
@@ -26,11 +30,21 @@ import {
 export default function EventosNFe({ nfe }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { updateInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const { user } = useUser();
   
   const [dialogCancelamento, setDialogCancelamento] = useState(false);
   const [dialogCartaCorrecao, setDialogCartaCorrecao] = useState(false);
   const [motivoCancelamento, setMotivoCancelamento] = useState("");
   const [textoCorrecao, setTextoCorrecao] = useState("");
+
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || nfe?.group_id || null;
+  const empresaId = nfe?.empresa_faturamento_id || nfe?.empresa_id || empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeCancelar = hasPermission('Fiscal', 'NotaFiscal', 'cancelar')
+    || hasPermission('Fiscal', 'Notas Fiscais', 'cancelar')
+    || hasPermission('Fiscal', 'NF-e', 'cancelar');
 
   const podeSerCancelada = nfe.status === "Autorizada" && !nfe.cancelamento;
   const diasDesdeEmissao = nfe.data_autorizacao 
@@ -40,47 +54,37 @@ export default function EventosNFe({ nfe }) {
 
   const cancelarMutation = useMutation({
     mutationFn: async (motivo) => {
-      // Log do cancelamento
-      await base44.entities.LogFiscal.create({
-        group_id: nfe.group_id,
-        empresa_id: nfe.empresa_faturamento_id,
-        nfe_id: nfe.id,
-        numero_nfe: nfe.numero,
-        chave_acesso: nfe.chave_acesso,
-        data_hora: new Date().toISOString(),
-        acao: "cancelar",
-        provedor: "Mock",
-        ambiente: nfe.ambiente,
-        payload_enviado: { chave_acesso: nfe.chave_acesso, motivo },
-        retorno_recebido: {
-          mock: true,
-          status: "cancelada",
-          protocolo: `CANC-${Date.now()}`
-        },
-        status: "sucesso",
-        codigo_status: "135",
-        mensagem: "NF-e cancelada com sucesso",
-        tempo_resposta_ms: 850,
-        usuario_nome: "Sistema"
-      });
+      if (!contextoValido || !empresaId) {
+        throw new Error('Selecione a empresa emitente antes de cancelar NF-e.');
+      }
+      if (!podeCancelar) {
+        throw new Error('Sem permissao para cancelar NF-e.');
+      }
+      if (!podeSerCancelada) {
+        throw new Error('Somente NF-e autorizada pode ser cancelada.');
+      }
 
-      // Atualizar NF-e
-      return await base44.entities.NotaFiscal.update(nfe.id, {
+      const resultado = await cancelarNFe(nfe.id, empresaId, motivo);
+      if (resultado?.sucesso === false) {
+        throw new Error(resultado?.error || 'Falha ao cancelar NF-e.');
+      }
+
+      return await updateInContext('NotaFiscal', nfe.id, {
         status: "Cancelada",
         data_cancelamento: new Date().toISOString(),
         cancelamento: {
           data_cancelamento: new Date().toISOString(),
-          protocolo_cancelamento: `CANC-${Date.now()}`,
+          protocolo_cancelamento: resultado?.protocolo || `CANC-${Date.now()}`,
           motivo: "Cancelamento solicitado",
           justificativa: motivo,
-          usuario: "Sistema"
+          usuario: user?.full_name || user?.email || "Sistema"
         },
         historico: [
           ...(nfe.historico || []),
           {
             data_hora: new Date().toISOString(),
             evento: "Cancelamento",
-            usuario: "Sistema",
+            usuario: user?.full_name || user?.email || "Sistema",
             detalhes: motivo
           }
         ]
@@ -91,6 +95,9 @@ export default function EventosNFe({ nfe }) {
       setDialogCancelamento(false);
       setMotivoCancelamento("");
       toast({ title: "✅ NF-e cancelada!" });
+    },
+    onError: (error) => {
+      toast({ title: error?.message || 'Falha ao cancelar NF-e', variant: 'destructive' });
     },
   });
 
@@ -164,7 +171,7 @@ export default function EventosNFe({ nfe }) {
             <Button
               variant="outline"
               className="w-full border-red-300 text-red-700 hover:bg-red-50"
-              disabled={!dentroDoPrazo}
+              disabled={!dentroDoPrazo || !podeCancelar || !contextoValido || !empresaId}
             >
               <XCircle className="w-4 h-4 mr-2" />
               Cancelar NF-e
@@ -211,7 +218,7 @@ export default function EventosNFe({ nfe }) {
                 </Button>
                 <Button
                   onClick={() => cancelarMutation.mutate(motivoCancelamento)}
-                  disabled={motivoCancelamento.length < 15 || cancelarMutation.isPending}
+                  disabled={motivoCancelamento.length < 15 || cancelarMutation.isPending || !podeCancelar || !contextoValido}
                   className="flex-1 bg-red-600 hover:bg-red-700"
                 >
                   {cancelarMutation.isPending ? 'Cancelando...' : 'Confirmar'}

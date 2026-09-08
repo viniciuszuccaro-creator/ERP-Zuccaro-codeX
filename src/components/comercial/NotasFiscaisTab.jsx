@@ -74,7 +74,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
   const canExportNota = hasPermission('Fiscal', 'NotaFiscal', 'exportar') || hasPermission('Fiscal', 'Notas Fiscais', 'exportar') || hasPermission('Fiscal', null, 'exportar');
   const canPrintNota = hasPermission('Fiscal', 'NotaFiscal', 'imprimir') || hasPermission('Fiscal', 'Notas Fiscais', 'imprimir') || canExportNota;
   const canDownloadDanfe = hasPermission('Fiscal', 'NotaFiscal', 'baixar_pdf') || hasPermission('Fiscal', 'Notas Fiscais', 'baixar_pdf') || canPrintNota;
-  const canSendNota = hasPermission('Fiscal', 'NotaFiscal', 'enviar') || hasPermission('Fiscal', 'Notas Fiscais', 'enviar') || hasPermission('Fiscal', null, 'enviar');
+  const canSendNota = hasPermission('Fiscal', 'NotaFiscal', 'emitir') || hasPermission('Fiscal', 'Notas Fiscais', 'emitir') || hasPermission('Fiscal', 'NotaFiscal', 'enviar') || hasPermission('Fiscal', 'Notas Fiscais', 'enviar');
 
   // Paginação e ordenação persistente (backend)
   const { page, setPage, pageSize, setPageSize } = useBackendPagination('NotaFiscal', 20);
@@ -267,8 +267,8 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
       const empresaEmitente = empresasDoGrupo?.find((item) => String(item.id) === String(emitenteId)) || empresaAtual;
       const ambiente = nfe.ambiente || empresaEmitente?.configuracao_fiscal?.ambiente_nfe || 'Homologacao';
       const producaoAutorizada = isProducaoAutorizada(
-        nfe.autoriza_emissao_producao,
         empresaEmitente?.configuracao_fiscal?.autoriza_emissao_producao,
+        empresaEmitente?.integracao_nfe?.autoriza_emissao_producao,
       );
       const check = assertEmissaoNFe({
         empresaId: emitenteId,
@@ -284,7 +284,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
       try {
         resultado = check.permiteSimulacao
           ? await mockEmitirNFe({ empresa_id: emitenteId, pedido: nfe, ambiente: 'Homologacao' })
-          : await emitirNFe({ ...nfe, ambiente: 'Producao', autoriza_emissao_producao: true }, emitenteId);
+          : await emitirNFe({ ...nfe, ambiente: 'Producao' }, emitenteId);
       } catch (error) {
         await updateInContext('NotaFiscal', nfe.id, withFiscalContext({
           status: 'Rejeitada',

@@ -64,7 +64,7 @@ async function consultarStatusNFe(nfeId, empresaId, chaveAcesso) {
 /**
  * Cancelar NF-e
  */
-async function cancelarNFe(nfeId, empresaId, justificativa) {
+export async function cancelarNFe(nfeId, empresaId, justificativa) {
   const { data } = await base44.functions.invoke('nfeActions', { action: 'cancelar', nfeId, empresaId, justificativa });
   return data;
 }
