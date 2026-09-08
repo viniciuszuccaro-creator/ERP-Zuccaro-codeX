@@ -56,10 +56,21 @@ export default function LiquidacaoEmLote({ onClose }) {
       const campo = tipo === 'receber' ? 'data_recebimento' : 'data_pagamento';
       const atualizados = [];
       for (const id of selecionados) {
+        const atual = contas.find((conta) => conta.id === id);
+        if (!atual) continue;
+        const statusAtual = String(atual.status || '').toLowerCase();
+        if ((tipo === 'receber' && ['recebido', 'liquidado', 'baixado', 'conciliado'].includes(statusAtual))
+          || (tipo === 'pagar' && ['pago', 'liquidado', 'baixado'].includes(statusAtual))) {
+          atualizados.push(atual);
+          continue;
+        }
         const atualizado = await updateInContext(entity, id, {
           status: tipo === 'receber' ? 'Recebido' : 'Pago',
           [campo]: new Date().toISOString().split('T')[0],
           empresa_id: empresaAtual.id,
+          ...(tipo === 'receber'
+            ? { valor_recebido: atual.valor_recebido ?? atual.valor }
+            : { valor_pago: atual.valor_pago ?? atual.valor }),
         });
         atualizados.push(atualizado);
       }
@@ -71,8 +82,8 @@ export default function LiquidacaoEmLote({ onClose }) {
       setSelecionados([]);
       onClose();
     },
-    onError: () => {
-      toast.error('Erro ao liquidar títulos');
+    onError: (error) => {
+      toast.error(error?.message || 'Erro ao liquidar títulos');
     },
   });
 

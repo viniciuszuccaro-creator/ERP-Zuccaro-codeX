@@ -336,7 +336,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
       toast({ title: 'Selecione grupo ou empresa para baixar titulo', variant: 'destructive' });
       return;
     }
-    if (!hasPermission('Financeiro','ContaReceber','baixar') && !hasPermission('Financeiro','ContaReceber','liquidar')) {
+    if (!podeBaixarReceber) {
       toast({ title: '⛔ Sem permissão para baixar', variant: 'destructive' });
       return;
     }
@@ -358,7 +358,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
       toast({ title: 'Selecione grupo ou empresa para baixa multipla', variant: 'destructive' });
       return;
     }
-    if (!hasPermission('Financeiro','ContaReceber','baixar') && !hasPermission('Financeiro','ContaReceber','liquidar')) {
+    if (!podeBaixarReceber) {
       toast({ title: '⛔ Sem permissão para baixa múltipla', variant: 'destructive' });
       return;
     }

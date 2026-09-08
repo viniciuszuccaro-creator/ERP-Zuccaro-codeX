@@ -52,10 +52,17 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
     canEdit('Financeiro', 'Caixa') ||
     hasPermission('Financeiro', 'PDV', 'criar') ||
     hasPermission('Financeiro', 'Caixa Central', 'editar');
-  const podeLiquidarTitulos = canEdit('Financeiro', 'Contas a Receber') ||
-    canEdit('Financeiro', 'Contas a Pagar') ||
-    hasPermission('Financeiro', null, 'baixar');
-  const controlesDesabilitados = !contextoValido || !podeOperarCaixa;
+  const podeLiquidarTitulosReceber = hasPermission('Financeiro', 'ContaReceber', 'receber')
+    || hasPermission('Financeiro', 'Contas a Receber', 'receber')
+    || hasPermission('Financeiro', 'ContaReceber', 'baixar')
+    || hasPermission('Financeiro', 'Contas a Receber', 'baixar')
+    || hasPermission('Financeiro', 'ContaReceber', 'liquidar');
+  const podeLiquidarTitulosPagar = hasPermission('Financeiro', 'ContaPagar', 'pagar')
+    || hasPermission('Financeiro', 'Contas a Pagar', 'pagar')
+    || hasPermission('Financeiro', 'ContaPagar', 'baixar')
+    || hasPermission('Financeiro', 'Contas a Pagar', 'baixar')
+    || hasPermission('Financeiro', 'ContaPagar', 'liquidar');
+  const podeLiquidarTitulos = podeLiquidarTitulosReceber || podeLiquidarTitulosPagar;  const controlesDesabilitados = !contextoValido || !podeOperarCaixa;
   const empresaId = empresaAtual?.id || null;
   const podeCriarEntregaPDV = hasPermission('Expedicao', 'Entrega', 'criar') || hasPermission('Expedicao', 'Entregas', 'criar') || hasPermission('Expedição', 'Entregas', 'criar');
   const podeEmitirNFePDV = hasPermission('Fiscal', 'Notas Fiscais', 'emitir') || hasPermission('Fiscal', 'Notas Fiscais', 'criar') || hasPermission('Fiscal', null, 'emitir');
@@ -362,7 +369,8 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
 
   const liquidarTitulo = useMutation({
     mutationFn: async ({ titulo, tipo, forma }) => {
-      if (!contextoValido || !podeLiquidarTitulos) {
+      const podeTipo = tipo === 'receber' ? podeLiquidarTitulosReceber : podeLiquidarTitulosPagar;
+      if (!contextoValido || !podeTipo) {
         await auditCaixaAction('pdv_liquidacao_bloqueada', { motivo: 'contexto_ou_permissao', entidade: tipo === 'receber' ? 'ContaReceber' : 'ContaPagar', titulo_id: titulo?.id }, false);
         throw new Error("Sem contexto ou permissao para liquidar titulo.");
       }

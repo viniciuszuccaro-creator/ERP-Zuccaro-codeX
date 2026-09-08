@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +15,7 @@ import { useUser } from "@/components/lib/UserContext";
 export default function ConciliacaoBancariaTab() {
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual, filterInContext, createInContext } = useContextoVisual();
-  const { canCreate, canEdit, hasPermission } = usePermissions();
+  const { hasPermission } = usePermissions();
   const { user } = useUser();
   const [periodo, setPeriodo] = useState({
     inicio: new Date(new Date().setDate(1)).toISOString().split('T')[0],
@@ -26,10 +26,10 @@ export default function ConciliacaoBancariaTab() {
   const empresaId = empresaAtual?.id || null;
   const contextKey = empresaAtual?.id || groupId || "sem-contexto";
   const contextoValido = contextKey !== "sem-contexto";
-  const podeConciliar = canCreate('Financeiro', 'ConciliaÃ§Ã£o BancÃ¡ria') ||
-    canEdit('Financeiro', 'ConciliaÃ§Ã£o BancÃ¡ria') ||
-    hasPermission('Financeiro', 'ConciliacaoBancaria', 'criar') ||
-    hasPermission('Financeiro', 'ConciliacaoBancaria', 'editar');
+  const podeConciliar = hasPermission('Financeiro', 'ConciliacaoBancaria', 'conciliar')
+    || hasPermission('Financeiro', 'Conciliação Bancária', 'conciliar')
+    || hasPermission('Financeiro', 'Conciliacao', 'conciliar')
+    || hasPermission('Financeiro', 'ContaReceber', 'conciliar');
   const controlesBloqueados = !contextoValido || !podeConciliar;
 
   const auditarConciliacao = async ({ acao, descricao, dadosNovos, sucesso = true }) => {

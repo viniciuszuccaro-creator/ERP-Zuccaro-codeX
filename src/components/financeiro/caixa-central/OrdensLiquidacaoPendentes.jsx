@@ -17,7 +17,7 @@ import { Clock, TrendingUp, TrendingDown, CheckCircle2, XCircle, Wallet } from '
 
 export default function OrdensLiquidacaoPendentes() {
   const { filterInContext, empresaAtual, grupoAtual, updateInContext } = useContextoVisual();
-  const { canEdit, hasPermission } = usePermissions();
+  const { hasPermission } = usePermissions();
   const { toast } = useToast();
   const { user } = useUser();
   const queryClient = useQueryClient();
@@ -29,8 +29,16 @@ export default function OrdensLiquidacaoPendentes() {
   const empresaId = empresaAtual?.id || null;
   const contextKey = empresaAtual?.id || groupId || "sem-contexto";
   const contextoValido = contextKey !== "sem-contexto";
-  const podeLiquidar = canEdit('Financeiro', 'Caixa') || canEdit('Financeiro', 'Caixa Central') || hasPermission('Financeiro', null, 'baixar');
-
+  const podeReceber = hasPermission('Financeiro', 'ContaReceber', 'receber')
+    || hasPermission('Financeiro', 'ContaReceber', 'baixar')
+    || hasPermission('Financeiro', 'ContaReceber', 'liquidar');
+  const podePagar = hasPermission('Financeiro', 'ContaPagar', 'pagar')
+    || hasPermission('Financeiro', 'ContaPagar', 'baixar')
+    || hasPermission('Financeiro', 'ContaPagar', 'liquidar');
+  const podeLiquidar = podeReceber || podePagar;
+  const podeLiquidarOrdem = (ordem) => (
+    ordem?.tipo_operacao === 'Pagamento' ? podePagar : podeReceber
+  );
   const auditarOrdem = async ({ acao, ordem, descricao, dadosAnteriores, dadosNovos, sucesso = true }) => {
     try {
       await base44.entities.AuditLog.create({
@@ -64,11 +72,12 @@ export default function OrdensLiquidacaoPendentes() {
   const liquidarOrdemMutation = useMutation({
     mutationFn: async ({ ordemId, dados }) => {
       const ordem = ordensLiquidacao.find(o => o.id === ordemId);
-      if (!contextoValido || !podeLiquidar) throw new Error("Sem contexto ou permissÃ£o para liquidar.");
+      if (!contextoValido || !podeLiquidarOrdem(ordem)) throw new Error("Sem contexto ou permissao para liquidar.");
       
       if (ordem.titulos_vinculados && ordem.titulos_vinculados.length > 0) {
         for (const titulo of ordem.titulos_vinculados) {
           if (ordem.tipo_operacao === 'Recebimento') {
+            if (!podeReceber) throw new Error("Sem permissao para receber titulo.");
             await updateInContext('ContaReceber', titulo.titulo_id, {
               group_id: ordem.group_id || groupId,
               grupo_id: ordem.grupo_id || ordem.group_id || groupId,
@@ -79,6 +88,7 @@ export default function OrdensLiquidacaoPendentes() {
               forma_recebimento: dados.forma_pagamento
             });
           } else if (ordem.tipo_operacao === 'Pagamento') {
+            if (!podePagar) throw new Error("Sem permissao para pagar titulo.");
             await updateInContext('ContaPagar', titulo.titulo_id, {
               group_id: ordem.group_id || groupId,
               grupo_id: ordem.grupo_id || ordem.group_id || groupId,

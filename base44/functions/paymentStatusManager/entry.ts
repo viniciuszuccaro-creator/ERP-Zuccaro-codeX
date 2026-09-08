@@ -52,6 +52,39 @@ function computeUpdatesForContaReceber(action, justificativa, registro){
 // Helpers Financeiro Profissional
 function isCR(entity){ return entity==='ContaReceber'; }
 function isCP(entity){ return entity==='ContaPagar'; }
+
+function normalizeTituloStatusLocal(status){
+  return String(status || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+function isTituloLiquidadoLocal(registro = {}){
+  return ['recebido','pago','liquidado','baixado','conciliado'].includes(normalizeTituloStatusLocal(registro.status));
+}
+function resolvePaymentPermissionAction(entity, action, valorTotal = 0){
+  if (action === 'conciliar_extrato') return 'conciliar';
+  if (action === 'cancelar') return 'cancelar';
+  if (action === 'estornar') return 'estornar';
+  if (action === 'aprovar') return 'aprovar';
+  if (action === 'rejeitar') return 'rejeitar';
+  if (action === 'cobrar') return 'editar';
+  if (valorTotal > 0 || ['baixar','liquidar','receber','pagar','pagar_titulo','receber_titulo'].includes(String(action||''))) {
+    return entity === 'ContaPagar' ? 'pagar' : 'receber';
+  }
+  return 'editar';
+}
+async function assertFinanceSettlementPermission(base44, ctx, entity, action, scopedPermissionScope, valorTotal = 0){
+  const primary = resolvePaymentPermissionAction(entity, action, valorTotal);
+  const candidates = primary === 'receber'
+    ? ['receber','baixar','liquidar']
+    : (primary === 'pagar' ? ['pagar','baixar','liquidar'] : [primary]);
+  let lastDeny = null;
+  for (const candidate of candidates) {
+    const perm = await assertPermission(base44, ctx, 'Financeiro', entity, candidate, scopedPermissionScope);
+    if (!perm) return null;
+    lastDeny = perm;
+  }
+  return lastDeny;
+}
+
 function normalizePagamento(p){
   const v = Number(p?.valor)||0;
   return {
@@ -430,11 +463,10 @@ Deno.serve(async (req) => {
       : body;
     const resolvedPermissionScope = await resolveFinancialScope(base44, permissionScope);
     const scopedPermissionScope = { ...permissionScope, group_id: resolvedPermissionScope.groupId, empresa_id: resolvedPermissionScope.empresaId };
-    const perm = await assertPermission(base44, ctx, 'Financeiro', entityForPerm, 'editar', scopedPermissionScope);
-    if (perm) return perm;
-
     // Conciliacao automatica por extrato bancario
     if (action === 'conciliar_extrato') {
+      const conciliarPerm = await assertPermission(base44, ctx, 'Financeiro', entityForPerm, 'conciliar', scopedPermissionScope);
+      if (conciliarPerm) return conciliarPerm;
       const scopedConciliacao = { ...(conciliacao || {}), group_id: resolvedPermissionScope.groupId, empresa_id: resolvedPermissionScope.empresaId };
       const result = await conciliarExtrato(base44, ctx, scopedConciliacao);
       await audit(base44, user, {
@@ -455,6 +487,8 @@ Deno.serve(async (req) => {
     const pagamento = normalizePagamento(pagamentoIn);
     const extraFromMulti = Array.isArray(pagamento.multiplos_meios) ? pagamento.multiplos_meios.reduce((s,m)=> s + (Number(m?.valor)||0), 0) : 0;
     const valorTotal = (Number(pagamento.valor)||0) + extraFromMulti;
+    const settlementPerm = await assertFinanceSettlementPermission(base44, ctx, entityForPerm, action, scopedPermissionScope, valorTotal);
+    if (settlementPerm) return settlementPerm;
 
     const resultados = [];
     for (const alvoId of idsList){
@@ -463,6 +497,13 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'Registro fora do contexto multiempresa informado' }, { status: 403 });
       }
       let updates = {};
+      if (action === 'cancelar' && isTituloLiquidadoLocal(registro)) {
+        return Response.json({ error: 'Estorno deve preservar historico.' }, { status: 409 });
+      }
+      if (valorTotal > 0 && isTituloLiquidadoLocal(registro)) {
+        resultados.push({ id: alvoId, ok: true, reused: true });
+        continue;
+      }
       if (isCP(entity)) {
         updates = computeUpdatesForContaPagar(action, justificativa, registro) || {};
         if (valorTotal>0) {

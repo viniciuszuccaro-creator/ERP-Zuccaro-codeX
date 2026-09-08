@@ -14,7 +14,7 @@ import {
   assertTituloOnDelete,
   assertTituloOnUpdate,
   isTituloFinanceiroEntity,
-  tituloSettlementAction,
+  tituloSettlementPermissionActions,
 } from "@/components/lib/financeiroTituloPolicy";
 import {
   applyNumeroNfeOnCreate,
@@ -899,6 +899,10 @@ const ENTITY_PERMISSION_SCOPE = {
   FormaPagamento: { module: 'Cadastros', section: 'Financeiro' },
   Banco: { module: 'Cadastros', section: 'Financeiro' },
   CentroCusto: { module: 'Cadastros', section: 'Financeiro' },
+  ContaReceber: { module: 'Financeiro', section: 'ContaReceber' },
+  ContaPagar: { module: 'Financeiro', section: 'ContaPagar' },
+  CaixaOrdemLiquidacao: { module: 'Financeiro', section: 'Caixa' },
+  CaixaMovimento: { module: 'Financeiro', section: 'Caixa' },
 };
 
 const getEntityPermissionScope = (entityName) => {
@@ -941,6 +945,16 @@ const assertLocalMutationAllowed = (entityName, action, recordId = null) => {
   if (!result.allowed) {
     auditLocalPermissionDenied(entityName, action, recordId);
     throw new Error(`Permissao negada para ${action} em ${entityName}.`);
+  }
+};
+
+const assertLocalTituloSettlementAllowed = (entityName, recordId = null) => {
+  const scope = getEntityPermissionScope(entityName);
+  const actions = tituloSettlementPermissionActions(entityName);
+  const allowed = actions.some((action) => evaluateLocalPermission({ ...scope, entityName, action }).allowed);
+  if (!allowed) {
+    auditLocalPermissionDenied(entityName, actions[0], recordId);
+    throw new Error(`Permissao negada para ${actions[0]} em ${entityName}.`);
   }
 };
 
@@ -1573,13 +1587,15 @@ const createEntityApi = (entityName) => ({
     if (isTituloFinanceiroEntity(entityName)) {
       const decision = assertTituloOnUpdate({ before, patch: payload });
       if (decision.reuse) {
-        assertLocalMutationAllowed(entityName, tituloSettlementAction(entityName), id);
+        assertLocalTituloSettlementAllowed(entityName, id);
         return decision.reuse;
       }
       if (decision.settlement) {
-        assertLocalMutationAllowed(entityName, tituloSettlementAction(entityName), id);
+        assertLocalTituloSettlementAllowed(entityName, id);
       } else if (decision.estorno) {
         assertLocalMutationAllowed(entityName, 'estornar', id);
+      } else if (decision.conciliation) {
+        assertLocalMutationAllowed(entityName, 'conciliar', id);
       } else {
         assertLocalMutationAllowed(entityName, 'editar', id);
       }

@@ -46,9 +46,10 @@ export default function LiquidarReceberPagar() {
   const podeEnviarCaixa = canCreate("Financeiro", "Caixa")
     || canCreate("Financeiro", "Caixa Central")
     || canCreate("Financeiro", "CaixaOrdemLiquidacao")
+    || hasPermission("Financeiro", "ContaReceber", "receber")
     || hasPermission("Financeiro", "ContaReceber", "baixar")
-    || hasPermission("Financeiro", "ContaPagar", "baixar")
-    || hasPermission("Financeiro", null, "editar");
+    || hasPermission("Financeiro", "ContaPagar", "pagar")
+    || hasPermission("Financeiro", "ContaPagar", "baixar");
   const bloqueado = !contextoValido || !empresaId || !podeEnviarCaixa;
 
   const withContext = (payload = {}) => ({

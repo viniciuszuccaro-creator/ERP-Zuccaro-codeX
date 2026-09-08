@@ -1,3 +1,15 @@
+### P0.8 - Gate 8 Financeiro residual: baixa, caixa e conciliacao
+- Objetivo: cumprir residual do Gate 8 / P0 Financeiro sem FinanceiroV2.
+- Diagnostico: ContaReceber/ContaPagar caíam no escopo Cadastros; caixa/PDV liquidavam com `canEdit`; conciliacao em lote sem `conciliar`; `valor_recebido`/`valor_pago` nao congelavam; `paymentStatusManager` usava `editar` e cancelava titulo liquidado.
+- Causa raiz: alçada de baixa/conciliação fraca e bypass de service-role fora da titulo policy.
+- Arquivos alterados: `financeiroTituloPolicy.js`, `localBase44Client.js`, `entityGuardPolicy`, `OrdensLiquidacaoPendentes`, `CaixaPDVCompleto`, `LiquidarReceberPagar`, `CaixaCentralLiquidacao`, `ConciliacaoEmLote`, `ConciliacaoBancariaTab`, `LiquidacaoEmLote`, `ContasReceberTab`, `ContasPagarTab`, `paymentStatusManager`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: `assertTituloOnUpdate`, CR/CP tabs, caixa central e conciliação existentes.
+- Alteracoes: escopo Financeiro no client; settlement com receber/pagar/baixar/liquidar; freeze de valores liquidados; conciliacao exige `conciliar`; paymentStatusManager com RBAC e idempotencia.
+- Multiempresa/RBAC: titulo exige empresa; baixa manual nao usa `editar`; cancel apos baixa bloqueado.
+- Pendencia: ExtratoBancario listagem sem empresa em ConciliacaoBancaria; rateio multiempresa UI; webhook de pagamento com chave de idempotencia explicita.
+- Validacoes: `node --test tests/financeiro-titulo-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 9 Fiscal (emissao homologacao).
+
 ### P0.7 - Gate 7 Estoque residual: tipo, alcada e transferencia
 - Objetivo: cumprir residual do Gate 7 / P0 Estoque sem EstoqueV2.
 - Diagnostico: MovimentacoesTab perdia `tipo_movimento` (saida virava entrada); inventário aprovava com `editar`; `applyInventoryAdjustments` usava `editar` e `isApprovedStatus` fail-open; transferencia usava tipo ambiguo e OR de criar; config de saldo negativo era global.

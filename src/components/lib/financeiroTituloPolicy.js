@@ -7,12 +7,15 @@ const toMoney = (value) => {
 
 export const TITULO_FINANCEIRO_ENTITIES = ['ContaReceber', 'ContaPagar'];
 
-const LIQUIDADO = new Set(['recebido', 'pago', 'liquidado', 'baixado']);
+const LIQUIDADO = new Set(['recebido', 'pago', 'liquidado', 'baixado', 'conciliado']);
 const ESTORNO = new Set(['estornado']);
+const CONCILIADO = new Set(['conciliado']);
 const FROZEN_AFTER_SETTLEMENT = [
   'valor',
   'valor_total',
   'valor_original',
+  'valor_recebido',
+  'valor_pago',
   'pedido_id',
   'nfe_id',
   'nota_fiscal_id',
@@ -30,7 +33,14 @@ export const isTituloLiquidado = (record = {}) => LIQUIDADO.has(normalizeTituloS
 
 export const isTituloEstorno = (record = {}) => ESTORNO.has(normalizeTituloStatus(record.status));
 
+export const isTituloConciliado = (record = {}) => CONCILIADO.has(normalizeTituloStatus(record.status));
+
 export const tituloSettlementAction = (entityName) => (entityName === 'ContaPagar' ? 'pagar' : 'receber');
+
+export const tituloSettlementPermissionActions = (entityName) => {
+  const primary = tituloSettlementAction(entityName);
+  return [primary, 'baixar', 'liquidar'];
+};
 
 export const parcelaKey = (value) => {
   const match = String(value || '').match(/\d+/);
@@ -87,10 +97,15 @@ export const assertTituloOnUpdate = ({ before = {}, patch = {} } = {}) => {
   const nextStatus = firstText(patch.status) || before.status;
   const becomingLiquidado = !isTituloLiquidado(before) && isTituloLiquidado({ status: nextStatus });
   const becomingEstorno = isTituloLiquidado(before) && isTituloEstorno({ status: nextStatus });
+  const becomingConciliado = isTituloLiquidado(before)
+    && !isTituloConciliado(before)
+    && isTituloConciliado({ status: nextStatus })
+    && !becomingEstorno;
   const retrySettlement = isTituloLiquidado(before)
     && Object.prototype.hasOwnProperty.call(patch, 'status')
     && isTituloLiquidado({ status: patch.status })
-    && !becomingEstorno;
+    && !becomingEstorno
+    && !becomingConciliado;
 
   if (firstText(patch.empresa_id) && firstText(before.empresa_id) && firstText(patch.empresa_id) !== firstText(before.empresa_id)) {
     throw new Error('Pagamento deve pertencer a empresa correta.');
@@ -115,7 +130,7 @@ export const assertTituloOnUpdate = ({ before = {}, patch = {} } = {}) => {
   }
 
   if (retrySettlement) {
-    return { reuse: before, record: before, settlement: false, estorno: false };
+    return { reuse: before, record: before, settlement: false, estorno: false, conciliation: false };
   }
 
   if (becomingEstorno) {
@@ -123,10 +138,13 @@ export const assertTituloOnUpdate = ({ before = {}, patch = {} } = {}) => {
       reuse: null,
       settlement: false,
       estorno: true,
+      conciliation: false,
       record: {
         ...patch,
         valor: before.valor,
         valor_total: before.valor_total ?? before.valor,
+        valor_recebido: before.valor_recebido,
+        valor_pago: before.valor_pago,
         pedido_id: before.pedido_id,
         nfe_id: before.nfe_id || before.nota_fiscal_id,
         empresa_id: before.empresa_id,
@@ -144,11 +162,31 @@ export const assertTituloOnUpdate = ({ before = {}, patch = {} } = {}) => {
     };
   }
 
+  if (becomingConciliado) {
+    return {
+      reuse: null,
+      settlement: false,
+      estorno: false,
+      conciliation: true,
+      record: {
+        ...patch,
+        valor: before.valor,
+        valor_total: before.valor_total ?? before.valor,
+        valor_recebido: before.valor_recebido,
+        valor_pago: before.valor_pago,
+        pedido_id: before.pedido_id,
+        nfe_id: before.nfe_id || before.nota_fiscal_id,
+        empresa_id: before.empresa_id,
+        status: 'Conciliado',
+      },
+    };
+  }
+
   if (isTituloLiquidado(before) && normalizeTituloStatus(nextStatus) === 'cancelado') {
     throw new Error('Estorno deve preservar historico.');
   }
 
-  return { reuse: null, record: patch, settlement: becomingLiquidado, estorno: false };
+  return { reuse: null, record: patch, settlement: becomingLiquidado, estorno: false, conciliation: false };
 };
 
 export const assertTituloOnDelete = (record = {}) => {

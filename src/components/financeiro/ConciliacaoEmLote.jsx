@@ -5,8 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Search, CheckCircle, AlertTriangle, Filter } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 import { toast } from 'sonner';
 
 /**
@@ -14,11 +14,18 @@ import { toast } from 'sonner';
  * Conciliação de pagamentos por critérios: pedido, NF, cliente, período
  */
 export default function ConciliacaoEmLote() {
-  const { filterInContext } = useContextoVisual();
+  const { filterInContext, updateInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
   const [criterio, setCriterio] = useState('pedido'); // 'pedido', 'nfe', 'cliente', 'periodo'
   const [filtro, setFiltro] = useState('');
   const [selecionados, setSelecionados] = useState([]);
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const podeConciliar = hasPermission('Financeiro', 'ContaReceber', 'conciliar')
+    || hasPermission('Financeiro', 'ConciliacaoBancaria', 'conciliar')
+    || hasPermission('Financeiro', 'Conciliacao', 'conciliar');
 
   // Buscar itens para conciliação
   const { data: itens = [] } = useQuery({
@@ -78,22 +85,35 @@ export default function ConciliacaoEmLote() {
   // Mutation para conciliar
   const conciliarMutation = useMutation({
     mutationFn: async () => {
-      const promises = selecionados.map(id =>
-        base44.entities.ContaReceber.update(id, {
+      if (!contextoValido) throw new Error('Selecione grupo ou empresa para conciliar.');
+      if (!podeConciliar) throw new Error('Sem permissao para conciliar titulos.');
+      const atualizados = [];
+      for (const id of selecionados) {
+        const atual = itens.find((item) => item.id === id);
+        if (!atual) continue;
+        if (String(atual.status || '').toLowerCase() === 'conciliado') {
+          atualizados.push(atual);
+          continue;
+        }
+        const atualizado = await updateInContext('ContaReceber', id, {
           status: 'Conciliado',
           data_conciliacao: new Date().toISOString(),
-          'detalhes_pagamento.status_compensacao': 'Conciliado',
-        })
-      );
-      return Promise.all(promises);
+          detalhes_pagamento: {
+            ...(atual.detalhes_pagamento || {}),
+            status_compensacao: 'Conciliado',
+          },
+        });
+        atualizados.push(atualizado);
+      }
+      return atualizados;
     },
     onSuccess: () => {
       toast.success(`${selecionados.length} título(s) conciliado(s)!`);
       queryClient.invalidateQueries({ queryKey: ['conciliacao-lote'] });
       setSelecionados([]);
     },
-    onError: () => {
-      toast.error('Erro ao conciliar títulos');
+    onError: (error) => {
+      toast.error(error?.message || 'Erro ao conciliar títulos');
     },
   });
 
@@ -280,7 +300,7 @@ export default function ConciliacaoEmLote() {
               </div>
               <Button
                 onClick={() => conciliarMutation.mutate()}
-                disabled={conciliarMutation.isPending}
+                disabled={conciliarMutation.isPending || !contextoValido || !podeConciliar || selecionados.length === 0}
                 className="bg-green-600 hover:bg-green-700"
               >
                 <CheckCircle className="w-4 h-4 mr-2" />

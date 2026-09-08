@@ -10,6 +10,8 @@ export const GRANULAR_PERMISSION_ACTIONS = [
   'cancelar',
   'receber',
   'pagar',
+  'baixar',
+  'liquidar',
   'conciliar',
   'estornar',
   'importar',

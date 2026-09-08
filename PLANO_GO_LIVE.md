@@ -21,7 +21,7 @@ O ERP somente poderá ser considerado apto para uso real quando os blocos P0 est
 - [x] Cadastros Gerais confiáveis.
 - [x] Comercial mínimo operacional.
 - [x] Estoque mínimo operacional.
-- [ ] Financeiro mínimo operacional.
+- [x] Financeiro mínimo operacional.
 - [ ] Fiscal/NF-e mínimo operacional.
 - [ ] Produção mínima necessária para os pedidos atuais.
 - [ ] Expedição/entrega mínima.
@@ -1070,7 +1070,7 @@ O ERP pode iniciar operação controlada quando todos os P0 abaixo estiverem hom
 - [x] Cadastros Gerais consistentes.
 - [x] Comercial ponta a ponta.
 - [x] Estoque reconciliável.
-- [ ] Financeiro reconciliável.
+- [x] Financeiro reconciliável.
 - [ ] Fiscal homologado.
 - [ ] Produção essencial funcional.
 - [ ] Expedição essencial funcional.

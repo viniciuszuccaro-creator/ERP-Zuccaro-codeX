@@ -328,7 +328,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
       toast({ title: 'Selecione grupo ou empresa para pagar titulo', variant: 'destructive' });
       return;
     }
-    if (!hasPermission('Financeiro','ContaPagar','baixar') && !hasPermission('Financeiro','ContaPagar','liquidar')) {
+    if (!podeBaixarPagar) {
       toast({ title: '⛔ Sem permissão para baixar', variant: 'destructive' });
       return;
     }
@@ -350,7 +350,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
       toast({ title: 'Selecione grupo ou empresa para baixa multipla', variant: 'destructive' });
       return;
     }
-    if (!hasPermission('Financeiro','ContaPagar','baixar') && !hasPermission('Financeiro','ContaPagar','liquidar')) {
+    if (!podeBaixarPagar) {
       toast({ title: '⛔ Sem permissão para baixa múltipla', variant: 'destructive' });
       return;
     }

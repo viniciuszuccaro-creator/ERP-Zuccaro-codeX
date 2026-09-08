@@ -36,10 +36,10 @@ export default function CaixaCentralLiquidacao({ windowMode = false }) {
     || hasPermission("Financeiro", null, "visualizar")
     || hasPermission("Financeiro", null, "ver");
   const canOpenSensitive = canCreate("Financeiro", "Caixa")
-    || hasPermission("Financeiro", "Caixa", "editar")
+    || hasPermission("Financeiro", "ContaReceber", "receber")
     || hasPermission("Financeiro", "ContaReceber", "baixar")
-    || hasPermission("Financeiro", "ContaPagar", "baixar")
-    || hasPermission("Financeiro", null, "editar");
+    || hasPermission("Financeiro", "ContaPagar", "pagar")
+    || hasPermission("Financeiro", "ContaPagar", "baixar");
   const bloqueado = !contextoValido || !empresaId || !canViewCaixa;
 
   const withContext = (payload = {}) => ({
