@@ -499,6 +499,9 @@ Caso contrário, sugira:
         }
       } catch (error) {
         console.error('Erro ao verificar código duplicado:', error);
+        toast.error('Nao foi possivel validar o codigo do produto. Tente novamente.');
+        setAbaAtiva('dados-gerais');
+        return;
       }
     }
 

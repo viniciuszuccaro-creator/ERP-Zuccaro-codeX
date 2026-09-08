@@ -10,7 +10,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
-import useEntityCounts, { SIMPLE_CATALOG } from "@/components/lib/useEntityCounts";
+import useEntityCounts from "@/components/lib/useEntityCounts";
+import { buildMultiempresaReadFilter } from "@/components/lib/contextoMultiempresaPolicy";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -216,7 +217,6 @@ export default function VisualizadorUniversalEntidadeV24({
   const ENTITY   = nomeEntidade || entityName || "";
   const TITULO   = tituloDisplay || ENTITY;
   const FormComponent = FormComponentProp || DEFAULT_FORM_COMPONENTS[ENTITY] || null;
-  const isSimple = SIMPLE_CATALOG.has(ENTITY);
   const _camposPrincipais = camposPrincipais || [];
   const _extraColors      = extraColors || {};
   const _pageSizeProp     = pageSizeProp || 20;
@@ -239,7 +239,8 @@ export default function VisualizadorUniversalEntidadeV24({
   const { canCreate, canEdit, canDelete, hasPermission } = usePermissions();
   const empresaId = (empresaAtual && empresaAtual.id) || null;
   const groupId   = (grupoAtual   && grupoAtual.id)   || null;
-  const contextoValido = !!(empresaId || groupId || isSimple);
+  // Fail-closed: catálogo "simples" tambem exige grupo/empresa para listar/salvar
+  const contextoValido = !!(empresaId || groupId);
   const canViewCadastro = hasPermission("Cadastros", ENTITY, "visualizar") || hasPermission("Cadastros", null, "visualizar");
   const canCreateCadastro = canCreate("Cadastros", ENTITY) || canCreate("Cadastros", null);
   const canEditCadastro = canEdit("Cadastros", ENTITY) || canEdit("Cadastros", null);
@@ -335,38 +336,23 @@ export default function VisualizadorUniversalEntidadeV24({
 
   const skip = (page - 1) * pageSize;
 
-  // Filtro limpo: backend expande empresa_id ou group_id para todos os campos
+  // Filtro canonico multiempresa (empresa + grupo = $and; nunca $or aberto com group_id solto)
   const readFilter = useMemo(function() {
-    if (isSimple && !groupId && !empresaId) return {};
+    if (!groupId && !empresaId) {
+      return { id: "__escopo_multiempresa_obrigatorio__" };
+    }
     const ctxCampo = ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id";
-    const orConds = [];
-    if (empresaId) {
-      orConds.push({ [ctxCampo]: empresaId });
-      if (ENTITY === "Cliente") {
-        orConds.push({ empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: { $in: [empresaId] } });
-      } else if (SHARED_ENTITIES.has(ENTITY)) {
-        orConds.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
-      }
-    }
-    if (groupId) {
-      orConds.push({ group_id: groupId });
-      if (!empresaId && Array.isArray(empresasDoGrupo) && empresasDoGrupo.length) {
-        const ids = empresasDoGrupo.map(function(e) { return e.id; }).filter(Boolean);
-        if (ids.length) {
-          if (ENTITY === "Cliente") {
-            orConds.push({ empresa_id: { $in: ids } }, { empresa_dona_id: { $in: ids } }, { empresas_compartilhadas_ids: { $in: ids } });
-          } else if (ENTITY === "Fornecedor" || ENTITY === "Transportadora") {
-            orConds.push({ empresa_dona_id: { $in: ids } }, { empresas_compartilhadas_ids: { $in: ids } });
-          } else if (ENTITY === "Colaborador") {
-            orConds.push({ empresa_alocada_id: { $in: ids } });
-          } else {
-            orConds.push({ [ctxCampo]: { $in: ids } });
-          }
-        }
-      }
-    }
-    return orConds.length ? { $or: orConds } : {};
-  }, [ENTITY, isSimple, empresaId, groupId, empresasDoGrupo]);
+    return buildMultiempresaReadFilter({
+      groupId,
+      empresaId,
+      ctxField: ctxCampo,
+      shared: ENTITY === "Cliente" || SHARED_ENTITIES.has(ENTITY),
+      empresaIdsDoGrupo: (!empresaId && Array.isArray(empresasDoGrupo))
+        ? empresasDoGrupo.map(function(e) { return e.id; }).filter(Boolean)
+        : [],
+      rest: {},
+    });
+  }, [ENTITY, empresaId, groupId, empresasDoGrupo]);
 
   const backendSortField = UNSORTABLE_BACKEND.has(sortField) ? "updated_date" : sortField;
   const backendSortDir   = sortDir;
@@ -507,9 +493,11 @@ export default function VisualizadorUniversalEntidadeV24({
     try {
       const clean = Object.assign({}, formData);
       delete clean._action;
-      if (!isSimple) {
-        if (!clean.empresa_id && empresaId) clean.empresa_id = empresaId;
-        if (!clean.group_id  && groupId)   clean.group_id   = groupId;
+      // Sempre carimbar contexto quando disponivel (inclusive catálogos "simples")
+      if (!clean.empresa_id && empresaId) clean.empresa_id = empresaId;
+      if (!clean.group_id  && groupId)   clean.group_id   = groupId;
+      if (!clean.group_id && !clean.empresa_id) {
+        throw new Error("Contexto de grupo/empresa obrigatorio para salvar cadastro.");
       }
       if (editItem && editItem.id) {
         await updateInContext(ENTITY, editItem.id, clean, ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id");
@@ -525,7 +513,7 @@ export default function VisualizadorUniversalEntidadeV24({
     } finally {
       setIsSaving(false);
     }
-  }, [ENTITY, editItem, empresaId, groupId, handleCloseForm, isSimple, canCreateCadastro, canEditCadastro, canDeleteCadastro, createInContext, updateInContext, deleteInContext, auditCadastroEvent]);
+  }, [ENTITY, editItem, empresaId, groupId, handleCloseForm, canCreateCadastro, canEditCadastro, canDeleteCadastro, createInContext, updateInContext, deleteInContext, auditCadastroEvent]);
 
   const handleNewItem = useCallback(function() {
     if (!contextoValido) {

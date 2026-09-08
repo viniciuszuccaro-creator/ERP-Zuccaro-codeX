@@ -982,14 +982,16 @@ const getEntityStore = (db, entityName) => {
 
 const applyLocalMasterCadastro = (db, entityName, record) => {
   const needsCode = Boolean(MASTER_CODE_SPECS[entityName]);
-  const needsDuplicate = ['Cliente', 'Fornecedor', 'Transportadora'].includes(entityName);
+  const needsDuplicate = ['Cliente', 'Fornecedor', 'Transportadora', 'Produto'].includes(entityName);
   if (!needsCode && !needsDuplicate) return record;
 
   const groupId = record.group_id || record.grupo_id || null;
-  const records = getEntityStore(db, entityName).filter((item) => {
-    if (!groupId) return true;
-    return String(item.group_id || item.grupo_id || '') === String(groupId);
-  });
+  if (!groupId) {
+    throw new Error('group_id obrigatorio para cadastro mestre.');
+  }
+  const records = getEntityStore(db, entityName).filter((item) => (
+    String(item.group_id || item.grupo_id || '') === String(groupId)
+  ));
   const configs = getEntityStore(db, 'ConfiguracaoSistema');
   const chave = sequenceKeyFor(entityName, groupId);
   const seqRow = configs.find((item) => item.chave === chave);

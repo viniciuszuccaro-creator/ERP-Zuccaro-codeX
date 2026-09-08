@@ -62,6 +62,15 @@ export const applyCodigoOnCreate = ({ entityName, record = {}, records = [], seq
       codigo_legado: record.codigo_legado || incoming,
     };
   }
+  // Produto (nao migracao): codigo interno sempre reservado no backend
+  if (entityName === 'Produto' && !isMigracao) {
+    return {
+      ...record,
+      [spec.field]: next,
+      codigo_origem: record.codigo_origem || incoming,
+      codigo_legado: record.codigo_legado || incoming,
+    };
+  }
   if (!conflict) return record;
   return {
     ...record,
@@ -73,7 +82,21 @@ export const applyCodigoOnCreate = ({ entityName, record = {}, records = [], seq
 
 export const findDuplicateMaster = ({ entityName, record = {}, records = [] } = {}) => {
   const groupId = firstText(record.group_id, record.grupo_id);
-  const sameGroup = (item) => !groupId || firstText(item.group_id, item.grupo_id) === groupId;
+  if (!groupId) {
+    if (['Cliente', 'Fornecedor', 'Transportadora', 'Produto'].includes(entityName)) {
+      return { type: 'sem_grupo' };
+    }
+    return null;
+  }
+  const sameGroup = (item) => firstText(item.group_id, item.grupo_id) === groupId;
+
+  if (entityName === 'Produto') {
+    const codigo = firstText(record.codigo);
+    if (codigo) {
+      const hit = records.find((item) => sameGroup(item) && firstText(item.codigo) === codigo);
+      if (hit) return { type: 'codigo', existingId: hit.id };
+    }
+  }
 
   if (['Cliente', 'Fornecedor', 'Transportadora'].includes(entityName)) {
     const doc = normalizeDocumento(record.cpf_cnpj || record.cnpj || record.cpf);
@@ -87,10 +110,37 @@ export const findDuplicateMaster = ({ entityName, record = {}, records = [] } = 
 };
 
 export const applyMasterCadastroOnCreate = ({ entityName, record = {}, records = [], sequenceValue = 0 } = {}) => {
+  const groupId = firstText(record.group_id, record.grupo_id);
+  const requiresGroup = Boolean(MASTER_CODE_SPECS[entityName])
+    || ['Cliente', 'Fornecedor', 'Transportadora', 'Produto'].includes(entityName);
+  if (requiresGroup && !groupId) {
+    const error = new Error('group_id obrigatorio para cadastro mestre.');
+    error.duplicate = { type: 'sem_grupo' };
+    throw error;
+  }
+  const isMigracao = Boolean(record.origem_migracao || record.lote_migracao || record.importacao_erp);
+  // Produto nao-migracao: rejeita codigo ja existente antes da reserva remapear
+  if (entityName === 'Produto' && !isMigracao) {
+    const preDup = findDuplicateMaster({ entityName, record, records });
+    if (preDup?.type === 'codigo') {
+      const error = new Error('Codigo duplicado no grupo para este cadastro.');
+      error.duplicate = preDup;
+      throw error;
+    }
+  }
   const withCode = applyCodigoOnCreate({ entityName, record, records, sequenceValue });
   const duplicate = findDuplicateMaster({ entityName, record: withCode, records });
+  if (duplicate?.type === 'sem_grupo') {
+    const error = new Error('group_id obrigatorio para cadastro mestre.');
+    error.duplicate = duplicate;
+    throw error;
+  }
   if (duplicate) {
-    const error = new Error('Cadastro duplicado no grupo para este documento.');
+    const error = new Error(
+      duplicate.type === 'codigo'
+        ? 'Codigo duplicado no grupo para este cadastro.'
+        : 'Cadastro duplicado no grupo para este documento.',
+    );
     error.duplicate = duplicate;
     throw error;
   }

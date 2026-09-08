@@ -1,3 +1,15 @@
+### P0.5 - Gate 5 Cadastros residual: escopo, codigo e duplicidade
+- Objetivo: cumprir residual do Gate 5 / P0 Cadastros Gerais sem CadastrosV2.
+- Diagnostico: Visualizador listava mestres do grupo inteiro na visao empresa (`$or` com `group_id`); SIMPLE_CATALOG contava/listava sem escopo; create mestre aceitava sem `group_id`; Produto nao rejeitava codigo duplicado e falhava aberto na checagem.
+- Causa raiz: filtro manual fora de `buildMultiempresaReadFilter` e policy mestre fail-open.
+- Arquivos alterados: `VisualizadorUniversalEntidadeV24.jsx`, `localCadastroMasterPolicy.js`, `localBase44Client.js`, `ProdutoFormV22_Completo.jsx`, `useEntityCounts.jsx`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: `buildMultiempresaReadFilter`, reserva sequencial, `applyMasterCadastroOnCreate`.
+- Alteracoes: listagem/save com escopo canonico; contagens respeitam grupo/empresa; produto reserva codigo e rejeita duplicado; create mestre exige `group_id`.
+- Multiempresa/RBAC: empresa nao mistura mestres de outras; sem contexto bloqueia listar/salvar.
+- Pendencia: enxugar lista SIMPLE_CATALOG; `DetalhesCadastro` KPIs; forms auxiliares com `entity.list()`; inativar/restaurar universal.
+- Validacoes: `node --test tests/cadastro-master-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem P0: Gate 6 Comercial (pedido → estoque → aprovacao → faturamento).
+
 ### P0.4 - Gate 4 Auditoria residual: catches silenciosos e escopo
 - Objetivo: cumprir residual do Gate 4 / P0 Auditoria de `PLANO_GO_LIVE.md` sem AuditV2.
 - Diagnostico: convite/export/estoque/config/CNPJ/portal/WhatsApp engoliam falha de AuditLog; `securityAlerts` aceitava orphan sem group_id e e-mail global; painéis financeiros e prefetch do Layout liam AuditLog sem contexto; `auditEntityEvents` marcava skip como ok.

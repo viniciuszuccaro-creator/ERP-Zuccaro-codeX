@@ -34,17 +34,16 @@ const CAMPO_CTX = {
 const SHARED = new Set(['Cliente', 'Fornecedor', 'Transportadora']);
 
 /**
- * buildContextFilter — mantido para compatibilidade com imports externos.
- * Internamente o hook agora usa filtro simples (o backend expande).
+ * buildContextFilter — escopo multiempresa para contagens.
+ * Catálogos "simples" tambem recebem group/empresa quando o contexto existe.
  */
 export function buildContextFilter(entityName, empresaId, groupId, empresasDoGrupo) {
-  if (SIMPLE_CATALOG.has(entityName)) return {};
-  // Filtro simples: o backend (countEntities / entityListSorted) já expande
-  // empresa_id → empresa_dona_id, empresa_alocada_id, empresas_compartilhadas_ids
-  // group_id  → todas as empresas do grupo
   if (groupId && !empresaId) return { group_id: groupId };
+  if (empresaId && groupId) return { group_id: groupId, empresa_id: empresaId };
   if (empresaId) return { empresa_id: empresaId };
-  return {};
+  // Sem contexto: so catálogos verdadeiramente globais contam aberto; demais fail-closed
+  if (SIMPLE_CATALOG.has(entityName)) return {};
+  return { id: '__escopo_multiempresa_obrigatorio__' };
 }
 
 // Fallback: contagem individual via countEntities (single mode)
@@ -107,12 +106,8 @@ export function useEntityCounts(entities = []) {
       const batchPayload = [];
 
       for (const entityName of normalized) {
-        const isSimple = SIMPLE_CATALOG.has(entityName);
-        let ctxFilter = {};
-        if (!isSimple) {
-          // buildContextFilter pode retornar null quando sem contexto — usa {} para contar global
-          ctxFilter = buildContextFilter(entityName, empresaId, groupId, empresasDoGrupo) ?? {};
-        }
+        // Sempre aplica escopo quando ha grupo/empresa (inclusive SIMPLE_CATALOG)
+        const ctxFilter = buildContextFilter(entityName, empresaId, groupId, empresasDoGrupo) ?? {};
         batchPayload.push({ entityName, filter: ctxFilter });
       }
 

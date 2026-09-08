@@ -18,7 +18,7 @@ O ERP somente poderá ser considerado apto para uso real quando os blocos P0 est
 - [x] RBAC granular frontend + backend.
 - [x] Multiempresa Grupo/Empresas.
 - [x] Auditoria e logs.
-- [ ] Cadastros Gerais confiáveis.
+- [x] Cadastros Gerais confiáveis.
 - [ ] Comercial mínimo operacional.
 - [ ] Estoque mínimo operacional.
 - [ ] Financeiro mínimo operacional.
@@ -1067,7 +1067,7 @@ O ERP pode iniciar operação controlada quando todos os P0 abaixo estiverem hom
 - [ ] RBAC frontend/backend.
 - [ ] Multiempresa validada.
 - [x] Auditoria confiável.
-- [ ] Cadastros Gerais consistentes.
+- [x] Cadastros Gerais consistentes.
 - [ ] Comercial ponta a ponta.
 - [ ] Estoque reconciliável.
 - [ ] Financeiro reconciliável.
