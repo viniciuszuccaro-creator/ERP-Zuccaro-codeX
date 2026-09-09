@@ -86,14 +86,39 @@ export const isMarketplaceAtivo = (configs = [], origem) => {
   const nome = firstText(origem).toLowerCase();
   if (!nome) return false;
   const list = Array.isArray(configs) ? configs : [];
-  if (!list.length) return true;
+  if (!list.length) return false;
   const match = list.find((item) => {
     const candidatos = [item.nome, item.marketplace, item.marketplace_id, item.chave]
       .map((value) => firstText(value).toLowerCase());
     return candidatos.some((value) => value && (value === nome || nome.includes(value) || value.includes(nome)));
   });
-  if (!match) return true;
+  if (!match) return false;
   return match.ativo !== false && match.ativo !== 'false' && match.ativo !== 0;
+};
+
+export const resolveMarketplaceLabelFromProvider = (provider = '') => {
+  const key = firstText(provider).toLowerCase();
+  const map = {
+    mercado_livre: 'Mercado Livre',
+    mercadolivre: 'Mercado Livre',
+    shopee: 'Shopee',
+    amazon: 'Amazon',
+    magalu: 'Magalu',
+    ecommerce_site: 'Site',
+  };
+  return map[key] || firstText(provider);
+};
+
+export const assertItensMarketplaceParaImport = (itens = []) => {
+  const list = Array.isArray(itens) ? itens : [];
+  if (!list.length) {
+    throw new Error('Itens obrigatorios para importacao marketplace.');
+  }
+  const semSku = list.filter((item) => !item.sku_resolvido && !firstText(item.produto_id));
+  if (semSku.length) {
+    throw new Error(`SKU nao resolvido para ${semSku.length} item(ns) do marketplace.`);
+  }
+  return true;
 };
 
 export const assertMarketplaceAtivo = ({ configs = [], origem } = {}) => {
@@ -197,8 +222,10 @@ export const applyStatusExternoMarketplace = ({
   throw new Error('Acao de status marketplace invalida.');
 };
 
-export const buildErpPedidoFromExterno = (pedidoExterno = {}, { produtos = [] } = {}) => {
+export const buildErpPedidoFromExterno = (pedidoExterno = {}, { produtos = [], exigirSku = true } = {}) => {
   const itensMapeados = mapItensMarketplaceComSku(pedidoExterno.itens, produtos);
+  if (exigirSku) assertItensMarketplaceParaImport(itensMapeados);
+  const conciliacao = buildConciliacaoResumo(pedidoExterno);
   return stampMarketplacePedido({
     cliente_id: pedidoExterno.cliente_erp_id || pedidoExterno.cliente_id,
     cliente_nome: pedidoExterno.cliente_nome,
@@ -232,7 +259,8 @@ export const buildErpPedidoFromExterno = (pedidoExterno = {}, { produtos = [] } 
     taxa_marketplace: pedidoExterno.taxa_marketplace,
     forma_pagamento: pedidoExterno.forma_pagamento_externa || 'Marketplace',
     observacoes_publicas: `Importado de ${pedidoExterno.origem} - Pedido #${pedidoExterno.numero_pedido_externo || pedidoExterno.id_externo}`,
-    ...buildConciliacaoResumo(pedidoExterno),
+    ...conciliacao,
+    conciliado: false,
   });
 };
 

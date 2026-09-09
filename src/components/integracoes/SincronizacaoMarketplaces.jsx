@@ -13,6 +13,7 @@ import usePermissions from '@/components/lib/usePermissions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { createMarketplaceSimulationOrders } from './marketplaceSimulationData';
 import {
+  applyStatusExternoMarketplace,
   assertMarketplaceAtivo,
   filtrarPedidosSimuladosAtivos,
 } from '@/components/lib/marketplacePedidoPolicy';
@@ -124,31 +125,42 @@ export default function SincronizacaoMarketplaces({ empresaId: empresaIdProp }) 
 
       let novos = 0;
       for (const pedido of simulados) {
-        const statusImportacao = String(pedido.status_externo || '').toLowerCase().includes('cancel')
-          ? 'Cancelado'
-          : 'A Validar';
-        await createInContext('PedidoExterno', {
-          ...pedido,
-          status_importacao: statusImportacao,
-          ...scope,
-        });
+        const statusRaw = String(pedido.status_externo || '').toLowerCase();
+        const acaoStatus = statusRaw.includes('cancel')
+          ? 'cancelar'
+          : (statusRaw.includes('return') || statusRaw.includes('devolv') ? 'devolver' : '');
+        if (acaoStatus) {
+          const { patch } = applyStatusExternoMarketplace({ pedidoExterno: pedido, acao: acaoStatus });
+          await createInContext('PedidoExterno', {
+            ...pedido,
+            ...patch,
+            ...scope,
+          });
+        } else {
+          await createInContext('PedidoExterno', {
+            ...pedido,
+            status_importacao: 'A Validar',
+            ...scope,
+          });
+        }
         novos += 1;
       }
 
       const resultado = {
         marketplace,
         novos_pedidos: novos,
-        atualizados: 0
+        atualizados: 0,
+        modo: 'simulacao_local',
       };
-      await auditarMarketplace('Sincronizar Marketplace', 'Sincronizacao manual de marketplace executada com escopo multiempresa.', resultado);
+      await auditarMarketplace('Sincronizar Marketplace', 'Sincronizacao manual local (simulacao; API real pendente).', resultado);
       return resultado;
     },
     onSuccess: (resultado) => {
       queryClient.invalidateQueries({ queryKey: ['pedidos-externos-config'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos-externos-pendentes'] });
       toast({
-        title: `✅ ${resultado.marketplace} sincronizado!`,
-        description: `${resultado.novos_pedidos} pedidos novos`
+        title: `${resultado.marketplace} sincronizado (local)`,
+        description: `${resultado.novos_pedidos} pedidos novos — simulacao; OAuth/API real pendente.`
       });
     },
     onError: async (error) => {

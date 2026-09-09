@@ -17,9 +17,9 @@ const toNumber = (value, fallback = 0) => Number.isFinite(Number(value)) ? Numbe
 export default function ConfiguracaoIntegracaoForm({ config, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || config;
   const { canCreate, canEdit } = usePermissions();
-  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
-  const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
+  const contextoValido = Boolean(empresaAtual?.id && groupId);
   const podeCriar = canCreate("Cadastros", "ConfiguracaoIntegracao") || canCreate("Sistema", "Integracoes") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "ConfiguracaoIntegracao") || canEdit("Sistema", "Integracoes") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
@@ -44,7 +44,12 @@ export default function ConfiguracaoIntegracaoForm({ config, item, data, initial
       return;
     }
     if (!contextoValido) {
-      alert("Selecione um grupo ou empresa antes de salvar.");
+      alert("Selecione grupo e empresa antes de salvar.");
+      return;
+    }
+    const empresaId = empresaAtual?.id || formData.empresa_id || dadosIniciais?.empresa_id;
+    if (!empresaId) {
+      alert("Empresa obrigatoria para configuracao de marketplace.");
       return;
     }
     const payload = {
@@ -60,7 +65,7 @@ export default function ConfiguracaoIntegracaoForm({ config, item, data, initial
       max_tentativas_retry: toNumber(formData.max_tentativas_retry, 3),
       observacoes: sanitizeText(formData.observacoes, 1000),
       group_id: groupId || formData.group_id,
-      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id
+      empresa_id: empresaId,
     };
     if (!payload.marketplace && !payload.nome_integracao) {
       alert("Nome da integracao ou marketplace e obrigatorio");

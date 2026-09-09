@@ -70,9 +70,12 @@ test('importacao carimba marketplace, sku e conciliacao', () => {
   assert.match(payload.referencia_conciliacao, /mkt\|Amazon\|AZ-99/);
 });
 
-test('config inativa bloqueia canal e status cancel/return sao idempotentes', () => {
+test('config inativa ou ausente bloqueia canal e status cancel/return sao idempotentes', () => {
+  assert.equal(isMarketplaceAtivo([], 'Shopee'), false);
+  assert.equal(isMarketplaceAtivo([{ nome: 'Mercado Livre', ativo: true }], 'Shopee'), false);
   assert.equal(isMarketplaceAtivo([{ nome: 'Shopee', ativo: false }], 'Shopee'), false);
   assert.throws(() => assertMarketplaceAtivo({ configs: [{ nome: 'Shopee', ativo: false }], origem: 'Shopee' }), /inativo/);
+  assert.throws(() => assertMarketplaceAtivo({ configs: [], origem: 'Shopee' }), /inativo/);
   const ativos = filtrarPedidosSimuladosAtivos(createMarketplaceSimulationOrders(), [
     { nome: 'Mercado Livre', ativo: true },
     { nome: 'Shopee', ativo: false },
@@ -97,6 +100,35 @@ test('config inativa bloqueia canal e status cancel/return sao idempotentes', ()
   assert.equal(buildConciliacaoResumo({ valor_total: 100, comissao_marketplace: 10, taxa_marketplace: 5 }).valor_liquido_estimado, 85);
 });
 
+test('importacao exige itens com sku resolvido e nao marca conciliado', () => {
+  assert.throws(
+    () => buildErpPedidoFromExterno({
+      origem: 'Shopee',
+      id_externo: 'SH-2',
+      itens: [],
+      valor_total: 10,
+    }),
+    /Itens obrigatorios/,
+  );
+  assert.throws(
+    () => buildErpPedidoFromExterno({
+      origem: 'Shopee',
+      id_externo: 'SH-2',
+      itens: [{ sku_externo: 'DESCONHECIDO', descricao: 'X', quantidade: 1, preco_unitario: 10, valor_total: 10 }],
+      valor_total: 10,
+    }, { produtos: [{ id: 'p1', codigo: 'OUTRO' }] }),
+    /SKU nao resolvido/,
+  );
+  const ok = buildErpPedidoFromExterno({
+    origem: 'Amazon',
+    id_externo: 'AZ-1',
+    itens: [{ sku_externo: 'VIGA-300', descricao: 'Viga', quantidade: 1, preco_unitario: 10, valor_total: 10 }],
+    valor_total: 10,
+    comissao_marketplace: 1,
+  }, { produtos: [{ id: 'prod-1', codigo: 'VIGA-300' }] });
+  assert.equal(ok.conciliado, false);
+});
+
 test('simulacao e telas existentes deixam de inventar id e numero', async () => {
   const sim = createMarketplaceSimulationOrders();
   assert.equal(sim[0].id_externo, 'ML-SIM-001');
@@ -106,14 +138,27 @@ test('simulacao e telas existentes deixam de inventar id e numero', async () => 
   const ativa = await readFile(new URL('../src/components/integracoes/SincronizacaoMarketplacesAtiva.jsx', import.meta.url), 'utf8');
   const sync = await readFile(new URL('../src/components/integracoes/SincronizacaoMarketplaces.jsx', import.meta.url), 'utf8');
   const comercial = await readFile(new URL('../src/components/comercial/ValidarPedidosExternos.jsx', import.meta.url), 'utf8');
+  const config = await readFile(new URL('../src/components/cadastros/ConfiguracaoIntegracaoForm.jsx', import.meta.url), 'utf8');
+  const webhook = await readFile(new URL('../base44/functions/legacyIntegrationsMirror/entry.ts', import.meta.url), 'utf8');
   assert.match(ativa, /buildErpPedidoFromExterno/);
   assert.match(ativa, /filtrarPedidosSimuladosAtivos/);
+  assert.match(ativa, /applyStatusExternoMarketplace/);
+  assert.match(ativa, /assertItensMarketplaceParaImport/);
   assert.match(ativa, /reutilizado por identificador externo/);
   assert.doesNotMatch(ativa, /substring\(0, 3\)/);
   assert.match(sync, /assertMarketplaceAtivo/);
+  assert.match(sync, /applyStatusExternoMarketplace/);
   assert.match(sync, /createMarketplaceSimulationOrders/);
   assert.doesNotMatch(sync, /setTimeout\(resolve, 2000\)/);
   assert.match(comercial, /buildErpPedidoFromExterno/);
+  assert.match(comercial, /assertMarketplaceAtivo/);
+  assert.match(comercial, /groupId && empresaContextoId/);
   assert.match(comercial, /Em Revisão/);
+  assert.doesNotMatch(comercial, /catch \(_\) \{\}/);
   assert.doesNotMatch(comercial, /numero_pedido: numero/);
+  assert.match(config, /Empresa obrigatoria para configuracao de marketplace/);
+  assert.match(webhook, /itens_obrigatorios/);
+  assert.match(webhook, /nada_processado/);
+  assert.match(webhook, /marketplaceLabel/);
+  assert.doesNotMatch(webhook, /origem_pedido: 'Marketplace'/);
 });

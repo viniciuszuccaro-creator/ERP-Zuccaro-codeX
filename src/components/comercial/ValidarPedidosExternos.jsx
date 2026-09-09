@@ -11,7 +11,13 @@ import { useUser } from "@/components/lib/UserContext";
 import usePermissions from "@/components/lib/usePermissions";
 import { ProtectedAction } from "@/components/ProtectedAction";
 import { toast } from "sonner";
-import { buildErpPedidoFromExterno, stampMarketplacePedido } from "@/components/lib/marketplacePedidoPolicy";
+import {
+  assertItensMarketplaceParaImport,
+  assertMarketplaceAtivo,
+  buildErpPedidoFromExterno,
+  mapItensMarketplaceComSku,
+  stampMarketplacePedido,
+} from "@/components/lib/marketplacePedidoPolicy";
 
 export default function ValidarPedidosExternos({ windowMode = true }) {
   const queryClient = useQueryClient();
@@ -20,11 +26,11 @@ export default function ValidarPedidosExternos({ windowMode = true }) {
   const { user } = useUser();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaContextoId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaContextoId);
-  const canViewPedidosExternos = hasPermission("Comercial", "PedidoExterno", "visualizar") || hasPermission("Comercial", "Pedido", "visualizar") || hasPermission("Comercial", null, "visualizar");
-  const canImportPedidoExterno = hasPermission("Comercial", "PedidoExterno", "importar") || hasPermission("Comercial", "Pedido", "criar") || hasPermission("Comercial", null, "criar");
-  const canValidatePedidoExterno = hasPermission("Comercial", "PedidoExterno", "validar") || hasPermission("Comercial", "Pedido", "editar") || hasPermission("Comercial", null, "editar");
-  const canDeletePedidoExterno = hasPermission("Comercial", "PedidoExterno", "excluir") || hasPermission("Comercial", "Pedido", "excluir") || hasPermission("Comercial", null, "excluir");
+  const contextoValido = Boolean(groupId && empresaContextoId);
+  const canViewPedidosExternos = hasPermission("Comercial", "PedidoExterno", "visualizar") || hasPermission("Comercial", "Pedido", "visualizar");
+  const canImportPedidoExterno = hasPermission("Comercial", "PedidoExterno", "importar") || hasPermission("Comercial", "Pedido", "criar");
+  const canValidatePedidoExterno = hasPermission("Comercial", "PedidoExterno", "validar") || hasPermission("Comercial", "Pedido", "editar");
+  const canDeletePedidoExterno = hasPermission("Comercial", "PedidoExterno", "excluir") || hasPermission("Comercial", "Pedido", "excluir");
 
   const auditPedidoExterno = async ({ acao, ext = null, descricao, sucesso = true, detalhes = {} }) => {
     try {
@@ -49,7 +55,10 @@ export default function ValidarPedidosExternos({ windowMode = true }) {
         },
         data_hora: new Date().toISOString()
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error("Falha ao auditar pedido externo", error);
+      throw error;
+    }
   };
 
   const { data: externos = [], isFetching, refetch } = useQuery({
@@ -109,10 +118,16 @@ export default function ValidarPedidosExternos({ windowMode = true }) {
     mutationFn: async (ext) => {
       if (!contextoValido || !canImportPedidoExterno) {
         await auditPedidoExterno({ acao: "Importacao bloqueada", ext, descricao: "Bloqueio ao importar pedido externo", sucesso: false, detalhes: { motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" } });
-        throw new Error(!contextoValido ? "Selecione grupo ou empresa antes de importar." : "Sem permissao para importar pedido externo.");
+        throw new Error(!contextoValido ? "Selecione grupo e empresa antes de importar." : "Sem permissao para importar pedido externo.");
       }
 
+      const configs = await filterInContext("ConfiguracaoIntegracaoMarketplace", {}, "-updated_date", 100);
+      assertMarketplaceAtivo({ configs, origem: ext.origem || ext.marketplace });
+
       const produtos = await filterInContext("Produto", {}, "codigo", 500);
+      const itensMapeados = mapItensMarketplaceComSku(ext.itens, produtos);
+      assertItensMarketplaceParaImport(itensMapeados);
+
       const pedidosExistentes = await filterInContext("Pedido", {
         origem_externa_id: ext.id_externo || ext.id,
       }, "-updated_date", 1);

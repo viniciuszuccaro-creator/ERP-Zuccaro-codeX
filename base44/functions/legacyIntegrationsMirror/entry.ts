@@ -276,38 +276,88 @@ Deno.serve(async (req) => {
         // 1) Pedido (order) - upsert por origem_externa_id
         const order = payload.order || payload.pedido || null;
         let pedidoResult = null;
+        const marketplaceLabel = ({
+          mercado_livre: 'Mercado Livre',
+          mercadolivre: 'Mercado Livre',
+          shopee: 'Shopee',
+          amazon: 'Amazon',
+          magalu: 'Magalu',
+          ecommerce_site: 'Site',
+        })[prov] || String(prov);
         if (order) {
           const extId = String(order.id || order.order_id || order.code || order.external_id || '').trim();
-          if (extId) {
+          if (!extId) {
+            return Response.json({ ok: false, error: 'id_externo_obrigatorio', provider: prov }, { status: 422 });
+          }
+          const itensRaw = Array.isArray(order.items) ? order.items : (Array.isArray(order.itens) ? order.itens : []);
+          if (!itensRaw.length) {
+            return Response.json({ ok: false, error: 'itens_obrigatorios', provider: prov, external_id: extId }, { status: 422 });
+          }
+          {
             const numero = String(order.number || order.code || extId).slice(0,50);
             const statusRaw = String(order.status || '').toLowerCase();
-            const statusMap = { paid: 'Aprovado', approved: 'Aprovado', canceled: 'Cancelado', shipped: 'Em Expedição', delivered: 'Entregue', pending: 'Aguardando Aprovação' };
+            const statusMap = { paid: 'Aprovado', approved: 'Aprovado', canceled: 'Cancelado', cancelled: 'Cancelado', shipped: 'Em Expedição', delivered: 'Entregue', pending: 'Aguardando Aprovação' };
             const status = statusMap[statusRaw] || 'Rascunho';
             const total = safeNum(order.total_amount || order.total || order.amount || 0);
             const cliente = clean(order.buyer_name || order.customer_name || 'Cliente Marketplace');
             const data_pedido = (order.date || order.created_at || new Date().toISOString()).toString().slice(0,10);
+            const itens = itensRaw.map((it) => ({
+              sku_externo: clean(it.sku || it.codigo || it.sku_externo || ''),
+              descricao: clean(it.title || it.descricao || it.name || 'Item marketplace'),
+              quantidade: safeNum(it.quantity ?? it.qty ?? it.quantidade, 1),
+              preco_unitario: safeNum(it.price ?? it.preco_unitario, 0),
+              valor_total: safeNum(it.total ?? it.valor_total, safeNum(it.price, 0) * safeNum(it.quantity ?? 1, 1)),
+            }));
 
-            const found = await base44.asServiceRole.entities.Pedido.filter({ empresa_id, origem_pedido: 'Marketplace', origem_externa_id: extId }, undefined, 1).then(r=>r?.[0]||null);
+            const found = await base44.asServiceRole.entities.Pedido.filter({ empresa_id, origem_externa_id: extId }, undefined, 1).then(r=>r?.[0]||null);
             if (found) {
               if (!recordMatchesGuardScope(found, { group_id: scopedGroupId, empresa_id })) {
                 return Response.json({ error: 'pedido_fora_do_contexto_multiempresa' }, { status: 403 });
               }
-              await base44.asServiceRole.entities.Pedido.update(found.id, { status, valor_total: total });
+              await base44.asServiceRole.entities.Pedido.update(found.id, { status, valor_total: total, marketplace: marketplaceLabel, origem_pedido: marketplaceLabel });
               pedidoResult = { action: 'update', id: found.id };
             } else {
+              const foundExt = await base44.asServiceRole.entities.PedidoExterno.filter({ empresa_id, id_externo: extId }, undefined, 1).then(r=>r?.[0]||null);
+              if (!foundExt) {
+                await base44.asServiceRole.entities.PedidoExterno.create({
+                  empresa_id, group_id: scopedGroupId,
+                  origem: marketplaceLabel,
+                  marketplace: marketplaceLabel,
+                  id_externo: extId,
+                  numero_pedido_externo: numero,
+                  cliente_nome: cliente,
+                  valor_total: total,
+                  itens,
+                  status_externo: statusRaw || 'pending',
+                  status_importacao: status === 'Cancelado' ? 'Cancelado' : 'A Validar',
+                  data_pedido_externo: data_pedido,
+                });
+              }
               const novo = await base44.asServiceRole.entities.Pedido.create({
                 numero_pedido: numero,
                 cliente_nome: cliente,
                 data_pedido,
                 valor_total: total,
                 empresa_id, group_id: scopedGroupId,
-                origem_pedido: 'Marketplace',
+                origem: marketplaceLabel,
+                origem_pedido: marketplaceLabel,
+                marketplace: marketplaceLabel,
                 origem_externa_id: extId,
-                tipo: 'Pedido'
+                id_externo: extId,
+                tipo: 'Pedido',
+                status,
+                itens_revenda: itens.map((item) => ({
+                  codigo_sku: item.sku_externo,
+                  descricao: item.descricao,
+                  quantidade: item.quantidade,
+                  preco_unitario: item.preco_unitario,
+                  valor_item: item.valor_total,
+                  unidade: 'UN',
+                })),
               });
               pedidoResult = { action: 'create', id: novo.id };
             }
-            try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: pedidoResult.action === 'create' ? 'Criacao' : 'Edicao', modulo: 'Comercial', tipo_auditoria: 'integracao', entidade: prov, descricao: `Sync pedido ${extId}`, empresa_id, group_id: scopedGroupId, dados_novos: { pedidoResult, external_id: extId, status, valor_total: total }, data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportIntegrationFailure('auditoria_sync_pedido', error, { external_id: extId }); }
+            try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: pedidoResult.action === 'create' ? 'Criacao' : 'Edicao', modulo: 'Comercial', tipo_auditoria: 'integracao', entidade: prov, descricao: `Sync pedido ${extId}`, empresa_id, group_id: scopedGroupId, dados_novos: { pedidoResult, external_id: extId, marketplace: marketplaceLabel, status, valor_total: total }, data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportIntegrationFailure('auditoria_sync_pedido', error, { external_id: extId }); }
           }
         }
 
@@ -357,7 +407,11 @@ Deno.serve(async (req) => {
           try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Edicao', modulo: 'Integracoes', tipo_auditoria: 'integracao', entidade: prov, descricao: `Atualizacao de precos (${priceCount})`, empresa_id, group_id: scopedGroupId, dados_novos: { priceCount }, data_hora: new Date().toISOString(), sucesso: true }); } catch (error) { reportIntegrationFailure('auditoria_sync_precos', error, { quantidade: priceCount }); }
         }
 
-        return Response.json({ ok: true, action: 'marketplace_webhook_processed', provider: prov, results: { pedido: pedidoResult, invCount, priceCount } });
+        if (!pedidoResult && invCount === 0 && priceCount === 0) {
+          return Response.json({ ok: false, error: 'nada_processado', provider: prov }, { status: 422 });
+        }
+
+        return Response.json({ ok: true, action: 'marketplace_webhook_processed', provider: prov, marketplace: marketplaceLabel, results: { pedido: pedidoResult, invCount, priceCount } });
       }
     }
 

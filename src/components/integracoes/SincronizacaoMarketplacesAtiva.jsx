@@ -10,8 +10,11 @@ import usePermissions from '@/components/lib/usePermissions';
 import { createMarketplaceSimulationOrders } from './marketplaceSimulationData';
 import MarketplacePendingOrders from './MarketplacePendingOrders';
 import {
+  applyStatusExternoMarketplace,
+  assertItensMarketplaceParaImport,
   buildErpPedidoFromExterno,
   filtrarPedidosSimuladosAtivos,
+  mapItensMarketplaceComSku,
   MARKETPLACE_STATUS_PENDENTES,
 } from '@/components/lib/marketplacePedidoPolicy';
 
@@ -110,6 +113,7 @@ export default function SincronizacaoMarketplacesAtiva() {
         });
         throw new Error('Dados obrigatorios invalidos');
       }
+      assertItensMarketplaceParaImport(mapItensMarketplaceComSku(pedidoExterno.itens, produtosSku));
       const pedidosExistentes = await filterInContext('Pedido', { origem_externa_id: pedidoExterno.id_externo }, '-updated_date', 1);
       if (pedidosExistentes.length > 0) {
         await updateInContext('PedidoExterno', pedidoExterno.id, {
@@ -255,10 +259,15 @@ export default function SincronizacaoMarketplacesAtiva() {
 
       let criados = 0;
       for (const pedido of novosPedidos) {
-        if (String(pedido.status_externo || '').toLowerCase().includes('cancel')) {
+        const statusRaw = String(pedido.status_externo || '').toLowerCase();
+        const acaoStatus = statusRaw.includes('cancel')
+          ? 'cancelar'
+          : (statusRaw.includes('return') || statusRaw.includes('devolv') ? 'devolver' : '');
+        if (acaoStatus) {
+          const { patch } = applyStatusExternoMarketplace({ pedidoExterno: pedido, acao: acaoStatus });
           await createInContext('PedidoExterno', {
             ...pedido,
-            status_importacao: 'Cancelado',
+            ...patch,
             ...scope
           });
         } else {
@@ -270,12 +279,12 @@ export default function SincronizacaoMarketplacesAtiva() {
         }
         criados += 1;
       }
-      await auditarMarketplace('Sincronizar Marketplaces', 'Busca simulada de pedidos externos executada com escopo multiempresa.', { quantidade: criados });
+      await auditarMarketplace('Sincronizar Marketplaces', 'Busca simulada local de pedidos externos (API real pendente).', { quantidade: criados, modo: 'simulacao_local' });
 
       queryClient.invalidateQueries({ queryKey: ['pedidos-externos-pendentes'] });
       toast({
-        title: 'Sincronizacao concluida',
-        description: `${criados} pedido(s) processado(s) nos canais ativos.`
+        title: 'Sincronizacao local concluida',
+        description: `${criados} pedido(s) processado(s) nos canais ativos (simulacao; OAuth/API real pendente).`
       });
     } catch (error) {
       console.warn('Falha ao sincronizar marketplaces:', error);

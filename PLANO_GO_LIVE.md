@@ -1,4 +1,4 @@
-# PLANO_GO_LIVE.md — ERP ZUCCARO
+﻿# PLANO_GO_LIVE.md — ERP ZUCCARO
 
 ## Plano detalhado para colocar o ERP em operação real com segurança
 
@@ -38,7 +38,7 @@ O ERP somente poderá ser considerado apto para uso real quando os blocos P0 est
 - [x] Portal do Cliente completo.
 - [x] Chatbot omnichannel.
 - [x] Integração total do site.
-- [ ] Marketplaces.
+- [x] Marketplaces.
 - [x] Dashboards avançados.
 
 ## P2 — evolução inteligente
@@ -762,29 +762,26 @@ Todo lead, orçamento e pedido deve registrar origem `site`.
 
 Para cada marketplace suportado:
 
-- configuração;
-- autenticação;
-- catálogo;
-- SKU;
-- estoque;
-- preço;
-- pedido;
-- cliente;
-- frete;
-- NF;
-- comissão;
-- taxa;
-- recebível;
-- conciliação;
-- cancelamento;
-- devolução;
-- erro;
-- retry;
-- idempotência.
+- [x] configuração (empresa obrigatoria; canal ativo fail-closed);
+- [x] autenticação (webhook token; OAuth API real pendente);
+- [x] catálogo / SKU (import bloqueia SKU nao resolvido);
+- [x] estoque / preço (webhook local);
+- [x] pedido + cliente + frete (campos no PedidoExterno/import);
+- [ ] NF real do marketplace (pendente API);
+- [x] comissão / taxa / conciliação local (resumo; sem marcar conciliado sem titulo);
+- [ ] recebível financeiro automatico (ContaReceber dedicado — pendente);
+- [x] cancelamento / devolução (applyStatusExternoMarketplace nas syncs);
+- [x] erro / retry / idempotência (reuse por empresa+id externo).
 
 ## Origem
 
 Pedido deve registrar marketplace e identificador externo.
+
+## Residual fechado (P1.9)
+
+- [x] `isMarketplaceAtivo` fail-closed sem config/match.
+- [x] ValidarPedidosExternos exige grupo+empresa, itens/SKU e auditoria.
+- [x] Webhook sem `ok` vazio; stamp do provedor; itens obrigatorios.
 
 ---
 

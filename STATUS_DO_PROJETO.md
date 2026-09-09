@@ -1,4 +1,15 @@
-﻿### P1.8 - Site proprio: checkout fail-closed, pagamento honesto e canal Site
+﻿### P1.9 - Marketplaces: canal fail-closed, import SKU e webhook honesto
+- Objetivo: fechar residual Gate 15 / P1 Marketplaces nas syncs e Validar existentes (sem MarketplaceV2).
+- Diagnostico: `isMarketplaceAtivo` liberava sem config; Validar com grupo-OR-empresa, audit engolido e import sem itens/SKU; cancel hardcoded; webhook `ok` sem pedido/itens e stamp generico `Marketplace`; config sem empresa.
+- Causa raiz: guards de canal/import/webhook ainda fail-open apos o lote de sync/SKU.
+- Arquivos alterados: `marketplacePedidoPolicy.js`, `ValidarPedidosExternos.jsx`, `SincronizacaoMarketplaces*.jsx`, `ConfiguracaoIntegracaoForm.jsx`, `legacyIntegrationsMirror/entry.ts`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: stamp/idempotencia, simulacao estavel, `buildErpPedidoFromExterno`, `applyStatusExternoMarketplace`.
+- Alteracoes: canal ativo fail-closed; import exige itens+SKU; cancel/devolucao via policy; webhook stamp provedor + itens + `nada_processado`; config exige empresa; toasts de sync como simulacao local.
+- Multiempresa/RBAC: Validar exige grupo+empresa; permissoes granulares PedidoExterno/Pedido.
+- Pendencia: OAuth/NF/recebivel reais das APIs; checklist P1 Marketplaces marcado (API real segue pendente).
+- Validacoes: `node --test tests/marketplace-pedido-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem: P1 checklist encerrado — seguir P2/IA ou residual Go-Live conforme STATUS.
+### P1.8 - Site proprio: checkout fail-closed, pagamento honesto e canal Site
 - Objetivo: fechar residual Gate 14 / P1 Integracao total do site no `OrcamentoSite` existente (sem SiteV2).
 - Diagnostico: checkout sem contato; ContaReceber com status `gerado` sem link; auditoria engolida; lead/IA sem empresa; CatalogoWeb em grupo sem `empresa_id`; widget Site so via CRM.
 - Causa raiz: guards de contato/pagamento/contexto incompletos apos o lote de catalogo/estoque.
