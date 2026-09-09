@@ -171,6 +171,7 @@ export const localApiUser = {
   app_id: 'erp-zuccaro-local',
   is_service: false,
   perfil_acesso_id: 'local_perfil_admin',
+  mestre_local: true,
   disabled: false,
   is_verified: true,
   created_date: now(),
@@ -333,6 +334,20 @@ const uniqueByString = (items = []) => {
   });
 };
 
+const isMasterLocalUser = (user = {}) => {
+  const id = String(user?.id || '');
+  const email = String(user?.email || '').trim().toLowerCase();
+  return id === localApiUser.id
+    || email === String(localApiUser.email).toLowerCase()
+    || id === '' // seed incompleto: reidrata como mestre local
+    || user?.mestre_local === true;
+};
+
+const buildMasterLocalPermissions = (permissoes = {}) => ({
+  ...(permissoes && typeof permissoes === 'object' ? permissoes : {}),
+  '*': [...GRANULAR_PERMISSION_ACTIONS],
+});
+
 const normalizeLocalUser = (user = {}) => {
   const groupId = 'local_grupo_cpa';
   const empresaIds = ['local_empresa_3z', 'local_empresa_cpa'];
@@ -346,12 +361,22 @@ const normalizeLocalUser = (user = {}) => {
     groupId,
     ...existingGrupos.map((v) => (typeof v === 'string' ? v : v?.grupo_id || v?.group_id || v?.id)),
   ]);
+  const master = isMasterLocalUser(user);
 
   return {
     ...localApiUser,
     ...user,
-    role: user.id === localApiUser.id ? (user.role || 'admin') : (user.role || 'user'),
-    perfil_acesso_id: user.perfil_acesso_id || (user.id === localApiUser.id ? 'local_perfil_admin' : null),
+    id: master ? localApiUser.id : user.id,
+    email: master ? (user.email || localApiUser.email) : user.email,
+    full_name: master
+      ? (user.full_name && String(user.full_name).trim() && String(user.full_name).trim() !== 'Usuário'
+        ? user.full_name
+        : localApiUser.full_name)
+      : user.full_name,
+    // Conta mestre local nunca perde admin/perfil — usuarios comuns continuam fail-closed.
+    role: master ? 'admin' : (user.role || 'user'),
+    perfil_acesso_id: master ? 'local_perfil_admin' : (user.perfil_acesso_id || null),
+    mestre_local: master ? true : Boolean(user.mestre_local),
     contexto_atual: user.contexto_atual || 'empresa',
     empresa_atual_id: user.empresa_atual_id || empresaIds[0],
     empresa_padrao_id: user.empresa_padrao_id || empresaIds[0],
@@ -362,7 +387,8 @@ const normalizeLocalUser = (user = {}) => {
     empresas_vinculadas: linkedEmpresaIds.map((empresaId) => ({
       empresa_id: empresaId,
       ativo: true,
-      nivel_acesso: existingEmpresas.find((v) => v?.empresa_id === empresaId)?.nivel_acesso || 'Administrador',
+      nivel_acesso: existingEmpresas.find((v) => v?.empresa_id === empresaId)?.nivel_acesso
+        || (master ? 'Administrador' : 'Operacional'),
     })),
     grupos_vinculados: linkedGroupIds.map((gid) => ({
       grupo_id: gid,
@@ -404,7 +430,9 @@ const ensureLocalTopology = (db) => {
     .map((empresa) => empresa?.id)
     .filter(Boolean);
 
-  let currentUser = normalizeLocalUser(db.User?.[0] || {});
+  let currentUser = normalizeLocalUser(
+    (db.User || []).find((item) => isMasterLocalUser(item)) || db.User?.[0] || {},
+  );
   if (importedGroup) {
     const currentGroupIsLocal = !currentUser.grupo_atual_id || String(currentUser.grupo_atual_id).startsWith('local_');
     const defaultGroupIsLocal = !currentUser.grupo_padrao_id || String(currentUser.grupo_padrao_id).startsWith('local_');
@@ -441,32 +469,46 @@ const ensureLocalTopology = (db) => {
 
   const perfil = seeded.PerfilAcesso[0];
   if (!isRecordDeletedLocally('PerfilAcesso', perfil.id)) {
-    ensureRecord(db, 'PerfilAcesso', perfil.id, () => perfil);
+    ensureRecord(db, 'PerfilAcesso', perfil.id, () => ({
+      ...perfil,
+      permissoes: buildMasterLocalPermissions(perfil.permissoes),
+    }));
   }
 
   db.PerfilAcesso = (db.PerfilAcesso || []).map((item) => {
     const hasScope = Boolean(item.group_id || item.grupo_id || item.empresa_id || item.empresa_atual_id);
     const legacyGroup = item.group_id === 'grupo_001' || item.grupo_id === 'grupo_001';
     const isLocalAdminProfile = String(item.id) === 'local_perfil_admin';
-    const permissoes = isLocalAdminProfile && !item?.permissoes?.['*']
-      ? { ...item.permissoes, '*': [...GRANULAR_PERMISSION_ACTIONS] }
+    const permissoes = isLocalAdminProfile
+      ? buildMasterLocalPermissions(item.permissoes)
       : item.permissoes;
     if (hasScope && !legacyGroup) {
       return {
         ...item,
-        nome: item.nome || item.nome_perfil,
+        nome: item.nome || item.nome_perfil || (isLocalAdminProfile ? 'Administrador Local' : item.nome),
         grupo_id: item.grupo_id || item.group_id || canonicalGroupId,
         permissoes,
+        ativo: isLocalAdminProfile ? true : item.ativo,
       };
     }
     return {
       ...item,
-      nome: item.nome || item.nome_perfil,
+      nome: item.nome || item.nome_perfil || (isLocalAdminProfile ? 'Administrador Local' : item.nome),
       group_id: canonicalGroupId,
       grupo_id: canonicalGroupId,
       permissoes,
+      ativo: isLocalAdminProfile ? true : item.ativo,
     };
   });
+
+  // Garante usuario mestre presente e com perfil completo (nao remove usuarios comuns).
+  const masterUser = normalizeLocalUser(
+    (db.User || []).find((item) => isMasterLocalUser(item)) || seeded.User[0] || localApiUser,
+  );
+  ensureRecord(db, 'User', masterUser.id, () => masterUser);
+  db.User = (db.User || []).map((item) => (
+    isMasterLocalUser(item) ? normalizeLocalUser({ ...item, ...masterUser, ...item, id: localApiUser.id }) : item
+  ));
 
   return db;
 };
@@ -496,15 +538,24 @@ const saveDb = (db) => {
 
 const readUser = () => {
   const raw = safeStorage.getItem(USER_KEY);
+  let user = null;
   if (raw) {
     try {
-      const user = normalizeLocalUser(JSON.parse(raw));
-      safeStorage.setItem(USER_KEY, JSON.stringify(user));
-      return user;
+      user = normalizeLocalUser(JSON.parse(raw));
     } catch (error) { reportLocalClientFailure('Falha ao carregar usuario local', error); }
   }
-  const db = loadDb();
-  return normalizeLocalUser(db.User?.[0] || {});
+  if (!user) {
+    const db = loadDb();
+    user = normalizeLocalUser(
+      (db.User || []).find((item) => isMasterLocalUser(item)) || db.User?.[0] || localApiUser,
+    );
+  }
+  // Sessao local orfã (sem perfil) reidrata o mestre — usuario comum com perfil restrito permanece fail-closed.
+  if (!user.perfil_acesso_id) {
+    user = normalizeLocalUser({ ...localApiUser, mestre_local: true });
+  }
+  safeStorage.setItem(USER_KEY, JSON.stringify(user));
+  return user;
 };
 
 const writeUser = (updates) => {

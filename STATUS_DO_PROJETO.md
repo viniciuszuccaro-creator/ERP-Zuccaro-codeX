@@ -1,4 +1,15 @@
-﻿### P0.23 / Fiscal-Comercial residual - NF mock e Pedidos audit fail-closed
+﻿### P0.24 / Acesso mestre local - perfil wildcard reidratado
+- Objetivo: restaurar acesso mestre do Administrador Local para homologacao (sem criar ControlesV2).
+- Diagnostico: sessao local perdia `role=admin`/perfil; UI em "Usuário"; `ProtectedSection` bloqueava todos os modulos; `*` do perfil so era preenchido se ausente.
+- Causa raiz: `normalizeLocalUser` permitia `role: user` no id mestre; perfil admin nao era forçado a cada load.
+- Arquivos alterados: `localBase44Client.js`, `tests/entity-guard-policy.test.js`, `STATUS`.
+- Reutilizado: `GRANULAR_PERMISSION_ACTIONS`, `local_perfil_admin`, `entityGuard` local.
+- Alteracoes: `isMasterLocalUser` + `buildMasterLocalPermissions`; mestre sempre admin + `local_perfil_admin` + `*`; usuario comum com perfil restrito permanece fail-closed.
+- Multiempresa/RBAC: sem bypass por role no frontend; mestre via perfil wildcard existente.
+- Pendencia: Go-Live humano Gates 18-20; criar usuario comum depois do teste mestre.
+- Validacoes: `node --test tests/entity-guard-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem: HUMAN_ONLY Gates 18-20 (com ERP acessivel para piloto).
+### P0.23 / Fiscal-Comercial residual - NF mock e Pedidos audit fail-closed
 - Objetivo: fechar mock emitir/cancelar como SEFAZ real e audit vazio em PedidosTab (sem FiscalV2/ComercialV2).
 - Diagnostico: `NotasFiscaisTab` gravava Autorizada/Cancelada apos mock sem stamp; cancel sempre `mockCancelarNFe`; audit warn-only; PedidosTab `catch (_) {}`; contexto OR.
 - Causa raiz: residual P0.9 nao distinguiu homologacao carimbada de producao no cancel/update.

@@ -96,5 +96,8 @@ test('entityGuard and local RBAC no longer allow every action by admin role', as
   assert.doesNotMatch(permissions, /user\.role === "admin"\) return true/);
   assert.doesNotMatch(localClient, /admin-local/);
   assert.match(localClient, /perfil-wildcard/);
+  assert.match(localClient, /buildMasterLocalPermissions/);
+  assert.match(localClient, /isMasterLocalUser/);
+  assert.match(localClient, /mestre_local: true/);
   assert.match(permissions, /normalizeGuardAction/);
 });
