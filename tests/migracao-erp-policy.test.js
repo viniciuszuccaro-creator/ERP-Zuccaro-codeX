@@ -149,6 +149,7 @@ test('importadores existentes fazem staging e reconciliam', async () => {
   const lote = await readFile(new URL('../src/components/cadastros/ImportarProdutosLote.jsx', import.meta.url), 'utf8');
   const planilha = await readFile(new URL('../src/components/estoque/ImportadorProdutosPlanilha.jsx', import.meta.url), 'utf8');
   const nfe = await readFile(new URL('../src/components/cadastros/ImportarProdutosNFe.jsx', import.meta.url), 'utf8');
+  const nfeAuto = await readFile(new URL('../src/components/cadastros/ImportacaoProdutoNFe.jsx', import.meta.url), 'utf8');
   const backup = await readFile(new URL('../src/components/sistema/ConfiguracaoBackup.jsx', import.meta.url), 'utf8');
   assert.match(lote, /assertReconciliacaoMigracao/);
   assert.match(lote, /confirmado: false/);
@@ -163,6 +164,11 @@ test('importadores existentes fazem staging e reconciliam', async () => {
   assert.match(nfe, /origem_migracao: 'nfe_xml'/);
   assert.match(nfe, /groupId && \(contexto === 'grupo' \|\| empresaId\)/);
   assert.doesNotMatch(nfe, /catch \(_\) \{\}/);
+  assert.match(nfeAuto, /stampMigracaoRecord/);
+  assert.match(nfeAuto, /assertReconciliacaoMigracao/);
+  assert.match(nfeAuto, /origem_migracao: 'nfe_xml'/);
+  assert.match(nfeAuto, /groupId && \(contexto === 'grupo' \|\| empresaId\)/);
+  assert.doesNotMatch(nfeAuto, /catch \(_\) \{\}/);
   assert.match(backup, /throw error/);
   assert.doesNotMatch(backup, /Falha ao registrar configuracao de backup\.', error\);\r?\n\s*\}/);
 });

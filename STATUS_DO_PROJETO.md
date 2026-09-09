@@ -1,4 +1,15 @@
-﻿### P0.17 / Gate 20 residual - ConfiguracaoBackup load scoped
+﻿### P0.18 / Gate 18 residual - ImportacaoProdutoNFe fail-closed
+- Objetivo: alinhar o importador automatico NF-e gemelo ao contrato de migracao (sem MigracaoV2).
+- Diagnostico: `ImportacaoProdutoNFe` ainda tinha OR fail-open, `catch (_)` em audit e create sem legado/lote/reconciliacao.
+- Causa raiz: P0.15 fechou so `ImportarProdutosNFe`; o gemelo em Cadastros ficou fora.
+- Arquivos alterados: `ImportacaoProdutoNFe.jsx`, `tests/migracao-erp-policy.test.js`, `PLANO_GO_LIVE.md`.
+- Reutilizado: `stampMigracaoRecord`, `assertReconciliacaoMigracao`, padrao `ImportarProdutosNFe`.
+- Alteracoes: contexto grupo+empresa; audit rethrow; stamp nfe_xml + reconciliacao; InvokeLLM com escopo.
+- Multiempresa/RBAC: exige groupId e (grupo ou empresa); Cadastros/Estoque Produto criar.
+- Pendencia: PAD/historicos em massa e rodada humana (Gate 18); 10 cenarios (Gate 19); virada Gate 20.
+- Validacoes: `node --test tests/migracao-erp-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem: HUMAN_ONLY Gates 18-20.
+### P0.17 / Gate 20 residual - ConfiguracaoBackup load scoped
 - Objetivo: fechar residual de leitura da config de backup/virada no escopo (sem BackupV2).
 - Diagnostico: UI ainda usava `filter` + `configs[0]` apos o helper `resolveConfigBackupInScope` existir no client.
 - Causa raiz: load path nao reutilizava o contrato fail-closed de escopo.

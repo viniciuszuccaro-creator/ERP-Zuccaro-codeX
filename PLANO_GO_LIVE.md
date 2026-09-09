@@ -928,6 +928,7 @@ Para cada lote comparar:
 - [x] ImportarProdutosLote exige group_id, legado e reconciliacao apos gravar.
 - [x] ImportadorProdutosPlanilha com staging confirm + reconciliacao (sem gravar falhas como sucesso).
 - [x] ImportarProdutosNFe alinhado ao contrato de migracao (legado/lote/reconciliacao/auditoria).
+- [x] ImportacaoProdutoNFe (gemelo automatico) alinhado ao mesmo contrato fail-closed.
 - [x] ConfiguracaoBackup sem engolir falha de AuditLog.
 - [ ] PAD/agente visual; historicos pedidos/financeiro/fiscal em massa; rodada humana com arquivo real do ERP antigo.
 
