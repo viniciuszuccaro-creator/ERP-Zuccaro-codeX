@@ -7,6 +7,7 @@ import {
   applyMarketplaceCreate,
   applyStatusExternoMarketplace,
   assertMarketplaceAtivo,
+  assertPedidoExternoImportavel,
   assertPedidoExternoOnCreate,
   assertPedidoMarketplaceOnCreate,
   buildConciliacaoResumo,
@@ -14,6 +15,7 @@ import {
   filtrarPedidosSimuladosAtivos,
   isMarketplaceAtivo,
   resolveSkuMarketplace,
+  stampPedidoExternoSimulacao,
 } from '../src/components/lib/marketplacePedidoPolicy.js';
 
 test('pedido externo exige empresa, marketplace e id externo', () => {
@@ -134,6 +136,9 @@ test('simulacao e telas existentes deixam de inventar id e numero', async () => 
   assert.equal(sim[0].id_externo, 'ML-SIM-001');
   assert.ok(sim.some((item) => item.status_externo === 'cancelled'));
   assert.doesNotMatch(JSON.stringify(sim), /Date\.now|Math\.random/);
+  const stamped = stampPedidoExternoSimulacao({ ...sim[0], empresa_id: 'e1' });
+  assert.equal(stamped.simulacao, true);
+  assert.throws(() => assertPedidoExternoImportavel(stamped), /simulado/);
 
   const ativa = await readFile(new URL('../src/components/integracoes/SincronizacaoMarketplacesAtiva.jsx', import.meta.url), 'utf8');
   const sync = await readFile(new URL('../src/components/integracoes/SincronizacaoMarketplaces.jsx', import.meta.url), 'utf8');
@@ -144,11 +149,19 @@ test('simulacao e telas existentes deixam de inventar id e numero', async () => 
   assert.match(ativa, /filtrarPedidosSimuladosAtivos/);
   assert.match(ativa, /applyStatusExternoMarketplace/);
   assert.match(ativa, /assertItensMarketplaceParaImport/);
+  assert.match(ativa, /assertPedidoExternoImportavel/);
+  assert.match(ativa, /stampPedidoExternoSimulacao/);
+  assert.match(ativa, /origem_cadastro: 'marketplace'/);
+  assert.match(ativa, /throw error/);
+  assert.doesNotMatch(ativa, /console\.warn\('Falha ao auditar marketplace:/);
   assert.match(ativa, /reutilizado por identificador externo/);
   assert.doesNotMatch(ativa, /substring\(0, 3\)/);
   assert.match(sync, /assertMarketplaceAtivo/);
   assert.match(sync, /applyStatusExternoMarketplace/);
   assert.match(sync, /createMarketplaceSimulationOrders/);
+  assert.match(sync, /stampPedidoExternoSimulacao/);
+  assert.match(sync, /throw error/);
+  assert.doesNotMatch(sync, /console\.warn\('Falha ao auditar marketplace:/);
   assert.doesNotMatch(sync, /setTimeout\(resolve, 2000\)/);
   assert.match(comercial, /buildErpPedidoFromExterno/);
   assert.match(comercial, /assertMarketplaceAtivo/);

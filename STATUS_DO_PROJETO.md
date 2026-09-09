@@ -1,4 +1,15 @@
-﻿### P0.20 / Gate 18 residual - ImportacaoNFeRecebimento fail-closed
+﻿### P1.10 / Marketplace residual - sync simulado nao importavel
+- Objetivo: fechar residual fail-open nas syncs Marketplace (sem MarketplaceV2).
+- Diagnostico: audit com warn; simulacao gravava PedidoExterno importavel; Cliente sem provenance.
+- Causa raiz: preview local tratado como pedido real apos P1.9.
+- Arquivos alterados: `marketplacePedidoPolicy.js`, `SincronizacaoMarketplacesAtiva.jsx`, `SincronizacaoMarketplaces.jsx`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: `stampMarketplacePedido`, canal ativo, ValidarPedidosExternos.
+- Alteracoes: `stampPedidoExternoSimulacao`; import bloqueia simulado; audit rethrow; Cliente com origem marketplace.
+- Multiempresa/RBAC: group+empresa ja exigidos; Integracoes criar/editar/executar.
+- Pendencia: OAuth/API real marketplace; Go-Live humano Gates 18-20.
+- Validacoes: `node --test tests/marketplace-pedido-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem: HUMAN_ONLY Gates 18-20.
+### P0.20 / Gate 18 residual - ImportacaoNFeRecebimento fail-closed
 - Objetivo: impedir recebimento mock gravar estoque e fechar OR/audit fail-open (sem RecebimentoV2).
 - Diagnostico: contexto grupo-OR-empresa; audit com warn; preview mock confirmava MovimentacaoEstoque com IDs ficticios.
 - Causa raiz: tela de preview IA ainda tratava simulacao como recebimento real.

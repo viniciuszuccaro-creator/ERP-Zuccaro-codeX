@@ -783,6 +783,11 @@ Pedido deve registrar marketplace e identificador externo.
 - [x] ValidarPedidosExternos exige grupo+empresa, itens/SKU e auditoria.
 - [x] Webhook sem `ok` vazio; stamp do provedor; itens obrigatorios.
 
+## Residual fechado (P1.10)
+
+- [x] Sync local marca `PedidoExterno` como simulacao e bloqueia import.
+- [x] Audit das syncs com rethrow; Cliente marketplace com provenance.
+
 ---
 
 # 18. GATE 16 — IA TRANSVERSAL

@@ -16,6 +16,7 @@ import {
   applyStatusExternoMarketplace,
   assertMarketplaceAtivo,
   filtrarPedidosSimuladosAtivos,
+  stampPedidoExternoSimulacao,
 } from '@/components/lib/marketplacePedidoPolicy';
 
 /**
@@ -64,7 +65,8 @@ export default function SincronizacaoMarketplaces({ empresaId: empresaIdProp }) 
         data_hora: new Date().toISOString()
       });
     } catch (error) {
-      console.warn('Falha ao auditar marketplace:', error);
+      console.error('Falha ao auditar marketplace:', error);
+      throw error;
     }
   };
   const [config, setConfig] = useState({
@@ -106,7 +108,7 @@ export default function SincronizacaoMarketplaces({ empresaId: empresaIdProp }) 
     mutationFn: async (marketplace) => {
       if (!contextoValido) {
         await auditarMarketplace('Bloqueio sem contexto', 'Tentativa de sincronizar marketplace sem grupo ou empresa.', { marketplace });
-        throw new Error('Selecione grupo ou empresa antes de sincronizar marketplaces.');
+        throw new Error('Selecione grupo e empresa antes de sincronizar marketplaces.');
       }
       if (!podeExecutar) {
         await auditarMarketplace('Bloqueio por permissao', 'Tentativa de sincronizar marketplace sem permissao.', { marketplace });
@@ -131,17 +133,17 @@ export default function SincronizacaoMarketplaces({ empresaId: empresaIdProp }) 
           : (statusRaw.includes('return') || statusRaw.includes('devolv') ? 'devolver' : '');
         if (acaoStatus) {
           const { patch } = applyStatusExternoMarketplace({ pedidoExterno: pedido, acao: acaoStatus });
-          await createInContext('PedidoExterno', {
+          await createInContext('PedidoExterno', stampPedidoExternoSimulacao({
             ...pedido,
             ...patch,
             ...scope,
-          });
+          }));
         } else {
-          await createInContext('PedidoExterno', {
+          await createInContext('PedidoExterno', stampPedidoExternoSimulacao({
             ...pedido,
             status_importacao: 'A Validar',
             ...scope,
-          });
+          }));
         }
         novos += 1;
       }
@@ -160,11 +162,11 @@ export default function SincronizacaoMarketplaces({ empresaId: empresaIdProp }) 
       queryClient.invalidateQueries({ queryKey: ['pedidos-externos-pendentes'] });
       toast({
         title: `${resultado.marketplace} sincronizado (local)`,
-        description: `${resultado.novos_pedidos} pedidos novos — simulacao; OAuth/API real pendente.`
+        description: `${resultado.novos_pedidos} pedidos simulados — nao importaveis ate API real.`
       });
     },
     onError: async (error) => {
-      console.warn('Falha ao sincronizar marketplace:', error);
+      console.error('Falha ao sincronizar marketplace:', error);
       await auditarMarketplace('Erro Sincronizar Marketplace', 'Falha ao sincronizar marketplace.', { tipo_erro: error?.name || 'Error', mensagem: error?.message });
       toast({
         title: 'Sincronizacao bloqueada',
@@ -214,7 +216,7 @@ export default function SincronizacaoMarketplaces({ empresaId: empresaIdProp }) 
         existente?.id || null
       );
     } catch (error) {
-      console.warn('Falha ao salvar marketplace:', error);
+      console.error('Falha ao salvar marketplace:', error);
       await auditarMarketplace(
         'Erro Alterar Status Marketplace',
         'Falha ao persistir status de marketplace.',

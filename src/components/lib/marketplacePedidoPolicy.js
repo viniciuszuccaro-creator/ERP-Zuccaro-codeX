@@ -29,6 +29,23 @@ export const stampMarketplacePedido = (record = {}) => {
   };
 };
 
+export const stampPedidoExternoSimulacao = (record = {}) => stampMarketplacePedido({
+  ...record,
+  simulacao: true,
+  origem_simulacao: 'marketplace_local',
+});
+
+export const isPedidoExternoSimulado = (pedido = {}) => (
+  pedido?.simulacao === true || Boolean(firstText(pedido?.origem_simulacao))
+);
+
+export const assertPedidoExternoImportavel = (pedidoExterno = {}) => {
+  if (isPedidoExternoSimulado(pedidoExterno)) {
+    throw new Error('Pedido simulado nao pode ser importado. Aguarde API real do marketplace.');
+  }
+  return true;
+};
+
 export const findPedidoExternoDuplicado = (record = {}, pedidosExternos = []) => {
   const empresaId = firstText(record.empresa_id);
   const idExterno = firstText(record.id_externo, record.origem_externa_id);

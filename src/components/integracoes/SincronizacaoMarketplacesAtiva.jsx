@@ -12,10 +12,12 @@ import MarketplacePendingOrders from './MarketplacePendingOrders';
 import {
   applyStatusExternoMarketplace,
   assertItensMarketplaceParaImport,
+  assertPedidoExternoImportavel,
   buildErpPedidoFromExterno,
   filtrarPedidosSimuladosAtivos,
   mapItensMarketplaceComSku,
   MARKETPLACE_STATUS_PENDENTES,
+  stampPedidoExternoSimulacao,
 } from '@/components/lib/marketplacePedidoPolicy';
 
 /**
@@ -60,7 +62,8 @@ export default function SincronizacaoMarketplacesAtiva() {
         data_hora: new Date().toISOString()
       });
     } catch (error) {
-      console.warn('Falha ao auditar marketplace:', error);
+      console.error('Falha ao auditar marketplace:', error);
+      throw error;
     }
   };
 
@@ -89,12 +92,13 @@ export default function SincronizacaoMarketplacesAtiva() {
     mutationFn: async (pedidoExterno) => {
       if (!contextoValido) {
         await auditarMarketplace('Bloqueio sem contexto', 'Tentativa de importar pedido externo sem grupo ou empresa.', { pedido_externo_id: pedidoExterno?.id });
-        throw new Error('Selecione grupo ou empresa antes de importar pedidos.');
+        throw new Error('Selecione grupo e empresa antes de importar pedidos.');
       }
       if (!podeImportar) {
         await auditarMarketplace('Bloqueio por permissao', 'Tentativa de importar pedido externo sem permissao.', { pedido_externo_id: pedidoExterno?.id });
         throw new Error('Seu perfil nao permite importar pedidos externos.');
       }
+      assertPedidoExternoImportavel(pedidoExterno);
       const pedidoNoEscopo = pedidoExterno?.group_id === groupId && pedidoExterno?.empresa_id === empresaId;
       if (!pedidoNoEscopo || !['A Validar', 'Em Revisão', 'Importado'].includes(pedidoExterno?.status_importacao)) {
         await auditarMarketplace('Bloqueio pedido invalido', 'Pedido externo rejeitado por escopo ou estado invalido.', {
@@ -167,6 +171,10 @@ export default function SincronizacaoMarketplacesAtiva() {
               principal: true
             }],
             origem_pedido: pedidoExterno.origem,
+            origem_cadastro: 'marketplace',
+            marketplace: pedidoExterno.origem,
+            codigo_legado: documento,
+            id_antigo: documento,
             ...scope
           });
           clienteId = novoCliente.id;
@@ -223,7 +231,7 @@ export default function SincronizacaoMarketplacesAtiva() {
     if (!contextoValido) {
       toast({
         title: 'Contexto obrigatorio',
-        description: 'Selecione grupo ou empresa antes de buscar pedidos.',
+        description: 'Selecione grupo e empresa antes de buscar pedidos.',
         variant: 'destructive'
       });
       await auditarMarketplace('Bloqueio sem contexto', 'Tentativa de sincronizar marketplaces sem grupo ou empresa.');
@@ -265,17 +273,17 @@ export default function SincronizacaoMarketplacesAtiva() {
           : (statusRaw.includes('return') || statusRaw.includes('devolv') ? 'devolver' : '');
         if (acaoStatus) {
           const { patch } = applyStatusExternoMarketplace({ pedidoExterno: pedido, acao: acaoStatus });
-          await createInContext('PedidoExterno', {
+          await createInContext('PedidoExterno', stampPedidoExternoSimulacao({
             ...pedido,
             ...patch,
             ...scope
-          });
+          }));
         } else {
-          await createInContext('PedidoExterno', {
+          await createInContext('PedidoExterno', stampPedidoExternoSimulacao({
             ...pedido,
             status_importacao: 'A Validar',
             ...scope
-          });
+          }));
         }
         criados += 1;
       }
@@ -284,12 +292,12 @@ export default function SincronizacaoMarketplacesAtiva() {
       queryClient.invalidateQueries({ queryKey: ['pedidos-externos-pendentes'] });
       toast({
         title: 'Sincronizacao local concluida',
-        description: `${criados} pedido(s) processado(s) nos canais ativos (simulacao; OAuth/API real pendente).`
+        description: `${criados} pedido(s) simulados nos canais ativos (nao importaveis ate API real).`
       });
     } catch (error) {
-      console.warn('Falha ao sincronizar marketplaces:', error);
+      console.error('Falha ao sincronizar marketplaces:', error);
       await auditarMarketplace('Erro Sincronizar Marketplaces', 'Falha na busca de pedidos externos.', { tipo_erro: 'unexpected_error' });
-      toast({ title: 'Erro na sincronizacao', description: 'Nao foi possivel buscar novos pedidos.', variant: 'destructive' });
+      toast({ title: 'Erro na sincronizacao', description: error?.message || 'Nao foi possivel buscar novos pedidos.', variant: 'destructive' });
     } finally {
       setSincronizando(false);
     }
