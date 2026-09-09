@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Acao critica do agente exige confirmacao humana.' }, { status: 403 });
     }
 
-    const opp = payload?.data || await base44.asServiceRole.entities.Oportunidade.get(entityId);
+    const opp = payload?.data || await base44.entities.Oportunidade.get(entityId);
     const groupId = payload?.group_id || opp?.group_id || opp?.grupo_id || user.grupo_atual_id || null;
     const empresaId = payload?.empresa_id || opp?.empresa_id || user.empresa_atual_id || null;
 
@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
       cliente: opp?.cliente_nome,
     })}`;
 
-    const res = await base44.asServiceRole.integrations.Core.InvokeLLM({
+    const res = await base44.integrations.Core.InvokeLLM({
       prompt,
       group_id: groupId,
       empresa_id: empresaId,
@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
     }
 
     if (simulate || !confirmado) {
-      await base44.asServiceRole.entities.AuditLog.create({
+      await base44.entities.AuditLog.create({
         usuario: user?.full_name || user?.email || 'Usuario',
         usuario_id: user?.id || null,
         acao: 'Analise',
@@ -91,10 +91,10 @@ Deno.serve(async (req) => {
     }
 
     if (Object.keys(patch).length) {
-      await base44.asServiceRole.entities.Oportunidade.update(entityId, patch);
+      await base44.entities.Oportunidade.update(entityId, patch);
     }
 
-    await base44.asServiceRole.entities.AuditLog.create({
+    await base44.entities.AuditLog.create({
       usuario: user?.full_name || user?.email || 'Usuario',
       usuario_id: user?.id || null,
       acao: 'Edicao',

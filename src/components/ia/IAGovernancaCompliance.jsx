@@ -10,22 +10,34 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import { useUser } from '@/components/lib/UserContext';
 import usePermissions from '@/components/lib/usePermissions';
 import { toast } from 'sonner';
+import {
+  assertIaUiContext,
+  buildSodConflictSuggestions,
+  requireIaHumanConfirm,
+  stampIaLogSugestao,
+} from '@/components/lib/iaTransversalPolicy';
 
 export default function IAGovernancaCompliance() {
   const [analisando, setAnalisando] = useState(false);
+  const [resultadoAnalise, setResultadoAnalise] = useState(null);
   const queryClient = useQueryClient();
-  const { contexto, empresaAtual, grupoAtual, empresasDoGrupo = [], filterInContext } = useContextoVisual();
+  const { contexto, empresaAtual, grupoAtual, empresasDoGrupo = [], filterInContext, createInContext, updateInContext, estaNoGrupo } = useContextoVisual();
   const { user } = useUser();
   const { isAdmin, hasPermission } = usePermissions();
-  const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
-    try { return localStorage.getItem('group_atual_id'); } catch { return null; }
-  })();
-  const empresaAtivaId = contexto === 'grupo' ? null : empresaAtual?.id;
-  const hasValidScope = !!(empresaAtivaId || grupoAtivoId);
-  const scopeKey = empresaAtivaId || grupoAtivoId || 'sem-contexto';
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const scopeType = estaNoGrupo || contexto === 'grupo' ? 'grupo' : 'empresa';
+  let hasValidScope = false;
+  try {
+    assertIaUiContext({ groupId, empresaId, scopeType });
+    hasValidScope = true;
+  } catch {
+    hasValidScope = false;
+  }
+  const scopeKey = `${groupId || 'sem-grupo'}|${empresaId || 'sem-empresa'}|${scopeType}`;
   const scope = {
-    ...(grupoAtivoId ? { group_id: grupoAtivoId } : {}),
-    ...(empresaAtivaId ? { empresa_id: empresaAtivaId } : {}),
+    ...(groupId ? { group_id: groupId } : {}),
+    ...(scopeType !== 'grupo' && empresaId ? { empresa_id: empresaId } : {}),
   };
   const podeExecutar = isAdmin() || hasPermission('Sistema', 'Seguranca', 'editar') || hasPermission('Sistema', 'Segurança', 'editar');
   const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
@@ -34,26 +46,26 @@ export default function IAGovernancaCompliance() {
   const usuarioNoEscopo = (usuario) => {
     const vinculadas = normalizeEmpresaIds(usuario?.empresas_vinculadas);
     const temMarcadorEscopo = Boolean(usuario?.group_id || usuario?.grupo_id || usuario?.grupo_atual_id || usuario?.empresa_id || usuario?.empresa_atual_id || vinculadas.length);
-    if (!temMarcadorEscopo) return true;
-    if (contexto === 'grupo') {
+    if (!temMarcadorEscopo) return false;
+    if (scopeType === 'grupo') {
       const empresasIds = empresasDoGrupo.map((empresa) => empresa.id);
-      return usuario.group_id === grupoAtivoId ||
-        usuario.grupo_id === grupoAtivoId ||
-        usuario.grupo_atual_id === grupoAtivoId ||
+      return usuario.group_id === groupId ||
+        usuario.grupo_id === groupId ||
+        usuario.grupo_atual_id === groupId ||
         vinculadas.some((id) => empresasIds.includes(id));
     }
-    return usuario.empresa_id === empresaAtivaId ||
-      usuario.empresa_atual_id === empresaAtivaId ||
-      vinculadas.includes(empresaAtivaId);
+    return usuario.empresa_id === empresaId ||
+      usuario.empresa_atual_id === empresaId ||
+      vinculadas.includes(empresaId);
   };
 
   const auditarIA = async ({ acao, descricao, dadosNovos = null }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || 'Usuario local',
         usuario_id: user?.id || null,
-        empresa_id: empresaAtivaId || null,
-        group_id: grupoAtivoId || null,
+        empresa_id: scope.empresa_id || null,
+        group_id: scope.group_id || null,
         acao,
         modulo: 'Seguranca',
         entidade: 'IA_Governanca',
@@ -62,7 +74,8 @@ export default function IAGovernancaCompliance() {
         data_hora: new Date().toISOString()
       });
     } catch (error) {
-      console.warn('Falha ao auditar IA de governanca:', error);
+      console.error('Falha ao auditar IA de governanca:', error);
+      throw error;
     }
   };
 
@@ -75,28 +88,24 @@ export default function IAGovernancaCompliance() {
   const { data: usuarios = [] } = useQuery({
     queryKey: ['usuarios', scopeKey],
     queryFn: async () => {
-      const rows = await base44.entities.User.list();
-      return rows.filter(usuarioNoEscopo);
+      const rows = await filterInContext('User', {}, '-updated_date', 500).catch(async () => {
+        const all = await base44.entities.User.list();
+        return all.filter(usuarioNoEscopo);
+      });
+      return (rows || []).filter(usuarioNoEscopo);
     },
     enabled: hasValidScope,
   });
 
   const { data: logs = [] } = useQuery({
     queryKey: ['logsIA', 'governanca', scopeKey],
-    queryFn: () => base44.entities.LogsIA.filter({ tipo_ia: 'IA_Governanca', ...scope }, '-created_date', 50),
+    queryFn: () => filterInContext('LogsIA', { tipo_ia: 'IA_Governanca' }, '-created_date', 50),
     enabled: hasValidScope,
   });
 
   const analisarGovernancaMutation = useMutation({
     mutationFn: async () => {
-      if (!hasValidScope) {
-        await auditarIA({
-          acao: 'Bloqueio sem contexto',
-          descricao: 'Tentativa de executar IA de governanca sem grupo ou empresa.',
-          dadosNovos: scope
-        });
-        throw new Error('Selecione um grupo ou empresa antes de executar a analise.');
-      }
+      assertIaUiContext({ groupId, empresaId, scopeType });
       if (!podeExecutar) {
         await auditarIA({
           acao: 'Bloqueio por permissao',
@@ -106,124 +115,33 @@ export default function IAGovernancaCompliance() {
         throw new Error('Sem permissao para executar analise de governanca.');
       }
       setAnalisando(true);
-      
-      // Analisar cada perfil de acesso
-      for (const perfil of perfis) {
-        const permissoesSensiveis = [];
-        const conflitos = [];
-        
-        // Verificar combinações críticas de SoD
-        const permissoes = perfil.permissoes || {};
-        
-        // Regra 1: Não pode cadastrar fornecedor E aprovar pagamento
-        if (permissoes.cadastros_gerais?.fornecedores?.includes('incluir') &&
-            permissoes.financeiro?.pode_baixar_titulos) {
-          conflitos.push({
-            tipo_conflito: 'SoD - Fornecedor + Pagamento',
-            descricao: 'Perfil permite cadastrar fornecedor E aprovar pagamentos - risco de fraude',
-            severidade: 'Crítica',
-            data_deteccao: new Date().toISOString()
-          });
-        }
-        
-        // Regra 2: Não pode criar pedido E emitir NF-e sem aprovação
-        if (permissoes.comercial?.pedidos?.includes('incluir') &&
-            permissoes.fiscal?.pode_emitir_nfe &&
-            !permissoes.comercial?.pedidos?.includes('aprovar')) {
-          conflitos.push({
-            tipo_conflito: 'SoD - Pedido + NF-e sem Aprovação',
-            descricao: 'Perfil permite criar pedido e emitir NF-e sem aprovação intermediária',
-            severidade: 'Alta',
-            data_deteccao: new Date().toISOString()
-          });
-        }
-        
-        // Regra 3: Não pode movimentar estoque E aprovar requisições
-        if (permissoes.estoque?.movimentacoes?.includes('incluir') &&
-            permissoes.estoque?.requisicoes?.includes('aprovar')) {
-          conflitos.push({
-            tipo_conflito: 'SoD - Estoque Próprio',
-            descricao: 'Perfil permite movimentar estoque e aprovar próprias requisições',
-            severidade: 'Média',
-            data_deteccao: new Date().toISOString()
-          });
-        }
-        
-        // Atualizar perfil com conflitos detectados
-        if (conflitos.length > 0) {
-          await base44.entities.PerfilAcesso.update(perfil.id, {
-            conflitos_sod_detectados: conflitos,
-            permissoes_sensiveis: permissoesSensiveis,
-            ...scope
-          });
-          
-          // Registrar no log de IA
-          await base44.entities.LogsIA.create({
-            tipo_ia: 'IA_Governanca',
-            contexto_execucao: 'Sistema',
-            entidade_relacionada: 'PerfilAcesso',
-            entidade_id: perfil.id,
-            acao_sugerida: `Detectados ${conflitos.length} conflitos de SoD no perfil "${perfil.nome_perfil}"`,
-            resultado: 'Automático',
-            confianca_ia: 95,
-            ...scope,
-            dados_entrada: { perfil_id: perfil.id },
-            dados_saida: { conflitos }
-          });
-        }
-      }
-      
-      // Analisar padrões de acesso suspeitos nos usuários
-      for (const usuario of usuarios) {
-        const alertas = [];
-        
-        // Verificar acessos fora do horário
-        if (usuario.ultimo_acesso) {
-          const hora = new Date(usuario.ultimo_acesso).getHours();
-          if (hora < 6 || hora > 22) {
-            alertas.push({
-              tipo: 'Acesso Fora do Horário',
-              descricao: `Último acesso às ${hora}h`,
-              severidade: 'Média'
-            });
-          }
-        }
-        
-        // Verificar múltiplas tentativas de login falhadas
-        if (usuario.tentativas_login_falhadas > 3) {
-          alertas.push({
-            tipo: 'Tentativas Login Falhadas',
-            descricao: `${usuario.tentativas_login_falhadas} tentativas falhadas`,
-            severidade: 'Alta'
-          });
-        }
-        
-        if (alertas.length > 0) {
-          await base44.entities.LogsIA.create({
-            tipo_ia: 'IA_Governanca',
-            contexto_execucao: 'Sistema',
-            entidade_relacionada: 'User',
-            entidade_id: usuario.id,
-            acao_sugerida: `Detectados ${alertas.length} alertas de segurança para usuário ${usuario.full_name}`,
-            resultado: 'Automático',
-            confianca_ia: 85,
-            ...scope,
-            dados_saida: { alertas }
-          });
-        }
-      }
-      
-      setAnalisando(false);
+
+      const sugestao = buildSodConflictSuggestions({ perfis, usuarios });
+
+      await createInContext('LogsIA', stampIaLogSugestao({
+        tipo_ia: 'IA_Governanca',
+        contexto_execucao: 'Sistema',
+        entidade_relacionada: 'PerfilAcesso',
+        acao_sugerida: `Analise SoD: ${sugestao.total_conflitos} conflito(s) sugeridos (sem gravacao automatica)`,
+        confianca_ia: 95,
+        ...scope,
+        dados_entrada: { perfis: perfis.length, usuarios: usuarios.length },
+        dados_saida: sugestao,
+      }));
+
       await auditarIA({
         acao: 'Analise IA Governanca',
-        descricao: 'Analise de governanca e compliance executada no escopo atual.',
-        dadosNovos: { perfis_analisados: perfis.length, usuarios_analisados: usuarios.length, ...scope }
+        descricao: 'Analise de governanca gerou sugestoes sem alterar PerfilAcesso.',
+        dadosNovos: { ...sugestao, ...scope }
       });
-      return { perfis_analisados: perfis.length, usuarios_analisados: usuarios.length };
+
+      setAnalisando(false);
+      return sugestao;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['perfisAcesso', scopeKey] });
+    onSuccess: (sugestao) => {
+      setResultadoAnalise(sugestao);
       queryClient.invalidateQueries({ queryKey: ['logsIA', 'governanca', scopeKey] });
+      toast.success(`IA sugeriu ${sugestao.total_conflitos} conflito(s). Confirme para gravar nos perfis.`);
     },
     onError: (error) => {
       setAnalisando(false);
@@ -231,16 +149,62 @@ export default function IAGovernancaCompliance() {
     }
   });
 
-  const conflitosDetectados = perfis.reduce((acc, p) => 
-    acc + (p.conflitos_sod_detectados?.length || 0), 0
-  );
+  const gravarConflitosMutation = useMutation({
+    mutationFn: async () => {
+      assertIaUiContext({ groupId, empresaId, scopeType });
+      if (!podeExecutar) throw new Error('Sem permissao para gravar conflitos SoD.');
+      const lista = resultadoAnalise?.sugestoes_perfis || [];
+      if (!lista.length) throw new Error('Nenhuma sugestao para gravar.');
+      if (!requireIaHumanConfirm(`Gravar conflitos SoD em ${lista.length} perfil(is)? Isso altera PerfilAcesso.`)) {
+        throw new Error('Gravacao cancelada.');
+      }
+      for (const item of lista) {
+        await updateInContext('PerfilAcesso', item.perfil_id, {
+          conflitos_sod_detectados: item.conflitos.map((c) => ({
+            ...c,
+            data_deteccao: new Date().toISOString(),
+          })),
+          ...scope,
+        });
+        await createInContext('LogsIA', stampIaLogSugestao({
+          tipo_ia: 'IA_Governanca',
+          contexto_execucao: 'Sistema',
+          entidade_relacionada: 'PerfilAcesso',
+          entidade_id: item.perfil_id,
+          acao_sugerida: `Conflitos SoD gravados no perfil "${item.nome_perfil}" apos confirmacao`,
+          confianca_ia: 95,
+          ...scope,
+          dados_saida: { conflitos: item.conflitos },
+        }));
+      }
+      await auditarIA({
+        acao: 'Gravar SoD',
+        descricao: 'Conflitos SoD gravados apos confirmacao humana.',
+        dadosNovos: { perfis: lista.length },
+      });
+      return lista.length;
+    },
+    onSuccess: (n) => {
+      queryClient.invalidateQueries({ queryKey: ['perfisAcesso', scopeKey] });
+      queryClient.invalidateQueries({ queryKey: ['logsIA', 'governanca', scopeKey] });
+      toast.success(`${n} perfil(is) atualizado(s).`);
+    },
+    onError: (error) => toast.error(error.message || 'Falha ao gravar conflitos.'),
+  });
 
-  const conflitosGravidade = perfis.reduce((acc, p) => {
-    (p.conflitos_sod_detectados || []).forEach(c => {
+  const conflitosDetectados = (resultadoAnalise?.total_conflitos
+    ?? perfis.reduce((acc, p) => acc + (p.conflitos_sod_detectados?.length || 0), 0));
+
+  const conflitosGravidade = (() => {
+    const acc = {};
+    const fonte = resultadoAnalise?.sugestoes_perfis
+      ? resultadoAnalise.sugestoes_perfis.flatMap((p) => p.conflitos)
+      : perfis.flatMap((p) => p.conflitos_sod_detectados || []);
+    fonte.forEach((c) => {
       acc[c.severidade] = (acc[c.severidade] || 0) + 1;
     });
     return acc;
-  }, {});
+  })();
 
   return (
     <div className="w-full h-full p-6 space-y-6 overflow-auto">
@@ -252,27 +216,39 @@ export default function IAGovernancaCompliance() {
           </h2>
           <p className="text-slate-600 mt-1">Detecção automática de riscos de SoD e padrões suspeitos</p>
         </div>
-        <Button
-          onClick={() => analisarGovernancaMutation.mutate()}
-          disabled={analisando || !hasValidScope || !podeExecutar}
-          className="bg-blue-600 hover:bg-blue-700"
-          data-action="IAGovernanca.executarAnalise"
-          data-permission="Sistema.Seguranca.editar"
-          data-context-required="group-or-company"
-          data-sensitive="true"
-        >
-          {analisando ? (
-            <>
-              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-              Analisando...
-            </>
-          ) : (
-            <>
-              <Shield className="w-4 h-4 mr-2" />
-              Executar Análise Completa
-            </>
-          )}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            onClick={() => analisarGovernancaMutation.mutate()}
+            disabled={analisando || !hasValidScope || !podeExecutar}
+            className="bg-blue-600 hover:bg-blue-700"
+            data-action="IAGovernanca.executarAnalise"
+            data-permission="Sistema.Seguranca.editar"
+            data-context-required="group-and-company"
+            data-sensitive="true"
+          >
+            {analisando ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                Analisando...
+              </>
+            ) : (
+              <>
+                <Shield className="w-4 h-4 mr-2" />
+                Executar Análise (sugestão)
+              </>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => gravarConflitosMutation.mutate()}
+            disabled={!resultadoAnalise?.sugestoes_perfis?.length || gravarConflitosMutation.isPending || !podeExecutar}
+            data-action="IAGovernanca.gravarSoD"
+            data-permission="Sistema.Seguranca.editar"
+            data-sensitive="true"
+          >
+            Gravar conflitos (confirmação)
+          </Button>
+        </div>
       </div>
 
       {/* Resumo de Riscos */}
@@ -335,7 +311,29 @@ export default function IAGovernancaCompliance() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {perfis.filter(p => p.conflitos_sod_detectados?.length > 0).length > 0 ? (
+          {resultadoAnalise?.sugestoes_perfis?.length > 0 ? (
+            resultadoAnalise.sugestoes_perfis.map((item) => (
+              <div key={item.perfil_id} className="border rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-slate-900">{item.nome_perfil}</h3>
+                  <Badge className="bg-orange-100 text-orange-800">
+                    {item.conflitos.length} conflito(s) sugerido(s)
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  {item.conflitos.map((conflito, idx) => (
+                    <Alert key={idx} className="border-orange-200 bg-orange-50">
+                      <AlertDescription>
+                        <p className="font-medium text-sm">{conflito.tipo_conflito}</p>
+                        <p className="text-xs text-slate-600 mt-1">{conflito.descricao}</p>
+                        <Badge className="mt-2" variant="outline">{conflito.severidade}</Badge>
+                      </AlertDescription>
+                    </Alert>
+                  ))}
+                </div>
+              </div>
+            ))
+          ) : perfis.filter(p => p.conflitos_sod_detectados?.length > 0).length > 0 ? (
             perfis.filter(p => p.conflitos_sod_detectados?.length > 0).map(perfil => (
               <div key={perfil.id} className="border border-slate-200 rounded-lg p-4">
                 <div className="flex items-start justify-between mb-3">
@@ -404,9 +402,9 @@ export default function IAGovernancaCompliance() {
                   </p>
                 </div>
                 <Badge className={`
-                  ${log.resultado === 'Aceito' ? 'bg-green-100 text-green-800' : ''}
-                  ${log.resultado === 'Automático' ? 'bg-blue-100 text-blue-800' : ''}
-                  ${log.resultado === 'Rejeitado' ? 'bg-red-100 text-red-800' : ''}
+                          ${log.resultado === 'Aceito' ? 'bg-green-100 text-green-800' : ''}
+                          ${log.resultado === 'Sugestao' || log.resultado === 'Automático' ? 'bg-blue-100 text-blue-800' : ''}
+                          ${log.resultado === 'Rejeitado' ? 'bg-red-100 text-red-800' : ''}
                 `}>
                   {log.resultado}
                 </Badge>

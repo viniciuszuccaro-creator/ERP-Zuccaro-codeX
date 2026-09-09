@@ -808,10 +808,16 @@ Cobertos pelos lotes P2 anteriores (anomalias, conciliacao, previsao, churn).
 - [x] Upsell/Recomendacao/PriceBrain/KYC/Top10/IAPriceBrain alinhados a `assertIaUiContext`.
 - [x] LogsIA sem `Automático`; aplicacao de preco/desconto com `requireIaHumanConfirm`.
 
+## Residual fechado (P2.7)
+
+- [x] Motor Fiscal com contexto + sugestao (nao emite NF).
+- [x] IAGovernanca: SoD so grava PerfilAcesso apos confirmacao humana.
+- [x] `oportunidadeScorer` sem `asServiceRole` (herda permissao do usuario).
+
 ## Pendencia seguinte
 
-- Motor Fiscal + IAGovernanca (write em PerfilAcesso) — Gate 16/17 residual.
-- Gate 17: remover `asServiceRole` indevido em scorers.
+- Demais funcoes agente com `asServiceRole` residual, se houver.
+- Go-Live humano Gates 18-20.
 
 ---
 
@@ -839,6 +845,11 @@ O agente herda as permissões do usuário. Nunca ampliar privilégios.
 ## Regra de execução
 
 Ações críticas exigem confirmação humana e revalidação backend.
+
+## Residual fechado (P2.7)
+
+- [x] `oportunidadeScorer` opera com cliente do usuario (sem `asServiceRole`).
+- [x] Acao critica do scorer continua exigindo `confirmado`.
 
 ---
 

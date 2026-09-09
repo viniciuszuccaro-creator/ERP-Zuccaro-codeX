@@ -167,6 +167,42 @@ test('P2 Gate16 residual: upsell, recomendacao, PriceBrain e KYC fail-closed', a
   assert.match(top10Ui, /group_id: groupId/);
 });
 
+test('P2 Gate16/17 residual: fiscal, governanca SoD e scorer sem elevacao', async () => {
+  const { buildSodConflictSuggestions, stampIaFiscalSuggestion } = await import('../src/components/lib/iaTransversalPolicy.js');
+
+  const sod = buildSodConflictSuggestions({
+    perfis: [{
+      id: 'pf1',
+      nome_perfil: 'Ops',
+      permissoes: {
+        cadastros_gerais: { fornecedores: ['incluir'] },
+        financeiro: { pode_baixar_titulos: true },
+      },
+    }],
+    usuarios: [{ id: 'u1', full_name: 'Ana', ultimo_acesso: '2026-09-09T03:00:00.000Z' }],
+  });
+  assert.equal(sod.modo, 'sugestao');
+  assert.equal(sod.total_conflitos, 1);
+  assert.equal(sod.alertas_usuarios.length, 1);
+  assert.equal(stampIaFiscalSuggestion({ valido: true }).emite_nf, false);
+
+  const fiscalUi = await readFile(new URL('../src/components/fiscal/MotorFiscalInteligente.jsx', import.meta.url), 'utf8');
+  const govUi = await readFile(new URL('../src/components/ia/IAGovernancaCompliance.jsx', import.meta.url), 'utf8');
+  const scorer = await readFile(new URL('../base44/functions/oportunidadeScorer/entry.ts', import.meta.url), 'utf8');
+
+  assert.match(fiscalUi, /assertIaUiContext/);
+  assert.match(fiscalUi, /filterInContext/);
+  assert.doesNotMatch(fiscalUi, /entities\.Pedido\.list/);
+  assert.match(fiscalUi, /stampIaFiscalSuggestion/);
+  assert.match(govUi, /buildSodConflictSuggestions/);
+  assert.match(govUi, /requireIaHumanConfirm/);
+  assert.match(govUi, /updateInContext\('PerfilAcesso'/);
+  assert.doesNotMatch(govUi, /entities\.PerfilAcesso\.update/);
+  assert.doesNotMatch(govUi, /resultado: 'Automático'/);
+  assert.doesNotMatch(scorer, /asServiceRole/);
+  assert.match(scorer, /base44\.entities\.Oportunidade/);
+});
+
 test('P2 previsoes: reposicao, recompra e caixa usam policy com sugestao', async () => {
   assert.throws(() => assertForecastUiContext({ groupId: 'g1', empresaId: '', scopeType: 'empresa' }), /Empresa/);
 

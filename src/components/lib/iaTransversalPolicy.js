@@ -385,6 +385,91 @@ export const buildRecomendacaoFromPedidos = ({ pedidos = [], itensAtuais = [], l
   });
 };
 
+/** SoD conflicts as suggestions only — never auto-write PerfilAcesso. */
+export const buildSodConflictSuggestions = ({ perfis = [], usuarios = [] } = {}) => {
+  const sugestoesPerfis = [];
+  (perfis || []).forEach((perfil) => {
+    const permissoes = perfil.permissoes || {};
+    const conflitos = [];
+    if (permissoes.cadastros_gerais?.fornecedores?.includes('incluir')
+      && permissoes.financeiro?.pode_baixar_titulos) {
+      conflitos.push({
+        tipo_conflito: 'SoD - Fornecedor + Pagamento',
+        descricao: 'Perfil permite cadastrar fornecedor E aprovar pagamentos - risco de fraude',
+        severidade: 'Crítica',
+      });
+    }
+    if (permissoes.comercial?.pedidos?.includes('incluir')
+      && permissoes.fiscal?.pode_emitir_nfe
+      && !permissoes.comercial?.pedidos?.includes('aprovar')) {
+      conflitos.push({
+        tipo_conflito: 'SoD - Pedido + NF-e sem Aprovação',
+        descricao: 'Perfil permite criar pedido e emitir NF-e sem aprovação intermediária',
+        severidade: 'Alta',
+      });
+    }
+    if (permissoes.estoque?.movimentacoes?.includes('incluir')
+      && permissoes.estoque?.requisicoes?.includes('aprovar')) {
+      conflitos.push({
+        tipo_conflito: 'SoD - Estoque Próprio',
+        descricao: 'Perfil permite movimentar estoque e aprovar próprias requisições',
+        severidade: 'Média',
+      });
+    }
+    if (conflitos.length) {
+      sugestoesPerfis.push({
+        perfil_id: perfil.id,
+        nome_perfil: perfil.nome_perfil || perfil.nome,
+        conflitos,
+      });
+    }
+  });
+
+  const alertasUsuarios = [];
+  (usuarios || []).forEach((usuario) => {
+    const alertas = [];
+    if (usuario.ultimo_acesso) {
+      const hora = new Date(usuario.ultimo_acesso).getHours();
+      if (hora < 6 || hora > 22) {
+        alertas.push({
+          tipo: 'Acesso Fora do Horário',
+          descricao: `Último acesso às ${hora}h`,
+          severidade: 'Média',
+        });
+      }
+    }
+    if (Number(usuario.tentativas_login_falhadas) > 3) {
+      alertas.push({
+        tipo: 'Tentativas Login Falhadas',
+        descricao: `${usuario.tentativas_login_falhadas} tentativas falhadas`,
+        severidade: 'Alta',
+      });
+    }
+    if (alertas.length) {
+      alertasUsuarios.push({
+        usuario_id: usuario.id,
+        nome: usuario.full_name || usuario.email,
+        alertas,
+      });
+    }
+  });
+
+  return stampIaSuggestion({
+    perfis_analisados: (perfis || []).length,
+    usuarios_analisados: (usuarios || []).length,
+    sugestoes_perfis: sugestoesPerfis,
+    alertas_usuarios: alertasUsuarios,
+    total_conflitos: sugestoesPerfis.reduce((n, item) => n + item.conflitos.length, 0),
+    fonte: 'ia_governanca_local',
+  });
+};
+
+export const stampIaFiscalSuggestion = (validacao = {}) => stampIaSuggestion({
+  ...validacao,
+  emite_nf: false,
+  fonte: 'ia_fiscal_local',
+});
+
 /** Fail-closed context for anomaly scans (financeiro/seguranca). */
 export const assertAnomalyScanContext = ({ groupId, empresaId, scopeType = 'empresa' } = {}) => (
   assertIaUiContext({ groupId, empresaId, scopeType })

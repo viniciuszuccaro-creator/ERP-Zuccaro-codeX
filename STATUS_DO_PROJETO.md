@@ -1,4 +1,15 @@
-﻿### P2.6 - Gate 16 residual: upsell/recomendacao/PriceBrain/KYC fail-closed
+﻿### P2.7 - Gate 16/17 residual: Fiscal, Governanca SoD e scorer sem elevacao
+- Objetivo: fechar residual Motor Fiscal + IAGovernanca + `oportunidadeScorer` (sem IAV2/AgenteV2).
+- Diagnostico: MotorFiscal lia Pedido/Empresa/Produto global e toast de aprovacao; Governanca gravava `PerfilAcesso` e LogsIA Automatico; scorer usava `asServiceRole`.
+- Causa raiz: IA/agente fora do contrato de sugestao + heranca de permissao do usuario.
+- Arquivos alterados: `iaTransversalPolicy.js`, `MotorFiscalInteligente.jsx`, `IAGovernancaCompliance.jsx`, `oportunidadeScorer/entry.ts`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: `assertIaUiContext`, `requireIaHumanConfirm`, `stampIaLogSugestao`, `filterInContext`/`updateInContext`.
+- Alteracoes: fiscal so sugere; SoD em memoria + gravacao com confirm; scorer no cliente autenticado.
+- Multiempresa/RBAC: contexto grupo/empresa; Fiscal.visualizar; Sistema.Seguranca.editar.
+- Pendencia: demais funcoes com asServiceRole se restarem; Go-Live humano Gates 18-20.
+- Validacoes: `node --test tests/ia-transversal-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem: Gate 18-20 (virada/homologacao humana) ou residual asServiceRole em outras funcoes.
+### P2.6 - Gate 16 residual: upsell/recomendacao/PriceBrain/KYC fail-closed
 - Objetivo: fechar residual Gate 16 nas telas IA comerciais irmas (sem IAV2).
 - Diagnostico: Upsell/Motor/PriceBrain liam Pedido global; desconto/preco sem confirm; KYC/IAPriceBrain com OR fail-open e LogsIA Automático; Top10 sem assertIaUiContext.
 - Causa raiz: telas irmas fora do contrato `assertIaUiContext` / `requireIaHumanConfirm`.
