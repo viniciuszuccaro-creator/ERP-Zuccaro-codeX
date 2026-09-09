@@ -4751,3 +4751,16 @@ Checklist inicial:
 - O desligamento do computador ocorreu depois da instalacao do SSMS; os logs confirmaram conclusao com codigo 0, e a tentativa de retomada apenas informou que o SSMS ja estava instalado.
 - Nenhum banco legado foi anexado e nenhum executavel contido no backup foi iniciado.
 - Proximo passo obrigatorio: iniciar manualmente `ERPZLEGACY`, anexar primeiro o menor banco de trabalho (`TIDDF`) com prefixo `LEGACY_`, validar compatibilidade/integridade e somente entao seguir banco a banco.
+
+### Gate 18 - Primeiro anexo controlado: TIDDF
+
+- Os hashes SHA-256 de `TIDDF.mdf` e `TIDDF.ldf` foram reconferidos entre a copia preservada e `02_SQL_WORK`; ambos permaneceram identicos antes do anexo.
+- O SQL Server recusou abrir MDF/LDF diretamente no HD externo mesmo com ACL exclusiva para o SID do servico; nenhuma tentativa alterou ou anexou esses arquivos.
+- Para preservar o isolamento do servico, foi criada uma terceira copia de apenas 7 MB no diretorio de dados da instancia; os hashes continuaram identicos antes da abertura.
+- A conta do servico e a conta Windows que executa o anexo receberam acesso somente nessas copias locais, conforme o modelo de personificacao do `CREATE DATABASE ... FOR ATTACH`.
+- O banco foi anexado como `LEGACY_TIDDF`, convertido pela copia da versao interna 782 para 998 e colocado imediatamente em `READ_ONLY`.
+- `DBCC CHECKDB` foi executado com `DATA_PURITY` e terminou sem erros.
+- Inventario estrutural: 3 tabelas de XML, zero linhas de negocio, zero views, procedures, triggers ou funcoes; `TRUSTWORTHY`, Service Broker e database chaining desabilitados.
+- Nenhum conteudo de registro foi exportado ou enviado ao GitHub; logs e metadados detalhados permaneceram em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- O servico `ERPZLEGACY` foi parado ao final e permanece com inicializacao manual.
+- Proximo passo obrigatorio: repetir o fluxo hash -> copia local -> ACL minima -> anexo -> `READ_ONLY` -> `DBCC CHECKDB` no menor banco empresarial `TID_EMP05`, antes de identificar a empresa por metadados seguros.
