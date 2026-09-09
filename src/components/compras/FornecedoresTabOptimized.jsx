@@ -20,7 +20,7 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
   const { hasPermission } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const contextoValido = Boolean(groupId && (contexto === 'grupo' || empresaId));
   const canViewFornecedor = hasPermission('Compras', 'Fornecedores', 'visualizar') ||
     hasPermission('Compras', null, 'visualizar');
   const canCreateFornecedor = hasPermission('Compras', 'Fornecedores', 'criar') ||
@@ -53,7 +53,8 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
         data_hora: new Date().toISOString(),
       });
     } catch (error) {
-      console.warn('Falha ao auditar lista otimizada de fornecedores:', error);
+      console.error('Falha ao auditar lista otimizada de fornecedores:', error);
+    throw new Error('Auditoria obrigatoria falhou.');
     }
   };
 
@@ -170,13 +171,13 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
     <div
       className="w-full h-full flex flex-col gap-4 p-4"
       data-permission="Compras.Fornecedores.visualizar"
-      data-context-required="group-or-company"
+      data-context-required="group-and-company"
       data-context-mode={contexto}
     >
       {(!contextoValido || !canViewFornecedor) && (
         <Card className="border-amber-300 bg-amber-50">
           <CardContent className="p-4 text-sm text-amber-900">
-            Selecione grupo ou empresa e confirme permissao para visualizar fornecedores.
+            Selecione grupo e empresa e confirme permissao para visualizar fornecedores.
           </CardContent>
         </Card>
       )}
@@ -185,7 +186,7 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
         className="border-cyan-200 bg-gradient-to-r from-cyan-50 to-blue-50"
         data-permission="Compras.Fornecedores.visualizar"
         data-action="Compras.FornecedoresOptimized.resumo"
-        data-context-required="group-or-company"
+        data-context-required="group-and-company"
       >
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
@@ -239,7 +240,7 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
             disabled={!contextoValido || !canViewFornecedor}
             data-permission="Compras.Fornecedores.visualizar"
             data-action="Compras.FornecedoresOptimized.buscar"
-            data-context-required="group-or-company"
+            data-context-required="group-and-company"
             data-sensitive="true"
           />
         </div>
@@ -250,7 +251,7 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
           disabled={!contextoValido || !canViewFornecedor}
           data-permission="Compras.Fornecedores.visualizar"
           data-action="Compras.FornecedoresOptimized.filtrarStatus"
-          data-context-required="group-or-company"
+          data-context-required="group-and-company"
         >
           <option value="todos">Todos Status</option>
           <option value="Ativo">Ativo</option>
@@ -265,7 +266,7 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
             disabled={!contextoValido || !canCreateFornecedor}
             data-permission="Compras.Fornecedores.criar"
             data-action="Compras.FornecedoresOptimized.criar"
-            data-context-required="group-or-company"
+            data-context-required="group-and-company"
             data-sensitive
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -297,7 +298,7 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
                 className="border hover:shadow-md transition-all"
                 data-permission="Compras.Fornecedores.visualizar"
                 data-action="Compras.FornecedoresOptimized.item"
-                data-context-required="group-or-company"
+                data-context-required="group-and-company"
               >
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
@@ -329,7 +330,7 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
                         disabled={!contextoValido || !canEditFornecedor}
                         data-permission="Compras.Fornecedores.editar"
                         data-action="Compras.FornecedoresOptimized.editar"
-                        data-context-required="group-or-company"
+                        data-context-required="group-and-company"
                         data-sensitive
                       >
                         <Edit className="w-4 h-4 text-cyan-600" />
@@ -347,7 +348,7 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
       <div
         data-permission="Compras.Fornecedores.visualizar"
         data-action="Compras.FornecedoresOptimized.paginar"
-        data-context-required="group-or-company"
+        data-context-required="group-and-company"
       >
         <PaginationControls
           currentPage={currentPage}

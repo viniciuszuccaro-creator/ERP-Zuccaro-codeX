@@ -47,7 +47,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
   const { empresaAtual, grupoAtual, contexto, filterInContext, updateInContext, createInContext } = useContextoVisual();
   const groupId = grupoAtual?.id || fornecedor?.group_id || fornecedor?.grupo_id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || fornecedor?.empresa_dona_id || fornecedor?.empresa_id || null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const contextoValido = Boolean(groupId && (contexto === 'grupo' || empresaId));
   const canViewFornecedor = hasPermission('Compras', 'Fornecedores', 'visualizar') ||
     hasPermission('Compras', null, 'visualizar');
   const canManageFornecedor = hasPermission('Compras', 'Fornecedores', 'editar') ||
@@ -70,7 +70,8 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
         data_hora: new Date().toISOString(),
       });
     } catch (error) {
-      console.warn('Falha ao auditar fornecedor:', error);
+      console.error('Falha ao auditar fornecedor:', error);
+    throw new Error('Auditoria obrigatoria falhou.');
     }
   };
 
@@ -147,7 +148,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
         motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
         dados: { tipo: documentoForm.tipo }
       });
-      toast.error(!contextoValido ? 'Selecione grupo ou empresa antes de alterar documentos.' : 'Sem permissão para alterar documentos do fornecedor.');
+      toast.error(!contextoValido ? 'Selecione grupo e empresa antes de alterar documentos.' : 'Sem permissão para alterar documentos do fornecedor.');
       return;
     }
 
@@ -174,7 +175,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
         motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
         dados: { index }
       });
-      toast.error(!contextoValido ? 'Selecione grupo ou empresa antes de alterar documentos.' : 'Sem permissão para remover documentos do fornecedor.');
+      toast.error(!contextoValido ? 'Selecione grupo e empresa antes de alterar documentos.' : 'Sem permissão para remover documentos do fornecedor.');
       return;
     }
 
@@ -194,7 +195,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
   };
 
   const content = (
-    <div className={windowMode ? 'w-full h-full overflow-auto bg-white p-4' : 'w-full h-full'} data-permission="Compras.Fornecedores.visualizar" data-context-required="group-or-company" data-context-mode={contexto}>
+    <div className={windowMode ? 'w-full h-full overflow-auto bg-white p-4' : 'w-full h-full'} data-permission="Compras.Fornecedores.visualizar" data-context-required="group-and-company" data-context-mode={contexto}>
       <Card className={windowMode ? 'border shadow-sm' : 'border-0 shadow-none m-4'}>
         <CardHeader className="border-b bg-white">
           <div className="flex items-center justify-between">
@@ -211,7 +212,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                 onClick={onClose}
                 data-permission="Compras.Fornecedores.visualizar"
                 data-action="Compras.Fornecedores.fecharDetalhes"
-                data-context-required="group-or-company"
+                data-context-required="group-and-company"
               >
                 <X className="w-5 h-5" />
               </Button>
@@ -223,7 +224,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
           {(!contextoValido || !canViewFornecedor) && (
             <Card className="mb-4 border-amber-300 bg-amber-50">
               <CardContent className="p-4 text-sm text-amber-900">
-                Selecione grupo ou empresa e confirme permissão para visualizar detalhes do fornecedor.
+                Selecione grupo e empresa e confirme permissão para visualizar detalhes do fornecedor.
               </CardContent>
             </Card>
           )}
@@ -231,14 +232,14 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
             value={activeTab}
             onValueChange={setActiveTab}
             data-permission="Compras.Fornecedores.visualizar"
-            data-context-required="group-or-company"
+            data-context-required="group-and-company"
           >
             <TabsList className="grid w-full grid-cols-3 mb-6">
               <TabsTrigger
                 value="historico"
                 data-permission="Compras.Fornecedores.visualizar"
                 data-action="Compras.Fornecedores.abaHistorico"
-                data-context-required="group-or-company"
+                data-context-required="group-and-company"
               >
                 <FileText className="w-4 h-4 mr-2" />
                 Histórico de Compras
@@ -247,7 +248,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                 value="condicoes"
                 data-permission="Compras.Fornecedores.visualizar"
                 data-action="Compras.Fornecedores.abaCondicoes"
-                data-context-required="group-or-company"
+                data-context-required="group-and-company"
               >
                 <TrendingUp className="w-4 h-4 mr-2" />
                 Condições Comerciais
@@ -256,7 +257,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                 value="documentos"
                 data-permission="Compras.Fornecedores.visualizar"
                 data-action="Compras.Fornecedores.abaDocumentos"
-                data-context-required="group-or-company"
+                data-context-required="group-and-company"
               >
                 <DollarSign className="w-4 h-4 mr-2" />
                 Documentos e Pagamentos
@@ -386,7 +387,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                   disabled={!contextoValido || !canManageFornecedor}
                   data-permission="Compras.Fornecedores.editar"
                   data-action="Compras.Fornecedores.editarCondicoes"
-                  data-context-required="group-or-company"
+                  data-context-required="group-and-company"
                   data-sensitive="true"
                 >
                   <Edit className="w-4 h-4 mr-2" />
@@ -438,7 +439,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                           disabled={!contextoValido || !canManageFornecedor}
                           data-permission="Compras.Fornecedores.documentos"
                           data-action="Compras.Fornecedores.abrirUploadDocumento"
-                          data-context-required="group-or-company"
+                          data-context-required="group-and-company"
                           data-sensitive="true"
                         >
                           <Plus className="w-4 h-4 mr-2" />
@@ -448,7 +449,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                       <DialogContent
                         data-permission="Compras.Fornecedores.documentos"
                         data-action="Compras.Fornecedores.dialogDocumento"
-                        data-context-required="group-or-company"
+                        data-context-required="group-and-company"
                       >
                         <DialogHeader>
                           <DialogTitle>Adicionar Documento</DialogTitle>
@@ -463,7 +464,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                               <SelectTrigger
                                 data-permission="Compras.Fornecedores.documentos"
                                 data-action="Compras.Fornecedores.documentoTipo"
-                                data-context-required="group-or-company"
+                                data-context-required="group-and-company"
                               >
                                 <SelectValue />
                               </SelectTrigger>
@@ -484,7 +485,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                               onChange={(e) => setDocumentoForm({...documentoForm, nome_arquivo: e.target.value})}
                               data-permission="Compras.Fornecedores.documentos"
                               data-action="Compras.Fornecedores.documentoNomeArquivo"
-                              data-context-required="group-or-company"
+                              data-context-required="group-and-company"
                               data-sensitive="true"
                             />
                           </div>
@@ -496,7 +497,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                               onChange={(e) => setDocumentoForm({...documentoForm, data_validade: e.target.value})}
                               data-permission="Compras.Fornecedores.documentos"
                               data-action="Compras.Fornecedores.documentoDataValidade"
-                              data-context-required="group-or-company"
+                              data-context-required="group-and-company"
                             />
                           </div>
                           <div>
@@ -506,7 +507,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                               onChange={(e) => setDocumentoForm({...documentoForm, observacao: e.target.value})}
                               data-permission="Compras.Fornecedores.documentos"
                               data-action="Compras.Fornecedores.documentoObservacao"
-                              data-context-required="group-or-company"
+                              data-context-required="group-and-company"
                               data-sensitive="true"
                             />
                           </div>
@@ -516,7 +517,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                             disabled={!contextoValido || !canManageFornecedor || updateFornecedorMutation.isPending}
                             data-permission="Compras.Fornecedores.documentos"
                             data-action="Compras.Fornecedores.adicionarDocumento"
-                            data-context-required="group-or-company"
+                            data-context-required="group-and-company"
                             data-sensitive="true"
                           >
                             Adicionar
@@ -554,7 +555,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                               title="Download"
                               data-permission="Compras.Fornecedores.documentos"
                               data-action="Compras.Fornecedores.downloadDocumento"
-                              data-context-required="group-or-company"
+                              data-context-required="group-and-company"
                             >
                               <Download className="w-4 h-4" />
                             </Button>
@@ -566,7 +567,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                                 disabled={!contextoValido || !canManageFornecedor || updateFornecedorMutation.isPending}
                                 data-permission="Compras.Fornecedores.documentos"
                                 data-action="Compras.Fornecedores.removerDocumento"
-                                data-context-required="group-or-company"
+                                data-context-required="group-and-company"
                                 data-sensitive="true"
                               >
                                 <Trash2 className="w-4 h-4 text-red-500" />
@@ -620,7 +621,7 @@ export default function DetalhesFornecedor({ fornecedor, onClose, windowMode = f
                       disabled={!contextoValido || !canManageFornecedor}
                       data-permission="Compras.Fornecedores.editar"
                       data-action="Compras.Fornecedores.editarDadosBancarios"
-                      data-context-required="group-or-company"
+                      data-context-required="group-and-company"
                       data-sensitive="true"
                     >
                       <Edit className="w-4 h-4 mr-2" />

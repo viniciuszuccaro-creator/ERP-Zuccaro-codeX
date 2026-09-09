@@ -26,7 +26,7 @@ export default function CotacoesTab({ windowMode = false }) {
   const { empresaAtual, grupoAtual, contexto, filterInContext, createInContext } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const contextoValido = Boolean(groupId && (contexto === 'grupo' || empresaId));
   const canViewCotacao = hasPermission('Compras', 'Cotacao', 'visualizar') || hasPermission('Compras', null, 'visualizar');
   const canCreateCotacao = hasPermission('Compras', 'Cotacao', 'criar') || hasPermission('Compras', null, 'criar');
   const canGerarOC = hasPermission('Compras', 'Cotacao', 'gerar_oc') || hasPermission('Compras', 'OrdemCompra', 'criar') || hasPermission('Compras', null, 'criar');
@@ -47,7 +47,8 @@ export default function CotacoesTab({ windowMode = false }) {
         data_hora: new Date().toISOString(),
       });
     } catch (error) {
-      console.warn('Falha ao auditar cotacao:', error);
+      console.error('Falha ao auditar cotacao:', error);
+    throw new Error('Auditoria obrigatoria falhou.');
     }
   };
   const [formCotacao, setFormCotacao] = useState({
@@ -88,7 +89,7 @@ export default function CotacoesTab({ windowMode = false }) {
           motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
           dados: { descricao: data.descricao }
         });
-        throw new Error(!contextoValido ? 'Selecione grupo ou empresa antes de criar cotacao.' : 'Sem permissao para criar cotacao.');
+        throw new Error(!contextoValido ? 'Selecione grupo e empresa antes de criar cotacao.' : 'Sem permissao para criar cotacao.');
       }
 
       const novaCotacao = await createInContext('Cotacao', {
@@ -132,7 +133,7 @@ export default function CotacoesTab({ windowMode = false }) {
           motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
           dados: { fornecedor_id: proposta.fornecedor_id, valor_total: proposta.valor_total }
         });
-        throw new Error(!contextoValido ? 'Selecione grupo ou empresa antes de gerar OC.' : 'Sem permissao para gerar ordem de compra.');
+        throw new Error(!contextoValido ? 'Selecione grupo e empresa antes de gerar OC.' : 'Sem permissao para gerar ordem de compra.');
       }
 
       const confirmado = window.confirm(`Confirma gerar uma ordem de compra para ${proposta.fornecedor_nome} no valor de R$ ${Number(proposta.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}?`);
@@ -228,11 +229,11 @@ export default function CotacoesTab({ windowMode = false }) {
   };
 
   const content = (
-    <div className="space-y-2 w-full h-full" data-permission="Compras.Cotacao.visualizar" data-context-required="group-or-company" data-context-mode={contexto}>
+    <div className="space-y-2 w-full h-full" data-permission="Compras.Cotacao.visualizar" data-context-required="group-and-company" data-context-mode={contexto}>
       {(!contextoValido || !canViewCotacao) && (
         <Card className="border-amber-300 bg-amber-50">
           <CardContent className="p-4 text-sm text-amber-900">
-            Selecione grupo ou empresa e confirme permissão para visualizar cotações.
+            Selecione grupo e empresa e confirme permissão para visualizar cotações.
           </CardContent>
         </Card>
       )}
@@ -247,7 +248,7 @@ export default function CotacoesTab({ windowMode = false }) {
             disabled={!contextoValido || !canCreateCotacao}
             data-permission="Compras.Cotacao.criar"
             data-action="Compras.Cotacao.abrirJanela"
-            data-context-required="group-or-company"
+            data-context-required="group-and-company"
             onClick={() => openWindow(CotacaoForm, {
               windowMode: true,
               onSubmit: async (data) => {
@@ -275,7 +276,7 @@ export default function CotacoesTab({ windowMode = false }) {
               className="hidden"
               data-permission="Compras.Cotacao.criar"
               data-action="Compras.Cotacao.dialogLegado"
-              data-context-required="group-or-company"
+              data-context-required="group-and-company"
             >
               Removido
             </Button>
@@ -289,7 +290,7 @@ export default function CotacoesTab({ windowMode = false }) {
               className="space-y-6"
               data-permission="Compras.Cotacao.criar"
               data-action="Compras.Cotacao.formularioLegado"
-              data-context-required="group-or-company"
+              data-context-required="group-and-company"
             >
               <div>
                 <Label>Descrição da Cotação *</Label>
@@ -298,7 +299,7 @@ export default function CotacoesTab({ windowMode = false }) {
                   onChange={(e) => setFormCotacao({ ...formCotacao, descricao: e.target.value })}
                   data-permission="Compras.Cotacao.criar"
                   data-action="Compras.Cotacao.descricao"
-                  data-context-required="group-or-company"
+                  data-context-required="group-and-company"
                   placeholder="Ex: Cotação de Bitolas - Lote Fevereiro"
                   required
                 />
@@ -312,7 +313,7 @@ export default function CotacoesTab({ windowMode = false }) {
                   onChange={(e) => setFormCotacao({ ...formCotacao, data_limite_resposta: e.target.value })}
                   data-permission="Compras.Cotacao.criar"
                   data-action="Compras.Cotacao.dataLimite"
-                  data-context-required="group-or-company"
+                  data-context-required="group-and-company"
                   required
                 />
               </div>
@@ -327,7 +328,7 @@ export default function CotacoesTab({ windowMode = false }) {
                     onClick={adicionarItem}
                     data-permission="Compras.Cotacao.criar"
                     data-action="Compras.Cotacao.adicionarItem"
-                    data-context-required="group-or-company"
+                    data-context-required="group-and-company"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Adicionar Item
@@ -348,7 +349,7 @@ export default function CotacoesTab({ windowMode = false }) {
                           <SelectTrigger
                             data-permission="Compras.Cotacao.criar"
                             data-action="Compras.Cotacao.itemProduto"
-                            data-context-required="group-or-company"
+                            data-context-required="group-and-company"
                           >
                             <SelectValue placeholder="Selecione o produto" />
                           </SelectTrigger>
@@ -373,7 +374,7 @@ export default function CotacoesTab({ windowMode = false }) {
                           placeholder="Qtd"
                           data-permission="Compras.Cotacao.criar"
                           data-action="Compras.Cotacao.itemQuantidade"
-                          data-context-required="group-or-company"
+                          data-context-required="group-and-company"
                           data-sensitive="true"
                         />
                       </div>
@@ -389,7 +390,7 @@ export default function CotacoesTab({ windowMode = false }) {
                           <SelectTrigger
                             data-permission="Compras.Cotacao.criar"
                             data-action="Compras.Cotacao.itemUnidade"
-                            data-context-required="group-or-company"
+                            data-context-required="group-and-company"
                           >
                             <SelectValue />
                           </SelectTrigger>
@@ -413,7 +414,7 @@ export default function CotacoesTab({ windowMode = false }) {
                           placeholder="Obs"
                           data-permission="Compras.Cotacao.criar"
                           data-action="Compras.Cotacao.itemObservacoes"
-                          data-context-required="group-or-company"
+                          data-context-required="group-and-company"
                         />
                       </div>
                       <div className="col-span-1 flex items-center justify-center">
@@ -426,7 +427,7 @@ export default function CotacoesTab({ windowMode = false }) {
                             className="text-red-600"
                             data-permission="Compras.Cotacao.criar"
                             data-action="Compras.Cotacao.removerItem"
-                            data-context-required="group-or-company"
+                            data-context-required="group-and-company"
                           >
                             ×
                           </Button>
@@ -447,7 +448,7 @@ export default function CotacoesTab({ windowMode = false }) {
                         onCheckedChange={() => toggleFornecedor(fornecedor.id)}
                         data-permission="Compras.Cotacao.criar"
                         data-action="Compras.Cotacao.selecionarFornecedor"
-                        data-context-required="group-or-company"
+                        data-context-required="group-and-company"
                       />
                       <div className="flex-1">
                         <p className="font-medium text-sm">{fornecedor.nome}</p>
@@ -483,7 +484,7 @@ export default function CotacoesTab({ windowMode = false }) {
                   rows={3}
                   data-permission="Compras.Cotacao.criar"
                   data-action="Compras.Cotacao.observacoesGerais"
-                  data-context-required="group-or-company"
+                  data-context-required="group-and-company"
                 />
               </div>
 
@@ -494,7 +495,7 @@ export default function CotacoesTab({ windowMode = false }) {
                   onClick={() => setDialogOpen(false)}
                   data-permission="Compras.Cotacao.criar"
                   data-action="Compras.Cotacao.cancelar"
-                  data-context-required="group-or-company"
+                  data-context-required="group-and-company"
                 >
                   Cancelar
                 </Button>
@@ -504,7 +505,7 @@ export default function CotacoesTab({ windowMode = false }) {
                   className="bg-cyan-600 hover:bg-cyan-700"
                   data-permission="Compras.Cotacao.criar"
                   data-action="Compras.Cotacao.confirmar"
-                  data-context-required="group-or-company"
+                  data-context-required="group-and-company"
                   data-sensitive="true"
                 >
                   <Send className="w-4 h-4 mr-2" />
@@ -545,7 +546,7 @@ export default function CotacoesTab({ windowMode = false }) {
                   onClick={() => setComparativoModal(cotacao)}
                   data-permission="Compras.Cotacao.visualizar"
                   data-action="Compras.Cotacao.verPropostas"
-                  data-context-required="group-or-company"
+                  data-context-required="group-and-company"
                 >
                   <Eye className="w-4 h-4 mr-2" />
                   Ver Propostas ({cotacao.propostas_recebidas}/{cotacao.fornecedores_convidados})
@@ -607,7 +608,7 @@ export default function CotacoesTab({ windowMode = false }) {
                 className="bg-cyan-600 hover:bg-cyan-700"
                 data-permission="Compras.Cotacao.criar"
                 data-action="Compras.Cotacao.criarVazio"
-                data-context-required="group-or-company"
+                data-context-required="group-and-company"
               >
                 <Plus className="w-3 h-3 mr-1" />
                 Criar Cotação
@@ -740,7 +741,7 @@ export default function CotacoesTab({ windowMode = false }) {
                                 size="sm"
                                 data-permission="Compras.Cotacao.solicitar_esclarecimento"
                                 data-action="Compras.Cotacao.solicitarEsclarecimentos"
-                                data-context-required="group-or-company"
+                                data-context-required="group-and-company"
                                 onClick={() => {
                                   toast({
                                     title: "📧 E-mail Enviado",
@@ -759,7 +760,7 @@ export default function CotacoesTab({ windowMode = false }) {
                                   disabled={gerarOrdemCompraMutation.isPending || !contextoValido || !canGerarOC}
                                   data-permission="Compras.Cotacao.gerar_oc"
                                   data-action="Compras.Cotacao.gerarOrdemCompra"
-                                  data-context-required="group-or-company"
+                                  data-context-required="group-and-company"
                                   data-sensitive="true"
                                 >
                                   <ShoppingCart className="w-4 h-4 mr-2" />

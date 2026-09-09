@@ -11,11 +11,11 @@ import usePermissions from "@/components/lib/usePermissions";
  * V21.1.2: Avaliação Fornecedor - Window Mode
  */
 export default function AvaliacaoFornecedorForm({ ordemCompra, onSubmit, windowMode = false }) {
-  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
+  const {empresaAtual, grupoAtual, createInContext, contexto } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const groupId = grupoAtual?.id || ordemCompra?.group_id || ordemCompra?.grupo_id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || ordemCompra?.empresa_id || null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const contextoValido = Boolean(groupId && (contexto === 'grupo' || empresaId));
   const canAvaliarFornecedor = hasPermission('Compras', 'Fornecedores', 'avaliar') ||
     hasPermission('Compras', 'Fornecedores', 'editar') ||
     hasPermission('Compras', null, 'editar');
@@ -50,7 +50,8 @@ export default function AvaliacaoFornecedorForm({ ordemCompra, onSubmit, windowM
         data_hora: new Date().toISOString(),
       });
     } catch (error) {
-      console.warn('Falha ao auditar avaliacao de fornecedor:', error);
+      console.error('Falha ao auditar avaliacao de fornecedor:', error);
+    throw new Error('Auditoria obrigatoria falhou.');
     }
   };
 
@@ -88,7 +89,7 @@ export default function AvaliacaoFornecedorForm({ ordemCompra, onSubmit, windowM
       className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}
       data-permission="Compras.Fornecedores.avaliar"
       data-action="Compras.AvaliacaoFornecedor.formulario"
-      data-context-required="group-or-company"
+      data-context-required="group-and-company"
     >
       <Card>
         <CardContent className="p-6 space-y-6">
@@ -111,7 +112,7 @@ export default function AvaliacaoFornecedorForm({ ordemCompra, onSubmit, windowM
                     disabled={!contextoValido || !canAvaliarFornecedor}
                     data-permission="Compras.Fornecedores.avaliar"
                     data-action="Compras.AvaliacaoFornecedor.qualidade"
-                    data-context-required="group-or-company"
+                    data-context-required="group-and-company"
                     data-sensitive="true"
                   >
                     <Star 
@@ -134,7 +135,7 @@ export default function AvaliacaoFornecedorForm({ ordemCompra, onSubmit, windowM
                     disabled={!contextoValido || !canAvaliarFornecedor}
                     data-permission="Compras.Fornecedores.avaliar"
                     data-action="Compras.AvaliacaoFornecedor.prazo"
-                    data-context-required="group-or-company"
+                    data-context-required="group-and-company"
                     data-sensitive="true"
                   >
                     <Star 
@@ -157,7 +158,7 @@ export default function AvaliacaoFornecedorForm({ ordemCompra, onSubmit, windowM
                     disabled={!contextoValido || !canAvaliarFornecedor}
                     data-permission="Compras.Fornecedores.avaliar"
                     data-action="Compras.AvaliacaoFornecedor.preco"
-                    data-context-required="group-or-company"
+                    data-context-required="group-and-company"
                     data-sensitive="true"
                   >
                     <Star 
@@ -180,7 +181,7 @@ export default function AvaliacaoFornecedorForm({ ordemCompra, onSubmit, windowM
                     disabled={!contextoValido || !canAvaliarFornecedor}
                     data-permission="Compras.Fornecedores.avaliar"
                     data-action="Compras.AvaliacaoFornecedor.atendimento"
-                    data-context-required="group-or-company"
+                    data-context-required="group-and-company"
                     data-sensitive="true"
                   >
                     <Star 
@@ -203,7 +204,7 @@ export default function AvaliacaoFornecedorForm({ ordemCompra, onSubmit, windowM
               disabled={!contextoValido || !canAvaliarFornecedor}
               data-permission="Compras.Fornecedores.avaliar"
               data-action="Compras.AvaliacaoFornecedor.comentario"
-              data-context-required="group-or-company"
+              data-context-required="group-and-company"
               data-sensitive="true"
             />
           </div>
@@ -226,7 +227,7 @@ export default function AvaliacaoFornecedorForm({ ordemCompra, onSubmit, windowM
           disabled={!contextoValido || !canAvaliarFornecedor}
           data-permission="Compras.Fornecedores.avaliar"
           data-action="Compras.AvaliacaoFornecedor.confirmar"
-          data-context-required="group-or-company"
+          data-context-required="group-and-company"
           data-sensitive="true"
         >
           <Save className="w-4 h-4 mr-2" />
@@ -241,7 +242,7 @@ export default function AvaliacaoFornecedorForm({ ordemCompra, onSubmit, windowM
       <div
         className="w-full h-full bg-white"
         data-permission="Compras.Fornecedores.avaliar"
-        data-context-required="group-or-company"
+        data-context-required="group-and-company"
       >
         {content}
       </div>

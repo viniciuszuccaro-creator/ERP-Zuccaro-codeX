@@ -1,4 +1,15 @@
-﻿### P0.21 / Compras residual - OC e launcher NF-e fail-closed
+﻿### P0.22 / Compras residual - Solicitacao/Cotacao/Fornecedor fail-closed
+- Objetivo: fechar OR fail-open e audit warn-only nas telas irmas de Compras (sem ComprasV2).
+- Diagnostico: Solicitacao/Cotacao/Avaliacao/Fornecedores ainda com `groupId||empresaId` e audit sem rethrow apos P0.21.
+- Causa raiz: lote OC/launcher nao cobriu o restante do modulo Compras.
+- Arquivos alterados: `SolicitacaoCompraForm.jsx`, `CotacaoForm.jsx`, `CotacoesTab.jsx`, `AvaliacaoFornecedorForm.jsx`, `FornecedoresTabOptimized.jsx`, `DetalhesFornecedor.jsx`, testes, `STATUS`.
+- Reutilizado: padrao P0.21 (group + grupo|empresa; audit throw).
+- Alteracoes: contexto fail-closed; auditoria obrigatoria; `group-and-company`.
+- Multiempresa/RBAC: permissoes Compras existentes preservadas.
+- Pendencia: NotasFiscaisTab mock emitir/cancelar; PedidosTab audit vazio; Go-Live humano Gates 18-20.
+- Validacoes: `node --test tests/migracao-erp-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem: residual Fiscal/Comercial mock/audit ou HUMAN_ONLY Gates 18-20.
+### P0.21 / Compras residual - OC e launcher NF-e fail-closed
 - Objetivo: fechar OR fail-open e audit silencioso em OC/recebimento/launcher (sem ComprasV2).
 - Diagnostico: `OrdensCompraTab` e `RecebimentoOCForm` com grupo-OR-empresa; audit OC so warn; `BotoesImportacaoProduto` com `catch (_)`.
 - Causa raiz: telas irmas fora do contrato dos importadores Gate 18.

@@ -41,7 +41,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
   const { carimbarContexto, filterInContext, createInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const contextoValido = Boolean(groupId && (contexto === 'grupo' || empresaId));
   const canCreateSolicitacao = hasPermission('Compras', 'SolicitacaoCompra', 'criar') || hasPermission('Compras', null, 'criar');
   const controlesBloqueados = !contextoValido || !canCreateSolicitacao;
   
@@ -109,7 +109,8 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
         data_hora: new Date().toISOString(),
       });
     } catch (error) {
-      console.warn('Falha ao auditar formulario de solicitacao de compra:', error);
+      console.error('Falha ao auditar formulario de solicitacao de compra:', error);
+    throw new Error('Auditoria obrigatoria falhou.');
     }
   };
 
@@ -123,7 +124,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
       });
       toast({
         title: "Solicitacao bloqueada",
-        description: !contextoValido ? "Selecione grupo ou empresa antes de criar." : "Sem permissao para criar solicitacao de compra.",
+        description: !contextoValido ? "Selecione grupo e empresa antes de criar." : "Sem permissao para criar solicitacao de compra.",
         variant: "destructive"
       });
       return;
@@ -139,13 +140,13 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
       className={`space-y-6 w-full h-full ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}
       data-permission="Compras.SolicitacaoCompra.criar"
       data-action="Compras.SolicitacaoCompra.formularioJanela"
-      data-context-required="group-or-company"
+      data-context-required="group-and-company"
       data-context-mode={contexto}
     >
       <Card
         data-permission="Compras.SolicitacaoCompra.criar"
         data-action="Compras.SolicitacaoCompra.dados"
-        data-context-required="group-or-company"
+        data-context-required="group-and-company"
       >
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg flex items-center gap-2">
@@ -162,7 +163,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
                 className="bg-slate-50"
                 data-permission="Compras.SolicitacaoCompra.visualizar"
                 data-action="Compras.SolicitacaoCompra.numero"
-                data-context-required="group-or-company"
+                data-context-required="group-and-company"
               />
             </div>
 
@@ -174,7 +175,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
                 disabled={controlesBloqueados}
                 data-permission="Compras.SolicitacaoCompra.criar"
                 data-action="Compras.SolicitacaoCompra.dataSolicitacao"
-                data-context-required="group-or-company"
+                data-context-required="group-and-company"
               />
               {errors.data_solicitacao && <p className="text-red-600 text-xs mt-1">{errors.data_solicitacao.message}</p>}
             </div>
@@ -189,7 +190,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
                     <SelectTrigger
                       data-permission="Compras.SolicitacaoCompra.criar"
                       data-action="Compras.SolicitacaoCompra.produto"
-                      data-context-required="group-or-company"
+                      data-context-required="group-and-company"
                     >
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
@@ -218,7 +219,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
                   disabled={controlesBloqueados}
                   data-permission="Compras.SolicitacaoCompra.criar"
                   data-action="Compras.SolicitacaoCompra.quantidade"
-                  data-context-required="group-or-company"
+                  data-context-required="group-and-company"
                   data-sensitive="true"
                 />
                 {errors.quantidade_solicitada && <p className="text-red-600 text-xs mt-1">{errors.quantidade_solicitada.message}</p>}
@@ -238,7 +239,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
                     <SelectTrigger
                       data-permission="Compras.SolicitacaoCompra.criar"
                       data-action="Compras.SolicitacaoCompra.prioridade"
-                      data-context-required="group-or-company"
+                      data-context-required="group-and-company"
                     >
                       <SelectValue />
                     </SelectTrigger>
@@ -261,7 +262,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
                 disabled={controlesBloqueados}
                 data-permission="Compras.SolicitacaoCompra.criar"
                 data-action="Compras.SolicitacaoCompra.dataNecessidade"
-                data-context-required="group-or-company"
+                data-context-required="group-and-company"
               />
             </div>
 
@@ -274,7 +275,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
                 disabled={controlesBloqueados}
                 data-permission="Compras.SolicitacaoCompra.criar"
                 data-action="Compras.SolicitacaoCompra.justificativa"
-                data-context-required="group-or-company"
+                data-context-required="group-and-company"
               />
               {errors.justificativa && <p className="text-red-600 text-xs mt-1">{errors.justificativa.message}</p>}
             </div>
@@ -287,7 +288,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
                 disabled={controlesBloqueados}
                 data-permission="Compras.SolicitacaoCompra.criar"
                 data-action="Compras.SolicitacaoCompra.observacoes"
-                data-context-required="group-or-company"
+                data-context-required="group-and-company"
               />
             </div>
           </div>
@@ -301,7 +302,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
           disabled={controlesBloqueados}
           data-permission="Compras.SolicitacaoCompra.criar"
           data-action="Compras.SolicitacaoCompra.confirmarJanela"
-          data-context-required="group-or-company"
+          data-context-required="group-and-company"
           data-sensitive="true"
         >
           <Save className="w-4 h-4 mr-2" />
@@ -316,7 +317,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
       <div
         className="w-full h-full bg-white"
         data-permission="Compras.SolicitacaoCompra.criar"
-        data-context-required="group-or-company"
+        data-context-required="group-and-company"
         data-context-mode={contexto}
       >
         {content}

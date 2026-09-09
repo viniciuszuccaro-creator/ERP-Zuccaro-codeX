@@ -193,6 +193,20 @@ test('importadores existentes fazem staging e reconciliam', async () => {
   const ocForm = await readFile(new URL('../src/components/compras/RecebimentoOCForm.jsx', import.meta.url), 'utf8');
   assert.match(ocForm, /groupId && \(contexto === 'grupo' \|\| empresaId\)/);
   assert.match(ocForm, /Auditoria obrigatoria falhou para recebimento de OC/);
+  for (const name of [
+    'SolicitacaoCompraForm.jsx',
+    'CotacaoForm.jsx',
+    'CotacoesTab.jsx',
+    'AvaliacaoFornecedorForm.jsx',
+    'FornecedoresTabOptimized.jsx',
+    'DetalhesFornecedor.jsx',
+  ]) {
+    const src = await readFile(new URL(`../src/components/compras/${name}`, import.meta.url), 'utf8');
+    assert.match(src, /groupId && \(contexto === 'grupo' \|\| empresaId\)/, name);
+    assert.match(src, /Auditoria obrigatoria falhou/, name);
+    assert.doesNotMatch(src, /Boolean\(groupId \|\| empresaId\)/, name);
+    assert.doesNotMatch(src, /console\.warn\('Falha ao auditar/, name);
+  }
   assert.match(backup, /throw error/);
   assert.doesNotMatch(backup, /Falha ao registrar configuracao de backup\.', error\);\r?\n\s*\}/);
 });
