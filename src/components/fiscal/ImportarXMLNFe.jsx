@@ -16,6 +16,11 @@ import { toast } from 'sonner';
 import useContextoVisual from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { parseNFeXML, validarXMLNFe, lerArquivoXML } from '../lib/parserXMLNFe';
+import {
+  assertReconciliacaoMigracao,
+  buildReconciliacaoMigracao,
+  stampMigracaoRecord,
+} from '@/components/lib/migracaoErpPolicy';
 
 /**
  * Componente de Importação de XML de NF-e
@@ -40,7 +45,7 @@ export default function ImportarXMLNFe({ empresaId }) {
   const { hasPermission } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaSelecionadaId = empresaId || empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaSelecionadaId);
+  const contextoValido = Boolean(groupId && empresaSelecionadaId);
   const canImportarXML = hasPermission('Fiscal', 'ImportarXMLNFe', 'criar') ||
     hasPermission('Fiscal', 'Notas Fiscais', 'criar') ||
     hasPermission('Fiscal', null, 'criar') ||
@@ -49,7 +54,7 @@ export default function ImportarXMLNFe({ empresaId }) {
 
   const auditImportacaoXML = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
-      await base44.entities.AuditLog.create({
+      await createInContext('AuditLog', {
         acao,
         modulo: 'Fiscal',
         entidade: 'ImportacaoXMLNFe',
@@ -63,7 +68,8 @@ export default function ImportarXMLNFe({ empresaId }) {
         data_hora: new Date().toISOString()
       });
     } catch (error) {
-      console.warn('Falha ao auditar importacao XML NF-e:', error);
+      console.error('Falha ao auditar importacao XML NF-e:', error);
+      throw error;
     }
   };
 
@@ -91,7 +97,7 @@ export default function ImportarXMLNFe({ empresaId }) {
         motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
         dados: { arquivo: file.name }
       });
-      toast.error(!contextoValido ? 'Selecione grupo ou empresa antes de importar XML.' : 'Sem permissao para importar XML NF-e.');
+      toast.error(!contextoValido ? 'Selecione grupo e empresa antes de importar XML.' : 'Sem permissao para importar XML NF-e.');
       return;
     }
 
@@ -183,7 +189,7 @@ export default function ImportarXMLNFe({ empresaId }) {
           motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
           dados: { numero_nfe: dadosNFe?.numeroNFe, chave_acesso: dadosNFe?.chaveAcesso }
         });
-        throw new Error(!contextoValido ? 'Selecione grupo ou empresa antes de confirmar importacao.' : 'Sem permissao para confirmar importacao XML NF-e.');
+        throw new Error(!contextoValido ? 'Selecione grupo e empresa antes de confirmar importacao.' : 'Sem permissao para confirmar importacao XML NF-e.');
       }
 
       const resultados = {
@@ -193,13 +199,19 @@ export default function ImportarXMLNFe({ empresaId }) {
         contas_pagar_ids: [],
         produtos_criados: []
       };
+      const produtosOrigem = [];
+      const produtosGravados = [];
 
       // 1. Criar/Encontrar Fornecedor
       if (opcoes.criarFornecedor && !dadosNFe.fornecedorExistente) {
-        const novoFornecedor = await createInContext('Fornecedor', {
+        const cnpjLegado = String(dadosNFe.fornecedor.cnpj || '').trim();
+        if (!cnpjLegado) {
+          throw new Error('CNPJ do fornecedor obrigatorio para migracao via NF-e.');
+        }
+        const novoFornecedor = await createInContext('Fornecedor', stampMigracaoRecord({
           nome: dadosNFe.fornecedor.razao_social,
           nome_fantasia: dadosNFe.fornecedor.nome_fantasia,
-          cnpj: dadosNFe.fornecedor.cnpj,
+          cnpj: cnpjLegado,
           inscricao_estadual: dadosNFe.fornecedor.inscricao_estadual,
           endereco: dadosNFe.fornecedor.endereco ? 
             `${dadosNFe.fornecedor.endereco.logradouro}, ${dadosNFe.fornecedor.endereco.numero}` : '',
@@ -209,9 +221,19 @@ export default function ImportarXMLNFe({ empresaId }) {
           categoria: 'Matéria Prima',
           status: 'Ativo',
           empresa_dona_id: empresaSelecionadaId,
+          empresa_id: empresaSelecionadaId,
           group_id: groupId,
-          grupo_id: groupId
-        }, 'empresa_dona_id');
+          grupo_id: groupId,
+          codigo_legado: cnpjLegado,
+          id_antigo: cnpjLegado,
+          origem_migracao: 'nfe_xml',
+          confirmado: true,
+        }, {
+          arquivoNome: arquivo?.name || 'nfe.xml',
+          entidade: 'Fornecedor',
+          confirmado: true,
+          destino: 'producao',
+        }), 'empresa_dona_id');
         resultados.fornecedor_id = novoFornecedor.id;
       } else {
         resultados.fornecedor_id = dadosNFe.fornecedorExistente?.id;
@@ -220,13 +242,19 @@ export default function ImportarXMLNFe({ empresaId }) {
       // 2. Criar Produtos Não Mapeados
       if (opcoes.criarProdutos && dadosNFe.produtosNaoMapeados.length > 0) {
         for (const item of dadosNFe.produtosNaoMapeados) {
-          const novoProduto = await createInContext('Produto', {
+          const descricao = String(item.descricao || '').trim();
+          if (!descricao) continue;
+          const codigoLegado = String(item.codigo_produto || '').trim()
+            || `NFE-${item.ncm || 'SEMNCM'}-${descricao.slice(0, 24)}`;
+          const payloadProduto = stampMigracaoRecord({
             empresa_id: empresaSelecionadaId,
             group_id: groupId,
             grupo_id: groupId,
-            codigo: item.codigo_produto,
+            codigo: codigoLegado,
+            codigo_legado: codigoLegado,
+            id_antigo: codigoLegado,
             codigo_barras: item.codigo_ean,
-            descricao: item.descricao,
+            descricao,
             ncm: item.ncm,
             unidade_medida: item.unidade,
             grupo: 'Matéria Prima',
@@ -240,10 +268,23 @@ export default function ImportarXMLNFe({ empresaId }) {
             fornecedor_id: resultados.fornecedor_id,
             fornecedor_principal: dadosNFe.fornecedor.razao_social,
             ultima_compra: dadosNFe.dataEmissao,
-            ultimo_preco_compra: item.valor_unitario
+            ultimo_preco_compra: item.valor_unitario,
+            origem_migracao: 'nfe_xml',
+            confirmado: true,
+          }, {
+            arquivoNome: arquivo?.name || 'nfe.xml',
+            entidade: 'Produto',
+            confirmado: true,
+            destino: 'producao',
           });
+          if (!payloadProduto.codigo_legado) {
+            throw new Error('Codigo legado obrigatorio para cada item da NF-e.');
+          }
+          produtosOrigem.push(payloadProduto);
+          const novoProduto = await createInContext('Produto', payloadProduto);
           
           resultados.produtos_criados.push(novoProduto.id);
+          produtosGravados.push(novoProduto);
           
           // Atualizar mapeamento
           const itemIndex = dadosNFe.itensMapeados.findIndex(i => 
@@ -252,6 +293,16 @@ export default function ImportarXMLNFe({ empresaId }) {
           if (itemIndex >= 0) {
             dadosNFe.itensMapeados[itemIndex].produto_id_mapeado = novoProduto.id;
           }
+        }
+        if (produtosOrigem.length) {
+          const reconciliacao = buildReconciliacaoMigracao({
+            origem: produtosOrigem,
+            gravados: produtosGravados,
+            reusos: [],
+            campoValor: 'custo_aquisicao',
+          });
+          assertReconciliacaoMigracao(reconciliacao);
+          resultados.reconciliacao_produtos = reconciliacao;
         }
       }
 
@@ -491,7 +542,7 @@ export default function ImportarXMLNFe({ empresaId }) {
         motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
         dados: { numero_nfe: dadosNFe?.numeroNFe, chave_acesso: dadosNFe?.chaveAcesso }
       });
-      toast.error(!contextoValido ? 'Selecione grupo ou empresa antes de confirmar importacao.' : 'Sem permissao para confirmar importacao XML NF-e.');
+        toast.error(!contextoValido ? 'Selecione grupo e empresa antes de confirmar importacao.' : 'Sem permissao para confirmar importacao XML NF-e.');
       return;
     }
 
@@ -515,7 +566,7 @@ export default function ImportarXMLNFe({ empresaId }) {
         <Alert className="border-amber-300 bg-amber-50">
           <AlertTriangle className="w-5 h-5 text-amber-700" />
           <AlertDescription className="text-sm text-amber-800">
-            {!contextoValido ? 'Selecione grupo ou empresa antes de importar XML NF-e.' : 'Seu perfil nao possui permissao para importar XML NF-e.'}
+            {!contextoValido ? 'Selecione grupo e empresa antes de importar XML NF-e.' : 'Seu perfil nao possui permissao para importar XML NF-e.'}
           </AlertDescription>
         </Alert>
       )}

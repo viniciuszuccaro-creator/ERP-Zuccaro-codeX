@@ -1,4 +1,15 @@
-﻿### P0.18 / Gate 18 residual - ImportacaoProdutoNFe fail-closed
+﻿### P0.19 / Gate 18 residual - ImportarXMLNFe fail-closed
+- Objetivo: alinhar importacao fiscal XML NF-e ao contrato de migracao (sem MigracaoV2).
+- Diagnostico: `ImportarXMLNFe` criava Produto/Fornecedor sem stamp; OR fail-open; audit via entity global com warn silencioso.
+- Causa raiz: fluxo fiscal de compras ficou fora dos lotes P0.15/P0.18 de Cadastros.
+- Arquivos alterados: `ImportarXMLNFe.jsx`, `tests/migracao-erp-policy.test.js`, `PLANO_GO_LIVE.md`.
+- Reutilizado: `stampMigracaoRecord`, `assertReconciliacaoMigracao`, `createInContext`.
+- Alteracoes: exige group+empresa; stamp nfe_xml em Fornecedor/Produto; reconciliacao; audit rethrow.
+- Multiempresa/RBAC: Fiscal/Compras/Estoque criar conforme permissao existente.
+- Pendencia: PAD/historicos humanos; ImportacaoNFeRecebimento micro residual; Gates 19-20 humanos.
+- Validacoes: `node --test tests/migracao-erp-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem: residual `ImportacaoNFeRecebimento` ou HUMAN_ONLY Gates 18-20.
+### P0.18 / Gate 18 residual - ImportacaoProdutoNFe fail-closed
 - Objetivo: alinhar o importador automatico NF-e gemelo ao contrato de migracao (sem MigracaoV2).
 - Diagnostico: `ImportacaoProdutoNFe` ainda tinha OR fail-open, `catch (_)` em audit e create sem legado/lote/reconciliacao.
 - Causa raiz: P0.15 fechou so `ImportarProdutosNFe`; o gemelo em Cadastros ficou fora.

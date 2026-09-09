@@ -929,6 +929,7 @@ Para cada lote comparar:
 - [x] ImportadorProdutosPlanilha com staging confirm + reconciliacao (sem gravar falhas como sucesso).
 - [x] ImportarProdutosNFe alinhado ao contrato de migracao (legado/lote/reconciliacao/auditoria).
 - [x] ImportacaoProdutoNFe (gemelo automatico) alinhado ao mesmo contrato fail-closed.
+- [x] ImportarXMLNFe (fiscal) com stamp nfe_xml, escopo grupo+empresa e audit obrigatoria.
 - [x] ConfiguracaoBackup sem engolir falha de AuditLog.
 - [ ] PAD/agente visual; historicos pedidos/financeiro/fiscal em massa; rodada humana com arquivo real do ERP antigo.
 

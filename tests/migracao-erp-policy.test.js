@@ -169,6 +169,13 @@ test('importadores existentes fazem staging e reconciliam', async () => {
   assert.match(nfeAuto, /origem_migracao: 'nfe_xml'/);
   assert.match(nfeAuto, /groupId && \(contexto === 'grupo' \|\| empresaId\)/);
   assert.doesNotMatch(nfeAuto, /catch \(_\) \{\}/);
+  const fiscalXml = await readFile(new URL('../src/components/fiscal/ImportarXMLNFe.jsx', import.meta.url), 'utf8');
+  assert.match(fiscalXml, /stampMigracaoRecord/);
+  assert.match(fiscalXml, /assertReconciliacaoMigracao/);
+  assert.match(fiscalXml, /origem_migracao: 'nfe_xml'/);
+  assert.match(fiscalXml, /groupId && empresaSelecionadaId/);
+  assert.match(fiscalXml, /createInContext\('AuditLog'/);
+  assert.doesNotMatch(fiscalXml, /console\.warn\('Falha ao auditar importacao XML NF-e:/);
   assert.match(backup, /throw error/);
   assert.doesNotMatch(backup, /Falha ao registrar configuracao de backup\.', error\);\r?\n\s*\}/);
 });
