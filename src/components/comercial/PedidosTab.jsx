@@ -49,10 +49,10 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
   const { user } = useUser();
   const { canEdit, canCreate, canApprove, canDelete, hasPermission } = usePermissions();
   const { openWindow, closeWindow } = useWindow();
-  const { empresaAtual, grupoAtual, updateInContext, deleteInContext, createInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, updateInContext, deleteInContext, createInContext } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaContextoId = empresaId || empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaContextoId);
+  const contextoValido = Boolean(groupId && (contexto === 'grupo' || empresaContextoId));
   const canViewPedido = hasPermission('Comercial', 'Pedido', 'visualizar') || hasPermission('Comercial', 'Pedidos', 'visualizar') || hasPermission('Comercial', null, 'visualizar');
   const canCreatePedido = canCreate('Comercial', 'Pedido') || canCreate('Comercial', 'Pedidos') || hasPermission('Comercial', null, 'criar');
   const canEditPedido = canEdit('Comercial', 'Pedido') || canEdit('Comercial', 'Pedidos') || hasPermission('Comercial', null, 'editar');
@@ -102,7 +102,10 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
         },
         data_hora: new Date().toISOString()
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error('Falha ao auditar pedido:', error);
+      throw new Error('Auditoria obrigatoria falhou para pedido.');
+    }
   };
 
   // SeleÃ§Ã£o em massa + exportaÃ§Ã£o

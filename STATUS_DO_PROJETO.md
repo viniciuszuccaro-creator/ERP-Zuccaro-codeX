@@ -1,4 +1,15 @@
-﻿### P0.22 / Compras residual - Solicitacao/Cotacao/Fornecedor fail-closed
+﻿### P0.23 / Fiscal-Comercial residual - NF mock e Pedidos audit fail-closed
+- Objetivo: fechar mock emitir/cancelar como SEFAZ real e audit vazio em PedidosTab (sem FiscalV2/ComercialV2).
+- Diagnostico: `NotasFiscaisTab` gravava Autorizada/Cancelada apos mock sem stamp; cancel sempre `mockCancelarNFe`; audit warn-only; PedidosTab `catch (_) {}`; contexto OR.
+- Causa raiz: residual P0.9 nao distinguiu homologacao carimbada de producao no cancel/update.
+- Arquivos alterados: `notaFiscalEmissaoPolicy.js`, `NotasFiscaisTab.jsx`, `PedidosTab.jsx`, `tests/nota-fiscal-emissao-policy.test.js`, `STATUS`.
+- Reutilizado: `assertEmissaoNFe`, `cancelarNFe`, padrao stamp simulacao (marketplace/NF recebimento).
+- Alteracoes: `assertCancelamentoNFe` + `stampNotaFiscalSimulacao`; mock so com `permiteSimulacao`; producao usa `cancelarNFe`/`emitirNFe`; audit rethrow; contexto grupo+empresa.
+- Multiempresa/RBAC: Fiscal emitir/cancelar e Comercial Pedido preservados.
+- Pendencia: Go-Live humano Gates 18-20.
+- Validacoes: `node --test tests/nota-fiscal-emissao-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem: HUMAN_ONLY Gates 18-20.
+### P0.22 / Compras residual - Solicitacao/Cotacao/Fornecedor fail-closed
 - Objetivo: fechar OR fail-open e audit warn-only nas telas irmas de Compras (sem ComprasV2).
 - Diagnostico: Solicitacao/Cotacao/Avaliacao/Fornecedores ainda com `groupId||empresaId` e audit sem rethrow apos P0.21.
 - Causa raiz: lote OC/launcher nao cobriu o restante do modulo Compras.

@@ -4,10 +4,13 @@ import test from 'node:test';
 
 import {
   applyNumeroNfeOnCreate,
+  assertCancelamentoNFe,
   assertEmissaoNFe,
   assertNotaFiscalOnDelete,
   assertNotaFiscalOnUpdate,
+  isNotaFiscalSimulada,
   resolveNextNumeroNfe,
+  stampNotaFiscalSimulacao,
 } from '../src/components/lib/notaFiscalEmissaoPolicy.js';
 
 test('production emit without explicit authorization is blocked', () => {
@@ -56,6 +59,35 @@ test('homologation emit is allowed as simulation when company and CFOP exist', (
     nfe: { cfop: '5102' },
   });
   assert.equal(check.permiteSimulacao, true);
+});
+
+test('simulated NF cancel stays on mock path and production cancel requires provider', () => {
+  const simulado = assertCancelamentoNFe({
+    empresaId: 'cpa-aco',
+    ambiente: 'Homologacao',
+    nfe: { status: 'Autorizada', simulacao: true },
+  });
+  assert.equal(simulado.permiteSimulacao, true);
+  assert.equal(isNotaFiscalSimulada({ origem_simulacao: 'nfe_homologacao' }), true);
+  assert.equal(stampNotaFiscalSimulacao({ status: 'Autorizada' }).simulacao, true);
+  assert.throws(
+    () => assertCancelamentoNFe({
+      empresaId: 'cpa-aco',
+      ambiente: 'Producao',
+      producaoAutorizada: true,
+      provedorConfigurado: false,
+      nfe: { status: 'Autorizada' },
+    }),
+    /provedor fiscal/,
+  );
+  const real = assertCancelamentoNFe({
+    empresaId: 'cpa-aco',
+    ambiente: 'Producao',
+    producaoAutorizada: true,
+    provedorConfigurado: true,
+    nfe: { status: 'Autorizada' },
+  });
+  assert.equal(real.permiteSimulacao, false);
 });
 
 test('NF numbers increment per company and series', () => {
@@ -124,6 +156,11 @@ test('commercial send no longer forges production auth and EventosNFe requires c
   const pdv = await readFile(new URL('../src/components/financeiro/CaixaPDVCompleto.jsx', import.meta.url), 'utf8');
 
   assert.match(tab, /assertEmissaoNFe/);
+  assert.match(tab, /assertCancelamentoNFe/);
+  assert.match(tab, /stampNotaFiscalSimulacao/);
+  assert.match(tab, /cancelarNFe/);
+  assert.match(tab, /Auditoria obrigatoria falhou para nota fiscal/);
+  assert.match(tab, /groupId && \(contexto === 'grupo' \|\| empresaId\)/);
   assert.doesNotMatch(tab, /autoriza_emissao_producao: true/);
   assert.doesNotMatch(tab, /nfe\.autoriza_emissao_producao/);
   assert.match(mock, /Emissao em producao exige autorizacao explicita/);
@@ -140,5 +177,8 @@ test('commercial send no longer forges production auth and EventosNFe requires c
   assert.match(config, /empresa_id: empresaIdAtual/);
   assert.doesNotMatch(fechamento, /NotaFiscal', 'criar'/);
   assert.doesNotMatch(pedidos, /NotaFiscal', 'criar'/);
+  assert.match(pedidos, /Auditoria obrigatoria falhou para pedido/);
+  assert.match(pedidos, /groupId && \(contexto === 'grupo' \|\| empresaContextoId\)/);
+  assert.doesNotMatch(pedidos, /catch \(_\) \{\}/);
   assert.doesNotMatch(pdv, /Notas Fiscais', 'criar'/);
 });

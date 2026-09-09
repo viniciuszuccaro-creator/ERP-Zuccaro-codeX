@@ -30,11 +30,13 @@ import {
 import GerarNFeModal from "./GerarNFeModal";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import { mockCancelarNFe, mockEmitirNFe } from "@/components/integracoes/MockIntegracoes";
-import { emitirNFe } from "@/components/lib/integracaoNFe";
+import { cancelarNFe, emitirNFe } from "@/components/lib/integracaoNFe";
 import {
+  assertCancelamentoNFe,
   assertEmissaoNFe,
   isProducaoAutorizada,
   isProvedorFiscalConfigurado,
+  stampNotaFiscalSimulacao,
 } from "@/components/lib/notaFiscalEmissaoPolicy";
 import { isUsuarioPiloto } from "@/components/lib/pilotoOperacaoPolicy";
 import usePermissions from "@/components/lib/usePermissions";
@@ -62,11 +64,11 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useUser();
-  const { empresaAtual, empresasDoGrupo, grupoAtual, createInContext, updateInContext } = useContextoVisual();
+  const { empresaAtual, empresasDoGrupo, grupoAtual, contexto, createInContext, updateInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const contextoValido = Boolean(groupId && (contexto === 'grupo' || empresaId));
   const canViewNota = hasPermission('Fiscal', 'NotaFiscal', 'visualizar') || hasPermission('Fiscal', 'Notas Fiscais', 'visualizar') || hasPermission('Fiscal', null, 'visualizar');
   const canCreateNota = hasPermission('Fiscal', 'NotaFiscal', 'criar') || hasPermission('Fiscal', 'Notas Fiscais', 'criar') || hasPermission('Fiscal', null, 'criar');
   const canEditNota = hasPermission('Fiscal', 'NotaFiscal', 'editar') || hasPermission('Fiscal', 'Notas Fiscais', 'editar') || hasPermission('Fiscal', null, 'editar');
@@ -121,7 +123,8 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
         data_hora: new Date().toISOString(),
       });
     } catch (error) {
-      console.warn('Falha ao auditar nota fiscal comercial:', error);
+      console.error('Falha ao auditar nota fiscal comercial:', error);
+      throw new Error('Auditoria obrigatoria falhou para nota fiscal.');
     }
   };
 
@@ -295,12 +298,12 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
         }));
         throw error;
       }
-      if (resultado?.sucesso === false || resultado?.error) {
+      if (resultado?.sucesso === false || resultado?.success === false || resultado?.error) {
         await updateInContext('NotaFiscal', nfe.id, withFiscalContext({ status: 'Rejeitada' }));
         throw new Error(resultado.error || 'Falha ao emitir NF-e.');
       }
 
-      const payloadAtualizacao = withFiscalContext({
+      const basePayload = withFiscalContext({
         status: resultado.status || 'Autorizada',
         numero: nfe.numero || resultado.numero_nfe,
         serie: nfe.serie || resultado.serie,
@@ -309,17 +312,20 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
         data_autorizacao: resultado.data_autorizacao,
         xml_url: resultado.xml_url,
         danfe_url: resultado.pdf_url,
-        ambiente: resultado.ambiente || nfe.ambiente,
+        ambiente: check.permiteSimulacao ? 'Homologacao' : (resultado.ambiente || nfe.ambiente || 'Producao'),
         historico: [
           ...(nfe.historico || []),
           {
             data_hora: new Date().toISOString(),
-            evento: 'NF-e Enviada (Simulacao)',
-            usuario: 'Sistema',
+            evento: check.permiteSimulacao ? 'NF-e Enviada (Simulacao)' : 'NF-e Autorizada',
+            usuario: user?.full_name || user?.email || 'Sistema',
             detalhes: resultado.mensagem_sefaz
           }
         ]
       });
+      const payloadAtualizacao = check.permiteSimulacao
+        ? stampNotaFiscalSimulacao(basePayload, { origem_simulacao: 'nfe_homologacao' })
+        : { ...basePayload, simulacao: false, __simulado__: false };
 
       await updateInContext('NotaFiscal', nfe.id, payloadAtualizacao);
       await createInContext('LogFiscal', {
@@ -331,24 +337,36 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
         chave_acesso: resultado.chave_acesso,
         data_hora: new Date().toISOString(),
         acao: 'enviar',
-        provedor: 'Mock/Simulacao',
-        ambiente: resultado.ambiente || nfe.ambiente,
+        provedor: check.permiteSimulacao ? 'Mock/Simulacao' : (resultado.provedor || 'IntegracaoNFe'),
+        ambiente: payloadAtualizacao.ambiente,
         status: 'sucesso',
         mensagem: resultado.mensagem_sefaz,
-        retorno_recebido: resultado,
-        usuario_nome: 'Sistema'
+        retorno_recebido: check.permiteSimulacao
+          ? { ...resultado, simulacao: true, __simulado__: true }
+          : resultado,
+        usuario_nome: user?.full_name || user?.email || 'Sistema'
       });
 
-      return resultado;
+      return { ...resultado, permiteSimulacao: check.permiteSimulacao };
     },
     onError: (error) => {
       toast({ title: error.message || 'Falha ao enviar NF-e', variant: 'destructive' });
     },
     onSuccess: async (resultado, nfe) => {
-      await auditFiscalComercial('nota_fiscal_enviada', { entidade: 'NotaFiscal', nota_id: nfe?.id, numero: nfe?.numero, protocolo: resultado?.protocolo }, true);
+      await auditFiscalComercial('nota_fiscal_enviada', {
+        entidade: 'NotaFiscal',
+        nota_id: nfe?.id,
+        numero: nfe?.numero,
+        protocolo: resultado?.protocolo,
+        simulacao: Boolean(resultado?.permiteSimulacao),
+      }, true);
       queryClient.invalidateQueries({ queryKey: ['notasfiscais'] });
       queryClient.invalidateQueries({ queryKey: ['notasFiscais'] });
-      toast({ title: 'NF-e enviada e autorizada (Simulacao)' });
+      toast({
+        title: resultado?.permiteSimulacao
+          ? 'NF-e enviada e autorizada (Simulacao)'
+          : 'NF-e enviada e autorizada',
+      });
     }
   });
 
@@ -359,36 +377,71 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
         throw new Error('Sem contexto ou permissao para cancelar NF-e.');
       }
       const motivoSanitizado = sanitizeFiscalText(motivo);
-      // Mock: Cancelamento simulado
-      const resultado = await mockCancelarNFe({
-        nfe_id: nfe.id,
-        chave_acesso: nfe.chave_acesso,
-        motivo: motivoSanitizado
+      if (!motivoSanitizado || motivoSanitizado.length < 15) {
+        throw new Error('Justificativa de cancelamento deve ter ao menos 15 caracteres.');
+      }
+      const emitenteId = nfe?.empresa_id || nfe?.empresa_faturamento_id || empresaId;
+      const empresaEmitente = empresasDoGrupo?.find((item) => String(item.id) === String(emitenteId)) || empresaAtual;
+      const ambiente = nfe.ambiente || empresaEmitente?.configuracao_fiscal?.ambiente_nfe || 'Homologacao';
+      const check = assertCancelamentoNFe({
+        empresaId: emitenteId,
+        ambiente,
+        producaoAutorizada: isProducaoAutorizada(
+          empresaEmitente?.configuracao_fiscal?.autoriza_emissao_producao,
+          empresaEmitente?.integracao_nfe?.autoriza_emissao_producao,
+        ),
+        provedorConfigurado: isProvedorFiscalConfigurado(empresaEmitente?.integracao_nfe || {}),
+        nfe,
       });
 
-      // Atualizar NF-e
-      await updateInContext('NotaFiscal', nfe.id, withFiscalContext({
+      await auditFiscalComercial('nota_fiscal_cancelamento_iniciado', {
+        nota_id: nfe.id,
+        numero: nfe.numero,
+        ambiente: check.ambiente,
+        simulacao: check.permiteSimulacao,
+      });
+
+      let resultado;
+      if (check.permiteSimulacao) {
+        resultado = await mockCancelarNFe({
+          nfe_id: nfe.id,
+          chave_acesso: nfe.chave_acesso,
+          motivo: motivoSanitizado
+        });
+      } else {
+        resultado = await cancelarNFe(nfe.id, emitenteId, motivoSanitizado);
+      }
+
+      if (resultado?.sucesso === false || resultado?.success === false || resultado?.error) {
+        throw new Error(resultado.error || 'Falha ao cancelar NF-e.');
+      }
+
+      const baseCancelamento = withFiscalContext({
         status: "Cancelada",
         cancelamento: {
-          data_cancelamento: resultado.data_cancelamento,
-          protocolo_cancelamento: resultado.protocolo_cancelamento,
+          data_cancelamento: resultado.data_cancelamento || new Date().toISOString(),
+          protocolo_cancelamento: resultado.protocolo_cancelamento || resultado.protocolo,
           motivo: motivoSanitizado,
           justificativa: motivoSanitizado,
-          usuario: "Sistema"
+          usuario: user?.full_name || user?.email || "Sistema"
         },
         xml_cancelamento: resultado.xml_cancelamento_url,
         historico: [
           ...(nfe.historico || []),
           {
             data_hora: new Date().toISOString(),
-            evento: "NF-e Cancelada (Simulação)",
-            usuario: "Sistema",
+            evento: check.permiteSimulacao ? "NF-e Cancelada (Simulacao)" : "NF-e Cancelada",
+            usuario: user?.full_name || user?.email || "Sistema",
             detalhes: motivoSanitizado
           }
         ]
-      }));
+      });
+      const payloadCancelamento = check.permiteSimulacao
+        ? stampNotaFiscalSimulacao(baseCancelamento, { origem_simulacao: nfe.origem_simulacao || 'nfe_homologacao' })
+        : { ...baseCancelamento, simulacao: false, __simulado__: false };
 
-      // Log fiscal
+      await updateInContext('NotaFiscal', nfe.id, payloadCancelamento);
+
       await createInContext('LogFiscal', {
         empresa_id: nfe.empresa_id || empresaId,
         group_id: nfe.group_id || groupId,
@@ -398,23 +451,32 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
         chave_acesso: nfe.chave_acesso,
         data_hora: new Date().toISOString(),
         acao: "cancelar",
-        provedor: "Mock/Simulação",
-        ambiente: nfe.ambiente,
+        provedor: check.permiteSimulacao ? "Mock/Simulacao" : (resultado.provedor || "IntegracaoNFe"),
+        ambiente: check.ambiente,
         status: "sucesso",
         mensagem: resultado.mensagem_sefaz,
-        retorno_recebido: resultado,
-        usuario_nome: "Sistema"
+        retorno_recebido: check.permiteSimulacao
+          ? { ...resultado, simulacao: true, __simulado__: true }
+          : resultado,
+        usuario_nome: user?.full_name || user?.email || "Sistema"
       });
 
-      return resultado;
+      return { ...resultado, permiteSimulacao: check.permiteSimulacao };
     },
     onError: (error) => {
       toast({ title: error.message || 'Falha ao cancelar NF-e', variant: 'destructive' });
     },
-    onSuccess: async (_, { nfe }) => {
-      await auditFiscalComercial('nota_fiscal_cancelada', { entidade: 'NotaFiscal', nota_id: nfe?.id, numero: nfe?.numero }, true);
+    onSuccess: async (resultado, { nfe }) => {
+      await auditFiscalComercial('nota_fiscal_cancelada', {
+        entidade: 'NotaFiscal',
+        nota_id: nfe?.id,
+        numero: nfe?.numero,
+        simulacao: Boolean(resultado?.permiteSimulacao),
+      }, true);
       queryClient.invalidateQueries({ queryKey: ['notasFiscais'] });
-      toast({ title: 'NF-e Cancelada (Simulacao)' });
+      toast({
+        title: resultado?.permiteSimulacao ? 'NF-e Cancelada (Simulacao)' : 'NF-e Cancelada',
+      });
     }
   });
 

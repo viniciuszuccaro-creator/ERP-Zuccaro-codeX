@@ -47,6 +47,24 @@ export const assertItensFiscaisMinimos = (nfe = {}) => {
   }
 };
 
+const normalizeNfeStatus = (status) => String(status || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+const statusIncludes = (status, token) => normalizeNfeStatus(status).includes(token);
+
+export const isNotaFiscalSimulada = (nfe = {}) => (
+  nfe?.simulacao === true
+  || nfe?.__simulado__ === true
+  || Boolean(firstText(nfe?.origem_simulacao))
+);
+
+export const stampNotaFiscalSimulacao = (record = {}, extras = {}) => ({
+  ...record,
+  simulacao: true,
+  __simulado__: true,
+  origem_simulacao: firstText(extras.origem_simulacao, record.origem_simulacao) || 'nfe_homologacao',
+  ambiente: record.ambiente || extras.ambiente || 'Homologacao',
+});
+
 export const assertEmissaoNFe = ({
   empresaId,
   ambiente,
@@ -77,6 +95,31 @@ export const assertEmissaoNFe = ({
   return { ambiente: 'producao', permiteSimulacao: false };
 };
 
+export const assertCancelamentoNFe = ({
+  empresaId,
+  ambiente,
+  producaoAutorizada = false,
+  provedorConfigurado = false,
+  nfe = {},
+} = {}) => {
+  if (!firstText(empresaId, nfe.empresa_id, nfe.empresa_faturamento_id)) {
+    throw new Error('Empresa emitente obrigatoria para cancelar NF-e.');
+  }
+  if (!statusIncludes(nfe.status, 'autorizada')) {
+    throw new Error('Somente NF-e autorizada pode ser cancelada.');
+  }
+  if (isNotaFiscalSimulada(nfe) || !isAmbienteProducao(ambiente || nfe.ambiente)) {
+    return { ambiente: 'homologacao', permiteSimulacao: true };
+  }
+  if (!producaoAutorizada) {
+    throw new Error('Cancelamento em producao exige autorizacao explicita.');
+  }
+  if (!provedorConfigurado) {
+    throw new Error('Cancelamento em producao exige provedor fiscal configurado.');
+  }
+  return { ambiente: 'producao', permiteSimulacao: false };
+};
+
 export const applyNumeroNfeOnCreate = ({ record = {}, records = [], sequenceValue = 0 } = {}) => {
   const empresaId = firstText(record.empresa_id, record.empresa_faturamento_id);
   if (!empresaId) {
@@ -101,10 +144,6 @@ export const assertNotaFiscalOnDelete = (record = {}) => {
     throw new Error('Exclusao de NF autorizada bloqueada.');
   }
 };
-
-const normalizeNfeStatus = (status) => String(status || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
-const statusIncludes = (status, token) => normalizeNfeStatus(status).includes(token);
 
 const FROZEN_AFTER_AUTORIZADA = [
   'numero',
