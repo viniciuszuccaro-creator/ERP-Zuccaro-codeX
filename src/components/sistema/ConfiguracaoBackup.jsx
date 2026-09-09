@@ -27,7 +27,7 @@ import {
 import { toast } from 'sonner';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
-import { VIRADA_CHECKLIST, stampViradaChecklistOnWrite } from '@/components/lib/viradaProducaoPolicy';
+import { VIRADA_CHECKLIST, resolveConfigBackupInScope, stampViradaChecklistOnWrite } from '@/components/lib/viradaProducaoPolicy';
 
 /**
  * Configuração de Backup Automático
@@ -42,7 +42,6 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
   })();
   const empresaAtivaId = empresaId || empresaAtual?.id || null;
   const scopeId = empresaAtivaId || grupoAtivoId || 'sem-contexto';
-  const scope = empresaAtivaId ? { empresa_id: empresaAtivaId } : grupoAtivoId ? { group_id: grupoAtivoId } : {};
   const contextoValido = Boolean(grupoAtivoId);
   const podeEditarBackup = isAdmin() || hasPermission('Sistema', 'Configurações', 'editar') || hasPermission('Sistema', 'Configuracoes', 'editar') || hasPermission('Sistema', 'Backup', 'editar');
   const podeExecutarBackup = isAdmin() || hasPermission('Sistema', 'Configurações', 'executar') || hasPermission('Sistema', 'Configuracoes', 'executar') || hasPermission('Sistema', 'Backup', 'executar');
@@ -50,12 +49,13 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
   const { data: config, isLoading } = useQuery({
     queryKey: ['config-backup', scopeId],
     queryFn: async () => {
-      const configs = await base44.entities.ConfiguracaoBackup.filter(scope);
-      
-      if (configs.length > 0) {
-        return configs[0];
-      }
-      
+      const rows = await filterInContext('ConfiguracaoBackup', {}, undefined, 20);
+      const scoped = resolveConfigBackupInScope(rows, {
+        groupId: grupoAtivoId,
+        empresaId: empresaAtivaId,
+      });
+      if (scoped) return scoped;
+
       // Config padrão
       return {
         empresa_id: empresaAtivaId || null,

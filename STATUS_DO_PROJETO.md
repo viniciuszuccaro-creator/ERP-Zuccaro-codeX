@@ -1,4 +1,15 @@
-﻿### P0.16 / Gate 19-20 residual - piloto/virada fail-closed
+﻿### P0.17 / Gate 20 residual - ConfiguracaoBackup load scoped
+- Objetivo: fechar residual de leitura da config de backup/virada no escopo (sem BackupV2).
+- Diagnostico: UI ainda usava `filter` + `configs[0]` apos o helper `resolveConfigBackupInScope` existir no client.
+- Causa raiz: load path nao reutilizava o contrato fail-closed de escopo.
+- Arquivos alterados: `ConfiguracaoBackup.jsx`, `tests/virada-producao-policy.test.js`, `PLANO_GO_LIVE.md`.
+- Reutilizado: `resolveConfigBackupInScope`, `filterInContext`.
+- Alteracoes: carga via contexto + resolve por group/empresa; sem fallback `[0]`.
+- Multiempresa/RBAC: exige groupId; empresa no escopo empresa.
+- Pendencia: Go-Live humano Gates 18-20 (PAD, 10 cenarios, virada operacional).
+- Validacoes: `node --test tests/virada-producao-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem: HUMAN_ONLY Gates 18-20.
+### P0.16 / Gate 19-20 residual - piloto/virada fail-closed
 - Objetivo: fechar residual de codigo no piloto e na virada (sem GoLiveV2).
 - Diagnostico: cenario string auto-ok; StatusControleAcesso com OR e `rows[0]`; snapshot/restore fail-open sem ID; ConfiguracaoBackup `[0]` global; checklist so por toggle.
 - Causa raiz: guards Gate 19/20 ainda fail-open apos persistencia inicial.

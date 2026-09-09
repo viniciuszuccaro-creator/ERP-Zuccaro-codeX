@@ -1002,6 +1002,7 @@ Nenhum erro crítico aberto e divergências financeiras/fiscais/estoque reconcil
 - [x] Snapshot/restore fail-closed por group/empresa (sem ID = fora do escopo).
 - [x] `ConfiguracaoBackup` resolvido por escopo (nao `[0]` global).
 - [x] Checklist de virada exige `virada_confirmado_por` (toggle sozinho nao basta).
+- [x] UI `ConfiguracaoBackup` carrega via `filterInContext` + `resolveConfigBackupInScope`.
 - [ ] Execucao humana: backups legado/ERP, congelar, deltas, reconciliacoes e contingencia.
 
 ## Durante

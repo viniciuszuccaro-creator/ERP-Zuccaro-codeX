@@ -133,6 +133,9 @@ test('backup existente deixa de simular restore e a central congela a janela', a
   assert.doesNotMatch(tela, /Math\.random/);
   assert.match(tela, /origem_backup: 'erp_novo'/);
   assert.match(tela, /stampViradaChecklistOnWrite/);
+  assert.match(tela, /resolveConfigBackupInScope/);
+  assert.match(tela, /filterInContext\('ConfiguracaoBackup'/);
+  assert.doesNotMatch(tela, /configs\[0\]/);
   assert.match(tela, /Boolean\(grupoAtivoId\)/);
   assert.match(center, /janela_migracao_congelada/);
   assert.doesNotMatch(historico, /Restauracao simulada|Simular restauracao|Simular restaura/);
