@@ -975,6 +975,7 @@ Nenhum erro crítico aberto e divergências financeiras/fiscais/estoque reconcil
 - [x] Write fail-closed via `applyPilotoCenariosOnWrite` no client local.
 - [x] NF producao exige usuario piloto com papel (nfeActions).
 - [x] Snapshot local nao auto-designa admin como piloto.
+- [x] String sozinha nao homologa cenario; StatusControleAcesso exige groupId e sem fallback `rows[0]`.
 - [ ] Execucao operacional dos 10 cenarios com usuarios reais (homologacao humana).
 
 ---
@@ -995,6 +996,13 @@ Nenhum erro crítico aberto e divergências financeiras/fiscais/estoque reconcil
 - [ ] Validar permissões.
 - [ ] Validar integrações.
 - [ ] Definir suporte de contingência.
+
+### Residual codigo Gate 19/20 (2026-09-09)
+
+- [x] Snapshot/restore fail-closed por group/empresa (sem ID = fora do escopo).
+- [x] `ConfiguracaoBackup` resolvido por escopo (nao `[0]` global).
+- [x] Checklist de virada exige `virada_confirmado_por` (toggle sozinho nao basta).
+- [ ] Execucao humana: backups legado/ERP, congelar, deltas, reconciliacoes e contingencia.
 
 ## Durante
 

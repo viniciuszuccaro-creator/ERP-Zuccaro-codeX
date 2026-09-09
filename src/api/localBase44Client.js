@@ -55,6 +55,8 @@ import {
   backupSequenceKey,
   buildBackupEntitySnapshot,
   buildBackupResumo,
+  resolveConfigBackupInScope,
+  stampViradaChecklistOnWrite,
 } from "@/components/lib/viradaProducaoPolicy";
 import { assertIaInvocation } from "@/components/lib/iaTransversalPolicy";
 import { AGENT_FUNCTION_MAP, AGENTES, assertAgentMayAct, assertMappedAgentFunction, resolveAgentScope } from "@/components/lib/agenteAutorizacaoPolicy";
@@ -1218,7 +1220,10 @@ const applyLocalMigracaoCreate = (db, entityName, record) => {
   if (result.reuse) return result;
   assertJanelaMigracao({
     configs: getEntityStore(db, 'ConfiguracaoSistema'),
-    configBackup: getEntityStore(db, 'ConfiguracaoBackup')[0] || {},
+    configBackup: resolveConfigBackupInScope(getEntityStore(db, 'ConfiguracaoBackup'), {
+      groupId: record.group_id || record.grupo_id || result.record?.group_id || result.record?.grupo_id,
+      empresaId: record.empresa_id || result.record?.empresa_id,
+    }) || {},
     migracaoConfirmada: record.confirmado === true || result.record?.confirmado === true,
   });
   if (record.confirmado === true || result.record?.confirmado === true) {
@@ -1247,13 +1252,17 @@ const applyLocalPilotoWrite = (db, entityName, record, before = null) => {
     if (chave === MODO_OPERACAO_CHAVE) {
       const cenarios = getEntityStore(db, 'ConfiguracaoSistema').find((item) => item.chave === PILOTO_CENARIOS_CHAVE);
       const incidentes = getEntityStore(db, 'AuditLog').filter((item) => item.severidade === 'P0' && item.sucesso === false && item.aberto !== false);
+      const scope = {
+        groupId: next.group_id || next.grupo_id || before?.group_id || before?.grupo_id,
+        empresaId: next.empresa_id || before?.empresa_id,
+      };
       next = applyModoOperacaoOnWrite({
         record: { ...(before || {}), ...record },
         users: getEntityStore(db, 'User'),
         cenariosExecutados: Array.isArray(cenarios?.valor_json) ? cenarios.valor_json : [],
         incidentesCriticosAbertos: incidentes,
         backups: getEntityStore(db, 'BackupAutomatico'),
-        configBackup: getEntityStore(db, 'ConfiguracaoBackup')[0] || {},
+        configBackup: resolveConfigBackupInScope(getEntityStore(db, 'ConfiguracaoBackup'), scope) || {},
         configs: getEntityStore(db, 'ConfiguracaoSistema'),
       });
     }
@@ -1262,6 +1271,12 @@ const applyLocalPilotoWrite = (db, entityName, record, before = null) => {
 };
 
 const applyLocalBackupWrite = (db, entityName, record, before = null) => {
+  if (entityName === 'ConfiguracaoBackup') {
+    return stampViradaChecklistOnWrite({
+      record: { ...(before || {}), ...record },
+      user: readUser(),
+    });
+  }
   if (entityName !== 'BackupAutomatico') return record;
   if (before) {
     const preserved = applyBackupOnUpdate({ before, patch: record });

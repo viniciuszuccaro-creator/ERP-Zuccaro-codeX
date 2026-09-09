@@ -48,13 +48,45 @@ const recordInBackupScope = (record = {}, { groupId = null, empresaId = null } =
   const empresa = firstText(empresaId);
   if (empresa) {
     const recordEmpresa = firstText(record.empresa_id, record.empresa_dona_id, record.empresa_alocada_id);
-    if (recordEmpresa && recordEmpresa !== empresa) return false;
+    if (!recordEmpresa || recordEmpresa !== empresa) return false;
   }
   if (group) {
     const recordGroup = firstText(record.group_id, record.grupo_id);
-    if (recordGroup && recordGroup !== group) return false;
+    if (!recordGroup || recordGroup !== group) return false;
   }
   return true;
+};
+
+export const resolveConfigBackupInScope = (rows = [], { groupId = null, empresaId = null } = {}) => {
+  const group = firstText(groupId);
+  const empresa = firstText(empresaId);
+  if (!group && !empresa) return null;
+  const list = Array.isArray(rows) ? rows : [];
+  return list.find((row) => {
+    if (empresa) {
+      const recordEmpresa = firstText(row.empresa_id);
+      if (!recordEmpresa || recordEmpresa !== empresa) return false;
+    }
+    if (group) {
+      const recordGroup = firstText(row.group_id, row.grupo_id);
+      if (!recordGroup || recordGroup !== group) return false;
+    }
+    return true;
+  }) || null;
+};
+
+export const stampViradaChecklistOnWrite = ({ record = {}, user = null } = {}) => {
+  const anyChecked = VIRADA_CHECKLIST.some((campo) => record[campo] === true);
+  if (!anyChecked) return record;
+  const who = firstText(record.virada_confirmado_por, user?.email, user?.full_name, user?.id);
+  if (!who) {
+    throw new Error('Checklist de virada exige identificacao do responsavel (virada_confirmado_por).');
+  }
+  return {
+    ...record,
+    virada_confirmado_por: who,
+    virada_confirmado_em: firstText(record.virada_confirmado_em) || new Date().toISOString(),
+  };
 };
 
 export const buildBackupEntitySnapshot = (stores = {}, { groupId = null, empresaId = null } = {}) => {
@@ -185,12 +217,12 @@ export const assertBackupRestore = ({ backup = {}, groupId = null, empresaId = n
   }
   const backupGroup = firstText(backup.group_id, backup.grupo_id);
   const ctxGroup = firstText(groupId);
-  if (ctxGroup && backupGroup && ctxGroup !== backupGroup) {
+  if (ctxGroup && (!backupGroup || ctxGroup !== backupGroup)) {
     throw new Error('Backup fora do grupo do contexto.');
   }
   const backupEmpresa = firstText(backup.empresa_id);
   const ctxEmpresa = firstText(empresaId);
-  if (ctxEmpresa && backupEmpresa && ctxEmpresa !== backupEmpresa) {
+  if (ctxEmpresa && (!backupEmpresa || ctxEmpresa !== backupEmpresa)) {
     throw new Error('Backup fora da empresa do contexto.');
   }
   if (backup.validacao_integridade?.pode_restaurar === false) {
@@ -246,6 +278,9 @@ export const assertChecklistVirada = ({
   }
   if (!isJanelaMigracaoCongelada({ configs, configBackup })) {
     throw new Error('Virada para producao exige janela de migracao congelada.');
+  }
+  if (!firstText(configBackup.virada_confirmado_por)) {
+    throw new Error('Virada para producao exige checklist assinado pelo responsavel.');
   }
   const checklist = evaluateChecklistVirada(configBackup);
   if (!checklist.ok) {

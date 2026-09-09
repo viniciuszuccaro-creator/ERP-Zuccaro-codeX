@@ -1,4 +1,15 @@
-﻿### P0.15 / Gate 18 residual - NF-e import + backup audit fail-closed
+﻿### P0.16 / Gate 19-20 residual - piloto/virada fail-closed
+- Objetivo: fechar residual de codigo no piloto e na virada (sem GoLiveV2).
+- Diagnostico: cenario string auto-ok; StatusControleAcesso com OR e `rows[0]`; snapshot/restore fail-open sem ID; ConfiguracaoBackup `[0]` global; checklist so por toggle.
+- Causa raiz: guards Gate 19/20 ainda fail-open apos persistencia inicial.
+- Arquivos alterados: `pilotoOperacaoPolicy.js`, `viradaProducaoPolicy.js`, `StatusControleAcesso.jsx`, `ConfiguracaoBackup.jsx`, `localBase44Client.js`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: allowlist `CENARIOS_PILOTO`, `VIRADA_CHECKLIST`, `assertChecklistVirada`, client local.
+- Alteracoes: string nao homologa; escopo obrigatorio; snapshot/restore fail-closed; config por escopo; assinatura `virada_confirmado_por`.
+- Multiempresa/RBAC: exige groupId; empresa quando no escopo empresa; backup/virada no Sistema.Backup.
+- Pendencia: 10 cenarios reais (Gate 19); backups/congelar/deltas/reconciliacao/contingencia humanos (Gate 20).
+- Validacoes: `node --test tests/piloto-operacao-policy.test.js tests/virada-producao-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem: Go-Live humano Gates 18-20 (PAD/arquivo, 10 cenarios, virada operacional).
+### P0.15 / Gate 18 residual - NF-e import + backup audit fail-closed
 - Objetivo: fechar residual Gate 18 no `ImportarProdutosNFe` e auditoria do `ConfiguracaoBackup` (sem MigracaoV2).
 - Diagnostico: NF-e criava Produto sem legado/lote/reconciliacao; audit engolido; contexto grupo-OR-empresa; backup engolia falha de AuditLog.
 - Causa raiz: importador NF-e fora do contrato `migracaoErpPolicy`; catch silencioso no backup.

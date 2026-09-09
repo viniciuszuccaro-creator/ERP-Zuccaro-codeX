@@ -36,7 +36,11 @@ const backupOk = [{
   quantidade_total_registros: 4,
   snapshot_dados: snapshotPiloto,
 }];
-const checklistOk = Object.fromEntries(VIRADA_CHECKLIST.map((campo) => [campo, true]));
+const checklistOk = Object.fromEntries([
+  ...VIRADA_CHECKLIST.map((campo) => [campo, true]),
+  ['virada_confirmado_por', 'qa@local'],
+  ['virada_confirmado_em', '2026-09-01T00:00:00.000Z'],
+]);
 const viradaPronta = {
   users: usersCompletos,
   cenariosExecutados: cenariosOk,
@@ -101,6 +105,14 @@ test('cenarios piloto so aceitam allowlist e homologacao exige papeis+cenarios',
     }),
     /invalido/,
   );
+  const stringOnly = applyPilotoCenariosOnWrite({
+    record: {
+      chave: PILOTO_CENARIOS_CHAVE,
+      valor_json: CENARIOS_PILOTO.map((id) => id),
+    },
+  });
+  assert.equal(stringOnly.valor, '0/10');
+  assert.equal(stringOnly.valor_json.every((item) => item.ok === false), true);
   const saved = applyPilotoCenariosOnWrite({
     record: {
       chave: PILOTO_CENARIOS_CHAVE,
@@ -126,9 +138,12 @@ test('telas existentes designam piloto, registram cenarios e NF exige papel', as
   assert.match(status, /PILOTO_CENARIOS_CHAVE/);
   assert.match(status, /upsertConfig/);
   assert.match(status, /CENARIOS_PILOTO\.map/);
+  assert.doesNotMatch(status, /rows\[0\]/);
+  assert.match(status, /Boolean\(groupId\)/);
   assert.match(tab, /usuarioPiloto: isUsuarioPiloto\(user\)/);
   assert.match(actions, /papel_piloto/);
   assert.match(actions, /usuario piloto designado/);
   assert.match(client, /applyPilotoCenariosOnWrite/);
+  assert.match(client, /resolveConfigBackupInScope/);
   assert.doesNotMatch(client, /role === 'admin' && record\.usuario_piloto == null/);
 });

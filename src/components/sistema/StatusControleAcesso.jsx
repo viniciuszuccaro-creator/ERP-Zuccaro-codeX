@@ -25,7 +25,7 @@ export default function StatusControleAcesso({ usuarios = [] }) {
   const { user } = useUser();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const contextoValido = Boolean(groupId);
   const canEdit = hasPermission("Sistema", "Configuracoes", "editar")
     || hasPermission("Sistema", "Controle de Acesso", "editar")
     || hasPermission("Seguranca", "Acessos", "editar");
@@ -38,10 +38,10 @@ export default function StatusControleAcesso({ usuarios = [] }) {
         ? { chave: PILOTO_CENARIOS_CHAVE, empresa_id: empresaId }
         : { chave: PILOTO_CENARIOS_CHAVE, group_id: groupId };
       const rows = await base44.entities.ConfiguracaoSistema.filter(filter, "-updated_date", 5);
-      const scoped = rows.find((row) => (
-        (!empresaId || String(row.empresa_id || "") === String(empresaId))
-        && (!groupId || String(row.group_id || row.grupo_id || "") === String(groupId))
-      )) || rows[0] || null;
+      const scoped = (Array.isArray(rows) ? rows : []).find((row) => (
+        String(row.group_id || row.grupo_id || "") === String(groupId)
+        && (!empresaId || String(row.empresa_id || "") === String(empresaId))
+      )) || null;
       return scoped;
     },
   });
@@ -57,7 +57,7 @@ export default function StatusControleAcesso({ usuarios = [] }) {
 
   const salvarCenariosMutation = useMutation({
     mutationFn: async (nextMap) => {
-      if (!contextoValido) throw new Error("Selecione grupo ou empresa para homologar cenarios.");
+      if (!contextoValido) throw new Error("Selecione o grupo para homologar cenarios.");
       if (!canEdit) throw new Error("Sem permissao para registrar cenarios piloto.");
       const valor_json = CENARIOS_PILOTO.map((id) => ({
         id,

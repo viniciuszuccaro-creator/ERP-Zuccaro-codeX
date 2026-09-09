@@ -27,7 +27,7 @@ import {
 import { toast } from 'sonner';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
-import { VIRADA_CHECKLIST } from '@/components/lib/viradaProducaoPolicy';
+import { VIRADA_CHECKLIST, stampViradaChecklistOnWrite } from '@/components/lib/viradaProducaoPolicy';
 
 /**
  * Configuração de Backup Automático
@@ -43,7 +43,7 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
   const empresaAtivaId = empresaId || empresaAtual?.id || null;
   const scopeId = empresaAtivaId || grupoAtivoId || 'sem-contexto';
   const scope = empresaAtivaId ? { empresa_id: empresaAtivaId } : grupoAtivoId ? { group_id: grupoAtivoId } : {};
-  const contextoValido = scopeId !== 'sem-contexto';
+  const contextoValido = Boolean(grupoAtivoId);
   const podeEditarBackup = isAdmin() || hasPermission('Sistema', 'Configurações', 'editar') || hasPermission('Sistema', 'Configuracoes', 'editar') || hasPermission('Sistema', 'Backup', 'editar');
   const podeExecutarBackup = isAdmin() || hasPermission('Sistema', 'Configurações', 'executar') || hasPermission('Sistema', 'Configuracoes', 'executar') || hasPermission('Sistema', 'Backup', 'executar');
 
@@ -107,7 +107,12 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
 
   const salvarMutation = useMutation({
     mutationFn: async (data) => {
-      const stamped = { ...data, empresa_id: empresaAtivaId || null, group_id: grupoAtivoId || null };
+      if (!grupoAtivoId) throw new Error('Selecione o grupo para configurar backup/virada.');
+      const me = await base44.auth.me();
+      const stamped = stampViradaChecklistOnWrite({
+        record: { ...data, empresa_id: empresaAtivaId || null, group_id: grupoAtivoId || null },
+        user: me,
+      });
       const result = config?.id
         ? await updateInContext('ConfiguracaoBackup', config.id, stamped)
         : await createInContext('ConfiguracaoBackup', stamped);
@@ -124,7 +129,6 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
       if (janelaRows?.[0]?.id) await updateInContext('ConfiguracaoSistema', janelaRows[0].id, janelaPayload);
       else await createInContext('ConfiguracaoSistema', janelaPayload);
       try {
-        const me = await base44.auth.me();
         await createInContext('AuditLog', {
           usuario: me?.full_name || me?.email || 'Usuario',
           usuario_id: me?.id || null,

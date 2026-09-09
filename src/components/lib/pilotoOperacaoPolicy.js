@@ -122,8 +122,9 @@ export const applyPilotoCenariosOnWrite = ({ record = {}, user = null } = {}) =>
     }
     if (seen.has(id)) return;
     seen.add(id);
-    const ok = item === id
-      ? true
+    // String sozinha nao homologa: exige objeto com ok/sucesso/status explicitos.
+    const ok = typeof item === 'string'
+      ? false
       : (item?.ok === true || item?.sucesso === true || item?.status === 'ok');
     normalized.push({
       id,

@@ -14,11 +14,13 @@ import {
   hashBackupResumo,
   hasBackupSnapshot,
   isBackupErpValido,
+  resolveConfigBackupInScope,
+  stampViradaChecklistOnWrite,
   VIRADA_CHECKLIST,
 } from '../src/components/lib/viradaProducaoPolicy.js';
 
 test('backup do ERP reserva numero estavel, hash e snapshot restauravel', () => {
-  const stores = { Cliente: [{ id: 1 }, { id: 2 }], Pedido: [{ id: 3 }] };
+  const stores = { Cliente: [{ id: 1, group_id: 'g1' }, { id: 2, group_id: 'g1' }], Pedido: [{ id: 3, group_id: 'g1' }] };
   const snapshotDados = buildBackupEntitySnapshot(stores, { groupId: 'g1' });
   const resumo = buildBackupResumo(snapshotDados.entities);
   const created = applyBackupOnCreate({
@@ -33,6 +35,17 @@ test('backup do ERP reserva numero estavel, hash e snapshot restauravel', () => 
   assert.equal(hasBackupSnapshot(created), true);
   assert.equal(created.validacao_integridade.pode_restaurar, true);
   assert.equal(isBackupErpValido(created), true);
+});
+
+test('snapshot exclui registro sem grupo/empresa no escopo', () => {
+  const snapshot = buildBackupEntitySnapshot({
+    Cliente: [
+      { id: 'ok', group_id: 'g1' },
+      { id: 'sem-grupo' },
+      { id: 'outro', group_id: 'g2' },
+    ],
+  }, { groupId: 'g1' });
+  assert.deepEqual(snapshot.entities.Cliente.map((row) => row.id), ['ok']);
 });
 
 test('backup sem grupo e recusado', () => {
@@ -51,6 +64,7 @@ test('restore exige snapshot e respeita escopo', () => {
   const entities = assertBackupRestore({ backup, groupId: 'g1' });
   assert.equal(entities.Cliente[0].id, 'c1');
   assert.throws(() => assertBackupRestore({ backup, groupId: 'outro' }), /grupo/);
+  assert.throws(() => assertBackupRestore({ backup, groupId: 'g1', empresaId: 'e1' }), /empresa/);
 });
 
 test('update preserva snapshot e expire e controlado', () => {
@@ -80,7 +94,7 @@ test('janela congelada bloqueia migracao confirmada', () => {
   assert.equal(assertJanelaMigracao({ migracaoConfirmada: true }), true);
 });
 
-test('checklist da virada exige backup valido e itens confirmados', () => {
+test('checklist da virada exige backup valido, assinatura e itens confirmados', () => {
   assert.throws(() => assertChecklistVirada({ backups: [], configBackup: {} }), /backup valido/);
   const snapshotDados = buildBackupEntitySnapshot({}, { groupId: 'g1' });
   const backups = [applyBackupOnCreate({
@@ -98,7 +112,15 @@ test('checklist da virada exige backup valido e itens confirmados', () => {
     /janela/,
   );
   const checklist = Object.fromEntries(VIRADA_CHECKLIST.map((campo) => [campo, true]));
-  assert.equal(assertChecklistVirada({ backups, configBackup: checklist }).permitido, true);
+  assert.throws(() => assertChecklistVirada({ backups, configBackup: checklist }), /assinado|responsavel/);
+  const assinado = stampViradaChecklistOnWrite({
+    record: checklist,
+    user: { email: 'qa@local' },
+  });
+  assert.equal(assinado.virada_confirmado_por, 'qa@local');
+  assert.equal(assertChecklistVirada({ backups, configBackup: assinado }).permitido, true);
+  assert.equal(resolveConfigBackupInScope([{ group_id: 'g1', id: 'cfg1' }, { group_id: 'g2', id: 'cfg2' }], { groupId: 'g1' })?.id, 'cfg1');
+  assert.equal(resolveConfigBackupInScope([{ id: 'sem' }], { groupId: 'g1' }), null);
 });
 
 test('backup existente deixa de simular restore e a central congela a janela', async () => {
@@ -110,12 +132,16 @@ test('backup existente deixa de simular restore e a central congela a janela', a
   assert.doesNotMatch(tela, /Date\.now\(\)/);
   assert.doesNotMatch(tela, /Math\.random/);
   assert.match(tela, /origem_backup: 'erp_novo'/);
+  assert.match(tela, /stampViradaChecklistOnWrite/);
+  assert.match(tela, /Boolean\(grupoAtivoId\)/);
   assert.match(center, /janela_migracao_congelada/);
   assert.doesNotMatch(historico, /Restauracao simulada|Simular restauracao|Simular restaura/);
   assert.match(historico, /BackupAutomatico\.restore/);
   assert.match(historico, /canRestaurar/);
   assert.match(client, /async restore\(/);
   assert.match(client, /buildBackupEntitySnapshot/);
+  assert.match(client, /resolveConfigBackupInScope/);
+  assert.match(client, /stampViradaChecklistOnWrite/);
   assert.match(client, /BackupAutomatico: \{ module: 'Sistema', section: 'Backup' \}/);
   assert.match(auto, /group_id obrigatorio/);
   assert.doesNotMatch(auto, /catch \(_\) \{\}/);
