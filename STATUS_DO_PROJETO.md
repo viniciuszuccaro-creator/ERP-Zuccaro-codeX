@@ -1,4 +1,15 @@
-﻿### P0.19 / Gate 18 residual - ImportarXMLNFe fail-closed
+﻿### P0.20 / Gate 18 residual - ImportacaoNFeRecebimento fail-closed
+- Objetivo: impedir recebimento mock gravar estoque e fechar OR/audit fail-open (sem RecebimentoV2).
+- Diagnostico: contexto grupo-OR-empresa; audit com warn; preview mock confirmava MovimentacaoEstoque com IDs ficticios.
+- Causa raiz: tela de preview IA ainda tratava simulacao como recebimento real.
+- Arquivos alterados: `ImportacaoNFeRecebimento.jsx`, `tests/migracao-erp-policy.test.js`, `PLANO_GO_LIVE.md`.
+- Reutilizado: `createInContext`/`filterInContext`, padrao audit dos importadores NF-e.
+- Alteracoes: exige group+empresa; audit rethrow; `simulacao` bloqueia confirm; produto deve existir no contexto.
+- Multiempresa/RBAC: Compras/Estoque criar conforme permissao existente.
+- Pendencia: parser XML real nesta tela (ou redirecionar ao Fiscal); Go-Live humano Gates 18-20.
+- Validacoes: `node --test tests/migracao-erp-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem: HUMAN_ONLY Gates 18-20.
+### P0.19 / Gate 18 residual - ImportarXMLNFe fail-closed
 - Objetivo: alinhar importacao fiscal XML NF-e ao contrato de migracao (sem MigracaoV2).
 - Diagnostico: `ImportarXMLNFe` criava Produto/Fornecedor sem stamp; OR fail-open; audit via entity global com warn silencioso.
 - Causa raiz: fluxo fiscal de compras ficou fora dos lotes P0.15/P0.18 de Cadastros.

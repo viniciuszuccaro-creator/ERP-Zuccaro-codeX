@@ -176,6 +176,12 @@ test('importadores existentes fazem staging e reconciliam', async () => {
   assert.match(fiscalXml, /groupId && empresaSelecionadaId/);
   assert.match(fiscalXml, /createInContext\('AuditLog'/);
   assert.doesNotMatch(fiscalXml, /console\.warn\('Falha ao auditar importacao XML NF-e:/);
+  const recebimento = await readFile(new URL('../src/components/compras/ImportacaoNFeRecebimento.jsx', import.meta.url), 'utf8');
+  assert.match(recebimento, /groupId && empresaId/);
+  assert.match(recebimento, /simulacao: true/);
+  assert.match(recebimento, /Resultado simulado/);
+  assert.match(recebimento, /throw error/);
+  assert.doesNotMatch(recebimento, /console\.warn\('Falha ao auditar importacao de NF-e:/);
   assert.match(backup, /throw error/);
   assert.doesNotMatch(backup, /Falha ao registrar configuracao de backup\.', error\);\r?\n\s*\}/);
 });

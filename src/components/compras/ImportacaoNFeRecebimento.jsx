@@ -25,7 +25,7 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
   const { empresaAtual, grupoAtual, contexto, createInContext, updateInContext, filterInContext } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const contextoValido = Boolean(groupId && empresaId);
   const canProcessarNFe = hasPermission('Compras', 'ImportacaoNFe', 'criar') ||
     hasPermission('Compras', 'Recebimento', 'criar') ||
     hasPermission('Estoque', 'Movimentacoes', 'criar') ||
@@ -47,7 +47,8 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
         data_hora: new Date().toISOString(),
       });
     } catch (error) {
-      console.warn('Falha ao auditar importacao de NF-e:', error);
+      console.error('Falha ao auditar importacao de NF-e:', error);
+      throw error;
     }
   };
 
@@ -60,7 +61,7 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
           motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
           dados: { arquivo: file?.name }
         });
-        throw new Error(!contextoValido ? 'Selecione grupo ou empresa antes de processar NF-e.' : 'Sem permissao para processar NF-e de recebimento.');
+        throw new Error(!contextoValido ? 'Selecione grupo e empresa antes de processar NF-e.' : 'Sem permissao para processar NF-e de recebimento.');
       }
 
       setProcessando(true);
@@ -68,6 +69,7 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
 
       const mockResultado = {
         sucesso: true,
+        simulacao: true,
         nfe: {
           numero: "123456",
           serie: "1",
@@ -140,7 +142,16 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
           motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
           dados: { numero_nfe: dados?.nfe?.numero, chave_acesso: dados?.nfe?.chave }
         });
-        throw new Error(!contextoValido ? 'Selecione grupo ou empresa antes de confirmar recebimento.' : 'Sem permissao para confirmar recebimento por NF-e.');
+        throw new Error(!contextoValido ? 'Selecione grupo e empresa antes de confirmar recebimento.' : 'Sem permissao para confirmar recebimento por NF-e.');
+      }
+      if (dados?.simulacao === true) {
+        await auditImportacao({
+          acao: 'ImportacaoNFe.recebimento_bloqueado',
+          sucesso: false,
+          motivo: 'resultado_simulado',
+          dados: { numero_nfe: dados?.nfe?.numero },
+        });
+        throw new Error('Resultado simulado: use Importar XML NF-e (Fiscal) para recebimento real com estoque.');
       }
 
       const importacao = await createInContext('ImportacaoXMLNFe', {
@@ -162,40 +173,43 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
 
       let itensMovimentados = 0;
       for (const item of dados.nfe.itens) {
-        if (item.produto_encontrado && item.produto_id) {
-          await createInContext('MovimentacaoEstoque', {
-            origem_movimento: "nfe",
-            tipo_movimento: "entrada",
-            tipo_movimentacao: "Entrada",
-            produto_id: item.produto_id,
-            produto_descricao: item.descricao,
-            quantidade: item.quantidade,
-            unidade_medida: item.unidade,
-            valor_unitario: item.valor_unitario,
-            valor_total: item.valor_total,
-            documento: `NF-e ${dados.nfe.numero}`,
-            data_movimentacao: dados.nfe.data_emissao,
-            motivo: `Recebimento NF-e ${dados.nfe.numero}`,
-            responsavel: "Sistema - Importacao XML",
-            group_id: groupId,
-            grupo_id: groupId,
-            empresa_id: empresaId
-          });
-          itensMovimentados += 1;
-
-          const produtos = await filterInContext('Produto', { id: item.produto_id }, 'descricao', 1);
-          const produtoAtual = Array.isArray(produtos) ? produtos[0] : null;
-          if (produtoAtual) {
-            await updateInContext('Produto', item.produto_id, {
-              estoque_atual: (Number(produtoAtual.estoque_atual) || 0) + Number(item.quantidade || 0),
-              ultimo_preco_compra: item.valor_unitario,
-              ultima_compra: dados.nfe.data_emissao,
-              group_id: produtoAtual.group_id || groupId,
-              grupo_id: produtoAtual.grupo_id || groupId,
-              empresa_id: produtoAtual.empresa_id || empresaId
-            });
-          }
+        if (!item.produto_encontrado || !item.produto_id) continue;
+        const produtos = await filterInContext('Produto', { id: item.produto_id }, 'descricao', 1);
+        const produtoAtual = Array.isArray(produtos) ? produtos[0] : null;
+        if (!produtoAtual) {
+          throw new Error(`Produto ${item.produto_id} nao encontrado no contexto do grupo/empresa.`);
         }
+        await createInContext('MovimentacaoEstoque', {
+          origem_movimento: "nfe",
+          tipo_movimento: "entrada",
+          tipo_movimentacao: "Entrada",
+          produto_id: item.produto_id,
+          produto_descricao: item.descricao,
+          quantidade: item.quantidade,
+          unidade_medida: item.unidade,
+          valor_unitario: item.valor_unitario,
+          valor_total: item.valor_total,
+          documento: `NF-e ${dados.nfe.numero}`,
+          data_movimentacao: dados.nfe.data_emissao,
+          motivo: `Recebimento NF-e ${dados.nfe.numero}`,
+          responsavel: "Sistema - Importacao XML",
+          group_id: groupId,
+          grupo_id: groupId,
+          empresa_id: empresaId
+        });
+        itensMovimentados += 1;
+
+        await updateInContext('Produto', item.produto_id, {
+          estoque_atual: (Number(produtoAtual.estoque_atual) || 0) + Number(item.quantidade || 0),
+          ultimo_preco_compra: item.valor_unitario,
+          ultima_compra: dados.nfe.data_emissao,
+          group_id: produtoAtual.group_id || groupId,
+          grupo_id: produtoAtual.grupo_id || groupId,
+          empresa_id: produtoAtual.empresa_id || empresaId
+        });
+      }
+      if (!itensMovimentados) {
+        throw new Error('Nenhum item com produto valido no contexto para movimentar estoque.');
       }
 
       await auditImportacao({
@@ -280,7 +294,15 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
       });
       toast({
         title: "Recebimento bloqueado",
-        description: !contextoValido ? "Selecione grupo ou empresa antes de confirmar." : "Sem permissao para confirmar recebimento.",
+        description: !contextoValido ? "Selecione grupo e empresa antes de confirmar." : "Sem permissao para confirmar recebimento.",
+        variant: "destructive"
+      });
+      return;
+    }
+    if (resultado.simulacao === true) {
+      toast({
+        title: "Recebimento bloqueado",
+        description: "Resultado simulado: use Importar XML NF-e (Fiscal) para recebimento real.",
         variant: "destructive"
       });
       return;
@@ -304,7 +326,7 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
     <div
       className="space-y-2 w-full h-full"
       data-permission="Compras.ImportacaoNFe.criar"
-      data-context-required="group-or-company"
+      data-context-required="group-and-company"
       data-context-mode={contexto}
     >
       {(!contextoValido || !canProcessarNFe) && (
@@ -312,7 +334,7 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
           <AlertCircle className="w-4 h-4 text-amber-700" />
           <AlertDescription className="text-sm text-amber-800">
             {!contextoValido
-              ? "Selecione um grupo ou empresa antes de processar NF-e."
+              ? "Selecione grupo e empresa antes de processar NF-e."
               : "Seu perfil nao possui permissao para processar recebimento por NF-e."}
           </AlertDescription>
         </Alert>
@@ -392,6 +414,14 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 space-y-3">
+            {resultado.simulacao === true && (
+              <Alert className="border-amber-300 bg-amber-50">
+                <AlertCircle className="w-4 h-4 text-amber-700" />
+                <AlertDescription className="text-sm text-amber-800">
+                  Preview simulado: confirmacao de estoque bloqueada. Use Importar XML NF-e (Fiscal) para recebimento real.
+                </AlertDescription>
+              </Alert>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="bg-white p-3 rounded-lg border border-green-200">
                 <p className="text-xs text-slate-600">Numero NF-e</p>
@@ -468,7 +498,7 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
               <Button
                 className="bg-green-600 hover:bg-green-700"
                 onClick={handleConfirmarRecebimento}
-                disabled={confirmarRecebimentoMutation.isPending || !contextoValido || !canProcessarNFe}
+                disabled={confirmarRecebimentoMutation.isPending || !contextoValido || !canProcessarNFe || resultado.simulacao === true}
               >
                 {confirmarRecebimentoMutation.isPending ? (
                   <>
