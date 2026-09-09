@@ -22,7 +22,7 @@ export default function RecebimentoOCForm({ ordemCompra, onSubmit, windowMode = 
   const { empresaAtual, grupoAtual, contexto, createInContext } = useContextoVisual();
   const groupId = ordemCompra?.group_id || ordemCompra?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = ordemCompra?.empresa_id || empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const contextoValido = Boolean(groupId && (contexto === 'grupo' || empresaId));
   const canReceiveOC = hasPermission('Compras', 'OrdemCompra', 'receber');
   const controlesBloqueados = !contextoValido || !canReceiveOC;
 
@@ -57,7 +57,7 @@ export default function RecebimentoOCForm({ ordemCompra, onSubmit, windowMode = 
         data_hora: new Date().toISOString(),
       });
     } catch (error) {
-      console.warn('Falha ao auditar formulario de recebimento de OC:', error);
+      console.error('Falha ao auditar formulario de recebimento de OC:', error);
       throw new Error('Auditoria obrigatoria falhou para recebimento de OC.');
     }
   };
@@ -72,7 +72,7 @@ export default function RecebimentoOCForm({ ordemCompra, onSubmit, windowMode = 
       });
       toast({
         title: "Recebimento bloqueado",
-        description: !contextoValido ? "Selecione grupo ou empresa antes de receber." : "Sem permissao para receber ordem de compra.",
+        description: !contextoValido ? "Selecione grupo e empresa antes de receber." : "Sem permissao para receber ordem de compra.",
         variant: "destructive"
       });
       return;
@@ -87,7 +87,7 @@ export default function RecebimentoOCForm({ ordemCompra, onSubmit, windowMode = 
       externalData={{ empresa_id: empresaId, group_id: groupId, grupo_id: groupId }}
       className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}
       data-permission="Compras.OrdemCompra.receber"
-      data-context-required="group-or-company"
+      data-context-required="group-and-company"
       data-context-mode={empresaId ? 'empresa' : contexto}
     >
       <Card>
@@ -112,7 +112,7 @@ export default function RecebimentoOCForm({ ordemCompra, onSubmit, windowMode = 
               className="mt-1"
               disabled={controlesBloqueados}
               data-permission="Compras.OrdemCompra.receber"
-              data-context-required="group-or-company"
+              data-context-required="group-and-company"
               data-sensitive="true"
             />
             {errors.data_entrega_real && <p className="text-red-600 text-xs mt-1">{errors.data_entrega_real.message}</p>}
@@ -124,7 +124,7 @@ export default function RecebimentoOCForm({ ordemCompra, onSubmit, windowMode = 
               {...register('nota_fiscal_entrada')}
               disabled={controlesBloqueados}
               data-permission="Compras.OrdemCompra.receber"
-              data-context-required="group-or-company"
+              data-context-required="group-and-company"
               data-sensitive="true"
               placeholder="Número da NF-e de entrada"
               className="mt-1"
@@ -137,7 +137,7 @@ export default function RecebimentoOCForm({ ordemCompra, onSubmit, windowMode = 
               {...register('observacoes')}
               disabled={controlesBloqueados}
               data-permission="Compras.OrdemCompra.receber"
-              data-context-required="group-or-company"
+              data-context-required="group-and-company"
               data-sensitive="true"
               rows={4}
               placeholder="Condições da mercadoria, divergências, observações..."
@@ -164,7 +164,7 @@ export default function RecebimentoOCForm({ ordemCompra, onSubmit, windowMode = 
           className="bg-green-600 hover:bg-green-700"
           disabled={controlesBloqueados}
           data-permission="Compras.OrdemCompra.receber"
-          data-context-required="group-or-company"
+          data-context-required="group-and-company"
         >
           <Save className="w-4 h-4 mr-2" />
           Confirmar Recebimento
@@ -178,7 +178,7 @@ export default function RecebimentoOCForm({ ordemCompra, onSubmit, windowMode = 
       <div
         className="w-full h-full bg-white"
         data-permission="Compras.OrdemCompra.receber"
-        data-context-required="group-or-company"
+        data-context-required="group-and-company"
         data-context-mode={empresaId ? 'empresa' : contexto}
       >
         {content}

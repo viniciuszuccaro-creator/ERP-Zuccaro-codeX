@@ -9,16 +9,15 @@ import { toast } from "sonner";
 
 /**
  * V21.1.2-R2 - Botões de Importação de Produtos
- * ✅ Via NF-e
- * (Importação em lote e ERP mapeado desativadas temporariamente a pedido do cliente)
+ * Via NF-e (lote/ERP mapeado desativados temporariamente a pedido do cliente)
  */
 export default function BotoesImportacaoProduto({ onProdutosCriados }) {
   const { openWindow } = useWindow();
-  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, createInContext } = useContextoVisual();
   const { canCreate } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const contextoValido = Boolean(groupId && (contexto === 'grupo' || empresaId));
   const podeImportarProduto = canCreate("Cadastros", "Produto") || canCreate("Estoque", "Produto") || canCreate("Cadastros", null);
 
   const auditarAberturaImportacao = async (acao, sucesso = true, motivo = null) => {
@@ -39,13 +38,16 @@ export default function BotoesImportacaoProduto({ onProdutosCriados }) {
         sucesso,
         data_hora: new Date().toISOString(),
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error("Falha ao auditar abertura de importacao NF-e:", error);
+      throw new Error("Auditoria obrigatoria falhou ao abrir importacao NF-e.");
+    }
   };
 
   const abrirImportacaoNFe = async () => {
     if (!contextoValido) {
-      await auditarAberturaImportacao("Cadastros.Produto.importacao_nfe.bloqueada_contexto", false, "Grupo ou empresa obrigatorio para importar produtos.");
-      toast.error("Selecione um grupo ou empresa antes de importar produtos.");
+      await auditarAberturaImportacao("Cadastros.Produto.importacao_nfe.bloqueada_contexto", false, "Grupo e empresa obrigatorios para importar produtos.");
+      toast.error("Selecione grupo e empresa antes de importar produtos.");
       return;
     }
 
@@ -65,7 +67,7 @@ export default function BotoesImportacaoProduto({ onProdutosCriados }) {
 
   return (
     <>
-      <div className="flex gap-2 flex-wrap" data-context-required="group-or-company" data-permission="Cadastros.Produto.importar">
+      <div className="flex gap-2 flex-wrap" data-context-required="group-and-company" data-permission="Cadastros.Produto.importar">
         <Button
           variant="outline"
           onClick={abrirImportacaoNFe}
@@ -73,20 +75,12 @@ export default function BotoesImportacaoProduto({ onProdutosCriados }) {
           className="border-purple-300 hover:bg-purple-50"
           data-permission="Cadastros.Produto.importar"
           data-action="Cadastros.Produto.importar-nfe"
-          data-context-required="group-or-company"
+          data-context-required="group-and-company"
         >
           <FileText className="w-4 h-4 mr-2" />
           Importar via NF-e
         </Button>
-        
-
       </div>
-
-
-
-
-
-
     </>
   );
 }

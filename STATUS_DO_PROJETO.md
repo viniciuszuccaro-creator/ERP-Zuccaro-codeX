@@ -1,4 +1,15 @@
-﻿### P1.10 / Marketplace residual - sync simulado nao importavel
+﻿### P0.21 / Compras residual - OC e launcher NF-e fail-closed
+- Objetivo: fechar OR fail-open e audit silencioso em OC/recebimento/launcher (sem ComprasV2).
+- Diagnostico: `OrdensCompraTab` e `RecebimentoOCForm` com grupo-OR-empresa; audit OC so warn; `BotoesImportacaoProduto` com `catch (_)`.
+- Causa raiz: telas irmas fora do contrato dos importadores Gate 18.
+- Arquivos alterados: `OrdensCompraTab.jsx`, `RecebimentoOCForm.jsx`, `BotoesImportacaoProduto.jsx`, `tests/migracao-erp-policy.test.js`, `PLANO_GO_LIVE.md`.
+- Reutilizado: padrao `ImportacaoProdutoNFe` (group + grupo|empresa), audit rethrow.
+- Alteracoes: contexto fail-closed; auditoria obrigatoria; launcher alinhado ao filho NF-e.
+- Multiempresa/RBAC: Compras OC criar/aprovar/enviar/receber; Cadastros Produto importar.
+- Pendencia: Go-Live humano Gates 18-20.
+- Validacoes: `node --test tests/migracao-erp-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem: HUMAN_ONLY Gates 18-20.
+### P1.10 / Marketplace residual - sync simulado nao importavel
 - Objetivo: fechar residual fail-open nas syncs Marketplace (sem MarketplaceV2).
 - Diagnostico: audit com warn; simulacao gravava PedidoExterno importavel; Cliente sem provenance.
 - Causa raiz: preview local tratado como pedido real apos P1.9.

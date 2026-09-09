@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
   const { createInContext, updateInContext, filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const contextoValido = Boolean(groupId && (contexto === 'grupo' || empresaId));
   const { page, setPage, pageSize, setPageSize } = useBackendPagination('OrdemCompra', 20);
   const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('OrdemCompra', 'data_solicitacao', 'desc');
   const { user: authUser } = useUser();
@@ -128,7 +128,8 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
         data_hora: new Date().toISOString()
       });
     } catch (error) {
-      console.warn('Falha ao auditar ordem de compra:', error);
+      console.error('Falha ao auditar ordem de compra:', error);
+      throw new Error('Auditoria obrigatoria falhou para ordem de compra.');
     }
   };
 
@@ -161,7 +162,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
           motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
           dados: { ordem_compra_id: id, numero_oc: oc?.numero_oc }
         });
-        throw new Error(!contextoValido ? 'Selecione grupo ou empresa antes de aprovar OC.' : 'Sem permissao para aprovar OC.');
+        throw new Error(!contextoValido ? 'Selecione grupo e empresa antes de aprovar OC.' : 'Sem permissao para aprovar OC.');
       }
       const hoje = new Date().toISOString().split('T')[0];
       await updateInContext('OrdemCompra', id, {
@@ -199,7 +200,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
           motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
           dados: { ordem_compra_id: id, numero_oc: oc?.numero_oc }
         });
-        throw new Error(!contextoValido ? 'Selecione grupo ou empresa antes de enviar OC.' : 'Sem permissao para enviar OC ao fornecedor.');
+        throw new Error(!contextoValido ? 'Selecione grupo e empresa antes de enviar OC.' : 'Sem permissao para enviar OC ao fornecedor.');
       }
       const hoje = new Date().toISOString().split('T')[0];
       await updateInContext('OrdemCompra', id, {
@@ -240,7 +241,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
           motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
           dados: { ordem_compra_id: id, numero_oc: oc?.numero_oc }
         });
-        throw new Error(!contextoValido ? 'Selecione grupo ou empresa antes de receber OC.' : 'Sem permissao para receber OC.');
+        throw new Error(!contextoValido ? 'Selecione grupo e empresa antes de receber OC.' : 'Sem permissao para receber OC.');
       }
       const dataEnvio = new Date(oc.data_envio_fornecedor);
       const dataRecebimento = new Date(dados.data_entrega_real);
@@ -521,7 +522,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
         motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
         dados: { ordem_compra_id: oc.id, numero_oc: oc.numero_oc }
       });
-      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de receber' : 'Sem permissao para receber', variant: 'destructive' });
+      toast({ title: !contextoValido ? 'Selecione grupo e empresa antes de receber' : 'Sem permissao para receber', variant: 'destructive' });
       return;
     }
     await auditOrdemCompra({
@@ -576,17 +577,17 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
   };
 
   const content = (
-    <div className="space-y-1.5 w-full h-full" data-permission="Compras.OrdemCompra" data-context-required="group-or-company" data-context-mode={contexto}>
+    <div className="space-y-1.5 w-full h-full" data-permission="Compras.OrdemCompra" data-context-required="group-and-company" data-context-mode={contexto}>
       {!contextoValido && (
         <Alert className="border-amber-300 bg-amber-50">
-          <AlertDescription className="text-sm text-amber-800">Selecione grupo ou empresa antes de criar, aprovar, enviar ou receber ordens de compra.</AlertDescription>
+          <AlertDescription className="text-sm text-amber-800">Selecione grupo e empresa antes de criar, aprovar, enviar ou receber ordens de compra.</AlertDescription>
         </Alert>
       )}
       <OrdensCompraHeader
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         onNovaOC={() => {
-          if (!contextoValido || !canCreateOC) { toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de criar' : 'Sem permissao para criar', variant: 'destructive' }); return; }
+          if (!contextoValido || !canCreateOC) { toast({ title: !contextoValido ? 'Selecione grupo e empresa antes de criar' : 'Sem permissao para criar', variant: 'destructive' }); return; }
           openWindow(OrdemCompraForm, {
             windowMode: true,
             onSubmit: async (data) => {
@@ -612,7 +613,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
               className="hidden"
               data-permission="Compras.OrdemCompra.criar"
               data-action="Compras.OrdemCompra.dialogLegado"
-              data-context-required="group-or-company"
+              data-context-required="group-and-company"
             >
               Removido
             </Button>
@@ -626,7 +627,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
               className="space-y-4"
               data-permission="Compras.OrdemCompra.criar"
               data-action="Compras.OrdemCompra.formularioLegado"
-              data-context-required="group-or-company"
+              data-context-required="group-and-company"
             >
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -638,7 +639,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
                     onChange={(e) => setFormData({...formData, numero_oc: e.target.value})}
                     data-permission="Compras.OrdemCompra.criar"
                     data-action="Compras.OrdemCompra.numero"
-                    data-context-required="group-or-company"
+                    data-context-required="group-and-company"
                   />
                 </div>
                 <div>
@@ -650,7 +651,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
                     <SelectTrigger
                       data-permission="Compras.OrdemCompra.criar"
                       data-action="Compras.OrdemCompra.fornecedor"
-                      data-context-required="group-or-company"
+                      data-context-required="group-and-company"
                     >
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
@@ -673,7 +674,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
                     required
                     data-permission="Compras.OrdemCompra.criar"
                     data-action="Compras.OrdemCompra.dataSolicitacao"
-                    data-context-required="group-or-company"
+                    data-context-required="group-and-company"
                   />
                 </div>
                 <div>
@@ -685,7 +686,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
                     onChange={(e) => setFormData({...formData, data_entrega_prevista: e.target.value})}
                     data-permission="Compras.OrdemCompra.criar"
                     data-action="Compras.OrdemCompra.entregaPrevista"
-                    data-context-required="group-or-company"
+                    data-context-required="group-and-company"
                   />
                 </div>
                 <div>
@@ -699,7 +700,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
                     required
                     data-permission="Compras.OrdemCompra.criar"
                     data-action="Compras.OrdemCompra.valorTotal"
-                    data-context-required="group-or-company"
+                    data-context-required="group-and-company"
                     data-sensitive="true"
                   />
                 </div>
@@ -712,7 +713,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
                     onChange={(e) => setFormData({...formData, prazo_entrega_acordado: e.target.value})}
                     data-permission="Compras.OrdemCompra.criar"
                     data-action="Compras.OrdemCompra.prazoEntrega"
-                    data-context-required="group-or-company"
+                    data-context-required="group-and-company"
                   />
                 </div>
                 <div>
@@ -724,7 +725,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
                     <SelectTrigger
                       data-permission="Compras.OrdemCompra.criar"
                       data-action="Compras.OrdemCompra.condicaoPagamento"
-                      data-context-required="group-or-company"
+                      data-context-required="group-and-company"
                     >
                       <SelectValue />
                     </SelectTrigger>
@@ -745,7 +746,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
                     <SelectTrigger
                       data-permission="Compras.OrdemCompra.criar"
                       data-action="Compras.OrdemCompra.formaPagamento"
-                      data-context-required="group-or-company"
+                      data-context-required="group-and-company"
                     >
                       <SelectValue />
                     </SelectTrigger>
@@ -766,7 +767,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
                     rows={3}
                     data-permission="Compras.OrdemCompra.criar"
                     data-action="Compras.OrdemCompra.observacoes"
-                    data-context-required="group-or-company"
+                    data-context-required="group-and-company"
                   />
                 </div>
               </div>
@@ -777,7 +778,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
                   onClick={() => setIsDialogOpen(false)}
                   data-permission="Compras.OrdemCompra.criar"
                   data-action="Compras.OrdemCompra.cancelar"
-                  data-context-required="group-or-company"
+                  data-context-required="group-and-company"
                 >
                   Cancelar
                 </Button>
@@ -785,7 +786,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
                   type="submit"
                   data-permission="Compras.OrdemCompra.criar"
                   data-action="Compras.OrdemCompra.confirmar"
-                  data-context-required="group-or-company"
+                  data-context-required="group-and-company"
                   data-sensitive="true"
                 >
                   {editingOC ? 'Atualizar' : 'Criar'} OC
@@ -811,10 +812,10 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
             onImprimir={(oc)=>{ const empresa = empresas?.find(e => e.id === oc.empresa_id); const fornecedor = fornecedores?.find(f => f.id === oc.fornecedor_id); ImprimirOrdemCompra({ oc, empresa, fornecedor }); }}
             onVer={(oc)=> openWindow(OrdemCompraForm, { ordemCompra: oc, windowMode: true, onSubmit: async (data) => { try { await updateMutation.mutateAsync({ id: oc.id, data }); sonnerToast.success('✅ OC atualizada!'); } catch { sonnerToast.error('Erro ao atualizar OC'); } } }, { title: `👁️ Ver: ${oc.numero_oc}`, width: 1100, height: 700 })}
             onEditar={handleEdit}
-            onAprovar={(oc)=> { if (!contextoValido || !canApproveOC) { toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de aprovar' : 'Sem permissao para aprovar', variant: 'destructive' }); return; } if (!window.confirm(`Confirma aprovar a OC ${oc.numero_oc}?`)) { auditOrdemCompra({ acao: 'OrdemCompra.aprovacao_cancelada', sucesso: false, motivo: 'confirmacao_cancelada', dados: { ordem_compra_id: oc.id, numero_oc: oc.numero_oc } }); return; } aprovarMutation.mutate({ id: oc.id, oc }); }}
-            onEnviar={(oc)=> { if (!contextoValido || !canSendOC) { toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de enviar' : 'Sem permissao para enviar', variant: 'destructive' }); return; } if (!window.confirm(`Confirma enviar a OC ${oc.numero_oc} ao fornecedor?`)) { auditOrdemCompra({ acao: 'OrdemCompra.envio_cancelado', sucesso: false, motivo: 'confirmacao_cancelada', dados: { ordem_compra_id: oc.id, numero_oc: oc.numero_oc } }); return; } enviarFornecedorMutation.mutate({ id: oc.id, oc }); }}
+            onAprovar={(oc)=> { if (!contextoValido || !canApproveOC) { toast({ title: !contextoValido ? 'Selecione grupo e empresa antes de aprovar' : 'Sem permissao para aprovar', variant: 'destructive' }); return; } if (!window.confirm(`Confirma aprovar a OC ${oc.numero_oc}?`)) { auditOrdemCompra({ acao: 'OrdemCompra.aprovacao_cancelada', sucesso: false, motivo: 'confirmacao_cancelada', dados: { ordem_compra_id: oc.id, numero_oc: oc.numero_oc } }); return; } aprovarMutation.mutate({ id: oc.id, oc }); }}
+            onEnviar={(oc)=> { if (!contextoValido || !canSendOC) { toast({ title: !contextoValido ? 'Selecione grupo e empresa antes de enviar' : 'Sem permissao para enviar', variant: 'destructive' }); return; } if (!window.confirm(`Confirma enviar a OC ${oc.numero_oc} ao fornecedor?`)) { auditOrdemCompra({ acao: 'OrdemCompra.envio_cancelado', sucesso: false, motivo: 'confirmacao_cancelada', dados: { ordem_compra_id: oc.id, numero_oc: oc.numero_oc } }); return; } enviarFornecedorMutation.mutate({ id: oc.id, oc }); }}
             onReceber={handleReceberClick}
-            onAvaliar={(oc)=> { if (!contextoValido || !canEvaluateSupplier) { toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de avaliar' : 'Sem permissao para avaliar', variant: 'destructive' }); return; } openWindow(AvaliacaoFornecedorForm, { ordemCompra: oc, windowMode: true, onSubmit: async (avaliacao) => { try { await avaliarFornecedorMutation.mutateAsync({ oc, avaliacao }); sonnerToast.success('⭐ Avaliação registrada!'); } catch { sonnerToast.error('Erro ao avaliar fornecedor'); } } }, { title: `⭐ Avaliar: ${oc.fornecedor_nome}`, width: 800, height: 650 }); }}
+            onAvaliar={(oc)=> { if (!contextoValido || !canEvaluateSupplier) { toast({ title: !contextoValido ? 'Selecione grupo e empresa antes de avaliar' : 'Sem permissao para avaliar', variant: 'destructive' }); return; } openWindow(AvaliacaoFornecedorForm, { ordemCompra: oc, windowMode: true, onSubmit: async (avaliacao) => { try { await avaliarFornecedorMutation.mutateAsync({ oc, avaliacao }); sonnerToast.success('⭐ Avaliação registrada!'); } catch { sonnerToast.error('Erro ao avaliar fornecedor'); } } }, { title: `⭐ Avaliar: ${oc.fornecedor_nome}`, width: 800, height: 650 }); }}
           />
 
           <OCPaginacao

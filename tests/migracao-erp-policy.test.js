@@ -182,6 +182,17 @@ test('importadores existentes fazem staging e reconciliam', async () => {
   assert.match(recebimento, /Resultado simulado/);
   assert.match(recebimento, /throw error/);
   assert.doesNotMatch(recebimento, /console\.warn\('Falha ao auditar importacao de NF-e:/);
+  const botoes = await readFile(new URL('../src/components/cadastros/BotoesImportacaoProduto.jsx', import.meta.url), 'utf8');
+  assert.match(botoes, /groupId && \(contexto === 'grupo' \|\| empresaId\)/);
+  assert.match(botoes, /Auditoria obrigatoria falhou/);
+  assert.doesNotMatch(botoes, /catch \(_\) \{\}/);
+  const ocTab = await readFile(new URL('../src/components/compras/OrdensCompraTab.jsx', import.meta.url), 'utf8');
+  assert.match(ocTab, /groupId && \(contexto === 'grupo' \|\| empresaId\)/);
+  assert.match(ocTab, /Auditoria obrigatoria falhou para ordem de compra/);
+  assert.doesNotMatch(ocTab, /console\.warn\('Falha ao auditar ordem de compra:/);
+  const ocForm = await readFile(new URL('../src/components/compras/RecebimentoOCForm.jsx', import.meta.url), 'utf8');
+  assert.match(ocForm, /groupId && \(contexto === 'grupo' \|\| empresaId\)/);
+  assert.match(ocForm, /Auditoria obrigatoria falhou para recebimento de OC/);
   assert.match(backup, /throw error/);
   assert.doesNotMatch(backup, /Falha ao registrar configuracao de backup\.', error\);\r?\n\s*\}/);
 });
