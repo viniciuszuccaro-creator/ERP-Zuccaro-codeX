@@ -5,24 +5,38 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { TrendingDown, TrendingUp, Zap, Sparkles, Lightbulb, Brain } from 'lucide-react';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import { useUser } from '@/components/lib/UserContext';
+import {
+  assertIaUiContext,
+  requireIaHumanConfirm,
+  stampIaSuggestion,
+} from '@/components/lib/iaTransversalPolicy';
 
 export default function PriceBrain({ pedido, onSugestaoAplicada }) {
   const [analisando, setAnalisando] = useState(false);
   const [sugestao, setSugestao] = useState(null);
+  const [erro, setErro] = useState('');
+  const { filterInContext, createInContext, empresaAtual, grupoAtual, estaNoGrupo } = useContextoVisual();
+  const { user } = useUser();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || pedido?.group_id || null;
+  const empresaId = empresaAtual?.id || pedido?.empresa_id || null;
+  const scopeType = estaNoGrupo ? 'grupo' : 'empresa';
 
   useEffect(() => {
     if (pedido?.cliente_id && (pedido.itens_revenda?.length > 0 || pedido.itens_producao?.length > 0)) {
       analisarPrecos();
     }
-  }, [pedido?.cliente_id]);
+  }, [pedido?.cliente_id, groupId, empresaId]);
 
   const analisarPrecos = async () => {
     setAnalisando(true);
-
+    setErro('');
     try {
-      const pedidosCliente = await base44.entities.Pedido.filter({
+      assertIaUiContext({ groupId, empresaId, scopeType });
+
+      const pedidosCliente = await filterInContext('Pedido', {
         cliente_id: pedido.cliente_id,
-        status: ['Aprovado', 'Faturado', 'Entregue']
       }, '-data_pedido', 10);
 
       const ticketMedioCliente = pedidosCliente.length > 0
@@ -32,8 +46,11 @@ export default function PriceBrain({ pedido, onSugestaoAplicada }) {
       const ultimaCompra = pedidosCliente[0];
 
       const analise = await base44.integrations.Core.InvokeLLM({
+        group_id: groupId,
+        empresa_id: scopeType === 'grupo' ? null : empresaId,
         prompt: `
 Você é o PriceBrain - IA especialista em precificação dinâmica para ERPs industriais.
+Apenas SUGIRA. Nao execute desconto sozinho.
 
 DADOS DO PEDIDO ATUAL:
 - Cliente: ${pedido.cliente_nome}
@@ -46,23 +63,14 @@ HISTÓRICO DO CLIENTE:
 - Ticket Médio: R$ ${ticketMedioCliente.toLocaleString('pt-BR')}
 - Última Compra: ${ultimaCompra ? `R$ ${ultimaCompra.valor_total?.toLocaleString('pt-BR')} em ${new Date(ultimaCompra.data_pedido).toLocaleDateString('pt-BR')}` : 'Nenhuma'}
 
-ANÁLISE:
-1. Compare o valor atual com o ticket médio
-2. Analise se é cliente recorrente ou novo
-3. Considere estratégias:
-   - Desconto para fechamento rápido
-   - Upsell (aumentar ticket)
-   - Cross-sell (produtos complementares)
-   - Fidelização (desconto para próxima compra)
-
 RETORNE em JSON:
 {
   "estrategia": "desconto_rapido | upsell | fidelizacao | manter_preco",
   "razao": "explicação breve",
   "desconto_sugerido_percentual": number (0-15),
   "valor_com_desconto": number,
-  "produtos_upsell": ["produto1", "produto2"] (se aplicável),
-  "condicao_especial": "string" (ex: "válido por 48h"),
+  "produtos_upsell": ["produto1", "produto2"],
+  "condicao_especial": "string",
   "confianca": number (0-100)
 }
         `,
@@ -75,39 +83,48 @@ RETORNE em JSON:
             valor_com_desconto: { type: 'number' },
             produtos_upsell: { type: 'array', items: { type: 'string' } },
             condicao_especial: { type: 'string' },
-            confianca: { type: 'number' }
-          }
-        }
+            confianca: { type: 'number' },
+          },
+        },
       });
 
-      setSugestao(analise);
+      const stamped = stampIaSuggestion(analise);
+      setSugestao(stamped);
 
-      await base44.entities.AuditoriaIA.create({
-        empresa_id: pedido.empresa_id,
+      await createInContext('AuditoriaIA', {
+        group_id: groupId,
+        empresa_id: scopeType === 'grupo' ? null : empresaId,
         modulo: 'Comercial',
         funcionalidade: 'PriceBrain',
-        usuario_id: 'sistema',
-        usuario_nome: 'PriceBrain',
+        usuario_id: user?.id || null,
+        usuario_nome: user?.full_name || user?.email || 'Usuario',
         data_hora: new Date().toISOString(),
         input_dados: {
           cliente_id: pedido.cliente_id,
           valor_pedido: pedido.valor_total,
-          historico: { pedidos: pedidosCliente.length, ticket_medio: ticketMedioCliente }
+          historico: { pedidos: pedidosCliente.length, ticket_medio: ticketMedioCliente },
+          modo: 'sugestao',
         },
-        output_resultado: analise,
-        confianca_percentual: analise.confianca,
-        status: 'Sucesso'
+        output_resultado: stamped,
+        confianca_percentual: stamped.confianca,
+        status: 'Sugestao',
       });
-
     } catch (error) {
       console.error('Erro ao analisar preços:', error);
+      setErro(String(error?.message || 'Falha no PriceBrain.'));
+      setSugestao(null);
     } finally {
       setAnalisando(false);
     }
   };
 
   const aplicarSugestao = () => {
-    if (!sugestao) return;
+    if (!sugestao || !onSugestaoAplicada) return;
+    if (!requireIaHumanConfirm(
+      `Aplicar desconto sugerido de ${sugestao.desconto_sugerido_percentual}% (R$ ${Number(sugestao.valor_com_desconto || 0).toLocaleString('pt-BR')})?`,
+    )) {
+      return;
+    }
 
     const novoValor = sugestao.valor_com_desconto;
     const descontoPercentual = sugestao.desconto_sugerido_percentual;
@@ -117,7 +134,7 @@ RETORNE em JSON:
       valor_total: novoValor,
       desconto_geral_pedido_percentual: descontoPercentual,
       desconto_geral_pedido_valor: pedido.valor_total - novoValor,
-      observacoes_internas: `${pedido.observacoes_internas || ''}\n\nPriceBrain: ${sugestao.razao} (${sugestao.condicao_especial})`
+      observacoes_internas: `${pedido.observacoes_internas || ''}\n\nPriceBrain (confirmado): ${sugestao.razao} (${sugestao.condicao_especial})`,
     });
 
     setSugestao(null);
@@ -125,13 +142,13 @@ RETORNE em JSON:
 
   if (analisando) {
     return (
-      <Card className="border-purple-200 bg-purple-50">
+      <Card className="border-purple-200 bg-purple-50 w-full">
         <CardContent className="p-6">
           <div className="flex items-center gap-3">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
             <p className="text-sm text-purple-900">
               <Brain className="w-4 h-4 inline mr-1" />
-              PriceBrain analisando histórico e sugerindo melhor preço...
+              PriceBrain analisando histórico (apenas sugestao)...
             </p>
           </div>
         </CardContent>
@@ -139,96 +156,73 @@ RETORNE em JSON:
     );
   }
 
+  if (erro) {
+    return (
+      <Alert className="border-amber-200 bg-amber-50">
+        <AlertDescription className="text-amber-800 text-sm">{erro}</AlertDescription>
+      </Alert>
+    );
+  }
+
   if (!sugestao) return null;
 
   const estrategiaConfig = {
-    desconto_rapido: { 
-      cor: 'green', 
-      icone: TrendingDown, 
-      titulo: 'Desconto para Fechamento Rápido' 
+    desconto_rapido: {
+      cor: 'green',
+      icone: TrendingDown,
+      titulo: 'Desconto para Fechamento Rápido',
     },
-    upsell: { 
-      cor: 'blue', 
-      icone: TrendingUp, 
-      titulo: 'Oportunidade de Upsell' 
+    upsell: {
+      cor: 'blue',
+      icone: TrendingUp,
+      titulo: 'Oportunidade de Upsell',
     },
-    fidelizacao: { 
-      cor: 'purple', 
-      icone: Sparkles, 
-      titulo: 'Desconto Fidelização' 
+    fidelizacao: {
+      cor: 'purple',
+      icone: Sparkles,
+      titulo: 'Fidelização',
     },
-    manter_preco: { 
-      cor: 'slate', 
-      icone: Zap, 
-      titulo: 'Manter Preço Atual' 
-    }
+    manter_preco: {
+      cor: 'slate',
+      icone: Lightbulb,
+      titulo: 'Manter Preço',
+    },
   };
 
-  const config = estrategiaConfig[sugestao.estrategia] || estrategiaConfig.manter_preco;
-  const Icon = config.icone;
+  const cfg = estrategiaConfig[sugestao.estrategia] || estrategiaConfig.manter_preco;
+  const Icon = cfg.icone;
 
   return (
-    <Card className="border-2 border-purple-300 bg-purple-50">
-      <CardHeader className="bg-white/80 border-b">
+    <Card className="border-2 border-purple-300 bg-gradient-to-br from-purple-50 to-blue-50 w-full">
+      <CardHeader className="bg-white/80 border-b pb-3">
         <CardTitle className="text-base flex items-center gap-2">
-          <Brain className="w-5 h-5 text-purple-600" />
-          PriceBrain - Sugestão Inteligente
-          <Badge className="ml-auto">
-            {sugestao.confianca}% confiança
+          <Zap className="w-5 h-5 text-purple-600" />
+          PriceBrain
+          <Badge variant="outline" className="ml-auto text-xs">
+            Confiança {sugestao.confianca || 0}%
           </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-4 space-y-4">
-        <Alert className="border-purple-300 bg-white">
-          <Icon className="w-5 h-5 text-purple-600" />
-          <AlertDescription>
-            <p className="font-semibold mb-1">{config.titulo}</p>
-            <p className="text-sm">{sugestao.razao}</p>
-          </AlertDescription>
-        </Alert>
-
-        {sugestao.desconto_sugerido_percentual > 0 && (
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-3 bg-white rounded-lg border">
-              <p className="text-xs text-slate-600">Valor Atual</p>
-              <p className="text-xl font-bold text-slate-700">
-                R$ {pedido.valor_total?.toLocaleString('pt-BR')}
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-start gap-3">
+          <Icon className="w-5 h-5 mt-0.5 text-purple-700" />
+          <div className="flex-1">
+            <p className="font-semibold text-sm">{cfg.titulo}</p>
+            <p className="text-sm text-slate-700 mt-1">{sugestao.razao}</p>
+            {sugestao.desconto_sugerido_percentual > 0 && (
+              <p className="text-sm mt-2 font-medium text-green-700">
+                Desconto sugerido: {sugestao.desconto_sugerido_percentual}% → R${' '}
+                {Number(sugestao.valor_com_desconto || 0).toLocaleString('pt-BR')}
               </p>
-            </div>
-            <div className="p-3 bg-green-100 rounded-lg border border-green-300">
-              <p className="text-xs text-slate-600">Com Desconto ({sugestao.desconto_sugerido_percentual}%)</p>
-              <p className="text-xl font-bold text-green-600">
-                R$ {sugestao.valor_com_desconto?.toLocaleString('pt-BR')}
-              </p>
-            </div>
+            )}
+            {sugestao.condicao_especial && (
+              <p className="text-xs text-slate-500 mt-1">{sugestao.condicao_especial}</p>
+            )}
           </div>
-        )}
-
-        {sugestao.condicao_especial && (
-          <div className="p-3 bg-amber-50 border border-amber-300 rounded-lg">
-            <p className="text-xs text-amber-700 font-semibold">Condição Especial:</p>
-            <p className="text-sm text-amber-900">{sugestao.condicao_especial}</p>
-          </div>
-        )}
-
-        {sugestao.produtos_upsell?.length > 0 && (
-          <div className="p-3 bg-blue-50 border border-blue-300 rounded-lg">
-            <p className="text-xs text-blue-700 font-semibold mb-2">Produtos Complementares:</p>
-            <ul className="text-sm text-blue-900 space-y-1">
-              {sugestao.produtos_upsell.map((prod, idx) => (
-                <li key={idx}>• {prod}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {sugestao.estrategia !== 'manter_preco' && (
-          <Button
-            onClick={aplicarSugestao}
-            className="w-full bg-purple-600 hover:bg-purple-700"
-          >
-            <Zap className="w-4 h-4 mr-2" />
-            Aplicar Sugestão
+        </div>
+        {onSugestaoAplicada && sugestao.desconto_sugerido_percentual > 0 && (
+          <Button type="button" className="w-full" onClick={aplicarSugestao}>
+            Aplicar sugestão (confirmação)
           </Button>
         )}
       </CardContent>

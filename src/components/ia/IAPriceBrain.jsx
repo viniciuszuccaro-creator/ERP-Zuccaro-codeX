@@ -9,17 +9,27 @@ import { Badge } from '@/components/ui/badge';
 import { Brain, TrendingUp, TrendingDown, DollarSign, AlertCircle, Loader2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import {
+  assertIaUiContext,
+  requireIaHumanConfirm,
+  stampIaLogSugestao,
+} from '@/components/lib/iaTransversalPolicy';
 
 export default function IAPriceBrain({ tabelaPrecoId, produtoId, onSugestaoAplicada }) {
   const [analisando, setAnalisando] = React.useState(false);
   const [sugestoes, setSugestoes] = React.useState(null);
   const queryClient = useQueryClient();
-  const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
-  const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
-    try { return localStorage.getItem('group_atual_id'); } catch { return null; }
-  })();
-  const empresaAtivaId = contexto === 'grupo' ? null : empresaAtual?.id;
-  const contextoValido = !!(empresaAtivaId || grupoAtivoId);
+  const { contexto, empresaAtual, grupoAtual, filterInContext, createInContext, estaNoGrupo } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const scopeType = estaNoGrupo || contexto === 'grupo' ? 'grupo' : 'empresa';
+  let contextoValido = false;
+  try {
+    assertIaUiContext({ groupId, empresaId, scopeType });
+    contextoValido = true;
+  } catch {
+    contextoValido = false;
+  }
 
   const { data: produto } = useQuery({
     queryKey: ['produto', produtoId],
@@ -43,9 +53,7 @@ export default function IAPriceBrain({ tabelaPrecoId, produtoId, onSugestaoAplic
 
   const analisarPrecoMutation = useMutation({
     mutationFn: async () => {
-      if (!contextoValido) {
-        throw new Error('Selecione um grupo ou empresa antes de analisar preco com IA.');
-      }
+      const ctx = assertIaUiContext({ groupId, empresaId, scopeType });
 
       setAnalisando(true);
       
@@ -54,7 +62,6 @@ export default function IAPriceBrain({ tabelaPrecoId, produtoId, onSugestaoAplic
       const margemAtual = custoMedio > 0 ? ((precoAtual - custoMedio) / custoMedio * 100) : 0;
       const margemMinima = produto?.margem_minima_percentual || 10;
       
-      // Calcular curva de vendas
       const vendasProduto = pedidos
         .filter(p => p.itens_revenda?.some(i => i.produto_id === produtoId))
         .slice(0, 30);
@@ -65,25 +72,25 @@ export default function IAPriceBrain({ tabelaPrecoId, produtoId, onSugestaoAplic
       }, 0);
 
       const prompt = `
-        Analise os dados de precificaÃ§Ã£o do produto e sugira o preÃ§o ideal:
+        Analise os dados de precificacao do produto e sugira o preco ideal (apenas sugestao):
         - Produto: ${produto?.descricao}
-        - Custo MÃ©dio: R$ ${custoMedio.toFixed(2)}
-        - PreÃ§o Atual: R$ ${precoAtual.toFixed(2)}
+        - Custo Medio: R$ ${custoMedio.toFixed(2)}
+        - Preco Atual: R$ ${precoAtual.toFixed(2)}
         - Margem Atual: ${margemAtual.toFixed(2)}%
-        - Margem MÃ­nima Desejada: ${margemMinima}%
-        - Total Vendido (Ãºltimos 30 pedidos): ${totalVendido} unidades
+        - Margem Minima Desejada: ${margemMinima}%
+        - Total Vendido (ultimos 30 pedidos): ${totalVendido} unidades
         
         Sugira:
-        1. PreÃ§o ideal para manter margem mÃ­nima
-        2. PreÃ§o competitivo baseado na curva de vendas
-        3. Oportunidades de aumento de preÃ§o (se margem estÃ¡ muito alta e vendas estÃ¡veis)
-        4. Alertas se margem estÃ¡ abaixo do mÃ­nimo
+        1. Preco ideal para manter margem minima
+        2. Preco competitivo baseado na curva de vendas
+        3. Oportunidades de aumento de preco
+        4. Alertas se margem esta abaixo do minimo
       `;
 
       const resultado = await base44.integrations.Core.InvokeLLM({
         prompt,
-        group_id: grupoAtivoId,
-        empresa_id: empresaAtivaId,
+        group_id: ctx.group_id,
+        empresa_id: ctx.empresa_id,
         response_json_schema: {
           type: 'object',
           properties: {
@@ -97,19 +104,18 @@ export default function IAPriceBrain({ tabelaPrecoId, produtoId, onSugestaoAplic
         }
       });
 
-      await base44.entities.LogsIA.create({
+      await createInContext('LogsIA', stampIaLogSugestao({
         tipo_ia: 'IA_PriceBrain',
         contexto_execucao: 'Comercial',
         entidade_relacionada: 'Produto',
         entidade_id: produtoId,
-        acao_sugerida: `AnÃ¡lise de precificaÃ§Ã£o para ${produto?.descricao}`,
-        resultado: 'AutomÃ¡tico',
+        acao_sugerida: `Analise de precificacao para ${produto?.descricao}`,
         confianca_ia: 85,
         dados_entrada: { custo_medio: custoMedio, preco_atual: precoAtual, margem_atual: margemAtual },
         dados_saida: resultado,
-        empresa_id: produto?.empresa_id || empresaAtivaId || null,
-        group_id: produto?.group_id || grupoAtivoId || null,
-      });
+        empresa_id: ctx.empresa_id,
+        group_id: ctx.group_id,
+      }));
 
       setAnalisando(false);
       setSugestoes(resultado);
@@ -122,10 +128,12 @@ export default function IAPriceBrain({ tabelaPrecoId, produtoId, onSugestaoAplic
   });
 
   const aplicarSugestao = async (precoSugerido) => {
-    if (onSugestaoAplicada) {
-      onSugestaoAplicada(precoSugerido);
-      toast.success('PreÃ§o sugerido aplicado!');
+    if (!onSugestaoAplicada) return;
+    if (!requireIaHumanConfirm(`Aplicar preco sugerido de R$ ${Number(precoSugerido || 0).toFixed(2)}?`)) {
+      return;
     }
+    onSugestaoAplicada(precoSugerido);
+    toast.success('Preco sugerido aplicado apos confirmacao.');
   };
 
   if (!produto) {

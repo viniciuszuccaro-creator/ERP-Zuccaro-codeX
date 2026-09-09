@@ -113,6 +113,60 @@ test('P2 IA transversal: CRM, financeiro e logistica usam sugestao com contexto'
   assert.match(sim, /fonte: realAggregates/);
 });
 
+test('P2 Gate16 residual: upsell, recomendacao, PriceBrain e KYC fail-closed', async () => {
+  const { buildUpsellSuggestions, buildRecomendacaoFromPedidos, stampIaLogSugestao } = await import('../src/components/lib/iaTransversalPolicy.js');
+
+  const upsell = buildUpsellSuggestions({
+    hoje: new Date('2026-09-09T12:00:00.000Z'),
+    pedidos: [{
+      data_pedido: '2026-08-10',
+      margem_total_percentual: 30,
+      itens_revenda: [{ produto_id: 'bitola_10mm', codigo_sku: 'bitola_10mm' }],
+    }],
+    pedidoAtual: { margem_total_percentual: 10, itens_revenda: [] },
+  });
+  assert.equal(upsell.modo, 'sugestao');
+  assert.ok(upsell.sugestoes.length >= 1);
+
+  const rec = buildRecomendacaoFromPedidos({
+    pedidos: [{
+      itens_revenda: [
+        { produto_id: 'p1', descricao: 'Viga', quantidade: 2, preco_unitario: 10 },
+        { produto_id: 'p1', descricao: 'Viga', quantidade: 1, preco_unitario: 10 },
+      ],
+    }],
+    itensAtuais: [],
+  });
+  assert.equal(rec.recomendacoes[0].produto_id, 'p1');
+  assert.equal(rec.recomendacoes[0].frequencia, 2);
+
+  const log = stampIaLogSugestao({ resultado: 'Automático', group_id: 'g1', empresa_id: 'e1' });
+  assert.equal(log.resultado, 'Sugestao');
+  assert.equal(log.modo, 'sugestao');
+
+  const upsellUi = await readFile(new URL('../src/components/comercial/IAUpsellPrecificacao.jsx', import.meta.url), 'utf8');
+  const motorUi = await readFile(new URL('../src/components/comercial/MotorRecomendacao.jsx', import.meta.url), 'utf8');
+  const priceUi = await readFile(new URL('../src/components/comercial/PriceBrain.jsx', import.meta.url), 'utf8');
+  const kycUi = await readFile(new URL('../src/components/ia/IAKYCValidacao.jsx', import.meta.url), 'utf8');
+  const iaPriceUi = await readFile(new URL('../src/components/ia/IAPriceBrain.jsx', import.meta.url), 'utf8');
+  const top10Ui = await readFile(new URL('../src/components/comercial/Top10ProdutosCliente.jsx', import.meta.url), 'utf8');
+
+  assert.match(upsellUi, /assertIaUiContext/);
+  assert.match(upsellUi, /filterInContext/);
+  assert.doesNotMatch(upsellUi, /entities\.Pedido\.filter/);
+  assert.match(motorUi, /requireIaHumanConfirm/);
+  assert.match(motorUi, /group_id: groupId/);
+  assert.match(priceUi, /requireIaHumanConfirm/);
+  assert.match(priceUi, /createInContext\('AuditoriaIA'/);
+  assert.doesNotMatch(priceUi, /usuario_id: 'sistema'/);
+  assert.match(kycUi, /stampIaLogSugestao/);
+  assert.doesNotMatch(kycUi, /resultado: 'Automático'/);
+  assert.match(iaPriceUi, /requireIaHumanConfirm/);
+  assert.doesNotMatch(iaPriceUi, /localStorage\.getItem\('group_atual_id'\)/);
+  assert.match(top10Ui, /assertIaUiContext/);
+  assert.match(top10Ui, /group_id: groupId/);
+});
+
 test('P2 previsoes: reposicao, recompra e caixa usam policy com sugestao', async () => {
   assert.throws(() => assertForecastUiContext({ groupId: 'g1', empresaId: '', scopeType: 'empresa' }), /Empresa/);
 

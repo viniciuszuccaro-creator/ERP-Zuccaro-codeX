@@ -287,6 +287,104 @@ export const requireIaHumanConfirm = (mensagem) => {
   return Boolean(window.confirm(String(mensagem || 'Confirmar aplicacao da sugestao de IA?')));
 };
 
+/** Log/auditoria de IA sempre como sugestao (nunca Automático). */
+export const stampIaLogSugestao = (record = {}) => ({
+  ...record,
+  resultado: firstText(record.resultado) && !String(record.resultado).toLowerCase().includes('autom')
+    ? record.resultado
+    : 'Sugestao',
+  modo: IA_MODO_SUGESTAO,
+  group_id: firstText(record.group_id) || undefined,
+  empresa_id: firstText(record.empresa_id) || undefined,
+});
+
+/**
+ * Upsell/reposicao local a partir de pedidos no contexto (Gate 16).
+ */
+export const buildUpsellSuggestions = ({ pedidos = [], pedidoAtual = null, hoje = new Date() } = {}) => {
+  const now = hoje instanceof Date ? hoje : new Date(hoje);
+  const list = Array.isArray(pedidos) ? pedidos : [];
+  const sugestoes = [];
+  const ultimoPedido = list[0];
+
+  if (ultimoPedido?.data_pedido) {
+    const diasDesdeUltimoP = Math.floor((now - new Date(ultimoPedido.data_pedido)) / (1000 * 60 * 60 * 24));
+    if (diasDesdeUltimoP >= 25 && diasDesdeUltimoP <= 35) {
+      sugestoes.push({
+        tipo: 'reposicao',
+        prioridade: 'alta',
+        titulo: 'Ciclo de Reposição Detectado',
+        descricao: `Cliente compra a cada ~30 dias. Ultima compra ha ${diasDesdeUltimoP} dias.`,
+        acao: 'Sugerir produtos do ultimo pedido',
+        produtos: ultimoPedido.itens_revenda?.map((i) => i.produto_id) || [],
+      });
+    }
+  }
+
+  const margemMedia = list.reduce((sum, p) => sum + (Number(p.margem_total_percentual) || 0), 0) / (list.length || 1);
+  if (margemMedia > 25 && Number(pedidoAtual?.margem_total_percentual) < 20) {
+    sugestoes.push({
+      tipo: 'precificacao',
+      prioridade: 'media',
+      titulo: 'Oportunidade de Aumentar Margem',
+      descricao: `Margem atual: ${Number(pedidoAtual.margem_total_percentual).toFixed(1)}%. Historico permite ${margemMedia.toFixed(1)}%.`,
+      acao: 'Revisar precos (sugestao; nao aplica sozinho)',
+    });
+  }
+
+  const produtosComprados = list.flatMap((p) => p.itens_revenda || []).map((i) => String(i.produto_id || i.codigo_sku || ''));
+  const temBitola = produtosComprados.some((id) => id.toLowerCase().includes('bitola') || id.includes('10mm'));
+  const temArame = (pedidoAtual?.itens_revenda || []).some((i) => String(i.codigo_sku || i.descricao || '').toLowerCase().includes('arame'));
+  if (temBitola && !temArame) {
+    sugestoes.push({
+      tipo: 'upsell',
+      prioridade: 'media',
+      titulo: 'Produto Complementar',
+      descricao: 'Padrao de compra sugere item complementar (ex.: arame).',
+      acao: 'Avaliar upsell complementar',
+    });
+  }
+
+  return stampIaSuggestion({
+    total_pedidos: list.length,
+    sugestoes,
+    fonte: 'ia_upsell_local',
+  });
+};
+
+export const buildRecomendacaoFromPedidos = ({ pedidos = [], itensAtuais = [], limite = 5 } = {}) => {
+  const produtosMaisComprados = {};
+  (pedidos || []).forEach((p) => {
+    (p.itens_revenda || []).forEach((item) => {
+      const id = firstText(item.produto_id, item.codigo_sku);
+      if (!id) return;
+      if (!produtosMaisComprados[id]) {
+        produtosMaisComprados[id] = {
+          produto_id: item.produto_id,
+          descricao: item.descricao,
+          codigo_sku: item.codigo_sku,
+          quantidade_total: 0,
+          frequencia: 0,
+          ultimo_preco: item.preco_unitario,
+        };
+      }
+      produtosMaisComprados[id].quantidade_total += Number(item.quantidade) || 0;
+      produtosMaisComprados[id].frequencia += 1;
+      produtosMaisComprados[id].ultimo_preco = item.preco_unitario;
+    });
+  });
+  const noCarrinho = new Set((itensAtuais || []).map((i) => firstText(i.produto_id)));
+  const recomendacoes = Object.values(produtosMaisComprados)
+    .filter((p) => !noCarrinho.has(firstText(p.produto_id)))
+    .sort((a, b) => b.frequencia - a.frequencia)
+    .slice(0, Math.max(1, Number(limite) || 5));
+  return stampIaSuggestion({
+    total_pedidos: (pedidos || []).length,
+    recomendacoes,
+    fonte: 'ia_recomendacao_local',
+  });
+};
+
 /** Fail-closed context for anomaly scans (financeiro/seguranca). */
 export const assertAnomalyScanContext = ({ groupId, empresaId, scopeType = 'empresa' } = {}) => (
   assertIaUiContext({ groupId, empresaId, scopeType })

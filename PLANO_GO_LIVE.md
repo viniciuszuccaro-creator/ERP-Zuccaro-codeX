@@ -793,52 +793,25 @@ Disponibilizar IA contextual em todos os módulos relevantes sem dar autonomia p
 
 ## Comercial
 
-- resumo de cliente;
-- sugestão de follow-up;
-- análise de margem;
-- oportunidade;
-- previsão de recompra.
+- [x] resumo de cliente / upsell (contexto + sugestao);
+- [x] sugestão de follow-up / recomendacao (confirm humano);
+- [x] análise de margem / PriceBrain (confirm + AuditoriaIA);
+- [x] oportunidade (churn CRM ja existente);
+- [x] previsão de recompra (lote previsoes).
 
-## Financeiro
+## Financeiro / Estoque / Logistica / Atendimento / Seguranca
 
-- previsão de caixa;
-- anomalias;
-- cobrança sugerida;
-- conciliação assistida.
+Cobertos pelos lotes P2 anteriores (anomalias, conciliacao, previsao, churn).
 
-## Estoque/Compras
+## Residual fechado (P2.6)
 
-- ruptura;
-- excesso;
-- sugestão de compra;
-- giro;
-- curva ABC.
+- [x] Upsell/Recomendacao/PriceBrain/KYC/Top10/IAPriceBrain alinhados a `assertIaUiContext`.
+- [x] LogsIA sem `Automático`; aplicacao de preco/desconto com `requireIaHumanConfirm`.
 
-## Produção
+## Pendencia seguinte
 
-- interpretação de projeto;
-- previsão de material;
-- gargalo;
-- rendimento.
-
-## Logística
-
-- previsão de atraso;
-- sugestão de rota;
-- análise de ocorrência.
-
-## Atendimento
-
-- resposta assistida;
-- resumo;
-- classificação;
-- transferência inteligente.
-
-## Segurança/Auditoria
-
-- detecção de comportamento anormal;
-- resumo de eventos;
-- priorização de alertas.
+- Motor Fiscal + IAGovernanca (write em PerfilAcesso) — Gate 16/17 residual.
+- Gate 17: remover `asServiceRole` indevido em scorers.
 
 ---
 

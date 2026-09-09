@@ -8,17 +8,25 @@ import { Package, ShieldAlert } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { assertIaUiContext } from "@/components/lib/iaTransversalPolicy";
 
 export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto }) {
   const [usandoIA, setUsandoIA] = useState(false);
   const [sugestoesIA, setSugestoesIA] = useState([]);
   const { toast } = useToast();
-  const { filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { filterInContext, empresaAtual, grupoAtual, contexto, estaNoGrupo } = useContextoVisual();
   const { hasPermission } = usePermissions();
 
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
-  const empresaId = contexto === "empresa" ? empresaAtual?.id : null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const empresaId = empresaAtual?.id || null;
+  const scopeType = estaNoGrupo || contexto === "grupo" ? "grupo" : "empresa";
+  let contextoValido = false;
+  try {
+    assertIaUiContext({ groupId, empresaId, scopeType });
+    contextoValido = true;
+  } catch {
+    contextoValido = false;
+  }
   const podeVisualizarHistorico =
     hasPermission("Comercial.Pedido.visualizar") ||
     hasPermission("Comercial.Pedido.criar") ||
@@ -89,7 +97,7 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto })
     if (!podeUsarIA) {
       toast({
         title: "Acao bloqueada",
-        description: "Selecione um contexto de grupo/empresa e confirme permissao para sugestoes comerciais com IA.",
+        description: "Selecione grupo e empresa e confirme permissao para sugestoes comerciais com IA.",
         variant: "destructive"
       });
       return;
@@ -108,6 +116,7 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto })
     setSugestoesIA([]);
 
     try {
+      assertIaUiContext({ groupId, empresaId, scopeType });
       const historicoPedidos = pedidos.map(p => ({
         data: p.data_pedido,
         valor: p.valor_total,
@@ -129,6 +138,7 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto })
         "Analise o historico de compras deste cliente e sugira os 10 melhores produtos para oferecer agora.",
         "Considere padroes de compra, produtos complementares e frequencia.",
         "Use apenas os PRODUTOS DISPONIVEIS fornecidos e respeite o contexto de grupo/empresa informado.",
+        "Apenas SUGIRA. Nao execute pedido nem altere estoque.",
         "",
         "CONTEXTO:",
         "Grupo: " + (groupId || "nao informado"),
@@ -149,6 +159,8 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto })
 
       const resultado = await base44.integrations.Core.InvokeLLM({
         prompt,
+        group_id: groupId,
+        empresa_id: scopeType === "grupo" ? null : empresaId,
         response_json_schema: {
           type: "object",
           properties: {

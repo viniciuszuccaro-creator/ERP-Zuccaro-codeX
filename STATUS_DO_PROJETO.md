@@ -1,4 +1,15 @@
-﻿### P1.9 - Marketplaces: canal fail-closed, import SKU e webhook honesto
+﻿### P2.6 - Gate 16 residual: upsell/recomendacao/PriceBrain/KYC fail-closed
+- Objetivo: fechar residual Gate 16 nas telas IA comerciais irmas (sem IAV2).
+- Diagnostico: Upsell/Motor/PriceBrain liam Pedido global; desconto/preco sem confirm; KYC/IAPriceBrain com OR fail-open e LogsIA Automático; Top10 sem assertIaUiContext.
+- Causa raiz: telas irmas fora do contrato `assertIaUiContext` / `requireIaHumanConfirm`.
+- Arquivos alterados: `iaTransversalPolicy.js`, `IAUpsellPrecificacao.jsx`, `MotorRecomendacao.jsx`, `PriceBrain.jsx`, `IAKYCValidacao.jsx`, `IAPriceBrain.jsx`, `Top10ProdutosCliente.jsx`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: policy Gate 16, `filterInContext`/`createInContext`, padrao Churn CRM.
+- Alteracoes: builders upsell/recomendacao; leituras no contexto; InvokeLLM com group/empresa; LogsIA como Sugestao; confirm humano em desconto/preco/add item.
+- Multiempresa/RBAC: escopo empresa exige empresa; grupo so no `scopeType=grupo`.
+- Pendencia: Motor Fiscal + IAGovernanca (PerfilAcesso); Gate 17 asServiceRole; Go-Live humano Gates 18-20.
+- Validacoes: `node --test tests/ia-transversal-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem: residual Gate 16/17 (Governanca/Fiscal) ou virada Gate 18-20.
+### P1.9 - Marketplaces: canal fail-closed, import SKU e webhook honesto
 - Objetivo: fechar residual Gate 15 / P1 Marketplaces nas syncs e Validar existentes (sem MarketplaceV2).
 - Diagnostico: `isMarketplaceAtivo` liberava sem config; Validar com grupo-OR-empresa, audit engolido e import sem itens/SKU; cancel hardcoded; webhook `ok` sem pedido/itens e stamp generico `Marketplace`; config sem empresa.
 - Causa raiz: guards de canal/import/webhook ainda fail-open apos o lote de sync/SKU.

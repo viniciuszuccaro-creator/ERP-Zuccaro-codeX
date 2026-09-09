@@ -3,78 +3,62 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Plus, TrendingUp, Brain } from 'lucide-react';
+import { Plus, TrendingUp, Brain } from 'lucide-react';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import {
+  assertIaUiContext,
+  buildRecomendacaoFromPedidos,
+  requireIaHumanConfirm,
+} from '@/components/lib/iaTransversalPolicy';
 
 /**
  * Motor de Recomendação de Produtos
- * Sugere produtos baseado em histórico e padrões
+ * Sugere produtos no contexto; adiciona só com confirmação humana (Gate 16).
  */
-export default function MotorRecomendacao({ 
-  clienteId, 
+export default function MotorRecomendacao({
+  clienteId,
   itensAtuais = [],
-  onAdicionarProduto 
+  onAdicionarProduto,
 }) {
   const [recomendacoes, setRecomendacoes] = useState([]);
   const [carregando, setCarregando] = useState(false);
   const [totalPedidosAnteriores, setTotalPedidosAnteriores] = useState(0);
+  const [erro, setErro] = useState('');
+  const { filterInContext, empresaAtual, grupoAtual, estaNoGrupo } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const scopeType = estaNoGrupo ? 'grupo' : 'empresa';
 
   useEffect(() => {
     if (clienteId) {
       buscarRecomendacoes();
     }
-  }, [clienteId, itensAtuais]);
+  }, [clienteId, itensAtuais, groupId, empresaId, scopeType]);
 
   const buscarRecomendacoes = async () => {
     setCarregando(true);
-
+    setErro('');
     try {
-      // 1. Buscar histórico do cliente
-      const historico = await base44.entities.HistoricoCliente.filter({
+      assertIaUiContext({ groupId, empresaId, scopeType });
+      const pedidosAnteriores = await filterInContext('Pedido', {
         cliente_id: clienteId,
-        modulo_origem: 'Comercial'
-      }, '-data_evento', 50);
-
-      // 2. Buscar pedidos anteriores
-      const pedidosAnteriores = await base44.entities.Pedido.filter({
-        cliente_id: clienteId,
-        status: ['Aprovado', 'Faturado', 'Entregue']
       }, '-data_pedido', 10);
 
       setTotalPedidosAnteriores(pedidosAnteriores.length);
-
-      // 3. Extrair produtos mais comprados
-      const produtosMaisComprados = {};
-      pedidosAnteriores.forEach(p => {
-        (p.itens_revenda || []).forEach(item => {
-          if (!produtosMaisComprados[item.produto_id]) {
-            produtosMaisComprados[item.produto_id] = {
-              produto_id: item.produto_id,
-              descricao: item.descricao,
-              codigo_sku: item.codigo_sku,
-              quantidade_total: 0,
-              frequencia: 0,
-              ultimo_preco: item.preco_unitario
-            };
-          }
-          produtosMaisComprados[item.produto_id].quantidade_total += item.quantidade;
-          produtosMaisComprados[item.produto_id].frequencia += 1;
-          produtosMaisComprados[item.produto_id].ultimo_preco = item.preco_unitario;
-        });
+      const base = buildRecomendacaoFromPedidos({
+        pedidos: pedidosAnteriores,
+        itensAtuais,
+        limite: 5,
       });
+      const produtosRecomendados = [...(base.recomendacoes || [])];
 
-      // 4. Filtrar produtos que NÃO estão no pedido atual
-      const produtosJaNoCarrinho = itensAtuais.map(i => i.produto_id);
-      const produtosRecomendados = Object.values(produtosMaisComprados)
-        .filter(p => !produtosJaNoCarrinho.includes(p.produto_id))
-        .sort((a, b) => b.frequencia - a.frequencia)
-        .slice(0, 5);
-
-      // 5. Usar IA para refinar recomendações
       if (produtosRecomendados.length > 0) {
         const analiseIA = await base44.integrations.Core.InvokeLLM({
+          group_id: groupId,
+          empresa_id: scopeType === 'grupo' ? null : empresaId,
           prompt: `
 Cliente comprou anteriormente:
-${produtosRecomendados.map(p => `- ${p.descricao} (${p.frequencia}x)`).join('\n')}
+${produtosRecomendados.map((p) => `- ${p.descricao} (${p.frequencia}x)`).join('\n')}
 
 Pedido atual tem ${itensAtuais.length} itens.
 
@@ -91,28 +75,36 @@ Retorne JSON:
             properties: {
               produto_recomendado: { type: 'string' },
               razao: { type: 'string' },
-              urgencia: { type: 'string' }
-            }
-          }
+              urgencia: { type: 'string' },
+            },
+          },
         });
 
-        // Adicionar razão da IA
         produtosRecomendados[0].razao_ia = analiseIA.razao;
         produtosRecomendados[0].urgencia = analiseIA.urgencia;
       }
 
       setRecomendacoes(produtosRecomendados);
-
     } catch (error) {
       console.error('Erro ao buscar recomendações:', error);
+      setErro(String(error?.message || 'Falha nas recomendacoes.'));
+      setRecomendacoes([]);
     } finally {
       setCarregando(false);
     }
   };
 
+  const handleAdicionar = (rec) => {
+    if (!onAdicionarProduto) return;
+    if (!requireIaHumanConfirm(`Adicionar "${rec.descricao}" ao pedido conforme sugestao de IA?`)) {
+      return;
+    }
+    onAdicionarProduto(rec);
+  };
+
   if (carregando) {
     return (
-      <Card className="border-purple-200 bg-purple-50">
+      <Card className="border-purple-200 bg-purple-50 w-full">
         <CardContent className="p-4">
           <div className="flex items-center gap-2">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
@@ -123,10 +115,18 @@ Retorne JSON:
     );
   }
 
+  if (erro) {
+    return (
+      <Card className="border-amber-200 bg-amber-50 w-full">
+        <CardContent className="p-4 text-sm text-amber-800">{erro}</CardContent>
+      </Card>
+    );
+  }
+
   if (recomendacoes.length === 0) return null;
 
   return (
-    <Card className="border-2 border-purple-300 bg-gradient-to-br from-purple-50 to-pink-50">
+    <Card className="border-2 border-purple-300 bg-gradient-to-br from-purple-50 to-pink-50 w-full">
       <CardHeader className="bg-white/80 border-b">
         <CardTitle className="text-base flex items-center gap-2">
           <Brain className="w-5 h-5 text-purple-600" />
@@ -159,14 +159,15 @@ Retorne JSON:
                 </div>
                 {rec.razao_ia && (
                   <p className="text-xs text-purple-700 mt-2">
-                    💡 {rec.razao_ia}
+                    {rec.razao_ia}
                   </p>
                 )}
               </div>
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => onAdicionarProduto && onAdicionarProduto(rec)}
+                type="button"
+                onClick={() => handleAdicionar(rec)}
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Adicionar
@@ -178,7 +179,7 @@ Retorne JSON:
         <div className="pt-2 border-t">
           <p className="text-xs text-center text-purple-600">
             <TrendingUp className="w-3 h-3 inline mr-1" />
-            Baseado em {totalPedidosAnteriores} pedidos anteriores
+            Baseado em {totalPedidosAnteriores} pedidos anteriores (sugestao)
           </p>
         </div>
       </CardContent>
