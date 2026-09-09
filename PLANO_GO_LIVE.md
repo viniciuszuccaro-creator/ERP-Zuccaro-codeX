@@ -851,6 +851,11 @@ Ações críticas exigem confirmação humana e revalidação backend.
 - [x] `oportunidadeScorer` opera com cliente do usuario (sem `asServiceRole`).
 - [x] Acao critica do scorer continua exigindo `confirmado`.
 
+## Residual fechado (P2.8)
+
+- [x] Funcoes do `AGENT_FUNCTION_MAP` sem elevacao `asServiceRole`.
+- [x] `sodValidator` so sugere (nao grava PerfilAcesso automaticamente).
+
 ---
 
 # 20. GATE 18 — MIGRAÇÃO DO ERP ANTIGO

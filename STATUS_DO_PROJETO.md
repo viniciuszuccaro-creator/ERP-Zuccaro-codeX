@@ -1,4 +1,15 @@
-﻿### P2.7 - Gate 16/17 residual: Fiscal, Governanca SoD e scorer sem elevacao
+﻿### P2.8 - Gate 17 residual: AGENT_FUNCTION_MAP sem elevacao asServiceRole
+- Objetivo: fechar residual Gate 17 nas funcoes mapeadas de agente (heranca de permissao do usuario).
+- Diagnostico: `iaFinanceAnomalyScan`, `iaChurnAnalyzer`, `productPriceOptimizer`, `optimizerOrchestrator`, `permissionOptimizer` ainda liam/gravavam via `asServiceRole`; `sodValidator` atualizava PerfilAcesso sozinho.
+- Causa raiz: agentes/automacoes com privilegio acima do usuario autenticado.
+- Arquivos alterados: entries das funcoes mapeadas, `sodValidator/entry.ts`, `tests/agente-autorizacao-policy.test.js`, `PLANO_GO_LIVE.md`.
+- Reutilizado: `assertPermission`, `confirmado`, `AGENT_FUNCTION_MAP`, IAGovernanca para gravar SoD.
+- Alteracoes: client autenticado nas funcoes de agente; SoD entity hook em modo sugestao.
+- Multiempresa/RBAC: guards existentes preservados; escrita critica continua exigindo confirmacao.
+- Pendencia: demais funcoes infra com asServiceRole (backup/webhook/seed) fora do mapa de agentes; Go-Live humano Gates 18-20.
+- Validacoes: `node --test tests/agente-autorizacao-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem: Gate 18-20 (virada/homologacao humana).
+### P2.7 - Gate 16/17 residual: Fiscal, Governanca SoD e scorer sem elevacao
 - Objetivo: fechar residual Motor Fiscal + IAGovernanca + `oportunidadeScorer` (sem IAV2/AgenteV2).
 - Diagnostico: MotorFiscal lia Pedido/Empresa/Produto global e toast de aprovacao; Governanca gravava `PerfilAcesso` e LogsIA Automatico; scorer usava `asServiceRole`.
 - Causa raiz: IA/agente fora do contrato de sugestao + heranca de permissao do usuario.

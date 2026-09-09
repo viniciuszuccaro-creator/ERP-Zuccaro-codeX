@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { getUserAndPerfil, assertPermission } from './_lib/guard.js';
 
 function buildPermissionOptimizationAudit(sugestoes = {}, blocksByModule = {}) {
@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
 
     const groupId = payload?.group_id || user.grupo_atual_id || user.grupo_padrao_id || user.group_id || null;
     const auditFilter = groupId ? { group_id: groupId } : {};
-    const ultimos = await base44.asServiceRole.entities.AuditLog.filter(auditFilter, '-data_hora', 800);
+    const ultimos = await base44.entities.AuditLog.filter(auditFilter, '-data_hora', 800);
     const bloqueios = (ultimos || []).filter((l) => l.acao === 'Bloqueio');
     const countBy = (arr, fn) => arr.reduce((acc, v) => {
       const k = fn(v);
@@ -66,11 +66,11 @@ Deno.serve(async (req) => {
     }, {});
     const blocksByModule = countBy(bloqueios, (l) => l.modulo || 'Sistema');
 
-    const perfis = await base44.asServiceRole.entities.PerfilAcesso.list();
+    const perfis = await base44.entities.PerfilAcesso.list();
     const sugestoes = buildSuggestions(perfis || [], blocksByModule);
 
     if (simulate || !confirmado) {
-      await base44.asServiceRole.entities.AuditLog.create({
+      await base44.entities.AuditLog.create({
         usuario: user?.full_name || user?.email || 'Usuario',
         usuario_id: user?.id || null,
         acao: 'Analise',
@@ -101,11 +101,11 @@ Deno.serve(async (req) => {
       if (item.requer_aprovacao_especial) {
         updated.requer_aprovacao_especial = true;
       }
-      await base44.asServiceRole.entities.PerfilAcesso.update(id, updated);
+      await base44.entities.PerfilAcesso.update(id, updated);
       atualizados += 1;
     }
 
-    await base44.asServiceRole.entities.AuditLog.create({
+    await base44.entities.AuditLog.create({
       usuario: user?.full_name || user?.email || 'Usuario',
       usuario_id: user?.id || null,
       acao: 'Edicao',

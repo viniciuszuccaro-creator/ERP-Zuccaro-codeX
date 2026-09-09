@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { getUserAndPerfil, assertPermission } from './_lib/guard.js';
 
 Deno.serve(async (req) => {
@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
 
     const groupId = user.grupo_atual_id || user.grupo_padrao_id || user.group_id || payload?.group_id || null;
     const empresas = groupId
-      ? await base44.asServiceRole.entities.Empresa.filter({ group_id: groupId }, '-id', 200)
+      ? await base44.entities.Empresa.filter({ group_id: groupId }, '-id', 200)
       : [];
     let aggregate = { empresas: empresas.length, total: 0, updated: 0, skipped: 0, failed: 0 };
 
@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     }
 
     try {
-      await base44.asServiceRole.entities.AuditLog.create({
+      await base44.entities.AuditLog.create({
         usuario: user?.full_name || user?.email || 'Automação',
         usuario_id: user?.id,
         acao: 'Edição',

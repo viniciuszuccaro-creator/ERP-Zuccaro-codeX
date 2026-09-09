@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { loadAnomalyConfig, computeIssues } from './_lib/anomalyUtils.js';
 import * as ss from 'npm:simple-statistics@7.8.3';
 import { notify } from './_lib/notificationService.js';
@@ -167,6 +167,9 @@ Deno.serve(async (req) => {
     let user = null;
     try { user = await base44.auth.me(); } catch { user = null; }
     const isScheduled = !user;
+    // Agente autenticado herda permissao; job agendado usa service role so para leitura/sugestao.
+    const entitiesApi = user ? base44.entities : base44.asServiceRole.entities;
+    const functionsApi = user ? base44.functions : base44.asServiceRole.functions;
 
     // Filtros opcionais (multiempresa): { empresa_id?, group_id? }
     let body = {};
@@ -186,19 +189,19 @@ Deno.serve(async (req) => {
         }
 
          // Coleta com escopo (quando fornecido)
-    const receber = await base44.asServiceRole.entities.ContaReceber.filter(filtros, '-updated_date', 500);
-    const pagar = await base44.asServiceRole.entities.ContaPagar.filter(filtros, '-updated_date', 500);
+    const receber = await entitiesApi.ContaReceber.filter(filtros, '-updated_date', 500);
+    const pagar = await entitiesApi.ContaPagar.filter(filtros, '-updated_date', 500);
     if (!Array.isArray(receber) || !Array.isArray(pagar)) {
       return Response.json({ ok: true, issues: 0, details: [] });
     }
 
     // Ferro & Aço: detectar órfãos/inconsistências de estoque/produto + contexto ampliado
     let produtos = [], movs = [], fornecedores = [], pedidos = [], entregas = [];
-    try { produtos = await base44.asServiceRole.entities.Produto.filter(filtros, '-updated_date', 300); } catch (error) { reportScanFailure('Falha ao carregar produtos', error, filtros); }
-    try { movs = await base44.asServiceRole.entities.MovimentacaoEstoque.filter(filtros, '-updated_date', 300); } catch (error) { reportScanFailure('Falha ao carregar movimentacoes de estoque', error, filtros); }
-    try { fornecedores = await base44.asServiceRole.entities.Fornecedor.filter(filtros, '-updated_date', 200); } catch (error) { reportScanFailure('Falha ao carregar fornecedores', error, filtros); }
-    try { pedidos = await base44.asServiceRole.entities.Pedido.filter(filtros, '-updated_date', 200); } catch (error) { reportScanFailure('Falha ao carregar pedidos', error, filtros); }
-    try { entregas = await base44.asServiceRole.entities.Entrega.filter(filtros, '-updated_date', 200); } catch (error) { reportScanFailure('Falha ao carregar entregas', error, filtros); }
+    try { produtos = await entitiesApi.Produto.filter(filtros, '-updated_date', 300); } catch (error) { reportScanFailure('Falha ao carregar produtos', error, filtros); }
+    try { movs = await entitiesApi.MovimentacaoEstoque.filter(filtros, '-updated_date', 300); } catch (error) { reportScanFailure('Falha ao carregar movimentacoes de estoque', error, filtros); }
+    try { fornecedores = await entitiesApi.Fornecedor.filter(filtros, '-updated_date', 200); } catch (error) { reportScanFailure('Falha ao carregar fornecedores', error, filtros); }
+    try { pedidos = await entitiesApi.Pedido.filter(filtros, '-updated_date', 200); } catch (error) { reportScanFailure('Falha ao carregar pedidos', error, filtros); }
+    try { entregas = await entitiesApi.Entrega.filter(filtros, '-updated_date', 200); } catch (error) { reportScanFailure('Falha ao carregar entregas', error, filtros); }
 
     const orphanProdutos = produtos.filter(p => p.eh_bitola === true && !p.empresa_id);
     const estoqueSemFilial = movs.filter(m => !m.empresa_id || !m.localizacao_destino);
@@ -261,8 +264,8 @@ Deno.serve(async (req) => {
             const podePersistirAlertas = body?.confirmado === true && !isScheduled;
             if ((idsDiverg.length || idsDup.length) && podePersistirAlertas) {
               await Promise.all([
-                ...idsDiverg.map(id => base44.asServiceRole.entities.ContaPagar.update(id, { alerta_taxa_divergente: true })),
-                ...idsDup.map(id => base44.asServiceRole.entities.ContaPagar.update(id, { duplicidade_detectada: true }))
+                ...idsDiverg.map(id => entitiesApi.ContaPagar.update(id, { alerta_taxa_divergente: true })),
+                ...idsDup.map(id => entitiesApi.ContaPagar.update(id, { duplicidade_detectada: true }))
               ]);
             } else if ((idsDiverg.length || idsDup.length) && !podePersistirAlertas) {
               warnings.push({
@@ -398,7 +401,7 @@ Deno.serve(async (req) => {
         }
         // Auditoria das previsões (entrada/saída)
         try {
-          await base44.asServiceRole.entities.AuditLog.create({
+          await entitiesApi.AuditLog.create({
             usuario: user?.full_name || 'Sistema',
             acao: 'Visualização',
             modulo: 'Estoque',
@@ -423,7 +426,7 @@ Deno.serve(async (req) => {
       const alvoEmpresaId = (filtros?.empresa_id) || (receber[0]?.empresa_id) || (pagar[0]?.empresa_id) || null;
       const podeAlertarExternamente = body?.confirmado === true || body?.alertar === true;
 
-      await base44.asServiceRole.entities.AuditLog.create({
+      await entitiesApi.AuditLog.create({
         usuario: user?.full_name || 'Sistema',
         acao: 'Visualização',
         modulo: 'Financeiro',
@@ -456,7 +459,7 @@ Deno.serve(async (req) => {
         try {
           if (cfg?.finance?.alerts?.whatsapp?.enabled && cfg.finance.alerts.whatsapp.to) {
             const msg = `Financeiro: ${issues.length} anomalia(s). Alta:${resumoSeveridade.alto || 0} • Média:${resumoSeveridade.medio || 0} • Baixa:${resumoSeveridade.baixo || 0}.`;
-            await base44.asServiceRole.functions.invoke('whatsappSend', {
+            await functionsApi.invoke('whatsappSend', {
               action: 'sendText',
               numero: cfg.finance.alerts.whatsapp.to,
               mensagem: msg,
@@ -476,7 +479,7 @@ Deno.serve(async (req) => {
     }
 
     const durationMs = Date.now() - t0;
-    try { if (durationMs > 500) { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Sistema', acao: 'Visualização', modulo: body?.previsao_estoque?.enabled ? 'Estoque' : 'Financeiro', tipo_auditoria: 'sistema', entidade: 'Performance', descricao: `iaFinanceAnomalyScan demorou ${durationMs}ms`, dados_novos: summarizeScanPerformance(durationMs, filtros), group_id: filtros?.group_id || null, data_hora: new Date().toISOString() }); } } catch (error) { reportScanFailure('Falha ao auditar desempenho da analise', error, filtros); }
+    try { if (durationMs > 500) { await entitiesApi.AuditLog.create({ usuario: 'Sistema', acao: 'Visualização', modulo: body?.previsao_estoque?.enabled ? 'Estoque' : 'Financeiro', tipo_auditoria: 'sistema', entidade: 'Performance', descricao: `iaFinanceAnomalyScan demorou ${durationMs}ms`, dados_novos: summarizeScanPerformance(durationMs, filtros), group_id: filtros?.group_id || null, data_hora: new Date().toISOString() }); } } catch (error) { reportScanFailure('Falha ao auditar desempenho da analise', error, filtros); }
     return Response.json({
       ok: true,
       modo: 'sugestao',

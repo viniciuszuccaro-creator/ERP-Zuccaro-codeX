@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { optimizeProductPrice } from './_lib/pricing/optimizeProductPriceHandler.js';
 import { getUserAndPerfil, assertPermission, audit } from './_lib/guard.js';
 
@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
       if (payload?.filtros?.empresa_id) filtro.empresa_id = payload.filtros.empresa_id;
       if (payload?.filtros?.group_id) filtro.group_id = payload.filtros.group_id;
 
-      const produtos = await base44.asServiceRole.entities.Produto.filter(filtro, '-updated_date', limit);
+      const produtos = await base44.entities.Produto.filter(filtro, '-updated_date', limit);
       let updated = 0, skipped = 0, failed = 0, creditExhausted = false;
 
       for (const p of produtos) {
@@ -121,7 +121,7 @@ Deno.serve(async (req) => {
       }
 
       // Oscilação de preços por bitola/fornecedor + sugestões setoriais
-      const fornecedores = await base44.asServiceRole.entities.Fornecedor.filter(filtro, '-updated_date', 200);
+      const fornecedores = await base44.entities.Fornecedor.filter(filtro, '-updated_date', 200);
       const osc = detectSteelPriceOscillation(produtos, fornecedores);
       const sugestoes = computeSteelSuggestions(produtos).concat(osc.sugestoes).slice(0, 100);
       const oscIssues = (osc.issues || []).slice(0, 100);
@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
           dados_novos: { total: produtos.length, updated, skipped, failed, creditExhausted, duracao_ms: Date.now() - t0, sugestoes, oscIssues }
         });
         if (sugestoes.length) {
-          await base44.asServiceRole.entities.Notificacao?.create?.({
+          await base44.entities.Notificacao?.create?.({
             titulo: 'Sugestões Comerciais (Aço)',
             mensagem: `${sugestoes.length} sugestão(ões) (reajuste/compra antecipada/oscilação).`,
             tipo: 'info',

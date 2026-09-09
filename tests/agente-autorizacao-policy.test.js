@@ -89,3 +89,21 @@ test('P2 agentes: permissionOptimizer e oportunidadeScorer exigem usuario e conf
   assert.match(scan, /podePersistirAlertas/);
   assert.match(scan, /confirmado === true/);
 });
+
+test('P2.8 Gate17: funcoes AGENT_FUNCTION_MAP nao elevam com asServiceRole', async () => {
+  const mapped = Object.keys(AGENT_FUNCTION_MAP);
+  for (const name of mapped) {
+    const src = await readFile(new URL(`../base44/functions/${name}/entry.ts`, import.meta.url), 'utf8');
+    assert.match(src, /assertPermission|auth\.me|requireEntityGuard/, `${name} sem guard de usuario/permissao`);
+    if (name === 'iaFinanceAnomalyScan') {
+      assert.match(src, /entitiesApi = user \? base44\.entities : base44\.asServiceRole\.entities/);
+      assert.match(src, /confirmado === true/);
+      continue;
+    }
+    assert.doesNotMatch(src, /asServiceRole/, `${name} ainda usa asServiceRole`);
+  }
+
+  const sod = await readFile(new URL('../base44/functions/sodValidator/entry.ts', import.meta.url), 'utf8');
+  assert.match(sod, /modo: 'sugestao'/);
+  assert.doesNotMatch(sod, /PerfilAcesso\.update/);
+});
