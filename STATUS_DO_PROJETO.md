@@ -4738,3 +4738,16 @@ Checklist inicial:
 - Nenhum executavel legado foi iniciado, nenhum banco foi anexado e nenhum dado, senha, MDF/LDF, TPS ou exportacao foi enviado ao GitHub.
 - Validacao: `robocopy` sem falhas, comparacao SHA-256 com status `VALIDATED` e varredura Defender com zero deteccoes.
 - Proximo passo obrigatorio: instalar SQL Server 2025 Developer/SSMS em instancia local isolada e anexar somente as copias em `02_SQL_WORK`, uma por vez, antes do inventario de schemas.
+
+### Gate 18 - Ambiente SQL legado isolado
+
+- Instalado SQL Server 2025 `17.0.1000.7`, edicao Standard Developer, em instancia nomeada `ERPZLEGACY` apenas para desenvolvimento e migracao local.
+- A instancia usa exclusivamente autenticacao integrada do Windows; o usuario local foi cadastrado como administrador SQL durante o setup.
+- TCP e Named Pipes permaneceram desabilitados, SQL Browser permaneceu desabilitado e o servico `MSSQL$ERPZLEGACY` foi configurado para inicializacao manual.
+- A telemetria da instancia foi parada e desabilitada; nenhuma porta de firewall foi aberta.
+- Instalado `sqlcmd` oficial 1.10.0 e validada conexao local explicita por Shared Memory.
+- A consulta tecnica retornou SQL Server `17.0.1000.7`, `Standard Developer Edition (64-bit)`, sem consultar dados do backup.
+- Instalado SQL Server Management Studio 22, versao `22.10.12201.205`; a ISO de instalacao foi desmontada ao final.
+- O desligamento do computador ocorreu depois da instalacao do SSMS; os logs confirmaram conclusao com codigo 0, e a tentativa de retomada apenas informou que o SSMS ja estava instalado.
+- Nenhum banco legado foi anexado e nenhum executavel contido no backup foi iniciado.
+- Proximo passo obrigatorio: iniciar manualmente `ERPZLEGACY`, anexar primeiro o menor banco de trabalho (`TIDDF`) com prefixo `LEGACY_`, validar compatibilidade/integridade e somente entao seguir banco a banco.
