@@ -4725,3 +4725,16 @@ Checklist inicial:
 - Permanecem avisos preexistentes de dados Browserslist desatualizados, imports mistos e bundle principal grande.
 - Nenhuma tela, grafico, card, aba, filtro, atualizacao automatica, funcionalidade ou dado foi removido.
 - Proximo passo obrigatorio: executar o Lote 9G em syncGroupCompany e upsertConfig, com testes de isolamento, retentativa e autorizacao backend.
+
+### Gate 18 - Preparacao segura do backup legado
+
+- O backup original em `C:\Users\cpaba\Desktop\BACKUP ERP ANTIGO\BACKUP 20-08-2026` foi mantido intocavel.
+- Criada a area isolada `D:\BACKUP ERP ANTIGO - CODEX` com pastas separadas para copia preservada, trabalho SQL, staging, relatorios e quarentena.
+- A copia preservada concluiu 1.857 arquivos, 21.102.245.906 bytes (19,65 GB) e zero falhas no `robocopy`.
+- Manifestos SHA-256 completos da origem e da copia foram comparados: 1.857 arquivos conferidos e zero divergencias de caminho, tamanho ou hash.
+- A copia preservada foi marcada como somente leitura; os manifestos e logs permaneceram apenas no HD externo e nao foram adicionados ao GitHub.
+- Microsoft Defender estava ativo, com protecao em tempo real habilitada, e concluiu a verificacao da copia com zero ameacas detectadas.
+- Criada copia gravavel exclusiva para SQL com 18 arquivos MDF/LDF, 18.663.342.080 bytes (17,38 GB) e zero falhas.
+- Nenhum executavel legado foi iniciado, nenhum banco foi anexado e nenhum dado, senha, MDF/LDF, TPS ou exportacao foi enviado ao GitHub.
+- Validacao: `robocopy` sem falhas, comparacao SHA-256 com status `VALIDATED` e varredura Defender com zero deteccoes.
+- Proximo passo obrigatorio: instalar SQL Server 2025 Developer/SSMS em instancia local isolada e anexar somente as copias em `02_SQL_WORK`, uma por vez, antes do inventario de schemas.
