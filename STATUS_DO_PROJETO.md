@@ -1,4 +1,15 @@
-﻿### P2.8 - Gate 17 residual: AGENT_FUNCTION_MAP sem elevacao asServiceRole
+﻿### P0.15 / Gate 18 residual - NF-e import + backup audit fail-closed
+- Objetivo: fechar residual Gate 18 no `ImportarProdutosNFe` e auditoria do `ConfiguracaoBackup` (sem MigracaoV2).
+- Diagnostico: NF-e criava Produto sem legado/lote/reconciliacao; audit engolido; contexto grupo-OR-empresa; backup engolia falha de AuditLog.
+- Causa raiz: importador NF-e fora do contrato `migracaoErpPolicy`; catch silencioso no backup.
+- Arquivos alterados: `ImportarProdutosNFe.jsx`, `migracaoErpPolicy.js`, `ConfiguracaoBackup.jsx`, testes, `PLANO_GO_LIVE.md`.
+- Reutilizado: `stampMigracaoRecord`, `assertReconciliacaoMigracao`, padrao Lote/Planilha.
+- Alteracoes: NF-e com `nfe_xml`, legado, lote, reconciliacao e auditoria obrigatoria; backup relanca erro de audit.
+- Multiempresa/RBAC: exige grupo (+empresa no escopo empresa); Cadastros/Estoque Produto criar.
+- Pendencia: PAD/historicos em massa e rodada humana (Gate 18); 10 cenarios reais (Gate 19); virada Gate 20.
+- Validacoes: `node --test tests/migracao-erp-policy.test.js`, `git diff --check` e `npm run build`.
+- Proximo passo da ordem: Gate 19/20 homologacao e virada humanas (codigo P0-P2/Gates 16-18 residuais fechados).
+### P2.8 - Gate 17 residual: AGENT_FUNCTION_MAP sem elevacao asServiceRole
 - Objetivo: fechar residual Gate 17 nas funcoes mapeadas de agente (heranca de permissao do usuario).
 - Diagnostico: `iaFinanceAnomalyScan`, `iaChurnAnalyzer`, `productPriceOptimizer`, `optimizerOrchestrator`, `permissionOptimizer` ainda liam/gravavam via `asServiceRole`; `sodValidator` atualizava PerfilAcesso sozinho.
 - Causa raiz: agentes/automacoes com privilegio acima do usuario autenticado.

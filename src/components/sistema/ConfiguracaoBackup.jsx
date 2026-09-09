@@ -141,6 +141,7 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
         });
       } catch (error) {
         console.error('[Auditoria] Falha ao registrar configuracao de backup.', error);
+        throw error;
       }
       return result;
     },
@@ -150,7 +151,7 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
     },
     onError: (error) => {
       console.error('Erro ao salvar:', error);
-      toast.error('❌ Erro ao salvar configuração');
+      toast.error(String(error?.message || 'Erro ao salvar configuração'));
     },
     onSettled: () => setSalvando(false)
   });
@@ -196,6 +197,7 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
         });
       } catch (error) {
         console.error('[Auditoria] Falha ao registrar backup do ERP.', error);
+        throw error;
       }
 
       return backup;

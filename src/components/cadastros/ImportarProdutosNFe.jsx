@@ -9,6 +9,11 @@ import { FileText, Upload, Loader2, CheckCircle2, Package, AlertTriangle } from 
 import { toast } from 'sonner';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
+import {
+  assertReconciliacaoMigracao,
+  buildReconciliacaoMigracao,
+  stampMigracaoRecord,
+} from '@/components/lib/migracaoErpPolicy';
 
 const sanitizeText = (value, max = 240) => String(value ?? '').replace(/[<>]/g, '').slice(0, max).trim();
 const toNumber = (value) => {
@@ -18,15 +23,15 @@ const toNumber = (value) => {
 
 /**
  * V21.1.2 - IMPORTAR PRODUTOS A PARTIR DE NF-e
- * Lê XML de NF-e e cria produtos automaticamente
+ * Lê XML de NF-e e cria produtos com contrato de migracao (Gate 18).
  */
 export default function ImportarProdutosNFe({ onProdutosCriados, onClose }) {
   const [xmlFile, setXmlFile] = useState(null);
   const { empresaAtual, grupoAtual, contexto, filterInContext, createInContext } = useContextoVisual();
   const { canCreate } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
-  const empresaId = contexto === 'empresa' ? empresaAtual?.id : null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const empresaId = contexto === 'empresa' ? empresaAtual?.id : (empresaAtual?.id || null);
+  const contextoValido = Boolean(groupId && (contexto === 'grupo' || empresaId));
   const podeCriarProduto = canCreate('Cadastros', 'Produto') || canCreate('Estoque', 'Produto') || canCreate('Cadastros', null);
 
   const auditImportacaoNFe = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
@@ -40,13 +45,16 @@ export default function ImportarProdutosNFe({ onProdutosCriados, onClose }) {
         group_id: dados.group_id || groupId || null,
         grupo_id: dados.group_id || groupId || null,
         tipo_auditoria: sucesso ? 'entidade' : 'seguranca',
-        descricao: motivo || 'Auditoria da importa\u00e7\u00e3o de produtos via NF-e.',
+        descricao: motivo || 'Auditoria da importacao de produtos via NF-e.',
         dados_anteriores: dados.dados_anteriores || null,
         dados_novos: { ...dados, contexto, arquivo: xmlFile?.name || null },
         sucesso,
         data_hora: new Date().toISOString(),
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error('Falha ao auditar importacao NF-e', error);
+      throw error;
+    }
   };
   const [processando, setProcessando] = useState(false);
   const [itensParsed, setItensParsed] = useState([]);
@@ -57,8 +65,8 @@ export default function ImportarProdutosNFe({ onProdutosCriados, onClose }) {
     if (!file) return;
 
     if (!contextoValido) {
-      await auditImportacaoNFe({ acao: 'Produto.importacao_nfe_bloqueada', sucesso: false, motivo: 'Contexto de grupo ou empresa obrigat\u00f3rio.', dados: { etapa: 'upload' } });
-      toast.error('Selecione um grupo ou empresa antes de importar produtos da NF-e.');
+      await auditImportacaoNFe({ acao: 'Produto.importacao_nfe_bloqueada', sucesso: false, motivo: 'Contexto de grupo e empresa obrigatorio.', dados: { etapa: 'upload' } });
+      toast.error('Selecione grupo e empresa antes de importar produtos da NF-e.');
       return;
     }
     if (!podeCriarProduto) {
@@ -76,6 +84,8 @@ export default function ImportarProdutosNFe({ onProdutosCriados, onClose }) {
 
       // Parsear XML com IA
       const resultado = await base44.integrations.Core.InvokeLLM({
+        group_id: groupId,
+        empresa_id: empresaId,
         prompt: `Analise este XML de NF-e e extraia TODOS os itens/produtos da nota fiscal.
 
 Para cada item, retorne:
@@ -168,19 +178,19 @@ IMPORTANTE: Extraia TODOS os itens, não apenas um exemplo.`,
     }
 
     if (!contextoValido) {
-      await auditImportacaoNFe({ acao: 'Produto.importacao_nfe_bloqueada', sucesso: false, motivo: 'Contexto de grupo ou empresa obrigat\u00f3rio.', dados: { total_itens: itensCriar.length } });
-      toast.error('Selecione um grupo ou empresa antes de criar produtos.');
+      await auditImportacaoNFe({ acao: 'Produto.importacao_nfe_bloqueada', sucesso: false, motivo: 'Contexto de grupo e empresa obrigatorio.', dados: { total_itens: itensCriar.length } });
+      toast.error('Selecione grupo e empresa antes de criar produtos.');
       return;
     }
     if (!podeCriarProduto) {
-      await auditImportacaoNFe({ acao: 'Produto.importacao_nfe_negada', sucesso: false, motivo: 'Permiss\u00e3o negada para criar produtos.', dados: { total_itens: itensCriar.length } });
-      toast.error('Sem permiss\u00e3o para criar produtos.');
+      await auditImportacaoNFe({ acao: 'Produto.importacao_nfe_negada', sucesso: false, motivo: 'Permissao negada para criar produtos.', dados: { total_itens: itensCriar.length } });
+      toast.error('Sem permissao para criar produtos.');
       return;
     }
 
-    const confirmado = window.confirm('Criar ' + itensCriar.length + ' produto(s) a partir da NF-e no contexto selecionado? Esta a\u00e7\u00e3o ser\u00e1 auditada.');
+    const confirmado = window.confirm('Criar ' + itensCriar.length + ' produto(s) a partir da NF-e no contexto selecionado? Esta acao sera auditada e reconciliada.');
     if (!confirmado) {
-      await auditImportacaoNFe({ acao: 'Produto.importacao_nfe_cancelada', sucesso: false, motivo: 'Confirma\u00e7\u00e3o cancelada pelo usu\u00e1rio.', dados: { total_itens: itensCriar.length } });
+      await auditImportacaoNFe({ acao: 'Produto.importacao_nfe_cancelada', sucesso: false, motivo: 'Confirmacao cancelada pelo usuario.', dados: { total_itens: itensCriar.length } });
       return;
     }
 
@@ -188,31 +198,70 @@ IMPORTANTE: Extraia TODOS os itens, não apenas um exemplo.`,
 
     try {
       const produtosCriados = [];
+      const origem = [];
 
       for (const item of itensCriar) {
-        const novoProduto = {
-          descricao: sanitizeText(item.descricao, 240),
-          codigo: sanitizeText(item.codigo_produto, 80),
+        const descricao = sanitizeText(item.descricao, 240);
+        if (!descricao) continue;
+        const codigoLegado = sanitizeText(item.codigo_produto || item.codigo || item.cProd, 80)
+          || sanitizeText(`NFE-${item.ncm || 'SEMNCM'}-${descricao.slice(0, 24)}`, 80);
+        const payload = stampMigracaoRecord({
+          descricao,
+          codigo: codigoLegado,
+          codigo_legado: codigoLegado,
+          id_antigo: codigoLegado,
           ncm: sanitizeText(item.ncm, 20),
           unidade_medida: sanitizeText(item.unidade || 'UN', 12).toUpperCase() || 'UN',
           unidade_principal: sanitizeText(item.unidade || 'UN', 12).toUpperCase() || 'UN',
           unidades_secundarias: [sanitizeText(item.unidade || 'UN', 12).toUpperCase() || 'UN'],
           custo_aquisicao: toNumber(item.valor_unitario),
+          preco_venda: toNumber(item.valor_unitario),
           tipo_item: 'Revenda',
           grupo: 'Outros',
           status: 'Ativo',
           group_id: groupId,
           grupo_id: groupId,
-          empresa_id: empresaId
-        };
-
-        if (!novoProduto.descricao) continue;
-        const produtoCriado = await createInContext('Produto', novoProduto);
+          empresa_id: empresaId,
+          origem_migracao: 'nfe_xml',
+          confirmado: true,
+        }, {
+          arquivoNome: xmlFile?.name || 'nfe.xml',
+          entidade: 'Produto',
+          confirmado: true,
+          destino: 'producao',
+        });
+        if (!payload.codigo_legado) {
+          throw new Error('Codigo legado obrigatorio para cada item da NF-e.');
+        }
+        origem.push(payload);
+        const produtoCriado = await createInContext('Produto', payload);
         produtosCriados.push(produtoCriado);
       }
 
-      await auditImportacaoNFe({ acao: 'Produto.importacao_nfe_concluida', sucesso: true, dados: { total_itens: itensCriar.length, total_criados: produtosCriados.length, codigos: produtosCriados.map((p) => p?.codigo).filter(Boolean).slice(0, 50) } });
-      toast.success(`${produtosCriados.length} produtos criados com sucesso!`);
+      if (!origem.length) {
+        throw new Error('Nenhum item valido para migracao a partir da NF-e.');
+      }
+
+      const reconciliacao = buildReconciliacaoMigracao({
+        origem,
+        gravados: produtosCriados,
+        reusos: [],
+        campoValor: 'custo_aquisicao',
+      });
+      assertReconciliacaoMigracao(reconciliacao);
+
+      await auditImportacaoNFe({
+        acao: 'Produto.importacao_nfe_concluida',
+        sucesso: true,
+        dados: {
+          total_itens: origem.length,
+          total_criados: produtosCriados.length,
+          lote_migracao: origem[0]?.lote_migracao,
+          reconciliacao,
+          codigos: produtosCriados.map((p) => p?.codigo).filter(Boolean).slice(0, 50),
+        },
+      });
+      toast.success(`${produtosCriados.length} produtos criados e reconciliados.`);
       onProdutosCriados && onProdutosCriados(produtosCriados);
       onClose && onClose();
     } catch (error) {
@@ -232,11 +281,11 @@ IMPORTANTE: Extraia TODOS os itens, não apenas um exemplo.`,
   };
 
   return (
-    <div className="space-y-4 w-full h-full" data-context-required="group-or-company" data-permission="Cadastros.Produto.importar">
+    <div className="space-y-4 w-full h-full" data-context-required="group-and-company" data-permission="Cadastros.Produto.importar">
       <Alert className="border-blue-200 bg-blue-50">
         <FileText className="w-4 h-4 text-blue-600" />
         <AlertDescription className="text-sm text-blue-900">
-          📄 <strong>Importar de NF-e:</strong> Carregue um XML de nota fiscal para criar produtos automaticamente
+          <strong>Importar de NF-e:</strong> XML com staging, codigo legado, lote e reconciliacao (Gate 18).
         </AlertDescription>
       </Alert>
 
@@ -244,7 +293,7 @@ IMPORTANTE: Extraia TODOS os itens, não apenas um exemplo.`,
         <Alert variant="destructive">
           <AlertTriangle className="w-4 h-4" />
           <AlertDescription>
-            {'O importador exige contexto de grupo/empresa e permiss\u00e3o para criar produtos.'}
+            O importador exige grupo, empresa e permissao para criar produtos.
           </AlertDescription>
         </Alert>
       )}
