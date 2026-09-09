@@ -4764,3 +4764,18 @@ Checklist inicial:
 - Nenhum conteudo de registro foi exportado ou enviado ao GitHub; logs e metadados detalhados permaneceram em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
 - O servico `ERPZLEGACY` foi parado ao final e permanece com inicializacao manual.
 - Proximo passo obrigatorio: repetir o fluxo hash -> copia local -> ACL minima -> anexo -> `READ_ONLY` -> `DBCC CHECKDB` no menor banco empresarial `TID_EMP05`, antes de identificar a empresa por metadados seguros.
+
+### Gate 18 - Segundo anexo controlado: TID_EMP05
+
+- Os hashes SHA-256 de `TID_EMP05.mdf` e `TID_EMP05_log.ldf` foram reconferidos entre a copia preservada, a area `02_SQL_WORK` e as copias locais usadas pela instancia; nao houve divergencia.
+- Somente as copias locais foram abertas. O banco foi anexado como `LEGACY_TID_EMP05`, convertido na copia da versao interna 782 para 998 e mantido em `READ_ONLY`.
+- `DBCC CHECKDB` com `DATA_PURITY` terminou sem erros; o banco permaneceu `ONLINE`, `MULTI_USER`, com `TRUSTWORTHY` e database chaining desabilitados.
+- Inventario estrutural: 692 tabelas, zero views, 1 procedure, zero triggers, zero funcoes e 2.527 linhas estimadas.
+- Das 2.527 linhas, 2.524 pertencem a duas tabelas de parametrizacao de campos. Apenas tres outras tabelas possuem uma linha cada; as demais tabelas de negocio estao vazias.
+- A tabela existente de parametrizacao empresarial esta vazia. Nao ha CNPJ, razao social ou outro metadado confiavel que permita associar o banco ao Grupo CPA, 3Z LTDA ou CPA Ferro e Aco.
+- O unico modulo SQL encontrado e uma procedure de alteracao de sequencia de versao. A referencia a execucao dinamica foi registrada para revisao, sem execucao; nao foram encontradas referencias a `xp_cmdshell`, `OPENROWSET`, `OPENDATASOURCE` ou automacao OLE.
+- Classificacao: banco estrutural praticamente vazio, sem massa operacional relevante e sem identidade empresarial comprovada. Ele fica preservado, mas bloqueado para exportacao ou importacao ate surgir evidencia externa de pertencimento.
+- Nenhum registro de negocio, documento fiscal, URL, CNPJ, senha ou arquivo do backup foi exportado ou enviado ao GitHub; os relatorios tecnicos detalhados permanecem somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- O servico `ERPZLEGACY` foi encerrado pelo proprio SQL Server ao final e permanece com inicializacao manual, sem TCP, Named Pipes ou SQL Browser.
+- Validacao documental: este subgate nao altera runtime do ERP; foi exigido somente `git diff --check` antes do commit.
+- Proximo passo obrigatorio: repetir o fluxo controlado no proximo banco empresarial por tamanho, `TID_EMP02`, e somente associar a uma empresa quando houver identificacao segura e conciliavel.
