@@ -4946,3 +4946,18 @@ Checklist inicial:
 - Nenhum TPS, esquema detalhado, hash individual, dado pessoal, valor de registro, executavel ou codigo do piloto foi enviado ao GitHub. Nenhuma funcionalidade do ERP foi alterada ou removida.
 - Validacao documental: compilacao do leitor com zero erros e avisos; 29/29 leituras aprovadas; zero divergencias de hash; zero copias gravaveis; zero quarentenas; zero valores emitidos; `git diff --check` exigido antes do commit.
 - Proximo passo obrigatorio: repetir o mesmo fluxo controlado no escopo TPS `EMP02`, preservando a separacao empresarial e mantendo qualquer falha ou contexto incerto em quarentena.
+
+### Gate 18 - Inventario de esquemas TPS: EMP02
+
+- O segundo lote empresarial TPS foi limitado ao escopo `EMP02` e executado somente sobre copias no staging local. A origem e a copia preservada permaneceram sem abertura para escrita.
+- Os 18 arquivos do escopo estavam classificados como nao sensiveis. Cada copia teve o SHA-256 comparado ao manifesto e foi marcada como somente leitura antes do processamento.
+- O leitor isolado processou 18 de 18 arquivos com sucesso, encontrando 18 tabelas, 44 registros e 348 campos no total.
+- Nao houve arquivo bloqueado, criptografado, corrompido, divergente, relatorio invalido ou item encaminhado para quarentena.
+- Somente nomes e tipos de campos, comprimentos, indices, memos e contagens foram registrados. Nenhum valor de registro foi desserializado ou emitido.
+- A verificacao posterior reconferiu os 18 hashes da copia preservada e das copias do piloto, com zero divergencias. Todas as copias continuaram marcadas como somente leitura.
+- Foram gerados 18 relatorios individuais de esquema e os resumos `tps-emp02-schema-summary.csv` e `tps-emp02-schema-summary.json`, armazenados somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- Os 18 documentos foram validados programaticamente com `accessMode=read-only`, `valuesEmitted=false` e zero relatorio invalido.
+- O nome da pasta `EMP02` continua sendo apenas indicio de contexto. A vinculacao futura com a 3Z depende de conciliacao com o mapa empresarial central e os bancos SQL, registro por registro.
+- Nenhum TPS, esquema detalhado, hash individual, dado pessoal, valor de registro, executavel ou codigo do piloto foi enviado ao GitHub. Nenhuma funcionalidade do ERP foi alterada ou removida.
+- Validacao documental: 18/18 leituras aprovadas; zero divergencias de hash; zero copias gravaveis; zero quarentenas; zero valores emitidos; `git diff --check` exigido antes do commit.
+- Proximo passo obrigatorio: repetir o fluxo controlado no escopo TPS `EMP03`, sem assumir pertencimento apenas pelo nome da pasta e mantendo registros ou arquivos de contexto incerto em quarentena.
