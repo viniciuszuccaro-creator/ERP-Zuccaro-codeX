@@ -5343,3 +5343,16 @@ Checklist inicial:
 - A instancia SQL voltou a `Stopped`/`Manual`; TCP e Named Pipes permanecem desativados.
 - Nenhum dado, credencial, TPS, snapshot, MDF/LDF, hash detalhado ou relatorio local foi adicionado ao GitHub. Mudanca exclusivamente documental no repositorio; testes de runtime dispensados e `git diff --check` obrigatorio no fechamento.
 - Proximo passo obrigatorio: extrair em modo local somente hashes dos codigos das 44 contas e dos vinculos RBAC, comprovar a cardinalidade entre `Usuarios`, `ContrAcesso` e `UsoSiglasAcesso` e manter todos os acessos Grupo/Empresa bloqueados ate definicao explicita.
+
+### Gate 18 - Correlacao hash-only de usuarios/RBAC - BLOCKED
+
+- A politica local foi ajustada para permitir `ContrAcesso.MATRICULA` exclusivamente como `ALLOW_HASH_ONLY_CORRELATION`; o valor bruto continua proibido e nao foi lido nem persistido.
+- Foi criada uma chave aleatoria de 32 bytes protegida por DPAPI `CurrentUser`, armazenada somente no HD com heranca removida e ACL exclusiva para `DELL-VINI\cpaba`. Apenas o fingerprint local da chave foi exibido.
+- A consulta preparada limita-se a `Usuarios.CODIGO`, `ContrAcesso.MATRICULA`, `ContrAcesso.CODIGOSISTEMA`, `UsoSiglasAcesso.ID` e `UsoSiglasAcesso.SIGLA`, convertendo cada valor em hash salgado dentro do SQL antes da saida.
+- O primeiro lancamento usou payload codificado acima do limite pratico do iniciador do Windows e nao produziu resumo. Um helper temporario foi criado para evitar esse limite, validado estaticamente e removido do repositorio antes do fechamento.
+- A execucao direta do helper confirmou que o processo atual nao possui permissao para iniciar `MSSQL$ERPZLEGACY`. O erro foi registrado localmente como `ServiceCommandException`, com zero campo de senha consultado e zero valor pessoal persistido.
+- Tres tentativas de elevacao pelo UAC, incluindo invocacao curta e modo destacado, nao chegaram a executar no ambiente atual e nao atualizaram o resumo. Nenhum resultado de correlacao foi produzido ou aceito.
+- A instancia permanece `Stopped`/`Manual`. Nenhum dado, credencial, TPS, snapshot, MDF/LDF, hash de usuario ou relatorio detalhado foi adicionado ao GitHub.
+- Estado `BLOCKED`: a correlacao depende de iniciar temporariamente a instancia com privilegio administrativo. Nao existe alternativa segura que preserve a consulta hash-only sem esse acesso.
+- Todos os acessos de Grupo e Empresa permanecem negados, e `ImportAuthorized=false` continua obrigatorio.
+- Proximo passo para desbloqueio: abrir o Codex como Administrador neste computador e repetir a consulta hash-only; depois validar 44 contas, 757 vinculos e 332 definicoes, desligando o SQL no `finally`.
