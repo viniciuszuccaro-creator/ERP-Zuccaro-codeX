@@ -5310,3 +5310,20 @@ Checklist inicial:
 - A instancia SQL permanece `Stopped`/`Manual`. Nenhum arquivo local, dado real, hash de identidade, TPS, snapshot, MDF/LDF ou relatorio detalhado foi adicionado ao GitHub.
 - Mudanca exclusivamente documental no repositorio; `git diff --check` foi aplicado no fechamento.
 - Proximo passo obrigatorio: iniciar o lote de usuarios e perfis pelo inventario estrutural somente leitura das tabelas legadas, excluindo senhas, tokens e segredos antes de consultar qualquer registro.
+
+### Gate 18 - Inventario estrutural de usuarios e RBAC legados
+
+- O inventario reutilizou o catalogo estrutural local ja existente dos nove bancos; a instancia SQL nao foi iniciada e nenhuma consulta de registros foi executada.
+- O catalogo cobre 4.612 combinacoes de banco, schema e tabela. O filtro corrigido identificou 34 nomes candidatos, 51 ocorrencias por banco e 563 colunas relacionadas a usuarios, acessos, escopos ou operadores.
+- A filtragem inicial foi descartada porque `acesso` tambem capturava `acessorios` e os aliases de coluna usados nao correspondiam ao cabecalho real. A classificacao final exclui esse falso positivo e usa `Database`/`Schema` corretamente.
+- A primeira geracao foi interrompida antes de gravar relatorios por sintaxe abreviada invalida de `return` no PowerShell. A expressao foi corrigida e toda a saida foi regenerada e validada.
+- `Usuarios` foi classificada como conta central; `UsuariosPortalWeb` ficou em revisao separada; `UsoSiglasAcesso` e `ContrAcesso` ficaram como dicionario ou vinculo RBAC.
+- Quinze ocorrencias de tabela foram classificadas como vinculos de Empresa, unidade, centro de custo ou estrutura organizacional. Vinte e duas tabelas de operadores foram separadas das contas de autenticacao.
+- `PerfilTributacao` foi excluida do RBAC por representar configuracao fiscal, evitando confundir perfil tributario com perfil de acesso.
+- Seis colunas foram marcadas `SENSITIVE_NEVER_READ`, incluindo senha, senha de e-mail, assinatura e caminho de assinatura. A tabela `UsuarioSenha` inteira recebeu `NEVER_READ_RECORDS`.
+- O arquivo `USUSENHA.TPS`, ja marcado `BLOQUEADO_CREDENCIAL` no inventario TPS, foi incorporado a politica como fonte proibida. Senhas legadas nao serao lidas nem migradas; usuarios deverao redefinir credenciais.
+- Foram gerados `legacy-user-rbac-structural-inventory.csv`, `legacy-user-rbac-column-policy.csv` e o resumo correspondente somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- Validacao final: nove bancos; 4.612 tabelas catalogadas; 51 ocorrencias candidatas; 563 colunas; seis colunas sensiveis bloqueadas; uma tabela e um TPS de credenciais bloqueados; zero registro lido; zero importacao autorizada.
+- A instancia SQL permanece `Stopped`/`Manual`. Nenhum dado, credencial, TPS, snapshot, MDF/LDF, hash detalhado ou relatorio local foi adicionado ao GitHub.
+- Mudanca exclusivamente documental no repositorio; testes de runtime dispensados e `git diff --check` obrigatorio no fechamento.
+- Proximo passo obrigatorio: definir a allowlist de campos para contas, RBAC e vinculos de escopo e executar somente contagens agregadas por tabela, ainda sem extrair nomes, e-mails, telefones, senhas ou permissoes individuais.
