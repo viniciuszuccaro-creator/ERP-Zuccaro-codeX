@@ -5167,3 +5167,18 @@ Checklist inicial:
 - Todas as 82 linhas mantem `CompanyContext=UNDETERMINED` e `ImportAuthorized=false`; nenhum valor foi lido e nenhuma empresa foi associada automaticamente.
 - Validacao documental: 82/82 campos classificados; uma chave compartilhada; 72 correspondencias de tipo compativel; nove lacunas genericas em quarentena; uma lacuna semantica em revisao; zero criacao nova; `git diff --check` exigido antes do commit.
 - Proximo passo obrigatorio: cruzar os 53 campos semanticos de `EMPRESAS` e `EMPRCOMP` com as entidades e configuracoes ja existentes no ERP novo, reutilizando o modelo atual e mantendo campos sem equivalente em revisao, sem criar estrutura nova.
+
+### Gate 18 - Cruzamento EMPRESAS/EMPRCOMP com o ERP atual
+
+- Os 53 campos semanticos foram cruzados apenas com contratos e componentes ja existentes no ERP novo, sem abrir snapshots locais, consultar valores de negocio ou iniciar a instancia SQL.
+- Foram reutilizadas as estruturas atuais `Empresa`, `Empresa.endereco`, `Empresa.configuracao_fiscal`, `ConfiguracaoSistema` e as politicas existentes de RBAC e multiempresa. Nenhuma entidade, tela, modulo, componente ou campo novo foi criado ou autorizado.
+- Doze campos possuem destino direto existente, incluindo identificacao, endereco e configuracoes basicas de NF-e. Todos continuam sujeitos a validacao de formato, dominio, `groupId` e `empresaId` antes de qualquer carga.
+- Vinte e seis campos foram classificados como `CONFIG_KEY_REVIEW`, com destino potencial na entidade generica `ConfiguracaoSistema`. Cada chave devera ter significado e tipo comprovados antes do uso.
+- Tres campos exigem transformacao controlada de dominio, dois serao tratados somente como identificadores legados de conciliacao e um permaneceu sem equivalente comprovado, sem criacao de estrutura nova.
+- Sete campos relacionados a liberacao, acesso ou propagacao foram bloqueados para revisao de politica. Valores legados nunca concederao RBAC nem acesso entre Grupo e Empresas automaticamente.
+- Dois campos contendo caminhos locais de ECF foram bloqueados por seguranca e portabilidade. Esses caminhos nao serao migrados automaticamente.
+- A matriz `tps-root-02-current-erp-field-crosswalk.csv` e seu resumo JSON foram armazenados somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS` e mantem `CompanyContext=UNDETERMINED` e `ImportAuthorized=false` nas 53 linhas.
+- A verificacao confirmou 53 campos unicos, zero autorizacao de importacao, zero contexto empresarial atribuido, obrigatoriedade de Grupo/Empresa em todas as linhas, zero valor lido e zero snapshot aberto.
+- A instancia `ERPZLEGACY` permaneceu `Stopped` e com inicializacao `Manual`. Nenhum dado real, segredo, TPS, MDF/LDF ou relatorio detalhado foi enviado ao GitHub.
+- Validacao documental: 53/53 campos classificados; 12 destinos diretos; 26 configuracoes em revisao; sete bloqueios de acesso; dois bloqueios de caminho; tres transformacoes; dois identificadores legados; uma lacuna sem equivalente; zero estrutura nova; `git diff --check` exigido antes do commit.
+- Proximo passo obrigatorio: definir o contrato de importacao piloto para os campos cadastrais de `EMPRESAS`, reutilizando `Empresa`, com chave legada idempotente, validacao de CNPJ/endereco/status, contexto Grupo/Empresa comprovado, RBAC e auditoria, ainda sem ler ou importar valores reais.
