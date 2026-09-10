@@ -5137,3 +5137,18 @@ Checklist inicial:
 - A instancia foi desligada pela propria conexao SQL ao final e permanece `Stopped` com inicializacao `Manual`. Nenhum dado real, segredo, MDF/LDF ou catalogo detalhado foi enviado ao GitHub.
 - Validacao documental: nove bancos seguros; zero duplicidade de tabela ou coluna no catalogo; 39/39 esquemas TPS cobertos; zero empresa definida; zero importacao autorizada; zero valor lido; `git diff --check` exigido antes do commit.
 - Proximo passo obrigatorio: revisar estruturalmente os 23 candidatos do `ROOT-02`, priorizando os cinco que possuem registros, comparar contexto empresarial e ambiguidades entre bancos e manter qualquer correspondencia incerta sem autorizacao de carga.
+
+### Gate 18 - Revisao dos candidatos ROOT-02 com registros
+
+- A revisao foi limitada aos cinco candidatos estruturais do `ROOT-02` que possuem registros, totalizando 19.830 registros TPS. Foram usados somente os catalogos locais; a instancia SQL permaneceu desligada.
+- `EMPRESAS` foi mantida como candidato forte de esquema para `Empresas`: nome exato, 17 de 18 campos coincidentes e compativeis. A correspondencia ainda nao comprova identidade empresarial nem autoriza importacao.
+- `CXPOSDIA`, com 19.723 registros, possui cinco campos semanticos coincidentes e compativeis, mas o candidato SQL ocorre em cinco bancos sem campo empresarial explicito. Ficou em revisao multi-banco.
+- `EMPRCOMP` apresenta 56 campos coincidentes, dos quais 36 semanticos e 20 genericos, mas aponta para o mesmo destino SQL de `EMPRESAS`. Ficou bloqueada por colisao de destino ate definir a separacao entre cadastro e configuracao.
+- `GENITEM` foi rejeitada como candidata automatica porque a maior pontuacao estrutural empata entre nove tabelas e nao existe semelhanca de nome ou contexto empresarial.
+- `FORFARD` permaneceu em revisao manual: 13 campos coincidentes, mas nove sao campos genericos legados, nao ha semelhanca de nome e nao existe contexto empresarial explicito.
+- Todos os cinco candidatos preservam `CompanyContext=UNDETERMINED` e `ImportAuthorized=false`. Nenhuma decisao foi baseada apenas no nome da pasta, banco ou tabela.
+- Foram gerados `tps-root-02-active-candidate-review.csv` e `tps-root-02-active-candidate-review-summary.json` somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- A validacao confirmou exatamente um candidato forte, uma revisao multi-banco, uma colisao de destino, uma rejeicao por ambiguidade e uma revisao manual, sem leitura de valores.
+- Nenhum registro de negocio, dado pessoal, segredo, MDF/LDF, TPS ou relatorio detalhado foi enviado ao GitHub. Nenhuma funcionalidade do ERP foi alterada ou removida.
+- Validacao documental: 5/5 candidatos ativos revisados; 19.830 registros cobertos; zero empresa definida; zero importacao autorizada; SQL `Stopped`/`Manual`; `git diff --check` exigido antes do commit.
+- Proximo passo obrigatorio: detalhar a separacao estrutural entre `EMPRESAS` e `EMPRCOMP` no destino SQL `Empresas`, identificando campos exclusivos, compartilhados e de configuracao, sem consultar valores e sem definir empresa automaticamente.
