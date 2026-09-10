@@ -4901,3 +4901,18 @@ Checklist inicial:
 - O servico `ERPZLEGACY` foi encerrado ao final e permanece manual, sem TCP, Named Pipes ou SQL Browser.
 - Validacao documental: este subgate nao altera o runtime do ERP; foi exigido somente `git diff --check` antes do commit.
 - Proximo passo obrigatorio: iniciar o inventario seguro dos arquivos TPS por caminho, tamanho, tipo e hash, sem executar binarios legados e sem consultar ou importar valores de `USUSENHA.TPS`.
+
+### Gate 18 - Inventario seguro dos arquivos TPS
+
+- O inventario foi produzido exclusivamente a partir dos manifestos SHA-256 ja validados da origem e da copia preservada; nenhum registro TPS foi aberto ou interpretado nesta etapa.
+- Foram identificados 294 arquivos TPS, totalizando 29.980.958 bytes, tanto na origem quanto na copia preservada. A comparacao de caminho relativo, tamanho e hash resultou em zero divergencias.
+- A distribuicao por escopo confirmou 193 arquivos na raiz compartilhada, 29 em `EMP01`, 18 em `EMP02`, 28 em `EMP03`, 2 em `EMP04`, 13 em `EMP05` e 11 em `RH`.
+- Os nomes indicam tabelas auxiliares, parametrizacoes e dados separados por empresa, mas nome de arquivo ou pasta nao foi aceito como prova suficiente de propriedade, completude ou precedencia sobre os bancos SQL ja classificados.
+- `USUSENHA.TPS` e sua copia historica foram marcados como `BLOQUEADO_CREDENCIAL`: ficam proibidos de leitura de conteudo, parser, exportacao e migracao. Usuarios deverao receber redefinicao de senha no ERP novo.
+- Dois arquivos de conexao foram marcados para revisao de seguranca e nao serao abertos enquanto nao existir metodo de extracao que garanta ausencia de exposicao de credenciais.
+- Os relatorios `tps-inventory-metadata.csv` e `tps-inventory-summary.json` foram gravados apenas em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`; eles contem metadados tecnicos e nao fazem parte do repositorio.
+- A verificacao completa anterior do Microsoft Defender continua valida para a copia preservada e havia terminado sem deteccoes. Nenhum executavel, biblioteca, script ou componente legado foi iniciado.
+- Classificacao: conjunto TPS preservado para apoio de conciliacao e eventual preenchimento de lacunas, sempre subordinado a staging, contexto empresarial comprovado, idempotencia, RBAC, auditoria e quarentena. Importacao integral ou direta permanece proibida.
+- Nenhum TPS, hash individual, senha, token, conexao, dado pessoal ou registro de negocio foi enviado ao GitHub. Nenhuma funcionalidade existente do ERP foi alterada ou removida.
+- Validacao documental: os manifestos registram integridade `VALIDATED`, o resumo registra `content_opened=false`, `legacy_binary_executed=false` e zero divergencias; foi exigido `git diff --check` antes do commit.
+- Proximo passo obrigatorio: verificar a disponibilidade de parser ou driver TopSpeed confiavel e isolado; somente se houver ferramenta segura, realizar um piloto de leitura em copia de TPS nao sensivel, mantendo `USUSENHA.TPS` e arquivos de conexao fora do teste.
