@@ -4795,3 +4795,19 @@ Checklist inicial:
 - O servico `ERPZLEGACY` foi encerrado ao final e permanece manual, sem TCP, Named Pipes ou SQL Browser.
 - Validacao documental: este subgate nao altera o runtime do ERP; foi exigido somente `git diff --check` antes do commit.
 - Proximo passo obrigatorio: repetir o fluxo controlado no banco empresarial `TID_EMP04`, identificar sua empresa por metadados seguros e manter qualquer contexto divergente em quarentena.
+
+### Gate 18 - Quarto anexo controlado: TID_EMP04
+
+- Os hashes SHA-256 e tamanhos de `TID_EMP04.mdf` e `TID_EMP04_log.ldf` foram comparados entre origem, copia preservada e `02_SQL_WORK`; as tres versoes permaneceram identicas.
+- Foram abertas somente copias locais em `C:\Users\cpaba\ERPZLEGACY_DATA`, com acesso minimo para o servico SQL. O banco foi anexado como `LEGACY_TID_EMP04`, convertido na copia da versao interna 782 para 998 e colocado imediatamente em `READ_ONLY`.
+- `DBCC CHECKDB` com `DATA_PURITY` terminou com codigo 0 e sem mensagens de erro. O banco permaneceu `ONLINE`, `MULTI_USER`, com `TRUSTWORTHY`, Service Broker e database chaining desabilitados.
+- Inventario estrutural: 687 tabelas, zero views, 1 procedure, zero triggers, zero funcoes, zero chaves estrangeiras declaradas e somente 39 linhas estimadas.
+- Das 39 linhas, 36 pertencem a `ParametrosCamposPadrao`; existem apenas um registro em `CadastroObservacoesPedidoCompra`, um em `EstoqueMateriais` e um em `HistoricoComentariosVenda`. Todas as demais tabelas estao vazias.
+- Embora o MDF tenha 188 MB alocados, somente 11,75 MB estao em uso; o log tem 6,75 MB alocados e aproximadamente 1,24 MB em uso. O tamanho do arquivo nao representa massa operacional.
+- `ParametrizacaoEmpresa` esta vazia, e os tres registros isolados nao possuem campo de Grupo, Empresa ou CNPJ. Nao existe evidencia segura para associar o banco ao Grupo CPA, 3Z LTDA ou CPA Ferro e Aco.
+- O unico modulo SQL e a procedure legada `ALTERA_SEQUENCIA_VERSAO_11`, com referencia a execucao dinamica e sem execucao durante a analise. Nao foram encontradas referencias a `xp_cmdshell`, `OPENROWSET`, `OPENDATASOURCE` ou automacao OLE.
+- Classificacao: banco estrutural praticamente vazio, preservado e bloqueado para exportacao ou importacao ate que exista evidencia externa conciliavel de pertencimento.
+- Nenhum registro, CNPJ, valor, senha, MDF/LDF ou dado de negocio foi exportado ou enviado ao GitHub. O relatorio de integridade permanece apenas em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- O servico `ERPZLEGACY` foi encerrado ao final e permanece manual, sem TCP, Named Pipes ou SQL Browser.
+- Validacao documental: este subgate nao altera o runtime do ERP; foi exigido somente `git diff --check` antes do commit.
+- Proximo passo obrigatorio: realizar triagem estrutural controlada de `TID_TEMP`, o menor banco restante, para comprovar se possui dados necessarios ou se deve permanecer excluido da migracao.
