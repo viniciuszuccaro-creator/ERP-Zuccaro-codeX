@@ -4848,3 +4848,22 @@ Checklist inicial:
 - O servico `ERPZLEGACY` foi encerrado ao final e permanece manual, sem TCP, Named Pipes ou SQL Browser.
 - Validacao documental: este subgate nao altera o runtime do ERP; foi exigido somente `git diff --check` antes do commit.
 - Proximo passo obrigatorio: repetir o fluxo controlado no banco empresarial `TID_EMP01`, identificar sua empresa e seus periodos por metadados seguros antes de planejar qualquer exportacao.
+
+### Gate 18 - Sexto anexo controlado: TID_EMP01
+
+- Os hashes SHA-256 e tamanhos de `TID_EMP01.mdf` e `TID_EMP01_log.ldf` foram comparados entre origem, copia preservada e `02_SQL_WORK`; as tres versoes permaneceram identicas.
+- Foram abertas somente copias locais em `C:\Users\cpaba\ERPZLEGACY_DATA`, com acesso minimo para o servico SQL. O banco foi anexado como `LEGACY_TID_EMP01`, convertido na copia da versao interna 782 para 998 e colocado imediatamente em `READ_ONLY`.
+- `DBCC CHECKDB` com `DATA_PURITY` terminou com codigo 0 e sem mensagens de erro. O banco permaneceu `ONLINE`, `MULTI_USER`, com `TRUSTWORTHY`, Service Broker e database chaining desabilitados.
+- Inventario estrutural: 722 tabelas, zero views, 1 procedure, zero triggers, zero funcoes, zero chaves estrangeiras declaradas e aproximadamente 1.841.537 linhas.
+- O MDF possui aproximadamente 2.551,94 MB alocados e 2.309,31 MB usados. O log possui 1.082,81 MB alocados, mas apenas 35,09 MB usados.
+- A massa e predominantemente fiscal: 139.593 notas de saida, 399.350 itens, 139.552 registros de processamento eletronico, 151.658 fragmentos relacionados a XML, 143.054 duplicatas eletronicas e dados vinculados de clientes, entradas, cancelamentos, tributos e contas.
+- A identificacao foi feita sem expor XML ou CNPJ integral: 7.771 blocos de emitente apontaram para a mesma Central Paulista Distribuidora de Aco, em duas variacoes historicas do nome e com o mesmo CNPJ mascarado. O banco fica classificado como origem fiscal da CPA/Central Paulista.
+- O periodo agregado das notas vai de `2012-03-05` a `2026-08-19`. Das 139.593 notas, 139.249 usam o codigo empresarial legado `1`; 187 usam codigo `0`, 151 usam codigo `3` e 6 usam codigo `2`. Os 344 registros fora do codigo proprietario ficam marcados para conciliacao e quarentena, sem propagacao automatica.
+- Foram encontrados campos destinados a credenciais de integracoes, mas as respectivas tabelas estao vazias. Apenas nomes e tipos de campos foram inventariados; nenhum valor foi consultado ou migrado.
+- O unico modulo SQL e a procedure legada `ALTERA_SEQUENCIA_VERSAO_11`, que possui referencia a execucao dinamica e nao foi executada. Nao foram encontradas referencias a `xp_cmdshell`, `OPENROWSET`, `OPENDATASOURCE` ou automacao OLE.
+- Nao existem assemblies de usuario, credenciais de escopo de banco, fontes externas, sinonimos ou principals externos.
+- Classificacao: banco fiscal de alta prioridade da CPA, que exige staging, mapeamento do codigo legado `1`, recorte dos ultimos cinco anos, reconciliacao financeira/fiscal, idempotencia, auditoria e quarentena antes de qualquer carga.
+- Nenhum XML, chave fiscal, CNPJ integral, valor financeiro, segredo, MDF/LDF ou registro de negocio foi exportado ou enviado ao GitHub. O relatorio de integridade permanece apenas em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- O servico `ERPZLEGACY` foi encerrado ao final e permanece manual, sem TCP, Named Pipes ou SQL Browser.
+- Validacao documental: este subgate nao altera o runtime do ERP; foi exigido somente `git diff --check` antes do commit.
+- Proximo passo obrigatorio: realizar o anexo controlado de `TID_AUDITORIA`, inventariar sua cobertura por periodos e empresas sem exportacao integral e sem consultar conteudos sensiveis desnecessarios.
