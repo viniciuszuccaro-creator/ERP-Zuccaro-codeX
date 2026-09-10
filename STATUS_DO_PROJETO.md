@@ -5122,3 +5122,18 @@ Checklist inicial:
 - Nenhum registro de negocio, valor TPS, dado pessoal, segredo, MDF/LDF ou identificador individual de arquivo foi consultado ou enviado ao GitHub. Nenhuma funcionalidade do ERP foi alterada ou removida.
 - Validacao documental: 39/39 esquemas cobertos; 349.303/349.303 registros sem candidato seguro; zero contexto empresarial definido; zero correspondencia de tipo; zero importacao autorizada; servico SQL parado/manual; `git diff --check` exigido antes do commit.
 - Proximo passo obrigatorio: persistir os catalogos completos dos bancos SQL ja validados por meio de uma inicializacao administrativa controlada da instancia, consultar somente `sys.tables`, `sys.columns` e tipos, desligar o servico e repetir o mapeamento do `ROOT-02` sem acessar valores.
+
+### Gate 18 - Catalogo SQL completo e remapeamento estrutural ROOT-02
+
+- A instancia `ERPZLEGACY` foi iniciada temporariamente com autorizacao administrativa, sem habilitar TCP ou Named Pipes. A conexao utilizou somente Shared Memory local.
+- Os nove bancos `LEGACY_` foram confirmados `ONLINE`, `READ_ONLY` e `MULTI_USER`, com `TRUSTWORTHY`, Service Broker e database chaining desativados.
+- O catalogo completo registrou 4.612 tabelas e 116.445 colunas com nomes, tipos, tamanhos, precisao, escala e nulabilidade. Nenhum valor de tabela de negocio foi consultado.
+- A tentativa inicial de somar estimativas de linhas e a primeira extracao ordenada foram canceladas por `RESOURCE_SEMAPHORE`. A extracao final removeu agregacoes, joins e ordenacao no SQL, preservando o limite de memoria da instancia.
+- Foram gerados `sql-legacy-database-state.csv`, `sql-legacy-table-catalog.csv`, `sql-legacy-column-catalog.csv` e `sql-legacy-schema-catalog-summary.json` somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- O remapeamento dos 39 esquemas aprovados do `ROOT-02` encontrou um candidato por nome exato, 22 candidatos estruturais para revisao e 16 tabelas sem candidato seguro. Nao houve vinculo automatico.
+- Os candidatos cobrem 19.830 registros; 329.473 registros continuam sem candidato seguro. Foram observadas 311 coincidencias de nomes de campos, todas com familia de tipo compativel.
+- Onze candidatos aparecem em mais de um banco, 13 possuem empate na maior pontuacao e 18 candidatos nao possuem registros TPS. Todas essas ocorrencias exigem revisao manual antes de qualquer decisao.
+- O mapa e o resumo completos foram salvos localmente como `tps-root-02-sql-full-structural-map.csv` e `tps-root-02-sql-full-structural-map-summary.json`, com `CompanyContext=UNDETERMINED` e `ImportAuthorized=false` em todas as linhas.
+- A instancia foi desligada pela propria conexao SQL ao final e permanece `Stopped` com inicializacao `Manual`. Nenhum dado real, segredo, MDF/LDF ou catalogo detalhado foi enviado ao GitHub.
+- Validacao documental: nove bancos seguros; zero duplicidade de tabela ou coluna no catalogo; 39/39 esquemas TPS cobertos; zero empresa definida; zero importacao autorizada; zero valor lido; `git diff --check` exigido antes do commit.
+- Proximo passo obrigatorio: revisar estruturalmente os 23 candidatos do `ROOT-02`, priorizando os cinco que possuem registros, comparar contexto empresarial e ambiguidades entre bancos e manter qualquer correspondencia incerta sem autorizacao de carga.
