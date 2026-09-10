@@ -4867,3 +4867,20 @@ Checklist inicial:
 - O servico `ERPZLEGACY` foi encerrado ao final e permanece manual, sem TCP, Named Pipes ou SQL Browser.
 - Validacao documental: este subgate nao altera o runtime do ERP; foi exigido somente `git diff --check` antes do commit.
 - Proximo passo obrigatorio: realizar o anexo controlado de `TID_AUDITORIA`, inventariar sua cobertura por periodos e empresas sem exportacao integral e sem consultar conteudos sensiveis desnecessarios.
+
+### Gate 18 - Setimo anexo controlado: TID_AUDITORIA
+
+- Os hashes SHA-256 e tamanhos de `TID_AUDITORIA.mdf` e `TID_AUDITORIA.ldf` foram comparados entre origem, copia preservada e `02_SQL_WORK`; as tres versoes permaneceram identicas antes do anexo.
+- Foram abertas somente copias locais em `C:\Users\cpaba\ERPZLEGACY_DATA`, com acesso minimo para o servico SQL. O banco foi anexado como `LEGACY_TID_AUDITORIA`, convertido na copia da versao interna 782 para 998 e colocado imediatamente em `READ_ONLY`.
+- `DBCC CHECKDB` com `DATA_PURITY` terminou com codigo 0 e sem mensagens de erro. O banco permaneceu `ONLINE`, `MULTI_USER`, com `TRUSTWORTHY`, Service Broker e database chaining desabilitados.
+- Inventario estrutural: 3 tabelas, sem views, procedures, triggers, funcoes ou chaves estrangeiras declaradas, com grande volume historico de eventos e logs.
+- A estrutura principal separa empresa, entidade, lancamento, data, hora, usuario, tipo, coluna e conteudos anterior/atual. Os campos de conteudo nao foram consultados, exibidos nem exportados.
+- A cobertura historica e multiempresa foi confirmada para os codigos legados `1` a `5`, com datas validas e predominancia do codigo `3`. As contagens detalhadas e os periodos exatos permanecem somente no relatorio local protegido.
+- A janela dos ultimos cinco anos possui massa suficiente para migracao segmentada. Foram confirmados eventos de inclusao, alteracao e exclusao em fluxos comerciais, financeiros, fiscais, logisticos e de compras.
+- O log tecnico tambem cobre a janela recente e contem indicadores de falhas da aplicacao legada. Nenhuma mensagem foi consultada; totais e periodos detalhados permanecem apenas no HD de analise.
+- O banco nao possui modulos SQL nem referencias a `xp_cmdshell`, `OPENROWSET`, `OPENDATASOURCE`, automacao OLE ou execucao dinamica.
+- Classificacao: arquivo historico multiempresa de alta sensibilidade. Qualquer exportacao futura devera ser segmentada por empresa, periodo e tabela, limitada a necessidade comprovada, sanitizada e conciliada; exportacao integral e proibida.
+- Nenhum usuario, conteudo anterior/atual, mensagem, dado pessoal, MDF/LDF ou evento individual foi exportado ou enviado ao GitHub. O relatorio de integridade permanece apenas em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- O servico `ERPZLEGACY` foi encerrado ao final e permanece manual, sem TCP, Named Pipes ou SQL Browser.
+- Validacao documental: este subgate nao altera o runtime do ERP; foi exigido somente `git diff --check` antes do commit.
+- Proximo passo obrigatorio: repetir o fluxo controlado no ultimo banco empresarial principal, `TID_EMP03`, identificar sua empresa e seus periodos por metadados seguros antes de qualquer exportacao.
