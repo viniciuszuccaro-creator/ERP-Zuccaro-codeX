@@ -4829,3 +4829,22 @@ Checklist inicial:
 - O servico `ERPZLEGACY` foi encerrado ao final e permanece manual, sem TCP, Named Pipes ou SQL Browser.
 - Validacao documental: este subgate nao altera o runtime do ERP; foi exigido somente `git diff --check` antes do commit.
 - Proximo passo obrigatorio: repetir o fluxo controlado no banco `TID_EXETPS`, inventariar sua finalidade e impedir qualquer execucao de conteudo legado durante a analise.
+
+### Gate 18 - Quinto anexo controlado: TID_EXETPS
+
+- Os hashes SHA-256 e tamanhos de `TID_EXETPS.mdf` e `TID_EXETPS_log.ldf` foram comparados entre origem, copia preservada e `02_SQL_WORK`; as tres versoes permaneceram identicas.
+- Foram abertas somente copias locais em `C:\Users\cpaba\ERPZLEGACY_DATA`, com acesso minimo para o servico SQL. O banco foi anexado como `LEGACY_TID_EXETPS`, convertido na copia da versao interna 782 para 998 e colocado imediatamente em `READ_ONLY`.
+- `DBCC CHECKDB` com `DATA_PURITY` terminou com codigo 0 e sem mensagens de erro. O banco permaneceu `ONLINE`, `MULTI_USER`, com `TRUSTWORTHY`, Service Broker e database chaining desabilitados.
+- Inventario estrutural: 981 tabelas, zero views, 34 procedures, 2 triggers, 12 funcoes, 22 chaves estrangeiras declaradas e aproximadamente 2.574.470 linhas.
+- O MDF possui 969 MB alocados e aproximadamente 737,94 MB usados. A massa inclui cadastros de clientes, fornecedores e materiais, caixa, bancos, credito, estoque, entregas, tabelas de preco, comunicacoes e logs; portanto, `TID_EXETPS` nao e um simples repositorio de executaveis.
+- A tabela `Empresas` confirmou que o banco e uma fonte central compartilhada. O mapa legado encontrado foi: codigo `1` CPA/Central Paulista Distribuidora de Aco, codigo `2` 3Z Armacao, codigo `3` Grupo CPA/CPA Ferro e Aco, codigo `4` Belgo Cercas inativa e codigo `5` Zuccaro Comercio de Ferragens.
+- A distribuicao agregada confirma uso multiempresa: logs possuem registros nos codigos `1`, `2`, `3` e `5`; romaneios concentram-se no codigo `3`, com pequena massa historica no codigo `1`. O periodo de romaneios vai de `2012-03-07` a `2026-08-20`.
+- O banco nao possui `groupId`/`empresaId` canonicos em todas as tabelas. A futura migracao devera mapear cada codigo legado, preservar a empresa proprietaria e impedir que tabelas sem contexto sejam propagadas automaticamente.
+- Foram encontrados campos destinados a senhas, tokens, chaves de API, certificados e credenciais bancarias, de e-mail, IA e integracoes. Apenas os nomes dos campos e suas tabelas foram inventariados; nenhum valor foi consultado. Esses segredos ficam proibidos de exportacao e migracao, com redefinicao ou rotacao obrigatoria no ERP novo.
+- Sete procedures possuem referencia a execucao dinamica, restritas ao alterador de versao e rotinas de classificacao de historico de materiais. Nenhuma foi executada. Nao foram encontradas referencias a `xp_cmdshell`, `OPENROWSET`, `OPENDATASOURCE` ou automacao OLE.
+- Nao existem assemblies de usuario, credenciais de escopo de banco, fontes externas, sinonimos ou principals externos. Os dois triggers encontrados validam fornecedores e materiais; nenhum foi disparado porque nao houve escrita.
+- Classificacao: fonte mestre e operacional central de alta prioridade, que exige staging, mapeamento empresa por empresa, RBAC, auditoria, idempotencia, quarentena e conciliacao antes de qualquer carga no ERP novo.
+- Nenhum cliente, mensagem, valor financeiro, segredo, CNPJ integral, MDF/LDF ou registro de negocio foi exportado ou enviado ao GitHub. O relatorio de integridade permanece apenas em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- O servico `ERPZLEGACY` foi encerrado ao final e permanece manual, sem TCP, Named Pipes ou SQL Browser.
+- Validacao documental: este subgate nao altera o runtime do ERP; foi exigido somente `git diff --check` antes do commit.
+- Proximo passo obrigatorio: repetir o fluxo controlado no banco empresarial `TID_EMP01`, identificar sua empresa e seus periodos por metadados seguros antes de planejar qualquer exportacao.
