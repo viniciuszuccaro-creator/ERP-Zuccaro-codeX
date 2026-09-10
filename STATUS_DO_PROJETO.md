@@ -4779,3 +4779,19 @@ Checklist inicial:
 - O servico `ERPZLEGACY` foi encerrado pelo proprio SQL Server ao final e permanece com inicializacao manual, sem TCP, Named Pipes ou SQL Browser.
 - Validacao documental: este subgate nao altera runtime do ERP; foi exigido somente `git diff --check` antes do commit.
 - Proximo passo obrigatorio: repetir o fluxo controlado no proximo banco empresarial por tamanho, `TID_EMP02`, e somente associar a uma empresa quando houver identificacao segura e conciliavel.
+
+### Gate 18 - Terceiro anexo controlado: TID_EMP02
+
+- Os hashes SHA-256 e tamanhos de `TID_EMP02.mdf` e `TID_EMP02_log.ldf` foram comparados entre origem, copia preservada e `02_SQL_WORK`; as tres versoes permaneceram identicas.
+- Como `Program Files` recusou a copia sem elevacao, foi usada a pasta local isolada `C:\Users\cpaba\ERPZLEGACY_DATA`, com permissao concedida somente ao servico `MSSQL$ERPZLEGACY` sobre as copias de trabalho. Nenhum arquivo original ou preservado foi aberto pelo SQL.
+- O banco foi anexado como `LEGACY_TID_EMP02`, convertido na copia da versao interna 782 para 998 e colocado imediatamente em `READ_ONLY`.
+- `DBCC CHECKDB` com `DATA_PURITY` terminou com codigo 0 e sem mensagens de erro. O banco permaneceu `ONLINE`, `MULTI_USER`, com `TRUSTWORTHY`, Service Broker e database chaining desabilitados.
+- Inventario estrutural: 714 tabelas, zero views, 1 procedure, zero triggers, zero funcoes, zero chaves estrangeiras declaradas e aproximadamente 66.005 linhas.
+- A massa e predominantemente fiscal: 8.281 notas de saida, 7.917 itens, 8.045 registros de processamento eletronico, 8.477 logs fiscais, 5.126 duplicatas eletronicas e 2.052 fragmentos relacionados a XML, alem de entradas, cancelamentos e contas vinculadas.
+- A identificacao foi feita sem expor XML ou CNPJ integral: 108 fragmentos continham bloco de emitente, todos com o mesmo nome historico `3Z ARMACAO LTDA` e o mesmo CNPJ mascarado. O banco fica classificado como origem fiscal da 3Z, ainda sujeito a conciliacao do CNPJ integral com o cadastro-alvo antes de qualquer importacao.
+- O periodo agregado das notas vai de `2012-03-06` a `2026-07-21`, usando a conversao da data Clarion. Das 8.281 notas, 8.268 usam o codigo empresarial legado `2`; 13 registros usam codigo `0` e ficam previamente marcados para quarentena, sem propagacao automatica.
+- O unico modulo SQL e a procedure legada `ALTERA_SEQUENCIA_VERSAO_11`, que contem referencia a execucao dinamica e nao foi executada. Nao foram encontradas referencias a `xp_cmdshell`, `OPENROWSET`, `OPENDATASOURCE` ou automacao OLE.
+- Nenhum XML, chave fiscal, CNPJ integral, valor financeiro, senha, MDF/LDF ou registro de negocio foi exportado ou enviado ao GitHub. O relatorio de integridade permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- O servico `ERPZLEGACY` foi encerrado ao final e permanece manual, sem TCP, Named Pipes ou SQL Browser.
+- Validacao documental: este subgate nao altera o runtime do ERP; foi exigido somente `git diff --check` antes do commit.
+- Proximo passo obrigatorio: repetir o fluxo controlado no banco empresarial `TID_EMP04`, identificar sua empresa por metadados seguros e manter qualquer contexto divergente em quarentena.
