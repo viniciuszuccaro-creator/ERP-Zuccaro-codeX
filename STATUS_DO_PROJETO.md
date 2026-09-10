@@ -4884,3 +4884,20 @@ Checklist inicial:
 - O servico `ERPZLEGACY` foi encerrado ao final e permanece manual, sem TCP, Named Pipes ou SQL Browser.
 - Validacao documental: este subgate nao altera o runtime do ERP; foi exigido somente `git diff --check` antes do commit.
 - Proximo passo obrigatorio: repetir o fluxo controlado no ultimo banco empresarial principal, `TID_EMP03`, identificar sua empresa e seus periodos por metadados seguros antes de qualquer exportacao.
+
+### Gate 18 - Oitavo anexo controlado: TID_EMP03
+
+- Os hashes SHA-256 e tamanhos de `TID_EMP03.mdf` e `TID_EMP03_log.ldf` foram comparados entre origem, copia preservada, `02_SQL_WORK` e as copias locais usadas pela instancia; nao houve divergencia.
+- Foram abertas somente copias locais em `C:\Users\cpaba\ERPZLEGACY_DATA`, com acesso minimo para o servico SQL. O banco foi anexado como `LEGACY_TID_EMP03`, convertido na copia da versao interna 782 para 998 e colocado imediatamente em `READ_ONLY`.
+- `DBCC CHECKDB` com `DATA_PURITY` terminou com codigo 0 e sem mensagens de erro. O banco permaneceu `ONLINE`, `MULTI_USER`, com `TRUSTWORTHY`, Service Broker e database chaining desabilitados durante a analise.
+- O inventario confirmou uma fonte operacional de grande porte, com centenas de tabelas e massa relevante nos fluxos de producao, comercial, estoque, financeiro e fiscal. Os totais detalhados permanecem somente nos relatorios locais protegidos.
+- O periodo fiscal agregado identificado vai de `2012-03-05` a `2026-08-19`, cobrindo a janela dos ultimos cinco anos definida para a migracao.
+- A tabela de parametrizacao empresarial e as tabelas de XML de saida estao vazias, e os registros eletronicos nao possuem chave fiscal utilizavel para confirmar diretamente o emitente. O nome `TID_EMP03` nao foi aceito como prova isolada de pertencimento.
+- As principais tabelas com contexto demonstraram massa multiempresa: predomina o codigo legado `1`, existem registros dos codigos `2` e `3`, e tambem registros sem empresa valida. O banco foi classificado como fonte operacional compartilhada, sem autorizacao para importacao integral em uma unica empresa.
+- A futura migracao devera segmentar cada lote pelo codigo empresarial conciliado com a fonte central, aplicar `groupId` e `empresaId` canonicos e encaminhar codigos ausentes, inativos ou divergentes para quarentena, sem propagacao automatica.
+- Foram inventariados campos destinados a senhas, tokens e certificados apenas por nome e tipo; nenhum valor foi consultado ou exportado. Credenciais legadas permanecem proibidas de migracao e exigirao redefinicao ou rotacao.
+- Os modulos SQL encontrados foram apenas inventariados e nenhum foi executado. Nao foram encontradas referencias a `xp_cmdshell`, `OPENROWSET` ou `OPENDATASOURCE`, nem assemblies de usuario, credenciais de escopo, fontes externas, sinonimos ou principals externos.
+- Nenhum XML, chave fiscal, CNPJ integral, valor financeiro, segredo, MDF/LDF ou registro de negocio foi exportado ou enviado ao GitHub. O relatorio de integridade permanece apenas em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- O servico `ERPZLEGACY` foi encerrado ao final e permanece manual, sem TCP, Named Pipes ou SQL Browser.
+- Validacao documental: este subgate nao altera o runtime do ERP; foi exigido somente `git diff --check` antes do commit.
+- Proximo passo obrigatorio: iniciar o inventario seguro dos arquivos TPS por caminho, tamanho, tipo e hash, sem executar binarios legados e sem consultar ou importar valores de `USUSENHA.TPS`.
