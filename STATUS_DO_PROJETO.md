@@ -4976,3 +4976,18 @@ Checklist inicial:
 - Nenhum TPS, esquema detalhado, hash individual, dado pessoal, valor de registro, executavel ou codigo do piloto foi enviado ao GitHub. Nenhuma funcionalidade do ERP foi alterada ou removida.
 - Validacao documental: 28/28 leituras aprovadas; zero divergencias de hash; zero copias gravaveis; zero quarentenas; zero valores emitidos; `git diff --check` exigido antes do commit.
 - Proximo passo obrigatorio: repetir o fluxo controlado no escopo TPS `EMP04`, mantendo sua massa reduzida sem associacao empresarial ate existir evidencia externa conciliavel.
+
+### Gate 18 - Inventario de esquemas TPS: EMP04
+
+- O quarto lote empresarial TPS foi limitado ao escopo `EMP04` e executado somente sobre copias no staging local. Origem e copia preservada permaneceram sem abertura para escrita.
+- O escopo possui apenas dois arquivos, ambos classificados como nao sensiveis. Cada copia teve o SHA-256 comparado ao manifesto e foi marcada como somente leitura antes do parser.
+- O leitor isolado processou os dois arquivos com sucesso, encontrando duas tabelas, dois registros e 12 campos no total.
+- Nao houve arquivo bloqueado, criptografado, corrompido, divergente, relatorio invalido ou item encaminhado para quarentena.
+- Somente nomes e tipos de campos, comprimentos, indices, memos e contagens foram registrados. Nenhum valor de registro foi desserializado ou emitido.
+- A verificacao posterior reconferiu os dois hashes da copia preservada e das copias do piloto, com zero divergencias. As duas copias continuaram marcadas como somente leitura.
+- Foram gerados dois relatorios individuais e os resumos `tps-emp04-schema-summary.csv` e `tps-emp04-schema-summary.json`, armazenados somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- Os dois documentos foram validados programaticamente com `accessMode=read-only`, `valuesEmitted=false` e zero relatorio invalido.
+- A massa TPS reduzida acompanha a classificacao do banco SQL `TID_EMP04` como estrutura praticamente vazia. O escopo permanece preservado, mas sem associacao empresarial ou autorizacao para migracao ate existir evidencia externa conciliavel.
+- Nenhum TPS, esquema detalhado, hash individual, dado pessoal, valor de registro, executavel ou codigo do piloto foi enviado ao GitHub. Nenhuma funcionalidade do ERP foi alterada ou removida.
+- Validacao documental: 2/2 leituras aprovadas; zero divergencias de hash; zero copias gravaveis; zero quarentenas; zero valores emitidos; `git diff --check` exigido antes do commit.
+- Proximo passo obrigatorio: repetir o fluxo controlado no escopo TPS `EMP05`, mantendo sua classificacao separada ate confirmar se possui massa complementar util ou apenas estrutura auxiliar.
