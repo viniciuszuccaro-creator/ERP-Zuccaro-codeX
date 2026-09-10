@@ -5233,3 +5233,19 @@ Checklist inicial:
 - Nenhum dado real, TPS, snapshot, MDF/LDF, hash individual ou relatorio detalhado foi enviado ao GitHub. Nenhuma entidade, tela, funcionalidade ou dado do ERP foi alterado.
 - Validacao documental: 3/3 linhas TPS cobertas; cinco linhas SQL consultadas; tres candidatos por codigo principal; zero coincidencia TID; tres CNPJs validos; dois destinos atuais distintos; duas colisoes; tres ausencias de Grupo; zero contexto confirmado; zero importacao autorizada; SQL desligado e rede desativada.
 - Proximo passo obrigatorio: reconciliar a topologia atual `Grupo CPA`/empresas usando fontes locais confiaveis de Grupo e Empresa, comprovar os IDs canonicos e decidir explicitamente a colisao de duas identidades legadas no mesmo destino, mantendo o ERP sem alteracoes e todas as linhas bloqueadas ate a decisao.
+
+### Gate 18 - Prova da topologia atual e decisao da colisao empresarial
+
+- A topologia foi comparada em quatro fontes locais: snapshot reduzido, snapshot completo e duas exportacoes somente leitura. Todas apresentam exatamente um Grupo e duas Empresas.
+- Os hashes do ID do Grupo, dos dois IDs de Empresa e dos dois CNPJs sao completos e identicos nas quatro fontes. Nenhum nome, ID ou documento bruto foi emitido no relatorio.
+- As linhas brutas de Empresa nao possuem `group_id`, `grupo_id` ou `grupo_empresarial_id`. O fluxo existente `normalizeSnapshotRecord` aplica explicitamente o primeiro Grupo importado como Grupo canonico das empresas durante a hidratacao local.
+- A primeira geracao da prova foi invalidada porque uma chamada de hash sem espaco apos `return` produziu hashes nulos. Os arquivos dessa tentativa foram sobrescritos; nenhuma conclusao foi aproveitada antes da correcao.
+- A geracao corrigida exigiu hashes completos antes de comparar fontes e confirmou estabilidade do Grupo, das Empresas e dos CNPJs, alem da presenca do contrato de normalizacao no codigo atual.
+- A topologia atual ficou comprovada para fins de staging: um Grupo canonico e duas Empresas canonicas. Isso nao confirma sozinho a identidade das tres linhas legadas nem autoriza carga.
+- A colisao foi decidida como relacionamento de aliases candidatos, nunca como nova empresa: duas linhas legadas permanecem em revisao muitos-para-um para uma Empresa atual e a terceira permanece alias individual para a outra Empresa.
+- E proibido criar uma terceira Empresa, substituir IDs canonicos ou gravar mais de um cadastro empresarial para o mesmo CNPJ. Codigos adicionais somente poderao ser preservados no mapa local de migracao ate validacao humana.
+- Foram gerados `current-erp-company-topology-proof.json`, `legacy-company-collision-decision.csv` e o resumo correspondente somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- A matriz possui tres linhas: duas `MANY_TO_ONE_ALIAS_REVIEW` e uma `SINGLE_ALIAS_REVIEW`; todas usam o Grupo canonico comprovado, preservam aliases localmente e mantem `ImportAuthorized=false`.
+- Os 21 testes focados de migracao e multiempresa foram aprovados. A instancia SQL permaneceu `Stopped`/`Manual`; nenhum dado, snapshot, TPS, MDF/LDF, hash detalhado ou mapa foi enviado ao GitHub.
+- Validacao documental: quatro fontes concordantes; um Grupo; duas Empresas; hashes completos e estaveis; tres aliases candidatos; dois destinos; uma colisao muitos-para-um; zero nova empresa; zero sobrescrita de ID; zero importacao autorizada.
+- Proximo passo obrigatorio: revisar de forma controlada `SITUACAO`, `TIPOEMPRESA` e `VARIASEMPRESASGRUPO` dos tres candidatos SQL para classificar alias ativo/inativo e matriz/filial, emitindo somente categorias permitidas e mantendo a identidade bloqueada ate validacao humana.
