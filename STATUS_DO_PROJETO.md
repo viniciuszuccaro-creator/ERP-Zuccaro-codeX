@@ -4961,3 +4961,18 @@ Checklist inicial:
 - Nenhum TPS, esquema detalhado, hash individual, dado pessoal, valor de registro, executavel ou codigo do piloto foi enviado ao GitHub. Nenhuma funcionalidade do ERP foi alterada ou removida.
 - Validacao documental: 18/18 leituras aprovadas; zero divergencias de hash; zero copias gravaveis; zero quarentenas; zero valores emitidos; `git diff --check` exigido antes do commit.
 - Proximo passo obrigatorio: repetir o fluxo controlado no escopo TPS `EMP03`, sem assumir pertencimento apenas pelo nome da pasta e mantendo registros ou arquivos de contexto incerto em quarentena.
+
+### Gate 18 - Inventario de esquemas TPS: EMP03
+
+- O terceiro lote empresarial TPS foi limitado ao escopo `EMP03` e executado somente sobre copias no staging local. Origem e copia preservada permaneceram sem abertura para escrita.
+- Os 28 arquivos estavam classificados como nao sensiveis. Cada copia teve seu SHA-256 comparado ao manifesto e foi marcada como somente leitura antes do parser.
+- O leitor isolado processou 28 de 28 arquivos com sucesso, encontrando 28 tabelas, 46.242 registros e 329 campos no total.
+- Nao houve arquivo bloqueado, criptografado, corrompido, divergente, relatorio invalido ou item encaminhado para quarentena.
+- Somente nomes e tipos de campos, comprimentos, indices, memos e contagens foram registrados. Nenhum valor de registro foi desserializado ou emitido.
+- A verificacao posterior reconferiu os 28 hashes da copia preservada e das copias do piloto, com zero divergencias. Todas as copias continuaram marcadas como somente leitura.
+- Foram gerados 28 relatorios individuais e os resumos `tps-emp03-schema-summary.csv` e `tps-emp03-schema-summary.json`, armazenados somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- Os 28 documentos foram validados programaticamente com `accessMode=read-only`, `valuesEmitted=false` e zero relatorio invalido.
+- O volume superior dos TPS em `EMP03` reforca sua relevancia para conciliacao, mas o nome da pasta nao comprova propriedade. A classificacao SQL anterior permanece soberana: ha contexto multiempresa e nenhuma carga integral pode ser atribuida automaticamente a CPA Ferro e Aco.
+- Nenhum TPS, esquema detalhado, hash individual, dado pessoal, valor de registro, executavel ou codigo do piloto foi enviado ao GitHub. Nenhuma funcionalidade do ERP foi alterada ou removida.
+- Validacao documental: 28/28 leituras aprovadas; zero divergencias de hash; zero copias gravaveis; zero quarentenas; zero valores emitidos; `git diff --check` exigido antes do commit.
+- Proximo passo obrigatorio: repetir o fluxo controlado no escopo TPS `EMP04`, mantendo sua massa reduzida sem associacao empresarial ate existir evidencia externa conciliavel.
