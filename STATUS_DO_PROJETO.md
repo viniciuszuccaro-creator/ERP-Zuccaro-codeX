@@ -5094,3 +5094,17 @@ Checklist inicial:
 - Nenhum TPS, esquema detalhado, hash individual, dado pessoal, valor de registro, executavel ou codigo do piloto foi enviado ao GitHub. Nenhuma funcionalidade do ERP foi alterada ou removida.
 - Validacao documental: compilacao do leitor com zero erros e avisos; 27/29 leituras aprovadas; duas quarentenas integras e nao inspecionadas; zero divergencias de hash; zero copias gravaveis; zero arquivos proibidos; zero valores emitidos; `git diff --check` exigido antes do commit.
 - Proximo passo obrigatorio: consolidar os cinco resumos `ROOT` e seus manifestos de quarentena, validar cobertura dos 189 arquivos elegiveis e produzir somente totais agregados e prioridades de mapeamento, sem abrir valores.
+
+### Gate 18 - Consolidacao dos lotes TPS compartilhados ROOT
+
+- Os cinco lotes `ROOT-01` a `ROOT-05` foram consolidados sem reabrir arquivos TPS e sem ler valores de registros.
+- A cobertura foi conciliada com o inventario geral: 193 arquivos no escopo compartilhado, sendo 189 elegiveis processados e quatro excluidos por politica, com duas credenciais bloqueadas e dois arquivos de conexao mantidos em revisao de seguranca.
+- Dos 189 arquivos elegiveis, 179 tiveram leitura estrutural aprovada e 10 permaneceram em quarentena. Os manifestos confirmam `ContentInspected=false` para todos os itens em quarentena.
+- A consolidacao contabilizou 26.433.566 bytes, 180 tabelas, 429.946 registros e 1.995 campos. Esses numeros representam somente metadados estruturais e nao autorizam migracao ou associacao empresarial.
+- A verificacao cruzada confirmou 179 relatorios individuais seguros, 10 entradas de quarentena, zero relatorio com valores, zero item de quarentena inspecionado e cobertura completa dos 189 caminhos elegiveis.
+- Foram gerados `tps-root-consolidated-summary.csv` e `tps-root-consolidated-summary.json` somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`. Os arquivos consolidados nao contem nomes, caminhos ou hashes individuais.
+- A prioridade preliminar por volume de registros ficou: `ROOT-02`, `ROOT-03`, `ROOT-01`, `ROOT-04` e `ROOT-05`. Esse criterio nao determina empresa, relevancia de negocio ou permissao de carga.
+- Toda vinculacao futura continua dependendo da conciliacao entre esquemas TPS, catalogos SQL e mapa empresarial central com `groupId` e `empresaId` comprovados.
+- Nenhum TPS, esquema detalhado, hash individual, dado pessoal, valor de registro, executavel ou codigo do piloto foi enviado ao GitHub. Nenhuma funcionalidade do ERP foi alterada ou removida.
+- Validacao documental: 189/189 itens elegiveis cobertos; 179 leituras aprovadas; 10 quarentenas integras e nao inspecionadas; quatro exclusoes por politica preservadas; zero valores emitidos; `git diff --check` exigido antes do commit.
+- Proximo passo obrigatorio: iniciar o mapeamento estrutural do lote prioritario `ROOT-02` contra os catalogos SQL ja inventariados, comparando somente nomes, tipos e contagens e mantendo contexto empresarial indeterminado ate conciliacao externa.
