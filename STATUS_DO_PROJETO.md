@@ -5152,3 +5152,18 @@ Checklist inicial:
 - Nenhum registro de negocio, dado pessoal, segredo, MDF/LDF, TPS ou relatorio detalhado foi enviado ao GitHub. Nenhuma funcionalidade do ERP foi alterada ou removida.
 - Validacao documental: 5/5 candidatos ativos revisados; 19.830 registros cobertos; zero empresa definida; zero importacao autorizada; SQL `Stopped`/`Manual`; `git diff --check` exigido antes do commit.
 - Proximo passo obrigatorio: detalhar a separacao estrutural entre `EMPRESAS` e `EMPRCOMP` no destino SQL `Empresas`, identificando campos exclusivos, compartilhados e de configuracao, sem consultar valores e sem definir empresa automaticamente.
+
+### Gate 18 - Separacao estrutural EMPRESAS x EMPRCOMP
+
+- A analise foi executada somente sobre os esquemas TPS locais de `EMPRESAS` e `EMPRCOMP` e o catalogo SQL completo de `LEGACY_TID_EXETPS.dbo.Empresas`. A instancia SQL permaneceu desligada.
+- O destino legado `Empresas` ocorre em um unico banco e possui 407 colunas. `EMPRESAS` possui 18 campos e tres registros; `EMPRCOMP` possui 65 campos e tres registros.
+- As duas fontes totalizam 82 campos unicos: 17 exclusivos de cadastro, 64 exclusivos de configuracao e somente uma chave compartilhada, `CODIGOEMPRESA`.
+- Foram localizados 72 campos no destino SQL, todos com familias de tipo compativeis. Outros 335 campos do destino nao aparecem nessas duas fontes e permanecem intocados.
+- Dez campos TPS nao possuem correspondencia exata no destino. Nove sao placeholders genericos e foram classificados como `QUARANTINE_GENERIC`.
+- `DIVIDEESTOQUE` e a unica lacuna semantica. Foi classificada como `CONFIGURATION_REVIEW_NO_TARGET`; nenhum campo, componente ou funcionalidade nova foi autorizado.
+- Ao todo, 29 campos genericos `*LIVRE*` foram separados da migracao automatica, mesmo quando existe coluna homonima no banco legado. Seu significado precisa ser comprovado antes de qualquer uso.
+- Nao foram encontrados campos de segredo nessas duas fontes. A regra geral de bloquear senhas, tokens, certificados e chaves continua obrigatoria para os demais lotes.
+- Foi gerada a matriz `tps-root-02-empresas-emprcomp-separation.csv` e o resumo correspondente somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- Todas as 82 linhas mantem `CompanyContext=UNDETERMINED` e `ImportAuthorized=false`; nenhum valor foi lido e nenhuma empresa foi associada automaticamente.
+- Validacao documental: 82/82 campos classificados; uma chave compartilhada; 72 correspondencias de tipo compativel; nove lacunas genericas em quarentena; uma lacuna semantica em revisao; zero criacao nova; `git diff --check` exigido antes do commit.
+- Proximo passo obrigatorio: cruzar os 53 campos semanticos de `EMPRESAS` e `EMPRCOMP` com as entidades e configuracoes ja existentes no ERP novo, reutilizando o modelo atual e mantendo campos sem equivalente em revisao, sem criar estrutura nova.
