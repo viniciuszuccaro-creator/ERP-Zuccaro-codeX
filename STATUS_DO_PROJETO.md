@@ -5080,3 +5080,17 @@ Checklist inicial:
 - Nenhum TPS, esquema detalhado, hash individual, dado pessoal, valor de registro, executavel ou codigo do piloto foi enviado ao GitHub. Nenhuma funcionalidade do ERP foi alterada ou removida.
 - Validacao documental: compilacao do leitor com zero erros e avisos; 36/40 leituras aprovadas; quatro quarentenas integras e nao inspecionadas; zero divergencias de hash; zero copias gravaveis; zero arquivos proibidos; zero valores emitidos; `git diff --check` exigido antes do commit.
 - Proximo passo obrigatorio: executar o ultimo lote compartilhado planejado, `ROOT-05`, mantendo as mesmas exclusoes, somente leitura e quarentena por falha.
+
+### Gate 18 - Inventario de esquemas TPS: ROOT-05
+
+- Este subgate executou o ultimo lote compartilhado planejado, `ROOT-05`, com 29 arquivos, somente sobre copias no staging. Origem e copia preservada permaneceram sem abertura para escrita.
+- Cada copia teve o SHA-256 comparado ao plano e foi marcada como somente leitura antes do parser. A verificacao final confirmou zero divergencias e zero copia gravavel.
+- O leitor isolado processou 27 arquivos com sucesso, encontrando 27 tabelas, 3.574 registros e 163 campos no total. Somente esquema e contagens foram emitidos.
+- Dois arquivos retornaram falha do parser, sendo um `TpsParserException` e uma falha generica. Nao houve tentativa de reparo, parser legado ou leitura alternativa; as copias foram encaminhadas para `D:\BACKUP ERP ANTIGO - CODEX\05_QUARANTINE\TPS\ROOT-05`, mantidas somente leitura e com hashes conciliados.
+- O manifesto de quarentena registra `ContentInspected=false` para os dois itens. As causas exatas permanecem indeterminadas ate existir metodo seguro para distinguir formato incompativel, erro interno do parser, criptografia ou dano estrutural.
+- Os arquivos de senha e conexao permaneceram fora do lote. A validacao final encontrou zero nome proibido no plano ou no staging.
+- Foram gerados 27 relatorios individuais, os resumos `tps-root-05-schema-summary.csv` e `tps-root-05-schema-summary.json` e o manifesto de quarentena, armazenados somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- Os 27 documentos foram validados programaticamente com `accessMode=read-only`, `valuesEmitted=false` e zero relatorio invalido.
+- Nenhum TPS, esquema detalhado, hash individual, dado pessoal, valor de registro, executavel ou codigo do piloto foi enviado ao GitHub. Nenhuma funcionalidade do ERP foi alterada ou removida.
+- Validacao documental: compilacao do leitor com zero erros e avisos; 27/29 leituras aprovadas; duas quarentenas integras e nao inspecionadas; zero divergencias de hash; zero copias gravaveis; zero arquivos proibidos; zero valores emitidos; `git diff --check` exigido antes do commit.
+- Proximo passo obrigatorio: consolidar os cinco resumos `ROOT` e seus manifestos de quarentena, validar cobertura dos 189 arquivos elegiveis e produzir somente totais agregados e prioridades de mapeamento, sem abrir valores.
