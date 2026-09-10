@@ -5280,3 +5280,18 @@ Checklist inicial:
 - A instancia SQL nao precisou ser iniciada nesta etapa e permanece `Stopped`/`Manual`.
 - Mudanca exclusivamente documental no repositorio: dispensados testes de runtime; obrigatorios `git diff --check`, verificacao do pacote e confirmacao do servico SQL foram executados.
 - Proximo passo obrigatorio: obter a decisao humana explicita para cada uma das tres fichas; somente depois gerar um mapa local assinado de aliases aprovados, mantendo rejeitados ou duvidosos em quarentena e sem executar importacao.
+
+### Gate 18 - Aprovacao humana e mapa local de aliases
+
+- O proprietario confirmou explicitamente os tres vinculos apresentados: um alias para `CPA FERRO E AÇO`, um alias para `3Z LTDA` e um registro de escopo para `Grupo CPA`.
+- As duas fichas locais de validacao foram atualizadas de `PENDENTE` para `APROVADO`; nenhuma decisao foi inferida pelo processo.
+- Foi criado `legacy-approved-business-alias-map.json` somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, pois nao existia mapa aprovado equivalente.
+- O mapa vincula as origens e os destinos exclusivamente por hashes completos, preserva o papel de cada alias e proibe criar nova Empresa ou sobrescrever IDs canonicos.
+- O registro de Grupo permanece separado dos dois vinculos empresariais e nao pode ser tratado como cadastro de Empresa.
+- A aprovacao do mapeamento nao autoriza carga: o mapa e todos os seus vinculos permanecem com `ImportAuthorized=false`.
+- A confirmacao foi registrada como atestado explicito do proprietario. Como nao existe chave de assinatura digital configurada, o artefato declara corretamente `digitalSignatureConfigured=false` e usa SHA-256 apenas como selo de integridade, sem alegar assinatura criptografica.
+- O selo foi recalculado a partir do arquivo persistido e conferiu integralmente. A validacao confirmou tres mapeamentos, tres aprovacoes, dois destinos empresariais, um destino de Grupo, zero identificador numerico longo e zero autorizacao de importacao.
+- A instancia SQL nao foi iniciada e permanece `Stopped`/`Manual`.
+- Nenhum arquivo local, dado real, hash de identidade, TPS, snapshot, MDF/LDF ou relatorio detalhado foi adicionado ao GitHub. O repositorio recebeu somente esta atualizacao documental.
+- Mudanca exclusivamente documental no ERP: testes de runtime dispensados; foram executados `git diff --check`, validacao estrutural das fichas, verificacao do selo e confirmacao do servico SQL.
+- Proximo passo obrigatorio: executar um ensaio local e somente leitura do resolvedor usando os tres aliases aprovados, comprovando resolucao unica, separacao Grupo/Empresa e idempotencia, sem gravar no ERP nem liberar importacao.
