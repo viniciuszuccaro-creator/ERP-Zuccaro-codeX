@@ -5265,3 +5265,18 @@ Checklist inicial:
 - Nenhum valor bruto, nome, CNPJ completo, ID, TPS, snapshot, MDF/LDF, script local ou relatorio detalhado foi enviado ao GitHub. Nenhum dado ou funcionalidade do ERP foi alterado.
 - Validacao documental: oito colunas minimas consultadas; 3/3 registros ativos; um registro de Grupo; dois candidatos empresariais; dois destinos canonicos; zero colisao empresarial remanescente; tres tipos nao reconhecidos; zero criacao; zero importacao autorizada.
 - Proximo passo obrigatorio: preparar um pacote local de validacao humana para os dois candidatos empresariais, exibindo somente codigo mascarado, final do CNPJ, empresa de destino conhecida e motivos pendentes; o registro de Grupo devera aparecer separado e nenhuma confirmacao sera inferida automaticamente.
+
+### Gate 18 - Pacote de validacao humana das identidades empresariais
+
+- Foi preparado no HD um pacote minimo para revisao humana das identidades legadas, sem alterar dados ou funcionalidades do ERP.
+- A ficha `legacy-company-human-validation.csv` contem exatamente dois candidatos empresariais: um destinado a `CPA FERRO E AÇO` e outro a `3Z LTDA`.
+- A ficha `legacy-group-record-human-validation.csv` mantem o terceiro registro isolado no escopo `Grupo CPA`, impedindo seu uso como cadastro de Empresa.
+- Cada ficha expoe somente codigo legado mascarado, quatro ultimos digitos do CNPJ, destino conhecido, motivos pendentes e decisao humana.
+- As tres decisoes foram iniciadas como `PENDENTE`. Nenhuma confirmacao foi inferida e `ImportAuthorized` permanece `false`.
+- Os motivos pendentes preservados sao divergencia de `CODIGOTIDSOFT`, nome de origem nao confirmado, tipo empresarial nao reconhecido e confirmacao humana obrigatoria; o registro de Grupo tambem exige confirmacao explicita de escopo.
+- O resumo `legacy-business-identity-human-validation-summary.json` registra apenas contagens, nomes dos arquivos do pacote e a negativa de importacao. Os tres arquivos permanecem exclusivamente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- A validacao confirmou duas linhas empresariais, uma linha de Grupo, esquemas exatos, mascaras validas, tres decisoes pendentes, zero campo proibido e zero autorizacao de importacao.
+- Nenhum valor bruto, ID, hash de identidade, CNPJ completo, TPS, snapshot, MDF/LDF, script ou relatorio detalhado foi adicionado ao GitHub.
+- A instancia SQL nao precisou ser iniciada nesta etapa e permanece `Stopped`/`Manual`.
+- Mudanca exclusivamente documental no repositorio: dispensados testes de runtime; obrigatorios `git diff --check`, verificacao do pacote e confirmacao do servico SQL foram executados.
+- Proximo passo obrigatorio: obter a decisao humana explicita para cada uma das tres fichas; somente depois gerar um mapa local assinado de aliases aprovados, mantendo rejeitados ou duvidosos em quarentena e sem executar importacao.
