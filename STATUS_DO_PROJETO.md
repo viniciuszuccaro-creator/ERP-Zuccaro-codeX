@@ -5199,3 +5199,19 @@ Checklist inicial:
 - Validacao documental: 18/18 campos unicos; zero valor lido; zero linha autorizada; Grupo e Empresa obrigatorios em todas as linhas; criacao automatica desabilitada; SQL `Stopped`/`Manual`; 21/21 testes focados de migracao e multiempresa aprovados.
 - Nenhum TPS, dado cadastral, CNPJ, endereco, segredo, MDF/LDF ou relatorio detalhado foi enviado ao GitHub. Nenhuma funcionalidade do ERP foi alterada ou removida.
 - Proximo passo obrigatorio: preparar a conciliacao controlada das tres linhas de `EMPRESAS` com as empresas ja cadastradas no ERP, lendo apenas os identificadores minimos necessarios em ambiente local, mascarando documentos nos relatorios e mantendo qualquer divergencia em quarentena, sem persistir alteracoes no sistema.
+
+### Gate 18 - Conciliacao controlada das identidades EMPRESAS
+
+- A conciliacao foi executada somente sobre a copia `ReadOnly` de `EMPRESAS.TPS` do staging `ROOT-02` e o snapshot local reduzido do ERP. Nenhum arquivo original foi alterado e nenhuma persistencia foi feita no sistema.
+- O leitor TPS local existente foi ampliado com um modo restrito de conciliacao, preservando o modo estrutural anterior. O novo modo seleciona somente `CODIGOEMPRESA`, `CODIGOTIDSOFT`, `CGC`, `RAZAOSOCIAL` e `NOMEFANTASIA`.
+- A primeira compilacao do modo restrito identificou apenas uma incompatibilidade de tipo do indice da biblioteca e nao executou leitura. A conversao foi corrigida e a compilacao seguinte terminou sem erros ou avisos.
+- A primeira leitura confirmou os codigos, mas retornou strings vazias porque a biblioteca disponibilizava parte do conteudo em bytes. A decodificacao Latin-1 foi adicionada e validada sem emitir valores brutos.
+- Foram encontrados tres registros legados e duas empresas no snapshot atual. Os tres registros possuem codigos e nomes, mas o campo `CGC` esta vazio nas tres linhas do TPS.
+- As duas empresas atuais possuem CNPJ matematicamente valido, porem nenhum vinculo pode ser comprovado porque o documento correspondente nao existe em `EMPRESAS.TPS`. Nao houve coincidencia exata de nome; nomes continuam apenas como evidencia secundaria e nunca autorizam vinculo isoladamente.
+- O resultado foi zero correspondencia unica e tres identidades nao resolvidas. Todas permanecem com `CompanyContext=UNDETERMINED` e `ImportAuthorized=false`.
+- As tres pendencias foram registradas em manifesto de quarentena local usando apenas numero do registro, mascara, fingerprint e motivo. Nenhum nome, CNPJ completo, endereco ou linha bruta foi copiado para a quarentena.
+- Foram gerados `tps-root-02-empresas-identity-reconciliation.json`, o CSV mascarado correspondente e `empresas-identity-quarantine.csv`, somente em `D:\BACKUP ERP ANTIGO - CODEX`.
+- O SHA-256 da copia analisada coincide com o plano `ROOT-02` e com a copia preservada. A copia permaneceu somente leitura; a instancia SQL permaneceu `Stopped` e com inicializacao `Manual`.
+- O codigo do leitor, os hashes individuais e os relatorios detalhados permanecem apenas na area local de migracao. Nenhum dado real, TPS, snapshot, MDF/LDF ou identificador foi enviado ao GitHub.
+- Validacao documental: 3/3 linhas cobertas; cinco campos minimos selecionados; zero valor bruto emitido; zero CNPJ legado presente; zero vinculo seguro; tres quarentenas; zero importacao autorizada; compilacao local sem erros/avisos; integridade confirmada.
+- Proximo passo obrigatorio: consultar de forma controlada somente os identificadores empresariais minimos no destino SQL legado `LEGACY_TID_EXETPS.dbo.Empresas`, correlacionar por `CODIGOEMPRESA`/`CODIGOTIDSOFT`, mascarar documentos e manter a instancia isolada desligada ao final, sem atualizar o ERP.
