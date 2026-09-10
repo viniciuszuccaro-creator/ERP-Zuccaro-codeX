@@ -4932,3 +4932,17 @@ Checklist inicial:
 - Nenhum TPS, DLL, executavel, senha, conexao, hash individual ou valor de registro foi enviado ao GitHub. Nenhuma funcionalidade do ERP foi alterada ou removida.
 - Validacao: compilacao do piloto com zero erros e zero avisos; pacote com assinatura de repositorio valida; zero vulnerabilidades conhecidas; hash da copia aprovado; leitura somente leitura aprovada; `values_emitted=false`; bloqueio de credenciais aprovado.
 - Proximo passo obrigatorio: executar inventario de esquemas e contagens dos TPS nao sensiveis em lotes pequenos, iniciando pelos escopos empresariais, sem emitir valores e colocando falhas, arquivos criptografados ou contexto incerto em quarentena.
+
+### Gate 18 - Inventario de esquemas TPS: EMP01
+
+- O primeiro lote empresarial TPS foi limitado ao escopo `EMP01` e executado somente no staging local, sem alterar ou abrir para escrita a origem e a copia preservada.
+- Os 29 arquivos do escopo estavam classificados como nao sensiveis. Cada arquivo foi copiado individualmente para o piloto, teve o SHA-256 reconferido contra o manifesto e foi marcado como somente leitura antes do parser.
+- O leitor isolado `TpsParser 6.0.1` processou 29 de 29 arquivos com sucesso. Nao houve arquivo bloqueado, criptografado, corrompido, divergente ou enviado para quarentena.
+- O inventario encontrou 29 tabelas, 368 registros e 446 campos no total. Somente nomes e tipos de campos, comprimentos, indices, memos e contagens foram registrados; nenhum valor de registro foi desserializado ou emitido.
+- A verificacao posterior reconferiu os 29 hashes da copia preservada e das copias do piloto, com zero divergencias. Todas as copias continuaram marcadas como somente leitura.
+- Foram gerados 29 relatorios individuais de esquema e os resumos `tps-emp01-schema-summary.csv` e `tps-emp01-schema-summary.json`, armazenados somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- Os relatorios foram validados programaticamente: 29 documentos validos, `accessMode=read-only`, `valuesEmitted=false` e zero relatorio invalido.
+- O escopo da pasta `EMP01` continua sendo apenas uma pista de contexto. Nenhum dado sera associado automaticamente a CPA/Central Paulista sem conciliacao com as fontes SQL e o mapa empresarial central.
+- Nenhum TPS, esquema detalhado, hash individual, dado pessoal, valor de registro, executavel ou codigo do piloto foi enviado ao GitHub. Nenhuma funcionalidade do ERP foi alterada ou removida.
+- Validacao documental: compilacao do leitor com zero erros e avisos; 29/29 leituras aprovadas; zero divergencias de hash; zero copias gravaveis; zero quarentenas; zero valores emitidos; `git diff --check` exigido antes do commit.
+- Proximo passo obrigatorio: repetir o mesmo fluxo controlado no escopo TPS `EMP02`, preservando a separacao empresarial e mantendo qualquer falha ou contexto incerto em quarentena.
