@@ -5182,3 +5182,20 @@ Checklist inicial:
 - A instancia `ERPZLEGACY` permaneceu `Stopped` e com inicializacao `Manual`. Nenhum dado real, segredo, TPS, MDF/LDF ou relatorio detalhado foi enviado ao GitHub.
 - Validacao documental: 53/53 campos classificados; 12 destinos diretos; 26 configuracoes em revisao; sete bloqueios de acesso; dois bloqueios de caminho; tres transformacoes; dois identificadores legados; uma lacuna sem equivalente; zero estrutura nova; `git diff --check` exigido antes do commit.
 - Proximo passo obrigatorio: definir o contrato de importacao piloto para os campos cadastrais de `EMPRESAS`, reutilizando `Empresa`, com chave legada idempotente, validacao de CNPJ/endereco/status, contexto Grupo/Empresa comprovado, RBAC e auditoria, ainda sem ler ou importar valores reais.
+
+### Gate 18 - Contrato do piloto cadastral EMPRESAS
+
+- O contrato foi definido somente a partir do esquema de `EMPRESAS.TPS` e dos fluxos existentes `migracaoErpPolicy`, `localCadastroMasterPolicy`, `entityGuardPolicy`, `Empresa` e `AuditLog`. Nenhum valor do backup foi lido.
+- O piloto operara em modo `UPDATE_EXISTING_ONLY`: nenhuma empresa sera criada automaticamente. Cada linha devera apontar para uma empresa ja cadastrada, pertencente ao Grupo confirmado e autorizada ao usuario.
+- A identidade exigira `CODIGOEMPRESA` como chave legada primaria, `CODIGOTIDSOFT` como identificador secundario e conferencia independente do CNPJ normalizado. Razao social e nome fantasia servirao apenas como evidencia secundaria.
+- A chave idempotente sera composta por `group_id`, `empresa_id`, origem da migracao e codigo legado. Reexecucoes deverao reutilizar o mesmo destino e nunca duplicar `Empresa`.
+- Dos 18 campos estruturais, nove foram destinados a escrita cadastral, um a conferencia e escrita de CNPJ, um a transformacao controlada de status, dois a metadados de conciliacao, tres a configuracao posterior, um a bloqueio de acesso e um a revisao sem destino.
+- `SITUACAO` somente podera ser traduzida para os dominios atuais `Ativa`, `Inativa` ou `Suspensa` por tabela aprovada. `CONTROLELIBERACAO` nunca concedera permissao; `INSCMUNICIPAL` permanece sem equivalente e sem autorizacao para criar campo.
+- A execucao exigira no backend as permissoes granulares de importar e editar em `Cadastros/Organizacional`, alem de acesso efetivo ao Grupo e a Empresa. Flags do legado nao alteram RBAC.
+- O fluxo exigira staging, reconciliacao de quantidade, confirmacao explicita e janela de migracao valida antes de qualquer persistencia. Conflitos de CNPJ, chave ou escopo irao para quarentena local sem interromper linhas validas.
+- A auditoria devera registrar antes/depois resumidos, campos alterados, resultado, motivo, usuario, timestamp, lote, Grupo e Empresa. Linha bruta, CNPJ completo, endereco completo, credenciais e caminhos locais nao poderao ser persistidos no log.
+- O helper visual atual registra objetos completos; por isso ele nao esta autorizado para a auditoria deste piloto. A futura execucao devera usar caminho backend com resumo seguro e falha fechada para RBAC, contexto e auditoria.
+- Foram gerados `tps-root-02-empresas-pilot-import-contract.csv` e o resumo JSON somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, ambos sem valores reais e com `ImportAuthorized=false`.
+- Validacao documental: 18/18 campos unicos; zero valor lido; zero linha autorizada; Grupo e Empresa obrigatorios em todas as linhas; criacao automatica desabilitada; SQL `Stopped`/`Manual`; 21/21 testes focados de migracao e multiempresa aprovados.
+- Nenhum TPS, dado cadastral, CNPJ, endereco, segredo, MDF/LDF ou relatorio detalhado foi enviado ao GitHub. Nenhuma funcionalidade do ERP foi alterada ou removida.
+- Proximo passo obrigatorio: preparar a conciliacao controlada das tres linhas de `EMPRESAS` com as empresas ja cadastradas no ERP, lendo apenas os identificadores minimos necessarios em ambiente local, mascarando documentos nos relatorios e mantendo qualquer divergencia em quarentena, sem persistir alteracoes no sistema.
