@@ -5295,3 +5295,18 @@ Checklist inicial:
 - Nenhum arquivo local, dado real, hash de identidade, TPS, snapshot, MDF/LDF ou relatorio detalhado foi adicionado ao GitHub. O repositorio recebeu somente esta atualizacao documental.
 - Mudanca exclusivamente documental no ERP: testes de runtime dispensados; foram executados `git diff --check`, validacao estrutural das fichas, verificacao do selo e confirmacao do servico SQL.
 - Proximo passo obrigatorio: executar um ensaio local e somente leitura do resolvedor usando os tres aliases aprovados, comprovando resolucao unica, separacao Grupo/Empresa e idempotencia, sem gravar no ERP nem liberar importacao.
+
+### Gate 18 - Dry-run idempotente dos aliases aprovados
+
+- Foi executado um ensaio local `READ_ONLY_DRY_RUN` com o mapa aprovado, sem chamar API de gravacao, sem tocar no armazenamento do ERP e sem iniciar o SQL legado.
+- O ensaio reutilizou o contrato existente de `normalizeSnapshotRecord`, que atribui explicitamente `group_id`, `grupo_id` e `grupo_empresarial_id` canonicos a cada Empresa importada.
+- Os tres aliases resolveram de forma unica contra a topologia atual: dois no escopo `COMPANY` e um no escopo `GROUP`, todos vinculados ao unico Grupo canonico.
+- Duas execucoes independentes produziram o mesmo hash de resultado, comprovando determinismo.
+- A primeira aplicacao em memoria adicionou tres vinculos; a segunda adicionou zero, reconheceu os tres como inalterados e produziu zero conflito.
+- Os cenarios negativos bloquearam destino inexistente, troca indevida de escopo Grupo/Empresa e Grupo de destino adulterado.
+- O relatorio `legacy-approved-business-alias-dry-run.json` foi gravado somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS` e revalidado apos persistencia.
+- O resultado registra `writesAttempted=0`, `erpStorageTouched=false`, `sqlStarted=false` e `importAuthorized=false`. A aprovacao de identidade continua separada da autorizacao de carga.
+- Os 20 testes focados de contexto multiempresa e cadastros mestres foram aprovados, incluindo isolamento de empresa externa ao Grupo e falha fechada em escopos incompletos.
+- A instancia SQL permanece `Stopped`/`Manual`. Nenhum arquivo local, dado real, hash de identidade, TPS, snapshot, MDF/LDF ou relatorio detalhado foi adicionado ao GitHub.
+- Mudanca exclusivamente documental no repositorio; `git diff --check` foi aplicado no fechamento.
+- Proximo passo obrigatorio: iniciar o lote de usuarios e perfis pelo inventario estrutural somente leitura das tabelas legadas, excluindo senhas, tokens e segredos antes de consultar qualquer registro.
