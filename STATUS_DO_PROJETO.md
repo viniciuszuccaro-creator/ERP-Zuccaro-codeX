@@ -5249,3 +5249,19 @@ Checklist inicial:
 - Os 21 testes focados de migracao e multiempresa foram aprovados. A instancia SQL permaneceu `Stopped`/`Manual`; nenhum dado, snapshot, TPS, MDF/LDF, hash detalhado ou mapa foi enviado ao GitHub.
 - Validacao documental: quatro fontes concordantes; um Grupo; duas Empresas; hashes completos e estaveis; tres aliases candidatos; dois destinos; uma colisao muitos-para-um; zero nova empresa; zero sobrescrita de ID; zero importacao autorizada.
 - Proximo passo obrigatorio: revisar de forma controlada `SITUACAO`, `TIPOEMPRESA` e `VARIASEMPRESASGRUPO` dos tres candidatos SQL para classificar alias ativo/inativo e matriz/filial, emitindo somente categorias permitidas e mantendo a identidade bloqueada ate validacao humana.
+
+### Gate 18 - Classificacao dos aliases empresariais legados
+
+- O script SQL local existente foi ampliado para consultar somente `SITUACAO`, `TIPOEMPRESA` e `VARIASEMPRESASGRUPO`, alem dos cinco identificadores ja autorizados. Nenhuma coluna de token, URL, credencial ou configuracao sensivel foi acessada.
+- Os valores foram convertidos apenas para categorias fechadas. Conteudo fora das listas permitidas recebeu `UNRECOGNIZED`, sem emissao do texto original.
+- A sintaxe foi validada estaticamente antes da execucao. A consulta administrativa terminou com codigo zero por Shared Memory local; SQL foi desligado no `finally` e permanece `Stopped`/`Manual`, com TCP e Named Pipes desativados.
+- Os tres registros foram classificados como ativos. Nao existe alias inativo ou suspenso nesse conjunto.
+- Um registro possui `VARIASEMPRESASGRUPO` habilitado e foi classificado como `GROUP_SCOPE_RECORD_REVIEW`. Ele representa controle no escopo do Grupo e nao podera criar ou atualizar uma Empresa.
+- Removido o registro de controle do Grupo da disputa empresarial, restam exatamente dois `SINGLE_COMPANY_ALIAS_AFTER_GROUP_EXCLUSION`, cada um apontando para uma das duas Empresas canonicas. Nao resta colisao entre candidatos empresariais.
+- `TIPOEMPRESA` ficou `UNRECOGNIZED` nos tres registros. Nenhuma interpretacao de matriz/filial foi inventada e esse campo permanece fora de qualquer decisao automatica.
+- A divergencia de `CODIGOTIDSOFT` continua presente. Por isso, os dois aliases empresariais sao candidatos de mapeamento, nao identidades confirmadas, e exigem validacao humana antes de qualquer carga.
+- A matriz `legacy-company-collision-decision.csv`, seu resumo e o manifesto de quarentena foram atualizados somente no HD. A decisao proibe criar terceira Empresa, sobrescrever ID canonico ou usar o registro de Grupo como cadastro empresarial.
+- A primeira atualizacao do resumo local calculou contagens zeradas por sintaxe abreviada incorreta de `Where-Object`. O resumo foi sobrescrito com filtros explicitos e validado com uma linha de Grupo, duas linhas de Empresa e zero colisao remanescente.
+- Nenhum valor bruto, nome, CNPJ completo, ID, TPS, snapshot, MDF/LDF, script local ou relatorio detalhado foi enviado ao GitHub. Nenhum dado ou funcionalidade do ERP foi alterado.
+- Validacao documental: oito colunas minimas consultadas; 3/3 registros ativos; um registro de Grupo; dois candidatos empresariais; dois destinos canonicos; zero colisao empresarial remanescente; tres tipos nao reconhecidos; zero criacao; zero importacao autorizada.
+- Proximo passo obrigatorio: preparar um pacote local de validacao humana para os dois candidatos empresariais, exibindo somente codigo mascarado, final do CNPJ, empresa de destino conhecida e motivos pendentes; o registro de Grupo devera aparecer separado e nenhuma confirmacao sera inferida automaticamente.
