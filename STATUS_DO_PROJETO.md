@@ -5006,3 +5006,19 @@ Checklist inicial:
 - Nenhum TPS, esquema detalhado, hash individual, dado pessoal, valor de registro, executavel ou codigo do piloto foi enviado ao GitHub. Nenhuma funcionalidade do ERP foi alterada ou removida.
 - Validacao documental: 13/13 leituras aprovadas; zero divergencias de hash; zero copias gravaveis; zero quarentenas; zero valores emitidos; `git diff --check` exigido antes do commit.
 - Proximo passo obrigatorio: inventariar o escopo TPS `RH` somente em nivel de esquema e contagem, sem exibir dados de pessoas e mantendo qualquer arquivo sensivel ou falha em quarentena.
+
+### Gate 18 - Inventario de esquemas TPS: RH
+
+- O lote TPS de `RH` foi limitado a esquema e contagens, executado somente sobre copias no staging local e sem abertura para escrita da origem ou da copia preservada.
+- Os 11 arquivos estavam classificados como nao sensiveis por nome. Cada copia teve o SHA-256 comparado ao manifesto e foi marcada como somente leitura antes do parser.
+- A primeira chamada do orquestrador foi recusada pelo PowerShell por erro de sintaxe antes de criar copias ou abrir arquivos. O comando foi corrigido e reexecutado sem alterar a politica de seguranca.
+- O leitor isolado processou 11 de 11 arquivos com sucesso, encontrando 11 tabelas, 15 registros e 111 campos no total.
+- Nao houve arquivo bloqueado, criptografado, corrompido, divergente, relatorio invalido ou item encaminhado para quarentena.
+- Somente nomes e tipos de campos, comprimentos, indices, memos e contagens foram registrados. Nenhum nome de pessoa, documento, salario, contato ou outro valor de registro foi desserializado ou emitido.
+- A verificacao posterior reconferiu os 11 hashes da copia preservada e das copias do piloto, com zero divergencias. Todas as copias continuaram marcadas como somente leitura.
+- Foram gerados 11 relatorios individuais e os resumos `tps-rh-schema-summary.csv` e `tps-rh-schema-summary.json`, armazenados somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- Os 11 documentos foram validados programaticamente com `accessMode=read-only`, `valuesEmitted=false`, `personal_values_emitted=false` e zero relatorio invalido.
+- O escopo permanece classificado como altamente sensivel. Qualquer leitura futura de valores exigira finalidade comprovada, minimizacao, contexto Grupo/Empresa, RBAC de RH, auditoria e staging separado.
+- Nenhum TPS, esquema detalhado, hash individual, dado pessoal, valor de registro, executavel ou codigo do piloto foi enviado ao GitHub. Nenhuma funcionalidade do ERP foi alterada ou removida.
+- Validacao documental: 11/11 leituras aprovadas; zero divergencias de hash; zero copias gravaveis; zero quarentenas; zero valores gerais ou pessoais emitidos; `git diff --check` exigido antes do commit.
+- Proximo passo obrigatorio: dividir os 193 TPS do escopo compartilhado `ROOT` em lotes pequenos, excluir por politica os arquivos de senha e conexao e iniciar somente o primeiro lote nao sensivel de esquemas e contagens.
