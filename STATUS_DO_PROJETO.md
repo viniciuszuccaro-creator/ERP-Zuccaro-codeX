@@ -4916,3 +4916,19 @@ Checklist inicial:
 - Nenhum TPS, hash individual, senha, token, conexao, dado pessoal ou registro de negocio foi enviado ao GitHub. Nenhuma funcionalidade existente do ERP foi alterada ou removida.
 - Validacao documental: os manifestos registram integridade `VALIDATED`, o resumo registra `content_opened=false`, `legacy_binary_executed=false` e zero divergencias; foi exigido `git diff --check` antes do commit.
 - Proximo passo obrigatorio: verificar a disponibilidade de parser ou driver TopSpeed confiavel e isolado; somente se houver ferramenta segura, realizar um piloto de leitura em copia de TPS nao sensivel, mantendo `USUSENHA.TPS` e arquivos de conexao fora do teste.
+
+### Gate 18 - Piloto isolado de leitura TPS
+
+- Nao havia driver ODBC TopSpeed/Clarion, ferramenta instalada ou comando compativel no Windows. O driver oficial disponivel comercialmente e de 32 bits e exige DSN de 32 bits; ele nao foi adquirido nem instalado neste subgate.
+- O backup contem executaveis e bibliotecas legadas relacionados a TopSpeed, inclusive utilitarios sem assinatura e uma versao antiga nao assinada do parser. Nenhum desses componentes foi carregado ou executado.
+- A biblioteca `ClaTPS.dll` do backup possui assinatura valida da SoftVelocity, mas permaneceu bloqueada por fazer parte do ambiente legado e nao ser necessaria para o piloto.
+- Foi instalado pelo Windows Package Manager o SDK oficial .NET `10.0.401`; o gerenciador verificou o hash do instalador antes da instalacao.
+- O piloto isolado foi criado somente em `D:\BACKUP ERP ANTIGO - CODEX\03_STAGING\TPS_PILOT`, fora do ERP e do GitHub, usando `TpsParser 6.0.1` obtido do NuGet oficial.
+- A assinatura de repositorio do pacote foi validada como pertencente ao NuGet.org, o hash de conteudo foi confirmado e a consulta de vulnerabilidades nao encontrou pacote vulneravel direto ou transitivo.
+- O leitor foi limitado a acesso `read-only`, recusa arquivos de senha e conexao antes de abrir o arquivo e emite somente hash, esquema e contagens. Ele nao desserializa nem exibe valores de registros.
+- O piloto usou exclusivamente uma copia de `BITOLAS.TPS` marcada como somente leitura e com SHA-256 identico ao manifesto. A leitura encontrou uma tabela, 17 registros e cinco campos, sem memo ou emissao de valores.
+- O teste preventivo com o caminho de `USUSENHA.TPS` retornou o codigo esperado de bloqueio antes da abertura. O arquivo de credenciais nao foi lido, copiado para o piloto, interpretado ou exportado.
+- Os relatorios sanitizados `tps-pilot-bitolas-schema.json` e `tps-parser-pilot-summary.json` ficaram somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`; o codigo descartavel do piloto tambem nao foi adicionado ao repositorio.
+- Nenhum TPS, DLL, executavel, senha, conexao, hash individual ou valor de registro foi enviado ao GitHub. Nenhuma funcionalidade do ERP foi alterada ou removida.
+- Validacao: compilacao do piloto com zero erros e zero avisos; pacote com assinatura de repositorio valida; zero vulnerabilidades conhecidas; hash da copia aprovado; leitura somente leitura aprovada; `values_emitted=false`; bloqueio de credenciais aprovado.
+- Proximo passo obrigatorio: executar inventario de esquemas e contagens dos TPS nao sensiveis em lotes pequenos, iniciando pelos escopos empresariais, sem emitir valores e colocando falhas, arquivos criptografados ou contexto incerto em quarentena.
