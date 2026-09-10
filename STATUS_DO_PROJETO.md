@@ -5108,3 +5108,17 @@ Checklist inicial:
 - Nenhum TPS, esquema detalhado, hash individual, dado pessoal, valor de registro, executavel ou codigo do piloto foi enviado ao GitHub. Nenhuma funcionalidade do ERP foi alterada ou removida.
 - Validacao documental: 189/189 itens elegiveis cobertos; 179 leituras aprovadas; 10 quarentenas integras e nao inspecionadas; quatro exclusoes por politica preservadas; zero valores emitidos; `git diff --check` exigido antes do commit.
 - Proximo passo obrigatorio: iniciar o mapeamento estrutural do lote prioritario `ROOT-02` contra os catalogos SQL ja inventariados, comparando somente nomes, tipos e contagens e mantendo contexto empresarial indeterminado ate conciliacao externa.
+
+### Gate 18 - Mapeamento estrutural parcial ROOT-02 x SQL
+
+- O mapeamento foi executado somente sobre os 39 relatorios estruturais aprovados do `ROOT-02`; o arquivo em quarentena permaneceu fechado e sem tentativa alternativa de leitura.
+- A consulta direta aos bancos nao foi realizada porque o Windows recusou a inicializacao do servico isolado por ACL. A tentativa nao iniciou a instancia, que permaneceu `Stopped` e com inicializacao `Manual`.
+- Foram reutilizados apenas os catalogos persistidos de `LEGACY_TID_EMP05` e `LEGACY_TIDDF`, totalizando 695 tabelas e 72 colunas de contexto empresarial previamente inventariadas. A cobertura SQL foi classificada explicitamente como parcial.
+- A comparacao conservadora de nomes produziu zero correspondencia exata, tres candidatos lexicais sujeitos a revisao e 36 tabelas TPS sem candidato seguro.
+- Os tres candidatos lexicais possuem zero registros no TPS e nenhuma coincidencia de coluna de contexto. Nao houve correspondencia de tipo porque tipos SQL somente seriam comparados apos igualdade exata do nome da coluna.
+- Os 349.303 registros e 466 campos contabilizados no `ROOT-02` continuam sem mapeamento seguro. Nenhum candidato recebeu contexto empresarial e nenhuma importacao foi autorizada.
+- Foram gerados `tps-root-02-sql-structural-map.csv` e `tps-root-02-sql-structural-map-summary.json` somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- A primeira execucao do consolidador foi recusada por erro de sintaxe antes de gerar arquivos. A validacao posterior teve apenas uma comparacao incorreta entre booleano e texto; corrigida a checagem, as 39 linhas foram confirmadas com `ImportAuthorized=false`.
+- Nenhum registro de negocio, valor TPS, dado pessoal, segredo, MDF/LDF ou identificador individual de arquivo foi consultado ou enviado ao GitHub. Nenhuma funcionalidade do ERP foi alterada ou removida.
+- Validacao documental: 39/39 esquemas cobertos; 349.303/349.303 registros sem candidato seguro; zero contexto empresarial definido; zero correspondencia de tipo; zero importacao autorizada; servico SQL parado/manual; `git diff --check` exigido antes do commit.
+- Proximo passo obrigatorio: persistir os catalogos completos dos bancos SQL ja validados por meio de uma inicializacao administrativa controlada da instancia, consultar somente `sys.tables`, `sys.columns` e tipos, desligar o servico e repetir o mapeamento do `ROOT-02` sem acessar valores.
