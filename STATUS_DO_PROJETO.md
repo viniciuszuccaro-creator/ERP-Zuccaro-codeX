@@ -5327,3 +5327,19 @@ Checklist inicial:
 - A instancia SQL permanece `Stopped`/`Manual`. Nenhum dado, credencial, TPS, snapshot, MDF/LDF, hash detalhado ou relatorio local foi adicionado ao GitHub.
 - Mudanca exclusivamente documental no repositorio; testes de runtime dispensados e `git diff --check` obrigatorio no fechamento.
 - Proximo passo obrigatorio: definir a allowlist de campos para contas, RBAC e vinculos de escopo e executar somente contagens agregadas por tabela, ainda sem extrair nomes, e-mails, telefones, senhas ou permissoes individuais.
+
+### Gate 18 - Allowlist e contagens agregadas de usuarios/RBAC
+
+- Foi criada uma allowlist local para as 19 tabelas elegiveis: uma de contas centrais, uma de portal, duas de RBAC e quinze de vinculos de escopo ou estrutura organizacional.
+- Das 152 colunas dessas fontes, 59 chaves tecnicas, estados de conta e metadados RBAC ficaram permitidos apenas para futura extracao controlada; oito campos pessoais e 81 campos sem mapeamento ficaram adiados.
+- Quatro campos sensiveis presentes nas tabelas elegiveis permanecem `DENY_NEVER_READ`. A tabela `UsuarioSenha` e `USUSENHA.TPS` nao foram incluidos na query.
+- A primeira tentativa de coleta nao iniciou porque o caminho esperado do PowerShell 7 nao existe neste computador. Nenhum servico ou banco foi tocado nessa tentativa.
+- A primeira execucao pelo Windows PowerShell realizou somente as agregacoes, mas o resultado foi rejeitado porque o array JSON foi contado como um objeto. O `finally` desligou o SQL e nenhum arquivo de contagem foi aceito.
+- A expansao do array foi corrigida e a consulta foi repetida. Foram executadas exclusivamente 19 expressoes `COUNT_BIG(*)`, com zero coluna de valor selecionada.
+- O resultado validado possui 19 tabelas unicas e tres nao vazias: `Usuarios` soma 44 contas; as duas fontes RBAC somam 1.089 registros; `UsuariosPortalWeb` e as quinze fontes de vinculo de escopo estao vazias.
+- A ausencia de vinculos nas fontes de escopo impede inferir liberacao para Grupo, Empresa, unidade ou centro de custo. Nenhum usuario recebera acesso multiempresa automaticamente.
+- Foram gerados `legacy-user-rbac-safe-field-allowlist.csv`, seu resumo, `legacy-user-rbac-aggregate-counts.csv`, seu resumo e o resumo de execucao somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- Validacao final: 19 tabelas; 19 chaves unicas; tres tabelas nao vazias; zero contagem negativa; zero coluna de valor; zero tabela de credencial; zero dado pessoal ou senha lido; zero importacao autorizada.
+- A instancia SQL voltou a `Stopped`/`Manual`; TCP e Named Pipes permanecem desativados.
+- Nenhum dado, credencial, TPS, snapshot, MDF/LDF, hash detalhado ou relatorio local foi adicionado ao GitHub. Mudanca exclusivamente documental no repositorio; testes de runtime dispensados e `git diff --check` obrigatorio no fechamento.
+- Proximo passo obrigatorio: extrair em modo local somente hashes dos codigos das 44 contas e dos vinculos RBAC, comprovar a cardinalidade entre `Usuarios`, `ContrAcesso` e `UsoSiglasAcesso` e manter todos os acessos Grupo/Empresa bloqueados ate definicao explicita.
