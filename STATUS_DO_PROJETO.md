@@ -5215,3 +5215,21 @@ Checklist inicial:
 - O codigo do leitor, os hashes individuais e os relatorios detalhados permanecem apenas na area local de migracao. Nenhum dado real, TPS, snapshot, MDF/LDF ou identificador foi enviado ao GitHub.
 - Validacao documental: 3/3 linhas cobertas; cinco campos minimos selecionados; zero valor bruto emitido; zero CNPJ legado presente; zero vinculo seguro; tres quarentenas; zero importacao autorizada; compilacao local sem erros/avisos; integridade confirmada.
 - Proximo passo obrigatorio: consultar de forma controlada somente os identificadores empresariais minimos no destino SQL legado `LEGACY_TID_EXETPS.dbo.Empresas`, correlacionar por `CODIGOEMPRESA`/`CODIGOTIDSOFT`, mascarar documentos e manter a instancia isolada desligada ao final, sem atualizar o ERP.
+
+### Gate 18 - Cruzamento SQL das identidades EMPRESAS
+
+- O cruzamento consultou somente `CODIGOEMPRESA`, `CODIGOTIDSOFT`, `CGC`, `RAZAOSOCIAL` e `NOMEFANTASIA` em `LEGACY_TID_EXETPS.dbo.Empresas`. As colunas proximas `TOKENTIDSERVICOS` e `URLTIDSERVICOS` foram explicitamente excluidas.
+- Nao havia script local equivalente. Foi criado somente no staging da migracao um script restrito e reproduzivel, com processamento em memoria, saida mascarada e desligamento obrigatorio do SQL em bloco `finally`. Esse codigo nao foi adicionado ao repositorio.
+- A primeira tentativa foi recusada pelo PowerShell por sintaxe incompativel antes de iniciar o servico. As tentativas diretas seguintes confirmaram a ACL administrativa do Windows e tambem nao iniciaram a instancia.
+- A primeira chamada UAC revelou um erro de parenteses no script antes da execucao. A sintaxe foi corrigida, validada estaticamente com zero erros e as execucoes administrativas posteriores terminaram com codigo zero.
+- A instancia foi usada somente por Shared Memory local. TCP e Named Pipes permaneceram desativados; o servico foi desligado ao final e permanece `Stopped`/`Manual`.
+- A tabela SQL possui cinco linhas. As tres identidades TPS encontram exatamente um candidato SQL por `CODIGOEMPRESA`, e esses candidatos possuem CNPJ matematicamente valido.
+- Nenhuma das tres identidades coincide por `CODIGOTIDSOFT`, e nenhuma possui coincidencia exata de nome. Assim, `CODIGOEMPRESA` foi mantido somente como evidencia de revisao, nunca como vinculo confirmado.
+- Os tres CNPJs SQL apontam individualmente para empresa no snapshot atual, mas representam apenas duas empresas distintas: duas linhas legadas disputam o mesmo destino atual.
+- As empresas do snapshot usado nao possuem Grupo explicito nas linhas consultadas. Portanto, as tres identidades continuam com contexto empresarial indeterminado.
+- O resultado final foi tres candidatos `CODE_ONLY_SQL_CURRENT_CNPJ_REVIEW`, zero vinculo confirmado e zero importacao autorizada. Duas linhas possuem colisao de destino e as tres possuem divergencia TID e ausencia de Grupo.
+- Foram gerados `tps-root-02-empresas-sql-identity-reconciliation.json`, o CSV mascarado correspondente, o resumo seguro da execucao e `empresas-sql-identity-quarantine.csv`, somente em `D:\BACKUP ERP ANTIGO - CODEX`.
+- A quarentena contem apenas numero de registro, fingerprint e motivos tecnicos. Nenhum nome, codigo completo, CNPJ completo, endereco, token, URL ou linha SQL bruta foi persistido nela.
+- Nenhum dado real, TPS, snapshot, MDF/LDF, hash individual ou relatorio detalhado foi enviado ao GitHub. Nenhuma entidade, tela, funcionalidade ou dado do ERP foi alterado.
+- Validacao documental: 3/3 linhas TPS cobertas; cinco linhas SQL consultadas; tres candidatos por codigo principal; zero coincidencia TID; tres CNPJs validos; dois destinos atuais distintos; duas colisoes; tres ausencias de Grupo; zero contexto confirmado; zero importacao autorizada; SQL desligado e rede desativada.
+- Proximo passo obrigatorio: reconciliar a topologia atual `Grupo CPA`/empresas usando fontes locais confiaveis de Grupo e Empresa, comprovar os IDs canonicos e decidir explicitamente a colisao de duas identidades legadas no mesmo destino, mantendo o ERP sem alteracoes e todas as linhas bloqueadas ate a decisao.
