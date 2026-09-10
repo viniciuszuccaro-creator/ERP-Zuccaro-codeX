@@ -4811,3 +4811,21 @@ Checklist inicial:
 - O servico `ERPZLEGACY` foi encerrado ao final e permanece manual, sem TCP, Named Pipes ou SQL Browser.
 - Validacao documental: este subgate nao altera o runtime do ERP; foi exigido somente `git diff --check` antes do commit.
 - Proximo passo obrigatorio: realizar triagem estrutural controlada de `TID_TEMP`, o menor banco restante, para comprovar se possui dados necessarios ou se deve permanecer excluido da migracao.
+
+### Gate 18 - Triagem controlada: TID_TEMP
+
+- Os hashes SHA-256 e tamanhos de `TID_TEMP.mdf` e `TID_TEMP.ldf` foram comparados entre origem, copia preservada e `02_SQL_WORK`; as tres versoes permaneceram identicas.
+- Foram abertas somente copias locais em `C:\Users\cpaba\ERPZLEGACY_DATA`, com acesso minimo para o servico SQL. O banco foi anexado como `LEGACY_TID_TEMP`, convertido na copia da versao interna 782 para 998 e colocado imediatamente em `READ_ONLY`.
+- `DBCC CHECKDB` com `DATA_PURITY` terminou com codigo 0 e sem mensagens de erro. O banco permaneceu `ONLINE`, `MULTI_USER`, com `TRUSTWORTHY`, Service Broker e database chaining desabilitados.
+- Inventario estrutural: 38 tabelas, zero views, procedures, triggers, funcoes ou chaves estrangeiras declaradas e 3.031 linhas estimadas.
+- As nove tabelas nao vazias usam o prefixo auxiliar `CLA_`. A massa esta concentrada em selecao de materiais, fontes temporarias de estoque, detalhamento, romaneio, fila de e-mail, consulta de CNPJ, selecao de explorer e dados gerais de sessao.
+- As quatro tabelas fora do prefixo `CLA_` (`HistoricoFinanceiro`, `HistoricoFinanceiroFornecedor_SQL`, `LogDeleteDuplicatas` e `TabelaTempSQL`) estao vazias.
+- Os campos de gravacao das tabelas auxiliares apontam exclusivamente para `2026-08-19`, um dia antes do backup, reforcando que se trata de fotografia transitoria de processamento e selecao, nao de fonte mestre.
+- Nenhuma tabela nao vazia possui contexto de Grupo ou Empresa. Chaves de usuario, produto, pedido e material encontradas servem ao processamento temporario e nao comprovam propriedade empresarial nem completude operacional.
+- O MDF tem 255 MB alocados, mas somente 10,625 MB usados; o log tem 252,25 MB alocados e aproximadamente 5,40 MB usados. O tamanho fisico elevado nao representa massa historica.
+- Nao existem modulos SQL nem referencias a `xp_cmdshell`, `OPENROWSET`, `OPENDATASOURCE`, automacao OLE ou execucao dinamica.
+- Classificacao: `TID_TEMP` fica preservado e consultavel no arquivo local, mas excluido da migracao direta. Ele somente podera apoiar conciliacao futura se uma lacuna concreta for comprovada nos bancos operacionais; seus registros nunca devem substituir fontes mestres.
+- Nenhum CNPJ, e-mail, registro temporario, MDF/LDF ou dado de negocio foi exportado ou enviado ao GitHub. O relatorio de integridade permanece apenas em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- O servico `ERPZLEGACY` foi encerrado ao final e permanece manual, sem TCP, Named Pipes ou SQL Browser.
+- Validacao documental: este subgate nao altera o runtime do ERP; foi exigido somente `git diff --check` antes do commit.
+- Proximo passo obrigatorio: repetir o fluxo controlado no banco `TID_EXETPS`, inventariar sua finalidade e impedir qualquer execucao de conteudo legado durante a analise.
