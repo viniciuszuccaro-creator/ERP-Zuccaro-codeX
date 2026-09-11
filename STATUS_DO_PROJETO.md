@@ -5657,3 +5657,16 @@ Checklist inicial:
 - Os scripts, saidas tecnicas e arquivos brutos temporarios foram removidos. Nenhum CSV, JSON local, codigo ou nome bancario, valor fiscal, hash, dado pessoal, TPS, MDF/LDF ou relatorio do HD integra o GitHub; a mudanca do repositorio e exclusivamente documental.
 - Validacao do repositorio: `git diff --check` aprovado; testes de runtime dispensados porque nenhum codigo de aplicacao permaneceu alterado neste lote.
 - Proximo passo obrigatorio: um revisor autorizado deve preencher os seis `target_banco_id` com cadastros `Banco` existentes no Grupo e definir o booleano de `SIMPLESFEDERAL` com justificativa fiscal. Ate isso ocorrer, agencia, conta, RG, staging nominal e importacao permanecem bloqueados.
+
+### Gate 18 - Evidencia tecnica da traducao fiscal de fornecedores
+
+- A coluna legada `SIMPLESFEDERAL` foi consultada somente por metadado e agregacao no banco `LEGACY_TID_EXETPS`, confirmado em `READ_ONLY`; nenhum fornecedor nominal foi exibido ou alterado.
+- A origem e `tinyint`, permite nulo e possui um unico valor efetivo: `0` nas 1.061/1.061 linhas. Essa evidencia sustenta a proposta tecnica `simples_nacional=false`, mas nao substitui a homologacao fiscal humana.
+- A linha fiscal da proposta protegida no HD foi atualizada para `PROPOSED_AWAITING_FISCAL_HOMOLOGATION`, com valor normalizado `false`, justificativa tecnica e `import_authorized=false`. Nenhum dado foi importado no ERP.
+- As seis referencias bancarias continuam sem `target_banco_id`. O ERP local abriu em `http://localhost:5174/cadastros`, mas o usuario atual recebeu `Permissao negada`; o RBAC foi respeitado e nao houve tentativa de contorno, consulta direta ao armazenamento do navegador ou atribuicao inventada.
+- A matriz local permanece com sete linhas, sete nao autorizadas, zero banco vinculado e uma proposta fiscal. O SHA-256 recalculado corresponde ao resumo agregado local.
+- O arquivo protegido e o resumo permanecem somente em `D:\BACKUP ERP ANTIGO - CODEX`; nenhum codigo/nome bancario, dado pessoal, valor nominal, CSV, JSON, hash, TPS, MDF/LDF ou relatorio local foi adicionado ao GitHub.
+- A instancia `MSSQL$ERPZLEGACY` foi encerrada e confirmada como `Stopped`/`Manual`. A consulta final usou memoria compartilhada local; TCP, SQL Browser e os canais externos permaneceram desativados.
+- A alteracao do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a verificacao obrigatoria deste fechamento.
+- Pendencia `BLOCKED`: a traducao fiscal exige aceite de revisor fiscal, e o mapeamento bancario exige usuario autorizado a visualizar os cadastros `Banco` do Grupo. Ate as duas homologacoes, agencia, conta, RG, staging nominal e importacao permanecem bloqueados.
+- Proximo passo recomendado: obter os dois aceites humanos no fluxo existente e, somente depois, executar um piloto pequeno e reversivel de fornecedores com RBAC, escopo Grupo, auditoria e reconciliacao integral.
