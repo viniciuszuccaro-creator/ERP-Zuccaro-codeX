@@ -5512,3 +5512,19 @@ Checklist inicial:
 - Regra reforcada para o lote de materiais: `CadastroMateriais` sera filtrado exclusivamente pela classificacao `REVENDA`. O nome exato da coluna classificadora ainda deve ser comprovado no catalogo estrutural antes da leitura nominal; demais materiais serao apenas contabilizados e excluidos do staging.
 - Nenhum dado ou funcionalidade do ERP foi alterado. Mudanca do repositorio exclusivamente documental; testes de runtime dispensados e `git diff --check` obrigatorio no fechamento.
 - Proximo passo obrigatorio: implementar e testar os campos `codigo_tabela_legado` em `TabelaPreco` e `codigo_vendedor_legado` em `Colaborador`, somente nas estruturas existentes, com escopo de Grupo/Empresa, RBAC, sanitizacao, auditoria e preservacao de compatibilidade.
+
+### Gate 18 - Codigos legados de tabela de preco e vendedor
+
+- Foram incorporados aos cadastros existentes os campos `TabelaPreco.codigo_tabela_legado` e `Colaborador.codigo_vendedor_legado`; nenhuma entidade, tela, rota, importador ou modulo paralelo foi criado.
+- Os dois formularios de tabela de preco e o formulario de colaborador exibem os campos com limite de 64 caracteres e formato restrito a letras, numeros, ponto, hifen, barra e sublinhado.
+- A gravacao exige as permissoes granulares `Cadastros.Produtos.TabelaPreco.codigo_tabela_legado.editar` e `Cadastros.Pessoas.Colaborador.codigo_vendedor_legado.editar`. Importacao em lote contendo esses campos tambem exige `importar`; operacoes sem permissao falham fechadas no wrapper remoto e no cliente local.
+- Codigos legados sao unicos por entidade dentro do Grupo, com comparacao sem diferenca entre maiusculas e minusculas. O mesmo codigo pode existir em outro Grupo sem colisao.
+- Criacao, edicao e limpeza do codigo exigem `group_id` canonico. Empresa informada deve existir e pertencer ao Grupo; empresa externa e alteracao indevida do Grupo sao bloqueadas.
+- `TabelaPreco` deixou de ser tratada como catalogo global no sanitizador backend e agora exige escopo multiempresa. `entityListSorted` passou a localizar tabela de preco e colaborador tambem pelos novos codigos.
+- Auditoria local preserva antes/depois sanitizado. O wrapper remoto registra apenas o valor anterior e posterior do campo legado quando ele e alterado, evitando incluir o restante dos dados pessoais do colaborador nesse evento especifico.
+- Nenhum dos 47 codigos pendentes foi automaticamente promovido, nenhum cadastro foi criado por inferencia e nenhuma linha nominal do backup foi gravada no ERP.
+- Validacoes: `npm run audit:baseline` aprovado; `npm test` aprovado com 226/226 testes; teste focado aprovado com 13/13; `npm run typecheck` aprovado; `npm run build` aprovado fora do sandbox apos a primeira tentativa ser bloqueada por acesso ao `vite.config.js`; lint direcionado aos arquivos alterados aprovado; `git diff --check` aprovado.
+- `npm run lint` global permanece reprovado por 86 erros e 18 avisos historicos em arquivos fora deste lote. Nenhum erro do lint direcionado pertence aos arquivos alterados; o baseline nao foi mascarado nem modificado.
+- `TabelaPrecoFormCompleto.jsx`, `Layout.jsx` e `localBase44Client.js` continuam acima do limite recomendado de linhas. A alteracao foi mantida localizada para nao misturar uma refatoracao ampla com o contrato de migracao; a divisao segura permanece como divida tecnica registrada.
+- A instancia `MSSQL$ERPZLEGACY` foi confirmada como `Stopped`/`Manual`. Nenhum CSV, nome, documento, e-mail, ID bruto, hash individual, TPS, MDF/LDF ou relatorio local foi adicionado ao GitHub.
+- Proximo passo obrigatorio: gerar somente no HD uma proposta de homologacao para as referencias ativas entre os sete codigos de tabela de preco e os 27 codigos de vendedor; inativos, ausentes, ambiguos e empresas externas permanecem bloqueados. Somente decisoes exatas homologadas poderao enriquecer o staging de clientes.

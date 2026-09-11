@@ -34,13 +34,14 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit, windowMode =
     updateInContext,
     deleteInContext
   } = useContextoVisual();
-  const { canCreate, canEdit, canDelete } = usePermissions();
+  const { canCreate, canEdit, canDelete, hasFieldPermission, isAdmin } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const contextKey = empresaAtual?.id || groupId || "sem-contexto";
   const contextoValido = contextKey !== "sem-contexto";
   const podeCriar = canCreate("Cadastros", "Tabela de Preco") || canCreate("Cadastros", "TabelaPreco") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Tabela de Preco") || canEdit("Cadastros", "TabelaPreco") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "Tabela de Preco") || canDelete("Cadastros", "TabelaPreco") || canDelete("Cadastros", null);
+  const podeEditarCodigoLegado = isAdmin() || hasFieldPermission('Cadastros', 'Produtos', 'TabelaPreco', 'codigo_tabela_legado', 'editar');
   
   useEffect(() => {
     const loadUser = async () => {
@@ -52,6 +53,7 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit, windowMode =
 
   const [formData, setFormData] = useState({
     nome: tabela?.nome || '',
+    codigo_tabela_legado: tabela?.codigo_tabela_legado || '',
     descricao: tabela?.descricao || '',
     tipo: tabela?.tipo || 'Padrão',
     data_inicio: tabela?.data_inicio || new Date().toISOString().split('T')[0],
@@ -384,6 +386,7 @@ RETORNE:
         group_id: groupId || formData.group_id,
         criado_por: user?.email || 'sistema'
       };
+      if (!podeEditarCodigoLegado) delete dadosTabela.codigo_tabela_legado;
 
       let tabelaId = tabela?.id;
       
@@ -499,6 +502,20 @@ RETORNE:
                     required
                     data-permission="Cadastros.TabelaPreco.editar"
                     data-action="editar-nome-tabela-preco"
+                    data-sensitive
+                  />
+                </div>
+
+                <div>
+                  <Label>Codigo da tabela no ERP antigo</Label>
+                  <Input
+                    value={formData.codigo_tabela_legado || ''}
+                    onChange={(e) => setFormData({...formData, codigo_tabela_legado: e.target.value.replace(/[^A-Za-z0-9._/-]/g, '').slice(0, 64)})}
+                    maxLength={64}
+                    placeholder="Ex: TAB-01"
+                    disabled={!podeEditarCodigoLegado || !contextoValido || (tabela?.id ? !podeEditar : !podeCriar)}
+                    data-permission="Cadastros.Produtos.TabelaPreco.codigo_tabela_legado.editar"
+                    data-action="editar-codigo-legado-tabela-preco"
                     data-sensitive
                   />
                 </div>

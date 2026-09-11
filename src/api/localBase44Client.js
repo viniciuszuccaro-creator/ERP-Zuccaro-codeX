@@ -7,7 +7,15 @@ import {
 } from "@/components/lib/contextoMultiempresaPolicy";
 import { sanitizeAuditPayload, sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
 import { createAuthDeniedError, evaluateLocalUserSession, markLocalLoggedOut, readLocalAuthState, writeLocalAuthState, LOCAL_SESSION_ID_KEY } from "@/api/localAuthSessionPolicy";
-import { applyMasterCadastroOnCreate, MASTER_CODE_SPECS, parseNumericCode, sequenceKeyFor } from "@/api/localCadastroMasterPolicy";
+import {
+  applyLegacyReferenceCodePolicy,
+  applyMasterCadastroOnCreate,
+  assertLegacyReferenceScope,
+  LEGACY_REFERENCE_CODE_SPECS,
+  MASTER_CODE_SPECS,
+  parseNumericCode,
+  sequenceKeyFor,
+} from "@/api/localCadastroMasterPolicy";
 import { assertMovimentacaoEstoque, configAllowsNegativeStock, HISTORICO_ESTOQUE_ENTITIES, isAjusteEstoque } from "@/components/lib/estoqueMovimentoPolicy";
 import {
   assertTituloOnCreate,
@@ -1097,7 +1105,8 @@ const getEntityStore = (db, entityName) => {
 const applyLocalMasterCadastro = (db, entityName, record) => {
   const needsCode = Boolean(MASTER_CODE_SPECS[entityName]);
   const needsDuplicate = ['Cliente', 'Fornecedor', 'Transportadora', 'Produto'].includes(entityName);
-  if (!needsCode && !needsDuplicate) return record;
+  const needsLegacyReference = Boolean(LEGACY_REFERENCE_CODE_SPECS[entityName]);
+  if (!needsCode && !needsDuplicate && !needsLegacyReference) return record;
 
   const groupId = record.group_id || record.grupo_id || null;
   if (!groupId) {
@@ -1106,6 +1115,16 @@ const applyLocalMasterCadastro = (db, entityName, record) => {
   const records = getEntityStore(db, entityName).filter((item) => (
     String(item.group_id || item.grupo_id || '') === String(groupId)
   ));
+  const legacySpec = LEGACY_REFERENCE_CODE_SPECS[entityName];
+  if (legacySpec && record[legacySpec.field]) {
+    const { groupId: currentGroupId } = getCurrentContext();
+    assertLegacyReferenceScope({
+      entityName,
+      record,
+      currentGroupId,
+      companies: getEntityStore(db, 'Empresa'),
+    });
+  }
   const configs = getEntityStore(db, 'ConfiguracaoSistema');
   const chave = sequenceKeyFor(entityName, groupId);
   const seqRow = configs.find((item) => item.chave === chave);
@@ -1140,6 +1159,49 @@ const applyLocalMasterCadastro = (db, entityName, record) => {
     }
   }
   return nextRecord;
+};
+
+const applyLocalLegacyReferenceUpdate = (db, entityName, before, patch) => {
+  const spec = LEGACY_REFERENCE_CODE_SPECS[entityName];
+  if (!spec) return patch;
+  const merged = { ...before, ...patch };
+  if (!Object.prototype.hasOwnProperty.call(merged, spec.field)) return patch;
+  const { groupId: currentGroupId } = getCurrentContext();
+  assertLegacyReferenceScope({
+    entityName,
+    record: merged,
+    before,
+    currentGroupId,
+    companies: getEntityStore(db, 'Empresa'),
+  });
+  const records = getEntityStore(db, entityName);
+  const validated = applyLegacyReferenceCodePolicy({
+    entityName,
+    record: merged,
+    records,
+    currentId: before?.id,
+  });
+  return { ...patch, [spec.field]: validated[spec.field] };
+};
+
+const LEGACY_FIELD_PERMISSION_SCOPE = {
+  TabelaPreco: ['Produtos', 'TabelaPreco', 'codigo_tabela_legado'],
+  Colaborador: ['Pessoas', 'Colaborador', 'codigo_vendedor_legado'],
+};
+
+const assertLocalLegacyFieldAllowed = (entityName, record = {}) => {
+  const spec = LEGACY_REFERENCE_CODE_SPECS[entityName];
+  if (!spec || !Object.prototype.hasOwnProperty.call(record, spec.field)) return;
+  const result = evaluateLocalPermission({
+    module: 'Cadastros',
+    section: LEGACY_FIELD_PERMISSION_SCOPE[entityName],
+    entityName,
+    action: 'editar',
+  });
+  if (!result.allowed) {
+    auditLocalPermissionDenied(entityName, 'editar', record?.id || null);
+    throw new Error(`Permissao negada para editar ${spec.field} em ${entityName}.`);
+  }
 };
 
 const applyLocalEstoqueMovimento = (db, entityName, record) => {
@@ -1628,6 +1690,7 @@ const createEntityApi = (entityName) => ({
 
   async create(data = {}) {
     assertLocalMutationAllowed(entityName, 'criar');
+    assertLocalLegacyFieldAllowed(entityName, data);
     if (entityName === 'MovimentacaoEstoque' && isAjusteEstoque(data)) {
       assertLocalMutationAllowed(entityName, 'ajustar');
     }
@@ -1682,6 +1745,7 @@ const createEntityApi = (entityName) => ({
     if (!isTituloFinanceiroEntity(entityName) && !NOTA_FISCAL_ENTITIES.includes(entityName) && entityName !== 'OrdemProducao' && entityName !== 'Entrega' && entityName !== 'BackupAutomatico' && entityName !== 'OrdemCompra' && entityName !== 'Oportunidade') {
       assertLocalMutationAllowed(entityName, 'editar', id);
     }
+    assertLocalLegacyFieldAllowed(entityName, data);
     const db = loadDb();
     const records = getEntityStore(db, entityName);
     const index = records.findIndex((item) => String(item.id) === String(id));
@@ -1708,6 +1772,7 @@ const createEntityApi = (entityName) => ({
       }
     }
     let nextPayload = applyLocalBackupWrite(db, entityName, applyLocalPilotoWrite(db, entityName, payload, before), before);
+    nextPayload = applyLocalLegacyReferenceUpdate(db, entityName, before, nextPayload);
     if (entityName === 'Entrega') {
       const decision = assertEntregaOnUpdate({ before, patch: payload });
       if (decision.reuse) {
@@ -1899,6 +1964,9 @@ const createEntityApi = (entityName) => ({
   },
 
   async bulkCreate(items = []) {
+    const legacySpec = LEGACY_REFERENCE_CODE_SPECS[entityName];
+    const hasLegacyReference = Boolean(legacySpec && items.some((item) => String(item?.[legacySpec.field] || '').trim()));
+    if (hasLegacyReference) assertLocalMutationAllowed(entityName, 'importar');
     const created = [];
     for (const item of items) {
       created.push(await this.create(item));

@@ -10,19 +10,22 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 const sanitizeText = (value, max = 255) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeDate = (value) => sanitizeText(value, 20);
+const sanitizeLegacyCode = (value) => sanitizeText(value, 64).replace(/[^A-Za-z0-9._/-]/g, '');
 
 export default function TabelaPrecoForm({ tabela, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || tabela;
-  const { canCreate, canEdit } = usePermissions();
+  const { canCreate, canEdit, hasFieldPermission, isAdmin } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = canCreate("Cadastros", "TabelaPreco") || canCreate("Comercial", "TabelaPreco") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "TabelaPreco") || canEdit("Comercial", "TabelaPreco") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
+  const podeEditarCodigoLegado = isAdmin() || hasFieldPermission('Cadastros', 'Produtos', 'TabelaPreco', 'codigo_tabela_legado', 'editar');
   const [formData, setFormData] = useState(dadosIniciais || {
     nome: '',
     descricao: '',
+    codigo_tabela_legado: '',
     tipo: 'Padrao',
     data_inicio: new Date().toISOString().split('T')[0],
     data_fim: '',
@@ -43,12 +46,14 @@ export default function TabelaPrecoForm({ tabela, item, data, initialData, defau
       ...formData,
       nome: sanitizeText(formData.nome, 180),
       descricao: sanitizeText(formData.descricao, 500),
+      codigo_tabela_legado: sanitizeLegacyCode(formData.codigo_tabela_legado),
       tipo: sanitizeText(formData.tipo, 40),
       data_inicio: sanitizeDate(formData.data_inicio),
       data_fim: sanitizeDate(formData.data_fim),
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id
     };
+    if (!podeEditarCodigoLegado) delete payload.codigo_tabela_legado;
     if (!payload.nome || !payload.tipo || !payload.data_inicio) {
       alert('Preencha os campos obrigatorios');
       return;
@@ -66,6 +71,11 @@ export default function TabelaPrecoForm({ tabela, item, data, initialData, defau
       <div>
         <Label>Descricao</Label>
         <Input value={formData.descricao} onChange={(e) => setFormData({ ...formData, descricao: e.target.value })} placeholder="Descricao interna" disabled={!podeSalvar} data-permission="Cadastros.TabelaPreco.editar" data-action="editar-descricao-tabela-preco" data-sensitive />
+      </div>
+
+      <div>
+        <Label>Codigo da tabela no ERP antigo</Label>
+        <Input value={formData.codigo_tabela_legado || ''} onChange={(e) => setFormData({ ...formData, codigo_tabela_legado: e.target.value })} maxLength={64} placeholder="Ex: TAB-01" disabled={!podeSalvar || !podeEditarCodigoLegado} data-permission="Cadastros.Produtos.TabelaPreco.codigo_tabela_legado.editar" data-action="editar-codigo-legado-tabela-preco" data-sensitive />
       </div>
 
       <div>

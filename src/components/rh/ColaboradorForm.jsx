@@ -11,6 +11,7 @@ import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
 import { Save, User, Trash2, Power, PowerOff } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * V21.1.2: Colaborador Form - Adaptado para Window Mode
@@ -22,8 +23,11 @@ function ColaboradorForm({ colaborador: colaboradorProp, item, data, onSubmit, o
   // Sync form when editing existing record
   const [_syncKey, _setSyncKey] = React.useState(colaborador?.id || 'new');
   const { carimbarContexto } = useContextoVisual();
+  const { hasFieldPermission, isAdmin } = usePermissions();
+  const podeEditarCodigoLegado = isAdmin() || hasFieldPermission('Cadastros', 'Pessoas', 'Colaborador', 'codigo_vendedor_legado', 'editar');
   const [formData, setFormData] = useState(colaborador || {
     nome_completo: '',
+    codigo_vendedor_legado: '',
     cpf: '',
     email: '',
     telefone: '',
@@ -61,7 +65,9 @@ function ColaboradorForm({ colaborador: colaboradorProp, item, data, onSubmit, o
   });
 
   const handleSubmit = async () => {
-    onSubmit(carimbarContexto(formData, 'empresa_alocada_id'));
+    const payload = { ...formData };
+    if (!podeEditarCodigoLegado) delete payload.codigo_vendedor_legado;
+    onSubmit(carimbarContexto(payload, 'empresa_alocada_id'));
   };
 
   const handleExcluir = () => {
@@ -142,6 +148,20 @@ function ColaboradorForm({ colaborador: colaboradorProp, item, data, onSubmit, o
             <h3 className="font-bold text-lg">Vínculo Empregatício</h3>
 
             <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Codigo de vendedor no ERP antigo</Label>
+                <Input
+                  value={formData.codigo_vendedor_legado || ''}
+                  onChange={(e) => setFormData({ ...formData, codigo_vendedor_legado: e.target.value.replace(/[^A-Za-z0-9._/-]/g, '').slice(0, 64) })}
+                  maxLength={64}
+                  placeholder="Ex: VEND-01"
+                  disabled={!podeEditarCodigoLegado}
+                  data-permission="Cadastros.Pessoas.Colaborador.codigo_vendedor_legado.editar"
+                  data-action="editar-codigo-legado-vendedor"
+                  data-sensitive
+                />
+              </div>
+
               <div>
                 <Label>Data de Admissão *</Label>
                 <Input

@@ -3,11 +3,87 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import {
+  applyLegacyReferenceCodePolicy,
   applyCodigoOnCreate,
   applyMasterCadastroOnCreate,
+  assertLegacyReferenceScope,
   findDuplicateMaster,
+  normalizeLegacyReferenceCode,
   resolveNextSequentialCode,
 } from '../src/api/localCadastroMasterPolicy.js';
+
+test('legacy reference codes follow an explicit format contract', () => {
+  assert.equal(normalizeLegacyReferenceCode('  VEND-01/CPA  '), 'VEND-01/CPA');
+  assert.throws(() => normalizeLegacyReferenceCode('<script>1</script>'), /Codigo legado invalido/);
+  assert.throws(() => normalizeLegacyReferenceCode('A'.repeat(65)), /Codigo legado invalido/);
+});
+
+test('legacy reference codes are unique inside the group and reusable in another group', () => {
+  const records = [{ id: 'tab-1', group_id: 'g1', codigo_tabela_legado: 'TAB-01' }];
+  assert.throws(
+    () => applyLegacyReferenceCodePolicy({
+      entityName: 'TabelaPreco',
+      record: { group_id: 'g1', codigo_tabela_legado: 'tab-01' },
+      records,
+    }),
+    /duplicado no grupo/,
+  );
+  assert.equal(applyLegacyReferenceCodePolicy({
+    entityName: 'TabelaPreco',
+    record: { group_id: 'g2', codigo_tabela_legado: 'TAB-01' },
+    records,
+  }).codigo_tabela_legado, 'TAB-01');
+});
+
+test('legacy seller code requires group context', () => {
+  assert.throws(
+    () => applyLegacyReferenceCodePolicy({
+      entityName: 'Colaborador',
+      record: { codigo_vendedor_legado: 'VEND-01' },
+      records: [],
+    }),
+    /group_id obrigatorio/,
+  );
+});
+
+test('legacy reference code blocks a company outside the resolved group', () => {
+  assert.throws(
+    () => assertLegacyReferenceScope({
+      entityName: 'Colaborador',
+      record: {
+        group_id: 'g1',
+        empresa_alocada_id: 'e2',
+        codigo_vendedor_legado: 'VEND-01',
+      },
+      currentGroupId: 'g1',
+      companies: [{ id: 'e2', group_id: 'g2' }],
+    }),
+    /Empresa externa ao grupo bloqueada/,
+  );
+  assert.equal(assertLegacyReferenceScope({
+    entityName: 'Colaborador',
+    record: {
+      group_id: 'g1',
+      empresa_alocada_id: 'e1',
+      codigo_vendedor_legado: 'VEND-01',
+    },
+    currentGroupId: 'g1',
+    companies: [{ id: 'e1', group_id: 'g1' }],
+  }), true);
+});
+
+test('clearing a legacy reference cannot move the record to another group', () => {
+  assert.throws(
+    () => assertLegacyReferenceScope({
+      entityName: 'TabelaPreco',
+      before: { group_id: 'g1', codigo_tabela_legado: 'TAB-01' },
+      record: { group_id: 'g2', codigo_tabela_legado: '' },
+      currentGroupId: 'g1',
+      companies: [],
+    }),
+    /Escopo de grupo invalido/,
+  );
+});
 
 test('sequential product codes increment from existing records, not a page count', () => {
   const next = resolveNextSequentialCode({
@@ -107,4 +183,23 @@ test('product form no longer invents the next code from a frontend list', async 
   assert.doesNotMatch(viewer, /return orConds\.length \? \{ \$or: orConds \} : \{\}/);
   assert.match(viewer, /contextoValido = !!\(empresaId \|\| groupId\)/);
   assert.match(counts, /Catálogos "simples" tambem recebem group\/empresa/);
+});
+
+test('legacy reference fields are exposed with RBAC and searchable by backend', async () => {
+  const tabela = await readFile(new URL('../src/components/cadastros/TabelaPrecoFormCompleto.jsx', import.meta.url), 'utf8');
+  const colaborador = await readFile(new URL('../src/components/rh/ColaboradorForm.jsx', import.meta.url), 'utf8');
+  const listSorted = await readFile(new URL('../base44/functions/entityListSorted/entry.ts', import.meta.url), 'utf8');
+  const backendSanitizer = await readFile(new URL('../base44/functions/sanitizeOnWrite/entry.ts', import.meta.url), 'utf8');
+  assert.match(tabela, /codigo_tabela_legado/);
+  assert.match(tabela, /Cadastros\.Produtos\.TabelaPreco\.codigo_tabela_legado\.editar/);
+  assert.match(colaborador, /codigo_vendedor_legado/);
+  assert.match(colaborador, /Cadastros\.Pessoas\.Colaborador\.codigo_vendedor_legado\.editar/);
+  assert.match(listSorted, /codigo_tabela_legado/);
+  assert.match(listSorted, /codigo_vendedor_legado/);
+  assert.match(backendSanitizer, /legacy_reference_duplicate_in_group/);
+  assert.match(backendSanitizer, /empresa_outside_group/);
+  const layout = await readFile(new URL('../src/Layout.jsx', import.meta.url), 'utf8');
+  const localClient = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
+  assert.match(layout, /checkLegacyFieldRBAC/);
+  assert.match(localClient, /assertLocalLegacyFieldAllowed/);
 });

@@ -6,7 +6,7 @@ const SIMPLE_CATALOG = new Set([
   'UnidadeMedida','Departamento','Cargo','Turno','GrupoProduto','Marca',
   'SetorAtividade','LocalEstoque','TabelaFiscal','CentroResultado',
   'OperadorCaixa','RotaPadrao','ModeloDocumento','KitProduto','CatalogoWeb',
-  'Servico','CondicaoComercial','TabelaPreco','PerfilAcesso',
+  'Servico','CondicaoComercial','PerfilAcesso',
   'ConfiguracaoNFe','ConfiguracaoBoletos','ConfiguracaoWhatsApp',
   'GatewayPagamento','ApiExterna','Webhook','ChatbotIntent','ChatbotCanal',
   'JobAgendado','EventoNotificacao','SegmentoCliente','RegiaoAtendimento',
@@ -15,6 +15,20 @@ const SIMPLE_CATALOG = new Set([
   'TabelaPrecoItem','CentroOperacao','ConfiguracaoDespesaRecorrente',
   'AuditLog','Notificacao','ConfiguracaoSistema',
 ]);
+
+const LEGACY_REFERENCE_FIELDS = {
+  TabelaPreco: 'codigo_tabela_legado',
+  Colaborador: 'codigo_vendedor_legado',
+};
+
+const normalizeLegacyReferenceCode = (value) => {
+  const normalized = String(value ?? '').trim();
+  if (!normalized) return '';
+  if (normalized.length > 64 || !/^[A-Za-z0-9._/-]+$/.test(normalized)) {
+    throw new Error('codigo_legado_referencia_invalido');
+  }
+  return normalized;
+};
 
 // Sanitização genérica de entradas para entidades críticas (previne XSS e payloads suspeitos)
 // Acionado por automações de entidade em events: create/update
@@ -88,6 +102,47 @@ Deno.serve(async (req) => {
         } catch {}
         return Response.json({ error: 'escopo_multiempresa_obrigatorio' }, { status: 400 });
       }
+    }
+
+    const legacyField = LEGACY_REFERENCE_FIELDS[event.entity_name];
+    if (legacyField && Object.prototype.hasOwnProperty.call(enriched, legacyField)) {
+      let legacyCode = '';
+      try {
+        legacyCode = normalizeLegacyReferenceCode(enriched[legacyField]);
+      } catch {
+        return Response.json({ error: 'legacy_reference_invalid' }, { status: 400 });
+      }
+      if (legacyCode || oldData?.[legacyField]) {
+        const groupId = enriched?.group_id || enriched?.grupo_id || null;
+        if (!groupId) {
+          return Response.json({ error: 'group_id_required_for_legacy_reference' }, { status: 400 });
+        }
+
+        const empresaId = event.entity_name === 'Colaborador'
+          ? (enriched?.empresa_alocada_id || enriched?.empresa_id || null)
+          : (enriched?.empresa_id || null);
+        if (empresaId) {
+          const empresas = await base44.asServiceRole.entities.Empresa.filter({ id: empresaId });
+          const empresa = Array.isArray(empresas) ? empresas[0] : null;
+          const empresaGroupId = empresa?.group_id || empresa?.grupo_id || empresa?.grupo_empresarial_id || null;
+          if (!empresa || String(empresaGroupId || '') !== String(groupId)) {
+            return Response.json({ error: 'empresa_outside_group' }, { status: 403 });
+          }
+        }
+
+        if (legacyCode) {
+          const matches = await base44.asServiceRole.entities[event.entity_name].filter({ group_id: groupId });
+          const normalizedCode = legacyCode.toLocaleUpperCase('pt-BR');
+          const duplicate = (Array.isArray(matches) ? matches : []).some((item) => (
+            String(item?.id) !== String(event.entity_id)
+            && String(item?.[legacyField] || '').trim().toLocaleUpperCase('pt-BR') === normalizedCode
+          ));
+          if (duplicate) {
+            return Response.json({ error: 'legacy_reference_duplicate_in_group' }, { status: 409 });
+          }
+        }
+      }
+      enriched = { ...enriched, [legacyField]: legacyCode };
     }
 
     // Criptografia de campos sensíveis (AES-GCM com BACKUP_ENCRYPTION_KEY)

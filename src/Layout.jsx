@@ -752,6 +752,7 @@ function LayoutContent({ children, currentPageName }) {
           Entrega: 'Expedição', Romaneio: 'Expedição',
           Fornecedor: 'Compras', SolicitacaoCompra: 'Compras', OrdemCompra: 'Compras',
           Produto: 'Estoque', MovimentacaoEstoque: 'Estoque',
+          TabelaPreco: 'Cadastros', Colaborador: 'Cadastros',
           ContaPagar: 'Financeiro', ContaReceber: 'Financeiro', CentroCusto: 'Financeiro',
           PerfilAcesso: 'Administração', User: 'Administração', Evento: 'Agenda'
         };
@@ -792,9 +793,27 @@ function LayoutContent({ children, currentPageName }) {
       }
     };
 
+    const LEGACY_FIELD_RBAC = {
+      TabelaPreco: {
+        field: 'codigo_tabela_legado',
+        section: ['Produtos', 'TabelaPreco', 'codigo_tabela_legado'],
+      },
+      Colaborador: {
+        field: 'codigo_vendedor_legado',
+        section: ['Pessoas', 'Colaborador', 'codigo_vendedor_legado'],
+      },
+    };
+
+    const checkLegacyFieldRBAC = async (entityName, action, data) => {
+      const rule = LEGACY_FIELD_RBAC[entityName];
+      if (!rule || !Object.prototype.hasOwnProperty.call(data || {}, rule.field)) return;
+      await checkRBAC(entityName, action, rule.section, action);
+    };
+
     const wrapEntity = (api, name) => {
       if (!api || api.__wrappedContext === true || name === 'AuditLog') return;
       const orig = {
+        get: typeof api.get === 'function' ? api.get.bind(api) : null,
         create: typeof api.create === 'function' ? api.create.bind(api) : null,
         bulkCreate: typeof api.bulkCreate === 'function' ? api.bulkCreate.bind(api) : null,
         update: typeof api.update === 'function' ? api.update.bind(api) : null,
@@ -810,12 +829,17 @@ function LayoutContent({ children, currentPageName }) {
       if (orig.create) {
         api.create = async (data) => {
           await checkRBAC(name, 'criar');
+          await checkLegacyFieldRBAC(name, 'editar', data);
           const res = await orig.create(stamp(sanitizeOnWrite(data)));
+          const legacyRule = LEGACY_FIELD_RBAC[name];
+          const legacyAudit = legacyRule && Object.prototype.hasOwnProperty.call(data || {}, legacyRule.field)
+            ? { [legacyRule.field]: res?.[legacyRule.field] || null }
+            : res;
           try { await base44.entities.AuditLog.create({
             usuario: user?.full_name || user?.email || 'Usuário',
             usuario_id: user?.id,
             acao: 'Criação', modulo: 'Sistema', tipo_auditoria: 'entidade',
-            entidade: name, registro_id: res?.id, dados_novos: res,
+            entidade: name, registro_id: res?.id, dados_anteriores: null, dados_novos: legacyAudit,
             empresa_id: empresaAtual?.id || null,
             group_id: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
             data_hora: new Date().toISOString(),
@@ -832,7 +856,16 @@ function LayoutContent({ children, currentPageName }) {
 
       if (orig.bulkCreate) {
         api.bulkCreate = async (arr) => {
-          const stamped = Array.isArray(arr) ? arr.map((x) => stamp(sanitizeOnWrite(x))) : arr;
+          const items = Array.isArray(arr) ? arr : [];
+          const legacyRule = LEGACY_FIELD_RBAC[name];
+          const hasLegacyReference = Boolean(legacyRule && items.some((item) => String(item?.[legacyRule.field] || '').trim()));
+          if (hasLegacyReference) {
+            await checkRBAC(name, 'importar');
+            for (const item of items) {
+              await checkLegacyFieldRBAC(name, 'editar', item);
+            }
+          }
+          const stamped = Array.isArray(arr) ? items.map((x) => stamp(sanitizeOnWrite(x))) : arr;
           const res = await orig.bulkCreate(stamped);
           try { await base44.entities.AuditLog.create({
             usuario: user?.full_name || user?.email || 'Usuário',
@@ -850,12 +883,19 @@ function LayoutContent({ children, currentPageName }) {
       if (orig.update) {
         api.update = async (id, data) => {
           await checkRBAC(name, 'editar');
+          await checkLegacyFieldRBAC(name, 'editar', data);
+          const legacyRule = LEGACY_FIELD_RBAC[name];
+          const legacyFieldChanged = Boolean(legacyRule && Object.prototype.hasOwnProperty.call(data || {}, legacyRule.field));
+          const beforeLegacy = legacyFieldChanged && orig.get ? await orig.get(id).catch(() => null) : null;
           const res = await orig.update(id, stamp(sanitizeOnWrite(data)));
           try { await base44.entities.AuditLog.create({
             usuario: user?.full_name || user?.email || 'Usuário',
             usuario_id: user?.id,
             acao: 'Edição', modulo: 'Sistema', tipo_auditoria: 'entidade',
-            entidade: name, registro_id: id, dados_novos: data,
+            entidade: name,
+            registro_id: id,
+            dados_anteriores: legacyFieldChanged ? { [legacyRule.field]: beforeLegacy?.[legacyRule.field] || null } : null,
+            dados_novos: legacyFieldChanged ? { [legacyRule.field]: res?.[legacyRule.field] || null } : data,
             empresa_id: empresaAtual?.id || null,
             group_id: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
             data_hora: new Date().toISOString(),
@@ -1087,7 +1127,6 @@ function LayoutContent({ children, currentPageName }) {
         } catch (error) { reportLayoutFailure('Falha ao auditar navegacao', error, { path: location.pathname }); }
       })();
     } catch (error) { reportLayoutFailure('Falha ao preparar auditoria de navegacao', error, { path: location.pathname }); }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, user?.id, empresaAtual?.id, moduleName]);
   useEffect(() => {
             if (!user) return;

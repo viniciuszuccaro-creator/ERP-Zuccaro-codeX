@@ -1,5 +1,74 @@
 const firstText = (...values) => values.map((value) => String(value || '').trim()).find(Boolean) || '';
 
+export const LEGACY_REFERENCE_CODE_SPECS = {
+  TabelaPreco: { field: 'codigo_tabela_legado', maxLength: 64 },
+  Colaborador: { field: 'codigo_vendedor_legado', maxLength: 64 },
+};
+
+export const normalizeLegacyReferenceCode = (value, maxLength = 64) => {
+  const normalized = String(value ?? '').trim();
+  if (!normalized) return '';
+  if (normalized.length > maxLength || !/^[A-Za-z0-9._/-]+$/.test(normalized)) {
+    throw new Error('Codigo legado invalido: use ate 64 caracteres alfanumericos, ponto, hifen, barra ou sublinhado.');
+  }
+  return normalized;
+};
+
+export const applyLegacyReferenceCodePolicy = ({ entityName, record = {}, records = [], currentId = null } = {}) => {
+  const spec = LEGACY_REFERENCE_CODE_SPECS[entityName];
+  if (!spec || !Object.prototype.hasOwnProperty.call(record, spec.field)) return record;
+
+  const code = normalizeLegacyReferenceCode(record[spec.field], spec.maxLength);
+  if (!code) return { ...record, [spec.field]: '' };
+
+  const groupId = firstText(record.group_id, record.grupo_id);
+  if (!groupId) {
+    throw new Error('group_id obrigatorio para codigo legado de referencia.');
+  }
+
+  const normalizedCode = code.toLocaleUpperCase('pt-BR');
+  const duplicate = records.find((item) => (
+    firstText(item.id) !== firstText(currentId)
+    && firstText(item.group_id, item.grupo_id) === groupId
+    && firstText(item[spec.field]).toLocaleUpperCase('pt-BR') === normalizedCode
+  ));
+  if (duplicate) {
+    const error = new Error('Codigo legado duplicado no grupo para este cadastro.');
+    error.duplicate = { type: spec.field, existingId: duplicate.id };
+    throw error;
+  }
+
+  return { ...record, [spec.field]: code };
+};
+
+export const assertLegacyReferenceScope = ({
+  entityName,
+  record = {},
+  before = null,
+  currentGroupId = null,
+  companies = [],
+} = {}) => {
+  const spec = LEGACY_REFERENCE_CODE_SPECS[entityName];
+  if (!spec || !firstText(record[spec.field], before?.[spec.field])) return true;
+
+  const groupId = firstText(record.group_id, record.grupo_id);
+  const beforeGroupId = firstText(before?.group_id, before?.grupo_id);
+  if (!groupId || (beforeGroupId && beforeGroupId !== groupId) || (currentGroupId && firstText(currentGroupId) !== groupId)) {
+    throw new Error('Escopo de grupo invalido para codigo legado de referencia.');
+  }
+
+  const empresaField = entityName === 'Colaborador' ? 'empresa_alocada_id' : 'empresa_id';
+  const empresaId = firstText(record[empresaField], record.empresa_id);
+  if (!empresaId) return true;
+
+  const empresa = (Array.isArray(companies) ? companies : []).find((item) => firstText(item?.id) === empresaId);
+  const empresaGroupId = firstText(empresa?.group_id, empresa?.grupo_id, empresa?.grupo_empresarial_id);
+  if (!empresa || empresaGroupId !== groupId) {
+    throw new Error('Empresa externa ao grupo bloqueada para codigo legado de referencia.');
+  }
+  return true;
+};
+
 export const MASTER_CODE_SPECS = {
   Produto: { field: 'codigo', width: 4 },
   Cliente: { field: 'codigo', width: 6 },
@@ -112,6 +181,7 @@ export const findDuplicateMaster = ({ entityName, record = {}, records = [] } = 
 export const applyMasterCadastroOnCreate = ({ entityName, record = {}, records = [], sequenceValue = 0 } = {}) => {
   const groupId = firstText(record.group_id, record.grupo_id);
   const requiresGroup = Boolean(MASTER_CODE_SPECS[entityName])
+    || Boolean(LEGACY_REFERENCE_CODE_SPECS[entityName] && firstText(record[LEGACY_REFERENCE_CODE_SPECS[entityName].field]))
     || ['Cliente', 'Fornecedor', 'Transportadora', 'Produto'].includes(entityName);
   if (requiresGroup && !groupId) {
     const error = new Error('group_id obrigatorio para cadastro mestre.');
@@ -144,5 +214,5 @@ export const applyMasterCadastroOnCreate = ({ entityName, record = {}, records =
     error.duplicate = duplicate;
     throw error;
   }
-  return withCode;
+  return applyLegacyReferenceCodePolicy({ entityName, record: withCode, records });
 };
