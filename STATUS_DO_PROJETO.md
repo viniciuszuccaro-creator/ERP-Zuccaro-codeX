@@ -5373,3 +5373,20 @@ Checklist inicial:
 - A instancia foi confirmada `Stopped`/`Manual` apos a intervencao manual; TCP e Named Pipes permanecem desativados conforme a configuracao isolada.
 - Nenhum dado, credencial, TPS, snapshot, MDF/LDF, hash detalhado ou relatorio local foi adicionado ao GitHub. Mudanca exclusivamente documental no repositorio; testes de runtime dispensados e `git diff --check` obrigatorio no fechamento.
 - Proximo passo obrigatorio: separar localmente os 172 candidatos por sigla dos 585 vinculos bloqueados, consolidar as 69 siglas duplicadas e comparar somente a taxonomia legada com as chaves RBAC existentes, sem liberar acesso.
+
+### Gate 18 - Filas RBAC e comparacao com chaves atuais
+
+- A separacao foi executada somente sobre os hashes ja extraidos; a instancia SQL nao foi iniciada nesta etapa.
+- A fonte canonicamente reutilizada no ERP atual foi `PerfilAcesso.permissoes` do snapshot vigente, respeitando os aliases de acao definidos em `entityGuardPolicy`.
+- Foram identificadas 395 chaves RBAC canonicas distintas no conjunto atual de perfis. As chaves foram convertidas com a mesma chave DPAPI e somente seus hashes foram comparados.
+- A primeira geracao foi interrompida antes de gravar as filas porque o PowerShell passou as 395 chaves como argumentos separados ao construtor de `HashSet`. O preenchimento foi corrigido para insercao item a item e toda a saida foi regenerada.
+- A fila `legacy-user-rbac-candidate-queue.json` contem 172 vinculos com definicao legada unica por sigla, todos marcados `CANDIDATE_NOT_AUTHORIZED`.
+- A fila `legacy-user-rbac-blocked-queue.json` contem 585 vinculos em quarentena: 263 sem definicao legada e 322 associados a siglas duplicadas.
+- As 69 siglas duplicadas foram consolidadas em grupos de revisao, preservando os hashes de suas definicoes sem escolher automaticamente uma definicao vencedora.
+- Dezesseis usuarios sem qualquer vinculo RBAC foram separados em fila propria e permanecem sem acesso de Grupo ou Empresa.
+- A comparacao exata encontrou zero sigla legada igual a uma das 395 chaves canonicas atuais e zero candidato diretamente mapeavel. Nenhuma aproximacao textual ou permissao por semelhanca foi aplicada.
+- Foram geradas seis filas/resumos somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, incluindo candidatos, bloqueados, duplicatas, usuarios sem vinculo e comparacao com o RBAC atual.
+- Validacao final: 172 candidatos; 585 bloqueados; 757 vinculos cobertos; 69 grupos duplicados; 16 usuarios sem vinculo; 2.262 hashes validos; zero hash invalido; zero acesso ou importacao autorizada.
+- A instancia permanece `Stopped`/`Manual`. Nenhum dado, credencial, hash detalhado, TPS, snapshot, MDF/LDF ou relatorio local foi adicionado ao GitHub.
+- Mudanca exclusivamente documental no repositorio; testes de runtime dispensados e `git diff --check` obrigatorio no fechamento.
+- Proximo passo obrigatorio: preparar uma extracao local e sanitizada da taxonomia das 332 definicoes (`SIGLA`, `MODULO`, `NOMEPROCEDURE` e `DESCRICAOUSO`), consolidar as duplicatas semanticamente e produzir uma matriz de traducao para revisao humana, sem ativar permissoes.
