@@ -5685,3 +5685,19 @@ Checklist inicial:
 - A instancia `MSSQL$ERPZLEGACY` foi encerrada e confirmada como `Stopped`/`Manual`; SQL Agent permaneceu `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
 - A alteracao do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
 - Proximo passo obrigatorio: gerar somente no HD o staging nominal protegido dos 1.222 produtos `REVENDA`, preservando os 24 inativos, validar codigo/descricao/unidade e colocar referencias, campos fiscais duvidosos e qualquer inconsistencia em quarentena, sempre com `import_authorized=false`.
+
+### Gate 18 - Staging nominal protegido de produtos de revenda
+
+- O staging nominal foi gerado exclusivamente no HD para as 1.222 linhas cuja classificacao e exatamente `TIPOMATERIAL=REVENDA`. Os 1.137 materiais de consumo e o unico material de producao permaneceram fora do lote.
+- Antes da extracao, o contrato estrutural foi corrigido de 19 para 14 campos permitidos. Cinco destinos inicialmente supostos nao existem de forma comprovada no cadastro `Produto` atual: prazo de garantia, descricao separada do site, titulo SEO, marca SEO e MPN; eles retornaram para `REVIEW_MAPPING`, sem criacao automatica de campos.
+- O contrato local final possui 14 colunas `ALLOW_STRUCTURAL`, 60 em revisao e 100 bloqueadas, totalizando 174/174 com `import_authorized=false`. Foram reutilizados somente campos existentes de `Produto` e a politica de migracao atual.
+- Foram produzidos 1.208 candidatos e 14 registros em quarentena, reconciliando 1.222/1.222 sem descarte. Os 1.198 ativos e 24 inativos foram preservados; nenhum inativo foi ativado automaticamente.
+- As unidades `UN`, `PC`, `KG`, `CX` e `MT` foram mantidas; `M²` foi normalizada para `M2` e `LTS` para `LT`, conforme os codigos ja aceitos pelo importador existente. As 14 linhas com `BD`, `GRS`, `PAR`, `RL` ou `SER` ficaram em quarentena por falta de mapeamento homologado.
+- Todos os candidatos possuem codigo legado, descricao, unidade valida, `tipo_item=Revenda`, contexto do unico Grupo canonico, `scope_type=grupo`, empresa vazia e compartilhamento de Grupo. Estoque atual, reservado e disponivel foram fixados em zero porque o estoque inicial pertence a lote posterior independente.
+- O lote apresentou zero codigo duplicado, zero fingerprint duplicado, zero candidato invalido, zero quarentena sem motivo e zero celula com risco de formula CSV. Todas as 1.222 linhas mantem `import_authorized=false`, `confirmado=false` e `importacao_erp=false`.
+- A geracao foi repetida integralmente e produziu os mesmos hashes para candidatos e quarentena, comprovando idempotencia. Os hashes gravados no resumo agregado correspondem aos arquivos finais.
+- `produtos-revenda-candidatos.csv` permanece em `03_EXPORT_STAGING\PRODUTOS\PRODUTOS-LEGACY-TID-001`; `produtos-revenda-quarentena.csv` permanece em `05_QUARANTINE\PRODUTOS\PRODUTOS-LEGACY-TID-001`; contrato e resumo permanecem em `04_REPORTS`. Todos estao somente em `D:\BACKUP ERP ANTIGO - CODEX`, com ACL exclusiva do usuario local.
+- Nenhum produto foi criado ou atualizado no ERP. Nenhum codigo, descricao, CSV/JSON local, fingerprint, hash, TPS, MDF/LDF ou relatorio do HD foi adicionado ao GitHub.
+- A instancia `MSSQL$ERPZLEGACY` foi encerrada e confirmada como `Stopped`/`Manual`; SQL Agent permaneceu `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A alteracao do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
+- Proximo passo obrigatorio: preparar uma fila local de homologacao para as cinco unidades sem destino (`BD`, `GRS`, `PAR`, `RL`, `SER`) e inventariar de forma agregada as referencias/fiscais adiadas dos 1.208 candidatos, sem importar ou criar cadastros automaticamente.
