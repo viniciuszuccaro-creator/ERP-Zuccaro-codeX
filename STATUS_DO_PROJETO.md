@@ -5543,3 +5543,20 @@ Checklist inicial:
 - A instancia `MSSQL$ERPZLEGACY` permanece `Stopped`/`Manual`. Nenhuma consulta ao banco legado, gravacao no ERP ou alteracao de runtime foi realizada neste lote.
 - Nenhum XLSX, CSV, nome, codigo individual, dado pessoal, ID bruto, hash detalhado, TPS, MDF/LDF ou relatorio local foi adicionado ao GitHub. A mudanca do repositorio e exclusivamente documental; testes de runtime foram dispensados e `git diff --check` e obrigatorio no fechamento.
 - Proximo passo obrigatorio: o proprietario deve preencher a aba `Revisao`. Somente linhas cujo resultado calculado esteja pronto poderao compor um lote posterior; pendentes, rejeitadas, incompletas e todas as linhas da aba `Bloqueados` permanecem sem importacao.
+
+### Gate 18 - Inventario estrutural agregado de fornecedores
+
+- O lote reutilizou a entidade e o formulario `Fornecedor` existentes. Nenhum importador, entidade, tela, rota, componente ou fluxo paralelo foi criado.
+- O catalogo de `LEGACY_TID_EXETPS.dbo.Fornecedores` possui 71 colunas. O contrato local classificou 13 para futuro staging controlado, 29 para mapeamento ou revisao de lacuna e 29 campos livres/historicos como bloqueados.
+- CPF/tipo de pessoa, bairro, website, endereco de cobranca, dados bancarios, referencias contabeis e padroes de pedido de compra ficaram adiados. Campos importantes somente serao incorporados ao cadastro existente apos confirmar ausencia de equivalente, uso operacional, RBAC sensivel e escopo Grupo/Empresa.
+- A consulta foi exclusivamente agregada e executada com o banco em `READ_ONLY`. Nenhuma linha nominal, documento, nome, endereco, e-mail ou dado bancario foi exportado.
+- A tabela possui 1.061 fornecedores e 1.061 codigos legados distintos, sem codigo ou nome ausente. As distribuicoes por situacao, tipo de fornecedor e tipo de pessoa reconciliaram 100% das linhas.
+- Todos os 1.061 registros estao marcados como ativos. Ha 816 fornecedores de despesas, 180 de custos e 65 classificados para ambos; 987 sao pessoas juridicas e 74 pessoas fisicas.
+- Existem 109 e-mails preenchidos, dos quais cinco falharam na validacao basica de formato e deverao seguir para revisao antes de qualquer staging nominal.
+- O documento esperado esta preenchido em todos os registros. Oitocentos e quarenta e nove possuem somente digitos e comprimento compativel; 212 possuem formato incompativel e permanecem bloqueados ate a validacao completa por digito verificador.
+- Foram encontrados dez grupos de documento duplicado, envolvendo 25 linhas e 15 linhas adicionais a conciliar. Nenhum registro vencedor foi escolhido automaticamente.
+- O contrato `legacy-supplier-extraction-contract.json` e o resumo `legacy-supplier-structural-summary.json` foram salvos somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com SHA-256 verificado e ACL exclusiva do usuario local.
+- A verificacao confirmou zero valor de e-mail, CPF ou CNPJ formatado nos dois relatorios. Os helpers e o resultado tecnico temporario foram removidos do projeto antes do fechamento.
+- A instancia `MSSQL$ERPZLEGACY` foi encerrada no bloco `finally` e permanece `Stopped`/`Manual`; TCP e Named Pipes continuam desativados conforme a configuracao isolada.
+- Nenhum dado pessoal, CSV nominal, JSON local, hash detalhado, TPS, MDF/LDF ou relatorio foi adicionado ao GitHub. A mudanca do repositorio e exclusivamente documental; testes de runtime foram dispensados e `git diff --check` e obrigatorio no fechamento.
+- Proximo passo obrigatorio: revisar no cadastro `Fornecedor` existente as lacunas de tipo de pessoa/CPF, bairro, website e endereco de cobranca; implementar somente os campos realmente necessarios com Grupo/Empresa, RBAC, sanitizacao e auditoria, antes de gerar staging nominal protegido e quarentena.
