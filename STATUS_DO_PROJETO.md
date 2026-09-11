@@ -5436,3 +5436,22 @@ Checklist inicial:
 - O arquivo auxiliar de inspecao criado pelo gerador foi removido para evitar duplicacao de conteudo sanitizado. Nenhuma planilha, CSV, dado legado, perfil, hash detalhado ou relatorio local foi adicionado ao GitHub.
 - A instancia SQL permanece `Stopped`/`Manual`; nenhuma alteracao de runtime foi realizada. Mudanca do repositorio exclusivamente documental, com `git diff --check` obrigatorio no fechamento.
 - Proximo passo obrigatorio: o proprietario deve preencher a aba `Revisao`. Somente linhas com `PRONTO PARA HOMOLOGACAO` poderao compor um lote posterior de homologacao; linhas pendentes, rejeitadas, invalidas, incompletas ou em quarentena permanecem sem acesso e sem importacao.
+
+### Gate 18 - Encerramento do RBAC legado e inventario agregado de clientes
+
+- O proprietario classificou as siglas, os vinculos e a planilha de revisao do RBAC legado como material apenas de referencia. Todo o pacote foi arquivado somente no HD, sem importacao de permissao.
+- As 44 contas antigas nao serao migradas. Usuarios e acessos serao cadastrados manualmente no ERP atual, sem leitura ou reaproveitamento de senhas legadas.
+- Foi criado somente no staging local o contrato das 156 colunas de `LEGACY_TID_EXETPS.dbo.Clientes`: 37 campos permitidos para uso estrutural ou futuro staging controlado e 119 campos bloqueados por falta de significado ou destino confirmado.
+- Campos livres, comentarios, historicos e saldos antigos permanecem fora da extracao. Nenhum importador, entidade, tela, rota ou funcionalidade paralela foi criado.
+- A tabela mestre possui 22.895 clientes e 22.895 codigos legados distintos, sem codigo ou nome ausente. A reconciliacao por situacao e tipo cobriu 100% das linhas.
+- A distribuicao agregada possui 21.747 clientes ativos, 39 inativos e 1.109 potenciais; 18.565 sao pessoas fisicas e 4.330 pessoas juridicas.
+- A pre-validacao usa `TIPOCLIENTE`: pessoa fisica exige CPF e pessoa juridica exige CGC/CNPJ. Zeros de preenchimento sao tratados como ausencia e nao como documento valido.
+- Todos os 22.895 registros possuem o documento esperado preenchido; 18.485 passam na validacao inicial de digitos e comprimento, e 4.410 apresentam formato incompativel e deverao seguir para quarentena antes de qualquer carga.
+- A correlacao em fluxo sequencial encontrou oito grupos de documento duplicado, envolvendo 24 registros e 16 linhas adicionais a conciliar. O calculo usou HMAC-SHA256 apenas em memoria, com chave aleatoria descartada ao final; nenhum documento ou hash individual foi persistido.
+- Os relatorios agregados nao possuem nomes, documentos, enderecos, e-mails ou linhas brutas. Contrato, contagens e resultados detalhados permanecem exclusivamente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- O inventario confirmou outros cadastros mestres no backup: `Fornecedores` com aproximadamente 1.061 registros, `Funcionarios` com 83, `CadastroMateriais` com 2.360, `Transportadoras` com 14, `Vendedores` com 34 e `Bancos` com 164.
+- Funcionarios serao tratados como dados pessoais de RH em lote proprio e nao serao confundidos com usuarios de autenticacao. Fornecedores, materiais/produtos e demais cadastros tambem terao contratos e quarentenas independentes antes de qualquer importacao.
+- Uma consulta de duplicidade com alto pedido de memoria foi cancelada sem alterar o banco e substituida pelo processamento sequencial de baixo consumo. Nenhum resultado parcial foi aceito.
+- A instancia SQL foi encerrada apos as consultas e permanece `Stopped`/`Manual`; TCP e Named Pipes estao desativados. Nenhuma importacao direta foi executada.
+- Nenhum dado pessoal, credencial, arquivo TPS, MDF/LDF, CSV nominal, planilha ou relatorio local foi adicionado ao GitHub. A mudanca no repositorio e exclusivamente documental; testes de runtime foram dispensados e `git diff --check` e obrigatorio no fechamento.
+- Proximo passo obrigatorio: preparar o lote nominal local de clientes usando o `Cliente` existente, validar CPF/CNPJ por digito verificador, aplicar idempotencia por `CODIGOCLIENTE` e documento normalizado no Grupo CPA e separar invalidos, duplicados ou sem identificacao em `05_QUARANTINE`, sem importar diretamente e sem enviar dados ao GitHub.
