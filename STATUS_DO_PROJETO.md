@@ -5779,3 +5779,20 @@ Checklist inicial:
 - A mudanca do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
 - Pendencia `BLOCKED`: Comercial/Financeiro deve homologar o significado e o escopo dos tres destinos candidatos e decidir se os cinco campos sem equivalente possuem uso operacional. Nenhum dos oito campos pode ser importado antes dessa decisao e do RBAC especifico para custo, preco, margem, desconto e comissao.
 - Proximo passo recomendado: enquanto as homologacoes fiscal e comercial permanecem bloqueadas, revisar estruturalmente os 13 campos funcionais com valor efetivo nos produtos candidatos, sem extrair valores ou criar campos automaticamente.
+
+### Gate 18 - Revisao estrutural funcional dos produtos de revenda
+
+- Os 13 campos funcionais adiados dos 1.208 produtos candidatos foram revisados somente por estrutura, quantidade e cardinalidade. Nenhum texto, peso, quantidade, indicador ou produto afetado foi extraido para a matriz ou para o resumo agregado.
+- Tres campos possuem somente destino estrutural candidato: material importado pode traduzir para `Produto.origem_mercadoria`, peso de barra pode corresponder a `Produto.fatores_conversao.kg_por_peca`, e quantidade de metros pode corresponder a `Produto.fatores_conversao.metros_por_peca`.
+- Os candidatos nao foram aceitos automaticamente. Origem exige traducao de enum; pesos e metros exigem confirmacao de unidade, embalagem e formula de conversao para evitar alterar estoque, venda, producao e expedicao.
+- Dez campos nao possuem equivalente exato comprovado: descricao externa, material com defeito, ocultacao em consultas, produto controlado, dias de garantia, quantidade por embalagem, limite de lote, recebimento de pintura, tipo de calculo e trava de descricao de venda. Nenhum campo novo foi criado por similaridade.
+- Dez dos 13 campos apresentam somente zero nas 1.208 linhas. Eles permanecem documentados e bloqueados, pois zero pode representar configuracao valida ou apenas ausencia no legado.
+- Uso diferente de zero foi identificado apenas por contagem: descricao externa em um produto, peso de barra em 614 produtos e trava de descricao de venda em tres produtos. Nenhum desses valores ou produtos foi exposto.
+- Peso de barra possui 388 valores nao zerados distintos e exige reconciliacao com peso liquido/bruto e fatores de conversao antes de qualquer aproveitamento. A validacao encontrou zero valor negativo.
+- A matriz `produtos-revisao-funcional-estrutural.csv` possui 13 linhas, todas com `values_extracted=false`, permissao ainda nao confirmada, `PENDING_FUNCTIONAL_HOMOLOGATION` e `import_authorized=false`.
+- A geracao foi repetida e confirmou o mesmo hash, ACL sem heranca e exclusiva do usuario local, 13/13 linhas nao autorizadas, zero destino aplicado e zero importacao.
+- A matriz permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\05_QUARANTINE\PRODUTOS\PRODUTOS-LEGACY-TID-001`; o resumo agregado permanece em `04_REPORTS`. Nenhum CSV/JSON local, texto, peso, quantidade, codigo individual, `group_id`, hash, TPS, MDF/LDF ou relatorio do HD integra o GitHub.
+- A instancia `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A mudanca do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
+- Pendencia `BLOCKED`: Operacao/Estoque deve homologar significado e unidade dos tres destinos candidatos e decidir se os dez campos sem equivalente possuem uso operacional. Nenhum campo funcional pode ser importado antes dessa decisao.
+- Proximo passo recomendado: encerrar estruturalmente os campos adiados sem valor efetivo, incluindo os nove campos de e-commerce vazios, para impedir criacao desnecessaria de schema; depois avancar para o inventario agregado de estoque legado sem misturar quantidades ao cadastro mestre de produtos.
