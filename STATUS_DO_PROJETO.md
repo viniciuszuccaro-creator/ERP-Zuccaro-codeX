@@ -5732,3 +5732,18 @@ Checklist inicial:
 - A instancia `MSSQL$ERPZLEGACY` foi encerrada e confirmada como `Stopped`/`Manual`; SQL Agent permaneceu `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
 - A alteracao do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
 - Proximo passo obrigatorio: preparar no HD a homologacao das 37 classes legadas contra `GrupoProduto` e isolar a unica classificacao fiscal ausente, sempre por correspondencia exata e com RBAC. As quatro referencias sem mestre e os 443 valores sem correspondencia permanecem bloqueados; nenhuma importacao esta autorizada.
+
+### Gate 18 - Filas protegidas de classes e pendencia fiscal de produtos
+
+- Foi preparada somente no HD a fila de homologacao das 37 classes legadas usadas pelos 1.208 produtos candidatos. A fila reutiliza o destino existente `GrupoProduto`; nenhuma entidade, tela, rota, campo ou importador paralelo foi criado.
+- As 37 classes possuem correspondencia unica em `LEGACY_TID_EXETPS.dbo.ClasseMateriais`, sem classe ausente ou ambigua. As contagens de uso reconciliam exatamente 1.208/1.208 candidatos.
+- Cada linha local preserva codigo, nome, tipo, setor e situacao legados para revisao, alem do contexto do unico Grupo canonico. Os campos de destino, decisao, revisor, data e justificativa permanecem vazios.
+- O ERP atual possui `GrupoProduto` com codigo, nome, natureza e NCM padrao. O usuario atual, entretanto, nao possui permissao para consultar os registros do cadastro; o RBAC foi respeitado e nenhum `target_grupo_produto_id` foi atribuido ou inventado.
+- A unica classificacao fiscal sem correspondencia no mestre legado foi isolada em fila propria, contendo somente a referencia local e a contagem de um produto afetado. Nenhum produto, descricao ou outro dado nominal foi associado ao relatorio agregado.
+- As duas filas totalizam 38 linhas, todas com `import_authorized=false`. A validacao confirmou zero destino atribuido, zero classe ausente/ambigua, zero risco de formula CSV e zero importacao no ERP.
+- A geracao foi repetida integralmente e produziu os mesmos hashes para as duas filas. Os hashes finais correspondem ao resumo local, e os arquivos possuem ACL sem heranca e exclusiva do usuario local.
+- `produtos-homologacao-classes.csv` e `produtos-classificacao-fiscal-nao-conciliada.csv` permanecem somente em `D:\BACKUP ERP ANTIGO - CODEX\05_QUARANTINE\PRODUTOS\PRODUTOS-LEGACY-TID-001`; o resumo agregado permanece em `04_REPORTS`.
+- Nenhum codigo ou nome de classe, referencia fiscal, `group_id`, CSV/JSON local, hash, TPS, MDF/LDF ou relatorio do HD integra o GitHub. A instancia `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A mudanca do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
+- Pendencia `BLOCKED`: um usuario autorizado deve mapear cada classe para um `GrupoProduto` do mesmo Grupo e um responsavel fiscal deve decidir a unica classificacao ausente. Ate isso ocorrer, as 38 linhas e os produtos dependentes permanecem sem autorizacao de importacao.
+- Proximo passo recomendado: enquanto essas decisoes humanas permanecem bloqueadas, revisar estruturalmente os 14 campos fiscais com uso efetivo nos produtos candidatos e confirmar destinos ja existentes, sem extrair valores nominais nem alterar schema automaticamente.
