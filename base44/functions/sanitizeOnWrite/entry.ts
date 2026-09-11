@@ -65,7 +65,47 @@ const normalizeSupplierPersonType = (value, document) => {
   throw new Error('supplier_person_type_invalid');
 };
 
-const AUDIT_PROTECTED_KEY = /(token|senha|password|secret|cpf|cnpj|rg|inscricao|email|telefone|whatsapp|endereco|bairro|cep|conta|agencia|certificado)/i;
+const isEncryptedValue = (value) => (
+  (typeof value === 'string' && value.startsWith('enc:gcm:'))
+  || (value && typeof value === 'object' && value.enc === 'gcm/v1')
+);
+
+const normalizeSupplierRg = (value) => {
+  if (isEncryptedValue(value)) return value;
+  const rg = String(value || '').trim().toUpperCase();
+  if (!rg) return '';
+  if (rg.length > 30 || !/^[0-9A-Z.\-/\s]+$/.test(rg)) throw new Error('supplier_rg_invalid');
+  return rg;
+};
+
+const normalizeSupplierBoolean = (value) => {
+  if (typeof value === 'boolean') return value;
+  if (value === 1 || value === '1') return true;
+  if (value === 0 || value === '0' || value == null || value === '') return false;
+  const normalized = String(value).normalize('NFD').replace(/\p{Diacritic}/gu, '').trim().toLowerCase();
+  if (['sim', 's', 'true'].includes(normalized)) return true;
+  if (['nao', 'n', 'false'].includes(normalized)) return false;
+  throw new Error('supplier_simples_nacional_invalid');
+};
+
+const normalizeSupplierBankData = (value) => {
+  if (value == null || value === '') return {};
+  if (isEncryptedValue(value)) return value;
+  if (typeof value !== 'object' || Array.isArray(value)) throw new Error('supplier_bank_data_invalid');
+  if (Object.values(value).some(isEncryptedValue)) return value;
+  const banco = String(value.banco || '').replace(/[<>]/g, '').trim().slice(0, 120);
+  const agencia = String(value.agencia || '').replace(/[^0-9A-Za-z.\-/]/g, '').trim().slice(0, 30);
+  const conta = String(value.conta || '').replace(/[^0-9A-Za-z.\-/]/g, '').trim().slice(0, 40);
+  const rawType = String(value.tipo_conta || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').trim().toUpperCase();
+  if (![banco, agencia, conta, rawType].some(Boolean)) return {};
+  if (!banco || !conta) throw new Error('supplier_bank_data_incomplete');
+  const accountTypes = { CORRENTE: 'Corrente', POUPANCA: 'Poupanca', PAGAMENTO: 'Pagamento' };
+  const tipoConta = accountTypes[rawType || 'CORRENTE'];
+  if (!tipoConta) throw new Error('supplier_bank_account_type_invalid');
+  return { banco, agencia, conta, tipo_conta: tipoConta };
+};
+
+const AUDIT_PROTECTED_KEY = /(token|senha|password|secret|cpf|cnpj|rg|inscricao|email|telefone|whatsapp|endereco|bairro|cep|dados_bancarios|banco|pix|conta|agencia|certificado)/i;
 const sanitizeAuditValue = (value, key = '', depth = 0) => {
   if (depth > 6) return { truncado: true };
   if (AUDIT_PROTECTED_KEY.test(String(key))) return { protegido: true };
@@ -182,6 +222,20 @@ Deno.serve(async (req) => {
         } catch {
           return Response.json({ error: 'supplier_website_invalid' }, { status: 400 });
         }
+      }
+
+      try {
+        if (Object.prototype.hasOwnProperty.call(enriched, 'rg')) {
+          enriched = { ...enriched, rg: normalizeSupplierRg(enriched.rg) };
+        }
+        if (Object.prototype.hasOwnProperty.call(enriched, 'simples_nacional')) {
+          enriched = { ...enriched, simples_nacional: normalizeSupplierBoolean(enriched.simples_nacional) };
+        }
+        if (Object.prototype.hasOwnProperty.call(enriched, 'dados_bancarios')) {
+          enriched = { ...enriched, dados_bancarios: normalizeSupplierBankData(enriched.dados_bancarios) };
+        }
+      } catch (error) {
+        return Response.json({ error: error?.message || 'supplier_sensitive_fields_invalid' }, { status: 400 });
       }
 
       const groupId = enriched.group_id || enriched.grupo_id || oldData?.group_id || oldData?.grupo_id || null;
@@ -351,6 +405,7 @@ Deno.serve(async (req) => {
           registro_id: event.entity_id,
           descricao: 'Sanitização automática aplicada (prevenção XSS/injeções).',
           empresa_id: enriched?.empresa_id || data?.empresa_id || null,
+          group_id: enriched?.group_id || enriched?.grupo_id || data?.group_id || data?.grupo_id || null,
           dados_anteriores: sanitizeAuditValue(oldData) || null,
           dados_novos: sanitizeAuditValue({ ...patch, group_id: enriched?.group_id || data?.group_id || null }),
           data_hora: new Date().toISOString(),

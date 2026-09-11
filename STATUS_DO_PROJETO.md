@@ -5614,3 +5614,18 @@ Checklist inicial:
 - Scripts e log tecnico temporarios foram removidos. A instancia `MSSQL$ERPZLEGACY` permanece `Stopped`/`Manual`, com TCP e Named Pipes desativados.
 - Nenhum CSV, valor individual, dado pessoal, codigo de referencia, hash individual, chave, TPS, MDF/LDF ou relatorio local foi adicionado ao GitHub. A alteracao do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio no fechamento.
 - Proximo passo obrigatorio: revisar no cadastro `Fornecedor` existente os campos `simples_nacional`, RG e `dados_bancarios`; implementar somente lacunas operacionais confirmadas com RBAC por campo, criptografia, escopo Grupo/Empresa e auditoria protegida antes de qualquer homologacao sensivel.
+
+### Gate 18 - Campos fiscais e bancarios protegidos de fornecedores
+
+- O formulario e a entidade `Fornecedor` existentes foram ampliados com `rg`, `simples_nacional` e `dados_bancarios`, sem criar tela, rota, entidade, importador ou modulo paralelo.
+- RG aparece somente para pessoa fisica, aceita formato restrito e limite de 30 caracteres. O indicador do Simples Nacional e booleano e a traducao aceita somente valores explicitos. Dados bancarios usam allowlist de banco, agencia, conta e tipo de conta; quando preenchidos, banco e conta sao obrigatorios e o tipo fica limitado a corrente, poupanca ou pagamento.
+- As gravacoes exigem permissoes independentes `Cadastros.Pessoas.Fornecedor.rg.editar`, `Cadastros.Pessoas.Fornecedor.simples_nacional.editar` e `Cadastros.Pessoas.Fornecedor.dados_bancarios.editar` nos wrappers remoto e local. Campos sem permissao nao seguem no payload.
+- O escopo de Grupo/Empresa e a deduplicacao por documento continuam centralizados nas politicas existentes. Empresa externa ao Grupo e mudanca indevida do Grupo permanecem bloqueadas.
+- RG foi incorporado ao conjunto PII criptografado de fornecedor. Dados bancarios continuam atendidos pelo criptografador AES-GCM existente; envelopes criptografados nao sao expostos nem convertidos em texto pelo formulario durante edicoes posteriores.
+- Auditorias frontend e backend mascaram RG e o objeto bancario, incluindo banco, agencia, conta e PIX. O log backend agora carimba tambem `group_id` como campo proprio, alem de `empresa_id`, sem registrar valores sensiveis.
+- `CadastroFornecedorCompleto.jsx` permaneceu dentro do limite de refatoracao, com a nova secao fiscal/financeira incorporada ao helper `FornecedorFormSections.jsx` ja existente e sem adicionar aba.
+- Nenhum dos 43 codigos de banco, 38 pares agencia/conta, 15 RGs ou valor fiscal legado foi importado, exibido, colocado no status ou adicionado ao GitHub.
+- Validacoes: teste focado aprovado com 19/19; suite completa aprovada com 232/232; lint direcionado aprovado; sintaxe TypeScript dos hooks alterados aprovada; `npm run build` aprovado; `npm run audit:baseline` aprovado; `git diff --check` aprovado.
+- O build manteve apenas os avisos historicos de tamanho de chunk e imports estatico/dinamico. A auditoria baseline manteve dividas tecnicas globais ja conhecidas, sem falha e sem mascarar o resultado.
+- Este lote nao iniciou nem consultou o SQL Server legado. Nenhum CSV, valor individual, dado pessoal, hash, TPS, MDF/LDF, planilha ou relatorio local integra o diff.
+- Proximo passo obrigatorio: preparar somente no HD um contrato de homologacao sensivel para os 43 codigos de banco, 38 agencias/contas, 15 RGs e a traducao de `SIMPLESFEDERAL`; manter `import_authorized=false` e nao extrair valores nominais antes de confirmar mapeamentos, destino e permissoes.

@@ -1205,6 +1205,18 @@ const SUPPLIER_PROTECTED_FIELD_SCOPES = [
     fields: ['endereco_cobranca'],
     section: ['Pessoas', 'Fornecedor', 'endereco_cobranca'],
   },
+  {
+    fields: ['rg'],
+    section: ['Pessoas', 'Fornecedor', 'rg'],
+  },
+  {
+    fields: ['simples_nacional'],
+    section: ['Pessoas', 'Fornecedor', 'simples_nacional'],
+  },
+  {
+    fields: ['dados_bancarios'],
+    section: ['Pessoas', 'Fornecedor', 'dados_bancarios'],
+  },
 ];
 
 const assertLocalLegacyFieldAllowed = (entityName, record = {}) => {

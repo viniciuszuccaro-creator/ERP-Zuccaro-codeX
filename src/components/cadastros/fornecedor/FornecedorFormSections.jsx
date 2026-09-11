@@ -4,6 +4,7 @@ import { Star } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 
 const documentValue = (data) => data.cpf_cnpj || data.cpf || data.cnpj || "";
@@ -85,6 +86,39 @@ export function FornecedorContatoEnderecoSection({ formData, setFormData, handle
       <div><Label htmlFor="cobranca_cidade">Cidade</Label><Input id="cobranca_cidade" value={cobranca.cidade || ""} onChange={(e) => updateCobranca("cidade", e.target.value)} disabled={!canEditBilling} data-permission="Cadastros.Pessoas.Fornecedor.endereco_cobranca.editar" data-sensitive /></div>
       <div><Label htmlFor="cobranca_estado">Estado</Label><Input id="cobranca_estado" value={cobranca.estado || ""} onChange={(e) => updateCobranca("estado", e.target.value)} maxLength={2} disabled={!canEditBilling} data-permission="Cadastros.Pessoas.Fornecedor.endereco_cobranca.editar" data-sensitive /></div>
       <div><Label htmlFor="cobranca_cep">CEP</Label><Input id="cobranca_cep" value={cobranca.cep || ""} onChange={(e) => updateCobranca("cep", e.target.value)} maxLength={12} disabled={!canEditBilling} data-permission="Cadastros.Pessoas.Fornecedor.endereco_cobranca.editar" data-sensitive /></div>
+    </div>
+  );
+}
+
+export function FornecedorFiscalFinanceiroSection({ formData, setFormData, canEditRg, canEditSimplesNacional, canEditBankData }) {
+  const pessoaFisica = formData.tipo_pessoa === "Pessoa Fisica";
+  const dadosBancarios = formData.dados_bancarios && typeof formData.dados_bancarios === "object" && !Array.isArray(formData.dados_bancarios)
+    && Object.values(formData.dados_bancarios).every((field) => field == null || ["string", "number"].includes(typeof field))
+    ? formData.dados_bancarios
+    : {};
+  const updateBank = (field, value) => setFormData({ ...formData, dados_bancarios: { ...dadosBancarios, [field]: value } });
+
+  return (
+    <div className="grid grid-cols-1 gap-4 border-t pt-5 md:grid-cols-2" data-sensitive>
+      <div className="md:col-span-2"><h3 className="text-sm font-semibold text-slate-800">Fiscal e financeiro</h3></div>
+      {pessoaFisica && (
+        <div><Label htmlFor="fornecedor_rg">RG</Label><Input id="fornecedor_rg" value={formData.rg || ""} onChange={(e) => setFormData({ ...formData, rg: e.target.value })} maxLength={30} disabled={!canEditRg} data-permission="Cadastros.Pessoas.Fornecedor.rg.editar" data-sensitive /></div>
+      )}
+      <div className="flex min-h-10 items-center justify-between gap-4 rounded border px-3 py-2">
+        <Label htmlFor="fornecedor_simples_nacional">Simples Nacional</Label>
+        <Switch id="fornecedor_simples_nacional" checked={Boolean(formData.simples_nacional)} onCheckedChange={(checked) => setFormData({ ...formData, simples_nacional: checked })} disabled={!canEditSimplesNacional} data-permission="Cadastros.Pessoas.Fornecedor.simples_nacional.editar" data-action="editar" />
+      </div>
+      <div className="md:col-span-2"><h3 className="text-sm font-semibold text-slate-800">Dados bancários</h3></div>
+      <div><Label htmlFor="fornecedor_banco">Banco</Label><Input id="fornecedor_banco" value={dadosBancarios.banco || ""} onChange={(e) => updateBank("banco", e.target.value)} maxLength={120} disabled={!canEditBankData} data-permission="Cadastros.Pessoas.Fornecedor.dados_bancarios.editar" data-sensitive /></div>
+      <div><Label htmlFor="fornecedor_agencia">Agência</Label><Input id="fornecedor_agencia" value={dadosBancarios.agencia || ""} onChange={(e) => updateBank("agencia", e.target.value)} maxLength={30} disabled={!canEditBankData} data-permission="Cadastros.Pessoas.Fornecedor.dados_bancarios.editar" data-sensitive /></div>
+      <div><Label htmlFor="fornecedor_conta">Conta</Label><Input id="fornecedor_conta" value={dadosBancarios.conta || ""} onChange={(e) => updateBank("conta", e.target.value)} maxLength={40} disabled={!canEditBankData} data-permission="Cadastros.Pessoas.Fornecedor.dados_bancarios.editar" data-sensitive /></div>
+      <div>
+        <Label htmlFor="fornecedor_tipo_conta">Tipo de conta</Label>
+        <Select value={dadosBancarios.tipo_conta || "Corrente"} onValueChange={(value) => updateBank("tipo_conta", value)} disabled={!canEditBankData}>
+          <SelectTrigger id="fornecedor_tipo_conta" data-permission="Cadastros.Pessoas.Fornecedor.dados_bancarios.editar" data-sensitive><SelectValue /></SelectTrigger>
+          <SelectContent className="z-[99999]"><SelectItem value="Corrente">Corrente</SelectItem><SelectItem value="Poupanca">Poupança</SelectItem><SelectItem value="Pagamento">Pagamento</SelectItem></SelectContent>
+        </Select>
+      </div>
     </div>
   );
 }

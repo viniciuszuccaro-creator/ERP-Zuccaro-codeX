@@ -808,6 +808,9 @@ function LayoutContent({ children, currentPageName }) {
       { fields: ['tipo_pessoa', 'cpf_cnpj', 'cpf', 'cnpj', 'inscricao_estadual'], section: ['Pessoas', 'Fornecedor', 'documento'] },
       { fields: ['bairro', 'website'], section: ['Pessoas', 'Fornecedor', 'contato'] },
       { fields: ['endereco_cobranca'], section: ['Pessoas', 'Fornecedor', 'endereco_cobranca'] },
+      { fields: ['rg'], section: ['Pessoas', 'Fornecedor', 'rg'] },
+      { fields: ['simples_nacional'], section: ['Pessoas', 'Fornecedor', 'simples_nacional'] },
+      { fields: ['dados_bancarios'], section: ['Pessoas', 'Fornecedor', 'dados_bancarios'] },
     ];
 
     const checkLegacyFieldRBAC = async (entityName, action, data) => {

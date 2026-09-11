@@ -12,6 +12,9 @@ import {
   isValidCnpj,
   isValidCpf,
   normalizeFornecedorCadastro,
+  normalizeFornecedorDadosBancarios,
+  normalizeFornecedorRg,
+  normalizeFornecedorSimplesNacional,
   normalizeFornecedorWebsite,
   normalizeLegacyReferenceCode,
   resolveNextSequentialCode,
@@ -38,6 +41,35 @@ test('supplier website only accepts complete http or https URLs', () => {
   assert.equal(normalizeFornecedorWebsite('https://empresa.example/path'), 'https://empresa.example/path');
   assert.throws(() => normalizeFornecedorWebsite('javascript:alert(1)'), /http ou https/);
   assert.throws(() => normalizeFornecedorWebsite('empresa.example'), /URL completa/);
+});
+
+test('supplier RG and Simples Nacional follow explicit validation contracts', () => {
+  assert.equal(normalizeFornecedorRg(' 12.345.678-x '), '12.345.678-X');
+  assert.equal(normalizeFornecedorRg(''), '');
+  assert.throws(() => normalizeFornecedorRg('<script>'), /RG do fornecedor invalido/);
+  assert.equal(normalizeFornecedorSimplesNacional('sim'), true);
+  assert.equal(normalizeFornecedorSimplesNacional('NÃO'), false);
+  assert.equal(normalizeFornecedorSimplesNacional(1), true);
+  assert.throws(() => normalizeFornecedorSimplesNacional('talvez'), /Simples Nacional invalido/);
+});
+
+test('supplier bank data is allowlisted and requires bank plus account', () => {
+  assert.deepEqual(normalizeFornecedorDadosBancarios({
+    banco: ' 001 - Banco do Brasil ',
+    agencia: '12.34-5',
+    conta: '98.765-X',
+    tipo_conta: 'poupança',
+    campo_inesperado: 'bloqueado',
+  }), {
+    banco: '001 - Banco do Brasil',
+    agencia: '12.34-5',
+    conta: '98.765-X',
+    tipo_conta: 'Poupanca',
+  });
+  assert.deepEqual(normalizeFornecedorDadosBancarios({}), {});
+  assert.throws(() => normalizeFornecedorDadosBancarios('001/123'), /Dados bancarios.*invalidos/);
+  assert.throws(() => normalizeFornecedorDadosBancarios({ banco: '001' }), /Banco e conta sao obrigatorios/);
+  assert.throws(() => normalizeFornecedorDadosBancarios({ banco: '001', conta: '1', tipo_conta: 'Investimento' }), /Tipo de conta.*invalido/);
 });
 
 test('supplier scope blocks another group and duplicate updates ignore the current row', () => {
@@ -265,6 +297,9 @@ test('supplier operational fields are integrated with granular RBAC and protecte
   assert.match(form, /FornecedorDadosGeraisSection/);
   assert.match(sections, /Cadastros\.Pessoas\.Fornecedor\.documento\.editar/);
   assert.match(sections, /Cadastros\.Pessoas\.Fornecedor\.endereco_cobranca\.editar/);
+  assert.match(sections, /Cadastros\.Pessoas\.Fornecedor\.rg\.editar/);
+  assert.match(sections, /Cadastros\.Pessoas\.Fornecedor\.simples_nacional\.editar/);
+  assert.match(sections, /Cadastros\.Pessoas\.Fornecedor\.dados_bancarios\.editar/);
   assert.match(layout, /checkSupplierFieldRBAC/);
   assert.match(layout, /name === 'Fornecedor'/);
   assert.match(localClient, /assertLocalSupplierFieldsAllowed/);
@@ -272,7 +307,9 @@ test('supplier operational fields are integrated with granular RBAC and protecte
   assert.match(auditSanitizer, /cpf\|cnpj/);
   assert.match(backendSanitizer, /supplier_document_invalid/);
   assert.match(backendSanitizer, /supplier_document_duplicate_in_group/);
+  assert.match(backendSanitizer, /supplier_bank_data_incomplete/);
+  assert.match(backendSanitizer, /supplier_simples_nacional_invalid/);
   assert.match(backendSanitizer, /sanitizeAuditValue/);
-  assert.match(piiEncryptor, /Fornecedor: \['cpf_cnpj'/);
+  assert.match(piiEncryptor, /Fornecedor: \['cpf_cnpj'.*'rg'.*'dados_bancarios'/);
   assert.match(listSorted, /'cpf_cnpj'/);
 });

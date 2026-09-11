@@ -41,7 +41,7 @@ function get(obj, path) { return path.split('.').reduce((o,k)=> (o==null?undefin
 
 const DEFAULT_FIELDS = {
   Cliente: ['cpf','rg','email_principal','telefone_principal','endereco_principal','contatos','documentos'],
-  Fornecedor: ['cpf_cnpj','cpf','cnpj','inscricao_estadual','email','telefone','celular','whatsapp','endereco','bairro','cep','endereco_cobranca','dados_bancarios'],
+  Fornecedor: ['cpf_cnpj','cpf','cnpj','rg','inscricao_estadual','email','telefone','celular','whatsapp','endereco','bairro','cep','endereco_cobranca','dados_bancarios'],
   Colaborador: ['cpf','rg','email','telefone','whatsapp','endereco','dados_bancarios','data_nascimento']
 };
 

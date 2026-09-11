@@ -19,12 +19,23 @@ import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { normalizeFornecedorCadastro } from "@/api/localCadastroMasterPolicy";
-import { FornecedorContatoEnderecoSection, FornecedorDadosGeraisSection } from "@/components/cadastros/fornecedor/FornecedorFormSections";
+import { FornecedorContatoEnderecoSection, FornecedorDadosGeraisSection, FornecedorFiscalFinanceiroSection } from "@/components/cadastros/fornecedor/FornecedorFormSections";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeCode = (value, max = 80) => String(value ?? "").replace(/[^0-9A-Za-z_.\-/\s@()+]/g, "").slice(0, max).trim();
 const sanitizeEmail = (value) => sanitizeCode(value, 180).toLowerCase();
 const toNumber = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
+const sanitizeDadosBancarios = (value) => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  if ([value.banco, value.agencia, value.conta, value.tipo_conta].some((field) => field != null && !["string", "number"].includes(typeof field))) return null;
+  const normalized = {
+    banco: sanitizeText(value.banco, 120),
+    agencia: sanitizeCode(value.agencia, 30),
+    conta: sanitizeCode(value.conta, 40),
+    tipo_conta: sanitizeText(value.tipo_conta || "Corrente", 20)
+  };
+  return [normalized.banco, normalized.agencia, normalized.conta].some(Boolean) ? normalized : null;
+};
 const sanitizeAvaliacoes = (values) => Array.isArray(values) ? values.slice(0, 100).map((avaliacao) => ({
   ...avaliacao,
   nota: toNumber(avaliacao?.nota, 0),
@@ -56,6 +67,9 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
   const podeEditarDocumento = isAdmin() || hasFieldPermission("Cadastros", "Pessoas", "Fornecedor", "documento", "editar");
   const podeEditarContato = isAdmin() || hasFieldPermission("Cadastros", "Pessoas", "Fornecedor", "contato", "editar");
   const podeEditarEnderecoCobranca = isAdmin() || hasFieldPermission("Cadastros", "Pessoas", "Fornecedor", "endereco_cobranca", "editar");
+  const podeEditarRg = isAdmin() || hasFieldPermission("Cadastros", "Pessoas", "Fornecedor", "rg", "editar");
+  const podeEditarSimplesNacional = isAdmin() || hasFieldPermission("Cadastros", "Pessoas", "Fornecedor", "simples_nacional", "editar");
+  const podeEditarDadosBancarios = isAdmin() || hasFieldPermission("Cadastros", "Pessoas", "Fornecedor", "dados_bancarios", "editar");
 
   const [formData, setFormData] = useState(fornecedor || {
     nome: "",
@@ -65,7 +79,9 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     cpf_cnpj: "",
     cpf: "",
     cnpj: "",
+    rg: "",
     inscricao_estadual: "",
+    simples_nacional: false,
     rntrc: "",
     email: "",
     telefone: "",
@@ -78,6 +94,7 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     cep: "",
     website: "",
     endereco_cobranca: { endereco: "", bairro: "", cidade: "", estado: "", cep: "" },
+    dados_bancarios: { banco: "", agencia: "", conta: "", tipo_conta: "Corrente" },
     tipo_fornecedor: "Matéria-Prima",
     categoria: "Matéria Prima",
     prazo_entrega_padrao: 0,
@@ -92,6 +109,7 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
 
   const buildPayload = (data = formData) => {
     const enderecoCobranca = data.endereco_cobranca || {};
+    const dadosBancarios = sanitizeDadosBancarios(data.dados_bancarios);
     const payload = {
     ...data,
     nome: sanitizeText(data.nome, 180),
@@ -101,7 +119,9 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     cpf_cnpj: sanitizeCode(data.cpf_cnpj || data.cpf || data.cnpj, 24),
     cpf: sanitizeCode(data.cpf, 18),
     cnpj: sanitizeCode(data.cnpj, 24),
+    rg: data.tipo_pessoa === "Pessoa Fisica" ? sanitizeCode(data.rg, 30) : "",
     inscricao_estadual: sanitizeCode(data.inscricao_estadual, 40),
+    simples_nacional: Boolean(data.simples_nacional),
     rntrc: sanitizeCode(data.rntrc, 40),
     email: sanitizeEmail(data.email),
     telefone: sanitizeCode(data.telefone, 40),
@@ -120,6 +140,7 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
       estado: sanitizeCode(enderecoCobranca.estado, 2).toUpperCase(),
       cep: sanitizeCode(enderecoCobranca.cep, 12),
     },
+    dados_bancarios: dadosBancarios,
     tipo_fornecedor: sanitizeText(data.tipo_fornecedor, 80),
     categoria: sanitizeText(data.categoria, 80),
     prazo_entrega_padrao: toNumber(data.prazo_entrega_padrao, 0),
@@ -134,6 +155,9 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     if (!podeEditarDocumento) ['tipo_pessoa', 'cpf_cnpj', 'cpf', 'cnpj', 'inscricao_estadual'].forEach((field) => delete payload[field]);
     if (!podeEditarContato) ['bairro', 'website'].forEach((field) => delete payload[field]);
     if (!podeEditarEnderecoCobranca) delete payload.endereco_cobranca;
+    if (!podeEditarRg) delete payload.rg;
+    if (!podeEditarSimplesNacional) delete payload.simples_nacional;
+    if (!podeEditarDadosBancarios || !dadosBancarios) delete payload.dados_bancarios;
     return normalizeFornecedorCadastro(payload);
   };
 
@@ -375,6 +399,13 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
                 handleDadosCNPJ={handleDadosCNPJ}
                 handleDadosRNTRC={handleDadosRNTRC}
                 canEditDocument={podeEditarDocumento}
+              />
+              <FornecedorFiscalFinanceiroSection
+                formData={formData}
+                setFormData={setFormData}
+                canEditRg={podeEditarRg}
+                canEditSimplesNacional={podeEditarSimplesNacional}
+                canEditBankData={podeEditarDadosBancarios}
               />
             </TabsContent>
 

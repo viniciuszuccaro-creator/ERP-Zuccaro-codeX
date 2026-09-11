@@ -159,6 +159,47 @@ export const normalizeFornecedorWebsite = (value) => {
   return parsed.toString();
 };
 
+export const normalizeFornecedorRg = (value) => {
+  const rg = String(value || '').trim().toUpperCase();
+  if (!rg) return '';
+  if (rg.length > 30 || !/^[0-9A-Z.\-/\s]+$/.test(rg)) {
+    throw new Error('RG do fornecedor invalido.');
+  }
+  return rg;
+};
+
+export const normalizeFornecedorSimplesNacional = (value) => {
+  if (typeof value === 'boolean') return value;
+  if (value === 1 || value === '1') return true;
+  if (value === 0 || value === '0' || value == null || value === '') return false;
+  const normalized = String(value).normalize('NFD').replace(/\p{Diacritic}/gu, '').trim().toLowerCase();
+  if (['sim', 's', 'true'].includes(normalized)) return true;
+  if (['nao', 'n', 'false'].includes(normalized)) return false;
+  throw new Error('Indicador do Simples Nacional invalido.');
+};
+
+const SUPPLIER_ACCOUNT_TYPES = new Map([
+  ['CORRENTE', 'Corrente'],
+  ['POUPANCA', 'Poupanca'],
+  ['PAGAMENTO', 'Pagamento'],
+]);
+
+export const normalizeFornecedorDadosBancarios = (value) => {
+  if (value == null || value === '') return {};
+  if (typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('Dados bancarios do fornecedor invalidos.');
+  }
+  const banco = String(value.banco || '').replace(/[<>]/g, '').trim().slice(0, 120);
+  const agencia = String(value.agencia || '').replace(/[^0-9A-Za-z.\-/]/g, '').trim().slice(0, 30);
+  const conta = String(value.conta || '').replace(/[^0-9A-Za-z.\-/]/g, '').trim().slice(0, 40);
+  const rawType = String(value.tipo_conta || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').trim().toUpperCase();
+  if (![banco, agencia, conta, rawType].some(Boolean)) return {};
+  if (!banco || !conta) throw new Error('Banco e conta sao obrigatorios nos dados bancarios do fornecedor.');
+  const tipoConta = SUPPLIER_ACCOUNT_TYPES.get(rawType || 'CORRENTE');
+  if (!tipoConta) throw new Error('Tipo de conta bancaria do fornecedor invalido.');
+  return { banco, agencia, conta, tipo_conta: tipoConta };
+};
+
 export const normalizeFornecedorCadastro = (record = {}) => {
   const hasDocumentFields = ['tipo_pessoa', 'cpf_cnpj', 'cpf', 'cnpj'].some((field) => (
     Object.prototype.hasOwnProperty.call(record, field)
@@ -180,6 +221,15 @@ export const normalizeFornecedorCadastro = (record = {}) => {
 
   if (Object.prototype.hasOwnProperty.call(record, 'website')) {
     normalized.website = normalizeFornecedorWebsite(record.website);
+  }
+  if (Object.prototype.hasOwnProperty.call(record, 'rg')) {
+    normalized.rg = normalizeFornecedorRg(record.rg);
+  }
+  if (Object.prototype.hasOwnProperty.call(record, 'simples_nacional')) {
+    normalized.simples_nacional = normalizeFornecedorSimplesNacional(record.simples_nacional);
+  }
+  if (Object.prototype.hasOwnProperty.call(record, 'dados_bancarios')) {
+    normalized.dados_bancarios = normalizeFornecedorDadosBancarios(record.dados_bancarios);
   }
 
   return normalized;
