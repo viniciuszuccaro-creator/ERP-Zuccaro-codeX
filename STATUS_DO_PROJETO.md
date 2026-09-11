@@ -5811,3 +5811,19 @@ Checklist inicial:
 - A instancia `MSSQL$ERPZLEGACY` permaneceu `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`; este lote nao consultou o banco legado.
 - A mudanca do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
 - Proximo passo obrigatorio: iniciar o inventario estrutural e agregado do estoque legado em lote separado do cadastro mestre de produtos, identificando tabelas, empresas, saldos, reservas, locais e datas sem extrair movimentos ou quantidades nominais.
+
+### Gate 18 - Inventario estrutural agregado do estoque legado
+
+- Foram revisadas em modo `READ_ONLY` as seis fontes SQL preservadas `LEGACY_TID_EXETPS` e `LEGACY_TID_EMP01` a `LEGACY_TID_EMP05`, sem consultar valores de saldo, quantidade, custo, produto ou movimento.
+- A busca estrutural encontrou 135 tabelas cujo nome sugere estoque, saldo, movimentacao, reserva, inventario, almoxarifado ou deposito. Vinte e duas possuem linhas estimadas; falsos positivos financeiros, como saldos de caixa/banco e depositos bancarios, foram identificados e nao classificados como estoque operacional.
+- Setenta e nove estruturas possuem combinacao de nome e colunas compativel com operacao de estoque, mas somente 11 estao nao vazias. Essas 11 somam aproximadamente 562.604 linhas estimadas e permanecem apenas como candidatas, sem autorizacao de exportacao.
+- `LEGACY_TID_EMP03` concentra 557.060 movimentos, 2.382 saldos de materiais e quatro transferencias. Como essa base ja foi classificada como compartilhada e as tres tabelas nao possuem coluna empresarial explicita, nenhuma linha pode ser atribuida automaticamente a CPA, 3Z ou CPA Ferro e Aco.
+- `LEGACY_TID_EXETPS` possui 2.372 parametros de estoque de materiais, 421 movimentos e 184 saldos de materiais. A fonte e central multiempresa e essas tabelas tambem nao possuem contexto empresarial explicito.
+- `LEGACY_TID_EMP01` possui 150 saldos e 12 movimentos; `LEGACY_TID_EMP02`, 17 saldos e um movimento; `LEGACY_TID_EMP04`, um saldo isolado; `LEGACY_TID_EMP05` nao possui tabela candidata nao vazia. Os nomes das bases continuam insuficientes para registros sem contexto ou para fontes previamente classificadas como compartilhadas/incertas.
+- Nenhuma das 11 fontes operacionais nao vazias possui coluna empresarial ou de local de estoque identificavel. Cinco possuem coluna de data. Portanto, empresa proprietaria, local, precedencia entre saldo e movimento e data de corte permanecem obrigatoriamente pendentes.
+- O relatorio `legacy-stock-structure-inventory.csv` contem somente metadados de banco/tabela, contagens estimadas e indicadores de presenca de colunas; todas as 135 linhas possuem `values_read=false` e `import_authorized=false`.
+- A geracao foi repetida e confirmou o mesmo hash, ACL sem heranca e exclusiva do usuario local, seis de seis bases em somente leitura, zero valor consultado e zero importacao.
+- O inventario e o resumo permanecem somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`. Nenhum CSV/JSON local, codigo de produto, saldo, quantidade, custo, movimento, empresa, hash, TPS, MDF/LDF ou relatorio do HD integra o GitHub.
+- A instancia `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A mudanca do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
+- Proximo passo obrigatorio: comparar os schemas de `EstoqueMateriais` e `MovimentacaoEstoque` entre as fontes, definir precedencia por empresa e periodo apenas por evidencias conciliaveis e manter `EMP03` bloqueado enquanto suas linhas nao puderem ser segmentadas com seguranca.
