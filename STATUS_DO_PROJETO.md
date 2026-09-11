@@ -5763,3 +5763,19 @@ Checklist inicial:
 - A mudanca do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
 - Pendencia `BLOCKED`: o responsavel fiscal deve decidir Produto versus TabelaFiscal, validar regime/empresa, traduzir codigos e definir o tratamento dos quatro campos sem destino. Nenhum dos 14 campos pode ser importado antes dessa homologacao.
 - Proximo passo recomendado: enquanto a homologacao fiscal permanece bloqueada, revisar estruturalmente os oito campos comerciais com uso efetivo nos produtos candidatos, mantendo precos, custos, margens e comissoes sem valores e sem autorizacao.
+
+### Gate 18 - Revisao estrutural comercial dos produtos de revenda
+
+- Os oito campos comerciais adiados dos 1.208 produtos candidatos foram revisados somente por estrutura, quantidade e cardinalidade. Nenhum preco, custo, margem, desconto ou comissao foi extraido para a matriz ou para o resumo agregado.
+- Tres campos possuem destino estrutural candidato ja existente: margem PMV pode corresponder a `Produto.margem_minima_percentual` ou `TabelaPrecoItem.margem_percentual`; desconto maximo pode corresponder a `TabelaPrecoItem.desconto_maximo_percentual`; margem contra tabela pode corresponder a `TabelaPrecoItem.margem_percentual`.
+- Os destinos candidatos nao foram aceitos automaticamente porque a semantica, a tabela proprietaria, o escopo Grupo/Empresa e a regra de vigencia ainda precisam de homologacao comercial.
+- Cinco campos nao possuem equivalente exato confirmado: politica de nao imprimir tabela, comissao por produto, percentual de preco maximo, preco em dolar e custo FOB. Nenhum campo novo foi criado por aproximacao.
+- Seis campos apresentam somente zero nas 1.208 linhas. Eles foram mantidos na matriz, sem serem descartados, pois zero pode representar regra comercial valida ou apenas ausencia no legado.
+- Somente dois campos possuem ocorrencias diferentes de zero: margem PMV em um produto e margem contra tabela em dez produtos. Os valores e os produtos afetados nao foram extraidos; apenas essas contagens agregadas foram conciliadas.
+- A validacao encontrou zero valor negativo. A matriz `produtos-revisao-comercial-estrutural.csv` possui oito linhas, todas com `values_extracted=false`, permissao sensivel ainda nao confirmada, `PENDING_COMMERCIAL_HOMOLOGATION` e `import_authorized=false`.
+- A geracao foi repetida e confirmou o mesmo hash, ACL sem heranca e exclusiva do usuario local, oito de oito linhas nao autorizadas, zero destino aplicado e zero importacao.
+- A matriz permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\05_QUARANTINE\PRODUTOS\PRODUTOS-LEGACY-TID-001`; o resumo agregado permanece em `04_REPORTS`. Nenhum CSV/JSON local, valor comercial, codigo individual, `group_id`, hash, TPS, MDF/LDF ou relatorio do HD integra o GitHub.
+- A instancia `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A mudanca do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
+- Pendencia `BLOCKED`: Comercial/Financeiro deve homologar o significado e o escopo dos tres destinos candidatos e decidir se os cinco campos sem equivalente possuem uso operacional. Nenhum dos oito campos pode ser importado antes dessa decisao e do RBAC especifico para custo, preco, margem, desconto e comissao.
+- Proximo passo recomendado: enquanto as homologacoes fiscal e comercial permanecem bloqueadas, revisar estruturalmente os 13 campos funcionais com valor efetivo nos produtos candidatos, sem extrair valores ou criar campos automaticamente.
