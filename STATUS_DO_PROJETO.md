@@ -5844,3 +5844,14 @@ Checklist inicial:
 - Nenhum CSV/JSON local, valor de estoque, codigo de produto, custo, documento, lote, hash, TPS, MDF/LDF ou relatorio do HD integra o GitHub. A instancia `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
 - A mudanca do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
 - Proximo passo obrigatorio: medir de forma agregada a sobreposicao dos movimentos entre `EMP01`, `EMP02`, `EMP03` e `EXETPS` e avaliar vinculo por documento com fontes que possuam empresa, usando fingerprints locais e sem exportar chaves, produtos, quantidades ou documentos.
+
+### Gate 18 - Bloqueio operacional da conciliacao de movimentos
+
+- A etapa foi preparada para calcular fingerprints SHA-256 somente na memoria temporaria do SQL e exportar apenas contagens por fonte e por par, sem chaves, produtos, quantidades, documentos ou hashes individuais.
+- `MSSQL$ERPZLEGACY` foi iniciado manualmente, mas a sessao restrita do Codex nao recebeu credencial SSPI para autenticar na instancia. As tentativas diretas falharam antes de executar qualquer consulta.
+- Duas tentativas de elevacao administrativa encerraram antes de abrir o processo, com codigo `-196608`. Um executor temporario acionado pelo Explorador aguardou quatro minutos, mas nao iniciou, nao gerou marcador de conclusao e nao produziu relatorio ou erro de banco.
+- Todos os scripts, marcadores e logs temporarios foram removidos. Nenhum valor legado foi lido, nenhum relatorio foi criado e nenhuma importacao ou alteracao de runtime foi realizada.
+- Situacao: `BLOCKED` por falta de uma sessao administrativa interativa capaz de autenticar no SQL local. Nenhuma fonte autoritativa foi escolhida e nenhuma etapa posterior de estoque pode avancar com seguranca.
+- SQL Agent permanece `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A instancia principal ficou `Running` apos a inicializacao manual e deve ser parada por um administrador na tela de Servicos do Windows.
+- A mudanca do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
+- Proximo passo obrigatorio: parar `SQL Server (ERPZLEGACY)` e, em uma sessao PowerShell realmente aberta como administrador, executar a conciliacao agregada com desligamento garantido em `finally`.
