@@ -5577,3 +5577,21 @@ Checklist inicial:
 - `npm run typecheck` global permanece reprovado pelo baseline historico de tipagem JS/TS distribuido em muitos modulos fora deste lote. A falha nao foi mascarada nem convertida em sucesso; os arquivos runtime do lote foram cobertos por lint, testes, transpilacao sintatica dos hooks e build de producao.
 - A instancia `MSSQL$ERPZLEGACY` foi confirmada como `Stopped`/`Manual`. Este lote nao iniciou o SQL Server nem acessou os dados nominais legados.
 - Proximo passo obrigatorio: gerar somente no HD o staging nominal protegido dos 1.061 fornecedores e a quarentena correspondente, aplicando o contrato estrutural ja aprovado, validacao integral de CPF/CNPJ, deduplicacao no Grupo e conciliacao das referencias; nenhuma importacao sera executada sem homologacao.
+
+### Gate 18 - Staging nominal protegido de fornecedores
+
+- O lote nominal dos 1.061 fornecedores foi gerado exclusivamente no HD a partir de `LEGACY_TID_EXETPS.dbo.Fornecedores`, com o banco confirmado em `READ_ONLY`. Nenhum registro foi importado no ERP.
+- Foram separados 790 candidatos e 271 registros em quarentena, reconciliando 1.061/1.061 linhas sem descarte.
+- A validacao completa encontrou 213 ocorrencias de CNPJ invalido e 15 de CPF invalido. Os totais sao superiores a verificacao estrutural anterior porque agora incluem digitos verificadores, e nao apenas formato e comprimento.
+- Os dez grupos de documento duplicado permaneceram confirmados, envolvendo 25 linhas. Todas as linhas desses grupos foram mantidas em quarentena; nenhum registro vencedor foi escolhido automaticamente.
+- Tambem foram identificados cinco e-mails invalidos e 42 websites sem URL HTTP/HTTPS valida. Os valores rejeitados nao foram promovidos aos candidatos e foram preservados somente na quarentena, em colunas explicitas de revisao.
+- Os motivos podem se sobrepor dentro das 271 linhas de quarentena. Cada linha possui ao menos um motivo, e nenhum dos 790 candidatos possui motivo de quarentena ou documento duplicado.
+- Todos os registros receberam o unico `group_id` canonico do Grupo, `scope_type=grupo` e empresa vazia. A validacao encontrou zero empresa externa, zero escopo divergente e zero linha com `import_authorized` diferente de `false`.
+- O codigo legado foi preservado como `codigo`, `codigo_legado` e `codigo_origem`. A identidade idempotente usa HMAC-SHA256 com chave propria protegida por DPAPI `CurrentUser`; a chave nao foi exibida nem adicionada ao repositorio.
+- Os CSVs foram gravados somente em `03_EXPORT_STAGING\FORNECEDORES\FORNECEDORES-LEGACY-TID-001` e `05_QUARANTINE\FORNECEDORES\FORNECEDORES-LEGACY-TID-001`, com ACL sem heranca e exclusiva do usuario local.
+- A repeticao integral produziu os mesmos hashes para candidatos e quarentena antes da preservacao adicional dos campos privados de revisao, comprovando idempotencia. O hash final da quarentena foi recalculado no resumo e validado apos essa preservacao.
+- A validacao final confirmou hashes correspondentes, zero formula CSV insegura, zero candidato duplicado, zero candidato com motivo, zero quarentena sem motivo, cinco valores privados para cinco e-mails invalidos e 42 valores privados para 42 websites invalidos.
+- O resumo agregado `legacy-supplier-nominal-staging-summary.json` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, sem nome, documento formatado, endereco ou e-mail.
+- Os scripts e o log tecnico temporarios foram removidos. A instancia `MSSQL$ERPZLEGACY` permanece `Stopped`/`Manual`; TCP e Named Pipes permanecem desativados.
+- Nenhum CSV, dado pessoal, codigo individual, hash individual, chave, TPS, MDF/LDF ou relatorio local foi adicionado ao GitHub. A alteracao do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio no fechamento.
+- Proximo passo obrigatorio: revisar localmente as 271 linhas em quarentena e inventariar as referencias adiadas de fornecedores, mantendo bloqueados documentos invalidos, duplicidades e destinos ausentes ou ambiguos; nenhuma importacao pode ocorrer antes da homologacao.
