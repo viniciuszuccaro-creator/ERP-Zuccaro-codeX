@@ -5629,3 +5629,17 @@ Checklist inicial:
 - O build manteve apenas os avisos historicos de tamanho de chunk e imports estatico/dinamico. A auditoria baseline manteve dividas tecnicas globais ja conhecidas, sem falha e sem mascarar o resultado.
 - Este lote nao iniciou nem consultou o SQL Server legado. Nenhum CSV, valor individual, dado pessoal, hash, TPS, MDF/LDF, planilha ou relatorio local integra o diff.
 - Proximo passo obrigatorio: preparar somente no HD um contrato de homologacao sensivel para os 43 codigos de banco, 38 agencias/contas, 15 RGs e a traducao de `SIMPLESFEDERAL`; manter `import_authorized=false` e nao extrair valores nominais antes de confirmar mapeamentos, destino e permissoes.
+
+### Gate 18 - Contrato de homologacao sensivel de fornecedores
+
+- Foi preparado somente no HD o contrato `SUPPLIERS-SENSITIVE-HOMOLOGATION-001` para os campos sensiveis adiados de `Fornecedor`; nenhum importador, entidade, tela, rota ou funcionalidade paralela foi criado.
+- O contrato cobre quatro decisoes: referencia bancaria, agencia/conta, RG e traducao de `SIMPLESFEDERAL` para `simples_nacional`. Ele registra somente estrutura, contagens, permissao necessaria, regra de decisao e gates de liberacao.
+- Permanecem contabilizados 43 fornecedores com codigo bancario, seis codigos distintos, 38 com agencia/conta, 15 com RG e um unico valor fiscal legado usado nas 1.061 linhas. Nenhum desses valores foi extraido para o contrato ou para a matriz.
+- A matriz possui quatro linhas agregadas, todas com `PENDING_HUMAN_HOMOLOGATION`, `values_extracted=false` e `import_authorized=false`. Revisor, data, justificativa e decisao permanecem vazios.
+- A liberacao futura exige Banco existente e autorizado no mesmo Grupo, confirmacao de titularidade e tipo de conta, RG vinculado a pessoa fisica, traducao fiscal formal do valor legado, permissoes granulares, criptografia AES-GCM, auditoria protegida e idempotencia por Grupo/codigo legado.
+- O contrato e o resumo foram gravados em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`; a matriz foi gravada em `05_QUARANTINE\FORNECEDORES\FORNECEDORES-LEGACY-TID-001`. Os tres arquivos possuem ACL sem heranca e exclusiva de `DELL-VINI\cpaba`.
+- Validacoes locais: quatro de quatro linhas pendentes e nao autorizadas; zero valor extraido; zero formula CSV; zero padrao de e-mail, CPF ou CNPJ; hashes do contrato e da matriz recalculados e correspondentes ao resumo local.
+- A instancia `MSSQL$ERPZLEGACY` foi confirmada como `Stopped`/`Manual`. O lote nao iniciou o SQL Server, nao consultou registros nominais e nao realizou gravacao no ERP.
+- O gerador tecnico temporario foi removido antes do fechamento. Nenhum CSV, JSON local, hash, dado pessoal, valor bancario, RG, valor fiscal, TPS, MDF/LDF ou relatorio do HD integra o GitHub; a mudanca do repositorio e exclusivamente documental.
+- Validacao do repositorio: `git diff --check` aprovado; testes de runtime dispensados porque nenhum codigo de aplicacao permaneceu alterado neste lote.
+- Proximo passo obrigatorio: homologar a traducao fiscal de `SIMPLESFEDERAL` e mapear os seis codigos bancarios para cadastros `Banco` validos no Grupo. Sem essas decisoes humanas, os dados nominais e todas as importacoes permanecem bloqueados.
