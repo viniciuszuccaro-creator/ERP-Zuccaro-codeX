@@ -30,6 +30,54 @@ const normalizeLegacyReferenceCode = (value) => {
   return normalized;
 };
 
+const digitsOnly = (value) => String(value || '').replace(/\D/g, '');
+const repeatedDigits = (value) => /^(\d)\1+$/.test(value);
+
+const validCpf = (value) => {
+  const document = digitsOnly(value);
+  if (document.length !== 11 || repeatedDigits(document)) return false;
+  const digit = (part, factor) => {
+    const total = part.split('').reduce((sum, current) => sum + Number(current) * factor--, 0);
+    const remainder = (total * 10) % 11;
+    return remainder === 10 ? 0 : remainder;
+  };
+  return digit(document.slice(0, 9), 10) === Number(document[9])
+    && digit(document.slice(0, 10), 11) === Number(document[10]);
+};
+
+const validCnpj = (value) => {
+  const document = digitsOnly(value);
+  if (document.length !== 14 || repeatedDigits(document)) return false;
+  const digit = (part, weights) => {
+    const total = part.split('').reduce((sum, current, index) => sum + Number(current) * weights[index], 0);
+    const remainder = total % 11;
+    return remainder < 2 ? 0 : 11 - remainder;
+  };
+  return digit(document.slice(0, 12), [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]) === Number(document[12])
+    && digit(document.slice(0, 13), [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]) === Number(document[13]);
+};
+
+const normalizeSupplierPersonType = (value, document) => {
+  const normalized = String(value || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').trim().toUpperCase();
+  if (!normalized) return document.length === 11 ? 'Pessoa Fisica' : 'Pessoa Juridica';
+  if (['F', 'PF', 'PESSOA FISICA'].includes(normalized)) return 'Pessoa Fisica';
+  if (['J', 'PJ', 'PESSOA JURIDICA'].includes(normalized)) return 'Pessoa Juridica';
+  throw new Error('supplier_person_type_invalid');
+};
+
+const AUDIT_PROTECTED_KEY = /(token|senha|password|secret|cpf|cnpj|rg|inscricao|email|telefone|whatsapp|endereco|bairro|cep|conta|agencia|certificado)/i;
+const sanitizeAuditValue = (value, key = '', depth = 0) => {
+  if (depth > 6) return { truncado: true };
+  if (AUDIT_PROTECTED_KEY.test(String(key))) return { protegido: true };
+  if (Array.isArray(value)) return value.slice(0, 50).map((item) => sanitizeAuditValue(item, key, depth + 1));
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).slice(0, 80).map(([childKey, childValue]) => (
+      [childKey, sanitizeAuditValue(childValue, childKey, depth + 1)]
+    )));
+  }
+  return typeof value === 'string' ? value.slice(0, 500) : value;
+};
+
 // Sanitização genérica de entradas para entidades críticas (previne XSS e payloads suspeitos)
 // Acionado por automações de entidade em events: create/update
 Deno.serve(async (req) => {
@@ -104,6 +152,63 @@ Deno.serve(async (req) => {
       }
     }
 
+    if (event.entity_name === 'Fornecedor') {
+      const documentFields = ['tipo_pessoa', 'cpf_cnpj', 'cpf', 'cnpj'];
+      if (documentFields.some((field) => Object.prototype.hasOwnProperty.call(enriched, field))) {
+        const document = digitsOnly(enriched.cpf_cnpj || enriched.cpf || enriched.cnpj);
+        let personType;
+        try {
+          personType = normalizeSupplierPersonType(enriched.tipo_pessoa, document);
+        } catch {
+          return Response.json({ error: 'supplier_person_type_invalid' }, { status: 400 });
+        }
+        if (document && !(personType === 'Pessoa Fisica' ? validCpf(document) : validCnpj(document))) {
+          return Response.json({ error: 'supplier_document_invalid' }, { status: 400 });
+        }
+        enriched = {
+          ...enriched,
+          tipo_pessoa: personType,
+          cpf_cnpj: document,
+          cpf: personType === 'Pessoa Fisica' ? document : '',
+          cnpj: personType === 'Pessoa Juridica' ? document : '',
+        };
+      }
+
+      if (Object.prototype.hasOwnProperty.call(enriched, 'website') && enriched.website) {
+        try {
+          const website = new URL(String(enriched.website).trim());
+          if (!['http:', 'https:'].includes(website.protocol) || String(enriched.website).length > 240) throw new Error('invalid');
+          enriched = { ...enriched, website: website.toString() };
+        } catch {
+          return Response.json({ error: 'supplier_website_invalid' }, { status: 400 });
+        }
+      }
+
+      const groupId = enriched.group_id || enriched.grupo_id || oldData?.group_id || oldData?.grupo_id || null;
+      const oldGroupId = oldData?.group_id || oldData?.grupo_id || null;
+      if (!groupId || (oldGroupId && String(oldGroupId) !== String(groupId))) {
+        return Response.json({ error: 'supplier_group_scope_invalid' }, { status: 403 });
+      }
+      const empresaId = enriched.empresa_dona_id || enriched.empresa_id || oldData?.empresa_dona_id || oldData?.empresa_id || null;
+      if (empresaId) {
+        const empresas = await base44.asServiceRole.entities.Empresa.filter({ id: empresaId });
+        const empresa = Array.isArray(empresas) ? empresas[0] : null;
+        const empresaGroupId = empresa?.group_id || empresa?.grupo_id || empresa?.grupo_empresarial_id || null;
+        if (!empresa || String(empresaGroupId || '') !== String(groupId)) {
+          return Response.json({ error: 'empresa_outside_group' }, { status: 403 });
+        }
+      }
+      const document = digitsOnly(enriched.cpf_cnpj || enriched.cpf || enriched.cnpj);
+      if (document) {
+        const suppliers = await base44.asServiceRole.entities.Fornecedor.filter({ group_id: groupId });
+        const duplicate = (Array.isArray(suppliers) ? suppliers : []).some((item) => (
+          String(item?.id) !== String(event.entity_id)
+          && digitsOnly(item?.cpf_cnpj || item?.cpf || item?.cnpj) === document
+        ));
+        if (duplicate) return Response.json({ error: 'supplier_document_duplicate_in_group' }, { status: 409 });
+      }
+    }
+
     const legacyField = LEGACY_REFERENCE_FIELDS[event.entity_name];
     if (legacyField && Object.prototype.hasOwnProperty.call(enriched, legacyField)) {
       let legacyCode = '';
@@ -168,7 +273,7 @@ Deno.serve(async (req) => {
     async function encryptSensitive(obj, entity) {
       const key = await getCryptoKey();
       if (!key) return obj;
-      const SENSITIVE_EXACT = new Set(['numero_autorizacao','pix_chave','conta','agencia','cartao','linha_digitavel','codigo_barras','pix_qrcode','pix_copia_cola','cpf','cnpj','rg','inscricao_estadual','inscricao_municipal','cliente_cpf_cnpj','favorecido_cpf_cnpj']);
+      const SENSITIVE_EXACT = new Set(['numero_autorizacao','pix_chave','conta','agencia','cartao','linha_digitavel','codigo_barras','pix_qrcode','pix_copia_cola','cpf','cnpj','cpf_cnpj','rg','inscricao_estadual','inscricao_municipal','cliente_cpf_cnpj','favorecido_cpf_cnpj']);
       const isPIIKey = (k) => {
         const s = String(k || '').toLowerCase();
         return SENSITIVE_EXACT.has(s) || s.includes('email') || s.includes('telefone') || s.includes('whatsapp');
@@ -246,8 +351,8 @@ Deno.serve(async (req) => {
           registro_id: event.entity_id,
           descricao: 'Sanitização automática aplicada (prevenção XSS/injeções).',
           empresa_id: enriched?.empresa_id || data?.empresa_id || null,
-          dados_anteriores: oldData || null,
-          dados_novos: { ...patch, group_id: enriched?.group_id || data?.group_id || null },
+          dados_anteriores: sanitizeAuditValue(oldData) || null,
+          dados_novos: sanitizeAuditValue({ ...patch, group_id: enriched?.group_id || data?.group_id || null }),
           data_hora: new Date().toISOString(),
         });
       } catch {}

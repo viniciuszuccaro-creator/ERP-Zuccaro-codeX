@@ -60,7 +60,7 @@ import GlobalNetworkErrorHandler from "@/components/lib/GlobalNetworkErrorHandle
 import GuardRails from "@/components/lib/GuardRails";
 import GlobalContextStamp from "@/components/lib/GlobalContextStamp";
 import ProtectedSection from "@/components/security/ProtectedSection";
-import { sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
+import { sanitizeAuditPayload, sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
 import { usePrefetchModuleData } from "@/components/lib/usePrefetchModuleData";
 import { useInvalidationBus } from "@/components/lib/useInvalidationBus";
 import { useNavHistory } from "@/components/lib/useNavHistory";
@@ -804,10 +804,25 @@ function LayoutContent({ children, currentPageName }) {
       },
     };
 
+    const SUPPLIER_FIELD_RBAC = [
+      { fields: ['tipo_pessoa', 'cpf_cnpj', 'cpf', 'cnpj', 'inscricao_estadual'], section: ['Pessoas', 'Fornecedor', 'documento'] },
+      { fields: ['bairro', 'website'], section: ['Pessoas', 'Fornecedor', 'contato'] },
+      { fields: ['endereco_cobranca'], section: ['Pessoas', 'Fornecedor', 'endereco_cobranca'] },
+    ];
+
     const checkLegacyFieldRBAC = async (entityName, action, data) => {
       const rule = LEGACY_FIELD_RBAC[entityName];
       if (!rule || !Object.prototype.hasOwnProperty.call(data || {}, rule.field)) return;
       await checkRBAC(entityName, action, rule.section, action);
+    };
+
+    const checkSupplierFieldRBAC = async (entityName, action, data) => {
+      if (entityName !== 'Fornecedor') return;
+      for (const rule of SUPPLIER_FIELD_RBAC) {
+        if (rule.fields.some((field) => Object.prototype.hasOwnProperty.call(data || {}, field))) {
+          await checkRBAC(entityName, action, rule.section, action);
+        }
+      }
     };
 
     const wrapEntity = (api, name) => {
@@ -830,11 +845,12 @@ function LayoutContent({ children, currentPageName }) {
         api.create = async (data) => {
           await checkRBAC(name, 'criar');
           await checkLegacyFieldRBAC(name, 'editar', data);
+          await checkSupplierFieldRBAC(name, 'editar', data);
           const res = await orig.create(stamp(sanitizeOnWrite(data)));
           const legacyRule = LEGACY_FIELD_RBAC[name];
           const legacyAudit = legacyRule && Object.prototype.hasOwnProperty.call(data || {}, legacyRule.field)
             ? { [legacyRule.field]: res?.[legacyRule.field] || null }
-            : res;
+            : sanitizeAuditPayload(res);
           try { await base44.entities.AuditLog.create({
             usuario: user?.full_name || user?.email || 'Usuário',
             usuario_id: user?.id,
@@ -846,7 +862,7 @@ function LayoutContent({ children, currentPageName }) {
           }); } catch (error) { reportLayoutFailure('Falha ao auditar criacao', error, { entity: name, id: res?.id }); }
           // PII encryption pass (server-side) for sensitive entities
           try {
-            if (name === 'Cliente' || name === 'Colaborador') {
+            if (name === 'Cliente' || name === 'Fornecedor' || name === 'Colaborador') {
               await base44.functions.invoke('piiEncryptor', { entity_name: name, id: res?.id, action: 'encrypt' });
             }
           } catch (error) { reportLayoutFailure('Falha ao criptografar dados pessoais apos criacao', error, { entity: name, id: res?.id }); }
@@ -859,10 +875,14 @@ function LayoutContent({ children, currentPageName }) {
           const items = Array.isArray(arr) ? arr : [];
           const legacyRule = LEGACY_FIELD_RBAC[name];
           const hasLegacyReference = Boolean(legacyRule && items.some((item) => String(item?.[legacyRule.field] || '').trim()));
-          if (hasLegacyReference) {
+          const hasSupplierProtectedField = name === 'Fornecedor' && items.some((item) => (
+            SUPPLIER_FIELD_RBAC.some((rule) => rule.fields.some((field) => Object.prototype.hasOwnProperty.call(item || {}, field)))
+          ));
+          if (hasLegacyReference || hasSupplierProtectedField) {
             await checkRBAC(name, 'importar');
             for (const item of items) {
               await checkLegacyFieldRBAC(name, 'editar', item);
+              await checkSupplierFieldRBAC(name, 'editar', item);
             }
           }
           const stamped = Array.isArray(arr) ? items.map((x) => stamp(sanitizeOnWrite(x))) : arr;
@@ -884,9 +904,15 @@ function LayoutContent({ children, currentPageName }) {
         api.update = async (id, data) => {
           await checkRBAC(name, 'editar');
           await checkLegacyFieldRBAC(name, 'editar', data);
+          await checkSupplierFieldRBAC(name, 'editar', data);
           const legacyRule = LEGACY_FIELD_RBAC[name];
           const legacyFieldChanged = Boolean(legacyRule && Object.prototype.hasOwnProperty.call(data || {}, legacyRule.field));
-          const beforeLegacy = legacyFieldChanged && orig.get ? await orig.get(id).catch(() => null) : null;
+          const supplierFieldChanged = name === 'Fornecedor' && SUPPLIER_FIELD_RBAC.some((rule) => (
+            rule.fields.some((field) => Object.prototype.hasOwnProperty.call(data || {}, field))
+          ));
+          const beforeRecord = (legacyFieldChanged || supplierFieldChanged) && orig.get
+            ? await orig.get(id).catch(() => null)
+            : null;
           const res = await orig.update(id, stamp(sanitizeOnWrite(data)));
           try { await base44.entities.AuditLog.create({
             usuario: user?.full_name || user?.email || 'Usuário',
@@ -894,15 +920,17 @@ function LayoutContent({ children, currentPageName }) {
             acao: 'Edição', modulo: 'Sistema', tipo_auditoria: 'entidade',
             entidade: name,
             registro_id: id,
-            dados_anteriores: legacyFieldChanged ? { [legacyRule.field]: beforeLegacy?.[legacyRule.field] || null } : null,
-            dados_novos: legacyFieldChanged ? { [legacyRule.field]: res?.[legacyRule.field] || null } : data,
+            dados_anteriores: legacyFieldChanged
+              ? { [legacyRule.field]: beforeRecord?.[legacyRule.field] || null }
+              : (supplierFieldChanged ? sanitizeAuditPayload(beforeRecord) : null),
+            dados_novos: legacyFieldChanged ? { [legacyRule.field]: res?.[legacyRule.field] || null } : sanitizeAuditPayload(data),
             empresa_id: empresaAtual?.id || null,
             group_id: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
             data_hora: new Date().toISOString(),
           }); } catch (error) { reportLayoutFailure('Falha ao auditar edicao', error, { entity: name, id }); }
           // PII encryption pass (server-side) for sensitive entities
           try {
-            if (name === 'Cliente' || name === 'Colaborador') {
+            if (name === 'Cliente' || name === 'Fornecedor' || name === 'Colaborador') {
               await base44.functions.invoke('piiEncryptor', { entity_name: name, id, action: 'encrypt' });
             }
           } catch (error) { reportLayoutFailure('Falha ao criptografar dados pessoais apos edicao', error, { entity: name, id }); }

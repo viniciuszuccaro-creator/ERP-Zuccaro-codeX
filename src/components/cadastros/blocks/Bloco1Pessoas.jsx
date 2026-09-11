@@ -74,7 +74,9 @@ export default function Bloco1Pessoas({ allCounts, isLoading, searchTerm = "" })
         data_hora: new Date().toISOString(),
         sucesso,
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error('[Bloco1Pessoas] Falha ao registrar auditoria', error);
+    }
   };
 
   const openList = (entidade, titulo, Icon, campos, FormComp) => () => {
@@ -123,7 +125,7 @@ export default function Bloco1Pessoas({ allCounts, isLoading, searchTerm = "" })
 
   const tiles = [
     { k: 'Cliente',           t: 'Clientes',                    i: Users,         c: ['nome','razao_social','cnpj','status','tipo'],                        f: CadastroClienteCompleto },
-    { k: 'Fornecedor',        t: 'Fornecedores',                i: Building2,     c: ['nome','razao_social','cnpj','categoria','status_fornecedor'],         f: CadastroFornecedorCompleto },
+    { k: 'Fornecedor',        t: 'Fornecedores',                i: Building2,     c: ['nome','razao_social','cpf_cnpj','cnpj','categoria','status_fornecedor'], f: CadastroFornecedorCompleto },
     { k: 'Transportadora',    t: 'Transportadoras',             i: Truck,         c: ['razao_social','nome_fantasia','cnpj','cidade','status'],              f: TransportadoraForm },
     { k: 'Colaborador',       t: 'Colaboradores',               i: User,          c: ['nome_completo','cargo','departamento','tipo_contrato','status'],      f: ColaboradorForm },
     { k: 'Representante',     t: 'Representantes & Indicadores',i: Award,         c: ['nome','email','telefone','percentual_comissao'],                      f: RepresentanteFormCompleto },
@@ -143,7 +145,7 @@ export default function Bloco1Pessoas({ allCounts, isLoading, searchTerm = "" })
       entidades_filtradas: filteredTiles.map(({ k }) => k),
       motivo: contextoValido ? null : "contexto_obrigatorio",
     });
-  }, [searchTerm, contextoValido, filteredTiles.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchTerm, contextoValido, filteredTiles.length]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">

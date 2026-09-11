@@ -25,6 +25,7 @@ export const CADASTROS_ENTITIES = {
     columns: [
       { field: "nome", label: "Nome", searchable: true, sortable: true },
       { field: "cnpj", label: "CNPJ", searchable: true },
+      { field: "tipo_pessoa", label: "Tipo", searchable: false },
       { field: "status_fornecedor", label: "Status", searchable: false },
     ],
   },

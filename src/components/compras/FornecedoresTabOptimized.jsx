@@ -131,7 +131,7 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
           (f.razao_social || '').toLowerCase().includes(termo) ||
           (f.nome_fantasia || '').toLowerCase().includes(termo);
         
-        const matchDocumento = (f.cnpj || '').includes(termo) ||
+        const matchDocumento = (f.cpf_cnpj || f.cnpj || f.cpf || '').includes(termo) ||
           (f.cpf || '').includes(termo);
         
         const matchContato = f.emails?.some(e => 
@@ -317,7 +317,9 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
                         )}
                       </div>
                       <div className="flex gap-3 text-xs text-slate-600">
-                        {fornecedor.cnpj && <span>CNPJ: {fornecedor.cnpj}</span>}
+                        {(fornecedor.cpf_cnpj || fornecedor.cnpj || fornecedor.cpf) && (
+                          <span>{fornecedor.tipo_pessoa === 'Pessoa Fisica' ? 'CPF' : 'CNPJ'}: {fornecedor.cpf_cnpj || fornecedor.cpf || fornecedor.cnpj}</span>
+                        )}
                         {fornecedor.categoria && <span>📦 {fornecedor.categoria}</span>}
                         {fornecedor.cidade && <span>📍 {fornecedor.cidade}</span>}
                       </div>

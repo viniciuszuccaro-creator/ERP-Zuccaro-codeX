@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 import { requireEntityGuard } from './_lib/security/guardCallPolicy.js';
 
 // Encrypt/decrypt PII fields for selected entities using AES-GCM with BACKUP_ENCRYPTION_KEY
-// Payload: { entity_name: 'Cliente'|'Colaborador', id: string, action?: 'encrypt'|'decrypt', fields?: string[] }
+// Payload: { entity_name: 'Cliente'|'Fornecedor'|'Colaborador', id: string, action?: 'encrypt'|'decrypt', fields?: string[] }
 // Notes: Admin-safe by default; user-scoped allowed but updates run as service role after auth.
 
 function b64encode(buf) { return btoa(String.fromCharCode(...new Uint8Array(buf))); }
@@ -41,6 +41,7 @@ function get(obj, path) { return path.split('.').reduce((o,k)=> (o==null?undefin
 
 const DEFAULT_FIELDS = {
   Cliente: ['cpf','rg','email_principal','telefone_principal','endereco_principal','contatos','documentos'],
+  Fornecedor: ['cpf_cnpj','cpf','cnpj','inscricao_estadual','email','telefone','celular','whatsapp','endereco','bairro','cep','endereco_cobranca','dados_bancarios'],
   Colaborador: ['cpf','rg','email','telefone','whatsapp','endereco','dados_bancarios','data_nascimento']
 };
 
@@ -111,7 +112,14 @@ Deno.serve(async (req) => {
       descricao: `PII ${action} aplicada em ${entity}`,
       dados_novos: { action, campos: changedFields, quantidade_campos: changedFields.length },
       data_hora: new Date().toISOString()
-    }); } catch {}
+    }); } catch (auditError) {
+      console.error('[piiEncryptor] Falha ao registrar auditoria protegida', {
+        entity,
+        id,
+        action,
+        error: auditError?.message || String(auditError),
+      });
+    }
 
     return Response.json({ ok: true, updated: changedFields, data: res });
   } catch (error) {

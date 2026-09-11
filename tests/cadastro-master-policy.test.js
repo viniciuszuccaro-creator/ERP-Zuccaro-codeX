@@ -6,11 +6,58 @@ import {
   applyLegacyReferenceCodePolicy,
   applyCodigoOnCreate,
   applyMasterCadastroOnCreate,
+  assertFornecedorScope,
   assertLegacyReferenceScope,
   findDuplicateMaster,
+  isValidCnpj,
+  isValidCpf,
+  normalizeFornecedorCadastro,
+  normalizeFornecedorWebsite,
   normalizeLegacyReferenceCode,
   resolveNextSequentialCode,
 } from '../src/api/localCadastroMasterPolicy.js';
+
+test('supplier documents are normalized and validated by person type', () => {
+  assert.equal(isValidCpf('529.982.247-25'), true);
+  assert.equal(isValidCnpj('11.222.333/0001-81'), true);
+  assert.equal(isValidCpf('111.111.111-11'), false);
+  assert.equal(isValidCnpj('11.222.333/0001-82'), false);
+
+  const pf = normalizeFornecedorCadastro({ tipo_pessoa: 'PF', cpf_cnpj: '529.982.247-25' });
+  assert.equal(pf.tipo_pessoa, 'Pessoa Fisica');
+  assert.equal(pf.cpf, '52998224725');
+  assert.equal(pf.cnpj, '');
+
+  const pj = normalizeFornecedorCadastro({ tipo_pessoa: 'J', cnpj: '11.222.333/0001-81' });
+  assert.equal(pj.tipo_pessoa, 'Pessoa Juridica');
+  assert.equal(pj.cpf_cnpj, '11222333000181');
+  assert.throws(() => normalizeFornecedorCadastro({ tipo_pessoa: 'PF', cpf: '111.111.111-11' }), /Documento invalido/);
+});
+
+test('supplier website only accepts complete http or https URLs', () => {
+  assert.equal(normalizeFornecedorWebsite('https://empresa.example/path'), 'https://empresa.example/path');
+  assert.throws(() => normalizeFornecedorWebsite('javascript:alert(1)'), /http ou https/);
+  assert.throws(() => normalizeFornecedorWebsite('empresa.example'), /URL completa/);
+});
+
+test('supplier scope blocks another group and duplicate updates ignore the current row', () => {
+  assert.throws(() => assertFornecedorScope({
+    record: { group_id: 'g1', empresa_dona_id: 'e2' },
+    currentGroupId: 'g1',
+    companies: [{ id: 'e2', group_id: 'g2' }],
+  }), /Empresa externa ao grupo/);
+  assert.equal(assertFornecedorScope({
+    record: { group_id: 'g1', empresa_dona_id: 'e1' },
+    currentGroupId: 'g1',
+    companies: [{ id: 'e1', group_id: 'g1' }],
+  }), true);
+  assert.equal(findDuplicateMaster({
+    entityName: 'Fornecedor',
+    record: { id: 'f1', group_id: 'g1', cpf_cnpj: '11222333000181' },
+    records: [{ id: 'f1', group_id: 'g1', cnpj: '11.222.333/0001-81' }],
+    currentId: 'f1',
+  }), null);
+});
 
 test('legacy reference codes follow an explicit format contract', () => {
   assert.equal(normalizeLegacyReferenceCode('  VEND-01/CPA  '), 'VEND-01/CPA');
@@ -202,4 +249,30 @@ test('legacy reference fields are exposed with RBAC and searchable by backend', 
   const localClient = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
   assert.match(layout, /checkLegacyFieldRBAC/);
   assert.match(localClient, /assertLocalLegacyFieldAllowed/);
+});
+
+test('supplier operational fields are integrated with granular RBAC and protected audit', async () => {
+  const form = await readFile(new URL('../src/components/cadastros/CadastroFornecedorCompleto.jsx', import.meta.url), 'utf8');
+  const sections = await readFile(new URL('../src/components/cadastros/fornecedor/FornecedorFormSections.jsx', import.meta.url), 'utf8');
+  const layout = await readFile(new URL('../src/Layout.jsx', import.meta.url), 'utf8');
+  const localClient = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
+  const auditSanitizer = await readFile(new URL('../src/components/lib/sanitizeOnWrite.jsx', import.meta.url), 'utf8');
+  const backendSanitizer = await readFile(new URL('../base44/functions/sanitizeOnWrite/entry.ts', import.meta.url), 'utf8');
+  const piiEncryptor = await readFile(new URL('../base44/functions/piiEncryptor/entry.ts', import.meta.url), 'utf8');
+  const listSorted = await readFile(new URL('../base44/functions/entityListSorted/entry.ts', import.meta.url), 'utf8');
+
+  assert.match(form, /normalizeFornecedorCadastro/);
+  assert.match(form, /FornecedorDadosGeraisSection/);
+  assert.match(sections, /Cadastros\.Pessoas\.Fornecedor\.documento\.editar/);
+  assert.match(sections, /Cadastros\.Pessoas\.Fornecedor\.endereco_cobranca\.editar/);
+  assert.match(layout, /checkSupplierFieldRBAC/);
+  assert.match(layout, /name === 'Fornecedor'/);
+  assert.match(localClient, /assertLocalSupplierFieldsAllowed/);
+  assert.match(localClient, /assertFornecedorScope/);
+  assert.match(auditSanitizer, /cpf\|cnpj/);
+  assert.match(backendSanitizer, /supplier_document_invalid/);
+  assert.match(backendSanitizer, /supplier_document_duplicate_in_group/);
+  assert.match(backendSanitizer, /sanitizeAuditValue/);
+  assert.match(piiEncryptor, /Fornecedor: \['cpf_cnpj'/);
+  assert.match(listSorted, /'cpf_cnpj'/);
 });

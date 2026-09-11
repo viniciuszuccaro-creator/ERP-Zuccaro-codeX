@@ -10,9 +10,12 @@ import { createAuthDeniedError, evaluateLocalUserSession, markLocalLoggedOut, re
 import {
   applyLegacyReferenceCodePolicy,
   applyMasterCadastroOnCreate,
+  assertFornecedorScope,
   assertLegacyReferenceScope,
+  findDuplicateMaster,
   LEGACY_REFERENCE_CODE_SPECS,
   MASTER_CODE_SPECS,
+  normalizeFornecedorCadastro,
   parseNumericCode,
   sequenceKeyFor,
 } from "@/api/localCadastroMasterPolicy";
@@ -1189,6 +1192,21 @@ const LEGACY_FIELD_PERMISSION_SCOPE = {
   Colaborador: ['Pessoas', 'Colaborador', 'codigo_vendedor_legado'],
 };
 
+const SUPPLIER_PROTECTED_FIELD_SCOPES = [
+  {
+    fields: ['tipo_pessoa', 'cpf_cnpj', 'cpf', 'cnpj', 'inscricao_estadual'],
+    section: ['Pessoas', 'Fornecedor', 'documento'],
+  },
+  {
+    fields: ['bairro', 'website'],
+    section: ['Pessoas', 'Fornecedor', 'contato'],
+  },
+  {
+    fields: ['endereco_cobranca'],
+    section: ['Pessoas', 'Fornecedor', 'endereco_cobranca'],
+  },
+];
+
 const assertLocalLegacyFieldAllowed = (entityName, record = {}) => {
   const spec = LEGACY_REFERENCE_CODE_SPECS[entityName];
   if (!spec || !Object.prototype.hasOwnProperty.call(record, spec.field)) return;
@@ -1201,6 +1219,23 @@ const assertLocalLegacyFieldAllowed = (entityName, record = {}) => {
   if (!result.allowed) {
     auditLocalPermissionDenied(entityName, 'editar', record?.id || null);
     throw new Error(`Permissao negada para editar ${spec.field} em ${entityName}.`);
+  }
+};
+
+const assertLocalSupplierFieldsAllowed = (entityName, record = {}) => {
+  if (entityName !== 'Fornecedor') return;
+  for (const rule of SUPPLIER_PROTECTED_FIELD_SCOPES) {
+    if (!rule.fields.some((field) => Object.prototype.hasOwnProperty.call(record, field))) continue;
+    const result = evaluateLocalPermission({
+      module: 'Cadastros',
+      section: rule.section,
+      entityName,
+      action: 'editar',
+    });
+    if (!result.allowed) {
+      auditLocalPermissionDenied(entityName, 'editar', record?.id || null);
+      throw new Error(`Permissao negada para editar ${rule.section.at(-1)} em Fornecedor.`);
+    }
   }
 };
 
@@ -1691,12 +1726,22 @@ const createEntityApi = (entityName) => ({
   async create(data = {}) {
     assertLocalMutationAllowed(entityName, 'criar');
     assertLocalLegacyFieldAllowed(entityName, data);
+    assertLocalSupplierFieldsAllowed(entityName, data);
     if (entityName === 'MovimentacaoEstoque' && isAjusteEstoque(data)) {
       assertLocalMutationAllowed(entityName, 'ajustar');
     }
     const db = loadDb();
     const records = getEntityStore(db, entityName);
-    const scoped = stampRecordContext(entityName, data);
+    let scoped = stampRecordContext(entityName, data);
+    if (entityName === 'Fornecedor') {
+      const { groupId: currentGroupId } = getCurrentContext();
+      assertFornecedorScope({
+        record: scoped,
+        currentGroupId,
+        companies: getEntityStore(db, 'Empresa'),
+      });
+      scoped = normalizeFornecedorCadastro(scoped);
+    }
     const ordem = applyLocalOrdemProducaoCreate(db, entityName, scoped);
     if (ordem.reuse) return ordem.reuse;
     const compras = applyLocalComprasCreate(db, entityName, ordem.record || scoped);
@@ -1746,12 +1791,38 @@ const createEntityApi = (entityName) => ({
       assertLocalMutationAllowed(entityName, 'editar', id);
     }
     assertLocalLegacyFieldAllowed(entityName, data);
+    assertLocalSupplierFieldsAllowed(entityName, data);
     const db = loadDb();
     const records = getEntityStore(db, entityName);
     const index = records.findIndex((item) => String(item.id) === String(id));
     if (index < 0) throw new Error(`${entityName} local nao encontrado: ${id}`);
     const before = { ...records[index] };
-    const payload = stampRecordContext(entityName, data);
+    let payload = stampRecordContext(entityName, data);
+    if (entityName === 'Fornecedor') {
+      const { groupId: currentGroupId } = getCurrentContext();
+      const documentFields = ['tipo_pessoa', 'cpf_cnpj', 'cpf', 'cnpj'];
+      const hasDocumentPatch = documentFields.some((field) => Object.prototype.hasOwnProperty.call(payload, field));
+      const normalized = hasDocumentPatch
+        ? normalizeFornecedorCadastro({ ...before, ...payload })
+        : normalizeFornecedorCadastro(payload);
+      const merged = { ...before, ...normalized };
+      assertFornecedorScope({
+        record: merged,
+        before,
+        currentGroupId,
+        companies: getEntityStore(db, 'Empresa'),
+      });
+      if (hasDocumentPatch) {
+        const duplicate = findDuplicateMaster({ entityName, record: merged, records, currentId: before.id });
+        if (duplicate) throw new Error('Cadastro duplicado no grupo para este documento.');
+      }
+      const normalizedFields = new Set(hasDocumentPatch
+        ? documentFields
+        : []);
+      payload = Object.fromEntries(Object.entries(normalized).filter(([field]) => (
+        Object.prototype.hasOwnProperty.call(payload, field) || normalizedFields.has(field)
+      )));
+    }
     if ((isTituloFinanceiroEntity(entityName) || NOTA_FISCAL_ENTITIES.includes(entityName) || entityName === 'OrdemProducao' || entityName === 'Entrega' || entityName === 'OrdemCompra' || entityName === 'Oportunidade') && before.empresa_id && !Object.prototype.hasOwnProperty.call(data || {}, 'empresa_id')) {
       payload.empresa_id = before.empresa_id;
       if (before.group_id) payload.group_id = before.group_id;
@@ -1966,7 +2037,10 @@ const createEntityApi = (entityName) => ({
   async bulkCreate(items = []) {
     const legacySpec = LEGACY_REFERENCE_CODE_SPECS[entityName];
     const hasLegacyReference = Boolean(legacySpec && items.some((item) => String(item?.[legacySpec.field] || '').trim()));
-    if (hasLegacyReference) assertLocalMutationAllowed(entityName, 'importar');
+    const hasProtectedSupplierField = entityName === 'Fornecedor' && items.some((item) => (
+      SUPPLIER_PROTECTED_FIELD_SCOPES.some((rule) => rule.fields.some((field) => Object.prototype.hasOwnProperty.call(item || {}, field)))
+    ));
+    if (hasLegacyReference || hasProtectedSupplierField) assertLocalMutationAllowed(entityName, 'importar');
     const created = [];
     for (const item of items) {
       created.push(await this.create(item));

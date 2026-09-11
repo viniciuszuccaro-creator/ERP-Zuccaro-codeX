@@ -19,7 +19,7 @@ const DEFAULT_SORTS = {
 const SEARCH_FIELDS = {
   Produto: ['descricao', 'codigo', 'codigo_barras', 'grupo_produto_nome', 'marca_nome'],
   Cliente: ['nome', 'razao_social', 'nome_fantasia', 'cpf', 'cnpj'],
-  Fornecedor: ['nome', 'razao_social', 'nome_fantasia', 'cnpj', 'cpf'],
+  Fornecedor: ['nome', 'razao_social', 'nome_fantasia', 'codigo', 'cpf_cnpj', 'cnpj', 'cpf'],
   Transportadora: ['razao_social', 'nome_fantasia', 'cnpj'],
   Colaborador: ['nome_completo', 'cpf', 'email', 'cargo', 'codigo_vendedor_legado'],
   Banco: ['nome', 'nome_banco', 'codigo_banco', 'agencia'],

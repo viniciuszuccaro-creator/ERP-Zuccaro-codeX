@@ -92,6 +92,116 @@ export const sequenceKeyFor = (entityName, groupId) => `seq_codigo_${entityName}
 
 export const normalizeDocumento = (value) => String(value || '').replace(/\D/g, '');
 
+const SUPPLIER_PERSON_TYPE_ALIASES = new Map([
+  ['F', 'Pessoa Fisica'],
+  ['PF', 'Pessoa Fisica'],
+  ['PESSOA FISICA', 'Pessoa Fisica'],
+  ['J', 'Pessoa Juridica'],
+  ['PJ', 'Pessoa Juridica'],
+  ['PESSOA JURIDICA', 'Pessoa Juridica'],
+]);
+
+export const normalizeFornecedorPersonType = (value, document = '') => {
+  const normalized = String(value || '')
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .trim()
+    .toUpperCase();
+  if (!normalized) return normalizeDocumento(document).length === 11 ? 'Pessoa Fisica' : 'Pessoa Juridica';
+  const personType = SUPPLIER_PERSON_TYPE_ALIASES.get(normalized);
+  if (!personType) throw new Error('Tipo de pessoa do fornecedor invalido.');
+  return personType;
+};
+
+const hasRepeatedDigits = (document) => /^(\d)\1+$/.test(document);
+
+const calculateCpfDigit = (digits, factor) => {
+  const total = digits.split('').reduce((sum, digit) => sum + Number(digit) * factor--, 0);
+  const remainder = (total * 10) % 11;
+  return remainder === 10 ? 0 : remainder;
+};
+
+export const isValidCpf = (value) => {
+  const document = normalizeDocumento(value);
+  if (document.length !== 11 || hasRepeatedDigits(document)) return false;
+  const first = calculateCpfDigit(document.slice(0, 9), 10);
+  const second = calculateCpfDigit(document.slice(0, 10), 11);
+  return first === Number(document[9]) && second === Number(document[10]);
+};
+
+const calculateCnpjDigit = (digits, weights) => {
+  const total = digits.split('').reduce((sum, digit, index) => sum + Number(digit) * weights[index], 0);
+  const remainder = total % 11;
+  return remainder < 2 ? 0 : 11 - remainder;
+};
+
+export const isValidCnpj = (value) => {
+  const document = normalizeDocumento(value);
+  if (document.length !== 14 || hasRepeatedDigits(document)) return false;
+  const first = calculateCnpjDigit(document.slice(0, 12), [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  const second = calculateCnpjDigit(document.slice(0, 13), [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  return first === Number(document[12]) && second === Number(document[13]);
+};
+
+export const normalizeFornecedorWebsite = (value) => {
+  const website = String(value || '').trim();
+  if (!website) return '';
+  if (website.length > 240) throw new Error('Website do fornecedor excede 240 caracteres.');
+  let parsed;
+  try {
+    parsed = new URL(website);
+  } catch {
+    throw new Error('Website do fornecedor invalido. Use uma URL completa com http ou https.');
+  }
+  if (!['http:', 'https:'].includes(parsed.protocol)) {
+    throw new Error('Website do fornecedor deve usar http ou https.');
+  }
+  return parsed.toString();
+};
+
+export const normalizeFornecedorCadastro = (record = {}) => {
+  const hasDocumentFields = ['tipo_pessoa', 'cpf_cnpj', 'cpf', 'cnpj'].some((field) => (
+    Object.prototype.hasOwnProperty.call(record, field)
+  ));
+  const normalized = { ...record };
+
+  if (hasDocumentFields) {
+    const document = normalizeDocumento(firstText(record.cpf_cnpj, record.cpf, record.cnpj));
+    const personType = normalizeFornecedorPersonType(record.tipo_pessoa, document);
+    if (document) {
+      const valid = personType === 'Pessoa Fisica' ? isValidCpf(document) : isValidCnpj(document);
+      if (!valid) throw new Error(`Documento invalido para ${personType}.`);
+    }
+    normalized.tipo_pessoa = personType;
+    normalized.cpf_cnpj = document;
+    normalized.cpf = personType === 'Pessoa Fisica' ? document : '';
+    normalized.cnpj = personType === 'Pessoa Juridica' ? document : '';
+  }
+
+  if (Object.prototype.hasOwnProperty.call(record, 'website')) {
+    normalized.website = normalizeFornecedorWebsite(record.website);
+  }
+
+  return normalized;
+};
+
+export const assertFornecedorScope = ({ record = {}, before = null, currentGroupId = null, companies = [] } = {}) => {
+  const groupId = firstText(record.group_id, record.grupo_id, before?.group_id, before?.grupo_id);
+  const beforeGroupId = firstText(before?.group_id, before?.grupo_id);
+  if (!groupId || (beforeGroupId && beforeGroupId !== groupId) || (currentGroupId && firstText(currentGroupId) !== groupId)) {
+    throw new Error('Escopo de grupo invalido para fornecedor.');
+  }
+
+  const empresaId = firstText(record.empresa_dona_id, record.empresa_id, before?.empresa_dona_id, before?.empresa_id);
+  if (!empresaId) return true;
+  const empresa = (Array.isArray(companies) ? companies : []).find((item) => firstText(item?.id) === empresaId);
+  const empresaGroupId = firstText(empresa?.group_id, empresa?.grupo_id, empresa?.grupo_empresarial_id);
+  if (!empresa || empresaGroupId !== groupId) {
+    throw new Error('Empresa externa ao grupo bloqueada para fornecedor.');
+  }
+  return true;
+};
+
 export const parseNumericCode = (value) => {
   const match = String(value || '').match(/(\d+)(?!.*\d)/);
   const parsed = Number.parseInt(match?.[1] || '', 10);
@@ -149,7 +259,7 @@ export const applyCodigoOnCreate = ({ entityName, record = {}, records = [], seq
   };
 };
 
-export const findDuplicateMaster = ({ entityName, record = {}, records = [] } = {}) => {
+export const findDuplicateMaster = ({ entityName, record = {}, records = [], currentId = null } = {}) => {
   const groupId = firstText(record.group_id, record.grupo_id);
   if (!groupId) {
     if (['Cliente', 'Fornecedor', 'Transportadora', 'Produto'].includes(entityName)) {
@@ -170,7 +280,11 @@ export const findDuplicateMaster = ({ entityName, record = {}, records = [] } = 
   if (['Cliente', 'Fornecedor', 'Transportadora'].includes(entityName)) {
     const doc = normalizeDocumento(record.cpf_cnpj || record.cnpj || record.cpf);
     if (doc) {
-      const hit = records.find((item) => sameGroup(item) && normalizeDocumento(item.cpf_cnpj || item.cnpj || item.cpf) === doc);
+      const hit = records.find((item) => (
+        firstText(item.id) !== firstText(currentId)
+        && sameGroup(item)
+        && normalizeDocumento(item.cpf_cnpj || item.cnpj || item.cpf) === doc
+      ));
       if (hit) return { type: 'documento', existingId: hit.id };
     }
   }
@@ -179,7 +293,8 @@ export const findDuplicateMaster = ({ entityName, record = {}, records = [] } = 
 };
 
 export const applyMasterCadastroOnCreate = ({ entityName, record = {}, records = [], sequenceValue = 0 } = {}) => {
-  const groupId = firstText(record.group_id, record.grupo_id);
+  const normalizedRecord = entityName === 'Fornecedor' ? normalizeFornecedorCadastro(record) : record;
+  const groupId = firstText(normalizedRecord.group_id, normalizedRecord.grupo_id);
   const requiresGroup = Boolean(MASTER_CODE_SPECS[entityName])
     || Boolean(LEGACY_REFERENCE_CODE_SPECS[entityName] && firstText(record[LEGACY_REFERENCE_CODE_SPECS[entityName].field]))
     || ['Cliente', 'Fornecedor', 'Transportadora', 'Produto'].includes(entityName);
@@ -188,17 +303,17 @@ export const applyMasterCadastroOnCreate = ({ entityName, record = {}, records =
     error.duplicate = { type: 'sem_grupo' };
     throw error;
   }
-  const isMigracao = Boolean(record.origem_migracao || record.lote_migracao || record.importacao_erp);
+  const isMigracao = Boolean(normalizedRecord.origem_migracao || normalizedRecord.lote_migracao || normalizedRecord.importacao_erp);
   // Produto nao-migracao: rejeita codigo ja existente antes da reserva remapear
   if (entityName === 'Produto' && !isMigracao) {
-    const preDup = findDuplicateMaster({ entityName, record, records });
+    const preDup = findDuplicateMaster({ entityName, record: normalizedRecord, records });
     if (preDup?.type === 'codigo') {
       const error = new Error('Codigo duplicado no grupo para este cadastro.');
       error.duplicate = preDup;
       throw error;
     }
   }
-  const withCode = applyCodigoOnCreate({ entityName, record, records, sequenceValue });
+  const withCode = applyCodigoOnCreate({ entityName, record: normalizedRecord, records, sequenceValue });
   const duplicate = findDuplicateMaster({ entityName, record: withCode, records });
   if (duplicate?.type === 'sem_grupo') {
     const error = new Error('group_id obrigatorio para cadastro mestre.');

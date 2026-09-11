@@ -5560,3 +5560,20 @@ Checklist inicial:
 - A instancia `MSSQL$ERPZLEGACY` foi encerrada no bloco `finally` e permanece `Stopped`/`Manual`; TCP e Named Pipes continuam desativados conforme a configuracao isolada.
 - Nenhum dado pessoal, CSV nominal, JSON local, hash detalhado, TPS, MDF/LDF ou relatorio foi adicionado ao GitHub. A mudanca do repositorio e exclusivamente documental; testes de runtime foram dispensados e `git diff --check` e obrigatorio no fechamento.
 - Proximo passo obrigatorio: revisar no cadastro `Fornecedor` existente as lacunas de tipo de pessoa/CPF, bairro, website e endereco de cobranca; implementar somente os campos realmente necessarios com Grupo/Empresa, RBAC, sanitizacao e auditoria, antes de gerar staging nominal protegido e quarentena.
+
+### Gate 18 - Campos essenciais e protecao do cadastro de fornecedores
+
+- O cadastro `Fornecedor` existente foi ampliado, sem criar tela, entidade, rota, modulo ou importador paralelo. Foram incorporados tipo de pessoa, documento unificado CPF/CNPJ, bairro, website e endereco de cobranca.
+- Os campos antigos `cpf` e `cnpj` foram preservados e continuam sincronizados com `cpf_cnpj`, mantendo compatibilidade com consultas e consumidores existentes.
+- CPF e CNPJ passam por normalizacao para somente digitos, bloqueio de sequencias repetidas e validacao completa dos digitos verificadores conforme o tipo de pessoa. Website aceita somente URL completa com protocolo HTTP ou HTTPS e limite de tamanho.
+- Criacao e edicao exigem `group_id` canonico. Alteracao indevida do Grupo e empresa proprietaria externa ao Grupo sao bloqueadas no cliente local e no sanitizador backend.
+- A deduplicacao por documento permanece restrita ao Grupo, agora tambem cobre edicao sem colidir com o proprio registro. Nenhum registro e escolhido ou mesclado automaticamente.
+- Os campos sensiveis exigem permissoes granulares nas secoes `Cadastros.Pessoas.Fornecedor.documento`, `Cadastros.Pessoas.Fornecedor.contato` e `Cadastros.Pessoas.Fornecedor.endereco_cobranca`. Lotes que contenham esses campos tambem exigem `importar`.
+- A auditoria de criacao e edicao mascara documentos, contatos, enderecos e dados bancarios. O sanitizador backend aplica a mesma protecao ao antes/depois e o criptografador PII existente passou a atender `Fornecedor` com AES-GCM, sem criar servico paralelo.
+- Busca e listagem passaram a reconhecer `codigo`, `cpf_cnpj`, `cpf` e `cnpj`; a exibicao identifica dinamicamente CPF ou CNPJ. Nenhum campo, aba, botao ou fluxo existente foi removido.
+- `CadastroFornecedorCompleto.jsx` foi reduzido de 720 para 500 linhas pela extracao das secoes de dados gerais e contato/endereco para um componente auxiliar integrado ao mesmo formulario. A extracao foi necessaria pela regra de refatoracao de arquivos grandes e nao altera a interface publica.
+- Nenhuma linha nominal do backup, documento, nome, endereco, e-mail, dado bancario, MDF/LDF, TPS, CSV ou relatorio local foi adicionada ao GitHub ou importada no ERP.
+- Validacoes: teste focado aprovado com 17/17; suite completa aprovada com 230/230 apos o ajuste final do criptografador; lint direcionado aprovado; sintaxe dos dois hooks TypeScript alterados aprovada; `npm run audit:baseline` aprovado; `npm run build` aprovado; `git diff --check` aprovado.
+- `npm run typecheck` global permanece reprovado pelo baseline historico de tipagem JS/TS distribuido em muitos modulos fora deste lote. A falha nao foi mascarada nem convertida em sucesso; os arquivos runtime do lote foram cobertos por lint, testes, transpilacao sintatica dos hooks e build de producao.
+- A instancia `MSSQL$ERPZLEGACY` foi confirmada como `Stopped`/`Manual`. Este lote nao iniciou o SQL Server nem acessou os dados nominais legados.
+- Proximo passo obrigatorio: gerar somente no HD o staging nominal protegido dos 1.061 fornecedores e a quarentena correspondente, aplicando o contrato estrutural ja aprovado, validacao integral de CPF/CNPJ, deduplicacao no Grupo e conciliacao das referencias; nenhuma importacao sera executada sem homologacao.

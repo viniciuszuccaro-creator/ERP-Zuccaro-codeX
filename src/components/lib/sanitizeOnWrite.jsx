@@ -21,7 +21,7 @@ export function sanitizeOnWrite(input) {
   return walk(input);
 }
 
-export const SENSITIVE_AUDIT_KEY = /(token|senha|password|secret|api[_-]?key|client[_-]?secret|access[_-]?token|refresh[_-]?token|authorization|cookie|certificado|private|webhook[_-]?url|linha_digitavel|cvv|cvc|pix_copia)/i;
+export const SENSITIVE_AUDIT_KEY = /(token|senha|password|secret|api[_-]?key|client[_-]?secret|access[_-]?token|refresh[_-]?token|authorization|cookie|certificado|private|webhook[_-]?url|linha_digitavel|cvv|cvc|pix_copia|cpf|cnpj|rg|inscricao_(estadual|municipal)|email|telefone|whatsapp|endereco|bairro|cep|dados_bancarios|agencia|conta(_corrente)?)/i;
 
 export function sanitizeAuditText(value, max = 300) {
   return String(value ?? '')

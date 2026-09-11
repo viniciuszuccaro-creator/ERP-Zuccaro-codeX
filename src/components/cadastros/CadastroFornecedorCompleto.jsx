@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
@@ -21,7 +18,8 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
-import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
+import { normalizeFornecedorCadastro } from "@/api/localCadastroMasterPolicy";
+import { FornecedorContatoEnderecoSection, FornecedorDadosGeraisSection } from "@/components/cadastros/fornecedor/FornecedorFormSections";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeCode = (value, max = 80) => String(value ?? "").replace(/[^0-9A-Za-z_.\-/\s@()+]/g, "").slice(0, max).trim();
@@ -49,17 +47,23 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     updateInContext,
     deleteInContext
   } = useContextoVisual();
-  const { canCreate, canEdit, canDelete } = usePermissions();
+  const { canCreate, canEdit, canDelete, hasFieldPermission, isAdmin } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || fornecedor?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || fornecedor?.empresa_id || fornecedor?.empresa_dona_id || fornecedor?.group_id);
   const podeCriar = canCreate("Cadastros", "Fornecedor") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Fornecedor") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "Fornecedor") || canDelete("Cadastros", null);
+  const podeEditarDocumento = isAdmin() || hasFieldPermission("Cadastros", "Pessoas", "Fornecedor", "documento", "editar");
+  const podeEditarContato = isAdmin() || hasFieldPermission("Cadastros", "Pessoas", "Fornecedor", "contato", "editar");
+  const podeEditarEnderecoCobranca = isAdmin() || hasFieldPermission("Cadastros", "Pessoas", "Fornecedor", "endereco_cobranca", "editar");
 
   const [formData, setFormData] = useState(fornecedor || {
     nome: "",
     razao_social: "",
     nome_fantasia: "",
+    tipo_pessoa: "Pessoa Juridica",
+    cpf_cnpj: "",
+    cpf: "",
     cnpj: "",
     inscricao_estadual: "",
     rntrc: "",
@@ -68,9 +72,12 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     whatsapp: "",
     contato_responsavel: "",
     endereco: "",
+    bairro: "",
     cidade: "",
     estado: "",
     cep: "",
+    website: "",
+    endereco_cobranca: { endereco: "", bairro: "", cidade: "", estado: "", cep: "" },
     tipo_fornecedor: "Matéria-Prima",
     categoria: "Matéria Prima",
     prazo_entrega_padrao: 0,
@@ -83,11 +90,16 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     group_id: groupId
   });
 
-  const buildPayload = (data = formData) => ({
+  const buildPayload = (data = formData) => {
+    const enderecoCobranca = data.endereco_cobranca || {};
+    const payload = {
     ...data,
     nome: sanitizeText(data.nome, 180),
     razao_social: sanitizeText(data.razao_social, 180),
     nome_fantasia: sanitizeText(data.nome_fantasia, 180),
+    tipo_pessoa: sanitizeText(data.tipo_pessoa || "Pessoa Juridica", 30),
+    cpf_cnpj: sanitizeCode(data.cpf_cnpj || data.cpf || data.cnpj, 24),
+    cpf: sanitizeCode(data.cpf, 18),
     cnpj: sanitizeCode(data.cnpj, 24),
     inscricao_estadual: sanitizeCode(data.inscricao_estadual, 40),
     rntrc: sanitizeCode(data.rntrc, 40),
@@ -96,9 +108,18 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     whatsapp: sanitizeCode(data.whatsapp, 40),
     contato_responsavel: sanitizeText(data.contato_responsavel, 180),
     endereco: sanitizeText(data.endereco, 300),
+    bairro: sanitizeText(data.bairro, 120),
     cidade: sanitizeText(data.cidade, 120),
     estado: sanitizeCode(data.estado, 2),
     cep: sanitizeCode(data.cep, 12),
+    website: sanitizeText(data.website, 240),
+    endereco_cobranca: {
+      endereco: sanitizeText(enderecoCobranca.endereco, 300),
+      bairro: sanitizeText(enderecoCobranca.bairro, 120),
+      cidade: sanitizeText(enderecoCobranca.cidade, 120),
+      estado: sanitizeCode(enderecoCobranca.estado, 2).toUpperCase(),
+      cep: sanitizeCode(enderecoCobranca.cep, 12),
+    },
     tipo_fornecedor: sanitizeText(data.tipo_fornecedor, 80),
     categoria: sanitizeText(data.categoria, 80),
     prazo_entrega_padrao: toNumber(data.prazo_entrega_padrao, 0),
@@ -109,7 +130,12 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     empresa_id: data.empresa_id || empresaAtual?.id,
     empresa_dona_id: data.empresa_dona_id || data.empresa_id || empresaAtual?.id,
     group_id: data.group_id || groupId
-  });
+    };
+    if (!podeEditarDocumento) ['tipo_pessoa', 'cpf_cnpj', 'cpf', 'cnpj', 'inscricao_estadual'].forEach((field) => delete payload[field]);
+    if (!podeEditarContato) ['bairro', 'website'].forEach((field) => delete payload[field]);
+    if (!podeEditarEnderecoCobranca) delete payload.endereco_cobranca;
+    return normalizeFornecedorCadastro(payload);
+  };
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
@@ -189,6 +215,10 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
       nome: dados.razao_social || formData.nome,
       razao_social: dados.razao_social || "",
       nome_fantasia: dados.nome_fantasia || "",
+      tipo_pessoa: "Pessoa Juridica",
+      cpf_cnpj: dados.cnpj || formData.cpf_cnpj || formData.cnpj,
+      cpf: "",
+      cnpj: dados.cnpj || formData.cnpj,
       inscricao_estadual: dados.inscricao_estadual || formData.inscricao_estadual,
       cnae_principal: dados.cnae_principal || formData.cnae_principal,
       ramo_atividade: dados.cnae_principal || formData.ramo_atividade,
@@ -196,6 +226,7 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
       endereco: dados.endereco_completo?.logradouro 
         ? `${dados.endereco_completo.logradouro}, ${dados.endereco_completo.numero || 'S/N'}${dados.endereco_completo.complemento ? ', ' + dados.endereco_completo.complemento : ''}, ${dados.endereco_completo.bairro || ''}`
         : formData.endereco,
+      bairro: dados.endereco_completo?.bairro || formData.bairro,
       cidade: dados.endereco_completo?.cidade || formData.cidade,
       estado: dados.endereco_completo?.uf || formData.estado,
       cep: dados.endereco_completo?.cep || formData.cep,
@@ -213,6 +244,7 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     setFormData({
       ...formData,
       endereco: dados.logradouro ? `${dados.logradouro}` : formData.endereco,
+      bairro: dados.bairro || formData.bairro,
       cidade: dados.cidade || formData.cidade,
       estado: dados.uf || formData.estado
     });
@@ -336,277 +368,25 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
         <ScrollArea className="flex-1">
           <div className="px-6 pb-6">
             <TabsContent value="dados-gerais" className="space-y-6 m-0 mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <Label htmlFor="nome">Nome / Razão Social *</Label>
-                  <Input
-                    id="nome"
-                    value={formData.nome}
-                    onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="razao_social">Razão Social</Label>
-                  <Input
-                    id="razao_social"
-                    value={formData.razao_social}
-                    onChange={(e) => setFormData({ ...formData, razao_social: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="nome_fantasia">Nome Fantasia</Label>
-                  <Input
-                    id="nome_fantasia"
-                    value={formData.nome_fantasia}
-                    onChange={(e) => setFormData({ ...formData, nome_fantasia: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="cnpj">CNPJ</Label>
-                  <Input
-                    id="cnpj"
-                    value={formData.cnpj}
-                    onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
-                    placeholder="00.000.000/0000-00"
-                  />
-                </div>
-
-                <div>
-                  <Label>&nbsp;</Label>
-                  <BotaoBuscaAutomatica
-                    tipo="cnpj"
-                    valor={formData.cnpj}
-                    onDadosEncontrados={handleDadosCNPJ}
-                    disabled={!formData.cnpj || formData.cnpj.replace(/\D/g, '').length < 14}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
-                  <Input
-                    id="inscricao_estadual"
-                    value={formData.inscricao_estadual}
-                    onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="categoria">Categoria *</Label>
-                  <Select
-                    value={formData.categoria}
-                    onValueChange={(value) => setFormData({ ...formData, categoria: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="z-[99999]">
-                      <SelectItem value="Matéria Prima">Matéria Prima</SelectItem>
-                      <SelectItem value="Equipamentos">Equipamentos</SelectItem>
-                      <SelectItem value="Serviços">Serviços</SelectItem>
-                      <SelectItem value="Transporte">Transporte</SelectItem>
-                      <SelectItem value="Tecnologia">Tecnologia</SelectItem>
-                      <SelectItem value="Outros">Outros</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {formData.categoria === "Transporte" && (
-                  <>
-                    <div>
-                      <Label htmlFor="rntrc">RNTRC (ANTT)</Label>
-                      <Input
-                        id="rntrc"
-                        value={formData.rntrc}
-                        onChange={(e) => setFormData({ ...formData, rntrc: e.target.value })}
-                        placeholder="00000000"
-                      />
-                    </div>
-
-                    <div>
-                      <Label>&nbsp;</Label>
-                      <BotaoBuscaAutomatica
-                        tipo="rntrc"
-                        valor={formData.rntrc}
-                        onDadosEncontrados={handleDadosRNTRC}
-                        disabled={!formData.rntrc}
-                      />
-                    </div>
-                  </>
-                )}
-
-                <div>
-                  <Label htmlFor="prazo_entrega_padrao">Prazo Entrega Padrão (dias)</Label>
-                  <Input
-                    id="prazo_entrega_padrao"
-                    type="number"
-                    value={formData.prazo_entrega_padrao}
-                    onChange={(e) => setFormData({ ...formData, prazo_entrega_padrao: parseFloat(e.target.value) || 0 })}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="status_fornecedor">Status do Fornecedor</Label>
-                  <Select
-                    value={formData.status_fornecedor}
-                    onValueChange={(value) => setFormData({ ...formData, status_fornecedor: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="z-[99999]">
-                      <SelectItem value="Em Análise">Em Análise</SelectItem>
-                      <SelectItem value="Ativo">Ativo</SelectItem>
-                      <SelectItem value="Bloqueado">Bloqueado</SelectItem>
-                      <SelectItem value="Inativo">Inativo</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="status">Status</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value) => setFormData({ ...formData, status: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="z-[99999]">
-                      <SelectItem value="Ativo">Ativo</SelectItem>
-                      <SelectItem value="Inativo">Inativo</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {fornecedor?.id && (
-                  <div className="col-span-2 pt-4 border-t">
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <p className="text-sm text-slate-600">Última Compra</p>
-                        <p className="font-semibold">
-                          {formData.ultima_compra 
-                            ? new Date(formData.ultima_compra).toLocaleDateString('pt-BR')
-                            : '-'
-                          }
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-slate-600">Total de Compras</p>
-                        <p className="font-semibold">
-                          {formData.quantidade_compras || 0}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-slate-600">Nota Média</p>
-                        <div className="flex items-center gap-2">
-                          <div className="flex gap-1">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Star
-                                key={star}
-                                className={`w-4 h-4 ${
-                                  star <= (formData.nota_media || 0)
-                                    ? 'fill-yellow-400 text-yellow-400'
-                                    : 'text-slate-300'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                          <span className="font-semibold">{(formData.nota_media || 0).toFixed(1)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <FornecedorDadosGeraisSection
+                formData={formData}
+                setFormData={setFormData}
+                fornecedor={fornecedor}
+                handleDadosCNPJ={handleDadosCNPJ}
+                handleDadosRNTRC={handleDadosRNTRC}
+                canEditDocument={podeEditarDocumento}
+              />
             </TabsContent>
 
             <TabsContent value="contato" className="space-y-6 m-0 mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="email">E-mail</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="telefone">Telefone</Label>
-                  <Input
-                    id="telefone"
-                    value={formData.telefone}
-                    onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <Label htmlFor="contato_responsavel">Contato Responsável</Label>
-                  <Input
-                    id="contato_responsavel"
-                    value={formData.contato_responsavel}
-                    onChange={(e) => setFormData({ ...formData, contato_responsavel: e.target.value })}
-                    placeholder="Nome do responsável"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="cep">CEP</Label>
-                  <Input
-                    id="cep"
-                    value={formData.cep}
-                    onChange={(e) => setFormData({ ...formData, cep: e.target.value })}
-                    placeholder="00000-000"
-                  />
-                </div>
-
-                <div>
-                  <Label>&nbsp;</Label>
-                  <BotaoBuscaAutomatica
-                    tipo="cep"
-                    valor={formData.cep}
-                    onDadosEncontrados={handleDadosCEP}
-                    disabled={!formData.cep || formData.cep.replace(/\D/g, '').length < 8}
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <Label htmlFor="endereco">Endereço Completo</Label>
-                  <Input
-                    id="endereco"
-                    value={formData.endereco}
-                    onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
-                    placeholder="Rua, Número, Bairro"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="cidade">Cidade</Label>
-                  <Input
-                    id="cidade"
-                    value={formData.cidade}
-                    onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="estado">Estado</Label>
-                  <Input
-                    id="estado"
-                    value={formData.estado}
-                    onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
-                    maxLength={2}
-                    placeholder="SP"
-                  />
-                </div>
-              </div>
+              <FornecedorContatoEnderecoSection
+                formData={formData}
+                setFormData={setFormData}
+                handleDadosCEP={handleDadosCEP}
+                canEditContact={podeEditarContato}
+                canEditBilling={podeEditarEnderecoCobranca}
+              />
             </TabsContent>
-
             <TabsContent value="avaliacoes" className="m-0 mt-4">
               {fornecedor?.id ? (
                 <div className="space-y-6">
