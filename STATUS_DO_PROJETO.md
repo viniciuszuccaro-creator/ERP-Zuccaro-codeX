@@ -5420,3 +5420,19 @@ Checklist inicial:
 - A instancia permanece `Stopped`/`Manual`, com TCP e Named Pipes desativados. Nenhum perfil completo, usuario, empresa, dado pessoal, hash detalhado ou relatorio local foi copiado para o repositorio.
 - Mudanca exclusivamente documental no GitHub; testes de runtime dispensados e `git diff --check` obrigatorio no fechamento.
 - Proximo passo obrigatorio: submeter os 64 grupos prontos a decisao humana controlada, exigindo uma chave exata do catalogo atual e justificativa para cada aceite; itens rejeitados ou sem decisao continuam sem acesso, e os 69 itens em quarentena nao podem ser selecionados.
+
+### Gate 18 - Planilha controlada para decisao RBAC
+
+- Foi criada a planilha local `legacy-rbac-controlled-human-review.xlsx` para a decisao humana dos 64 grupos prontos, sem macro, conexao com banco, botao de importacao ou mecanismo de concessao de acesso.
+- A aba `Revisao` contem os 64 grupos, campos editaveis para decisao, chave RBAC exata, justificativa e revisor, alem de validacao calculada por linha.
+- A decisao aceita somente `PENDENTE`, `ACEITAR` ou `REJEITAR`. A chave escolhida usa lista vinculada ao catalogo atual de 395 permissoes.
+- Um aceite somente chega a `PRONTO PARA HOMOLOGACAO` quando possui chave existente exatamente uma vez no catalogo, justificativa e revisor. Chave por similaridade nao e calculada nem sugerida.
+- A aba `Catalogo` contem apenas as 395 chaves RBAC legiveis de referencia, derivadas dos 20 perfis atuais e das 601 ocorrencias ja validadas.
+- A aba `Quarentena` contem os 69 grupos bloqueados, sendo 67 conflitos semanticos e 2 redacoes de seguranca, sem campos de selecao para migracao.
+- O XLSX exportado possui duas validacoes nativas nos intervalos `G9:G72` e `H9:H72` e 69 formulas de controle. A verificacao interna do arquivo confirmou a persistencia dessas estruturas.
+- Testes apos reabertura: aceite incompleto resultou em `FALTAM DADOS`; chave inexistente em `CHAVE INVALIDA`; aceite completo de teste em `PRONTO PARA HOMOLOGACAO`; rejeicao em `REJEITADO`; restauracao final em `PENDENTE`.
+- As tres abas foram renderizadas e revisadas visualmente, com titulos, cabecalhos, textos, campos editaveis e bloqueios legiveis.
+- O arquivo final foi salvo somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com SHA-256 `12BEEB78ADEBF855F2605C1F74DFD3F78B4FA65E73193004B16C4D03D6747EA2`.
+- O arquivo auxiliar de inspecao criado pelo gerador foi removido para evitar duplicacao de conteudo sanitizado. Nenhuma planilha, CSV, dado legado, perfil, hash detalhado ou relatorio local foi adicionado ao GitHub.
+- A instancia SQL permanece `Stopped`/`Manual`; nenhuma alteracao de runtime foi realizada. Mudanca do repositorio exclusivamente documental, com `git diff --check` obrigatorio no fechamento.
+- Proximo passo obrigatorio: o proprietario deve preencher a aba `Revisao`. Somente linhas com `PRONTO PARA HOMOLOGACAO` poderao compor um lote posterior de homologacao; linhas pendentes, rejeitadas, invalidas, incompletas ou em quarentena permanecem sem acesso e sem importacao.
