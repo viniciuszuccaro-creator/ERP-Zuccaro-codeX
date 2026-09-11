@@ -5476,3 +5476,22 @@ Checklist inicial:
 - O script temporario de extracao foi removido apos a validacao. A instancia SQL foi encerrada e permanece `Stopped`/`Manual`, com TCP e Named Pipes desativados.
 - Nenhum CSV nominal, ID bruto, dado pessoal, chave, hash individual, TPS, MDF/LDF ou relatorio local foi adicionado ao GitHub. A mudanca no repositorio e exclusivamente documental; testes de runtime foram dispensados e `git diff --check` e obrigatorio no fechamento.
 - Proximo passo obrigatorio: mapear localmente as referencias legadas dos 18.458 candidatos contra as entidades existentes, iniciando por tabela de preco, condicao de pagamento, vendedor, regiao e transportadora; referencias ausentes ou ambiguas permanecem bloqueadas e nenhuma importacao pode ocorrer antes da homologacao.
+
+### Gate 18 - Mapeamento estrito das referencias de clientes
+
+- O mapeamento reutilizou exclusivamente `TabelaPreco`, `Colaborador`, `RegiaoAtendimento`, `Transportadora` e o campo textual `Cliente.condicao_comercial.condicao_pagamento` ja existentes.
+- Foram comparados os 18.458 candidatos do staging. A politica permitiu apenas igualdade exata apos normalizacao de caixa, acentos e pontuacao; nenhuma aproximacao textual ou criacao automatica foi aplicada.
+- Condicao de pagamento foi mantida separada de `FormaPagamento`: 26 codigos legados receberam texto valido no campo existente, cobrindo 2.217 clientes. Nenhum ID de forma de pagamento foi inferido.
+- Permaneceram pendentes 47 codigos de referencia: sete tabelas de preco, 27 vendedores, nove regioes e quatro transportadoras.
+- Entre as tabelas de preco, um dos sete codigos usados nao existe na tabela mestre legada. Nao houve correspondencia exata com a unica tabela atual dentro do Grupo canonico.
+- Duas tabelas de preco atuais possuiam `group_id` diferente do Grupo canonico e foram excluidas da comparacao. Nenhum registro externo ao Grupo foi usado como destino.
+- Entre os vendedores, seis dos 27 codigos usados nao foram encontrados na tabela mestre legada e nenhum dos demais coincidiu exatamente com os dois colaboradores atuais.
+- As nove regioes possuem definicao legada, mas nenhuma coincide exatamente com a unica `RegiaoAtendimento` atual. As quatro transportadoras usadas possuem definicao legada, mas o ERP atual nao possui `Transportadora` cadastrada no snapshot.
+- Foram geradas uma matriz resolvida com 26 linhas e uma fila pendente com 47 linhas. Ambas permanecem somente no HD, possuem ACL exclusiva do usuario local, hashes SHA-256 validados e `import_authorized=false` em todas as linhas.
+- Os CSVs nominais originais de clientes permaneceram inalterados e conservaram seus hashes. A validacao encontrou zero chave de referencia repetida, zero decisao inconsistente e zero formula CSV insegura.
+- O resumo de mapeamento nao contem nome, ID, e-mail, documento ou valor bruto. Nenhum cadastro, dado ou permissao foi gravado no ERP.
+- As tentativas intermediarias que falharam na conversao de `DataRow` nao produziram resultado aceito. Os dois arquivos parciais foram removidos por caminho absoluto validado antes da geracao final.
+- O script temporario foi removido. A instancia SQL permanece `Stopped`/`Manual`, com TCP e Named Pipes desativados.
+- Regra confirmada para o lote futuro de materiais: em `CadastroMateriais`, somente registros classificados como `REVENDA` poderao seguir para staging e eventual homologacao. Os demais materiais serao apenas contabilizados e permanecerao fora da migracao.
+- Nenhum CSV, matriz nominal, nome, ID bruto, dado pessoal, chave, TPS, MDF/LDF ou relatorio local foi adicionado ao GitHub. A mudanca no repositorio e exclusivamente documental; testes de runtime foram dispensados e `git diff --check` e obrigatorio no fechamento.
+- Proximo passo obrigatorio: revisar localmente os 47 codigos pendentes contra os cadastros atuais, mantendo bloqueados os ausentes e os que exigiriam criar ou alterar cadastro sem homologacao; somente correspondencias exatas aprovadas poderao enriquecer o lote de clientes.
