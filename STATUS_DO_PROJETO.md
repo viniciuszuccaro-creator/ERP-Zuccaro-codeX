@@ -5595,3 +5595,22 @@ Checklist inicial:
 - Os scripts e o log tecnico temporarios foram removidos. A instancia `MSSQL$ERPZLEGACY` permanece `Stopped`/`Manual`; TCP e Named Pipes permanecem desativados.
 - Nenhum CSV, dado pessoal, codigo individual, hash individual, chave, TPS, MDF/LDF ou relatorio local foi adicionado ao GitHub. A alteracao do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio no fechamento.
 - Proximo passo obrigatorio: revisar localmente as 271 linhas em quarentena e inventariar as referencias adiadas de fornecedores, mantendo bloqueados documentos invalidos, duplicidades e destinos ausentes ou ambiguos; nenhuma importacao pode ocorrer antes da homologacao.
+
+### Gate 18 - Revisao da quarentena e referencias de fornecedores
+
+- Foi criada somente no HD uma fila derivada para revisar as 271 linhas em quarentena. O CSV original permaneceu preservado e nenhuma decisao foi aplicada automaticamente.
+- Cada linha da fila possui `required_action`, status pendente, decisao, revisor, data e justificativa vazios e `import_authorized=false`. Os 271 fingerprints sao unicos e reconciliam integralmente a quarentena.
+- As acoes pendentes totalizam 228 validacoes de documento na fonte, 25 conciliacoes de duplicidade no Grupo, cinco correcoes ou descartes controlados de e-mail e 42 confirmacoes de URL HTTP/HTTPS. As acoes podem se sobrepor na mesma linha.
+- Zeros sentinela do banco legado foram tratados como ausencia em codigos de cliente correspondente, historico, transportadora, usuario e banco. Eles nao foram promovidos como referencias reais.
+- Depois da remocao dos sentinelas, restaram duas decisoes de referencia: um codigo de cliente correspondente usado por um fornecedor e a traducao fiscal de `SIMPLESFEDERAL`, com um unico valor legado usado pelos 1.061 fornecedores.
+- O cliente correspondente possui exatamente uma origem no staging protegido de clientes. O vinculo permanece com status `legacy_source_found_waiting_client_import`, sem `target_id`, porque nenhum cliente foi importado ou homologado no ERP.
+- A traducao de `SIMPLESFEDERAL` permanece `pending_fiscal_homologation`. Nenhum valor fiscal foi aplicado ao cadastro atual.
+- Historico contabil, codigo de sistema antigo, transportadora padrao, condicao de pagamento de compra, contas contabeis, finalidade, frete e usuario de lancamento nao possuem valor legado efetivo neste lote apos remover sentinelas.
+- Dados sensiveis foram apenas contabilizados: 43 fornecedores possuem codigo de banco nao nulo, 38 possuem agencia, 38 possuem conta corrente, 15 possuem RG e um possui caixa postal/CEP. Nenhum desses valores foi exportado para a matriz de referencias.
+- Certificado de pedido de compra nao possui valor preenchido. Os sete campos sensiveis inventariados permanecem com status `blocked_sensitive_rbac` ate existir contrato, permissao e homologacao especificos.
+- Os arquivos `fornecedores-revisao-quarentena.csv` e `fornecedores-referencias-pendentes.csv` permanecem somente em `05_QUARANTINE\FORNECEDORES\FORNECEDORES-LEGACY-TID-001`, com ACL exclusiva, hashes validados e zero linha autorizada.
+- O resumo `legacy-supplier-review-and-reference-summary.json` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, sem nomes, e-mails, documentos ou valores bancarios.
+- A verificacao final confirmou zero formula CSV insegura, hashes correspondentes, ACLs protegidas, zero `target_id` atribuido, zero dado sensivel na matriz e zero importacao.
+- Scripts e log tecnico temporarios foram removidos. A instancia `MSSQL$ERPZLEGACY` permanece `Stopped`/`Manual`, com TCP e Named Pipes desativados.
+- Nenhum CSV, valor individual, dado pessoal, codigo de referencia, hash individual, chave, TPS, MDF/LDF ou relatorio local foi adicionado ao GitHub. A alteracao do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio no fechamento.
+- Proximo passo obrigatorio: revisar no cadastro `Fornecedor` existente os campos `simples_nacional`, RG e `dados_bancarios`; implementar somente lacunas operacionais confirmadas com RBAC por campo, criptografia, escopo Grupo/Empresa e auditoria protegida antes de qualquer homologacao sensivel.
