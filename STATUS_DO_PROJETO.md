@@ -5701,3 +5701,19 @@ Checklist inicial:
 - A instancia `MSSQL$ERPZLEGACY` foi encerrada e confirmada como `Stopped`/`Manual`; SQL Agent permaneceu `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
 - A alteracao do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
 - Proximo passo obrigatorio: preparar uma fila local de homologacao para as cinco unidades sem destino (`BD`, `GRS`, `PAR`, `RL`, `SER`) e inventariar de forma agregada as referencias/fiscais adiadas dos 1.208 candidatos, sem importar ou criar cadastros automaticamente.
+
+### Gate 18 - Filas de homologacao e campos adiados de produtos
+
+- Foi criada somente no HD uma fila de homologacao para as cinco unidades sem destino comprovado. As cinco linhas cobrem exatamente os 14 produtos em quarentena e possuem apenas sigla de origem, quantidade e descricao sugerida; `target_unidade_id`, codigo de destino, decisao, revisor e justificativa permanecem vazios.
+- As descricoes sugeridas para `BD`, `GRS`, `PAR`, `RL` e `SER` sao apenas apoio humano. Nenhuma unidade foi criada, convertida, selecionada por similaridade ou liberada automaticamente; as cinco linhas permanecem `PENDING_HUMAN_HOMOLOGATION` e `import_authorized=false`.
+- Os 60 campos adiados do contrato foram inventariados somente por contagem sobre os 1.208 candidatos. O relatorio nao contem nenhum valor de produto: registra apenas nome/tipo da coluna, categoria, quantidade preenchida e cardinalidade.
+- Dos 60 campos adiados, 44 possuem algum valor efetivo e 16 estao vazios. A classificacao agregada ficou em oito campos comerciais para lote posterior, nove de e-commerce, 17 fiscais, 15 funcionais e 11 referencias cadastrais.
+- Entre os campos com uso efetivo, oito sao comerciais, zero de e-commerce, 14 fiscais, 13 funcionais e nove referencias. Os campos vazios nao justificam criacao ou alteracao no ERP e permanecem sem destino.
+- As duas matrizes totalizam 65 linhas, todas sem destino atribuido e com `import_authorized=false`. Nenhum valor nominal foi extraido para os relatorios, nenhum produto foi importado e nenhum cadastro foi criado.
+- A geracao foi repetida e produziu os mesmos hashes nas filas de unidades e campos adiados. As ACLs foram confirmadas sem heranca e exclusivas do usuario local.
+- `produtos-homologacao-unidades.csv` e `produtos-inventario-campos-adiados.csv` permanecem somente em `D:\BACKUP ERP ANTIGO - CODEX\05_QUARANTINE\PRODUTOS\PRODUTOS-LEGACY-TID-001`; o resumo agregado permanece em `04_REPORTS`.
+- Nenhuma sigla individual alem das cinco ja registradas, valor fiscal/comercial, CSV/JSON local, cardinalidade por valor, hash, TPS, MDF/LDF ou relatorio do HD foi adicionado ao GitHub.
+- A instancia `MSSQL$ERPZLEGACY` foi encerrada e confirmada como `Stopped`/`Manual`; SQL Agent permaneceu `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A alteracao do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
+- Pendencia `BLOCKED`: as cinco unidades exigem correspondencia exata em `UnidadeMedida` por usuario autorizado; os campos fiscais/comerciais com uso exigem homologacao propria antes de qualquer extracao de valores ou alteracao de schema.
+- Proximo passo recomendado: revisar primeiro os nove campos de referencia com uso efetivo contra os cadastros mestres existentes, usando apenas correspondencia exata e mantendo ausentes/ambiguos bloqueados; precos, custos e fiscais continuam em lotes separados.
