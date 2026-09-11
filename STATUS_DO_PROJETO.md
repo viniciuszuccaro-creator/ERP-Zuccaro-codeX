@@ -5495,3 +5495,20 @@ Checklist inicial:
 - Regra confirmada para o lote futuro de materiais: em `CadastroMateriais`, somente registros classificados como `REVENDA` poderao seguir para staging e eventual homologacao. Os demais materiais serao apenas contabilizados e permanecerao fora da migracao.
 - Nenhum CSV, matriz nominal, nome, ID bruto, dado pessoal, chave, TPS, MDF/LDF ou relatorio local foi adicionado ao GitHub. A mudanca no repositorio e exclusivamente documental; testes de runtime foram dispensados e `git diff --check` e obrigatorio no fechamento.
 - Proximo passo obrigatorio: revisar localmente os 47 codigos pendentes contra os cadastros atuais, mantendo bloqueados os ausentes e os que exigiriam criar ou alterar cadastro sem homologacao; somente correspondencias exatas aprovadas poderao enriquecer o lote de clientes.
+
+### Gate 18 - Revisao de codigos pendentes e campos importantes
+
+- O proprietario autorizou criar campo importante ausente no ERP atual quando nao existir equivalente, incluindo codigo, e-mail, telefone e outros dados necessarios a operacao ou rastreabilidade.
+- A autorizacao nao permite duplicacao indiscriminada: antes da criacao devem ser comprovadas a ausencia de equivalente, a necessidade do dado e a integracao no cadastro existente, com Grupo/Empresa, RBAC, validacao, sanitizacao e auditoria antes/depois.
+- A revisao dos 47 codigos pendentes encontrou zero correspondencia exata adicional por codigo ou nome. Nenhuma referencia foi promovida e nenhuma aproximacao foi aplicada.
+- `RegiaoAtendimento` ja possui `codigo_regiao`, mas nenhum dos nove codigos legados coincide exatamente com o unico codigo atual. Nao e necessario criar nova coluna para regiao.
+- `Transportadora` ja possui politica de codigo mestre e campos de e-mail e telefone. O snapshot atual nao possui registro dessa entidade; nenhuma transportadora foi criada automaticamente.
+- `Colaborador` e `Transportadora` ja possuem campos de e-mail e telefone. Esses dados devem reutilizar os campos existentes e nao justificam colunas duplicadas.
+- Foram confirmadas duas lacunas relevantes: `TabelaPreco` nao possui campo para o codigo estavel da tabela legada, e `Colaborador` nao possui campo especifico para o codigo legado de vendedor.
+- O contrato local propoe `TabelaPreco.codigo_tabela_legado` e `Colaborador.codigo_vendedor_legado`, ambos apenas para futura alteracao controlada no cadastro existente. Nenhum deles foi criado neste lote documental.
+- Onze codigos de vendedor inativos ainda aparecem em 6.074 candidatos; outros seis codigos sem situacao cobrem 292 candidatos. Esses vinculos permanecem bloqueados.
+- Duas transportadoras inativas aparecem em oito candidatos e tambem permanecem bloqueadas. As referencias ativas sem destino atual continuam pendentes, sem criar cadastro por inferencia.
+- Foi gerado `legacy-client-reference-schema-gap-summary.json` somente no HD, sem nomes, IDs, documentos, e-mails ou dados brutos e com `importAuthorized=false`.
+- Regra reforcada para o lote de materiais: `CadastroMateriais` sera filtrado exclusivamente pela classificacao `REVENDA`. O nome exato da coluna classificadora ainda deve ser comprovado no catalogo estrutural antes da leitura nominal; demais materiais serao apenas contabilizados e excluidos do staging.
+- Nenhum dado ou funcionalidade do ERP foi alterado. Mudanca do repositorio exclusivamente documental; testes de runtime dispensados e `git diff --check` obrigatorio no fechamento.
+- Proximo passo obrigatorio: implementar e testar os campos `codigo_tabela_legado` em `TabelaPreco` e `codigo_vendedor_legado` em `Colaborador`, somente nas estruturas existentes, com escopo de Grupo/Empresa, RBAC, sanitizacao, auditoria e preservacao de compatibilidade.
