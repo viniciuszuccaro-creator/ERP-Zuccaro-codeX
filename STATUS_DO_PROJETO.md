@@ -5356,3 +5356,20 @@ Checklist inicial:
 - Estado `BLOCKED`: a correlacao depende de iniciar temporariamente a instancia com privilegio administrativo. Nao existe alternativa segura que preserve a consulta hash-only sem esse acesso.
 - Todos os acessos de Grupo e Empresa permanecem negados, e `ImportAuthorized=false` continua obrigatorio.
 - Proximo passo para desbloqueio: abrir o Codex como Administrador neste computador e repetir a consulta hash-only; depois validar 44 contas, 757 vinculos e 332 definicoes, desligando o SQL no `finally`.
+
+### Gate 18 - Correlacao hash-only de usuarios/RBAC concluida
+
+- O bloqueio foi removido com inicializacao manual da instancia pelo proprietario. A consulta foi executada contra o SQL ja ativo e o servico foi parado manualmente logo apos a analise.
+- A sintaxe do helper temporario foi validada com zero erro. O arquivo foi removido antes do fechamento e nao sera enviado ao GitHub.
+- A consulta acessou somente `Usuarios.CODIGO`, `ContrAcesso.MATRICULA`, `ContrAcesso.CODIGOSISTEMA`, `UsoSiglasAcesso.ID` e `UsoSiglasAcesso.SIGLA`; os valores foram transformados em hashes salgados dentro do SQL antes da saida.
+- A chave de correlacao permanece protegida por DPAPI e ACL local. Nenhuma chave, codigo, matricula, nome, e-mail, senha ou permissao em texto foi persistida nos relatorios.
+- Foram encontrados 44 usuarios e 44 hashes unicos, sem chave vazia ou duplicada.
+- Os 757 vinculos RBAC encontram exatamente um usuario: zero usuario ausente e zero usuario ambiguo. Vinte e oito usuarios possuem vinculos e dezesseis nao possuem.
+- As 332 definicoes possuem IDs unicos, mas apenas 133 siglas distintas; 69 grupos de sigla estao duplicados.
+- Dos 757 vinculos, 172 encontram definicao por sigla, 263 nao encontram definicao e 322 sao ambiguos. Nenhum vinculo encontra a definicao pelo ID e nao ha aresta duplicada exata.
+- Os 172 casamentos por sigla sao apenas candidatos tecnicos. Os 585 vinculos ausentes ou ambiguos permanecem bloqueados, e nenhum deles foi convertido em permissao atual.
+- Foram gerados o relatorio hash-only, seu resumo e o resumo de execucao somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- Validacao final: 2.222 hashes no formato SHA-256; zero hash invalido; 44 contas; 757 vinculos; 332 definicoes; zero valor bruto; zero campo de senha; zero dado pessoal persistido; zero acesso de Grupo/Empresa; zero importacao autorizada.
+- A instancia foi confirmada `Stopped`/`Manual` apos a intervencao manual; TCP e Named Pipes permanecem desativados conforme a configuracao isolada.
+- Nenhum dado, credencial, TPS, snapshot, MDF/LDF, hash detalhado ou relatorio local foi adicionado ao GitHub. Mudanca exclusivamente documental no repositorio; testes de runtime dispensados e `git diff --check` obrigatorio no fechamento.
+- Proximo passo obrigatorio: separar localmente os 172 candidatos por sigla dos 585 vinculos bloqueados, consolidar as 69 siglas duplicadas e comparar somente a taxonomia legada com as chaves RBAC existentes, sem liberar acesso.
