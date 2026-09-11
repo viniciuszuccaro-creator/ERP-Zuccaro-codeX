@@ -5796,3 +5796,18 @@ Checklist inicial:
 - A mudanca do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
 - Pendencia `BLOCKED`: Operacao/Estoque deve homologar significado e unidade dos tres destinos candidatos e decidir se os dez campos sem equivalente possuem uso operacional. Nenhum campo funcional pode ser importado antes dessa decisao.
 - Proximo passo recomendado: encerrar estruturalmente os campos adiados sem valor efetivo, incluindo os nove campos de e-commerce vazios, para impedir criacao desnecessaria de schema; depois avancar para o inventario agregado de estoque legado sem misturar quantidades ao cadastro mestre de produtos.
+
+### Gate 18 - Encerramento dos campos de produto sem valor efetivo
+
+- O inventario dos 60 campos adiados foi reavaliado depois da remocao logica das duas referencias compostas somente por sentinela zero. A contagem correta e 42 campos com valor efetivo e 18 sem valor, substituindo a contagem preliminar anterior de 44/16.
+- Os 18 campos sem valor foram encerrados no inventario local como `CLOSED_NO_SOURCE_VALUE_NO_SCHEMA_CHANGE`, com decisao `DO_NOT_MIGRATE_NO_SOURCE_VALUE`, destino vazio e `import_authorized=false`.
+- O fechamento cobre nove campos de e-commerce, tres fiscais, dois funcionais e quatro referencias. Nenhum campo, componente, entidade ou alteracao de schema foi criado para dados inexistentes.
+- Os nove campos de e-commerce vazios incluem metadados de descricao/SEO e controles de imagens adicionais. O encerramento se refere apenas a migracao deste lote e nao remove nem desativa funcionalidades nativas existentes no ERP.
+- As tres lacunas fiscais, duas funcionais e quatro referencias vazias tambem permanecem registradas para rastreabilidade, mas nao seguirao para staging nominal ou importacao sem nova fonte comprovada.
+- O inventario original de 60 linhas foi preservado; somente status, decisao e justificativa dos 18 campos vazios foram atualizados. Nenhum valor de origem foi lido ou descartado.
+- A validacao confirmou 18/18 linhas fechadas, zero destino atribuido, zero valor extraido e 18/18 com autorizacao falsa. A repeticao produziu o mesmo hash do inventario.
+- `produtos-inventario-campos-adiados.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\05_QUARANTINE\PRODUTOS\PRODUTOS-LEGACY-TID-001`; os resumos atualizados permanecem em `04_REPORTS`, todos com ACL sem heranca e exclusiva do usuario local.
+- Nenhum CSV/JSON local, nome de produto, codigo individual, valor, `group_id`, hash, TPS, MDF/LDF ou relatorio do HD integra o GitHub. Nenhuma importacao ou alteracao no ERP foi realizada.
+- A instancia `MSSQL$ERPZLEGACY` permaneceu `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`; este lote nao consultou o banco legado.
+- A mudanca do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
+- Proximo passo obrigatorio: iniciar o inventario estrutural e agregado do estoque legado em lote separado do cadastro mestre de produtos, identificando tabelas, empresas, saldos, reservas, locais e datas sem extrair movimentos ou quantidades nominais.
