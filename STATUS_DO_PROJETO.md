@@ -5747,3 +5747,19 @@ Checklist inicial:
 - A mudanca do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
 - Pendencia `BLOCKED`: um usuario autorizado deve mapear cada classe para um `GrupoProduto` do mesmo Grupo e um responsavel fiscal deve decidir a unica classificacao ausente. Ate isso ocorrer, as 38 linhas e os produtos dependentes permanecem sem autorizacao de importacao.
 - Proximo passo recomendado: enquanto essas decisoes humanas permanecem bloqueadas, revisar estruturalmente os 14 campos fiscais com uso efetivo nos produtos candidatos e confirmar destinos ja existentes, sem extrair valores nominais nem alterar schema automaticamente.
+
+### Gate 18 - Revisao estrutural fiscal dos produtos de revenda
+
+- Os 14 campos fiscais com preenchimento nos 1.208 produtos candidatos foram revisados somente por estrutura, quantidade e cardinalidade. Nenhum valor tributario foi extraido para a matriz ou para o resumo agregado.
+- Dez campos possuem destino estrutural candidato ja existente. Aliquotas e CSTs encontram equivalentes em `Produto.tributacao` e em `TabelaFiscal`; `CSOSN` encontra candidato em `TabelaFiscal.icms_cst_csosn`, e a origem encontra candidatos em `Produto.origem_mercadoria` e `TabelaFiscal.origem_mercadoria`.
+- A existencia desses campos nao autoriza o mapeamento automatico. `Produto` e cadastro mestre compartilhado, enquanto `TabelaFiscal` aplica regras por empresa, regime e cenario; o responsavel fiscal deve definir o escopo correto antes de qualquer extracao ou persistencia.
+- Quatro campos nao possuem equivalente exato confirmado: codigo de lista de servicos, indicador booleano de substituicao tributaria e os dois controles de indicador de escala da NF-e. Nenhum campo novo foi criado por suposicao.
+- Tres campos apresentam somente valor equivalente a zero nas 1.208 linhas: `CSOSN`, `ICMSSUBSTITUICAO` e `ORIGEMSITUACAOTRIB`. Eles nao foram descartados como sentinela, pois zero pode representar ausencia, falso ou origem nacional conforme a semantica fiscal.
+- Os demais campos possuem combinacoes de zero e valores distintos. A matriz preserva apenas as contagens agregadas e marca traducao, regime e escopo como pendentes; valores e produtos afetados continuam fora do relatorio.
+- `produtos-revisao-fiscal-estrutural.csv` possui 14 linhas, todas com `values_extracted=false`, `PENDING_FISCAL_HOMOLOGATION` e `import_authorized=false`. Nenhum destino fiscal foi aplicado ao staging.
+- A geracao foi repetida e confirmou o mesmo hash, ACL sem heranca e exclusiva do usuario local, 14/14 linhas nao autorizadas, zero extracao e zero importacao.
+- A matriz permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\05_QUARANTINE\PRODUTOS\PRODUTOS-LEGACY-TID-001`; o resumo agregado permanece em `04_REPORTS`. Nenhum CSV/JSON local, valor fiscal, codigo individual, `group_id`, hash, TPS, MDF/LDF ou relatorio do HD integra o GitHub.
+- A instancia `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A mudanca do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
+- Pendencia `BLOCKED`: o responsavel fiscal deve decidir Produto versus TabelaFiscal, validar regime/empresa, traduzir codigos e definir o tratamento dos quatro campos sem destino. Nenhum dos 14 campos pode ser importado antes dessa homologacao.
+- Proximo passo recomendado: enquanto a homologacao fiscal permanece bloqueada, revisar estruturalmente os oito campos comerciais com uso efetivo nos produtos candidatos, mantendo precos, custos, margens e comissoes sem valores e sem autorizacao.
