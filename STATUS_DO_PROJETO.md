@@ -5670,3 +5670,18 @@ Checklist inicial:
 - A alteracao do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a verificacao obrigatoria deste fechamento.
 - Pendencia `BLOCKED`: a traducao fiscal exige aceite de revisor fiscal, e o mapeamento bancario exige usuario autorizado a visualizar os cadastros `Banco` do Grupo. Ate as duas homologacoes, agencia, conta, RG, staging nominal e importacao permanecem bloqueados.
 - Proximo passo recomendado: obter os dois aceites humanos no fluxo existente e, somente depois, executar um piloto pequeno e reversivel de fornecedores com RBAC, escopo Grupo, auditoria e reconciliacao integral.
+
+### Gate 18 - Contrato estrutural de produtos de revenda
+
+- A ordem de migracao avancou para produtos sem atravessar o bloqueio humano de fornecedores. Foram reutilizados o cadastro mestre `Produto`, `ImportadorProdutosPlanilha`, `ImportarProdutosLote` e a politica de migracao existentes; nenhuma tela, entidade, rota ou importador paralelo foi criado.
+- `LEGACY_TID_EXETPS.dbo.CadastroMateriais` foi confirmado com 2.360 linhas e 174 colunas no banco `READ_ONLY`. A coluna classificadora comprovada e `TIPOMATERIAL`, portanto a selecao futura sera estritamente `UPPER(TRIM(TIPOMATERIAL)) = REVENDA`, sem inferencia por descricao.
+- A distribuicao agregada reconciliou 2.360/2.360: 1.137 `CONSUMO`, uma `PRODUCAO` e 1.222 `REVENDA`. Os 1.138 registros que nao sao revenda ficam fora do staging e de qualquer importacao.
+- Entre os 1.222 registros de revenda, 1.198 estao ativos e 24 inativos. Todos possuem codigo, descricao e unidade; foram encontrados zero codigo ausente e zero grupo/linha com codigo duplicado. Os inativos permanecem elegiveis ao staging apenas para preservacao fiel do status, sem ativacao automatica.
+- O contrato local classificou 19 colunas como `ALLOW_STRUCTURAL`, 55 como revisao de mapeamento ou lote posterior e 100 como bloqueadas. As 174 linhas mantem `import_authorized=false`.
+- Campos livres, narrativos, historicos e com sufixo `_VELHO` foram bloqueados. Precos, custos, margens, descontos e comissoes ficaram para lote posterior homologado; referencias fiscais ou cadastrais sem destino exato ficaram em revisao.
+- Os campos estruturais permitidos possuem destino existente confirmado, incluindo codigo/codigo legado, descricao, unidade, pesos, tipo de aco, bitola, situacao e a regra `tipo_item=Revenda`. Todo valor ainda dependera de sanitizacao, escopo Grupo/Empresa, RBAC, auditoria e quarentena no staging nominal.
+- O contrato `legacy-product-structure-contract.csv` e o resumo `legacy-product-structure-summary.json` foram gravados somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL exclusiva do usuario local. O hash do contrato foi recalculado e validado.
+- Nenhum codigo ou descricao individual, preco, custo, dado fiscal nominal, CSV/JSON local, hash, TPS, MDF/LDF ou relatorio do HD foi adicionado ao GitHub. Nenhum registro foi criado ou atualizado no ERP.
+- A instancia `MSSQL$ERPZLEGACY` foi encerrada e confirmada como `Stopped`/`Manual`; SQL Agent permaneceu `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A alteracao do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
+- Proximo passo obrigatorio: gerar somente no HD o staging nominal protegido dos 1.222 produtos `REVENDA`, preservando os 24 inativos, validar codigo/descricao/unidade e colocar referencias, campos fiscais duvidosos e qualquer inconsistencia em quarentena, sempre com `import_authorized=false`.
