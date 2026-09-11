@@ -5717,3 +5717,18 @@ Checklist inicial:
 - A alteracao do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
 - Pendencia `BLOCKED`: as cinco unidades exigem correspondencia exata em `UnidadeMedida` por usuario autorizado; os campos fiscais/comerciais com uso exigem homologacao propria antes de qualquer extracao de valores ou alteracao de schema.
 - Proximo passo recomendado: revisar primeiro os nove campos de referencia com uso efetivo contra os cadastros mestres existentes, usando apenas correspondencia exata e mantendo ausentes/ambiguos bloqueados; precos, custos e fiscais continuam em lotes separados.
+
+### Gate 18 - Reconciliacao de referencias mestres de produtos
+
+- Os nove campos de referencia anteriormente apontados foram reavaliados nos 1.208 candidatos protegidos. `CODIGOCARACTERISTICA` e `CODIGOROTEIROPRODUCAO` continham somente sentinela zero nas 1.208 linhas e foram corrigidos para zero valor efetivo, restando sete campos reais para homologacao.
+- Tres dos sete campos possuem mestre legado candidato confirmado. `CODIGOCLASSE` reconciliou integralmente 37/37 valores distintos e 1.208/1.208 usos em `dbo.ClasseMateriais`, sem ausencia ou ambiguidade.
+- `CODIGOCF` reconciliou 139/140 valores distintos e 1.207/1.208 usos em `dbo.ClassificacaoFiscal`; a unica referencia ausente permanece bloqueada para revisao fiscal, sem substituicao inferida.
+- `REFERENCIA` possui 443 valores distintos e 637 usos, mas nenhum correspondeu ao campo homonimo de `dbo.Referencias`. A relacao nao foi presumida e permanece bloqueada ate confirmacao funcional.
+- Nao foi localizado mestre legado apropriado para `CODIGOMATERIALBELGO`, `CODIGOTIPO`, `SIGLACONVERTENDOUNIDADE` e `UNIDADEBELGO`. Esses quatro campos permanecem sem destino e sem extracao adicional.
+- O unico destino funcional candidato no ERP atual e `GrupoProduto` para `CODIGOCLASSE`, reutilizando a estrutura existente. Nenhum `target_id` foi atribuido porque o usuario atual nao possui acesso ao cadastro e o RBAC nao foi contornado.
+- A matriz local foi corrigida de 44 para 42 campos adiados com valor efetivo e de nove para sete referencias reais. A proposta agregada possui sete linhas, todas sem destino confirmado e com `import_authorized=false`.
+- A geracao foi repetida e confirmou hash estavel, ACL sem heranca e exclusiva do usuario local, zero valor bruto exportado no relatorio agregado e zero importacao no ERP.
+- `produtos-referencias-mestres-legado.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\05_QUARANTINE\PRODUTOS\PRODUTOS-LEGACY-TID-001`; o resumo agregado permanece em `04_REPORTS`. Nenhum CSV, JSON local, codigo individual, valor fiscal, hash, TPS, MDF/LDF ou relatorio do HD integra o GitHub.
+- A instancia `MSSQL$ERPZLEGACY` foi encerrada e confirmada como `Stopped`/`Manual`; SQL Agent permaneceu `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A alteracao do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
+- Proximo passo obrigatorio: preparar no HD a homologacao das 37 classes legadas contra `GrupoProduto` e isolar a unica classificacao fiscal ausente, sempre por correspondencia exata e com RBAC. As quatro referencias sem mestre e os 443 valores sem correspondencia permanecem bloqueados; nenhuma importacao esta autorizada.
