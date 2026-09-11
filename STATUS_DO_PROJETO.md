@@ -5827,3 +5827,20 @@ Checklist inicial:
 - A instancia `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
 - A mudanca do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
 - Proximo passo obrigatorio: comparar os schemas de `EstoqueMateriais` e `MovimentacaoEstoque` entre as fontes, definir precedencia por empresa e periodo apenas por evidencias conciliaveis e manter `EMP03` bloqueado enquanto suas linhas nao puderem ser segmentadas com seguranca.
+
+### Gate 18 - Comparacao de schemas e periodos do estoque legado
+
+- Os schemas de `EstoqueMateriais` e `MovimentacaoEstoque` foram comparados nas seis bases preservadas em `READ_ONLY`. Foram inventariadas 210 definicoes de coluna em 12 fontes, sem leitura de codigo de produto, quantidade, custo, documento, lote ou texto historico.
+- `EstoqueMateriais` possui o mesmo schema nas seis bases: chave de material, estoque principal e estoque em unidade paralela. As seis fontes possuem uma unica assinatura estrutural; cinco estao nao vazias.
+- `MovimentacaoEstoque` tambem possui uma unica assinatura estrutural nas seis bases, com 32 colunas e chave primaria. Quatro fontes estao nao vazias.
+- O movimento legado possui data, produto, quantidade, estoque anterior/atual, custo, documento e lote, mas nao possui `groupId`, `empresaId`, reserva ou local de estoque. O saldo mestre tambem nao possui empresa, local ou data de referencia.
+- O periodo agregado de `LEGACY_TID_EMP03` cobre 557.060 movimentos entre `2012-03-06` e `2026-08-19`. Essa e a massa historica principal, mas continua bloqueada porque a base e compartilhada e nao permite separar diretamente CPA, 3Z e CPA Ferro e Aco.
+- `LEGACY_TID_EXETPS` possui 421 movimentos entre `2012-01-26` e `2012-03-05`, terminando um dia antes do inicio do `EMP03`. A continuidade cronologica e apenas indicio de precedencia historica; nao comprova empresa nem autoriza concatenacao automatica.
+- `LEGACY_TID_EMP01` possui 12 movimentos entre `2013-01-12` e `2024-03-08`; `LEGACY_TID_EMP02` possui um movimento em `2013-12-04`. Como esses periodos estao contidos no intervalo do `EMP03`, as fontes podem ser auxiliares ou duplicadas e exigem conciliacao por fingerprint antes de qualquer uso.
+- `LEGACY_TID_EMP04` e `LEGACY_TID_EMP05` nao possuem movimentos. Os saldos existentes nao carregam data de corte, portanto nenhuma das cinco tabelas nao vazias foi declarada saldo inicial autoritativo.
+- O ERP novo preserva saldo em `Produto.estoque_atual` e historico em `MovimentacaoEstoque`, com Grupo/Empresa, idempotencia e auditoria. Nenhum saldo legado foi aplicado ao produto e nenhum movimento foi recriado.
+- Os relatorios `legacy-stock-schema-columns.csv`, `legacy-stock-source-comparison.csv`, `legacy-stock-movement-periods.csv` e o resumo permanecem somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL exclusiva.
+- A geracao foi repetida e confirmou hashes estaveis nos tres relatorios, 12/12 fontes nao autorizadas, seis bases em somente leitura e zero importacao.
+- Nenhum CSV/JSON local, valor de estoque, codigo de produto, custo, documento, lote, hash, TPS, MDF/LDF ou relatorio do HD integra o GitHub. A instancia `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A mudanca do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
+- Proximo passo obrigatorio: medir de forma agregada a sobreposicao dos movimentos entre `EMP01`, `EMP02`, `EMP03` e `EXETPS` e avaliar vinculo por documento com fontes que possuam empresa, usando fingerprints locais e sem exportar chaves, produtos, quantidades ou documentos.
