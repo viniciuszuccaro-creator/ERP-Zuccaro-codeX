@@ -5455,3 +5455,24 @@ Checklist inicial:
 - A instancia SQL foi encerrada apos as consultas e permanece `Stopped`/`Manual`; TCP e Named Pipes estao desativados. Nenhuma importacao direta foi executada.
 - Nenhum dado pessoal, credencial, arquivo TPS, MDF/LDF, CSV nominal, planilha ou relatorio local foi adicionado ao GitHub. A mudanca no repositorio e exclusivamente documental; testes de runtime foram dispensados e `git diff --check` e obrigatorio no fechamento.
 - Proximo passo obrigatorio: preparar o lote nominal local de clientes usando o `Cliente` existente, validar CPF/CNPJ por digito verificador, aplicar idempotencia por `CODIGOCLIENTE` e documento normalizado no Grupo CPA e separar invalidos, duplicados ou sem identificacao em `05_QUARANTINE`, sem importar diretamente e sem enviar dados ao GitHub.
+
+### Gate 18 - Staging nominal protegido de clientes
+
+- O lote reutilizou o cadastro mestre `Cliente`, o payload do formulario existente e `localCadastroMasterPolicy`; nenhum importador, entidade, tela, rota ou funcao paralela foi criado.
+- O Grupo canonico foi resolvido somente em memoria a partir do snapshot atual. Seu hash coincide com a prova de topologia previamente validada; o ID bruto aparece apenas nos CSVs privados.
+- O contrato local foi atualizado para `NOMINAL_LOCAL_STAGING_COMPLETE`: 37 das 156 colunas estao permitidas somente no staging local e as outras 119 permanecem bloqueadas.
+- As 22.895 linhas de `LEGACY_TID_EXETPS.dbo.Clientes` foram lidas por `SELECT` e reconciliadas integralmente, sem escrita no banco legado e sem chamada de criacao ou atualizacao no ERP.
+- Foram gerados 18.458 candidatos e 4.437 registros em quarentena. Todas as linhas possuem `import_authorized=false` e o resumo confirma `directImportPerformed=false`.
+- A validacao nominal completa de CPF/CNPJ inclui tipo esperado, somente digitos, comprimento, bloqueio de sequencias repetidas e digitos verificadores. Foram quarentenados 4.414 registros por documento invalido.
+- Os oito grupos duplicados identificados anteriormente foram confirmados: as 24 linhas envolvidas permaneceram integralmente em quarentena, sem eleger automaticamente um registro vencedor.
+- Um documento ja existe entre os clientes do snapshot atual e tambem foi bloqueado para revisao idempotente. Nenhum candidato aceito possui documento duplicado.
+- Todos os candidatos possuem tipo e status reconhecidos, um unico `group_id` canonico, `scope_type=grupo` e `empresa_id` vazio. O cadastro mestre nao foi duplicado fisicamente entre empresas.
+- `CODIGOCLIENTE` foi preservado como codigo legado e origem. Referencias a tabela de preco, vendedor, regiao, condicao de pagamento, transportadora, grupo de cliente, ramo e CNAE foram mantidas somente como codigos legados pendentes de mapeamento.
+- Campos de nome, documento, endereco, cobranca e e-mail foram sanitizados. E-mails invalidos nao foram promovidos ao campo de contato; permaneceram apenas no arquivo privado para revisao.
+- A validacao final confirmou 22.895/22.895 linhas reconciliadas, zero autorizacao indevida, zero candidato com motivo de quarentena, zero quarentena sem motivo, zero duplicidade entre candidatos e zero celula com prefixo inseguro para CSV.
+- Os CSVs nominais foram gravados somente em `03_EXPORT_STAGING\CLIENTES\CLIENTES-LEGACY-TID-001` e `05_QUARANTINE\CLIENTES\CLIENTES-LEGACY-TID-001`, com heranca de ACL removida e uma unica regra para o usuario local.
+- Os fingerprints usam HMAC-SHA256 com chave propria protegida por DPAPI `CurrentUser`; a chave nao foi exibida, exportada ou reutilizada do lote RBAC.
+- O resumo sem dados pessoais e o contrato atualizado permanecem somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`. A verificacao confirmou ausencia de e-mail e documento bruto; sequencias longas aparecem apenas nos campos SHA-256.
+- O script temporario de extracao foi removido apos a validacao. A instancia SQL foi encerrada e permanece `Stopped`/`Manual`, com TCP e Named Pipes desativados.
+- Nenhum CSV nominal, ID bruto, dado pessoal, chave, hash individual, TPS, MDF/LDF ou relatorio local foi adicionado ao GitHub. A mudanca no repositorio e exclusivamente documental; testes de runtime foram dispensados e `git diff --check` e obrigatorio no fechamento.
+- Proximo passo obrigatorio: mapear localmente as referencias legadas dos 18.458 candidatos contra as entidades existentes, iniciando por tabela de preco, condicao de pagamento, vendedor, regiao e transportadora; referencias ausentes ou ambiguas permanecem bloqueadas e nenhuma importacao pode ocorrer antes da homologacao.
