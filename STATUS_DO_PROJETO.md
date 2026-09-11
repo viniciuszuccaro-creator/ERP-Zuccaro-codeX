@@ -5405,3 +5405,18 @@ Checklist inicial:
 - A instancia foi confirmada `Stopped`/`Manual` ao final. TCP e Named Pipes permanecem desativados conforme a configuracao isolada.
 - Nenhum dado, credencial, TPS, snapshot, MDF/LDF, hash detalhado ou relatorio local foi adicionado ao GitHub. Mudanca exclusivamente documental no repositorio; testes de runtime dispensados e `git diff --check` obrigatorio no fechamento.
 - Proximo passo obrigatorio: preparar um pacote local de revisao humana para os 66 grupos sem conflito semantico, comparando-os com as chaves RBAC atuais sem sugerir acesso por similaridade; os 67 grupos conflitantes e as 2 redacoes permanecem em quarentena.
+
+### Gate 18 - Pacote de revisao humana RBAC
+
+- O pacote foi gerado somente a partir da taxonomia sanitizada e do `PerfilAcesso.permissoes` vigente, sem nova consulta aos bancos legados e sem iniciar a instancia SQL.
+- A arvore de permissoes atual foi lida somente em memoria no armazenamento local do navegador. Foram confirmados 20 perfis, 601 ocorrencias e exatamente 395 caminhos RBAC distintos, correspondentes aos 395 hashes do inventario anterior.
+- Dos 66 grupos sem conflito semantico, 2 continham redacao de seguranca e permaneceram bloqueados. A fila humana pronta contem 64 grupos unicos.
+- A quarentena consolidada contem 69 grupos unicos: 67 por conflito semantico e 2 por conteudo redigido. Nenhum grupo bloqueado foi promovido para revisao pronta.
+- O catalogo legivel das 395 chaves atuais foi separado da fila legada e marcado exclusivamente como referencia. Nao houve associacao por similaridade, recomendacao automatica ou escolha de permissao.
+- Todas as 64 linhas revisaveis permanecem com `ReviewerDecision=PENDENTE`, `SelectedCurrentPermissionKey` vazio e autorizacoes de Grupo, Empresa e importacao iguais a `false`.
+- As 69 linhas em quarentena permanecem com `ReviewerDecision=BLOQUEADO` e todas as autorizacoes iguais a `false`.
+- Os campos textuais exportados foram protegidos contra formula CSV. Validacao final: 64 IDs de revisao unicos; 69 IDs de bloqueio unicos; 395 chaves atuais unicas; zero celula insegura; zero linha autorizada; zero sugestao por similaridade.
+- Foram gerados `legacy-rbac-human-review-ready.csv`, `legacy-rbac-human-review-quarantine.csv`, `current-rbac-readable-key-catalog.csv` e `legacy-rbac-human-review-package-summary.json` somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- A instancia permanece `Stopped`/`Manual`, com TCP e Named Pipes desativados. Nenhum perfil completo, usuario, empresa, dado pessoal, hash detalhado ou relatorio local foi copiado para o repositorio.
+- Mudanca exclusivamente documental no GitHub; testes de runtime dispensados e `git diff --check` obrigatorio no fechamento.
+- Proximo passo obrigatorio: submeter os 64 grupos prontos a decisao humana controlada, exigindo uma chave exata do catalogo atual e justificativa para cada aceite; itens rejeitados ou sem decisao continuam sem acesso, e os 69 itens em quarentena nao podem ser selecionados.
