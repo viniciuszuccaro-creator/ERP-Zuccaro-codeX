@@ -5643,3 +5643,17 @@ Checklist inicial:
 - O gerador tecnico temporario foi removido antes do fechamento. Nenhum CSV, JSON local, hash, dado pessoal, valor bancario, RG, valor fiscal, TPS, MDF/LDF ou relatorio do HD integra o GitHub; a mudanca do repositorio e exclusivamente documental.
 - Validacao do repositorio: `git diff --check` aprovado; testes de runtime dispensados porque nenhum codigo de aplicacao permaneceu alterado neste lote.
 - Proximo passo obrigatorio: homologar a traducao fiscal de `SIMPLESFEDERAL` e mapear os seis codigos bancarios para cadastros `Banco` validos no Grupo. Sem essas decisoes humanas, os dados nominais e todas as importacoes permanecem bloqueados.
+
+### Gate 18 - Proposta de mapeamento bancario e fiscal de fornecedores
+
+- Foi gerada somente no HD uma proposta controlada com os seis codigos bancarios usados por fornecedores e o unico valor legado de `SIMPLESFEDERAL`. Nenhum destino ou traducao foi escolhido automaticamente.
+- Os seis codigos bancarios possuem correspondencia exata em `LEGACY_TID_EXETPS.dbo.Bancos`; os nomes cadastrais foram obtidos por `NOMEFANTASIA`, com fallback para `RAZAOSOCIAL`. As seis referencias reconciliam exatamente 43 usos em fornecedores.
+- A referencia fiscal possui um unico valor distinto e reconcilia as 1.061 linhas. O valor permanece sem conversao para booleano ate homologacao fiscal formal.
+- A proposta possui sete linhas: seis bancarias e uma fiscal. Todas permanecem com `PENDING_HUMAN_HOMOLOGATION`, destino/valor normalizado/decisao/revisor/justificativa vazios e `import_authorized=false`.
+- Agencia, conta corrente e RG nao foram extraidos neste lote. Nenhum dado pessoal ou bancario nominal de fornecedor foi lido para a proposta.
+- O arquivo `fornecedores-mapeamento-bancos-fiscal.csv` permanece em `D:\BACKUP ERP ANTIGO - CODEX\05_QUARANTINE\FORNECEDORES\FORNECEDORES-LEGACY-TID-001`; o resumo agregado permanece em `04_REPORTS`. Ambos possuem ACL exclusiva de `DELL-VINI\cpaba`.
+- Validacoes: sete de sete linhas pendentes; zero autorizada; seis de seis referencias com cadastro mestre e descricao resolvida; totais de uso 43/43 e 1.061/1.061; zero destino atribuido; zero traducao fiscal atribuida; zero formula CSV; hash recalculado e correspondente ao resumo local.
+- A consulta ocorreu na instancia isolada e no banco `READ_ONLY`; `MSSQL$ERPZLEGACY` foi encerrado no bloco `finally` e confirmado como `Stopped`/`Manual` ao final de todas as tentativas.
+- Os scripts, saidas tecnicas e arquivos brutos temporarios foram removidos. Nenhum CSV, JSON local, codigo ou nome bancario, valor fiscal, hash, dado pessoal, TPS, MDF/LDF ou relatorio do HD integra o GitHub; a mudanca do repositorio e exclusivamente documental.
+- Validacao do repositorio: `git diff --check` aprovado; testes de runtime dispensados porque nenhum codigo de aplicacao permaneceu alterado neste lote.
+- Proximo passo obrigatorio: um revisor autorizado deve preencher os seis `target_banco_id` com cadastros `Banco` existentes no Grupo e definir o booleano de `SIMPLESFEDERAL` com justificativa fiscal. Ate isso ocorrer, agencia, conta, RG, staging nominal e importacao permanecem bloqueados.
