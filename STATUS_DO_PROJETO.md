@@ -5528,3 +5528,18 @@ Checklist inicial:
 - `TabelaPrecoFormCompleto.jsx`, `Layout.jsx` e `localBase44Client.js` continuam acima do limite recomendado de linhas. A alteracao foi mantida localizada para nao misturar uma refatoracao ampla com o contrato de migracao; a divisao segura permanece como divida tecnica registrada.
 - A instancia `MSSQL$ERPZLEGACY` foi confirmada como `Stopped`/`Manual`. Nenhum CSV, nome, documento, e-mail, ID bruto, hash individual, TPS, MDF/LDF ou relatorio local foi adicionado ao GitHub.
 - Proximo passo obrigatorio: gerar somente no HD uma proposta de homologacao para as referencias ativas entre os sete codigos de tabela de preco e os 27 codigos de vendedor; inativos, ausentes, ambiguos e empresas externas permanecem bloqueados. Somente decisoes exatas homologadas poderao enriquecer o staging de clientes.
+
+### Gate 18 - Planilha de homologacao de tabelas de preco e vendedores
+
+- Foi gerada somente no HD uma planilha controlada para revisar as 34 referencias pendentes de tabela de preco e vendedor, sem macro, conexao externa, botao ou mecanismo de importacao.
+- A reconciliacao separou 16 referencias para decisao humana e manteve 18 bloqueadas. Todas as linhas preservam `import_authorized=false`.
+- Das sete tabelas de preco, seis possuem cadastro mestre legado e aguardam confirmacao de situacao, escopo e destino; elas afetam 18.454 candidatos. Um codigo ausente no cadastro mestre, usado por tres candidatos, permanece bloqueado.
+- Dos 27 vendedores, dez ativos aguardam homologacao e afetam 12.086 candidatos. Onze inativos, usados por 6.074 candidatos, e seis ausentes do cadastro mestre, usados por 292 candidatos, permanecem bloqueados.
+- A aba de revisao aceita somente decisao controlada, escopo, empresa de destino quando aplicavel, ID de destino existente, justificativa e revisor. Nenhuma correspondencia e sugerida por similaridade.
+- Uma vinculacao exige destino existente, justificativa e revisor. Um cadastro no fluxo existente exige escopo valido, empresa quando o registro for empresarial e justificativa/revisor. Linhas incompletas continuam pendentes.
+- O XLSX possui tres abas, 16 formulas de validacao e duas listas de selecao nativas. A verificacao interna confirmou zero macro e zero vinculo externo; as tres abas foram renderizadas e revisadas visualmente.
+- O arquivo final `legacy-client-table-seller-homologation.xlsx` foi salvo exclusivamente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL restrita ao usuario local e SHA-256 verificado sem publicar o valor.
+- O arquivo tecnico de inspecao criado durante a geracao foi removido para evitar duplicacao desnecessaria de conteudo privado.
+- A instancia `MSSQL$ERPZLEGACY` permanece `Stopped`/`Manual`. Nenhuma consulta ao banco legado, gravacao no ERP ou alteracao de runtime foi realizada neste lote.
+- Nenhum XLSX, CSV, nome, codigo individual, dado pessoal, ID bruto, hash detalhado, TPS, MDF/LDF ou relatorio local foi adicionado ao GitHub. A mudanca do repositorio e exclusivamente documental; testes de runtime foram dispensados e `git diff --check` e obrigatorio no fechamento.
+- Proximo passo obrigatorio: o proprietario deve preencher a aba `Revisao`. Somente linhas cujo resultado calculado esteja pronto poderao compor um lote posterior; pendentes, rejeitadas, incompletas e todas as linhas da aba `Bloqueados` permanecem sem importacao.
