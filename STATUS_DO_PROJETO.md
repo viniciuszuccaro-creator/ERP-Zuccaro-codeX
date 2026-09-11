@@ -5390,3 +5390,18 @@ Checklist inicial:
 - A instancia permanece `Stopped`/`Manual`. Nenhum dado, credencial, hash detalhado, TPS, snapshot, MDF/LDF ou relatorio local foi adicionado ao GitHub.
 - Mudanca exclusivamente documental no repositorio; testes de runtime dispensados e `git diff --check` obrigatorio no fechamento.
 - Proximo passo obrigatorio: preparar uma extracao local e sanitizada da taxonomia das 332 definicoes (`SIGLA`, `MODULO`, `NOMEPROCEDURE` e `DESCRICAOUSO`), consolidar as duplicatas semanticamente e produzir uma matriz de traducao para revisao humana, sem ativar permissoes.
+
+### Gate 18 - Taxonomia RBAC sanitizada e matriz humana
+
+- Foi definido e validado um contrato local de extracao que permite exclusivamente `SIGLA`, `MODULO`, `NOMEPROCEDURE` e `DESCRICAOUSO`; todas as demais colunas permanecem proibidas.
+- A instancia foi iniciada manualmente pelo proprietario somente durante a consulta das 332 definicoes e nenhum campo de senha foi consultado.
+- Os valores foram normalizados e sanitizados em memoria antes da persistencia. Nenhuma linha bruta, URL, e-mail, CPF/CNPJ, numero longo ou token potencial foi gravado sem tratamento.
+- As 332 definicoes resultaram em 133 grupos de sigla e 133 linhas na matriz de traducao humana, sem sigla vazia.
+- Foram encontrados 69 grupos com siglas duplicadas e 67 grupos com conflito semantico. As duplicatas foram consolidadas apenas para revisao, sem escolher automaticamente uma definicao vencedora.
+- Duas definicoes com padrao semelhante a token foram redigidas e colocadas em quarentena. O conteudo original nao foi exposto nos relatorios.
+- Todas as 133 linhas permanecem com decisao humana `PENDENTE`; destino, permissao atual e autorizacao continuam vazios. Foram realizados zero mapeamento automatico e zero liberacao de acesso.
+- Foram gerados contrato, taxonomia sanitizada, matriz humana, quarentena e resumo exclusivamente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
+- Validacao final: 332 definicoes; 133 grupos; 69 grupos duplicados; 67 conflitos semanticos; 2 redacoes e 2 quarentenas; zero limite de campo excedido; zero caractere de controle; zero padrao inseguro sem redacao; zero acesso de Grupo/Empresa; zero importacao autorizada.
+- A instancia foi confirmada `Stopped`/`Manual` ao final. TCP e Named Pipes permanecem desativados conforme a configuracao isolada.
+- Nenhum dado, credencial, TPS, snapshot, MDF/LDF, hash detalhado ou relatorio local foi adicionado ao GitHub. Mudanca exclusivamente documental no repositorio; testes de runtime dispensados e `git diff --check` obrigatorio no fechamento.
+- Proximo passo obrigatorio: preparar um pacote local de revisao humana para os 66 grupos sem conflito semantico, comparando-os com as chaves RBAC atuais sem sugerir acesso por similaridade; os 67 grupos conflitantes e as 2 redacoes permanecem em quarentena.
