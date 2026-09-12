@@ -6175,3 +6175,21 @@ Checklist inicial:
 - Situacao: `BLOCKED` para declarar faturamento, recebimento ou pendencia. Os caminhos candidatos foram identificados, mas o contrato de join e os indicadores fiscais ainda precisam ser delimitados.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: inventariar de forma direcionada somente chaves, empresa, situacao, cancelamento e datas nas tabelas `NotaFiscalSaidas`, `NotaFiscalSaidasItens`, `NotasFiscaisEntradas` e `NotaFiscalEntradasItens` das fontes relevantes. Nao ler registros nem valores; definir primeiro o contrato seguro de conciliacao antes de contar vinculos.
+
+### Gate 18 - Contrato estrutural de conciliacao fiscal dos pedidos
+
+- As tabelas fiscais direcionadas de `EMP01`, `EMP02` e `EMP03` foram inventariadas em duas passagens identicas, incluindo colunas candidatas, chaves primarias, indices unicos, ordem das colunas e chaves estrangeiras declaradas.
+- O relatorio final contem 296 metadados estruturais. Nenhum registro fiscal, numero de pedido, numero de nota, chave de acesso, parte, produto, quantidade, valor ou texto foi consultado.
+- Em `NotaFiscalSaidas`, a chave primaria e `NRPEDIDO`. Em `NotaFiscalSaidasItens`, a chave primaria e composta por `NRPEDIDO + ITEMPEDIDO`.
+- A saida fiscal possui `CODIGOEMPRESA`, `SITUACAO`, `NRNFSAIDA`, `SERIENF`, `TIPOEMISSAO`, `DATAEMISSAO` e `DATAEMISSAONF`. `CODIGOEMPRESA` e anulavel; por isso, igualdade de `NRPEDIDO` sem escopo empresarial nao comprova vinculacao segura.
+- Em `NotasFiscaisEntradas`, a chave primaria e `RELATORIO`. Em `NotaFiscalEntradasItens`, a chave primaria e composta por `RELATORIO + ITEMRELATORIO`.
+- A entrada fiscal possui `CODIGOEMPRESA`, `SITUACAO`, `TIPOENTRADA`, `NRNOTAFISCAL`, `SERIENOTA`, `DATAEMISSAO`, `DATAENTRADA` e `NRPEDIDOCOMPRA`. O item possui `NRPEDIDOCOMPRA` e `ITEMPEDIDOCOMPRA`.
+- O indice composto de entrada por pedido inclui `NRPEDIDOCOMPRA + ITEMPEDIDOCOMPRA + RELATORIO + ITEMRELATORIO`. Isso permite repeticao do mesmo pedido/item em mais de um relatorio e impede assumir relacao um para um ou recebimento integral.
+- Nao existe chave estrangeira declarada em nenhuma das oito ocorrencias das quatro tabelas fiscais. Todo join futuro precisa validar cardinalidade e empresa explicitamente.
+- Contrato candidato de venda: cabecalho do pedido com cabecalho fiscal por `NRPEDIDO + CODIGOEMPRESA`, seguido dos itens por `NRPEDIDO + ITEMPEDIDO`. Ausencia ou divergencia de empresa deve ir para bloqueio, nunca para vinculacao apenas numerica.
+- Contrato candidato de compra: pedido/item por `NRPEDIDO + ITEMPEDIDO`, item fiscal por `NRPEDIDOCOMPRA + ITEMPEDIDOCOMPRA`, cabecalho fiscal por `RELATORIO` e igualdade de `CODIGOEMPRESA` entre pedido e nota. Multiplos relatorios por item devem ser preservados.
+- `SITUACAO`, numero/serie de nota e datas fiscais ainda nao foram lidos nem traduzidos. A presenca estrutural desses campos nao comprova autorizacao, cancelamento, recebimento ou encerramento.
+- O relatorio `legacy-fiscal-order-join-contract.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: `BLOCKED` para declarar pedidos faturados/recebidos. O contrato candidato esta definido, mas precisa de contagens agregadas de cardinalidade, escopo empresarial e situacao fiscal.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: contar somente de forma agregada os vinculos dos candidatos recentes `EMP03` (`Pedido` de venda e `Emitido` de compra) com as tabelas fiscais, separando sem vinculo, vinculo com mesma empresa, empresa nula/divergente, multiplicidade e situacao fiscal. Nao exportar IDs, notas, partes, produtos, quantidades ou valores.
