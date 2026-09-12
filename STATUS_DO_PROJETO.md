@@ -6266,3 +6266,22 @@ Checklist inicial:
 - Situacao: contrato estrutural definido, mas recebimento continua `BLOCKED` ate a comparacao agregada demonstrar nulos, zeros, parciais, exatos, excedentes e divergencia entre acumulado e documentos fiscais validos.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: comparar internamente as quantidades dos 4.228 itens de compra recentes de `EMP03` e exportar somente contagens por categoria: pedida invalida, nao recebida, parcial, exata, excedente, soma fiscal valida e divergencia com `QUANTIDADERECEBIDA`. Segmentar por escopo empresarial conciliado, sem exportar IDs nem valores de quantidade.
+
+### Gate 18 - Classificacao agregada das quantidades recebidas
+
+- Os 4.228 itens de compra recentes de `EMP03` foram comparados em duas passagens identicas, usando aritmetica `decimal(38,3)` e exportando somente contagens por categoria.
+- Todos os 4.228 itens possuem `QUANTIDADE` pedida positiva. Nao foram encontradas quantidades pedidas nulas, zeradas ou negativas.
+- Pela coluna acumulada `QUANTIDADERECEBIDA`, existem 459 itens nao recebidos, 569 parciais, 1.597 exatamente iguais ao pedido e 1.603 acima da quantidade pedida.
+- Pela soma de itens fiscais com situacao `Emitida` e rota empresarial permitida, existem 569 parciais, 1.619 exatos e 1.610 excedentes. Outros 428 nao possuem vinculo fiscal e dois possuem escopo inseguro.
+- Os itens segmentam-se em 1.607 no mesmo destino empresarial, 2.191 na rota `Grupo CPA -> Empresa membro`, 428 sem vinculo fiscal e dois com vinculo empresarial inseguro.
+- A soma fiscal emitida concorda exatamente com `QUANTIDADERECEBIDA` em 3.762 itens. Em 36 itens a soma fiscal e maior que o acumulado; nao existe caso em que o acumulado seja maior que a soma fiscal valida.
+- As 36 divergencias concentram-se em oito itens do codigo empresarial 1 e 28 itens do codigo 3. Nenhum valor ou identificador desses itens foi exportado.
+- Os 428 itens sem vinculo fiscal tambem estao com acumulado zero: 130 pertencem ao codigo empresarial 1 e 298 ao codigo 3.
+- Os dois itens de escopo inseguro possuem acumulado igual ao pedido, mas foram excluidos da soma fiscal aceita e permanecem bloqueados.
+- Todas as quantidades fiscais emitidas usadas na soma sao nao nulas e nao negativas. Nao existe categoria de somente nota cancelada entre os itens com escopo permitido; notas canceladas foram excluidas da soma.
+- A elevada quantidade de casos excedentes nao foi interpretada como recebimento completo. Ela pode refletir recebimento acima do pedido, unidade/conversao, repeticao documental ou semantica legada e exige validacao adicional.
+- Nenhum item foi marcado como concluido, parcial ou pendente no ERP novo. As categorias sao diagnosticas e nao autorizam importacao.
+- O relatorio `legacy-purchase-quantity-classification.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum ID, valor de quantidade, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: 3.762 itens possuem consistencia entre acumulado e fiscal, mas o recebimento continua `BLOCKED` pelos 36 desacordos, 1.610 excedentes fiscais, 428 sem vinculo e dois escopos inseguros.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: inventariar somente os campos de unidade, unidade paralela, fator e conversao em `PedidoCompraItens` e `NotaFiscalEntradasItens`, com tipo e chaves, sem consultar valores. Definir o contrato de unidade antes de investigar excedentes ou autorizar classificacao de recebimento.
