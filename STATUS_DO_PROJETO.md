@@ -6159,3 +6159,19 @@ Checklist inicial:
 - Situacao: `BLOCKED` para importar os 222 registros de venda ou 1.021 de compra do periodo. O recorte temporal reduz o universo, mas `Orcamento`, `Pedido` e `Emitido` ainda nao comprovam pendencia operacional.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: inventariar somente a estrutura de campos e tabelas relacionadas que possam comprovar faturamento/encerramento das vendas `Pedido` e recebimento/encerramento das compras `Emitido`. Nao consultar registros nominais, quantidades ou valores e nao selecionar pendencias antes de validar a evidencia downstream.
+
+### Gate 18 - Inventario estrutural das evidencias de encerramento
+
+- O catalogo das bases `EMP01`, `EMP02` e `EMP03` foi consultado em duas passagens identicas, sem leitura de registros, para localizar sinais de faturamento, entrega, recebimento, cancelamento e referencias a pedido.
+- Foram registrados 1.119 metadados estruturais: 100 sinais nos quatro nomes de tabela de cabecalho/item e 1.019 colunas com nome relacionado a pedido em 250 nomes de tabela. Entre as referencias, 96 nomes de tabela possuem linhas segundo o metadado do catalogo.
+- A busca ampla por nome inclui muitos falsos positivos e estruturas de producao, financeiro, historico e programacao. Nenhuma tabela foi considerada relacionada apenas por conter a palavra `PEDIDO`.
+- Nos cabecalhos de venda existem sinais candidatos como `NRNFSAIDA`, `DATAEMISSAONF`, `DATASAIDA`, `ESTOQUEATUALIZADONFE`, `SEMEFEITOFATURAMENTO`, serie e tipo de nota. Esses campos nao comprovam isoladamente faturamento ou encerramento.
+- `NotaFiscalSaidas` e `NotaFiscalSaidasItens` possuem referencia `NRPEDIDO`; itens tambem possuem `ITEMPEDIDO`. Em `EMP03`, o catalogo informa 231.601 cabecalhos fiscais de saida e 587.147 itens, evidenciando uma fonte downstream relevante, mas ainda sem join validado.
+- Nas compras, `PedidoCompraItens` possui `QUANTIDADERECEBIDA`, enquanto `NotasFiscaisEntradas` possui `NRPEDIDOCOMPRA` e `NotaFiscalEntradasItens` possui `NRPEDIDOCOMPRA` e `ITEMPEDIDOCOMPRA`.
+- Em `EMP03`, o catalogo informa 16.307 cabecalhos fiscais de entrada e 30.822 itens. Em `EMP02`, sao 189 cabecalhos e 279 itens. Essas quantidades sao metadados integrais das tabelas e nao representam somente os pedidos candidatos.
+- O inventario anterior ja havia confirmado ausencia de chaves estrangeiras declaradas nos conjuntos de pedidos. Portanto, `NRPEDIDO` ou `NRPEDIDOCOMPRA` nao podem ser unidos sem validar empresa, cardinalidade, item, cancelamento e natureza fiscal.
+- Nenhum registro, numero de pedido, nota, parte, produto, quantidade recebida, valor ou texto livre foi consultado ou exportado neste lote.
+- O relatorio `legacy-order-closure-structural-inventory.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum metadado local em CSV/JSON, TPS ou MDF/LDF integra o GitHub.
+- Situacao: `BLOCKED` para declarar faturamento, recebimento ou pendencia. Os caminhos candidatos foram identificados, mas o contrato de join e os indicadores fiscais ainda precisam ser delimitados.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: inventariar de forma direcionada somente chaves, empresa, situacao, cancelamento e datas nas tabelas `NotaFiscalSaidas`, `NotaFiscalSaidasItens`, `NotasFiscaisEntradas` e `NotaFiscalEntradasItens` das fontes relevantes. Nao ler registros nem valores; definir primeiro o contrato seguro de conciliacao antes de contar vinculos.
