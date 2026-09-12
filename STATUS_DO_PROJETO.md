@@ -6229,3 +6229,22 @@ Checklist inicial:
 - Situacao: `BLOCKED` para importar ou consolidar compras. A matriz revela centralizacao ou cruzamento empresarial sistematico, mas nao autoriza mudar a empresa proprietaria do pedido nem da nota.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: confrontar somente os codigos 1, 2, 3 e 5 da matriz com `LEGACY_TID_EXETPS.dbo.Empresas` e com o mapa local de aliases ja aprovado, registrando identidades empresariais e situacao ativa/inativa sem consultar documentos, segredos ou pedidos. Classificar cada par como mesmo cadastro, cruzamento entre empresas-alvo, legado externo/inativo ou ainda ambiguo, sem autorizar importacao.
+
+### Gate 18 - Conciliacao dos codigos empresariais das compras
+
+- Os codigos 1, 2, 3 e 5 foram confrontados em duas passagens identicas com `LEGACY_TID_EXETPS.dbo.Empresas` e com o mapa local de aliases aprovado, sem persistir ou exibir CNPJ, hashes, documentos, caminhos ou segredos.
+- Os quatro cadastros estao com `SITUACAO=Ativa`. O codigo 1 e `CENTRAL PAULISTA DISTRIBUIDORA DE ACO LTDA`, o codigo 2 e `3Z ARMACAO LTDA`, o codigo 3 e `CPA FERRO E ACO` e o codigo 5 e `ZUCCARO COMERCIO DE FERRAGENS LTDA`.
+- O codigo 2 possui correspondencia concordante por CNPJ e codigo legado com o destino aprovado `3Z LTDA`, escopo `COMPANY`.
+- Os codigos 1 e 3 compartilham CNPJ historico e, por isso, o documento sozinho produz dois candidatos. O `legacyCodeHash` aprovado desempata explicitamente: codigo 1 -> `CPA FERRO E ACO` (`COMPANY`) e codigo 3 -> `Grupo CPA` (`GROUP`).
+- A primeira combinacao indistinta dos dois metodos encontrou mais de um alias para o codigo 1 e foi bloqueada antes da gravacao aceita. A execucao final separou CNPJ e codigo, aplicou somente o desempate ja presente no mapa aprovado e permaneceu estavel.
+- O codigo 5 nao possui correspondencia no mapa aprovado. Embora esteja ativo no legado, e uma identidade externa ao conjunto de destinos autorizado e deve permanecer em quarentena.
+- Os pares `1 -> 1` e `2 -> 2` sao o mesmo cadastro legado e o mesmo destino aprovado. Eles abrangem 310 pedidos vinculados da matriz anterior.
+- Os pares `3 -> 1` e `3 -> 2` representam `Grupo CPA -> Empresa membro`. Na matriz anterior, 645 pedidos do Grupo possuem esses vinculos: 639 alcancam CPA Ferro e Aco, sete alcancam 3Z e um pedido aparece nas duas rotas.
+- A rota Grupo -> Empresa e compativel estruturalmente com a Regra-Mae, segundo a qual a operacao consolidada do Grupo deve preservar a empresa juridica responsavel. Isso nao autoriza importacao nem prova recebimento integral.
+- O par excepcional `1 -> 2` e cruzamento direto entre CPA Ferro e Aco e 3Z. O par `1 -> 5` usa identidade sem alias aprovado. Cada par envolve um pedido na matriz anterior e ambos permanecem bloqueados para quarentena nominal futura.
+- Assim, dos 1.009 pedidos de compra recentes: 310 possuem vinculo no mesmo destino, 645 possuem rota Grupo -> Empresa membro, dois possuem cruzamento inseguro e 52 nao possuem vinculo fiscal. As categorias sao mutuamente exclusivas nesse nivel.
+- O mapa local e todos os seus vinculos continuam com `importAuthorized=false`. Nenhum cadastro, pedido, empresa ou permissao foi criado ou alterado no ERP novo.
+- O relatorio `legacy-purchase-company-code-reconciliation.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CNPJ, hash, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: escopo empresarial conciliado para 955 pedidos vinculados, mas importacao continua `BLOCKED` ate validar recebimento quantitativo e situacoes fiscais. Os dois cruzamentos inseguros e os 52 sem vinculo permanecem bloqueados separadamente.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: inventariar somente os campos numericos de quantidade pedida e recebida em `PedidoCompraItens` e `NotaFiscalEntradasItens`, com tipo, precisao, escala e chaves de item. Nao consultar valores ainda; definir o contrato de comparacao que preserve recebimentos parciais e multiplos relatorios.
