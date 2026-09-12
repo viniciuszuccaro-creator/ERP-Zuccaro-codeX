@@ -5855,3 +5855,15 @@ Checklist inicial:
 - SQL Agent permanece `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A instancia principal ficou `Running` apos a inicializacao manual e deve ser parada por um administrador na tela de Servicos do Windows.
 - A mudanca do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
 - Proximo passo obrigatorio: parar `SQL Server (ERPZLEGACY)` e, em uma sessao PowerShell realmente aberta como administrador, executar a conciliacao agregada com desligamento garantido em `finally`.
+
+### Gate 18 - Diagnostico de desempenho da conciliacao de movimentos
+
+- A sessao administrativa interativa foi obtida e confirmou acesso local por memoria compartilhada aos bancos `READ_ONLY`. O bloqueio de autenticacao registrado no lote anterior foi superado.
+- A primeira estrategia processou os fingerprints, mas excedeu 15 minutos ao criar um indice global temporario sobre as quatro fontes. A execucao foi cancelada sem exportar resultados.
+- A segunda estrategia removeu o indice global e comparou as fontes por agregacoes e `INTERSECT` independentes. Dois campos de lote inexistentes foram eliminados do contrato antes da repeticao valida.
+- A execucao corrigida permaneceu ativa por mais de 35 minutos sem concluir as duas passagens de estabilidade. Para evitar consumo indefinido, a instancia foi parada administrativamente; o cancelamento encerrou a consulta de leitura pelo Shared Memory Provider.
+- Nenhum resumo parcial foi aceito, nenhum arquivo de conclusao foi produzido e nenhum dado nominal, fingerprint individual, produto, quantidade, custo ou documento foi exportado.
+- Todos os executores e logs temporarios foram removidos. `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- Situacao: `BLOCKED` por custo excessivo da comparacao integral. Nenhuma precedencia foi atribuida e nenhuma etapa posterior de estoque foi iniciada.
+- A mudanca do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
+- Proximo passo obrigatorio: redesenhar a conciliacao em lotes fechados por periodo, material ou documento, persistindo apenas contagens agregadas e checkpoints locais, para limitar cada consulta e permitir retomada sem repetir toda a massa historica.
