@@ -6480,3 +6480,18 @@ Checklist inicial:
 - Situacao: os nove itens dos dois documentos com multiplos itens permanecem `BLOCKED` como unidade documental; os tres itens exatos nao devem ser liberados isoladamente e o item com chave orfa exige investigacao de integridade referencial.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`; a consulta usou somente a copia local `READ_ONLY`. A mudanca do repositorio e exclusivamente documental, testes de runtime do ERP sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: investigar somente o item `CHAVE_SEM_ITEM` por contagens, verificando existencia do cabecalho do pedido, outros itens no mesmo pedido, candidatos exatos por material/unidade/quantidade e historico de quantidade cancelada ou exclusao. Nao exportar IDs, documentos, fornecedores, materiais, datas, unidades, quantidades ou valores e nao criar vinculo automatico.
+
+### Gate 18 - Integridade referencial do item com chave orfa
+
+- O unico item fiscal `CHAVE_SEM_ITEM` foi investigado em duas passagens identicas por 15 metricas de cabecalho, itens, candidatos, cancelamentos, agrupamentos e historicos.
+- O cabecalho do pedido referenciado existe, e o pedido esta `Emitido` e ativo. O pedido possui entre um e cinco outros itens atualmente gravados.
+- O numero de item indicado pelo documento fiscal esta acima da maior posicao atualmente existente no pedido. Isso comprova a referencia ausente, mas nao permite concluir se houve exclusao historica ou gravacao incorreta.
+- Nao existe no mesmo pedido candidato com o mesmo material; consequentemente, tambem nao existe candidato por material/unidade nem candidato exato por material/unidade/quantidade.
+- Nao ha registro em `PedidoCompraItensQtdeCancelada` para a chave exata nem para outros itens do pedido. Tambem nao ha evidencia em `PedidoCompraItensAgrupados` como origem ou destino.
+- `PedidoCompraHistoricoAjuste` e `PedidoCompraOperacoes` nao possuem registros para o pedido. Como essas estruturas sao de cabecalho e nao existe trilha especifica de exclusao por item, a causa historica nao pode ser recuperada com seguranca.
+- Nenhum vinculo aproximado foi criado. O item fiscal e o documento incompleto ao qual pertence permanecem `BLOCKED` por integridade referencial.
+- As 15 metricas reconciliaram exatamente um item orfao. As duas execucoes e a releitura do HD externo produziram SHA-256 `548F28C27386DF86F1E6FABE9E2F3767F149469931B8907A59CAD811DA70C039`.
+- O relatorio `legacy-purchase-orphan-item-integrity.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum identificador, documento, fornecedor, material, data, unidade, quantidade, valor, texto livre, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: o alcance conhecido permanece em onze itens fiscais bloqueados de quatro documentos; dez possuem vinculo de pedido identificavel e um possui chave orfa sem candidato seguro.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`; a consulta usou somente a copia local `READ_ONLY`. A mudanca do repositorio e exclusivamente documental, testes de runtime do ERP sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: nos 1.602 itens excedentes com cobertura integral de movimentos, contar registros e somas de `PedidoCompraItensQtdeCancelada` e a presenca de `PedidoCompraHistoricoAjuste`/`PedidoCompraOperacoes`. Classificar se cancelamentos ou ajustes posteriores explicam a diferenca entre quantidade pedida e recebida, sem exportar IDs, materiais, unidades, quantidades, valores, datas ou textos e sem liberar importacao.
