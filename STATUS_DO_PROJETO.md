@@ -6639,3 +6639,16 @@ Checklist inicial:
 - Situacao: no limite da auditoria, a obrigacao financeira era futura e permanecia aberta, enquanto o estoque ainda nao havia processado os dois recebimentos. Os casos continuam BLOCKED para importacao automatica e exigem decisao humana no fluxo correto.
 - MSSQL$ERPZLEGACY terminou Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; a consulta usou somente a copia local READ_ONLY. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
 - Proximo passo obrigatorio: classificar os cinco titulos a vencer por horizonte de ate 30, 31 a 60, 61 a 90 ou mais de 90 dias apos o limite da auditoria e verificar repeticao de vencimentos por documento. Nao exportar IDs, documentos, datas, fornecedores, textos, quantidades ou valores e nao efetuar baixa, pagamento, cancelamento ou importacao automatica.
+
+### Gate 18 - Horizonte dos titulos abertos dos recebimentos pendentes
+
+- Os cinco titulos abertos dos dois documentos fiscais pendentes de estoque foram classificados pelo intervalo entre o limite fixo de 20/08/2026 e o vencimento registrado.
+- Um titulo, pertencente a um dos documentos, estava na faixa de ate 30 dias. Quatro titulos, distribuidos entre os dois documentos, estavam na faixa de 31 a 60 dias.
+- Nenhum titulo estava nas faixas de 61 a 90 dias, mais de 90 dias, vencido no limite ou sem vencimento.
+- Os cinco vencimentos sao distintos dentro do respectivo documento. Nao foi encontrada repeticao de data de vencimento entre parcelas do mesmo documento.
+- A distribuicao e compativel com parcelamento financeiro futuro no limite da auditoria, mas nao comprova recebimento de estoque nem autoriza pagamento, baixa ou importacao.
+- As duas metricas reconciliaram exatamente os mesmos cinco titulos abertos dos dois documentos. As duas execucoes e a releitura protegida do HD externo produziram SHA-256 A3233553D055A9272FA9791F436D13050EE516A055BFAE5F2AD9863D688E2C98.
+- O relatorio legacy-purchase-five-open-title-horizon.csv permanece somente em D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS, com ACL protegida. Nenhum identificador, documento, data individual, fornecedor, texto, quantidade, valor, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: os cinco titulos representam obrigacoes futuras de curto prazo no limite da auditoria e permanecem ligados a recebimentos fiscais ainda nao processados no estoque. Os casos continuam BLOCKED para importacao automatica.
+- MSSQL$ERPZLEGACY terminou Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; a consulta usou somente a copia local READ_ONLY. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
+- Proximo passo obrigatorio: localizar estruturalmente o campo de total fiscal e comparar, somente por classificacao igual, menor ou maior, o total dos seis titulos com o total de cada documento. Separar a parcela baixada das cinco abertas sem exportar valores, IDs, documentos, datas, fornecedores ou textos e sem efetuar baixa, pagamento, cancelamento ou importacao automatica.
