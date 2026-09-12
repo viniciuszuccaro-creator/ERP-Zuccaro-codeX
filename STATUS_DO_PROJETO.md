@@ -5880,3 +5880,15 @@ Checklist inicial:
 - Situacao: `BLOCKED` para a medicao de sobreposicao, sem fonte autoritativa definida e sem impacto no ERP novo.
 - A mudanca do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
 - Proximo passo obrigatorio: materializar primeiro, em tabela temporaria, somente as linhas de `EMP03` que coincidam por data e produto com `EMP01/EMP02`; confirmar a contagem reduzida e apenas numa segunda instrucao calcular fingerprints sobre esse conjunto materializado.
+
+### Gate 18 - Ensaio de materializacao seletiva do estoque
+
+- Foi implementado e executado localmente um ensaio que separa fisicamente as fases: primeiro materializa somente 16 campos operacionais de `EMP03` coincidentes por data e produto com os 13 movimentos de `EMP01/EMP02`; depois calcula fingerprints apenas sobre o conjunto reduzido.
+- Textos livres, comentarios e historicos nao integraram a tabela temporaria. Um limite de 50.000 candidatos interromperia automaticamente qualquer expansao inesperada.
+- A primeira execucao materializou os candidatos, mas revelou aliases ausentes nas duas CTEs de fingerprint. A falha ocorreu antes da exportacao; os aliases foram corrigidos e a consulta foi repetida.
+- A execucao corrigida permaneceu ativa por mais de 20 minutos sem produzir marcador final ou erro SQL. A instancia foi parada administrativamente para impedir consumo indefinido, e nenhum resultado parcial foi aceito.
+- O comportamento demonstra que a lentidao nao pode mais ser atribuida apenas ao hash integral. O executor ainda agrupa contagens de documentos, materializa candidatos, compara as fontes pequenas e inventaria metadados; sem checkpoints por fase nao e seguro afirmar qual instrucao domina o tempo.
+- Nenhum CSV/JSON de resultado foi criado, nenhum dado nominal foi exportado e nenhuma importacao ou alteracao no ERP novo ocorreu.
+- Todos os executores, logs e marcadores temporarios foram removidos. `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- Situacao: `BLOCKED` para a sobreposicao, sem fonte autoritativa definida. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e a validacao obrigatoria.
+- Proximo passo obrigatorio: executar cada fase isoladamente com horario inicial/final e checkpoint agregado local, com limite curto por comando, iniciando pela contagem simples e pela materializacao sem fingerprint. Somente a fase comprovadamente lenta sera redesenhada.
