@@ -6592,3 +6592,20 @@ Checklist inicial:
 - Situacao: os sete pedidos recentes permanecem BLOCKED para importacao automatica como historico ou obrigacao. A validacao humana deve decidir se continuam abertos; os dois itens fiscalizados sem movimento exigem prova tecnica adicional antes dessa decisao.
 - MSSQL$ERPZLEGACY terminou Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; a consulta usou somente a copia local READ_ONLY. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
 - Proximo passo obrigatorio: nos dois itens residuais com vinculo fiscal e sem movimento reconhecido, classificar ponte SEQESTOQUE, indicadores ESTOQUEATUALIZADO e NAOATUALIZAESTOQUE, situacao fiscal, cancelamento, devolucao e movimentos alternativos. Nao exportar IDs, documentos, datas, textos, partes, materiais, unidades, quantidades ou valores e nao alterar o estado dos sete pedidos.
+
+### Gate 18 - Recebimentos fiscais pendentes nos pedidos recentes
+
+- Os dois itens residuais com vinculo fiscal e sem movimento reconhecido foram avaliados em duas passagens identicas. Eles pertencem a dois documentos fiscais distintos.
+- Ambos seguem a rota empresarial do Grupo para empresa membro, preservando o escopo empresarial ja validado para as compras do Grupo.
+- As duas notas estao Emitida, possuem indicador PEDIDOCOMPRA ativo e NOTAFISCALTRANSFERIDA ativo. ESTOQUEATUALIZADO esta inativo e NAOATUALIZAESTOQUE tambem esta inativo nos dois casos.
+- SEQESTOQUE esta zerado para os dois itens; por isso nao existe ponte direta a validar. Nenhum movimento de estoque foi encontrado para o documento ou para o item do documento.
+- Tambem nao existe movimento alternativo de entrada pelo mesmo documento, item e material, nem movimento fracionado cuja soma pudesse reconciliar a quantidade fiscal. A cobertura de estoque dos dois documentos e zero.
+- A quantidade fiscal permanece maior que QUANTIDADERECEBIDA nos dois itens. O acumulado do pedido ainda nao incorporou o documento fiscal emitido.
+- Nao existe cancelamento da nota, cancelamento do item de compra nem devolucao vinculada a qualquer dos dois casos.
+- A combinacao dos indicadores comprova uma etapa fiscal registrada e transferida, mas ainda nao processada no estoque. Esses itens devem ser tratados como recebimentos fiscais pendentes e nao como historico recebido ou saldo simplesmente sem documento.
+- A primeira tentativa foi rejeitada pelo SQL antes de produzir relatorio devido a uma expressao de agregacao invalida. A consulta foi corrigida sem alterar dados; somente as duas passagens posteriores, identicas e validadas, compoem o resultado.
+- As 22 metricas reconciliaram exatamente os mesmos dois itens e dois documentos. As duas execucoes validas e a releitura do HD externo produziram SHA-256 D656265F023511C93F11E86565DE9B544A7697AE80E9505927443DBD9C136F3B.
+- O relatorio legacy-purchase-two-pending-stock.csv permanece somente em D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS, com ACL protegida. Nenhum identificador, documento, data, texto, parte, material, unidade, quantidade individual, valor, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: os dois itens continuam BLOCKED para importacao automatica e exigem continuidade do recebimento fiscal/estoque ou decisao humana de cancelamento no fluxo correto. Nenhum estado legado foi modificado.
+- MSSQL$ERPZLEGACY terminou Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; a consulta usou somente a copia local READ_ONLY. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
+- Proximo passo obrigatorio: verificar de forma agregada se os dois documentos pendentes geraram titulo financeiro, contabilizacao ou outra obrigacao downstream, reutilizando somente chaves estruturais validadas. Nao exportar IDs, documentos, partes, datas, textos, quantidades ou valores e nao decidir recebimento, pagamento ou cancelamento automaticamente.
