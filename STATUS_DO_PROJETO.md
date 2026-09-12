@@ -6124,3 +6124,22 @@ Checklist inicial:
 - Situacao: `BLOCKED` para selecionar ou importar pedidos abertos ate homologar a semantica combinada de situacao/cancelamento, mapear os codigos empresariais e tratar as inconsistencias de integridade.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: levantar somente intervalos agregados das datas tecnicas dos cabecalhos por fonte e situacao, sem exportar numeros, partes, produtos, valores ou textos. Usar o resultado apenas para delimitar o periodo candidato e continuar sem interpretar automaticamente quais pedidos estao abertos.
+
+### Gate 18 - Intervalos agregados das datas dos pedidos
+
+- O schema dos quatro cabecalhos confirmou que as datas legadas sao armazenadas em colunas `int`; nenhum tipo SQL nativo de data foi encontrado. O campo textual `DESCRDATAENTREGA` foi excluido da consulta.
+- Foram avaliadas 28 combinacoes de fonte e coluna numerica em duas passagens identicas, agrupadas somente por `SITUACAO`, total, nulos, zeros, faixa plausivel e limites minimo/maximo.
+- A conversao para ISO foi tratada apenas como candidata Clarion, usando `1801-01-01` para o valor 4 e aceitando a faixa ate 2100. Nenhum dos valores numericos nao nulos e nao zerados ficou fora dessa faixa.
+- Em vendas `EMP01`, `DATAEMISSAO` e `DATAENTREGA` estao preenchidas nos 28 cabecalhos, com intervalos candidatos de `2012-03-12` a `2020-01-23` e `2012-03-07` a `2020-01-23`. `DATAPERDIDO` esta preenchida apenas nos dois registros `Perdido`, ambos em `2015-04-24`.
+- Em compras `EMP02`, `DATAINCLUSAO` e `DATAPEDIDO` estao preenchidas nos dois cabecalhos e abrangem `2016-07-15` a `2016-09-22`; as outras tres colunas tecnicas estao nulas.
+- Em compras `EMP03`, `DATAINCLUSAO` e `DATAPEDIDO` estao preenchidas nos 6.898 cabecalhos e possuem o mesmo intervalo candidato, de `2012-01-25` a `2026-08-19`. `DataContratual` e `DataExpedicao` estao nulas; `DataLiberacaoComprador` possui 3.712 nulos e 3.186 zeros, sem data positiva.
+- Por situacao nas compras `EMP03`, os 46 cabecalhos sem situacao abrangem `2012-03-24` a `2025-04-10`, os 53 `Cancelado` abrangem `2012-04-20` a `2025-01-14` e os 6.799 `Emitido` abrangem `2012-01-25` a `2026-08-19`.
+- Em vendas `EMP03`, `DATAEMISSAO` esta preenchida nos 250 cabecalhos, de `2012-03-20` a `2026-08-19`. `DATAENTREGA` possui 249 datas plausiveis e um zero, de `2016-02-06` a `2026-09-08`.
+- Por situacao nas vendas `EMP03`, os 193 `Orcamento` possuem emissao/entrega de `2017-01-10` a `2026-04-29`; os 29 `Pedido` possuem emissao de `2026-03-16` a `2026-08-19` e entrega de `2026-02-18` a `2026-09-08`; os 27 `Perdido` possuem emissao de `2018-06-28` a `2026-03-28`.
+- `DATAPERDIDO` esta preenchida exatamente nos 27 registros `Perdido` de `EMP03`, com intervalo de `2020-09-10` a `2026-04-29`. As colunas de emissao de NF, pedido pronto, saida e venda efetiva estao zeradas nos cabecalhos avaliados.
+- A entrega candidata em `2026-09-08`, posterior a data do backup, pode representar prazo programado; ela nao foi classificada como erro nem usada para autorizar importacao.
+- Cada coluna reconciliou exatamente os 28, 250, dois ou 6.898 cabecalhos de sua fonte. Nenhum numero de pedido, parte, produto, valor ou texto livre foi consultado ou exportado.
+- O relatorio `legacy-open-orders-date-ranges.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhuma data nominal, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: `BLOCKED` para definir pedidos abertos. Os intervalos confirmam fontes antigas e recentes, mas data, situacao e indicador de cancelamento ainda nao bastam para determinar saldo operacional ou empresa proprietaria.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: contar, de forma agregada por fonte, situacao e empresa, os cabecalhos cuja data principal candidata esta nos ultimos cinco anos do backup (`2021-08-20` a `2026-08-20`), anteriores ao periodo ou posteriores ao backup. Nao selecionar registros nominais nem interpretar automaticamente quais estao abertos.
