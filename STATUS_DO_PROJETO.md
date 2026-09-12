@@ -6334,3 +6334,19 @@ Checklist inicial:
 - Situacao: recebimento continua `BLOCKED`. A causa deixou de ser predominantemente multiplicidade de documentos e passa a exigir validacao da semantica do proprio item fiscal, principalmente nos 1.364 casos de vinculo unico e nas 82 ocorrencias acima de 100%.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: classificar somente por contagens os 1.364 excedentes de vinculo fiscal unico segundo assinatura quantitativa: valores integrais/fracionarios, excesso inferior ou igual a uma unidade e razao fiscal/pedida em multiplos inteiros. Cruzar as categorias com a concordancia de `QUANTIDADERECEBIDA`, sem exportar IDs, unidades ou quantidades e sem inferir conversao automaticamente.
+
+### Gate 18 - Assinaturas quantitativas dos excedentes com vinculo unico
+
+- Os 1.364 itens excedentes com unidade principal igual e um unico vinculo fiscal emitido foram classificados em duas passagens identicas, sem exportar valores ou identificadores.
+- Em 1.312 itens, as quantidades pedida e fiscal sao ambas integrais. Quinze possuem ambas fracionarias, tres possuem quantidade pedida fracionaria e fiscal integral, e 34 possuem quantidade pedida integral e fiscal fracionaria.
+- Somente 37 itens excedem o pedido em ate uma unidade; os outros 1.327 excedem em mais de uma unidade. Portanto, diferenca residual de arredondamento nao explica o padrao dominante.
+- Apenas cinco itens apresentam razao fiscal/pedida como multiplo inteiro exato: tres com razao dois, um entre tres e cinco e um entre seis e dez. Os outros 1.359 nao formam multiplo inteiro.
+- No mesmo destino empresarial existem 941 itens de vinculo unico: 937 do codigo empresarial 1 e quatro do codigo 2. A rota `Grupo CPA -> Empresa membro` contem 423 itens do codigo empresarial 3.
+- `QUANTIDADERECEBIDA` concorda exatamente com a quantidade fiscal em 1.362 itens. Os dois desacordos possuem quantidade fiscal maior que o acumulado, pertencem ao codigo empresarial 3 e excedem o pedido em mais de uma unidade.
+- Os cinco desacordos adicionais identificados no lote anterior pertencem, portanto, ao subconjunto de multiplos vinculos e nao ao universo de vinculo unico analisado aqui.
+- A combinacao predominante e quantidade integral, excesso acima de uma unidade, razao nao multipla e concordancia entre acumulado e fiscal. Isso afasta arredondamento simples, duplicacao integral do pedido e conversao por multiplicador inteiro como explicacoes gerais.
+- Nenhuma semantica operacional foi inferida e nenhum item foi marcado como recebido ou concluido no ERP novo. Os resultados continuam exclusivamente diagnosticos.
+- O relatorio `legacy-purchase-single-link-signatures.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, identificador, unidade, quantidade, TPS ou MDF/LDF integra o GitHub.
+- Situacao: recebimento continua `BLOCKED`. O excesso parece estar registrado no proprio item fiscal e replicado no acumulado legado, mas sua origem funcional ainda nao foi comprovada.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: nos 1.364 itens de vinculo unico, classificar somente por contagens a presenca e as relacoes de igualdade dos campos suplementares `QTDEPECAS`, `PesoLiquido`, `QTDEMETROSREAL` e `QTDEUNIDPARALELA` com as quantidades pedida e fiscal. Nao exportar valores, materiais, unidades ou IDs e nao aplicar conversao sem contrato homologado.
