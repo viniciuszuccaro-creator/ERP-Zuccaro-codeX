@@ -6576,3 +6576,19 @@ Checklist inicial:
 - Situacao: 380 pedidos foram separados como historico encerrado e sete permanecem como risco de obrigacao aberta. Nenhum dado foi alterado, importado, excluido ou liberado.
 - MSSQL$ERPZLEGACY terminou Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; a consulta usou somente a copia local READ_ONLY. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
 - Proximo passo obrigatorio: isolar somente os sete pedidos sem data de liquidacao e classifica-los por faixa temporal, presenca de operacao, cobertura fiscal, movimentos de estoque e saldo apos cancelamento. Nao exportar IDs, datas, textos, partes, materiais, unidades, quantidades ou valores e nao criar obrigacao no ERP novo sem prova operacional.
+
+### Gate 18 - Risco operacional dos sete pedidos sem liquidacao
+
+- Os sete pedidos sem DTLIQUIDACAOPEDIDO foram avaliados em duas passagens identicas, abrangendo 15 itens excedentes conciliados e 24 outros itens com saldo apos cancelamentos formais.
+- Todos os sete pedidos pertencem a faixa de ate 90 dias em relacao ao limite fixo de 20/08/2026. Portanto, nao sao residuos antigos que possam ser presumidos como encerrados.
+- Todos continuam Emitido e ativos, nao possuem registro em PedidoCompraOperacoes e nao apresentam cancelamento capaz de cobrir qualquer dos 24 saldos residuais.
+- Os 15 excedentes possuem cobertura integral dos movimentos e igualdade entre quantidade fiscal e recebida; 12 possuem um vinculo fiscal e tres possuem multiplos vinculos. Eles continuam sem causa comercial comprovada e permanecem bloqueados.
+- Entre os 24 saldos residuais, 17 nao possuem vinculo fiscal e sete possuem um vinculo. Cinco dos sete vinculados possuem movimento integral e igualdade entre quantidade fiscal e recebida.
+- Os outros dois itens vinculados nao possuem movimento de estoque reconhecido e apresentam quantidade fiscal maior que a quantidade recebida. Eles formam uma pendencia operacional diferente dos 17 itens ainda sem documento fiscal.
+- Nenhum dos 24 itens residuais possui cancelamento que encerre o saldo. Seis pedidos possuem entre dois e cinco residuais, totalizando 23 itens, e um pedido possui um residual.
+- A combinacao de recencia, ausencia de liquidacao, ausencia de operacao e saldo residual impede classificar esses sete pedidos como historico encerrado. Eles devem permanecer como possiveis obrigacoes abertas ate homologacao operacional.
+- As 31 linhas agregadas reconciliaram em cada metrica os mesmos sete pedidos, 15 excedentes e 24 residuais. As duas execucoes e a releitura do HD externo produziram SHA-256 1A761D51AF9C47E1D778AD20287AE832DBA9FC3B3CA4B501F97BCBA7D4F7752D.
+- O relatorio legacy-purchase-seven-open-risk.csv permanece somente em D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS, com ACL protegida. Nenhum identificador, data individual, texto, parte, material, unidade, quantidade individual, valor, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: os sete pedidos recentes permanecem BLOCKED para importacao automatica como historico ou obrigacao. A validacao humana deve decidir se continuam abertos; os dois itens fiscalizados sem movimento exigem prova tecnica adicional antes dessa decisao.
+- MSSQL$ERPZLEGACY terminou Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; a consulta usou somente a copia local READ_ONLY. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
+- Proximo passo obrigatorio: nos dois itens residuais com vinculo fiscal e sem movimento reconhecido, classificar ponte SEQESTOQUE, indicadores ESTOQUEATUALIZADO e NAOATUALIZAESTOQUE, situacao fiscal, cancelamento, devolucao e movimentos alternativos. Nao exportar IDs, documentos, datas, textos, partes, materiais, unidades, quantidades ou valores e nao alterar o estado dos sete pedidos.
