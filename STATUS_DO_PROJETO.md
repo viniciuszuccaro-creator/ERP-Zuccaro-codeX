@@ -5972,3 +5972,16 @@ Checklist inicial:
 - A primeira consulta de catalogo excedeu o limite e foi descartada; a consulta segmentada e otimizada concluiu de forma estavel. `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
 - A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e a validacao obrigatoria.
 - Proximo passo obrigatorio: comparar somente o schema completo de `TransferenciaEstoque` e suas tabelas de itens/complementos entre `EMP03` e `EXETPS`, procurando identificadores estruturais de origem/destino sob nomes nao empresariais. As quatro linhas nao podem ser lidas ou migradas antes dessa classificacao.
+
+### Gate 18 - Comparacao estrutural das transferencias de estoque
+
+- Os schemas de `TransferenciaEstoque*` em `EMP03` e `EXETPS` foram comparados em duas passagens estaveis, sem leitura das quatro transferencias ou de qualquer valor operacional.
+- Foram reconciliadas seis tabelas, 114 colunas, 11 indices e zero chave estrangeira, totalizando 125 linhas de metadados. Apenas `EMP03.TransferenciaEstoque` possui dados, com quatro linhas; as outras cinco estruturas estao vazias.
+- O cabecalho `TransferenciaEstoque` de `EMP03` e estruturalmente identico ao de `EXETPS`: 26 colunas e os mesmos tres indices. Ele contem `CODIGOENTRADA`, `CODIGOSAIDA`, lotes e quantidades, mas nao possui empresa, filial, grupo, estoque/local de origem ou estoque/local de destino.
+- Os unicos campos explicitamente classificados como origem/destino sao `ESTOQUEORIGEM` e `ESTOQUEDESTINO` de `EXETPS.TransferenciaEstoqueEmpresas`. Essa tabela possui 25 colunas, zero linha e nenhuma chave estrangeira que a relacione ao cabecalho de `EMP03`.
+- `EXETPS.TransferenciaEstoqueItens`, `TransferenciaEstoqueEmpresasComplemento` e `EMP03.TransferenciaEstoqueAnexos` tambem estao vazias. Similaridade de nome ou chave numerica nao foi aceita como relacionamento implícito.
+- A estrutura das quatro linhas sugere uma operacao entre codigos de entrada/saida com quantidade e lote, mas a semantica nao foi inferida. Elas continuam sem atribuicao empresarial e bloqueadas para importacao.
+- O relatorio `legacy-stock-transfer-schema.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, sob ACL local. Nenhum valor, codigo, quantidade, lote, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Nenhuma entidade, tela, campo, importador ou fluxo do ERP novo foi criado ou alterado. `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e a validacao obrigatoria.
+- Proximo passo obrigatorio: medir apenas contagens agregadas de preenchimento e correspondencia de `CODIGOENTRADA`/`CODIGOSAIDA` das quatro linhas contra `CadastroMateriais`, sem exportar codigos. O objetivo e distinguir conversao interna de material de transferencia empresarial; qualquer resultado ambiguo permanece em quarentena.
