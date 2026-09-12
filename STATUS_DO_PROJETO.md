@@ -6527,3 +6527,20 @@ Checklist inicial:
 - Situacao: baixa e liquidacao foram separadas das operacoes excepcionais. Os 1.602 excessos continuam sem causa comercial comprovada e permanecem `BLOCKED` para importacao automatica.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`; a consulta usou somente a copia local `READ_ONLY`. A mudanca do repositorio e exclusivamente documental, testes de runtime do ERP sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: nos dez pedidos com operacao posterior de cancelamento/exclusao ou ajuste, contar todos os itens atuais do pedido e classificar quantos sao excedentes conciliados, exatos, parciais ou sem vinculo fiscal. Verificar tambem o estado atual do cabecalho, sem exportar IDs, datas, textos, materiais, unidades, quantidades ou valores e sem atribuir a operacao a itens.
+
+### Gate 18 - Escopo dos itens nos pedidos com operacoes excepcionais
+
+- Os dez pedidos com operacao posterior de cancelamento, exclusao, alteracao ou ajuste foram avaliados em duas passagens identicas. Todos permanecem atualmente emitidos e ativos.
+- Esses pedidos possuem 141 itens atuais: 65 itens excedentes conciliados e 76 outros itens do mesmo pedido.
+- Os 65 excedentes possuem vinculo fiscal excedente, cobertura integral de movimentos, igualdade entre quantidade fiscal e recebida e quantidade recebida maior que a pedida. Nenhum deles perdeu a comprovacao operacional ja estabelecida.
+- Entre os 76 outros itens, 22 possuem recebimento exato, 18 possuem recebimento parcial e 36 nao possuem vinculo fiscal. Os 40 itens fiscalizados possuem cobertura integral de movimentos, igualdade entre quantidade fiscal e recebida e unidades fiscais compativeis.
+- Na unica operacao de alteracao ou ajuste, o pedido contem um excedente e 14 outros itens: 13 exatos e um sem vinculo fiscal.
+- Nas nove operacoes de cancelamento ou exclusao, os pedidos contem 64 excedentes e 62 outros itens: nove exatos, 18 parciais e 35 sem vinculo fiscal.
+- Considerando quantidade recebida versus pedida nos outros itens, 22 estao iguais e 54 possuem recebimento menor. Esse saldo residual aparece principalmente nos pedidos com cancelamento ou exclusao.
+- As operacoes de cabecalho nao se aplicaram somente aos itens excedentes: os mesmos pedidos conservam itens exatos, parciais e ainda sem vinculo fiscal. Como a tabela de operacoes nao identifica item nem registra valores antes/depois, ela nao comprova alteracao da quantidade dos excedentes.
+- O resultado e compativel com encerramento ou limpeza de saldo remanescente no nivel do pedido, mas essa interpretacao ainda exige verificacao estrutural e nao autoriza alterar ou importar registros.
+- As 41 linhas agregadas reconciliaram os mesmos dez pedidos, 141 itens atuais e 65 excedentes. As duas execucoes e a releitura do HD externo produziram SHA-256 `D0D5C3D2C621C2DA7264790C62F93F0DC8C995E42F5FD84292C548EEB98EA36D`.
+- O relatorio `legacy-purchase-exceptional-order-item-scope.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum identificador, data, texto, material, unidade, quantidade individual, valor, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: as operacoes excepcionais continuam sem capacidade de explicar os 65 excedentes. Os itens e os 1.602 excessos do universo maior permanecem `BLOCKED` para importacao automatica.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`; a consulta usou somente a copia local `READ_ONLY`. A mudanca do repositorio e exclusivamente documental, testes de runtime do ERP sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: nos nove pedidos com cancelamento ou exclusao, classificar de forma agregada se os 53 outros itens com recebimento menor representam saldo aberto ou saldo encerrado e confrontar essa classificacao com o estado operacional do pedido. Nao exportar IDs, datas, textos, materiais, unidades, quantidades ou valores e nao inferir mudanca por item sem trilha historica.
