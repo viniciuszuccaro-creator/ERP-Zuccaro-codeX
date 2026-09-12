@@ -5957,3 +5957,18 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
 - A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e a validacao obrigatoria.
 - Proximo passo obrigatorio: inventariar somente estrutura e contagens agregadas de locais, reservas e transferencias de estoque, verificando se algum conjunto possui contexto empresarial proprio. Nao consultar valores nominais nem desbloquear `MovimentacaoEstoque`.
+
+### Gate 18 - Estruturas de locais, reservas e transferencias de estoque
+
+- O inventario estrutural foi executado em duas passagens estaveis nas seis bases `EXETPS` e `EMP01` a `EMP05`, usando catalogos e contagens de particao, sem consultar registros, produtos, quantidades, documentos ou valores.
+- A busca ampla encontrou 194 estruturas por nome de tabela ou coluna: 45 nao vazias, 48 com alguma coluna textual de empresa/grupo/filial e zero com chave estrangeira de entrada ou saida. A maioria e falso positivo de dominio, incluindo local de entrega, telefone, embarque, instalacao e transferencias financeiras/fiscais.
+- Nao foi encontrado cadastro mestre nao vazio de local de estoque nem reserva operacional de estoque. As estruturas nomeadas de local pertencem a equipamentos, instalacao ou entrega; a unica referencia de reserva esta vazia e pertence a agenda tecnica.
+- `Empresas.LOCALIZACAOESTOQUE` existe em `EXETPS`, mas e somente parametro na tabela de cinco empresas, sem chave estrangeira. Sua presenca nao relaciona saldo, movimento ou transferencia a uma empresa.
+- `TransferenciaEstoque` possui quatro linhas somente em `EMP03`; as tabelas homonimas de `EXETPS`, `EMP01`, `EMP02`, `EMP04` e `EMP05` estao vazias. A estrutura nao possui coluna empresarial reconhecivel nem chave estrangeira declarada.
+- `MovimentacaoEstoque.BAIXACONTROLETRANSFERENCIA` aparece como referencia de transferencia, mas continua sem contexto empresarial. O campo nao autoriza associar os 557.060 movimentos de `EMP03` a nenhuma empresa.
+- As estruturas nao relacionadas ao estoque foram mantidas fora do escopo. Logs de transferencia fiscal e transferencias bancarias/creditos nao foram usados como fonte operacional de estoque.
+- O relatorio agregado `legacy-stock-locations-reservations-transfers.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, protegido por ACL local. Nenhum CSV, JSON, valor nominal, TPS ou MDF/LDF integra o GitHub.
+- Nenhuma importacao, precedencia ou atribuicao empresarial foi autorizada. `MovimentacaoEstoque` e as quatro transferencias de `EMP03` permanecem bloqueadas.
+- A primeira consulta de catalogo excedeu o limite e foi descartada; a consulta segmentada e otimizada concluiu de forma estavel. `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e a validacao obrigatoria.
+- Proximo passo obrigatorio: comparar somente o schema completo de `TransferenciaEstoque` e suas tabelas de itens/complementos entre `EMP03` e `EXETPS`, procurando identificadores estruturais de origem/destino sob nomes nao empresariais. As quatro linhas nao podem ser lidas ou migradas antes dessa classificacao.
