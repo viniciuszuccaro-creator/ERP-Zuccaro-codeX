@@ -5867,3 +5867,16 @@ Checklist inicial:
 - Situacao: `BLOCKED` por custo excessivo da comparacao integral. Nenhuma precedencia foi atribuida e nenhuma etapa posterior de estoque foi iniciada.
 - A mudanca do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
 - Proximo passo obrigatorio: redesenhar a conciliacao em lotes fechados por periodo, material ou documento, persistindo apenas contagens agregadas e checkpoints locais, para limitar cada consulta e permitir retomada sem repetir toda a massa historica.
+
+### Gate 18 - Refinamento da estrategia de conciliacao do estoque
+
+- A conciliacao foi redesenhada para usar os periodos ja comprovados: os pares de `EXETPS` com `EMP01`, `EMP02` e `EMP03` foram classificados apenas metodologicamente como intervalos sem intersecao, sem concatenar ou importar movimentos.
+- A comparacao efetiva ficou restrita aos 12 movimentos de `EMP01`, ao unico movimento de `EMP02` e ao periodo coincidente de `EMP03`. A execucao administrativa local e o desligamento em `finally` funcionaram corretamente.
+- Tres planos foram avaliados e rejeitados por desempenho: `INTERSECT` integral, `HASH JOIN` explicito sobre fingerprints e filtro por data/produto no mesmo plano do fingerprint. Os dois ultimos ultrapassaram, respectivamente, 12 e oito minutos sem concluir a dupla validacao.
+- As consultas foram canceladas por parada administrativa do servico. Como os bancos estao `READ_ONLY`, o cancelamento nao alterou as fontes; nenhum resumo parcial foi aceito ou exportado.
+- A evidencia indica que o otimizador calcula o fingerprint caro durante a varredura de `EMP03`, antes de reduzir os candidatos. Portanto, repetir a mesma expressao por ano apenas multiplicaria o custo sem garantir ganho.
+- Todos os executores e logs temporarios foram removidos. Nenhum fingerprint individual, produto, quantidade, custo, documento, CSV/JSON local ou dado legado integra o GitHub.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- Situacao: `BLOCKED` para a medicao de sobreposicao, sem fonte autoritativa definida e sem impacto no ERP novo.
+- A mudanca do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
+- Proximo passo obrigatorio: materializar primeiro, em tabela temporaria, somente as linhas de `EMP03` que coincidam por data e produto com `EMP01/EMP02`; confirmar a contagem reduzida e apenas numa segunda instrucao calcular fingerprints sobre esse conjunto materializado.
