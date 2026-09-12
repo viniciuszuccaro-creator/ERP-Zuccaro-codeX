@@ -5999,3 +5999,17 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
 - A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e a validacao obrigatoria.
 - Proximo passo obrigatorio: medir somente qualidade agregada das quatro operacoes (chave unica, datas validas, quantidades positivas e presenca de lotes), sem exportar valores. Somente depois preparar quarentena nominal local com `import_authorized=false`; a ausencia de empresa continua bloqueando qualquer carga.
+
+### Gate 18 - Qualidade agregada das transferencias internas
+
+- As quatro operacoes foram avaliadas em duas passagens identicas no banco `LEGACY_TID_EMP03`, confirmado em `READ_ONLY`, sem exportar chaves, datas, codigos, quantidades ou lotes individuais.
+- As quatro possuem `NUMEROTI` preenchido e distinto, portanto nao ha chave ausente ou repetida no conjunto.
+- As quatro datas principais estao preenchidas e foram validadas no intervalo Clarion entre 1900 e o dia seguinte a execucao. Nao ha data principal invalida.
+- Todas as quatro quantidades principais estao preenchidas e sao positivas; nao existe quantidade zero ou negativa.
+- `DATARETORNO`, quantidades paralelas de entrada/saida e lotes de fabricacao de entrada/saida estao vazios nas quatro operacoes. Esses campos nao serao preenchidos artificialmente nem usados para rejeitar o conjunto sem regra operacional que os torne obrigatorios.
+- Somadas a conciliacao anterior, as quatro linhas possuem chave unica, data valida, quantidade positiva e materiais distintos de entrada/saida, ambos conciliados como `REVENDA`.
+- A qualidade estrutural nao resolve a empresa proprietaria. As quatro operacoes continuam bloqueadas para importacao e nao podem ser propagadas ao Grupo ou a qualquer empresa por suposicao.
+- O relatorio `legacy-stock-transfer-quality-summary.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, sob ACL local. Nenhum valor nominal, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Nenhuma entidade, tela, campo ou importador do ERP novo foi alterado. `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e a validacao obrigatoria.
+- Proximo passo obrigatorio: gerar somente no HD uma quarentena nominal minima para as quatro operacoes, preservando chave legada, data, codigos de entrada/saida e quantidade, com `empresa_id` vazio, motivo `MISSING_EMPRESA_OWNER` e `import_authorized=false`. Nao incluir matricula, motivo livre ou campos livres sem necessidade comprovada.
