@@ -6285,3 +6285,20 @@ Checklist inicial:
 - Situacao: 3.762 itens possuem consistencia entre acumulado e fiscal, mas o recebimento continua `BLOCKED` pelos 36 desacordos, 1.610 excedentes fiscais, 428 sem vinculo e dois escopos inseguros.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: inventariar somente os campos de unidade, unidade paralela, fator e conversao em `PedidoCompraItens` e `NotaFiscalEntradasItens`, com tipo e chaves, sem consultar valores. Definir o contrato de unidade antes de investigar excedentes ou autorizar classificacao de recebimento.
+
+### Gate 18 - Contrato estrutural de unidades das compras
+
+- Os campos de unidade e conversao de `PedidoCompraItens` e `NotaFiscalEntradasItens` foram inventariados em `EMP02` e `EMP03` por duas passagens identicas, sem consultar valores operacionais.
+- Os schemas de `EMP02` e `EMP03` sao identicos no recorte avaliado. O relatorio contem 42 metadados de chaves, unidades, quantidades e conversoes.
+- As duas tabelas possuem `CODIGOMATERIAL` e `UNIDADE char(4)` anulaveis, alem de `QUANTIDADE decimal(11,3)`. Assim, igualdade de precisao numerica nao basta: a unidade principal tambem deve coincidir.
+- `PedidoCompraItens` possui `QTDEPECAS decimal(11,3)`, `PesoLiquido decimal(12,2)`, o indicador legado `HabilitaCoversaoUnidade`, `QtdeConversaoUnidade decimal(17,10)`, `UnidadeConversao varchar(4)` e `VrUnitarioConversao decimal(23,10)`.
+- O nome legado `HabilitaCoversaoUnidade` foi preservado exatamente como existe no schema, inclusive a grafia. Nenhum campo foi renomeado ou criado.
+- `NotaFiscalEntradasItens` possui `QTDEMETROSREAL` e `QTDEUNIDPARALELA`, ambas `decimal(11,3)`, mas nao possui o mesmo conjunto de indicador/unidade de conversao do pedido.
+- O contrato principal exige normalizar espacos e caixa de `UNIDADE` e comparar pedido x item fiscal antes de somar `QUANTIDADE`. Unidade nula, vazia ou divergente bloqueia a soma principal.
+- Campos de pecas, metros reais, peso, unidade paralela e valor unitario de conversao nao podem ser usados como fator entre si. A conversao somente sera aceita quando indicador, unidade de destino e quantidade convertida estiverem presentes e semanticamente homologados.
+- Recebimentos em varios relatorios devem manter a unidade de cada item fiscal. Misturar unidades no mesmo pedido/item e depois somar produziria um saldo incorreto, ainda que os tipos decimais sejam compativeis.
+- Nenhum codigo de material, unidade, quantidade, fator, peso, valor ou identificador foi consultado ou exportado neste lote.
+- O relatorio `legacy-purchase-unit-conversion-contract.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: contrato estrutural definido, mas os 1.610 excedentes fiscais continuam `BLOCKED` ate comprovar igualdade de unidade ou conversao valida em cada vinculo.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: contar de forma agregada, nos vinculos fiscais emitidos e de escopo permitido, unidades principais iguais, divergentes, nulas ou vazias e disponibilidade dos campos de conversao do pedido. Separar itens exatos/parciais/excedentes sem exportar codigos de material, unidades ou quantidades.
