@@ -6090,3 +6090,19 @@ Checklist inicial:
 - Nenhuma entidade, tela, campo ou importador do ERP novo foi criado ou alterado. `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
 - A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: manter estoque bloqueado e iniciar o inventario somente estrutural das fontes de pedidos abertos de venda e compra, identificando campos de situacao, data, empresa, cliente/fornecedor e itens sem consultar registros nominais.
+
+### Gate 18 - Inventario estrutural das fontes de pedidos
+
+- Foram inventariadas em duas passagens estaveis as tabelas nomeadas de pedidos de venda e compra nas seis bases `READ_ONLY`, sem consultar pedidos, clientes, fornecedores, produtos, valores ou textos.
+- O catalogo resultou em 76 tabelas e 784 metadados relevantes; 13 tabelas estao nao vazias, dez possuem alguma coluna empresarial e nenhuma possui chave estrangeira declarada.
+- Vendas nao vazias: `EMP01.PedidoVenda` possui 28 cabecalhos e `PedidoVendaItens` 77 itens; `EMP03` possui 250 cabecalhos e 803 itens. As demais fontes nao possuem cabecalho/item de venda nao vazio.
+- Compras nao vazias: `EMP02.PedidosCompra` possui dois cabecalhos e `PedidoCompraItens` dois itens; `EMP03` possui 6.898 cabecalhos e 19.743 itens. As demais fontes nao possuem cabecalho/item de compra nao vazio.
+- Os cabecalhos usam `NRPEDIDO` como chave primaria. Os itens usam a chave composta `NRPEDIDO + ITEMPEDIDO`, oferecendo um vinculo estrutural candidato com o cabecalho, mas sem integridade referencial declarada.
+- `PedidoVenda` possui `SITUACAO`, `CODIGOEMPRESA`, `CODIGOCLIENTE` e diversas datas. `PedidosCompra` possui `SITUACAO`, `PEDIDOCANCELADO`, `CODEMPRESA`, `CODIGOFORNEC` e datas de pedido, prazo e expedicao.
+- Os itens nao carregam empresa propria; o escopo empresarial somente pode ser herdado de um cabecalho validado pela chave `NRPEDIDO`. Itens orfaos ou ambiguos devem ser bloqueados.
+- A presenca de colunas de situacao/cancelamento ainda nao define quais registros estao abertos. Nenhum estado foi traduzido, filtrado ou importado neste lote.
+- A primeira consulta ampla excedeu o limite e foi descartada. A execucao segmentada foi corrigida para materializar candidatos, usar checkpoints por base e incluir identificadores/chaves primarias; somente a passagem final estavel foi aceita.
+- O relatorio `legacy-open-orders-structural-inventory.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, sob ACL local. Nenhum pedido, codigo, valor, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Nenhuma entidade, tela, campo ou importador do ERP novo foi alterado. `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: levantar somente distribuicoes agregadas de `SITUACAO`, cancelamento e empresa nos quatro conjuntos de cabecalhos nao vazios, alem de contar itens sem cabecalho por `NRPEDIDO`. Nao ler partes, produtos, valores ou textos e nao definir estado aberto sem homologar a semantica.
