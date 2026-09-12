@@ -5985,3 +5985,17 @@ Checklist inicial:
 - Nenhuma entidade, tela, campo, importador ou fluxo do ERP novo foi criado ou alterado. `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
 - A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e a validacao obrigatoria.
 - Proximo passo obrigatorio: medir apenas contagens agregadas de preenchimento e correspondencia de `CODIGOENTRADA`/`CODIGOSAIDA` das quatro linhas contra `CadastroMateriais`, sem exportar codigos. O objetivo e distinguir conversao interna de material de transferencia empresarial; qualquer resultado ambiguo permanece em quarentena.
+
+### Gate 18 - Cobertura de materiais nas transferencias internas
+
+- As quatro linhas de `EMP03.TransferenciaEstoque` foram avaliadas somente por contagens agregadas contra o cadastro mestre confirmado `LEGACY_TID_EXETPS.dbo.CadastroMateriais`, com ambos os bancos em `READ_ONLY`.
+- Todas as quatro possuem `CODIGOENTRADA` e `CODIGOSAIDA` preenchidos. Ha quatro codigos distintos em cada lado, sem exibir ou exportar nenhum deles.
+- Os quatro codigos de entrada e os quatro codigos de saida possuem correspondencia exata no cadastro mestre. Em todas as quatro linhas, ambos os lados foram conciliados.
+- Todos os oito lados correspondem exclusivamente a materiais classificados exatamente como `TIPOMATERIAL=REVENDA`, respeitando a regra de migracao ja homologada. Nenhuma linha usa o mesmo codigo como entrada e saida.
+- A combinacao de dois materiais distintos, quantidades e lotes no schema caracteriza as quatro linhas como candidatas a conversao/transferencia interna de material, e nao fornece evidencia de transferencia entre empresas. Essa classificacao tecnica ainda nao resolve a empresa proprietaria.
+- As duas primeiras tentativas foram descartadas sem resultado: uma expressao agregada incompativel com o SQL legado e uma referencia ao cadastro no banco incorreto. A consulta final usou mapa deduplicado do cadastro mestre, concluiu em duas passagens identicas e nao multiplicou linhas.
+- O relatorio `legacy-stock-transfer-material-coverage.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, sob ACL local. Nenhum codigo, lote, quantidade, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Nenhuma importacao foi autorizada. As quatro operacoes permanecem em quarentena por falta de empresa proprietaria, mesmo com materiais de revenda validos.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e a validacao obrigatoria.
+- Proximo passo obrigatorio: medir somente qualidade agregada das quatro operacoes (chave unica, datas validas, quantidades positivas e presenca de lotes), sem exportar valores. Somente depois preparar quarentena nominal local com `import_authorized=false`; a ausencia de empresa continua bloqueando qualquer carga.
