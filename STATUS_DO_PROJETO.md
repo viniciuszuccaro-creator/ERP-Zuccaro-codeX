@@ -6695,3 +6695,17 @@ Checklist inicial:
 - Situacao: a origem da DATABAIXA continua nao comprovada e a parcela permanece BLOCKED para migracao como pagamento. Nenhum registro legado foi alterado.
 - MSSQL$ERPZLEGACY terminou Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; a consulta usou somente a copia local READ_ONLY. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
 - Proximo passo obrigatorio: identificar somente os metadados seguros do modulo criptografado, incluindo tipo, objeto pai, nome classificado por termos e dependencias catalogadas. Se ele nao for relacionado a contas a pagar, localizar no backup do aplicativo antigo referencias binarias ou configuracoes a FornecDuplicatas e DATABAIXA sem copiar executaveis, credenciais ou conteudo sensivel para o GitHub.
+
+### Gate 18 - Metadados do modulo SQL criptografado
+
+- O unico modulo criptografado foi classificado sem descriptografia, sem nome real e sem exportacao de definicao.
+- O objeto e uma SQL stored procedure no schema dbo, sem objeto pai e sem schema binding. Ela executa no contexto do chamador.
+- O nome do objeto foi classificado como OUTRO: nao contem termos de fornecedor, duplicata, titulo, baixa, pagamento, financeiro ou bordero.
+- A procedure possui 19 parametros, nenhuma dependencia catalogada para qualquer entidade e nenhuma dependencia catalogada especificamente para FornecDuplicatas.
+- Nao existe permissao explicita registrada diretamente no objeto. As configuracoes ANSI NULLS e QUOTED IDENTIFIER estao ativas.
+- A ausencia de termos financeiros no nome reduz a indicacao de relacao com a baixa, mas nao permite descarta-la: a criptografia tambem impede inspecionar a definicao e pode impedir o catalogo completo de dependencias.
+- A linha de metadados foi reproduzida em duas execucoes identicas e na releitura protegida do HD externo, com SHA-256 2B54AC2778228C140DB4AB9DC7967FBAB8018869A2429D1E12F43019C53E1AE8.
+- O relatorio legacy-encrypted-module-metadata.csv permanece somente em D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS, com ACL protegida. Nenhum nome real, definicao SQL, parametro individual, identificador, documento, data, fornecedor, texto, quantidade, valor, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: o modulo criptografado nao fornece evidencia positiva de relacao com FornecDuplicatas, mas ainda nao pode ser excluido como origem. A parcela permanece BLOCKED para migracao como pagamento comprovado.
+- MSSQL$ERPZLEGACY terminou Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; a consulta usou somente a copia local READ_ONLY. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
+- Proximo passo obrigatorio: classificar de forma agregada os 19 parametros da procedure criptografada por termos funcionais e tipos de dados, sem exportar nomes ou valores. Se nao houver sinal de contas a pagar ou baixa, iniciar busca controlada no backup do aplicativo antigo por referencias a FornecDuplicatas e DATABAIXA, sem copiar executaveis, credenciais ou conteudo sensivel para o GitHub.
