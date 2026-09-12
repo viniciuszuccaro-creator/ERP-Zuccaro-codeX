@@ -5920,3 +5920,16 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
 - A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e a validacao obrigatoria.
 - Proximo passo obrigatorio: reduzir as 107 candidatas por relacionamento estrutural com `MovimentacaoEstoque` e medir somente contagens de documentos vinculaveis por empresa, sem consultar ou exportar documentos individuais.
+
+### Gate 18 - Triagem estrutural das fontes documentais
+
+- As 107 tabelas amplas foram reavaliadas em duas passagens usando somente metadados, sem consulta a valores operacionais ou documentos.
+- O criterio forte exigiu simultaneamente coluna de empresa/filial, coluna exata `NRDOCUMENTO` e pelo menos uma chave complementar exata `ITEMDOCUMENTO` ou `CODIGOPRODUTO`.
+- A triagem encontrou zero tabelas que atendam ao contrato forte nas quatro fontes `EXETPS`, `EMP01`, `EMP02` e `EMP03`. O resultado foi identico nas duas passagens.
+- Como nenhuma candidata possui o conjunto minimo de chaves, nao foi executada contagem de documentos vinculaveis por empresa. Fazer join apenas por nomes genericos como `NUMERO`, `NOTA` ou `PEDIDO` poderia produzir colisao e atribuicao empresarial incorreta.
+- Chaves estrangeiras e indices de `NRDOCUMENTO` estavam previstos como evidencias adicionais, mas nenhuma tabela chegou a essa fase por cumprir o contrato minimo.
+- O relatorio vazio controlado `legacy-stock-document-structural-shortlist.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, sob ACL local, preservando a evidencia de zero candidatas.
+- Nenhuma fonte empresarial foi inferida, nenhum documento individual foi lido ou exportado e nenhuma importacao foi autorizada.
+- Todos os executores e marcadores temporarios foram removidos. `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e a validacao obrigatoria.
+- Proximo passo obrigatorio: formar uma lista estrutural secundaria com empresa/filial e `NRDOCUMENTO` exato, sem exigir item/produto, classificando finalidade da tabela e cardinalidade; qualquer join por documento isolado permanecera bloqueado ate evidenciar unicidade e semantica compativel.
