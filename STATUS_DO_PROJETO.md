@@ -6318,3 +6318,19 @@ Checklist inicial:
 - Situacao: unidade principal validada para 3.787 itens, mas recebimento continua `BLOCKED` pelos onze sem conversao e pelos 1.609 excedentes nao explicados.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: classificar somente por contagens os 1.609 excedentes de unidade igual segundo vinculo fiscal unico/multiplo e faixas relativas de excesso, comparando tambem com `QUANTIDADERECEBIDA`. Nao exportar IDs, unidades nem valores e nao tratar excesso como conclusao automatica.
+
+### Gate 18 - Classificacao relativa dos excedentes de compra
+
+- Os 1.609 itens excedentes com unidade principal igual, nota fiscal `Emitida` e rota empresarial permitida foram classificados em duas passagens identicas, usando comparacao decimal exata e exportando somente contagens.
+- A distribuicao por faixa relativa e: 270 itens com excesso de ate 1%, 824 acima de 1% ate 10%, 342 acima de 10% ate 50%, 91 acima de 50% ate 100%, 53 acima de 100% ate 500% e 29 acima de 500%. As faixas reconciliam exatamente os 1.609 itens.
+- O segmento de mesmo destino empresarial contem 1.090 itens: 1.085 do codigo empresarial 1 e cinco do codigo 2. A rota `Grupo CPA -> Empresa membro` contem 519 itens do codigo empresarial 3.
+- Existem 1.364 itens excedentes com um unico vinculo fiscal e 245 com multiplos vinculos. Assim, a multiplicidade documental nao explica o padrao dominante: 84,8% dos excedentes ja aparecem em um unico item fiscal emitido.
+- Entre os itens com um unico vinculo, 239 estao na faixa de ate 1%, 734 acima de 1% ate 10%, 283 acima de 10% ate 50%, 52 acima de 50% ate 100%, 32 acima de 100% ate 500% e 24 acima de 500%.
+- Entre os itens com multiplos vinculos, 31 estao na faixa de ate 1%, 90 acima de 1% ate 10%, 59 acima de 10% ate 50%, 39 acima de 50% ate 100%, 21 acima de 100% ate 500% e cinco acima de 500%.
+- `QUANTIDADERECEBIDA` concorda exatamente com a soma fiscal em 1.602 dos 1.609 excedentes. Em sete itens a soma fiscal e maior que o acumulado: cinco no codigo empresarial 1 e dois no codigo 3. Nao houve acumulado maior que o fiscal nem acumulado nulo/negativo nesse recorte.
+- O alto nivel de concordancia entre acumulado e fiscal indica que o excesso esta registrado de forma consistente nas duas fontes legadas; isso ainda nao comprova recebimento correto nem autoriza transportar o excedente para o ERP novo.
+- Nenhum ID de pedido, item ou relatorio, codigo de material, unidade ou valor absoluto de quantidade foi exportado. Nenhum registro foi alterado ou importado no ERP novo.
+- O relatorio `legacy-purchase-excess-classification.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: recebimento continua `BLOCKED`. A causa deixou de ser predominantemente multiplicidade de documentos e passa a exigir validacao da semantica do proprio item fiscal, principalmente nos 1.364 casos de vinculo unico e nas 82 ocorrencias acima de 100%.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: classificar somente por contagens os 1.364 excedentes de vinculo fiscal unico segundo assinatura quantitativa: valores integrais/fracionarios, excesso inferior ou igual a uma unidade e razao fiscal/pedida em multiplos inteiros. Cruzar as categorias com a concordancia de `QUANTIDADERECEBIDA`, sem exportar IDs, unidades ou quantidades e sem inferir conversao automaticamente.
