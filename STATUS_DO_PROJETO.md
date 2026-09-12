@@ -6060,3 +6060,18 @@ Checklist inicial:
 - O relatorio `legacy-stock-balance-resale-overlap.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, sob ACL local. Nenhum codigo, saldo, hash individual, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: classificar apenas por contagens as divergencias principais dos pares com `EMP03` em positivo/zero/nulo de cada lado e ambos positivos diferentes. O objetivo e distinguir subconjunto zerado de snapshot operacional sem calcular totais ou revelar saldos.
+
+### Gate 18 - Classificacao das divergencias de saldo de revenda
+
+- As chaves compartilhadas de `EXETPS`, `EMP01`, `EMP02` e `EMP04` contra `EMP03` foram classificadas em categorias mutuamente exclusivas, em duas passagens identicas e sem exportar codigos ou saldos.
+- `EXETPS` x `EMP03`: 99 compartilhadas, sendo duas zeradas nos dois lados, 27 positivas apenas em `EXETPS`, uma positiva apenas em `EMP03` e 69 positivas nos dois lados com valores divergentes.
+- `EMP01` x `EMP03`: 140 compartilhadas, sendo 24 zeradas nos dois lados, duas positivas apenas em `EMP01`, 108 positivas apenas em `EMP03` e seis positivas nos dois lados com valores divergentes.
+- `EMP02` x `EMP03`: 11 compartilhadas, sendo tres zeradas nos dois lados e oito positivas apenas em `EMP03`.
+- `EMP04` x `EMP03`: a unica chave compartilhada esta zerada em `EMP04` e positiva em `EMP03`.
+- Nao existe saldo positivo exatamente igual entre qualquer uma das quatro fontes menores e `EMP03`. Tambem nao existe saldo nulo ou negativo nas comparacoes.
+- As categorias reconciliaram integralmente 251 ocorrencias compartilhadas nos quatro pares. Zero versus positivo nos dois sentidos e 75 pares positivos divergentes comprovam que as fontes nao sao copias intercambiaveis.
+- A evidencia e compativel com snapshots, periodos ou escopos empresariais diferentes, mas nao identifica qual interpretacao e correta. Nenhuma fonte foi escolhida como autoritativa e nenhuma divergencia foi sobrescrita.
+- O relatorio `legacy-stock-balance-resale-divergence-classes.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, sob ACL local. Nenhum codigo, saldo, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: `BLOCKED` para precedencia, merge e importacao de saldos ate existir mapeamento empresarial e decisao operacional sobre o snapshot valido.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: gerar somente no HD uma quarentena nominal das 1.473 ocorrencias de saldo `REVENDA`, preservadas por fonte e sem deduplicar, com `group_id`/`empresa_id` vazios, motivo de conflito quando aplicavel e `import_authorized=false`. Nao calcular soma consolidada.
