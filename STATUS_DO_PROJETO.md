@@ -6045,3 +6045,18 @@ Checklist inicial:
 - Nenhuma soma, concatenacao, precedencia ou importacao foi autorizada. `EMP03` permanece bloqueada por ausencia de empresa proprietaria.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: medir sobreposicao par a par das chaves `REVENDA` entre as fontes e contar saldos exatamente iguais ou divergentes, sem exportar codigos nem quantidades. Nenhuma fonte pode ser tratada como incremental antes dessa conciliacao.
+
+### Gate 18 - Sobreposicao dos saldos de produtos de revenda
+
+- As seis fontes foram comparadas nos 15 pares possiveis em duas passagens identicas, usando somente contagens de chaves `REVENDA` compartilhadas/exclusivas e igualdade exata dos dois saldos. Nenhum codigo ou valor foi exportado.
+- As 99 chaves de `EXETPS`, 140 de `EMP01`, 11 de `EMP02` e uma de `EMP04` estao todas contidas nas 1.222 chaves de `EMP03`. As fontes menores nao acrescentam produto de revenda ausente em `EMP03`.
+- `EXETPS` e `EMP03` compartilham 99 chaves: apenas dois saldos principais sao iguais e 97 divergem.
+- `EMP01` e `EMP03` compartilham 140 chaves: 24 saldos principais sao iguais e 116 divergem. `EMP02` e `EMP03` compartilham 11: tres iguais e oito divergentes.
+- `EXETPS` e `EMP01` compartilham 38 chaves, todas com saldo principal divergente; `EXETPS` e `EMP02` compartilham sete, tambem todas divergentes.
+- As 11 chaves de `EMP02` sao subconjunto de `EMP01` e possuem saldos principais exatamente iguais nos dois bancos. A unica chave de `EMP04` tambem coincide com `EMP01` e `EMP02`, mas diverge de `EMP03` e `EXETPS`.
+- Todos os saldos paralelos compartilhados sao iguais e nenhum diverge, coerente com o resultado anterior de zero em todas as ocorrencias de revenda. Esse campo nao ajuda a definir precedencia.
+- A cobertura integral de chaves por `EMP03` nao prova que seus saldos sejam autoritativos. As divergencias indicam snapshots, contextos empresariais ou periodos diferentes; concatenar ou somar produziria duplicidade.
+- `EMP05` esta vazia e nao participa de nenhuma sobreposicao efetiva. Nenhuma fonte foi promovida, descartada ou importada.
+- O relatorio `legacy-stock-balance-resale-overlap.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, sob ACL local. Nenhum codigo, saldo, hash individual, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: classificar apenas por contagens as divergencias principais dos pares com `EMP03` em positivo/zero/nulo de cada lado e ambos positivos diferentes. O objetivo e distinguir subconjunto zerado de snapshot operacional sem calcular totais ou revelar saldos.
