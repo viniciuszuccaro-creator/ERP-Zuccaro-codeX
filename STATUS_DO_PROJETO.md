@@ -6511,3 +6511,19 @@ Checklist inicial:
 - Situacao: os 1.602 itens continuam com movimentos comprovados, mas a origem comercial do excesso permanece sem explicacao e a importacao automatica continua `BLOCKED`.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`; a consulta usou somente a copia local `READ_ONLY`. A mudanca do repositorio e exclusivamente documental, testes de runtime do ERP sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: deduplicar os pedidos dos 507 itens com operacao e classificar somente por contagens o tipo da operacao e sua posicao temporal relativa a entrada fiscal e ao movimento de estoque. Separar os 64 casos com termo de cancelamento/exclusao, sem exportar IDs, datas, textos, materiais, unidades, quantidades ou valores e sem atribuir a operacao a um item.
+
+### Gate 18 - Cronologia das operacoes dos pedidos com excedentes
+
+- Os 507 itens excedentes associados a registros em `PedidoCompraOperacoes` foram deduplicados em 110 pedidos e avaliados em duas passagens identicas.
+- Cada um dos 110 pedidos possui exatamente uma operacao registrada. Cem operacoes sao de baixa ou liquidacao e abrangem 442 itens excedentes; nove sao de cancelamento ou exclusao e abrangem 64 itens; uma e de alteracao ou ajuste e abrange um item.
+- Em 109 pedidos, com 505 itens, a operacao ocorreu depois de todas as entradas fiscais dos itens excedentes. Um pedido, com dois itens, teve a operacao no mesmo dia do limite das entradas fiscais.
+- Em relacao aos movimentos de estoque, 99 operacoes ocorreram depois de todos os movimentos, oito no mesmo dia de limite, duas entre movimentos e uma antes de todos.
+- As nove operacoes de cancelamento ou exclusao ocorreram depois de todas as entradas fiscais e depois de todos os movimentos de estoque dos 64 itens associados.
+- A unica operacao de alteracao ou ajuste tambem ocorreu depois de todas as entradas fiscais e de todos os movimentos do item associado.
+- Entre as cem baixas ou liquidacoes, 89 ocorreram depois de todos os movimentos, oito no mesmo dia, duas entre movimentos e uma antes. Esse padrao e compativel com fechamento operacional e nao explica alteracao de quantidade.
+- A cronologia confirma que os dez pedidos excepcionais receberam operacoes posteriores ao processamento fiscal e de estoque, mas `PedidoCompraOperacoes` nao possui chave de item nem valores antes/depois. Portanto, nao e possivel atribuir a operacao ao excesso de nenhum item.
+- As dez metricas reconciliaram os mesmos 110 pedidos e 507 itens. As duas execucoes e a releitura do HD externo produziram SHA-256 `C9BF28C624D58AD1759D92A9044F96CDC6393E58171D2A0A5B5F84230ECE17FE`.
+- O relatorio `legacy-purchase-order-operation-chronology.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum identificador, data, texto, material, unidade, quantidade, valor, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: baixa e liquidacao foram separadas das operacoes excepcionais. Os 1.602 excessos continuam sem causa comercial comprovada e permanecem `BLOCKED` para importacao automatica.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`; a consulta usou somente a copia local `READ_ONLY`. A mudanca do repositorio e exclusivamente documental, testes de runtime do ERP sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: nos dez pedidos com operacao posterior de cancelamento/exclusao ou ajuste, contar todos os itens atuais do pedido e classificar quantos sao excedentes conciliados, exatos, parciais ou sem vinculo fiscal. Verificar tambem o estado atual do cabecalho, sem exportar IDs, datas, textos, materiais, unidades, quantidades ou valores e sem atribuir a operacao a itens.
