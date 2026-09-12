@@ -6365,3 +6365,17 @@ Checklist inicial:
 - Situacao: recebimento continua `BLOCKED`. O excesso permanece registrado na quantidade do item fiscal e replicado em `QUANTIDADERECEBIDA`, sem explicacao pelos campos paralelos avaliados.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual`, SQL Browser `Stopped`/`Disabled` e telemetria `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime do ERP sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: classificar somente por contagens, nos mesmos 1.364 itens, os indicadores fiscais e de estoque `PEDIDOCOMPRA`, `ESTOQUEATUALIZADO`, `NAOATUALIZAESTOQUE`, `TIPONOTA`, `TIPOENTRADA` e `NOTAFISCALTRANSFERIDA`. O objetivo e comprovar se a quantidade fiscal participou de entrada de estoque; nao exportar valores, documentos, materiais ou IDs e nao autorizar recebimento automaticamente.
+
+### Gate 18 - Indicadores fiscais e de estoque dos excedentes com vinculo unico
+
+- Os seis indicadores fiscais e de estoque dos 1.364 itens foram classificados em duas passagens identicas. Cada indicador reconciliou exatamente o universo analisado e os dois CSVs produziram o mesmo SHA-256.
+- Todos os itens possuem `PEDIDOCOMPRA=1`, `NAOATUALIZAESTOQUE=0`, `TIPOENTRADA=Nota Fiscal`, `TIPONOTA=Custos` e `NOTAFISCALTRANSFERIDA=1`.
+- Em 1.362 itens, `ESTOQUEATUALIZADO=1` e `QUANTIDADERECEBIDA` concorda exatamente com a quantidade fiscal. O recorte inclui 937 itens na rota `1 -> 1`, quatro em `2 -> 2`, 419 em `3 -> 1` e dois em `3 -> 2`.
+- Os dois itens restantes pertencem a rota `3 -> 1`, possuem `ESTOQUEATUALIZADO=0` e quantidade fiscal maior que `QUANTIDADERECEBIDA`. Eles explicam integralmente os dois desacordos ja isolados no subconjunto de vinculo unico.
+- A combinacao entre vinculacao ao pedido, atualizacao permitida, marcador de estoque atualizado e concordancia do acumulado fornece evidencia forte de processamento de estoque para 1.362 itens. Ela ainda nao comprova causalidade item a item nem autoriza importar o excesso como recebimento correto.
+- O marcador `NOTAFISCALTRANSFERIDA=1` e uniforme no recorte, mas sua semantica operacional nao foi homologada e nao foi usada para alterar a empresa proprietaria do pedido ou da nota.
+- Nenhum pedido, item, movimento, material, documento fiscal ou quantidade individual foi exportado, alterado ou importado no ERP novo.
+- O relatorio `legacy-purchase-stock-fiscal-flags.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida e releitura validada pelo mesmo SHA-256. Nenhum CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: recebimento continua `BLOCKED`. Os indicadores confirmam processamento do cabecalho fiscal, mas falta reconciliar o vinculo efetivo com movimentos de estoque e validar a origem funcional do excesso.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual`, SQL Browser `Stopped`/`Disabled` e telemetria `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime do ERP sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: inventariar somente a estrutura das tabelas que usam `SEQESTOQUE` e definir o contrato de vinculo entre `NotaFiscalEntradasItens` e o historico de estoque. Depois, contar presenca, ausencia e multiplicidade dos vinculos nos mesmos 1.364 itens, sem consultar ou exportar IDs, materiais, unidades, documentos ou quantidades.
