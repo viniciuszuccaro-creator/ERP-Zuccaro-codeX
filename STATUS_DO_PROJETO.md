@@ -6028,3 +6028,20 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
 - A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e a validacao obrigatoria.
 - Proximo passo obrigatorio: manter as transferencias bloqueadas e avancar para a qualidade estrutural e agregada dos saldos de `EstoqueMateriais`, separados por fonte e limitados a materiais `REVENDA`, sem exportar codigos, quantidades ou saldos nominais. Fontes sem empresa comprovada permanecem em quarentena.
+
+### Gate 18 - Qualidade agregada dos saldos de produtos de revenda
+
+- O schema de `EstoqueMateriais` foi reconfirmado nas seis fontes: `CODIGOMATERIAL` como chave primaria, `ESTOQUE` e `ESTOQUEUNIDADEPARALELA`, com assinatura identica e sem contexto empresarial.
+- As fontes foram avaliadas em duas passagens identicas contra `LEGACY_TID_EXETPS.dbo.CadastroMateriais`, limitando a classificacao candidata a `TIPOMATERIAL=REVENDA` e sem exportar codigos ou valores de saldo.
+- `EXETPS` possui 184 linhas: 99 de revenda, 72 nao revenda e 13 orfas; entre revenda, 96 saldos principais positivos e tres zerados.
+- `EMP01` possui 150 linhas: 140 de revenda, nove nao revenda e uma orfa; entre revenda, oito saldos principais positivos e 132 zerados.
+- `EMP02` possui 17 linhas: 11 de revenda, cinco nao revenda e uma orfa; os 11 saldos de revenda estao zerados.
+- `EMP03` possui 2.382 linhas: 1.222 de revenda, 1.138 nao revenda e 22 orfas; entre revenda, 791 saldos principais positivos e 431 zerados.
+- `EMP04` possui uma unica linha, classificada como revenda e com saldo principal zero. `EMP05` esta vazia.
+- Nenhum saldo principal de revenda e nulo ou negativo. Todos os 1.473 registros de revenda contabilizados entre as fontes possuem saldo em unidade paralela igual a zero.
+- As 37 linhas orfas e todos os materiais nao classificados como revenda permanecem fora de qualquer staging. As 1.473 ocorrencias de revenda nao representam produtos unicos, pois podem se repetir entre fontes.
+- A primeira conversao tecnica de agregados nulos da fonte vazia foi rejeitada e corrigida para zero; nenhuma saida parcial foi aceita.
+- O relatorio `legacy-stock-balance-resale-quality.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, sob ACL local. Nenhum codigo, saldo, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Nenhuma soma, concatenacao, precedencia ou importacao foi autorizada. `EMP03` permanece bloqueada por ausencia de empresa proprietaria.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: medir sobreposicao par a par das chaves `REVENDA` entre as fontes e contar saldos exatamente iguais ou divergentes, sem exportar codigos nem quantidades. Nenhuma fonte pode ser tratada como incremental antes dessa conciliacao.
