@@ -5905,3 +5905,18 @@ Checklist inicial:
 - Nenhuma precedencia de fonte foi definida e nenhuma importacao foi autorizada. `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
 - A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e a validacao obrigatoria.
 - Proximo passo obrigatorio: executar separadamente o fingerprint sobre as 21 linhas candidatas e o inventario de metadados, cada um com checkpoint e limite proprio, para concluir a causa da lentidao e medir a sobreposicao sem nova varredura integral com hash.
+
+### Gate 18 - Conciliacao final de sobreposicao dos movimentos
+
+- A conciliacao foi concluida em duas passagens estaveis depois de materializar primeiro apenas `SEQUENCIA`, data e produto de `EMP03`, buscar os 16 campos operacionais pela chave primaria e somente entao calcular fingerprints nas 21 linhas candidatas.
+- Os 12 movimentos de `EMP01` produziram 18 candidatos em `EMP03`; o unico movimento de `EMP02` produziu tres candidatos. O fingerprint de 16 campos encontrou zero correspondencia exata nos dois casos.
+- `EMP01` e `EMP02` tambem possuem zero fingerprint em comum. Os tres pares com `EXETPS` foram mantidos em zero pela ausencia comprovada de intersecao temporal, pois o periodo de `EXETPS` termina antes das demais fontes.
+- Portanto, nenhuma das fontes pequenas pode ser descartada como duplicata exata de `EMP03`. Isso tambem nao autoriza concatenacao: empresa proprietaria e precedencia operacional continuam sem evidencia suficiente.
+- A fase de sobreposicao levou 55.951 ms na primeira passagem e 56.615 ms na segunda. Os relatorios das duas execucoes produziram hashes identicos, sem exportar fingerprints individuais.
+- O inventario estrutural otimizado encontrou 107 tabelas com pelo menos uma coluna indicativa de empresa/filial e uma de documento/nota/pedido/numero: 38 em `EXETPS` e 23 em cada uma de `EMP01`, `EMP02` e `EMP03`.
+- O inventario de metadados concluiu em 2,5 a 6,8 segundos por fonte. Nenhum valor dessas 107 tabelas foi lido e nenhuma relacao documental foi presumida automaticamente.
+- Os arquivos `legacy-stock-movement-overlap-summary.csv`, `legacy-stock-document-company-candidates.csv` e `legacy-stock-overlap-final-summary.json` permanecem somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, sob a ACL local.
+- Nenhum CSV/JSON local, fingerprint, codigo, produto, quantidade, custo, documento, TPS, MDF/LDF ou dado legado integra o GitHub. Nenhuma importacao foi autorizada ou executada.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e a validacao obrigatoria.
+- Proximo passo obrigatorio: reduzir as 107 candidatas por relacionamento estrutural com `MovimentacaoEstoque` e medir somente contagens de documentos vinculaveis por empresa, sem consultar ou exportar documentos individuais.
