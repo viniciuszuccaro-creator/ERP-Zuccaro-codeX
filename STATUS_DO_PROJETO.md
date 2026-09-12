@@ -5892,3 +5892,16 @@ Checklist inicial:
 - Todos os executores, logs e marcadores temporarios foram removidos. `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
 - Situacao: `BLOCKED` para a sobreposicao, sem fonte autoritativa definida. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e a validacao obrigatoria.
 - Proximo passo obrigatorio: executar cada fase isoladamente com horario inicial/final e checkpoint agregado local, com limite curto por comando, iniciando pela contagem simples e pela materializacao sem fingerprint. Somente a fase comprovadamente lenta sera redesenhada.
+
+### Gate 18 - Diagnostico isolado das fases de estoque
+
+- O diagnostico administrativo por fases foi concluido com checkpoints agregados e limite individual de 180 segundos, sem fingerprint e sem leitura de texto livre.
+- As quatro contagens basicas concluiram em menos de 200 ms cada e reconciliaram 421 movimentos em `EXETPS`, 12 em `EMP01`, um em `EMP02` e 557.060 em `EMP03`.
+- A materializacao somente por data e produto concluiu em 55.912 ms. Os 12 movimentos de `EMP01` reduziram a 18 linhas candidatas em `EMP03`; o unico movimento de `EMP02` reduziu a tres candidatos.
+- As contagens de documentos concluiram em menos de um segundo por fonte. Possuem documento e item 108/421 movimentos de `EXETPS`, 1/12 de `EMP01`, 0/1 de `EMP02` e 542.887/557.060 de `EMP03`.
+- A conversao das datas no marcador tecnico produziu o sentinela `0001-01-01`; essas datas foram rejeitadas e nao substituem os periodos canonicos ja conciliados no lote anterior.
+- O resultado comprova que contagens, materializacao e leitura de indicadores documentais nao causam a demora superior a 20 minutos. As fases ainda nao isoladas sao o fingerprint das 21 linhas candidatas e o inventario estrutural de tabelas com empresa/documento.
+- O checkpoint `legacy-stock-phase-diagnostics.json` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, protegido pela ACL local. Nenhum checkpoint, hash, codigo, produto, quantidade, documento, TPS, MDF/LDF ou dado legado integra o GitHub.
+- Nenhuma precedencia de fonte foi definida e nenhuma importacao foi autorizada. `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e a validacao obrigatoria.
+- Proximo passo obrigatorio: executar separadamente o fingerprint sobre as 21 linhas candidatas e o inventario de metadados, cada um com checkpoint e limite proprio, para concluir a causa da lentidao e medir a sobreposicao sem nova varredura integral com hash.
