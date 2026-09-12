@@ -6248,3 +6248,21 @@ Checklist inicial:
 - Situacao: escopo empresarial conciliado para 955 pedidos vinculados, mas importacao continua `BLOCKED` ate validar recebimento quantitativo e situacoes fiscais. Os dois cruzamentos inseguros e os 52 sem vinculo permanecem bloqueados separadamente.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: inventariar somente os campos numericos de quantidade pedida e recebida em `PedidoCompraItens` e `NotaFiscalEntradasItens`, com tipo, precisao, escala e chaves de item. Nao consultar valores ainda; definir o contrato de comparacao que preserve recebimentos parciais e multiplos relatorios.
+
+### Gate 18 - Contrato estrutural das quantidades de compra
+
+- `PedidoCompraItens` e `NotaFiscalEntradasItens` foram inventariadas em `EMP02` e `EMP03` por duas passagens identicas, sem consultar nenhum valor de quantidade.
+- Os dois bancos possuem assinatura estrutural identica para os campos e indices avaliados. O relatorio contem 58 metadados de colunas e participacoes em indices.
+- Em `PedidoCompraItens`, a chave primaria e `NRPEDIDO + ITEMPEDIDO`. `QUANTIDADE` e `QUANTIDADERECEBIDA` sao `decimal(11,3)` anulaveis.
+- O item de compra tambem possui `QTDEPECAS` como `decimal(11,3)` e `QtdeConversaoUnidade` como `decimal(17,10)`. Esses campos representam dimensoes/unidades alternativas e nao podem ser somados ou comparados diretamente com `QUANTIDADE` sem regra de conversao homologada.
+- Em `NotaFiscalEntradasItens`, a chave primaria e `RELATORIO + ITEMRELATORIO`. `NRPEDIDOCOMPRA` e `ITEMPEDIDOCOMPRA` sao anulaveis e participam do indice composto que tambem inclui relatorio/item fiscal.
+- `NotaFiscalEntradasItens.QUANTIDADE` e `decimal(11,3)` anulavel, compativel em precisao e escala com a quantidade pedida e recebida do item de compra.
+- A entrada fiscal tambem possui `QTDEMETROSREAL` e `QTDEUNIDPARALELA`, ambas `decimal(11,3)`. Elas nao serao usadas para determinar recebimento na unidade principal.
+- Contrato candidato: comparar `PedidoCompraItens.QUANTIDADE` com `QUANTIDADERECEBIDA` e, separadamente, com a soma em `decimal(38,3)` de `NotaFiscalEntradasItens.QUANTIDADE` por pedido/item e relatorio fiscal valido.
+- Notas `Cancelada`, empresas fora da rota empresarial conciliada, campos nulos, quantidades negativas e itens sem cabecalho fiscal devem ficar fora da soma aceita e em categorias de qualidade separadas.
+- A escala de tres casas exige comparacao decimal exata nessa escala; nenhuma conversao por ponto flutuante sera usada. Recebimentos multiplos devem ser somados por item sem colapsar os relatorios de origem.
+- Nenhum campo novo foi criado no ERP. A estrutura existente ja oferece quantidade pedida, recebida e fiscal; eventual ampliacao do cadastro somente sera avaliada quando o contrato de migracao exigir informacao importante ausente.
+- O relatorio `legacy-purchase-quantity-contract.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhuma quantidade, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: contrato estrutural definido, mas recebimento continua `BLOCKED` ate a comparacao agregada demonstrar nulos, zeros, parciais, exatos, excedentes e divergencia entre acumulado e documentos fiscais validos.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: comparar internamente as quantidades dos 4.228 itens de compra recentes de `EMP03` e exportar somente contagens por categoria: pedida invalida, nao recebida, parcial, exata, excedente, soma fiscal valida e divergencia com `QUANTIDADERECEBIDA`. Segmentar por escopo empresarial conciliado, sem exportar IDs nem valores de quantidade.
