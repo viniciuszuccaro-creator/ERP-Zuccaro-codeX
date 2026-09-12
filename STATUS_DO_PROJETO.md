@@ -6408,3 +6408,16 @@ Checklist inicial:
 - Situacao: 1.362 itens estao conciliados estrutural e quantitativamente com movimentos de entrada, mas continuam sem autorizacao para importacao automatica ate homologar a semantica do excesso. Os dois casos sem movimento permanecem `BLOCKED`.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`; o relatorio foi produzido somente por leitura da copia local `READ_ONLY`. A mudanca do repositorio e exclusivamente documental, testes de runtime do ERP sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: investigar somente por contagens e indicadores os dois casos `3 -> 1` sem candidato, comparando eventos de cancelamento, estorno, devolucao, exclusao ou processamento fiscal/estoque incompleto. Nao exportar IDs, documentos, materiais, quantidades ou valores e nao alterar dados.
+
+### Gate 18 - Eventos dos dois excedentes sem movimento
+
+- Os dois itens restantes da rota `3 -> 1`, com quantidade fiscal maior que `QUANTIDADERECEBIDA`, `ESTOQUEATUALIZADO=0`, `SEQESTOQUE=0` e nenhum vinculo alternativo, foram cruzados com eventos fiscais e de estoque em duas passagens identicas.
+- Nenhum dos dois possui registro em `CancelamentoNotasFiscaisEntrada`, `NotasFiscaisEntradasDevolucaoItens` ou `PedidoCompraItensQtdeCancelada`.
+- Nao existe movimento de estoque associado ao mesmo relatorio fiscal, nem ao mesmo relatorio/item, inclusive sob tipo `SAIDA` ou com material e quantidade fiscal exatos. Portanto, nao foi localizada evidencia de entrada seguida de estorno.
+- `HISTORICOESTOQUE` esta vazio nos dois itens, e as quatro observacoes do cabecalho fiscal tambem nao contem texto. Nao ha justificativa operacional registrada nesses campos.
+- O inventario estrutural nao identificou tabela especifica de trilha de exclusao por item de nota fiscal de entrada. Assim, exclusao fisica historica nao pode ser comprovada nem descartada apenas pelo esquema disponivel.
+- As dez metricas independentes reconciliaram exatamente os mesmos dois itens. As duas execucoes e a releitura do HD externo produziram SHA-256 `D015AE560AC9C09C2851652B7E5ABD3FDB2FF625691BA3C7A44BFF9E4F07CCFE`.
+- O relatorio `legacy-purchase-two-unresolved-event-checks.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum identificador, documento, material, quantidade, valor, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: os 1.362 itens com movimento continuam conciliados, enquanto os dois itens sem movimento permanecem `BLOCKED`. A evidencia disponivel aponta para processamento fiscal/estoque incompleto, sem evento formal de cancelamento, devolucao ou estorno.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`; a consulta usou somente a copia local `READ_ONLY`. A mudanca do repositorio e exclusivamente documental, testes de runtime do ERP sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: analisar somente por contagens os documentos fiscais associados aos dois itens, incluindo quantidade de itens irmaos, vinculos de pedido, marcadores de estoque/financeiro/contabil e existencia de documento fiscal substituto com a mesma assinatura comercial. O objetivo e distinguir falha do documento inteiro de falha isolada do item, sem exportar IDs, numeros fiscais, fornecedores, materiais, datas, quantidades ou valores.
