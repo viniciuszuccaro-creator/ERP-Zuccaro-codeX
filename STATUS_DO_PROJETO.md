@@ -6075,3 +6075,18 @@ Checklist inicial:
 - Situacao: `BLOCKED` para precedencia, merge e importacao de saldos ate existir mapeamento empresarial e decisao operacional sobre o snapshot valido.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: gerar somente no HD uma quarentena nominal das 1.473 ocorrencias de saldo `REVENDA`, preservadas por fonte e sem deduplicar, com `group_id`/`empresa_id` vazios, motivo de conflito quando aplicavel e `import_authorized=false`. Nao calcular soma consolidada.
+
+### Gate 18 - Quarentena nominal dos saldos de revenda
+
+- Foi gerada exclusivamente no HD a quarentena `STOCK-BALANCE-RESALE-001` com as 1.473 ocorrencias de saldo `REVENDA`, preservadas por fonte e sem deduplicacao, merge ou soma.
+- O lote contem 99 ocorrencias de `EXETPS`, 140 de `EMP01`, 11 de `EMP02`, 1.222 de `EMP03` e uma de `EMP04`; `EMP05` permanece sem linha.
+- Cada linha preserva somente fonte, codigo legado do material, saldo principal, saldo paralelo, indicadores de sobreposicao, contexto do Grupo CPA e hash de idempotencia. Nenhuma descricao, custo, usuario, texto livre ou dado cadastral foi incluido.
+- As 1.473 chaves compostas `fonte + codigo` sao unicas. Todas possuem `group_id` e `empresa_id` vazios, `status=QUARANTINED` e `import_authorized=false`.
+- Foram classificadas 407 ocorrencias com `SOURCE_BALANCE_CONFLICT`, 45 com outra fonte e saldo identico (`DUPLICATE_SOURCE_OCCURRENCE`) e 1.021 sem outra ocorrencia. Essas contagens representam linhas por fonte, nao produtos unicos.
+- A origem foi consultada duas vezes e produziu o mesmo CSV ordenado. Foram validados o cabecalho minimo, as 1.473 linhas persistidas, o hash do CSV no manifesto, a ausencia de empresa e o bloqueio de importacao em todas as linhas.
+- O diretorio, CSV e manifesto foram confirmados com ACL protegida e sem heranca. O manifesto mantem `merge_authorized=false` e `sum_authorized=false`.
+- `saldos-revenda-quarentena.csv` e `manifest.json` permanecem somente em `D:\BACKUP ERP ANTIGO - CODEX\05_QUARANTINE\ESTOQUE\SALDOS-REVENDA-001`. Nenhum codigo, saldo, hash, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: `BLOCKED` para importacao de estoque ate homologacao humana da empresa proprietaria e da precedencia de snapshot. A quarentena nao permite escolher fonte automaticamente.
+- Nenhuma entidade, tela, campo ou importador do ERP novo foi criado ou alterado. `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: manter estoque bloqueado e iniciar o inventario somente estrutural das fontes de pedidos abertos de venda e compra, identificando campos de situacao, data, empresa, cliente/fornecedor e itens sem consultar registros nominais.
