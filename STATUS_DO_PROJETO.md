@@ -5944,3 +5944,16 @@ Checklist inicial:
 - Nenhuma fonte autoritativa foi definida, nenhuma precedencia foi alterada e nenhuma importacao foi autorizada. `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
 - A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e a validacao obrigatoria.
 - Proximo passo obrigatorio: inventariar somente metadados de chaves empresariais presentes em `MovimentacaoEstoque` e seus relacionamentos declarados (chaves estrangeiras e indices), sem inferir empresa por documento e sem consultar valores nominais. Se nao houver relacionamento estrutural comprovado, manter `EMP03` bloqueado para migracao operacional.
+
+### Gate 18 - Relacionamentos empresariais dos movimentos de estoque
+
+- Os catalogos das seis bases `EXETPS` e `EMP01` a `EMP05` foram consultados em duas passagens estaveis, sem leitura de qualquer linha de movimento ou valor nominal.
+- `MovimentacaoEstoque` possui zero coluna com indicacao de Grupo, Empresa ou Filial nas seis bases e zero chave estrangeira de entrada ou saida. Nao existe relacionamento declarado capaz de identificar a empresa proprietaria.
+- Cada base possui os mesmos cinco indices habilitados: chave primaria por `SEQUENCIA` e quatro indices unicos por data/produto/sequencia, data/sequencia, produto/data/sequencia e tipo/documento/item/sequencia.
+- A presenca de `SEQUENCIA` em todas as chaves unicas secundarias impede que a unicidade dos indices seja usada como prova de vinculo empresarial. Os indices descrevem apenas a identidade interna do movimento.
+- Foram reconciliadas 30 linhas de metadados: cinco indices em cada uma das seis bases, zero coluna empresarial e zero coluna participante de chave estrangeira. O resultado foi identico nas duas execucoes.
+- O relatorio `legacy-stock-movement-company-metadata.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL local e sem dados operacionais. Nenhum CSV, JSON, documento, produto, quantidade, custo, TPS ou MDF/LDF integra o GitHub.
+- Situacao: `BLOCKED` para migracao de movimentos de `EMP03`; nao ha base estrutural para separar CPA, 3Z e CPA Ferro e Aco. Nenhuma fonte autoritativa, precedencia ou importacao foi aprovada.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e a validacao obrigatoria.
+- Proximo passo obrigatorio: inventariar somente estrutura e contagens agregadas de locais, reservas e transferencias de estoque, verificando se algum conjunto possui contexto empresarial proprio. Nao consultar valores nominais nem desbloquear `MovimentacaoEstoque`.
