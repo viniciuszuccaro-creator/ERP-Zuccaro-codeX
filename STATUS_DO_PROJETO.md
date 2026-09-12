@@ -6625,3 +6625,17 @@ Checklist inicial:
 - Situacao: os dois recebimentos continuam BLOCKED para importacao automatica. A obrigacao financeira deve ser preservada como existente e conciliada com o tratamento humano do recebimento ou eventual cancelamento pelo fluxo correto.
 - MSSQL$ERPZLEGACY terminou Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; as consultas usaram somente a copia local READ_ONLY. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
 - Proximo passo obrigatorio: classificar de forma agregada os cinco titulos ainda abertos por vencido, a vencer ou sem vencimento no limite fixo da auditoria e verificar sinais de bloqueio ou prorrogacao existentes. Nao exportar IDs, documentos, datas, fornecedores, textos, quantidades ou valores e nao efetuar baixa, pagamento, cancelamento ou importacao automatica.
+
+### Gate 18 - Vencimento dos titulos abertos dos recebimentos pendentes
+
+- Os cinco titulos ainda abertos dos dois documentos fiscais pendentes de estoque foram avaliados no limite fixo de 20/08/2026, em duas passagens identicas.
+- Todos os cinco titulos estavam a vencer nesse limite. Nenhum foi classificado como vencido ou sem vencimento, e os dois documentos permaneceram representados na classificacao.
+- Todos possuem tipo de vencimento preenchido e vinculo estrutural validado por relatorio, fornecedor e numero da nota.
+- Nenhum titulo aberto possui ajuste, comentario de baixa ou indicador de atualizacao contabil ativo.
+- Nao foi encontrado sinal textual agregado de bloqueio, suspensao, prorrogacao, renegociacao ou adiamento nos campos existentes. O inventario estrutural anterior tambem nao encontrou campo dedicado de bloqueio ou prorrogacao em FornecDuplicatas.
+- A ausencia desses sinais nao comprova autorizacao de pagamento, baixa, recebimento ou cancelamento. Ela apenas demonstra que o backup nao registra essas excecoes nos contratos estruturais avaliados.
+- As oito metricas reconciliaram exatamente os mesmos dois documentos e cinco titulos abertos. As duas execucoes e a releitura protegida do HD externo produziram SHA-256 F65CF6D505F6E6E6A5431868FDAFD54A20D7DD6470F6ABDF75A358768920D2AA.
+- O relatorio legacy-purchase-five-open-title-status.csv permanece somente em D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS, com ACL protegida. Nenhum identificador, documento, data individual, fornecedor, texto, quantidade, valor, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: no limite da auditoria, a obrigacao financeira era futura e permanecia aberta, enquanto o estoque ainda nao havia processado os dois recebimentos. Os casos continuam BLOCKED para importacao automatica e exigem decisao humana no fluxo correto.
+- MSSQL$ERPZLEGACY terminou Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; a consulta usou somente a copia local READ_ONLY. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
+- Proximo passo obrigatorio: classificar os cinco titulos a vencer por horizonte de ate 30, 31 a 60, 61 a 90 ou mais de 90 dias apos o limite da auditoria e verificar repeticao de vencimentos por documento. Nao exportar IDs, documentos, datas, fornecedores, textos, quantidades ou valores e nao efetuar baixa, pagamento, cancelamento ou importacao automatica.
