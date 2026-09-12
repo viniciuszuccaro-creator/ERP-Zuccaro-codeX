@@ -6193,3 +6193,21 @@ Checklist inicial:
 - Situacao: `BLOCKED` para declarar pedidos faturados/recebidos. O contrato candidato esta definido, mas precisa de contagens agregadas de cardinalidade, escopo empresarial e situacao fiscal.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: contar somente de forma agregada os vinculos dos candidatos recentes `EMP03` (`Pedido` de venda e `Emitido` de compra) com as tabelas fiscais, separando sem vinculo, vinculo com mesma empresa, empresa nula/divergente, multiplicidade e situacao fiscal. Nao exportar IDs, notas, partes, produtos, quantidades ou valores.
+
+### Gate 18 - Conciliacao agregada dos vinculos fiscais recentes
+
+- Os candidatos recentes de `EMP03` foram conciliados em duas passagens identicas, sem exportar IDs, numeros de pedido/nota, partes, produtos, quantidades comerciais ou valores.
+- Nenhum dos 29 cabecalhos de venda `Pedido` possui correspondencia por `NRPEDIDO` em `NotaFiscalSaidas`. Os 77 itens desses pedidos tambem nao possuem correspondencia por `NRPEDIDO + ITEMPEDIDO` em `NotaFiscalSaidasItens`.
+- A ausencia total de vinculo fiscal e compativel com pedidos ainda nao faturados ou com movimentacao entre tabelas, mas nao comprova sozinha que estejam abertos. Nenhum registro de venda foi promovido para staging.
+- Nenhum dos 1.009 cabecalhos de compra `Emitido` possui vinculo direto pelo campo `NotasFiscaisEntradas.NRPEDIDOCOMPRA`; essa rota nao pode ser usada para conciliacao.
+- Pela rota dos itens, 957 dos 1.009 pedidos de compra possuem ao menos um item ligado a relatorio fiscal e 52 nao possuem vinculo. Ha 315 pedidos com um unico vinculo de item e 642 com multiplos vinculos.
+- Dos 957 pedidos com vinculo por item, 310 possuem somente cabecalhos fiscais da mesma empresa e 647 apresentam ao menos uma empresa fiscal divergente. Nao houve empresa fiscal nula nem item fiscal sem cabecalho de relatorio.
+- Os 1.009 pedidos candidatos possuem 4.228 itens. Desses, 428 nao possuem vinculo fiscal, 3.426 possuem um vinculo e 374 possuem multiplos vinculos.
+- Entre os itens, 1.607 estao ligados somente a cabecalhos fiscais da mesma empresa e 2.193 apresentam empresa fiscal divergente. A divergencia esta concentrada nos pedidos cujo codigo empresarial e 3, com duas ocorrencias adicionais no codigo 1.
+- A situacao fiscal agregada e `Emitida` nos vinculos de situacao unica. Treze pedidos e 27 itens possuem mais de uma situacao fiscal entre seus relatorios e permanecem sem interpretacao.
+- Existencia de nota de entrada nao equivale a recebimento integral. `QUANTIDADERECEBIDA`, quantidades pedidas e valores nao foram lidos; portanto, nenhum pedido/item foi marcado como concluido ou pendente.
+- As rotas de cabecalho reconciliaram exatamente os 29 pedidos de venda e os 1.009 pedidos de compra. As rotas de itens reconciliaram os 77 itens de venda e 4.228 itens de compra.
+- O relatorio `legacy-order-fiscal-link-counts.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: `BLOCKED` para importar pedidos de compra ou declarar recebimento, principalmente pelas 647 divergencias empresariais e pela ausencia de conciliacao quantitativa. Vendas tambem permanecem bloqueadas ate homologar a semantica de permanencia em `PedidoVenda`.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: levantar apenas a matriz agregada `empresa do pedido x empresa fiscal x situacao fiscal` dos vinculos de compra recentes, contando pedidos, itens e relatorios distintos sem exportar seus IDs. O objetivo e distinguir mapeamento historico de empresa de contaminacao cruzada; nenhuma equivalencia deve ser inferida automaticamente.
