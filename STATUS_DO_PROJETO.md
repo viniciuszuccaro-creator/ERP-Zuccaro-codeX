@@ -6394,3 +6394,17 @@ Checklist inicial:
 - Situacao: 1.278 vinculos de estoque estao estrutural e quantitativamente conciliados; os 86 sem `SEQESTOQUE` continuam `BLOCKED` para classificacao de recebimento.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual`, SQL Browser `Stopped`/`Disabled` e telemetria `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime do ERP sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: somente nos 86 itens com `SEQESTOQUE=0`, contar candidatos em `MovimentacaoEstoque` por tipo de entrada, `NRDOCUMENTO=RELATORIO` e `ITEMDOCUMENTO=ITEMRELATORIO`. Classificar zero, um ou multiplos candidatos e, separadamente, igualdade de material e quantidade, sem exportar IDs, documentos, materiais ou valores.
+
+### Gate 18 - Vinculos alternativos dos itens sem SEQESTOQUE
+
+- Os 86 itens excedentes com vinculo fiscal unico e `SEQESTOQUE=0` foram comparados ao historico de estoque pelo indice alternativo `TIPO=ENTRADA`, `NRDOCUMENTO=RELATORIO` e `ITEMDOCUMENTO=ITEMRELATORIO`, em duas passagens identicas.
+- Em 84 itens existe exatamente um movimento candidato. Todos os 84 candidatos tambem concordam individualmente em material e quantidade, formando um unico vinculo alternativo exato por item.
+- Os 84 vinculos alternativos exatos se distribuem em 43 itens na rota `1 -> 1`, um em `2 -> 2`, 38 em `3 -> 1` e dois em `3 -> 2`.
+- Os dois itens restantes nao possuem candidato pelo indice alternativo. Ambos pertencem a rota `3 -> 1`, possuem quantidade fiscal maior que `QUANTIDADERECEBIDA` e ja eram os dois casos com `ESTOQUEATUALIZADO=0`.
+- Assim, os 84 itens cuja quantidade recebida concordava com a fiscal foram integralmente conciliados a um movimento de entrada, mesmo sem a ponte direta gravada em `SEQESTOQUE`. Nenhuma multiplicidade ou candidato parcial foi encontrado.
+- Somando os 1.278 vinculos diretos do lote anterior aos 84 vinculos alternativos exatos, 1.362 dos 1.364 excedentes com vinculo fiscal unico possuem evidencia item a item de movimento de entrada e concordancia quantitativa.
+- O relatorio foi validado em quatro metricas independentes, cada uma reconciliando exatamente os mesmos 86 itens. As duas execucoes e a releitura do HD externo produziram SHA-256 `D6FD3F25B648FE84E346FF91C9E8B20D6443958108CB09867D714E72050AA087`.
+- O relatorio `legacy-purchase-zero-seq-alternate-links.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum identificador, documento, material, valor, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: 1.362 itens estao conciliados estrutural e quantitativamente com movimentos de entrada, mas continuam sem autorizacao para importacao automatica ate homologar a semantica do excesso. Os dois casos sem movimento permanecem `BLOCKED`.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`; o relatorio foi produzido somente por leitura da copia local `READ_ONLY`. A mudanca do repositorio e exclusivamente documental, testes de runtime do ERP sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: investigar somente por contagens e indicadores os dois casos `3 -> 1` sem candidato, comparando eventos de cancelamento, estorno, devolucao, exclusao ou processamento fiscal/estoque incompleto. Nao exportar IDs, documentos, materiais, quantidades ou valores e nao alterar dados.
