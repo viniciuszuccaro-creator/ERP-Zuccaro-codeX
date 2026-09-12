@@ -6302,3 +6302,19 @@ Checklist inicial:
 - Situacao: contrato estrutural definido, mas os 1.610 excedentes fiscais continuam `BLOCKED` ate comprovar igualdade de unidade ou conversao valida em cada vinculo.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: contar de forma agregada, nos vinculos fiscais emitidos e de escopo permitido, unidades principais iguais, divergentes, nulas ou vazias e disponibilidade dos campos de conversao do pedido. Separar itens exatos/parciais/excedentes sem exportar codigos de material, unidades ou quantidades.
+
+### Gate 18 - Validacao agregada das unidades recebidas
+
+- Os 3.798 itens com nota fiscal `Emitida` e escopo empresarial permitido foram avaliados em duas passagens identicas, sem exportar unidades, materiais, quantidades ou identificadores.
+- 3.787 itens possuem a mesma `UNIDADE` principal normalizada no pedido e em todos os vinculos fiscais emitidos. Nao foram encontradas unidades nulas/vazias nem mistura de varias unidades fiscais nesses itens.
+- Onze itens possuem unidade fiscal divergente da unidade do pedido. Todos pertencem a pedidos do codigo 3 na rota `Grupo CPA -> Empresa membro`.
+- Os 3.798 itens foram classificados como `SEM_CONVERSAO`: indicador desabilitado/ausente, unidade de conversao vazia e quantidade convertida vazia/zero. Assim, os onze divergentes nao possuem fator ou unidade de destino que permita conversao automatica.
+- Entre os itens emitidos seguros, 3.449 possuem um unico vinculo fiscal e 349 possuem multiplos vinculos. Essa multiplicidade foi preservada e nao representa duplicidade por si so.
+- Depois de exigir unidade principal igual, 1.612 itens ficam exatamente iguais a quantidade pedida, 566 ficam parciais e 1.609 continuam excedentes. Onze comparacoes permanecem bloqueadas pela unidade divergente.
+- A validacao de unidade retirou da classificacao quantitativa sete itens antes exatos, tres antes parciais e um antes excedente; nenhum deles foi convertido ou descartado.
+- Os 1.609 excedentes com unidade igual demonstram que o excesso nao e explicado pela divergencia de unidade principal. Ainda podem existir recebimentos acima do pedido, multiplos documentos, ajustes ou outra semantica operacional legada.
+- Nenhum item foi marcado como recebido/concluido no ERP novo. Os onze divergentes exigem decisao de unidade, e os excedentes exigem conciliacao adicional.
+- O relatorio `legacy-purchase-unit-classification.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhuma unidade, quantidade, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: unidade principal validada para 3.787 itens, mas recebimento continua `BLOCKED` pelos onze sem conversao e pelos 1.609 excedentes nao explicados.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: classificar somente por contagens os 1.609 excedentes de unidade igual segundo vinculo fiscal unico/multiplo e faixas relativas de excesso, comparando tambem com `QUANTIDADERECEBIDA`. Nao exportar IDs, unidades nem valores e nao tratar excesso como conclusao automatica.
