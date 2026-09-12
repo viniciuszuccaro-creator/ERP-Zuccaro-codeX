@@ -6013,3 +6013,18 @@ Checklist inicial:
 - Nenhuma entidade, tela, campo ou importador do ERP novo foi alterado. `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
 - A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e a validacao obrigatoria.
 - Proximo passo obrigatorio: gerar somente no HD uma quarentena nominal minima para as quatro operacoes, preservando chave legada, data, codigos de entrada/saida e quantidade, com `empresa_id` vazio, motivo `MISSING_EMPRESA_OWNER` e `import_authorized=false`. Nao incluir matricula, motivo livre ou campos livres sem necessidade comprovada.
+
+### Gate 18 - Quarentena nominal das transferencias internas
+
+- Foi gerada exclusivamente no HD a quarentena `STOCK-TRANSFER-EMP03-001` para as quatro operacoes de `EMP03.TransferenciaEstoque`; nenhuma linha foi importada no ERP novo.
+- O CSV preserva somente origem tecnica, chave legada, data Clarion e ISO, codigos de entrada/saida, quantidade, contexto do Grupo CPA e hash de idempotencia. `group_id` e `empresa_id` permanecem vazios.
+- Todas as quatro linhas possuem `quarantine_reason=MISSING_EMPRESA_OWNER`, `status=QUARANTINED` e `import_authorized=false`. Nenhuma atribuicao ou propagacao empresarial foi inferida.
+- `MATRICULA`, `MOTIVO`, campos `LONGLIVRE*`, `BYTELIVRE*`, `DECIMALLIVRE*` e `STRINGLIVRE*` foram excluidos do contrato por nao serem necessarios e poderem conter identificacao ou texto sem semantica homologada.
+- A origem foi consultada duas vezes e produziu o mesmo conteudo ordenado. Foram validadas quatro linhas persistidas, quatro chaves unicas, cabecalho exato, hash do CSV no manifesto e bloqueio de importacao em todas as linhas.
+- O diretorio, o CSV e o manifesto tiveram heranca de ACL removida e foram confirmados como protegidos. A sessao comum recebeu acesso negado, e a verificacao final foi concluida somente no executor administrativo sem exibir os valores.
+- Uma incompatibilidade local de conversao da lista interrompeu as primeiras geracoes antes da gravacao aceita; ela foi corrigida e nenhuma saida parcial foi homologada.
+- `transferencias-quarentena.csv` e `manifest.json` permanecem apenas em `D:\BACKUP ERP ANTIGO - CODEX\05_QUARANTINE\ESTOQUE\TRANSFERENCIAS-EMP03-001`. Nenhum dado nominal, hash, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: `BLOCKED` para importacao ate um responsavel autorizado comprovar `group_id` e empresa proprietaria. A quarentena nao pode ser usada para escolher CPA, 3Z ou CPA Ferro e Aco automaticamente.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e a validacao obrigatoria.
+- Proximo passo obrigatorio: manter as transferencias bloqueadas e avancar para a qualidade estrutural e agregada dos saldos de `EstoqueMateriais`, separados por fonte e limitados a materiais `REVENDA`, sem exportar codigos, quantidades ou saldos nominais. Fontes sem empresa comprovada permanecem em quarentena.
