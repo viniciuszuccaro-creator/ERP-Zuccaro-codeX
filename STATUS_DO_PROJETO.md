@@ -6106,3 +6106,21 @@ Checklist inicial:
 - Nenhuma entidade, tela, campo ou importador do ERP novo foi alterado. `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
 - A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: levantar somente distribuicoes agregadas de `SITUACAO`, cancelamento e empresa nos quatro conjuntos de cabecalhos nao vazios, alem de contar itens sem cabecalho por `NRPEDIDO`. Nao ler partes, produtos, valores ou textos e nao definir estado aberto sem homologar a semantica.
+
+### Gate 18 - Distribuicoes e integridade dos pedidos legados
+
+- Os quatro conjuntos de cabecalhos nao vazios foram consultados em duas passagens identicas, limitadas a distribuicoes de `SITUACAO`, indicador de cancelamento, codigo empresarial e contagens de integridade por `NRPEDIDO`.
+- Em vendas `EMP01`, os 28 cabecalhos se distribuem em 26 `Pedido` e dois `Perdido`. Os codigos empresariais sao: 0 com um registro, 1 com 25, 2 com um e 3 com um.
+- Em vendas `EMP03`, os 250 cabecalhos se distribuem em 193 `Orcamento`, 29 `Pedido`, 27 `Perdido` e um com situacao vazia. Os codigos empresariais sao: 0 com cinco registros, 1 com 225, 2 com 16 e 3 com quatro.
+- Em compras `EMP02`, os dois cabecalhos estao como `Emitido`, indicador de cancelamento 0 e codigo empresarial 2.
+- Em compras `EMP03`, os 6.898 cabecalhos se distribuem em 6.799 `Emitido`, 53 `Cancelado` e 46 com situacao vazia. O indicador de cancelamento esta em 1 para 19 registros e em 0 para 6.879.
+- Existe divergencia interna nas compras `EMP03`: 34 cabecalhos com situacao `Cancelado` possuem indicador de cancelamento 0. Por isso, nenhum dos dois campos foi tratado isoladamente como verdade operacional.
+- Os codigos empresariais das compras `EMP03` totalizam 41 registros no codigo 0, 1.302 no codigo 1, 82 no codigo 2 e 5.473 no codigo 3. Esses codigos ainda nao foram convertidos em `empresa_id` nem homologados como identidade juridica.
+- A integridade de itens esta completa nas compras: `EMP02` possui dois itens e nenhum orfao; `EMP03` possui 19.743 itens e nenhum orfao. Ha zero item sem cabecalho nos dois conjuntos.
+- Em vendas `EMP01`, os 77 itens possuem cabecalho, mas tres dos 28 cabecalhos nao possuem item. Em vendas `EMP03`, existem 803 itens, dos quais 13 pertencem a nove numeros de pedido sem cabecalho; sete dos 250 cabecalhos nao possuem item.
+- Itens orfaos e cabecalhos sem item permanecem bloqueados. Nenhum numero de pedido, cliente, fornecedor, produto, valor, data ou texto livre foi consultado ou exportado.
+- As somas das distribuicoes reconciliaram exatamente os 28, 250, dois e 6.898 cabecalhos inventariados no lote anterior. A primeira tentativa foi interrompida antes de gravar o relatorio por materializacao incorreta do `DataTable`; a conversao foi corrigida e somente as passagens finais estaveis foram aceitas.
+- O relatorio `legacy-open-orders-status-company-integrity.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum pedido, codigo nominal, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: `BLOCKED` para selecionar ou importar pedidos abertos ate homologar a semantica combinada de situacao/cancelamento, mapear os codigos empresariais e tratar as inconsistencias de integridade.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: levantar somente intervalos agregados das datas tecnicas dos cabecalhos por fonte e situacao, sem exportar numeros, partes, produtos, valores ou textos. Usar o resultado apenas para delimitar o periodo candidato e continuar sem interpretar automaticamente quais pedidos estao abertos.
