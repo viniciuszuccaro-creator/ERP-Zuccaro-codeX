@@ -5933,3 +5933,14 @@ Checklist inicial:
 - Todos os executores e marcadores temporarios foram removidos. `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
 - A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e a validacao obrigatoria.
 - Proximo passo obrigatorio: formar uma lista estrutural secundaria com empresa/filial e `NRDOCUMENTO` exato, sem exigir item/produto, classificando finalidade da tabela e cardinalidade; qualquer join por documento isolado permanecera bloqueado ate evidenciar unicidade e semantica compativel.
+
+### Gate 18 - Cardinalidade secundaria das fontes documentais
+
+- A lista estrutural secundaria foi executada em duas passagens estaveis nas fontes `EXETPS`, `EMP01`, `EMP02` e `EMP03`, exigindo somente `NRDOCUMENTO` exato e uma coluna de empresa/filial.
+- Foram encontradas apenas tres combinacoes: `ReciboBaixaTitulos.CODIGOEMPRESA` em `EMP01`, `EMP02` e `EMP03`. As tres tabelas sao de finalidade financeira e possuem zero linhas.
+- Consequentemente, nenhuma candidata possui documento e empresa preenchidos simultaneamente, nenhum par empresa/documento pode ser medido e nenhuma evidencia de unicidade ou semantica compativel com `MovimentacaoEstoque` foi obtida.
+- O vinculo secundario por documento isolado foi encerrado sem join: utilizar tabela financeira vazia ou nomes genericos poderia atribuir movimentos a empresa incorreta e violaria o isolamento multiempresa.
+- O relatorio agregado `legacy-stock-document-secondary-cardinality.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, sob ACL local. Ele contem apenas metadados, cardinalidades e finalidade tecnica; nenhum documento individual ou valor operacional foi exportado.
+- Nenhuma fonte autoritativa foi definida, nenhuma precedencia foi alterada e nenhuma importacao foi autorizada. `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e a validacao obrigatoria.
+- Proximo passo obrigatorio: inventariar somente metadados de chaves empresariais presentes em `MovimentacaoEstoque` e seus relacionamentos declarados (chaves estrangeiras e indices), sem inferir empresa por documento e sem consultar valores nominais. Se nao houver relacionamento estrutural comprovado, manter `EMP03` bloqueado para migracao operacional.
