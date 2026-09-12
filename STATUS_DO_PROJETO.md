@@ -6544,3 +6544,19 @@ Checklist inicial:
 - Situacao: as operacoes excepcionais continuam sem capacidade de explicar os 65 excedentes. Os itens e os 1.602 excessos do universo maior permanecem `BLOCKED` para importacao automatica.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`; a consulta usou somente a copia local `READ_ONLY`. A mudanca do repositorio e exclusivamente documental, testes de runtime do ERP sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: nos nove pedidos com cancelamento ou exclusao, classificar de forma agregada se os 53 outros itens com recebimento menor representam saldo aberto ou saldo encerrado e confrontar essa classificacao com o estado operacional do pedido. Nao exportar IDs, datas, textos, materiais, unidades, quantidades ou valores e nao inferir mudanca por item sem trilha historica.
+
+### Gate 18 - Encerramento dos saldos residuais de compra
+
+- Os 53 outros itens com quantidade recebida menor que a pedida, pertencentes aos nove pedidos com operacao de cancelamento ou exclusao, foram avaliados em duas passagens identicas por sinais estruturais de item e cabecalho.
+- Todas as nove operacoes foram classificadas especificamente como CANCELAMENTO; nenhuma dependeu somente de termo de exclusao.
+- Os nove pedidos continuam atualmente Emitido e ativos, mas todos possuem DTLIQUIDACAOPEDIDO preenchida. Portanto, o estado textual isolado nao representa corretamente um saldo comercial aberto.
+- Nenhum dos 53 itens possui registro em PedidoCompraItensQtdeCancelada, e a quantidade cancelada agregada e zero. O saldo residual nao foi encerrado por uma baixa rastreavel no nivel do item.
+- Todos os 53 itens foram classificados como encerrados somente pela liquidacao do cabecalho, sem trilha exata no item. Essa evidencia permite reconhecer o pedido como historicamente encerrado, mas nao reconstruir uma alteracao de quantidade.
+- Entre esses itens, 18 possuem recebimento fiscal parcial e 35 nao possuem vinculo fiscal. Os dois grupos pertencem a oito pedidos cada, com sobreposicao entre os pedidos.
+- Seis pedidos concentram entre dois e cinco itens residuais, totalizando 19 itens; tres pedidos possuem mais de cinco, totalizando 34 itens.
+- A operacao de cancelamento e a data de liquidacao sao compativeis com encerramento do saldo remanescente do pedido. Elas nao explicam os 64 itens excedentes conciliados existentes nos mesmos nove pedidos, pois esses excedentes ja estavam integralmente recebidos e movimentados e nao possuem cancelamento por item.
+- As 14 linhas agregadas reconciliaram exatamente os mesmos nove pedidos e 53 itens em cada metrica. As duas execucoes e a releitura do HD externo produziram SHA-256 FEB32EF63B3AB318544D2B339978B09A0ADC24D6DC831EC9BF72892F10DBA7E9.
+- O relatorio legacy-purchase-residual-closure.csv permanece somente em D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS, com ACL protegida. Nenhum identificador, data, texto, material, unidade, quantidade individual, valor, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: os 53 saldos residuais podem ser classificados como historicamente encerrados no nivel do pedido, sem criar contas ou obrigacoes abertas no ERP novo. Os 64 excedentes desses pedidos e os 1.602 excessos do universo maior continuam BLOCKED para importacao automatica.
+- MSSQL$ERPZLEGACY terminou Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; a consulta usou somente a copia local READ_ONLY. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
+- Proximo passo obrigatorio: classificar todos os pedidos associados aos 1.602 excedentes conciliados por liquidacao do cabecalho, presenca e tipo de operacao e existencia de outros itens residuais. O objetivo e separar historico encerrado de obrigacao potencialmente aberta sem exportar IDs, datas, textos, materiais, unidades, quantidades ou valores e sem liberar os excedentes para importacao.
