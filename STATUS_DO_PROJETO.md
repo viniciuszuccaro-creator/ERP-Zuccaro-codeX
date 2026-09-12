@@ -6350,3 +6350,18 @@ Checklist inicial:
 - Situacao: recebimento continua `BLOCKED`. O excesso parece estar registrado no proprio item fiscal e replicado no acumulado legado, mas sua origem funcional ainda nao foi comprovada.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: nos 1.364 itens de vinculo unico, classificar somente por contagens a presenca e as relacoes de igualdade dos campos suplementares `QTDEPECAS`, `PesoLiquido`, `QTDEMETROSREAL` e `QTDEUNIDPARALELA` com as quantidades pedida e fiscal. Nao exportar valores, materiais, unidades ou IDs e nao aplicar conversao sem contrato homologado.
+
+### Gate 18 - Campos suplementares dos excedentes com vinculo unico
+
+- O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
+- Somente `TID_EMP03.mdf` e `TID_EMP03_log.ldf` foram copiados de `02_SQL_WORK` para `C:\Users\cpaba\ERPZLEGACY_DATA`. Os hashes SHA-256 da origem e da copia coincidiram antes do anexo; os arquivos no HD externo nao foram abertos pelo SQL nem alterados.
+- A copia foi anexada como `LEGACY_TID_EMP03`, convertida localmente da versao interna 782 para 998, colocada imediatamente em `READ_ONLY` e aprovada por `DBCC CHECKDB` com `DATA_PURITY` sem erros.
+- O universo anterior foi reproduzido exatamente: 1.364 itens excedentes, com unidade principal igual e um unico vinculo fiscal emitido. Sao 937 itens na rota empresarial `1 -> 1`, quatro em `2 -> 2`, 421 em `3 -> 1` e dois em `3 -> 2`.
+- A classificacao dos quatro campos suplementares foi executada em duas passagens identicas. Cada campo reconciliou exatamente os 1.364 itens e os dois CSVs produziram o mesmo SHA-256.
+- `PesoLiquido` esta nulo nos 1.364 itens. `QTDEMETROSREAL` e `QTDEUNIDPARALELA` estao zerados nos 1.364 itens.
+- `QTDEPECAS` esta zerado em 1.303 itens, possui outro valor positivo em 60 e coincide com a quantidade pedida em somente um item. Nenhum registro apresentou valor negativo, e nenhum dos quatro campos coincidiu com a quantidade fiscal excedente.
+- Portanto, os campos suplementares nao explicam o excesso fiscal dominante e nao fornecem contrato seguro de conversao. Nenhuma conversao, recebimento ou importacao foi autorizada.
+- O relatorio `legacy-purchase-supplemental-field-classification.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida e releitura validada pelo mesmo SHA-256. Nenhum CSV/JSON local, identificador, material, unidade, quantidade, TPS ou MDF/LDF integra o GitHub.
+- Situacao: recebimento continua `BLOCKED`. O excesso permanece registrado na quantidade do item fiscal e replicado em `QUANTIDADERECEBIDA`, sem explicacao pelos campos paralelos avaliados.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual`, SQL Browser `Stopped`/`Disabled` e telemetria `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime do ERP sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: classificar somente por contagens, nos mesmos 1.364 itens, os indicadores fiscais e de estoque `PEDIDOCOMPRA`, `ESTOQUEATUALIZADO`, `NAOATUALIZAESTOQUE`, `TIPONOTA`, `TIPOENTRADA` e `NOTAFISCALTRANSFERIDA`. O objetivo e comprovar se a quantidade fiscal participou de entrada de estoque; nao exportar valores, documentos, materiais ou IDs e nao autorizar recebimento automaticamente.
