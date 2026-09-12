@@ -6379,3 +6379,18 @@ Checklist inicial:
 - Situacao: recebimento continua `BLOCKED`. Os indicadores confirmam processamento do cabecalho fiscal, mas falta reconciliar o vinculo efetivo com movimentos de estoque e validar a origem funcional do excesso.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual`, SQL Browser `Stopped`/`Disabled` e telemetria `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime do ERP sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: inventariar somente a estrutura das tabelas que usam `SEQESTOQUE` e definir o contrato de vinculo entre `NotaFiscalEntradasItens` e o historico de estoque. Depois, contar presenca, ausencia e multiplicidade dos vinculos nos mesmos 1.364 itens, sem consultar ou exportar IDs, materiais, unidades, documentos ou quantidades.
+
+### Gate 18 - Vinculos diretos dos excedentes com movimentos de estoque
+
+- O inventario estrutural confirmou que `NotaFiscalEntradasItens.SEQESTOQUE` e `MovimentacaoEstoque.SEQUENCIA` usam `int`, e que `MovimentacaoEstoque.SEQUENCIA` e a chave primaria unica. Tambem existe indice unico por `TIPO, NRDOCUMENTO, ITEMDOCUMENTO, SEQUENCIA`.
+- Dos 1.364 itens excedentes com vinculo fiscal unico, 1.278 possuem movimento localizado diretamente por `SEQESTOQUE`. Todos os 1.278 sao do tipo `ENTRADA`, possuem descricao contendo nota e concordam simultaneamente em material, relatorio fiscal, item fiscal e quantidade.
+- Os 1.278 movimentos diretos se distribuem em 894 itens na rota empresarial `1 -> 1`, tres em `2 -> 2` e 381 em `3 -> 1`. Nao houve movimento direto no pequeno recorte `3 -> 2`.
+- Em todos os 1.278 vinculos diretos, a quantidade do movimento coincide tanto com a quantidade fiscal quanto com `QUANTIDADERECEBIDA`. Nao foi encontrada divergencia nas chaves ou na quantidade desse conjunto.
+- Os 86 itens restantes possuem `SEQESTOQUE=0`, e nao uma referencia positiva sem destino. Portanto, nao existe ponte direta gravada para movimento de estoque nesses itens.
+- Os 86 sem ponte direta sao 43 itens na rota `1 -> 1`, um em `2 -> 2`, 40 em `3 -> 1` e dois em `3 -> 2`.
+- Entre os 86 sem movimento direto, 84 ainda possuem `QUANTIDADERECEBIDA` igual a quantidade fiscal. Os dois desacordos anteriores pertencem a rota `3 -> 1`, tambem estao neste conjunto e permanecem com quantidade fiscal maior que a recebida.
+- O vinculo direto comprova movimento de entrada para 1.278 itens, mas os 86 com referencia zero nao podem ser considerados sem movimento definitivo antes de testar o indice alternativo por tipo, documento e item. Nenhum recebimento ou importacao foi autorizado automaticamente.
+- O relatorio `legacy-purchase-stock-movement-links.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida e releitura validada pelo mesmo SHA-256. Nenhum CSV/JSON local, identificador, material, documento, quantidade, TPS ou MDF/LDF integra o GitHub.
+- Situacao: 1.278 vinculos de estoque estao estrutural e quantitativamente conciliados; os 86 sem `SEQESTOQUE` continuam `BLOCKED` para classificacao de recebimento.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual`, SQL Browser `Stopped`/`Disabled` e telemetria `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime do ERP sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: somente nos 86 itens com `SEQESTOQUE=0`, contar candidatos em `MovimentacaoEstoque` por tipo de entrada, `NRDOCUMENTO=RELATORIO` e `ITEMDOCUMENTO=ITEMRELATORIO`. Classificar zero, um ou multiplos candidatos e, separadamente, igualdade de material e quantidade, sem exportar IDs, documentos, materiais ou valores.
