@@ -6143,3 +6143,19 @@ Checklist inicial:
 - Situacao: `BLOCKED` para definir pedidos abertos. Os intervalos confirmam fontes antigas e recentes, mas data, situacao e indicador de cancelamento ainda nao bastam para determinar saldo operacional ou empresa proprietaria.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: contar, de forma agregada por fonte, situacao e empresa, os cabecalhos cuja data principal candidata esta nos ultimos cinco anos do backup (`2021-08-20` a `2026-08-20`), anteriores ao periodo ou posteriores ao backup. Nao selecionar registros nominais nem interpretar automaticamente quais estao abertos.
+
+### Gate 18 - Recorte agregado dos pedidos nos ultimos cinco anos
+
+- O recorte foi executado em duas passagens identicas usando `DATAEMISSAO` para vendas e `DATAPEDIDO` para compras. Os limites Clarion candidatos foram fixados em 80589 (`2021-08-20`) e 82415 (`2026-08-20`).
+- Todos os 28 cabecalhos de venda `EMP01` e os dois cabecalhos de compra `EMP02` sao anteriores a `2021-08-20`; essas fontes nao possuem candidato dentro dos cinco anos do backup.
+- Em vendas `EMP03`, 222 dos 250 cabecalhos estao nos ultimos cinco anos e 28 sao anteriores. Nao existe data principal invalida nem posterior ao backup.
+- As 222 vendas recentes se distribuem em 185 `Orcamento`, 29 `Pedido` e oito `Perdido`. Por codigo empresarial, sao uma no codigo 0, 204 no codigo 1, 14 no codigo 2 e tres no codigo 3.
+- Em compras `EMP03`, 1.021 dos 6.898 cabecalhos estao nos ultimos cinco anos e 5.877 sao anteriores. Nao existe data principal invalida nem posterior ao backup.
+- As 1.021 compras recentes se distribuem em 1.009 `Emitido`, seis `Cancelado` e seis sem situacao. Todas possuem indicador de cancelamento 0, inclusive as seis cuja situacao textual e `Cancelado`.
+- Por codigo empresarial, as compras recentes totalizam seis no codigo 0, 323 no codigo 1, tres no codigo 2 e 689 no codigo 3.
+- Os 19 cabecalhos de compra `EMP03` com indicador de cancelamento 1 estao todos antes do periodo de cinco anos. Isso nao elimina a divergencia semantica dos seis `Cancelado` recentes com indicador 0.
+- As contagens por periodo, situacao, cancelamento e codigo empresarial reconciliaram exatamente os 28, 250, dois e 6.898 cabecalhos das quatro fontes. Nenhum numero de pedido, parte, produto, valor ou texto livre foi consultado ou exportado.
+- O relatorio `legacy-open-orders-five-year-period-counts.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum pedido, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: `BLOCKED` para importar os 222 registros de venda ou 1.021 de compra do periodo. O recorte temporal reduz o universo, mas `Orcamento`, `Pedido` e `Emitido` ainda nao comprovam pendencia operacional.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: inventariar somente a estrutura de campos e tabelas relacionadas que possam comprovar faturamento/encerramento das vendas `Pedido` e recebimento/encerramento das compras `Emitido`. Nao consultar registros nominais, quantidades ou valores e nao selecionar pendencias antes de validar a evidencia downstream.
