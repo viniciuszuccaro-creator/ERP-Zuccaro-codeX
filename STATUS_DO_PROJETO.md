@@ -6211,3 +6211,21 @@ Checklist inicial:
 - Situacao: `BLOCKED` para importar pedidos de compra ou declarar recebimento, principalmente pelas 647 divergencias empresariais e pela ausencia de conciliacao quantitativa. Vendas tambem permanecem bloqueadas ate homologar a semantica de permanencia em `PedidoVenda`.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: levantar apenas a matriz agregada `empresa do pedido x empresa fiscal x situacao fiscal` dos vinculos de compra recentes, contando pedidos, itens e relatorios distintos sem exportar seus IDs. O objetivo e distinguir mapeamento historico de empresa de contaminacao cruzada; nenhuma equivalencia deve ser inferida automaticamente.
+
+### Gate 18 - Matriz empresarial dos vinculos fiscais de compra
+
+- A matriz dos vinculos de compra recentes de `EMP03` foi produzida em duas passagens identicas, cruzando somente codigo empresarial do pedido, codigo empresarial fiscal e situacao fiscal.
+- Os 957 pedidos vinculados abrangem 3.800 itens distintos, 2.090 relatorios fiscais distintos e 4.273 vinculos item/relatorio. A diferenca entre itens e vinculos confirma recebimentos ou documentos multiplos por item.
+- No par `pedido 1 -> fiscal 1`, existem 307 pedidos associados a situacao `Emitida` e oito a `Cancelada`, com 1.832 e 12 vinculos de item, respectivamente.
+- Foram encontrados dois cruzamentos excepcionais para pedidos do codigo 1: um pedido/item/relatorio `1 -> 2` e um `1 -> 5`, ambos com situacao fiscal `Emitida`.
+- No par `pedido 2 -> fiscal 2`, existem tres pedidos, sete itens distintos, nove relatorios e nove vinculos, todos com situacao `Emitida`.
+- O padrao dominante divergente e `pedido 3 -> fiscal 1`: 639 pedidos aparecem em `Emitida` e cinco em `Cancelada`, com 2.385 e 15 vinculos de item. Tambem existem sete pedidos no par `3 -> 2`, com 14 itens, 13 relatorios e 18 vinculos `Emitida`.
+- As celulas de pedidos e itens nao devem ser somadas como universos exclusivos, pois os mesmos registros podem possuir relatorios de mais de uma situacao ou empresa. Os totais globais distintos sao a referencia de reconciliacao.
+- As situacoes `Cancelada` totalizam 13 relatorios e 27 vinculos de item, distribuidos nos pares `1 -> 1` e `3 -> 1`. O lote anterior ja demonstrou que esses pedidos tambem possuem mais de uma situacao fiscal; nenhum cancelamento foi tratado como encerramento integral.
+- Nao houve empresa fiscal nula na matriz. O codigo fiscal 5 aparece somente no cruzamento excepcional com um pedido do codigo 1.
+- O cadastro mestre legado ja registra identidades distintas para os codigos 1, 2, 3 e 5. Assim, `3 -> 1`, `3 -> 2`, `1 -> 2` e `1 -> 5` permanecem divergencias reais de escopo ate conciliacao, mesmo quando possam refletir operacao centralizada historica.
+- Nenhum ID de pedido, item, relatorio, nota, parte, produto, quantidade comercial ou valor foi exportado. A consulta produziu apenas contagens distintas e totais de vinculos.
+- O relatorio `legacy-purchase-company-fiscal-matrix.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: `BLOCKED` para importar ou consolidar compras. A matriz revela centralizacao ou cruzamento empresarial sistematico, mas nao autoriza mudar a empresa proprietaria do pedido nem da nota.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: confrontar somente os codigos 1, 2, 3 e 5 da matriz com `LEGACY_TID_EXETPS.dbo.Empresas` e com o mapa local de aliases ja aprovado, registrando identidades empresariais e situacao ativa/inativa sem consultar documentos, segredos ou pedidos. Classificar cada par como mesmo cadastro, cruzamento entre empresas-alvo, legado externo/inativo ou ainda ambiguo, sem autorizar importacao.
