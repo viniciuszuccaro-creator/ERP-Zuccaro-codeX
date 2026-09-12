@@ -6680,3 +6680,18 @@ Checklist inicial:
 - Situacao: os cinco titulos abertos continuam comprovados e conciliados; a unica parcela com DATABAIXA permanece sem comprovacao downstream. Os dois recebimentos e essa baixa continuam BLOCKED para importacao automatica.
 - MSSQL$ERPZLEGACY terminou Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; a consulta usou somente a copia local READ_ONLY. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
 - Proximo passo obrigatorio: inventariar procedures, triggers, views e funcoes que referenciem FornecDuplicatas e DATABAIXA para localizar a rotina de baixa e suas tabelas de destino. Consultar dados somente se surgir uma chave estrutural validada, sem exportar definicoes completas, IDs, documentos, datas, fornecedores, textos, quantidades ou valores e sem alterar o legado.
+
+### Gate 18 - Inventario das rotinas que podem gravar a baixa
+
+- Procedures, triggers, views e funcoes do banco foram inventariados por dependencia registrada e referencia textual a FornecDuplicatas e DATABAIXA, sem exportar definicoes SQL.
+- O banco possui dois modulos com definicao visivel. Nenhum referencia FornecDuplicatas por texto ou dependencia e nenhum combina a tabela com DATABAIXA.
+- Nao existe trigger direto associado a FornecDuplicatas e nao foram encontrados sinais de update, insert ou delete da tabela nos modulos SQL inspecionaveis.
+- Tambem nao existe modulo visivel que relacione FornecDuplicatas a ContasPagarCheque, FornecDuplicatasAjustes ou estruturas de bordero.
+- Existe um modulo SQL criptografado cuja definicao nao pode ser lida. Portanto, a auditoria nao pode declarar que toda a logica de baixa esta ausente do banco.
+- O resultado indica que a gravacao pode estar no aplicativo cliente antigo ou no modulo criptografado, mas essa e apenas uma hipotese estrutural e nao comprova pagamento.
+- A primeira execucao encontrou corretamente zero rotinas candidatas, mas o validador tratou zero como erro e nao salvou relatorio. O validador foi corrigido para registrar contagens zero e incluir modulos criptografados; somente as duas passagens posteriores compoem o resultado.
+- As 12 metricas foram reproduzidas em duas execucoes identicas e na releitura protegida do HD externo, com SHA-256 9E6DB84C95FD402673BBF196C6E1A23EA1543E6B77080008FAECFF1B5CCE9CB5.
+- O relatorio legacy-fornec-duplicatas-baixa-modules-summary.csv permanece somente em D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS, com ACL protegida. Nenhuma definicao SQL, identificador, documento, data, fornecedor, texto, quantidade, valor, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: a origem da DATABAIXA continua nao comprovada e a parcela permanece BLOCKED para migracao como pagamento. Nenhum registro legado foi alterado.
+- MSSQL$ERPZLEGACY terminou Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; a consulta usou somente a copia local READ_ONLY. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
+- Proximo passo obrigatorio: identificar somente os metadados seguros do modulo criptografado, incluindo tipo, objeto pai, nome classificado por termos e dependencias catalogadas. Se ele nao for relacionado a contas a pagar, localizar no backup do aplicativo antigo referencias binarias ou configuracoes a FornecDuplicatas e DATABAIXA sem copiar executaveis, credenciais ou conteudo sensivel para o GitHub.
