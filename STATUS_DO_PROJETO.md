@@ -6495,3 +6495,19 @@ Checklist inicial:
 - Situacao: o alcance conhecido permanece em onze itens fiscais bloqueados de quatro documentos; dez possuem vinculo de pedido identificavel e um possui chave orfa sem candidato seguro.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`; a consulta usou somente a copia local `READ_ONLY`. A mudanca do repositorio e exclusivamente documental, testes de runtime do ERP sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: nos 1.602 itens excedentes com cobertura integral de movimentos, contar registros e somas de `PedidoCompraItensQtdeCancelada` e a presenca de `PedidoCompraHistoricoAjuste`/`PedidoCompraOperacoes`. Classificar se cancelamentos ou ajustes posteriores explicam a diferenca entre quantidade pedida e recebida, sem exportar IDs, materiais, unidades, quantidades, valores, datas ou textos e sem liberar importacao.
+
+### Gate 18 - Cancelamentos e ajustes dos excedentes conciliados
+
+- Os 1.602 itens excedentes com cobertura integral de movimentos e igualdade entre quantidade fiscal, recebida e movimentada foram avaliados em duas passagens identicas.
+- Por rota, o universo contem 1.080 itens em `1 -> 1`, cinco em `2 -> 2`, 512 em `3 -> 1`, quatro em `3 -> 2` e um item do Grupo com vinculos fiscais mistos entre empresas membro.
+- Nenhum dos 1.602 itens possui registro em `PedidoCompraItensQtdeCancelada`; portanto, nao existe quantidade cancelada capaz de recompor a diferenca entre quantidade pedida e recebida.
+- Nenhum item possui registro como origem em `PedidoCompraItensAgrupados`. Agrupamento de pedido tambem nao explica o excesso.
+- Os pedidos associados aos 1.602 itens nao possuem registros em `PedidoCompraHistoricoAjuste`, inclusive ajustes com termos de quantidade, cancelamento ou exclusao.
+- Para 1.095 itens, o pedido nao possui registro em `PedidoCompraOperacoes`. Os outros 507 itens pertencem a pedidos com uma operacao registrada.
+- Entre os 507 itens com operacao no pedido, 64 compartilham pedidos cuja unica operacao contem termo de cancelamento ou exclusao; 443 possuem operacao sem esses termos. Como `PedidoCompraOperacoes` nao identifica o item, essa presenca nao comprova alteracao da quantidade analisada.
+- Assim, cancelamento por item, agrupamento e historico de ajuste explicam zero dos 1.602 excessos. Operacoes de cabecalho permanecem apenas como indicio temporal a verificar, sem autorizacao para inferir causa.
+- As dez metricas reconciliaram exatamente os mesmos 1.602 itens. As duas execucoes e a releitura do HD externo produziram SHA-256 `B63166FFC11F1EAE3CED9A87A646B7D684019B156467ECF3CE0EAB0874CC60C5`.
+- O relatorio `legacy-purchase-reconciled-excess-order-changes.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum identificador, material, unidade, quantidade, valor, data, texto livre, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: os 1.602 itens continuam com movimentos comprovados, mas a origem comercial do excesso permanece sem explicacao e a importacao automatica continua `BLOCKED`.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`; a consulta usou somente a copia local `READ_ONLY`. A mudanca do repositorio e exclusivamente documental, testes de runtime do ERP sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: deduplicar os pedidos dos 507 itens com operacao e classificar somente por contagens o tipo da operacao e sua posicao temporal relativa a entrada fiscal e ao movimento de estoque. Separar os 64 casos com termo de cancelamento/exclusao, sem exportar IDs, datas, textos, materiais, unidades, quantidades ou valores e sem atribuir a operacao a um item.
