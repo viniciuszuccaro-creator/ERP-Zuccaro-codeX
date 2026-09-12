@@ -6652,3 +6652,18 @@ Checklist inicial:
 - Situacao: os cinco titulos representam obrigacoes futuras de curto prazo no limite da auditoria e permanecem ligados a recebimentos fiscais ainda nao processados no estoque. Os casos continuam BLOCKED para importacao automatica.
 - MSSQL$ERPZLEGACY terminou Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; a consulta usou somente a copia local READ_ONLY. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
 - Proximo passo obrigatorio: localizar estruturalmente o campo de total fiscal e comparar, somente por classificacao igual, menor ou maior, o total dos seis titulos com o total de cada documento. Separar a parcela baixada das cinco abertas sem exportar valores, IDs, documentos, datas, fornecedores ou textos e sem efetuar baixa, pagamento, cancelamento ou importacao automatica.
+
+### Gate 18 - Conciliacao dos totais fiscal e financeiro
+
+- Onze campos numericos candidatos do cabecalho fiscal foram localizados estruturalmente e comparados com os titulos dos dois documentos, sem exportar qualquer valor.
+- VALORTOTALNOTA foi o unico campo de total fiscal que conciliou integralmente os dois documentos: a soma dos seis titulos e igual ao total da respectiva nota em ambos os casos.
+- Em um documento, os tres titulos abertos correspondem integralmente ao total fiscal. No outro, os dois titulos abertos representam parcela menor que o total e a parcela ja baixada completa a conciliacao.
+- A parcela baixada isoladamente e menor que o total fiscal, como esperado em um parcelamento. O segundo documento nao possui titulo baixado e foi classificado sem componente baixado.
+- VALORMERCADORIA conciliou somente um documento e divergiu no outro. Assim, nao pode ser usado como total fiscal universal para estes casos.
+- Os demais campos candidatos representam componentes fiscais, indicadores ou valores nulos e nao reconciliaram simultaneamente os seis titulos dos dois documentos.
+- A igualdade entre VALORTOTALNOTA e os seis titulos comprova integridade do parcelamento financeiro registrado. Ela nao comprova processamento de estoque, contabilizacao ou autorizacao para pagamento ou importacao.
+- As 46 linhas agregadas reconciliaram 11 campos fiscais candidatos, os mesmos dois documentos, seis titulos totais, cinco abertos e um baixado. As duas execucoes e a releitura protegida do HD externo produziram SHA-256 EADF776A9EB9593A90B7F465F8F14B9A2879A978D358044AD52979D89A31E7D2.
+- O relatorio legacy-purchase-fiscal-financial-total-reconciliation.csv permanece somente em D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS, com ACL protegida. Nenhum identificador, documento, data, fornecedor, texto, quantidade, valor, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: as obrigacoes financeiras estao completas e conciliadas com o total fiscal, mas os dois recebimentos continuam sem processamento de estoque. Os casos permanecem BLOCKED para importacao automatica como recebidos ou como novas contas.
+- MSSQL$ERPZLEGACY terminou Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; a consulta usou somente a copia local READ_ONLY. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
+- Proximo passo obrigatorio: localizar estruturalmente a trilha downstream da unica parcela baixada e confirmar por contagens se existe bordero, lancamento de pagamento ou outro registro de baixa vinculado por chaves validadas. Nao exportar IDs, documentos, datas, fornecedores, textos, quantidades ou valores e nao efetuar baixa, pagamento, cancelamento ou importacao automatica.
