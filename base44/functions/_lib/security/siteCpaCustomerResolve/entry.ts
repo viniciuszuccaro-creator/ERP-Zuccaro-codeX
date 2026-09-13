@@ -326,7 +326,7 @@ const resolveApprovedContact = async (base44, scope, customer, approvedLink) => 
   }
 };
 
-const resolveSeller = async (base44, scope, customer) => {
+export const resolveSiteCpaSeller = async (base44, scope, customer) => {
   const sellerId = text(customer?.vendedor_responsavel_id);
   if (!sellerId) return { sellerId: null, sellerName: null, assignmentStatus: 'UNASSIGNED' };
   let sellers;
@@ -465,7 +465,7 @@ export const resolveSiteCpaCustomer = async ({ base44, payload = {}, scope, requ
     throw new SiteCpaCustomerError(403, 'site_cpa_business_role_forbidden');
   }
 
-  const seller = await resolveSeller(base44, scope, customer);
+  const seller = await resolveSiteCpaSeller(base44, scope, customer);
   const approvedContact = await resolveApprovedContact(base44, scope, customer, approvedLink);
   const addresses = buildCustomerAddresses(customer);
   const commercial = customer?.condicao_comercial || {};

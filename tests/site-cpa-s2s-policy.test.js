@@ -217,6 +217,7 @@ test('healthcheck S2S usa empresa padrao, audita e persiste o evento', async () 
   assert.equal(result.body.data.scope.empresaId, 'cpa-aco');
   assert.equal(result.body.data.capabilities.CUSTOMER_RESOLVE, 'ready');
   assert.equal(result.body.data.capabilities.CATALOG_READ, 'ready');
+  assert.equal(result.body.data.capabilities.ORDER_CREATE, 'ready');
   assert.equal(result.createdEvents[0].status, 'concluido');
   assert.equal(result.audits.length, 1);
 });
@@ -239,7 +240,7 @@ test('nonce repetido e ledger indisponivel falham fechados', async () => {
 
 test('operacao futura autenticada responde nao implementada sem sucesso falso', async () => {
   const result = await gatewayRequest({
-    body: { version: '1', operation: 'sitePedidoCreate' },
+    body: { version: '1', operation: 'siteOrcamentoCreate' },
     nonce: 'nonce-pedido-12345678901',
   });
   assert.equal(result.response.status, 501);

@@ -701,3 +701,73 @@ A auditoria registra operacao, correlacao, Grupo, Empresa, pagina, tamanho, quan
 siteHealth informa CUSTOMER_RESOLVE: ready e CATALOG_READ: ready. Pedido, pagamento, frete final e credito final permanecem fora deste lote.
 
 Proximo lote somente com autorizacao expressa: ERP-SITE-04 - Pedido e Checkout.
+
+---
+
+# 23. EXECUCAO ERP-SITE-04 - PEDIDO E CHECKOUT
+
+A operacao `sitePedidoCreate` foi integrada ao gateway S2S `v1`. O contrato cria um `Pedido` real com `itens_revenda` incorporados, reutilizando Cliente, Produto, CatalogoWeb, GrupoProduto, UnidadeMedida, TabelaPreco, TabelaPrecoItem, FormaPagamento, Colaborador, enderecos e referencias existentes.
+
+## Requisicao
+
+O objeto `data` aceita somente os dados necessarios ao checkout:
+
+- `externalOrderId`, `externalUserId` e `erpCustomerId`;
+- `items`, com 1 a 50 itens contendo `erpProductId`, quantidade e, quando aplicavel, spec, unidade e preco exibido;
+- `deliveryMode` como DELIVERY/ENTREGA ou PICKUP/RETIRADA;
+- `addressId` para entrega;
+- data de entrega solicitada, referencia de ordem de compra, obra, projeto, centro de custo e observacoes sanitizadas.
+
+Total, subtotal, desconto, frete, vendedor, preco, estoque, `sellable`, `quoteRequired`, condicao e credito enviados pelo Site nao sao autoridade.
+
+## Revalidacao no ERP
+
+- Cliente e usuario externo exigem vinculo aprovado no ERP-SITE-02 e papel `ADMIN_EMPRESA` ou `COMPRADOR`;
+- Grupo e Empresa vem da credencial S2S e todos os registros sao revalidados no mesmo escopo;
+- cada Produto precisa estar ativo, publicado, vendavel, com unidade/spec corretas, quantidade minima e multiplo validos;
+- o preco e recalculado pelo ERP-SITE-03; divergencia retorna `PRICE_CHANGED` com snapshot atual permitido e nao cria Pedido;
+- estoque fisico menos reservado e revalidado; indisponibilidade ou mudanca falha fechada, sem parcial silencioso;
+- produto oficialmente sob encomenda preserva esse fluxo;
+- endereco precisa pertencer ao Cliente; retirada nao exige endereco de entrega;
+- obra precisa ser um endereco ativo do tipo OBRA; Projeto exige ownership do Cliente e Centro de Custo exige o mesmo escopo;
+- FormaPagamento e condicao do Cliente sao oficiais; condicao a prazo valida o credito existente sem expor limites na resposta.
+
+## Criacao e estado
+
+O Pedido nasce com origem `SITE_CPA`, canal `Site B2B`, numero ERP estavel, referencia externa, contrato `v1`, Grupo, Empresa, Cliente e vendedor oficial. O estado inicial e `Aguardando Aprovacao`, com `status_aprovacao = pendente` e pagamento pendente.
+
+Nenhum pagamento e confirmado. Entrega nasce com frete pendente e proxima acao de confirmacao; retirada usa o fluxo `Retirada`, sem frete. O pedido S2S pendente nao reserva estoque antes da aprovacao. A reserva existente continua disponivel no fluxo oficial posterior.
+
+Pedido e itens sao uma unica gravacao. Auditoria obrigatoria ocorre antes e depois da criacao. Se a confirmacao posterior falhar, `externalOrderId` e hash canonico permitem recuperar o Pedido no retry sem duplica-lo.
+
+## Idempotencia e resposta
+
+O ledger do ERP-SITE-01 continua protegendo a chave de idempotencia. Alem disso, `externalOrderId` e persistido por Empresa/origem:
+
+- mesmo pedido e mesmo payload retornam o Pedido existente;
+- mesmo identificador com payload ou ownership diferente retorna conflito `409`;
+- duplo clique/retry nao cria outro Pedido.
+
+A resposta minimizada contem `erpOrderId`, numero, identificador externo, estado, data, vendedor, totais oficiais, itens confirmados, modalidade, data solicitada, pagamento pendente, proxima acao e origem ERP. Custo, margem, markup, credito detalhado, banco, fornecedor, notas internas e segredos nao sao retornados.
+
+## Erros principais
+
+- `site_cpa_order_customer_invalid` e `site_cpa_order_scope_forbidden`;
+- `site_cpa_order_item_invalid` e `site_cpa_order_quote_required`;
+- `site_cpa_order_price_changed` e `site_cpa_order_stock_changed`;
+- `site_cpa_order_stock_unavailable`;
+- `site_cpa_order_address_invalid` e `site_cpa_order_work_invalid`;
+- `site_cpa_order_payment_condition_invalid` e `site_cpa_order_credit_blocked`;
+- `site_cpa_order_idempotency_conflict` e `site_cpa_order_unavailable`.
+
+`siteHealth` informa `CUSTOMER_RESOLVE: ready`, `CATALOG_READ: ready` e `ORDER_CREATE: ready`.
+
+## Pendencias deliberadas
+
+- pagamento real, provider e webhook;
+- frete final integrado;
+- credito avancado e negociacao;
+- cancelamento e edicao pos-pedido;
+- consulta/status como operacoes independentes.
+
+Proximo lote somente com autorizacao expressa: ERP-SITE-05 - Orcamento e Negociacao.

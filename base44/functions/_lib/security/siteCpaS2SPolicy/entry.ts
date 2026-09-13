@@ -8,6 +8,11 @@ import {
   SiteCpaCatalogError,
   resolveSiteCpaCatalog,
 } from '../siteCpaCatalogRead/entry.ts';
+import {
+  SITE_CPA_ORDER_CREATE_OPERATION,
+  SiteCpaOrderError,
+  resolveSiteCpaOrderCreate,
+} from '../siteCpaOrderCreate/entry.ts';
 
 export const SITE_CPA_ORIGIN = 'SITE_CPA';
 export const SITE_CPA_CONTRACT_VERSION = '1';
@@ -399,6 +404,7 @@ export const handleSiteCpaGatewayRequest = async ({
         capabilities: {
           CUSTOMER_RESOLVE: 'ready',
           CATALOG_READ: 'ready',
+          ORDER_CREATE: 'ready',
         },
       },
     });
@@ -439,6 +445,31 @@ export const handleSiteCpaGatewayRequest = async ({
       const failure = error instanceof SiteCpaCatalogError
         ? error
         : new SiteCpaCatalogError(503, 'site_cpa_catalog_unavailable');
+      const body = buildSiteCpaResponse({
+        ok: false,
+        request,
+        code: failure.code,
+        message: failure.message,
+        details: failure.details,
+      });
+      return finish({
+        status: failure.status,
+        body,
+        eventStatus: 'rejeitado',
+        errorCode: failure.code,
+      });
+    }
+  }
+
+  if (request.operation === SITE_CPA_ORDER_CREATE_OPERATION) {
+    try {
+      const data = await resolveSiteCpaOrderCreate({ base44, payload, scope, request, now });
+      const body = buildSiteCpaResponse({ ok: true, request, data });
+      return finish({ status: 201, body, eventStatus: 'concluido' });
+    } catch (error) {
+      const failure = error instanceof SiteCpaOrderError
+        ? error
+        : new SiteCpaOrderError(503, 'site_cpa_order_unavailable');
       const body = buildSiteCpaResponse({
         ok: false,
         request,

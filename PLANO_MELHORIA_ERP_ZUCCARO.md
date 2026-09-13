@@ -790,3 +790,12 @@ O contrato tecnico detalhado e o andamento dos lotes ficam no plano existente `d
 - Sellable e quoteRequired sao calculados no ERP; custo, margem e regras internas nao saem do backend.
 - CUSTOMER_RESOLVE e CATALOG_READ ficam ready; Pedido permanece no lote seguinte.
 
+### ERP-SITE-04 - Pedido e checkout
+
+- `sitePedidoCreate` reutiliza Pedido, itens incorporados, Cliente, catalogo/preco, estoque, FormaPagamento, enderecos, vendedor e referencias existentes.
+- Cliente, papel empresarial e ownership sao revalidados pelo ERP-SITE-02; Produto, preco, unidade, spec, minimo, multiplo e venda direta sao revalidados pelo ERP-SITE-03.
+- Preco ou estoque alterados impedem a criacao e retornam conflito seguro; total, desconto, frete, vendedor e condicao enviados pelo Site nao sao autoridade.
+- Pedido nasce aguardando aprovacao, com pagamento pendente e sem reserva antecipada. Entrega mantem frete pendente; retirada segue o fluxo oficial sem frete.
+- O ledger S2S e o `externalOrderId` com hash canonico impedem duplicidade e conflito de payload.
+- CUSTOMER_RESOLVE, CATALOG_READ e ORDER_CREATE ficam ready; pagamento, cancelamento, edicao e negociacao permanecem em lotes separados.
+

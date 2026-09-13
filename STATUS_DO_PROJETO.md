@@ -7371,3 +7371,29 @@ Checklist inicial:
 - Avisos conhecidos: build mantem imports mistos, Browserslist desatualizado e bundle principal acima de 500 kB.
 - Nenhum arquivo do Site CPA, dado real, recurso Base44 remoto, backup legado ou HD externo foi acessado ou alterado.
 - Proximo passo somente com autorizacao expressa: ERP-SITE-04 - Pedido e checkout.
+
+### ERP-SITE-04 - Pedido e checkout do Site CPA
+
+- Objetivo: implementar `sitePedidoCreate` no gateway S2S `v1`, criando um `Pedido` real no ERP sem confiar nos calculos ou identificadores comerciais enviados pelo Site.
+- Reuso: Pedido com `itens_revenda`, Cliente, Produto, CatalogoWeb, GrupoProduto, UnidadeMedida, TabelaPreco, TabelaPrecoItem, FormaPagamento, enderecos incorporados, Colaborador, Projeto, CentroCusto, `IntegracaoEvento` e auditoria existentes.
+- Cliente e acesso: `erpCustomerId` e `externalUserId` exigem vinculo aprovado no ERP-SITE-02; somente `ADMIN_EMPRESA` e `COMPRADOR` podem solicitar Pedido. Papel externo nao amplia RBAC interno.
+- Multiempresa: Grupo e Empresa vem da credencial `SITE_CPA`; Cliente, Produto, preco, estoque, endereco, obra, Projeto, Centro de Custo e FormaPagamento sao revalidados no mesmo escopo.
+- Itens: limite de 50; IDs oficiais obrigatorios; Produto ativo/publicado/vendavel; spec, unidade, minimo e multiplo validados. Nome e SKU enviados nao sao chaves de decisao.
+- Preco: recalculado pelo ERP-SITE-03 com tabela aprovada do Cliente. Divergencia retorna `PRICE_CHANGED` com snapshot seguro e nao cria Pedido; total, desconto e preco enviados pelo Site sao ignorados como autoridade.
+- Estoque: saldo fisico menos reservado e revalidado antes da criacao. Mudanca retorna `STOCK_CHANGED`, indisponibilidade falha com `503`, parcial nao e aceito silenciosamente e produto oficialmente sob encomenda preserva esse fluxo.
+- Entrega: DELIVERY exige endereco ativo do Cliente; PICKUP usa `Retirada`. Obra exige endereco do tipo OBRA; Projeto exige ownership do Cliente e Centro de Custo exige o mesmo escopo.
+- Condicao e credito: somente condicao oficial do Cliente e FormaPagamento ativa sao aceitas. Condicao a prazo valida credito existente; bloqueio nao expoe limite detalhado.
+- Vendedor: somente o Colaborador ativo configurado no Cliente e usado; ausente/inativo retorna `UNASSIGNED`, sem inventar responsavel.
+- Persistencia: Pedido e itens sao gravados juntos; nasce `Aguardando Aprovacao`, com aprovacao e pagamento pendentes, sem faturamento, sem pagamento confirmado e sem reserva antecipada.
+- Frete: retirada usa zero; entrega nasce com frete pendente e `FREIGHT_CONFIRMATION`, sem aceitar valor ficticio do Site.
+- Idempotencia: ledger S2S, `externalOrderId` e hash canonico impedem duplo clique/retry e detectam ownership ou payload conflitante com `409`.
+- Seguranca: observacoes e referencias sao limitadas/sanitizadas; resposta nao inclui custo, margem, markup, fornecedor, credito detalhado, dados bancarios, notas internas ou segredos.
+- Auditoria: registra solicitacao, criacao, replay e bloqueios com correlacao, Grupo, Empresa, Cliente, identificador externo e contagem de itens, sem payload integral.
+- Capability: `siteHealth` informa `CUSTOMER_RESOLVE: ready`, `CATALOG_READ: ready` e `ORDER_CREATE: ready`; capabilities posteriores continuam inativas.
+- PRONTO: criacao de Pedido real, revalidacao de Cliente, Produto, preco, estoque, endereco, entrega/retirada, condicao, vendedor, idempotencia e status oficial.
+- BLOCKED: pagamento/provider/webhook real, frete final integrado, credito avancado, cancelamento, edicao pos-pedido e operacoes independentes de consulta/status.
+- Validacao: 52/52 testes focados e 304/304 testes globais aprovados; ESLint global sem diagnosticos; `audit:baseline`, build completo e `git diff --check` aprovados.
+- Typecheck: permanecem os mesmos 2.238 diagnosticos historicos e zero diagnosticos nos arquivos do lote.
+- Avisos conhecidos: build mantem imports mistos, Browserslist desatualizado e bundle principal acima de 500 kB.
+- Nenhum arquivo do Site CPA, dado real, recurso Base44 remoto, backup legado ou HD externo foi acessado ou alterado.
+- Proximo passo somente com autorizacao expressa: ERP-SITE-05 - Orcamento e Negociacao.

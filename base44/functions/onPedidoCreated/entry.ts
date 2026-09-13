@@ -34,11 +34,13 @@ Deno.serve(async (req) => {
     if ((dataEnriched as any)?.error) return dataEnriched;
 
     if (event.type === 'create') {
-      // Permissão: editar estoque e criar movimentação
-      const perm = await assertPermission(base44, ctx, 'Estoque', 'MovimentacaoEstoque', 'criar');
-      if (perm) return perm;
-
-      const { movimentos } = await handleOnPedidoCreated(base44, ctx, dataEnriched, user);
+      let movimentos = [];
+      if (dataEnriched?.reserva_estoque_ao_criar !== false) {
+        // Permissão: editar estoque e criar movimentação
+        const perm = await assertPermission(base44, ctx, 'Estoque', 'MovimentacaoEstoque', 'criar');
+        if (perm) return perm;
+        movimentos = (await handleOnPedidoCreated(base44, ctx, dataEnriched, user)).movimentos;
+      }
 
       await stockAudit(base44, user, {
         acao: 'Criação',
