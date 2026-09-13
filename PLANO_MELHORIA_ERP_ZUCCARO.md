@@ -468,3 +468,52 @@ Andamento em 2026-09-13: a persistencia especializada passou a confirmar a escri
 
 Proxima frente: documentar a matriz de impacto, pre-condicoes, rollback, idempotencia, RBAC e segregacao necessaria para eventual promocao manual. Essa frente nao habilitara acao executavel nem criara ou alterara titulos sem autorizacao expressa.
 
+### Matriz de decisao para eventual promocao manual
+
+Esta matriz e somente um contrato de seguranca. Ela nao autoriza implementacao, nao cria permissao, botao, endpoint, entidade ou titulo e nao altera o bloqueio atual do staging.
+
+| Area | Pre-condicao obrigatoria | Comportamento futuro permitido | Bloqueio obrigatorio |
+|---|---|---|---|
+| Contexto | `scope_type=empresa`, `group_id` e `empresa_id` validos; Empresa ativa e pertencente ao Grupo | Operar somente na Empresa proprietaria; Grupo recebe visao consolidada | Grupo sem Empresa emissora, Empresa de outro Grupo ou contexto divergente |
+| Estado | Solicitacao `pendente`, bloqueada, com etapa `aprovada_aguardando_promocao_manual` | Iniciar promocao uma unica vez, sob versao conhecida do envelope | Qualquer outra etapa, envelope alterado, cancelado, ja promovido ou em processamento |
+| Origem | Entidade `ContaPagar` ou `ContaReceber`, codigo legado e referencia do staging presentes | Manter rastreio permanente da solicitacao e do codigo legado | Entidade desconhecida, codigo ausente ou origem sem rastreabilidade |
+| Evidencia | Pelo menos uma evidencia acessivel, validada e vinculada; antes da implementacao, exigir hash imutavel e verificacao de arquivo | Referenciar a evidencia no evento de promocao sem copiar segredo ou URL temporaria para auditoria | Arquivo ausente, expirado, adulterado, infectado ou sem hash verificavel |
+| Segregacao | Registrante, revisor e aprovador final distintos | Um quarto usuario, tambem distinto, executa a promocao | Auto-promocao ou acumulacao com qualquer uma das tres etapas anteriores |
+| RBAC | Nova acao especifica proposta `Financeiro.Migracao.promover`, validada no frontend e backend, com sessao reforcada | Exibir e executar somente apos autorizacao expressa e confirmacao humana | Reuso de `conciliar`, `aprovar`, perfil administrativo generico ou falha do guard |
+| Decisao `ABERTO` | Valor, vencimento, contraparte, categoria/conta e Empresa confirmados | Criar titulo operacional inicialmente pendente, sem data/valor de baixa | Projetar pagamento, recebimento ou conciliacao em titulo classificado como aberto |
+| Decisao `PAGO` | Todos os campos de `ABERTO` mais data, valor, forma, conta/caixa e comprovante de liquidacao | Criar titulo e evento de liquidacao na mesma unidade atomica; nunca apenas marcar `status=Pago` | Campo financeiro incompleto, divergencia de valor ou impossibilidade de atomicidade |
+| Idempotencia | Chave unica proposta `migracao-promocao|grupo|empresa|entidade|codigo-legado` | Repeticao devolve o mesmo resultado confirmado | Atualizar automaticamente titulo conflitante ou aceitar mesma chave em outro destino |
+| Auditoria | Antes/depois sanitizados, quatro atores, timestamp, Grupo, Empresa, decisao, correlacao e resultado | Confirmar sucesso somente depois de titulo, staging e auditoria persistidos | Auditoria indisponivel, incompleta ou contendo segredo/evidencia temporaria |
+| Integridade | Validar `assertTituloOnCreate`, duplicidade e escopo antes da escrita | Remover do payload operacional as marcas que mantem o envelope no staging e preservar a origem em campos proprios | Contornar `financeiroTituloPolicy` ou copiar diretamente o envelope para o titulo |
+| Concorrencia | Reserva/lock por solicitacao e verificacao de versao imediatamente antes da escrita | Uma unica promocao vence; repeticoes sao idempotentes | Duas sessoes criarem titulos ou liquidacoes concorrentes |
+
+#### Sequencia futura condicionada a autorizacao
+
+1. Revalidar usuario, sessao reforcada, permissao especifica e contexto no backend.
+2. Recarregar a solicitacao por ID, Grupo e Empresa e validar integralmente o envelope aprovado.
+3. Verificar hash e disponibilidade das evidencias, quatro atores distintos e decisao final consistente.
+4. Reservar a chave idempotente e impedir outra promocao concorrente.
+5. Construir por allowlist o payload minimo de `ContaPagar` ou `ContaReceber`.
+6. Para `ABERTO`, criar titulo pendente. Para `PAGO`, criar titulo e liquidacao na mesma unidade atomica.
+7. Auditar antes/depois e somente entao marcar o staging como promovido, preservando referencia ao titulo.
+8. Confirmar o resultado por releitura e liberar notificacoes/invalidacoes de cache apenas depois da persistencia completa.
+
+#### Rollback e recuperacao obrigatorios
+
+- Falha antes da escrita: manter a solicitacao intacta em `aprovada_aguardando_promocao_manual`.
+- Falha ao criar titulo: liberar a reserva idempotente e registrar tentativa negada, sem alterar o staging.
+- Falha de auditoria ou ao atualizar o staging: desfazer o titulo recem-criado somente se ele ainda nao tiver consumidores; caso contrario, bloquear ambos e abrir reconciliacao tecnica.
+- Falha depois de liquidacao: nunca apagar titulo ou pagamento; aplicar estorno compensatorio auditado e manter a solicitacao bloqueada para intervencao.
+- Timeout com resultado desconhecido: consultar pela chave idempotente antes de repetir; nunca executar novamente por suposicao.
+
+#### Bloqueios tecnicos ainda nao resolvidos
+
+- Nao foi confirmada uma primitiva transacional entre `SolicitacaoAprovacao`, `ContaPagar`/`ContaReceber` e `AuditLog`.
+- Nao foi confirmado indice unico persistente para a chave de promocao.
+- As evidencias aceitam referencia controlada, mas ainda nao exigem hash imutavel e verificacao de conteudo.
+- Nao foi homologada sessao reforcada/MFA especificamente para promocao financeira migrada.
+- O mapeamento obrigatorio de contraparte, conta, categoria, vencimento, forma e liquidacao ainda exige aprovacao do responsavel financeiro.
+- O clone continua sem configuracao de deploy Base44; nenhum recurso remoto pode ser alterado por este lote.
+
+Recomendacao atual: manter a promocao desabilitada. O proximo trabalho permitido e uma auditoria tecnica somente leitura das primitivas existentes de transacao, unicidade/idempotencia e evidencia, sem criar acao executavel.
+

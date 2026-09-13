@@ -7065,3 +7065,15 @@ Checklist inicial:
 - Validacao: 1 teste focado e 251 testes globais aprovados; ESLint e typecheck direcionados sem diagnosticos; audit baseline, build completo e `git diff --check` aprovados.
 - Divida preexistente: ESLint global permanece com 84 erros e 17 avisos; typecheck, bundle e Browserslist mantem apenas os diagnosticos historicos registrados.
 - Proximo passo obrigatorio: preparar a matriz de impacto, pre-condicoes, rollback e autorizacoes para uma eventual promocao manual do staging, sem implementar acao executavel e sem criar ou alterar `ContaPagar` ou `ContaReceber` antes de autorizacao expressa.
+
+### Gate 18 - Matriz de eventual promocao manual documentada
+
+- A matriz foi adicionada ao `PLANO_MELHORIA_ERP_ZUCCARO.md`, sem criar documento concorrente, tela, botao, permissao, endpoint ou codigo executavel.
+- Foram definidos contexto estrito, estado de entrada, origem, evidencia, segregacao de quatro usuarios, RBAC especifico, idempotencia, concorrencia, auditoria e integridade do titulo.
+- A decisao `ABERTO` somente admite futuro titulo pendente e sem campos de baixa. A decisao `PAGO` exige dados completos e criacao do titulo mais liquidacao em uma mesma unidade atomica; marcar apenas o status foi proibido.
+- A chave futura proposta inclui Grupo, Empresa, entidade e codigo legado. Conflito nunca autoriza atualizar automaticamente um titulo existente.
+- O rollback distingue falha antes da escrita, falha de criacao, falha de auditoria, resultado desconhecido e falha posterior a liquidacao; titulos consumidos nunca poderao ser apagados.
+- Permanecem bloqueadores: transacao entre entidades nao confirmada, ausencia de indice unico homologado, evidencia sem hash obrigatorio, MFA nao homologado para a acao e mapeamento financeiro pendente de aprovacao.
+- Recomendacao mantida: promocao operacional desabilitada. Nenhum dado real, titulo, banco, arquivo legado ou HD externo foi acessado ou alterado.
+- Validacao documental: contratos atuais de migracao, titulo, workflow e backend foram comparados; `git diff --check` aprovado. Testes e build foram dispensados conforme AGENTS.md porque o lote altera somente Plano e Status, sem runtime.
+- Proximo passo obrigatorio: auditar em modo somente leitura as primitivas existentes de transacao, unicidade/idempotencia e integridade de evidencias. Nao implementar promocao nem alterar dados antes de autorizacao expressa.
