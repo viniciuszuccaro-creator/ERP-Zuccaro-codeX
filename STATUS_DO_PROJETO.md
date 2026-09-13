@@ -7327,3 +7327,25 @@ Checklist inicial:
 - Avisos conhecidos: build mantem imports mistos, Browserslist desatualizado e bundle principal acima de 500 kB.
 - Nenhum arquivo do Site CPA, dado real, backup legado ou HD externo foi acessado ou alterado neste lote.
 - Proximo passo coordenado: ERP-SITE-02, evoluindo Cliente, enderecos e acessos existentes para solicitacao e aprovacao do vinculo empresarial por CNPJ.
+
+### ERP-SITE-02 - Cliente e conta empresarial
+
+- Objetivo: implementar siteClienteResolve no gateway v1, fazendo do Cliente existente a fonte mestre da conta empresarial do Site CPA.
+- Ajuste da fundacao: o gateway S2S somente reconhece a origem oficial SITE_CPA. Operacao legada com nome site* sem essa origem nao e capturada pelo novo contrato.
+- Identidade: CNPJ e normalizado e validado pelos digitos verificadores; erpCustomerId somente e aceito quando pertence ao escopo e ao vinculo aprovado. Nome, e-mail e telefone nao resolvem Cliente.
+- Vinculo governado: SolicitacaoAprovacao registra o relacionamento entre externalUserId e Cliente, com papel externo em allowlist. ADMIN_EMPRESA, COMPRADOR, FINANCEIRO e CONSULTA nao ampliam nem duplicam o RBAC interno.
+- Aprovacao humana: primeiro membro ou administrador recebe estado PENDING_VERIFICATION. Nenhum CNPJ, dominio de e-mail ou ContatoB2B aprova o vinculo automaticamente.
+- Reuso de ContatoB2B: contato ativo do mesmo Cliente/Grupo/Empresa pode ser anexado como referencia auxiliar da solicitacao; nenhum usuario interno do ERP e exposto.
+- Multiempresa: busca e resposta exigem Grupo e Empresa definidos no servidor. Cliente de outro Grupo/Empresa, ID adulterado e Cliente compartilhado fora da allowlist falham fechados.
+- Duplicidade: mais de um Cliente ativo com o mesmo CNPJ no escopo retorna site_cpa_customer_ambiguous; nenhuma escolha silenciosa ocorre.
+- Enderecos: endereco_principal e locais_entrega/obra ativos sao projetados por allowlist. Apenas o endereco principal oficial nasce como padrao; a primeira posicao de locais_entrega nao e promovida.
+- Vendedor oficial: vendedor_responsavel_id somente retorna ASSIGNED quando o Colaborador esta ativo no mesmo escopo; caso contrario retorna UNASSIGNED.
+- Minimizacao: resposta nao inclui custo, margem, banco, observacoes internas, tags CRM, score de risco ou limite de credito detalhado.
+- Capability: siteHealth informa apenas CUSTOMER_RESOLVE como ready. Usuarios, obras, condicao comercial e criacao de endereco permanecem inativos.
+- PRONTO: customer resolve, solicitacao/vinculo seguro, seller resolve, leitura de enderecos ativos, conta empresarial verificada e erros estaveis.
+- BLOCKED: criacao automatica de Cliente, gravacao automatica de endereco e politicas avancadas de membros/obras/condicao comercial.
+- Validacao: 20/20 testes focados e 272/272 testes globais aprovados; ESLint direcionado e global sem diagnosticos; audit:baseline, build completo e git diff --check aprovados.
+- Typecheck: permanecem os mesmos 2.238 diagnosticos historicos; nenhum diagnostico novo foi introduzido pelo lote.
+- Avisos conhecidos: build mantem imports mistos, Browserslist desatualizado e bundle principal acima de 500 kB.
+- Nenhum arquivo do Site CPA, dado real, recurso Base44 remoto, backup legado ou HD externo foi acessado ou alterado.
+- Proximo passo somente com autorizacao expressa: ERP-SITE-03 - Catalogo.

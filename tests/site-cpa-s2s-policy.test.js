@@ -9,6 +9,7 @@ import {
   constantTimeEqual,
   hmacSha256Hex,
   handleSiteCpaGatewayRequest,
+  isSiteCpaRequest,
   normalizeSiteCpaRequest,
   resolveSiteCpaScope,
   validateSiteCpaContract,
@@ -52,6 +53,17 @@ test('normaliza envelope e headers do contrato Site CPA', () => {
   assert.equal(normalized.operation, 'siteHealth');
   assert.equal(normalized.bearerToken, 'service-token');
   assert.equal(normalized.requestedEmpresaId, 'cpa-aco');
+});
+
+test('operacao legada site* sem origem SITE_CPA nao entra no novo gateway', () => {
+  assert.equal(isSiteCpaRequest({
+    headers: new Headers({ 'content-type': 'application/json' }),
+    payload: { version: '1', operation: 'sitePedidoCreate' },
+  }), false);
+  assert.equal(isSiteCpaRequest({
+    headers: new Headers({ 'content-type': 'application/json', 'x-origin': 'SITE_CPA' }),
+    payload: { version: '1', operation: 'sitePedidoCreate' },
+  }), true);
 });
 
 test('contrato falha fechado para versao, timestamp, nonce e idempotencia invalidos', () => {
@@ -225,8 +237,8 @@ test('nonce repetido e ledger indisponivel falham fechados', async () => {
 
 test('operacao futura autenticada responde nao implementada sem sucesso falso', async () => {
   const result = await gatewayRequest({
-    body: { version: '1', operation: 'siteClienteResolve' },
-    nonce: 'nonce-cliente-1234567890',
+    body: { version: '1', operation: 'sitePedidoCreate' },
+    nonce: 'nonce-pedido-12345678901',
   });
   assert.equal(result.response.status, 501);
   assert.equal(result.body.ok, false);

@@ -773,3 +773,11 @@ Nova prioridade autorizada em 2026-09-13: executar primeiro no ERP os 12 contrat
 
 O contrato tecnico detalhado e o andamento dos lotes ficam no plano existente `docs/PLANO_CPA_B2B_MARKETPLACE_ERP.md` e em `STATUS_DO_PROJETO.md`.
 
+### ERP-SITE-02 - Cliente e conta empresarial
+
+- siteClienteResolve reutiliza Cliente, ContatoB2B, enderecos incorporados, vendedor responsavel e SolicitacaoAprovacao.
+- O CNPJ tem validacao de digitos; e-mail, telefone e nome nao sao chaves mestras.
+- Dados somente sao liberados para Site user com vinculo aprovado no mesmo Grupo e Empresa.
+- Cliente ausente, endereco novo e primeiro administrador nao geram cadastro ou privilegio automatico.
+- CUSTOMER_RESOLVE e a unica capability de Cliente pronta; Catalogo permanece como proximo lote separado.
+

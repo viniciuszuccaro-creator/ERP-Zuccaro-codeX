@@ -552,3 +552,76 @@ Segredos nunca entram em commit, frontend, resposta ou auditoria.
 - operacoes dos lotes seguintes respondem `501 site_cpa_operation_not_implemented`, sem sucesso falso.
 
 Proximo lote: ERP-SITE-02, resolucao de Cliente e solicitacao/aprovacao de vinculo empresarial, reutilizando Cliente, enderecos, contatos e RBAC existentes.
+
+---
+
+# 21. EXECUCAO ERP-SITE-02 - CLIENTE E CONTA EMPRESARIAL
+
+A operacao siteClienteResolve foi integrada ao mesmo gateway v1. A deteccao do novo canal agora exige origem oficial SITE_CPA; uma operacao legada com nome site*, sem essa origem, continua fora do gateway S2S.
+
+## Requisicao
+
+~~~json
+{
+  "version": "1",
+  "operation": "siteClienteResolve",
+  "data": {
+    "cnpj": "11.222.333/0001-81",
+    "externalUserId": "usuario-estavel-do-site",
+    "role": "COMPRADOR",
+    "email": "dado-auxiliar@cliente.example"
+  }
+}
+~~~
+
+- identificadores mestres aceitos: CNPJ valido ou erpCustomerId previamente vinculado;
+- externalUserId/siteUserId e obrigatorio para ownership da conta;
+- e-mail e telefone nunca resolvem ou aprovam Cliente isoladamente;
+- papeis externos permitidos: ADMIN_EMPRESA, COMPRADOR, FINANCEIRO e CONSULTA; eles nao equivalem ao perfil RBAC interno;
+- groupId, empresaId, vendedor e papel enviados pelo Site nao sao confiados.
+
+## Vinculo e ownership
+
+- Cliente permanece o mestre da conta empresarial; nao existe cadastro paralelo;
+- SolicitacaoAprovacao com tipo vinculo_site_cpa_cliente registra solicitacao, decisao e papel externo;
+- ContatoB2B pode ser associado como referencia auxiliar por coincidencia exata dentro do Cliente e escopo, mas nunca aprova o vinculo;
+- primeiro administrador, comprador ou outro membro somente recebe dados depois de aprovacao humana com Comercial.Aprovacoes.aprovar;
+- repeticao da solicitacao para o mesmo Site user e Cliente reutiliza a pendencia;
+- erpCustomerId e sempre revalidado contra Grupo, Empresa e vinculo aprovado.
+
+## Resposta permitida
+
+A resposta aprovada contem apenas erpCustomerId, codigo, CNPJ mascarado, nomes empresariais, situacao, tipo, conta verificada, usuario externo atual, vendedor validado, enderecos ativos, flags comerciais minimas, Grupo, Empresa, origem ERP e data de atualizacao.
+
+Nao sao retornados custo, margem, dados bancarios, observacoes internas, tags de CRM, score de risco ou limite de credito detalhado.
+
+O endereco principal existente e o unico que nasce como padrao. Locais de entrega/obra preservam seu proprio campo de padrao; a primeira posicao da lista nao concede essa condicao. Enderecos inativos nao sao selecionaveis.
+
+O vendedor somente fica ASSIGNED quando o Colaborador indicado pelo Cliente esta ativo no mesmo Grupo/Empresa. Caso contrario, a resposta usa UNASSIGNED, sem inventar redistribuicao.
+
+## Estados e erros
+
+- 400 site_cpa_customer_invalid_document: CNPJ invalido;
+- 400 site_cpa_customer_identifier_required: falta CNPJ/ERP Customer ID;
+- 400 site_cpa_external_user_required: usuario externo ausente ou invalido;
+- 400 site_cpa_business_role_invalid: papel externo fora da allowlist;
+- 403 site_cpa_customer_forbidden: ID fora do ownership;
+- 403 site_cpa_business_link_rejected: vinculo recusado;
+- 404 site_cpa_customer_not_found: BLOCKED_PENDING_CUSTOMER_CREATION_POLICY;
+- 409 site_cpa_customer_ambiguous: mais de um Cliente ativo no escopo;
+- 409 site_cpa_address_policy_pending: BLOCKED_PENDING_ADDRESS_CREATE_POLICY;
+- 423 site_cpa_customer_inactive ou site_cpa_customer_blocked;
+- 503: leitura, gravacao, contato ou auditoria indisponivel.
+
+siteHealth publica somente CUSTOMER_RESOLVE: ready. As capabilities futuras de usuarios, obras, condicao comercial e criacao de endereco permanecem inativas.
+
+## Pendencias deliberadas
+
+- criacao automatica de Cliente permanece bloqueada;
+- criacao/alteracao automatica de endereco permanece bloqueada;
+- listagem completa de membros, obras e condicao comercial fica para contratos futuros;
+- integracao do Site CPA continua proibida ate homologacao da camada ERP.
+
+Como cada request usa nonce e idempotencia do ERP-SITE-01, uma nova consulta posterior a decisao humana deve usar novo nonce e nova chave de idempotencia.
+
+Proximo lote autorizado somente por solicitacao expressa: ERP-SITE-03 - Catalogo.

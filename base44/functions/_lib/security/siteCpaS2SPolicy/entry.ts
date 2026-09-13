@@ -1,3 +1,9 @@
+import {
+  SITE_CPA_CUSTOMER_RESOLVE_OPERATION,
+  SiteCpaCustomerError,
+  resolveSiteCpaCustomer,
+} from '../siteCpaCustomerResolve/entry.ts';
+
 export const SITE_CPA_ORIGIN = 'SITE_CPA';
 export const SITE_CPA_CONTRACT_VERSION = '1';
 export const SITE_CPA_HEALTH_OPERATION = 'siteHealth';
@@ -67,7 +73,7 @@ export const normalizeSiteCpaRequest = ({ headers, payload = {} } = {}) => ({
 
 export const isSiteCpaRequest = ({ headers, payload = {} } = {}) => {
   const request = normalizeSiteCpaRequest({ headers, payload });
-  return request.origin === SITE_CPA_ORIGIN || /^site[A-Z]/.test(request.operation);
+  return request.origin === SITE_CPA_ORIGIN;
 };
 
 export const validateSiteCpaContract = ({ request, now = Date.now(), clockSkewMs = DEFAULT_CLOCK_SKEW_MS } = {}) => {
@@ -140,10 +146,15 @@ export const buildSiteCpaResponse = ({
   message = null,
   request = {},
   replayed = false,
+  details = null,
 } = {}) => ({
   ok: ok === true,
   data: ok === true ? data : null,
-  error: ok === true ? null : { code: code || 'site_cpa_error', message: message || code || 'site_cpa_error' },
+  error: ok === true ? null : {
+    code: code || 'site_cpa_error',
+    message: message || code || 'site_cpa_error',
+    ...(details ? { details } : {}),
+  },
   meta: {
     version: SITE_CPA_CONTRACT_VERSION,
     origin: SITE_CPA_ORIGIN,
@@ -162,8 +173,8 @@ const jsonResponse = (body, status) => Response.json(body, {
   },
 });
 
-const errorResponse = ({ request, status, code, message }) => jsonResponse(
-  buildSiteCpaResponse({ ok: false, request, code, message }),
+const errorResponse = ({ request, status, code, message, details }) => jsonResponse(
+  buildSiteCpaResponse({ ok: false, request, code, message, details }),
   status,
 );
 
@@ -380,9 +391,37 @@ export const handleSiteCpaGatewayRequest = async ({
           empresaId: scope.empresaId,
           scopeType: scope.scopeType,
         },
+        capabilities: {
+          CUSTOMER_RESOLVE: 'ready',
+        },
       },
     });
     return finish({ status: 200, body, eventStatus: 'concluido' });
+  }
+
+  if (request.operation === SITE_CPA_CUSTOMER_RESOLVE_OPERATION) {
+    try {
+      const data = await resolveSiteCpaCustomer({ base44, payload, scope, request });
+      const body = buildSiteCpaResponse({ ok: true, request, data });
+      return finish({ status: 200, body, eventStatus: 'concluido' });
+    } catch (error) {
+      const failure = error instanceof SiteCpaCustomerError
+        ? error
+        : new SiteCpaCustomerError(503, 'site_cpa_customer_resolve_unavailable');
+      const body = buildSiteCpaResponse({
+        ok: false,
+        request,
+        code: failure.code,
+        message: failure.message,
+        details: failure.details,
+      });
+      return finish({
+        status: failure.status,
+        body,
+        eventStatus: 'rejeitado',
+        errorCode: failure.code,
+      });
+    }
   }
 
   const body = buildSiteCpaResponse({
