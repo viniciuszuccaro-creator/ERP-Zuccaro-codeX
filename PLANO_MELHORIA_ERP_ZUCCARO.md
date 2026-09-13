@@ -681,3 +681,16 @@ Lote concluido em 2026-09-13 na politica compartilhada de cadastros, sem alterar
 
 Proxima frente: tipar `portalClientePolicy.js`, politica compartilhada com 42 diagnosticos e 232 linhas. O cliente local e as telas acima do limite permanecem reservados para lotes proprios.
 
+### Contratos JSDoc - politica do Portal do Cliente
+
+Lote concluido em 2026-09-13 na politica compartilhada do Portal, sem alterar autenticacao, vinculo, filtragem, segunda via, PIX ou documentos fiscais.
+
+- Contratos locais descrevem usuario, cliente, titulo, NF-e, sessao, leitura, saldo e operacoes financeiras do Portal sem `any`, `ts-ignore` ou desativacao de `checkJs`.
+- O typecheck isolado de `portalClientePolicy.js` passou de 42 diagnosticos para zero.
+- O typecheck global caiu de 2.458 para 2.413 diagnosticos, reducao liquida de 45, sem transferir falhas para dashboards, boletos, documentos ou cliente local.
+- Permanecem iguais o bloqueio contra outro cliente, a filtragem das entidades pelo vinculo, o timeout explicito e a protecao contra troca do titular do recebivel.
+- A segunda via e o PIX continuam idempotentes e os links de XML/DANFE continuam restritos a NF-e do cliente; a politica encerrou com 310 linhas.
+- Nenhum dado, entidade, recurso Base44, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente: tipar `siteOrigemPolicy.js`, politica compartilhada com 39 diagnosticos e 265 linhas. O cliente local e as telas acima do limite permanecem reservados para lotes proprios.
+

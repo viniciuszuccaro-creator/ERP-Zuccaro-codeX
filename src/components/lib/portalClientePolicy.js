@@ -1,3 +1,51 @@
+/**
+ * @typedef {Record<string, unknown> & {
+ *   id?: string | number,
+ *   portal_usuario_id?: unknown,
+ *   cliente_id?: unknown,
+ *   cliente_fornecedor_id?: unknown,
+ *   destinatario_id?: unknown,
+ *   nome?: unknown,
+ *   razao_social?: unknown,
+ *   status?: unknown,
+ *   visivel_no_portal?: boolean,
+ *   valor?: string | number,
+ *   valor_total?: string | number,
+ *   data_vencimento?: string | number,
+ *   updated_date?: unknown,
+ *   portal_segunda_via_key?: unknown,
+ *   url_boleto_pdf?: unknown,
+ *   pix_copia_cola?: unknown,
+ *   linha_digitavel?: unknown,
+ *   xml_url?: unknown,
+ *   xml_nfe?: unknown,
+ *   danfe_url?: unknown,
+ *   pdf_url?: unknown,
+ * }} PortalRecord
+ * @typedef {{ requestedClienteId?: unknown, adminMode?: boolean }} PortalClienteIdOptions
+ * @typedef {{ user?: PortalRecord | null, cliente?: PortalRecord | null, requestedClienteId?: unknown, adminMode?: boolean }} PortalScopeOptions
+ * @typedef {{ entityName?: string, records?: PortalRecord[], portalClienteId?: unknown }} PortalReadOptions
+ * @typedef {{
+ *   authLoading?: boolean,
+ *   authError?: Error | null,
+ *   user?: PortalRecord | null,
+ *   vinculoLoading?: boolean,
+ *   vinculoFetched?: boolean,
+ *   vinculoError?: Error | null,
+ *   vinculoCliente?: PortalRecord | null,
+ *   requestedClienteId?: unknown,
+ *   adminMode?: boolean,
+ *   elapsedMs?: number,
+ * }} PortalSessionOptions
+ * @typedef {{ titulo?: PortalRecord, clienteId?: unknown }} PortalTituloOptions
+ * @typedef {{ before?: PortalRecord, patch?: PortalRecord, portalClienteId?: unknown }} PortalTituloWriteOptions
+ * @typedef {{ nfe?: PortalRecord, clienteId?: unknown }} PortalNfeOptions
+ * @typedef {{ tipo?: unknown, tituloId?: unknown, nonce?: unknown }} PortalFinanceKeyOptions
+ * @typedef {{ titulo?: PortalRecord, cliente?: PortalRecord }} PortalSegundaViaOptions
+ * @typedef {{ aberto: number, atrasado: number, quantidade: number }} PortalSaldo
+ */
+
+/** @param {...unknown} values */
 const firstText = (...values) => values.map((value) => String(value || '').trim()).find(Boolean) || '';
 
 export const PORTAL_TIMEOUT_MS = 12000;
@@ -13,11 +61,13 @@ export const PORTAL_SCOPED_ENTITIES = new Set([
   'Oportunidade',
 ]);
 
+/** @param {PortalClienteIdOptions} options */
 export const sanitizePortalClienteId = ({ requestedClienteId, adminMode = false } = {}) => {
   if (!adminMode) return null;
   return firstText(requestedClienteId) || null;
 };
 
+/** @param {PortalScopeOptions} options */
 export const assertPortalClienteScope = ({ user, cliente, requestedClienteId, adminMode = false } = {}) => {
   const requested = firstText(requestedClienteId);
   if (requested && !adminMode) {
@@ -31,6 +81,10 @@ export const assertPortalClienteScope = ({ user, cliente, requestedClienteId, ad
   return true;
 };
 
+/**
+ * @param {PortalRecord[]} clientes
+ * @param {PortalRecord} user
+ */
 export const resolvePortalClienteId = (clientes = [], user = {}) => {
   const userId = firstText(user.id);
   if (!userId) return null;
@@ -38,12 +92,14 @@ export const resolvePortalClienteId = (clientes = [], user = {}) => {
   return mine?.id || null;
 };
 
+/** @param {PortalRecord} nfe */
 export const clienteIdFromNfe = (nfe = {}) => firstText(
   nfe.cliente_id,
   nfe.cliente_fornecedor_id,
   nfe.destinatario_id,
 );
 
+/** @param {PortalReadOptions} options */
 export const applyPortalReadScope = ({ entityName, records = [], portalClienteId } = {}) => {
   if (!portalClienteId) return records;
   const list = Array.isArray(records) ? records : [];
@@ -57,6 +113,7 @@ export const applyPortalReadScope = ({ entityName, records = [], portalClienteId
   return list.filter((item) => firstText(item.cliente_id) === firstText(portalClienteId));
 };
 
+/** @param {PortalSessionOptions} options */
 export const resolvePortalSessionState = ({
   authLoading = false,
   authError = null,
@@ -94,6 +151,7 @@ export const resolvePortalSessionState = ({
   return { state: 'pronto', cliente: vinculoCliente, title: 'Pronto', message: '' };
 };
 
+/** @param {PortalTituloOptions} options */
 export const assertPortalTituloDoCliente = ({ titulo = {}, clienteId } = {}) => {
   const scoped = firstText(clienteId);
   if (!scoped) throw new Error('Cliente do portal obrigatorio.');
@@ -104,6 +162,7 @@ export const assertPortalTituloDoCliente = ({ titulo = {}, clienteId } = {}) => 
   return true;
 };
 
+/** @param {PortalTituloWriteOptions} options */
 export const assertPortalTituloWrite = ({ before = {}, patch = {}, portalClienteId } = {}) => {
   assertPortalTituloDoCliente({ titulo: before, clienteId: portalClienteId });
   if (Object.prototype.hasOwnProperty.call(patch, 'cliente_id')
@@ -114,6 +173,7 @@ export const assertPortalTituloWrite = ({ before = {}, patch = {}, portalCliente
   return true;
 };
 
+/** @param {PortalNfeOptions} options */
 export const assertPortalNfeDoCliente = ({ nfe = {}, clienteId } = {}) => {
   const scoped = firstText(clienteId);
   if (!scoped) throw new Error('Cliente do portal obrigatorio.');
@@ -124,6 +184,7 @@ export const assertPortalNfeDoCliente = ({ nfe = {}, clienteId } = {}) => {
   return true;
 };
 
+/** @param {PortalRecord} titulo */
 export const isTituloAbertoPortal = (titulo = {}) => {
   const status = String(titulo.status || '').toLowerCase();
   return !status.includes('recebid')
@@ -132,18 +193,27 @@ export const isTituloAbertoPortal = (titulo = {}) => {
     && !status.includes('cancel');
 };
 
+/** @param {PortalRecord} titulo */
 export const isTituloVisivelPortal = (titulo = {}) => {
   if (titulo.visivel_no_portal === false) return false;
   if (titulo.visivel_no_portal === true) return true;
   return isTituloAbertoPortal(titulo);
 };
 
+/**
+ * @param {PortalRecord[]} titulos
+ * @param {unknown} clienteId
+ */
 export const filtrarTitulosPortal = (titulos = [], clienteId) => (
   (Array.isArray(titulos) ? titulos : []).filter((item) => (
     firstText(item.cliente_id) === firstText(clienteId) && isTituloVisivelPortal(item)
   ))
 );
 
+/**
+ * @param {PortalRecord[]} titulos
+ * @param {unknown} clienteId
+ */
 export const calcularSaldoPortal = (titulos = [], clienteId) => {
   const list = filtrarTitulosPortal(titulos, clienteId).filter(isTituloAbertoPortal);
   const hoje = new Date();
@@ -154,9 +224,10 @@ export const calcularSaldoPortal = (titulos = [], clienteId) => {
     const venc = item.data_vencimento ? new Date(item.data_vencimento) : null;
     if (venc && !Number.isNaN(venc.getTime()) && venc < hoje) acc.atrasado += valor;
     return acc;
-  }, { aberto: 0, atrasado: 0, quantidade: list.length });
+  }, /** @type {PortalSaldo} */ ({ aberto: 0, atrasado: 0, quantidade: list.length }));
 };
 
+/** @param {PortalFinanceKeyOptions} options */
 export const portalFinanceKey = ({ tipo, tituloId, nonce = '' } = {}) => {
   const t = firstText(tipo);
   const id = firstText(tituloId);
@@ -164,13 +235,19 @@ export const portalFinanceKey = ({ tipo, tituloId, nonce = '' } = {}) => {
   return ['portal', t, id, firstText(nonce)].filter(Boolean).join('|');
 };
 
+/** @param {unknown} value */
 const onlyDigits = (value) => String(value || '').replace(/\D/g, '');
 
+/** @param {PortalRecord} titulo */
 export const buildLinhaDigitavelLocal = (titulo = {}) => {
   const base = `${onlyDigits(titulo.id)}${onlyDigits(titulo.valor || titulo.valor_total)}${onlyDigits(titulo.data_vencimento)}`.padEnd(47, '0');
   return base.slice(0, 47);
 };
 
+/**
+ * @param {PortalRecord} titulo
+ * @param {PortalRecord} cliente
+ */
 export const buildPixCopiaColaPortal = (titulo = {}, cliente = {}) => {
   const txid = firstText(titulo.id).replace(/[^a-zA-Z0-9]/g, '').slice(0, 25) || 'PORTALTX';
   const valor = (Number(titulo.valor || titulo.valor_total || 0) || 0).toFixed(2);
@@ -192,6 +269,7 @@ export const buildPixCopiaColaPortal = (titulo = {}, cliente = {}) => {
   ].join('');
 };
 
+/** @param {PortalSegundaViaOptions} options */
 export const buildSegundaViaPortal = ({ titulo = {}, cliente = {} } = {}) => {
   assertPortalTituloDoCliente({ titulo, clienteId: cliente.id });
   if (!isTituloAbertoPortal(titulo)) {
@@ -222,6 +300,7 @@ export const buildSegundaViaPortal = ({ titulo = {}, cliente = {} } = {}) => {
   };
 };
 
+/** @param {PortalNfeOptions} options */
 export const buildPortalDocumentoLinks = ({ nfe = {}, clienteId } = {}) => {
   assertPortalNfeDoCliente({ nfe, clienteId });
   return {

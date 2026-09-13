@@ -7226,3 +7226,17 @@ Checklist inicial:
 - O build mantem somente os avisos conhecidos de imports mistos, bundle principal e Browserslist.
 - Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
 - Proximo passo: tipar `portalClientePolicy.js`, politica compartilhada com 42 diagnosticos e 232 linhas; arquivos grandes permanecem separados.
+
+### Gate 18 - Contrato tipado do Portal do Cliente
+
+- Objetivo: reduzir a divida de typecheck da politica do Portal sem alterar sessao, vinculo, leitura, segunda via, PIX ou acesso a documentos.
+- Causa raiz: objetos de usuario, cliente, titulo, NF-e e sessao eram inferidos sem campos, concentrando 42 diagnosticos.
+- Implementacao: JSDoc local passou a descrever registros do Portal, opcoes de escopo/leitura/sessao, operacoes financeiras e o acumulador numerico de saldo. Nenhum `any`, `ts-ignore` ou desligamento de `checkJs` foi introduzido.
+- Seguranca preservada: usuario continua impedido de acessar outro cliente, leituras continuam filtradas pelo vinculo e o cliente de um titulo nao pode ser alterado pelo Portal.
+- Comportamento preservado: timeout e estados de sessao, saldo, segunda via, PIX idempotente e links XML/DANFE continuam com os mesmos contratos de runtime.
+- Resultado isolado: 42 diagnosticos antes e zero depois.
+- Resultado global: 2.458 diagnosticos antes e 2.413 depois, reducao liquida de 45. O typecheck permanece habilitado e falha apenas pela divida historica registrada e autorizada.
+- Validacao: 8/8 testes focados e 252/252 testes globais aprovados; ESLint direcionado e global sem diagnosticos; `audit:baseline`, build completo e `git diff --check` aprovados.
+- O build mantem somente os avisos conhecidos de imports mistos, bundle principal e Browserslist.
+- Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
+- Proximo passo: tipar `siteOrigemPolicy.js`, politica compartilhada com 39 diagnosticos e 265 linhas; arquivos grandes permanecem separados.
