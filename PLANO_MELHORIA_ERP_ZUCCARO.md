@@ -707,3 +707,16 @@ Lote concluido em 2026-09-13 na politica compartilhada do site, sem alterar cata
 
 Proxima frente: tipar `financeiroTituloPolicy.js`, politica compartilhada com 34 diagnosticos e 207 linhas. O cliente local e as telas acima do limite permanecem reservados para lotes proprios.
 
+### Contratos JSDoc - politica de Titulos Financeiros
+
+Lote concluido em 2026-09-13 na politica compartilhada de titulos, sem alterar criacao, baixa, conciliacao, estorno, exclusao protegida ou staging manual.
+
+- Contratos locais descrevem titulo, valores, vinculos, historico, criacao, atualizacao e erro codificado sem `any`, `ts-ignore` ou desativacao de `checkJs`.
+- Os 34 diagnosticos proprios de `financeiroTituloPolicy.js` foram reduzidos a zero. Sete diagnosticos preexistentes da dependencia importada `migracaoErpPolicy.js` permanecem fora deste lote.
+- O typecheck global caiu de 2.365 para 2.331 diagnosticos, reducao liquida de 34, sem deslocar falhas para o cliente local.
+- Permanecem iguais a exigencia de Empresa, a idempotencia por documento/parcela, o bloqueio de staging manual e o congelamento de valores e vinculos depois da baixa.
+- Conciliacao e estorno continuam caminhos explicitos, com historico preservado, e titulo liquidado continua protegido contra exclusao; a politica encerrou com 262 linhas.
+- Nenhum dado, entidade, recurso Base44, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente: tipar `appMotoristaPolicy.js`, politica compartilhada com 33 diagnosticos e 329 linhas. O cliente local e as telas acima do limite permanecem reservados para lotes proprios.
+

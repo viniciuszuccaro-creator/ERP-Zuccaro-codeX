@@ -7254,3 +7254,17 @@ Checklist inicial:
 - O build mantem somente os avisos conhecidos de imports mistos, bundle principal e Browserslist.
 - Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
 - Proximo passo: tipar `financeiroTituloPolicy.js`, politica compartilhada com 34 diagnosticos e 207 linhas; arquivos grandes permanecem separados.
+
+### Gate 18 - Contrato tipado dos Titulos Financeiros
+
+- Objetivo: reduzir a divida de typecheck da politica financeira sem alterar criacao, baixa, conciliacao, estorno ou exclusao protegida.
+- Causa raiz: registros, patches, valores e erro codificado eram inferidos sem campos, concentrando 34 diagnosticos proprios.
+- Implementacao: JSDoc local passou a descrever titulos, opcoes de criacao/atualizacao, historico e erro com `code`. Nenhum `any`, `ts-ignore` ou desligamento de `checkJs` foi introduzido.
+- Multiempresa e seguranca preservadas: Empresa continua obrigatoria, troca de Empresa continua bloqueada e staging de conciliacao manual permanece fora do fluxo operacional.
+- Comportamento preservado: idempotencia, congelamento depois da baixa, conciliacao explicita, estorno com historico e bloqueio de exclusao de titulo liquidado mantem os mesmos contratos de runtime.
+- Resultado proprio: 34 diagnosticos antes e zero depois. A verificacao direcionada ainda exibe sete diagnosticos preexistentes de `migracaoErpPolicy.js`, dependencia importada e nao alterada neste lote.
+- Resultado global: 2.365 diagnosticos antes e 2.331 depois, reducao liquida de 34. O typecheck permanece habilitado e falha apenas pela divida historica registrada e autorizada.
+- Validacao: 10/10 testes focados e 252/252 testes globais aprovados; ESLint direcionado e global sem diagnosticos; `audit:baseline`, build completo e `git diff --check` aprovados.
+- O build mantem somente os avisos conhecidos de imports mistos, bundle principal e Browserslist.
+- Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
+- Proximo passo: tipar `appMotoristaPolicy.js`, politica compartilhada com 33 diagnosticos e 329 linhas; arquivos grandes permanecem separados.

@@ -1,7 +1,36 @@
 import { isPendingManualReconciliation } from './migracaoErpPolicy.js';
 
+/**
+ * @typedef {Record<string, unknown> & {
+ *   id?: string | number,
+ *   status?: unknown,
+ *   empresa_id?: unknown,
+ *   idempotency_key?: unknown,
+ *   pedido_id?: unknown,
+ *   origem_documento_id?: unknown,
+ *   numero_parcela?: unknown,
+ *   origem_tipo?: unknown,
+ *   valor?: unknown,
+ *   valor_total?: unknown,
+ *   valor_original?: unknown,
+ *   valor_recebido?: unknown,
+ *   valor_pago?: unknown,
+ *   nfe_id?: unknown,
+ *   nota_fiscal_id?: unknown,
+ *   nota_id?: unknown,
+ *   cliente_id?: unknown,
+ *   fornecedor_id?: unknown,
+ *   historico_eventos?: FinanceRecord[],
+ * }} FinanceRecord
+ * @typedef {{ record?: FinanceRecord, titles?: FinanceRecord[] }} TituloCreateOptions
+ * @typedef {{ before?: FinanceRecord, patch?: FinanceRecord }} TituloUpdateOptions
+ * @typedef {Error & { code?: string }} TituloPolicyError
+ */
+
+/** @param {...unknown} values */
 const firstText = (...values) => values.map((value) => String(value || '').trim()).find(Boolean) || '';
 
+/** @param {unknown} value */
 const toMoney = (value) => {
   const amount = Number(value);
   return Number.isFinite(amount) ? Math.round(amount * 100) / 100 : 0;
@@ -27,28 +56,37 @@ const FROZEN_AFTER_SETTLEMENT = [
   'empresa_id',
 ];
 
+/** @param {string} entityName */
 export const isTituloFinanceiroEntity = (entityName) => TITULO_FINANCEIRO_ENTITIES.includes(entityName);
 
+/** @param {unknown} status */
 export const normalizeTituloStatus = (status) => String(status || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
+/** @param {FinanceRecord} record */
 export const isTituloLiquidado = (record = {}) => LIQUIDADO.has(normalizeTituloStatus(record.status));
 
+/** @param {FinanceRecord} record */
 export const isTituloEstorno = (record = {}) => ESTORNO.has(normalizeTituloStatus(record.status));
 
+/** @param {FinanceRecord} record */
 export const isTituloConciliado = (record = {}) => CONCILIADO.has(normalizeTituloStatus(record.status));
 
+/** @param {string} entityName */
 export const tituloSettlementAction = (entityName) => (entityName === 'ContaPagar' ? 'pagar' : 'receber');
 
+/** @param {string} entityName */
 export const tituloSettlementPermissionActions = (entityName) => {
   const primary = tituloSettlementAction(entityName);
   return [primary, 'baixar', 'liquidar'];
 };
 
+/** @param {unknown} value */
 export const parcelaKey = (value) => {
   const match = String(value || '').match(/\d+/);
   return match ? match[0] : '';
 };
 
+/** @param {FinanceRecord} record */
 export const tituloIdempotencyKey = (record = {}) => {
   const explicit = firstText(record.idempotency_key);
   if (explicit) return explicit;
@@ -58,12 +96,21 @@ export const tituloIdempotencyKey = (record = {}) => {
   return ['titulo', firstText(record.origem_tipo) || 'pedido', pedido, parcela].join('|');
 };
 
+/**
+ * @param {FinanceRecord} record
+ * @param {FinanceRecord[]} titles
+ */
 export const findDuplicateTitulo = (record = {}, titles = []) => {
   const key = tituloIdempotencyKey(record);
   if (!key) return null;
   return (Array.isArray(titles) ? titles : []).find((item) => tituloIdempotencyKey(item) === key) || null;
 };
 
+/**
+ * @param {FinanceRecord} before
+ * @param {FinanceRecord} patch
+ * @param {string} field
+ */
 const linkCleared = (before, patch, field) => {
   if (!Object.prototype.hasOwnProperty.call(patch, field)) return false;
   const previous = firstText(before[field]);
@@ -71,12 +118,18 @@ const linkCleared = (before, patch, field) => {
   return Boolean(previous) && !next;
 };
 
+/**
+ * @param {FinanceRecord} before
+ * @param {FinanceRecord} patch
+ * @param {string} field
+ */
 const moneyChanged = (before, patch, field) => {
   if (!Object.prototype.hasOwnProperty.call(patch, field)) return false;
   if (patch[field] === undefined || patch[field] === null || patch[field] === '') return false;
   return Math.abs(toMoney(before[field]) - toMoney(patch[field])) > 0.009;
 };
 
+/** @param {TituloCreateOptions} options */
 export const assertTituloOnCreate = ({ record = {}, titles = [] } = {}) => {
   if (isPendingManualReconciliation(record)) {
     throw new Error('Titulo pendente de conciliacao manual deve permanecer no staging.');
@@ -96,6 +149,7 @@ export const assertTituloOnCreate = ({ record = {}, titles = [] } = {}) => {
   };
 };
 
+/** @param {TituloUpdateOptions} options */
 export const assertTituloOnUpdate = ({ before = {}, patch = {} } = {}) => {
   if (!before?.id) throw new Error('Titulo financeiro nao encontrado.');
 
@@ -198,9 +252,10 @@ export const assertTituloOnUpdate = ({ before = {}, patch = {} } = {}) => {
   return { reuse: null, record: patch, settlement: becomingLiquidado, estorno: false, conciliation: false };
 };
 
+/** @param {FinanceRecord} record */
 export const assertTituloOnDelete = (record = {}) => {
   if (isTituloLiquidado(record) || isTituloEstorno(record)) {
-    const error = new Error('Nao excluir titulo liquidado.');
+    const error = /** @type {TituloPolicyError} */ (new Error('Nao excluir titulo liquidado.'));
     error.code = 'TITULO_LIQUIDADO';
     throw error;
   }
