@@ -655,3 +655,16 @@ Lote concluido em 2026-09-13 na politica compartilhada de Oportunidades CRM, sem
 
 Proxima frente: tipar `notaFiscalEmissaoPolicy.js`, politica compartilhada com 53 diagnosticos. `Contratos.jsx`, `ArmadoPadraoTab.jsx` e o cliente local permanecem reservados para lotes proprios por tamanho e propagacao.
 
+### Contratos JSDoc - politica de emissao de Nota Fiscal
+
+Lote concluido em 2026-09-13 na politica compartilhada de NF-e, sem alterar numeracao, ambiente, emissao, simulacao, cancelamento ou congelamento fiscal.
+
+- Contratos locais descrevem Nota Fiscal, itens, integracao fiscal, sequencia, criacao, atualizacao, emissao e cancelamento sem `any`, `ts-ignore` ou desativacao de `checkJs`.
+- O typecheck isolado de `notaFiscalEmissaoPolicy.js` passou de 53 diagnosticos para zero.
+- O typecheck global caiu de 2.569 para 2.514 diagnosticos, reducao liquida de 55, sem deslocar falhas para os consumidores.
+- Permanecem iguais a sequencia por Empresa e serie, a exigencia de empresa emitente e CFOP, a autorizacao explicita para producao, o modo piloto, a simulacao em homologacao e os bloqueios de exclusao e recalculo.
+- As permissoes de emitir e cancelar foram preservadas e a politica encerrou com 317 linhas, sem necessidade de extracao.
+- Nenhum dado, entidade, recurso Base44, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente: tipar `localCadastroMasterPolicy.js`, politica compartilhada com 51 diagnosticos e 383 linhas. As telas grandes de Nota Fiscal, Dashboard, Contratos e Armado permanecem reservadas para lotes proprios de refatoracao.
+

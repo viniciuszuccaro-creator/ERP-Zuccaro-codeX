@@ -1,31 +1,92 @@
+/**
+ * @typedef {Record<string, unknown> & {
+ *   id?: string | number,
+ *   group_id?: unknown,
+ *   grupo_id?: unknown,
+ *   empresa_id?: unknown,
+ *   empresa_faturamento_id?: unknown,
+ *   serie?: unknown,
+ *   serie_nfe?: unknown,
+ *   numero?: unknown,
+ *   numero_nfe?: unknown,
+ *   ambiente?: unknown,
+ *   ativo?: boolean,
+ *   ativa?: boolean,
+ *   api_key?: unknown,
+ *   token?: unknown,
+ *   cfop?: unknown,
+ *   cfop_pedido?: unknown,
+ *   natureza_cfop?: unknown,
+ *   cfop_item?: unknown,
+ *   itens?: FiscalRecord[],
+ *   status?: unknown,
+ *   simulacao?: boolean,
+ *   __simulado__?: boolean,
+ *   origem_simulacao?: unknown,
+ *   chave_acesso?: unknown,
+ *   valor_total?: unknown,
+ *   pedido_id?: unknown,
+ * }} FiscalRecord
+ * @typedef {{ records?: FiscalRecord[], empresaId?: unknown, serie?: unknown, currentMax?: number }} NfeSequenceOptions
+ * @typedef {{
+ *   empresaId?: unknown,
+ *   ambiente?: unknown,
+ *   producaoAutorizada?: boolean,
+ *   provedorConfigurado?: boolean,
+ *   nfe?: FiscalRecord,
+ *   modoOperacao?: unknown,
+ *   usuarioPiloto?: boolean,
+ * }} EmissaoNfeOptions
+ * @typedef {{
+ *   empresaId?: unknown,
+ *   ambiente?: unknown,
+ *   producaoAutorizada?: boolean,
+ *   provedorConfigurado?: boolean,
+ *   nfe?: FiscalRecord,
+ * }} CancelamentoNfeOptions
+ * @typedef {{ record?: FiscalRecord, records?: FiscalRecord[], sequenceValue?: number }} NfeCreateOptions
+ * @typedef {{ before?: FiscalRecord, patch?: FiscalRecord }} NfeUpdateOptions
+ */
+
+/** @param {...unknown} values */
 const firstText = (...values) => values.map((value) => String(value || '').trim()).find(Boolean) || '';
 
 export const NOTA_FISCAL_ENTITIES = ['NotaFiscal', 'NFe'];
 
+/**
+ * @param {unknown} empresaId
+ * @param {unknown} serie
+ */
 export const nfeSequenceKey = (empresaId, serie) => `seq_nfe_${firstText(empresaId) || 'empresa'}_${firstText(serie) || '1'}`;
 
+/** @param {unknown} value */
 export const normalizeAmbienteNfe = (value) => {
   const raw = String(value || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   if (raw.startsWith('prod')) return 'producao';
   return 'homologacao';
 };
 
+/** @param {unknown} value */
 export const isAmbienteProducao = (value) => normalizeAmbienteNfe(value) === 'producao';
 
+/** @param {FiscalRecord} integracao */
 export const isProvedorFiscalConfigurado = (integracao = {}) => {
   const ativo = integracao.ativo !== false && integracao.ativa !== false;
   return Boolean(ativo && firstText(integracao.api_key, integracao.token));
 };
 
+/** @param {...unknown} flags */
 export const isProducaoAutorizada = (...flags) => flags.some((value) => (
   value === true || String(value || '').trim().toLowerCase() === 'true' || String(value || '').trim() === '1'
 ));
 
+/** @param {unknown} value */
 export const parseNumeroNfe = (value) => {
   const parsed = Number.parseInt(String(value || '').replace(/\D/g, ''), 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
 };
 
+/** @param {NfeSequenceOptions} options */
 export const resolveNextNumeroNfe = ({ records = [], empresaId, serie = '1', currentMax = 0 } = {}) => {
   const scopedEmpresa = firstText(empresaId);
   const scopedSerie = firstText(serie) || '1';
@@ -38,6 +99,7 @@ export const resolveNextNumeroNfe = ({ records = [], empresaId, serie = '1', cur
   return String(Math.max(currentMax, maxExisting) + 1);
 };
 
+/** @param {FiscalRecord} nfe */
 export const assertItensFiscaisMinimos = (nfe = {}) => {
   const cfop = firstText(nfe.cfop, nfe.cfop_pedido, nfe.natureza_cfop);
   const itens = Array.isArray(nfe.itens) ? nfe.itens : [];
@@ -47,16 +109,26 @@ export const assertItensFiscaisMinimos = (nfe = {}) => {
   }
 };
 
+/** @param {unknown} status */
 const normalizeNfeStatus = (status) => String(status || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
+/**
+ * @param {unknown} status
+ * @param {string} token
+ */
 const statusIncludes = (status, token) => normalizeNfeStatus(status).includes(token);
 
+/** @param {FiscalRecord} nfe */
 export const isNotaFiscalSimulada = (nfe = {}) => (
   nfe?.simulacao === true
   || nfe?.__simulado__ === true
   || Boolean(firstText(nfe?.origem_simulacao))
 );
 
+/**
+ * @param {FiscalRecord} record
+ * @param {FiscalRecord} extras
+ */
 export const stampNotaFiscalSimulacao = (record = {}, extras = {}) => ({
   ...record,
   simulacao: true,
@@ -65,6 +137,7 @@ export const stampNotaFiscalSimulacao = (record = {}, extras = {}) => ({
   ambiente: record.ambiente || extras.ambiente || 'Homologacao',
 });
 
+/** @param {EmissaoNfeOptions} options */
 export const assertEmissaoNFe = ({
   empresaId,
   ambiente,
@@ -95,6 +168,7 @@ export const assertEmissaoNFe = ({
   return { ambiente: 'producao', permiteSimulacao: false };
 };
 
+/** @param {CancelamentoNfeOptions} options */
 export const assertCancelamentoNFe = ({
   empresaId,
   ambiente,
@@ -120,6 +194,7 @@ export const assertCancelamentoNFe = ({
   return { ambiente: 'producao', permiteSimulacao: false };
 };
 
+/** @param {NfeCreateOptions} options */
 export const applyNumeroNfeOnCreate = ({ record = {}, records = [], sequenceValue = 0 } = {}) => {
   const empresaId = firstText(record.empresa_id, record.empresa_faturamento_id);
   if (!empresaId) {
@@ -138,6 +213,7 @@ export const applyNumeroNfeOnCreate = ({ record = {}, records = [], sequenceValu
   };
 };
 
+/** @param {FiscalRecord} record */
 export const assertNotaFiscalOnDelete = (record = {}) => {
   const status = String(record.status || '').toLowerCase();
   if (['autorizada', 'cancelada', 'denegada'].some((item) => status.includes(item))) {
@@ -155,6 +231,11 @@ const FROZEN_AFTER_AUTORIZADA = [
   'empresa_faturamento_id',
 ];
 
+/**
+ * @param {FiscalRecord} before
+ * @param {FiscalRecord} patch
+ * @param {string} field
+ */
 const moneyOrTextChanged = (before, patch, field) => {
   if (!Object.prototype.hasOwnProperty.call(patch, field)) return false;
   if (patch[field] === undefined || patch[field] === null || patch[field] === '') {
@@ -163,6 +244,7 @@ const moneyOrTextChanged = (before, patch, field) => {
   return firstText(patch[field]) !== firstText(before[field]);
 };
 
+/** @param {NfeUpdateOptions} options */
 export const assertNotaFiscalOnUpdate = ({ before = {}, patch = {} } = {}) => {
   if (!before?.id) throw new Error('Nota fiscal nao encontrada.');
 

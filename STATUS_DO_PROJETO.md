@@ -7198,3 +7198,17 @@ Checklist inicial:
 - O build mantem somente os avisos conhecidos de imports mistos, bundle principal e Browserslist.
 - Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
 - Proximo passo: tipar `notaFiscalEmissaoPolicy.js`, politica compartilhada priorizada com 53 diagnosticos; componentes grandes serao tratados em lotes de refatoracao separados.
+
+### Gate 18 - Contrato tipado da emissao de Nota Fiscal
+
+- Objetivo: reduzir a divida de typecheck da politica fiscal compartilhada sem alterar o fluxo de numeracao, emissao, simulacao ou cancelamento de NF-e.
+- Causa raiz: registros fiscais e opcoes com valor padrao `{}` eram inferidos sem campos, concentrando 53 diagnosticos.
+- Implementacao: JSDoc local passou a descrever Nota Fiscal, itens, integracao, sequencia e opcoes de criacao, atualizacao, emissao e cancelamento. Nenhum `any`, `ts-ignore` ou desligamento de `checkJs` foi introduzido.
+- Multiempresa preservada: a empresa emitente continua obrigatoria e a sequencia permanece isolada por Empresa e serie; operacoes fiscais sem empresa continuam bloqueadas.
+- Seguranca e comportamento preservados: producao exige autorizacao e provedor, piloto exige usuario designado, homologacao permanece simulada, e notas finalizadas continuam protegidas contra exclusao e recalculo.
+- Resultado isolado: 53 diagnosticos antes e zero depois.
+- Resultado global: 2.569 diagnosticos antes e 2.514 depois, reducao liquida de 55. O typecheck permanece habilitado e falha apenas pela divida historica registrada e autorizada.
+- Validacao: 9/9 testes focados e 252/252 testes globais aprovados; ESLint direcionado e global sem diagnosticos; `audit:baseline`, build completo e `git diff --check` aprovados.
+- O build mantem somente os avisos conhecidos de imports mistos, bundle principal e Browserslist.
+- Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
+- Proximo passo: tipar `localCadastroMasterPolicy.js`, politica compartilhada com 51 diagnosticos e 383 linhas; telas acima do limite serao tratadas separadamente.
