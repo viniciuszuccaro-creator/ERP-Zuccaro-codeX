@@ -799,3 +799,13 @@ O contrato tecnico detalhado e o andamento dos lotes ficam no plano existente `d
 - O ledger S2S e o `externalOrderId` com hash canonico impedem duplicidade e conflito de payload.
 - CUSTOMER_RESOLVE, CATALOG_READ e ORDER_CREATE ficam ready; pagamento, cancelamento, edicao e negociacao permanecem em lotes separados.
 
+### ERP-SITE-05 - Orcamento e negociacao
+
+- `siteOrcamentoCreate`, `siteOrcamentoGet`, `siteNegociacaoGet` e `siteNegociacaoResponder` reutilizam `Pedido`/Orcamento, itens, Cliente, catalogo, vendedor, enderecos, `Oportunidade` e `SolicitacaoAprovacao` existentes.
+- Itens oficiais sao revalidados pelo ERP; itens customizados ficam em revisao humana sem Produto ou preco ficticio.
+- A proposta possui versao, validade, snapshot imutavel e timeline publica. Respostas do cliente nao alteram diretamente preco, desconto, frete ou condicao.
+- Concorrencia usa `expectedProposalVersion`; repeticoes usam `externalResponseId`, ledger e identificador externo idempotentes.
+- O aceite reutiliza `sitePedidoCreate`, revalidando preco e estoque e mantendo o novo Pedido sem pagamento confirmado.
+- Frete pendente, customizacao, expiracao ou dependencia indisponivel bloqueiam o aceite.
+- CUSTOMER_RESOLVE, CATALOG_READ, ORDER_CREATE, QUOTE_CREATE e NEGOTIATION ficam ready; pagamento real permanece bloqueado para o ERP-SITE-06.
+

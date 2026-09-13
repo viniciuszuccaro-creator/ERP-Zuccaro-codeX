@@ -771,3 +771,56 @@ A resposta minimizada contem `erpOrderId`, numero, identificador externo, estado
 - consulta/status como operacoes independentes.
 
 Proximo lote somente com autorizacao expressa: ERP-SITE-05 - Orcamento e Negociacao.
+
+---
+
+# 24. EXECUCAO ERP-SITE-05 - ORCAMENTO E NEGOCIACAO
+
+As operacoes `siteOrcamentoCreate`, `siteOrcamentoGet`, `siteNegociacaoGet` e `siteNegociacaoResponder` foram integradas ao gateway S2S `v1`. O contrato reutiliza `Pedido` com `tipo = Orçamento`, itens incorporados, Cliente, catalogo/preco, vendedor, enderecos, `SolicitacaoAprovacao`, `Oportunidade`, referencias de obra/projeto/centro de custo, ledger e auditoria existentes.
+
+## Criacao e proposta
+
+- origens aceitas: `MATERIAL_LIST`, `CART`, `MANUAL_QUOTE`, `ARMACAO`, `REPURCHASE` e `AI_QUOTE_AGENT`;
+- `externalQuoteId`, usuario externo e Cliente aprovado sao obrigatorios e idempotentes por Empresa;
+- itens de catalogo sao revalidados por ID, escopo, atividade, especificacao, unidade, minimo, multiplo e preco oficial;
+- itens customizados nao recebem Produto ficticio nem preco inventado e seguem como `SELLER_REVIEW_REQUIRED`;
+- total, desconto, frete, vendedor e condicao enviados pelo Site nao sao autoridade;
+- a proposta nasce na versao 1 com snapshot em `proposta_historico`; eventos do cliente nao sobrescrevem a versao comercial;
+- a validade padrao de sete dias reutiliza o comportamento atual de orcamento do ERP;
+- nenhum estoque e reservado, nenhum pagamento e confirmado e nenhuma Ordem de Producao e criada.
+- cada Orçamento garante uma unica `Oportunidade` CRM no mesmo escopo; retry reusa o vinculo e conflito de Cliente falha fechado.
+
+Propostas completas para retirada, com preco e vendedor oficiais, ficam em `CUSTOMER_REVIEW`. Item customizado, preco ausente, vendedor nao atribuido ou entrega com frete ainda nao calculado mantem o orcamento em `UNDER_REVIEW`, sem aceite direto.
+
+## Consulta e ownership
+
+`siteOrcamentoGet` retorna a proposta minimizada. `siteNegociacaoGet` acrescenta somente a timeline publica. Ambas exigem `erpCustomerId`, `externalUserId`, vinculo empresarial aprovado e o mesmo Grupo/Empresa do contrato. Custo, margem, fornecedor, credito detalhado, notas internas e segredos nao saem do ERP.
+
+## Resposta e concorrencia
+
+`siteNegociacaoResponder` aceita `REQUEST_BETTER_PRICE`, `REQUEST_CHANGE`, `COUNTER_PROPOSAL`, `ACCEPT` e `REJECT`. Toda resposta exige `externalResponseId` e `expectedProposalVersion`.
+
+- pedidos de alteracao criam `SolicitacaoAprovacao` pendente e evento de timeline, sem aplicar preco, desconto ou condicao pedidos pelo cliente;
+- repeticao do mesmo `externalResponseId` e idempotente;
+- versao divergente retorna conflito com a versao atual;
+- proposta expirada, encerrada, customizada ou com frete pendente nao pode ser aceita;
+- o aceite chama `sitePedidoCreate`, que revalida catalogo, preco, estoque, Cliente, referencias e condicao antes de criar um unico Pedido;
+- preco/estoque alterado bloqueia a conversao; o Pedido aceito continua aguardando aprovacao e pagamento real.
+
+## Resposta, erros e capabilities
+
+A resposta inclui IDs ERP/externo, numero, estado, versao, validade, Cliente, vendedor, itens, totais permitidos, frete, condicao, entrega, vinculo do Pedido e datas. A timeline informa apenas evento, ator, versao, mensagem publica e data.
+
+Erros estaveis cobrem entrada, origem, Cliente, item, endereco, escopo, condicao, idempotencia, expiracao, versao concorrente, proposta nao aceitavel, conversao bloqueada, dependencia e auditoria indisponiveis.
+
+`siteHealth` informa `CUSTOMER_RESOLVE`, `CATALOG_READ`, `ORDER_CREATE`, `QUOTE_CREATE` e `NEGOTIATION` como `ready`.
+
+## Pendencias deliberadas
+
+- provider, pagamento real e webhook permanecem no ERP-SITE-06;
+- frete final exige o fluxo logistico oficial antes do aceite;
+- item customizado exige revisao e precificacao humana no ERP;
+- a referencia de armacao e preservada, mas producao somente sera liberada no ERP-SITE-10;
+- Site CPA permanece sem alteracoes.
+
+Proximo lote somente com autorizacao expressa: ERP-SITE-06 - Pagamento.

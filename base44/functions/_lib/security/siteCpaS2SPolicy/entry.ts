@@ -13,6 +13,14 @@ import {
   SiteCpaOrderError,
   resolveSiteCpaOrderCreate,
 } from '../siteCpaOrderCreate/entry.ts';
+import {
+  SITE_CPA_NEGOTIATION_GET_OPERATION,
+  SITE_CPA_NEGOTIATION_RESPOND_OPERATION,
+  SITE_CPA_QUOTE_CREATE_OPERATION,
+  SITE_CPA_QUOTE_GET_OPERATION,
+  SiteCpaQuoteError,
+  resolveSiteCpaQuoteOperation,
+} from '../siteCpaQuoteNegotiation/entry.ts';
 
 export const SITE_CPA_ORIGIN = 'SITE_CPA';
 export const SITE_CPA_CONTRACT_VERSION = '1';
@@ -405,6 +413,8 @@ export const handleSiteCpaGatewayRequest = async ({
           CUSTOMER_RESOLVE: 'ready',
           CATALOG_READ: 'ready',
           ORDER_CREATE: 'ready',
+          QUOTE_CREATE: 'ready',
+          NEGOTIATION: 'ready',
         },
       },
     });
@@ -470,6 +480,40 @@ export const handleSiteCpaGatewayRequest = async ({
       const failure = error instanceof SiteCpaOrderError
         ? error
         : new SiteCpaOrderError(503, 'site_cpa_order_unavailable');
+      const body = buildSiteCpaResponse({
+        ok: false,
+        request,
+        code: failure.code,
+        message: failure.message,
+        details: failure.details,
+      });
+      return finish({
+        status: failure.status,
+        body,
+        eventStatus: 'rejeitado',
+        errorCode: failure.code,
+      });
+    }
+  }
+
+  if ([
+    SITE_CPA_QUOTE_CREATE_OPERATION,
+    SITE_CPA_QUOTE_GET_OPERATION,
+    SITE_CPA_NEGOTIATION_GET_OPERATION,
+    SITE_CPA_NEGOTIATION_RESPOND_OPERATION,
+  ].includes(request.operation)) {
+    try {
+      const data = await resolveSiteCpaQuoteOperation({ base44, payload, scope, request, now });
+      const body = buildSiteCpaResponse({ ok: true, request, data });
+      return finish({
+        status: request.operation === SITE_CPA_QUOTE_CREATE_OPERATION ? 201 : 200,
+        body,
+        eventStatus: 'concluido',
+      });
+    } catch (error) {
+      const failure = error instanceof SiteCpaQuoteError
+        ? error
+        : new SiteCpaQuoteError(503, 'site_cpa_quote_unavailable');
       const body = buildSiteCpaResponse({
         ok: false,
         request,

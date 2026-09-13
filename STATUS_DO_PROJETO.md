@@ -7397,3 +7397,26 @@ Checklist inicial:
 - Avisos conhecidos: build mantem imports mistos, Browserslist desatualizado e bundle principal acima de 500 kB.
 - Nenhum arquivo do Site CPA, dado real, recurso Base44 remoto, backup legado ou HD externo foi acessado ou alterado.
 - Proximo passo somente com autorizacao expressa: ERP-SITE-05 - Orcamento e Negociacao.
+
+### ERP-SITE-05 - Orcamento e negociacao do Site CPA
+
+- Objetivo: integrar criacao, consulta e resposta a propostas no gateway S2S `v1`, sem criar modulo paralelo e sem permitir que o Site altere regras comerciais.
+- Operacoes: `siteOrcamentoCreate`, `siteOrcamentoGet`, `siteNegociacaoGet` e `siteNegociacaoResponder`.
+- Reuso: `Pedido` com tipo `Orçamento`, itens incorporados, Cliente, Produto/catalogo/preco, Colaborador, enderecos, Projeto, CentroCusto, `Oportunidade`, `SolicitacaoAprovacao`, `IntegracaoEvento` e auditoria.
+- Multiempresa: escopo vem da credencial; Cliente, usuario, Produto, endereco, obra, Projeto, Centro de Custo e proposta exigem o mesmo Grupo/Empresa e ownership aprovado.
+- Proposta: versao 1 e snapshot imutavel; validade de sete dias conforme comportamento existente; Site nao envia preco, desconto, frete ou vendedor como autoridade.
+- Customizados: aceitos como solicitacao, sem ID de Produto ou preco ficticio, sempre com revisao humana obrigatoria.
+- CRM: cada Orçamento garante uma `Oportunidade` existente no mesmo escopo, de forma idempotente e sem duplicar funil.
+- Negociacao: melhoria, alteracao e contraproposta criam `SolicitacaoAprovacao`; aceite/rejeicao usam `expectedProposalVersion`; `externalResponseId` impede evento duplicado.
+- Conversao: aceite reutiliza `sitePedidoCreate`, revalida preco/estoque e cria no maximo um Pedido; pagamento continua `PENDING` e producao nao e liberada.
+- Fail-closed: proposta expirada, customizada, com frete pendente, preco alterado, ownership invalido ou dependencia indisponivel nao e aceita.
+- Privacidade: resposta minimizada nao inclui custo, margem, fornecedor, credito detalhado, dados bancarios, notas internas ou segredos.
+- Capabilities: `CUSTOMER_RESOLVE`, `CATALOG_READ`, `ORDER_CREATE`, `QUOTE_CREATE` e `NEGOTIATION` estao `ready`.
+- PRONTO: criacao/consulta de Orcamento, proposta versionada, timeline, solicitacao de revisao, aceite/rejeicao e conversao idempotente em Pedido.
+- BLOCKED: provider/pagamento/webhook real, frete final, precificacao humana de item customizado e liberacao de producao.
+- Validacao focada: 69/69 testes dos contratos ERP-SITE-01 a 05 aprovados.
+- Validacao global: 321/321 testes aprovados; ESLint global e `audit:baseline` sem falhas; build completo aprovado.
+- Typecheck: 2.238 diagnosticos historicos preservados e zero diagnosticos nos arquivos do ERP-SITE-05.
+- Avisos conhecidos: build mantem imports mistos, Browserslist desatualizado e bundle principal acima de 500 kB.
+- Nenhum arquivo do Site CPA, dado real, recurso Base44 remoto, backup legado ou HD externo foi acessado ou alterado.
+- Proximo passo somente com autorizacao expressa: ERP-SITE-06 - Pagamento.
