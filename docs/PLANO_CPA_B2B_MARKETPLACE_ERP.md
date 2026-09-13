@@ -1024,3 +1024,42 @@ PRONTO: start/reuso, message, poll, history, close/reopen, assignment, fila/CRM,
 BLOCKED: anexos ate existir storage privado com scanner, realtime inexistente, WhatsApp, chat anonimo/Lead e recursos internos nao comprovados pelo CRM atual. O Site CPA permanece sem alteracoes.
 
 Proximo lote somente com autorizacao expressa: ERP-SITE-10 - Armacao e Producao.
+---
+
+# 29. EXECUCAO ERP-SITE-10 - ARMACAO E PRODUCAO
+
+O gateway S2S `v1` passou a receber pacotes tecnicos de armacao no `Projeto` existente. O Site nao cria Produto, Pedido, Ordem de Producao nem aprovacao tecnica paralelos. O pacote confirmado pode ser encaminhado ao Comercial pelo `siteOrcamentoCreate` existente, sempre como item customizado sujeito a revisao humana.
+
+## Operacoes e contrato
+
+- `siteArmacaoCreate`: cria pacote tecnico idempotente por `externalArmacaoId`, Cliente, usuario e hash canonico;
+- `siteArmacaoGet`: consulta o pacote do proprio Cliente;
+- `siteArmacaoUpdate`: cria nova revisao mediante `expectedVersion`, sem sobrescrever o historico;
+- `siteArmacaoConfirm`: registra apenas a confirmacao do Cliente;
+- `siteArmacaoEnviarParaComercial`: cria ou reutiliza Orcamento `ARMACAO`, referenciando pacote e revisao.
+
+A entrada aceita fontes `MANUAL`, `PROJECT_READER`, `SELLER_ASSISTED` e `QUOTE_CONVERSION`; IDs oficiais de Cliente, usuario, obra, Projeto pai, Pedido, Orcamento e Centro de Custo; pecas estruturadas; variaveis resolvidas; conflitos; evidencias; e metadados seguros do arquivo. URL, path, base64, conteudo bruto, script e formula executavel sao recusados.
+
+Tipos de peca: `VIGA`, `COLUNA`, `ESTACA`, `BLOCO` e `SAPATA`. Dimensoes em mm, cm ou m sao normalizadas para milimetros. Dobras usam `NONE`, `START`, `END` ou `BOTH`. Armaduras preservam diametro, quantidade, comprimento, posicao e Produto oficial opcional. O ERP recalcula estribos por `floor(comprimento / espacamento) + 1` e rejeita contagem divergente.
+
+## Revisao, ownership e seguranca
+
+O `Projeto` guarda snapshot atual e historico imutavel de ate 50 revisoes, com limite de 100 pecas. `expectedVersion` impede sobrescrita concorrente. Pacotes com variaveis nao resolvidas, conflitos, evidencia ausente ou confianca abaixo de 0,8 permanecem `NEEDS_REVIEW`.
+
+`ADMIN_EMPRESA` e `COMPRADOR` podem criar, alterar, confirmar e enviar ao Comercial. `CONSULTA` pode apenas ler. `FINANCEIRO` nao recebe acesso tecnico. Cliente, usuario, Grupo, Empresa, obra, Produto de armadura e todas as referencias sao revalidados no backend; a credencial `SITE_CPA` nao concede acesso irrestrito.
+
+Campos de aprovacao tecnica, liberacao de producao, OP e aprovacao do vendedor recebidos do Site sao bloqueados por mass assignment. A resposta sempre declara `technicalApproval = PENDING_INTERNAL_REVIEW`, `productionReleased = false` e `productionOrderId = null`.
+
+## Comercial, documentos e capabilities
+
+O envio comercial exige confirmacao do Cliente, mas nao exige nem concede aprovacao tecnica. Um unico item comercial referencia o pacote/revisao completos no `Projeto`, permitindo ate 100 pecas sem exceder o limite do Orcamento. Preco, desconto, prazo e decisao comercial continuam sob o ERP-SITE-05 e o vendedor.
+
+Metadados de documento exigem `sourceFileId`, SHA-256, tamanho limitado e ficam `PENDING_SECURE_STORAGE_REVIEW`. Como storage privado e scanner S2S ainda nao estao comprovados, `WORK` e `PRODUCTION_INTAKE` ficam `degraded`; indisponibilidade de `Projeto` ou `Pedido` os torna `blocked`. `PRODUCTION_RELEASE` permanece sempre `blocked`.
+
+Erros estaveis cobrem payload, unidade, peca, estribo, variavel, documento, Cliente, papel, ownership, versao, idempotencia, confirmacao, Produto, Comercial, dependencia e auditoria. Auditoria registra operacao, correlacao, Cliente, Grupo, Empresa, versao, quantidade de pecas e duracao sem guardar pacote tecnico integral.
+
+PRONTO: create/get/update/confirm/send-to-commercial, pacote tecnico estruturado, conversao de unidades, estribos server-side, revisoes imutaveis, idempotencia, RBAC, ownership, multiempresa, auditoria e Orcamento real sem OP.
+
+BLOCKED: aprovacao tecnica pelo Site, liberacao de producao, criacao automatica de OP, corte/dobra/armado automaticos, arquivo sem storage privado e scanner, Produto inexistente, formula executavel e decisao autonoma de IA.
+
+Proximo lote somente com autorizacao expressa: ERP-SITE-11 - Obras e Centros de Custo.

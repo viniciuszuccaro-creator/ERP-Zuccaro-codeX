@@ -1,4 +1,4 @@
-﻿### P0.24 / Acesso mestre local - perfil wildcard reidratado
+### P0.24 / Acesso mestre local - perfil wildcard reidratado
 - Objetivo: restaurar acesso mestre do Administrador Local para homologacao (sem criar ControlesV2).
 - Diagnostico: sessao local perdia `role=admin`/perfil; UI em "Usuário"; `ProtectedSection` bloqueava todos os modulos; `*` do perfil so era preenchido se ausente.
 - Causa raiz: `normalizeLocalUser` permitia `role: user` no id mestre; perfil admin nao era forçado a cada load.
@@ -7515,3 +7515,23 @@ Checklist inicial:
 - Avisos conhecidos: build mantem imports mistos, Browserslist desatualizado e bundle principal acima de 500 kB.
 - Nenhum arquivo do Site CPA, dado real, recurso Base44 remoto, backup legado ou HD externo foi acessado ou alterado.
 - Proximo passo somente com autorizacao expressa: ERP-SITE-10 - Armacao e Producao.
+### ERP-SITE-10 - Armacao e Producao do Site CPA
+
+- Objetivo: receber pacote tecnico versionado no `Projeto` existente, encaminhar ao Comercial e impedir qualquer liberacao automatica de producao.
+- Operacoes: `siteArmacaoCreate`, `siteArmacaoGet`, `siteArmacaoUpdate`, `siteArmacaoConfirm` e `siteArmacaoEnviarParaComercial` no gateway S2S `v1`.
+- Reuso: `Projeto`, `Cliente`, vinculo em `SolicitacaoAprovacao`, Produto, obra/endereco, Pedido/Orcamento, CentroCusto, `IntegracaoEvento`, auditoria e ERP-SITE-05 existentes.
+- Estrutura tecnica: Viga, Coluna, Estaca, Bloco e Sapata; dimensoes normalizadas em mm; dobra; armadura; estribos recalculados pelo ERP; localizacao; variaveis; conflitos; evidencias e arquivo por referencia/hash.
+- Revisoes: snapshot atual e historico imutavel, limite de 100 pecas e 50 versoes; `expectedVersion` bloqueia edicao concorrente.
+- IA governada: `PROJECT_READER` preserva evidencia/confianca; baixa confianca, conflito ou variavel pendente ficam `NEEDS_REVIEW`; formula/script nunca e executado.
+- Multiempresa/RBAC: Grupo e Empresa vem da credencial; ownership de Cliente, usuario, obra, Produto e referencias e obrigatorio. ADMIN/COMPRADOR escrevem, CONSULTA apenas le e FINANCEIRO nao acessa o tecnico.
+- Comercial: confirmacao do Cliente permite criar/reusar Orcamento de origem `ARMACAO`; pacote/revisao ficam vinculados e nenhuma OP e criada.
+- Producao: confirmacao do Cliente nao e aprovacao tecnica; mass assignment de aprovacao/liberacao/OP e recusado; resposta sempre informa producao nao liberada.
+- Documentos: apenas metadados com referencia privada e SHA-256; URL/path/base64 sao bloqueados. Storage/scanner S2S continuam pendentes.
+- Capabilities: `WORK` e `PRODUCTION_INTAKE` ficam `degraded` quando Projeto/Pedido funcionam e `blocked` se falharem; `PRODUCTION_RELEASE` permanece `blocked`.
+- PRONTO: pacote estruturado, create/get/update/confirm, revisao, idempotencia, envio comercial, ownership, privacidade e auditoria.
+- BLOCKED: aprovacao tecnica externa, OP automatica, corte/dobra/armado automaticos, storage/scanner nao comprovados e Produto criado pelo Site.
+- Validacao focada: 17/17 testes do ERP-SITE-10 aprovados, inclusive gateway autenticado e ausencia de `OrdemProducao`.
+- Validacao global: 408/408 testes aprovados; ESLint global, `audit:baseline`, build completo e `git diff --check` sem falhas.
+- Typecheck: 2.238 diagnosticos historicos preservados e zero diagnosticos nos arquivos do ERP-SITE-10.
+- Nenhum arquivo do Site CPA, dado real, recurso Base44 remoto, backup legado ou HD externo foi acessado ou alterado.
+- Proximo passo somente com autorizacao expressa: ERP-SITE-11 - Obras e Centros de Custo.

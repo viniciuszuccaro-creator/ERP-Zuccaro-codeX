@@ -43,6 +43,12 @@ import {
   SiteCpaChatError,
   resolveSiteCpaChatOperation,
 } from '../siteCpaChat/entry.ts';
+import {
+  SITE_CPA_ARMACAO_CREATE_OPERATION,
+  SITE_CPA_ARMACAO_OPERATIONS,
+  SiteCpaArmacaoError,
+  resolveSiteCpaArmacaoOperation,
+} from '../siteCpaArmacao/entry.ts';
 
 const rejected = (buildResponse, request, failure) => ({
   handled: true,
@@ -118,6 +124,17 @@ export const routeSiteCpaOperation = async ({
     } catch (error) {
       return rejected(buildResponse, request, error instanceof SiteCpaChatError
         ? error : new SiteCpaChatError(503, 'site_cpa_chat_unavailable'));
+    }
+  }
+
+  if (SITE_CPA_ARMACAO_OPERATIONS.has(request.operation)) {
+    try {
+      const data = await resolveSiteCpaArmacaoOperation({ base44, payload, scope, request, now });
+      return completed(buildResponse, request, data,
+        request.operation === SITE_CPA_ARMACAO_CREATE_OPERATION ? 201 : 200);
+    } catch (error) {
+      return rejected(buildResponse, request, error instanceof SiteCpaArmacaoError
+        ? error : new SiteCpaArmacaoError(503, 'site_cpa_armacao_unavailable'));
     }
   }
 
