@@ -6932,3 +6932,12 @@ Checklist inicial:
 - O relatorio detalhado e sua verificacao de integridade permanecem exclusivamente na pasta protegida do HD externo.
 - A instancia, o Agent e o Browser SQL terminaram parados. O repositorio recebe somente este resumo sem registros ou conteudo do log; git diff --check e a validacao aplicavel.
 - Proximo passo obrigatorio: preparar uma recomendacao nao destrutiva de tratamento da parcela como pendencia de conciliacao manual, com impacto e criterio de desbloqueio, sem alterar ou migrar dados antes de autorizacao expressa.
+
+### Gate 18 - Recomendacao de conciliacao manual
+
+- Foi preparada e validada em duas passagens uma recomendacao nao destrutiva para tratar a pendencia financeira sem declarar automaticamente pagamento ou saldo em aberto.
+- A recomendacao preserva a origem, exige evidencia documental, contexto multiempresa, revisao financeira, dupla aprovacao, auditoria e decisao reversivel em staging.
+- Nenhum dado, registro, banco ou regra de migracao foi alterado nesta etapa.
+- O documento detalhado e sua verificacao de integridade permanecem exclusivamente na pasta protegida do HD externo.
+- Os servicos SQL permaneceram parados. O repositorio recebe somente este resumo sem identificadores ou dados financeiros; git diff --check e a validacao aplicavel.
+- Proximo passo obrigatorio: apresentar a recomendacao ao responsavel e obter autorizacao expressa antes de transforma-la em regra do staging de migracao.
