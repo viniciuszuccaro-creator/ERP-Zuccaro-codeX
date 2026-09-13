@@ -733,3 +733,16 @@ Lote concluido em 2026-09-13 na politica compartilhada do App Motorista, sem alt
 
 Proxima frente: tipar `viradaProducaoPolicy.js`, politica compartilhada com 290 linhas. O cliente local e as telas acima do limite permanecem reservados para lotes proprios.
 
+### Contratos JSDoc - politica de backup e virada de producao
+
+Lote concluido em 2026-09-13 na politica compartilhada de backup e virada, sem alterar snapshot, restauracao, expiracao, congelamento da migracao ou checklist de producao.
+
+- Contratos locais descrevem registros, configuracao, escopo, resumo, snapshot, entidades e operacoes de backup/virada sem `any`, `ts-ignore` ou desativacao de `checkJs`.
+- O typecheck isolado de `viradaProducaoPolicy.js` passou de 30 diagnosticos para zero.
+- O typecheck global caiu de 2.298 para 2.265 diagnosticos, reducao liquida de 33, incluindo tres diagnosticos removidos do consumidor de configuracao.
+- Permanecem iguais a exigencia de Grupo, o isolamento por Empresa, o hash estavel, a validacao do snapshot e os bloqueios de restauracao fora do escopo.
+- Checklist assinado, backup valido e janela congelada continuam obrigatorios para a virada; a politica encerrou com 400 linhas.
+- Nenhum dado, entidade, recurso Base44, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente: tipar `expedicaoEntregaPolicy.js`, politica compartilhada com 27 diagnosticos e 220 linhas. Telas grandes permanecem reservadas para lotes proprios.
+

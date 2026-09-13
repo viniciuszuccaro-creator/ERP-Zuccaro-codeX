@@ -7282,3 +7282,18 @@ Checklist inicial:
 - O build mantem somente os avisos conhecidos de imports mistos, bundle principal e Browserslist.
 - Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
 - Proximo passo: tipar `viradaProducaoPolicy.js`, politica compartilhada com 290 linhas; arquivos grandes permanecem separados.
+
+### Gate 18 - Contrato tipado de backup e virada de producao
+
+- Objetivo: reduzir a divida de typecheck da politica de backup/virada sem alterar snapshot, restauracao, expiracao, congelamento ou liberacao para producao.
+- Causa raiz: registros, configuracoes, snapshots e opcoes eram inferidos como objetos vazios, concentrando 30 diagnosticos.
+- Implementacao: JSDoc local passou a descrever registros, escopo, configuracao, resumo, snapshot, entidades e operacoes, preservando o tipo de entrada dos consumidores dinamicos. Nenhum `any`, `ts-ignore` ou desligamento de `checkJs` foi introduzido.
+- Multiempresa preservada: Grupo continua obrigatorio; snapshot e restauracao continuam filtrados e validados por Grupo e Empresa, sem acesso cruzado.
+- Seguranca e comportamento preservados: numero estavel, hash, integridade, expiracao controlada, assinatura do responsavel, backup valido e janela congelada mantem os mesmos contratos de runtime.
+- Resultado isolado: 30 diagnosticos antes e zero depois.
+- Resultado global: 2.298 diagnosticos antes e 2.265 depois, reducao liquida de 33. Um diagnostico historico de inferencia no formulario de configuracao permanece fora deste lote.
+- Validacao: 15/15 testes focados e 252/252 testes globais aprovados; ESLint direcionado e global sem diagnosticos; `audit:baseline`, build completo e `git diff --check` aprovados.
+- A primeira execucao global dos testes sofreu bloqueio de leitura do sandbox no `vite.config.js`; a repeticao com permissao adequada aprovou 252/252.
+- O build mantem somente o aviso conhecido do bundle principal; o typecheck permanece habilitado e falha apenas pelos 2.265 diagnosticos historicos registrados e autorizados.
+- Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
+- Proximo passo: tipar `expedicaoEntregaPolicy.js`, politica compartilhada com 27 diagnosticos e 220 linhas; arquivos grandes permanecem separados.
