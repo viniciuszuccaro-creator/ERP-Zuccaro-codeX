@@ -6979,3 +6979,18 @@ Checklist inicial:
 - Validacao: 17 testes focados e 241 testes globais aprovados; ESLint direcionado aprovado; audit baseline aprovado; build completo aprovado; `git diff --check` aprovado.
 - Divida preexistente: lint e typecheck globais continuam com os diagnosticos historicos ja registrados; o adaptador novo nao acrescentou diagnostico especifico.
 - Proximo passo obrigatorio: endurecer o backend existente de `SolicitacaoAprovacao` com acoes especializadas para staging financeiro e impedir acesso pelo fluxo generico antes de persistir qualquer pendencia real.
+
+### Gate 18 - Backend do staging financeiro protegido
+
+- A funcao existente `solicitacoesAprovacao` recebeu as acoes especializadas `createManualReconciliation` e `listManualReconciliations`; nenhum endpoint, entidade, tela ou modulo paralelo foi criado.
+- A criacao exige `scope_type=empresa`, Grupo e Empresa, confirma no backend que a Empresa pertence ao Grupo e valida o vinculo ativo do usuario com ambos.
+- O RBAC financeiro usa `Financeiro.Migracao.conciliar` para criar/revisar e permite a listagem somente a quem possui `conciliar` ou `Financeiro.Migracao.aprovar`; negacoes sao auditadas e falham fechadas se a auditoria estiver indisponivel.
+- O backend reconstrui o registro por allowlist, remove segredos e marcacao HTML, limita tamanho/profundidade e recusa envelope adulterado, preaprovado ou fora do estado inicial `aguardando_evidencia`.
+- A chave idempotente combina Grupo, Empresa, entidade financeira e codigo legado. Reutilizacoes sao auditadas e nao criam outro registro.
+- Se a auditoria obrigatoria falhar depois da criacao, o registro recem-criado e removido por rollback e a operacao retorna indisponibilidade, sem declarar sucesso falso.
+- As acoes comerciais genericas de criar, listar, aprovar e rejeitar nao podem expor nem decidir conciliacoes financeiras. Nenhuma chamada cria ou atualiza `ContaPagar` ou `ContaReceber`.
+- O adaptador passou a declarar `scope_type=empresa` e o envelope inicial agora registra explicitamente `etapa_conciliacao=aguardando_evidencia`.
+- Nenhum dado real foi persistido, migrado ou alterado e nenhum recurso Base44 foi implantado; o clone nao possui `base44/config.jsonc`.
+- Validacao: 19 testes focados e 243 testes globais aprovados; handler backend exercitado em memoria para autorizacao, idempotencia, contexto adulterado, falta de permissao, envelope preaprovado e rollback; audit baseline, ESLint direcionado, build completo e `git diff --check` aprovados.
+- Divida preexistente: ESLint global permanece com 85 erros e 17 avisos; typecheck global permanece com diagnosticos historicos. A checagem direcionada manteve apenas diagnosticos anteriores da funcao e da infraestrutura Deno/Base44, sem diagnostico novo nos contratos adicionados.
+- Proximo passo obrigatorio: implementar na mesma funcao as acoes especializadas para anexar evidencia, registrar revisao financeira e aprovacao final com segregacao de tres usuarios, sem promover ou criar titulo operacional.

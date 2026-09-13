@@ -150,6 +150,7 @@ export const buildPendingManualReconciliation = (record = {}, {
     destino_migracao: MIGRACAO_DESTINO_STAGING,
     requer_conciliacao_manual: true,
     bloqueio_operacional: true,
+    etapa_conciliacao: 'aguardando_evidencia',
     decisao_financeira: null,
     evidencias_conciliacao: [],
     aprovacoes_conciliacao: [],
@@ -372,6 +373,7 @@ export const buildManualReconciliationApprovalRequest = (staging = {}, {
   return {
     group_id: groupId,
     empresa_id: empresaId,
+    scope_type: 'empresa',
     solicitante_id: actor,
     solicitante_nome: sanitizeManualText(solicitanteNome, 160) || actor,
     tipo_solicitacao: MIGRACAO_RECONCILIACAO_TIPO_SOLICITACAO,

@@ -21,6 +21,42 @@ import {
 } from '../src/components/lib/migracaoErpPolicy.js';
 import { assertTituloOnCreate, assertTituloOnUpdate } from '../src/components/lib/financeiroTituloPolicy.js';
 
+const loadSolicitacoesAprovacaoHandler = async () => {
+  const original = await readFile(new URL('../base44/functions/solicitacoesAprovacao/entry.ts', import.meta.url), 'utf8');
+  const instrumented = original
+    .replace(/^import \{ createClientFromRequest \}[^\n]+\n/, 'const createClientFromRequest = () => globalThis.__approvalMockClient;\n')
+    .replace('record: Record<string, unknown> = {}', 'record = {}')
+    .replace('input: Record<string, unknown> = {}', 'input = {}')
+    .replace('Deno.serve(async (req) => {', 'globalThis.__captureApprovalHandler(async (req) => {');
+  let handler = null;
+  globalThis.__captureApprovalHandler = (candidate) => { handler = candidate; };
+  await import(`data:text/javascript;base64,${Buffer.from(instrumented).toString('base64')}#${Date.now()}-${Math.random()}`);
+  delete globalThis.__captureApprovalHandler;
+  assert.equal(typeof handler, 'function');
+  return handler;
+};
+
+const makeApprovalClient = ({ existing = [], permissions = ['conciliar'], empresaGroup = 'g1', auditFails = false } = {}) => {
+  const state = { created: [], deleted: [], audits: [] };
+  const user = { id: 'u1', full_name: 'Analista', perfil_acesso_id: 'p1', group_id: 'g1', empresa_atual_id: 'e1' };
+  const solicitacoes = {
+    filter: async () => existing,
+    create: async (record) => { const created = { id: 'sa-created', ...record }; state.created.push(created); return created; },
+    delete: async (id) => { state.deleted.push(id); },
+  };
+  const client = {
+    auth: { me: async () => user },
+    asServiceRole: { entities: {
+      PerfilAcesso: { get: async () => ({ permissoes: { Financeiro: { Migracao: permissions } } }) },
+      Empresa: { get: async () => ({ id: 'e1', group_id: empresaGroup }) },
+      SolicitacaoAprovacao: solicitacoes,
+      AuditLog: { create: async (record) => { if (auditFails) throw new Error('audit down'); state.audits.push(record); return record; } },
+    } },
+    entities: { SolicitacaoAprovacao: solicitacoes },
+  };
+  return { client, state };
+};
+
 test('lote de migracao e estavel para o mesmo arquivo e contexto', () => {
   const a = buildLoteMigracaoId({
     arquivoNome: 'produtos-erp-antigo.csv',
@@ -174,6 +210,7 @@ test('titulo financeiro sem evidencia fica isolado no staging para conciliacao m
 
   assert.deepEqual(origem, snapshot);
   assert.equal(staging.status_migracao, MIGRACAO_STATUS_PENDING_MANUAL_RECONCILIATION);
+  assert.equal(staging.etapa_conciliacao, 'aguardando_evidencia');
   assert.equal(staging.destino_migracao, 'staging');
   assert.equal(staging.confirmado, false);
   assert.equal(staging.bloqueio_operacional, true);
@@ -348,6 +385,7 @@ test('SolicitacaoAprovacao recebe envelope idempotente sem virar titulo operacio
   assert.equal(isManualReconciliationApprovalRequest(request), true);
   assert.equal(request.group_id, 'g1');
   assert.equal(request.empresa_id, 'e1');
+  assert.equal(request.scope_type, 'empresa');
   assert.equal(request.entidade_alvo, 'ContaPagar');
   assert.equal(request.entidade_alvo_id, null);
   assert.equal(request.status, 'pendente');
@@ -386,6 +424,91 @@ test('estrutura persistente existente fica fora das entidades financeiras operac
   const approvals = await readFile(new URL('../base44/functions/solicitacoesAprovacao/entry.ts', import.meta.url), 'utf8');
   assert.match(approvals, /entities\.SolicitacaoAprovacao\.create/);
   assert.doesNotMatch(approvals, /tipo_solicitacao === 'conciliacao_migracao_financeira'[\s\S]*entities\.(ContaPagar|ContaReceber)\.(create|update)/);
+});
+
+test('backend isola conciliacao financeira do fluxo comercial generico', async () => {
+  const approvals = await readFile(new URL('../base44/functions/solicitacoesAprovacao/entry.ts', import.meta.url), 'utf8');
+  assert.match(approvals, /action === 'createManualReconciliation'/);
+  assert.match(approvals, /action === 'listManualReconciliations'/);
+  assert.match(approvals, /hasPermission\(base44, user, 'Financeiro', 'Migracao', 'conciliar'\)/);
+  assert.match(approvals, /hasPermission\(base44, user, 'Financeiro', 'Migracao', 'aprovar'\)/);
+  assert.match(approvals, /scopeType !== 'empresa' \|\| !groupId \|\| !empresaId/);
+  assert.match(approvals, /Empresa\.get\(empresaId\)/);
+  assert.match(approvals, /idempotency_key: prepared\.record\.idempotency_key/);
+  assert.match(approvals, /sanitizeManualValue\(envelope\)/);
+  assert.match(approvals, /Use a acao financeira especializada/);
+  assert.match(approvals, /Conciliacao financeira nao pode ser decidida pelo fluxo comercial generico/);
+  assert.match(approvals, /filter\(\(item\) => !isManualReconciliationRequest\(item\)\)/);
+  const specialized = approvals.slice(
+    approvals.indexOf("if (action === 'createManualReconciliation')"),
+    approvals.indexOf("if (action === 'create')"),
+  );
+  assert.doesNotMatch(specialized, /entities\.(ContaPagar|ContaReceber)\.(create|update)/);
+});
+
+test('backend executa staging financeiro com contexto, RBAC, idempotencia e rollback', async () => {
+  const handler = await loadSolicitacoesAprovacaoHandler();
+  const staging = buildPendingManualReconciliation({
+    group_id: 'g1', empresa_id: 'e1', codigo_legado: 'titulo-1', password: 'nao-persistir',
+  }, { registradoPor: 'u1', registradoEm: '2026-09-13T12:00:00.000Z' });
+  const approvalRequest = buildManualReconciliationApprovalRequest(staging, {
+    solicitanteId: 'u1', timestamp: '2026-09-13T12:05:00.000Z',
+  });
+  const invoke = async (client, payload) => {
+    globalThis.__approvalMockClient = client;
+    const response = await handler({ json: async () => payload });
+    return { status: response.status, body: await response.json() };
+  };
+  const payload = { action: 'createManualReconciliation', group_id: 'g1', empresa_id: 'e1', scope_type: 'empresa', approval_request: approvalRequest };
+
+  const allowed = makeApprovalClient();
+  const created = await invoke(allowed.client, payload);
+  assert.equal(created.status, 200);
+  assert.equal(created.body.reused, false);
+  assert.equal(allowed.state.created.length, 1);
+  assert.equal(allowed.state.audits.length, 1);
+  assert.equal(allowed.state.created[0].dados_propostos.envelope_staging.password, undefined);
+  assert.equal(allowed.state.created[0].entidade_alvo_id, null);
+
+  const duplicateRecord = { id: 'sa-existing', ...allowed.state.created[0] };
+  const duplicate = makeApprovalClient({ existing: [duplicateRecord] });
+  const reused = await invoke(duplicate.client, payload);
+  assert.equal(reused.status, 200);
+  assert.equal(reused.body.reused, true);
+  assert.equal(duplicate.state.created.length, 0);
+  assert.equal(duplicate.state.audits[0].acao, 'Reutilizacao');
+
+  const wrongGroup = makeApprovalClient({ empresaGroup: 'outro-grupo' });
+  assert.equal((await invoke(wrongGroup.client, payload)).status, 403);
+  assert.equal(wrongGroup.state.audits[0].sucesso, false);
+
+  const denied = makeApprovalClient({ permissions: [] });
+  assert.equal((await invoke(denied.client, payload)).status, 403);
+  assert.equal(denied.state.created.length, 0);
+  assert.equal(denied.state.audits[0].acao, 'Bloqueio');
+
+  const tampered = makeApprovalClient();
+  const badPayload = { ...payload, approval_request: { ...approvalRequest, empresa_id: 'outra-empresa' } };
+  assert.equal((await invoke(tampered.client, badPayload)).status, 400);
+  assert.equal(tampered.state.created.length, 0);
+  const preapproved = makeApprovalClient();
+  const preapprovedPayload = {
+    ...payload,
+    approval_request: {
+      ...approvalRequest,
+      dados_propostos: {
+        ...approvalRequest.dados_propostos,
+        envelope_staging: { ...approvalRequest.dados_propostos.envelope_staging, aprovacoes_conciliacao: [{ etapa: 'aprovacao_final' }] },
+      },
+    },
+  };
+  assert.equal((await invoke(preapproved.client, preapprovedPayload)).status, 400);
+  assert.equal(preapproved.state.created.length, 0);
+
+  const auditDown = makeApprovalClient({ auditFails: true });
+  assert.equal((await invoke(auditDown.client, payload)).status, 503);
+  assert.deepEqual(auditDown.state.deleted, ['sa-created']);
+  delete globalThis.__approvalMockClient;
 });
 
 test('importadores existentes fazem staging e reconciliam', async () => {
