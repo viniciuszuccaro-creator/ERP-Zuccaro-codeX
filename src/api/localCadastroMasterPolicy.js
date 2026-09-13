@@ -1,10 +1,54 @@
+/**
+ * @typedef {Record<string, unknown> & {
+ *   id?: string | number,
+ *   group_id?: unknown,
+ *   grupo_id?: unknown,
+ *   grupo_empresarial_id?: unknown,
+ *   empresa_id?: unknown,
+ *   empresa_dona_id?: unknown,
+ *   empresa_alocada_id?: unknown,
+ *   codigo?: unknown,
+ *   cpf_cnpj?: unknown,
+ *   cpf?: unknown,
+ *   cnpj?: unknown,
+ *   tipo_pessoa?: unknown,
+ *   website?: unknown,
+ *   rg?: unknown,
+ *   simples_nacional?: unknown,
+ *   dados_bancarios?: unknown,
+ *   banco?: unknown,
+ *   agencia?: unknown,
+ *   conta?: unknown,
+ *   tipo_conta?: unknown,
+ *   origem_migracao?: unknown,
+ *   lote_migracao?: unknown,
+ *   importacao_erp?: unknown,
+ *   codigo_origem?: unknown,
+ *   codigo_legado?: unknown,
+ * }} MasterRecord
+ * @typedef {{ field: string, maxLength: number }} LegacyReferenceCodeSpec
+ * @typedef {{ field: string, width: number, prefix?: string }} MasterCodeSpec
+ * @typedef {{ type: string, existingId?: unknown }} DuplicateResult
+ * @typedef {Error & { duplicate?: DuplicateResult }} MasterPolicyError
+ * @typedef {{ entityName?: string, record?: MasterRecord, records?: MasterRecord[], currentId?: unknown }} ReferenceCodeOptions
+ * @typedef {{ entityName?: string, record?: MasterRecord, before?: MasterRecord | null, currentGroupId?: unknown, companies?: MasterRecord[] }} MasterScopeOptions
+ * @typedef {{ records?: MasterRecord[], field?: string, width?: number, currentMax?: number, prefix?: string }} SequentialCodeOptions
+ * @typedef {{ entityName?: string, record?: MasterRecord, records?: MasterRecord[], sequenceValue?: number }} MasterCreateOptions
+ */
+
+/** @param {...unknown} values */
 const firstText = (...values) => values.map((value) => String(value || '').trim()).find(Boolean) || '';
 
+/** @type {Record<string, LegacyReferenceCodeSpec>} */
 export const LEGACY_REFERENCE_CODE_SPECS = {
   TabelaPreco: { field: 'codigo_tabela_legado', maxLength: 64 },
   Colaborador: { field: 'codigo_vendedor_legado', maxLength: 64 },
 };
 
+/**
+ * @param {unknown} value
+ * @param {number} maxLength
+ */
 export const normalizeLegacyReferenceCode = (value, maxLength = 64) => {
   const normalized = String(value ?? '').trim();
   if (!normalized) return '';
@@ -14,6 +58,7 @@ export const normalizeLegacyReferenceCode = (value, maxLength = 64) => {
   return normalized;
 };
 
+/** @param {ReferenceCodeOptions} options */
 export const applyLegacyReferenceCodePolicy = ({ entityName, record = {}, records = [], currentId = null } = {}) => {
   const spec = LEGACY_REFERENCE_CODE_SPECS[entityName];
   if (!spec || !Object.prototype.hasOwnProperty.call(record, spec.field)) return record;
@@ -33,7 +78,7 @@ export const applyLegacyReferenceCodePolicy = ({ entityName, record = {}, record
     && firstText(item[spec.field]).toLocaleUpperCase('pt-BR') === normalizedCode
   ));
   if (duplicate) {
-    const error = new Error('Codigo legado duplicado no grupo para este cadastro.');
+    const error = /** @type {MasterPolicyError} */ (new Error('Codigo legado duplicado no grupo para este cadastro.'));
     error.duplicate = { type: spec.field, existingId: duplicate.id };
     throw error;
   }
@@ -41,6 +86,7 @@ export const applyLegacyReferenceCodePolicy = ({ entityName, record = {}, record
   return { ...record, [spec.field]: code };
 };
 
+/** @param {MasterScopeOptions} options */
 export const assertLegacyReferenceScope = ({
   entityName,
   record = {},
@@ -69,6 +115,7 @@ export const assertLegacyReferenceScope = ({
   return true;
 };
 
+/** @type {Record<string, MasterCodeSpec>} */
 export const MASTER_CODE_SPECS = {
   Produto: { field: 'codigo', width: 4 },
   Cliente: { field: 'codigo', width: 6 },
@@ -88,8 +135,13 @@ export const MASTER_CODE_SPECS = {
   Rota: { field: 'codigo_rota', width: 6, prefix: 'ROT-' },
 };
 
+/**
+ * @param {string} entityName
+ * @param {unknown} groupId
+ */
 export const sequenceKeyFor = (entityName, groupId) => `seq_codigo_${entityName}_${groupId || 'grupo'}`;
 
+/** @param {unknown} value */
 export const normalizeDocumento = (value) => String(value || '').replace(/\D/g, '');
 
 const SUPPLIER_PERSON_TYPE_ALIASES = new Map([
@@ -101,6 +153,10 @@ const SUPPLIER_PERSON_TYPE_ALIASES = new Map([
   ['PESSOA JURIDICA', 'Pessoa Juridica'],
 ]);
 
+/**
+ * @param {unknown} value
+ * @param {unknown} document
+ */
 export const normalizeFornecedorPersonType = (value, document = '') => {
   const normalized = String(value || '')
     .normalize('NFD')
@@ -113,14 +169,20 @@ export const normalizeFornecedorPersonType = (value, document = '') => {
   return personType;
 };
 
+/** @param {string} document */
 const hasRepeatedDigits = (document) => /^(\d)\1+$/.test(document);
 
+/**
+ * @param {string} digits
+ * @param {number} factor
+ */
 const calculateCpfDigit = (digits, factor) => {
   const total = digits.split('').reduce((sum, digit) => sum + Number(digit) * factor--, 0);
   const remainder = (total * 10) % 11;
   return remainder === 10 ? 0 : remainder;
 };
 
+/** @param {unknown} value */
 export const isValidCpf = (value) => {
   const document = normalizeDocumento(value);
   if (document.length !== 11 || hasRepeatedDigits(document)) return false;
@@ -129,12 +191,17 @@ export const isValidCpf = (value) => {
   return first === Number(document[9]) && second === Number(document[10]);
 };
 
+/**
+ * @param {string} digits
+ * @param {number[]} weights
+ */
 const calculateCnpjDigit = (digits, weights) => {
   const total = digits.split('').reduce((sum, digit, index) => sum + Number(digit) * weights[index], 0);
   const remainder = total % 11;
   return remainder < 2 ? 0 : 11 - remainder;
 };
 
+/** @param {unknown} value */
 export const isValidCnpj = (value) => {
   const document = normalizeDocumento(value);
   if (document.length !== 14 || hasRepeatedDigits(document)) return false;
@@ -143,6 +210,7 @@ export const isValidCnpj = (value) => {
   return first === Number(document[12]) && second === Number(document[13]);
 };
 
+/** @param {unknown} value */
 export const normalizeFornecedorWebsite = (value) => {
   const website = String(value || '').trim();
   if (!website) return '';
@@ -159,6 +227,7 @@ export const normalizeFornecedorWebsite = (value) => {
   return parsed.toString();
 };
 
+/** @param {unknown} value */
 export const normalizeFornecedorRg = (value) => {
   const rg = String(value || '').trim().toUpperCase();
   if (!rg) return '';
@@ -168,6 +237,7 @@ export const normalizeFornecedorRg = (value) => {
   return rg;
 };
 
+/** @param {unknown} value */
 export const normalizeFornecedorSimplesNacional = (value) => {
   if (typeof value === 'boolean') return value;
   if (value === 1 || value === '1') return true;
@@ -184,15 +254,17 @@ const SUPPLIER_ACCOUNT_TYPES = new Map([
   ['PAGAMENTO', 'Pagamento'],
 ]);
 
+/** @param {unknown} value */
 export const normalizeFornecedorDadosBancarios = (value) => {
   if (value == null || value === '') return {};
   if (typeof value !== 'object' || Array.isArray(value)) {
     throw new Error('Dados bancarios do fornecedor invalidos.');
   }
-  const banco = String(value.banco || '').replace(/[<>]/g, '').trim().slice(0, 120);
-  const agencia = String(value.agencia || '').replace(/[^0-9A-Za-z.\-/]/g, '').trim().slice(0, 30);
-  const conta = String(value.conta || '').replace(/[^0-9A-Za-z.\-/]/g, '').trim().slice(0, 40);
-  const rawType = String(value.tipo_conta || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').trim().toUpperCase();
+  const bankData = /** @type {MasterRecord} */ (value);
+  const banco = String(bankData.banco || '').replace(/[<>]/g, '').trim().slice(0, 120);
+  const agencia = String(bankData.agencia || '').replace(/[^0-9A-Za-z.\-/]/g, '').trim().slice(0, 30);
+  const conta = String(bankData.conta || '').replace(/[^0-9A-Za-z.\-/]/g, '').trim().slice(0, 40);
+  const rawType = String(bankData.tipo_conta || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').trim().toUpperCase();
   if (![banco, agencia, conta, rawType].some(Boolean)) return {};
   if (!banco || !conta) throw new Error('Banco e conta sao obrigatorios nos dados bancarios do fornecedor.');
   const tipoConta = SUPPLIER_ACCOUNT_TYPES.get(rawType || 'CORRENTE');
@@ -200,6 +272,7 @@ export const normalizeFornecedorDadosBancarios = (value) => {
   return { banco, agencia, conta, tipo_conta: tipoConta };
 };
 
+/** @param {MasterRecord} record */
 export const normalizeFornecedorCadastro = (record = {}) => {
   const hasDocumentFields = ['tipo_pessoa', 'cpf_cnpj', 'cpf', 'cnpj'].some((field) => (
     Object.prototype.hasOwnProperty.call(record, field)
@@ -235,6 +308,7 @@ export const normalizeFornecedorCadastro = (record = {}) => {
   return normalized;
 };
 
+/** @param {MasterScopeOptions} options */
 export const assertFornecedorScope = ({ record = {}, before = null, currentGroupId = null, companies = [] } = {}) => {
   const groupId = firstText(record.group_id, record.grupo_id, before?.group_id, before?.grupo_id);
   const beforeGroupId = firstText(before?.group_id, before?.grupo_id);
@@ -252,22 +326,29 @@ export const assertFornecedorScope = ({ record = {}, before = null, currentGroup
   return true;
 };
 
+/** @param {unknown} value */
 export const parseNumericCode = (value) => {
   const match = String(value || '').match(/(\d+)(?!.*\d)/);
   const parsed = Number.parseInt(match?.[1] || '', 10);
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+/**
+ * @param {MasterRecord[]} records
+ * @param {string} field
+ */
 export const maxNumericCode = (records = [], field = 'codigo') => records.reduce((max, item) => {
   const parsed = parseNumericCode(item?.[field]);
   return parsed > max ? parsed : max;
 }, 0);
 
+/** @param {SequentialCodeOptions} options */
 export const resolveNextSequentialCode = ({ records = [], field = 'codigo', width = 4, currentMax = 0, prefix = '' } = {}) => {
   const next = Math.max(currentMax, maxNumericCode(records, field)) + 1;
   return `${prefix}${String(next).padStart(width, '0')}`;
 };
 
+/** @param {MasterCreateOptions} options */
 export const applyCodigoOnCreate = ({ entityName, record = {}, records = [], sequenceValue = 0 } = {}) => {
   const spec = MASTER_CODE_SPECS[entityName];
   if (!spec) return record;
@@ -309,6 +390,7 @@ export const applyCodigoOnCreate = ({ entityName, record = {}, records = [], seq
   };
 };
 
+/** @param {ReferenceCodeOptions} options */
 export const findDuplicateMaster = ({ entityName, record = {}, records = [], currentId = null } = {}) => {
   const groupId = firstText(record.group_id, record.grupo_id);
   if (!groupId) {
@@ -342,6 +424,7 @@ export const findDuplicateMaster = ({ entityName, record = {}, records = [], cur
   return null;
 };
 
+/** @param {MasterCreateOptions} options */
 export const applyMasterCadastroOnCreate = ({ entityName, record = {}, records = [], sequenceValue = 0 } = {}) => {
   const normalizedRecord = entityName === 'Fornecedor' ? normalizeFornecedorCadastro(record) : record;
   const groupId = firstText(normalizedRecord.group_id, normalizedRecord.grupo_id);
@@ -349,7 +432,7 @@ export const applyMasterCadastroOnCreate = ({ entityName, record = {}, records =
     || Boolean(LEGACY_REFERENCE_CODE_SPECS[entityName] && firstText(record[LEGACY_REFERENCE_CODE_SPECS[entityName].field]))
     || ['Cliente', 'Fornecedor', 'Transportadora', 'Produto'].includes(entityName);
   if (requiresGroup && !groupId) {
-    const error = new Error('group_id obrigatorio para cadastro mestre.');
+    const error = /** @type {MasterPolicyError} */ (new Error('group_id obrigatorio para cadastro mestre.'));
     error.duplicate = { type: 'sem_grupo' };
     throw error;
   }
@@ -358,7 +441,7 @@ export const applyMasterCadastroOnCreate = ({ entityName, record = {}, records =
   if (entityName === 'Produto' && !isMigracao) {
     const preDup = findDuplicateMaster({ entityName, record: normalizedRecord, records });
     if (preDup?.type === 'codigo') {
-      const error = new Error('Codigo duplicado no grupo para este cadastro.');
+      const error = /** @type {MasterPolicyError} */ (new Error('Codigo duplicado no grupo para este cadastro.'));
       error.duplicate = preDup;
       throw error;
     }
@@ -366,16 +449,16 @@ export const applyMasterCadastroOnCreate = ({ entityName, record = {}, records =
   const withCode = applyCodigoOnCreate({ entityName, record: normalizedRecord, records, sequenceValue });
   const duplicate = findDuplicateMaster({ entityName, record: withCode, records });
   if (duplicate?.type === 'sem_grupo') {
-    const error = new Error('group_id obrigatorio para cadastro mestre.');
+    const error = /** @type {MasterPolicyError} */ (new Error('group_id obrigatorio para cadastro mestre.'));
     error.duplicate = duplicate;
     throw error;
   }
   if (duplicate) {
-    const error = new Error(
+    const error = /** @type {MasterPolicyError} */ (new Error(
       duplicate.type === 'codigo'
         ? 'Codigo duplicado no grupo para este cadastro.'
         : 'Cadastro duplicado no grupo para este documento.',
-    );
+    ));
     error.duplicate = duplicate;
     throw error;
   }

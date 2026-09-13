@@ -7212,3 +7212,17 @@ Checklist inicial:
 - O build mantem somente os avisos conhecidos de imports mistos, bundle principal e Browserslist.
 - Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
 - Proximo passo: tipar `localCadastroMasterPolicy.js`, politica compartilhada com 51 diagnosticos e 383 linhas; telas acima do limite serao tratadas separadamente.
+
+### Gate 18 - Contrato tipado dos Cadastros Mestres
+
+- Objetivo: reduzir a divida de typecheck da politica local de cadastros sem alterar validacao, sequenciamento, migracao ou bloqueios de duplicidade.
+- Causa raiz: registros mestres, opcoes e erros enriquecidos eram inferidos sem seus campos, concentrando 51 diagnosticos.
+- Implementacao: JSDoc local passou a descrever registros, empresas, dados bancarios, especificacoes de codigo, opcoes de escopo/criacao e erros com `duplicate`. Nenhum `any`, `ts-ignore` ou desligamento de `checkJs` foi introduzido.
+- Multiempresa preservada: codigos e documentos continuam unicos dentro do Grupo; fornecedor e referencia legada continuam bloqueados quando a Empresa nao pertence ao Grupo resolvido.
+- Seguranca e comportamento preservados: CPF/CNPJ, website, RG, Simples Nacional e dados bancarios mantem sanitizacao e validacao; sequencias continuam reservadas no backend e migracoes preservam origem.
+- Resultado isolado: 51 diagnosticos antes e zero depois.
+- Resultado global: 2.514 diagnosticos antes e 2.458 depois, reducao liquida de 56. O typecheck permanece habilitado e falha apenas pela divida historica registrada e autorizada.
+- Validacao: 19/19 testes focados e 252/252 testes globais aprovados; ESLint direcionado e global sem diagnosticos; `audit:baseline`, build completo e `git diff --check` aprovados.
+- O build mantem somente os avisos conhecidos de imports mistos, bundle principal e Browserslist.
+- Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
+- Proximo passo: tipar `portalClientePolicy.js`, politica compartilhada com 42 diagnosticos e 232 linhas; arquivos grandes permanecem separados.

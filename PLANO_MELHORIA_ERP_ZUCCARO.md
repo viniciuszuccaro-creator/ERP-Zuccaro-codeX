@@ -668,3 +668,16 @@ Lote concluido em 2026-09-13 na politica compartilhada de NF-e, sem alterar nume
 
 Proxima frente: tipar `localCadastroMasterPolicy.js`, politica compartilhada com 51 diagnosticos e 383 linhas. As telas grandes de Nota Fiscal, Dashboard, Contratos e Armado permanecem reservadas para lotes proprios de refatoracao.
 
+### Contratos JSDoc - politica local de Cadastros Mestres
+
+Lote concluido em 2026-09-13 na politica compartilhada de cadastros, sem alterar validacao de fornecedor, codigos legados, sequencias ou deteccao de duplicidade.
+
+- Contratos locais descrevem registros mestres, empresas, dados bancarios, especificacoes de codigo, escopo, sequencias e erros com detalhe de duplicidade sem `any`, `ts-ignore` ou desativacao de `checkJs`.
+- O typecheck isolado de `localCadastroMasterPolicy.js` passou de 51 diagnosticos para zero.
+- O typecheck global caiu de 2.514 para 2.458 diagnosticos, reducao liquida de 56, incluindo cinco diagnosticos removidos do cliente local.
+- Permanecem iguais a validacao de CPF/CNPJ, website, RG, Simples Nacional e dados bancarios, o bloqueio de empresa fora do Grupo e a reserva de codigos pelo backend.
+- Migracoes continuam preservando codigo de origem e legado; duplicidades continuam isoladas por Grupo e o arquivo encerrou com 466 linhas.
+- Nenhum dado, entidade, recurso Base44, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente: tipar `portalClientePolicy.js`, politica compartilhada com 42 diagnosticos e 232 linhas. O cliente local e as telas acima do limite permanecem reservados para lotes proprios.
+
