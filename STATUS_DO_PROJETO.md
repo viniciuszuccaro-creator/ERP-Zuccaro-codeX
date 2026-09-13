@@ -6738,3 +6738,18 @@ Checklist inicial:
 - Situacao: existe evidencia positiva de que a logica envolvendo FornecDuplicatas e DATABAIXA esta presente no aplicativo cliente antigo. Ainda nao foi identificado qual binario grava a baixa, e a parcela permanece BLOCKED para migracao como pagamento comprovado.
 - O SQL permaneceu Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; esta etapa nao acessou dados do banco. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
 - Proximo passo obrigatorio: deduplicar por SHA-256 os 13 arquivos que contem ambas as referencias e classificar somente as cadeias alvo por coocorrencia de SELECT, UPDATE, INSERT, DELETE e estruturas financeiras relacionadas. Nao executar binarios, nao exportar consultas, strings completas, credenciais ou dados e nao alterar o backup.
+
+### Gate 18 - Deduplicacao e classificacao das cadeias do aplicativo
+
+- Os 13 arquivos que contem FornecDuplicatas e DATABAIXA foram comparados por SHA-256. Eles representam 12 binarios unicos; um grupo contem duas copias identicas da mesma biblioteca.
+- Um representante de cada hash foi analisado em ASCII e UTF-16LE, totalizando 24 leituras. Somente cadeias imprimiveis que continham ao menos um dos dois alvos foram classificadas.
+- Tres binarios unicos possuem UPDATE na mesma cadeia imprimivel que um alvo. Eles pertencem a categorias funcionais de caixa, contas a receber e fiscal.
+- Em dois desses tres binarios, FornecDuplicatas e DATABAIXA aparecem juntos na mesma cadeia que tambem contem UPDATE. No terceiro, UPDATE aparece com um alvo, mas os dois alvos nao estao juntos na mesma cadeia.
+- Dois binarios de modulo de pagamentos possuem cadeias alvo com SELECT, INSERT, DELETE, ajustes de duplicatas e bordero, mas nao apresentam UPDATE na mesma cadeia alvo.
+- Outros binarios possuem referencias a ajustes ou contas a pagar, porem sem verbo de escrita na mesma cadeia alvo. Nenhum candidato apresentou MERGE ou EXEC na cadeia classificada.
+- A coocorrencia reduz o universo de investigacao, mas ainda nao prova que o comando seja UPDATE FornecDuplicatas SET DATABAIXA. Nenhum binario foi executado e nenhuma consulta foi exportada.
+- As duas passagens reproduziram os mesmos 13 arquivos, 12 hashes e 24 analises. A releitura protegida do HD externo confirmou SHA-256 AD9954E31BD999709EA88739FCE618FD73CEE7714E7963C486B73A540E66FFC7.
+- O relatorio legacy-app-target-string-classification.csv permanece somente em D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS, com ACL protegida. Caminhos, hashes dos binarios, cadeias, consultas, identificadores, documentos, datas, fornecedores, quantidades e valores nao integram o GitHub.
+- Situacao: tres binarios sao candidatos prioritarios a gravacao da baixa, mas a origem da parcela ainda nao esta comprovada. Ela permanece BLOCKED para migracao como pagamento.
+- O SQL permaneceu Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; esta etapa nao acessou dados do banco. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
+- Proximo passo obrigatorio: nos tres hashes com UPDATE, classificar por expressoes estruturais se existe UPDATE dirigido a FornecDuplicatas, atribuicao a DATABAIXA e clausulas de chave envolvendo relatorio e sequencia. Exportar somente contagens e classificacoes, nunca consultas ou cadeias completas, e nao executar nem alterar binarios.
