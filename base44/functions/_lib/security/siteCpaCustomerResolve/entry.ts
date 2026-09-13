@@ -496,7 +496,7 @@ export const resolveSiteCpaCustomer = async ({ base44, payload = {}, scope, requ
     capabilities: {
       customerResolve: true,
       customerUsers: false,
-      customerWorks: false,
+      customerWorks: true,
       customerCommercialCondition: false,
       addressCreate: false,
       hasCommercialCondition: Boolean(Object.keys(commercial).length),

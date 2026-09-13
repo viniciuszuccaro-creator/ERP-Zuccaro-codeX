@@ -9,6 +9,8 @@ import {
   SiteCpaCatalogError,
   resolveSiteCpaCatalog,
 } from '../siteCpaCatalogRead/entry.ts';
+import { SiteCpaWorkError, resolveWorkContext } from '../siteCpaWork/entry.ts';
+import { workAccessFromLink } from '../siteCpaWork/contract.ts';
 
 export const SITE_CPA_ORDER_CREATE_OPERATION = 'sitePedidoCreate';
 
@@ -310,25 +312,6 @@ const resolvePaymentCondition = async ({ base44, scope, customer, preference }) 
   return { id: method.id, name, creditRequired: normalize(name) !== 'A VISTA' };
 };
 
-const validateReference = async ({ base44, scope, entityName, id, customerId, requireCustomer }) => {
-  if (!id) return null;
-  let rows;
-  try {
-    rows = await base44.asServiceRole.entities[entityName].filter({
-      id,
-      group_id: scope.groupId,
-    }, undefined, 2);
-  } catch {
-    throw new SiteCpaOrderError(503, 'site_cpa_order_unavailable');
-  }
-  const record = (Array.isArray(rows) ? rows : []).find((item) => customerBelongsToScope(item, scope));
-  const ownerId = text(record?.cliente_id || record?.customer_id);
-  if (!record || (ownerId && ownerId !== customerId) || (requireCustomer && !ownerId)) {
-    throw new SiteCpaOrderError(403, 'site_cpa_order_scope_forbidden');
-  }
-  return record;
-};
-
 const auditOrder = async ({ base44, scope, request, input, order, outcome, success }) => {
   try {
     await base44.asServiceRole.entities.AuditLog.create({
@@ -440,20 +423,21 @@ export const resolveSiteCpaOrderCreate = async ({
       address = addresses.find((item) => text(item.addressId) === text(input.addressId)) || null;
       if (!address) throw new SiteCpaOrderError(403, 'site_cpa_order_address_invalid');
     }
-    if (input.obraId) {
-      const work = addresses.find((item) => (
-        text(item.addressId) === input.obraId && item.type === 'OBRA'
-      ));
-      if (!work) throw new SiteCpaOrderError(403, 'site_cpa_order_work_invalid');
+    try {
+      await resolveWorkContext({
+        base44, scope, obraId: input.obraId, projectId: input.projectId, costCenterId: input.costCenterId,
+        context: { ...customerContext, workAccess: workAccessFromLink(customerContext.link, customerContext.role) },
+      });
+    } catch (error) {
+      if (error instanceof SiteCpaWorkError) {
+        if (input.obraId && ['site_cpa_work_forbidden', 'site_cpa_work_not_found'].includes(error.code)) {
+          throw new SiteCpaOrderError(403, 'site_cpa_order_work_invalid');
+        }
+        if (error.status === 503) throw new SiteCpaOrderError(503, 'site_cpa_order_unavailable');
+        throw new SiteCpaOrderError(403, 'site_cpa_order_scope_forbidden');
+      }
+      throw error;
     }
-    await validateReference({
-      base44, scope, entityName: 'Projeto', id: input.projectId,
-      customerId: input.erpCustomerId, requireCustomer: true,
-    });
-    await validateReference({
-      base44, scope, entityName: 'CentroCusto', id: input.costCenterId,
-      customerId: input.erpCustomerId, requireCustomer: false,
-    });
 
     const confirmed = await resolveOrderItems({ base44, scope, input, request, now });
     const payment = await resolvePaymentCondition({

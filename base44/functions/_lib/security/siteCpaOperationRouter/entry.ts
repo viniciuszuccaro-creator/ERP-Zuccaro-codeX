@@ -49,6 +49,11 @@ import {
   SiteCpaArmacaoError,
   resolveSiteCpaArmacaoOperation,
 } from '../siteCpaArmacao/entry.ts';
+import {
+  SITE_CPA_WORK_OPERATIONS,
+  SiteCpaWorkError,
+  resolveSiteCpaWorkOperation,
+} from '../siteCpaWork/entry.ts';
 
 const rejected = (buildResponse, request, failure) => ({
   handled: true,
@@ -135,6 +140,16 @@ export const routeSiteCpaOperation = async ({
     } catch (error) {
       return rejected(buildResponse, request, error instanceof SiteCpaArmacaoError
         ? error : new SiteCpaArmacaoError(503, 'site_cpa_armacao_unavailable'));
+    }
+  }
+
+  if (SITE_CPA_WORK_OPERATIONS.has(request.operation)) {
+    try {
+      const data = await resolveSiteCpaWorkOperation({ base44, payload, scope, request, now });
+      return completed(buildResponse, request, data);
+    } catch (error) {
+      return rejected(buildResponse, request, error instanceof SiteCpaWorkError
+        ? error : new SiteCpaWorkError(503, 'site_cpa_work_unavailable'));
     }
   }
 

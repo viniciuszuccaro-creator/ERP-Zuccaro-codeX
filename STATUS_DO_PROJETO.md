@@ -7535,3 +7535,20 @@ Checklist inicial:
 - Typecheck: 2.238 diagnosticos historicos preservados e zero diagnosticos nos arquivos do ERP-SITE-10.
 - Nenhum arquivo do Site CPA, dado real, recurso Base44 remoto, backup legado ou HD externo foi acessado ou alterado.
 - Proximo passo somente com autorizacao expressa: ERP-SITE-11 - Obras e Centros de Custo.
+
+### ERP-SITE-11 - Obras, Projetos e Centros de Custo do Site CPA
+
+- Objetivo: publicar a estrutura Cliente -> Obra -> Projeto -> Centro de Custo como leitura segura no gateway S2S `v1`.
+- Operacoes: `siteObraList/Get`, `siteProjetoList/Get` e `siteCentroCustoList/Get`.
+- Reuso: Obra em `Cliente.locais_entrega`, `Projeto`, `CentroCusto`, vinculo em `SolicitacaoAprovacao`, gateway, ledger e auditoria existentes.
+- Helper central: `resolveWorkContext` valida ownership, allowlist, hierarquia, parent, compatibilidade Obra/Projeto/Centro e contexto Grupo/Empresa.
+- RBAC: os quatro papeis empresariais possuem somente leitura; nao administrativos exigem `allWorks: true` ou allowlist explicita. Usuario revogado e politica ausente falham fechados.
+- Privacidade: respostas minimizadas nao incluem custos, margem, budget, notas internas, responsavel privado ou metadados internos de aprovacao.
+- Integracao: Pedido, Orcamento e Armacao usam o helper central; `siteClienteResolve` anuncia `customerWorks: true`.
+- Capabilities: `WORK`, `WORK_PROJECTS` e `WORK_COST_CENTER` refletem a disponibilidade real das entidades existentes.
+- PRONTO: lista/detalhe, busca, filtros, paginacao, hierarquia, selectable, IDOR, cross-tenant, RBAC, auditoria e gateway autenticado.
+- BLOCKED: criacao/edicao pelo Site, alteracao de allowlist, Centro de Custo sem ownership, financeiro interno e analytics avancado.
+- Validacao focada: 16/16 testes próprios e 69/69 testes do Work Context com Pedido, Orcamento e Armacao aprovados.
+- Validacao global: 424/424 testes aprovados; ESLint global, `audit:baseline`, build completo e `git diff --check` sem falhas. Typecheck direcionado sem diagnosticos; baseline global permanece com 2.238 diagnosticos historicos.
+- Nenhum arquivo do Site CPA, dado real, recurso Base44 remoto, backup legado ou HD externo foi acessado ou alterado.
+- Proximo passo somente com autorizacao expressa: ERP-SITE-12 - Copiloto e Oportunidades.

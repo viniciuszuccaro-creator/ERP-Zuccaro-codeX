@@ -89,6 +89,7 @@ const approvedLink = (overrides = {}) => ({
     source: 'SITE_CPA',
     externalUserId: 'site-user-1',
     role: 'COMPRADOR',
+    allWorks: true,
   },
   ...overrides,
 });
@@ -120,7 +121,7 @@ const createState = ({
   payments = [{ id: 'payment-1', group_id: 'grupo-cpa', empresa_id: 'cpa-aco', descricao: 'Boleto 30 dias', ativo: true }],
   sellers = [{ id: 'seller-1', group_id: 'grupo-cpa', empresa_id: 'cpa-aco', nome_completo: 'Vendedor CPA', ativo: true }],
   projects = [{ id: 'project-1', group_id: 'grupo-cpa', empresa_id: 'cpa-aco', cliente_id: 'customer-1', ativo: true }],
-  costCenters = [{ id: 'cost-1', group_id: 'grupo-cpa', empresa_id: 'cpa-aco', ativo: true }],
+  costCenters = [{ id: 'cost-1', group_id: 'grupo-cpa', empresa_id: 'cpa-aco', cliente_id: 'customer-1', obra_id: 'work-1', projeto_id: 'project-1', ativo: true }],
   orders = [],
   failEntity = null,
 } = {}) => {

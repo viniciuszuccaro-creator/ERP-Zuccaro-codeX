@@ -13,6 +13,8 @@ import {
   SiteCpaOrderError,
   resolveSiteCpaOrderCreate,
 } from '../siteCpaOrderCreate/entry.ts';
+import { SiteCpaWorkError, resolveWorkContext } from '../siteCpaWork/entry.ts';
+import { workAccessFromLink } from '../siteCpaWork/contract.ts';
 import {
   QUOTE_OPERATIONS,
   SITE_CPA_NEGOTIATION_GET_OPERATION,
@@ -131,25 +133,6 @@ const resolveCustomer = async ({ base44, scope, input }) => {
     throw new SiteCpaQuoteError(403, 'site_cpa_quote_customer_invalid');
   }
   return context;
-};
-
-const validateReference = async ({ base44, scope, entityName, id, customerId, requireCustomer }) => {
-  if (!id) return null;
-  let rows;
-  try {
-    rows = await base44.asServiceRole.entities[entityName].filter({
-      id,
-      group_id: scope.groupId,
-    }, undefined, 2);
-  } catch {
-    throw new SiteCpaQuoteError(503, 'site_cpa_quote_unavailable');
-  }
-  const record = (Array.isArray(rows) ? rows : []).find((item) => customerBelongsToScope(item, scope));
-  const ownerId = text(record?.cliente_id || record?.customer_id);
-  if (!record || (ownerId && ownerId !== customerId) || (requireCustomer && !ownerId)) {
-    throw new SiteCpaQuoteError(403, 'site_cpa_quote_scope_forbidden');
-  }
-  return record;
 };
 
 const resolveCatalogItems = async ({ base44, scope, request, input, now }) => {
@@ -271,17 +254,21 @@ const createQuote = async ({ base44, payload, scope, request, now }) => {
     address = addresses.find((item) => text(item.addressId) === input.addressId) || null;
     if (!address) throw new SiteCpaQuoteError(403, 'site_cpa_quote_address_invalid');
   }
-  if (input.obraId && !addresses.some((item) => text(item.addressId) === input.obraId && item.type === 'OBRA')) {
-    throw new SiteCpaQuoteError(403, 'site_cpa_quote_work_invalid');
+  try {
+    await resolveWorkContext({
+      base44, scope, obraId: input.obraId, projectId: input.projectId, costCenterId: input.costCenterId,
+      context: { ...customerContext, workAccess: workAccessFromLink(customerContext.link, customerContext.role) },
+    });
+  } catch (error) {
+    if (error instanceof SiteCpaWorkError) {
+      if (input.obraId && ['site_cpa_work_forbidden', 'site_cpa_work_not_found'].includes(error.code)) {
+        throw new SiteCpaQuoteError(403, 'site_cpa_quote_work_invalid');
+      }
+      if (error.status === 503) throw new SiteCpaQuoteError(503, 'site_cpa_quote_unavailable');
+      throw new SiteCpaQuoteError(403, 'site_cpa_quote_scope_forbidden');
+    }
+    throw error;
   }
-  await validateReference({
-    base44, scope, entityName: 'Projeto', id: input.projectId,
-    customerId: input.erpCustomerId, requireCustomer: true,
-  });
-  await validateReference({
-    base44, scope, entityName: 'CentroCusto', id: input.costCenterId,
-    customerId: input.erpCustomerId, requireCustomer: false,
-  });
 
   const catalog = await resolveCatalogItems({ base44, scope, request, input, now });
   const customItems = input.customItems.map((item) => ({

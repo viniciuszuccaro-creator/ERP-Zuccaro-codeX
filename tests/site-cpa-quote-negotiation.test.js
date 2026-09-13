@@ -42,7 +42,7 @@ const customer = (overrides = {}) => ({
 const approvedLink = (overrides = {}) => ({
   id: 'link-1', tipo_solicitacao: 'vinculo_site_cpa_cliente', entidade_alvo_id: 'customer-1',
   group_id: 'grupo-cpa', empresa_id: 'cpa-aco', status: 'aprovado',
-  dados_propostos: { source: 'SITE_CPA', externalUserId: 'site-user-1', role: 'COMPRADOR' },
+  dados_propostos: { source: 'SITE_CPA', externalUserId: 'site-user-1', role: 'COMPRADOR', allWorks: true },
   ...overrides,
 });
 
@@ -83,7 +83,7 @@ const createState = ({
     FormaPagamento: [{ id: 'payment-1', group_id: 'grupo-cpa', empresa_id: 'cpa-aco', descricao: 'Boleto 30 dias', ativo: true }],
     Colaborador: sellers,
     Projeto: [{ id: 'project-1', group_id: 'grupo-cpa', empresa_id: 'cpa-aco', cliente_id: 'customer-1', ativo: true }],
-    CentroCusto: [{ id: 'cost-1', group_id: 'grupo-cpa', empresa_id: 'cpa-aco', ativo: true }],
+    CentroCusto: [{ id: 'cost-1', group_id: 'grupo-cpa', empresa_id: 'cpa-aco', cliente_id: 'customer-1', obra_id: 'work-1', projeto_id: 'project-1', ativo: true }],
     Oportunidade: [],
     Pedido: orders,
   };

@@ -1,10 +1,12 @@
 import {
-  SiteCpaCustomerError, buildCustomerAddresses, customerBelongsToScope,
+  SiteCpaCustomerError, customerBelongsToScope,
   resolveApprovedSiteCustomerContext,
 } from '../siteCpaCustomerResolve/entry.ts';
 import {
   SITE_CPA_QUOTE_CREATE_OPERATION, SiteCpaQuoteError, resolveSiteCpaQuoteOperation,
 } from '../siteCpaQuoteNegotiation/entry.ts';
+import { SiteCpaWorkError, resolveWorkContext } from '../siteCpaWork/entry.ts';
+import { workAccessFromLink } from '../siteCpaWork/contract.ts';
 import {
   ARMATION_LIMITS, SITE_CPA_ARMACAO_CONFIRM_OPERATION, SITE_CPA_ARMACAO_CREATE_OPERATION,
   SITE_CPA_ARMACAO_GET_OPERATION, SITE_CPA_ARMACAO_OPERATIONS,
@@ -116,20 +118,24 @@ const validateReference = async ({ base44, scope, name, id, customerId, type = n
 };
 
 const validateContextReferences = async ({ base44, scope, input, context }) => {
-  const addresses = buildCustomerAddresses(context.customer);
-  if (input.obraId && !addresses.some((address) => text(address.addressId) === input.obraId && address.type === 'OBRA')) {
-    throw new SiteCpaArmacaoError(403, 'site_cpa_armacao_work_invalid');
-  }
-  const allowed = new Set(Array.isArray(context.link?.dados_propostos?.allowedWorkIds)
-    ? context.link.dados_propostos.allowedWorkIds.map(text) : []);
-  if (input.obraId && allowed.size && !allowed.has(input.obraId)) {
-    throw new SiteCpaArmacaoError(403, 'site_cpa_armacao_work_invalid');
+  try {
+    await resolveWorkContext({
+      base44, scope, obraId: input.obraId, projectId: input.projectId, costCenterId: input.costCenterId,
+      context: { ...context, workAccess: workAccessFromLink(context.link, context.role) },
+    });
+  } catch (error) {
+    if (error instanceof SiteCpaWorkError) {
+      if (input.obraId && ['site_cpa_work_forbidden', 'site_cpa_work_not_found'].includes(error.code)) {
+        throw new SiteCpaArmacaoError(403, 'site_cpa_armacao_work_invalid');
+      }
+      if (error.status === 503) throw new SiteCpaArmacaoError(503, 'site_cpa_armacao_unavailable');
+      throw new SiteCpaArmacaoError(403, 'site_cpa_armacao_context_invalid');
+    }
+    throw error;
   }
   await Promise.all([
     validateReference({ base44, scope, name: 'Pedido', id: input.erpOrderId, customerId: input.erpCustomerId }),
     validateReference({ base44, scope, name: 'Pedido', id: input.erpQuoteId, customerId: input.erpCustomerId, type: 'Orçamento' }),
-    validateReference({ base44, scope, name: 'Projeto', id: input.projectId, customerId: input.erpCustomerId }),
-    validateReference({ base44, scope, name: 'CentroCusto', id: input.costCenterId, customerId: input.erpCustomerId }),
   ]);
 };
 

@@ -1063,3 +1063,37 @@ PRONTO: create/get/update/confirm/send-to-commercial, pacote tecnico estruturado
 BLOCKED: aprovacao tecnica pelo Site, liberacao de producao, criacao automatica de OP, corte/dobra/armado automaticos, arquivo sem storage privado e scanner, Produto inexistente, formula executavel e decisao autonoma de IA.
 
 Proximo lote somente com autorizacao expressa: ERP-SITE-11 - Obras e Centros de Custo.
+
+---
+
+# 30. EXECUCAO ERP-SITE-11 - OBRAS, PROJETOS E CENTROS DE CUSTO
+
+O gateway S2S `v1` passou a expor a estrutura organizacional oficial do Cliente sem criar entidade de Obra paralela. Obra continua representada pelos enderecos ativos do tipo `OBRA` em `Cliente`; Projeto e Centro de Custo reutilizam as entidades `Projeto` e `CentroCusto` existentes.
+
+## Operacoes e contrato
+
+- `siteObraList` e `siteObraGet`: lista e detalhe das obras autorizadas;
+- `siteProjetoList` e `siteProjetoGet`: projetos, subprojetos, etapa, pavimento e area;
+- `siteCentroCustoList` e `siteCentroCustoGet`: referencias gerenciais permitidas, sem valores financeiros internos.
+
+Listas aceitam busca segura por nome/codigo, status, ativo, obra, Projeto, pai, pagina de ate 100 itens e ordenacao allowlisted. Respostas retornam somente IDs/codigos oficiais, labels, status, hierarquia, seletividade, contagens e endereco resumido. Custos, orcamentos internos, margem, responsavel privado, notas e metadados de aprovacao nao sao publicados.
+
+## Work Context, ownership e RBAC
+
+O helper central `resolveWorkContext` resolve Cliente -> Obra -> Projeto -> Centro de Custo e bloqueia combinacoes incompatíveis. Projeto precisa pertencer explicitamente ao Cliente; Centro de Custo precisa possuir Cliente ou vinculo verificavel com Obra/Projeto. Centro generico sem ownership nao e exposto ao Site.
+
+`ADMIN_EMPRESA`, `COMPRADOR`, `FINANCEIRO` e `CONSULTA` possuem somente leitura. ADMIN sem politica explicita segue a regra administrativa existente; allowlist explicita sempre o restringe. Os demais papeis exigem `allWorks: true` ou `allowedWorkIds`; ausencia de politica falha fechada. O Site nao pode enviar nem alterar a allowlist.
+
+Obra/projeto ativo e selecionavel. Inativo, concluido ou cancelado permanece consultavel quando autorizado, mas retorna `selectable: false` e motivo publico. Projeto independente e aceito somente para vinculo com todas as obras. Parent project precisa pertencer ao mesmo Cliente e, quando informado, a mesma Obra.
+
+## Integracao, capabilities e pendencias
+
+Pedido, Orcamento e Armacao passaram a usar o helper central para validar `obraId`, `projectId` e `costCenterId`, preservando seus codigos de erro publicos. Portal, Entrega e Chat continuam usando os IDs/allowlists oficiais e agora recebem referencias resolvidas pelas seis operacoes. `siteClienteResolve` informa `customerWorks: true`.
+
+`siteHealth` informa `WORK`, `WORK_PROJECTS` e `WORK_COST_CENTER` conforme a disponibilidade real de Projeto e CentroCusto. Auditoria registra operacao, correlacao, Cliente, IDs solicitados, contagem, duracao e resultado sem entidades completas.
+
+PRONTO: list/get de Obra, Projeto e Centro de Custo; paginacao; busca; hierarquia; selectable; ownership; IDOR; RBAC; allowlist; auditoria e integracao com Pedido, Orcamento e Armacao.
+
+BLOCKED: criacao/edicao de mestre pelo Site, alteracao de `allowedWorkIds`, centro sem ownership, orcamento financeiro da obra, analytics avancado, storage e alteracao de geometria.
+
+Proximo lote somente com autorizacao expressa: ERP-SITE-12 - Copiloto e Oportunidades.
