@@ -7184,3 +7184,17 @@ Checklist inicial:
 - O build mantem somente os avisos conhecidos de imports mistos, bundle principal e Browserslist.
 - Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
 - Proximo passo: tipar `crmOportunidadePolicy.js`, atual politica compartilhada priorizada com 71 diagnosticos, sem misturar a refatoracao ampla de `Contratos.jsx`.
+
+### Gate 18 - Contrato tipado das Oportunidades CRM
+
+- Objetivo: reduzir a divida de typecheck da politica central de CRM sem alterar o fluxo de oportunidade, funil, fechamento ou conversao comercial.
+- Causa raiz: registros e opcoes com valor padrao `{}` eram inferidos sem seus campos dinamicos, concentrando 71 diagnosticos.
+- Implementacao: JSDoc local passou a descrever oportunidade, cliente, funil, contexto, opcoes de criacao/atualizacao e conversao. Nenhum `any`, `ts-ignore` ou desligamento de `checkJs` foi introduzido.
+- Multiempresa preservada: Grupo e Empresa continuam validados e propagados; operacoes sem Empresa continuam bloqueadas conforme os contratos existentes.
+- Comportamento preservado: deduplicacao, idempotencia, etapas do funil, fechamento, congelamento, conversao para pedido/orcamento e permissoes por acao permanecem inalterados.
+- Resultado isolado: 71 diagnosticos antes e zero depois.
+- Resultado global: 2.640 diagnosticos antes e 2.569 depois, reducao liquida de 71. O typecheck permanece habilitado e falha apenas pela divida historica registrada e autorizada.
+- Validacao: 5/5 testes focados e 252/252 testes globais aprovados; ESLint direcionado e global sem diagnosticos; `audit:baseline`, build completo e `git diff --check` aprovados.
+- O build mantem somente os avisos conhecidos de imports mistos, bundle principal e Browserslist.
+- Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
+- Proximo passo: tipar `notaFiscalEmissaoPolicy.js`, politica compartilhada priorizada com 53 diagnosticos; componentes grandes serao tratados em lotes de refatoracao separados.

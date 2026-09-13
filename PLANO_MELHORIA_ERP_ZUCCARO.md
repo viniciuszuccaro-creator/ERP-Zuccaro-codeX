@@ -642,3 +642,16 @@ Lote concluido em 2026-09-13 na politica compartilhada de Compras, sem alterar c
 
 Proxima frente: tipar `crmOportunidadePolicy.js`, politica compartilhada com 71 diagnosticos e testes existentes. A pagina grande de Contratos continua reservada para refatoracao propria.
 
+### Contratos JSDoc - politica de Oportunidades CRM
+
+Lote concluido em 2026-09-13 na politica compartilhada de Oportunidades CRM, sem alterar criacao, atualizacao, fechamento, conversao ou permissoes.
+
+- Contratos locais descrevem registros de oportunidade, cliente, funil, contexto, conversao e opcoes de operacao sem `any`, `ts-ignore` ou desativacao de `checkJs`.
+- O typecheck isolado de `crmOportunidadePolicy.js` passou de 71 diagnosticos para zero.
+- O typecheck global caiu de 2.640 para 2.569 diagnosticos, reducao liquida de 71, sem deslocar falhas para os consumidores.
+- Permanecem iguais o contexto Grupo/Empresa, a deduplicacao, as chaves idempotentes, as etapas do funil, o fechamento e congelamento e a conversao para pedido ou orcamento.
+- As classificacoes de permissoes por acao foram preservadas e a politica encerrou com 366 linhas, sem necessidade de extracao.
+- Nenhum dado, entidade, recurso Base44, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente: tipar `notaFiscalEmissaoPolicy.js`, politica compartilhada com 53 diagnosticos. `Contratos.jsx`, `ArmadoPadraoTab.jsx` e o cliente local permanecem reservados para lotes proprios por tamanho e propagacao.
+

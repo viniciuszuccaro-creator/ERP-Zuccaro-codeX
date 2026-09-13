@@ -1,3 +1,46 @@
+/**
+ * @typedef {Record<string, unknown> & {
+ *   id?: string | number,
+ *   group_id?: unknown,
+ *   grupo_id?: unknown,
+ *   empresa_id?: unknown,
+ *   empresa_dona_id?: unknown,
+ *   status?: unknown,
+ *   titulo?: unknown,
+ *   nome?: unknown,
+ *   cliente_id?: unknown,
+ *   cliente_nome?: unknown,
+ *   cliente_email?: unknown,
+ *   cliente_telefone?: unknown,
+ *   cliente_cpf_cnpj?: unknown,
+ *   oportunidade_id?: unknown,
+ *   codigo_oportunidade?: unknown,
+ *   etapa?: unknown,
+ *   etapa_funil?: unknown,
+ *   historico_mudancas_etapa?: CrmRecord[],
+ *   idempotency_key?: unknown,
+ *   pedido_id?: unknown,
+ *   orcamento_site_id?: unknown,
+ *   orcamento_id?: unknown,
+ *   probabilidade?: unknown,
+ *   valor_estimado?: unknown,
+ *   data_abertura?: unknown,
+ *   data_inicio?: unknown,
+ *   data_interacao?: unknown,
+ *   temperatura?: unknown,
+ *   tipo?: unknown,
+ *   resultado?: unknown,
+ *   convertido_em?: unknown,
+ *   origem?: unknown,
+ *   observacoes?: unknown,
+ *   necessidades?: unknown,
+ * }} CrmRecord
+ * @typedef {{ record?: CrmRecord, oportunidades?: CrmRecord[] }} OportunidadeCreateOptions
+ * @typedef {{ before?: CrmRecord, patch?: CrmRecord }} OportunidadeUpdateOptions
+ * @typedef {{ oportunidade?: CrmRecord, tipo?: string, empresaId?: unknown }} ConversaoOptions
+ */
+
+/** @param {...unknown} values */
 const firstText = (...values) => values.map((value) => String(value || '').trim()).find(Boolean) || '';
 
 export const CRM_ENTITIES = ['Oportunidade', 'Interacao', 'Campanha'];
@@ -11,10 +54,13 @@ export const CRM_ETAPAS = [
   'Fechamento',
 ];
 
+/** @param {string} entityName */
 export const isCrmEntity = (entityName) => CRM_ENTITIES.includes(entityName);
 
+/** @param {unknown} value */
 export const digitsOnly = (value) => String(value || '').replace(/\D/g, '');
 
+/** @param {unknown} value */
 export const normalizeEtapaCrm = (value) => {
   const raw = firstText(value);
   if (!raw) return 'Prospecção';
@@ -35,6 +81,7 @@ export const normalizeEtapaCrm = (value) => {
   return aliases[raw.toLowerCase()] || raw;
 };
 
+/** @param {CrmRecord} record */
 export const oportunidadeAberta = (record = {}) => {
   const status = String(record.status || '').toLowerCase();
   return !status.includes('ganh')
@@ -44,6 +91,7 @@ export const oportunidadeAberta = (record = {}) => {
     && !status.includes('fechad');
 };
 
+/** @param {CrmRecord} record */
 export const oportunidadeIdempotencyKey = (record = {}) => {
   const explicit = firstText(record.idempotency_key);
   if (explicit) return explicit;
@@ -58,6 +106,10 @@ export const oportunidadeIdempotencyKey = (record = {}) => {
   return ['opp', scope, contact, titulo].join('|');
 };
 
+/**
+ * @param {CrmRecord} record
+ * @param {CrmRecord[]} oportunidades
+ */
 export const findDuplicateOportunidade = (record = {}, oportunidades = []) => {
   const key = oportunidadeIdempotencyKey(record);
   if (!key) return null;
@@ -66,6 +118,7 @@ export const findDuplicateOportunidade = (record = {}, oportunidades = []) => {
   )) || null;
 };
 
+/** @param {CrmRecord} record */
 export const stampOportunidadeDefaults = (record = {}) => {
   const etapa = normalizeEtapaCrm(record.etapa || record.etapa_funil);
   return {
@@ -81,6 +134,7 @@ export const stampOportunidadeDefaults = (record = {}) => {
   };
 };
 
+/** @param {OportunidadeCreateOptions} options */
 export const assertOportunidadeOnCreate = ({ record = {}, oportunidades = [] } = {}) => {
   if (!firstText(record.group_id, record.grupo_id) && !firstText(record.empresa_id)) {
     throw new Error('Grupo ou empresa obrigatorios para oportunidade.');
@@ -97,6 +151,7 @@ export const assertOportunidadeOnCreate = ({ record = {}, oportunidades = [] } =
   return { reuse: null, record: stamped };
 };
 
+/** @param {{ record?: CrmRecord }} options */
 export const assertInteracaoOnCreate = ({ record = {} } = {}) => {
   if (!firstText(record.empresa_id) && !firstText(record.group_id, record.grupo_id)) {
     throw new Error('Grupo ou empresa obrigatorios para interacao.');
@@ -118,6 +173,7 @@ export const assertInteracaoOnCreate = ({ record = {} } = {}) => {
   };
 };
 
+/** @param {{ record?: CrmRecord }} options */
 export const assertCampanhaOnCreate = ({ record = {} } = {}) => {
   if (!firstText(record.group_id, record.grupo_id) && !firstText(record.empresa_id, record.empresa_dona_id)) {
     throw new Error('Grupo ou empresa obrigatorios para campanha.');
@@ -139,6 +195,7 @@ export const assertCampanhaOnCreate = ({ record = {} } = {}) => {
   };
 };
 
+/** @param {OportunidadeUpdateOptions} options */
 export const assertOportunidadeOnUpdate = ({ before = {}, patch = {} } = {}) => {
   if (!before?.id && !firstText(before.codigo_oportunidade)) {
     throw new Error('Oportunidade nao encontrada.');
@@ -207,6 +264,7 @@ export const assertOportunidadeOnUpdate = ({ before = {}, patch = {} } = {}) => 
   };
 };
 
+/** @param {string} action */
 export const oportunidadeStatusPermissionActions = (action) => {
   if (action === 'converter') return ['converter', 'aprovar', 'editar'];
   if (action === 'mover_etapa') return ['mover_etapa', 'editar'];
@@ -214,6 +272,7 @@ export const oportunidadeStatusPermissionActions = (action) => {
   return ['editar'];
 };
 
+/** @param {ConversaoOptions} options */
 export const assertConversaoOportunidade = ({ oportunidade = {}, tipo = 'orcamento', empresaId } = {}) => {
   if (!oportunidadeAberta(oportunidade)) {
     throw new Error('Oportunidade ja convertida ou fechada.');
@@ -229,6 +288,11 @@ export const assertConversaoOportunidade = ({ oportunidade = {}, tipo = 'orcamen
   return { empresaId: empresa, tipo: tipoNorm };
 };
 
+/**
+ * @param {CrmRecord} oportunidade
+ * @param {string} tipo
+ * @param {unknown} [empresaId]
+ */
 export const buildDocumentoFromOportunidade = (oportunidade = {}, tipo = 'orcamento', empresaId) => {
   const decision = assertConversaoOportunidade({ oportunidade, tipo, empresaId });
   const base = {
@@ -266,6 +330,11 @@ export const buildDocumentoFromOportunidade = (oportunidade = {}, tipo = 'orcame
   };
 };
 
+/**
+ * @param {CrmRecord} oportunidade
+ * @param {CrmRecord} documento
+ * @param {string} tipo
+ */
 export const stampOportunidadeConvertida = (oportunidade = {}, documento = {}, tipo = 'orcamento') => ({
   ...oportunidade,
   status: 'Ganho',
@@ -278,6 +347,11 @@ export const stampOportunidadeConvertida = (oportunidade = {}, documento = {}, t
   convertido_em_id: documento?.id,
 });
 
+/**
+ * @param {string} entityName
+ * @param {CrmRecord} record
+ * @param {{ oportunidades?: CrmRecord[] }} stores
+ */
 export const applyCrmCreate = (entityName, record = {}, stores = {}) => {
   if (entityName === 'Oportunidade') {
     return assertOportunidadeOnCreate({ record, oportunidades: stores.oportunidades });
