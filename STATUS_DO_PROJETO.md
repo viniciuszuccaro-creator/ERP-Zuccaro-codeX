@@ -6905,3 +6905,12 @@ Checklist inicial:
 - O relatorio detalhado e sua verificacao em duas passagens permanecem exclusivamente na pasta protegida do HD externo.
 - Os servicos SQL permaneceram parados e o banco nao foi acessado. O repositorio recebe somente este resumo sem conteudo sensivel; git diff --check e a validacao aplicavel.
 - Proximo passo obrigatorio: verificar somente os bytes iniciais dos arquivos da copia original para detectar recipientes com extensao incorreta ou ausente, sem abrir, extrair ou executar seu conteudo.
+
+### Gate 18 - Verificacao de assinaturas de recipientes
+
+- Os cabecalhos dos arquivos da copia original foram verificados contra assinaturas conhecidas, sem extrair, montar ou executar conteudo.
+- Nenhum recipiente compactado ou pacote oculto por extensao ausente ou incorreta foi identificado nas duas passagens independentes.
+- A hipotese de artefatos de desenvolvimento ocultos em recipientes da copia original fica encerrada; o bloqueio de migracao permanece.
+- O relatorio detalhado e sua verificacao de integridade permanecem exclusivamente na pasta protegida do HD externo.
+- Os servicos SQL permaneceram parados e o banco nao foi acessado. O repositorio recebe somente este resumo sem conteudo sensivel; git diff --check e a validacao aplicavel.
+- Proximo passo obrigatorio: verificar de forma controlada os arquivos nao executaveis e nao pertencentes ao banco por referencias textuais a rotina auditada, exportando somente contagens e categorias de extensao.
