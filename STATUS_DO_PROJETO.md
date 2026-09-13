@@ -7117,3 +7117,15 @@ Checklist inicial:
 - Validacao documental: pacote e lock restaurados, `HEAD` inicialmente em `dce01f6b` e nenhuma alteracao de runtime neste lote. Testes e build sao dispensados conforme `AGENTS.md`; executar `git diff --check` antes do commit.
 - Estado: `BLOCKED` ate autenticacao manual na conta Base44 correta e comprovacao do vinculo controlado do aplicativo.
 - Proximo passo permitido sem credencial: triagem direcionada das vulnerabilidades de producao, priorizando a critica e sem aplicar `npm audit fix` automaticamente.
+
+### Gate 18 - Vulnerabilidade critica do jsPDF eliminada
+
+- Causa confirmada: o projeto declarava `jspdf@^2.5.2` e duas funcoes backend fixavam `npm:jspdf@4.0.0`; o registro npm classificava as versoes como afetadas por vulnerabilidades criticas.
+- Correcao: dependencia local e imports de `exportEstoqueAco` e `emitirBoleto` alinhados em `jspdf@4.2.1`, sem mudanca no contrato de geracao dos PDFs.
+- Regressao protegida no teste de seguranca existente, incluindo `package.json` e os dois imports Deno.
+- Auditoria de producao depois da correcao: 22 alertas, sendo 0 criticos, 13 altos, 8 moderados e 1 baixo. Antes eram 24, incluindo 1 critico.
+- Validacao: smoke test gerou PDF valido de 3.523 bytes; teste focado aprovado; 252/252 testes globais aprovados; `audit:baseline` aprovado; build completo aprovado.
+- O ESLint direcionado do teste passou; as funcoes Deno continuam fora da configuracao operacional do ESLint. O ESLint global manteve a divida anterior de 84 erros e 17 avisos, sem ocorrencia nos arquivos deste lote.
+- O typecheck global manteve diagnosticos historicos em outras telas e nao apontou os arquivos alterados. Avisos conhecidos de bundle e Browserslist permanecem no build.
+- Nenhum dado, entidade, recurso Base44, banco ou HD externo foi acessado ou alterado.
+- Proximo passo: triar isoladamente o alerta alto da dependencia direta `lodash`, sem atualizacao automatica e sem agrupar React Router ou PostCSS.

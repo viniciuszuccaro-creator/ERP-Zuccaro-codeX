@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { jsPDF } from 'npm:jspdf@4.0.0';
+import { jsPDF } from 'npm:jspdf@4.2.1';
 import { completeGuardCallScope, requireEntityGuard } from './_lib/security/guardCallPolicy.js';
 
 const reportBoletoFailure = (operation, error, context = {}) => {

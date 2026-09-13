@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { jsPDF } from 'npm:jspdf@4.0.0';
+import { jsPDF } from 'npm:jspdf@4.2.1';
 import { getUserAndPerfil, assertPermission } from './_lib/guard.js';
 
 Deno.serve(async (req) => {

@@ -15,6 +15,8 @@ test('operational audit call sites no longer swallow AuditLog failures', async (
   const events = await readFile(new URL('../base44/functions/auditEntityEvents/entry.ts', import.meta.url), 'utf8');
   const invite = await readFile(new URL('../base44/functions/adminInviteUser/entry.ts', import.meta.url), 'utf8');
   const exportAco = await readFile(new URL('../base44/functions/exportEstoqueAco/entry.ts', import.meta.url), 'utf8');
+  const emitirBoleto = await readFile(new URL('../base44/functions/emitirBoleto/entry.ts', import.meta.url), 'utf8');
+  const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
   const stock = await readFile(new URL('../base44/functions/applyOrderStockMovements/entry.ts', import.meta.url), 'utf8');
   const upsert = await readFile(new URL('../base44/functions/upsertConfig/entry.ts', import.meta.url), 'utf8');
   const cnpj = await readFile(new URL('../base44/functions/ConsultarCNPJ/entry.ts', import.meta.url), 'utf8');
@@ -53,6 +55,9 @@ test('operational audit call sites no longer swallow AuditLog failures', async (
   assert.doesNotMatch(exportAco, /catch \{\}/);
   assert.match(exportAco, /group_id: groupId/);
   assert.match(exportAco, /Falha ao registrar auditoria da exportacao/);
+  assert.equal(packageJson.dependencies.jspdf, '^4.2.1');
+  assert.match(exportAco, /npm:jspdf@4\.2\.1/);
+  assert.match(emitirBoleto, /npm:jspdf@4\.2\.1/);
   assert.doesNotMatch(stock, /catch \(_\) \{\}/);
   assert.match(stock, /Falha ao auditar bloqueio RBAC/);
   assert.match(upsert, /Falha ao auditar update por ID/);

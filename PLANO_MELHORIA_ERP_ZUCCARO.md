@@ -575,3 +575,17 @@ Estado: `BLOCKED` para homologacao Base44 ate que o proprietario conclua manualm
 
 Proxima frente segura: realizar triagem direcionada das vulnerabilidades de producao, sem atualizacoes automaticas e sem misturar esse trabalho com a homologacao remota. A retomada da homologacao exigira autenticacao manual valida.
 
+### Seguranca de dependencias - jsPDF
+
+Lote concluido em 2026-09-13 para eliminar a vulnerabilidade critica de producao identificada na geracao de PDF, sem alterar telas, fluxos, dados ou formatos de saida.
+
+- A dependencia direta `jspdf` foi atualizada de `2.5.2` para `4.2.1`, primeira versao indicada pelo registro npm como corrigida para os alertas criticos vigentes.
+- As funcoes existentes `exportEstoqueAco` e `emitirBoleto` deixaram de fixar `jspdf@4.0.0` e passaram a usar `jspdf@4.2.1` no runtime Deno.
+- Os usos atuais continuam limitados a construcao do documento, texto, paginas e `output('arraybuffer')`, contratos preservados na versao corrigida.
+- O teste de seguranca existente agora impede regressao da versao declarada e das duas importacoes backend.
+- A geracao real de um PDF de duas paginas foi validada com a dependencia instalada.
+- A auditoria de producao passou de 24 para 22 alertas e de 1 critico para 0 criticos. Permanecem 13 altos, 8 moderados e 1 baixo, que serao tratados em lotes isolados.
+- Nenhuma correcao automatica ampla, `npm audit fix`, acesso Base44, dado real ou HD externo foi utilizado.
+
+Proxima frente: triagem isolada da dependencia direta `lodash`, classificada como alta, verificando usos e compatibilidade antes de qualquer atualizacao. React Router, PostCSS e dependencias transitivas permanecem fora deste lote.
+
