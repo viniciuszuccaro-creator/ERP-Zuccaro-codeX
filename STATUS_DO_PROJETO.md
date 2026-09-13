@@ -6723,3 +6723,18 @@ Checklist inicial:
 - Situacao: nao foi encontrada evidencia positiva de que a procedure criptografada produza a baixa financeira. A origem de DATABAIXA e a parcela continuam BLOCKED para migracao como pagamento comprovado.
 - MSSQL$ERPZLEGACY terminou Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; a consulta usou somente a copia local READ_ONLY. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
 - Proximo passo obrigatorio: inventariar de forma controlada os arquivos do backup do aplicativo antigo por extensao, tamanho e tipo, selecionar somente executaveis, bibliotecas, scripts e configuracoes potencialmente relacionados e buscar referencias literais a FornecDuplicatas e DATABAIXA. Nao executar binarios, nao copiar credenciais ou conteudo sensivel para o GitHub e nao alterar o backup.
+
+### Gate 18 - Referencias da baixa no aplicativo legado
+
+- A copia original do aplicativo foi inventariada sem executar arquivos. A busca foi limitada a executaveis, bibliotecas, scripts e configuracoes e excluiu bancos MDF/LDF, arquivos TPS, relatorios, quarentena e instaladores.
+- Foram selecionados 1.545 arquivos candidatos, totalizando aproximadamente 2,4 GB: 176 executaveis e 1.369 bibliotecas DLL.
+- A varredura literal foi executada em ASCII e UTF-16LE para FornecDuplicatas e DATABAIXA. Foram encontradas 52 ocorrencias de arquivo e codificacao, correspondentes a 36 arquivos unicos.
+- DATABAIXA aparece em 35 arquivos unicos. FornecDuplicatas aparece em 13 arquivos, e todos esses 13 tambem contem DATABAIXA.
+- Os outros 23 arquivos contem somente DATABAIXA e podem representar baixas de outros modulos; por isso nao serao tratados como evidencia da parcela de fornecedor.
+- Os nomes dos 13 candidatos incluem categorias funcionais compativeis com caixa, despesas, conciliacao bancaria, contas a pagar, fiscal e bibliotecas compartilhadas. Essa classificacao orienta a proxima leitura, mas nao comprova escrita.
+- Nenhum binario foi carregado ou executado. A busca leu apenas cadeias literais e nao exportou comandos SQL, credenciais, dados comerciais ou conteudo dos arquivos.
+- As duas passagens produziram inventario e resultados identicos; a releitura protegida do HD externo confirmou SHA-256 9A56686930DD111CDC561065441A8C4C734426B740B4F5195A7DE6A1916242E5.
+- O relatorio legacy-app-literal-scan.csv permanece somente em D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS, com ACL protegida. Caminhos de binarios, identificadores, documentos, datas, fornecedores, textos, quantidades, valores e o proprio relatorio nao integram o GitHub.
+- Situacao: existe evidencia positiva de que a logica envolvendo FornecDuplicatas e DATABAIXA esta presente no aplicativo cliente antigo. Ainda nao foi identificado qual binario grava a baixa, e a parcela permanece BLOCKED para migracao como pagamento comprovado.
+- O SQL permaneceu Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; esta etapa nao acessou dados do banco. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
+- Proximo passo obrigatorio: deduplicar por SHA-256 os 13 arquivos que contem ambas as referencias e classificar somente as cadeias alvo por coocorrencia de SELECT, UPDATE, INSERT, DELETE e estruturas financeiras relacionadas. Nao executar binarios, nao exportar consultas, strings completas, credenciais ou dados e nao alterar o backup.
