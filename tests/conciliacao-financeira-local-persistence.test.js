@@ -18,13 +18,25 @@ const EMPRESA_3Z_ID = "local_empresa_3z";
 
 const createMemoryStorage = (initialEntries = []) => {
   const values = new Map(initialEntries);
+  const blockedWrites = new Set();
+  const ignoredWrites = new Set();
   return {
     getItem: (key) => values.has(String(key)) ? values.get(String(key)) : null,
-    setItem: (key, value) => values.set(String(key), String(value)),
+    setItem: (key, value) => {
+      if (blockedWrites.has(String(key))) throw new Error(`Escrita bloqueada para ${key}`);
+      if (ignoredWrites.has(String(key))) return;
+      values.set(String(key), String(value));
+    },
     removeItem: (key) => values.delete(String(key)),
     clear: () => values.clear(),
+    blockWrites: (key) => blockedWrites.add(String(key)),
+    allowWrites: (key) => blockedWrites.delete(String(key)),
+    ignoreWrites: (key) => ignoredWrites.add(String(key)),
+    confirmWrites: (key) => ignoredWrites.delete(String(key)),
     snapshot: () => [...values.entries()].sort(([left], [right]) => left.localeCompare(right)),
     restore: (entries) => {
+      blockedWrites.clear();
+      ignoredWrites.clear();
       values.clear();
       entries.forEach(([key, value]) => values.set(key, value));
     },
@@ -197,6 +209,72 @@ test("cliente local persiste e reabre conciliacao entre tres sessoes sem mistura
     assert.deepEqual(z3List.data.map((record) => record.referencia_staging), ["3z-1"]);
     assert.equal(
       z3List.data[0].dados_propostos.envelope_staging.etapa_conciliacao,
+      "aguardando_evidencia",
+    );
+
+    const beforeRejectedWrite = storage.getItem(STORAGE_KEY);
+    storage.blockWrites(STORAGE_KEY);
+    await assert.rejects(
+      () => z3Client.functions.invoke("solicitacoesAprovacao", {
+        action: "attachManualReconciliationEvidence",
+        solicitacao_id: z3List.data[0].id,
+        group_id: GROUP_ID,
+        empresa_id: EMPRESA_3Z_ID,
+        scope_type: "empresa",
+        evidencia: {
+          id: "evidencia-nao-persistida",
+          tipo: "application/pdf",
+          arquivo_url: "local://homologacao/nao-persistir.pdf",
+        },
+      }),
+      /Nao foi possivel confirmar a persistencia local/,
+    );
+    storage.allowWrites(STORAGE_KEY);
+    assert.equal(storage.getItem(STORAGE_KEY), beforeRejectedWrite);
+    const reopenedAfterFailure = await (await openSession("aprovador", EMPRESA_3Z_ID)).functions.invoke(
+      "solicitacoesAprovacao",
+      {
+        action: "listManualReconciliations",
+        group_id: GROUP_ID,
+        empresa_id: EMPRESA_3Z_ID,
+        scope_type: "empresa",
+      },
+    );
+    assert.equal(
+      reopenedAfterFailure.data[0].dados_propostos.envelope_staging.etapa_conciliacao,
+      "aguardando_evidencia",
+    );
+
+    const beforeUnconfirmedWrite = storage.getItem(STORAGE_KEY);
+    storage.ignoreWrites(STORAGE_KEY);
+    await assert.rejects(
+      () => z3Client.functions.invoke("solicitacoesAprovacao", {
+        action: "attachManualReconciliationEvidence",
+        solicitacao_id: z3List.data[0].id,
+        group_id: GROUP_ID,
+        empresa_id: EMPRESA_3Z_ID,
+        scope_type: "empresa",
+        evidencia: {
+          id: "evidencia-sem-confirmacao",
+          tipo: "application/pdf",
+          arquivo_url: "local://homologacao/sem-confirmacao.pdf",
+        },
+      }),
+      /Nao foi possivel confirmar a persistencia local/,
+    );
+    storage.confirmWrites(STORAGE_KEY);
+    assert.equal(storage.getItem(STORAGE_KEY), beforeUnconfirmedWrite);
+    const reopenedAfterUnconfirmedWrite = await (await openSession("aprovador", EMPRESA_3Z_ID)).functions.invoke(
+      "solicitacoesAprovacao",
+      {
+        action: "listManualReconciliations",
+        group_id: GROUP_ID,
+        empresa_id: EMPRESA_3Z_ID,
+        scope_type: "empresa",
+      },
+    );
+    assert.equal(
+      reopenedAfterUnconfirmedWrite.data[0].dados_propostos.envelope_staging.etapa_conciliacao,
       "aguardando_evidencia",
     );
 

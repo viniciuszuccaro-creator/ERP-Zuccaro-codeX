@@ -464,3 +464,7 @@ Andamento em 2026-09-13: o cliente local real foi homologado com `localStorage` 
 
 Proxima frente: fazer a persistencia especializada confirmar a escrita e falhar fechada quando o armazenamento estiver indisponivel ou exceder a quota, evitando sucesso falso. A promocao operacional continua dependente de autorizacao expressa.
 
+Andamento em 2026-09-13: a persistencia especializada passou a confirmar a escrita por leitura imediata e a falhar fechada, com tentativa de restauracao do snapshot anterior. Excecao de quota e escrita silenciosamente nao confirmada foram simuladas em memoria; nenhuma delas avancou a etapa da pendencia ou declarou sucesso.
+
+Proxima frente: documentar a matriz de impacto, pre-condicoes, rollback, idempotencia, RBAC e segregacao necessaria para eventual promocao manual. Essa frente nao habilitara acao executavel nem criara ou alterara titulos sem autorizacao expressa.
+

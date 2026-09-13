@@ -7052,3 +7052,16 @@ Checklist inicial:
 - Validacao: 1 teste focado e 251 testes globais aprovados; ESLint e typecheck direcionados sem diagnosticos; audit baseline, build completo e `git diff --check` aprovados.
 - Divida preexistente: ESLint global permanece com 84 erros e 17 avisos. O typecheck global permanece com diagnosticos historicos fora deste lote; os avisos de bundle e Browserslist tambem permanecem registrados.
 - Proximo passo obrigatorio: endurecer a persistencia local especializada para detectar quota, indisponibilidade ou escrita nao confirmada e falhar fechada sem declarar a transicao concluida. Nenhuma promocao operacional sera implementada sem autorizacao expressa.
+
+### Gate 18 - Persistencia local especializada falha fechada
+
+- O adaptador de armazenamento existente recebeu uma escrita estrita para a conciliacao financeira, sem alterar o comportamento das demais entidades locais.
+- A escrita critica agora exige `localStorage` disponivel, grava o banco serializado e confirma o mesmo valor por leitura imediata antes de retornar sucesso.
+- Se a gravacao lancar excecao ou nao for confirmada, o adaptador tenta restaurar o snapshot anterior e devolve erro explicito. Notificacoes de atualizacao somente ocorrem depois da persistencia confirmada.
+- Listagem auditada, bloqueio por contexto adulterado, reutilizacao idempotente e transicoes de evidencia, revisao e aprovacao usam a mesma persistencia estrita.
+- O teste descartavel simulou tanto excecao de escrita quanto uma chamada aceita sem gravacao efetiva. Nos dois casos, o valor serializado permaneceu inalterado e a pendencia da 3Z LTDA continuou em `aguardando_evidencia` depois da reabertura.
+- O fluxo bem-sucedido com registrante, revisor e aprovador continua persistindo normalmente e preservando a segregacao entre CPA Ferro e Aco e 3Z LTDA.
+- Nenhum dado real, titulo financeiro, banco ou arquivo legado foi acessado ou alterado. O HD externo nao foi acessado e os servicos SQL legados permaneceram parados.
+- Validacao: 1 teste focado e 251 testes globais aprovados; ESLint e typecheck direcionados sem diagnosticos; audit baseline, build completo e `git diff --check` aprovados.
+- Divida preexistente: ESLint global permanece com 84 erros e 17 avisos; typecheck, bundle e Browserslist mantem apenas os diagnosticos historicos registrados.
+- Proximo passo obrigatorio: preparar a matriz de impacto, pre-condicoes, rollback e autorizacoes para uma eventual promocao manual do staging, sem implementar acao executavel e sem criar ou alterar `ContaPagar` ou `ContaReceber` antes de autorizacao expressa.

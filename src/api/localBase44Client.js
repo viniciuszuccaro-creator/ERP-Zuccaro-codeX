@@ -136,6 +136,15 @@ const safeStorage = {
       console.warn('[base44-local] Nao foi possivel gravar localStorage:', key, error?.message || error);
     }
   },
+  setItemStrict(key, value) {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      throw new Error('Armazenamento local indisponivel.');
+    }
+    window.localStorage.setItem(key, value);
+    if (window.localStorage.getItem(key) !== value) {
+      throw new Error('A escrita no armazenamento local nao foi confirmada.');
+    }
+  },
   removeItem(key) {
     if (typeof window === 'undefined' || !window.localStorage) return;
     window.localStorage.removeItem(key);
@@ -550,6 +559,21 @@ const loadDb = () => {
 
 const saveDb = (db) => {
   safeStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+};
+
+const saveDbStrict = (db) => {
+  const previous = safeStorage.getItem(STORAGE_KEY);
+  try {
+    safeStorage.setItemStrict(STORAGE_KEY, JSON.stringify(db));
+  } catch (error) {
+    try {
+      if (previous === null) safeStorage.removeItem(STORAGE_KEY);
+      else safeStorage.setItemStrict(STORAGE_KEY, previous);
+    } catch (rollbackError) {
+      reportLocalClientFailure('Falha ao restaurar banco local apos escrita recusada', rollbackError);
+    }
+    throw new Error('Nao foi possivel confirmar a persistencia local da conciliacao financeira.', { cause: error });
+  }
 };
 
 const readUser = () => {
@@ -2183,7 +2207,7 @@ const invokeLocalManualReconciliation = async (payload = {}) => {
       && String(record.empresa_id || '') === empresaId
     )).slice(0, 50);
     appendLocalManualReconciliationAudit(db, user, { group_id: groupId, empresa_id: empresaId }, 'Visualizacao');
-    saveDb(db);
+    saveDbStrict(db);
     return { data: records };
   }
 
@@ -2195,13 +2219,13 @@ const invokeLocalManualReconciliation = async (payload = {}) => {
   const current = records[index];
   if (String(current.group_id || '') !== groupId || String(current.empresa_id || '') !== empresaId) {
     appendLocalManualReconciliationAudit(db, user, { id: payload.solicitacao_id, group_id: groupId, empresa_id: empresaId }, 'Bloqueio', false);
-    saveDb(db);
+    saveDbStrict(db);
     throw new Error('Conciliacao financeira fora do contexto autorizado.');
   }
   const transition = applyManualWorkflowTransition(current, payload.action, payload, user);
   if (transition.reused) {
     appendLocalManualReconciliationAudit(db, user, current, 'Reutilizacao', true, current);
-    saveDb(db);
+    saveDbStrict(db);
     return { data: { record: current, reused: true } };
   }
   const updated = {
@@ -2216,7 +2240,7 @@ const invokeLocalManualReconciliation = async (payload = {}) => {
     : payload.action === 'reviewManualReconciliation' ? 'Revisao' : 'Aprovacao';
   appendLocalManualReconciliationAudit(db, user, updated, auditAction, true, current);
   records[index] = updated;
-  saveDb(db);
+  saveDbStrict(db);
   notify('SolicitacaoAprovacao', 'update', updated);
   notify('AuditLog', 'create', getEntityStore(db, 'AuditLog')[0]);
   return { data: { record: updated, reused: false } };
