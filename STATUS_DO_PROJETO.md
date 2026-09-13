@@ -6768,3 +6768,18 @@ Checklist inicial:
 - Situacao: foi localizada a estrutura cliente que atualiza FornecDuplicatas.DATABAIXA, mas ainda nao esta provado que ela gerou a parcela auditada nem que usa a chave completa. A baixa permanece BLOCKED para migracao como pagamento comprovado.
 - O SQL permaneceu Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; esta etapa nao acessou dados do banco. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
 - Proximo passo obrigatorio: no unico hash com UPDATE direto, medir a proximidade e a ordem dos fragmentos que contem UPDATE, DATABAIXA, RELATORIO e SEQUENCIA e classificar se formam uma unica montagem de comando. Exportar somente distancias, ordem e classificacoes, nunca strings ou consultas, e nao executar nem alterar o binario.
+
+### Gate 18 - Proximidade dos fragmentos do UPDATE de caixa
+
+- O unico binario com UPDATE direto de FornecDuplicatas foi analisado por posicao em bytes e ordem das cadeias ASCII, sem executar ou modificar o arquivo.
+- Existe exatamente uma cadeia com UPDATE direto da tabela. Nessa mesma cadeia aparecem a atribuicao a DATABAIXA e um predicado envolvendo RELATORIO.
+- Foram encontradas nove cadeias com atribuicao a DATABAIXA e tres com predicado de RELATORIO no binario, mas a correspondencia mais proxima para ambos os componentes e a propria cadeia do UPDATE.
+- Existem duas cadeias com predicado de SEQUENCIA. A mais proxima aparece depois do UPDATE, separada por 230 bytes e dez cadeias imprimiveis.
+- Pela regra conservadora da auditoria, essa distancia foi classificada como DISTANTE. O predicado de SEQUENCIA nao pode ser atribuido ao mesmo comando apenas pela proximidade fisica.
+- A montagem geral foi classificada como MONTAGEM_NAO_COMPROVADA. Ha prova estrutural de UPDATE FornecDuplicatas com DATABAIXA e RELATORIO, mas nao da chave composta RELATORIO mais SEQUENCIA.
+- Essa rotina pode atualizar por documento ou usar outra combinacao de campos ainda nao classificada. A analise nao prova que ela produziu a baixa da parcela auditada.
+- As duas passagens reproduziram os mesmos tres componentes, distancias e ordem. A releitura protegida do HD externo confirmou SHA-256 0F843C6E501E29ADBA6AAC40A4F335AEF678CFA3619559A9A483D7B74FC801CA.
+- O relatorio legacy-caixa-update-proximity.csv permanece somente em D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS, com ACL protegida. O binario, caminhos, offsets absolutos, cadeias, consultas, identificadores, documentos, datas, fornecedores, quantidades e valores nao integram o GitHub.
+- Situacao: foi comprovada uma rotina cliente de baixa por RELATORIO, mas nao uma selecao inequivoca da parcela por SEQUENCIA. A parcela continua BLOCKED para migracao como pagamento comprovado.
+- O SQL permaneceu Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; esta etapa nao acessou dados do banco. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
+- Proximo passo obrigatorio: classificar, somente por presenca, quais outros campos de chave e quais campos atribuidos aparecem na mesma cadeia do UPDATE direto, incluindo fornecedor, nota, vencimento, valor e tipo. Nao exportar a consulta, literais, parametros, offsets, dados ou conteudo do binario e nao executar nem alterar o aplicativo.
