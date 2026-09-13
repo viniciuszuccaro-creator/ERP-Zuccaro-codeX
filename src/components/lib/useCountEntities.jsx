@@ -58,7 +58,11 @@ async function flushBatch() {
       items.forEach(it => {
         const c = typeof counts[it.entityName] === 'number' ? counts[it.entityName] : 0;
         cache.set(it.reqKey, c);
-        try { localStorage.setItem(`count_cache_${it.reqKey}`, String(c)); } catch (_) {}
+        try {
+          localStorage.setItem(`count_cache_${it.reqKey}`, String(c));
+        } catch (error) {
+          console.warn('[useCountEntities] Falha ao persistir contagem em cache', error);
+        }
         it.resolvers.forEach(r => r(c));
       });
       break; // sucesso — sai do loop
@@ -158,7 +162,12 @@ export function useCountEntities(entityName, filter = {}, options = {}) {
       if (Date.now() < cd) {
         const cached = cache.get(reqKey);
         if (typeof cached === 'number') return cached;
-        try { const v = Number(localStorage.getItem(`count_cache_${reqKey}`) || '0'); if (!isNaN(v)) return v; } catch (_) {}
+        try {
+          const v = Number(localStorage.getItem(`count_cache_${reqKey}`) || '0');
+          if (!isNaN(v)) return v;
+        } catch (error) {
+          console.warn('[useCountEntities] Falha ao ler contagem em cache', error);
+        }
         return 0;
       }
       // micro-batching: agrupa chamadas no mesmo tick
@@ -177,7 +186,12 @@ export function useCountEntities(entityName, filter = {}, options = {}) {
       if (prev !== undefined) return prev;
       const cached = cache.get(reqKey);
       if (typeof cached === 'number') return cached;
-      try { const v = Number(localStorage.getItem(`count_cache_${reqKey}`) || '0'); if (!isNaN(v)) return v; } catch (_) {}
+      try {
+        const v = Number(localStorage.getItem(`count_cache_${reqKey}`) || '0');
+        if (!isNaN(v)) return v;
+      } catch (error) {
+        console.warn('[useCountEntities] Falha ao ler contagem em cache', error);
+      }
       return 0;
     },
     ...options,

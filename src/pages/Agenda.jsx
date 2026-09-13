@@ -54,9 +54,9 @@ function Agenda() {
     let d = params.get('date');
     let u = params.get('user');
 
-    if (!v) { try { v = localStorage.getItem('Agenda_view') || null; } catch {} }
-    if (!d) { try { d = localStorage.getItem('Agenda_date') || null; } catch {} }
-    if (!u) { try { u = localStorage.getItem('Agenda_user') || null; } catch {} }
+    if (!v) { try { v = localStorage.getItem('Agenda_view') || null; } catch (error) { console.warn('[Agenda] Falha ao restaurar visualizacao', error); } }
+    if (!d) { try { d = localStorage.getItem('Agenda_date') || null; } catch (error) { console.warn('[Agenda] Falha ao restaurar data', error); } }
+    if (!u) { try { u = localStorage.getItem('Agenda_user') || null; } catch (error) { console.warn('[Agenda] Falha ao restaurar filtro de usuario', error); } }
 
     if (v) setVisualizacao(v);
     if (d) {
@@ -77,7 +77,9 @@ function Agenda() {
       localStorage.setItem('Agenda_view', visualizacao);
       localStorage.setItem('Agenda_date', dataAtual.toISOString());
       localStorage.setItem('Agenda_user', filtroUsuario);
-    } catch {}
+    } catch (error) {
+      console.warn('[Agenda] Falha ao persistir preferencias', error);
+    }
   }, [visualizacao, dataAtual, filtroUsuario]);
 
   const { toast } = useToast();

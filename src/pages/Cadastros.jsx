@@ -80,7 +80,9 @@ export default function Cadastros() {
         data_hora: new Date().toISOString(),
         sucesso: extras.sucesso ?? true,
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error('[Cadastros] Falha ao auditar acao', error);
+    }
   };
 
   useEffect(() => {
@@ -91,7 +93,7 @@ export default function Cadastros() {
       sucesso: false,
       dados_novos: { motivo: "permissao_negada" },
     });
-  }, [podeVerCadastros, groupId, empresaId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [podeVerCadastros, groupId, empresaId]);
 
   useEffect(() => {
     if (!podeVerCadastros || contextoAtivo) return;
@@ -101,12 +103,12 @@ export default function Cadastros() {
       sucesso: false,
       dados_novos: { motivo: "contexto_obrigatorio" },
     });
-  }, [podeVerCadastros, contextoAtivo, groupId, empresaId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [podeVerCadastros, contextoAtivo, groupId, empresaId]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     let t = params.get('tab');
-    if (!t) { try { t = localStorage.getItem('Cadastros_tab'); } catch {} }
+    if (!t) { try { t = localStorage.getItem('Cadastros_tab'); } catch (error) { console.warn('[Cadastros] Falha ao restaurar aba', error); } }
     if (t) setAbaGerenciamento(t);
   }, []);
 
@@ -130,7 +132,7 @@ export default function Cadastros() {
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
-    try { localStorage.setItem('Cadastros_tab', value); } catch {}
+    try { localStorage.setItem('Cadastros_tab', value); } catch (error) { console.warn('[Cadastros] Falha ao persistir aba', error); }
     registrarAuditoriaCadastros(`Troca de aba em Cadastros: ${value}`, {
       dados_novos: { aba: value, contexto_obrigatorio_atendido: contextoAtivo },
       sucesso: contextoAtivo,
@@ -188,7 +190,7 @@ export default function Cadastros() {
       });
     }, 900);
     return () => clearTimeout(timeout);
-  }, [searchTerm, contextoAtivo, acordeonAberto, totals]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchTerm, contextoAtivo, acordeonAberto, totals]);
 
   if (!podeVerCadastros) {
     return (

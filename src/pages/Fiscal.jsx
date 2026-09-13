@@ -55,7 +55,9 @@ export default function FiscalPage() {
         empresa_id: empresaAtual?.id || null,
         data_hora: new Date().toISOString(),
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error('[Fiscal] Falha ao auditar acao', error);
+    }
   };
 
   const { data: notasFiscais = [] } = useQuery({

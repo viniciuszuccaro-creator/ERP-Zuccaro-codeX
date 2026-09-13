@@ -83,7 +83,7 @@ export function useEntityCounts(entities = []) {
   const normalized = useMemo(() => {
     const arr = Array.isArray(entities) ? entities : [entities];
     return arr.filter(Boolean);
-  }, [entities.join ? entities.join(',') : JSON.stringify(entities)]); // eslint-disable-line
+  }, [entities.join ? entities.join(',') : JSON.stringify(entities)]);
 
   const entitiesKey = useMemo(() => [...normalized].sort().join(','), [normalized]);
 
@@ -123,7 +123,9 @@ export function useEntityCounts(entities = []) {
           // CORREÇÃO: 'fixed' nunca existiu — ReferenceError silencioso zerrava todos os counts
           return { ...d.counts };
         }
-      } catch (_) {}
+      } catch (error) {
+        console.warn('[useEntityCounts] Contagem agregada indisponivel', error);
+      }
 
       // Fallback sequencial com delay para evitar 429
       const result = {};
@@ -153,7 +155,7 @@ export function useEntityCounts(entities = []) {
       });
     }).filter(Boolean);
     return () => { unsubs.forEach(u => { if (typeof u === 'function') u(); }); };
-  }, [entitiesKey, queryClient]); // eslint-disable-line
+  }, [entitiesKey, queryClient]);
 
   const total = useMemo(
     () => normalized.reduce((acc, e) => acc + (Number(counts[e]) || 0), 0),

@@ -171,7 +171,9 @@ function fmtValue(value, col, extraColors) {
     try {
       const d = new Date(value);
       if (!isNaN(d.getTime())) return d.toLocaleDateString("pt-BR");
-    } catch (_) {}
+    } catch (error) {
+      console.warn('[VisualizadorUniversalEntidade] Falha ao formatar data', error);
+    }
   }
   if (MONEY_FIELDS.has(col.field) || col.type === "currency") {
     const n = Number(value);
@@ -258,7 +260,7 @@ export default function VisualizadorUniversalEntidadeV24({
       });
     }
     return [{ field: "nome", label: "Nome", sortable: true }, { field: "status", label: "Status", sortable: false }];
-  }, [JSON.stringify(columns), JSON.stringify(_camposPrincipais)]); // eslint-disable-line
+  }, [JSON.stringify(columns), JSON.stringify(_camposPrincipais)]);
 
   // ── estado ──────────────────────────────────────────────────────────────────
   const [sortField, setSortField] = useState("updated_date");
@@ -330,7 +332,9 @@ export default function VisualizadorUniversalEntidadeV24({
         data_hora: new Date().toISOString(),
         sucesso: typeof payload.sucesso === "boolean" ? payload.sucesso : (acao !== "Bloqueio" && acao !== "Falha")
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error('[VisualizadorUniversalEntidade] Falha ao auditar acao', error);
+    }
   }, [ENTITY, empresaId, groupId, createInContext, buildAuditPayload]);
 
 
@@ -638,7 +642,10 @@ export default function VisualizadorUniversalEntidadeV24({
       for (let i = 0; i < idsToDelete.length; i += 20) {
         await Promise.all(
           idsToDelete.slice(i, i + 20).map(function(id) {
-            return deleteInContext(ENTITY, id).catch(function() {});
+            return deleteInContext(ENTITY, id).catch(function(error) {
+              console.error('[VisualizadorUniversalEntidade] Falha na exclusao em lote', error);
+              throw error;
+            });
           })
         );
       }

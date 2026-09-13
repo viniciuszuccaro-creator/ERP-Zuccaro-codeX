@@ -56,7 +56,11 @@ export default function ChatbotPortal({ cliente }) {
           origem: 'Portal/Chatbot',
           status: 'Aberto'
         });
-        try { await base44.entities.AuditLog.create({ acao: 'Criação', modulo: 'CRM', tipo_auditoria: 'entidade', entidade: 'Chamado', registro_id: ch.id, descricao: 'Chamado criado via Chatbot no Portal', data_hora: new Date().toISOString() }); } catch {}
+        try {
+          await base44.entities.AuditLog.create({ acao: 'Criação', modulo: 'CRM', tipo_auditoria: 'entidade', entidade: 'Chamado', registro_id: ch.id, descricao: 'Chamado criado via Chatbot no Portal', data_hora: new Date().toISOString() });
+        } catch (auditError) {
+          console.error('[ChatbotPortal] Falha ao auditar criacao do chamado', auditError);
+        }
         setMessages((m) => [...m, { role: 'assistant', content: `Chamado aberto com sucesso (#${ch.id}). Em breve nossa equipe entrará em contato.` }]);
       } else if (intent === 'query_order_status') {
         const numero = String(data.numero_pedido || '').trim();

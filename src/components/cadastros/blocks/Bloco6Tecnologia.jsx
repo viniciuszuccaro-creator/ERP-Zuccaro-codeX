@@ -71,7 +71,9 @@ export default function Bloco6Tecnologia({ allCounts, isLoading, searchTerm = ""
         data_hora: new Date().toISOString(),
         sucesso,
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error('[Bloco6Tecnologia] Falha ao auditar navegacao', error);
+    }
   };
 
   const openList = (entidade, titulo, Icon, campos, FormComp) => () => {
@@ -123,7 +125,7 @@ export default function Bloco6Tecnologia({ allCounts, isLoading, searchTerm = ""
       entidades_filtradas: filteredTiles.map(({ k }) => k),
       motivo: contextoValido ? null : "contexto_obrigatorio",
     });
-  }, [searchTerm, contextoValido, filteredTiles.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchTerm, contextoValido, filteredTiles.length]);
   const canViewEntity = (entidade) =>
     hasPermission("Cadastros", entidade, "visualizar") ||
     hasPermission("Cadastros", null, "visualizar") ||

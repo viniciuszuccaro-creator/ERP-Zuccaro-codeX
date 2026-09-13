@@ -51,7 +51,9 @@ export default function ConversaoProducaoMassa({ produtos, onConcluido }) {
         sucesso,
         data_hora: new Date().toISOString(),
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error('[ConversaoProducaoMassa] Falha ao auditar conversao', error);
+    }
   };
 
   // Filtrar apenas produtos que não são de produção

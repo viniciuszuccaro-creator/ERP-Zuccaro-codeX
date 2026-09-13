@@ -41,7 +41,9 @@ export function useQueryWithFallback(storageKey, queryOptions, emptyValue = []) 
   if (result.data !== undefined && result.data !== null) {
     try {
       localStorage.setItem(`qfb_${storageKey}`, JSON.stringify(result.data));
-    } catch (_) {}
+    } catch (error) {
+      console.warn('[useQueryWithFallback] Falha ao persistir fallback local', error);
+    }
   }
 
   return result;

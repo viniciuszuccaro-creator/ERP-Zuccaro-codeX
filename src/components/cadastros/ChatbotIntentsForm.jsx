@@ -89,7 +89,9 @@ export default function ChatbotIntentsForm({ intent, onSubmit, isSubmitting }) {
         sucesso,
         data_hora: new Date().toISOString(),
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error('[ChatbotIntentsForm] Falha ao auditar alteracao', error);
+    }
   };
 
   const initial = toNew(intent);

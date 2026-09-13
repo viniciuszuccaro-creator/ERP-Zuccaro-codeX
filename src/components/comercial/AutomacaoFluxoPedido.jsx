@@ -91,7 +91,9 @@ export default function AutomacaoFluxoPedido({
         },
         data_hora: new Date().toISOString()
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error('[AutomacaoFluxoPedido] Falha ao auditar acao', error);
+    }
   };
 
   const adicionarLog = (mensagem, tipo = 'info') => {

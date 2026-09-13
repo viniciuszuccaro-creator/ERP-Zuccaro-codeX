@@ -49,7 +49,7 @@ export default function Relatorios() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     let initial = params.get('tab');
-    if (!initial) {try {initial = localStorage.getItem('Relatorios_tab');} catch {}}
+    if (!initial) { try { initial = localStorage.getItem('Relatorios_tab'); } catch (error) { console.warn('[Relatorios] Falha ao restaurar aba', error); } }
     if (initial) setActiveTab(initial);
   }, []);
   const handleTabChange = (value) => {
@@ -57,7 +57,7 @@ export default function Relatorios() {
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
-    try {localStorage.setItem('Relatorios_tab', value);} catch {}
+    try { localStorage.setItem('Relatorios_tab', value); } catch (error) { console.warn('[Relatorios] Falha ao persistir aba', error); }
     auditRelatorioAction('alterar_aba', { aba: value });
   }; // Changed default active tab to "vendas"
   const [selectedReport, setSelectedReport] = useState(null);
@@ -102,7 +102,9 @@ export default function Relatorios() {
         empresa_id: empresaAtual?.id || null,
         data_hora: new Date().toISOString()
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error('[Relatorios] Falha ao auditar acao', error);
+    }
   };
 
   const { data: clientes = [] } = useQuery({

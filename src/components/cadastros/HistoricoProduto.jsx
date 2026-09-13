@@ -50,7 +50,9 @@ export default function HistoricoProduto({ produtoId, produto }) {
         sucesso,
         data_hora: new Date().toISOString(),
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error('[HistoricoProduto] Falha ao auditar consulta', error);
+    }
   };
 
   const { data: movimentacoes = [] } = useQuery({

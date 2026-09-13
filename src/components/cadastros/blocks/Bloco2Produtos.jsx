@@ -72,7 +72,9 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
         data_hora: new Date().toISOString(),
         sucesso,
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error('[Bloco2Produtos] Falha ao auditar navegacao', error);
+    }
   };
 
   const openProdutos = () => {
@@ -151,7 +153,7 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
       entidades_filtradas: ["Produto", ...filteredTiles.map(({ k }) => k)],
       motivo: contextoValido ? null : "contexto_obrigatorio",
     });
-  }, [searchTerm, contextoValido, filteredTiles.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchTerm, contextoValido, filteredTiles.length]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">

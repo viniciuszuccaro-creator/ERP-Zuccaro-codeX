@@ -52,7 +52,7 @@ export default function ContratosPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     let initial = params.get('tab');
-    if (!initial) { try { initial = localStorage.getItem('Contratos_tab'); } catch {} }
+    if (!initial) { try { initial = localStorage.getItem('Contratos_tab'); } catch (error) { console.warn('[Contratos] Falha ao restaurar aba', error); } }
     if (initial) setActiveTab(initial);
   }, []);
 
@@ -61,7 +61,7 @@ export default function ContratosPage() {
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
-    try { localStorage.setItem('Contratos_tab', value); } catch {}
+    try { localStorage.setItem('Contratos_tab', value); } catch (error) { console.warn('[Contratos] Falha ao persistir aba', error); }
   };
 
   const { toast } = useToast();

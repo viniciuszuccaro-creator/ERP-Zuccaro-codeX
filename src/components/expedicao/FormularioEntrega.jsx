@@ -201,7 +201,9 @@ Retorne apenas sugestao (nao altere o pedido):
           data_hora: new Date().toISOString(),
           sucesso: true
         });
-      } catch (_) {}
+      } catch (auditError) {
+        console.error('[FormularioEntrega] Falha ao auditar criacao', auditError);
+      }
 
       onCancel();
     },
@@ -242,7 +244,9 @@ Retorne apenas sugestao (nao altere o pedido):
           data_hora: new Date().toISOString(),
           sucesso: true
         });
-      } catch (_) {}
+      } catch (auditError) {
+        console.error('[FormularioEntrega] Falha ao auditar alteracao', auditError);
+      }
 
       onCancel();
     },

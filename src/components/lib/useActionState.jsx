@@ -69,7 +69,9 @@ export function useActionState(options = {}) {
             timestamp: new Date().toISOString(),
             result: result
           });
-        } catch {}
+        } catch (auditError) {
+          console.error('[useActionState] Falha ao auditar conclusao da acao', auditError);
+        }
       }
 
       return result;
@@ -97,7 +99,9 @@ export function useActionState(options = {}) {
             timestamp: new Date().toISOString(),
             error: err?.message || String(err)
           });
-        } catch {}
+        } catch (auditError) {
+          console.error('[useActionState] Falha ao auditar erro da acao', auditError);
+        }
       }
 
       throw err;

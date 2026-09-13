@@ -70,7 +70,12 @@ export default function ERPDataTable({
     columns.filter(c => {
       if (hiddenColumns.has(c.key)) return false;
       if (c.permission) {
-        try { if (!hasPermissionKey(c.permission)) return false; } catch {}
+        try {
+          if (!hasPermissionKey(c.permission)) return false;
+        } catch (error) {
+          console.error('[DataTable] Falha ao validar permissao da coluna', error);
+          return false;
+        }
       }
       return true;
     })
@@ -152,7 +157,9 @@ export default function ERPDataTable({
       } else {
         localStorage.removeItem(`sort_${entityName}`);
       }
-    } catch {}
+    } catch (error) {
+      console.warn('[DataTable] Falha ao persistir ordenacao', error);
+    }
   }, [autoPersistSort, entityName, sortField, sortDirection]);
 
   // Restaura sort salvo quando não vier definido
@@ -167,7 +174,9 @@ export default function ERPDataTable({
         const sd = parsed.direction || parsed.sortDirection;
         if (sf && sd) onSortChange(sf, sd);
       }
-    } catch {}
+    } catch (error) {
+      console.warn('[DataTable] Falha ao restaurar ordenacao', error);
+    }
   }, [autoPersistSort, entityName, sortField]);
 
   const totalPages = Math.max(1, Math.ceil((totalItems || 0) / (pageSize || 20)));

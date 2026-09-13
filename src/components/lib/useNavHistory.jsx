@@ -37,7 +37,9 @@ function loadHistory() {
 function saveHistory(entries) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(entries.slice(-MAX_ENTRIES)));
-  } catch {}
+  } catch (error) {
+    console.warn('[useNavHistory] Falha ao persistir historico de navegacao', error);
+  }
 }
 
 /**

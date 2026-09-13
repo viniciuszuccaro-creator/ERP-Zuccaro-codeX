@@ -87,7 +87,9 @@ export default function GlobalContextStamp() {
         patchEntity(key);
       });
       root.__patched_multiempresa = true;
-    } catch (_) {}
+    } catch (error) {
+      console.error('[GlobalContextStamp] Falha ao aplicar contexto multiempresa', error);
+    }
 
     // sem cleanup (mantém patch durante a sessão)
   }, []);

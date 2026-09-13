@@ -18,7 +18,11 @@ export default function OrcamentosList({ cliente }) {
     mutationFn: async (p) => base44.functions.invoke('solicitacoesAprovacao', { action: 'acceptBudget', pedido_id: p.id }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['portal-orcamentos', cliente?.id] });
-      try { window.dispatchEvent(new CustomEvent('portal:setTab', { detail: 'pedidos' })); } catch {}
+      try {
+        window.dispatchEvent(new CustomEvent('portal:setTab', { detail: 'pedidos' }));
+      } catch (error) {
+        console.warn('[OrcamentosList] Falha ao mudar para a aba de pedidos', error);
+      }
     }
   });
 

@@ -7129,3 +7129,15 @@ Checklist inicial:
 - O typecheck global manteve diagnosticos historicos em outras telas e nao apontou os arquivos alterados. Avisos conhecidos de bundle e Browserslist permanecem no build.
 - Nenhum dado, entidade, recurso Base44, banco ou HD externo foi acessado ou alterado.
 - Proximo passo: triar isoladamente o alerta alto da dependencia direta `lodash`, sem atualizacao automatica e sem agrupar React Router ou PostCSS.
+
+### Gate 18 - ESLint operacional encerrado sem falhas silenciosas
+
+- O ESLint global foi reduzido de 84 erros e 17 avisos para zero erros e zero avisos, sem desativar regras e sem excluir arquivos operacionais adicionais.
+- Foram removidas 17 supressoes obsoletas e corrigidos 81 blocos vazios. Erros de cache, auditoria, persistencia, contexto e realtime agora sao observaveis.
+- Consultas de portal falham fechadas quando o contexto nao pode ser validado; a tabela nega a acao se o verificador de permissao falhar; exclusoes em lote interrompem e propagam falha em vez de informar sucesso parcial silencioso.
+- O inventario de catches operacionais vazios caiu de 127 para 45. Os restantes continuam registrados, sobretudo em funcoes backend que nao pertencem ao escopo atual do ESLint.
+- Validacao: 24 testes focados e 252/252 testes globais aprovados; ESLint global com zero diagnosticos; `audit:baseline`, build completo e `git diff --check` aprovados.
+- O typecheck global continua com 2.909 diagnosticos historicos e permanece habilitado. O proprietario autorizou expressamente este commit/push mesmo com essa divida; nenhuma supressao global foi adicionada.
+- O build mantem apenas avisos conhecidos de imports mistos, bundle principal e base Browserslist desatualizada.
+- Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
+- Proximo passo: iniciar a reducao incremental do typecheck pelos contratos JSDoc compartilhados de maior propagacao, medindo a contagem antes e depois de cada lote.

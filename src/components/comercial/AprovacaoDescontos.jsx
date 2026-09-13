@@ -85,7 +85,9 @@ export default function AprovacaoDescontos({ windowMode = false, empresaId = nul
         },
         data_hora: new Date().toISOString()
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error('[AprovacaoDescontos] Falha ao auditar acao', error);
+    }
   };
   const [filtros, setFiltros] = useState({
     empresa_id: "",

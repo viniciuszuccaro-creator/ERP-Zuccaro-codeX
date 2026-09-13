@@ -426,7 +426,8 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
           a.download = `contas_pagar_${new Date().toISOString().slice(0,10)}.csv`;
           a.click();
           URL.revokeObjectURL(url);
-          try { auditarFinanceiro({ acao: 'Exportacao', entidade: 'ContaPagar', descricao: `Exportados ${itens.length} titulos a pagar`, dadosNovos: { quantidade: itens.length, ids: itens.map(item => item.id).filter(Boolean) } }); } catch(_) {}
+          void auditarFinanceiro({ acao: 'Exportacao', entidade: 'ContaPagar', descricao: `Exportados ${itens.length} titulos a pagar`, dadosNovos: { quantidade: itens.length, ids: itens.map(item => item.id).filter(Boolean) } })
+            .catch((error) => console.error('[ContasPagarTab] Falha ao auditar exportacao', error));
         }}
         onBaixarMultipla={handleBaixarMultipla}
         onNovaConta={() => { if (!hasPermission('Financeiro','ContaPagar','criar')) { toast({ title: '⛔ Sem permissão para criar', variant: 'destructive' }); return; } openWindow(ContaPagarForm, {

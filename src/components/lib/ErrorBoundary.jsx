@@ -25,7 +25,9 @@ export default class ErrorBoundary extends React.Component {
         dados_novos: { info },
         data_hora: new Date().toISOString(),
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error('[ErrorBoundary] Falha ao registrar erro da interface', error);
+    }
   }
 
   handleRetry = () => {

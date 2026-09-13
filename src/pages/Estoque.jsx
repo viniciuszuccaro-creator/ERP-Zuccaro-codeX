@@ -58,7 +58,9 @@ export default function Estoque() {
         sucesso,
         data_hora: new Date().toISOString(),
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error('[Estoque] Falha ao auditar acao', error);
+    }
   };
   
   // Estados removidos - VisualizadorUniversalEntidade gerencia tudo internamente
@@ -229,7 +231,9 @@ export default function Estoque() {
           sucesso: true,
           data_hora: new Date().toISOString(),
         });
-      } catch (_) {}
+      } catch (auditError) {
+        console.error('[Estoque] Falha ao auditar exportacao', auditError);
+      }
     } catch (e) {
       console.error('Falha ao exportar estoque de aço:', e);
     }

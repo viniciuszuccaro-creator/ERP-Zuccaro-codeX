@@ -63,7 +63,9 @@ export function useInvalidationBus(entities = [], options = {}) {
           keys.forEach((qk) => {
             try {
               queryClient.invalidateQueries({ queryKey: qk, exact: false });
-            } catch (_) {}
+            } catch (error) {
+              console.warn('[useInvalidationBus] Falha ao invalidar consulta', error);
+            }
           });
         }, 50);
       });

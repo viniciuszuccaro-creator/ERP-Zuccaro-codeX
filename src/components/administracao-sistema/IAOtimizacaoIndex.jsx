@@ -102,7 +102,9 @@ export default function IAOtimizacaoIndex({ initialTab }) {
         sucesso: true,
         data_hora: new Date().toISOString(),
       });
-    } catch {}
+    } catch (error) {
+      console.error('[IAOtimizacaoIndex] Falha ao auditar acao de IA', error);
+    }
   };
 
   React.useEffect(() => { if (initialTab) setTab(initialTab); }, [initialTab]);

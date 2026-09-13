@@ -115,7 +115,9 @@ export default function GuardRails({ children, currentPageName }) {
         descricao: `GuardRails bloqueou acesso a ${currentPageName}`,
         data_hora: new Date().toISOString(),
       });
-    } catch {}
+    } catch (error) {
+      console.error('[GuardRails] Falha ao auditar bloqueio de contexto', error);
+    }
     return (
       <div className="p-6">
         <Card className="bg-white">

@@ -38,7 +38,7 @@ const useQuery = ({ queryKey, queryFn }) => {
   const [data, setData] = useState([]);
   useEffect(() => {
     queryFn().then(setData);
-  }, [queryKey[0]]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [queryKey[0]]);
   return { data };
 };
 
@@ -98,7 +98,7 @@ export default function FormasPagamentoPedido({
     if (acrescimo !== percentualAcrescimo) {
       setPercentualAcrescimo(acrescimo);
     }
-  }, [acrescimo]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [acrescimo]);
 
   // Effect to handle initial parcel count from prop, if needed.
   // The current outline does not explicitly handle initial `numeroParcelas` from prop.

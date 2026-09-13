@@ -299,7 +299,9 @@ export default function ProdutosTab(props) {
                       sucesso: true,
                       data_hora: new Date().toISOString()
                     });
-                  } catch(_) {}
+                  } catch (auditError) {
+                    console.error('[ProdutosTab] Falha ao auditar criacao do produto', auditError);
+                  }
                   toast({ title: "✅ Produto criado!" });
                 } catch (error) {
                   toast({ title: "❌ Erro", description: error.message, variant: "destructive" });

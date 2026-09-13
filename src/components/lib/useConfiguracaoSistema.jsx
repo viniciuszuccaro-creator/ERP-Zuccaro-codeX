@@ -47,7 +47,9 @@ export default function useConfiguracaoSistema({ categoria, chave } = {}) {
           data: { ...(res || {}), __meta: { changed_by: me?.email || me?.full_name, param: chave || variables?.chave } },
           old_data: data || null
         });
-      } catch (_) {}
+      } catch (auditError) {
+        console.error('[useConfiguracaoSistema] Falha ao auditar alteracao', auditError);
+      }
     }
   });
 

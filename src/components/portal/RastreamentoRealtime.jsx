@@ -63,7 +63,9 @@ export default function RastreamentoRealtime() {
       unsubscribe = base44.entities.Entrega.subscribe(() => {
         refetch();
       });
-    } catch {}
+    } catch (error) {
+      console.error('[RastreamentoRealtime] Falha ao assinar atualizacoes da entrega', error);
+    }
 
     return () => {
       clearInterval(autoRefresh);

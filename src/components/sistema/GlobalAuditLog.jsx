@@ -49,7 +49,9 @@ export default function GlobalAuditLog({ limite = 20, mostrarFiltros = true }) {
         const changes = typeof log.changes === 'string' ? JSON.parse(log.changes) : log.changes;
         const campos = Object.keys(changes).join(', ');
         descricao = `Campos alterados: ${campos}`;
-      } catch (e) {}
+      } catch (error) {
+        console.warn('[GlobalAuditLog] Falha ao detalhar campos alterados', error);
+      }
     }
 
     return {

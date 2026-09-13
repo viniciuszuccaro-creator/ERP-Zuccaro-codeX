@@ -118,7 +118,9 @@ export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
           sucesso: true,
           data_hora: new Date().toISOString()
         });
-      } catch {}
+      } catch (auditError) {
+        console.error('[ConfiguracaoMonitoramento] Falha ao auditar configuracao', auditError);
+      }
       return result;
     },
     onSuccess: () => {

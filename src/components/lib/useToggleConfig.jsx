@@ -26,7 +26,9 @@ export function canEditConfigByPermission(hasPermission, chave, categoria) {
   const rule = CONFIG_PERMISSION_RULES.find(item => item.match(chave, categoria));
   try {
     if (hasPermission(getConfigPermissionKey(chave, categoria))) return true;
-  } catch {}
+  } catch (error) {
+    console.warn('[useToggleConfig] Permissao granular indisponivel', error);
+  }
   return (rule?.permissions || []).some(([modulo, secao, acao]) => {
     try { return hasPermission(modulo, secao, acao); } catch { return false; }
   });
@@ -230,7 +232,9 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
           sucesso: true,
           data_hora: new Date().toISOString()
         });
-      } catch {}
+      } catch (auditError) {
+        console.error('[useToggleConfig] Falha ao auditar alteracao', auditError);
+      }
 
       return true;
     } catch (err) {

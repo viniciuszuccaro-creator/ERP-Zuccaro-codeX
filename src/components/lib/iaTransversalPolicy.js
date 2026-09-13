@@ -18,10 +18,17 @@ const SENSITIVE_IA_HINTS = [
 
 export const IA_MODO_SUGESTAO = 'sugestao';
 
+const replaceControlCharacters = (value) => Array.from(value, (character) => {
+  const code = character.charCodeAt(0);
+  return code <= 31 || code === 127 ? ' ' : character;
+}).join('');
+
 export const sanitizeIaPrompt = (value, max = 4000) => String(value ?? '')
   .replace(/[<>]/g, '')
   .replace(/javascript:/gi, '')
-  .replace(/[\u0000-\u001F\u007F]/g, ' ')
+  .split('\n')
+  .map(replaceControlCharacters)
+  .join(' ')
   .replace(/\s+/g, ' ')
   .trim()
   .slice(0, max);

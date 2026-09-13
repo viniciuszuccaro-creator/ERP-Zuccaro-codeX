@@ -96,7 +96,9 @@ function AprovacaoDescontosManager({ windowMode = false, empresaId = null }) {
         },
         data_hora: new Date().toISOString()
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error('[AprovacaoDescontosManager] Falha ao auditar acao', error);
+    }
   };
 
   // V21.6: Multi-empresa

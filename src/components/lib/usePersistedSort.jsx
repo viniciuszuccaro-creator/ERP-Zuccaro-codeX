@@ -17,15 +17,18 @@ export default function usePersistedSort(entityName, defaultField = 'updated_dat
         if (sf) setSortField(sf);
         if (sd) setSortDirection(sd);
       }
-    } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    } catch (error) {
+      console.warn('[usePersistedSort] Ordenacao persistida indisponivel', error);
+    }
   }, [entityName]);
 
   // Persistir toda vez que mudar
   useEffect(() => {
     try {
       localStorage.setItem(`sort_${entityName}`, JSON.stringify({ sortField, sortDirection }));
-    } catch {}
+    } catch (error) {
+      console.warn('[usePersistedSort] Falha ao persistir ordenacao', error);
+    }
   }, [entityName, sortField, sortDirection]);
 
   return [sortField, setSortField, sortDirection, setSortDirection];

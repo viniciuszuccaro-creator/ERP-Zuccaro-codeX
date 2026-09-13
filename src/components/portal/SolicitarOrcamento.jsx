@@ -42,7 +42,10 @@ export default function SolicitarOrcamento() {
       try {
         const c = await base44.entities.Cliente.filter({ portal_usuario_id: user.id }, undefined, 1);
         if (Array.isArray(c) && c[0]) { empresaId = c[0].empresa_id || null; groupId = c[0].group_id || null; }
-      } catch {}
+      } catch (error) {
+        console.error('[SolicitarOrcamento] Falha ao resolver contexto do cliente', error);
+        throw new Error('Contexto do cliente indisponivel para solicitar orcamento.');
+      }
       return await base44.entities.Oportunidade.create({
         titulo: data.titulo,
         descricao: data.descricao,

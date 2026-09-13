@@ -61,7 +61,11 @@ export default function RouteOptimizerPanel({ entregas = [], empresaId, groupId,
         }) : []
       };
       setRota(view);
-      try { window.dispatchEvent(new CustomEvent('logistica:route', { detail: view })); } catch {}
+      try {
+        window.dispatchEvent(new CustomEvent('logistica:route', { detail: view }));
+      } catch (error) {
+        console.warn('[RouteOptimizerPanel] Falha ao notificar rota otimizada', error);
+      }
     } catch (error) {
       await onAudit?.({ acao: 'PainelLogistico.rota.otimizar.erro', sucesso: false, motivo: error?.message || 'erro_otimizacao' });
     } finally {

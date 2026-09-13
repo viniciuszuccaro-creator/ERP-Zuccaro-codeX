@@ -44,7 +44,9 @@ export default function SegurancaGovernancaIndex() {
         descricao: `Aba de seguranca visualizada: ${value}`,
         data_hora: new Date().toISOString()
       }).catch((error) => console.warn("Falha ao auditar aba de seguranca:", error));
-    } catch {}
+    } catch (error) {
+      console.error('[SegurancaGovernancaIndex] Falha ao preparar auditoria da aba', error);
+    }
   };
 
   if (!canViewSecurity) return <div className="p-4 text-sm text-slate-500">Acesso restrito.</div>;

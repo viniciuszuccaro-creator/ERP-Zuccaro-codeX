@@ -71,7 +71,9 @@ export default function useCadastrosAllCounts() {
           ALL_ENTITIES.forEach(e => { full[e] = Number(raw[e]) || 0; });
           return full;
         }
-      } catch (_) {}
+      } catch (error) {
+        console.warn('[useCadastrosAllCounts] Contagem agregada indisponivel', error);
+      }
 
       // Tentativa 2: batches de 8 com delay anti-429
       const result = {};
@@ -105,7 +107,7 @@ export default function useCadastrosAllCounts() {
   useEffect(() => {
     queryClient.invalidateQueries({ queryKey: ["cadastros-all-counts-v5"] });
     queryClient.invalidateQueries({ queryKey: ["entityCounts_v5"] });
-  }, [empresaId, groupId]); // eslint-disable-line
+  }, [empresaId, groupId]);
 
   // Subscrição real-time: invalida contagens quando qualquer entidade muda
   // CORREÇÃO: sem subscribedRef — re-executa quando empresa/grupo muda para garantir invalidação correta
@@ -119,7 +121,7 @@ export default function useCadastrosAllCounts() {
       });
     }).filter(Boolean);
     return () => { unsubs.forEach(u => { if (typeof u === 'function') u(); }); };
-  }, [empresaId, groupId, queryClient]); // eslint-disable-line
+  }, [empresaId, groupId, queryClient]);
 
   const counts = data || {};
 

@@ -40,7 +40,9 @@ export default function VisualizadorProdutos(props) {
         data_hora: new Date().toISOString(),
         sucesso,
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error('[VisualizadorProdutos] Falha ao auditar acao', error);
+    }
   };
 
   const { data: setores = [] } = useQuery({

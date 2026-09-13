@@ -434,7 +434,8 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
           a.download = `contas_receber_${new Date().toISOString().slice(0,10)}.csv`;
           a.click();
           URL.revokeObjectURL(url);
-          try { auditarFinanceiro({ acao: 'Exportacao', entidade: 'ContaReceber', descricao: `Exportados ${itens.length} titulos a receber`, dadosNovos: { quantidade: itens.length, ids: itens.map(item => item.id).filter(Boolean) } }); } catch(_) {}
+          void auditarFinanceiro({ acao: 'Exportacao', entidade: 'ContaReceber', descricao: `Exportados ${itens.length} titulos a receber`, dadosNovos: { quantidade: itens.length, ids: itens.map(item => item.id).filter(Boolean) } })
+            .catch((error) => console.error('[ContasReceberTab] Falha ao auditar exportacao', error));
         }}
         onBaixarMultipla={handleBaixarMultipla}
         onNovaConta={() => { if (!hasPermission('Financeiro','ContaReceber','criar')) { toast({ title: '⛔ Sem permissão para criar', variant: 'destructive' }); return; } openWindow(ContaReceberForm, {

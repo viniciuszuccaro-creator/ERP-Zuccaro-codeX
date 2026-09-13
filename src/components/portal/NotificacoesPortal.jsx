@@ -31,7 +31,10 @@ export default function NotificacoesPortal() {
       try {
         const c = await base44.entities.Cliente.filter({ portal_usuario_id: me.id }, undefined, 1);
         if (Array.isArray(c) && c[0]) { empresaId = c[0].empresa_id || null; groupId = c[0].group_id || null; }
-      } catch {}
+      } catch (error) {
+        console.error('[NotificacoesPortal] Falha ao resolver contexto do cliente', error);
+        throw new Error('Contexto do cliente indisponivel para notificacoes.');
+      }
       return await base44.entities.Notificacao.filter(
         { usuario_id: me.id, lida: false, empresa_id: empresaId || undefined, group_id: groupId || undefined },
         '-created_date',
@@ -64,10 +67,15 @@ export default function NotificacoesPortal() {
       try {
         const c = await base44.entities.Cliente.filter({ portal_usuario_id: me.id }, undefined, 1);
         if (Array.isArray(c) && c[0]) { empresaId = c[0].empresa_id || null; groupId = c[0].group_id || null; }
-      } catch {}
+      } catch (error) {
+        console.error('[NotificacoesPortal] Falha ao resolver contexto para leitura', error);
+        throw new Error('Contexto do cliente indisponivel para atualizar notificacao.');
+      }
       await base44.entities.Notificacao.update(notifId, { lida: true, empresa_id: empresaId || undefined, group_id: groupId || undefined });
-      try { queryClient.invalidateQueries({ queryKey: ['notificacoes-portal', user?.id] }); } catch {}
-    } catch (_) {}
+      await queryClient.invalidateQueries({ queryKey: ['notificacoes-portal', user?.id] });
+    } catch (error) {
+      console.error('[NotificacoesPortal] Falha ao marcar notificacao como lida', error);
+    }
   };
 
   return (

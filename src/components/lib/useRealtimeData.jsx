@@ -112,44 +112,39 @@ export function useRealtimeKPIs(empresaId, intervalo = 30000, groupId = null, en
       scopeType: empresaId ? 'empresa' : 'grupo',
     }),
     async () => {
-      try {
-        if (!empresaId && !groupId) {
-          throw new Error('Contexto de grupo ou empresa obrigatorio para KPIs.');
+      if (!empresaId && !groupId) {
+        throw new Error('Contexto de grupo ou empresa obrigatorio para KPIs.');
+      }
+      const limit = DASHBOARD_REALTIME_LIMIT;
+      const getByContext = async (entity, order) => {
+        if (typeof filterInContext === 'function') {
+          return filterInContext(entity, {}, order, limit);
         }
-        const limit = DASHBOARD_REALTIME_LIMIT;
-        const getByContext = async (entity, order) => {
-          if (typeof filterInContext === 'function') {
-            return filterInContext(entity, {}, order, limit);
-          }
-          if (empresaId) return base44.entities[entity].filter({ empresa_id: empresaId }, order, limit);
-          if (groupId) return base44.entities[entity].filter({ group_id: groupId }, order, limit);
-          return [];
-        };
-        const results = await Promise.allSettled([
-          getByContext('Pedido', '-created_date'),
-          getByContext('ContaReceber', '-data_vencimento'),
-          getByContext('OrdemProducao', '-data_emissao'),
-          getByContext('Entrega', '-created_date'),
-        ]);
+        if (empresaId) return base44.entities[entity].filter({ empresa_id: empresaId }, order, limit);
+        if (groupId) return base44.entities[entity].filter({ group_id: groupId }, order, limit);
+        return [];
+      };
+      const results = await Promise.allSettled([
+        getByContext('Pedido', '-created_date'),
+        getByContext('ContaReceber', '-data_vencimento'),
+        getByContext('OrdemProducao', '-data_emissao'),
+        getByContext('Entrega', '-created_date'),
+      ]);
 
-        const rejectedCount = results.filter(r => r.status === 'rejected').length;
-        if (rejectedCount >= 2) {
-          const firstErr = results.find(r => r.status === 'rejected')?.reason || {};
-          const e = new Error(String(firstErr?.message || 'Rate limit exceeded'));
-          e.status = firstErr?.status || 429;
-          throw e;
-        }
-
-        const pedidos = results[0].status === 'fulfilled' ? results[0].value : [];
-        const contas = results[1].status === 'fulfilled' ? results[1].value : [];
-        const ops     = results[2].status === 'fulfilled' ? results[2].value : [];
-        const entregas= results[3].status === 'fulfilled' ? results[3].value : [];
-
-        return computeRealtimeKpisFromStores({ pedidos, contas, ops, entregas });
-      } catch (e) {
-        // Fail-closed: propaga falha em vez de zerar silenciosamente como se nao houvesse dados.
+      const rejectedCount = results.filter(r => r.status === 'rejected').length;
+      if (rejectedCount >= 2) {
+        const firstErr = results.find(r => r.status === 'rejected')?.reason || {};
+        const e = new Error(String(firstErr?.message || 'Rate limit exceeded'));
+        e.status = firstErr?.status || 429;
         throw e;
       }
+
+      const pedidos = results[0].status === 'fulfilled' ? results[0].value : [];
+      const contas = results[1].status === 'fulfilled' ? results[1].value : [];
+      const ops = results[2].status === 'fulfilled' ? results[2].value : [];
+      const entregas = results[3].status === 'fulfilled' ? results[3].value : [];
+
+      return computeRealtimeKpisFromStores({ pedidos, contas, ops, entregas });
     },
     { refetchInterval: intervalo, enabled: enabled && Boolean(empresaId || groupId), initialData: defaultKPIs, retry: false }
   );

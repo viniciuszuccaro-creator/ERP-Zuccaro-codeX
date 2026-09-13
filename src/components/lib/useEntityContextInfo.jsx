@@ -9,7 +9,9 @@ export default function useEntityContextInfo(entityName) {
       try {
         const fn = base44.entities?.[entityName]?.schema;
         if (typeof fn === "function") return await fn();
-      } catch {}
+      } catch (error) {
+        console.warn('[useEntityContextInfo] Schema da entidade indisponivel', error);
+      }
       return null;
     },
     staleTime: 600000,

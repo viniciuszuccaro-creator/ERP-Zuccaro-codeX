@@ -16,15 +16,18 @@ export default function useBackendPagination(entityName, defaultPageSize = 20) {
         if (p) setPage(p);
         if (ps) setPageSize(ps);
       }
-    } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    } catch (error) {
+      console.warn('[useBackendPagination] Preferencias de paginacao indisponiveis', error);
+    }
   }, [entityName]);
 
   // Persistir quando mudar
   useEffect(() => {
     try {
       localStorage.setItem(storageKey, JSON.stringify({ page, pageSize }));
-    } catch {}
+    } catch (error) {
+      console.warn('[useBackendPagination] Falha ao persistir paginacao', error);
+    }
   }, [storageKey, page, pageSize]);
 
   return { page, setPage, pageSize, setPageSize };

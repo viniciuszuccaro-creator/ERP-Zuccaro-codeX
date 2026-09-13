@@ -69,7 +69,9 @@ export default function GerarBoletoChat({ conversa, clienteId, onBoletoEnviado }
         detalhes,
         data_hora: new Date().toISOString()
       });
-    } catch {}
+    } catch (error) {
+      console.error('[GerarBoletoChat] Falha ao auditar emissao', error);
+    }
   };
 
   const withContext = (payload = {}, titulo = null) => ({

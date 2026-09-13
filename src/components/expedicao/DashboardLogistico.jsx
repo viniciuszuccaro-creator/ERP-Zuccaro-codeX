@@ -108,8 +108,14 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
   });
 
   const handleEntregaUpdated = (e) => {
-    try { setSelected(e); } catch (_) {}
-    try { queryClient.invalidateQueries({ queryKey: ['painel-logistico-entregas', effectiveGroupId, effectiveEmpresaId] }); } catch (_) {}
+    try {
+      setSelected(e);
+    } catch (error) {
+      console.error('[DashboardLogistico] Falha ao selecionar entrega atualizada', error);
+    }
+    void queryClient
+      .invalidateQueries({ queryKey: ['painel-logistico-entregas', effectiveGroupId, effectiveEmpresaId] })
+      .catch((error) => console.error('[DashboardLogistico] Falha ao invalidar entregas', error));
   };
 
   const filtradas = React.useMemo(() => {

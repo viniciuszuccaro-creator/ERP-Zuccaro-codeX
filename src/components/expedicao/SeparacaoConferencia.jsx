@@ -228,7 +228,9 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
           sucesso: true,
           data_hora: new Date().toISOString()
         });
-      } catch (_) {}
+      } catch (auditError) {
+        console.error('[SeparacaoConferencia] Falha ao auditar conferencia', auditError);
+      }
       queryClient.invalidateQueries({ queryKey: ['entregas'] }); // Invalidate deliveries query
       queryClient.invalidateQueries({ queryKey: ['separacoes'] });
       toast({

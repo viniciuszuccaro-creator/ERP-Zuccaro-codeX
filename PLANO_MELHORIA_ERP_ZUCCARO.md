@@ -589,3 +589,17 @@ Lote concluido em 2026-09-13 para eliminar a vulnerabilidade critica de producao
 
 Proxima frente: triagem isolada da dependencia direta `lodash`, classificada como alta, verificando usos e compatibilidade antes de qualquer atualizacao. React Router, PostCSS e dependencias transitivas permanecem fora deste lote.
 
+### Qualidade operacional - ESLint verde e falhas observaveis
+
+Lote concluido em 2026-09-13 para eliminar erros e avisos do ESLint operacional sem remover funcionalidades, relaxar regras ou ocultar falhas criticas.
+
+- O ESLint global passou de 84 erros e 17 avisos para zero erros e zero avisos.
+- Foram removidas 17 diretivas `eslint-disable` obsoletas e corrigidos 81 blocos vazios com tratamento explicito e rastreavel.
+- Falhas de cache, contexto, auditoria, persistencia e encerramento de assinaturas passaram a ser registradas. Fluxos de portal, permissao da tabela e exclusao em lote agora falham fechados quando a verificacao critica nao pode ser concluida.
+- Foram corrigidos o hook de notificacao ausente na liquidacao financeira, a sanitizacao de caracteres de controle da politica transversal de IA e o tratamento redundante de erro no realtime.
+- O inventario `audit:baseline` reduziu `operationalEmptyCatches` de 127 para 45. Os casos restantes estao principalmente em funcoes backend fora do ESLint operacional e permanecem inventariados para lotes direcionados.
+- O typecheck global permanece ativo, sem `ts-ignore` global ou desativacao de `checkJs`, e reporta 2.909 diagnosticos historicos. A continuidade foi expressamente autorizada pelo proprietario; essa divida nao e declarada resolvida.
+- Nenhum dado, entidade, recurso Base44, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente: reduzir o typecheck por contratos JSDoc compartilhados, iniciando por uma politica de alta propagacao e sem introduzir `any` global. Cada lote deve comprovar que nao aumenta a contagem total antes do commit.
+

@@ -68,7 +68,9 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
         finalSortField = sf;
         finalSortDirection = sd;
       }
-    } catch (_) {}
+    } catch (error) {
+      console.warn('[useEntityListSorted] Ordenacao persistida indisponivel', error);
+    }
     if (!finalSortField || !finalSortDirection) {
       finalSortField = DEFAULT_SORTS[entityName]?.field || 'updated_date';
       finalSortDirection = DEFAULT_SORTS[entityName]?.direction || 'desc';
@@ -173,7 +175,9 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
               try {
                 const idbFallback = await idbGet(idbKey);
                 if (Array.isArray(idbFallback)) return idbFallback;
-              } catch (_) {}
+              } catch (fallbackError) {
+                console.warn('[useEntityListSorted] Cache IndexedDB indisponivel', fallbackError);
+              }
             }
             // Fallback a cache em memória (nunca deixa UI vazia)
             if (__elsCache.has(key)) return __elsCache.get(key);
@@ -181,7 +185,9 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
             try {
               const idbFallback = await idbGet(idbKey);
               if (Array.isArray(idbFallback)) return idbFallback;
-            } catch (_) {}
+            } catch (fallbackError) {
+              console.warn('[useEntityListSorted] Cache IndexedDB indisponivel', fallbackError);
+            }
             throw err;
           }
         }
