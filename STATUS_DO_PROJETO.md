@@ -6923,3 +6923,12 @@ Checklist inicial:
 - O relatorio agregado foi reproduzido em duas passagens, salvo e relido na pasta protegida do HD externo.
 - Os servicos SQL permaneceram parados e o banco nao foi acessado. O repositorio recebe somente este resumo sem conteudo sensivel; git diff --check e a validacao aplicavel.
 - Proximo passo obrigatorio: avaliar somente metadados agregados do log transacional da copia SQL local para determinar se existe historico tecnico utilizavel da rotina auditada, sem exportar registros, valores ou conteudo do log.
+
+### Gate 18 - Disponibilidade do historico transacional legado
+
+- Os metadados e as contagens agregadas do log transacional da copia SQL local foram avaliados em duas passagens, com o banco confirmado como somente leitura.
+- O log atual esta acessivel, mas nao contem historico utilizavel da operacao auditada e nao permite comprovar a vinculacao do pagamento.
+- As fontes tecnicas controladas desta investigacao foram esgotadas sem evidenciar a baixa de forma inequivoca; o bloqueio de migracao permanece.
+- O relatorio detalhado e sua verificacao de integridade permanecem exclusivamente na pasta protegida do HD externo.
+- A instancia, o Agent e o Browser SQL terminaram parados. O repositorio recebe somente este resumo sem registros ou conteudo do log; git diff --check e a validacao aplicavel.
+- Proximo passo obrigatorio: preparar uma recomendacao nao destrutiva de tratamento da parcela como pendencia de conciliacao manual, com impacto e criterio de desbloqueio, sem alterar ou migrar dados antes de autorizacao expressa.
