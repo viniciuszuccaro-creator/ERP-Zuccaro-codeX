@@ -1097,3 +1097,31 @@ PRONTO: list/get de Obra, Projeto e Centro de Custo; paginacao; busca; hierarqui
 BLOCKED: criacao/edicao de mestre pelo Site, alteracao de `allowedWorkIds`, centro sem ownership, orcamento financeiro da obra, analytics avancado, storage e alteracao de geometria.
 
 Proximo lote somente com autorizacao expressa: ERP-SITE-12 - Copiloto e Oportunidades.
+
+
+---
+
+# 31. EXECUCAO ERP-SITE-12 - COPILOTO COMERCIAL E OPORTUNIDADES
+
+O CRM existente passou a expor leitura segura de Oportunidades e contexto comercial pelo gateway S2S v1. Nao foi criado CRM, banco 360 ou modelo paralelo.
+
+## Operacoes
+
+- `siteOportunidadeList`: lista paginada das Oportunidades do Cliente no escopo;
+- `siteOportunidadeGet`: detalhe publico e minimizado;
+- `siteOportunidadeContext`: agrega em tempo de leitura Cliente, vendedor, obras, Orcamentos, Pedidos, Armacao, Chat, Entregas e Financeiro resumido permitido;
+- `siteOportunidadeSignal`: registra intencoes explicitas allowlisted e idempotentes.
+
+Os sinais aceitos sao `CLIENT_REQUESTED_CONTACT`, `BETTER_PRICE_REQUESTED` e `TALK_TO_SELLER`. IDs de Orcamento, Pedido, Conversa e Projeto sao revalidados por Cliente, Grupo e Empresa. O Site nao envia status, score, prioridade, vendedor, preco, desconto, credito ou acao executada.
+
+## Copiloto governado
+
+O contexto gera apenas sinais determinísticos baseados em registros reais e recomendacoes com `SUGGESTION_ONLY`, justificativa, confianca e confirmacao humana obrigatoria. Nenhuma sugestao altera preco, desconto, condicao, credito, pagamento, entrega, producao, pedido, mensagem, cadastro ou Oportunidade. Conteudo do Cliente e tratado como dado, sem eval, SQL ou execucao de comandos.
+
+`OPPORTUNITY_READ` e `OPPORTUNITY_SIGNAL` ficam `ready` quando suas dependencias reais respondem. `COMMERCIAL_COPILOT` fica `degraded`: o motor estruturado e operacional, mas IA generativa segura e validada nao e anunciada como disponivel.
+
+PRONTO: list/get, ownership, RBAC, paginacao, contexto 360 composto, sinais comerciais reais, deduplicacao, recomendacoes explicaveis, privacidade, auditoria e capabilities honestas.
+
+BLOCKED: decisao autonoma, envio automatico de mensagem, alteracao comercial/financeira/fiscal, fechamento de Oportunidade e IA generativa sem provider e schema governados. O Site CPA permanece sem alteracoes.
+
+ERP-SITE-01 a ERP-SITE-12 concluidos no ERP. Proxima etapa: homologacao integrada e, somente mediante autorizacao, adaptacao incremental do Site CPA.

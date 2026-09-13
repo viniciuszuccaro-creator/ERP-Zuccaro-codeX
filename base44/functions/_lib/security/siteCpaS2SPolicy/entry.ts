@@ -4,6 +4,7 @@ import { deliveryCapability } from '../siteCpaDelivery/entry.ts';
 import { chatCapability } from '../siteCpaChat/entry.ts';
 import { armationCapabilities } from '../siteCpaArmacao/entry.ts';
 import { workCapabilities } from '../siteCpaWork/entry.ts';
+import { opportunityCapabilities } from '../siteCpaOpportunity/entry.ts';
 import { routeSiteCpaOperation } from '../siteCpaOperationRouter/entry.ts';
 
 export const SITE_CPA_ORIGIN = 'SITE_CPA';
@@ -387,6 +388,7 @@ export const handleSiteCpaGatewayRequest = async ({
     const chatState = await chatCapability({ base44, scope });
     const armationStates = await armationCapabilities({ base44, scope });
     const workStates = await workCapabilities({ base44, scope });
+    const opportunityStates = await opportunityCapabilities({ base44, scope });
     const aggregateWorkState = [armationStates.WORK, workStates.WORK].includes('blocked')
       ? 'blocked' : [armationStates.WORK, workStates.WORK].includes('degraded') ? 'degraded' : 'ready';
     const body = buildSiteCpaResponse({
@@ -414,6 +416,7 @@ export const handleSiteCpaGatewayRequest = async ({
           ...armationStates,
           ...workStates,
           WORK: aggregateWorkState,
+          ...opportunityStates,
         },
       },
     });

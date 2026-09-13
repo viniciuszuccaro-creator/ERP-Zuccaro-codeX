@@ -7552,3 +7552,17 @@ Checklist inicial:
 - Validacao global: 424/424 testes aprovados; ESLint global, `audit:baseline`, build completo e `git diff --check` sem falhas. Typecheck direcionado sem diagnosticos; baseline global permanece com 2.238 diagnosticos historicos.
 - Nenhum arquivo do Site CPA, dado real, recurso Base44 remoto, backup legado ou HD externo foi acessado ou alterado.
 - Proximo passo somente com autorizacao expressa: ERP-SITE-12 - Copiloto e Oportunidades.
+
+
+## 2026-09-13 - ERP-SITE-12: Copiloto Comercial e Oportunidades
+
+- Implementadas `siteOportunidadeList`, `siteOportunidadeGet`, `siteOportunidadeContext` e `siteOportunidadeSignal` no gateway S2S v1.
+- Reutilizados Cliente, Oportunidade, vendedor, Pedido/Orcamento, Projeto/Armacao, ConversaOmnicanal, Entrega, ContaReceber, enderecos de obra, IntegracaoEvento e auditoria existentes.
+- Contexto 360 e composto sob demanda e minimizado; nao existe copia paralela de dados. Financeiro resumido e restrito a ADMIN_EMPRESA/FINANCEIRO.
+- Sinais aceitos sao allowlisted, vinculados ao Cliente e idempotentes. Nenhum campo de autoridade comercial e aceito do Site.
+- Recomendacoes sao regras estruturadas, explicaveis e `SUGGESTION_ONLY`; nenhuma acao critica ou mensagem externa e executada.
+- Capabilities: `OPPORTUNITY_READ=ready`, `OPPORTUNITY_SIGNAL=ready` quando dependencias respondem; `COMMERCIAL_COPILOT=degraded` ate existir IA generativa governada comprovada.
+- Site CPA, backup legado e HD externo nao foram alterados.
+- Proximo passo: homologar ERP-SITE-01 a 12 de ponta a ponta e iniciar a integracao do Site somente com autorizacao expressa.
+- Validacao final: 11/11 testes focados e 435/435 testes globais aprovados; ESLint global e `audit:baseline` aprovados; build completo e `git diff --check` aprovados.
+- Typecheck global permaneceu no baseline historico de 2.238 diagnosticos, sem aumento e sem supressao. Avisos conhecidos de bundle, Browserslist e imports mistos permanecem registrados.

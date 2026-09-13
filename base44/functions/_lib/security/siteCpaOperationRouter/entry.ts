@@ -54,6 +54,10 @@ import {
   SiteCpaWorkError,
   resolveSiteCpaWorkOperation,
 } from '../siteCpaWork/entry.ts';
+import {
+  SITE_CPA_OPPORTUNITY_OPERATIONS, SiteCpaOpportunityError,
+  resolveSiteCpaOpportunityOperation,
+} from '../siteCpaOpportunity/entry.ts';
 
 const rejected = (buildResponse, request, failure) => ({
   handled: true,
@@ -140,6 +144,17 @@ export const routeSiteCpaOperation = async ({
     } catch (error) {
       return rejected(buildResponse, request, error instanceof SiteCpaArmacaoError
         ? error : new SiteCpaArmacaoError(503, 'site_cpa_armacao_unavailable'));
+    }
+  }
+
+  if (SITE_CPA_OPPORTUNITY_OPERATIONS.has(request.operation)) {
+    try {
+      const data = await resolveSiteCpaOpportunityOperation({ base44, payload, scope, request, now });
+      return completed(buildResponse, request, data,
+        request.operation === 'siteOportunidadeSignal' && data.replayed !== true ? 201 : 200);
+    } catch (error) {
+      return rejected(buildResponse, request, error instanceof SiteCpaOpportunityError
+        ? error : new SiteCpaOpportunityError(503, 'site_cpa_opportunity_unavailable'));
     }
   }
 
