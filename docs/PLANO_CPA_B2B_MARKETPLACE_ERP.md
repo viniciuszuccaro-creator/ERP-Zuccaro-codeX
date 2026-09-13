@@ -496,3 +496,59 @@ GO-LIVE só pode ser aprovado com build/testes/E2E reais, ERP/S2S, pagamento, fi
 14. H1 homologação final.
 
 Cada lote autorizado deve terminar com status atualizado, testes aplicáveis, commit e push. Não avançar para o próximo lote sem autorização, salvo autorização explícita para continuidade.
+
+---
+
+# 20. EXECUCAO ERP-SITE-01 - FUNDACAO S2S
+
+O gateway existente `legacyIntegrationsMirror` passa a reconhecer o contrato `SITE_CPA` versao `1`, sem alterar os contratos legados de API, marketplaces, pagamentos, fiscal ou configuracoes.
+
+## Requisicao
+
+Headers obrigatorios:
+
+- `Authorization: Bearer <SITE_CPA_SERVICE_TOKEN>`;
+- `Content-Type: application/json`;
+- `x-origin: SITE_CPA`;
+- `x-correlation-id`;
+- `x-site-cpa-timestamp` em ISO-8601;
+- `x-site-cpa-nonce` unico;
+- `x-site-cpa-signature` HMAC-SHA256 de `timestamp.nonce.corpo-bruto`;
+- `idempotency-key` para todas as operacoes exceto `siteHealth`.
+
+Envelope:
+
+```json
+{
+  "version": "1",
+  "operation": "siteHealth",
+  "context": {
+    "empresaId": "empresa-autorizada-opcional"
+  },
+  "data": {}
+}
+```
+
+O Grupo nunca e escolhido pelo Site: vem de `SITE_CPA_GROUP_ID`. A Empresa padrao vem de `SITE_CPA_DEFAULT_EMPRESA_ID` e qualquer Empresa solicitada precisa estar em `SITE_CPA_ALLOWED_EMPRESA_IDS` e pertencer ao Grupo configurado.
+
+## Configuracao de ambiente
+
+- `SITE_CPA_SERVICE_TOKEN`;
+- `SITE_CPA_HMAC_SECRET`;
+- `SITE_CPA_GROUP_ID`;
+- `SITE_CPA_DEFAULT_EMPRESA_ID`;
+- `SITE_CPA_ALLOWED_EMPRESA_IDS`;
+- `SITE_CPA_RATE_LIMIT` opcional, padrao 120;
+- `SITE_CPA_RATE_WINDOW_MS` opcional, padrao 60000.
+
+Segredos nunca entram em commit, frontend, resposta ou auditoria.
+
+## Persistencia e comportamento
+
+- `IntegracaoEvento` registra somente hashes, correlacao, escopo, operacao, estado e resposta necessaria para idempotencia;
+- nonce repetido, chave reutilizada com corpo diferente, Empresa/Grupo adulterados e ledger indisponivel falham fechados;
+- o corpo JSON e limitado a 1 MiB;
+- `siteHealth` e a unica operacao habilitada no ERP-SITE-01;
+- operacoes dos lotes seguintes respondem `501 site_cpa_operation_not_implemented`, sem sucesso falso.
+
+Proximo lote: ERP-SITE-02, resolucao de Cliente e solicitacao/aprovacao de vinculo empresarial, reutilizando Cliente, enderecos, contatos e RBAC existentes.

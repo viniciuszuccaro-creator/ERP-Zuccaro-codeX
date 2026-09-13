@@ -759,3 +759,17 @@ Lote concluido em 2026-09-13 na politica compartilhada de expedicao, sem alterar
 
 Proxima frente: tipar `ordemProducaoPolicy.js`, politica compartilhada com 23 diagnosticos e 158 linhas. Telas grandes permanecem reservadas para lotes proprios.
 
+### ERP-SITE-01 - Fundacao S2S do Site CPA
+
+Nova prioridade autorizada em 2026-09-13: executar primeiro no ERP os 12 contratos Site CPA, sem alterar o repositorio do Site ate a homologacao da camada ERP.
+
+- O gateway existente `legacyIntegrationsMirror` sera preservado como entrada unica e versionada.
+- A origem tecnica canonica externa e `SITE_CPA`; a origem interna legada `site` continua preservada nos fluxos atuais.
+- Grupo e Empresas autorizadas sao vinculados no servidor, nunca confiados ao navegador.
+- Token dedicado, HMAC, timestamp, nonce, correlacao, idempotencia, rate limit persistente, auditoria e healthcheck sao obrigatorios.
+- CPA Ferro e Aco e a Empresa padrao; 3Z LTDA exige selecao permitida e validacao no mesmo Grupo.
+- Os dados atuais do Site serao tratados posteriormente por staging e reconciliacao, sem sobrescrita automatica e sem transformar carrinho em pedido.
+- Provedor de pagamento permanece pendente; nenhuma integracao simulada podera declarar pagamento real.
+
+O contrato tecnico detalhado e o andamento dos lotes ficam no plano existente `docs/PLANO_CPA_B2B_MARKETPLACE_ERP.md` e em `STATUS_DO_PROJETO.md`.
+

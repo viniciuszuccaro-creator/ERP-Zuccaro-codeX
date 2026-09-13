@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 import { completeGuardCallScope, recordMatchesGuardScope, requireEntityGuard } from './_lib/security/guardCallPolicy.js';
+import { handleSiteCpaGatewayRequest } from './_lib/security/siteCpaS2SPolicy.js';
 
 const reportIntegrationFailure = (operation, error, context = {}) => {
   console.error(`[legacyIntegrationsMirror] ${operation}`, { error: error?.message || String(error), ...context });
@@ -78,7 +79,21 @@ const resolveScopeOrReject = async (base44, input = {}, errorLabel = 'contexto_m
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const payload = await req.json().catch(() => ({}));
+    const rawBody = await req.text();
+    let payload = {};
+    try {
+      payload = rawBody ? JSON.parse(rawBody) : {};
+    } catch {
+      return Response.json({ error: 'json_invalido' }, { status: 400 });
+    }
+    const siteCpaResponse = await handleSiteCpaGatewayRequest({
+      req,
+      base44,
+      payload,
+      rawBody,
+      env: (name) => Deno.env.get(name),
+    });
+    if (siteCpaResponse) return siteCpaResponse;
     const evt = payload?.event || {};
     const data = payload?.data || null;
 

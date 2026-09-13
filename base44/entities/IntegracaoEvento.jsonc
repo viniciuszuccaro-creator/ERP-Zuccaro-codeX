@@ -1,0 +1,30 @@
+{
+  "name": "IntegracaoEvento",
+  "type": "object",
+  "properties": {
+    "group_id": { "type": "string", "description": "Grupo vinculado no servidor" },
+    "empresa_id": { "type": "string", "description": "Empresa juridica responsavel" },
+    "origem": { "type": "string", "description": "Origem tecnica da integracao" },
+    "operacao": { "type": "string", "description": "Operacao versionada executada" },
+    "correlation_id": { "type": "string", "description": "Identificador de correlacao ponta a ponta" },
+    "idempotency_key": { "type": "string", "description": "Chave de idempotencia da operacao" },
+    "nonce_hash": { "type": "string", "description": "Hash do nonce para protecao contra replay" },
+    "request_hash": { "type": "string", "description": "Hash do corpo recebido, sem armazenar segredo" },
+    "status": { "type": "string", "description": "processando, concluido, rejeitado ou erro" },
+    "http_status": { "type": "number" },
+    "tentativas": { "type": "number", "default": 1 },
+    "expires_at": { "type": "string", "format": "date-time" },
+    "response_payload": { "type": "object", "additionalProperties": true },
+    "erro_codigo": { "type": "string" }
+  },
+  "required": [
+    "group_id",
+    "empresa_id",
+    "origem",
+    "operacao",
+    "correlation_id",
+    "nonce_hash",
+    "request_hash",
+    "status"
+  ]
+}

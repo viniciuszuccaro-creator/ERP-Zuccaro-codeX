@@ -7311,3 +7311,19 @@ Checklist inicial:
 - O build mantem somente o aviso conhecido do bundle principal; o typecheck permanece habilitado e falha apenas pelos 2.238 diagnosticos historicos registrados e autorizados.
 - Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
 - Proximo passo: tipar `ordemProducaoPolicy.js`, politica compartilhada com 23 diagnosticos e 158 linhas; arquivos grandes permanecem separados.
+
+### ERP-SITE-01 - Fundacao S2S do Site CPA
+
+- Objetivo: iniciar a integracao Site CPA -> ERP pelo gateway existente `legacyIntegrationsMirror`, sem criar endpoints paralelos nem alterar o Site antes da homologacao do ERP.
+- Contrato entregue: envelope `v1` com origem fixa `SITE_CPA`, operacao nomeada, correlacao, timestamp, nonce, assinatura HMAC-SHA256 e chave de idempotencia.
+- Credencial e escopo: token e segredo permanecem somente no backend; Grupo, Empresa padrao e Empresas permitidas sao resolvidos por configuracao do servidor. O Site nao pode escolher livremente outro Grupo ou Empresa.
+- Seguranca: conteudo e tamanho sao validados; assinatura usa comparacao constante; timestamp, nonce, replay, idempotencia e limite de requisicoes falham fechados.
+- Multiempresa: a Empresa configurada e validada contra o Grupo configurado antes de qualquer operacao. Escopo ausente, adulterado ou cruzado e recusado.
+- Persistencia: a entidade `IntegracaoEvento` registra idempotencia, nonce por hash, tentativas, estado, expiracao e resposta segura para repeticao controlada. A revisao confirmou que `Webhook` representa configuracao e nao substitui esse ledger.
+- Auditoria: o healthcheck registra usuario tecnico, origem, operacao, correlacao, Grupo, Empresa e resultado, sem persistir token, segredo ou assinatura.
+- Compatibilidade: todas as ramificacoes legadas de API, pagamento, marketplace e configuracao foram preservadas. Apenas `siteHealth` esta ativo; operacoes futuras retornam erro estavel `501` e nunca sucesso falso.
+- Validacao: 8/8 testes focados e 260/260 testes globais aprovados; ESLint direcionado e global sem diagnosticos; `audit:baseline`, build completo e `git diff --check` aprovados.
+- Typecheck: permanecem os mesmos 2.238 diagnosticos historicos do commit de origem; nenhum diagnostico novo foi introduzido pelo lote.
+- Avisos conhecidos: build mantem imports mistos, Browserslist desatualizado e bundle principal acima de 500 kB.
+- Nenhum arquivo do Site CPA, dado real, backup legado ou HD externo foi acessado ou alterado neste lote.
+- Proximo passo coordenado: ERP-SITE-02, evoluindo Cliente, enderecos e acessos existentes para solicitacao e aprovacao do vinculo empresarial por CNPJ.
