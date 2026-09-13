@@ -1,34 +1,6 @@
-import {
-  SITE_CPA_CUSTOMER_RESOLVE_OPERATION,
-  SiteCpaCustomerError,
-  resolveSiteCpaCustomer,
-} from '../siteCpaCustomerResolve/entry.ts';
-import {
-  SITE_CPA_CATALOG_LIST_OPERATION,
-  SiteCpaCatalogError,
-  resolveSiteCpaCatalog,
-} from '../siteCpaCatalogRead/entry.ts';
-import {
-  SITE_CPA_ORDER_CREATE_OPERATION,
-  SiteCpaOrderError,
-  resolveSiteCpaOrderCreate,
-} from '../siteCpaOrderCreate/entry.ts';
-import {
-  SITE_CPA_NEGOTIATION_GET_OPERATION,
-  SITE_CPA_NEGOTIATION_RESPOND_OPERATION,
-  SITE_CPA_QUOTE_CREATE_OPERATION,
-  SITE_CPA_QUOTE_GET_OPERATION,
-  SiteCpaQuoteError,
-  resolveSiteCpaQuoteOperation,
-} from '../siteCpaQuoteNegotiation/entry.ts';
-import {
-  SITE_CPA_PAYMENT_CANCEL_OPERATION,
-  SITE_CPA_PAYMENT_CREATE_OPERATION,
-  SITE_CPA_PAYMENT_STATUS_OPERATION,
-  SiteCpaPaymentError,
-  resolveSiteCpaPaymentOperation,
-} from '../siteCpaPayment/entry.ts';
 import { paymentCapability } from '../siteCpaPayment/provider.ts';
+import { portalCapabilities } from '../siteCpaPortal/entry.ts';
+import { routeSiteCpaOperation } from '../siteCpaOperationRouter/entry.ts';
 
 export const SITE_CPA_ORIGIN = 'SITE_CPA';
 export const SITE_CPA_CONTRACT_VERSION = '1';
@@ -406,6 +378,7 @@ export const handleSiteCpaGatewayRequest = async ({
 
   if (request.operation === SITE_CPA_HEALTH_OPERATION) {
     const paymentState = await paymentCapability({ base44, scope, env });
+    const portalStates = await portalCapabilities({ base44, scope });
     const body = buildSiteCpaResponse({
       ok: true,
       request,
@@ -425,153 +398,18 @@ export const handleSiteCpaGatewayRequest = async ({
           QUOTE_CREATE: 'ready',
           NEGOTIATION: 'ready',
           PAYMENT: paymentState,
+          ...portalStates,
         },
       },
     });
     return finish({ status: 200, body, eventStatus: 'concluido' });
   }
 
-  if ([
-    SITE_CPA_PAYMENT_CREATE_OPERATION,
-    SITE_CPA_PAYMENT_STATUS_OPERATION,
-    SITE_CPA_PAYMENT_CANCEL_OPERATION,
-  ].includes(request.operation)) {
-    try {
-      const data = await resolveSiteCpaPaymentOperation({
-        base44, payload, scope, request, env, now,
-      });
-      const body = buildSiteCpaResponse({ ok: true, request, data });
-      const status = request.operation === SITE_CPA_PAYMENT_CREATE_OPERATION
-        ? (data.status === 'PROCESSING' ? 202 : 201)
-        : 200;
-      return finish({ status, body, eventStatus: 'concluido' });
-    } catch (error) {
-      const failure = error instanceof SiteCpaPaymentError
-        ? error
-        : new SiteCpaPaymentError(503, 'site_cpa_payment_unavailable');
-      const body = buildSiteCpaResponse({
-        ok: false,
-        request,
-        code: failure.code,
-        message: failure.message,
-        details: failure.details,
-      });
-      return finish({
-        status: failure.status,
-        body,
-        eventStatus: 'rejeitado',
-        errorCode: failure.code,
-      });
-    }
-  }
-
-  if (request.operation === SITE_CPA_CUSTOMER_RESOLVE_OPERATION) {
-    try {
-      const data = await resolveSiteCpaCustomer({ base44, payload, scope, request });
-      const body = buildSiteCpaResponse({ ok: true, request, data });
-      return finish({ status: 200, body, eventStatus: 'concluido' });
-    } catch (error) {
-      const failure = error instanceof SiteCpaCustomerError
-        ? error
-        : new SiteCpaCustomerError(503, 'site_cpa_customer_resolve_unavailable');
-      const body = buildSiteCpaResponse({
-        ok: false,
-        request,
-        code: failure.code,
-        message: failure.message,
-        details: failure.details,
-      });
-      return finish({
-        status: failure.status,
-        body,
-        eventStatus: 'rejeitado',
-        errorCode: failure.code,
-      });
-    }
-  }
-
-  if (request.operation === SITE_CPA_CATALOG_LIST_OPERATION) {
-    try {
-      const data = await resolveSiteCpaCatalog({ base44, payload, scope, request, now });
-      const body = buildSiteCpaResponse({ ok: true, request, data });
-      return finish({ status: 200, body, eventStatus: 'concluido' });
-    } catch (error) {
-      const failure = error instanceof SiteCpaCatalogError
-        ? error
-        : new SiteCpaCatalogError(503, 'site_cpa_catalog_unavailable');
-      const body = buildSiteCpaResponse({
-        ok: false,
-        request,
-        code: failure.code,
-        message: failure.message,
-        details: failure.details,
-      });
-      return finish({
-        status: failure.status,
-        body,
-        eventStatus: 'rejeitado',
-        errorCode: failure.code,
-      });
-    }
-  }
-
-  if (request.operation === SITE_CPA_ORDER_CREATE_OPERATION) {
-    try {
-      const data = await resolveSiteCpaOrderCreate({ base44, payload, scope, request, now });
-      const body = buildSiteCpaResponse({ ok: true, request, data });
-      return finish({ status: 201, body, eventStatus: 'concluido' });
-    } catch (error) {
-      const failure = error instanceof SiteCpaOrderError
-        ? error
-        : new SiteCpaOrderError(503, 'site_cpa_order_unavailable');
-      const body = buildSiteCpaResponse({
-        ok: false,
-        request,
-        code: failure.code,
-        message: failure.message,
-        details: failure.details,
-      });
-      return finish({
-        status: failure.status,
-        body,
-        eventStatus: 'rejeitado',
-        errorCode: failure.code,
-      });
-    }
-  }
-
-  if ([
-    SITE_CPA_QUOTE_CREATE_OPERATION,
-    SITE_CPA_QUOTE_GET_OPERATION,
-    SITE_CPA_NEGOTIATION_GET_OPERATION,
-    SITE_CPA_NEGOTIATION_RESPOND_OPERATION,
-  ].includes(request.operation)) {
-    try {
-      const data = await resolveSiteCpaQuoteOperation({ base44, payload, scope, request, now });
-      const body = buildSiteCpaResponse({ ok: true, request, data });
-      return finish({
-        status: request.operation === SITE_CPA_QUOTE_CREATE_OPERATION ? 201 : 200,
-        body,
-        eventStatus: 'concluido',
-      });
-    } catch (error) {
-      const failure = error instanceof SiteCpaQuoteError
-        ? error
-        : new SiteCpaQuoteError(503, 'site_cpa_quote_unavailable');
-      const body = buildSiteCpaResponse({
-        ok: false,
-        request,
-        code: failure.code,
-        message: failure.message,
-        details: failure.details,
-      });
-      return finish({
-        status: failure.status,
-        body,
-        eventStatus: 'rejeitado',
-        errorCode: failure.code,
-      });
-    }
+  const routed = await routeSiteCpaOperation({
+    base44, payload, scope, request, env, now, buildResponse: buildSiteCpaResponse,
+  });
+  if (routed.handled) {
+    return finish(routed);
   }
 
   const body = buildSiteCpaResponse({

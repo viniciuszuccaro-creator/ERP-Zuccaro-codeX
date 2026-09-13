@@ -884,3 +884,51 @@ PRONTO: contrato create/status/cancel, saldo oficial, tentativa persistente, ide
 BLOCKED: metodos sem provider real, CARD/PAYMENT_LINK sem hosted checkout, cancelamento Juno, refund operacional e automacao avancada de chargeback. O Site CPA permanece sem alteracoes.
 
 Proximo lote somente com autorizacao expressa: ERP-SITE-07 - Portal Financeiro e Fiscal.
+
+---
+
+# 26. EXECUCAO ERP-SITE-07 - PORTAL FINANCEIRO E FISCAL
+
+O Portal existente passou a ter contratos oficiais de leitura no gateway S2S `v1`. Nenhum portal, endpoint, entidade financeira ou repositorio de documentos paralelo foi criado.
+
+## Operacoes
+
+- `sitePortalPedidos`: lista paginada de Pedidos visiveis no portal;
+- `sitePortalPedidoGet`: detalhe seguro do Pedido e itens oficiais;
+- `sitePortalNfe`: resumo paginado de NF-e, inclusive cancelada;
+- `sitePortalBoletos`: cobrancas reais ja existentes, sem geracao simulada;
+- `sitePortalDuplicatas`: titulos oficiais abertos, parciais, pagos, vencidos ou cancelados conforme visibilidade existente;
+- `sitePortalPagamentos`: tentativas oficiais do ERP-SITE-06;
+- `sitePortalDocumento`: DANFE, XML ou boleto por URL assinada curta.
+
+Todas as respostas usam `source = ERP`, snapshot temporal, paginacao maxima de 100 registros e `Cache-Control: no-store` no gateway.
+
+## RBAC, ownership e multiempresa
+
+`ADMIN_EMPRESA` acessa pedidos, fiscal e financeiro. `FINANCEIRO` acessa os mesmos contratos de leitura. `COMPRADOR` e `CONSULTA` acessam pedidos e fiscal, mas nao titulos, boletos, linha digitavel ou pagamentos.
+
+O papel e lido exclusivamente do vinculo empresarial aprovado do ERP-SITE-02. Cliente, usuario externo, Grupo, Empresa, Pedido, NF-e, titulo, pagamento, documento e obra autorizada sao revalidados no backend. IDs adulterados, usuario pendente/revogado e leitura cruzada falham fechados.
+
+## Pedidos, fiscal e financeiro
+
+Pedidos retornam status externo estavel, itens e totais oficiais sem custo, margem, comissao, credito ou anotacoes internas. NF-e retorna status externo, chave mascarada e apenas a disponibilidade de DANFE/XML, nunca caminho interno ou URL permanente.
+
+Titulos reutilizam `ContaReceber`; os estados externos sao `OPEN`, `PARTIALLY_PAID`, `PAID`, `OVERDUE`, `CANCELLED` e `UNDER_REVIEW`. Pagamentos reutilizam a tentativa persistida pelo ERP-SITE-06 e omitem payload, token, transacao interna e segredo do provider.
+
+`sitePortalBoletos` nunca chama o fallback simulado de `emitirBoleto`. Segunda via permanece bloqueada quando nao existir cobranca real consultavel no ERP/provedor.
+
+## Documentos
+
+`sitePortalDocumento` nao aceita URL, path ou `fileUri` enviados pelo Site. O ERP localiza o recurso pelo ID, confirma ownership e obra, aceita somente URI privada sem traversal e arquivos PDF/XML oficiais, e usa `CreateFileSignedUrl` com TTL de 300 segundos.
+
+URL permanente, URL publica gravada no registro, HTML arbitrario, path traversal, storage ausente e assinatura indisponivel retornam `site_cpa_portal_document_unavailable`. A auditoria registra o recurso e o usuario sem guardar URI privada, URL assinada ou conteudo.
+
+## Capabilities e pendencias
+
+`siteHealth` agora informa `PORTAL`, `PORTAL_FINANCIAL`, `PORTAL_FISCAL` e `PORTAL_DOCUMENT`. O estado geral e `ready` somente quando Pedido, Fiscal, Financeiro, ledger de pagamentos e assinatura de documentos estao disponiveis; disponibilidade parcial resulta em `degraded` e ausencia total em `blocked`.
+
+PRONTO: pedidos, detalhe, NF-e resumida, boletos existentes, duplicatas, pagamentos, filtros de obra, RBAC, ownership, paginacao e download assinado quando o storage real estiver disponivel.
+
+BLOCKED: segunda via que dependa de provider nao integrado, documento sem URI privada/storage assinado, devolucao, envio automatico por e-mail e recursos fiscais inexistentes no ERP atual. O Site CPA permanece sem alteracoes.
+
+Proximo lote somente com autorizacao expressa: ERP-SITE-08 - Entrega e Logistica.

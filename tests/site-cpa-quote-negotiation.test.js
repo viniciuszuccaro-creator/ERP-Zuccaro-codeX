@@ -313,10 +313,11 @@ test('respostas não expõem custo, margem, fornecedor, crédito ou notas intern
 
 test('gateway registra as quatro operações e mantém compatibilidade dos contratos anteriores', async () => {
   const source = await readFile(new URL('../base44/functions/_lib/security/siteCpaS2SPolicy/entry.ts', import.meta.url), 'utf8');
+  const router = await readFile(new URL('../base44/functions/_lib/security/siteCpaOperationRouter/entry.ts', import.meta.url), 'utf8');
   for (const operation of [
     'SITE_CPA_QUOTE_CREATE_OPERATION', 'SITE_CPA_QUOTE_GET_OPERATION',
     'SITE_CPA_NEGOTIATION_GET_OPERATION', 'SITE_CPA_NEGOTIATION_RESPOND_OPERATION',
-  ]) assert.match(source, new RegExp(operation));
+  ]) assert.match(router, new RegExp(operation));
   assert.match(source, /QUOTE_CREATE: 'ready'/);
   assert.match(source, /NEGOTIATION: 'ready'/);
   assert.match(source, /CUSTOMER_RESOLVE: 'ready'/);

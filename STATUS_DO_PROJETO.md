@@ -7444,3 +7444,25 @@ Checklist inicial:
 - Avisos conhecidos: build mantem imports mistos, Browserslist desatualizado e bundle principal acima de 500 kB.
 - Nenhum arquivo do Site CPA, dado real, recurso Base44 remoto, provider real, backup legado ou HD externo foi acessado ou alterado.
 - Proximo passo somente com autorizacao expressa: ERP-SITE-07 - Portal Financeiro e Fiscal.
+
+### ERP-SITE-07 - Portal Financeiro e Fiscal do Site CPA
+
+- Objetivo: expor ao Site CPA leituras privadas e oficiais do Portal existente, sem criar modulo, endpoint ou entidade paralela.
+- Operacoes: `sitePortalPedidos`, `sitePortalPedidoGet`, `sitePortalNfe`, `sitePortalBoletos`, `sitePortalDuplicatas`, `sitePortalPagamentos` e `sitePortalDocumento` no gateway S2S `v1`.
+- Reuso: `Cliente`, `SolicitacaoAprovacao`, `Pedido`, `NotaFiscal`, `ContaReceber`, tentativas do ERP-SITE-06, `IntegracaoEvento`, `AuditLog` e `CreateFileSignedUrl` existentes.
+- Refatoracao: roteamento dos contratos SITE-01 a SITE-07 extraido do `siteCpaS2SPolicy` para helper interno; o arquivo central caiu de 588 para aproximadamente 426 linhas.
+- RBAC: `ADMIN_EMPRESA` e `FINANCEIRO` acessam financeiro; `COMPRADOR` e `CONSULTA` ficam limitados a pedidos e fiscal.
+- Ownership: usuario externo, Cliente, Grupo, Empresa, obra, Pedido, NF-e, titulo, pagamento e documento sao revalidados no backend.
+- Pedidos: lista/detalhe paginados, status externo, itens e totais oficiais sem custo, margem, comissao, credito ou notas internas.
+- Fiscal: NF-e autorizada/cancelada com status externo, chave mascarada e indicador de documento, sem URL ou path privado.
+- Financeiro: duplicatas mapeadas, boletos reais existentes e pagamentos do ERP-SITE-06; nenhuma segunda via simulada e criada.
+- Documentos: somente PDF/XML por URI privada validada e URL assinada por 300 segundos; URL/path do Site, traversal e storage ausente falham fechados.
+- Capabilities: `PORTAL`, `PORTAL_FINANCIAL`, `PORTAL_FISCAL` e `PORTAL_DOCUMENT` refletem disponibilidade real e podem ficar `ready`, `degraded` ou `blocked`.
+- Auditoria: consultas, downloads, bloqueios, IDOR e falhas registram operacao, correlacao, Cliente, Grupo, Empresa e contagem, sem payload financeiro ou conteudo.
+- PRONTO: pedidos, NF-e resumida, duplicatas, boletos existentes, pagamentos, filtros por obra, RBAC, ownership e download assinado quando suportado.
+- BLOCKED: segunda via sem provider oficial, documento sem URI privada/storage, devolucao, e-mail automatico e recurso fiscal inexistente.
+- Validacao focada: 104/104 testes dos contratos ERP-SITE-01 a 07 e regressao do roteador aprovados.
+- Validacao global: 356/356 testes aprovados; ESLint global e `audit:baseline` sem falhas; build completo aprovado.
+- Typecheck: 2.238 diagnosticos historicos preservados e zero diagnosticos novos do ERP-SITE-07.
+- Nenhum arquivo do Site CPA, dado real, recurso Base44 remoto, provider real, backup legado ou HD externo foi acessado ou alterado.
+- Proximo passo somente com autorizacao expressa: ERP-SITE-08 - Entrega e Logistica.
