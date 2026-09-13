@@ -6914,3 +6914,12 @@ Checklist inicial:
 - O relatorio detalhado e sua verificacao de integridade permanecem exclusivamente na pasta protegida do HD externo.
 - Os servicos SQL permaneceram parados e o banco nao foi acessado. O repositorio recebe somente este resumo sem conteudo sensivel; git diff --check e a validacao aplicavel.
 - Proximo passo obrigatorio: verificar de forma controlada os arquivos nao executaveis e nao pertencentes ao banco por referencias textuais a rotina auditada, exportando somente contagens e categorias de extensao.
+
+### Gate 18 - Verificacao textual fora dos binarios e bancos
+
+- A copia original foi filtrada para excluir executaveis, bibliotecas e arquivos pertencentes ao banco antes da busca pelas referencias tecnicas controladas.
+- Nenhum arquivo permaneceu elegivel nesse escopo; portanto, nao existe fonte textual adicional para esclarecer a rotina auditada.
+- Nenhuma nova evidencia de vinculacao com o pagamento foi encontrada e o bloqueio de migracao permanece.
+- O relatorio agregado foi reproduzido em duas passagens, salvo e relido na pasta protegida do HD externo.
+- Os servicos SQL permaneceram parados e o banco nao foi acessado. O repositorio recebe somente este resumo sem conteudo sensivel; git diff --check e a validacao aplicavel.
+- Proximo passo obrigatorio: avaliar somente metadados agregados do log transacional da copia SQL local para determinar se existe historico tecnico utilizavel da rotina auditada, sem exportar registros, valores ou conteudo do log.
