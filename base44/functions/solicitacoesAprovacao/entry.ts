@@ -238,6 +238,42 @@ Deno.serve(async (req) => {
       }
     }
 
+    if (action === 'createManualReconciliationEvidenceAccessUrl') {
+      const scope = await resolveManualScope(base44, user, payload);
+      if (scope.response) return scope.response;
+      const canReview = await hasPermission(base44, user, 'Financeiro', 'Migracao', 'conciliar');
+      const canApprove = await hasPermission(base44, user, 'Financeiro', 'Migracao', 'aprovar');
+      if (!canReview && !canApprove) {
+        try { await auditManualStaging(base44, user, { group_id: scope.groupId, empresa_id: scope.empresaId }, 'Bloqueio', false); }
+        catch (error) { reportApprovalFailure('Falha ao auditar bloqueio de evidencia', error, { group_id: scope.groupId, empresa_id: scope.empresaId }); return Response.json({ error: 'Controle de acesso indisponivel' }, { status: 503 }); }
+        return Response.json({ error: 'Forbidden' }, { status: 403 });
+      }
+      const solicitacaoId = firstText(payload?.solicitacao_id);
+      const evidenciaId = firstText(payload?.evidencia_id);
+      if (!solicitacaoId || !evidenciaId) return Response.json({ error: 'solicitacao_id e evidencia_id sao obrigatorios' }, { status: 400 });
+      try {
+        const current = await base44.asServiceRole.entities.SolicitacaoAprovacao.get(solicitacaoId);
+        if (!current || firstText(current?.group_id) !== scope.groupId || firstText(current?.empresa_id) !== scope.empresaId || !isManualReconciliationRequest(current)) {
+          await auditManualStaging(base44, user, { id: solicitacaoId, group_id: scope.groupId, empresa_id: scope.empresaId }, 'Bloqueio', false);
+          return Response.json({ error: 'Forbidden' }, { status: 403 });
+        }
+        const evidences = current?.dados_propostos?.envelope_staging?.evidencias_conciliacao;
+        const evidence = (Array.isArray(evidences) ? evidences : []).find((item) => firstText(item?.id) === evidenciaId);
+        const fileUri = firstText(evidence?.file_uri);
+        if (!fileUri.startsWith('private/') || fileUri.includes('..') || /[\\\s?#]/.test(fileUri)) {
+          await auditManualStaging(base44, user, current, 'Bloqueio', false, current, { evidencia_id: evidenciaId });
+          return Response.json({ error: 'Evidencia privada nao encontrada' }, { status: 404 });
+        }
+        const signed = await base44.asServiceRole.integrations.Core.CreateFileSignedUrl({ file_uri: fileUri, expires_in: 300 });
+        if (!firstText(signed?.signed_url)) throw new Error('Integracao nao retornou URL assinada');
+        await auditManualStaging(base44, user, current, 'AcessoEvidencia', true, current, { evidencia_id: evidenciaId });
+        return Response.json({ signed_url: signed.signed_url, expires_in: 300 });
+      } catch (error) {
+        reportApprovalFailure('Falha ao autorizar acesso temporario a evidencia', error, { solicitacao_id: solicitacaoId, evidencia_id: evidenciaId, group_id: scope.groupId, empresa_id: scope.empresaId });
+        return Response.json({ error: 'Acesso temporario a evidencia indisponivel' }, { status: 503 });
+      }
+    }
+
     if (MANUAL_RECONCILIATION_WORKFLOW_ACTIONS.has(action)) {
       const scope = await resolveManualScope(base44, user, payload);
       if (scope.response) return scope.response;

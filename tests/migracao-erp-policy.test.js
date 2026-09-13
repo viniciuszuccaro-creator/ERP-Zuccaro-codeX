@@ -24,6 +24,18 @@ import {
   applyManualWorkflowTransition,
 } from '../base44/functions/_lib/financeiro/manualReconciliationApprovalPolicy/entry.ts';
 
+const privateEvidence = (id = 'ev-1', overrides = {}) => ({
+  id,
+  tipo: 'application/pdf',
+  file_uri: `private/test/${id}.pdf`,
+  arquivo_nome: `${id}.pdf`,
+  arquivo_tamanho: 128,
+  hash_sha256: 'a'.repeat(64),
+  hash_algoritmo: 'SHA-256',
+  armazenamento: 'privado',
+  ...overrides,
+});
+
 const loadSolicitacoesAprovacaoHandler = async () => {
   const original = await readFile(new URL('../base44/functions/solicitacoesAprovacao/entry.ts', import.meta.url), 'utf8');
   const instrumented = original
@@ -41,7 +53,7 @@ const loadSolicitacoesAprovacaoHandler = async () => {
 };
 
 const makeApprovalClient = ({ existing = [], current = null, permissions = ['conciliar'], empresaGroup = 'g1', auditFails = false, updateFails = false, userId = 'u1' } = {}) => {
-  const state = { created: [], deleted: [], audits: [], updates: [] };
+  const state = { created: [], deleted: [], audits: [], updates: [], signedUris: [] };
   const user = { id: userId, full_name: 'Analista', perfil_acesso_id: 'p1', group_id: 'g1', empresa_atual_id: 'e1' };
   let stored = current || existing[0] || null;
   const solicitacoes = {
@@ -58,12 +70,18 @@ const makeApprovalClient = ({ existing = [], current = null, permissions = ['con
   };
   const client = {
     auth: { me: async () => user },
-    asServiceRole: { entities: {
-      PerfilAcesso: { get: async () => ({ permissoes: { Financeiro: { Migracao: permissions } } }) },
-      Empresa: { get: async () => ({ id: 'e1', group_id: empresaGroup }) },
-      SolicitacaoAprovacao: solicitacoes,
-      AuditLog: { create: async (record) => { if (auditFails) throw new Error('audit down'); state.audits.push(record); return record; } },
-    } },
+    asServiceRole: {
+      entities: {
+        PerfilAcesso: { get: async () => ({ permissoes: { Financeiro: { Migracao: permissions } } }) },
+        Empresa: { get: async () => ({ id: 'e1', group_id: empresaGroup }) },
+        SolicitacaoAprovacao: solicitacoes,
+        AuditLog: { create: async (record) => { if (auditFails) throw new Error('audit down'); state.audits.push(record); return record; } },
+      },
+      integrations: { Core: { CreateFileSignedUrl: async ({ file_uri }) => {
+        state.signedUris.push(file_uri);
+        return { signed_url: 'https://signed.example/evidencia?expires=300' };
+      } } },
+    },
     entities: { SolicitacaoAprovacao: solicitacoes },
   };
   return { client, state };
@@ -293,23 +311,23 @@ test('evidencia de conciliacao exige permissao, metadados e e idempotente', () =
     group_id: 'g1', empresa_id: 'e1', codigo_legado: 'titulo-1', status_pagamento: 'Pago',
   }, { registradoPor: 'registrante-1', registradoEm: '2026-09-13T12:00:00.000Z' });
   const options = {
-    evidencia: { id: 'ev-1', tipo: 'comprovante<script>', hash_sha256: 'hash-controlado', descricao: '<script>arquivo</script>' },
+    evidencia: privateEvidence('ev-1', { descricao: '<script>arquivo</script>' }),
     usuarioId: 'analista-1',
     timestamp: '2026-09-13T13:00:00.000Z',
     temPermissao: true,
   };
 
   assert.throws(() => appendManualReconciliationEvidence(staging, { ...options, temPermissao: false }), /Permissao/);
-  assert.throws(() => appendManualReconciliationEvidence(staging, { ...options, evidencia: { id: 'ev-1' } }), /Evidencia exige/);
+  assert.throws(() => appendManualReconciliationEvidence(staging, { ...options, evidencia: { id: 'ev-1' } }), /Evidencia privada exige/);
   const withEvidence = appendManualReconciliationEvidence(staging, options);
   assert.equal(staging.evidencias_conciliacao.length, 0);
   assert.equal(withEvidence.evidencias_conciliacao.length, 1);
-  assert.equal(withEvidence.evidencias_conciliacao[0].tipo, 'comprovante');
+  assert.equal(withEvidence.evidencias_conciliacao[0].tipo, 'application/pdf');
   assert.equal(withEvidence.evidencias_conciliacao[0].descricao, 'arquivo');
   assert.equal(withEvidence.etapa_conciliacao, 'evidencia_anexada');
   assert.equal(appendManualReconciliationEvidence(withEvidence, options), withEvidence);
   assert.throws(
-    () => appendManualReconciliationEvidence(withEvidence, { ...options, evidencia: { ...options.evidencia, hash_sha256: 'outro-hash' } }),
+    () => appendManualReconciliationEvidence(withEvidence, { ...options, evidencia: { ...options.evidencia, hash_sha256: 'b'.repeat(64) } }),
     /ja utilizado/,
   );
 });
@@ -328,7 +346,7 @@ test('revisao financeira exige evidencia, permissao e segregacao do registrante'
 
   assert.throws(() => reviewPendingManualReconciliation(staging, review), /ao menos uma evidencia/);
   const withEvidence = appendManualReconciliationEvidence(staging, {
-    evidencia: { id: 'ev-1', tipo: 'comprovante', referencia: 'arquivo-controlado' },
+    evidencia: privateEvidence(),
     usuarioId: 'analista-1', timestamp: '2026-09-13T13:00:00.000Z', temPermissao: true,
   });
   assert.throws(
@@ -349,7 +367,7 @@ test('aprovacao final exige segundo usuario, mesma decisao e confirmacao humana'
     group_id: 'g1', empresa_id: 'e1', codigo_legado: 'titulo-1',
   }, { registradoPor: 'registrante-1', registradoEm: '2026-09-13T12:00:00.000Z' });
   const withEvidence = appendManualReconciliationEvidence(staging, {
-    evidencia: { id: 'ev-1', tipo: 'comprovante', referencia: 'arquivo-controlado' },
+    evidencia: privateEvidence(),
     usuarioId: 'analista-1', timestamp: '2026-09-13T13:00:00.000Z', temPermissao: true,
   });
   const reviewed = reviewPendingManualReconciliation(withEvidence, {
@@ -536,8 +554,14 @@ test('politica backend exige tres usuarios e mantem aprovacao no staging', () =>
     }),
   };
   const evidenceInput = {
-    evidencia: { id: 'ev-1', tipo: 'comprovante<script>', referencia: 'arquivo-controlado' },
+    evidencia: privateEvidence(),
   };
+  assert.throws(
+    () => applyManualWorkflowTransition(initial, 'attachManualReconciliationEvidence', {
+      evidencia: { id: 'publica', tipo: 'application/pdf', arquivo_url: 'https://public.example/evidencia.pdf' },
+    }, { id: 'u1' }),
+    /Evidencia privada exige/,
+  );
   const withEvidence = applyManualWorkflowTransition(
     initial,
     'attachManualReconciliationEvidence',
@@ -545,7 +569,7 @@ test('politica backend exige tres usuarios e mantem aprovacao no staging', () =>
     { id: 'u1' },
     '2026-09-13T13:00:00.000Z',
   ).record;
-  assert.equal(withEvidence.dados_propostos.envelope_staging.evidencias_conciliacao[0].tipo, 'comprovante');
+  assert.equal(withEvidence.dados_propostos.envelope_staging.evidencias_conciliacao[0].tipo, 'application/pdf');
   assert.equal(
     applyManualWorkflowTransition(withEvidence, 'attachManualReconciliationEvidence', evidenceInput, { id: 'u1' }).reused,
     true,
@@ -601,26 +625,38 @@ test('backend persiste workflow especializado com RBAC, contexto e rollback', as
   const denied = makeApprovalClient({ current: initial, permissions: [] });
   assert.equal((await invoke(denied.client, {
     ...basePayload, action: 'attachManualReconciliationEvidence',
-    evidencia: { id: 'ev-2', tipo: 'comprovante', referencia: 'arquivo' },
+    evidencia: privateEvidence('ev-2'),
   })).status, 403);
   assert.equal(denied.state.updates.length, 0);
 
   const wrongContext = makeApprovalClient({ current: { ...initial, empresa_id: 'e2' } });
   assert.equal((await invoke(wrongContext.client, {
     ...basePayload, action: 'attachManualReconciliationEvidence',
-    evidencia: { id: 'ev-2', tipo: 'comprovante', referencia: 'arquivo' },
+    evidencia: privateEvidence('ev-2'),
   })).status, 403);
   assert.equal(wrongContext.state.updates.length, 0);
 
   const allowed = makeApprovalClient({ current: initial });
   const attached = await invoke(allowed.client, {
     ...basePayload, action: 'attachManualReconciliationEvidence',
-    evidencia: { id: 'ev-2', tipo: 'comprovante', referencia: 'arquivo' },
+    evidencia: privateEvidence('ev-2'),
   });
   assert.equal(attached.status, 200);
   assert.equal(attached.body.record.status, 'pendente');
   assert.equal(attached.body.record.dados_propostos.envelope_staging.etapa_conciliacao, 'evidencia_anexada');
   assert.equal(allowed.state.audits[0].acao, 'Evidencia');
+
+  const accessed = await invoke(allowed.client, {
+    ...basePayload,
+    action: 'createManualReconciliationEvidenceAccessUrl',
+    evidencia_id: 'ev-2',
+  });
+  assert.equal(accessed.status, 200);
+  assert.equal(accessed.body.expires_in, 300);
+  assert.deepEqual(allowed.state.signedUris, ['private/test/ev-2.pdf']);
+  assert.equal(allowed.state.audits[1].acao, 'AcessoEvidencia');
+  assert.equal(allowed.state.audits[1].dados_novos.evidencia_id, 'ev-2');
+  assert.equal(JSON.stringify(allowed.state.audits[1]).includes('signed.example'), false);
 
   const reviewer = makeApprovalClient({ current: attached.body.record, userId: 'u2' });
   const reviewed = await invoke(reviewer.client, {
@@ -653,7 +689,7 @@ test('backend persiste workflow especializado com RBAC, contexto e rollback', as
   const auditDown = makeApprovalClient({ current: initial, auditFails: true });
   assert.equal((await invoke(auditDown.client, {
     ...basePayload, action: 'attachManualReconciliationEvidence',
-    evidencia: { id: 'ev-3', tipo: 'comprovante', referencia: 'arquivo-2' },
+    evidencia: privateEvidence('ev-3'),
   })).status, 503);
   assert.equal(auditDown.state.updates.length, 2);
   assert.deepEqual(auditDown.state.updates[1].patch.dados_propostos, initial.dados_propostos);
@@ -675,6 +711,9 @@ test('central existente integra conciliacao financeira sem promover titulo', asy
   assert.match(uiPolicy, /textId\(record\.empresa_id\) === expectedEmpresaId/);
   assert.match(tab, /action: "listManualReconciliations"/);
   assert.match(tab, /attachManualReconciliationEvidence/);
+  assert.match(tab, /createManualReconciliationEvidenceAccessUrl/);
+  assert.match(tab, /UploadPrivateFile/);
+  assert.doesNotMatch(tab, /Core\.UploadFile/);
   assert.match(tab, /reviewManualReconciliation/);
   assert.match(tab, /approveManualReconciliation/);
   assert.match(tab, /confirmacao_humana/);

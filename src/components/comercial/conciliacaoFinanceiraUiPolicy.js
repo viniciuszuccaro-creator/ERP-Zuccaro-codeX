@@ -1,6 +1,49 @@
 const MANUAL_RECONCILIATION_TYPE = "conciliacao_migracao_financeira";
 
+export const MAX_CONCILIACAO_EVIDENCE_BYTES = 10 * 1024 * 1024;
+export const ALLOWED_CONCILIACAO_EVIDENCE_TYPES = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+
+const EVIDENCE_EXTENSIONS_BY_TYPE = {
+  "application/pdf": [".pdf"],
+  "image/jpeg": [".jpg", ".jpeg"],
+  "image/png": [".png"],
+  "image/webp": [".webp"],
+};
+
 const textId = (value) => (typeof value === "string" ? value.trim() : "");
+
+/** @param {{ name?: string, size?: number, type?: string } | null | undefined} file */
+export const assertConciliacaoEvidenceFile = (file) => {
+  if (!file) throw new Error("Selecione a evidência.");
+  const type = textId(file.type).toLowerCase();
+  const name = textId(file.name);
+  const size = Number(file.size);
+  if (!ALLOWED_CONCILIACAO_EVIDENCE_TYPES.has(type)) {
+    throw new Error("Use um arquivo PDF, JPG, PNG ou WEBP.");
+  }
+  if (!Number.isSafeInteger(size) || size <= 0 || size > MAX_CONCILIACAO_EVIDENCE_BYTES) {
+    throw new Error("A evidência deve ter entre 1 byte e 10 MB.");
+  }
+  const allowedExtensions = EVIDENCE_EXTENSIONS_BY_TYPE[type] || [];
+  if (!name || !allowedExtensions.some((extension) => name.toLowerCase().endsWith(extension))) {
+    throw new Error("A extensão do arquivo não corresponde ao tipo informado.");
+  }
+  return { name, size, type };
+};
+
+/** @param {{ arrayBuffer?: () => Promise<ArrayBuffer> }} file */
+export const calculateConciliacaoEvidenceSha256 = async (file) => {
+  if (!globalThis.crypto?.subtle || typeof file?.arrayBuffer !== "function") {
+    throw new Error("Não foi possível calcular a integridade da evidência neste navegador.");
+  }
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+};
 
 /**
  * @param {{ userId?: unknown, groupId?: unknown, empresaId?: unknown, contexto?: unknown }} scope
@@ -60,6 +103,12 @@ export const getConciliacaoStage = (record = {}) => textId(
 export const getConciliacaoEvidenceCount = (record = {}) => {
   const evidence = getConciliacaoEnvelope(record).evidencias_conciliacao;
   return Array.isArray(evidence) ? evidence.length : 0;
+};
+
+/** @param {Record<string, unknown>} record */
+export const getConciliacaoEvidences = (record = {}) => {
+  const evidence = getConciliacaoEnvelope(record).evidencias_conciliacao;
+  return Array.isArray(evidence) ? evidence : [];
 };
 
 /** @param {Record<string, unknown>} record */

@@ -2148,12 +2148,13 @@ const countEntity = async (entityName, filter = {}) => {
 
 const MANUAL_RECONCILIATION_LOCAL_ACTIONS = new Set([
   'listManualReconciliations',
+  'createManualReconciliationEvidenceAccessUrl',
   'attachManualReconciliationEvidence',
   'reviewManualReconciliation',
   'approveManualReconciliation',
 ]);
 
-const appendLocalManualReconciliationAudit = (db, user, record, action, success = true, previous = null) => {
+const appendLocalManualReconciliationAudit = (db, user, record, action, success = true, previous = null, details = {}) => {
   const audits = getEntityStore(db, 'AuditLog');
   const timestamp = now();
   audits.unshift({
@@ -2169,7 +2170,7 @@ const appendLocalManualReconciliationAudit = (db, user, record, action, success 
     registro_id: record?.id || null,
     descricao: `${action} de conciliacao financeira em staging local`,
     dados_anteriores: previous ? sanitizeAuditPayload(summarizeManualRequest(previous)) : null,
-    dados_novos: sanitizeAuditPayload(summarizeManualRequest(record)),
+    dados_novos: sanitizeAuditPayload({ ...summarizeManualRequest(record), ...details }),
     sucesso: success,
     local: true,
     created_date: timestamp,
@@ -2209,6 +2210,21 @@ const invokeLocalManualReconciliation = async (payload = {}) => {
     appendLocalManualReconciliationAudit(db, user, { group_id: groupId, empresa_id: empresaId }, 'Visualizacao');
     saveDbStrict(db);
     return { data: records };
+  }
+
+  if (payload.action === 'createManualReconciliationEvidenceAccessUrl') {
+    if (!canReview && !canApprove) throw new Error('Permissao negada para consultar evidencias financeiras.');
+    const current = getEntityStore(db, 'SolicitacaoAprovacao').find((record) => String(record.id) === String(payload.solicitacao_id || ''));
+    if (!current || String(current.group_id || '') !== groupId || String(current.empresa_id || '') !== empresaId) {
+      throw new Error('Evidencia financeira fora do contexto autorizado.');
+    }
+    const evidences = current?.dados_propostos?.envelope_staging?.evidencias_conciliacao;
+    const evidence = (Array.isArray(evidences) ? evidences : []).find((item) => String(item?.id || '') === String(payload.evidencia_id || ''));
+    if (!String(evidence?.file_uri || '').startsWith('private/')) throw new Error('Evidencia privada nao encontrada.');
+    const signed = await Core.CreateFileSignedUrl({ file_uri: evidence.file_uri, expires_in: 300 });
+    appendLocalManualReconciliationAudit(db, user, current, 'AcessoEvidencia', true, current, { evidencia_id: evidence.id });
+    saveDbStrict(db);
+    return { data: { signed_url: signed.signed_url, expires_in: 300 } };
   }
 
   const requiredPermission = payload.action === 'approveManualReconciliation' ? canApprove : canReview;
@@ -2408,6 +2424,16 @@ const Core = {
   },
   async UploadFile({ file } = {}) {
     return { file_url: `local://uploads/${file?.name || makeId('arquivo')}`, url: `local://uploads/${file?.name || makeId('arquivo')}`, local: true };
+  },
+  async UploadPrivateFile({ file } = {}) {
+    if (!file) throw new Error('Arquivo obrigatorio para upload privado local.');
+    const fileName = encodeURIComponent(file.name || 'arquivo');
+    return { file_uri: `private/local/${makeId('arquivo')}/${fileName}`, local: true };
+  },
+  async CreateFileSignedUrl({ file_uri: fileUri, expires_in: expiresIn = 300 } = {}) {
+    if (!String(fileUri || '').startsWith('private/')) throw new Error('Referencia privada invalida.');
+    const ttl = Number.isFinite(Number(expiresIn)) ? Math.min(Math.max(Number(expiresIn), 1), 3600) : 300;
+    return { signed_url: `local://signed/${encodeURIComponent(fileUri)}?expires_in=${ttl}`, local: true };
   },
   async GenerateImage() {
     return { url: '', local: true, message: 'Geracao de imagem externa desativada no modo local.' };

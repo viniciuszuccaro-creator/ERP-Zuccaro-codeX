@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, CheckCircle2, FileCheck2, Loader2, Paperclip, ShieldCheck } from "lucide-react";
+import { AlertCircle, CheckCircle2, ExternalLink, FileCheck2, Loader2, Paperclip, ShieldCheck } from "lucide-react";
 
 import { base44 } from "@/api/base44Client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -15,25 +15,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import {
+  assertConciliacaoEvidenceFile,
   buildConciliacaoFinanceiraQueryKey,
+  calculateConciliacaoEvidenceSha256,
   filterConciliacoesByScope,
   getConciliacaoDecision,
   getConciliacaoEntityLabel,
   getConciliacaoEvidenceCount,
+  getConciliacaoEvidences,
   getConciliacaoRecordId,
   getConciliacaoReference,
   getConciliacaoStage,
   resolveConciliacaoFinanceiraAccess,
   resolveConciliacaoRowActions,
 } from "./conciliacaoFinanceiraUiPolicy";
-
-const MAX_EVIDENCE_BYTES = 10 * 1024 * 1024;
-const ALLOWED_EVIDENCE_TYPES = new Set([
-  "application/pdf",
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-]);
 
 const STAGE_LABELS = {
   aguardando_evidencia: "Aguardando evidência",
@@ -113,16 +108,20 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
         scope_type: "empresa",
       };
       if (action === "attachManualReconciliationEvidence") {
-        if (!evidenceFile) throw new Error("Selecione a evidência.");
-        if (!ALLOWED_EVIDENCE_TYPES.has(evidenceFile.type)) throw new Error("Use um arquivo PDF, JPG, PNG ou WEBP.");
-        if (evidenceFile.size > MAX_EVIDENCE_BYTES) throw new Error("A evidência deve ter no máximo 10 MB.");
-        const upload = await base44.integrations.Core.UploadFile({ file: evidenceFile });
-        const fileUrl = upload?.file_url;
-        if (!fileUrl) throw new Error("O upload não retornou uma referência válida.");
+        const metadata = assertConciliacaoEvidenceFile(evidenceFile);
+        const hashSha256 = await calculateConciliacaoEvidenceSha256(evidenceFile);
+        const upload = await base44.integrations.Core.UploadPrivateFile({ file: evidenceFile });
+        const fileUri = upload?.file_uri;
+        if (!fileUri) throw new Error("O upload privado não retornou uma referência válida.");
         payload.evidencia = {
           id: globalThis.crypto?.randomUUID?.() || `evidencia-${record.id}-${evidenceFile.size}`,
-          tipo: evidenceFile.type,
-          arquivo_url: fileUrl,
+          tipo: metadata.type,
+          file_uri: fileUri,
+          arquivo_nome: metadata.name,
+          arquivo_tamanho: metadata.size,
+          hash_sha256: hashSha256,
+          hash_algoritmo: "SHA-256",
+          armazenamento: "privado",
           descricao: justification,
         };
       } else {
@@ -143,6 +142,32 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
     },
     onError: (mutationError) => {
       toast({ title: "Não foi possível atualizar", description: mutationError.message, variant: "destructive" });
+    },
+  });
+
+  const evidenceAccessMutation = useMutation({
+    mutationFn: async ({ record, evidenceId }) => {
+      const response = await base44.functions.invoke("solicitacoesAprovacao", {
+        action: "createManualReconciliationEvidenceAccessUrl",
+        solicitacao_id: record.id,
+        evidencia_id: evidenceId,
+        group_id: groupId,
+        empresa_id: empresaId,
+        scope_type: "empresa",
+      });
+      const signedUrl = response?.data?.signed_url;
+      if (!signedUrl) throw new Error(response?.data?.error || "O backend não autorizou o acesso à evidência.");
+      return signedUrl;
+    },
+    onSuccess: (signedUrl) => {
+      const anchor = document.createElement("a");
+      anchor.href = signedUrl;
+      anchor.target = "_blank";
+      anchor.rel = "noopener noreferrer";
+      anchor.click();
+    },
+    onError: (accessError) => {
+      toast({ title: "Não foi possível abrir a evidência", description: accessError.message, variant: "destructive" });
     },
   });
 
@@ -213,6 +238,8 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
               <TableBody>
                 {requests.map((record) => {
                   const stage = getConciliacaoStage(record);
+                  const evidences = getConciliacaoEvidences(record);
+                  const latestPrivateEvidence = [...evidences].reverse().find((item) => item?.file_uri);
                   const { canAttach, canPerformReview, canPerformApproval } = resolveConciliacaoRowActions({
                     record,
                     userId: user?.id,
@@ -224,7 +251,26 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
                       <TableCell className="font-medium">{getConciliacaoReference(record) || "-"}</TableCell>
                       <TableCell>{getConciliacaoEntityLabel(record)}</TableCell>
                       <TableCell><Badge variant="outline">{STAGE_LABELS[stage] || stage || "Pendente"}</Badge></TableCell>
-                      <TableCell>{getConciliacaoEvidenceCount(record)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span>{getConciliacaoEvidenceCount(record)}</span>
+                          {latestPrivateEvidence && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              title="Abrir evidência mais recente"
+                              aria-label="Abrir evidência mais recente"
+                              onClick={() => evidenceAccessMutation.mutate({ record, evidenceId: latestPrivateEvidence.id })}
+                              disabled={evidenceAccessMutation.isPending}
+                              data-permission={canReview ? "Financeiro.Migracao.conciliar" : "Financeiro.Migracao.aprovar"}
+                              data-action="conciliacao-abrir-evidencia"
+                              data-sensitive="true"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>{getConciliacaoDecision(record) || "-"}</TableCell>
                       <TableCell>
                         <div className="flex justify-end gap-2">

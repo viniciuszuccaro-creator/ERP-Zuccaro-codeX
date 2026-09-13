@@ -9,6 +9,14 @@ export const MIGRACAO_RECONCILIACAO_PERMISSOES = Object.freeze({
   revisar: 'Financeiro.Migracao.conciliar',
   aprovar: 'Financeiro.Migracao.aprovar',
 });
+const MIGRACAO_EVIDENCIA_MAX_BYTES = 10 * 1024 * 1024;
+const MIGRACAO_EVIDENCIA_EXTENSOES = {
+  'application/pdf': ['.pdf'],
+  'image/jpeg': ['.jpg', '.jpeg'],
+  'image/png': ['.png'],
+  'image/webp': ['.webp'],
+};
+const MIGRACAO_EVIDENCIA_HASH = /^[a-f0-9]{64}$/;
 
 export const SECRET_MIGRACAO_KEYS = [
   'senha',
@@ -24,6 +32,35 @@ export const SECRET_MIGRACAO_KEYS = [
 
 const slug = (value) => firstText(value).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48);
 const sanitizeManualText = (value, maxLength = 500) => firstText(value).replace(/<[^>]*>/g, '').slice(0, maxLength).trim();
+
+const normalizeManualEvidence = (evidence = {}) => {
+  const id = sanitizeManualText(firstText(evidence.id, evidence.evidencia_id), 120);
+  const type = sanitizeManualText(evidence.tipo, 80).toLowerCase();
+  const fileUri = sanitizeManualText(evidence.file_uri, 1000);
+  const fileName = sanitizeManualText(evidence.arquivo_nome, 255);
+  const fileSize = Number(evidence.arquivo_tamanho);
+  const hashSha256 = sanitizeManualText(evidence.hash_sha256, 64).toLowerCase();
+  const extensions = MIGRACAO_EVIDENCIA_EXTENSOES[type] || [];
+  const validPrivateUri = fileUri.startsWith('private/') && !fileUri.includes('..') && !/[\\\s?#]/.test(fileUri);
+  if (!id || !validPrivateUri || !MIGRACAO_EVIDENCIA_HASH.test(hashSha256)
+    || !Number.isSafeInteger(fileSize) || fileSize <= 0 || fileSize > MIGRACAO_EVIDENCIA_MAX_BYTES
+    || !fileName || /[\\/]/.test(fileName) || !extensions.some((extension) => fileName.toLowerCase().endsWith(extension))
+    || firstText(evidence.armazenamento).toLowerCase() !== 'privado'
+    || firstText(evidence.hash_algoritmo).toUpperCase() !== 'SHA-256') {
+    throw new Error('Evidencia privada exige arquivo, MIME, tamanho, nome e SHA-256 validos.');
+  }
+  return {
+    id,
+    tipo: type,
+    file_uri: fileUri,
+    arquivo_nome: fileName,
+    arquivo_tamanho: fileSize,
+    hash_sha256: hashSha256,
+    hash_algoritmo: 'SHA-256',
+    armazenamento: 'privado',
+    descricao: sanitizeManualText(evidence.descricao, 500) || undefined,
+  };
+};
 
 
 /** @param {Record<string, unknown>} record */
@@ -216,17 +253,14 @@ export const appendManualReconciliationEvidence = (record = {}, {
   assertPendingManualReconciliation(record);
   assertManualPermission(temPermissao, MIGRACAO_RECONCILIACAO_PERMISSOES.evidenciar);
   const { actor, at } = assertAuditActor(usuarioId, timestamp);
-  const evidenceId = sanitizeManualText(firstText(evidencia.id, evidencia.evidencia_id), 120);
-  const type = sanitizeManualText(evidencia.tipo, 80);
-  const reference = sanitizeManualText(firstText(evidencia.arquivo_url, evidencia.hash_sha256, evidencia.referencia), 1000);
-  if (!evidenceId || !type || !reference) {
-    throw new Error('Evidencia exige identificador, tipo e arquivo, hash ou referencia.');
-  }
+  const normalizedEvidence = normalizeManualEvidence(evidencia);
 
   const current = Array.isArray(record.evidencias_conciliacao) ? record.evidencias_conciliacao : [];
-  const duplicate = current.find((item) => firstText(item?.id) === evidenceId);
+  const duplicate = current.find((item) => firstText(item?.id) === normalizedEvidence.id);
   if (duplicate) {
-    if (firstText(duplicate.tipo) === type && firstText(duplicate.arquivo_url, duplicate.hash_sha256, duplicate.referencia) === reference) {
+    if (firstText(duplicate.tipo) === normalizedEvidence.tipo
+      && firstText(duplicate.file_uri) === normalizedEvidence.file_uri
+      && firstText(duplicate.hash_sha256) === normalizedEvidence.hash_sha256) {
       return record;
     }
     throw new Error('Identificador de evidencia ja utilizado com outro conteudo.');
@@ -238,18 +272,13 @@ export const appendManualReconciliationEvidence = (record = {}, {
     ...record,
     etapa_conciliacao: 'evidencia_anexada',
     evidencias_conciliacao: [...current, {
-      id: evidenceId,
-      tipo: type,
-      arquivo_url: sanitizeManualText(evidencia.arquivo_url, 1000) || undefined,
-      hash_sha256: sanitizeManualText(evidencia.hash_sha256, 160) || undefined,
-      referencia: sanitizeManualText(evidencia.referencia, 1000) || undefined,
-      descricao: sanitizeManualText(evidencia.descricao, 500) || undefined,
+      ...normalizedEvidence,
       anexado_por: actor,
       anexado_em: at,
     }],
     historico_conciliacao: [
       ...(Array.isArray(record.historico_conciliacao) ? record.historico_conciliacao : []),
-      { acao: 'evidencia_anexada', evidencia_id: evidenceId, usuario_id: actor, timestamp: at, group_id: groupId, empresa_id: empresaId },
+      { acao: 'evidencia_anexada', evidencia_id: normalizedEvidence.id, usuario_id: actor, timestamp: at, group_id: groupId, empresa_id: empresaId },
     ],
   };
 };

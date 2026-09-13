@@ -7089,3 +7089,18 @@ Checklist inicial:
 - A matriz tecnica detalhada foi incorporada ao Plano Mestre existente. A promocao continua desabilitada e nenhuma acao, permissao, endpoint, entidade ou titulo foi criado.
 - Validacao documental: `base44/config.jsonc` ausente confirmado; referencias instaladas de entidades e integracoes, schemas versionados, politicas e compensacoes existentes foram comparados; `git diff --check` aprovado. Testes/build dispensados por ser lote exclusivamente documental.
 - Proximo passo obrigatorio: proteger o fluxo de evidencia existente com armazenamento privado, hash SHA-256 obrigatorio e validacao backend de metadados, mantendo a promocao operacional ausente.
+
+### Gate 18 - Evidencias financeiras privadas e acesso temporario
+
+- Objetivo: proteger o comprovante da conciliacao financeira existente sem criar tela paralela, promover titulo ou alterar dados historicos.
+- Causa raiz: a aba usava `UploadFile` publico, aceitava somente validacao frontend, nao calculava hash e nao oferecia acesso temporario auditado ao revisor.
+- Implementacao: novos anexos usam `UploadPrivateFile`, SHA-256 via Web Crypto e metadados completos; frontend e backend validam MIME, extensao, nome e limite de 10 MB, e o backend rejeita URL publica/referencia livre.
+- Acesso: a Central de Aprovacoes abre a evidencia privada mais recente somente por acao backend com contexto e RBAC. `CreateFileSignedUrl` gera URL de 300 segundos, nunca persistida ou auditada.
+- Auditoria: o acesso registra `evidencia_id`, usuario, Grupo e Empresa. Tentativa com referencia privada invalida falha fechada e gera bloqueio auditavel.
+- Compatibilidade: evidencias historicas nao foram alteradas ou removidas. O modo local implementa o mesmo contrato e preserva reabertura entre sessoes e isolamento entre CPA Ferro e Aco e 3Z LTDA.
+- Arquivos alterados: politica financeira backend, `solicitacoesAprovacao`, politica de migracao, aba/politica visual da conciliacao, cliente local e tres testes existentes. Nenhum modulo, entidade ou endpoint paralelo foi criado.
+- Validacao: 28 testes focados e 252 testes globais aprovados; ESLint direcionado e typecheck isolado das politicas aprovados; `audit:baseline` e build completo aprovados. O build mantem apenas avisos conhecidos de bundle e Browserslist.
+- Divida preexistente: ESLint global permanece com 84 erros e 17 avisos fora deste lote. Typecheck global permanece com diagnosticos historicos; os diagnosticos introduzidos inicialmente na nova politica foram corrigidos, e as politicas isoladas encerraram sem diagnosticos.
+- Limite: o backend valida a estrutura do SHA-256 informado, mas ainda nao rele o arquivo privado para recalcular o conteudo. O SDK instalado tambem nao documenta descarte de upload privado orfao.
+- Promocao operacional continua ausente e desabilitada.
+- Proximo passo obrigatorio: homologar URL assinada e buscar validacao backend do conteudo/descarte de orfaos somente apos vinculo Base44 controlado; `base44/config.jsonc` continua ausente.

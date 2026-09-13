@@ -543,3 +543,20 @@ Auditoria concluida em 2026-09-13 somente com leitura do SDK instalado, do codig
 
 Proxima frente: endurecer o fluxo de evidencia ja existente, reutilizando `UploadPrivateFile`/`CreateFileSignedUrl`, hash SHA-256 e validacao backend. O hash calculado no cliente sera apenas uma verificacao complementar ate existir confirmacao confiavel no backend. A promocao continuara ausente.
 
+### Evidencias financeiras privadas no staging
+
+Lote concluido em 2026-09-13 na Central de Aprovacoes existente, sem criar modulo paralelo e sem habilitar promocao financeira.
+
+- Novos comprovantes usam `UploadPrivateFile`; URL publica e URL assinada nao sao persistidas no envelope.
+- A interface valida PDF/JPG/PNG/WEBP, extensao correspondente e tamanho entre 1 byte e 10 MB antes do upload, calcula SHA-256 com Web Crypto e falha fechada quando a integridade nao pode ser calculada.
+- A politica backend repete a allowlist de MIME, extensao, tamanho, nome, URI privada, algoritmo e formato hexadecimal de 64 caracteres do SHA-256. Campos publicos ou referencias livres nao satisfazem mais um novo anexo.
+- A evidencia persistida inclui `file_uri`, nome, tamanho, MIME, SHA-256, algoritmo e marcador de armazenamento privado, alem do usuario e horario ja auditados.
+- Revisor ou aprovador autorizado pode abrir a evidencia mais recente por URL assinada com validade de 300 segundos. O backend valida Grupo, Empresa, perfil, solicitacao e evidencia antes de assinar.
+- Cada acesso registra `evidencia_id`, usuario, Grupo e Empresa; a URL assinada nunca entra no log ou no staging.
+- O cliente local recebeu os mesmos contratos para upload privado e URL temporaria, mantendo testes de persistencia e reabertura entre sessoes.
+- Evidencias historicas permanecem preservadas e contam no workflow; somente novos anexos recebem o contrato obrigatorio, evitando alteracao destrutiva de dados existentes.
+
+Limite conhecido: o SHA-256 e calculado no navegador e validado estruturalmente pelo backend, mas o clone ainda nao possui um servico backend capaz de reler o conteudo privado e recalcular o hash. O valor e complementar, nao prova backend de imutabilidade. Upload privado que conclua antes de uma falha posterior tambem pode ficar orfao porque o SDK instalado nao documenta exclusao de arquivo privado.
+
+Proxima frente: homologar em ambiente Base44 vinculado a leitura real por URL assinada e investigar uma primitiva backend de leitura/hash e descarte de upload orfao. Enquanto `base44/config.jsonc` estiver ausente, nao declarar essas garantias nem habilitar promocao.
+

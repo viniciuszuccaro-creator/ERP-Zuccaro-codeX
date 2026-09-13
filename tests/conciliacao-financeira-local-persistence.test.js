@@ -15,6 +15,16 @@ const USER_KEY = "erp_integra_local_user_v1";
 const GROUP_ID = "local_grupo_cpa";
 const EMPRESA_CPA_ID = "local_empresa_cpa";
 const EMPRESA_3Z_ID = "local_empresa_3z";
+const privateEvidence = (id) => ({
+  id,
+  tipo: "application/pdf",
+  file_uri: `private/local-test/${id}.pdf`,
+  arquivo_nome: `${id}.pdf`,
+  arquivo_tamanho: 128,
+  hash_sha256: "a".repeat(64),
+  hash_algoritmo: "SHA-256",
+  armazenamento: "privado",
+});
 
 const createMemoryStorage = (initialEntries = []) => {
   const values = new Map(initialEntries);
@@ -149,11 +159,7 @@ test("cliente local persiste e reabre conciliacao entre tres sessoes sem mistura
       group_id: GROUP_ID,
       empresa_id: EMPRESA_CPA_ID,
       scope_type: "empresa",
-      evidencia: {
-        id: "evidencia-descartavel-1",
-        tipo: "application/pdf",
-        arquivo_url: "local://homologacao/comprovante.pdf",
-      },
+      evidencia: privateEvidence("evidencia-descartavel-1"),
     });
 
     const reviewerClient = await openSession("revisor", EMPRESA_CPA_ID);
@@ -167,6 +173,16 @@ test("cliente local persiste e reabre conciliacao entre tres sessoes sem mistura
       reopenedForReview.data[0].dados_propostos.envelope_staging.etapa_conciliacao,
       "evidencia_anexada",
     );
+    const privateAccess = await reviewerClient.functions.invoke("solicitacoesAprovacao", {
+      action: "createManualReconciliationEvidenceAccessUrl",
+      solicitacao_id: requestId,
+      evidencia_id: "evidencia-descartavel-1",
+      group_id: GROUP_ID,
+      empresa_id: EMPRESA_CPA_ID,
+      scope_type: "empresa",
+    });
+    assert.match(privateAccess.data.signed_url, /^local:\/\/signed\//);
+    assert.equal(privateAccess.data.expires_in, 300);
     await reviewerClient.functions.invoke("solicitacoesAprovacao", {
       action: "reviewManualReconciliation",
       solicitacao_id: requestId,
@@ -221,11 +237,7 @@ test("cliente local persiste e reabre conciliacao entre tres sessoes sem mistura
         group_id: GROUP_ID,
         empresa_id: EMPRESA_3Z_ID,
         scope_type: "empresa",
-        evidencia: {
-          id: "evidencia-nao-persistida",
-          tipo: "application/pdf",
-          arquivo_url: "local://homologacao/nao-persistir.pdf",
-        },
+        evidencia: privateEvidence("evidencia-nao-persistida"),
       }),
       /Nao foi possivel confirmar a persistencia local/,
     );
@@ -254,11 +266,7 @@ test("cliente local persiste e reabre conciliacao entre tres sessoes sem mistura
         group_id: GROUP_ID,
         empresa_id: EMPRESA_3Z_ID,
         scope_type: "empresa",
-        evidencia: {
-          id: "evidencia-sem-confirmacao",
-          tipo: "application/pdf",
-          arquivo_url: "local://homologacao/sem-confirmacao.pdf",
-        },
+        evidencia: privateEvidence("evidencia-sem-confirmacao"),
       }),
       /Nao foi possivel confirmar a persistencia local/,
     );

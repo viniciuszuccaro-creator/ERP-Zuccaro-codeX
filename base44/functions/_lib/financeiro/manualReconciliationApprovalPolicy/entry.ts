@@ -1,4 +1,12 @@
 export const MANUAL_RECONCILIATION_TYPE = 'conciliacao_migracao_financeira';
+export const MANUAL_EVIDENCE_MAX_BYTES = 10 * 1024 * 1024;
+const MANUAL_EVIDENCE_EXTENSIONS = {
+  'application/pdf': ['.pdf'],
+  'image/jpeg': ['.jpg', '.jpeg'],
+  'image/png': ['.png'],
+  'image/webp': ['.webp'],
+};
+const MANUAL_EVIDENCE_HASH = /^[a-f0-9]{64}$/;
 export const MANUAL_RECONCILIATION_STATUS = 'PENDING_MANUAL_RECONCILIATION';
 const MANUAL_RECONCILIATION_ENTITIES = new Set(['ContaPagar', 'ContaReceber']);
 const MANUAL_SECRET_PARTS = ['password', 'senha', 'token', 'secret', 'authorization', 'api_key', 'apikey', 'certificado', 'certificate'];
@@ -36,18 +44,47 @@ function userHasManualScope(user, groupId, empresaId) {
   return groupIds.has(groupId) && empresaIds.has(empresaId);
 }
 
-export async function auditManualStaging(base44, user, record, acao, sucesso = true, previous = null) {
+export async function auditManualStaging(base44, user, record, acao, sucesso = true, previous = null, details: Record<string, unknown> = {}) {
   await base44.asServiceRole.entities.AuditLog.create({
     usuario: user?.full_name || user?.email || 'Usuario', usuario_id: user?.id,
     empresa_id: record?.empresa_id || null, group_id: record?.group_id || null,
     acao, modulo: 'Financeiro', tipo_auditoria: 'migracao', entidade: 'SolicitacaoAprovacao',
     registro_id: record?.id || null, descricao: `${acao} de conciliacao financeira em staging`,
     dados_anteriores: previous ? summarizeManualRequest(previous) : null,
-    dados_novos: summarizeManualRequest(record), data_hora: new Date().toISOString(), sucesso,
+    dados_novos: { ...summarizeManualRequest(record), ...details }, data_hora: new Date().toISOString(), sucesso,
   });
 }
 
 const reportFailure = (operation, error, context = {}) => console.error('[manualReconciliationApprovalPolicy] ' + operation, { error: error?.message || String(error), ...context });
+
+function normalizeManualEvidence(evidence: Record<string, unknown> = {}) {
+  const id = cleanText(firstText(evidence?.id, evidence?.evidencia_id), 120);
+  const tipo = cleanText(evidence?.tipo, 80).toLowerCase();
+  const fileUri = cleanText(evidence?.file_uri, 1000);
+  const fileName = cleanText(evidence?.arquivo_nome, 255);
+  const fileSize = Number(evidence?.arquivo_tamanho);
+  const hashSha256 = cleanText(evidence?.hash_sha256, 64).toLowerCase();
+  const extensions = MANUAL_EVIDENCE_EXTENSIONS[tipo] || [];
+  const validPrivateUri = fileUri.startsWith('private/') && !fileUri.includes('..') && !/[\\\s?#]/.test(fileUri);
+  if (!id || !validPrivateUri || !MANUAL_EVIDENCE_HASH.test(hashSha256)
+    || !Number.isSafeInteger(fileSize) || fileSize <= 0 || fileSize > MANUAL_EVIDENCE_MAX_BYTES
+    || !fileName || /[\\/]/.test(fileName) || !extensions.some((extension) => fileName.toLowerCase().endsWith(extension))
+    || firstText(evidence?.armazenamento).toLowerCase() !== 'privado'
+    || firstText(evidence?.hash_algoritmo).toUpperCase() !== 'SHA-256') {
+    throw new Error('Evidencia privada exige arquivo, MIME, tamanho, nome e SHA-256 validos.');
+  }
+  return {
+    id,
+    tipo,
+    file_uri: fileUri,
+    arquivo_nome: fileName,
+    arquivo_tamanho: fileSize,
+    hash_sha256: hashSha256,
+    hash_algoritmo: 'SHA-256',
+    armazenamento: 'privado',
+    descricao: cleanText(evidence?.descricao, 500) || undefined,
+  };
+}
 
 export async function resolveManualScope(base44, user, input: Record<string, unknown> = {}) {
   const groupId = firstText(input?.group_id, input?.groupId);
@@ -149,18 +186,16 @@ export function applyManualWorkflowTransition(record, action, input, user, times
 
   if (action === 'attachManualReconciliationEvidence') {
     if (!['aguardando_evidencia', 'evidencia_anexada'].includes(firstText(envelope?.etapa_conciliacao))) throw new Error('Etapa nao permite anexar evidencia.');
-    const evidence = input?.evidencia || {};
-    const id = cleanText(firstText(evidence?.id, evidence?.evidencia_id), 120);
-    const tipo = cleanText(evidence?.tipo, 80);
-    const referencia = cleanText(firstText(evidence?.arquivo_url, evidence?.hash_sha256, evidence?.referencia), 1000);
-    if (!id || !tipo || !referencia) throw new Error('Evidencia exige identificador, tipo e referencia.');
-    const duplicate = evidences.find((item) => firstText(item?.id) === id);
+    const evidence = normalizeManualEvidence(input?.evidencia || {});
+    const duplicate = evidences.find((item) => firstText(item?.id) === evidence.id);
     if (duplicate) {
-      if (firstText(duplicate?.tipo) === tipo && firstText(duplicate?.arquivo_url, duplicate?.hash_sha256, duplicate?.referencia) === referencia) return { record, reused: true };
+      if (firstText(duplicate?.tipo) === evidence.tipo
+        && firstText(duplicate?.file_uri) === evidence.file_uri
+        && firstText(duplicate?.hash_sha256) === evidence.hash_sha256) return { record, reused: true };
       throw new Error('Identificador de evidencia ja utilizado.');
     }
-    const evidenceRecord = { id, tipo, arquivo_url: cleanText(evidence?.arquivo_url, 1000) || undefined, hash_sha256: cleanText(evidence?.hash_sha256, 160) || undefined, referencia: cleanText(evidence?.referencia, 1000) || undefined, descricao: cleanText(evidence?.descricao, 500) || undefined, anexado_por: actor, anexado_em: timestamp };
-    next = { ...envelope, etapa_conciliacao: 'evidencia_anexada', evidencias_conciliacao: [...evidences, evidenceRecord], historico_conciliacao: [...history, { acao: 'evidencia_anexada', evidencia_id: id, usuario_id: actor, timestamp, group_id: scope.groupId, empresa_id: scope.empresaId }] };
+    const evidenceRecord = { ...evidence, anexado_por: actor, anexado_em: timestamp };
+    next = { ...envelope, etapa_conciliacao: 'evidencia_anexada', evidencias_conciliacao: [...evidences, evidenceRecord], historico_conciliacao: [...history, { acao: 'evidencia_anexada', evidencia_id: evidence.id, usuario_id: actor, timestamp, group_id: scope.groupId, empresa_id: scope.empresaId }] };
   } else if (action === 'reviewManualReconciliation') {
     if (firstText(envelope?.etapa_conciliacao) !== 'evidencia_anexada' || !evidences.length) throw new Error('Revisao exige evidencia anterior.');
     if (actor === originActor) throw new Error('Registrante nao pode revisar a propria pendencia.');

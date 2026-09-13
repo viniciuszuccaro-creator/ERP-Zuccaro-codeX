@@ -8,13 +8,26 @@ import {
   MIGRACAO_STATUS_PENDING_MANUAL_RECONCILIATION,
 } from "../src/components/lib/migracaoErpPolicy.js";
 import {
+  assertConciliacaoEvidenceFile,
   buildConciliacaoFinanceiraQueryKey,
+  calculateConciliacaoEvidenceSha256,
   filterConciliacoesByScope,
   resolveConciliacaoFinanceiraAccess,
   resolveConciliacaoRowActions,
 } from "../src/components/comercial/conciliacaoFinanceiraUiPolicy.js";
 
 const GROUP_ID = "grupo-cpa";
+const privateEvidence = (id = "ev-1", overrides = {}) => ({
+  id,
+  tipo: "application/pdf",
+  file_uri: `private/test/${id}.pdf`,
+  arquivo_nome: `${id}.pdf`,
+  arquivo_tamanho: 128,
+  hash_sha256: "a".repeat(64),
+  hash_algoritmo: "SHA-256",
+  armazenamento: "privado",
+  ...overrides,
+});
 const makeRequest = (empresaId, legacyCode = "titulo-1") => {
   const staging = buildPendingManualReconciliation({
     group_id: GROUP_ID,
@@ -29,6 +42,25 @@ const makeRequest = (empresaId, legacyCode = "titulo-1") => {
     }),
   };
 };
+
+test("evidencia valida MIME, tamanho, extensao e calcula SHA-256", async () => {
+  const bytes = new TextEncoder().encode("abc");
+  const file = {
+    name: "comprovante.pdf",
+    size: bytes.byteLength,
+    type: "application/pdf",
+    arrayBuffer: async () => bytes.buffer,
+  };
+  assert.deepEqual(assertConciliacaoEvidenceFile(file), {
+    name: "comprovante.pdf", size: 3, type: "application/pdf",
+  });
+  assert.equal(
+    await calculateConciliacaoEvidenceSha256(file),
+    "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+  );
+  assert.throws(() => assertConciliacaoEvidenceFile({ ...file, size: 0 }), /entre 1 byte e 10 MB/);
+  assert.throws(() => assertConciliacaoEvidenceFile({ ...file, name: "comprovante.png" }), /extensão/);
+});
 
 test("Grupo CPA nao consulta conciliacao e empresas exigem contexto completo", () => {
   assert.deepEqual(resolveConciliacaoFinanceiraAccess({
@@ -86,7 +118,7 @@ test("acoes visuais respeitam tres usuarios e acompanham o workflow do backend",
   }), { canAttach: true, canPerformReview: false, canPerformApproval: false });
 
   const withEvidence = applyManualWorkflowTransition(initial, "attachManualReconciliationEvidence", {
-    evidencia: { id: "ev-1", tipo: "application/pdf", referencia: "arquivo-controlado" },
+    evidencia: privateEvidence(),
   }, { id: "registrante" }, "2026-09-13T13:00:00.000Z").record;
   assert.equal(resolveConciliacaoRowActions({
     record: withEvidence, userId: "registrante", canReview: true,
