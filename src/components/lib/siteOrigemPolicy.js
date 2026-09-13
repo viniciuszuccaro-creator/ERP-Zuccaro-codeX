@@ -1,7 +1,75 @@
+/**
+ * @typedef {Record<string, unknown> & {
+ *   id?: string | number,
+ *   produto?: SiteRecord,
+ *   produto_id?: unknown,
+ *   descricao?: unknown,
+ *   codigo?: unknown,
+ *   slug?: unknown,
+ *   slug_site?: unknown,
+ *   nome_catalogo?: unknown,
+ *   exibir_no_site?: boolean | string,
+ *   exibir_site?: boolean | string,
+ *   exibir_no_marketplace?: boolean | string,
+ *   exibir_marketplace?: boolean | string,
+ *   ativo?: boolean | string | number,
+ *   status?: unknown,
+ *   situacao?: unknown,
+ *   estoque_disponivel?: unknown,
+ *   estoque_atual?: unknown,
+ *   saldo?: unknown,
+ *   estoque_minimo_online?: unknown,
+ *   estoque_maximo_online?: unknown,
+ *   preco_venda?: unknown,
+ *   preco?: unknown,
+ *   valor_unitario?: unknown,
+ *   _precoResolvido?: unknown,
+ *   qty?: unknown,
+ *   quantidade?: unknown,
+ *   precoUnit?: unknown,
+ *   preco_unitario?: unknown,
+ *   nome?: unknown,
+ *   cliente_nome?: unknown,
+ *   email?: unknown,
+ *   email_principal?: unknown,
+ *   email_nfe?: unknown,
+ *   cliente_email?: unknown,
+ *   telefone?: unknown,
+ *   documento?: unknown,
+ *   cpf_cnpj?: unknown,
+ *   cnpj?: unknown,
+ *   cpf?: unknown,
+ *   origem?: unknown,
+ *   origem_pedido?: unknown,
+ *   canal_origem?: unknown,
+ *   origem_canal?: unknown,
+ *   numero_pedido?: unknown,
+ *   tipo?: unknown,
+ *   valor?: unknown,
+ *   valor_total?: unknown,
+ *   url_boleto_pdf?: unknown,
+ *   link_pagamento?: unknown,
+ *   pix_copia_cola?: unknown,
+ *   pode_ver_no_portal?: boolean,
+ *   sequencia_rota?: unknown,
+ *   data_previsao?: unknown,
+ *   previsao_entrega?: unknown,
+ * }} SiteRecord
+ * @typedef {Record<string, unknown> & { status?: string, referencia?: string, url?: string | null }} SitePagamento
+ * @typedef {{ busca?: unknown, precoMap?: Map<unknown, unknown> | Record<string | number, unknown> | null, catalogos?: SiteRecord[] }} SiteCatalogOptions
+ * @typedef {{ empresaId?: unknown, itens?: SiteRecord[], contato?: SiteRecord }} SiteCheckoutOptions
+ * @typedef {{ clientes?: SiteRecord[], email?: unknown, documento?: unknown }} SiteClienteMatchOptions
+ * @typedef {{ nome?: unknown, email?: unknown, telefone?: unknown, documento?: unknown, valor?: unknown, pedidoId?: unknown, orcamentoId?: unknown, clienteId?: unknown, empresaId?: unknown, groupId?: unknown }} SiteLeadOptions
+ * @typedef {{ pedidoId?: unknown, contaId?: unknown, valor?: unknown, gatewayAtivo?: boolean, pagamentoUrl?: unknown, pagamentoReferencia?: unknown, numeroPedido?: unknown }} SitePagamentoOptions
+ * @typedef {{ pedido?: SiteRecord, conta?: SiteRecord, pagamento?: SitePagamento | null, entrega?: SiteRecord | null, portalPath?: string }} SitePedidoStatusOptions
+ */
+
+/** @param {...unknown} values */
 const firstText = (...values) => values.map((value) => String(value || '').trim()).find(Boolean) || '';
 
 export const SITE_ORIGEM = 'site';
 
+/** @param {unknown} value */
 export const isSiteOrigemValue = (value) => {
   const normalized = String(value || '').trim().toLowerCase();
   return normalized === 'site'
@@ -10,6 +78,7 @@ export const isSiteOrigemValue = (value) => {
     || normalized === 'site base44';
 };
 
+/** @param {SiteRecord} record */
 export const stampSiteOrigem = (record = {}) => ({
   ...record,
   origem: SITE_ORIGEM,
@@ -19,6 +88,7 @@ export const stampSiteOrigem = (record = {}) => ({
 });
 
 /** Unifica flags do cadastro Produto e CatalogoWeb. */
+/** @param {SiteRecord} record */
 export const syncFlagsCatalogoProduto = (record = {}) => {
   const exibirSite = record.exibir_no_site === true || record.exibir_site === true
     || record.exibir_no_site === 'true' || record.exibir_site === 'true';
@@ -33,20 +103,26 @@ export const syncFlagsCatalogoProduto = (record = {}) => {
   };
 };
 
+/** @param {SiteRecord} produto */
 export const estoqueDisponivelSite = (produto = {}) => {
   const raw = Number(produto.estoque_disponivel ?? produto.estoque_atual ?? produto.saldo ?? 0);
   return Number.isFinite(raw) ? raw : 0;
 };
 
+/**
+ * @param {SiteRecord} produto
+ * @param {Map<unknown, unknown> | Record<string | number, unknown> | null} precoMap
+ */
 export const resolvePrecoSite = (produto = {}, precoMap = null) => {
   const fromMap = precoMap instanceof Map
     ? Number(precoMap.get(produto.id))
-    : Number(precoMap?.[produto.id]);
+    : Number(precoMap?.[/** @type {string | number} */ (produto.id)]);
   if (Number.isFinite(fromMap) && fromMap > 0) return fromMap;
   const fallback = Number(produto.preco_venda ?? produto.preco ?? produto.valor_unitario ?? 0);
   return Number.isFinite(fallback) && fallback > 0 ? fallback : 0;
 };
 
+/** @param {SiteRecord} produto */
 export const isProdutoAtivoSite = (produto = {}) => {
   const status = String(produto.status || produto.situacao || 'Ativo').toLowerCase();
   if (status.includes('inativ') || status.includes('bloq') || status === 'false') return false;
@@ -54,6 +130,10 @@ export const isProdutoAtivoSite = (produto = {}) => {
   return true;
 };
 
+/**
+ * @param {SiteRecord} produto
+ * @param {unknown} qty
+ */
 export const isProdutoDisponivelSite = (produto = {}, qty = 1) => {
   if (!isProdutoAtivoSite(produto)) return false;
   const flags = syncFlagsCatalogoProduto(produto);
@@ -70,6 +150,10 @@ export const isProdutoDisponivelSite = (produto = {}, qty = 1) => {
   return true;
 };
 
+/**
+ * @param {SiteRecord[]} produtos
+ * @param {SiteCatalogOptions} options
+ */
 export const filtrarProdutosSite = (produtos = [], { busca = '', precoMap = null, catalogos = [] } = {}) => {
   const q = String(busca || '').toLowerCase().trim();
   const catalogByProduto = new Map();
@@ -101,6 +185,7 @@ export const filtrarProdutosSite = (produtos = [], { busca = '', precoMap = null
     });
 };
 
+/** @param {SiteCheckoutOptions} options */
 export const assertSiteCheckout = ({ empresaId, itens = [], contato = {} } = {}) => {
   if (!firstText(empresaId)) {
     throw new Error('Empresa obrigatoria para operacao do site.');
@@ -123,6 +208,7 @@ export const assertSiteCheckout = ({ empresaId, itens = [], contato = {} } = {})
   return true;
 };
 
+/** @param {SiteRecord} contato */
 export const assertSiteContato = (contato = {}) => {
   const nome = firstText(contato.nome, contato.cliente_nome);
   const email = firstText(contato.email, contato.cliente_email);
@@ -137,8 +223,10 @@ export const assertSiteContato = (contato = {}) => {
   return true;
 };
 
+/** @param {unknown} value */
 const digitsOnly = (value) => String(value || '').replace(/\D/g, '');
 
+/** @param {SiteClienteMatchOptions} options */
 export const matchClienteSite = ({ clientes = [], email, documento } = {}) => {
   const mail = firstText(email).toLowerCase();
   const doc = digitsOnly(documento);
@@ -150,6 +238,7 @@ export const matchClienteSite = ({ clientes = [], email, documento } = {}) => {
   }) || null;
 };
 
+/** @param {SiteLeadOptions} options */
 export const buildSiteLeadPayload = ({
   nome,
   email,
@@ -187,6 +276,7 @@ export const buildSiteLeadPayload = ({
   });
 };
 
+/** @param {SitePagamentoOptions} options */
 export const buildSitePagamentoPlaceholder = ({
   pedidoId,
   contaId,
@@ -214,6 +304,7 @@ export const buildSitePagamentoPlaceholder = ({
   };
 };
 
+/** @param {SitePedidoStatusOptions} options */
 export const buildSitePedidoStatusResumo = ({
   pedido = {},
   conta = {},
@@ -254,6 +345,10 @@ export const buildSitePedidoStatusResumo = ({
     mensagem: `Pedido ${firstText(pedido.numero_pedido, pedido.id)} registrado. Acompanhe no portal.`,
   };
 };
+/**
+ * @param {string} entityName
+ * @param {SiteRecord} record
+ */
 export const applySiteOrigemOnCreate = (entityName, record = {}) => {
   const fromEntity = entityName === 'OrcamentoSite';
   const fromField = isSiteOrigemValue(record.origem)

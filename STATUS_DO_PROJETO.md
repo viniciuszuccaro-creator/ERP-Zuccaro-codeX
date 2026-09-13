@@ -7240,3 +7240,17 @@ Checklist inicial:
 - O build mantem somente os avisos conhecidos de imports mistos, bundle principal e Browserslist.
 - Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
 - Proximo passo: tipar `siteOrigemPolicy.js`, politica compartilhada com 39 diagnosticos e 265 linhas; arquivos grandes permanecem separados.
+
+### Gate 18 - Contrato tipado da operacao do Site
+
+- Objetivo: reduzir a divida de typecheck da politica do site sem alterar catalogo, checkout, origem, lead, pagamento ou acompanhamento.
+- Causa raiz: produtos mesclados, itens do carrinho e opcoes de lead/pagamento eram inferidos sem campos, concentrando 39 diagnosticos.
+- Implementacao: JSDoc local passou a descrever registros do site, catalogo, checkout, cliente, lead, pagamento e resumo do pedido. Nenhum `any`, `ts-ignore` ou desligamento de `checkJs` foi introduzido.
+- Multiempresa e seguranca preservadas: checkout e lead continuam exigindo Empresa; contato, preco e estoque continuam validados antes da operacao.
+- Comportamento preservado: flags de catalogo, origem `site`, correspondencia do cliente, placeholder de pagamento e acompanhamento pelo Portal mantem os mesmos contratos de runtime.
+- Resultado isolado: 39 diagnosticos antes e zero depois.
+- Resultado global: 2.413 diagnosticos antes e 2.365 depois, reducao liquida de 48. O typecheck permanece habilitado e falha apenas pela divida historica registrada e autorizada.
+- Validacao: 9/9 testes focados e 252/252 testes globais aprovados; ESLint direcionado e global sem diagnosticos; `audit:baseline`, build completo e `git diff --check` aprovados.
+- O build mantem somente os avisos conhecidos de imports mistos, bundle principal e Browserslist.
+- Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
+- Proximo passo: tipar `financeiroTituloPolicy.js`, politica compartilhada com 34 diagnosticos e 207 linhas; arquivos grandes permanecem separados.

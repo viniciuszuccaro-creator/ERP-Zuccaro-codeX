@@ -694,3 +694,16 @@ Lote concluido em 2026-09-13 na politica compartilhada do Portal, sem alterar au
 
 Proxima frente: tipar `siteOrigemPolicy.js`, politica compartilhada com 39 diagnosticos e 265 linhas. O cliente local e as telas acima do limite permanecem reservados para lotes proprios.
 
+### Contratos JSDoc - politica de origem e operacao do Site
+
+Lote concluido em 2026-09-13 na politica compartilhada do site, sem alterar catalogo, checkout, lead, pagamento ou acompanhamento do pedido.
+
+- Contratos locais descrevem produto, catalogo, cliente, contato, carrinho, lead, pagamento e resumo do pedido sem `any`, `ts-ignore` ou desativacao de `checkJs`.
+- O typecheck isolado de `siteOrigemPolicy.js` passou de 39 diagnosticos para zero.
+- O typecheck global caiu de 2.413 para 2.365 diagnosticos, reducao liquida de 48, sem transferir falhas para Orcamento Site, Catalogo Web, IA comercial ou cliente local.
+- Permanecem iguais a exigencia de Empresa, contato valido, preco e estoque online, a origem canonica `site` e a correspondencia de cliente por e-mail ou documento.
+- Pagamento sem link continua pendente, sem falso status de gerado, e o acompanhamento permanece integrado ao Portal; a politica encerrou com 360 linhas.
+- Nenhum dado, entidade, recurso Base44, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente: tipar `financeiroTituloPolicy.js`, politica compartilhada com 34 diagnosticos e 207 linhas. O cliente local e as telas acima do limite permanecem reservados para lotes proprios.
+
