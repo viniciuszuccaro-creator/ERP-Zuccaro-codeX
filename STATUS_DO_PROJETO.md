@@ -6824,3 +6824,22 @@ Checklist inicial:
 - Situacao: a chave composta esta comprovada para leitura, nao para o UPDATE de DATABAIXA. A vinculacao da parcela ao pagamento continua nao comprovada e permanece BLOCKED para migracao como pagamento comprovado.
 - O SQL permaneceu Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; esta etapa nao acessou dados do banco. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
 - Proximo passo obrigatorio: comparar somente a forma estrutural dos operandos de RELATORIO no SELECT e no UPDATE e do operando de SEQUENCIA no SELECT, incluindo tipo de placeholder e compatibilidade entre as assinaturas, sem exportar nomes, literais, valores, consultas, cadeias ou offsets.
+
+### Gate 18 - Correcao estrita dos predicados e operandos
+
+- Os campos RELATORIO e SEQUENCIA foram reavaliados com correspondencia estrita de operador e operando nas cadeias do UPDATE e dos dois SELECTs relacionados a FornecDuplicatas.
+- No UPDATE, RELATORIO forma o inicio de um predicado, mas a cadeia termina imediatamente depois do sinal de igualdade. O operando nao esta presente nesse fragmento.
+- SEQUENCIA esta ausente da cadeia do UPDATE.
+- Foram identificadas duas cadeias SELECT relacionadas que contem RELATORIO e SEQUENCIA.
+- Na primeira, ambos sao apenas referencias; SEQUENCIA aparece na projecao, sem predicado de igualdade.
+- Na segunda, RELATORIO possui predicado completo com operando da classe referencia de identificador. SEQUENCIA aparece em projecao e agregacao, sem predicado de igualdade.
+- Nenhum dos dois SELECTs possui predicado completo de SEQUENCIA.
+- A classificacao ampla anterior superestimou predicados porque aceitava qualquer igualdade anterior ao token na mesma cadeia. Esta secao substitui expressamente a conclusao de que existia leitura por RELATORIO mais SEQUENCIA.
+- O relatorio legacy-caixa-sequencia-command-role.csv fica preservado apenas como artefato historico do criterio amplo e nao deve fundamentar migracao ou conciliacao.
+- Nao e possivel comparar o operando de RELATORIO entre UPDATE e SELECT porque o operando do UPDATE esta em outro fragmento.
+- Tambem nao existe evidencia estrutural suficiente de que qualquer SELECT limite ou componha o UPDATE de DATABAIXA.
+- As duas passagens reproduziram as mesmas seis classificacoes. A releitura protegida do HD externo confirmou SHA-256 FEBFADD1A288236248B7CC8611F63717832826A9170F0AFFEF8C076846E0CD48.
+- O relatorio legacy-caixa-strict-predicate-correction.csv permanece somente em D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS, com ACL protegida. Consultas, cadeias, identificadores, operandos, literais, valores, offsets, dados e o binario nao integram o GitHub.
+- Situacao: esta comprovado apenas um UPDATE fragmentado de DATABAIXA filtrado por RELATORIO com operando externo ao fragmento. A parcela e o pagamento continuam sem vinculacao comprovada e permanecem BLOCKED para migracao como pagamento comprovado.
+- O SQL permaneceu Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; esta etapa nao acessou dados do banco. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
+- Proximo passo obrigatorio: classificar o fragmento imprimivel imediatamente posterior ao UPDATE para verificar se ele fornece o operando de RELATORIO por concatenacao, placeholder ou parametro. Exportar somente distancia, classe e compatibilidade, nunca conteudo, nomes, literais, valores, consultas ou offsets absolutos.
