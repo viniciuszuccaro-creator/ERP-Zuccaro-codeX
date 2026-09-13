@@ -932,3 +932,48 @@ PRONTO: pedidos, detalhe, NF-e resumida, boletos existentes, duplicatas, pagamen
 BLOCKED: segunda via que dependa de provider nao integrado, documento sem URI privada/storage assinado, devolucao, envio automatico por e-mail e recursos fiscais inexistentes no ERP atual. O Site CPA permanece sem alteracoes.
 
 Proximo lote somente com autorizacao expressa: ERP-SITE-08 - Entrega e Logistica.
+
+---
+
+# 27. EXECUCAO ERP-SITE-08 - ENTREGA E LOGISTICA
+
+A logistica existente passou a ter contratos oficiais de leitura no gateway S2S `v1`. Foram reutilizados `Entrega`, `Pedido`, historico de status, ocorrencias, entrega parcial, rota, romaneio e comprovante; nenhuma entidade, tela ou rota HTTP paralela foi criada.
+
+## Operacoes
+
+- `siteEntregaList`: lista paginada de entregas oficiais do Cliente;
+- `siteEntregaGet`: detalhe seguro, itens e quantidades oficiais;
+- `siteEntregaTimeline`: eventos persistidos em ordem cronologica;
+- `siteEntregaComprovantes`: provas privadas por URL assinada curta.
+
+Filtros aceitos: status externo, periodo maximo de 366 dias quando informado, obra autorizada, numero do Pedido, `deliveryId`, `erpOrderId`, pagina e `pageSize` de no maximo 100. O gateway permanece `no-store`, autenticado, assinado, limitado e protegido contra replay pelo ERP-SITE-01.
+
+## Ownership, RBAC e multiempresa
+
+Toda Entrega precisa pertencer ao Grupo/Empresa do contrato e apontar para um Pedido real, visivel no portal e pertencente ao mesmo Cliente. O `deliveryId`, `erpOrderId`, Cliente, usuario externo e obra sao revalidados no backend; vinculo ausente ou leitura cruzada falham fechados.
+
+`ADMIN_EMPRESA`, `COMPRADOR` e `CONSULTA` podem acompanhar logistica. `FINANCEIRO` nao recebe acesso logístico automaticamente. O papel vem somente do vinculo empresarial aprovado do ERP-SITE-02; usuario revogado, pendente ou Cliente inativo perde acesso.
+
+## Status, itens e timeline
+
+Os estados externos sao `PENDING`, `SEPARATING`, `READY`, `SCHEDULED`, `ROUTED`, `OUT_FOR_DELIVERY`, `PARTIAL`, `DELIVERED`, `PICKUP_READY`, `PICKED_UP`, `RESCHEDULED`, `OCCURRENCE` e `CANCELLED`.
+
+Um Pedido pode ter varias Entregas. Quantidades pedida, planejada, entregue e restante sao publicadas somente quando os campos oficiais permitem o calculo; entrega parcial nunca e promovida a entregue. Retirada nao publica endereco, rota, motorista ou veiculo.
+
+A timeline usa apenas `historico_status`, ocorrencias persistidas e reagendamento real. Observacao interna, usuario interno, geolocalizacao e evento sintetico nao sao retornados. Ocorrencias sao reduzidas a categorias externas estaveis e somente campos explicitamente publicos podem aparecer como mensagem.
+
+## Privacidade e comprovantes
+
+Endereco e minimizado para logradouro parcial, bairro, cidade e UF. Rota retorna apenas atribuicao/estado, nunca identificador, sequencia de outros clientes ou coordenadas. Nome do motorista e abreviado; telefone pessoal e omitido.
+
+Comprovantes aceitos: assinatura, foto de entrega, foto oficial de ocorrencia e romaneio assinado quando houver URI privada valida. URL publica, base64, path enviado pelo Site, traversal e arquivo solto nao sao aceitos. O download usa `CreateFileSignedUrl` com TTL de 300 segundos; documento do recebedor e mascarado e URI/storage path nunca sai na resposta.
+
+## Capability e pendencias
+
+`siteHealth` informa `DELIVERY`: `ready` quando Pedido, Entrega e assinador privado estao consultaveis; `degraded` quando a leitura logistica funciona sem assinatura de comprovantes; `blocked` quando Pedido ou Entrega nao pode ser consultado.
+
+PRONTO: lista, detalhe, multiplas entregas, status, itens, parcial, retirada, timeline, ocorrencias publicas, filtro por obra, RBAC, ownership e comprovante assinado quando houver storage privado.
+
+BLOCKED: GPS ao vivo, alteracao de endereco, reagendamento por mutation, comprovante sem URI privada, tracking ficticio e roteirizador externo indisponivel. O Site CPA permanece sem alteracoes.
+
+Proximo lote somente com autorizacao expressa: ERP-SITE-09 - Chat e CRM.

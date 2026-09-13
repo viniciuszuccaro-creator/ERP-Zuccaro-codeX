@@ -225,6 +225,7 @@ test('healthcheck S2S usa empresa padrao, audita e persiste o evento', async () 
   assert.equal(result.body.data.capabilities.PORTAL_FINANCIAL, 'blocked');
   assert.equal(result.body.data.capabilities.PORTAL_FISCAL, 'blocked');
   assert.equal(result.body.data.capabilities.PORTAL_DOCUMENT, 'blocked');
+  assert.equal(result.body.data.capabilities.DELIVERY, 'blocked');
   assert.equal(result.createdEvents[0].status, 'concluido');
   assert.equal(result.audits.length, 1);
 });

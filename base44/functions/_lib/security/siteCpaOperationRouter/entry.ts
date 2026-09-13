@@ -33,6 +33,11 @@ import {
   SiteCpaPortalError,
   resolveSiteCpaPortalOperation,
 } from '../siteCpaPortal/entry.ts';
+import {
+  SITE_CPA_DELIVERY_OPERATIONS,
+  SiteCpaDeliveryError,
+  resolveSiteCpaDeliveryOperation,
+} from '../siteCpaDelivery/entry.ts';
 
 const rejected = (buildResponse, request, failure) => ({
   handled: true,
@@ -87,6 +92,16 @@ export const routeSiteCpaOperation = async ({
     } catch (error) {
       return rejected(buildResponse, request, error instanceof SiteCpaPortalError
         ? error : new SiteCpaPortalError(503, 'site_cpa_portal_unavailable'));
+    }
+  }
+
+  if (SITE_CPA_DELIVERY_OPERATIONS.has(request.operation)) {
+    try {
+      const data = await resolveSiteCpaDeliveryOperation({ base44, payload, scope, request, now });
+      return completed(buildResponse, request, data);
+    } catch (error) {
+      return rejected(buildResponse, request, error instanceof SiteCpaDeliveryError
+        ? error : new SiteCpaDeliveryError(503, 'site_cpa_delivery_unavailable'));
     }
   }
 

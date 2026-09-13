@@ -7466,3 +7466,27 @@ Checklist inicial:
 - Typecheck: 2.238 diagnosticos historicos preservados e zero diagnosticos novos do ERP-SITE-07.
 - Nenhum arquivo do Site CPA, dado real, recurso Base44 remoto, provider real, backup legado ou HD externo foi acessado ou alterado.
 - Proximo passo somente com autorizacao expressa: ERP-SITE-08 - Entrega e Logistica.
+
+### ERP-SITE-08 - Entrega e Logistica do Site CPA
+
+- Objetivo: expor acompanhamento logistico privado e oficial no gateway S2S `v1`, sem criar Entrega, Roteirizacao, Romaneio ou endpoint paralelo.
+- Operacoes: `siteEntregaList`, `siteEntregaGet`, `siteEntregaTimeline` e `siteEntregaComprovantes`.
+- Reuso: `Entrega`, `Pedido`, `SolicitacaoAprovacao`, historico, ocorrencias, entrega parcial, rota, romaneio, comprovante, `AuditLog` e `CreateFileSignedUrl` existentes.
+- Ownership: Entrega exige Pedido oficial visivel do mesmo Cliente, Grupo e Empresa; IDs, usuario externo e obra sao revalidados no backend.
+- RBAC: `ADMIN_EMPRESA`, `COMPRADOR` e `CONSULTA` podem ler logistica; `FINANCEIRO` nao recebe esse acesso automaticamente.
+- Status: contrato externo estavel cobre pendencia, separacao, programacao, rota, saida, parcial, entrega, retirada, reagendamento, ocorrencia e cancelamento.
+- Itens: pedido, planejado, entregue e restante usam apenas valores oficiais; dado insuficiente permanece `null`, sem inferencia arbitraria.
+- Multiplas entregas: relacao Pedido/Entrega nao assume 1:1 e a entrega parcial nao encerra o Pedido.
+- Timeline: somente historico e ocorrencias persistidos; notas, usuarios internos, GPS e eventos inventados sao omitidos.
+- Retirada: nao publica endereco, rota, motorista ou veiculo.
+- Privacidade: endereco parcial, motorista abreviado e nenhum telefone, coordenada, rota interna, custo, margem, nota interna ou documento completo.
+- Comprovantes: apenas URI privada validada e vinculada recebe URL assinada por 300 segundos; URL publica, base64, traversal e storage ausente falham fechados.
+- Capability: `DELIVERY` e `ready`, `degraded` ou `blocked` conforme Pedido, Entrega e assinatura privada realmente disponiveis.
+- Auditoria: lista, detalhe, timeline, comprovante, bloqueio e IDOR registram operacao, correlacao, Cliente, Entrega, Grupo, Empresa e resultado sem payload sensivel.
+- PRONTO: lista, detalhe, timeline, parcial, retirada, ocorrencias, filtro por obra, RBAC, ownership e comprovante privado.
+- BLOCKED: GPS ao vivo, mudanca de endereco, reagendamento por escrita, prova sem storage privado, tracking ficticio e roteirizador externo indisponivel.
+- Validacao focada: 120/120 testes dos contratos ERP-SITE-01 a 08 e regressao do gateway aprovados.
+- Validacao global: 372/372 testes aprovados; ESLint global e `audit:baseline` sem falhas; build completo aprovado.
+- Typecheck: 2.238 diagnosticos historicos preservados e zero diagnosticos novos do ERP-SITE-08.
+- Nenhum arquivo do Site CPA, dado real, recurso Base44 remoto, backup legado ou HD externo foi acessado ou alterado.
+- Proximo passo somente com autorizacao expressa: ERP-SITE-09 - Chat e CRM.
