@@ -14,6 +14,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  buildConciliacaoFinanceiraQueryKey,
+  filterConciliacoesByScope,
+  getConciliacaoDecision,
+  getConciliacaoEntityLabel,
+  getConciliacaoEvidenceCount,
+  getConciliacaoRecordId,
+  getConciliacaoReference,
+  getConciliacaoStage,
+  resolveConciliacaoFinanceiraAccess,
+  resolveConciliacaoRowActions,
+} from "./conciliacaoFinanceiraUiPolicy";
 
 const MAX_EVIDENCE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_EVIDENCE_TYPES = new Set([
@@ -22,11 +34,6 @@ const ALLOWED_EVIDENCE_TYPES = new Set([
   "image/png",
   "image/webp",
 ]);
-
-const getEnvelope = (record) => record?.dados_propostos?.envelope_staging || {};
-const getOriginUserId = (record) => getEnvelope(record)?.historico_conciliacao?.[0]?.usuario_id || record?.solicitante_id || null;
-const getReviewerUserId = (record) => getEnvelope(record)?.aprovacoes_conciliacao
-  ?.find((item) => item?.etapa === "revisao_financeira")?.usuario_id || null;
 
 const STAGE_LABELS = {
   aguardando_evidencia: "Aguardando evidência",
@@ -50,10 +57,20 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
   const [justification, setJustification] = useState("");
   const [evidenceFile, setEvidenceFile] = useState(null);
   const [humanConfirmed, setHumanConfirmed] = useState(false);
-  const validContext = contexto === "empresa" && Boolean(groupId && empresaId);
-  const canView = canReview || canApprove;
+  const { validContext, canView } = resolveConciliacaoFinanceiraAccess({
+    contexto,
+    groupId,
+    empresaId,
+    canReview,
+    canApprove,
+  });
 
-  const queryKey = ["conciliacoes-financeiras-staging", user?.id || null, groupId, empresaId, contexto];
+  const queryKey = buildConciliacaoFinanceiraQueryKey({
+    userId: user?.id,
+    groupId,
+    empresaId,
+    contexto,
+  });
   const { data: requests = [], isLoading, error } = useQuery({
     queryKey,
     queryFn: async () => {
@@ -63,14 +80,14 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
         empresa_id: empresaId,
         scope_type: "empresa",
       });
-      return Array.isArray(response?.data) ? response.data : [];
+      return filterConciliacoesByScope(response?.data, { groupId, empresaId });
     },
     enabled: validContext && canView,
     retry: 1,
   });
 
   const pendingCount = useMemo(
-    () => requests.filter((record) => getEnvelope(record).etapa_conciliacao !== "aprovada_aguardando_promocao_manual").length,
+    () => requests.filter((record) => getConciliacaoStage(record) !== "aprovada_aguardando_promocao_manual").length,
     [requests],
   );
 
@@ -195,21 +212,20 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
               </TableHeader>
               <TableBody>
                 {requests.map((record) => {
-                  const envelope = getEnvelope(record);
-                  const stage = envelope.etapa_conciliacao;
-                  const originUserId = getOriginUserId(record);
-                  const reviewerUserId = getReviewerUserId(record);
-                  const canAttach = canReview && ["aguardando_evidencia", "evidencia_anexada"].includes(stage);
-                  const canPerformReview = canReview && stage === "evidencia_anexada" && user?.id !== originUserId;
-                  const canPerformApproval = canApprove && stage === "aguardando_aprovacao_final"
-                    && user?.id !== originUserId && user?.id !== reviewerUserId;
+                  const stage = getConciliacaoStage(record);
+                  const { canAttach, canPerformReview, canPerformApproval } = resolveConciliacaoRowActions({
+                    record,
+                    userId: user?.id,
+                    canReview,
+                    canApprove,
+                  });
                   return (
-                    <TableRow key={record.id}>
-                      <TableCell className="font-medium">{record.referencia_staging || "-"}</TableCell>
-                      <TableCell>{record.entidade_alvo === "ContaPagar" ? "Conta a pagar" : "Conta a receber"}</TableCell>
+                    <TableRow key={getConciliacaoRecordId(record)}>
+                      <TableCell className="font-medium">{getConciliacaoReference(record) || "-"}</TableCell>
+                      <TableCell>{getConciliacaoEntityLabel(record)}</TableCell>
                       <TableCell><Badge variant="outline">{STAGE_LABELS[stage] || stage || "Pendente"}</Badge></TableCell>
-                      <TableCell>{envelope.evidencias_conciliacao?.length || 0}</TableCell>
-                      <TableCell>{envelope.decisao_financeira?.classificacao || "-"}</TableCell>
+                      <TableCell>{getConciliacaoEvidenceCount(record)}</TableCell>
+                      <TableCell>{getConciliacaoDecision(record) || "-"}</TableCell>
                       <TableCell>
                         <div className="flex justify-end gap-2">
                           {canAttach && (

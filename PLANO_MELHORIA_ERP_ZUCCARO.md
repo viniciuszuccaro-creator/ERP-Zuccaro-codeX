@@ -454,3 +454,9 @@ Primeiro pacote de trabalho:
 7. Aplicar RBAC visual e funcional.
 8. Confirmar duplicidades antes de qualquer criacao/exclusao.
 
+## Andamento Gate 18 - Conciliacao financeira
+
+Em 2026-09-13, a politica visual da conciliacao financeira foi homologada com dados sinteticos para Grupo CPA, CPA Ferro e Aco e 3Z LTDA. Contexto, cache, filtro defensivo e segregacao entre registrante, revisor e aprovador foram exercitados sem persistir dados reais. O registro permaneceu bloqueado em `PENDING_MANUAL_RECONCILIATION` durante todo o fluxo.
+
+Proxima frente: validar persistencia e reabertura entre tres sessoes em armazenamento descartavel, restaurando o ambiente automaticamente ao final. Nenhuma promocao para titulos operacionais sera implementada sem autorizacao expressa.
+

@@ -663,11 +663,16 @@ test('backend persiste workflow especializado com RBAC, contexto e rollback', as
 test('central existente integra conciliacao financeira sem promover titulo', async () => {
   const central = await readFile(new URL('../src/components/comercial/CentralAprovacoesManager.jsx', import.meta.url), 'utf8');
   const tab = await readFile(new URL('../src/components/comercial/ConciliacaoFinanceiraAprovacoesTab.jsx', import.meta.url), 'utf8');
+  const uiPolicy = await readFile(new URL('../src/components/comercial/conciliacaoFinanceiraUiPolicy.js', import.meta.url), 'utf8');
   const localClient = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
 
   assert.match(central, /ConciliacaoFinanceiraAprovacoesTab/);
   assert.match(central, /Financeiro(?:"\s*,\s*"Migracao|\.Migracao\.conciliar)/);
-  assert.match(tab, /contexto === "empresa" && Boolean\(groupId && empresaId\)/);
+  assert.match(tab, /resolveConciliacaoFinanceiraAccess/);
+  assert.match(tab, /filterConciliacoesByScope\(response\?\.data/);
+  assert.match(uiPolicy, /contexto === "empresa"/);
+  assert.match(uiPolicy, /textId\(record\.group_id\) === expectedGroupId/);
+  assert.match(uiPolicy, /textId\(record\.empresa_id\) === expectedEmpresaId/);
   assert.match(tab, /action: "listManualReconciliations"/);
   assert.match(tab, /attachManualReconciliationEvidence/);
   assert.match(tab, /reviewManualReconciliation/);

@@ -7026,3 +7026,16 @@ Checklist inicial:
 - Divida preexistente: ESLint global melhorou para 84 erros e 17 avisos. O typecheck global permanece com diagnosticos historicos; nenhum diagnostico novo permaneceu nos arquivos deste lote.
 - Os servicos `MSSQL$ERPZLEGACY` e `SQLAgent$ERPZLEGACY` terminaram parados e manuais; `SQLBrowser` terminou parado e desabilitado. O HD externo e o banco legado nao foram acessados.
 - Proximo passo obrigatorio: homologar o fluxo visual completo com registros sinteticos e tres perfis distintos, incluindo troca entre Grupo CPA, CPA Ferro e Aco e 3Z LTDA, sem usar ou alterar dados legados e sem promover titulo operacional.
+
+### Gate 18 - Politica visual da conciliacao homologada com dados sinteticos
+
+- A regra visual da aba de conciliacao financeira foi extraida para um helper puro e reutilizavel, sem criar pagina, rota, entidade ou funcionalidade paralela.
+- A visao de Grupo CPA permanece bloqueada para decisoes financeiras. CPA Ferro e Aco e 3Z LTDA exigem `group_id`, `empresa_id` e `scope_type=empresa` completos.
+- As chaves de cache continuam separadas por usuario, Grupo, Empresa e tipo de contexto. A resposta do backend agora passa tambem por filtro defensivo local, que descarta solicitacoes genericas, outro Grupo ou outra Empresa.
+- A disponibilidade dos botoes foi homologada com tres perfis sinteticos distintos: registrante anexa evidencia, outro usuario revisa e um terceiro usuario aprova. Auto-revisao e autoaprovacao continuam ocultas e bloqueadas definitivamente no backend.
+- A simulacao percorreu as etapas `aguardando_evidencia`, `evidencia_anexada`, `aguardando_aprovacao_final` e `aprovada_aguardando_promocao_manual` somente em memoria.
+- Mesmo no fim da simulacao, a pendencia permaneceu `PENDING_MANUAL_RECONCILIATION`, em `staging`, com `confirmado=false`, `status=pendente` e bloqueio operacional.
+- Nenhum cadastro, pendencia real, arquivo legado, banco ou dado do ERP foi criado, alterado ou migrado. O HD externo nao foi acessado.
+- Validacao: 26 testes focados e 250 testes globais aprovados; ESLint direcionado, audit baseline, build completo e `git diff --check` aprovados.
+- Divida preexistente: ESLint global permanece com 84 erros e 17 avisos. O typecheck global permanece com diagnosticos historicos e nao aponta diagnostico nos arquivos deste lote.
+- Proximo passo obrigatorio: homologar persistencia, reabertura e troca de sessao em armazenamento descartavel, com restauracao automatica ao final e sem usar dados reais. A promocao para `ContaPagar` ou `ContaReceber` permanece fora de escopo ate autorizacao expressa.
