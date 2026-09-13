@@ -6994,3 +6994,18 @@ Checklist inicial:
 - Validacao: 19 testes focados e 243 testes globais aprovados; handler backend exercitado em memoria para autorizacao, idempotencia, contexto adulterado, falta de permissao, envelope preaprovado e rollback; audit baseline, ESLint direcionado, build completo e `git diff --check` aprovados.
 - Divida preexistente: ESLint global permanece com 85 erros e 17 avisos; typecheck global permanece com diagnosticos historicos. A checagem direcionada manteve apenas diagnosticos anteriores da funcao e da infraestrutura Deno/Base44, sem diagnostico novo nos contratos adicionados.
 - Proximo passo obrigatorio: implementar na mesma funcao as acoes especializadas para anexar evidencia, registrar revisao financeira e aprovacao final com segregacao de tres usuarios, sem promover ou criar titulo operacional.
+
+### Gate 18 - Workflow persistente de conciliacao financeira no backend
+
+- A funcao existente `solicitacoesAprovacao` passou a persistir as acoes especializadas `attachManualReconciliationEvidence`, `reviewManualReconciliation` e `approveManualReconciliation`; nenhuma entidade, tela, titulo financeiro ou endpoint paralelo foi criado.
+- A politica foi extraida para helper interno porque o arquivo principal ultrapassava 600 linhas. A interface publica existente foi preservada e o endpoint principal ficou menor e concentrado na orquestracao.
+- Todas as acoes exigem contexto `scope_type=empresa`, Grupo e Empresa validos, vinculo do usuario com o contexto e RBAC `Financeiro.Migracao.conciliar` ou `Financeiro.Migracao.aprovar`.
+- O registro carregado e novamente comparado com Grupo e Empresa antes da transicao, bloqueando tentativa por identificador adulterado ou acesso cruzado.
+- Evidencia repetida com os mesmos metadados e idempotente. Revisao exige evidencia e usuario diferente do registrante. Aprovacao final exige confirmacao humana, a mesma decisao e um terceiro usuario distinto.
+- A atualizacao usa allowlist restrita a `status=pendente`, `bloqueio_operacional=true` e `dados_propostos`. Mesmo aprovado, o envelope permanece `PENDING_MANUAL_RECONCILIATION`, em `staging`, com `confirmado=false` e sem promocao para `ContaPagar` ou `ContaReceber`.
+- Evidencia, revisao, aprovacao, reutilizacao e bloqueios sao auditados. Se a auditoria obrigatoria falhar depois da atualizacao, o backend restaura o envelope anterior e retorna indisponibilidade, sem sucesso falso.
+- Nenhum dado real foi persistido, migrado ou alterado e nenhum recurso Base44 foi implantado; o clone continua sem `base44/config.jsonc`.
+- Validacao: 21 testes focados e 245 testes globais aprovados; typecheck isolado do helper e ESLint direcionado aprovados; audit baseline, build completo e `git diff --check` aprovados.
+- Divida preexistente: ESLint global permanece com 85 erros e 17 avisos. O typecheck global permanece com diagnosticos historicos e nao apontou diagnostico nos arquivos deste lote.
+- Os servicos `MSSQL$ERPZLEGACY` e `SQLAgent$ERPZLEGACY` terminaram parados e manuais; `SQLBrowser` terminou parado e desabilitado. O HD externo e o banco legado nao foram acessados.
+- Proximo passo obrigatorio: integrar as acoes especializadas na Central de Aprovacoes existente, exibindo apenas pendencias do contexto autorizado e preservando o bloqueio de promocao operacional.

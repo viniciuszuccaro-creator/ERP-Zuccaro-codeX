@@ -1,135 +1,25 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import {
+  MANUAL_RECONCILIATION_TYPE,
+  applyManualWorkflowTransition,
+  auditManualStaging,
+  buildManualRecord,
+  firstText,
+  isManualReconciliationRequest,
+  resolveManualScope,
+} from '../_lib/financeiro/manualReconciliationApprovalPolicy/entry.ts';
 
-const MANUAL_RECONCILIATION_TYPE = 'conciliacao_migracao_financeira';
-const MANUAL_RECONCILIATION_STATUS = 'PENDING_MANUAL_RECONCILIATION';
-const MANUAL_RECONCILIATION_ENTITIES = new Set(['ContaPagar', 'ContaReceber']);
-const MANUAL_SECRET_PARTS = ['password', 'senha', 'token', 'secret', 'authorization', 'api_key', 'apikey', 'certificado', 'certificate'];
+const MANUAL_RECONCILIATION_WORKFLOW_ACTIONS = new Set([
+  'attachManualReconciliationEvidence',
+  'reviewManualReconciliation',
+  'approveManualReconciliation',
+]);
 
-const firstText = (...values) => values.map((value) => String(value ?? '').trim()).find(Boolean) || '';
-
-function isManualReconciliationRequest(record: Record<string, unknown> = {}) {
-  return firstText(record?.tipo_solicitacao) === MANUAL_RECONCILIATION_TYPE;
-}
-
-function sanitizeManualValue(value, depth = 0) {
-  if (depth > 8) return '[limite-de-profundidade]';
-  if (Array.isArray(value)) return value.slice(0, 200).map((item) => sanitizeManualValue(item, depth + 1));
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.entries(value).slice(0, 300).flatMap(([key, item]) => {
-      const normalized = String(key).toLowerCase().replace(/[^a-z0-9_]/g, '');
-      if (MANUAL_SECRET_PARTS.some((part) => normalized.includes(part))) return [];
-      return [[key, sanitizeManualValue(item, depth + 1)]];
-    }));
-  }
-  if (typeof value === 'string') return value.replace(/<[^>]*>/g, '').slice(0, 4000).trim();
-  return value;
-}
-
-function userHasManualScope(user, groupId, empresaId) {
-  const groupIds = new Set([
-    user?.group_id, user?.grupo_atual_id, user?.grupo_padrao_id,
-    ...(Array.isArray(user?.grupos_vinculados) ? user.grupos_vinculados.filter((item) => item?.ativo !== false).map((item) => item?.grupo_id) : []),
-    ...(Array.isArray(user?.empresas_vinculadas) ? user.empresas_vinculadas.filter((item) => item?.ativo !== false).map((item) => item?.group_id || item?.grupo_id) : []),
-  ].map((value) => firstText(value)).filter(Boolean));
-  const empresaIds = new Set([
-    user?.empresa_atual_id, user?.empresa_padrao_id,
-    ...(Array.isArray(user?.empresas_vinculadas) ? user.empresas_vinculadas.filter((item) => item?.ativo !== false).map((item) => item?.empresa_id) : []),
-  ].map((value) => firstText(value)).filter(Boolean));
-  return groupIds.has(groupId) && empresaIds.has(empresaId);
-}
-
-async function resolveManualScope(base44, user, input: Record<string, unknown> = {}) {
-  const groupId = firstText(input?.group_id, input?.groupId);
-  const empresaId = firstText(input?.empresa_id, input?.empresaId);
-  const scopeType = firstText(input?.scope_type, input?.scopeType).toLowerCase();
-  if (scopeType !== 'empresa' || !groupId || !empresaId) {
-    return { response: Response.json({ error: 'Contexto de Empresa exige scope_type, group_id e empresa_id' }, { status: 400 }) };
-  }
-  try {
-    const empresa = await base44.asServiceRole.entities.Empresa.get(empresaId);
-    if (!empresa || firstText(empresa?.group_id, empresa?.grupo_id) !== groupId) {
-      try { await auditManualStaging(base44, user, { group_id: groupId, empresa_id: empresaId }, 'Bloqueio', false); }
-      catch (auditError) { reportApprovalFailure('Falha ao auditar Empresa fora do Grupo', auditError, { group_id: groupId, empresa_id: empresaId }); return { response: Response.json({ error: 'Controle de acesso indisponivel' }, { status: 503 }) }; }
-      return { response: Response.json({ error: 'Empresa nao pertence ao Grupo informado' }, { status: 403 }) };
-    }
-  } catch (error) {
-    reportApprovalFailure('Falha ao validar Empresa da conciliacao', error, { group_id: groupId, empresa_id: empresaId });
-    return { response: Response.json({ error: 'Validacao multiempresa indisponivel' }, { status: 503 }) };
-  }
-  if (!userHasManualScope(user, groupId, empresaId)) {
-    try { await auditManualStaging(base44, user, { group_id: groupId, empresa_id: empresaId }, 'Bloqueio', false); }
-    catch (error) { reportApprovalFailure('Falha ao auditar escopo negado', error, { group_id: groupId, empresa_id: empresaId }); return { response: Response.json({ error: 'Controle de acesso indisponivel' }, { status: 503 }) }; }
-    return { response: Response.json({ error: 'Forbidden' }, { status: 403 }) };
-  }
-  return { groupId, empresaId, scopeType };
-}
-
-function buildManualRecord(input, user, scope) {
-  const request = input?.approval_request || input?.solicitacao || {};
-  const envelope = request?.dados_propostos?.envelope_staging;
-  const entityName = firstText(request?.entidade_alvo);
-  const legacyCode = firstText(request?.referencia_staging);
-  const expectedKey = ['migracao-conciliacao', scope.groupId, scope.empresaId, entityName, legacyCode].join('|');
-  const envelopeSize = (() => { try { return JSON.stringify(envelope || {}).length; } catch { return Infinity; } })();
-  const history = Array.isArray(envelope?.historico_conciliacao) ? envelope.historico_conciliacao : [];
-  const initialEvent = history[0] || {};
-  const valid = isManualReconciliationRequest(request)
-    && request?.bloqueio_operacional === true
-    && firstText(request?.status) === 'pendente'
-    && firstText(request?.origem) === 'staging_migracao'
-    && (request?.entidade_alvo_id === null || request?.entidade_alvo_id === undefined)
-    && MANUAL_RECONCILIATION_ENTITIES.has(entityName)
-    && Boolean(legacyCode)
-    && firstText(request?.idempotency_key) === expectedKey
-    && firstText(request?.group_id) === scope.groupId
-    && firstText(request?.empresa_id) === scope.empresaId
-    && firstText(request?.scope_type).toLowerCase() === 'empresa'
-    && firstText(envelope?.status_migracao).toUpperCase() === MANUAL_RECONCILIATION_STATUS
-    && firstText(envelope?.destino_migracao).toLowerCase() === 'staging'
-    && envelope?.requer_conciliacao_manual === true
-    && envelope?.bloqueio_operacional === true
-    && envelope?.confirmado === false
-    && firstText(envelope?.etapa_conciliacao) === 'aguardando_evidencia'
-    && (envelope?.decisao_financeira === null || envelope?.decisao_financeira === undefined)
-    && Array.isArray(envelope?.evidencias_conciliacao) && envelope.evidencias_conciliacao.length === 0
-    && Array.isArray(envelope?.aprovacoes_conciliacao) && envelope.aprovacoes_conciliacao.length === 0
-    && history.length === 1
-    && firstText(initialEvent?.acao) === 'marcado_pendente_conciliacao_manual'
-    && Boolean(firstText(initialEvent?.usuario_id))
-    && !Number.isNaN(Date.parse(firstText(initialEvent?.timestamp)))
-    && firstText(initialEvent?.group_id) === scope.groupId
-    && firstText(initialEvent?.empresa_id) === scope.empresaId
-    && firstText(envelope?.group_id, envelope?.grupo_id) === scope.groupId
-    && firstText(envelope?.empresa_id) === scope.empresaId
-    && firstText(envelope?.entidade_migracao) === entityName
-    && firstText(envelope?.codigo_legado, envelope?.id_antigo) === legacyCode
-    && envelopeSize <= 250000;
-  if (!valid) return { error: 'Envelope de conciliacao financeira invalido ou inconsistente' };
-
-  const now = new Date().toISOString();
-  return { record: {
-    group_id: scope.groupId, empresa_id: scope.empresaId, scope_type: 'empresa',
-    solicitante_id: user.id,
-    solicitante_nome: firstText(user.full_name, user.email, user.id).replace(/<[^>]*>/g, '').slice(0, 160),
-    tipo_solicitacao: MANUAL_RECONCILIATION_TYPE, entidade_alvo: entityName, entidade_alvo_id: null,
-    referencia_staging: legacyCode, idempotency_key: expectedKey,
-    dados_propostos: { operation: 'manual_reconciliation_staging', envelope_staging: sanitizeManualValue(envelope) },
-    justificativa: 'Pendencia legada exige conciliacao financeira manual.',
-    perfil_aprovador_necessario: 'Financeiro.Migracao.aprovar',
-    status: 'pendente', data_solicitacao: now, origem: 'staging_migracao', bloqueio_operacional: true,
-  } };
-}
-
-async function auditManualStaging(base44, user, record, acao, sucesso = true) {
-  await base44.asServiceRole.entities.AuditLog.create({
-    usuario: user?.full_name || user?.email || 'Usuario', usuario_id: user?.id,
-    empresa_id: record?.empresa_id || null, group_id: record?.group_id || null,
-    acao, modulo: 'Financeiro', tipo_auditoria: 'migracao', entidade: 'SolicitacaoAprovacao',
-    registro_id: record?.id || null, descricao: `${acao} de conciliacao financeira em staging`,
-    dados_novos: { tipo_solicitacao: MANUAL_RECONCILIATION_TYPE, entidade_alvo: record?.entidade_alvo || null, referencia_staging: record?.referencia_staging || null, status: record?.status || null, bloqueio_operacional: true },
-    data_hora: new Date().toISOString(), sucesso,
-  });
-}
+const MANUAL_RECONCILIATION_AUDIT_ACTIONS = {
+  attachManualReconciliationEvidence: 'Evidencia',
+  reviewManualReconciliation: 'Revisao',
+  approveManualReconciliation: 'Aprovacao',
+};
 
 const reportApprovalFailure = (operation, error, context = {}) => {
   console.error('[solicitacoesAprovacao] ' + operation, {
@@ -345,6 +235,74 @@ Deno.serve(async (req) => {
       } catch (error) {
         reportApprovalFailure('Falha ao listar conciliacoes em staging', error, { group_id: scope.groupId, empresa_id: scope.empresaId });
         return Response.json({ error: 'Consulta de staging indisponivel' }, { status: 503 });
+      }
+    }
+
+    if (MANUAL_RECONCILIATION_WORKFLOW_ACTIONS.has(action)) {
+      const scope = await resolveManualScope(base44, user, payload);
+      if (scope.response) return scope.response;
+      const permissionAction = action === 'approveManualReconciliation' ? 'aprovar' : 'conciliar';
+      const permOk = await hasPermission(base44, user, 'Financeiro', 'Migracao', permissionAction);
+      if (!permOk) {
+        try { await auditManualStaging(base44, user, { group_id: scope.groupId, empresa_id: scope.empresaId }, 'Bloqueio', false); }
+        catch (error) { reportApprovalFailure('Falha ao auditar bloqueio do workflow financeiro', error, { action, group_id: scope.groupId, empresa_id: scope.empresaId }); return Response.json({ error: 'Controle de acesso indisponivel' }, { status: 503 }); }
+        return Response.json({ error: 'Forbidden' }, { status: 403 });
+      }
+
+      const solicitacaoId = firstText(payload?.solicitacao_id);
+      if (!solicitacaoId) return Response.json({ error: 'solicitacao_id e obrigatorio' }, { status: 400 });
+
+      let current;
+      try {
+        current = await base44.asServiceRole.entities.SolicitacaoAprovacao.get(solicitacaoId);
+      } catch (error) {
+        reportApprovalFailure('Falha ao carregar conciliacao financeira', error, { action, solicitacao_id: solicitacaoId });
+        return Response.json({ error: 'Consulta de staging indisponivel' }, { status: 503 });
+      }
+      if (!current) return Response.json({ error: 'Conciliacao financeira nao encontrada' }, { status: 404 });
+      if (firstText(current?.group_id) !== scope.groupId || firstText(current?.empresa_id) !== scope.empresaId) {
+        try { await auditManualStaging(base44, user, { id: solicitacaoId, group_id: scope.groupId, empresa_id: scope.empresaId }, 'Bloqueio', false); }
+        catch (error) { reportApprovalFailure('Falha ao auditar tentativa fora do contexto', error, { action, solicitacao_id: solicitacaoId }); return Response.json({ error: 'Controle de acesso indisponivel' }, { status: 503 }); }
+        return Response.json({ error: 'Forbidden' }, { status: 403 });
+      }
+
+      let transition;
+      try {
+        transition = applyManualWorkflowTransition(current, action, payload, user);
+      } catch (error) {
+        reportApprovalFailure('Transicao de conciliacao recusada', error, { action, solicitacao_id: solicitacaoId });
+        return Response.json({ error: error?.message || 'Transicao de conciliacao invalida' }, { status: 409 });
+      }
+      const auditAction = MANUAL_RECONCILIATION_AUDIT_ACTIONS[action];
+      if (transition.reused) {
+        try { await auditManualStaging(base44, user, current, 'Reutilizacao', true, current); }
+        catch (error) { reportApprovalFailure('Falha ao auditar repeticao idempotente do workflow', error, { action, solicitacao_id: solicitacaoId }); return Response.json({ error: 'Auditoria da conciliacao indisponivel' }, { status: 503 }); }
+        return Response.json({ record: current, reused: true });
+      }
+
+      let updated = null;
+      try {
+        updated = await base44.asServiceRole.entities.SolicitacaoAprovacao.update(solicitacaoId, {
+          status: 'pendente',
+          bloqueio_operacional: true,
+          dados_propostos: transition.record.dados_propostos,
+        });
+        await auditManualStaging(base44, user, updated, auditAction, true, current);
+        return Response.json({ record: updated, reused: false });
+      } catch (error) {
+        reportApprovalFailure('Falha ao persistir ou auditar workflow financeiro', error, { action, solicitacao_id: solicitacaoId });
+        if (updated) {
+          try {
+            await base44.asServiceRole.entities.SolicitacaoAprovacao.update(solicitacaoId, {
+              status: current.status,
+              bloqueio_operacional: current.bloqueio_operacional,
+              dados_propostos: current.dados_propostos,
+            });
+          } catch (rollbackError) {
+            reportApprovalFailure('Falha no rollback do workflow financeiro', rollbackError, { action, solicitacao_id: solicitacaoId });
+          }
+        }
+        return Response.json({ error: 'Persistencia ou auditoria da conciliacao falhou' }, { status: 503 });
       }
     }
 

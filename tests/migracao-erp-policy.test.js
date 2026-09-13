@@ -20,28 +20,40 @@ import {
   stripSegredosMigracao,
 } from '../src/components/lib/migracaoErpPolicy.js';
 import { assertTituloOnCreate, assertTituloOnUpdate } from '../src/components/lib/financeiroTituloPolicy.js';
+import {
+  applyManualWorkflowTransition,
+} from '../base44/functions/_lib/financeiro/manualReconciliationApprovalPolicy/entry.ts';
 
 const loadSolicitacoesAprovacaoHandler = async () => {
   const original = await readFile(new URL('../base44/functions/solicitacoesAprovacao/entry.ts', import.meta.url), 'utf8');
   const instrumented = original
     .replace(/^import \{ createClientFromRequest \}[^\n]+\n/, 'const createClientFromRequest = () => globalThis.__approvalMockClient;\n')
-    .replace('record: Record<string, unknown> = {}', 'record = {}')
-    .replace('input: Record<string, unknown> = {}', 'input = {}')
+    .replace(/import \{[\s\S]*?\} from '\.\.\/_lib\/financeiro\/manualReconciliationApprovalPolicy\/entry\.ts';\n/, 'const { MANUAL_RECONCILIATION_TYPE, applyManualWorkflowTransition, auditManualStaging, buildManualRecord, firstText, isManualReconciliationRequest, resolveManualScope } = globalThis.__manualApprovalPolicy;\n')
     .replace('Deno.serve(async (req) => {', 'globalThis.__captureApprovalHandler(async (req) => {');
   let handler = null;
   globalThis.__captureApprovalHandler = (candidate) => { handler = candidate; };
+  globalThis.__manualApprovalPolicy = await import('../base44/functions/_lib/financeiro/manualReconciliationApprovalPolicy/entry.ts');
   await import(`data:text/javascript;base64,${Buffer.from(instrumented).toString('base64')}#${Date.now()}-${Math.random()}`);
   delete globalThis.__captureApprovalHandler;
+  delete globalThis.__manualApprovalPolicy;
   assert.equal(typeof handler, 'function');
   return handler;
 };
 
-const makeApprovalClient = ({ existing = [], permissions = ['conciliar'], empresaGroup = 'g1', auditFails = false } = {}) => {
-  const state = { created: [], deleted: [], audits: [] };
-  const user = { id: 'u1', full_name: 'Analista', perfil_acesso_id: 'p1', group_id: 'g1', empresa_atual_id: 'e1' };
+const makeApprovalClient = ({ existing = [], current = null, permissions = ['conciliar'], empresaGroup = 'g1', auditFails = false, updateFails = false, userId = 'u1' } = {}) => {
+  const state = { created: [], deleted: [], audits: [], updates: [] };
+  const user = { id: userId, full_name: 'Analista', perfil_acesso_id: 'p1', group_id: 'g1', empresa_atual_id: 'e1' };
+  let stored = current || existing[0] || null;
   const solicitacoes = {
     filter: async () => existing,
+    get: async () => stored,
     create: async (record) => { const created = { id: 'sa-created', ...record }; state.created.push(created); return created; },
+    update: async (id, patch) => {
+      if (updateFails) throw new Error('update down');
+      stored = { ...stored, ...patch, id };
+      state.updates.push({ id, patch });
+      return stored;
+    },
     delete: async (id) => { state.deleted.push(id); },
   };
   const client = {
@@ -428,14 +440,16 @@ test('estrutura persistente existente fica fora das entidades financeiras operac
 
 test('backend isola conciliacao financeira do fluxo comercial generico', async () => {
   const approvals = await readFile(new URL('../base44/functions/solicitacoesAprovacao/entry.ts', import.meta.url), 'utf8');
+  const policy = await readFile(new URL('../base44/functions/_lib/financeiro/manualReconciliationApprovalPolicy/entry.ts', import.meta.url), 'utf8');
+  const specializedContract = approvals + policy;
   assert.match(approvals, /action === 'createManualReconciliation'/);
   assert.match(approvals, /action === 'listManualReconciliations'/);
   assert.match(approvals, /hasPermission\(base44, user, 'Financeiro', 'Migracao', 'conciliar'\)/);
   assert.match(approvals, /hasPermission\(base44, user, 'Financeiro', 'Migracao', 'aprovar'\)/);
-  assert.match(approvals, /scopeType !== 'empresa' \|\| !groupId \|\| !empresaId/);
-  assert.match(approvals, /Empresa\.get\(empresaId\)/);
+  assert.match(specializedContract, /scopeType !== 'empresa' \|\| !groupId \|\| !empresaId/);
+  assert.match(specializedContract, /Empresa\.get\(empresaId\)/);
   assert.match(approvals, /idempotency_key: prepared\.record\.idempotency_key/);
-  assert.match(approvals, /sanitizeManualValue\(envelope\)/);
+  assert.match(specializedContract, /sanitizeManualValue\(envelope\)/);
   assert.match(approvals, /Use a acao financeira especializada/);
   assert.match(approvals, /Conciliacao financeira nao pode ser decidida pelo fluxo comercial generico/);
   assert.match(approvals, /filter\(\(item\) => !isManualReconciliationRequest\(item\)\)/);
@@ -508,6 +522,141 @@ test('backend executa staging financeiro com contexto, RBAC, idempotencia e roll
   const auditDown = makeApprovalClient({ auditFails: true });
   assert.equal((await invoke(auditDown.client, payload)).status, 503);
   assert.deepEqual(auditDown.state.deleted, ['sa-created']);
+  delete globalThis.__approvalMockClient;
+});
+
+test('politica backend exige tres usuarios e mantem aprovacao no staging', () => {
+  const staging = buildPendingManualReconciliation({
+    group_id: 'g1', empresa_id: 'e1', codigo_legado: 'titulo-1',
+  }, { registradoPor: 'u1', registradoEm: '2026-09-13T12:00:00.000Z' });
+  const initial = {
+    id: 'sa-1',
+    ...buildManualReconciliationApprovalRequest(staging, {
+      solicitanteId: 'u1', timestamp: '2026-09-13T12:05:00.000Z',
+    }),
+  };
+  const evidenceInput = {
+    evidencia: { id: 'ev-1', tipo: 'comprovante<script>', referencia: 'arquivo-controlado' },
+  };
+  const withEvidence = applyManualWorkflowTransition(
+    initial,
+    'attachManualReconciliationEvidence',
+    evidenceInput,
+    { id: 'u1' },
+    '2026-09-13T13:00:00.000Z',
+  ).record;
+  assert.equal(withEvidence.dados_propostos.envelope_staging.evidencias_conciliacao[0].tipo, 'comprovante');
+  assert.equal(
+    applyManualWorkflowTransition(withEvidence, 'attachManualReconciliationEvidence', evidenceInput, { id: 'u1' }).reused,
+    true,
+  );
+  assert.throws(
+    () => applyManualWorkflowTransition(withEvidence, 'reviewManualReconciliation', {
+      decisao: 'ABERTO', justificativa: 'Documento insuficiente.',
+    }, { id: 'u1' }),
+    /Registrante nao pode revisar/,
+  );
+  const reviewed = applyManualWorkflowTransition(withEvidence, 'reviewManualReconciliation', {
+    decisao: 'ABERTO', justificativa: 'Documento insuficiente.',
+  }, { id: 'u2' }, '2026-09-13T14:00:00.000Z').record;
+  assert.throws(
+    () => applyManualWorkflowTransition(reviewed, 'approveManualReconciliation', {
+      decisao: 'ABERTO', justificativa: 'Confirmado.', confirmacao_humana: true,
+    }, { id: 'u2' }),
+    /distinto do registrante e revisor/,
+  );
+  const approved = applyManualWorkflowTransition(reviewed, 'approveManualReconciliation', {
+    decisao: 'ABERTO', justificativa: 'Segunda conferencia confirma a decisao.', confirmacao_humana: true,
+  }, { id: 'u3' }, '2026-09-13T15:00:00.000Z').record;
+  const envelope = approved.dados_propostos.envelope_staging;
+  assert.equal(approved.status, 'pendente');
+  assert.equal(approved.bloqueio_operacional, true);
+  assert.equal(envelope.etapa_conciliacao, 'aprovada_aguardando_promocao_manual');
+  assert.equal(envelope.status_migracao, MIGRACAO_STATUS_PENDING_MANUAL_RECONCILIATION);
+  assert.equal(envelope.destino_migracao, 'staging');
+  assert.equal(envelope.confirmado, false);
+  assert.equal(envelope.bloqueio_operacional, true);
+});
+
+test('backend persiste workflow especializado com RBAC, contexto e rollback', async () => {
+  const handler = await loadSolicitacoesAprovacaoHandler();
+  const staging = buildPendingManualReconciliation({
+    group_id: 'g1', empresa_id: 'e1', codigo_legado: 'titulo-2',
+  }, { registradoPor: 'u1', registradoEm: '2026-09-13T12:00:00.000Z' });
+  const initial = {
+    id: 'sa-2',
+    ...buildManualReconciliationApprovalRequest(staging, {
+      solicitanteId: 'u1', timestamp: '2026-09-13T12:05:00.000Z',
+    }),
+  };
+  const invoke = async (client, payload) => {
+    globalThis.__approvalMockClient = client;
+    const response = await handler({ json: async () => payload });
+    return { status: response.status, body: await response.json() };
+  };
+  const basePayload = {
+    group_id: 'g1', empresa_id: 'e1', scope_type: 'empresa', solicitacao_id: 'sa-2',
+  };
+
+  const denied = makeApprovalClient({ current: initial, permissions: [] });
+  assert.equal((await invoke(denied.client, {
+    ...basePayload, action: 'attachManualReconciliationEvidence',
+    evidencia: { id: 'ev-2', tipo: 'comprovante', referencia: 'arquivo' },
+  })).status, 403);
+  assert.equal(denied.state.updates.length, 0);
+
+  const wrongContext = makeApprovalClient({ current: { ...initial, empresa_id: 'e2' } });
+  assert.equal((await invoke(wrongContext.client, {
+    ...basePayload, action: 'attachManualReconciliationEvidence',
+    evidencia: { id: 'ev-2', tipo: 'comprovante', referencia: 'arquivo' },
+  })).status, 403);
+  assert.equal(wrongContext.state.updates.length, 0);
+
+  const allowed = makeApprovalClient({ current: initial });
+  const attached = await invoke(allowed.client, {
+    ...basePayload, action: 'attachManualReconciliationEvidence',
+    evidencia: { id: 'ev-2', tipo: 'comprovante', referencia: 'arquivo' },
+  });
+  assert.equal(attached.status, 200);
+  assert.equal(attached.body.record.status, 'pendente');
+  assert.equal(attached.body.record.dados_propostos.envelope_staging.etapa_conciliacao, 'evidencia_anexada');
+  assert.equal(allowed.state.audits[0].acao, 'Evidencia');
+
+  const reviewer = makeApprovalClient({ current: attached.body.record, userId: 'u2' });
+  const reviewed = await invoke(reviewer.client, {
+    ...basePayload, action: 'reviewManualReconciliation',
+    decisao: 'ABERTO', justificativa: 'Documento nao comprova liquidacao.',
+  });
+  assert.equal(reviewed.status, 200);
+  assert.equal(reviewed.body.record.dados_propostos.envelope_staging.etapa_conciliacao, 'aguardando_aprovacao_final');
+  assert.equal(reviewer.state.audits[0].acao, 'Revisao');
+
+  const sameReviewer = makeApprovalClient({ current: reviewed.body.record, permissions: ['aprovar'], userId: 'u2' });
+  assert.equal((await invoke(sameReviewer.client, {
+    ...basePayload, action: 'approveManualReconciliation',
+    decisao: 'ABERTO', justificativa: 'Confirmado.', confirmacao_humana: true,
+  })).status, 409);
+  assert.equal(sameReviewer.state.updates.length, 0);
+
+  const approver = makeApprovalClient({ current: reviewed.body.record, permissions: ['aprovar'], userId: 'u3' });
+  const approved = await invoke(approver.client, {
+    ...basePayload, action: 'approveManualReconciliation',
+    decisao: 'ABERTO', justificativa: 'Segunda conferencia confirma a decisao.', confirmacao_humana: true,
+  });
+  assert.equal(approved.status, 200);
+  assert.equal(approved.body.record.status, 'pendente');
+  assert.equal(approved.body.record.bloqueio_operacional, true);
+  assert.equal(approved.body.record.dados_propostos.envelope_staging.etapa_conciliacao, 'aprovada_aguardando_promocao_manual');
+  assert.equal(approved.body.record.dados_propostos.envelope_staging.confirmado, false);
+  assert.equal(approver.state.audits[0].acao, 'Aprovacao');
+
+  const auditDown = makeApprovalClient({ current: initial, auditFails: true });
+  assert.equal((await invoke(auditDown.client, {
+    ...basePayload, action: 'attachManualReconciliationEvidence',
+    evidencia: { id: 'ev-3', tipo: 'comprovante', referencia: 'arquivo-2' },
+  })).status, 503);
+  assert.equal(auditDown.state.updates.length, 2);
+  assert.deepEqual(auditDown.state.updates[1].patch.dados_propostos, initial.dados_propostos);
   delete globalThis.__approvalMockClient;
 });
 
