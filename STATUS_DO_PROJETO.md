@@ -7170,3 +7170,17 @@ Checklist inicial:
 - O build mantem somente os avisos conhecidos de imports mistos, bundle principal e Browserslist.
 - Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
 - Proximo passo: tipar `comprasOrdemPolicy.js`, atual politica compartilhada priorizada com 74 diagnosticos. `Contratos.jsx` sera tratado separadamente devido ao tamanho de 1.575 linhas.
+
+### Gate 18 - Contrato tipado das Ordens de Compra
+
+- Objetivo: reduzir a divida de typecheck da politica de Compras sem alterar o fluxo solicitacao, cotacao, OC, recebimento, estoque e financeiro.
+- Causa raiz: registros de OC, itens, titulos e patches com valor padrao `{}` eram inferidos sem propriedades, concentrando 74 diagnosticos.
+- Implementacao: JSDoc local passou a descrever registros, opcoes de criacao/atualizacao, movimento de recebimento, Conta a Pagar e stores. Nao foi usado `any`, `ts-ignore` ou desativacao de `checkJs`.
+- Multiempresa preservada: Empresa continua obrigatoria para OC, recebimento e titulo; Grupo e Empresa continuam propagados aos movimentos e ao financeiro.
+- Comportamento preservado: idempotencia por solicitacao/cotacao, bloqueio de OC sem itens, recebimento unico, classificacao de transicao e permissoes granulares continuam inalterados.
+- Resultado isolado: 74 diagnosticos antes e zero depois.
+- Resultado global: 2.716 diagnosticos antes e 2.640 depois, reducao liquida de 76. O typecheck permanece habilitado e falha apenas pela divida historica registrada e autorizada.
+- Validacao: 5/5 testes focados e 252/252 testes globais aprovados; ESLint direcionado e global sem diagnosticos; `audit:baseline`, build completo e `git diff --check` aprovados.
+- O build mantem somente os avisos conhecidos de imports mistos, bundle principal e Browserslist.
+- Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
+- Proximo passo: tipar `crmOportunidadePolicy.js`, atual politica compartilhada priorizada com 71 diagnosticos, sem misturar a refatoracao ampla de `Contratos.jsx`.

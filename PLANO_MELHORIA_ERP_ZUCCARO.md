@@ -629,3 +629,16 @@ Lote concluido em 2026-09-13 na politica compartilhada de conversas e Chatbot, s
 
 Proxima frente: tipar `comprasOrdemPolicy.js`, politica compartilhada com 74 diagnosticos e testes existentes. A pagina `Contratos.jsx`, com 79 diagnosticos e 1.575 linhas, exige lote proprio de refatoracao e nao sera misturada a esta sequencia curta.
 
+### Contratos JSDoc - politica de Ordens de Compra
+
+Lote concluido em 2026-09-13 na politica compartilhada de Compras, sem alterar criacao, recebimento, movimentacao de estoque, Conta a Pagar ou permissoes.
+
+- Um contrato `ComprasRecord` descreve OC, solicitacao, cotacao, itens, fornecedor, valores, documentos, contexto e vinculos financeiros; opcoes por operacao foram tipadas sem `any`.
+- O typecheck isolado de `comprasOrdemPolicy.js` passou de 74 diagnosticos para zero.
+- O typecheck global caiu de 2.716 para 2.640 diagnosticos, reducao liquida de 76, sem deslocar falhas para o cliente local ou para a tela de Ordens de Compra.
+- Permanecem iguais as chaves idempotentes, o bloqueio sem Empresa, o recebimento unico, o carimbo Grupo/Empresa, a geracao de movimento e titulo e a classificacao granular de permissoes.
+- A politica encerrou com 282 linhas, sem necessidade de extracao e sem criar modulo, entidade ou funcionalidade paralela.
+- Nenhum dado, entidade, recurso Base44, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente: tipar `crmOportunidadePolicy.js`, politica compartilhada com 71 diagnosticos e testes existentes. A pagina grande de Contratos continua reservada para refatoracao propria.
+

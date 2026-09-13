@@ -1,9 +1,47 @@
+/**
+ * @typedef {Record<string, unknown> & {
+ *   id?: string | number,
+ *   empresa_id?: unknown,
+ *   group_id?: unknown,
+ *   grupo_id?: unknown,
+ *   status?: unknown,
+ *   origem?: unknown,
+ *   idempotency_key?: unknown,
+ *   solicitacao_compra_id?: unknown,
+ *   cotacao_id?: unknown,
+ *   fornecedor_id?: unknown,
+ *   fornecedor_nome?: unknown,
+ *   itens?: ComprasRecord[],
+ *   produto_id?: unknown,
+ *   descricao?: unknown,
+ *   quantidade_solicitada?: unknown,
+ *   quantidade_recebida?: unknown,
+ *   valor_unitario?: unknown,
+ *   valor_total?: unknown,
+ *   valor?: unknown,
+ *   numero_oc?: unknown,
+ *   nota_fiscal_entrada?: unknown,
+ *   data_entrega_real?: unknown,
+ *   data_prevista_entrega?: unknown,
+ *   origem_documento_id?: unknown,
+ *   ordem_compra_id?: unknown,
+ *   origem_tipo?: unknown,
+ * }} ComprasRecord
+ * @typedef {{ record?: ComprasRecord, orders?: ComprasRecord[] }} OrdemCreateOptions
+ * @typedef {{ before?: ComprasRecord, patch?: ComprasRecord }} OrdemUpdateOptions
+ * @typedef {{ oc?: ComprasRecord, item?: ComprasRecord, dataRecebimento?: unknown }} MovimentacaoOptions
+ * @typedef {{ oc?: ComprasRecord, dataVencimento?: unknown }} ContaPagarOptions
+ */
+
+/** @param {...unknown} values */
 const firstText = (...values) => values.map((value) => String(value || '').trim()).find(Boolean) || '';
 
 export const COMPRAS_ENTITIES = ['OrdemCompra', 'SolicitacaoCompra', 'Cotacao'];
 
+/** @param {string} entityName */
 export const isComprasEntity = (entityName) => COMPRAS_ENTITIES.includes(entityName);
 
+/** @param {ComprasRecord} record */
 export const ocIdempotencyKey = (record = {}) => {
   const explicit = firstText(record.idempotency_key);
   if (explicit) return explicit;
@@ -18,6 +56,10 @@ export const ocIdempotencyKey = (record = {}) => {
   return '';
 };
 
+/**
+ * @param {ComprasRecord} record
+ * @param {ComprasRecord[]} orders
+ */
 export const findDuplicateOc = (record = {}, orders = []) => {
   const key = ocIdempotencyKey(record);
   if (!key) return null;
@@ -28,6 +70,7 @@ export const findDuplicateOc = (record = {}, orders = []) => {
   }) || null;
 };
 
+/** @param {OrdemCreateOptions} options */
 export const assertOrdemCompraOnCreate = ({ record = {}, orders = [] } = {}) => {
   if (!firstText(record.empresa_id)) {
     throw new Error('Empresa obrigatoria para ordem de compra.');
@@ -42,6 +85,7 @@ export const assertOrdemCompraOnCreate = ({ record = {}, orders = [] } = {}) => 
   return { reuse: null, record: stamped };
 };
 
+/** @param {{ record?: ComprasRecord }} options */
 export const assertSolicitacaoCompraOnCreate = ({ record = {} } = {}) => {
   if (!firstText(record.group_id, record.grupo_id) && !firstText(record.empresa_id)) {
     throw new Error('Grupo ou empresa obrigatorios para solicitacao de compra.');
@@ -49,6 +93,7 @@ export const assertSolicitacaoCompraOnCreate = ({ record = {} } = {}) => {
   return { reuse: null, record };
 };
 
+/** @param {{ record?: ComprasRecord }} options */
 export const assertCotacaoOnCreate = ({ record = {} } = {}) => {
   if (!firstText(record.group_id, record.grupo_id) && !firstText(record.empresa_id)) {
     throw new Error('Grupo ou empresa obrigatorios para cotacao.');
@@ -56,6 +101,11 @@ export const assertCotacaoOnCreate = ({ record = {} } = {}) => {
   return { reuse: null, record };
 };
 
+/**
+ * @param {string} entityName
+ * @param {ComprasRecord} record
+ * @param {{ ordensCompra?: ComprasRecord[] }} stores
+ */
 export const applyComprasCreate = (entityName, record = {}, stores = {}) => {
   if (entityName === 'OrdemCompra') {
     return assertOrdemCompraOnCreate({ record, orders: stores.ordensCompra });
@@ -69,11 +119,13 @@ export const applyComprasCreate = (entityName, record = {}, stores = {}) => {
   return { reuse: null, record };
 };
 
+/** @param {ComprasRecord} oc */
 export const isOcRecebida = (oc = {}) => {
   const status = String(oc.status || '').toLowerCase();
   return status.includes('receb');
 };
 
+/** @param {OrdemUpdateOptions} options */
 export const assertRecebimentoOc = ({ before = {}, patch = {} } = {}) => {
   if (!firstText(before.empresa_id || patch.empresa_id)) {
     throw new Error('Empresa obrigatoria para receber ordem de compra.');
@@ -102,6 +154,7 @@ export const assertRecebimentoOc = ({ before = {}, patch = {} } = {}) => {
   };
 };
 
+/** @param {MovimentacaoOptions} options */
 export const stampMovimentacaoRecebimentoOc = ({ oc = {}, item = {}, dataRecebimento } = {}) => ({
   produto_id: item.produto_id,
   produto_descricao: item.descricao,
@@ -120,8 +173,13 @@ export const stampMovimentacaoRecebimentoOc = ({ oc = {}, item = {}, dataRecebim
   responsavel: 'Sistema',
 });
 
+/** @param {unknown} status */
 const normalizeOcStatus = (status) => String(status || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
+/**
+ * @param {unknown} beforeStatus
+ * @param {unknown} nextStatus
+ */
 export const classifyOcStatusTransition = (beforeStatus, nextStatus) => {
   const before = normalizeOcStatus(beforeStatus);
   const next = normalizeOcStatus(nextStatus);
@@ -133,6 +191,7 @@ export const classifyOcStatusTransition = (beforeStatus, nextStatus) => {
   return 'editar';
 };
 
+/** @param {string} action */
 export const ocStatusPermissionActions = (action) => {
   if (action === 'receber') return ['receber'];
   if (action === 'aprovar') return ['aprovar'];
@@ -141,6 +200,7 @@ export const ocStatusPermissionActions = (action) => {
   return ['editar'];
 };
 
+/** @param {ContaPagarOptions} options */
 export const stampContaPagarRecebimentoOc = ({ oc = {}, dataVencimento } = {}) => {
   if (!firstText(oc.id)) throw new Error('OC obrigatoria para gerar Conta a Pagar.');
   if (!firstText(oc.empresa_id)) throw new Error('Empresa obrigatoria para Conta a Pagar da OC.');
@@ -172,6 +232,10 @@ export const stampContaPagarRecebimentoOc = ({ oc = {}, dataVencimento } = {}) =
   };
 };
 
+/**
+ * @param {ComprasRecord} oc
+ * @param {ComprasRecord[]} titles
+ */
 export const findContaPagarOc = (oc = {}, titles = []) => {
   const ocId = firstText(oc.id);
   if (!ocId) return null;
@@ -185,6 +249,7 @@ export const findContaPagarOc = (oc = {}, titles = []) => {
   )) || null;
 };
 
+/** @param {OrdemUpdateOptions} options */
 export const assertOrdemCompraOnUpdate = ({ before = {}, patch = {} } = {}) => {
   const statusChanging = Object.prototype.hasOwnProperty.call(patch, 'status');
   let action = statusChanging
