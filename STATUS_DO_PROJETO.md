@@ -7268,3 +7268,17 @@ Checklist inicial:
 - O build mantem somente os avisos conhecidos de imports mistos, bundle principal e Browserslist.
 - Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
 - Proximo passo: tipar `appMotoristaPolicy.js`, politica compartilhada com 33 diagnosticos e 329 linhas; arquivos grandes permanecem separados.
+
+### Gate 18 - Contrato tipado do App Motorista
+
+- Objetivo: reduzir a divida de typecheck da politica do motorista sem alterar atribuicao, rota, comprovacao, ocorrencias, estorno ou sincronizacao offline.
+- Causa raiz: registros de usuario, motorista, entrega, localizacao e opcoes de operacao eram inferidos sem seus campos, concentrando 33 diagnosticos.
+- Implementacao: JSDoc local passou a descrever os registros, enderecos, contatos, comprovantes, patches, historico, localizacao e armazenamento da fila offline. Nenhum `any`, `ts-ignore` ou desligamento de `checkJs` foi introduzido.
+- Multiempresa e seguranca preservadas: escopo e motorista atribuido continuam obrigatorios; a politica nao amplia leitura nem gravacao entre Grupo ou Empresas.
+- Comportamento preservado: sequencia da rota, GPS, comprovacao total ou parcial, ocorrencia, estorno, historico, idempotencia e retomada offline mantem os mesmos contratos de runtime.
+- Resultado isolado: 33 diagnosticos antes e zero depois.
+- Resultado global: 2.331 diagnosticos antes e 2.298 depois, reducao liquida exata de 33. O typecheck permanece habilitado e falha apenas pela divida historica registrada e autorizada.
+- Validacao: 5/5 testes focados e 252/252 testes globais aprovados; ESLint direcionado e global sem diagnosticos; `audit:baseline`, build completo e `git diff --check` aprovados.
+- O build mantem somente os avisos conhecidos de imports mistos, bundle principal e Browserslist.
+- Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
+- Proximo passo: tipar `viradaProducaoPolicy.js`, politica compartilhada com 290 linhas; arquivos grandes permanecem separados.

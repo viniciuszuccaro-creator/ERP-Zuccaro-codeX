@@ -720,3 +720,16 @@ Lote concluido em 2026-09-13 na politica compartilhada de titulos, sem alterar c
 
 Proxima frente: tipar `appMotoristaPolicy.js`, politica compartilhada com 33 diagnosticos e 329 linhas. O cliente local e as telas acima do limite permanecem reservados para lotes proprios.
 
+### Contratos JSDoc - politica do App Motorista
+
+Lote concluido em 2026-09-13 na politica compartilhada do App Motorista, sem alterar atribuicao, rota, comprovantes, ocorrencias, estorno ou operacao offline.
+
+- Contratos locais descrevem usuario, motorista, entrega, localizacao, comprovante, historico, patches e fila offline sem `any`, `ts-ignore` ou desativacao de `checkJs`.
+- O typecheck isolado de `appMotoristaPolicy.js` passou de 33 diagnosticos para zero.
+- O typecheck global caiu de 2.331 para 2.298 diagnosticos, reducao liquida exata de 33, sem transferir falhas para o App, expedicao ou cliente local.
+- Permanecem iguais a validacao de motorista atribuido, escopo, GPS, comprovacao parcial, ocorrencia, estorno e atualizacao de status.
+- Idempotencia e retomada da fila offline continuam preservadas; a politica encerrou com 433 linhas apos a documentacao dos contratos.
+- Nenhum dado, entidade, recurso Base44, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente: tipar `viradaProducaoPolicy.js`, politica compartilhada com 290 linhas. O cliente local e as telas acima do limite permanecem reservados para lotes proprios.
+

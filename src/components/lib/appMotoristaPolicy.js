@@ -1,3 +1,70 @@
+/**
+ * @typedef {Record<string, unknown> & {
+ *   id?: string | number,
+ *   status?: string,
+ *   usuario_id?: unknown,
+ *   motorista_id?: unknown,
+ *   motorista_usuario_id?: unknown,
+ *   motorista_email?: unknown,
+ *   motorista?: unknown,
+ *   motorista_nome?: unknown,
+ *   colaborador_id?: unknown,
+ *   email?: string,
+ *   full_name?: string,
+ *   cliente_nome?: string,
+ *   numero_pedido?: string | number,
+ *   placa?: string,
+ *   tipo_frete?: unknown,
+ *   comprovante_entrega?: MotoristaRecord,
+ *   nome_recebedor?: unknown,
+ *   foto_comprovante?: unknown,
+ *   assinatura_digital?: unknown,
+ *   documento_recebedor?: unknown,
+ *   historico_status?: MotoristaRecord[],
+ *   sequencia_rota?: string | number,
+ *   ordem_sequencia?: string | number,
+ *   sequencia?: string | number,
+ *   endereco_entrega_completo?: MotoristaRecord,
+ *   contato_entrega?: MotoristaRecord,
+ *   logradouro?: string,
+ *   numero?: string | number,
+ *   bairro?: string,
+ *   cidade?: string,
+ *   estado?: string,
+ *   cep?: string,
+ *   mapa_url?: string,
+ *   telefone?: string,
+ *   volumes?: string | number,
+ *   peso_total_kg?: number,
+ *   data_saida?: unknown,
+ *   created_date?: unknown,
+ *   updated_date?: unknown,
+ *   empresa_id?: unknown,
+ *   group_id?: unknown,
+ *   idempotency_key?: unknown,
+ *   entrega_parcial?: MotoristaRecord,
+ *   entrega_frustrada?: MotoristaRecord,
+ *   tentativa_numero?: unknown,
+ *   logistica_reversa?: MotoristaRecord,
+ *   motivo?: unknown,
+ *   quantidade_devolvida?: unknown,
+ *   valor_devolvido?: unknown,
+ *   patch?: MotoristaRecord,
+ *   tipo?: unknown,
+ *   entregaId?: unknown,
+ * }} MotoristaRecord
+ * @typedef {Record<string, unknown> & { latitude?: unknown, longitude?: unknown }} MotoristaLocation
+ * @typedef {{ getItem?: (key: string) => string | null, setItem?: (key: string, value: string) => void }} MotoristaStorage
+ * @typedef {{ tipo?: unknown, entregaId?: unknown, nonce?: unknown }} MotoristaActionKeyOptions
+ * @typedef {{ entrega?: MotoristaRecord, user?: MotoristaRecord, motoristas?: MotoristaRecord[] }} MotoristaActionOptions
+ * @typedef {{ entrega?: MotoristaRecord, user?: MotoristaRecord, localizacao?: MotoristaLocation | null, motoristas?: MotoristaRecord[] }} MotoristaPatchOptions
+ * @typedef {{ entrega?: MotoristaRecord, user?: MotoristaRecord, localizacao?: MotoristaLocation | null, comprovante?: MotoristaRecord, parcial?: boolean, quantidade_entregue?: unknown, motoristas?: MotoristaRecord[] }} MotoristaConfirmacaoOptions
+ * @typedef {{ entrega?: MotoristaRecord, user?: MotoristaRecord, localizacao?: MotoristaLocation | null, motivo?: unknown, foto?: unknown, motoristas?: MotoristaRecord[] }} MotoristaOcorrenciaOptions
+ * @typedef {{ entrega?: MotoristaRecord, user?: MotoristaRecord, localizacao?: MotoristaLocation | null, motivo?: unknown, quantidade?: unknown, valor?: unknown, motoristas?: MotoristaRecord[] }} MotoristaReversaOptions
+ * @typedef {{ before?: MotoristaRecord, patch?: MotoristaRecord, user?: MotoristaRecord | null, motoristas?: MotoristaRecord[] }} MotoristaUpdateOptions
+ */
+
+/** @param {...unknown} values */
 const firstText = (...values) => values.map((value) => String(value || '').trim()).find(Boolean) || '';
 
 export const MOTORISTA_QUEUE_KEY = 'erp_zuccaro_motorista_sync_queue';
@@ -10,8 +77,10 @@ export const STATUS_ENTREGA_MOTORISTA = [
   'Entrega Parcial',
 ];
 
+/** @param {MotoristaRecord} record */
 export const statusOf = (record = {}) => String(record.status || '').toLowerCase();
 
+/** @param {unknown} status */
 export const isStatusAtivoMotorista = (status) => {
   const value = String(status || '');
   return STATUS_ENTREGA_MOTORISTA.some((item) => item.toLowerCase() === value.toLowerCase())
@@ -19,6 +88,10 @@ export const isStatusAtivoMotorista = (status) => {
     || statusOf({ status: value }).includes('saiu');
 };
 
+/**
+ * @param {MotoristaRecord} user
+ * @param {MotoristaRecord[]} motoristas
+ */
 export const resolveMotoristaIdsForUser = (user = {}, motoristas = []) => {
   const userId = firstText(user.id, user.usuario_id);
   const email = firstText(user.email).toLowerCase();
@@ -36,6 +109,11 @@ export const resolveMotoristaIdsForUser = (user = {}, motoristas = []) => {
   return [...ids].filter(Boolean);
 };
 
+/**
+ * @param {MotoristaRecord} entrega
+ * @param {MotoristaRecord} user
+ * @param {MotoristaRecord[]} motoristas
+ */
 export const entregaAtribuidaAoMotoristaLocal = (entrega = {}, user = {}, motoristas = []) => {
   if (!entrega?.id || !user) return false;
   const allowedIds = resolveMotoristaIdsForUser(user, motoristas);
@@ -57,6 +135,7 @@ export const entregaAtribuidaAoMotoristaLocal = (entrega = {}, user = {}, motori
 
 export const entregaAtribuidaAoMotorista = entregaAtribuidaAoMotoristaLocal;
 
+/** @param {MotoristaRecord} record */
 export const hasProvaEntregaLocal = (record = {}) => {
   const prova = record.comprovante_entrega || {};
   const nome = firstText(prova.nome_recebedor);
@@ -67,6 +146,11 @@ export const hasProvaEntregaLocal = (record = {}) => {
 
 export const hasProvaEntrega = hasProvaEntregaLocal;
 
+/**
+ * @param {MotoristaRecord[]} entregas
+ * @param {MotoristaRecord} user
+ * @param {MotoristaRecord[]} motoristas
+ */
 export const filtrarEntregasDoMotorista = (entregas = [], user = {}, motoristas = []) => (
   (Array.isArray(entregas) ? entregas : []).filter((entrega) => (
     entregaAtribuidaAoMotoristaLocal(entrega, user, motoristas)
@@ -74,6 +158,7 @@ export const filtrarEntregasDoMotorista = (entregas = [], user = {}, motoristas 
   ))
 );
 
+/** @param {MotoristaRecord[]} entregas */
 export const ordenarEntregasRota = (entregas = []) => (
   [...(Array.isArray(entregas) ? entregas : [])].sort((a, b) => {
     const sa = Number(a.sequencia_rota || a.ordem_sequencia || a.sequencia || 9999);
@@ -83,11 +168,17 @@ export const ordenarEntregasRota = (entregas = []) => (
   })
 );
 
+/**
+ * @param {MotoristaRecord[]} entregas
+ * @param {MotoristaRecord} user
+ * @param {MotoristaRecord[]} motoristas
+ */
 export const proximaParada = (entregas = [], user = {}, motoristas = []) => {
   const ordenadas = ordenarEntregasRota(filtrarEntregasDoMotorista(entregas, user, motoristas));
   return ordenadas.find((item) => !statusOf(item).includes('entregue') && !statusOf(item).includes('frustr') && !statusOf(item).includes('devolv')) || null;
 };
 
+/** @param {MotoristaActionKeyOptions} options */
 export const motoristaActionKey = ({ tipo, entregaId, nonce = '' } = {}) => {
   const t = firstText(tipo);
   const id = firstText(entregaId);
@@ -95,6 +186,13 @@ export const motoristaActionKey = ({ tipo, entregaId, nonce = '' } = {}) => {
   return ['motorista', t, id, firstText(nonce)].filter(Boolean).join('|');
 };
 
+/**
+ * @param {MotoristaRecord} entrega
+ * @param {string} status
+ * @param {MotoristaRecord} user
+ * @param {MotoristaLocation | null} localizacao
+ * @param {unknown} observacao
+ */
 export const buildHistoricoStatus = (entrega = {}, status, user = {}, localizacao = null, observacao = '') => ([
   ...(Array.isArray(entrega.historico_status) ? entrega.historico_status : []),
   {
@@ -106,6 +204,7 @@ export const buildHistoricoStatus = (entrega = {}, status, user = {}, localizaca
   },
 ]);
 
+/** @param {MotoristaActionOptions} options */
 export const assertMotoristaPodeAgir = ({ entrega = {}, user = {}, motoristas = [] } = {}) => {
   if (!firstText(user?.id, user?.email, user?.full_name)) {
     throw new Error('Motorista nao autenticado.');
@@ -116,6 +215,7 @@ export const assertMotoristaPodeAgir = ({ entrega = {}, user = {}, motoristas = 
   return true;
 };
 
+/** @param {MotoristaPatchOptions} options */
 export const buildChegadaPatch = ({ entrega = {}, user = {}, localizacao = null, motoristas = [] } = {}) => {
   assertMotoristaPodeAgir({ entrega, user, motoristas });
   return {
@@ -127,6 +227,7 @@ export const buildChegadaPatch = ({ entrega = {}, user = {}, localizacao = null,
   };
 };
 
+/** @param {MotoristaConfirmacaoOptions} options */
 export const buildConfirmacaoPatch = ({
   entrega = {},
   user = {},
@@ -178,6 +279,7 @@ export const buildConfirmacaoPatch = ({
   return stamped;
 };
 
+/** @param {MotoristaOcorrenciaOptions} options */
 export const buildOcorrenciaPatch = ({
   entrega = {},
   user = {},
@@ -202,6 +304,7 @@ export const buildOcorrenciaPatch = ({
   };
 };
 
+/** @param {MotoristaReversaOptions} options */
 export const buildReversaPatch = ({
   entrega = {},
   user = {},
@@ -229,6 +332,7 @@ export const buildReversaPatch = ({
   };
 };
 
+/** @param {MotoristaPatchOptions} options */
 export const buildInicioPatch = ({ entrega = {}, user = {}, localizacao = null, motoristas = [] } = {}) => {
   assertMotoristaPodeAgir({ entrega, user, motoristas });
   return {
@@ -238,6 +342,7 @@ export const buildInicioPatch = ({ entrega = {}, user = {}, localizacao = null, 
   };
 };
 
+/** @param {MotoristaStorage} storage */
 export const readMotoristaQueue = (storage = globalThis.localStorage) => {
   if (!storage?.getItem) return [];
   try {
@@ -249,12 +354,20 @@ export const readMotoristaQueue = (storage = globalThis.localStorage) => {
   }
 };
 
+/**
+ * @param {MotoristaRecord[]} queue
+ * @param {MotoristaStorage} storage
+ */
 export const writeMotoristaQueue = (queue = [], storage = globalThis.localStorage) => {
   if (!storage?.setItem) return queue;
   storage.setItem(MOTORISTA_QUEUE_KEY, JSON.stringify(Array.isArray(queue) ? queue : []));
   return queue;
 };
 
+/**
+ * @param {MotoristaRecord} action
+ * @param {MotoristaStorage} storage
+ */
 export const enqueueMotoristaAction = (action = {}, storage = globalThis.localStorage) => {
   const queue = readMotoristaQueue(storage);
   const key = firstText(action.idempotency_key, motoristaActionKey(action));
@@ -275,14 +388,20 @@ export const enqueueMotoristaAction = (action = {}, storage = globalThis.localSt
   return { queue: next, action: nextAction, reused: false };
 };
 
+/**
+ * @param {unknown} actionId
+ * @param {MotoristaStorage} storage
+ */
 export const dequeueMotoristaAction = (actionId, storage = globalThis.localStorage) => {
   const queue = readMotoristaQueue(storage).filter((item) => item.id !== actionId && item.idempotency_key !== actionId);
   writeMotoristaQueue(queue, storage);
   return queue;
 };
 
+/** @param {unknown} key */
 export const isMotoristaIdempotencyKey = (key) => String(key || '').startsWith('motorista|');
 
+/** @param {MotoristaUpdateOptions} options */
 export const assertEntregaMotoristaOnUpdate = ({ before = {}, patch = {}, user = null, motoristas = [] } = {}) => {
   const next = {
     ...before,
