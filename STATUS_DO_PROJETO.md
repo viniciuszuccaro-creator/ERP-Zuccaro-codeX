@@ -6783,3 +6783,17 @@ Checklist inicial:
 - Situacao: foi comprovada uma rotina cliente de baixa por RELATORIO, mas nao uma selecao inequivoca da parcela por SEQUENCIA. A parcela continua BLOCKED para migracao como pagamento comprovado.
 - O SQL permaneceu Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; esta etapa nao acessou dados do banco. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
 - Proximo passo obrigatorio: classificar, somente por presenca, quais outros campos de chave e quais campos atribuidos aparecem na mesma cadeia do UPDATE direto, incluindo fornecedor, nota, vencimento, valor e tipo. Nao exportar a consulta, literais, parametros, offsets, dados ou conteudo do binario e nao executar nem alterar o aplicativo.
+
+### Gate 18 - Campos presentes no UPDATE direto de baixa
+
+- A unica cadeia do aplicativo de caixa com UPDATE direto de FornecDuplicatas foi classificada somente pela presenca e pelo papel estrutural de cinco categorias de campo, sem executar ou modificar o binario.
+- A categoria FORNECEDOR esta presente na cadeia. Uma verificacao adicional confirmou o token tecnico FORNECEDOR, excluindo o nome da propria tabela como falso positivo.
+- Pelo analisador conservador, FORNECEDOR aparece como referencia, sem atribuicao ou predicado de igualdade comprovado. Essa classificacao nao permite trata-lo como chave da baixa.
+- As categorias NOTA, VENCIMENTO, VALOR e TIPO nao aparecem na mesma cadeia do UPDATE direto.
+- O resultado reforca que o comando contem DATABAIXA, RELATORIO e uma referencia a fornecedor, mas nao identifica a parcela por nota, vencimento, valor, tipo ou SEQUENCIA na mesma cadeia.
+- A ausencia dessas categorias nao exclui parametros montados em outras cadeias ou logica externa ao fragmento. Nenhuma consulta completa foi reconstruida ou exportada.
+- As duas passagens produziram as mesmas cinco categorias. A releitura protegida do HD externo confirmou SHA-256 37798EE18090B92DD1ACF0125730B902C1C6C8A3F6C545E6C60C75367B3C34D4.
+- O relatorio legacy-caixa-update-field-presence.csv permanece somente em D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS, com ACL protegida. Cadeias, consultas, parametros, offsets, dados, identificadores e o binario nao integram o GitHub.
+- Situacao: a rotina de baixa por RELATORIO possui contexto de fornecedor, mas a chave da parcela e a vinculacao ao pagamento auditado continuam nao comprovadas. A parcela permanece BLOCKED para migracao como pagamento comprovado.
+- O SQL permaneceu Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; esta etapa nao acessou dados do banco. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
+- Proximo passo obrigatorio: classificar a posicao estrutural do token FORNECEDOR em relacao a SET, WHERE e RELATORIO e verificar se ele representa coluna, parametro ou outro fragmento, sem exportar a consulta, literais, valores, offsets ou dados e sem executar o aplicativo.
