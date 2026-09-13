@@ -6843,3 +6843,19 @@ Checklist inicial:
 - Situacao: esta comprovado apenas um UPDATE fragmentado de DATABAIXA filtrado por RELATORIO com operando externo ao fragmento. A parcela e o pagamento continuam sem vinculacao comprovada e permanecem BLOCKED para migracao como pagamento comprovado.
 - O SQL permaneceu Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; esta etapa nao acessou dados do banco. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
 - Proximo passo obrigatorio: classificar o fragmento imprimivel imediatamente posterior ao UPDATE para verificar se ele fornece o operando de RELATORIO por concatenacao, placeholder ou parametro. Exportar somente distancia, classe e compatibilidade, nunca conteudo, nomes, literais, valores, consultas ou offsets absolutos.
+
+### Gate 18 - Fragmento posterior ao predicado de RELATORIO
+
+- O primeiro fragmento imprimivel posterior a cadeia do UPDATE foi classificado por distancia e forma inicial, sem executar ou modificar o aplicativo.
+- Ele comeca dois bytes depois do fim do UPDATE e e a primeira sequencia imprimivel seguinte.
+- Os dois bytes do intervalo sao nao imprimiveis.
+- A forma inicial foi classificada como identificador composto, com outros elementos na mesma sequencia.
+- O fragmento nao foi reconhecido como parametro nomeado, parametro posicional, placeholder formatado, literal textual, literal numerico ou identificador isolado.
+- O criterio de distancia foi atendido, mas o criterio de classe compativel com operando nao foi atendido.
+- A classificacao geral e OPERANDO_NAO_COMPROVADO. A proximidade binaria, isoladamente, nao demonstra concatenacao com RELATORIO.
+- Nenhum conteudo do fragmento foi reconstruido, exportado ou comparado com dados.
+- As duas passagens reproduziram a mesma distancia, classe e conclusao. A releitura protegida do HD externo confirmou SHA-256 374654EF2C8A3B1CDCA10578D87E47E0341177D11CF91F3B4365321E475038C1.
+- O relatorio legacy-caixa-following-operand.csv permanece somente em D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS, com ACL protegida. Conteudo, nomes, consultas, literais, valores, offsets absolutos, dados e o binario nao integram o GitHub.
+- Situacao: o UPDATE continua fragmentado no operando de RELATORIO e nao pode ser vinculado de forma inequivoca a parcela ou ao pagamento. A migracao como pagamento comprovado permanece BLOCKED.
+- O SQL permaneceu Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; esta etapa nao acessou dados do banco. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
+- Proximo passo obrigatorio: classificar internamente o fragmento composto por categorias de tokens e delimitadores para verificar se ele inicia uma expressao de concatenacao, um simbolo de runtime ou outro artefato. Exportar somente contagens e classes, nunca conteudo, nomes, literais, valores ou offsets.
