@@ -7104,3 +7104,16 @@ Checklist inicial:
 - Limite: o backend valida a estrutura do SHA-256 informado, mas ainda nao rele o arquivo privado para recalcular o conteudo. O SDK instalado tambem nao documenta descarte de upload privado orfao.
 - Promocao operacional continua ausente e desabilitada.
 - Proximo passo obrigatorio: homologar URL assinada e buscar validacao backend do conteudo/descarte de orfaos somente apos vinculo Base44 controlado; `base44/config.jsonc` continua ausente.
+
+### Gate 18 - Homologacao Base44 bloqueada por autenticacao
+
+- A verificacao confirmou que `base44/config.jsonc` continua ausente e que o clone nao possui vinculo versionado com o aplicativo remoto correto.
+- O SDK instalado documenta upload privado e URL assinada temporaria, mas nao oferece contrato documentado para releitura/hash backend do conteudo nem descarte de upload privado orfao.
+- Um identificador encontrado em exportacao historica foi mantido apenas como evidencia; ele nao foi usado como autoridade nem para acessar ambiente remoto.
+- A CLI Base44 solicitou autenticacao interativa, que nao foi concluida. Conforme `AGENTS.md`, o passo foi marcado `BLOCKED` em vez de contornar a credencial ou automatizar o login.
+- A tentativa local de adicionar a CLI foi totalmente retirada de `package.json` e `package-lock.json`; nenhuma alteracao de dependencia sera incluida neste lote.
+- A auditoria do conjunto instalado encontrou 24 vulnerabilidades de producao: 1 critica, 13 altas, 9 moderadas e 1 baixa. Correcao automatica foi recusada para evitar mudancas de contrato sem analise.
+- Nenhum recurso Base44, dado real, banco, evidencia ou HD externo foi acessado ou alterado. A promocao para `ContaPagar` ou `ContaReceber` continua ausente e desabilitada.
+- Validacao documental: pacote e lock restaurados, `HEAD` inicialmente em `dce01f6b` e nenhuma alteracao de runtime neste lote. Testes e build sao dispensados conforme `AGENTS.md`; executar `git diff --check` antes do commit.
+- Estado: `BLOCKED` ate autenticacao manual na conta Base44 correta e comprovacao do vinculo controlado do aplicativo.
+- Proximo passo permitido sem credencial: triagem direcionada das vulnerabilidades de producao, priorizando a critica e sem aplicar `npm audit fix` automaticamente.

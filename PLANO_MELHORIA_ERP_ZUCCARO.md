@@ -560,3 +560,18 @@ Limite conhecido: o SHA-256 e calculado no navegador e validado estruturalmente 
 
 Proxima frente: homologar em ambiente Base44 vinculado a leitura real por URL assinada e investigar uma primitiva backend de leitura/hash e descarte de upload orfao. Enquanto `base44/config.jsonc` estiver ausente, nao declarar essas garantias nem habilitar promocao.
 
+### Homologacao remota das evidencias - BLOCKED
+
+Verificacao executada em 2026-09-13 exclusivamente no clone interno. O repositorio continua sem `base44/config.jsonc` e, portanto, sem um vinculo versionado e comprovavel com o aplicativo Base44 correto.
+
+- A documentacao instalada do SDK confirma `UploadPrivateFile` e `CreateFileSignedUrl`, mas nao documenta uma primitiva backend para reler o arquivo privado, recalcular seu hash ou excluir upload orfao.
+- Foi localizado apenas um identificador historico em exportacao somente leitura. Esse identificador nao sera tratado como fonte de verdade nem usado para vincular ou alterar ambiente remoto.
+- A autenticacao interativa da CLI Base44 nao foi concluida. Esse login depende de confirmacao manual do proprietario e nao pode ser automatizado com seguranca.
+- A instalacao experimental da CLI nao foi incorporada ao projeto: `package.json` e `package-lock.json` foram restaurados integralmente, sem nova dependencia versionada.
+- A auditoria do conjunto de dependencias instalado reportou 24 vulnerabilidades de producao (1 critica, 13 altas, 9 moderadas e 1 baixa). Nenhum `npm audit fix` sera aplicado automaticamente, pois pode alterar contratos ou introduzir quebra; o tema deve ser tratado em lote proprio de seguranca.
+- Nenhum recurso remoto, arquivo privado, dado real, configuracao, entidade ou banco foi consultado ou alterado.
+
+Estado: `BLOCKED` para homologacao Base44 ate que o proprietario conclua manualmente o login na conta correta e o vinculo controlado do aplicativo seja comprovado. A promocao financeira permanece ausente e desabilitada.
+
+Proxima frente segura: realizar triagem direcionada das vulnerabilidades de producao, sem atualizacoes automaticas e sem misturar esse trabalho com a homologacao remota. A retomada da homologacao exigira autenticacao manual valida.
+
