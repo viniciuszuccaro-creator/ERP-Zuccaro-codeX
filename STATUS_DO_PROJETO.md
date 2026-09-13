@@ -6859,3 +6859,13 @@ Checklist inicial:
 - Situacao: o UPDATE continua fragmentado no operando de RELATORIO e nao pode ser vinculado de forma inequivoca a parcela ou ao pagamento. A migracao como pagamento comprovado permanece BLOCKED.
 - O SQL permaneceu Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; esta etapa nao acessou dados do banco. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
 - Proximo passo obrigatorio: classificar internamente o fragmento composto por categorias de tokens e delimitadores para verificar se ele inicia uma expressao de concatenacao, um simbolo de runtime ou outro artefato. Exportar somente contagens e classes, nunca conteudo, nomes, literais, valores ou offsets.
+
+### Gate 18 - Analise complementar do fragmento legado
+
+- A classificacao interna do fragmento posterior foi concluida de forma somente leitura e em duas passagens independentes.
+- A estrutura encontrada corresponde a texto ou metadado de runtime e nao atende aos criterios conservadores de um operando compativel.
+- Nenhum novo vinculo entre a rotina legada e o pagamento auditado foi comprovado; o bloqueio de migracao permanece.
+- O relatorio detalhado e sua verificacao de integridade permanecem exclusivamente na pasta protegida de relatorios do HD externo.
+- O repositorio recebe somente este resumo operacional, sem conteudo do aplicativo, nomes tecnicos adicionais, dados, valores ou consultas.
+- Os servicos SQL permaneceram parados e esta etapa nao acessou o banco. Por ser mudanca documental, git diff --check e a validacao aplicavel.
+- Proximo passo obrigatorio: fazer uma varredura limitada dos fragmentos seguintes para verificar se existe algum candidato estruturalmente compativel antes do proximo comando reconhecivel, sem exportar conteudo sensivel.
