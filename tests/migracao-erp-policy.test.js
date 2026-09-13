@@ -4,12 +4,15 @@ import test from 'node:test';
 
 import { applyCodigoOnCreate } from '../src/api/localCadastroMasterPolicy.js';
 import {
+  appendManualReconciliationEvidence,
   applyMigracaoOnCreate,
+  approvePendingManualReconciliation,
   assertReconciliacaoMigracao,
   buildPendingManualReconciliation,
   buildLoteMigracaoId,
   buildReconciliacaoMigracao,
   MIGRACAO_STATUS_PENDING_MANUAL_RECONCILIATION,
+  reviewPendingManualReconciliation,
   stampMigracaoRecord,
   stripSegredosMigracao,
 } from '../src/components/lib/migracaoErpPolicy.js';
@@ -230,6 +233,101 @@ test('pendencia manual nao pode ser promovida nem liquidada pelo fluxo operacion
       patch: { status: 'Pago', status_pagamento: 'Pago' },
     }),
     /nao pode ser alterado/,
+  );
+});
+
+test('evidencia de conciliacao exige permissao, metadados e e idempotente', () => {
+  const staging = buildPendingManualReconciliation({
+    group_id: 'g1', empresa_id: 'e1', codigo_legado: 'titulo-1', status_pagamento: 'Pago',
+  }, { registradoPor: 'registrante-1', registradoEm: '2026-09-13T12:00:00.000Z' });
+  const options = {
+    evidencia: { id: 'ev-1', tipo: 'comprovante<script>', hash_sha256: 'hash-controlado', descricao: '<script>arquivo</script>' },
+    usuarioId: 'analista-1',
+    timestamp: '2026-09-13T13:00:00.000Z',
+    temPermissao: true,
+  };
+
+  assert.throws(() => appendManualReconciliationEvidence(staging, { ...options, temPermissao: false }), /Permissao/);
+  assert.throws(() => appendManualReconciliationEvidence(staging, { ...options, evidencia: { id: 'ev-1' } }), /Evidencia exige/);
+  const withEvidence = appendManualReconciliationEvidence(staging, options);
+  assert.equal(staging.evidencias_conciliacao.length, 0);
+  assert.equal(withEvidence.evidencias_conciliacao.length, 1);
+  assert.equal(withEvidence.evidencias_conciliacao[0].tipo, 'comprovante');
+  assert.equal(withEvidence.evidencias_conciliacao[0].descricao, 'arquivo');
+  assert.equal(withEvidence.etapa_conciliacao, 'evidencia_anexada');
+  assert.equal(appendManualReconciliationEvidence(withEvidence, options), withEvidence);
+  assert.throws(
+    () => appendManualReconciliationEvidence(withEvidence, { ...options, evidencia: { ...options.evidencia, hash_sha256: 'outro-hash' } }),
+    /ja utilizado/,
+  );
+});
+
+test('revisao financeira exige evidencia, permissao e segregacao do registrante', () => {
+  const staging = buildPendingManualReconciliation({
+    group_id: 'g1', empresa_id: 'e1', codigo_legado: 'titulo-1',
+  }, { registradoPor: 'registrante-1', registradoEm: '2026-09-13T12:00:00.000Z' });
+  const review = {
+    decisao: 'PAGO',
+    justificativa: 'Comprovante conferido com o documento financeiro.',
+    usuarioId: 'revisor-1',
+    timestamp: '2026-09-13T14:00:00.000Z',
+    temPermissao: true,
+  };
+
+  assert.throws(() => reviewPendingManualReconciliation(staging, review), /ao menos uma evidencia/);
+  const withEvidence = appendManualReconciliationEvidence(staging, {
+    evidencia: { id: 'ev-1', tipo: 'comprovante', referencia: 'arquivo-controlado' },
+    usuarioId: 'analista-1', timestamp: '2026-09-13T13:00:00.000Z', temPermissao: true,
+  });
+  assert.throws(
+    () => reviewPendingManualReconciliation(withEvidence, { ...review, usuarioId: 'registrante-1' }),
+    /registrante nao pode revisar/,
+  );
+  assert.throws(() => reviewPendingManualReconciliation(withEvidence, { ...review, decisao: 'INDEFINIDO' }), /PAGO ou ABERTO/);
+  const reviewed = reviewPendingManualReconciliation(withEvidence, review);
+  assert.equal(reviewed.etapa_conciliacao, 'aguardando_aprovacao_final');
+  assert.equal(reviewed.decisao_financeira.classificacao, 'PAGO');
+  assert.equal(reviewed.decisao_financeira.status, 'EM_APROVACAO');
+  assert.equal(reviewed.confirmado, false);
+  assert.equal(reviewed.destino_migracao, 'staging');
+});
+
+test('aprovacao final exige segundo usuario, mesma decisao e confirmacao humana', () => {
+  const staging = buildPendingManualReconciliation({
+    group_id: 'g1', empresa_id: 'e1', codigo_legado: 'titulo-1',
+  }, { registradoPor: 'registrante-1', registradoEm: '2026-09-13T12:00:00.000Z' });
+  const withEvidence = appendManualReconciliationEvidence(staging, {
+    evidencia: { id: 'ev-1', tipo: 'comprovante', referencia: 'arquivo-controlado' },
+    usuarioId: 'analista-1', timestamp: '2026-09-13T13:00:00.000Z', temPermissao: true,
+  });
+  const reviewed = reviewPendingManualReconciliation(withEvidence, {
+    decisao: 'ABERTO', justificativa: 'Documento nao comprova a liquidacao.',
+    usuarioId: 'revisor-1', timestamp: '2026-09-13T14:00:00.000Z', temPermissao: true,
+  });
+  const approval = {
+    decisao: 'ABERTO',
+    justificativa: 'Segunda conferencia confirma a classificacao.',
+    usuarioId: 'aprovador-1',
+    timestamp: '2026-09-13T15:00:00.000Z',
+    temPermissao: true,
+    confirmacaoHumana: true,
+  };
+
+  assert.throws(() => approvePendingManualReconciliation(reviewed, { ...approval, confirmacaoHumana: false }), /Confirmacao humana/);
+  assert.throws(() => approvePendingManualReconciliation(reviewed, { ...approval, usuarioId: 'revisor-1' }), /aprovador final distinto/);
+  assert.throws(() => approvePendingManualReconciliation(reviewed, { ...approval, decisao: 'PAGO' }), /confirmar a decisao revisada/);
+  const approved = approvePendingManualReconciliation(reviewed, approval);
+  assert.equal(reviewed.aprovacoes_conciliacao.length, 1);
+  assert.equal(approved.aprovacoes_conciliacao.length, 2);
+  assert.equal(approved.etapa_conciliacao, 'aprovada_aguardando_promocao_manual');
+  assert.equal(approved.decisao_financeira.status, 'APROVADA');
+  assert.equal(approved.status_migracao, MIGRACAO_STATUS_PENDING_MANUAL_RECONCILIATION);
+  assert.equal(approved.destino_migracao, 'staging');
+  assert.equal(approved.confirmado, false);
+  assert.equal(approved.bloqueio_operacional, true);
+  assert.throws(
+    () => applyMigracaoOnCreate({ entityName: 'ContaPagar', record: { ...approved, confirmado: true } }),
+    /permanece no staging/,
   );
 });
 

@@ -6954,3 +6954,16 @@ Checklist inicial:
 - Validacao: 21 testes focados e 235 testes globais aprovados; ESLint direcionado aprovado; build completo aprovado; `git diff --check` aprovado.
 - Divida preexistente: ESLint global permanece com 85 erros e 17 avisos fora deste lote; typecheck global permanece com diagnosticos historicos, sem novo diagnostico especifico do contrato implementado.
 - Proximo passo obrigatorio: definir e homologar, em lote separado, o fluxo humano de anexar evidencia, revisar e aprovar em segregacao de funcoes antes de qualquer classificacao como pago ou aberto.
+
+### Gate 18 - Workflow humano da conciliacao manual homologado
+
+- O contrato existente de migracao passou a suportar anexo de evidencia, revisao financeira e aprovacao final sem criar modulo, entidade ou fluxo paralelo.
+- As operacoes exigem permissoes granulares `Financeiro.Migracao.conciliar` e `Financeiro.Migracao.aprovar`, alem de usuario e timestamp validos.
+- Evidencias exigem identificador, tipo e referencia controlada; seus metadados sao sanitizados e repeticoes identicas sao idempotentes.
+- A revisao exige evidencia previa, justificativa e decisao explicita `PAGO` ou `ABERTO`. O registrante original nao pode revisar a propria pendencia.
+- A aprovacao final exige confirmacao humana, justificativa, a mesma decisao da revisao e um terceiro usuario distinto do registrante e do revisor.
+- Mesmo depois das duas aprovacoes, o registro permanece `PENDING_MANUAL_RECONCILIATION`, em `staging`, com `confirmado=false` e bloqueio operacional. A etapa apenas o marca como `aprovada_aguardando_promocao_manual`.
+- Nenhum titulo financeiro foi criado, editado, liquidado ou promovido e nenhum dado legado foi alterado.
+- Validacao: 24 testes focados e 238 testes globais aprovados; ESLint direcionado aprovado; audit baseline aprovado; build completo aprovado; `git diff --check` aprovado.
+- Divida preexistente: lint e typecheck globais continuam com os diagnosticos ja registrados fora deste lote; o contrato novo nao acrescentou diagnostico especifico.
+- Proximo passo obrigatorio: identificar e homologar a estrutura persistente de staging ja existente que possa receber esse envelope sem expor a pendencia nos dashboards, saldos ou relatorios operacionais. Se nenhuma estrutura equivalente existir, registrar impacto e pedir autorizacao antes de criar uma nova.

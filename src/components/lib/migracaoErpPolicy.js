@@ -3,6 +3,11 @@ const firstText = (...values) => values.map((value) => String(value || '').trim(
 export const MIGRACAO_ORIGENS = ['erp_antigo', 'migracao', 'lote_csv', 'planilha', 'nfe_xml'];
 export const MIGRACAO_STATUS_PENDING_MANUAL_RECONCILIATION = 'PENDING_MANUAL_RECONCILIATION';
 export const MIGRACAO_DESTINO_STAGING = 'staging';
+export const MIGRACAO_RECONCILIACAO_PERMISSOES = Object.freeze({
+  evidenciar: 'Financeiro.Migracao.conciliar',
+  revisar: 'Financeiro.Migracao.conciliar',
+  aprovar: 'Financeiro.Migracao.aprovar',
+});
 
 export const SECRET_MIGRACAO_KEYS = [
   'senha',
@@ -17,6 +22,8 @@ export const SECRET_MIGRACAO_KEYS = [
 ];
 
 const slug = (value) => firstText(value).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48);
+const sanitizeManualText = (value, maxLength = 500) => firstText(value).replace(/<[^>]*>/g, '').slice(0, maxLength).trim();
+
 
 /** @param {Record<string, unknown>} record */
 export const isPendingManualReconciliation = (record = {}) => (
@@ -112,7 +119,7 @@ export const buildPendingManualReconciliation = (record = {}, {
   const groupId = firstText(origem.group_id, origem.grupo_id);
   const empresaId = firstText(origem.empresa_id);
   const codigoLegado = firstText(origem.codigo_legado, origem.id_antigo, origem.codigo_origem, origem.codigo, origem.numero_documento);
-  const usuarioId = firstText(registradoPor);
+  const usuarioId = sanitizeManualText(registradoPor, 120);
   const timestamp = firstText(registradoEm);
 
   if (!['ContaPagar', 'ContaReceber'].includes(entidade)) throw new Error('Entidade financeira invalida para conciliacao manual.');
@@ -128,6 +135,7 @@ export const buildPendingManualReconciliation = (record = {}, {
   if (!Number.isFinite(Date.parse(timestamp))) {
     throw new Error('Data de auditoria invalida para conciliacao manual.');
   }
+  const auditTimestamp = new Date(timestamp).toISOString();
 
   return stampMigracaoRecord({
     group_id: groupId,
@@ -147,12 +155,189 @@ export const buildPendingManualReconciliation = (record = {}, {
     historico_conciliacao: [{
       acao: 'marcado_pendente_conciliacao_manual',
       usuario_id: usuarioId,
-      timestamp,
+      timestamp: auditTimestamp,
       group_id: groupId,
       empresa_id: empresaId,
-      motivo: firstText(motivo),
+      motivo: sanitizeManualText(motivo, 500),
     }],
   }, { arquivoNome, entidade, confirmado: false, destino: MIGRACAO_DESTINO_STAGING });
+};
+
+/** @param {Record<string, unknown>} record */
+const assertPendingManualReconciliation = (record = {}) => {
+  if (!isPendingManualReconciliation(record)
+    || firstText(record.destino_migracao).toLowerCase() !== MIGRACAO_DESTINO_STAGING
+    || record.confirmado === true
+    || record.bloqueio_operacional !== true) {
+    throw new Error('Registro nao esta em staging bloqueado para conciliacao manual.');
+  }
+  if (!firstText(record.group_id, record.grupo_id) || !firstText(record.empresa_id)) {
+    throw new Error('Grupo e Empresa sao obrigatorios na conciliacao manual.');
+  }
+};
+
+const assertAuditActor = (usuarioId, timestamp) => {
+  const actor = sanitizeManualText(usuarioId, 120);
+  const at = firstText(timestamp);
+  if (!actor || !at) throw new Error('Usuario e data sao obrigatorios na conciliacao manual.');
+  if (!Number.isFinite(Date.parse(at))) throw new Error('Data de auditoria invalida na conciliacao manual.');
+  return { actor, at: new Date(at).toISOString() };
+};
+
+const assertManualPermission = (allowed, permission) => {
+  if (allowed !== true) throw new Error(`Permissao ${permission} obrigatoria para conciliacao manual.`);
+};
+
+const originActorId = (record) => {
+  const history = Array.isArray(record.historico_conciliacao) ? record.historico_conciliacao : [];
+  return firstText(history.find((item) => item?.acao === 'marcado_pendente_conciliacao_manual')?.usuario_id);
+};
+
+const normalizeManualDecision = (value) => {
+  const decision = firstText(value).toUpperCase();
+  if (!['PAGO', 'ABERTO'].includes(decision)) {
+    throw new Error('Decisao manual deve ser PAGO ou ABERTO.');
+  }
+  return decision;
+};
+
+/**
+ * @param {Record<string, unknown>} record
+ * @param {{ evidencia?: Record<string, unknown>, usuarioId?: unknown, timestamp?: unknown, temPermissao?: boolean }} options
+ */
+export const appendManualReconciliationEvidence = (record = {}, {
+  evidencia = {},
+  usuarioId,
+  timestamp,
+  temPermissao = false,
+} = {}) => {
+  assertPendingManualReconciliation(record);
+  assertManualPermission(temPermissao, MIGRACAO_RECONCILIACAO_PERMISSOES.evidenciar);
+  const { actor, at } = assertAuditActor(usuarioId, timestamp);
+  const evidenceId = sanitizeManualText(firstText(evidencia.id, evidencia.evidencia_id), 120);
+  const type = sanitizeManualText(evidencia.tipo, 80);
+  const reference = sanitizeManualText(firstText(evidencia.arquivo_url, evidencia.hash_sha256, evidencia.referencia), 1000);
+  if (!evidenceId || !type || !reference) {
+    throw new Error('Evidencia exige identificador, tipo e arquivo, hash ou referencia.');
+  }
+
+  const current = Array.isArray(record.evidencias_conciliacao) ? record.evidencias_conciliacao : [];
+  const duplicate = current.find((item) => firstText(item?.id) === evidenceId);
+  if (duplicate) {
+    if (firstText(duplicate.tipo) === type && firstText(duplicate.arquivo_url, duplicate.hash_sha256, duplicate.referencia) === reference) {
+      return record;
+    }
+    throw new Error('Identificador de evidencia ja utilizado com outro conteudo.');
+  }
+
+  const groupId = firstText(record.group_id, record.grupo_id);
+  const empresaId = firstText(record.empresa_id);
+  return {
+    ...record,
+    etapa_conciliacao: 'evidencia_anexada',
+    evidencias_conciliacao: [...current, {
+      id: evidenceId,
+      tipo: type,
+      arquivo_url: sanitizeManualText(evidencia.arquivo_url, 1000) || undefined,
+      hash_sha256: sanitizeManualText(evidencia.hash_sha256, 160) || undefined,
+      referencia: sanitizeManualText(evidencia.referencia, 1000) || undefined,
+      descricao: sanitizeManualText(evidencia.descricao, 500) || undefined,
+      anexado_por: actor,
+      anexado_em: at,
+    }],
+    historico_conciliacao: [
+      ...(Array.isArray(record.historico_conciliacao) ? record.historico_conciliacao : []),
+      { acao: 'evidencia_anexada', evidencia_id: evidenceId, usuario_id: actor, timestamp: at, group_id: groupId, empresa_id: empresaId },
+    ],
+  };
+};
+
+/**
+ * @param {Record<string, unknown>} record
+ * @param {{ decisao?: unknown, justificativa?: unknown, usuarioId?: unknown, timestamp?: unknown, temPermissao?: boolean }} options
+ */
+export const reviewPendingManualReconciliation = (record = {}, {
+  decisao,
+  justificativa,
+  usuarioId,
+  timestamp,
+  temPermissao = false,
+} = {}) => {
+  assertPendingManualReconciliation(record);
+  assertManualPermission(temPermissao, MIGRACAO_RECONCILIACAO_PERMISSOES.revisar);
+  const { actor, at } = assertAuditActor(usuarioId, timestamp);
+  const decision = normalizeManualDecision(decisao);
+  const reason = sanitizeManualText(justificativa, 1000);
+  const evidences = Array.isArray(record.evidencias_conciliacao) ? record.evidencias_conciliacao : [];
+  const approvals = Array.isArray(record.aprovacoes_conciliacao) ? record.aprovacoes_conciliacao : [];
+  if (!evidences.length) throw new Error('Revisao financeira exige ao menos uma evidencia.');
+  if (!reason) throw new Error('Justificativa obrigatoria para revisao financeira.');
+  if (actor === originActorId(record)) throw new Error('Segregacao de funcoes: registrante nao pode revisar a propria pendencia.');
+  if (approvals.some((item) => item?.etapa === 'revisao_financeira')) throw new Error('Pendencia ja possui revisao financeira.');
+
+  const groupId = firstText(record.group_id, record.grupo_id);
+  const empresaId = firstText(record.empresa_id);
+  const review = { etapa: 'revisao_financeira', decisao: decision, justificativa: reason, usuario_id: actor, timestamp: at };
+  return {
+    ...record,
+    etapa_conciliacao: 'aguardando_aprovacao_final',
+    decisao_financeira: { classificacao: decision, status: 'EM_APROVACAO', revisado_por: actor, revisado_em: at },
+    aprovacoes_conciliacao: [...approvals, review],
+    historico_conciliacao: [
+      ...(Array.isArray(record.historico_conciliacao) ? record.historico_conciliacao : []),
+      { acao: 'revisao_financeira_registrada', decisao: decision, usuario_id: actor, timestamp: at, group_id: groupId, empresa_id: empresaId },
+    ],
+  };
+};
+
+/**
+ * @param {Record<string, unknown>} record
+ * @param {{ decisao?: unknown, justificativa?: unknown, usuarioId?: unknown, timestamp?: unknown, temPermissao?: boolean, confirmacaoHumana?: boolean }} options
+ */
+export const approvePendingManualReconciliation = (record = {}, {
+  decisao,
+  justificativa,
+  usuarioId,
+  timestamp,
+  temPermissao = false,
+  confirmacaoHumana = false,
+} = {}) => {
+  assertPendingManualReconciliation(record);
+  assertManualPermission(temPermissao, MIGRACAO_RECONCILIACAO_PERMISSOES.aprovar);
+  if (confirmacaoHumana !== true) throw new Error('Confirmacao humana obrigatoria para aprovacao final.');
+  const { actor, at } = assertAuditActor(usuarioId, timestamp);
+  const decision = normalizeManualDecision(decisao);
+  const reason = sanitizeManualText(justificativa, 1000);
+  const approvals = Array.isArray(record.aprovacoes_conciliacao) ? record.aprovacoes_conciliacao : [];
+  const review = approvals.find((item) => item?.etapa === 'revisao_financeira');
+  if (!review) throw new Error('Aprovacao final exige revisao financeira anterior.');
+  if (!reason) throw new Error('Justificativa obrigatoria para aprovacao final.');
+  if (firstText(review.decisao) !== decision) throw new Error('Aprovacao final deve confirmar a decisao revisada.');
+  if ([originActorId(record), firstText(review.usuario_id)].includes(actor)) {
+    throw new Error('Segregacao de funcoes exige aprovador final distinto do registrante e do revisor.');
+  }
+  if (approvals.some((item) => item?.etapa === 'aprovacao_final')) throw new Error('Pendencia ja possui aprovacao final.');
+
+  const groupId = firstText(record.group_id, record.grupo_id);
+  const empresaId = firstText(record.empresa_id);
+  const approval = { etapa: 'aprovacao_final', decisao: decision, justificativa: reason, usuario_id: actor, timestamp: at };
+  return {
+    ...record,
+    etapa_conciliacao: 'aprovada_aguardando_promocao_manual',
+    decisao_financeira: {
+      ...(record.decisao_financeira && typeof record.decisao_financeira === 'object' ? record.decisao_financeira : {}),
+      classificacao: decision, status: 'APROVADA', aprovado_por: actor, aprovado_em: at,
+    },
+    aprovacoes_conciliacao: [...approvals, approval],
+    historico_conciliacao: [
+      ...(Array.isArray(record.historico_conciliacao) ? record.historico_conciliacao : []),
+      { acao: 'aprovacao_final_registrada', decisao: decision, usuario_id: actor, timestamp: at, group_id: groupId, empresa_id: empresaId },
+    ],
+    status_migracao: MIGRACAO_STATUS_PENDING_MANUAL_RECONCILIATION,
+    destino_migracao: MIGRACAO_DESTINO_STAGING,
+    confirmado: false,
+    bloqueio_operacional: true,
+  };
 };
 
 export const findRegistroMigracaoDuplicado = (record = {}, records = []) => {
