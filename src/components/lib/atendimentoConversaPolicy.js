@@ -1,12 +1,98 @@
+/**
+ * @typedef {Record<string, unknown> & {
+ *   id?: string | number,
+ *   empresa_id?: unknown,
+ *   group_id?: unknown,
+ *   grupo_id?: unknown,
+ *   canal?: unknown,
+ *   origem_canal?: unknown,
+ *   sessao_id?: unknown,
+ *   cliente_id?: unknown,
+ *   cliente_nome?: unknown,
+ *   cliente_telefone?: unknown,
+ *   cliente_email?: unknown,
+ *   telefone?: unknown,
+ *   celular?: unknown,
+ *   whatsapp?: unknown,
+ *   fone?: unknown,
+ *   from?: unknown,
+ *   email?: unknown,
+ *   nome?: unknown,
+ *   razao_social?: unknown,
+ *   nome_fantasia?: unknown,
+ *   mensagem?: unknown,
+ *   texto?: unknown,
+ *   midia_url?: unknown,
+ *   status?: unknown,
+ *   ativo?: unknown,
+ *   data_hora?: unknown,
+ *   data_inicio?: string | number | Date,
+ *   created_date?: string | number | Date,
+ *   transferido_em?: string | number | Date,
+ *   prioridade?: unknown,
+ *   sentimento_geral?: unknown,
+ *   atendente_id?: unknown,
+ *   atendente_nome?: unknown,
+ *   full_name?: unknown,
+ *   departamento?: unknown,
+ *   observacoes_internas?: unknown,
+ *   portal_transfer_key?: unknown,
+ *   resolvido?: unknown,
+ * }} AtendimentoRecord
+ * @typedef {Record<string, unknown> & {
+ *   max_conversas_simultaneas?: unknown,
+ *   tipo_roteamento?: unknown,
+ *   priorizar_ultimo_atendente?: unknown,
+ *   considerar_carga_trabalho?: unknown,
+ * }} RegrasRoteamento
+ * @typedef {Record<string, unknown> & {
+ *   text?: unknown,
+ *   message?: unknown,
+ *   mensagem?: unknown,
+ *   from?: unknown,
+ *   phone?: unknown,
+ *   telefone?: unknown,
+ *   name?: unknown,
+ *   nome?: unknown,
+ *   email?: unknown,
+ *   sessao_id?: unknown,
+ *   entry?: Array<{
+ *     changes?: Array<{
+ *       value?: {
+ *         messages?: Array<{ text?: { body?: unknown }, from?: unknown }>,
+ *         contacts?: Array<{ profile?: { name?: unknown } }>,
+ *       },
+ *     }>,
+ *   }>,
+ * }} AtendimentoPayload
+ * @typedef {{
+ *   frustrado?: unknown,
+ *   urgente?: unknown,
+ *   tipo?: unknown,
+ * }} SentimentoAtendimento
+ * @typedef {{ record?: AtendimentoRecord, conversas?: AtendimentoRecord[], clientes?: AtendimentoRecord[] }} ConversaCreateOptions
+ * @typedef {{ regras?: RegrasRoteamento, atendentes?: AtendimentoRecord[], conversas?: AtendimentoRecord[], clienteId?: unknown }} RoteamentoOptions
+ * @typedef {{ conversa?: AtendimentoRecord, regras?: RegrasRoteamento, atendentes?: AtendimentoRecord[], conversas?: AtendimentoRecord[] }} AplicarRoteamentoOptions
+ * @typedef {{ payload?: AtendimentoPayload, canal?: string, empresaId?: unknown, groupId?: unknown, configs?: AtendimentoRecord[] }} IngestOptions
+ * @typedef {{ conversa?: AtendimentoRecord, user?: AtendimentoRecord, empresaId?: unknown }} ConversaUserOptions
+ * @typedef {{ conversa?: AtendimentoRecord, user?: AtendimentoRecord, tipo?: string, destinoId?: string, destinoNome?: string, departamento?: string, nota?: string, empresaId?: unknown }} TransferOptions
+ * @typedef {{ sessaoId?: unknown, empresaId?: unknown, groupId?: unknown, canal?: string, cliente?: AtendimentoRecord | null, mensagem?: string, sentimento?: SentimentoAtendimento, prioridade?: string }} EscalarOptions
+ * @typedef {{ conversaId?: unknown, canal?: string, empresaId?: unknown, clienteId?: unknown }} SessaoOptions
+ */
+
+/** @param {...unknown} values */
 const firstText = (...values) => values.map((value) => String(value || '').trim()).find(Boolean) || '';
 
+/** @param {unknown} value */
 export const digitsOnly = (value) => String(value || '').replace(/\D/g, '');
 
+/** @param {AtendimentoRecord} record */
 export const conversaAberta = (record = {}) => {
   const status = String(record.status || '').toLowerCase();
   return !status.includes('resolv') && !status.includes('arquiv') && !status.includes('cancel') && !status.includes('finaliz');
 };
 
+/** @param {AtendimentoRecord} record */
 export const conversaIdempotencyKey = (record = {}) => {
   const empresaId = firstText(record.empresa_id);
   const canal = firstText(record.canal) || 'Portal';
@@ -15,6 +101,10 @@ export const conversaIdempotencyKey = (record = {}) => {
   return ['chat', empresaId, canal, identity].join('|');
 };
 
+/**
+ * @param {AtendimentoRecord} record
+ * @param {AtendimentoRecord[]} conversas
+ */
 export const findDuplicateConversa = (record = {}, conversas = []) => {
   const key = conversaIdempotencyKey(record);
   if (!key) return null;
@@ -23,6 +113,10 @@ export const findDuplicateConversa = (record = {}, conversas = []) => {
   )) || null;
 };
 
+/**
+ * @param {AtendimentoRecord[]} clientes
+ * @param {AtendimentoRecord} record
+ */
 export const matchClientePorContato = (clientes = [], record = {}) => {
   const clienteId = firstText(record.cliente_id);
   if (clienteId) {
@@ -36,6 +130,7 @@ export const matchClientePorContato = (clientes = [], record = {}) => {
   }) || null;
 };
 
+/** @param {ConversaCreateOptions} options */
 export const assertConversaOnCreate = ({ record = {}, conversas = [], clientes = [] } = {}) => {
   if (!firstText(record.empresa_id)) {
     throw new Error('Empresa obrigatoria para conversa de atendimento.');
@@ -52,6 +147,7 @@ export const assertConversaOnCreate = ({ record = {}, conversas = [], clientes =
   return { reuse: null, record: next };
 };
 
+/** @param {{ record?: AtendimentoRecord }} options */
 export const assertMensagemOnCreate = ({ record = {} } = {}) => {
   if (!firstText(record.empresa_id)) {
     throw new Error('Empresa obrigatoria para mensagem de atendimento.');
@@ -65,6 +161,7 @@ export const assertMensagemOnCreate = ({ record = {} } = {}) => {
   return { reuse: null, record };
 };
 
+/** @param {{ canal?: unknown, configs?: AtendimentoRecord[], empresaId?: unknown }} options */
 export const assertCanalAtivo = ({ canal, configs = [], empresaId } = {}) => {
   const canalNome = firstText(canal);
   if (!canalNome) throw new Error('Canal obrigatorio.');
@@ -83,6 +180,7 @@ export const assertCanalAtivo = ({ canal, configs = [], empresaId } = {}) => {
   return true;
 };
 
+/** @param {{ record?: AtendimentoRecord }} options */
 export const assertChatbotInteracaoOnCreate = ({ record = {} } = {}) => {
   if (!firstText(record.empresa_id)) {
     throw new Error('Empresa obrigatoria para interacao do chatbot.');
@@ -100,6 +198,7 @@ export const assertChatbotInteracaoOnCreate = ({ record = {} } = {}) => {
   };
 };
 
+/** @param {RoteamentoOptions} options */
 export const selecionarAtendenteRoteamento = ({
   regras = {},
   atendentes = [],
@@ -146,6 +245,7 @@ export const selecionarAtendenteRoteamento = ({
   };
 };
 
+/** @param {AplicarRoteamentoOptions} options */
 export const aplicarRoteamentoIngest = ({
   conversa = {},
   regras = {},
@@ -172,6 +272,7 @@ export const aplicarRoteamentoIngest = ({
     },
   };
 };
+/** @param {IngestOptions} options */
 export const ingestCanalExterno = ({ payload = {}, canal = 'WhatsApp', empresaId, groupId, configs } = {}) => {
   if (!firstText(empresaId)) {
     throw new Error('Empresa obrigatoria para ingestao de canal.');
@@ -211,6 +312,7 @@ export const ingestCanalExterno = ({ payload = {}, canal = 'WhatsApp', empresaId
   };
 };
 
+/** @param {AtendimentoRecord} conversa */
 const prioridadeScore = (conversa = {}) => {
   const p = String(conversa.prioridade || '').toLowerCase();
   if (p.includes('urgent')) return 1000;
@@ -219,6 +321,7 @@ const prioridadeScore = (conversa = {}) => {
   return 0;
 };
 
+/** @param {AtendimentoRecord} conversa */
 const sentimentoScore = (conversa = {}) => {
   const s = String(conversa.sentimento_geral || '').toLowerCase();
   if (s.includes('frustr')) return 300;
@@ -226,15 +329,18 @@ const sentimentoScore = (conversa = {}) => {
   return 0;
 };
 
+/** @param {unknown} status */
 export const statusNaFilaAtendimento = (status) => {
   const s = String(status || '').toLowerCase();
   return s.includes('aguard') || s.includes('não atribu') || s.includes('nao atribu') || s.includes('nao_atribu') || s === 'nova';
 };
 
+/** @param {AtendimentoRecord[]} conversas */
 export const filtrarFilaAtendimento = (conversas = []) => (
   (Array.isArray(conversas) ? conversas : []).filter((item) => statusNaFilaAtendimento(item.status) && conversaAberta(item))
 );
 
+/** @param {AtendimentoRecord[]} conversas */
 export const ordenarFilaAtendimento = (conversas = []) => (
   [...filtrarFilaAtendimento(conversas)].sort((a, b) => {
     const scoreDiff = (prioridadeScore(b) + sentimentoScore(b)) - (prioridadeScore(a) + sentimentoScore(a));
@@ -245,6 +351,7 @@ export const ordenarFilaAtendimento = (conversas = []) => (
   })
 );
 
+/** @param {ConversaUserOptions} options */
 export const buildAssumirConversa = ({ conversa = {}, user = {}, empresaId } = {}) => {
   if (!conversa?.id) throw new Error('Conversa obrigatoria.');
   if (!firstText(user.id)) throw new Error('Atendente obrigatorio.');
@@ -278,6 +385,7 @@ export const buildAssumirConversa = ({ conversa = {}, user = {}, empresaId } = {
   };
 };
 
+/** @param {TransferOptions} options */
 export const buildTransferirConversa = ({
   conversa = {},
   user = {},
@@ -351,6 +459,7 @@ export const buildTransferirConversa = ({
   };
 };
 
+/** @param {ConversaUserOptions} options */
 export const buildFecharConversa = ({ conversa = {}, user = {}, empresaId } = {}) => {
   if (!conversa?.id) throw new Error('Conversa obrigatoria.');
   if (!firstText(conversa.empresa_id) && !firstText(empresaId)) {
@@ -373,6 +482,7 @@ export const buildFecharConversa = ({ conversa = {}, user = {}, empresaId } = {}
   };
 };
 
+/** @param {EscalarOptions} options */
 export const buildEscalarParaHub = ({
   sessaoId,
   empresaId,
@@ -421,6 +531,7 @@ export const buildEscalarParaHub = ({
   return { conversa, mensagem: msg };
 };
 
+/** @param {SessaoOptions} options */
 export const resolveSessaoEstavel = ({ conversaId, canal = 'Portal', empresaId, clienteId } = {}) => {
   if (firstText(conversaId)) return conversaId;
   const identity = firstText(clienteId) || 'anon';
@@ -435,6 +546,11 @@ export const resolveSessaoEstavel = ({ conversaId, canal = 'Portal', empresaId, 
   return `session-${firstText(canal) || 'Portal'}-${identity}`;
 };
 
+/**
+ * @param {string} entityName
+ * @param {AtendimentoRecord} record
+ * @param {{ conversas?: AtendimentoRecord[], clientes?: AtendimentoRecord[] }} stores
+ */
 export const applyAtendimentoCreate = (entityName, record, stores = {}) => {
   if (entityName === 'ConversaOmnicanal') {
     return assertConversaOnCreate({

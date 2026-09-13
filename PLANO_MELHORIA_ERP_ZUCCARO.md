@@ -616,3 +616,16 @@ Lote concluido em 2026-09-13 na politica compartilhada de roteirizacao, preserva
 
 Proxima frente: aplicar o mesmo metodo incremental a `atendimentoConversaPolicy.js`, atual maior concentrador compartilhado com 94 diagnosticos, preservando ciclo de vida, multiempresa, RBAC e idempotencia do Atendimento.
 
+### Contratos JSDoc - politica de Atendimento
+
+Lote concluido em 2026-09-13 na politica compartilhada de conversas e Chatbot, sem alterar telas, estados, roteamento, idempotencia ou persistencia.
+
+- Foram tipados registros de conversa, cliente, atendente, configuracao de canal, webhook externo, regras de roteamento, sentimento, sessao e stores com JSDoc local e sem `any`.
+- O typecheck isolado de `atendimentoConversaPolicy.js` passou de 94 diagnosticos para zero.
+- O typecheck global caiu de 2.814 para 2.716 diagnosticos, reducao liquida de 98, sem transferir falhas para Hub, Chatbot ou outros consumidores.
+- Os contratos de entrada preservam aliases legados, payload WhatsApp, verificacao por Empresa, canal ativo, fila, assumir, transferir, fechar, escalar e sessao estavel.
+- Declaracoes repetidas foram consolidadas em aliases JSDoc e a politica encerrou com 569 linhas, abaixo do limite de 600, sem criar arquivo ou funcionalidade paralela.
+- Nenhum dado, entidade, recurso Base44, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente: tipar `comprasOrdemPolicy.js`, politica compartilhada com 74 diagnosticos e testes existentes. A pagina `Contratos.jsx`, com 79 diagnosticos e 1.575 linhas, exige lote proprio de refatoracao e nao sera misturada a esta sequencia curta.
+

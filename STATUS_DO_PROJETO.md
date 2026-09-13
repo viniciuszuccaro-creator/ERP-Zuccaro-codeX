@@ -7155,3 +7155,18 @@ Checklist inicial:
 - O build mantem apenas os avisos conhecidos de imports mistos, bundle principal e Browserslist.
 - Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
 - Proximo passo: tipar incrementalmente `atendimentoConversaPolicy.js`, atual maior concentrador compartilhado com 94 diagnosticos, e somente commitar se a contagem global nao aumentar.
+
+### Gate 18 - Contrato tipado do Atendimento
+
+- Objetivo: reduzir a divida de typecheck da politica central de Atendimento sem alterar o ciclo conversa, mensagem, fila, webhook, Chatbot e Hub.
+- Causa raiz: registros e opcoes com valor padrao `{}` eram inferidos sem campos, concentrando 94 diagnosticos.
+- Implementacao: contratos JSDoc descrevem conversa, cliente, atendente, configuracao de canal, payload externo, regras de roteamento, sentimento e stores. Nenhum `any`, `ts-ignore` ou desativacao de `checkJs` foi introduzido.
+- Multiempresa e seguranca preservadas: Empresa continua obrigatoria em criacao, mensagem, webhook, assumir, transferir, fechar e escalar; canal ausente ou inativo continua falhando fechado.
+- Comportamento preservado: idempotencia por sessao/contato, identificacao de cliente, prioridade da fila, roteamento, assumir, transferencia, fechamento e sessao estavel mantiveram os mesmos contratos de runtime.
+- Manutencao: aliases JSDoc eliminaram repeticao e mantiveram o arquivo em 569 linhas, sem novo modulo paralelo.
+- Resultado isolado: 94 diagnosticos antes e zero depois.
+- Resultado global: 2.814 diagnosticos antes e 2.716 depois, reducao liquida de 98. O typecheck permanece habilitado e falha apenas pela divida historica registrada e autorizada.
+- Validacao: 10/10 testes focados e 252/252 testes globais aprovados; ESLint direcionado e global sem diagnosticos; `audit:baseline`, build completo e `git diff --check` aprovados.
+- O build mantem somente os avisos conhecidos de imports mistos, bundle principal e Browserslist.
+- Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
+- Proximo passo: tipar `comprasOrdemPolicy.js`, atual politica compartilhada priorizada com 74 diagnosticos. `Contratos.jsx` sera tratado separadamente devido ao tamanho de 1.575 linhas.
