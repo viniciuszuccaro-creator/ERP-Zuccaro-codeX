@@ -6797,3 +6797,16 @@ Checklist inicial:
 - Situacao: a rotina de baixa por RELATORIO possui contexto de fornecedor, mas a chave da parcela e a vinculacao ao pagamento auditado continuam nao comprovadas. A parcela permanece BLOCKED para migracao como pagamento comprovado.
 - O SQL permaneceu Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; esta etapa nao acessou dados do banco. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
 - Proximo passo obrigatorio: classificar a posicao estrutural do token FORNECEDOR em relacao a SET, WHERE e RELATORIO e verificar se ele representa coluna, parametro ou outro fragmento, sem exportar a consulta, literais, valores, offsets ou dados e sem executar o aplicativo.
+
+### Gate 18 - Papel estrutural de FORNECEDOR no UPDATE de baixa
+
+- A unica ocorrencia exata do token FORNECEDOR na cadeia do UPDATE direto foi classificada em relacao as clausulas SET e WHERE, aos comparadores e aos marcadores usuais de parametro, sem executar ou modificar o aplicativo.
+- FORNECEDOR aparece fora das clausulas SET e WHERE. Nao foi identificado como campo atribuido nem como coluna ou referencia de um predicado.
+- O token nao possui marcador de parametro nomeado e nao compartilha a clausula WHERE em que RELATORIO foi identificado.
+- Assim, a presenca de FORNECEDOR na mesma cadeia imprimivel nao comprova que o comando use fornecedor como chave, filtro ou valor atribuido.
+- A classificacao anterior de contexto de fornecedor fica restrita a uma referencia nao classificada fora do corpo estrutural reconhecido do UPDATE.
+- As duas passagens produziram uma unica linha estrutural identica. A releitura protegida do HD externo confirmou SHA-256 727DF58BEB23B45161BE997F37EC2071E878B69BB9B96307919D3DED11072D54.
+- O relatorio legacy-caixa-fornecedor-role.csv permanece somente em D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS, com ACL protegida. A consulta, cadeias, literais, valores, parametros, offsets, dados e o binario nao integram o GitHub.
+- Situacao: o UPDATE comprovado continua selecionado por RELATORIO, sem prova de SEQUENCIA, fornecedor ou outra chave da parcela na mesma estrutura. A parcela permanece BLOCKED para migracao como pagamento comprovado.
+- O SQL permaneceu Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; esta etapa nao acessou dados do banco. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
+- Proximo passo obrigatorio: classificar as duas cadeias com predicado de SEQUENCIA por verbo e tabela-alvo para verificar se pertencem a outro comando ou operacao. Exportar somente categorias e contagens, nunca consultas, cadeias, nomes adicionais, parametros, offsets ou dados, e nao executar nem alterar o aplicativo.
