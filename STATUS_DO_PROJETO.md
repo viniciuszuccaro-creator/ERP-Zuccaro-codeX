@@ -7420,3 +7420,27 @@ Checklist inicial:
 - Avisos conhecidos: build mantem imports mistos, Browserslist desatualizado e bundle principal acima de 500 kB.
 - Nenhum arquivo do Site CPA, dado real, recurso Base44 remoto, backup legado ou HD externo foi acessado ou alterado.
 - Proximo passo somente com autorizacao expressa: ERP-SITE-06 - Pagamento.
+
+### ERP-SITE-06 - Pagamento do Site CPA
+
+- Objetivo: integrar criacao, consulta e cancelamento de cobranca no gateway S2S `v1`, mantendo ERP/provedor como unicas autoridades de valor, status, baixa e conciliacao.
+- Operacoes: `sitePagamentoCreate`, `sitePagamentoStatus` e `sitePagamentoCancel`; webhook HMAC no `legacyIntegrationsMirror`, sem endpoint paralelo.
+- Reuso: `Pedido`, `Cliente`, `SolicitacaoAprovacao`, `ContaReceber`, `ConfiguracaoGatewayPagamento`/`GatewayPagamento`, `IntegracaoEvento`, auditoria e escopo multiempresa existentes.
+- Ownership: Cliente, usuario externo, Pedido, titulo, tentativa e provedor exigem o mesmo Grupo/Empresa; IDs adulterados e leitura cruzada falham fechados.
+- Valor: saldo aberto do `ContaReceber` e a unica fonte; campos financeiros enviados pelo Site sao rejeitados e nenhum titulo avulso e criado.
+- Idempotencia: ledger S2S, `externalPaymentId`, hash, `paymentAttemptId` e event ID impedem cobranca ou baixa duplicada.
+- Provedores: Asaas suporta PIX/Boleto e cancelamento; Juno suporta Boleto. Nenhum deles usa o fallback simulado de `emitirBoleto`.
+- Segredos: API key e webhook secret sao aceitos apenas do ambiente/secret manager, com variante por Empresa; credenciais persistidas no cadastro nao sao usadas pelo S2S.
+- Webhook: raw body, HMAC, timestamp, replay, rate limit por Empresa, provider transaction, tentativa, tenant e valor sao validados antes de qualquer efeito.
+- Financeiro: pagamento completo ou parcial atualiza o titulo oficial e os campos financeiros do Pedido; nao libera producao, entrega, nota ou faturamento.
+- Divergencia: excesso, valor ausente e status desconhecido seguem para `UNDER_REVIEW`/`MANUAL_REVIEW`, sem sucesso falso.
+- Privacidade: resposta nao expoe segredo, token, cartao, credencial bancaria, custo, margem, notas internas ou payload integral.
+- Capability: `PAYMENT` e dinamica; fica `ready` somente com provider real, credenciais, metodo e resolucao de cliente configurados, `blocked` sem requisitos minimos e `degraded` se a configuracao nao puder ser consultada.
+- PRONTO: create/status/cancel, tentativa oficial, adapter, webhook assinado, replay protection, conciliacao, parcial e baixa idempotente.
+- BLOCKED: CARD/PAYMENT_LINK sem hosted checkout, metodos sem provider, cancelamento Juno, refund operacional e chargeback avancado.
+- Validacao focada: 88/88 testes dos contratos ERP-SITE-01 a 06 aprovados.
+- Validacao global: 340/340 testes aprovados; ESLint global e `audit:baseline` sem falhas; build completo aprovado.
+- Typecheck: 2.238 diagnosticos historicos preservados e zero diagnosticos novos do ERP-SITE-06.
+- Avisos conhecidos: build mantem imports mistos, Browserslist desatualizado e bundle principal acima de 500 kB.
+- Nenhum arquivo do Site CPA, dado real, recurso Base44 remoto, provider real, backup legado ou HD externo foi acessado ou alterado.
+- Proximo passo somente com autorizacao expressa: ERP-SITE-07 - Portal Financeiro e Fiscal.

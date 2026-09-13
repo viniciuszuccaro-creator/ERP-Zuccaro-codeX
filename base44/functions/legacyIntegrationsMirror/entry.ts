@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 import { completeGuardCallScope, recordMatchesGuardScope, requireEntityGuard } from './_lib/security/guardCallPolicy.js';
 import { handleSiteCpaGatewayRequest } from './_lib/security/siteCpaS2SPolicy.js';
+import { handleSiteCpaPaymentWebhook } from './_lib/security/siteCpaPaymentWebhook.js';
 
 const reportIntegrationFailure = (operation, error, context = {}) => {
   console.error(`[legacyIntegrationsMirror] ${operation}`, { error: error?.message || String(error), ...context });
@@ -86,6 +87,14 @@ Deno.serve(async (req) => {
     } catch {
       return Response.json({ error: 'json_invalido' }, { status: 400 });
     }
+    const paymentWebhookResponse = await handleSiteCpaPaymentWebhook({
+      req,
+      base44,
+      payload,
+      rawBody,
+      env: (name) => Deno.env.get(name),
+    });
+    if (paymentWebhookResponse) return paymentWebhookResponse;
     const siteCpaResponse = await handleSiteCpaGatewayRequest({
       req,
       base44,

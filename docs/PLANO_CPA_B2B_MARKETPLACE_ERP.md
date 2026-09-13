@@ -824,3 +824,63 @@ Erros estaveis cobrem entrada, origem, Cliente, item, endereco, escopo, condicao
 - Site CPA permanece sem alteracoes.
 
 Proximo lote somente com autorizacao expressa: ERP-SITE-06 - Pagamento.
+
+---
+
+# 25. EXECUCAO ERP-SITE-06 - PAGAMENTO
+
+As operacoes `sitePagamentoCreate`, `sitePagamentoStatus` e `sitePagamentoCancel` foram integradas ao gateway S2S `v1`. O webhook assinado usa o mesmo `legacyIntegrationsMirror`, identificado pelo header `x-site-cpa-payment-webhook: v1`; nenhum endpoint ou modulo financeiro paralelo foi criado.
+
+## Origem, valor e ownership
+
+A cobranca exige `erpOrderId`, `erpCustomerId`, `externalUserId`, `externalPaymentId` e metodo. O ERP revalida vinculo empresarial aprovado, papel externo permitido, Pedido `SITE_CPA`, Grupo, Empresa e `ContaReceber` oficial vinculada.
+
+- o valor nasce exclusivamente do saldo aberto do titulo;
+- `amount`, `paid`, `approved`, `settled`, status e identificadores enviados como autoridade pelo Site sao rejeitados;
+- titulo ausente nao gera cobranca avulsa e retorna `BLOCKED_PENDING_RECEIVABLE`;
+- titulo liquidado, Pedido cancelado, ownership cruzado e parcela ambigua falham fechados;
+- `returnUrl` aceita somente rota interna e nunca confirma pagamento.
+
+## Tentativa e idempotencia
+
+`IntegracaoEvento` registra a tentativa com `paymentAttemptId`, Pedido, Cliente, titulo, provedor, metodo, valor, status, identificador externo e datas. `externalPaymentId`, hash canonico, ledger S2S e evento do provider protegem duplo clique, retry e payload conflitante.
+
+A mesma tentativa preserva historico. Falha ou expiracao exige novo `externalPaymentId`; timeout permanece `PROCESSING` e nunca e transformado automaticamente em sucesso ou falha.
+
+## Provedores e segredos
+
+O adaptador pequeno reutiliza `ConfiguracaoGatewayPagamento`/`GatewayPagamento` e os provedores ja existentes:
+
+- Asaas: criacao e consulta de PIX/Boleto e cancelamento de cobranca cancelavel;
+- Juno: criacao e consulta de Boleto; cancelamento permanece bloqueado enquanto nao houver contrato oficial seguro;
+- CARD e PAYMENT_LINK ficam inativos ate existir checkout hospedado/tokenizado real.
+
+Chave de API e segredo de webhook nao sao lidos dos registros. Eles devem existir no secret manager/ambiente, preferencialmente por Empresa:
+
+- `SITE_CPA_PAYMENT_API_KEY_<EMPRESA>`;
+- `SITE_CPA_PAYMENT_WEBHOOK_SECRET_<EMPRESA>`;
+- `SITE_CPA_PAYMENT_CUSTOMER_ID_<EMPRESA>`.
+
+O fluxo antigo de `emitirBoleto`, que pode gerar documento simulado, nao e chamado pelo contrato S2S. Provider ausente retorna `site_cpa_payment_provider_unavailable`, sem cobranca falsa.
+
+## Status, webhook e conciliacao
+
+Estados canonicos: `PENDING`, `PROCESSING`, `APPROVED`, `PARTIALLY_PAID`, `PAID`, `FAILED`, `CANCELLED`, `EXPIRED`, `REFUNDED`, `CHARGEBACK` e `UNDER_REVIEW`. Status desconhecido nunca vira aprovado.
+
+O webhook valida Empresa, provedor, raw body, HMAC-SHA256, timestamp, event ID, replay, rate limit por Empresa, tentativa, transacao, tenant e valor. Evento repetido ja concluido responde idempotente antes do rate limit e sem nova baixa.
+
+Pagamento confirmado atualiza o `ContaReceber` existente e somente os campos financeiros do Pedido. Parcial aplica apenas o incremento confirmado e preserva saldo. Excesso, valor ausente ou divergencia seguem para `MANUAL_REVIEW`; nenhuma producao, entrega ou faturamento e liberado automaticamente.
+
+## Resposta e privacidade
+
+As respostas retornam apenas tentativa, Pedido, metodo, valor oficial, status, valor pago, vencimento/expiracao, conciliacao, proxima acao e dados publicos de PIX/Boleto. Segredos, tokens, credenciais bancarias, PAN, CVV, headers internos, custo, margem e notas internas nao sao expostos.
+
+## Capability e pendencias
+
+`siteHealth` preserva as capabilities anteriores e calcula `PAYMENT` como `ready`, `blocked` ou `degraded`. `ready` exige cadastro ativo, provedor suportado, metodo real, segredos no ambiente e resolucao de cliente no provedor. Na instalacao sem credenciais provisionadas, o estado correto e `blocked`.
+
+PRONTO: contrato create/status/cancel, saldo oficial, tentativa persistente, idempotencia, adapter Asaas/Juno, webhook HMAC, replay protection, conciliacao, parcial e baixa oficial no titulo existente.
+
+BLOCKED: metodos sem provider real, CARD/PAYMENT_LINK sem hosted checkout, cancelamento Juno, refund operacional e automacao avancada de chargeback. O Site CPA permanece sem alteracoes.
+
+Proximo lote somente com autorizacao expressa: ERP-SITE-07 - Portal Financeiro e Fiscal.

@@ -21,6 +21,14 @@ import {
   SiteCpaQuoteError,
   resolveSiteCpaQuoteOperation,
 } from '../siteCpaQuoteNegotiation/entry.ts';
+import {
+  SITE_CPA_PAYMENT_CANCEL_OPERATION,
+  SITE_CPA_PAYMENT_CREATE_OPERATION,
+  SITE_CPA_PAYMENT_STATUS_OPERATION,
+  SiteCpaPaymentError,
+  resolveSiteCpaPaymentOperation,
+} from '../siteCpaPayment/entry.ts';
+import { paymentCapability } from '../siteCpaPayment/provider.ts';
 
 export const SITE_CPA_ORIGIN = 'SITE_CPA';
 export const SITE_CPA_CONTRACT_VERSION = '1';
@@ -397,6 +405,7 @@ export const handleSiteCpaGatewayRequest = async ({
   };
 
   if (request.operation === SITE_CPA_HEALTH_OPERATION) {
+    const paymentState = await paymentCapability({ base44, scope, env });
     const body = buildSiteCpaResponse({
       ok: true,
       request,
@@ -415,10 +424,45 @@ export const handleSiteCpaGatewayRequest = async ({
           ORDER_CREATE: 'ready',
           QUOTE_CREATE: 'ready',
           NEGOTIATION: 'ready',
+          PAYMENT: paymentState,
         },
       },
     });
     return finish({ status: 200, body, eventStatus: 'concluido' });
+  }
+
+  if ([
+    SITE_CPA_PAYMENT_CREATE_OPERATION,
+    SITE_CPA_PAYMENT_STATUS_OPERATION,
+    SITE_CPA_PAYMENT_CANCEL_OPERATION,
+  ].includes(request.operation)) {
+    try {
+      const data = await resolveSiteCpaPaymentOperation({
+        base44, payload, scope, request, env, now,
+      });
+      const body = buildSiteCpaResponse({ ok: true, request, data });
+      const status = request.operation === SITE_CPA_PAYMENT_CREATE_OPERATION
+        ? (data.status === 'PROCESSING' ? 202 : 201)
+        : 200;
+      return finish({ status, body, eventStatus: 'concluido' });
+    } catch (error) {
+      const failure = error instanceof SiteCpaPaymentError
+        ? error
+        : new SiteCpaPaymentError(503, 'site_cpa_payment_unavailable');
+      const body = buildSiteCpaResponse({
+        ok: false,
+        request,
+        code: failure.code,
+        message: failure.message,
+        details: failure.details,
+      });
+      return finish({
+        status: failure.status,
+        body,
+        eventStatus: 'rejeitado',
+        errorCode: failure.code,
+      });
+    }
   }
 
   if (request.operation === SITE_CPA_CUSTOMER_RESOLVE_OPERATION) {
