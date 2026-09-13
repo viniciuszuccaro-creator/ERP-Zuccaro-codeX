@@ -6810,3 +6810,17 @@ Checklist inicial:
 - Situacao: o UPDATE comprovado continua selecionado por RELATORIO, sem prova de SEQUENCIA, fornecedor ou outra chave da parcela na mesma estrutura. A parcela permanece BLOCKED para migracao como pagamento comprovado.
 - O SQL permaneceu Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; esta etapa nao acessou dados do banco. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
 - Proximo passo obrigatorio: classificar as duas cadeias com predicado de SEQUENCIA por verbo e tabela-alvo para verificar se pertencem a outro comando ou operacao. Exportar somente categorias e contagens, nunca consultas, cadeias, nomes adicionais, parametros, offsets ou dados, e nao executar nem alterar o aplicativo.
+
+### Gate 18 - Comandos associados aos predicados de SEQUENCIA
+
+- As duas cadeias com predicado de SEQUENCIA no aplicativo de caixa foram classificadas por verbo e classe da tabela-alvo, sem executar ou modificar o binario.
+- A primeira cadeia pertence a um DELETE de outra estrutura ou de alvo nao extraido. Ela nao referencia FornecDuplicatas, DATABAIXA ou RELATORIO.
+- A segunda cadeia pertence a um SELECT cuja tabela-alvo e FornecDuplicatas. Ela combina os predicados RELATORIO e SEQUENCIA, mas nao atribui DATABAIXA.
+- Nenhuma das duas cadeias e o UPDATE direto de FornecDuplicatas identificado anteriormente.
+- Existe, portanto, leitura de parcela pela chave composta RELATORIO mais SEQUENCIA, mas a gravacao da baixa permanece estruturada separadamente somente com RELATORIO comprovado.
+- A proximidade fisica entre SELECT e UPDATE nao demonstra por si so que ambos componham a mesma operacao nem que o resultado lido limite a atualizacao.
+- As duas passagens reproduziram os mesmos dois comandos e classificacoes. A releitura protegida do HD externo confirmou SHA-256 F5E769508716A1F3DF35706019D01017560E43BB0598A1E61B0DF290641D58A0.
+- O relatorio legacy-caixa-sequencia-command-role.csv permanece somente em D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS, com ACL protegida. Consultas, cadeias, tabelas adicionais, parametros, offsets, dados e o binario nao integram o GitHub.
+- Situacao: a chave composta esta comprovada para leitura, nao para o UPDATE de DATABAIXA. A vinculacao da parcela ao pagamento continua nao comprovada e permanece BLOCKED para migracao como pagamento comprovado.
+- O SQL permaneceu Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; esta etapa nao acessou dados do banco. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
+- Proximo passo obrigatorio: comparar somente a forma estrutural dos operandos de RELATORIO no SELECT e no UPDATE e do operando de SEQUENCIA no SELECT, incluindo tipo de placeholder e compatibilidade entre as assinaturas, sem exportar nomes, literais, valores, consultas, cadeias ou offsets.
