@@ -13,16 +13,14 @@ import {
   Clock,
   TrendingDown,
   ShieldCheck,
-  DollarSign,
-  Zap,
-  Shield
+  Zap
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useWindow } from "@/components/lib/useWindow";
 import AnalisePedidoAprovacao from "./AnalisePedidoAprovacao";
 import AutomacaoFluxoPedido from "./AutomacaoFluxoPedido";
+import ConciliacaoFinanceiraAprovacoesTab from "./ConciliacaoFinanceiraAprovacoesTab";
+import { AprovacoesPlaceholder, CentralAprovacoesShell } from "./CentralAprovacoesLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
@@ -49,7 +47,7 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
 
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaContextoId = empresaId || (contexto === "empresa" ? empresaAtual?.id : null);
-  const contextoValido = Boolean(groupId || empresaContextoId);
+  const contextoValido = contexto === "grupo" ? Boolean(groupId) : Boolean(groupId && empresaContextoId);
   const podeVisualizarAprovacoes =
     hasPermission("Comercial", "Pedido", "visualizar") ||
     hasPermission("Comercial", "Pedido", "aprovar") ||
@@ -58,8 +56,26 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
   const podeEditarAprovacoes =
     hasPermission("Comercial", "Pedido", "aprovar") ||
     hasPermission("Comercial.Pedido.aprovar");
+  const podeRevisarConciliacao =
+    hasPermission("Financeiro", "Migracao", "conciliar") ||
+    hasPermission("Financeiro.Migracao.conciliar");
+  const podeAprovarConciliacao =
+    hasPermission("Financeiro", "Migracao", "aprovar") ||
+    hasPermission("Financeiro.Migracao.aprovar");
+  const podeVisualizarConciliacao = podeRevisarConciliacao || podeAprovarConciliacao;
+  const podeVisualizarCentral = podeVisualizarAprovacoes || podeVisualizarConciliacao;
+  const tabVisivel = !podeVisualizarAprovacoes && podeVisualizarConciliacao ? "conciliacao" : activeTab;
   const consultaHabilitada = Boolean(contextoValido && podeVisualizarAprovacoes);
 
+  /**
+   * @param {{
+   *   acao: string,
+   *   pedido?: Record<string, any>|null,
+   *   descricao: string,
+   *   sucesso?: boolean,
+   *   detalhes?: Record<string, any>
+   * }} params
+   */
   const auditAprovacao = async ({ acao, pedido = null, descricao, sucesso = true, detalhes = {} }) => {
     try {
       await createInContext("AuditLog", {
@@ -85,7 +101,15 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
         },
         data_hora: new Date().toISOString()
       });
-    } catch (_) {}
+    } catch (error) {
+      console.error("[CentralAprovacoesManager] Falha ao auditar aprovacao", {
+        error: error?.message || String(error),
+        acao,
+        pedido_id: pedido?.id || detalhes?.pedido_id || null,
+        group_id: pedido?.group_id || pedido?.grupo_id || groupId,
+        empresa_id: pedido?.empresa_id || empresaContextoId,
+      });
+    }
   };
 
   const { data: pedidos = [] } = useQuery({
@@ -274,54 +298,30 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
   const pedidosAprovados = pedidos.filter(p => p.status_aprovacao === "aprovado");
   const pedidosNegados = pedidos.filter(p => p.status_aprovacao === "negado");
 
-  // V21.6: Responsividade w-full h-full
-  const containerClass = windowMode 
-    ? 'w-full h-full flex flex-col overflow-hidden' 
-    : 'w-full h-full space-y-6';
-
-  const contentClass = windowMode 
-    ? 'flex-1 overflow-y-auto p-6' 
-    : '';
-
-  const Wrapper = ({ children }) => windowMode ? (
-    <div className={containerClass} data-context-required="true" data-permission="Comercial.Pedido.aprovar">
-      <div className={contentClass}>{children}</div>
-    </div>
-  ) : (
-    <div className="w-full h-full space-y-6" data-context-required="true" data-permission="Comercial.Pedido.aprovar">{children}</div>
-  );
-
   return (
-    <Wrapper>
-      
-      {/* V21.6: Controle de Acesso */}
-      {(!contextoValido || !podeVisualizarAprovacoes) && (
-        <Alert className="border-red-300 bg-red-50 mb-6">
-          <Shield className="w-4 h-4 text-red-600" />
-          <AlertDescription>
-            <p className="font-semibold text-red-900">🔒 Acesso Negado</p>
-            <p className="text-sm text-red-700 mt-1">
-              Apenas <strong>Administradores</strong> e <strong>Gerentes</strong> podem acessar a Central de Aprovações.
-            </p>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <ShieldCheck className="w-7 h-7 text-orange-600" />
-            Central de Aprovações V21.6
-          </h2>
-          <p className="text-slate-600 text-sm">Gerencie aprovações com fechamento automático integrado</p>
-        </div>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="descontos">Descontos</TabsTrigger>
-          <TabsTrigger value="limite">Limite de Crédito</TabsTrigger>
-          <TabsTrigger value="duplicatas">Duplicatas Vencidas</TabsTrigger>
+    <CentralAprovacoesShell
+      windowMode={windowMode}
+      contextoValido={contextoValido}
+      acessoPermitido={podeVisualizarCentral}
+    >
+      <Tabs value={tabVisivel} onValueChange={setActiveTab} className="w-full">
+        <TabsList className={`grid h-auto w-full ${
+          podeVisualizarAprovacoes && podeVisualizarConciliacao
+            ? "grid-cols-2 md:grid-cols-4"
+            : podeVisualizarAprovacoes ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1"
+        }`}>
+          {podeVisualizarAprovacoes && (
+            <>
+              <TabsTrigger value="descontos">Descontos</TabsTrigger>
+              <TabsTrigger value="limite">Limite de Crédito</TabsTrigger>
+              <TabsTrigger value="duplicatas">Duplicatas Vencidas</TabsTrigger>
+            </>
+          )}
+          {podeVisualizarConciliacao && (
+            <TabsTrigger value="conciliacao" data-action="visualizar-conciliacao-financeira">
+              Conciliação financeira
+            </TabsTrigger>
+          )}
         </TabsList>
         
         <TabsContent value="descontos">
@@ -600,34 +600,27 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
         </TabsContent>
         
         <TabsContent value="limite">
-          <Card className="border-0 shadow-md mt-4">
-            <CardHeader className="bg-purple-50 border-b">
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-purple-600" />
-                Aprovações de Limite de Crédito
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 text-slate-600">
-              <p>Funcionalidade em desenvolvimento.</p>
-            </CardContent>
-          </Card>
+          <AprovacoesPlaceholder tipo="limite" />
         </TabsContent>
 
         <TabsContent value="duplicatas">
-          <Card className="border-0 shadow-md mt-4">
-            <CardHeader className="bg-red-50 border-b">
-              <CardTitle className="flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-red-600" />
-                Aprovações de Duplicatas Vencidas
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 text-slate-600">
-              <p>Funcionalidade em desenvolvimento.</p>
-            </CardContent>
-          </Card>
+          <AprovacoesPlaceholder tipo="duplicatas" />
         </TabsContent>
+
+        {podeVisualizarConciliacao && (
+          <TabsContent value="conciliacao">
+            <ConciliacaoFinanceiraAprovacoesTab
+              groupId={groupId}
+              empresaId={empresaContextoId}
+              contexto={contexto}
+              user={user}
+              canReview={podeRevisarConciliacao}
+              canApprove={podeAprovarConciliacao}
+            />
+          </TabsContent>
+        )}
       </Tabs>
-    </Wrapper>
+    </CentralAprovacoesShell>
   );
 }
 

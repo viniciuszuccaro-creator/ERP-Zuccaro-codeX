@@ -7009,3 +7009,20 @@ Checklist inicial:
 - Divida preexistente: ESLint global permanece com 85 erros e 17 avisos. O typecheck global permanece com diagnosticos historicos e nao apontou diagnostico nos arquivos deste lote.
 - Os servicos `MSSQL$ERPZLEGACY` e `SQLAgent$ERPZLEGACY` terminaram parados e manuais; `SQLBrowser` terminou parado e desabilitado. O HD externo e o banco legado nao foram acessados.
 - Proximo passo obrigatorio: integrar as acoes especializadas na Central de Aprovacoes existente, exibindo apenas pendencias do contexto autorizado e preservando o bloqueio de promocao operacional.
+
+### Gate 18 - Conciliacao financeira integrada a Central de Aprovacoes
+
+- A Central de Aprovacoes existente recebeu a aba de conciliacao financeira; nenhuma pagina, rota, entidade ou central paralela foi criada.
+- A aba somente consulta em contexto de Empresa com `group_id`, `empresa_id` e `scope_type=empresa`. Na visao de Grupo, a interface orienta selecionar a empresa responsavel e nao executa consulta global.
+- A listagem chama `listManualReconciliations` e usa chave de cache com usuario, Grupo, Empresa e tipo de contexto para impedir mistura entre empresas.
+- A interface permite anexar evidencia PDF ou imagem de ate 10 MB, registrar revisao `PAGO` ou `ABERTO` com justificativa e confirmar a aprovacao final. Os controles respeitam `Financeiro.Migracao.conciliar` e `Financeiro.Migracao.aprovar`.
+- Perfis exclusivamente financeiros veem somente a aba financeira; perfis comerciais preservam as tres abas anteriores; perfis com ambos os acessos veem as quatro abas.
+- A segregacao visual impede o registrante de revisar e impede registrante ou revisor de aprovar. O backend continua sendo a autoridade definitiva e repete todas as validacoes.
+- O cliente local deixou de simular essas acoes: listagem, evidencia, revisao e aprovacao agora persistem no armazenamento local usando a mesma politica de transicao, contexto estrito, RBAC e auditoria atomica.
+- Mesmo aprovada, a pendencia permanece `PENDING_MANUAL_RECONCILIATION`, em `staging`, com `confirmado=false` e bloqueio operacional. A interface nao possui acao de promover, baixar ou criar `ContaPagar` ou `ContaReceber`.
+- Como a Central ultrapassava 600 linhas, o contêiner responsivo e os placeholders repetidos foram extraidos para componente auxiliar, e a aba financeira foi mantida isolada em componente proprio. Todas as abas e comportamentos anteriores foram preservados.
+- Uma falha silenciosa de auditoria existente na Central foi substituida por registro explicito do erro, reduzindo o baseline de catches vazios operacionais de 128 para 127.
+- Validacao: 22 testes focados e 246 testes globais aprovados; ESLint direcionado, audit baseline, build completo e `git diff --check` aprovados.
+- Divida preexistente: ESLint global melhorou para 84 erros e 17 avisos. O typecheck global permanece com diagnosticos historicos; nenhum diagnostico novo permaneceu nos arquivos deste lote.
+- Os servicos `MSSQL$ERPZLEGACY` e `SQLAgent$ERPZLEGACY` terminaram parados e manuais; `SQLBrowser` terminou parado e desabilitado. O HD externo e o banco legado nao foram acessados.
+- Proximo passo obrigatorio: homologar o fluxo visual completo com registros sinteticos e tres perfis distintos, incluindo troca entre Grupo CPA, CPA Ferro e Aco e 3Z LTDA, sem usar ou alterar dados legados e sem promover titulo operacional.

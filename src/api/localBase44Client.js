@@ -72,6 +72,11 @@ import {
 import { assertIaInvocation } from "@/components/lib/iaTransversalPolicy";
 import { AGENT_FUNCTION_MAP, AGENTES, assertAgentMayAct, assertMappedAgentFunction, resolveAgentScope } from "@/components/lib/agenteAutorizacaoPolicy";
 import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows } from "../../base44/functions/_lib/security/entityGuardPolicy/entry.ts";
+import {
+  applyManualWorkflowTransition,
+  isManualReconciliationRequest,
+  summarizeManualRequest,
+} from "../../base44/functions/_lib/financeiro/manualReconciliationApprovalPolicy/entry";
 
 const reportLocalClientFailure = (operation, error, context = {}) => {
   console.error('[base44-local] ' + operation, {
@@ -2117,6 +2122,106 @@ const countEntity = async (entityName, filter = {}) => {
   return rows.length;
 };
 
+const MANUAL_RECONCILIATION_LOCAL_ACTIONS = new Set([
+  'listManualReconciliations',
+  'attachManualReconciliationEvidence',
+  'reviewManualReconciliation',
+  'approveManualReconciliation',
+]);
+
+const appendLocalManualReconciliationAudit = (db, user, record, action, success = true, previous = null) => {
+  const audits = getEntityStore(db, 'AuditLog');
+  const timestamp = now();
+  audits.unshift({
+    id: makeId('audit'),
+    usuario: user?.full_name || user?.email || 'Usuario Local',
+    usuario_id: user?.id || null,
+    empresa_id: record?.empresa_id || null,
+    group_id: record?.group_id || null,
+    acao: action,
+    modulo: 'Financeiro',
+    tipo_auditoria: 'migracao',
+    entidade: 'SolicitacaoAprovacao',
+    registro_id: record?.id || null,
+    descricao: `${action} de conciliacao financeira em staging local`,
+    dados_anteriores: previous ? sanitizeAuditPayload(summarizeManualRequest(previous)) : null,
+    dados_novos: sanitizeAuditPayload(summarizeManualRequest(record)),
+    sucesso: success,
+    local: true,
+    created_date: timestamp,
+    updated_date: timestamp,
+    data_hora: timestamp,
+  });
+};
+
+const invokeLocalManualReconciliation = async (payload = {}) => {
+  const user = readUser();
+  const session = evaluateLocalUserSession(user);
+  if (!session.allowed) throw createAuthDeniedError(session);
+  const { contexto, groupId: currentGroupId, empresaId: currentEmpresaId } = getCurrentContext();
+  const groupId = String(payload.group_id || '').trim();
+  const empresaId = String(payload.empresa_id || '').trim();
+  if (payload.scope_type !== 'empresa' || !groupId || !empresaId) {
+    throw new Error('Contexto de Empresa exige scope_type, group_id e empresa_id.');
+  }
+  if (contexto !== 'empresa' || groupId !== String(currentGroupId || '') || empresaId !== String(currentEmpresaId || '')) {
+    throw new Error('Contexto local nao autorizado para a conciliacao financeira.');
+  }
+
+  const db = loadDb();
+  const empresa = getEntityStore(db, 'Empresa').find((item) => String(item.id) === empresaId);
+  if (!empresa || String(empresa.group_id || empresa.grupo_id || '') !== groupId) {
+    throw new Error('Empresa nao pertence ao Grupo informado.');
+  }
+  const canReview = evaluateLocalPermission({ module: 'Financeiro', section: 'Migracao', action: 'conciliar' }).allowed;
+  const canApprove = evaluateLocalPermission({ module: 'Financeiro', section: 'Migracao', action: 'aprovar' }).allowed;
+  if (payload.action === 'listManualReconciliations') {
+    if (!canReview && !canApprove) throw new Error('Permissao negada para consultar conciliacoes financeiras.');
+    const records = getEntityStore(db, 'SolicitacaoAprovacao').filter((record) => (
+      isManualReconciliationRequest(record)
+      && String(record.group_id || '') === groupId
+      && String(record.empresa_id || '') === empresaId
+    )).slice(0, 50);
+    appendLocalManualReconciliationAudit(db, user, { group_id: groupId, empresa_id: empresaId }, 'Visualizacao');
+    saveDb(db);
+    return { data: records };
+  }
+
+  const requiredPermission = payload.action === 'approveManualReconciliation' ? canApprove : canReview;
+  if (!requiredPermission) throw new Error('Permissao negada para atualizar a conciliacao financeira.');
+  const records = getEntityStore(db, 'SolicitacaoAprovacao');
+  const index = records.findIndex((record) => String(record.id) === String(payload.solicitacao_id || ''));
+  if (index < 0) throw new Error('Conciliacao financeira nao encontrada.');
+  const current = records[index];
+  if (String(current.group_id || '') !== groupId || String(current.empresa_id || '') !== empresaId) {
+    appendLocalManualReconciliationAudit(db, user, { id: payload.solicitacao_id, group_id: groupId, empresa_id: empresaId }, 'Bloqueio', false);
+    saveDb(db);
+    throw new Error('Conciliacao financeira fora do contexto autorizado.');
+  }
+  const transition = applyManualWorkflowTransition(current, payload.action, payload, user);
+  if (transition.reused) {
+    appendLocalManualReconciliationAudit(db, user, current, 'Reutilizacao', true, current);
+    saveDb(db);
+    return { data: { record: current, reused: true } };
+  }
+  const updated = {
+    ...current,
+    status: 'pendente',
+    bloqueio_operacional: true,
+    dados_propostos: transition.record.dados_propostos,
+    updated_date: now(),
+  };
+  const auditAction = payload.action === 'attachManualReconciliationEvidence'
+    ? 'Evidencia'
+    : payload.action === 'reviewManualReconciliation' ? 'Revisao' : 'Aprovacao';
+  appendLocalManualReconciliationAudit(db, user, updated, auditAction, true, current);
+  records[index] = updated;
+  saveDb(db);
+  notify('SolicitacaoAprovacao', 'update', updated);
+  notify('AuditLog', 'create', getEntityStore(db, 'AuditLog')[0]);
+  return { data: { record: updated, reused: false } };
+};
+
 const functions = {
   async invoke(name, payload = {}) {
     const mapped = AGENT_FUNCTION_MAP[name];
@@ -2142,6 +2247,11 @@ const functions = {
       });
     }
     switch (name) {
+      case 'solicitacoesAprovacao':
+        if (MANUAL_RECONCILIATION_LOCAL_ACTIONS.has(payload.action)) {
+          return invokeLocalManualReconciliation(payload);
+        }
+        return { data: { ok: true, local: true, functionName: name, message: 'Acao de aprovacao simulada no modo local.' } };
       case 'getEntityRecord': {
         if (!payload.entityName) return { data: [] };
         const filter = expandLocalContextFilter(payload.entityName, payload.filter || {});

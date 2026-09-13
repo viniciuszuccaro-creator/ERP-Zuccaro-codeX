@@ -660,6 +660,34 @@ test('backend persiste workflow especializado com RBAC, contexto e rollback', as
   delete globalThis.__approvalMockClient;
 });
 
+test('central existente integra conciliacao financeira sem promover titulo', async () => {
+  const central = await readFile(new URL('../src/components/comercial/CentralAprovacoesManager.jsx', import.meta.url), 'utf8');
+  const tab = await readFile(new URL('../src/components/comercial/ConciliacaoFinanceiraAprovacoesTab.jsx', import.meta.url), 'utf8');
+  const localClient = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
+
+  assert.match(central, /ConciliacaoFinanceiraAprovacoesTab/);
+  assert.match(central, /Financeiro(?:"\s*,\s*"Migracao|\.Migracao\.conciliar)/);
+  assert.match(tab, /contexto === "empresa" && Boolean\(groupId && empresaId\)/);
+  assert.match(tab, /action: "listManualReconciliations"/);
+  assert.match(tab, /attachManualReconciliationEvidence/);
+  assert.match(tab, /reviewManualReconciliation/);
+  assert.match(tab, /approveManualReconciliation/);
+  assert.match(tab, /confirmacao_humana/);
+  assert.match(tab, /Financeiro\.Migracao\.conciliar/);
+  assert.match(tab, /Financeiro\.Migracao\.aprovar/);
+  assert.doesNotMatch(tab, /entities\.(ContaPagar|ContaReceber)\.(create|update)/);
+
+  assert.match(localClient, /invokeLocalManualReconciliation/);
+  assert.match(localClient, /MANUAL_RECONCILIATION_LOCAL_ACTIONS/);
+  assert.match(localClient, /appendLocalManualReconciliationAudit/);
+  assert.match(localClient, /applyManualWorkflowTransition\(current, payload\.action, payload, user\)/);
+  assert.match(localClient, /contexto !== 'empresa'/);
+  assert.doesNotMatch(
+    localClient.slice(localClient.indexOf('const invokeLocalManualReconciliation'), localClient.indexOf('const functions =')),
+    /entities\.(ContaPagar|ContaReceber)\.(create|update)/,
+  );
+});
+
 test('importadores existentes fazem staging e reconciliam', async () => {
   const lote = await readFile(new URL('../src/components/cadastros/ImportarProdutosLote.jsx', import.meta.url), 'utf8');
   const planilha = await readFile(new URL('../src/components/estoque/ImportadorProdutosPlanilha.jsx', import.meta.url), 'utf8');
