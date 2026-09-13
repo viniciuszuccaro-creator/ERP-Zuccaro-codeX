@@ -9,8 +9,11 @@ import {
   approvePendingManualReconciliation,
   assertReconciliacaoMigracao,
   buildPendingManualReconciliation,
+  buildManualReconciliationApprovalRequest,
   buildLoteMigracaoId,
   buildReconciliacaoMigracao,
+  findManualReconciliationApprovalRequest,
+  isManualReconciliationApprovalRequest,
   MIGRACAO_STATUS_PENDING_MANUAL_RECONCILIATION,
   reviewPendingManualReconciliation,
   stampMigracaoRecord,
@@ -329,6 +332,60 @@ test('aprovacao final exige segundo usuario, mesma decisao e confirmacao humana'
     () => applyMigracaoOnCreate({ entityName: 'ContaPagar', record: { ...approved, confirmado: true } }),
     /permanece no staging/,
   );
+});
+
+test('SolicitacaoAprovacao recebe envelope idempotente sem virar titulo operacional', () => {
+  const staging = buildPendingManualReconciliation({
+    group_id: 'g1', empresa_id: 'e1', codigo_legado: 'titulo-1',
+    status: 'Pago', status_pagamento: 'Pago', valor_pago: 100,
+  }, { registradoPor: 'registrante-1', registradoEm: '2026-09-13T12:00:00.000Z' });
+  const request = buildManualReconciliationApprovalRequest(staging, {
+    solicitanteId: 'registrante-1',
+    solicitanteNome: 'Analista <script>',
+    timestamp: '2026-09-13T12:05:00.000Z',
+  });
+
+  assert.equal(isManualReconciliationApprovalRequest(request), true);
+  assert.equal(request.group_id, 'g1');
+  assert.equal(request.empresa_id, 'e1');
+  assert.equal(request.entidade_alvo, 'ContaPagar');
+  assert.equal(request.entidade_alvo_id, null);
+  assert.equal(request.status, 'pendente');
+  assert.equal(request.bloqueio_operacional, true);
+  assert.equal(request.solicitante_nome, 'Analista');
+  assert.equal(request.status_pagamento, undefined);
+  assert.equal(request.valor_pago, undefined);
+  assert.equal(request.dados_propostos.envelope_staging.status_migracao, MIGRACAO_STATUS_PENDING_MANUAL_RECONCILIATION);
+  assert.equal(request.dados_propostos.envelope_staging.confirmado, false);
+  assert.match(request.idempotency_key, /^migracao-conciliacao\|g1\|e1\|ContaPagar\|titulo-1$/);
+
+  const duplicate = findManualReconciliationApprovalRequest(request, [{ id: 'sa-1', ...request }]);
+  assert.equal(duplicate.id, 'sa-1');
+  assert.equal(findManualReconciliationApprovalRequest(request, [{ ...request, group_id: 'outro-grupo' }]), null);
+});
+
+test('adaptador persistente recusa envelope fora do staging financeiro', () => {
+  const staging = buildPendingManualReconciliation({
+    group_id: 'g1', empresa_id: 'e1', codigo_legado: 'titulo-1',
+  }, { registradoPor: 'registrante-1', registradoEm: '2026-09-13T12:00:00.000Z' });
+  assert.throws(
+    () => buildManualReconciliationApprovalRequest({ ...staging, destino_migracao: 'producao' }, {
+      solicitanteId: 'registrante-1', timestamp: '2026-09-13T12:05:00.000Z',
+    }),
+    /nao esta em staging bloqueado/,
+  );
+  assert.throws(
+    () => buildManualReconciliationApprovalRequest({ ...staging, entidade_migracao: 'Pedido' }, {
+      solicitanteId: 'registrante-1', timestamp: '2026-09-13T12:05:00.000Z',
+    }),
+    /Entidade financeira invalida/,
+  );
+});
+
+test('estrutura persistente existente fica fora das entidades financeiras operacionais', async () => {
+  const approvals = await readFile(new URL('../base44/functions/solicitacoesAprovacao/entry.ts', import.meta.url), 'utf8');
+  assert.match(approvals, /entities\.SolicitacaoAprovacao\.create/);
+  assert.doesNotMatch(approvals, /tipo_solicitacao === 'conciliacao_migracao_financeira'[\s\S]*entities\.(ContaPagar|ContaReceber)\.(create|update)/);
 });
 
 test('importadores existentes fazem staging e reconciliam', async () => {

@@ -3,6 +3,7 @@ const firstText = (...values) => values.map((value) => String(value || '').trim(
 export const MIGRACAO_ORIGENS = ['erp_antigo', 'migracao', 'lote_csv', 'planilha', 'nfe_xml'];
 export const MIGRACAO_STATUS_PENDING_MANUAL_RECONCILIATION = 'PENDING_MANUAL_RECONCILIATION';
 export const MIGRACAO_DESTINO_STAGING = 'staging';
+export const MIGRACAO_RECONCILIACAO_TIPO_SOLICITACAO = 'conciliacao_migracao_financeira';
 export const MIGRACAO_RECONCILIACAO_PERMISSOES = Object.freeze({
   evidenciar: 'Financeiro.Migracao.conciliar',
   revisar: 'Financeiro.Migracao.conciliar',
@@ -338,6 +339,73 @@ export const approvePendingManualReconciliation = (record = {}, {
     confirmado: false,
     bloqueio_operacional: true,
   };
+};
+
+/** @param {Record<string, unknown>} record */
+export const isManualReconciliationApprovalRequest = (record = {}) => (
+  firstText(record.tipo_solicitacao) === MIGRACAO_RECONCILIACAO_TIPO_SOLICITACAO
+  && record.bloqueio_operacional === true
+  && record.dados_propostos
+  && typeof record.dados_propostos === 'object'
+);
+
+/**
+ * @param {Record<string, unknown>} staging
+ * @param {{ solicitanteId?: unknown, solicitanteNome?: unknown, timestamp?: unknown }} options
+ */
+export const buildManualReconciliationApprovalRequest = (staging = {}, {
+  solicitanteId,
+  solicitanteNome,
+  timestamp,
+} = {}) => {
+  assertPendingManualReconciliation(staging);
+  const { actor, at } = assertAuditActor(solicitanteId, timestamp);
+  const groupId = firstText(staging.group_id, staging.grupo_id);
+  const empresaId = firstText(staging.empresa_id);
+  const entityName = firstText(staging.entidade_migracao);
+  const legacyCode = firstText(staging.codigo_legado, staging.id_antigo);
+  if (!['ContaPagar', 'ContaReceber'].includes(entityName)) {
+    throw new Error('Entidade financeira invalida no envelope de staging.');
+  }
+  if (!legacyCode) throw new Error('Codigo legado obrigatorio no envelope de staging.');
+
+  return {
+    group_id: groupId,
+    empresa_id: empresaId,
+    solicitante_id: actor,
+    solicitante_nome: sanitizeManualText(solicitanteNome, 160) || actor,
+    tipo_solicitacao: MIGRACAO_RECONCILIACAO_TIPO_SOLICITACAO,
+    entidade_alvo: entityName,
+    entidade_alvo_id: null,
+    referencia_staging: legacyCode,
+    idempotency_key: ['migracao-conciliacao', groupId, empresaId, entityName, legacyCode].join('|'),
+    dados_propostos: {
+      operation: 'manual_reconciliation_staging',
+      envelope_staging: { ...staging },
+    },
+    justificativa: 'Pendencia legada exige conciliacao financeira manual.',
+    perfil_aprovador_necessario: MIGRACAO_RECONCILIACAO_PERMISSOES.aprovar,
+    status: 'pendente',
+    data_solicitacao: at,
+    origem: 'staging_migracao',
+    bloqueio_operacional: true,
+  };
+};
+
+/**
+ * @param {Record<string, unknown>} request
+ * @param {Array<Record<string, unknown>>} requests
+ */
+export const findManualReconciliationApprovalRequest = (request = {}, requests = []) => {
+  if (!isManualReconciliationApprovalRequest(request)) return null;
+  const key = firstText(request.idempotency_key);
+  if (!key) throw new Error('Chave idempotente obrigatoria para persistencia do staging.');
+  return (Array.isArray(requests) ? requests : []).find((item) => (
+    isManualReconciliationApprovalRequest(item)
+    && firstText(item.idempotency_key) === key
+    && firstText(item.group_id) === firstText(request.group_id)
+    && firstText(item.empresa_id) === firstText(request.empresa_id)
+  )) || null;
 };
 
 export const findRegistroMigracaoDuplicado = (record = {}, records = []) => {

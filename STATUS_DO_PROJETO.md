@@ -6967,3 +6967,15 @@ Checklist inicial:
 - Validacao: 24 testes focados e 238 testes globais aprovados; ESLint direcionado aprovado; audit baseline aprovado; build completo aprovado; `git diff --check` aprovado.
 - Divida preexistente: lint e typecheck globais continuam com os diagnosticos ja registrados fora deste lote; o contrato novo nao acrescentou diagnostico especifico.
 - Proximo passo obrigatorio: identificar e homologar a estrutura persistente de staging ja existente que possa receber esse envelope sem expor a pendencia nos dashboards, saldos ou relatorios operacionais. Se nenhuma estrutura equivalente existir, registrar impacto e pedir autorizacao antes de criar uma nova.
+
+### Gate 18 - Estrutura persistente de staging homologada
+
+- A entidade existente `SolicitacaoAprovacao` foi homologada como recipiente persistente para o envelope de conciliacao manual, sem criar modulo, tela ou entidade paralela.
+- O adaptador exige envelope bloqueado em `PENDING_MANUAL_RECONCILIATION`, contexto estrito de Grupo e Empresa e origem financeira limitada a `ContaPagar` ou `ContaReceber`.
+- A solicitacao recebe tipo especifico, chave idempotente estavel e o envelope sanitizado dentro de `dados_propostos.envelope_staging`; nenhum identificador de titulo operacional e projetado no nivel superior.
+- Campos operacionais de pagamento, abertura, data de baixa e valor pago nao sao expostos no registro superior, preservando o isolamento de dashboards, saldos e relatorios financeiros.
+- Nenhum registro real foi persistido, alterado ou migrado neste lote.
+- O backend generico de `SolicitacaoAprovacao` ainda usa permissoes comerciais. Por seguranca, a integracao permanece bloqueada ate existirem acoes especializadas protegidas por `Financeiro.Migracao.conciliar` e `Financeiro.Migracao.aprovar`, contexto estrito, auditoria e isolamento das listagens e aprovacoes genericas.
+- Validacao: 17 testes focados e 241 testes globais aprovados; ESLint direcionado aprovado; audit baseline aprovado; build completo aprovado; `git diff --check` aprovado.
+- Divida preexistente: lint e typecheck globais continuam com os diagnosticos historicos ja registrados; o adaptador novo nao acrescentou diagnostico especifico.
+- Proximo passo obrigatorio: endurecer o backend existente de `SolicitacaoAprovacao` com acoes especializadas para staging financeiro e impedir acesso pelo fluxo generico antes de persistir qualquer pendencia real.
