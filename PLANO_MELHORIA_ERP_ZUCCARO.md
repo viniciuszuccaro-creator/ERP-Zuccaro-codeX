@@ -746,3 +746,16 @@ Lote concluido em 2026-09-13 na politica compartilhada de backup e virada, sem a
 
 Proxima frente: tipar `expedicaoEntregaPolicy.js`, politica compartilhada com 27 diagnosticos e 220 linhas. Telas grandes permanecem reservadas para lotes proprios.
 
+### Contratos JSDoc - politica de entrega e expedicao
+
+Lote concluido em 2026-09-13 na politica compartilhada de expedicao, sem alterar entrega, romaneio, separacao, comprovante, ocorrencia ou logistica reversa.
+
+- Contratos locais descrevem entrega, usuario, comprovante, romaneio, separacao, atualizacao e stores da expedicao sem `any`, `ts-ignore` ou desativacao de `checkJs`.
+- O typecheck isolado de `expedicaoEntregaPolicy.js` passou de 27 diagnosticos para zero.
+- O typecheck global caiu de 2.265 para 2.238 diagnosticos, reducao liquida exata de 27, sem transferir falhas para o App Motorista ou cliente local.
+- Permanecem iguais a exigencia de Empresa, a deteccao de duplicidade, a idempotencia e o bloqueio de troca da Empresa proprietaria.
+- Prova de entrega, ocorrencia, devolucao, campos congelados e permissoes por transicao continuam preservados; a politica encerrou com 302 linhas.
+- Nenhum dado, entidade, recurso Base44, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente: tipar `ordemProducaoPolicy.js`, politica compartilhada com 23 diagnosticos e 158 linhas. Telas grandes permanecem reservadas para lotes proprios.
+

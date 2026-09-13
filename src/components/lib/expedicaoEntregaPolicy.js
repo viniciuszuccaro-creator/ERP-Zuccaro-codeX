@@ -1,17 +1,63 @@
+/**
+ * @typedef {Record<string, unknown> & {
+ *   id?: unknown,
+ *   status?: string,
+ *   tipo_frete?: unknown,
+ *   entregas_ids?: unknown[],
+ *   comprovante_entrega?: ExpedicaoRecord,
+ *   nome_recebedor?: unknown,
+ *   foto_comprovante?: unknown,
+ *   assinatura_digital?: unknown,
+ *   documento_recebedor?: unknown,
+ *   motorista?: unknown,
+ *   motorista_id?: unknown,
+ *   motorista_nome?: unknown,
+ *   motorista_email?: unknown,
+ *   email?: unknown,
+ *   full_name?: unknown,
+ *   pedido_id?: unknown,
+ *   empresa_id?: unknown,
+ *   veiculo?: unknown,
+ *   veiculo_id?: unknown,
+ *   placa?: unknown,
+ *   entrega_id?: unknown,
+ *   tipo?: unknown,
+ *   idempotency_key?: unknown,
+ *   logistica_reversa?: ExpedicaoRecord,
+ *   entrega_frustrada?: ExpedicaoRecord,
+ *   motivo?: unknown,
+ *   quantidade_devolvida?: unknown,
+ *   valor_devolvido?: unknown,
+ *   qr_code?: unknown,
+ *   numero_entrega?: unknown,
+ * }} ExpedicaoRecord
+ * @typedef {{ record?: ExpedicaoRecord, entregas?: ExpedicaoRecord[] }} EntregaCreateOptions
+ * @typedef {{ record?: ExpedicaoRecord, romaneios?: ExpedicaoRecord[] }} RomaneioCreateOptions
+ * @typedef {{ record?: ExpedicaoRecord, separacoes?: ExpedicaoRecord[] }} SeparacaoCreateOptions
+ * @typedef {{ before?: ExpedicaoRecord, patch?: ExpedicaoRecord }} EntregaUpdateOptions
+ * @typedef {{ entregas?: ExpedicaoRecord[], romaneios?: ExpedicaoRecord[], separacoes?: ExpedicaoRecord[] }} ExpedicaoStores
+ */
+
+/** @param {...unknown} values */
 const firstText = (...values) => values.map((value) => String(value || '').trim()).find(Boolean) || '';
 
+/** @param {ExpedicaoRecord} record */
 const statusOf = (record = {}) => String(record.status || '').toLowerCase();
 
+/** @param {ExpedicaoRecord} record */
 const isEntregue = (record = {}) => statusOf(record).includes('entregue') && !statusOf(record).includes('frustr');
 
+/** @param {ExpedicaoRecord} record */
 const isRetirada = (record = {}) => String(record.tipo_frete || '').toLowerCase().includes('retir');
 
+/** @param {ExpedicaoRecord} record */
 const sortedEntregaIds = (record = {}) => (Array.isArray(record.entregas_ids) ? record.entregas_ids : [])
   .map((id) => String(id))
   .filter(Boolean)
   .sort()
   .join(',');
 
+/** @param {ExpedicaoRecord} record */
 export const hasProvaEntrega = (record = {}) => {
   const prova = record.comprovante_entrega || {};
   const nome = firstText(prova.nome_recebedor);
@@ -20,6 +66,10 @@ export const hasProvaEntrega = (record = {}) => {
   return Boolean(firstText(prova.foto_comprovante, prova.assinatura_digital, prova.documento_recebedor));
 };
 
+/**
+ * @param {ExpedicaoRecord} entrega
+ * @param {ExpedicaoRecord} user
+ */
 export const entregaAtribuidaAoMotorista = (entrega = {}, user = {}) => {
   if (!entrega?.id || !user) return false;
   if (firstText(entrega.motorista_id) && firstText(entrega.motorista_id) === firstText(user.id)) return true;
@@ -30,6 +80,10 @@ export const entregaAtribuidaAoMotorista = (entrega = {}, user = {}) => {
   return Boolean(email && firstText(entrega.motorista_email).toLowerCase() === email);
 };
 
+/**
+ * @param {ExpedicaoRecord} record
+ * @param {ExpedicaoRecord[]} entregas
+ */
 export const findDuplicateEntrega = (record = {}, entregas = []) => {
   const pedidoId = firstText(record.pedido_id);
   const empresaId = firstText(record.empresa_id);
@@ -40,6 +94,10 @@ export const findDuplicateEntrega = (record = {}, entregas = []) => {
   }) || null;
 };
 
+/**
+ * @param {ExpedicaoRecord} record
+ * @param {ExpedicaoRecord[]} romaneios
+ */
 export const findDuplicateRomaneio = (record = {}, romaneios = []) => {
   const key = sortedEntregaIds(record);
   const empresaId = firstText(record.empresa_id);
@@ -50,6 +108,10 @@ export const findDuplicateRomaneio = (record = {}, romaneios = []) => {
   }) || null;
 };
 
+/**
+ * @param {ExpedicaoRecord} record
+ * @param {ExpedicaoRecord[]} separacoes
+ */
 export const findDuplicateSeparacao = (record = {}, separacoes = []) => {
   const origem = firstText(record.entrega_id, record.pedido_id);
   const empresaId = firstText(record.empresa_id);
@@ -62,6 +124,7 @@ export const findDuplicateSeparacao = (record = {}, separacoes = []) => {
   )) || null;
 };
 
+/** @param {EntregaCreateOptions} options */
 export const assertEntregaOnCreate = ({ record = {}, entregas = [] } = {}) => {
   if (!firstText(record.empresa_id)) {
     throw new Error('Empresa obrigatoria para entrega.');
@@ -74,6 +137,7 @@ export const assertEntregaOnCreate = ({ record = {}, entregas = [] } = {}) => {
   return { reuse: null, record };
 };
 
+/** @param {RomaneioCreateOptions} options */
 export const assertRomaneioOnCreate = ({ record = {}, romaneios = [] } = {}) => {
   if (!firstText(record.empresa_id)) {
     throw new Error('Empresa obrigatoria para romaneio.');
@@ -92,6 +156,7 @@ export const assertRomaneioOnCreate = ({ record = {}, romaneios = [] } = {}) => 
   return { reuse: null, record };
 };
 
+/** @param {SeparacaoCreateOptions} options */
 export const assertSeparacaoOnCreate = ({ record = {}, separacoes = [] } = {}) => {
   if (!firstText(record.empresa_id)) {
     throw new Error('Empresa obrigatoria para separacao.');
@@ -101,6 +166,7 @@ export const assertSeparacaoOnCreate = ({ record = {}, separacoes = [] } = {}) =
   return { reuse: null, record };
 };
 
+/** @param {EntregaUpdateOptions} options */
 export const assertEntregaOnUpdate = ({ before = {}, patch = {} } = {}) => {
   if (!firstText(before.empresa_id) && !firstText(patch.empresa_id)) {
     throw new Error('Empresa obrigatoria para entrega.');
@@ -168,8 +234,10 @@ export const assertEntregaOnUpdate = ({ before = {}, patch = {} } = {}) => {
   };
 };
 
+/** @param {unknown} status */
 const normalizeEntregaStatus = (status) => String(status || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
+/** @param {ExpedicaoRecord} record */
 export const assertEntregaOnDelete = (record = {}) => {
   const status = normalizeEntregaStatus(record.status);
   if (isEntregue(record) || status.includes('frustr') || status.includes('devolv') || hasProvaEntrega(record)) {
@@ -180,6 +248,10 @@ export const assertEntregaOnDelete = (record = {}) => {
   }
 };
 
+/**
+ * @param {unknown} beforeStatus
+ * @param {unknown} nextStatus
+ */
 export const classifyEntregaStatusTransition = (beforeStatus, nextStatus) => {
   const before = normalizeEntregaStatus(beforeStatus);
   const next = normalizeEntregaStatus(nextStatus);
@@ -192,6 +264,7 @@ export const classifyEntregaStatusTransition = (beforeStatus, nextStatus) => {
   return 'editar';
 };
 
+/** @param {unknown} action */
 export const entregaStatusPermissionActions = (action) => {
   if (action === 'entregar') return ['entregar', 'confirmar'];
   if (action === 'conferir') return ['conferir', 'editar'];
@@ -201,6 +274,11 @@ export const entregaStatusPermissionActions = (action) => {
   return ['editar'];
 };
 
+/**
+ * @param {unknown} entityName
+ * @param {ExpedicaoRecord} record
+ * @param {ExpedicaoStores} stores
+ */
 export const applyExpedicaoCreate = (entityName, record, stores = {}) => {
   if (entityName === 'Entrega') return assertEntregaOnCreate({ record, entregas: stores.entregas });
   if (entityName === 'Romaneio') return assertRomaneioOnCreate({ record, romaneios: stores.romaneios });
@@ -208,6 +286,10 @@ export const applyExpedicaoCreate = (entityName, record, stores = {}) => {
   return { reuse: null, record };
 };
 
+/**
+ * @param {unknown} entityName
+ * @param {ExpedicaoRecord} record
+ */
 export const syncEntregaNumero = (entityName, record = {}) => {
   if (entityName !== 'Entrega') return record;
   const code = firstText(record.qr_code, record.numero_entrega);

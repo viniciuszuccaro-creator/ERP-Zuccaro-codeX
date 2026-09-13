@@ -7297,3 +7297,17 @@ Checklist inicial:
 - O build mantem somente o aviso conhecido do bundle principal; o typecheck permanece habilitado e falha apenas pelos 2.265 diagnosticos historicos registrados e autorizados.
 - Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
 - Proximo passo: tipar `expedicaoEntregaPolicy.js`, politica compartilhada com 27 diagnosticos e 220 linhas; arquivos grandes permanecem separados.
+
+### Gate 18 - Contrato tipado de entrega e expedicao
+
+- Objetivo: reduzir a divida de typecheck da politica de expedicao sem alterar entrega, romaneio, separacao, comprovantes ou logistica reversa.
+- Causa raiz: registros e opcoes de criacao/atualizacao eram inferidos como objetos vazios, concentrando 27 diagnosticos.
+- Implementacao: JSDoc local passou a descrever entrega, usuario, comprovante, romaneio, separacao, stores e atualizacoes. Nenhum `any`, `ts-ignore` ou desligamento de `checkJs` foi introduzido.
+- Multiempresa preservada: Empresa continua obrigatoria em entrega, romaneio e separacao; troca da Empresa proprietaria continua bloqueada.
+- Seguranca e comportamento preservados: duplicidade, idempotencia, prova de entrega, ocorrencia, devolucao, campos congelados e permissoes por transicao mantem os mesmos contratos de runtime.
+- Resultado isolado: 27 diagnosticos antes e zero depois.
+- Resultado global: 2.265 diagnosticos antes e 2.238 depois, reducao liquida exata de 27. O cliente local permaneceu com os mesmos 54 diagnosticos historicos e o App Motorista permaneceu sem diagnosticos.
+- Validacao: 15/15 testes focados e 252/252 testes globais aprovados; ESLint direcionado e global sem diagnosticos; `audit:baseline`, build completo e `git diff --check` aprovados.
+- O build mantem somente o aviso conhecido do bundle principal; o typecheck permanece habilitado e falha apenas pelos 2.238 diagnosticos historicos registrados e autorizados.
+- Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
+- Proximo passo: tipar `ordemProducaoPolicy.js`, politica compartilhada com 23 diagnosticos e 158 linhas; arquivos grandes permanecem separados.
