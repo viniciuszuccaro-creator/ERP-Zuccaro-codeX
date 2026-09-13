@@ -603,3 +603,16 @@ Lote concluido em 2026-09-13 para eliminar erros e avisos do ESLint operacional 
 
 Proxima frente: reduzir o typecheck por contratos JSDoc compartilhados, iniciando por uma politica de alta propagacao e sem introduzir `any` global. Cada lote deve comprovar que nao aumenta a contagem total antes do commit.
 
+### Contratos JSDoc - politica de roteirizacao
+
+Lote concluido em 2026-09-13 na politica compartilhada de roteirizacao, preservando algoritmo, exports, telas e tolerancia das entradas dinamicas existentes.
+
+- O contrato local passou a descrever coordenadas, registros de rota/entrega, capacidade, parametros de otimizacao, dados de criacao e stores sem usar `any`, `ts-ignore` ou desativar `checkJs`.
+- O typecheck isolado de `roteirizacaoPolicy.js` passou de 94 diagnosticos para zero.
+- O typecheck global caiu de 2.909 para 2.814 diagnosticos, uma reducao liquida de 95, sem transferir erros para consumidores.
+- Foram preservados o retorno historico `NaN` quando `distanciaKm` recebe argumentos ausentes e a normalizacao tolerante de entradas dinamicas em `sortedEntregaIdsKey`.
+- Os contratos continuam aceitando campos legados de Grupo, Empresa, motorista, veiculo, entrega e sequencia usados pelos consumidores atuais.
+- Nenhum dado, entidade, recurso Base44, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente: aplicar o mesmo metodo incremental a `atendimentoConversaPolicy.js`, atual maior concentrador compartilhado com 94 diagnosticos, preservando ciclo de vida, multiempresa, RBAC e idempotencia do Atendimento.
+

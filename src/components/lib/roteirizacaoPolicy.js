@@ -1,9 +1,85 @@
+/**
+ * @typedef {{ latitude: number, longitude: number }} Coordenadas
+ * @typedef {Record<string, unknown> & {
+ *   id?: unknown,
+ *   entrega_id?: unknown,
+ *   rota_id?: unknown,
+ *   group_id?: unknown,
+ *   grupo_id?: unknown,
+ *   empresa_id?: unknown,
+ *   data_rota?: unknown,
+ *   idempotency_key?: unknown,
+ *   status?: unknown,
+ *   prioridade?: unknown,
+ *   latitude?: unknown,
+ *   longitude?: unknown,
+ *   lat?: unknown,
+ *   lng?: unknown,
+ *   lon?: unknown,
+ *   endereco?: RoteirizacaoRecord,
+ *   endereco_entrega_completo?: RoteirizacaoRecord,
+ *   endereco_completo?: unknown,
+ *   peso_total_kg?: unknown,
+ *   peso_kg?: unknown,
+ *   peso?: unknown,
+ *   volume_total_m3?: unknown,
+ *   volume_m3?: unknown,
+ *   volume?: unknown,
+ *   capacidade_kg?: unknown,
+ *   capacidade?: unknown,
+ *   capacidade_m3?: unknown,
+ *   janela_entrega_inicio?: unknown,
+ *   janela_inicio?: unknown,
+ *   horario_inicio?: unknown,
+ *   janela_entrega_fim?: unknown,
+ *   janela_fim?: unknown,
+ *   entregas_ids?: Array<string | number | RoteirizacaoRecord>,
+ *   pontos_entrega?: RoteirizacaoRecord[],
+ *   entregas_vinculadas?: RoteirizacaoRecord[],
+ *   sequencia?: unknown,
+ *   ordem_sequencia?: unknown,
+ *   sequencia_rota?: unknown,
+ *   distancia_anterior_km?: unknown,
+ *   motorista_id?: unknown,
+ *   motorista?: unknown,
+ *   motorista_nome?: unknown,
+ *   veiculo_id?: unknown,
+ *   veiculo?: unknown,
+ *   veiculo_placa?: unknown,
+ *   placa?: unknown,
+ *   nome_completo?: unknown,
+ *   nome?: unknown,
+ *   full_name?: unknown,
+ *   descricao?: unknown,
+ *   modelo?: unknown,
+ *   cliente_nome?: unknown,
+ *   logradouro?: unknown,
+ *   numero?: unknown,
+ *   cidade?: unknown,
+ *   distancia_total_km?: unknown,
+ *   tempo_estimado_minutos?: unknown,
+ *   algoritmo?: unknown,
+ *   alertas_capacidade?: string[],
+ * }} RoteirizacaoRecord
+ * @typedef {{
+ *   priorizar_urgencia?: boolean,
+ *   considerar_janela_horario?: boolean,
+ *   velocidade_media_kmh?: unknown,
+ *   tempo_medio_entrega_minutos?: unknown,
+ *   distancia_maxima_km?: unknown,
+ * }} ParametrosRoteirizacao
+ * @typedef {{ kg: number, m3: number }} CapacidadeVeiculo
+ */
+
+/** @param {...unknown} values */
 const firstText = (...values) => values.map((value) => String(value || '').trim()).find(Boolean) || '';
 
 export const ROTEIRIZACAO_ENTITIES = ['Rota', 'RoteirizacaoInteligente'];
 
+/** @param {string} entityName */
 export const isRoteirizacaoEntity = (entityName) => ROTEIRIZACAO_ENTITIES.includes(entityName);
 
+/** @param {unknown} value */
 export const prioridadeScore = (value) => {
   const raw = String(value || '').toLowerCase();
   if (raw.includes('urg') || raw.includes('alta') || raw === '1' || raw === 'alta') return 3;
@@ -14,6 +90,10 @@ export const prioridadeScore = (value) => {
   return 0;
 };
 
+/**
+ * @param {RoteirizacaoRecord} record
+ * @returns {Coordenadas | null}
+ */
 export const resolveCoordenadas = (record = {}) => {
   const endereco = record.endereco_entrega_completo || record.endereco || {};
   const latitude = Number(
@@ -34,7 +114,14 @@ export const resolveCoordenadas = (record = {}) => {
   return { latitude, longitude };
 };
 
-export const distanciaKm = (p1 = {}, p2 = {}) => {
+/**
+ * @param {Coordenadas} [p1]
+ * @param {Coordenadas} [p2]
+ */
+export const distanciaKm = (
+  p1 = { latitude: Number.NaN, longitude: Number.NaN },
+  p2 = { latitude: Number.NaN, longitude: Number.NaN },
+) => {
   const R = 6371;
   const dLat = ((p2.latitude - p1.latitude) * Math.PI) / 180;
   const dLon = ((p2.longitude - p1.longitude) * Math.PI) / 180;
@@ -46,17 +133,24 @@ export const distanciaKm = (p1 = {}, p2 = {}) => {
   return R * c;
 };
 
+/** @param {RoteirizacaoRecord} entrega */
 export const pesoEntregaKg = (entrega = {}) => Number(entrega.peso_total_kg || entrega.peso_kg || entrega.peso || 0) || 0;
 
+/** @param {RoteirizacaoRecord} entrega */
 export const volumeEntregaM3 = (entrega = {}) => Number(
   entrega.volume_total_m3 || entrega.volume_m3 || entrega.volume || 0,
 ) || 0;
 
+/**
+ * @param {RoteirizacaoRecord} veiculo
+ * @returns {CapacidadeVeiculo}
+ */
 export const capacidadeVeiculo = (veiculo = {}) => ({
   kg: Number(veiculo.capacidade_kg || veiculo.capacidade || 0) || 0,
   m3: Number(veiculo.capacidade_m3 || veiculo.volume_m3 || 0) || 0,
 });
 
+/** @param {{ entregas?: RoteirizacaoRecord[], veiculo?: RoteirizacaoRecord }} options */
 export const assertCapacidadeRota = ({ entregas = [], veiculo = {} } = {}) => {
   const caps = capacidadeVeiculo(veiculo);
   const peso = (Array.isArray(entregas) ? entregas : []).reduce((sum, item) => sum + pesoEntregaKg(item), 0);
@@ -71,6 +165,7 @@ export const assertCapacidadeRota = ({ entregas = [], veiculo = {} } = {}) => {
   return { ok: alertas.length === 0, peso, volume, capacidade: caps, alertas };
 };
 
+/** @param {RoteirizacaoRecord} entrega */
 export const janelaInicioMinutos = (entrega = {}) => {
   const raw = firstText(entrega.janela_entrega_inicio, entrega.janela_inicio, entrega.horario_inicio);
   if (!raw) return null;
@@ -79,8 +174,12 @@ export const janelaInicioMinutos = (entrega = {}) => {
   return (Number(match[1]) * 60) + Number(match[2]);
 };
 
+/** @param {unknown} entregasOrIds */
 export const sortedEntregaIdsKey = (entregasOrIds = []) => {
-  const ids = (Array.isArray(entregasOrIds) ? entregasOrIds : [])
+  const items = Array.isArray(entregasOrIds)
+    ? /** @type {Array<string | number | RoteirizacaoRecord>} */ (entregasOrIds)
+    : [];
+  const ids = items
     .map((item) => (typeof item === 'string' || typeof item === 'number'
       ? String(item)
       : firstText(item?.id, item?.entrega_id)))
@@ -89,6 +188,7 @@ export const sortedEntregaIdsKey = (entregasOrIds = []) => {
   return ids.join(',');
 };
 
+/** @param {RoteirizacaoRecord} record */
 export const rotaIdempotencyKey = (record = {}) => {
   const explicit = firstText(record.idempotency_key);
   if (explicit) return explicit;
@@ -103,6 +203,10 @@ export const rotaIdempotencyKey = (record = {}) => {
   return ['rota', empresaId, data, entregas].join('|');
 };
 
+/**
+ * @param {RoteirizacaoRecord} record
+ * @param {RoteirizacaoRecord[]} rotas
+ */
 export const findDuplicateRota = (record = {}, rotas = []) => {
   const key = rotaIdempotencyKey(record);
   if (!key) return null;
@@ -113,6 +217,13 @@ export const findDuplicateRota = (record = {}, rotas = []) => {
   }) || null;
 };
 
+/** @param {{
+ *   origem?: RoteirizacaoRecord,
+ *   entregas?: RoteirizacaoRecord[],
+ *   veiculo?: RoteirizacaoRecord,
+ *   parametros?: ParametrosRoteirizacao,
+ * }} options
+ */
 export const otimizarRotaAvancada = ({
   origem = {},
   entregas = [],
@@ -127,7 +238,9 @@ export const otimizarRotaAvancada = ({
     throw new Error('Origem da rota sem coordenadas.');
   }
 
+  /** @type {Array<RoteirizacaoRecord & Coordenadas>} */
   const comCoords = [];
+  /** @type {RoteirizacaoRecord[]} */
   const semCoords = [];
   for (const entrega of (Array.isArray(entregas) ? entregas : [])) {
     const coords = resolveCoordenadas(entrega);
@@ -159,6 +272,7 @@ export const otimizarRotaAvancada = ({
   });
 
   // Processa por faixa de prioridade e, dentro da faixa, usa Nearest Neighbor.
+  /** @type {Array<{ score: number, pontos: Array<RoteirizacaoRecord & Coordenadas> }>} */
   const faixas = [];
   if (priorizar) {
     for (const ponto of ordenados) {
@@ -171,6 +285,13 @@ export const otimizarRotaAvancada = ({
     faixas.push({ score: 0, pontos: ordenados });
   }
 
+  /** @type {Array<RoteirizacaoRecord & Coordenadas & {
+   *   sequencia: number,
+   *   ordem_sequencia: number,
+   *   distancia_anterior_km: number,
+   *   peso_kg: number,
+   *   volume_m3: number,
+   * }>} */
   const rota = [];
   let atual = origemCoords;
   for (const faixa of faixas) {
@@ -229,6 +350,11 @@ export const otimizarRotaAvancada = ({
   };
 };
 
+/**
+ * @param {RoteirizacaoRecord[]} pontos
+ * @param {number} fromIndex
+ * @param {number} toIndex
+ */
 export const reordenarPontosRota = (pontos = [], fromIndex, toIndex) => {
   const list = [...(Array.isArray(pontos) ? pontos : [])];
   if (fromIndex < 0 || toIndex < 0 || fromIndex >= list.length || toIndex >= list.length) return list;
@@ -241,6 +367,16 @@ export const reordenarPontosRota = (pontos = [], fromIndex, toIndex) => {
   }));
 };
 
+/** @param {{
+ *   otimizacao?: RoteirizacaoRecord,
+ *   motorista?: RoteirizacaoRecord,
+ *   veiculo?: RoteirizacaoRecord,
+ *   empresaId?: unknown,
+ *   groupId?: unknown,
+ *   dataRota?: unknown,
+ *   usuario?: unknown,
+ * }} options
+ */
 export const buildRotaRecord = ({
   otimizacao,
   motorista,
@@ -301,6 +437,13 @@ export const buildRotaRecord = ({
   };
 };
 
+/** @param {{
+ *   record?: RoteirizacaoRecord,
+ *   rotas?: RoteirizacaoRecord[],
+ *   veiculo?: RoteirizacaoRecord | null,
+ *   bloquearCapacidade?: boolean,
+ * }} options
+ */
 export const assertRotaOnCreate = ({ record = {}, rotas = [], veiculo = null, bloquearCapacidade = false } = {}) => {
   if (!firstText(record.empresa_id)) {
     throw new Error('Empresa obrigatoria para rota.');
@@ -319,6 +462,7 @@ export const assertRotaOnCreate = ({ record = {}, rotas = [], veiculo = null, bl
     throw new Error('Selecione pelo menos uma entrega para a rota.');
   }
 
+  /** @type {RoteirizacaoRecord} */
   const stamped = {
     ...record,
     data_rota: firstText(record.data_rota) || new Date().toISOString().slice(0, 10),
@@ -353,6 +497,7 @@ export const assertRotaOnCreate = ({ record = {}, rotas = [], veiculo = null, bl
   return { reuse: null, record: stamped };
 };
 
+/** @param {{ record?: RoteirizacaoRecord, rotas?: RoteirizacaoRecord[] }} options */
 export const assertRoteirizacaoInteligenteOnCreate = ({ record = {}, rotas = [] } = {}) => {
   if (!firstText(record.empresa_id)) {
     throw new Error('Empresa obrigatoria para roteirizacao inteligente.');
@@ -370,6 +515,7 @@ export const assertRoteirizacaoInteligenteOnCreate = ({ record = {}, rotas = [] 
   if (!vinculados.length && !sortedEntregaIdsKey(record.entregas_ids)) {
     throw new Error('Selecione entregas para roteirizacao inteligente.');
   }
+  /** @type {RoteirizacaoRecord} */
   const stamped = {
     ...record,
     group_id: firstText(record.group_id, record.grupo_id),
@@ -396,6 +542,14 @@ export const assertRoteirizacaoInteligenteOnCreate = ({ record = {}, rotas = [] 
   return { reuse: null, record: stamped };
 };
 
+/** @param {{
+ *   entrega?: RoteirizacaoRecord,
+ *   rota?: RoteirizacaoRecord,
+ *   motorista?: RoteirizacaoRecord,
+ *   veiculo?: RoteirizacaoRecord,
+ *   sequencia?: unknown,
+ * }} options
+ */
 export const stampEntregaAtribuicaoRota = ({
   entrega = {},
   rota = {},
@@ -433,6 +587,16 @@ export const stampEntregaAtribuicaoRota = ({
   };
 };
 
+/**
+ * @param {string} entityName
+ * @param {RoteirizacaoRecord} record
+ * @param {{
+ *   rotas?: RoteirizacaoRecord[],
+ *   roteirizacoes?: RoteirizacaoRecord[],
+ *   veiculo?: RoteirizacaoRecord | null,
+ *   bloquearCapacidade?: boolean,
+ * }} stores
+ */
 export const applyRoteirizacaoCreate = (entityName, record = {}, stores = {}) => {
   if (entityName === 'Rota') {
     return assertRotaOnCreate({

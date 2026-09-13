@@ -7141,3 +7141,17 @@ Checklist inicial:
 - O build mantem apenas avisos conhecidos de imports mistos, bundle principal e base Browserslist desatualizada.
 - Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
 - Proximo passo: iniciar a reducao incremental do typecheck pelos contratos JSDoc compartilhados de maior propagacao, medindo a contagem antes e depois de cada lote.
+
+### Gate 18 - Contrato tipado da roteirizacao
+
+- Objetivo: reduzir a divida de typecheck em uma politica compartilhada e testada, sem alterar comportamento operacional.
+- Causa raiz: parametros com valor padrao `{}` e arrays dinamicos eram inferidos sem propriedades, concentrando 94 erros `TS2339` e correlatos.
+- Implementacao: `roteirizacaoPolicy.js` recebeu typedefs e contratos JSDoc explicitos para coordenadas, rota, entrega, veiculo, otimizacao, capacidade e stores. Nao foi introduzido `any`, supressao ou contrato paralelo.
+- Compatibilidade: todos os exports foram preservados; argumentos ausentes de distancia continuam retornando `NaN`; IDs dinamicos continuam normalizados sem lancamento indevido.
+- Resultado isolado: 94 diagnosticos antes e zero depois.
+- Resultado global: 2.909 diagnosticos antes e 2.814 depois, reducao liquida de 95. O typecheck continua habilitado e ainda falha somente pela divida historica registrada e autorizada.
+- Validacao: 7/7 testes focados e 252/252 testes globais aprovados; ESLint direcionado e global sem diagnosticos; `audit:baseline`, build completo e `git diff --check` aprovados.
+- A primeira execucao dos testes no sandbox restrito bloqueou a leitura do Vite; a repeticao no mesmo clone, fora dessa restricao, aprovou todos os 252 testes.
+- O build mantem apenas os avisos conhecidos de imports mistos, bundle principal e Browserslist.
+- Nenhum dado real, recurso Base44, banco ou HD externo foi acessado ou alterado.
+- Proximo passo: tipar incrementalmente `atendimentoConversaPolicy.js`, atual maior concentrador compartilhado com 94 diagnosticos, e somente commitar se a contagem global nao aumentar.
