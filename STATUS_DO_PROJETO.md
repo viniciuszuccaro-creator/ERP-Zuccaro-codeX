@@ -7077,3 +7077,15 @@ Checklist inicial:
 - Recomendacao mantida: promocao operacional desabilitada. Nenhum dado real, titulo, banco, arquivo legado ou HD externo foi acessado ou alterado.
 - Validacao documental: contratos atuais de migracao, titulo, workflow e backend foram comparados; `git diff --check` aprovado. Testes e build foram dispensados conforme AGENTS.md porque o lote altera somente Plano e Status, sem runtime.
 - Proximo passo obrigatorio: auditar em modo somente leitura as primitivas existentes de transacao, unicidade/idempotencia e integridade de evidencias. Nao implementar promocao nem alterar dados antes de autorizacao expressa.
+
+### Gate 18 - Auditoria tecnica para promocao concluida
+
+- A documentacao instalada do `@base44/sdk` e o codigo real foram auditados em modo somente leitura; nenhum recurso remoto, dado ou servico foi acessado.
+- O SDK documenta CRUD, lotes e `updateMany`, mas nao uma transacao multi-entidade. `updateMany` pode reservar o estado de uma solicitacao, porem nao torna atomicas a criacao do titulo, liquidacao, auditoria e conclusao do staging.
+- O rollback existente cobre criacao/transicao da conciliacao em staging, nao `ContaPagar`, `ContaReceber` ou eventos de liquidacao.
+- A idempotencia atual usa consulta seguida de criacao. Como nao existem schemas versionados dessas tres entidades nem `base44/config.jsonc`, nenhum indice unico, RLS, FLS ou constraint remoto pode ser comprovado pelo clone.
+- A evidencia atual usa `UploadFile` publico, que retorna somente URL. O hash SHA-256 e opcional, nao e calculado pela interface e nao e confrontado com o conteudo pelo backend.
+- O SDK oferece `UploadPrivateFile` e URL assinada temporaria, mas o fluxo financeiro ainda nao os utiliza. MIME e limite de 10 MB estao apenas no frontend e podem ser contornados.
+- A matriz tecnica detalhada foi incorporada ao Plano Mestre existente. A promocao continua desabilitada e nenhuma acao, permissao, endpoint, entidade ou titulo foi criado.
+- Validacao documental: `base44/config.jsonc` ausente confirmado; referencias instaladas de entidades e integracoes, schemas versionados, politicas e compensacoes existentes foram comparados; `git diff --check` aprovado. Testes/build dispensados por ser lote exclusivamente documental.
+- Proximo passo obrigatorio: proteger o fluxo de evidencia existente com armazenamento privado, hash SHA-256 obrigatorio e validacao backend de metadados, mantendo a promocao operacional ausente.

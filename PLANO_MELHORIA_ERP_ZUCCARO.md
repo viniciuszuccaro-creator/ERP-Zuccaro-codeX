@@ -517,3 +517,29 @@ Esta matriz e somente um contrato de seguranca. Ela nao autoriza implementacao, 
 
 Recomendacao atual: manter a promocao desabilitada. O proximo trabalho permitido e uma auditoria tecnica somente leitura das primitivas existentes de transacao, unicidade/idempotencia e evidencia, sem criar acao executavel.
 
+### Auditoria tecnica das primitivas para promocao
+
+Auditoria concluida em 2026-09-13 somente com leitura do SDK instalado, do codigo e das definicoes versionadas no repositorio. Nenhum recurso remoto foi consultado ou alterado.
+
+| Tema | Evidencia encontrada | Conclusao | Risco para promocao |
+|---|---|---|---|
+| Transacao | O SDK `@base44/sdk` instalado documenta `create`, `update`, `updateMany`, operacoes em lote e exclusao por entidade; nao documenta transacao multi-entidade | Nao ha garantia local de commit atomico entre solicitacao, titulo, liquidacao e auditoria | Critico: falha intermediaria pode deixar titulo sem staging concluido ou staging sem auditoria |
+| Reserva concorrente | `updateMany(query, patch)` informa quantos registros foram atualizados e pode futuramente reivindicar uma solicitacao ainda no estado esperado | Pode reduzir corrida no mesmo registro, mas nao torna as escritas posteriores atomicas | Alto: reserva evita dois vencedores, mas exige recuperacao duravel apos timeout/falha |
+| Rollback existente | `solicitacoesAprovacao` remove solicitacao recem-criada se a auditoria falhar e restaura o envelope anterior quando a transicao nao puder ser auditada | Ha compensacao localizada e testada apenas dentro da conciliacao em staging | Alto: nao existe compensacao homologada envolvendo `ContaPagar`, `ContaReceber` ou liquidacao |
+| Unicidade | A idempotencia atual consulta por chave e depois cria; o repositorio nao possui schema versionado para `SolicitacaoAprovacao`, `ContaPagar` ou `ContaReceber` | Nao foi comprovado indice unico para impedir duas criacoes concorrentes | Critico: filtro antes de `create` nao garante unicidade sob concorrencia |
+| Configuracao Base44 | `base44/config.jsonc` nao existe e somente `ConfiguracaoSistema.jsonc` esta versionada em `base44/entities` | O clone nao consegue provar nem publicar RLS, FLS, indices ou constraints das entidades financeiras | Critico: nao implementar promocao remota sem vinculo/configuracao controlada do aplicativo |
+| Upload atual | A aba usa `Core.UploadFile`, que retorna apenas `file_url` em armazenamento publico | A referencia pode ser persistida, mas nao comprova imutabilidade, privacidade ou conteudo | Critico: comprovante financeiro nao deve depender de URL publica como unica evidencia |
+| Upload privado | O SDK instalado documenta `UploadPrivateFile`, que retorna `file_uri`, e `CreateFileSignedUrl` temporaria | Existe caminho de armazenamento privado reutilizavel | Medio: ainda falta adaptar cliente local, backend, expiração e autorizacao de leitura |
+| Hash | O envelope aceita `hash_sha256`, mas ele e opcional; a interface nao calcula hash e o backend aceita URL, hash ou referencia sem verificar o arquivo | Nao existe prova criptografica obrigatoria do conteudo revisado | Critico: troca de arquivo nao seria detectada pelo contrato atual |
+| Validacao de arquivo | A interface limita PDF/JPG/PNG/WEBP e 10 MB; o backend valida apenas metadados textuais | MIME, tamanho e conteudo nao sao confirmados por uma autoridade backend | Alto: validacao frontend pode ser contornada |
+
+#### Decisao tecnica
+
+- A promocao manual permanece desabilitada.
+- `updateMany` pode ser estudado como reivindicacao atomica do estado da solicitacao, mas nao resolve a unidade atomica multi-entidade.
+- Sem indice unico confirmado, toda futura escrita deve tratar a chave como idempotencia de recuperacao, nao como garantia absoluta contra concorrencia.
+- Se a plataforma nao oferecer transacao multi-entidade, a unica alternativa aceitavel sera uma saga duravel com reserva, estados intermediarios, releitura, compensacao e fila de reconciliacao tecnica. Essa alternativa exigira nova avaliacao e autorizacao.
+- Antes de qualquer promocao, a evidencia existente deve migrar para armazenamento privado, hash SHA-256 obrigatorio, allowlist backend de MIME/tamanho e acesso temporario auditado.
+
+Proxima frente: endurecer o fluxo de evidencia ja existente, reutilizando `UploadPrivateFile`/`CreateFileSignedUrl`, hash SHA-256 e validacao backend. O hash calculado no cliente sera apenas uma verificacao complementar ate existir confirmacao confiavel no backend. A promocao continuara ausente.
+
