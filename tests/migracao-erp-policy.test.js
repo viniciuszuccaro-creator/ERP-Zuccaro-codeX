@@ -6,11 +6,14 @@ import { applyCodigoOnCreate } from '../src/api/localCadastroMasterPolicy.js';
 import {
   applyMigracaoOnCreate,
   assertReconciliacaoMigracao,
+  buildPendingManualReconciliation,
   buildLoteMigracaoId,
   buildReconciliacaoMigracao,
+  MIGRACAO_STATUS_PENDING_MANUAL_RECONCILIATION,
   stampMigracaoRecord,
   stripSegredosMigracao,
 } from '../src/components/lib/migracaoErpPolicy.js';
+import { assertTituloOnCreate, assertTituloOnUpdate } from '../src/components/lib/financeiroTituloPolicy.js';
 
 test('lote de migracao e estavel para o mesmo arquivo e contexto', () => {
   const a = buildLoteMigracaoId({
@@ -142,6 +145,91 @@ test('reconciliacao compara quantidade e bloqueia divergencia', () => {
       divergencia_quantidade: 1,
     }),
     /divergencia/,
+  );
+});
+
+test('titulo financeiro sem evidencia fica isolado no staging para conciliacao manual', () => {
+  const origem = {
+    group_id: 'g1',
+    empresa_id: 'e1',
+    codigo_legado: 'titulo-1',
+    status: 'Pago',
+    status_pagamento: 'Pago',
+    data_pagamento: '2020-01-15',
+    valor_pago: 125.5,
+    valor: 125.5,
+  };
+  const snapshot = { ...origem };
+  const staging = buildPendingManualReconciliation(origem, {
+    arquivoNome: 'titulos.csv',
+    registradoPor: 'financeiro-1',
+    registradoEm: '2026-09-13T12:00:00.000Z',
+  });
+
+  assert.deepEqual(origem, snapshot);
+  assert.equal(staging.status_migracao, MIGRACAO_STATUS_PENDING_MANUAL_RECONCILIATION);
+  assert.equal(staging.destino_migracao, 'staging');
+  assert.equal(staging.confirmado, false);
+  assert.equal(staging.bloqueio_operacional, true);
+  assert.equal(staging.requer_conciliacao_manual, true);
+  assert.equal(staging.decisao_financeira, null);
+  assert.equal(staging.status, undefined);
+  assert.equal(staging.status_pagamento, undefined);
+  assert.equal(staging.data_pagamento, undefined);
+  assert.equal(staging.valor_pago, undefined);
+  assert.deepEqual(staging.dados_origem_migracao, origem);
+  assert.deepEqual(staging.aprovacoes_conciliacao, []);
+  assert.equal(staging.historico_conciliacao[0].usuario_id, 'financeiro-1');
+  assert.equal(staging.historico_conciliacao[0].group_id, 'g1');
+  assert.equal(staging.historico_conciliacao[0].empresa_id, 'e1');
+});
+
+test('conciliacao manual exige contexto completo, codigo legado e auditoria', () => {
+  const base = { group_id: 'g1', empresa_id: 'e1', codigo_legado: 'titulo-1' };
+  const audit = { registradoPor: 'financeiro-1', registradoEm: '2026-09-13T12:00:00.000Z' };
+  assert.throws(
+    () => buildPendingManualReconciliation({ ...base, empresa_id: '' }, audit),
+    /Grupo e Empresa/,
+  );
+  assert.throws(
+    () => buildPendingManualReconciliation({ ...base, codigo_legado: '' }, audit),
+    /Codigo legado/,
+  );
+  assert.throws(
+    () => buildPendingManualReconciliation(base),
+    /Usuario e data/,
+  );
+  assert.throws(
+    () => buildPendingManualReconciliation(base, { ...audit, registradoEm: 'data-invalida' }),
+    /Data de auditoria invalida/,
+  );
+});
+
+test('pendencia manual nao pode ser promovida nem liquidada pelo fluxo operacional', () => {
+  const staging = buildPendingManualReconciliation({
+    group_id: 'g1',
+    empresa_id: 'e1',
+    codigo_legado: 'titulo-1',
+    status_pagamento: 'Pago',
+  }, {
+    registradoPor: 'financeiro-1',
+    registradoEm: '2026-09-13T12:00:00.000Z',
+  });
+
+  assert.throws(
+    () => applyMigracaoOnCreate({ entityName: 'ContaPagar', record: { ...staging, confirmado: true } }),
+    /permanece no staging/,
+  );
+  assert.throws(
+    () => assertTituloOnCreate({ record: { ...staging, status: 'Pendente' } }),
+    /permanecer no staging/,
+  );
+  assert.throws(
+    () => assertTituloOnUpdate({
+      before: { id: 'cp-1', ...staging },
+      patch: { status: 'Pago', status_pagamento: 'Pago' },
+    }),
+    /nao pode ser alterado/,
   );
 });
 

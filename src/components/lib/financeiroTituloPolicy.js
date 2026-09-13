@@ -1,3 +1,5 @@
+import { isPendingManualReconciliation } from './migracaoErpPolicy.js';
+
 const firstText = (...values) => values.map((value) => String(value || '').trim()).find(Boolean) || '';
 
 const toMoney = (value) => {
@@ -76,6 +78,9 @@ const moneyChanged = (before, patch, field) => {
 };
 
 export const assertTituloOnCreate = ({ record = {}, titles = [] } = {}) => {
+  if (isPendingManualReconciliation(record)) {
+    throw new Error('Titulo pendente de conciliacao manual deve permanecer no staging.');
+  }
   if (!firstText(record.empresa_id)) {
     throw new Error('Empresa obrigatoria para titulo financeiro.');
   }
@@ -93,6 +98,10 @@ export const assertTituloOnCreate = ({ record = {}, titles = [] } = {}) => {
 
 export const assertTituloOnUpdate = ({ before = {}, patch = {} } = {}) => {
   if (!before?.id) throw new Error('Titulo financeiro nao encontrado.');
+
+  if (isPendingManualReconciliation(before) || isPendingManualReconciliation(patch)) {
+    throw new Error('Titulo pendente de conciliacao manual nao pode ser alterado pelo fluxo operacional.');
+  }
 
   const nextStatus = firstText(patch.status) || before.status;
   const becomingLiquidado = !isTituloLiquidado(before) && isTituloLiquidado({ status: nextStatus });

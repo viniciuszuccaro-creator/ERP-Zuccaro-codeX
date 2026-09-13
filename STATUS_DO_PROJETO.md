@@ -6941,3 +6941,16 @@ Checklist inicial:
 - O documento detalhado e sua verificacao de integridade permanecem exclusivamente na pasta protegida do HD externo.
 - Os servicos SQL permaneceram parados. O repositorio recebe somente este resumo sem identificadores ou dados financeiros; git diff --check e a validacao aplicavel.
 - Proximo passo obrigatorio: apresentar a recomendacao ao responsavel e obter autorizacao expressa antes de transforma-la em regra do staging de migracao.
+
+### Gate 18 - Pendencia financeira em conciliacao manual no staging
+
+- A implementacao foi autorizada expressamente pelo responsavel e aplicada na politica de migracao existente, sem criar modulo ou entidade paralela.
+- Titulos cuja baixa legada nao possua evidencia suficiente recebem o estado `PENDING_MANUAL_RECONCILIATION`, permanecem em `staging`, com `confirmado=false`, bloqueio operacional e decisao financeira vazia.
+- Grupo, Empresa, codigo legado, usuario e data de registro sao obrigatorios; a data deve ser valida e a entidade deve ser `ContaPagar` ou `ContaReceber`.
+- O envelope preserva uma copia sanitizada dos dados de origem somente para revisao, sem projetar `Pago`, `Aberto`, data de baixa ou valor pago como estado operacional.
+- A trilha inicial registra usuario, timestamp, Grupo, Empresa e motivo. Evidencias e aprovacoes iniciam vazias para impedir desbloqueio implicito.
+- As politicas de migracao e de titulo financeiro bloqueiam a promocao, criacao, edicao ou liquidacao dessa pendencia pelo fluxo operacional, mesmo se o payload tentar marcar `confirmado=true`.
+- Nenhum registro ou dado legado foi alterado ou migrado neste lote.
+- Validacao: 21 testes focados e 235 testes globais aprovados; ESLint direcionado aprovado; build completo aprovado; `git diff --check` aprovado.
+- Divida preexistente: ESLint global permanece com 85 erros e 17 avisos fora deste lote; typecheck global permanece com diagnosticos historicos, sem novo diagnostico especifico do contrato implementado.
+- Proximo passo obrigatorio: definir e homologar, em lote separado, o fluxo humano de anexar evidencia, revisar e aprovar em segregacao de funcoes antes de qualquer classificacao como pago ou aberto.

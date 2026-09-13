@@ -1,6 +1,9 @@
 const firstText = (...values) => values.map((value) => String(value || '').trim()).find(Boolean) || '';
 
 export const MIGRACAO_ORIGENS = ['erp_antigo', 'migracao', 'lote_csv', 'planilha', 'nfe_xml'];
+export const MIGRACAO_STATUS_PENDING_MANUAL_RECONCILIATION = 'PENDING_MANUAL_RECONCILIATION';
+export const MIGRACAO_DESTINO_STAGING = 'staging';
+
 export const SECRET_MIGRACAO_KEYS = [
   'senha',
   'password',
@@ -15,6 +18,12 @@ export const SECRET_MIGRACAO_KEYS = [
 
 const slug = (value) => firstText(value).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48);
 
+/** @param {Record<string, unknown>} record */
+export const isPendingManualReconciliation = (record = {}) => (
+  firstText(record.status_migracao).toUpperCase() === MIGRACAO_STATUS_PENDING_MANUAL_RECONCILIATION
+  || record.requer_conciliacao_manual === true
+);
+
 export const isMigracaoOrigem = (value) => MIGRACAO_ORIGENS.includes(firstText(value).toLowerCase());
 
 export const isMigracaoRecord = (record = {}) => Boolean(
@@ -27,6 +36,10 @@ export const isMigracaoRecord = (record = {}) => Boolean(
   || isMigracaoOrigem(record.origem_cadastro)
 );
 
+/**
+ * @param {Record<string, unknown>} record
+ * @returns {Record<string, unknown>}
+ */
 export const stripSegredosMigracao = (record = {}) => {
   const next = { ...record };
   SECRET_MIGRACAO_KEYS.forEach((key) => {
@@ -35,6 +48,7 @@ export const stripSegredosMigracao = (record = {}) => {
   return next;
 };
 
+/** @param {{ arquivoNome?: unknown, groupId?: unknown, empresaId?: unknown, entidade?: string }} options */
 export const buildLoteMigracaoId = ({
   arquivoNome,
   groupId,
@@ -45,12 +59,17 @@ export const buildLoteMigracaoId = ({
   return `MIG-${slug(entidade) || 'registro'}-${firstText(groupId) || 'grupo'}-${firstText(empresaId) || 'grupo'}-${fileSlug}`;
 };
 
+/**
+ * @param {Record<string, unknown>} record
+ * @param {{ arquivoNome?: unknown, entidade?: string, confirmado?: boolean, destino?: string }} options
+ */
 export const stampMigracaoRecord = (record = {}, {
   arquivoNome,
   entidade = 'registro',
   confirmado = false,
   destino = 'producao',
 } = {}) => {
+  const pendingManualReconciliation = isPendingManualReconciliation(record);
   const groupId = firstText(record.group_id, record.grupo_id);
   const empresaId = firstText(record.empresa_id);
   const codigoLegado = firstText(record.codigo_legado, record.id_antigo, record.codigo_origem, record.codigo, record.numero_pedido);
@@ -66,11 +85,74 @@ export const stampMigracaoRecord = (record = {}, {
     }),
     codigo_legado: codigoLegado || record.codigo_legado,
     id_antigo: firstText(record.id_antigo, codigoLegado) || record.id_antigo,
-    destino_migracao: firstText(record.destino_migracao, destino) || 'producao',
-    status_migracao: firstText(record.status_migracao, confirmado ? 'validado' : 'staging'),
+    destino_migracao: pendingManualReconciliation
+      ? MIGRACAO_DESTINO_STAGING
+      : firstText(record.destino_migracao, destino) || 'producao',
+    status_migracao: pendingManualReconciliation
+      ? MIGRACAO_STATUS_PENDING_MANUAL_RECONCILIATION
+      : firstText(record.status_migracao, confirmado ? 'validado' : 'staging'),
     importacao_erp: true,
-    confirmado: confirmado || record.confirmado === true,
+    confirmado: pendingManualReconciliation ? false : confirmado || record.confirmado === true,
   });
+};
+
+/**
+ * @param {Record<string, unknown>} record
+ * @param {{ arquivoNome?: unknown, entidade?: string, registradoPor?: unknown, registradoEm?: unknown, motivo?: string }} options
+ */
+export const buildPendingManualReconciliation = (record = {}, {
+  arquivoNome,
+  entidade = 'ContaPagar',
+  registradoPor,
+  registradoEm,
+  motivo = 'Evidencia insuficiente para classificar automaticamente o titulo financeiro.',
+} = {}) => {
+  /** @type {Record<string, unknown>} */
+  const origem = stripSegredosMigracao(record);
+  const groupId = firstText(origem.group_id, origem.grupo_id);
+  const empresaId = firstText(origem.empresa_id);
+  const codigoLegado = firstText(origem.codigo_legado, origem.id_antigo, origem.codigo_origem, origem.codigo, origem.numero_documento);
+  const usuarioId = firstText(registradoPor);
+  const timestamp = firstText(registradoEm);
+
+  if (!['ContaPagar', 'ContaReceber'].includes(entidade)) throw new Error('Entidade financeira invalida para conciliacao manual.');
+  if (!groupId || !empresaId) {
+    throw new Error('Grupo e Empresa sao obrigatorios para conciliacao manual de titulo migrado.');
+  }
+  if (!codigoLegado) {
+    throw new Error('Codigo legado obrigatorio para conciliacao manual de titulo migrado.');
+  }
+  if (!usuarioId || !timestamp) {
+    throw new Error('Usuario e data sao obrigatorios para auditar a conciliacao manual.');
+  }
+  if (!Number.isFinite(Date.parse(timestamp))) {
+    throw new Error('Data de auditoria invalida para conciliacao manual.');
+  }
+
+  return stampMigracaoRecord({
+    group_id: groupId,
+    grupo_id: groupId,
+    empresa_id: empresaId,
+    codigo_legado: codigoLegado,
+    id_antigo: firstText(origem.id_antigo, codigoLegado),
+    entidade_migracao: entidade,
+    dados_origem_migracao: { ...origem },
+    status_migracao: MIGRACAO_STATUS_PENDING_MANUAL_RECONCILIATION,
+    destino_migracao: MIGRACAO_DESTINO_STAGING,
+    requer_conciliacao_manual: true,
+    bloqueio_operacional: true,
+    decisao_financeira: null,
+    evidencias_conciliacao: [],
+    aprovacoes_conciliacao: [],
+    historico_conciliacao: [{
+      acao: 'marcado_pendente_conciliacao_manual',
+      usuario_id: usuarioId,
+      timestamp,
+      group_id: groupId,
+      empresa_id: empresaId,
+      motivo: firstText(motivo),
+    }],
+  }, { arquivoNome, entidade, confirmado: false, destino: MIGRACAO_DESTINO_STAGING });
 };
 
 export const findRegistroMigracaoDuplicado = (record = {}, records = []) => {
@@ -132,6 +214,10 @@ export const applyMigracaoOnCreate = ({ entityName, record = {}, records = [] } 
   if (!isMigracaoRecord(record)) return { reuse: null, record };
   const stripped = stripSegredosMigracao(record);
 
+  if (isPendingManualReconciliation(stripped)) {
+    throw new Error('Pendencia de conciliacao manual permanece no staging e nao pode ser gravada em producao.');
+  }
+
   if (!firstText(stripped.group_id, stripped.grupo_id)) {
     throw new Error('Grupo obrigatorio para migracao do ERP antigo.');
   }
@@ -139,7 +225,7 @@ export const applyMigracaoOnCreate = ({ entityName, record = {}, records = [] } 
   const stamped = stampMigracaoRecord(stripped, {
     entidade: entityName,
     confirmado: stripped.confirmado === true,
-    destino: stripped.destino_migracao,
+    destino: firstText(stripped.destino_migracao) || undefined,
   });
 
   if (!firstText(stamped.codigo_legado, stamped.id_antigo)) {
