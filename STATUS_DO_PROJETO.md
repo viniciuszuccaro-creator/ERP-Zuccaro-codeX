@@ -6709,3 +6709,17 @@ Checklist inicial:
 - Situacao: o modulo criptografado nao fornece evidencia positiva de relacao com FornecDuplicatas, mas ainda nao pode ser excluido como origem. A parcela permanece BLOCKED para migracao como pagamento comprovado.
 - MSSQL$ERPZLEGACY terminou Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; a consulta usou somente a copia local READ_ONLY. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
 - Proximo passo obrigatorio: classificar de forma agregada os 19 parametros da procedure criptografada por termos funcionais e tipos de dados, sem exportar nomes ou valores. Se nao houver sinal de contas a pagar ou baixa, iniciar busca controlada no backup do aplicativo antigo por referencias a FornecDuplicatas e DATABAIXA, sem copiar executaveis, credenciais ou conteudo sensivel para o GitHub.
+
+### Gate 18 - Classificacao dos parametros do modulo criptografado
+
+- Os 19 parametros da procedure criptografada foram classificados por finalidade sugerida pelo nome, familia do tipo, direcao e presenca de valor padrao, sem exportar nomes ou valores.
+- Todos os 19 parametros sao de entrada e nenhum possui valor padrao. Quatorze usam familia inteira e cinco usam familia textual.
+- Pela finalidade sugerida, existe um parametro relacionado a cliente, um a empresa, um a fiscal, um a produto ou material e dois a data ou hora. Treze possuem nomes genericos classificados como OUTRO.
+- Nenhum parametro contem termos de fornecedor, duplicata, titulo, baixa, pagamento, financeiro, banco, conta ou bordero.
+- O conjunto de parametros sugere uma rotina ligada a operacao, cadastro ou fiscal, e nao uma rotina especificamente nomeada para contas a pagar. Essa e uma inferencia de metadados, pois a definicao continua criptografada.
+- Os 13 parametros genericos e a ausencia de definicao impedem excluir tecnicamente qualquer comportamento interno. O modulo nao sera alterado, executado ou descriptografado.
+- As quatro dimensoes reconciliaram exatamente os mesmos 19 parametros. As duas execucoes e a releitura protegida do HD externo produziram SHA-256 39DA01542BE4E7C5FE14594CA2A7056176FB427D5442D768782A9955CD2F9F9A.
+- O relatorio legacy-encrypted-module-parameter-classification.csv permanece somente em D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS, com ACL protegida. Nenhum nome real, definicao SQL, parametro individual, identificador, documento, data, fornecedor, texto, quantidade, valor, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: nao foi encontrada evidencia positiva de que a procedure criptografada produza a baixa financeira. A origem de DATABAIXA e a parcela continuam BLOCKED para migracao como pagamento comprovado.
+- MSSQL$ERPZLEGACY terminou Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; a consulta usou somente a copia local READ_ONLY. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
+- Proximo passo obrigatorio: inventariar de forma controlada os arquivos do backup do aplicativo antigo por extensao, tamanho e tipo, selecionar somente executaveis, bibliotecas, scripts e configuracoes potencialmente relacionados e buscar referencias literais a FornecDuplicatas e DATABAIXA. Nao executar binarios, nao copiar credenciais ou conteudo sensivel para o GitHub e nao alterar o backup.
