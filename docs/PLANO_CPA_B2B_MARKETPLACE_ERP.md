@@ -977,3 +977,50 @@ PRONTO: lista, detalhe, multiplas entregas, status, itens, parcial, retirada, ti
 BLOCKED: GPS ao vivo, alteracao de endereco, reagendamento por mutation, comprovante sem URI privada, tracking ficticio e roteirizador externo indisponivel. O Site CPA permanece sem alteracoes.
 
 Proximo lote somente com autorizacao expressa: ERP-SITE-09 - Chat e CRM.
+
+---
+
+# 28. EXECUCAO ERP-SITE-09 - CHAT E CRM
+
+O Atendimento omnicanal existente passou a receber o canal `SITE_CPA` pelo gateway S2S `v1`. Nenhuma inbox, entidade de conversa, CRM ou endpoint paralelo foi criado.
+
+## Operacoes e lifecycle
+
+- `siteChatStart`: cria ou reutiliza conversa aberta compativel;
+- `siteChatMessage`: envia mensagem do Cliente com idempotencia por `externalMessageId`;
+- `siteChatPoll`: retorna somente mensagens posteriores ao cursor;
+- `siteChatHistory`: retorna historico publico paginado;
+- `siteChatClose`: encerra sem excluir o historico;
+- `siteChatReopen`: reabre conforme o estado existente do Atendimento.
+
+Os estados internos sao projetados como `OPEN`, `WAITING_AGENT`, `IN_PROGRESS`, `WAITING_CUSTOMER`, `TRANSFERRED` ou `CLOSED`. Polling seguro foi mantido; websocket/realtime nao foi simulado.
+
+## Contexto, assignment e CRM
+
+Toda operacao revalida o vinculo empresarial aprovado do ERP-SITE-02, o papel, Cliente, usuario externo, Grupo e Empresa. `conversationId` e IDs enviados pelo Site nunca bastam para conceder acesso.
+
+`siteChatStart` pode vincular Pedido, Orcamento, obra e Projeto somente apos ownership no mesmo escopo. A obra precisa existir entre os enderecos oficiais do Cliente e, quando houver allowlist no vinculo, tambem estar autorizada. O contexto fica na `ConversaOmnicanal` para uso do Hub/CRM, sem criar Oportunidade a cada mensagem.
+
+O vendedor oficial ativo do Cliente e usado como atendente inicial. Sem vendedor valido, a conversa permanece na fila existente com `WAITING_QUEUE`; nenhum responsavel e inventado. Transferencia continua sendo operacao interna do ERP e o Site ve apenas o estado publico.
+
+## Mensagens, privacidade e limites
+
+O autor das mensagens recebidas e definido no servidor como Cliente. HTML executavel, `javascript:`, campos de autor/status/escopo e mensagens vazias ou acima de 4.000 caracteres sao recusados. O gateway e o ledger preservam replay/rate limit, e `externalMessageId` impede duplo envio com conflito para conteudo divergente.
+
+Historico e polling omitem `interno`, notas privadas, e-mail/telefone interno, IDs desnecessarios, score CRM, comissao, fila interna e payload de IA. Nome publico do atendente e limitado a display name. Nenhum conteudo integral de mensagem entra na auditoria.
+
+Paginacao do historico aceita ate 100 mensagens; polling retorna ate 50 por chamada. O gateway continua com `Cache-Control: no-store` e limite/rate limit persistentes do ERP-SITE-01.
+
+## Anexos, capability e erros
+
+O recebimento de anexos permanece fail-closed. Embora o ERP possua upload no Hub, o fluxo atual nao comprova URI privada e scanner de malware no contrato S2S. PDF/JPG/PNG passam por validacao preliminar de tipo, quantidade e tamanho, mas retornam `site_cpa_chat_attachment_unavailable` sem gravacao. URL publica, executavel, HTML, SVG inseguro e arquivo excessivo sao recusados.
+
+`siteHealth` informa `CHAT: degraded` quando conversa e mensagem estao operacionais, pois anexos seguros e realtime nao estao disponiveis; informa `blocked` se qualquer entidade principal nao puder ser consultada. Capabilities anteriores permanecem inalteradas.
+
+Erros estaveis cobrem Cliente/papel, ownership, contexto, conversa inexistente/fechada, mensagem, cursor, anexo, idempotencia, dependencia e auditoria. Status HTTP distinguem validacao, proibicao, inexistencia, conflito e indisponibilidade.
+
+PRONTO: start/reuso, message, poll, history, close/reopen, assignment, fila/CRM, ownership, RBAC dos quatro papeis empresariais, sanitizacao, idempotencia, privacidade e auditoria.
+
+BLOCKED: anexos ate existir storage privado com scanner, realtime inexistente, WhatsApp, chat anonimo/Lead e recursos internos nao comprovados pelo CRM atual. O Site CPA permanece sem alteracoes.
+
+Proximo lote somente com autorizacao expressa: ERP-SITE-10 - Armacao e Producao.

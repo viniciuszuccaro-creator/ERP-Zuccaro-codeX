@@ -7490,3 +7490,28 @@ Checklist inicial:
 - Typecheck: 2.238 diagnosticos historicos preservados e zero diagnosticos novos do ERP-SITE-08.
 - Nenhum arquivo do Site CPA, dado real, recurso Base44 remoto, backup legado ou HD externo foi acessado ou alterado.
 - Proximo passo somente com autorizacao expressa: ERP-SITE-09 - Chat e CRM.
+
+### ERP-SITE-09 - Chat e CRM do Site CPA
+
+- Objetivo: conectar o chat autenticado do Site CPA ao Atendimento/CRM real pelo gateway S2S `v1`, sem criar inbox ou entidades paralelas.
+- Operacoes: `siteChatStart`, `siteChatMessage`, `siteChatPoll`, `siteChatHistory`, `siteChatClose` e `siteChatReopen`.
+- Reuso: `ConversaOmnicanal`, `MensagemOmnicanal`, Cliente, vinculo em `SolicitacaoAprovacao`, vendedor/Colaborador, fila e Hub existentes.
+- Multiempresa: Grupo e Empresa vem da credencial; Cliente, usuario externo, conversa, mensagem e referencias exigem ownership no mesmo escopo.
+- RBAC externo: `ADMIN_EMPRESA`, `COMPRADOR`, `FINANCEIRO` e `CONSULTA` podem usar o atendimento autenticado enquanto o vinculo estiver aprovado.
+- Start: reutiliza conversa aberta compativel para evitar duplicacao por refresh; nova conversa recebe origem/canal `SITE_CPA` e entra no Hub real.
+- Assignment: vendedor oficial ativo e usado; ausente/inativo deixa a conversa na fila existente sem inventar atendente.
+- Contexto CRM: Pedido, Orcamento, obra e Projeto sao revalidados; obra precisa ser endereco oficial e respeitar a allowlist do vinculo.
+- Mensagem: autor definido server-side como Cliente, limite de 4.000 caracteres, bloqueio de HTML executavel e idempotencia por `externalMessageId`/hash.
+- Poll/history: cursor e paginacao limitados; somente mensagens publicas sao retornadas e polling nao marca leitura ficticia.
+- Lifecycle: close preserva historico; reopen restaura fila; estados externos estaveis nao substituem os estados internos existentes.
+- Privacidade: nenhuma nota interna, contato interno, score CRM, comissao, fila sensivel, segredo ou payload integral de mensagem sai no contrato/auditoria.
+- Auditoria: start, envio, leitura, fechamento, reabertura e bloqueios registram operacao, correlacao, Cliente, conversa, Grupo, Empresa, contagem e duracao.
+- Capability: `CHAT` fica `degraded` com conversa/mensagem operacionais e `blocked` sem essas entidades.
+- PRONTO: start/reuso, message, poll, history, close/reopen, assignment, fila/CRM, ownership, RBAC, sanitizacao, idempotencia e auditoria.
+- BLOCKED: anexos sem storage privado e scanner, realtime/websocket inexistente, WhatsApp, Lead anonimo e funcionalidades internas nao comprovadas.
+- Validacao focada: 139/139 testes dos contratos ERP-SITE-01 a 09 e regressao do gateway aprovados.
+- Validacao global: 391/391 testes aprovados; ESLint global e `audit:baseline` sem falhas; build completo aprovado.
+- Typecheck: 2.238 diagnosticos historicos preservados e zero diagnosticos novos do ERP-SITE-09.
+- Avisos conhecidos: build mantem imports mistos, Browserslist desatualizado e bundle principal acima de 500 kB.
+- Nenhum arquivo do Site CPA, dado real, recurso Base44 remoto, backup legado ou HD externo foi acessado ou alterado.
+- Proximo passo somente com autorizacao expressa: ERP-SITE-10 - Armacao e Producao.

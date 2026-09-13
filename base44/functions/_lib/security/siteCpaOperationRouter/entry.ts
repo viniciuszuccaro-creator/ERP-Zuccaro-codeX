@@ -38,6 +38,11 @@ import {
   SiteCpaDeliveryError,
   resolveSiteCpaDeliveryOperation,
 } from '../siteCpaDelivery/entry.ts';
+import {
+  SITE_CPA_CHAT_OPERATIONS,
+  SiteCpaChatError,
+  resolveSiteCpaChatOperation,
+} from '../siteCpaChat/entry.ts';
 
 const rejected = (buildResponse, request, failure) => ({
   handled: true,
@@ -102,6 +107,17 @@ export const routeSiteCpaOperation = async ({
     } catch (error) {
       return rejected(buildResponse, request, error instanceof SiteCpaDeliveryError
         ? error : new SiteCpaDeliveryError(503, 'site_cpa_delivery_unavailable'));
+    }
+  }
+
+  if (SITE_CPA_CHAT_OPERATIONS.has(request.operation)) {
+    try {
+      const data = await resolveSiteCpaChatOperation({ base44, payload, scope, request, now });
+      const status = request.operation === 'siteChatStart' ? 201 : 200;
+      return completed(buildResponse, request, data, status);
+    } catch (error) {
+      return rejected(buildResponse, request, error instanceof SiteCpaChatError
+        ? error : new SiteCpaChatError(503, 'site_cpa_chat_unavailable'));
     }
   }
 

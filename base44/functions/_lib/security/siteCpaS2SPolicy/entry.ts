@@ -1,6 +1,7 @@
 import { paymentCapability } from '../siteCpaPayment/provider.ts';
 import { portalCapabilities } from '../siteCpaPortal/entry.ts';
 import { deliveryCapability } from '../siteCpaDelivery/entry.ts';
+import { chatCapability } from '../siteCpaChat/entry.ts';
 import { routeSiteCpaOperation } from '../siteCpaOperationRouter/entry.ts';
 
 export const SITE_CPA_ORIGIN = 'SITE_CPA';
@@ -381,6 +382,7 @@ export const handleSiteCpaGatewayRequest = async ({
     const paymentState = await paymentCapability({ base44, scope, env });
     const portalStates = await portalCapabilities({ base44, scope });
     const deliveryState = await deliveryCapability({ base44, scope });
+    const chatState = await chatCapability({ base44, scope });
     const body = buildSiteCpaResponse({
       ok: true,
       request,
@@ -402,6 +404,7 @@ export const handleSiteCpaGatewayRequest = async ({
           PAYMENT: paymentState,
           ...portalStates,
           DELIVERY: deliveryState,
+          CHAT: chatState,
         },
       },
     });
