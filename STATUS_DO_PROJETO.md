@@ -6896,3 +6896,12 @@ Checklist inicial:
 - O relatorio detalhado e sua verificacao de integridade permanecem exclusivamente na pasta protegida do HD externo.
 - Os servicos SQL permaneceram parados e o banco nao foi acessado. O repositorio recebe somente este resumo sem conteudo sensivel; git diff --check e a validacao aplicavel.
 - Proximo passo obrigatorio: inventariar apenas por nome, extensao e tamanho os arquivos compactados ou recipientes existentes no backup para verificar se algum pode conter fontes ou simbolos, sem abrir, extrair ou executar esses arquivos.
+
+### Gate 18 - Inventario de recipientes da copia original
+
+- A copia original foi inventariada por extensao, faixa de tamanho e indicios genericos no nome, sem abrir, extrair ou executar arquivos.
+- Nenhum recipiente compactado, imagem de disco, pacote instalador ou arquivo de backup com extensao reconhecida foi encontrado no escopo seguro.
+- A area protegida de credenciais nao foi acessada nem incluida na varredura.
+- O relatorio detalhado e sua verificacao em duas passagens permanecem exclusivamente na pasta protegida do HD externo.
+- Os servicos SQL permaneceram parados e o banco nao foi acessado. O repositorio recebe somente este resumo sem conteudo sensivel; git diff --check e a validacao aplicavel.
+- Proximo passo obrigatorio: verificar somente os bytes iniciais dos arquivos da copia original para detectar recipientes com extensao incorreta ou ausente, sem abrir, extrair ou executar seu conteudo.
