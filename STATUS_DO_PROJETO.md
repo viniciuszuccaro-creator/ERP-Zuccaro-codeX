@@ -6878,3 +6878,12 @@ Checklist inicial:
 - O relatorio detalhado e sua verificacao de integridade permanecem exclusivamente na pasta protegida do HD externo.
 - Os servicos SQL permaneceram parados e o banco nao foi acessado. O repositorio recebe somente este resumo sem conteudo sensivel; git diff --check e a validacao aplicavel.
 - Proximo passo obrigatorio: classificar os candidatos encontrados por faixa de distancia e delimitadores vizinhos para distinguir operandos plausiveis de simbolos ou metadados de runtime, sem exportar conteudo.
+
+### Gate 18 - Delimitadores dos candidatos legados
+
+- Os candidatos da janela limitada foram classificados por distancia, tamanho e delimitadores em duas passagens independentes e somente leitura.
+- Todos estao isolados por bytes de controle ou binarios e nenhum atende ao criterio conservador de continuacao adjacente.
+- A etapa encerra a busca por operando nos fragmentos proximos sem comprovar vinculacao com o pagamento; o bloqueio de migracao permanece.
+- O relatorio detalhado e sua verificacao de integridade permanecem exclusivamente na pasta protegida do HD externo.
+- Os servicos SQL permaneceram parados e o banco nao foi acessado. O repositorio recebe somente este resumo sem conteudo sensivel; git diff --check e a validacao aplicavel.
+- Proximo passo obrigatorio: inventariar no backup, sem executar arquivos, a existencia de codigo-fonte, mapas, simbolos ou metadados de depuracao relacionados ao modulo analisado para buscar evidencia mais confiavel que inferencia binaria.
