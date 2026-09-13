@@ -6753,3 +6753,18 @@ Checklist inicial:
 - Situacao: tres binarios sao candidatos prioritarios a gravacao da baixa, mas a origem da parcela ainda nao esta comprovada. Ela permanece BLOCKED para migracao como pagamento.
 - O SQL permaneceu Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; esta etapa nao acessou dados do banco. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
 - Proximo passo obrigatorio: nos tres hashes com UPDATE, classificar por expressoes estruturais se existe UPDATE dirigido a FornecDuplicatas, atribuicao a DATABAIXA e clausulas de chave envolvendo relatorio e sequencia. Exportar somente contagens e classificacoes, nunca consultas ou cadeias completas, e nao executar nem alterar binarios.
+
+### Gate 18 - Classificacao estrutural dos UPDATEs candidatos
+
+- Os tres hashes com UPDATE foram reavaliados em seis leituras, uma ASCII e uma UTF-16LE para cada representante, sem executar os binarios.
+- Somente um binario, da categoria funcional de caixa, contem UPDATE dirigido diretamente a FornecDuplicatas.
+- Nesse mesmo binario existe uma cadeia com UPDATE da tabela e atribuicao a DATABAIXA. Tambem foram encontradas cadeias alvo com predicado de RELATORIO e uma com predicado de SEQUENCIA.
+- Nenhuma cadeia isolada reuniu simultaneamente UPDATE direto, atribuicao a DATABAIXA e os dois predicados RELATORIO e SEQUENCIA. Assim, a chave completa da operacao ainda nao esta comprovada.
+- O binario fiscal possui UPDATE e atribuicoes a DATABAIXA em cadeias alvo, mas nao apresenta UPDATE direto de FornecDuplicatas.
+- O binario de contas a receber tambem possui UPDATE e atribuicoes a DATABAIXA, mas nao combina os dois alvos na mesma cadeia e nao atualiza diretamente FornecDuplicatas.
+- O binario de caixa passa a ser o candidato prioritario para a origem da baixa. A fragmentacao das cadeias do executavel exige verificar proximidade e ordem sem reconstruir ou exportar a consulta completa.
+- As duas passagens reproduziram os mesmos tres hashes e seis analises. A releitura protegida do HD externo confirmou SHA-256 639616621B0D0EBCA7F52D048EE326517A8FCD90938326C20C11627F346BDE71.
+- O relatorio legacy-app-keyed-update-classification.csv permanece somente em D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS, com ACL protegida. Caminhos, hashes dos binarios, cadeias, consultas, identificadores, documentos, datas, fornecedores, quantidades e valores nao integram o GitHub.
+- Situacao: foi localizada a estrutura cliente que atualiza FornecDuplicatas.DATABAIXA, mas ainda nao esta provado que ela gerou a parcela auditada nem que usa a chave completa. A baixa permanece BLOCKED para migracao como pagamento comprovado.
+- O SQL permaneceu Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; esta etapa nao acessou dados do banco. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
+- Proximo passo obrigatorio: no unico hash com UPDATE direto, medir a proximidade e a ordem dos fragmentos que contem UPDATE, DATABAIXA, RELATORIO e SEQUENCIA e classificar se formam uma unica montagem de comando. Exportar somente distancias, ordem e classificacoes, nunca strings ou consultas, e nao executar nem alterar o binario.
