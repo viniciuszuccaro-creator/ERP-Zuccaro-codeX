@@ -45,13 +45,14 @@ const customerCnpj = (customer) => normalizeCnpj(
 );
 
 const customerGroupId = (customer) => text(customer?.group_id || customer?.grupo_id);
-const customerEmpresaId = (customer) => text(customer?.empresa_id);
+const customerEmpresaId = (customer) => text(customer?.empresa_id || customer?.empresa_dona_id);
 
 const customerAllowedEmpresaIds = (customer) => [
   customer?.empresa_ids,
   customer?.empresas_ids,
   customer?.empresas_autorizadas,
   customer?.empresas_autorizadas_ids,
+  customer?.empresas_compartilhadas_ids,
 ].flatMap((value) => (Array.isArray(value) ? value : [])).map(text).filter(Boolean);
 
 export const customerBelongsToScope = (customer, scope) => {
@@ -178,6 +179,32 @@ const resolveCustomerById = async (base44, scope, customerId) => {
     throw new SiteCpaCustomerError(403, 'site_cpa_customer_forbidden');
   }
   return customer;
+};
+
+export const resolveApprovedSiteCustomerContext = async ({
+  base44,
+  scope,
+  erpCustomerId,
+  externalUserId,
+} = {}) => {
+  const customerId = text(erpCustomerId);
+  const siteUserId = assertExternalUserId(externalUserId);
+  if (!customerId) throw new SiteCpaCustomerError(400, 'site_cpa_customer_context_invalid');
+  const customer = await resolveCustomerById(base44, scope, customerId);
+  if (customerAccountStatus(customer) !== 'VERIFIED') {
+    throw new SiteCpaCustomerError(403, 'site_cpa_customer_context_invalid');
+  }
+  const links = await loadCustomerLinks(base44, scope);
+  const approvedLink = links.find((link) => (
+    linkMatches(link, { customerId, externalUserId: siteUserId })
+    && text(link.status).toLowerCase() === 'aprovado'
+  ));
+  if (!approvedLink) throw new SiteCpaCustomerError(403, 'site_cpa_customer_context_invalid');
+  return {
+    customer,
+    link: approvedLink,
+    role: normalizeRole(approvedLink?.dados_propostos?.role) || 'CONSULTA',
+  };
 };
 
 const auditResolution = async ({ base44, scope, request, customer = null, outcome, success }) => {

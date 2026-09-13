@@ -781,3 +781,12 @@ O contrato tecnico detalhado e o andamento dos lotes ficam no plano existente `d
 - Cliente ausente, endereco novo e primeiro administrador nao geram cadastro ou privilegio automatico.
 - CUSTOMER_RESOLVE e a unica capability de Cliente pronta; Catalogo permanece como proximo lote separado.
 
+### ERP-SITE-03 - Catalogo oficial
+
+- siteCatalogoList reutiliza Produto, CatalogoWeb, GrupoProduto, UnidadeMedida, TabelaPreco e TabelaPrecoItem.
+- O contrato e paginado, aceita delta por updatedSince e preserva inativacoes para sincronizacao.
+- Preco empresarial exige Cliente e vinculo aprovados; falha de tabela nunca autoriza fallback indevido.
+- Estoque e minimizado em estados de disponibilidade, sem quantidade exata.
+- Sellable e quoteRequired sao calculados no ERP; custo, margem e regras internas nao saem do backend.
+- CUSTOMER_RESOLVE e CATALOG_READ ficam ready; Pedido permanece no lote seguinte.
+

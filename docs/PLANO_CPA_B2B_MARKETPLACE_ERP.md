@@ -625,3 +625,79 @@ siteHealth publica somente CUSTOMER_RESOLVE: ready. As capabilities futuras de u
 Como cada request usa nonce e idempotencia do ERP-SITE-01, uma nova consulta posterior a decisao humana deve usar novo nonce e nova chave de idempotencia.
 
 Proximo lote autorizado somente por solicitacao expressa: ERP-SITE-03 - Catalogo.
+
+---
+
+# 22. EXECUCAO ERP-SITE-03 - CATALOGO OFICIAL
+
+A operacao siteCatalogoList foi integrada ao gateway S2S v1. Produto permanece a fonte mestre; CatalogoWeb controla publicacao, GrupoProduto fornece categorias, UnidadeMedida complementa a unidade oficial e TabelaPreco/TabelaPrecoItem fornecem preco contextual.
+
+## Requisicao e filtros
+
+A requisicao usa o envelope, assinatura, escopo, nonce, correlacao e idempotencia do ERP-SITE-01. O objeto data aceita somente:
+
+- page, a partir de 1;
+- pageSize entre 1 e 100;
+- active como true, false ou all;
+- updatedSince em data ISO valida;
+- categoryId;
+- sku oficial exato;
+- productIds, com no maximo 100 IDs;
+- erpCustomerId e externalUserId juntos, somente para preco empresarial aprovado.
+
+Filtros desconhecidos nao viram consulta arbitraria. O Site nao escolhe Grupo/Empresa nem envia regras de preco/estoque.
+
+## Resposta
+
+Cada produto retorna somente:
+
+- erpProductId, SKU/codigo, nome e descricao;
+- categoria oficial e marca;
+- status, active e unidade comercial;
+- especificacoes estruturadas permitidas, spec code e relacao de variante quando existentes;
+- preco, origem do preco, tabela segura, stale e data de atualizacao;
+- disponibilidade por estado, sellable, quoteRequired, minimo e multiplo;
+- peso/conversao apenas quando oficiais;
+- imagem HTTP(S) oficial, origem ERP, updatedAt e TTL.
+
+A resposta inclui categorias usadas na pagina, paginacao e metadados de sincronizacao: catalogVersion, snapshotAt, updatedSince, lastUpdatedAt, source, stale, TTL e sinal de scan truncado.
+
+## Preco
+
+- sem contexto de Cliente: usa somente preco_venda/preco padrao oficial positivo;
+- Cliente aprovado sem tabela especifica: usa o mesmo preco padrao oficial;
+- Cliente aprovado com tabela: exige TabelaPreco ativa no mesmo escopo e TabelaPrecoItem valido;
+- tabela cruzada e bloqueada;
+- tabela/item indisponivel nao usa fallback: price fica null, priceSource UNAVAILABLE, priceStale true, sellable false e quoteRequired true;
+- custo, margem, markup, preco minimo e limite de desconto nunca sao retornados.
+
+## Estoque e venda
+
+Disponibilidade usa estoque_disponivel quando oficial; na ausencia, calcula estoque_atual menos estoque_reservado/quantidade_reservada. A quantidade exata nao sai do ERP.
+
+Estados: IN_STOCK, LOW_STOCK, OUT_OF_STOCK, AVAILABLE_TO_ORDER e UNKNOWN. Dependencia desconhecida, produto/categoria/catalogo inativo, preco ausente ou unidade ausente impedem sellable e exigem orcamento.
+
+## Publicacao, delta e multiempresa
+
+- somente Produto explicitamente publicado ou associado ao CatalogoWeb entra no contrato;
+- por padrao sao listados apenas itens ativos;
+- active=false permite consultar desativados;
+- updatedSince inclui alteracoes de Produto, CatalogoWeb e GrupoProduto, permitindo propagar inativacoes;
+- Produto, categoria, catalogo, tabela e item de preco sao validados contra o Grupo/Empresa definidos pelo servidor;
+- produtos compartilhados seguem a allowlist existente; registros de outra Empresa/Grupo sao descartados.
+
+## Erros e observabilidade
+
+- site_cpa_catalog_page_invalid;
+- site_cpa_catalog_updated_since_invalid;
+- site_cpa_catalog_filter_invalid;
+- site_cpa_customer_context_invalid;
+- site_cpa_catalog_scope_forbidden;
+- site_cpa_catalog_unavailable;
+- site_cpa_audit_unavailable.
+
+A auditoria registra operacao, correlacao, Grupo, Empresa, pagina, tamanho, quantidade, uso de preco empresarial, duracao e resultado, nunca o catalogo inteiro.
+
+siteHealth informa CUSTOMER_RESOLVE: ready e CATALOG_READ: ready. Pedido, pagamento, frete final e credito final permanecem fora deste lote.
+
+Proximo lote somente com autorizacao expressa: ERP-SITE-04 - Pedido e Checkout.

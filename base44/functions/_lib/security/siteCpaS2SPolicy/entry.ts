@@ -3,6 +3,11 @@ import {
   SiteCpaCustomerError,
   resolveSiteCpaCustomer,
 } from '../siteCpaCustomerResolve/entry.ts';
+import {
+  SITE_CPA_CATALOG_LIST_OPERATION,
+  SiteCpaCatalogError,
+  resolveSiteCpaCatalog,
+} from '../siteCpaCatalogRead/entry.ts';
 
 export const SITE_CPA_ORIGIN = 'SITE_CPA';
 export const SITE_CPA_CONTRACT_VERSION = '1';
@@ -393,6 +398,7 @@ export const handleSiteCpaGatewayRequest = async ({
         },
         capabilities: {
           CUSTOMER_RESOLVE: 'ready',
+          CATALOG_READ: 'ready',
         },
       },
     });
@@ -408,6 +414,31 @@ export const handleSiteCpaGatewayRequest = async ({
       const failure = error instanceof SiteCpaCustomerError
         ? error
         : new SiteCpaCustomerError(503, 'site_cpa_customer_resolve_unavailable');
+      const body = buildSiteCpaResponse({
+        ok: false,
+        request,
+        code: failure.code,
+        message: failure.message,
+        details: failure.details,
+      });
+      return finish({
+        status: failure.status,
+        body,
+        eventStatus: 'rejeitado',
+        errorCode: failure.code,
+      });
+    }
+  }
+
+  if (request.operation === SITE_CPA_CATALOG_LIST_OPERATION) {
+    try {
+      const data = await resolveSiteCpaCatalog({ base44, payload, scope, request, now });
+      const body = buildSiteCpaResponse({ ok: true, request, data });
+      return finish({ status: 200, body, eventStatus: 'concluido' });
+    } catch (error) {
+      const failure = error instanceof SiteCpaCatalogError
+        ? error
+        : new SiteCpaCatalogError(503, 'site_cpa_catalog_unavailable');
       const body = buildSiteCpaResponse({
         ok: false,
         request,

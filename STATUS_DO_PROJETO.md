@@ -7349,3 +7349,25 @@ Checklist inicial:
 - Avisos conhecidos: build mantem imports mistos, Browserslist desatualizado e bundle principal acima de 500 kB.
 - Nenhum arquivo do Site CPA, dado real, recurso Base44 remoto, backup legado ou HD externo foi acessado ou alterado.
 - Proximo passo somente com autorizacao expressa: ERP-SITE-03 - Catalogo.
+
+### ERP-SITE-03 - Catalogo oficial do ERP
+
+- Objetivo: implementar `siteCatalogoList` no gateway S2S `v1`, mantendo Produto, preco e disponibilidade do ERP como fontes oficiais do Site CPA.
+- Reuso: a operacao consulta as entidades existentes `Produto`, `CatalogoWeb`, `GrupoProduto`, `UnidadeMedida`, `TabelaPreco` e `TabelaPrecoItem`; nenhum ProdutoV2, Catalogo2, Preco2, Estoque2 ou endpoint paralelo foi criado.
+- Multiempresa: Grupo e Empresa sao resolvidos pela credencial `SITE_CPA` no servidor. Produtos, categorias, tabelas, precos e vinculos de Cliente de outro escopo falham fechados.
+- Cliente: preco empresarial exige `erpCustomerId` e `externalUserId` com vinculo aprovado pelo ERP-SITE-02. Cliente ausente, inativo, adulterado ou nao vinculado nao recebe condicao especifica.
+- Contrato: filtros permitidos por categoria, situacao, data de atualizacao, IDs e SKU; paginacao obrigatoria com limite maximo de 100 itens; delta inclui alteracoes do Produto, publicacao e categoria.
+- Produto: resposta minimizada traz identificador estavel, SKU/codigo, nome, descricao comercial permitida, categoria, marca, situacao, unidade, especificacoes estruturadas, variante, quantidade minima, multiplo, imagem segura e datas oficiais.
+- Preco: usa tabela aprovada do Cliente quando valida e, sem contexto empresarial, somente o preco padrao permitido. Preco inexistente ou dependencia de tabela indisponivel retorna `null`, nunca zero nem fallback inseguro.
+- Disponibilidade: quantidade exata nao e exposta. O contrato retorna apenas `IN_STOCK`, `LOW_STOCK`, `OUT_OF_STOCK`, `AVAILABLE_TO_ORDER` ou `UNKNOWN`; falha de dependencia nunca produz falso estoque.
+- Venda: `sellable` e `quoteRequired` sao calculados no servidor considerando atividade, publicacao, unidade, preco e disponibilidade. Produto/categoria inativos continuam visiveis no delta como nao vendaveis.
+- Privacidade: custo, margem, markup, fornecedor, localizacao interna, dados bancarios, segredos e notas internas nao fazem parte da resposta.
+- Auditoria: registra operacao, correlacao, Grupo, Empresa, pagina, quantidade, uso de preco empresarial, duracao e resultado, sem registrar o catalogo completo.
+- Capability: `siteHealth` informa `CUSTOMER_RESOLVE: ready` e `CATALOG_READ: ready`; as capabilities dos lotes seguintes continuam inativas.
+- PRONTO: catalogo oficial, produtos, categorias, especificacoes, unidade, preco permitido, disponibilidade minimizada, `sellable`, paginacao e sincronizacao delta.
+- BLOCKED: pedido/checkout, pagamento, frete final, credito final e regras dependentes dos contratos futuros.
+- Validacao: 33/33 testes focados e 285/285 testes globais aprovados; ESLint direcionado e global sem diagnosticos; `audit:baseline`, build completo e `git diff --check` aprovados.
+- Typecheck: permanecem os mesmos 2.238 diagnosticos historicos; nenhum diagnostico novo foi introduzido pelo lote.
+- Avisos conhecidos: build mantem imports mistos, Browserslist desatualizado e bundle principal acima de 500 kB.
+- Nenhum arquivo do Site CPA, dado real, recurso Base44 remoto, backup legado ou HD externo foi acessado ou alterado.
+- Proximo passo somente com autorizacao expressa: ERP-SITE-04 - Pedido e checkout.

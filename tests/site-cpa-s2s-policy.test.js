@@ -215,6 +215,8 @@ test('healthcheck S2S usa empresa padrao, audita e persiste o evento', async () 
   assert.equal(result.body.ok, true);
   assert.equal(result.body.data.scope.groupId, 'grupo-cpa');
   assert.equal(result.body.data.scope.empresaId, 'cpa-aco');
+  assert.equal(result.body.data.capabilities.CUSTOMER_RESOLVE, 'ready');
+  assert.equal(result.body.data.capabilities.CATALOG_READ, 'ready');
   assert.equal(result.createdEvents[0].status, 'concluido');
   assert.equal(result.audits.length, 1);
 });
