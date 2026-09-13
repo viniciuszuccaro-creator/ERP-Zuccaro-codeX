@@ -6869,3 +6869,12 @@ Checklist inicial:
 - O repositorio recebe somente este resumo operacional, sem conteudo do aplicativo, nomes tecnicos adicionais, dados, valores ou consultas.
 - Os servicos SQL permaneceram parados e esta etapa nao acessou o banco. Por ser mudanca documental, git diff --check e a validacao aplicavel.
 - Proximo passo obrigatorio: fazer uma varredura limitada dos fragmentos seguintes para verificar se existe algum candidato estruturalmente compativel antes do proximo comando reconhecivel, sem exportar conteudo sensivel.
+
+### Gate 18 - Varredura limitada apos a rotina legada
+
+- A janela posterior foi examinada ate o proximo comando reconhecivel, incluindo fragmentos curtos, em duas passagens independentes e somente leitura.
+- Foram encontrados candidatos com forma generica de operando, mas nenhum deles e adjacente ao predicado fragmentado.
+- A etapa nao comprovou continuacao, concatenacao ou vinculacao logica com o pagamento auditado; o bloqueio de migracao permanece.
+- O relatorio detalhado e sua verificacao de integridade permanecem exclusivamente na pasta protegida do HD externo.
+- Os servicos SQL permaneceram parados e o banco nao foi acessado. O repositorio recebe somente este resumo sem conteudo sensivel; git diff --check e a validacao aplicavel.
+- Proximo passo obrigatorio: classificar os candidatos encontrados por faixa de distancia e delimitadores vizinhos para distinguir operandos plausiveis de simbolos ou metadados de runtime, sem exportar conteudo.
