@@ -460,3 +460,7 @@ Em 2026-09-13, a politica visual da conciliacao financeira foi homologada com da
 
 Proxima frente: validar persistencia e reabertura entre tres sessoes em armazenamento descartavel, restaurando o ambiente automaticamente ao final. Nenhuma promocao para titulos operacionais sera implementada sem autorizacao expressa.
 
+Andamento em 2026-09-13: o cliente local real foi homologado com `localStorage` em memoria e recarga entre registrante, revisor e aprovador. CPA Ferro e Aco e 3Z LTDA permaneceram isoladas, a visao de Grupo falhou fechada, a auditoria preservou os tres atores e nenhum titulo operacional foi criado. O armazenamento de teste foi restaurado integralmente ao final.
+
+Proxima frente: fazer a persistencia especializada confirmar a escrita e falhar fechada quando o armazenamento estiver indisponivel ou exceder a quota, evitando sucesso falso. A promocao operacional continua dependente de autorizacao expressa.
+

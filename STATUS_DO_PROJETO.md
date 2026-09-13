@@ -7039,3 +7039,16 @@ Checklist inicial:
 - Validacao: 26 testes focados e 250 testes globais aprovados; ESLint direcionado, audit baseline, build completo e `git diff --check` aprovados.
 - Divida preexistente: ESLint global permanece com 84 erros e 17 avisos. O typecheck global permanece com diagnosticos historicos e nao aponta diagnostico nos arquivos deste lote.
 - Proximo passo obrigatorio: homologar persistencia, reabertura e troca de sessao em armazenamento descartavel, com restauracao automatica ao final e sem usar dados reais. A promocao para `ContaPagar` ou `ContaReceber` permanece fora de escopo ate autorizacao expressa.
+
+### Gate 18 - Persistencia local homologada em armazenamento descartavel
+
+- O cliente local real foi carregado pelo runtime do Vite com um `localStorage` exclusivamente em memoria; nenhuma copia da regra de persistencia foi usada no teste.
+- Duas pendencias sinteticas foram mantidas separadas entre CPA Ferro e Aco e 3Z LTDA. A tentativa de consulta na visao de Grupo CPA falhou fechada.
+- O cliente foi reaberto entre tres sessoes distintas: registrante anexou evidencia, revisor registrou a decisao e aprovador confirmou a classificacao.
+- Cada reabertura leu do armazenamento compartilhado a etapa persistida pela sessao anterior. A trilha gravou os tres usuarios distintos e preservou Grupo e Empresa.
+- A empresa 3Z LTDA permaneceu em `aguardando_evidencia` enquanto a pendencia da CPA Ferro e Aco avancou, comprovando que a troca de contexto nao mistura os registros.
+- Ao final, a pendencia aprovada continuou `PENDING_MANUAL_RECONCILIATION`, `status=pendente`, `confirmado=false` e bloqueada no staging. As quantidades de `ContaPagar` e `ContaReceber` permaneceram inalteradas.
+- O armazenamento anterior ao teste foi restaurado integralmente no bloco de encerramento, inclusive em caso de falha da homologacao. Nenhum dado do navegador aberto, banco, ERP real ou HD externo foi acessado.
+- Validacao: 1 teste focado e 251 testes globais aprovados; ESLint e typecheck direcionados sem diagnosticos; audit baseline, build completo e `git diff --check` aprovados.
+- Divida preexistente: ESLint global permanece com 84 erros e 17 avisos. O typecheck global permanece com diagnosticos historicos fora deste lote; os avisos de bundle e Browserslist tambem permanecem registrados.
+- Proximo passo obrigatorio: endurecer a persistencia local especializada para detectar quota, indisponibilidade ou escrita nao confirmada e falhar fechada sem declarar a transicao concluida. Nenhuma promocao operacional sera implementada sem autorizacao expressa.
