@@ -6887,3 +6887,12 @@ Checklist inicial:
 - O relatorio detalhado e sua verificacao de integridade permanecem exclusivamente na pasta protegida do HD externo.
 - Os servicos SQL permaneceram parados e o banco nao foi acessado. O repositorio recebe somente este resumo sem conteudo sensivel; git diff --check e a validacao aplicavel.
 - Proximo passo obrigatorio: inventariar no backup, sem executar arquivos, a existencia de codigo-fonte, mapas, simbolos ou metadados de depuracao relacionados ao modulo analisado para buscar evidencia mais confiavel que inferencia binaria.
+
+### Gate 18 - Inventario de artefatos de desenvolvimento legados
+
+- A copia original foi inventariada por nomes e extensoes, sem executar arquivos nem ler seu conteudo, em duas passagens independentes.
+- Nao foram encontrados arquivos-fonte, mapas, simbolos de depuracao, unidades compiladas ou metadados de build nas categorias controladas.
+- Nao existe artefato de desenvolvimento disponivel nessa copia para esclarecer a rotina auditada; o bloqueio de migracao permanece.
+- O relatorio detalhado e sua verificacao de integridade permanecem exclusivamente na pasta protegida do HD externo.
+- Os servicos SQL permaneceram parados e o banco nao foi acessado. O repositorio recebe somente este resumo sem conteudo sensivel; git diff --check e a validacao aplicavel.
+- Proximo passo obrigatorio: inventariar apenas por nome, extensao e tamanho os arquivos compactados ou recipientes existentes no backup para verificar se algum pode conter fontes ou simbolos, sem abrir, extrair ou executar esses arquivos.
