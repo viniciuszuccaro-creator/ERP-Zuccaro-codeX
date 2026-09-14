@@ -6705,6 +6705,20 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A consulta usou somente loopback local e a mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: classificar somente por contagens os cinco itens fiscais sem item de pedido, verificando pedido existente, item alternativo exato no mesmo pedido, material, quantidade e referencia de movimento. Nao remapear automaticamente nem liberar os tres documentos e seus nove titulos.
 
+### Gate 18 - Referencias ausentes dos itens fiscais classificadas
+
+- Os cinco itens fiscais sem item de pedido foram classificados em duas passagens identicas; os resultados produziram o mesmo SHA-256 e reconciliaram exatamente os tres documentos bloqueados.
+- As cinco linhas fiscais nao possuem numero de pedido nem item de pedido preenchidos em seus proprios campos. A ausencia da referencia foi preservada e nao substituida silenciosamente.
+- O pedido-pai de cada documento existe e foi comprovado pelos demais itens fiscais vinculados do mesmo documento. A busca alternativa ficou restrita a esse pedido-pai conhecido.
+- Para cada uma das cinco linhas existe exatamente um item com o mesmo material no pedido-pai. Entretanto, a quantidade fiscal nao coincide com a quantidade pedida nem com a quantidade recebida acumulada desse item.
+- Os cinco itens possuem movimento direto por `SEQESTOQUE`, com material e quantidade exatamente iguais a linha fiscal. Assim, a entrada de estoque esta comprovada, mas o item de pedido correspondente nao esta.
+- A combinacao material unico + quantidade divergente nao e suficiente para criar a referencia ausente. Nenhum item foi remapeado e nenhuma aproximacao por descricao ou posicao foi aceita.
+- Os tres documentos e seus nove titulos, sendo quatro abertos e cinco marcados como baixados, permanecem bloqueados para migracao operacional.
+- O relatorio `legacy-purchase-orphan-fiscal-item-alternatives.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, chave, codigo, nome, documento, fornecedor, data, material, quantidade, valor, TPS ou MDF/LDF integra o GitHub.
+- Nenhum fornecedor, pedido, item, movimento, documento fiscal, titulo, staging ou registro do ERP novo foi criado, alterado, remapeado, importado ou promovido.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A consulta usou somente loopback local e a mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: comparar somente por classificacao menor, igual ou maior a quantidade das cinco linhas fiscais com a quantidade pedida, recebida acumulada e soma das linhas fiscais irmas do mesmo pedido/material. Nao exportar quantidades nem criar vinculo automatico.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
