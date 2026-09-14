@@ -6581,6 +6581,20 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: decompor somente por contagens os 25 documentos dos tres pedidos com escopo fiscal inseguro, separando situacao fiscal, empresa fora da rota Grupo -> empresa membro, fornecedor divergente e impacto nos 75 titulos. Isolar os dois itens fiscais sem movimento; nao exportar dados nominais, recalcular obrigacoes ou autorizar importacao.
 
+### Gate 18 - Causa da inseguranca fiscal nos tres pedidos
+
+- Os 25 documentos fiscais associados aos tres pedidos foram decompostos em duas passagens identicas por situacao, rota empresarial, fornecedor e titulos financeiros, sem exportar IDs, documentos, fornecedores, datas, valores ou quantidades individuais.
+- Todos os 25 documentos estao com situacao `Emitida` e seguem a rota empresarial permitida do Grupo CPA para empresa membro. Nao existe documento cancelado, situacao indefinida ou empresa fiscal fora da rota neste recorte.
+- A inseguranca esta exclusivamente no fornecedor: 20 documentos usam fornecedor fiscal diferente do fornecedor registrado no pedido. Esses documentos possuem 60 titulos, dos quais 26 estao abertos e 34 marcados como baixados.
+- Os cinco documentos restantes concordam com o fornecedor do pedido e permanecem seguros quanto a situacao, empresa e fornecedor. Eles possuem 15 titulos, sendo 11 abertos e quatro marcados como baixados.
+- Os dois itens fiscais sem movimento pertencem aos documentos seguros quanto a situacao, rota e fornecedor. Portanto, o bloqueio desses itens decorre da ausencia de processamento de estoque, nao da divergencia de fornecedor.
+- Os 75 titulos reconciliam novamente 37 abertos e 38 marcados como baixados. Todos foram vinculados pela assinatura estrita de relatorio, fornecedor fiscal e numero da nota; nenhuma obrigacao sera recriada automaticamente.
+- A divergencia entre fornecedor do pedido e fornecedor fiscal nao foi tratada como erro nominal nem corrigida. Ela pode representar alteracao comercial, faturamento por outro cadastro ou inconsistencia historica e exige conciliacao do cadastro mestre.
+- O relatorio `legacy-purchase-unsafe-fiscal-document-classification.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, identificador, documento, fornecedor, data, valor, quantidade, TPS ou MDF/LDF integra o GitHub.
+- Nenhum pedido, fornecedor, titulo, documento fiscal, item ou movimento foi criado, alterado, importado ou promovido no ERP novo.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: confrontar somente por contagens os pares fornecedor do pedido x fornecedor fiscal dos 20 documentos divergentes com o cadastro mestre, classificando existencia, situacao, igualdade de documento normalizado, grupo duplicado e elegibilidade no staging protegido. Nao exportar codigos, nomes, documentos ou corrigir automaticamente o fornecedor.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
