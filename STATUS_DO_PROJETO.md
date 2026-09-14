@@ -8369,5 +8369,5 @@ Checklist inicial:
 - Typecheck: os arquivos do lote passaram de 22 diagnosticos para zero; o passivo global caiu de 2.140 para 2.118, reducao liquida exata de 22, e continua aberto sem ser mascarado.
 - Verificacao local: `http://localhost:5173/estoque` respondeu HTTP 200 e entregou o root da aplicacao. A tentativa de inspecao visual no navegador interno expirou antes de gerar snapshot e nao foi declarada como aprovada.
 - Dados/infraestrutura: nenhum recebimento real foi criado, nenhum backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
-- Commit de implementacao: `PENDENTE_COMMIT`.
+- Commit de implementacao: `de2293af` (`Refatora recebimento e preserva dados da conferencia`).
 - Proximo passo P0: refatorar e tipar `ConfiguracaoSeguranca.jsx`, que possui 943 linhas e 21 diagnosticos, em lote separado.
