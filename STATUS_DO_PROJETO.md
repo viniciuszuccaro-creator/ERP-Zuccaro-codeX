@@ -6379,6 +6379,21 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: cruzar por contagens os 1.364 excedentes de vinculo unico com `CadastroMateriais`, classificando correspondencia da chave, `REVENDA`/nao revenda, situacao, igualdade da unidade mestre com pedido/fiscal e disponibilidade dos quatro pesos e referencias de conversao. Nao exportar codigos, unidades, pesos, materiais, IDs ou quantidades.
 
+### Gate 18 - Cruzamento dos excedentes com o cadastro mestre
+
+- Os 1.364 excedentes com unidade pedido/fiscal igual e vinculo fiscal unico foram cruzados com `CadastroMateriais` em duas passagens identicas, usando apenas contagens agregadas.
+- Todos os 1.364 itens possuem o mesmo `CODIGOMATERIAL` no pedido e na nota fiscal, e todos encontram exatamente um cadastro pela chave primaria do mestre. Nao houve codigo ausente, divergente ou sem cadastro.
+- A classificacao mestre separou 1.344 itens `REVENDA` e 20 nao revenda. Os 20 nao revenda ficam excluidos do lote de produtos e de qualquer migracao vinculada a revenda.
+- Existem 1.350 cadastros ativos e 14 inativos no universo. O status sera preservado; inativo nao sera ativado automaticamente.
+- A unidade mestre coincide com a unidade ja igual do pedido/nota em 1.300 itens e diverge em 64: 44 no codigo empresarial 1 e 20 no codigo 3. Nenhuma unidade mestre esta ausente.
+- `PESOBRUTO` e `PESOLIQUIDO` sao positivos em 1.359 itens e zero em cinco. `PESOBARRA` e positivo em 1.213 e zero em 151. `PESOMETROCALCULO` esta zerado nos 1.364 itens.
+- Todos os itens possuem ao menos uma das quatro referencias legadas de conversao: tres possuem uma, nove possuem duas, 746 possuem tres e 606 possuem quatro. Essas referencias nao incluem fator numerico direto comprovado e nao autorizam conversao automatica.
+- A presenca de peso ou referencia legada nao prova que a quantidade fiscal deva ser multiplicada ou dividida. Nenhuma formula foi inferida e nenhum item foi alterado ou importado.
+- O relatorio `legacy-purchase-material-master-classification.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum codigo, unidade, peso, quantidade, material, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: 20 itens ficam fora por nao serem `REVENDA`; os 64 com unidade mestre divergente e os demais excedentes continuam `BLOCKED` ate existir evidencia quantitativa de conversao ou homologacao operacional.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: limitar aos 1.344 itens `REVENDA` e classificar por contagens os 64 casos de unidade mestre divergente, separando ativos/inativos e testando somente igualdade decimal da razao fiscal/pedida ou seu inverso com `PESOBRUTO`, `PESOLIQUIDO` e `PESOBARRA`. Nao exportar valores ou unidades e nao aceitar aproximacao nem conversao automatica.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
