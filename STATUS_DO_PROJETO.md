@@ -8148,5 +8148,5 @@ Checklist inicial:
 - Seguranca: `production_reapproval_required=true`, `import_authorized=false` e `operational_promotion_allowed=false`. Nenhum envelope foi movido da quarentena e nenhum registro do ERP foi criado, alterado ou promovido.
 - Integridade: a ficha concluida possui SHA-256 `B07E4B54C1407C315C7FE87B8378D3DDF18CF748C40985A131835696AB2511F9`, ACL protegida e os envelopes HMAC originais permanecem inalterados.
 - Escopo do repositorio: mudanca exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
-- Commit de implementacao: pendente neste registro.
+- Commit de implementacao: `bb33a36a` (`Conclui homologacao fiscal local`).
 - Proximo passo obrigatorio: validar offline a compatibilidade dos tres envelopes homologados com o contrato backend de `conciliacao_migracao_fiscal`, sem chamar persistencia e sem retirar os arquivos da quarentena. Qualquer passagem posterior para staging exigira autorizacao especifica separada.
