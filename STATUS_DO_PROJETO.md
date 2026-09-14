@@ -6565,6 +6565,22 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: classificar somente por contagens os 12 pedidos sem liquidacao e seus 68 itens por composicao exclusiva `REVENDA`, fornecedor mestre valido, faixa anual, escopo empresarial/fiscal e existencia de obrigacao financeira downstream. Isolar os dois itens com fiscal sem movimento; nao exportar dados nominais, calcular saldo final ou autorizar importacao.
 
+### Gate 18 - Qualidade dos doze pedidos potencialmente abertos
+
+- Os 12 pedidos sem liquidacao e seus 68 itens pendentes foram classificados em duas passagens identicas por produto, fornecedor, ano, escopo fiscal e obrigacao financeira, sem exportar IDs, datas completas, documentos, fornecedores, materiais, valores ou quantidades individuais.
+- Todos os 12 pertencem ao escopo legado do Grupo CPA, foram emitidos em 2026, possuem somente produtos classificados como `REVENDA` e apontam para fornecedor encontrado e ativo no cadastro mestre.
+- A existencia do fornecedor ativo comprova integridade referencial no legado, mas nao substitui a homologacao do staging de fornecedores nem autoriza importar cadastro em quarentena.
+- Nove pedidos possuem documentos fiscais e ao menos um titulo financeiro aberto. Eles abrangem 82 itens no total, dos quais 41 permanecem pendentes pelo acumulado.
+- Seis pedidos mistos possuem somente documentos fiscais de escopo seguro. Eles concentram 13 documentos e 39 titulos financeiros, sendo 17 abertos e 22 marcados como baixados.
+- Tres pedidos mistos possuem ao menos um documento fiscal inseguro. Eles concentram 25 documentos e 75 titulos, sendo 37 abertos e 38 marcados como baixados; os dois itens fiscais sem movimento pertencem a esse recorte.
+- Os nove pedidos fiscalizados reconciliam 38 documentos, 114 titulos, 54 titulos abertos e 60 marcados como baixados. A presenca de titulo impede criar automaticamente nova obrigacao financeira no ERP novo.
+- Os tres pedidos restantes estao sem recebimento acumulado, documento fiscal ou titulo financeiro. Eles possuem 27 itens pendentes exclusivamente de revenda e continuam apenas como candidatos operacionais, nao como compras autorizadas.
+- Todos os 68 itens pendentes foram reconciliados novamente: 15 parcelas recebidas e processadas, 51 sem fiscal seguro e dois com fiscal emitido sem movimento. Nenhuma outra categoria apareceu.
+- O relatorio `legacy-purchase-open-twelve-classification.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, identificador, data completa, documento, fornecedor, material, valor, quantidade, TPS ou MDF/LDF integra o GitHub.
+- Nenhum pedido, fornecedor, titulo, documento fiscal ou item foi criado, alterado, importado ou promovido no ERP novo. Nenhum saldo final foi calculado.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: decompor somente por contagens os 25 documentos dos tres pedidos com escopo fiscal inseguro, separando situacao fiscal, empresa fora da rota Grupo -> empresa membro, fornecedor divergente e impacto nos 75 titulos. Isolar os dois itens fiscais sem movimento; nao exportar dados nominais, recalcular obrigacoes ou autorizar importacao.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
