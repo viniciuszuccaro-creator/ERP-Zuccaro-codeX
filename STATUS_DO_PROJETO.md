@@ -8179,5 +8179,5 @@ Checklist inicial:
 - Validacao focada: `tests/contexto-multiempresa-policy.test.js` passou 13/13, incluindo empresa externa bloqueada, escopo incompleto recusado e empresa emissora obrigatoria no fiscal.
 - Infraestrutura legada: SQL Server e Agent permaneceram `Stopped`/`Manual`; SQL Browser permaneceu `Stopped`/`Disabled`.
 - Escopo do repositorio: mudanca exclusivamente documental; `git diff --check` e obrigatorio antes do commit.
-- Commit de implementacao: pendente neste registro.
+- Commit de implementacao: `9675f7b8` (`Mapeia contexto fiscal com HMAC`).
 - Proximo passo obrigatorio: substituir os aliases pelos IDs canonicos somente em memoria e repetir a validacao offline dos tres envelopes contra o guard de Grupo/Empresa e o contrato fiscal, produzindo apenas resultado agregado protegido. Nao mover para staging, persistir ou promover `NotaFiscal`.
