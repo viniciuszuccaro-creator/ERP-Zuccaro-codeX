@@ -8415,5 +8415,5 @@ Checklist inicial:
 - Testes: focados passaram 4/4; suite completa passou 450/450. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; build manteve apenas o aviso conhecido de chunk grande.
 - Typecheck: os arquivos do lote passaram de 65 diagnosticos para zero; o passivo global caiu de 2.074 para 2.009, reducao liquida exata de 65, e continua aberto sem ser mascarado.
 - Dados/infraestrutura: nenhum Pedido ou dado real foi alterado, nenhum backend Base44 remoto, banco legado ou HD externo foi acessado ou modificado.
-- Commit de implementacao: `PENDENTE_COMMIT`.
+- Commit de implementacao: `71f8da11` (`Refatora armado padrao com escopo de empresa`).
 - Proximo passo P0: refatorar e tipar `src/pages/Contratos.jsx`, maior concentracao operacional restante com 79 diagnosticos, em lote separado e preservando o fluxo Comercial existente.
