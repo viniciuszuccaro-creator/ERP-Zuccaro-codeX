@@ -8386,3 +8386,18 @@ Checklist inicial:
 - Dados/infraestrutura: nenhuma configuracao real foi salva, nenhum backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
 - Commit de implementacao: `52770d1f` (`Refatora configuracao de seguranca`).
 - Proximo passo P0: refatorar e tipar `GestaoUsuariosAvancada.jsx`, que possui 614 linhas e 16 diagnosticos, em lote separado.
+
+## 2026-09-14 - Refatoracao e contratos da Gestao avancada de usuarios
+
+- Objetivo: reduzir a tela de gestao individual, eliminar seus diagnosticos de `checkJs` e preservar RBAC granular com escopo Grupo/Empresas/Setores.
+- Causa raiz: `GestaoUsuariosAvancada.jsx` concentrava regras, sanitizacao e cinco blocos visuais em 614 linhas; a mutacao nao possuia contrato de dados.
+- Arquivos alterados: `src/components/sistema/GestaoUsuariosAvancada.jsx`, `src/components/sistema/gestao-usuarios/UserAccessFormSections.jsx`, `src/components/sistema/gestao-usuarios/gestaoUsuarioPolicy.js` e `tests/piloto-operacao-policy.test.js`.
+- Refatoracao: cards e acoes foram extraidos para um componente controlado; sanitizadores e estado inicial foram movidos para uma policy pura. Os auxiliares existem somente para decompor a gestao atual, sem criar tela, rota, entidade ou persistencia paralela.
+- Tamanho: o orquestrador caiu para 306 linhas, o bloco visual ficou com 351 e a policy com 80. Mutacao, resolucao do escopo permitido e auditoria continuam no orquestrador.
+- Multiempresa/RBAC: empresa selecionada continua limitada ao conjunto do Grupo; acesso somente Grupo nao vincula empresas; salvar continua bloqueado sem contexto ou permissao.
+- Seguranca/auditoria: texto, telefone, listas e limite financeiro sao sanitizados antes da persistencia; snapshots antes/depois e bloqueios continuam auditados.
+- Testes: focados passaram 8/8; suite completa passou 446/446. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; build manteve apenas o aviso conhecido de chunk grande.
+- Typecheck: arquivos do fluxo passaram de 16 diagnosticos para zero; o passivo global caiu de 2.090 para 2.074, reducao liquida exata de 16, e continua aberto sem ser mascarado.
+- Dados/infraestrutura: nenhum usuario real foi alterado, nenhum backend Base44 remoto, banco legado ou HD externo foi acessado ou modificado.
+- Commit de implementacao: `PENDENTE_COMMIT`.
+- Proximo passo P0: refatorar e tipar `ArmadoPadraoTab.jsx`, que possui 805 linhas e 65 diagnosticos, em lote separado.

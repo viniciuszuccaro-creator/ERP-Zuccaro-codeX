@@ -15,6 +15,12 @@ import {
   papeisPilotoCobertos,
   PILOTO_CENARIOS_CHAVE,
 } from '../src/components/lib/pilotoOperacaoPolicy.js';
+import {
+  createInitialUserAccessForm,
+  sanitizeCurrencyLimit,
+  sanitizePhone,
+  sanitizeText,
+} from '../src/components/sistema/gestao-usuarios/gestaoUsuarioPolicy.js';
 
 const usersCompletos = PAPEIS_PILOTO.map((papel, index) => ({
   id: `u${index}`,
@@ -98,6 +104,18 @@ test('usuario piloto sem papel e recusado', () => {
   assert.equal(stamped.papel_piloto, 'vendedor');
 });
 
+test('gestao de usuario normaliza campos sensiveis antes da persistencia', () => {
+  const form = createInitialUserAccessForm({
+    empresas_vinculadas: [{ empresa_id: 'e1' }, 'e2'],
+    restricoes_adicionais: { limite_aprovacao_valor: -10 },
+  });
+  assert.deepEqual(form.empresas_vinculadas, ['e1', 'e2']);
+  assert.equal(form.restricoes_adicionais.limite_aprovacao_valor, 0);
+  assert.equal(sanitizeText('<script> Comercial', 60), 'script Comercial');
+  assert.equal(sanitizePhone('(11) 99999-0000 x'), '(11) 99999-0000');
+  assert.equal(sanitizeCurrencyLimit('1000000000'), 999999999.99);
+});
+
 test('cenarios piloto so aceitam allowlist e homologacao exige papeis+cenarios', () => {
   assert.throws(
     () => applyPilotoCenariosOnWrite({
@@ -130,11 +148,14 @@ test('cenarios piloto so aceitam allowlist e homologacao exige papeis+cenarios',
 
 test('telas existentes designam piloto, registram cenarios e NF exige papel', async () => {
   const gestao = await readFile(new URL('../src/components/sistema/GestaoUsuariosAvancada.jsx', import.meta.url), 'utf8');
+  const secoes = await readFile(new URL('../src/components/sistema/gestao-usuarios/UserAccessFormSections.jsx', import.meta.url), 'utf8');
   const status = await readFile(new URL('../src/components/sistema/StatusControleAcesso.jsx', import.meta.url), 'utf8');
   const tab = await readFile(new URL('../src/components/comercial/NotasFiscaisTab.jsx', import.meta.url), 'utf8');
   const actions = await readFile(new URL('../base44/functions/nfeActions/entry.ts', import.meta.url), 'utf8');
   const client = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
   assert.match(gestao, /usuario_piloto/);
+  assert.match(gestao, /<UserAccessFormSections/);
+  assert.match(secoes, /data-action="RBAC\.Usuario\.salvar"/);
   assert.match(status, /PILOTO_CENARIOS_CHAVE/);
   assert.match(status, /upsertConfig/);
   assert.match(status, /CENARIOS_PILOTO\.map/);

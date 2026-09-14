@@ -838,6 +838,19 @@ Lote concluido em 2026-09-14 na tela existente de configuracao de seguranca, sem
 
 Proxima frente P0: refatorar e tipar `GestaoUsuariosAvancada.jsx`, tela existente de acessos com 614 linhas e 16 diagnosticos, em lote proprio.
 
+### Refatoracao e contratos - Gestao avancada de usuarios
+
+Lote concluido em 2026-09-14 na gestao existente de usuarios e acessos, sem criar tela, rota, entidade ou fluxo paralelo.
+
+- `GestaoUsuariosAvancada.jsx` caiu de 614 para 306 linhas; os cinco cards e a barra de acoes foram extraidos para `UserAccessFormSections.jsx`, componente controlado de 351 linhas.
+- Sanitizacao e estado inicial foram extraidos para `gestaoUsuarioPolicy.js`, policy pura de 80 linhas reutilizada pelo orquestrador, pela interface e pelos testes.
+- Estado, contexto Grupo/Empresa, resolucao das empresas permitidas, mutacao, RBAC e auditoria permanecem centralizados no componente original.
+- O typecheck do fluxo passou de 16 diagnosticos para zero; o global caiu de 2.090 para 2.074, reducao liquida exata de 16.
+- Testes cobrem sanitizacao de texto/telefone, limite financeiro, normalizacao de empresas e permanencia da acao protegida de salvar.
+- Nenhum usuario, permissao, configuracao remota, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: refatorar e tipar `ArmadoPadraoTab.jsx`, fluxo Comercial existente com 805 linhas e 65 diagnosticos, em lote proprio.
+
 ### ERP-SITE-01 - Fundacao S2S do Site CPA
 
 Nova prioridade autorizada em 2026-09-13: executar primeiro no ERP os 12 contratos Site CPA, sem alterar o repositorio do Site ate a homologacao da camada ERP.
