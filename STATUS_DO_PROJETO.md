@@ -6365,6 +6365,20 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: inventariar somente o schema de `CadastroMateriais` relacionado a chave, tipo/finalidade de material, situacao, unidade, peso e conversao, sem consultar valores. Definir como identificar estruturalmente os produtos de `REVENDA` antes de cruzar contagens dos 1.364 excedentes com o cadastro mestre.
 
+### Gate 18 - Revalidacao estrutural do cadastro mestre nas compras
+
+- O contrato estrutural anterior de `LEGACY_TID_EXETPS.dbo.CadastroMateriais` foi reutilizado e somente os metadados necessarios ao cruzamento das compras foram revalidados em duas passagens identicas. Nenhum valor de produto foi consultado.
+- `CODIGOMATERIAL decimal(15,0)` e a chave primaria unica e nao anulavel. Ela e compativel com o vinculo estrutural existente nos itens de pedido e de nota fiscal.
+- `TIPOMATERIAL char(10)` permanece o unico classificador homologado para limitar o lote a `UPPER(TRIM(TIPOMATERIAL)) = REVENDA`. `SITUACAO char(10)` e `UNIDADE char(4)` permitem preservar status e validar a unidade principal.
+- Os campos de peso localizados sao `PESOBRUTO`, `PESOLIQUIDO`, `PESOBARRA` e `PESOMETROCALCULO`, todos `decimal(11,3)` anulaveis. Peso nao sera tratado como quantidade sem regra funcional homologada.
+- Nao existe fator numerico de conversao direto comprovado nesse recorte. Existem apenas as referencias legadas `CODIGOMATERIALBELGO`, `UNIDADEBELGO`, `SIGLACONVERTENDOUNIDADE` e `CODIGOTIPO`, todas anulaveis e ja mantidas em revisao/bloqueio pelo contrato anterior.
+- O campo `CONTROLAESTOQUEUNIDADEPARALELA_VELHO` foi identificado apenas como legado obsoleto e nao sera usado para liberar conversao ou recebimento.
+- Os indices confirmam `CODIGOMATERIAL` como chave primaria; os demais indices de classe, descricao e referencia nao substituem o vinculo por codigo e nao autorizam deduplicacao nominal.
+- O relatorio `legacy-purchase-material-schema-contract.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum valor, codigo individual, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Nenhum produto ou compra foi criado, alterado, convertido ou importado no ERP novo. A regra de migrar somente produtos `REVENDA` foi preservada.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: cruzar por contagens os 1.364 excedentes de vinculo unico com `CadastroMateriais`, classificando correspondencia da chave, `REVENDA`/nao revenda, situacao, igualdade da unidade mestre com pedido/fiscal e disponibilidade dos quatro pesos e referencias de conversao. Nao exportar codigos, unidades, pesos, materiais, IDs ou quantidades.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
