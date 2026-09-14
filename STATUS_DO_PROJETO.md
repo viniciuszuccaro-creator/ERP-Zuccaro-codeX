@@ -8463,5 +8463,5 @@ Checklist inicial:
 - Testes: focados passaram 20/20 e a suite completa passou 461/461. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve apenas avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
 - Typecheck: os arquivos do lote passaram de 44 diagnosticos para zero; o passivo global caiu de 1.879 para 1.835, reducao liquida exata de 44, e continua aberto sem ser mascarado.
 - Dados/infraestrutura: nenhuma Nota Fiscal real foi emitida, alterada ou cancelada; nenhum backend Base44 remoto, banco legado ou HD externo foi acessado ou modificado.
-- Commit de implementacao: `PENDENTE_COMMIT`.
+- Commit de implementacao: `9eaa60e9` (`Isola notas fiscais por empresa`).
 - Proximo passo P0: refatorar e tipar `src/components/dashboard/DashboardTempoReal.jsx`, que concentra 50 diagnosticos, preservando consultas em tempo real, RBAC e isolamento Grupo/Empresa; `localBase44Client.js` permanece reservado para lote transversal proprio.
