@@ -6548,6 +6548,23 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: classificar por contagens os 309 pedidos candidatos segundo `DTLIQUIDACAOPEDIDO`, tipo e presenca de `PedidoCompraOperacoes` e cancelamento formal de item, cruzando os 569 parciais, os 428 sem fiscal e os 31 fiscais sem movimento. O objetivo e separar historico encerrado de obrigacao potencialmente aberta sem exportar dados nominais, calcular saldo final ou autorizar importacao.
 
+### Gate 18 - Encerramento dos pedidos candidatos de compra
+
+- Os 309 pedidos candidatos foram classificados em duas passagens identicas por liquidacao do cabecalho, operacoes e presenca de cancelamento formal nos itens, sem exportar IDs, datas, textos, documentos, fornecedores, materiais, valores ou quantidades individuais.
+- Em 297 pedidos, `DTLIQUIDACAOPEDIDO` esta preenchida e existe ao menos uma operacao de cabecalho. Esses pedidos concentram 960 dos 1.028 itens pendentes diagnosticados e possuem evidencia estrutural de encerramento historico.
+- Entre os 297 liquidados, 279 possuem operacao classificada como baixa ou liquidacao, 17 como cancelamento ou exclusao e um possui multiplas operacoes. O texto das operacoes foi usado somente para classificacao interna e nao integra o relatorio ou o GitHub.
+- Os 960 itens associados aos pedidos liquidados incluem 554 parcelas recebidas e processadas, 377 itens sem fiscal seguro e 29 itens com fiscal emitido sem movimento. A liquidacao do cabecalho impede tratar automaticamente esses residuos como compras abertas.
+- Os 12 pedidos restantes nao possuem `DTLIQUIDACAOPEDIDO`, registro em `PedidoCompraOperacoes` nem cancelamento formal positivo em item. Todos pertencem ao escopo legado do Grupo CPA e formam o unico recorte ainda potencialmente aberto.
+- Os 12 pedidos sem liquidacao abrangem 68 itens pendentes: 15 parcialmente recebidos com fiscal e movimento conciliados, 51 sem fiscal seguro e dois com fiscal emitido sem movimento de estoque.
+- Nove dos 12 pedidos sem liquidacao possuem estado agregado misto e tres nao possuem recebimento acumulado. Nenhum esta no estado agregado parcial puro.
+- Nenhum dos 309 pedidos possui cancelamento formal positivo nos itens pendentes. Assim, `PedidoCompraItensQtdeCancelada` nao fornece trilha capaz de encerrar ou reduzir esse universo.
+- A classificacao reconciliou novamente os 569 itens parciais processados, 428 sem fiscal seguro, 31 com fiscal sem movimento e zero outras divergencias. Nenhum saldo residual definitivo foi calculado.
+- Os 297 pedidos liquidados podem seguir apenas como historico encerrado, sem criar obrigacao de compra aberta. Os 12 sem liquidacao permanecem `BLOCKED` ate validacao direcionada de produto, fornecedor, periodo e efeitos financeiros/fiscais.
+- O relatorio `legacy-purchase-candidate-closure-classification.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, identificador, data, texto, documento, fornecedor, material, valor, quantidade, TPS ou MDF/LDF integra o GitHub.
+- Nenhum pedido, item, operacao, movimento ou documento fiscal foi criado, alterado, importado ou promovido no ERP novo.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: classificar somente por contagens os 12 pedidos sem liquidacao e seus 68 itens por composicao exclusiva `REVENDA`, fornecedor mestre valido, faixa anual, escopo empresarial/fiscal e existencia de obrigacao financeira downstream. Isolar os dois itens com fiscal sem movimento; nao exportar dados nominais, calcular saldo final ou autorizar importacao.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
