@@ -8135,5 +8135,5 @@ Checklist inicial:
 - Bloqueio: `homologation_status=SINGLE_OWNER_OVERRIDE_RECORDED_PENDING_FINAL_CONFIRMATION`, `import_authorized=false` e `operational_promotion_allowed=false` nos tres registros. Nenhum dado foi movido para staging e nenhum registro do ERP foi criado ou alterado.
 - Integridade: a ficha atual possui SHA-256 `51A8DB1371A471448D238FE818CD7EB1FD02E2D20C9DD71C220D3E6480F60986` e ACL protegida. Os envelopes HMAC originais permanecem inalterados.
 - Escopo do repositorio: mudanca exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
-- Commit de implementacao: pendente neste registro.
+- Commit de implementacao: `807f1f85` (`Registra excecao de proprietario unico`).
 - Proximo passo dependente de usuario: obter uma confirmacao final separada de Vinicius para encerrar a homologacao local dos tres candidatos. Mesmo apos essa confirmacao, manter `import_authorized=false` e exigir etapa especifica posterior antes de qualquer passagem para staging ou promocao de `NotaFiscal`.
