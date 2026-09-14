@@ -8095,3 +8095,18 @@ Checklist inicial:
 - Escopo do repositorio: mudanca exclusivamente documental; testes de runtime sao dispensados. `git diff --check` permanece obrigatorio antes do commit.
 - Commit de implementacao: `c7c90d73` (`Registra dry-run fiscal em quarentena`).
 - Proximo passo obrigatorio: submeter os tres envelopes mascarados a homologacao humana no HD e registrar, por candidato, `PRESERVAR_SEM_VINCULO_PEDIDO` ou `AGUARDAR_VINCULO_PEDIDO`, com justificativa e responsavel distintos. Nao mover para staging, importar ou promover `NotaFiscal` sem essa decisao.
+
+## 2026-09-14 - Gate 18: ficha protegida de homologacao fiscal
+
+- Objetivo: preparar a revisao humana dos tres envelopes fiscais mascarados sem escolher decisoes, preencher justificativas ou assumir identidades em nome dos responsaveis.
+- Reuso: a ficha foi derivada exclusivamente de `fiscal-candidate-envelopes.jsonl` e do manifesto do lote `FISCAL-DRYRUN-001`; nenhuma nova consulta ao banco legado e nenhuma estrutura paralela no ERP foram necessarias.
+- Ficha local: `fiscal-human-review.csv` e `review-manifest.json` permanecem somente em `D:\BACKUP ERP ANTIGO - CODEX\05_QUARANTINE\FISCAL\FISCAL-DRYRUN-001`.
+- Contrato: cada candidato aceita somente `PRESERVAR_SEM_VINCULO_PEDIDO` ou `AGUARDAR_VINCULO_PEDIDO` e exige decisao, justificativa, registrante, revisor, aprovador e marcos de revisao/aprovacao.
+- Segregacao: registrante, revisor e aprovador devem ser pessoas distintas. Os campos correspondentes permanecem vazios e `homologation_status=PENDING_HUMAN_REVIEW` nos tres registros.
+- Seguranca: a ficha usa somente `candidate_id` HMAC, escopo empresarial e contagens agregadas; nao contem numero fiscal, relatorio, pedido, fornecedor, material, data, valor, chave de acesso ou hashes internos de documento/pedido.
+- ACL: os dois arquivos possuem heranca removida e acesso limitado ao usuario local, `SYSTEM` e Administradores. O SHA-256 da ficha vazia e `81556D7A36FB422576E1EA7C70FC4D805F57C5715711EFC7821A11546EE9952B`.
+- Validacao: tres linhas, zero campo proibido, todos os campos humanos vazios, atores distintos obrigatorios e bloqueio operacional ativo. Nenhum arquivo foi movido para staging e nenhum registro do ERP foi criado ou alterado.
+- Situacao: `BLOCKED_HUMAN_REVIEW`; Codex nao pode fabricar a decisao, a justificativa ou os tres responsaveis.
+- Escopo do repositorio: mudanca exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Commit de implementacao: pendente neste registro.
+- Proximo passo dependente de usuario: preencher a ficha protegida com uma das duas decisoes permitidas para cada candidato, justificativa e tres responsaveis distintos. Somente depois validar assinaturas, integridade e permissao fiscal antes de considerar a passagem controlada da quarentena para staging.
