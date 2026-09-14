@@ -8513,5 +8513,5 @@ Checklist inicial:
 - Testes: focados passaram 47/47 e a suite completa passou 465/465. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; build manteve somente os avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
 - Typecheck: `Layout.jsx` e `AppLayoutShell.jsx` passaram de 30 diagnosticos para zero; o passivo global caiu de 1.735 para 1.705, reducao liquida exata de 30, e continua aberto sem ser mascarado.
 - Dados/infraestrutura: nenhuma consulta remota foi executada e nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou modificado.
-- Commit de implementacao: `PENDENTE_HASH_IMPLEMENTACAO_LAYOUT` (`Refatora shell e auditoria global do layout`).
+- Commit de implementacao: `8aaea566` (`Refatora shell e auditoria global do layout`).
 - Proximo passo P0: refatorar e tipar `src/components/ui/sidebar.jsx`, componente compartilhado com 627 linhas e contratos de propriedades incompletos; `localBase44Client.js` permanece reservado para lote transversal proprio.
