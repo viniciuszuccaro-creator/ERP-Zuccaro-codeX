@@ -8195,5 +8195,5 @@ Checklist inicial:
 - Validacao focada: `tests/contexto-multiempresa-policy.test.js` e `tests/migracao-erp-policy.test.js` passaram 36/36; `git diff --check` aprovado antes do commit.
 - Infraestrutura legada: `MSSQL$ERPZLEGACY` e `SQLAgent$ERPZLEGACY` terminaram `Stopped`/`Manual`; `SQLBrowser` terminou `Stopped`/`Disabled`.
 - Escopo do repositorio: mudanca exclusivamente documental; nenhuma politica ou runtime foi alterado.
-- Commit de implementacao: a registrar apos validacao final.
+- Commit de implementacao: `04e7d00c` (`Valida contexto fiscal canonico offline`).
 - Proximo passo obrigatorio: preparar na quarentena um manifesto de transicao dos tres candidatos homologados para staging, ainda sem mover arquivos nem persistir `NotaFiscal`. A passagem efetiva para staging exigira autorizacao especifica posterior.
