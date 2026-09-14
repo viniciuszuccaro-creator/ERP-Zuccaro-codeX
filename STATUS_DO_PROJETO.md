@@ -6517,6 +6517,21 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: classificar somente por contagens os 309 pedidos nos estados `MISTO`, `PARCIAL` ou `SEM_RECEBIMENTO`, separando quantidade de itens pendentes por faixa, cobertura fiscal completa/parcial/ausente, composicao exclusiva `REVENDA` e as sete contradicoes sem acumulado com fiscal emitido. Manter os 696 integralmente recebidos fora dos candidatos abertos e os quatro sem itens em quarentena; nao calcular saldo final.
 
+### Gate 18 - Matriz dos candidatos de compra com recebimento pendente
+
+- Os 309 pedidos nos estados `MISTO`, `PARCIAL` ou `SEM_RECEBIMENTO` foram classificados em duas passagens identicas, sem exportar identificadores, documentos, materiais, unidades, valores ou quantidades individuais.
+- A matriz reconciliou 2.075 itens, dos quais 1.028 ainda possuem quantidade recebida acumulada inferior a pedida. Permanecem 217 pedidos mistos, 37 parciais e 55 sem recebimento acumulado.
+- Por quantidade de itens pendentes, 105 pedidos possuem um item, 165 possuem de dois a cinco, 37 possuem de seis a 20 e dois possuem mais de 20. Nenhum saldo residual foi calculado.
+- A cobertura fiscal segura no nivel do pedido e completa em 159 casos, parcial em 102 e ausente em 48. A presenca de cobertura completa em pedido ainda pendente comprova que o estado do cabecalho nao pode ser promovido automaticamente como aberto.
+- A composicao do cadastro mestre separou 260 pedidos somente com produtos `REVENDA`, 19 mistos, 16 sem revenda e 14 com material ausente ou sem cadastro. Entre os 260 de revenda, 195 sao mistos, 37 parciais e 28 nao possuem recebimento acumulado.
+- O escopo dos candidatos compreende 266 pedidos do Grupo CPA, 41 da empresa CPA Ferro e Aco e dois da 3Z. A classificacao nao alterou nem inferiu empresa proprietaria.
+- As sete contradicoes sem recebimento acumulado e com fiscal emitido seguro pertencem ao Grupo CPA e abrangem 22 itens, todos pendentes pelo acumulado. Seis pedidos possuem cobertura fiscal completa e um parcial; somente um e composto exclusivamente por revenda.
+- Os sete pedidos contraditorios permanecem bloqueados. Documento fiscal emitido nao autoriza sobrescrever o acumulado, concluir recebimento ou considerar saldo aberto sem conciliacao dos movimentos de estoque e da trilha operacional.
+- O relatorio `legacy-purchase-open-candidate-classification.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, identificador, documento, material, unidade, valor, quantidade, TPS ou MDF/LDF integra o GitHub.
+- Os 696 pedidos integralmente recebidos continuam fora do universo candidato e os quatro cabecalhos sem itens continuam em quarentena. Nenhum registro foi importado, ajustado ou promovido no ERP novo.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: classificar somente por contagens os 1.028 itens pendentes, separando estado acumulado sem/parcial, presenca e relacao da soma fiscal segura com o acumulado, cobertura de movimento de estoque, produto `REVENDA` e escopo empresarial. Isolar os 22 itens das sete contradicoes; nao exportar dados nominais, calcular saldo final ou autorizar importacao.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
