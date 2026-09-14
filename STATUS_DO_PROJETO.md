@@ -6394,6 +6394,21 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: limitar aos 1.344 itens `REVENDA` e classificar por contagens os 64 casos de unidade mestre divergente, separando ativos/inativos e testando somente igualdade decimal da razao fiscal/pedida ou seu inverso com `PESOBRUTO`, `PESOLIQUIDO` e `PESOBARRA`. Nao exportar valores ou unidades e nao aceitar aproximacao nem conversao automatica.
 
+### Gate 18 - Evidencia de peso nas unidades divergentes de revenda
+
+- Os 1.344 excedentes classificados como `REVENDA` foram reconciliados em duas passagens identicas: 1.280 possuem unidade mestre igual a pedido/fiscal e 64 possuem unidade mestre divergente.
+- Os 64 divergentes estao ativos no cadastro mestre. Quarenta e quatro pertencem ao codigo empresarial 1 no mesmo destino e 20 ao codigo 3 na rota `Grupo CPA -> Empresa membro`.
+- `PESOBARRA` esta zerado ou nao positivo nos 64 casos e nao corresponde a nenhuma razao de quantidade.
+- Em 50 itens, nem `PESOBRUTO` nem `PESOLIQUIDO` correspondem exatamente a razao fiscal/pedida ou ao seu inverso.
+- Em 14 itens do codigo empresarial 3, a igualdade decimal direta e exata `quantidade fiscal = quantidade pedida x peso` ocorre simultaneamente para `PESOBRUTO` e `PESOLIQUIDO`. Nao houve igualdade pela razao inversa.
+- A coincidencia simultanea dos dois pesos produz duas evidencias por item, mas nao representa dois fatores independentes. Ela e apenas candidata a explicar os 14 excessos.
+- Nenhuma tolerancia, arredondamento aproximado ou conversao foi aplicado. Os 14 itens continuam bloqueados ate validar direcao, par de unidades e referencias legadas; os outros 50 permanecem sem explicacao quantitativa.
+- O relatorio `legacy-purchase-resale-unit-weight-classification.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum peso, unidade, quantidade, codigo, material, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Nenhum produto, pedido, nota ou saldo foi alterado ou importado no ERP novo.
+- Situacao: 14 itens possuem evidencia matematica candidata de conversao por peso; 50 divergentes e os 1.280 excedentes com unidade mestre igual continuam `BLOCKED` sem explicacao funcional.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: somente nos 14 candidatos, contar materiais e pares de unidade distintos, repeticao por material e relacoes de `SIGLACONVERTENDOUNIDADE`, `UNIDADEBELGO`, `CODIGOMATERIALBELGO` e `CODIGOTIPO` com material/unidade mestre e pedido/fiscal. Nao exportar os valores das referencias nem autorizar conversao.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
