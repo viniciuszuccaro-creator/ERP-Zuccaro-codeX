@@ -8497,5 +8497,5 @@ Checklist inicial:
 - Testes: focados passaram 10/10 e a suite completa passou 464/464. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve apenas avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
 - Typecheck: os arquivos do lote passaram de 30 diagnosticos para zero; o passivo global caiu de 1.765 para 1.735, reducao liquida exata de 30, e continua aberto sem ser mascarado.
 - Dados/infraestrutura: nenhuma transferencia real foi executada e nenhum backend Base44 remoto, banco legado ou HD externo foi acessado ou modificado.
-- Commit de implementacao: `PENDENTE_COMMIT`.
+- Commit de implementacao: `6eea0eec` (`Protege transferencia de estoque entre empresas`).
 - Proximo passo P0: revisar e decompor `src/Layout.jsx`, estrutura transversal com aproximadamente 1.564 linhas e 30 diagnosticos, em lote isolado para preservar autenticacao, RBAC, contexto e navegacao; `localBase44Client.js` permanece reservado.
