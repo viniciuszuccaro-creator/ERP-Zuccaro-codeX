@@ -8417,3 +8417,19 @@ Checklist inicial:
 - Dados/infraestrutura: nenhum Pedido ou dado real foi alterado, nenhum backend Base44 remoto, banco legado ou HD externo foi acessado ou modificado.
 - Commit de implementacao: `71f8da11` (`Refatora armado padrao com escopo de empresa`).
 - Proximo passo P0: refatorar e tipar `src/pages/Contratos.jsx`, maior concentracao operacional restante com 79 diagnosticos, em lote separado e preservando o fluxo Comercial existente.
+
+## 2026-09-14 - Refatoracao, RBAC e isolamento da Gestao de Contratos
+
+- Objetivo: decompor a pagina de Contratos, eliminar seus diagnosticos de `checkJs` e fechar os acessos fail-open entre Grupo/Empresas.
+- Causa raiz: `Contratos.jsx` reunia consultas, automacoes, mutacoes, formulario legado oculto, KPIs, tabela e dialogs em 1.458 linhas. As consultas carregavam listas globais e devolviam todos os registros quando o filtro contextual ficava vazio; a exclusao era fisica.
+- Arquivos alterados: `src/pages/Contratos.jsx`, `src/components/contratos/ContratoDialogs.jsx`, `src/components/contratos/ContratosOverview.jsx`, `src/components/contratos/contratosPagePolicy.js` e `tests/contratos-page-policy.test.js`.
+- Refatoracao: a pagina caiu para 594 linhas; apresentacao, dialogs e policy ficaram entre 60 e 104 linhas. Os auxiliares privados reutilizam `ContratoForm` e existem somente para decompor o fluxo atual, sem criar tela, rota, entidade ou cadastro paralelo.
+- Compatibilidade: o formulario oculto `open=false`, duplicado e sem consumidores, foi substituido pelo `ContratoForm` ja usado na mesma pagina. Todos os campos e os fluxos de criar, editar, visualizar, assinar, cobrar, renovar, pesquisar e consultar historico permanecem ligados.
+- Multiempresa: Contrato, Cliente e Fornecedor agora sao consultados no backend com filtro de Grupo/Empresa e query keys contextualizadas. Sem contexto valido ou permissao de leitura, as queries ficam desabilitadas; o fallback para listas globais foi removido.
+- RBAC: visualizar, criar, editar, assinar, executar cobranca, renovar e inativar usam permissoes separadas, com compatibilidade administrativa. Criacao exige escopo Empresa e Empresa valida.
+- Seguranca/auditoria: exclusao fisica foi substituida por status `Rescindido`, preservando historico. Escritas usam helpers contextuais existentes; alertas, cobrancas, renovacoes, criacoes e rescisoes carregam Grupo/Empresa na auditoria. Nenhum payload de assinatura e registrado no console.
+- Financeiro: geracao de Conta a Receber falha fechada sem `group_id` e `empresa_id`; a Empresa proprietaria do Contrato e preservada.
+- Testes: focados passaram 4/4 e a suite completa passou 454/454. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve apenas o aviso conhecido de chunk grande. O typecheck dos arquivos do lote passou de 79 diagnosticos para zero; o passivo global caiu de 2.009 para 1.930, reducao liquida exata de 79.
+- Dados/infraestrutura: nenhum Contrato, Cliente, Fornecedor ou titulo real foi alterado; nenhum backend Base44 remoto, banco legado ou HD externo foi acessado ou modificado.
+- Commit de implementacao: `PENDENTE_COMMIT`.
+- Proximo passo P0: refatorar e tipar `src/components/expedicao/FormularioEntrega.jsx`, fluxo operacional de Expedicao com 51 diagnosticos; `localBase44Client.js` permanece reservado para lote proprio devido ao impacto transversal.

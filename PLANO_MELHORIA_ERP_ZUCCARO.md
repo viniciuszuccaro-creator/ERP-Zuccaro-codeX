@@ -915,3 +915,19 @@ Lote concluido em 2026-09-14 na aba existente de Armado Padrao, sem criar tela, 
 
 Proxima frente P0: refatorar e tipar `src/pages/Contratos.jsx`, que concentra 79 diagnosticos, preservando o fluxo Comercial e seus consumidores.
 
+### Refatoracao e isolamento - Gestao de Contratos
+
+Lote concluido em 2026-09-14 na pagina existente de Contratos, sem criar rota, entidade ou cadastro paralelo.
+
+- `Contratos.jsx` caiu de 1.458 para 594 linhas; overview, dialogs e regras puras foram extraidos para auxiliares privados entre 60 e 104 linhas.
+- O `ContratoForm` existente substitui o formulario legado oculto e duplicado, preservando os mesmos campos e a integracao de criar/editar.
+- Contrato, Cliente e Fornecedor deixaram de carregar listas globais: consultas agora incluem Grupo/Empresa no backend e na query key e ficam desabilitadas sem contexto/RBAC validos.
+- Acoes de visualizar, criar, editar, assinar, cobrar, renovar e inativar possuem guardas granulares; criar contrato exige uma Empresa juridica selecionada.
+- Exclusao fisica foi substituida por rescisao/inativacao auditada, preservando historico e rastreabilidade.
+- Cobranca falha fechada sem Grupo/Empresa e mantem a Empresa proprietaria na Conta a Receber; auditorias relevantes carregam o contexto.
+- O typecheck dos arquivos do lote passou de 79 diagnosticos para zero; o global caiu de 2.009 para 1.930, reducao liquida exata de 79.
+- Testes focados cobrem filtros, KPIs, identificador obrigatorio, consulta contextual e ausencia de delete fisico.
+- Nenhum dado real, entidade remota, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: refatorar e tipar `src/components/expedicao/FormularioEntrega.jsx`, com 51 diagnosticos, preservando o fluxo de Expedicao.
+
