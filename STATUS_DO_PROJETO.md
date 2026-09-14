@@ -8137,3 +8137,16 @@ Checklist inicial:
 - Escopo do repositorio: mudanca exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Commit de implementacao: `807f1f85` (`Registra excecao de proprietario unico`).
 - Proximo passo dependente de usuario: obter uma confirmacao final separada de Vinicius para encerrar a homologacao local dos tres candidatos. Mesmo apos essa confirmacao, manter `import_authorized=false` e exigir etapa especifica posterior antes de qualquer passagem para staging ou promocao de `NotaFiscal`.
+
+## 2026-09-14 - Gate 18: homologacao fiscal local concluida
+
+- Objetivo: encerrar a homologacao local dos tres candidatos fiscais em um segundo momento confirmado pelo proprietario, sem autorizar importacao, staging ou promocao operacional.
+- Confirmacao: o novo comando `proximo`, recebido em turno separado depois da solicitacao explicita de confirmacao final, foi registrado como `USER_SEPARATE_CHAT_CONFIRMATION`.
+- Resultado: os tres candidatos permanecem com `PRESERVAR_SEM_VINCULO_PEDIDO` e passaram para `LOCAL_HOMOLOGATION_COMPLETE_IMPORT_BLOCKED`.
+- Auditoria compensatoria: o marco de revisao reutiliza o momento anterior da excecao e o marco de aprovacao registra esta confirmacao posterior; a validacao comprovou ordem temporal estrita nos tres registros.
+- Proprietario unico: Vinicius permanece identificado como registrante, revisor e aprovador sob `SINGLE_OWNER_DEVELOPMENT_OVERRIDE`, limitado a homologacao local.
+- Seguranca: `production_reapproval_required=true`, `import_authorized=false` e `operational_promotion_allowed=false`. Nenhum envelope foi movido da quarentena e nenhum registro do ERP foi criado, alterado ou promovido.
+- Integridade: a ficha concluida possui SHA-256 `B07E4B54C1407C315C7FE87B8378D3DDF18CF748C40985A131835696AB2511F9`, ACL protegida e os envelopes HMAC originais permanecem inalterados.
+- Escopo do repositorio: mudanca exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Commit de implementacao: pendente neste registro.
+- Proximo passo obrigatorio: validar offline a compatibilidade dos tres envelopes homologados com o contrato backend de `conciliacao_migracao_fiscal`, sem chamar persistencia e sem retirar os arquivos da quarentena. Qualquer passagem posterior para staging exigira autorizacao especifica separada.
