@@ -13,6 +13,7 @@ import {
   calculateConciliacaoEvidenceSha256,
   FISCAL_MANUAL_RECONCILIATION_TYPE,
   filterConciliacoesByScope,
+  resolveConciliacaoCentralTabs,
   resolveConciliacaoFinanceiraAccess,
   resolveConciliacaoRowActions,
 } from "../src/components/comercial/conciliacaoFinanceiraUiPolicy.js";
@@ -76,6 +77,26 @@ test("Grupo CPA nao consulta conciliacao e empresas exigem contexto completo", (
   assert.equal(resolveConciliacaoFinanceiraAccess({
     contexto: "empresa", groupId: GROUP_ID, empresaId: "empresa-cpa",
   }).canView, false);
+});
+
+test("perfil somente financeiro nao visualiza nem seleciona a ramificacao fiscal", () => {
+  assert.deepEqual(resolveConciliacaoCentralTabs({
+    activeTab: "conciliacao-fiscal",
+    canReviewFinance: true,
+    canApproveFinance: true,
+  }), {
+    tabsPermitidas: ["conciliacao"],
+    tabVisivel: "conciliacao",
+    totalTabs: 1,
+  });
+  assert.deepEqual(resolveConciliacaoCentralTabs({
+    activeTab: "conciliacao",
+    canReviewFiscal: true,
+  }), {
+    tabsPermitidas: ["conciliacao-fiscal"],
+    tabVisivel: "conciliacao-fiscal",
+    totalTabs: 1,
+  });
 });
 
 test("chaves de cache isolam Grupo CPA, CPA Ferro e Aco e 3Z LTDA", () => {

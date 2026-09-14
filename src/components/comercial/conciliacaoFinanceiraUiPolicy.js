@@ -73,6 +73,37 @@ export const resolveConciliacaoFinanceiraAccess = ({
 });
 
 /**
+ * @param {{
+ *   activeTab?: unknown,
+ *   canViewApprovals?: boolean,
+ *   canReviewFinance?: boolean,
+ *   canApproveFinance?: boolean,
+ *   canReviewFiscal?: boolean,
+ *   canApproveFiscal?: boolean
+ * }} access
+ */
+export const resolveConciliacaoCentralTabs = ({
+  activeTab,
+  canViewApprovals = false,
+  canReviewFinance = false,
+  canApproveFinance = false,
+  canReviewFiscal = false,
+  canApproveFiscal = false,
+}) => {
+  const tabsPermitidas = [
+    ...(canViewApprovals ? ["descontos", "limite", "duplicatas"] : []),
+    ...(canReviewFinance || canApproveFinance ? ["conciliacao"] : []),
+    ...(canReviewFiscal || canApproveFiscal ? ["conciliacao-fiscal"] : []),
+  ];
+  const requestedTab = textId(activeTab);
+  return {
+    tabsPermitidas,
+    tabVisivel: tabsPermitidas.includes(requestedTab) ? requestedTab : (tabsPermitidas[0] || null),
+    totalTabs: tabsPermitidas.length,
+  };
+};
+
+/**
  * @param {Record<string, unknown>} record
  * @returns {Record<string, unknown>}
  */

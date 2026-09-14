@@ -8060,3 +8060,22 @@ Checklist inicial:
 - Infraestrutura legada: `MSSQL$ERPZLEGACY` e `SQLAgent$ERPZLEGACY` terminaram `Stopped`/`Manual`; `SQLBrowser` terminou `Stopped`/`Disabled`. Nenhum banco, backup, HD externo ou dado fiscal real foi acessado.
 - Commit de implementacao: `9d522251` (`Integra conciliacao fiscal na central`).
 - Proximo passo obrigatorio: homologar reabertura e persistencia da conciliacao fiscal com dados sinteticos, troca de sessao entre registrante/revisor/aprovador e bloqueio visual de usuario apenas financeiro. Os tres documentos reais permanecem bloqueados.
+
+## 2026-09-14 - Gate 18: homologacao descartavel da conciliacao fiscal
+
+- Objetivo: comprovar persistencia, reabertura, segregacao de funcoes e RBAC da conciliacao fiscal antes de usar qualquer documento real.
+- Reuso: o teste de persistencia local existente foi ampliado e a decisao de abas da Central foi extraida para `conciliacaoFinanceiraUiPolicy`; nenhuma tela, rota, entidade, importador ou armazenamento paralelo foi criado.
+- Persistencia: uma `NotaFiscal` sintetica percorreu evidencia, revisao e aprovacao em carregamentos independentes do cliente local. Cada nova sessao reabriu exatamente a etapa gravada pela anterior.
+- Segregacao: registrante, revisor e aprovador fiscais foram usuarios distintos; a auditoria persistida confirmou os tres atores, modulo `Fiscal`, Grupo e Empresa.
+- RBAC frontend: a politica consumida pela Central comprovou que perfil apenas financeiro nao visualiza nem seleciona `conciliacao-fiscal`; perfil apenas fiscal nao recebe a conciliacao financeira.
+- RBAC backend: um perfil sintetico contendo somente `Financeiro.Migracao` listou o staging financeiro e recebeu bloqueio explicito ao consultar o tipo fiscal.
+- Multiempresa: a homologacao preservou o isolamento entre CPA Ferro e Aco e 3Z LTDA e manteve obrigatorios `group_id`, `empresa_id` e `scope_type=empresa`.
+- Bloqueio operacional: a quantidade de `NotaFiscal`, `ContaPagar` e `ContaReceber` operacionais permaneceu inalterada; o envelope fiscal terminou em `staging`, `confirmado=false` e `aprovada_aguardando_promocao_manual`.
+- Restauracao: todo o `localStorage` usado foi exclusivamente em memoria e seu snapshot original foi restaurado automaticamente ao final, inclusive nos cenarios de escrita recusada e nao confirmada.
+- Validacao focada: 7/7 testes da politica visual e 1/1 teste persistente de runtime aprovados.
+- Validacao global: 441/441 testes aprovados; ESLint, `audit:baseline`, build e `git diff --check` aprovados.
+- Typecheck: baseline historico preservado em 2.238 diagnosticos, sem diagnostico novo do lote.
+- Infraestrutura legada: `MSSQL$ERPZLEGACY` e `SQLAgent$ERPZLEGACY` terminaram `Stopped`/`Manual`; `SQLBrowser` terminou `Stopped`/`Disabled`. Nenhum banco, backup, HD externo, documento ou dado fiscal real foi acessado.
+- Homologacao visual: o bloqueio de abas foi comprovado por politica automatizada consumida pela UI; validacao humana no navegador com perfis reais ainda nao foi executada.
+- Commit de implementacao: `PENDENTE_COMMIT_GATE18_HOMOLOGACAO_FISCAL`.
+- Proximo passo obrigatorio: preparar um dry-run local dos tres documentos fiscais reais ja identificados, usando somente dados minimos e mascarados para construir envelopes candidatos, sem persistir no ERP, sem promover `NotaFiscal` e mantendo toda divergencia em quarentena no HD.

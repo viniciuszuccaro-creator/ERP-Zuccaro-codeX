@@ -26,6 +26,7 @@ import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { validarLimiteCredito } from "@/components/lib/useFluxoPedido";
+import { resolveConciliacaoCentralTabs } from "./conciliacaoFinanceiraUiPolicy";
 
 /**
  * 🔐 CENTRAL DE APROVAÇÕES V21.5
@@ -71,13 +72,14 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
     hasPermission("Fiscal.Migracao.aprovar");
   const podeVisualizarConciliacaoFiscal = podeRevisarConciliacaoFiscal || podeAprovarConciliacaoFiscal;
   const podeVisualizarCentral = podeVisualizarAprovacoes || podeVisualizarConciliacao || podeVisualizarConciliacaoFiscal;
-  const tabsPermitidas = [
-    ...(podeVisualizarAprovacoes ? ["descontos", "limite", "duplicatas"] : []),
-    ...(podeVisualizarConciliacao ? ["conciliacao"] : []),
-    ...(podeVisualizarConciliacaoFiscal ? ["conciliacao-fiscal"] : []),
-  ];
-  const tabVisivel = tabsPermitidas.includes(activeTab) ? activeTab : tabsPermitidas[0];
-  const totalTabs = tabsPermitidas.length;
+  const { tabVisivel, totalTabs } = resolveConciliacaoCentralTabs({
+    activeTab,
+    canViewApprovals: podeVisualizarAprovacoes,
+    canReviewFinance: podeRevisarConciliacao,
+    canApproveFinance: podeAprovarConciliacao,
+    canReviewFiscal: podeRevisarConciliacaoFiscal,
+    canApproveFiscal: podeAprovarConciliacaoFiscal,
+  });
   const consultaHabilitada = Boolean(contextoValido && podeVisualizarAprovacoes);
 
   /**

@@ -53,12 +53,12 @@ const createMemoryStorage = (initialEntries = []) => {
   };
 };
 
-const makeUser = (id, empresaId, contexto = "empresa") => ({
+const makeUser = (id, empresaId, contexto = "empresa", perfilAcessoId = "local_perfil_admin") => ({
   id,
   email: `${id}@homologacao.local`,
   full_name: id,
   role: "user",
-  perfil_acesso_id: "local_perfil_admin",
+  perfil_acesso_id: perfilAcessoId,
   mestre_local: false,
   disabled: false,
   ativo: true,
@@ -76,12 +76,12 @@ const makeUser = (id, empresaId, contexto = "empresa") => ({
   ],
 });
 
-const makeRequest = (empresaId, code) => {
+const makeRequest = (empresaId, code, entidade = "ContaPagar") => {
   const staging = buildPendingManualReconciliation({
     group_id: GROUP_ID,
     empresa_id: empresaId,
     codigo_legado: code,
-  }, { registradoPor: "registrante", registradoEm: "2026-09-13T12:00:00.000Z" });
+  }, { entidade, registradoPor: "registrante", registradoEm: "2026-09-13T12:00:00.000Z" });
   return {
     id: `homologacao-${empresaId}-${code}`,
     ...buildManualReconciliationApprovalRequest(staging, {
@@ -113,8 +113,8 @@ test("cliente local persiste e reabre conciliacao entre tres sessoes sem mistura
     );
     return module.localBase44;
   };
-  const openSession = async (id, empresaId, contexto = "empresa") => {
-    storage.setItem(USER_KEY, JSON.stringify(makeUser(id, empresaId, contexto)));
+  const openSession = async (id, empresaId, contexto = "empresa", perfilAcessoId = "local_perfil_admin") => {
+    storage.setItem(USER_KEY, JSON.stringify(makeUser(id, empresaId, contexto, perfilAcessoId)));
     storage.setItem("contexto_atual", contexto);
     storage.setItem("group_atual_id", GROUP_ID);
     if (empresaId) storage.setItem("empresa_atual_id", empresaId);
@@ -125,12 +125,23 @@ test("cliente local persiste e reabre conciliacao entre tres sessoes sem mistura
   try {
     const setupClient = await reopenClient("preparacao");
     setupClient.__local.reset();
+    await setupClient.entities.PerfilAcesso.create({
+      id: "perfil-somente-financeiro",
+      nome: "Homologacao somente financeira",
+      ativo: true,
+      group_id: GROUP_ID,
+      permissoes: {
+        Financeiro: { Migracao: ["visualizar", "conciliar", "aprovar"] },
+      },
+    });
     await setupClient.entities.SolicitacaoAprovacao.create(makeRequest(EMPRESA_CPA_ID, "cpa-1"));
     await setupClient.entities.SolicitacaoAprovacao.create(makeRequest(EMPRESA_3Z_ID, "3z-1"));
+    await setupClient.entities.SolicitacaoAprovacao.create(makeRequest(EMPRESA_CPA_ID, "nf-fiscal-1", "NotaFiscal"));
     const beforeWorkflow = JSON.parse(storage.getItem(STORAGE_KEY));
     const financialCounts = {
       pagar: beforeWorkflow.ContaPagar?.length || 0,
       receber: beforeWorkflow.ContaReceber?.length || 0,
+      fiscal: beforeWorkflow.NotaFiscal?.length || 0,
     };
 
     const groupClient = await openSession("registrante", null, "grupo");
@@ -286,6 +297,104 @@ test("cliente local persiste e reabre conciliacao entre tres sessoes sem mistura
       "aguardando_evidencia",
     );
 
+    const financeOnlyClient = await openSession(
+      "somente-financeiro",
+      EMPRESA_CPA_ID,
+      "empresa",
+      "perfil-somente-financeiro",
+    );
+    const financeOnlyList = await financeOnlyClient.functions.invoke("solicitacoesAprovacao", {
+      action: "listManualReconciliations",
+      group_id: GROUP_ID,
+      empresa_id: EMPRESA_CPA_ID,
+      scope_type: "empresa",
+    });
+    assert.deepEqual(financeOnlyList.data.map((record) => record.referencia_staging), ["cpa-1"]);
+    await assert.rejects(
+      () => financeOnlyClient.functions.invoke("solicitacoesAprovacao", {
+        action: "listManualReconciliations",
+        group_id: GROUP_ID,
+        empresa_id: EMPRESA_CPA_ID,
+        scope_type: "empresa",
+        tipo_solicitacao: "conciliacao_migracao_fiscal",
+      }),
+      /Permissao negada/,
+    );
+
+    const fiscalRegistrant = await openSession("registrante-fiscal", EMPRESA_CPA_ID);
+    const fiscalRegistrantList = await fiscalRegistrant.functions.invoke("solicitacoesAprovacao", {
+      action: "listManualReconciliations",
+      group_id: GROUP_ID,
+      empresa_id: EMPRESA_CPA_ID,
+      scope_type: "empresa",
+      tipo_solicitacao: "conciliacao_migracao_fiscal",
+    });
+    assert.deepEqual(fiscalRegistrantList.data.map((record) => record.referencia_staging), ["nf-fiscal-1"]);
+    const fiscalRequestId = fiscalRegistrantList.data[0].id;
+    await fiscalRegistrant.functions.invoke("solicitacoesAprovacao", {
+      action: "attachManualReconciliationEvidence",
+      solicitacao_id: fiscalRequestId,
+      group_id: GROUP_ID,
+      empresa_id: EMPRESA_CPA_ID,
+      scope_type: "empresa",
+      evidencia: privateEvidence("evidencia-fiscal-descartavel"),
+    });
+
+    const fiscalReviewer = await openSession("revisor-fiscal", EMPRESA_CPA_ID);
+    const reopenedFiscalForReview = await fiscalReviewer.functions.invoke("solicitacoesAprovacao", {
+      action: "listManualReconciliations",
+      group_id: GROUP_ID,
+      empresa_id: EMPRESA_CPA_ID,
+      scope_type: "empresa",
+      tipo_solicitacao: "conciliacao_migracao_fiscal",
+    });
+    assert.equal(reopenedFiscalForReview.data[0].dados_propostos.envelope_staging.etapa_conciliacao, "evidencia_anexada");
+    await fiscalReviewer.functions.invoke("solicitacoesAprovacao", {
+      action: "reviewManualReconciliation",
+      solicitacao_id: fiscalRequestId,
+      group_id: GROUP_ID,
+      empresa_id: EMPRESA_CPA_ID,
+      scope_type: "empresa",
+      decisao: "PRESERVAR_SEM_VINCULO_PEDIDO",
+      justificativa: "Documento fiscal sintetico revisado em nova sessao.",
+    });
+
+    const fiscalApprover = await openSession("aprovador-fiscal", EMPRESA_CPA_ID);
+    const reopenedFiscalForApproval = await fiscalApprover.functions.invoke("solicitacoesAprovacao", {
+      action: "listManualReconciliations",
+      group_id: GROUP_ID,
+      empresa_id: EMPRESA_CPA_ID,
+      scope_type: "empresa",
+      tipo_solicitacao: "conciliacao_migracao_fiscal",
+    });
+    assert.equal(reopenedFiscalForApproval.data[0].dados_propostos.envelope_staging.etapa_conciliacao, "aguardando_aprovacao_final");
+    await fiscalApprover.functions.invoke("solicitacoesAprovacao", {
+      action: "approveManualReconciliation",
+      solicitacao_id: fiscalRequestId,
+      group_id: GROUP_ID,
+      empresa_id: EMPRESA_CPA_ID,
+      scope_type: "empresa",
+      decisao: "PRESERVAR_SEM_VINCULO_PEDIDO",
+      justificativa: "Terceira sessao confirma a decisao fiscal sintetica.",
+      confirmacao_humana: true,
+    });
+
+    const reopenedFiscal = await (await openSession("auditor-fiscal", EMPRESA_CPA_ID)).functions.invoke(
+      "solicitacoesAprovacao",
+      {
+        action: "listManualReconciliations",
+        group_id: GROUP_ID,
+        empresa_id: EMPRESA_CPA_ID,
+        scope_type: "empresa",
+        tipo_solicitacao: "conciliacao_migracao_fiscal",
+      },
+    );
+    const fiscalEnvelope = reopenedFiscal.data[0].dados_propostos.envelope_staging;
+    assert.equal(fiscalEnvelope.etapa_conciliacao, "aprovada_aguardando_promocao_manual");
+    assert.equal(fiscalEnvelope.decisao_fiscal.classificacao, "PRESERVAR_SEM_VINCULO_PEDIDO");
+    assert.equal(fiscalEnvelope.destino_migracao, "staging");
+    assert.equal(fiscalEnvelope.confirmado, false);
+
     const persisted = z3Client.__local.export();
     const approved = persisted.SolicitacaoAprovacao.find((record) => record.id === requestId);
     const envelope = approved.dados_propostos.envelope_staging;
@@ -296,6 +405,7 @@ test("cliente local persiste e reabre conciliacao entre tres sessoes sem mistura
     assert.equal(envelope.confirmado, false);
     assert.equal(persisted.ContaPagar?.length || 0, financialCounts.pagar);
     assert.equal(persisted.ContaReceber?.length || 0, financialCounts.receber);
+    assert.equal(persisted.NotaFiscal?.length || 0, financialCounts.fiscal);
     const workflowAudits = persisted.AuditLog.filter((entry) => (
       entry.registro_id === requestId && ["Evidencia", "Revisao", "Aprovacao"].includes(entry.acao)
     ));
@@ -303,6 +413,14 @@ test("cliente local persiste e reabre conciliacao entre tres sessoes sem mistura
       workflowAudits.map((entry) => entry.usuario_id).sort(),
       ["aprovador", "registrante", "revisor"],
     );
+    const fiscalWorkflowAudits = persisted.AuditLog.filter((entry) => (
+      entry.registro_id === fiscalRequestId && ["Evidencia", "Revisao", "Aprovacao"].includes(entry.acao)
+    ));
+    assert.deepEqual(
+      fiscalWorkflowAudits.map((entry) => entry.usuario_id).sort(),
+      ["aprovador-fiscal", "registrante-fiscal", "revisor-fiscal"],
+    );
+    assert.ok(fiscalWorkflowAudits.every((entry) => entry.modulo === "Fiscal"));
   } finally {
     await server.close();
     storage.restore(originalSnapshot);
