@@ -8124,3 +8124,16 @@ Checklist inicial:
 - Escopo do repositorio: mudanca exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Commit de implementacao: `d9659f86` (`Registra decisao fiscal conservadora`).
 - Proximo passo dependente de usuario: informar os nomes do registrante, revisor e aprovador, obrigatoriamente tres pessoas distintas. Depois disso, validar as identidades e concluir somente a homologacao da ficha, ainda sem promover `NotaFiscal` automaticamente.
+
+## 2026-09-14 - Gate 18: excecao local de proprietario unico
+
+- Objetivo: permitir continuidade da homologacao fiscal local quando o proprietario e o unico desenvolvedor disponivel, sem inventar pessoas nem enfraquecer o bloqueio de producao.
+- Autorizacao: Vinicius confirmou explicitamente o uso da excecao `SINGLE_OWNER_DEVELOPMENT_OVERRIDE` para exercer registrante, revisor e aprovador neste lote local.
+- Escopo: a excecao vale somente para `LOCAL_MIGRATION_HOMOLOGATION_ONLY`; nao concede aprovacao de producao, importacao ou promocao operacional.
+- Ficha protegida: os tres candidatos preservam a decisao `PRESERVAR_SEM_VINCULO_PEDIDO`, identificam `VINICIUS` nas tres funcoes e registram justificativa de indisponibilidade de segundo aprovador.
+- Controles compensatorios: confirmacao final posterior continua obrigatoria, reaprovacao de producao permanece obrigatoria e toda promocao automatica continua proibida.
+- Bloqueio: `homologation_status=SINGLE_OWNER_OVERRIDE_RECORDED_PENDING_FINAL_CONFIRMATION`, `import_authorized=false` e `operational_promotion_allowed=false` nos tres registros. Nenhum dado foi movido para staging e nenhum registro do ERP foi criado ou alterado.
+- Integridade: a ficha atual possui SHA-256 `51A8DB1371A471448D238FE818CD7EB1FD02E2D20C9DD71C220D3E6480F60986` e ACL protegida. Os envelopes HMAC originais permanecem inalterados.
+- Escopo do repositorio: mudanca exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Commit de implementacao: pendente neste registro.
+- Proximo passo dependente de usuario: obter uma confirmacao final separada de Vinicius para encerrar a homologacao local dos tres candidatos. Mesmo apos essa confirmacao, manter `import_authorized=false` e exigir etapa especifica posterior antes de qualquer passagem para staging ou promocao de `NotaFiscal`.
