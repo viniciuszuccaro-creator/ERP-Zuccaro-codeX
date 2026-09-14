@@ -12,6 +12,39 @@ import {
   resolveNextNumeroNfe,
   stampNotaFiscalSimulacao,
 } from '../src/components/lib/notaFiscalEmissaoPolicy.js';
+import {
+  buildNotaFiscalScope,
+  notaMatchesFiscalScope,
+  resolveEmpresaEmitente,
+  resolveSafeFiscalUrl,
+  summarizeFiscalProviderResult,
+} from '../src/components/comercial/notas-fiscais/notasFiscaisTabPolicy.js';
+
+test('aba fiscal exige escopo completo e filtra Grupo ou Empresa', () => {
+  assert.deepEqual(buildNotaFiscalScope({ groupId: null, empresaId: 'e1', contexto: 'empresa' }), { valid: false, filter: {} });
+  assert.deepEqual(buildNotaFiscalScope({ groupId: 'g1', empresaId: 'e1', contexto: 'empresa' }), { valid: true, filter: { group_id: 'g1', empresa_id: 'e1' } });
+  assert.deepEqual(buildNotaFiscalScope({ groupId: 'g1', contexto: 'grupo' }), { valid: true, filter: { group_id: 'g1' } });
+});
+
+test('aba fiscal rejeita nota sem Grupo e empresa externa ao escopo', () => {
+  const scope = { groupId: 'g1', empresaId: 'e1', contexto: 'empresa', empresasDoGrupo: [{ id: 'e1' }, { id: 'e2' }] };
+  assert.equal(notaMatchesFiscalScope({ empresa_id: 'e1' }, scope), false);
+  assert.equal(notaMatchesFiscalScope({ group_id: 'g1', empresa_id: 'e2' }, scope), false);
+  assert.equal(notaMatchesFiscalScope({ group_id: 'g1', empresa_id: 'e1' }, scope), true);
+  assert.throws(() => resolveEmpresaEmitente({ group_id: 'g2', empresa_id: 'e1' }, scope), /fora do Grupo\/Empresa/);
+});
+
+test('DANFE aceita somente HTTP e log do provedor permanece resumido', () => {
+  assert.equal(resolveSafeFiscalUrl('javascript:alert(1)'), null);
+  assert.equal(resolveSafeFiscalUrl('file:///segredo.xml'), null);
+  assert.match(resolveSafeFiscalUrl('https://fiscal.example/danfe.pdf'), /^https:/);
+  const summary = summarizeFiscalProviderResult({ protocolo: 'segredo', chave_acesso: '44-digitos', xml_url: 'privado', pdf_url: 'privado' }, false);
+  assert.equal(summary.possui_protocolo, true);
+  assert.equal(summary.possui_xml, true);
+  assert.equal(summary.possui_danfe, true);
+  assert.equal('chave_acesso' in summary, false);
+  assert.equal('protocolo' in summary, false);
+});
 
 test('production emit without explicit authorization is blocked', () => {
   assert.throws(
@@ -160,7 +193,12 @@ test('commercial send no longer forges production auth and EventosNFe requires c
   assert.match(tab, /stampNotaFiscalSimulacao/);
   assert.match(tab, /cancelarNFe/);
   assert.match(tab, /Auditoria obrigatoria falhou para nota fiscal/);
-  assert.match(tab, /groupId && \(contexto === 'grupo' \|\| empresaId\)/);
+  assert.match(tab, /buildNotaFiscalScope/);
+  assert.match(tab, /notaMatchesFiscalScope/);
+  assert.match(tab, /resolveEmpresaEmitente/);
+  assert.match(tab, /summarizeFiscalProviderResult/);
+  assert.doesNotMatch(tab, /retorno_recebido:\s*check\.permiteSimulacao/);
+  assert.doesNotMatch(tab, /chave_acesso:\s*resultado\.chave_acesso,[\s\S]{0,300}acao:\s*'enviar'/);
   assert.doesNotMatch(tab, /autoriza_emissao_producao: true/);
   assert.doesNotMatch(tab, /nfe\.autoriza_emissao_producao/);
   assert.match(mock, /Emissao em producao exige autorizacao explicita/);

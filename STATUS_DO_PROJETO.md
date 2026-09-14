@@ -8449,3 +8449,19 @@ Checklist inicial:
 - Dados/infraestrutura: nenhuma Entrega, Pedido ou Cliente real foi alterado; nenhum backend Base44 remoto, banco legado ou HD externo foi acessado ou modificado.
 - Commit de implementacao: `e0c2a916` (`Isola formulario de entrega por empresa`).
 - Proximo passo P0: refatorar e tipar `src/components/comercial/NotasFiscaisTab.jsx`, fluxo Fiscal existente com 44 diagnosticos; `localBase44Client.js` permanece reservado para lote transversal proprio.
+
+## 2026-09-14 - Refatoracao e isolamento das Notas Fiscais
+
+- Objetivo: decompor a aba Fiscal existente, eliminar seus diagnosticos de `checkJs` e impedir leitura, emissao, cancelamento ou acesso ao DANFE fora do contexto autorizado.
+- Causa raiz: `NotasFiscaisTab.jsx` reunia interface, filtros, emissao, cancelamento, exportacao e auditoria em 963 linhas; listas recebidas por propriedade podiam substituir a consulta contextual e a Empresa atual podia ser usada como fallback para uma nota pertencente a outra Empresa.
+- Arquivos alterados: `src/components/comercial/NotasFiscaisTab.jsx`, `src/components/comercial/notas-fiscais/NotasFiscaisTabView.jsx`, `src/components/comercial/notas-fiscais/notasFiscaisTabPolicy.js` e `tests/nota-fiscal-emissao-policy.test.js`.
+- Refatoracao: o orquestrador caiu de 963 para 405 linhas; a apresentacao ficou com 132 e a policy pura com 133. Os auxiliares privados foram criados somente para decompor a aba existente, sem criar tela, rota, entidade, emissor ou persistencia paralela.
+- Multiempresa: a consulta backend recebe filtro explicito de Grupo/Empresa e tanto os resultados remotos quanto a lista opcional recebida por propriedade passam pela mesma policy contextual. Empresa externa ao Grupo, nota sem Grupo e emissor divergente ficam bloqueados.
+- RBAC: visualizar, criar, editar, cancelar, exportar, imprimir, baixar e enviar continuam protegidos pelas permissoes granulares existentes; criacao exige Grupo e Empresa completos.
+- Seguranca/auditoria: DANFE aceita somente URL HTTP/HTTPS valida. `LogFiscal` passou a registrar indicadores resumidos do provedor, sem chave de acesso, URL, XML ou resposta fiscal integral; os campos fiscais necessarios permanecem somente na entidade `NotaFiscal`.
+- Compatibilidade: homologacao, producao, edicao, exportacao, impressao, download, envio e cancelamento foram preservados, assim como as politicas existentes de piloto e faturamento.
+- Testes: focados passaram 20/20 e a suite completa passou 461/461. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve apenas avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
+- Typecheck: os arquivos do lote passaram de 44 diagnosticos para zero; o passivo global caiu de 1.879 para 1.835, reducao liquida exata de 44, e continua aberto sem ser mascarado.
+- Dados/infraestrutura: nenhuma Nota Fiscal real foi emitida, alterada ou cancelada; nenhum backend Base44 remoto, banco legado ou HD externo foi acessado ou modificado.
+- Commit de implementacao: `PENDENTE_COMMIT`.
+- Proximo passo P0: refatorar e tipar `src/components/dashboard/DashboardTempoReal.jsx`, que concentra 50 diagnosticos, preservando consultas em tempo real, RBAC e isolamento Grupo/Empresa; `localBase44Client.js` permanece reservado para lote transversal proprio.

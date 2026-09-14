@@ -946,3 +946,18 @@ Lote concluido em 2026-09-14 no formulario existente de Expedicao, sem criar tel
 
 Proxima frente P0: refatorar e tipar `src/components/comercial/NotasFiscaisTab.jsx`, fluxo Fiscal existente com 44 diagnosticos, mantendo `localBase44Client.js` para lote transversal proprio.
 
+### Refatoracao e isolamento - Notas Fiscais
+
+Lote concluido em 2026-09-14 na aba Fiscal existente, sem criar tela, rota, entidade, emissor ou persistencia paralela.
+
+- `NotasFiscaisTab.jsx` caiu de 963 para 405 linhas; apresentacao e policy contextual foram extraidas para auxiliares privados com 132 e 133 linhas.
+- Consulta backend e lista opcional recebida por propriedade usam a mesma filtragem Grupo/Empresa; nota sem Grupo, Empresa externa ou emissor divergente ficam bloqueados.
+- Criar, editar, enviar, cancelar, exportar, imprimir e baixar preservam RBAC granular e exigem o contexto aplicavel.
+- URL de DANFE e validada por protocolo HTTP/HTTPS; `LogFiscal` armazena somente indicadores resumidos, sem chave, URL, XML ou resposta integral do provedor.
+- Os campos fiscais operacionais continuam preservados na entidade `NotaFiscal`; homologacao, producao, piloto e faturamento mantem seus fluxos existentes.
+- O typecheck dos arquivos do lote passou de 44 diagnosticos para zero; o global caiu de 1.879 para 1.835, reducao liquida exata de 44.
+- Testes focados passaram 20/20 e a suite completa passou 461/461; auditoria baseline, lint, build e verificacao de diff tambem passaram.
+- Nenhuma Nota Fiscal real, entidade remota, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: refatorar e tipar `src/components/dashboard/DashboardTempoReal.jsx`, com 50 diagnosticos, preservando tempo real, RBAC e isolamento Grupo/Empresa.
+

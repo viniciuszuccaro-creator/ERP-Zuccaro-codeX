@@ -1,112 +1,101 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea"; // Added Textarea
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-
-
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
-import {
-  Plus,
-  Search,
-  FileText,
-  Download,
-  Eye,
-  Send,
-  CheckCircle2,
-  AlertCircle,
-  Clock,
-  X,
-  XCircle,
-  Edit,
-  Printer
-} from "lucide-react";
-import GerarNFeModal from "./GerarNFeModal";
-import useContextoVisual from "@/components/lib/useContextoVisual";
-import { mockCancelarNFe, mockEmitirNFe } from "@/components/integracoes/MockIntegracoes";
-import { cancelarNFe, emitirNFe } from "@/components/lib/integracaoNFe";
+import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/components/ui/use-toast';
+import useContextoVisual from '@/components/lib/useContextoVisual';
+import { mockCancelarNFe, mockEmitirNFe } from '@/components/integracoes/MockIntegracoes';
+import { cancelarNFe, emitirNFe } from '@/components/lib/integracaoNFe';
 import {
   assertCancelamentoNFe,
   assertEmissaoNFe,
   isProducaoAutorizada,
   isProvedorFiscalConfigurado,
   stampNotaFiscalSimulacao,
-} from "@/components/lib/notaFiscalEmissaoPolicy";
-import { isUsuarioPiloto } from "@/components/lib/pilotoOperacaoPolicy";
-import usePermissions from "@/components/lib/usePermissions";
-import { ProtectedAction } from "@/components/ProtectedAction";
-import { ImprimirDANFESimplificado } from "@/components/lib/impressao";
-import ERPDataTable from "@/components/ui/erp/DataTable";
-import usePersistedSort from "@/components/lib/usePersistedSort";
-import useEntityListSorted from "@/components/lib/useEntityListSorted";
-import useBackendPagination from "@/components/lib/useBackendPagination";
-import { sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
-import { useUser } from "@/components/lib/UserContext";
-import { assertFaturamentoDentroDoPedido } from "@/components/lib/pedidoFaturamentoPolicy";
+} from '@/components/lib/notaFiscalEmissaoPolicy';
+import { isUsuarioPiloto } from '@/components/lib/pilotoOperacaoPolicy';
+import usePermissions from '@/components/lib/usePermissions';
+import { ImprimirDANFESimplificado } from '@/components/lib/impressao';
+import usePersistedSort from '@/components/lib/usePersistedSort';
+import useEntityListSorted from '@/components/lib/useEntityListSorted';
+import useBackendPagination from '@/components/lib/useBackendPagination';
+import { sanitizeOnWrite } from '@/components/lib/sanitizeOnWrite';
+import { useUser } from '@/components/lib/UserContext';
+import { assertFaturamentoDentroDoPedido } from '@/components/lib/pedidoFaturamentoPolicy';
+import NotasFiscaisTabView from './notas-fiscais/NotasFiscaisTabView';
+import {
+  buildNotaFiscalScope,
+  createInitialNotaFiscalForm,
+  filterNotasFiscais,
+  notaMatchesFiscalScope,
+  resolveEmpresaEmitente,
+  resolveSafeFiscalUrl,
+  sanitizeFiscalText,
+  stampFiscalContext,
+  summarizeFiscalProviderResult,
+  summarizeNotasFiscais,
+} from './notas-fiscais/notasFiscaisTabPolicy';
 
-export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCreateNFe }) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("todas");
-  const [tipoFilter, setTipoFilter] = useState("todas");
+/** @typedef {import('./notas-fiscais/notasFiscaisTabPolicy').NotaFiscalTabRecord} NotaFiscalTabRecord */
+/** @typedef {import('./notas-fiscais/notasFiscaisTabPolicy').EmpresaFiscal} EmpresaFiscal */
+
+/** @param {unknown} value @returns {Record<string, any>} */
+function asRecord(value) {
+  return value && typeof value === 'object' ? value : {};
+}
+
+/**
+ * @param {{
+ *  notasFiscais?: NotaFiscalTabRecord[], pedidos?: Array<Record<string, any>>,
+ *  onCreateNFe?: (() => void)|null
+ * }} props
+ */
+export default function NotasFiscaisTab({ notasFiscais = [], pedidos = [], onCreateNFe = null }) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('todas');
+  const [tipoFilter, setTipoFilter] = useState('todas');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedNF, setSelectedNF] = useState(null);
-  const [viewingDetails, setViewingDetails] = useState(null);
-  // Seleção em massa + exportação
-  const [selectedNotas, setSelectedNotas] = useState([]);
-  const toggleNota = (id) => setSelectedNotas(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-  const toggleAllNotas = (checked, lista) => setSelectedNotas(checked ? lista.map(n => n.id) : []);
+  const [selectedNF, setSelectedNF] = useState(/** @type {NotaFiscalTabRecord|null} */ (null));
+  const [viewingDetails, setViewingDetails] = useState(/** @type {NotaFiscalTabRecord|null} */ (null));
+  const [selectedNotas, setSelectedNotas] = useState(/** @type {string[]} */ ([]));
+  const [formData, setFormData] = useState(createInitialNotaFiscalForm);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useUser();
-  const { empresaAtual, empresasDoGrupo, grupoAtual, contexto, createInContext, updateInContext } = useContextoVisual();
+  const { empresaAtual, empresasDoGrupo = [], grupoAtual, contexto, createInContext, updateInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId && (contexto === 'grupo' || empresaId));
-  const canViewNota = hasPermission('Fiscal', 'NotaFiscal', 'visualizar') || hasPermission('Fiscal', 'Notas Fiscais', 'visualizar') || hasPermission('Fiscal', null, 'visualizar');
-  const canCreateNota = hasPermission('Fiscal', 'NotaFiscal', 'criar') || hasPermission('Fiscal', 'Notas Fiscais', 'criar') || hasPermission('Fiscal', null, 'criar');
-  const canEditNota = hasPermission('Fiscal', 'NotaFiscal', 'editar') || hasPermission('Fiscal', 'Notas Fiscais', 'editar') || hasPermission('Fiscal', null, 'editar');
-  const canCancelNota = hasPermission('Fiscal', 'NotaFiscal', 'cancelar') || hasPermission('Fiscal', 'Notas Fiscais', 'cancelar') || hasPermission('Fiscal', null, 'cancelar');
-  const canExportNota = hasPermission('Fiscal', 'NotaFiscal', 'exportar') || hasPermission('Fiscal', 'Notas Fiscais', 'exportar') || hasPermission('Fiscal', null, 'exportar');
-  const canPrintNota = hasPermission('Fiscal', 'NotaFiscal', 'imprimir') || hasPermission('Fiscal', 'Notas Fiscais', 'imprimir') || canExportNota;
-  const canDownloadDanfe = hasPermission('Fiscal', 'NotaFiscal', 'baixar_pdf') || hasPermission('Fiscal', 'Notas Fiscais', 'baixar_pdf') || canPrintNota;
-  const canSendNota = hasPermission('Fiscal', 'NotaFiscal', 'emitir') || hasPermission('Fiscal', 'Notas Fiscais', 'emitir') || hasPermission('Fiscal', 'NotaFiscal', 'enviar') || hasPermission('Fiscal', 'Notas Fiscais', 'enviar');
+  const fiscalScope = buildNotaFiscalScope({ groupId, empresaId, contexto });
+  const contextoValido = fiscalScope.valid;
+  const scopeInput = { groupId, empresaId, contexto, empresasDoGrupo };
 
-  // Paginação e ordenação persistente (backend)
+  const hasFiscalPermission = (action) => hasPermission('Fiscal', 'NotaFiscal', action) || hasPermission('Fiscal', 'Notas Fiscais', action) || hasPermission('Fiscal', null, action);
+  const canViewNota = hasFiscalPermission('visualizar');
+  const canCreateNota = hasFiscalPermission('criar');
+  const canEditNota = hasFiscalPermission('editar');
+  const canCancelNota = hasFiscalPermission('cancelar');
+  const canExportNota = hasFiscalPermission('exportar');
+  const canPrintNota = hasFiscalPermission('imprimir') || canExportNota;
+  const canDownloadDanfe = hasFiscalPermission('baixar_pdf') || canPrintNota;
+  const canSendNota = hasFiscalPermission('emitir') || hasFiscalPermission('enviar');
+
   const { page, setPage, pageSize, setPageSize } = useBackendPagination('NotaFiscal', 20);
-  const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('NotaFiscal', 'data_emissao', 'desc');
-  const { data: notasBackend = [] } = useEntityListSorted('NotaFiscal', {}, { sortField, sortDirection, page, pageSize, limit: pageSize, enabled: contextoValido && canViewNota });
-  const notasList = Array.isArray(notasFiscais) && notasFiscais.length ? notasFiscais : notasBackend;
-
-  const exportarNotasCSV = (lista) => {
-    const headers = ['numero','serie','tipo','cliente_fornecedor','empresa_id','data_emissao','valor_total','status'];
-    const csv = [
-      headers.join(','),
-      ...lista.map(n => headers.map(h => JSON.stringify(n[h] ?? '')).join(','))
-    ].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `notas_fiscais_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const sanitizeFiscalText = (value) => String(value || '').replace(/[<>]/g, '').replace(/javascript:/gi, '').trim();
-  const withFiscalContext = (payload = {}) => ({
-    ...payload,
-    ...(empresaId ? { empresa_id: empresaId, empresa_faturamento_id: payload.empresa_faturamento_id || empresaId } : {}),
-    ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
+  const sortState = /** @type {[string, (value: string) => void, string, (value: string) => void]} */ (usePersistedSort('NotaFiscal', 'data_emissao', 'desc'));
+  const [sortField, setSortField, sortDirection, setSortDirection] = sortState;
+  const { data: notasBackend = [] } = useEntityListSorted('NotaFiscal', fiscalScope.filter, {
+    sortField, sortDirection, page, pageSize, limit: pageSize, enabled: contextoValido && canViewNota,
   });
+  const notasSource = notasFiscais.length ? notasFiscais : notasBackend;
+  const notasList = /** @type {NotaFiscalTabRecord[]} */ (notasSource).filter((nota) => notaMatchesFiscalScope(nota, scopeInput));
+  const filteredNotas = filterNotasFiscais(notasList, { searchTerm, statusFilter, tipoFilter });
+  const totals = summarizeNotasFiscais(notasList);
+
+  /** @param {string} actionEmpresaId @param {Record<string, any>} payload */
+  const withFiscalContext = (actionEmpresaId, payload = {}) => stampFiscalContext(payload, groupId, actionEmpresaId);
+
+  /** @param {string} acao @param {Record<string, any>} detalhes @param {boolean} sucesso */
   const auditFiscalComercial = async (acao, detalhes = {}, sucesso = true) => {
     try {
+      const auditEmpresaId = detalhes.empresa_id || empresaId || null;
       await createInContext('AuditLog', {
         usuario_id: user?.id || null,
         usuario: user?.full_name || user?.email || 'Sistema',
@@ -115,7 +104,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
         tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
         entidade: detalhes.entidade || 'NotaFiscal',
         descricao: detalhes.descricao || acao,
-        empresa_id: empresaId,
+        empresa_id: auditEmpresaId,
         group_id: groupId,
         grupo_id: groupId,
         sucesso,
@@ -128,58 +117,74 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
     }
   };
 
+  /** @param {NotaFiscalTabRecord} nota */
+  const assertNotaNoEscopo = (nota) => {
+    if (!notaMatchesFiscalScope(nota, scopeInput)) throw new Error('NF-e fora do Grupo/Empresa autorizado.');
+    return nota.empresa_id || nota.empresa_faturamento_id || '';
+  };
+
+  /** @param {NotaFiscalTabRecord} nota */
   const visualizarNotaSeguro = async (nota) => {
-    if (!contextoValido || !canViewNota) {
-      await auditFiscalComercial('nota_fiscal_visualizar_bloqueada', { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada', nota_id: nota?.id, numero: nota?.numero }, false);
-      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de visualizar' : 'Sem permissao para visualizar NF-e', variant: 'destructive' });
+    if (!contextoValido || !canViewNota || !notaMatchesFiscalScope(nota, scopeInput)) {
+      await auditFiscalComercial('nota_fiscal_visualizar_bloqueada', { motivo: !contextoValido ? 'contexto_obrigatorio' : 'escopo_ou_permissao', nota_id: nota?.id }, false);
+      toast({ title: 'Sem contexto, escopo ou permissao para visualizar NF-e', variant: 'destructive' });
       return;
     }
-    await auditFiscalComercial('nota_fiscal_visualizada', { nota_id: nota?.id, numero: nota?.numero });
+    await auditFiscalComercial('nota_fiscal_visualizada', { nota_id: nota.id, empresa_id: nota.empresa_id });
     setViewingDetails(nota);
   };
 
+  /** @param {NotaFiscalTabRecord} nota */
   const imprimirDanfeSeguro = async (nota) => {
-    if (!contextoValido || !canPrintNota) {
-      await auditFiscalComercial('nota_fiscal_imprimir_bloqueada', { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada', nota_id: nota?.id, numero: nota?.numero }, false);
-      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de imprimir' : 'Sem permissao para imprimir DANFE', variant: 'destructive' });
+    if (!contextoValido || !canPrintNota || !notaMatchesFiscalScope(nota, scopeInput)) {
+      await auditFiscalComercial('nota_fiscal_imprimir_bloqueada', { motivo: 'contexto_escopo_ou_permissao', nota_id: nota?.id }, false);
+      toast({ title: 'Sem contexto, escopo ou permissao para imprimir DANFE', variant: 'destructive' });
       return;
     }
-    const empresa = empresasDoGrupo?.find(e => e.id === nota.empresa_id);
-    await auditFiscalComercial('nota_fiscal_danfe_impressa', { nota_id: nota?.id, numero: nota?.numero, empresa_id: nota?.empresa_id });
+    const empresa = resolveEmpresaEmitente(nota, scopeInput);
+    await auditFiscalComercial('nota_fiscal_danfe_impressa', { nota_id: nota.id, empresa_id: empresa.id });
     ImprimirDANFESimplificado({ nfe: nota, empresa });
   };
 
+  /** @param {NotaFiscalTabRecord} nota */
   const baixarDanfeSeguro = async (nota) => {
-    const danfeUrl = sanitizeFiscalText(nota?.danfe_url);
-    if (!danfeUrl) {
-      toast({ title: 'DANFE indisponivel', variant: 'destructive' });
+    const danfeUrl = resolveSafeFiscalUrl(nota?.danfe_url);
+    const notaNoEscopo = notaMatchesFiscalScope(nota, scopeInput);
+    if (!danfeUrl || !contextoValido || !canDownloadDanfe || !notaNoEscopo) {
+      await auditFiscalComercial('nota_fiscal_danfe_bloqueada', { motivo: !danfeUrl ? 'url_invalida' : 'contexto_escopo_ou_permissao', nota_id: nota?.id }, false);
+      toast({ title: !danfeUrl ? 'DANFE indisponivel' : 'Sem contexto, escopo ou permissao para baixar DANFE', variant: 'destructive' });
       return;
     }
-    if (!contextoValido || !canDownloadDanfe) {
-      await auditFiscalComercial('nota_fiscal_danfe_bloqueada', { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada', nota_id: nota?.id, numero: nota?.numero }, false);
-      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de baixar' : 'Sem permissao para baixar DANFE', variant: 'destructive' });
-      return;
-    }
-    await auditFiscalComercial('nota_fiscal_danfe_baixada', { nota_id: nota?.id, numero: nota?.numero });
+    const notaEmpresaId = nota.empresa_id || nota.empresa_faturamento_id || '';
+    await auditFiscalComercial('nota_fiscal_danfe_baixada', { nota_id: nota.id, empresa_id: notaEmpresaId });
     window.open(danfeUrl, '_blank', 'noopener,noreferrer');
   };
 
+  /** @param {NotaFiscalTabRecord[]} lista */
   const exportarNotasSeguro = async (lista) => {
-    if (!contextoValido || !canExportNota) {
-      await auditFiscalComercial('nota_fiscal_exportar_bloqueada', { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada', total: lista.length }, false);
-      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de exportar' : 'Sem permissao para exportar NF-e', variant: 'destructive' });
+    const scoped = lista.filter((nota) => notaMatchesFiscalScope(nota, scopeInput));
+    if (!contextoValido || !canExportNota || scoped.length !== lista.length) {
+      await auditFiscalComercial('nota_fiscal_exportar_bloqueada', { motivo: 'contexto_escopo_ou_permissao', total: lista.length }, false);
+      toast({ title: 'Sem contexto, escopo ou permissao para exportar NF-e', variant: 'destructive' });
       return;
     }
-    if (!lista.length) {
+    if (!scoped.length) {
       toast({ title: 'Nenhuma NF-e selecionada para exportar' });
       return;
     }
-    if (!window.confirm("Confirmar exportacao das NF-e selecionadas?")) {
-      await auditFiscalComercial('nota_fiscal_exportacao_cancelada', { motivo: 'confirmacao_cancelada', total: lista.length }, false);
+    if (!window.confirm('Confirmar exportacao das NF-e selecionadas?')) {
+      await auditFiscalComercial('nota_fiscal_exportacao_cancelada', { motivo: 'confirmacao_cancelada', total: scoped.length }, false);
       return;
     }
-    exportarNotasCSV(lista);
-    await auditFiscalComercial('nota_fiscal_exportada', { total: lista.length, nota_ids: lista.map(n => n.id) });
+    const headers = ['numero', 'serie', 'tipo', 'cliente_fornecedor', 'empresa_id', 'data_emissao', 'valor_total', 'status'];
+    const csv = [headers.join(','), ...scoped.map((nota) => headers.map((header) => JSON.stringify(nota[header] ?? '')).join(','))].join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `notas_fiscais_${new Date().toISOString().slice(0, 10)}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    await auditFiscalComercial('nota_fiscal_exportada', { total: scoped.length });
   };
 
   const criarNFeExternaSeguro = async () => {
@@ -188,776 +193,218 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
       toast({ title: !empresaId ? 'Selecione a empresa faturadora' : 'Sem permissao para criar NF-e', variant: 'destructive' });
       return;
     }
-    await auditFiscalComercial('nota_fiscal_criacao_externa_aberta', { origem_fluxo: 'onCreateNFe' });
+    await auditFiscalComercial('nota_fiscal_criacao_externa_aberta', { empresa_id: empresaId, origem_fluxo: 'onCreateNFe' });
     onCreateNFe?.();
   };
 
-  const [formData, setFormData] = useState({
-    tipo: "NF-e (Saída)",
-    cliente_fornecedor: "",
-    numero: "",
-    serie: "1",
-    data_emissao: new Date().toISOString().split('T')[0],
-    valor_produtos: 0,
-    valor_total: 0,
-    observacoes: ""
-  });
+  const invalidateNotas = () => Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['notasfiscais'] }),
+    queryClient.invalidateQueries({ queryKey: ['notasFiscais'] }),
+    queryClient.invalidateQueries({ queryKey: ['entityListSorted', 'NotaFiscal'] }),
+  ]);
 
   const createMutation = useMutation({
+    /** @param {NotaFiscalTabRecord} data */
     mutationFn: async (data) => {
-      if (!contextoValido || !canCreateNota || !empresaId) {
-        await auditFiscalComercial('nota_fiscal_criar_bloqueada', { motivo: !empresaId ? 'empresa_faturadora_obrigatoria' : 'contexto_ou_permissao' }, false);
-        throw new Error('Selecione uma empresa faturadora e confirme permissao para criar NF-e.');
+      if (!contextoValido || !canCreateNota || !empresaId) throw new Error('Selecione uma empresa faturadora e confirme permissao para criar NF-e.');
+      if (data.pedido_id) {
+        const pedido = pedidos.find((item) => String(item.id) === String(data.pedido_id));
+        if (!pedido) throw new Error('Pedido obrigatorio para faturar.');
+        assertFaturamentoDentroDoPedido({ pedido, notasExistentes: notasList.filter((nota) => String(nota.pedido_id) === String(data.pedido_id)), notaNova: data });
       }
-      const pedidoId = data?.pedido_id;
-      if (pedidoId) {
-        const pedido = (pedidos || []).find((item) => String(item.id) === String(pedidoId));
-        if (!pedido) {
-          throw new Error('Pedido obrigatorio para faturar.');
-        }
-        assertFaturamentoDentroDoPedido({
-          pedido,
-          notasExistentes: notasList.filter((nota) => String(nota.pedido_id) === String(pedidoId)),
-          notaNova: data,
-        });
-      }
-      return createInContext('NotaFiscal', withFiscalContext(data));
+      return createInContext('NotaFiscal', withFiscalContext(empresaId, data));
     },
-    onError: (error) => {
-      toast({ title: error.message || 'Falha ao criar Nota Fiscal', variant: 'destructive' });
-    },
-    onSuccess: async () => {
-      await auditFiscalComercial('nota_fiscal_criada', { entidade: 'NotaFiscal' }, true);
-      queryClient.invalidateQueries({ queryKey: ['notasfiscais'] });
-      setIsDialogOpen(false);
-      resetForm();
+    onError: (error) => toast({ title: error instanceof Error ? error.message : 'Falha ao criar Nota Fiscal', variant: 'destructive' }),
+    onSuccess: async (result) => {
+      const nota = asRecord(result);
+      await auditFiscalComercial('nota_fiscal_criada', { nota_id: nota.id || null, empresa_id: empresaId });
+      await invalidateNotas();
+      closeForm();
       toast({ title: 'Nota Fiscal criada!' });
     },
   });
 
   const updateMutation = useMutation({
+    /** @param {{id: string, data: NotaFiscalTabRecord}} input */
     mutationFn: async ({ id, data }) => {
-      if (!contextoValido || !canEditNota) {
-        await auditFiscalComercial('nota_fiscal_editar_bloqueada', { motivo: 'contexto_ou_permissao', nota_id: id }, false);
-        throw new Error('Sem contexto ou permissao para editar NF-e.');
-      }
-      return updateInContext('NotaFiscal', id, withFiscalContext(data));
+      if (!contextoValido || !canEditNota || !selectedNF) throw new Error('Sem contexto ou permissao para editar NF-e.');
+      const actionEmpresaId = assertNotaNoEscopo(selectedNF);
+      return updateInContext('NotaFiscal', id, withFiscalContext(actionEmpresaId, data));
     },
-    onError: (error) => {
-      toast({ title: error.message || 'Falha ao atualizar Nota Fiscal', variant: 'destructive' });
-    },
+    onError: (error) => toast({ title: error instanceof Error ? error.message : 'Falha ao atualizar Nota Fiscal', variant: 'destructive' }),
     onSuccess: async () => {
-      await auditFiscalComercial('nota_fiscal_atualizada', { entidade: 'NotaFiscal', nota_id: selectedNF?.id || null }, true);
-      queryClient.invalidateQueries({ queryKey: ['notasfiscais'] });
-      setIsDialogOpen(false);
-      setSelectedNF(null); // Changed from setEditingNota
-      resetForm();
+      await auditFiscalComercial('nota_fiscal_atualizada', { nota_id: selectedNF?.id || null, empresa_id: selectedNF?.empresa_id || null });
+      await invalidateNotas();
+      closeForm();
       toast({ title: 'Nota Fiscal atualizada!' });
     },
   });
 
   const enviarNFeMutation = useMutation({
+    /** @param {NotaFiscalTabRecord} nfe */
     mutationFn: async (nfe) => {
-      if (!contextoValido || !canSendNota) {
-        await auditFiscalComercial('nota_fiscal_enviar_bloqueada', { motivo: 'contexto_ou_permissao', nota_id: nfe?.id, numero: nfe?.numero }, false);
-        throw new Error('Sem contexto ou permissao para enviar NF-e.');
-      }
-      if (nfe?.status !== 'Pendente') {
-        await auditFiscalComercial('nota_fiscal_enviar_bloqueada', { motivo: 'status_invalido', nota_id: nfe?.id, status: nfe?.status }, false);
-        throw new Error('Somente NF-e pendente pode ser enviada.');
-      }
-      const emitenteId = nfe?.empresa_id || nfe?.empresa_faturamento_id || empresaId;
-      const empresaEmitente = empresasDoGrupo?.find((item) => String(item.id) === String(emitenteId)) || empresaAtual;
-      const ambiente = nfe.ambiente || empresaEmitente?.configuracao_fiscal?.ambiente_nfe || 'Homologacao';
-      const producaoAutorizada = isProducaoAutorizada(
-        empresaEmitente?.configuracao_fiscal?.autoriza_emissao_producao,
-        empresaEmitente?.integracao_nfe?.autoriza_emissao_producao,
-      );
+      if (!contextoValido || !canSendNota) throw new Error('Sem contexto ou permissao para enviar NF-e.');
+      if (nfe.status !== 'Pendente') throw new Error('Somente NF-e pendente pode ser enviada.');
+      const empresaEmitente = resolveEmpresaEmitente(nfe, scopeInput);
+      const emitenteId = String(empresaEmitente.id);
+      const ambiente = nfe.ambiente || empresaEmitente.configuracao_fiscal?.ambiente_nfe || 'Homologacao';
       const check = assertEmissaoNFe({
         empresaId: emitenteId,
         ambiente,
-        producaoAutorizada,
-        provedorConfigurado: isProvedorFiscalConfigurado(empresaEmitente?.integracao_nfe || {}),
+        producaoAutorizada: isProducaoAutorizada(empresaEmitente.configuracao_fiscal?.autoriza_emissao_producao, empresaEmitente.integracao_nfe?.autoriza_emissao_producao),
+        provedorConfigurado: isProvedorFiscalConfigurado(empresaEmitente.integracao_nfe || {}),
         nfe,
         usuarioPiloto: isUsuarioPiloto(user),
       });
-
-      await auditFiscalComercial('nota_fiscal_envio_iniciado', { nota_id: nfe.id, numero: nfe.numero, ambiente: check.ambiente });
+      await auditFiscalComercial('nota_fiscal_envio_iniciado', { nota_id: nfe.id, empresa_id: emitenteId, ambiente: check.ambiente });
       let resultado;
       try {
-        resultado = check.permiteSimulacao
+        resultado = asRecord(check.permiteSimulacao
           ? await mockEmitirNFe({ empresa_id: emitenteId, pedido: nfe, ambiente: 'Homologacao' })
-          : await emitirNFe({ ...nfe, ambiente: 'Producao' }, emitenteId);
+          : await emitirNFe({ ...nfe, ambiente: 'Producao' }, emitenteId));
       } catch (error) {
-        await updateInContext('NotaFiscal', nfe.id, withFiscalContext({
-          status: 'Rejeitada',
-          historico: [
-            ...(nfe.historico || []),
-            { data_hora: new Date().toISOString(), evento: 'NF-e rejeitada', detalhes: error?.message || 'falha_emissao' },
-          ],
-        }));
+        await updateInContext('NotaFiscal', nfe.id, withFiscalContext(emitenteId, { status: 'Rejeitada', historico: [...(nfe.historico || []), { data_hora: new Date().toISOString(), evento: 'NF-e rejeitada', detalhes: error instanceof Error ? error.message : 'falha_emissao' }] }));
         throw error;
       }
-      if (resultado?.sucesso === false || resultado?.success === false || resultado?.error) {
-        await updateInContext('NotaFiscal', nfe.id, withFiscalContext({ status: 'Rejeitada' }));
-        throw new Error(resultado.error || 'Falha ao emitir NF-e.');
+      if (resultado.sucesso === false || resultado.success === false || resultado.error) {
+        await updateInContext('NotaFiscal', nfe.id, withFiscalContext(emitenteId, { status: 'Rejeitada' }));
+        throw new Error(String(resultado.error || 'Falha ao emitir NF-e.'));
       }
-
-      const basePayload = withFiscalContext({
-        status: resultado.status || 'Autorizada',
-        numero: nfe.numero || resultado.numero_nfe,
-        serie: nfe.serie || resultado.serie,
-        chave_acesso: resultado.chave_acesso,
-        protocolo_autorizacao: resultado.protocolo,
-        data_autorizacao: resultado.data_autorizacao,
-        xml_url: resultado.xml_url,
-        danfe_url: resultado.pdf_url,
+      const basePayload = withFiscalContext(emitenteId, {
+        status: resultado.status || 'Autorizada', numero: nfe.numero || resultado.numero_nfe, serie: nfe.serie || resultado.serie,
+        chave_acesso: resultado.chave_acesso, protocolo_autorizacao: resultado.protocolo, data_autorizacao: resultado.data_autorizacao,
+        xml_url: resultado.xml_url, danfe_url: resultado.pdf_url,
         ambiente: check.permiteSimulacao ? 'Homologacao' : (resultado.ambiente || nfe.ambiente || 'Producao'),
-        historico: [
-          ...(nfe.historico || []),
-          {
-            data_hora: new Date().toISOString(),
-            evento: check.permiteSimulacao ? 'NF-e Enviada (Simulacao)' : 'NF-e Autorizada',
-            usuario: user?.full_name || user?.email || 'Sistema',
-            detalhes: resultado.mensagem_sefaz
-          }
-        ]
+        historico: [...(nfe.historico || []), { data_hora: new Date().toISOString(), evento: check.permiteSimulacao ? 'NF-e Enviada (Simulacao)' : 'NF-e Autorizada', usuario: user?.full_name || user?.email || 'Sistema' }],
       });
-      const payloadAtualizacao = check.permiteSimulacao
-        ? stampNotaFiscalSimulacao(basePayload, { origem_simulacao: 'nfe_homologacao' })
-        : { ...basePayload, simulacao: false, __simulado__: false };
-
+      const payloadAtualizacao = /** @type {Record<string, any>} */ (check.permiteSimulacao ? stampNotaFiscalSimulacao(basePayload, { origem_simulacao: 'nfe_homologacao' }) : { ...basePayload, simulacao: false, __simulado__: false });
       await updateInContext('NotaFiscal', nfe.id, payloadAtualizacao);
-      await createInContext('LogFiscal', {
-        empresa_id: nfe.empresa_id || empresaId,
-        group_id: nfe.group_id || groupId,
-        grupo_id: nfe.grupo_id || nfe.group_id || groupId,
-        nfe_id: nfe.id,
-        numero_nfe: payloadAtualizacao.numero,
-        chave_acesso: resultado.chave_acesso,
-        data_hora: new Date().toISOString(),
-        acao: 'enviar',
-        provedor: check.permiteSimulacao ? 'Mock/Simulacao' : (resultado.provedor || 'IntegracaoNFe'),
-        ambiente: payloadAtualizacao.ambiente,
-        status: 'sucesso',
-        mensagem: resultado.mensagem_sefaz,
-        retorno_recebido: check.permiteSimulacao
-          ? { ...resultado, simulacao: true, __simulado__: true }
-          : resultado,
-        usuario_nome: user?.full_name || user?.email || 'Sistema'
-      });
-
-      return { ...resultado, permiteSimulacao: check.permiteSimulacao };
+      await createInContext('LogFiscal', withFiscalContext(emitenteId, {
+        nfe_id: nfe.id, numero_nfe: payloadAtualizacao.numero, data_hora: new Date().toISOString(), acao: 'enviar',
+        provedor: check.permiteSimulacao ? 'Mock/Simulacao' : (resultado.provedor || 'IntegracaoNFe'), ambiente: payloadAtualizacao.ambiente,
+        status: 'sucesso', retorno_recebido: summarizeFiscalProviderResult(resultado, check.permiteSimulacao), usuario_nome: user?.full_name || user?.email || 'Sistema',
+      }));
+      return /** @type {Record<string, any>} */ ({ ...resultado, permiteSimulacao: check.permiteSimulacao });
     },
-    onError: (error) => {
-      toast({ title: error.message || 'Falha ao enviar NF-e', variant: 'destructive' });
-    },
+    onError: (error) => toast({ title: error instanceof Error ? error.message : 'Falha ao enviar NF-e', variant: 'destructive' }),
     onSuccess: async (resultado, nfe) => {
-      await auditFiscalComercial('nota_fiscal_enviada', {
-        entidade: 'NotaFiscal',
-        nota_id: nfe?.id,
-        numero: nfe?.numero,
-        protocolo: resultado?.protocolo,
-        simulacao: Boolean(resultado?.permiteSimulacao),
-      }, true);
-      queryClient.invalidateQueries({ queryKey: ['notasfiscais'] });
-      queryClient.invalidateQueries({ queryKey: ['notasFiscais'] });
-      toast({
-        title: resultado?.permiteSimulacao
-          ? 'NF-e enviada e autorizada (Simulacao)'
-          : 'NF-e enviada e autorizada',
-      });
-    }
+      await auditFiscalComercial('nota_fiscal_enviada', { nota_id: nfe.id, empresa_id: nfe.empresa_id, simulacao: Boolean(resultado?.permiteSimulacao), possui_protocolo: Boolean(resultado?.protocolo) });
+      await invalidateNotas();
+      toast({ title: resultado?.permiteSimulacao ? 'NF-e enviada e autorizada (Simulacao)' : 'NF-e enviada e autorizada' });
+    },
   });
 
   const cancelarNFeMutation = useMutation({
+    /** @param {{nfe: NotaFiscalTabRecord, motivo: string}} input */
     mutationFn: async ({ nfe, motivo }) => {
-      if (!contextoValido || !canCancelNota) {
-        await auditFiscalComercial('nota_fiscal_cancelar_bloqueada', { motivo: 'contexto_ou_permissao', nota_id: nfe?.id }, false);
-        throw new Error('Sem contexto ou permissao para cancelar NF-e.');
-      }
+      if (!contextoValido || !canCancelNota) throw new Error('Sem contexto ou permissao para cancelar NF-e.');
       const motivoSanitizado = sanitizeFiscalText(motivo);
-      if (!motivoSanitizado || motivoSanitizado.length < 15) {
-        throw new Error('Justificativa de cancelamento deve ter ao menos 15 caracteres.');
-      }
-      const emitenteId = nfe?.empresa_id || nfe?.empresa_faturamento_id || empresaId;
-      const empresaEmitente = empresasDoGrupo?.find((item) => String(item.id) === String(emitenteId)) || empresaAtual;
-      const ambiente = nfe.ambiente || empresaEmitente?.configuracao_fiscal?.ambiente_nfe || 'Homologacao';
+      if (motivoSanitizado.length < 15) throw new Error('Justificativa de cancelamento deve ter ao menos 15 caracteres.');
+      const empresaEmitente = resolveEmpresaEmitente(nfe, scopeInput);
+      const emitenteId = String(empresaEmitente.id);
+      const ambiente = nfe.ambiente || empresaEmitente.configuracao_fiscal?.ambiente_nfe || 'Homologacao';
       const check = assertCancelamentoNFe({
-        empresaId: emitenteId,
-        ambiente,
-        producaoAutorizada: isProducaoAutorizada(
-          empresaEmitente?.configuracao_fiscal?.autoriza_emissao_producao,
-          empresaEmitente?.integracao_nfe?.autoriza_emissao_producao,
-        ),
-        provedorConfigurado: isProvedorFiscalConfigurado(empresaEmitente?.integracao_nfe || {}),
-        nfe,
+        empresaId: emitenteId, ambiente,
+        producaoAutorizada: isProducaoAutorizada(empresaEmitente.configuracao_fiscal?.autoriza_emissao_producao, empresaEmitente.integracao_nfe?.autoriza_emissao_producao),
+        provedorConfigurado: isProvedorFiscalConfigurado(empresaEmitente.integracao_nfe || {}), nfe,
       });
-
-      await auditFiscalComercial('nota_fiscal_cancelamento_iniciado', {
-        nota_id: nfe.id,
-        numero: nfe.numero,
-        ambiente: check.ambiente,
-        simulacao: check.permiteSimulacao,
-      });
-
-      let resultado;
-      if (check.permiteSimulacao) {
-        resultado = await mockCancelarNFe({
-          nfe_id: nfe.id,
-          chave_acesso: nfe.chave_acesso,
-          motivo: motivoSanitizado
-        });
-      } else {
-        resultado = await cancelarNFe(nfe.id, emitenteId, motivoSanitizado);
-      }
-
-      if (resultado?.sucesso === false || resultado?.success === false || resultado?.error) {
-        throw new Error(resultado.error || 'Falha ao cancelar NF-e.');
-      }
-
-      const baseCancelamento = withFiscalContext({
-        status: "Cancelada",
-        cancelamento: {
-          data_cancelamento: resultado.data_cancelamento || new Date().toISOString(),
-          protocolo_cancelamento: resultado.protocolo_cancelamento || resultado.protocolo,
-          motivo: motivoSanitizado,
-          justificativa: motivoSanitizado,
-          usuario: user?.full_name || user?.email || "Sistema"
-        },
+      await auditFiscalComercial('nota_fiscal_cancelamento_iniciado', { nota_id: nfe.id, empresa_id: emitenteId, ambiente: check.ambiente, simulacao: check.permiteSimulacao });
+      const resultado = asRecord(check.permiteSimulacao
+        ? await mockCancelarNFe({ nfe_id: nfe.id, chave_acesso: nfe.chave_acesso, motivo: motivoSanitizado })
+        : await cancelarNFe(nfe.id, emitenteId, motivoSanitizado));
+      if (resultado.sucesso === false || resultado.success === false || resultado.error) throw new Error(String(resultado.error || 'Falha ao cancelar NF-e.'));
+      const baseCancelamento = withFiscalContext(emitenteId, {
+        status: 'Cancelada',
+        cancelamento: { data_cancelamento: resultado.data_cancelamento || new Date().toISOString(), protocolo_cancelamento: resultado.protocolo_cancelamento || resultado.protocolo, motivo: motivoSanitizado, justificativa: motivoSanitizado, usuario: user?.full_name || user?.email || 'Sistema' },
         xml_cancelamento: resultado.xml_cancelamento_url,
-        historico: [
-          ...(nfe.historico || []),
-          {
-            data_hora: new Date().toISOString(),
-            evento: check.permiteSimulacao ? "NF-e Cancelada (Simulacao)" : "NF-e Cancelada",
-            usuario: user?.full_name || user?.email || "Sistema",
-            detalhes: motivoSanitizado
-          }
-        ]
+        historico: [...(nfe.historico || []), { data_hora: new Date().toISOString(), evento: check.permiteSimulacao ? 'NF-e Cancelada (Simulacao)' : 'NF-e Cancelada', usuario: user?.full_name || user?.email || 'Sistema', detalhes: motivoSanitizado }],
       });
-      const payloadCancelamento = check.permiteSimulacao
-        ? stampNotaFiscalSimulacao(baseCancelamento, { origem_simulacao: nfe.origem_simulacao || 'nfe_homologacao' })
-        : { ...baseCancelamento, simulacao: false, __simulado__: false };
-
+      const payloadCancelamento = check.permiteSimulacao ? stampNotaFiscalSimulacao(baseCancelamento, { origem_simulacao: nfe.origem_simulacao || 'nfe_homologacao' }) : { ...baseCancelamento, simulacao: false, __simulado__: false };
       await updateInContext('NotaFiscal', nfe.id, payloadCancelamento);
-
-      await createInContext('LogFiscal', {
-        empresa_id: nfe.empresa_id || empresaId,
-        group_id: nfe.group_id || groupId,
-        grupo_id: nfe.grupo_id || nfe.group_id || groupId,
-        nfe_id: nfe.id,
-        numero_nfe: nfe.numero,
-        chave_acesso: nfe.chave_acesso,
-        data_hora: new Date().toISOString(),
-        acao: "cancelar",
-        provedor: check.permiteSimulacao ? "Mock/Simulacao" : (resultado.provedor || "IntegracaoNFe"),
-        ambiente: check.ambiente,
-        status: "sucesso",
-        mensagem: resultado.mensagem_sefaz,
-        retorno_recebido: check.permiteSimulacao
-          ? { ...resultado, simulacao: true, __simulado__: true }
-          : resultado,
-        usuario_nome: user?.full_name || user?.email || "Sistema"
-      });
-
+      await createInContext('LogFiscal', withFiscalContext(emitenteId, {
+        nfe_id: nfe.id, numero_nfe: nfe.numero, data_hora: new Date().toISOString(), acao: 'cancelar',
+        provedor: check.permiteSimulacao ? 'Mock/Simulacao' : (resultado.provedor || 'IntegracaoNFe'), ambiente: check.ambiente,
+        status: 'sucesso', retorno_recebido: summarizeFiscalProviderResult(resultado, check.permiteSimulacao), usuario_nome: user?.full_name || user?.email || 'Sistema',
+      }));
       return { ...resultado, permiteSimulacao: check.permiteSimulacao };
     },
-    onError: (error) => {
-      toast({ title: error.message || 'Falha ao cancelar NF-e', variant: 'destructive' });
-    },
+    onError: (error) => toast({ title: error instanceof Error ? error.message : 'Falha ao cancelar NF-e', variant: 'destructive' }),
     onSuccess: async (resultado, { nfe }) => {
-      await auditFiscalComercial('nota_fiscal_cancelada', {
-        entidade: 'NotaFiscal',
-        nota_id: nfe?.id,
-        numero: nfe?.numero,
-        simulacao: Boolean(resultado?.permiteSimulacao),
-      }, true);
-      queryClient.invalidateQueries({ queryKey: ['notasFiscais'] });
-      toast({
-        title: resultado?.permiteSimulacao ? 'NF-e Cancelada (Simulacao)' : 'NF-e Cancelada',
-      });
-    }
+      await auditFiscalComercial('nota_fiscal_cancelada', { nota_id: nfe.id, empresa_id: nfe.empresa_id, simulacao: Boolean(resultado?.permiteSimulacao) });
+      await invalidateNotas();
+      toast({ title: resultado?.permiteSimulacao ? 'NF-e Cancelada (Simulacao)' : 'NF-e Cancelada' });
+    },
   });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const acao = selectedNF ? 'atualizar' : 'criar';
-    if (!window.confirm(`Confirmar ${acao} esta Nota Fiscal?`)) {
+  /** @param {import('react').FormEvent<HTMLFormElement>} event */
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!window.confirm(`Confirmar ${selectedNF ? 'atualizar' : 'criar'} esta Nota Fiscal?`)) {
       await auditFiscalComercial('nota_fiscal_salvar_cancelado', { motivo: 'confirmacao_cancelada', nota_id: selectedNF?.id || null }, false);
       return;
     }
-    const payload = withFiscalContext(sanitizeOnWrite({
-      ...formData,
-      cliente_fornecedor: sanitizeFiscalText(formData.cliente_fornecedor),
-      numero: sanitizeFiscalText(formData.numero),
-      serie: sanitizeFiscalText(formData.serie),
-      observacoes: sanitizeFiscalText(formData.observacoes),
-    }));
-    if (selectedNF) { // Changed from editingNota
-      updateMutation.mutate({ id: selectedNF.id, data: payload }); // Changed from editingNota
-    } else {
-      createMutation.mutate(payload);
-    }
+    const payload = /** @type {NotaFiscalTabRecord} */ (sanitizeOnWrite({ ...formData, cliente_fornecedor: sanitizeFiscalText(formData.cliente_fornecedor), numero: sanitizeFiscalText(formData.numero), serie: sanitizeFiscalText(formData.serie), observacoes: sanitizeFiscalText(formData.observacoes) }));
+    if (selectedNF?.id) updateMutation.mutate({ id: selectedNF.id, data: payload });
+    else createMutation.mutate(payload);
   };
+
+  /** @param {NotaFiscalTabRecord} nota */
   const handleEdit = async (nota) => {
-    if (!contextoValido || !canEditNota) {
-      await auditFiscalComercial('nota_fiscal_editar_bloqueada', { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada', nota_id: nota?.id, numero: nota?.numero }, false);
-      toast({ title: !contextoValido ? 'Selecione grupo ou empresa antes de editar' : 'Sem permissao para editar NF-e', variant: 'destructive' });
+    if (!contextoValido || !canEditNota || !notaMatchesFiscalScope(nota, scopeInput)) {
+      await auditFiscalComercial('nota_fiscal_editar_bloqueada', { motivo: 'contexto_escopo_ou_permissao', nota_id: nota?.id }, false);
+      toast({ title: 'Sem contexto, escopo ou permissao para editar NF-e', variant: 'destructive' });
       return;
     }
-    await auditFiscalComercial('nota_fiscal_edicao_aberta', { nota_id: nota?.id, numero: nota?.numero });
-    setSelectedNF(nota); // Changed from setEditingNota
+    await auditFiscalComercial('nota_fiscal_edicao_aberta', { nota_id: nota.id, empresa_id: nota.empresa_id });
+    setSelectedNF(nota);
     setFormData(nota);
     setIsDialogOpen(true);
   };
 
-  const resetForm = () => {
-    setFormData({
-      tipo: "NF-e (Saída)",
-      cliente_fornecedor: "",
-      numero: "",
-      serie: "1",
-      data_emissao: new Date().toISOString().split('T')[0],
-      valor_produtos: 0,
-      valor_total: 0,
-      observacoes: ""
-    });
+  const closeForm = () => {
+    setIsDialogOpen(false);
+    setSelectedNF(null);
+    setFormData(createInitialNotaFiscalForm());
   };
 
+  /** @param {NotaFiscalTabRecord} nfe */
   const handleCancelarNFe = (nfe) => {
-    const motivo = prompt("Digite o motivo do cancelamento:");
+    const motivo = window.prompt('Digite o motivo do cancelamento:');
     if (!motivo) return;
-    if (!window.confirm(`Confirmar cancelamento da NF-e ${nfe.numero || ''}?`)) {
-      auditFiscalComercial('nota_fiscal_cancelamento_cancelado', { motivo: 'confirmacao_cancelada', nota_id: nfe.id, numero: nfe.numero }, false);
-      return;
-    }
-
     if (motivo.length < 15) {
-      toast({
-        title: "⚠️ Motivo muito curto",
-        description: "O motivo deve ter pelo menos 15 caracteres",
-        variant: "destructive"
-      });
+      toast({ title: 'Motivo muito curto', description: 'O motivo deve ter pelo menos 15 caracteres', variant: 'destructive' });
       return;
     }
-
-    cancelarNFeMutation.mutate({ nfe, motivo });
+    if (window.confirm(`Confirmar cancelamento da NF-e ${nfe.numero || ''}?`)) cancelarNFeMutation.mutate({ nfe, motivo });
+    else void auditFiscalComercial('nota_fiscal_cancelamento_cancelado', { motivo: 'confirmacao_cancelada', nota_id: nfe.id, empresa_id: nfe.empresa_id }, false);
   };
 
+  /** @param {NotaFiscalTabRecord} nfe */
   const handleEnviarNFe = (nfe) => {
-    if (!window.confirm(`Confirmar envio da NF-e ${nfe.numero || ''}?`)) {
-      auditFiscalComercial('nota_fiscal_envio_cancelado', { motivo: 'confirmacao_cancelada', nota_id: nfe.id, numero: nfe.numero }, false);
-      return;
-    }
-    enviarNFeMutation.mutate(nfe);
+    if (window.confirm(`Confirmar envio da NF-e ${nfe.numero || ''}?`)) enviarNFeMutation.mutate(nfe);
+    else void auditFiscalComercial('nota_fiscal_envio_cancelado', { motivo: 'confirmacao_cancelada', nota_id: nfe.id, empresa_id: nfe.empresa_id }, false);
   };
 
   const fecharDetalhesSeguro = async () => {
-    await auditFiscalComercial('nota_fiscal_detalhes_fechados', { nota_id: viewingDetails?.id, numero: viewingDetails?.numero });
+    await auditFiscalComercial('nota_fiscal_detalhes_fechados', { nota_id: viewingDetails?.id, empresa_id: viewingDetails?.empresa_id });
     setViewingDetails(null);
   };
 
-  const filteredNotas = notasList.filter(n => {
-    const searchLower = searchTerm.toLowerCase();
-    const matchSearch = n.cliente_fornecedor?.toLowerCase().includes(searchLower) ||
-                       n.numero?.toString().includes(searchLower) ||
-                       n.serie?.toString().includes(searchLower) ||
-                       n.chave_acesso?.includes(searchLower) ||
-                       n.protocolo_autorizacao?.includes(searchLower) ||
-                       n.tipo?.toLowerCase().includes(searchLower) ||
-                       n.status?.toLowerCase().includes(searchLower) ||
-                       n.natureza_operacao?.toLowerCase().includes(searchLower) ||
-                       n.cfop?.includes(searchLower) ||
-                       n.numero_pedido?.includes(searchLower) ||
-                       n.cliente_cpf_cnpj?.includes(searchLower) ||
-                       n.observacoes?.toLowerCase().includes(searchLower);
-    const matchStatus = statusFilter === "todas" || n.status === statusFilter;
-    const matchTipo = tipoFilter === "todas" || n.tipo === tipoFilter;
-    return matchSearch && matchStatus && matchTipo;
-  });
-
-  const totalAutorizada = notasList.filter(n => n.status === "Autorizada").reduce((sum, n) => sum + (n.valor_total || 0), 0);
-  const totalCancelada = notasList.filter(n => n.status === "Cancelada").reduce((sum, n) => sum + (n.valor_total || 0), 0);
-
-  return (
-    <div className="w-full h-full space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-0 shadow-md">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Total Emitidas</p>
-                <p className="text-2xl font-bold text-slate-900">{notasFiscais.length}</p>
-              </div>
-              <FileText className="w-8 h-8 text-slate-400" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-md bg-green-50">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-green-700">Autorizadas</p>
-                <p className="text-2xl font-bold text-green-900">
-                  R$ {totalAutorizada.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </p>
-              </div>
-              <FileText className="w-8 h-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-md bg-red-50">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-red-700">Canceladas</p>
-                <p className="text-2xl font-bold text-red-900">
-                  R$ {totalCancelada.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </p>
-              </div>
-              <FileText className="w-8 h-8 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="border-0 shadow-md">
-        <CardContent className="p-6">
-          <div className="flex gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
-              <Input
-                placeholder="Buscar por cliente, número, série, chave, CPF/CNPJ, tipo, pedido..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}> {/* Changed from selectedStatus */}
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todas">Todos os Status</SelectItem>
-                <SelectItem value="Autorizada">Autorizada</SelectItem>
-                <SelectItem value="Cancelada">Cancelada</SelectItem>
-                <SelectItem value="Denegada">Denegada</SelectItem>
-                <SelectItem value="Pendente">Pendente</SelectItem>
-                <SelectItem value="Erro">Erro</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={tipoFilter} onValueChange={setTipoFilter}> {/* Added tipoFilter */}
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todas">Todos os Tipos</SelectItem>
-                <SelectItem value="NF-e (Saída)">NF-e (Saída)</SelectItem>
-                <SelectItem value="NF-e (Entrada)">NF-e (Entrada)</SelectItem>
-                <SelectItem value="NFS-e">NFS-e</SelectItem>
-                <SelectItem value="CT-e">CT-e</SelectItem>
-              </SelectContent>
-            </Select>
-            {onCreateNFe && canCreateNota && contextoValido && empresaId && (
-              <Button 
-                className="bg-blue-600 hover:bg-blue-700"
-                data-permission="Fiscal.NotaFiscal.criar"
-                data-action="Fiscal.NotaFiscal.criar"
-                data-context-required="true"
-                data-sensitive="true"
-                onClick={criarNFeExternaSeguro}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Nova NF-e
-              </Button>
-            )}
-            <Dialog open={isDialogOpen} onOpenChange={(open) => {
-              setIsDialogOpen(open);
-              if (!open) {
-                setSelectedNF(null);
-                resetForm();
-              }
-            }}>
-              <DialogTrigger asChild>
-                {!onCreateNFe && canCreateNota && (
-                  <Button className="bg-blue-600 hover:bg-blue-700" data-permission="Fiscal.NotaFiscal.criar" data-action="Fiscal.NotaFiscal.criar_rapido" data-context-required="true" data-sensitive="true" disabled={!contextoValido || !empresaId}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Nova NF-e (Rápido)
-                  </Button>
-                )}
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>{selectedNF ? 'Editar' : 'Nova'} Nota Fiscal</DialogTitle> {/* Changed from editingNota */}
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <Label>Tipo *</Label>
-                    <Select
-                      value={formData.tipo}
-                      onValueChange={(value) => setFormData({ ...formData, tipo: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o tipo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="NF-e (Saída)">NF-e (Saída)</SelectItem>
-                        <SelectItem value="NF-e (Entrada)">NF-e (Entrada)</SelectItem>
-                        <SelectItem value="NFS-e">NFS-e</SelectItem>
-                        <SelectItem value="CT-e">CT-e</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Cliente/Fornecedor *</Label>
-                    <Input
-                      value={formData.cliente_fornecedor}
-                      onChange={(e) => setFormData({ ...formData, cliente_fornecedor: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Número *</Label>
-                      <Input
-                        value={formData.numero}
-                        onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label>Série *</Label>
-                      <Input
-                        value={formData.serie}
-                        onChange={(e) => setFormData({ ...formData, serie: e.target.value })}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Data de Emissão *</Label>
-                      <Input
-                        type="date"
-                        value={formData.data_emissao}
-                        onChange={(e) => setFormData({ ...formData, data_emissao: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label>Valor Produtos *</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={formData.valor_produtos}
-                        onChange={(e) => setFormData({ ...formData, valor_produtos: parseFloat(e.target.value) })}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label>Valor Total *</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={formData.valor_total}
-                      onChange={(e) => setFormData({ ...formData, valor_total: parseFloat(e.target.value) })}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label>Observações</Label>
-                    <Textarea
-                      value={formData.observacoes}
-                      onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                    />
-                  </div>
-                  <div className="flex justify-end gap-3 pt-4">
-                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                      Cancelar
-                    </Button>
-                    <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending || !contextoValido || !empresaId || (selectedNF ? !canEditNota : !canCreateNota)} data-action={selectedNF ? "Fiscal.NotaFiscal.editar" : "Fiscal.NotaFiscal.criar"} data-permission={selectedNF ? "Fiscal.NotaFiscal.editar" : "Fiscal.NotaFiscal.criar"} data-context-required="true" data-sensitive="true">
-                      {selectedNF ? 'Atualizar' : 'Criar'} {/* Changed from editingNota */}
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-0 shadow-md">
-        <CardHeader className="bg-slate-50 border-b flex flex-row items-center justify-between">
-          <CardTitle>Notas Fiscais Emitidas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {selectedNotas.length > 0 && (
-            <Alert className="mb-3 border-blue-300 bg-blue-50">
-              <AlertDescription className="flex items-center justify-between">
-                <div className="text-blue-900 font-semibold">{selectedNotas.length} NF selecionada(s)</div>
-                <div className="flex gap-2">
-                  <ProtectedAction module="Fiscal" section="NotaFiscal" action="exportar" mode="disable">
-                    <Button variant="outline" data-action="Fiscal.NotaFiscal.exportar" data-permission="Fiscal.NotaFiscal.exportar" data-context-required="true" onClick={() => exportarNotasSeguro(filteredNotas.filter(n => selectedNotas.includes(n.id)))} disabled={!contextoValido || !canExportNota}>
-                      <Download className="w-4 h-4 mr-2" /> Exportar CSV
-                    </Button>
-                  </ProtectedAction>
-                  <Button variant="ghost" onClick={() => setSelectedNotas([])}>Limpar Seleção</Button>
-                </div>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* DataTable padronizado com backend sort/paginação */}
-          <ERPDataTable
-            columns={[
-              { key: 'numero', label: 'Número', render: (n) => <span className="font-medium">{n.numero}</span> },
-              { key: 'serie', label: 'Série' },
-              { key: 'tipo', label: 'Tipo' },
-              { key: 'cliente_fornecedor', label: 'Cliente/Fornecedor' },
-              { key: 'data_emissao', label: 'Data Emissão', render: (n) => new Date(n.data_emissao).toLocaleDateString('pt-BR') },
-              { key: 'valor_total', label: 'Valor Total', isNumeric: true, render: (n) => `R$ ${Number(n.valor_total||0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` },
-              { key: 'status', label: 'Status', render: (n) => (
-                <Badge className={
-                  n.status === 'Autorizada' ? 'bg-green-100 text-green-700' :
-                  n.status === 'Cancelada' ? 'bg-red-100 text-red-700' :
-                  n.status === 'Denegada' ? 'bg-gray-100 text-gray-700' :
-                  n.status === 'Pendente' ? 'bg-yellow-100 text-yellow-700' :
-                  'bg-orange-100 text-orange-700'
-                }>
-                  {n.status}
-                </Badge>
-              ) },
-              { key: 'actions', label: 'Ações', render: (nota) => (
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" data-permission="Fiscal.NotaFiscal.visualizar" onClick={() => visualizarNotaSeguro(nota)} disabled={!contextoValido || !canViewNota} title="Ver Detalhes" className="h-8 px-2">
-                    <Eye className="w-3 h-3 mr-1" /> <span className="text-xs">Ver</span>
-                  </Button>
-                  <ProtectedAction module="Fiscal" section="NotaFiscal" action="editar" mode="disable">
-                    <Button variant="ghost" size="sm" data-permission="Fiscal.NotaFiscal.editar" data-action="Fiscal.NotaFiscal.editar" data-context-required="true" data-sensitive="true" onClick={() => handleEdit(nota)} disabled={!contextoValido || !canEditNota} title="Editar NF-e" className="h-8 px-2 text-amber-600">
-                      <Edit className="w-3 h-3 mr-1" /> <span className="text-xs">Editar</span>
-                    </Button>
-                  </ProtectedAction>
-                  <Button variant="ghost" size="sm" data-permission="Fiscal.NotaFiscal.imprimir" onClick={() => imprimirDanfeSeguro(nota)} disabled={!contextoValido || !canPrintNota} title="Imprimir DANFE" className="h-8 px-2 text-slate-600">
-                    <Printer className="w-3 h-3 mr-1" /> <span className="text-xs">Imprimir</span>
-                  </Button>
-                  {nota.danfe_url && (
-                    <Button variant="ghost" size="sm" data-permission="Fiscal.NotaFiscal.baixar_pdf" onClick={() => baixarDanfeSeguro(nota)} disabled={!contextoValido || !canDownloadDanfe} title="Baixar DANFE" className="h-8 px-2 text-blue-600">
-                      <Download className="w-3 h-3 mr-1" /> <span className="text-xs">PDF</span>
-                    </Button>
-                  )}
-                  {nota.status === 'Pendente' && canSendNota && (
-                    <Button variant="ghost" size="sm" title="Enviar NF-e" className="h-8 px-2 text-green-600" data-permission="Fiscal.NotaFiscal.enviar" data-action="Fiscal.NotaFiscal.enviar" data-context-required="true" data-sensitive="true" onClick={() => handleEnviarNFe(nota)} disabled={!contextoValido || !canSendNota || enviarNFeMutation.isPending}>
-                      <Send className="w-3 h-3 mr-1" /> <span className="text-xs">Enviar</span>
-                    </Button>
-                  )}
-                  {nota.status === 'Autorizada' && (
-                    <ProtectedAction module="Fiscal" section="NotaFiscal" action="cancelar" mode="disable">
-                      <Button variant="ghost" size="sm" onClick={() => handleCancelarNFe(nota)} disabled={!contextoValido || !canCancelNota || cancelarNFeMutation.isPending} className="h-8 px-2 text-red-600" title="Cancelar NF-e" data-action="Fiscal.NotaFiscal.cancelar" data-permission="Fiscal.NotaFiscal.cancelar" data-context-required="true" data-sensitive="true">
-                        <XCircle className="w-3 h-3 mr-1" /> <span className="text-xs">Cancelar</span>
-                      </Button>
-                    </ProtectedAction>
-                  )}
-                </div>
-              ) }
-            ]}
-            data={filteredNotas}
-            entityName="NotaFiscal"
-            sortField={sortField}
-            sortDirection={sortDirection}
-            onSortChange={(sf, sd) => { setSortField(sf); setSortDirection(sd); }}
-            selectedIds={selectedNotas}
-            allSelected={selectedNotas.length === filteredNotas.length && filteredNotas.length > 0}
-            onToggleSelectAll={() => {
-              const all = selectedNotas.length === filteredNotas.length && filteredNotas.length > 0;
-              setSelectedNotas(all ? [] : filteredNotas.map(n=>n.id));
-            }}
-            onToggleItem={(id) => toggleNota(id)}
-            permission="Fiscal.NotaFiscal.visualizar"
-            page={page}
-            pageSize={pageSize}
-            totalItems={page * pageSize + (notasBackend.length < pageSize ? 0 : 1)}
-            onPageChange={(p) => setPage(p)}
-            onPageSizeChange={(n) => { setPageSize(n); setPage(1); }}
-          />
-
-{/* paginação integrada ao ERPDataTable */}
-
-          {filteredNotas.length === 0 && (
-            <div className="text-center py-8 text-slate-500">
-              <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p>Nenhuma nota encontrada</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {viewingDetails && (
-        <Dialog open={!!viewingDetails} onOpenChange={(open) => { if (!open) fecharDetalhesSeguro(); }}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>📄 Detalhes NF-e {viewingDetails.numero}/{viewingDetails.serie}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs text-slate-600">Cliente/Fornecedor</Label>
-                  <p className="font-semibold">{viewingDetails.cliente_fornecedor}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-slate-600">Status</Label>
-                  <Badge className={
-                    viewingDetails.status === 'Autorizada' ? 'bg-green-600' :
-                    viewingDetails.status === 'Cancelada' ? 'bg-red-600' : 'bg-yellow-600'
-                  }>
-                    {viewingDetails.status}
-                  </Badge>
-                </div>
-                <div>
-                  <Label className="text-xs text-slate-600">Chave de Acesso</Label>
-                  <p className="font-mono text-xs">{viewingDetails.chave_acesso || '-'}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-slate-600">Protocolo</Label>
-                  <p className="font-mono text-xs">{viewingDetails.protocolo_autorizacao || '-'}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-slate-600">Valor Produtos</Label>
-                  <p className="text-lg font-bold text-green-600">
-                    R$ {viewingDetails.valor_produtos?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-xs text-slate-600">Valor Total</Label>
-                  <p className="text-lg font-bold text-blue-600">
-                    R$ {viewingDetails.valor_total?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-              </div>
-              {viewingDetails.observacoes && (
-                <div>
-                  <Label className="text-xs text-slate-600">Observações</Label>
-                  <p className="text-sm p-3 bg-slate-50 rounded">{viewingDetails.observacoes}</p>
-                </div>
-              )}
-              <div className="flex gap-2 pt-4">
-                {viewingDetails.danfe_url && (
-                  <Button onClick={() => baixarDanfeSeguro(viewingDetails)} disabled={!contextoValido || !canDownloadDanfe}>
-                    <Download className="w-4 h-4 mr-2" />
-                    Baixar DANFE
-                  </Button>
-                )}
-                <Button variant="outline" onClick={fecharDetalhesSeguro}>
-                  Fechar
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
-    </div>
-  );
+  return <NotasFiscaisTabView
+    notas={filteredNotas} totals={totals} searchTerm={searchTerm} statusFilter={statusFilter} tipoFilter={tipoFilter}
+    setSearchTerm={setSearchTerm} setStatusFilter={setStatusFilter} setTipoFilter={setTipoFilter}
+    contextoValido={contextoValido} empresaId={empresaId} canViewNota={canViewNota} canCreateNota={canCreateNota}
+    canEditNota={canEditNota} canCancelNota={canCancelNota} canExportNota={canExportNota} canPrintNota={canPrintNota}
+    canDownloadDanfe={canDownloadDanfe} canSendNota={canSendNota} onCreateNFe={onCreateNFe ? criarNFeExternaSeguro : null}
+    isDialogOpen={isDialogOpen} onDialogOpenChange={(open) => open ? setIsDialogOpen(true) : closeForm()}
+    selectedNF={selectedNF} formData={formData} setFormData={setFormData} onSubmit={handleSubmit}
+    isSaving={createMutation.isPending || updateMutation.isPending} selectedNotas={selectedNotas} setSelectedNotas={setSelectedNotas}
+    onExport={exportarNotasSeguro} onView={visualizarNotaSeguro} onEdit={handleEdit} onPrint={imprimirDanfeSeguro}
+    onDownload={baixarDanfeSeguro} onSend={handleEnviarNFe} onCancelNFe={handleCancelarNFe}
+    sending={enviarNFeMutation.isPending} cancelling={cancelarNFeMutation.isPending}
+    viewingDetails={viewingDetails} onCloseDetails={fecharDetalhesSeguro}
+    sortField={sortField} sortDirection={sortDirection} onSortChange={(field, direction) => { setSortField(field); setSortDirection(direction); }}
+    page={page} pageSize={pageSize} totalItems={page * pageSize + (notasBackend.length < pageSize ? 0 : 1)}
+    onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+  />;
 }
