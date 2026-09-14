@@ -8241,5 +8241,5 @@ Checklist inicial:
 - Validacoes: testes focados passaram 31/31; suite completa passou 442/442; `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram. O typecheck global continua com passivo anterior amplo, mas o filtro comprovou zero erro nos arquivos de runtime deste lote.
 - Validacao visual: o ERP permaneceu autenticado e o modulo compilou no navegador; a central nao ficou acessivel no snapshot local atual porque a pagina Comercial nao exibiu seus modulos, sem erro novo relacionado ao painel nos logs.
 - Infraestrutura legada: `MSSQL$ERPZLEGACY` e `SQLAgent$ERPZLEGACY` terminaram `Stopped`/`Manual`; `SQLBrowser` terminou `Stopped`/`Disabled`.
-- Commit de implementacao: pendente neste registro.
+- Commit de implementacao: `ec9528ce` (`Valida manifesto fiscal antes do staging`).
 - Proximo passo obrigatorio: integrar ao backend existente uma verificacao do vinculo entre os HMACs do manifesto e o Grupo/Empresa selecionados usando segredo mantido somente no servidor. Apenas depois dessa prova e de confirmacao humana separada criar exatamente tres envelopes idempotentes e bloqueados em `SolicitacaoAprovacao`, sem promover `NotaFiscal`.
