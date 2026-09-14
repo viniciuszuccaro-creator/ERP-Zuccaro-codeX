@@ -8093,5 +8093,5 @@ Checklist inicial:
 - Validacao de privacidade: tres envelopes validos, zero campo proibido de identificador fiscal nominal e todos os bloqueios ativos. O GitHub recebe somente este resumo sem dados reais.
 - Infraestrutura legada: `LEGACY_TID_EMP03` foi confirmado `READ_ONLY`; a consulta usou Shared Memory local. `MSSQL$ERPZLEGACY` e `SQLAgent$ERPZLEGACY` terminaram `Stopped`/`Manual`; `SQLBrowser` terminou `Stopped`/`Disabled`.
 - Escopo do repositorio: mudanca exclusivamente documental; testes de runtime sao dispensados. `git diff --check` permanece obrigatorio antes do commit.
-- Commit de implementacao: pendente neste registro.
+- Commit de implementacao: `c7c90d73` (`Registra dry-run fiscal em quarentena`).
 - Proximo passo obrigatorio: submeter os tres envelopes mascarados a homologacao humana no HD e registrar, por candidato, `PRESERVAR_SEM_VINCULO_PEDIDO` ou `AGUARDAR_VINCULO_PEDIDO`, com justificativa e responsavel distintos. Nao mover para staging, importar ou promover `NotaFiscal` sem essa decisao.
