@@ -6744,6 +6744,19 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A consulta usou somente loopback local e a mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: comparar somente por classificacao a linha fiscal adicional com suas linhas irmas quanto a unidade, valor unitario, natureza de operacao, assinatura tributaria e tipo do movimento de estoque. Nao exportar valores, aliquotas, codigos fiscais, textos ou identificadores e nao criar vinculo automatico.
 
+### Gate 18 - Assinaturas das linhas fiscais adicionais reconciliadas
+
+- As cinco linhas fiscais adicionais foram reconstruidas com o filtro de staging protegido e comparadas com suas linhas irmas em duas passagens identicas. Os resultados produziram o mesmo SHA-256 e reconciliaram exatamente os tres documentos bloqueados.
+- Nos cinco casos, todas as linhas irmas utilizam a mesma unidade e o mesmo valor unitario da linha adicional.
+- A natureza de operacao e a assinatura tributaria composta por aliquotas e classificacoes fiscais coincidem integralmente entre cada linha adicional e suas linhas irmas.
+- O tipo dos movimentos de estoque tambem coincide integralmente nos cinco casos. Nao foi encontrada diferenca estrutural comercial, fiscal, tributaria ou de movimentacao que caracterize a linha adicional como item de outra natureza.
+- A homogeneidade reforca que as linhas adicionais sao continuacoes do mesmo item fiscal, mas nao elimina o excesso ja comprovado da soma fiscal sobre as quantidades pedida e recebida. Portanto, a referencia ausente continua sem preenchimento automatico.
+- Nenhuma aliquota, codigo fiscal, unidade, valor, quantidade, identificador ou texto foi exportado. Nenhum pedido, item, movimento, documento fiscal, titulo, staging ou registro do ERP novo foi criado, alterado, remapeado, importado ou promovido.
+- O relatorio `legacy-purchase-orphan-fiscal-signature-reconciliation.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Os tres documentos e seus nove titulos, sendo quatro abertos e cinco marcados como baixados, permanecem bloqueados. `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A consulta usou somente loopback local e a mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: reconciliar somente por classificacao os totais dos tres documentos com a soma de todos os itens e com a soma sem as cinco linhas adicionais, verificando tambem a cobertura financeira ja vinculada. Nao exportar valores, documentos, fornecedores ou identificadores e nao liberar importacao.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
