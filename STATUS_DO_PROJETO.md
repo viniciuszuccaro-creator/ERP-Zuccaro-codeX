@@ -8272,3 +8272,18 @@ Checklist inicial:
 - Typecheck: o passivo global anterior permanece. Os componentes e a policy deste lote nao geraram erro; `localBase44Client.js` manteve os diagnosticos anteriores, com linhas apenas deslocadas pela nova guarda.
 - Commit de implementacao: `675e84b5` (`Conecta manifesto fiscal ao backend protegido`).
 - Proximo passo dependente de acesso: vincular este clone ao projeto Base44 oficial e autenticar o CLI, sem criar novo app. Depois configurar `MIGRATION_CONTEXT_HMAC_KEY` somente no ambiente servidor, implantar `solicitacoesAprovacao` e homologar a prova real. Ate la, nenhuma passagem para staging esta autorizada.
+
+## 2026-09-14 - Gate 0: arquitetura de producao PostgreSQL/Supabase
+
+- Objetivo: definir onde o ERP sera executado e armazenara dados reais antes de ampliar a dependencia do Base44 ou iniciar importacao operacional.
+- Decisao do proprietario: adotar PostgreSQL gerenciado no Supabase Pro, em regiao especifica de Sao Paulo, com Supabase Auth, Storage, frontend web em hospedagem gerenciada, dominio proprio e backups externos independentes.
+- Estruturas reutilizadas: `src/api/base44Client.js` permanece como fachada inicial dos consumidores; a transicao sera feita dentro dos contratos existentes, sem criar ERP, tela, cadastro ou modulo paralelo.
+- Inventario de impacto: 351 arquivos frontend importam o cliente central, 308 referenciam entidades, 65 referenciam funcoes e existem 71 diretorios de funcoes backend. O volume confirma migracao incremental, com compatibilidade e rollback, em vez de reescrita total.
+- Base44: passa a ser dependencia transitoria. O login CLI nao foi concluido, nenhum projeto foi criado ou vinculado e nenhum segredo foi configurado. Nenhum dado real do ERP antigo sera importado para a plataforma.
+- Seguranca: GitHub guardara somente codigo e contratos; banco, documentos, tokens e backups permanecem fora do repositorio. MFA administrativo, RLS fail-closed, ambientes separados e restauracao testada bloqueiam a producao.
+- Multiempresa/RBAC/auditoria: autenticacao, Grupo, Empresas e vinculos de acesso formam o primeiro lote de runtime. Toda tabela e operacao futura exigira escopo, permissao backend e trilha de auditoria antes/depois.
+- Runtime: nenhuma dependencia, entidade, funcao ou comportamento da aplicacao foi alterado neste lote. Dados locais, Base44 remoto, banco legado e HD externo nao foram acessados ou modificados.
+- Plano: `PLANO_GO_LIVE.md` recebeu destino, regras de transicao, ordem dos subgates e bloqueios obrigatorios para dados reais.
+- Validacao aplicavel: mudanca exclusivamente documental; `git diff --check` deve passar antes do commit. Testes de runtime sao dispensados conforme `AGENTS.md`.
+- Commit de implementacao: a registrar no fechamento deste lote.
+- Proximo passo dependente de usuario: criar ou autorizar uma organizacao Supabase sob titularidade da empresa e um projeto de desenvolvimento pago na regiao Sao Paulo. Nao criar homologacao/producao nem fornecer segredo em chat antes de definir propriedade, cobranca e recuperacao da conta.

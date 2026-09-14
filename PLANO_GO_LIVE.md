@@ -1133,3 +1133,44 @@ O ERP pode iniciar operação controlada quando todos os P0 abaixo estiverem hom
 - [ ] Plano de contingência definido.
 
 IA avançada, agentes, marketplaces completos, chatbot omnichannel e otimizações avançadas devem continuar sendo desenvolvidos, mas não devem atrasar a entrada controlada do núcleo quando os P0 estiverem aprovados.
+
+---
+
+# 26. ARQUITETURA DE PRODUCAO APROVADA
+
+Decisao aprovada em 2026-09-14 para evitar dependencia definitiva da infraestrutura Base44 e manter os dados operacionais sob uma plataforma PostgreSQL portavel.
+
+## Destino
+
+- PostgreSQL gerenciado no Supabase Pro, em regiao especifica de Sao Paulo.
+- Supabase Auth para contas individuais, sessao, recuperacao e MFA de perfis privilegiados.
+- Supabase Storage para documentos, com politicas por Grupo/Empresa e backup proprio dos objetos.
+- frontend web em hospedagem gerenciada, acessado por dominio proprio e HTTPS.
+- GitHub como fonte do codigo, nunca como armazenamento de banco, documentos ou segredos.
+- backup diario do provedor, exportacao logica automatizada e copia criptografada fora do provedor.
+
+## Transicao
+
+1. Base44 permanece somente como dependencia transitoria enquanto cada contrato existente e substituido e homologado.
+2. Nenhum novo fluxo deve aumentar o acoplamento direto ao Base44 quando puder reutilizar a fachada central existente.
+3. Nenhum dado real do ERP antigo sera importado para o Base44.
+4. `src/api/base44Client.js` e o ponto de compatibilidade inicial; a troca nao sera feita por reescrita total nem por modulo paralelo.
+5. Autenticacao e contexto Grupo/Empresa migram primeiro; depois Cadastros Gerais, operacoes, documentos e integracoes.
+6. Cada entidade migra com schema, RLS, RBAC backend, auditoria, idempotencia, reconciliacao e rollback comprovados.
+7. O modo local continua apenas para desenvolvimento e homologacao, nunca como banco definitivo de producao.
+
+## Ordem dos subgates
+
+- [x] Escolha da arquitetura e congelamento de novos dados reais no Base44.
+- [ ] Criar e proteger os ambientes Supabase de desenvolvimento, homologacao e producao.
+- [ ] Definir variaveis de ambiente sem segredos no frontend ou GitHub.
+- [ ] Implementar adaptador do provedor na fachada existente, preservando consumidores.
+- [ ] Migrar autenticacao, usuarios, Grupo, Empresas e vinculos RBAC.
+- [ ] Migrar Cadastros Gerais por contratos idempotentes.
+- [ ] Migrar os modulos operacionais na ordem P0.
+- [ ] Configurar Storage, backups externos, restauracao e monitoramento.
+- [ ] Homologar piloto, carga, seguranca, contingencia e virada.
+
+## Bloqueios de producao
+
+Antes de importar dados reais, devem existir projeto de producao pago, regiao confirmada, MFA administrativo, RLS fail-closed, backup externo testado, restauracao homologada e separacao entre desenvolvimento, homologacao e producao.
