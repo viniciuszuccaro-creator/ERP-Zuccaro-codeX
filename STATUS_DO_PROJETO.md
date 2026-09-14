@@ -6453,6 +6453,22 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: nos 1.280 excedentes `REVENDA` com unidade mestre igual, contar pedidos, materiais e repeticoes por material; testar se a razao fiscal/pedida e constante nas repeticoes e se coincide exatamente com `PESOBRUTO`, `PESOLIQUIDO` ou `PESOBARRA`. Nao exportar identificadores, razoes, pesos ou quantidades e nao inferir tolerancia.
 
+### Gate 18 - Variacao dos excedentes de revenda com unidade igual
+
+- Os 1.280 excedentes `REVENDA` com unidade mestre igual a pedido/nota foram analisados em duas passagens identicas com comparacao racional exata, sem divisao aproximada.
+- O universo abrange 315 pedidos, 275 materiais distintos e 1.280 pares pedido/material. Cada material aparece no maximo uma vez por pedido nesse recorte.
+- Sessenta e seis itens pertencem a materiais com uma unica ocorrencia. Entre os repetidos, 384 itens usam materiais com duas a cinco ocorrencias, 805 usam materiais com seis a 20 e 25 usam materiais com mais de 20 ocorrencias.
+- Todos os 1.214 itens de materiais repetidos ficaram na categoria `RAZAO_VARIAVEL`; nenhum material repetido manteve a mesma razao fiscal/pedida em todas as ocorrencias.
+- Em 1.272 itens, a razao fiscal/pedida nao coincide exatamente, em nenhuma direcao, com `PESOBRUTO`, `PESOLIQUIDO` ou `PESOBARRA` do cadastro mestre.
+- Somente oito itens, todos do codigo empresarial 3 na rota `Grupo CPA -> Empresa membro`, possuem uma coincidencia direta com exatamente um dos tres pesos. Essa minoria nao explica o padrao geral.
+- Existem 1.266 itens com material ativo e 14 com material inativo. O status nao foi alterado e inativos nao serao reativados automaticamente.
+- A variacao por ocorrencia dentro do mesmo material afasta fator fixo de conversao cadastral como explicacao dominante. Ela e compativel com variacao operacional de recebimento, mas isso nao foi assumido como causa sem evidencia adicional.
+- O relatorio `legacy-purchase-resale-equal-unit-ratio-classification.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum pedido, material, razao, peso, unidade, quantidade, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Nenhum item foi marcado como recebido, corrigido, convertido ou importado no ERP novo.
+- Situacao: os 1.280 excedentes permanecem `BLOCKED`; o schema e os pesos mestres nao fornecem regra automatica segura para transportar o excesso.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: classificar os 1.280 itens somente por familias semanticas de unidade (peso, contagem, comprimento/area/volume e outra), presenca de atributos de aco/bitola e existencia de peso no cabecalho fiscal; contar tambem relatorios com um ou varios itens. Nao exportar unidades, materiais, documentos, pesos ou quantidades e nao ratear peso de cabecalho.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
