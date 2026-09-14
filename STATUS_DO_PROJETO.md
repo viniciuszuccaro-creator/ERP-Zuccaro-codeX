@@ -6663,6 +6663,20 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: classificar somente por contagens os 18 titulos abertos por vencimento, evidencia de baixa posterior, empresa proprietaria e cobertura da chave idempotente. Manter os 18 titulos baixados apenas como historico e nao recalcular saldo ou autorizar importacao.
 
+### Gate 18 - Horizonte e trilha dos titulos abertos candidatos
+
+- Os 36 titulos dos dois pares candidatos foram reconstruidos e classificados em duas passagens identicas; os resultados produziram o mesmo SHA-256 e reconciliaram 18 abertos e 18 marcados como baixados.
+- O horizonte foi calculado contra o corte fixo do backup em 20/08/2026, usando a data Clarion legada. Todos os 18 titulos abertos estavam na faixa de 31 a 60 dias apos o corte; nao havia titulo vencido, sem vencimento ou em outra faixa.
+- Os 18 titulos abertos possuem chave idempotente completa e unica, sem campo obrigatorio ausente ou colisao pela assinatura empresa, relatorio, fornecedor, nota e sequencia.
+- Todos pertencem a uma unica empresa proprietaria mapeada e permanecem em rota permitida dentro do Grupo CPA. Nenhuma empresa externa ou sem alias aprovado foi encontrada.
+- Nenhum dos 18 titulos abertos possui ajuste vinculado por relatorio+sequencia ou lancamento em `ContasPagarCheque` pela assinatura fornecedor+nota+parcela. Nao foi encontrada evidencia downstream de baixa posterior.
+- A ausencia de evidencia de baixa nao prova que a obrigacao continue exigivel hoje; ela apenas preserva o estado aberto no corte do backup. Nenhuma data, valor ou saldo foi recalculado.
+- Os 18 titulos marcados como baixados permaneceram fora da analise de obrigacao aberta e continuam classificados somente como historico, sem tentativa de recriar pagamento.
+- O relatorio `legacy-purchase-open-title-horizon-evidence.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, chave, codigo, nome, documento, fornecedor, data individual, valor, TPS ou MDF/LDF integra o GitHub.
+- Nenhum fornecedor, pedido, documento fiscal, titulo, staging ou registro do ERP novo foi criado, alterado, baixado, importado ou promovido.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A consulta usou somente loopback local e a mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: comparar somente por classificacao igual, menor ou maior o total dos 36 titulos com o total fiscal dos 12 documentos, separando as parcelas abertas das baixadas e sem exportar valores, recalcular saldo ou autorizar importacao.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
