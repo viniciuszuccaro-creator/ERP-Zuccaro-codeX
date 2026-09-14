@@ -8399,5 +8399,5 @@ Checklist inicial:
 - Testes: focados passaram 8/8; suite completa passou 446/446. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; build manteve apenas o aviso conhecido de chunk grande.
 - Typecheck: arquivos do fluxo passaram de 16 diagnosticos para zero; o passivo global caiu de 2.090 para 2.074, reducao liquida exata de 16, e continua aberto sem ser mascarado.
 - Dados/infraestrutura: nenhum usuario real foi alterado, nenhum backend Base44 remoto, banco legado ou HD externo foi acessado ou modificado.
-- Commit de implementacao: `PENDENTE_COMMIT`.
+- Commit de implementacao: `c7f6ac92` (`Refatora gestao avancada de usuarios`).
 - Proximo passo P0: refatorar e tipar `ArmadoPadraoTab.jsx`, que possui 805 linhas e 65 diagnosticos, em lote separado.
