@@ -6469,6 +6469,22 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: classificar os 1.280 itens somente por familias semanticas de unidade (peso, contagem, comprimento/area/volume e outra), presenca de atributos de aco/bitola e existencia de peso no cabecalho fiscal; contar tambem relatorios com um ou varios itens. Nao exportar unidades, materiais, documentos, pesos ou quantidades e nao ratear peso de cabecalho.
 
+### Gate 18 - Familias de unidade e composicao fiscal dos excedentes
+
+- Os 1.280 excedentes `REVENDA` com unidade mestre igual foram classificados em duas passagens identicas por familia semantica de unidade e composicao do relatorio fiscal.
+- A allowlist semantica separou 1.267 itens na familia `PESO` e 13 em `CONTAGEM`. Nao houve item nas familias de comprimento/area/volume ou outra.
+- A familia de peso abrange 876 itens do codigo empresarial 1, quatro do codigo 2 e 387 do codigo 3. Os 13 de contagem dividem-se em dois do codigo 1 e 11 do codigo 3.
+- Nenhum dos 1.280 materiais possui `TIPOACO` ou `BITOLA` efetivamente preenchidos nesse recorte. Esses atributos nao ajudam a explicar ou validar o excesso.
+- O campo `PESO` do cabecalho fiscal esta zerado nos 1.280 itens. Nenhum rateio ou comparacao item/cabecalho pode ser realizado por esse campo.
+- Os itens pertencem a 723 relatorios fiscais distintos: 452 relatorios possuem um item, 187 possuem de dois a cinco, 83 possuem de seis a 20 e um possui mais de 20 itens.
+- No nivel dos itens, 452 excedentes estao em relatorios de item unico, 351 em relatorios de dois a cinco itens, 470 em relatorios de seis a 20 e sete no relatorio com mais de 20.
+- A existencia de 452 relatorios de item unico demonstra que o excesso nao depende de rateio entre varios itens. A concentracao em unidade de peso e compativel com quantidade efetivamente pesada, mas ainda nao comprova essa regra operacional.
+- O relatorio `legacy-purchase-resale-unit-family-classification.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhuma unidade, material, documento, peso, quantidade, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Nenhum item foi ajustado, convertido, marcado como recebido ou importado no ERP novo.
+- Situacao: os 1.267 itens de peso e os 13 de contagem continuam `BLOCKED`; nao existe atributo ou peso de cabecalho que autorize transportar o excesso automaticamente.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: classificar por contagens os 1.280 itens por ano do pedido, familia de unidade e faixas relativas de excesso, separando relatorios de item unico/multiplo. O objetivo e verificar persistencia temporal do padrao sem exportar datas completas, unidades, documentos, materiais, pesos ou quantidades.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
