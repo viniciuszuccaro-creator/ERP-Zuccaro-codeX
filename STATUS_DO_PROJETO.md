@@ -6757,6 +6757,19 @@ Checklist inicial:
 - A consulta usou somente loopback local e a mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: reconciliar somente por classificacao os totais dos tres documentos com a soma de todos os itens e com a soma sem as cinco linhas adicionais, verificando tambem a cobertura financeira ja vinculada. Nao exportar valores, documentos, fornecedores ou identificadores e nao liberar importacao.
 
+### Gate 18 - Totais dos documentos com linhas adicionais reconciliados
+
+- Os tres documentos, cinco linhas fiscais adicionais e nove titulos foram reconstruidos pelo mesmo filtro protegido e classificados em duas passagens identicas. Os resultados produziram o mesmo SHA-256 e reconciliaram integralmente o universo bloqueado.
+- Nos tres documentos, o valor de mercadorias do cabecalho coincide com a soma de todos os itens fiscais. Ao retirar as cinco linhas adicionais, a soma deixa de coincidir com o cabecalho nos tres documentos.
+- As linhas adicionais possuem contribuicao monetaria em todos os tres documentos. Portanto, elas integram o valor fiscal registrado e nao podem ser descartadas como linhas tecnicas sem efeito economico.
+- A soma simples do valor total dos itens difere do total da nota nos tres documentos, tanto com quanto sem as linhas adicionais. Essa diferenca exige reconciliar os componentes de cabecalho antes de concluir a composicao total.
+- A soma dos titulos financeiros pela assinatura estrita de relatorio, fornecedor fiscal e numero da nota coincide com o total da nota nos tres casos. Os nove titulos permanecem integralmente vinculados aos documentos.
+- A evidencia comprova a inclusao das linhas adicionais no valor de mercadorias e na obrigacao financeira consolidada, mas nao resolve a referencia ausente nem o excesso quantitativo em relacao ao pedido. Nenhum documento ou titulo foi liberado para migracao.
+- O relatorio `legacy-purchase-orphan-fiscal-total-reconciliation.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum valor, identificador, documento, fornecedor, quantidade, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Nenhum pedido, item, movimento, documento fiscal, titulo, staging ou registro do ERP novo foi criado, alterado, remapeado, importado ou promovido. `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: reconciliar somente por classificacao a diferenca entre o total da nota e a soma dos itens usando frete, desconto, IPI, substituicao tributaria, seguro, servicos e custos adicionais do cabecalho. Nao exportar valores, aliquotas, codigos fiscais ou identificadores e nao liberar importacao.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
