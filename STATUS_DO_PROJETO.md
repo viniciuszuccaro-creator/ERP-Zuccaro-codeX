@@ -6623,6 +6623,19 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: revisar somente por contagens a fila documental do fornecedor fiscal em quarentena e verificar se existe evidencia estrutural suficiente para classificar o motivo, sem exportar identificadores nem alterar staging. Se o motivo continuar ausente, registrar `BLOCKED` para homologacao humana desse par.
 
+### Gate 18 - Fornecedor fiscal bloqueado para homologacao humana
+
+- A fila protegida de revisao foi classificada em duas passagens identicas e os resultados produziram o mesmo SHA-256, sem exibir ou exportar codigos, nomes, documentos, enderecos ou e-mails.
+- O relatorio agregado anterior confirmou um unico par alvo na fila documental, relacionado a oito documentos fiscais e 24 titulos. Nenhum identificador foi reintroduzido no relatorio desta etapa.
+- A fila possui 271 registros, dos quais 244 sao documentais. Todos os 244 possuem motivo estrutural, acao requerida e estado de revisao preenchidos, mas nenhum possui decisao humana, justificativa ou autorizacao de importacao.
+- Como o relatorio anterior e deliberadamente agregado, nao existe evidencia individual segura para associar uma categoria de motivo ao fornecedor fiscal sem reexpor o identificador protegido. A categoria exata nao foi inferida por proximidade nem por contagem.
+- Uma reconsulta SQL auxiliar foi descartada com `SQLCMD_FAILED`; nenhum resultado parcial foi usado. As duas execucoes remanescentes encerraram e o servico retornou ao estado seguro.
+- Decisao: `BLOCKED_HOMOLOGACAO_HUMANA`. O fornecedor fiscal permanece em quarentena, o fornecedor do pedido permanece separado e nenhum mapeamento antigo -> novo pode ser aprovado automaticamente.
+- O relatorio `legacy-purchase-supplier-document-review-decision.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, codigo, nome, documento, fornecedor, valor, TPS ou MDF/LDF integra o GitHub.
+- Nenhum fornecedor, pedido, documento fiscal, titulo, staging ou registro do ERP novo foi criado, alterado, mesclado, importado ou promovido.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo dependente de usuario: homologar manualmente o fornecedor fiscal do par bloqueado na fila protegida, registrando decisao, justificativa e responsavel. Ate isso ocorrer, este par e seus oito documentos e 24 titulos permanecem fora da migracao.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
