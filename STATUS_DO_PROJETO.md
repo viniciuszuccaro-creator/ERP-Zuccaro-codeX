@@ -6424,6 +6424,20 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: cruzar somente os `CODIGOMATERIALBELGO` dos 14 candidatos com `CadastroMateriais` e contar existencia, `REVENDA`/nao revenda, situacao, igualdade da unidade referenciada com `UNIDADEBELGO`/pedido e reciprocidade do vinculo. Nao exportar codigos ou valores e nao autorizar conversao automaticamente.
 
+### Gate 18 - Validacao dos materiais externos referenciados
+
+- Os materiais apontados por `CODIGOMATERIALBELGO` nos 14 candidatos foram cruzados com a chave primaria de `CadastroMateriais` em duas passagens identicas, sem exportar codigos ou valores.
+- Os 14 itens abrangem oito materiais de origem distintos e oito pares origem/referencia distintos. Nenhum dos codigos referenciados corresponde a `CODIGOMATERIAL` existente no cadastro mestre.
+- Consequentemente, existem zero materiais referenciados internos distintos e os 14 contratos ficaram classificados como incompletos.
+- Nao foi possivel comprovar `REVENDA`, situacao, unidade de destino ou reciprocidade para nenhuma referencia, pois nao existe cadastro interno correspondente pela chave homologada.
+- O resultado confirma o bloqueio historico de `CODIGOMATERIALBELGO`: o campo representa referencia externa ou usa mestre nao localizado, e nao pode ser tratado como chave interna por similaridade.
+- A igualdade matematica por peso dos 14 itens continua registrada apenas como evidencia candidata; ela nao autoriza conversao sem o mestre externo e a direcao funcional homologada.
+- Nenhum fallback por descricao, referencia textual ou codigo aproximado foi aplicado. Nenhum produto, pedido, nota ou saldo foi alterado ou importado.
+- O relatorio `legacy-purchase-referenced-material-classification.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum codigo, unidade, peso, quantidade, material, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: os 14 candidatos ficam em quarentena por referencia externa sem mestre; os outros 50 de unidade divergente permanecem sem evidencia de conversao.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: encerrar os 64 itens `REVENDA` de unidade mestre divergente como bloqueados e voltar aos 1.280 excedentes `REVENDA` com unidade mestre igual. Inventariar somente metadados de campos relacionados a tolerancia, recebimento, saldo, ajuste e arredondamento em `PedidosCompra`, `PedidoCompraItens`, `NotasFiscaisEntradas` e `NotaFiscalEntradasItens`, sem consultar valores.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
