@@ -7,13 +7,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import ConciliacaoFiscalManifestPanel from "./ConciliacaoFiscalManifestPanel";
+import ConciliacaoManualWorkflowDialog from "./ConciliacaoManualWorkflowDialog";
 import {
   assertConciliacaoEvidenceFile,
   buildConciliacaoFinanceiraQueryKey,
@@ -180,7 +177,7 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
   });
 
   const evidenceAccessMutation = useMutation({
-    mutationFn: async ({ record, evidenceId }) => {
+    mutationFn: async (/** @type {{ record: Record<string, unknown>, evidenceId: string }} */ { record, evidenceId }) => {
       const response = await base44.functions.invoke("solicitacoesAprovacao", {
         action: "createManualReconciliationEvidenceAccessUrl",
         solicitacao_id: record.id,
@@ -248,6 +245,14 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
           A aprovação classifica a pendência, mas mantém o registro bloqueado no staging. Nenhum registro operacional é criado ou promovido nesta etapa.
         </AlertDescription>
       </Alert>
+
+      {domain === "fiscal" && (
+        <ConciliacaoFiscalManifestPanel
+          canValidate={canReview}
+          validContext={validContext}
+          permission={reconcilePermission}
+        />
+      )}
 
       <Card>
         <CardHeader className="border-b bg-slate-50">
@@ -365,81 +370,23 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
         </CardContent>
       </Card>
 
-      <Dialog open={Boolean(dialogState)} onOpenChange={(open) => !open && closeDialog()}>
-        <DialogContent className="max-w-xl">
-          <DialogHeader>
-            <DialogTitle>
-              {dialogState?.action === "attachManualReconciliationEvidence" && "Anexar evidência"}
-              {dialogState?.action === "reviewManualReconciliation" && `Revisão ${config.domainLabel}`}
-              {dialogState?.action === "approveManualReconciliation" && "Aprovação final"}
-            </DialogTitle>
-          </DialogHeader>
-          {dialogState?.action === "attachManualReconciliationEvidence" ? (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor={`evidencia-${domain}`}>Arquivo comprobatório</Label>
-                <input
-                  id={`evidencia-${domain}`}
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,.webp"
-                  onChange={(event) => setEvidenceFile(event.target.files?.[0] || null)}
-                  className="block w-full text-sm"
-                  data-permission={reconcilePermission}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="descricao-evidencia">Descrição</Label>
-                <Textarea id="descricao-evidencia" value={justification} onChange={(event) => setJustification(event.target.value)} maxLength={500} />
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Decisão {config.domainLabel}</Label>
-                <Select value={decision} onValueChange={setDecision}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {config.decisions.map((item) => (
-                      <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="justificativa-conciliacao">Justificativa</Label>
-                <Textarea id="justificativa-conciliacao" value={justification} onChange={(event) => setJustification(event.target.value)} maxLength={1000} />
-              </div>
-              {dialogState?.action === "approveManualReconciliation" && (
-                <div className="flex items-start gap-2 rounded border p-3">
-                  <Checkbox
-                    id="confirmar-conciliacao"
-                    checked={humanConfirmed}
-                    onCheckedChange={(checked) => setHumanConfirmed(checked === true)}
-                    data-permission={approvePermission}
-                    data-action="conciliacao-confirmacao-humana"
-                  />
-                  <Label htmlFor="confirmar-conciliacao" className="leading-5">
-                    Confirmo que revisei a evidência e que esta decisão não promove nenhum registro operacional.
-                  </Label>
-                </div>
-              )}
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={closeDialog} disabled={workflowMutation.isPending}>Cancelar</Button>
-            <Button
-              onClick={() => workflowMutation.mutate()}
-              disabled={workflowMutation.isPending || (dialogState?.action === "approveManualReconciliation" && !humanConfirmed)}
-              data-permission={dialogState?.action === "approveManualReconciliation" ? approvePermission : reconcilePermission}
-              data-action="conciliacao-confirmar-transicao"
-              data-sensitive="true"
-            >
-              {workflowMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Confirmar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConciliacaoManualWorkflowDialog
+        dialogState={dialogState}
+        domain={domain}
+        config={config}
+        decision={decision}
+        onDecisionChange={setDecision}
+        justification={justification}
+        onJustificationChange={setJustification}
+        onEvidenceChange={setEvidenceFile}
+        humanConfirmed={humanConfirmed}
+        onHumanConfirmedChange={setHumanConfirmed}
+        reconcilePermission={reconcilePermission}
+        approvePermission={approvePermission}
+        isPending={workflowMutation.isPending}
+        onClose={closeDialog}
+        onConfirm={() => workflowMutation.mutate()}
+      />
     </div>
   );
 }

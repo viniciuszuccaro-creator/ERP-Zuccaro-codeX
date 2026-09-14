@@ -8228,3 +8228,18 @@ Checklist inicial:
 - Infraestrutura legada: `MSSQL$ERPZLEGACY` e `SQLAgent$ERPZLEGACY` terminaram `Stopped`/`Manual`; `SQLBrowser` terminou `Stopped`/`Disabled`.
 - Commit de implementacao: `b0004bb6` (`Corrige prerequisitos do staging fiscal local`).
 - Proximo passo obrigatorio: refatorar a aba fiscal existente, atualmente acima de 400 linhas, e integrar nela um controle protegido para selecionar e validar o manifesto de transicao. Somente depois, em execucao controlada separada, criar exatamente tres envelopes bloqueados em `SolicitacaoAprovacao`, sem promover `NotaFiscal`.
+
+## 2026-09-14 - Gate 18: validador protegido do manifesto fiscal
+
+- Objetivo: integrar na ramificacao fiscal existente um controle local e protegido para selecionar e validar o manifesto de transicao antes de qualquer persistencia.
+- Refatoracao: `ConciliacaoFinanceiraAprovacoesTab.jsx` foi reduzido de 445 para 392 linhas. O dialogo de workflow foi extraido para `ConciliacaoManualWorkflowDialog.jsx` e o novo painel fiscal para `ConciliacaoFiscalManifestPanel.jsx`, ambos consumidos somente pela central existente.
+- Contrato: `conciliacaoFinanceiraUiPolicy.js` agora limita o arquivo a JSON de 256 KB, aplica allowlist estrita de campos, exige hashes/HMACs validos e unicos e aceita apenas `NotaFiscal -> SolicitacaoAprovacao` com staging bloqueado.
+- Falha fechada: campo extra como `empresa_id`, referencia duplicada, quantidade divergente, destino diferente, autorizacao de importacao ou promocao e qualquer candidato com `transition_authorized=true` sao recusados.
+- RBAC e multiempresa: o painel existe somente no dominio fiscal, exige contexto completo de Empresa e permissao `Fiscal.Migracao.conciliar`; perfil apenas aprovador nao recebe o seletor de arquivo.
+- Seguranca: a validacao ocorre no navegador, nao envia o arquivo, nao chama backend e nao cria entidade. O resumo visual contem somente lote, quantidade e resultado; HMACs, IDs e dados fiscais nao sao exibidos.
+- Manifesto real: `FISCAL-DRYRUN-001` foi aceito pela policy com 3 candidatos, `operationalPromotionAllowed=false` e verificacao canonica ainda obrigatoria. Nenhum arquivo saiu da quarentena e nenhum registro foi persistido.
+- Validacoes: testes focados passaram 31/31; suite completa passou 442/442; `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram. O typecheck global continua com passivo anterior amplo, mas o filtro comprovou zero erro nos arquivos de runtime deste lote.
+- Validacao visual: o ERP permaneceu autenticado e o modulo compilou no navegador; a central nao ficou acessivel no snapshot local atual porque a pagina Comercial nao exibiu seus modulos, sem erro novo relacionado ao painel nos logs.
+- Infraestrutura legada: `MSSQL$ERPZLEGACY` e `SQLAgent$ERPZLEGACY` terminaram `Stopped`/`Manual`; `SQLBrowser` terminou `Stopped`/`Disabled`.
+- Commit de implementacao: pendente neste registro.
+- Proximo passo obrigatorio: integrar ao backend existente uma verificacao do vinculo entre os HMACs do manifesto e o Grupo/Empresa selecionados usando segredo mantido somente no servidor. Apenas depois dessa prova e de confirmacao humana separada criar exatamente tres envelopes idempotentes e bloqueados em `SolicitacaoAprovacao`, sem promover `NotaFiscal`.

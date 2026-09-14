@@ -9,10 +9,13 @@ import {
 } from "../src/components/lib/migracaoErpPolicy.js";
 import {
   assertConciliacaoEvidenceFile,
+  assertFiscalStagingManifest,
+  assertFiscalStagingManifestFile,
   buildConciliacaoFinanceiraQueryKey,
   calculateConciliacaoEvidenceSha256,
   FISCAL_MANUAL_RECONCILIATION_TYPE,
   filterConciliacoesByScope,
+  readFiscalStagingManifest,
   resolveConciliacaoCentralTabs,
   resolveConciliacaoFinanceiraAccess,
   resolveConciliacaoRowActions,
@@ -44,6 +47,52 @@ const makeRequest = (empresaId, legacyCode = "titulo-1", entidade = "ContaPagar"
     }),
   };
 };
+const makeFiscalManifest = () => ({
+  schema_version: "1.0",
+  batch_id: "FISCAL-DRYRUN-001",
+  classification: "READY_FOR_EXPLICIT_STAGING_AUTHORIZATION",
+  candidate_count: 3,
+  source_stage: "quarantine",
+  requested_target_stage: "staging",
+  group_context_ref_hmac: "1".repeat(64),
+  empresa_context_ref_hmac: "2".repeat(64),
+  membership_ref_hmac: "3".repeat(64),
+  context_resolution: "CANONICAL_IDS_RESOLVED_ONLY_IN_MEMORY",
+  staging_entity: "SolicitacaoAprovacao",
+  operational_entity: "NotaFiscal",
+  source_sha256: {
+    envelopes: "A".repeat(64),
+    human_review: "B".repeat(64),
+    canonical_context_map: "C".repeat(64),
+    canonical_context_validation: "D".repeat(64),
+  },
+  candidates: ["4", "5", "6"].map((digit) => ({
+    candidate_ref_hmac: digit.repeat(64),
+    entity: "NotaFiscal",
+    reconciliation_type: FISCAL_MANUAL_RECONCILIATION_TYPE,
+    decision: "PRESERVAR_SEM_VINCULO_PEDIDO",
+    pedido_link_policy: "PRESERVE_NULL",
+    source_stage: "quarantine",
+    requested_target_stage: "staging",
+    staging_entity: "SolicitacaoAprovacao",
+    staging_operation: "manual_fiscal_reconciliation_staging",
+    homologation_status: "LOCAL_HOMOLOGATION_COMPLETE_IMPORT_BLOCKED",
+    production_reapproval_required: true,
+    import_authorized: false,
+    operational_promotion_allowed: false,
+    transition_authorized: false,
+  })),
+  controls: {
+    explicit_staging_authorization_required: true,
+    files_moved_to_staging: false,
+    backend_or_base44_called: false,
+    erp_persistence_performed: false,
+    import_authorized: false,
+    operational_promotion_allowed: false,
+    production_reapproval_required: true,
+    raw_canonical_ids_persisted: false,
+  },
+});
 
 test("evidencia valida MIME, tamanho, extensao e calcula SHA-256", async () => {
   const bytes = new TextEncoder().encode("abc");
@@ -77,6 +126,62 @@ test("Grupo CPA nao consulta conciliacao e empresas exigem contexto completo", (
   assert.equal(resolveConciliacaoFinanceiraAccess({
     contexto: "empresa", groupId: GROUP_ID, empresaId: "empresa-cpa",
   }).canView, false);
+});
+
+test("manifesto fiscal valida somente contrato bloqueado e sem IDs brutos", async () => {
+  const manifest = makeFiscalManifest();
+  assert.deepEqual(assertFiscalStagingManifest(manifest), {
+    batchId: "FISCAL-DRYRUN-001",
+    candidateCount: 3,
+    classification: "READY_FOR_EXPLICIT_STAGING_AUTHORIZATION",
+    operationalPromotionAllowed: false,
+    requiresCanonicalContextVerification: true,
+  });
+  const contents = JSON.stringify(manifest);
+  const file = {
+    name: "staging-transition-manifest.json",
+    size: new TextEncoder().encode(contents).byteLength,
+    type: "application/json",
+    text: async () => contents,
+  };
+  assert.deepEqual(assertFiscalStagingManifestFile(file), {
+    name: file.name, size: file.size, type: file.type,
+  });
+  assert.deepEqual(await readFiscalStagingManifest(file), assertFiscalStagingManifest(manifest));
+
+  assert.throws(
+    () => assertFiscalStagingManifest({ ...manifest, empresa_id: "empresa-cpa" }),
+    /campo não permitido: empresa_id/,
+  );
+  const { envelopes: omittedHash, ...incompleteSourceHashes } = manifest.source_sha256;
+  assert.equal(omittedHash, "A".repeat(64));
+  assert.throws(
+    () => assertFiscalStagingManifest({ ...manifest, source_sha256: incompleteSourceHashes }),
+    /campo obrigatório: envelopes/,
+  );
+  assert.throws(
+    () => assertFiscalStagingManifest({
+      ...manifest,
+      candidates: manifest.candidates.map((candidate, index) => (
+        index === 0 ? { ...candidate, transition_authorized: true } : candidate
+      )),
+    }),
+    /autorização ou destino incompatível/,
+  );
+  assert.throws(
+    () => assertFiscalStagingManifest({
+      ...manifest,
+      candidates: manifest.candidates.map((candidate) => ({
+        ...candidate,
+        candidate_ref_hmac: manifest.candidates[0].candidate_ref_hmac,
+      })),
+    }),
+    /inválida ou duplicada/,
+  );
+  assert.throws(
+    () => assertFiscalStagingManifestFile({ ...file, size: (256 * 1024) + 1 }),
+    /256 KB/,
+  );
 });
 
 test("perfil somente financeiro nao visualiza nem seleciona a ramificacao fiscal", () => {
