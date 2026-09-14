@@ -1,15 +1,16 @@
 import React, { useState } from "react";
 import { FileSearch, Loader2, ShieldCheck } from "lucide-react";
 
+import { base44 } from "@/api/base44Client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { readFiscalStagingManifest } from "./conciliacaoFinanceiraUiPolicy";
+import { readFiscalStagingManifestPayload } from "./conciliacaoFinanceiraUiPolicy";
 
-export default function ConciliacaoFiscalManifestPanel({ canValidate, validContext, permission }) {
+export default function ConciliacaoFiscalManifestPanel({ canValidate, validContext, permission, groupId, empresaId }) {
   const { toast } = useToast();
   const [file, setFile] = useState(null);
   const [summary, setSummary] = useState(null);
@@ -22,9 +23,23 @@ export default function ConciliacaoFiscalManifestPanel({ canValidate, validConte
     setSummary(null);
     try {
       if (!validContext) throw new Error("Selecione a Empresa antes de validar o manifesto fiscal.");
-      const validated = await readFiscalStagingManifest(file);
-      setSummary(validated);
-      toast({ title: "Manifesto fiscal válido", description: "Nenhum registro foi importado nesta validação." });
+      const { manifest, summary: localSummary } = await readFiscalStagingManifestPayload(file);
+      const response = await base44.functions.invoke("solicitacoesAprovacao", {
+        action: "validateFiscalStagingManifestContext",
+        group_id: groupId,
+        empresa_id: empresaId,
+        scope_type: "empresa",
+        manifest,
+      });
+      const verified = response?.data;
+      if (verified?.context_verified !== true
+        || verified?.operational_promotion_allowed !== false
+        || verified?.batch_id !== localSummary.batchId
+        || verified?.candidate_count !== localSummary.candidateCount) {
+        throw new Error(verified?.error || "O backend não confirmou o contexto protegido do manifesto.");
+      }
+      setSummary({ ...localSummary, contextVerified: true });
+      toast({ title: "Contexto fiscal validado", description: "Nenhum registro foi importado nesta validação." });
     } catch (error) {
       toast({ title: "Manifesto fiscal recusado", description: error.message, variant: "destructive" });
     } finally {
@@ -44,7 +59,7 @@ export default function ConciliacaoFiscalManifestPanel({ canValidate, validConte
         <Alert className="border-amber-300 bg-amber-50">
           <ShieldCheck className="h-4 w-4 text-amber-700" />
           <AlertDescription className="text-amber-900">
-            A validação ocorre somente neste navegador. Ela não envia o arquivo, não cria solicitações e não promove notas fiscais.
+            O manifesto é validado localmente e o vínculo protegido é confirmado no backend. Esta ação não cria solicitações nem promove notas fiscais.
           </AlertDescription>
         </Alert>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -79,7 +94,7 @@ export default function ConciliacaoFiscalManifestPanel({ canValidate, validConte
           <div className="grid gap-3 rounded border border-emerald-300 bg-emerald-50 p-3 text-sm sm:grid-cols-3">
             <div><span className="block text-slate-600">Lote</span><strong>{summary.batchId}</strong></div>
             <div><span className="block text-slate-600">Candidatos</span><strong>{summary.candidateCount}</strong></div>
-            <div><span className="block text-slate-600">Resultado</span><Badge className="bg-emerald-700">Contrato válido</Badge></div>
+            <div><span className="block text-slate-600">Resultado</span><Badge className="bg-emerald-700">Contexto validado</Badge></div>
           </div>
         )}
       </CardContent>

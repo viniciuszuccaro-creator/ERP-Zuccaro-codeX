@@ -251,6 +251,8 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
           canValidate={canReview}
           validContext={validContext}
           permission={reconcilePermission}
+          groupId={groupId}
+          empresaId={empresaId}
         />
       )}
 

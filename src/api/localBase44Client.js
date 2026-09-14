@@ -2386,6 +2386,9 @@ const functions = {
     }
     switch (name) {
       case 'solicitacoesAprovacao':
+        if (payload.action === 'validateFiscalStagingManifestContext') {
+          throw new Error('A verificacao protegida do manifesto fiscal exige o backend Base44 configurado.');
+        }
         if (MANUAL_RECONCILIATION_LOCAL_ACTIONS.has(payload.action)) {
           return invokeLocalManualReconciliation(payload);
         }

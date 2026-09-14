@@ -16,6 +16,7 @@ import {
   FISCAL_MANUAL_RECONCILIATION_TYPE,
   filterConciliacoesByScope,
   readFiscalStagingManifest,
+  readFiscalStagingManifestPayload,
   resolveConciliacaoCentralTabs,
   resolveConciliacaoFinanceiraAccess,
   resolveConciliacaoRowActions,
@@ -148,6 +149,10 @@ test("manifesto fiscal valida somente contrato bloqueado e sem IDs brutos", asyn
     name: file.name, size: file.size, type: file.type,
   });
   assert.deepEqual(await readFiscalStagingManifest(file), assertFiscalStagingManifest(manifest));
+  assert.deepEqual(await readFiscalStagingManifestPayload(file), {
+    manifest,
+    summary: assertFiscalStagingManifest(manifest),
+  });
 
   assert.throws(
     () => assertFiscalStagingManifest({ ...manifest, empresa_id: "empresa-cpa" }),

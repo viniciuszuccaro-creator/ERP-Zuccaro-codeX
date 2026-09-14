@@ -155,6 +155,16 @@ test("cliente local persiste e reabre conciliacao entre tres sessoes sem mistura
     );
 
     const registrantClient = await openSession("registrante", EMPRESA_CPA_ID);
+    await assert.rejects(
+      () => registrantClient.functions.invoke("solicitacoesAprovacao", {
+        action: "validateFiscalStagingManifestContext",
+        group_id: GROUP_ID,
+        empresa_id: EMPRESA_CPA_ID,
+        scope_type: "empresa",
+        manifest: {},
+      }),
+      /exige o backend Base44 configurado/,
+    );
     const fiscalRequest = makeRequest(EMPRESA_CPA_ID, "nf-fiscal-1", "NotaFiscal");
     const createdFiscal = await registrantClient.functions.invoke("solicitacoesAprovacao", {
       action: "createManualReconciliation",

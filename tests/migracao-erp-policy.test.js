@@ -887,14 +887,21 @@ test('central existente integra conciliacao financeira sem promover titulo', asy
   assert.match(tab, /AGUARDAR_VINCULO_PEDIDO/);
   assert.doesNotMatch(tab, /entities\.(ContaPagar|ContaReceber)\.(create|update)/);
   const manifestPanel = await readFile(new URL('../src/components/comercial/ConciliacaoFiscalManifestPanel.jsx', import.meta.url), 'utf8');
-  assert.match(manifestPanel, /readFiscalStagingManifest/);
+  assert.match(manifestPanel, /readFiscalStagingManifestPayload/);
   assert.match(manifestPanel, /Fiscal\.Migracao\.conciliar|permission/);
-  assert.doesNotMatch(manifestPanel, /functions\.invoke|entities\.[A-Za-z]+\.(create|update)/);
+  assert.match(manifestPanel, /action: "validateFiscalStagingManifestContext"/);
+  assert.match(manifestPanel, /context_verified !== true/);
+  assert.match(manifestPanel, /operational_promotion_allowed !== false/);
+  assert.doesNotMatch(manifestPanel, /entities\.[A-Za-z]+\.(create|update)/);
+  assert.match(tab, /groupId=\{groupId\}/);
+  assert.match(tab, /empresaId=\{empresaId\}/);
 
   assert.match(localClient, /invokeLocalManualReconciliation/);
   assert.match(localClient, /MANUAL_RECONCILIATION_LOCAL_ACTIONS/);
   assert.match(localClient, /appendLocalManualReconciliationAudit/);
   assert.match(localClient, /applyManualWorkflowTransition\(current, payload\.action, payload, user\)/);
+  assert.match(localClient, /validateFiscalStagingManifestContext/);
+  assert.match(localClient, /exige o backend Base44 configurado/);
   assert.match(localClient, /contexto !== 'empresa'/);
   assert.doesNotMatch(
     localClient.slice(localClient.indexOf('const invokeLocalManualReconciliation'), localClient.indexOf('const functions =')),

@@ -8258,3 +8258,17 @@ Checklist inicial:
 - Configuracao pendente: o segredo real continua protegido somente no HD e ainda nao foi configurado no backend Base44. O modo local nao recebeu segredo nem simulacao de sucesso.
 - Commit de implementacao: `278813d8` (`Valida contexto fiscal por HMAC no backend`).
 - Proximo passo obrigatorio: configurar com seguranca `MIGRATION_CONTEXT_HMAC_KEY` no ambiente backend Base44 e entao conectar o painel fiscal existente a esta verificacao. A validacao deve continuar separada da autorizacao humana e da criacao dos tres envelopes; nenhuma promocao de `NotaFiscal` e autorizada.
+
+## 2026-09-14 - Gate 18: painel fiscal conectado a verificacao backend
+
+- Objetivo: conectar o seletor de manifesto da central existente a `validateFiscalStagingManifestContext`, sem permitir sucesso local simulado nem criar registros de staging.
+- Reuso: `ConciliacaoFiscalManifestPanel`, `ConciliacaoFinanceiraAprovacoesTab`, `conciliacaoFinanceiraUiPolicy` e `base44.functions.invoke`; nenhum modulo, tela, rota ou entidade paralela foi criado.
+- Fluxo: o arquivo continua limitado e validado por allowlist no navegador; o objeto protegido e enviado ao backend com `group_id`, `empresa_id` e `scope_type=empresa`. A interface aceita sucesso somente quando lote, quantidade, bloqueio operacional e `context_verified=true` coincidem com a validacao local.
+- Falha fechada: o cliente local deixou de retornar a simulacao generica para esta acao e agora informa que a prova protegida exige backend Base44 configurado. Nenhum segredo foi adicionado ao frontend, localStorage, bundle, teste ou repositorio.
+- Seguranca e persistencia: o painel mantem em estado somente o resumo validado; nao exibe HMACs e nao chama create/update. A verificacao permanece separada da autorizacao humana e da criacao dos tres envelopes.
+- Base44 remoto: este clone nao possui `base44/config.jsonc`, CLI Base44 local nem vinculo autenticado. Para evitar criar projeto paralelo, nenhuma inicializacao, configuracao de segredo ou deploy foi executado.
+- Verificacao visual: o ERP permaneceu estavel em `http://localhost:5173/`; a rota `/comercial` ainda resolve para a tela inicial no snapshot local, impedindo homologacao visual do painel neste ambiente sem produzir erro novo.
+- Testes: focados passaram 32/32 e o teste de persistencia local passou 1/1; suite completa passou 443/443. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram.
+- Typecheck: o passivo global anterior permanece. Os componentes e a policy deste lote nao geraram erro; `localBase44Client.js` manteve os diagnosticos anteriores, com linhas apenas deslocadas pela nova guarda.
+- Commit de implementacao: a registrar no fechamento deste lote.
+- Proximo passo dependente de acesso: vincular este clone ao projeto Base44 oficial e autenticar o CLI, sem criar novo app. Depois configurar `MIGRATION_CONTEXT_HMAC_KEY` somente no ambiente servidor, implantar `solicitacoesAprovacao` e homologar a prova real. Ate la, nenhuma passagem para staging esta autorizada.

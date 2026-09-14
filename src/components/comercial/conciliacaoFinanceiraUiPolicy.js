@@ -143,7 +143,7 @@ export const assertFiscalStagingManifest = (manifest = {}) => {
 };
 
 /** @param {{ name?: string, size?: number, type?: string, text?: () => Promise<string> } | null | undefined} file */
-export const readFiscalStagingManifest = async (file) => {
+export const readFiscalStagingManifestPayload = async (file) => {
   assertFiscalStagingManifestFile(file);
   if (typeof file?.text !== "function") throw new Error("Não foi possível ler o manifesto neste navegador.");
   let parsed;
@@ -152,8 +152,10 @@ export const readFiscalStagingManifest = async (file) => {
   } catch {
     throw new Error("O conteúdo do manifesto não é um JSON válido.");
   }
-  return assertFiscalStagingManifest(parsed);
+  return { manifest: parsed, summary: assertFiscalStagingManifest(parsed) };
 };
+
+export const readFiscalStagingManifest = async (file) => (await readFiscalStagingManifestPayload(file)).summary;
 
 /** @param {{ name?: string, size?: number, type?: string } | null | undefined} file */
 export const assertConciliacaoEvidenceFile = (file) => {
