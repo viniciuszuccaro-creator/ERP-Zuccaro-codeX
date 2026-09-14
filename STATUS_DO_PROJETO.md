@@ -8311,5 +8311,5 @@ Checklist inicial:
 - Testes: teste dedicado passou 6/6; suite completa passou 443/443; `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram. O build manteve somente os avisos conhecidos de chunks/imports mistos e bases de navegador desatualizadas.
 - Typecheck: `ordemProducaoPolicy.js` passou de 23 diagnosticos para zero; o passivo global caiu de 2.233 para 2.209, reducao liquida de 24, e portanto continua aberto sem ser mascarado.
 - Dados/infraestrutura: nenhum dado real, Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
-- Commit de implementacao: a registrar no fechamento deste lote.
+- Commit de implementacao: `168bee66` (`Tipa politica de ordem de producao`).
 - Proximo passo: tipar `pedidoFaturamentoPolicy.js`, politica compartilhada com 23 diagnosticos, em lote separado.
