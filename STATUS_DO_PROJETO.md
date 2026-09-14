@@ -8150,3 +8150,18 @@ Checklist inicial:
 - Escopo do repositorio: mudanca exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Commit de implementacao: `bb33a36a` (`Conclui homologacao fiscal local`).
 - Proximo passo obrigatorio: validar offline a compatibilidade dos tres envelopes homologados com o contrato backend de `conciliacao_migracao_fiscal`, sem chamar persistencia e sem retirar os arquivos da quarentena. Qualquer passagem posterior para staging exigira autorizacao especifica separada.
+
+## 2026-09-14 - Gate 18: compatibilidade offline dos envelopes fiscais
+
+- Objetivo: validar os tres envelopes mascarados contra as funcoes puras do contrato existente de `conciliacao_migracao_fiscal`, sem chamar backend, Base44, persistencia ou entidades operacionais.
+- Reuso: `buildPendingManualReconciliation`, `buildManualReconciliationApprovalRequest`, `isManualReconciliationApprovalRequest` e `applyMigracaoOnCreate` de `migracaoErpPolicy.js`; nenhum importador, modulo, tela ou arquivo de codigo paralelo foi criado.
+- Resultado: os tres candidatos foram aceitos pelo contrato de staging fiscal, geraram tres chaves idempotentes unicas e permaneceram `PENDING_MANUAL_RECONCILIATION`, `destino_migracao=staging`, `confirmado=false`, `pedido_id=null` e `bloqueio_operacional=true` somente em memoria.
+- Falha fechada: tres tentativas sinteticas de promocao foram recusadas pela protecao existente; quatro casos negativos sem Grupo, Empresa, codigo legado ou entidade valida tambem foram bloqueados.
+- Reprodutibilidade: duas passagens produziram resultado agregado identico. O relatorio `offline-contract-validation.json` permanece somente na quarentena fiscal protegida e possui SHA-256 `6365E4C3A939220D930374470BCEB94DE207675F783D6C7A03FB2B27237E506F`.
+- ACL: o relatorio tem heranca removida e acesso limitado ao usuario local, `SYSTEM` e Administradores. Ele nao contem IDs HMAC individuais, documentos, pedidos, fornecedores, materiais, datas ou valores.
+- Limite confirmado: os envelopes usam `GRUPO_CPA` e `CPA_FERRO_E_ACO` como aliases mascarados; o contrato puro aceita texto nao vazio, mas isso nao comprova os `group_id` e `empresa_id` canonicos nem autorizacao do usuario no backend.
+- Classificacao: `COMPATIBLE_OFFLINE_REQUIRES_CANONICAL_CONTEXT_MAPPING`. Nenhum arquivo foi movido para staging e `import_authorized=false`/`operational_promotion_allowed=false` permanecem ativos.
+- Validacao focada: `tests/migracao-erp-policy.test.js` passou 23/23. SQL Server e Agent legados terminaram `Stopped`/`Manual`; SQL Browser terminou `Stopped`/`Disabled`.
+- Escopo do repositorio: mudanca exclusivamente documental; a politica executada nao foi alterada. `git diff --check` permanece obrigatorio antes do commit.
+- Commit de implementacao: pendente neste registro.
+- Proximo passo obrigatorio: resolver offline os IDs canonicos atuais de `Grupo CPA` e `CPA Ferro e Aco` a partir da fonte local confiavel ja usada pelo ERP, validar pertencimento empresa-grupo e produzir somente um mapa HMAC protegido. Nao mover os envelopes para staging nem chamar persistencia.
