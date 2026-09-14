@@ -12,6 +12,63 @@ import {
   entregaStatusPermissionActions,
   hasProvaEntrega,
 } from '../src/components/lib/expedicaoEntregaPolicy.js';
+import {
+  resolveEntregaContext,
+  sanitizeEntregaPayload,
+  summarizeGeolocationAudit,
+  summarizePredictionAudit,
+} from '../src/components/expedicao/formulario-entrega/entregaFormPolicy.js';
+
+test('formulario exige Grupo e empresa autorizada no contexto', () => {
+  assert.deepEqual(resolveEntregaContext({ grupoAtual: { id: 'g1' }, estaNoGrupo: true }), {
+    groupId: 'g1', empresaId: null, empresaPertence: false, contextoValido: false,
+  });
+
+  const externo = resolveEntregaContext({
+    grupoAtual: { id: 'g1' }, empresaSelecionadaId: 'e2',
+    empresasDoGrupo: [{ id: 'e1' }], estaNoGrupo: true,
+  });
+  assert.equal(externo.contextoValido, false);
+  assert.equal(externo.empresaPertence, false);
+
+  const autorizado = resolveEntregaContext({
+    grupoAtual: { id: 'g1' }, empresaSelecionadaId: 'e1',
+    empresasDoGrupo: [{ id: 'e1' }], estaNoGrupo: true,
+  });
+  assert.equal(autorizado.contextoValido, true);
+});
+
+test('formulario ignora empresa adulterada no registro em contexto de empresa', () => {
+  const contexto = resolveEntregaContext({
+    empresaAtual: { id: 'e1', group_id: 'g1' },
+    empresaSelecionadaId: 'empresa-externa',
+    estaNoGrupo: false,
+  });
+  assert.equal(contexto.groupId, 'g1');
+  assert.equal(contexto.empresaId, 'e1');
+  assert.equal(contexto.contextoValido, true);
+});
+
+test('formulario sanitiza payload e resume auditoria de IA', () => {
+  const sanitized = sanitizeEntregaPayload({ observacoes: '<script>javascript:alert(1)</script>' });
+  assert.equal(sanitized.observacoes, 'scriptalert(1)/script');
+  assert.deepEqual(summarizePredictionAudit({ data_prevista: '2026-09-20', confianca_percentual: 90 }), {
+    sugestao_recebida: true, confianca_faixa: 'alta',
+  });
+  assert.deepEqual(summarizeGeolocationAudit({ link_google_maps: 'https://maps.test', latitude: -23, longitude: -46 }), {
+    coordenadas_recebidas: true, link_recebido: true,
+  });
+});
+
+test('formulario usa contrato vigente do CEP e nao confia no registro para contexto', async () => {
+  const formulario = await readFile(new URL('../src/components/expedicao/FormularioEntrega.jsx', import.meta.url), 'utf8');
+  const secoes = await readFile(new URL('../src/components/expedicao/formulario-entrega/EntregaFormSections.jsx', import.meta.url), 'utf8');
+  assert.doesNotMatch(formulario, /Boolean\(groupId \|\| empresaId\)/);
+  assert.doesNotMatch(formulario, /formData\?\.group_id/);
+  assert.match(secoes, /onEnderecoEncontrado=/);
+  assert.match(secoes, /enderecoAtual=/);
+  assert.doesNotMatch(secoes, /onCEPFound=/);
+});
 
 test('entrega exige empresa e nao marca entregue sem prova', () => {
   assert.throws(() => assertEntregaOnCreate({ record: { pedido_id: 'p1' }, entregas: [] }), /Empresa obrigatoria/);

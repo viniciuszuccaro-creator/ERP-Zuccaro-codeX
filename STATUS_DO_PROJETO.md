@@ -8433,3 +8433,19 @@ Checklist inicial:
 - Dados/infraestrutura: nenhum Contrato, Cliente, Fornecedor ou titulo real foi alterado; nenhum backend Base44 remoto, banco legado ou HD externo foi acessado ou modificado.
 - Commit de implementacao: `7c238fbe` (`Isola contratos por empresa e preserva historico`).
 - Proximo passo P0: refatorar e tipar `src/components/expedicao/FormularioEntrega.jsx`, fluxo operacional de Expedicao com 51 diagnosticos; `localBase44Client.js` permanece reservado para lote proprio devido ao impacto transversal.
+
+## 2026-09-14 - Refatoracao e isolamento do Formulario de Entrega
+
+- Objetivo: decompor o formulario existente de Expedicao, eliminar seus diagnosticos de `checkJs` e impedir persistencia com contexto Grupo/Empresa incompleto ou adulterado.
+- Causa raiz: `FormularioEntrega.jsx` reunia interface, IA, contexto, persistencia e auditoria em 903 linhas; aceitava Grupo ou Empresa isoladamente, reutilizava IDs do registro como autoridade e chamava `BuscaCEP` com propriedades fora do contrato vigente.
+- Arquivos alterados: `src/components/expedicao/FormularioEntrega.jsx`, `src/components/expedicao/formulario-entrega/EntregaFormSections.jsx`, `src/components/expedicao/formulario-entrega/entregaFormPolicy.js` e `tests/expedicao-entrega-policy.test.js`.
+- Refatoracao: o orquestrador ficou com 240 linhas, a apresentacao controlada com 300 e a policy pura com 148. Os dois auxiliares privados foram criados somente para decompor o componente existente; nao criam tela, rota, entidade, importador ou persistencia paralela.
+- Multiempresa: salvar, prever e geolocalizar agora exigem simultaneamente `group_id` e `empresa_id`. Na visao de Empresa, o contexto da sessao prevalece sobre o registro; na visao do Grupo, a empresa selecionada precisa pertencer a `empresasDoGrupo`. O payload recebe somente o escopo resolvido e autorizado.
+- RBAC: criar e editar continuam separados pelas permissoes granulares existentes e as operacoes de IA permanecem bloqueadas sem a mesma permissao efetiva do salvamento.
+- Seguranca/auditoria: entradas continuam sanitizadas; auditorias de previsao e geolocalizacao passaram a registrar apenas indicadores e faixa de confianca, sem endereco, prompt, link ou resposta completa. Criacao e edicao registram apenas identificador/status resumido, sem copiar o registro integral.
+- Compatibilidade: todos os campos, seletores, toggles e botoes foram preservados. `BuscaCEP` agora usa `enderecoAtual` e `onEnderecoEncontrado`; grids e acoes foram ajustados para celular, tablet e desktop com `w-full`/`h-full`.
+- Testes: focados passaram 22/22 e a suite completa passou 458/458. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve apenas avisos conhecidos de chunks/imports mistos e bases de navegador desatualizadas.
+- Typecheck: os arquivos do lote passaram de 51 diagnosticos para zero; o passivo global caiu de 1.930 para 1.879, reducao liquida exata de 51, e continua aberto sem ser mascarado.
+- Dados/infraestrutura: nenhuma Entrega, Pedido ou Cliente real foi alterado; nenhum backend Base44 remoto, banco legado ou HD externo foi acessado ou modificado.
+- Commit de implementacao: a registrar apos o commit deste lote.
+- Proximo passo P0: refatorar e tipar `src/components/comercial/NotasFiscaisTab.jsx`, fluxo Fiscal existente com 44 diagnosticos; `localBase44Client.js` permanece reservado para lote transversal proprio.

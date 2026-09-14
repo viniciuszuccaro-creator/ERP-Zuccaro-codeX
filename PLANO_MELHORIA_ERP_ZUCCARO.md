@@ -931,3 +931,18 @@ Lote concluido em 2026-09-14 na pagina existente de Contratos, sem criar rota, e
 
 Proxima frente P0: refatorar e tipar `src/components/expedicao/FormularioEntrega.jsx`, com 51 diagnosticos, preservando o fluxo de Expedicao.
 
+### Refatoracao e isolamento - Formulario de Entrega
+
+Lote concluido em 2026-09-14 no formulario existente de Expedicao, sem criar tela, rota, entidade ou fluxo paralelo.
+
+- `FormularioEntrega.jsx` caiu de 903 para 240 linhas; secoes visuais e politica pura foram extraidas para auxiliares privados com 300 e 148 linhas.
+- Grupo e Empresa passaram a ser obrigatorios em conjunto; a sessao de Empresa prevalece sobre IDs do registro e a visao de Grupo aceita somente empresa da lista autorizada.
+- Criar/editar permanecem com RBAC distinto e operacoes de IA falham fechadas sem contexto e permissao.
+- Auditorias de IA, criacao e edicao armazenam somente indicadores operacionais resumidos, sem endereco, link, prompt, resposta ou payload integral.
+- O contrato vigente de `BuscaCEP` foi restabelecido e todos os campos, seletores, toggles e botoes foram preservados em layout responsivo `w-full`/`h-full`.
+- O typecheck dos arquivos do lote passou de 51 diagnosticos para zero; o global caiu de 1.930 para 1.879, reducao liquida exata de 51.
+- Testes cobrem contexto incompleto, empresa externa ao Grupo, ID de Empresa adulterado, sanitizacao, auditoria minimizada e integracao do CEP.
+- Nenhuma Entrega, entidade remota, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: refatorar e tipar `src/components/comercial/NotasFiscaisTab.jsx`, fluxo Fiscal existente com 44 diagnosticos, mantendo `localBase44Client.js` para lote transversal proprio.
+
