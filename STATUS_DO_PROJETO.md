@@ -8165,3 +8165,19 @@ Checklist inicial:
 - Escopo do repositorio: mudanca exclusivamente documental; a politica executada nao foi alterada. `git diff --check` permanece obrigatorio antes do commit.
 - Commit de implementacao: `69121fe6` (`Valida envelopes fiscais offline`).
 - Proximo passo obrigatorio: resolver offline os IDs canonicos atuais de `Grupo CPA` e `CPA Ferro e Aco` a partir da fonte local confiavel ja usada pelo ERP, validar pertencimento empresa-grupo e produzir somente um mapa HMAC protegido. Nao mover os envelopes para staging nem chamar persistencia.
+
+## 2026-09-14 - Gate 18: mapa HMAC do contexto fiscal canonico
+
+- Objetivo: resolver em memoria os IDs canonicos atuais de `Grupo CPA` e `CPA Ferro e Aco`, comprovar o pertencimento usado pelo ERP e persistir somente referencias HMAC protegidas.
+- Fonte: `public/base44-local-core-snapshot.json`, carregado pelo fluxo existente `hydrateLocalBase44FromSnapshot`; o snapshot contem exatamente um Grupo, duas Empresas e uma correspondencia nominal unica para o Grupo e a empresa fiscal alvo.
+- Integridade de origem: o snapshot possui SHA-256 `D5F1B977E48ED61270C428CCA5DD39A658AA45702483290224C76F9AF3E6156C`.
+- Relacao: a linha bruta da Empresa nao possui Grupo explicito. A validacao confirmou no codigo vigente que `normalizeSnapshotRecord` atribui `group_id`, `grupo_id` e `grupo_empresarial_id` ao `canonicalGroupId` durante a hidratacao.
+- Resultado: a regra de normalizacao foi comprovada, o pertencimento normalizado `Grupo CPA -> CPA Ferro e Aco` e unico e valido, e os IDs reais permaneceram apenas em memoria.
+- Mapa local: `canonical-context-hmac-map.json` permanece exclusivamente na quarentena fiscal protegida, contendo aliases, HMACs de Grupo/Empresa/relacao, hashes das fontes e indicadores de validacao. Nenhum ID bruto foi persistido.
+- Reprodutibilidade: duas passagens produziram o mesmo mapa. O arquivo final possui SHA-256 `1BE0F9888515B5AA2DFCD05B989F20901AC59266E919E8D6F8B3AE894B84C97B`.
+- ACL: heranca removida e acesso limitado ao usuario local, `SYSTEM` e Administradores. Nenhum envelope foi movido para staging e nenhuma persistencia backend foi chamada.
+- Validacao focada: `tests/contexto-multiempresa-policy.test.js` passou 13/13, incluindo empresa externa bloqueada, escopo incompleto recusado e empresa emissora obrigatoria no fiscal.
+- Infraestrutura legada: SQL Server e Agent permaneceram `Stopped`/`Manual`; SQL Browser permaneceu `Stopped`/`Disabled`.
+- Escopo do repositorio: mudanca exclusivamente documental; `git diff --check` e obrigatorio antes do commit.
+- Commit de implementacao: pendente neste registro.
+- Proximo passo obrigatorio: substituir os aliases pelos IDs canonicos somente em memoria e repetir a validacao offline dos tres envelopes contra o guard de Grupo/Empresa e o contrato fiscal, produzindo apenas resultado agregado protegido. Nao mover para staging, persistir ou promover `NotaFiscal`.
