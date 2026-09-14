@@ -6649,6 +6649,20 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` permaneceu `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: validar somente por contagens, nos 12 documentos e 36 titulos dos dois pares candidatos, unicidade das chaves legadas, empresa proprietaria, rota Grupo -> Empresa e cobertura do mapeamento de fornecedor. Nao importar, recalcular saldo nem alterar o fornecedor historico.
 
+### Gate 18 - Chaves e escopo dos fornecedores candidatos validados
+
+- Os 12 documentos e 36 titulos dos dois pares candidatos foram reconstruidos e classificados em duas passagens identicas; os resultados produziram o mesmo SHA-256 e reconciliaram 18 titulos abertos e 18 marcados como baixados.
+- A data do pedido foi tratada pelo contrato Clarion legado. Nenhuma comparacao direta incorreta com `AAAAMMDD` foi mantida na classificacao.
+- A chave fiscal composta por empresa proprietaria, relatorio, fornecedor fiscal, numero e serie esta completa nos 12 documentos, sem colisao. A chave financeira acrescenta a sequencia e esta completa nos 36 titulos, tambem sem colisao.
+- Os 12 documentos possuem fornecedor do pedido e fornecedor fiscal cobertos pelo staging candidato, correlacionados pelo cadastro mestre e documento normalizado. Os codigos empresariais e globais permanecem preservados em seus namespaces, sem substituicao silenciosa.
+- Todos os 12 documentos possuem empresa proprietaria mapeada e rota permitida dentro do Grupo CPA; nenhum documento ficou com rota bloqueada ou empresa sem alias aprovado.
+- A conexao SQL foi limitada ao listener efemero de loopback da propria instancia. Nenhuma interface externa, SQL Browser ou Named Pipes foi habilitada e o servico foi encerrado ao final.
+- A unicidade tecnica permite preparar idempotencia futura, mas nao autoriza recriar obrigacoes, recalcular saldos, trocar fornecedor historico ou importar documentos/titulos.
+- O relatorio `legacy-purchase-candidate-key-scope-validation.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, chave, codigo, nome, documento, fornecedor, valor, TPS ou MDF/LDF integra o GitHub.
+- Nenhum fornecedor, pedido, documento fiscal, titulo, staging ou registro do ERP novo foi criado, alterado, mesclado, importado ou promovido.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: classificar somente por contagens os 18 titulos abertos por vencimento, evidencia de baixa posterior, empresa proprietaria e cobertura da chave idempotente. Manter os 18 titulos baixados apenas como historico e nao recalcular saldo ou autorizar importacao.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
