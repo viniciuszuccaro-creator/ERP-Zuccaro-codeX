@@ -8212,5 +8212,5 @@ Checklist inicial:
 - Validacao focada: `tests/contexto-multiempresa-policy.test.js` e `tests/migracao-erp-policy.test.js` passaram 36/36; `git diff --check` permanece obrigatorio antes do commit.
 - Infraestrutura legada: `MSSQL$ERPZLEGACY` e `SQLAgent$ERPZLEGACY` terminaram `Stopped`/`Manual`; `SQLBrowser` terminou `Stopped`/`Disabled`.
 - Escopo do repositorio: mudanca exclusivamente documental; nenhuma politica ou runtime foi alterado.
-- Commit de implementacao: a registrar apos validacao final.
+- Commit de implementacao: `1dc9d0d6` (`Prepara manifesto de transicao fiscal`).
 - Proximo passo dependente de usuario: autorizar explicitamente a passagem dos tres candidatos do lote `FISCAL-DRYRUN-001` da quarentena para o staging fiscal. A autorizacao permitira apenas criar envelopes bloqueados em `SolicitacaoAprovacao`; nao autoriza promover ou alterar `NotaFiscal` operacional.
