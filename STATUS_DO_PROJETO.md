@@ -6438,6 +6438,21 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: encerrar os 64 itens `REVENDA` de unidade mestre divergente como bloqueados e voltar aos 1.280 excedentes `REVENDA` com unidade mestre igual. Inventariar somente metadados de campos relacionados a tolerancia, recebimento, saldo, ajuste e arredondamento em `PedidosCompra`, `PedidoCompraItens`, `NotasFiscaisEntradas` e `NotaFiscalEntradasItens`, sem consultar valores.
 
+### Gate 18 - Contrato estrutural de tolerancia e ajuste de recebimento
+
+- Os metadados de `PedidosCompra`, `PedidoCompraItens`, `NotasFiscaisEntradas` e `NotaFiscalEntradasItens` foram consultados em `EMP02` e `EMP03` por duas passagens identicas, sem ler registros operacionais.
+- As assinaturas dos dois bancos sao iguais no recorte. Foram encontrados 14 campos relevantes por banco, totalizando 28 linhas estruturais no relatorio.
+- `PedidosCompra` nao possui campo com nome relacionado a tolerancia, recebimento, saldo, ajuste, arredondamento, diferenca, sobra, falta, quantidade, peso, unidade ou conversao.
+- `PedidoCompraItens` concentra nove campos: `UNIDADE`, `QUANTIDADE`, `QUANTIDADERECEBIDA`, `QTDEPECAS`, `HabilitaCoversaoUnidade`, `QtdeConversaoUnidade`, `UnidadeConversao`, `VrUnitarioConversao` e `PesoLiquido`.
+- `NotaFiscalEntradasItens` possui apenas `UNIDADE`, `QUANTIDADE`, `QTDEMETROSREAL` e `QTDEUNIDPARALELA` nesse contrato. `NotasFiscaisEntradas` acrescenta somente `PESO decimal(9,3)`.
+- Nao foi localizado campo explicito de tolerancia, saldo, ajuste, diferenca, sobra, falta ou arredondamento em nenhuma das quatro tabelas.
+- Os campos de conversao e quantidades suplementares do item ja foram avaliados nos lotes anteriores e nao explicaram o padrao dominante. O `PESO` do cabecalho fiscal nao deve ser rateado entre itens sem regra comprovada.
+- Portanto, o schema nao registra uma politica explicita que autorize excesso de recebimento ou descreva seu calculo. Nenhum comportamento sera inventado.
+- O relatorio `legacy-purchase-receipt-adjustment-schema.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum pedido, nota, quantidade, valor, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Nenhum dado foi alterado ou importado no ERP novo. Os 64 itens de unidade mestre divergente permanecem bloqueados separadamente.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: nos 1.280 excedentes `REVENDA` com unidade mestre igual, contar pedidos, materiais e repeticoes por material; testar se a razao fiscal/pedida e constante nas repeticoes e se coincide exatamente com `PESOBRUTO`, `PESOLIQUIDO` ou `PESOBARRA`. Nao exportar identificadores, razoes, pesos ou quantidades e nao inferir tolerancia.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
