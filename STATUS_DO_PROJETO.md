@@ -8256,5 +8256,5 @@ Checklist inicial:
 - Persistencia: a acao realiza somente a auditoria obrigatoria. Nenhuma `SolicitacaoAprovacao`, `NotaFiscal` ou outra entidade operacional e criada, atualizada ou removida.
 - Testes: teste focado passou 24/24; suite completa passou 443/443; `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram. O typecheck global permanece com passivo anterior amplo, e o filtro confirmou zero erro nos arquivos deste lote.
 - Configuracao pendente: o segredo real continua protegido somente no HD e ainda nao foi configurado no backend Base44. O modo local nao recebeu segredo nem simulacao de sucesso.
-- Commit de implementacao: a registrar no fechamento deste lote.
+- Commit de implementacao: `278813d8` (`Valida contexto fiscal por HMAC no backend`).
 - Proximo passo obrigatorio: configurar com seguranca `MIGRATION_CONTEXT_HMAC_KEY` no ambiente backend Base44 e entao conectar o painel fiscal existente a esta verificacao. A validacao deve continuar separada da autorizacao humana e da criacao dos tres envelopes; nenhuma promocao de `NotaFiscal` e autorizada.
