@@ -991,3 +991,19 @@ Lote concluido em 2026-09-14 no formulario existente de transferencia, sem criar
 
 Proxima frente P0: revisar e decompor `src/Layout.jsx` em lote isolado, preservando autenticacao, RBAC, contexto e navegacao.
 
+### Refatoracao e auditoria global - Layout
+
+Lote concluido em 2026-09-14 no Layout existente, sem criar pagina, rota, entidade, consulta ou persistencia paralela.
+
+- A estrutura visual foi extraida para `AppLayoutShell.jsx`, auxiliar privado que reutiliza Sidebar, cabecalho, alertas, guardas e sistema de janelas existentes.
+- `Layout.jsx` caiu de aproximadamente 1.564 para 1.363 linhas; os wrappers transversais de entidade, funcao, RBAC e contexto permaneceram no orquestrador para uma decomposicao de seguranca posterior e isolada.
+- Erros de queries e mutations passaram a ser observados pelos caches oficiais do React Query v5; callbacks `onError` obsoletos em `defaultOptions` foram removidos.
+- Auditoria registra somente tipo e referencia tecnica limitada (`queryHash` ou `mutationId`), sem query key, parametros ou payload; cancelamentos e limite 429 continuam ignorados.
+- Estado offline usa o contrato vigente da Query e extensoes internas de `window`/functions receberam contratos locais, sem ampliar permissoes nem alterar runtime.
+- O shell preserva `ProtectedSection`, contexto Grupo/Empresa, troca de Empresa, pesquisa, notificacoes, atalhos e navegacao, com `w-full`, `h-full`, `min-w-0` e `min-h-0` responsivos.
+- Os 30 diagnosticos diretos do Layout passaram para zero; o passivo global caiu de 1.735 para 1.705, reducao liquida exata de 30.
+- Testes focados passaram 47/47 e a suite completa passou 465/465; auditoria baseline, lint, build e verificacao de diff tambem passaram.
+- Nenhuma consulta remota, dado real, banco legado ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: refatorar e tipar `src/components/ui/sidebar.jsx`, componente compartilhado com 627 linhas e diagnosticos de contratos de propriedades, em lote separado antes de remover os aliases locais de compatibilidade do shell.
+

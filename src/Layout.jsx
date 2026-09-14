@@ -1,5 +1,5 @@
-import React, { useEffect, useState, Suspense } from "react";
-import { Link, useLocation } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { 
         LayoutDashboard, 
@@ -9,57 +9,25 @@ import {
         DollarSign, 
         Package,
         UserCircle,
-        Menu,
-        LogOut,
         Box,
         FileText,
         Settings,
-        Shield,
         Calendar,
         BarChart3,
         Factory,
-        Search,
-        MessageCircle,
-        CheckCircle2,
-        Trophy,
-        Zap
+        MessageCircle
       } from "lucide-react";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarHeader,
-  SidebarFooter,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
 import { base44 } from "@/api/base44Client";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import usePermissions from "@/components/lib/usePermissions";
-import NotificationCenter from "@/components/NotificationCenter";
-import EmpresaSwitcher from "@/components/EmpresaSwitcher";
 import { UserProvider, useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import AcoesRapidasGlobal from "@/components/AcoesRapidasGlobal";
-import PesquisaUniversal from "@/components/PesquisaUniversal";
-import MiniMapaNavegacao from "@/components/MiniMapaNavegacao";
 import { WindowProvider } from "@/components/lib/WindowManager";
-import WindowRenderer from "@/components/lib/WindowRenderer";
-import MinimizedWindowsBar from "@/components/lib/MinimizedWindowsBar";
-import AtalhosTecladoInfo from "@/components/sistema/AtalhosTecladoInfo";
 import ZIndexGuard from "@/components/lib/ZIndexFix";
-import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import "@/components/lib/networkGuard";
-import BootstrapGuard from "@/components/lib/BootstrapGuard";
 import GlobalNetworkErrorHandler from "@/components/lib/GlobalNetworkErrorHandler";
-import GuardRails from "@/components/lib/GuardRails";
 import GlobalContextStamp from "@/components/lib/GlobalContextStamp";
-import ProtectedSection from "@/components/security/ProtectedSection";
+import AppLayoutShell from "@/components/layout/AppLayoutShell";
 import { sanitizeAuditPayload, sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
 import { usePrefetchModuleData } from "@/components/lib/usePrefetchModuleData";
 import { useInvalidationBus } from "@/components/lib/useInvalidationBus";
@@ -170,7 +138,7 @@ function LayoutContent({ children, currentPageName }) {
 
   // pageToModule/moduleName movidos para antes dos efeitos para evitar TDZ
 
-        // Auditoria global de erros do React Query (queries e mutations)
+        // Configuracao global de cache; erros sao auditados pelo cache do React Query v5 abaixo.
         React.useEffect(() => {
           try {
             queryClient.setDefaultOptions({
@@ -180,65 +148,54 @@ function LayoutContent({ children, currentPageName }) {
                 refetchOnWindowFocus: false,
                 refetchOnReconnect: false,
                 retry: 1,
-                onError: (error) => {
-                                                                                    const m = String(error?.message || '');
-                                                                                    const code = error?.code;
-                                                                                    const name = error?.name;
-                                                                                    const status = error?.response?.status || error?.status;
-                                                                                    if (name === 'AbortError' || code === 'ERR_CANCELED' || /aborted|abort|canceled|cancelled/i.test(m)) { return; }
-                                                                                    if (status === 429 || /rate limit/i.test(m)) { return; }
-                                                                                    try {
-                                                                                      const msg = (error && (error.message || String(error))) || 'Erro em query';
-                                                                (async () => {
-                                                                  try {
-                                                                    if (await base44.auth.isAuthenticated()) {
-                                                                      await base44.functions.invoke('auditError', {
-                                                                        module: moduleName || 'Sistema',
-                                                                        message: `Query error: ${msg}`,
-                                                                        stack: error?.stack || null,
-                                                                        page: currentPageName,
-                                                                        empresa_id: empresaAtual?.id || null,
-                                                                        group_id: grupoAtual?.id || null,
-                                                                        metadata: { queryKey: 'unknown' }
-                                                                      });
-                                                                    }
-                                                                  } catch (auditError) { reportLayoutFailure('Falha ao auditar erro de query', auditError); }
-                                                                })();
-                                                              } catch (error) { reportLayoutFailure('Falha ao preparar auditoria de query', error); }
-                                                            }
               },
               mutations: {
                 retry: 1,
-                onError: (error) => {
-                                                                                    const m = String(error?.message || '');
-                                                                                    const code = error?.code;
-                                                                                    const name = error?.name;
-                                                                                    const status = error?.response?.status || error?.status;
-                                                                                    if (name === 'AbortError' || code === 'ERR_CANCELED' || /aborted|abort|canceled|cancelled/i.test(m)) { return; }
-                                                                                    if (status === 429 || /rate limit/i.test(m)) { return; }
-                                                                                    try {
-                                                                                      const msg = (error && (error.message || String(error))) || 'Erro em mutation';
-                                                                (async () => {
-                                                                  try {
-                                                                    if (await base44.auth.isAuthenticated()) {
-                                                                      await base44.functions.invoke('auditError', {
-                                                                        module: moduleName || 'Sistema',
-                                                                        message: `Mutation error: ${msg}`,
-                                                                        stack: error?.stack || null,
-                                                                        page: currentPageName,
-                                                                        empresa_id: empresaAtual?.id || null,
-                                                                        group_id: grupoAtual?.id || null,
-                                                                        metadata: { mutation: true }
-                                                                      });
-                                                                    }
-                                                                  } catch (auditError) { reportLayoutFailure('Falha ao auditar erro de mutation', auditError); }
-                                                                })();
-                                                              } catch (error) { reportLayoutFailure('Falha ao preparar auditoria de mutation', error); }
-                                                            }
               }
             });
           } catch (error) { reportLayoutFailure('Falha ao configurar React Query', error); }
-        }, [user?.id, empresaAtual?.id, grupoAtual?.id, moduleName, currentPageName]);
+        }, [queryClient]);
+
+        // React Query v5 notifica falhas pelos caches de queries e mutations.
+        React.useEffect(() => {
+          /** @param {unknown} rawError @param {'query' | 'mutation'} source @param {string | number} reference */
+          const auditCacheError = async (rawError, source, reference) => {
+            const error = /** @type {Error & { code?: string, status?: number, response?: { status?: number } }} */ (rawError);
+            const message = String(error?.message || error || 'Erro desconhecido');
+            const status = error?.response?.status || error?.status;
+            if (error?.name === 'AbortError' || error?.code === 'ERR_CANCELED' || /aborted|abort|canceled|cancelled/i.test(message)) return;
+            if (status === 429 || /rate limit/i.test(message)) return;
+            try {
+              if (await base44.auth.isAuthenticated()) {
+                await base44.functions.invoke('auditError', {
+                  module: moduleName || 'Sistema',
+                  message: `${source === 'query' ? 'Query' : 'Mutation'} error: ${message}`,
+                  stack: error?.stack || null,
+                  page: currentPageName,
+                  empresa_id: empresaAtual?.id || null,
+                  group_id: grupoAtual?.id || null,
+                  metadata: { source, reference: String(reference || 'unknown').slice(0, 120) },
+                });
+              }
+            } catch (auditError) {
+              reportLayoutFailure('Falha ao auditar erro do React Query', auditError, { source });
+            }
+          };
+          const queryUnsubscribe = queryClient.getQueryCache().subscribe((event) => {
+            if (event?.type === 'updated' && event.action?.type === 'error') {
+              void auditCacheError(event.action.error, 'query', event.query.queryHash);
+            }
+          });
+          const mutationUnsubscribe = queryClient.getMutationCache().subscribe((event) => {
+            if (event?.type === 'updated' && event.action?.type === 'error') {
+              void auditCacheError(event.action.error, 'mutation', event.mutation.mutationId);
+            }
+          });
+          return () => {
+            queryUnsubscribe();
+            mutationUnsubscribe();
+          };
+        }, [queryClient, user?.id, empresaAtual?.id, grupoAtual?.id, moduleName, currentPageName]);
 
         const prefetchForItem = (title) => {
                         try {
@@ -492,7 +449,7 @@ function LayoutContent({ children, currentPageName }) {
       try {
         if (event?.type !== 'updated') return;
         const q = event.query;
-        const state = q.getState?.();
+        const state = q.state;
         if (state?.data === undefined) return;
         const scopeEmpresa = empresaAtual?.id || '';
         const scopeGrupo = grupoAtual?.id || '';
@@ -731,7 +688,8 @@ function LayoutContent({ children, currentPageName }) {
     };
 
     // Cache local de permissões RBAC (evita chamadas repetidas ao backend)
-    const __rbacCache = window.__layoutRbacCache || (window.__layoutRbacCache = new Map());
+    const layoutWindow = /** @type {Window & typeof globalThis & { __layoutRbacCache?: Map<string, { allowed: boolean, ts: number }> }} */ (window);
+    const __rbacCache = layoutWindow.__layoutRbacCache || (layoutWindow.__layoutRbacCache = new Map());
     const __RBAC_TTL = 5 * 60 * 1000; // 5 minutos
 
     const checkRBAC = async (entityName, action, sectionHint = null, op = null) => {
@@ -993,7 +951,8 @@ function LayoutContent({ children, currentPageName }) {
 
     // Phase 4: RBAC + Auditoria + Strict empresa scope para chamadas de funções backend
     try {
-      if (base44?.functions && base44.functions.invoke && base44.functions.__wrappedPhase4 !== true) {
+      const functionsModule = /** @type {typeof base44.functions & { __wrappedPhase4?: boolean, __inflight?: Map<string, Promise<any>>, __invokeAuditLastAt?: number }} */ (base44.functions);
+      if (functionsModule && functionsModule.invoke && functionsModule.__wrappedPhase4 !== true) {
         const origInvoke = base44.functions.invoke.bind(base44.functions);
         // Política híbrida: apenas funções sensíveis exigem guard; demais apenas auditam
         const SENSITIVE_FUNCTIONS = new Set([
@@ -1061,11 +1020,11 @@ function LayoutContent({ children, currentPageName }) {
           // De-duplicação + retry com backoff para 429/500
           // upsertConfig e outras escritas NUNCA são deduplicadas (cada chamada é uma mutação distinta)
           const SKIP_DEDUP = new Set(['upsertConfig', 'applyInventoryAdjustments', 'applyOrderStockMovements', 'nfeActions', 'emitirBoleto', 'adminInviteUser']);
-          base44.functions.__inflight = base44.functions.__inflight || new Map();
+          functionsModule.__inflight = functionsModule.__inflight || new Map();
           const serialize = (o)=>{try{return JSON.stringify(o, Object.keys(o||{}).sort())}catch{ return JSON.stringify(o||{})}};
           const key = `${functionName}:${serialize(params || {})}`;
-          if (!SKIP_DEDUP.has(functionName) && base44.functions.__inflight.has(key)) {
-            return await base44.functions.__inflight.get(key);
+          if (!SKIP_DEDUP.has(functionName) && functionsModule.__inflight.has(key)) {
+            return await functionsModule.__inflight.get(key);
           }
           const exec = async () => {
             let attempt = 0;
@@ -1085,8 +1044,8 @@ function LayoutContent({ children, currentPageName }) {
             }
           };
           const startedAt = Date.now();
-          const p = exec().finally(() => base44.functions.__inflight.delete(key));
-          if (!SKIP_DEDUP.has(functionName)) base44.functions.__inflight.set(key, p);
+          const p = exec().finally(() => functionsModule.__inflight.delete(key));
+          if (!SKIP_DEDUP.has(functionName)) functionsModule.__inflight.set(key, p);
           const result = await p;
 
           // Telemetria de latência (auditoria de performance > 1500ms)
@@ -1109,9 +1068,9 @@ function LayoutContent({ children, currentPageName }) {
           // Auditoria (throttle 3s)
           try {
             const now = Date.now();
-            const last = (base44.functions.__invokeAuditLastAt || 0);
+            const last = (functionsModule.__invokeAuditLastAt || 0);
             if (now - last > 3000) {
-              base44.functions.__invokeAuditLastAt = now;
+              functionsModule.__invokeAuditLastAt = now;
               await base44.entities.AuditLog.create({
                 usuario: user?.full_name || user?.email || 'Usuário',
                 usuario_id: user?.id,
@@ -1124,7 +1083,7 @@ function LayoutContent({ children, currentPageName }) {
           return result;
         };
 
-        base44.functions.__wrappedPhase4 = true;
+        functionsModule.__wrappedPhase4 = true;
         // Nota: performance logs visíveis em Auditoria > Logs; usar este sinal para detectar gargalos.
       }
     } catch (error) {
@@ -1362,188 +1321,29 @@ function LayoutContent({ children, currentPageName }) {
   }
 
   return (
-    <SidebarProvider>
-      
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-50 to-blue-50">
-        {/* Fase 2: preencher h-full com rolagem interna em todo conteúdo central */}
-        <Sidebar className="border-r border-slate-200 bg-white/80 backdrop-blur-sm">
-          <SidebarHeader className="border-b border-slate-200 p-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
-                <FileText className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="font-bold text-xl text-slate-900">ERP Zuccaro</h2>
-                <p className="text-xs text-slate-500">V21.5 • Sistema Completo</p>
-              </div>
-            </div>
-          </SidebarHeader>
-          
-          <SidebarContent className="p-3">
-            {Object.entries(groupedItems).map(([groupName, items]) => {
-              if (items.length === 0) return null;
-              
-              const groupLabels = {
-                principal: "Principal",
-                cadastros: "Cadastros",
-                operacional: "Operacional",
-                administrativo: "Administrativo",
-                sistema: "Sistema",
-                publico: "Público"
-              };
-
-              return (
-                <SidebarGroup key={groupName}>
-                  <SidebarGroupLabel className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 py-2 mb-1">
-                    {groupLabels[groupName]}
-                  </SidebarGroupLabel>
-                  <SidebarGroupContent>
-                    <SidebarMenu>
-                      {items.map((item) => {
-                        const isActive = location.pathname === item.url;
-                        return (
-                          <SidebarMenuItem key={item.title}>
-                            <SidebarMenuButton 
-                              asChild 
-                              className={`transition-all duration-200 rounded-lg mb-1 ${
-                                isActive 
-                                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-200' 
-                                  : 'hover:bg-slate-100 text-slate-700'
-                              }`}
-                            >
-                              <Link to={item.url} onMouseEnter={() => { prefetchForItem(item.title); prefetchModule(item.title); }} className="flex items-center gap-3 px-4 py-3">
-                                <item.icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-500'}`} />
-                                <span className="font-medium">{item.title}</span>
-                              </Link>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        );
-                      })}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                </SidebarGroup>
-              );
-            })}
-          </SidebarContent>
-
-          <SidebarFooter className="border-t border-slate-200 p-4 bg-slate-50/50">
-            <div className="flex items-center justify-between">
-              <Link to={createPageUrl("ConfiguracoesUsuario")} className="flex items-center gap-3 hover:bg-slate-100 p-2 rounded-lg transition-colors flex-1">
-                <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-semibold text-sm">
-                    {user?.full_name?.[0] || 'U'}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-slate-900 text-sm truncate">
-                    {user?.full_name || 'Usuário'}
-                  </p>
-                  <p className="text-xs text-slate-500 truncate">
-                    {user?.role === 'admin' ? 'Administrador' : 'Usuário'}
-                  </p>
-                </div>
-              </Link>
-              <button
-                onClick={() => base44.auth.logout()}
-                className="p-2 hover:bg-slate-200 rounded-lg transition-colors"
-                title="Sair"
-              >
-                <LogOut className="w-4 h-4 text-slate-500" />
-              </button>
-            </div>
-          </SidebarFooter>
-        </Sidebar>
-
-        <main className="flex-1 flex flex-col">
-          <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 px-6 py-4 sticky top-0 z-10">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-4 flex-1">
-                <div className="lg:hidden">
-                  <SidebarTrigger className="hover:bg-slate-100 p-2 rounded-lg transition-colors">
-                    <Menu className="w-5 h-5" />
-                  </SidebarTrigger>
-                </div>
-                
-                <div className="hidden lg:block flex-1 max-w-md">
-                  <MiniMapaNavegacao />
-                </div>
-              </div>
-
-              <div className="hidden sm:block">
-                <EmpresaSwitcher />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => setPesquisaOpen(true)}
-                  className="p-2 hover:bg-slate-100 rounded-lg transition-colors hidden md:flex items-center gap-2"
-                  title="Pesquisa Universal (Ctrl+K)"
-                >
-                  <Search className="w-5 h-5 text-slate-600" />
-                  <span className="text-sm text-slate-500 hidden lg:inline">Ctrl+K</span>
-                </button>
-
-                <AtalhosTecladoInfo />
-
-                <AcoesRapidasGlobal />
-
-                <NotificationCenter />
-                
-                <Link to={createPageUrl("ConfiguracoesUsuario")}>
-                  <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                    <Settings className="w-5 h-5 text-slate-600" />
-                  </button>
-                </Link>
-              </div>
-              </div>
-              {isOffline && (
-              <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-amber-800 text-sm">
-                Modo offline: exibindo dados em cache (última sincronização). Algumas ações podem não estar disponíveis.
-              </div>
-              )}
-              {(!empresaAtual?.id && contexto !== 'grupo') && (
-              <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-amber-800 text-sm">
-                Selecione uma empresa para carregar os dados. O acesso está bloqueado sem empresa selecionada.
-              </div>
-              )}
-              {!integracoesOk && hasPermission('Sistema', null, 'ver') && (
-              <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-amber-800 text-sm">
-                Integrações fiscais pendentes nesta empresa. <Link to={createPageUrl("AdministracaoSistema?tab=integracoes")} className="underline">Configurar agora</Link>.
-              </div>
-              )}
-              </header>
-
-          <div className="flex-1 overflow-auto">
-            <ErrorBoundary>
-              <Suspense fallback={<div className="p-6 text-slate-500">Carregando…</div>}>
-                <BootstrapGuard>
-                  <ProtectedSection module={moduleName || 'Sistema'} action="ver" fallback={<div className="p-10 text-center text-slate-600">Acesso negado a este módulo.</div>}>
-                    <GuardRails currentPageName={currentPageName}>
-                      <div className="w-full h-full">
-                        <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-4 space-y-4">
-                          {children}
-                        </div>
-                      </div>
-                    </GuardRails>
-                  </ProtectedSection>
-                </BootstrapGuard>
-              </Suspense>
-            </ErrorBoundary>
-          </div>
-        </main>
-
-        <PesquisaUniversal 
-          open={pesquisaOpen} 
-          onOpenChange={setPesquisaOpen} 
-        />
-
-        {/* Sistema de Janelas Multitarefa V21.0 */}
-        <WindowRenderer />
-        <MinimizedWindowsBar />
-        </div>
-        </SidebarProvider>
-        );
-        }
+    <AppLayoutShell
+      currentPageName={currentPageName}
+      moduleName={moduleName}
+      groupedItems={groupedItems}
+      currentPath={location.pathname}
+      user={user}
+      empresaAtual={empresaAtual}
+      contexto={contexto}
+      isOffline={isOffline}
+      integracoesOk={integracoesOk}
+      pesquisaOpen={pesquisaOpen}
+      setPesquisaOpen={setPesquisaOpen}
+      canViewSystem={hasPermission('Sistema', null, 'ver')}
+      onLogout={() => base44.auth.logout()}
+      onPrefetch={(item) => {
+        prefetchForItem(item.title);
+        prefetchModule(item.title);
+      }}
+    >
+      {children}
+    </AppLayoutShell>
+  );
+}
 
 
 export default function Layout({ children, currentPageName }) {

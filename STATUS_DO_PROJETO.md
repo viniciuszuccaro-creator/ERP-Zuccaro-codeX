@@ -8499,3 +8499,19 @@ Checklist inicial:
 - Dados/infraestrutura: nenhuma transferencia real foi executada e nenhum backend Base44 remoto, banco legado ou HD externo foi acessado ou modificado.
 - Commit de implementacao: `6eea0eec` (`Protege transferencia de estoque entre empresas`).
 - Proximo passo P0: revisar e decompor `src/Layout.jsx`, estrutura transversal com aproximadamente 1.564 linhas e 30 diagnosticos, em lote isolado para preservar autenticacao, RBAC, contexto e navegacao; `localBase44Client.js` permanece reservado.
+
+## 2026-09-14 - Refatoracao e auditoria global do Layout
+
+- Objetivo: decompor o Layout transversal, eliminar seus diagnosticos de `checkJs` e restabelecer a auditoria efetiva de falhas do React Query v5 sem alterar navegacao, autenticacao ou escopo.
+- Causa raiz: `Layout.jsx` concentrava shell visual e wrappers globais em aproximadamente 1.564 linhas; usava callbacks `onError` removidos do contrato de `defaultOptions` do React Query v5, API antiga de estado da Query e propriedades internas sem contrato.
+- Arquivos alterados: `src/Layout.jsx`, `src/components/layout/AppLayoutShell.jsx`, `tests/sanitize-audit-policy.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
+- Refatoracao: Sidebar, cabecalho, alertas, guardas e janelas foram extraidos para auxiliar visual privado de 230 linhas. O orquestrador caiu para 1.363 linhas; wrappers de entidade, funcao, RBAC e contexto permanecem nele para lote de seguranca isolado, pois possuem consumidores e testes diretos.
+- Compatibilidade: rotas, grupos de menu, troca de Empresa, pesquisa, notificacoes, atalhos, prefetch, modo mobile, carregamento e logout foram preservados. O shell usa os componentes existentes e nao cria tela, rota, modulo ou persistencia paralela.
+- Multiempresa/RBAC: `ProtectedSection`, permissao do modulo, usuario, Grupo, Empresa e alertas contextuais continuam fail-closed. Nenhum acesso foi ampliado e nenhum ID de request passou a ser tratado como autoridade.
+- Seguranca/auditoria: falhas de query/mutation agora sao observadas pelos caches oficiais do React Query v5. A auditoria envia apenas origem e referencia tecnica limitada, sem query key, parametros ou payload; cancelamentos e respostas 429 continuam filtrados.
+- Layout: containers principais preservam `w-full`/`h-full` e receberam `min-w-0`/`min-h-0` para evitar estouro e corte em resolucoes menores.
+- Testes: focados passaram 47/47 e a suite completa passou 465/465. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; build manteve somente os avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
+- Typecheck: `Layout.jsx` e `AppLayoutShell.jsx` passaram de 30 diagnosticos para zero; o passivo global caiu de 1.735 para 1.705, reducao liquida exata de 30, e continua aberto sem ser mascarado.
+- Dados/infraestrutura: nenhuma consulta remota foi executada e nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou modificado.
+- Commit de implementacao: `PENDENTE_HASH_IMPLEMENTACAO_LAYOUT` (`Refatora shell e auditoria global do layout`).
+- Proximo passo P0: refatorar e tipar `src/components/ui/sidebar.jsx`, componente compartilhado com 627 linhas e contratos de propriedades incompletos; `localBase44Client.js` permanece reservado para lote transversal proprio.

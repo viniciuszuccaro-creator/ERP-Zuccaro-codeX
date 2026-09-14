@@ -98,3 +98,17 @@ test('operational audit call sites no longer swallow AuditLog failures', async (
   assert.match(formasUi, /filterInContext\('AuditLog'/);
   assert.doesNotMatch(formasUi, /FormaPagamento\.list\(\)/);
 });
+
+test('layout audits React Query v5 cache failures without exposing request payloads', async () => {
+  const layout = await readFile(new URL('../src/Layout.jsx', import.meta.url), 'utf8');
+  const shell = await readFile(new URL('../src/components/layout/AppLayoutShell.jsx', import.meta.url), 'utf8');
+
+  assert.match(layout, /getQueryCache\(\)\.subscribe/);
+  assert.match(layout, /getMutationCache\(\)\.subscribe/);
+  assert.match(layout, /event\.query\.queryHash/);
+  assert.match(layout, /event\.mutation\.mutationId/);
+  assert.match(layout, /AppLayoutShell/);
+  assert.doesNotMatch(layout, /auditCacheError\([^\n]+queryKey/);
+  assert.match(shell, /section=\{null\}/);
+  assert.match(shell, /className="min-h-screen h-full flex w-full/);
+});
