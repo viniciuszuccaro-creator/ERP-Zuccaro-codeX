@@ -8529,5 +8529,5 @@ Checklist inicial:
 - Testes: focados passaram 20/20 e a suite completa passou 466/466. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; build manteve somente os avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
 - Typecheck: os arquivos do lote passaram de 49 diagnosticos para zero; o passivo global caiu de 1.705 para 1.656, reducao liquida exata de 49, e continua aberto sem ser mascarado.
 - Dados/infraestrutura: nenhuma consulta remota foi executada e nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou modificado.
-- Commit de implementacao: `PENDENTE_HASH_IMPLEMENTACAO_SIDEBAR` (`Refatora contratos da sidebar compartilhada`).
+- Commit de implementacao: `37face82` (`Refatora contratos da sidebar compartilhada`).
 - Proximo passo P0: tratar `src/api/localBase44Client.js` em lote transversal proprio, com inventario e decomposicao segura das 2.657 linhas antes de corrigir seus 53 diagnosticos.
