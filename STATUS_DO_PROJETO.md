@@ -8163,5 +8163,5 @@ Checklist inicial:
 - Classificacao: `COMPATIBLE_OFFLINE_REQUIRES_CANONICAL_CONTEXT_MAPPING`. Nenhum arquivo foi movido para staging e `import_authorized=false`/`operational_promotion_allowed=false` permanecem ativos.
 - Validacao focada: `tests/migracao-erp-policy.test.js` passou 23/23. SQL Server e Agent legados terminaram `Stopped`/`Manual`; SQL Browser terminou `Stopped`/`Disabled`.
 - Escopo do repositorio: mudanca exclusivamente documental; a politica executada nao foi alterada. `git diff --check` permanece obrigatorio antes do commit.
-- Commit de implementacao: pendente neste registro.
+- Commit de implementacao: `69121fe6` (`Valida envelopes fiscais offline`).
 - Proximo passo obrigatorio: resolver offline os IDs canonicos atuais de `Grupo CPA` e `CPA Ferro e Aco` a partir da fonte local confiavel ja usada pelo ERP, validar pertencimento empresa-grupo e produzir somente um mapa HMAC protegido. Nao mover os envelopes para staging nem chamar persistencia.
