@@ -797,6 +797,19 @@ Lote concluido em 2026-09-14 na politica compartilhada de movimentacao, sem alte
 
 Proxima frente P0: selecionar no ranking atualizado a proxima politica operacional de maior impacto, mantendo `iaTransversalPolicy.js` para P2 e `marketplacePedidoPolicy.js` para P1.
 
+### Contratos JSDoc - formulario de Inventario
+
+Lote concluido em 2026-09-14 no formulario existente de Inventario, sem alterar contagem, aprovacao, aplicacao de ajustes ou persistencia.
+
+- Contratos locais descrevem o estado do Inventario, dados resumidos de auditoria, propriedades do componente e opcoes de salvamento sem `any`, `ts-ignore` ou desativacao de `checkJs`.
+- O typecheck isolado de `InventarioForm.jsx` passou de 20 diagnosticos para zero.
+- O typecheck global caiu de 2.160 para 2.140 diagnosticos, reducao liquida exata de 20, sem transferir falhas para consumidores.
+- Permanecem iguais o contexto obrigatorio, o RBAC separado para salvar e aprovar, a confirmacao de estados sensiveis e a aplicacao backend dos ajustes.
+- Auditoria de sucesso/falha, protecao contra duplo salvamento e bloqueio de aprovacao sem registro persistido continuam preservados.
+- Nenhum dado, entidade, recurso Base44, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: refatorar com seguranca e tipar `RecebimentoTab.jsx`, tela existente de Estoque com 527 linhas e 22 diagnosticos, preservando seu contrato publico e fluxo operacional.
+
 ### ERP-SITE-01 - Fundacao S2S do Site CPA
 
 Nova prioridade autorizada em 2026-09-13: executar primeiro no ERP os 12 contratos Site CPA, sem alterar o repositorio do Site ate a homologacao da camada ERP.

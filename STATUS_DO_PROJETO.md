@@ -8341,3 +8341,17 @@ Checklist inicial:
 - Dados/infraestrutura: nenhum dado real, Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
 - Commit de implementacao: `bfab52ca` (`Tipa politica de movimentacao de estoque`).
 - Proximo passo P0: recalcular o ranking e selecionar a proxima politica operacional ainda aberta; IA transversal e Marketplace permanecem nas prioridades P2 e P1, respectivamente.
+
+## 2026-09-14 - Contratos JSDoc do formulario de Inventario
+
+- Objetivo: eliminar os diagnosticos proprios de `InventarioForm.jsx` documentando o estado e as opcoes existentes sem alterar o fluxo operacional.
+- Causa raiz: o estado inicial restringia a inferencia aos campos basicos e os dados de auditoria eram inferidos como objeto vazio, gerando 20 diagnosticos locais.
+- Arquivo alterado: `src/components/estoque/InventarioForm.jsx`; nenhum consumidor, entidade, funcao backend ou outro componente precisou ser modificado.
+- Implementacao: JSDoc local descreve Inventario, dados resumidos de auditoria, propriedades do componente e opcoes de salvamento sem `any`, `ts-ignore` ou desligamento de `checkJs`.
+- Multiempresa/RBAC: contexto de Grupo/Empresa continua obrigatorio; salvar/editar e aprovar permanecem com permissoes distintas e fail-closed.
+- Seguranca/auditoria: confirmacao de estados sensiveis, bloqueio de duplo salvamento, auditoria de sucesso/falha e aplicacao protegida de ajustes permanecem inalterados.
+- Testes: teste focado de Estoque passou 7/7; suite completa passou 443/443; `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram. O build manteve apenas o aviso conhecido de chunk grande.
+- Typecheck: `InventarioForm.jsx` passou de 20 diagnosticos para zero; o passivo global caiu de 2.160 para 2.140, reducao liquida exata de 20, e portanto continua aberto sem ser mascarado.
+- Dados/infraestrutura: nenhum dado real, Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
+- Commit de implementacao: `PENDENTE_COMMIT`.
+- Proximo passo P0: refatorar com seguranca e tipar `RecebimentoTab.jsx`, que possui 527 linhas e 22 diagnosticos, em lote separado.

@@ -13,10 +13,34 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { base44 } from '@/api/base44Client';
 
+/**
+ * @typedef {Record<string, unknown> & {
+ *   id?: string | number,
+ *   descricao: string,
+ *   data_referencia: string,
+ *   status: string,
+ *   itens: Array<Record<string, unknown>>,
+ *   empresa_id?: unknown,
+ *   group_id?: unknown,
+ * }} InventarioRecord
+ * @typedef {Record<string, unknown> & {
+ *   registro_id?: unknown,
+ *   empresa_id?: unknown,
+ *   group_id?: unknown,
+ *   status?: unknown,
+ *   total_itens?: number,
+ *   dados_anteriores?: unknown,
+ *   dados_novos?: unknown,
+ * }} InventarioAuditData
+ * @typedef {{ acao: string, sucesso?: boolean, motivo?: string | null, dados?: InventarioAuditData }} InventarioAuditOptions
+ * @typedef {{ confirmar?: boolean }} InventarioSaveOptions
+ */
+
+/** @param {{ windowMode?: boolean }} props */
 export default function InventarioForm({ windowMode = true }) { // w-full/h-full garantidos no container pai
   const { carimbarContexto, empresaAtual, grupoAtual, contexto, createInContext, updateInContext } = useContextoVisual();
   const { canCreate, canEdit, canApprove } = usePermissions();
-  const [inv, setInv] = useState({ descricao: '', data_referencia: new Date().toISOString().slice(0,10), status: 'Aberto', itens: [] });
+  const [inv, setInv] = useState(/** @type {InventarioRecord} */ ({ descricao: '', data_referencia: new Date().toISOString().slice(0,10), status: 'Aberto', itens: [] }));
   const [salvando, setSalvando] = useState(false);
   const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id);
   const podeSalvar = canCreate('Estoque', 'Inventário') || canCreate('Estoque', 'Inventario') || canEdit('Estoque', 'Inventário') || canEdit('Estoque', 'Inventario');
@@ -24,6 +48,7 @@ export default function InventarioForm({ windowMode = true }) { // w-full/h-full
   const controlesDesabilitados = !contextoValido || !podeSalvar || salvando;
   const grupoContextoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || inv.group_id || null;
 
+  /** @param {InventarioAuditOptions} options */
   const auditInventario = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
       await createInContext('AuditLog', {
@@ -57,6 +82,10 @@ export default function InventarioForm({ windowMode = true }) { // w-full/h-full
     status: z.string(),
   });
 
+  /**
+   * @param {string} status
+   * @param {InventarioSaveOptions} options
+   */
   const salvar = async (status = 'Aberto', options = {}) => {
     if (salvando) return;
 
