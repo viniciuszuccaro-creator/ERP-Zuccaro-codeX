@@ -6409,6 +6409,21 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: somente nos 14 candidatos, contar materiais e pares de unidade distintos, repeticao por material e relacoes de `SIGLACONVERTENDOUNIDADE`, `UNIDADEBELGO`, `CODIGOMATERIALBELGO` e `CODIGOTIPO` com material/unidade mestre e pedido/fiscal. Nao exportar os valores das referencias nem autorizar conversao.
 
+### Gate 18 - Referencias de conversao dos candidatos por peso
+
+- Os 14 candidatos de conversao por peso foram analisados em duas passagens identicas, sem exportar codigos, unidades, materiais, pesos ou quantidades.
+- O universo contem oito materiais distintos e somente um par de unidades mestre/pedido. Cinco itens usam materiais com uma unica ocorrencia; nove itens pertencem a materiais repetidos de duas a cinco vezes.
+- Os 14 itens compartilham o mesmo par de unidades, classificado apenas por cardinalidade. Nenhuma sigla do par foi exportada.
+- `UNIDADEBELGO` coincide com a unidade do pedido/nota nos 14 itens. `SIGLACONVERTENDOUNIDADE` coincide com a unidade mestre em 11 e esta ausente em tres.
+- Assim, 11 itens possuem referencias de unidade coerentes com a direcao mestre para pedido e tres possuem referencia parcial, limitada a unidade de destino.
+- `CODIGOMATERIALBELGO` esta preenchido nos 14 itens e aponta para outro codigo de material, nunca para o proprio material. `CODIGOTIPO` tambem esta presente nos 14.
+- A combinacao de um unico par de unidades, peso exato e referencia para outro material reforca a hipotese de conversao cadastrada. Ainda nao comprova que o material referenciado exista, seja `REVENDA`, use a unidade de destino ou forme vinculo reciproco.
+- Nenhum mapeamento foi aceito, nenhuma conversao foi aplicada e nenhum item foi importado ou marcado como recebido.
+- O relatorio `legacy-purchase-weight-candidate-reference-classification.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum codigo, unidade, peso, quantidade, material, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Situacao: os 14 casos possuem evidencia estrutural forte, mas permanecem `BLOCKED` ate validar o cadastro apontado por `CODIGOMATERIALBELGO`; os outros 50 divergentes continuam sem explicacao.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: cruzar somente os `CODIGOMATERIALBELGO` dos 14 candidatos com `CadastroMateriais` e contar existencia, `REVENDA`/nao revenda, situacao, igualdade da unidade referenciada com `UNIDADEBELGO`/pedido e reciprocidade do vinculo. Nao exportar codigos ou valores e nao autorizar conversao automaticamente.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
