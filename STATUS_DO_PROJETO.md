@@ -8431,5 +8431,5 @@ Checklist inicial:
 - Financeiro: geracao de Conta a Receber falha fechada sem `group_id` e `empresa_id`; a Empresa proprietaria do Contrato e preservada.
 - Testes: focados passaram 4/4 e a suite completa passou 454/454. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve apenas o aviso conhecido de chunk grande. O typecheck dos arquivos do lote passou de 79 diagnosticos para zero; o passivo global caiu de 2.009 para 1.930, reducao liquida exata de 79.
 - Dados/infraestrutura: nenhum Contrato, Cliente, Fornecedor ou titulo real foi alterado; nenhum backend Base44 remoto, banco legado ou HD externo foi acessado ou modificado.
-- Commit de implementacao: `PENDENTE_COMMIT`.
+- Commit de implementacao: `7c238fbe` (`Isola contratos por empresa e preserva historico`).
 - Proximo passo P0: refatorar e tipar `src/components/expedicao/FormularioEntrega.jsx`, fluxo operacional de Expedicao com 51 diagnosticos; `localBase44Client.js` permanece reservado para lote proprio devido ao impacto transversal.
