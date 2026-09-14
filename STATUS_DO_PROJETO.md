@@ -8355,3 +8355,19 @@ Checklist inicial:
 - Dados/infraestrutura: nenhum dado real, Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
 - Commit de implementacao: `aa989441` (`Tipa formulario de inventario`).
 - Proximo passo P0: refatorar com seguranca e tipar `RecebimentoTab.jsx`, que possui 527 linhas e 22 diagnosticos, em lote separado.
+
+## 2026-09-14 - Refatoracao e contratos do Recebimento de Estoque
+
+- Objetivo: reduzir o tamanho de `RecebimentoTab.jsx`, eliminar seus diagnosticos de `checkJs` e preservar corretamente os dados enviados pelo formulario ativo.
+- Causa raiz: a tela reunia listagem, persistencia e um formulario legado oculto em 527 linhas; a mutacao nao possuia contrato e lia aliases diferentes dos enviados por `RecebimentoForm`.
+- Arquivos alterados: `src/components/estoque/RecebimentoTab.jsx`, `src/components/estoque/RecebimentoLegacyDialog.jsx`, `src/components/lib/estoqueMovimentoPolicy.js` e `tests/estoque-movimento-policy.test.js`.
+- Refatoracao: o dialogo legado e seus manipuladores foram extraidos para um componente auxiliar privado, criado somente porque nao havia equivalente reutilizavel. A tela principal caiu para 319 linhas e o auxiliar ficou com 323; rota, interface publica e comportamento oculto foram preservados.
+- Compatibilidade: o helper existente de Estoque normaliza `numero_recebimento/numero_oc`, `numero_nf/nota_fiscal` e `responsavel_recebimento/conferente`. Itens aceitam `produto_descricao/descricao`, evitando perda de dados do formulario ativo.
+- Multiempresa/RBAC: contexto de Grupo/Empresa e permissao `Estoque.Recebimento.criar` continuam fail-closed; a extracao preserva os marcadores granulares do formulario legado.
+- Seguranca/auditoria: nenhuma permissao foi ampliada. Movimentos continuam criados pelo contexto existente, Ordem de Compra continua atualizada no mesmo fluxo e auditoria permanece obrigatoria.
+- Testes: focados passaram 13/13 e agora cobrem aliases ativos/legados e a permanencia das acoes do componente extraido; suite completa passou 444/444. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram.
+- Typecheck: os arquivos do lote passaram de 22 diagnosticos para zero; o passivo global caiu de 2.140 para 2.118, reducao liquida exata de 22, e continua aberto sem ser mascarado.
+- Verificacao local: `http://localhost:5173/estoque` respondeu HTTP 200 e entregou o root da aplicacao. A tentativa de inspecao visual no navegador interno expirou antes de gerar snapshot e nao foi declarada como aprovada.
+- Dados/infraestrutura: nenhum recebimento real foi criado, nenhum backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
+- Commit de implementacao: `PENDENTE_COMMIT`.
+- Proximo passo P0: refatorar e tipar `ConfiguracaoSeguranca.jsx`, que possui 943 linhas e 21 diagnosticos, em lote separado.

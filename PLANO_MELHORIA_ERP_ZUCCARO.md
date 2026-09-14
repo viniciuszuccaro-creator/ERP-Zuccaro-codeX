@@ -810,6 +810,20 @@ Lote concluido em 2026-09-14 no formulario existente de Inventario, sem alterar 
 
 Proxima frente P0: refatorar com seguranca e tipar `RecebimentoTab.jsx`, tela existente de Estoque com 527 linhas e 22 diagnosticos, preservando seu contrato publico e fluxo operacional.
 
+### Refatoracao e contratos - Recebimento de Estoque
+
+Lote concluido em 2026-09-14 no fluxo existente de Recebimento, sem criar rota, tela, entidade ou operacao paralela.
+
+- `RecebimentoTab.jsx` caiu de 527 para 319 linhas; o formulario legado oculto e seus manipuladores foram extraidos para `RecebimentoLegacyDialog.jsx`, componente auxiliar privado com 323 linhas e o mesmo ponto de uso.
+- A extracao preserva campos, controles, acoes RBAC e o estado oculto `open=false`; nenhuma funcionalidade legada foi excluida.
+- Contratos JSDoc descrevem recebimentos, itens, ordens e produtos sem `any`, `ts-ignore` ou desativacao de `checkJs`.
+- O typecheck isolado dos arquivos do lote passou de 22 diagnosticos para zero; o global caiu de 2.140 para 2.118, reducao liquida exata de 22.
+- O helper existente de Estoque agora normaliza os aliases ativos/legados de numero, NF e responsavel; a mutacao tambem preserva `descricao` ou `produto_descricao` do item.
+- Permanecem iguais o contexto obrigatorio, o RBAC de criacao, a idempotencia de movimentos, a atualizacao da Ordem de Compra e a auditoria do recebimento.
+- Nenhum dado real, entidade remota, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: refatorar e tipar `ConfiguracaoSeguranca.jsx`, tela existente de Seguranca com 943 linhas e 21 diagnosticos, em lote proprio.
+
 ### ERP-SITE-01 - Fundacao S2S do Site CPA
 
 Nova prioridade autorizada em 2026-09-13: executar primeiro no ERP os 12 contratos Site CPA, sem alterar o repositorio do Site ate a homologacao da camada ERP.

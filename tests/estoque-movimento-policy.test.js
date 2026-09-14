@@ -2,6 +2,7 @@ import {
   assertMovimentacaoEstoque,
   configAllowsNegativeStock,
   findDuplicateMovement,
+  normalizeRecebimentoAliases,
   resolveNextEstoque,
   resolveSignedQuantity,
 } from '../src/components/lib/estoqueMovimentoPolicy.js';
@@ -91,6 +92,27 @@ test('explicit next balance from inventory is applied as a set, not a delta', ()
   assert.equal(next, 7);
 });
 
+test('active and legacy receipt field names resolve to the same contract', () => {
+  assert.deepEqual(normalizeRecebimentoAliases({
+    numero_oc: 'OC-9',
+    nota_fiscal: 'NF-7',
+    conferente: 'Vinicius',
+  }), {
+    numeroRecebimento: 'OC-9',
+    numeroNota: 'NF-7',
+    responsavel: 'Vinicius',
+  });
+  assert.deepEqual(normalizeRecebimentoAliases({
+    numero_recebimento: 'REC-1',
+    numero_nf: 'NF-8',
+    responsavel_recebimento: 'Enzo',
+  }), {
+    numeroRecebimento: 'REC-1',
+    numeroNota: 'NF-8',
+    responsavel: 'Enzo',
+  });
+});
+
 test('stock persistence owns the product balance and history cannot be deleted', async () => {
   const client = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
   const tab = await readFile(new URL('../src/components/estoque/MovimentacoesTab.jsx', import.meta.url), 'utf8');
@@ -99,6 +121,8 @@ test('stock persistence owns the product balance and history cannot be deleted',
   const applyInv = await readFile(new URL('../base44/functions/applyInventoryAdjustments/entry.ts', import.meta.url), 'utf8');
   const validation = await readFile(new URL('../base44/functions/_lib/validationUtils/entry.ts', import.meta.url), 'utf8');
   const controle = await readFile(new URL('../src/components/estoque/ControleEstoqueCompleto.jsx', import.meta.url), 'utf8');
+  const recebimento = await readFile(new URL('../src/components/estoque/RecebimentoTab.jsx', import.meta.url), 'utf8');
+  const recebimentoLegacy = await readFile(new URL('../src/components/estoque/RecebimentoLegacyDialog.jsx', import.meta.url), 'utf8');
 
   assert.match(client, /applyLocalEstoqueMovimento/);
   assert.match(client, /Exclusao de historico bloqueada/);
@@ -115,4 +139,7 @@ test('stock persistence owns the product balance and history cannot be deleted',
   assert.match(validation, /if \(!data \|\| typeof data !== 'object'\) return false/);
   assert.match(controle, /canApprove\('Estoque', 'Inventario'\)/);
   assert.doesNotMatch(controle, /updateInContext\('Produto', produtoId, \{\s*estoque_atual: quantidadeContada/);
+  assert.match(recebimento, /<RecebimentoLegacyDialog/);
+  assert.match(recebimentoLegacy, /data-action="Estoque\.Recebimento\.formularioLegado"/);
+  assert.match(recebimentoLegacy, /data-action="Estoque\.Recebimento\.confirmar"/);
 });

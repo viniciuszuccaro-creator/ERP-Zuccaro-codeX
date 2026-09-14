@@ -38,6 +38,14 @@
  * @typedef {{ groupId?: unknown, empresaId?: unknown }} EstoqueConfigScope
  * @typedef {{ produto?: EstoqueProdutoRecord, record?: EstoqueMovimentoRecord, permiteNegativo?: boolean }} ResolveEstoqueOptions
  * @typedef {{ record?: EstoqueMovimentoRecord, produto?: EstoqueProdutoRecord | null, movements?: EstoqueMovimentoRecord[], permiteNegativo?: boolean }} AssertEstoqueOptions
+ * @typedef {Record<string, unknown> & {
+ *   numero_recebimento?: unknown,
+ *   numero_oc?: unknown,
+ *   numero_nf?: unknown,
+ *   nota_fiscal?: unknown,
+ *   responsavel_recebimento?: unknown,
+ *   conferente?: unknown,
+ * }} RecebimentoAliasRecord
  * @typedef {Error & { code?: string }} EstoquePolicyError
  */
 
@@ -74,6 +82,13 @@ export const movementHasOrigin = (record = {}) => Boolean(
     record.motivo,
   ),
 );
+
+/** @param {RecebimentoAliasRecord} record */
+export const normalizeRecebimentoAliases = (record = {}) => ({
+  numeroRecebimento: firstText(record.numero_recebimento, record.numero_oc),
+  numeroNota: firstText(record.numero_nf, record.nota_fiscal),
+  responsavel: firstText(record.responsavel_recebimento, record.conferente),
+});
 
 /** @param {EstoqueMovimentoRecord} record */
 export const movementIdempotencyKey = (record = {}) => {
