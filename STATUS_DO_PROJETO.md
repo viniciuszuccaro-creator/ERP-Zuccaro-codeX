@@ -8325,5 +8325,5 @@ Checklist inicial:
 - Testes: teste dedicado passou 7/7; suite completa passou 443/443; `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram. O build manteve somente os avisos conhecidos de chunks/imports mistos e bases de navegador desatualizadas.
 - Typecheck: `pedidoFaturamentoPolicy.js` passou de 23 diagnosticos para zero; o passivo global caiu de 2.209 para 2.182, reducao liquida de 27, e portanto continua aberto sem ser mascarado.
 - Dados/infraestrutura: nenhum dado real, Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
-- Commit de implementacao: `PENDENTE_COMMIT`.
+- Commit de implementacao: `00af6aeb` (`Tipa politica de faturamento do pedido`).
 - Proximo passo P0: tipar `estoqueMovimentoPolicy.js`, politica compartilhada de Estoque com 22 diagnosticos, em lote separado.
