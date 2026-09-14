@@ -8297,5 +8297,5 @@ Checklist inicial:
 - Dados: nenhuma informacao real do ERP antigo sera importada para Base44 ou Supabase durante o adiamento; banco legado e HD externo nao foram acessados.
 - Runtime: nenhuma dependencia, tela, entidade, funcao ou comportamento foi alterado. O lote e exclusivamente documental.
 - Validacao aplicavel: `git diff --check` deve passar; testes de aplicacao sao dispensados conforme `AGENTS.md`.
-- Commit de implementacao: a registrar no fechamento deste lote.
+- Commit de implementacao: `52bd0afe` (`Adia migracao Supabase sem liberar dados reais`).
 - Proximo passo independente: retomar o backlog local registrado em `PLANO_MELHORIA_ERP_ZUCCARO.md`, iniciando pelo contrato de `ordemProducaoPolicy.js`, sem ampliar acoplamento remoto e sem acessar dados reais.
