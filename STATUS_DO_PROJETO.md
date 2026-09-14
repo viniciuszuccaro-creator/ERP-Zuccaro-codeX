@@ -8197,3 +8197,20 @@ Checklist inicial:
 - Escopo do repositorio: mudanca exclusivamente documental; nenhuma politica ou runtime foi alterado.
 - Commit de implementacao: `04e7d00c` (`Valida contexto fiscal canonico offline`).
 - Proximo passo obrigatorio: preparar na quarentena um manifesto de transicao dos tres candidatos homologados para staging, ainda sem mover arquivos nem persistir `NotaFiscal`. A passagem efetiva para staging exigira autorizacao especifica posterior.
+
+## 2026-09-14 - Gate 18: manifesto protegido de transicao fiscal
+
+- Objetivo: preparar o contrato de transicao dos tres candidatos fiscais homologados para o staging existente, sem mover arquivos, chamar backend ou persistir entidades.
+- Reuso: os envelopes HMAC, a ficha de homologacao local, o mapa HMAC do contexto canonico, a validacao offline e o staging fiscal existente em `SolicitacaoAprovacao`; nenhum modulo, tela, entidade, importador ou arquivo de codigo paralelo foi criado.
+- Manifesto local: `staging-transition-manifest.json` permanece exclusivamente em `D:\BACKUP ERP ANTIGO - CODEX\05_QUARANTINE\FISCAL\FISCAL-DRYRUN-001`, classificado como `READY_FOR_EXPLICIT_STAGING_AUTHORIZATION`.
+- Conteudo: tres referencias HMAC unicas, decisao `PRESERVAR_SEM_VINCULO_PEDIDO`, destino solicitado `staging`, entidade de staging `SolicitacaoAprovacao` e operacao `manual_fiscal_reconciliation_staging`.
+- Contexto: o manifesto referencia Grupo, Empresa e pertencimento somente por HMAC; nenhum ID canonico bruto, numero fiscal, pedido, fornecedor, material, valor ou data fiscal foi persistido.
+- Bloqueios: os tres candidatos permanecem `transition_authorized=false`, `import_authorized=false` e `operational_promotion_allowed=false`; reaprovacao de producao continua obrigatoria.
+- Integridade: as referencias dos envelopes e da ficha coincidem 3/3, sem duplicidade. O manifesto possui SHA-256 `F6370AF9EAE681EE0ED01D6B2E4B5242397669B545B128799C54633D45334CF4`.
+- ACL: acesso confirmado somente para o usuario local, `SYSTEM` e Administradores.
+- Persistencia: nenhum arquivo foi movido da quarentena, nenhuma chamada backend/Base44 ocorreu e nenhuma `SolicitacaoAprovacao` ou `NotaFiscal` foi criada ou alterada.
+- Validacao focada: `tests/contexto-multiempresa-policy.test.js` e `tests/migracao-erp-policy.test.js` passaram 36/36; `git diff --check` permanece obrigatorio antes do commit.
+- Infraestrutura legada: `MSSQL$ERPZLEGACY` e `SQLAgent$ERPZLEGACY` terminaram `Stopped`/`Manual`; `SQLBrowser` terminou `Stopped`/`Disabled`.
+- Escopo do repositorio: mudanca exclusivamente documental; nenhuma politica ou runtime foi alterado.
+- Commit de implementacao: a registrar apos validacao final.
+- Proximo passo dependente de usuario: autorizar explicitamente a passagem dos tres candidatos do lote `FISCAL-DRYRUN-001` da quarentena para o staging fiscal. A autorizacao permitira apenas criar envelopes bloqueados em `SolicitacaoAprovacao`; nao autoriza promover ou alterar `NotaFiscal` operacional.
