@@ -6485,6 +6485,23 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: classificar por contagens os 1.280 itens por ano do pedido, familia de unidade e faixas relativas de excesso, separando relatorios de item unico/multiplo. O objetivo e verificar persistencia temporal do padrao sem exportar datas completas, unidades, documentos, materiais, pesos ou quantidades.
 
+### Gate 18 - Persistencia temporal dos excedentes de revenda
+
+- Os 1.280 excedentes `REVENDA` com unidade mestre igual foram classificados em duas passagens identicas por ano, familia de unidade, faixa relativa e composicao do relatorio fiscal.
+- O padrao esta presente em todos os anos do recorte: 149 itens em 2021, 313 em 2022, 284 em 2023, 300 em 2024, 135 em 2025 e 99 em 2026.
+- A distribuicao por faixa reconciliou os 1.280 itens: 222 ate 1%, 710 acima de 1% ate 10%, 258 acima de 10% ate 50%, 51 acima de 50% ate 100%, 26 acima de 100% ate 500% e 13 acima de 500%.
+- A faixa predominante de 1% a 10% ocorre em todos os seis anos. Excedentes acima de 50% tambem aparecem ao longo do periodo; os casos acima de 500% concentram-se principalmente em 2025, mas nao sao exclusivos desse ano.
+- Dos 1.267 itens da familia de peso, 214 ficam ate 1%, 707 entre 1% e 10%, 258 entre 10% e 50%, 51 entre 50% e 100%, 25 entre 100% e 500% e 12 acima de 500%.
+- Os 13 itens de contagem incluem oito ate 1%, tres entre 1% e 10%, um entre 100% e 500% e um acima de 500%. Eles permanecem bloqueados separadamente por nao seguirem o padrao majoritario de peso.
+- Entre os 452 itens em relatorios de item unico, existem ocorrencias em todas as faixas: 74 ate 1%, 243 entre 1% e 10%, 89 entre 10% e 50%, 24 entre 50% e 100%, 13 entre 100% e 500% e nove acima de 500%.
+- Entre os 828 itens em relatorios multiplos, existem 148 ate 1%, 467 entre 1% e 10%, 169 entre 10% e 50%, 27 entre 50% e 100%, 13 entre 100% e 500% e quatro acima de 500%.
+- A persistencia anual e a ocorrencia em relatorios de item unico confirmam que o excesso nao e evento isolado nem depende de rateio. Isso e compativel com pratica operacional historica, mas nao define automaticamente a regra de migracao.
+- O relatorio `legacy-purchase-resale-temporal-excess-classification.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhuma data completa, unidade, material, documento, peso, quantidade, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Nenhum saldo residual foi calculado para importacao e nenhum item foi marcado como recebido ou concluido no ERP novo.
+- Situacao: causa tecnica automatica nao comprovada; os excedentes devem ser preservados como evidencia historica e exigem regra de negocio homologada antes de determinar saldo aberto.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: classificar os 1.009 pedidos recentes no nivel do cabecalho segundo estado agregado dos itens (`sem recebimento`, `parcial`, `todos recebidos/exatos`, `todos recebidos/com excesso` e `misto`), presenca exclusiva de produtos `REVENDA`, escopo empresarial seguro e vinculo fiscal. Nao importar nem calcular saldo definitivo antes de homologacao humana.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
