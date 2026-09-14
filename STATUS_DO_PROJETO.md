@@ -6353,6 +6353,20 @@ Checklist inicial:
 
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
+- Os quatro campos suplementares dos 1.364 itens excedentes com unidade principal igual e vinculo fiscal unico foram classificados em duas passagens identicas, sem exportar valores ou identificadores.
+- `PesoLiquido` esta ausente nos 1.364 itens. `QTDEMETROSREAL` e `QTDEUNIDPARALELA` estao zeradas em todos os casos.
+- `QTDEPECAS` esta zerada em 1.303 itens e positiva em somente 61: 51 no codigo empresarial 1, um no codigo 2 e nove no codigo 3.
+- Das 61 ocorrencias positivas de `QTDEPECAS`, 60 diferem tanto da quantidade pedida quanto da fiscal. Uma ocorrencia do codigo 3 e igual a quantidade pedida; nenhuma e igual a quantidade fiscal excedente.
+- Nao foram encontrados valores negativos nos quatro campos suplementares. As oito metricas de presenca e relacao reconciliaram exatamente os 1.364 itens cada.
+- Portanto, pecas, peso liquido, metros reais e unidade paralela nao explicam o excesso registrado no item fiscal e em `QUANTIDADERECEBIDA` para este universo.
+- Nenhum item foi convertido, corrigido, marcado como recebido ou importado no ERP novo. A falta de correspondencia nesses campos preserva o bloqueio de interpretacao automatica.
+- O relatorio `legacy-purchase-supplemental-quantity-classification.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, material, unidade, quantidade, ID, TPS ou MDF/LDF integra o GitHub.
+- Situacao: recebimento continua `BLOCKED`; as quantidades suplementares do pedido e da nota nao fornecem contrato de conversao para os excedentes.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: inventariar somente o schema de `CadastroMateriais` relacionado a chave, tipo/finalidade de material, situacao, unidade, peso e conversao, sem consultar valores. Definir como identificar estruturalmente os produtos de `REVENDA` antes de cruzar contagens dos 1.364 excedentes com o cadastro mestre.
+
+### Gate 18 - Campos suplementares dos excedentes com vinculo unico
+
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
 - Somente `TID_EMP03.mdf` e `TID_EMP03_log.ldf` foram copiados de `02_SQL_WORK` para `C:\Users\cpaba\ERPZLEGACY_DATA`. Os hashes SHA-256 da origem e da copia coincidiram antes do anexo; os arquivos no HD externo nao foram abertos pelo SQL nem alterados.
 - A copia foi anexada como `LEGACY_TID_EMP03`, convertida localmente da versao interna 782 para 998, colocada imediatamente em `READ_ONLY` e aprovada por `DBCC CHECKDB` com `DATA_PURITY` sem erros.
