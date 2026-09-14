@@ -8480,5 +8480,5 @@ Checklist inicial:
 - Testes: focados passaram 7/7 e a suite completa passou 462/462. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve apenas avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
 - Typecheck: os 67 diagnosticos diretos dos arquivos tocados passaram para zero; o passivo global caiu de 1.835 para 1.765, reducao liquida de 70 por melhora dos contratos compartilhados, e continua aberto sem ser mascarado.
 - Dados/infraestrutura: nenhuma consulta remota foi executada e nenhum backend Base44, banco legado ou HD externo foi acessado ou modificado.
-- Commit de implementacao: `PENDENTE_COMMIT`.
+- Commit de implementacao: `f73b408e` (`Isola dashboard em tempo real por usuario`).
 - Proximo passo P0: refatorar e tipar `src/components/estoque/TransferenciaEntreEmpresasForm.jsx`, preservando validacao bilateral Grupo/Empresas, estoque e auditoria; `localBase44Client.js` permanece reservado para lote transversal proprio.
