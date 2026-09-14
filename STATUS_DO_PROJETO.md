@@ -6770,6 +6770,19 @@ Checklist inicial:
 - A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: reconciliar somente por classificacao a diferenca entre o total da nota e a soma dos itens usando frete, desconto, IPI, substituicao tributaria, seguro, servicos e custos adicionais do cabecalho. Nao exportar valores, aliquotas, codigos fiscais ou identificadores e nao liberar importacao.
 
+### Gate 18 - Componentes dos cabecalhos fiscais reconciliados
+
+- Os tres documentos e suas cinco linhas adicionais foram reconstruidos pelo mesmo filtro protegido e classificados em duas passagens identicas. Os resultados produziram o mesmo SHA-256 e reconciliaram integralmente o universo bloqueado.
+- Nos tres documentos, a formula composta pelo valor de mercadorias mais frete, menos desconto, mais IPI, substituicao tributaria, seguro e custos adicionais coincide exatamente com o total da nota.
+- Frete esta presente nos tres documentos. Desconto, IPI, substituicao tributaria, seguro, servico, retencao e custos adicionais estao ausentes em todos eles.
+- Como servicos e retencoes estao ausentes, as formulas com servico bruto e servico liquido convergem para a mesma formula-base e tambem coincidem nos tres casos.
+- A diferenca anterior entre a soma simples de `VALORITOTALITEM` e o total da nota fica explicada pelo componente de frete do cabecalho. Mercadorias, cabecalho e os nove titulos financeiros estao internamente conciliados.
+- A integridade fiscal e financeira dos documentos esta comprovada, mas as cinco referencias de item de pedido continuam ausentes e a soma quantitativa continua superior ao pedido e ao recebido. Nenhum vinculo foi inferido e nenhum documento foi liberado para importacao.
+- O relatorio `legacy-purchase-fiscal-header-components-reconciliation.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum valor, aliquota, codigo fiscal, identificador, documento, fornecedor, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Nenhum pedido, item, movimento, documento fiscal, titulo, staging ou registro do ERP novo foi criado, alterado, remapeado, importado ou promovido. `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
+- A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: revisar o contrato de migracao/importacao fiscal ja existente para verificar se uma linha fiscal historica pode preservar a referencia de pedido ausente e manter somente esse vinculo em quarentena, sem criar importador paralelo, sem importar dados reais e sem liberar os tres documentos antes da validacao do fluxo completo.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
