@@ -24,6 +24,7 @@ import {
 import { assertTituloOnCreate, assertTituloOnUpdate } from '../src/components/lib/financeiroTituloPolicy.js';
 import {
   applyManualWorkflowTransition,
+  verifyFiscalStagingManifestContext,
 } from '../base44/functions/_lib/financeiro/manualReconciliationApprovalPolicy/entry.ts';
 
 const privateEvidence = (id = 'ev-1', overrides = {}) => ({
@@ -42,7 +43,7 @@ const loadSolicitacoesAprovacaoHandler = async () => {
   const original = await readFile(new URL('../base44/functions/solicitacoesAprovacao/entry.ts', import.meta.url), 'utf8');
   const instrumented = original
     .replace(/^import \{ createClientFromRequest \}[^\r\n]+\r?\n/, 'const createClientFromRequest = () => globalThis.__approvalMockClient;\n')
-    .replace(/import \{[\s\S]*?\} from '\.\.\/_lib\/financeiro\/manualReconciliationApprovalPolicy\/entry\.ts';\r?\n/, 'const { MANUAL_RECONCILIATION_TYPE, applyManualWorkflowTransition, auditManualStaging, buildManualRecord, firstText, isManualReconciliationRequest, resolveManualReconciliationAccess, resolveManualScope } = globalThis.__manualApprovalPolicy;\n')
+    .replace(/import \{[\s\S]*?\} from '\.\.\/_lib\/financeiro\/manualReconciliationApprovalPolicy\/entry\.ts';\r?\n/, 'const { FISCAL_MANUAL_RECONCILIATION_TYPE, MANUAL_RECONCILIATION_TYPE, applyManualWorkflowTransition, auditManualStaging, buildManualRecord, firstText, isManualReconciliationRequest, resolveManualReconciliationAccess, resolveManualScope, verifyFiscalStagingManifestContext } = globalThis.__manualApprovalPolicy;\n')
     .replace('Deno.serve(async (req) => {', 'globalThis.__captureApprovalHandler(async (req) => {');
   let handler = null;
   globalThis.__captureApprovalHandler = (candidate) => { handler = candidate; };
@@ -87,6 +88,37 @@ const makeApprovalClient = ({ existing = [], current = null, permissions = ['con
     entities: { SolicitacaoAprovacao: solicitacoes },
   };
   return { client, state };
+};
+
+const makeFiscalContextManifest = async ({ groupId = 'g1', empresaId = 'e1', keyBytes = new Uint8Array(32).fill(7) } = {}) => {
+  const hmac = async (message) => {
+    const key = await crypto.subtle.importKey('raw', keyBytes, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    return Buffer.from(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(message))).toString('hex');
+  };
+  return {
+    secret: `base64:${Buffer.from(keyBytes).toString('base64')}`,
+    manifest: {
+      schema_version: '1.0', batch_id: 'FISCAL-DRYRUN-TEST', classification: 'READY_FOR_EXPLICIT_STAGING_AUTHORIZATION',
+      candidate_count: 3, source_stage: 'quarantine', requested_target_stage: 'staging',
+      group_context_ref_hmac: await hmac(`group|${groupId}`),
+      empresa_context_ref_hmac: await hmac(`empresa|${empresaId}`),
+      membership_ref_hmac: await hmac(`membership|${groupId}|${empresaId}`),
+      context_resolution: 'CANONICAL_IDS_RESOLVED_ONLY_IN_MEMORY', staging_entity: 'SolicitacaoAprovacao', operational_entity: 'NotaFiscal',
+      source_sha256: { envelopes: 'a'.repeat(64), human_review: 'b'.repeat(64), canonical_context_map: 'c'.repeat(64), canonical_context_validation: 'd'.repeat(64) },
+      candidates: ['4', '5', '6'].map((digit) => ({
+        candidate_ref_hmac: digit.repeat(64), entity: 'NotaFiscal', reconciliation_type: 'conciliacao_migracao_fiscal',
+        decision: 'PRESERVAR_SEM_VINCULO_PEDIDO', pedido_link_policy: 'PRESERVE_NULL', source_stage: 'quarantine',
+        requested_target_stage: 'staging', staging_entity: 'SolicitacaoAprovacao', staging_operation: 'manual_fiscal_reconciliation_staging',
+        homologation_status: 'LOCAL_HOMOLOGATION_COMPLETE_IMPORT_BLOCKED', production_reapproval_required: true,
+        import_authorized: false, operational_promotion_allowed: false, transition_authorized: false,
+      })),
+      controls: {
+        explicit_staging_authorization_required: true, files_moved_to_staging: false, backend_or_base44_called: false,
+        erp_persistence_performed: false, import_authorized: false, operational_promotion_allowed: false,
+        production_reapproval_required: true, raw_canonical_ids_persisted: false,
+      },
+    },
+  };
 };
 
 test('lote de migracao e estavel para o mesmo arquivo e contexto', () => {
@@ -478,6 +510,68 @@ test('backend isola conciliacao financeira do fluxo comercial generico', async (
     approvals.indexOf("if (action === 'create')"),
   );
   assert.doesNotMatch(specialized, /entities\.(ContaPagar|ContaReceber)\.(create|update)/);
+});
+
+test('backend valida manifesto fiscal por HMAC sem expor ou persistir contexto', async () => {
+  const { manifest, secret } = await makeFiscalContextManifest();
+  const verified = await verifyFiscalStagingManifestContext(manifest, { groupId: 'g1', empresaId: 'e1' }, secret);
+  assert.deepEqual(verified, {
+    batchId: 'FISCAL-DRYRUN-TEST', candidateCount: 3, contextVerified: true, operationalPromotionAllowed: false,
+  });
+
+  const altered = { ...manifest, membership_ref_hmac: '0'.repeat(64) };
+  assert.equal((await verifyFiscalStagingManifestContext(altered, { groupId: 'g1', empresaId: 'e1' }, secret)).contextVerified, false);
+  const alteredEmpresa = { ...manifest, empresa_context_ref_hmac: '0'.repeat(64) };
+  assert.equal((await verifyFiscalStagingManifestContext(alteredEmpresa, { groupId: 'g1', empresaId: 'e1' }, secret)).contextVerified, false);
+  await assert.rejects(
+    verifyFiscalStagingManifestContext({ ...manifest, empresa_id: 'e1' }, { groupId: 'g1', empresaId: 'e1' }, secret),
+    /estrutura invalida/,
+  );
+  await assert.rejects(
+    verifyFiscalStagingManifestContext(manifest, { groupId: 'g1', empresaId: 'e1' }, 'curto'),
+    /Segredo HMAC fiscal invalido/,
+  );
+
+  const handler = await loadSolicitacoesAprovacaoHandler();
+  const originalDeno = globalThis.Deno;
+  const invoke = async (client, currentSecret, currentManifest = manifest) => {
+    globalThis.__approvalMockClient = client;
+    globalThis.Deno = { env: { get: (name) => name === 'MIGRATION_CONTEXT_HMAC_KEY' ? currentSecret : undefined } };
+    const response = await handler({ json: async () => ({
+      action: 'validateFiscalStagingManifestContext', group_id: 'g1', empresa_id: 'e1', scope_type: 'empresa', manifest: currentManifest,
+    }) });
+    return { status: response.status, body: await response.json() };
+  };
+  try {
+    const allowed = makeApprovalClient();
+    const response = await invoke(allowed.client, secret);
+    assert.equal(response.status, 200);
+    assert.deepEqual(response.body, {
+      batch_id: 'FISCAL-DRYRUN-TEST', candidate_count: 3, context_verified: true, operational_promotion_allowed: false,
+    });
+    assert.equal(allowed.state.created.length, 0);
+    assert.equal(allowed.state.updates.length, 0);
+    assert.equal(allowed.state.audits.length, 1);
+    assert.equal(allowed.state.audits[0].acao, 'ValidacaoManifesto');
+    assert.equal(JSON.stringify(allowed.state.audits[0]).includes(secret), false);
+    assert.equal(JSON.stringify(allowed.state.audits[0]).includes(manifest.group_context_ref_hmac), false);
+
+    const denied = makeApprovalClient({ fiscalPermissions: [] });
+    assert.equal((await invoke(denied.client, secret)).status, 403);
+    assert.equal(denied.state.created.length, 0);
+
+    const noSecret = makeApprovalClient();
+    assert.equal((await invoke(noSecret.client, '')).status, 503);
+    assert.equal(noSecret.state.created.length, 0);
+
+    const mismatch = makeApprovalClient();
+    assert.equal((await invoke(mismatch.client, secret, altered)).status, 403);
+    assert.equal(mismatch.state.created.length, 0);
+    assert.equal(mismatch.state.audits[0].dados_novos.motivo, 'contexto_hmac_incompativel');
+  } finally {
+    globalThis.Deno = originalDeno;
+    delete globalThis.__approvalMockClient;
+  }
 });
 
 test('backend executa staging financeiro com contexto, RBAC, idempotencia e rollback', async () => {

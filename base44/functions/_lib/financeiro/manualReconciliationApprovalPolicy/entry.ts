@@ -8,6 +8,10 @@ const MANUAL_EVIDENCE_EXTENSIONS = {
   'image/webp': ['.webp'],
 };
 const MANUAL_EVIDENCE_HASH = /^[a-f0-9]{64}$/;
+const FISCAL_MANIFEST_MAX_BYTES = 256 * 1024;
+const FISCAL_HMAC_SHA256 = /^[a-f0-9]{64}$/;
+const FISCAL_SHA256 = /^[a-f0-9]{64}$/i;
+const FISCAL_BATCH_ID = /^[A-Z0-9][A-Z0-9._-]{2,79}$/;
 export const MANUAL_RECONCILIATION_STATUS = 'PENDING_MANUAL_RECONCILIATION';
 const MANUAL_RECONCILIATION_CONFIG = {
   ContaPagar: { type: MANUAL_RECONCILIATION_TYPE, module: 'Financeiro', domain: 'financeira', decisionField: 'decisao_financeira', reviewStage: 'revisao_financeira', decisions: ['PAGO', 'ABERTO'] },
@@ -18,6 +22,129 @@ const MANUAL_SECRET_PARTS = ['password', 'senha', 'token', 'secret', 'authorizat
 
 export const firstText = (...values) => values.map((value) => String(value ?? '').trim()).find(Boolean) || '';
 const cleanText = (value, limit = 1000) => firstText(value).replace(/<[^>]*>/g, '').slice(0, limit).trim();
+
+const assertExactKeys = (record, keys, label) => {
+  if (!record || typeof record !== 'object' || Array.isArray(record)) throw new Error(`${label} invalido.`);
+  const actual = Object.keys(record);
+  const allowed = new Set(keys);
+  const unexpected = actual.find((key) => !allowed.has(key));
+  const missing = keys.find((key) => !Object.prototype.hasOwnProperty.call(record, key));
+  if (unexpected || missing) throw new Error(`${label} possui estrutura invalida.`);
+};
+
+const fiscalSecretError = () => Object.assign(new Error('Segredo HMAC fiscal invalido.'), { code: 'FISCAL_HMAC_SECRET_INVALID' });
+
+const decodeFiscalHmacSecret = (secret) => {
+  const value = firstText(secret);
+  let bytes;
+  try {
+    if (value.startsWith('base64:')) {
+      const encoded = value.slice(7);
+      if (!encoded || !/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) throw new Error('base64 invalido');
+      bytes = Uint8Array.from(atob(encoded), (char) => char.charCodeAt(0));
+    } else {
+      bytes = new TextEncoder().encode(value);
+    }
+  } catch {
+    throw fiscalSecretError();
+  }
+  if (bytes.byteLength < 32) throw fiscalSecretError();
+  return bytes;
+};
+
+const calculateFiscalContextHmac = async (key, value) => {
+  const cryptoKey = await crypto.subtle.importKey('raw', key, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const signature = new Uint8Array(await crypto.subtle.sign('HMAC', cryptoKey, new TextEncoder().encode(value)));
+  return Array.from(signature, (byte) => byte.toString(16).padStart(2, '0')).join('');
+};
+
+const constantTimeHexEqual = (left, right) => {
+  if (!FISCAL_HMAC_SHA256.test(left) || !FISCAL_HMAC_SHA256.test(right)) return false;
+  let difference = 0;
+  for (let index = 0; index < left.length; index += 1) difference |= left.charCodeAt(index) ^ right.charCodeAt(index);
+  return difference === 0;
+};
+
+const assertFiscalManifestContract = (manifest) => {
+  const size = (() => { try { return new TextEncoder().encode(JSON.stringify(manifest)).byteLength; } catch { return Infinity; } })();
+  if (size <= 0 || size > FISCAL_MANIFEST_MAX_BYTES) throw new Error('Manifesto fiscal excede o limite permitido.');
+  assertExactKeys(manifest, [
+    'schema_version', 'batch_id', 'classification', 'candidate_count', 'source_stage',
+    'requested_target_stage', 'group_context_ref_hmac', 'empresa_context_ref_hmac',
+    'membership_ref_hmac', 'context_resolution', 'staging_entity', 'operational_entity',
+    'source_sha256', 'candidates', 'controls',
+  ], 'Manifesto fiscal');
+  if (manifest.schema_version !== '1.0'
+    || manifest.classification !== 'READY_FOR_EXPLICIT_STAGING_AUTHORIZATION'
+    || manifest.source_stage !== 'quarantine' || manifest.requested_target_stage !== 'staging'
+    || manifest.context_resolution !== 'CANONICAL_IDS_RESOLVED_ONLY_IN_MEMORY'
+    || manifest.staging_entity !== 'SolicitacaoAprovacao' || manifest.operational_entity !== 'NotaFiscal') {
+    throw new Error('Manifesto fiscal fora do contrato de staging.');
+  }
+  const batchId = firstText(manifest.batch_id);
+  if (!FISCAL_BATCH_ID.test(batchId)) throw new Error('Lote fiscal invalido.');
+  for (const field of ['group_context_ref_hmac', 'empresa_context_ref_hmac', 'membership_ref_hmac']) {
+    if (!FISCAL_HMAC_SHA256.test(firstText(manifest[field]))) throw new Error('Referencia protegida invalida.');
+  }
+  assertExactKeys(manifest.source_sha256, ['envelopes', 'human_review', 'canonical_context_map', 'canonical_context_validation'], 'Integridade fiscal');
+  if (Object.values(manifest.source_sha256).some((hash) => !FISCAL_SHA256.test(firstText(hash)))) throw new Error('Hash de origem invalido.');
+  const candidates = Array.isArray(manifest.candidates) ? manifest.candidates : [];
+  const candidateCount = Number(manifest.candidate_count);
+  if (!Number.isSafeInteger(candidateCount) || candidateCount < 1 || candidateCount > 100 || candidates.length !== candidateCount) {
+    throw new Error('Quantidade de candidatos fiscais invalida.');
+  }
+  const references = new Set();
+  candidates.forEach((candidate) => {
+    assertExactKeys(candidate, [
+      'candidate_ref_hmac', 'entity', 'reconciliation_type', 'decision', 'pedido_link_policy',
+      'source_stage', 'requested_target_stage', 'staging_entity', 'staging_operation',
+      'homologation_status', 'production_reapproval_required', 'import_authorized',
+      'operational_promotion_allowed', 'transition_authorized',
+    ], 'Candidato fiscal');
+    const reference = firstText(candidate.candidate_ref_hmac);
+    if (!FISCAL_HMAC_SHA256.test(reference) || references.has(reference)) throw new Error('Referencia de candidato invalida.');
+    references.add(reference);
+    if (candidate.entity !== 'NotaFiscal' || candidate.reconciliation_type !== FISCAL_MANUAL_RECONCILIATION_TYPE
+      || candidate.decision !== 'PRESERVAR_SEM_VINCULO_PEDIDO' || candidate.pedido_link_policy !== 'PRESERVE_NULL'
+      || candidate.source_stage !== 'quarantine' || candidate.requested_target_stage !== 'staging'
+      || candidate.staging_entity !== 'SolicitacaoAprovacao' || candidate.staging_operation !== 'manual_fiscal_reconciliation_staging'
+      || candidate.homologation_status !== 'LOCAL_HOMOLOGATION_COMPLETE_IMPORT_BLOCKED'
+      || candidate.production_reapproval_required !== true || candidate.import_authorized !== false
+      || candidate.operational_promotion_allowed !== false || candidate.transition_authorized !== false) {
+      throw new Error('Candidato fiscal fora do staging bloqueado.');
+    }
+  });
+  assertExactKeys(manifest.controls, [
+    'explicit_staging_authorization_required', 'files_moved_to_staging', 'backend_or_base44_called',
+    'erp_persistence_performed', 'import_authorized', 'operational_promotion_allowed',
+    'production_reapproval_required', 'raw_canonical_ids_persisted',
+  ], 'Controles fiscais');
+  const controls = manifest.controls;
+  if (controls.explicit_staging_authorization_required !== true || controls.files_moved_to_staging !== false
+    || controls.backend_or_base44_called !== false || controls.erp_persistence_performed !== false
+    || controls.import_authorized !== false || controls.operational_promotion_allowed !== false
+    || controls.production_reapproval_required !== true || controls.raw_canonical_ids_persisted !== false) {
+    throw new Error('Controles fiscais nao preservam o bloqueio operacional.');
+  }
+  return { batchId, candidateCount };
+};
+
+export async function verifyFiscalStagingManifestContext(manifest, scope, secret) {
+  const { batchId, candidateCount } = assertFiscalManifestContract(manifest);
+  const groupId = firstText(scope?.groupId);
+  const empresaId = firstText(scope?.empresaId);
+  if (!groupId || !empresaId) throw new Error('Contexto fiscal canonico obrigatorio.');
+  const key = decodeFiscalHmacSecret(secret);
+  const [groupHmac, empresaHmac, membershipHmac] = await Promise.all([
+    calculateFiscalContextHmac(key, `group|${groupId}`),
+    calculateFiscalContextHmac(key, `empresa|${empresaId}`),
+    calculateFiscalContextHmac(key, `membership|${groupId}|${empresaId}`),
+  ]);
+  const contextVerified = constantTimeHexEqual(groupHmac, manifest.group_context_ref_hmac)
+    && constantTimeHexEqual(empresaHmac, manifest.empresa_context_ref_hmac)
+    && constantTimeHexEqual(membershipHmac, manifest.membership_ref_hmac);
+  return { batchId, candidateCount, contextVerified, operationalPromotionAllowed: false };
+}
 
 export function isManualReconciliationRequest(record: Record<string, unknown> = {}) {
   return [MANUAL_RECONCILIATION_TYPE, FISCAL_MANUAL_RECONCILIATION_TYPE].includes(firstText(record?.tipo_solicitacao));

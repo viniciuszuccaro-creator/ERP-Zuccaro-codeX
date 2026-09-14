@@ -8243,3 +8243,18 @@ Checklist inicial:
 - Infraestrutura legada: `MSSQL$ERPZLEGACY` e `SQLAgent$ERPZLEGACY` terminaram `Stopped`/`Manual`; `SQLBrowser` terminou `Stopped`/`Disabled`.
 - Commit de implementacao: `ec9528ce` (`Valida manifesto fiscal antes do staging`).
 - Proximo passo obrigatorio: integrar ao backend existente uma verificacao do vinculo entre os HMACs do manifesto e o Grupo/Empresa selecionados usando segredo mantido somente no servidor. Apenas depois dessa prova e de confirmacao humana separada criar exatamente tres envelopes idempotentes e bloqueados em `SolicitacaoAprovacao`, sem promover `NotaFiscal`.
+
+## 2026-09-14 - Gate 18: verificacao backend do contexto HMAC fiscal
+
+- Objetivo: comprovar no backend que o manifesto fiscal pertence ao Grupo, Empresa e vinculo selecionados antes de qualquer criacao em staging.
+- Reuso: a acao `validateFiscalStagingManifestContext` foi integrada a funcao existente `solicitacoesAprovacao` e a `manualReconciliationApprovalPolicy`; nenhum modulo, tela, entidade ou importador paralelo foi criado.
+- Contrato protegido: o backend reaplica allowlist estrita, limite de 256 KB, hashes e HMACs SHA-256, lote e controles de bloqueio. O frontend nao e considerado fonte de confianca.
+- Vinculo canonico: Grupo, Empresa e pertencimento sao recalculados por HMAC-SHA256 com comparacao constante. O contrato de mensagens foi confirmado offline sem persistir IDs canonicos, chave ou HMACs no repositorio.
+- Segredo servidor: a chave deve ser fornecida somente por `MIGRATION_CONTEXT_HMAC_KEY`, com no minimo 32 bytes e suporte ao formato `base64:`. Ausencia, leitura negada ou configuracao invalida falham fechadas com indisponibilidade; nenhum fallback foi criado.
+- Multiempresa e RBAC: o fluxo reutiliza `resolveManualScope`, valida Empresa no Grupo e exige `Fiscal.Migracao.conciliar`. Contexto adulterado ou HMAC incompativel retorna bloqueio.
+- Auditoria segura: sucesso e falha registram somente lote, quantidade, resultado e motivo tecnico resumido, alem do contexto obrigatorio da auditoria. Manifesto, segredo, HMACs e dados fiscais nao sao registrados nem retornados.
+- Persistencia: a acao realiza somente a auditoria obrigatoria. Nenhuma `SolicitacaoAprovacao`, `NotaFiscal` ou outra entidade operacional e criada, atualizada ou removida.
+- Testes: teste focado passou 24/24; suite completa passou 443/443; `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram. O typecheck global permanece com passivo anterior amplo, e o filtro confirmou zero erro nos arquivos deste lote.
+- Configuracao pendente: o segredo real continua protegido somente no HD e ainda nao foi configurado no backend Base44. O modo local nao recebeu segredo nem simulacao de sucesso.
+- Commit de implementacao: a registrar no fechamento deste lote.
+- Proximo passo obrigatorio: configurar com seguranca `MIGRATION_CONTEXT_HMAC_KEY` no ambiente backend Base44 e entao conectar o painel fiscal existente a esta verificacao. A validacao deve continuar separada da autorizacao humana e da criacao dos tres envelopes; nenhuma promocao de `NotaFiscal` e autorizada.

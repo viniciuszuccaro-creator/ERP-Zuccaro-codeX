@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 import {
+  FISCAL_MANUAL_RECONCILIATION_TYPE,
   MANUAL_RECONCILIATION_TYPE,
   applyManualWorkflowTransition,
   auditManualStaging,
@@ -8,6 +9,7 @@ import {
   isManualReconciliationRequest,
   resolveManualReconciliationAccess,
   resolveManualScope,
+  verifyFiscalStagingManifestContext,
 } from '../_lib/financeiro/manualReconciliationApprovalPolicy/entry.ts';
 
 const MANUAL_RECONCILIATION_WORKFLOW_ACTIONS = new Set([
@@ -174,6 +176,43 @@ Deno.serve(async (req) => {
       }
       try { await base44.entities.AuditLog.create({ usuario: user.full_name || user.email, usuario_id: user.id, empresa_id: empresa_id || null, group_id: group_id || null, acao: 'Edicao', modulo: 'Sistema', entidade: 'ConfiguracaoSistema', registro_id: cfg.id, descricao: 'Atualizacao de politicas de aprovacao', dados_novos: summarizeApprovalPolicies(policies), data_hora: new Date().toISOString() }); } catch (error) { reportApprovalFailure('Falha ao auditar politica de aprovacao', error, { group_id, empresa_id, registro_id: cfg.id }); }
       return Response.json({ sucesso: true, id: cfg.id });
+    }
+
+    if (action === 'validateFiscalStagingManifestContext') {
+      const scope = await resolveManualScope(base44, user, payload);
+      if (scope.response) return scope.response;
+      const auditRecord = { tipo_solicitacao: FISCAL_MANUAL_RECONCILIATION_TYPE, group_id: scope.groupId, empresa_id: scope.empresaId };
+      const permOk = await hasPermission(base44, user, 'Fiscal', 'Migracao', 'conciliar');
+      if (!permOk) {
+        try { await auditManualStaging(base44, user, auditRecord, 'BloqueioManifesto', false, null, { motivo: 'permissao_negada' }); }
+        catch (error) { reportApprovalFailure('Falha ao auditar bloqueio do manifesto fiscal', error, { group_id: scope.groupId, empresa_id: scope.empresaId }); return Response.json({ error: 'Controle de acesso indisponivel' }, { status: 503 }); }
+        return Response.json({ error: 'Forbidden' }, { status: 403 });
+      }
+      let secret = '';
+      try { secret = globalThis.Deno?.env?.get?.('MIGRATION_CONTEXT_HMAC_KEY') || ''; }
+      catch (error) { reportApprovalFailure('Falha ao ler segredo protegido do manifesto fiscal', error, { group_id: scope.groupId, empresa_id: scope.empresaId }); }
+      if (!secret) {
+        try { await auditManualStaging(base44, user, auditRecord, 'BloqueioManifesto', false, null, { motivo: 'segredo_servidor_indisponivel' }); }
+        catch (error) { reportApprovalFailure('Falha ao auditar dependencia do manifesto fiscal', error, { group_id: scope.groupId, empresa_id: scope.empresaId }); }
+        return Response.json({ error: 'Verificacao protegida do manifesto indisponivel' }, { status: 503 });
+      }
+      let verification;
+      try {
+        verification = await verifyFiscalStagingManifestContext(payload?.manifest, scope, secret);
+      } catch (error) {
+        reportApprovalFailure('Manifesto fiscal rejeitado pelo contrato', error, { group_id: scope.groupId, empresa_id: scope.empresaId });
+        if (error?.code === 'FISCAL_HMAC_SECRET_INVALID') return Response.json({ error: 'Verificacao protegida do manifesto indisponivel' }, { status: 503 });
+        return Response.json({ error: 'Manifesto fiscal invalido' }, { status: 400 });
+      }
+      const safeDetails = { batch_id: verification.batchId, candidate_count: verification.candidateCount, context_verified: verification.contextVerified };
+      if (!verification.contextVerified) {
+        try { await auditManualStaging(base44, user, auditRecord, 'BloqueioManifesto', false, null, { ...safeDetails, motivo: 'contexto_hmac_incompativel' }); }
+        catch (error) { reportApprovalFailure('Falha ao auditar contexto HMAC incompativel', error, { group_id: scope.groupId, empresa_id: scope.empresaId }); return Response.json({ error: 'Controle de acesso indisponivel' }, { status: 503 }); }
+        return Response.json({ error: 'Manifesto fiscal nao pertence ao contexto selecionado' }, { status: 403 });
+      }
+      try { await auditManualStaging(base44, user, auditRecord, 'ValidacaoManifesto', true, null, safeDetails); }
+      catch (error) { reportApprovalFailure('Falha ao auditar validacao do manifesto fiscal', error, { group_id: scope.groupId, empresa_id: scope.empresaId }); return Response.json({ error: 'Auditoria da validacao indisponivel' }, { status: 503 }); }
+      return Response.json({ batch_id: verification.batchId, candidate_count: verification.candidateCount, context_verified: true, operational_promotion_allowed: false });
     }
 
     // CREATE generic approval (alçada)
