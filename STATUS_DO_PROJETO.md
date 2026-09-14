@@ -6636,6 +6636,19 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo dependente de usuario: homologar manualmente o fornecedor fiscal do par bloqueado na fila protegida, registrando decisao, justificativa e responsavel. Ate isso ocorrer, este par e seus oito documentos e 24 titulos permanecem fora da migracao.
 
+### Gate 18 - Segregacao do par bloqueado e continuidade segura
+
+- A orientacao do usuario para prosseguir foi aplicada como continuidade sem homologacao: o fornecedor fiscal em quarentena permanece bloqueado e nao foi promovido, aprovado ou associado automaticamente.
+- A segregacao foi reproduzida em duas passagens identicas e os resultados produziram o mesmo SHA-256. O recorte total reconciliou os tres pares, 20 documentos fiscais e 60 titulos, sendo 26 abertos e 34 marcados como baixados.
+- Um par, oito documentos e 24 titulos permanecem integralmente excluidos da migracao ate decisao humana registrada. Esse recorte inclui oito titulos abertos e 16 marcados como baixados.
+- Os dois pares restantes abrangem 12 documentos e 36 titulos, sendo 18 abertos e 18 marcados como baixados. Os dois lados continuam no staging candidato, mas isso nao autoriza importacao operacional.
+- Como os documentos normalizados dos fornecedores sao diferentes, os cadastros foram classificados como identidades distintas. Nenhum merge, codigo vencedor, substituicao de fornecedor ou propagacao entre Grupo e Empresas foi executado.
+- Documentos fiscais devem preservar o fornecedor fiscal original e pedidos devem preservar o fornecedor registrado no pedido. A divergencia historica sera mantida como rastreabilidade, nao corrigida silenciosamente.
+- O relatorio `legacy-purchase-supplier-segregation-decision.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, codigo, nome, documento, fornecedor, valor, TPS ou MDF/LDF integra o GitHub.
+- Nenhum fornecedor, pedido, documento fiscal, titulo, staging ou registro do ERP novo foi criado, alterado, mesclado, importado ou promovido.
+- `MSSQL$ERPZLEGACY` permaneceu `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: validar somente por contagens, nos 12 documentos e 36 titulos dos dois pares candidatos, unicidade das chaves legadas, empresa proprietaria, rota Grupo -> Empresa e cobertura do mapeamento de fornecedor. Nao importar, recalcular saldo nem alterar o fornecedor historico.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
