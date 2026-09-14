@@ -6783,6 +6783,19 @@ Checklist inicial:
 - A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: revisar o contrato de migracao/importacao fiscal ja existente para verificar se uma linha fiscal historica pode preservar a referencia de pedido ausente e manter somente esse vinculo em quarentena, sem criar importador paralelo, sem importar dados reais e sem liberar os tres documentos antes da validacao do fluxo completo.
 
+### Gate 18 - Contrato fiscal historico sem vinculo de pedido revisado
+
+- Foram revisados somente os contratos existentes `migracaoErpPolicy.js`, `notaFiscalEmissaoPolicy.js`, `ImportarXMLNFe.jsx`, o adaptador local e os testes diretamente relacionados. Nenhum modulo, tela, entidade, rota ou importador paralelo foi criado.
+- A politica de `NotaFiscal` exige empresa emitente, serie e numero, mas nao exige `pedido_id` na criacao. Portanto, o modelo operacional aceita tecnicamente preservar uma nota fiscal historica sem vinculo ao pedido.
+- O importador XML existente pode deixar `ordem_compra_id` vazio quando a criacao de ordem esta desmarcada, mas ele nao persiste uma `NotaFiscal` historica em staging: seu fluxo cria opcionalmente ordem, movimentos e contas operacionais e registra apenas `ImportacaoXMLNFe`.
+- `applyMigracaoOnCreate` bloqueia corretamente qualquer registro com conciliacao manual pendente antes da gravacao operacional. Entretanto, `buildPendingManualReconciliation`, `SolicitacaoAprovacao` e a politica backend aceitam somente `ContaPagar` e `ContaReceber`, com decisoes financeiras `PAGO` ou `ABERTO`.
+- Nao existe hoje envelope persistente e idempotente para manter uma `NotaFiscal` em staging com apenas o vinculo de item de pedido em quarentena. Reutilizar a conciliacao financeira para isso misturaria permissoes e semanticas e foi rejeitado.
+- Situacao: `BLOCKED_CONTRATO_STAGING_FISCAL`. Os tres documentos, cinco linhas sem referencia e nove titulos permanecem fora da promocao; nenhuma criacao, importacao, remapeamento ou alteracao de dados foi executada.
+- Multiempresa e RBAC exigidos para o futuro contrato: `group_id` e `empresa_id` obrigatorios, empresa pertencente ao Grupo, idempotencia por chave fiscal legada e permissoes `Fiscal.Migracao.conciliar` e `Fiscal.Migracao.aprovar`, sem herdar privilegios de `Financeiro.Migracao`.
+- Validacao focada: `node --test tests/migracao-erp-policy.test.js tests/nota-fiscal-emissao-policy.test.js` executou 31 cenarios, com 29 aprovados. Dois cenarios backend preexistentes nao carregaram por `ERR_UNSUPPORTED_RESOLVE_REQUEST` ao resolver import relativo em modulo `data:` do harness; nenhuma assercao de negocio desses dois cenarios foi executada e a falha nao foi mascarada.
+- O banco legado nao foi iniciado neste lote. `MSSQL$ERPZLEGACY` permaneceu `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: ampliar a politica de migracao e o fluxo backend existentes com um envelope fiscal bloqueado para `NotaFiscal`, permissao fiscal propria, contexto Grupo/Empresa, chave idempotente, referencia de pedido opcional e segregacao de funcoes. Adicionar testes focados sem importar dados reais nem promover os tres documentos.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
