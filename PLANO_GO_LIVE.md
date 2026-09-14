@@ -1140,6 +1140,10 @@ IA avançada, agentes, marketplaces completos, chatbot omnichannel e otimizaçõ
 
 Decisao aprovada em 2026-09-14 para evitar dependencia definitiva da infraestrutura Base44 e manter os dados operacionais sob uma plataforma PostgreSQL portavel.
 
+## Continuidade temporaria
+
+Por decisao do proprietario em 2026-09-14, a criacao da conta e dos ambientes Supabase foi adiada. O desenvolvimento continua com a arquitetura local/Base44 ja existente, sem criar nova dependencia remota, sem vincular projeto Base44 por credencial desconhecida e sem importar dados reais. A arquitetura PostgreSQL/Supabase permanece como destino futuro e deve ser retomada antes da liberacao de producao.
+
 ## Destino
 
 - PostgreSQL gerenciado no Supabase Pro, em regiao especifica de Sao Paulo.
@@ -1162,7 +1166,7 @@ Decisao aprovada em 2026-09-14 para evitar dependencia definitiva da infraestrut
 ## Ordem dos subgates
 
 - [x] Escolha da arquitetura e congelamento de novos dados reais no Base44.
-- [ ] Criar e proteger os ambientes Supabase de desenvolvimento, homologacao e producao.
+- [ ] Criar e proteger os ambientes Supabase de desenvolvimento, homologacao e producao (adiado por decisao do proprietario).
 - [ ] Definir variaveis de ambiente sem segredos no frontend ou GitHub.
 - [ ] Implementar adaptador do provedor na fachada existente, preservando consumidores.
 - [ ] Migrar autenticacao, usuarios, Grupo, Empresas e vinculos RBAC.
@@ -1173,4 +1177,4 @@ Decisao aprovada em 2026-09-14 para evitar dependencia definitiva da infraestrut
 
 ## Bloqueios de producao
 
-Antes de importar dados reais, devem existir projeto de producao pago, regiao confirmada, MFA administrativo, RLS fail-closed, backup externo testado, restauracao homologada e separacao entre desenvolvimento, homologacao e producao.
+Antes de importar dados reais ou liberar uso de producao, a decisao de infraestrutura deve ser retomada e devem existir projeto de producao pago, regiao confirmada, MFA administrativo, RLS fail-closed, backup externo testado, restauracao homologada e separacao entre desenvolvimento, homologacao e producao.

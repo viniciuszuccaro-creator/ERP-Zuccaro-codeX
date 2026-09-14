@@ -8287,3 +8287,15 @@ Checklist inicial:
 - Validacao aplicavel: mudanca exclusivamente documental; `git diff --check` deve passar antes do commit. Testes de runtime sao dispensados conforme `AGENTS.md`.
 - Commit de implementacao: `102f676f` (`Define arquitetura de producao no Supabase`).
 - Proximo passo dependente de usuario: criar ou autorizar uma organizacao Supabase sob titularidade da empresa e um projeto de desenvolvimento pago na regiao Sao Paulo. Nao criar homologacao/producao nem fornecer segredo em chat antes de definir propriedade, cobranca e recuperacao da conta.
+
+## 2026-09-14 - Gate 0: migracao Supabase adiada
+
+- Decisao do proprietario: continuar temporariamente com a arquitetura local/Base44 existente e retomar a migracao PostgreSQL/Supabase depois.
+- Tentativa Supabase: somente a pagina oficial de login foi aberta. O login nao foi concluido; nenhuma conta, organizacao, projeto, cobranca, chave, tabela ou recurso foi criado ou alterado.
+- Preservacao: o destino PostgreSQL/Supabase e o requisito de portabilidade permanecem no plano, mas nao fazem parte dos proximos lotes de runtime ate nova autorizacao.
+- Base44: nenhum login, vinculo, segredo ou deploy remoto foi realizado. O backend remoto fiscal continua bloqueado e nenhuma passagem do lote `FISCAL-DRYRUN-001` para staging esta autorizada.
+- Dados: nenhuma informacao real do ERP antigo sera importada para Base44 ou Supabase durante o adiamento; banco legado e HD externo nao foram acessados.
+- Runtime: nenhuma dependencia, tela, entidade, funcao ou comportamento foi alterado. O lote e exclusivamente documental.
+- Validacao aplicavel: `git diff --check` deve passar; testes de aplicacao sao dispensados conforme `AGENTS.md`.
+- Commit de implementacao: a registrar no fechamento deste lote.
+- Proximo passo independente: retomar o backlog local registrado em `PLANO_MELHORIA_ERP_ZUCCARO.md`, iniciando pelo contrato de `ordemProducaoPolicy.js`, sem ampliar acoplamento remoto e sem acessar dados reais.
