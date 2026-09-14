@@ -8110,3 +8110,17 @@ Checklist inicial:
 - Escopo do repositorio: mudanca exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Commit de implementacao: `c0de2502` (`Prepara homologacao fiscal protegida`).
 - Proximo passo dependente de usuario: preencher a ficha protegida com uma das duas decisoes permitidas para cada candidato, justificativa e tres responsaveis distintos. Somente depois validar assinaturas, integridade e permissao fiscal antes de considerar a passagem controlada da quarentena para staging.
+
+## 2026-09-14 - Gate 18: decisao fiscal conservadora registrada
+
+- Objetivo: aplicar a melhor decisao tecnica aos tres candidatos cuja origem nominal deliberadamente nao aparece na ficha mascarada, sem inventar vinculo de pedido nem liberar importacao.
+- Decisao autorizada: por orientacao explicita do proprietario no chat, os tres candidatos receberam `PRESERVAR_SEM_VINCULO_PEDIDO`.
+- Justificativa: estoque e financeiro comprovam existencia e processamento historico dos documentos, mas cinco referencias ausentes e a sobreposicao quantitativa impedem reconstruir com seguranca o item de pedido. A preservacao historica sem vinculo evita corromper rastreabilidade.
+- Persistencia local: somente `fiscal-human-review.csv` e `review-manifest.json` foram atualizados na quarentena protegida; os envelopes originais permaneceram inalterados.
+- Segregacao: nenhum nome, identidade ou data foi inferido. Registrante, revisor e aprovador continuam vazios e devem ser tres pessoas distintas antes da homologacao final.
+- Bloqueio: os tres registros permanecem `DECISION_RECORDED_PENDING_DISTINCT_ACTORS`, `import_authorized=false` e `operational_promotion_allowed=false`; nenhuma `NotaFiscal`, conta, pedido ou movimento foi criado ou alterado no ERP.
+- Integridade: a ficha atual possui SHA-256 `BB9B1242218AEE0D6E40663B4C73B3CA3EDEAE3997792072C05711CDFB5C05DE`, ACL protegida e tres decisoes identicas validadas.
+- Situacao: `BLOCKED_DISTINCT_ACTORS`; a decisao de negocio esta registrada, mas a segregacao de funcoes ainda impede homologacao, staging e promocao.
+- Escopo do repositorio: mudanca exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Commit de implementacao: pendente neste registro.
+- Proximo passo dependente de usuario: informar os nomes do registrante, revisor e aprovador, obrigatoriamente tres pessoas distintas. Depois disso, validar as identidades e concluir somente a homologacao da ficha, ainda sem promover `NotaFiscal` automaticamente.
