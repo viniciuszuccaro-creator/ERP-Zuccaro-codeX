@@ -6691,6 +6691,20 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A consulta usou somente loopback local e a mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: classificar somente por contagens os dez documentos de composicao mista conforme cobertura fiscal dos itens, movimento de estoque e estado acumulado do pedido, preservando os dois documentos totalmente baixados apenas como historico. Nao calcular saldo, criar obrigacao ou autorizar importacao.
 
+### Gate 18 - Cobertura operacional dos documentos financeiros mistos
+
+- Os dez documentos com parcelas abertas e baixadas foram classificados em duas passagens identicas; os resultados produziram o mesmo SHA-256 e reconciliaram 17 itens fiscais, 30 titulos, 18 abertos e 12 marcados como baixados.
+- Todos os 17 itens fiscais possuem movimento de estoque exato pela ponte direta ou alternativa validada. Nao foi aceito vinculo por descricao, aproximacao de quantidade ou similaridade de material.
+- Sete documentos possuem todos os itens fiscais vinculados ao respectivo item do pedido, movimento exato e estado acumulado integral. Eles abrangem sete itens fiscais e 21 titulos, sendo 14 abertos e sete marcados como baixados.
+- Tres documentos possuem dez itens fiscais e movimento exato em todos eles, mas cinco itens nao encontram o item correspondente do pedido pela chave numero+item. O estado do documento fica misto por ausencia parcial dessa referencia.
+- Os tres documentos com referencia incompleta abrangem nove titulos, sendo quatro abertos e cinco marcados como baixados. Eles permanecem bloqueados para migracao operacional apesar da evidencia de movimentacao de estoque.
+- Movimento de estoque e recebimento acumulado integral comprovam processamento operacional no legado, mas nao comprovam exigibilidade financeira atual nem autorizam recriar Conta a Pagar.
+- Os dois documentos totalmente baixados do subgate anterior permaneceram fora deste recorte e continuam somente como historico.
+- O relatorio `legacy-purchase-mixed-document-stock-coverage.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, chave, codigo, nome, documento, fornecedor, data, quantidade, valor, TPS ou MDF/LDF integra o GitHub.
+- Nenhum fornecedor, pedido, item, movimento, documento fiscal, titulo, staging ou registro do ERP novo foi criado, alterado, baixado, importado ou promovido.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A consulta usou somente loopback local e a mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: classificar somente por contagens os cinco itens fiscais sem item de pedido, verificando pedido existente, item alternativo exato no mesmo pedido, material, quantidade e referencia de movimento. Nao remapear automaticamente nem liberar os tres documentos e seus nove titulos.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
