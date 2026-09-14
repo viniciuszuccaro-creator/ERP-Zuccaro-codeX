@@ -824,6 +824,20 @@ Lote concluido em 2026-09-14 no fluxo existente de Recebimento, sem criar rota, 
 
 Proxima frente P0: refatorar e tipar `ConfiguracaoSeguranca.jsx`, tela existente de Seguranca com 943 linhas e 21 diagnosticos, em lote proprio.
 
+### Refatoracao e contratos - Configuracao de Seguranca
+
+Lote concluido em 2026-09-14 na tela existente de configuracao de seguranca, sem criar rota, modulo ou fluxo paralelo.
+
+- `ConfiguracaoSeguranca.jsx` caiu de 943 para 362 linhas; as abas JWT, Sessoes, MFA e Senhas foram extraidas como componentes controlados entre 106 e 252 linhas.
+- Normalizacao, defaults e validacao foram extraidos para `configuracaoSegurancaPolicy.js`, policy pura de 116 linhas reutilizada pela tela e pelos testes.
+- Estado, consulta, RBAC, confirmacao, persistencia, espelhamento e auditoria permanecem centralizados no componente original.
+- O contrato JSDoc de `persistOperationalAudit` foi completado para refletir os campos ja aceitos, sem alterar seu comportamento.
+- O typecheck dos arquivos do lote passou de 21 diagnosticos para zero; o global caiu de 2.118 para 2.090, reducao liquida de 28 incluindo consumidores da auditoria.
+- Defaults seguros e rejeicao de token curto, senha fraca e poucas tentativas de login receberam teste focado.
+- Nenhum dado, configuracao remota, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: refatorar e tipar `GestaoUsuariosAvancada.jsx`, tela existente de acessos com 614 linhas e 16 diagnosticos, em lote proprio.
+
 ### ERP-SITE-01 - Fundacao S2S do Site CPA
 
 Nova prioridade autorizada em 2026-09-13: executar primeiro no ERP os 12 contratos Site CPA, sem alterar o repositorio do Site ate a homologacao da camada ERP.

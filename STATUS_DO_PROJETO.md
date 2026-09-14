@@ -8371,3 +8371,18 @@ Checklist inicial:
 - Dados/infraestrutura: nenhum recebimento real foi criado, nenhum backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
 - Commit de implementacao: `de2293af` (`Refatora recebimento e preserva dados da conferencia`).
 - Proximo passo P0: refatorar e tipar `ConfiguracaoSeguranca.jsx`, que possui 943 linhas e 21 diagnosticos, em lote separado.
+
+## 2026-09-14 - Refatoracao e contratos da Configuracao de Seguranca
+
+- Objetivo: reduzir a tela monolitica, eliminar seus diagnosticos de `checkJs` e preservar configuracoes fail-closed de autenticacao, sessao, MFA e senha.
+- Causa raiz: `ConfiguracaoSeguranca.jsx` concentrava quatro abas, policy, persistencia e auditoria em 943 linhas; contratos de mutacao, entidade e auditoria estavam incompletos.
+- Arquivos alterados: `src/components/sistema/ConfiguracaoSeguranca.jsx`, cinco auxiliares em `src/components/sistema/configuracao-seguranca`, `src/components/lib/uiAudit.jsx` e `tests/sanitize-audit-policy.test.js`.
+- Refatoracao: as quatro abas foram extraidas como componentes controlados e a normalizacao/validacao foi movida para uma policy pura. Esses auxiliares foram criados somente para decompor o componente existente; nao criam tela, rota, entidade ou persistencia paralela.
+- Tamanho: o orquestrador caiu para 362 linhas; policy ficou com 116 e abas entre 106 e 252 linhas. Estado, consulta, salvamento, espelhamento e auditoria continuam no orquestrador original.
+- Multiempresa/RBAC: escopo Grupo/Empresa, contexto obrigatorio, administrador/permissao granular e controles desabilitados permanecem inalterados e fail-closed.
+- Seguranca/auditoria: defaults seguros e validacoes minimas continuam obrigatorios; `persistOperationalAudit` recebeu apenas contrato JSDoc dos campos ja suportados, sem mudanca de runtime.
+- Testes: focados passaram 2/2, incluindo defaults e rejeicao de politica fraca; suite completa passou 445/445. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; build manteve apenas o aviso conhecido de chunk grande.
+- Typecheck: arquivos do lote passaram de 21 diagnosticos para zero; o passivo global caiu de 2.118 para 2.090, reducao liquida de 28, e continua aberto sem ser mascarado.
+- Dados/infraestrutura: nenhuma configuracao real foi salva, nenhum backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
+- Commit de implementacao: `PENDENTE_COMMIT`.
+- Proximo passo P0: refatorar e tipar `GestaoUsuariosAvancada.jsx`, que possui 614 linhas e 16 diagnosticos, em lote separado.

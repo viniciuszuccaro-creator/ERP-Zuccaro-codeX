@@ -100,6 +100,21 @@ function sanitizeMeta(meta) {
   return sanitizeAuditPayload(meta) || null;
 }
 
+/**
+ * @param {{
+ *   acao?: string,
+ *   modulo?: string,
+ *   entidade?: string,
+ *   registro_id?: unknown,
+ *   sucesso?: boolean,
+ *   descricao?: string,
+ *   detalhes?: unknown,
+ *   dados_anteriores?: unknown,
+ *   dados_novos?: unknown,
+ *   empresa_id?: unknown,
+ *   group_id?: unknown,
+ * }} options
+ */
 export async function persistOperationalAudit({
   acao,
   modulo = 'Sistema',

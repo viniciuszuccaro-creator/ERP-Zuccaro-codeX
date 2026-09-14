@@ -1,6 +1,24 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import {
+  normalizeSecurityConfig,
+  validateSecurityConfig,
+} from '../src/components/sistema/configuracao-seguranca/configuracaoSegurancaPolicy.js';
+
+test('security configuration keeps safe defaults and rejects weak policies', () => {
+  const defaults = normalizeSecurityConfig({});
+  assert.equal(defaults.jwt_ativo, true);
+  assert.equal(defaults.politica_senha.tamanho_minimo, 8);
+  assert.deepEqual(validateSecurityConfig(defaults), []);
+
+  const weak = normalizeSecurityConfig({
+    jwt_validade_access_minutos: 1,
+    tentativas_login_max: 1,
+    politica_senha: { tamanho_minimo: 4 },
+  });
+  assert.equal(validateSecurityConfig(weak).length, 3);
+});
 
 test('operational audit call sites no longer swallow AuditLog failures', async () => {
   const sanitizer = await readFile(new URL('../src/components/lib/sanitizeOnWrite.jsx', import.meta.url), 'utf8');
@@ -11,6 +29,7 @@ test('operational audit call sites no longer swallow AuditLog failures', async (
   const link = await readFile(new URL('../src/components/financeiro/GeradorLinkPagamento.jsx', import.meta.url), 'utf8');
   const liquidar = await readFile(new URL('../src/components/financeiro/caixa-central/LiquidarReceberPagar.jsx', import.meta.url), 'utf8');
   const seguranca = await readFile(new URL('../src/components/sistema/ConfiguracaoSeguranca.jsx', import.meta.url), 'utf8');
+  const senhaTab = await readFile(new URL('../src/components/sistema/configuracao-seguranca/PasswordSecurityTab.jsx', import.meta.url), 'utf8');
   const pedido = await readFile(new URL('../src/components/comercial/pedido/PedidoTabsContainer.jsx', import.meta.url), 'utf8');
   const events = await readFile(new URL('../base44/functions/auditEntityEvents/entry.ts', import.meta.url), 'utf8');
   const invite = await readFile(new URL('../base44/functions/adminInviteUser/entry.ts', import.meta.url), 'utf8');
@@ -39,6 +58,8 @@ test('operational audit call sites no longer swallow AuditLog failures', async (
   assert.match(link, /persistOperationalAudit/);
   assert.match(liquidar, /persistOperationalAudit/);
   assert.match(seguranca, /persistOperationalAudit/);
+  assert.match(seguranca, /<PasswordSecurityTab/);
+  assert.match(senhaTab, /Seguranca\.bruteforce\.bloquearIpSuspeito/);
   assert.doesNotMatch(caixa, /catch \{\}/);
   assert.doesNotMatch(cobranca, /catch \{\}/);
   assert.doesNotMatch(link, /catch \{\}/);
