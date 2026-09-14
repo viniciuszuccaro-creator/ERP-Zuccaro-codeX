@@ -1,437 +1,257 @@
-import React, { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeftRight, Save, AlertCircle } from "lucide-react";
-import { toast } from "sonner";
-import usePermissions from "@/components/lib/usePermissions";
-import ProtectedField from "@/components/security/ProtectedField";
-import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import React, { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeftRight } from 'lucide-react';
+import { toast } from 'sonner';
+
+import TransferenciaEntreEmpresasFields from '@/components/estoque/transferencia-empresas/TransferenciaEntreEmpresasFields';
+import {
+  createTransferenciaFormState,
+  resolveTransferenciaEntreEmpresas,
+  summarizeTransferenciaAudit,
+} from '@/components/lib/estoqueMovimentoPolicy';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
+
+/** @typedef {import('@/components/lib/estoqueMovimentoPolicy').TransferFormState} TransferFormState */
+/** @typedef {import('@/components/lib/estoqueMovimentoPolicy').TransferCompanyRecord} TransferCompanyRecord */
+/** @typedef {import('@/components/lib/estoqueMovimentoPolicy').TransferProductRecord} TransferProductRecord */
 
 /**
- * V21.1.2 - WINDOW MODE READY
- * Formulário de transferência entre empresas do grupo
+ * Formulario de transferencia entre empresas do Grupo.
+ * @param {{ empresasDoGrupo?: TransferCompanyRecord[], produtos?: TransferProductRecord[], onSuccess?: () => void, windowMode?: boolean }} props
  */
-export default function TransferenciaEntreEmpresasForm({ 
+export default function TransferenciaEntreEmpresasForm({
   empresasDoGrupo = [],
   produtos = [],
   onSuccess,
-  windowMode = false
+  windowMode = false,
 }) {
   const queryClient = useQueryClient();
   const { canCreate } = usePermissions();
-  const { empresaAtual, grupoAtual, contexto, createInContext } = useContextoVisual();
-  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
-  const contextoValido = Boolean(groupId || empresasDoGrupo.length > 0);
+  const { empresaAtual, grupoAtual, contexto, createInContext, updateInContext } = useContextoVisual();
+  const groupId = String(grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || '').trim();
+  const authorizedCompanies = empresasDoGrupo.filter((empresa) => (
+    String(empresa.group_id || empresa.grupo_id || '').trim() === groupId
+  ));
+  const authorizedCompanyIds = new Set(authorizedCompanies.map((empresa) => String(empresa.id || '')));
+  const authorizedProducts = produtos.filter((produto) => {
+    const productGroupId = String(produto.group_id || produto.grupo_id || '').trim();
+    const productCompanyId = String(produto.empresa_id || produto.empresa_dona_id || '').trim();
+    return productGroupId === groupId || authorizedCompanyIds.has(productCompanyId);
+  });
+  const contextoValido = Boolean(groupId && authorizedCompanies.length >= 2);
   const canCreateTransferencia = canCreate('Estoque', 'Transferencias');
+  const [formData, setFormData] = useState(createTransferenciaFormState);
 
-  const auditTransferencia = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
-    try {
-      await createInContext('AuditLog', {
-        acao,
-        modulo: 'Estoque',
-        entidade: 'TransferenciaFilial',
-        tipo_auditoria: sucesso ? 'entidade' : 'seguranca',
-        descricao: motivo || 'Auditoria de transferencia entre empresas.',
-        dados_novos: dados,
-        group_id: groupId || dados.group_id || null,
-        grupo_id: groupId || dados.group_id || null,
-        empresa_id: dados.empresa_origem_id || empresaAtual?.id || null,
-        sucesso,
-        data_hora: new Date().toISOString(),
-      });
-    } catch (error) {
-      console.warn('Falha ao auditar transferencia entre empresas:', error);
-    }
-  };
-
-  const [formData, setFormData] = useState({
-    empresa_origem_id: "",
-    empresa_destino_id: "",
-    produto_id: "",
-    quantidade: 0,
-    unidade: "",
-    motivo: "reequilibrio",
-    gerar_financeiro: false,
-    observacoes: ""
+  /**
+   * @param {{ acao: string, sucesso?: boolean, motivo?: string | null, dados?: Partial<TransferFormState> & { transferencia_id?: unknown, status?: unknown } }} input
+   */
+  const auditTransferencia = async ({ acao, sucesso = true, motivo = null, dados = {} }) => createInContext('AuditLog', {
+    acao,
+    modulo: 'Estoque',
+    entidade: 'TransferenciaFilial',
+    tipo_auditoria: sucesso ? 'entidade' : 'seguranca',
+    descricao: motivo || 'Auditoria de transferencia entre empresas.',
+    dados_novos: summarizeTransferenciaAudit(dados),
+    group_id: groupId,
+    grupo_id: groupId,
+    empresa_id: authorizedCompanyIds.has(String(dados.empresa_origem_id || ''))
+      ? dados.empresa_origem_id
+      : null,
+    sucesso,
+    data_hora: new Date().toISOString(),
   });
 
   const createTransferenciaMutation = useMutation({
-    mutationFn: async (data) => {
-      const produto = produtos.find(p => p.id === data.produto_id);
-      const empresaOrigem = empresasDoGrupo.find(e => e.id === data.empresa_origem_id);
-      const empresaDestino = empresasDoGrupo.find(e => e.id === data.empresa_destino_id);
-
-      // Criar registro de transferência
-      const transferencia = await createInContext('TransferenciaFilial', {
-        group_id: empresaOrigem.group_id,
-        empresa_origem_id: data.empresa_origem_id,
-        empresa_destino_id: data.empresa_destino_id,
-        produto_id: data.produto_id,
-        produto_descricao: produto.descricao,
-        quantidade: data.quantidade,
-        unidade_medida: data.unidade,
-        motivo: data.motivo,
-        observacoes: data.observacoes,
-        valor_unitario: produto.custo_medio || produto.custo_aquisicao || 0,
-        valor_total: (produto.custo_medio || produto.custo_aquisicao || 0) * data.quantidade,
-        status: "Aprovada",
-        data_solicitacao: new Date().toISOString(),
-        gerar_cobranca_interna: data.gerar_financeiro
+    mutationFn: async (/** @type {TransferFormState} */ submittedForm) => {
+      const resolved = resolveTransferenciaEntreEmpresas({
+        groupId,
+        companies: authorizedCompanies,
+        products: authorizedProducts,
+        form: submittedForm,
       });
-
-      // Criar movimentações de estoque (saida origem + entrada destino)
-      await createInContext('MovimentacaoEstoque', {
-        empresa_id: data.empresa_origem_id,
-        group_id: empresaOrigem.group_id,
-        produto_id: data.produto_id,
-        tipo_movimento: "transferencia_saida",
-        origem_movimento: "transferencia",
-        origem_documento_id: transferencia.id,
-        quantidade: data.quantidade,
-        documento: transferencia.id,
-        observacoes: `Transferência para ${empresaDestino.nome_fantasia}`,
-        data_movimentacao: new Date().toISOString()
+      const { form, origin, destination, product } = resolved;
+      const unitCost = Number(product.custo_medio || product.custo_aquisicao || 0);
+      const now = new Date().toISOString();
+      const transfer = await createInContext('TransferenciaFilial', {
+        group_id: resolved.groupId,
+        grupo_id: resolved.groupId,
+        empresa_id: form.empresa_origem_id,
+        empresa_origem_id: form.empresa_origem_id,
+        empresa_destino_id: form.empresa_destino_id,
+        produto_id: form.produto_id,
+        produto_descricao: String(product.descricao || ''),
+        quantidade: form.quantidade,
+        unidade_medida: form.unidade,
+        motivo: form.motivo,
+        observacoes: form.observacoes,
+        valor_unitario: unitCost,
+        valor_total: unitCost * form.quantidade,
+        status: 'Processando',
+        data_solicitacao: now,
+        gerar_cobranca_interna: form.gerar_financeiro,
       });
+      const transferId = String(transfer?.id || '');
+      if (!transferId) throw new Error('Transferencia criada sem identificador.');
+
+      const commonMovement = {
+        group_id: resolved.groupId,
+        grupo_id: resolved.groupId,
+        produto_id: form.produto_id,
+        origem_movimento: 'transferencia',
+        origem_documento_id: transferId,
+        quantidade: form.quantidade,
+        documento: transferId,
+        data_movimentacao: now,
+      };
 
       try {
         await createInContext('MovimentacaoEstoque', {
-          empresa_id: data.empresa_destino_id,
-          group_id: empresaDestino.group_id,
-          produto_id: data.produto_id,
-          tipo_movimento: "transferencia_entrada",
-          origem_movimento: "transferencia",
-          origem_documento_id: transferencia.id,
-          quantidade: data.quantidade,
-          documento: transferencia.id,
-          observacoes: `Transferência de ${empresaOrigem.nome_fantasia}`,
-          data_movimentacao: new Date().toISOString()
+          ...commonMovement,
+          empresa_id: form.empresa_origem_id,
+          tipo_movimento: 'transferencia_saida',
+          idempotency_key: `transferencia|${transferId}|saida`,
+          observacoes: `Transferência para ${String(destination.nome_fantasia || destination.razao_social || 'destino')}`,
         });
-      } catch (destError) {
+      } catch (originError) {
+        await updateInContext('TransferenciaFilial', transferId, {
+          group_id: resolved.groupId,
+          empresa_id: form.empresa_origem_id,
+          status: 'Falha',
+        });
+        await auditTransferencia({
+          acao: 'TransferenciaEntreEmpresas.origem_falhou',
+          sucesso: false,
+          motivo: originError instanceof Error ? originError.message : 'Falha na perna de origem.',
+          dados: { ...form, transferencia_id: transferId, status: 'Falha' },
+        });
+        throw originError;
+      }
+
+      try {
+        await createInContext('MovimentacaoEstoque', {
+          ...commonMovement,
+          empresa_id: form.empresa_destino_id,
+          tipo_movimento: 'transferencia_entrada',
+          idempotency_key: `transferencia|${transferId}|entrada`,
+          observacoes: `Transferência de ${String(origin.nome_fantasia || origin.razao_social || 'origem')}`,
+        });
+      } catch (destinationError) {
+        let compensated = false;
+        try {
+          await createInContext('MovimentacaoEstoque', {
+            ...commonMovement,
+            empresa_id: form.empresa_origem_id,
+            tipo_movimento: 'transferencia_entrada',
+            idempotency_key: `transferencia|${transferId}|compensacao-origem`,
+            observacoes: 'Compensação automática por falha na entrada do destino',
+          });
+          compensated = true;
+        } catch (compensationError) {
+          console.error('Falha critica ao compensar transferencia entre empresas.', compensationError);
+        }
+        const failureStatus = compensated ? 'Falha Compensada' : 'Falha Crítica';
+        await updateInContext('TransferenciaFilial', transferId, {
+          group_id: resolved.groupId,
+          empresa_id: form.empresa_origem_id,
+          status: failureStatus,
+        });
         await auditTransferencia({
           acao: 'TransferenciaEntreEmpresas.destino_falhou',
           sucesso: false,
-          motivo: destError?.message || 'Falha na perna de destino',
-          dados: {
-            transferencia_id: transferencia?.id,
-            empresa_origem_id: data.empresa_origem_id,
-            empresa_destino_id: data.empresa_destino_id,
-            produto_id: data.produto_id,
-          },
+          motivo: destinationError instanceof Error ? destinationError.message : 'Falha na perna de destino.',
+          dados: { ...form, transferencia_id: transferId, status: failureStatus },
         });
-        throw new Error(`Transferencia incompleta: origem ok, destino falhou (${destError?.message || destError})`);
+        throw new Error(compensated
+          ? 'A entrada no destino falhou e a saída da origem foi compensada.'
+          : 'Transferência incompleta: falha no destino e na compensação da origem.');
       }
 
+      const completedTransfer = await updateInContext('TransferenciaFilial', transferId, {
+        group_id: resolved.groupId,
+        empresa_id: form.empresa_origem_id,
+        status: 'Aprovada',
+        data_conclusao: new Date().toISOString(),
+      });
       await auditTransferencia({
         acao: 'TransferenciaEntreEmpresas.confirmada',
-        dados: {
-          transferencia_id: transferencia?.id,
-          group_id: empresaOrigem.group_id || empresaDestino.group_id || groupId,
-          empresa_origem_id: data.empresa_origem_id,
-          empresa_destino_id: data.empresa_destino_id,
-          produto_id: data.produto_id,
-          quantidade: data.quantidade
-        }
+        dados: { ...form, transferencia_id: transferId, status: 'Aprovada' },
       });
-
-      return transferencia;
+      return completedTransfer;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['produtos'] });
       queryClient.invalidateQueries({ queryKey: ['movimentacoes'] });
       queryClient.invalidateQueries({ queryKey: ['transferencias'] });
-      toast.success("✅ Transferência realizada com sucesso!");
-      if (onSuccess) onSuccess();
-      resetForm();
-    }
+      toast.success('Transferência realizada com sucesso.');
+      onSuccess?.();
+      setFormData(createTransferenciaFormState());
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Não foi possível concluir a transferência.');
+    },
   });
 
-  const resetForm = () => {
-    setFormData({
-      empresa_origem_id: "",
-      empresa_destino_id: "",
-      produto_id: "",
-      quantidade: 0,
-      unidade: "",
-      motivo: "reequilibrio",
-      gerar_financeiro: false,
-      observacoes: ""
-    });
-  };
+  const selectedProduct = authorizedProducts.find((product) => product.id === formData.produto_id);
 
-  const produtoSelecionado = produtos.find(p => p.id === formData.produto_id);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
+  /** @param {React.FormEvent<HTMLFormElement>} event */
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     if (!contextoValido || !canCreateTransferencia) {
-      await auditTransferencia({
-        acao: 'TransferenciaEntreEmpresas.bloqueada',
-        sucesso: false,
-        motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
-        dados: { ...formData }
-      });
-      toast.error(!contextoValido ? "Selecione grupo ou empresa antes de transferir." : "Sem permissão para transferir estoque entre empresas.");
+      const reason = !contextoValido ? 'contexto_grupo_empresas_obrigatorio' : 'permissao_negada';
+      try {
+        await auditTransferencia({ acao: 'TransferenciaEntreEmpresas.bloqueada', sucesso: false, motivo: reason, dados: formData });
+      } catch (auditError) {
+        console.error('Falha ao auditar bloqueio de transferencia.', auditError);
+      }
+      toast.error(!contextoValido
+        ? 'Selecione um Grupo com pelo menos duas empresas autorizadas.'
+        : 'Sem permissão para transferir estoque entre empresas.');
       return;
     }
 
-    if (!formData.empresa_origem_id || !formData.empresa_destino_id) {
-      toast.error("Selecione as empresas de origem e destino");
+    let resolved;
+    try {
+      resolved = resolveTransferenciaEntreEmpresas({ groupId, companies: authorizedCompanies, products: authorizedProducts, form: formData });
+    } catch (validationError) {
+      const message = validationError instanceof Error ? validationError.message : 'Dados da transferência inválidos.';
+      await auditTransferencia({ acao: 'TransferenciaEntreEmpresas.bloqueada', sucesso: false, motivo: message, dados: formData });
+      toast.error(message);
       return;
     }
-    
-    if (!formData.produto_id) {
-      toast.error("Selecione um produto");
+    const confirmed = window.confirm(
+      `Confirma transferir ${resolved.form.quantidade} ${resolved.form.unidade} de ${String(resolved.product.descricao || 'produto')} de ${String(resolved.origin.nome_fantasia || resolved.origin.razao_social || 'origem')} para ${String(resolved.destination.nome_fantasia || resolved.destination.razao_social || 'destino')}?`,
+    );
+    if (!confirmed) {
+      await auditTransferencia({ acao: 'TransferenciaEntreEmpresas.cancelada', sucesso: false, motivo: 'confirmacao_cancelada', dados: resolved.form });
       return;
     }
-    
-    if (formData.quantidade <= 0) {
-      toast.error("Quantidade deve ser maior que zero");
-      return;
-    }
-
-    if (formData.empresa_origem_id === formData.empresa_destino_id) {
-      toast.error("Empresa origem e destino devem ser diferentes");
-      return;
-    }
-
-    const produto = produtos.find(p => p.id === formData.produto_id);
-    const empresaOrigem = empresasDoGrupo.find(e => e.id === formData.empresa_origem_id);
-    const empresaDestino = empresasDoGrupo.find(e => e.id === formData.empresa_destino_id);
-    const confirmado = window.confirm(`Confirma transferir ${formData.quantidade} ${formData.unidade || produto?.unidade_medida || ''} de ${produto?.descricao || 'produto'} de ${empresaOrigem?.nome_fantasia || 'origem'} para ${empresaDestino?.nome_fantasia || 'destino'}?`);
-    if (!confirmado) {
-      await auditTransferencia({ acao: 'TransferenciaEntreEmpresas.cancelada', sucesso: false, motivo: 'confirmacao_cancelada', dados: { ...formData } });
-      return;
-    }
-
-    createTransferenciaMutation.mutate(formData);
+    createTransferenciaMutation.mutate(resolved.form);
   };
 
   const content = (
-    <div className={`space-y-6 w-full h-full ${windowMode ? 'p-6 overflow-auto' : ''}`} data-permission="Estoque.Transferencias.criar" data-context-required="group-or-company" data-context-mode={contexto}>
+    <div className={`space-y-6 w-full h-full ${windowMode ? 'p-4 md:p-6 overflow-auto' : ''}`} data-permission="Estoque.Transferencias.criar" data-context-required="group-and-companies" data-context-mode={contexto}>
       {!windowMode && (
         <div className="flex items-center gap-2 mb-4">
           <ArrowLeftRight className="w-6 h-6 text-purple-600" />
           <h2 className="text-2xl font-bold">Transferência entre Empresas</h2>
         </div>
       )}
-
-      <form onSubmit={handleSubmit} className="space-y-4" data-permission="Estoque.Transferencias.criar" data-action="Estoque.Transferencias.formulario" data-context-required="group-or-company">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label>Empresa Origem *</Label>
-            <Select
-              value={formData.empresa_origem_id}
-              onValueChange={(v) => setFormData({ ...formData, empresa_origem_id: v })}
-            >
-              <SelectTrigger data-permission="Estoque.Transferencias.criar" data-action="Estoque.Transferencias.empresaOrigem" data-context-required="group-or-company">
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
-              <SelectContent>
-                {empresasDoGrupo.map(emp => (
-                  <SelectItem key={emp.id} value={emp.id}>
-                    {emp.nome_fantasia || emp.razao_social}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label>Empresa Destino *</Label>
-            <Select
-              value={formData.empresa_destino_id}
-              onValueChange={(v) => setFormData({ ...formData, empresa_destino_id: v })}
-            >
-              <SelectTrigger data-permission="Estoque.Transferencias.criar" data-action="Estoque.Transferencias.empresaDestino" data-context-required="group-or-company">
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
-              <SelectContent>
-                {empresasDoGrupo.map(emp => (
-                  <SelectItem key={emp.id} value={emp.id}>
-                    {emp.nome_fantasia || emp.razao_social}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div>
-          <Label>Produto *</Label>
-          <Select
-            value={formData.produto_id}
-            onValueChange={(v) => {
-              const prod = produtos.find(p => p.id === v);
-              setFormData({ 
-                ...formData, 
-                produto_id: v,
-                unidade: prod?.unidade_medida || ""
-              });
-            }}
-          >
-            <SelectTrigger data-permission="Estoque.Transferencias.criar" data-action="Estoque.Transferencias.produto" data-context-required="group-or-company">
-              <SelectValue placeholder="Selecione..." />
-            </SelectTrigger>
-            <SelectContent>
-              {produtos.filter(p => p.status === 'Ativo').map(prod => (
-                <SelectItem key={prod.id} value={prod.id}>
-                  {prod.codigo ? `${prod.codigo} - ` : ''}{prod.descricao}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {produtoSelecionado && (
-          <Card className="border-blue-200 bg-blue-50">
-            <CardContent className="p-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-blue-700">Estoque Atual</p>
-                  <p className="font-bold text-blue-900">
-                    {produtoSelecionado.estoque_atual || 0} {produtoSelecionado.unidade_medida}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-blue-700">Custo Médio</p>
-                  <p className="font-bold text-blue-900">
-                    <ProtectedField module="Estoque" submodule="Transferencias" field="custo" action="ver" asText>
-                      R$ {(produtoSelecionado.custo_medio || produtoSelecionado.custo_aquisicao || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </ProtectedField>
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label>Quantidade *</Label>
-            <Input
-              type="number"
-              step="0.01"
-              value={formData.quantidade}
-              onChange={(e) => setFormData({ ...formData, quantidade: parseFloat(e.target.value) || 0 })}
-              data-permission="Estoque.Transferencias.criar"
-              data-action="Estoque.Transferencias.quantidade"
-              data-context-required="group-or-company"
-            />
-          </div>
-
-          <div>
-            <Label>Unidade</Label>
-            <Input
-              value={formData.unidade}
-              disabled
-              className="bg-slate-100"
-              data-permission="Estoque.Transferencias.visualizar"
-              data-action="Estoque.Transferencias.unidade"
-              data-context-required="group-or-company"
-            />
-          </div>
-        </div>
-
-        <div>
-          <Label>Motivo *</Label>
-          <Select
-            value={formData.motivo}
-            onValueChange={(v) => setFormData({ ...formData, motivo: v })}
-          >
-            <SelectTrigger data-permission="Estoque.Transferencias.criar" data-action="Estoque.Transferencias.motivo" data-context-required="group-or-company">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="reequilibrio">Reequilíbrio de Estoque</SelectItem>
-              <SelectItem value="producao">Suprimento para Produção</SelectItem>
-              <SelectItem value="emprestimo">Empréstimo Temporário</SelectItem>
-              <SelectItem value="devolucao">Devolução de Empréstimo</SelectItem>
-              <SelectItem value="outros">Outros</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <Card className="border-amber-300 bg-amber-50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="gerar-financeiro"
-                checked={formData.gerar_financeiro}
-                onChange={(e) => setFormData({ ...formData, gerar_financeiro: e.target.checked })}
-                className="w-4 h-4"
-                data-permission="Estoque.Transferencias.criar"
-                data-action="Estoque.Transferencias.gerarFinanceiroInterno"
-                data-context-required="group-or-company"
-                data-sensitive="true"
-              />
-              <Label htmlFor="gerar-financeiro" className="cursor-pointer font-normal">
-                Gerar financeiro interno (transferência cobra da empresa destino)
-              </Label>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div>
-          <Label>Observações</Label>
-          <Textarea
-            value={formData.observacoes}
-            onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-            rows={3}
-            data-permission="Estoque.Transferencias.criar"
-            data-action="Estoque.Transferencias.observacoes"
-            data-context-required="group-or-company"
-          />
-        </div>
-
-        {formData.empresa_origem_id === formData.empresa_destino_id && formData.empresa_origem_id && (
-          <Card className="border-red-300 bg-red-50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-red-600" />
-                <p className="text-sm text-red-700">
-                  <strong>Erro:</strong> Empresa origem e destino não podem ser iguais
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
-          <Button
-            type="submit"
-            disabled={createTransferenciaMutation.isPending || !contextoValido || !canCreateTransferencia}
-            className="bg-purple-600 hover:bg-purple-700"
-            data-permission="Estoque.Transferencias.criar"
-            data-action="Estoque.Transferencias.confirmar"
-            data-context-required="group-or-company"
-            data-sensitive="true"
-          >
-            {createTransferenciaMutation.isPending ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                Processando...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                Confirmar Transferência
-              </>
-            )}
-          </Button>
-        </div>
+      <form onSubmit={handleSubmit} className="space-y-4 w-full" data-permission="Estoque.Transferencias.criar" data-action="Estoque.Transferencias.formulario" data-context-required="group-and-companies">
+        <TransferenciaEntreEmpresasFields
+          formData={formData}
+          setFormData={setFormData}
+          companies={authorizedCompanies}
+          products={authorizedProducts}
+          selectedProduct={selectedProduct}
+          disabled={!contextoValido || !canCreateTransferencia}
+          isPending={createTransferenciaMutation.isPending}
+        />
       </form>
     </div>
   );
 
-  if (windowMode) {
-    return <div className="w-full h-full bg-white" data-permission="Estoque.Transferencias.criar" data-context-required="group-or-company">{content}</div>;
-  }
-
-  return content;
+  return windowMode
+    ? <div className="w-full h-full bg-white" data-permission="Estoque.Transferencias.criar" data-context-required="group-and-companies">{content}</div>
+    : content;
 }

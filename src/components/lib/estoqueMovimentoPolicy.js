@@ -47,6 +47,9 @@
  *   conferente?: unknown,
  * }} RecebimentoAliasRecord
  * @typedef {Error & { code?: string }} EstoquePolicyError
+ * @typedef {Record<string, unknown> & { id?: string, group_id?: unknown, grupo_id?: unknown, nome_fantasia?: unknown, razao_social?: unknown }} TransferCompanyRecord
+ * @typedef {Record<string, unknown> & { id?: string, group_id?: unknown, grupo_id?: unknown, empresa_id?: unknown, empresa_dona_id?: unknown, descricao?: unknown, codigo?: unknown, status?: unknown, unidade_medida?: unknown, estoque_atual?: unknown, custo_medio?: unknown, custo_aquisicao?: unknown }} TransferProductRecord
+ * @typedef {{ empresa_origem_id: string, empresa_destino_id: string, produto_id: string, quantidade: number, unidade: string, motivo: string, gerar_financeiro: boolean, observacoes: string }} TransferFormState
  */
 
 /** @param {unknown} value */
@@ -57,6 +60,96 @@ const toQty = (value) => {
 
 /** @param {...unknown} values */
 const firstText = (...values) => values.map((value) => String(value || '').trim()).find(Boolean) || '';
+
+export const TRANSFERENCIA_MOTIVOS = ['reequilibrio', 'producao', 'emprestimo', 'devolucao', 'outros'];
+
+/** @returns {TransferFormState} */
+export const createTransferenciaFormState = () => ({
+  empresa_origem_id: '',
+  empresa_destino_id: '',
+  produto_id: '',
+  quantidade: 0,
+  unidade: '',
+  motivo: 'reequilibrio',
+  gerar_financeiro: false,
+  observacoes: '',
+});
+
+/** @param {unknown} value @param {number} [maxLength] */
+const sanitizeTransferText = (value, maxLength = 500) => String(value || '')
+  .replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, '')
+  .replace(/javascript\s*:/gi, '')
+  .split('')
+  .filter((character) => {
+    const code = character.charCodeAt(0);
+    return code === 9 || code === 10 || code === 13 || (code >= 32 && code !== 127);
+  })
+  .join('')
+  .trim()
+  .slice(0, maxLength);
+
+/**
+ * @param {{ groupId?: unknown, companies?: TransferCompanyRecord[], products?: TransferProductRecord[], form?: Partial<TransferFormState> }} input
+ */
+export const resolveTransferenciaEntreEmpresas = ({ groupId, companies = [], products = [], form = {} }) => {
+  const resolvedGroupId = firstText(groupId);
+  if (!resolvedGroupId) throw new Error('Grupo obrigatorio para transferencia entre empresas.');
+  const companyList = Array.isArray(companies) ? companies : [];
+  const originId = firstText(form.empresa_origem_id);
+  const destinationId = firstText(form.empresa_destino_id);
+  if (!originId || !destinationId) throw new Error('Selecione as empresas de origem e destino.');
+  if (originId === destinationId) throw new Error('Empresa origem e destino devem ser diferentes.');
+
+  const belongsToGroup = (/** @type {TransferCompanyRecord} */ company) => (
+    firstText(company.group_id, company.grupo_id) === resolvedGroupId
+  );
+  const origin = companyList.find((company) => company.id === originId && belongsToGroup(company));
+  const destination = companyList.find((company) => company.id === destinationId && belongsToGroup(company));
+  if (!origin || !destination) throw new Error('Origem e destino devem pertencer ao Grupo selecionado.');
+
+  const productId = firstText(form.produto_id);
+  const product = (Array.isArray(products) ? products : []).find((item) => item.id === productId);
+  if (!product || String(product.status || 'Ativo') !== 'Ativo') throw new Error('Produto ativo nao encontrado.');
+  const productGroupId = firstText(product.group_id, product.grupo_id);
+  const productCompanyId = firstText(product.empresa_id, product.empresa_dona_id);
+  if (productGroupId && productGroupId !== resolvedGroupId) throw new Error('Produto pertence a outro Grupo.');
+  if (productCompanyId && productCompanyId !== originId) throw new Error('Produto nao pertence a Empresa de origem.');
+
+  const quantity = Number(form.quantidade);
+  if (!Number.isFinite(quantity) || quantity <= 0) throw new Error('Quantidade deve ser maior que zero.');
+  const currentStock = Number(product.estoque_atual);
+  if (Number.isFinite(currentStock) && quantity > currentStock) throw new Error('Quantidade excede o estoque disponivel na origem.');
+  const reason = firstText(form.motivo);
+  if (!TRANSFERENCIA_MOTIVOS.includes(reason)) throw new Error('Motivo da transferencia invalido.');
+
+  return {
+    groupId: resolvedGroupId,
+    origin,
+    destination,
+    product,
+    form: /** @type {TransferFormState} */ ({
+      empresa_origem_id: originId,
+      empresa_destino_id: destinationId,
+      produto_id: productId,
+      quantidade: Math.round(quantity * 1000) / 1000,
+      unidade: sanitizeTransferText(product.unidade_medida || form.unidade, 20),
+      motivo: reason,
+      gerar_financeiro: form.gerar_financeiro === true,
+      observacoes: sanitizeTransferText(form.observacoes, 500),
+    }),
+  };
+};
+
+/** @param {Partial<TransferFormState> & { transferencia_id?: unknown, status?: unknown }} data */
+export const summarizeTransferenciaAudit = (data = {}) => ({
+  transferencia_id: firstText(data.transferencia_id) || undefined,
+  empresa_origem_id: firstText(data.empresa_origem_id) || undefined,
+  empresa_destino_id: firstText(data.empresa_destino_id) || undefined,
+  produto_id: firstText(data.produto_id) || undefined,
+  quantidade: Number.isFinite(Number(data.quantidade)) ? Number(data.quantidade) : undefined,
+  status: firstText(data.status) || undefined,
+  gerar_financeiro: data.gerar_financeiro === true,
+});
 
 export const HISTORICO_ESTOQUE_ENTITIES = ['MovimentacaoEstoque', 'AuditLog'];
 

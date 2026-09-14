@@ -8482,3 +8482,20 @@ Checklist inicial:
 - Dados/infraestrutura: nenhuma consulta remota foi executada e nenhum backend Base44, banco legado ou HD externo foi acessado ou modificado.
 - Commit de implementacao: `f73b408e` (`Isola dashboard em tempo real por usuario`).
 - Proximo passo P0: refatorar e tipar `src/components/estoque/TransferenciaEntreEmpresasForm.jsx`, preservando validacao bilateral Grupo/Empresas, estoque e auditoria; `localBase44Client.js` permanece reservado para lote transversal proprio.
+
+## 2026-09-14 - Transferencia de Estoque entre Empresas com Compensacao
+
+- Objetivo: eliminar os diagnosticos do formulario existente e impedir transferencia com contexto adulterado, produto incompatível, saldo insuficiente ou persistencia parcial silenciosa.
+- Causa raiz: o formulario aceitava contexto apenas pela existencia de empresas, nao comprovava origem/destino no mesmo Grupo, persistia campos sem contrato e podia registrar a saida mesmo quando a entrada no destino falhava.
+- Arquivos alterados: `src/components/estoque/TransferenciaEntreEmpresasForm.jsx`, `src/components/estoque/transferencia-empresas/TransferenciaEntreEmpresasFields.jsx`, `src/components/lib/estoqueMovimentoPolicy.js` e `tests/estoque-movimento-policy.test.js`.
+- Refatoracao: o orquestrador caiu de 437 para 257 linhas e os campos visuais foram extraidos para auxiliar privado de 231 linhas. O auxiliar existe somente para decompor o formulario atual, sem criar tela, rota, entidade ou persistencia paralela.
+- Multiempresa: Grupo passou a ser obrigatorio; origem e destino precisam estar na lista autorizada e declarar o mesmo Grupo. Produto deve pertencer ao Grupo ou a Empresa de origem, estar ativo e possuir estoque suficiente.
+- RBAC: criacao continua protegida por `Estoque.Transferencias.criar`; campos e confirmacao ficam desabilitados sem permissao ou sem duas empresas autorizadas no Grupo.
+- Integridade: transferencia nasce em `Processando`; saida e entrada recebem chaves idempotentes. Se o destino falhar, uma entrada compensatoria na origem e tentada e o registro termina como `Falha Compensada` ou `Falha Critica`, sem declarar sucesso parcial.
+- Seguranca/auditoria: motivo usa allowlist, quantidade e unidade sao normalizadas e observacoes sao sanitizadas/limitadas. Auditorias registram apenas IDs, quantidade, status e indicador financeiro, sem observacoes ou custos.
+- Compatibilidade: seletores, custo protegido, motivo, financeiro interno, observacoes, confirmacao, invalidacoes de cache e modo janela foram preservados em layout `w-full`/`h-full` responsivo.
+- Testes: focados passaram 10/10 e a suite completa passou 464/464. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve apenas avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
+- Typecheck: os arquivos do lote passaram de 30 diagnosticos para zero; o passivo global caiu de 1.765 para 1.735, reducao liquida exata de 30, e continua aberto sem ser mascarado.
+- Dados/infraestrutura: nenhuma transferencia real foi executada e nenhum backend Base44 remoto, banco legado ou HD externo foi acessado ou modificado.
+- Commit de implementacao: `PENDENTE_COMMIT`.
+- Proximo passo P0: revisar e decompor `src/Layout.jsx`, estrutura transversal com aproximadamente 1.564 linhas e 30 diagnosticos, em lote isolado para preservar autenticacao, RBAC, contexto e navegacao; `localBase44Client.js` permanece reservado.

@@ -976,3 +976,18 @@ Lote concluido em 2026-09-14 no dashboard existente, sem criar pagina, rota, ent
 
 Proxima frente P0: refatorar e tipar `src/components/estoque/TransferenciaEntreEmpresasForm.jsx`, preservando validacao bilateral Grupo/Empresas, estoque e auditoria.
 
+### Integridade - Transferencia de Estoque entre Empresas
+
+Lote concluido em 2026-09-14 no formulario existente de transferencia, sem criar tela, rota, entidade ou persistencia paralela.
+
+- `TransferenciaEntreEmpresasForm.jsx` caiu de 437 para 257 linhas; os campos foram extraidos para auxiliar visual privado de 231 linhas.
+- Grupo e duas Empresas autorizadas passaram a ser obrigatorios; origem/destino externos, produto de outro escopo, produto inativo e saldo insuficiente ficam bloqueados antes da escrita.
+- Transferencia usa estado `Processando`, movimentos com chaves idempotentes e compensacao da origem quando a entrada no destino falha.
+- Falhas terminam com estado explicito `Falha`, `Falha Compensada` ou `Falha Critica`; sucesso somente e marcado depois das duas pernas.
+- Observacoes sao sanitizadas e limitadas; auditoria registra resumo sem texto livre ou custo.
+- O typecheck dos arquivos do lote passou de 30 diagnosticos para zero; o global caiu de 1.765 para 1.735, reducao liquida exata de 30.
+- Testes focados passaram 10/10 e a suite completa passou 464/464; auditoria baseline, lint, build e verificacao de diff tambem passaram.
+- Nenhuma transferencia real, entidade remota, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: revisar e decompor `src/Layout.jsx` em lote isolado, preservando autenticacao, RBAC, contexto e navegacao.
+

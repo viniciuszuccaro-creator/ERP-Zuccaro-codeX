@@ -3,8 +3,10 @@ import {
   configAllowsNegativeStock,
   findDuplicateMovement,
   normalizeRecebimentoAliases,
+  resolveTransferenciaEntreEmpresas,
   resolveNextEstoque,
   resolveSignedQuantity,
+  summarizeTransferenciaAudit,
 } from '../src/components/lib/estoqueMovimentoPolicy.js';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -113,6 +115,52 @@ test('active and legacy receipt field names resolve to the same contract', () =>
   });
 });
 
+test('transferencia exige origem e destino do mesmo grupo e produto da origem', () => {
+  const companies = [
+    { id: 'empresa-a', group_id: 'grupo-1', nome_fantasia: 'A' },
+    { id: 'empresa-b', group_id: 'grupo-1', nome_fantasia: 'B' },
+    { id: 'empresa-x', group_id: 'grupo-2', nome_fantasia: 'X' },
+  ];
+  const products = [{ id: 'produto-a', group_id: 'grupo-1', empresa_id: 'empresa-a', status: 'Ativo', estoque_atual: 10, unidade_medida: 'UN' }];
+  const form = {
+    empresa_origem_id: 'empresa-a',
+    empresa_destino_id: 'empresa-b',
+    produto_id: 'produto-a',
+    quantidade: 2,
+    motivo: 'reequilibrio',
+    gerar_financeiro: false,
+    observacoes: '<script>remover</script>ok',
+  };
+  const resolved = resolveTransferenciaEntreEmpresas({ groupId: 'grupo-1', companies, products, form });
+  assert.equal(resolved.form.quantidade, 2);
+  assert.equal(resolved.form.unidade, 'UN');
+  assert.equal(resolved.form.observacoes, 'ok');
+  assert.throws(
+    () => resolveTransferenciaEntreEmpresas({ groupId: 'grupo-1', companies, products, form: { ...form, empresa_destino_id: 'empresa-x' } }),
+    /pertencer ao Grupo/,
+  );
+  assert.throws(
+    () => resolveTransferenciaEntreEmpresas({ groupId: 'grupo-1', companies, products, form: { ...form, quantidade: 11 } }),
+    /excede o estoque/,
+  );
+});
+
+test('auditoria de transferencia omite observacoes e custos', () => {
+  const summary = summarizeTransferenciaAudit({
+    transferencia_id: 't1',
+    empresa_origem_id: 'empresa-a',
+    empresa_destino_id: 'empresa-b',
+    produto_id: 'p1',
+    quantidade: 3,
+    observacoes: 'dado livre',
+    custo_medio: 99,
+    status: 'Aprovada',
+  });
+  assert.equal(summary.transferencia_id, 't1');
+  assert.equal(summary.quantidade, 3);
+  assert.doesNotMatch(JSON.stringify(summary), /dado livre|custo_medio|99/);
+});
+
 test('stock persistence owns the product balance and history cannot be deleted', async () => {
   const client = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
   const tab = await readFile(new URL('../src/components/estoque/MovimentacoesTab.jsx', import.meta.url), 'utf8');
@@ -134,6 +182,8 @@ test('stock persistence owns the product balance and history cannot be deleted',
   assert.match(inv, /applyInventoryAdjustments/);
   assert.match(transfer, /transferencia_saida/);
   assert.match(transfer, /transferencia_entrada/);
+  assert.match(transfer, /compensacao-origem/);
+  assert.match(transfer, /resolveTransferenciaEntreEmpresas/);
   assert.doesNotMatch(transfer, /hasPermission\('Estoque', null, 'criar'\)/);
   assert.match(applyInv, /'aprovar'/);
   assert.match(validation, /if \(!data \|\| typeof data !== 'object'\) return false/);
