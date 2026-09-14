@@ -8353,5 +8353,5 @@ Checklist inicial:
 - Testes: teste focado de Estoque passou 7/7; suite completa passou 443/443; `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram. O build manteve apenas o aviso conhecido de chunk grande.
 - Typecheck: `InventarioForm.jsx` passou de 20 diagnosticos para zero; o passivo global caiu de 2.160 para 2.140, reducao liquida exata de 20, e portanto continua aberto sem ser mascarado.
 - Dados/infraestrutura: nenhum dado real, Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
-- Commit de implementacao: `PENDENTE_COMMIT`.
+- Commit de implementacao: `aa989441` (`Tipa formulario de inventario`).
 - Proximo passo P0: refatorar com seguranca e tipar `RecebimentoTab.jsx`, que possui 527 linhas e 22 diagnosticos, em lote separado.
