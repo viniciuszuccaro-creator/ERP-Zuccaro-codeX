@@ -6732,6 +6732,18 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A consulta usou somente loopback local e a mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: classificar somente por contagens a ordem estrutural das linhas fiscais e dos movimentos do mesmo documento/material, verificando referencias preenchidas nas linhas irmas e sequencias distintas para separar parcelamento legitimo de possivel sobreposicao. Nao exportar IDs, datas, quantidades ou valores e nao liberar importacao.
 
+### Gate 18 - Estrutura das linhas fiscais sem referencia reconciliada
+
+- As cinco linhas fiscais sem referencia foram reconstruidas com o mesmo filtro de staging protegido e analisadas em duas passagens identicas. Os resultados produziram o mesmo SHA-256 e reconciliaram exatamente os tres documentos bloqueados.
+- Em todos os cinco casos, todas as linhas irmas do mesmo documento e material possuem referencia preenchida, apontam para o mesmo pedido-pai e apontam para o unico item do pedido com aquele material.
+- As cinco linhas sem referencia ocupam a ultima posicao entre as linhas fiscais do mesmo material e seus movimentos de estoque tambem sao posteriores aos movimentos das linhas irmas.
+- Todas as linhas do mesmo documento/material possuem movimentos de estoque presentes, exatos e com sequencias distintas. Nao foi encontrada reutilizacao da mesma sequencia de movimento nem ausencia de baixa individual.
+- A estrutura caracteriza uma entrada adicional registrada depois das linhas ja vinculadas, e nao uma linha intercalada ou um movimento tecnico duplicado pela mesma chave. Entretanto, como a soma fiscal supera as quantidades pedida e recebida, isso nao comprova parcelamento legitimo nem autoriza preencher a referencia ausente.
+- Nenhuma referencia, pedido, item, movimento, documento fiscal, titulo, staging ou registro do ERP novo foi criado, alterado, remapeado, importado ou promovido. Os tres documentos e seus nove titulos permanecem bloqueados.
+- O relatorio `legacy-purchase-orphan-fiscal-structure-reconciliation.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum identificador, documento, fornecedor, material, data, unidade, quantidade, valor, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A consulta usou somente loopback local e a mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: comparar somente por classificacao a linha fiscal adicional com suas linhas irmas quanto a unidade, valor unitario, natureza de operacao, assinatura tributaria e tipo do movimento de estoque. Nao exportar valores, aliquotas, codigos fiscais, textos ou identificadores e nao criar vinculo automatico.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
