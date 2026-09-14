@@ -6719,6 +6719,19 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A consulta usou somente loopback local e a mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: comparar somente por classificacao menor, igual ou maior a quantidade das cinco linhas fiscais com a quantidade pedida, recebida acumulada e soma das linhas fiscais irmas do mesmo pedido/material. Nao exportar quantidades nem criar vinculo automatico.
 
+### Gate 18 - Quantidades das referencias fiscais ausentes reconciliadas
+
+- As cinco linhas fiscais sem referencia de item foram reconstruidas com o filtro de elegibilidade do staging protegido e classificadas em duas passagens identicas. Os resultados produziram o mesmo SHA-256 e reconciliaram exatamente os tres documentos bloqueados.
+- A quantidade fiscal individual e menor que a quantidade pedida nos cinco casos e tambem menor que a quantidade recebida acumulada nos cinco casos.
+- Quando consideradas todas as linhas fiscais do mesmo documento e material, a soma e maior que a quantidade pedida nos cinco casos e maior que a quantidade recebida acumulada nos cinco casos.
+- Os cinco registros pertencem a documentos com um unico pedido-pai identificavel e possuem multiplas linhas fiscais do mesmo material. Portanto, a divergencia nao decorre de documento compartilhado entre pedidos distintos.
+- Os cinco movimentos diretos por `SEQESTOQUE` continuam exatos quanto a material e quantidade da respectiva linha fiscal. A entrada individual esta comprovada, mas a soma fiscal sobreposta impede usar a quantidade como chave de preenchimento da referencia ausente.
+- Nenhuma aproximacao, rateio, consolidacao, remapeamento ou vinculo automatico foi criado. Os tres documentos e seus nove titulos, sendo quatro abertos e cinco marcados como baixados, permanecem bloqueados para migracao operacional.
+- O relatorio `legacy-purchase-orphan-fiscal-quantity-reconciliation.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum identificador, documento, fornecedor, material, data, unidade, quantidade, valor, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
+- Nenhum fornecedor, pedido, item, movimento, documento fiscal, titulo, staging ou registro do ERP novo foi criado, alterado, remapeado, importado ou promovido.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A consulta usou somente loopback local e a mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: classificar somente por contagens a ordem estrutural das linhas fiscais e dos movimentos do mesmo documento/material, verificando referencias preenchidas nas linhas irmas e sequencias distintas para separar parcelamento legitimo de possivel sobreposicao. Nao exportar IDs, datas, quantidades ou valores e nao liberar importacao.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
