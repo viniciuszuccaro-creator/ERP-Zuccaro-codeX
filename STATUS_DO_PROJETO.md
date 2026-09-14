@@ -8384,5 +8384,5 @@ Checklist inicial:
 - Testes: focados passaram 2/2, incluindo defaults e rejeicao de politica fraca; suite completa passou 445/445. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; build manteve apenas o aviso conhecido de chunk grande.
 - Typecheck: arquivos do lote passaram de 21 diagnosticos para zero; o passivo global caiu de 2.118 para 2.090, reducao liquida de 28, e continua aberto sem ser mascarado.
 - Dados/infraestrutura: nenhuma configuracao real foi salva, nenhum backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
-- Commit de implementacao: `PENDENTE_COMMIT`.
+- Commit de implementacao: `52770d1f` (`Refatora configuracao de seguranca`).
 - Proximo passo P0: refatorar e tipar `GestaoUsuariosAvancada.jsx`, que possui 614 linhas e 16 diagnosticos, em lote separado.
