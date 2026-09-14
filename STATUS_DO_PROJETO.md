@@ -8339,5 +8339,5 @@ Checklist inicial:
 - Testes: teste dedicado passou 7/7; suite completa passou 443/443; `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram. O build manteve apenas os avisos conhecidos de chunks/imports mistos e bases de navegador desatualizadas.
 - Typecheck: `estoqueMovimentoPolicy.js` passou de 22 diagnosticos para zero; o passivo global caiu de 2.182 para 2.160, reducao liquida exata de 22, e portanto continua aberto sem ser mascarado.
 - Dados/infraestrutura: nenhum dado real, Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
-- Commit de implementacao: `PENDENTE_COMMIT`.
+- Commit de implementacao: `bfab52ca` (`Tipa politica de movimentacao de estoque`).
 - Proximo passo P0: recalcular o ranking e selecionar a proxima politica operacional ainda aberta; IA transversal e Marketplace permanecem nas prioridades P2 e P1, respectivamente.
