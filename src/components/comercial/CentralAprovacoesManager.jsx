@@ -63,8 +63,21 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
     hasPermission("Financeiro", "Migracao", "aprovar") ||
     hasPermission("Financeiro.Migracao.aprovar");
   const podeVisualizarConciliacao = podeRevisarConciliacao || podeAprovarConciliacao;
-  const podeVisualizarCentral = podeVisualizarAprovacoes || podeVisualizarConciliacao;
-  const tabVisivel = !podeVisualizarAprovacoes && podeVisualizarConciliacao ? "conciliacao" : activeTab;
+  const podeRevisarConciliacaoFiscal =
+    hasPermission("Fiscal", "Migracao", "conciliar") ||
+    hasPermission("Fiscal.Migracao.conciliar");
+  const podeAprovarConciliacaoFiscal =
+    hasPermission("Fiscal", "Migracao", "aprovar") ||
+    hasPermission("Fiscal.Migracao.aprovar");
+  const podeVisualizarConciliacaoFiscal = podeRevisarConciliacaoFiscal || podeAprovarConciliacaoFiscal;
+  const podeVisualizarCentral = podeVisualizarAprovacoes || podeVisualizarConciliacao || podeVisualizarConciliacaoFiscal;
+  const tabsPermitidas = [
+    ...(podeVisualizarAprovacoes ? ["descontos", "limite", "duplicatas"] : []),
+    ...(podeVisualizarConciliacao ? ["conciliacao"] : []),
+    ...(podeVisualizarConciliacaoFiscal ? ["conciliacao-fiscal"] : []),
+  ];
+  const tabVisivel = tabsPermitidas.includes(activeTab) ? activeTab : tabsPermitidas[0];
+  const totalTabs = tabsPermitidas.length;
   const consultaHabilitada = Boolean(contextoValido && podeVisualizarAprovacoes);
 
   /**
@@ -305,11 +318,7 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
       acessoPermitido={podeVisualizarCentral}
     >
       <Tabs value={tabVisivel} onValueChange={setActiveTab} className="w-full">
-        <TabsList className={`grid h-auto w-full ${
-          podeVisualizarAprovacoes && podeVisualizarConciliacao
-            ? "grid-cols-2 md:grid-cols-4"
-            : podeVisualizarAprovacoes ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1"
-        }`}>
+        <TabsList className={`grid h-auto w-full grid-cols-1 ${totalTabs > 1 ? "sm:grid-cols-2" : ""} ${totalTabs >= 3 ? "lg:grid-cols-3" : ""} ${totalTabs >= 4 ? "xl:grid-cols-4" : ""} ${totalTabs >= 5 ? "2xl:grid-cols-5" : ""}`}>
           {podeVisualizarAprovacoes && (
             <>
               <TabsTrigger value="descontos">Descontos</TabsTrigger>
@@ -320,6 +329,11 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
           {podeVisualizarConciliacao && (
             <TabsTrigger value="conciliacao" data-action="visualizar-conciliacao-financeira">
               Conciliação financeira
+            </TabsTrigger>
+          )}
+          {podeVisualizarConciliacaoFiscal && (
+            <TabsTrigger value="conciliacao-fiscal" data-action="visualizar-conciliacao-fiscal">
+              Conciliação fiscal
             </TabsTrigger>
           )}
         </TabsList>
@@ -616,6 +630,19 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
               user={user}
               canReview={podeRevisarConciliacao}
               canApprove={podeAprovarConciliacao}
+            />
+          </TabsContent>
+        )}
+        {podeVisualizarConciliacaoFiscal && (
+          <TabsContent value="conciliacao-fiscal">
+            <ConciliacaoFinanceiraAprovacoesTab
+              groupId={groupId}
+              empresaId={empresaContextoId}
+              contexto={contexto}
+              user={user}
+              canReview={podeRevisarConciliacaoFiscal}
+              canApprove={podeAprovarConciliacaoFiscal}
+              domain="fiscal"
             />
           </TabsContent>
         )}

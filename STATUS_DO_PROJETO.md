@@ -8045,3 +8045,18 @@ Checklist inicial:
 - Proximo passo somente com autorizacao: preparar dataset/ambiente e executar E2E integrado com o Site CPA.
 - Validacao final: 186/186 testes ERP-SITE e 438/438 testes globais aprovados; ESLint global, `audit:baseline`, build completo e `git diff --check` aprovados.
 - Typecheck global permaneceu no baseline historico de 2.238 diagnosticos, sem aumento ou supressao. Avisos conhecidos de bundle, Browserslist e imports mistos permanecem P2.
+
+## 2026-09-14 - Gate 18: conciliacao fiscal integrada a Central
+
+- Objetivo: disponibilizar a revisao do staging fiscal na Central de Aprovacoes existente, mantendo os documentos historicos bloqueados e sem criar tela, rota, entidade ou fluxo paralelo.
+- Reuso: `CentralAprovacoesManager`, `ConciliacaoFinanceiraAprovacoesTab` e `conciliacaoFinanceiraUiPolicy` foram parametrizados para os dominios Financeiro e Fiscal; o fluxo financeiro anterior foi preservado.
+- RBAC: a ramificacao fiscal somente aparece para `Fiscal.Migracao.conciliar` ou `Fiscal.Migracao.aprovar`; cada botao e acao sensivel recebe a permissao fiscal correspondente. Permissoes financeiras nao liberam a aba fiscal.
+- Multiempresa: consultas exigem visao de Empresa, `group_id`, `empresa_id` e `scope_type=empresa`; a chave de cache e o filtro defensivo incluem tambem o tipo de conciliacao, impedindo mistura entre empresas e entre os dominios Financeiro/Fiscal.
+- Workflow: a revisao fiscal oferece somente `PRESERVAR_SEM_VINCULO_PEDIDO` e `AGUARDAR_VINCULO_PEDIDO`, preserva evidencia privada, segregacao dos tres usuarios e confirmacao humana final.
+- Seguranca: a aprovacao continua classificando apenas o envelope em staging; nenhuma `NotaFiscal`, titulo ou outro registro operacional e criado, promovido ou liquidado.
+- Validacao focada: 29/29 testes aprovados, incluindo cache isolado, Empresa A/B, dominio fiscal, decisoes fiscais, segregacao e permanencia no staging.
+- Validacao global: 440/440 testes aprovados; ESLint, `audit:baseline`, build e `git diff --check` aprovados.
+- Typecheck: baseline historico preservado em 2.238 diagnosticos; quatro diagnosticos novos de anotacao JSDoc foram corrigidos e nao restou aumento do lote.
+- Infraestrutura legada: `MSSQL$ERPZLEGACY` e `SQLAgent$ERPZLEGACY` terminaram `Stopped`/`Manual`; `SQLBrowser` terminou `Stopped`/`Disabled`. Nenhum banco, backup, HD externo ou dado fiscal real foi acessado.
+- Commit de implementacao: `PENDENTE_COMMIT_GATE18_CENTRAL_FISCAL`.
+- Proximo passo obrigatorio: homologar reabertura e persistencia da conciliacao fiscal com dados sinteticos, troca de sessao entre registrante/revisor/aprovador e bloqueio visual de usuario apenas financeiro. Os tres documentos reais permanecem bloqueados.

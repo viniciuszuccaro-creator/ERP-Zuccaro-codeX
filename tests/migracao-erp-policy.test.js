@@ -766,6 +766,10 @@ test('central existente integra conciliacao financeira sem promover titulo', asy
   const localClient = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
 
   assert.match(central, /ConciliacaoFinanceiraAprovacoesTab/);
+  assert.match(central, /Fiscal\.Migracao\.conciliar/);
+  assert.match(central, /Fiscal\.Migracao\.aprovar/);
+  assert.match(central, /value="conciliacao-fiscal"/);
+  assert.match(central, /domain="fiscal"/);
   assert.match(central, /Financeiro(?:"\s*,\s*"Migracao|\.Migracao\.conciliar)/);
   assert.match(tab, /resolveConciliacaoFinanceiraAccess/);
   assert.match(tab, /filterConciliacoesByScope\(response\?\.data/);
@@ -780,8 +784,12 @@ test('central existente integra conciliacao financeira sem promover titulo', asy
   assert.match(tab, /reviewManualReconciliation/);
   assert.match(tab, /approveManualReconciliation/);
   assert.match(tab, /confirmacao_humana/);
-  assert.match(tab, /Financeiro\.Migracao\.conciliar/);
-  assert.match(tab, /Financeiro\.Migracao\.aprovar/);
+  assert.match(tab, /permissionModule: "Financeiro"/);
+  assert.match(tab, /const reconcilePermission = `\$\{config\.permissionModule\}\.Migracao\.conciliar`/);
+  assert.match(tab, /const approvePermission = `\$\{config\.permissionModule\}\.Migracao\.aprovar`/);
+  assert.match(tab, /FISCAL_MANUAL_RECONCILIATION_TYPE/);
+  assert.match(tab, /PRESERVAR_SEM_VINCULO_PEDIDO/);
+  assert.match(tab, /AGUARDAR_VINCULO_PEDIDO/);
   assert.doesNotMatch(tab, /entities\.(ContaPagar|ContaReceber)\.(create|update)/);
 
   assert.match(localClient, /invokeLocalManualReconciliation/);

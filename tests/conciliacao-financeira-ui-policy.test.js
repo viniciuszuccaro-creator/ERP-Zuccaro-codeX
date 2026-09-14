@@ -11,6 +11,7 @@ import {
   assertConciliacaoEvidenceFile,
   buildConciliacaoFinanceiraQueryKey,
   calculateConciliacaoEvidenceSha256,
+  FISCAL_MANUAL_RECONCILIATION_TYPE,
   filterConciliacoesByScope,
   resolveConciliacaoFinanceiraAccess,
   resolveConciliacaoRowActions,
@@ -28,12 +29,12 @@ const privateEvidence = (id = "ev-1", overrides = {}) => ({
   armazenamento: "privado",
   ...overrides,
 });
-const makeRequest = (empresaId, legacyCode = "titulo-1") => {
+const makeRequest = (empresaId, legacyCode = "titulo-1", entidade = "ContaPagar") => {
   const staging = buildPendingManualReconciliation({
     group_id: GROUP_ID,
     empresa_id: empresaId,
     codigo_legado: legacyCode,
-  }, { registradoPor: "registrante", registradoEm: "2026-09-13T12:00:00.000Z" });
+  }, { entidade, registradoPor: "registrante", registradoEm: "2026-09-13T12:00:00.000Z" });
   return {
     id: `${empresaId}-${legacyCode}`,
     ...buildManualReconciliationApprovalRequest(staging, {
@@ -90,6 +91,11 @@ test("chaves de cache isolam Grupo CPA, CPA Ferro e Aco e 3Z LTDA", () => {
   assert.notDeepEqual(groupKey, cpaKey);
   assert.notDeepEqual(cpaKey, z3Key);
   assert.deepEqual(cpaKey.slice(-3), [GROUP_ID, "empresa-cpa", "empresa"]);
+  const fiscalKey = buildConciliacaoFinanceiraQueryKey({
+    userId: "revisor", groupId: GROUP_ID, empresaId: "empresa-cpa", contexto: "empresa",
+    tipoSolicitacao: FISCAL_MANUAL_RECONCILIATION_TYPE,
+  });
+  assert.notDeepEqual(cpaKey, fiscalKey);
 });
 
 test("filtro defensivo impede mistura entre CPA Ferro e Aco e 3Z LTDA", () => {
@@ -109,6 +115,36 @@ test("filtro defensivo impede mistura entre CPA Ferro e Aco e 3Z LTDA", () => {
     [z3.id],
   );
   assert.deepEqual(filterConciliacoesByScope([cpa, z3], { groupId: GROUP_ID }), []);
+  const fiscal = makeRequest("empresa-cpa", "nf-1", "NotaFiscal");
+  assert.deepEqual(filterConciliacoesByScope([cpa, fiscal], {
+    groupId: GROUP_ID,
+    empresaId: "empresa-cpa",
+    tipoSolicitacao: FISCAL_MANUAL_RECONCILIATION_TYPE,
+  }).map((record) => record.id), [fiscal.id]);
+});
+
+test("ramificacao fiscal usa decisoes e segregacao proprias sem promover NotaFiscal", () => {
+  const initial = makeRequest("empresa-cpa", "nf-2", "NotaFiscal");
+  const withEvidence = applyManualWorkflowTransition(initial, "attachManualReconciliationEvidence", {
+    evidencia: privateEvidence("ev-fiscal"),
+  }, { id: "registrante" }, "2026-09-14T13:00:00.000Z").record;
+  assert.equal(resolveConciliacaoRowActions({
+    record: withEvidence, userId: "revisor-fiscal", canReview: true,
+  }).canPerformReview, true);
+  const reviewed = applyManualWorkflowTransition(withEvidence, "reviewManualReconciliation", {
+    decisao: "PRESERVAR_SEM_VINCULO_PEDIDO",
+    justificativa: "Documento fiscal sintetico sem referencia de pedido.",
+  }, { id: "revisor-fiscal" }, "2026-09-14T14:00:00.000Z").record;
+  assert.equal(resolveConciliacaoRowActions({
+    record: reviewed, userId: "aprovador-fiscal", canApprove: true,
+  }).canPerformApproval, true);
+  const approved = applyManualWorkflowTransition(reviewed, "approveManualReconciliation", {
+    decisao: "PRESERVAR_SEM_VINCULO_PEDIDO",
+    justificativa: "Revisao fiscal independente confirmada.",
+    confirmacao_humana: true,
+  }, { id: "aprovador-fiscal" }, "2026-09-14T15:00:00.000Z").record;
+  assert.equal(approved.dados_propostos.envelope_staging.destino_migracao, "staging");
+  assert.equal(approved.dados_propostos.envelope_staging.confirmado, false);
 });
 
 test("acoes visuais respeitam tres usuarios e acompanham o workflow do backend", () => {

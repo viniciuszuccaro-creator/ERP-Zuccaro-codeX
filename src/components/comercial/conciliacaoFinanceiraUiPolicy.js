@@ -1,4 +1,5 @@
-const MANUAL_RECONCILIATION_TYPE = "conciliacao_migracao_financeira";
+export const MANUAL_RECONCILIATION_TYPE = "conciliacao_migracao_financeira";
+export const FISCAL_MANUAL_RECONCILIATION_TYPE = "conciliacao_migracao_fiscal";
 
 export const MAX_CONCILIACAO_EVIDENCE_BYTES = 10 * 1024 * 1024;
 export const ALLOWED_CONCILIACAO_EVIDENCE_TYPES = new Set([
@@ -46,10 +47,11 @@ export const calculateConciliacaoEvidenceSha256 = async (file) => {
 };
 
 /**
- * @param {{ userId?: unknown, groupId?: unknown, empresaId?: unknown, contexto?: unknown }} scope
+ * @param {{ userId?: unknown, groupId?: unknown, empresaId?: unknown, contexto?: unknown, tipoSolicitacao?: unknown }} scope
  */
-export const buildConciliacaoFinanceiraQueryKey = ({ userId, groupId, empresaId, contexto }) => [
-  "conciliacoes-financeiras-staging",
+export const buildConciliacaoFinanceiraQueryKey = ({ userId, groupId, empresaId, contexto, tipoSolicitacao = MANUAL_RECONCILIATION_TYPE }) => [
+  "conciliacoes-manuais-staging",
+  textId(tipoSolicitacao) || MANUAL_RECONCILIATION_TYPE,
   textId(userId) || null,
   textId(groupId) || null,
   textId(empresaId) || null,
@@ -91,7 +93,9 @@ export const getConciliacaoReference = (record = {}) => textId(record.referencia
 
 /** @param {Record<string, unknown>} record */
 export const getConciliacaoEntityLabel = (record = {}) => (
-  textId(record.entidade_alvo) === "ContaPagar" ? "Conta a pagar" : "Conta a receber"
+  textId(record.entidade_alvo) === "ContaPagar"
+    ? "Conta a pagar"
+    : textId(record.entidade_alvo) === "NotaFiscal" ? "Nota fiscal" : "Conta a receber"
 );
 
 /** @param {Record<string, unknown>} record */
@@ -113,7 +117,10 @@ export const getConciliacaoEvidences = (record = {}) => {
 
 /** @param {Record<string, unknown>} record */
 export const getConciliacaoDecision = (record = {}) => {
-  const decision = getConciliacaoEnvelope(record).decisao_financeira;
+  const envelope = getConciliacaoEnvelope(record);
+  const decision = textId(record.tipo_solicitacao) === FISCAL_MANUAL_RECONCILIATION_TYPE
+    ? envelope.decisao_fiscal
+    : envelope.decisao_financeira;
   if (!decision || typeof decision !== "object" || Array.isArray(decision)) return "";
   return textId(/** @type {Record<string, unknown>} */ (decision).classificacao);
 };
@@ -128,18 +135,21 @@ export const getConciliacaoOriginUserId = (record = {}) => {
 /** @param {Record<string, unknown>} record */
 export const getConciliacaoReviewerUserId = (record = {}) => {
   const approvals = getConciliacaoEnvelope(record).aprovacoes_conciliacao;
+  const reviewStage = textId(record.tipo_solicitacao) === FISCAL_MANUAL_RECONCILIATION_TYPE
+    ? "revisao_fiscal"
+    : "revisao_financeira";
   const review = Array.isArray(approvals)
-    ? approvals.find((item) => item?.etapa === "revisao_financeira")
+    ? approvals.find((item) => item?.etapa === reviewStage)
     : null;
   return textId(review?.usuario_id) || null;
 };
 
 /**
- * Mantem apenas registros financeiros do contexto explicitamente selecionado.
+ * Mantem apenas registros do dominio e contexto explicitamente selecionados.
  * @param {Array<Record<string, unknown>>} records
- * @param {{ groupId?: unknown, empresaId?: unknown }} scope
+ * @param {{ groupId?: unknown, empresaId?: unknown, tipoSolicitacao?: unknown }} scope
  */
-export const filterConciliacoesByScope = (records, { groupId, empresaId }) => {
+export const filterConciliacoesByScope = (records, { groupId, empresaId, tipoSolicitacao = MANUAL_RECONCILIATION_TYPE }) => {
   const expectedGroupId = textId(groupId);
   const expectedEmpresaId = textId(empresaId);
   if (!expectedGroupId || !expectedEmpresaId) return [];
@@ -147,7 +157,7 @@ export const filterConciliacoesByScope = (records, { groupId, empresaId }) => {
     textId(record.group_id) === expectedGroupId
     && textId(record.empresa_id) === expectedEmpresaId
     && textId(record.scope_type) === "empresa"
-    && textId(record.tipo_solicitacao) === MANUAL_RECONCILIATION_TYPE
+    && textId(record.tipo_solicitacao) === textId(tipoSolicitacao)
   ));
 };
 

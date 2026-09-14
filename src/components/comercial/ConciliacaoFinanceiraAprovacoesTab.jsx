@@ -18,6 +18,7 @@ import {
   assertConciliacaoEvidenceFile,
   buildConciliacaoFinanceiraQueryKey,
   calculateConciliacaoEvidenceSha256,
+  FISCAL_MANUAL_RECONCILIATION_TYPE,
   filterConciliacoesByScope,
   getConciliacaoDecision,
   getConciliacaoEntityLabel,
@@ -37,6 +38,33 @@ const STAGE_LABELS = {
   aprovada_aguardando_promocao_manual: "Aprovada no staging",
 };
 
+const DOMAIN_CONFIG = {
+  financeiro: {
+    tipoSolicitacao: "conciliacao_migracao_financeira",
+    domainLabel: "financeira",
+    pluralLabel: "financeiras",
+    permissionModule: "Financeiro",
+    title: "Pendências financeiras da empresa",
+    emptyLabel: "Nenhuma conciliação financeira neste contexto.",
+    decisions: [
+      { value: "PAGO", label: "Pago" },
+      { value: "ABERTO", label: "Em aberto" },
+    ],
+  },
+  fiscal: {
+    tipoSolicitacao: FISCAL_MANUAL_RECONCILIATION_TYPE,
+    domainLabel: "fiscal",
+    pluralLabel: "fiscais",
+    permissionModule: "Fiscal",
+    title: "Pendências fiscais da empresa",
+    emptyLabel: "Nenhuma conciliação fiscal neste contexto.",
+    decisions: [
+      { value: "PRESERVAR_SEM_VINCULO_PEDIDO", label: "Preservar sem vínculo de pedido" },
+      { value: "AGUARDAR_VINCULO_PEDIDO", label: "Aguardar vínculo de pedido" },
+    ],
+  },
+};
+
 export default function ConciliacaoFinanceiraAprovacoesTab({
   groupId,
   empresaId,
@@ -44,7 +72,11 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
   user,
   canReview,
   canApprove,
+  domain = "financeiro",
 }) {
+  const config = DOMAIN_CONFIG[domain] || DOMAIN_CONFIG.financeiro;
+  const reconcilePermission = `${config.permissionModule}.Migracao.conciliar`;
+  const approvePermission = `${config.permissionModule}.Migracao.aprovar`;
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [dialogState, setDialogState] = useState(null);
@@ -65,6 +97,7 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
     groupId,
     empresaId,
     contexto,
+    tipoSolicitacao: config.tipoSolicitacao,
   });
   const { data: requests = [], isLoading, error } = useQuery({
     queryKey,
@@ -74,8 +107,9 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
         group_id: groupId,
         empresa_id: empresaId,
         scope_type: "empresa",
+        tipo_solicitacao: config.tipoSolicitacao,
       });
-      return filterConciliacoesByScope(response?.data, { groupId, empresaId });
+      return filterConciliacoesByScope(response?.data, { groupId, empresaId, tipoSolicitacao: config.tipoSolicitacao });
     },
     enabled: validContext && canView,
     retry: 1,
@@ -125,7 +159,7 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
           descricao: justification,
         };
       } else {
-        if (!decision) throw new Error("Selecione a decisão financeira.");
+        if (!decision) throw new Error(`Selecione a decisão ${config.domainLabel}.`);
         if (!justification.trim()) throw new Error("Informe a justificativa.");
         payload.decisao = decision;
         payload.justificativa = justification.trim();
@@ -176,7 +210,7 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
       <Alert className="mt-4 border-amber-300 bg-amber-50">
         <AlertCircle className="h-4 w-4 text-amber-700" />
         <AlertDescription className="text-amber-900">
-          Selecione uma Empresa para revisar conciliações financeiras. A visão de Grupo não permite decidir por uma empresa.
+          Selecione uma Empresa para revisar conciliações {config.pluralLabel}. A visão de Grupo não permite decidir por uma empresa.
         </AlertDescription>
       </Alert>
     );
@@ -186,7 +220,7 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
     return (
       <Alert variant="destructive" className="mt-4">
         <ShieldCheck className="h-4 w-4" />
-        <AlertDescription>Seu perfil não possui permissão para visualizar a conciliação financeira.</AlertDescription>
+        <AlertDescription>Seu perfil não possui permissão para visualizar a conciliação {config.domainLabel}.</AlertDescription>
       </Alert>
     );
   }
@@ -211,7 +245,7 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
       <Alert className="border-slate-300 bg-slate-50">
         <ShieldCheck className="h-4 w-4 text-slate-700" />
         <AlertDescription>
-          A aprovação classifica a pendência, mas mantém o registro bloqueado no staging. Nenhum título é criado ou baixado nesta etapa.
+          A aprovação classifica a pendência, mas mantém o registro bloqueado no staging. Nenhum registro operacional é criado ou promovido nesta etapa.
         </AlertDescription>
       </Alert>
 
@@ -219,7 +253,7 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
         <CardHeader className="border-b bg-slate-50">
           <CardTitle className="flex items-center gap-2 text-base">
             <FileCheck2 className="h-5 w-5" />
-            Pendências financeiras da empresa
+            {config.title}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -262,7 +296,7 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
                               aria-label="Abrir evidência mais recente"
                               onClick={() => evidenceAccessMutation.mutate({ record, evidenceId: latestPrivateEvidence.id })}
                               disabled={evidenceAccessMutation.isPending}
-                              data-permission={canReview ? "Financeiro.Migracao.conciliar" : "Financeiro.Migracao.aprovar"}
+                              data-permission={canReview ? reconcilePermission : approvePermission}
                               data-action="conciliacao-abrir-evidencia"
                               data-sensitive="true"
                             >
@@ -279,7 +313,7 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
                               size="sm"
                               variant="outline"
                               onClick={() => setDialogState({ record, action: "attachManualReconciliationEvidence" })}
-                              data-permission="Financeiro.Migracao.conciliar"
+                              data-permission={reconcilePermission}
                               data-action="conciliacao-anexar-evidencia"
                               data-sensitive="true"
                             >
@@ -291,7 +325,7 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
                             <Button
                               size="sm"
                               onClick={() => setDialogState({ record, action: "reviewManualReconciliation" })}
-                              data-permission="Financeiro.Migracao.conciliar"
+                              data-permission={reconcilePermission}
                               data-action="conciliacao-revisar"
                               data-sensitive="true"
                             >
@@ -302,7 +336,7 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
                             <Button
                               size="sm"
                               onClick={() => setDialogState({ record, action: "approveManualReconciliation" })}
-                              data-permission="Financeiro.Migracao.aprovar"
+                              data-permission={approvePermission}
                               data-action="conciliacao-aprovar"
                               data-sensitive="true"
                             >
@@ -326,7 +360,7 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
           )}
           {!isLoading && error && <div className="p-6 text-center text-red-700">Não foi possível consultar o staging.</div>}
           {!isLoading && !error && requests.length === 0 && (
-            <div className="p-10 text-center text-slate-500">Nenhuma conciliação financeira neste contexto.</div>
+            <div className="p-10 text-center text-slate-500">{config.emptyLabel}</div>
           )}
         </CardContent>
       </Card>
@@ -336,21 +370,21 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
           <DialogHeader>
             <DialogTitle>
               {dialogState?.action === "attachManualReconciliationEvidence" && "Anexar evidência"}
-              {dialogState?.action === "reviewManualReconciliation" && "Revisão financeira"}
+              {dialogState?.action === "reviewManualReconciliation" && `Revisão ${config.domainLabel}`}
               {dialogState?.action === "approveManualReconciliation" && "Aprovação final"}
             </DialogTitle>
           </DialogHeader>
           {dialogState?.action === "attachManualReconciliationEvidence" ? (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="evidencia-financeira">Arquivo comprobatório</Label>
+                <Label htmlFor={`evidencia-${domain}`}>Arquivo comprobatório</Label>
                 <input
-                  id="evidencia-financeira"
+                  id={`evidencia-${domain}`}
                   type="file"
                   accept=".pdf,.jpg,.jpeg,.png,.webp"
                   onChange={(event) => setEvidenceFile(event.target.files?.[0] || null)}
                   className="block w-full text-sm"
-                  data-permission="Financeiro.Migracao.conciliar"
+                  data-permission={reconcilePermission}
                 />
               </div>
               <div className="space-y-2">
@@ -361,12 +395,13 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
           ) : (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Decisão financeira</Label>
+                <Label>Decisão {config.domainLabel}</Label>
                 <Select value={decision} onValueChange={setDecision}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="PAGO">Pago</SelectItem>
-                    <SelectItem value="ABERTO">Em aberto</SelectItem>
+                    {config.decisions.map((item) => (
+                      <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -380,11 +415,11 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
                     id="confirmar-conciliacao"
                     checked={humanConfirmed}
                     onCheckedChange={(checked) => setHumanConfirmed(checked === true)}
-                    data-permission="Financeiro.Migracao.aprovar"
+                    data-permission={approvePermission}
                     data-action="conciliacao-confirmacao-humana"
                   />
                   <Label htmlFor="confirmar-conciliacao" className="leading-5">
-                    Confirmo que revisei a evidência e que esta decisão não promove nem liquida o título.
+                    Confirmo que revisei a evidência e que esta decisão não promove nenhum registro operacional.
                   </Label>
                 </div>
               )}
@@ -395,7 +430,7 @@ export default function ConciliacaoFinanceiraAprovacoesTab({
             <Button
               onClick={() => workflowMutation.mutate()}
               disabled={workflowMutation.isPending || (dialogState?.action === "approveManualReconciliation" && !humanConfirmed)}
-              data-permission={dialogState?.action === "approveManualReconciliation" ? "Financeiro.Migracao.aprovar" : "Financeiro.Migracao.conciliar"}
+              data-permission={dialogState?.action === "approveManualReconciliation" ? approvePermission : reconcilePermission}
               data-action="conciliacao-confirmar-transicao"
               data-sensitive="true"
             >
