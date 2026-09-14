@@ -8122,5 +8122,5 @@ Checklist inicial:
 - Integridade: a ficha atual possui SHA-256 `BB9B1242218AEE0D6E40663B4C73B3CA3EDEAE3997792072C05711CDFB5C05DE`, ACL protegida e tres decisoes identicas validadas.
 - Situacao: `BLOCKED_DISTINCT_ACTORS`; a decisao de negocio esta registrada, mas a segregacao de funcoes ainda impede homologacao, staging e promocao.
 - Escopo do repositorio: mudanca exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
-- Commit de implementacao: pendente neste registro.
+- Commit de implementacao: `d9659f86` (`Registra decisao fiscal conservadora`).
 - Proximo passo dependente de usuario: informar os nomes do registrante, revisor e aprovador, obrigatoriamente tres pessoas distintas. Depois disso, validar as identidades e concluir somente a homologacao da ficha, ainda sem promover `NotaFiscal` automaticamente.
