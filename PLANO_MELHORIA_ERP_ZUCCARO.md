@@ -1007,3 +1007,18 @@ Lote concluido em 2026-09-14 no Layout existente, sem criar pagina, rota, entida
 
 Proxima frente P0: refatorar e tipar `src/components/ui/sidebar.jsx`, componente compartilhado com 627 linhas e diagnosticos de contratos de propriedades, em lote separado antes de remover os aliases locais de compatibilidade do shell.
 
+### Refatoracao e contratos - Sidebar compartilhada
+
+Lote concluido em 2026-09-14 no componente de Sidebar existente, sem criar tela, rota, entidade, permissao ou comportamento paralelo.
+
+- `sidebar.jsx` caiu de 627 para 457 linhas; contexto e familia de itens de menu foram extraidos para auxiliares internos de 26 e 190 linhas porque nao havia equivalente reutilizavel.
+- A API publica e os mesmos exports foram preservados, incluindo Provider, trigger, rail, grupos, menus, submenus, tooltip e hook `useSidebar`.
+- Props, refs, variantes, tamanhos, estado controlado e propriedades polimorficas receberam contratos React/DOM explicitos, sem `any`, `ts-ignore` ou desligamento de `checkJs`.
+- Estado aberto/fechado, cookie, atalho de teclado, comportamento mobile/desktop e recolhimento continuam no fluxo original.
+- `AppLayoutShell.jsx` removeu os aliases `ComponentType<any>` e passou a consumir diretamente os componentes tipados.
+- Os 49 diagnosticos diretos passaram para zero; o passivo global caiu de 1.705 para 1.656, reducao liquida exata de 49.
+- Testes focados passaram 20/20 e a suite completa passou 466/466; auditoria baseline, lint, build e verificacao de diff tambem passaram.
+- Nenhum dado real, backend remoto, banco legado ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: tratar `src/api/localBase44Client.js` em lote transversal proprio, iniciando por inventario de responsabilidades e decomposicao segura das 2.657 linhas antes de corrigir seus 53 diagnosticos.
+

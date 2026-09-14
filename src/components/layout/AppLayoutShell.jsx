@@ -43,20 +43,6 @@ const GROUP_LABELS = {
   publico: 'Público',
 };
 
-// O componente legado de Sidebar ainda nao declara props JSDoc; estes aliases preservam sua API publica.
-const TypedSidebarProvider = /** @type {React.ComponentType<any>} */ (SidebarProvider);
-const TypedSidebar = /** @type {React.ComponentType<any>} */ (Sidebar);
-const TypedSidebarHeader = /** @type {React.ComponentType<any>} */ (SidebarHeader);
-const TypedSidebarContent = /** @type {React.ComponentType<any>} */ (SidebarContent);
-const TypedSidebarGroup = /** @type {React.ComponentType<any>} */ (SidebarGroup);
-const TypedSidebarGroupLabel = /** @type {React.ComponentType<any>} */ (SidebarGroupLabel);
-const TypedSidebarGroupContent = /** @type {React.ComponentType<any>} */ (SidebarGroupContent);
-const TypedSidebarMenu = /** @type {React.ComponentType<any>} */ (SidebarMenu);
-const TypedSidebarMenuItem = /** @type {React.ComponentType<any>} */ (SidebarMenuItem);
-const TypedSidebarMenuButton = /** @type {React.ComponentType<any>} */ (SidebarMenuButton);
-const TypedSidebarFooter = /** @type {React.ComponentType<any>} */ (SidebarFooter);
-const TypedSidebarTrigger = /** @type {React.ComponentType<any>} */ (SidebarTrigger);
-
 /**
  * Shell visual privado do Layout existente. Nao possui consultas nem regras de autorizacao.
  * @param {{
@@ -95,10 +81,10 @@ export default function AppLayoutShell({
   onPrefetch,
 }) {
   return (
-    <TypedSidebarProvider>
+    <SidebarProvider>
       <div className="min-h-screen h-full flex w-full bg-gradient-to-br from-slate-50 to-blue-50">
-        <TypedSidebar className="border-r border-slate-200 bg-white/80 backdrop-blur-sm">
-          <TypedSidebarHeader className="border-b border-slate-200 p-6">
+        <Sidebar className="border-r border-slate-200 bg-white/80 backdrop-blur-sm">
+          <SidebarHeader className="border-b border-slate-200 p-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
                 <FileText className="w-6 h-6 text-white" />
@@ -108,23 +94,23 @@ export default function AppLayoutShell({
                 <p className="text-xs text-slate-500">V21.5 • Sistema Completo</p>
               </div>
             </div>
-          </TypedSidebarHeader>
+          </SidebarHeader>
 
-          <TypedSidebarContent className="p-3">
+          <SidebarContent className="p-3">
             {Object.entries(groupedItems).map(([groupName, items]) => {
               if (items.length === 0) return null;
               return (
-                <TypedSidebarGroup key={groupName}>
-                  <TypedSidebarGroupLabel className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 py-2 mb-1">
+                <SidebarGroup key={groupName}>
+                  <SidebarGroupLabel className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 py-2 mb-1">
                     {GROUP_LABELS[groupName] || groupName}
-                  </TypedSidebarGroupLabel>
-                  <TypedSidebarGroupContent>
-                    <TypedSidebarMenu>
+                  </SidebarGroupLabel>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
                       {items.map((item) => {
                         const isActive = currentPath === item.url;
                         return (
-                          <TypedSidebarMenuItem key={item.title}>
-                            <TypedSidebarMenuButton
+                          <SidebarMenuItem key={item.title}>
+                            <SidebarMenuButton
                               asChild
                               className={`transition-all duration-200 rounded-lg mb-1 ${isActive
                                 ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-200'
@@ -134,18 +120,18 @@ export default function AppLayoutShell({
                                 <item.icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-500'}`} />
                                 <span className="font-medium">{item.title}</span>
                               </Link>
-                            </TypedSidebarMenuButton>
-                          </TypedSidebarMenuItem>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
                         );
                       })}
-                    </TypedSidebarMenu>
-                  </TypedSidebarGroupContent>
-                </TypedSidebarGroup>
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
               );
             })}
-          </TypedSidebarContent>
+          </SidebarContent>
 
-          <TypedSidebarFooter className="border-t border-slate-200 p-4 bg-slate-50/50">
+          <SidebarFooter className="border-t border-slate-200 p-4 bg-slate-50/50">
             <div className="flex items-center justify-between">
               <Link to={createPageUrl('ConfiguracoesUsuario')} className="flex items-center gap-3 hover:bg-slate-100 p-2 rounded-lg transition-colors flex-1">
                 <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
@@ -160,17 +146,17 @@ export default function AppLayoutShell({
                 <LogOut className="w-4 h-4 text-slate-500" />
               </button>
             </div>
-          </TypedSidebarFooter>
-        </TypedSidebar>
+          </SidebarFooter>
+        </Sidebar>
 
         <main className="flex-1 min-w-0 flex flex-col">
           <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 px-4 md:px-6 py-4 sticky top-0 z-10">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-4 flex-1 min-w-0">
                 <div className="lg:hidden">
-                  <TypedSidebarTrigger className="hover:bg-slate-100 p-2 rounded-lg transition-colors">
+                  <SidebarTrigger className="hover:bg-slate-100 p-2 rounded-lg transition-colors">
                     <Menu className="w-5 h-5" />
-                  </TypedSidebarTrigger>
+                  </SidebarTrigger>
                 </div>
                 <div className="hidden lg:block flex-1 max-w-md"><MiniMapaNavegacao /></div>
               </div>
@@ -220,7 +206,7 @@ export default function AppLayoutShell({
         <WindowRenderer />
         <MinimizedWindowsBar />
       </div>
-    </TypedSidebarProvider>
+    </SidebarProvider>
   );
 }
 

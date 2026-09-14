@@ -112,3 +112,19 @@ test('layout audits React Query v5 cache failures without exposing request paylo
   assert.match(shell, /section=\{null\}/);
   assert.match(shell, /className="min-h-screen h-full flex w-full/);
 });
+
+test('sidebar keeps its public controls typed after internal decomposition', async () => {
+  const sidebar = await readFile(new URL('../src/components/ui/sidebar.jsx', import.meta.url), 'utf8');
+  const context = await readFile(new URL('../src/components/ui/sidebar-context.jsx', import.meta.url), 'utf8');
+  const menu = await readFile(new URL('../src/components/ui/sidebar-menu.jsx', import.meta.url), 'utf8');
+  const shell = await readFile(new URL('../src/components/layout/AppLayoutShell.jsx', import.meta.url), 'utf8');
+
+  assert.match(sidebar, /SIDEBAR_COOKIE_NAME/);
+  assert.match(sidebar, /SIDEBAR_KEYBOARD_SHORTCUT/);
+  assert.match(sidebar, /SidebarMenuButton,/);
+  assert.match(context, /useSidebar must be used within a SidebarProvider/);
+  assert.match(menu, /sidebarMenuButtonVariants/);
+  assert.match(menu, /TooltipContent/);
+  assert.match(shell, /<SidebarProvider>/);
+  assert.doesNotMatch(shell, /ComponentType<any>/);
+});

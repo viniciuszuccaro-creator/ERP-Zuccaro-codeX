@@ -8515,3 +8515,19 @@ Checklist inicial:
 - Dados/infraestrutura: nenhuma consulta remota foi executada e nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou modificado.
 - Commit de implementacao: `8aaea566` (`Refatora shell e auditoria global do layout`).
 - Proximo passo P0: refatorar e tipar `src/components/ui/sidebar.jsx`, componente compartilhado com 627 linhas e contratos de propriedades incompletos; `localBase44Client.js` permanece reservado para lote transversal proprio.
+
+## 2026-09-14 - Refatoracao e contratos da Sidebar compartilhada
+
+- Objetivo: decompor a Sidebar compartilhada, eliminar seus diagnosticos de `checkJs` e restabelecer contratos publicos seguros para o shell principal.
+- Causa raiz: `sidebar.jsx` reunia contexto, estrutura responsiva e toda a familia de menus em 627 linhas; os `forwardRef` inferiam propriedades como objetos vazios e obrigavam o consumidor a usar aliases `ComponentType<any>`.
+- Arquivos alterados: `src/components/ui/sidebar.jsx`, `src/components/ui/sidebar-context.jsx`, `src/components/ui/sidebar-menu.jsx`, `src/components/layout/AppLayoutShell.jsx`, `tests/sanitize-audit-policy.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
+- Refatoracao: contexto e hook foram extraidos para auxiliar interno de 26 linhas; itens, botoes e submenus foram extraidos para auxiliar interno de 190 linhas. Esses arquivos existem somente para decompor o componente original e nao criam tela, rota, modulo ou funcionalidade paralela.
+- Tamanho: o arquivo publico caiu de 627 para 457 linhas. Todos os exports originais foram preservados pelo mesmo ponto de entrada `sidebar.jsx`.
+- Contratos: Provider, Sidebar, trigger, rail, input, grupos, menus, variantes, tooltip, refs e propriedades polimorficas usam tipos React/DOM explicitos, sem `any`, `ts-ignore` ou desativacao de verificacao.
+- Compatibilidade: cookie, estado controlado, atalho Ctrl/Cmd+B, mobile Sheet, desktop recolhivel, tooltip e classes visuais continuam com o comportamento existente.
+- Multiempresa/RBAC/seguranca: o componente permanece estritamente visual; nao consulta dados nem toma decisoes de acesso. `AppLayoutShell` continua protegido pelo RBAC/contexto existente e removeu os aliases genericos de compatibilidade.
+- Testes: focados passaram 20/20 e a suite completa passou 466/466. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; build manteve somente os avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
+- Typecheck: os arquivos do lote passaram de 49 diagnosticos para zero; o passivo global caiu de 1.705 para 1.656, reducao liquida exata de 49, e continua aberto sem ser mascarado.
+- Dados/infraestrutura: nenhuma consulta remota foi executada e nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou modificado.
+- Commit de implementacao: `PENDENTE_HASH_IMPLEMENTACAO_SIDEBAR` (`Refatora contratos da sidebar compartilhada`).
+- Proximo passo P0: tratar `src/api/localBase44Client.js` em lote transversal proprio, com inventario e decomposicao segura das 2.657 linhas antes de corrigir seus 53 diagnosticos.
