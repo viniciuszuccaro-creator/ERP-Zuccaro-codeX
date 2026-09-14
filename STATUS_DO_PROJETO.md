@@ -8079,3 +8079,19 @@ Checklist inicial:
 - Homologacao visual: o bloqueio de abas foi comprovado por politica automatizada consumida pela UI; validacao humana no navegador com perfis reais ainda nao foi executada.
 - Commit de implementacao: `4b700461` (`Homologa persistencia da conciliacao fiscal`).
 - Proximo passo obrigatorio: preparar um dry-run local dos tres documentos fiscais reais ja identificados, usando somente dados minimos e mascarados para construir envelopes candidatos, sem persistir no ERP, sem promover `NotaFiscal` e mantendo toda divergencia em quarentena no HD.
+
+## 2026-09-14 - Gate 18: dry-run fiscal real em quarentena
+
+- Objetivo: reconstruir os tres documentos fiscais reais ja conciliados e preparar somente envelopes candidatos mascarados, sem gravacao no ERP e sem promocao de `NotaFiscal`.
+- Causa do bloqueio: os documentos possuem dez itens e cobertura exata de estoque, mas cinco linhas fiscais nao carregam referencia de pedido/item e a soma fiscal sobreposta impede preenchimento automatico seguro.
+- Recorte: o filtro estrutural foi cruzado com os fornecedores ja aprovados no staging protegido e reconciliou exatamente tres documentos, dez itens, cinco referencias ausentes e nove titulos, sendo quatro abertos e cinco marcados como baixados.
+- Multiempresa: os candidatos preservam a rota aprovada `Grupo CPA -> CPA Ferro e Aco`, com `scope_type=empresa`; nenhum registro de empresa externa ou sem alias aprovado integrou o lote.
+- Seguranca: numeros fiscais, relatorios, pedidos, fornecedores e demais chaves reais foram usados somente em memoria. Os envelopes persistem apenas referencias HMAC-SHA-256 geradas com chave local protegida por DPAPI.
+- Quarentena: `fiscal-candidate-envelopes.jsonl` e `manifest.json` permanecem exclusivamente em `D:\BACKUP ERP ANTIGO - CODEX\05_QUARANTINE\FISCAL\FISCAL-DRYRUN-001`, com heranca de ACL removida e acesso limitado ao usuario local, `SYSTEM` e Administradores.
+- Bloqueio operacional: os tres envelopes permanecem `PENDING_MANUAL_RECONCILIATION`, `stage=quarantine`, `confirmado=false`, `import_authorized=false` e `operational_promotion_allowed=false`. Nenhuma conta, pedido, estoque ou `NotaFiscal` foi criado, alterado, liquidado ou promovido.
+- Reprodutibilidade: duas geracoes independentes produziram conteudo identico; o arquivo de envelopes possui SHA-256 `19609646CDB5ED03A6CCA8C7B25888FEA3518591ABDBAF2E5B1842196459507D` e confere com o manifesto local.
+- Validacao de privacidade: tres envelopes validos, zero campo proibido de identificador fiscal nominal e todos os bloqueios ativos. O GitHub recebe somente este resumo sem dados reais.
+- Infraestrutura legada: `LEGACY_TID_EMP03` foi confirmado `READ_ONLY`; a consulta usou Shared Memory local. `MSSQL$ERPZLEGACY` e `SQLAgent$ERPZLEGACY` terminaram `Stopped`/`Manual`; `SQLBrowser` terminou `Stopped`/`Disabled`.
+- Escopo do repositorio: mudanca exclusivamente documental; testes de runtime sao dispensados. `git diff --check` permanece obrigatorio antes do commit.
+- Commit de implementacao: pendente neste registro.
+- Proximo passo obrigatorio: submeter os tres envelopes mascarados a homologacao humana no HD e registrar, por candidato, `PRESERVAR_SEM_VINCULO_PEDIDO` ou `AGUARDAR_VINCULO_PEDIDO`, com justificativa e responsavel distintos. Nao mover para staging, importar ou promover `NotaFiscal` sem essa decisao.
