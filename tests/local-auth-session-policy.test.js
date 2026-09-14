@@ -12,6 +12,7 @@ import {
   resolveUserGroupId,
   writeLocalAuthState,
 } from '../src/api/localAuthSessionPolicy.js';
+import { createLocalStorageAdapter } from '../src/api/localStorageAdapter.js';
 
 const admin = {
   id: 'local-admin-user',
@@ -82,6 +83,35 @@ test('auth state logout and api-key interactive gate', () => {
   assert.equal(assertInteractiveAuthAllowed({ isLocalOnlyMode: true, hasApiKey: true, hasUserToken: false }).allowed, true);
   assert.equal(assertInteractiveAuthAllowed({ isLocalOnlyMode: false, hasApiKey: true, hasUserToken: false }).allowed, false);
   assert.equal(assertInteractiveAuthAllowed({ isLocalOnlyMode: false, hasApiKey: true, hasUserToken: true }).allowed, true);
+});
+
+test('local storage adapter tolerates optional writes and confirms strict writes', () => {
+  const previousWindow = globalThis.window;
+  const values = new Map();
+  globalThis.window = {
+    localStorage: {
+      getItem: (key) => values.get(key) ?? null,
+      setItem: (key, value) => values.set(key, String(value)),
+      removeItem: (key) => values.delete(key),
+    },
+  };
+
+  try {
+    const storage = createLocalStorageAdapter();
+    storage.setItem('optional', 'ok');
+    storage.setItemStrict('session', 'confirmed');
+    assert.equal(storage.getItem('optional'), 'ok');
+    assert.equal(storage.getItem('session'), 'confirmed');
+    storage.removeItem('optional');
+    assert.equal(storage.getItem('optional'), null);
+  } finally {
+    if (previousWindow === undefined) delete globalThis.window;
+    else globalThis.window = previousWindow;
+  }
+
+  const unavailable = createLocalStorageAdapter();
+  assert.doesNotThrow(() => unavailable.setItem('optional', 'ignored'));
+  assert.throws(() => unavailable.setItemStrict('session', 'blocked'), /indisponivel/);
 });
 
 test('local auth stack binds session and refuses api-key browser bypass', async () => {

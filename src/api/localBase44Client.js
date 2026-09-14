@@ -7,6 +7,7 @@ import {
 } from "@/components/lib/contextoMultiempresaPolicy";
 import { sanitizeAuditPayload, sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
 import { createAuthDeniedError, evaluateLocalUserSession, markLocalLoggedOut, prepareLocalReauthentication, readLocalAuthState, writeLocalAuthState, LOCAL_SESSION_ID_KEY } from "@/api/localAuthSessionPolicy";
+import { createLocalStorageAdapter } from "@/api/localStorageAdapter";
 import {
   applyLegacyReferenceCodePolicy,
   applyMasterCadastroOnCreate,
@@ -71,7 +72,7 @@ import {
 } from "@/components/lib/viradaProducaoPolicy";
 import { assertIaInvocation } from "@/components/lib/iaTransversalPolicy";
 import { AGENT_FUNCTION_MAP, AGENTES, assertAgentMayAct, assertMappedAgentFunction, resolveAgentScope } from "@/components/lib/agenteAutorizacaoPolicy";
-import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows } from "../../base44/functions/_lib/security/entityGuardPolicy/entry.ts";
+import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows } from "../../base44/functions/_lib/security/entityGuardPolicy/entry";
 import {
   MANUAL_RECONCILIATION_TYPE,
   applyManualWorkflowTransition,
@@ -124,35 +125,33 @@ const LOCAL_ENTITY_CONTEXT_FIELD = {
 };
 const LOCAL_SHARED_ENTITIES = new Set(['Cliente', 'Fornecedor', 'Transportadora']);
 
+/** @typedef {Record<string, unknown>} LocalRecord */
+/**
+ * @typedef {LocalRecord & {
+ *   action?: string,
+ *   acao?: string,
+ *   agente?: string,
+ *   confirmado?: boolean,
+ *   entityName?: string,
+ *   entities?: Array<string | { entityName?: string, name?: string, filter?: LocalRecord }>,
+ *   filter?: LocalRecord,
+ *   sortField?: string,
+ *   sortDirection?: string,
+ *   limit?: number,
+ *   chave?: string,
+ *   data?: LocalRecord,
+ *   scope?: LocalRecord,
+ *   group_id?: string,
+ *   grupo_id?: string,
+ *   empresa_id?: string,
+ *   prompt?: string,
+ *   response_json_schema?: unknown,
+ * }} LocalFunctionPayload
+ */
+
 const now = () => new Date().toISOString();
 
-const safeStorage = {
-  getItem(key) {
-    if (typeof window === 'undefined' || !window.localStorage) return null;
-    return window.localStorage.getItem(key);
-  },
-  setItem(key, value) {
-    if (typeof window === 'undefined' || !window.localStorage) return;
-    try {
-      window.localStorage.setItem(key, value);
-    } catch (error) {
-      console.warn('[base44-local] Nao foi possivel gravar localStorage:', key, error?.message || error);
-    }
-  },
-  setItemStrict(key, value) {
-    if (typeof window === 'undefined' || !window.localStorage) {
-      throw new Error('Armazenamento local indisponivel.');
-    }
-    window.localStorage.setItem(key, value);
-    if (window.localStorage.getItem(key) !== value) {
-      throw new Error('A escrita no armazenamento local nao foi confirmada.');
-    }
-  },
-  removeItem(key) {
-    if (typeof window === 'undefined' || !window.localStorage) return;
-    window.localStorage.removeItem(key);
-  },
-};
+const safeStorage = createLocalStorageAdapter();
 
 const readDeletedRecords = () => {
   const raw = safeStorage.getItem(DELETED_RECORDS_KEY);
@@ -196,6 +195,7 @@ export const localApiUser = {
   email: 'admin@erp-local.test',
   full_name: 'Administrador Local',
   role: 'admin',
+  _app_role: 'admin',
   app_id: 'erp-zuccaro-local',
   is_service: false,
   perfil_acesso_id: 'local_perfil_admin',
@@ -379,8 +379,12 @@ const buildMasterLocalPermissions = (permissoes = {}) => ({
 const normalizeLocalUser = (user = {}) => {
   const groupId = 'local_grupo_cpa';
   const empresaIds = ['local_empresa_3z', 'local_empresa_cpa'];
-  const existingEmpresas = Array.isArray(user.empresas_vinculadas) ? user.empresas_vinculadas : [];
-  const existingGrupos = Array.isArray(user.grupos_vinculados) ? user.grupos_vinculados : [];
+  const existingEmpresas = /** @type {Array<string | { empresa_id?: string, id?: string, nivel_acesso?: string }>} */ (
+    Array.isArray(user.empresas_vinculadas) ? user.empresas_vinculadas : []
+  );
+  const existingGrupos = /** @type {Array<string | { grupo_id?: string, group_id?: string, id?: string, nivel_acesso?: string }>} */ (
+    Array.isArray(user.grupos_vinculados) ? user.grupos_vinculados : []
+  );
   const linkedEmpresaIds = uniqueByString([
     ...empresaIds,
     ...existingEmpresas.map((v) => (typeof v === 'string' ? v : v?.empresa_id || v?.id)),
@@ -412,17 +416,25 @@ const normalizeLocalUser = (user = {}) => {
     grupo_padrao_id: user.grupo_padrao_id || groupId,
     pode_operar_em_grupo: user.pode_operar_em_grupo ?? true,
     pode_ver_todas_empresas: user.pode_ver_todas_empresas ?? true,
-    empresas_vinculadas: linkedEmpresaIds.map((empresaId) => ({
-      empresa_id: empresaId,
-      ativo: true,
-      nivel_acesso: existingEmpresas.find((v) => v?.empresa_id === empresaId)?.nivel_acesso
-        || (master ? 'Administrador' : 'Operacional'),
-    })),
-    grupos_vinculados: linkedGroupIds.map((gid) => ({
-      grupo_id: gid,
-      ativo: true,
-      nivel_acesso: existingGrupos.find((v) => v?.grupo_id === gid || v?.group_id === gid)?.nivel_acesso || 'Administrador',
-    })),
+    empresas_vinculadas: linkedEmpresaIds.map((empresaId) => {
+      const vinculo = existingEmpresas.find((item) => typeof item !== 'string' && item?.empresa_id === empresaId);
+      return {
+        empresa_id: empresaId,
+        ativo: true,
+        nivel_acesso: (typeof vinculo !== 'string' && vinculo?.nivel_acesso)
+          || (master ? 'Administrador' : 'Operacional'),
+      };
+    }),
+    grupos_vinculados: linkedGroupIds.map((gid) => {
+      const vinculo = existingGrupos.find((item) => (
+        typeof item !== 'string' && (item?.grupo_id === gid || item?.group_id === gid)
+      ));
+      return {
+        grupo_id: gid,
+        ativo: true,
+        nivel_acesso: (typeof vinculo !== 'string' && vinculo?.nivel_acesso) || 'Administrador',
+      };
+    }),
   };
 };
 
@@ -471,7 +483,7 @@ const ensureLocalTopology = (db) => {
       grupos_vinculados: uniqueByString([
         canonicalGroupId,
         ...(currentUser.grupos_vinculados || [])
-          .map((v) => v?.grupo_id || v?.group_id || v?.id)
+          .map((v) => v?.grupo_id)
           .filter((id) => id && !String(id).startsWith('local_')),
       ]).map((grupoId) => ({ grupo_id: grupoId, ativo: true, nivel_acesso: 'Administrador' })),
     };
@@ -487,7 +499,7 @@ const ensureLocalTopology = (db) => {
       empresas_vinculadas: uniqueByString([
         ...canonicalEmpresaIds,
         ...(currentUser.empresas_vinculadas || [])
-          .map((v) => v?.empresa_id || v?.id)
+          .map((v) => v?.empresa_id)
           .filter((id) => id && !String(id).startsWith('local_')),
       ]).map((empresaId) => ({ empresa_id: empresaId, ativo: true, nivel_acesso: 'Administrador' })),
     };
@@ -862,7 +874,12 @@ const stampRecordContext = (entityName, data = {}) => {
   return record;
 };
 
-const auditLocalMutation = (entityName, action, { before = null, after = null, recordId = null } = {}) => {
+/**
+ * @param {string} entityName
+ * @param {string} action
+ * @param {{ before?: LocalRecord | null, after?: LocalRecord | null, recordId?: unknown, detalhes?: LocalRecord | null }} options
+ */
+const auditLocalMutation = (entityName, action, { before = null, after = null, recordId = null, detalhes = null } = {}) => {
   if (entityName === 'AuditLog') return;
   try {
     const db = loadDb();
@@ -883,7 +900,7 @@ const auditLocalMutation = (entityName, action, { before = null, after = null, r
       group_id: after?.group_id || after?.grupo_id || before?.group_id || groupId || null,
       correlacao_id: correlacaoId,
       dados_anteriores: sanitizeAuditPayload(before) || null,
-      dados_novos: sanitizeAuditPayload(after) || null,
+      dados_novos: sanitizeAuditPayload(detalhes ? { ...(after || {}), detalhes } : after) || null,
       sucesso: true,
       local: true,
       created_date: now(),
@@ -895,6 +912,7 @@ const auditLocalMutation = (entityName, action, { before = null, after = null, r
   } catch (error) { reportLocalClientFailure('Falha ao auditar mutacao local', error, { entityName, action, recordId }); }
 };
 
+/** @param {string} entityName @param {LocalRecord} filter */
 const expandLocalContextFilter = (entityName, filter = {}) => {
   if (!isPlainObject(filter)) return filter || {};
 
@@ -915,7 +933,13 @@ const expandLocalContextFilter = (entityName, filter = {}) => {
   const ctxField = LOCAL_ENTITY_CONTEXT_FIELD[entityName] || 'empresa_id';
   const shared = entityName === 'Cliente' || LOCAL_SHARED_ENTITIES.has(entityName);
   // Sempre compoe escopo (inclusive quando caller traz $or/$and)
-  return buildMultiempresaReadFilter({ groupId, empresaId, ctxField, shared, rest });
+  return (/** @type {(options: { groupId?: unknown, empresaId?: unknown, ctxField?: string, shared?: boolean, rest?: LocalRecord }) => LocalRecord} */ (buildMultiempresaReadFilter))({
+    groupId,
+    empresaId,
+    ctxField,
+    shared,
+    rest,
+  });
 };
 
 const normalizePermissionText = (value) => String(value || '')
@@ -996,6 +1020,7 @@ const findPermissionNodeByPath = (root, path = []) => {
   return cursor;
 };
 
+/** @param {{ module?: string, section?: string | string[], entityName?: string, action?: string }} options */
 const evaluateLocalPermission = ({ module, section, entityName, action } = {}) => {
   const db = loadDb();
   const user = readUser();
@@ -1445,8 +1470,9 @@ const applyLocalMarketplaceCreate = (db, entityName, record) => applyMarketplace
   pedidosExternos: getEntityStore(db, 'PedidoExterno'),
 });
 
+/** @param {LocalRecord} db @param {string} entityName @param {LocalRecord} record */
 const applyLocalMigracaoCreate = (db, entityName, record) => {
-  const result = applyMigracaoOnCreate({
+  const result = (/** @type {(options: { entityName: string, record: LocalRecord, records: LocalRecord[] }) => { reuse?: LocalRecord | null, record: LocalRecord }} */ (applyMigracaoOnCreate))({
     entityName,
     record,
     records: getEntityStore(db, entityName),
@@ -1461,7 +1487,7 @@ const applyLocalMigracaoCreate = (db, entityName, record) => {
     migracaoConfirmada: record.confirmado === true || result.record?.confirmado === true,
   });
   if (record.confirmado === true || result.record?.confirmado === true) {
-    assertOperacaoPiloto({
+    (/** @type {(options: { user?: LocalRecord, modoOperacao?: string, acao?: string }) => unknown} */ (assertOperacaoPiloto))({
       user: readUser(),
       modoOperacao: resolveModoOperacao(getEntityStore(db, 'ConfiguracaoSistema')),
       acao: 'migracao_producao',
@@ -2022,7 +2048,7 @@ const createEntityApi = (entityName) => ({
         assertLocalPermissionAny(entityName, ['editar', 'apontar', 'aprovar', 'criar'], id);
         return before;
       }
-      assertLocalPermissionAny(entityName, opStatusPermissionActions(decision.action), id);
+      assertLocalPermissionAny(entityName, opStatusPermissionActions(/** @type {'editar' | 'apontar' | 'aprovar' | 'cancelar' | 'retry'} */ (decision.action)), id);
       nextPayload = decision.record;
       if (before.empresa_id) nextPayload.empresa_id = before.empresa_id;
     }
@@ -2091,7 +2117,7 @@ const createEntityApi = (entityName) => ({
       groupId: options.group_id || groupId,
       empresaId: options.empresa_id || empresaId,
     });
-    const summary = {};
+    const summary = /** @type {LocalRecord} */ ({});
     BACKUP_COUNT_ENTITIES.forEach((name) => {
       summary[name] = mergeSnapshotRecords(db, name, entitiesSnapshot[name] || []);
     });
@@ -2150,6 +2176,7 @@ const createEntityApi = (entityName) => ({
   },
 });
 
+/** @type {Record<string, ReturnType<typeof createEntityApi>>} */
 const entities = new Proxy({}, {
   get(target, prop) {
     if (typeof prop !== 'string') return undefined;
@@ -2158,12 +2185,14 @@ const entities = new Proxy({}, {
   },
 });
 
+/** @param {LocalRecord} scope */
 const normalizeLocalConfigScope = (scope = {}) => {
   const context = validateMultiempresaContext(scope);
   if (!context.valid) return { valid: false, error: context.error, scope: {} };
   return { valid: true, error: null, scope: toEntityScope(context) };
 };
 
+/** @param {{ chave?: string, data?: LocalRecord, scope?: LocalRecord }} options */
 const upsertConfig = async ({ chave, data = {}, scope = {} }) => {
   const normalizedScope = normalizeLocalConfigScope(scope);
   if (!chave) throw new Error('Chave obrigatoria para ConfiguracaoSistema local');
@@ -2361,6 +2390,7 @@ const invokeLocalManualReconciliation = async (payload = {}) => {
 };
 
 const functions = {
+  /** @param {string} name @param {LocalFunctionPayload} payload */
   async invoke(name, payload = {}) {
     const mapped = AGENT_FUNCTION_MAP[name];
     if (mapped) {
@@ -2377,7 +2407,7 @@ const functions = {
         module: scope.modulo,
         action: mapped.action,
       });
-      assertMappedAgentFunction({
+      (/** @type {(options: { functionName: string, agent?: string, userAllowed: boolean, confirmed?: boolean }) => unknown} */ (assertMappedAgentFunction))({
         functionName: name,
         agent: scope.agent,
         userAllowed: perm.allowed || permModulo.allowed,
@@ -2417,7 +2447,8 @@ const functions = {
         const counts = {};
         for (const item of entitiesList) {
           const entityName = typeof item === 'string' ? item : item.entityName || item.name;
-          if (entityName) counts[entityName] = await countEntity(entityName, expandLocalContextFilter(entityName, item.filter || {}));
+          const itemFilter = typeof item === 'string' ? {} : item.filter || {};
+          if (entityName) counts[entityName] = await countEntity(entityName, expandLocalContextFilter(entityName, itemFilter));
         }
         return { data: { counts, ...counts } };
       }
@@ -2476,11 +2507,12 @@ const functions = {
 };
 
 const Core = {
+  /** @param {LocalFunctionPayload} payload */
   async InvokeLLM(payload = {}) {
     const user = readUser();
     const evaluation = evaluateLocalUserSession(user);
     if (!evaluation.allowed) throw createAuthDeniedError(evaluation);
-    const stamped = assertIaInvocation({
+    const stamped = (/** @type {(options: { payload: LocalFunctionPayload, groupId?: string | null, empresaId?: string | null }) => LocalFunctionPayload & { modo: string, group_id: string, empresa_id: string | null }} */ (assertIaInvocation))({
       payload,
       groupId: payload.group_id || payload.grupo_id || getCurrentGroupId(),
       empresaId: payload.empresa_id || getCurrentEmpresaId(),
@@ -2492,7 +2524,7 @@ const Core = {
         section: def?.secao || 'Pedido',
         action: payload.acao || 'visualizar',
       });
-      assertAgentMayAct({
+      (/** @type {(options: { agent: string, userAllowed: boolean, action?: string, confirmed?: boolean }) => unknown} */ (assertAgentMayAct))({
         agent: payload.agente,
         userAllowed: perm.allowed,
         action: payload.acao || 'visualizar',
@@ -2523,14 +2555,17 @@ const Core = {
   async SendSMS() {
     return { success: true, local: true, message: 'SMS nao enviado: modo local.' };
   },
+  /** @param {{ file?: File }} options */
   async UploadFile({ file } = {}) {
     return { file_url: `local://uploads/${file?.name || makeId('arquivo')}`, url: `local://uploads/${file?.name || makeId('arquivo')}`, local: true };
   },
+  /** @param {{ file?: File }} options */
   async UploadPrivateFile({ file } = {}) {
     if (!file) throw new Error('Arquivo obrigatorio para upload privado local.');
     const fileName = encodeURIComponent(file.name || 'arquivo');
     return { file_uri: `private/local/${makeId('arquivo')}/${fileName}`, local: true };
   },
+  /** @param {{ file_uri?: string, expires_in?: number }} options */
   async CreateFileSignedUrl({ file_uri: fileUri, expires_in: expiresIn = 300 } = {}) {
     if (!String(fileUri || '').startsWith('private/')) throw new Error('Referencia privada invalida.');
     const ttl = Number.isFinite(Number(expiresIn)) ? Math.min(Math.max(Number(expiresIn), 1), 3600) : 300;

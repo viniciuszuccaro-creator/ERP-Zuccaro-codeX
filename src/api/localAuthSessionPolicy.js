@@ -1,5 +1,13 @@
 const INACTIVE_STATUSES = new Set(['inativo', 'desligado', 'bloqueado', 'inativa', 'suspenso', 'suspensa']);
 
+/**
+ * @typedef {{
+ *   getItem?: (key: string) => string | null,
+ *   setItem?: (key: string, value: string) => void,
+ *   removeItem?: (key: string) => void,
+ * }} LocalStorageLike
+ */
+
 export const LOCAL_AUTH_STATE_KEY = 'erp_integra_local_auth_state_v1';
 export const LOCAL_SESSION_ID_KEY = 'sessao_id';
 
@@ -14,6 +22,7 @@ const firstActiveId = (list, idField) => {
   return match?.[idField] || null;
 };
 
+/** @param {LocalStorageLike | null | undefined} storage @param {string} key */
 const safeGetItem = (storage, key) => {
   try {
     return storage?.getItem?.(key) ?? null;
@@ -22,6 +31,7 @@ const safeGetItem = (storage, key) => {
   }
 };
 
+/** @param {LocalStorageLike | null | undefined} storage @param {string} key @param {string} value */
 const safeSetItem = (storage, key, value) => {
   try {
     storage?.setItem?.(key, value);
@@ -30,6 +40,7 @@ const safeSetItem = (storage, key, value) => {
   }
 };
 
+/** @param {LocalStorageLike | null | undefined} storage @param {string} key */
 const safeRemoveItem = (storage, key) => {
   try {
     storage?.removeItem?.(key);
@@ -57,12 +68,15 @@ export const resolveUserEmpresaId = (user = {}) => (
 );
 
 export const createAuthDeniedError = (evaluation = {}) => {
-  const error = new Error(evaluation.reason || 'auth_required');
+  const error = /** @type {Error & { status: number, authType: string }} */ (
+    new Error(evaluation.reason || 'auth_required')
+  );
   error.status = 403;
   error.authType = evaluation.type || 'auth_required';
   return error;
 };
 
+/** @param {LocalStorageLike | null | undefined} storage */
 export const readLocalAuthState = (storage = globalThis?.localStorage) => {
   const raw = safeGetItem(storage, LOCAL_AUTH_STATE_KEY);
   if (!raw) {
@@ -80,6 +94,7 @@ export const readLocalAuthState = (storage = globalThis?.localStorage) => {
   }
 };
 
+/** @param {{ logged_in?: boolean, sessao_id?: string | null }} state @param {LocalStorageLike | null | undefined} storage */
 export const writeLocalAuthState = (state = {}, storage = globalThis?.localStorage) => {
   const next = {
     logged_in: state.logged_in !== false,
@@ -92,10 +107,12 @@ export const writeLocalAuthState = (state = {}, storage = globalThis?.localStora
   return next;
 };
 
+/** @param {LocalStorageLike | null | undefined} storage */
 export const markLocalLoggedOut = (storage = globalThis?.localStorage) => (
   writeLocalAuthState({ logged_in: false, sessao_id: null }, storage)
 );
 
+/** @param {LocalStorageLike | null | undefined} storage */
 export const prepareLocalReauthentication = (storage = globalThis?.localStorage) => (
   writeLocalAuthState({ logged_in: true, sessao_id: null }, storage)
 );
