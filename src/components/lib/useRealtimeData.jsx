@@ -3,7 +3,7 @@
  * Usa polling inteligente com React Query (sem WebSocket)
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useEffect, useState } from 'react';
 import { useContextoVisual } from './useContextoVisual';
@@ -13,12 +13,20 @@ import {
   DASHBOARD_REALTIME_LIMIT,
 } from './dashboardKpiPolicy';
 
+/** @typedef {{ hoje: number, valorHoje: number, aguardandoAprovacao: number, emProducao: number, amostraLimitada?: boolean }} RealtimePedidosKpi */
+/** @typedef {{ vencendoHoje: number, valorHoje: number, atrasados: number, recebidosHoje: number, amostraLimitada?: boolean }} RealtimeFinanceiroKpi */
+/** @typedef {{ opsEmAndamento: number, percentualMedio: number, opsAtrasadas: number, opsFinalizadasHoje: number, amostraLimitada?: boolean }} RealtimeProducaoKpi */
+/** @typedef {{ entregasHoje: number, pendentes: number, realizadas: number, emRota: number, amostraLimitada?: boolean }} RealtimeExpedicaoKpi */
+/** @typedef {{ pedidos: RealtimePedidosKpi, financeiro: RealtimeFinanceiroKpi, producao: RealtimeProducaoKpi, expedicao: RealtimeExpedicaoKpi, ultimaAtualizacao: string | null }} RealtimeKpis */
+/** @typedef {{ id?: string, numero_pedido?: string, status?: string, prioridade?: string, cliente_nome?: string, valor_total?: number, created_date?: string }} RealtimePedido */
+/** @typedef {{ id?: string, numero_pedido?: string, status?: string, cliente_nome?: string, endereco_entrega_completo?: { cidade?: string }, motorista?: string, placa?: string, data_previsao?: string }} RealtimeEntrega */
+
 /**
  * Hook principal de tempo real
- * @param {string} queryKey - Chave da query
- * @param {function} queryFn - Função de fetch
- * @param {number} refetchInterval - Intervalo de atualização em ms (padrão: 5000)
- * @param {boolean} enabled - Se está habilitado
+ * @template T
+ * @param {readonly unknown[]} queryKey - Chave contextual da query
+ * @param {() => Promise<T> | T} queryFn - Função de fetch
+ * @param {{ refetchInterval?: number, enabled?: boolean, onUpdate?: ((novos: T, anteriores: T) => void) | null, [key: string]: any }} [options]
  */
 export function useRealtimeData(queryKey, queryFn, options = {}) {
   const {
@@ -30,7 +38,7 @@ export function useRealtimeData(queryKey, queryFn, options = {}) {
 
   const [currentInterval, setCurrentInterval] = useState(refetchInterval);
 
-  const [lastData, setLastData] = useState(null);
+  const [lastData, setLastData] = useState(/** @type {T | null} */ (null));
   const [hasChanges, setHasChanges] = useState(false);
   const [isReady, setIsReady] = useState(false);
 
@@ -48,31 +56,32 @@ export function useRealtimeData(queryKey, queryFn, options = {}) {
     refetchOnReconnect: false,
     retry: false,
     gcTime: 300000,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     staleTime: typeof currentInterval === 'number' ? Math.max(0, currentInterval - 1000) : 10000,
     enabled: enabled && isReady,
     ...otherOptions
   });
+  const currentData = /** @type {T | undefined} */ (query.data);
 
   // Detectar mudanças
   useEffect(() => {
-    if (query.data && lastData) {
-      const hasChanged = JSON.stringify(query.data) !== JSON.stringify(lastData);
+    if (currentData && lastData) {
+      const hasChanged = JSON.stringify(currentData) !== JSON.stringify(lastData);
       setHasChanges(hasChanged);
       
       if (hasChanged && onUpdate) {
-        onUpdate(query.data, lastData);
+        onUpdate(currentData, lastData);
       }
     }
     
-    if (query.data) {
-      setLastData(query.data);
+    if (currentData) {
+      setLastData(currentData);
     }
-  }, [query.data]);
+  }, [currentData]);
 
   // Backoff automático em 429 e reset ao normal quando voltar a responder
   useEffect(() => {
-    const err = query.error;
+    const err = /** @type {(Error & { status?: number, response?: { status?: number } }) | null} */ (query.error);
     if (err) {
       const msg = String(err?.message || '');
       const status = err?.status || err?.response?.status;
@@ -95,6 +104,7 @@ export function useRealtimeData(queryKey, queryFn, options = {}) {
  * Hook para KPIs em tempo real
  */
 export function useRealtimeKPIs(empresaId, intervalo = 30000, groupId = null, enabled = true, userId = null) {
+  /** @type {RealtimeKpis} */
   const defaultKPIs = {
     pedidos: { hoje: 0, valorHoje: 0, aguardandoAprovacao: 0, emProducao: 0 },
     financeiro: { vencendoHoje: 0, valorHoje: 0, atrasados: 0, recebidosHoje: 0 },
@@ -134,7 +144,7 @@ export function useRealtimeKPIs(empresaId, intervalo = 30000, groupId = null, en
       const rejectedCount = results.filter(r => r.status === 'rejected').length;
       if (rejectedCount >= 2) {
         const firstErr = results.find(r => r.status === 'rejected')?.reason || {};
-        const e = new Error(String(firstErr?.message || 'Rate limit exceeded'));
+        const e = /** @type {Error & { status?: number }} */ (new Error(String(firstErr?.message || 'Rate limit exceeded')));
         e.status = firstErr?.status || 429;
         throw e;
       }
@@ -153,10 +163,15 @@ export function useRealtimeKPIs(empresaId, intervalo = 30000, groupId = null, en
 /**
  * Hook para Status de Pedidos em tempo real
  */
-export function useRealtimePedidos(empresaId, limite = 10, groupId = null, enabled = true) {
-  const { filterInContext } = useContextoVisual();
+export function useRealtimePedidos(empresaId, limite = 10, groupId = null, enabled = true, userId = null) {
   return useRealtimeData(
-    ['pedidos-realtime', empresaId, groupId],
+    buildDashboardQueryKey({
+      prefix: 'pedidos-realtime',
+      userId,
+      groupId,
+      empresaId,
+      scopeType: empresaId ? 'empresa' : 'grupo',
+    }),
     () => (
       empresaId
         ? base44.entities.Pedido.filter({ empresa_id: empresaId }, '-created_date', limite)
@@ -187,10 +202,15 @@ export function useRealtimePedidos(empresaId, limite = 10, groupId = null, enabl
 /**
  * Hook para Entregas em tempo real
  */
-export function useRealtimeEntregas(empresaId, groupId = null, enabled = true) {
-  const { filterInContext } = useContextoVisual();
+export function useRealtimeEntregas(empresaId, groupId = null, enabled = true, userId = null) {
   return useRealtimeData(
-    ['entregas-realtime', empresaId, groupId],
+    buildDashboardQueryKey({
+      prefix: 'entregas-realtime',
+      userId,
+      groupId,
+      empresaId,
+      scopeType: empresaId ? 'empresa' : 'grupo',
+    }),
     async () => {
       const entregas = await (
         empresaId

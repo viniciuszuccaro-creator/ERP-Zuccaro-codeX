@@ -961,3 +961,18 @@ Lote concluido em 2026-09-14 na aba Fiscal existente, sem criar tela, rota, enti
 
 Proxima frente P0: refatorar e tipar `src/components/dashboard/DashboardTempoReal.jsx`, com 50 diagnosticos, preservando tempo real, RBAC e isolamento Grupo/Empresa.
 
+### Refatoracao e isolamento - Dashboard em Tempo Real
+
+Lote concluido em 2026-09-14 no dashboard existente, sem criar pagina, rota, entidade, consulta ou persistencia paralela.
+
+- `DashboardTempoReal.jsx` caiu de 583 para 232 linhas; a apresentacao operacional foi extraida para auxiliar privado de 247 linhas.
+- A policy contextual consolida o Grupo sem Empresa e, no escopo Empresa, aceita somente Empresa atual ou pertencente ao Grupo; ID externo fica bloqueado antes das queries.
+- KPIs, Pedidos e Entregas usam chaves de cache com usuario, tipo de escopo, Grupo e Empresa e continuam fail-closed sem RBAC/contexto.
+- Polling, backoff, cache e atualizacao em primeiro plano foram preservados; a retencao de dados anteriores foi alinhada a API vigente do React Query.
+- Cards, alertas, listas, progresso e insight permanecem funcionais em layout `w-full`/`h-full` mais responsivo.
+- Os 67 diagnosticos diretos do lote passaram para zero; o passivo global caiu de 1.835 para 1.765, reducao liquida de 70.
+- Testes focados passaram 7/7 e a suite completa passou 462/462; auditoria baseline, lint, build e verificacao de diff tambem passaram.
+- Nenhuma consulta remota, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: refatorar e tipar `src/components/estoque/TransferenciaEntreEmpresasForm.jsx`, preservando validacao bilateral Grupo/Empresas, estoque e auditoria.
+

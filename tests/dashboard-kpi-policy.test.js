@@ -11,6 +11,7 @@ import {
   computeRealtimeKpisFromStores,
   isCappedListUnreliable,
   resolveDashboardCount,
+  resolveRealtimeDashboardScope,
   resolveMetaOperacional,
   DASHBOARD_LIST_SOFT_LIMIT,
 } from '../src/components/lib/dashboardKpiPolicy.js';
@@ -19,6 +20,36 @@ test('dashboard exige contexto de grupo/empresa', () => {
   assert.throws(() => assertDashboardContext({ groupId: '', empresaId: 'e1' }), /Grupo/);
   assert.throws(() => assertDashboardContext({ groupId: 'g1', empresaId: '', scopeType: 'empresa' }), /Empresa/);
   assert.equal(assertDashboardContext({ groupId: 'g1', scopeType: 'grupo' }), true);
+});
+
+test('dashboard realtime consolida grupo e bloqueia empresa externa', () => {
+  const groupScope = resolveRealtimeDashboardScope({
+    scopeType: 'grupo',
+    groupId: 'g1',
+    requestedEmpresaId: 'externa',
+  });
+  assert.equal(groupScope.valid, true);
+  assert.equal(groupScope.empresaId, null);
+
+  const companyScope = resolveRealtimeDashboardScope({
+    scopeType: 'empresa',
+    groupId: 'g1',
+    requestedEmpresaId: 'e1',
+    currentEmpresa: { id: 'e1', group_id: 'g1' },
+    groupCompanies: [{ id: 'e1', group_id: 'g1' }],
+  });
+  assert.equal(companyScope.valid, true);
+  assert.equal(companyScope.empresaId, 'e1');
+
+  const externalScope = resolveRealtimeDashboardScope({
+    scopeType: 'empresa',
+    groupId: 'g1',
+    requestedEmpresaId: 'e2',
+    currentEmpresa: { id: 'e1', group_id: 'g1' },
+    groupCompanies: [{ id: 'e1', group_id: 'g1' }],
+  });
+  assert.equal(externalScope.valid, false);
+  assert.equal(externalScope.empresaId, null);
 });
 
 test('queryKey inclui usuario, grupo e empresa', () => {
@@ -97,6 +128,7 @@ test('telas existentes usam policy e abandonam mock de vendas', async () => {
   const dash = await readFile(new URL('../src/pages/Dashboard.jsx', import.meta.url), 'utf8');
   const bi = await readFile(new URL('../src/components/dashboard/DashboardOperacionalBI.jsx', import.meta.url), 'utf8');
   const realtime = await readFile(new URL('../src/components/lib/useRealtimeData.jsx', import.meta.url), 'utf8');
+  const realtimeDashboard = await readFile(new URL('../src/components/dashboard/DashboardTempoReal.jsx', import.meta.url), 'utf8');
   const painel = await readFile(new URL('../src/components/logistica/PainelMetricasRealtime.jsx', import.meta.url), 'utf8');
   const hook = await readFile(new URL('../src/components/dashboard/hooks/useDashboardDerivedData.jsx', import.meta.url), 'utf8');
 
@@ -107,7 +139,11 @@ test('telas existentes usam policy e abandonam mock de vendas', async () => {
   assert.doesNotMatch(bi, /valor: 45000/);
   assert.match(realtime, /DASHBOARD_REALTIME_LIMIT/);
   assert.match(realtime, /computeRealtimeKpisFromStores/);
+  assert.match(realtime, /prefix: 'pedidos-realtime'/);
+  assert.match(realtime, /prefix: 'entregas-realtime'/);
   assert.doesNotMatch(realtime, /getByContext\('Pedido', '-created_date', 20\)/);
+  assert.match(realtimeDashboard, /resolveRealtimeDashboardScope/);
+  assert.match(realtimeDashboard, /user\?\.id \|\| user\?\.email/);
   assert.match(painel, /filterInContext/);
   assert.match(painel, /buildDashboardQueryKey/);
   assert.match(painel, /resolveMetaOperacional/);

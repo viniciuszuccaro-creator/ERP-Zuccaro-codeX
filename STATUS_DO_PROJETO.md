@@ -8465,3 +8465,20 @@ Checklist inicial:
 - Dados/infraestrutura: nenhuma Nota Fiscal real foi emitida, alterada ou cancelada; nenhum backend Base44 remoto, banco legado ou HD externo foi acessado ou modificado.
 - Commit de implementacao: `9eaa60e9` (`Isola notas fiscais por empresa`).
 - Proximo passo P0: refatorar e tipar `src/components/dashboard/DashboardTempoReal.jsx`, que concentra 50 diagnosticos, preservando consultas em tempo real, RBAC e isolamento Grupo/Empresa; `localBase44Client.js` permanece reservado para lote transversal proprio.
+
+## 2026-09-14 - Refatoracao e isolamento do Dashboard em Tempo Real
+
+- Objetivo: decompor o dashboard existente, eliminar seus diagnosticos de `checkJs` e impedir consultas com Empresa externa ao Grupo ou cache compartilhado entre usuarios.
+- Causa raiz: `DashboardTempoReal.jsx` concentrava contexto, polling e toda a apresentacao em 583 linhas; o `empresaId` recebido por propriedade tinha precedencia sem validacao de pertencimento e as chaves de Pedidos/Entregas nao identificavam usuario nem tipo de escopo.
+- Arquivos alterados: `src/components/dashboard/DashboardTempoReal.jsx`, `src/components/dashboard/DashboardTempoRealOperations.jsx`, `src/components/lib/dashboardKpiPolicy.js`, `src/components/lib/useRealtimeData.jsx` e `tests/dashboard-kpi-policy.test.js`.
+- Refatoracao: o orquestrador caiu de 583 para 232 linhas e a apresentacao operacional ficou em auxiliar privado de 247 linhas. O auxiliar foi criado somente para decompor o dashboard atual, sem criar pagina, rota, entidade, consulta ou persistencia paralela.
+- Multiempresa: a policy resolve escopo Grupo/Empresa antes de habilitar queries. A visao Grupo consolida sem herdar Empresa; a visao Empresa exige Empresa atual ou listada no Grupo e bloqueia ID externo/adulterado.
+- RBAC/cache: nenhuma consulta inicia sem permissao de visualizacao e contexto valido. As query keys de KPIs, Pedidos e Entregas agora incluem usuario, tipo de escopo, Grupo e Empresa.
+- Tempo real: polling, backoff para limite de requisicoes, cache contextual e ausencia de atualizacao em segundo plano foram preservados; `keepPreviousData` legado foi atualizado para a API vigente `placeholderData` do React Query.
+- Seguranca/auditoria: o lote e somente leitura e nao cria dado operacional. Mensagens de erro nao expõem resposta backend e nenhuma permissao foi ampliada.
+- Layout: todos os cards, alertas, listas, progresso e insight existentes foram preservados; conteudo e acoes passaram a se adaptar melhor entre celular, tablet e desktop em `w-full`/`h-full`.
+- Testes: focados passaram 7/7 e a suite completa passou 462/462. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve apenas avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
+- Typecheck: os 67 diagnosticos diretos dos arquivos tocados passaram para zero; o passivo global caiu de 1.835 para 1.765, reducao liquida de 70 por melhora dos contratos compartilhados, e continua aberto sem ser mascarado.
+- Dados/infraestrutura: nenhuma consulta remota foi executada e nenhum backend Base44, banco legado ou HD externo foi acessado ou modificado.
+- Commit de implementacao: `PENDENTE_COMMIT`.
+- Proximo passo P0: refatorar e tipar `src/components/estoque/TransferenciaEntreEmpresasForm.jsx`, preservando validacao bilateral Grupo/Empresas, estoque e auditoria; `localBase44Client.js` permanece reservado para lote transversal proprio.

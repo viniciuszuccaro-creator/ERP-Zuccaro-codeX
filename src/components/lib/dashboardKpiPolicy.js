@@ -4,6 +4,9 @@ const firstText = (...values) => values.map((value) => String(value || '').trim(
 export const DASHBOARD_LIST_SOFT_LIMIT = 9999;
 export const DASHBOARD_REALTIME_LIMIT = 500;
 
+/**
+ * @param {{ groupId?: string | null, empresaId?: string | null, scopeType?: string }} [context]
+ */
 export const assertDashboardContext = ({ groupId, empresaId, scopeType = 'empresa' } = {}) => {
   if (!firstText(groupId)) {
     throw new Error('Grupo obrigatorio para dashboard.');
@@ -12,6 +15,46 @@ export const assertDashboardContext = ({ groupId, empresaId, scopeType = 'empres
     throw new Error('Empresa obrigatoria para dashboard no escopo empresa.');
   }
   return true;
+};
+
+/**
+ * @param {{
+ *   scopeType?: string,
+ *   groupId?: string | null,
+ *   requestedEmpresaId?: string | null,
+ *   currentEmpresa?: { id?: string, group_id?: string, grupo_id?: string } | null,
+ *   groupCompanies?: Array<{ id?: string, group_id?: string, grupo_id?: string }>,
+ * }} [input]
+ */
+export const resolveRealtimeDashboardScope = ({
+  scopeType = 'empresa',
+  groupId = null,
+  requestedEmpresaId = null,
+  currentEmpresa = null,
+  groupCompanies = [],
+} = {}) => {
+  const normalizedGroupId = firstText(groupId);
+  const normalizedScope = scopeType === 'grupo' ? 'grupo' : 'empresa';
+  if (!normalizedGroupId) {
+    return { valid: false, error: 'Grupo obrigatorio para dashboard.', groupId: null, empresaId: null, scopeType: normalizedScope };
+  }
+  if (normalizedScope === 'grupo') {
+    return { valid: true, error: '', groupId: normalizedGroupId, empresaId: null, scopeType: normalizedScope };
+  }
+
+  const empresaId = firstText(requestedEmpresaId, currentEmpresa?.id);
+  if (!empresaId) {
+    return { valid: false, error: 'Empresa obrigatoria para dashboard no escopo empresa.', groupId: normalizedGroupId, empresaId: null, scopeType: normalizedScope };
+  }
+  const currentEmpresaGroupId = firstText(currentEmpresa?.group_id, currentEmpresa?.grupo_id);
+  const currentAllowed = currentEmpresa?.id === empresaId && currentEmpresaGroupId === normalizedGroupId;
+  const listedAllowed = (Array.isArray(groupCompanies) ? groupCompanies : []).some((empresa) => (
+    empresa?.id === empresaId && firstText(empresa?.group_id, empresa?.grupo_id, normalizedGroupId) === normalizedGroupId
+  ));
+  if (!currentAllowed && !listedAllowed) {
+    return { valid: false, error: 'Empresa nao pertence ao Grupo selecionado.', groupId: normalizedGroupId, empresaId: null, scopeType: normalizedScope };
+  }
+  return { valid: true, error: '', groupId: normalizedGroupId, empresaId, scopeType: normalizedScope };
 };
 
 export const buildDashboardQueryKey = ({
@@ -36,6 +79,7 @@ export const isCappedListUnreliable = (list = [], softLimit = DASHBOARD_LIST_SOF
   Array.isArray(list) && list.length >= softLimit
 );
 
+/** @param {{ countValue?: unknown, list?: any[], softLimit?: number }} [input] */
 export const resolveDashboardCount = ({ countValue, list = [], softLimit = DASHBOARD_LIST_SOFT_LIMIT } = {}) => {
   const counted = Number(countValue);
   if (Number.isFinite(counted) && counted >= 0) {
