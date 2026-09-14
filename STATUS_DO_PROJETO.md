@@ -8108,5 +8108,5 @@ Checklist inicial:
 - Validacao: tres linhas, zero campo proibido, todos os campos humanos vazios, atores distintos obrigatorios e bloqueio operacional ativo. Nenhum arquivo foi movido para staging e nenhum registro do ERP foi criado ou alterado.
 - Situacao: `BLOCKED_HUMAN_REVIEW`; Codex nao pode fabricar a decisao, a justificativa ou os tres responsaveis.
 - Escopo do repositorio: mudanca exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
-- Commit de implementacao: pendente neste registro.
+- Commit de implementacao: `c0de2502` (`Prepara homologacao fiscal protegida`).
 - Proximo passo dependente de usuario: preencher a ficha protegida com uma das duas decisoes permitidas para cada candidato, justificativa e tres responsaveis distintos. Somente depois validar assinaturas, integridade e permissao fiscal antes de considerar a passagem controlada da quarentena para staging.
