@@ -136,7 +136,6 @@ test("cliente local persiste e reabre conciliacao entre tres sessoes sem mistura
     });
     await setupClient.entities.SolicitacaoAprovacao.create(makeRequest(EMPRESA_CPA_ID, "cpa-1"));
     await setupClient.entities.SolicitacaoAprovacao.create(makeRequest(EMPRESA_3Z_ID, "3z-1"));
-    await setupClient.entities.SolicitacaoAprovacao.create(makeRequest(EMPRESA_CPA_ID, "nf-fiscal-1", "NotaFiscal"));
     const beforeWorkflow = JSON.parse(storage.getItem(STORAGE_KEY));
     const financialCounts = {
       pagar: beforeWorkflow.ContaPagar?.length || 0,
@@ -156,6 +155,25 @@ test("cliente local persiste e reabre conciliacao entre tres sessoes sem mistura
     );
 
     const registrantClient = await openSession("registrante", EMPRESA_CPA_ID);
+    const fiscalRequest = makeRequest(EMPRESA_CPA_ID, "nf-fiscal-1", "NotaFiscal");
+    const createdFiscal = await registrantClient.functions.invoke("solicitacoesAprovacao", {
+      action: "createManualReconciliation",
+      group_id: GROUP_ID,
+      empresa_id: EMPRESA_CPA_ID,
+      scope_type: "empresa",
+      approval_request: fiscalRequest,
+    });
+    assert.equal(createdFiscal.data.reused, false);
+    assert.equal(createdFiscal.data.record.tipo_solicitacao, "conciliacao_migracao_fiscal");
+    const reusedFiscal = await registrantClient.functions.invoke("solicitacoesAprovacao", {
+      action: "createManualReconciliation",
+      group_id: GROUP_ID,
+      empresa_id: EMPRESA_CPA_ID,
+      scope_type: "empresa",
+      approval_request: fiscalRequest,
+    });
+    assert.equal(reusedFiscal.data.reused, true);
+    assert.equal(reusedFiscal.data.record.id, createdFiscal.data.record.id);
     const cpaList = await registrantClient.functions.invoke("solicitacoesAprovacao", {
       action: "listManualReconciliations",
       group_id: GROUP_ID,

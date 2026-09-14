@@ -8214,3 +8214,17 @@ Checklist inicial:
 - Escopo do repositorio: mudanca exclusivamente documental; nenhuma politica ou runtime foi alterado.
 - Commit de implementacao: `1dc9d0d6` (`Prepara manifesto de transicao fiscal`).
 - Proximo passo dependente de usuario: autorizar explicitamente a passagem dos tres candidatos do lote `FISCAL-DRYRUN-001` da quarentena para o staging fiscal. A autorizacao permitira apenas criar envelopes bloqueados em `SolicitacaoAprovacao`; nao autoriza promover ou alterar `NotaFiscal` operacional.
+
+## 2026-09-14 - Gate 18: prerequisitos locais do staging fiscal
+
+- Objetivo: eliminar os bloqueios locais de autenticacao e persistencia antes da passagem controlada dos tres candidatos fiscais para o staging existente.
+- Causa raiz: no modo local, `createManualReconciliation` era apenas simulado; uma sessao expirada nao preparava a reautenticacao; e a abertura de uma sessao propria passava pelo RBAC generico antes de existir autenticacao valida.
+- Reuso: `buildManualRecord`, `resolveManualReconciliationAccess`, `isManualReconciliationRequest`, o banco local existente e a auditoria de `SolicitacaoAprovacao`; nenhum modulo, tela, entidade ou importador paralelo foi criado.
+- Persistencia local: `createManualReconciliation` agora valida usuario, Grupo, Empresa e permissao granular, grava envelope fiscal bloqueado e auditoria na mesma escrita estrita e reutiliza a solicitacao na repeticao pela chave idempotente.
+- Sessao: a recuperacao limpa somente o identificador expirado e mantem a intencao de login. A criacao/renovacao da sessao do proprio usuario valida ownership e pertencimento Empresa-Grupo e registra auditoria de seguranca, sem abrir bypass no CRUD generico.
+- Verificacao visual: o ERP local reabriu autenticado em `http://localhost:5173/` e exibiu `Administrador Local` sem o ciclo de sessao invalida.
+- Seguranca: a mudanca nao concede permissao adicional, nao cria `NotaFiscal` e nao registra payload fiscal. Nenhum dos tres candidatos reais foi persistido neste subgate.
+- Testes: `npm run audit:baseline`, `npm run lint`, `npm run typecheck` e `git diff --check` passaram; `npm test` passou 441/441; `npm run build` concluiu com sucesso, mantendo apenas avisos conhecidos de tamanho de chunk e imports mistos.
+- Infraestrutura legada: `MSSQL$ERPZLEGACY` e `SQLAgent$ERPZLEGACY` terminaram `Stopped`/`Manual`; `SQLBrowser` terminou `Stopped`/`Disabled`.
+- Commit de implementacao: pendente neste registro.
+- Proximo passo obrigatorio: refatorar a aba fiscal existente, atualmente acima de 400 linhas, e integrar nela um controle protegido para selecionar e validar o manifesto de transicao. Somente depois, em execucao controlada separada, criar exatamente tres envelopes bloqueados em `SolicitacaoAprovacao`, sem promover `NotaFiscal`.

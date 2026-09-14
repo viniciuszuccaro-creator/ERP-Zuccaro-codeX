@@ -96,6 +96,10 @@ export const markLocalLoggedOut = (storage = globalThis?.localStorage) => (
   writeLocalAuthState({ logged_in: false, sessao_id: null }, storage)
 );
 
+export const prepareLocalReauthentication = (storage = globalThis?.localStorage) => (
+  writeLocalAuthState({ logged_in: true, sessao_id: null }, storage)
+);
+
 export const evaluateLocalUserSession = (user, session = null, nowMs = Date.now()) => {
   if (!user || !user.id) {
     return { allowed: false, reason: 'unauthenticated', type: 'auth_required' };

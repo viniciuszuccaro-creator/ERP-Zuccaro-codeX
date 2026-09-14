@@ -6,7 +6,7 @@ import {
   validateMultiempresaContext,
 } from "@/components/lib/contextoMultiempresaPolicy";
 import { sanitizeAuditPayload, sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
-import { createAuthDeniedError, evaluateLocalUserSession, markLocalLoggedOut, readLocalAuthState, writeLocalAuthState, LOCAL_SESSION_ID_KEY } from "@/api/localAuthSessionPolicy";
+import { createAuthDeniedError, evaluateLocalUserSession, markLocalLoggedOut, prepareLocalReauthentication, readLocalAuthState, writeLocalAuthState, LOCAL_SESSION_ID_KEY } from "@/api/localAuthSessionPolicy";
 import {
   applyLegacyReferenceCodePolicy,
   applyMasterCadastroOnCreate,
@@ -75,6 +75,7 @@ import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows
 import {
   MANUAL_RECONCILIATION_TYPE,
   applyManualWorkflowTransition,
+  buildManualRecord,
   isManualReconciliationRequest,
   resolveManualReconciliationAccess,
   summarizeManualRequest,
@@ -630,32 +631,74 @@ const ensureLocalActiveSession = async (user) => {
     if (!evaluation.allowed) {
       throw createAuthDeniedError(evaluation);
     }
-    try {
-      session = await entities.SessaoUsuario.update(session.id, {
-        data_hora_ultimo_acesso: now(),
-        ativa: true,
-        status: 'Ativa',
-      });
-    } catch (error) {
-      reportLocalClientFailure('Falha ao renovar SessaoUsuario', error, { sessao_id: session?.id });
+    if (String(session.usuario_id || '') !== String(user.id || '')) {
+      throw createAuthDeniedError({ reason: 'session_owner_mismatch', type: 'auth_required' });
     }
+    const db = loadDb();
+    const sessions = getEntityStore(db, 'SessaoUsuario');
+    const index = sessions.findIndex((item) => String(item.id) === String(session.id));
+    if (index < 0) throw createAuthDeniedError({ reason: 'session_not_found', type: 'auth_required' });
+    session = {
+      ...sessions[index],
+      data_hora_ultimo_acesso: now(),
+      ativa: true,
+      status: 'Ativa',
+      updated_date: now(),
+    };
+    sessions[index] = session;
+    saveDbStrict(db);
     writeLocalAuthState({ logged_in: true, sessao_id: session.id }, safeStorage);
     return session;
   }
 
-  session = await entities.SessaoUsuario.create({
+  const db = loadDb();
+  const groupId = user.grupo_atual_id || user.grupo_padrao_id || null;
+  const empresaId = user.empresa_atual_id || user.empresa_padrao_id || null;
+  const empresa = empresaId
+    ? getEntityStore(db, 'Empresa').find((item) => String(item.id) === String(empresaId))
+    : null;
+  if (empresaId && (!empresa || String(empresa.group_id || empresa.grupo_id || '') !== String(groupId || ''))) {
+    throw createAuthDeniedError({ reason: 'company_outside_group', type: 'auth_required' });
+  }
+  const timestamp = now();
+  session = {
+    id: makeId('sessao'),
     usuario_id: user.id,
     usuario_email: user.email,
     ativa: true,
     status: 'Ativa',
-    data_hora_inicio: now(),
-    data_hora_ultimo_acesso: now(),
+    data_hora_inicio: timestamp,
+    data_hora_ultimo_acesso: timestamp,
     max_idle_ms: 8 * 60 * 60 * 1000,
-    group_id: user.grupo_atual_id || user.grupo_padrao_id || null,
-    empresa_id: user.empresa_atual_id || user.empresa_padrao_id || null,
+    group_id: groupId,
+    empresa_id: empresaId,
     dispositivo: 'local',
     origem: 'localBase44Client',
+    created_date: timestamp,
+    updated_date: timestamp,
+  };
+  getEntityStore(db, 'SessaoUsuario').unshift(session);
+  getEntityStore(db, 'AuditLog').unshift({
+    id: makeId('audit'),
+    usuario: user.full_name || user.email || 'Usuario Local',
+    usuario_id: user.id,
+    acao: 'Login',
+    modulo: 'Sistema Local',
+    tipo_auditoria: 'seguranca',
+    entidade: 'SessaoUsuario',
+    registro_id: session.id,
+    descricao: 'Sessao local autenticada',
+    empresa_id: empresaId,
+    group_id: groupId,
+    sucesso: true,
+    local: true,
+    created_date: timestamp,
+    updated_date: timestamp,
+    data_hora: timestamp,
   });
+  saveDbStrict(db);
+  notify('SessaoUsuario', 'create', session);
+  notify('AuditLog', 'create', getEntityStore(db, 'AuditLog')[0]);
   writeLocalAuthState({ logged_in: true, sessao_id: session.id }, safeStorage);
   return session;
 };
@@ -2149,6 +2192,7 @@ const countEntity = async (entityName, filter = {}) => {
 };
 
 const MANUAL_RECONCILIATION_LOCAL_ACTIONS = new Set([
+  'createManualReconciliation',
   'listManualReconciliations',
   'createManualReconciliationEvidenceAccessUrl',
   'attachManualReconciliationEvidence',
@@ -2200,6 +2244,50 @@ const invokeLocalManualReconciliation = async (payload = {}) => {
   const empresa = getEntityStore(db, 'Empresa').find((item) => String(item.id) === empresaId);
   if (!empresa || String(empresa.group_id || empresa.grupo_id || '') !== groupId) {
     throw new Error('Empresa nao pertence ao Grupo informado.');
+  }
+  if (payload.action === 'createManualReconciliation') {
+    const access = resolveManualReconciliationAccess(payload.approval_request || payload.solicitacao || {});
+    if (!access) throw new Error('Tipo de conciliacao manual invalido.');
+    const canCreate = evaluateLocalPermission({
+      module: access.module,
+      section: access.section,
+      action: access.reconcilePermission,
+    }).allowed;
+    if (!canCreate) throw new Error('Permissao negada para criar conciliacao manual.');
+
+    const prepared = buildManualRecord(payload, user, { groupId, empresaId });
+    if (prepared.error) throw new Error(prepared.error);
+    const records = getEntityStore(db, 'SolicitacaoAprovacao');
+    const existing = records.find((record) => (
+      String(record.idempotency_key || '') === String(prepared.record.idempotency_key || '')
+      && String(record.group_id || '') === groupId
+      && String(record.empresa_id || '') === empresaId
+      && String(record.tipo_solicitacao || '') === access.type
+    ));
+    if (existing) {
+      if (!isManualReconciliationRequest(existing)
+        || String(existing.referencia_staging || '') !== String(prepared.record.referencia_staging || '')) {
+        throw new Error('Conflito de idempotencia no staging.');
+      }
+      appendLocalManualReconciliationAudit(db, user, existing, 'Reutilizacao', true, existing);
+      saveDbStrict(db);
+      notify('AuditLog', 'create', getEntityStore(db, 'AuditLog')[0]);
+      return { data: { record: existing, reused: true } };
+    }
+
+    const timestamp = now();
+    const created = {
+      ...prepared.record,
+      id: makeId('solicitacao'),
+      created_date: timestamp,
+      updated_date: timestamp,
+    };
+    records.unshift(created);
+    appendLocalManualReconciliationAudit(db, user, created, 'Criacao', true);
+    saveDbStrict(db);
+    notify('SolicitacaoAprovacao', 'create', created);
+    notify('AuditLog', 'create', getEntityStore(db, 'AuditLog')[0]);
+    return { data: { record: created, reused: false } };
   }
   if (payload.action === 'listManualReconciliations') {
     const access = resolveManualReconciliationAccess({ tipo_solicitacao: payload.tipo_solicitacao || MANUAL_RECONCILIATION_TYPE });
@@ -2545,7 +2633,7 @@ export const localBase44 = {
       return true;
     },
     redirectToLogin() {
-      markLocalLoggedOut(safeStorage);
+      prepareLocalReauthentication(safeStorage);
       return true;
     },
   },

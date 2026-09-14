@@ -6,6 +6,7 @@ import {
   assertInteractiveAuthAllowed,
   evaluateLocalUserSession,
   markLocalLoggedOut,
+  prepareLocalReauthentication,
   readLocalAuthState,
   resolveUserEmpresaId,
   resolveUserGroupId,
@@ -72,6 +73,10 @@ test('auth state logout and api-key interactive gate', () => {
   assert.equal(readLocalAuthState(storage).logged_in, true);
   markLocalLoggedOut(storage);
   assert.equal(readLocalAuthState(storage).logged_in, false);
+  assert.equal(readLocalAuthState(storage).sessao_id, null);
+
+  prepareLocalReauthentication(storage);
+  assert.equal(readLocalAuthState(storage).logged_in, true);
   assert.equal(readLocalAuthState(storage).sessao_id, null);
 
   assert.equal(assertInteractiveAuthAllowed({ isLocalOnlyMode: true, hasApiKey: true, hasUserToken: false }).allowed, true);
