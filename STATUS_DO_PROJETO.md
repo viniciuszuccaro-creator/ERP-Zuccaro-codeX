@@ -6595,6 +6595,21 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: confrontar somente por contagens os pares fornecedor do pedido x fornecedor fiscal dos 20 documentos divergentes com o cadastro mestre, classificando existencia, situacao, igualdade de documento normalizado, grupo duplicado e elegibilidade no staging protegido. Nao exportar codigos, nomes, documentos ou corrigir automaticamente o fornecedor.
 
+### Gate 18 - Conciliacao dos pares de fornecedor divergentes
+
+- Os 20 documentos com fornecedor divergente foram reduzidos a tres pares de codigos e confrontados em duas passagens identicas com o cadastro mestre, o staging candidato e a quarentena protegida, sem exportar codigos, nomes ou documentos.
+- Nos tres pares, fornecedor do pedido e fornecedor fiscal existem no mestre e estao ativos. Em todos os casos, os dois lados possuem exatamente o mesmo documento normalizado.
+- Ambos os lados dos tres pares pertencem a grupos de documento duplicado no cadastro mestre. Assim, a divergencia nao representa documentos de pessoas distintas, mas codigos legados diferentes associados a uma mesma identidade documental.
+- Dois pares possuem os dois fornecedores no staging candidato. Eles abrangem 12 documentos e 36 titulos financeiros, sendo 18 abertos e 18 marcados como baixados.
+- No terceiro par, o fornecedor do pedido esta no staging candidato e o fornecedor fiscal permanece em quarentena. Esse par abrange oito documentos e 24 titulos, sendo oito abertos e 16 marcados como baixados.
+- Os tres pares reconciliam integralmente os 20 documentos, 60 titulos, 26 abertos e 34 marcados como baixados do lote anterior.
+- A igualdade documental permite classificar a causa como duplicidade cadastral legada, mas nao autoriza escolher codigo vencedor, mesclar registros, trocar fornecedor no pedido ou reenquadrar titulos automaticamente.
+- A elegibilidade do fornecedor do pedido nao substitui a revisao do fornecedor fiscal em quarentena. Os codigos e vinculos devem ser preservados ate homologacao humana do mapeamento antigo para o novo.
+- O relatorio `legacy-purchase-supplier-pair-reconciliation.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, codigo, nome, documento, fornecedor, valor, quantidade, TPS ou MDF/LDF integra o GitHub.
+- Nenhum fornecedor, pedido, titulo ou documento fiscal foi criado, alterado, mesclado, importado ou promovido no ERP novo.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: classificar somente por contagens os grupos duplicados envolvidos nos tres pares e os motivos de quarentena do fornecedor fiscal, preservando todos os codigos e preparando uma decisao de homologacao antigo -> novo. Nao exportar codigos, nomes ou documentos e nao realizar merge automatico.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
