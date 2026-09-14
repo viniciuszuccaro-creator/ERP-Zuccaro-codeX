@@ -8270,5 +8270,5 @@ Checklist inicial:
 - Verificacao visual: o ERP permaneceu estavel em `http://localhost:5173/`; a rota `/comercial` ainda resolve para a tela inicial no snapshot local, impedindo homologacao visual do painel neste ambiente sem produzir erro novo.
 - Testes: focados passaram 32/32 e o teste de persistencia local passou 1/1; suite completa passou 443/443. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram.
 - Typecheck: o passivo global anterior permanece. Os componentes e a policy deste lote nao geraram erro; `localBase44Client.js` manteve os diagnosticos anteriores, com linhas apenas deslocadas pela nova guarda.
-- Commit de implementacao: a registrar no fechamento deste lote.
+- Commit de implementacao: `675e84b5` (`Conecta manifesto fiscal ao backend protegido`).
 - Proximo passo dependente de acesso: vincular este clone ao projeto Base44 oficial e autenticar o CLI, sem criar novo app. Depois configurar `MIGRATION_CONTEXT_HMAC_KEY` somente no ambiente servidor, implantar `solicitacoesAprovacao` e homologar a prova real. Ate la, nenhuma passagem para staging esta autorizada.
