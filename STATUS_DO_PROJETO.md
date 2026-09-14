@@ -6677,6 +6677,20 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A consulta usou somente loopback local e a mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: comparar somente por classificacao igual, menor ou maior o total dos 36 titulos com o total fiscal dos 12 documentos, separando as parcelas abertas das baixadas e sem exportar valores, recalcular saldo ou autorizar importacao.
 
+### Gate 18 - Totais fiscais e parcelas candidatas reconciliados
+
+- Os 12 documentos e 36 titulos dos dois pares candidatos foram comparados em duas passagens identicas; os resultados produziram o mesmo SHA-256 e reconciliaram novamente 18 parcelas abertas e 18 marcadas como baixadas.
+- A soma de todos os titulos e exatamente igual ao total fiscal em cada um dos 12 documentos. Nao existe documento com soma menor, maior, total fiscal ausente ou componente financeiro excedente.
+- Dez documentos possuem componentes abertos e baixados. Eles abrangem 30 titulos, sendo 18 abertos e 12 marcados como baixados; cada componente isolado e menor que o total fiscal e a composicao conjunta fecha exatamente o documento.
+- Dois documentos possuem somente seis titulos marcados como baixados. A soma dessas parcelas e exatamente igual ao respectivo total fiscal, sem parcela aberta residual.
+- Nenhum documento possui somente titulos abertos. Assim, os 18 abertos pertencem exclusivamente aos dez documentos de composicao mista e nao podem ser interpretados sem preservar as 12 parcelas historicamente baixadas relacionadas.
+- A igualdade contabil prova integridade aritmetica do parcelamento no corte do backup, mas nao comprova exigibilidade atual, pagamento downstream ou autorizacao para criar Conta a Pagar no ERP novo.
+- Os valores foram convertidos em memoria apenas para classificacao `IGUAL`, `MENOR` ou `MAIOR`; nenhum valor individual, soma monetaria ou saldo integra o relatorio ou o GitHub.
+- O relatorio `legacy-purchase-candidate-fiscal-title-total-reconciliation.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, chave, codigo, nome, documento, fornecedor, data, valor, TPS ou MDF/LDF integra o GitHub.
+- Nenhum fornecedor, pedido, documento fiscal, titulo, staging ou registro do ERP novo foi criado, alterado, baixado, importado ou promovido.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A consulta usou somente loopback local e a mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: classificar somente por contagens os dez documentos de composicao mista conforme cobertura fiscal dos itens, movimento de estoque e estado acumulado do pedido, preservando os dois documentos totalmente baixados apenas como historico. Nao calcular saldo, criar obrigacao ou autorizar importacao.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
