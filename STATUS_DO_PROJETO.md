@@ -8285,5 +8285,5 @@ Checklist inicial:
 - Runtime: nenhuma dependencia, entidade, funcao ou comportamento da aplicacao foi alterado neste lote. Dados locais, Base44 remoto, banco legado e HD externo nao foram acessados ou modificados.
 - Plano: `PLANO_GO_LIVE.md` recebeu destino, regras de transicao, ordem dos subgates e bloqueios obrigatorios para dados reais.
 - Validacao aplicavel: mudanca exclusivamente documental; `git diff --check` deve passar antes do commit. Testes de runtime sao dispensados conforme `AGENTS.md`.
-- Commit de implementacao: a registrar no fechamento deste lote.
+- Commit de implementacao: `102f676f` (`Define arquitetura de producao no Supabase`).
 - Proximo passo dependente de usuario: criar ou autorizar uma organizacao Supabase sob titularidade da empresa e um projeto de desenvolvimento pago na regiao Sao Paulo. Nao criar homologacao/producao nem fornecer segredo em chat antes de definir propriedade, cobranca e recuperacao da conta.
