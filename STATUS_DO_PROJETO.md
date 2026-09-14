@@ -8058,5 +8058,5 @@ Checklist inicial:
 - Validacao global: 440/440 testes aprovados; ESLint, `audit:baseline`, build e `git diff --check` aprovados.
 - Typecheck: baseline historico preservado em 2.238 diagnosticos; quatro diagnosticos novos de anotacao JSDoc foram corrigidos e nao restou aumento do lote.
 - Infraestrutura legada: `MSSQL$ERPZLEGACY` e `SQLAgent$ERPZLEGACY` terminaram `Stopped`/`Manual`; `SQLBrowser` terminou `Stopped`/`Disabled`. Nenhum banco, backup, HD externo ou dado fiscal real foi acessado.
-- Commit de implementacao: `PENDENTE_COMMIT_GATE18_CENTRAL_FISCAL`.
+- Commit de implementacao: `9d522251` (`Integra conciliacao fiscal na central`).
 - Proximo passo obrigatorio: homologar reabertura e persistencia da conciliacao fiscal com dados sinteticos, troca de sessao entre registrante/revisor/aprovador e bloqueio visual de usuario apenas financeiro. Os tres documentos reais permanecem bloqueados.
