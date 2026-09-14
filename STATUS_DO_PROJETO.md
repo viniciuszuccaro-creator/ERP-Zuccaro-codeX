@@ -6610,6 +6610,19 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: classificar somente por contagens os grupos duplicados envolvidos nos tres pares e os motivos de quarentena do fornecedor fiscal, preservando todos os codigos e preparando uma decisao de homologacao antigo -> novo. Nao exportar codigos, nomes ou documentos e nao realizar merge automatico.
 
+### Gate 18 - Retificacao da conciliacao dos fornecedores divergentes
+
+- A classificacao foi repetida em duas passagens identicas, correlacionando diretamente os tres pares com o cadastro mestre, o staging candidato, a quarentena e a fila protegida de revisao. Os dois resultados produziram o mesmo SHA-256.
+- A verificacao direta retifica a conclusao do subgate anterior: fornecedor do pedido e fornecedor fiscal possuem documentos normalizados diferentes nos tres pares e nenhum deles forma grupo duplicado por documento no universo analisado.
+- Dois pares continuam com ambos os lados no staging candidato. Eles abrangem 12 documentos fiscais e 36 titulos, sendo 18 abertos e 18 marcados como baixados.
+- No terceiro par, o fornecedor do pedido permanece no staging candidato e o fornecedor fiscal permanece em quarentena. Esse par abrange oito documentos fiscais e 24 titulos, sendo oito abertos e 16 marcados como baixados.
+- O arquivo principal de quarentena nao apresenta motivo preenchido para o fornecedor fiscal. O registro aparece na fila protegida de revisao documental, portanto a causa exata ainda depende de homologacao humana e nao pode ser inferida automaticamente.
+- Os tres pares reconciliam integralmente os 20 documentos, 60 titulos, 26 abertos e 34 marcados como baixados, sem expor codigos, nomes, documentos, datas ou valores.
+- A conclusao anterior de duplicidade cadastral por documento fica superada por esta verificacao. Nenhum codigo vencedor, merge, troca de fornecedor, reenquadramento de titulo ou promocao ao ERP novo foi realizado.
+- O relatorio `legacy-purchase-supplier-duplicate-group-review.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, codigo, nome, documento, fornecedor, valor, TPS ou MDF/LDF integra o GitHub.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: revisar somente por contagens a fila documental do fornecedor fiscal em quarentena e verificar se existe evidencia estrutural suficiente para classificar o motivo, sem exportar identificadores nem alterar staging. Se o motivo continuar ausente, registrar `BLOCKED` para homologacao humana desse par.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
