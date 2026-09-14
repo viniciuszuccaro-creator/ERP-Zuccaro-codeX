@@ -5,197 +5,60 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Download, ChevronRight, Box, Layers, ArrowRight, Pencil } from 'lucide-react';
+import { Plus, Layers } from 'lucide-react';
 import { toast } from 'sonner';
+import ArmadoPadraoItems from './armado-padrao/ArmadoPadraoItems';
+import {
+  calcularPeca,
+  consolidarItensPorEtapa,
+  ETAPAS_OBRA,
+  gerarItensRevenda,
+  TIPOS_PECA
+} from './armado-padrao/armadoPadraoPolicy';
+
+/** @typedef {import('./armado-padrao/armadoPadraoPolicy.js').ArmadoItem} ArmadoItem */
+/** @typedef {import('./armado-padrao/armadoPadraoPolicy.js').TipoPeca} TipoPeca */
+/** @typedef {import('./armado-padrao/armadoPadraoPolicy.js').Bitola} Bitola */
+
+/**
+ * @typedef {{
+ *   group_id?: string,
+ *   empresa_id?: string,
+ *   itens_armado_padrao?: ArmadoItem[],
+ *   itens_revenda?: Array<Record<string, unknown>>,
+ *   [key: string]: unknown
+ * }} PedidoArmadoFormData
+ */
 
 /**
  * V21.1 - Aba 3: Armado Padrão
  * AGORA COM: etapa_obra_id + Consolidação por Etapa
  */
+/**
+ * @param {{formData: PedidoArmadoFormData, setFormData: React.Dispatch<React.SetStateAction<PedidoArmadoFormData>>, empresaId?: string, onNext: () => void}} props
+ */
 export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNext }) {
-  const [tipoPeca, setTipoPeca] = useState(null);
-  const [dadosPeca, setDadosPeca] = useState({});
-  const [pecaEditandoIndex, setPecaEditandoIndex] = useState(null);
+  const [tipoPeca, setTipoPeca] = useState(/** @type {TipoPeca|null} */ (null));
+  const [dadosPeca, setDadosPeca] = useState(/** @type {ArmadoItem} */ ({}));
+  const [pecaEditandoIndex, setPecaEditandoIndex] = useState(/** @type {number|null} */ (null));
 
   const { data: bitolas = [] } = useQuery({
-    queryKey: ['bitolas', empresaId || formData?.empresa_id],
+    queryKey: ['bitolas', formData?.group_id, empresaId || formData?.empresa_id],
     queryFn: async () => {
       const empId = empresaId || formData?.empresa_id;
-      const filter = empId 
-        ? { empresa_id: empId, eh_bitola: true, status: 'Ativo' }
-        : { eh_bitola: true, status: 'Ativo' };
-      return await base44.entities.Produto.filter(filter);
+      if (!empId) return [];
+      const filter = {
+        ...(formData?.group_id ? { group_id: formData.group_id } : {}),
+        empresa_id: empId,
+        eh_bitola: true,
+        status: 'Ativo'
+      };
+      return /** @type {Promise<Bitola[]>} */ (base44.entities.Produto.filter(filter));
     },
-    enabled: true
+    enabled: Boolean(empresaId || formData?.empresa_id)
   });
-
-  const tiposPeca = [
-    { 
-      id: 'coluna', 
-      label: 'Coluna', 
-      icon: '🏛️',
-      descricao: 'Coluna retangular com estribos'
-    },
-    { 
-      id: 'viga', 
-      label: 'Viga', 
-      icon: '📏',
-      descricao: 'Viga retangular com estribos'
-    },
-    { 
-      id: 'estaca', 
-      label: 'Estaca/Broca', 
-      icon: '🔩',
-      descricao: 'Estaca com estribo circular'
-    },
-    { 
-      id: 'bloco', 
-      label: 'Bloco', 
-      icon: '🧱',
-      descricao: 'Bloco de coroamento/fundação'
-    }
-  ];
-
-  const calcularPeca = () => {
-    let resultado = {
-      ...dadosPeca,
-      tipo_peca: tipoPeca,
-      identificador: dadosPeca.identificador || `${tipoPeca.toUpperCase()}-${Date.now()}`,
-      quantidade: dadosPeca.quantidade || 1,
-      etapa_obra_id: dadosPeca.etapa_obra_id || '',
-      etapa_obra_nome: dadosPeca.etapa_obra_nome || '',
-      quantidade_ferros_principais: dadosPeca.quantidade_ferros_principais || 4,
-      bitola_principal: dadosPeca.bitola_principal || '',
-      reforco_bitola: dadosPeca.reforco_bitola || '',
-      reforco_quantidade: dadosPeca.reforco_quantidade || 0,
-      estribo_bitola: dadosPeca.estribo_bitola || '',
-      estribo_largura: dadosPeca.estribo_largura || 0,
-      estribo_altura: dadosPeca.estribo_altura || 0,
-      distancia_estribo: dadosPeca.distancia_estribo || 20
-    };
-
-    // Cálculos específicos por tipo
-    if (tipoPeca === 'coluna' || tipoPeca === 'viga') {
-      const comprimento = dadosPeca.comprimento || 0;
-      const distanciaEstribo = dadosPeca.distancia_estribo || 20;
-      
-      // Qtde de estribos
-      const qtdeEstribos = Math.ceil((comprimento * 100) / distanciaEstribo);
-      
-      resultado.estribo_quantidade = qtdeEstribos;
-      resultado.quantidade_estribos = qtdeEstribos * resultado.quantidade;
-      
-      // Reforço
-      const reforco = dadosPeca.reforco_bitola ? ` + ${dadosPeca.reforco_quantidade || 0} ferros ${dadosPeca.reforco_bitola}` : '';
-      resultado.reforco_descricao = reforco;
-    }
-
-    if (tipoPeca === 'estaca') {
-      const comprimento = dadosPeca.comprimento || 0;
-      const distanciaEstribo = dadosPeca.distancia_estribo || 20;
-      const qtdeEstribos = Math.ceil((comprimento * 100) / distanciaEstribo);
-      
-      resultado.estribo_quantidade = qtdeEstribos;
-      resultado.quantidade_estribos = qtdeEstribos * resultado.quantidade;
-    }
-
-    if (tipoPeca === 'bloco') {
-      // Cálculo automático de ferros
-      const comprimentoCm = dadosPeca.comprimento || 0;
-      const alturaCm = dadosPeca.altura || 0;
-      const larguraCm = dadosPeca.largura || 0;
-      const espacamento = dadosPeca.espacamento || 15;
-
-      const ferrosLado1 = Math.ceil(comprimentoCm / espacamento) + 1;
-      const ferrosLado2 = Math.ceil(larguraCm / espacamento) + 1;
-      const costelas = Math.floor(larguraCm / 30) || 0; // A cada 30cm uma costela
-
-      resultado.ferros_lado1 = ferrosLado1;
-      resultado.ferros_lado2 = ferrosLado2;
-      resultado.costelas_quantidade = costelas;
-      resultado.bitola_costela = dadosPeca.bitola_principal; // Mesma bitola
-    }
-
-    // Gerar descrição automática
-    const descricao = gerarDescricaoTecnica(resultado);
-    resultado.descricao_automatica = descricao;
-
-    // Calcular peso (simplificado - em produção usar tabela de peso/metro)
-    const pesoEstimado = estimarPeso(resultado, bitolas);
-    resultado.peso_total_kg = pesoEstimado;
-
-    // Calcular preço (R$/kg configurável)
-    const precoPorKg = 8.50; // Configurável por empresa
-    resultado.preco_venda_total = pesoEstimado * precoPorKg;
-
-    return resultado;
-  };
-
-  const gerarDescricaoTecnica = (peca) => {
-    const etapaTexto = peca.etapa_obra_nome ? ` [${peca.etapa_obra_nome}]` : '';
-    
-    if (peca.tipo_peca === 'coluna' || peca.tipo_peca === 'viga') {
-      return `${peca.quantidade} ${peca.tipo_peca.toUpperCase()}${etapaTexto} de ${peca.comprimento}m — ` +
-        `${peca.quantidade_ferros_principais || 0} ferros ${peca.bitola_principal}` +
-        `${peca.reforco_descricao || ''} — ` +
-        `Estribo ${peca.estribo_largura}x${peca.estribo_altura}cm (${peca.estribo_bitola}) a cada ${peca.distancia_estribo}cm`;
-    }
-
-    if (peca.tipo_peca === 'estaca') {
-      return `${peca.quantidade} ESTACA${etapaTexto} de ${peca.comprimento}m — ` +
-        `${peca.quantidade_ferros_principais || 0} ferros ${peca.bitola_principal}mm — ` +
-        `Estribo Ø${peca.estribo_diametro}cm (${peca.estribo_bitola}mm) a cada ${peca.distancia_estribo}cm`;
-    }
-
-    if (peca.tipo_peca === 'bloco') {
-      return `${peca.quantidade} BLOCO${etapaTexto} ${peca.comprimento}x${peca.largura}x${peca.altura}cm — ` +
-        `${peca.ferros_lado1} ferros lado 1 + ${peca.ferros_lado2} ferros lado 2 — ` +
-        `Bitola ${peca.bitola_principal}mm`;
-    }
-
-    return peca.identificador;
-  };
-
-  const estimarPeso = (peca, bitolas) => {
-    // Simplificado - em produção usar peso_teorico_kg_m das bitolas
-    const pesoMedioPorMetro = 1.5; // kg/m para bitola média
-    let pesoTotal = 0;
-
-    if (peca.tipo_peca === 'coluna' || peca.tipo_peca === 'viga' || peca.tipo_peca === 'estaca') {
-      const comprimento = peca.comprimento || 0;
-      const qtdePecas = peca.quantidade || 1;
-      const qtdeFerros = peca.quantidade_ferros_principais || 4;
-      
-      // Ferros principais
-      pesoTotal += comprimento * qtdeFerros * qtdePecas * pesoMedioPorMetro;
-      
-      // Reforço (V21.6)
-      if (peca.reforco_bitola && peca.reforco_quantidade) {
-        pesoTotal += comprimento * peca.reforco_quantidade * qtdePecas * pesoMedioPorMetro;
-      }
-      
-      // Estribos
-      const perimetroEstribo = peca.tipo_peca === 'estaca'
-        ? Math.PI * (peca.estribo_diametro || 30) / 100
-        : 2 * ((peca.estribo_largura || 15) + (peca.estribo_altura || 25)) / 100;
-      
-      pesoTotal += perimetroEstribo * (peca.quantidade_estribos || 0) * 0.5; // Estribos mais leves
-    }
-
-    if (peca.tipo_peca === 'bloco') {
-      const comprimentoM = (peca.comprimento || 0) / 100;
-      const larguraM = (peca.largura || 0) / 100;
-      const ferrosTotal = (peca.ferros_lado1 || 0) + (peca.ferros_lado2 || 0) + (peca.costelas_quantidade || 0);
-      
-      pesoTotal += (comprimentoM + larguraM) * ferrosTotal * (peca.quantidade || 1) * pesoMedioPorMetro;
-    }
-
-    return pesoTotal;
-  };
 
   const adicionarOuEditarPeca = () => {
     if (!tipoPeca) {
@@ -203,7 +66,7 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
       return;
     }
 
-    const pecaCalculada = calcularPeca();
+    const pecaCalculada = calcularPeca(tipoPeca, dadosPeca);
 
     setFormData(prev => {
       const novosItens = [...(prev.itens_armado_padrao || [])];
@@ -226,16 +89,19 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
     setPecaEditandoIndex(null);
   };
 
+  /** @param {number} index */
   const removerPeca = (index) => {
     setFormData(prev => ({
       ...prev,
-      itens_armado_padrao: prev.itens_armado_padrao.filter((_, i) => i !== index)
+      itens_armado_padrao: (prev.itens_armado_padrao || []).filter((_, i) => i !== index)
     }));
     toast.success('✅ Peça removida');
   };
 
+  /** @param {number} index */
   const editarPeca = (index) => {
-    const pecaParaEditar = formData.itens_armado_padrao[index];
+    const pecaParaEditar = (formData.itens_armado_padrao || [])[index];
+    if (!pecaParaEditar?.tipo_peca) return;
     setTipoPeca(pecaParaEditar.tipo_peca);
     setDadosPeca(pecaParaEditar);
     setPecaEditandoIndex(index);
@@ -244,55 +110,17 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
 
   // V21.1: Consolidar por Etapa de Obra
   const consolidarPorEtapa = () => {
-    const itensComEtapa = formData.itens_armado_padrao.filter(p => p.etapa_obra_id);
-    
-    if (itensComEtapa.length === 0) {
+    const resumo = consolidarItensPorEtapa(formData.itens_armado_padrao || []);
+    if (resumo.length === 0) {
       toast.error('Nenhum item possui etapa de obra definida');
       return;
     }
-
-    const etapas = {};
-    
-    itensComEtapa.forEach(peca => {
-      const etapaId = peca.etapa_obra_id;
-      if (!etapas[etapaId]) {
-        etapas[etapaId] = {
-          etapa_obra_id: etapaId,
-          etapa_obra_nome: peca.etapa_obra_nome,
-          pecas: [],
-          peso_total_kg: 0,
-          valor_total: 0
-        };
-      }
-      etapas[etapaId].pecas.push(peca);
-      etapas[etapaId].peso_total_kg += peca.peso_total_kg || 0;
-      etapas[etapaId].valor_total += peca.preco_venda_total || 0;
-    });
-
-    const resumo = Object.values(etapas);
     toast.success(`📊 Consolidado em ${resumo.length} etapa(s) de obra`);
-    
-    // You might want to update formData or display this consolidated view
-    // For now, it just toasts and returns the data.
-    console.log("Resumo por etapa:", resumo); 
     return resumo;
   };
 
   const gerarItensComerciais = () => {
-    // Injetar itens de armado padrão na aba de revenda (como itens comerciais)
-    const itensComerciais = formData.itens_armado_padrao.map(peca => ({
-      produto_id: null,
-      codigo_sku: peca.identificador,
-      descricao: peca.descricao_automatica,
-      unidade_medida: 'UN', // V21.1
-      quantidade: peca.quantidade,
-      quantidade_kg: peca.peso_total_kg, // V21.1
-      preco_unitario: peca.preco_venda_total / peca.quantidade,
-      valor_item: peca.preco_venda_total,
-      peso_unitario: peca.peso_total_kg / peca.quantidade,
-      origem_armado: true,
-      item_producao_id: peca.id
-    }));
+    const itensComerciais = gerarItensRevenda(formData.itens_armado_padrao || []);
 
     setFormData(prev => ({
       ...prev,
@@ -303,16 +131,8 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
     onNext();
   };
 
-  // V21.1: Etapas de Obra Disponíveis (simulado - pode vir de formData.obra_destino_id)
-  const etapasObra = [
-    { id: 'fundacao', nome: 'Fundação' },
-    { id: 'estrutura', nome: 'Estrutura' },
-    { id: 'cobertura', nome: 'Cobertura' },
-    { id: 'acabamento', nome: 'Acabamento' }
-  ];
-
   return (
-    <div className="space-y-6">
+    <div className="w-full h-full space-y-6 overflow-auto">
       {/* Seleção de Tipo */}
       {!tipoPeca && (
         <Card>
@@ -320,11 +140,11 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
             <CardTitle className="text-base">Selecione o Tipo de Peça</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-4 gap-4">
-              {tiposPeca.map((tipo) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+              {TIPOS_PECA.map((tipo) => (
                 <button
                   key={tipo.id}
-                  onClick={() => setTipoPeca(tipo.id)}
+                  onClick={() => setTipoPeca(/** @type {TipoPeca} */ (tipo.id))}
                   className="p-6 border-2 border-slate-200 rounded-xl hover:border-blue-600 hover:bg-blue-50 transition-all group"
                 >
                   <div className="text-5xl mb-3">{tipo.icon}</div>
@@ -344,7 +164,7 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
         <Card className="border-2 border-blue-600">
           <CardHeader className="bg-blue-50 border-b">
             <CardTitle className="text-base flex items-center justify-between">
-              <span>Configurar {tiposPeca.find(t => t.id === tipoPeca)?.label}</span>
+              <span>Configurar {TIPOS_PECA.find(t => t.id === tipoPeca)?.label}</span>
               <Button
                 variant="outline"
                 size="sm"
@@ -359,7 +179,7 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
           </CardHeader>
           <CardContent className="p-6 space-y-4">
             {/* Campos Comuns */}
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
               <div>
                 <Label>Identificador</Label>
                 <Input
@@ -396,7 +216,7 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
                 <Select
                   value={dadosPeca.etapa_obra_id}
                   onValueChange={(value) => {
-                    const etapa = etapasObra.find(e => e.id === value);
+                    const etapa = ETAPAS_OBRA.find(e => e.id === value);
                     setDadosPeca({ 
                       ...dadosPeca, 
                       etapa_obra_id: value,
@@ -408,7 +228,7 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent className="z-[99999]">
-                    {etapasObra.map(etapa => (
+                    {ETAPAS_OBRA.map(etapa => (
                       <SelectItem key={etapa.id} value={etapa.id}>
                         {etapa.nome}
                       </SelectItem>
@@ -420,7 +240,7 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
 
             {/* Campos de BLOCO */}
             {tipoPeca === 'bloco' && (
-              <div className="grid grid-cols-4 gap-4 p-4 bg-slate-50 rounded-lg">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 p-4 bg-slate-50 rounded-lg">
                 <div>
                   <Label>Altura (cm)</Label>
                   <Input
@@ -469,7 +289,7 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
             {/* Campos de COLUNA/VIGA/ESTACA */}
             {(tipoPeca === 'coluna' || tipoPeca === 'viga' || tipoPeca === 'estaca') && (
               <>
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                   <div>
                     <Label>Bitola Principal (CA-50)</Label>
                     <Select
@@ -501,13 +321,13 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
                     <Label>Bitola Reforço (CA-50)</Label>
                     <Select
                       value={dadosPeca.reforco_bitola || ''}
-                      onValueChange={(value) => setDadosPeca({ ...dadosPeca, reforco_bitola: value })}
+                      onValueChange={(value) => setDadosPeca({ ...dadosPeca, reforco_bitola: value === '__nenhum__' ? '' : value })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Opcional" />
                       </SelectTrigger>
                       <SelectContent className="z-[99999]">
-                        <SelectItem value={null}>Nenhum</SelectItem>
+                        <SelectItem value="__nenhum__">Nenhum</SelectItem>
                         {bitolas.filter(b => b.tipo_aco === 'CA-50').map((b) => (
                           <SelectItem key={b.id} value={b.bitola_diametro_mm + 'mm'}>
                             {b.bitola_diametro_mm}mm
@@ -530,7 +350,7 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
                 </div>
 
                 {/* Dobras */}
-                <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-lg">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 rounded-lg">
                   <div className="flex items-center gap-2">
                     <Checkbox
                       checked={dadosPeca.dobra_l1}
@@ -566,7 +386,7 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
                 {/* Estribos */}
                 <div className="border-t pt-4">
                   <h3 className="font-semibold mb-3">Configuração de Estribos</h3>
-                  <div className="grid grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                     <div>
                       <Label>Bitola Estribo</Label>
                       <Select
@@ -627,7 +447,7 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
                   </div>
 
                   {(tipoPeca === 'coluna' || tipoPeca === 'viga') && (
-                    <div className="grid grid-cols-2 gap-4 mt-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
                       <div>
                         <Label>Lado Sem Estribo</Label>
                         <Select
@@ -688,169 +508,13 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
         </Card>
       )}
 
-      {/* Lista de Peças */}
-      <Card>
-        <CardHeader className="bg-slate-50 border-b">
-          <CardTitle className="text-base flex items-center justify-between">
-            <span>Peças Adicionadas ({formData.itens_armado_padrao?.length || 0})</span>
-            <div className="flex gap-2">
-              {/* V21.1: Botão Consolidar */}
-              {formData.itens_armado_padrao && formData.itens_armado_padrao.length > 0 && (
-                <Button
-                  onClick={consolidarPorEtapa}
-                  variant="outline"
-                  size="sm"
-                  className="border-purple-300 text-purple-600"
-                >
-                  <Layers className="w-4 h-4 mr-2" />
-                  Agrupar por Etapa
-                </Button>
-              )}
-              {formData.itens_armado_padrao && formData.itens_armado_padrao.length > 0 && (
-                <Button
-                  onClick={gerarItensComerciais}
-                  variant="outline"
-                  size="sm"
-                >
-                  <ArrowRight className="w-4 h-4 mr-2" />
-                  Enviar para Aba Revenda
-                </Button>
-              )}
-            </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {formData.itens_armado_padrao && formData.itens_armado_padrao.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-slate-50">
-                  <TableHead>ID</TableHead>
-                  <TableHead>Etapa Obra</TableHead>
-                  <TableHead>Descrição Técnica</TableHead>
-                  <TableHead>Qtd</TableHead>
-                  <TableHead>Peso (kg)</TableHead>
-                  <TableHead>Preço</TableHead>
-                  <TableHead className="text-center">Ação</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {formData.itens_armado_padrao.map((peca, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-mono text-xs">{peca.identificador}</TableCell>
-                    <TableCell>
-                      {peca.etapa_obra_nome ? (
-                        <Badge className="bg-purple-100 text-purple-700">
-                          {peca.etapa_obra_nome}
-                        </Badge>
-                      ) : (
-                        <span className="text-xs text-slate-400">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="max-w-md">
-                      <p className="text-sm">{peca.descricao_automatica}</p>
-                    </TableCell>
-                    <TableCell>{peca.quantidade}</TableCell>
-                    <TableCell className="font-semibold">
-                      {peca.peso_total_kg?.toFixed(2)} kg
-                    </TableCell>
-                    <TableCell className="font-semibold text-green-600">
-                      R$ {peca.preco_venda_total?.toFixed(2)}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => editarPeca(index)}
-                          className="text-blue-600 hover:bg-blue-50"
-                          title="Editar Peça"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removerPeca(index)}
-                          className="text-red-600 hover:bg-red-50"
-                          title="Remover Peça"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="text-center py-12 text-slate-500">
-              <Box className="w-16 h-16 mx-auto mb-4 opacity-30" />
-              <p>Nenhuma peça adicionada</p>
-              <p className="text-sm mt-1">Selecione um tipo de peça acima para começar</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Resumo de Bitolas */}
-      {formData.itens_armado_padrao && formData.itens_armado_padrao.length > 0 && (
-        <Card className="border-2 border-green-300 bg-green-50">
-          <CardHeader className="bg-green-100 border-b">
-            <CardTitle className="text-base">📊 Resumo de Matéria-Prima (Armado Padrão)</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <ResumoMateriasPrimas itens={formData.itens_armado_padrao} />
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
-}
-
-/**
- * Componente de Resumo de Matérias-Primas
- */
-function ResumoMateriasPrimas({ itens }) {
-  const resumo = {};
-
-  itens.forEach(peca => {
-    // Bitola principal
-    if (peca.bitola_principal) {
-      if (!resumo[peca.bitola_principal]) {
-        resumo[peca.bitola_principal] = { peso: 0, tipo: 'CA-50' };
-      }
-      const pesoFerros = (peca.comprimento || 0) * (peca.quantidade_ferros_principais || 0) * (peca.quantidade || 1) * 1.5;
-      resumo[peca.bitola_principal].peso += pesoFerros;
-    }
-
-    // Bitola estribo
-    if (peca.estribo_bitola) {
-      if (!resumo[peca.estribo_bitola]) {
-        resumo[peca.estribo_bitola] = { peso: 0, tipo: 'CA-60' };
-      }
-      const pesoEstribos = (peca.quantidade_estribos || 0) * 0.5; // Peso médio por estribo
-      resumo[peca.estribo_bitola].peso += pesoEstribos;
-    }
-  });
-
-  return (
-    <div className="space-y-2">
-      {Object.entries(resumo).sort().map(([bitola, dados]) => (
-        <div key={bitola} className="flex items-center justify-between p-3 bg-white rounded-lg border">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
-              <p className="font-bold text-slate-700">{bitola}</p>
-            </div>
-            <div>
-              <p className="font-semibold text-slate-900">Bitola {bitola}</p>
-              <p className="text-xs text-slate-600">{dados.tipo}</p>
-            </div>
-          </div>
-          <p className="text-xl font-bold text-green-600">
-            {dados.peso.toFixed(2)} KG
-          </p>
-        </div>
-      ))}
+      <ArmadoPadraoItems
+        itens={formData.itens_armado_padrao || []}
+        onConsolidar={consolidarPorEtapa}
+        onGerarRevenda={gerarItensComerciais}
+        onEditar={editarPeca}
+        onRemover={removerPeca}
+      />
     </div>
   );
 }

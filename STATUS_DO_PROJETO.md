@@ -8401,3 +8401,19 @@ Checklist inicial:
 - Dados/infraestrutura: nenhum usuario real foi alterado, nenhum backend Base44 remoto, banco legado ou HD externo foi acessado ou modificado.
 - Commit de implementacao: `c7f6ac92` (`Refatora gestao avancada de usuarios`).
 - Proximo passo P0: refatorar e tipar `ArmadoPadraoTab.jsx`, que possui 805 linhas e 65 diagnosticos, em lote separado.
+
+## 2026-09-14 - Refatoracao e isolamento multiempresa do Armado Padrao
+
+- Objetivo: reduzir a aba Comercial de Armado Padrao, eliminar seus diagnosticos de `checkJs` e impedir leitura de bitolas sem Empresa explicita.
+- Causa raiz: `ArmadoPadraoTab.jsx` concentrava formulario, calculos, conversao para Revenda, listagem e resumo em 805 linhas; o estado vazio nao possuia contrato e a consulta possuia fallback sem Empresa.
+- Arquivos alterados: `src/components/comercial/ArmadoPadraoTab.jsx`, `src/components/comercial/armado-padrao/ArmadoPadraoItems.jsx`, `src/components/comercial/armado-padrao/armadoPadraoPolicy.js` e `tests/armado-padrao-policy.test.js`.
+- Refatoracao: calculos e transformacoes puras foram extraidos para policy reutilizavel; lista e resumo foram extraidos para componente controlado. Os auxiliares existem somente para decompor a aba atual, sem criar tela, rota, entidade ou persistencia paralela.
+- Tamanho: o orquestrador caiu de 805 para 489 linhas; a policy ficou com 167 e a apresentacao com 80. O componente publico, `itens_armado_padrao`, campos, edicao, exclusao, consolidacao e envio para Revenda foram preservados.
+- Multiempresa: a consulta de Produto/bitola agora fica desabilitada sem `empresa_id`, retorna vazio em defesa adicional e inclui `group_id` no filtro quando o contexto o fornece. O fallback que lia todas as bitolas ativas foi removido.
+- RBAC/auditoria: nenhuma permissao, persistencia ou auditoria foi ampliada ou removida; a aba continua subordinada ao fluxo e as guardas do Pedido existente.
+- Layout e controle: container principal passou a `w-full h-full`, grades se adaptam a celular/tablet/desktop e a opcao Nenhum da bitola de reforco usa valor interno valido em vez de `null`.
+- Testes: focados passaram 4/4; suite completa passou 450/450. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; build manteve apenas o aviso conhecido de chunk grande.
+- Typecheck: os arquivos do lote passaram de 65 diagnosticos para zero; o passivo global caiu de 2.074 para 2.009, reducao liquida exata de 65, e continua aberto sem ser mascarado.
+- Dados/infraestrutura: nenhum Pedido ou dado real foi alterado, nenhum backend Base44 remoto, banco legado ou HD externo foi acessado ou modificado.
+- Commit de implementacao: `PENDENTE_COMMIT`.
+- Proximo passo P0: refatorar e tipar `src/pages/Contratos.jsx`, maior concentracao operacional restante com 79 diagnosticos, em lote separado e preservando o fluxo Comercial existente.

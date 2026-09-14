@@ -901,3 +901,17 @@ O contrato tecnico detalhado e o andamento dos lotes ficam no plano existente `d
 - Frete pendente, customizacao, expiracao ou dependencia indisponivel bloqueiam o aceite.
 - CUSTOMER_RESOLVE, CATALOG_READ, ORDER_CREATE, QUOTE_CREATE e NEGOTIATION ficam ready; pagamento real permanece bloqueado para o ERP-SITE-06.
 
+### Refatoracao e contratos - Armado Padrao Comercial
+
+Lote concluido em 2026-09-14 na aba existente de Armado Padrao, sem criar tela, rota, entidade ou fluxo paralelo.
+
+- `ArmadoPadraoTab.jsx` caiu de 805 para 489 linhas; calculos/transformacoes foram extraidos para policy pura e lista/resumo para componente controlado.
+- Contratos JSDoc cobrem pecas, bitolas, formulario, consolidacao e itens de Revenda sem `any`, `ts-ignore` ou desativacao de `checkJs`.
+- A consulta de bitolas agora exige Empresa explicita e preserva o Grupo no filtro quando disponivel, eliminando o fallback de leitura sem escopo.
+- O typecheck dos arquivos do lote passou de 65 diagnosticos para zero; o global caiu de 2.074 para 2.009, reducao liquida exata de 65.
+- Testes cobrem calculo de coluna, consolidacao por etapa, conversao segura para Revenda e consulta fail-closed sem Empresa.
+- Layout principal e grades foram ajustados para `w-full`, `h-full` e responsividade, sem alterar campos, botoes ou sequencia do Pedido.
+- Nenhum Pedido, entidade remota, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: refatorar e tipar `src/pages/Contratos.jsx`, que concentra 79 diagnosticos, preservando o fluxo Comercial e seus consumidores.
+
