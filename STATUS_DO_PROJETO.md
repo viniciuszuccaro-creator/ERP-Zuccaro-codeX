@@ -8077,5 +8077,5 @@ Checklist inicial:
 - Typecheck: baseline historico preservado em 2.238 diagnosticos, sem diagnostico novo do lote.
 - Infraestrutura legada: `MSSQL$ERPZLEGACY` e `SQLAgent$ERPZLEGACY` terminaram `Stopped`/`Manual`; `SQLBrowser` terminou `Stopped`/`Disabled`. Nenhum banco, backup, HD externo, documento ou dado fiscal real foi acessado.
 - Homologacao visual: o bloqueio de abas foi comprovado por politica automatizada consumida pela UI; validacao humana no navegador com perfis reais ainda nao foi executada.
-- Commit de implementacao: `PENDENTE_COMMIT_GATE18_HOMOLOGACAO_FISCAL`.
+- Commit de implementacao: `4b700461` (`Homologa persistencia da conciliacao fiscal`).
 - Proximo passo obrigatorio: preparar um dry-run local dos tres documentos fiscais reais ja identificados, usando somente dados minimos e mascarados para construir envelopes candidatos, sem persistir no ERP, sem promover `NotaFiscal` e mantendo toda divergencia em quarentena no HD.
