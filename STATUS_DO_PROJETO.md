@@ -8181,3 +8181,19 @@ Checklist inicial:
 - Escopo do repositorio: mudanca exclusivamente documental; `git diff --check` e obrigatorio antes do commit.
 - Commit de implementacao: `9675f7b8` (`Mapeia contexto fiscal com HMAC`).
 - Proximo passo obrigatorio: substituir os aliases pelos IDs canonicos somente em memoria e repetir a validacao offline dos tres envelopes contra o guard de Grupo/Empresa e o contrato fiscal, produzindo apenas resultado agregado protegido. Nao mover para staging, persistir ou promover `NotaFiscal`.
+
+## 2026-09-14 - Gate 18: validacao fiscal offline com contexto canonico
+
+- Objetivo: substituir os aliases fiscais pelos IDs canonicos somente em memoria e repetir a validacao dos tres candidatos contra os guards existentes de Grupo/Empresa e o contrato fiscal, sem persistencia.
+- Reuso: `validateMultiempresaContext`, `empresaPertenceAoGrupo`, `recordMatchesGroupScope`, `recordMatchesEmpresaScope`, `entityRequiresEmpresaOnWrite` e `resolveEmpresaIdOnWrite` de `contextoMultiempresaPolicy.js`, alem do contrato existente de `migracaoErpPolicy.js`; nenhum modulo, tela, importador, entidade ou arquivo de codigo paralelo foi criado.
+- Contexto: o Grupo e a Empresa fiscal foram resolvidos de forma unica no snapshot local confiavel. Os aliases foram substituidos pelos IDs canonicos apenas durante as duas passagens em memoria; nenhum ID bruto foi gravado no relatorio.
+- Resultado: 3/3 contextos canonicos, pertencimentos, escopos de Grupo/Empresa, envelopes fiscais e solicitacoes de aprovacao foram aceitos. As tres chaves idempotentes permaneceram unicas.
+- Falha fechada: 3/3 tentativas de usar a outra Empresa no escopo do registro foram bloqueadas, 3/3 adulteracoes de Grupo foram recusadas e 3/3 tentativas de promocao operacional permaneceram impedidas pelo staging fiscal.
+- Reprodutibilidade: duas passagens independentes produziram o mesmo resultado agregado. O relatorio `canonical-context-offline-validation.json` permanece somente na quarentena fiscal protegida e possui SHA-256 `5FE935B2B0E1FD366261A9B86245873FF643AB4B99A37F3BDFA9CE8A2446BB2C`.
+- Seguranca: o relatorio contem somente contagens, indicadores e hashes das fontes; nao contem IDs canonicos, candidatos individuais ou dados fiscais. A ACL foi confirmada para o usuario local, `SYSTEM` e Administradores.
+- Bloqueio operacional: nenhuma chamada backend/Base44 ocorreu, nenhum arquivo foi movido para staging, nenhuma entidade foi persistida e `import_authorized=false`/`operational_promotion_allowed=false` permanecem ativos.
+- Validacao focada: `tests/contexto-multiempresa-policy.test.js` e `tests/migracao-erp-policy.test.js` passaram 36/36; `git diff --check` aprovado antes do commit.
+- Infraestrutura legada: `MSSQL$ERPZLEGACY` e `SQLAgent$ERPZLEGACY` terminaram `Stopped`/`Manual`; `SQLBrowser` terminou `Stopped`/`Disabled`.
+- Escopo do repositorio: mudanca exclusivamente documental; nenhuma politica ou runtime foi alterado.
+- Commit de implementacao: a registrar apos validacao final.
+- Proximo passo obrigatorio: preparar na quarentena um manifesto de transicao dos tres candidatos homologados para staging, ainda sem mover arquivos nem persistir `NotaFiscal`. A passagem efetiva para staging exigira autorizacao especifica posterior.
