@@ -759,6 +759,19 @@ Lote concluido em 2026-09-13 na politica compartilhada de expedicao, sem alterar
 
 Proxima frente: tipar `ordemProducaoPolicy.js`, politica compartilhada com 23 diagnosticos e 158 linhas. Telas grandes permanecem reservadas para lotes proprios.
 
+### Contratos JSDoc - politica de Ordem de Producao
+
+Lote concluido em 2026-09-14 na politica compartilhada de Ordem de Producao, sem alterar criacao, apontamento, transicao de status, liberacao para expedicao ou exclusao protegida.
+
+- Contratos locais descrevem OP, apontamento, opcoes de criacao/atualizacao e acoes de status sem `any`, `ts-ignore` ou desativacao de `checkJs`.
+- O typecheck isolado de `ordemProducaoPolicy.js` passou de 23 diagnosticos para zero.
+- O typecheck global caiu de 2.233 para 2.209 diagnosticos, reducao liquida de 24, incluindo um diagnostico removido de consumidor.
+- Permanecem iguais a exigencia de Empresa, o isolamento por Empresa, a idempotencia por Pedido, o congelamento apos finalizacao e as permissoes por transicao.
+- Apontamento continua exigindo quantidade ou peso, e expedicao continua liberada somente por conferencia ou conclusao integral; a politica encerrou com 184 linhas.
+- Nenhum dado, entidade, recurso Base44, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente: tipar `pedidoFaturamentoPolicy.js`, politica compartilhada com 23 diagnosticos. Telas grandes e `localBase44Client.js` permanecem reservados para lotes proprios.
+
 ### ERP-SITE-01 - Fundacao S2S do Site CPA
 
 Nova prioridade autorizada em 2026-09-13: executar primeiro no ERP os 12 contratos Site CPA, sem alterar o repositorio do Site ate a homologacao da camada ERP.

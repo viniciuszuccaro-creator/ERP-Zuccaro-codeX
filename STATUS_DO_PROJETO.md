@@ -8299,3 +8299,17 @@ Checklist inicial:
 - Validacao aplicavel: `git diff --check` deve passar; testes de aplicacao sao dispensados conforme `AGENTS.md`.
 - Commit de implementacao: `52bd0afe` (`Adia migracao Supabase sem liberar dados reais`).
 - Proximo passo independente: retomar o backlog local registrado em `PLANO_MELHORIA_ERP_ZUCCARO.md`, iniciando pelo contrato de `ordemProducaoPolicy.js`, sem ampliar acoplamento remoto e sem acessar dados reais.
+
+## 2026-09-14 - Contratos JSDoc da Ordem de Producao
+
+- Objetivo: eliminar os diagnosticos proprios de `ordemProducaoPolicy.js` documentando o contrato existente sem alterar comportamento operacional.
+- Causa raiz: parametros e records com defaults `{}` eram inferidos sem campos por `checkJs`, gerando 23 diagnosticos locais e um diagnostico adicional em consumidor.
+- Arquivo alterado: `src/components/lib/ordemProducaoPolicy.js`; nenhum consumidor, tela, entidade ou backend precisou ser modificado.
+- Implementacao: JSDoc local descreve Ordem de Producao, apontamento, criacao, atualizacao e acoes de status sem `any`, `ts-ignore` ou desligamento de `checkJs`.
+- Multiempresa/RBAC: exigencia e congelamento de `empresa_id`, idempotencia por Empresa/Pedido e mapeamento de permissoes por transicao permanecem inalterados.
+- Seguranca/auditoria: nenhuma persistencia ou auditoria foi modificada. Exclusao de OP concluida, com estoque consumido ou em conferencia continua bloqueada.
+- Testes: teste dedicado passou 6/6; suite completa passou 443/443; `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram. O build manteve somente os avisos conhecidos de chunks/imports mistos e bases de navegador desatualizadas.
+- Typecheck: `ordemProducaoPolicy.js` passou de 23 diagnosticos para zero; o passivo global caiu de 2.233 para 2.209, reducao liquida de 24, e portanto continua aberto sem ser mascarado.
+- Dados/infraestrutura: nenhum dado real, Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
+- Commit de implementacao: a registrar no fechamento deste lote.
+- Proximo passo: tipar `pedidoFaturamentoPolicy.js`, politica compartilhada com 23 diagnosticos, em lote separado.

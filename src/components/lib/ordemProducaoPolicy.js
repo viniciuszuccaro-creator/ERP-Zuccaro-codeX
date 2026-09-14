@@ -1,10 +1,39 @@
+/**
+ * @typedef {Record<string, unknown> & {
+ *   id?: string | number,
+ *   empresa_id?: unknown,
+ *   pedido_id?: unknown,
+ *   idempotency_key?: unknown,
+ *   origem?: unknown,
+ *   status?: unknown,
+ *   estoque_baixado?: boolean,
+ *   percentual_conclusao?: number,
+ *   numero_op?: unknown,
+ *   peso_total_kg?: unknown,
+ *   historico_status?: unknown,
+ *   updated_date?: unknown,
+ * }} OrdemProducaoRecord
+ * @typedef {Record<string, unknown> & {
+ *   quantidade_produzida?: unknown,
+ *   peso_produzido_kg?: unknown,
+ * }} ApontamentoProducaoRecord
+ * @typedef {'retry' | 'cancelar' | 'apontar' | 'aprovar' | 'editar'} OrdemProducaoAction
+ * @typedef {{ record?: OrdemProducaoRecord, ops?: OrdemProducaoRecord[] }} OrdemProducaoCreateOptions
+ * @typedef {{ before?: OrdemProducaoRecord, patch?: OrdemProducaoRecord }} OrdemProducaoUpdateOptions
+ * @typedef {{ percentual?: number, statusAtual?: unknown }} StatusApontamentoOptions
+ * @typedef {{ op?: OrdemProducaoRecord | null, apontamento?: ApontamentoProducaoRecord, empresaId?: unknown }} ApontamentoOptions
+ */
+
+/** @param {...unknown} values */
 const firstText = (...values) => values.map((value) => String(value || '').trim()).find(Boolean) || '';
 
+/** @param {unknown} value */
 const toQty = (value) => {
   const amount = Number(value);
   return Number.isFinite(amount) ? amount : 0;
 };
 
+/** @param {OrdemProducaoRecord} record */
 export const opIdempotencyKey = (record = {}) => {
   const explicit = firstText(record.idempotency_key);
   if (explicit) return explicit;
@@ -13,6 +42,10 @@ export const opIdempotencyKey = (record = {}) => {
   return ['op', firstText(record.empresa_id), pedidoId].join('|');
 };
 
+/**
+ * @param {OrdemProducaoRecord} record
+ * @param {OrdemProducaoRecord[]} ops
+ */
 export const findDuplicateOp = (record = {}, ops = []) => {
   const key = opIdempotencyKey(record);
   if (!key) return null;
@@ -23,6 +56,7 @@ export const findDuplicateOp = (record = {}, ops = []) => {
   }) || null;
 };
 
+/** @param {OrdemProducaoCreateOptions} options */
 export const assertOpOnCreate = ({ record = {}, ops = [] } = {}) => {
   if (!firstText(record.empresa_id)) {
     throw new Error('Empresa obrigatoria para ordem de producao.');
@@ -39,11 +73,13 @@ export const assertOpOnCreate = ({ record = {}, ops = [] } = {}) => {
   };
 };
 
+/** @param {StatusApontamentoOptions} options */
 export const resolveStatusAposApontamento = ({ percentual = 0, statusAtual } = {}) => {
   if (Number(percentual) >= 100) return 'Em Conferência';
   return statusAtual || 'Em Producao';
 };
 
+/** @param {ApontamentoOptions} options */
 export const assertApontamento = ({ op, apontamento = {}, empresaId } = {}) => {
   if (!op?.id) throw new Error('OP obrigatoria para apontar producao.');
   const emitente = firstText(empresaId, op.empresa_id);
@@ -57,13 +93,16 @@ export const assertApontamento = ({ op, apontamento = {}, empresaId } = {}) => {
   return true;
 };
 
+/** @param {OrdemProducaoRecord} op */
 export const shouldLiberarExpedicao = (op = {}) => {
   const status = String(op.status || '').toLowerCase();
   return status.includes('confer') || Number(op.percentual_conclusao) >= 100;
 };
 
+/** @param {unknown} status */
 const normalizeOpStatus = (status) => String(status || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
+/** @param {OrdemProducaoRecord} record */
 export const isOpFinalizada = (record = {}) => {
   const status = normalizeOpStatus(record.status);
   return ['conclu', 'finaliz', 'cancel', 'expedid'].some((token) => status.includes(token))
@@ -71,6 +110,11 @@ export const isOpFinalizada = (record = {}) => {
     || Number(record.percentual_conclusao) >= 100 && status.includes('pronta');
 };
 
+/**
+ * @param {unknown} beforeStatus
+ * @param {unknown} nextStatus
+ * @returns {OrdemProducaoAction}
+ */
 export const classifyOpStatusTransition = (beforeStatus, nextStatus) => {
   const before = normalizeOpStatus(beforeStatus);
   const next = normalizeOpStatus(nextStatus);
@@ -86,6 +130,7 @@ export const classifyOpStatusTransition = (beforeStatus, nextStatus) => {
   return 'editar';
 };
 
+/** @param {OrdemProducaoAction} action */
 export const opStatusPermissionActions = (action) => {
   if (action === 'apontar') return ['apontar', 'criar'];
   if (action === 'aprovar') return ['aprovar', 'liberar'];
@@ -95,6 +140,7 @@ export const opStatusPermissionActions = (action) => {
 
 const FROZEN_AFTER_FINAL = ['empresa_id', 'pedido_id', 'numero_op', 'peso_total_kg'];
 
+/** @param {OrdemProducaoUpdateOptions} options */
 export const assertOpOnUpdate = ({ before = {}, patch = {} } = {}) => {
   if (!before?.id) throw new Error('Ordem de producao nao encontrada.');
 
@@ -144,6 +190,7 @@ export const assertOpOnUpdate = ({ before = {}, patch = {} } = {}) => {
   };
 };
 
+/** @param {OrdemProducaoRecord} record */
 export const assertOpOnDelete = (record = {}) => {
   const status = normalizeOpStatus(record.status);
   if (record.estoque_baixado || Number(record.percentual_conclusao) >= 100) {
