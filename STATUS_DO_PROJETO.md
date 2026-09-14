@@ -6502,6 +6502,21 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: classificar os 1.009 pedidos recentes no nivel do cabecalho segundo estado agregado dos itens (`sem recebimento`, `parcial`, `todos recebidos/exatos`, `todos recebidos/com excesso` e `misto`), presenca exclusiva de produtos `REVENDA`, escopo empresarial seguro e vinculo fiscal. Nao importar nem calcular saldo definitivo antes de homologacao humana.
 
+### Gate 18 - Classificacao dos pedidos de compra no nivel do cabecalho
+
+- Os 1.009 pedidos recentes e seus 4.228 itens foram classificados em duas passagens identicas, usando somente contagens agregadas e sem exportar identificadores, documentos, materiais, unidades, valores ou quantidades individuais.
+- O estado agregado de recebimento reconciliou os 1.009 cabecalhos: 425 com todos os itens recebidos exatamente, 271 com todos recebidos e ao menos um excesso, 217 mistos, 37 parciais, 55 sem recebimento acumulado e quatro cabecalhos sem itens classificados como dados invalidos.
+- Assim, 696 pedidos aparecem integralmente recebidos pelo acumulado, mas permanecem fora de qualquer fechamento ou importacao automatica ate homologacao da regra de negocio. Outros 309 pedidos possuem estado aberto ou ambiguo, e os quatro sem itens permanecem em quarentena.
+- Todos os 1.009 cabecalhos estao marcados como nao cancelados. Esse indicador isolado nao distingue pedido aberto de pedido integralmente recebido e nao sera usado como criterio de migracao.
+- A composicao por finalidade do material reconciliou os cabecalhos: 758 somente com produtos `REVENDA`, 188 sem produto `REVENDA`, 42 mistos e 21 com material ausente, sem cadastro mestre ou sem itens.
+- O escopo fiscal classificou 955 pedidos somente com vinculo seguro e emitido, 52 sem vinculo fiscal e dois com vinculo inseguro. Os dois pedidos inseguros aparecem entre os integralmente recebidos de forma exata e permanecem em quarentena.
+- A cobertura fiscal por item resultou em 853 pedidos com todos os itens cobertos, 102 com cobertura parcial, 50 sem item coberto e quatro sem itens. Ter algum vinculo fiscal seguro nao equivale a cobertura fiscal integral.
+- Sete pedidos sem recebimento acumulado possuem vinculo fiscal seguro e emitido. A contradicao entre o acumulado do pedido e a presenca fiscal exige isolamento e revisao; ela nao autoriza concluir recebimento nem calcular saldo automaticamente.
+- O relatorio `legacy-purchase-order-level-classification.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, identificador, documento, material, unidade, valor, quantidade, TPS ou MDF/LDF integra o GitHub.
+- Nenhum pedido ou item foi importado, ajustado, fechado ou marcado como recebido no ERP novo. Nenhum saldo residual definitivo foi calculado.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: classificar somente por contagens os 309 pedidos nos estados `MISTO`, `PARCIAL` ou `SEM_RECEBIMENTO`, separando quantidade de itens pendentes por faixa, cobertura fiscal completa/parcial/ausente, composicao exclusiva `REVENDA` e as sete contradicoes sem acumulado com fiscal emitido. Manter os 696 integralmente recebidos fora dos candidatos abertos e os quatro sem itens em quarentena; nao calcular saldo final.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
