@@ -8447,5 +8447,5 @@ Checklist inicial:
 - Testes: focados passaram 22/22 e a suite completa passou 458/458. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve apenas avisos conhecidos de chunks/imports mistos e bases de navegador desatualizadas.
 - Typecheck: os arquivos do lote passaram de 51 diagnosticos para zero; o passivo global caiu de 1.930 para 1.879, reducao liquida exata de 51, e continua aberto sem ser mascarado.
 - Dados/infraestrutura: nenhuma Entrega, Pedido ou Cliente real foi alterado; nenhum backend Base44 remoto, banco legado ou HD externo foi acessado ou modificado.
-- Commit de implementacao: a registrar apos o commit deste lote.
+- Commit de implementacao: `e0c2a916` (`Isola formulario de entrega por empresa`).
 - Proximo passo P0: refatorar e tipar `src/components/comercial/NotasFiscaisTab.jsx`, fluxo Fiscal existente com 44 diagnosticos; `localBase44Client.js` permanece reservado para lote transversal proprio.
