@@ -772,6 +772,18 @@ Lote concluido em 2026-09-14 na politica compartilhada de Ordem de Producao, sem
 
 Proxima frente: tipar `pedidoFaturamentoPolicy.js`, politica compartilhada com 23 diagnosticos. Telas grandes e `localBase44Client.js` permanecem reservados para lotes proprios.
 
+### Contratos JSDoc - politica de faturamento do Pedido
+
+Lote concluido em 2026-09-14 na politica compartilhada de faturamento, sem alterar calculo, persistencia de Nota Fiscal, credito ou movimentacao de estoque.
+
+- Contratos locais descrevem Pedido, Cliente, movimentos, opcoes de leitura/faturamento e metadados de erro sem `any`, `ts-ignore` ou desativacao de `checkJs`.
+- O typecheck isolado de `pedidoFaturamentoPolicy.js` passou de 23 diagnosticos para zero.
+- O typecheck global caiu de 2.209 para 2.182 diagnosticos, reducao liquida de 27, incluindo quatro diagnosticos removidos dos consumidores.
+- Permanecem iguais o faturamento parcial, a exclusao de notas canceladas, o bloqueio de sobrefaturamento, a consulta de credito fail-closed e a idempotencia do movimento de estoque.
+- Nenhum dado, entidade, recurso Base44, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: tipar `estoqueMovimentoPolicy.js`, politica compartilhada de Estoque com 22 diagnosticos. `iaTransversalPolicy.js` permanece posterior por pertencer a P2.
+
 ### ERP-SITE-01 - Fundacao S2S do Site CPA
 
 Nova prioridade autorizada em 2026-09-13: executar primeiro no ERP os 12 contratos Site CPA, sem alterar o repositorio do Site ate a homologacao da camada ERP.

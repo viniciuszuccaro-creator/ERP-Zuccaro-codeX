@@ -1,10 +1,42 @@
+/**
+ * @typedef {Record<string, unknown> & {
+ *   id?: string | number,
+ *   pedido_id?: unknown,
+ *   valor_total?: unknown,
+ *   valor_produtos?: unknown,
+ *   status?: unknown,
+ *   cliente_id?: unknown,
+ *   limite_credito_override?: boolean,
+ *   limite_credito_justificativa?: unknown,
+ * }} PedidoFaturamentoRecord
+ * @typedef {Record<string, unknown> & {
+ *   condicao_comercial?: {
+ *     limite_credito?: unknown,
+ *     limite_credito_utilizado?: unknown,
+ *   } & Record<string, unknown>,
+ * }} ClienteCreditoRecord
+ * @typedef {Record<string, unknown> & {
+ *   tipo_movimento?: unknown,
+ *   origem_documento_id?: unknown,
+ *   produto_id?: unknown,
+ * }} MovimentoPedidoRecord
+ * @typedef {{ pedido?: PedidoFaturamentoRecord, notasExistentes?: PedidoFaturamentoRecord[] }} FaturamentoLeituraOptions
+ * @typedef {{ pedido?: PedidoFaturamentoRecord, notasExistentes?: PedidoFaturamentoRecord[], notaNova?: PedidoFaturamentoRecord }} FaturamentoOptions
+ * @typedef {{ pedido?: PedidoFaturamentoRecord, cliente?: ClienteCreditoRecord | null, permitirOverride?: boolean }} PedidoCreditoOptions
+ * @typedef {{ movimentos?: MovimentoPedidoRecord[], pedidoId?: unknown, produtoId?: unknown }} MovimentoPedidoOptions
+ * @typedef {Error & { code?: string, restante?: number }} FaturamentoError
+ */
+
+/** @param {unknown} value */
 const toMoney = (value) => {
   const amount = Number(value);
   return Number.isFinite(amount) ? Math.round(amount * 100) / 100 : 0;
 };
 
+/** @param {PedidoFaturamentoRecord} nota */
 const notaAtiva = (nota = {}) => !/cancel/i.test(String(nota.status || ''));
 
+/** @param {FaturamentoLeituraOptions} options */
 export const remainingValorFaturar = ({ pedido = {}, notasExistentes = [] } = {}) => {
   const pedidoValor = toMoney(pedido.valor_total || pedido.valor_produtos);
   const pedidoId = String(pedido.id || '');
@@ -14,6 +46,7 @@ export const remainingValorFaturar = ({ pedido = {}, notasExistentes = [] } = {}
   return Math.max(0, toMoney(pedidoValor - faturado));
 };
 
+/** @param {FaturamentoOptions} options */
 export const resolveStatusFaturamentoPedido = ({ pedido = {}, notasExistentes = [], notaNova = {} } = {}) => {
   const pedidoValor = toMoney(pedido.valor_total || pedido.valor_produtos);
   const faturado = pedidoValor - remainingValorFaturar({ pedido, notasExistentes }) + toMoney(notaNova.valor_total || notaNova.valor_produtos);
@@ -22,6 +55,7 @@ export const resolveStatusFaturamentoPedido = ({ pedido = {}, notasExistentes = 
   return 'Faturado';
 };
 
+/** @param {FaturamentoOptions} options */
 export const assertFaturamentoDentroDoPedido = ({ pedido, notasExistentes = [], notaNova = {} } = {}) => {
   if (!pedido?.id && !pedido?.valor_total && !pedido?.valor_produtos) {
     throw new Error('Pedido obrigatorio para faturar.');
@@ -32,7 +66,7 @@ export const assertFaturamentoDentroDoPedido = ({ pedido, notasExistentes = [], 
     throw new Error('Valor de faturamento invalido.');
   }
   if (novoValor > restante + 0.009) {
-    const error = new Error('Faturamento acima do pedido bloqueado.');
+    const error = /** @type {FaturamentoError} */ (new Error('Faturamento acima do pedido bloqueado.'));
     error.code = 'FATURAMENTO_ACIMA_PEDIDO';
     error.restante = restante;
     throw error;
@@ -44,6 +78,7 @@ export const assertFaturamentoDentroDoPedido = ({ pedido, notasExistentes = [], 
 };
 
 /** Credito do pedido: fail-closed sem cliente, sem limite ou sem alçada de override. */
+/** @param {PedidoCreditoOptions} options */
 export const evaluatePedidoCredito = ({
   pedido = {},
   cliente = null,
@@ -105,6 +140,7 @@ export const evaluatePedidoCredito = ({
 };
 
 /** Idempotencia: ja existe saida/liberacao de reserva do pedido para o produto. */
+/** @param {MovimentoPedidoOptions} options */
 export const pedidoJaTemSaidaEstoque = ({ movimentos = [], pedidoId, produtoId } = {}) => {
   const pid = String(pedidoId || '');
   const prod = String(produtoId || '');
@@ -118,6 +154,7 @@ export const pedidoJaTemSaidaEstoque = ({ movimentos = [], pedidoId, produtoId }
   });
 };
 
+/** @param {MovimentoPedidoOptions} options */
 export const pedidoJaTemReservaEstoque = ({ movimentos = [], pedidoId, produtoId } = {}) => {
   const pid = String(pedidoId || '');
   const prod = String(produtoId || '');

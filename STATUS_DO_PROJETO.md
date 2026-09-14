@@ -8313,3 +8313,17 @@ Checklist inicial:
 - Dados/infraestrutura: nenhum dado real, Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
 - Commit de implementacao: `168bee66` (`Tipa politica de ordem de producao`).
 - Proximo passo: tipar `pedidoFaturamentoPolicy.js`, politica compartilhada com 23 diagnosticos, em lote separado.
+
+## 2026-09-14 - Contratos JSDoc do faturamento do Pedido
+
+- Objetivo: eliminar os diagnosticos proprios de `pedidoFaturamentoPolicy.js` documentando o contrato existente sem alterar o fluxo operacional.
+- Causa raiz: records, opcoes e metadados de erro eram inferidos sem campos por `checkJs`, gerando 23 diagnosticos locais e quatro adicionais nos consumidores.
+- Arquivo alterado: `src/components/lib/pedidoFaturamentoPolicy.js`; nenhum consumidor, tela, entidade ou backend precisou ser modificado.
+- Implementacao: JSDoc local descreve Pedido, Cliente, movimentos, opcoes de leitura/faturamento e erro de sobrefaturamento sem `any`, `ts-ignore` ou desligamento de `checkJs`.
+- Multiempresa/RBAC: o contrato nao amplia acesso nem altera escopo; os consumidores continuam responsaveis pelo contexto de Grupo/Empresa e pelas permissoes ja existentes.
+- Seguranca/auditoria: nenhuma persistencia ou auditoria foi modificada. Validacao de credito continua fail-closed, sobrefaturamento continua bloqueado e movimento de estoque permanece idempotente.
+- Testes: teste dedicado passou 7/7; suite completa passou 443/443; `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram. O build manteve somente os avisos conhecidos de chunks/imports mistos e bases de navegador desatualizadas.
+- Typecheck: `pedidoFaturamentoPolicy.js` passou de 23 diagnosticos para zero; o passivo global caiu de 2.209 para 2.182, reducao liquida de 27, e portanto continua aberto sem ser mascarado.
+- Dados/infraestrutura: nenhum dado real, Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
+- Commit de implementacao: `PENDENTE_COMMIT`.
+- Proximo passo P0: tipar `estoqueMovimentoPolicy.js`, politica compartilhada de Estoque com 22 diagnosticos, em lote separado.
