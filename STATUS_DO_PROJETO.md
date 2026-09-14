@@ -6532,6 +6532,22 @@ Checklist inicial:
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: classificar somente por contagens os 1.028 itens pendentes, separando estado acumulado sem/parcial, presenca e relacao da soma fiscal segura com o acumulado, cobertura de movimento de estoque, produto `REVENDA` e escopo empresarial. Isolar os 22 itens das sete contradicoes; nao exportar dados nominais, calcular saldo final ou autorizar importacao.
 
+### Gate 18 - Conciliacao fiscal e de estoque dos itens pendentes
+
+- Os 1.028 itens pendentes dos 309 pedidos candidatos foram conciliados em duas passagens identicas, reutilizando o contrato fiscal seguro e as pontes de estoque direta por `SEQESTOQUE` e alternativa por tipo, relatorio e item, sempre com produto e quantidade exatos.
+- O estado acumulado reconciliou 569 itens parcialmente recebidos e 459 sem recebimento. Nenhum identificador, documento, material, unidade, valor ou quantidade individual foi exportado.
+- Todos os 569 itens parciais possuem soma fiscal segura exatamente igual ao acumulado e cobertura completa por movimentos de entrada. Isso comprova o processamento da parcela recebida, mas nao determina se o restante continua aberto ou foi encerrado no cabecalho.
+- Entre os 459 itens sem recebimento acumulado, 428 nao possuem fiscal seguro nem movimento vinculado. Outros 31 possuem soma fiscal emitida acima do acumulado, mas nenhum movimento de estoque exato; esses casos representam processamento fiscal sem entrada de estoque comprovada.
+- Nao foi encontrada cobertura de movimento parcial ou ambigua: os vinculos classificaram-se somente como completos, ausentes ou sem fiscal seguro. Nenhum fallback por similaridade foi aceito.
+- A finalidade do cadastro mestre separou 958 itens `REVENDA`, 42 nao revenda e 28 com material ausente ou sem cadastro. O filtro de migracao continua limitado a `REVENDA`, sem descartar as demais linhas da quarentena.
+- O escopo dos itens compreende 776 registros do Grupo CPA, 250 da empresa CPA Ferro e Aco e dois da 3Z. Nenhuma empresa proprietaria foi alterada ou inferida.
+- Nos 22 itens das sete contradicoes, 21 possuem fiscal seguro acima do acumulado e movimento ausente; o item restante nao possui fiscal seguro e tambem carece de cadastro mestre. O recorte contem quatro itens de revenda, 17 nao revenda e um sem cadastro.
+- A conciliacao nao autoriza promover os 569 residuais como compras abertas, nem os 31 fiscais sem movimento como recebidos. Liquidacao, cancelamento e operacoes do cabecalho ainda precisam ser confrontados antes de qualquer decisao.
+- O relatorio `legacy-purchase-pending-item-reconciliation.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, identificador, documento, material, unidade, valor, quantidade, TPS ou MDF/LDF integra o GitHub.
+- Nenhum pedido, item, movimento ou documento fiscal foi criado, alterado, importado ou promovido no ERP novo. Nenhum saldo final foi calculado.
+- `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
+- Proximo passo obrigatorio: classificar por contagens os 309 pedidos candidatos segundo `DTLIQUIDACAOPEDIDO`, tipo e presenca de `PedidoCompraOperacoes` e cancelamento formal de item, cruzando os 569 parciais, os 428 sem fiscal e os 31 fiscais sem movimento. O objetivo e separar historico encerrado de obrigacao potencialmente aberta sem exportar dados nominais, calcular saldo final ou autorizar importacao.
+
 ### Gate 18 - Campos suplementares dos excedentes com vinculo unico
 
 - O ambiente isolado foi recomposto neste computador com SQL Server 2025 `17.0.1000.7`, instancia nomeada `ERPZLEGACY`, autenticacao integrada do Windows, servicos manuais, SQL Browser desabilitado, telemetria desabilitada, SSMS 22 `22.10.12201.205` e `sqlcmd` local validado por Shared Memory.
