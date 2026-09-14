@@ -1125,3 +1125,16 @@ PRONTO: list/get, ownership, RBAC, paginacao, contexto 360 composto, sinais come
 BLOCKED: decisao autonoma, envio automatico de mensagem, alteracao comercial/financeira/fiscal, fechamento de Oportunidade e IA generativa sem provider e schema governados. O Site CPA permanece sem alteracoes.
 
 ERP-SITE-01 a ERP-SITE-12 concluidos no ERP. Proxima etapa: homologacao integrada e, somente mediante autorizacao, adaptacao incremental do Site CPA.
+
+
+---
+
+# 32. ERP-SITE-HML-01 - HOMOLOGACAO CONSOLIDADA
+
+ERP-SITE-01 a ERP-SITE-12 foram homologados em conjunto. A matriz completa, inventario das 43 operations, capabilities, evidencias, blockers externos e dataset estao em `docs/ERP_SITE_HML_01.md`.
+
+Decisao: `ERP_READY_FOR_SITE_E2E`. Isso nao equivale a go-live. Providers ausentes continuam `blocked` ou `degraded` e nenhum segredo/dado real foi utilizado.
+
+Um P1 foi corrigido: capabilities centrais deixaram de ser constantes e agora dependem de sondagem real. O health passa a informar estado geral, timestamp e dependencias minimizadas. Nao ha P0 ou P1 de codigo aberto.
+
+Proximo passo somente com autorizacao expressa: preparar ambiente/dataset de homologacao e integrar o Site CPA contrato por contrato. Nao existe ERP-SITE-13.

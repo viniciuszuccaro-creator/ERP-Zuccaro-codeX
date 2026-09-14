@@ -1,10 +1,4 @@
-import { paymentCapability } from '../siteCpaPayment/provider.ts';
-import { portalCapabilities } from '../siteCpaPortal/entry.ts';
-import { deliveryCapability } from '../siteCpaDelivery/entry.ts';
-import { chatCapability } from '../siteCpaChat/entry.ts';
-import { armationCapabilities } from '../siteCpaArmacao/entry.ts';
-import { workCapabilities } from '../siteCpaWork/entry.ts';
-import { opportunityCapabilities } from '../siteCpaOpportunity/entry.ts';
+import { buildSiteCpaHealth } from './health.ts';
 import { routeSiteCpaOperation } from '../siteCpaOperationRouter/entry.ts';
 
 export const SITE_CPA_ORIGIN = 'SITE_CPA';
@@ -382,44 +376,10 @@ export const handleSiteCpaGatewayRequest = async ({
   };
 
   if (request.operation === SITE_CPA_HEALTH_OPERATION) {
-    const paymentState = await paymentCapability({ base44, scope, env });
-    const portalStates = await portalCapabilities({ base44, scope });
-    const deliveryState = await deliveryCapability({ base44, scope });
-    const chatState = await chatCapability({ base44, scope });
-    const armationStates = await armationCapabilities({ base44, scope });
-    const workStates = await workCapabilities({ base44, scope });
-    const opportunityStates = await opportunityCapabilities({ base44, scope });
-    const aggregateWorkState = [armationStates.WORK, workStates.WORK].includes('blocked')
-      ? 'blocked' : [armationStates.WORK, workStates.WORK].includes('degraded') ? 'degraded' : 'ready';
-    const body = buildSiteCpaResponse({
-      ok: true,
-      request,
-      data: {
-        status: 'ok',
-        contractVersion: SITE_CPA_CONTRACT_VERSION,
-        origin: SITE_CPA_ORIGIN,
-        scope: {
-          groupId: scope.groupId,
-          empresaId: scope.empresaId,
-          scopeType: scope.scopeType,
-        },
-        capabilities: {
-          CUSTOMER_RESOLVE: 'ready',
-          CATALOG_READ: 'ready',
-          ORDER_CREATE: 'ready',
-          QUOTE_CREATE: 'ready',
-          NEGOTIATION: 'ready',
-          PAYMENT: paymentState,
-          ...portalStates,
-          DELIVERY: deliveryState,
-          CHAT: chatState,
-          ...armationStates,
-          ...workStates,
-          WORK: aggregateWorkState,
-          ...opportunityStates,
-        },
-      },
+    const data = await buildSiteCpaHealth({
+      base44, scope, env, now, contractVersion: SITE_CPA_CONTRACT_VERSION, origin: SITE_CPA_ORIGIN,
     });
+    const body = buildSiteCpaResponse({ ok: true, request, data });
     return finish({ status: 200, body, eventStatus: 'concluido' });
   }
 

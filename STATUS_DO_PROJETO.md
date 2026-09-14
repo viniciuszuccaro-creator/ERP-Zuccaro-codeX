@@ -7566,3 +7566,19 @@ Checklist inicial:
 - Proximo passo: homologar ERP-SITE-01 a 12 de ponta a ponta e iniciar a integracao do Site somente com autorizacao expressa.
 - Validacao final: 11/11 testes focados e 435/435 testes globais aprovados; ESLint global e `audit:baseline` aprovados; build completo e `git diff --check` aprovados.
 - Typecheck global permaneceu no baseline historico de 2.238 diagnosticos, sem aumento e sem supressao. Avisos conhecidos de bundle, Browserslist e imports mistos permanecem registrados.
+
+
+## 2026-09-13 - ERP-SITE-HML-01: homologacao consolidada
+
+- Decisao: `ERP_READY_FOR_SITE_E2E`; nao equivale a `GO_LIVE_READY`.
+- Inventario oficial: 43 operations S2S unicas, com nomes validos e roteamento confirmado.
+- Corrigido P1 do health: `CUSTOMER_RESOLVE`, `CATALOG_READ`, `ORDER_CREATE`, `QUOTE_CREATE` e `NEGOTIATION` nao sao mais declaradas `ready` sem sondar entidades/metodos reais.
+- Health agora retorna estado geral, timestamp, versao, escopo, capabilities e dependencias minimizadas sem segredos. Falha central bloqueia; provider opcional ausente degrada.
+- `PRODUCTION_RELEASE` permanece `blocked`; `COMMERCIAL_COPILOT` permanece `degraded` sem IA generativa governada comprovada.
+- Suite consolidada ERP-SITE: 186/186 testes aprovados. P0 abertos: 0. P1 abertos: 0.
+- Blockers externos: credencial por ambiente, sandbox de pagamento, storage privado, scanner, DWG e IA/mensageria quando aplicaveis.
+- Relatorio: `docs/ERP_SITE_HML_01.md`.
+- Nenhum dado real, Site CPA, backup legado ou HD externo foi acessado ou alterado.
+- Proximo passo somente com autorizacao: preparar dataset/ambiente e executar E2E integrado com o Site CPA.
+- Validacao final: 186/186 testes ERP-SITE e 438/438 testes globais aprovados; ESLint global, `audit:baseline`, build completo e `git diff --check` aprovados.
+- Typecheck global permaneceu no baseline historico de 2.238 diagnosticos, sem aumento ou supressao. Avisos conhecidos de bundle, Browserslist e imports mistos permanecem P2.
