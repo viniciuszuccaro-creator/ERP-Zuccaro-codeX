@@ -784,6 +784,19 @@ Lote concluido em 2026-09-14 na politica compartilhada de faturamento, sem alter
 
 Proxima frente P0: tipar `estoqueMovimentoPolicy.js`, politica compartilhada de Estoque com 22 diagnosticos. `iaTransversalPolicy.js` permanece posterior por pertencer a P2.
 
+### Contratos JSDoc - politica de movimentacao de Estoque
+
+Lote concluido em 2026-09-14 na politica compartilhada de movimentacao, sem alterar calculo de saldo, inventario, transferencias ou persistencia do historico.
+
+- Contratos locais descrevem movimento, Produto, configuracao, escopo e metadados de erro sem `any`, `ts-ignore` ou desativacao de `checkJs`.
+- O typecheck isolado de `estoqueMovimentoPolicy.js` passou de 22 diagnosticos para zero.
+- O typecheck global caiu de 2.182 para 2.160 diagnosticos, reducao liquida exata de 22, sem transferir falhas para o cliente local.
+- Permanecem iguais o bloqueio de saldo negativo sem politica, a exigencia de origem e Empresa, o isolamento de Produto por Empresa/Grupo e a idempotencia por documento.
+- Inventario continua aplicando saldo absoluto, transferencias preservam direcao e o historico de estoque continua protegido contra exclusao.
+- Nenhum dado, entidade, recurso Base44, banco ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: selecionar no ranking atualizado a proxima politica operacional de maior impacto, mantendo `iaTransversalPolicy.js` para P2 e `marketplacePedidoPolicy.js` para P1.
+
 ### ERP-SITE-01 - Fundacao S2S do Site CPA
 
 Nova prioridade autorizada em 2026-09-13: executar primeiro no ERP os 12 contratos Site CPA, sem alterar o repositorio do Site ate a homologacao da camada ERP.

@@ -1,8 +1,53 @@
+/**
+ * @typedef {Record<string, unknown> & {
+ *   id?: string | number,
+ *   empresa_id?: unknown,
+ *   group_id?: unknown,
+ *   grupo_id?: unknown,
+ *   produto_id?: unknown,
+ *   tipo_movimento?: unknown,
+ *   tipo_movimentacao?: unknown,
+ *   quantidade?: unknown,
+ *   estoque_anterior?: unknown,
+ *   estoque_atual?: unknown,
+ *   reservado_atual?: unknown,
+ *   origem_movimento?: unknown,
+ *   origem_documento_id?: unknown,
+ *   documento?: unknown,
+ *   documento_referencia?: unknown,
+ *   motivo?: unknown,
+ *   idempotency_key?: unknown,
+ * }} EstoqueMovimentoRecord
+ * @typedef {Record<string, unknown> & {
+ *   empresa_id?: unknown,
+ *   empresa_dona_id?: unknown,
+ *   group_id?: unknown,
+ *   grupo_id?: unknown,
+ *   estoque_atual?: unknown,
+ *   permite_saldo_negativo?: unknown,
+ * }} EstoqueProdutoRecord
+ * @typedef {Record<string, unknown> & {
+ *   chave?: unknown,
+ *   group_id?: unknown,
+ *   grupo_id?: unknown,
+ *   empresa_id?: unknown,
+ *   valor?: unknown,
+ *   valor_texto?: unknown,
+ *   valor_booleano?: unknown,
+ * }} EstoqueConfigRecord
+ * @typedef {{ groupId?: unknown, empresaId?: unknown }} EstoqueConfigScope
+ * @typedef {{ produto?: EstoqueProdutoRecord, record?: EstoqueMovimentoRecord, permiteNegativo?: boolean }} ResolveEstoqueOptions
+ * @typedef {{ record?: EstoqueMovimentoRecord, produto?: EstoqueProdutoRecord | null, movements?: EstoqueMovimentoRecord[], permiteNegativo?: boolean }} AssertEstoqueOptions
+ * @typedef {Error & { code?: string }} EstoquePolicyError
+ */
+
+/** @param {unknown} value */
 const toQty = (value) => {
   const amount = Number(value);
   return Number.isFinite(amount) ? amount : 0;
 };
 
+/** @param {...unknown} values */
 const firstText = (...values) => values.map((value) => String(value || '').trim()).find(Boolean) || '';
 
 export const HISTORICO_ESTOQUE_ENTITIES = ['MovimentacaoEstoque', 'AuditLog'];
@@ -11,12 +56,15 @@ const SET_TIPOS = new Set(['ajuste', 'inventario', 'inventário']);
 const IN_TIPOS = new Set(['entrada', 'devolucao', 'devolução', 'compra', 'recebimento', 'producao_entrada']);
 const OUT_TIPOS = new Set(['saida', 'saída', 'venda', 'consumo', 'baixa', 'producao']);
 
+/** @param {EstoqueMovimentoRecord} record */
 export const normalizeTipoMovimento = (record = {}) => String(
   record.tipo_movimento || record.tipo_movimentacao || '',
 ).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
+/** @param {EstoqueMovimentoRecord} record */
 export const isAjusteEstoque = (record = {}) => SET_TIPOS.has(normalizeTipoMovimento(record));
 
+/** @param {EstoqueMovimentoRecord} record */
 export const movementHasOrigin = (record = {}) => Boolean(
   firstText(
     record.origem_movimento,
@@ -27,6 +75,7 @@ export const movementHasOrigin = (record = {}) => Boolean(
   ),
 );
 
+/** @param {EstoqueMovimentoRecord} record */
 export const movementIdempotencyKey = (record = {}) => {
   const explicit = firstText(record.idempotency_key);
   if (explicit) return explicit;
@@ -44,18 +93,23 @@ export const movementIdempotencyKey = (record = {}) => {
   ].join('|');
 };
 
+/**
+ * @param {EstoqueMovimentoRecord} record
+ * @param {EstoqueMovimentoRecord[]} movements
+ */
 export const findDuplicateMovement = (record = {}, movements = []) => {
   const key = movementIdempotencyKey(record);
   if (!key) return null;
   return (Array.isArray(movements) ? movements : []).find((item) => movementIdempotencyKey(item) === key) || null;
 };
 
+/** @param {EstoqueMovimentoRecord} record */
 export const resolveSignedQuantity = (record = {}) => {
   const qty = toQty(record.quantidade);
   if (qty < 0) return qty;
   const tipo = normalizeTipoMovimento(record);
   if (!tipo) {
-    const error = new Error('Tipo de movimentacao obrigatorio.');
+    const error = /** @type {EstoquePolicyError} */ (new Error('Tipo de movimentacao obrigatorio.'));
     error.code = 'ESTOQUE_TIPO_OBRIGATORIO';
     throw error;
   }
@@ -65,11 +119,15 @@ export const resolveSignedQuantity = (record = {}) => {
   if (tipo === 'transferencia_saida') return -qty;
   if (OUT_TIPOS.has(tipo)) return -qty;
   if (IN_TIPOS.has(tipo)) return qty;
-  const error = new Error(`Tipo de movimentacao nao suportado: ${tipo}`);
+  const error = /** @type {EstoquePolicyError} */ (new Error(`Tipo de movimentacao nao suportado: ${tipo}`));
   error.code = 'ESTOQUE_TIPO_INVALIDO';
   throw error;
 };
 
+/**
+ * @param {EstoqueConfigRecord[]} configs
+ * @param {EstoqueConfigScope} scope
+ */
 export const configAllowsNegativeStock = (configs = [], { groupId = null, empresaId = null } = {}) => (
   (Array.isArray(configs) ? configs : []).some((item) => {
     if (String(item?.chave || '') !== 'estoque_permite_saldo_negativo') return false;
@@ -85,6 +143,7 @@ export const configAllowsNegativeStock = (configs = [], { groupId = null, empres
   })
 );
 
+/** @param {ResolveEstoqueOptions} options */
 export const resolveNextEstoque = ({ produto = {}, record = {}, permiteNegativo = false } = {}) => {
   const current = toQty(produto.estoque_atual);
   const explicit = record.estoque_atual;
@@ -97,13 +156,14 @@ export const resolveNextEstoque = ({ produto = {}, record = {}, permiteNegativo 
     next = delta === null ? Math.abs(toQty(record.quantidade)) : current + delta;
   }
   if (next < -0.0001 && !permiteNegativo) {
-    const error = new Error('Saldo negativo sem politica.');
+    const error = /** @type {EstoquePolicyError} */ (new Error('Saldo negativo sem politica.'));
     error.code = 'ESTOQUE_NEGATIVO';
     throw error;
   }
   return { current, next: Math.round(next * 1000) / 1000 };
 };
 
+/** @param {AssertEstoqueOptions} options */
 export const assertMovimentacaoEstoque = ({ record = {}, produto = null, movements = [], permiteNegativo = false } = {}) => {
   if (!firstText(record.empresa_id)) {
     throw new Error('Empresa obrigatoria para movimentar estoque.');
@@ -127,7 +187,7 @@ export const assertMovimentacaoEstoque = ({ record = {}, produto = null, movemen
   const produtoEmpresa = firstText(produto.empresa_id, produto.empresa_dona_id);
   const movimentoEmpresa = firstText(record.empresa_id);
   if (produtoEmpresa && movimentoEmpresa && produtoEmpresa !== movimentoEmpresa) {
-    const error = new Error('Movimentacao em empresa errada.');
+    const error = /** @type {EstoquePolicyError} */ (new Error('Movimentacao em empresa errada.'));
     error.code = 'ESTOQUE_EMPRESA_ERRADA';
     throw error;
   }
@@ -135,7 +195,7 @@ export const assertMovimentacaoEstoque = ({ record = {}, produto = null, movemen
     const produtoGroup = firstText(produto.group_id, produto.grupo_id);
     const movimentoGroup = firstText(record.group_id, record.grupo_id);
     if (!produtoGroup || !movimentoGroup || produtoGroup !== movimentoGroup) {
-      const error = new Error('Produto sem empresa proprietaria exige group_id compativel.');
+      const error = /** @type {EstoquePolicyError} */ (new Error('Produto sem empresa proprietaria exige group_id compativel.'));
       error.code = 'ESTOQUE_EMPRESA_ERRADA';
       throw error;
     }
@@ -162,7 +222,7 @@ export const assertMovimentacaoEstoque = ({ record = {}, produto = null, movemen
     idempotency_key: movementIdempotencyKey(record) || undefined,
   };
 
-  const produtoPatch = { estoque_atual: next };
+  const produtoPatch = /** @type {Record<string, number>} */ ({ estoque_atual: next });
   if (record.reservado_atual !== undefined && record.reservado_atual !== null) {
     produtoPatch.estoque_reservado = toQty(record.reservado_atual);
   }

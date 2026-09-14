@@ -8327,3 +8327,17 @@ Checklist inicial:
 - Dados/infraestrutura: nenhum dado real, Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
 - Commit de implementacao: `00af6aeb` (`Tipa politica de faturamento do pedido`).
 - Proximo passo P0: tipar `estoqueMovimentoPolicy.js`, politica compartilhada de Estoque com 22 diagnosticos, em lote separado.
+
+## 2026-09-14 - Contratos JSDoc da movimentacao de Estoque
+
+- Objetivo: eliminar os diagnosticos proprios de `estoqueMovimentoPolicy.js` documentando o contrato existente sem alterar o fluxo operacional.
+- Causa raiz: parametros, records, configuracoes, opcoes e metadados de erro eram inferidos sem campos por `checkJs`, gerando 22 diagnosticos locais.
+- Arquivo alterado: `src/components/lib/estoqueMovimentoPolicy.js`; nenhum consumidor, tela, entidade ou backend precisou ser modificado.
+- Implementacao: JSDoc local descreve movimento, Produto, configuracao, escopo, operacoes de saldo e erros protegidos sem `any`, `ts-ignore` ou desligamento de `checkJs`.
+- Multiempresa/RBAC: exigencia de Empresa, compatibilidade Produto-Empresa e fallback de Produto mestre por Grupo permanecem inalterados; nenhuma permissao foi ampliada.
+- Seguranca/auditoria: saldo negativo continua fail-closed, origem continua obrigatoria, repeticoes continuam idempotentes e o historico permanece protegido contra exclusao.
+- Testes: teste dedicado passou 7/7; suite completa passou 443/443; `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram. O build manteve apenas os avisos conhecidos de chunks/imports mistos e bases de navegador desatualizadas.
+- Typecheck: `estoqueMovimentoPolicy.js` passou de 22 diagnosticos para zero; o passivo global caiu de 2.182 para 2.160, reducao liquida exata de 22, e portanto continua aberto sem ser mascarado.
+- Dados/infraestrutura: nenhum dado real, Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
+- Commit de implementacao: `PENDENTE_COMMIT`.
+- Proximo passo P0: recalcular o ranking e selecionar a proxima politica operacional ainda aberta; IA transversal e Marketplace permanecem nas prioridades P2 e P1, respectivamente.
