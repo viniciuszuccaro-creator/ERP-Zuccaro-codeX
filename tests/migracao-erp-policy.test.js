@@ -14,6 +14,8 @@ import {
   buildReconciliacaoMigracao,
   findManualReconciliationApprovalRequest,
   isManualReconciliationApprovalRequest,
+  MIGRACAO_RECONCILIACAO_FISCAL_PERMISSOES,
+  MIGRACAO_RECONCILIACAO_TIPO_FISCAL,
   MIGRACAO_STATUS_PENDING_MANUAL_RECONCILIATION,
   reviewPendingManualReconciliation,
   stampMigracaoRecord,
@@ -39,8 +41,8 @@ const privateEvidence = (id = 'ev-1', overrides = {}) => ({
 const loadSolicitacoesAprovacaoHandler = async () => {
   const original = await readFile(new URL('../base44/functions/solicitacoesAprovacao/entry.ts', import.meta.url), 'utf8');
   const instrumented = original
-    .replace(/^import \{ createClientFromRequest \}[^\n]+\n/, 'const createClientFromRequest = () => globalThis.__approvalMockClient;\n')
-    .replace(/import \{[\s\S]*?\} from '\.\.\/_lib\/financeiro\/manualReconciliationApprovalPolicy\/entry\.ts';\n/, 'const { MANUAL_RECONCILIATION_TYPE, applyManualWorkflowTransition, auditManualStaging, buildManualRecord, firstText, isManualReconciliationRequest, resolveManualScope } = globalThis.__manualApprovalPolicy;\n')
+    .replace(/^import \{ createClientFromRequest \}[^\r\n]+\r?\n/, 'const createClientFromRequest = () => globalThis.__approvalMockClient;\n')
+    .replace(/import \{[\s\S]*?\} from '\.\.\/_lib\/financeiro\/manualReconciliationApprovalPolicy\/entry\.ts';\r?\n/, 'const { MANUAL_RECONCILIATION_TYPE, applyManualWorkflowTransition, auditManualStaging, buildManualRecord, firstText, isManualReconciliationRequest, resolveManualReconciliationAccess, resolveManualScope } = globalThis.__manualApprovalPolicy;\n')
     .replace('Deno.serve(async (req) => {', 'globalThis.__captureApprovalHandler(async (req) => {');
   let handler = null;
   globalThis.__captureApprovalHandler = (candidate) => { handler = candidate; };
@@ -52,7 +54,7 @@ const loadSolicitacoesAprovacaoHandler = async () => {
   return handler;
 };
 
-const makeApprovalClient = ({ existing = [], current = null, permissions = ['conciliar'], empresaGroup = 'g1', auditFails = false, updateFails = false, userId = 'u1' } = {}) => {
+const makeApprovalClient = ({ existing = [], current = null, permissions = ['conciliar'], fiscalPermissions = permissions, empresaGroup = 'g1', auditFails = false, updateFails = false, userId = 'u1' } = {}) => {
   const state = { created: [], deleted: [], audits: [], updates: [], signedUris: [] };
   const user = { id: userId, full_name: 'Analista', perfil_acesso_id: 'p1', group_id: 'g1', empresa_atual_id: 'e1' };
   let stored = current || existing[0] || null;
@@ -72,7 +74,7 @@ const makeApprovalClient = ({ existing = [], current = null, permissions = ['con
     auth: { me: async () => user },
     asServiceRole: {
       entities: {
-        PerfilAcesso: { get: async () => ({ permissoes: { Financeiro: { Migracao: permissions } } }) },
+        PerfilAcesso: { get: async () => ({ permissoes: { Financeiro: { Migracao: permissions }, Fiscal: { Migracao: fiscalPermissions } } }) },
         Empresa: { get: async () => ({ id: 'e1', group_id: empresaGroup }) },
         SolicitacaoAprovacao: solicitacoes,
         AuditLog: { create: async (record) => { if (auditFails) throw new Error('audit down'); state.audits.push(record); return record; } },
@@ -446,7 +448,7 @@ test('adaptador persistente recusa envelope fora do staging financeiro', () => {
     () => buildManualReconciliationApprovalRequest({ ...staging, entidade_migracao: 'Pedido' }, {
       solicitanteId: 'registrante-1', timestamp: '2026-09-13T12:05:00.000Z',
     }),
-    /Entidade financeira invalida/,
+    /Entidade invalida/,
   );
 });
 
@@ -462,13 +464,13 @@ test('backend isola conciliacao financeira do fluxo comercial generico', async (
   const specializedContract = approvals + policy;
   assert.match(approvals, /action === 'createManualReconciliation'/);
   assert.match(approvals, /action === 'listManualReconciliations'/);
-  assert.match(approvals, /hasPermission\(base44, user, 'Financeiro', 'Migracao', 'conciliar'\)/);
-  assert.match(approvals, /hasPermission\(base44, user, 'Financeiro', 'Migracao', 'aprovar'\)/);
+  assert.match(approvals, /hasPermission\(base44, user, access\.module, access\.section, access\.reconcilePermission\)/);
+  assert.match(approvals, /hasPermission\(base44, user, access\.module, access\.section, access\.approvePermission\)/);
   assert.match(specializedContract, /scopeType !== 'empresa' \|\| !groupId \|\| !empresaId/);
   assert.match(specializedContract, /Empresa\.get\(empresaId\)/);
   assert.match(approvals, /idempotency_key: prepared\.record\.idempotency_key/);
   assert.match(specializedContract, /sanitizeManualValue\(envelope\)/);
-  assert.match(approvals, /Use a acao financeira especializada/);
+  assert.match(approvals, /Use a acao especializada/);
   assert.match(approvals, /Conciliacao financeira nao pode ser decidida pelo fluxo comercial generico/);
   assert.match(approvals, /filter\(\(item\) => !isManualReconciliationRequest\(item\)\)/);
   const specialized = approvals.slice(
@@ -693,6 +695,67 @@ test('backend persiste workflow especializado com RBAC, contexto e rollback', as
   })).status, 503);
   assert.equal(auditDown.state.updates.length, 2);
   assert.deepEqual(auditDown.state.updates[1].patch.dados_propostos, initial.dados_propostos);
+  delete globalThis.__approvalMockClient;
+});
+
+test('nota fiscal legada usa staging fiscal bloqueado, pedido opcional e tres usuarios', async () => {
+  const staging = buildPendingManualReconciliation({
+    group_id: 'g1', empresa_id: 'e1', codigo_legado: 'nf-legacy-1', chave_acesso: 'nao-auditar-integralmente',
+  }, {
+    entidade: 'NotaFiscal', registradoPor: 'u1', registradoEm: '2026-09-14T12:00:00.000Z',
+  });
+  const request = buildManualReconciliationApprovalRequest(staging, {
+    solicitanteId: 'u1', timestamp: '2026-09-14T12:05:00.000Z',
+  });
+
+  assert.equal(staging.pedido_id, null);
+  assert.equal(staging.decisao_fiscal, null);
+  assert.equal(request.tipo_solicitacao, MIGRACAO_RECONCILIACAO_TIPO_FISCAL);
+  assert.equal(request.perfil_aprovador_necessario, MIGRACAO_RECONCILIACAO_FISCAL_PERMISSOES.aprovar);
+  assert.equal(request.dados_propostos.operation, 'manual_fiscal_reconciliation_staging');
+  assert.equal(isManualReconciliationApprovalRequest(request), true);
+  assert.throws(
+    () => applyMigracaoOnCreate({ entityName: 'NotaFiscal', record: { ...staging, confirmado: true } }),
+    /permanece no staging/,
+  );
+
+  const handler = await loadSolicitacoesAprovacaoHandler();
+  const invoke = async (client, payload) => {
+    globalThis.__approvalMockClient = client;
+    const response = await handler({ json: async () => payload });
+    return { status: response.status, body: await response.json() };
+  };
+  const payload = {
+    action: 'createManualReconciliation', group_id: 'g1', empresa_id: 'e1', scope_type: 'empresa', approval_request: request,
+  };
+  const financeOnly = makeApprovalClient({ permissions: ['conciliar'], fiscalPermissions: [] });
+  const denied = await invoke(financeOnly.client, payload);
+  assert.equal(denied.status, 403);
+  assert.equal(financeOnly.state.created.length, 0);
+  assert.equal(financeOnly.state.audits[0].modulo, 'Fiscal');
+
+  const allowed = makeApprovalClient();
+  const created = await invoke(allowed.client, payload);
+  assert.equal(created.status, 200);
+  assert.equal(allowed.state.audits[0].modulo, 'Fiscal');
+  assert.equal(allowed.state.created[0].tipo_solicitacao, MIGRACAO_RECONCILIACAO_TIPO_FISCAL);
+
+  const initial = { id: 'sa-fiscal-1', ...allowed.state.created[0] };
+  const withEvidence = applyManualWorkflowTransition(initial, 'attachManualReconciliationEvidence', {
+    evidencia: privateEvidence('ev-fiscal'),
+  }, { id: 'u1' }, '2026-09-14T13:00:00.000Z').record;
+  const reviewed = applyManualWorkflowTransition(withEvidence, 'reviewManualReconciliation', {
+    decisao: 'PRESERVAR_SEM_VINCULO_PEDIDO', justificativa: 'Pedido de origem nao foi localizado.',
+  }, { id: 'u2' }, '2026-09-14T14:00:00.000Z').record;
+  const approved = applyManualWorkflowTransition(reviewed, 'approveManualReconciliation', {
+    decisao: 'PRESERVAR_SEM_VINCULO_PEDIDO', justificativa: 'Conferencia fiscal independente concluida.', confirmacao_humana: true,
+  }, { id: 'u3' }, '2026-09-14T15:00:00.000Z').record;
+  const envelope = approved.dados_propostos.envelope_staging;
+  assert.equal(envelope.decisao_fiscal.status, 'APROVADA_AGUARDANDO_PROMOCAO');
+  assert.equal(envelope.status_migracao, MIGRACAO_STATUS_PENDING_MANUAL_RECONCILIATION);
+  assert.equal(envelope.destino_migracao, 'staging');
+  assert.equal(envelope.confirmado, false);
+  assert.equal(envelope.bloqueio_operacional, true);
   delete globalThis.__approvalMockClient;
 });
 

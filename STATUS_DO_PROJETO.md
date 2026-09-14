@@ -8012,6 +8012,24 @@ Checklist inicial:
 - Validacao final: 11/11 testes focados e 435/435 testes globais aprovados; ESLint global e `audit:baseline` aprovados; build completo e `git diff --check` aprovados.
 - Typecheck global permaneceu no baseline historico de 2.238 diagnosticos, sem aumento e sem supressao. Avisos conhecidos de bundle, Browserslist e imports mistos permanecem registrados.
 
+## 2026-09-14 - Gate 18: staging fiscal historico protegido
+
+- Objetivo: desbloquear o contrato tecnico de staging para `NotaFiscal` legada sem vinculo obrigatorio de pedido, sem importar ou promover os tres documentos reais ainda bloqueados.
+- Causa raiz: a conciliacao manual existente aceitava somente `ContaPagar` e `ContaReceber`, usava semantica financeira fixa e nao possuia permissao fiscal independente.
+- Reuso: foram ampliados `migracaoErpPolicy`, `manualReconciliationApprovalPolicy`, `solicitacoesAprovacao` e o adaptador local existentes; nenhuma tela, rota, entidade, modulo ou importador paralelo foi criado.
+- Envelope fiscal: `NotaFiscal` recebe tipo `conciliacao_migracao_fiscal`, chave idempotente por Grupo, Empresa, entidade e codigo legado, `pedido_id` opcional e decisao fiscal separada. O registro permanece `PENDING_MANUAL_RECONCILIATION`, em `staging`, com `confirmado=false` e bloqueio operacional.
+- RBAC: criacao, listagem, evidencia e revisao exigem `Fiscal.Migracao.conciliar`; aprovacao exige `Fiscal.Migracao.aprovar`. Permissao financeira isolada nao concede acesso fiscal.
+- Multiempresa: todas as acoes continuam exigindo `scope_type=empresa`, `group_id`, `empresa_id`, Empresa pertencente ao Grupo e usuario vinculado ao mesmo contexto.
+- Segregacao: evidencia, revisao e aprovacao final exigem tres usuarios distintos. As decisoes fiscais permitidas sao `PRESERVAR_SEM_VINCULO_PEDIDO` e `AGUARDAR_VINCULO_PEDIDO`; nenhuma delas promove automaticamente o documento.
+- Auditoria: o modulo e a descricao agora acompanham o dominio Financeiro ou Fiscal; o resumo persiste apenas tipo, entidade, referencia de staging, etapa, contagens e estado de bloqueio.
+- Compatibilidade: o fluxo financeiro anterior, inclusive decisoes `PAGO`/`ABERTO`, chave idempotente, rollback e Central de Aprovacoes, foi preservado.
+- Validacao focada: 32/32 testes aprovados, incluindo pedido opcional, RBAC fiscal independente, idempotencia, segregacao de tres usuarios e permanencia no staging.
+- Validacao global: 439/439 testes aprovados; ESLint global, `audit:baseline`, build completo e `git diff --check` aprovados.
+- Typecheck: permaneceu no baseline historico de 2.238 diagnosticos. O unico diagnostico novo do lote foi corrigido; os sete diagnosticos ainda apontados em `migracaoErpPolicy.js` sao preexistentes e ficam fora das linhas alteradas.
+- Nenhum dado real, documento fiscal, titulo, arquivo legado, banco, backup ou HD externo foi acessado, criado, alterado, importado ou promovido.
+- `MSSQL$ERPZLEGACY` e `SQLAgent$ERPZLEGACY` terminaram `Stopped`/`Manual`; `SQLBrowser` terminou `Stopped`/`Disabled`.
+- Proximo passo obrigatorio: integrar o tipo fiscal na Central de Aprovacoes existente, com uma aba ou ramificacao fiscal protegida pelas permissoes fiscais, filtros estritos de Grupo/Empresa e testes sinteticos. Nao promover os tres documentos reais antes da homologacao visual e persistente completa.
+
 
 ## 2026-09-13 - ERP-SITE-HML-01: homologacao consolidada
 

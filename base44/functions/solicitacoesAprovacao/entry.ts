@@ -6,6 +6,7 @@ import {
   buildManualRecord,
   firstText,
   isManualReconciliationRequest,
+  resolveManualReconciliationAccess,
   resolveManualScope,
 } from '../_lib/financeiro/manualReconciliationApprovalPolicy/entry.ts';
 
@@ -179,9 +180,11 @@ Deno.serve(async (req) => {
     if (action === 'createManualReconciliation') {
       const scope = await resolveManualScope(base44, user, payload);
       if (scope.response) return scope.response;
-      const permOk = await hasPermission(base44, user, 'Financeiro', 'Migracao', 'conciliar');
+      const access = resolveManualReconciliationAccess(payload?.approval_request || payload?.solicitacao || {});
+      if (!access) return Response.json({ error: 'Tipo de conciliacao manual invalido' }, { status: 400 });
+      const permOk = await hasPermission(base44, user, access.module, access.section, access.reconcilePermission);
       if (!permOk) {
-        try { await auditManualStaging(base44, user, { group_id: scope.groupId, empresa_id: scope.empresaId }, 'Bloqueio', false); }
+        try { await auditManualStaging(base44, user, { tipo_solicitacao: access.type, group_id: scope.groupId, empresa_id: scope.empresaId }, 'Bloqueio', false); }
         catch (error) { reportApprovalFailure('Falha ao auditar bloqueio da conciliacao', error, { group_id: scope.groupId, empresa_id: scope.empresaId }); return Response.json({ error: 'Controle de acesso indisponivel' }, { status: 503 }); }
         return Response.json({ error: 'Forbidden' }, { status: 403 });
       }
@@ -189,7 +192,7 @@ Deno.serve(async (req) => {
       if (prepared.error) return Response.json({ error: prepared.error }, { status: 400 });
       let existing;
       try {
-        const matches = await base44.asServiceRole.entities.SolicitacaoAprovacao.filter({ idempotency_key: prepared.record.idempotency_key, group_id: scope.groupId, empresa_id: scope.empresaId, tipo_solicitacao: MANUAL_RECONCILIATION_TYPE }, undefined, 2);
+        const matches = await base44.asServiceRole.entities.SolicitacaoAprovacao.filter({ idempotency_key: prepared.record.idempotency_key, group_id: scope.groupId, empresa_id: scope.empresaId, tipo_solicitacao: prepared.record.tipo_solicitacao }, undefined, 2);
         existing = Array.isArray(matches) ? matches[0] : null;
       } catch (error) {
         reportApprovalFailure('Falha ao consultar idempotencia da conciliacao', error, { group_id: scope.groupId, empresa_id: scope.empresaId });
@@ -221,17 +224,19 @@ Deno.serve(async (req) => {
     if (action === 'listManualReconciliations') {
       const scope = await resolveManualScope(base44, user, payload);
       if (scope.response) return scope.response;
-      const canReview = await hasPermission(base44, user, 'Financeiro', 'Migracao', 'conciliar');
-      const canApprove = await hasPermission(base44, user, 'Financeiro', 'Migracao', 'aprovar');
+      const access = resolveManualReconciliationAccess({ tipo_solicitacao: firstText(payload?.tipo_solicitacao, MANUAL_RECONCILIATION_TYPE) });
+      if (!access) return Response.json({ error: 'Tipo de conciliacao manual invalido' }, { status: 400 });
+      const canReview = await hasPermission(base44, user, access.module, access.section, access.reconcilePermission);
+      const canApprove = await hasPermission(base44, user, access.module, access.section, access.approvePermission);
       if (!canReview && !canApprove) {
         try { await auditManualStaging(base44, user, { group_id: scope.groupId, empresa_id: scope.empresaId }, 'Bloqueio', false); }
         catch (error) { reportApprovalFailure('Falha ao auditar bloqueio da listagem', error, { group_id: scope.groupId, empresa_id: scope.empresaId }); return Response.json({ error: 'Controle de acesso indisponivel' }, { status: 503 }); }
         return Response.json({ error: 'Forbidden' }, { status: 403 });
       }
       try {
-        const items = await base44.asServiceRole.entities.SolicitacaoAprovacao.filter({ tipo_solicitacao: MANUAL_RECONCILIATION_TYPE, group_id: scope.groupId, empresa_id: scope.empresaId }, '-created_date', 50);
-        await auditManualStaging(base44, user, { group_id: scope.groupId, empresa_id: scope.empresaId }, 'Visualizacao', true);
-        return Response.json((Array.isArray(items) ? items : []).filter((item) => isManualReconciliationRequest(item) && firstText(item?.group_id) === scope.groupId && firstText(item?.empresa_id) === scope.empresaId));
+        const items = await base44.asServiceRole.entities.SolicitacaoAprovacao.filter({ tipo_solicitacao: access.type, group_id: scope.groupId, empresa_id: scope.empresaId }, '-created_date', 50);
+        await auditManualStaging(base44, user, { tipo_solicitacao: access.type, group_id: scope.groupId, empresa_id: scope.empresaId }, 'Visualizacao', true);
+        return Response.json((Array.isArray(items) ? items : []).filter((item) => firstText(item?.tipo_solicitacao) === access.type && firstText(item?.group_id) === scope.groupId && firstText(item?.empresa_id) === scope.empresaId));
       } catch (error) {
         reportApprovalFailure('Falha ao listar conciliacoes em staging', error, { group_id: scope.groupId, empresa_id: scope.empresaId });
         return Response.json({ error: 'Consulta de staging indisponivel' }, { status: 503 });
@@ -241,22 +246,26 @@ Deno.serve(async (req) => {
     if (action === 'createManualReconciliationEvidenceAccessUrl') {
       const scope = await resolveManualScope(base44, user, payload);
       if (scope.response) return scope.response;
-      const canReview = await hasPermission(base44, user, 'Financeiro', 'Migracao', 'conciliar');
-      const canApprove = await hasPermission(base44, user, 'Financeiro', 'Migracao', 'aprovar');
+      const solicitacaoId = firstText(payload?.solicitacao_id);
+      const evidenciaId = firstText(payload?.evidencia_id);
+      if (!solicitacaoId || !evidenciaId) return Response.json({ error: 'solicitacao_id e evidencia_id sao obrigatorios' }, { status: 400 });
+      let current;
+      try { current = await base44.asServiceRole.entities.SolicitacaoAprovacao.get(solicitacaoId); }
+      catch (error) { reportApprovalFailure('Falha ao carregar conciliacao para evidencia', error, { solicitacao_id: solicitacaoId }); return Response.json({ error: 'Consulta de staging indisponivel' }, { status: 503 }); }
+      if (!current || firstText(current?.group_id) !== scope.groupId || firstText(current?.empresa_id) !== scope.empresaId || !isManualReconciliationRequest(current)) {
+        try { await auditManualStaging(base44, user, { id: solicitacaoId, group_id: scope.groupId, empresa_id: scope.empresaId }, 'Bloqueio', false); }
+        catch (error) { reportApprovalFailure('Falha ao auditar evidencia fora do contexto', error, { solicitacao_id: solicitacaoId }); return Response.json({ error: 'Controle de acesso indisponivel' }, { status: 503 }); }
+        return Response.json({ error: 'Forbidden' }, { status: 403 });
+      }
+      const access = resolveManualReconciliationAccess(current);
+      const canReview = access && await hasPermission(base44, user, access.module, access.section, access.reconcilePermission);
+      const canApprove = access && await hasPermission(base44, user, access.module, access.section, access.approvePermission);
       if (!canReview && !canApprove) {
         try { await auditManualStaging(base44, user, { group_id: scope.groupId, empresa_id: scope.empresaId }, 'Bloqueio', false); }
         catch (error) { reportApprovalFailure('Falha ao auditar bloqueio de evidencia', error, { group_id: scope.groupId, empresa_id: scope.empresaId }); return Response.json({ error: 'Controle de acesso indisponivel' }, { status: 503 }); }
         return Response.json({ error: 'Forbidden' }, { status: 403 });
       }
-      const solicitacaoId = firstText(payload?.solicitacao_id);
-      const evidenciaId = firstText(payload?.evidencia_id);
-      if (!solicitacaoId || !evidenciaId) return Response.json({ error: 'solicitacao_id e evidencia_id sao obrigatorios' }, { status: 400 });
       try {
-        const current = await base44.asServiceRole.entities.SolicitacaoAprovacao.get(solicitacaoId);
-        if (!current || firstText(current?.group_id) !== scope.groupId || firstText(current?.empresa_id) !== scope.empresaId || !isManualReconciliationRequest(current)) {
-          await auditManualStaging(base44, user, { id: solicitacaoId, group_id: scope.groupId, empresa_id: scope.empresaId }, 'Bloqueio', false);
-          return Response.json({ error: 'Forbidden' }, { status: 403 });
-        }
         const evidences = current?.dados_propostos?.envelope_staging?.evidencias_conciliacao;
         const evidence = (Array.isArray(evidences) ? evidences : []).find((item) => firstText(item?.id) === evidenciaId);
         const fileUri = firstText(evidence?.file_uri);
@@ -277,14 +286,6 @@ Deno.serve(async (req) => {
     if (MANUAL_RECONCILIATION_WORKFLOW_ACTIONS.has(action)) {
       const scope = await resolveManualScope(base44, user, payload);
       if (scope.response) return scope.response;
-      const permissionAction = action === 'approveManualReconciliation' ? 'aprovar' : 'conciliar';
-      const permOk = await hasPermission(base44, user, 'Financeiro', 'Migracao', permissionAction);
-      if (!permOk) {
-        try { await auditManualStaging(base44, user, { group_id: scope.groupId, empresa_id: scope.empresaId }, 'Bloqueio', false); }
-        catch (error) { reportApprovalFailure('Falha ao auditar bloqueio do workflow financeiro', error, { action, group_id: scope.groupId, empresa_id: scope.empresaId }); return Response.json({ error: 'Controle de acesso indisponivel' }, { status: 503 }); }
-        return Response.json({ error: 'Forbidden' }, { status: 403 });
-      }
-
       const solicitacaoId = firstText(payload?.solicitacao_id);
       if (!solicitacaoId) return Response.json({ error: 'solicitacao_id e obrigatorio' }, { status: 400 });
 
@@ -299,6 +300,14 @@ Deno.serve(async (req) => {
       if (firstText(current?.group_id) !== scope.groupId || firstText(current?.empresa_id) !== scope.empresaId) {
         try { await auditManualStaging(base44, user, { id: solicitacaoId, group_id: scope.groupId, empresa_id: scope.empresaId }, 'Bloqueio', false); }
         catch (error) { reportApprovalFailure('Falha ao auditar tentativa fora do contexto', error, { action, solicitacao_id: solicitacaoId }); return Response.json({ error: 'Controle de acesso indisponivel' }, { status: 503 }); }
+        return Response.json({ error: 'Forbidden' }, { status: 403 });
+      }
+      const access = resolveManualReconciliationAccess(current);
+      const permissionAction = action === 'approveManualReconciliation' ? access?.approvePermission : access?.reconcilePermission;
+      const permOk = access && await hasPermission(base44, user, access.module, access.section, permissionAction);
+      if (!permOk) {
+        try { await auditManualStaging(base44, user, current, 'Bloqueio', false); }
+        catch (error) { reportApprovalFailure('Falha ao auditar bloqueio do workflow manual', error, { action, group_id: scope.groupId, empresa_id: scope.empresaId }); return Response.json({ error: 'Controle de acesso indisponivel' }, { status: 503 }); }
         return Response.json({ error: 'Forbidden' }, { status: 403 });
       }
 
@@ -344,8 +353,8 @@ Deno.serve(async (req) => {
 
     if (action === 'create') {
       const { group_id, empresa_id, tipo_solicitacao, entidade_alvo, entidade_alvo_id, dados_propostos, justificativa, aprovador_id, perfil_aprovador_necessario } = payload;
-      if (firstText(tipo_solicitacao) === MANUAL_RECONCILIATION_TYPE) {
-        return Response.json({ error: 'Use a acao financeira especializada para conciliacao em staging' }, { status: 400 });
+      if (isManualReconciliationRequest({ tipo_solicitacao })) {
+        return Response.json({ error: 'Use a acao especializada para conciliacao em staging' }, { status: 400 });
       }
       const permOk = await hasPermission(base44, user, 'Comercial', 'Aprovacoes', 'criar');
       if (!permOk) return Response.json({ error: 'Forbidden' }, { status: 403 });
@@ -654,8 +663,8 @@ Deno.serve(async (req) => {
     // LIST approvals
     if (action === 'list') {
       const { status, tipo_solicitacao, group_id, empresa_id } = payload;
-      if (firstText(tipo_solicitacao) === MANUAL_RECONCILIATION_TYPE) {
-        return Response.json({ error: 'Use a listagem financeira especializada' }, { status: 400 });
+      if (isManualReconciliationRequest({ tipo_solicitacao })) {
+        return Response.json({ error: 'Use a listagem especializada de conciliacao' }, { status: 400 });
       }
       const permOk = await hasPermission(base44, user, 'Comercial', 'Aprovacoes', 'visualizar');
       if (!permOk) return Response.json({ error: 'Forbidden' }, { status: 403 });

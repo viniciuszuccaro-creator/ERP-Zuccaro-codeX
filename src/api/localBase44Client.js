@@ -73,8 +73,10 @@ import { assertIaInvocation } from "@/components/lib/iaTransversalPolicy";
 import { AGENT_FUNCTION_MAP, AGENTES, assertAgentMayAct, assertMappedAgentFunction, resolveAgentScope } from "@/components/lib/agenteAutorizacaoPolicy";
 import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows } from "../../base44/functions/_lib/security/entityGuardPolicy/entry.ts";
 import {
+  MANUAL_RECONCILIATION_TYPE,
   applyManualWorkflowTransition,
   isManualReconciliationRequest,
+  resolveManualReconciliationAccess,
   summarizeManualRequest,
 } from "../../base44/functions/_lib/financeiro/manualReconciliationApprovalPolicy/entry";
 
@@ -2155,6 +2157,7 @@ const MANUAL_RECONCILIATION_LOCAL_ACTIONS = new Set([
 ]);
 
 const appendLocalManualReconciliationAudit = (db, user, record, action, success = true, previous = null, details = {}) => {
+  const access = resolveManualReconciliationAccess(record) || { module: 'Financeiro', domain: 'financeira' };
   const audits = getEntityStore(db, 'AuditLog');
   const timestamp = now();
   audits.unshift({
@@ -2164,11 +2167,11 @@ const appendLocalManualReconciliationAudit = (db, user, record, action, success 
     empresa_id: record?.empresa_id || null,
     group_id: record?.group_id || null,
     acao: action,
-    modulo: 'Financeiro',
+    modulo: access.module,
     tipo_auditoria: 'migracao',
     entidade: 'SolicitacaoAprovacao',
     registro_id: record?.id || null,
-    descricao: `${action} de conciliacao financeira em staging local`,
+    descricao: `${action} de conciliacao ${access.domain} em staging local`,
     dados_anteriores: previous ? sanitizeAuditPayload(summarizeManualRequest(previous)) : null,
     dados_novos: sanitizeAuditPayload({ ...summarizeManualRequest(record), ...details }),
     sucesso: success,
@@ -2190,7 +2193,7 @@ const invokeLocalManualReconciliation = async (payload = {}) => {
     throw new Error('Contexto de Empresa exige scope_type, group_id e empresa_id.');
   }
   if (contexto !== 'empresa' || groupId !== String(currentGroupId || '') || empresaId !== String(currentEmpresaId || '')) {
-    throw new Error('Contexto local nao autorizado para a conciliacao financeira.');
+    throw new Error('Contexto local nao autorizado para a conciliacao manual.');
   }
 
   const db = loadDb();
@@ -2198,26 +2201,31 @@ const invokeLocalManualReconciliation = async (payload = {}) => {
   if (!empresa || String(empresa.group_id || empresa.grupo_id || '') !== groupId) {
     throw new Error('Empresa nao pertence ao Grupo informado.');
   }
-  const canReview = evaluateLocalPermission({ module: 'Financeiro', section: 'Migracao', action: 'conciliar' }).allowed;
-  const canApprove = evaluateLocalPermission({ module: 'Financeiro', section: 'Migracao', action: 'aprovar' }).allowed;
   if (payload.action === 'listManualReconciliations') {
-    if (!canReview && !canApprove) throw new Error('Permissao negada para consultar conciliacoes financeiras.');
+    const access = resolveManualReconciliationAccess({ tipo_solicitacao: payload.tipo_solicitacao || MANUAL_RECONCILIATION_TYPE });
+    if (!access) throw new Error('Tipo de conciliacao manual invalido.');
+    const canReview = evaluateLocalPermission({ module: access.module, section: access.section, action: access.reconcilePermission }).allowed;
+    const canApprove = evaluateLocalPermission({ module: access.module, section: access.section, action: access.approvePermission }).allowed;
+    if (!canReview && !canApprove) throw new Error('Permissao negada para consultar conciliacoes manuais.');
     const records = getEntityStore(db, 'SolicitacaoAprovacao').filter((record) => (
-      isManualReconciliationRequest(record)
+      String(record.tipo_solicitacao || '') === access.type
       && String(record.group_id || '') === groupId
       && String(record.empresa_id || '') === empresaId
     )).slice(0, 50);
-    appendLocalManualReconciliationAudit(db, user, { group_id: groupId, empresa_id: empresaId }, 'Visualizacao');
+    appendLocalManualReconciliationAudit(db, user, { tipo_solicitacao: access.type, group_id: groupId, empresa_id: empresaId }, 'Visualizacao');
     saveDbStrict(db);
     return { data: records };
   }
 
   if (payload.action === 'createManualReconciliationEvidenceAccessUrl') {
-    if (!canReview && !canApprove) throw new Error('Permissao negada para consultar evidencias financeiras.');
     const current = getEntityStore(db, 'SolicitacaoAprovacao').find((record) => String(record.id) === String(payload.solicitacao_id || ''));
-    if (!current || String(current.group_id || '') !== groupId || String(current.empresa_id || '') !== empresaId) {
-      throw new Error('Evidencia financeira fora do contexto autorizado.');
+    if (!current || !isManualReconciliationRequest(current) || String(current.group_id || '') !== groupId || String(current.empresa_id || '') !== empresaId) {
+      throw new Error('Evidencia de conciliacao fora do contexto autorizado.');
     }
+    const access = resolveManualReconciliationAccess(current);
+    const canReview = access && evaluateLocalPermission({ module: access.module, section: access.section, action: access.reconcilePermission }).allowed;
+    const canApprove = access && evaluateLocalPermission({ module: access.module, section: access.section, action: access.approvePermission }).allowed;
+    if (!canReview && !canApprove) throw new Error('Permissao negada para consultar evidencias da conciliacao.');
     const evidences = current?.dados_propostos?.envelope_staging?.evidencias_conciliacao;
     const evidence = (Array.isArray(evidences) ? evidences : []).find((item) => String(item?.id || '') === String(payload.evidencia_id || ''));
     if (!String(evidence?.file_uri || '').startsWith('private/')) throw new Error('Evidencia privada nao encontrada.');
@@ -2227,17 +2235,19 @@ const invokeLocalManualReconciliation = async (payload = {}) => {
     return { data: { signed_url: signed.signed_url, expires_in: 300 } };
   }
 
-  const requiredPermission = payload.action === 'approveManualReconciliation' ? canApprove : canReview;
-  if (!requiredPermission) throw new Error('Permissao negada para atualizar a conciliacao financeira.');
   const records = getEntityStore(db, 'SolicitacaoAprovacao');
   const index = records.findIndex((record) => String(record.id) === String(payload.solicitacao_id || ''));
-  if (index < 0) throw new Error('Conciliacao financeira nao encontrada.');
+  if (index < 0) throw new Error('Conciliacao manual nao encontrada.');
   const current = records[index];
   if (String(current.group_id || '') !== groupId || String(current.empresa_id || '') !== empresaId) {
     appendLocalManualReconciliationAudit(db, user, { id: payload.solicitacao_id, group_id: groupId, empresa_id: empresaId }, 'Bloqueio', false);
     saveDbStrict(db);
-    throw new Error('Conciliacao financeira fora do contexto autorizado.');
+    throw new Error('Conciliacao manual fora do contexto autorizado.');
   }
+  const access = resolveManualReconciliationAccess(current);
+  const requiredAction = payload.action === 'approveManualReconciliation' ? access?.approvePermission : access?.reconcilePermission;
+  const requiredPermission = access && evaluateLocalPermission({ module: access.module, section: access.section, action: requiredAction }).allowed;
+  if (!requiredPermission) throw new Error('Permissao negada para atualizar a conciliacao manual.');
   const transition = applyManualWorkflowTransition(current, payload.action, payload, user);
   if (transition.reused) {
     appendLocalManualReconciliationAudit(db, user, current, 'Reutilizacao', true, current);
