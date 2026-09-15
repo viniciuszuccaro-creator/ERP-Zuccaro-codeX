@@ -17,6 +17,7 @@ import { runLocalBackupRestorePipeline } from "@/api/localBackupRestorePipeline"
 import { runLocalEntityBulkCreatePipeline } from "@/api/localEntityBulkCreatePipeline";
 import { upsertLocalConfig } from "@/api/localConfigApi";
 import { runLocalEntityCounts } from "@/api/localEntityCountApi";
+import { runLocalEntityGuard } from "@/api/localEntityGuardApi";
 import {
   applyLegacyReferenceCodePolicy,
   applyMasterCadastroOnCreate,
@@ -81,7 +82,7 @@ import {
 } from "@/components/lib/viradaProducaoPolicy";
 import { assertIaInvocation } from "@/components/lib/iaTransversalPolicy";
 import { AGENT_FUNCTION_MAP, AGENTES, assertAgentMayAct, assertMappedAgentFunction, resolveAgentScope } from "@/components/lib/agenteAutorizacaoPolicy";
-import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows } from "../../base44/functions/_lib/security/entityGuardPolicy/entry";
+import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows, validateGuardContext } from "../../base44/functions/_lib/security/entityGuardPolicy/entry";
 import {
   MANUAL_RECONCILIATION_TYPE,
   applyManualWorkflowTransition,
@@ -2269,16 +2270,20 @@ const functions = {
       }
       case 'entityGuard':
         {
-          const result = evaluateLocalPermission(payload);
-          return {
-            data: {
-              allowed: result.allowed,
-              can: result.allowed,
-              permitido: result.allowed,
-              local: true,
-              reason: result.reason || null,
+          return runLocalEntityGuard(payload, {
+            normalizeAction: normalizeGuardAction,
+            validateContext: validateGuardContext,
+            evaluatePermission: evaluateLocalPermission,
+            loadScopeData: () => {
+              const db = loadDb();
+              return {
+                user: readUser(),
+                groups: getEntityStore(db, 'GrupoEmpresarial'),
+                companies: getEntityStore(db, 'Empresa'),
+              };
             },
-          };
+            auditDenied: auditLocalPermissionDenied,
+          });
         }
       case 'verifyTotp':
         return { data: { valid: true, local: true } };
