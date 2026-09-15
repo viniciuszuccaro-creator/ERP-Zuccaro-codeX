@@ -15,6 +15,7 @@ import { prepareLocalEntityUpdate } from "@/api/localEntityUpdatePreparation";
 import { runLocalEntityDeletePipeline } from "@/api/localEntityDeletePipeline";
 import { runLocalBackupRestorePipeline } from "@/api/localBackupRestorePipeline";
 import { runLocalEntityBulkCreatePipeline } from "@/api/localEntityBulkCreatePipeline";
+import { upsertLocalConfig } from "@/api/localConfigApi";
 import {
   applyLegacyReferenceCodePolicy,
   applyMasterCadastroOnCreate,
@@ -2025,35 +2026,15 @@ const createEntityApi = (entityName) => ({
 /** @type {Record<string, ReturnType<typeof createEntityApi>>} */
 const entities = createLocalEntityProxy(createEntityApi);
 
-/** @param {LocalRecord} scope */
-const normalizeLocalConfigScope = (scope = {}) => {
-  const context = validateMultiempresaContext(scope);
-  if (!context.valid) return { valid: false, error: context.error, scope: {} };
-  return { valid: true, error: null, scope: toEntityScope(context) };
-};
-
 /** @param {{ chave?: string, data?: LocalRecord, scope?: LocalRecord }} options */
-const upsertConfig = async ({ chave, data = {}, scope = {} }) => {
-  const normalizedScope = normalizeLocalConfigScope(scope);
-  if (!chave) throw new Error('Chave obrigatoria para ConfiguracaoSistema local');
-  if (!normalizedScope.valid) {
-    throw new Error(`Contexto multiempresa obrigatorio para ConfiguracaoSistema local: ${normalizedScope.error}`);
-  }
-
-  const filter = { chave, ...normalizedScope.scope };
-  const existing = await entities.ConfiguracaoSistema.filter(filter, '-updated_date', 1);
-  const payload = {
-    chave,
-    categoria: data.categoria || 'Sistema',
-    ...data,
-    ...normalizedScope.scope,
-    updated_date: now(),
-  };
-  const record = existing[0]
-    ? await entities.ConfiguracaoSistema.update(existing[0].id, payload)
-    : await entities.ConfiguracaoSistema.create(payload);
-  return { data: { record } };
-};
+const upsertConfig = (options) => upsertLocalConfig(options, {
+  validateContext: validateMultiempresaContext,
+  toEntityScope,
+  filterConfigs: (filter, sort, limit) => entities.ConfiguracaoSistema.filter(filter, sort, limit),
+  updateConfig: (id, payload) => entities.ConfiguracaoSistema.update(id, payload),
+  createConfig: (payload) => entities.ConfiguracaoSistema.create(payload),
+  now,
+});
 
 const countEntity = async (entityName, filter = {}) => {
   const rows = await entities[entityName].filter(filter);
