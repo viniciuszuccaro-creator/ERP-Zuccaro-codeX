@@ -1100,3 +1100,16 @@ Lote concluido em 2026-09-15 na API local existente, sem criar entidade, endpoin
 
 Proxima frente P0: separar o fluxo sensivel de restauracao de Backup local, preservando escopo, merge controlado, notificacao e auditoria.
 
+### Decomposicao incremental - Restauracao de Backup local
+
+Lote concluido em 2026-09-15 na API local existente, sem criar entidade, endpoint, restaurador ou persistencia paralela.
+
+- Permissao, resolucao do Backup, contexto Grupo/Empresa, validacao do snapshot, allowlist, historico e efeitos finais foram extraidos para auxiliar interno.
+- `assertBackupRestore` continua bloqueando escopo divergente antes do merge; somente `BACKUP_COUNT_ENTITIES` pode ser restaurado.
+- O merge existente permanece unico no cliente e injetado no pipeline; persistencia, notificacao e auditoria mantem a ordem original.
+- Testes focados passaram 13/13 e a suite completa passou 490/490; auditoria baseline, lint, build e verificacao de diff tambem passaram.
+- Os arquivos do lote possuem zero diagnosticos e o passivo global permaneceu em 1.601; o cliente transversal ficou com aproximadamente 2.532 linhas.
+- Nenhum dado real, backend remoto, banco legado ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: separar `bulkCreate`, preservando permissao de importacao, validacao sequencial por item, idempotencia e auditoria existente.
+

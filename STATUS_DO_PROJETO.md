@@ -8624,3 +8624,19 @@ Checklist inicial:
 - Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
 - Commit de implementacao: `394942fc` (`Separa pipeline de exclusao local`).
 - Proximo passo P0: decompor o fluxo sensivel de restauracao de Backup da API local, preservando escopo Grupo/Empresa, merge controlado, rastreabilidade, notificacao e auditoria.
+
+## 2026-09-15 - Pipeline de restauracao de Backup local
+
+- Objetivo: separar a orquestracao sensivel de `BackupAutomatico.restore` sem alterar validacao, merge, persistencia, notificacao ou auditoria.
+- Causa raiz: autorizacao, resolucao do Backup, contexto Grupo/Empresa, validacao do snapshot, allowlist de entidades, historico e efeitos finais permaneciam concentrados no cliente transversal.
+- Arquivos alterados: `src/api/localBase44Client.js`, `src/api/localBackupRestorePipeline.js`, `tests/local-backup-restore-pipeline.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
+- Refatoracao: a orquestracao foi extraida para auxiliar interno de 85 linhas com dependencias explicitas porque nao havia equivalente reutilizavel. O algoritmo unico `mergeSnapshotRecords` continua no cliente e e injetado; nenhuma entidade, tela, rota, endpoint ou restaurador paralelo foi criado.
+- Multiempresa/RBAC: somente `BackupAutomatico` aceita restore; a permissao granular restaurar/executar e exigida antes da leitura. Grupo e Empresa explicitos ou do contexto continuam validados por `assertBackupRestore` antes de qualquer merge.
+- Seguranca/integridade: apenas `BACKUP_COUNT_ENTITIES` e percorrido; falha de snapshot ou escopo impede merge e persistencia. O historico anterior e preservado e recebe responsavel, horario e resumo agregado.
+- Auditoria: persistencia, notificacao e auditoria mantem a ordem original e registram antes/depois, identificador do Backup e somente o resumo de contagens por entidade.
+- Testes: 13/13 testes focados passaram e a suite completa passou 490/490. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve somente os avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
+- Typecheck: os arquivos do lote possuem zero diagnosticos e o passivo global permaneceu em 1.601, sem regressao ou mascaramento.
+- Tamanho: o inventario oficial registrou `localBase44Client.js` com 2.532 linhas; a leitura direta apos o lote registrou 2.531 linhas por diferenca de quebra final.
+- Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
+- Commit de implementacao: `28d9bac8` (`Separa restauracao de backup local`).
+- Proximo passo P0: decompor o fluxo `bulkCreate` da API local, preservando permissao de importacao para campos protegidos, criacao sequencial, validacoes por item, idempotencia e auditoria existente.
