@@ -1138,3 +1138,13 @@ Decisao: `ERP_READY_FOR_SITE_E2E`. Isso nao equivale a go-live. Providers ausent
 Um P1 foi corrigido: capabilities centrais deixaram de ser constantes e agora dependem de sondagem real. O health passa a informar estado geral, timestamp e dependencias minimizadas. Nao ha P0 ou P1 de codigo aberto.
 
 Proximo passo somente com autorizacao expressa: preparar ambiente/dataset de homologacao e integrar o Site CPA contrato por contrato. Nao existe ERP-SITE-13.
+
+---
+
+# 33. GO-LIVE-HML-01 (Opcao A) - PREPARACAO ERP PARA E2E EXTERNO
+
+Lote exclusivo de preparacao no ERP (sem Site CPA, sem segredos, sem URL inventada). Artefatos: `.env.site-cpa.hml.example`, `tests/helpers/siteCpaHmlDataset.js`, `tests/helpers/siteCpaHmlHarness.js`, `tests/site-cpa-go-live-hml-01.test.js`, `docs/GO_LIVE_HML_01_ERP.md`.
+
+Decisao: `ERP_HML_PREPARED_FOR_EXTERNAL_E2E` com `EXTERNAL_E2E_STATUS=BLOCKED_CONFIGURATION`. Nao declara `ERP_E2E_READY` nem `GO_LIVE_READY`. Reutiliza contratos ERP-SITE-01..12 e health fail-closed; payment/storage/AI permanecem blocked/degraded honestos.
+
+Opcao B (conexao real Site CPA + credenciais HML) somente com autorizacao expressa. Nao existe ERP-SITE-13.

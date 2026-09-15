@@ -1,3 +1,26 @@
+### GO-LIVE-HML-01 / Reconciliacao segura com main (Opcao A)
+- Objetivo: integrar `origin/main` na branch `cursor/go-live-hml-01-392b` sem force push e sem descartar Codex.
+- Estrategia: merge de `origin/main` (`ae774cd7`) na branch HML; historico preservado.
+- Conflitos: nenhum (auto-merge ort em `STATUS_DO_PROJETO.md`).
+- STATUS: mantidos o bloco GO-LIVE-HML-01 no topo e as secoes Codex `EntityGuard local` + `Validacao MFA local` no final; nenhuma exclusao silenciosa.
+- Preservado Codex: `localBase44Client.js`, `localEntityGuardApi.js`, `localTotpVerificationApi.js`, testes e `PLANO_MELHORIA_ERP_ZUCCARO.md`.
+- Preservado HML: `.env.site-cpa.hml.example`, helpers, `site-cpa-go-live-hml-01.test.js`, `docs/GO_LIVE_HML_01_ERP.md`.
+- Decisao mantida: `EXTERNAL_E2E_STATUS=BLOCKED_CONFIGURATION` (sem Opcao B).
+- Segredos: nenhum real versionado (somente marcadores sinteticos `hml-test-*-not-a-real-secret`).
+- Validacoes pos-merge: go-live-hml-01 13/13; site-cpa 199/199; local-entity-guard 7/7; local-totp 4/4; suite global 538/538; audit:baseline/lint/build/`git diff --check` OK; typecheck baseline 1603 (sem regressao do merge).
+- Proximo passo: push so na branch HML; PARAR; sem Opcao B e sem merge em main.
+### GO-LIVE-HML-01 / Opcao A - Preparacao ERP para E2E externo
+- Objetivo: preparar ERP (dataset sintetico, harness S2S, checklist, env example) para E2E externo futuro, sem Site CPA e sem segredos.
+- Diagnostico: precursor `ERP_READY_FOR_SITE_E2E` (ERP-SITE-HML-01) nao provisionava dataset/harness de go-live nem template de env HML.
+- Causa raiz: faltava lote exclusivo de preparacao (Opcao A) antes de qualquer conexao externa.
+- Arquivos alterados: `.env.site-cpa.hml.example`, `tests/helpers/siteCpaHmlDataset.js`, `tests/helpers/siteCpaHmlHarness.js`, `tests/site-cpa-go-live-hml-01.test.js`, `docs/GO_LIVE_HML_01_ERP.md`, `docs/PLANO_CPA_B2B_MARKETPLACE_ERP.md`, `STATUS`.
+- Reutilizado: `siteCpaS2SPolicy` (HMAC/contrato/health), `siteCpaOperationRouter`, suites `tests/site-cpa-*.test.js`, `docs/ERP_SITE_HML_01.md`.
+- Alteracoes: IDs `hml_*`, roles oficiais, env injetavel (provider vazio = blocked honesto), evidencia de readiness Opcao A.
+- Multiempresa/RBAC/auditoria: escopo `groupId`/`empresaId` no servidor; cross-tenant e allowlist cobertos no harness; correlationId no gateway.
+- Decisao: `ERP_HML_PREPARED_FOR_EXTERNAL_E2E` + `EXTERNAL_E2E_STATUS=BLOCKED_CONFIGURATION`. Nao declara `ERP_E2E_READY` nem `GO_LIVE_READY`.
+- Pendencia: Opcao B (URL/creds/Site reais) somente com autorizacao; Gates humanos 18-20.
+- Validacoes: `node --experimental-strip-types --test tests/site-cpa-go-live-hml-01.test.js` (13/13); `tests/site-cpa-*.test.js` (199/199); `npm run audit:baseline` OK; `npm run lint` OK; `npm run build` OK; `git diff --check` OK; typecheck baseline historico (sem regressao introduzida por este lote).
+- Proximo passo: PARAR apos push da branch; nao merge automatico; nao iniciar Opcao B sem pedido.
 ### P0.24 / Acesso mestre local - perfil wildcard reidratado
 - Objetivo: restaurar acesso mestre do Administrador Local para homologacao (sem criar ControlesV2).
 - Diagnostico: sessao local perdia `role=admin`/perfil; UI em "Usuário"; `ProtectedSection` bloqueava todos os modulos; `*` do perfil so era preenchido se ausente.
