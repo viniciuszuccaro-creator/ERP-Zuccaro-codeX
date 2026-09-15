@@ -8673,3 +8673,19 @@ Checklist inicial:
 - Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
 - Commit de implementacao: `0f37fa97` (`Separa configuracao local multiempresa`).
 - Proximo passo P0: decompor as consultas `entityCount` e `entityCounts` do dispatcher local, preservando filtros Grupo/Empresa, validacao de entidade, agregacao e ausencia de vazamento entre contextos.
+
+## 2026-09-15 - Contagens contextuais da API local
+
+- Objetivo: separar as contagens simples e multiplas do dispatcher local, preservando o contrato de resposta e a aplicacao obrigatoria do contexto antes da consulta.
+- Causa raiz: a ramificacao `countEntities` ainda aceitava nomes dinamicos sem validacao e concentrava normalizacao, composicao de filtro, consulta e agregacao no cliente transversal.
+- Arquivos alterados: `src/api/localBase44Client.js`, `src/api/localEntityCountApi.js`, `tests/local-entity-count-api.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
+- Refatoracao: as contagens foram extraidas para auxiliar interno com dependencias explicitas porque nao havia equivalente reutilizavel. Nenhuma entidade, rota, endpoint, tela ou armazenamento paralelo foi criado.
+- Multiempresa: toda contagem continua passando por `expandLocalContextFilter` antes da leitura; filtros de Grupo/Empresa permanecem compostos pela policy existente e nao podem ser ignorados pela agregacao.
+- Seguranca/RBAC: nomes de entidade agora aceitam somente o formato PascalCase ja usado pelo ERP e bloqueiam chaves de prototipo ou identificadores invalidos. A consulta concreta continua na API de entidades existente, preservando seus controles.
+- Compatibilidade: respostas simples mantem `count`, `counts` e a chave nominal; respostas multiplas preservam ordem sequencial, descritores por `entityName`/`name` e interrupcao imediata em caso de falha.
+- Testes: 42/42 testes focados passaram e a suite completa passou 509/509. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve somente avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
+- Typecheck: os arquivos do lote possuem zero diagnosticos; o passivo global permaneceu em 1.601, sem regressao ou mascaramento.
+- Tamanho: o inventario oficial registrou `localBase44Client.js` com 2.503 linhas; a responsabilidade de contagem ficou isolada em auxiliar interno pequeno e testavel.
+- Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
+- Commit de implementacao: `90e71490` (`Separa contagens contextuais locais`).
+- Proximo passo P0: separar as leituras genericas `getEntityRecord` e `entityListSorted` do dispatcher local, preservando filtro contextual, ordenacao, paginacao e compatibilidade das respostas.

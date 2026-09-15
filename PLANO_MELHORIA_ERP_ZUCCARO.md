@@ -1140,3 +1140,17 @@ Lote concluido em 2026-09-15 na API local existente, sem criar entidade, endpoin
 
 Proxima frente P0: separar `entityCount` e `entityCounts`, preservando filtros contextuais, validacao de entidade e isolamento Grupo/Empresa.
 
+### Decomposicao incremental - Contagens contextuais locais
+
+Lote concluido em 2026-09-15 na API local existente, sem criar entidade, endpoint ou armazenamento paralelo.
+
+- Contagens simples e multiplas foram extraidas para auxiliar interno com dependencias explicitas.
+- Todo filtro passa por `expandLocalContextFilter` antes da consulta concreta, preservando isolamento Grupo/Empresa.
+- Nomes dinamicos vazios sao ignorados conforme compatibilidade anterior; chaves de prototipo e formatos invalidos sao recusados antes da leitura.
+- Contratos simples e multiplos foram preservados, incluindo execucao sequencial e interrupcao em falha.
+- Testes focados passaram 42/42 e a suite completa passou 509/509; auditoria baseline, lint, build e verificacao de diff tambem passaram.
+- Os arquivos do lote possuem zero diagnosticos e o passivo global permaneceu em 1.601.
+- Nenhum dado real, backend remoto, banco legado ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: separar `getEntityRecord` e `entityListSorted`, preservando filtro contextual, ordenacao, paginacao e respostas existentes.
+
