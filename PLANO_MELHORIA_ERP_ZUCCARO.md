@@ -1154,3 +1154,17 @@ Lote concluido em 2026-09-15 na API local existente, sem criar entidade, endpoin
 
 Proxima frente P0: separar `getEntityRecord` e `entityListSorted`, preservando filtro contextual, ordenacao, paginacao e respostas existentes.
 
+### Decomposicao incremental - Leituras genericas contextuais locais
+
+Lote concluido em 2026-09-15 no helper de leitura existente, sem criar entidade, endpoint, tela ou consulta paralela.
+
+- `getEntityRecord` e `entityListSorted` passaram a usar uma unica execucao interna com dependencias explicitas.
+- O filtro Grupo/Empresa e composto antes da consulta; ordenacao, limite e deslocamento sao aplicados no mesmo acesso paginado.
+- `skip` deixou de ser descartado e `sortDirection` passou a definir a ordenacao antes do corte da pagina.
+- Nomes de entidade, campos de ordenacao, filtros, limite e deslocamento invalidos falham antes da leitura.
+- Testes focados passaram 42/42 e a suite completa passou 514/514; auditoria baseline, lint, build e verificacao de diff tambem passaram.
+- Os arquivos do lote possuem zero diagnosticos e o passivo global permaneceu em 1.601.
+- Nenhum dado real, backend remoto, banco legado ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: separar `entityGuard`, preservando aliases, escopo multiempresa, RBAC fail-closed e auditoria de negacao.
+

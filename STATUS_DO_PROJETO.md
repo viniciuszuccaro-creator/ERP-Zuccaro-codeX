@@ -8689,3 +8689,20 @@ Checklist inicial:
 - Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
 - Commit de implementacao: `90e71490` (`Separa contagens contextuais locais`).
 - Proximo passo P0: separar as leituras genericas `getEntityRecord` e `entityListSorted` do dispatcher local, preservando filtro contextual, ordenacao, paginacao e compatibilidade das respostas.
+
+## 2026-09-15 - Leituras genericas contextuais do dispatcher local
+
+- Objetivo: separar `getEntityRecord` e `entityListSorted` do dispatcher local e corrigir a selecao de pagina sem alterar seus consumidores ou contratos de resposta.
+- Causa raiz: os dois casos duplicavam a consulta; `skip` nao era encaminhado e `entityListSorted` limitava os registros antes de aplicar `sortDirection`, podendo repetir a primeira pagina ou selecionar o subconjunto incorreto.
+- Arquivos alterados: `src/api/localBase44Client.js`, `src/api/localEntityReadApi.js`, `tests/local-entity-read-api.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
+- Refatoracao: a execucao das duas funcoes foi incorporada ao helper de leitura existente. Nenhuma entidade, rota, endpoint, tela, consulta ou arquivo auxiliar paralelo foi criado.
+- Multiempresa: `expandLocalContextFilter` continua obrigatorio e e executado antes da consulta. Ordenacao, limite e deslocamento sao aplicados somente depois da composicao do filtro Grupo/Empresa.
+- Seguranca/RBAC: nomes dinamicos de entidade e campos de ordenacao recebem validacao por formato; chaves de prototipo, filtro nao estruturado, direcao, limite e deslocamento invalidos falham antes da leitura. O acesso concreto permanece na API de entidades existente.
+- Compatibilidade/paginacao: respostas continuam no formato `{ data: [...] }`; limite foi alinhado ao teto existente de 500 registros, `skip` passou a ser preservado e a direcao agora compoe o `order` antes da selecao da pagina.
+- Auditoria: o lote e somente leitura e nao cria evento de mutacao; autenticacao, contexto e guards do dispatcher e da API de entidades continuam ativos.
+- Testes: 42/42 testes focados passaram e a suite completa passou 514/514. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve somente avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
+- Typecheck: os arquivos do lote possuem zero diagnosticos; o passivo global permaneceu em 1.601, sem regressao ou mascaramento.
+- Tamanho: o inventario oficial registrou `localBase44Client.js` com 2.507 linhas e o helper de leitura existente com 162 linhas apos receber o contrato testavel do dispatcher.
+- Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
+- Commit de implementacao: `39b568d3` (`Centraliza leituras contextuais locais`).
+- Proximo passo P0: separar o caso `entityGuard` do dispatcher local, preservando aliases de acao, escopo Grupo/Empresa, RBAC fail-closed e auditoria de negacao.
