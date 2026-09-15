@@ -1,3 +1,18 @@
+### COMPARATIVO DE PLATAFORMAS / Decisao de arquitetura (pre-RUNTIME-01)
+
+- Objetivo: escolher a plataforma-alvo do ERP empresarial real antes de ERP-RUNTIME-01, sem migrar codigo, sem criar banco/conta, sem deploy, sem HML e sem alterar Site CPA.
+- Base: `docs/DIAGNOSTICO_RUNTIME_ERP.md` (`HYBRID_TRANSITION`) + inventário real (~900 entities, ~70 functions, facade `localBase44`, sem Postgres proprio).
+- Documento: `docs/COMPARATIVO_PLATAFORMAS_ERP.md` (Supabase, OCI, GCP, AWS, Appwrite; scores, custos USD/BRL, fontes oficiais 2026-09-15).
+- Vencedor: **Supabase (PostgreSQL + Auth + Storage) + BFF/facade** — score **86/100**.
+- Plano B: Google Cloud (Cloud Run + Cloud SQL PostgreSQL em SP).
+- Custos aprox. (FX USD/BRL 5,15): DEV ~R$ 0; HML ~R$ 129; PROD pequeno ~R$ 180.
+- Premissa preservada: UI → facade `base44` → HttpApiClient → API/Postgres; nao reescrever call sites.
+- Gate 0: destino Supabase permanece valido; este lote apenas revalida com comparativo amplo.
+- Runtime: nenhuma dependencia, tela, entidade, funcao ou comportamento alterado. Base44 nao removido.
+- Validacao: lote documental; `git diff --check`.
+- Proximo passo (somente apos aprovacao humana): **ERP-RUNTIME-01** na plataforma vencedora. PARAR sem executar.
+- Branch: `cursor/comparativo-plataformas-erp-392b`.
+
 ### GO-LIVE-HML-01 / Reconciliacao segura com main (Opcao A)
 - Objetivo: integrar `origin/main` na branch `cursor/go-live-hml-01-392b` sem force push e sem descartar Codex.
 - Estrategia: merge de `origin/main` (`ae774cd7`) na branch HML; historico preservado.
