@@ -1,3 +1,14 @@
+### PROVISIONAMENTO-HML-01 / Fase 1 - Descoberta + Nucleo HML
+- Objetivo: descobrir runtime/endpoint/env canonicos para Site CPA ↔ ERP HML, sem Opcao B e sem alterar o Site.
+- Diagnostico: GO-LIVE-HML-01 Opcao A esta na main, mas URL/creds/entidades HML reais nao existem no Git.
+- Causa raiz: S2S vive em `legacyIntegrationsMirror` (Deno/Base44); secrets via `Deno.env`; endpoint = `/apps/{APP_ID}/functions/legacyIntegrationsMirror`.
+- Arquivos alterados: `docs/PROVISIONAMENTO_HML_01.md`, `.env.site-cpa.hml.example`, `STATUS`.
+- Reutilizado: `siteCpaS2SPolicy`, dataset/harness HML, suites `site-cpa-*`, `GO_LIVE_HML_01_ERP.md`.
+- Decisao Fase 1: `HML_CORE_BLOCKED_CONFIGURATION` (codigo pronto; faltam Base44 HML + secrets + Grupo/Empresa + dataset no runtime).
+- Blockers: `SITE_HML_CONNECTION`, `S2S_REAL_CREDENTIAL`, `HML_GROUP_EMPRESA_ENTITIES`, `HML_DATASET_MATERIALIZATION`.
+- Nao executado: Fases 2-7, Opcao B, pagamento, ERP-SITE-13, merge em main.
+- Segredos: nenhum real; example so placeholders.
+- Proximo passo: acoes humanas do checklist em `docs/PROVISIONAMENTO_HML_01.md`; depois FASE 2 no repositorio do Site CPA.
 ### GO-LIVE-HML-01 / Reconciliacao segura com main (Opcao A)
 - Objetivo: integrar `origin/main` na branch `cursor/go-live-hml-01-392b` sem force push e sem descartar Codex.
 - Estrategia: merge de `origin/main` (`ae774cd7`) na branch HML; historico preservado.
