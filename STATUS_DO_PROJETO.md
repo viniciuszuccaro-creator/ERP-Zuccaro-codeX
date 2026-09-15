@@ -8,6 +8,7 @@
 - Blockers: `SITE_HML_CONNECTION`, `S2S_REAL_CREDENTIAL`, `HML_GROUP_EMPRESA_ENTITIES`, `HML_DATASET_MATERIALIZATION`.
 - Nao executado: Fases 2-7, Opcao B, pagamento, ERP-SITE-13, merge em main.
 - Segredos: nenhum real; example so placeholders.
+- Validacoes: go-live-hml-01 13/13; site-cpa 199/199; s2s+hml 12/12; lint/audit:baseline/build/`git diff --check` OK.
 - Proximo passo: acoes humanas do checklist em `docs/PROVISIONAMENTO_HML_01.md`; depois FASE 2 no repositorio do Site CPA.
 ### GO-LIVE-HML-01 / Reconciliacao segura com main (Opcao A)
 - Objetivo: integrar `origin/main` na branch `cursor/go-live-hml-01-392b` sem force push e sem descartar Codex.
