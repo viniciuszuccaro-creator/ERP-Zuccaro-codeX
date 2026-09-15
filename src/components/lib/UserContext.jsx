@@ -3,6 +3,27 @@ import { base44, isApiKeyMode, isLocalOnlyMode, localApiUser } from "@/api/base4
 
 const UserContext = createContext(null);
 
+const resolveBootUser = async () => {
+  if (isApiKeyMode && !isLocalOnlyMode) {
+    return localApiUser;
+  }
+  try {
+    return await base44.auth.me();
+  } catch (error) {
+    // Modo local: se a sessao falhar por carimbo/contexto no boot, nao perder o admin mestre.
+    if (isLocalOnlyMode && localApiUser?.id) {
+      console.warn('[UserContext] auth.me falhou no boot local; usando administrador local.', error?.message || error);
+      return {
+        ...localApiUser,
+        full_name: localApiUser.full_name || 'Administrador Local',
+        role: 'admin',
+        perfil_acesso_id: localApiUser.perfil_acesso_id || 'local_perfil_admin',
+      };
+    }
+    throw error;
+  }
+};
+
 export function UserProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -10,10 +31,10 @@ export function UserProvider({ children }) {
 
   useEffect(() => {
     let mounted = true;
-    
+
     const loadUser = async () => {
       try {
-        const currentUser = isApiKeyMode && !isLocalOnlyMode ? localApiUser : await base44.auth.me();
+        const currentUser = await resolveBootUser();
         if (mounted) {
           setUser(currentUser);
           setError(null);
@@ -40,12 +61,14 @@ export function UserProvider({ children }) {
 
   const refreshUser = async () => {
     try {
-      const currentUser = isApiKeyMode && !isLocalOnlyMode ? localApiUser : await base44.auth.me();
+      const currentUser = await resolveBootUser();
       setUser(currentUser);
       setError(null);
+      return currentUser;
     } catch (err) {
       console.error("Erro ao atualizar usuário:", err);
       setError(err);
+      throw err;
     }
   };
 
