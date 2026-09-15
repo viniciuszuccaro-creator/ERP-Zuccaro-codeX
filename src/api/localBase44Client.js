@@ -8,7 +8,7 @@ import {
 import { sanitizeAuditPayload, sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
 import { createAuthDeniedError, evaluateLocalUserSession, markLocalLoggedOut, prepareLocalReauthentication, readLocalAuthState, writeLocalAuthState, LOCAL_SESSION_ID_KEY } from "@/api/localAuthSessionPolicy";
 import { createLocalStorageAdapter } from "@/api/localStorageAdapter";
-import { createLocalEntityProxy, createLocalEntityReadApi } from "@/api/localEntityReadApi";
+import { createLocalEntityProxy, createLocalEntityReadApi, runLocalEntityReadFunction } from "@/api/localEntityReadApi";
 import { runLocalEntityCreatePipeline } from "@/api/localEntityCreatePipeline";
 import { applyLocalEntityUpdateTransitions } from "@/api/localEntityUpdateTransitions";
 import { prepareLocalEntityUpdate } from "@/api/localEntityUpdatePreparation";
@@ -2241,16 +2241,20 @@ const functions = {
         }
         return { data: { ok: true, local: true, functionName: name, message: 'Acao de aprovacao simulada no modo local.' } };
       case 'getEntityRecord': {
-        if (!payload.entityName) return { data: [] };
-        const filter = expandLocalContextFilter(payload.entityName, payload.filter || {});
-        const data = await entities[payload.entityName].filter(filter, payload.sortField, payload.limit);
-        return { data };
+        return runLocalEntityReadFunction(name, payload, {
+          expandFilter: expandLocalContextFilter,
+          listEntity: (entityName, filter, order, limit, skip) => (
+            entities[entityName].filter(filter, order, limit, skip)
+          ),
+        });
       }
       case 'entityListSorted': {
-        if (!payload.entityName) return { data: [] };
-        const filter = expandLocalContextFilter(payload.entityName, payload.filter || {});
-        const data = await entities[payload.entityName].filter(filter, payload.sortField, payload.limit);
-        return { data: sortRecords(data, payload.sortField, payload.sortDirection) };
+        return runLocalEntityReadFunction(name, payload, {
+          expandFilter: expandLocalContextFilter,
+          listEntity: (entityName, filter, order, limit, skip) => (
+            entities[entityName].filter(filter, order, limit, skip)
+          ),
+        });
       }
       case 'upsertConfig':
         return upsertConfig(payload);
