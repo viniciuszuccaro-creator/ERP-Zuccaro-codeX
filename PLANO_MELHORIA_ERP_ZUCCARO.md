@@ -1061,3 +1061,16 @@ Lote concluido em 2026-09-15 na API local existente, sem criar entidade, endpoin
 
 Proxima frente P0: decompor a atualizacao da API local por validacoes e transicoes de entidade, preservando ownership, idempotencia e auditoria.
 
+### Decomposicao incremental - Transicoes de atualizacao local
+
+Lote concluido em 2026-09-15 na API local existente, sem criar entidade, endpoint ou persistencia paralela.
+
+- Transicoes de Entrega, Ordem de Compra, Oportunidade, Financeiro, Nota Fiscal e Ordem de Producao foram extraidas para auxiliar interno.
+- `reuse` e `retry` continuam anteriores a persistencia; Empresa proprietaria e Empresa emissora permanecem imutaveis.
+- Permissoes de liquidar, conciliar, estornar, emitir, cancelar e demais acoes continuam separadas e fail-closed.
+- Testes focados passaram 55/55 e a suite completa passou 474/474; auditoria baseline, lint, build e verificacao de diff tambem passaram.
+- Os arquivos do lote possuem zero diagnosticos e o passivo global permaneceu em 1.601; o cliente transversal foi reduzido em mais 60 linhas.
+- Nenhum dado real, backend remoto, banco legado ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: separar validacao e preparacao generica do `update`, incluindo Fornecedor, contexto imutavel e Backup, mantendo as transicoes e a persistencia atuais.
+
