@@ -105,6 +105,7 @@ test('settlement permission actions include baixa aliases', () => {
 
 test('finance persistence blocks delete of settled titles and closes caixa/conciliacao fail-open', async () => {
   const client = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
+  const updateTransitions = await readFile(new URL('../src/api/localEntityUpdateTransitions.js', import.meta.url), 'utf8');
   const fluxo = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
   const lote = await readFile(new URL('../src/components/financeiro/LiquidacaoEmLote.jsx', import.meta.url), 'utf8');
   const ordens = await readFile(new URL('../src/components/financeiro/caixa-central/OrdensLiquidacaoPendentes.jsx', import.meta.url), 'utf8');
@@ -118,7 +119,9 @@ test('finance persistence blocks delete of settled titles and closes caixa/conci
   assert.match(client, /assertTituloOnDelete/);
   assert.match(client, /assertLocalTituloSettlementAllowed/);
   assert.match(client, /ContaReceber: \{ module: 'Financeiro'/);
-  assert.match(client, /decision\.conciliation/);
+  assert.match(client, /applyLocalEntityUpdateTransitions/);
+  assert.match(updateTransitions, /decision\.conciliation/);
+  assert.match(updateTransitions, /assertMutationAllowed\(entityName, 'conciliar'/);
   assert.match(fluxo, /origem_documento_id: `\$\{pedido\.id\}/);
   assert.match(lote, /Sem permissao para baixa manual/);
   assert.doesNotMatch(ordens, /canEdit\('Financeiro', 'Caixa'\)/);

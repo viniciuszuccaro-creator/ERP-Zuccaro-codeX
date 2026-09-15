@@ -10,6 +10,7 @@ import { createAuthDeniedError, evaluateLocalUserSession, markLocalLoggedOut, pr
 import { createLocalStorageAdapter } from "@/api/localStorageAdapter";
 import { createLocalEntityProxy, createLocalEntityReadApi } from "@/api/localEntityReadApi";
 import { runLocalEntityCreatePipeline } from "@/api/localEntityCreatePipeline";
+import { applyLocalEntityUpdateTransitions } from "@/api/localEntityUpdateTransitions";
 import {
   applyLegacyReferenceCodePolicy,
   applyMasterCadastroOnCreate,
@@ -1935,102 +1936,41 @@ const createEntityApi = (entityName) => ({
     }
     let nextPayload = applyLocalBackupWrite(db, entityName, applyLocalPilotoWrite(db, entityName, payload, before), before);
     nextPayload = applyLocalLegacyReferenceUpdate(db, entityName, before, nextPayload);
-    if (entityName === 'Entrega') {
-      const decision = assertEntregaOnUpdate({ before, patch: payload });
-      if (decision.reuse) {
-        assertLocalPermissionAny(entityName, ['editar', 'entregar', 'conferir', 'expedir'], id);
-        return decision.reuse;
-      }
-      if (decision.action === 'retry') {
-        assertLocalPermissionAny(entityName, ['editar', 'entregar', 'conferir', 'expedir'], id);
-        return before;
-      }
-      assertLocalPermissionAny(entityName, entregaStatusPermissionActions(decision.action), id);
-      nextPayload = decision.record;
-      if (before.empresa_id) nextPayload.empresa_id = before.empresa_id;
-      if (isMotoristaIdempotencyKey(payload.idempotency_key) || isMotoristaIdempotencyKey(nextPayload.idempotency_key)) {
-        const motoristas = getEntityStore(db, 'Motorista');
-        nextPayload = assertEntregaMotoristaOnUpdate({
-          before,
-          patch: nextPayload,
-          user: readUser(),
-          motoristas,
-        });
-        if (before.empresa_id) nextPayload.empresa_id = before.empresa_id;
-      }
-    }
-    if (entityName === 'OrdemCompra') {
-      const decision = assertOrdemCompraOnUpdate({ before, patch: payload });
-      if (decision.reuse || decision.action === 'retry') {
-        assertLocalPermissionAny(entityName, ['editar', 'receber', 'aprovar', 'enviar_fornecedor'], id);
-        return decision.reuse || before;
-      }
-      assertLocalPermissionAny(entityName, ocStatusPermissionActions(decision.action), id);
-      nextPayload = decision.record;
-      if (before.empresa_id) nextPayload.empresa_id = before.empresa_id;
-    }
-    if (entityName === 'Oportunidade') {
-      const decision = assertOportunidadeOnUpdate({ before, patch: payload });
-      if (decision.reuse || decision.action === 'retry') {
-        assertLocalPermissionAny(entityName, ['editar', 'mover_etapa', 'converter'], id);
-        return decision.reuse || before;
-      }
-      assertLocalPermissionAny(entityName, oportunidadeStatusPermissionActions(decision.action), id);
-      nextPayload = decision.record;
-      if (before.empresa_id) nextPayload.empresa_id = before.empresa_id;
-    }
-    if (isTituloFinanceiroEntity(entityName)) {
-      const portalClienteId = resolvePortalClienteId(getEntityStore(db, 'Cliente'), readUser());
-      if (portalClienteId && entityName === 'ContaReceber') {
-        assertPortalTituloWrite({ before, patch: payload, portalClienteId });
-      }
-      const decision = assertTituloOnUpdate({ before, patch: payload });
-      if (decision.reuse) {
-        assertLocalTituloSettlementAllowed(entityName, id);
-        return decision.reuse;
-      }
-      if (decision.settlement) {
-        assertLocalTituloSettlementAllowed(entityName, id);
-      } else if (decision.estorno) {
-        assertLocalMutationAllowed(entityName, 'estornar', id);
-      } else if (decision.conciliation) {
-        assertLocalMutationAllowed(entityName, 'conciliar', id);
-      } else {
-        assertLocalMutationAllowed(entityName, 'editar', id);
-      }
-      nextPayload = decision.record;
-    }
-    if (NOTA_FISCAL_ENTITIES.includes(entityName)) {
-      const decision = assertNotaFiscalOnUpdate({ before, patch: payload });
-      if (decision.reuse) {
-        assertLocalPermissionAny(entityName, [...nfeEmitPermissionActions(), ...nfeCancelPermissionActions()], id);
-        return decision.reuse;
-      }
-      if (decision.emit) {
-        assertLocalPermissionAny(entityName, nfeEmitPermissionActions(), id);
-      } else if (decision.cancel) {
-        assertLocalPermissionAny(entityName, nfeCancelPermissionActions(), id);
-      } else {
-        assertLocalMutationAllowed(entityName, 'editar', id);
-      }
-      nextPayload = decision.record;
-      if (before.empresa_id) nextPayload.empresa_id = before.empresa_id;
-      if (before.empresa_faturamento_id) nextPayload.empresa_faturamento_id = before.empresa_faturamento_id;
-    }
-    if (entityName === 'OrdemProducao') {
-      const decision = assertOpOnUpdate({ before, patch: payload });
-      if (decision.reuse) {
-        assertLocalPermissionAny(entityName, ['editar', 'apontar', 'aprovar', 'criar'], id);
-        return decision.reuse;
-      }
-      if (decision.action === 'retry') {
-        assertLocalPermissionAny(entityName, ['editar', 'apontar', 'aprovar', 'criar'], id);
-        return before;
-      }
-      assertLocalPermissionAny(entityName, opStatusPermissionActions(/** @type {'editar' | 'apontar' | 'aprovar' | 'cancelar' | 'retry'} */ (decision.action)), id);
-      nextPayload = decision.record;
-      if (before.empresa_id) nextPayload.empresa_id = before.empresa_id;
-    }
+    const transitioned = applyLocalEntityUpdateTransitions({
+      db,
+      entityName,
+      id,
+      before,
+      payload,
+      initialRecord: nextPayload,
+      dependencies: {
+        getStore: getEntityStore,
+        readUser,
+        assertPermissionAny: assertLocalPermissionAny,
+        assertMutationAllowed: assertLocalMutationAllowed,
+        assertTituloSettlementAllowed: assertLocalTituloSettlementAllowed,
+        isTituloFinanceiro: isTituloFinanceiroEntity,
+        notaFiscalEntities: NOTA_FISCAL_ENTITIES,
+        resolvePortalClienteId,
+        assertPortalTituloWrite,
+        assertEntregaOnUpdate,
+        entregaActions: (action) => entregaStatusPermissionActions(/** @type {'editar' | 'entregar' | 'conferir' | 'expedir' | 'retry'} */ (action)),
+        isMotoristaIdempotencyKey,
+        assertEntregaMotoristaOnUpdate,
+        assertOrdemCompraOnUpdate,
+        ordemCompraActions: (action) => ocStatusPermissionActions(/** @type {'editar' | 'receber' | 'aprovar' | 'enviar_fornecedor' | 'retry'} */ (action)),
+        assertOportunidadeOnUpdate,
+        oportunidadeActions: (action) => oportunidadeStatusPermissionActions(/** @type {'editar' | 'mover_etapa' | 'converter' | 'retry'} */ (action)),
+        assertTituloOnUpdate,
+        assertNotaFiscalOnUpdate,
+        nfeEmitActions: nfeEmitPermissionActions,
+        nfeCancelActions: nfeCancelPermissionActions,
+        assertOpOnUpdate,
+        opActions: (action) => opStatusPermissionActions(/** @type {'editar' | 'apontar' | 'aprovar' | 'cancelar' | 'retry'} */ (action)),
+      },
+    });
+    if (transitioned.reuse) return transitioned.reuse;
+    nextPayload = transitioned.record || nextPayload;
     records[index] = {
       ...records[index],
       ...nextPayload,
