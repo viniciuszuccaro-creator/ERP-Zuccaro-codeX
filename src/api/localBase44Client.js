@@ -8,6 +8,7 @@ import {
 import { sanitizeAuditPayload, sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
 import { createAuthDeniedError, evaluateLocalUserSession, markLocalLoggedOut, prepareLocalReauthentication, readLocalAuthState, writeLocalAuthState, LOCAL_SESSION_ID_KEY } from "@/api/localAuthSessionPolicy";
 import { createLocalStorageAdapter } from "@/api/localStorageAdapter";
+import { createLocalEntityProxy, createLocalEntityReadApi } from "@/api/localEntityReadApi";
 import {
   applyLegacyReferenceCodePolicy,
   applyMasterCadastroOnCreate,
@@ -659,7 +660,7 @@ const ensureLocalActiveSession = async (user) => {
     };
     sessions[index] = session;
     saveDbStrict(db);
-    writeLocalAuthState({ logged_in: true, sessao_id: session.id }, safeStorage);
+    writeLocalAuthState({ logged_in: true, sessao_id: String(session.id || sessaoId) }, safeStorage);
     return session;
   }
 
@@ -711,7 +712,7 @@ const ensureLocalActiveSession = async (user) => {
   saveDbStrict(db);
   notify('SessaoUsuario', 'create', session);
   notify('AuditLog', 'create', getEntityStore(db, 'AuditLog')[0]);
-  writeLocalAuthState({ logged_in: true, sessao_id: session.id }, safeStorage);
+  writeLocalAuthState({ logged_in: true, sessao_id: String(session.id) }, safeStorage);
   return session;
 };
 
@@ -1805,35 +1806,15 @@ export const hydrateLocalBase44FromSnapshot = async ({ force = false, includeAud
 };
 
 const createEntityApi = (entityName) => ({
-  async list(order, limit, skip = 0) {
-    // Sempre passa por filter+expand (fail-closed sem contexto)
-    return this.filter({}, order, limit, skip);
-  },
-
-  async filter(filter = {}, order, limit, skip = 0) {
-    if (typeof order === 'number') {
-      skip = limit || 0;
-      limit = order;
-      order = undefined;
-    }
-    const db = loadDb();
-    const scopedFilter = expandLocalContextFilter(entityName, filter);
-    const records = applyLocalPortalReadScope(
-      db,
-      entityName,
-      getEntityStore(db, entityName).filter((record) => matchesFilter(record, scopedFilter)),
-    );
-    return sortRecords(records, order).slice(skip || 0, limit ? (skip || 0) + limit : undefined);
-  },
-
-  async get(id) {
-    const db = loadDb();
-    const record = getEntityStore(db, entityName).find((item) => String(item.id) === String(id));
-    if (!record) throw new Error(`${entityName} local nao encontrado: ${id}`);
-    const scoped = applyLocalPortalReadScope(db, entityName, [record]);
-    if (!scoped.length) throw new Error(`${entityName} local nao encontrado: ${id}`);
-    return scoped[0];
-  },
+  ...createLocalEntityReadApi(entityName, {
+    loadDb,
+    expandFilter: expandLocalContextFilter,
+    applyReadScope: applyLocalPortalReadScope,
+    getStore: getEntityStore,
+    matchesFilter,
+    sortRecords,
+    listeners,
+  }),
 
   async create(data = {}) {
     assertLocalMutationAllowed(entityName, 'criar');
@@ -2160,30 +2141,10 @@ const createEntityApi = (entityName) => ({
     return created;
   },
 
-  async schema() {
-    const db = loadDb();
-    const sample = getEntityStore(db, entityName)[0] || {};
-    const properties = Object.fromEntries(
-      ['id', 'created_date', 'updated_date', 'empresa_id', 'group_id', ...Object.keys(sample)].map((key) => [key, { type: 'string' }])
-    );
-    return { properties };
-  },
-
-  subscribe(listener) {
-    if (!listeners.has(entityName)) listeners.set(entityName, new Set());
-    listeners.get(entityName).add(listener);
-    return () => listeners.get(entityName)?.delete(listener);
-  },
 });
 
 /** @type {Record<string, ReturnType<typeof createEntityApi>>} */
-const entities = new Proxy({}, {
-  get(target, prop) {
-    if (typeof prop !== 'string') return undefined;
-    if (!target[prop]) target[prop] = createEntityApi(prop);
-    return target[prop];
-  },
-});
+const entities = createLocalEntityProxy(createEntityApi);
 
 /** @param {LocalRecord} scope */
 const normalizeLocalConfigScope = (scope = {}) => {

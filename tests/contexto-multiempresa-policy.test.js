@@ -134,6 +134,7 @@ test('caller $or/$and is composed with group scope instead of bypassing it', () 
 
 test('existing multiempresa call sites fail closed against cross-company leak', async () => {
   const policy = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
+  const entityReadApi = await readFile(new URL('../src/api/localEntityReadApi.js', import.meta.url), 'utf8');
   const visual = await readFile(new URL('../src/components/lib/useContextoVisual.jsx', import.meta.url), 'utf8');
   const grupo = await readFile(new URL('../src/components/lib/useContextoGrupoEmpresa.jsx', import.meta.url), 'utf8');
   const switcher = await readFile(new URL('../src/components/EmpresaSwitcher.jsx', import.meta.url), 'utf8');
@@ -143,7 +144,9 @@ test('existing multiempresa call sites fail closed against cross-company leak', 
   assert.doesNotMatch(policy, /LOCAL_RELAXED_CONTEXT_ENTITIES/);
   assert.doesNotMatch(policy, /user\?\.grupo_padrao_id \|\| 'local_grupo_cpa'/);
   assert.match(policy, /nunca inventar groupId padrao/);
-  assert.match(policy, /this\.filter\(\{\}/);
+  assert.match(policy, /createLocalEntityReadApi/);
+  assert.match(entityReadApi, /return filter\(\{\}, order, limit, skip\)/);
+  assert.match(entityReadApi, /applyReadScope/);
   assert.doesNotMatch(policy, /if \(filter\.\$or \|\| filter\.\$and\) return filter/);
   assert.match(visual, /buildMultiempresaReadFilter/);
   assert.doesNotMatch(visual, /Empresa\.list\(\)/);
