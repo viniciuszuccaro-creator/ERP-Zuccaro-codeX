@@ -6,26 +6,44 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  * GlobalContextStamp
  * - Carimba automaticamente group_id/empresa_id em create/update/bulkCreate quando ausentes
  * - Injeta filtro de contexto em filter() quando não informado
- * - Não altera UI e não renderiza nada
+ * - Nunca lanca erro no patch: sessao/auth e entidades de sistema nao podem quebrar o boot
+ * - Nao altera UI e nao renderiza nada
  */
-export default function GlobalContextStamp() {
-  const { getFiltroContexto, carimbarContexto, contexto, empresaAtual, grupoAtual } = useContextoVisual();
-  const contextRef = React.useRef({ getFiltroContexto, carimbarContexto });
 
-  contextRef.current = { getFiltroContexto, carimbarContexto };
+const SKIP_ENTITY_PATCH = new Set([
+  'User',
+  'SessaoUsuario',
+  'AuditLog',
+  'PerfilAcesso',
+  'GrupoEmpresarial',
+]);
+
+const safeCarimbar = (carimbarContexto, dados) => {
+  if (typeof carimbarContexto !== 'function') return dados;
+  try {
+    return carimbarContexto(dados) || dados;
+  } catch (error) {
+    console.warn('[GlobalContextStamp] Contexto indisponivel; gravacao sem carimbo automatico.', error?.message || error);
+    return dados;
+  }
+};
+
+export default function GlobalContextStamp() {
+  const { getFiltroContexto, carimbarContexto, contextoValido } = useContextoVisual();
+  const contextRef = React.useRef({ getFiltroContexto, carimbarContexto, contextoValido });
+
+  contextRef.current = { getFiltroContexto, carimbarContexto, contextoValido };
 
   useEffect(() => {
     if (!base44?.entities) return;
     const root = base44.entities;
-    if (root.__patched_multiempresa) return; // evita patch duplicado
-
-    const original = new Map();
+    if (root.__patched_multiempresa_v2) return;
 
     const patchEntity = (name) => {
+      if (SKIP_ENTITY_PATCH.has(name)) return;
       const api = root[name];
       if (!api || typeof api !== 'object') return;
 
-      // Guardar originais
       const o = {
         create: api.create?.bind(api),
         bulkCreate: api.bulkCreate?.bind(api),
@@ -33,44 +51,36 @@ export default function GlobalContextStamp() {
         filter: api.filter?.bind(api),
         list: api.list?.bind(api),
       };
-      original.set(name, o);
 
-      // create
       if (o.create) {
-        api.create = (dados) => {
-          const stamped = contextRef.current.carimbarContexto?.(dados) || dados;
-          return o.create(stamped);
-        };
+        api.create = (dados) => o.create(safeCarimbar(contextRef.current.carimbarContexto, dados));
       }
 
-      // bulkCreate
       if (o.bulkCreate) {
-        api.bulkCreate = (lista) => {
-          const stampedList = (lista || []).map((item) => contextRef.current.carimbarContexto?.(item) || item);
-          return o.bulkCreate(stampedList);
-        };
+        api.bulkCreate = (lista) => o.bulkCreate(
+          (lista || []).map((item) => safeCarimbar(contextRef.current.carimbarContexto, item)),
+        );
       }
 
-      // update
       if (o.update) {
-        api.update = (id, dados) => {
-          const stamped = contextRef.current.carimbarContexto?.(dados) || dados;
-          return o.update(id, stamped);
-        };
+        api.update = (id, dados) => o.update(id, safeCarimbar(contextRef.current.carimbarContexto, dados));
       }
 
-      // filter
       if (o.filter) {
         api.filter = (criterios = {}, order, limit) => {
-          const merged = { ...criterios, ...contextRef.current.getFiltroContexto?.() };
+          const ctx = contextRef.current.contextoValido
+            ? (contextRef.current.getFiltroContexto?.() || {})
+            : {};
+          const merged = { ...criterios, ...ctx };
           return o.filter(merged, order, limit);
         };
       }
 
-      // list -> direciona para filter com contexto quando possível
       if (o.list) {
         api.list = (order, limit) => {
-          const ctx = contextRef.current.getFiltroContexto?.() || {};
+          const ctx = contextRef.current.contextoValido
+            ? (contextRef.current.getFiltroContexto?.() || {})
+            : {};
           if (o.filter && ctx && (ctx.group_id || ctx.empresa_id)) {
             return o.filter(ctx, order, limit);
           }
@@ -80,18 +90,12 @@ export default function GlobalContextStamp() {
     };
 
     try {
-      // Enumerar chaves conhecidas (evita mexer em User/AuditLog se não desejar)
-      Object.keys(root).forEach((key) => {
-        // Não alterar User para evitar regras especiais
-        if (key === 'User') return;
-        patchEntity(key);
-      });
+      Object.keys(root).forEach((key) => patchEntity(key));
+      root.__patched_multiempresa_v2 = true;
       root.__patched_multiempresa = true;
     } catch (error) {
-      console.error('[GlobalContextStamp] Falha ao aplicar contexto multiempresa', error);
+      console.warn('[GlobalContextStamp] Falha ao aplicar patch multiempresa.', error);
     }
-
-    // sem cleanup (mantém patch durante a sessão)
   }, []);
 
   return null;
