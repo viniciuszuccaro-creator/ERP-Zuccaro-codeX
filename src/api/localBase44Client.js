@@ -14,6 +14,7 @@ import { applyLocalEntityUpdateTransitions } from "@/api/localEntityUpdateTransi
 import { prepareLocalEntityUpdate } from "@/api/localEntityUpdatePreparation";
 import { runLocalEntityDeletePipeline } from "@/api/localEntityDeletePipeline";
 import { runLocalBackupRestorePipeline } from "@/api/localBackupRestorePipeline";
+import { runLocalEntityBulkCreatePipeline } from "@/api/localEntityBulkCreatePipeline";
 import {
   applyLegacyReferenceCodePolicy,
   applyMasterCadastroOnCreate,
@@ -2007,17 +2008,16 @@ const createEntityApi = (entityName) => ({
   },
 
   async bulkCreate(items = []) {
-    const legacySpec = LEGACY_REFERENCE_CODE_SPECS[entityName];
-    const hasLegacyReference = Boolean(legacySpec && items.some((item) => String(item?.[legacySpec.field] || '').trim()));
-    const hasProtectedSupplierField = entityName === 'Fornecedor' && items.some((item) => (
-      SUPPLIER_PROTECTED_FIELD_SCOPES.some((rule) => rule.fields.some((field) => Object.prototype.hasOwnProperty.call(item || {}, field)))
-    ));
-    if (hasLegacyReference || hasProtectedSupplierField) assertLocalMutationAllowed(entityName, 'importar');
-    const created = [];
-    for (const item of items) {
-      created.push(await this.create(item));
-    }
-    return created;
+    return runLocalEntityBulkCreatePipeline({
+      entityName,
+      items,
+      dependencies: {
+        legacyReferenceSpecs: LEGACY_REFERENCE_CODE_SPECS,
+        supplierProtectedFieldScopes: SUPPLIER_PROTECTED_FIELD_SCOPES,
+        assertMutationAllowed: assertLocalMutationAllowed,
+        createItem: (item) => this.create(item),
+      },
+    });
   },
 
 });
