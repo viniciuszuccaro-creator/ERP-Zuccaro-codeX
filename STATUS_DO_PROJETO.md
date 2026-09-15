@@ -8592,3 +8592,19 @@ Checklist inicial:
 - Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
 - Commit de implementacao: `5a086871` (`Separa transicoes de atualizacao local`).
 - Proximo passo P0: decompor validacao e preparacao generica do `update` local, incluindo Fornecedor, contexto imutavel e Backup, mantendo as transicoes e a persistencia atuais.
+
+## 2026-09-15 - Preparacao e validacao de atualizacao da API local
+
+- Objetivo: concluir a separacao da preparacao generica do metodo `update` sem mover transicoes, persistencia, notificacao ou auditoria para fora do cliente existente.
+- Causa raiz: validacoes comuns, normalizacao de Fornecedor, protecao do contexto Grupo/Empresa, autorizacao de Backup e preparadores de piloto/legado ainda estavam acoplados ao orquestrador transversal.
+- Arquivos alterados: `src/api/localBase44Client.js`, `src/api/localEntityUpdatePreparation.js`, `tests/local-entity-update-preparation.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
+- Refatoracao: a preparacao foi extraida para auxiliar interno com dependencias explicitas porque nao havia equivalente reutilizavel. Nenhuma entidade, endpoint, tela, rota ou persistencia paralela foi criada.
+- Compatibilidade: Fornecedor continua normalizando documento somente quando o campo e alterado e bloqueia duplicidade no Grupo; piloto, Backup e referencia legada preservam exatamente essa ordem.
+- Multiempresa/RBAC: contexto omitido continua herdando Empresa/Grupo do registro; Nota Fiscal, Entrega, Ordem de Compra e Ordem de Producao preservam a Empresa proprietaria. Adulteracao explicita em Financeiro permanece visivel para a policy fail-closed, sem ser ocultada pelo preparador.
+- Seguranca/auditoria: Backup expirado continua exigindo guarda propria e permissoes de excluir/editar; demais operacoes aceitam somente editar/restaurar/executar. Escrita e auditoria permanecem posteriores as transicoes aceitas.
+- Testes: 46/46 testes focados passaram e a suite completa passou 480/480. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve somente os avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
+- Typecheck: os arquivos do lote possuem zero diagnosticos e o passivo global permaneceu em 1.601, sem regressao ou mascaramento.
+- Tamanho: `localBase44Client.js` caiu para 2.568 linhas no inventario oficial; o auxiliar interno possui 124 linhas.
+- Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
+- Commit de implementacao: `f1b91f66` (`Separa preparacao de atualizacao local`).
+- Proximo passo P0: decompor validacoes e efeitos do fluxo de exclusao logica da API local, preservando historicos, guards por entidade, auditoria e comportamento idempotente.

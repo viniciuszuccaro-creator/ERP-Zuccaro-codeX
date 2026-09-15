@@ -1074,3 +1074,16 @@ Lote concluido em 2026-09-15 na API local existente, sem criar entidade, endpoin
 
 Proxima frente P0: separar validacao e preparacao generica do `update`, incluindo Fornecedor, contexto imutavel e Backup, mantendo as transicoes e a persistencia atuais.
 
+### Decomposicao incremental - Preparacao de atualizacao local
+
+Lote concluido em 2026-09-15 na API local existente, sem criar entidade, endpoint ou persistencia paralela.
+
+- Validacoes comuns, Fornecedor, contexto imutavel e autorizacao de Backup foram extraidos para auxiliar interno com dependencias explicitas.
+- Normalizacao e duplicidade de documento continuam limitadas ao Grupo; Empresa proprietaria e preservada nas entidades operacionais e fiscais previstas.
+- Piloto, Backup e referencia legada mantem a ordem original; transicoes, persistencia, notificacao e auditoria continuam no fluxo existente.
+- Testes focados passaram 46/46 e a suite completa passou 480/480; auditoria baseline, lint, build e verificacao de diff tambem passaram.
+- Os arquivos do lote possuem zero diagnosticos e o passivo global permaneceu em 1.601; o cliente transversal ficou com 2.568 linhas.
+- Nenhum dado real, backend remoto, banco legado ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: separar validacoes e efeitos da exclusao logica da API local, preservando historicos, guards por entidade, auditoria e idempotencia.
+
