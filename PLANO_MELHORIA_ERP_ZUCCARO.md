@@ -1087,3 +1087,16 @@ Lote concluido em 2026-09-15 na API local existente, sem criar entidade, endpoin
 
 Proxima frente P0: separar validacoes e efeitos da exclusao logica da API local, preservando historicos, guards por entidade, auditoria e idempotencia.
 
+### Decomposicao incremental - Exclusao de entidades local
+
+Lote concluido em 2026-09-15 na API local existente, sem criar entidade, endpoint ou persistencia paralela.
+
+- Bloqueio de historicos, guards especializados, permissao, marcador idempotente, remocao, notificacao e auditoria foram extraidos para auxiliar interno.
+- Historicos de Estoque e registros operacionais protegidos continuam fail-closed pelas mesmas policies.
+- Registro ausente continua retornando sucesso depois do marcador, sem persistencia ou auditoria repetida; registro existente mantem a ordem original dos efeitos.
+- Testes focados passaram 57/57 e a suite completa passou 485/485; auditoria baseline, lint, build e verificacao de diff tambem passaram.
+- Os arquivos do lote possuem zero diagnosticos e o passivo global permaneceu em 1.601; o cliente transversal ficou com aproximadamente 2.555 linhas.
+- Nenhum dado real, backend remoto, banco legado ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: separar o fluxo sensivel de restauracao de Backup local, preservando escopo, merge controlado, notificacao e auditoria.
+

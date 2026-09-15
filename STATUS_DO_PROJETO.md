@@ -8608,3 +8608,19 @@ Checklist inicial:
 - Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
 - Commit de implementacao: `f1b91f66` (`Separa preparacao de atualizacao local`).
 - Proximo passo P0: decompor validacoes e efeitos do fluxo de exclusao logica da API local, preservando historicos, guards por entidade, auditoria e comportamento idempotente.
+
+## 2026-09-15 - Pipeline de exclusao da API de entidades local
+
+- Objetivo: separar validacoes e efeitos do metodo `delete` sem alterar sua interface, seus bloqueios ou a persistencia local existente.
+- Causa raiz: bloqueio de historicos, guards de Financeiro/Producao/Expedicao/Fiscal, permissao, marcador idempotente, remocao, notificacao e auditoria permaneciam concentrados no cliente transversal.
+- Arquivos alterados: `src/api/localBase44Client.js`, `src/api/localEntityDeletePipeline.js`, `tests/local-entity-delete-pipeline.test.js`, `tests/estoque-movimento-policy.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
+- Refatoracao: o fluxo foi extraido para auxiliar interno de 66 linhas com dependencias explicitas porque nao havia equivalente reutilizavel. Nenhuma entidade, tela, rota, endpoint ou persistencia paralela foi criada.
+- Compatibilidade/idempotencia: historicos de Estoque continuam impossiveis de excluir; registro ausente recebe o marcador local e retorna sucesso sem nova persistencia, notificacao ou auditoria; registro existente preserva a ordem marcador, remocao, persistencia, notificacao e auditoria.
+- Multiempresa/RBAC: a permissao granular `excluir` permanece obrigatoria e os guards especializados continuam avaliando o registro atual antes da mutacao. Nenhum escopo ou acesso foi ampliado.
+- Seguranca/auditoria: titulos liquidados, OP protegida, Entrega finalizada/em transito e NF autorizada continuam bloqueados pelas mesmas policies; auditoria ocorre somente para registro efetivamente removido.
+- Testes: 57/57 testes focados passaram e a suite completa passou 485/485. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve somente os avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
+- Typecheck: os arquivos do lote possuem zero diagnosticos e o passivo global permaneceu em 1.601, sem regressao ou mascaramento.
+- Tamanho: o inventario oficial registrou `localBase44Client.js` com 2.555 linhas; a leitura direta apos o lote registrou 2.554 linhas por diferenca de contagem de quebra final.
+- Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
+- Commit de implementacao: `394942fc` (`Separa pipeline de exclusao local`).
+- Proximo passo P0: decompor o fluxo sensivel de restauracao de Backup da API local, preservando escopo Grupo/Empresa, merge controlado, rastreabilidade, notificacao e auditoria.
