@@ -16,6 +16,7 @@ import { runLocalEntityDeletePipeline } from "@/api/localEntityDeletePipeline";
 import { runLocalBackupRestorePipeline } from "@/api/localBackupRestorePipeline";
 import { runLocalEntityBulkCreatePipeline } from "@/api/localEntityBulkCreatePipeline";
 import { upsertLocalConfig } from "@/api/localConfigApi";
+import { runLocalEntityCounts } from "@/api/localEntityCountApi";
 import {
   applyLegacyReferenceCodePolicy,
   applyMasterCadastroOnCreate,
@@ -2036,11 +2037,6 @@ const upsertConfig = (options) => upsertLocalConfig(options, {
   now,
 });
 
-const countEntity = async (entityName, filter = {}) => {
-  const rows = await entities[entityName].filter(filter);
-  return rows.length;
-};
-
 const MANUAL_RECONCILIATION_LOCAL_ACTIONS = new Set([
   'createManualReconciliation',
   'listManualReconciliations',
@@ -2259,19 +2255,13 @@ const functions = {
       case 'upsertConfig':
         return upsertConfig(payload);
       case 'countEntities': {
-        if (payload.entityName) {
-          const filter = expandLocalContextFilter(payload.entityName, payload.filter || {});
-          const count = await countEntity(payload.entityName, filter);
-          return { data: { count, counts: { [payload.entityName]: count }, [payload.entityName]: count } };
-        }
-        const entitiesList = payload.entities || [];
-        const counts = {};
-        for (const item of entitiesList) {
-          const entityName = typeof item === 'string' ? item : item.entityName || item.name;
-          const itemFilter = typeof item === 'string' ? {} : item.filter || {};
-          if (entityName) counts[entityName] = await countEntity(entityName, expandLocalContextFilter(entityName, itemFilter));
-        }
-        return { data: { counts, ...counts } };
+        return runLocalEntityCounts(payload, {
+          expandFilter: expandLocalContextFilter,
+          countEntity: async (entityName, filter) => {
+            const rows = await entities[entityName].filter(filter);
+            return rows.length;
+          },
+        });
       }
       case 'entityGuard':
         {
