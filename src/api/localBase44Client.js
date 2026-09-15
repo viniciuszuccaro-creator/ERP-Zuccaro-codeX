@@ -17,6 +17,8 @@ import { runLocalBackupRestorePipeline } from "@/api/localBackupRestorePipeline"
 import { runLocalEntityBulkCreatePipeline } from "@/api/localEntityBulkCreatePipeline";
 import { upsertLocalConfig } from "@/api/localConfigApi";
 import { runLocalEntityCounts } from "@/api/localEntityCountApi";
+import { runLocalEntityGuard } from "@/api/localEntityGuardApi";
+import { runLocalTotpVerification } from "@/api/localTotpVerificationApi";
 import {
   applyLegacyReferenceCodePolicy,
   applyMasterCadastroOnCreate,
@@ -81,7 +83,7 @@ import {
 } from "@/components/lib/viradaProducaoPolicy";
 import { assertIaInvocation } from "@/components/lib/iaTransversalPolicy";
 import { AGENT_FUNCTION_MAP, AGENTES, assertAgentMayAct, assertMappedAgentFunction, resolveAgentScope } from "@/components/lib/agenteAutorizacaoPolicy";
-import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows } from "../../base44/functions/_lib/security/entityGuardPolicy/entry";
+import { GRANULAR_PERMISSION_ACTIONS, normalizeGuardAction, permissionNodeAllows, validateGuardContext } from "../../base44/functions/_lib/security/entityGuardPolicy/entry";
 import {
   MANUAL_RECONCILIATION_TYPE,
   applyManualWorkflowTransition,
@@ -1142,6 +1144,34 @@ const auditLocalPermissionDenied = (entityName, action, recordId = null) => {
     saveDb(db);
     notify('AuditLog', 'create', audit[0]);
   } catch (error) { reportLocalClientFailure('Falha ao auditar permissao local negada', error, { entityName, action, recordId }); }
+};
+
+const auditLocalTotpAttempt = ({ success, reason, groupId, empresaId, sessionId }) => {
+  const db = loadDb();
+  const audit = getEntityStore(db, 'AuditLog');
+  const user = readUser();
+  const timestamp = now();
+  audit.unshift({
+    id: makeId('audit'),
+    usuario: user?.full_name || user?.email || 'Usuario Local',
+    usuario_id: user?.id || null,
+    acao: success ? 'Validacao MFA' : 'Bloqueio MFA',
+    modulo: 'Sistema Local',
+    tipo_auditoria: 'seguranca',
+    entidade: 'SessaoUsuario',
+    registro_id: sessionId,
+    descricao: success ? 'Prova MFA local vigente confirmada' : 'Validacao MFA local bloqueada',
+    empresa_id: empresaId || null,
+    group_id: groupId || null,
+    dados_novos: { resultado: success ? 'permitido' : 'bloqueado', motivo: reason },
+    sucesso: success,
+    local: true,
+    created_date: timestamp,
+    updated_date: timestamp,
+    data_hora: timestamp,
+  });
+  saveDbStrict(db);
+  notify('AuditLog', 'create', audit[0]);
 };
 
 const assertLocalMutationAllowed = (entityName, action, recordId = null) => {
@@ -2269,19 +2299,60 @@ const functions = {
       }
       case 'entityGuard':
         {
-          const result = evaluateLocalPermission(payload);
-          return {
-            data: {
-              allowed: result.allowed,
-              can: result.allowed,
-              permitido: result.allowed,
-              local: true,
-              reason: result.reason || null,
+          return runLocalEntityGuard(payload, {
+            normalizeAction: normalizeGuardAction,
+            validateContext: validateGuardContext,
+            evaluatePermission: evaluateLocalPermission,
+            loadScopeData: () => {
+              const db = loadDb();
+              return {
+                user: readUser(),
+                groups: getEntityStore(db, 'GrupoEmpresarial'),
+                companies: getEntityStore(db, 'Empresa'),
+              };
             },
-          };
+            auditDenied: auditLocalPermissionDenied,
+          });
         }
       case 'verifyTotp':
-        return { data: { valid: true, local: true } };
+        return runLocalTotpVerification(payload, {
+          validateContext: validateGuardContext,
+          evaluateSession: evaluateLocalUserSession,
+          evaluatePermission: evaluateLocalPermission,
+          loadState: () => {
+            const db = loadDb();
+            const user = readUser();
+            const userSecurity = /** @type {LocalRecord} */ (user);
+            const authState = readLocalAuthState(safeStorage);
+            const sessionId = safeStorage.getItem(LOCAL_SESSION_ID_KEY) || authState.sessao_id || null;
+            const session = getEntityStore(db, 'SessaoUsuario')
+              .find((item) => String(item.id || '') === String(sessionId || '')) || null;
+            const securityConfigs = getEntityStore(db, 'ConfiguracaoSeguranca');
+            const requestedGroupId = payload.group_id || payload.groupId || '';
+            const requestedEmpresaId = payload.empresa_id || payload.empresaId || '';
+            const scopedSecurityConfig = securityConfigs.find((item) => (
+              String(item.group_id || item.grupo_id || '') === String(requestedGroupId)
+              && String(item.empresa_id || '') === String(requestedEmpresaId)
+            )) || securityConfigs.find((item) => (
+              String(item.group_id || item.grupo_id || '') === String(requestedGroupId) && !item.empresa_id
+            ));
+            const toggleRequiresMfa = getEntityStore(db, 'ConfiguracaoSistema').some((item) => (
+              ['cc_exigir_mfa', 'seg_login_duplo_fator'].includes(String(item.chave || ''))
+              && item.ativa === true
+              && String(item.group_id || item.grupo_id || '') === String(requestedGroupId)
+              && (!item.empresa_id || String(item.empresa_id) === String(requestedEmpresaId))
+            ));
+            return {
+              user,
+              session,
+              groups: getEntityStore(db, 'GrupoEmpresarial'),
+              companies: getEntityStore(db, 'Empresa'),
+              mfaRequired: userSecurity?.autenticacao_dois_fatores === true || scopedSecurityConfig?.exigir_mfa === true || toggleRequiresMfa,
+              validityMinutes: scopedSecurityConfig?.mfa_validade_codigo_minutos,
+            };
+          },
+          auditAttempt: auditLocalTotpAttempt,
+        });
       case 'iaFinanceAnomalyScan':
         return {
           data: {

@@ -8718,3 +8718,33 @@ Checklist inicial:
 - Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
 - Commit de implementacao: `39b568d3` (`Centraliza leituras contextuais locais`).
 - Proximo passo P0: separar o caso `entityGuard` do dispatcher local, preservando aliases de acao, escopo Grupo/Empresa, RBAC fail-closed e auditoria de negacao.
+
+## 2026-09-15 - EntityGuard local com escopo autorizado
+
+- Objetivo: separar o `entityGuard` do dispatcher e fazer a decisao local respeitar contexto completo, ownership Grupo/Empresa, vinculos do usuario e imutabilidade da auditoria.
+- Causa raiz: o caso local avaliava somente a arvore de permissoes; contexto incompleto, empresa externa ao grupo e empresa nao vinculada podiam chegar a uma resposta permitida, e negativas nao acionavam a auditoria local existente.
+- Arquivos alterados: `src/api/localBase44Client.js`, `src/api/localEntityGuardApi.js`, `tests/local-entity-guard-api.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
+- Refatoracao: a orquestracao foi extraida para auxiliar interno de 108 linhas porque nao havia equivalente local reutilizavel. A policy canonica continua unica e suas funcoes sao injetadas pelo cliente; nenhuma permissao, entidade, rota, tela ou endpoint paralelo foi criado.
+- Multiempresa: Grupo precisa existir e estar vinculado ao usuario; operacao no Grupo respeita `pode_operar_em_grupo`; Empresa precisa existir, pertencer ao Grupo e estar autorizada por vinculo ou acesso a todas as empresas.
+- RBAC: aliases sao normalizados pela policy canonica antes da avaliacao; resposta permitida continua expondo `allowed`, `can` e `permitido`. Contexto ou ownership invalido encerra antes da arvore de permissoes.
+- Seguranca/auditoria: mutacoes em `AuditLog` permanecem imutaveis mesmo com wildcard; toda negativa chama a auditoria local existente. Entidade e registro usados no log sao limitados e normalizados antes da persistencia.
+- Testes: 49/49 testes focados passaram e a suite completa passou 521/521. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve somente avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
+- Typecheck: os arquivos do lote possuem zero diagnosticos. O passivo global esta em 1.603; a variacao em relacao a 1.601 veio do commit remoto integrado anteriormente em `GlobalContextStamp.jsx` e `UserContext.jsx`, fora deste lote e sem mascaramento.
+- Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
+- Commit de implementacao: `cfe23853` (`Protege entityGuard local por escopo`).
+- Proximo passo P0: substituir o `verifyTotp` local permissivo por verificacao fail-closed apoiada na sessao e configuracao MFA existentes, sem registrar segredo ou codigo informado.
+
+## 2026-09-15 - Validacao MFA local fail-closed
+
+- Objetivo: eliminar a resposta local que tratava qualquer tentativa de `verifyTotp` como valida e alinhar o fluxo ao contexto, sessao, RBAC e configuracao MFA existentes.
+- Causa raiz: o dispatcher retornava `valid: true` sem validar usuario, sessao, Grupo, Empresa, permissao, configuracao ou prova MFA; alem disso, o prompt repassava o codigo ao callback consumidor.
+- Arquivos alterados: `src/api/localBase44Client.js`, `src/api/localTotpVerificationApi.js`, `src/components/security/TwoFactorAuthPrompt.jsx`, `tests/local-totp-verification-api.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
+- Refatoracao: a verificacao foi extraida para auxiliar interno testavel porque o cliente transversal possui mais de 2.500 linhas e nao havia verificador local equivalente. Nenhuma tela, entidade, endpoint, segredo ou autenticacao paralela foi criada.
+- Multiempresa/RBAC: Grupo e Empresa precisam existir, pertencer ao mesmo escopo e estar autorizados ao usuario; sessao, usuario e Grupo precisam coincidir; `Sistema.Seguranca.executar` e obrigatoria.
+- Seguranca: codigo precisa ter seis digitos, MFA precisa estar habilitado e somente uma prova `mfa_validado` recente, emitida previamente na sessao, e aceita. Ausencia, expiracao ou divergencia falham fechadas; o prompt nao repassa mais o codigo ao callback.
+- Auditoria: toda tentativa registra somente resultado, motivo controlado, sessao, Grupo e Empresa. Codigo informado, segredo e payload de autenticacao nao sao persistidos; falha da escrita de auditoria bloqueia a operacao.
+- Testes: 19/19 testes focados passaram e a suite completa passou 525/525. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve somente avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
+- Typecheck: os arquivos do lote possuem zero diagnosticos; o passivo global permaneceu em 1.603, sem regressao ou mascaramento.
+- Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
+- Commit de implementacao: `a95565ef` (`Fecha validacao MFA local`).
+- Proximo passo P0: endurecer o `verifyTotp` backend existente, removendo segredo fallback, exigindo provedor/segredo seguro, contexto e auditoria fail-closed sem registrar codigo ou segredo.

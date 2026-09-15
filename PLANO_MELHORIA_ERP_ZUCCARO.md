@@ -1168,3 +1168,31 @@ Lote concluido em 2026-09-15 no helper de leitura existente, sem criar entidade,
 
 Proxima frente P0: separar `entityGuard`, preservando aliases, escopo multiempresa, RBAC fail-closed e auditoria de negacao.
 
+### Decomposicao incremental - EntityGuard local
+
+Lote concluido em 2026-09-15 no dispatcher local existente, sem criar permissao, entidade, rota, tela ou endpoint paralelo.
+
+- A orquestracao do guard foi extraida para auxiliar interno e continua reutilizando a policy canonica por injecao explicita.
+- Contexto incompleto, Grupo inexistente ou nao vinculado, Empresa externa ao Grupo e Empresa nao autorizada falham antes da avaliacao RBAC.
+- Operacao no Grupo respeita a liberacao do usuario e as duas empresas autorizadas permanecem isoladas pelo cadastro e pelos vinculos.
+- Mutacoes de `AuditLog` continuam bloqueadas; toda negativa e auditada com identificadores normalizados e limitados.
+- Testes focados passaram 49/49 e a suite completa passou 521/521; auditoria baseline, lint, build e verificacao de diff tambem passaram.
+- Os arquivos do lote possuem zero diagnosticos; o baseline global de 1.603 inclui a variacao trazida pelo commit remoto anterior, fora deste subgate.
+- Nenhum dado real, backend remoto, banco legado ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: substituir o `verifyTotp` local permissivo por verificacao fail-closed usando sessao e configuracao MFA existentes, sem registrar segredo ou codigo.
+
+### Seguranca P0 - Validacao MFA local fail-closed
+
+Lote concluido em 2026-09-15 no dispatcher e prompt 2FA existentes, sem criar autenticacao, entidade, endpoint ou segredo paralelo.
+
+- A resposta local permissiva foi substituida por verificacao de contexto, ownership, sessao ativa, RBAC, configuracao MFA e prova recente vinculada a sessao.
+- Tentativas sem configuracao, sem prova, expiradas, com sessao divergente, Empresa externa ou permissao negada falham fechadas.
+- Auditoria persiste somente resultado, motivo controlado, sessao e escopo; codigo e segredo nunca entram no registro.
+- O prompt deixou de repassar o codigo MFA ao callback depois da verificacao.
+- Testes focados passaram 19/19 e a suite completa passou 525/525; auditoria baseline, lint, build e verificacao de diff tambem passaram.
+- Os arquivos do lote possuem zero diagnosticos; o baseline global permaneceu em 1.603.
+- Implementacao registrada no commit `a95565ef`.
+
+Proxima frente P0: endurecer o `verifyTotp` backend existente, removendo segredo fallback e exigindo verificacao e auditoria seguras e fail-closed.
+
