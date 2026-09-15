@@ -1182,3 +1182,17 @@ Lote concluido em 2026-09-15 no dispatcher local existente, sem criar permissao,
 
 Proxima frente P0: substituir o `verifyTotp` local permissivo por verificacao fail-closed usando sessao e configuracao MFA existentes, sem registrar segredo ou codigo.
 
+### Seguranca P0 - Validacao MFA local fail-closed
+
+Lote concluido em 2026-09-15 no dispatcher e prompt 2FA existentes, sem criar autenticacao, entidade, endpoint ou segredo paralelo.
+
+- A resposta local permissiva foi substituida por verificacao de contexto, ownership, sessao ativa, RBAC, configuracao MFA e prova recente vinculada a sessao.
+- Tentativas sem configuracao, sem prova, expiradas, com sessao divergente, Empresa externa ou permissao negada falham fechadas.
+- Auditoria persiste somente resultado, motivo controlado, sessao e escopo; codigo e segredo nunca entram no registro.
+- O prompt deixou de repassar o codigo MFA ao callback depois da verificacao.
+- Testes focados passaram 19/19 e a suite completa passou 525/525; auditoria baseline, lint, build e verificacao de diff tambem passaram.
+- Os arquivos do lote possuem zero diagnosticos; o baseline global permaneceu em 1.603.
+- Implementacao registrada no commit `a95565ef`.
+
+Proxima frente P0: endurecer o `verifyTotp` backend existente, removendo segredo fallback e exigindo verificacao e auditoria seguras e fail-closed.
+

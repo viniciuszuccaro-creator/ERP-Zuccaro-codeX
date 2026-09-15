@@ -8721,3 +8721,18 @@ Checklist inicial:
 - Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
 - Commit de implementacao: `cfe23853` (`Protege entityGuard local por escopo`).
 - Proximo passo P0: substituir o `verifyTotp` local permissivo por verificacao fail-closed apoiada na sessao e configuracao MFA existentes, sem registrar segredo ou codigo informado.
+
+## 2026-09-15 - Validacao MFA local fail-closed
+
+- Objetivo: eliminar a resposta local que tratava qualquer tentativa de `verifyTotp` como valida e alinhar o fluxo ao contexto, sessao, RBAC e configuracao MFA existentes.
+- Causa raiz: o dispatcher retornava `valid: true` sem validar usuario, sessao, Grupo, Empresa, permissao, configuracao ou prova MFA; alem disso, o prompt repassava o codigo ao callback consumidor.
+- Arquivos alterados: `src/api/localBase44Client.js`, `src/api/localTotpVerificationApi.js`, `src/components/security/TwoFactorAuthPrompt.jsx`, `tests/local-totp-verification-api.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
+- Refatoracao: a verificacao foi extraida para auxiliar interno testavel porque o cliente transversal possui mais de 2.500 linhas e nao havia verificador local equivalente. Nenhuma tela, entidade, endpoint, segredo ou autenticacao paralela foi criada.
+- Multiempresa/RBAC: Grupo e Empresa precisam existir, pertencer ao mesmo escopo e estar autorizados ao usuario; sessao, usuario e Grupo precisam coincidir; `Sistema.Seguranca.executar` e obrigatoria.
+- Seguranca: codigo precisa ter seis digitos, MFA precisa estar habilitado e somente uma prova `mfa_validado` recente, emitida previamente na sessao, e aceita. Ausencia, expiracao ou divergencia falham fechadas; o prompt nao repassa mais o codigo ao callback.
+- Auditoria: toda tentativa registra somente resultado, motivo controlado, sessao, Grupo e Empresa. Codigo informado, segredo e payload de autenticacao nao sao persistidos; falha da escrita de auditoria bloqueia a operacao.
+- Testes: 19/19 testes focados passaram e a suite completa passou 525/525. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve somente avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
+- Typecheck: os arquivos do lote possuem zero diagnosticos; o passivo global permaneceu em 1.603, sem regressao ou mascaramento.
+- Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
+- Commit de implementacao: `a95565ef` (`Fecha validacao MFA local`).
+- Proximo passo P0: endurecer o `verifyTotp` backend existente, removendo segredo fallback, exigindo provedor/segredo seguro, contexto e auditoria fail-closed sem registrar codigo ou segredo.
