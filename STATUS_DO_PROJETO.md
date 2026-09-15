@@ -9,6 +9,7 @@
 - Segredos: nenhum real versionado (somente marcadores sinteticos `hml-test-*-not-a-real-secret`).
 - Validacoes pos-merge: go-live-hml-01 13/13; site-cpa 199/199; local-entity-guard 7/7; local-totp 4/4; suite global 538/538; audit:baseline/lint/build/`git diff --check` OK; typecheck baseline 1603 (sem regressao do merge).
 - Proximo passo: push so na branch HML; PARAR; sem Opcao B e sem merge em main.
+### GO-LIVE-HML-01 / Opcao A - Preparacao ERP para E2E externo
 - Objetivo: preparar ERP (dataset sintetico, harness S2S, checklist, env example) para E2E externo futuro, sem Site CPA e sem segredos.
 - Diagnostico: precursor `ERP_READY_FOR_SITE_E2E` (ERP-SITE-HML-01) nao provisionava dataset/harness de go-live nem template de env HML.
 - Causa raiz: faltava lote exclusivo de preparacao (Opcao A) antes de qualquer conexao externa.
