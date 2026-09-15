@@ -9,6 +9,7 @@ import { sanitizeAuditPayload, sanitizeOnWrite } from "@/components/lib/sanitize
 import { createAuthDeniedError, evaluateLocalUserSession, markLocalLoggedOut, prepareLocalReauthentication, readLocalAuthState, writeLocalAuthState, LOCAL_SESSION_ID_KEY } from "@/api/localAuthSessionPolicy";
 import { createLocalStorageAdapter } from "@/api/localStorageAdapter";
 import { createLocalEntityProxy, createLocalEntityReadApi } from "@/api/localEntityReadApi";
+import { runLocalEntityCreatePipeline } from "@/api/localEntityCreatePipeline";
 import {
   applyLegacyReferenceCodePolicy,
   applyMasterCadastroOnCreate,
@@ -1835,34 +1836,31 @@ const createEntityApi = (entityName) => ({
       });
       scoped = normalizeFornecedorCadastro(scoped);
     }
-    const ordem = applyLocalOrdemProducaoCreate(db, entityName, scoped);
-    if (ordem.reuse) return ordem.reuse;
-    const compras = applyLocalComprasCreate(db, entityName, ordem.record || scoped);
-    if (compras.reuse) return compras.reuse;
-    const expedicao = applyLocalExpedicaoCreate(db, entityName, compras.record || ordem.record || scoped);
-    if (expedicao.reuse) return expedicao.reuse;
-    const atendimento = applyLocalAtendimentoCreate(db, entityName, expedicao.record || compras.record || ordem.record || scoped);
-    if (atendimento.reuse) return atendimento.reuse;
-    const crm = applyLocalCrmCreate(db, entityName, atendimento.record || expedicao.record || compras.record || ordem.record || scoped);
-    if (crm.reuse) return crm.reuse;
-    const roteirizacao = applyLocalRoteirizacaoCreate(db, entityName, crm.record || atendimento.record || expedicao.record || compras.record || ordem.record || scoped);
-    if (roteirizacao.reuse) return roteirizacao.reuse;
-    const withSiteOrigem = applyLocalSiteOrigemCreate(entityName, roteirizacao.record || crm.record || atendimento.record || expedicao.record || ordem.record || scoped);
-    const marketplace = applyLocalMarketplaceCreate(db, entityName, withSiteOrigem);
-    if (marketplace.reuse) return marketplace.reuse;
-    const migracao = applyLocalMigracaoCreate(db, entityName, marketplace.record || withSiteOrigem);
-    if (migracao.reuse) return migracao.reuse;
-    const withPiloto = applyLocalPilotoWrite(db, entityName, migracao.record || marketplace.record || withSiteOrigem);
-    const withBackup = applyLocalBackupWrite(db, entityName, withPiloto);
-    const stamped = syncEntregaNumero(
+    const prepared = runLocalEntityCreatePipeline({
+      db,
       entityName,
-      applyLocalMasterCadastro(db, entityName, withBackup),
-    );
-    const estoque = applyLocalEstoqueMovimento(db, entityName, stamped);
-    if (estoque.reuse) return estoque.reuse;
-    const financeiro = applyLocalFinanceiroTituloCreate(db, entityName, estoque.record || stamped);
-    if (financeiro.reuse) return financeiro.reuse;
-    const payload = applyLocalNotaFiscalCreate(db, entityName, financeiro.record || estoque.record || stamped);
+      scoped,
+      steps: {
+        ordem: applyLocalOrdemProducaoCreate,
+        compras: applyLocalComprasCreate,
+        expedicao: applyLocalExpedicaoCreate,
+        atendimento: applyLocalAtendimentoCreate,
+        crm: applyLocalCrmCreate,
+        roteirizacao: applyLocalRoteirizacaoCreate,
+        siteOrigem: applyLocalSiteOrigemCreate,
+        marketplace: applyLocalMarketplaceCreate,
+        migracao: applyLocalMigracaoCreate,
+        piloto: applyLocalPilotoWrite,
+        backup: applyLocalBackupWrite,
+        master: applyLocalMasterCadastro,
+        syncEntregaNumero,
+        estoque: applyLocalEstoqueMovimento,
+        financeiro: applyLocalFinanceiroTituloCreate,
+        notaFiscal: applyLocalNotaFiscalCreate,
+      },
+    });
+    if (prepared.reuse) return prepared.reuse;
+    const payload = prepared.record || scoped;
     const record = {
       ...payload,
       id: payload.id || makeId(entityName.toLowerCase()),
@@ -1871,7 +1869,7 @@ const createEntityApi = (entityName) => ({
     };
     records.unshift(record);
     if (entityName === 'MovimentacaoEstoque') {
-      applyLocalEstoqueProdutoPatch(db, record.produto_id, estoque.produtoPatch);
+      applyLocalEstoqueProdutoPatch(db, record.produto_id, prepared.produtoPatch);
     }
     saveDb(db);
     notify(entityName, 'create', record);
