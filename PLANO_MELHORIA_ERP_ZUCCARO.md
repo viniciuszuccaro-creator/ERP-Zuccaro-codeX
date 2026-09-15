@@ -1035,3 +1035,16 @@ Lote concluido em 2026-09-14 no cliente local existente, sem criar entidade, end
 
 Proxima frente P0: continuar a decomposicao de `src/api/localBase44Client.js`, isolando sua API de entidades em lote proprio sem alterar interface publica ou comportamento.
 
+### Decomposicao incremental - Leitura de entidades local
+
+Lote concluido em 2026-09-15 na API local existente, sem criar entidade, endpoint, cadastro ou persistencia paralela.
+
+- `list`, `filter`, `get`, `schema`, `subscribe` e o proxy lazy foram extraidos para auxiliar interno com dependencias explicitas.
+- Escopo Grupo/Empresa e Portal e aplicado antes da ordenacao/paginacao e novamente na leitura por ID.
+- A interface publica e a instancia unica por entidade foram preservadas; mutacoes continuam no orquestrador existente.
+- Testes focados passaram 23/23 e a suite completa passou 469/469; auditoria baseline, lint, build e verificacao de diff tambem passaram.
+- Os arquivos do lote possuem zero diagnosticos e o passivo global permaneceu em 1.601.
+- O inventario oficial registrou reducao de 39 linhas no cliente e o auxiliar ficou com 83 linhas; nenhuma operacao real ou acesso remoto foi executado.
+
+Proxima frente P0: extrair a orquestracao de criacao da API local em lote proprio, preservando a sequencia das policies e todos os guards existentes.
+

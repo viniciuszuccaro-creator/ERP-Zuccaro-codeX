@@ -8546,3 +8546,18 @@ Checklist inicial:
 - Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
 - Commit de implementacao: `d1a38719` (`Tipa contratos do cliente Base44 local`).
 - Proximo passo P0: continuar a decomposicao interna de `src/api/localBase44Client.js`, isolando a API de entidades em lote proprio e preservando os mesmos guards, contratos e consumidores.
+
+## 2026-09-15 - Leitura contextual da API de entidades local
+
+- Objetivo: continuar a decomposicao de `localBase44Client.js`, isolando a leitura, schema, subscriptions e proxy da API de entidades sem tocar na orquestracao de mutacoes.
+- Causa raiz: consultas e carregamento tardio de entidades permaneciam acoplados ao cliente transversal, dificultando provar que escopo precede ordenacao/paginacao e que `get` respeita a visibilidade do usuario.
+- Arquivos alterados: `src/api/localBase44Client.js`, `src/api/localEntityReadApi.js`, `tests/local-entity-read-api.test.js`, `tests/contexto-multiempresa-policy.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
+- Refatoracao: os metodos existentes `list`, `filter`, `get`, `schema` e `subscribe`, alem do proxy lazy, foram extraidos para auxiliar interno de 83 linhas porque nao havia equivalente reutilizavel. A interface publica e a instancia unica por entidade foram preservadas.
+- Multiempresa/RBAC: o filtro contextual continua aplicado antes de ordenar e paginar; `get` reaplica o escopo de Portal/usuario e responde como nao encontrado para registro invisivel. Nenhuma permissao foi ampliada.
+- Seguranca/auditoria: IDs de sessao retornados pela leitura generica sao normalizados antes da persistencia. A extracao nao escreve dados e continua usando os guards e a auditoria do orquestrador existente.
+- Testes: 23/23 testes focados passaram e cobrem pagina apos escopo, bloqueio entre empresas, schema, subscription, proxy e autenticacao; a suite completa passou 469/469. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve somente os avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
+- Typecheck: os arquivos do lote possuem zero diagnosticos e o passivo global permaneceu em 1.601, sem regressao ou mascaramento.
+- Tamanho: o inventario oficial registrou reducao de 39 linhas em `localBase44Client.js`; o auxiliar ficou com 83 linhas. O restante sera decomposto em lotes menores devido ao alto acoplamento operacional.
+- Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
+- Commit de implementacao: `5586d67b` (`Separa leitura de entidades do cliente local`).
+- Proximo passo P0: decompor a orquestracao de criacao da API local em auxiliar interno, preservando a ordem das policies, idempotencia, Grupo/Empresa, RBAC e auditoria.
