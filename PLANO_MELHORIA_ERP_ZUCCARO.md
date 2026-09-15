@@ -1022,3 +1022,16 @@ Lote concluido em 2026-09-14 no componente de Sidebar existente, sem criar tela,
 
 Proxima frente P0: tratar `src/api/localBase44Client.js` em lote transversal proprio, iniciando por inventario de responsabilidades e decomposicao segura das 2.657 linhas antes de corrigir seus 53 diagnosticos.
 
+### Contratos e primeira decomposicao - Cliente Base44 local
+
+Lote concluido em 2026-09-14 no cliente local existente, sem criar entidade, endpoint, persistencia ou fluxo paralelo.
+
+- O armazenamento local foi extraido para um adaptador interno reutilizado pela mesma autenticacao; escrita critica confirma persistencia e falha fechada quando indisponivel.
+- Usuario SDK, vinculos Grupo/Empresa, filtros, entidades dinamicas, configuracoes, migracao, agentes, IA e arquivos receberam contratos explicitos sem ampliar permissoes.
+- A normalizacao usa identificadores canonicos de Grupo/Empresa e preserva guards de contexto, RBAC e auditoria sanitizada.
+- Os arquivos do subgate passaram de 55 diagnosticos para zero; o global caiu de 1.656 para 1.601.
+- Testes direcionados passaram 53/53 e a suite completa passou 467/467; auditoria baseline, lint, build e verificacao de diff tambem passaram.
+- Nenhum dado real, backend remoto, banco legado ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: continuar a decomposicao de `src/api/localBase44Client.js`, isolando sua API de entidades em lote proprio sem alterar interface publica ou comportamento.
+

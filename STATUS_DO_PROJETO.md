@@ -8531,3 +8531,18 @@ Checklist inicial:
 - Dados/infraestrutura: nenhuma consulta remota foi executada e nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou modificado.
 - Commit de implementacao: `37face82` (`Refatora contratos da sidebar compartilhada`).
 - Proximo passo P0: tratar `src/api/localBase44Client.js` em lote transversal proprio, com inventario e decomposicao segura das 2.657 linhas antes de corrigir seus 53 diagnosticos.
+
+## 2026-09-14 - Contratos e primeira decomposicao do cliente Base44 local
+
+- Objetivo: iniciar a decomposicao segura de `localBase44Client.js` e eliminar seus diagnosticos de `checkJs` sem alterar persistencia, autenticacao, RBAC, contexto ou integracoes locais.
+- Causa raiz: o arquivo transversal reunia 2.657 linhas e contratos inferidos incompletos para armazenamento, usuario SDK, vinculos Grupo/Empresa, entidades dinamicas, configuracoes, migracao e chamadas de IA/agentes.
+- Arquivos alterados: `src/api/localBase44Client.js`, `src/api/localStorageAdapter.js`, `src/api/localAuthSessionPolicy.js`, `tests/local-auth-session-policy.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
+- Refatoracao: o adaptador de armazenamento foi extraido para um auxiliar interno porque nao havia equivalente reutilizavel. A interface publica do cliente foi preservada e nenhuma tela, rota, entidade ou persistencia paralela foi criada.
+- Contratos: usuario local, vinculos empresariais, filtros multiempresa, mapa dinamico de entidades, configuracoes, payloads de funcoes, upload privado, URL assinada, migracao e IA receberam contratos explicitos sem `any`, `ts-ignore` ou desativacao de verificacao.
+- Multiempresa/RBAC: a normalizacao preserva somente `grupo_id` e `empresa_id` canonicos; chamadas dinamicas continuam sujeitas aos guards existentes e nenhuma permissao foi ampliada.
+- Seguranca/auditoria: escrita estrita no armazenamento confirma persistencia de sessao; auditoria local aceita detalhes somente depois de sanitizacao. O erro de autenticacao possui contrato explicito e continua fail-closed.
+- Testes: 53/53 testes direcionados de autenticacao local, multiempresa, IA e migracao passaram; a suite completa passou 467/467. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve somente os avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
+- Typecheck: os arquivos do subgate passaram de 55 diagnosticos para zero; o passivo global caiu de 1.656 para 1.601, reducao liquida exata de 55, e continua aberto sem ser mascarado.
+- Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
+- Commit de implementacao: `d1a38719` (`Tipa contratos do cliente Base44 local`).
+- Proximo passo P0: continuar a decomposicao interna de `src/api/localBase44Client.js`, isolando a API de entidades em lote proprio e preservando os mesmos guards, contratos e consumidores.
