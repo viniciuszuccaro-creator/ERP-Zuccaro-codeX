@@ -8,7 +8,7 @@
 - Multiempresa/RBAC/auditoria: escopo `groupId`/`empresaId` no servidor; cross-tenant e allowlist cobertos no harness; correlationId no gateway.
 - Decisao: `ERP_HML_PREPARED_FOR_EXTERNAL_E2E` + `EXTERNAL_E2E_STATUS=BLOCKED_CONFIGURATION`. Nao declara `ERP_E2E_READY` nem `GO_LIVE_READY`.
 - Pendencia: Opcao B (URL/creds/Site reais) somente com autorizacao; Gates humanos 18-20.
-- Validacoes: `node --experimental-strip-types --test tests/site-cpa-go-live-hml-01.test.js` (+ site-cpa quando viavel), lint/audit/build/`git diff --check`.
+- Validacoes: `node --experimental-strip-types --test tests/site-cpa-go-live-hml-01.test.js` (13/13); `tests/site-cpa-*.test.js` (199/199); `npm run audit:baseline` OK; `npm run lint` OK; `npm run build` OK; `git diff --check` OK; typecheck baseline historico (sem regressao introduzida por este lote).
 - Proximo passo: PARAR apos push da branch; nao merge automatico; nao iniciar Opcao B sem pedido.
 ### P0.24 / Acesso mestre local - perfil wildcard reidratado
 - Objetivo: restaurar acesso mestre do Administrador Local para homologacao (sem criar ControlesV2).
