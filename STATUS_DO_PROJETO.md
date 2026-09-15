@@ -1,3 +1,12 @@
+### GO-LIVE-HML-01 / Reconciliacao segura com main (Opcao A)
+- Objetivo: integrar `origin/main` na branch `cursor/go-live-hml-01-392b` sem force push e sem descartar Codex.
+- Estrategia: merge de `origin/main` (`ae774cd7`) na branch HML; historico preservado.
+- Conflitos: nenhum (auto-merge ort em `STATUS_DO_PROJETO.md`).
+- STATUS: mantidos o bloco GO-LIVE-HML-01 no topo e as secoes Codex `EntityGuard local` + `Validacao MFA local` no final; nenhuma exclusao silenciosa.
+- Preservado Codex: `localBase44Client.js`, `localEntityGuardApi.js`, `localTotpVerificationApi.js`, testes e `PLANO_MELHORIA_ERP_ZUCCARO.md`.
+- Preservado HML: `.env.site-cpa.hml.example`, helpers, `site-cpa-go-live-hml-01.test.js`, `docs/GO_LIVE_HML_01_ERP.md`.
+- Decisao mantida: `EXTERNAL_E2E_STATUS=BLOCKED_CONFIGURATION` (sem Opcao B).
+- Segredos: nenhum real versionado (somente marcadores sinteticos `hml-test-*-not-a-real-secret`).
 ### GO-LIVE-HML-01 / Opcao A - Preparacao ERP para E2E externo
 - Objetivo: preparar ERP (dataset sintetico, harness S2S, checklist, env example) para E2E externo futuro, sem Site CPA e sem segredos.
 - Diagnostico: precursor `ERP_READY_FOR_SITE_E2E` (ERP-SITE-HML-01) nao provisionava dataset/harness de go-live nem template de env HML.
