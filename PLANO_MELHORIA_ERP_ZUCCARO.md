@@ -1168,3 +1168,17 @@ Lote concluido em 2026-09-15 no helper de leitura existente, sem criar entidade,
 
 Proxima frente P0: separar `entityGuard`, preservando aliases, escopo multiempresa, RBAC fail-closed e auditoria de negacao.
 
+### Decomposicao incremental - EntityGuard local
+
+Lote concluido em 2026-09-15 no dispatcher local existente, sem criar permissao, entidade, rota, tela ou endpoint paralelo.
+
+- A orquestracao do guard foi extraida para auxiliar interno e continua reutilizando a policy canonica por injecao explicita.
+- Contexto incompleto, Grupo inexistente ou nao vinculado, Empresa externa ao Grupo e Empresa nao autorizada falham antes da avaliacao RBAC.
+- Operacao no Grupo respeita a liberacao do usuario e as duas empresas autorizadas permanecem isoladas pelo cadastro e pelos vinculos.
+- Mutacoes de `AuditLog` continuam bloqueadas; toda negativa e auditada com identificadores normalizados e limitados.
+- Testes focados passaram 49/49 e a suite completa passou 521/521; auditoria baseline, lint, build e verificacao de diff tambem passaram.
+- Os arquivos do lote possuem zero diagnosticos; o baseline global de 1.603 inclui a variacao trazida pelo commit remoto anterior, fora deste subgate.
+- Nenhum dado real, backend remoto, banco legado ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: substituir o `verifyTotp` local permissivo por verificacao fail-closed usando sessao e configuracao MFA existentes, sem registrar segredo ou codigo.
+
