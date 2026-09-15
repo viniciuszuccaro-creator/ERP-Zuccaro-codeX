@@ -11,6 +11,7 @@ import { createLocalStorageAdapter } from "@/api/localStorageAdapter";
 import { createLocalEntityProxy, createLocalEntityReadApi } from "@/api/localEntityReadApi";
 import { runLocalEntityCreatePipeline } from "@/api/localEntityCreatePipeline";
 import { applyLocalEntityUpdateTransitions } from "@/api/localEntityUpdateTransitions";
+import { prepareLocalEntityUpdate } from "@/api/localEntityUpdatePreparation";
 import {
   applyLegacyReferenceCodePolicy,
   applyMasterCadastroOnCreate,
@@ -1879,63 +1880,39 @@ const createEntityApi = (entityName) => ({
   },
 
   async update(id, data = {}) {
-    if (!isTituloFinanceiroEntity(entityName) && !NOTA_FISCAL_ENTITIES.includes(entityName) && entityName !== 'OrdemProducao' && entityName !== 'Entrega' && entityName !== 'BackupAutomatico' && entityName !== 'OrdemCompra' && entityName !== 'Oportunidade') {
-      assertLocalMutationAllowed(entityName, 'editar', id);
-    }
-    assertLocalLegacyFieldAllowed(entityName, data);
-    assertLocalSupplierFieldsAllowed(entityName, data);
     const db = loadDb();
     const records = getEntityStore(db, entityName);
     const index = records.findIndex((item) => String(item.id) === String(id));
     if (index < 0) throw new Error(`${entityName} local nao encontrado: ${id}`);
     const before = { ...records[index] };
-    let payload = stampRecordContext(entityName, data);
-    if (entityName === 'Fornecedor') {
-      const { groupId: currentGroupId } = getCurrentContext();
-      const documentFields = ['tipo_pessoa', 'cpf_cnpj', 'cpf', 'cnpj'];
-      const hasDocumentPatch = documentFields.some((field) => Object.prototype.hasOwnProperty.call(payload, field));
-      const normalized = hasDocumentPatch
-        ? normalizeFornecedorCadastro({ ...before, ...payload })
-        : normalizeFornecedorCadastro(payload);
-      const merged = { ...before, ...normalized };
-      assertFornecedorScope({
-        record: merged,
-        before,
-        currentGroupId,
-        companies: getEntityStore(db, 'Empresa'),
-      });
-      if (hasDocumentPatch) {
-        const duplicate = findDuplicateMaster({ entityName, record: merged, records, currentId: before.id });
-        if (duplicate) throw new Error('Cadastro duplicado no grupo para este documento.');
-      }
-      const normalizedFields = new Set(hasDocumentPatch
-        ? documentFields
-        : []);
-      payload = Object.fromEntries(Object.entries(normalized).filter(([field]) => (
-        Object.prototype.hasOwnProperty.call(payload, field) || normalizedFields.has(field)
-      )));
-    }
-    if ((isTituloFinanceiroEntity(entityName) || NOTA_FISCAL_ENTITIES.includes(entityName) || entityName === 'OrdemProducao' || entityName === 'Entrega' || entityName === 'OrdemCompra' || entityName === 'Oportunidade') && before.empresa_id && !Object.prototype.hasOwnProperty.call(data || {}, 'empresa_id')) {
-      payload.empresa_id = before.empresa_id;
-      if (before.group_id) payload.group_id = before.group_id;
-      if (before.grupo_id) payload.grupo_id = before.grupo_id;
-    }
-    if ((entityName === 'Entrega' || entityName === 'OrdemCompra' || NOTA_FISCAL_ENTITIES.includes(entityName) || entityName === 'OrdemProducao') && before.empresa_id) {
-      payload.empresa_id = before.empresa_id;
-    }
-    if (entityName === 'BackupAutomatico') {
-      const statusPatch = Object.prototype.hasOwnProperty.call(payload, 'status')
-        ? String(payload.status || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        : '';
-      if (statusPatch === 'expirado') {
-        assertBackupExpire(before);
-        assertLocalPermissionAny(entityName, ['excluir', 'editar'], id);
-      } else {
-        assertLocalPermissionAny(entityName, ['editar', 'restaurar', 'executar'], id);
-      }
-    }
-    let nextPayload = applyLocalBackupWrite(db, entityName, applyLocalPilotoWrite(db, entityName, payload, before), before);
-    nextPayload = applyLocalLegacyReferenceUpdate(db, entityName, before, nextPayload);
+    const prepared = prepareLocalEntityUpdate({
+      db,
+      entityName,
+      id,
+      data,
+      records,
+      before,
+      dependencies: {
+        isTituloFinanceiro: isTituloFinanceiroEntity,
+        notaFiscalEntities: NOTA_FISCAL_ENTITIES,
+        assertMutationAllowed: assertLocalMutationAllowed,
+        assertLegacyFieldAllowed: assertLocalLegacyFieldAllowed,
+        assertSupplierFieldsAllowed: assertLocalSupplierFieldsAllowed,
+        stampRecordContext,
+        getCurrentContext,
+        getStore: getEntityStore,
+        normalizeFornecedorCadastro,
+        assertFornecedorScope,
+        findDuplicateMaster,
+        assertBackupExpire,
+        assertPermissionAny: assertLocalPermissionAny,
+        applyPilotoWrite: applyLocalPilotoWrite,
+        applyBackupWrite: applyLocalBackupWrite,
+        applyLegacyReferenceUpdate: applyLocalLegacyReferenceUpdate,
+      },
+    });
+    const { payload } = prepared;
+    let nextPayload = prepared.initialRecord;
     const transitioned = applyLocalEntityUpdateTransitions({
       db,
       entityName,
