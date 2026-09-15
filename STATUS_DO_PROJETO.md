@@ -1,3 +1,15 @@
+### GO-LIVE-HML-01 / Opcao A - Preparacao ERP para E2E externo
+- Objetivo: preparar ERP (dataset sintetico, harness S2S, checklist, env example) para E2E externo futuro, sem Site CPA e sem segredos.
+- Diagnostico: precursor `ERP_READY_FOR_SITE_E2E` (ERP-SITE-HML-01) nao provisionava dataset/harness de go-live nem template de env HML.
+- Causa raiz: faltava lote exclusivo de preparacao (Opcao A) antes de qualquer conexao externa.
+- Arquivos alterados: `.env.site-cpa.hml.example`, `tests/helpers/siteCpaHmlDataset.js`, `tests/helpers/siteCpaHmlHarness.js`, `tests/site-cpa-go-live-hml-01.test.js`, `docs/GO_LIVE_HML_01_ERP.md`, `docs/PLANO_CPA_B2B_MARKETPLACE_ERP.md`, `STATUS`.
+- Reutilizado: `siteCpaS2SPolicy` (HMAC/contrato/health), `siteCpaOperationRouter`, suites `tests/site-cpa-*.test.js`, `docs/ERP_SITE_HML_01.md`.
+- Alteracoes: IDs `hml_*`, roles oficiais, env injetavel (provider vazio = blocked honesto), evidencia de readiness Opcao A.
+- Multiempresa/RBAC/auditoria: escopo `groupId`/`empresaId` no servidor; cross-tenant e allowlist cobertos no harness; correlationId no gateway.
+- Decisao: `ERP_HML_PREPARED_FOR_EXTERNAL_E2E` + `EXTERNAL_E2E_STATUS=BLOCKED_CONFIGURATION`. Nao declara `ERP_E2E_READY` nem `GO_LIVE_READY`.
+- Pendencia: Opcao B (URL/creds/Site reais) somente com autorizacao; Gates humanos 18-20.
+- Validacoes: `node --experimental-strip-types --test tests/site-cpa-go-live-hml-01.test.js` (+ site-cpa quando viavel), lint/audit/build/`git diff --check`.
+- Proximo passo: PARAR apos push da branch; nao merge automatico; nao iniciar Opcao B sem pedido.
 ### P0.24 / Acesso mestre local - perfil wildcard reidratado
 - Objetivo: restaurar acesso mestre do Administrador Local para homologacao (sem criar ControlesV2).
 - Diagnostico: sessao local perdia `role=admin`/perfil; UI em "Usuário"; `ProtectedSection` bloqueava todos os modulos; `*` do perfil so era preenchido se ausente.

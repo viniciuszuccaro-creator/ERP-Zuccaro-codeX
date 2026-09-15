@@ -1,6 +1,7 @@
 #env
 .env
 .env.*
+!.env.site-cpa.hml.example
 
 # Logs
 logs
