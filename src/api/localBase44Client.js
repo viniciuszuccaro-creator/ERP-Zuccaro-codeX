@@ -13,6 +13,7 @@ import { runLocalEntityCreatePipeline } from "@/api/localEntityCreatePipeline";
 import { applyLocalEntityUpdateTransitions } from "@/api/localEntityUpdateTransitions";
 import { prepareLocalEntityUpdate } from "@/api/localEntityUpdatePreparation";
 import { runLocalEntityDeletePipeline } from "@/api/localEntityDeletePipeline";
+import { runLocalBackupRestorePipeline } from "@/api/localBackupRestorePipeline";
 import {
   applyLegacyReferenceCodePolicy,
   applyMasterCadastroOnCreate,
@@ -1985,48 +1986,24 @@ const createEntityApi = (entityName) => ({
   },
 
   async restore(id, options = {}) {
-    if (entityName !== 'BackupAutomatico') {
-      throw new Error(`restore nao suportado para ${entityName}`);
-    }
-    assertLocalPermissionAny(entityName, ['restaurar', 'executar'], id);
-    const db = loadDb();
-    const records = getEntityStore(db, entityName);
-    const index = records.findIndex((item) => String(item.id) === String(id));
-    if (index < 0) throw new Error(`${entityName} local nao encontrado: ${id}`);
-    const backup = records[index];
-    const { groupId, empresaId, user } = getCurrentContext();
-    const entitiesSnapshot = assertBackupRestore({
-      backup,
-      groupId: options.group_id || groupId,
-      empresaId: options.empresa_id || empresaId,
+    return runLocalBackupRestorePipeline({
+      entityName,
+      id,
+      options,
+      dependencies: {
+        assertPermissionAny: assertLocalPermissionAny,
+        loadDb,
+        getStore: getEntityStore,
+        getCurrentContext,
+        assertBackupRestore,
+        backupCountEntities: BACKUP_COUNT_ENTITIES,
+        mergeSnapshotRecords,
+        now,
+        saveDb,
+        notify,
+        auditMutation: auditLocalMutation,
+      },
     });
-    const summary = /** @type {LocalRecord} */ ({});
-    BACKUP_COUNT_ENTITIES.forEach((name) => {
-      summary[name] = mergeSnapshotRecords(db, name, entitiesSnapshot[name] || []);
-    });
-    const restauracao = {
-      data_hora: now(),
-      usuario: user?.full_name || user?.email || 'Sistema',
-      usuario_id: user?.id || null,
-      tipo_restauracao: 'Completa',
-      sucesso: true,
-      observacoes: `Restauracao aplicada do backup ${backup.numero_backup || backup.id}`,
-      resumo: summary,
-    };
-    records[index] = {
-      ...backup,
-      restauracoes: [...(backup.restauracoes || []), restauracao],
-      updated_date: now(),
-    };
-    saveDb(db);
-    notify(entityName, 'update', records[index]);
-    auditLocalMutation(entityName, 'Restauracao', {
-      before: backup,
-      after: records[index],
-      recordId: records[index].id,
-      detalhes: summary,
-    });
-    return { backup: records[index], summary };
   },
 
   async bulkCreate(items = []) {
