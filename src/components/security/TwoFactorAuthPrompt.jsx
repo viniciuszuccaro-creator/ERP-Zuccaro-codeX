@@ -22,7 +22,7 @@ export default function TwoFactorAuthPrompt({ open, onClose, contexto = {}, onSu
     try {
       const res = await base44.functions.invoke('verifyTotp', { ...contexto, code: six });
       if (res?.data?.ok) {
-        onSuccess?.(six);
+        onSuccess?.();
         onClose?.();
       } else {
         setError('Código inválido.');
