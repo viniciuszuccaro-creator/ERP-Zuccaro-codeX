@@ -8561,3 +8561,18 @@ Checklist inicial:
 - Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
 - Commit de implementacao: `5586d67b` (`Separa leitura de entidades do cliente local`).
 - Proximo passo P0: decompor a orquestracao de criacao da API local em auxiliar interno, preservando a ordem das policies, idempotencia, Grupo/Empresa, RBAC e auditoria.
+
+## 2026-09-15 - Pipeline de criacao da API de entidades local
+
+- Objetivo: decompor a preparacao de criacao da API local sem mover persistencia, notificacao ou auditoria para fora do cliente existente.
+- Causa raiz: o metodo `create` encadeava diretamente 16 etapas de Producao, Compras, Expedicao, Atendimento, CRM, Roteirizacao, Site, Marketplace, migracao, piloto, backup, cadastro mestre, Estoque, Financeiro e Fiscal, tornando a ordem e os atalhos idempotentes dificeis de provar.
+- Arquivos alterados: `src/api/localBase44Client.js`, `src/api/localEntityCreatePipeline.js`, `tests/local-entity-create-pipeline.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
+- Refatoracao: a sequencia existente foi extraida para auxiliar interno com dependencias explicitas porque nao havia pipeline equivalente reutilizavel. Nenhuma policy, entidade, rota, endpoint ou funcionalidade paralela foi criada.
+- Compatibilidade/idempotencia: a ordem das 16 etapas e todos os retornos antecipados por `reuse` foram preservados; o payload fiscal e o ajuste de produto continuam entregues a mesma persistencia final.
+- Multiempresa/RBAC: contexto e permissoes continuam validados no cliente antes do pipeline; cada policy recebe o mesmo registro carimbado e o mesmo banco em memoria. Nenhum acesso foi ampliado.
+- Seguranca/auditoria: a extracao nao grava dados. `saveDb`, notificacao e `auditLocalMutation` permanecem no orquestrador depois da preparacao bem-sucedida; falhas nao declaram criacao concluida.
+- Testes: 46/46 testes focados passaram, incluindo ordem integral, interrupcao idempotente, estoque, cadastros e isolamento multiempresa; a suite completa passou 471/471. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve somente os avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
+- Typecheck: os arquivos do lote possuem zero diagnosticos e o passivo global permaneceu em 1.601, sem regressao ou mascaramento.
+- Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
+- Commit de implementacao: `ed395ea9` (`Separa pipeline de criacao local`).
+- Proximo passo P0: decompor a atualizacao da API local em lote proprio, separando validacoes e transicoes por entidade sem alterar ownership, idempotencia ou auditoria.

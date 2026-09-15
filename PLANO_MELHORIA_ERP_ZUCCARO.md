@@ -1048,3 +1048,16 @@ Lote concluido em 2026-09-15 na API local existente, sem criar entidade, endpoin
 
 Proxima frente P0: extrair a orquestracao de criacao da API local em lote proprio, preservando a sequencia das policies e todos os guards existentes.
 
+### Decomposicao incremental - Pipeline de criacao local
+
+Lote concluido em 2026-09-15 na API local existente, sem criar entidade, endpoint ou persistencia paralela.
+
+- As 16 etapas de preparacao da criacao foram extraidas para pipeline interno com dependencias explicitas.
+- Ordem das policies, atalhos idempotentes, payload final e ajuste de Estoque foram preservados.
+- Contexto Grupo/Empresa e RBAC continuam validados antes do pipeline; persistencia e auditoria permanecem depois dele no cliente existente.
+- Testes focados passaram 46/46 e a suite completa passou 471/471; auditoria baseline, lint, build e verificacao de diff tambem passaram.
+- Os arquivos do lote possuem zero diagnosticos e o passivo global permaneceu em 1.601.
+- Nenhum dado real, backend remoto, banco legado ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: decompor a atualizacao da API local por validacoes e transicoes de entidade, preservando ownership, idempotencia e auditoria.
+
