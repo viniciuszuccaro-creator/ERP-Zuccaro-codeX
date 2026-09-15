@@ -1126,3 +1126,17 @@ Lote concluido em 2026-09-15 na API local existente, sem criar entidade, endpoin
 
 Proxima frente P0: separar a API local de configuracao, preservando escopo fail-closed, upsert existente e auditoria dos wrappers atuais.
 
+### Decomposicao incremental - Configuracao local multiempresa
+
+Lote concluido em 2026-09-15 na API local existente, sem criar entidade, endpoint ou configuracao paralela.
+
+- Normalizacao de escopo e upsert foram extraidos para auxiliar interno que reutiliza `ConfiguracaoSistema.filter/update/create`.
+- Contexto invalido bloqueia leitura e escrita; Grupo/Empresa validados prevalecem sobre IDs adulterados em `data`.
+- Chave vazia e recusada e a chave externa normalizada passou a ser autoritativa sobre `data.chave`.
+- Guards e auditoria continuam na API de entidades e nos wrappers existentes.
+- Testes focados passaram 23/23 e a suite completa passou 503/503; auditoria baseline, lint, build e verificacao de diff tambem passaram.
+- Os arquivos do lote possuem zero diagnosticos e o passivo global permaneceu em 1.601; o cliente transversal ficou com aproximadamente 2.513 linhas.
+- Nenhum dado real, backend remoto, banco legado ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: separar `entityCount` e `entityCounts`, preservando filtros contextuais, validacao de entidade e isolamento Grupo/Empresa.
+

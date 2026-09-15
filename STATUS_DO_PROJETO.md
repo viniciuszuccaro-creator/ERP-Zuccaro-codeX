@@ -8656,3 +8656,20 @@ Checklist inicial:
 - Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
 - Commit de implementacao: `f3035b18` (`Separa criacao em lote local`).
 - Proximo passo P0: decompor a API local de configuracao, preservando validacao fail-closed de Grupo/Empresa, busca contextual, upsert pela entidade existente e auditoria dos wrappers atuais.
+
+## 2026-09-15 - API local de configuracao multiempresa
+
+- Objetivo: separar e endurecer o upsert local de `ConfiguracaoSistema` sem criar entidade, persistencia ou fluxo de configuracao paralelo.
+- Causa raiz: normalizacao de escopo, busca e decisao create/update permaneciam acopladas ao cliente transversal; adicionalmente, `data.chave` podia sobrescrever a chave externa do comando.
+- Arquivos alterados: `src/api/localBase44Client.js`, `src/api/localConfigApi.js`, `tests/local-config-api.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
+- Refatoracao: normalizacao e upsert foram extraidos para auxiliar interno de 59 linhas com dependencias explicitas porque nao havia equivalente reutilizavel. O cliente continua operando pela entidade `ConfiguracaoSistema` existente.
+- Multiempresa: contexto continua validado por `validateMultiempresaContext` e convertido por `toEntityScope`; contexto invalido impede busca e escrita. O escopo validado prevalece sobre IDs repetidos em `data`.
+- RBAC/auditoria: `filter`, `update` e `create` continuam passando pela API de entidades existente, preservando guards granulares e auditoria dos wrappers atuais. Nenhuma permissao foi ampliada.
+- Seguranca: chave vazia ou composta apenas por espacos passou a ser recusada; a chave externa normalizada agora e autoritativa e nao pode ser substituida por `data.chave` adulterada.
+- Compatibilidade: configuracao existente continua usando o registro mais recente; configuracao ausente continua sendo criada com categoria `Sistema` quando nao informada.
+- Testes: 23/23 testes focados passaram e a suite completa passou 503/503. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve somente os avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
+- Typecheck: os arquivos do lote possuem zero diagnosticos e o passivo global permaneceu em 1.601, sem regressao ou mascaramento.
+- Tamanho: o inventario oficial registrou `localBase44Client.js` com 2.513 linhas; a leitura direta apos o lote registrou 2.512 linhas por diferenca de quebra final.
+- Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
+- Commit de implementacao: `0f37fa97` (`Separa configuracao local multiempresa`).
+- Proximo passo P0: decompor as consultas `entityCount` e `entityCounts` do dispatcher local, preservando filtros Grupo/Empresa, validacao de entidade, agregacao e ausencia de vazamento entre contextos.
