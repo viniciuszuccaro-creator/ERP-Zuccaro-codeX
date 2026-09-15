@@ -8640,3 +8640,19 @@ Checklist inicial:
 - Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
 - Commit de implementacao: `28d9bac8` (`Separa restauracao de backup local`).
 - Proximo passo P0: decompor o fluxo `bulkCreate` da API local, preservando permissao de importacao para campos protegidos, criacao sequencial, validacoes por item, idempotencia e auditoria existente.
+
+## 2026-09-15 - Pipeline de criacao em lote da API local
+
+- Objetivo: separar a coordenacao de `bulkCreate` sem substituir o metodo `create` nem alterar validacoes, contexto, idempotencia, persistencia ou auditoria por item.
+- Causa raiz: deteccao de codigo legado/campos protegidos, permissao adicional de importacao e iteracao sequencial permaneciam acopladas ao cliente transversal.
+- Arquivos alterados: `src/api/localBase44Client.js`, `src/api/localEntityBulkCreatePipeline.js`, `tests/local-entity-bulk-create-pipeline.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
+- Refatoracao: a coordenacao foi extraida para auxiliar interno de 45 linhas com dependencias explicitas porque nao havia equivalente reutilizavel. Nenhuma entidade, tela, rota, endpoint ou importador paralelo foi criado.
+- RBAC: lote com codigo legado preenchido ou campo protegido de Fornecedor continua exigindo `importar` antes da primeira criacao; campo vazio ou entidade nao relacionada nao amplia a permissao requerida.
+- Multiempresa/seguranca/auditoria: cada item continua passando sequencialmente pelo mesmo `create`, mantendo carimbo Grupo/Empresa, sanitizacao, guards, idempotencia e auditoria existentes. Falha em um item interrompe o lote antes dos itens seguintes.
+- Compatibilidade: ordem dos itens e resultados foi preservada; lote vazio retorna vazio sem permissao ou efeito; nao foi introduzida execucao paralela ou rollback ficticio.
+- Testes: 35/35 testes focados passaram e a suite completa passou 497/497. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve somente os avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
+- Typecheck: os arquivos do lote possuem zero diagnosticos e o passivo global permaneceu em 1.601, sem regressao ou mascaramento.
+- Tamanho: `localBase44Client.js` permaneceu com aproximadamente 2.532 linhas; a responsabilidade e seus testes ficaram isolados no auxiliar.
+- Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
+- Commit de implementacao: `f3035b18` (`Separa criacao em lote local`).
+- Proximo passo P0: decompor a API local de configuracao, preservando validacao fail-closed de Grupo/Empresa, busca contextual, upsert pela entidade existente e auditoria dos wrappers atuais.

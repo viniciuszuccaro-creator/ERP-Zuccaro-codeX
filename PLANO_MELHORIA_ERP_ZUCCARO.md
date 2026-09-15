@@ -1113,3 +1113,16 @@ Lote concluido em 2026-09-15 na API local existente, sem criar entidade, endpoin
 
 Proxima frente P0: separar `bulkCreate`, preservando permissao de importacao, validacao sequencial por item, idempotencia e auditoria existente.
 
+### Decomposicao incremental - Criacao em lote local
+
+Lote concluido em 2026-09-15 na API local existente, sem criar entidade, endpoint ou importador paralelo.
+
+- Deteccao de codigo legado/campos protegidos, permissao de importacao e iteracao sequencial foram extraidas para auxiliar interno.
+- Cada item continua usando o mesmo `create`, preservando contexto, sanitizacao, RBAC, idempotencia, persistencia e auditoria por registro.
+- Falha interrompe os itens seguintes; lote vazio nao gera efeito e a ordem dos resultados foi preservada.
+- Testes focados passaram 35/35 e a suite completa passou 497/497; auditoria baseline, lint, build e verificacao de diff tambem passaram.
+- Os arquivos do lote possuem zero diagnosticos e o passivo global permaneceu em 1.601.
+- Nenhum dado real, backend remoto, banco legado ou HD externo foi acessado ou alterado.
+
+Proxima frente P0: separar a API local de configuracao, preservando escopo fail-closed, upsert existente e auditoria dos wrappers atuais.
+
