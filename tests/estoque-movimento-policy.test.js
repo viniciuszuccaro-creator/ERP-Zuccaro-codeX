@@ -163,6 +163,7 @@ test('auditoria de transferencia omite observacoes e custos', () => {
 
 test('stock persistence owns the product balance and history cannot be deleted', async () => {
   const client = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
+  const deletePipeline = await readFile(new URL('../src/api/localEntityDeletePipeline.js', import.meta.url), 'utf8');
   const tab = await readFile(new URL('../src/components/estoque/MovimentacoesTab.jsx', import.meta.url), 'utf8');
   const inv = await readFile(new URL('../src/components/estoque/InventarioForm.jsx', import.meta.url), 'utf8');
   const transfer = await readFile(new URL('../src/components/estoque/TransferenciaEntreEmpresasForm.jsx', import.meta.url), 'utf8');
@@ -173,7 +174,8 @@ test('stock persistence owns the product balance and history cannot be deleted',
   const recebimentoLegacy = await readFile(new URL('../src/components/estoque/RecebimentoLegacyDialog.jsx', import.meta.url), 'utf8');
 
   assert.match(client, /applyLocalEstoqueMovimento/);
-  assert.match(client, /Exclusao de historico bloqueada/);
+  assert.match(client, /runLocalEntityDeletePipeline/);
+  assert.match(deletePipeline, /Exclusao de historico bloqueada/);
   assert.match(client, /MovimentacaoEstoque: \{ module: 'Estoque'/);
   assert.doesNotMatch(tab, /Movimentacao deixaria o estoque negativo/);
   assert.match(tab, /tipo_movimento: tipoMovimento/);

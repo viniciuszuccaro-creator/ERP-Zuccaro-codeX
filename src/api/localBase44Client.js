@@ -12,6 +12,7 @@ import { createLocalEntityProxy, createLocalEntityReadApi } from "@/api/localEnt
 import { runLocalEntityCreatePipeline } from "@/api/localEntityCreatePipeline";
 import { applyLocalEntityUpdateTransitions } from "@/api/localEntityUpdateTransitions";
 import { prepareLocalEntityUpdate } from "@/api/localEntityUpdatePreparation";
+import { runLocalEntityDeletePipeline } from "@/api/localEntityDeletePipeline";
 import {
   applyLegacyReferenceCodePolicy,
   applyMasterCadastroOnCreate,
@@ -1961,40 +1962,26 @@ const createEntityApi = (entityName) => ({
   },
 
   async delete(id) {
-    if (HISTORICO_ESTOQUE_ENTITIES.includes(entityName)) {
-      throw new Error('Exclusao de historico bloqueada.');
-    }
-    if (isTituloFinanceiroEntity(entityName)) {
-      const dbPreview = loadDb();
-      const current = getEntityStore(dbPreview, entityName).find((item) => String(item.id) === String(id));
-      assertTituloOnDelete(current || {});
-    }
-    if (entityName === 'OrdemProducao') {
-      const dbPreview = loadDb();
-      const current = getEntityStore(dbPreview, entityName).find((item) => String(item.id) === String(id));
-      assertOpOnDelete(current || {});
-    }
-    if (entityName === 'Entrega') {
-      const dbPreview = loadDb();
-      const current = getEntityStore(dbPreview, entityName).find((item) => String(item.id) === String(id));
-      assertEntregaOnDelete(current || {});
-    }
-    if (NOTA_FISCAL_ENTITIES.includes(entityName)) {
-      const dbPreview = loadDb();
-      const current = getEntityStore(dbPreview, entityName).find((item) => String(item.id) === String(id));
-      assertNotaFiscalOnDelete(current || {});
-    }
-    assertLocalMutationAllowed(entityName, 'excluir', id);
-    const db = loadDb();
-    const records = getEntityStore(db, entityName);
-    const index = records.findIndex((item) => String(item.id) === String(id));
-    markRecordDeletedLocally(entityName, id);
-    if (index < 0) return { success: true };
-    const [removed] = records.splice(index, 1);
-    saveDb(db);
-    notify(entityName, 'delete', removed);
-    auditLocalMutation(entityName, 'Exclusao', { before: removed, recordId: removed?.id || id });
-    return { success: true };
+    return runLocalEntityDeletePipeline({
+      entityName,
+      id,
+      dependencies: {
+        historicoEstoqueEntities: HISTORICO_ESTOQUE_ENTITIES,
+        isTituloFinanceiro: isTituloFinanceiroEntity,
+        notaFiscalEntities: NOTA_FISCAL_ENTITIES,
+        loadDb,
+        getStore: getEntityStore,
+        assertTituloOnDelete,
+        assertOpOnDelete,
+        assertEntregaOnDelete,
+        assertNotaFiscalOnDelete,
+        assertMutationAllowed: assertLocalMutationAllowed,
+        markRecordDeleted: markRecordDeletedLocally,
+        saveDb,
+        notify,
+        auditMutation: auditLocalMutation,
+      },
+    });
   },
 
   async restore(id, options = {}) {
