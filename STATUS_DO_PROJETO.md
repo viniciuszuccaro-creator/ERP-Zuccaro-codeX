@@ -8775,3 +8775,22 @@ Checklist inicial:
 - Commit de implementacao: `5959fdd0` (`Protege verificacao MFA no backend`).
 - Risco residual: o limite de tentativas atual e por instancia em memoria e precisa de armazenamento distribuido antes da producao.
 - Proximo passo P0: integrar emissao e entrega do desafio ao fluxo MFA existente por e-mail/WhatsApp, com expiracao, idempotencia e rate limit distribuido, configurando `MFA_TOTP_PROVIDER` e `MFA_TOTP_SECRET` somente no ambiente seguro.
+
+## 2026-09-16 - Emissao e entrega segura do desafio MFA
+
+- Objetivo: completar no fluxo existente a solicitacao, entrega, reenvio controlado e verificacao do codigo MFA, sem criar endpoint, entidade ou autenticacao paralela.
+- Causa raiz: o backend validava um codigo deterministico, mas nao havia acao para emiti-lo ao usuario; o prompt apenas solicitava digitacao e o limite de tentativas era local por instancia.
+- Arquivos alterados: `base44/functions/verifyTotp/entry.ts`, `base44/functions/whatsappSend/entry.ts`, `base44/functions/_lib/security/totpVerificationPolicy/entry.ts`, `src/components/security/TwoFactorAuthPrompt.jsx`, `src/api/localTotpVerificationApi.js`, `tests/verify-totp-backend.test.js`, `tests/local-totp-verification-api.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
+- Estruturas reutilizadas: a funcao `verifyTotp`, o prompt 2FA, `AuditLog`, `Core.SendEmail`, `whatsappSend`, a sessao local e a policy MFA existentes. Nenhuma entidade, rota, tela ou provedor paralelo foi criado.
+- Fluxo: `verifyTotp` aceita `request` e `verify`; o prompt solicita ao abrir e permite reenvio. O codigo permanece vinculado ao usuario, modulo, secao, Grupo, Empresa e janela de cinco minutos.
+- Multiempresa/RBAC: emissao e verificacao exigem ownership Grupo/Empresa e `Sistema.Seguranca.executar`. O destino vem exclusivamente do usuario autenticado; IDs ou contatos enviados pelo frontend nao sao aceitos.
+- Seguranca: reenvio e tentativas usam historico persistente de `AuditLog`; repeticao em menos de um minuto reaproveita o desafio sem novo envio e cinco solicitacoes em quinze minutos ou cinco falhas em cinco minutos bloqueiam novas tentativas. Falhas ambiguas de entrega tambem entram na janela.
+- WhatsApp: o canal existente aceita o handoff MFA somente com HMAC de curta duracao vinculado ao usuario, escopo, destino e mensagem. Modo simulado ou integracao inativa falham fechados e nao fingem entrega.
+- Auditoria/privacidade: logs guardam apenas resultado, motivo controlado, provedor e escopo. Codigo, segredo, e-mail e telefone completos nao entram na auditoria ou resposta; a interface recebe apenas o destino mascarado.
+- Compatibilidade local: `request` reutiliza somente prova MFA valida da sessao local e responde `requested: false`, sem fingir envio externo.
+- Testes: 13/13 focados e 547/547 na suite completa passaram. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o baseline de `catch` operacional vazio permaneceu em 1.028. O build manteve somente os avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
+- Typecheck: os arquivos do lote possuem zero diagnosticos; o passivo global permaneceu em 1.603, sem regressao ou mascaramento.
+- Implantacao: nenhuma operacao remota foi executada porque `base44/config.jsonc` nao existe neste clone. Antes da homologacao, configurar `MFA_TOTP_PROVIDER` e `MFA_TOTP_SECRET` no ambiente seguro e implantar as funcoes pelos meios oficiais.
+- Dados/infraestrutura: nenhum dado real, banco legado ou HD externo foi acessado ou alterado.
+- Commit de implementacao: `adedd239` (`Integra entrega segura do codigo MFA`).
+- Proximo passo P0: implementar recuperacao de acesso no fluxo de autenticacao existente, com token curto, uso unico, expiracao, revogacao de sessoes e auditoria, sem criar provedor de identidade paralelo.

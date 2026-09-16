@@ -1209,3 +1209,18 @@ Lote concluido em 2026-09-16 na funcao `verifyTotp` existente, sem criar endpoin
 
 Proxima frente P0: integrar emissao e entrega do desafio ao fluxo MFA existente por e-mail/WhatsApp, com expiracao, idempotencia e rate limit distribuido antes da producao.
 
+### Seguranca P0 - Emissao e entrega do desafio MFA
+
+Lote concluido em 2026-09-16 nas funcoes e no prompt MFA existentes, sem criar endpoint, entidade, tela ou provedor paralelo.
+
+- O mesmo `verifyTotp` passou a emitir e verificar o desafio, com destino obtido somente do usuario autenticado.
+- E-mail reutiliza `Core.SendEmail`; WhatsApp reutiliza `whatsappSend` com handoff HMAC curto e bloqueio de modo simulado.
+- `AuditLog` sustenta cooldown, limite persistente de solicitacoes e bloqueio de tentativas, sem armazenar codigo, segredo ou contato completo.
+- O prompt solicita o desafio ao abrir e oferece reenvio controlado; o modo local preserva a prova MFA de sessao sem simular entrega.
+- Testes focados passaram 13/13 e a suite completa passou 547/547; auditoria baseline, lint, build e verificacao de diff passaram.
+- Os arquivos do lote possuem zero diagnosticos e o baseline global permaneceu em 1.603.
+- Implementacao registrada no commit `adedd239`.
+- Implantacao remota permanece pendente porque `base44/config.jsonc` nao existe; provedor e segredo MFA devem ser configurados somente no ambiente seguro.
+
+Proxima frente P0: implementar recuperacao de acesso no fluxo de autenticacao existente, com token de uso unico, expiracao, revogacao de sessoes e auditoria.
+
