@@ -2,7 +2,8 @@
 
 - Objetivo: expandir o padrao Marca (R01) para cadastros base sem migrar o ERP inteiro e sem deploy VPS.
 - Branch: `cursor/erp-runtime-02-392b` (base main `c943ba09`).
-- SHA: `6986dccf` (+ commit de status/validacao se houver).
+- SHA: `74fe5119` (implementacao `6986dccf` + status).
+- PR: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/7 (draft; sem merge).
 - Inventario real: `UnidadeMedida`, `GrupoProduto`, `SetorAtividade`, `Produto`, `TabelaPreco`, `Fornecedor`; Categoria/Fabricante/Subgrupo **nao existem**.
 - Classificacao: A = UnidadeMedida/GrupoProduto/SetorAtividade/Marca; B = Produto base; C/adiados = TabelaPreco, Fornecedor, Produto operacional.
 - Implementado: UnidadeMedida, GrupoProduto, SetorAtividade (CRUD HTTP+Postgres+audit+tenant); Produto cadastro-base (schema/API/repo; fora do piloto HTTP frontend).
