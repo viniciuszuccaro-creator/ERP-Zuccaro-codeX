@@ -17,12 +17,32 @@ test('resolveErpBackendMode defaults to local without remote config', () => {
   }), 'remote');
 });
 
-test('resolveErpApiBaseUrl uses localhost default', () => {
+test('resolveErpApiBaseUrl supports same-origin mode', () => {
   assert.equal(resolveErpApiBaseUrl({}), 'http://localhost:3080');
+  assert.equal(resolveErpApiBaseUrl({ VITE_ERP_API_SAME_ORIGIN: 'true' }), '');
   assert.equal(
     resolveErpApiBaseUrl({ VITE_ERP_API_BASE_URL: 'https://api-erp-dev.cpaferroeaco.com.br/' }),
     'https://api-erp-dev.cpaferroeaco.com.br',
   );
+});
+
+test('HttpApiClient supports relative same-origin URLs', async () => {
+  /** @type {string[]} */
+  const urls = [];
+  const fetchImpl = async (url) => {
+    urls.push(String(url));
+    return new Response(JSON.stringify({ data: [] }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+  const client = createHttpApiClient({
+    baseUrl: '',
+    fetchImpl,
+    getScope: () => ({ groupId: '11111111-1111-4111-8111-111111111111' }),
+  });
+  await client.entities.Marca.list();
+  assert.equal(urls[0].startsWith('/api/v1/marcas'), true);
 });
 
 test('HTTP_PILOT_ENTITIES includes Marca only', () => {

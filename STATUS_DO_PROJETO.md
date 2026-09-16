@@ -1,3 +1,14 @@
+### ERP-DEV-DEPLOY-01 / Preparacao do primeiro deploy DEV Hostinger
+
+- Objetivo: preparar artefatos e runbook humano para subir ERP-RUNTIME-01 no VPS DEV, sem SSH/Cursor no VPS e sem depender de DNS.
+- Documento: `docs/ERP_DEV_DEPLOY_01.md` (runbook com comandos curtos + placeholders).
+- Ajustes: `docker-compose.erp.yml` (network externa obrigatoria, limits, health), nginx same-origin proxy, `.env.erp.dev.example`, seed sintetico `server/scripts/seed-dev-synthetic.sql`, `VITE_ERP_API_SAME_ORIGIN`.
+- Portas: `127.0.0.1:3080` (API) e `127.0.0.1:3081` (web). Nao publicar externamente.
+- Segredos: somente placeholders; arquivo VPS `.env.erp.dev` chmod 600 fora do Git.
+- Proibicoes: nao reset Supabase, nao abrir 5432, nao alterar UFW/DOCKER-USER, nao deploy automatico.
+- Decisao: `ERP_DEV_DEPLOY_01_READY_FOR_MANUAL_DEPLOY`.
+- Proximo: humano executar runbook no VPS; Cursor PARAR sem deploy.
+
 ### ERP-RUNTIME-01 / Incorporacao segura na main
 
 - Objetivo: incorporar `cursor/erp-runtime-01-392b` em `main` preservando Codex e demais trabalhos.

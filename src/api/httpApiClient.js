@@ -24,13 +24,18 @@ function createHttpError(status, body, requestId) {
  * }} [options]
  */
 export function createHttpApiClient(options = {}) {
-  const baseUrl = (options.baseUrl || resolveErpApiBaseUrl()).replace(/\/$/, '');
+  const resolvedBase = options.baseUrl !== undefined
+    ? options.baseUrl
+    : resolveErpApiBaseUrl();
+  const baseUrl = String(resolvedBase || '').replace(/\/$/, '');
   const fetchImpl = options.fetchImpl || fetch;
   const getScope = options.getScope || (() => ({}));
 
   async function request(path, { method = 'GET', body, query } = {}) {
     const scope = getScope() || {};
-    const url = new URL(`${baseUrl}${path}`);
+    const url = baseUrl
+      ? new URL(`${baseUrl}${path}`)
+      : new URL(path, 'http://same-origin.local');
     if (query && typeof query === 'object') {
       for (const [key, value] of Object.entries(query)) {
         if (value == null || value === '') continue;
@@ -48,7 +53,8 @@ export function createHttpApiClient(options = {}) {
     if (scope.actorEmail) headers['X-Actor-Email'] = String(scope.actorEmail);
     if (scope.token) headers.Authorization = `Bearer ${scope.token}`;
 
-    const response = await fetchImpl(url.toString(), {
+    const fetchUrl = baseUrl ? url.toString() : `${url.pathname}${url.search}`;
+    const response = await fetchImpl(fetchUrl, {
       method,
       headers,
       body: body == null ? undefined : JSON.stringify(body),

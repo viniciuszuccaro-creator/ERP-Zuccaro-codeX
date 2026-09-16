@@ -5,9 +5,11 @@ COPY package.json package-lock.json* ./
 RUN npm install
 COPY . .
 ARG VITE_ERP_BACKEND=http
-ARG VITE_ERP_API_BASE_URL=https://api-erp-dev.cpaferroeaco.com.br
+ARG VITE_ERP_API_BASE_URL=
+ARG VITE_ERP_API_SAME_ORIGIN=true
 ENV VITE_ERP_BACKEND=$VITE_ERP_BACKEND
 ENV VITE_ERP_API_BASE_URL=$VITE_ERP_API_BASE_URL
+ENV VITE_ERP_API_SAME_ORIGIN=$VITE_ERP_API_SAME_ORIGIN
 RUN npm run build
 
 FROM nginx:1.27-alpine AS runtime

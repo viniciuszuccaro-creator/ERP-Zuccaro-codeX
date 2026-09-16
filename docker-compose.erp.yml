@@ -1,11 +1,10 @@
 # Stack ERP separado do docker-compose oficial do Supabase.
-# Compartilha a rede Docker do Supabase de forma controlada (external network).
+# NÃO altera /root/supabase/docker nem o compose do Supabase.
 #
-# Exemplo (apos criar a rede do Supabase self-hosted):
-#   docker network ls | grep supabase
-#   ERP_DOCKER_NETWORK=supabase_default DATABASE_URL=... docker compose -f docker-compose.erp.yml up -d --build
+# Rede: anexar a network EXTERNA descoberta com `docker network ls`
+# (nao inventar nome — ver docs/ERP_DEV_DEPLOY_01.md).
 #
-# NÃO altera o compose do Supabase no VPS.
+# Portas: somente 127.0.0.1 (nao publicar 3080/3081 na internet).
 
 services:
   erp-api:
@@ -19,18 +18,26 @@ services:
     environment:
       NODE_ENV: production
       ERP_ENV: dev
-      PORT: 3080
+      PORT: "3080"
       REQUIRE_DATABASE: "true"
     ports:
-      # Bind apenas localhost no host; proxy reverso (Caddy/Nginx) expoe 443.
       - "127.0.0.1:3080:3080"
     networks:
       - erp_net
+    mem_limit: 512m
+    cpus: 0.50
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3080/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3080/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 30s
       timeout: 5s
-      retries: 3
+      retries: 5
+      start_period: 20s
 
   erp-web:
     build:
@@ -38,17 +45,23 @@ services:
       dockerfile: Dockerfile.frontend
       args:
         VITE_ERP_BACKEND: http
-        VITE_ERP_API_BASE_URL: https://api-erp-dev.cpaferroeaco.com.br
+        # Same-origin via nginx proxy (/health /ready /api) — funciona sem DNS.
+        VITE_ERP_API_SAME_ORIGIN: "true"
+        VITE_ERP_API_BASE_URL: ""
     container_name: erp-web-dev
     restart: unless-stopped
     ports:
       - "127.0.0.1:3081:80"
     depends_on:
-      - erp-api
+      erp-api:
+        condition: service_healthy
     networks:
       - erp_net
+    mem_limit: 128m
+    cpus: 0.25
 
 networks:
   erp_net:
-    name: ${ERP_DOCKER_NETWORK:-erp_runtime_net}
-    external: ${ERP_DOCKER_NETWORK_EXTERNAL:-false}
+    # Preencher ERP_DOCKER_NETWORK com o nome real da network do Supabase.
+    name: ${ERP_DOCKER_NETWORK:?Set ERP_DOCKER_NETWORK to the real Supabase docker network name}
+    external: true

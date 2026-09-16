@@ -39,6 +39,10 @@ export function resolveErpBackendMode(env = import.meta.env) {
  * @param {ImportMetaEnv | Record<string, string | undefined>} [env]
  */
 export function resolveErpApiBaseUrl(env = import.meta.env) {
+  // Deploy local/DEV com nginx proxy same-origin (sem depender de DNS).
+  if (String(env?.VITE_ERP_API_SAME_ORIGIN || '').trim().toLowerCase() === 'true') {
+    return '';
+  }
   const configured = String(env?.VITE_ERP_API_BASE_URL || '').trim().replace(/\/$/, '');
   if (configured) return configured;
   return 'http://localhost:3080';
