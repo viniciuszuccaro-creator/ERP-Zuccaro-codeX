@@ -1224,3 +1224,11 @@ Lote concluido em 2026-09-16 nas funcoes e no prompt MFA existentes, sem criar e
 
 Proxima frente P0: implementar recuperacao de acesso no fluxo de autenticacao existente, com token de uso unico, expiracao, revogacao de sessoes e auditoria.
 
+### Diagnostico da recuperacao de acesso - 2026-09-16
+
+- O SDK Base44 instalado confirma `resetPasswordRequest` e `resetPassword`, com rate limit, politica de senha e rejeicao de token invalido ou expirado.
+- O mesmo contrato nao expoe revogacao global das sessoes apos a troca de senha, callback confiavel do reset nem controle de expiracao/refresh dos tokens.
+- `logout` limpa apenas a sessao corrente; portanto ele nao comprova o requisito de invalidar sessoes antigas.
+- O modo local nao usa senha e nao recebera um fluxo ficticio de recuperacao.
+- O subgate permanece aberto e bloqueado por contrato externo. Nao criar tela ou token paralelo antes de confirmar revogacao e auditoria no provedor ou concluir a migracao de autenticacao planejada.
+

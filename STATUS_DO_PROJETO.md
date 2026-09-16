@@ -8794,3 +8794,15 @@ Checklist inicial:
 - Dados/infraestrutura: nenhum dado real, banco legado ou HD externo foi acessado ou alterado.
 - Commit de implementacao: `adedd239` (`Integra entrega segura do codigo MFA`).
 - Proximo passo P0: implementar recuperacao de acesso no fluxo de autenticacao existente, com token curto, uso unico, expiracao, revogacao de sessoes e auditoria, sem criar provedor de identidade paralelo.
+
+## 2026-09-16 - Diagnostico da recuperacao de acesso
+
+- Objetivo: validar o contrato real do provedor antes de implementar recuperacao de senha no ERP.
+- Estruturas verificadas: `src/api/base44Client.js`, `src/api/localBase44Client.js`, `src/lib/AuthContext.jsx`, `src/App.jsx` e a referencia oficial instalada do SDK Base44.
+- Contrato confirmado: o SDK oferece `resetPasswordRequest(email)` e `resetPassword({ resetToken, newPassword })`; o provedor aplica complexidade, rate limit e rejeita token invalido ou expirado sem revelar se o e-mail existe.
+- Bloqueio: o SDK instalado nao expoe revogacao global das sessoes depois da redefinicao. `logout()` encerra somente a sessao corrente, e expiracao/refresh dos tokens tambem nao sao expostos. O modo local nao possui autenticacao por senha e nao deve simular recuperacao.
+- Decisao de seguranca: nenhuma tela, token, armazenamento de senha ou provedor paralelo foi criado. Implementar apenas o formulario de reset deixaria sessoes antigas potencialmente validas e nao atenderia ao Gate 1.
+- Multiempresa/RBAC/auditoria: nenhum acesso, dado ou permissao foi alterado. Auditoria confiavel do reset tambem depende de callback/evento backend do provedor, inexistente no contrato local verificado.
+- Validacao: alteracao exclusivamente documental; `git diff --check` executado no fechamento. Testes de runtime dispensados porque nenhum codigo de aplicacao foi alterado.
+- Pendencia para desbloqueio: confirmar no ambiente Base44 um mecanismo administrativo/callback para revogar todas as sessoes do usuario e auditar o reset, ou executar a migracao de autenticacao prevista para um provedor que exponha essas garantias.
+- Proximo passo P0: manter recuperacao de acesso aberta no Gate 1 e obter o contrato de revogacao/auditoria do provedor antes de qualquer implementacao.
