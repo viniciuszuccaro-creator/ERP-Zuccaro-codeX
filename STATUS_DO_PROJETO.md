@@ -1,3 +1,15 @@
+### ERP-RUNTIME-02 / Incorporacao segura na main
+
+- Objetivo: incorporar `cursor/erp-runtime-02-392b` em `main` preservando Codex e demais trabalhos.
+- Antes: `origin/main` = `c943ba09`; branch = `578a1306`; merge-base = `c943ba09` (0 atras / 3 a frente).
+- Conflitos: nenhum — fast-forward direto; nao foi necessario rebase/merge de main na branch.
+- Preservado: migrations 004/005/006, TenantGuard, UnidadeMedida/GrupoProduto/SetorAtividade, Produto base (nao ativado no HTTP piloto), HttpApiClient, auditoria, docs/runbook, RUNTIME-01, DEV-DEPLOY-01, Marca, localBase44, ERP-SITE, B2B, GO-LIVE-HML.
+- 001/002/003: imutaveis (diff vazio vs main).
+- Produto: permanece preparado; fora de `HTTP_PILOT_ENTITIES`.
+- Validacoes pre-merge: server 13 pass + 1 skip; HttpApiClient 7/7; localEntityGuard 18/18; site-cpa HML 16/16; suite 570/570; lint/build frontend OK; build/typecheck server OK; audit:baseline OK; typecheck frontend baseline; `git diff --check` OK; secrets apenas CHANGE_ME/fixture de teste.
+- Decisao: `ERP_RUNTIME_02_MERGED_TO_MAIN` apos push.
+- Proximo: humano aplicar runbook DEV (backup + migrate 004-006) no VPS; sem deploy pelo agente; sem RUNTIME-03.
+
 ### ERP-RUNTIME-02 / Migracao controlada da camada de Cadastros
 
 - Objetivo: expandir o padrao Marca (R01) para cadastros base sem migrar o ERP inteiro e sem deploy VPS.
