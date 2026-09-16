@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect } from "react";
+import React, { useEffect } from "react";
 import ModuleLayout from "@/components/layout/ModuleLayout";
 import ModuleContent from "@/components/layout/ModuleContent";
 import usePermissions from "@/components/lib/usePermissions";
@@ -7,8 +7,6 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ProtectedSection from "@/components/security/ProtectedSection";
 import AdminHeader from "@/components/administracao-sistema/AdminHeader";
 import AdminTabs from "@/components/administracao-sistema/AdminTabs";
-
-const PortalCliente = lazy(() => import("./PortalCliente"));
 
 // Mapa completo de alias de URL → aba interna
 const TAB_MAP = {
@@ -37,7 +35,7 @@ const TAB_MAP = {
 };
 
 export default function AdministracaoSistema() {
-  const { isAdmin } = usePermissions();
+  const { isAdmin, hasPermission, isLoading } = usePermissions();
   const { user } = useUser();
   const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
 
@@ -45,6 +43,7 @@ export default function AdministracaoSistema() {
   const rawTab = (params.get("tab") || "gerais").toLowerCase().trim();
   const initialTab = TAB_MAP[rawTab] || 'gerais';
   const isAdminUser = isAdmin();
+  const canViewSystem = isAdminUser || (!isLoading && hasPermission('Sistema', null, 'visualizar'));
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
 
@@ -74,46 +73,48 @@ export default function AdministracaoSistema() {
   };
 
   useEffect(() => {
+    if (isLoading) return;
     auditAdminPage(
-      isAdminUser ? 'admin_sistema_aberto' : 'admin_sistema_redirecionado_portal',
+      canViewSystem ? 'admin_sistema_aberto' : 'admin_sistema_bloqueado',
       {
-        motivo: isAdminUser ? 'acesso_admin_autorizado' : 'usuario_sem_permissao_admin',
+        motivo: isAdminUser
+          ? 'acesso_admin_autorizado'
+          : (canViewSystem ? 'acesso_rbac_autorizado' : 'usuario_sem_permissao_sistema'),
         permissao: 'Sistema.visualizar'
       },
-      isAdminUser
+      canViewSystem
     );
-  }, [isAdminUser, initialTab, rawTab, groupId, empresaId, user?.id, user?.email]);
+  }, [isLoading, isAdminUser, canViewSystem, initialTab, rawTab, groupId, empresaId, user?.id, user?.email]);
 
-  // Usuários não-admin são redirecionados ao Portal do Cliente
-  if (!isAdminUser) {
+  if (isLoading) {
     return (
-      <div className="w-full h-full">
-        <Suspense fallback={
-          <div className="min-h-screen flex items-center justify-center text-slate-600 w-full h-full">
-            Carregando Portal…
-          </div>
-        }>
-          <PortalCliente />
-        </Suspense>
+      <div className="w-full h-full flex items-center justify-center text-slate-600">
+        Carregando permissões...
       </div>
     );
   }
 
+  const content = (
+    <ModuleLayout title="Administração do Sistema" subtitle="" actions={null}>
+      <AdminHeader />
+      <ModuleContent>
+        <div className="p-4 md:p-6 w-full h-full">
+          <AdminTabs
+            initialTab={initialTab}
+            isAdmin={isAdmin}
+            empresaAtual={empresaAtual}
+            grupoAtual={grupoAtual}
+          />
+        </div>
+      </ModuleContent>
+    </ModuleLayout>
+  );
+
+  if (isAdminUser) return content;
+
   return (
-    <ProtectedSection module="Sistema" action="visualizar">
-      <ModuleLayout title="Administração do Sistema">
-        <AdminHeader />
-        <ModuleContent>
-          <div className="p-4 md:p-6 w-full h-full">
-            <AdminTabs
-              initialTab={initialTab}
-              isAdmin={isAdmin}
-              empresaAtual={empresaAtual}
-              grupoAtual={grupoAtual}
-            />
-          </div>
-        </ModuleContent>
-      </ModuleLayout>
+    <ProtectedSection module="Sistema" section={null} action="visualizar">
+      {content}
     </ProtectedSection>
   );
 }

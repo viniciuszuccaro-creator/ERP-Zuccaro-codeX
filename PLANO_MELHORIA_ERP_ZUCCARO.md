@@ -1304,3 +1304,17 @@ Lote concluido em 2026-09-16 no fluxo local existente, sem criar tela, entidade 
 
 Proxima frente P0: manter os dois bloqueios remotos do Gate 1 explicitamente abertos e iniciar o Gate 2 pela matriz RBAC da Administracao, validando pagina, aba, botao e acao backend sem criar estrutura paralela.
 
+### Gate 2 - Acesso granular a Administracao do Sistema
+
+Lote concluido em 2026-09-16 na pagina e nas guardas existentes, sem criar rota, tela, perfil ou mecanismo de autorizacao paralelo.
+
+- A pagina deixou de exigir exclusivamente `role=admin`; usuario comum com `Sistema.*.visualizar` pode abrir somente as abas concedidas ao seu perfil.
+- Administradores preservam a compatibilidade atual, enquanto usuarios nao administrativos continuam sujeitos ao `ProtectedSection` e ao `entityGuard` backend.
+- Perfil sem permissao de visualizacao em `Sistema` falha fechado e gera auditoria de bloqueio, sem redirecionamento silencioso para o Portal do Cliente.
+- O carregamento aguarda a resolucao do perfil antes de decidir acesso, evitando liberacao temporaria durante a consulta.
+- A regressao automatizada impede o retorno do bloqueio exclusivo por papel e exige a permanencia da guarda backend.
+- Testes focados passaram 17/17 e a suite completa passou 563/563; auditoria baseline, lint, build e verificacao de diff passaram.
+- Os arquivos do lote possuem zero diagnosticos de TypeScript; o passivo global conhecido ficou em 1.600.
+
+Proxima frente P0: normalizar e auditar o acesso direto por `?tab=` para a primeira aba autorizada e alinhar os marcadores `data-permission` das abas com as chaves RBAC canonicas ja utilizadas.
+

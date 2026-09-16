@@ -155,6 +155,17 @@ test('administrative tools align granular RBAC, group propagation and dry-run sa
   assert.match(backfillSource, /requireEntityGuard[\s\S]*?section: 'Ferramentas'/);
 });
 
+test('administration page honors granular system RBAC without weakening the backend guard', async () => {
+  const pageSource = await readFile(new URL('../src/pages/AdministracaoSistema.jsx', import.meta.url), 'utf8');
+
+  assert.match(pageSource, /hasPermission\('Sistema', null, 'visualizar'\)/);
+  assert.match(pageSource, /canViewSystem \? 'admin_sistema_aberto' : 'admin_sistema_bloqueado'/);
+  assert.match(pageSource, /<ProtectedSection module="Sistema" section=\{null\} action="visualizar">/);
+  assert.match(pageSource, /if \(isAdminUser\) return content/);
+  assert.doesNotMatch(pageSource, /PortalCliente/);
+  assert.doesNotMatch(pageSource, /if \(!isAdminUser\)/);
+});
+
 test('generic read callers send canonical group and company context', async () => {
   const layoutSource = await readFile(new URL('../src/Layout.jsx', import.meta.url), 'utf8');
   const statusSource = await readFile(new URL('../src/components/administracao-sistema/AdminStatusBar.jsx', import.meta.url), 'utf8');

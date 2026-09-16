@@ -8895,3 +8895,17 @@ Checklist inicial:
 - Gate 1: os controles locais executaveis estao cobertos; recuperacao com revogacao global e logs remotos anteriores ao login permanecem bloqueados pelo contrato do provedor ja documentado.
 - Commit de implementacao: `5e77717e` (`Aplica timeouts configuraveis de sessao`).
 - Proximo passo P0: iniciar o Gate 2 pela matriz RBAC da Administracao, validando pagina, aba, botao e acao backend existentes sem criar estrutura paralela.
+
+## 2026-09-16 - Gate 2: acesso granular a Administracao
+
+- Objetivo: permitir que perfis autorizados acessem apenas as areas administrativas concedidas, sem transformar `role=admin` em requisito unico para abrir a pagina.
+- Causa raiz: `AdministracaoSistema.jsx` redirecionava qualquer usuario nao administrador ao Portal do Cliente antes de consultar as permissoes granulares ja usadas pelas abas e pela guarda backend.
+- Arquivos alterados: `src/pages/AdministracaoSistema.jsx`, `tests/audit-baseline.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
+- Estruturas reutilizadas: `usePermissions`, `ProtectedSection`, `entityGuard`, `AdminTabs` e `AuditLog` existentes. Nenhuma rota, tela, entidade ou autorizacao paralela foi criada.
+- RBAC: administrador preserva o acesso compativel; usuario comum precisa de `Sistema.*.visualizar` e continua limitado, dentro da pagina, somente as abas liberadas no perfil. Usuario sem permissao falha fechado na guarda frontend e backend.
+- Auditoria: abertura autorizada diferencia administrador de acesso granular; negativa usa `admin_sistema_bloqueado` e motivo controlado, com Grupo e Empresa do contexto, sem payload de permissoes.
+- UX: a pagina aguarda o carregamento do perfil antes de decidir o acesso e nao envia mais usuario interno sem permissao ao Portal do Cliente.
+- Testes: regressao focada 17/17 e suite completa 563/563 aprovadas. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram.
+- Typecheck: zero diagnosticos nos arquivos do lote; o passivo global conhecido ficou em 1.600 e nao foi mascarado.
+- Commit de implementacao: pendente neste fechamento.
+- Proximo passo P0: proteger e auditar a selecao inicial por `?tab=`, normalizando URL e aba ativa para a primeira opcao autorizada e alinhando os marcadores de permissao com as chaves canonicas existentes.
