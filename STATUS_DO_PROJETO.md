@@ -8759,3 +8759,19 @@ Checklist inicial:
 - Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado.
 - Commit de implementacao: `a95565ef` (`Fecha validacao MFA local`).
 - Proximo passo P0: endurecer o `verifyTotp` backend existente, removendo segredo fallback, exigindo provedor/segredo seguro, contexto e auditoria fail-closed sem registrar codigo ou segredo.
+
+## 2026-09-16 - Verificacao MFA backend segura e contextual
+
+- Objetivo: endurecer o `verifyTotp` backend existente sem criar endpoint, entidade ou fluxo de autenticacao paralelo.
+- Causa raiz: a funcao reutilizava chaves de backup/deploy, possuia segredo fallback embutido, comparava codigo diretamente e nao validava ownership Grupo/Empresa nem RBAC granular; falhas de auditoria eram ignoradas.
+- Arquivos alterados: `base44/functions/verifyTotp/entry.ts`, `base44/functions/_lib/security/totpVerificationPolicy/entry.ts`, `tests/verify-totp-backend.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
+- Refatoracao: a politica criptografica foi extraida para helper interno testavel porque nao havia helper MFA equivalente. A funcao e a rota existentes foram preservadas.
+- Multiempresa/RBAC: Grupo precisa existir e estar vinculado ao usuario; Empresa precisa pertencer ao Grupo e estar autorizada; `Sistema.Seguranca.executar` e obrigatoria antes da verificacao.
+- Seguranca: removidos `BACKUP_ENCRYPTION_KEY`, `DEPLOY_AUDIT_TOKEN` e o fallback embutido. A funcao exige `MFA_TOTP_PROVIDER` (`email` ou `whatsapp`) e `MFA_TOTP_SECRET` dedicado com no minimo 32 caracteres, usa HMAC-SHA-256, comparacao constante, janela atual/anterior e limite local de cinco tentativas em cinco minutos.
+- Auditoria: toda decisao autenticada registra apenas resultado, motivo controlado, provedor e escopo; codigo e segredo nao sao persistidos. Falha de auditoria encerra a verificacao com indisponibilidade.
+- Testes: a suite completa passou 543/543. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o baseline de `catch` operacional vazio caiu de 1.029 para 1.028. O build manteve somente avisos conhecidos de imports mistos, bundle grande e base de navegadores desatualizada.
+- Typecheck: os arquivos do lote possuem zero diagnosticos; o passivo global permaneceu em 1.603, sem regressao ou mascaramento.
+- Dados/infraestrutura: nenhum dado real, backend Base44 remoto, banco legado ou HD externo foi acessado ou alterado. `base44/config.jsonc` nao existe neste clone, portanto nao houve operacao remota pela CLI.
+- Commit de implementacao: `5959fdd0` (`Protege verificacao MFA no backend`).
+- Risco residual: o limite de tentativas atual e por instancia em memoria e precisa de armazenamento distribuido antes da producao.
+- Proximo passo P0: integrar emissao e entrega do desafio ao fluxo MFA existente por e-mail/WhatsApp, com expiracao, idempotencia e rate limit distribuido, configurando `MFA_TOTP_PROVIDER` e `MFA_TOTP_SECRET` somente no ambiente seguro.

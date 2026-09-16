@@ -1196,3 +1196,16 @@ Lote concluido em 2026-09-15 no dispatcher e prompt 2FA existentes, sem criar au
 
 Proxima frente P0: endurecer o `verifyTotp` backend existente, removendo segredo fallback e exigindo verificacao e auditoria seguras e fail-closed.
 
+### Seguranca P0 - Verificacao MFA backend segura e contextual
+
+Lote concluido em 2026-09-16 na funcao `verifyTotp` existente, sem criar endpoint, entidade ou autenticacao paralela.
+
+- Segredos genericos de backup/deploy e o fallback embutido foram removidos; o backend exige provedor e segredo MFA dedicados no ambiente.
+- A prova usa HMAC-SHA-256, comparacao constante e vinculo ao usuario, modulo, secao, Grupo, Empresa e janela de tempo.
+- Ownership Grupo/Empresa e `Sistema.Seguranca.executar` sao validados antes da verificacao; empresa externa ao Grupo falha fechada.
+- Auditoria obrigatoria registra somente resultado, motivo controlado, provedor e escopo, sem codigo ou segredo.
+- A suite completa passou 543/543; auditoria baseline, lint, build e verificacao de diff passaram. Os arquivos do lote possuem zero diagnosticos e o baseline global permaneceu em 1.603.
+- Implementacao registrada no commit `5959fdd0`.
+
+Proxima frente P0: integrar emissao e entrega do desafio ao fluxo MFA existente por e-mail/WhatsApp, com expiracao, idempotencia e rate limit distribuido antes da producao.
+
