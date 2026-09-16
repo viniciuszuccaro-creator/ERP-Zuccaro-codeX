@@ -141,10 +141,32 @@ export function createHttpApiClient(options = {}) {
     SetorAtividade: createCrudEntity('/api/v1/setores-atividade', {
       searchKeys: ['nome', 'search'],
     }),
-    // API pronta; NAO habilitada em HTTP_PILOT_ENTITIES (estoque/custo ainda no local).
-    Produto: createCrudEntity('/api/v1/produtos', {
-      searchKeys: ['descricao', 'codigo', 'nome', 'search'],
-    }),
+    // API MASTER DATA pronta; NAO habilitada em HTTP_PILOT_ENTITIES.
+    Produto: (() => {
+      const base = createCrudEntity('/api/v1/produtos', {
+        searchKeys: ['descricao', 'codigo', 'nome', 'codigo_barras', 'search'],
+      });
+      return {
+        ...base,
+        async list(orderBy, limit = 50, offset = 0) {
+          void orderBy;
+          return request('/api/v1/produtos', { query: { limit, offset } });
+        },
+        async filter(query = {}, orderBy, limit = 50) {
+          void orderBy;
+          return request('/api/v1/produtos', {
+            query: {
+              limit,
+              offset: query.offset,
+              search: query.descricao || query.search || query.nome,
+              codigo: query.codigo,
+              codigo_barras: query.codigo_barras,
+              ativo: query.ativo ?? query.ativa,
+            },
+          });
+        },
+      };
+    })(),
   };
 
   /** @type {Record<string, ReturnType<typeof createCrudEntity>>} */

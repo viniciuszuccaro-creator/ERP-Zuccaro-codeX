@@ -5,34 +5,37 @@ import helmet from 'helmet';
 import { InMemoryAuditRepository, PostgresAuditRepository } from './audit/auditRepository.js';
 import type { AppConfig } from './config/env.js';
 import type { DbClient } from './db/client.js';
+import {
+  InMemoryProdutoRelationGuard,
+  PostgresProdutoRelationGuard,
+} from './db/produtoRelationGuard.js';
 import { InMemoryTenantGuard, PostgresTenantGuard } from './db/tenantGuard.js';
 import { createErrorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { requestIdMiddleware, scopeMiddleware } from './middleware/requestContext.js';
 import {
   createInMemoryGrupoProdutoRepo,
-  createInMemoryProdutoRepo,
   createInMemorySetorRepo,
   createInMemoryUnidadeRepo,
 } from './repositories/inMemoryCadastroRepositories.js';
+import { createInMemoryProdutoRepo } from './repositories/inMemoryProdutoRepository.js';
 import { InMemoryMarcaRepository } from './repositories/inMemoryMarcaRepository.js';
 import {
   PostgresGrupoProdutoRepository,
-  PostgresProdutoRepository,
   PostgresSetorRepository,
   PostgresUnidadeRepository,
 } from './repositories/postgresCadastroRepositories.js';
+import { PostgresProdutoRepository } from './repositories/postgresProdutoRepository.js';
 import { PostgresMarcaRepository } from './repositories/postgresMarcaRepository.js';
 import {
   grupoProdutoCreateSchema,
   grupoProdutoUpdateSchema,
-  produtoCreateSchema,
-  produtoUpdateSchema,
   setorCreateSchema,
   setorUpdateSchema,
   unidadeCreateSchema,
   unidadeUpdateSchema,
 } from './repositories/cadastroTypes.js';
 import { MarcaService } from './services/marcaService.js';
+import { ProdutoService } from './services/produtoService.js';
 import { TenantCrudService } from './services/tenantCrudService.js';
 import { createApiRouter } from './api/router.js';
 
@@ -42,6 +45,8 @@ export type CreateAppOptions = {
   useMemory?: boolean;
   /** Optional preconfigured tenant guard (tests). */
   tenantGuard?: InMemoryTenantGuard | PostgresTenantGuard;
+  /** Optional relation guard for Produto FKs (tests). */
+  produtoRelationGuard?: InMemoryProdutoRelationGuard | PostgresProdutoRelationGuard;
 };
 
 export function createApp(options: CreateAppOptions) {
@@ -51,6 +56,8 @@ export function createApp(options: CreateAppOptions) {
   const auditRepo = useMemory ? new InMemoryAuditRepository() : new PostgresAuditRepository(db);
   const tenantGuard = options.tenantGuard
     ?? (useMemory ? new InMemoryTenantGuard() : new PostgresTenantGuard(db));
+  const produtoRelationGuard = options.produtoRelationGuard
+    ?? (useMemory ? new InMemoryProdutoRelationGuard() : new PostgresProdutoRelationGuard(db));
 
   const marcaRepo = useMemory ? new InMemoryMarcaRepository() : new PostgresMarcaRepository(db);
   const unidadeRepo = useMemory ? createInMemoryUnidadeRepo() : new PostgresUnidadeRepository(db);
@@ -59,7 +66,6 @@ export function createApp(options: CreateAppOptions) {
   const produtoRepo = useMemory ? createInMemoryProdutoRepo() : new PostgresProdutoRepository(db);
 
   const marcaService = new MarcaService(marcaRepo, auditRepo, tenantGuard);
-  // Snapshot de auditoria: default sanitizeAuditSnapshot (completo, sem pick parcial).
   const unidadeService = new TenantCrudService(unidadeRepo, auditRepo, tenantGuard, {
     entityName: 'UnidadeMedida',
     notFoundCode: 'UNIDADE_NOT_FOUND',
@@ -87,15 +93,12 @@ export function createApp(options: CreateAppOptions) {
     resolveEmpresaIdFromCreate: (data, scope) => data.empresa_id ?? scope.empresaId,
     resolveEmpresaIdFromUpdate: (data, current) => (data.empresa_id === undefined ? current.empresa_id : data.empresa_id),
   });
-  const produtoService = new TenantCrudService(produtoRepo, auditRepo, tenantGuard, {
-    entityName: 'Produto',
-    notFoundCode: 'PRODUTO_NOT_FOUND',
-    createSchema: produtoCreateSchema,
-    updateSchema: produtoUpdateSchema,
-    getEmpresaId: (row) => row.empresa_id,
-    resolveEmpresaIdFromCreate: (data, scope) => data.empresa_id ?? scope.empresaId,
-    resolveEmpresaIdFromUpdate: (data, current) => (data.empresa_id === undefined ? current.empresa_id : data.empresa_id),
-  });
+  const produtoService = new ProdutoService(
+    produtoRepo,
+    auditRepo,
+    tenantGuard,
+    produtoRelationGuard,
+  );
 
   const app = express();
   app.disable('x-powered-by');
@@ -147,6 +150,7 @@ export function createApp(options: CreateAppOptions) {
     produtoService,
     auditRepo,
     tenantGuard,
+    produtoRelationGuard,
     useMemory,
   };
 }

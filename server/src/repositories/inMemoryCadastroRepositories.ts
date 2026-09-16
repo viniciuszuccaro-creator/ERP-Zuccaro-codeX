@@ -2,10 +2,10 @@ import { randomUUID } from 'node:crypto';
 import type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';
 import type {
   GrupoProduto, GrupoProdutoCreate, GrupoProdutoUpdate,
-  Produto, ProdutoCreate, ProdutoUpdate,
   SetorAtividade, SetorCreate, SetorUpdate,
   UnidadeCreate, UnidadeMedida, UnidadeUpdate,
 } from './cadastroTypes.js';
+
 
 function nowIso() { return new Date().toISOString(); }
 
@@ -93,17 +93,4 @@ export function createInMemorySetorRepo() {
   );
 }
 
-export function createInMemoryProdutoRepo() {
-  return new MemRepo<Produto, ProdutoCreate, ProdutoUpdate>(
-    (scope, data, id, ts) => ({
-      id, group_id: scope.groupId, empresa_id: data.empresa_id ?? scope.empresaId ?? null,
-      codigo: data.codigo ?? null, descricao: data.descricao, nome: data.nome ?? data.descricao,
-      unidade_medida_id: data.unidade_medida_id ?? null, unidade_medida: data.unidade_medida ?? null,
-      grupo_produto_id: data.grupo_produto_id ?? null, marca_id: data.marca_id ?? null,
-      setor_atividade_id: data.setor_atividade_id ?? null, ncm: data.ncm ?? null,
-      ativo: data.ativo ?? true, created_at: ts, updated_at: ts,
-    }),
-    (c, d) => ({ ...c, ...d, empresa_id: d.empresa_id === undefined ? c.empresa_id : d.empresa_id, updated_at: nowIso() }),
-    (r) => `${r.descricao} ${r.codigo || ''} ${r.nome || ''}`,
-  );
-}
+// Produto: ver inMemoryProdutoRepository.ts (ERP-RUNTIME-03)

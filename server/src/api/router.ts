@@ -5,6 +5,7 @@ import type { DbClient } from '../db/client.js';
 import { getAuthFoundation } from '../auth/foundation.js';
 import { requireTenantScope } from '../middleware/requestContext.js';
 import type { MarcaService } from '../services/marcaService.js';
+import type { ProdutoService } from '../services/produtoService.js';
 import type { TenantCrudService } from '../services/tenantCrudService.js';
 
 type CrudLike = {
@@ -22,7 +23,7 @@ export type ApiDeps = {
   unidadeService: TenantCrudService<any, any, any>;
   grupoProdutoService: TenantCrudService<any, any, any>;
   setorService: TenantCrudService<any, any, any>;
-  produtoService: TenantCrudService<any, any, any>;
+  produtoService: ProdutoService;
 };
 
 function ctxFromReq(req: Request) {
@@ -89,6 +90,64 @@ function mountCrud(router: Router, basePath: string, service: CrudLike) {
   });
 }
 
+function mountProdutoRoutes(router: Router, service: ProdutoService) {
+  router.get('/api/v1/produtos', requireTenantScope, async (req, res, next) => {
+    try {
+      const ativoParam = req.query.ativo;
+      const ativo = ativoParam == null
+        ? undefined
+        : ['1', 'true', 'yes'].includes(String(ativoParam).toLowerCase());
+      const page = await service.list(ctxFromReq(req), {
+        ativo,
+        search: req.query.search ? String(req.query.search) : undefined,
+        codigo: req.query.codigo ? String(req.query.codigo) : undefined,
+        codigoBarras: req.query.codigo_barras ? String(req.query.codigo_barras) : undefined,
+        limit: req.query.limit ? Number(req.query.limit) : undefined,
+        offset: req.query.offset ? Number(req.query.offset) : undefined,
+      });
+      res.json(page);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/api/v1/produtos/:id', requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.get(ctxFromReq(req), req.params.id);
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post('/api/v1/produtos', requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.create(ctxFromReq(req), req.body);
+      res.status(201).json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.patch('/api/v1/produtos/:id', requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.update(ctxFromReq(req), req.params.id, req.body);
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.delete('/api/v1/produtos/:id', requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.softDelete(ctxFromReq(req), req.params.id);
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+}
+
 export function createApiRouter(deps: ApiDeps) {
   const router = Router();
 
@@ -123,14 +182,20 @@ export function createApiRouter(deps: ApiDeps) {
 
   router.get('/api/v1/meta', (_req, res) => {
     res.json({
-      runtime: 'ERP-RUNTIME-02',
+      runtime: 'ERP-RUNTIME-03',
       auth: getAuthFoundation(),
       config: publicConfigView(deps.config),
       httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade'],
       preparedEntities: ['Produto'],
       httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto'],
       rlsModel: 'ENABLE+FORCE fail-closed; BFF uses privileged DB role; JWT policies planned with Auth',
-      note: 'Produto API is base-cadastro only; not in frontend HTTP_PILOT_ENTITIES until operational fields are scoped',
+      note: 'Produto MASTER DATA prepared; NOT in frontend HTTP_PILOT_ENTITIES until E2E activation authorized',
+      produto: {
+        masterData: true,
+        pagination: true,
+        tenantFkIntegrity: true,
+        frontendHttp: false,
+      },
     });
   });
 
@@ -138,7 +203,7 @@ export function createApiRouter(deps: ApiDeps) {
   mountCrud(router, '/api/v1/unidades-medida', deps.unidadeService);
   mountCrud(router, '/api/v1/grupos-produto', deps.grupoProdutoService);
   mountCrud(router, '/api/v1/setores-atividade', deps.setorService);
-  mountCrud(router, '/api/v1/produtos', deps.produtoService);
+  mountProdutoRoutes(router, deps.produtoService);
 
   return router;
 }

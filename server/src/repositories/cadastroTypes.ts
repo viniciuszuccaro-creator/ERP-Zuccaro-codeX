@@ -94,35 +94,12 @@ export type SetorAtividade = {
   updated_at: string;
 };
 
-export const produtoCreateSchema = z.object({
-  ...baseCreate,
-  codigo: z.string().trim().max(64).optional().nullable(),
-  descricao: z.string().trim().min(1).max(500),
-  nome: z.string().trim().max(500).optional().nullable(),
-  unidade_medida_id: z.string().uuid().optional().nullable(),
-  unidade_medida: z.string().trim().max(20).optional().nullable(),
-  grupo_produto_id: z.string().uuid().optional().nullable(),
-  marca_id: z.string().uuid().optional().nullable(),
-  setor_atividade_id: z.string().uuid().optional().nullable(),
-  ncm: z.string().trim().max(20).optional().nullable(),
-});
-export const produtoUpdateSchema = produtoCreateSchema.partial();
-export type ProdutoCreate = z.infer<typeof produtoCreateSchema>;
-export type ProdutoUpdate = z.infer<typeof produtoUpdateSchema>;
-export type Produto = {
-  id: string;
-  group_id: string;
-  empresa_id: string | null;
-  codigo: string | null;
-  descricao: string;
-  nome: string | null;
-  unidade_medida_id: string | null;
-  unidade_medida: string | null;
-  grupo_produto_id: string | null;
-  marca_id: string | null;
-  setor_atividade_id: string | null;
-  ncm: string | null;
-  ativo: boolean;
-  created_at: string;
-  updated_at: string;
-};
+// Produto types moved to produtoTypes.ts (ERP-RUNTIME-03)
+export {
+  produtoCreateSchema,
+  produtoUpdateSchema,
+  PRODUTO_FORBIDDEN_OPERATIONAL_FIELDS,
+  type Produto,
+  type ProdutoCreate,
+  type ProdutoUpdate,
+} from './produtoTypes.js';

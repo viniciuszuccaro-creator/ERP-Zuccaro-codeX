@@ -1,6 +1,6 @@
 -- Seed DEV sintetico (ERP-RUNTIME-02)
 -- Sem dados reais CPA.
--- Aplicar SOMENTE apos migrations 001-006.
+-- Aplicar SOMENTE apos migrations 001-008.
 -- IDs fixos para facilitar testes manuais.
 -- Idempotente via ON CONFLICT DO NOTHING.
 
@@ -147,37 +147,51 @@ INSERT INTO setores_atividade (
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO produtos (
-  id, group_id, empresa_id, codigo, descricao, nome,
-  unidade_medida_id, grupo_produto_id, marca_id, setor_atividade_id, ativo
+  id, group_id, empresa_id, codigo, descricao, nome, tipo_item, eh_bitola,
+  unidade_medida_id, unidade_principal, grupo_produto_id, marca_id, setor_atividade_id,
+  peso_teorico_kg_m, bitola_diametro_mm, status, ativo
 ) VALUES (
   '77777777-aaaa-4aaa-8aaa-777777777777',
   'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
   'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
   'PROD-A-001',
-  'Barra CA-50 12.5mm Sintetica A',
-  'Barra CA-50 12.5mm Sintetica A',
+  'PRODUTO DEV SINTETICO A',
+  'PRODUTO DEV SINTETICO A',
+  'Revenda',
+  true,
   '11111111-aaaa-4aaa-8aaa-111111111111',
+  'KG',
   '33333333-aaaa-4aaa-8aaa-333333333333',
   'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
   '55555555-aaaa-4aaa-8aaa-555555555555',
+  0.963,
+  12.5,
+  'Ativo',
   true
 )
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO produtos (
-  id, group_id, empresa_id, codigo, descricao, nome,
-  unidade_medida_id, grupo_produto_id, marca_id, setor_atividade_id, ativo
+  id, group_id, empresa_id, codigo, descricao, nome, tipo_item, eh_bitola,
+  unidade_medida_id, unidade_principal, grupo_produto_id, marca_id, setor_atividade_id,
+  peso_teorico_kg_m, bitola_diametro_mm, status, ativo
 ) VALUES (
   '88888888-bbbb-4bbb-8bbb-888888888888',
   'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
   'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
   'PROD-B-001',
-  'Barra CA-50 12.5mm Sintetica B',
-  'Barra CA-50 12.5mm Sintetica B',
+  'PRODUTO DEV SINTETICO B',
+  'PRODUTO DEV SINTETICO B',
+  'Revenda',
+  true,
   '22222222-bbbb-4bbb-8bbb-222222222222',
+  'KG',
   '44444444-bbbb-4bbb-8bbb-444444444444',
   'ffffffff-ffff-4fff-8fff-ffffffffffff',
   '66666666-bbbb-4bbb-8bbb-666666666666',
+  0.963,
+  12.5,
+  'Ativo',
   true
 )
 ON CONFLICT (id) DO NOTHING;

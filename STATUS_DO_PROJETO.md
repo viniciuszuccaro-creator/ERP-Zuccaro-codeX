@@ -1,3 +1,13 @@
+### ERP-RUNTIME-03 / Produto MASTER DATA e cadastros estruturais
+
+- Objetivo: consolidar Produto como MASTER DATA (A/B/C + D cadastral) sem estoque/preço/custo/fiscal operacional.
+- Branch: `cursor/erp-runtime-03-392b` (base main `411edc6a`).
+- Migrations: `007_produtos_master_data`, `008_produtos_fk_tenant` (001-006 imutaveis).
+- ProdutoService: paginação, busca, TENANT_MISMATCH + TENANT_FK_MISMATCH, rejeita campos operacionais, auditoria completa.
+- Frontend: Produto **nao** em `HTTP_PILOT_ENTITIES` (apenas prepared).
+- Docs: `docs/ERP_RUNTIME_03.md`, matriz, UI gap, runbook.
+- Decisao: registrar apos validacoes (`ERP_RUNTIME_03_READY_FOR_REVIEW` ou `BLOCKED`).
+
 ### ERP-RUNTIME-02 / Incorporacao audit snapshot fix na main
 
 - Objetivo: incorporar `cursor/runtime02-audit-snapshot-fix-392b` em `main`.

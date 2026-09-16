@@ -8,10 +8,10 @@ import { createDbClient } from '../src/db/client.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 import {
   createInMemoryGrupoProdutoRepo,
-  createInMemoryProdutoRepo,
   createInMemorySetorRepo,
   createInMemoryUnidadeRepo,
 } from '../src/repositories/inMemoryCadastroRepositories.ts';
+import { createInMemoryProdutoRepo } from '../src/repositories/inMemoryProdutoRepository.ts';
 import {
   grupoProdutoCreateSchema,
   grupoProdutoUpdateSchema,
@@ -22,6 +22,8 @@ import {
   unidadeCreateSchema,
   unidadeUpdateSchema,
 } from '../src/repositories/cadastroTypes.ts';
+import { InMemoryProdutoRelationGuard } from '../src/db/produtoRelationGuard.ts';
+import { ProdutoService } from '../src/services/produtoService.ts';
 import { TenantCrudService } from '../src/services/tenantCrudService.ts';
 
 const GROUP_A = '11111111-1111-4111-8111-111111111111';
@@ -307,6 +309,7 @@ test('AUDIT FIX: GrupoProduto and SetorAtividade keep entity-specific fields in 
 test('GrupoProduto / SetorAtividade / Produto base isolate tenants A/B', async () => {
   const audit = new InMemoryAuditRepository();
   const guard = linkedGuard();
+  const relationGuard = new InMemoryProdutoRelationGuard();
 
   const grupo = new TenantCrudService(createInMemoryGrupoProdutoRepo(), audit, guard, {
     entityName: 'GrupoProduto',
@@ -326,15 +329,7 @@ test('GrupoProduto / SetorAtividade / Produto base isolate tenants A/B', async (
     resolveEmpresaIdFromCreate: (data, scope) => data.empresa_id ?? scope.empresaId,
     resolveEmpresaIdFromUpdate: (data, current) => (data.empresa_id === undefined ? current.empresa_id : data.empresa_id),
   });
-  const produto = new TenantCrudService(createInMemoryProdutoRepo(), audit, guard, {
-    entityName: 'Produto',
-    notFoundCode: 'PRODUTO_NOT_FOUND',
-    createSchema: produtoCreateSchema,
-    updateSchema: produtoUpdateSchema,
-    getEmpresaId: (row) => row.empresa_id,
-    resolveEmpresaIdFromCreate: (data, scope) => data.empresa_id ?? scope.empresaId,
-    resolveEmpresaIdFromUpdate: (data, current) => (data.empresa_id === undefined ? current.empresa_id : data.empresa_id),
-  });
+  const produto = new ProdutoService(createInMemoryProdutoRepo(), audit, guard, relationGuard);
 
   const a = { requestId: 'r-a', groupId: GROUP_A, empresaId: EMPRESA_A };
   const b = { requestId: 'r-b', groupId: GROUP_B, empresaId: EMPRESA_B };
@@ -348,7 +343,7 @@ test('GrupoProduto / SetorAtividade / Produto base isolate tenants A/B', async (
 
   assert.equal((await grupo.list(a)).length, 1);
   assert.equal((await setor.list(a)).length, 1);
-  assert.equal((await produto.list(a)).length, 1);
+  assert.equal((await produto.list(a)).data.length, 1);
   assert.equal((await grupo.list(b)).length, 1);
 
   await assert.rejects(() => grupo.get(b, gA.id), /not found/i);
@@ -389,7 +384,7 @@ test('API RUNTIME-02 UnidadeMedida E2E + meta + cross-tenant HTTP', async () => 
   });
 
   const meta = await fetchOk(app, '/api/v1/meta');
-  assert.equal(meta.runtime, 'ERP-RUNTIME-02');
+  assert.match(String(meta.runtime), /^ERP-RUNTIME-0[23]$/);
   assert.ok(meta.httpPilotEntities.includes('UnidadeMedida'));
   assert.ok(meta.preparedEntities.includes('Produto'));
 

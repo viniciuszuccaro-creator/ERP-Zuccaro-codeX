@@ -2,7 +2,6 @@ import type { DbClient } from '../db/client.js';
 import type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';
 import type {
   GrupoProduto, GrupoProdutoCreate, GrupoProdutoUpdate,
-  Produto, ProdutoCreate, ProdutoUpdate,
   SetorAtividade, SetorCreate, SetorUpdate,
   UnidadeCreate, UnidadeMedida, UnidadeUpdate,
 } from './cadastroTypes.js';
@@ -80,20 +79,7 @@ function mapSetor(row: Record<string, unknown>): SetorAtividade {
   };
 }
 
-function mapProduto(row: Record<string, unknown>): Produto {
-  return {
-    id: String(row.id), group_id: String(row.group_id),
-    empresa_id: row.empresa_id == null ? null : String(row.empresa_id),
-    codigo: row.codigo == null ? null : String(row.codigo),
-    descricao: String(row.descricao), nome: row.nome == null ? null : String(row.nome),
-    unidade_medida_id: row.unidade_medida_id == null ? null : String(row.unidade_medida_id),
-    unidade_medida: row.unidade_medida == null ? null : String(row.unidade_medida),
-    grupo_produto_id: row.grupo_produto_id == null ? null : String(row.grupo_produto_id),
-    marca_id: row.marca_id == null ? null : String(row.marca_id),
-    setor_atividade_id: row.setor_atividade_id == null ? null : String(row.setor_atividade_id),
-    ncm: row.ncm == null ? null : String(row.ncm), ativo: Boolean(row.ativo), ...ts(row),
-  };
-}
+// Produto: ver postgresProdutoRepository.ts (ERP-RUNTIME-03)
 
 export class PostgresUnidadeRepository implements TenantEntityRepository<UnidadeMedida, UnidadeCreate, UnidadeUpdate> {
   constructor(private readonly db: DbClient) {}
@@ -185,40 +171,6 @@ export class PostgresSetorRepository implements TenantEntityRepository<SetorAtiv
     sql += ' RETURNING *';
     const result = await this.db.query(sql, params);
     return result.rows[0] ? mapSetor(result.rows[0] as Record<string, unknown>) : null;
-  }
-  softDelete(scope: Scope, id: string) { return this.update(scope, id, { ativo: false }); }
-}
-
-export class PostgresProdutoRepository implements TenantEntityRepository<Produto, ProdutoCreate, ProdutoUpdate> {
-  constructor(private readonly db: DbClient) {}
-  list(f: Scope & ListOptions) { return listSimple(this.db, 'produtos', f, "lower(descricao || ' ' || coalesce(codigo,'') || ' ' || coalesce(nome,''))", mapProduto); }
-  getById(s: Scope, id: string) { return getSimple(this.db, 'produtos', s, id, mapProduto); }
-  async create(scope: Scope, data: ProdutoCreate) {
-    const result = await this.db.query(
-      `INSERT INTO produtos (
-        group_id, empresa_id, codigo, descricao, nome, unidade_medida_id, unidade_medida,
-        grupo_produto_id, marca_id, setor_atividade_id, ncm, ativo
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
-      [scope.groupId, data.empresa_id ?? scope.empresaId ?? null, data.codigo ?? null, data.descricao,
-       data.nome ?? data.descricao, data.unidade_medida_id ?? null, data.unidade_medida ?? null,
-       data.grupo_produto_id ?? null, data.marca_id ?? null, data.setor_atividade_id ?? null,
-       data.ncm ?? null, data.ativo ?? true],
-    );
-    return mapProduto(result.rows[0] as Record<string, unknown>);
-  }
-  async update(scope: Scope, id: string, data: ProdutoUpdate) {
-    const current = await this.getById(scope, id);
-    if (!current) return null;
-    const next = { ...current, ...data, empresa_id: data.empresa_id === undefined ? current.empresa_id : data.empresa_id };
-    const params: unknown[] = [next.codigo, next.descricao, next.nome, next.unidade_medida_id, next.unidade_medida,
-      next.grupo_produto_id, next.marca_id, next.setor_atividade_id, next.ncm, next.ativo, next.empresa_id, scope.groupId, id];
-    let sql = `UPDATE produtos SET codigo=$1, descricao=$2, nome=$3, unidade_medida_id=$4, unidade_medida=$5,
-      grupo_produto_id=$6, marca_id=$7, setor_atividade_id=$8, ncm=$9, ativo=$10, empresa_id=$11
-      WHERE group_id=$12 AND id=$13`;
-    if (scope.empresaId) { params.push(scope.empresaId); sql += ' AND empresa_id=$14'; }
-    sql += ' RETURNING *';
-    const result = await this.db.query(sql, params);
-    return result.rows[0] ? mapProduto(result.rows[0] as Record<string, unknown>) : null;
   }
   softDelete(scope: Scope, id: string) { return this.update(scope, id, { ativo: false }); }
 }
