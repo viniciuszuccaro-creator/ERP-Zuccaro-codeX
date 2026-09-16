@@ -1,3 +1,11 @@
+### DIAGNOSTICO-RUNTIME-ERP / Pre-HML
+- Objetivo: mapear runtime real do ERP principal (GitHub) sem assumir Base44 ativo; recomendar arquitetura sem migrar codigo.
+- Premissa: repositorio oficial e o GitHub; copia Base44 paralela nao e runtime oficial; HML Base44 nao configurado.
+- Achados: default sem appId/serverUrl usa `localBase44`+localStorage; ~900 calls `entities`; ~70 functions Deno; sem Postgres proprio; S2S Site CPA e policy testavel com entry Deno acoplada.
+- Entrega: `docs/DIAGNOSTICO_RUNTIME_ERP.md`.
+- Decisao: `HYBRID_TRANSITION` (destino fora do Base44; facade atual preservada; sem big-bang).
+- Nao feito: migracao, banco, HML, Site CPA, merge main, PROVISIONAMENTO Fase 2.
+- Proximo passo: aprovacao humana da stack alvo; so entao provisionar HML na arquitetura escolhida.
 ### GO-LIVE-HML-01 / Reconciliacao segura com main (Opcao A)
 - Objetivo: integrar `origin/main` na branch `cursor/go-live-hml-01-392b` sem force push e sem descartar Codex.
 - Estrategia: merge de `origin/main` (`ae774cd7`) na branch HML; historico preservado.
