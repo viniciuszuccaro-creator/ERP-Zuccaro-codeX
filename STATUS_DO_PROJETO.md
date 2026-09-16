@@ -1,3 +1,14 @@
+### ERP-DEV-DEPLOY-01 / Incorporacao segura na main
+
+- Objetivo: incorporar `cursor/erp-dev-deploy-01-392b` em `main` para desbloquear o deploy manual Hostinger.
+- Antes: `origin/main` = `42b2a21e`; branch = `9fc9d759`; merge-base = `42b2a21e` (0 atras / 1 a frente).
+- Conflitos: nenhum — fast-forward direto.
+- Preservado: ERP-RUNTIME-01, Codex, ERP-SITE, localBase44, B2B e demais funcionalidades.
+- Validacoes: HttpApiClient 5/5; server 8 pass + 1 skip; suite 568/568; lint/build frontend OK; build/typecheck server OK; audit:baseline OK; typecheck frontend baseline; `git diff --check` OK.
+- Segredos: nenhum real (CHANGE_ME / placeholders).
+- Decisao: `ERP_DEV_DEPLOY_01_MERGED_TO_MAIN` apos push.
+- Proximo: humano retomar runbook Hostinger; sem deploy pelo agente.
+
 ### ERP-DEV-DEPLOY-01 / Preparacao do primeiro deploy DEV Hostinger
 
 - Objetivo: preparar artefatos e runbook humano para subir ERP-RUNTIME-01 no VPS DEV, sem SSH/Cursor no VPS e sem depender de DNS.
