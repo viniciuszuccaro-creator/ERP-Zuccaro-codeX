@@ -1,3 +1,14 @@
+### ERP-RUNTIME-01 / Incorporacao segura na main
+
+- Objetivo: incorporar `cursor/erp-runtime-01-392b` em `main` preservando Codex e demais trabalhos.
+- Antes: `origin/main` = `4eeebd0e`; branch = `03de223a`; merge-base = `4eeebd0e` (0 atras / 1 a frente).
+- Conflitos: nenhum — fast-forward direto; nao foi necessario rebase/merge de main na branch.
+- Preservado: server/BFF, migrations, RLS, HttpApiClient, feature flag, localBase44, piloto Marca, Docker ERP, docs.
+- Validacoes: server test 8 pass + 1 skip; HttpApiClient 4/4; localEntityGuard+auth 30/30; site-cpa 199/199; go-live-hml 13/13; suite frontend 567/567; lint/build frontend OK; build/typecheck server OK; audit:baseline OK; typecheck frontend baseline EXIT 2; `git diff --check` OK.
+- Segredos: nenhum real (apenas CHANGE_ME / fixtures de teste).
+- Decisao: `ERP_RUNTIME_01_MERGED_TO_MAIN` apos push.
+- Proximo: deploy DEV humano na Hostinger; sem RUNTIME-02 neste lote.
+
 ### ERP-RUNTIME-01 / Fundacao Hostinger + Supabase self-hosted
 
 - Objetivo: criar a fundacao do runtime oficial (API/BFF + Postgres + facade HTTP) sem migrar o ERP inteiro e sem deploy no VPS.
