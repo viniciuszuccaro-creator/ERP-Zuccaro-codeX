@@ -1148,3 +1148,11 @@ Lote exclusivo de preparacao no ERP (sem Site CPA, sem segredos, sem URL inventa
 Decisao: `ERP_HML_PREPARED_FOR_EXTERNAL_E2E` com `EXTERNAL_E2E_STATUS=BLOCKED_CONFIGURATION`. Nao declara `ERP_E2E_READY` nem `GO_LIVE_READY`. Reutiliza contratos ERP-SITE-01..12 e health fail-closed; payment/storage/AI permanecem blocked/degraded honestos.
 
 Opcao B (conexao real Site CPA + credenciais HML) somente com autorizacao expressa. Nao existe ERP-SITE-13.
+
+---
+
+# 34. PROVISIONAMENTO-HML-01 - FASE 1 (DESCOBERTA + NUCLEO)
+
+Descoberta do runtime Base44/`legacyIntegrationsMirror`, matriz canônica `SITE_CPA_*`, endpoint formato SDK e checklist humano em `docs/PROVISIONAMENTO_HML_01.md`.
+
+Decisao Fase 1: `HML_CORE_BLOCKED_CONFIGURATION`. Fases 2–7 documentadas e nao executadas. Site CPA nao alterado.
