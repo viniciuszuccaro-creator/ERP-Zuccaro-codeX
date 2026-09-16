@@ -9,12 +9,14 @@ export const runLocalTotpVerification = (payload = {}, dependencies) => {
   const context = dependencies.validateContext(payload);
   const state = dependencies.loadState();
   const sessionId = normalizeId(state.session?.id) || null;
-  const finish = (success, reason) => {
+  const action = String(payload.action || 'verify').trim().toLowerCase();
+  const finish = (success, reason, extra = {}) => {
     dependencies.auditAttempt({ success, reason, groupId: context.groupId || null, empresaId: context.empresaId || null, sessionId });
-    return { data: { ok: success, valid: success, local: true, reason } };
+    return { data: { ok: success, valid: success, local: true, reason, ...extra } };
   };
 
   if (!context.valid) return finish(false, context.error || 'contexto-invalido');
+  if (!['request', 'verify'].includes(action)) return finish(false, 'acao-invalida');
   const scope = evaluateLocalGuardScope(context, state);
   if (!scope.allowed) return finish(false, scope.reason || 'escopo-nao-autorizado');
 
@@ -26,7 +28,6 @@ export const runLocalTotpVerification = (payload = {}, dependencies) => {
 
   const permission = dependencies.evaluatePermission({ module: 'Sistema', section: 'Seguranca', action: 'executar' });
   if (!permission.allowed) return finish(false, permission.reason || 'permissao-negada');
-  if (!isSixDigitCode(payload.code)) return finish(false, 'codigo-invalido');
   if (state.mfaRequired !== true) return finish(false, 'mfa-nao-configurado');
   if (state.session?.mfa_validado !== true) return finish(false, 'mfa-nao-validado');
 
@@ -34,6 +35,8 @@ export const runLocalTotpVerification = (payload = {}, dependencies) => {
   const configuredMinutes = Number(state.validityMinutes || DEFAULT_MFA_VALIDITY_MINUTES);
   const validityMinutes = Number.isFinite(configuredMinutes) ? Math.min(Math.max(configuredMinutes, 1), 15) : DEFAULT_MFA_VALIDITY_MINUTES;
   if (!Number.isFinite(validatedAt) || validatedAt <= 0 || nowMs - validatedAt > validityMinutes * 60_000) return finish(false, 'mfa-expirado');
+  if (action === 'request') return finish(true, 'mfa-sessao-valida', { requested: false });
+  if (!isSixDigitCode(payload.code)) return finish(false, 'codigo-invalido');
 
   return finish(true, 'mfa-sessao-valida');
 };

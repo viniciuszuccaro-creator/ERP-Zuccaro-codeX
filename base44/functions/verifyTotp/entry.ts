@@ -1,31 +1,23 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
 import { resolveGuardPermission, validateGuardContext } from '../_lib/security/entityGuardPolicy/entry.ts';
+import { sendEmail } from '../_lib/notificationUtils/entry.ts';
 import {
+  createMfaDeliverySignature,
+  createScopedMfaCode,
   evaluateMfaScopeAccess,
+  evaluateMfaRequestRateLimit,
+  evaluateMfaVerificationRateLimit,
   isSixDigitMfaCode,
+  mfaStepForTime,
+  resolveMfaDestination,
   validateMfaProviderConfig,
   verifyScopedMfaCode,
 } from '../_lib/security/totpVerificationPolicy/entry.ts';
-
-const attempts = globalThis.__verifyTotpAttempts || (globalThis.__verifyTotpAttempts = new Map());
-const RATE_WINDOW_MS = 5 * 60 * 1000;
-const MAX_ATTEMPTS = 5;
 
 const safeIdentifier = (value, fallback = '-') => String(value || fallback)
   .trim()
   .replace(/[^A-Za-z0-9_. -]/g, '')
   .slice(0, 100) || fallback;
-
-const consumeAttempt = (key, nowMs = Date.now()) => {
-  const recent = (attempts.get(key) || []).filter((timestamp) => nowMs - timestamp < RATE_WINDOW_MS);
-  recent.push(nowMs);
-  attempts.set(key, recent);
-  if (attempts.size > 1_000) {
-    const oldest = attempts.keys().next().value;
-    attempts.delete(oldest);
-  }
-  return recent.length <= MAX_ATTEMPTS;
-};
 
 const auditAttempt = async (base44, user, context, details) => {
   await base44.asServiceRole.entities.AuditLog.create({
@@ -50,6 +42,39 @@ const auditAttempt = async (base44, user, context, details) => {
   });
 };
 
+const loadRecentAttempts = (base44, user, context) => base44.asServiceRole.entities.AuditLog.filter({
+  entidade: '2FA.Verify',
+  usuario_id: user.id,
+  group_id: context.groupId,
+  empresa_id: context.empresaId || null,
+}, '-created_date', 30);
+
+const deliverChallenge = async ({ base44, provider, destination, code, user, context, secret }) => {
+  const message = `Seu codigo de verificacao do ERP Zuccaro e ${code}. Ele expira em ate 5 minutos. Nao compartilhe este codigo.`;
+  if (provider === 'email') {
+    await sendEmail(base44, destination, 'Codigo de verificacao - ERP Zuccaro', message);
+    return;
+  }
+  const timestamp = Date.now();
+  const signature = await createMfaDeliverySignature({
+    secret,
+    userId: user.id,
+    groupId: context.groupId,
+    empresaId: context.empresaId,
+    destination,
+    message,
+    timestamp,
+  });
+  await base44.asServiceRole.functions.invoke('whatsappSend', {
+    action: 'sendText',
+    numero: destination,
+    mensagem: message,
+    empresaId: context.empresaId || null,
+    groupId: context.groupId,
+    mfa_delivery: { user_id: user.id, timestamp, signature },
+  });
+};
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -60,14 +85,15 @@ Deno.serve(async (req) => {
     const context = validateGuardContext(body);
     const moduleName = safeIdentifier(body?.module, 'Sistema');
     const section = safeIdentifier(Array.isArray(body?.section) ? body.section.join('.') : body?.section);
+    const action = String(body?.action || 'verify').trim().toLowerCase();
 
     if (!context.valid) {
       await auditAttempt(base44, user, context, { success: false, reason: context.error, moduleName, section, provider: null });
       return Response.json({ ok: false, error: context.error }, { status: 400 });
     }
-    if (!isSixDigitMfaCode(body?.code)) {
-      await auditAttempt(base44, user, context, { success: false, reason: 'invalid_code_format', moduleName, section, provider: null });
-      return Response.json({ ok: false, error: 'invalid_code_format' }, { status: 400 });
+    if (!['request', 'verify'].includes(action)) {
+      await auditAttempt(base44, user, context, { success: false, reason: 'invalid_action', moduleName, section, provider: null });
+      return Response.json({ ok: false, error: 'invalid_action' }, { status: 400 });
     }
 
     const groups = await base44.asServiceRole.entities.GrupoEmpresarial.filter({ id: context.groupId }, undefined, 1);
@@ -105,8 +131,64 @@ Deno.serve(async (req) => {
       return Response.json({ ok: false, error: 'mfa_unavailable' }, { status: 503 });
     }
 
-    const ip = String(req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown').split(',')[0].trim();
-    if (!consumeAttempt(`${user.id}:${ip}`)) {
+    const recentAttempts = await loadRecentAttempts(base44, user, context);
+    if (action === 'request') {
+      const destination = resolveMfaDestination(providerConfig.provider, user);
+      if (!destination.valid) {
+        await auditAttempt(base44, user, context, { success: false, reason: destination.error, moduleName, section, provider: providerConfig.provider });
+        return Response.json({ ok: false, error: destination.error }, { status: 409 });
+      }
+      const requestGate = evaluateMfaRequestRateLimit(recentAttempts);
+      if (!requestGate.allowed) {
+        await auditAttempt(base44, user, context, { success: false, reason: requestGate.reason, moduleName, section, provider: providerConfig.provider });
+        return Response.json({ ok: false, error: requestGate.reason }, { status: 429 });
+      }
+      if (requestGate.reused) {
+        await auditAttempt(base44, user, context, { success: true, reason: requestGate.reason, moduleName, section, provider: providerConfig.provider });
+        return Response.json({
+          ok: true,
+          requested: true,
+          reused: true,
+          provider: providerConfig.provider,
+          destination: destination.masked,
+          retry_after_seconds: requestGate.retryAfterSeconds,
+        });
+      }
+
+      const secret = Deno.env.get('MFA_TOTP_SECRET');
+      const code = await createScopedMfaCode({
+        secret,
+        userId: user.id,
+        moduleName,
+        section,
+        groupId: context.groupId,
+        empresaId: context.empresaId,
+        step: mfaStepForTime(),
+      });
+      try {
+        await deliverChallenge({ base44, provider: providerConfig.provider, destination: destination.destination, code, user, context, secret });
+      } catch (error) {
+        console.error('[verifyTotp] challenge delivery failed', { provider: providerConfig.provider, error: error?.message || String(error) });
+        await auditAttempt(base44, user, context, { success: false, reason: 'challenge_delivery_failed', moduleName, section, provider: providerConfig.provider });
+        return Response.json({ ok: false, error: 'challenge_delivery_failed' }, { status: 503 });
+      }
+      await auditAttempt(base44, user, context, { success: true, reason: 'challenge_sent', moduleName, section, provider: providerConfig.provider });
+      return Response.json({
+        ok: true,
+        requested: true,
+        reused: false,
+        provider: providerConfig.provider,
+        destination: destination.masked,
+        expires_in_seconds: 300,
+      });
+    }
+
+    if (!isSixDigitMfaCode(body?.code)) {
+      await auditAttempt(base44, user, context, { success: false, reason: 'invalid_code_format', moduleName, section, provider: providerConfig.provider });
+      return Response.json({ ok: false, error: 'invalid_code_format' }, { status: 400 });
+    }
+    const verifyGate = evaluateMfaVerificationRateLimit(recentAttempts);
+    if (!verifyGate.allowed) {
       await auditAttempt(base44, user, context, { success: false, reason: 'rate_limited', moduleName, section, provider: providerConfig.provider });
       return Response.json({ ok: false, error: 'rate_limited' }, { status: 429 });
     }

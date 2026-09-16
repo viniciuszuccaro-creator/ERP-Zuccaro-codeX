@@ -38,6 +38,14 @@ test('accepts only a recent MFA proof bound to the active session', () => {
   assert.deepEqual(audits[0], { success: true, reason: 'mfa-sessao-valida', groupId: 'grupo-cpa', empresaId: '3z', sessionId: 'sessao-1' });
 });
 
+test('request action reuses the trusted local session without pretending delivery', () => {
+  const { result, audits } = run({ action: 'request', code: undefined });
+  assert.equal(result.data.ok, true);
+  assert.equal(result.data.requested, false);
+  assert.equal(result.data.reason, 'mfa-sessao-valida');
+  assert.equal(JSON.stringify(audits).includes('123456'), false);
+});
+
 test('fails closed without MFA configuration or trusted session proof', () => {
   assert.equal(run({}, { ...baseState, mfaRequired: false }).result.data.reason, 'mfa-nao-configurado');
   assert.equal(run({}, { ...baseState, session: { ...baseState.session, mfa_validado: false } }).result.data.reason, 'mfa-nao-validado');

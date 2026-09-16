@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 import { completeGuardCallScope, requireEntityGuard } from './_lib/security/guardCallPolicy.js';
+import { verifyMfaDeliverySignature } from './_lib/security/totpVerificationPolicy/entry.ts';
 
 const reportWhatsappFailure = (operation, error, context = {}) => {
   console.error('[whatsappSend] ' + operation, {
@@ -53,11 +54,30 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const payload = await req.json().catch(() => ({}));
-    let { action = 'sendText', numero, mensagem, empresaId, groupId, clienteId, pedidoId, templateKey, vars = {}, arquivoUrl, legenda, internal_token } = payload || {};
+    let { action = 'sendText', numero, mensagem, empresaId, groupId, clienteId, pedidoId, templateKey, vars = {}, arquivoUrl, legenda, internal_token, mfa_delivery } = payload || {};
 
     const user = await base44.auth.me().catch(() => null);
     const trustedInternal = internal_token && Deno.env.get('DEPLOY_AUDIT_TOKEN') && internal_token === Deno.env.get('DEPLOY_AUDIT_TOKEN');
-    if (!user && !trustedInternal) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    const trustedMfaDelivery = Boolean(
+      action === 'sendText'
+      && numero
+      && mensagem
+      && !clienteId
+      && !pedidoId
+      && !templateKey
+      && !arquivoUrl
+      && await verifyMfaDeliverySignature({
+        secret: Deno.env.get('MFA_TOTP_SECRET'),
+        userId: mfa_delivery?.user_id,
+        groupId,
+        empresaId,
+        destination: numero,
+        message: mensagem,
+        timestamp: mfa_delivery?.timestamp,
+        signature: mfa_delivery?.signature,
+      }),
+    );
+    if (!user && !trustedInternal && !trustedMfaDelivery) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     // Contexto multiempresa obrigatório (empresa preferencial)
     if (!empresaId && groupId) {
@@ -74,7 +94,7 @@ Deno.serve(async (req) => {
     empresaId = empresaId || resolvedScope.empresaId;
     groupId = groupId || resolvedScope.groupId;
 
-    if (!trustedInternal) {
+    if (!trustedInternal && !trustedMfaDelivery) {
       const guardFailure = await requireEntityGuard(base44, {
         module: 'Atendimento',
         section: 'WhatsApp',
@@ -132,6 +152,9 @@ Deno.serve(async (req) => {
 
     // Simulado quando nao configurado
     if (!config || config.ativo === false || config.simulacao_ativa === true) {
+      if (trustedMfaDelivery) {
+        return Response.json({ error: 'WhatsApp MFA indisponivel' }, { status: 503 });
+      }
       const result = { sucesso: true, modo: 'simulado', messageId: `SIM_${Date.now()}`, status: 'sent' };
       await auditWhatsapp(base44, user, {
         descricao: 'Envio simulado sem configuracao ativa',

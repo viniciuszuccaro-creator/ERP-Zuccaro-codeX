@@ -3,10 +3,15 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import {
+  createMfaDeliverySignature,
   createScopedMfaCode,
   evaluateMfaScopeAccess,
+  evaluateMfaRequestRateLimit,
+  evaluateMfaVerificationRateLimit,
   mfaStepForTime,
+  resolveMfaDestination,
   validateMfaProviderConfig,
+  verifyMfaDeliverySignature,
   verifyScopedMfaCode,
 } from '../base44/functions/_lib/security/totpVerificationPolicy/entry.ts';
 
@@ -65,11 +70,56 @@ test('scope blocks external company and accepts only linked group/company', () =
   }).reason, 'company_outside_group');
 });
 
+test('MFA delivery resolves and masks only valid user-owned contacts', () => {
+  assert.equal(resolveMfaDestination('email', { email: 'vinicius@example.com' }).masked, 'vi******@example.com');
+  assert.equal(resolveMfaDestination('whatsapp', { telefone: '(11) 99999-1234' }).masked, '*******1234');
+  assert.equal(resolveMfaDestination('email', { email: 'invalid' }).error, 'mfa_email_unavailable');
+  assert.equal(resolveMfaDestination('whatsapp', { telefone: '123' }).error, 'mfa_whatsapp_unavailable');
+});
+
+test('persistent audit history controls resend and verification abuse', () => {
+  const audit = (motivo, millisecondsAgo) => ({
+    created_date: new Date(nowMs - millisecondsAgo).toISOString(),
+    dados_novos: { motivo },
+  });
+  assert.equal(evaluateMfaRequestRateLimit([audit('challenge_sent', 30_000)], nowMs).reused, true);
+  assert.equal(evaluateMfaRequestRateLimit(Array.from({ length: 5 }, (_, index) => audit('challenge_sent', 70_000 + index)), nowMs).reason, 'challenge_rate_limited');
+  assert.equal(evaluateMfaRequestRateLimit(Array.from({ length: 5 }, (_, index) => audit('challenge_delivery_failed', index)), nowMs).reason, 'challenge_rate_limited');
+  assert.equal(evaluateMfaVerificationRateLimit(Array.from({ length: 5 }, (_, index) => audit('invalid_code', index)), nowMs).reason, 'rate_limited');
+  assert.equal(evaluateMfaVerificationRateLimit([audit('invalid_code', 6 * 60_000)], nowMs).allowed, true);
+});
+
+test('WhatsApp MFA handoff signature is scoped and expires quickly', async () => {
+  const delivery = {
+    secret,
+    userId: 'vinicius',
+    groupId: 'grupo-cpa',
+    empresaId: '3z',
+    destination: '5511999991234',
+    message: 'Codigo MFA 123456',
+    timestamp: nowMs,
+  };
+  const signature = await createMfaDeliverySignature(delivery);
+  assert.equal(await verifyMfaDeliverySignature({ ...delivery, signature }, nowMs), true);
+  assert.equal(await verifyMfaDeliverySignature({ ...delivery, signature, destination: '5511888881234' }, nowMs), false);
+  assert.equal(await verifyMfaDeliverySignature({ ...delivery, signature }, nowMs + 61_000), false);
+});
+
 test('backend source never reuses backup/deploy secrets or audits informed code', async () => {
   const source = await readFile(new URL('../base44/functions/verifyTotp/entry.ts', import.meta.url), 'utf8');
+  const whatsapp = await readFile(new URL('../base44/functions/whatsappSend/entry.ts', import.meta.url), 'utf8');
+  const prompt = await readFile(new URL('../src/components/security/TwoFactorAuthPrompt.jsx', import.meta.url), 'utf8');
   assert.match(source, /MFA_TOTP_SECRET/);
   assert.match(source, /MFA_TOTP_PROVIDER/);
+  assert.match(source, /AuditLog\.filter/);
+  assert.match(source, /action === 'request'/);
   assert.doesNotMatch(source, /BACKUP_ENCRYPTION_KEY|DEPLOY_AUDIT_TOKEN|b44_fallback_secret/);
+  assert.doesNotMatch(source, /__verifyTotpAttempts/);
   assert.doesNotMatch(source, /dados_novos:\s*\{[^}]*code/s);
   assert.doesNotMatch(source, /catch\s*\{\s*\}/);
+  assert.match(whatsapp, /trustedMfaDelivery/);
+  assert.match(whatsapp, /WhatsApp MFA indisponivel/);
+  assert.doesNotMatch(whatsapp, /dados_novos:\s*\{[^}]*mfa_delivery/s);
+  assert.match(prompt, /action: 'request'/);
+  assert.match(prompt, /action: 'verify'/);
 });
