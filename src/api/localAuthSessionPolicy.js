@@ -9,6 +9,8 @@ const AUTH_DENIAL_REASONS = new Set([
   'session_revoked',
   'session_expired',
   'session_owner_mismatch',
+  'session_access_version_missing',
+  'session_access_changed',
   'session_not_found',
   'company_outside_group',
 ]);
@@ -36,6 +38,60 @@ const stripAccents = (value) => String(value || '')
   .replace(/[\u0300-\u036f]/g, '')
   .toLowerCase()
   .trim();
+
+const stableAccessValue = (value) => {
+  if (Array.isArray(value)) {
+    return value.map(stableAccessValue).sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
+  }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.keys(value).sort().map((key) => [key, stableAccessValue(value[key])]),
+    );
+  }
+  return value ?? null;
+};
+
+const hashAccessValue = (value) => {
+  const input = JSON.stringify(stableAccessValue(value));
+  let first = 0x811c9dc5;
+  let second = 0x9e3779b9;
+  for (let index = 0; index < input.length; index += 1) {
+    const code = input.charCodeAt(index);
+    first = Math.imul(first ^ code, 0x01000193) >>> 0;
+    second = Math.imul(second ^ code, 0x85ebca6b) >>> 0;
+  }
+  return `${first.toString(16).padStart(8, '0')}${second.toString(16).padStart(8, '0')}`;
+};
+
+export const buildLocalAccessVersion = (user, profile) => {
+  if (!user?.id || !profile?.id || profile.ativo === false) return null;
+  const userGroupId = resolveUserGroupId(user);
+  const profileGroupId = profile.group_id || profile.grupo_id || null;
+  if (profileGroupId && (!userGroupId || String(profileGroupId) !== String(userGroupId))) return null;
+  return `access-v1:${hashAccessValue({
+    user: {
+      id: user.id,
+      perfil_acesso_id: user.perfil_acesso_id || null,
+      disabled: user.disabled === true,
+      ativo: user.ativo !== false,
+      status: stripAccents(user.status),
+      pode_operar_em_grupo: user.pode_operar_em_grupo === true,
+      pode_ver_todas_empresas: user.pode_ver_todas_empresas === true,
+      grupo_padrao_id: user.grupo_padrao_id || null,
+      empresa_padrao_id: user.empresa_padrao_id || null,
+      grupos_vinculados: user.grupos_vinculados || [],
+      empresas_vinculadas: user.empresas_vinculadas || [],
+    },
+    profile: {
+      id: profile.id,
+      ativo: profile.ativo !== false,
+      group_id: profileGroupId,
+      empresa_id: profile.empresa_id || null,
+      nivel: profile.nivel || profile.nivel_acesso || null,
+      permissoes: profile.permissoes || {},
+    },
+  })}`;
+};
 
 const firstActiveId = (list, idField) => {
   const match = (Array.isArray(list) ? list : []).find((item) => item && item[idField] && item.ativo !== false);
@@ -195,7 +251,7 @@ export const prepareLocalReauthentication = (storage = globalThis?.localStorage)
   writeLocalAuthState({ logged_in: true, sessao_id: null }, storage)
 );
 
-export const evaluateLocalUserSession = (user, session = null, nowMs = Date.now()) => {
+export const evaluateLocalUserSession = (user, session = null, nowMs = Date.now(), currentAccessVersion = null) => {
   if (!user || !user.id) {
     return { allowed: false, reason: 'unauthenticated', type: 'auth_required' };
   }
@@ -227,6 +283,15 @@ export const evaluateLocalUserSession = (user, session = null, nowMs = Date.now(
     const sessionStatus = stripAccents(session.status);
     if (session.ativa === false || sessionStatus === 'encerrada' || sessionStatus === 'revogada') {
       return { allowed: false, reason: 'session_revoked', type: 'auth_required' };
+    }
+
+    if (currentAccessVersion) {
+      if (!session.access_version) {
+        return { allowed: false, reason: 'session_access_version_missing', type: 'auth_required' };
+      }
+      if (String(session.access_version) !== String(currentAccessVersion)) {
+        return { allowed: false, reason: 'session_access_changed', type: 'auth_required' };
+      }
     }
 
     const lastAccess = new Date(session.data_hora_ultimo_acesso || session.data_hora_inicio || 0).getTime();

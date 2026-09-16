@@ -1261,3 +1261,18 @@ Proxima frente P0: implementar recuperacao de acesso no fluxo de autenticacao ex
 - Commit: `913a536c`.
 - Proxima frente P0: invalidar sessao local antiga apos alteracao do perfil/permissoes; depois validar a configuracao existente de sessao unica. Recuperacao e logs remotos continuam bloqueados pelo provedor.
 
+### Seguranca P0 - Sessao vinculada ao perfil de acesso
+
+Lote concluido em 2026-09-16 no fluxo local existente, sem criar entidade, tela, rota ou autenticacao paralela.
+
+- Cada sessao nova recebe uma versao deterministica do usuario, perfil, permissoes e vinculos Grupo/Empresa vigentes.
+- Alteracao de perfil, permissao, vinculo, nivel, estado da conta ou ownership do perfil revoga a sessao antes do proximo acesso.
+- Sessao legada sem versao de acesso falha fechada, e o usuario precisa autenticar novamente para receber o contrato atual.
+- Perfil ausente, inativo ou pertencente a outro Grupo nao permite criar ou renovar sessao.
+- Usuario comum sem perfil nao e mais reidratado como administrador local; somente a conta mestre preserva essa recuperacao controlada.
+- A negativa usa motivos controlados e permanece auditada no `AuditLog`, sem persistir a arvore de permissoes.
+- Testes focados passaram 24/24 e a suite completa passou 558/558; auditoria baseline, lint, build e verificacao de diff passaram.
+- Os arquivos do lote possuem zero diagnosticos de TypeScript; o passivo global permaneceu em 1.603.
+
+Proxima frente P0: aplicar a configuracao existente `seg_sessao_unica` ao login local, revogando sessoes simultaneas do mesmo usuario com auditoria e preservacao de Grupo/Empresa.
+

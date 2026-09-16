@@ -6,7 +6,7 @@ import {
   validateMultiempresaContext,
 } from "@/components/lib/contextoMultiempresaPolicy";
 import { sanitizeAuditPayload, sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
-import { buildLocalAuthDeniedAuditRecord, createAuthDeniedError, evaluateLocalUserSession, markLocalLoggedOut, prepareLocalReauthentication, readLocalAuthState, writeLocalAuthState, LOCAL_SESSION_ID_KEY } from "@/api/localAuthSessionPolicy";
+import { buildLocalAccessVersion, buildLocalAuthDeniedAuditRecord, createAuthDeniedError, evaluateLocalUserSession, markLocalLoggedOut, prepareLocalReauthentication, readLocalAuthState, writeLocalAuthState, LOCAL_SESSION_ID_KEY } from "@/api/localAuthSessionPolicy";
 import { createLocalStorageAdapter } from "@/api/localStorageAdapter";
 import { createLocalEntityProxy, createLocalEntityReadApi, runLocalEntityReadFunction } from "@/api/localEntityReadApi";
 import { runLocalEntityCreatePipeline } from "@/api/localEntityCreatePipeline";
@@ -610,6 +610,11 @@ const readUser = () => {
       user = normalizeLocalUser(JSON.parse(raw));
     } catch (error) { reportLocalClientFailure('Falha ao carregar usuario local', error); }
   }
+  if (user?.id) {
+    const db = loadDb();
+    const current = (db.User || []).find((item) => String(item.id) === String(user.id));
+    if (current) user = normalizeLocalUser(current);
+  }
   if (!user) {
     const db = loadDb();
     user = normalizeLocalUser(
@@ -617,7 +622,7 @@ const readUser = () => {
     );
   }
   // Sessao local orfã (sem perfil) reidrata o mestre — usuario comum com perfil restrito permanece fail-closed.
-  if (!user.perfil_acesso_id) {
+  if (!user.perfil_acesso_id && isMasterLocalUser(user)) {
     user = normalizeLocalUser({ ...localApiUser, mestre_local: true });
   }
   safeStorage.setItem(USER_KEY, JSON.stringify(user));
@@ -674,17 +679,47 @@ const loadLocalSessionById = async (sessaoId) => {
   }
 };
 
+const revokeLocalSessionRecord = (db, session, motivo) => {
+  if (!session?.id) return;
+  const sessions = getEntityStore(db, 'SessaoUsuario');
+  const index = sessions.findIndex((item) => String(item.id) === String(session.id));
+  if (index < 0) return;
+  sessions[index] = {
+    ...sessions[index],
+    ativa: false,
+    status: 'Revogada',
+    data_hora_encerramento: now(),
+    motivo_encerramento: motivo,
+    updated_date: now(),
+  };
+  saveDbStrict(db);
+  notify('SessaoUsuario', 'update', sessions[index]);
+};
+
 const ensureLocalActiveSession = async (user) => {
   const authState = readLocalAuthState(safeStorage);
   const sessaoId = safeStorage.getItem(LOCAL_SESSION_ID_KEY) || authState.sessao_id || null;
   let session = await loadLocalSessionById(sessaoId);
+  const db = loadDb();
+  const currentUser = getEntityStore(db, 'User').find((item) => String(item.id) === String(user?.id));
+  const currentProfile = currentUser?.perfil_acesso_id
+    ? getEntityStore(db, 'PerfilAcesso').find((item) => String(item.id) === String(currentUser.perfil_acesso_id))
+    : null;
+  const accessVersion = buildLocalAccessVersion(currentUser, currentProfile);
+
+  if (!accessVersion) {
+    revokeLocalSessionRecord(db, session, 'Alteracao de acesso');
+    throw createAuthDeniedError({ reason: 'session_access_changed', type: 'auth_required' });
+  }
 
   if (session) {
-    const evaluation = evaluateLocalUserSession(user, session);
+    const evaluation = evaluateLocalUserSession(user, session, Date.now(), accessVersion);
     if (!evaluation.allowed) {
+      if (evaluation.reason === 'session_access_version_missing' || evaluation.reason === 'session_access_changed') {
+        revokeLocalSessionRecord(db, session, 'Alteracao de acesso');
+      }
       throw createAuthDeniedError(evaluation);
     }
-    const db = loadDb();
     const sessions = getEntityStore(db, 'SessaoUsuario');
     const index = sessions.findIndex((item) => String(item.id) === String(session.id));
     if (index < 0) throw createAuthDeniedError({ reason: 'session_not_found', type: 'auth_required' });
@@ -701,7 +736,6 @@ const ensureLocalActiveSession = async (user) => {
     return session;
   }
 
-  const db = loadDb();
   const groupId = user.grupo_atual_id || user.grupo_padrao_id || null;
   const empresaId = user.empresa_atual_id || user.empresa_padrao_id || null;
   const empresa = empresaId
@@ -724,6 +758,8 @@ const ensureLocalActiveSession = async (user) => {
     empresa_id: empresaId,
     dispositivo: 'local',
     origem: 'localBase44Client',
+    perfil_acesso_id: currentProfile.id,
+    access_version: accessVersion,
     created_date: timestamp,
     updated_date: timestamp,
   };

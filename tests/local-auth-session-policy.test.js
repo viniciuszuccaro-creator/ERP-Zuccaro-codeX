@@ -4,6 +4,7 @@ import test from 'node:test';
 
 import {
   assertInteractiveAuthAllowed,
+  buildLocalAccessVersion,
   buildLocalAuthDeniedAuditRecord,
   createAuthDeniedError,
   evaluateLocalUserSession,
@@ -23,6 +24,13 @@ const admin = {
   pode_operar_em_grupo: true,
   grupo_atual_id: 'local_grupo_cpa',
   empresa_atual_id: 'local_empresa_3z',
+};
+
+const adminProfile = {
+  id: 'local_perfil_admin',
+  ativo: true,
+  group_id: 'local_grupo_cpa',
+  permissoes: { Sistema: { Seguranca: ['visualizar', 'executar'] } },
 };
 
 test('Gate 1 local authentication matrix fails closed with auditable reasons', async (t) => {
@@ -125,6 +133,57 @@ test('auth state logout and api-key interactive gate', () => {
   assert.equal(assertInteractiveAuthAllowed({ isLocalOnlyMode: false, hasApiKey: true, hasUserToken: true }).allowed, true);
 });
 
+test('access version is stable and changes with profile permissions or user scope', () => {
+  const version = buildLocalAccessVersion(admin, adminProfile);
+  const reorderedProfile = {
+    ...adminProfile,
+    permissoes: { Sistema: { Seguranca: ['executar', 'visualizar'] } },
+  };
+  assert.equal(buildLocalAccessVersion(admin, reorderedProfile), version);
+  assert.notEqual(
+    buildLocalAccessVersion(admin, { ...adminProfile, permissoes: { Sistema: { Seguranca: ['visualizar'] } } }),
+    version,
+  );
+  assert.notEqual(buildLocalAccessVersion({ ...admin, pode_operar_em_grupo: false }, adminProfile), version);
+  assert.equal(buildLocalAccessVersion(admin, { ...adminProfile, ativo: false }), null);
+  assert.equal(buildLocalAccessVersion(admin, { ...adminProfile, group_id: 'outro-grupo' }), null);
+  assert.equal(buildLocalAccessVersion({ ...admin, perfil_acesso_id: null }, null), null);
+});
+
+test('session access binding fails closed when version is absent or changed', () => {
+  const accessVersion = buildLocalAccessVersion(admin, adminProfile);
+  const session = {
+    usuario_id: admin.id,
+    ativa: true,
+    status: 'Ativa',
+    data_hora_ultimo_acesso: '2026-09-16T11:59:30.000Z',
+    max_idle_ms: 60_000,
+  };
+  const nowMs = Date.parse('2026-09-16T12:00:00.000Z');
+
+  assert.deepEqual(
+    evaluateLocalUserSession(admin, session, nowMs, accessVersion),
+    { allowed: false, reason: 'session_access_version_missing', type: 'auth_required' },
+  );
+  assert.deepEqual(
+    evaluateLocalUserSession(admin, { ...session, access_version: 'access-v1:old' }, nowMs, accessVersion),
+    { allowed: false, reason: 'session_access_changed', type: 'auth_required' },
+  );
+  assert.equal(
+    evaluateLocalUserSession(admin, { ...session, access_version: accessVersion }, nowMs, accessVersion).allowed,
+    true,
+  );
+
+  const audit = buildLocalAuthDeniedAuditRecord({
+    error: createAuthDeniedError({ reason: 'session_access_changed', type: 'auth_required' }),
+    user: admin,
+    sessionId: 'sessao-access',
+    id: 'audit-access',
+    timestamp: '2026-09-16T12:00:00.000Z',
+  });
+  assert.deepEqual(audit.dados_novos, { motivo: 'session_access_changed', tipo: 'auth_required' });
+});
+
 test('denied authentication audit keeps controlled reason and scope without raw error data', () => {
   const error = createAuthDeniedError({ reason: 'session_revoked', type: 'auth_required' });
   error.stack = 'sensitive stack';
@@ -195,7 +254,10 @@ test('local auth stack binds session and refuses api-key browser bypass', async 
 
   assert.match(policy, /ensureLocalActiveSession/);
   assert.match(policy, /markLocalLoggedOut/);
-  assert.match(policy, /evaluateLocalUserSession\(user, session\)/);
+  assert.match(policy, /evaluateLocalUserSession\(user, session, Date\.now\(\), accessVersion\)/);
+  assert.match(policy, /access_version: accessVersion/);
+  assert.match(policy, /revokeLocalSessionRecord\(db, session, 'Alteracao de acesso'\)/);
+  assert.match(policy, /!user\.perfil_acesso_id && isMasterLocalUser\(user\)/);
   assert.match(policy, /async logout\(\)/);
   assert.match(client, /assertInteractiveAuthAllowed/);
   assert.doesNotMatch(client, /isAuthenticated = async \(\) => true/);

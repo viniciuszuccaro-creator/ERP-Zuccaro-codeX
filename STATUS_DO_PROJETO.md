@@ -8848,3 +8848,19 @@ Checklist inicial:
 - Commit de implementacao: `913a536c` (`Consolida matriz local de autenticacao`).
 - Gate 1 permanece aberto: recuperacao e logs remotos continuam bloqueados pelo contrato do provedor; sessao antiga apos alteracao de permissao e politica de login simultaneo ainda precisam de verificacao dedicada.
 - Proximo passo P0: vincular a sessao local a versao/identidade do perfil de acesso e revoga-la quando o perfil ou suas permissoes mudarem, preservando auditoria e contexto Grupo/Empresa.
+
+## 2026-09-16 - Sessao local vinculada ao perfil de acesso
+
+- Objetivo: invalidar sessoes locais antigas quando perfil, permissoes ou escopo autorizado do usuario forem alterados.
+- Causa raiz: `SessaoUsuario` guardava somente usuario e contexto; uma sessao ativa continuava valida depois de mudancas em `PerfilAcesso` ou nos vinculos do usuario.
+- Arquivos alterados: `src/api/localAuthSessionPolicy.js`, `src/api/localBase44Client.js`, `tests/local-auth-session-policy.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
+- Estruturas reutilizadas: `SessaoUsuario`, `PerfilAcesso`, `User`, `AuditLog`, `evaluateLocalUserSession`, persistencia local estrita e o fluxo de reautenticacao existentes. Nenhuma entidade, tela, rota ou provedor foi criado.
+- Implementacao: a sessao recebe `perfil_acesso_id` e uma versao deterministica que resume somente os atributos de autorizacao. A versao e recalculada a partir dos registros vigentes, sem confiar no estado antigo do navegador.
+- Multiempresa/RBAC: a versao cobre vinculos e capacidades Grupo/Empresa; perfil ausente, inativo ou de outro Grupo falha fechado. Mudanca de permissoes, perfil, nivel ou vinculo revoga a sessao antes de liberar acesso.
+- Seguranca: sessoes legadas sem versao tambem sao revogadas e exigem reautenticacao. Foi corrigida a reidratacao para impedir que usuario comum sem perfil se transforme na conta mestre local.
+- Auditoria: a negativa continua no `AuditLog` com motivo allowlisted e contexto confiavel; a arvore de permissoes e o material usado no calculo da versao nao entram no log.
+- Testes: 24/24 testes focados e 558/558 na suite completa passaram. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve somente os avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
+- Typecheck: zero diagnosticos nos arquivos do lote; o passivo global permaneceu em 1.603, sem regressao ou mascaramento.
+- Compatibilidade: a primeira abertura com uma sessao anterior ao lote solicitara nova autenticacao uma unica vez para emitir a sessao versionada.
+- Commit: sera registrado imediatamente apos a gravacao deste lote.
+- Proximo passo P0: aplicar a configuracao existente `seg_sessao_unica` ao login local, revogando sessoes simultaneas do mesmo usuario com auditoria e preservacao de Grupo/Empresa.
