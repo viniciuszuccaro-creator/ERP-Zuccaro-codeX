@@ -8907,5 +8907,5 @@ Checklist inicial:
 - UX: a pagina aguarda o carregamento do perfil antes de decidir o acesso e nao envia mais usuario interno sem permissao ao Portal do Cliente.
 - Testes: regressao focada 17/17 e suite completa 563/563 aprovadas. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram.
 - Typecheck: zero diagnosticos nos arquivos do lote; o passivo global conhecido ficou em 1.600 e nao foi mascarado.
-- Commit de implementacao: pendente neste fechamento.
+- Commit de implementacao: `97d0e373` (`Libera administracao por RBAC granular`).
 - Proximo passo P0: proteger e auditar a selecao inicial por `?tab=`, normalizando URL e aba ativa para a primeira opcao autorizada e alinhando os marcadores de permissao com as chaves canonicas existentes.
