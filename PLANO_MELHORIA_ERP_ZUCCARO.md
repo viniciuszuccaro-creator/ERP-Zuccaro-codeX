@@ -1232,3 +1232,13 @@ Proxima frente P0: implementar recuperacao de acesso no fluxo de autenticacao ex
 - O modo local nao usa senha e nao recebera um fluxo ficticio de recuperacao.
 - O subgate permanece aberto e bloqueado por contrato externo. Nao criar tela ou token paralelo antes de confirmar revogacao e auditoria no provedor ou concluir a migracao de autenticacao planejada.
 
+### Auditoria de negativas de autenticacao local - 2026-09-16
+
+- O login local bem-sucedido ja auditado foi preservado; recusas agora tambem criam `AuditLog` pela persistencia local estrita existente.
+- Motivos de logout, conta inativa/desativada, contexto ausente, sessao revogada/expirada e ownership divergente sao reduzidos a allowlists.
+- O registro inclui identidade e escopo Grupo/Empresa somente quando confiaveis; erro bruto, stack, senha, token e payload nao entram na auditoria.
+- Eventos identicos da mesma sessao recebem deduplicacao curta contra loops, sem mudar a decisao fail-closed.
+- Testes focados passaram 10/10 e a suite completa 549/549; baseline, lint, build e diff check passaram. Typecheck do lote ficou em zero e o passivo global permaneceu em 1.603.
+- Commit: `f7d9e174`.
+- Pendente no Gate 1: logs remotos anteriores a autenticacao exigem evento/callback server-side do provedor; nao sera criado endpoint anonimo confiando em dados enviados pelo navegador.
+

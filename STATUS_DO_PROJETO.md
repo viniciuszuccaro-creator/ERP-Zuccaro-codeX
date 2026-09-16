@@ -8806,3 +8806,18 @@ Checklist inicial:
 - Validacao: alteracao exclusivamente documental; `git diff --check` executado no fechamento. Testes de runtime dispensados porque nenhum codigo de aplicacao foi alterado.
 - Pendencia para desbloqueio: confirmar no ambiente Base44 um mecanismo administrativo/callback para revogar todas as sessoes do usuario e auditar o reset, ou executar a migracao de autenticacao prevista para um provedor que exponha essas garantias.
 - Proximo passo P0: manter recuperacao de acesso aberta no Gate 1 e obter o contrato de revogacao/auditoria do provedor antes de qualquer implementacao.
+
+## 2026-09-16 - Auditoria de negativas de autenticacao local
+
+- Objetivo: completar os logs de tentativa negada no fluxo local existente sem criar entidade, endpoint ou sistema de autenticacao paralelo.
+- Causa raiz: o login local bem-sucedido ja criava `SessaoUsuario` e `AuditLog`, mas recusas por logout, conta inativa/desativada, contexto ausente, sessao revogada/expirada ou ownership divergente apenas lancavam erro.
+- Arquivos alterados: `src/api/localAuthSessionPolicy.js`, `src/api/localBase44Client.js`, `tests/local-auth-session-policy.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
+- Estruturas reutilizadas: `AuditLog`, `SessaoUsuario`, `evaluateLocalUserSession`, `createAuthDeniedError`, persistencia local estrita e notificacao ja existentes. Nenhuma tela, rota, entidade ou armazenamento paralelo foi criado.
+- Multiempresa: quando a identidade e conhecida, o registro preserva `group_id` e `empresa_id` resolvidos pelo mesmo contrato da sessao; tentativa anonima nao fabrica contexto.
+- Seguranca/auditoria: motivos e tipos usam allowlists; erro bruto, stack, senha, token e payload nao sao persistidos. Eventos identicos da mesma sessao sao deduplicados por cinco segundos para evitar loop de renderizacao, sem liberar o acesso recusado.
+- Compatibilidade: login local bem-sucedido continua auditado na criacao da sessao; a negativa continua fail-closed. Falha de persistencia da auditoria nao transforma a recusa em sucesso.
+- Limite externo: tentativas remotas anteriores a autenticacao pertencem ao provedor Base44 e continuam pendentes de callback/evento confiavel; o frontend nao recebeu endpoint anonimo de auditoria.
+- Testes: 10/10 testes focados e 549/549 na suite completa passaram. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o baseline permaneceu em 1.028 catches operacionais vazios.
+- Typecheck: zero diagnosticos nos arquivos do lote; o passivo global permaneceu em 1.603, sem regressao ou mascaramento.
+- Commit de implementacao: `f7d9e174` (`Audita negativas de autenticacao local`).
+- Proximo passo P0: obter do provedor o evento/callback server-side de login e tentativa negada para fechar os logs remotos do Gate 1, sem aceitar auditoria anonima forjada pelo navegador.
