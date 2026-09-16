@@ -8879,3 +8879,19 @@ Checklist inicial:
 - Typecheck: zero diagnosticos nos arquivos do lote; o passivo global permaneceu em 1.603, sem regressao ou mascaramento.
 - Commit de implementacao: `71f5950a` (`Aplica politica de sessao unica local`).
 - Proximo passo P0: substituir o limite local fixo pela configuracao existente de timeout por inatividade e duracao absoluta da sessao, mantendo precedencia Empresa/Grupo e auditoria fail-closed.
+
+## 2026-09-16 - Timeouts configuraveis da sessao local
+
+- Objetivo: aplicar os limites existentes de inatividade e duracao absoluta ao fluxo real de sessao local.
+- Causa raiz: novas sessoes recebiam oito horas fixas de inatividade, `timeout_inatividade_minutos` nao era consultado e `timeout_absoluto_horas` nao era avaliado.
+- Arquivos alterados: `src/api/localAuthSessionPolicy.js`, `src/api/localBase44Client.js`, `tests/local-auth-session-policy.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
+- Estruturas reutilizadas: `ConfiguracaoSeguranca`, `SessaoUsuario`, `evaluateLocalUserSession`, revogacao, auditoria de negativa e precedencia Empresa/Grupo existentes. Nenhuma estrutura paralela foi criada.
+- Configuracao: Empresa prevalece sobre Grupo. Valores positivos sao convertidos para milissegundos; ausencia, zero, negativo ou valor numericamente inseguro usa os padroes de 60 minutos de inatividade e 24 horas absolutas.
+- Seguranca: os limites vigentes sao recalculados no acesso e aplicados a sessoes ja abertas. Expiracao por inatividade usa `session_expired`; duracao absoluta usa `session_absolute_expired`.
+- Persistencia/auditoria: a sessao vencida e revogada antes do bloqueio. A negativa e auditada com motivo allowlisted e contexto Grupo/Empresa, sem registrar payload, token ou segredo.
+- Compatibilidade: sessoes legadas sem inicio recebem o timestamp corrente uma unica vez; sessoes novas guardam limites efetivos e origem da configuracao.
+- Testes: 28/28 testes focados e 562/562 na suite completa passaram. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o baseline permaneceu em 1.028 catches operacionais vazios.
+- Typecheck: zero diagnosticos nos arquivos do lote; o passivo global permaneceu em 1.603, sem regressao ou mascaramento.
+- Gate 1: os controles locais executaveis estao cobertos; recuperacao com revogacao global e logs remotos anteriores ao login permanecem bloqueados pelo contrato do provedor ja documentado.
+- Commit: sera registrado imediatamente apos a gravacao deste lote.
+- Proximo passo P0: iniciar o Gate 2 pela matriz RBAC da Administracao, validando pagina, aba, botao e acao backend existentes sem criar estrutura paralela.

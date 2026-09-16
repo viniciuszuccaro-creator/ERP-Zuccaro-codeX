@@ -15,6 +15,7 @@ import {
   resolveUserEmpresaId,
   resolveUserGroupId,
   resolveLocalSingleSessionConfig,
+  resolveLocalSessionTimeoutConfig,
   writeLocalAuthState,
 } from '../src/api/localAuthSessionPolicy.js';
 import { createLocalStorageAdapter } from '../src/api/localStorageAdapter.js';
@@ -77,6 +78,18 @@ test('Gate 1 local authentication matrix fails closed with auditable reasons', a
       session: { ...activeSession, data_hora_ultimo_acesso: '2020-01-01T00:00:00.000Z' },
       expected: { allowed: false, reason: 'session_expired', type: 'auth_required' },
       nowMs: Date.parse('2020-01-01T01:00:00.000Z'),
+    },
+    {
+      name: 'absolute session lifetime expired',
+      user: admin,
+      session: {
+        ...activeSession,
+        data_hora_inicio: '2020-01-01T00:00:00.000Z',
+        data_hora_ultimo_acesso: '2020-01-01T01:59:30.000Z',
+        max_absolute_ms: 60 * 60 * 1000,
+      },
+      expected: { allowed: false, reason: 'session_absolute_expired', type: 'auth_required' },
+      nowMs: Date.parse('2020-01-01T02:00:00.000Z'),
     },
   ];
 
@@ -274,6 +287,44 @@ test('single-session policy revokes only competing sessions from the same user a
   }), []);
 });
 
+test('session timeout configuration prefers company, falls back to group and validates durations', () => {
+  const company = resolveLocalSessionTimeoutConfig({
+    groupId: 'g1',
+    empresaId: 'e1',
+    securityConfigs: [
+      { id: 'group', group_id: 'g1', empresa_id: null, timeout_inatividade_minutos: 30, timeout_absoluto_horas: 12 },
+      { id: 'company', group_id: 'g1', empresa_id: 'e1', timeout_inatividade_minutos: 15, timeout_absoluto_horas: 8 },
+      { id: 'external', group_id: 'g2', empresa_id: 'e1', timeout_inatividade_minutos: 1, timeout_absoluto_horas: 1 },
+    ],
+  });
+  assert.deepEqual(company, {
+    maxIdleMs: 15 * 60 * 1000,
+    maxAbsoluteMs: 8 * 60 * 60 * 1000,
+    source: 'ConfiguracaoSeguranca:empresa',
+    configId: 'company',
+  });
+
+  const group = resolveLocalSessionTimeoutConfig({
+    groupId: 'g1',
+    empresaId: 'e1',
+    securityConfigs: [
+      { id: 'group', group_id: 'g1', empresa_id: null, timeout_inatividade_minutos: 30, timeout_absoluto_horas: 12 },
+    ],
+  });
+  assert.equal(group.source, 'ConfiguracaoSeguranca:grupo');
+  assert.equal(group.maxIdleMs, 30 * 60 * 1000);
+  assert.equal(group.maxAbsoluteMs, 12 * 60 * 60 * 1000);
+
+  const invalid = resolveLocalSessionTimeoutConfig({
+    groupId: 'g1',
+    securityConfigs: [
+      { id: 'invalid', group_id: 'g1', timeout_inatividade_minutos: 0, timeout_absoluto_horas: -1 },
+    ],
+  });
+  assert.equal(invalid.maxIdleMs, 60 * 60 * 1000);
+  assert.equal(invalid.maxAbsoluteMs, 24 * 60 * 60 * 1000);
+});
+
 test('denied authentication audit keeps controlled reason and scope without raw error data', () => {
   const error = createAuthDeniedError({ reason: 'session_revoked', type: 'auth_required' });
   error.stack = 'sensitive stack';
@@ -344,7 +395,8 @@ test('local auth stack binds session and refuses api-key browser bypass', async 
 
   assert.match(policy, /ensureLocalActiveSession/);
   assert.match(policy, /markLocalLoggedOut/);
-  assert.match(policy, /evaluateLocalUserSession\(user, session, Date\.now\(\), accessVersion\)/);
+  assert.match(policy, /evaluateLocalUserSession\(user, session, Date\.now\(\), accessVersion, sessionTimeout\)/);
+  assert.match(policy, /max_absolute_ms: sessionTimeout\.maxAbsoluteMs/);
   assert.match(policy, /access_version: accessVersion/);
   assert.match(policy, /revokeLocalSessionRecord\(db, session, 'Alteracao de acesso'\)/);
   assert.match(policy, /enforceLocalSingleSession/);

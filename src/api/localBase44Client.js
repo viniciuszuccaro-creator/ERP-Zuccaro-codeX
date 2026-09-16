@@ -6,7 +6,7 @@ import {
   validateMultiempresaContext,
 } from "@/components/lib/contextoMultiempresaPolicy";
 import { sanitizeAuditPayload, sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
-import { buildLocalAccessVersion, buildLocalAuthDeniedAuditRecord, buildLocalSingleSessionRevocations, createAuthDeniedError, evaluateLocalUserSession, markLocalLoggedOut, prepareLocalReauthentication, readLocalAuthState, resolveLocalSingleSessionConfig, writeLocalAuthState, LOCAL_SESSION_ID_KEY } from "@/api/localAuthSessionPolicy";
+import { buildLocalAccessVersion, buildLocalAuthDeniedAuditRecord, buildLocalSingleSessionRevocations, createAuthDeniedError, evaluateLocalUserSession, markLocalLoggedOut, prepareLocalReauthentication, readLocalAuthState, resolveLocalSessionTimeoutConfig, resolveLocalSingleSessionConfig, writeLocalAuthState, LOCAL_SESSION_ID_KEY } from "@/api/localAuthSessionPolicy";
 import { createLocalStorageAdapter } from "@/api/localStorageAdapter";
 import { createLocalEntityProxy, createLocalEntityReadApi, runLocalEntityReadFunction } from "@/api/localEntityReadApi";
 import { runLocalEntityCreatePipeline } from "@/api/localEntityCreatePipeline";
@@ -759,6 +759,13 @@ const ensureLocalActiveSession = async (user) => {
     ? getEntityStore(db, 'PerfilAcesso').find((item) => String(item.id) === String(currentUser.perfil_acesso_id))
     : null;
   const accessVersion = buildLocalAccessVersion(currentUser, currentProfile);
+  const groupId = user.grupo_atual_id || user.grupo_padrao_id || null;
+  const empresaId = user.empresa_atual_id || user.empresa_padrao_id || null;
+  const sessionTimeout = resolveLocalSessionTimeoutConfig({
+    securityConfigs: getEntityStore(db, 'ConfiguracaoSeguranca'),
+    groupId,
+    empresaId,
+  });
 
   if (!accessVersion) {
     revokeLocalSessionRecord(db, session, 'Alteracao de acesso');
@@ -766,10 +773,16 @@ const ensureLocalActiveSession = async (user) => {
   }
 
   if (session) {
-    const evaluation = evaluateLocalUserSession(user, session, Date.now(), accessVersion);
+    const evaluation = evaluateLocalUserSession(user, session, Date.now(), accessVersion, sessionTimeout);
     if (!evaluation.allowed) {
       if (evaluation.reason === 'session_access_version_missing' || evaluation.reason === 'session_access_changed') {
         revokeLocalSessionRecord(db, session, 'Alteracao de acesso');
+      }
+      if (evaluation.reason === 'session_expired') {
+        revokeLocalSessionRecord(db, session, 'Expiracao por inatividade');
+      }
+      if (evaluation.reason === 'session_absolute_expired') {
+        revokeLocalSessionRecord(db, session, 'Expiracao absoluta');
       }
       throw createAuthDeniedError(evaluation);
     }
@@ -780,13 +793,17 @@ const ensureLocalActiveSession = async (user) => {
     const singleSession = enforceLocalSingleSession(db, {
       user,
       currentSessionId: session.id,
-      groupId: user.grupo_atual_id || user.grupo_padrao_id || null,
-      empresaId: user.empresa_atual_id || user.empresa_padrao_id || null,
+      groupId,
+      empresaId,
       timestamp,
     });
     session = {
       ...sessions[index],
       data_hora_ultimo_acesso: timestamp,
+      data_hora_inicio: sessions[index].data_hora_inicio || timestamp,
+      max_idle_ms: sessionTimeout.maxIdleMs,
+      max_absolute_ms: sessionTimeout.maxAbsoluteMs,
+      timeout_config_source: sessionTimeout.source,
       ativa: true,
       status: 'Ativa',
       updated_date: timestamp,
@@ -798,8 +815,6 @@ const ensureLocalActiveSession = async (user) => {
     return session;
   }
 
-  const groupId = user.grupo_atual_id || user.grupo_padrao_id || null;
-  const empresaId = user.empresa_atual_id || user.empresa_padrao_id || null;
   const empresa = empresaId
     ? getEntityStore(db, 'Empresa').find((item) => String(item.id) === String(empresaId))
     : null;
@@ -823,7 +838,9 @@ const ensureLocalActiveSession = async (user) => {
     status: 'Ativa',
     data_hora_inicio: timestamp,
     data_hora_ultimo_acesso: timestamp,
-    max_idle_ms: 8 * 60 * 60 * 1000,
+    max_idle_ms: sessionTimeout.maxIdleMs,
+    max_absolute_ms: sessionTimeout.maxAbsoluteMs,
+    timeout_config_source: sessionTimeout.source,
     group_id: groupId,
     empresa_id: empresaId,
     dispositivo: 'local',

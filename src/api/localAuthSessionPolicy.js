@@ -8,6 +8,7 @@ const AUTH_DENIAL_REASONS = new Set([
   'missing_company',
   'session_revoked',
   'session_expired',
+  'session_absolute_expired',
   'session_owner_mismatch',
   'session_access_version_missing',
   'session_access_changed',
@@ -127,6 +128,40 @@ export const resolveLocalSingleSessionConfig = ({
     enabled: toEnabledFlag(selected.record[selected.field]),
     source: selected.source,
     configId: selected.record.id || null,
+  };
+};
+
+const toDurationMs = (value, multiplier, fallback) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0 || parsed > Number.MAX_SAFE_INTEGER / multiplier) return fallback;
+  return parsed * multiplier;
+};
+
+export const resolveLocalSessionTimeoutConfig = ({
+  securityConfigs = [],
+  groupId = null,
+  empresaId = null,
+} = {}) => {
+  const defaultConfig = {
+    maxIdleMs: 60 * 60 * 1000,
+    maxAbsoluteMs: 24 * 60 * 60 * 1000,
+    source: 'default',
+    configId: null,
+  };
+  if (!groupId) return defaultConfig;
+  const sameGroup = (item) => String(item?.group_id || item?.grupo_id || '') === String(groupId);
+  const security = (Array.isArray(securityConfigs) ? securityConfigs : []).filter(sameGroup);
+  const companyConfig = empresaId
+    ? latestConfig(security.filter((item) => String(item?.empresa_id || '') === String(empresaId)))
+    : null;
+  const groupConfig = latestConfig(security.filter((item) => !item?.empresa_id));
+  const selected = companyConfig || groupConfig;
+  if (!selected) return defaultConfig;
+  return {
+    maxIdleMs: toDurationMs(selected.timeout_inatividade_minutos, 60 * 1000, defaultConfig.maxIdleMs),
+    maxAbsoluteMs: toDurationMs(selected.timeout_absoluto_horas, 60 * 60 * 1000, defaultConfig.maxAbsoluteMs),
+    source: companyConfig ? 'ConfiguracaoSeguranca:empresa' : 'ConfiguracaoSeguranca:grupo',
+    configId: selected.id || null,
   };
 };
 
@@ -328,7 +363,20 @@ export const prepareLocalReauthentication = (storage = globalThis?.localStorage)
   writeLocalAuthState({ logged_in: true, sessao_id: null }, storage)
 );
 
-export const evaluateLocalUserSession = (user, session = null, nowMs = Date.now(), currentAccessVersion = null) => {
+/**
+ * @param {Record<string, any> | null | undefined} user
+ * @param {Record<string, any> | null} session
+ * @param {number} nowMs
+ * @param {string | null} currentAccessVersion
+ * @param {{ maxIdleMs?: number, maxAbsoluteMs?: number } | null} sessionLimits
+ */
+export const evaluateLocalUserSession = (
+  user,
+  session = null,
+  nowMs = Date.now(),
+  currentAccessVersion = null,
+  sessionLimits = null,
+) => {
   if (!user || !user.id) {
     return { allowed: false, reason: 'unauthenticated', type: 'auth_required' };
   }
@@ -371,8 +419,14 @@ export const evaluateLocalUserSession = (user, session = null, nowMs = Date.now(
       }
     }
 
+    const startedAt = new Date(session.data_hora_inicio || 0).getTime();
+    const maxAbsoluteMs = Number(sessionLimits?.maxAbsoluteMs || session.max_absolute_ms || 24 * 60 * 60 * 1000);
+    if (Number.isFinite(startedAt) && startedAt > 0 && nowMs - startedAt > maxAbsoluteMs) {
+      return { allowed: false, reason: 'session_absolute_expired', type: 'auth_required' };
+    }
+
     const lastAccess = new Date(session.data_hora_ultimo_acesso || session.data_hora_inicio || 0).getTime();
-    const maxIdleMs = Number(session.max_idle_ms || 8 * 60 * 60 * 1000);
+    const maxIdleMs = Number(sessionLimits?.maxIdleMs || session.max_idle_ms || 60 * 60 * 1000);
     if (Number.isFinite(lastAccess) && lastAccess > 0 && nowMs - lastAccess > maxIdleMs) {
       return { allowed: false, reason: 'session_expired', type: 'auth_required' };
     }

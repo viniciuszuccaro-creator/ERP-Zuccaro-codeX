@@ -1290,3 +1290,17 @@ Lote concluido em 2026-09-16 no fluxo e nas configuracoes existentes, sem criar 
 
 Proxima frente P0: substituir o limite local fixo pela configuracao existente de timeout por inatividade e duracao absoluta da sessao, mantendo precedencia Empresa/Grupo e auditoria fail-closed.
 
+### Seguranca P0 - Timeouts configuraveis de sessao
+
+Lote concluido em 2026-09-16 no fluxo local existente, sem criar tela, entidade ou configuracao paralela.
+
+- `timeout_inatividade_minutos` e `timeout_absoluto_horas` agora governam sessoes novas e ja abertas.
+- Configuracao da Empresa prevalece sobre a do Grupo; ausencia ou valor invalido usa os padroes existentes de 60 minutos e 24 horas.
+- Expiracao absoluta encerra a sessao mesmo com atividade recente; expiracao por inatividade continua independente.
+- Sessao vencida e revogada antes da negativa, com motivo controlado e auditoria no `AuditLog` existente.
+- Os limites efetivos e a origem da configuracao ficam na `SessaoUsuario`, sem token, segredo ou dado sensivel.
+- Testes focados passaram 28/28 e a suite completa passou 562/562; auditoria baseline, lint, build e verificacao de diff passaram.
+- Os arquivos do lote possuem zero diagnosticos de TypeScript; o passivo global permaneceu em 1.603.
+
+Proxima frente P0: manter os dois bloqueios remotos do Gate 1 explicitamente abertos e iniciar o Gate 2 pela matriz RBAC da Administracao, validando pagina, aba, botao e acao backend sem criar estrutura paralela.
+
