@@ -77,52 +77,86 @@ export function createHttpApiClient(options = {}) {
     return payload?.data !== undefined ? payload.data : payload;
   }
 
-  function createMarcaEntity() {
+  /**
+   * @param {string} basePath
+   * @param {{ searchKeys?: string[], ativoKeys?: string[] }} [opts]
+   */
+  function createCrudEntity(basePath, opts = {}) {
+    const searchKeys = opts.searchKeys || ['search', 'nome', 'descricao'];
+    const ativoKeys = opts.ativoKeys || ['ativo', 'ativa'];
     return {
       async list(orderBy, limit = 100) {
         void orderBy;
-        return request('/api/v1/marcas', { query: { limit } });
+        return request(basePath, { query: { limit } });
       },
       async filter(query = {}, orderBy, limit = 100) {
         void orderBy;
-        return request('/api/v1/marcas', {
-          query: {
-            limit,
-            search: query.nome_marca || query.search,
-            ativo: query.ativa ?? query.ativo,
-          },
+        let search;
+        for (const key of searchKeys) {
+          if (query[key] != null && query[key] !== '') {
+            search = query[key];
+            break;
+          }
+        }
+        let ativo;
+        for (const key of ativoKeys) {
+          if (query[key] != null && query[key] !== '') {
+            ativo = query[key];
+            break;
+          }
+        }
+        return request(basePath, {
+          query: { limit, search, ativo },
         });
       },
       async get(id) {
-        return request(`/api/v1/marcas/${encodeURIComponent(id)}`);
+        return request(`${basePath}/${encodeURIComponent(id)}`);
       },
       async create(data) {
-        return request('/api/v1/marcas', { method: 'POST', body: data });
+        return request(basePath, { method: 'POST', body: data });
       },
       async update(id, data) {
-        return request(`/api/v1/marcas/${encodeURIComponent(id)}`, {
+        return request(`${basePath}/${encodeURIComponent(id)}`, {
           method: 'PATCH',
           body: data,
         });
       },
       async delete(id) {
-        return request(`/api/v1/marcas/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        return request(`${basePath}/${encodeURIComponent(id)}`, { method: 'DELETE' });
       },
     };
   }
 
-  const entities = {
-    Marca: createMarcaEntity(),
+  const entityRoutes = {
+    Marca: createCrudEntity('/api/v1/marcas', {
+      searchKeys: ['nome_marca', 'search', 'nome'],
+      ativoKeys: ['ativa', 'ativo'],
+    }),
+    UnidadeMedida: createCrudEntity('/api/v1/unidades-medida', {
+      searchKeys: ['sigla', 'nome_completo', 'search'],
+    }),
+    GrupoProduto: createCrudEntity('/api/v1/grupos-produto', {
+      searchKeys: ['nome_grupo', 'codigo', 'search'],
+    }),
+    SetorAtividade: createCrudEntity('/api/v1/setores-atividade', {
+      searchKeys: ['nome', 'search'],
+    }),
+    // API pronta; NAO habilitada em HTTP_PILOT_ENTITIES (estoque/custo ainda no local).
+    Produto: createCrudEntity('/api/v1/produtos', {
+      searchKeys: ['descricao', 'codigo', 'nome', 'search'],
+    }),
   };
 
+  /** @type {Record<string, ReturnType<typeof createCrudEntity>>} */
+  const entities = {};
   for (const name of HTTP_PILOT_ENTITIES) {
-    if (!entities[name]) {
-      entities[name] = createMarcaEntity();
-    }
+    entities[name] = entityRoutes[name] || entityRoutes.Marca;
   }
 
   return {
     entities,
+    /** Acesso direto a rotas preparadas (ex.: Produto base) sem feature flag. */
+    preparedEntities: entityRoutes,
     async health() {
       return request('/health');
     },

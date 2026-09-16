@@ -5,11 +5,24 @@ import type { DbClient } from '../db/client.js';
 import { getAuthFoundation } from '../auth/foundation.js';
 import { requireTenantScope } from '../middleware/requestContext.js';
 import type { MarcaService } from '../services/marcaService.js';
+import type { TenantCrudService } from '../services/tenantCrudService.js';
+
+type CrudLike = {
+  list: (ctx: ReturnType<typeof ctxFromReq>, options?: { ativo?: boolean; search?: string; limit?: number }) => Promise<unknown>;
+  get: (ctx: ReturnType<typeof ctxFromReq>, id: string) => Promise<unknown>;
+  create: (ctx: ReturnType<typeof ctxFromReq>, payload: unknown) => Promise<unknown>;
+  update: (ctx: ReturnType<typeof ctxFromReq>, id: string, payload: unknown) => Promise<unknown>;
+  softDelete: (ctx: ReturnType<typeof ctxFromReq>, id: string) => Promise<unknown>;
+};
 
 export type ApiDeps = {
   config: AppConfig;
   db: DbClient;
   marcaService: MarcaService;
+  unidadeService: TenantCrudService<any, any, any>;
+  grupoProdutoService: TenantCrudService<any, any, any>;
+  setorService: TenantCrudService<any, any, any>;
+  produtoService: TenantCrudService<any, any, any>;
 };
 
 function ctxFromReq(req: Request) {
@@ -21,6 +34,59 @@ function ctxFromReq(req: Request) {
     actorEmail: req.actorEmail,
     ipAddress: req.ip,
   };
+}
+
+function mountCrud(router: Router, basePath: string, service: CrudLike) {
+  router.get(basePath, requireTenantScope, async (req, res, next) => {
+    try {
+      const ativoParam = req.query.ativo;
+      const ativo = ativoParam == null
+        ? undefined
+        : ['1', 'true', 'yes'].includes(String(ativoParam).toLowerCase());
+      const search = req.query.search ? String(req.query.search) : undefined;
+      const limit = req.query.limit ? Number(req.query.limit) : undefined;
+      const rows = await service.list(ctxFromReq(req), { ativo, search, limit });
+      res.json({ data: rows });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get(`${basePath}/:id`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.get(ctxFromReq(req), req.params.id);
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post(basePath, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.create(ctxFromReq(req), req.body);
+      res.status(201).json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.patch(`${basePath}/:id`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.update(ctxFromReq(req), req.params.id, req.body);
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.delete(`${basePath}/:id`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.softDelete(ctxFromReq(req), req.params.id);
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
 }
 
 export function createApiRouter(deps: ApiDeps) {
@@ -57,63 +123,22 @@ export function createApiRouter(deps: ApiDeps) {
 
   router.get('/api/v1/meta', (_req, res) => {
     res.json({
-      runtime: 'ERP-RUNTIME-01',
+      runtime: 'ERP-RUNTIME-02',
       auth: getAuthFoundation(),
       config: publicConfigView(deps.config),
-      pilotEntity: 'Marca',
+      httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade'],
+      preparedEntities: ['Produto'],
+      httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto'],
+      rlsModel: 'ENABLE+FORCE fail-closed; BFF uses privileged DB role; JWT policies planned with Auth',
+      note: 'Produto API is base-cadastro only; not in frontend HTTP_PILOT_ENTITIES until operational fields are scoped',
     });
   });
 
-  router.get('/api/v1/marcas', requireTenantScope, async (req, res, next) => {
-    try {
-      const ativoParam = req.query.ativo;
-      const ativo = ativoParam == null
-        ? undefined
-        : ['1', 'true', 'yes'].includes(String(ativoParam).toLowerCase());
-      const search = req.query.search ? String(req.query.search) : undefined;
-      const limit = req.query.limit ? Number(req.query.limit) : undefined;
-      const rows = await deps.marcaService.list(ctxFromReq(req), { ativo, search, limit });
-      res.json({ data: rows });
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  router.get('/api/v1/marcas/:id', requireTenantScope, async (req, res, next) => {
-    try {
-      const row = await deps.marcaService.get(ctxFromReq(req), req.params.id);
-      res.json({ data: row });
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  router.post('/api/v1/marcas', requireTenantScope, async (req, res, next) => {
-    try {
-      const row = await deps.marcaService.create(ctxFromReq(req), req.body);
-      res.status(201).json({ data: row });
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  router.patch('/api/v1/marcas/:id', requireTenantScope, async (req, res, next) => {
-    try {
-      const row = await deps.marcaService.update(ctxFromReq(req), req.params.id, req.body);
-      res.json({ data: row });
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  router.delete('/api/v1/marcas/:id', requireTenantScope, async (req, res, next) => {
-    try {
-      const row = await deps.marcaService.softDelete(ctxFromReq(req), req.params.id);
-      res.json({ data: row });
-    } catch (error) {
-      next(error);
-    }
-  });
+  mountCrud(router, '/api/v1/marcas', deps.marcaService);
+  mountCrud(router, '/api/v1/unidades-medida', deps.unidadeService);
+  mountCrud(router, '/api/v1/grupos-produto', deps.grupoProdutoService);
+  mountCrud(router, '/api/v1/setores-atividade', deps.setorService);
+  mountCrud(router, '/api/v1/produtos', deps.produtoService);
 
   return router;
 }

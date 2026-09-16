@@ -5,6 +5,7 @@ import { InMemoryAuditRepository } from '../src/audit/auditRepository.ts';
 import { loadConfig, publicConfigView } from '../src/config/env.ts';
 import { createApp } from '../src/app.ts';
 import { createDbClient } from '../src/db/client.ts';
+import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 import { listMigrationFiles } from '../src/db/migrate.ts';
 import { InMemoryMarcaRepository } from '../src/repositories/inMemoryMarcaRepository.ts';
 import { MarcaService } from '../src/services/marcaService.ts';
@@ -12,6 +13,7 @@ import { MarcaService } from '../src/services/marcaService.ts';
 const GROUP_A = '11111111-1111-4111-8111-111111111111';
 const GROUP_B = '22222222-2222-4222-8222-222222222222';
 const EMPRESA_A = '33333333-3333-4333-8333-333333333333';
+const EMPRESA_B = '44444444-4444-4444-8444-444444444444';
 
 function testConfig(overrides: Record<string, string> = {}) {
   return loadConfig({
@@ -22,6 +24,13 @@ function testConfig(overrides: Record<string, string> = {}) {
     REQUIRE_DATABASE: 'false',
     ...overrides,
   });
+}
+
+function linkedGuard() {
+  const guard = new InMemoryTenantGuard();
+  guard.link(EMPRESA_A, GROUP_A);
+  guard.link(EMPRESA_B, GROUP_B);
+  return guard;
 }
 
 test('config load and public view never expose secrets', () => {
@@ -38,19 +47,22 @@ test('config load and public view never expose secrets', () => {
   assert.doesNotMatch(serialized, /postgresql:\/\//);
 });
 
-test('migrations are ordered and foundation files exist', () => {
+test('migrations are ordered and foundation + runtime-02 files exist', () => {
   const files = listMigrationFiles();
   assert.deepEqual(files, [
     '001_foundation.sql',
     '002_rls_foundation.sql',
     '003_marcas_pilot.sql',
+    '004_tenant_integrity.sql',
+    '005_cadastros_simples.sql',
+    '006_produtos_base.sql',
   ]);
 });
 
 test('marca service validates payload and audits create/update/soft-delete', async () => {
   const repo = new InMemoryMarcaRepository();
   const audit = new InMemoryAuditRepository();
-  const service = new MarcaService(repo, audit);
+  const service = new MarcaService(repo, audit, linkedGuard());
   const ctx = {
     requestId: 'req-1',
     groupId: GROUP_A,
@@ -84,7 +96,7 @@ test('marca service validates payload and audits create/update/soft-delete', asy
 test('multiempresa scope isolates groups', async () => {
   const repo = new InMemoryMarcaRepository();
   const audit = new InMemoryAuditRepository();
-  const service = new MarcaService(repo, audit);
+  const service = new MarcaService(repo, audit, linkedGuard());
 
   const a = await service.create({
     requestId: 'r-a',
@@ -109,7 +121,7 @@ test('multiempresa scope isolates groups', async () => {
 test('GET /health and /ready with memory harness', async () => {
   const config = testConfig();
   const db = createDbClient(config);
-  const { app } = createApp({ config, db, useMemory: true });
+  const { app } = createApp({ config, db, useMemory: true, tenantGuard: linkedGuard() });
 
   const healthRes = await fetchOk(app, '/health');
   assert.equal(healthRes.status, 'ok');
@@ -125,7 +137,7 @@ test('GET /health and /ready with memory harness', async () => {
 test('API piloto Marca end-to-end via harness', async () => {
   const config = testConfig();
   const db = createDbClient(config);
-  const { app, auditRepo } = createApp({ config, db, useMemory: true });
+  const { app, auditRepo } = createApp({ config, db, useMemory: true, tenantGuard: linkedGuard() });
 
   const createRes = await fetchStatus(app, '/api/v1/marcas', {
     method: 'POST',
@@ -177,7 +189,7 @@ test('API piloto Marca end-to-end via harness', async () => {
 test('API rejects missing group scope', async () => {
   const config = testConfig();
   const db = createDbClient(config);
-  const { app } = createApp({ config, db, useMemory: true });
+  const { app } = createApp({ config, db, useMemory: true, tenantGuard: linkedGuard() });
   const res = await fetchStatus(app, '/api/v1/marcas');
   assert.equal(res.statusCode, 400);
   assert.equal(res.body.error.code, 'GROUP_ID_REQUIRED');
@@ -186,7 +198,7 @@ test('API rejects missing group scope', async () => {
 test('API rejects invalid payload', async () => {
   const config = testConfig();
   const db = createDbClient(config);
-  const { app } = createApp({ config, db, useMemory: true });
+  const { app } = createApp({ config, db, useMemory: true, tenantGuard: linkedGuard() });
   const res = await fetchStatus(app, '/api/v1/marcas', {
     method: 'POST',
     headers: {

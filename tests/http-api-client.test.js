@@ -45,8 +45,14 @@ test('HttpApiClient supports relative same-origin URLs', async () => {
   assert.equal(urls[0].startsWith('/api/v1/marcas'), true);
 });
 
-test('HTTP_PILOT_ENTITIES includes Marca only', () => {
-  assert.deepEqual([...HTTP_PILOT_ENTITIES], ['Marca']);
+test('HTTP_PILOT_ENTITIES includes RUNTIME-02 cadastros sem Produto', () => {
+  assert.deepEqual([...HTTP_PILOT_ENTITIES], [
+    'Marca',
+    'UnidadeMedida',
+    'GrupoProduto',
+    'SetorAtividade',
+  ]);
+  assert.equal(HTTP_PILOT_ENTITIES.includes('Produto'), false);
 });
 
 test('HttpApiClient maps Marca CRUD to BFF routes', async () => {
@@ -84,4 +90,46 @@ test('HttpApiClient maps Marca CRUD to BFF routes', async () => {
 
   const listed = await client.entities.Marca.list('-created_date', 10);
   assert.equal(listed.length, 1);
+});
+
+test('HttpApiClient maps UnidadeMedida/GrupoProduto/SetorAtividade routes', async () => {
+  /** @type {string[]} */
+  const urls = [];
+  const fetchImpl = async (url) => {
+    urls.push(String(url));
+    return new Response(JSON.stringify({ data: [] }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+  const client = createHttpApiClient({
+    baseUrl: 'http://localhost:3080',
+    fetchImpl,
+    getScope: () => ({ groupId: '11111111-1111-4111-8111-111111111111' }),
+  });
+
+  await client.entities.UnidadeMedida.list();
+  await client.entities.GrupoProduto.filter({ nome_grupo: 'Aco' });
+  await client.entities.SetorAtividade.get('s1');
+
+  assert.match(urls[0], /\/api\/v1\/unidades-medida/);
+  assert.match(urls[1], /\/api\/v1\/grupos-produto/);
+  assert.match(urls[1], /search=Aco/);
+  assert.match(urls[2], /\/api\/v1\/setores-atividade\/s1/);
+});
+
+test('Produto route exists in preparedEntities but not in pilot entities', async () => {
+  /** @type {string[]} */
+  const urls = [];
+  const fetchImpl = async (url) => {
+    urls.push(String(url));
+    return new Response(JSON.stringify({ data: { id: 'p1' } }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+  const client = createHttpApiClient({ baseUrl: 'http://localhost:3080', fetchImpl });
+  assert.equal(client.entities.Produto, undefined);
+  await client.preparedEntities.Produto.get('p1');
+  assert.match(urls[0], /\/api\/v1\/produtos\/p1/);
 });

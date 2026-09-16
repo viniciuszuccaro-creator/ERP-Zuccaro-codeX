@@ -51,5 +51,13 @@ export function resolveErpApiBaseUrl(env = import.meta.env) {
 /**
  * Entidades piloto roteadas ao BFF quando mode=http.
  * Demais entidades permanecem no fallback local durante a migracao incremental.
+ *
+ * Produto: API/schema base prontos no BFF, mas NAO entram no piloto HTTP ainda
+ * (campos operacionais de estoque/custo/fiscal ainda no localBase44).
  */
-export const HTTP_PILOT_ENTITIES = Object.freeze(['Marca']);
+export const HTTP_PILOT_ENTITIES = Object.freeze([
+  'Marca',
+  'UnidadeMedida',
+  'GrupoProduto',
+  'SetorAtividade',
+]);

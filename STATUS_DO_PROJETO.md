@@ -1,3 +1,20 @@
+### ERP-RUNTIME-02 / Migracao controlada da camada de Cadastros
+
+- Objetivo: expandir o padrao Marca (R01) para cadastros base sem migrar o ERP inteiro e sem deploy VPS.
+- Branch: `cursor/erp-runtime-02-392b` (base main `c943ba09`).
+- Inventario real: `UnidadeMedida`, `GrupoProduto`, `SetorAtividade`, `Produto`, `TabelaPreco`, `Fornecedor`; Categoria/Fabricante/Subgrupo **nao existem**.
+- Implementado: UnidadeMedida, GrupoProduto, SetorAtividade (CRUD HTTP+Postgres+audit+tenant); Produto cadastro-base (schema/API/repo; fora do piloto HTTP frontend).
+- Adiado: TabelaPreco (regras/historico), Fornecedor (Compras/Financeiro), Produto operacional (estoque/custo/fiscal).
+- Migrations novas: `004_tenant_integrity`, `005_cadastros_simples`, `006_produtos_base` (001-003 imutaveis).
+- Integridade: trigger `assert_empresa_belongs_to_group` + `TenantGuard` (409 TENANT_MISMATCH).
+- RLS: ENABLE+FORCE fail-closed nas tabelas novas; BFF role privilegiada; JWT policies com Auth futuro.
+- HttpApiClient: `HTTP_PILOT_ENTITIES` = Marca, UnidadeMedida, GrupoProduto, SetorAtividade; fallback localBase44 preservado.
+- Docs: `docs/ERP_RUNTIME_02.md`, `docs/ERP_RUNTIME_02_CADASTROS_MATRIX.md`, `docs/ERP_RUNTIME_02_DEV_RUNBOOK.md`.
+- Seed sintetico A/B atualizado; sem dados reais CPA.
+- Proibicoes: sem SSH/VPS migrate, sem merge main, sem RUNTIME-03, sem remover Base44.
+- Decisao: registrar apos validacoes (`ERP_RUNTIME_02_READY_FOR_REVIEW` ou `BLOCKED`).
+- Proximo (humano, apos review/merge): backup + migrate 004-006 no VPS via runbook; sem DNS/HTTPS neste passo.
+
 ### ERP-DEV-DEPLOY-01 / Incorporacao segura na main
 
 - Objetivo: incorporar `cursor/erp-dev-deploy-01-392b` em `main` para desbloquear o deploy manual Hostinger.

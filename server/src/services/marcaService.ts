@@ -1,6 +1,7 @@
 import type { AuditRepository } from '../audit/types.js';
 import { AppError } from '../api/errors.js';
 import type { RequestContext } from '../audit/types.js';
+import type { TenantGuard } from '../db/tenantGuard.js';
 import {
   marcaCreateSchema,
   marcaUpdateSchema,
@@ -12,6 +13,7 @@ export class MarcaService {
   constructor(
     private readonly repo: MarcaRepository,
     private readonly audit: AuditRepository,
+    private readonly tenantGuard: TenantGuard,
   ) {}
 
   async list(ctx: RequestContext, options: { ativo?: boolean; search?: string; limit?: number } = {}) {
@@ -38,6 +40,8 @@ export class MarcaService {
     if (!parsed.success) {
       throw new AppError(400, 'VALIDATION_ERROR', 'Invalid marca payload', parsed.error.flatten());
     }
+    const empresaId = parsed.data.empresa_id ?? ctx.empresaId ?? null;
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
     const created = await this.repo.create(
       { groupId: ctx.groupId, empresaId: ctx.empresaId },
       parsed.data,
@@ -65,6 +69,8 @@ export class MarcaService {
     }
     const before = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id);
     if (!before) throw new AppError(404, 'MARCA_NOT_FOUND', 'Marca not found in tenant scope');
+    const empresaId = parsed.data.empresa_id === undefined ? before.empresa_id : parsed.data.empresa_id;
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
 
     const updated = await this.repo.update(
       { groupId: ctx.groupId, empresaId: ctx.empresaId },
