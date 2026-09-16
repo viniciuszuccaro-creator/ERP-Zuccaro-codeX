@@ -8862,5 +8862,5 @@ Checklist inicial:
 - Testes: 24/24 testes focados e 558/558 na suite completa passaram. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve somente os avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
 - Typecheck: zero diagnosticos nos arquivos do lote; o passivo global permaneceu em 1.603, sem regressao ou mascaramento.
 - Compatibilidade: a primeira abertura com uma sessao anterior ao lote solicitara nova autenticacao uma unica vez para emitir a sessao versionada.
-- Commit: sera registrado imediatamente apos a gravacao deste lote.
+- Commit de implementacao: `d2bf9161` (`Revoga sessao apos mudanca de acesso`).
 - Proximo passo P0: aplicar a configuracao existente `seg_sessao_unica` ao login local, revogando sessoes simultaneas do mesmo usuario com auditoria e preservacao de Grupo/Empresa.
