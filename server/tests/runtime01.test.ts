@@ -91,6 +91,11 @@ test('marca service validates payload and audits create/update/soft-delete', asy
   assert.deepEqual(logs.map((l) => l.action), ['create', 'update', 'soft_delete']);
   assert.ok(logs.every((l) => l.requestId === 'req-1'));
   assert.ok(logs.every((l) => l.groupId === GROUP_A));
+  const updateLog = logs.find((l) => l.action === 'update');
+  assert.equal((updateLog?.beforeData as { nome_marca: string }).nome_marca, 'Gerdau Teste');
+  assert.equal((updateLog?.beforeData as { pais_origem: string }).pais_origem, 'Brasil');
+  assert.equal((updateLog?.afterData as { descricao: string }).descricao, 'Aco');
+  assert.equal((updateLog?.afterData as { pais_origem: string }).pais_origem, 'Brasil');
 });
 
 test('multiempresa scope isolates groups', async () => {

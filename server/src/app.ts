@@ -59,12 +59,12 @@ export function createApp(options: CreateAppOptions) {
   const produtoRepo = useMemory ? createInMemoryProdutoRepo() : new PostgresProdutoRepository(db);
 
   const marcaService = new MarcaService(marcaRepo, auditRepo, tenantGuard);
+  // Snapshot de auditoria: default sanitizeAuditSnapshot (completo, sem pick parcial).
   const unidadeService = new TenantCrudService(unidadeRepo, auditRepo, tenantGuard, {
     entityName: 'UnidadeMedida',
     notFoundCode: 'UNIDADE_NOT_FOUND',
     createSchema: unidadeCreateSchema,
     updateSchema: unidadeUpdateSchema,
-    sanitize: (row) => ({ id: row.id, group_id: row.group_id, empresa_id: row.empresa_id, sigla: row.sigla, ativo: row.ativo, updated_at: row.updated_at }),
     getEmpresaId: (row) => row.empresa_id,
     resolveEmpresaIdFromCreate: (data, scope) => data.empresa_id ?? scope.empresaId,
     resolveEmpresaIdFromUpdate: (data, current) => (data.empresa_id === undefined ? current.empresa_id : data.empresa_id),
@@ -74,7 +74,6 @@ export function createApp(options: CreateAppOptions) {
     notFoundCode: 'GRUPO_PRODUTO_NOT_FOUND',
     createSchema: grupoProdutoCreateSchema,
     updateSchema: grupoProdutoUpdateSchema,
-    sanitize: (row) => ({ id: row.id, group_id: row.group_id, empresa_id: row.empresa_id, nome_grupo: row.nome_grupo, ativo: row.ativo, updated_at: row.updated_at }),
     getEmpresaId: (row) => row.empresa_id,
     resolveEmpresaIdFromCreate: (data, scope) => data.empresa_id ?? scope.empresaId,
     resolveEmpresaIdFromUpdate: (data, current) => (data.empresa_id === undefined ? current.empresa_id : data.empresa_id),
@@ -84,7 +83,6 @@ export function createApp(options: CreateAppOptions) {
     notFoundCode: 'SETOR_NOT_FOUND',
     createSchema: setorCreateSchema,
     updateSchema: setorUpdateSchema,
-    sanitize: (row) => ({ id: row.id, group_id: row.group_id, empresa_id: row.empresa_id, nome: row.nome, ativo: row.ativo, updated_at: row.updated_at }),
     getEmpresaId: (row) => row.empresa_id,
     resolveEmpresaIdFromCreate: (data, scope) => data.empresa_id ?? scope.empresaId,
     resolveEmpresaIdFromUpdate: (data, current) => (data.empresa_id === undefined ? current.empresa_id : data.empresa_id),
@@ -94,7 +92,6 @@ export function createApp(options: CreateAppOptions) {
     notFoundCode: 'PRODUTO_NOT_FOUND',
     createSchema: produtoCreateSchema,
     updateSchema: produtoUpdateSchema,
-    sanitize: (row) => ({ id: row.id, group_id: row.group_id, empresa_id: row.empresa_id, descricao: row.descricao, codigo: row.codigo, ativo: row.ativo, updated_at: row.updated_at }),
     getEmpresaId: (row) => row.empresa_id,
     resolveEmpresaIdFromCreate: (data, scope) => data.empresa_id ?? scope.empresaId,
     resolveEmpresaIdFromUpdate: (data, current) => (data.empresa_id === undefined ? current.empresa_id : data.empresa_id),

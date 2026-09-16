@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { AuditRepository, RequestContext } from '../audit/types.js';
+import { sanitizeAuditSnapshot } from '../audit/sanitizeAuditSnapshot.js';
 import { AppError } from '../api/errors.js';
 import type { TenantGuard } from '../db/tenantGuard.js';
 
@@ -24,7 +25,11 @@ type FactoryOptions<TRow, TCreate, TUpdate> = {
   notFoundCode: string;
   createSchema: z.ZodType<TCreate>;
   updateSchema: z.ZodType<TUpdate>;
-  sanitize: (row: TRow) => unknown;
+  /**
+   * Opcional. Default: snapshot completo via sanitizeAuditSnapshot
+   * (todos os campos do row, menos secrets).
+   */
+  sanitize?: (row: TRow) => unknown;
   getEmpresaId: (row: TRow) => string | null | undefined;
   resolveEmpresaIdFromCreate: (data: TCreate, scope: Scope) => string | null | undefined;
   resolveEmpresaIdFromUpdate: (data: TUpdate, current: TRow) => string | null | undefined;
@@ -37,6 +42,13 @@ export class TenantCrudService<TRow, TCreate, TUpdate> {
     private readonly tenantGuard: TenantGuard,
     private readonly opts: FactoryOptions<TRow, TCreate, TUpdate>,
   ) {}
+
+  private snapshot(row: TRow): unknown {
+    if (this.opts.sanitize) {
+      return this.opts.sanitize(row);
+    }
+    return sanitizeAuditSnapshot(row);
+  }
 
   async list(ctx: RequestContext, options: ListOptions = {}) {
     this.assertScope(ctx);
@@ -80,7 +92,7 @@ export class TenantCrudService<TRow, TCreate, TUpdate> {
       entity: this.opts.entityName,
       entityId: String((created as { id: string }).id),
       action: 'create',
-      afterData: this.opts.sanitize(created),
+      afterData: this.snapshot(created),
       requestId: ctx.requestId,
       ipAddress: ctx.ipAddress,
     });
@@ -118,8 +130,8 @@ export class TenantCrudService<TRow, TCreate, TUpdate> {
       entity: this.opts.entityName,
       entityId: id,
       action: 'update',
-      beforeData: this.opts.sanitize(before),
-      afterData: this.opts.sanitize(updated),
+      beforeData: this.snapshot(before),
+      afterData: this.snapshot(updated),
       requestId: ctx.requestId,
       ipAddress: ctx.ipAddress,
     });
@@ -145,8 +157,8 @@ export class TenantCrudService<TRow, TCreate, TUpdate> {
       entity: this.opts.entityName,
       entityId: id,
       action: 'soft_delete',
-      beforeData: this.opts.sanitize(before),
-      afterData: this.opts.sanitize(updated),
+      beforeData: this.snapshot(before),
+      afterData: this.snapshot(updated),
       requestId: ctx.requestId,
       ipAddress: ctx.ipAddress,
     });

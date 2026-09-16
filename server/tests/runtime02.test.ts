@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { InMemoryAuditRepository } from '../src/audit/auditRepository.ts';
+import { isSensitiveAuditKey, sanitizeAuditSnapshot } from '../src/audit/sanitizeAuditSnapshot.ts';
 import { loadConfig } from '../src/config/env.ts';
 import { createApp } from '../src/app.ts';
 import { createDbClient } from '../src/db/client.ts';
@@ -45,6 +46,7 @@ function testConfig() {
   });
 }
 
+/** Usa o default sanitizeAuditSnapshot (sem pick parcial — causa raiz do defeito VPS). */
 function makeUnidadeService(audit = new InMemoryAuditRepository(), guard = linkedGuard()) {
   return {
     service: new TenantCrudService(createInMemoryUnidadeRepo(), audit, guard, {
@@ -52,14 +54,6 @@ function makeUnidadeService(audit = new InMemoryAuditRepository(), guard = linke
       notFoundCode: 'UNIDADE_NOT_FOUND',
       createSchema: unidadeCreateSchema,
       updateSchema: unidadeUpdateSchema,
-      sanitize: (row) => ({
-        id: row.id,
-        group_id: row.group_id,
-        empresa_id: row.empresa_id,
-        sigla: row.sigla,
-        nome_completo: row.nome_completo,
-        ativo: row.ativo,
-      }),
       getEmpresaId: (row) => row.empresa_id,
       resolveEmpresaIdFromCreate: (data, scope) => data.empresa_id ?? scope.empresaId,
       resolveEmpresaIdFromUpdate: (data, current) => (data.empresa_id === undefined ? current.empresa_id : data.empresa_id),
@@ -67,6 +61,26 @@ function makeUnidadeService(audit = new InMemoryAuditRepository(), guard = linke
     audit,
   };
 }
+
+test('sanitizeAuditSnapshot keeps business fields and strips secrets', () => {
+  const snap = sanitizeAuditSnapshot({
+    id: '1',
+    nome_completo: 'Caixa',
+    password: 'secret',
+    api_token: 'tok',
+    service_role: 'sr',
+    authorization: 'Bearer x',
+    ativo: true,
+  });
+  assert.equal(snap?.nome_completo, 'Caixa');
+  assert.equal(snap?.ativo, true);
+  assert.equal(snap?.password, undefined);
+  assert.equal(snap?.api_token, undefined);
+  assert.equal(snap?.service_role, undefined);
+  assert.equal(snap?.authorization, undefined);
+  assert.equal(isSensitiveAuditKey('SUPABASE_SERVICE_ROLE_KEY'), true);
+  assert.equal(isSensitiveAuditKey('nome_completo'), false);
+});
 
 test('UnidadeMedida service CRUD + audit before/after + request_id', async () => {
   const { service, audit } = makeUnidadeService();
@@ -105,6 +119,189 @@ test('UnidadeMedida service CRUD + audit before/after + request_id', async () =>
   assert.ok(softLog?.afterData);
   assert.equal((softLog?.beforeData as { ativo: boolean }).ativo, true);
   assert.equal((softLog?.afterData as { ativo: boolean }).ativo, false);
+  assert.equal((softLog?.beforeData as { nome_completo: string }).nome_completo, 'Quilo');
+  assert.equal((softLog?.afterData as { nome_completo: string }).nome_completo, 'Quilo');
+});
+
+/**
+ * Reproduz EXATAMENTE o defeito E2E Hostinger:
+ * CREATE nome_completo=Caixa Teste API → UPDATE Caixa Teste API Alterada
+ * via createApp (mesmo sanitize incompleto que existia em produção).
+ */
+test('AUDIT FIX: UnidadeMedida UPDATE snapshot includes nome_completo (VPS defect)', async () => {
+  const config = testConfig();
+  const db = createDbClient(config);
+  const { app, auditRepo } = createApp({
+    config,
+    db,
+    useMemory: true,
+    tenantGuard: linkedGuard(),
+  });
+
+  const createRes = await fetchStatus(app, '/api/v1/unidades-medida', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-group-id': GROUP_A,
+      'x-empresa-id': EMPRESA_A,
+      'x-actor-email': 'audit-fix@example.com',
+      'x-request-id': 'audit-fix-create',
+    },
+    body: JSON.stringify({
+      sigla: 'CX',
+      nome_completo: 'Caixa Teste API',
+      tipo_grandeza: 'Unidade',
+    }),
+  });
+  assert.equal(createRes.statusCode, 201);
+  const id = createRes.body.data.id as string;
+
+  const updateRes = await fetchStatus(app, `/api/v1/unidades-medida/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'content-type': 'application/json',
+      'x-group-id': GROUP_A,
+      'x-empresa-id': EMPRESA_A,
+      'x-actor-email': 'audit-fix@example.com',
+      'x-request-id': 'audit-fix-update',
+    },
+    body: JSON.stringify({ nome_completo: 'Caixa Teste API Alterada' }),
+  });
+  assert.equal(updateRes.statusCode, 200);
+  assert.equal(updateRes.body.data.nome_completo, 'Caixa Teste API Alterada');
+
+  assert.ok('entries' in auditRepo);
+  const updateAudit = auditRepo.entries.find(
+    (e) => e.entity === 'UnidadeMedida' && e.entityId === id && e.action === 'update',
+  );
+  assert.ok(updateAudit, 'update audit entry missing');
+  const before = updateAudit.beforeData as Record<string, unknown>;
+  const after = updateAudit.afterData as Record<string, unknown>;
+
+  assert.equal(before.nome_completo, 'Caixa Teste API');
+  assert.equal(after.nome_completo, 'Caixa Teste API Alterada');
+  assert.equal(before.sigla, 'CX');
+  assert.equal(after.sigla, 'CX');
+  assert.equal(before.tipo_grandeza, 'Unidade');
+  assert.equal(after.tipo_grandeza, 'Unidade');
+  assert.equal(before.ativo, true);
+  assert.equal(after.ativo, true);
+  assert.equal(before.group_id, GROUP_A);
+  assert.equal(after.group_id, GROUP_A);
+  assert.equal(before.empresa_id, EMPRESA_A);
+  assert.equal(after.empresa_id, EMPRESA_A);
+  assert.equal(updateAudit.requestId, 'audit-fix-update');
+  assert.equal(updateAudit.actorEmail, 'audit-fix@example.com');
+
+  const createAudit = auditRepo.entries.find(
+    (e) => e.entity === 'UnidadeMedida' && e.entityId === id && e.action === 'create',
+  );
+  assert.ok(createAudit);
+  assert.equal(createAudit.beforeData, undefined);
+  assert.equal((createAudit.afterData as { nome_completo: string }).nome_completo, 'Caixa Teste API');
+
+  const delRes = await fetchStatus(app, `/api/v1/unidades-medida/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'x-group-id': GROUP_A,
+      'x-request-id': 'audit-fix-soft',
+    },
+  });
+  assert.equal(delRes.statusCode, 200);
+
+  const softAudit = auditRepo.entries.find(
+    (e) => e.entity === 'UnidadeMedida' && e.entityId === id && e.action === 'soft_delete',
+  );
+  assert.ok(softAudit);
+  assert.equal((softAudit.beforeData as { ativo: boolean }).ativo, true);
+  assert.equal((softAudit.afterData as { ativo: boolean }).ativo, false);
+  assert.equal((softAudit.beforeData as { nome_completo: string }).nome_completo, 'Caixa Teste API Alterada');
+  assert.equal((softAudit.afterData as { nome_completo: string }).nome_completo, 'Caixa Teste API Alterada');
+});
+
+test('AUDIT FIX: GrupoProduto and SetorAtividade keep entity-specific fields in snapshots', async () => {
+  const config = testConfig();
+  const db = createDbClient(config);
+  const { app, auditRepo } = createApp({
+    config,
+    db,
+    useMemory: true,
+    tenantGuard: linkedGuard(),
+  });
+
+  const grupoCreate = await fetchOk(app, '/api/v1/grupos-produto', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-group-id': GROUP_A,
+      'x-empresa-id': EMPRESA_A,
+      'x-request-id': 'g-create',
+    },
+    body: JSON.stringify({
+      nome_grupo: 'Longos Audit',
+      codigo: 'LG-AUD',
+      natureza: 'Revenda',
+      margem_sugerida: 12.5,
+    }),
+  });
+  const grupoId = grupoCreate.data.id as string;
+  await fetchOk(app, `/api/v1/grupos-produto/${grupoId}`, {
+    method: 'PATCH',
+    headers: {
+      'content-type': 'application/json',
+      'x-group-id': GROUP_A,
+      'x-request-id': 'g-update',
+    },
+    body: JSON.stringify({ nome_grupo: 'Longos Audit Alterado', margem_sugerida: 15 }),
+  });
+
+  const setorCreate = await fetchOk(app, '/api/v1/setores-atividade', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-group-id': GROUP_A,
+      'x-empresa-id': EMPRESA_A,
+      'x-request-id': 's-create',
+    },
+    body: JSON.stringify({
+      nome: 'Construcao Audit',
+      descricao: 'Setor teste',
+      tipo_operacao: 'Revenda',
+    }),
+  });
+  const setorId = setorCreate.data.id as string;
+  await fetchOk(app, `/api/v1/setores-atividade/${setorId}`, {
+    method: 'PATCH',
+    headers: {
+      'content-type': 'application/json',
+      'x-group-id': GROUP_A,
+      'x-request-id': 's-update',
+    },
+    body: JSON.stringify({ nome: 'Construcao Audit Alterado', descricao: 'Setor alterado' }),
+  });
+
+  assert.ok('entries' in auditRepo);
+  const gUpdate = auditRepo.entries.find(
+    (e) => e.entity === 'GrupoProduto' && e.entityId === grupoId && e.action === 'update',
+  );
+  assert.ok(gUpdate);
+  assert.equal((gUpdate.beforeData as { nome_grupo: string }).nome_grupo, 'Longos Audit');
+  assert.equal((gUpdate.afterData as { nome_grupo: string }).nome_grupo, 'Longos Audit Alterado');
+  assert.equal((gUpdate.beforeData as { codigo: string }).codigo, 'LG-AUD');
+  assert.equal((gUpdate.afterData as { codigo: string }).codigo, 'LG-AUD');
+  assert.equal((gUpdate.beforeData as { margem_sugerida: number }).margem_sugerida, 12.5);
+  assert.equal((gUpdate.afterData as { margem_sugerida: number }).margem_sugerida, 15);
+  assert.equal((gUpdate.beforeData as { natureza: string }).natureza, 'Revenda');
+
+  const sUpdate = auditRepo.entries.find(
+    (e) => e.entity === 'SetorAtividade' && e.entityId === setorId && e.action === 'update',
+  );
+  assert.ok(sUpdate);
+  assert.equal((sUpdate.beforeData as { nome: string }).nome, 'Construcao Audit');
+  assert.equal((sUpdate.afterData as { nome: string }).nome, 'Construcao Audit Alterado');
+  assert.equal((sUpdate.beforeData as { descricao: string }).descricao, 'Setor teste');
+  assert.equal((sUpdate.afterData as { descricao: string }).descricao, 'Setor alterado');
+  assert.equal((sUpdate.beforeData as { tipo_operacao: string }).tipo_operacao, 'Revenda');
 });
 
 test('GrupoProduto / SetorAtividade / Produto base isolate tenants A/B', async () => {
@@ -116,7 +313,6 @@ test('GrupoProduto / SetorAtividade / Produto base isolate tenants A/B', async (
     notFoundCode: 'GRUPO_PRODUTO_NOT_FOUND',
     createSchema: grupoProdutoCreateSchema,
     updateSchema: grupoProdutoUpdateSchema,
-    sanitize: (row) => ({ id: row.id, group_id: row.group_id, nome_grupo: row.nome_grupo, ativo: row.ativo }),
     getEmpresaId: (row) => row.empresa_id,
     resolveEmpresaIdFromCreate: (data, scope) => data.empresa_id ?? scope.empresaId,
     resolveEmpresaIdFromUpdate: (data, current) => (data.empresa_id === undefined ? current.empresa_id : data.empresa_id),
@@ -126,7 +322,6 @@ test('GrupoProduto / SetorAtividade / Produto base isolate tenants A/B', async (
     notFoundCode: 'SETOR_NOT_FOUND',
     createSchema: setorCreateSchema,
     updateSchema: setorUpdateSchema,
-    sanitize: (row) => ({ id: row.id, group_id: row.group_id, nome: row.nome, ativo: row.ativo }),
     getEmpresaId: (row) => row.empresa_id,
     resolveEmpresaIdFromCreate: (data, scope) => data.empresa_id ?? scope.empresaId,
     resolveEmpresaIdFromUpdate: (data, current) => (data.empresa_id === undefined ? current.empresa_id : data.empresa_id),
@@ -136,7 +331,6 @@ test('GrupoProduto / SetorAtividade / Produto base isolate tenants A/B', async (
     notFoundCode: 'PRODUTO_NOT_FOUND',
     createSchema: produtoCreateSchema,
     updateSchema: produtoUpdateSchema,
-    sanitize: (row) => ({ id: row.id, group_id: row.group_id, descricao: row.descricao, ativo: row.ativo }),
     getEmpresaId: (row) => row.empresa_id,
     resolveEmpresaIdFromCreate: (data, scope) => data.empresa_id ?? scope.empresaId,
     resolveEmpresaIdFromUpdate: (data, current) => (data.empresa_id === undefined ? current.empresa_id : data.empresa_id),
@@ -293,6 +487,9 @@ test('API RUNTIME-02 UnidadeMedida E2E + meta + cross-tenant HTTP', async () => 
     const updateAudit = produtoAudits.find((e) => e.action === 'update');
     assert.ok(updateAudit?.beforeData);
     assert.ok(updateAudit?.afterData);
+    assert.equal((updateAudit?.beforeData as { descricao: string }).descricao, 'Produto Base Sintetico');
+    assert.equal((updateAudit?.afterData as { ncm: string }).ncm, '72142000');
+    assert.equal((updateAudit?.beforeData as { ncm: string | null }).ncm, null);
     assert.equal(updateAudit?.requestId, 'rt02-p-2');
   }
 });

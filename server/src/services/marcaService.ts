@@ -1,4 +1,5 @@
 import type { AuditRepository } from '../audit/types.js';
+import { sanitizeAuditSnapshot } from '../audit/sanitizeAuditSnapshot.js';
 import { AppError } from '../api/errors.js';
 import type { RequestContext } from '../audit/types.js';
 import type { TenantGuard } from '../db/tenantGuard.js';
@@ -126,13 +127,5 @@ export class MarcaService {
 }
 
 function sanitizeMarca(row: Marca) {
-  return {
-    id: row.id,
-    group_id: row.group_id,
-    empresa_id: row.empresa_id,
-    nome_marca: row.nome_marca,
-    descricao: row.descricao,
-    ativo: row.ativo,
-    updated_at: row.updated_at,
-  };
+  return sanitizeAuditSnapshot(row);
 }

@@ -1,3 +1,12 @@
+### ERP-RUNTIME-02 / Correcao audit snapshot incompleto
+
+- Objetivo: corrigir before/after incompletos no TenantCrudService (defeito E2E UnidadeMedida no VPS).
+- Causa raiz: `sanitize` em `app.ts` fazia pick parcial (omitia `nome_completo` e demais campos alteraveis).
+- Solucao: `sanitizeAuditSnapshot` generico (copia todos os campos do row, denylist de secrets); default no TenantCrudService; Marca alinhada.
+- Sem migration; sem deploy; Produto continua fora do piloto HTTP.
+- Branch: `cursor/runtime02-audit-snapshot-fix-392b`.
+- Decisao: registrar apos validacoes.
+
 ### ERP-RUNTIME-02 / Incorporacao segura na main
 
 - Objetivo: incorporar `cursor/erp-runtime-02-392b` em `main` preservando Codex e demais trabalhos.
