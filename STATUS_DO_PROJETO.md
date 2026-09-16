@@ -8877,5 +8877,5 @@ Checklist inicial:
 - Auditoria: cada aplicacao efetiva gera um unico registro resumido com quantidade, regra e origem da configuracao, sem dados de dispositivo, token ou arvore de permissoes.
 - Testes: 26/26 testes focados e 560/560 na suite completa passaram. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o baseline permaneceu em 1.028 catches operacionais vazios.
 - Typecheck: zero diagnosticos nos arquivos do lote; o passivo global permaneceu em 1.603, sem regressao ou mascaramento.
-- Commit: sera registrado imediatamente apos a gravacao deste lote.
+- Commit de implementacao: `71f5950a` (`Aplica politica de sessao unica local`).
 - Proximo passo P0: substituir o limite local fixo pela configuracao existente de timeout por inatividade e duracao absoluta da sessao, mantendo precedencia Empresa/Grupo e auditoria fail-closed.
