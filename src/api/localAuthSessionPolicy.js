@@ -1,4 +1,24 @@
 const INACTIVE_STATUSES = new Set(['inativo', 'desligado', 'bloqueado', 'inativa', 'suspenso', 'suspensa']);
+const AUTH_DENIAL_REASONS = new Set([
+  'unauthenticated',
+  'logged_out',
+  'disabled',
+  'inactive',
+  'missing_group',
+  'missing_company',
+  'session_revoked',
+  'session_expired',
+  'session_owner_mismatch',
+  'session_not_found',
+  'company_outside_group',
+]);
+const AUTH_DENIAL_TYPES = new Set([
+  'auth_required',
+  'account_disabled',
+  'account_inactive',
+  'missing_group',
+  'missing_company',
+]);
 
 /**
  * @typedef {{
@@ -68,12 +88,68 @@ export const resolveUserEmpresaId = (user = {}) => (
 );
 
 export const createAuthDeniedError = (evaluation = {}) => {
-  const error = /** @type {Error & { status: number, authType: string }} */ (
+  const error = /** @type {Error & { status: number, authType: string, authReason: string }} */ (
     new Error(evaluation.reason || 'auth_required')
   );
   error.status = 403;
   error.authType = evaluation.type || 'auth_required';
+  error.authReason = evaluation.reason || 'auth_required';
   return error;
+};
+
+/**
+ * @param {{
+ *   error?: { authReason?: string, authType?: string, message?: string },
+ *   user?: {
+ *     id?: string,
+ *     full_name?: string,
+ *     email?: string,
+ *     grupo_atual_id?: string,
+ *     grupo_padrao_id?: string,
+ *     group_id?: string,
+ *     grupo_id?: string,
+ *     empresa_atual_id?: string,
+ *     empresa_padrao_id?: string,
+ *     empresa_id?: string,
+ *     grupos_vinculados?: Array<Record<string, unknown>>,
+ *     empresas_vinculadas?: Array<Record<string, unknown>>,
+ *   } | null,
+ *   sessionId?: string | null,
+ *   id?: string,
+ *   timestamp?: string,
+ * }} options
+ */
+export const buildLocalAuthDeniedAuditRecord = ({
+  error,
+  user,
+  sessionId = null,
+  id,
+  timestamp = new Date().toISOString(),
+} = {}) => {
+  const reasonCandidate = String(error?.authReason || error?.message || 'auth_required');
+  const typeCandidate = String(error?.authType || 'auth_required');
+  const reason = AUTH_DENIAL_REASONS.has(reasonCandidate) ? reasonCandidate : 'auth_required';
+  const type = AUTH_DENIAL_TYPES.has(typeCandidate) ? typeCandidate : 'auth_required';
+
+  return {
+    id,
+    usuario: user?.full_name || user?.email || 'Usuario nao autenticado',
+    usuario_id: user?.id || null,
+    acao: 'Bloqueio',
+    modulo: 'Sistema Local',
+    tipo_auditoria: 'seguranca',
+    entidade: 'SessaoUsuario',
+    registro_id: sessionId || null,
+    descricao: 'Tentativa de autenticacao local negada',
+    empresa_id: resolveUserEmpresaId(user),
+    group_id: resolveUserGroupId(user),
+    dados_novos: { motivo: reason, tipo: type },
+    sucesso: false,
+    local: true,
+    created_date: timestamp,
+    updated_date: timestamp,
+    data_hora: timestamp,
+  };
 };
 
 /** @param {LocalStorageLike | null | undefined} storage */

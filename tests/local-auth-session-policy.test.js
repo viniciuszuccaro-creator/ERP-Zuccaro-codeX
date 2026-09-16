@@ -4,6 +4,8 @@ import test from 'node:test';
 
 import {
   assertInteractiveAuthAllowed,
+  buildLocalAuthDeniedAuditRecord,
+  createAuthDeniedError,
   evaluateLocalUserSession,
   markLocalLoggedOut,
   prepareLocalReauthentication,
@@ -83,6 +85,37 @@ test('auth state logout and api-key interactive gate', () => {
   assert.equal(assertInteractiveAuthAllowed({ isLocalOnlyMode: true, hasApiKey: true, hasUserToken: false }).allowed, true);
   assert.equal(assertInteractiveAuthAllowed({ isLocalOnlyMode: false, hasApiKey: true, hasUserToken: false }).allowed, false);
   assert.equal(assertInteractiveAuthAllowed({ isLocalOnlyMode: false, hasApiKey: true, hasUserToken: true }).allowed, true);
+});
+
+test('denied authentication audit keeps controlled reason and scope without raw error data', () => {
+  const error = createAuthDeniedError({ reason: 'session_revoked', type: 'auth_required' });
+  error.stack = 'sensitive stack';
+  const record = buildLocalAuthDeniedAuditRecord({
+    error,
+    user: { ...admin, full_name: 'Vinicius' },
+    sessionId: 'sessao-1',
+    id: 'audit-1',
+    timestamp: '2026-09-16T12:00:00.000Z',
+  });
+
+  assert.equal(record.usuario, 'Vinicius');
+  assert.equal(record.group_id, 'local_grupo_cpa');
+  assert.equal(record.empresa_id, 'local_empresa_3z');
+  assert.equal(record.registro_id, 'sessao-1');
+  assert.deepEqual(record.dados_novos, { motivo: 'session_revoked', tipo: 'auth_required' });
+  assert.equal(record.sucesso, false);
+  assert.doesNotMatch(JSON.stringify(record), /sensitive stack/);
+});
+
+test('denied authentication audit replaces unknown provider details with safe values', () => {
+  const record = buildLocalAuthDeniedAuditRecord({
+    error: { status: 403, message: 'token=secret-value', authType: 'provider_internal' },
+    id: 'audit-2',
+  });
+
+  assert.equal(record.usuario, 'Usuario nao autenticado');
+  assert.deepEqual(record.dados_novos, { motivo: 'auth_required', tipo: 'auth_required' });
+  assert.doesNotMatch(JSON.stringify(record), /secret-value|provider_internal/);
 });
 
 test('local storage adapter tolerates optional writes and confirms strict writes', () => {

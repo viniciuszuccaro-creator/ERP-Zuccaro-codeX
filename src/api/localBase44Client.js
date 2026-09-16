@@ -6,7 +6,7 @@ import {
   validateMultiempresaContext,
 } from "@/components/lib/contextoMultiempresaPolicy";
 import { sanitizeAuditPayload, sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
-import { createAuthDeniedError, evaluateLocalUserSession, markLocalLoggedOut, prepareLocalReauthentication, readLocalAuthState, writeLocalAuthState, LOCAL_SESSION_ID_KEY } from "@/api/localAuthSessionPolicy";
+import { buildLocalAuthDeniedAuditRecord, createAuthDeniedError, evaluateLocalUserSession, markLocalLoggedOut, prepareLocalReauthentication, readLocalAuthState, writeLocalAuthState, LOCAL_SESSION_ID_KEY } from "@/api/localAuthSessionPolicy";
 import { createLocalStorageAdapter } from "@/api/localStorageAdapter";
 import { createLocalEntityProxy, createLocalEntityReadApi, runLocalEntityReadFunction } from "@/api/localEntityReadApi";
 import { runLocalEntityCreatePipeline } from "@/api/localEntityCreatePipeline";
@@ -631,6 +631,36 @@ const writeUser = (updates) => {
   db.User = [user, ...(db.User || []).filter((u) => u.id !== user.id)];
   saveDb(db);
   return user;
+};
+
+let lastLocalAuthDenial = { key: null, at: 0 };
+
+/**
+ * @param {{
+ *   error?: Error & { status?: number, authReason?: string, authType?: string },
+ *   user?: LocalRecord | null,
+ *   sessionId?: string | null,
+ * }} options
+ */
+const recordLocalAuthDenied = ({ error, user = null, sessionId = null } = {}) => {
+  if (error?.status !== 403) return;
+  const timestamp = now();
+  const record = buildLocalAuthDeniedAuditRecord({
+    error,
+    user,
+    sessionId,
+    id: makeId('audit'),
+    timestamp,
+  });
+  const key = [record.usuario_id || 'anonymous', record.registro_id || 'no-session', record.dados_novos.motivo].join(':');
+  const currentMs = new Date(timestamp).getTime();
+  if (lastLocalAuthDenial.key === key && currentMs - lastLocalAuthDenial.at < 5_000) return;
+
+  const db = loadDb();
+  getEntityStore(db, 'AuditLog').unshift(record);
+  saveDbStrict(db);
+  lastLocalAuthDenial = { key, at: currentMs };
+  notify('AuditLog', 'create', record);
 };
 
 const loadLocalSessionById = async (sessaoId) => {
@@ -2520,17 +2550,25 @@ export const localBase44 = {
   },
   auth: {
     async me() {
-      const authState = readLocalAuthState(safeStorage);
-      if (authState.logged_in === false) {
-        throw createAuthDeniedError({ reason: 'logged_out', type: 'auth_required' });
+      let user = null;
+      let sessionId = null;
+      try {
+        const authState = readLocalAuthState(safeStorage);
+        sessionId = safeStorage.getItem(LOCAL_SESSION_ID_KEY) || authState.sessao_id || null;
+        if (authState.logged_in === false) {
+          throw createAuthDeniedError({ reason: 'logged_out', type: 'auth_required' });
+        }
+        user = readUser();
+        const userEvaluation = evaluateLocalUserSession(user);
+        if (!userEvaluation.allowed) throw createAuthDeniedError(userEvaluation);
+        const session = await ensureLocalActiveSession(user);
+        const evaluation = evaluateLocalUserSession(user, session);
+        if (!evaluation.allowed) throw createAuthDeniedError(evaluation);
+        return user;
+      } catch (error) {
+        recordLocalAuthDenied({ error, user, sessionId });
+        throw error;
       }
-      const user = readUser();
-      const userEvaluation = evaluateLocalUserSession(user);
-      if (!userEvaluation.allowed) throw createAuthDeniedError(userEvaluation);
-      const session = await ensureLocalActiveSession(user);
-      const evaluation = evaluateLocalUserSession(user, session);
-      if (!evaluation.allowed) throw createAuthDeniedError(evaluation);
-      return user;
     },
     async isAuthenticated() {
       try {
