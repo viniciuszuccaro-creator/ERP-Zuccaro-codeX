@@ -69,23 +69,25 @@ const safeRemoveItem = (storage, key) => {
   }
 };
 
-export const resolveUserGroupId = (user = {}) => (
-  user.grupo_atual_id
-  || user.grupo_padrao_id
-  || user.group_id
-  || user.grupo_id
-  || firstActiveId(user.grupos_vinculados, 'grupo_id')
-  || firstActiveId(user.grupos_vinculados, 'group_id')
-  || null
-);
+export const resolveUserGroupId = (user = {}) => {
+  const source = user || {};
+  return source.grupo_atual_id
+    || source.grupo_padrao_id
+    || source.group_id
+    || source.grupo_id
+    || firstActiveId(source.grupos_vinculados, 'grupo_id')
+    || firstActiveId(source.grupos_vinculados, 'group_id')
+    || null;
+};
 
-export const resolveUserEmpresaId = (user = {}) => (
-  user.empresa_atual_id
-  || user.empresa_padrao_id
-  || user.empresa_id
-  || firstActiveId(user.empresas_vinculadas, 'empresa_id')
-  || null
-);
+export const resolveUserEmpresaId = (user = {}) => {
+  const source = user || {};
+  return source.empresa_atual_id
+    || source.empresa_padrao_id
+    || source.empresa_id
+    || firstActiveId(source.empresas_vinculadas, 'empresa_id')
+    || null;
+};
 
 export const createAuthDeniedError = (evaluation = {}) => {
   const error = /** @type {Error & { status: number, authType: string, authReason: string }} */ (
@@ -218,6 +220,10 @@ export const evaluateLocalUserSession = (user, session = null, nowMs = Date.now(
   }
 
   if (session) {
+    if (String(session.usuario_id || '') !== String(user.id || '')) {
+      return { allowed: false, reason: 'session_owner_mismatch', type: 'auth_required' };
+    }
+
     const sessionStatus = stripAccents(session.status);
     if (session.ativa === false || sessionStatus === 'encerrada' || sessionStatus === 'revogada') {
       return { allowed: false, reason: 'session_revoked', type: 'auth_required' };

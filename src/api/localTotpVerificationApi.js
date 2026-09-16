@@ -22,7 +22,12 @@ export const runLocalTotpVerification = (payload = {}, dependencies) => {
 
   const nowMs = dependencies.nowMs?.() ?? Date.now();
   const sessionEvaluation = dependencies.evaluateSession(state.user || null, state.session || null, nowMs);
-  if (!sessionEvaluation.allowed) return finish(false, sessionEvaluation.reason || 'sessao-invalida');
+  if (!sessionEvaluation.allowed) {
+    const reason = sessionEvaluation.reason === 'session_owner_mismatch'
+      ? 'sessao-usuario-divergente'
+      : sessionEvaluation.reason || 'sessao-invalida';
+    return finish(false, reason);
+  }
   if (normalizeId(state.session?.usuario_id) !== normalizeId(state.user?.id)) return finish(false, 'sessao-usuario-divergente');
   if (normalizeId(state.session?.group_id || state.session?.grupo_id) !== normalizeId(context.groupId)) return finish(false, 'sessao-grupo-divergente');
 

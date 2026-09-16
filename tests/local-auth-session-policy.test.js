@@ -25,39 +25,77 @@ const admin = {
   empresa_atual_id: 'local_empresa_3z',
 };
 
-test('active local admin with group and company is allowed', () => {
-  const result = evaluateLocalUserSession(admin);
-  assert.equal(result.allowed, true);
-  assert.equal(result.groupId, 'local_grupo_cpa');
-  assert.equal(result.empresaId, 'local_empresa_3z');
-});
-
-test('missing user, disabled, inactive and dismissed accounts fail closed', () => {
-  assert.equal(evaluateLocalUserSession(null).type, 'auth_required');
-  assert.equal(evaluateLocalUserSession({ ...admin, disabled: true }).type, 'account_disabled');
-  assert.equal(evaluateLocalUserSession({ ...admin, ativo: false }).type, 'account_inactive');
-  assert.equal(evaluateLocalUserSession({ ...admin, status: 'Desligado' }).type, 'account_inactive');
-});
-
-test('profile without group or company is blocked', () => {
-  assert.equal(evaluateLocalUserSession({ ...admin, grupo_atual_id: null, grupo_padrao_id: null, group_id: null, grupos_vinculados: [] }).type, 'missing_group');
-  assert.equal(evaluateLocalUserSession({
-    ...admin,
-    pode_operar_em_grupo: false,
-    empresa_atual_id: null,
-    empresa_padrao_id: null,
-    empresas_vinculadas: [],
-  }).type, 'missing_company');
-});
-
-test('revoked and idle sessions are rejected', () => {
-  assert.equal(evaluateLocalUserSession(admin, { ativa: false, status: 'Revogada' }).reason, 'session_revoked');
-  const expired = evaluateLocalUserSession(admin, {
+test('Gate 1 local authentication matrix fails closed with auditable reasons', async (t) => {
+  const activeSession = {
+    usuario_id: admin.id,
     ativa: true,
-    data_hora_ultimo_acesso: '2020-01-01T00:00:00.000Z',
+    status: 'Ativa',
+    data_hora_ultimo_acesso: '2026-09-16T11:59:30.000Z',
     max_idle_ms: 60_000,
-  }, Date.parse('2020-01-01T01:00:00.000Z'));
-  assert.equal(expired.reason, 'session_expired');
+  };
+  const cases = [
+    { name: 'active user', user: admin, session: activeSession, expected: { allowed: true, reason: null, type: null } },
+    { name: 'missing user', user: null, expected: { allowed: false, reason: 'unauthenticated', type: 'auth_required' } },
+    { name: 'disabled account', user: { ...admin, disabled: true }, expected: { allowed: false, reason: 'disabled', type: 'account_disabled' } },
+    { name: 'inactive account', user: { ...admin, ativo: false }, expected: { allowed: false, reason: 'inactive', type: 'account_inactive' } },
+    { name: 'dismissed account', user: { ...admin, status: 'Desligado' }, expected: { allowed: false, reason: 'inactive', type: 'account_inactive' } },
+    {
+      name: 'missing group',
+      user: { ...admin, grupo_atual_id: null, grupo_padrao_id: null, group_id: null, grupos_vinculados: [] },
+      expected: { allowed: false, reason: 'missing_group', type: 'missing_group' },
+    },
+    {
+      name: 'missing company',
+      user: { ...admin, pode_operar_em_grupo: false, empresa_atual_id: null, empresa_padrao_id: null, empresas_vinculadas: [] },
+      expected: { allowed: false, reason: 'missing_company', type: 'missing_company' },
+    },
+    {
+      name: 'session owned by another user',
+      user: admin,
+      session: { ...activeSession, usuario_id: 'outro-usuario' },
+      expected: { allowed: false, reason: 'session_owner_mismatch', type: 'auth_required' },
+    },
+    {
+      name: 'revoked session',
+      user: admin,
+      session: { ...activeSession, ativa: false, status: 'Revogada' },
+      expected: { allowed: false, reason: 'session_revoked', type: 'auth_required' },
+    },
+    {
+      name: 'expired session',
+      user: admin,
+      session: { ...activeSession, data_hora_ultimo_acesso: '2020-01-01T00:00:00.000Z' },
+      expected: { allowed: false, reason: 'session_expired', type: 'auth_required' },
+      nowMs: Date.parse('2020-01-01T01:00:00.000Z'),
+    },
+  ];
+
+  for (const scenario of cases) {
+    await t.test(scenario.name, () => {
+      const result = evaluateLocalUserSession(
+        scenario.user,
+        scenario.session || null,
+        scenario.nowMs || Date.parse('2026-09-16T12:00:00.000Z'),
+      );
+      assert.equal(result.allowed, scenario.expected.allowed);
+      assert.equal(result.reason, scenario.expected.reason);
+      assert.equal(result.type, scenario.expected.type);
+      if (result.allowed) {
+        assert.equal(result.groupId, 'local_grupo_cpa');
+        assert.equal(result.empresaId, 'local_empresa_3z');
+        return;
+      }
+      const record = buildLocalAuthDeniedAuditRecord({
+        error: createAuthDeniedError(result),
+        user: scenario.user,
+        sessionId: scenario.session ? 'sessao-gate-1' : null,
+        id: `audit-${scenario.name}`,
+        timestamp: '2026-09-16T12:00:00.000Z',
+      });
+      assert.deepEqual(record.dados_novos, { motivo: scenario.expected.reason, tipo: scenario.expected.type });
+      assert.equal(record.sucesso, false);
+    });
+  }
 });
 
 test('linked group and company ids resolve from active vinculos', () => {

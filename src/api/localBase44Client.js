@@ -684,9 +684,6 @@ const ensureLocalActiveSession = async (user) => {
     if (!evaluation.allowed) {
       throw createAuthDeniedError(evaluation);
     }
-    if (String(session.usuario_id || '') !== String(user.id || '')) {
-      throw createAuthDeniedError({ reason: 'session_owner_mismatch', type: 'auth_required' });
-    }
     const db = loadDb();
     const sessions = getEntityStore(db, 'SessaoUsuario');
     const index = sessions.findIndex((item) => String(item.id) === String(session.id));
