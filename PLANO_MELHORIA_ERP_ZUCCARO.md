@@ -1251,3 +1251,13 @@ Proxima frente P0: implementar recuperacao de acesso no fluxo de autenticacao ex
 - Nenhum endpoint anonimo ou evento informado pelo navegador sera aceito como auditoria confiavel.
 - Proxima frente P0: consolidar testes do Gate 1 para login local, logout, expiracao, conta inativa/desativada, contexto ausente e sessao revogada; manter recuperacao e logs remotos explicitamente bloqueados.
 
+### Matriz local de autenticacao do Gate 1 - 2026-09-16
+
+- A matriz executavel cobre usuario ativo/ausente, conta desativada/inativa/desligada, Grupo/Empresa ausentes, ownership divergente, sessao revogada e sessao expirada.
+- O ownership foi centralizado em `evaluateLocalUserSession`; o cliente nao repete a decisao e o MFA preserva seu motivo publico legado.
+- Tentativa anonima agora resolve Grupo/Empresa como `null` e pode ser auditada sem erro ou contexto fabricado.
+- Cada negativa produz motivo e tipo allowlisted, sem senha, token, stack ou payload bruto.
+- Testes focados passaram 22/22 e a suite completa 556/556; baseline, lint, build e diff check passaram. Typecheck do lote ficou em zero e o passivo global permaneceu em 1.603.
+- Commit: `913a536c`.
+- Proxima frente P0: invalidar sessao local antiga apos alteracao do perfil/permissoes; depois validar a configuracao existente de sessao unica. Recuperacao e logs remotos continuam bloqueados pelo provedor.
+

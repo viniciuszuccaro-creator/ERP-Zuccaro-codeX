@@ -8833,3 +8833,18 @@ Checklist inicial:
 - Validacao: lote exclusivamente documental; `git diff --check` executado no fechamento. Testes de runtime dispensados porque nenhum codigo de aplicacao foi alterado.
 - Bloqueios remotos do Gate 1: revogacao global apos reset e logs de tentativa anterior ao login dependem de recurso administrativo/callback do provedor ou da migracao de autenticacao planejada.
 - Proximo passo P0: consolidar a matriz automatizada dos controles locais do Gate 1, marcando separadamente os cenarios remotos bloqueados, sem declarar o Gate concluido.
+
+## 2026-09-16 - Matriz local de autenticacao do Gate 1
+
+- Objetivo: consolidar em uma unica matriz executavel os controles locais ja implementados de login/sessao e garantir motivos auditaveis fail-closed.
+- Causa raiz: os cenarios estavam distribuidos em testes isolados e o ownership usuario/sessao era validado no cliente depois da policy, dificultando reuso por MFA e outros consumidores.
+- Arquivos alterados: `src/api/localAuthSessionPolicy.js`, `src/api/localBase44Client.js`, `src/api/localTotpVerificationApi.js`, `tests/local-auth-session-policy.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
+- Matriz coberta: usuario ativo, usuario ausente, conta desativada, conta inativa, usuario desligado, Grupo ausente, Empresa ausente, sessao de outro usuario, sessao revogada e sessao expirada.
+- Refatoracao: ownership da sessao foi movido para `evaluateLocalUserSession`; o cliente deixou de repetir a mesma comparacao. O adaptador MFA preserva o motivo publico legado `sessao-usuario-divergente`.
+- Correcao adicional: os resolvedores de Grupo/Empresa passaram a aceitar usuario `null`, permitindo auditar tentativa anonima com escopo nulo sem erro e sem fabricar contexto.
+- Auditoria: cada negativa da matriz gera somente motivo/tipo allowlisted e `sucesso: false`; identidade e Grupo/Empresa aparecem apenas quando confiaveis.
+- Testes: 22/22 testes focados de autenticacao/MFA e 556/556 na suite completa passaram. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; baseline permaneceu em 1.028 catches operacionais vazios.
+- Typecheck: zero diagnosticos nos arquivos do lote; passivo global permaneceu em 1.603, sem regressao ou mascaramento.
+- Commit de implementacao: `913a536c` (`Consolida matriz local de autenticacao`).
+- Gate 1 permanece aberto: recuperacao e logs remotos continuam bloqueados pelo contrato do provedor; sessao antiga apos alteracao de permissao e politica de login simultaneo ainda precisam de verificacao dedicada.
+- Proximo passo P0: vincular a sessao local a versao/identidade do perfil de acesso e revoga-la quando o perfil ou suas permissoes mudarem, preservando auditoria e contexto Grupo/Empresa.
