@@ -1,3 +1,13 @@
+### ERP-RUNTIME-02 / Incorporacao audit snapshot fix na main
+
+- Objetivo: incorporar `cursor/runtime02-audit-snapshot-fix-392b` em `main`.
+- Antes: `origin/main` = `1115839e`; fix = `f9864474`; merge-base = `1115839e` (0 atras / 1 a frente).
+- Conflitos: nenhum — fast-forward direto.
+- Preservado: sanitizeAuditSnapshot, TenantCrudService CREATE/UPDATE/SOFT_DELETE, TenantGuard 409, Marca, HttpApiClient, localBase44, migrations 001-006 (sem nova migration), RLS, ERP-SITE, B2B.
+- Validacoes pre-merge: server 16 pass + 1 skip (inclui VPS defect Caixa Teste API); HttpApiClient 7/7; localEntityGuard 16/16.
+- Decisao: `ERP_RUNTIME_02_AUDIT_FIX_MERGED_TO_MAIN` apos push.
+- Proximo: humano rebuild/restart API no VPS e retestar UPDATE UnidadeMedida; sem deploy pelo agente; sem RUNTIME-03.
+
 ### ERP-RUNTIME-02 / Correcao audit snapshot incompleto
 
 - Objetivo: corrigir before/after incompletos no TenantCrudService (defeito E2E UnidadeMedida no VPS).
@@ -5,7 +15,9 @@
 - Solucao: `sanitizeAuditSnapshot` generico (copia todos os campos do row, denylist de secrets); default no TenantCrudService; Marca alinhada.
 - Sem migration; sem deploy; Produto continua fora do piloto HTTP.
 - Branch: `cursor/runtime02-audit-snapshot-fix-392b`.
-- Decisao: registrar apos validacoes.
+- Validacoes: server 16 pass + 1 skip; HttpApiClient 7/7; localEntityGuard 16/16; lint/builds OK; audit:baseline OK; typecheck frontend baseline; `git diff --check` OK.
+- Decisao: **`ERP_RUNTIME_02_AUDIT_FIX_READY`**.
+- Proximo: review/merge; humano retestar UPDATE UnidadeMedida no VPS apos deploy; sem RUNTIME-03 neste agente.
 
 ### ERP-RUNTIME-02 / Incorporacao segura na main
 
