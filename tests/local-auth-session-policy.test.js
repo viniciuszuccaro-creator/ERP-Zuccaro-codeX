@@ -6,6 +6,7 @@ import {
   assertInteractiveAuthAllowed,
   buildLocalAccessVersion,
   buildLocalAuthDeniedAuditRecord,
+  buildLocalSingleSessionRevocations,
   createAuthDeniedError,
   evaluateLocalUserSession,
   markLocalLoggedOut,
@@ -13,6 +14,7 @@ import {
   readLocalAuthState,
   resolveUserEmpresaId,
   resolveUserGroupId,
+  resolveLocalSingleSessionConfig,
   writeLocalAuthState,
 } from '../src/api/localAuthSessionPolicy.js';
 import { createLocalStorageAdapter } from '../src/api/localStorageAdapter.js';
@@ -184,6 +186,94 @@ test('session access binding fails closed when version is absent or changed', ()
   assert.deepEqual(audit.dados_novos, { motivo: 'session_access_changed', tipo: 'auth_required' });
 });
 
+test('single-session configuration prefers company then group without crossing scope', () => {
+  const resolved = resolveLocalSingleSessionConfig({
+    groupId: 'g1',
+    empresaId: 'e1',
+    securityConfigs: [
+      { id: 'security-group', group_id: 'g1', empresa_id: null, sessao_unica: false },
+    ],
+    systemConfigs: [
+      { id: 'mirror-company', chave: 'seg_sessao_unica', group_id: 'g1', empresa_id: 'e1', ativa: true },
+      { id: 'external', chave: 'seg_sessao_unica', group_id: 'g2', empresa_id: 'e1', ativa: false },
+    ],
+  });
+  assert.deepEqual(resolved, {
+    enabled: true,
+    source: 'ConfiguracaoSistema:empresa',
+    configId: 'mirror-company',
+  });
+
+  const primary = resolveLocalSingleSessionConfig({
+    groupId: 'g1',
+    empresaId: 'e1',
+    securityConfigs: [
+      { id: 'security-company', group_id: 'g1', empresa_id: 'e1', sessao_unica: false },
+    ],
+    systemConfigs: [
+      { id: 'mirror-company', chave: 'seg_sessao_unica', group_id: 'g1', empresa_id: 'e1', ativa: true },
+    ],
+  });
+  assert.deepEqual(primary, {
+    enabled: false,
+    source: 'ConfiguracaoSeguranca:empresa',
+    configId: 'security-company',
+  });
+
+  const groupFallback = resolveLocalSingleSessionConfig({
+    groupId: 'g1',
+    empresaId: 'e1',
+    securityConfigs: [
+      { id: 'security-group', group_id: 'g1', empresa_id: null, sessao_unica: true },
+    ],
+  });
+  assert.deepEqual(groupFallback, {
+    enabled: true,
+    source: 'ConfiguracaoSeguranca:grupo',
+    configId: 'security-group',
+  });
+});
+
+test('single-session policy revokes only competing sessions from the same user and group', () => {
+  const timestamp = '2026-09-16T15:00:00.000Z';
+  const revoked = buildLocalSingleSessionRevocations({
+    enabled: true,
+    userId: 'u1',
+    currentSessionId: 'current',
+    groupId: 'g1',
+    timestamp,
+    sessions: [
+      { id: 'current', usuario_id: 'u1', group_id: 'g1', ativa: true },
+      { id: 'same-scope', usuario_id: 'u1', group_id: 'g1', ativa: true },
+      { id: 'legacy-unscoped', usuario_id: 'u1', ativa: true },
+      { id: 'other-group', usuario_id: 'u1', group_id: 'g2', ativa: true },
+      { id: 'other-user', usuario_id: 'u2', group_id: 'g1', ativa: true },
+      { id: 'closed', usuario_id: 'u1', group_id: 'g1', ativa: false },
+    ],
+  });
+
+  assert.equal(revoked.length, 2);
+  assert.deepEqual(revoked[0], {
+    id: 'same-scope',
+    usuario_id: 'u1',
+    group_id: 'g1',
+    ativa: false,
+    status: 'Revogada',
+    data_hora_encerramento: timestamp,
+    motivo_encerramento: 'Sessao unica: novo login',
+    updated_date: timestamp,
+  });
+  assert.equal(revoked[1].id, 'legacy-unscoped');
+  assert.equal(revoked[1].status, 'Revogada');
+  assert.deepEqual(buildLocalSingleSessionRevocations({
+    enabled: false,
+    userId: 'u1',
+    currentSessionId: 'current',
+    groupId: 'g1',
+    sessions: [{ id: 'other', usuario_id: 'u1', group_id: 'g1', ativa: true }],
+  }), []);
+});
+
 test('denied authentication audit keeps controlled reason and scope without raw error data', () => {
   const error = createAuthDeniedError({ reason: 'session_revoked', type: 'auth_required' });
   error.stack = 'sensitive stack';
@@ -257,6 +347,8 @@ test('local auth stack binds session and refuses api-key browser bypass', async 
   assert.match(policy, /evaluateLocalUserSession\(user, session, Date\.now\(\), accessVersion\)/);
   assert.match(policy, /access_version: accessVersion/);
   assert.match(policy, /revokeLocalSessionRecord\(db, session, 'Alteracao de acesso'\)/);
+  assert.match(policy, /enforceLocalSingleSession/);
+  assert.match(policy, /regra: 'seg_sessao_unica'/);
   assert.match(policy, /!user\.perfil_acesso_id && isMasterLocalUser\(user\)/);
   assert.match(policy, /async logout\(\)/);
   assert.match(client, /assertInteractiveAuthAllowed/);

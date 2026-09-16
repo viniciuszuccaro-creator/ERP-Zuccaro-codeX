@@ -1276,3 +1276,17 @@ Lote concluido em 2026-09-16 no fluxo local existente, sem criar entidade, tela,
 
 Proxima frente P0: aplicar a configuracao existente `seg_sessao_unica` ao login local, revogando sessoes simultaneas do mesmo usuario com auditoria e preservacao de Grupo/Empresa.
 
+### Seguranca P0 - Sessao unica local efetiva
+
+Lote concluido em 2026-09-16 no fluxo e nas configuracoes existentes, sem criar tela, entidade, rota ou armazenamento paralelo.
+
+- O login e a renovacao consultam `ConfiguracaoSeguranca.sessao_unica` e o espelho `ConfiguracaoSistema/seg_sessao_unica`.
+- Configuracao de Empresa prevalece sobre Grupo; a fonte principal prevalece sobre o espelho no mesmo escopo.
+- Quando ativa, a sessao atual revoga concorrentes do mesmo usuario e Grupo, inclusive sessao legada sem escopo.
+- Sessoes de outro usuario ou explicitamente vinculadas a outro Grupo permanecem intocadas.
+- A revogacao e persistida antes da liberacao e gera auditoria resumida com quantidade, regra e origem da configuracao.
+- Testes focados passaram 26/26 e a suite completa passou 560/560; auditoria baseline, lint, build e verificacao de diff passaram.
+- Os arquivos do lote possuem zero diagnosticos de TypeScript; o passivo global permaneceu em 1.603.
+
+Proxima frente P0: substituir o limite local fixo pela configuracao existente de timeout por inatividade e duracao absoluta da sessao, mantendo precedencia Empresa/Grupo e auditoria fail-closed.
+

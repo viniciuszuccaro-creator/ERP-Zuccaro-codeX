@@ -8864,3 +8864,18 @@ Checklist inicial:
 - Compatibilidade: a primeira abertura com uma sessao anterior ao lote solicitara nova autenticacao uma unica vez para emitir a sessao versionada.
 - Commit de implementacao: `d2bf9161` (`Revoga sessao apos mudanca de acesso`).
 - Proximo passo P0: aplicar a configuracao existente `seg_sessao_unica` ao login local, revogando sessoes simultaneas do mesmo usuario com auditoria e preservacao de Grupo/Empresa.
+
+## 2026-09-16 - Sessao unica local efetiva
+
+- Objetivo: fazer o toggle existente `seg_sessao_unica` impedir logins simultaneos no fluxo local real.
+- Causa raiz: a configuracao era persistida e exibida, mas `ensureLocalActiveSession` nao a consultava; varias sessoes do mesmo usuario podiam permanecer ativas.
+- Arquivos alterados: `src/api/localAuthSessionPolicy.js`, `src/api/localBase44Client.js`, `tests/local-auth-session-policy.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
+- Estruturas reutilizadas: `ConfiguracaoSeguranca`, `ConfiguracaoSistema`, `SessaoUsuario`, `AuditLog`, login local e notificacoes existentes. Nenhuma estrutura paralela foi criada.
+- Configuracao: a resolucao usa primeiro Empresa e depois Grupo; em cada escopo, `ConfiguracaoSeguranca.sessao_unica` prevalece sobre o espelho `seg_sessao_unica`.
+- Multiempresa: somente sessoes do mesmo usuario no mesmo Grupo sao concorrentes. Sessao de outro Grupo nao e alterada; sessao legada sem Grupo e revogada por nao possuir escopo confiavel.
+- Seguranca/RBAC: a sessao atual vence e as concorrentes sao marcadas `Revogada` antes de o acesso continuar. Configuracao desativada preserva as sessoes simultaneas existentes.
+- Auditoria: cada aplicacao efetiva gera um unico registro resumido com quantidade, regra e origem da configuracao, sem dados de dispositivo, token ou arvore de permissoes.
+- Testes: 26/26 testes focados e 560/560 na suite completa passaram. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o baseline permaneceu em 1.028 catches operacionais vazios.
+- Typecheck: zero diagnosticos nos arquivos do lote; o passivo global permaneceu em 1.603, sem regressao ou mascaramento.
+- Commit: sera registrado imediatamente apos a gravacao deste lote.
+- Proximo passo P0: substituir o limite local fixo pela configuracao existente de timeout por inatividade e duracao absoluta da sessao, mantendo precedencia Empresa/Grupo e auditoria fail-closed.

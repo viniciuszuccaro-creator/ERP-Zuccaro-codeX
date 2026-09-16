@@ -6,7 +6,7 @@ import {
   validateMultiempresaContext,
 } from "@/components/lib/contextoMultiempresaPolicy";
 import { sanitizeAuditPayload, sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
-import { buildLocalAccessVersion, buildLocalAuthDeniedAuditRecord, createAuthDeniedError, evaluateLocalUserSession, markLocalLoggedOut, prepareLocalReauthentication, readLocalAuthState, writeLocalAuthState, LOCAL_SESSION_ID_KEY } from "@/api/localAuthSessionPolicy";
+import { buildLocalAccessVersion, buildLocalAuthDeniedAuditRecord, buildLocalSingleSessionRevocations, createAuthDeniedError, evaluateLocalUserSession, markLocalLoggedOut, prepareLocalReauthentication, readLocalAuthState, resolveLocalSingleSessionConfig, writeLocalAuthState, LOCAL_SESSION_ID_KEY } from "@/api/localAuthSessionPolicy";
 import { createLocalStorageAdapter } from "@/api/localStorageAdapter";
 import { createLocalEntityProxy, createLocalEntityReadApi, runLocalEntityReadFunction } from "@/api/localEntityReadApi";
 import { runLocalEntityCreatePipeline } from "@/api/localEntityCreatePipeline";
@@ -696,6 +696,59 @@ const revokeLocalSessionRecord = (db, session, motivo) => {
   notify('SessaoUsuario', 'update', sessions[index]);
 };
 
+const enforceLocalSingleSession = (db, { user, currentSessionId, groupId, empresaId, timestamp }) => {
+  const config = resolveLocalSingleSessionConfig({
+    securityConfigs: getEntityStore(db, 'ConfiguracaoSeguranca'),
+    systemConfigs: getEntityStore(db, 'ConfiguracaoSistema'),
+    groupId,
+    empresaId,
+  });
+  const sessions = getEntityStore(db, 'SessaoUsuario');
+  const revoked = buildLocalSingleSessionRevocations({
+    sessions,
+    userId: user?.id,
+    currentSessionId,
+    groupId,
+    enabled: config.enabled,
+    timestamp,
+  });
+  for (const record of revoked) {
+    const index = sessions.findIndex((item) => String(item.id) === String(record.id));
+    if (index >= 0) sessions[index] = record;
+  }
+  if (revoked.length === 0) return { config, revoked, audit: null };
+  const audit = {
+    id: makeId('audit'),
+    usuario: user?.full_name || user?.email || 'Usuario Local',
+    usuario_id: user?.id || null,
+    acao: 'Revogacao',
+    modulo: 'Sistema Local',
+    tipo_auditoria: 'seguranca',
+    entidade: 'SessaoUsuario',
+    registro_id: currentSessionId,
+    descricao: 'Sessoes simultaneas revogadas pela politica de sessao unica',
+    empresa_id: empresaId || null,
+    group_id: groupId,
+    dados_novos: {
+      quantidade: revoked.length,
+      regra: 'seg_sessao_unica',
+      origem_configuracao: config.source,
+    },
+    sucesso: true,
+    local: true,
+    created_date: timestamp,
+    updated_date: timestamp,
+    data_hora: timestamp,
+  };
+  getEntityStore(db, 'AuditLog').unshift(audit);
+  return { config, revoked, audit };
+};
+
+const notifyLocalSingleSession = ({ revoked = [], audit = null } = {}) => {
+  revoked.forEach((record) => notify('SessaoUsuario', 'update', record));
+  if (audit) notify('AuditLog', 'create', audit);
+};
+
 const ensureLocalActiveSession = async (user) => {
   const authState = readLocalAuthState(safeStorage);
   const sessaoId = safeStorage.getItem(LOCAL_SESSION_ID_KEY) || authState.sessao_id || null;
@@ -723,15 +776,24 @@ const ensureLocalActiveSession = async (user) => {
     const sessions = getEntityStore(db, 'SessaoUsuario');
     const index = sessions.findIndex((item) => String(item.id) === String(session.id));
     if (index < 0) throw createAuthDeniedError({ reason: 'session_not_found', type: 'auth_required' });
+    const timestamp = now();
+    const singleSession = enforceLocalSingleSession(db, {
+      user,
+      currentSessionId: session.id,
+      groupId: user.grupo_atual_id || user.grupo_padrao_id || null,
+      empresaId: user.empresa_atual_id || user.empresa_padrao_id || null,
+      timestamp,
+    });
     session = {
       ...sessions[index],
-      data_hora_ultimo_acesso: now(),
+      data_hora_ultimo_acesso: timestamp,
       ativa: true,
       status: 'Ativa',
-      updated_date: now(),
+      updated_date: timestamp,
     };
     sessions[index] = session;
     saveDbStrict(db);
+    notifyLocalSingleSession(singleSession);
     writeLocalAuthState({ logged_in: true, sessao_id: String(session.id || sessaoId) }, safeStorage);
     return session;
   }
@@ -745,8 +807,16 @@ const ensureLocalActiveSession = async (user) => {
     throw createAuthDeniedError({ reason: 'company_outside_group', type: 'auth_required' });
   }
   const timestamp = now();
+  const sessionId = makeId('sessao');
+  const singleSession = enforceLocalSingleSession(db, {
+    user,
+    currentSessionId: sessionId,
+    groupId,
+    empresaId,
+    timestamp,
+  });
   session = {
-    id: makeId('sessao'),
+    id: sessionId,
     usuario_id: user.id,
     usuario_email: user.email,
     ativa: true,
@@ -783,6 +853,7 @@ const ensureLocalActiveSession = async (user) => {
     data_hora: timestamp,
   });
   saveDbStrict(db);
+  notifyLocalSingleSession(singleSession);
   notify('SessaoUsuario', 'create', session);
   notify('AuditLog', 'create', getEntityStore(db, 'AuditLog')[0]);
   writeLocalAuthState({ logged_in: true, sessao_id: String(session.id) }, safeStorage);

@@ -93,6 +93,83 @@ export const buildLocalAccessVersion = (user, profile) => {
   })}`;
 };
 
+const toEnabledFlag = (value) => value === true
+  || value === 1
+  || ['true', 'sim', 'ativo', '1'].includes(stripAccents(value));
+
+const latestConfig = (configs) => [...configs].sort((left, right) => (
+  new Date(right?.updated_date || right?.created_date || 0).getTime()
+  - new Date(left?.updated_date || left?.created_date || 0).getTime()
+))[0] || null;
+
+export const resolveLocalSingleSessionConfig = ({
+  securityConfigs = [],
+  systemConfigs = [],
+  groupId = null,
+  empresaId = null,
+} = {}) => {
+  if (!groupId) return { enabled: false, source: 'default', configId: null };
+  const sameGroup = (item) => String(item?.group_id || item?.grupo_id || '') === String(groupId);
+  const companyScoped = (item) => empresaId && String(item?.empresa_id || '') === String(empresaId);
+  const groupScoped = (item) => !item?.empresa_id;
+  const security = (Array.isArray(securityConfigs) ? securityConfigs : []).filter(sameGroup);
+  const mirrors = (Array.isArray(systemConfigs) ? systemConfigs : [])
+    .filter((item) => sameGroup(item) && item?.chave === 'seg_sessao_unica');
+  const candidates = [
+    { record: latestConfig(security.filter(companyScoped)), field: 'sessao_unica', source: 'ConfiguracaoSeguranca:empresa' },
+    { record: latestConfig(mirrors.filter(companyScoped)), field: 'ativa', source: 'ConfiguracaoSistema:empresa' },
+    { record: latestConfig(security.filter(groupScoped)), field: 'sessao_unica', source: 'ConfiguracaoSeguranca:grupo' },
+    { record: latestConfig(mirrors.filter(groupScoped)), field: 'ativa', source: 'ConfiguracaoSistema:grupo' },
+  ];
+  const selected = candidates.find((candidate) => candidate.record);
+  if (!selected) return { enabled: false, source: 'default', configId: null };
+  return {
+    enabled: toEnabledFlag(selected.record[selected.field]),
+    source: selected.source,
+    configId: selected.record.id || null,
+  };
+};
+
+/**
+ * @param {{
+ *   sessions?: Array<Record<string, any>>,
+ *   userId?: string | null,
+ *   currentSessionId?: string | null,
+ *   groupId?: string | null,
+ *   enabled?: boolean,
+ *   timestamp?: string,
+ * }} options
+ * @returns {Array<Record<string, any>>}
+ */
+export const buildLocalSingleSessionRevocations = ({
+  sessions = [],
+  userId,
+  currentSessionId,
+  groupId,
+  enabled = false,
+  timestamp = new Date().toISOString(),
+} = {}) => {
+  if (!enabled || !userId || !currentSessionId || !groupId) return [];
+  return (Array.isArray(sessions) ? sessions : [])
+    .filter((session) => (
+      session?.ativa === true
+      && String(session.usuario_id || '') === String(userId)
+      && (
+        !session.group_id && !session.grupo_id
+        || String(session.group_id || session.grupo_id) === String(groupId)
+      )
+      && String(session.id || '') !== String(currentSessionId)
+    ))
+    .map((session) => ({
+      ...session,
+      ativa: false,
+      status: 'Revogada',
+      data_hora_encerramento: timestamp,
+      motivo_encerramento: 'Sessao unica: novo login',
+      updated_date: timestamp,
+    }));
+};
+
 const firstActiveId = (list, idField) => {
   const match = (Array.isArray(list) ? list : []).find((item) => item && item[idField] && item.ativo !== false);
   return match?.[idField] || null;
