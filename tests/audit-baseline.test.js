@@ -87,7 +87,7 @@ test('group company synchronization fails closed outside the resolved scope', as
 
 test('multi-company backfill only scans the resolved group and known entities', async () => {
   const backfillSource = await readFile(new URL('../base44/functions/backfillGroupEmpresa/entry.ts', import.meta.url), 'utf8');
-  const adminSource = await readFile(new URL('../src/components/administracao-sistema/AdminTabs.jsx', import.meta.url), 'utf8');
+  const adminSource = await readFile(new URL('../src/components/administracao-sistema/AdminFerramentas.jsx', import.meta.url), 'utf8');
 
   assert.match(backfillSource, /DEPLOY_AUDIT_TOKEN/);
   assert.match(backfillSource, /requireEntityGuard/);
@@ -119,7 +119,7 @@ test('multi-company seed requires explicit scope or controlled empty initializat
 
 test('administrative seed requires explicit multi-company scope and safe auditing', async () => {
   const seedSource = await readFile(new URL('../base44/functions/seedData/entry.ts', import.meta.url), 'utf8');
-  const adminSource = await readFile(new URL('../src/components/administracao-sistema/AdminTabs.jsx', import.meta.url), 'utf8');
+  const adminSource = await readFile(new URL('../src/components/administracao-sistema/AdminFerramentas.jsx', import.meta.url), 'utf8');
 
   assert.match(seedSource, /DEPLOY_AUDIT_TOKEN/);
   assert.match(seedSource, /completeGuardCallScope/);
@@ -138,11 +138,12 @@ test('administrative seed requires explicit multi-company scope and safe auditin
 });
 
 test('administrative tools align granular RBAC, group propagation and dry-run safety', async () => {
-  const adminSource = await readFile(new URL('../src/components/administracao-sistema/AdminTabs.jsx', import.meta.url), 'utf8');
+  const adminSource = await readFile(new URL('../src/components/administracao-sistema/AdminFerramentas.jsx', import.meta.url), 'utf8');
+  const tabsSource = await readFile(new URL('../src/components/administracao-sistema/AdminTabs.jsx', import.meta.url), 'utf8');
   const seedSource = await readFile(new URL('../base44/functions/seedData/entry.ts', import.meta.url), 'utf8');
   const backfillSource = await readFile(new URL('../base44/functions/backfillGroupEmpresa/entry.ts', import.meta.url), 'utf8');
 
-  assert.match(adminSource, /canAccessFerramentas = canAccess\("Ferramentas"\)/);
+  assert.match(tabsSource, /canAccessFerramentas = canAccess\(FERRAMENTAS_TAB\.perm\)/);
   assert.match(adminSource, /podeExecutarFerramenta = isAdminUser \|\| hasPermission\("Sistema", "Ferramentas", "executar"\)/);
   assert.match(adminSource, /podeEditarFerramenta = isAdminUser \|\| hasPermission\("Sistema", "Ferramentas", "editar"\)/);
   assert.match(adminSource, /multiCompany: !empresaId/);
@@ -157,6 +158,7 @@ test('administrative tools align granular RBAC, group propagation and dry-run sa
 
 test('administration page honors granular system RBAC without weakening the backend guard', async () => {
   const pageSource = await readFile(new URL('../src/pages/AdministracaoSistema.jsx', import.meta.url), 'utf8');
+  const tabsSource = await readFile(new URL('../src/components/administracao-sistema/AdminTabs.jsx', import.meta.url), 'utf8');
 
   assert.match(pageSource, /hasPermission\('Sistema', null, 'visualizar'\)/);
   assert.match(pageSource, /canViewSystem \? 'admin_sistema_aberto' : 'admin_sistema_bloqueado'/);
@@ -164,6 +166,13 @@ test('administration page honors granular system RBAC without weakening the back
   assert.match(pageSource, /if \(isAdminUser\) return content/);
   assert.doesNotMatch(pageSource, /PortalCliente/);
   assert.doesNotMatch(pageSource, /if \(!isAdminUser\)/);
+  assert.match(pageSource, /isRequestedTabValid=\{isRequestedTabValid\}/);
+  assert.match(tabsSource, /aba_inicial_sem_permissao_ou_inexistente/);
+  assert.match(tabsSource, /const firstAllowedTab = allowedTabs\[0\]\?\.value \|\| ""/);
+  assert.match(tabsSource, /syncTabUrl\(nextTab\)/);
+  assert.match(tabsSource, /data-permission=\{getTabPermissionKey\(tab\)\}/);
+  assert.match(tabsSource, /data-permission=\{getTabPermissionKey\(FERRAMENTAS_TAB\)\}/);
+  assert.doesNotMatch(tabsSource, /visibleTabs\[0\]\?\.value \|\| "gerais"/);
 });
 
 test('generic read callers send canonical group and company context', async () => {

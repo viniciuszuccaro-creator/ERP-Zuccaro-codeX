@@ -42,6 +42,7 @@ export default function AdministracaoSistema() {
   const params = new URLSearchParams(window.location.search);
   const rawTab = (params.get("tab") || "gerais").toLowerCase().trim();
   const initialTab = TAB_MAP[rawTab] || 'gerais';
+  const isRequestedTabValid = Boolean(TAB_MAP[rawTab]);
   const isAdminUser = isAdmin();
   const canViewSystem = isAdminUser || (!isLoading && hasPermission('Sistema', null, 'visualizar'));
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
@@ -101,6 +102,8 @@ export default function AdministracaoSistema() {
         <div className="p-4 md:p-6 w-full h-full">
           <AdminTabs
             initialTab={initialTab}
+            requestedTab={rawTab}
+            isRequestedTabValid={isRequestedTabValid}
             isAdmin={isAdmin}
             empresaAtual={empresaAtual}
             grupoAtual={grupoAtual}

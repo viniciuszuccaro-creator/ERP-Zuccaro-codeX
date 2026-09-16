@@ -8909,3 +8909,18 @@ Checklist inicial:
 - Typecheck: zero diagnosticos nos arquivos do lote; o passivo global conhecido ficou em 1.600 e nao foi mascarado.
 - Commit de implementacao: `97d0e373` (`Libera administracao por RBAC granular`).
 - Proximo passo P0: proteger e auditar a selecao inicial por `?tab=`, normalizando URL e aba ativa para a primeira opcao autorizada e alinhando os marcadores de permissao com as chaves canonicas existentes.
+
+## 2026-09-16 - Gate 2: abas administrativas fail-closed
+
+- Objetivo: impedir que URL direta mantenha aba administrativa inexistente ou nao autorizada e alinhar a navegacao visivel ao RBAC efetivo.
+- Causa raiz: `AdminTabs` escondia triggers sem permissao, mas preservava `?tab=` e estado interno negados; o fallback considerava apenas abas comuns e podia abrir `gerais` para perfil autorizado exclusivamente em `Ferramentas`.
+- Arquivos alterados: `src/pages/AdministracaoSistema.jsx`, `src/components/administracao-sistema/AdminTabs.jsx`, `src/components/administracao-sistema/AdminFerramentas.jsx`, `tests/audit-baseline.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e `STATUS_DO_PROJETO.md`.
+- Estruturas reutilizadas: `TAB_MAP`, `AdminTabs`, `ProtectedSection`, `usePermissions`, `AuditLog` e o componente interno `AdminFerramentas`. O novo arquivo e somente a extracao exigida da implementacao existente, nao uma tela ou funcionalidade paralela.
+- RBAC: a resolucao inicial usa somente abas permitidas por `Sistema.<secao>.visualizar`; URL invalida ou negada nunca libera conteudo. Marcadores visuais agora usam as mesmas chaves canonicas da verificacao real.
+- Multiempresa/auditoria: acesso inicial e troca de aba registram Grupo, Empresa, aba solicitada sanitizada, aba anterior, resultado e motivo controlado. A deduplicacao impede repeticao do mesmo evento durante rerender.
+- Compatibilidade: aliases continuam aceitos e sao normalizados; administradores preservam todas as abas; perfil somente Ferramentas recebe o fallback correto; Integrações e IA mantiveram seus estados internos padrao.
+- Refatoracao: `AdminTabs.jsx` caiu de 589 para aproximadamente 300 linhas; `AdminFerramentas.jsx` preserva integralmente seed, dry-run, aplicacao, RBAC e auditoria existentes.
+- Testes: regressao focada 17/17 e suite completa 563/563 aprovadas. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram.
+- Typecheck: zero diagnosticos nos arquivos do lote; o passivo global conhecido ficou em 1.598 e nao foi mascarado.
+- Commit de implementacao: pendente neste fechamento.
+- Proximo passo P0: revisar criar/editar perfil e vincular usuario na Gestao de Acessos, comprovando botao, persistencia, `entityGuard`, Grupo/Empresa e auditoria antes/depois.

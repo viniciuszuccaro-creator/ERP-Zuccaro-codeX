@@ -1318,3 +1318,18 @@ Lote concluido em 2026-09-16 na pagina e nas guardas existentes, sem criar rota,
 
 Proxima frente P0: normalizar e auditar o acesso direto por `?tab=` para a primeira aba autorizada e alinhar os marcadores `data-permission` das abas com as chaves RBAC canonicas ja utilizadas.
 
+### Gate 2 - Abas administrativas fail-closed
+
+Lote concluido em 2026-09-16 na navegacao administrativa existente.
+
+- A aba solicitada por `?tab=` agora e validada contra a lista efetivamente autorizada antes de se tornar ativa.
+- Alias valido e normalizado para a URL canonica; aba inexistente ou sem permissao gera auditoria de seguranca e seleciona somente a primeira aba liberada.
+- Perfil com acesso exclusivo a `Ferramentas` recebe `ferramentas` como fallback; `gerais` nao e mais usado como acesso implicito.
+- Perfil sem nenhuma aba reconhecida nao recebe conteudo administrativo e ve um estado vazio controlado.
+- Os marcadores `data-permission` usam as mesmas secoes canonicas consultadas por `hasPermission` e `ProtectedSection`.
+- Refatoracao obrigatoria: o componente existente `AdminFerramentas` foi extraido de `AdminTabs.jsx`, reduzindo o orquestrador de 589 para aproximadamente 300 linhas sem alterar props, botoes, backend ou comportamento.
+- Testes focados passaram 17/17 e a suite completa passou 563/563; auditoria baseline, lint, build e verificacao de diff passaram.
+- Os arquivos do lote possuem zero diagnosticos de TypeScript; o passivo global conhecido ficou em 1.598.
+
+Proxima frente P0: revisar os botoes e persistencias da Gestao de Acessos, comecando por criar/editar perfil e vincular usuario, confirmando permissao granular no frontend, `entityGuard` backend, contexto Grupo/Empresa e auditoria antes/depois.
+
