@@ -10,7 +10,12 @@
     "lint": "eslint .",
     "typecheck": "tsc -p ./jsconfig.json",
     "preview": "vite preview",
-    "test": "node --test"
+    "test": "node --test 'tests/**/*.test.js'",
+    "server:dev": "npm --prefix server run dev",
+    "server:build": "npm --prefix server run build",
+    "server:test": "npm --prefix server run test",
+    "server:migrate": "npm --prefix server run migrate",
+    "server:typecheck": "npm --prefix server run typecheck"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.26",

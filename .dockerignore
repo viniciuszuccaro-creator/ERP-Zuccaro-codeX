@@ -1,0 +1,10 @@
+node_modules
+dist
+.git
+.env
+.env.*
+!.env.example
+coverage
+*.log
+server/node_modules
+server/dist

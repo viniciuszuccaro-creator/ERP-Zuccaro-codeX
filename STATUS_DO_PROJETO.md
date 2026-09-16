@@ -1,3 +1,19 @@
+### ERP-RUNTIME-01 / Fundacao Hostinger + Supabase self-hosted
+
+- Objetivo: criar a fundacao do runtime oficial (API/BFF + Postgres + facade HTTP) sem migrar o ERP inteiro e sem deploy no VPS.
+- Decisao de infra: Hostinger VPS + Supabase self-hosted + PostgreSQL + BFF proprio + frontend React atual. GitHub = fonte oficial. Base44 = sandbox/referencia apenas.
+- Documento: `docs/ERP_RUNTIME_01.md`.
+- Piloto: entidade **Marca** (cadastro simples; fora de financeiro/fiscal/estoque).
+- Schema: migrations `001_foundation` (groups/empresas/profiles/audit_logs/integration_events), `002_rls_foundation` (fail-closed), `003_marcas_pilot`.
+- Feature flag: `VITE_ERP_BACKEND=local|http|remote` + `VITE_ERP_API_BASE_URL`; default `local` (localBase44 preservado).
+- HttpApiClient: UI → facade → BFF → repository → PostgreSQL (somente Marca no modo http; demais entidades no localBase44).
+- Docker: `server/Dockerfile`, `Dockerfile.frontend`, `docker-compose.erp.yml` (separado do compose oficial do Supabase).
+- Segredos: apenas `.env.example` / `server/.env.example` com `CHANGE_ME`; nenhum secret real; sem SSH no VPS; sem migrate remoto.
+- Validacoes: server typecheck/test/build OK (8 pass + 1 skip Postgres); frontend `npm test` 567 pass; lint OK; build OK; `audit:baseline` OK; `git diff --check` OK; typecheck frontend mantém baseline histórico (EXIT 2, sem novo alvo neste lote).
+- Decisao: **`ERP_RUNTIME_01_READY_FOR_DEV_DEPLOY`**.
+- Proximo passo (humano): aplicar migrate/DEV na Hostinger; depois ERP-RUNTIME-02. PARAR sem deploy neste agente.
+- Branch: `cursor/erp-runtime-01-392b`.
+
 ### GO-LIVE-HML-01 / Reconciliacao segura com main (Opcao A)
 - Objetivo: integrar `origin/main` na branch `cursor/go-live-hml-01-392b` sem force push e sem descartar Codex.
 - Estrategia: merge de `origin/main` (`ae774cd7`) na branch HML; historico preservado.
