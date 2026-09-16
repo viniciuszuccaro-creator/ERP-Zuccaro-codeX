@@ -1242,3 +1242,12 @@ Proxima frente P0: implementar recuperacao de acesso no fluxo de autenticacao ex
 - Commit: `f7d9e174`.
 - Pendente no Gate 1: logs remotos anteriores a autenticacao exigem evento/callback server-side do provedor; nao sera criado endpoint anonimo confiando em dados enviados pelo navegador.
 
+### Diagnostico de eventos remotos de autenticacao - 2026-09-16
+
+- O contrato instalado do SDK Base44 nao oferece listener, webhook ou callback para sucesso/falha de login; `onAuthStateChanged` nao existe.
+- `appLogs` e `analytics` cobrem atividade posterior a inicializacao/autenticacao, nao a tentativa recusada pelo provedor.
+- `securityAlerts` analisa registros existentes e exige usuario/escopo; nao deve ser transformado em coletor anonimo de login.
+- `base44/config.jsonc` permanece ausente, portanto o clone nao possui configuracao remota oficial para consultar ou publicar.
+- Nenhum endpoint anonimo ou evento informado pelo navegador sera aceito como auditoria confiavel.
+- Proxima frente P0: consolidar testes do Gate 1 para login local, logout, expiracao, conta inativa/desativada, contexto ausente e sessao revogada; manter recuperacao e logs remotos explicitamente bloqueados.
+

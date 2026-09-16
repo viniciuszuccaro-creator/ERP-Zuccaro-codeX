@@ -8821,3 +8821,15 @@ Checklist inicial:
 - Typecheck: zero diagnosticos nos arquivos do lote; o passivo global permaneceu em 1.603, sem regressao ou mascaramento.
 - Commit de implementacao: `f7d9e174` (`Audita negativas de autenticacao local`).
 - Proximo passo P0: obter do provedor o evento/callback server-side de login e tentativa negada para fechar os logs remotos do Gate 1, sem aceitar auditoria anonima forjada pelo navegador.
+
+## 2026-09-16 - Diagnostico de eventos remotos de autenticacao
+
+- Objetivo: confirmar se o SDK/configuracao Base44 disponivel oferece callback confiavel de login e tentativa negada antes de alterar o runtime.
+- Fontes verificadas: contrato `auth` do SDK instalado, referencias de `appLogs`, `analytics`, automacoes Base44, pacote `@base44/sdk`, funcao `securityAlerts` e consumidores atuais.
+- Resultado: o contrato `auth` expoe login, logout, sessao, registro, OTP e reset de senha, mas nao expoe listener, webhook ou callback de sucesso/falha de login. `onAuthStateChanged` nao existe.
+- Limite de logging: `appLogs` e `analytics` registram atividade depois da inicializacao/autenticacao; nao recebem a tentativa recusada pelo provedor. `securityAlerts` apenas analisa `AuditLog` existente e exige identidade/escopo, portanto nao e coletor de login.
+- Configuracao: `base44/config.jsonc` continua ausente neste clone, impedindo consultar ou publicar configuracao remota pelo fluxo oficial do projeto.
+- Decisao de seguranca: nenhum endpoint anonimo, segredo compartilhado no navegador ou evento forjado pelo frontend foi criado. A auditoria local concluida no lote anterior permanece ativa.
+- Validacao: lote exclusivamente documental; `git diff --check` executado no fechamento. Testes de runtime dispensados porque nenhum codigo de aplicacao foi alterado.
+- Bloqueios remotos do Gate 1: revogacao global apos reset e logs de tentativa anterior ao login dependem de recurso administrativo/callback do provedor ou da migracao de autenticacao planejada.
+- Proximo passo P0: consolidar a matriz automatizada dos controles locais do Gate 1, marcando separadamente os cenarios remotos bloqueados, sem declarar o Gate concluido.
