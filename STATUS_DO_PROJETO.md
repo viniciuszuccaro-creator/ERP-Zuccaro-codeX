@@ -8893,5 +8893,5 @@ Checklist inicial:
 - Testes: 28/28 testes focados e 562/562 na suite completa passaram. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o baseline permaneceu em 1.028 catches operacionais vazios.
 - Typecheck: zero diagnosticos nos arquivos do lote; o passivo global permaneceu em 1.603, sem regressao ou mascaramento.
 - Gate 1: os controles locais executaveis estao cobertos; recuperacao com revogacao global e logs remotos anteriores ao login permanecem bloqueados pelo contrato do provedor ja documentado.
-- Commit: sera registrado imediatamente apos a gravacao deste lote.
+- Commit de implementacao: `5e77717e` (`Aplica timeouts configuraveis de sessao`).
 - Proximo passo P0: iniciar o Gate 2 pela matriz RBAC da Administracao, validando pagina, aba, botao e acao backend existentes sem criar estrutura paralela.
