@@ -2,7 +2,9 @@
 
 - Objetivo: expandir o padrao Marca (R01) para cadastros base sem migrar o ERP inteiro e sem deploy VPS.
 - Branch: `cursor/erp-runtime-02-392b` (base main `c943ba09`).
+- SHA: `6986dccf` (+ commit de status/validacao se houver).
 - Inventario real: `UnidadeMedida`, `GrupoProduto`, `SetorAtividade`, `Produto`, `TabelaPreco`, `Fornecedor`; Categoria/Fabricante/Subgrupo **nao existem**.
+- Classificacao: A = UnidadeMedida/GrupoProduto/SetorAtividade/Marca; B = Produto base; C/adiados = TabelaPreco, Fornecedor, Produto operacional.
 - Implementado: UnidadeMedida, GrupoProduto, SetorAtividade (CRUD HTTP+Postgres+audit+tenant); Produto cadastro-base (schema/API/repo; fora do piloto HTTP frontend).
 - Adiado: TabelaPreco (regras/historico), Fornecedor (Compras/Financeiro), Produto operacional (estoque/custo/fiscal).
 - Migrations novas: `004_tenant_integrity`, `005_cadastros_simples`, `006_produtos_base` (001-003 imutaveis).
@@ -11,9 +13,10 @@
 - HttpApiClient: `HTTP_PILOT_ENTITIES` = Marca, UnidadeMedida, GrupoProduto, SetorAtividade; fallback localBase44 preservado.
 - Docs: `docs/ERP_RUNTIME_02.md`, `docs/ERP_RUNTIME_02_CADASTROS_MATRIX.md`, `docs/ERP_RUNTIME_02_DEV_RUNBOOK.md`.
 - Seed sintetico A/B atualizado; sem dados reais CPA.
-- Proibicoes: sem SSH/VPS migrate, sem merge main, sem RUNTIME-03, sem remover Base44.
-- Decisao: registrar apos validacoes (`ERP_RUNTIME_02_READY_FOR_REVIEW` ou `BLOCKED`).
-- Proximo (humano, apos review/merge): backup + migrate 004-006 no VPS via runbook; sem DNS/HTTPS neste passo.
+- Validacoes: server 13 pass + 1 skip; HttpApiClient 7/7; suite frontend 570/570; localEntityGuard+entity 24/24; site-cpa HML 16/16; lint OK; build frontend OK; build/typecheck server OK; audit:baseline OK; typecheck frontend baseline historico; `git diff --check` OK; secrets apenas CHANGE_ME.
+- Proibicoes cumpridas: sem SSH/VPS migrate, sem merge main, sem RUNTIME-03, sem remover Base44.
+- Decisao: **`ERP_RUNTIME_02_READY_FOR_REVIEW`**.
+- Proximo (humano, apos review/merge): backup pg_dump + migrate 004-006 no VPS via `docs/ERP_RUNTIME_02_DEV_RUNBOOK.md`; sem DNS/HTTPS neste passo.
 
 ### ERP-DEV-DEPLOY-01 / Incorporacao segura na main
 
