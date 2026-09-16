@@ -8922,5 +8922,5 @@ Checklist inicial:
 - Refatoracao: `AdminTabs.jsx` caiu de 589 para aproximadamente 300 linhas; `AdminFerramentas.jsx` preserva integralmente seed, dry-run, aplicacao, RBAC e auditoria existentes.
 - Testes: regressao focada 17/17 e suite completa 563/563 aprovadas. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram.
 - Typecheck: zero diagnosticos nos arquivos do lote; o passivo global conhecido ficou em 1.598 e nao foi mascarado.
-- Commit de implementacao: pendente neste fechamento.
+- Commit de implementacao: `2f082dc4` (`Protege abas administrativas por RBAC`).
 - Proximo passo P0: revisar criar/editar perfil e vincular usuario na Gestao de Acessos, comprovando botao, persistencia, `entityGuard`, Grupo/Empresa e auditoria antes/depois.
