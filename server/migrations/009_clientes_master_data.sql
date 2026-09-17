@@ -10,6 +10,10 @@ CREATE TABLE IF NOT EXISTS entity_code_sequences (
   PRIMARY KEY (group_id, entity_name)
 );
 
+ALTER TABLE entity_code_sequences ENABLE ROW LEVEL SECURITY;
+ALTER TABLE entity_code_sequences FORCE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE entity_code_sequences FROM PUBLIC;
+
 CREATE OR REPLACE FUNCTION reserve_entity_codigo(p_group_id UUID, p_entity_name TEXT, p_width INT DEFAULT 6)
 RETURNS TEXT
 LANGUAGE plpgsql
@@ -27,6 +31,10 @@ BEGIN
   RETURN lpad(v_next::text, GREATEST(p_width, length(v_next::text)), '0');
 END;
 $$;
+
+-- A função é executada como invoker: roles comuns continuam submetidas ao RLS
+-- fail-closed (sem policies). O BFF usa a role privilegiada já definida em 002.
+REVOKE ALL ON FUNCTION reserve_entity_codigo(UUID, TEXT, INT) FROM PUBLIC;
 
 CREATE TABLE IF NOT EXISTS clientes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -63,6 +71,11 @@ CREATE TABLE IF NOT EXISTS clientes (
     OR (tipo = 'Pessoa Jurídica' AND (documento_normalizado IS NULL OR length(documento_normalizado) = 14))
   )
 );
+
+-- Snapshot de permissões do PerfilAcesso canônico para enforcement no BFF.
+-- O formato permanece { Modulo: { secao: [acoes] } }, igual ao entityGuard.
+ALTER TABLE profiles
+  ADD COLUMN IF NOT EXISTS permissoes JSONB NOT NULL DEFAULT '{}'::jsonb;
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_clientes_group_codigo
   ON clientes (group_id, codigo);
@@ -104,6 +117,33 @@ CREATE TABLE IF NOT EXISTS cliente_empresas (
   UNIQUE (cliente_id, empresa_id)
 );
 
+CREATE OR REPLACE FUNCTION assert_cliente_empresa_same_tenant()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM clientes c
+    WHERE c.id = NEW.cliente_id
+      AND c.group_id = NEW.group_id
+  ) THEN
+    RAISE EXCEPTION 'TENANT_FK_MISMATCH: cliente_id % does not belong to group_id %',
+      NEW.cliente_id, NEW.group_id;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM empresas e
+    WHERE e.id = NEW.empresa_id
+      AND e.group_id = NEW.group_id
+  ) THEN
+    RAISE EXCEPTION 'TENANT_FK_MISMATCH: empresa_id % does not belong to group_id %',
+      NEW.empresa_id, NEW.group_id;
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE INDEX IF NOT EXISTS idx_cliente_empresas_group ON cliente_empresas(group_id);
 CREATE INDEX IF NOT EXISTS idx_cliente_empresas_empresa ON cliente_empresas(empresa_id);
 CREATE INDEX IF NOT EXISTS idx_cliente_empresas_cliente ON cliente_empresas(cliente_id);
@@ -115,8 +155,12 @@ CREATE TRIGGER trg_cliente_empresas_updated_at
 
 DROP TRIGGER IF EXISTS trg_cliente_empresas_tenant ON cliente_empresas;
 CREATE TRIGGER trg_cliente_empresas_tenant
-  BEFORE INSERT OR UPDATE OF group_id, empresa_id ON cliente_empresas
-  FOR EACH ROW EXECUTE PROCEDURE assert_empresa_belongs_to_group();
+  BEFORE INSERT OR UPDATE OF group_id, cliente_id, empresa_id ON cliente_empresas
+  FOR EACH ROW EXECUTE PROCEDURE assert_cliente_empresa_same_tenant();
 
 ALTER TABLE cliente_empresas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cliente_empresas FORCE ROW LEVEL SECURITY;
+
+-- Modelo RLS herdado de 002: nenhuma policy permissiva para acesso direto.
+-- Sem BYPASSRLS, clientes/clientes_empresas/sequências retornam zero linhas e
+-- bloqueiam writes. O BFF privilegiado aplica tenant + RBAC na aplicação.
