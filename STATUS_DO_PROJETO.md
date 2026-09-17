@@ -1,3 +1,13 @@
+### ERP-RUNTIME-03 / Seed reconciliation (partial-state) fix
+
+- Objetivo: tornar o seed convergente quando Produto B já existe com `marca_id` legado (`ffffffff`, Grupo A).
+- Causa: `ON CONFLICT DO NOTHING` no Produto não reconciliava partial-state.
+- Estratégia: UPSERT (`DO UPDATE`) **somente** nos IDs sintéticos Produto A `77777777-…` e Produto B `88888888-…`; Marca LEGACY permanece `DO NOTHING` (não move tenant); trigger 008 ativo.
+- Branch: `cursor/runtime03-seed-reconciliation-fix-392b` (base main `548830cb`).
+- Migrations 001–008: imutáveis.
+- Sem Hostinger, sem deploy, sem merge main, sem RUNTIME-04.
+- Decisão: ver relatório final do agente.
+
 ### ERP-RUNTIME-03 / Seed tenant A/B fix — Incorporacao na main
 
 - Objetivo: incorporar `cursor/runtime03-seed-tenant-fix-392b` em `main`.

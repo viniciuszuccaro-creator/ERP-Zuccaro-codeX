@@ -124,4 +124,6 @@ cat /tmp/fk-legacy.json
 
 Nomes "A"/"B" **não** definem tenant. Não mover o legado `ffffffff` para o Grupo B.
 
+**Partial-state:** se Produto B já existir com `marca_id = ffffffff`, a reexecução do seed (UPSERT só no ID `88888888-…`) reconcilia para Marca B REAL. Registros com outros IDs não são alterados.
+
 Rollback: nova migration corretiva; restore só em incidente controlado.

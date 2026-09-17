@@ -41,6 +41,8 @@ Correção no seed (sem migration, sem mover tenant legado):
 | Marca B REAL | `b0b0b0b0-bbbb-4bbb-8bbb-b0b0b0b0b0b0` | Grupo B / Empresa B |
 | Produto B | usa Marca B REAL + FKs B | Grupo B |
 
+**Reconciliação (partial-state):** Produto A/B usam `ON CONFLICT (id) DO UPDATE` **somente** nos IDs sintéticos `77777777-…` e `88888888-…`, para convergir `marca_id` legado → Marca B REAL sem tocar registros reais. Demais entidades do seed: `DO NOTHING`. Trigger 008 permanece ativo.
+
 Constantes: `server/scripts/seedDevIds.ts`.
 
 ## Docs
