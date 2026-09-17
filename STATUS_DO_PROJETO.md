@@ -4,11 +4,14 @@
 - Causa raiz: nome "MARCA TESTE B" não define tenant; `ON CONFLICT DO NOTHING` preservou registro legado no Grupo A; seed RUNTIME-03 reutilizou o ID errado.
 - Branch: `cursor/runtime03-seed-tenant-fix-392b` (base main `e4fb0ed0`).
 - Correção: Marca B REAL `b0b0b0b0-bbbb-4bbb-8bbb-b0b0b0b0b0b0` (Grupo B/Empresa B); legado `ffffffff` permanece/cria no Grupo A; Produto A/B só com FKs do próprio tenant.
-- Migrations 001–008: **imutáveis** (sem alteração).
+- Migrations 001–008: **imutáveis** (diff vazio vs main).
 - Proteção `assert_produto_fk_same_tenant` / `TENANT_FK_MISMATCH`: preservada (testes negativos mantidos).
 - Arquivos: `server/scripts/seed-dev-synthetic.sql`, `server/scripts/seedDevIds.ts`, `server/tests/seed-dev-synthetic.test.ts`, docs/STATUS/runbook.
+- Validacoes: server 28 pass + 1 skip; seed tests OK; runtime01/02/03 OK; suite frontend 570/570; lint OK; build frontend OK; build/typecheck server OK; audit:baseline OK; typecheck frontend baseline histórico; `git diff --check` OK; secrets sem credencial real nos arquivos do lote; migrations 001–008 imutáveis.
+- Seed 1ª/2ª execução: idempotência estrutural (`ON CONFLICT` = inserts) + semântica A/B; apply real no Postgres do VPS fica no runbook (sem Hostinger neste agente).
 - Sem Hostinger, sem deploy, sem merge main, sem RUNTIME-04.
-- Decisão: ver relatório final do agente (`ERP_RUNTIME_03_SEED_TENANT_FIX_READY` ou `BLOCKED`).
+- Decisão: **`ERP_RUNTIME_03_SEED_TENANT_FIX_READY`**.
+- PR: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/10 (draft).
 
 ### ERP-RUNTIME-03 / Incorporacao segura na main
 
