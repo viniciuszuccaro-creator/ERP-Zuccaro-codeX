@@ -6,7 +6,9 @@
 - ProdutoService: paginação, busca, TENANT_MISMATCH + TENANT_FK_MISMATCH, rejeita campos operacionais, auditoria completa.
 - Frontend: Produto **nao** em `HTTP_PILOT_ENTITIES` (apenas prepared).
 - Docs: `docs/ERP_RUNTIME_03.md`, matriz, UI gap, runbook.
-- Decisao: registrar apos validacoes (`ERP_RUNTIME_03_READY_FOR_REVIEW` ou `BLOCKED`).
+- Validacoes: server 23 pass + 1 skip; HttpApiClient 7/7; localEntityGuard 16/16; suite 570/570; lint/builds OK; audit:baseline OK; typecheck frontend baseline; `git diff --check` OK.
+- Decisao: **`ERP_RUNTIME_03_READY_FOR_REVIEW`**.
+- Proximo: review; humano apply 007-008 no VPS via runbook; ativacao HTTP Produto em lote futuro; sem deploy pelo agente.
 
 ### ERP-RUNTIME-02 / Incorporacao audit snapshot fix na main
 
