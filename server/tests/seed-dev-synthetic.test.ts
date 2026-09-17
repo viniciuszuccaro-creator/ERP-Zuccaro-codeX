@@ -145,10 +145,10 @@ test('seed SQL: parents DO NOTHING; Produto A/B e Cliente A/B usam UPSERT conver
   const doNothing = codeOnly.match(/ON CONFLICT \(id\) DO NOTHING/gi)?.length ?? 0;
   const doUpdate = codeOnly.match(/ON CONFLICT \(id\) DO UPDATE SET/gi)?.length ?? 0;
 
-  // 15 originais (groups→produtos) + entity_code_sequences + 3 clientes + cliente_empresas = 20
-  assert.equal(inserts, 20);
+  // 15 originais + sequência + 2 perfis RBAC + 3 clientes + cliente_empresas = 22
+  assert.equal(inserts, 22);
   assert.equal(doNothing, 13, 'groups/empresas/marcas/unidades/grupos/setores = DO NOTHING');
-  assert.equal(doUpdate, 5, 'Produto A/B + Cliente PJ/PF A + Cliente PJ B usam DO UPDATE');
+  assert.equal(doUpdate, 7, 'Produto A/B + perfis RBAC A/B + clientes sintéticos usam DO UPDATE');
 
   assert.match(codeOnly, /WHERE produtos\.id = '77777777-aaaa-4aaa-8aaa-777777777777'/);
   assert.match(codeOnly, /WHERE produtos\.id = '88888888-bbbb-4bbb-8bbb-888888888888'/);
