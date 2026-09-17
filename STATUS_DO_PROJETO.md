@@ -1,3 +1,33 @@
+### ERP-RUNTIME-04 / DEV PRECHECK
+
+- Objetivo: confirmar no PostgreSQL DEV se migrations `001`–`008` estão em `schema_migrations` (bloqueador do diagnóstico).
+- HEAD utilizado: `76fe4ab4` (`origin/main` com diagnóstico RUNTIME-04 incorporado).
+- Ambiente tentado: PostgreSQL DEV (mesmo usado em RUNTIME-01/02/03 no VPS Hostinger).
+- Mecanismo: `server/src/db/migrate.ts` → `schema_migrations` / `node dist/db/migrate.js --status`.
+- Resultado da conexão: **falha de acesso a partir do Cloud Agent**.
+  - `DATABASE_URL` não injetada neste ambiente;
+  - sem `psql`/Docker local apontando ao DEV;
+  - API local `127.0.0.1:3080` indisponível;
+  - sem worker self-hosted conectado;
+  - runbooks existentes (`docs/ERP_RUNTIME_0*_DEV_RUNBOOK.md`, `docs/ERP_DEV_DEPLOY_01.md`) exigem execução **humana no VPS**.
+- Migrations 001–008 (prova no banco): **não verificáveis** → tratadas como **PENDENTE de confirmação**.
+  - 001 — PENDENTE (não confirmada no DEV)
+  - 002 — PENDENTE
+  - 003 — PENDENTE
+  - 004 — PENDENTE
+  - 005 — PENDENTE
+  - 006 — PENDENTE
+  - 007 — PENDENTE
+  - 008 — PENDENTE
+- Integridade mínima das estruturas: **não executada** (sem conexão).
+- Bloqueadores: ausência de credencial/rota segura ao Postgres DEV neste agente (sem expor secrets).
+- Ação segura recomendada (humano no VPS, runbook):
+  1. `cd /opt/erp-zuccaro/server && npm ci && npm run build`
+  2. `node dist/db/migrate.js --status`
+  3. Colar no PR/issue apenas a lista de IDs aplicados (sem senha/URL).
+- Decisão: **`BLOCKED`** — não iniciar implementação Cliente / migration 009.
+- Branch: `cursor/erp-runtime-04-dev-precheck-392b`. Sem Hostinger pelo agente; sem apply automático de migrate.
+
 ### ERP-RUNTIME-04 / Diagnóstico registrado (sem implementação)
 
 - Objetivo: registrar o diagnóstico completo do próximo lote após RUNTIME-03, sem editar runtime/código de Cliente.
