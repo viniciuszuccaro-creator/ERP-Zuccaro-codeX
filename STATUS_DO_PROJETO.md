@@ -1,3 +1,14 @@
+### ERP-RUNTIME-03 / Incorporacao segura na main
+
+- Objetivo: incorporar `cursor/erp-runtime-03-392b` em `main` preservando RUNTIME-01/02 e trabalhos paralelos.
+- Antes: `origin/main` = `411edc6a`; branch = `cbb12e7a`; merge-base = `411edc6a` (0 atras / 1 a frente).
+- Conflitos: nenhum — fast-forward direto.
+- Preservado: 007/008, ProdutoService, paginação, TENANT_FK_MISMATCH, audit snapshots, prepared HttpApiClient (Produto fora do piloto HTTP), Marca/Unidade/Grupo/Setor, localBase44, ERP-SITE, B2B.
+- 001–006: imutaveis (diff vazio byte-for-byte vs main).
+- Validacoes pre-merge: server 23 pass + 1 skip; HttpApiClient 7/7; localEntityGuard 16/16; suite 570/570; lint/builds OK; FK cross-tenant e TENANT_MISMATCH OK.
+- Decisao: `ERP_RUNTIME_03_MERGED_TO_MAIN` apos push.
+- Proximo: humano apply 007-008 no VPS via runbook; sem deploy pelo agente; sem RUNTIME-04.
+
 ### ERP-RUNTIME-03 / Produto MASTER DATA e cadastros estruturais
 
 - Objetivo: consolidar Produto como MASTER DATA (A/B/C + D cadastral) sem estoque/preço/custo/fiscal operacional.
