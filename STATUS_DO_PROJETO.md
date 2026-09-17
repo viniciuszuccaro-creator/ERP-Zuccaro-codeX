@@ -1,3 +1,15 @@
+### ERP-RUNTIME-03 / Seed tenant A/B fix
+
+- Objetivo: corrigir seed sintético que criava Produto B (Grupo B) com Marca `ffffffff` pertencente ao Grupo A no DEV.
+- Causa raiz: nome "MARCA TESTE B" não define tenant; `ON CONFLICT DO NOTHING` preservou registro legado no Grupo A; seed RUNTIME-03 reutilizou o ID errado.
+- Branch: `cursor/runtime03-seed-tenant-fix-392b` (base main `e4fb0ed0`).
+- Correção: Marca B REAL `b0b0b0b0-bbbb-4bbb-8bbb-b0b0b0b0b0b0` (Grupo B/Empresa B); legado `ffffffff` permanece/cria no Grupo A; Produto A/B só com FKs do próprio tenant.
+- Migrations 001–008: **imutáveis** (sem alteração).
+- Proteção `assert_produto_fk_same_tenant` / `TENANT_FK_MISMATCH`: preservada (testes negativos mantidos).
+- Arquivos: `server/scripts/seed-dev-synthetic.sql`, `server/scripts/seedDevIds.ts`, `server/tests/seed-dev-synthetic.test.ts`, docs/STATUS/runbook.
+- Sem Hostinger, sem deploy, sem merge main, sem RUNTIME-04.
+- Decisão: ver relatório final do agente (`ERP_RUNTIME_03_SEED_TENANT_FIX_READY` ou `BLOCKED`).
+
 ### ERP-RUNTIME-03 / Incorporacao segura na main
 
 - Objetivo: incorporar `cursor/erp-runtime-03-392b` em `main` preservando RUNTIME-01/02 e trabalhos paralelos.

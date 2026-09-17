@@ -13,7 +13,7 @@ git fetch origin
 ```
 
 ```bash
-git pull origin cursor/erp-runtime-03-392b
+git pull origin cursor/runtime03-seed-tenant-fix-392b
 ```
 
 ```bash
@@ -21,7 +21,7 @@ mkdir -p /opt/erp-zuccaro/backups
 ```
 
 ```bash
-docker exec supabase-db pg_dump -U postgres -d postgres > /opt/erp-zuccaro/backups/pre-runtime03-$(date +%Y%m%d%H%M).sql
+docker exec supabase-db pg_dump -U postgres -d postgres > /opt/erp-zuccaro/backups/pre-runtime03-seed-fix-$(date +%Y%m%d%H%M).sql
 ```
 
 ```bash
@@ -53,6 +53,12 @@ docker exec -i supabase-db psql -U postgres -d postgres < /opt/erp-zuccaro/serve
 ```
 
 ```bash
+docker exec -i supabase-db psql -U postgres -d postgres < /opt/erp-zuccaro/server/scripts/seed-dev-synthetic.sql
+```
+
+(segunda execução: idempotente — sem duplicate key / TENANT_FK_MISMATCH)
+
+```bash
 cd /opt/erp-zuccaro
 ```
 
@@ -82,14 +88,40 @@ Smoke Produto A (paginação):
 curl -sS 'http://127.0.0.1:3080/api/v1/produtos?limit=5' -H 'x-group-id: aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 ```
 
-Cross-tenant FK (deve 409):
+Smoke Produto B (Grupo B — Marca B REAL `b0b0b0b0-...`, NÃO o legado `ffffffff`):
 
 ```bash
-curl -sS -o /tmp/fk.json -w '%{http_code}\n' -X POST http://127.0.0.1:3080/api/v1/produtos -H 'content-type: application/json' -H 'x-group-id: aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' -H 'x-empresa-id: cccccccc-cccc-4ccc-8ccc-cccccccccccc' -d '{"descricao":"FK Cross","marca_id":"ffffffff-ffff-4fff-8fff-ffffffffffff"}'
+curl -sS 'http://127.0.0.1:3080/api/v1/produtos?limit=5' -H 'x-group-id: bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
+```
+
+Cross-tenant FK: Produto Grupo A + Marca B REAL → deve 409 `TENANT_FK_MISMATCH`:
+
+```bash
+curl -sS -o /tmp/fk.json -w '%{http_code}\n' -X POST http://127.0.0.1:3080/api/v1/produtos -H 'content-type: application/json' -H 'x-group-id: aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' -H 'x-empresa-id: cccccccc-cccc-4ccc-8ccc-cccccccccccc' -d '{"descricao":"FK Cross","marca_id":"b0b0b0b0-bbbb-4bbb-8bbb-b0b0b0b0b0b0"}'
+```
+
+Cross-tenant FK: Produto Grupo B + Marca LEGACY `ffffffff` (Grupo A) → deve 409:
+
+```bash
+curl -sS -o /tmp/fk-legacy.json -w '%{http_code}\n' -X POST http://127.0.0.1:3080/api/v1/produtos -H 'content-type: application/json' -H 'x-group-id: bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' -H 'x-empresa-id: dddddddd-dddd-4ddd-8ddd-dddddddddddd' -d '{"descricao":"FK Legacy","marca_id":"ffffffff-ffff-4fff-8fff-ffffffffffff"}'
 ```
 
 ```bash
 cat /tmp/fk.json
 ```
+
+```bash
+cat /tmp/fk-legacy.json
+```
+
+## Seed tenant (IDs)
+
+| Papel | ID | group_id | empresa_id |
+|---|---|---|---|
+| Marca A | `eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee` | Grupo A | Empresa A |
+| Marca LEGACY (nome histórico "TESTE B") | `ffffffff-ffff-4fff-8fff-ffffffffffff` | Grupo A | Empresa A |
+| Marca B REAL | `b0b0b0b0-bbbb-4bbb-8bbb-b0b0b0b0b0b0` | Grupo B | Empresa B |
+
+Nomes "A"/"B" **não** definem tenant. Não mover o legado `ffffffff` para o Grupo B.
 
 Rollback: nova migration corretiva; restore só em incidente controlado.

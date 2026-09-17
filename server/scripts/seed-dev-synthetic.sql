@@ -1,15 +1,33 @@
--- Seed DEV sintetico (ERP-RUNTIME-02)
+-- Seed DEV sintetico (ERP-RUNTIME-03 seed tenant fix)
 -- Sem dados reais CPA.
 -- Aplicar SOMENTE apos migrations 001-008.
--- IDs fixos para facilitar testes manuais.
--- Idempotente via ON CONFLICT DO NOTHING.
+-- IDs fixos e deterministicos. Idempotente via ON CONFLICT (id) DO NOTHING.
+--
+-- REGRA: nomes "A"/"B"/"TESTE B" NAO definem tenant.
+-- Tenant = group_id + empresa_id exclusivamente.
+--
+-- IDs canonicos:
+--   Grupo A:    aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa
+--   Grupo B:    bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb
+--   Empresa A:  cccccccc-cccc-4ccc-8ccc-cccccccccccc
+--   Empresa B:  dddddddd-dddd-4ddd-8ddd-dddddddddddd
+--   Marca A:    eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee  (Grupo A)
+--   Marca LEGACY id ffffffff-ffff-4fff-8fff-ffffffffffff:
+--     historico RUNTIME-01/02 em DEV pode existir como Grupo A
+--     (nome "MARCA TESTE B" NAO implica Grupo B). NAO mover tenant.
+--     Neste seed: se ainda nao existir, cria como Grupo A (legado).
+--   Marca B REAL: b0b0b0b0-bbbb-4bbb-8bbb-b0b0b0b0b0b0 (Grupo B)
+--     Usada por Produto B. Nunca reutilizar ffffffff para Grupo B.
+--   Unidade A/B, GrupoProduto A/B, Setor A/B: IDs abaixo, tenant correto.
+--   Produto A: 77777777-aaaa-...  FKs somente Grupo A
+--   Produto B: 88888888-bbbb-...  FKs somente Grupo B (marca = Marca B REAL)
 
 INSERT INTO groups (id, nome_do_grupo, status, observacoes)
 VALUES (
   'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
   'Grupo DEV Sintetico A',
   'Ativo',
-  'ERP-RUNTIME-02 seed'
+  'ERP-RUNTIME-03 seed'
 )
 ON CONFLICT (id) DO NOTHING;
 
@@ -18,7 +36,7 @@ VALUES (
   'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
   'Grupo DEV Sintetico B',
   'Ativo',
-  'ERP-RUNTIME-02 seed isolamento'
+  'ERP-RUNTIME-03 seed isolamento'
 )
 ON CONFLICT (id) DO NOTHING;
 
@@ -44,6 +62,7 @@ VALUES (
 )
 ON CONFLICT (id) DO NOTHING;
 
+-- Marca A (Grupo A)
 INSERT INTO marcas (
   id, group_id, empresa_id, nome_marca, descricao, pais_origem, ativo
 ) VALUES (
@@ -51,20 +70,36 @@ INSERT INTO marcas (
   'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
   'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
   'MARCA TESTE A',
-  'Seed sintetico A',
+  'Seed sintetico A — tenant Grupo A',
   'Brasil',
   true
 )
 ON CONFLICT (id) DO NOTHING;
 
+-- Marca LEGACY id ffffffff: permanece/cria no Grupo A.
+-- Nome historico "MARCA TESTE B" NAO define tenant.
 INSERT INTO marcas (
   id, group_id, empresa_id, nome_marca, descricao, pais_origem, ativo
 ) VALUES (
   'ffffffff-ffff-4fff-8fff-ffffffffffff',
+  'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+  'MARCA TESTE B LEGACY',
+  'LEGADO: id ffffffff no Grupo A. Nao usar em Produto B. Nao mover tenant.',
+  'Brasil',
+  true
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- Marca B REAL (Grupo B) — ID novo deterministico
+INSERT INTO marcas (
+  id, group_id, empresa_id, nome_marca, descricao, pais_origem, ativo
+) VALUES (
+  'b0b0b0b0-bbbb-4bbb-8bbb-b0b0b0b0b0b0',
   'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
   'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
-  'MARCA TESTE B',
-  'Seed sintetico B',
+  'MARCA DEV SINTETICA B',
+  'Seed sintetico B — tenant Grupo B (nao confundir com ffffffff legado)',
   'Brasil',
   true
 )
@@ -146,6 +181,7 @@ INSERT INTO setores_atividade (
 )
 ON CONFLICT (id) DO NOTHING;
 
+-- Produto A: somente FKs do Grupo A
 INSERT INTO produtos (
   id, group_id, empresa_id, codigo, descricao, nome, tipo_item, eh_bitola,
   unidade_medida_id, unidade_principal, grupo_produto_id, marca_id, setor_atividade_id,
@@ -171,6 +207,7 @@ INSERT INTO produtos (
 )
 ON CONFLICT (id) DO NOTHING;
 
+-- Produto B: somente FKs do Grupo B (marca = Marca B REAL, nao ffffffff)
 INSERT INTO produtos (
   id, group_id, empresa_id, codigo, descricao, nome, tipo_item, eh_bitola,
   unidade_medida_id, unidade_principal, grupo_produto_id, marca_id, setor_atividade_id,
@@ -187,7 +224,7 @@ INSERT INTO produtos (
   '22222222-bbbb-4bbb-8bbb-222222222222',
   'KG',
   '44444444-bbbb-4bbb-8bbb-444444444444',
-  'ffffffff-ffff-4fff-8fff-ffffffffffff',
+  'b0b0b0b0-bbbb-4bbb-8bbb-b0b0b0b0b0b0',
   '66666666-bbbb-4bbb-8bbb-666666666666',
   0.963,
   12.5,

@@ -411,7 +411,7 @@ Group A:
 curl -s http://127.0.0.1:3080/api/v1/marcas -H 'X-Group-Id: aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 ```
 
-**Resultado esperado:** lista com MARCA TESTE A/B.
+**Resultado esperado:** lista com Marca A, Marca LEGACY (`ffffffff`, Grupo A) e Marca B REAL (`b0b0b0b0`, Grupo B). Nomes não definem tenant.
 
 ---
 
