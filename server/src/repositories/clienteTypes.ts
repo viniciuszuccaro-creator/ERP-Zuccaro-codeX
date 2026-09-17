@@ -7,7 +7,7 @@ export const CLIENTE_ORIGENS = [
   'MARKETPLACE', 'APP', 'API',
 ] as const;
 
-/** Chaves RBAC canônicas (backend documenta; enforcement granular completo em lote Auth). */
+/** Chaves RBAC canônicas; operações existentes são aplicadas por ClienteService. */
 export const CLIENTE_RBAC_KEYS = Object.freeze([
   'cadastros.cliente.visualizar',
   'cadastros.cliente.criar',

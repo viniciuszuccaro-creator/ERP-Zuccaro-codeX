@@ -9,6 +9,7 @@ import {
   InMemoryProdutoRelationGuard,
   PostgresProdutoRelationGuard,
 } from './db/produtoRelationGuard.js';
+import { InMemoryRbacGuard, PostgresRbacGuard } from './db/rbacGuard.js';
 import { InMemoryTenantGuard, PostgresTenantGuard } from './db/tenantGuard.js';
 import { createErrorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { requestIdMiddleware, scopeMiddleware } from './middleware/requestContext.js';
@@ -50,6 +51,8 @@ export type CreateAppOptions = {
   tenantGuard?: InMemoryTenantGuard | PostgresTenantGuard;
   /** Optional relation guard for Produto FKs (tests). */
   produtoRelationGuard?: InMemoryProdutoRelationGuard | PostgresProdutoRelationGuard;
+  /** Optional RBAC guard using the canonical entityGuard permission tree (tests). */
+  rbacGuard?: InMemoryRbacGuard | PostgresRbacGuard;
 };
 
 export function createApp(options: CreateAppOptions) {
@@ -61,6 +64,8 @@ export function createApp(options: CreateAppOptions) {
     ?? (useMemory ? new InMemoryTenantGuard() : new PostgresTenantGuard(db));
   const produtoRelationGuard = options.produtoRelationGuard
     ?? (useMemory ? new InMemoryProdutoRelationGuard() : new PostgresProdutoRelationGuard(db));
+  const rbacGuard = options.rbacGuard
+    ?? (useMemory ? new InMemoryRbacGuard() : new PostgresRbacGuard(db));
 
   const marcaRepo = useMemory ? new InMemoryMarcaRepository() : new PostgresMarcaRepository(db);
   const unidadeRepo = useMemory ? createInMemoryUnidadeRepo() : new PostgresUnidadeRepository(db);
@@ -103,7 +108,7 @@ export function createApp(options: CreateAppOptions) {
     tenantGuard,
     produtoRelationGuard,
   );
-  const clienteService = new ClienteService(clienteRepo, auditRepo, tenantGuard);
+  const clienteService = new ClienteService(clienteRepo, auditRepo, tenantGuard, rbacGuard);
 
   const app = express();
   app.disable('x-powered-by');
@@ -158,6 +163,7 @@ export function createApp(options: CreateAppOptions) {
     auditRepo,
     tenantGuard,
     produtoRelationGuard,
+    rbacGuard,
     useMemory,
   };
 }

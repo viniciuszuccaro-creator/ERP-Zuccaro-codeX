@@ -2,6 +2,7 @@ import type { AuditRepository, RequestContext } from '../audit/types.js';
 import { sanitizeAuditSnapshot } from '../audit/sanitizeAuditSnapshot.js';
 import { AppError } from '../api/errors.js';
 import { maskDocumento, normalizeDocumento } from '../db/documentoValidators.js';
+import type { RbacAction, RbacGuard } from '../db/rbacGuard.js';
 import type { TenantGuard } from '../db/tenantGuard.js';
 import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';
 import {
@@ -37,10 +38,12 @@ export class ClienteService {
     private readonly repo: ClienteRepository,
     private readonly audit: AuditRepository,
     private readonly tenantGuard: TenantGuard,
+    private readonly rbacGuard: RbacGuard,
   ) {}
 
   async list(ctx: RequestContext, options: ClienteListOptions = {}) {
     this.assertScope(ctx);
+    await this.assertPermission(ctx, 'visualizar');
     const limit = Math.min(Math.max(options.limit ?? 50, 1), 200);
     const offset = Math.max(options.offset ?? 0, 0);
     // Fail-safe: sem ?ativo= explícito, listar SOMENTE ativo=true.
@@ -70,6 +73,7 @@ export class ClienteService {
 
   async get(ctx: RequestContext, id: string) {
     this.assertScope(ctx);
+    await this.assertPermission(ctx, 'visualizar');
     const row = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id);
     // Soft-deleted: inexistente para operação padrão (404).
     if (!row || row.ativo === false) {
@@ -80,6 +84,7 @@ export class ClienteService {
 
   async create(ctx: RequestContext, payload: unknown) {
     this.assertScope(ctx);
+    await this.assertPermission(ctx, 'criar');
     this.rejectForbiddenFields(payload);
     const parsed = clienteCreateSchema.safeParse(payload);
     if (!parsed.success) {
@@ -140,6 +145,7 @@ export class ClienteService {
 
   async update(ctx: RequestContext, id: string, payload: unknown) {
     this.assertScope(ctx);
+    await this.assertPermission(ctx, 'editar');
     this.rejectForbiddenFields(payload);
     const parsed = clienteUpdateSchema.safeParse(payload);
     if (!parsed.success) {
@@ -150,6 +156,7 @@ export class ClienteService {
     if (!before || before.ativo === false) {
       throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');
     }
+    this.validateUpdatedIdentity(before, parsed.data);
     const empresaId = parsed.data.empresa_id === undefined ? before.empresa_id : parsed.data.empresa_id;
     await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
 
@@ -206,6 +213,7 @@ export class ClienteService {
 
   async softDelete(ctx: RequestContext, id: string) {
     this.assertScope(ctx);
+    await this.assertPermission(ctx, 'inativar');
     const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
     const before = await this.repo.getById(scope, id);
     if (!before || before.ativo === false) {
@@ -231,6 +239,7 @@ export class ClienteService {
 
   async restore(ctx: RequestContext, id: string) {
     this.assertScope(ctx);
+    await this.assertPermission(ctx, 'restaurar');
     const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
     const before = await this.repo.getById(scope, id);
     // Restore só de inativo existente no tenant; ativo → 404 idempotente.
@@ -301,6 +310,54 @@ export class ClienteService {
         { fields: forbidden },
       );
     }
+  }
+
+  private validateUpdatedIdentity(
+    before: Cliente,
+    data: ReturnType<typeof clienteUpdateSchema.parse>,
+  ) {
+    const candidate = clienteCreateSchema.safeParse({
+      empresa_id: data.empresa_id === undefined ? before.empresa_id : data.empresa_id,
+      ativo: data.ativo === undefined ? before.ativo : data.ativo,
+      tipo: data.tipo ?? before.tipo,
+      documento: data.documento === undefined && data.cpf_cnpj === undefined
+        ? before.documento
+        : (data.documento ?? data.cpf_cnpj),
+      nome: data.nome === undefined ? before.nome : data.nome,
+      razao_social: data.razao_social === undefined ? before.razao_social : data.razao_social,
+      nome_fantasia: data.nome_fantasia === undefined ? before.nome_fantasia : data.nome_fantasia,
+      nome_social: data.nome_social === undefined ? before.nome_social : data.nome_social,
+      inscricao_estadual: data.inscricao_estadual === undefined
+        ? before.inscricao_estadual
+        : data.inscricao_estadual,
+      inscricao_municipal: data.inscricao_municipal === undefined
+        ? before.inscricao_municipal
+        : data.inscricao_municipal,
+      email: data.email === undefined ? before.email : data.email,
+      telefone: data.telefone === undefined ? before.telefone : data.telefone,
+      celular: data.celular === undefined ? before.celular : data.celular,
+      status: data.status ?? before.status,
+      origem: data.origem ?? before.origem,
+      codigo_legado: data.codigo_legado === undefined ? before.codigo_legado : data.codigo_legado,
+      legacy_id: data.legacy_id === undefined ? before.legacy_id : data.legacy_id,
+      source_system: data.source_system === undefined ? before.source_system : data.source_system,
+      migration_batch: data.migration_batch === undefined
+        ? before.migration_batch
+        : data.migration_batch,
+      observacoes: data.observacoes === undefined ? before.observacoes : data.observacoes,
+    });
+    if (!candidate.success) {
+      throw new AppError(
+        400,
+        'VALIDATION_ERROR',
+        'Invalid Cliente payload',
+        candidate.error.flatten(),
+      );
+    }
+  }
+
+  private assertPermission(ctx: RequestContext, action: RbacAction) {
+    return this.rbacGuard.assertAllowed(ctx, 'Cadastros', 'cliente', action);
   }
 
   private assertScope(ctx: RequestContext) {

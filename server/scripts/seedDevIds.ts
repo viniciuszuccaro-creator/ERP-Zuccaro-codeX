@@ -24,6 +24,8 @@ export const SEED_IDS = Object.freeze({
   clientePjA: '99999999-aaaa-4aaa-8aaa-999999999991',
   clientePfA: '99999999-aaaa-4aaa-8aaa-999999999992',
   clientePjB: '99999999-bbbb-4bbb-8bbb-999999999993',
+  runtimeActorA: 'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4',
+  runtimeActorB: 'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4',
 });
 
 /** Documentos sintéticos do seed (normalizados). */

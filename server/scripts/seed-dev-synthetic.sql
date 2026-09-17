@@ -299,6 +299,53 @@ ON CONFLICT (group_id, entity_name) DO UPDATE
   SET next_value = GREATEST(entity_code_sequences.next_value, EXCLUDED.next_value),
       updated_at = timezone('utc', now());
 
+-- Perfis sintéticos do BFF com RBAC Cliente. IDs usados em x-actor-id no DEV.
+INSERT INTO profiles (
+  id, email, full_name, role, ativo, group_id, empresa_id, permissoes
+) VALUES (
+  'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4',
+  'runtime04.actor.a@dev.synthetic.local',
+  'Runtime 04 Actor A',
+  'user',
+  true,
+  'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  NULL,
+  '{"Cadastros":{"cliente":["visualizar","criar","editar","inativar","restaurar"]}}'::jsonb
+)
+ON CONFLICT (id) DO UPDATE SET
+  email = EXCLUDED.email,
+  full_name = EXCLUDED.full_name,
+  role = EXCLUDED.role,
+  ativo = EXCLUDED.ativo,
+  group_id = EXCLUDED.group_id,
+  empresa_id = EXCLUDED.empresa_id,
+  permissoes = EXCLUDED.permissoes,
+  updated_at = timezone('utc', now())
+WHERE profiles.id = 'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4';
+
+INSERT INTO profiles (
+  id, email, full_name, role, ativo, group_id, empresa_id, permissoes
+) VALUES (
+  'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4',
+  'runtime04.actor.b@dev.synthetic.local',
+  'Runtime 04 Actor B',
+  'user',
+  true,
+  'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+  NULL,
+  '{"Cadastros":{"cliente":["visualizar","criar","editar","inativar","restaurar"]}}'::jsonb
+)
+ON CONFLICT (id) DO UPDATE SET
+  email = EXCLUDED.email,
+  full_name = EXCLUDED.full_name,
+  role = EXCLUDED.role,
+  ativo = EXCLUDED.ativo,
+  group_id = EXCLUDED.group_id,
+  empresa_id = EXCLUDED.empresa_id,
+  permissoes = EXCLUDED.permissoes,
+  updated_at = timezone('utc', now())
+WHERE profiles.id = 'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4';
+
 -- Cliente PJ A (Grupo A)
 INSERT INTO clientes (
   id, group_id, empresa_id, codigo, tipo, documento, documento_normalizado,
