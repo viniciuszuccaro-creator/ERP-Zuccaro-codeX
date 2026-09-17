@@ -1,3 +1,31 @@
+### ERP-RUNTIME-04 — CORREÇÕES OBRIGATÓRIAS DO REVIEW PR #16
+
+- Data: 2026-09-17.
+- Branch/PR: `cursor/erp-runtime-04-cliente-master-data-392b` / #16.
+- Status: **`IMPLEMENTATION_READY — DEV_MIGRATION_PENDING`**.
+- RBAC backend: `PostgresRbacGuard` aplica o contrato canônico
+  `Cadastros.cliente.{visualizar,criar,editar,inativar,restaurar}` no
+  `ClienteService`; ausência de actor/perfil/permissão bloqueia com 403.
+- Tenant + RBAC: testes cobrem permissão correta/incorreta e tenant correto/adulterado.
+- Integridade `cliente_empresas`: trigger da migration 009 valida
+  `cliente_id` e `empresa_id` contra o mesmo `group_id`.
+- RLS: `clientes`, `cliente_empresas` e `entity_code_sequences` com
+  ENABLE + FORCE e sem policies permissivas; roles comuns fail-closed.
+- Sequence: tabela/função sem acesso PUBLIC; função invoker; testes cobrem
+  concorrência, independência A/B e não reutilização após inativação.
+- Documento: create/update validam CPF/CNPJ, bloqueiam duplicidade formatada e
+  mascaram documento em auditoria/erro.
+- Semântica: `clientes.empresa_id` = origem/preferencial de compatibilidade;
+  ownership da identidade = Grupo; relacionamento canônico = `cliente_empresas`.
+- PostgreSQL local: migrations 001–009 executadas em PGlite; integridade,
+  RLS fail-closed e sequence comprovados sem acesso ao DEV.
+- Validações: `audit:baseline` OK; frontend 570 pass; server 46 pass/1 skip;
+  lint OK; server typecheck/build OK; frontend build OK; `diff --check` OK.
+  Typecheck global mantém baseline histórico do frontend, sem erro novo nos
+  arquivos do server/RUNTIME-04.
+- DEV: migration 009 **não aplicada**; seguir runbook após aprovação.
+- Sem merge, sem Cliente 360º e sem RUNTIME-05.
+
 ### ERP-RUNTIME-04 — IMPLEMENTAÇÃO Cliente MASTER DATA
 
 - Data: 2026-09-17.

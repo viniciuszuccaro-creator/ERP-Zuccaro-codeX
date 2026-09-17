@@ -79,12 +79,30 @@ Esperado: 2 clientes no Grupo A (PJ+PF) e 1 no Grupo B (PJ).
 
 ## API smoke (após restart do BFF)
 
-Headers: `x-group-id` / `x-empresa-id` do seed.
+Headers: `x-group-id` / `x-empresa-id` e `x-actor-id` sintéticos do seed.
+
+- Actor A: `a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4`
+- Actor B: `b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4`
 
 - `GET /api/v1/meta` → `runtime: ERP-RUNTIME-04`, `cliente.frontendHttp: false`
 - `GET /api/v1/clientes?limit=10` no Grupo A → 2 ativos
 - `GET /api/v1/clientes` no Grupo B → não lista clientes A
 - POST com mesmo CNPJ formatado diferente → `409 DUPLICATE_DOCUMENT`
+- Actor A + `x-group-id` B → `403 PERMISSION_DENIED`
+
+## Verificações de integridade
+
+Antes do apply no DEV, o teste automatizado executa migrations 001–009 em
+PostgreSQL embutido. Após o apply humano, repetir no DEV:
+
+- Cliente A + Grupo B + Empresa B em `cliente_empresas` → bloqueado;
+- Cliente A + Grupo A + Empresa B → bloqueado;
+- Cliente A + Grupo A + Empresa A → permitido;
+- role sem BYPASSRLS → zero linhas em `clientes`, `cliente_empresas` e
+  `entity_code_sequences`;
+- role comum não executa `reserve_entity_codigo`;
+- duas reservas concorrentes no Grupo A retornam códigos diferentes;
+- Grupo A e Grupo B mantêm sequências independentes.
 
 ## Rollback
 

@@ -23,6 +23,9 @@ CLIENTE MASTER (group_id)
 
 - Identidade no **Grupo** (não duplicar por empresa).
 - Relacionamento empresa em `cliente_empresas` (mínimo neste lote).
+- `clientes.empresa_id` é somente empresa de origem/preferencial para
+  compatibilidade; **não** define ownership da identidade. O relacionamento
+  empresarial canônico é `cliente_empresas`.
 - PF e PJ no mesmo agregado (`tipo`).
 - Código sequencial via `reserve_entity_codigo(group_id, 'Cliente')`.
 - Unicidade de documento: `documento_normalizado` por `group_id`.
@@ -38,12 +41,40 @@ CLIENTE MASTER (group_id)
 | Auditoria | create/update/soft_delete/restore/duplicate_block (documento mascarado) |
 | Seed | Cliente PJ/PF A + PJ B sintéticos; UPSERT convergente |
 | Frontend HTTP | **fora** de `HTTP_PILOT_ENTITIES` |
+| Integridade | trigger valida Cliente e Empresa contra o mesmo `group_id` |
+| RLS | ENABLE + FORCE, sem policy permissiva; sequence sem acesso PUBLIC |
 
-## RBAC (chaves canônicas documentadas)
+## RBAC backend
 
 `cadastros.cliente.visualizar|criar|editar|inativar|restaurar|importar|exportar`
 
-Enforcement granular completo permanece no lote Auth; backend já fail-closed por tenant.
+As ações implementadas usam enforcement real no `ClienteService`, via
+`PostgresRbacGuard`. O guard carrega `profiles.permissoes` no backend e reutiliza
+o formato canônico do `entityGuard`:
+`{ Cadastros: { cliente: ['visualizar', ...] } }`.
+
+- LIST/GET → `visualizar`
+- POST → `criar`
+- PATCH → `editar`
+- DELETE lógico → `inativar`
+- POST restore → `restaurar`
+
+Sem actor, perfil tenant-scoped ou permissão: `403 PERMISSION_DENIED`.
+Importar/exportar ficam preparados, mas sem endpoints neste lote.
+Selecionar Cliente em Pedido será uma permissão própria do fluxo Comercial; não
+concede `cadastros.cliente.editar`.
+
+## RLS e sequence
+
+O padrão permanece o de `002_rls_foundation.sql`: BFF com role privilegiada e
+tenant + RBAC na aplicação; roles comuns recebem RLS fail-closed sem policies.
+`clientes`, `cliente_empresas` e `entity_code_sequences` usam `ENABLE` + `FORCE`.
+A tabela e a função de reserva têm privilégios PUBLIC revogados; a função não é
+`SECURITY DEFINER`.
+
+Os testes executam migrations 001–009 em PostgreSQL embutido e comprovam:
+zero leitura/write para role comum, bloqueio de reserva cross-tenant, sequências
+independentes e concorrentes, e integridade Cliente/Empresa/Grupo.
 
 ## Proibições deste lote
 
