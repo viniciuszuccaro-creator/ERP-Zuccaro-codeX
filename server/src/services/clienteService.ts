@@ -1,0 +1,321 @@
+import type { AuditRepository, RequestContext } from '../audit/types.js';
+import { sanitizeAuditSnapshot } from '../audit/sanitizeAuditSnapshot.js';
+import { AppError } from '../api/errors.js';
+import { maskDocumento, normalizeDocumento } from '../db/documentoValidators.js';
+import type { TenantGuard } from '../db/tenantGuard.js';
+import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';
+import {
+  CLIENTE_FORBIDDEN_FIELDS,
+  clienteCreateSchema,
+  clienteUpdateSchema,
+  type Cliente,
+} from '../repositories/clienteTypes.js';
+
+export type ClienteListOptions = {
+  ativo?: boolean;
+  search?: string;
+  codigo?: string;
+  documento?: string;
+  orderBy?: 'codigo' | 'nome';
+  orderDir?: 'asc' | 'desc';
+  limit?: number;
+  offset?: number;
+};
+
+function sanitizeClienteAudit(row: unknown): Record<string, unknown> | null {
+  const snap = sanitizeAuditSnapshot(row);
+  if (!snap) return null;
+  if (snap.documento != null) snap.documento = maskDocumento(snap.documento);
+  if (snap.documento_normalizado != null) {
+    snap.documento_normalizado = maskDocumento(snap.documento_normalizado);
+  }
+  return snap;
+}
+
+export class ClienteService {
+  constructor(
+    private readonly repo: ClienteRepository,
+    private readonly audit: AuditRepository,
+    private readonly tenantGuard: TenantGuard,
+  ) {}
+
+  async list(ctx: RequestContext, options: ClienteListOptions = {}) {
+    this.assertScope(ctx);
+    const limit = Math.min(Math.max(options.limit ?? 50, 1), 200);
+    const offset = Math.max(options.offset ?? 0, 0);
+    // Fail-safe: sem ?ativo= explícito, listar SOMENTE ativo=true.
+    const ativo = typeof options.ativo === 'boolean' ? options.ativo : true;
+    const page = await this.repo.listPage({
+      groupId: ctx.groupId,
+      empresaId: ctx.empresaId,
+      ativo,
+      search: options.search,
+      codigo: options.codigo,
+      documento: options.documento,
+      orderBy: options.orderBy,
+      orderDir: options.orderDir,
+      limit,
+      offset,
+    });
+    return {
+      data: page.rows,
+      meta: {
+        limit,
+        offset,
+        total: page.total,
+        hasMore: offset + page.rows.length < page.total,
+      },
+    };
+  }
+
+  async get(ctx: RequestContext, id: string) {
+    this.assertScope(ctx);
+    const row = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id);
+    // Soft-deleted: inexistente para operação padrão (404).
+    if (!row || row.ativo === false) {
+      throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');
+    }
+    return row;
+  }
+
+  async create(ctx: RequestContext, payload: unknown) {
+    this.assertScope(ctx);
+    this.rejectForbiddenFields(payload);
+    const parsed = clienteCreateSchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new AppError(400, 'VALIDATION_ERROR', 'Invalid Cliente payload', parsed.error.flatten());
+    }
+    const empresaId = parsed.data.empresa_id ?? ctx.empresaId ?? null;
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
+
+    const docNorm = normalizeDocumento(parsed.data.documento ?? parsed.data.cpf_cnpj ?? '');
+    if (docNorm) {
+      const existing = await this.repo.findByDocumento(ctx.groupId, docNorm);
+      if (existing) {
+        await this.audit.append({
+          groupId: ctx.groupId,
+          empresaId: existing.empresa_id ?? ctx.empresaId,
+          actorId: ctx.actorId,
+          actorEmail: ctx.actorEmail,
+          entity: 'Cliente',
+          entityId: existing.id,
+          action: 'duplicate_block',
+          beforeData: sanitizeClienteAudit(existing),
+          afterData: {
+            attempted_documento: maskDocumento(docNorm),
+            attempted_tipo: parsed.data.tipo,
+            reason: 'DUPLICATE_DOCUMENT',
+          },
+          requestId: ctx.requestId,
+          ipAddress: ctx.ipAddress,
+        });
+        throw new AppError(409, 'DUPLICATE_DOCUMENT', 'Cliente with same CPF/CNPJ already exists in group');
+      }
+    }
+
+    let created: Cliente;
+    try {
+      created = await this.repo.create(
+        { groupId: ctx.groupId, empresaId: ctx.empresaId },
+        { ...parsed.data, empresa_id: empresaId },
+      );
+    } catch (error) {
+      await this.handleCreateConflict(ctx, error, docNorm, parsed.data.tipo);
+      throw error;
+    }
+    await this.audit.append({
+      groupId: ctx.groupId,
+      empresaId: created.empresa_id ?? ctx.empresaId,
+      actorId: ctx.actorId,
+      actorEmail: ctx.actorEmail,
+      entity: 'Cliente',
+      entityId: created.id,
+      action: 'create',
+      afterData: sanitizeClienteAudit(created),
+      requestId: ctx.requestId,
+      ipAddress: ctx.ipAddress,
+    });
+    return created;
+  }
+
+  async update(ctx: RequestContext, id: string, payload: unknown) {
+    this.assertScope(ctx);
+    this.rejectForbiddenFields(payload);
+    const parsed = clienteUpdateSchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new AppError(400, 'VALIDATION_ERROR', 'Invalid Cliente payload', parsed.error.flatten());
+    }
+    const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
+    const before = await this.repo.getById(scope, id);
+    if (!before || before.ativo === false) {
+      throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');
+    }
+    const empresaId = parsed.data.empresa_id === undefined ? before.empresa_id : parsed.data.empresa_id;
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
+
+    if (parsed.data.documento !== undefined || parsed.data.cpf_cnpj !== undefined) {
+      const docNorm = normalizeDocumento(parsed.data.documento ?? parsed.data.cpf_cnpj ?? '');
+      if (docNorm) {
+        const existing = await this.repo.findByDocumento(ctx.groupId, docNorm);
+        if (existing && existing.id !== id) {
+          await this.audit.append({
+            groupId: ctx.groupId,
+            empresaId: existing.empresa_id ?? ctx.empresaId,
+            actorId: ctx.actorId,
+            actorEmail: ctx.actorEmail,
+            entity: 'Cliente',
+            entityId: existing.id,
+            action: 'duplicate_block',
+            beforeData: sanitizeClienteAudit(existing),
+            afterData: {
+              attempted_documento: maskDocumento(docNorm),
+              attempted_cliente_id: id,
+              reason: 'DUPLICATE_DOCUMENT',
+            },
+            requestId: ctx.requestId,
+            ipAddress: ctx.ipAddress,
+          });
+          throw new AppError(409, 'DUPLICATE_DOCUMENT', 'Cliente with same CPF/CNPJ already exists in group');
+        }
+      }
+    }
+
+    let updated: Cliente | null;
+    try {
+      updated = await this.repo.update(scope, id, parsed.data);
+    } catch (error) {
+      this.rethrowConflict(error);
+      throw error;
+    }
+    if (!updated) throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');
+    await this.audit.append({
+      groupId: ctx.groupId,
+      empresaId: updated.empresa_id ?? ctx.empresaId,
+      actorId: ctx.actorId,
+      actorEmail: ctx.actorEmail,
+      entity: 'Cliente',
+      entityId: id,
+      action: 'update',
+      beforeData: sanitizeClienteAudit(before),
+      afterData: sanitizeClienteAudit(updated),
+      requestId: ctx.requestId,
+      ipAddress: ctx.ipAddress,
+    });
+    return updated;
+  }
+
+  async softDelete(ctx: RequestContext, id: string) {
+    this.assertScope(ctx);
+    const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
+    const before = await this.repo.getById(scope, id);
+    if (!before || before.ativo === false) {
+      throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');
+    }
+    const updated = await this.repo.softDelete(scope, id);
+    if (!updated) throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');
+    await this.audit.append({
+      groupId: ctx.groupId,
+      empresaId: updated.empresa_id ?? ctx.empresaId,
+      actorId: ctx.actorId,
+      actorEmail: ctx.actorEmail,
+      entity: 'Cliente',
+      entityId: id,
+      action: 'soft_delete',
+      beforeData: sanitizeClienteAudit(before),
+      afterData: sanitizeClienteAudit(updated),
+      requestId: ctx.requestId,
+      ipAddress: ctx.ipAddress,
+    });
+    return updated;
+  }
+
+  async restore(ctx: RequestContext, id: string) {
+    this.assertScope(ctx);
+    const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
+    const before = await this.repo.getById(scope, id);
+    // Restore só de inativo existente no tenant; ativo → 404 idempotente.
+    if (!before || before.ativo === true) {
+      throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found for restore in tenant scope');
+    }
+    const updated = await this.repo.restore(scope, id);
+    if (!updated) throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found for restore in tenant scope');
+    await this.audit.append({
+      groupId: ctx.groupId,
+      empresaId: updated.empresa_id ?? ctx.empresaId,
+      actorId: ctx.actorId,
+      actorEmail: ctx.actorEmail,
+      entity: 'Cliente',
+      entityId: id,
+      action: 'restore',
+      beforeData: sanitizeClienteAudit(before),
+      afterData: sanitizeClienteAudit(updated),
+      requestId: ctx.requestId,
+      ipAddress: ctx.ipAddress,
+    });
+    return updated;
+  }
+
+  private async handleCreateConflict(
+    ctx: RequestContext,
+    error: unknown,
+    docNorm: string,
+    tipo: string,
+  ) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (/unique|duplicate/i.test(message) && /documento/i.test(message)) {
+      const existing = docNorm ? await this.repo.findByDocumento(ctx.groupId, docNorm) : null;
+      await this.audit.append({
+        groupId: ctx.groupId,
+        empresaId: existing?.empresa_id ?? ctx.empresaId,
+        actorId: ctx.actorId,
+        actorEmail: ctx.actorEmail,
+        entity: 'Cliente',
+        entityId: existing?.id ?? null,
+        action: 'duplicate_block',
+        beforeData: sanitizeClienteAudit(existing),
+        afterData: {
+          attempted_documento: maskDocumento(docNorm),
+          attempted_tipo: tipo,
+          reason: 'DUPLICATE_DOCUMENT',
+        },
+        requestId: ctx.requestId,
+        ipAddress: ctx.ipAddress,
+      });
+      throw new AppError(409, 'DUPLICATE_DOCUMENT', 'Cliente with same CPF/CNPJ already exists in group');
+    }
+    this.rethrowConflict(error);
+  }
+
+  private rejectForbiddenFields(payload: unknown) {
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return;
+    const keys = Object.keys(payload as Record<string, unknown>);
+    const forbidden = keys.filter((k) => (
+      (CLIENTE_FORBIDDEN_FIELDS as readonly string[]).includes(k)
+      || /^(limite_|credito_|tabela_preco|vendedor_|saldo_)/i.test(k)
+    ));
+    if (forbidden.length > 0) {
+      throw new AppError(
+        400,
+        'OPERATIONAL_FIELD_FORBIDDEN',
+        'Cliente master-data API rejects commercial/credit operational fields',
+        { fields: forbidden },
+      );
+    }
+  }
+
+  private assertScope(ctx: RequestContext) {
+    if (!ctx.groupId) {
+      throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
+    }
+  }
+
+  private rethrowConflict(error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (/unique|duplicate/i.test(message)) {
+      throw new AppError(409, 'CONFLICT', 'Cliente conflicts with an existing record');
+    }
+    if (/TENANT_FK_MISMATCH/i.test(message)) {
+      throw new AppError(409, 'TENANT_FK_MISMATCH', message);
+    }
+  }
+}

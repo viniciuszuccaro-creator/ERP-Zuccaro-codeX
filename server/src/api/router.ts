@@ -4,6 +4,7 @@ import { publicConfigView } from '../config/env.js';
 import type { DbClient } from '../db/client.js';
 import { getAuthFoundation } from '../auth/foundation.js';
 import { requireTenantScope } from '../middleware/requestContext.js';
+import type { ClienteService } from '../services/clienteService.js';
 import type { MarcaService } from '../services/marcaService.js';
 import type { ProdutoService } from '../services/produtoService.js';
 import type { TenantCrudService } from '../services/tenantCrudService.js';
@@ -24,6 +25,7 @@ export type ApiDeps = {
   grupoProdutoService: TenantCrudService<any, any, any>;
   setorService: TenantCrudService<any, any, any>;
   produtoService: ProdutoService;
+  clienteService: ClienteService;
 };
 
 function ctxFromReq(req: Request) {
@@ -148,6 +150,80 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
   });
 }
 
+function parseAtivoQuery(ativoParam: unknown): boolean | undefined {
+  if (ativoParam == null) return undefined;
+  return ['1', 'true', 'yes'].includes(String(ativoParam).toLowerCase());
+}
+
+function mountClienteRoutes(router: Router, service: ClienteService) {
+  router.get('/api/v1/clientes', requireTenantScope, async (req, res, next) => {
+    try {
+      const orderByRaw = req.query.order_by ? String(req.query.order_by) : undefined;
+      const orderBy = orderByRaw === 'nome' || orderByRaw === 'codigo' ? orderByRaw : undefined;
+      const orderDirRaw = req.query.order_dir ? String(req.query.order_dir).toLowerCase() : undefined;
+      const orderDir = orderDirRaw === 'desc' || orderDirRaw === 'asc' ? orderDirRaw : undefined;
+      const page = await service.list(ctxFromReq(req), {
+        ativo: parseAtivoQuery(req.query.ativo),
+        search: req.query.search ? String(req.query.search) : undefined,
+        codigo: req.query.codigo ? String(req.query.codigo) : undefined,
+        documento: req.query.documento ? String(req.query.documento) : undefined,
+        orderBy,
+        orderDir,
+        limit: req.query.limit ? Number(req.query.limit) : undefined,
+        offset: req.query.offset ? Number(req.query.offset) : undefined,
+      });
+      res.json(page);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/api/v1/clientes/:id', requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.get(ctxFromReq(req), req.params.id);
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post('/api/v1/clientes', requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.create(ctxFromReq(req), req.body);
+      res.status(201).json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.patch('/api/v1/clientes/:id', requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.update(ctxFromReq(req), req.params.id, req.body);
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.delete('/api/v1/clientes/:id', requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.softDelete(ctxFromReq(req), req.params.id);
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post('/api/v1/clientes/:id/restore', requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.restore(ctxFromReq(req), req.params.id);
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+}
+
 export function createApiRouter(deps: ApiDeps) {
   const router = Router();
 
@@ -182,18 +258,26 @@ export function createApiRouter(deps: ApiDeps) {
 
   router.get('/api/v1/meta', (_req, res) => {
     res.json({
-      runtime: 'ERP-RUNTIME-03',
+      runtime: 'ERP-RUNTIME-04',
       auth: getAuthFoundation(),
       config: publicConfigView(deps.config),
       httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade'],
-      preparedEntities: ['Produto'],
-      httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto'],
+      preparedEntities: ['Produto', 'Cliente'],
+      httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente'],
       rlsModel: 'ENABLE+FORCE fail-closed; BFF uses privileged DB role; JWT policies planned with Auth',
-      note: 'Produto MASTER DATA prepared; NOT in frontend HTTP_PILOT_ENTITIES until E2E activation authorized',
+      note: 'Cliente MASTER DATA prepared; NOT in frontend HTTP_PILOT_ENTITIES until E2E activation authorized',
       produto: {
         masterData: true,
         pagination: true,
         tenantFkIntegrity: true,
+        frontendHttp: false,
+      },
+      cliente: {
+        masterData: true,
+        pagination: true,
+        sequentialCodigo: true,
+        documentoUniqueness: true,
+        softDeleteRestore: true,
         frontendHttp: false,
       },
     });
@@ -204,6 +288,7 @@ export function createApiRouter(deps: ApiDeps) {
   mountCrud(router, '/api/v1/grupos-produto', deps.grupoProdutoService);
   mountCrud(router, '/api/v1/setores-atividade', deps.setorService);
   mountProdutoRoutes(router, deps.produtoService);
+  mountClienteRoutes(router, deps.clienteService);
 
   return router;
 }

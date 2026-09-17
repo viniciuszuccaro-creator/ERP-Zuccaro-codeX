@@ -18,6 +18,7 @@ import {
   createInMemoryUnidadeRepo,
 } from './repositories/inMemoryCadastroRepositories.js';
 import { createInMemoryProdutoRepo } from './repositories/inMemoryProdutoRepository.js';
+import { createInMemoryClienteRepo } from './repositories/inMemoryClienteRepository.js';
 import { InMemoryMarcaRepository } from './repositories/inMemoryMarcaRepository.js';
 import {
   PostgresGrupoProdutoRepository,
@@ -25,6 +26,7 @@ import {
   PostgresUnidadeRepository,
 } from './repositories/postgresCadastroRepositories.js';
 import { PostgresProdutoRepository } from './repositories/postgresProdutoRepository.js';
+import { PostgresClienteRepository } from './repositories/postgresClienteRepository.js';
 import { PostgresMarcaRepository } from './repositories/postgresMarcaRepository.js';
 import {
   grupoProdutoCreateSchema,
@@ -34,6 +36,7 @@ import {
   unidadeCreateSchema,
   unidadeUpdateSchema,
 } from './repositories/cadastroTypes.js';
+import { ClienteService } from './services/clienteService.js';
 import { MarcaService } from './services/marcaService.js';
 import { ProdutoService } from './services/produtoService.js';
 import { TenantCrudService } from './services/tenantCrudService.js';
@@ -64,6 +67,7 @@ export function createApp(options: CreateAppOptions) {
   const grupoRepo = useMemory ? createInMemoryGrupoProdutoRepo() : new PostgresGrupoProdutoRepository(db);
   const setorRepo = useMemory ? createInMemorySetorRepo() : new PostgresSetorRepository(db);
   const produtoRepo = useMemory ? createInMemoryProdutoRepo() : new PostgresProdutoRepository(db);
+  const clienteRepo = useMemory ? createInMemoryClienteRepo() : new PostgresClienteRepository(db);
 
   const marcaService = new MarcaService(marcaRepo, auditRepo, tenantGuard);
   const unidadeService = new TenantCrudService(unidadeRepo, auditRepo, tenantGuard, {
@@ -99,6 +103,7 @@ export function createApp(options: CreateAppOptions) {
     tenantGuard,
     produtoRelationGuard,
   );
+  const clienteService = new ClienteService(clienteRepo, auditRepo, tenantGuard);
 
   const app = express();
   app.disable('x-powered-by');
@@ -137,6 +142,7 @@ export function createApp(options: CreateAppOptions) {
     grupoProdutoService,
     setorService,
     produtoService,
+    clienteService,
   }));
   app.use(notFoundHandler);
   app.use(createErrorHandler(config));
@@ -148,6 +154,7 @@ export function createApp(options: CreateAppOptions) {
     grupoProdutoService,
     setorService,
     produtoService,
+    clienteService,
     auditRepo,
     tenantGuard,
     produtoRelationGuard,

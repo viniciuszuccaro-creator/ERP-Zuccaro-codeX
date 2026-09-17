@@ -13,7 +13,14 @@ export type RequestContext = TenantScope & ActorContext & {
   ipAddress?: string | null;
 };
 
-export type AuditAction = 'create' | 'update' | 'delete' | 'soft_delete' | 'read';
+export type AuditAction =
+  | 'create'
+  | 'update'
+  | 'delete'
+  | 'soft_delete'
+  | 'restore'
+  | 'duplicate_block'
+  | 'read';
 
 export type AuditEntry = {
   groupId?: string | null;
