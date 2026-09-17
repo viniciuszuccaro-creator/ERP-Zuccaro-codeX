@@ -115,9 +115,11 @@ test('seed SQL: Produto A/B FKs batem com tenant real (nao com o nome)', () => {
 
 test('seed SQL: ON CONFLICT DO NOTHING presente (idempotencia)', () => {
   const sql = readFileSync(seedPath, 'utf8');
-  const inserts = sql.match(/INSERT INTO/gi)?.length ?? 0;
-  const conflicts = sql.match(/ON CONFLICT \(id\) DO NOTHING/gi)?.length ?? 0;
-  assert.ok(inserts >= 14);
+  // Ignora comentarios de linha para nao contar mencao documental de ON CONFLICT
+  const codeOnly = sql.replace(/--.*$/gm, '');
+  const inserts = codeOnly.match(/INSERT INTO/gi)?.length ?? 0;
+  const conflicts = codeOnly.match(/ON CONFLICT \(id\) DO NOTHING/gi)?.length ?? 0;
+  assert.ok(inserts >= 15, `esperados >=15 inserts (inclui Marca B REAL); got ${inserts}`);
   assert.equal(conflicts, inserts);
 });
 
