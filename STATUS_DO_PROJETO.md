@@ -1,3 +1,29 @@
+### ERP-RUNTIME-04 — IMPLEMENTAÇÃO Cliente MASTER DATA
+
+- Data: 2026-09-17.
+- Branch: `cursor/erp-runtime-04-cliente-master-data-392b` (base `74b68257`).
+- Status: **`IMPLEMENTATION_READY — DEV_MIGRATION_PENDING`**.
+- Objetivo: fundação Cliente MASTER DATA (PF/PJ) no PostgreSQL/API — sem Cliente 360º.
+- Migration: `009_clientes_master_data.sql` (`clientes`, `cliente_empresas`, `entity_code_sequences` + `reserve_entity_codigo`).
+- Backend: `ClienteService` + rotas `/api/v1/clientes` (list/search/count/get/create/update/soft-delete/restore).
+- Multiempresa: identidade no `group_id`; vínculo opcional `cliente_empresas`; isolamento tenant A/B.
+- Duplicidade: CPF/CNPJ normalizado único por grupo → `409 DUPLICATE_DOCUMENT` + audit `duplicate_block`.
+- Soft delete: `ativo=false`; listagem padrão só ativos; restore com audit.
+- Auditoria: create/update/soft_delete/restore/duplicate_block; documento mascarado.
+- Seed: Cliente PJ/PF A + PJ B sintéticos (UPSERT convergente); docs em `SEED_DOCS`.
+- Frontend: **não** incluído em `HTTP_PILOT_ENTITIES`.
+- Docs: `docs/ERP_RUNTIME_04.md`, `docs/ERP_RUNTIME_04_DEV_RUNBOOK.md`.
+- Validações:
+  - `npm run audit:baseline` OK
+  - `npm test` (frontend) 570 pass
+  - `npm --prefix server test` 39 pass / 1 skip
+  - `npm run lint` OK
+  - `npm run typecheck` baseline histórico (HubAtendimento/Portal/Produção/RH/Relatórios) — **sem novas falhas** nos arquivos do lote; `server` typecheck OK
+  - `npm run build` OK; `server` build OK
+  - `git diff --check` OK
+- Pendência DEV: aplicar migration 009 + seed no VPS (humano; runbook). Sem merge. Sem RUNTIME-05.
+- Próximo após review/DEV: ativação HTTP piloto Cliente (autorização explícita) — não iniciar automaticamente.
+
 ### ERP-RUNTIME-04 — DEV PRECHECK APROVADO
 
 - Data: 2026-09-17.
