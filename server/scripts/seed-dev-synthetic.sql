@@ -1,10 +1,17 @@
--- Seed DEV sintetico (ERP-RUNTIME-03 seed tenant fix)
+-- Seed DEV sintetico (ERP-RUNTIME-03 seed reconciliation fix)
 -- Sem dados reais CPA.
 -- Aplicar SOMENTE apos migrations 001-008.
--- IDs fixos e deterministicos. Idempotente via ON CONFLICT (id) DO NOTHING.
 --
 -- REGRA: nomes "A"/"B"/"TESTE B" NAO definem tenant.
 -- Tenant = group_id + empresa_id exclusivamente.
+--
+-- Idempotencia:
+--   Groups/Empresas/Marcas/Unidades/Grupos/Setores: ON CONFLICT DO NOTHING
+--     (Marca LEGACY ffffffff NUNCA tem tenant alterado).
+--   Produto A/B (IDs sinteticos fixos): ON CONFLICT DO UPDATE (UPSERT)
+--     para convergir estado parcial (ex.: Produto B com marca_id legado).
+--   SOMENTE os IDs deterministicos abaixo sofrem UPSERT de produto.
+--   Registros reais / IDs nao listados NUNCA sao tocados.
 --
 -- IDs canonicos:
 --   Grupo A:    aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa
@@ -19,8 +26,11 @@
 --   Marca B REAL: b0b0b0b0-bbbb-4bbb-8bbb-b0b0b0b0b0b0 (Grupo B)
 --     Usada por Produto B. Nunca reutilizar ffffffff para Grupo B.
 --   Unidade A/B, GrupoProduto A/B, Setor A/B: IDs abaixo, tenant correto.
---   Produto A: 77777777-aaaa-...  FKs somente Grupo A
---   Produto B: 88888888-bbbb-...  FKs somente Grupo B (marca = Marca B REAL)
+--   Produto A: 77777777-aaaa-4aaa-8aaa-777777777777  FKs somente Grupo A
+--   Produto B: 88888888-bbbb-4bbb-8bbb-888888888888  FKs somente Grupo B
+--
+-- Ordem: Groups → Empresas → Marcas → Unidades → GruposProduto → Setores → Produtos.
+-- Protecao 008 (assert_produto_fk_same_tenant) permanece ativa; sem bypass.
 
 INSERT INTO groups (id, nome_do_grupo, status, observacoes)
 VALUES (
@@ -77,7 +87,7 @@ INSERT INTO marcas (
 ON CONFLICT (id) DO NOTHING;
 
 -- Marca LEGACY id ffffffff: permanece/cria no Grupo A.
--- Nome historico "MARCA TESTE B" NAO define tenant.
+-- Nome historico "MARCA TESTE B" NAO define tenant. NUNCA UPSERT de tenant.
 INSERT INTO marcas (
   id, group_id, empresa_id, nome_marca, descricao, pais_origem, ativo
 ) VALUES (
@@ -181,7 +191,7 @@ INSERT INTO setores_atividade (
 )
 ON CONFLICT (id) DO NOTHING;
 
--- Produto A: somente FKs do Grupo A
+-- Produto A: UPSERT apenas no ID sintetico 77777777-...
 INSERT INTO produtos (
   id, group_id, empresa_id, codigo, descricao, nome, tipo_item, eh_bitola,
   unidade_medida_id, unidade_principal, grupo_produto_id, marca_id, setor_atividade_id,
@@ -205,9 +215,28 @@ INSERT INTO produtos (
   'Ativo',
   true
 )
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+  group_id = EXCLUDED.group_id,
+  empresa_id = EXCLUDED.empresa_id,
+  codigo = EXCLUDED.codigo,
+  descricao = EXCLUDED.descricao,
+  nome = EXCLUDED.nome,
+  tipo_item = EXCLUDED.tipo_item,
+  eh_bitola = EXCLUDED.eh_bitola,
+  unidade_medida_id = EXCLUDED.unidade_medida_id,
+  unidade_principal = EXCLUDED.unidade_principal,
+  grupo_produto_id = EXCLUDED.grupo_produto_id,
+  marca_id = EXCLUDED.marca_id,
+  setor_atividade_id = EXCLUDED.setor_atividade_id,
+  peso_teorico_kg_m = EXCLUDED.peso_teorico_kg_m,
+  bitola_diametro_mm = EXCLUDED.bitola_diametro_mm,
+  status = EXCLUDED.status,
+  ativo = EXCLUDED.ativo,
+  updated_at = timezone('utc', now())
+WHERE produtos.id = '77777777-aaaa-4aaa-8aaa-777777777777';
 
--- Produto B: somente FKs do Grupo B (marca = Marca B REAL, nao ffffffff)
+-- Produto B: UPSERT apenas no ID sintetico 88888888-...
+-- Reconcilia partial-state (marca_id legado ffffffff → Marca B REAL).
 INSERT INTO produtos (
   id, group_id, empresa_id, codigo, descricao, nome, tipo_item, eh_bitola,
   unidade_medida_id, unidade_principal, grupo_produto_id, marca_id, setor_atividade_id,
@@ -231,4 +260,22 @@ INSERT INTO produtos (
   'Ativo',
   true
 )
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+  group_id = EXCLUDED.group_id,
+  empresa_id = EXCLUDED.empresa_id,
+  codigo = EXCLUDED.codigo,
+  descricao = EXCLUDED.descricao,
+  nome = EXCLUDED.nome,
+  tipo_item = EXCLUDED.tipo_item,
+  eh_bitola = EXCLUDED.eh_bitola,
+  unidade_medida_id = EXCLUDED.unidade_medida_id,
+  unidade_principal = EXCLUDED.unidade_principal,
+  grupo_produto_id = EXCLUDED.grupo_produto_id,
+  marca_id = EXCLUDED.marca_id,
+  setor_atividade_id = EXCLUDED.setor_atividade_id,
+  peso_teorico_kg_m = EXCLUDED.peso_teorico_kg_m,
+  bitola_diametro_mm = EXCLUDED.bitola_diametro_mm,
+  status = EXCLUDED.status,
+  ativo = EXCLUDED.ativo,
+  updated_at = timezone('utc', now())
+WHERE produtos.id = '88888888-bbbb-4bbb-8bbb-888888888888';

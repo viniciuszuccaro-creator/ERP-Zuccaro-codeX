@@ -21,3 +21,9 @@ export const SEED_IDS = Object.freeze({
   produtoA: '77777777-aaaa-4aaa-8aaa-777777777777',
   produtoB: '88888888-bbbb-4bbb-8bbb-888888888888',
 });
+
+/** Somente estes IDs de produto recebem ON CONFLICT DO UPDATE no seed. */
+export const SEED_UPSERTABLE_PRODUTO_IDS = Object.freeze([
+  SEED_IDS.produtoA,
+  SEED_IDS.produtoB,
+] as const);

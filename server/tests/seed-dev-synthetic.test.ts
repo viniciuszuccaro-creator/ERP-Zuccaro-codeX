@@ -7,13 +7,27 @@ import { InMemoryAuditRepository } from '../src/audit/auditRepository.ts';
 import { InMemoryProdutoRelationGuard } from '../src/db/produtoRelationGuard.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 import { createInMemoryProdutoRepo } from '../src/repositories/inMemoryProdutoRepository.ts';
+import type { Produto } from '../src/repositories/produtoTypes.ts';
 import { ProdutoService } from '../src/services/produtoService.ts';
 import { SEED_IDS } from '../scripts/seedDevIds.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const seedPath = join(__dirname, '../scripts/seed-dev-synthetic.sql');
 
-type SeedRow = { id: string; groupId: string; empresaId?: string; marcaId?: string; unidadeId?: string; grupoId?: string; setorId?: string };
+type SeedRow = {
+  id: string;
+  groupId: string;
+  empresaId?: string;
+  marcaId?: string;
+  unidadeId?: string;
+  grupoId?: string;
+  setorId?: string;
+  codigo?: string;
+  ativo?: boolean;
+};
+
+/** IDs sinteticos que o seed pode UPSERT (somente produtos). */
+const UPSERTABLE_PRODUCT_IDS = new Set([SEED_IDS.produtoA, SEED_IDS.produtoB]);
 
 function parseSeedInserts(sql: string) {
   const marcas = new Map<string, SeedRow>();
@@ -43,27 +57,38 @@ function parseSeedInserts(sql: string) {
     setores.set(m[1], { id: m[1], groupId: m[2], empresaId: m[3] });
   }
 
-  // produtos: id, group, empresa, ..., unidade, ..., grupo_produto, marca, setor (positional after fixed columns)
   const produtoBlocks = sql.split(/INSERT INTO produtos/i).slice(1);
   for (const block of produtoBlocks) {
     const valuesMatch = block.match(/VALUES\s*\(([\s\S]*?)\)\s*ON CONFLICT/i);
     if (!valuesMatch) continue;
     const parts = [...valuesMatch[1].matchAll(/'([^']*)'|true|false|([0-9.]+)/g)].map((x) => x[1] ?? x[0]);
-    // Expected order from seed:
-    // 0 id, 1 group, 2 empresa, 3 codigo, 4 descricao, 5 nome, 6 tipo_item, 7 eh_bitola,
-    // 8 unidade_medida_id, 9 unidade_principal, 10 grupo_produto_id, 11 marca_id, 12 setor_atividade_id
     produtos.set(parts[0], {
       id: parts[0],
       groupId: parts[1],
       empresaId: parts[2],
+      codigo: parts[3],
       unidadeId: parts[8],
       grupoId: parts[10],
       marcaId: parts[11],
       setorId: parts[12],
+      ativo: parts[16] === 'true' || parts.includes('true'),
     });
   }
 
   return { marcas, unidades, grupos, setores, produtos };
+}
+
+/** Simula UPSERT do seed sobre um mapa de produtos (somente IDs sinteticos). */
+function applyProdutoSeedUpserts(
+  store: Map<string, SeedRow>,
+  canonical: Map<string, SeedRow>,
+) {
+  for (const [id, row] of canonical) {
+    if (!UPSERTABLE_PRODUCT_IDS.has(id)) {
+      throw new Error(`ID nao autorizado para UPSERT: ${id}`);
+    }
+    store.set(id, { ...row });
+  }
 }
 
 test('seed SQL: Produto A/B FKs batem com tenant real (nao com o nome)', () => {
@@ -104,7 +129,6 @@ test('seed SQL: Produto A/B FKs batem com tenant real (nao com o nome)', () => {
   assert.equal(produtoB.grupoId, SEED_IDS.grupoProdutoB);
   assert.equal(produtoB.setorId, SEED_IDS.setorB);
 
-  // Todas FKs do produto batem com group do proprio produto
   for (const [label, p] of [['A', produtoA], ['B', produtoB]] as const) {
     assert.equal(parsed.marcas.get(p.marcaId!)?.groupId, p.groupId, `Produto ${label} marca tenant`);
     assert.equal(parsed.unidades.get(p.unidadeId!)?.groupId, p.groupId, `Produto ${label} unidade tenant`);
@@ -113,14 +137,102 @@ test('seed SQL: Produto A/B FKs batem com tenant real (nao com o nome)', () => {
   }
 });
 
-test('seed SQL: ON CONFLICT DO NOTHING presente (idempotencia)', () => {
+test('seed SQL: parents DO NOTHING; Produto A/B usam UPSERT convergente', () => {
   const sql = readFileSync(seedPath, 'utf8');
-  // Ignora comentarios de linha para nao contar mencao documental de ON CONFLICT
   const codeOnly = sql.replace(/--.*$/gm, '');
+
   const inserts = codeOnly.match(/INSERT INTO/gi)?.length ?? 0;
-  const conflicts = codeOnly.match(/ON CONFLICT \(id\) DO NOTHING/gi)?.length ?? 0;
-  assert.ok(inserts >= 15, `esperados >=15 inserts (inclui Marca B REAL); got ${inserts}`);
-  assert.equal(conflicts, inserts);
+  const doNothing = codeOnly.match(/ON CONFLICT \(id\) DO NOTHING/gi)?.length ?? 0;
+  const doUpdate = codeOnly.match(/ON CONFLICT \(id\) DO UPDATE SET/gi)?.length ?? 0;
+
+  assert.equal(inserts, 15);
+  assert.equal(doNothing, 13, 'groups/empresas/marcas/unidades/grupos/setores = DO NOTHING');
+  assert.equal(doUpdate, 2, 'somente Produto A e Produto B usam DO UPDATE');
+
+  assert.match(codeOnly, /WHERE produtos\.id = '77777777-aaaa-4aaa-8aaa-777777777777'/);
+  assert.match(codeOnly, /WHERE produtos\.id = '88888888-bbbb-4bbb-8bbb-888888888888'/);
+
+  // Marca LEGACY nao tem DO UPDATE (nunca mover tenant)
+  const marcaBlocks = sql.split(/INSERT INTO marcas\b/i).slice(1);
+  const legacyBlock = marcaBlocks.find((b) => b.includes(`'${SEED_IDS.marcaLegacyFalselyNamedB}'`));
+  assert.ok(legacyBlock);
+  assert.match(legacyBlock!, /ON CONFLICT \(id\) DO NOTHING/i);
+  assert.doesNotMatch(legacyBlock!, /DO UPDATE/i);
+
+  // Produto B UPSERT aponta marca canônica
+  const produtoBlocks = sql.split(/INSERT INTO produtos\b/i).slice(1);
+  const produtoBBlock = produtoBlocks.find((b) => b.includes(`'${SEED_IDS.produtoB}'`));
+  assert.ok(produtoBBlock);
+  assert.match(produtoBBlock!, /DO UPDATE SET/i);
+  assert.match(produtoBBlock!, /marca_id = EXCLUDED\.marca_id/);
+  assert.ok(produtoBBlock!.includes(SEED_IDS.marcaB));
+  assert.ok(!produtoBBlock!.includes(SEED_IDS.marcaLegacyFalselyNamedB));
+});
+
+test('partial-state: Produto B com marca legado converge para Marca B REAL (cenarios 1-5)', () => {
+  const sql = readFileSync(seedPath, 'utf8');
+  const canonical = parseSeedInserts(sql).produtos;
+  assert.equal(canonical.get(SEED_IDS.produtoB)?.marcaId, SEED_IDS.marcaB);
+
+  // Cenario 1: banco limpo
+  const clean = new Map<string, SeedRow>();
+  applyProdutoSeedUpserts(clean, canonical);
+  assert.equal(clean.get(SEED_IDS.produtoB)?.marcaId, SEED_IDS.marcaB);
+  assert.equal(clean.get(SEED_IDS.produtoA)?.marcaId, SEED_IDS.marcaA);
+
+  // Cenario 2: segunda execucao — sem duplicar, mesmo estado
+  const beforeSecond = JSON.stringify([...clean.entries()]);
+  applyProdutoSeedUpserts(clean, canonical);
+  assert.equal(JSON.stringify([...clean.entries()]), beforeSecond);
+  assert.equal(clean.size, 2);
+
+  // Cenario 3: partial-state Produto B com marca LEGACY (Grupo A)
+  const partial = new Map<string, SeedRow>([
+    [SEED_IDS.produtoB, {
+      id: SEED_IDS.produtoB,
+      groupId: SEED_IDS.groupB,
+      empresaId: SEED_IDS.empresaB,
+      codigo: 'PROD-B-001',
+      unidadeId: SEED_IDS.unidadeB,
+      grupoId: SEED_IDS.grupoProdutoB,
+      marcaId: SEED_IDS.marcaLegacyFalselyNamedB,
+      setorId: SEED_IDS.setorB,
+      ativo: true,
+    }],
+  ]);
+  assert.equal(partial.get(SEED_IDS.produtoB)?.marcaId, SEED_IDS.marcaLegacyFalselyNamedB);
+  applyProdutoSeedUpserts(partial, canonical);
+  const after = partial.get(SEED_IDS.produtoB)!;
+  assert.equal(after.marcaId, SEED_IDS.marcaB, 'reconcilia marca legado → Marca B REAL');
+  assert.equal(after.groupId, SEED_IDS.groupB);
+  assert.equal(after.empresaId, SEED_IDS.empresaB);
+  assert.equal(after.unidadeId, SEED_IDS.unidadeB);
+  assert.equal(after.grupoId, SEED_IDS.grupoProdutoB);
+  assert.equal(after.setorId, SEED_IDS.setorB);
+  assert.equal(after.codigo, 'PROD-B-001');
+
+  // Cenario 4: seed novamente apos reconciliacao
+  const snap = JSON.stringify(after);
+  applyProdutoSeedUpserts(partial, canonical);
+  assert.equal(JSON.stringify(partial.get(SEED_IDS.produtoB)), snap);
+
+  // Cenario 5: registro nao sintetico nao e alterado pelo UPSERT do seed
+  const foreignId = '99999999-9999-4999-8999-999999999999';
+  const storeWithForeign = new Map<string, SeedRow>([
+    [foreignId, {
+      id: foreignId,
+      groupId: SEED_IDS.groupB,
+      empresaId: SEED_IDS.empresaB,
+      marcaId: SEED_IDS.marcaB,
+      codigo: 'REAL-001',
+    }],
+  ]);
+  applyProdutoSeedUpserts(storeWithForeign, canonical);
+  assert.equal(storeWithForeign.get(foreignId)?.codigo, 'REAL-001');
+  assert.equal(storeWithForeign.get(foreignId)?.marcaId, SEED_IDS.marcaB);
+  assert.ok(storeWithForeign.has(SEED_IDS.produtoA));
+  assert.ok(storeWithForeign.has(SEED_IDS.produtoB));
+  assert.equal(storeWithForeign.size, 3);
 });
 
 function makeServiceWithSeedRelations(legacyMarcaInGroupA = true) {
@@ -176,7 +288,6 @@ test('seed semantico: Produto A/B com FKs corretas; legado ffffffff nao serve ao
   });
   assert.equal(b.marca_id, SEED_IDS.marcaB);
 
-  // Negativo: Produto B + marca legado (Grupo A) deve bloquear
   await assert.rejects(
     () => service.create({
       requestId: 'seed-bad',
@@ -189,7 +300,6 @@ test('seed semantico: Produto A/B com FKs corretas; legado ffffffff nao serve ao
     (err: unknown) => (err as { code?: string }).code === 'TENANT_FK_MISMATCH',
   );
 
-  // Negativo: Produto B + Marca A → TENANT_FK_MISMATCH
   await assert.rejects(
     () => service.create({
       requestId: 'seed-bad-a',
@@ -199,6 +309,77 @@ test('seed semantico: Produto A/B com FKs corretas; legado ffffffff nao serve ao
       descricao: 'BAD',
       marca_id: SEED_IDS.marcaA,
     }),
+    (err: unknown) => (err as { code?: string }).code === 'TENANT_FK_MISMATCH',
+  );
+});
+
+test('partial-state via service: update Produto B marca legado → Marca B REAL passa protecao', async () => {
+  const { service, repo } = makeServiceWithSeedRelations(true);
+  const ts = new Date().toISOString();
+  // Simula linha ja existente no DEV com FK inconsistente (como seed parcial antigo)
+  const stale: Produto = {
+    id: SEED_IDS.produtoB,
+    group_id: SEED_IDS.groupB,
+    empresa_id: SEED_IDS.empresaB,
+    codigo: 'PROD-B-001',
+    codigo_barras: null,
+    descricao: 'PRODUTO DEV SINTETICO B',
+    nome: 'PRODUTO DEV SINTETICO B',
+    tipo_item: 'Revenda',
+    tipo_aco: null,
+    eh_bitola: true,
+    peso_teorico_kg_m: 0.963,
+    bitola_diametro_mm: 12.5,
+    comprimento_barra_padrao_m: 12,
+    unidade_medida_id: SEED_IDS.unidadeB,
+    unidade_medida: 'KG',
+    unidade_principal: 'KG',
+    unidades_secundarias: [],
+    fatores_conversao: {},
+    grupo_produto_id: SEED_IDS.grupoProdutoB,
+    grupo_legado: null,
+    marca_id: SEED_IDS.marcaLegacyFalselyNamedB,
+    setor_atividade_id: SEED_IDS.setorB,
+    peso_liquido_kg: 0,
+    peso_bruto_kg: 0,
+    altura_cm: 0,
+    largura_cm: 0,
+    comprimento_cm: 0,
+    volume_m3: 0,
+    ncm: null,
+    cest: null,
+    origem_mercadoria: null,
+    status: 'Ativo',
+    foto_produto_url: null,
+    ativo: true,
+    created_at: ts,
+    updated_at: ts,
+  };
+  repo.seed([stale]);
+  assert.equal(
+    (await repo.getById({ groupId: SEED_IDS.groupB, empresaId: SEED_IDS.empresaB }, SEED_IDS.produtoB))?.marca_id,
+    SEED_IDS.marcaLegacyFalselyNamedB,
+  );
+
+  const fixed = await service.update({
+    requestId: 'reconcile-b',
+    groupId: SEED_IDS.groupB,
+    empresaId: SEED_IDS.empresaB,
+  }, SEED_IDS.produtoB, {
+    marca_id: SEED_IDS.marcaB,
+    unidade_medida_id: SEED_IDS.unidadeB,
+    grupo_produto_id: SEED_IDS.grupoProdutoB,
+    setor_atividade_id: SEED_IDS.setorB,
+  });
+  assert.equal(fixed.marca_id, SEED_IDS.marcaB);
+
+  // Manter negativo: nao permite voltar para marca do Grupo A
+  await assert.rejects(
+    () => service.update({
+      requestId: 'bad-back',
+      groupId: SEED_IDS.groupB,
+      empresaId: SEED_IDS.empresaB,
+    }, SEED_IDS.produtoB, { marca_id: SEED_IDS.marcaLegacyFalselyNamedB }),
     (err: unknown) => (err as { code?: string }).code === 'TENANT_FK_MISMATCH',
   );
 });
