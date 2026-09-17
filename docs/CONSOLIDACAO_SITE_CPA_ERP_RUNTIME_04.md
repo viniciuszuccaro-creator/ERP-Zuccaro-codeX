@@ -221,6 +221,82 @@ A escolha de RUNTIME-04 deve obedecer:
 9. branch pequena e reversível;
 10. atualizar `STATUS_DO_PROJETO.md` ao final.
 
+## Diagnóstico concluído (2026-09-17) — aguardando autorização de implementação
+
+**Base Git:** `main` @ `90a99a4f`
+**Branch de registro:** `cursor/erp-runtime-04-diagnostico-392b`
+**Implementação RUNTIME-04:** ainda **não** iniciada.
+
+### Estado da main confirmado no clone
+
+Presentes: ERP-RUNTIME-01, 02, 03; Produto MASTER DATA; FK/isolamento tenant; seed tenant; seed convergente/reconciliação; soft-delete de Produto fora das listagens padrão. Produto permanece fora de `HTTP_PILOT_ENTITIES`.
+
+### Migrations 001–008 no DEV
+
+| Item | Resultado |
+|---|---|
+| Arquivos no Git | `001`…`008` presentes em `server/migrations/` |
+| Controle | tabela `schema_migrations` (`server/src/db/migrate.ts`) |
+| Confirmação real no Postgres DEV | **NÃO POSSÍVEL neste ambiente** (`DATABASE_URL` ausente; sem Hostinger) |
+
+**Status:** `BLOCKED — MIGRATION PENDENTE` **de confirmação real no DEV** (não se afirma falta de migration; afirma-se falta de prova no banco).
+
+Antes de implementar RUNTIME-04, humano no VPS deve confirmar:
+
+```bash
+node dist/db/migrate.js --status
+# ou: SELECT id FROM schema_migrations ORDER BY id;
+```
+
+e garantir as oito entradas. Se faltar alguma, aplicar via runbook antes de autorizar o lote.
+
+### Baseline no clone (pré-implementação)
+
+| Check | Resultado |
+|---|---|
+| `npm run audit:baseline` | OK |
+| `npm test` (frontend) | 570/570 |
+| `npm run lint` | OK |
+| `npm run typecheck` | EXIT 2 — baseline histórico (ex.: Financeiro/Relatorios) |
+| `npm run build` | OK |
+| `git diff --check` | OK |
+| `server npm test` | 31 pass + 1 skip |
+| `server npm run build` | OK |
+
+### Inventário resumido dos candidatos
+
+| Candidato | Situação | Decisão |
+|---|---|---|
+| Produto | RUNTIME-03 fechado (mestre; sem preço/estoque/fiscal operacional) | Não expandir agora |
+| Marca / Unidade / GrupoProduto / SetorAtividade | RUNTIME-01/02 | Já migrados |
+| Categoria / Fabricante / Subgrupo | Não existem no ERP | Não inventar |
+| TabelaPreco | Existe; regras/histórico; adiada no R02 | Lote futuro (maior) |
+| Setor de armazenamento | Não bloqueia Pedido/Site imediato | Fora deste lote |
+| Pedido | Operacional | Não é o próximo mestre |
+| **Cliente** | Entidade `Cliente` em Cadastros/Pessoas; PF/PJ via `tipo`; UI/`localCadastroMasterPolicy` existentes; shared entity no localBase44 | **Agregado recomendado** |
+
+### Agregado recomendado
+
+**Cliente** (MASTER DATA mínimo — não Cliente 360º completo).
+
+Justificativa: próximo P0 após Produto para Pedido 360º, Site/B2B, Portal e Marketplace; reutiliza entidade/UI existentes; lote pequeno e testável; compatível com RUNTIME-01/02/03; não exige antecipar preço/estoque dentro do Produto.
+
+### Escopo previsto (somente após autorização)
+
+- Migration **009+** (001–008 imutáveis)
+- Backend Cliente: tenant, código sequencial concorrente, CPF/CNPJ, soft-delete, list/search/count, auditoria, RBAC
+- Seed sintético A/B Cliente
+- Docs/STATUS + testes E2E DEV
+- Frontend HTTP piloto: **não** ativar neste lote salvo autorização explícita
+
+### Fora de escopo
+
+Cliente 360º completo · Comercial novo · Site/Marketplace · CAD/BOM/Armação · Financeiro/IA · hard delete · alterar 001–008 · desfazer fixes RUNTIME-03.
+
+### Branch prevista de implementação (ainda não criada para código)
+
+`cursor/erp-runtime-04-cliente-master-data-392b` — somente após confirmação das migrations no DEV + autorização explícita.
+
 ## Reestruturação definitiva
 
 A Regra-Mãe permanece, mas não deve impedir correção arquitetural. É permitido reorganizar/substituir profundamente uma estrutura existente quando houver diagnóstico de que ela impede segurança, performance, integração, escalabilidade ou evolução. Nesses casos exigir diagnóstico, dependências, migração, compatibilidade, testes e rollback.

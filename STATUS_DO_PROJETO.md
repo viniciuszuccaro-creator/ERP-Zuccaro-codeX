@@ -1,3 +1,14 @@
+### ERP-RUNTIME-04 / Diagnóstico registrado (sem implementação)
+
+- Objetivo: registrar o diagnóstico completo do próximo lote após RUNTIME-03, sem editar runtime/código de Cliente.
+- HEAD main na análise: `90a99a4f`.
+- Branch de registro: `cursor/erp-runtime-04-diagnostico-392b`.
+- Documento canônico: `docs/CONSOLIDACAO_SITE_CPA_ERP_RUNTIME_04.md` (seção “Diagnóstico concluído”).
+- Agregado recomendado: **Cliente** (MASTER DATA mínimo; não Cliente 360º).
+- Migrations 001–008 no DEV: **não confirmáveis** neste ambiente (`DATABASE_URL` ausente) → `BLOCKED — MIGRATION PENDENTE` de confirmação humana no VPS (`schema_migrations` / `migrate --status`).
+- Baseline clone: audit OK; suite 570/570; lint OK; build OK; typecheck frontend baseline EXIT 2; server 31 pass + 1 skip; build server OK; `git diff --check` OK.
+- Próximo: humano confirmar 001–008 no DEV; depois autorizar implementação em `cursor/erp-runtime-04-cliente-master-data-392b`. Sem Hostinger/deploy neste registro.
+
 ### ERP-RUNTIME-03 / Soft-delete visibility — Incorporacao na main
 
 - Objetivo: incorporar `cursor/runtime03-produto-soft-delete-visibility-fix-392b` em `main`.
