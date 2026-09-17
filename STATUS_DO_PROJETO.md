@@ -1,3 +1,14 @@
+### ERP-RUNTIME-03 / Seed reconciliation — Incorporacao na main
+
+- Objetivo: incorporar `cursor/runtime03-seed-reconciliation-fix-392b` em `main`.
+- Antes: `origin/main` = `548830cb`; fix = `fe8d99b3`; merge-base = `548830cb` (0 atras / 3 a frente).
+- Conflitos: nenhum — fast-forward direto.
+- Preservado: UPSERT só Produto A/B sintéticos; Marca LEGACY `ffffffff` Grupo A; trigger 008 / TENANT_FK_MISMATCH / guards / RLS / auditoria; RUNTIME-01/02/03.
+- Migrations 001–008: imutáveis (diff vazio).
+- Validacoes pre-merge: server 30 pass + 1 skip; suite 570/570; lint/builds OK; audit:baseline OK; typecheck frontend baseline histórico; `git diff --check` OK; secrets OK.
+- Decisao: `ERP_RUNTIME_03_SEED_RECONCILIATION_FIX_MERGED_TO_MAIN` apos push.
+- Proximo: humano reaplicar seed no VPS via runbook; sem deploy pelo agente; sem RUNTIME-04.
+
 ### ERP-RUNTIME-03 / Seed reconciliation (partial-state) fix
 
 - Objetivo: tornar o seed convergente quando Produto B já existe com `marca_id` legado (`ffffffff`, Grupo A).
