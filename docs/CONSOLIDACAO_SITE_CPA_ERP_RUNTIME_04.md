@@ -239,7 +239,11 @@ Presentes: ERP-RUNTIME-01, 02, 03; Produto MASTER DATA; FK/isolamento tenant; se
 | Controle | tabela `schema_migrations` (`server/src/db/migrate.ts`) |
 | Confirmação real no Postgres DEV | **NÃO POSSÍVEL neste ambiente** (`DATABASE_URL` ausente; sem Hostinger) |
 
-**Status:** `BLOCKED — MIGRATION PENDENTE` **de confirmação real no DEV** (não se afirma falta de migration; afirma-se falta de prova no banco).
+**Status (diagnóstico inicial):** `BLOCKED — MIGRATION PENDENTE` **de confirmação real no DEV** (não se afirma falta de migration; afirma-se falta de prova no banco pelo Cloud Agent).
+
+### Precheck DEV resolvido (2026-09-17) — READY
+
+Verificação **manual read-only** no VPS DEV confirmou `schema_migrations` com `001`–`008` OK; 11 tabelas RUNTIME-01/02/03 OK; `produtos.ativo` OK; seeds sintéticos (groups=2, marcas=3, produtos=2). Nenhuma migration/apply/alteração de dados. Detalhe em `STATUS_DO_PROJETO.md` → **ERP-RUNTIME-04 — DEV PRECHECK APROVADO**. Implementação Cliente ainda **não** autorizada neste registro.
 
 Antes de implementar RUNTIME-04, humano no VPS deve confirmar:
 

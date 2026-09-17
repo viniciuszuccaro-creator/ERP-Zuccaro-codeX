@@ -1,3 +1,27 @@
+### ERP-RUNTIME-04 — DEV PRECHECK APROVADO
+
+- Data: 2026-09-17.
+- Ambiente: PostgreSQL DEV (VPS; `ERP_ROOT=/opt/erp-zuccaro`; container `supabase-db`).
+- Método: precheck **manual read-only** no VPS (humano). Cloud Agent **não** reexecutou acesso remoto.
+- Base documental anterior: entrada `ERP-RUNTIME-04 / DEV PRECHECK` permanece (histórico `BLOCKED` por falta de acesso do agente) — **não apagada**.
+- Bloqueador resolvido: confirmação real em `schema_migrations`.
+- Migrations no DEV:
+  - `001_foundation.sql` — OK
+  - `002_rls_foundation.sql` — OK
+  - `003_marcas_pilot.sql` — OK
+  - `004_tenant_integrity.sql` — OK
+  - `005_cadastros_simples.sql` — OK
+  - `006_produtos_base.sql` — OK
+  - `007_produtos_master_data.sql` — OK
+  - `008_produtos_fk_tenant.sql` — OK
+- Integridade (11/11 tabelas OK): `audit_logs`, `empresas`, `groups`, `grupos_produto`, `integration_events`, `marcas`, `produtos`, `profiles`, `schema_migrations`, `setores_atividade`, `unidades_medida`.
+- Soft-delete Produto: `produtos.ativo` — OK.
+- Seeds sintéticos (contagens): groups=2, marcas=3, produtos=2.
+- Segurança da execução: **nenhuma** migration aplicada; **nenhum** registro/schema alterado; somente leitura.
+- Sem credenciais/DATABASE_URL/senhas neste registro.
+- Decisão: **`ERP-RUNTIME-04 — DEV PRECHECK APROVADO`** · migrations 001–008 confirmadas · integridade RUNTIME-01/02/03 confirmada · **READY PARA IMPLEMENTAÇÃO DO ERP-RUNTIME-04**.
+- Próximo (somente após autorização explícita): implementação Cliente MASTER DATA em branch dedicada. Sem Cliente neste lote documental.
+
 ### ERP-RUNTIME-04 / DEV PRECHECK
 
 - Objetivo: confirmar no PostgreSQL DEV se migrations `001`–`008` estão em `schema_migrations` (bloqueador do diagnóstico).
