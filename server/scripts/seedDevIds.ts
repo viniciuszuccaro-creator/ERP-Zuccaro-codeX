@@ -20,10 +20,28 @@ export const SEED_IDS = Object.freeze({
   setorB: '66666666-bbbb-4bbb-8bbb-666666666666',
   produtoA: '77777777-aaaa-4aaa-8aaa-777777777777',
   produtoB: '88888888-bbbb-4bbb-8bbb-888888888888',
+  /** Cliente MASTER DATA (RUNTIME-04) — documentos sintéticos válidos, nunca reais. */
+  clientePjA: '99999999-aaaa-4aaa-8aaa-999999999991',
+  clientePfA: '99999999-aaaa-4aaa-8aaa-999999999992',
+  clientePjB: '99999999-bbbb-4bbb-8bbb-999999999993',
+});
+
+/** Documentos sintéticos do seed (normalizados). */
+export const SEED_DOCS = Object.freeze({
+  clientePjA: '11222333000181',
+  clientePfA: '52998224725',
+  clientePjB: '34028316000103',
 });
 
 /** Somente estes IDs de produto recebem ON CONFLICT DO UPDATE no seed. */
 export const SEED_UPSERTABLE_PRODUTO_IDS = Object.freeze([
   SEED_IDS.produtoA,
   SEED_IDS.produtoB,
+] as const);
+
+/** Somente estes IDs de cliente recebem ON CONFLICT DO UPDATE no seed. */
+export const SEED_UPSERTABLE_CLIENTE_IDS = Object.freeze([
+  SEED_IDS.clientePjA,
+  SEED_IDS.clientePfA,
+  SEED_IDS.clientePjB,
 ] as const);

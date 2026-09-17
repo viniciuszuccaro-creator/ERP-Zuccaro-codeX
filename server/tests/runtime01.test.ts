@@ -47,7 +47,7 @@ test('config load and public view never expose secrets', () => {
   assert.doesNotMatch(serialized, /postgresql:\/\//);
 });
 
-test('migrations are ordered and foundation + runtime-02/03 files exist', () => {
+test('migrations are ordered and foundation + runtime-02/03/04 files exist', () => {
   const files = listMigrationFiles();
   assert.deepEqual(files, [
     '001_foundation.sql',
@@ -58,6 +58,7 @@ test('migrations are ordered and foundation + runtime-02/03 files exist', () => 
     '006_produtos_base.sql',
     '007_produtos_master_data.sql',
     '008_produtos_fk_tenant.sql',
+    '009_clientes_master_data.sql',
   ]);
 });
 

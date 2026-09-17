@@ -384,7 +384,7 @@ test('API RUNTIME-02 UnidadeMedida E2E + meta + cross-tenant HTTP', async () => 
   });
 
   const meta = await fetchOk(app, '/api/v1/meta');
-  assert.match(String(meta.runtime), /^ERP-RUNTIME-0[23]$/);
+  assert.match(String(meta.runtime), /^ERP-RUNTIME-0[234]$/);
   assert.ok(meta.httpPilotEntities.includes('UnidadeMedida'));
   assert.ok(meta.preparedEntities.includes('Produto'));
 

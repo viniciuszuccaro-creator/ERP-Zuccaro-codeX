@@ -137,7 +137,7 @@ test('seed SQL: Produto A/B FKs batem com tenant real (nao com o nome)', () => {
   }
 });
 
-test('seed SQL: parents DO NOTHING; Produto A/B usam UPSERT convergente', () => {
+test('seed SQL: parents DO NOTHING; Produto A/B e Cliente A/B usam UPSERT convergente', () => {
   const sql = readFileSync(seedPath, 'utf8');
   const codeOnly = sql.replace(/--.*$/gm, '');
 
@@ -145,12 +145,15 @@ test('seed SQL: parents DO NOTHING; Produto A/B usam UPSERT convergente', () => 
   const doNothing = codeOnly.match(/ON CONFLICT \(id\) DO NOTHING/gi)?.length ?? 0;
   const doUpdate = codeOnly.match(/ON CONFLICT \(id\) DO UPDATE SET/gi)?.length ?? 0;
 
-  assert.equal(inserts, 15);
+  // 15 originais (groups→produtos) + entity_code_sequences + 3 clientes + cliente_empresas = 20
+  assert.equal(inserts, 20);
   assert.equal(doNothing, 13, 'groups/empresas/marcas/unidades/grupos/setores = DO NOTHING');
-  assert.equal(doUpdate, 2, 'somente Produto A e Produto B usam DO UPDATE');
+  assert.equal(doUpdate, 5, 'Produto A/B + Cliente PJ/PF A + Cliente PJ B usam DO UPDATE');
 
   assert.match(codeOnly, /WHERE produtos\.id = '77777777-aaaa-4aaa-8aaa-777777777777'/);
   assert.match(codeOnly, /WHERE produtos\.id = '88888888-bbbb-4bbb-8bbb-888888888888'/);
+  assert.match(codeOnly, /WHERE clientes\.id = '99999999-aaaa-4aaa-8aaa-999999999991'/);
+  assert.match(codeOnly, /WHERE clientes\.id = '99999999-bbbb-4bbb-8bbb-999999999993'/);
 
   // Marca LEGACY nao tem DO UPDATE (nunca mover tenant)
   const marcaBlocks = sql.split(/INSERT INTO marcas\b/i).slice(1);
@@ -167,6 +170,28 @@ test('seed SQL: parents DO NOTHING; Produto A/B usam UPSERT convergente', () => 
   assert.match(produtoBBlock!, /marca_id = EXCLUDED\.marca_id/);
   assert.ok(produtoBBlock!.includes(SEED_IDS.marcaB));
   assert.ok(!produtoBBlock!.includes(SEED_IDS.marcaLegacyFalselyNamedB));
+});
+
+test('seed SQL: Cliente PJ/PF A e PJ B com tenant e documentos sintéticos', () => {
+  const sql = readFileSync(seedPath, 'utf8');
+  assert.match(sql, new RegExp(SEED_IDS.clientePjA));
+  assert.match(sql, new RegExp(SEED_IDS.clientePfA));
+  assert.match(sql, new RegExp(SEED_IDS.clientePjB));
+  assert.match(sql, /11222333000181/);
+  assert.match(sql, /52998224725/);
+  assert.match(sql, /34028316000103/);
+  assert.match(sql, /entity_code_sequences/);
+  assert.match(sql, /INSERT INTO cliente_empresas/);
+
+  // Cliente B: group_id na 2ª coluna do VALUES deve ser Grupo B
+  const valuesMatch = sql.match(
+    new RegExp(
+      `'${SEED_IDS.clientePjB}'\\s*,\\s*'([^']+)'\\s*,\\s*'([^']+)'`,
+    ),
+  );
+  assert.ok(valuesMatch);
+  assert.equal(valuesMatch![1], SEED_IDS.groupB);
+  assert.equal(valuesMatch![2], SEED_IDS.empresaB);
 });
 
 test('partial-state: Produto B com marca legado converge para Marca B REAL (cenarios 1-5)', () => {
