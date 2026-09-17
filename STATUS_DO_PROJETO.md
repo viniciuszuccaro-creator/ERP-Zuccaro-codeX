@@ -4,9 +4,10 @@
 - Causa: `ON CONFLICT DO NOTHING` no Produto não reconciliava partial-state.
 - Estratégia: UPSERT (`DO UPDATE`) **somente** nos IDs sintéticos Produto A `77777777-…` e Produto B `88888888-…`; Marca LEGACY permanece `DO NOTHING` (não move tenant); trigger 008 ativo.
 - Branch: `cursor/runtime03-seed-reconciliation-fix-392b` (base main `548830cb`).
-- Migrations 001–008: imutáveis.
+- Migrations 001–008: imutáveis (diff vazio).
+- Validacoes: server 30 pass + 1 skip (inclui partial-state); suite 570/570; lint/builds OK; audit:baseline OK; typecheck frontend baseline histórico; `git diff --check` OK; secrets sem credencial real.
 - Sem Hostinger, sem deploy, sem merge main, sem RUNTIME-04.
-- Decisão: ver relatório final do agente.
+- Decisão: **`ERP_RUNTIME_03_SEED_RECONCILIATION_FIX_READY`**.
 
 ### ERP-RUNTIME-03 / Seed tenant A/B fix — Incorporacao na main
 
