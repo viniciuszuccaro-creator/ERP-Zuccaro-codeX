@@ -97,10 +97,10 @@ export class PostgresProdutoRepository implements ProdutoRepository {
       params.push(filter.empresaId);
       where.push(`empresa_id = $${params.length}`);
     }
-    if (typeof filter.ativo === 'boolean') {
-      params.push(filter.ativo);
-      where.push(`ativo = $${params.length}`);
-    }
+    // Default operacional: ativo=true (fail-safe). Combinado com group_id (tenant).
+    const ativoFilter = typeof filter.ativo === 'boolean' ? filter.ativo : true;
+    params.push(ativoFilter);
+    where.push(`ativo = $${params.length}`);
     if (filter.codigo) {
       params.push(filter.codigo.toLowerCase());
       where.push(`lower(codigo) = $${params.length}`);

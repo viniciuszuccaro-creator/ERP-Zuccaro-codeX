@@ -290,7 +290,87 @@ test('API Produto cross-tenant empresa and FK via HTTP', async () => {
   assert.equal(crossFk.body.error.code, 'TENANT_FK_MISMATCH');
 });
 
-test('soft-deleted produto excluded from default list', async () => {
+test('soft-deleted produto excluded from default list/search/count (defeito VPS)', async () => {
+  const config = testConfig();
+  const db = createDbClient(config);
+  const { app } = createApp({
+    config,
+    db,
+    useMemory: true,
+    tenantGuard: linkedGuard(),
+    produtoRelationGuard: linkedRelations(),
+  });
+  const headersA = {
+    'content-type': 'application/json',
+    'x-group-id': GROUP_A,
+    'x-empresa-id': EMPRESA_A,
+  };
+
+  const keep = await fetchOk(app, '/api/v1/produtos', {
+    method: 'POST',
+    headers: headersA,
+    body: JSON.stringify({ descricao: 'Ativo permanece', codigo: 'PROD-KEEP' }),
+  });
+  const doomed = await fetchOk(app, '/api/v1/produtos', {
+    method: 'POST',
+    headers: headersA,
+    body: JSON.stringify({ descricao: 'Para soft delete', codigo: 'PROD-API-TESTE' }),
+  });
+
+  // Aparece antes do soft delete
+  const beforeList = await fetchOk(app, '/api/v1/produtos?limit=10&offset=0', {
+    headers: { 'x-group-id': GROUP_A },
+  });
+  assert.ok(beforeList.data.some((p: { codigo: string }) => p.codigo === 'PROD-API-TESTE'));
+  assert.ok(beforeList.data.some((p: { codigo: string }) => p.codigo === 'PROD-KEEP'));
+
+  const deleted = await fetchOk(app, `/api/v1/produtos/${doomed.data.id}`, {
+    method: 'DELETE',
+    headers: { 'x-group-id': GROUP_A },
+  });
+  assert.equal(deleted.data.ativo, false);
+
+  // LIST padrao (sem ?ativo=) NAO deve retornar soft-deleted
+  const afterList = await fetchOk(app, '/api/v1/produtos?limit=10&offset=0', {
+    headers: { 'x-group-id': GROUP_A },
+  });
+  assert.equal(afterList.data.some((p: { id: string }) => p.id === doomed.data.id), false);
+  assert.ok(afterList.data.some((p: { id: string }) => p.id === keep.data.id));
+  assert.equal(afterList.meta.total, afterList.data.length);
+  assert.equal(afterList.data.every((p: { ativo: boolean }) => p.ativo === true), true);
+
+  // SEARCH pelo codigo soft-deleted → vazio + total 0
+  const search = await fetchOk(app, '/api/v1/produtos?search=PROD-API-TESTE&limit=10&offset=0', {
+    headers: { 'x-group-id': GROUP_A },
+  });
+  assert.deepEqual(search.data, []);
+  assert.equal(search.meta.total, 0);
+  assert.equal(search.meta.hasMore, false);
+
+  // GET by id soft-deleted → 404
+  const getGone = await fetchStatus(app, `/api/v1/produtos/${doomed.data.id}`, {
+    headers: { 'x-group-id': GROUP_A },
+  });
+  assert.equal(getGone.statusCode, 404);
+  assert.equal(getGone.body.error.code, 'PRODUTO_NOT_FOUND');
+
+  // PATCH soft-deleted → 404
+  const patchGone = await fetchStatus(app, `/api/v1/produtos/${doomed.data.id}`, {
+    method: 'PATCH',
+    headers: headersA,
+    body: JSON.stringify({ descricao: 'nao deve editar' }),
+  });
+  assert.equal(patchGone.statusCode, 404);
+
+  // DELETE repetido → 404 (sem soft_delete enganoso)
+  const delAgain = await fetchStatus(app, `/api/v1/produtos/${doomed.data.id}`, {
+    method: 'DELETE',
+    headers: { 'x-group-id': GROUP_A },
+  });
+  assert.equal(delAgain.statusCode, 404);
+});
+
+test('soft-delete visibility respeita tenant A/B', async () => {
   const config = testConfig();
   const db = createDbClient(config);
   const { app } = createApp({
@@ -301,23 +381,50 @@ test('soft-deleted produto excluded from default list', async () => {
     produtoRelationGuard: linkedRelations(),
   });
 
-  const created = await fetchOk(app, '/api/v1/produtos', {
+  const a1 = await fetchOk(app, '/api/v1/produtos', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
       'x-group-id': GROUP_A,
       'x-empresa-id': EMPRESA_A,
     },
-    body: JSON.stringify({ descricao: 'Para soft delete', codigo: 'SOFT-1' }),
+    body: JSON.stringify({ descricao: 'A ativo', codigo: 'TA-1', marca_id: MARCA_A }),
   });
-  await fetchOk(app, `/api/v1/produtos/${created.data.id}`, {
+  const a2 = await fetchOk(app, '/api/v1/produtos', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-group-id': GROUP_A,
+      'x-empresa-id': EMPRESA_A,
+    },
+    body: JSON.stringify({ descricao: 'A soft', codigo: 'TA-2', marca_id: MARCA_A }),
+  });
+  await fetchOk(app, `/api/v1/produtos/${a2.data.id}`, {
     method: 'DELETE',
     headers: { 'x-group-id': GROUP_A },
   });
-  const active = await fetchOk(app, '/api/v1/produtos?ativo=true', {
+  await fetchOk(app, '/api/v1/produtos', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-group-id': GROUP_B,
+      'x-empresa-id': EMPRESA_B,
+    },
+    body: JSON.stringify({ descricao: 'B ativo', codigo: 'TB-1', marca_id: MARCA_B }),
+  });
+
+  const listA = await fetchOk(app, '/api/v1/produtos?limit=50', {
     headers: { 'x-group-id': GROUP_A },
   });
-  assert.equal(active.data.every((p: { id: string }) => p.id !== created.data.id), true);
+  assert.equal(listA.data.every((p: { group_id: string; ativo: boolean }) => p.group_id === GROUP_A && p.ativo), true);
+  assert.ok(listA.data.some((p: { id: string }) => p.id === a1.data.id));
+  assert.equal(listA.data.some((p: { id: string }) => p.id === a2.data.id), false);
+
+  const listB = await fetchOk(app, '/api/v1/produtos?limit=50', {
+    headers: { 'x-group-id': GROUP_B },
+  });
+  assert.equal(listB.data.every((p: { group_id: string }) => p.group_id === GROUP_B), true);
+  assert.equal(listB.data.some((p: { id: string }) => p.id === a1.data.id), false);
 });
 
 async function fetchStatus(app: ReturnType<typeof createApp>['app'], path: string, init: RequestInit = {}) {

@@ -34,10 +34,13 @@ export class ProdutoService {
     this.assertScope(ctx);
     const limit = Math.min(Math.max(options.limit ?? 50, 1), 200);
     const offset = Math.max(options.offset ?? 0, 0);
+    // Fail-safe operacional: sem ?ativo= explícito, listar SOMENTE ativo=true.
+    // Search/count/paginação usam o mesmo filtro (meta.total alinhado aos rows).
+    const ativo = typeof options.ativo === 'boolean' ? options.ativo : true;
     const page = await this.repo.listPage({
       groupId: ctx.groupId,
       empresaId: ctx.empresaId,
-      ativo: options.ativo,
+      ativo,
       search: options.search,
       codigo: options.codigo,
       codigoBarras: options.codigoBarras,
@@ -58,7 +61,10 @@ export class ProdutoService {
   async get(ctx: RequestContext, id: string) {
     this.assertScope(ctx);
     const row = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id);
-    if (!row) throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+    // Endpoint operacional: soft-deleted (ativo=false) trata-se como inexistente (404).
+    if (!row || row.ativo === false) {
+      throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+    }
     return row;
   }
 
@@ -106,7 +112,10 @@ export class ProdutoService {
     }
     const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
     const before = await this.repo.getById(scope, id);
-    if (!before) throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+    // Nao editar soft-deleted como se estivesse ativo.
+    if (!before || before.ativo === false) {
+      throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+    }
     const empresaId = parsed.data.empresa_id === undefined ? before.empresa_id : parsed.data.empresa_id;
     await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
     await this.assertRelations(ctx.groupId, { ...before, ...parsed.data });
@@ -138,7 +147,10 @@ export class ProdutoService {
     this.assertScope(ctx);
     const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
     const before = await this.repo.getById(scope, id);
-    if (!before) throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+    // Idempotente: ja inativo → 404, sem auditoria enganosa false→false.
+    if (!before || before.ativo === false) {
+      throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+    }
     const updated = await this.repo.softDelete(scope, id);
     if (!updated) throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
     await this.audit.append({

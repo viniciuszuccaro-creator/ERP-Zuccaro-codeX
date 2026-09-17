@@ -1,3 +1,13 @@
+### ERP-RUNTIME-03 / Soft-delete visibility fix
+
+- Objetivo: list/search/count de Produto padrão excluem `ativo=false` (defeito E2E VPS: PROD-API-TESTE ainda aparecia após DELETE).
+- Causa raiz: `ProdutoService.list` / repos só filtravam `ativo` quando o query param era explícito; default omitia o filtro.
+- Correção: default `ativo=true` no service + Postgres/InMemory; GET/PATCH/DELETE de soft-deleted → 404 idempotente; sem hard delete; sem includeDeleted.
+- Branch: `cursor/runtime03-produto-soft-delete-visibility-fix-392b` (base main `d7d027de`).
+- Migrations 001–008: imutáveis.
+- Sem Hostinger, sem deploy, sem merge main, sem RUNTIME-04.
+- Decisão: ver relatório final do agente.
+
 ### ERP-RUNTIME-03 / Seed reconciliation — Incorporacao na main
 
 - Objetivo: incorporar `cursor/runtime03-seed-reconciliation-fix-392b` em `main`.

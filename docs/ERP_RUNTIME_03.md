@@ -1,9 +1,9 @@
 # ERP-RUNTIME-03 — Produto MASTER DATA
 
-**Status:** seed tenant A/B corrigido (sem deploy VPS neste lote)
-**Branch:** `cursor/runtime03-seed-tenant-fix-392b`
-**Base main:** `e4fb0ed0`
-**Pré-requisito:** RUNTIME-03 na main (`e4fb0ed0`)
+**Status:** soft-delete visibility fix (sem deploy VPS neste lote)
+**Branch:** `cursor/runtime03-produto-soft-delete-visibility-fix-392b`
+**Base main:** `d7d027de`
+**Pré-requisito:** seed reconciliation na main
 
 ## Objetivo
 
@@ -44,6 +44,18 @@ Correção no seed (sem migration, sem mover tenant legado):
 **Reconciliação (partial-state):** Produto A/B usam `ON CONFLICT (id) DO UPDATE` **somente** nos IDs sintéticos `77777777-…` e `88888888-…`, para convergir `marca_id` legado → Marca B REAL sem tocar registros reais. Demais entidades do seed: `DO NOTHING`. Trigger 008 permanece ativo.
 
 Constantes: `server/scripts/seedDevIds.ts`.
+
+## Soft delete — visibilidade operacional
+
+| Operação | Semântica |
+|---|---|
+| `GET /produtos` e `?search=` | **default `ativo=true`** (list + count + paginação). Soft-deleted não aparece. |
+| `GET /produtos/:id` | soft-deleted → **404** `PRODUTO_NOT_FOUND` |
+| `PATCH /produtos/:id` | soft-deleted → **404** (não edita inativo) |
+| `DELETE /produtos/:id` | já inativo → **404** idempotente (sem audit false→false) |
+| Persistência | registro permanece no Postgres (`ativo=false`); audit `soft_delete` intacta |
+
+Filtro `ativo` combina com `group_id` (tenant). Sem `includeDeleted` neste lote.
 
 ## Docs
 

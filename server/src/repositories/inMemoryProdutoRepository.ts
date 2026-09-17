@@ -65,7 +65,9 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
   private matches(filter: ProdutoListFilter, r: Produto): boolean {
     if (r.group_id !== filter.groupId) return false;
     if (filter.empresaId && r.empresa_id !== filter.empresaId) return false;
-    if (typeof filter.ativo === 'boolean' && r.ativo !== filter.ativo) return false;
+    // Default operacional: ativo=true (paridade com Postgres). Combinado com group_id.
+    const ativoFilter = typeof filter.ativo === 'boolean' ? filter.ativo : true;
+    if (r.ativo !== ativoFilter) return false;
     if (filter.codigo && String(r.codigo || '').toLowerCase() !== filter.codigo.toLowerCase()) return false;
     if (filter.codigoBarras && String(r.codigo_barras || '').toLowerCase() !== filter.codigoBarras.toLowerCase()) {
       return false;
