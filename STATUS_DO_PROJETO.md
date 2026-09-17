@@ -1,3 +1,14 @@
+### ERP-RUNTIME-03 / Soft-delete visibility — Incorporacao na main
+
+- Objetivo: incorporar `cursor/runtime03-produto-soft-delete-visibility-fix-392b` em `main`.
+- Antes: `origin/main` = `d7d027de`; fix = `e06a41b5`; merge-base = `d7d027de` (0 atras / 2 a frente).
+- Conflitos: nenhum — fast-forward direto.
+- Preservado: default ativo=true em list/search/count; GET/PATCH/DELETE soft-deleted → 404; seed A/B; TENANT_FK; audit; Produto fora de HTTP_PILOT_ENTITIES.
+- Migrations 001–008: imutaveis (diff vazio).
+- Validacoes pre-merge: server 31 pass + 1 skip; suite 570/570; lint/builds OK; audit:baseline OK; typecheck frontend baseline; `git diff --check` OK; secrets OK.
+- Decisao: `ERP_RUNTIME_03_SOFT_DELETE_VISIBILITY_FIX_MERGED_TO_MAIN` apos push.
+- Proximo: humano rebuild/restart API no VPS e retestar search PROD-API-TESTE; sem deploy pelo agente; sem RUNTIME-04.
+
 ### ERP-RUNTIME-03 / Soft-delete visibility fix
 
 - Objetivo: list/search/count de Produto padrão excluem `ativo=false` (defeito E2E VPS: PROD-API-TESTE ainda aparecia após DELETE).
