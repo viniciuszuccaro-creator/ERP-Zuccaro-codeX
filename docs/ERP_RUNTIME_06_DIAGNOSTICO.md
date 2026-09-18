@@ -135,7 +135,7 @@ Ownership proposto:
 ```text
 clientes (Grupo)
   └─ cliente_locais (Grupo, Cliente)
-       └─ finalidades: CADASTRAL/FISCAL/COBRANCA/ENTREGA/OBRA/
+       └─ finalidades: CADASTRAL/FISCAL/COBRANCA/ENTREGA/
                        CORRESPONDENCIA/OUTRO
 ```
 
@@ -152,7 +152,8 @@ Campos mínimos prováveis do Local:
 
 O mesmo Local pode ter múltiplas finalidades. Finalidade não deve exigir cópia
 física do endereço. “Principal” deve ser definido por finalidade, com
-unicidade controlada.
+unicidade controlada por `(cliente_id, finalidade)`; um Local pode ser principal
+para várias finalidades.
 
 Tabela provável:
 
@@ -176,6 +177,10 @@ Isso deve ser preservado durante a transição, mas não é o modelo final: Obra
 contexto comercial/operacional com nome, código, status e vários Projetos;
 Endereço é apenas localização física. Um endereço de cobrança não é Obra.
 
+No modelo final, **OBRA não é finalidade de ClienteLocal**. Finalidades
+descrevem somente o uso do endereço físico: CADASTRAL, FISCAL, COBRANCA,
+ENTREGA, CORRESPONDENCIA e OUTRO.
+
 RUNTIME-06B deve evoluir a estrutura existente para uma tabela `obras`
 referenciando `cliente_local_id`, sem repetir logradouro. O alias legado
 `obra_destino_id = addressId` deve ser mapeado ao UUID novo durante a transição.
@@ -195,6 +200,15 @@ Classificação futura:
 Cardinalidade inicial: uma Obra pertence a um Cliente e referencia um Local.
 Consórcios/múltiplos clientes não aparecem no código atual; devem ser extensão
 futura por relacionamento, sem superdimensionar RUNTIME-06B.
+
+Várias Obras podem referenciar o mesmo Local; não criar
+`UNIQUE(cliente_local_id)`. Inativar Obra não inativa Local. Inativar Local
+referenciado por Obra ativa deve ser bloqueado ou exigir reassociação explícita,
+sem cascade.
+
+`cliente_local_id` deve ser obrigatório na Obra canônica. Registros legados sem
+Local resolvido permanecem no staging de migração, com relatório de pendência;
+não entram parcialmente no agregado operacional.
 
 Obra é global ao Grupo e pode ser usada pela CPA e 3Z quando ambas possuem
 ClienteEmpresa elegível/autorizado. Não duplicar a mesma Obra por Empresa.
@@ -327,9 +341,15 @@ salas, portões e obras no mesmo endereço podem ser registros legítimos.
 Migração futura:
 
 - staging de `endereco_principal` e `locais_entrega[]`;
+- identificar aliases legados `tipo_endereco=Obra`, `tipo/type=OBRA` e
+  `obra=true`;
+- materializar primeiro ClienteLocal e depois Obra com `cliente_local_id`;
 - atribuir UUID/código sem mudar arrays legados;
-- preservar `legacy_id`, `legacy_code`, `source_system`, `migration_batch`;
-- mapear ID legado/índice → UUID;
+- preservar `legacy_id`, `legacy_code`, `source_system`, `migration_batch` em
+  Local e Obra;
+- mapear ID legado/índice/addressId → Local UUID → Obra UUID;
+- manter aliases `addressId=obraId` e `obra_destino_id` durante compatibilidade,
+  sem tratá-los como modelo definitivo;
 - relatório de conflito e decisão humana;
 - reexecutável/idempotente, sem migração massiva no primeiro apply.
 
@@ -386,6 +406,8 @@ Escopo provável:
 
 - `cliente_locais`;
 - `cliente_local_finalidades`;
+- finalidades limitadas a CADASTRAL/FISCAL/COBRANCA/ENTREGA/
+  CORRESPONDENCIA/OUTRO; nunca OBRA;
 - indexes/fingerprint de possível duplicidade;
 - integridade Cliente/Grupo;
 - RLS, lifecycle, origem/legado e actors.
@@ -403,6 +425,10 @@ RUNTIME-06B provável:
 - `GET/PATCH/DELETE /api/v1/clientes/:clienteId/obras/:obraId`;
 - `POST .../:obraId/restore`;
 - `obras.cliente_local_id` obrigatório e tenant-scoped.
+- `obras`: id, group/cliente, código, nome, status, `cliente_local_id`, origem,
+  legado, ativo, timestamps e actors;
+- FK garante Cliente, Obra e Local no mesmo Grupo/Cliente;
+- nenhuma unicidade sobre `cliente_local_id`.
 
 Não ativar frontend HTTP no diagnóstico.
 
@@ -411,7 +437,7 @@ Não ativar frontend HTTP no diagnóstico.
 Casos suportados pelo modelo:
 
 - cadastral e entrega distintos, sem trocar endereço principal;
-- várias Obras, cada uma com Local próprio;
+- várias Obras com Locais próprios ou compartilhando o mesmo Local;
 - Cliente/Obra compartilhados por CPA e 3Z autorizadas, sem cópia física;
 - destino eventual e endereço Marketplace ficam apenas no snapshot;
 - retirada referencia Local da Empresa, não ClienteLocal;
@@ -420,24 +446,24 @@ Casos suportados pelo modelo:
 - coordenadas são opcionais: ausência de geocode não bloqueia venda quando a
   política logística permitir.
 
-1. Cliente A cria Local A e Local da Obra A;
-2. mesmo Local recebe múltiplas finalidades sem duplicar endereço;
-3. ID do Local e código sequencial da Obra permanecem estáveis;
-4. Grupo A consolida;
-5. Empresa com ClienteEmpresa elegível usa o Local;
-6. Empresa A2 não autorizada é bloqueada;
-7. Grupo B não lê/get/patch/inativa/restaura Local A;
-8. Cliente/Local cross-group é bloqueado no banco;
-9. fingerprint formatado/não formatado sinaliza possível duplicidade sem merge;
-10. apartamentos/complementos distintos permanecem separados;
-11. soft delete remove da listagem operacional; restore retorna;
-12. paginação/count/busca fora da primeira página e filtros cidade/UF/tipo;
-13. RLS fail-closed;
-14. auditoria atômica before/after e rollback em falha;
-15. seed duplo converge;
-16. Obra A referencia Local A sem repetir endereço;
-17. mesma Obra é visível para CPA/3Z autorizadas sem duplicação;
-18. Obra inativa permanece no histórico e não aparece em nova operação;
+1. criar Local A com finalidades CADASTRAL + COBRANCA;
+2. definir um principal por finalidade, permitindo o mesmo Local em ambas;
+3. criar Local B com finalidade ENTREGA;
+4. criar Obra 000001 referenciando Local B;
+5. criar Obra 000002 referenciando o mesmo Local B;
+6. confirmar que Obras não repetem endereço;
+7. inativar Obra sem inativar Local;
+8. bloquear inativação de Local usado por Obra ativa ou exigir reassociação;
+9. Grupo A consolida; Empresa elegível usa Local/Obra;
+10. Empresa A2 não autorizada e Grupo B são bloqueados;
+11. Cliente/Local/Obra cross-group é bloqueado no banco;
+12. fingerprint sinaliza possível duplicidade sem merge;
+13. complementos distintos permanecem separados;
+14. soft delete/restore e listagem operacional funcionam;
+15. paginação/count/busca/filtros;
+16. RBAC, RLS e auditoria atômica com rollback;
+17. código Obra via `entity_code_sequences`;
+18. seed duplo converge;
 19. snapshot de Pedido somente quando Pedido existir no PostgreSQL.
 
 Seed futuro: Grupo A/Cliente A com Local matriz e duas obras; Grupo B/Cliente B
