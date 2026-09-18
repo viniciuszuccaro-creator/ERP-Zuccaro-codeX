@@ -9,6 +9,7 @@ import {
   InMemoryProdutoRelationGuard,
   PostgresProdutoRelationGuard,
 } from './db/produtoRelationGuard.js';
+import { InMemoryRbacGuard, PostgresRbacGuard } from './db/rbacGuard.js';
 import { InMemoryTenantGuard, PostgresTenantGuard } from './db/tenantGuard.js';
 import { createErrorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { requestIdMiddleware, scopeMiddleware } from './middleware/requestContext.js';
@@ -18,6 +19,7 @@ import {
   createInMemoryUnidadeRepo,
 } from './repositories/inMemoryCadastroRepositories.js';
 import { createInMemoryProdutoRepo } from './repositories/inMemoryProdutoRepository.js';
+import { createInMemoryClienteRepo } from './repositories/inMemoryClienteRepository.js';
 import { InMemoryMarcaRepository } from './repositories/inMemoryMarcaRepository.js';
 import {
   PostgresGrupoProdutoRepository,
@@ -25,6 +27,7 @@ import {
   PostgresUnidadeRepository,
 } from './repositories/postgresCadastroRepositories.js';
 import { PostgresProdutoRepository } from './repositories/postgresProdutoRepository.js';
+import { PostgresClienteRepository } from './repositories/postgresClienteRepository.js';
 import { PostgresMarcaRepository } from './repositories/postgresMarcaRepository.js';
 import {
   grupoProdutoCreateSchema,
@@ -34,6 +37,7 @@ import {
   unidadeCreateSchema,
   unidadeUpdateSchema,
 } from './repositories/cadastroTypes.js';
+import { ClienteService } from './services/clienteService.js';
 import { MarcaService } from './services/marcaService.js';
 import { ProdutoService } from './services/produtoService.js';
 import { TenantCrudService } from './services/tenantCrudService.js';
@@ -47,6 +51,8 @@ export type CreateAppOptions = {
   tenantGuard?: InMemoryTenantGuard | PostgresTenantGuard;
   /** Optional relation guard for Produto FKs (tests). */
   produtoRelationGuard?: InMemoryProdutoRelationGuard | PostgresProdutoRelationGuard;
+  /** Optional RBAC guard using the canonical entityGuard permission tree (tests). */
+  rbacGuard?: InMemoryRbacGuard | PostgresRbacGuard;
 };
 
 export function createApp(options: CreateAppOptions) {
@@ -58,12 +64,15 @@ export function createApp(options: CreateAppOptions) {
     ?? (useMemory ? new InMemoryTenantGuard() : new PostgresTenantGuard(db));
   const produtoRelationGuard = options.produtoRelationGuard
     ?? (useMemory ? new InMemoryProdutoRelationGuard() : new PostgresProdutoRelationGuard(db));
+  const rbacGuard = options.rbacGuard
+    ?? (useMemory ? new InMemoryRbacGuard() : new PostgresRbacGuard(db));
 
   const marcaRepo = useMemory ? new InMemoryMarcaRepository() : new PostgresMarcaRepository(db);
   const unidadeRepo = useMemory ? createInMemoryUnidadeRepo() : new PostgresUnidadeRepository(db);
   const grupoRepo = useMemory ? createInMemoryGrupoProdutoRepo() : new PostgresGrupoProdutoRepository(db);
   const setorRepo = useMemory ? createInMemorySetorRepo() : new PostgresSetorRepository(db);
   const produtoRepo = useMemory ? createInMemoryProdutoRepo() : new PostgresProdutoRepository(db);
+  const clienteRepo = useMemory ? createInMemoryClienteRepo() : new PostgresClienteRepository(db);
 
   const marcaService = new MarcaService(marcaRepo, auditRepo, tenantGuard);
   const unidadeService = new TenantCrudService(unidadeRepo, auditRepo, tenantGuard, {
@@ -99,6 +108,7 @@ export function createApp(options: CreateAppOptions) {
     tenantGuard,
     produtoRelationGuard,
   );
+  const clienteService = new ClienteService(clienteRepo, auditRepo, tenantGuard, rbacGuard);
 
   const app = express();
   app.disable('x-powered-by');
@@ -137,6 +147,7 @@ export function createApp(options: CreateAppOptions) {
     grupoProdutoService,
     setorService,
     produtoService,
+    clienteService,
   }));
   app.use(notFoundHandler);
   app.use(createErrorHandler(config));
@@ -148,9 +159,11 @@ export function createApp(options: CreateAppOptions) {
     grupoProdutoService,
     setorService,
     produtoService,
+    clienteService,
     auditRepo,
     tenantGuard,
     produtoRelationGuard,
+    rbacGuard,
     useMemory,
   };
 }

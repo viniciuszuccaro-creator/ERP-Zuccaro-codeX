@@ -244,8 +244,9 @@ test('API Produto pagination + tenant isolation + search no leak', async () => {
   assert.equal(listB.data[0].codigo, 'SYN-B-0');
 
   const meta = await fetchOk(app, '/api/v1/meta');
-  assert.equal(meta.runtime, 'ERP-RUNTIME-03');
+  assert.ok(['ERP-RUNTIME-03', 'ERP-RUNTIME-04'].includes(meta.runtime));
   assert.equal(meta.produto.frontendHttp, false);
+  assert.ok(meta.preparedEntities.includes('Produto'));
   assert.ok(!meta.httpPilotEntities.includes('Produto'));
 });
 
