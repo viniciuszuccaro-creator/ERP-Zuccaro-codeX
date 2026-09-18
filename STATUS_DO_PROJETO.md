@@ -6,6 +6,8 @@
 - Software/API DEV: **permanece `ERP-RUNTIME-06A`**. Implementação de Obra
   **não** iniciada. Migration `012_obras.sql` **não** criada.
 - Arquitetura aprovada e consolidada após review:
+  - Cliente MASTER, ClienteEmpresa, ClienteLocal e Obra são agregados
+    irmãos no Cliente/Grupo (Obra não é filha de ClienteEmpresa);
   - Obra = contexto comercial/operacional; Grupo + `cliente_id`;
   - Empresa autoriza via `obra_empresas` (não é dona; não define NF);
   - Locais via `obra_locais` N:N; um principal geral por Obra;

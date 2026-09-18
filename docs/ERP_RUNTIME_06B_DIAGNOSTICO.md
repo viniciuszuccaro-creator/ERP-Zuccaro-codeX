@@ -16,16 +16,24 @@ Arquitetura **aprovada** no review. Este arquivo é a fonte canônica de Obra.
 Obra é **contexto comercial/operacional do Cliente**, não um endereço e não
 uma finalidade de `ClienteLocal`.
 
-Cadeia canônica:
+Cadeia canônica oficial:
 
 ```text
-Cliente (Grupo)
-  └── ClienteEmpresa (elegibilidade por Empresa)
-        └── Obra (Grupo + Cliente)
-              ├── obra_empresas (autorização de atendimento por Empresa)
-              └── obra_locais → ClienteLocal (endereço físico reutilizado)
-                    └── Pedido / Orçamento / Entrega / NF  (futuro: ref + snapshot)
+Cliente MASTER (identidade no Grupo)
+   |
+   +-- ClienteEmpresa (elegibilidade comercial por Empresa)
+   |
+   +-- ClienteLocal (endereço físico canônico + finalidades)
+   |
+   +-- Obra (contexto comercial/operacional; group_id + cliente_id)
+          |
+          +-- obra_empresas   → autorização de atendimento por Empresa
+          |
+          +-- obra_locais     → ClienteLocal (uso_na_obra + principal)
 ```
+
+Obra **não** é filha de ClienteEmpresa. ClienteEmpresa e `obra_empresas`
+são relações de autorização; o dono da Obra é Grupo + Cliente.
 
 Pedido **não exige** Obra. Marketplace, site PF e venda avulsa continuam
 válidos sem Obra. B2B/obra industrial podem selecionar ou criar Obra.
