@@ -10,6 +10,7 @@ export type ActorContext = {
 
 export type RequestContext = TenantScope & ActorContext & {
   requestId: string;
+  scopeType?: 'grupo' | 'empresa';
   ipAddress?: string | null;
 };
 
@@ -19,6 +20,10 @@ export type AuditAction =
   | 'delete'
   | 'soft_delete'
   | 'restore'
+  | 'link'
+  | 'block'
+  | 'unblock'
+  | 'inactivate'
   | 'duplicate_block'
   | 'read';
 

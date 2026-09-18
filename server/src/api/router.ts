@@ -35,6 +35,7 @@ function ctxFromReq(req: Request) {
     empresaId: req.empresaId,
     actorId: req.actorId,
     actorEmail: req.actorEmail,
+    scopeType: req.scopeType,
     ipAddress: req.ip,
   };
 }
@@ -156,6 +157,112 @@ function parseAtivoQuery(ativoParam: unknown): boolean | undefined {
 }
 
 function mountClienteRoutes(router: Router, service: ClienteService) {
+  const relationshipPath = '/api/v1/clientes/:clienteId/empresas';
+
+  router.get(relationshipPath, requireTenantScope, async (req, res, next) => {
+    try {
+      const orderByRaw = req.query.order_by ? String(req.query.order_by) : undefined;
+      const orderBy = ['empresa', 'situacao', 'created_at'].includes(orderByRaw ?? '')
+        ? orderByRaw as 'empresa' | 'situacao' | 'created_at'
+        : undefined;
+      const orderDirRaw = req.query.order_dir ? String(req.query.order_dir).toLowerCase() : undefined;
+      const orderDir = orderDirRaw === 'asc' || orderDirRaw === 'desc' ? orderDirRaw : undefined;
+      const page = await service.listEmpresaLinks(ctxFromReq(req), req.params.clienteId, {
+        ativo: parseAtivoQuery(req.query.ativo),
+        bloqueado: req.query.bloqueado == null
+          ? undefined
+          : parseAtivoQuery(req.query.bloqueado),
+        situacaoComercial: req.query.situacao ? String(req.query.situacao) : undefined,
+        empresaId: req.query.empresa_id ? String(req.query.empresa_id) : undefined,
+        search: req.query.search ? String(req.query.search) : undefined,
+        orderBy,
+        orderDir,
+        limit: req.query.limit ? Number(req.query.limit) : undefined,
+        offset: req.query.offset ? Number(req.query.offset) : undefined,
+      });
+      res.json(page);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get(`${relationshipPath}/:empresaId`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.getEmpresaLink(
+        ctxFromReq(req), req.params.clienteId, req.params.empresaId,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post(`${relationshipPath}/:empresaId`, requireTenantScope, async (req, res, next) => {
+    try {
+      const result = await service.createEmpresaLink(
+        ctxFromReq(req), req.params.clienteId, req.params.empresaId, req.body,
+      );
+      res.status(result.created ? 201 : 200).json({ data: result.row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.patch(`${relationshipPath}/:empresaId`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.updateEmpresaLink(
+        ctxFromReq(req), req.params.clienteId, req.params.empresaId, req.body,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post(`${relationshipPath}/:empresaId/block`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.blockEmpresaLink(
+        ctxFromReq(req), req.params.clienteId, req.params.empresaId, req.body,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post(`${relationshipPath}/:empresaId/unblock`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.unblockEmpresaLink(
+        ctxFromReq(req), req.params.clienteId, req.params.empresaId,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.delete(`${relationshipPath}/:empresaId`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.softDeleteEmpresaLink(
+        ctxFromReq(req), req.params.clienteId, req.params.empresaId,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post(`${relationshipPath}/:empresaId/restore`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.restoreEmpresaLink(
+        ctxFromReq(req), req.params.clienteId, req.params.empresaId,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   router.get('/api/v1/clientes', requireTenantScope, async (req, res, next) => {
     try {
       const orderByRaw = req.query.order_by ? String(req.query.order_by) : undefined;
@@ -258,14 +365,14 @@ export function createApiRouter(deps: ApiDeps) {
 
   router.get('/api/v1/meta', (_req, res) => {
     res.json({
-      runtime: 'ERP-RUNTIME-04',
+      runtime: 'ERP-RUNTIME-05',
       auth: getAuthFoundation(),
       config: publicConfigView(deps.config),
       httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade'],
-      preparedEntities: ['Produto', 'Cliente'],
-      httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente'],
+      preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa'],
+      httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa'],
       rlsModel: 'ENABLE+FORCE fail-closed; BFF uses privileged DB role; JWT policies planned with Auth',
-      note: 'Cliente MASTER DATA prepared; NOT in frontend HTTP_PILOT_ENTITIES until E2E activation authorized',
+      note: 'ClienteEmpresa prepared in backend; NOT in frontend HTTP_PILOT_ENTITIES until E2E activation authorized',
       produto: {
         masterData: true,
         pagination: true,
@@ -277,6 +384,13 @@ export function createApiRouter(deps: ApiDeps) {
         pagination: true,
         sequentialCodigo: true,
         documentoUniqueness: true,
+        softDeleteRestore: true,
+        frontendHttp: false,
+      },
+      clienteEmpresa: {
+        commercialEligibility: true,
+        pagination: true,
+        tenantIntegrity: true,
         softDeleteRestore: true,
         frontendHttp: false,
       },

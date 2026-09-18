@@ -1,8 +1,19 @@
 import type { DbClient } from '../db/client.js';
 import { normalizeDocumento } from '../db/documentoValidators.js';
 import type { ListOptions, Scope } from '../services/tenantCrudService.js';
-import type { Cliente, ClienteCreate, ClienteUpdate } from './clienteTypes.js';
-import type { ClienteListFilter, ClienteRepository } from './inMemoryClienteRepository.js';
+import type {
+  Cliente,
+  ClienteCreate,
+  ClienteEmpresa,
+  ClienteEmpresaCreate,
+  ClienteEmpresaUpdate,
+  ClienteUpdate,
+} from './clienteTypes.js';
+import type {
+  ClienteEmpresaListFilter,
+  ClienteListFilter,
+  ClienteRepository,
+} from './inMemoryClienteRepository.js';
 
 function mapCliente(row: Record<string, unknown>): Cliente {
   return {
@@ -34,6 +45,40 @@ function mapCliente(row: Record<string, unknown>): Cliente {
     updated_by: row.updated_by == null ? null : String(row.updated_by),
     created_at: String(row.created_at),
     updated_at: String(row.updated_at),
+  };
+}
+
+function mapClienteEmpresa(row: Record<string, unknown>): ClienteEmpresa {
+  const ativo = Boolean(row.ativo);
+  const situacao = String(row.situacao_comercial ?? 'ATIVO') as ClienteEmpresa['situacao_comercial'];
+  const habilitado = Boolean(row.habilitado_operacao);
+  const bloqueado = Boolean(row.bloqueado);
+  return {
+    id: String(row.id),
+    group_id: String(row.group_id),
+    cliente_id: String(row.cliente_id),
+    empresa_id: String(row.empresa_id),
+    ativo,
+    situacao_comercial: situacao,
+    habilitado_operacao: habilitado,
+    bloqueado,
+    motivo_bloqueio: row.motivo_bloqueio == null ? null : String(row.motivo_bloqueio),
+    bloqueado_em: row.bloqueado_em == null ? null : String(row.bloqueado_em),
+    bloqueado_por: row.bloqueado_por == null ? null : String(row.bloqueado_por),
+    observacao_comercial: row.observacao_comercial == null
+      ? null
+      : String(row.observacao_comercial),
+    origem: String(row.origem ?? 'ERP') as ClienteEmpresa['origem'],
+    legacy_id: row.legacy_id == null ? null : String(row.legacy_id),
+    legacy_code: row.legacy_code == null ? null : String(row.legacy_code),
+    source_system: row.source_system == null ? null : String(row.source_system),
+    migration_batch: row.migration_batch == null ? null : String(row.migration_batch),
+    imported_at: row.imported_at == null ? null : String(row.imported_at),
+    created_by: row.created_by == null ? null : String(row.created_by),
+    updated_by: row.updated_by == null ? null : String(row.updated_by),
+    created_at: String(row.created_at),
+    updated_at: String(row.updated_at),
+    elegivel_operacao: ativo && situacao === 'ATIVO' && habilitado && !bloqueado,
   };
 }
 
@@ -129,7 +174,7 @@ export class PostgresClienteRepository implements ClienteRepository {
     return row ? mapCliente(row) : null;
   }
 
-  async create(scope: Scope, data: ClienteCreate): Promise<Cliente> {
+  async create(scope: Scope, data: ClienteCreate, actorId?: string | null): Promise<Cliente> {
     const raw = data.documento ?? data.cpf_cnpj ?? '';
     const docNorm = normalizeDocumento(raw) || null;
     const empresaId = data.empresa_id ?? scope.empresaId ?? null;
@@ -148,9 +193,9 @@ export class PostgresClienteRepository implements ClienteRepository {
           nome, razao_social, nome_fantasia, nome_social,
           inscricao_estadual, inscricao_municipal, email, telefone, celular,
           status, origem, codigo_legado, legacy_id, source_system, migration_batch,
-          observacoes, ativo
+          observacoes, ativo, created_by, updated_by
         ) VALUES (
-          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23
+          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$24
         ) RETURNING *`,
         [
           scope.groupId,
@@ -176,15 +221,18 @@ export class PostgresClienteRepository implements ClienteRepository {
           data.migration_batch ?? null,
           data.observacoes ?? null,
           data.ativo ?? true,
+          actorId ?? null,
         ],
       );
       const created = mapCliente(insert.rows[0] as Record<string, unknown>);
       if (empresaId) {
         await client.query(
-          `INSERT INTO cliente_empresas (group_id, cliente_id, empresa_id, ativo)
-           VALUES ($1,$2,$3,true)
+          `INSERT INTO cliente_empresas (
+             group_id, cliente_id, empresa_id, ativo, created_by, updated_by
+           )
+           VALUES ($1,$2,$3,true,$4,$4)
            ON CONFLICT (cliente_id, empresa_id) DO NOTHING`,
-          [scope.groupId, created.id, empresaId],
+          [scope.groupId, created.id, empresaId, actorId ?? null],
         );
       }
       return created;
@@ -254,5 +302,222 @@ export class PostgresClienteRepository implements ClienteRepository {
 
   restore(scope: Scope, id: string) {
     return this.update(scope, id, { ativo: true, status: 'Ativo' });
+  }
+
+  async listEmpresaLinks(
+    filter: ClienteEmpresaListFilter,
+  ): Promise<{ rows: ClienteEmpresa[]; total: number }> {
+    const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);
+    const offset = Math.max(filter.offset ?? 0, 0);
+    const params: unknown[] = [filter.groupId, filter.clienteId];
+    const where = ['ce.group_id = $1', 'ce.cliente_id = $2'];
+    params.push(typeof filter.ativo === 'boolean' ? filter.ativo : true);
+    where.push(`ce.ativo = $${params.length}`);
+    if (filter.empresaId) {
+      params.push(filter.empresaId);
+      where.push(`ce.empresa_id = $${params.length}`);
+    }
+    if (filter.situacaoComercial) {
+      params.push(filter.situacaoComercial);
+      where.push(`ce.situacao_comercial = $${params.length}`);
+    }
+    if (typeof filter.bloqueado === 'boolean') {
+      params.push(filter.bloqueado);
+      where.push(`ce.bloqueado = $${params.length}`);
+    }
+    if (filter.search) {
+      params.push(`%${filter.search.toLowerCase()}%`);
+      where.push(`(
+        lower(ce.empresa_id::text) LIKE $${params.length}
+        OR lower(ce.situacao_comercial) LIKE $${params.length}
+        OR lower(coalesce(ce.observacao_comercial, '')) LIKE $${params.length}
+        OR lower(coalesce(ce.legacy_id, '')) LIKE $${params.length}
+        OR lower(coalesce(ce.legacy_code, '')) LIKE $${params.length}
+        OR lower(coalesce(ce.source_system, '')) LIKE $${params.length}
+      )`);
+    }
+    const whereSql = where.join(' AND ');
+    const orderColumn = filter.orderBy === 'empresa'
+      ? 'ce.empresa_id'
+      : filter.orderBy === 'situacao'
+        ? 'ce.situacao_comercial'
+        : 'ce.created_at';
+    const orderDirection = filter.orderDir === 'desc' ? 'DESC' : 'ASC';
+    const count = await this.db.query(
+      `SELECT count(*)::int AS total FROM cliente_empresas ce WHERE ${whereSql}`,
+      params,
+    );
+    params.push(limit, offset);
+    const result = await this.db.query(
+      `SELECT ce.* FROM cliente_empresas ce
+       WHERE ${whereSql}
+       ORDER BY ${orderColumn} ${orderDirection}, ce.id ASC
+       LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      params,
+    );
+    return {
+      rows: result.rows.map((row) => mapClienteEmpresa(row as Record<string, unknown>)),
+      total: Number(count.rows[0]?.total ?? 0),
+    };
+  }
+
+  async getEmpresaLink(
+    scope: Scope,
+    clienteId: string,
+    empresaId: string,
+  ): Promise<ClienteEmpresa | null> {
+    const result = await this.db.query(
+      `SELECT * FROM cliente_empresas
+       WHERE group_id = $1 AND cliente_id = $2 AND empresa_id = $3`,
+      [scope.groupId, clienteId, empresaId],
+    );
+    const row = result.rows[0] as Record<string, unknown> | undefined;
+    return row ? mapClienteEmpresa(row) : null;
+  }
+
+  async createEmpresaLink(
+    scope: Scope,
+    clienteId: string,
+    empresaId: string,
+    data: ClienteEmpresaCreate,
+    actorId?: string | null,
+  ): Promise<{ row: ClienteEmpresa; created: boolean }> {
+    return this.db.withTransaction(async (client) => {
+      const inserted = await client.query(
+        `INSERT INTO cliente_empresas (
+          group_id, cliente_id, empresa_id, ativo, situacao_comercial,
+          habilitado_operacao, bloqueado, observacao_comercial, origem,
+          legacy_id, legacy_code, source_system, migration_batch, imported_at,
+          created_by, updated_by
+        ) VALUES (
+          $1,$2,$3,true,$4,$5,false,$6,$7,$8,$9,$10,$11,$12,$13,$13
+        )
+        ON CONFLICT (cliente_id, empresa_id) DO NOTHING
+        RETURNING *`,
+        [
+          scope.groupId,
+          clienteId,
+          empresaId,
+          data.situacao_comercial ?? 'ATIVO',
+          data.habilitado_operacao ?? true,
+          data.observacao_comercial ?? null,
+          data.origem ?? 'ERP',
+          data.legacy_id ?? null,
+          data.legacy_code ?? null,
+          data.source_system ?? null,
+          data.migration_batch ?? null,
+          data.imported_at ?? null,
+          actorId ?? null,
+        ],
+      );
+      const insertedRow = inserted.rows[0] as Record<string, unknown> | undefined;
+      if (insertedRow) return { row: mapClienteEmpresa(insertedRow), created: true };
+
+      const existing = await client.query(
+        `SELECT * FROM cliente_empresas
+         WHERE group_id = $1 AND cliente_id = $2 AND empresa_id = $3`,
+        [scope.groupId, clienteId, empresaId],
+      );
+      const row = existing.rows[0] as Record<string, unknown> | undefined;
+      if (!row) throw new Error('cliente_empresa conflict without visible row');
+      return { row: mapClienteEmpresa(row), created: false };
+    });
+  }
+
+  async updateEmpresaLink(
+    scope: Scope,
+    clienteId: string,
+    empresaId: string,
+    data: ClienteEmpresaUpdate,
+    actorId?: string | null,
+  ): Promise<ClienteEmpresa | null> {
+    const current = await this.getEmpresaLink(scope, clienteId, empresaId);
+    if (!current) return null;
+    const result = await this.db.query(
+      `UPDATE cliente_empresas SET
+        situacao_comercial=$1, habilitado_operacao=$2, observacao_comercial=$3,
+        origem=$4, legacy_id=$5, legacy_code=$6, source_system=$7,
+        migration_batch=$8, imported_at=$9, updated_by=$10
+       WHERE group_id=$11 AND cliente_id=$12 AND empresa_id=$13
+       RETURNING *`,
+      [
+        data.situacao_comercial ?? current.situacao_comercial,
+        data.habilitado_operacao ?? current.habilitado_operacao,
+        data.observacao_comercial === undefined
+          ? current.observacao_comercial
+          : data.observacao_comercial,
+        data.origem ?? current.origem,
+        data.legacy_id === undefined ? current.legacy_id : data.legacy_id,
+        data.legacy_code === undefined ? current.legacy_code : data.legacy_code,
+        data.source_system === undefined ? current.source_system : data.source_system,
+        data.migration_batch === undefined ? current.migration_batch : data.migration_batch,
+        data.imported_at === undefined ? current.imported_at : data.imported_at,
+        actorId ?? null,
+        scope.groupId,
+        clienteId,
+        empresaId,
+      ],
+    );
+    const row = result.rows[0] as Record<string, unknown> | undefined;
+    return row ? mapClienteEmpresa(row) : null;
+  }
+
+  async setEmpresaLinkBlocked(
+    scope: Scope,
+    clienteId: string,
+    empresaId: string,
+    blocked: boolean,
+    actorId?: string | null,
+    motivo?: string | null,
+  ): Promise<ClienteEmpresa | null> {
+    const result = await this.db.query(
+      `UPDATE cliente_empresas SET
+        bloqueado=$1,
+        motivo_bloqueio=CASE WHEN $1 THEN $2 ELSE NULL END,
+        bloqueado_em=CASE WHEN $1 THEN timezone('utc', now()) ELSE NULL END,
+        bloqueado_por=CASE WHEN $1 THEN $3::uuid ELSE NULL END,
+        updated_by=$3
+       WHERE group_id=$4 AND cliente_id=$5 AND empresa_id=$6 AND ativo=true
+       RETURNING *`,
+      [blocked, motivo ?? null, actorId ?? null, scope.groupId, clienteId, empresaId],
+    );
+    const row = result.rows[0] as Record<string, unknown> | undefined;
+    return row ? mapClienteEmpresa(row) : null;
+  }
+
+  async softDeleteEmpresaLink(
+    scope: Scope,
+    clienteId: string,
+    empresaId: string,
+    actorId?: string | null,
+  ): Promise<ClienteEmpresa | null> {
+    const result = await this.db.query(
+      `UPDATE cliente_empresas SET
+        ativo=false, situacao_comercial='INATIVO', habilitado_operacao=false,
+        updated_by=$1
+       WHERE group_id=$2 AND cliente_id=$3 AND empresa_id=$4 AND ativo=true
+       RETURNING *`,
+      [actorId ?? null, scope.groupId, clienteId, empresaId],
+    );
+    const row = result.rows[0] as Record<string, unknown> | undefined;
+    return row ? mapClienteEmpresa(row) : null;
+  }
+
+  async restoreEmpresaLink(
+    scope: Scope,
+    clienteId: string,
+    empresaId: string,
+    actorId?: string | null,
+  ): Promise<ClienteEmpresa | null> {
+    const result = await this.db.query(
+      `UPDATE cliente_empresas SET
+        ativo=true, situacao_comercial='ATIVO', habilitado_operacao=true,
+        updated_by=$1
+       WHERE group_id=$2 AND cliente_id=$3 AND empresa_id=$4 AND ativo=false
+       RETURNING *`,
+      [actorId ?? null, scope.groupId, clienteId, empresaId],
+    );
+    const row = result.rows[0] as Record<string, unknown> | undefined;
+    return row ? mapClienteEmpresa(row) : null;
   }
 }

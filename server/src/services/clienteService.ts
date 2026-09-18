@@ -11,6 +11,10 @@ import {
   clienteUpdateSchema,
   type Cliente,
 } from '../repositories/clienteTypes.js';
+import {
+  ClienteEmpresaOperations,
+  type ClienteEmpresaListOptions,
+} from './clienteEmpresaOperations.js';
 
 export type ClienteListOptions = {
   ativo?: boolean;
@@ -34,12 +38,21 @@ function sanitizeClienteAudit(row: unknown): Record<string, unknown> | null {
 }
 
 export class ClienteService {
+  private readonly empresaOperations: ClienteEmpresaOperations;
+
   constructor(
     private readonly repo: ClienteRepository,
     private readonly audit: AuditRepository,
     private readonly tenantGuard: TenantGuard,
     private readonly rbacGuard: RbacGuard,
-  ) {}
+  ) {
+    this.empresaOperations = new ClienteEmpresaOperations(
+      repo,
+      audit,
+      tenantGuard,
+      rbacGuard,
+    );
+  }
 
   async list(ctx: RequestContext, options: ClienteListOptions = {}) {
     this.assertScope(ctx);
@@ -92,6 +105,7 @@ export class ClienteService {
     }
     const empresaId = parsed.data.empresa_id ?? ctx.empresaId ?? null;
     await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
+    if (empresaId) await this.empresaOperations.assertCanCreate(ctx);
 
     const docNorm = normalizeDocumento(parsed.data.documento ?? parsed.data.cpf_cnpj ?? '');
     if (docNorm) {
@@ -123,6 +137,7 @@ export class ClienteService {
       created = await this.repo.create(
         { groupId: ctx.groupId, empresaId: ctx.empresaId },
         { ...parsed.data, empresa_id: empresaId },
+        ctx.actorId,
       );
     } catch (error) {
       await this.handleCreateConflict(ctx, error, docNorm, parsed.data.tipo);
@@ -140,6 +155,15 @@ export class ClienteService {
       requestId: ctx.requestId,
       ipAddress: ctx.ipAddress,
     });
+    if (empresaId) {
+      const link = await this.repo.getEmpresaLink(
+        { groupId: ctx.groupId, empresaId: ctx.empresaId },
+        created.id,
+        empresaId,
+      );
+      if (!link) throw new AppError(500, 'CLIENTE_EMPRESA_LINK_FAILED', 'Cliente relationship was not created');
+      await this.empresaOperations.auditCreatedLink(ctx, link);
+    }
     return created;
   }
 
@@ -262,6 +286,57 @@ export class ClienteService {
       ipAddress: ctx.ipAddress,
     });
     return updated;
+  }
+
+  async listEmpresaLinks(
+    ctx: RequestContext,
+    clienteId: string,
+    options: ClienteEmpresaListOptions = {},
+  ) {
+    return this.empresaOperations.list(ctx, clienteId, options);
+  }
+
+  async getEmpresaLink(ctx: RequestContext, clienteId: string, empresaId: string) {
+    return this.empresaOperations.get(ctx, clienteId, empresaId);
+  }
+
+  async createEmpresaLink(
+    ctx: RequestContext,
+    clienteId: string,
+    empresaId: string,
+    payload: unknown,
+  ) {
+    return this.empresaOperations.create(ctx, clienteId, empresaId, payload);
+  }
+
+  async updateEmpresaLink(
+    ctx: RequestContext,
+    clienteId: string,
+    empresaId: string,
+    payload: unknown,
+  ) {
+    return this.empresaOperations.update(ctx, clienteId, empresaId, payload);
+  }
+
+  async blockEmpresaLink(
+    ctx: RequestContext,
+    clienteId: string,
+    empresaId: string,
+    payload: unknown,
+  ) {
+    return this.empresaOperations.block(ctx, clienteId, empresaId, payload);
+  }
+
+  async unblockEmpresaLink(ctx: RequestContext, clienteId: string, empresaId: string) {
+    return this.empresaOperations.unblock(ctx, clienteId, empresaId);
+  }
+
+  async softDeleteEmpresaLink(ctx: RequestContext, clienteId: string, empresaId: string) {
+    return this.empresaOperations.softDelete(ctx, clienteId, empresaId);
+  }
+
+  async restoreEmpresaLink(ctx: RequestContext, clienteId: string, empresaId: string) {
+    return this.empresaOperations.restore(ctx, clienteId, empresaId);
   }
 
   private async handleCreateConflict(

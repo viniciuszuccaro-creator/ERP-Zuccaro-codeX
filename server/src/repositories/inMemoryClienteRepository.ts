@@ -1,7 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';
 import { normalizeDocumento } from '../db/documentoValidators.js';
-import type { Cliente, ClienteCreate, ClienteUpdate } from './clienteTypes.js';
+import type {
+  Cliente,
+  ClienteCreate,
+  ClienteEmpresa,
+  ClienteEmpresaCreate,
+  ClienteEmpresaUpdate,
+  ClienteUpdate,
+} from './clienteTypes.js';
 
 function nowIso() { return new Date().toISOString(); }
 
@@ -13,10 +20,57 @@ export type ClienteListFilter = Scope & ListOptions & {
   orderDir?: 'asc' | 'desc';
 };
 
+export type ClienteEmpresaListFilter = Scope & ListOptions & {
+  clienteId: string;
+  empresaId?: string;
+  situacaoComercial?: string;
+  bloqueado?: boolean;
+  offset?: number;
+  orderBy?: 'empresa' | 'situacao' | 'created_at';
+  orderDir?: 'asc' | 'desc';
+};
+
 export interface ClienteRepository extends TenantEntityRepository<Cliente, ClienteCreate, ClienteUpdate> {
+  create(scope: Scope, data: ClienteCreate, actorId?: string | null): Promise<Cliente>;
   listPage(filter: ClienteListFilter): Promise<{ rows: Cliente[]; total: number }>;
   findByDocumento(groupId: string, documentoNormalizado: string): Promise<Cliente | null>;
   restore(scope: Scope, id: string): Promise<Cliente | null>;
+  listEmpresaLinks(filter: ClienteEmpresaListFilter): Promise<{ rows: ClienteEmpresa[]; total: number }>;
+  getEmpresaLink(scope: Scope, clienteId: string, empresaId: string): Promise<ClienteEmpresa | null>;
+  createEmpresaLink(
+    scope: Scope,
+    clienteId: string,
+    empresaId: string,
+    data: ClienteEmpresaCreate,
+    actorId?: string | null,
+  ): Promise<{ row: ClienteEmpresa; created: boolean }>;
+  updateEmpresaLink(
+    scope: Scope,
+    clienteId: string,
+    empresaId: string,
+    data: ClienteEmpresaUpdate,
+    actorId?: string | null,
+  ): Promise<ClienteEmpresa | null>;
+  setEmpresaLinkBlocked(
+    scope: Scope,
+    clienteId: string,
+    empresaId: string,
+    blocked: boolean,
+    actorId?: string | null,
+    motivo?: string | null,
+  ): Promise<ClienteEmpresa | null>;
+  softDeleteEmpresaLink(
+    scope: Scope,
+    clienteId: string,
+    empresaId: string,
+    actorId?: string | null,
+  ): Promise<ClienteEmpresa | null>;
+  restoreEmpresaLink(
+    scope: Scope,
+    clienteId: string,
+    empresaId: string,
+    actorId?: string | null,
+  ): Promise<ClienteEmpresa | null>;
 }
 
 function displayName(data: ClienteCreate | Cliente): string | null {
@@ -71,7 +125,7 @@ function buildCliente(
 export class InMemoryClienteRepository implements ClienteRepository {
   private readonly rows = new Map<string, Cliente>();
   private readonly sequences = new Map<string, number>();
-  private readonly empresaLinks = new Set<string>();
+  private readonly empresaLinks = new Map<string, ClienteEmpresa>();
 
   seed(rows: Cliente[]) {
     for (const row of rows) this.rows.set(row.id, row);
@@ -144,7 +198,7 @@ export class InMemoryClienteRepository implements ClienteRepository {
     ) ?? null;
   }
 
-  async create(scope: Scope, data: ClienteCreate): Promise<Cliente> {
+  async create(scope: Scope, data: ClienteCreate, actorId?: string | null): Promise<Cliente> {
     const doc = normalizeDocumento(data.documento ?? data.cpf_cnpj ?? '');
     if (doc) {
       const dup = await this.findByDocumento(scope.groupId, doc);
@@ -152,9 +206,21 @@ export class InMemoryClienteRepository implements ClienteRepository {
     }
     const ts = nowIso();
     const codigo = this.nextCodigo(scope.groupId);
-    const row = buildCliente(scope, data, randomUUID(), codigo, ts, {});
+    const row = buildCliente(scope, data, randomUUID(), codigo, ts, {
+      createdBy: actorId,
+      updatedBy: actorId,
+    });
     this.rows.set(row.id, row);
-    if (row.empresa_id) this.empresaLinks.add(`${row.id}:${row.empresa_id}`);
+    if (row.empresa_id) {
+      const link = this.buildEmpresaLink(
+        scope,
+        row.id,
+        row.empresa_id,
+        {},
+        actorId,
+      );
+      this.empresaLinks.set(this.empresaLinkKey(row.id, row.empresa_id), link);
+    }
     return row;
   }
 
@@ -192,6 +258,186 @@ export class InMemoryClienteRepository implements ClienteRepository {
 
   restore(scope: Scope, id: string) {
     return this.update(scope, id, { ativo: true, status: 'Ativo' });
+  }
+
+  async listEmpresaLinks(
+    filter: ClienteEmpresaListFilter,
+  ): Promise<{ rows: ClienteEmpresa[]; total: number }> {
+    const ativo = typeof filter.ativo === 'boolean' ? filter.ativo : true;
+    const q = String(filter.search ?? '').trim().toLowerCase();
+    let rows = [...this.empresaLinks.values()].filter((row) => (
+      row.group_id === filter.groupId
+      && row.cliente_id === filter.clienteId
+      && row.ativo === ativo
+      && (!filter.empresaId || row.empresa_id === filter.empresaId)
+      && (!filter.situacaoComercial || row.situacao_comercial === filter.situacaoComercial)
+      && (typeof filter.bloqueado !== 'boolean' || row.bloqueado === filter.bloqueado)
+      && (!q || [
+        row.empresa_id,
+        row.situacao_comercial,
+        row.observacao_comercial,
+        row.legacy_id,
+        row.legacy_code,
+        row.source_system,
+      ].some((value) => String(value ?? '').toLowerCase().includes(q)))
+    ));
+    const direction = filter.orderDir === 'desc' ? -1 : 1;
+    const field = filter.orderBy ?? 'created_at';
+    rows.sort((a, b) => String(
+      field === 'empresa' ? a.empresa_id : field === 'situacao'
+        ? a.situacao_comercial : a.created_at,
+    ).localeCompare(String(
+      field === 'empresa' ? b.empresa_id : field === 'situacao'
+        ? b.situacao_comercial : b.created_at,
+    )) * direction);
+    const total = rows.length;
+    const offset = Math.max(filter.offset ?? 0, 0);
+    const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);
+    return { rows: rows.slice(offset, offset + limit), total };
+  }
+
+  async getEmpresaLink(
+    scope: Scope,
+    clienteId: string,
+    empresaId: string,
+  ): Promise<ClienteEmpresa | null> {
+    const row = this.empresaLinks.get(this.empresaLinkKey(clienteId, empresaId));
+    return row?.group_id === scope.groupId ? row : null;
+  }
+
+  async createEmpresaLink(
+    scope: Scope,
+    clienteId: string,
+    empresaId: string,
+    data: ClienteEmpresaCreate,
+    actorId?: string | null,
+  ): Promise<{ row: ClienteEmpresa; created: boolean }> {
+    const key = this.empresaLinkKey(clienteId, empresaId);
+    const existing = this.empresaLinks.get(key);
+    if (existing) return { row: existing, created: false };
+    const row = this.buildEmpresaLink(scope, clienteId, empresaId, data, actorId);
+    this.empresaLinks.set(key, row);
+    return { row, created: true };
+  }
+
+  async updateEmpresaLink(
+    scope: Scope,
+    clienteId: string,
+    empresaId: string,
+    data: ClienteEmpresaUpdate,
+    actorId?: string | null,
+  ): Promise<ClienteEmpresa | null> {
+    const current = await this.getEmpresaLink(scope, clienteId, empresaId);
+    if (!current) return null;
+    const next = this.withEligibility({
+      ...current,
+      ...data,
+      updated_by: actorId ?? null,
+      updated_at: nowIso(),
+    });
+    this.empresaLinks.set(this.empresaLinkKey(clienteId, empresaId), next);
+    return next;
+  }
+
+  async setEmpresaLinkBlocked(
+    scope: Scope,
+    clienteId: string,
+    empresaId: string,
+    blocked: boolean,
+    actorId?: string | null,
+    motivo?: string | null,
+  ): Promise<ClienteEmpresa | null> {
+    const current = await this.getEmpresaLink(scope, clienteId, empresaId);
+    if (!current) return null;
+    const next = this.withEligibility({
+      ...current,
+      bloqueado: blocked,
+      motivo_bloqueio: blocked ? motivo ?? null : null,
+      bloqueado_em: blocked ? nowIso() : null,
+      bloqueado_por: blocked ? actorId ?? null : null,
+      updated_by: actorId ?? null,
+      updated_at: nowIso(),
+    });
+    this.empresaLinks.set(this.empresaLinkKey(clienteId, empresaId), next);
+    return next;
+  }
+
+  softDeleteEmpresaLink(
+    scope: Scope,
+    clienteId: string,
+    empresaId: string,
+    actorId?: string | null,
+  ) {
+    return this.updateEmpresaLink(
+      scope,
+      clienteId,
+      empresaId,
+      { ativo: false, situacao_comercial: 'INATIVO', habilitado_operacao: false } as never,
+      actorId,
+    );
+  }
+
+  restoreEmpresaLink(
+    scope: Scope,
+    clienteId: string,
+    empresaId: string,
+    actorId?: string | null,
+  ) {
+    return this.updateEmpresaLink(
+      scope,
+      clienteId,
+      empresaId,
+      { ativo: true, situacao_comercial: 'ATIVO', habilitado_operacao: true } as never,
+      actorId,
+    );
+  }
+
+  private empresaLinkKey(clienteId: string, empresaId: string) {
+    return `${clienteId}:${empresaId}`;
+  }
+
+  private withEligibility(row: Omit<ClienteEmpresa, 'elegivel_operacao'>): ClienteEmpresa {
+    return {
+      ...row,
+      elegivel_operacao: row.ativo
+        && row.situacao_comercial === 'ATIVO'
+        && row.habilitado_operacao
+        && !row.bloqueado,
+    };
+  }
+
+  private buildEmpresaLink(
+    scope: Scope,
+    clienteId: string,
+    empresaId: string,
+    data: Partial<ClienteEmpresaCreate>,
+    actorId?: string | null,
+  ): ClienteEmpresa {
+    const timestamp = nowIso();
+    return this.withEligibility({
+      id: randomUUID(),
+      group_id: scope.groupId,
+      cliente_id: clienteId,
+      empresa_id: empresaId,
+      ativo: true,
+      situacao_comercial: data.situacao_comercial ?? 'ATIVO',
+      habilitado_operacao: data.habilitado_operacao ?? true,
+      bloqueado: false,
+      motivo_bloqueio: null,
+      bloqueado_em: null,
+      bloqueado_por: null,
+      observacao_comercial: data.observacao_comercial ?? null,
+      origem: data.origem ?? 'ERP',
+      legacy_id: data.legacy_id ?? null,
+      legacy_code: data.legacy_code ?? null,
+      source_system: data.source_system ?? null,
+      migration_batch: data.migration_batch ?? null,
+      imported_at: data.imported_at ?? null,
+      created_by: actorId ?? null,
+      updated_by: actorId ?? null,
+      created_at: timestamp,
+      updated_at: timestamp,
+    });
   }
 }
 
