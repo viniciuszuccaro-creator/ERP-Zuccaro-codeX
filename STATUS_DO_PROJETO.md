@@ -27,8 +27,10 @@
 - Compatibilidade: Base44 inalterado, sem dual-write/cutover/backfill real.
 - API/meta: CRUD/list/search/count/filtros e `ERP-RUNTIME-06A`; ClienteLocal
   permanece fora de `HTTP_PILOT_ENTITIES`.
-- Testes focados: RUNTIME-06A + atomicidade 5/5; server 55 pass/1 skip,
-  typecheck/build OK.
+- Validações: RUNTIME-06A + atomicidade 5/5; server 56 pass/1 skip +
+  typecheck/build OK; audit/lint/build frontend e 570 testes OK;
+  `git diff --check` OK; typecheck frontend mantém baseline histórico (exit 2),
+  sem erro novo no lote.
 - Docs: `docs/ERP_RUNTIME_06A.md` e
   `docs/ERP_RUNTIME_06A_DEV_RUNBOOK.md`.
 - Pendência: review; depois migration 011 + seed/E2E humano no DEV.

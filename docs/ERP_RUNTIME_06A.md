@@ -161,5 +161,15 @@ frontend HTTP e migração real.
 - rollback real de PATCH e SET_PRIMARY quando audit falha;
 - sem tabela/campo/finalidade Obra.
 
+Fechamento local:
+
+- `npm run audit:baseline`: OK;
+- `npm test`: 570 pass;
+- `npm run lint`: OK;
+- `npm run typecheck`: baseline histórico do frontend (exit 2), sem erro novo;
+- `npm run build`: OK;
+- server: 56 pass/1 skip, typecheck e build OK;
+- `git diff --check`: OK.
+
 Aplicação DEV e E2E permanecem pendentes conforme
 `docs/ERP_RUNTIME_06A_DEV_RUNBOOK.md`.
