@@ -4,6 +4,14 @@
 **Base:** `7c29f234670cb965f02315a5f1adc15590521a0f`
 **Escopo analisado:** locais, endereços, obras, entrega e geolocalização.
 
+**Atualização 2026-09-18:** o RUNTIME-06A foi implementado na main
+`067d002f`. O detalhamento de Obra (06B) está em
+`docs/ERP_RUNTIME_06B_DIAGNOSTICO.md`. Aquele documento **refina** o
+modelo mínimo de Obra: em vez de um único `obras.cliente_local_id` e
+compartilhamento só implícito via ClienteEmpresa, recomenda `obra_locais`
+e `obra_empresas`. A decisão de não tratar Obra como finalidade de
+ClienteLocal permanece.
+
 ## 1. Decisão
 
 O domínio recomendado para o ERP-RUNTIME-06 é:

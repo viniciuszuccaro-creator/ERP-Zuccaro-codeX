@@ -1,3 +1,22 @@
+### ERP-RUNTIME-06B — DIAGNÓSTICO ARQUITETURAL (Obra)
+
+- Data: 2026-09-18.
+- Base: `067d002f90b162c507581dfa2f6909b3c1059ed4` (main; RUNTIME-06A).
+- Status: **`DIAGNÓSTICO SOMENTE — AGUARDANDO REVIEW`**.
+- Software/API DEV: **permanece `ERP-RUNTIME-06A`**. Implementação de Obra
+  **não** iniciada.
+- Decisão: Obra é contexto comercial/operacional do Cliente (Grupo), não
+  endereço e não finalidade de ClienteLocal.
+- Relação canônica: Cliente → ClienteEmpresa → Obra → `obra_locais` →
+  ClienteLocal; autorização multiempresa via `obra_empresas` (fail-closed).
+- Refinamento do diagnóstico 06: descartar `obras.cliente_local_id` único
+  como modelo final; um Local não cobre portaria/descarga/escritório.
+- Pedido futuro: `obra_id` **opcional**; destino efetivo é Local + snapshot.
+- Fora deste diagnóstico: código, migration 012, VPS, frontend HTTP,
+  responsáveis, anexos, Pedido, Comercial 360º UI, RUNTIME-07.
+- Documento: `docs/ERP_RUNTIME_06B_DIAGNOSTICO.md`.
+- Próximo passo: review do diagnóstico; **não** implementar 06B ainda.
+
 ### ERP-RUNTIME-06A — IMPLEMENTAÇÃO ClienteLocal
 
 - Review geo/fingerprint (2026-09-18):
