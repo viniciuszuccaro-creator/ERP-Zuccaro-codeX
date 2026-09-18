@@ -150,6 +150,8 @@ Dados são sintéticos e o seed converge em duas execuções.
 `Cliente.endereco_principal` e `Cliente.locais_entrega[]` permanecem
 inalterados. Não há cutover, dual-write ou backfill real. Legado
 `tipo_endereco=Obra` será tratado no RUNTIME-06B via staging Local → Obra.
+O diagnóstico de Obra está em `docs/ERP_RUNTIME_06B_DIAGNOSTICO.md`; este
+runtime não implementa Obra.
 
 Pedido/Entrega/NF não foram alterados. Contrato futuro: `cliente_local_id` +
 snapshot imutável.

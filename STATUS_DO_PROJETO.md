@@ -1,3 +1,27 @@
+### ERP-RUNTIME-06B — DIAGNÓSTICO ARQUITETURAL (Obra)
+
+- Data: 2026-09-18.
+- Base: `067d002f90b162c507581dfa2f6909b3c1059ed4` (main; RUNTIME-06A).
+- Status: **`DIAGNÓSTICO SOMENTE — AGUARDANDO REVIEW FINAL`**.
+- Software/API DEV: **permanece `ERP-RUNTIME-06A`**. Implementação de Obra
+  **não** iniciada. Migration `012_obras.sql` **não** criada.
+- Arquitetura aprovada e consolidada após review:
+  - Obra = contexto comercial/operacional; Grupo + `cliente_id`;
+  - Empresa autoriza via `obra_empresas` (não é dona; não define NF);
+  - Locais via `obra_locais` N:N; um principal geral por Obra;
+  - Obra **não** é finalidade de ClienteLocal;
+  - criação atômica: Obra + código + `obra_empresas` + Local principal + audit;
+  - ClienteEmpresa elegível obrigatório para **nova** operação;
+  - histórico visível após bloqueio, para usuário autorizado;
+  - seleção operacional padrão: `ATIVA` + `ativo`; PAUSADA/CONCLUIDA/
+    CANCELADA fora;
+  - Pedido futuro: `obra_id` opcional; destino = Local efetivo + snapshot.
+- Modelo original do 06 (`obras.cliente_local_id`) registrado como rascunho
+  superado; documento 06 alinhado ao 06B.
+- Documento: `docs/ERP_RUNTIME_06B_DIAGNOSTICO.md`.
+- Próximo passo: review final; **não** implementar 06B; **não** merge
+  automático; **não** iniciar RUNTIME-07.
+
 ### ERP-RUNTIME-06A — IMPLEMENTAÇÃO ClienteLocal
 
 - Review geo/fingerprint (2026-09-18):
@@ -61,11 +85,12 @@
   CORRESPONDENCIA e OUTRO; **OBRA não é finalidade no modelo final**.
 - Legado `tipo_endereco=Obra`/`addressId=obraId`: staging materializa Local e
   Obra, preserva mapeamento/aliases e mantém compatibilidade até o cutover.
-- `obras.cliente_local_id` obrigatório no canônico; pendências ficam em
-  staging. Várias Obras podem referenciar o mesmo Local, sem UNIQUE indevido.
+- `obras.cliente_local_id` era o rascunho original; **superado** pelo 06B
+  (`obra_locais` N:N). Pendências de legado ficam em staging, não na tabela
+  canônica. Várias Obras podem reutilizar o mesmo Local, sem UNIQUE indevido.
 - Divisão obrigatória para manter lotes pequenos:
   - RUNTIME-06A: Local/Endereço + finalidades;
-  - RUNTIME-06B: Obra mínima + FK Local + código sequencial.
+  - RUNTIME-06B: Obra mínima + `obra_empresas` + `obra_locais` + código.
 - Evidência: `Cliente.endereco_principal` + `locais_entrega[]` alimentam
   `obra_destino_id`/snapshot do Pedido e `endereco_entrega_completo` da Entrega.
 - Duplicidades: tipos `tipo_endereco`/`tipo`/`obra`; IDs temporários por índice;

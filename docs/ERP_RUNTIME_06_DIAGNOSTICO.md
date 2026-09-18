@@ -4,6 +4,19 @@
 **Base:** `7c29f234670cb965f02315a5f1adc15590521a0f`
 **Escopo analisado:** locais, endereços, obras, entrega e geolocalização.
 
+**Atualização 2026-09-18 (06B):** o RUNTIME-06A foi implementado na main
+`067d002f`. O modelo **oficial** de Obra está em
+`docs/ERP_RUNTIME_06B_DIAGNOSTICO.md` e **substitui** o rascunho de FK
+única abaixo.
+
+- **Modelo original deste diagnóstico 06:** `obras.cliente_local_id`
+  obrigatório (um Local por Obra).
+- **Refinamento oficial 06B:** `obra_locais` N:N tipado + `obra_empresas`.
+- Motivo: uma Obra pode ter local físico, portaria, entrega, administrativo,
+  fiscal e outros pontos; várias Obras podem reutilizar o mesmo
+  ClienteLocal. A FK única nascia incompleta.
+- Obra **não** é finalidade de ClienteLocal. Pedido futuro **não** exige Obra.
+
 ## 1. Decisão
 
 O domínio recomendado para o ERP-RUNTIME-06 é:
@@ -14,7 +27,9 @@ Decisão correspondente ao **modelo C** (Endereço/Local como base + entidade
 específica referenciando-o), entregue em dois sublotes:
 
 - **RUNTIME-06A:** Local do Cliente, endereço físico e finalidades;
-- **RUNTIME-06B:** Obra mínima, com código/nome/status e FK para Local;
+- **RUNTIME-06B:** Obra mínima (`obras` + `obra_empresas` + `obra_locais`);
+  ver diagnóstico especializado 06B (modelo final). O rascunho “FK Local
+  única” deste documento foi **refinado**, não apagado.
 - Endereço é o value object físico do Local, não outro cadastro;
 - Projeto e Centro de Custo referenciam Obra, mas permanecem proprietários de
   seus dados.
@@ -181,9 +196,17 @@ No modelo final, **OBRA não é finalidade de ClienteLocal**. Finalidades
 descrevem somente o uso do endereço físico: CADASTRAL, FISCAL, COBRANCA,
 ENTREGA, CORRESPONDENCIA e OUTRO.
 
-RUNTIME-06B deve evoluir a estrutura existente para uma tabela `obras`
-referenciando `cliente_local_id`, sem repetir logradouro. O alias legado
-`obra_destino_id = addressId` deve ser mapeado ao UUID novo durante a transição.
+**Modelo original (rascunho 06):** tabela `obras` com `cliente_local_id`
+obrigatório, sem repetir logradouro.
+
+**Modelo oficial (diagnóstico 06B):** `obras` **não** guarda endereço nem um
+único `cliente_local_id`. A relação canônica é
+`obras → obra_locais → cliente_locais`, com `uso_na_obra` e **um** Local
+principal geral por Obra. Autorização por Empresa: `obra_empresas`.
+
+O alias legado `obra_destino_id = addressId` deve ser mapeado no cutover
+para **dois** UUIDs distintos (`cliente_local_id` e `obra_id`);
+`addressId ≠ obraId` no modelo final.
 
 Classificação futura:
 
@@ -197,23 +220,26 @@ Classificação futura:
 | projeto/BOM/revisão | Projeto/Engenharia |
 | início/previsão de término | Obra |
 
-Cardinalidade inicial: uma Obra pertence a um Cliente e referencia um Local.
-Consórcios/múltiplos clientes não aparecem no código atual; devem ser extensão
-futura por relacionamento, sem superdimensionar RUNTIME-06B.
+Cardinalidade oficial (06B): uma Obra pertence a um Cliente comercial
+(`cliente_id` = comprador/operador no ERP, não necessariamente o
+proprietário do imóvel) e referencia **N** Locais via `obra_locais`.
+Consórcios/múltiplos clientes/responsáveis são extensão futura por
+relacionamento, sem superdimensionar o 06B.
 
-Várias Obras podem referenciar o mesmo Local; não criar
-`UNIQUE(cliente_local_id)`. Inativar Obra não inativa Local. Inativar Local
-referenciado por Obra ativa deve ser bloqueado ou exigir reassociação explícita,
-sem cascade.
+Várias Obras podem referenciar o mesmo Local; não criar UNIQUE do Local.
+Inativar Obra não inativa Local. Inativar Local com `obra_locais` ativo de
+Obra ativa deve ser bloqueado ou exigir desvínculo/substituição explícita,
+sem cascade. Se for o principal, outro principal entra na mesma transação.
 
-`cliente_local_id` deve ser obrigatório na Obra canônica. Registros legados sem
-Local resolvido permanecem no staging de migração, com relatório de pendência;
-não entram parcialmente no agregado operacional.
+Obra operacional nova exige pelo menos um `obra_local` ativo e exatamente
+um principal. Legado sem Local resolvido permanece em **staging de
+migração** (fora deste lote); não entra como Obra operacional incompleta
+e não se inventa status `INCOMPLETA`.
 
-Obra é global ao Grupo e pode ser usada pela CPA e 3Z quando ambas possuem
-ClienteEmpresa elegível/autorizado. Não duplicar a mesma Obra por Empresa.
-Código de Obra deve reutilizar
-`reserve_entity_codigo(group_id, 'Obra')`, preservando `legacy_code`.
+Obra é do Grupo + Cliente. CPA e 3Z operam a **mesma** Obra só com
+`obra_empresas` ativo **e** ClienteEmpresa correspondente. Não duplicar
+Obra por Empresa. Código: `reserve_entity_codigo(group_id, 'Obra', 6)`,
+preservando `legacy_code`.
 
 ### LocalEstoque e Empresa
 
@@ -231,7 +257,7 @@ Código de Obra deve reutilizar
 | elegibilidade/preferência empresarial | ClienteEmpresa | Empresa |
 | logradouro/CEP/coordenada | ClienteLocal | master mutável |
 | finalidades e principal | ClienteLocal | uma principal por Cliente/finalidade |
-| nome/código/status da obra | Obra | Grupo; referencia Local |
+| nome/código/status da obra | Obra | Grupo + Cliente; Locais via `obra_locais` |
 | responsável permanente | Contato/Obra | FK futura; não duplicar Pessoa |
 | instrução permanente de descarga | Local/Obra | preferência do destino |
 | observação/janela daquela entrega | Pedido/Entrega | transacional |
@@ -248,19 +274,20 @@ criar cadastro paralelo de Município/UF/País.
 
 ## 5. Referência canônica e snapshot imutável
 
-Pedido/Orçamento/Entrega devem possuir:
+Pedido/Orçamento/Entrega futuros devem possuir:
 
-1. referência ao `cliente_locais.id`;
-2. snapshot imutável capturado no momento transacional.
+1. `obra_id` **opcional**;
+2. `cliente_local_id` do destino **efetivo** (não assumir o principal da Obra);
+3. snapshot imutável capturado no momento transacional.
 
-Snapshot recomendado:
+Snapshot recomendado (enxuto):
 
-- Local/obra ID, código, nome e finalidade;
-- CEP, logradouro, número, complemento, bairro, cidade, UF e país;
+- `obra_id`, `codigo_obra`, `nome_obra` quando houver Obra;
+- Local ID e uso; CEP, logradouro, número, complemento, bairro, cidade, UF, país;
 - coordenadas válidas quando relevantes;
 - instrução logística crítica, janela e restrição;
 - contato de recebimento estritamente necessário;
-- `captured_at` e versão/hash do snapshot.
+- `captured_at`.
 
 Regras:
 
@@ -343,13 +370,14 @@ Migração futura:
 - staging de `endereco_principal` e `locais_entrega[]`;
 - identificar aliases legados `tipo_endereco=Obra`, `tipo/type=OBRA` e
   `obra=true`;
-- materializar primeiro ClienteLocal e depois Obra com `cliente_local_id`;
+- materializar primeiro ClienteLocal e depois Obra + `obra_locais` (principal);
 - atribuir UUID/código sem mudar arrays legados;
 - preservar `legacy_id`, `legacy_code`, `source_system`, `migration_batch` em
   Local e Obra;
 - mapear ID legado/índice/addressId → Local UUID → Obra UUID;
-- manter aliases `addressId=obraId` e `obra_destino_id` durante compatibilidade,
-  sem tratá-los como modelo definitivo;
+- aliases `addressId=obraId` e `obra_destino_id` só na transição; no modelo
+  final `addressId`/`cliente_local_id` ≠ `obra_id`; não manter o alias
+  ambíguo indefinidamente;
 - relatório de conflito e decisão humana;
 - reexecutável/idempotente, sem migração massiva no primeiro apply.
 
@@ -376,7 +404,9 @@ e migração; se aprovado, reutilizar
 - `cadastros.local-cliente.inativar`;
 - `cadastros.local-cliente.restaurar`;
 - permissão própria para alterar coordenada/endereço confirmado;
-- `cadastros.obra.visualizar|criar|editar|inativar|restaurar`;
+- `cadastros.obra.*` conforme `docs/ERP_RUNTIME_06B_DIAGNOSTICO.md`
+  (visualizar/criar/editar/inativar/restaurar/vincular-empresa/
+  vincular-local/principal); confirmar nomenclatura na implementação;
 - `logistica.local.instrucoes` para alterar restrições permanentes;
 - usar Local no Pedido não concede edição cadastral.
 
@@ -419,16 +449,15 @@ API provável:
 - `POST .../:localId/restore`;
 - list/search/count/paginação/filtros por finalidade/cidade/UF/ativo.
 
-RUNTIME-06B provável:
+RUNTIME-06B (oficial — ver `ERP_RUNTIME_06B_DIAGNOSTICO.md`):
 
 - `GET/POST /api/v1/clientes/:clienteId/obras`;
 - `GET/PATCH/DELETE /api/v1/clientes/:clienteId/obras/:obraId`;
 - `POST .../:obraId/restore`;
-- `obras.cliente_local_id` obrigatório e tenant-scoped.
-- `obras`: id, group/cliente, código, nome, status, `cliente_local_id`, origem,
-  legado, ativo, timestamps e actors;
-- FK garante Cliente, Obra e Local no mesmo Grupo/Cliente;
-- nenhuma unicidade sobre `cliente_local_id`.
+- subrotas de `empresas` e `locais`;
+- tabelas `obras`, `obra_empresas`, `obra_locais` (não `obras.cliente_local_id`);
+- um Local principal geral por Obra; criação atômica com Empresa + Local + audit;
+- triggers tenant-aware; RLS ENABLE/FORCE; **nenhuma migration criada aqui**.
 
 Não ativar frontend HTTP no diagnóstico.
 
@@ -449,9 +478,9 @@ Casos suportados pelo modelo:
 1. criar Local A com finalidades CADASTRAL + COBRANCA;
 2. definir um principal por finalidade, permitindo o mesmo Local em ambas;
 3. criar Local B com finalidade ENTREGA;
-4. criar Obra 000001 referenciando Local B;
-5. criar Obra 000002 referenciando o mesmo Local B;
-6. confirmar que Obras não repetem endereço;
+4. criar Obra 000001 com `obra_locais` no Local B (principal geral);
+5. criar Obra 000002 reutilizando o mesmo Local B;
+6. confirmar que Obras não copiam endereço;
 7. inativar Obra sem inativar Local;
 8. bloquear inativação de Local usado por Obra ativa ou exigir reassociação;
 9. Grupo A consolida; Empresa elegível usa Local/Obra;
@@ -496,8 +525,9 @@ RUNTIME-06 deve ser dividido:
 
 - **06A — Local/Endereço do Cliente:** fonte física, finalidades, principal,
   geolocalização opcional, lifecycle, legado, API/RBAC/RLS/auditoria;
-- **06B — Obra mínima:** código/nome/status, Cliente e FK Local; sem Projeto,
-  Produção ou Centro de Custo.
+- **06B — Obra mínima:** `obras` + `obra_empresas` + `obra_locais`; código,
+  status, lifecycle, RBAC/RLS/audit; sem Projeto, Produção ou Centro de Custo.
+  Detalhe canônico: `docs/ERP_RUNTIME_06B_DIAGNOSTICO.md`.
 
 A divisão mantém cada lote pequeno e impede que Obra avançada atrase Preço.
 Ambos são concluídos antes da numeração seguinte:
