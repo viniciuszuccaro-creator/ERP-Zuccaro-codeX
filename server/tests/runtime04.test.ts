@@ -750,7 +750,7 @@ test('API Cliente isolation + pagination + search + soft delete + restore', asyn
   assert.equal(dupHttp.body.error.code, 'DUPLICATE_DOCUMENT');
 
   const meta = await fetchOk(app, '/api/v1/meta');
-  assert.ok(['ERP-RUNTIME-04', 'ERP-RUNTIME-05'].includes(meta.runtime));
+  assert.ok(['ERP-RUNTIME-04', 'ERP-RUNTIME-05', 'ERP-RUNTIME-06A'].includes(meta.runtime));
   assert.equal(meta.cliente.frontendHttp, false);
   assert.ok(meta.preparedEntities.includes('Cliente'));
   assert.ok(!meta.httpPilotEntities.includes('Cliente'));
