@@ -1,3 +1,28 @@
+### ERP-RUNTIME-05 — DIAGNÓSTICO ARQUITETURAL
+
+- Data: 2026-09-18.
+- Base: `4c4d798d5108cdf9f49adb222397c8891f00f056` (RUNTIME-04 concluído no DEV).
+- Status: **`DIAGNÓSTICO SOMENTE — AGUARDANDO REVIEW`**.
+- Decisão: próximo agregado recomendado é **Relacionamento Comercial
+  Cliente × Empresa — núcleo e elegibilidade**, evoluindo
+  `cliente_empresas`; não criar estrutura paralela.
+- Causa: condição/vendedor/tabela/limite ainda vivem no Cliente Base44
+  compartilhado do Grupo, enquanto Pedido/Site/Preço operam por Empresa.
+- Escopo futuro proposto: lifecycle e situação/bloqueio comercial por Empresa,
+  API/RBAC/RLS/auditoria/seed/E2E do vínculo; sem Cliente 360º.
+- Ownership preservado: identidade no Cliente/Grupo; crédito/títulos no
+  Financeiro; preço no motor de Preço; vendedor no cadastro canônico; locais e
+  contatos em agregados próprios.
+- Migration provável, não criada: `010_cliente_empresas_comercial.sql`.
+- Ordem provisória: R05 ClienteEmpresa → R06 Locais do Cliente → R07 Preço →
+  R08 Disponibilidade/Reserva → R09 Orçamento/Negociação. Forma/Condição de
+  Pagamento e identidade do vendedor são gates antes de Orçamento/Pedido.
+- Documento: `docs/ERP_RUNTIME_05_DIAGNOSTICO.md`.
+- Baseline: audit/lint/build/diff PASS; typecheck mantém baseline histórico
+  (exit 2), sem nova falha por este lote exclusivamente documental.
+- Nenhum código, API, banco, VPS, migration ou `HTTP_PILOT_ENTITIES` alterado.
+- RUNTIME-03 rollback permanece preservado. RUNTIME-05 não implementado.
+
 ### ERP-RUNTIME-04 — CONCLUÍDO E VALIDADO NO DEV
 
 - Data da validação/promoção: 2026-09-18.
