@@ -1,3 +1,35 @@
+### ERP-RUNTIME-06 — DIAGNÓSTICO ARQUITETURAL
+
+- Data: 2026-09-18.
+- Base: `7c29f234670cb965f02315a5f1adc15590521a0f`.
+- Status: **`DIAGNÓSTICO SOMENTE`**.
+- Agregado recomendado: **Local do Cliente — endereço físico canônico com
+  finalidades**.
+- Decisão: Local é o agregado; Endereço é value object; Obra é finalidade do
+  Local neste runtime. Não criar tabela `obras` que repita endereço.
+- Evidência: `Cliente.endereco_principal` + `locais_entrega[]` alimentam
+  `obra_destino_id`/snapshot do Pedido e `endereco_entrega_completo` da Entrega.
+- Duplicidades: tipos `tipo_endereco`/`tipo`/`obra`; IDs temporários por índice;
+  quatro aliases de mapa; coordenadas com aliases; contatos e snapshots
+  fragmentados; conversão Orçamento→Pedido perde endereço/obra.
+- Ownership: Local/Cliente no Grupo; uso pela Empresa exige ClienteEmpresa
+  elegível; preferências empresariais não alteram endereço físico.
+- Snapshot: Pedido/Entrega devem guardar referência ao Local + cópia imutável;
+  mudança do master não altera histórico.
+- PostgreSQL provável: `011_cliente_locais.sql`, com `cliente_locais` e
+  finalidades controladas; **não criada**.
+- Obra técnica futura poderá ser extensão um-para-um do Local somente quando
+  houver lifecycle próprio; Projeto/CC permanecem em seus domínios.
+- CEP/geo: ViaCEP + Nominatim já existem; providers, links e aliases precisam
+  de contrato único, rate limit e validação, sem implementação neste lote.
+- Multiempresa/RBAC/RLS/auditoria: reutilizar Cliente, ClienteEmpresa,
+  PostgresRbacGuard, RLS fail-closed e atomicidade RUNTIME-05.
+- Frontend, backend, banco, migration, VPS e `HTTP_PILOT_ENTITIES`: inalterados.
+- Documento: `docs/ERP_RUNTIME_06_DIAGNOSTICO.md`.
+- Baseline: audit/lint/build/diff PASS; typecheck mantém baseline histórico
+  (exit 2), sem erro novo por este lote documental.
+- Não implementar RUNTIME-06 sem review/autorização.
+
 ### ERP-RUNTIME-05 — CONCLUÍDO E VALIDADO NO DEV
 
 - Data: 2026-09-18.
