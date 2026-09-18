@@ -1,3 +1,33 @@
+### ERP-RUNTIME-05 — IMPLEMENTAÇÃO Cliente × Empresa
+
+- Data: 2026-09-18.
+- Branch: `cursor/erp-runtime-05-cliente-empresa-392b`.
+- Base: `9e78d5dc3f5ead25137e8078d6a5326d6c1e47bb`.
+- Status: **`IMPLEMENTATION_READY — DEV_MIGRATION_PENDING`**.
+- Migration: `010_cliente_empresas_comercial.sql`, aditiva e convergente;
+  migrations 001–009 imutáveis.
+- Agregado: evolução de `cliente_empresas` existente, sem Cliente paralelo.
+- Campos: situação comercial, habilitação, bloqueio/motivo/quando/actor,
+  observação, origem, legado/importação e actors de criação/alteração.
+- Fora do vínculo: crédito/títulos, preço, estoque, endereço/contato/obra,
+  pedido/orçamento, vendedor e pagamento.
+- API: list/get/link/update/block/unblock/inactivate/restore sob
+  `/api/v1/clientes/:clienteId/empresas`.
+- Multiempresa: Empresa opera apenas seu vínculo; Grupo autorizado consolida;
+  trigger mantém Cliente/Empresa no mesmo Grupo.
+- RBAC: `Cadastros.cliente_empresa` com visualizar/criar/editar/bloquear/
+  inativar/restaurar; criação indireta pelo Cliente também protegida.
+- RLS: `cliente_empresas` permanece ENABLE + FORCE fail-closed.
+- Auditoria: link/update/block/unblock/inactivate/restore, sem replicar PII.
+- Soft delete: vínculo inativo some da listagem padrão e exige restore.
+- Concorrência: unique existente + criação idempotente impedem linha duplicada.
+- Seed: Empresa A2 + vínculos A/A2/B e perfil RBAC, convergente em reexecução.
+- Frontend/Base44: inalterados; sem dual-write; fora de `HTTP_PILOT_ENTITIES`.
+- Testes focados: RUNTIME-05 3/3; server typecheck e suíte 49 pass/1 skip.
+- Docs: `docs/ERP_RUNTIME_05.md` e `docs/ERP_RUNTIME_05_DEV_RUNBOOK.md`.
+- Pendência: review; depois aplicação manual da migration 010 + E2E DEV.
+- Não aplicar no VPS e não iniciar RUNTIME-06.
+
 ### ERP-RUNTIME-05 — DIAGNÓSTICO ARQUITETURAL
 
 - Data: 2026-09-18.
