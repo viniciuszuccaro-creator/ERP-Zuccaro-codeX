@@ -6,6 +6,12 @@
 - Domínio recomendado: **Local/Endereço do Cliente + Obra referenciando Local**.
 - Decisão refinada: Endereço é value object do Local; Obra é contexto
   comercial/operacional separado que referencia Local sem repetir logradouro.
+- Finalidades canônicas de Local: CADASTRAL, FISCAL, COBRANCA, ENTREGA,
+  CORRESPONDENCIA e OUTRO; **OBRA não é finalidade no modelo final**.
+- Legado `tipo_endereco=Obra`/`addressId=obraId`: staging materializa Local e
+  Obra, preserva mapeamento/aliases e mantém compatibilidade até o cutover.
+- `obras.cliente_local_id` obrigatório no canônico; pendências ficam em
+  staging. Várias Obras podem referenciar o mesmo Local, sem UNIQUE indevido.
 - Divisão obrigatória para manter lotes pequenos:
   - RUNTIME-06A: Local/Endereço + finalidades;
   - RUNTIME-06B: Obra mínima + FK Local + código sequencial.
