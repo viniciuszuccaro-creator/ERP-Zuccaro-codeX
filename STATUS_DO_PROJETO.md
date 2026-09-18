@@ -1,3 +1,24 @@
+### ERP-RUNTIME-07 — DIAGNÓSTICO ARQUITETURAL (próximo agregado)
+
+- Data: 2026-09-18.
+- Branch documental: `cursor/erp-runtime-07-diagnostico-392b`.
+- Base / `origin/main`: `67686298be2fa125966e714b1cf20759a7991765`
+  (merge PR #25; ERP-RUNTIME-06B). Commits posteriores em `main`: nenhum.
+- Status: **`DIAGNÓSTICO SOMENTE — AGUARDANDO REVIEW HUMANO`**.
+- Software/API DEV: **permanece `ERP-RUNTIME-06B`**. Migration 013 **não**
+  criada nem aplicada. Banco/VPS/API/frontend **não** alterados.
+- Espinha canônica PG: Grupo → Cliente → ClienteEmpresa → ClienteLocal → Obra
+  (001–012). Preço, Pedido, Orçamento, Estoque, Contato **não** existem no PG.
+- Decisão (evidência 05 §10, 06B §23, `CLIENTE_FORBIDDEN_FIELDS`, Produto sem
+  preço, entidade Base44 `TabelaPreco`/`TabelaPrecoItem`, Site CPA):
+  **próximo agregado = TabelaPreco + itens**.
+- Migration proposta (não criada): `013_tabelas_preco.sql`.
+- Frontend HTTP: **NÃO ATIVAR**; `HTTP_PILOT_ENTITIES` inalterado.
+- RUNTIME-07A **não** iniciado; autorização deve ser lote separado após review.
+- Documento: `docs/ERP_RUNTIME_07_DIAGNOSTICO.md`.
+- Próximo passo: review humano; **não** implementar 07A; **não** merge
+  automático; **não** promover API.
+
 ### ERP-RUNTIME-06B — IMPLEMENTAÇÃO Obra (branch)
 
 - Data: 2026-09-18.
