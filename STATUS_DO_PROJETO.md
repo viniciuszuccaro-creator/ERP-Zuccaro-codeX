@@ -1,3 +1,25 @@
+### ERP-RUNTIME-07A — ESPECIFICAÇÃO TabelaPreco (documental)
+
+- Data: 2026-09-18.
+- Branch documental: `cursor/erp-runtime-07a-especificacao-preco-392b`.
+- Baseline 06B / `origin/main` de referência:
+  `67686298be2fa125966e714b1cf20759a7991765`.
+- Diagnóstico 07: `docs/ERP_RUNTIME_07_DIAGNOSTICO.md` (PR #26 Draft; fonte
+  sem merge).
+- Status: **`ESPECIFICAÇÃO DOCUMENTAL — AGUARDANDO REVIEW HUMANO`**.
+- Software/API DEV: **permanece `ERP-RUNTIME-06B`**. Migration 013 **não**
+  criada nem aplicada. Banco/VPS/API/frontend **não** alterados.
+- Decisões fechadas: ownership Grupo+empresa origem; compartilhamento N:N
+  `tabela_preco_empresas`; padrão único por Empresa; `ClienteEmpresa.tabela_preco_id`
+  NULLABLE; fallback específica→padrão→sem preço; vigência DATE no cabeçalho;
+  item = produto+unidade; `NUMERIC(18,6)` BRL; histórico in-place+audit+snapshot
+  documental; soft delete; RLS FORCE; RBAC fail-closed; `frontendHttp=false`.
+- Documento: `docs/ERP_RUNTIME_07A_ESPECIFICACAO_TABELA_PRECO.md`.
+- Bloqueadores para 07B: **NENHUM** (após review humano).
+- Próximo passo: review humano; **não** iniciar RUNTIME-07B; **não** criar
+  `013_tabelas_preco.sql`; **não** merge automático; **não** promover API;
+  **não** frontend HTTP.
+
 ### ERP-RUNTIME-06B — IMPLEMENTAÇÃO Obra (branch)
 
 - Data: 2026-09-18.
