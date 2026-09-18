@@ -9,6 +9,7 @@ export type RbacAction =
   | 'inativar'
   | 'restaurar'
   | 'bloquear'
+  | 'principal'
   | 'importar'
   | 'exportar';
 
