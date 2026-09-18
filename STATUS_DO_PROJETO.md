@@ -1,3 +1,60 @@
+### ERP-RUNTIME-05 — CONCLUÍDO E VALIDADO NO DEV
+
+- Data: 2026-09-18.
+- Agregado: **Cliente × Empresa — relacionamento comercial e elegibilidade**.
+- PR/merge oficial: #19 / `079f594c798c33d903cd4e70a673f9f068639142`.
+- Implementação, review, correção de atomicidade, migration e E2E: **APROVADOS**.
+- Migrations DEV:
+  - `001_foundation.sql` — OK
+  - `002_rls_foundation.sql` — OK
+  - `003_marcas_pilot.sql` — OK
+  - `004_tenant_integrity.sql` — OK
+  - `005_cadastros_simples.sql` — OK
+  - `006_produtos_base.sql` — OK
+  - `007_produtos_master_data.sql` — OK
+  - `008_produtos_fk_tenant.sql` — OK
+  - `009_clientes_master_data.sql` — OK
+  - `010_cliente_empresas_comercial.sql` — APLICADA/OK
+- Modelo consolidado: Cliente MASTER é identidade única no Grupo;
+  `cliente_empresas` contém situação/elegibilidade específica da Empresa. Um
+  bloqueio na 3Z não altera identidade nem vínculo liberado na CPA.
+- Elegibilidade atual: vínculo ativo + situação comercial +
+  `habilitado_operacao` + ausência de bloqueio. Crédito, inadimplência, limite
+  e títulos permanecem no Financeiro.
+- Multiempresa E2E:
+  - Grupo consolidado e Empresa A → vínculo A: OK;
+  - Empresa A → A2 sem autorização: HTTP 403;
+  - Grupo B → Cliente/vínculo A: HTTP 404;
+  - cross-group PostgreSQL: bloqueado; `BAD_LINKS=0`.
+- RBAC fail-closed: sem actor → HTTP 403; usar Cliente, editar Cliente, alterar
+  relacionamento e bloquear/desbloquear são permissões distintas.
+- RLS `cliente_empresas`: ENABLE/FORCE (`RLS_STATE=true|true`).
+- Unicidade `(cliente_id, empresa_id)`: aprovada; `DUP_COUNT=0`.
+- Seed executado duas vezes: convergente/idempotente, sem duplicação.
+- Lifecycle E2E:
+  - update/block/unblock/inactivate/restore: HTTP 200;
+  - block → bloqueado e não elegível;
+  - GET inativo: HTTP 404;
+  - final: ATIVO, habilitado, não bloqueado e `ativo=true`;
+  - busca e paginação/count: HTTP 200; listagem padrão exclui inativos.
+- Auditoria DEV: update, block, unblock, inactivate e restore confirmados.
+- Atomicidade: mutação + auditoria são uma transação; falha de auditoria
+  rollbacka mutação, comprovado por testes PostgreSQL/PGlite.
+- PII: regex numérico genérico gerou falso positivo; verificação específica
+  confirmou `EXACT_CLIENT_DOCUMENT_LEAK=0` e `AUDIT_ROWS_WITH_PII_KEYS=0`.
+  Nenhuma chave CPF/CNPJ/documento/telefone/celular/e-mail nos snapshots.
+- API oficial DEV: `127.0.0.1:3080`, runtime `ERP-RUNTIME-05`.
+- Imagem promovida: `erp-zuccaro-erp-api:runtime05-f83acd03`.
+- Frontend HTTP: **NÃO ATIVADO**; sem alteração de `HTTP_PILOT_ENTITIES`.
+- Rollback: `erp-api-dev-runtime04-backup` e
+  `erp-api-dev-runtime03-backup` preservados temporariamente.
+- Validação do closeout documental: `npm run audit:baseline` e
+  `git diff --check` OK; testes/build dispensados por não alterar runtime.
+- Comercial 360º: pode futuramente compor Cliente + Empresa + situação +
+  habilitação + bloqueio + elegibilidade, sem depositar dados dos módulos
+  proprietários em ClienteEmpresa.
+- Planejamento somente: RUNTIME-06 = Locais/Endereços/Obras. Não implementar.
+
 ### ERP-RUNTIME-05 — IMPLEMENTAÇÃO Cliente × Empresa
 
 - Review de atomicidade (2026-09-18):

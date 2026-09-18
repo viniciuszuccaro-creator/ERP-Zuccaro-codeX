@@ -1,8 +1,8 @@
 # ERP-RUNTIME-05 — Cliente × Empresa
 
-**Status:** `IMPLEMENTATION_READY — DEV_MIGRATION_PENDING`
-**Branch:** `cursor/erp-runtime-05-cliente-empresa-392b`
-**Base:** `9e78d5dc3f5ead25137e8078d6a5326d6c1e47bb`
+**Status:** `ERP-RUNTIME-05 — CONCLUÍDO E VALIDADO NO DEV`
+**PR/merge oficial:** #19 / `079f594c798c33d903cd4e70a673f9f068639142`
+**Validação DEV:** 2026-09-18
 **Diagnóstico aprovado:** `docs/ERP_RUNTIME_05_DIAGNOSTICO.md`
 
 ## Objetivo
@@ -11,6 +11,20 @@ Evoluir `cliente_empresas` como relacionamento comercial e de elegibilidade
 entre a identidade Cliente do Grupo e cada Empresa autorizada.
 
 Não cria Cliente paralelo e não implementa Cliente/Comercial 360º.
+
+## Estado oficial no DEV
+
+- migrations 001–010 presentes e validadas;
+- `010_cliente_empresas_comercial.sql` aplicada;
+- `cliente_empresas`: RLS `ENABLE=true`, `FORCE=true`
+  (`RLS_STATE=true|true`);
+- unicidade `(cliente_id, empresa_id)` sem duplicados (`DUP_COUNT=0`);
+- API oficial em `127.0.0.1:3080` retorna `ERP-RUNTIME-05`;
+- imagem promovida: `erp-zuccaro-erp-api:runtime05-f83acd03`;
+- Cliente MASTER preservado como identidade única do Grupo;
+- ClienteEmpresa, elegibilidade, multiempresa, RBAC, RLS, unicidade,
+  lifecycle, auditoria, atomicidade e PII: aprovados;
+- frontend HTTP não ativado.
 
 ## Modelo
 
@@ -86,6 +100,16 @@ Permissões backend, no `PostgresRbacGuard` existente:
 Criar Cliente com `empresa_id` também exige permissão de criar o vínculo. Usar
 Cliente em Pedido futuramente não concede edição/bloqueio.
 
+E2E DEV:
+
+- Grupo consolidado: OK;
+- Empresa A → vínculo A: OK;
+- Empresa A → vínculo A2 sem autorização: HTTP 403;
+- Grupo B → Cliente/vínculo A: HTTP 404;
+- tentativa Cliente Grupo A + Empresa Grupo B: bloqueada no PostgreSQL e não
+  persistida (`BAD_LINKS=0`);
+- sem actor: HTTP 403.
+
 ## Auditoria e lifecycle
 
 Entidade auditada: `ClienteEmpresa`.
@@ -96,6 +120,14 @@ replica CPF/CNPJ do Cliente.
 
 Inativação remove o vínculo da listagem operacional padrão, mantém histórico e
 exige restore explícito.
+
+E2E lifecycle:
+
+- update, block, unblock, inactivate e restore: HTTP 200;
+- após block: `bloqueado=true` e `elegivel_operacao=false`;
+- GET inativo: HTTP 404;
+- estado final: situação ATIVO, habilitado, não bloqueado e `ativo=true`;
+- busca, paginação/count: HTTP 200; inativos excluídos por padrão.
 
 ### Atomicidade
 
@@ -121,6 +153,22 @@ Criação de Cliente com `empresa_id` também foi coberta: Cliente, vínculo,
 auditoria Cliente e auditoria ClienteEmpresa compartilham uma única transação.
 Se a auditoria do vínculo falhar, nenhum Cliente ou vínculo permanece gravado.
 
+No DEV, `audit_logs` confirmou update, block, unblock, inactivate e restore.
+Os testes automatizados anteriores ao E2E comprovaram que falha de auditoria
+rollbacka a mutação.
+
+### PII
+
+O regex genérico `[0-9]{11,14}` produziu falso positivo por sequências numéricas
+legítimas do snapshot. A validação específica confirmou:
+
+- `EXACT_CLIENT_DOCUMENT_LEAK=0`;
+- `AUDIT_ROWS_WITH_PII_KEYS=0`;
+- nenhuma chave `cpf`, `cnpj`, `documento`, `documento_normalizado`,
+  `telefone`, `celular` ou `email` nos snapshots ClienteEmpresa.
+
+Conclusão: auditoria sem PII do Cliente.
+
 ## Seed DEV
 
 - Grupo A: Cliente PJ A vinculado à Empresa A (liberado);
@@ -128,7 +176,7 @@ Se a auditoria do vínculo falhar, nenhum Cliente ou vínculo permanece gravado.
 - Grupo A: Cliente PF A como prospect não habilitado;
 - Grupo B: Cliente PJ B vinculado à Empresa B;
 - perfis sintéticos recebem permissões ClienteEmpresa;
-- segunda execução converge sem duplicar.
+- seed executado duas vezes: convergente/idempotente, sem duplicação.
 
 ## Compatibilidade e dependências futuras
 
@@ -164,9 +212,9 @@ Resultados:
 - server: 51 pass/1 skip, typecheck e build OK;
 - `git diff --check`: OK.
 
-## Pendência
+## Rollback e próxima fundação
 
-Migration 010 e E2E ainda precisam de autorização e execução humana no
-PostgreSQL DEV conforme `docs/ERP_RUNTIME_05_DEV_RUNBOOK.md`.
-
-ClienteEmpresa permanece fora de `HTTP_PILOT_ENTITIES`.
+- `erp-api-dev-runtime04-backup` e `erp-api-dev-runtime03-backup` permanecem
+  preservados temporariamente;
+- ClienteEmpresa permanece fora de `HTTP_PILOT_ENTITIES`;
+- planejamento, sem implementação: RUNTIME-06 — Locais/Endereços/Obras.
