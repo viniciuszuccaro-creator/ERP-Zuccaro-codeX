@@ -10,6 +10,8 @@ export type RbacAction =
   | 'restaurar'
   | 'bloquear'
   | 'principal'
+  | 'vincular-empresa'
+  | 'vincular-local'
   | 'importar'
   | 'exportar';
 

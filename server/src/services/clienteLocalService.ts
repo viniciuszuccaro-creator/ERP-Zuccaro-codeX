@@ -64,6 +64,13 @@ export class ClienteLocalService {
     private readonly audit: AuditRepository,
     private readonly tenantGuard: TenantGuard,
     private readonly rbacGuard: RbacGuard,
+    private readonly obraUsage?: {
+      findActiveObraUsingLocal(
+        groupId: string,
+        localId: string,
+        executor?: import('../db/client.js').DbQueryExecutor,
+      ): Promise<{ obraId: string; principal: boolean } | null>;
+    },
   ) {}
 
   async list(
@@ -220,6 +227,18 @@ export class ClienteLocalService {
           'CLIENTE_LOCAL_IS_PRIMARY',
           'Remove primary purposes before inactivating local',
         );
+      }
+      if (this.obraUsage) {
+        const usage = await this.obraUsage.findActiveObraUsingLocal(
+          ctx.groupId, localId, executor,
+        );
+        if (usage) {
+          throw new AppError(
+            409,
+            'CLIENTE_LOCAL_IN_USE',
+            'ClienteLocal is used by an active Obra',
+          );
+        }
       }
       const after = await this.repo.softDelete(
         this.scope(ctx, clienteId), localId, ctx.actorId, executor,

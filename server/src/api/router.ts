@@ -6,6 +6,7 @@ import { getAuthFoundation } from '../auth/foundation.js';
 import { requireTenantScope } from '../middleware/requestContext.js';
 import type { ClienteService } from '../services/clienteService.js';
 import type { ClienteLocalService } from '../services/clienteLocalService.js';
+import type { ObraService } from '../services/obraService.js';
 import type { MarcaService } from '../services/marcaService.js';
 import type { ProdutoService } from '../services/produtoService.js';
 import type { TenantCrudService } from '../services/tenantCrudService.js';
@@ -28,6 +29,7 @@ export type ApiDeps = {
   produtoService: ProdutoService;
   clienteService: ClienteService;
   clienteLocalService: ClienteLocalService;
+  obraService: ObraService;
 };
 
 function ctxFromReq(req: Request) {
@@ -429,6 +431,184 @@ function mountClienteLocalRoutes(router: Router, service: ClienteLocalService) {
   });
 }
 
+function mountObraRoutes(router: Router, service: ObraService) {
+  const basePath = '/api/v1/clientes/:clienteId/obras';
+
+  router.get(basePath, requireTenantScope, async (req, res, next) => {
+    try {
+      const orderByRaw = req.query.order_by ? String(req.query.order_by) : undefined;
+      const orderBy = ['nome', 'codigo', 'created_at'].includes(orderByRaw ?? '')
+        ? orderByRaw as 'nome' | 'codigo' | 'created_at'
+        : undefined;
+      const orderDirRaw = req.query.order_dir ? String(req.query.order_dir).toLowerCase() : undefined;
+      const orderDir = orderDirRaw === 'asc' || orderDirRaw === 'desc' ? orderDirRaw : undefined;
+      const page = await service.list(ctxFromReq(req), req.params.clienteId, {
+        ativo: parseAtivoQuery(req.query.ativo),
+        status: req.query.status ? String(req.query.status) : undefined,
+        operacional: req.query.operacional == null
+          ? undefined
+          : parseAtivoQuery(req.query.operacional),
+        search: req.query.search ? String(req.query.search) : undefined,
+        cidade: req.query.cidade ? String(req.query.cidade) : undefined,
+        uf: req.query.uf ? String(req.query.uf) : undefined,
+        orderBy,
+        orderDir,
+        limit: req.query.limit ? Number(req.query.limit) : undefined,
+        offset: req.query.offset ? Number(req.query.offset) : undefined,
+      });
+      res.json(page);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post(basePath, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.create(ctxFromReq(req), req.params.clienteId, req.body);
+      res.status(201).json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get(`${basePath}/:obraId`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.get(ctxFromReq(req), req.params.clienteId, req.params.obraId);
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.patch(`${basePath}/:obraId`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.update(
+        ctxFromReq(req), req.params.clienteId, req.params.obraId, req.body,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.delete(`${basePath}/:obraId`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.softDelete(
+        ctxFromReq(req), req.params.clienteId, req.params.obraId,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post(`${basePath}/:obraId/restore`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.restore(
+        ctxFromReq(req), req.params.clienteId, req.params.obraId,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get(`${basePath}/:obraId/empresas`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.get(ctxFromReq(req), req.params.clienteId, req.params.obraId);
+      res.json({ data: row.empresas });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get(`${basePath}/:obraId/locais`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.get(ctxFromReq(req), req.params.clienteId, req.params.obraId);
+      res.json({ data: row.locais });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post(`${basePath}/:obraId/empresas/:empresaId`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.linkEmpresa(
+        ctxFromReq(req), req.params.clienteId, req.params.obraId, req.params.empresaId,
+      );
+      res.status(201).json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.delete(`${basePath}/:obraId/empresas/:empresaId`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.unlinkEmpresa(
+        ctxFromReq(req), req.params.clienteId, req.params.obraId, req.params.empresaId,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post(`${basePath}/:obraId/empresas/:empresaId/restore`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.restoreEmpresa(
+        ctxFromReq(req), req.params.clienteId, req.params.obraId, req.params.empresaId,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post(`${basePath}/:obraId/locais`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.linkLocal(
+        ctxFromReq(req), req.params.clienteId, req.params.obraId, req.body,
+      );
+      res.status(201).json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.delete(`${basePath}/:obraId/locais/:localId`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.unlinkLocal(
+        ctxFromReq(req), req.params.clienteId, req.params.obraId, req.params.localId,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post(`${basePath}/:obraId/locais/:localId/restore`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.restoreLocal(
+        ctxFromReq(req), req.params.clienteId, req.params.obraId, req.params.localId,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post(`${basePath}/:obraId/locais/:localId/principal`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.setPrincipal(
+        ctxFromReq(req), req.params.clienteId, req.params.obraId, req.params.localId,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+}
+
 export function createApiRouter(deps: ApiDeps) {
   const router = Router();
 
@@ -463,14 +643,14 @@ export function createApiRouter(deps: ApiDeps) {
 
   router.get('/api/v1/meta', (_req, res) => {
     res.json({
-      runtime: 'ERP-RUNTIME-06A',
+      runtime: 'ERP-RUNTIME-06B',
       auth: getAuthFoundation(),
       config: publicConfigView(deps.config),
       httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade'],
-      preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal'],
+      preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra'],
       httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal'],
       rlsModel: 'ENABLE+FORCE fail-closed; BFF uses privileged DB role; JWT policies planned with Auth',
-      note: 'ClienteEmpresa prepared in backend; NOT in frontend HTTP_PILOT_ENTITIES until E2E activation authorized',
+      note: 'Obra prepared in backend; NOT in frontend HTTP_PILOT_ENTITIES; Pedido.obra_id remains optional and unimplemented',
       produto: {
         masterData: true,
         pagination: true,
@@ -499,6 +679,16 @@ export function createApiRouter(deps: ApiDeps) {
         transactionalAudit: true,
         frontendHttp: false,
       },
+      obra: {
+        canonicalBusinessContext: true,
+        companyAuthorization: true,
+        typedLocals: true,
+        sequentialCodigo: true,
+        pagination: true,
+        transactionalAudit: true,
+        frontendHttp: false,
+        optionalOnPedido: true,
+      },
     });
   });
 
@@ -509,6 +699,7 @@ export function createApiRouter(deps: ApiDeps) {
   mountProdutoRoutes(router, deps.produtoService);
   mountClienteRoutes(router, deps.clienteService);
   mountClienteLocalRoutes(router, deps.clienteLocalService);
+  mountObraRoutes(router, deps.obraService);
 
   return router;
 }

@@ -53,6 +53,9 @@ test('HTTP_PILOT_ENTITIES includes RUNTIME-02 cadastros sem Produto', () => {
     'SetorAtividade',
   ]);
   assert.equal(HTTP_PILOT_ENTITIES.includes('Produto'), false);
+  assert.equal(HTTP_PILOT_ENTITIES.includes('Cliente'), false);
+  assert.equal(HTTP_PILOT_ENTITIES.includes('ClienteLocal'), false);
+  assert.equal(HTTP_PILOT_ENTITIES.includes('Obra'), false);
 });
 
 test('HttpApiClient maps Marca CRUD to BFF routes', async () => {

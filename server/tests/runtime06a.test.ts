@@ -125,7 +125,9 @@ test('migration 011 é convergente, sem Obra, com integridade/principal/RLS', as
     const files = readdirSync(migrationDir)
       .filter((file) => /^\d{3}_.*\.sql$/.test(file))
       .sort();
-    assert.equal(files.at(-1), '011_cliente_locais.sql');
+    assert.ok(files.includes('011_cliente_locais.sql'));
+    assert.ok(files.includes('012_obras.sql'));
+    assert.ok(files.indexOf('011_cliente_locais.sql') < files.indexOf('012_obras.sql'));
     for (const file of files) {
       await db.exec(
         readFileSync(join(migrationDir, file), 'utf8')
@@ -528,7 +530,7 @@ test('API ClienteLocal cobre multifinalidade, principal, tenant, geo e lifecycle
   assert.equal(serializedAudit.includes('Bloco A'), false);
 
   const meta = await fetchOk(app, '/api/v1/meta');
-  assert.equal(meta.runtime, 'ERP-RUNTIME-06A');
+  assert.ok(['ERP-RUNTIME-06A', 'ERP-RUNTIME-06B'].includes(meta.runtime));
   assert.equal(meta.clienteLocal.frontendHttp, false);
   assert.ok(!meta.httpPilotEntities.includes('ClienteLocal'));
   assert.ok(CLIENTE_LOCAL_FINALIDADES.every((purpose) => purpose !== 'OBRA'));

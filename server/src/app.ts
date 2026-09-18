@@ -30,6 +30,8 @@ import {
 import { PostgresProdutoRepository } from './repositories/postgresProdutoRepository.js';
 import { PostgresClienteRepository } from './repositories/postgresClienteRepository.js';
 import { PostgresClienteLocalRepository } from './repositories/postgresClienteLocalRepository.js';
+import { InMemoryObraRepository } from './repositories/inMemoryObraRepository.js';
+import { PostgresObraRepository } from './repositories/postgresObraRepository.js';
 import { PostgresMarcaRepository } from './repositories/postgresMarcaRepository.js';
 import {
   grupoProdutoCreateSchema,
@@ -41,6 +43,7 @@ import {
 } from './repositories/cadastroTypes.js';
 import { ClienteService } from './services/clienteService.js';
 import { ClienteLocalService } from './services/clienteLocalService.js';
+import { ObraService } from './services/obraService.js';
 import { MarcaService } from './services/marcaService.js';
 import { ProdutoService } from './services/produtoService.js';
 import { TenantCrudService } from './services/tenantCrudService.js';
@@ -79,6 +82,7 @@ export function createApp(options: CreateAppOptions) {
   const clienteLocalRepo = useMemory
     ? new InMemoryClienteLocalRepository()
     : new PostgresClienteLocalRepository(db);
+  const obraRepo = useMemory ? new InMemoryObraRepository() : new PostgresObraRepository(db);
 
   const marcaService = new MarcaService(marcaRepo, auditRepo, tenantGuard);
   const unidadeService = new TenantCrudService(unidadeRepo, auditRepo, tenantGuard, {
@@ -115,12 +119,21 @@ export function createApp(options: CreateAppOptions) {
     produtoRelationGuard,
   );
   const clienteService = new ClienteService(clienteRepo, auditRepo, tenantGuard, rbacGuard);
+  const obraService = new ObraService(
+    obraRepo,
+    clienteRepo,
+    clienteLocalRepo,
+    auditRepo,
+    tenantGuard,
+    rbacGuard,
+  );
   const clienteLocalService = new ClienteLocalService(
     clienteLocalRepo,
     clienteRepo,
     auditRepo,
     tenantGuard,
     rbacGuard,
+    obraService,
   );
 
   const app = express();
@@ -162,6 +175,7 @@ export function createApp(options: CreateAppOptions) {
     produtoService,
     clienteService,
     clienteLocalService,
+    obraService,
   }));
   app.use(notFoundHandler);
   app.use(createErrorHandler(config));
@@ -175,6 +189,7 @@ export function createApp(options: CreateAppOptions) {
     produtoService,
     clienteService,
     clienteLocalService,
+    obraService,
     auditRepo,
     tenantGuard,
     produtoRelationGuard,

@@ -245,7 +245,7 @@ test('API Produto pagination + tenant isolation + search no leak', async () => {
 
   const meta = await fetchOk(app, '/api/v1/meta');
   assert.ok(
-    ['ERP-RUNTIME-03', 'ERP-RUNTIME-04', 'ERP-RUNTIME-05', 'ERP-RUNTIME-06A']
+    ['ERP-RUNTIME-03', 'ERP-RUNTIME-04', 'ERP-RUNTIME-05', 'ERP-RUNTIME-06A', 'ERP-RUNTIME-06B']
       .includes(meta.runtime),
   );
   assert.equal(meta.produto.frontendHttp, false);
