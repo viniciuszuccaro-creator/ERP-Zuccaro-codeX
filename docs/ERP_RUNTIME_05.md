@@ -124,6 +124,17 @@ Ficam fora até suas fontes PostgreSQL canônicas:
 integridade cross-group, unicidade, RLS, tenant A/A2/B, RBAC, mass assignment,
 paginação/count/busca/filtros, concorrência, bloqueio, lifecycle e auditoria.
 
+Resultados:
+
+- `npm run audit:baseline`: OK;
+- `npm test`: 570 pass;
+- `npm run lint`: OK;
+- `npm run typecheck`: baseline histórico do frontend (exit 2), sem erro novo
+  nos arquivos do lote;
+- `npm run build`: OK;
+- server: 49 pass/1 skip, typecheck e build OK;
+- `git diff --check`: OK.
+
 ## Pendência
 
 Migration 010 e E2E ainda precisam de autorização e execução humana no

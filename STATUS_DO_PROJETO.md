@@ -23,7 +23,9 @@
 - Concorrência: unique existente + criação idempotente impedem linha duplicada.
 - Seed: Empresa A2 + vínculos A/A2/B e perfil RBAC, convergente em reexecução.
 - Frontend/Base44: inalterados; sem dual-write; fora de `HTTP_PILOT_ENTITIES`.
-- Testes focados: RUNTIME-05 3/3; server typecheck e suíte 49 pass/1 skip.
+- Validações: RUNTIME-05 3/3; server 49 pass/1 skip + typecheck/build OK;
+  audit/lint/build frontend e 570 testes OK; `git diff --check` OK; typecheck
+  frontend mantém baseline histórico (exit 2), sem erro novo no lote.
 - Docs: `docs/ERP_RUNTIME_05.md` e `docs/ERP_RUNTIME_05_DEV_RUNBOOK.md`.
 - Pendência: review; depois aplicação manual da migration 010 + E2E DEV.
 - Não aplicar no VPS e não iniciar RUNTIME-06.
