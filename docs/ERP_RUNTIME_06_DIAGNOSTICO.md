@@ -6,22 +6,30 @@
 
 ## 1. Decisão
 
-O agregado recomendado para o ERP-RUNTIME-06 é:
+O domínio recomendado para o ERP-RUNTIME-06 é:
 
-> **Local do Cliente — endereço físico canônico com finalidades**
+> **Local/Endereço do Cliente + Obra referenciando Local**
 
-Decisão correspondente à alternativa **A**, ajustada ao código real:
+Decisão correspondente ao **modelo C** (Endereço/Local como base + entidade
+específica referenciando-o), entregue em dois sublotes:
 
-- Local é o agregado principal;
+- **RUNTIME-06A:** Local do Cliente, endereço físico e finalidades;
+- **RUNTIME-06B:** Obra mínima, com código/nome/status e FK para Local;
 - Endereço é o value object físico do Local, não outro cadastro;
-- Obra, no escopo inicial, é uma finalidade/tipo de Local;
-- Projeto e Centro de Custo referenciam o Local/Obra, mas permanecem em seus
-  módulos proprietários;
-- uma extensão `obras` separada só será justificada quando houver lifecycle
-  técnico próprio além do endereço (projeto, início/fim, engenharia etc.).
+- Projeto e Centro de Custo referenciam Obra, mas permanecem proprietários de
+  seus dados.
 
 Não criar `EnderecoClienteNovo`, `LocalNovo`, `EnderecoPedido` ou
 `EnderecoObraNovo`.
+
+### Comparação dos modelos
+
+| Modelo | Aderência ao código/domínio | Decisão |
+|---|---|---|
+| A — Endereço + Obra separados | separa conceitos, mas Endereço solto tende a owner polimórfico/FKs frágeis | não usar isoladamente |
+| B — Local universal tipado | próximo do legado, porém mistura Cliente, Empresa, Estoque e Obra | rejeitado por abstração excessiva |
+| **C — ClienteLocal base + Obra referenciando** | preserva `locais_entrega/addressId`, separa lifecycle da Obra e evita copiar endereço | **selecionado** |
+| D — manter JSON embutido | máxima compatibilidade imediata, mas IDs/tipos não são estáveis nem consultáveis no PostgreSQL | apenas camada de transição |
 
 ## 2. Estruturas existentes
 
@@ -131,9 +139,9 @@ clientes (Grupo)
                        CORRESPONDENCIA/OUTRO
 ```
 
-Campos mínimos prováveis:
+Campos mínimos prováveis do Local:
 
-- UUID e código interno estável;
+- UUID estável (substitui IDs temporários por índice);
 - `group_id`, `cliente_id`;
 - nome/apelido;
 - CEP, logradouro, número, complemento, bairro, cidade, UF, país e referência;
@@ -149,8 +157,8 @@ unicidade controlada.
 Tabela provável:
 
 - `cliente_locais`;
-- opcionalmente `cliente_local_finalidades` se o contrato relacional for
-  preferível a `TEXT[]`.
+- `cliente_local_finalidades`, para múltiplos usos e principal por finalidade
+  sem duplicar o endereço.
 
 Não usar tabela genérica polimórfica para Cliente, Empresa, Fornecedor e
 Transportadora agora: vários masters ainda não existem no PostgreSQL e FKs
@@ -158,29 +166,40 @@ ficariam frágeis. Reutilizar normalizadores/componentes, não ownership.
 
 ### Obra
 
-O código atual comprova “Obra = Local de tipo/finalidade OBRA”:
+O legado comprova que Obra hoje é tratada como Local de tipo/finalidade OBRA:
 
 - Wizard usa o ID do item de `locais_entrega`;
 - Site CPA usa `addressId` como `obraId`;
 - Projeto/CC referenciam esse ID.
 
-Portanto, RUNTIME-06 não precisa criar `obras` para repetir logradouro.
-Campos de endereço, coordenada, janela, restrição e instrução ficam no Local.
+Isso deve ser preservado durante a transição, mas não é o modelo final: Obra é
+contexto comercial/operacional com nome, código, status e vários Projetos;
+Endereço é apenas localização física. Um endereço de cobrança não é Obra.
+
+RUNTIME-06B deve evoluir a estrutura existente para uma tabela `obras`
+referenciando `cliente_local_id`, sem repetir logradouro. O alias legado
+`obra_destino_id = addressId` deve ser mapeado ao UUID novo durante a transição.
 
 Classificação futura:
 
 | Campo | Domínio |
 |---|---|
-| código/nome/status da obra | Obra/Local |
+| código/nome/status da obra | Obra |
 | endereço/coordenadas | Local |
 | responsável/telefone/e-mail | Contato referenciado; snapshot na operação |
 | horário, restrição de veículo, instruções | preferência logística do Local |
 | centro de custo | Financeiro |
 | projeto/BOM/revisão | Projeto/Engenharia |
-| início/previsão de término | futura extensão Obra |
+| início/previsão de término | Obra |
 
-Se lifecycle técnico próprio for comprovado, uma tabela `obras` poderá
-referenciar `cliente_local_id` um-para-um, sem copiar endereço.
+Cardinalidade inicial: uma Obra pertence a um Cliente e referencia um Local.
+Consórcios/múltiplos clientes não aparecem no código atual; devem ser extensão
+futura por relacionamento, sem superdimensionar RUNTIME-06B.
+
+Obra é global ao Grupo e pode ser usada pela CPA e 3Z quando ambas possuem
+ClienteEmpresa elegível/autorizado. Não duplicar a mesma Obra por Empresa.
+Código de Obra deve reutilizar
+`reserve_entity_codigo(group_id, 'Obra')`, preservando `legacy_code`.
 
 ### LocalEstoque e Empresa
 
@@ -189,6 +208,29 @@ referenciar `cliente_local_id` um-para-um, sem copiar endereço.
   Cliente;
 - `Empresa.endereco` continua separado por finalidade fiscal/origem logística;
 - validadores de CEP/endereço/coordenada podem ser compartilhados.
+
+### Matriz de propriedade
+
+| Informação | Proprietário | Regra |
+|---|---|---|
+| identidade CPF/CNPJ | Cliente MASTER | Grupo |
+| elegibilidade/preferência empresarial | ClienteEmpresa | Empresa |
+| logradouro/CEP/coordenada | ClienteLocal | master mutável |
+| finalidades e principal | ClienteLocal | uma principal por Cliente/finalidade |
+| nome/código/status da obra | Obra | Grupo; referencia Local |
+| responsável permanente | Contato/Obra | FK futura; não duplicar Pessoa |
+| instrução permanente de descarga | Local/Obra | preferência do destino |
+| observação/janela daquela entrega | Pedido/Entrega | transacional |
+| destino vendido | Pedido | referência + snapshot |
+| destino expedido/canhoto | Entrega | snapshot + evidência |
+| endereço emitido | Fiscal/NF | snapshot fiscal imutável |
+| rota/distância | Roteirizador | calculado a partir do snapshot |
+| posição do veículo | PosicaoVeiculo | telemetria |
+
+Não há município/código IBGE canônico localizado no cadastro atual. ViaCEP
+retorna dados municipais, mas o fluxo não persiste código IBGE. RUNTIME-06A
+deve aceitar o identificador fiscal validado quando houver fonte canônica, sem
+criar cadastro paralelo de Município/UF/País.
 
 ## 5. Referência canônica e snapshot imutável
 
@@ -314,6 +356,8 @@ e migração; se aprovado, reutilizar
 - `cadastros.local-cliente.inativar`;
 - `cadastros.local-cliente.restaurar`;
 - permissão própria para alterar coordenada/endereço confirmado;
+- `cadastros.obra.visualizar|criar|editar|inativar|restaurar`;
+- `logistica.local.instrucoes` para alterar restrições permanentes;
 - usar Local no Pedido não concede edição cadastral.
 
 Não criar sistema paralelo: reutilizar `PostgresRbacGuard`.
@@ -333,14 +377,15 @@ Não criar sistema paralelo: reutilizar `PostgresRbacGuard`.
 
 ## 11. Migration/API prováveis — não criadas
 
-Migration sugerida:
+Migrations sugeridas, sem criação:
 
-`011_cliente_locais.sql`
+- RUNTIME-06A: `011_cliente_locais.sql`;
+- RUNTIME-06B: `012_obras.sql`, somente após review/E2E de 06A.
 
 Escopo provável:
 
 - `cliente_locais`;
-- finalidades em coluna controlada ou `cliente_local_finalidades`;
+- `cliente_local_finalidades`;
 - indexes/fingerprint de possível duplicidade;
 - integridade Cliente/Grupo;
 - RLS, lifecycle, origem/legado e actors.
@@ -352,13 +397,32 @@ API provável:
 - `POST .../:localId/restore`;
 - list/search/count/paginação/filtros por finalidade/cidade/UF/ativo.
 
+RUNTIME-06B provável:
+
+- `GET/POST /api/v1/clientes/:clienteId/obras`;
+- `GET/PATCH/DELETE /api/v1/clientes/:clienteId/obras/:obraId`;
+- `POST .../:obraId/restore`;
+- `obras.cliente_local_id` obrigatório e tenant-scoped.
+
 Não ativar frontend HTTP no diagnóstico.
 
 ## 12. E2E proposto
 
-1. Cliente A cria Local A e Local Obra A;
+Casos suportados pelo modelo:
+
+- cadastral e entrega distintos, sem trocar endereço principal;
+- várias Obras, cada uma com Local próprio;
+- Cliente/Obra compartilhados por CPA e 3Z autorizadas, sem cópia física;
+- destino eventual e endereço Marketplace ficam apenas no snapshot;
+- retirada referencia Local da Empresa, não ClienteLocal;
+- alteração posterior do Local não muda Pedido/NF;
+- Obra encerrada sai da operação, mas permanece no histórico;
+- coordenadas são opcionais: ausência de geocode não bloqueia venda quando a
+  política logística permitir.
+
+1. Cliente A cria Local A e Local da Obra A;
 2. mesmo Local recebe múltiplas finalidades sem duplicar endereço;
-3. IDs/códigos permanecem estáveis;
+3. ID do Local e código sequencial da Obra permanecem estáveis;
 4. Grupo A consolida;
 5. Empresa com ClienteEmpresa elegível usa o Local;
 6. Empresa A2 não autorizada é bloqueada;
@@ -371,7 +435,10 @@ Não ativar frontend HTTP no diagnóstico.
 13. RLS fail-closed;
 14. auditoria atômica before/after e rollback em falha;
 15. seed duplo converge;
-16. snapshot de Pedido somente quando Pedido existir no PostgreSQL.
+16. Obra A referencia Local A sem repetir endereço;
+17. mesma Obra é visível para CPA/3Z autorizadas sem duplicação;
+18. Obra inativa permanece no histórico e não aparece em nova operação;
+19. snapshot de Pedido somente quando Pedido existir no PostgreSQL.
 
 Seed futuro: Grupo A/Cliente A com Local matriz e duas obras; Grupo B/Cliente B
 com Local B; variações de finalidade, complemento e status, todos sintéticos.
@@ -381,7 +448,7 @@ com Local B; variações de finalidade, complemento e status, todos sintéticos.
 Dependências:
 
 - Cliente MASTER e ClienteEmpresa (concluídos);
-- `entity_code_sequences` se código sequencial for aprovado;
+- `entity_code_sequences` para código sequencial de Obra;
 - normalizadores CEP/endereço/coordenadas extraídos do fluxo existente;
 - decisão posterior sobre Contato canônico.
 
@@ -397,7 +464,24 @@ Fora do RUNTIME-06:
 - Cliente/Comercial 360º;
 - migração massiva e ativação `HTTP_PILOT_ENTITIES`.
 
-## 14. Baseline
+## 14. Divisão e sequência
+
+RUNTIME-06 deve ser dividido:
+
+- **06A — Local/Endereço do Cliente:** fonte física, finalidades, principal,
+  geolocalização opcional, lifecycle, legado, API/RBAC/RLS/auditoria;
+- **06B — Obra mínima:** código/nome/status, Cliente e FK Local; sem Projeto,
+  Produção ou Centro de Custo.
+
+A divisão mantém cada lote pequeno e impede que Obra avançada atrase Preço.
+Ambos são concluídos antes da numeração seguinte:
+
+- RUNTIME-07 — Tabela de Preço / preço comercial;
+- RUNTIME-08 — Estoque, disponibilidade e reserva;
+- RUNTIME-09 — Orçamento e negociação;
+- RUNTIME-10 — Pedido canônico.
+
+## 15. Baseline
 
 - `npm run audit:baseline`: PASS;
 - `npm run lint`: PASS;
