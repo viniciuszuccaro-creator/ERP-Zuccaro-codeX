@@ -1,3 +1,5 @@
+import type { DbQueryExecutor } from '../db/client.js';
+
 export type TenantScope = {
   groupId: string;
   empresaId?: string | null;
@@ -42,6 +44,6 @@ export type AuditEntry = {
 };
 
 export interface AuditRepository {
-  append(entry: AuditEntry): Promise<void>;
+  append(entry: AuditEntry, executor?: DbQueryExecutor): Promise<void>;
   listByEntity(entity: string, entityId: string): Promise<AuditEntry[]>;
 }

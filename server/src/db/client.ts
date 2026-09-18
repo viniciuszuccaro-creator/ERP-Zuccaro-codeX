@@ -1,15 +1,22 @@
-import type { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
+import type { Pool, QueryResult, QueryResultRow } from 'pg';
 import pg from 'pg';
 import type { AppConfig } from '../config/env.js';
 
 const { Pool: PgPool } = pg;
+
+export type DbQueryExecutor = {
+  query: <T extends QueryResultRow = QueryResultRow>(
+    text: string,
+    params?: unknown[],
+  ) => Promise<QueryResult<T>>;
+};
 
 export type DbClient = {
   query: <T extends QueryResultRow = QueryResultRow>(
     text: string,
     params?: unknown[],
   ) => Promise<QueryResult<T>>;
-  withTransaction: <T>(fn: (client: PoolClient) => Promise<T>) => Promise<T>;
+  withTransaction: <T>(fn: (client: DbQueryExecutor) => Promise<T>) => Promise<T>;
   checkConnection: () => Promise<boolean>;
   end: () => Promise<void>;
   pool: Pool | null;
@@ -34,7 +41,7 @@ export function createDbClient(config: AppConfig): DbClient {
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
-        const result = await fn(client);
+        const result = await fn(client as unknown as DbQueryExecutor);
         await client.query('COMMIT');
         return result;
       } catch (error) {

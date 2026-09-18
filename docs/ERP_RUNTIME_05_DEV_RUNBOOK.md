@@ -92,6 +92,11 @@ A segunda execução não pode duplicar ClienteEmpresa.
 - actor sem cada permissão recebe 403;
 - list/count/filtros/paginação/busca são consistentes;
 - auditoria contém link/update/block/unblock/inactivate/restore sem CPF/CNPJ.
+- mutation e INSERT em `audit_logs` compartilham a mesma transação;
+- falha forçada de auditoria mantém link/update/block/unblock/inactivate/restore
+  no estado anterior;
+- criação de Cliente com `empresa_id` também rollbacka Cliente + vínculo se a
+  auditoria falhar.
 
 ## 6. Restrições
 

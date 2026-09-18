@@ -132,39 +132,48 @@ export class ClienteService {
       }
     }
 
-    let created: Cliente;
     try {
-      created = await this.repo.create(
-        { groupId: ctx.groupId, empresaId: ctx.empresaId },
-        { ...parsed.data, empresa_id: empresaId },
-        ctx.actorId,
-      );
+      return await this.repo.withTransaction(async (executor) => {
+        const created = await this.repo.create(
+          { groupId: ctx.groupId, empresaId: ctx.empresaId },
+          { ...parsed.data, empresa_id: empresaId },
+          ctx.actorId,
+          executor,
+        );
+        await this.audit.append({
+          groupId: ctx.groupId,
+          empresaId: created.empresa_id ?? ctx.empresaId,
+          actorId: ctx.actorId,
+          actorEmail: ctx.actorEmail,
+          entity: 'Cliente',
+          entityId: created.id,
+          action: 'create',
+          afterData: sanitizeClienteAudit(created),
+          requestId: ctx.requestId,
+          ipAddress: ctx.ipAddress,
+        }, executor);
+        if (empresaId) {
+          const link = await this.repo.getEmpresaLink(
+            { groupId: ctx.groupId, empresaId: ctx.empresaId },
+            created.id,
+            empresaId,
+            executor,
+          );
+          if (!link) {
+            throw new AppError(
+              500,
+              'CLIENTE_EMPRESA_LINK_FAILED',
+              'Cliente relationship was not created',
+            );
+          }
+          await this.empresaOperations.auditCreatedLink(ctx, link, executor);
+        }
+        return created;
+      });
     } catch (error) {
       await this.handleCreateConflict(ctx, error, docNorm, parsed.data.tipo);
       throw error;
     }
-    await this.audit.append({
-      groupId: ctx.groupId,
-      empresaId: created.empresa_id ?? ctx.empresaId,
-      actorId: ctx.actorId,
-      actorEmail: ctx.actorEmail,
-      entity: 'Cliente',
-      entityId: created.id,
-      action: 'create',
-      afterData: sanitizeClienteAudit(created),
-      requestId: ctx.requestId,
-      ipAddress: ctx.ipAddress,
-    });
-    if (empresaId) {
-      const link = await this.repo.getEmpresaLink(
-        { groupId: ctx.groupId, empresaId: ctx.empresaId },
-        created.id,
-        empresaId,
-      );
-      if (!link) throw new AppError(500, 'CLIENTE_EMPRESA_LINK_FAILED', 'Cliente relationship was not created');
-      await this.empresaOperations.auditCreatedLink(ctx, link);
-    }
-    return created;
   }
 
   async update(ctx: RequestContext, id: string, payload: unknown) {

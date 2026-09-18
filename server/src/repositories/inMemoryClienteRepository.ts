@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';
 import { normalizeDocumento } from '../db/documentoValidators.js';
+import type { DbQueryExecutor } from '../db/client.js';
 import type {
   Cliente,
   ClienteCreate,
@@ -31,18 +32,30 @@ export type ClienteEmpresaListFilter = Scope & ListOptions & {
 };
 
 export interface ClienteRepository extends TenantEntityRepository<Cliente, ClienteCreate, ClienteUpdate> {
-  create(scope: Scope, data: ClienteCreate, actorId?: string | null): Promise<Cliente>;
+  withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T>;
+  create(
+    scope: Scope,
+    data: ClienteCreate,
+    actorId?: string | null,
+    executor?: DbQueryExecutor,
+  ): Promise<Cliente>;
   listPage(filter: ClienteListFilter): Promise<{ rows: Cliente[]; total: number }>;
   findByDocumento(groupId: string, documentoNormalizado: string): Promise<Cliente | null>;
   restore(scope: Scope, id: string): Promise<Cliente | null>;
   listEmpresaLinks(filter: ClienteEmpresaListFilter): Promise<{ rows: ClienteEmpresa[]; total: number }>;
-  getEmpresaLink(scope: Scope, clienteId: string, empresaId: string): Promise<ClienteEmpresa | null>;
+  getEmpresaLink(
+    scope: Scope,
+    clienteId: string,
+    empresaId: string,
+    executor?: DbQueryExecutor,
+  ): Promise<ClienteEmpresa | null>;
   createEmpresaLink(
     scope: Scope,
     clienteId: string,
     empresaId: string,
     data: ClienteEmpresaCreate,
     actorId?: string | null,
+    executor?: DbQueryExecutor,
   ): Promise<{ row: ClienteEmpresa; created: boolean }>;
   updateEmpresaLink(
     scope: Scope,
@@ -50,6 +63,7 @@ export interface ClienteRepository extends TenantEntityRepository<Cliente, Clien
     empresaId: string,
     data: ClienteEmpresaUpdate,
     actorId?: string | null,
+    executor?: DbQueryExecutor,
   ): Promise<ClienteEmpresa | null>;
   setEmpresaLinkBlocked(
     scope: Scope,
@@ -58,18 +72,21 @@ export interface ClienteRepository extends TenantEntityRepository<Cliente, Clien
     blocked: boolean,
     actorId?: string | null,
     motivo?: string | null,
+    executor?: DbQueryExecutor,
   ): Promise<ClienteEmpresa | null>;
   softDeleteEmpresaLink(
     scope: Scope,
     clienteId: string,
     empresaId: string,
     actorId?: string | null,
+    executor?: DbQueryExecutor,
   ): Promise<ClienteEmpresa | null>;
   restoreEmpresaLink(
     scope: Scope,
     clienteId: string,
     empresaId: string,
     actorId?: string | null,
+    executor?: DbQueryExecutor,
   ): Promise<ClienteEmpresa | null>;
 }
 
@@ -126,6 +143,23 @@ export class InMemoryClienteRepository implements ClienteRepository {
   private readonly rows = new Map<string, Cliente>();
   private readonly sequences = new Map<string, number>();
   private readonly empresaLinks = new Map<string, ClienteEmpresa>();
+
+  async withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> {
+    const rowsSnapshot = new Map(this.rows);
+    const sequencesSnapshot = new Map(this.sequences);
+    const linksSnapshot = new Map(this.empresaLinks);
+    try {
+      return await fn(undefined);
+    } catch (error) {
+      this.rows.clear();
+      rowsSnapshot.forEach((value, key) => this.rows.set(key, value));
+      this.sequences.clear();
+      sequencesSnapshot.forEach((value, key) => this.sequences.set(key, value));
+      this.empresaLinks.clear();
+      linksSnapshot.forEach((value, key) => this.empresaLinks.set(key, value));
+      throw error;
+    }
+  }
 
   seed(rows: Cliente[]) {
     for (const row of rows) this.rows.set(row.id, row);
@@ -198,7 +232,12 @@ export class InMemoryClienteRepository implements ClienteRepository {
     ) ?? null;
   }
 
-  async create(scope: Scope, data: ClienteCreate, actorId?: string | null): Promise<Cliente> {
+  async create(
+    scope: Scope,
+    data: ClienteCreate,
+    actorId?: string | null,
+    _executor?: DbQueryExecutor,
+  ): Promise<Cliente> {
     const doc = normalizeDocumento(data.documento ?? data.cpf_cnpj ?? '');
     if (doc) {
       const dup = await this.findByDocumento(scope.groupId, doc);
@@ -300,6 +339,7 @@ export class InMemoryClienteRepository implements ClienteRepository {
     scope: Scope,
     clienteId: string,
     empresaId: string,
+    _executor?: DbQueryExecutor,
   ): Promise<ClienteEmpresa | null> {
     const row = this.empresaLinks.get(this.empresaLinkKey(clienteId, empresaId));
     return row?.group_id === scope.groupId ? row : null;
@@ -311,6 +351,7 @@ export class InMemoryClienteRepository implements ClienteRepository {
     empresaId: string,
     data: ClienteEmpresaCreate,
     actorId?: string | null,
+    _executor?: DbQueryExecutor,
   ): Promise<{ row: ClienteEmpresa; created: boolean }> {
     const key = this.empresaLinkKey(clienteId, empresaId);
     const existing = this.empresaLinks.get(key);
@@ -326,6 +367,7 @@ export class InMemoryClienteRepository implements ClienteRepository {
     empresaId: string,
     data: ClienteEmpresaUpdate,
     actorId?: string | null,
+    _executor?: DbQueryExecutor,
   ): Promise<ClienteEmpresa | null> {
     const current = await this.getEmpresaLink(scope, clienteId, empresaId);
     if (!current) return null;
@@ -346,6 +388,7 @@ export class InMemoryClienteRepository implements ClienteRepository {
     blocked: boolean,
     actorId?: string | null,
     motivo?: string | null,
+    _executor?: DbQueryExecutor,
   ): Promise<ClienteEmpresa | null> {
     const current = await this.getEmpresaLink(scope, clienteId, empresaId);
     if (!current) return null;
@@ -367,6 +410,7 @@ export class InMemoryClienteRepository implements ClienteRepository {
     clienteId: string,
     empresaId: string,
     actorId?: string | null,
+    executor?: DbQueryExecutor,
   ) {
     return this.updateEmpresaLink(
       scope,
@@ -374,6 +418,7 @@ export class InMemoryClienteRepository implements ClienteRepository {
       empresaId,
       { ativo: false, situacao_comercial: 'INATIVO', habilitado_operacao: false } as never,
       actorId,
+      executor,
     );
   }
 
@@ -382,6 +427,7 @@ export class InMemoryClienteRepository implements ClienteRepository {
     clienteId: string,
     empresaId: string,
     actorId?: string | null,
+    executor?: DbQueryExecutor,
   ) {
     return this.updateEmpresaLink(
       scope,
@@ -389,6 +435,7 @@ export class InMemoryClienteRepository implements ClienteRepository {
       empresaId,
       { ativo: true, situacao_comercial: 'ATIVO', habilitado_operacao: true } as never,
       actorId,
+      executor,
     );
   }
 

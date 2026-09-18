@@ -97,6 +97,30 @@ replica CPF/CNPJ do Cliente.
 Inativação remove o vínculo da listagem operacional padrão, mantém histórico e
 exige restore explícito.
 
+### Atomicidade
+
+As mutações sensíveis de ClienteEmpresa executam no mesmo
+`DbClient.withTransaction` que a escrita em `audit_logs`:
+
+```text
+BEGIN → validar estado → mutar ClienteEmpresa → inserir audit_logs → COMMIT
+```
+
+Falha de domínio ou auditoria provoca `ROLLBACK`. Isso vale para:
+
+- link;
+- update;
+- block/unblock;
+- inactivate/restore.
+
+`AuditRepository.append` aceita opcionalmente o executor transacional existente,
+sem abrir transação aninhada. A abstração é reutilizável por outros agregados,
+mas somente ClienteEmpresa foi migrado neste lote.
+
+Criação de Cliente com `empresa_id` também foi coberta: Cliente, vínculo,
+auditoria Cliente e auditoria ClienteEmpresa compartilham uma única transação.
+Se a auditoria do vínculo falhar, nenhum Cliente ou vínculo permanece gravado.
+
 ## Seed DEV
 
 - Grupo A: Cliente PJ A vinculado à Empresa A (liberado);
@@ -124,6 +148,11 @@ Ficam fora até suas fontes PostgreSQL canônicas:
 integridade cross-group, unicidade, RLS, tenant A/A2/B, RBAC, mass assignment,
 paginação/count/busca/filtros, concorrência, bloqueio, lifecycle e auditoria.
 
+`server/tests/runtime05-audit-atomicity.test.ts` força falha real de INSERT em
+`audit_logs` no PostgreSQL/PGlite e comprova rollback de link, update, block,
+unblock, inactivate, restore e Cliente + vínculo indireto. O repositório
+in-memory comprova semântica equivalente.
+
 Resultados:
 
 - `npm run audit:baseline`: OK;
@@ -132,7 +161,7 @@ Resultados:
 - `npm run typecheck`: baseline histórico do frontend (exit 2), sem erro novo
   nos arquivos do lote;
 - `npm run build`: OK;
-- server: 49 pass/1 skip, typecheck e build OK;
+- server: 51 pass/1 skip, typecheck e build OK;
 - `git diff --check`: OK.
 
 ## Pendência

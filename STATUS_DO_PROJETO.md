@@ -1,5 +1,13 @@
 ### ERP-RUNTIME-05 — IMPLEMENTAÇÃO Cliente × Empresa
 
+- Review de atomicidade (2026-09-18):
+  - `AuditRepository.append` reutiliza o executor de `DbClient.withTransaction`;
+  - link/update/block/unblock/inactivate/restore + audit são uma unidade atômica;
+  - falha em `audit_logs` provoca rollback PostgreSQL comprovado em PGlite;
+  - in-memory restaura snapshot na mesma falha;
+  - Cliente criado com `empresa_id`, vínculo e ambas auditorias também são
+    atômicos; nenhuma inconsistência residual do RUNTIME-04 ficou nesse fluxo;
+  - prova: `runtime05-audit-atomicity.test.ts` (2/2).
 - Data: 2026-09-18.
 - Branch: `cursor/erp-runtime-05-cliente-empresa-392b`.
 - Base: `9e78d5dc3f5ead25137e8078d6a5326d6c1e47bb`.
@@ -23,7 +31,8 @@
 - Concorrência: unique existente + criação idempotente impedem linha duplicada.
 - Seed: Empresa A2 + vínculos A/A2/B e perfil RBAC, convergente em reexecução.
 - Frontend/Base44: inalterados; sem dual-write; fora de `HTTP_PILOT_ENTITIES`.
-- Validações: RUNTIME-05 3/3; server 49 pass/1 skip + typecheck/build OK;
+- Validações: RUNTIME-05 3/3 + atomicidade 2/2; server 51 pass/1 skip +
+  typecheck/build OK;
   audit/lint/build frontend e 570 testes OK; `git diff --check` OK; typecheck
   frontend mantém baseline histórico (exit 2), sem erro novo no lote.
 - Docs: `docs/ERP_RUNTIME_05.md` e `docs/ERP_RUNTIME_05_DEV_RUNBOOK.md`.

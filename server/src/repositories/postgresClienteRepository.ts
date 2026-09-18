@@ -1,4 +1,4 @@
-import type { DbClient } from '../db/client.js';
+import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import { normalizeDocumento } from '../db/documentoValidators.js';
 import type { ListOptions, Scope } from '../services/tenantCrudService.js';
 import type {
@@ -48,6 +48,11 @@ function mapCliente(row: Record<string, unknown>): Cliente {
   };
 }
 
+function mapTimestamp(value: unknown): string | null {
+  if (value == null) return null;
+  return value instanceof Date ? value.toISOString() : String(value);
+}
+
 function mapClienteEmpresa(row: Record<string, unknown>): ClienteEmpresa {
   const ativo = Boolean(row.ativo);
   const situacao = String(row.situacao_comercial ?? 'ATIVO') as ClienteEmpresa['situacao_comercial'];
@@ -63,7 +68,7 @@ function mapClienteEmpresa(row: Record<string, unknown>): ClienteEmpresa {
     habilitado_operacao: habilitado,
     bloqueado,
     motivo_bloqueio: row.motivo_bloqueio == null ? null : String(row.motivo_bloqueio),
-    bloqueado_em: row.bloqueado_em == null ? null : String(row.bloqueado_em),
+    bloqueado_em: mapTimestamp(row.bloqueado_em),
     bloqueado_por: row.bloqueado_por == null ? null : String(row.bloqueado_por),
     observacao_comercial: row.observacao_comercial == null
       ? null
@@ -73,17 +78,21 @@ function mapClienteEmpresa(row: Record<string, unknown>): ClienteEmpresa {
     legacy_code: row.legacy_code == null ? null : String(row.legacy_code),
     source_system: row.source_system == null ? null : String(row.source_system),
     migration_batch: row.migration_batch == null ? null : String(row.migration_batch),
-    imported_at: row.imported_at == null ? null : String(row.imported_at),
+    imported_at: mapTimestamp(row.imported_at),
     created_by: row.created_by == null ? null : String(row.created_by),
     updated_by: row.updated_by == null ? null : String(row.updated_by),
-    created_at: String(row.created_at),
-    updated_at: String(row.updated_at),
+    created_at: mapTimestamp(row.created_at) ?? '',
+    updated_at: mapTimestamp(row.updated_at) ?? '',
     elegivel_operacao: ativo && situacao === 'ATIVO' && habilitado && !bloqueado,
   };
 }
 
 export class PostgresClienteRepository implements ClienteRepository {
   constructor(private readonly db: DbClient) {}
+
+  withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> {
+    return this.db.withTransaction(fn);
+  }
 
   async list(filter: Scope & ListOptions): Promise<Cliente[]> {
     const page = await this.listPage({ ...filter, offset: 0 });
@@ -174,12 +183,17 @@ export class PostgresClienteRepository implements ClienteRepository {
     return row ? mapCliente(row) : null;
   }
 
-  async create(scope: Scope, data: ClienteCreate, actorId?: string | null): Promise<Cliente> {
+  async create(
+    scope: Scope,
+    data: ClienteCreate,
+    actorId?: string | null,
+    executor?: DbQueryExecutor,
+  ): Promise<Cliente> {
     const raw = data.documento ?? data.cpf_cnpj ?? '';
     const docNorm = normalizeDocumento(raw) || null;
     const empresaId = data.empresa_id ?? scope.empresaId ?? null;
 
-    return this.db.withTransaction(async (client) => {
+    const execute = async (client: DbQueryExecutor) => {
       const codigoResult = await client.query<{ codigo: string }>(
         'SELECT reserve_entity_codigo($1, $2, 6) AS codigo',
         [scope.groupId, 'Cliente'],
@@ -236,7 +250,8 @@ export class PostgresClienteRepository implements ClienteRepository {
         );
       }
       return created;
-    });
+    };
+    return executor ? execute(executor) : this.db.withTransaction(execute);
   }
 
   async update(scope: Scope, id: string, data: ClienteUpdate): Promise<Cliente | null> {
@@ -365,10 +380,12 @@ export class PostgresClienteRepository implements ClienteRepository {
     scope: Scope,
     clienteId: string,
     empresaId: string,
+    executor?: DbQueryExecutor,
   ): Promise<ClienteEmpresa | null> {
-    const result = await this.db.query(
+    const result = await (executor ?? this.db).query(
       `SELECT * FROM cliente_empresas
-       WHERE group_id = $1 AND cliente_id = $2 AND empresa_id = $3`,
+       WHERE group_id = $1 AND cliente_id = $2 AND empresa_id = $3
+       ${executor ? 'FOR UPDATE' : ''}`,
       [scope.groupId, clienteId, empresaId],
     );
     const row = result.rows[0] as Record<string, unknown> | undefined;
@@ -381,8 +398,9 @@ export class PostgresClienteRepository implements ClienteRepository {
     empresaId: string,
     data: ClienteEmpresaCreate,
     actorId?: string | null,
+    executor?: DbQueryExecutor,
   ): Promise<{ row: ClienteEmpresa; created: boolean }> {
-    return this.db.withTransaction(async (client) => {
+    const execute = async (client: DbQueryExecutor) => {
       const inserted = await client.query(
         `INSERT INTO cliente_empresas (
           group_id, cliente_id, empresa_id, ativo, situacao_comercial,
@@ -421,7 +439,8 @@ export class PostgresClienteRepository implements ClienteRepository {
       const row = existing.rows[0] as Record<string, unknown> | undefined;
       if (!row) throw new Error('cliente_empresa conflict without visible row');
       return { row: mapClienteEmpresa(row), created: false };
-    });
+    };
+    return executor ? execute(executor) : this.db.withTransaction(execute);
   }
 
   async updateEmpresaLink(
@@ -430,10 +449,12 @@ export class PostgresClienteRepository implements ClienteRepository {
     empresaId: string,
     data: ClienteEmpresaUpdate,
     actorId?: string | null,
+    executor?: DbQueryExecutor,
   ): Promise<ClienteEmpresa | null> {
-    const current = await this.getEmpresaLink(scope, clienteId, empresaId);
+    const client = executor ?? this.db;
+    const current = await this.getEmpresaLink(scope, clienteId, empresaId, executor);
     if (!current) return null;
-    const result = await this.db.query(
+    const result = await client.query(
       `UPDATE cliente_empresas SET
         situacao_comercial=$1, habilitado_operacao=$2, observacao_comercial=$3,
         origem=$4, legacy_id=$5, legacy_code=$6, source_system=$7,
@@ -469,8 +490,9 @@ export class PostgresClienteRepository implements ClienteRepository {
     blocked: boolean,
     actorId?: string | null,
     motivo?: string | null,
+    executor?: DbQueryExecutor,
   ): Promise<ClienteEmpresa | null> {
-    const result = await this.db.query(
+    const result = await (executor ?? this.db).query(
       `UPDATE cliente_empresas SET
         bloqueado=$1,
         motivo_bloqueio=CASE WHEN $1 THEN $2 ELSE NULL END,
@@ -490,8 +512,9 @@ export class PostgresClienteRepository implements ClienteRepository {
     clienteId: string,
     empresaId: string,
     actorId?: string | null,
+    executor?: DbQueryExecutor,
   ): Promise<ClienteEmpresa | null> {
-    const result = await this.db.query(
+    const result = await (executor ?? this.db).query(
       `UPDATE cliente_empresas SET
         ativo=false, situacao_comercial='INATIVO', habilitado_operacao=false,
         updated_by=$1
@@ -508,8 +531,9 @@ export class PostgresClienteRepository implements ClienteRepository {
     clienteId: string,
     empresaId: string,
     actorId?: string | null,
+    executor?: DbQueryExecutor,
   ): Promise<ClienteEmpresa | null> {
-    const result = await this.db.query(
+    const result = await (executor ?? this.db).query(
       `UPDATE cliente_empresas SET
         ativo=true, situacao_comercial='ATIVO', habilitado_operacao=true,
         updated_by=$1
