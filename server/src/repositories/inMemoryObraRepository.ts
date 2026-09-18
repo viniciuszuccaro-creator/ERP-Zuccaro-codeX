@@ -177,7 +177,13 @@ export class InMemoryObraRepository implements ObraRepository {
     const ativo = typeof filter.ativo === 'boolean' ? filter.ativo : true;
     rows = rows.filter((obra) => obra.ativo === ativo);
     if (filter.status) rows = rows.filter((obra) => obra.status === filter.status);
-    if (filter.operacional) rows = rows.filter((obra) => obra.status === 'ATIVA' && obra.ativo);
+    if (filter.operacional) {
+      rows = rows.filter((obra) => (
+        obra.ativo
+        && obra.status === 'ATIVA'
+        && obra.locais.some((row) => row.principal && row.ativo)
+      ));
+    }
     if (filter.empresaId) {
       rows = rows.filter((obra) => obra.empresas.some(
         (row) => row.empresa_id === filter.empresaId && row.ativo,

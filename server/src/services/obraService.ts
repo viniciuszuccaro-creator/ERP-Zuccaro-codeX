@@ -14,6 +14,8 @@ import {
   obraLocalInputSchema,
   obraUpdateSchema,
   obraAuditSnapshot,
+  obraEmpresaAuditSnapshot,
+  obraLocalAuditSnapshot,
   publicObra,
   type Obra,
 } from '../repositories/obraTypes.js';
@@ -47,7 +49,10 @@ export class ObraService {
       this.validationError({ status: 'invalid' });
     }
     if (options.search && options.search.length > 200) this.validationError({ search: 'max_length_200' });
-    if (options.operacional && ctx.empresaId) {
+    if (options.operacional) {
+      if (!ctx.empresaId) {
+        throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required for operational Obra selection');
+      }
       await this.assertEligible(ctx, clienteId, true);
     }
     const limit = this.pageNumber(options.limit, 50, 1, 200);
@@ -56,7 +61,7 @@ export class ObraService {
       groupId: ctx.groupId,
       clienteId,
       empresaId: ctx.empresaId,
-      ativo: typeof options.ativo === 'boolean' ? options.ativo : true,
+      ativo: options.operacional ? true : (typeof options.ativo === 'boolean' ? options.ativo : true),
       status: options.status,
       operacional: options.operacional,
       search: options.search,
@@ -68,7 +73,7 @@ export class ObraService {
       offset,
     });
     return {
-      data: page.rows.map(publicObra),
+      data: page.rows.map((row) => publicObra(row, { empresaId: ctx.empresaId })),
       meta: {
         limit,
         offset,
@@ -82,13 +87,16 @@ export class ObraService {
     await this.prepare(ctx, clienteId, 'visualizar', { allowIneligible: true, obraId });
     const obra = await this.repo.get(this.scope(ctx, clienteId), obraId);
     if (!obra || !obra.ativo) this.notFound();
-    return publicObra(obra);
+    return publicObra(obra, { empresaId: ctx.empresaId });
   }
 
   async create(ctx: RequestContext, clienteId: string, payload: unknown) {
     await this.prepare(ctx, clienteId, 'criar', { requireEligible: true, requireEmpresa: true });
     const parsed = obraCreateSchema.safeParse(payload);
     if (!parsed.success) this.validationError(parsed.error.flatten());
+    if (parsed.data.confirm_possible_duplicate) {
+      await this.assertPermission(ctx, 'criar');
+    }
     if (parsed.data.locais.some((row) => row.principal)) {
       await this.assertPermission(ctx, 'principal');
     }
@@ -121,7 +129,7 @@ export class ObraService {
         await this.appendAudit(ctx, 'create', created, created, executor);
         return created;
       });
-      return publicObra(obra);
+      return publicObra(obra, { empresaId: ctx.empresaId });
     } catch (error) {
       this.rethrowKnown(error);
       throw error;
@@ -144,7 +152,7 @@ export class ObraService {
       await this.appendAudit(ctx, action, before, after, executor);
       return after;
     });
-    return publicObra(updated);
+    return publicObra(updated, { empresaId: ctx.empresaId });
   }
 
   async softDelete(ctx: RequestContext, clienteId: string, obraId: string) {
@@ -158,7 +166,7 @@ export class ObraService {
       await this.appendAudit(ctx, 'inactivate', before, after, executor);
       return after;
     });
-    return publicObra(updated);
+    return publicObra(updated, { empresaId: ctx.empresaId });
   }
 
   async restore(ctx: RequestContext, clienteId: string, obraId: string) {
@@ -175,7 +183,7 @@ export class ObraService {
       await this.appendAudit(ctx, 'restore', before, after, executor);
       return after;
     });
-    return publicObra(updated);
+    return publicObra(updated, { empresaId: ctx.empresaId });
   }
 
   async linkEmpresa(ctx: RequestContext, clienteId: string, obraId: string, empresaId: string) {
@@ -185,14 +193,16 @@ export class ObraService {
     await this.assertEligible({ ...ctx, empresaId }, clienteId, true);
     this.hydrateMemory({ ...ctx, empresaId }, clienteId, []);
     const updated = await this.repo.withTransaction(async (executor) => {
-      const before = await this.requireActive(ctx, clienteId, obraId, executor);
+      await this.requireActive(ctx, clienteId, obraId, executor);
       const after = await this.repo.linkEmpresa(
         this.scope(ctx, clienteId), obraId, empresaId, ctx.actorId, executor,
       );
-      await this.appendAudit(ctx, 'link', before, after, executor);
+      await this.appendLinkAudit(
+        ctx, 'link', after.id, obraEmpresaAuditSnapshot(after.id, empresaId, true), executor,
+      );
       return after;
     });
-    return publicObra(updated);
+    return publicObra(updated, { empresaId: ctx.empresaId });
   }
 
   async unlinkEmpresa(ctx: RequestContext, clienteId: string, obraId: string, empresaId: string) {
@@ -204,10 +214,12 @@ export class ObraService {
         this.scope(ctx, clienteId), obraId, empresaId, ctx.actorId, executor,
       );
       if (!after) this.notFound();
-      await this.appendAudit(ctx, 'inactivate', before, after, executor);
+      await this.appendLinkAudit(
+        ctx, 'inactivate', after.id, obraEmpresaAuditSnapshot(after.id, empresaId, false), executor,
+      );
       return after;
     });
-    return publicObra(updated);
+    return publicObra(updated, { empresaId: ctx.empresaId });
   }
 
   async restoreEmpresa(ctx: RequestContext, clienteId: string, obraId: string, empresaId: string) {
@@ -223,20 +235,20 @@ export class ObraService {
     this.hydrateMemory(ctx, clienteId, [local]);
     const updated = await this.repo.withTransaction(async (executor) => {
       await this.repo.lock(this.scope(ctx, clienteId), obraId, executor);
-      const before = await this.requireActive(ctx, clienteId, obraId, executor);
+      await this.requireActive(ctx, clienteId, obraId, executor);
       const after = await this.repo.linkLocal(
         this.scope(ctx, clienteId), obraId, parsed.data, ctx.actorId, executor,
       );
-      await this.appendAudit(
+      await this.appendLinkAudit(
         ctx,
         parsed.data.principal ? 'change_primary_local' : 'link',
-        before,
-        after,
+        after.id,
+        obraLocalAuditSnapshot(after.id, { ...parsed.data, ativo: true }),
         executor,
       );
       return after;
     });
-    return publicObra(updated);
+    return publicObra(updated, { empresaId: ctx.empresaId });
   }
 
   async unlinkLocal(ctx: RequestContext, clienteId: string, obraId: string, localId: string) {
@@ -254,25 +266,40 @@ export class ObraService {
         this.scope(ctx, clienteId), obraId, localId, ctx.actorId, executor,
       );
       if (!after) this.notFound();
-      await this.appendAudit(ctx, 'inactivate', before, after, executor);
+      await this.appendLinkAudit(
+        ctx,
+        'inactivate',
+        after.id,
+        obraLocalAuditSnapshot(after.id, { ...target, ativo: false }),
+        executor,
+      );
       return after;
     });
-    return publicObra(updated);
+    return publicObra(updated, { empresaId: ctx.empresaId });
   }
 
   async restoreLocal(ctx: RequestContext, clienteId: string, obraId: string, localId: string) {
     await this.prepare(ctx, clienteId, 'vincular-local', { requireEligible: true, obraId });
     this.assertUuid(localId, 'localId');
     const updated = await this.repo.withTransaction(async (executor) => {
-      const before = await this.requireActive(ctx, clienteId, obraId, executor);
+      await this.requireActive(ctx, clienteId, obraId, executor);
       const after = await this.repo.restoreLocal(
         this.scope(ctx, clienteId), obraId, localId, ctx.actorId, executor,
       );
       if (!after) this.notFound();
-      await this.appendAudit(ctx, 'restore', before, after, executor);
+      const restored = after.locais.find((row) => row.cliente_local_id === localId);
+      await this.appendLinkAudit(
+        ctx,
+        'restore',
+        after.id,
+        obraLocalAuditSnapshot(after.id, restored ?? {
+          cliente_local_id: localId, uso_na_obra: 'OUTRO', principal: false, ativo: true,
+        }),
+        executor,
+      );
       return after;
     });
-    return publicObra(updated);
+    return publicObra(updated, { empresaId: ctx.empresaId });
   }
 
   async setPrincipal(ctx: RequestContext, clienteId: string, obraId: string, localId: string) {
@@ -281,14 +308,22 @@ export class ObraService {
     const updated = await this.repo.withTransaction(async (executor) => {
       await this.repo.lock(this.scope(ctx, clienteId), obraId, executor);
       const before = await this.requireActive(ctx, clienteId, obraId, executor);
+      const target = before.locais.find((row) => row.cliente_local_id === localId && row.ativo);
+      if (!target) this.notFound();
       const after = await this.repo.setPrincipal(
         this.scope(ctx, clienteId), obraId, localId, ctx.actorId, executor,
       );
       if (!after) this.notFound();
-      await this.appendAudit(ctx, 'change_primary_local', before, after, executor);
+      await this.appendLinkAudit(
+        ctx,
+        'change_primary_local',
+        after.id,
+        obraLocalAuditSnapshot(after.id, { ...target, principal: true }),
+        executor,
+      );
       return after;
     });
-    return publicObra(updated);
+    return publicObra(updated, { empresaId: ctx.empresaId });
   }
 
   async findActiveObraUsingLocal(groupId: string, localId: string, executor?: DbQueryExecutor) {
@@ -413,6 +448,27 @@ export class ObraService {
       action,
       beforeData: action === 'create' ? undefined : obraAuditSnapshot(before),
       afterData: obraAuditSnapshot(after),
+      requestId: ctx.requestId,
+      ipAddress: ctx.ipAddress,
+    }, executor);
+  }
+
+  private appendLinkAudit(
+    ctx: RequestContext,
+    action: AuditAction,
+    obraId: string,
+    afterData: unknown,
+    executor?: DbQueryExecutor,
+  ) {
+    return this.audit.append({
+      groupId: ctx.groupId,
+      empresaId: ctx.empresaId,
+      actorId: ctx.actorId,
+      actorEmail: ctx.actorEmail,
+      entity: 'Obra',
+      entityId: obraId,
+      action,
+      afterData,
       requestId: ctx.requestId,
       ipAddress: ctx.ipAddress,
     }, executor);

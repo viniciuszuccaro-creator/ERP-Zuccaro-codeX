@@ -36,6 +36,21 @@ ou maps em `obras`. Sem finalidade `OBRA` em `cliente_local_finalidades`.
 
 Índices apenas para tenant, código, relacionamentos, status/listagem e principal.
 
+`CREATE TABLE IF NOT EXISTS` segue o runner (`schema_migrations` aplica 012
+uma vez). Não mascara schema divergente: o arquivo é a definição canônica
+completa do agregado novo.
+
+### Integridade tenant (FK vs trigger)
+
+| Garantia | Mecanismo | Motivo |
+|---|---|---|
+| Filha `obra_empresas`/`obra_locais` no mesmo `group_id` da Obra | FK composta `(obra_id, group_id) → obras(id, group_id)` | Chave candidata da tabela **nova** `obras` (`UNIQUE(id, group_id)`). |
+| Obra `group_id` = Cliente `group_id` | Trigger `assert_obra_same_tenant` | `clientes` não tem `UNIQUE(id, group_id)`; não se adiciona UNIQUE redundante em tabela histórica só para FK. |
+| Empresa da autorização no mesmo Grupo + existência de `cliente_empresas` do cliente da Obra | Trigger `assert_obra_empresa_same_tenant` | `empresas` e `cliente_empresas` não expõem chave composta segura `(id, group_id)` / `(group_id, cliente_id, empresa_id)` sem UNIQUE novo em tabela histórica. Elegibilidade dinâmica permanece no service. |
+| Local no mesmo Grupo e no mesmo Cliente da Obra | Trigger `assert_obra_local_same_tenant` | `cliente_locais` não tem `UNIQUE(id, group_id, cliente_id)` pré-existente. |
+
+Testes PGlite cobrem INSERT e UPDATE inválidos de `group_id`/`obra_id`/`empresa_id`/`cliente_local_id`. Validação PostgreSQL real de RLS/FORCE/FK no DEV é **gate de promoção** (`docs/ERP_RUNTIME_06B_DEV_RUNBOOK.md`).
+
 ## Modelo
 
 ```text
@@ -63,10 +78,14 @@ Concorrência no mesmo Grupo gera códigos distintos; gap é aceitável.
 
 - `status` operacional; `ativo` lifecycle.
 - Default de create: `ATIVA`.
-- Seleção operacional: `ativo=true` + `status=ATIVA` + `obra_empresa` ativa +
-  ClienteEmpresa elegível.
-- PAUSADA/CONCLUIDA/CANCELADA/inativa ficam fora do operacional padrão.
-- Histórico autorizado permanece após bloqueio comercial.
+- Seleção operacional (`operacional=true`): exige **simultaneamente**
+  `ativo=true`, `status=ATIVA`, `obra_empresa` ativa da Empresa de contexto,
+  ClienteEmpresa elegível e **Local principal ativo**. Sem `empresaId` não
+  há bypass de Grupo (`400 EMPRESA_ID_REQUIRED`).
+- Restore da identidade **não** restaura vínculos em cascade. Obra restaurada
+  sem empresa ativa e/ou sem principal ativo permanece consultável no
+  histórico autorizado, mas **não** entra na seleção operacional.
+- PAUSADA/CONCLUIDA/CANCELADA/inativa ficam fora da nova operação.
 
 ## obra_empresas
 
@@ -184,9 +203,10 @@ fingerprint-identidade e sem MD5.
 Eventos: create, update, change_status, inactivate, restore, link,
 change_primary_local, possible_duplicate_override.
 
-Mutação + audit na mesma transação; falha de audit rollbacka. Snapshot:
-ids, código, nome, status, flags e vínculos. Sem endereço, CEP, coordenadas,
-telefone, e-mail, CPF/CNPJ ou documento.
+- snapshot de mutação da Obra: id, group/cliente, código, status, ativo,
+  principal_cliente_local_id;
+- snapshot de vínculo: `obra_id` + `empresa_id` **ou** `cliente_local_id` +
+  uso/principal/ativo. Sem endereço, CEP, coordenadas ou documento.
 
 Não há módulo `securityAlerts` no server atual; cross-tenant/mass assignment
 são bloqueados por schema/404/403 sem log PII. Integração futura deve

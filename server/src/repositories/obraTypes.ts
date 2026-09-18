@@ -131,11 +131,14 @@ export type Obra = {
 };
 
 export function normalizeObraNome(nome: string): string {
-  return nome.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/\s+/g, ' ').trim();
+  return nome.toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
-export function publicObra(obra: Obra) {
+export function publicObra(obra: Obra, options: { empresaId?: string | null } = {}) {
   const principal = obra.locais.find((row) => row.principal && row.ativo);
+  const empresas = obra.empresas.filter((row) => (
+    row.ativo && (!options.empresaId || row.empresa_id === options.empresaId)
+  ));
   return {
     id: obra.id,
     codigo: obra.codigo,
@@ -155,9 +158,10 @@ export function publicObra(obra: Obra) {
         cidade: principal.cidade ?? null,
         uf: principal.uf ?? null,
         uso_na_obra: principal.uso_na_obra,
+        principal: true,
       }
       : null,
-    empresas: obra.empresas.filter((row) => row.ativo).map((row) => ({
+    empresas: empresas.map((row) => ({
       empresa_id: row.empresa_id,
       ativo: row.ativo,
     })),
@@ -174,23 +178,31 @@ export function publicObra(obra: Obra) {
 }
 
 export function obraAuditSnapshot(obra: Obra) {
+  const principal = obra.locais.find((row) => row.principal && row.ativo);
   return {
     id: obra.id,
     group_id: obra.group_id,
     cliente_id: obra.cliente_id,
     codigo: obra.codigo,
-    nome: obra.nome,
     status: obra.status,
     ativo: obra.ativo,
-    empresas: obra.empresas.map((row) => ({
-      empresa_id: row.empresa_id,
-      ativo: row.ativo,
-    })),
-    locais: obra.locais.map((row) => ({
-      cliente_local_id: row.cliente_local_id,
-      uso_na_obra: row.uso_na_obra,
-      principal: row.principal,
-      ativo: row.ativo,
-    })),
+    principal_cliente_local_id: principal?.cliente_local_id ?? null,
+  };
+}
+
+export function obraEmpresaAuditSnapshot(obraId: string, empresaId: string, ativo: boolean) {
+  return { obra_id: obraId, empresa_id: empresaId, ativo };
+}
+
+export function obraLocalAuditSnapshot(
+  obraId: string,
+  local: { cliente_local_id: string; uso_na_obra: string; principal: boolean; ativo: boolean },
+) {
+  return {
+    obra_id: obraId,
+    cliente_local_id: local.cliente_local_id,
+    uso_na_obra: local.uso_na_obra,
+    principal: local.principal,
+    ativo: local.ativo,
   };
 }

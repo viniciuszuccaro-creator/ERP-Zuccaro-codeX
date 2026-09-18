@@ -22,12 +22,18 @@ CREATE TABLE IF NOT EXISTS obras (
   created_at TIMESTAMPTZ NOT NULL DEFAULT (timezone('utc', now())),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT (timezone('utc', now())),
   UNIQUE (group_id, codigo),
+  UNIQUE (id, group_id),
   CHECK (btrim(nome) <> ''),
   CHECK (codigo ~ '^[0-9]{6}$'),
   CHECK (status IN ('ATIVA', 'PAUSADA', 'CONCLUIDA', 'CANCELADA')),
   CHECK (observacao IS NULL OR char_length(observacao) <= 500)
 );
 
+-- Integridade tenant:
+-- FK composta (obra_id, group_id) → obras(id, group_id) nas filhas (chave
+-- candidata da tabela NOVA). Não se adiciona UNIQUE(id, group_id) em
+-- clientes/empresas/cliente_locais/cliente_empresas (tabelas históricas)
+-- só para viabilizar FK; tenant Cliente/Empresa/Local permanece em trigger.
 CREATE OR REPLACE FUNCTION assert_obra_same_tenant()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -75,7 +81,8 @@ CREATE TABLE IF NOT EXISTS obra_empresas (
   updated_by UUID REFERENCES profiles(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT (timezone('utc', now())),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT (timezone('utc', now())),
-  UNIQUE (obra_id, empresa_id)
+  UNIQUE (obra_id, empresa_id),
+  FOREIGN KEY (obra_id, group_id) REFERENCES obras(id, group_id)
 );
 
 CREATE OR REPLACE FUNCTION assert_obra_empresa_same_tenant()
@@ -147,7 +154,8 @@ CREATE TABLE IF NOT EXISTS obra_locais (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT (timezone('utc', now())),
   UNIQUE (obra_id, cliente_local_id, uso_na_obra),
   CHECK (uso_na_obra IN ('FISICO', 'ENTREGA', 'ADMINISTRATIVO', 'FISCAL', 'OUTRO')),
-  CHECK (principal = false OR ativo = true)
+  CHECK (principal = false OR ativo = true),
+  FOREIGN KEY (obra_id, group_id) REFERENCES obras(id, group_id)
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_obra_locais_principal

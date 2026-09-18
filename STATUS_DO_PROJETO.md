@@ -13,7 +13,13 @@
 - Obra **não** é finalidade de ClienteLocal e **não** armazena endereço/geo.
 - Código: `reserve_entity_codigo(group_id,'Obra',6)`; concorrência coberta.
 - Status: ATIVA/PAUSADA/CONCLUIDA/CANCELADA; operacional exige ATIVA+ativo+
-  obra_empresa+ClienteEmpresa elegível; histórico preservado após bloqueio.
+  obra_empresa+ClienteEmpresa elegível+principal ativo; sem empresaId não há
+  bypass de Grupo; restore histórico não cascadeia vínculos.
+- Review técnico (PR #25): FK composta filhas→obras; triggers para
+  Cliente/Empresa/Local históricos; setPrincipal valida target antes;
+  audit de vínculo mínimo; testes de rollback de principal/vínculo.
+- Skip `runtime01` integração Postgres: BLOCKER de promoção enquanto
+  `DATABASE_URL` de teste real estiver ausente.
 - RBAC `Cadastros.obra` fail-closed; RLS ENABLE+FORCE nas três tabelas.
 - Auditoria atômica sem PII de endereço/documento; soft delete/restore sem
   cascade de vínculos.

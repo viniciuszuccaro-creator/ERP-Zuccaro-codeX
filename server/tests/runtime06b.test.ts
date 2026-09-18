@@ -10,7 +10,7 @@ import { createDbClient } from '../src/db/client.ts';
 import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 import { CLIENTE_LOCAL_FINALIDADES } from '../src/repositories/clienteLocalTypes.ts';
-import { obraCreateSchema, obraUpdateSchema, publicObra } from '../src/repositories/obraTypes.ts';
+import { normalizeObraNome, obraCreateSchema, obraLocalInputSchema, obraUpdateSchema, publicObra } from '../src/repositories/obraTypes.ts';
 import { SEED_IDS } from '../scripts/seedDevIds.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -130,6 +130,15 @@ test('payload Obra exige um principal e rejeita mass assignment', () => {
     logradouro: 'Rua X',
   });
   assert.equal(patchExtra.success, false);
+  assert.equal(obraLocalInputSchema.safeParse({
+    cliente_local_id: SEED_IDS.clienteLocalA,
+    uso_na_obra: 'FISICO',
+    principal: true,
+    group_id: GROUP_A,
+    cep: '00000000',
+  }).success, false);
+  assert.equal(normalizeObraNome('  Obra   Principal A '), 'obra principal a');
+  assert.equal(normalizeObraNome('OBRA PRINCIPAL A'), 'obra principal a');
   assert.ok(CLIENTE_LOCAL_FINALIDADES.every((item) => item !== 'OBRA'));
   assert.equal('logradouro' in publicObra({
     id: '1', group_id: GROUP_A, cliente_id: SEED_IDS.clientePjA, codigo: '000001',
@@ -200,6 +209,48 @@ test('PostgreSQL: migration 012 é convergente, RLS, tenant e principal único',
         )
       `),
       /uq_obra_locais_principal|unique/i,
+    );
+    await assert.rejects(
+      () => db.exec(`
+        UPDATE obras SET group_id='${SEED_IDS.groupB}'
+        WHERE id='${SEED_IDS.obraA}'
+      `),
+      /TENANT_FK_MISMATCH|foreign key|violat/i,
+    );
+    await assert.rejects(
+      () => db.exec(`
+        UPDATE obras SET cliente_id='${SEED_IDS.clientePjB}'
+        WHERE id='${SEED_IDS.obraA}'
+      `),
+      /TENANT_FK_MISMATCH|foreign key|violat/i,
+    );
+    await assert.rejects(
+      () => db.exec(`
+        UPDATE obra_empresas SET empresa_id='${SEED_IDS.empresaB}'
+        WHERE obra_id='${SEED_IDS.obraA}'
+      `),
+      /TENANT_FK_MISMATCH|CLIENTE_EMPRESA_REQUIRED|foreign key|violat/i,
+    );
+    await assert.rejects(
+      () => db.exec(`
+        UPDATE obra_empresas SET group_id='${SEED_IDS.groupB}'
+        WHERE obra_id='${SEED_IDS.obraA}'
+      `),
+      /TENANT_FK_MISMATCH|foreign key|violat/i,
+    );
+    await assert.rejects(
+      () => db.exec(`
+        UPDATE obra_locais SET cliente_local_id='${SEED_IDS.clienteLocalB1}'
+        WHERE obra_id='${SEED_IDS.obraA}' AND principal=true
+      `),
+      /TENANT_FK_MISMATCH|foreign key|violat/i,
+    );
+    await assert.rejects(
+      () => db.exec(`
+        UPDATE obra_locais SET group_id='${SEED_IDS.groupB}'
+        WHERE obra_id='${SEED_IDS.obraA}' AND principal=true
+      `),
+      /TENANT_FK_MISMATCH|foreign key|violat/i,
     );
     await assert.rejects(
       () => db.exec(`
@@ -369,6 +420,12 @@ test('API Obra cobre create atômico, tenant, RBAC, lifecycle, duplicidade e pag
   await fetchOk(app, `${base}/${created.data.id}/empresas/${EMPRESA_A2}`, {
     method: 'POST', headers: groupHeaders(),
   });
+  const payloadA = await fetchOk(app, `${base}/${created.data.id}`, { headers: company });
+  assert.deepEqual(payloadA.data.empresas.map((row: { empresa_id: string }) => row.empresa_id), [EMPRESA_A]);
+  assert.equal('cep' in (payloadA.data.local_principal ?? {}), false);
+  assert.equal('logradouro' in (payloadA.data.local_principal ?? {}), false);
+  const payloadGroup = await fetchOk(app, `${base}/${created.data.id}`, { headers: groupHeaders() });
+  assert.ok(payloadGroup.data.empresas.some((row: { empresa_id: string }) => row.empresa_id === EMPRESA_A2));
   await fetchOk(app, `/api/v1/clientes/${clienteId}/empresas/${EMPRESA_A2}/block`, {
     method: 'POST',
     headers: groupHeaders(),
@@ -398,10 +455,24 @@ test('API Obra cobre create atômico, tenant, RBAC, lifecycle, duplicidade e pag
   await fetchOk(app, `${base}/${created.data.id}`, {
     method: 'PATCH', headers: company, body: JSON.stringify({ status: 'ATIVA' }),
   });
+  const localBMaster = await fetchStatus(app, `/api/v1/clientes/${clienteId}/locais/${localB.data.id}`, {
+    method: 'DELETE', headers: groupHeaders(),
+  });
+  assert.equal(localBMaster.statusCode, 409);
+  const localAMaster = await fetchStatus(app, `/api/v1/clientes/${clienteId}/locais/${localA.data.id}`, {
+    method: 'DELETE', headers: groupHeaders(),
+  });
+  assert.equal(localAMaster.statusCode, 409);
   const primaryBlocked = await fetchStatus(app, `${base}/${created.data.id}/locais/${localA.data.id}`, {
     method: 'DELETE', headers: company,
   });
   assert.equal(primaryBlocked.statusCode, 409);
+  const missingPrincipal = await fetchStatus(app, `${base}/${created.data.id}/locais/${SEED_IDS.clienteLocalC}/principal`, {
+    method: 'POST', headers: company,
+  });
+  assert.equal(missingPrincipal.statusCode, 404);
+  const stillA = await fetchOk(app, `${base}/${created.data.id}`, { headers: company });
+  assert.equal(stillA.data.local_principal.id, localA.data.id);
   await fetchOk(app, `${base}/${created.data.id}/locais/${localB.data.id}/principal`, {
     method: 'POST', headers: company,
   });
@@ -422,7 +493,33 @@ test('API Obra cobre create atômico, tenant, RBAC, lifecycle, duplicidade e pag
   assert.equal(restored.data.ativo, true);
   assert.equal(restored.data.codigo, '000001');
 
-  const page = await fetchOk(app, `${base}?limit=1&offset=0&order_by=codigo`, { headers: company });
+  const restoredLocal = await fetchOk(app, `${base}/${created.data.id}/locais/${localA.data.id}/restore`, {
+    method: 'POST', headers: company,
+  });
+  assert.equal(restoredLocal.data.locais.find((row: { cliente_local_id: string }) => row.cliente_local_id === localA.data.id).principal, false);
+  assert.equal(restoredLocal.data.local_principal.id, localB.data.id);
+
+  await fetchOk(app, `${base}/${created.data.id}/empresas/${EMPRESA_A}`, {
+    method: 'DELETE', headers: groupHeaders(),
+  });
+  await fetchOk(app, `${base}/${created.data.id}`, { method: 'DELETE', headers: groupHeaders() });
+  const inactiveHist = await fetchOk(app, `${base}?ativo=false`, { headers: groupHeaders() });
+  assert.ok(inactiveHist.data.some((row: { id: string }) => row.id === created.data.id));
+  const restoredIdentity = await fetchOk(app, `${base}/${created.data.id}/restore`, {
+    method: 'POST', headers: groupHeaders(),
+  });
+  assert.equal(restoredIdentity.data.id, created.data.id);
+  assert.equal(restoredIdentity.data.codigo, '000001');
+  assert.equal(restoredIdentity.data.empresas.some((row: { empresa_id: string }) => row.empresa_id === EMPRESA_A), false);
+  assert.equal((await fetchStatus(app, `${base}/${created.data.id}`, { headers: company })).statusCode, 404);
+  const operacionalAfterRestore = await fetchOk(app, `${base}?operacional=true`, { headers: company });
+  assert.equal(operacionalAfterRestore.data.some((row: { id: string }) => row.id === created.data.id), false);
+  const histGroup = await fetchOk(app, `${base}/${created.data.id}`, { headers: groupHeaders() });
+  assert.equal(histGroup.data.codigo, '000001');
+
+  assert.equal((await fetchStatus(app, `${base}?operacional=true`, { headers: groupHeaders() })).statusCode, 400);
+
+  const page = await fetchOk(app, `${base}?limit=1&offset=0&order_by=codigo`, { headers: groupHeaders() });
   assert.equal(page.meta.limit, 1);
   assert.equal(page.meta.total, 2);
   assert.equal(page.meta.hasMore, true);
@@ -446,7 +543,8 @@ test('API Obra cobre create atômico, tenant, RBAC, lifecycle, duplicidade e pag
     method: 'POST',
     headers: viewHeaders,
     body: JSON.stringify({
-      nome: 'Negada',
+      nome: 'Obra Principal A',
+      confirm_possible_duplicate: true,
       locais: [{ cliente_local_id: localA.data.id, uso_na_obra: 'FISICO', principal: true }],
     }),
   })).statusCode, 403);

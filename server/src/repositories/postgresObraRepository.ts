@@ -89,7 +89,14 @@ export class PostgresObraRepository implements ObraRepository {
       params.push(filter.status);
       where.push(`o.status=$${params.length}`);
     }
-    if (filter.operacional) where.push(`o.status='ATIVA'`);
+    if (filter.operacional) {
+      where.push(`o.ativo=true`);
+      where.push(`o.status='ATIVA'`);
+      where.push(`EXISTS (
+        SELECT 1 FROM obra_locais pl0
+        WHERE pl0.obra_id=o.id AND pl0.principal=true AND pl0.ativo=true
+      )`);
+    }
     if (filter.empresaId) {
       params.push(filter.empresaId);
       where.push(`EXISTS (
@@ -370,18 +377,23 @@ export class PostgresObraRepository implements ObraRepository {
     executor?: DbQueryExecutor,
   ) {
     const db = this.exec(executor);
+    const target = await db.query<{ id: string }>(
+      `SELECT id FROM obra_locais
+       WHERE group_id=$1 AND obra_id=$2 AND cliente_local_id=$3 AND ativo=true
+       FOR UPDATE`,
+      [scope.groupId, obraId, localId],
+    );
+    if (!target.rows[0]) return null;
     await db.query(
       `UPDATE obra_locais SET principal=false, updated_by=$2, updated_at=timezone('utc', now())
-       WHERE obra_id=$1 AND principal=true AND ativo=true`,
-      [obraId, actorId ?? null],
+       WHERE obra_id=$1 AND principal=true AND ativo=true AND cliente_local_id<>$3`,
+      [obraId, actorId ?? null, localId],
     );
-    const result = await db.query(
-      `UPDATE obra_locais SET principal=true, updated_by=$4, updated_at=timezone('utc', now())
-       WHERE group_id=$1 AND obra_id=$2 AND cliente_local_id=$3 AND ativo=true
-       RETURNING id`,
-      [scope.groupId, obraId, localId, actorId ?? null],
+    await db.query(
+      `UPDATE obra_locais SET principal=true, updated_by=$3, updated_at=timezone('utc', now())
+       WHERE id=$1 AND group_id=$2 AND ativo=true`,
+      [target.rows[0].id, scope.groupId, actorId ?? null],
     );
-    if (!result.rows[0]) return null;
     return this.require(scope, obraId, executor);
   }
 
@@ -396,7 +408,7 @@ export class PostgresObraRepository implements ObraRepository {
       `${OBRA_SELECT}
        WHERE o.group_id=$1 AND o.cliente_id=$2 AND o.ativo=true
          AND ($4::uuid IS NULL OR o.id<>$4)
-         AND regexp_replace(lower(o.nome), '\\s+', ' ', 'g') = $5
+         AND btrim(regexp_replace(lower(o.nome), '\\s+', ' ', 'g')) = $5
          AND EXISTS (
            SELECT 1 FROM obra_locais l
            WHERE l.obra_id=o.id AND l.principal=true AND l.ativo=true

@@ -49,6 +49,25 @@ node dist/db/migrate.js --status
 Esperado neste momento: 001–011 aplicadas no DEV atual; `012_obras.sql`
 pendente até a promoção deste lote.
 
+## 1b. Gate PostgreSQL real (BLOCKER de promoção)
+
+O teste `integration postgres ready when DATABASE_URL present (optional)` em
+`server/tests/runtime01.test.ts` **é skipped** quando `DATABASE_URL` não está
+definida. PGlite **não** substitui a validação final de RLS/FORCE, FK/triggers
+e concorrência em PostgreSQL real.
+
+Antes de aplicar 012 ou promover API:
+
+1. Confirmar que `DATABASE_URL` está configurada **sem imprimir o valor**
+   (`test -n "$DATABASE_URL"`).
+2. Executar a suíte do server com essa URL (incluindo o teste opcional de
+   integração).
+3. Confirmar no Postgres real: `relrowsecurity` e `relforcerowsecurity` das
+   três tabelas; INSERT/UPDATE cross-group bloqueados; principal único;
+   rollback de audit em create e em vínculo.
+
+Qualquer falha => **não aplicar 012 e não promover**.
+
 ## 2. Backup
 
 ```bash
