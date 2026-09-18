@@ -1,3 +1,42 @@
+### ERP-RUNTIME-04 — CONCLUÍDO E VALIDADO NO DEV
+
+- Data da validação/promoção: 2026-09-18.
+- Agregado: **Cliente MASTER DATA** (fundação; não Cliente 360º).
+- PR/merge oficial: #16 / `e3fbbf324e8727acfb9cdefab546bda3c243a3f0`.
+- Implementação: **CONCLUÍDA**.
+- Migration `009_clientes_master_data.sql`: **APLICADA E VALIDADA NO DEV**.
+- Migrations 001–009 em `schema_migrations`: **OK**.
+- Estruturas PostgreSQL: `clientes`, `cliente_empresas` e
+  `entity_code_sequences`: **OK**.
+- RLS nas três estruturas: `ENABLE=true`, `FORCE=true`.
+- Seed DEV: executado duas vezes, reexecutável/convergente e sem duplicação;
+  Grupo A com dois clientes-base e Grupo B com um cliente-base.
+- E2E real:
+  - runtime `/api/v1/meta`: `ERP-RUNTIME-04`;
+  - LIST Grupo A e Grupo B: HTTP 200;
+  - Grupo B acessando Cliente A: HTTP 404;
+  - RBAC sem actor e actor inválido: HTTP 403;
+  - CREATE Cliente PF: HTTP 201 e código sequencial automático;
+  - GET, busca, paginação/count: HTTP 200;
+  - Cliente recém-criado acessado cross-tenant: HTTP 404;
+  - soft delete: HTTP 200; GET posterior: HTTP 404; restore: HTTP 200;
+  - CNPJ duplicado e duplicidade do Cliente criado: HTTP 409
+    `DUPLICATE_DOCUMENT`;
+  - auditoria: create, soft_delete e restore (3 eventos);
+  - documento integral na auditoria: 0 ocorrências; mascaramento OK.
+- API oficial DEV promovida em `127.0.0.1:3080`.
+- Imagem validada/promovida: `erp-zuccaro-erp-api:runtime04-683e0cfb`.
+- Multiempresa, RBAC, auditoria, soft delete/restore e duplicidade: **APROVADOS**.
+- Frontend HTTP: **NÃO ATIVADO**; Cliente permanece fora de
+  `HTTP_PILOT_ENTITIES`.
+- Rollback: `erp-api-dev-runtime03-backup` e dumps pre-runtime04 preservados
+  temporariamente; não remover até decisão posterior.
+- Segurança documental: nenhum IP público, segredo, token, senha ou `.env`
+  registrado.
+- Validação deste lote documental: `npm run audit:baseline` e
+  `git diff --check` OK; testes/build dispensados por não haver alteração runtime.
+- Próximo: nenhum neste lote. Não iniciar ERP-RUNTIME-05.
+
 ### ERP-RUNTIME-04 — CORREÇÕES OBRIGATÓRIAS DO REVIEW PR #16
 
 - Data: 2026-09-17.

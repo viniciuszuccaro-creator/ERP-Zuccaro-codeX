@@ -1,9 +1,9 @@
 # ERP-RUNTIME-04 — Cliente MASTER DATA
 
-**Status:** `IMPLEMENTATION_READY — DEV_MIGRATION_PENDING`
-**Branch:** `cursor/erp-runtime-04-cliente-master-data-392b`
-**Base:** `74b68257` (precheck DEV aprovado)
-**Pré-requisito:** migrations 001–008 confirmadas no PostgreSQL DEV
+**Status:** `ERP-RUNTIME-04 — CONCLUÍDO E VALIDADO NO DEV`
+**Merge oficial:** `e3fbbf324e8727acfb9cdefab546bda3c243a3f0` (PR #16)
+**Validação DEV:** 2026-09-18
+**Migrations no DEV:** 001–009 confirmadas
 
 ## Objetivo
 
@@ -76,9 +76,48 @@ Os testes executam migrations 001–009 em PostgreSQL embutido e comprovam:
 zero leitura/write para role comum, bloqueio de reserva cross-tenant, sequências
 independentes e concorrentes, e integridade Cliente/Empresa/Grupo.
 
-## Proibições deste lote
+## Validação E2E real no DEV
 
-Sem Cliente 360º · sem Pedido 360º · sem Site/Portal/Marketplace paralelo · sem ativar HTTP no frontend · sem merge main · sem RUNTIME-05 · sem aplicar migration no VPS pelo Cloud Agent
+Em 18/09/2026, a migration `009_clientes_master_data.sql` foi aplicada
+manualmente e validada no PostgreSQL DEV. As migrations 001–009 estão OK.
+
+Estruturas confirmadas:
+
+- `clientes`, `cliente_empresas` e `entity_code_sequences`: OK;
+- RLS `ENABLE=true` e `FORCE=true` nas três estruturas;
+- seed executado duas vezes, convergente e sem duplicação;
+- Grupo A com dois clientes-base e Grupo B com um cliente-base.
+
+E2E contra a API e o PostgreSQL DEV:
+
+| Verificação | Resultado |
+|---|---|
+| Runtime `/api/v1/meta` | `ERP-RUNTIME-04` |
+| LIST Grupo A / Grupo B | HTTP 200 |
+| Cliente A acessado pelo Grupo B | HTTP 404 |
+| RBAC sem actor / actor inválido | HTTP 403 |
+| CREATE PF + código sequencial | HTTP 201 / OK |
+| GET / busca / paginação e count | HTTP 200 |
+| Soft delete / GET após exclusão | HTTP 200 / HTTP 404 |
+| Restore | HTTP 200 |
+| CNPJ duplicado | HTTP 409 `DUPLICATE_DOCUMENT` |
+| Auditoria | create, soft_delete e restore confirmados |
+| Documento integral em auditoria | 0 ocorrências; máscara OK |
+
+## Promoção da API DEV
+
+- API oficial DEV: `127.0.0.1:3080`;
+- imagem promovida: `erp-zuccaro-erp-api:runtime04-683e0cfb`;
+- Cliente MASTER DATA, multiempresa, RBAC, auditoria e API Cliente: OK;
+- Cliente continua fora de `HTTP_PILOT_ENTITIES` do frontend;
+- rollback RUNTIME-03 preservado temporariamente em
+  `erp-api-dev-runtime03-backup`;
+- dumps pre-runtime04 também permanecem preservados.
+
+## Limites preservados
+
+Sem Cliente 360º · sem Pedido 360º · sem Site/Portal/Marketplace paralelo ·
+sem ativar HTTP no frontend · sem RUNTIME-05.
 
 ## Docs
 

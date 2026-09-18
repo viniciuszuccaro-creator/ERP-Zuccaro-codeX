@@ -1,6 +1,15 @@
 # ERP-RUNTIME-04 — Runbook DEV (migration 009 + seed Cliente)
 
-**NÃO executar pelo Cursor Cloud Agent sem acesso autorizado.** Humano no VPS. Um comando por etapa.
+**Status:** executado e aprovado manualmente no DEV em 18/09/2026.
+
+**Histórico operacional:** manter este runbook para rastreabilidade. Não
+reexecutar migration/seed nem alterar o VPS nesta tarefa. Qualquer repetição
+futura exige autorização, backup e conferência de `schema_migrations`.
+
+**NÃO executar pelo Cursor Cloud Agent sem acesso autorizado.** Humano no VPS.
+Um comando por etapa.
+
+## Procedimento histórico aplicado
 
 Antes: **pg_dump**.
 
@@ -13,8 +22,10 @@ git fetch origin
 ```
 
 ```bash
-git pull origin cursor/erp-runtime-04-cliente-master-data-392b
+git pull origin main
 ```
+
+Referência oficial incorporada: `e3fbbf324e8727acfb9cdefab546bda3c243a3f0`.
 
 ```bash
 mkdir -p /opt/erp-zuccaro/backups
@@ -107,3 +118,7 @@ PostgreSQL embutido. Após o apply humano, repetir no DEV:
 ## Rollback
 
 Restaurar dump `pre-runtime04-*.sql`. Não dropar tabelas em produção/DEV sem plano.
+
+O container `erp-api-dev-runtime03-backup` e os dumps pre-runtime04 estão
+preservados temporariamente. Não remover até decisão posterior após o período de
+estabilidade.
