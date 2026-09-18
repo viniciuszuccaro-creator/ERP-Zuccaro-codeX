@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { CLIENTE_ORIGENS } from './clienteTypes.js';
 
@@ -19,6 +18,14 @@ export const GEOCODE_STATUS = [
 ] as const;
 
 export const GEOCODE_PRECISOES = ['EXATA', 'APROXIMADA', 'DESCONHECIDA'] as const;
+export const COORDINATE_SOURCES = [
+  'MANUAL',
+  'GPS',
+  'IMPORTACAO',
+  'GEOCODER',
+  'APP_MOTORISTA',
+  'API',
+] as const;
 
 export const CLIENTE_LOCAL_RBAC_KEYS = Object.freeze([
   'cadastros.local-cliente.visualizar',
@@ -76,6 +83,7 @@ const localFields = {
   referencia: nullableText(500),
   latitude: z.number().min(-90).max(90).nullable().optional(),
   longitude: z.number().min(-180).max(180).nullable().optional(),
+  coordinate_source: z.enum(COORDINATE_SOURCES).nullable().optional(),
   geocode_status: z.enum(GEOCODE_STATUS).optional(),
   geocode_source: nullableText(80),
   geocode_precision: z.enum(GEOCODE_PRECISOES).nullable().optional(),
@@ -92,7 +100,9 @@ function validateGeo(
   data: {
     latitude?: number | null;
     longitude?: number | null;
+    coordinate_source?: string | null;
     geocode_status?: string;
+    geocode_source?: string | null;
     geocoded_at?: string | null;
   },
   ctx: z.RefinementCtx,
@@ -106,11 +116,39 @@ function validateGeo(
       path: ['latitude'],
     });
   }
+  if (!hasLatitude && !hasLongitude && data.coordinate_source) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'origem da coordenada exige latitude e longitude',
+      path: ['coordinate_source'],
+    });
+  }
   if (data.geocode_status === 'GEOCODIFICADO' && (!hasLatitude || !hasLongitude)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: 'status geocodificado exige coordenadas',
       path: ['geocode_status'],
+    });
+  }
+  if (
+    data.geocode_status === 'GEOCODIFICADO'
+    && (!data.geocode_source || !data.geocoded_at)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'geocoding confirmado exige source e timestamp',
+      path: ['geocode_source'],
+    });
+  }
+  if (
+    data.geocode_status
+    && data.geocode_status !== 'GEOCODIFICADO'
+    && data.geocoded_at
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'timestamp de geocoding exige status GEOCODIFICADO',
+      path: ['geocoded_at'],
     });
   }
 }
@@ -135,6 +173,7 @@ export const clienteLocalUpdateSchema = z.object({
   referencia: localFields.referencia,
   latitude: localFields.latitude,
   longitude: localFields.longitude,
+  coordinate_source: localFields.coordinate_source,
   geocode_status: localFields.geocode_status,
   geocode_source: localFields.geocode_source,
   geocode_precision: localFields.geocode_precision,
@@ -181,6 +220,7 @@ export type ClienteLocal = {
   referencia: string | null;
   latitude: number | null;
   longitude: number | null;
+  coordinate_source: typeof COORDINATE_SOURCES[number] | null;
   geocode_status: typeof GEOCODE_STATUS[number];
   geocode_source: string | null;
   geocode_precision: typeof GEOCODE_PRECISOES[number] | null;
@@ -213,14 +253,16 @@ export function buildClienteLocalFingerprint(
     'cep' | 'logradouro' | 'numero' | 'complemento' | 'cidade' | 'uf'
   >,
 ) {
-  return createHash('md5').update([
-    groupId,
-    clienteId,
+  return [
+    groupId.toLowerCase(),
+    clienteId.toLowerCase(),
+    ...[
     data.cep,
     data.logradouro,
     data.numero,
     data.complemento,
     data.cidade,
     data.uf,
-  ].map(fingerprintPart).join('|')).digest('hex');
+    ].map(fingerprintPart),
+  ].join('|');
 }

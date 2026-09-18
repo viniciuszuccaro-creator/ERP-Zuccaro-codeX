@@ -102,7 +102,10 @@ OBRA.
 - Grupo B recebe 404;
 - RBAC por ação recebe 403 quando negado;
 - geo válido/ausente aceito; limites inválidos bloqueados;
+- coordenada MANUAL/GPS aceita sem marcar geocoding fictício;
+- latitude/longitude exigidas em par e limitadas no banco;
 - equivalente formatado retorna `POSSIBLE_DUPLICATE`;
+- fingerprint textual interno, sem MD5 e não exposto na API;
 - complemento distinto permitido;
 - Local principal não pode ser inativado;
 - após remover principal: inactivate/GET 404/restore;

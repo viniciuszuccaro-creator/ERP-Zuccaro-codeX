@@ -1,5 +1,18 @@
 ### ERP-RUNTIME-06A — IMPLEMENTAÇÃO ClienteLocal
 
+- Review geo/fingerprint (2026-09-18):
+  - coordenadas são independentes de geocoding e exigidas em par, com limites
+    -90/90 e -180/180 no schema e banco;
+  - `coordinate_source` distingue MANUAL/GPS/IMPORTACAO/GEOCODER/
+    APP_MOTORISTA/API;
+  - coordenada manual/GPS não força `geocode_status=GEOCODIFICADO`;
+  - `geocode_*` descreve somente enriquecimento efetivamente realizado;
+  - fingerprint passou de MD5 para chave textual normalizada determinística,
+    interna, não criptográfica e não exposta na API/audit;
+  - `POSSIBLE_DUPLICATE`, complemento distinto e ausência de UNIQUE agressivo
+    preservados;
+  - seed sintético usa coordenada manual sem geocoding fictício;
+  - nenhuma integração externa, Obra, migration 012 ou frontend foi criada.
 - Data: 2026-09-18.
 - Branch: `cursor/erp-runtime-06a-cliente-locais-392b`.
 - Base: `821b335fd6bff01896fcba3ba3291adab94df262`.

@@ -551,7 +551,7 @@ ON CONFLICT (cliente_id, empresa_id) DO UPDATE SET
 INSERT INTO cliente_locais (
   id, group_id, cliente_id, nome, cep, logradouro, numero, complemento,
   bairro, cidade, uf, pais, referencia, latitude, longitude,
-  geocode_status, geocode_source, geocode_precision, geocoded_at,
+  coordinate_source, geocode_status, geocode_source, geocode_precision, geocoded_at,
   ativo, origem, legacy_id, legacy_code, source_system, migration_batch,
   imported_at, created_by, updated_by
 ) VALUES
@@ -561,7 +561,7 @@ INSERT INTO cliente_locais (
     '99999999-aaaa-4aaa-8aaa-999999999991',
     'LOCAL DEV MATRIZ A', '00000001', 'RUA SINTETICA A', 'S/N', 'BLOCO A',
     'BAIRRO DEV', 'CIDADE DEV A', 'SP', 'BRASIL', 'REFERENCIA SINTETICA',
-    NULL, NULL, 'NAO_GEOCODIFICADO', NULL, NULL, NULL,
+    NULL, NULL, NULL, 'NAO_GEOCODIFICADO', NULL, NULL, NULL,
     true, 'ERP', 'LOCAL-A', 'LEG-LOCAL-A', 'ERP_ANTIGO', 'RUNTIME06A-SEED',
     '2026-09-18T00:00:00Z',
     'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4',
@@ -573,8 +573,7 @@ INSERT INTO cliente_locais (
     '99999999-aaaa-4aaa-8aaa-999999999991',
     'LOCAL DEV ENTREGA A', '00000002', 'AVENIDA SINTETICA B', '100-A', NULL,
     'BAIRRO DEV', 'CIDADE DEV A', 'SP', 'BRASIL', NULL,
-    0, 0, 'GEOCODIFICADO', 'MANUAL', 'DESCONHECIDA',
-    '2026-09-18T00:00:00Z',
+    0, 0, 'MANUAL', 'NAO_GEOCODIFICADO', NULL, NULL, NULL,
     true, 'ERP', 'LOCAL-B', 'LEG-LOCAL-B', 'ERP_ANTIGO', 'RUNTIME06A-SEED',
     '2026-09-18T00:00:00Z',
     'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4',
@@ -586,7 +585,7 @@ INSERT INTO cliente_locais (
     '99999999-aaaa-4aaa-8aaa-999999999991',
     'LOCAL DEV ENTREGA C', '00000003', 'ESTRADA SINTETICA C', 'KM 12', 'PORTAO 2',
     'BAIRRO DEV', 'CIDADE DEV C', 'MG', 'BRASIL', NULL,
-    NULL, NULL, 'NAO_GEOCODIFICADO', NULL, NULL, NULL,
+    NULL, NULL, NULL, 'NAO_GEOCODIFICADO', NULL, NULL, NULL,
     true, 'ERP', NULL, NULL, NULL, NULL, NULL,
     'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4',
     'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'
@@ -597,7 +596,7 @@ INSERT INTO cliente_locais (
     '99999999-bbbb-4bbb-8bbb-999999999993',
     'LOCAL DEV ENTREGA B', '00000004', 'RUA SINTETICA D', '200', NULL,
     'BAIRRO DEV', 'CIDADE DEV B', 'RJ', 'BRASIL', NULL,
-    NULL, NULL, 'NAO_GEOCODIFICADO', NULL, NULL, NULL,
+    NULL, NULL, NULL, 'NAO_GEOCODIFICADO', NULL, NULL, NULL,
     true, 'ERP', 'LOCAL-B1', 'LEG-LOCAL-B1', 'ERP_ANTIGO', 'RUNTIME06A-SEED',
     '2026-09-18T00:00:00Z',
     'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4',
@@ -618,6 +617,7 @@ ON CONFLICT (id) DO UPDATE SET
   referencia=EXCLUDED.referencia,
   latitude=EXCLUDED.latitude,
   longitude=EXCLUDED.longitude,
+  coordinate_source=EXCLUDED.coordinate_source,
   geocode_status=EXCLUDED.geocode_status,
   geocode_source=EXCLUDED.geocode_source,
   geocode_precision=EXCLUDED.geocode_precision,

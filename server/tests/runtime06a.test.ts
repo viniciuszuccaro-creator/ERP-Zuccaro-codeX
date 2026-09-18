@@ -9,7 +9,10 @@ import { loadConfig } from '../src/config/env.ts';
 import { createDbClient } from '../src/db/client.ts';
 import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
-import { CLIENTE_LOCAL_FINALIDADES } from '../src/repositories/clienteLocalTypes.ts';
+import {
+  CLIENTE_LOCAL_FINALIDADES,
+  buildClienteLocalFingerprint,
+} from '../src/repositories/clienteLocalTypes.ts';
 import { SEED_IDS } from '../scripts/seedDevIds.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -132,6 +135,7 @@ test('migration 011 é convergente, sem Obra, com integridade/principal/RLS', as
     const migration = readFileSync(join(migrationDir, '011_cliente_locais.sql'), 'utf8');
     await db.exec(migration);
     assert.doesNotMatch(migration, /CREATE TABLE\s+(?:IF NOT EXISTS\s+)?obras/i);
+    assert.doesNotMatch(migration, /\bmd5\s*\(/i);
     assert.doesNotMatch(
       migration.match(/CREATE TABLE IF NOT EXISTS cliente_local_finalidades[\s\S]*$/)?.[0] ?? '',
       /'OBRA'/,
@@ -149,6 +153,48 @@ test('migration 011 é convergente, sem Obra, com integridade/principal/RLS', as
       WHERE cliente_local_id='${SEED_IDS.clienteLocalA}' AND ativo=true
     `);
     assert.equal(purposesA.rows[0].total, 3);
+    const manualCoordinates = await db.query<{
+      coordinate_source: string;
+      geocode_status: string;
+      geocoded_at: string | null;
+    }>(`
+      SELECT coordinate_source, geocode_status, geocoded_at
+      FROM cliente_locais WHERE id='${SEED_IDS.clienteLocalB}'
+    `);
+    assert.deepEqual(manualCoordinates.rows, [{
+      coordinate_source: 'MANUAL',
+      geocode_status: 'NAO_GEOCODIFICADO',
+      geocoded_at: null,
+    }]);
+    await assert.rejects(
+      () => db.exec(`
+        UPDATE cliente_locais SET longitude=NULL
+        WHERE id='${SEED_IDS.clienteLocalB}'
+      `),
+      /chk_cliente_locais_geo/,
+    );
+    await assert.rejects(
+      () => db.exec(`
+        UPDATE cliente_locais SET latitude=91
+        WHERE id='${SEED_IDS.clienteLocalB}'
+      `),
+      /chk_cliente_locais_geo/,
+    );
+    const internalFingerprint = await db.query<{ endereco_fingerprint: string }>(`
+      SELECT endereco_fingerprint
+      FROM cliente_locais WHERE id='${SEED_IDS.clienteLocalA}'
+    `);
+    assert.equal(
+      internalFingerprint.rows[0].endereco_fingerprint,
+      buildClienteLocalFingerprint(SEED_IDS.groupA, SEED_IDS.clientePjA, {
+        cep: '00000001',
+        logradouro: 'RUA SINTETICA A',
+        numero: 'S/N',
+        complemento: 'BLOCO A',
+        cidade: 'CIDADE DEV A',
+        uf: 'SP',
+      }),
+    );
 
     await assert.rejects(
       () => db.exec(`
@@ -279,7 +325,9 @@ test('API ClienteLocal cobre multifinalidade, principal, tenant, geo e lifecycle
       finalidades: [{ finalidade: 'ENTREGA', principal: true }],
     })),
   });
-  assert.equal(localB.data.geocode_status, 'GEOCODIFICADO');
+  assert.equal(localB.data.coordinate_source, 'MANUAL');
+  assert.equal(localB.data.geocode_status, 'NAO_GEOCODIFICADO');
+  assert.equal(localB.data.geocoded_at, null);
 
   const localC = await fetchOk(app, base, {
     method: 'POST',
@@ -379,16 +427,43 @@ test('API ClienteLocal cobre multifinalidade, principal, tenant, geo e lifecycle
   });
   assert.ok(differentComplement.data.id);
 
-  assert.equal((await fetchStatus(app, base, {
+  const gpsLocal = await fetchOk(app, base, {
     method: 'POST',
     headers: groupHeaders(),
-    body: JSON.stringify(localPayload({ latitude: 91, longitude: 0 })),
-  })).statusCode, 400);
-  assert.equal((await fetchStatus(app, base, {
-    method: 'POST',
-    headers: groupHeaders(),
-    body: JSON.stringify(localPayload({ latitude: 0, longitude: 181 })),
-  })).statusCode, 400);
+    body: JSON.stringify(localPayload({
+      nome: 'Local GPS sem geocoding',
+      cep: '00000005',
+      logradouro: 'Rua GPS',
+      latitude: -10,
+      longitude: -20,
+      coordinate_source: 'GPS',
+      finalidades: [{ finalidade: 'OUTRO', principal: false }],
+    })),
+  });
+  assert.equal(gpsLocal.data.coordinate_source, 'GPS');
+  assert.equal(gpsLocal.data.geocode_status, 'NAO_GEOCODIFICADO');
+  assert.equal(gpsLocal.data.geocoded_at, null);
+
+  for (const coordinates of [
+    { latitude: 1 },
+    { longitude: 1 },
+    { latitude: 91, longitude: 0 },
+    { latitude: -91, longitude: 0 },
+    { latitude: 0, longitude: 181 },
+    { latitude: 0, longitude: -181 },
+  ]) {
+    const invalid = await fetchStatus(app, base, {
+      method: 'POST',
+      headers: groupHeaders(),
+      body: JSON.stringify(localPayload({
+        nome: `Geo invalido ${JSON.stringify(coordinates)}`,
+        cep: `000000${String(10 + Object.keys(coordinates).length).slice(-2)}`,
+        complemento: JSON.stringify(coordinates),
+        ...coordinates,
+      })),
+    });
+    assert.equal(invalid.statusCode, 400);
+  }
 
   const companyA = await fetchStatus(app, `${base}/${localA.data.id}`, {
     headers: {

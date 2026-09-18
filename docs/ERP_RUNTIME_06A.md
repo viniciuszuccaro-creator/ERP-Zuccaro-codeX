@@ -101,13 +101,22 @@ Pedido futuramente não concede edição.
 - CEP normalizado, UF/país uppercase, número textual (`S/N`, `100-A`, `KM 12`);
 - latitude -90/90 e longitude -180/180, ambas opcionais e informadas juntas;
 - sem coordenadas, Local continua válido;
+- `coordinate_source` registra MANUAL, GPS, IMPORTACAO, GEOCODER,
+  APP_MOTORISTA ou API;
+- coordenadas MANUAL/GPS são válidas com
+  `geocode_status=NAO_GEOCODIFICADO`;
+- `geocode_*` descreve somente enriquecimento por geocoding real;
 - geocode provider-neutral; nenhuma chamada ViaCEP/Maps/Nominatim;
 - sem URL de mapa canônica;
 - mass assignment de tenant/actors bloqueado.
 
 ## Duplicidade
 
-Fingerprint usa Cliente/Grupo + endereço normalizado, incluindo complemento.
+Fingerprint é uma chave **textual normalizada e determinística** composta por
+Grupo, Cliente, CEP, logradouro, número, complemento, cidade e UF. Não usa MD5,
+não é criptografia, autenticação ou mecanismo de segurança e não é exposto na
+API. Serve somente para comparação interna.
+
 Endereço equivalente retorna `409 POSSIBLE_DUPLICATE`; não há merge automático
 nem UNIQUE agressivo. Complementos distintos permanecem permitidos.
 
@@ -116,9 +125,9 @@ nem UNIQUE agressivo. Complementos distintos permanecem permitidos.
 CREATE, UPDATE, SET_PURPOSES/SET_PRIMARY, INACTIVATE e RESTORE compartilham a
 transação PostgreSQL com `audit_logs`. Falha de auditoria rollbacka mutação.
 
-O snapshot de audit registra ID, nome, cidade/UF/país, fingerprint, presença de
-coordenadas, status geocode, lifecycle e finalidades. Não replica CEP,
-logradouro, número, complemento, referência ou coordenadas.
+O snapshot de audit registra ID, nome, cidade/UF/país, presença/origem de
+coordenadas, status geocode, lifecycle e finalidades. Não replica fingerprint,
+CEP, logradouro, número, complemento, referência ou coordenadas.
 
 ## Soft delete
 

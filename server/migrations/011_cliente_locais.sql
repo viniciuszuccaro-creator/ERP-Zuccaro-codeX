@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS cliente_locais (
   referencia TEXT,
   latitude DOUBLE PRECISION,
   longitude DOUBLE PRECISION,
+  coordinate_source TEXT,
   geocode_status TEXT NOT NULL DEFAULT 'NAO_GEOCODIFICADO',
   geocode_source TEXT,
   geocode_precision TEXT,
@@ -79,15 +80,41 @@ BEGIN
         (
           latitude IS NULL
           AND longitude IS NULL
-          AND geocode_status IN ('NAO_GEOCODIFICADO', 'PENDENTE', 'FALHA')
-          AND geocoded_at IS NULL
+          AND coordinate_source IS NULL
         )
         OR (
-          latitude BETWEEN -90 AND 90
+          latitude IS NOT NULL
+          AND longitude IS NOT NULL
+          AND latitude BETWEEN -90 AND 90
           AND longitude BETWEEN -180 AND 180
-          AND geocode_status = 'GEOCODIFICADO'
+          AND coordinate_source IN (
+            'MANUAL', 'GPS', 'IMPORTACAO', 'GEOCODER', 'APP_MOTORISTA', 'API'
+          )
+        )
+      );
+  END IF;
+END;
+$$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'chk_cliente_locais_geocode_metadata'
+      AND conrelid = 'cliente_locais'::regclass
+  ) THEN
+    ALTER TABLE cliente_locais
+      ADD CONSTRAINT chk_cliente_locais_geocode_metadata CHECK (
+        (
+          geocode_status = 'GEOCODIFICADO'
+          AND latitude IS NOT NULL
+          AND longitude IS NOT NULL
           AND geocode_source IS NOT NULL
           AND geocoded_at IS NOT NULL
+        )
+        OR (
+          geocode_status IN ('NAO_GEOCODIFICADO', 'PENDENTE', 'FALHA')
+          AND geocoded_at IS NULL
         )
       );
   END IF;
@@ -118,7 +145,8 @@ BEGIN
   NEW.cep = regexp_replace(coalesce(NEW.cep, ''), '\D', '', 'g');
   NEW.uf = upper(btrim(coalesce(NEW.uf, '')));
   NEW.pais = upper(btrim(coalesce(NEW.pais, 'BRASIL')));
-  NEW.endereco_fingerprint = md5(concat_ws('|',
+  -- Chave textual interna para comparação; não é hash criptográfico.
+  NEW.endereco_fingerprint = concat_ws('|',
     NEW.group_id::text,
     NEW.cliente_id::text,
     regexp_replace(lower(coalesce(NEW.cep, '')), '[^a-z0-9]', '', 'g'),
@@ -127,7 +155,7 @@ BEGIN
     regexp_replace(lower(coalesce(NEW.complemento, '')), '[^a-z0-9]', '', 'g'),
     regexp_replace(lower(coalesce(NEW.cidade, '')), '[^a-z0-9]', '', 'g'),
     regexp_replace(lower(coalesce(NEW.uf, '')), '[^a-z0-9]', '', 'g')
-  ));
+  );
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;

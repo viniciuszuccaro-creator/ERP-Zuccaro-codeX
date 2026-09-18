@@ -169,12 +169,15 @@ export class InMemoryClienteLocalRepository implements ClienteLocalRepository {
       referencia: data.referencia ?? null,
       latitude: data.latitude ?? null,
       longitude: data.longitude ?? null,
-      geocode_status: hasCoordinates ? 'GEOCODIFICADO' : 'NAO_GEOCODIFICADO',
-      geocode_source: hasCoordinates ? data.geocode_source ?? 'MANUAL' : null,
-      geocode_precision: hasCoordinates
+      coordinate_source: hasCoordinates ? data.coordinate_source ?? 'MANUAL' : null,
+      geocode_status: data.geocode_status ?? 'NAO_GEOCODIFICADO',
+      geocode_source: data.geocode_source ?? null,
+      geocode_precision: data.geocode_status === 'GEOCODIFICADO'
         ? data.geocode_precision ?? 'DESCONHECIDA'
         : null,
-      geocoded_at: hasCoordinates ? data.geocoded_at ?? now : null,
+      geocoded_at: data.geocode_status === 'GEOCODIFICADO'
+        ? data.geocoded_at ?? null
+        : null,
       endereco_incompleto: false,
       endereco_fingerprint: fingerprint,
       ativo: true,
@@ -209,21 +212,25 @@ export class InMemoryClienteLocalRepository implements ClienteLocalRepository {
     this.assertNoDuplicate(scope, fingerprint, localId);
     const coordinatesChanged = data.latitude !== undefined || data.longitude !== undefined;
     const hasCoordinates = candidate.latitude != null && candidate.longitude != null;
+    const geocodeStatus = coordinatesChanged
+      ? data.geocode_status ?? 'NAO_GEOCODIFICADO'
+      : data.geocode_status ?? current.geocode_status;
     const next: ClienteLocal = {
       ...candidate,
       endereco_fingerprint: fingerprint,
-      geocode_status: coordinatesChanged
-        ? hasCoordinates ? 'GEOCODIFICADO' : 'NAO_GEOCODIFICADO'
-        : current.geocode_status,
-      geocode_source: coordinatesChanged
-        ? hasCoordinates ? data.geocode_source ?? 'MANUAL' : null
-        : candidate.geocode_source ?? null,
-      geocode_precision: coordinatesChanged
-        ? hasCoordinates ? data.geocode_precision ?? 'DESCONHECIDA' : null
-        : candidate.geocode_precision ?? null,
-      geocoded_at: coordinatesChanged
-        ? hasCoordinates ? data.geocoded_at ?? timestamp() : null
-        : candidate.geocoded_at ?? null,
+      coordinate_source: coordinatesChanged
+        ? hasCoordinates ? data.coordinate_source ?? current.coordinate_source ?? 'MANUAL' : null
+        : candidate.coordinate_source ?? null,
+      geocode_status: geocodeStatus,
+      geocode_source: geocodeStatus === 'NAO_GEOCODIFICADO'
+        ? null
+        : data.geocode_source ?? candidate.geocode_source ?? null,
+      geocode_precision: geocodeStatus === 'GEOCODIFICADO'
+        ? data.geocode_precision ?? candidate.geocode_precision ?? 'DESCONHECIDA'
+        : null,
+      geocoded_at: geocodeStatus === 'GEOCODIFICADO'
+        ? data.geocoded_at ?? candidate.geocoded_at ?? null
+        : null,
       updated_by: actorId ?? null,
       updated_at: timestamp(),
       finalidades: current.finalidades,

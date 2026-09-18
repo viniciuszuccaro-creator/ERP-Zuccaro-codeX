@@ -41,6 +41,9 @@ function mapLocal(row: Record<string, unknown>): ClienteLocal {
     referencia: row.referencia == null ? null : String(row.referencia),
     latitude: row.latitude == null ? null : Number(row.latitude),
     longitude: row.longitude == null ? null : Number(row.longitude),
+    coordinate_source: row.coordinate_source == null
+      ? null
+      : String(row.coordinate_source) as ClienteLocal['coordinate_source'],
     geocode_status: String(row.geocode_status) as ClienteLocal['geocode_status'],
     geocode_source: row.geocode_source == null ? null : String(row.geocode_source),
     geocode_precision: row.geocode_precision == null
@@ -191,19 +194,20 @@ export class PostgresClienteLocalRepository implements ClienteLocalRepository {
         `INSERT INTO cliente_locais (
           group_id, cliente_id, nome, cep, logradouro, numero, complemento,
           bairro, cidade, uf, pais, referencia, latitude, longitude,
-          geocode_status, geocode_source, geocode_precision, geocoded_at,
+          coordinate_source, geocode_status, geocode_source, geocode_precision,
+          geocoded_at,
           endereco_incompleto, endereco_fingerprint, ativo, origem,
           legacy_id, legacy_code, source_system, migration_batch, imported_at,
           created_by, updated_by
         ) VALUES (
-          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,
-          false,$19,true,$20,$21,$22,$23,$24,$25,$26,$26
+          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,
+          false,$20,true,$21,$22,$23,$24,$25,$26,$27,$27
         ) RETURNING id`,
         [
           scope.groupId, scope.clienteId, data.nome, data.cep, data.logradouro,
           data.numero, data.complemento ?? null, data.bairro, data.cidade,
           data.uf, data.pais, data.referencia ?? null, data.latitude ?? null,
-          data.longitude ?? null, geo.status, geo.source, geo.precision,
+          data.longitude ?? null, geo.coordinateSource, geo.status, geo.source, geo.precision,
           geo.geocodedAt, fingerprint, data.origem, data.legacy_id ?? null,
           data.legacy_code ?? null, data.source_system ?? null,
           data.migration_batch ?? null, data.imported_at ?? null, actorId ?? null,
@@ -237,15 +241,17 @@ export class PostgresClienteLocalRepository implements ClienteLocalRepository {
         `UPDATE cliente_locais SET
           nome=$1, cep=$2, logradouro=$3, numero=$4, complemento=$5,
           bairro=$6, cidade=$7, uf=$8, pais=$9, referencia=$10,
-          latitude=$11, longitude=$12, geocode_status=$13, geocode_source=$14,
-          geocode_precision=$15, geocoded_at=$16, endereco_fingerprint=$17,
-          origem=$18, legacy_id=$19, legacy_code=$20, source_system=$21,
-          migration_batch=$22, imported_at=$23, updated_by=$24
-         WHERE group_id=$25 AND cliente_id=$26 AND id=$27`,
+          latitude=$11, longitude=$12, coordinate_source=$13,
+          geocode_status=$14, geocode_source=$15, geocode_precision=$16,
+          geocoded_at=$17, endereco_fingerprint=$18,
+          origem=$19, legacy_id=$20, legacy_code=$21, source_system=$22,
+          migration_batch=$23, imported_at=$24, updated_by=$25
+         WHERE group_id=$26 AND cliente_id=$27 AND id=$28`,
         [
           next.nome, next.cep, next.logradouro, next.numero, next.complemento,
           next.bairro, next.cidade, next.uf, next.pais, next.referencia,
-          next.latitude, next.longitude, geo.status, geo.source, geo.precision,
+          next.latitude, next.longitude, geo.coordinateSource, geo.status,
+          geo.source, geo.precision,
           geo.geocodedAt, fingerprint, next.origem, next.legacy_id,
           next.legacy_code, next.source_system, next.migration_batch,
           next.imported_at, actorId ?? null, scope.groupId, scope.clienteId,
@@ -366,7 +372,13 @@ export class PostgresClienteLocalRepository implements ClienteLocalRepository {
   private geoValues(
     data: Pick<
       ClienteLocalCreate,
-      'latitude' | 'longitude' | 'geocode_source' | 'geocode_precision' | 'geocoded_at'
+      | 'latitude'
+      | 'longitude'
+      | 'coordinate_source'
+      | 'geocode_status'
+      | 'geocode_source'
+      | 'geocode_precision'
+      | 'geocoded_at'
     >,
     current?: ClienteLocal,
     changed?: ClienteLocalUpdate,
@@ -375,19 +387,25 @@ export class PostgresClienteLocalRepository implements ClienteLocalRepository {
       || changed?.latitude !== undefined
       || changed?.longitude !== undefined;
     const hasCoordinates = data.latitude != null && data.longitude != null;
-    if (!coordinatesChanged && current) {
-      return {
-        status: current.geocode_status,
-        source: current.geocode_source,
-        precision: current.geocode_precision,
-        geocodedAt: current.geocoded_at,
-      };
-    }
+    const status = coordinatesChanged
+      ? changed?.geocode_status ?? data.geocode_status ?? 'NAO_GEOCODIFICADO'
+      : changed?.geocode_status ?? current?.geocode_status ?? 'NAO_GEOCODIFICADO';
     return {
-      status: hasCoordinates ? 'GEOCODIFICADO' : 'NAO_GEOCODIFICADO',
-      source: hasCoordinates ? data.geocode_source ?? 'MANUAL' : null,
-      precision: hasCoordinates ? data.geocode_precision ?? 'DESCONHECIDA' : null,
-      geocodedAt: hasCoordinates ? data.geocoded_at ?? new Date().toISOString() : null,
+      coordinateSource: hasCoordinates
+        ? changed?.coordinate_source ?? data.coordinate_source
+          ?? current?.coordinate_source ?? 'MANUAL'
+        : null,
+      status,
+      source: status === 'NAO_GEOCODIFICADO'
+        ? null
+        : changed?.geocode_source ?? data.geocode_source ?? current?.geocode_source ?? null,
+      precision: status === 'GEOCODIFICADO'
+        ? changed?.geocode_precision ?? data.geocode_precision
+          ?? current?.geocode_precision ?? 'DESCONHECIDA'
+        : null,
+      geocodedAt: status === 'GEOCODIFICADO'
+        ? changed?.geocoded_at ?? data.geocoded_at ?? current?.geocoded_at ?? null
+        : null,
     };
   }
 }
