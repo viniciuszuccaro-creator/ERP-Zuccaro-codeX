@@ -145,9 +145,9 @@ test('seed SQL: parents DO NOTHING; Produto A/B e Cliente A/B usam UPSERT conver
   const doNothing = codeOnly.match(/ON CONFLICT \(id\) DO NOTHING/gi)?.length ?? 0;
   const doUpdate = codeOnly.match(/ON CONFLICT \(id\) DO UPDATE SET/gi)?.length ?? 0;
 
-  // 15 originais + sequência + 2 perfis RBAC + 3 clientes + cliente_empresas = 22
-  assert.equal(inserts, 22);
-  assert.equal(doNothing, 13, 'groups/empresas/marcas/unidades/grupos/setores = DO NOTHING');
+  // 15 originais + Empresa A2 + sequência + 2 perfis + 3 clientes + vínculos = 23
+  assert.equal(inserts, 23);
+  assert.equal(doNothing, 14, 'parents de R01–04 + Empresa A2 = DO NOTHING');
   assert.equal(doUpdate, 7, 'Produto A/B + perfis RBAC A/B + clientes sintéticos usam DO UPDATE');
 
   assert.match(codeOnly, /WHERE produtos\.id = '77777777-aaaa-4aaa-8aaa-777777777777'/);
@@ -182,6 +182,9 @@ test('seed SQL: Cliente PJ/PF A e PJ B com tenant e documentos sintéticos', () 
   assert.match(sql, /34028316000103/);
   assert.match(sql, /entity_code_sequences/);
   assert.match(sql, /INSERT INTO cliente_empresas/);
+  assert.match(sql, new RegExp(SEED_IDS.empresaA2));
+  assert.match(sql, /Bloqueio sintetico para E2E/);
+  assert.match(sql, /ON CONFLICT \(cliente_id, empresa_id\) DO UPDATE SET/);
 
   // Cliente B: group_id na 2ª coluna do VALUES deve ser Grupo B
   const valuesMatch = sql.match(

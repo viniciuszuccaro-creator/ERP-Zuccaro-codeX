@@ -1,6 +1,6 @@
--- Seed DEV sintetico (ERP-RUNTIME-04 Cliente MASTER DATA)
+-- Seed DEV sintetico (ERP-RUNTIME-05 Cliente x Empresa)
 -- Sem dados reais CPA.
--- Aplicar SOMENTE apos migrations 001-009.
+-- Aplicar SOMENTE apos migrations 001-010.
 --
 -- REGRA: nomes "A"/"B"/"TESTE B" NAO definem tenant.
 -- Tenant = group_id + empresa_id exclusivamente.
@@ -18,6 +18,7 @@
 --   Grupo A:    aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa
 --   Grupo B:    bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb
 --   Empresa A:  cccccccc-cccc-4ccc-8ccc-cccccccccccc
+--   Empresa A2: c2c2c2c2-cccc-4ccc-8ccc-c2c2c2c2c2c2
 --   Empresa B:  dddddddd-dddd-4ddd-8ddd-dddddddddddd
 --   Marca A:    eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee  (Grupo A)
 --   Marca LEGACY id ffffffff-ffff-4fff-8fff-ffffffffffff:
@@ -61,6 +62,17 @@ VALUES (
   'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
   'Empresa DEV Sintetica A LTDA',
   'Empresa DEV A',
+  NULL,
+  'Ativa'
+)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO empresas (id, group_id, razao_social, nome_fantasia, cnpj, status)
+VALUES (
+  'c2c2c2c2-cccc-4ccc-8ccc-c2c2c2c2c2c2',
+  'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  'Empresa DEV Sintetica A2 LTDA',
+  'Empresa DEV A2',
   NULL,
   'Ativa'
 )
@@ -310,7 +322,7 @@ INSERT INTO profiles (
   true,
   'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
   NULL,
-  '{"Cadastros":{"cliente":["visualizar","criar","editar","inativar","restaurar"]}}'::jsonb
+  '{"Cadastros":{"cliente":["visualizar","criar","editar","inativar","restaurar"],"cliente_empresa":["visualizar","criar","editar","inativar","restaurar","bloquear"]}}'::jsonb
 )
 ON CONFLICT (id) DO UPDATE SET
   email = EXCLUDED.email,
@@ -333,7 +345,7 @@ INSERT INTO profiles (
   true,
   'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
   NULL,
-  '{"Cadastros":{"cliente":["visualizar","criar","editar","inativar","restaurar"]}}'::jsonb
+  '{"Cadastros":{"cliente":["visualizar","criar","editar","inativar","restaurar"],"cliente_empresa":["visualizar","criar","editar","inativar","restaurar","bloquear"]}}'::jsonb
 )
 ON CONFLICT (id) DO UPDATE SET
   email = EXCLUDED.email,
@@ -459,24 +471,74 @@ ON CONFLICT (id) DO UPDATE SET
   updated_at = timezone('utc', now())
 WHERE clientes.id = '99999999-bbbb-4bbb-8bbb-999999999993';
 
-INSERT INTO cliente_empresas (group_id, cliente_id, empresa_id, ativo)
+INSERT INTO cliente_empresas (
+  group_id, cliente_id, empresa_id, ativo, situacao_comercial,
+  habilitado_operacao, bloqueado, motivo_bloqueio, bloqueado_em, bloqueado_por,
+  observacao_comercial, origem, legacy_id, legacy_code, source_system,
+  migration_batch, imported_at, created_by, updated_by
+)
 VALUES
   (
     'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
     '99999999-aaaa-4aaa-8aaa-999999999991',
     'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
-    true
+    true, 'ATIVO', true, false, NULL, NULL, NULL,
+    'Vinculo sintetico liberado Empresa A', 'ERP',
+    'CLI-EMP-A', 'LEG-CE-A', 'ERP_ANTIGO', 'RUNTIME05-SEED',
+    '2026-09-18T00:00:00Z',
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4',
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'
+  ),
+  (
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    '99999999-aaaa-4aaa-8aaa-999999999991',
+    'c2c2c2c2-cccc-4ccc-8ccc-c2c2c2c2c2c2',
+    true, 'ATIVO', true, true, 'Bloqueio sintetico para E2E',
+    '2026-09-18T00:00:00Z',
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4',
+    'Vinculo sintetico bloqueado Empresa A2', 'ERP',
+    'CLI-EMP-A2', 'LEG-CE-A2', 'ERP_ANTIGO', 'RUNTIME05-SEED',
+    '2026-09-18T00:00:00Z',
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4',
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'
   ),
   (
     'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
     '99999999-aaaa-4aaa-8aaa-999999999992',
     'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
-    true
+    true, 'PROSPECT', false, false, NULL, NULL, NULL,
+    'Vinculo sintetico prospect', 'ERP',
+    NULL, NULL, NULL, NULL, NULL,
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4',
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'
   ),
   (
     'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
     '99999999-bbbb-4bbb-8bbb-999999999993',
     'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
-    true
+    true, 'ATIVO', true, false, NULL, NULL, NULL,
+    'Vinculo sintetico liberado Empresa B', 'ERP',
+    'CLI-EMP-B', 'LEG-CE-B', 'ERP_ANTIGO', 'RUNTIME05-SEED',
+    '2026-09-18T00:00:00Z',
+    'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4',
+    'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4'
   )
-ON CONFLICT (cliente_id, empresa_id) DO NOTHING;
+ON CONFLICT (cliente_id, empresa_id) DO UPDATE SET
+  group_id = EXCLUDED.group_id,
+  ativo = EXCLUDED.ativo,
+  situacao_comercial = EXCLUDED.situacao_comercial,
+  habilitado_operacao = EXCLUDED.habilitado_operacao,
+  bloqueado = EXCLUDED.bloqueado,
+  motivo_bloqueio = EXCLUDED.motivo_bloqueio,
+  bloqueado_em = EXCLUDED.bloqueado_em,
+  bloqueado_por = EXCLUDED.bloqueado_por,
+  observacao_comercial = EXCLUDED.observacao_comercial,
+  origem = EXCLUDED.origem,
+  legacy_id = EXCLUDED.legacy_id,
+  legacy_code = EXCLUDED.legacy_code,
+  source_system = EXCLUDED.source_system,
+  migration_batch = EXCLUDED.migration_batch,
+  imported_at = EXCLUDED.imported_at,
+  created_by = EXCLUDED.created_by,
+  updated_by = EXCLUDED.updated_by,
+  updated_at = timezone('utc', now());

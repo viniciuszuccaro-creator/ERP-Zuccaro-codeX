@@ -6,6 +6,7 @@ export const SEED_IDS = Object.freeze({
   groupA: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
   groupB: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
   empresaA: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+  empresaA2: 'c2c2c2c2-cccc-4ccc-8ccc-c2c2c2c2c2c2',
   empresaB: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
   marcaA: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
   /** LEGADO: historicamente nomeado "TESTE B" mas tenant = Grupo A. Nao usar em Produto B. */
