@@ -1,13 +1,13 @@
 # ERP-RUNTIME-06B — Diagnóstico arquitetural (Obra)
 
-**Status:** `DIAGNÓSTICO SOMENTE — AGUARDANDO REVIEW`
+**Status:** `DIAGNÓSTICO SOMENTE — AGUARDANDO REVIEW FINAL`
 **Base:** `067d002f90b162c507581dfa2f6909b3c1059ed4` (main; ERP-RUNTIME-06A)
 **Software/API DEV:** permanece `ERP-RUNTIME-06A`
 **Este lote:** documentação. Nenhuma migration, código, VPS ou frontend.
 
-Este documento especializa o diagnóstico `docs/ERP_RUNTIME_06_DIAGNOSTICO.md`
-após a implementação de ClienteLocal. Não substitui o 06A. Não inicia a
-implementação de Obra.
+Arquitetura **aprovada** no review. Este arquivo é a fonte canônica de Obra.
+`docs/ERP_RUNTIME_06_DIAGNOSTICO.md` guarda o rascunho original
+(`obras.cliente_local_id`) como histórico e aponta para cá o modelo final.
 
 ---
 
@@ -30,13 +30,71 @@ Cliente (Grupo)
 Pedido **não exige** Obra. Marketplace, site PF e venda avulsa continuam
 válidos sem Obra. B2B/obra industrial podem selecionar ou criar Obra.
 
-O RUNTIME-06A já entregou o endereço canônico. O 06 original previa
-`obras.cliente_local_id` único. Isso é **insuficiente** para portaria vs
-descarga vs escritório e deve ser evoluído para `obra_locais`.
+O RUNTIME-06A já entregou o endereço canônico.
 
-Compartilhar a mesma Obra entre CPA e 3Z **não** deve ser implícito só porque
-existe `cliente_empresas`. A autorização por Empresa deve ser explícita e
-fail-closed em `obra_empresas`, no mesmo espírito de `cliente_empresas`.
+**Modelo original do diagnóstico 06:** `obras.cliente_local_id` obrigatório
+(um Local por Obra) e compartilhamento implícito via ClienteEmpresa.
+
+**Refinamento oficial 06B:** `obra_locais` N:N tipado e `obra_empresas`
+explícito. Motivo: uma Obra pode ter local físico, portaria, entrega,
+administrativo, fiscal e outros pontos; várias Obras reutilizam o mesmo
+ClienteLocal; CPA e 3Z não devem herdar atendimento só porque o Cliente
+está elegível.
+
+---
+
+## 1.1 Arquitetura oficial consolidada (review)
+
+```text
+Cliente MASTER (identidade no Grupo)
+   |
+   +-- ClienteEmpresa (elegibilidade comercial por Empresa)
+   |
+   +-- ClienteLocal (endereço físico canônico + finalidades)
+   |
+   +-- Obra (contexto comercial/operacional; group_id + cliente_id)
+          |
+          +-- obra_empresas   → autorização de atendimento por Empresa
+          |
+          +-- obra_locais     → ClienteLocal (uso_na_obra + principal)
+```
+
+Ownership: Obra **não** pertence à Empresa. Empresa opera quando existe
+`obra_empresas` **e**, para nova operação comercial, ClienteEmpresa elegível.
+
+Pedido futuro **não** é obrigado a ter Obra. Comercial 360º **consulta**
+Obra; não é dono do agregado.
+
+`uso_na_obra` **não** substitui `cliente_local_finalidades`.
+Finalidade = papel do endereço para o **Cliente**.
+`uso_na_obra` = papel do Local **naquela Obra**.
+Exemplo: Local com finalidade ENTREGA no cadastro pode ser `FISICO` na Obra.
+
+Principal no 06B: **um** Local principal **geral** por Obra (`principal=true`
+e `ativo=true`). Não significa entrega/fiscal/cobrança padrão do Pedido.
+**Não** implementar principal por uso (FISICO/ENTREGA/…) neste lote.
+
+Obra operacional nova: ≥1 `obra_local` ativo e exatamente 1 principal.
+Importação legado: staging → resolver Local → criar Obra canônica →
+`obra_local` principal → só então operacional. Sem status `INCOMPLETA`.
+
+POST no contexto Empresa, **mesma transação**:
+
+1. Obra;
+2. `reserve_entity_codigo(group_id, 'Obra', 6)` (`000001`; UI: `OBRA 000001`);
+3. `obra_empresas` da Empresa do contexto;
+4. ≥1 `obra_local` do mesmo `group_id` + `cliente_id`;
+5. Local principal;
+6. auditoria.
+
+Qualquer falha (incluindo audit): **ROLLBACK** completo. Sem Obra órfã,
+sem código inconsistente.
+
+Novo Local no Comercial futuro: reutilizar API/serviço ClienteLocal (06A).
+Não duplicar endereço em `ObraService`. Se a transação única entre
+agregados exigir orquestração, usar application service que chama os dois
+repositórios no **mesmo** `db.withTransaction` — sem segundo cadastro de
+endereço.
 
 ---
 
@@ -132,14 +190,28 @@ estoque e NF continuam da Empresa da transação, nunca do Grupo.
 
 ### D. Papel de ClienteEmpresa
 
-Pré-condição de qualquer operação empresarial sobre a Obra:
+Pré-condição de **nova operação comercial** (criar Obra, vincular Empresa
+para atendimento novo, usar Obra em venda nova):
 
 1. Cliente e Empresa no mesmo Grupo;
-2. `cliente_empresas` existe e, para vender/operar, `elegivel_operacao`;
+2. `cliente_empresas` existe, `ativo`, habilitado, não bloqueado e
+   `elegivel_operacao`;
 3. `obra_empresas` ativo para aquela Empresa.
 
+**Visualização histórica** (Obra já existente, Pedidos/NF antigos): RBAC +
+tenant + relacionamento autorizado podem permitir leitura **mesmo** se o
+Cliente estiver inelegível/bloqueado hoje. Não esconder histórico porque a
+elegibilidade atual mudou.
+
+Não basta só ClienteEmpresa ou só `obra_empresas`.
+
 Criar Obra no contexto Empresa cria o vínculo daquela Empresa na mesma
-transação (padrão Cliente + `empresa_id` do RUNTIME-04/05).
+transação. Adicionar outra Empresa: mesmo Grupo; `cliente_empresas` existe;
+para ativação operacional nova, ClienteEmpresa elegível; RBAC
+`cadastros.obra.vincular-empresa`. Mutação + audit na mesma transação.
+
+Inativar `obra_empresas` (`ativo=false`): não hard-delete; não inativa Obra,
+Cliente, Local nem outras Empresas. Restore com RBAC.
 
 ### E/F. Relação Obra × ClienteLocal
 
@@ -150,19 +222,35 @@ obras 1 ── N obra_locais N ── 1 cliente_locais
 ```
 
 `obra_locais.uso_na_obra`: `FISICO`, `ENTREGA`, `ADMINISTRATIVO`, `FISCAL`,
-`OUTRO`. Flag `principal` (no máximo um principal ativo por Obra). O mesmo
-ClienteLocal pode aparecer em várias Obras e em mais de um uso da mesma Obra.
+`OUTRO`. Flag `principal`: no máximo **um** principal geral ativo por Obra
+(`principal=true` AND `ativo=true`). Vínculo inativo **não** pode ser
+principal. Troca A→B é atômica (nunca dois principais no commit).
 
-Finalidades de ClienteLocal permanecem do **endereço** (entrega fiscal vs
-cobrança do cliente). Usos de `obra_locais` descrevem o papel **na Obra**.
-Não adicionar finalidade `OBRA`.
+**Fora do 06B:** principal por uso (principal ENTREGA, principal FISICO…).
+
+O mesmo ClienteLocal pode aparecer em várias Obras e em mais de um uso da
+mesma Obra. Campos conceituais de `obra_locais`: `id`, `group_id`,
+`obra_id`, `cliente_local_id`, `uso_na_obra`, `principal`, `ativo`,
+`created_at`, `updated_at`, `created_by`, `updated_by`.
+
+Finalidades de ClienteLocal permanecem do **endereço**. Usos de
+`obra_locais` descrevem o papel **na Obra**. Não adicionar finalidade
+`OBRA`. Local de outro Cliente/Grupo: bloqueio no banco e no backend.
 
 ### G. `obra_empresas`
 
-Sim, no 06B. Unicidade `(obra_id, empresa_id)`. Trigger: Obra, Cliente e
-Empresa no mesmo `group_id`; Empresa deve ter `cliente_empresas` do mesmo
-Cliente (vínculo cadastral). Elegibilidade comercial de venda continua em
+Sim, no 06B. Representa **autorização de atendimento/operação** da Obra
+pela Empresa. **Não** é ownership, faturamento, estoque, crédito, preço ou
+série fiscal. A NF futura sai da `empresa_id` do Pedido, nunca do Grupo.
+
+Unicidade `(obra_id, empresa_id)`. Trigger: Obra, Cliente e Empresa no
+mesmo `group_id`; deve existir `cliente_empresas` do mesmo Cliente para
+aquela Empresa (cadastro). Elegibilidade de **venda nova** continua em
 `cliente_empresas.elegivel_operacao`.
+
+Exemplo: Obra 000001 com CPA e 3Z ativas = **uma** Obra, dois vínculos.
+Se só CPA estiver vinculada, usuário 3Z não lista operacionalmente, não
+vende e não infere dados protegidos. Grupo autorizado vê consolidado.
 
 ### H. Responsáveis
 
@@ -173,9 +261,11 @@ dezenas de colunas.
 
 ### I. Código sequencial
 
-Reutilizar `reserve_entity_codigo(group_id, 'Obra', 6)` → `000001`.
-Exibição `OBRA 000001` é apresentação, não PK. Escopo **por Grupo**, nunca
-global e nunca por Empresa. Preservar `legacy_code`.
+Reutilizar `reserve_entity_codigo(group_id, 'Obra', 6)` → armazenar
+`000001` (sem prefixo `OBRA ` no valor). Exibição `OBRA 000001` é só UI.
+Escopo **por Grupo**. Nunca `count(*)+1`. Teste obrigatório: duas criações
+concorrentes → códigos distintos, sem reaproveitamento. Preservar
+`legacy_code`.
 
 ### J. Status canônico da Obra
 
@@ -200,23 +290,39 @@ Vocabulário mínimo de `obras.status`:
 `ARQUIVADA` = `ativo=false`, não um quinto status operacional.
 
 Obra `CONCLUIDA`/`CANCELADA`/`ativo=false` permanece visível em histórico e
-referenciável em documentos antigos; some da seleção operacional padrão.
+referenciável em documentos antigos.
+
+**Seleção para nova operação (padrão):** `ativo=true` **e** `status=ATIVA`
+**e** `obra_empresas` ativo **e** ClienteEmpresa elegível.
+
+- `PAUSADA`: **não** entra na seleção padrão. Operar exige reativar para
+  `ATIVA` ou política/autorização explícita futura — sem exceção silenciosa.
+- `CONCLUIDA` / `CANCELADA` / `ativo=false`: fora da seleção nova.
+- Histórico continua listável com filtro explícito + RBAC.
 
 ### K. Soft delete / restore
 
 Igual Cliente/ClienteLocal: inativar (`ativo=false`), restore, GET de
 inativo = 404 na API operacional, listagem padrão só ativos. Sem hard
-delete. Inativar Obra **não** inativa ClienteLocal. Inativar Local usado
-por Obra ativa: **bloquear** (ou exigir desvínculo explícito). Sem cascade.
+delete. Sem cascade para ClienteLocal, `obra_empresas`, Pedido/NF/Entrega
+futuros. Relacionamentos permanecem para rastreio.
+
+Inativar Local com `obra_locais` **ativo** de Obra **ativa**: **bloquear**.
+Exigir desvínculo ou substituição. Se for o principal, outro principal
+entra antes ou na mesma transação. Sem cascade. Inativar Obra **não**
+inativa o Local.
 
 ### L. Duplicidade
 
-Não criar UNIQUE de endereço. Apartamentos, torres, etapas, contratos e
-reformas no mesmo Local são legítimos.
+Não criar UNIQUE de endereço nem fingerprint de Obra como identidade.
+Identidade = UUID. Identificador humano = `codigo`. Possible duplicate é
+só proteção operacional.
 
 Alerta conservador `409 POSSIBLE_DUPLICATE` quando, no mesmo Cliente/Grupo,
 o **nome normalizado** coincide **e** o Local principal é o mesmo.
-Override explícito + auditoria `possible_duplicate`, sem merge.
+**Não** impede casos legítimos: Torre A/B, Reforma 2026/2027, Etapa 1/2
+no mesmo endereço. Override explícito (flag/confirmação) + permissão/
+política + auditoria `possible_duplicate` / override. Sem merge.
 
 ### M. Endereço histórico (Pedido / NF / Entrega / contrato)
 
@@ -224,11 +330,12 @@ Contrato futuro obrigatório, **não implementado no 06B**:
 
 1. `obra_id` opcional;
 2. `cliente_local_id` do destino efetivo;
-3. snapshot imutável (logradouro, CEP, cidade, UF, coordenadas se houver,
-   uso, nome da obra/código, `captured_at`).
+3. snapshot imutável enxuto: `obra_id`/`codigo_obra`/`nome_obra` quando
+   houver; dados do Local efetivo; `captured_at`. Não copiar a Obra inteira.
 
-Telas históricas leem snapshot. Alterar `obra_locais` ou o master
-ClienteLocal **não** reidrata documento antigo.
+MASTER mutável. Documento transacional imutável. Alterar Obra,
+ClienteLocal ou `obra_locais` **não** altera Pedido/NF/Entrega/contrato
+antigos.
 
 ### N–T. Demais respostas
 
@@ -245,9 +352,11 @@ Finalidade: identidade da Obra.
 - PK: `id UUID`
 - Tenant: `group_id` NOT NULL → `groups`
 - Dono comercial: `cliente_id` NOT NULL → `clientes`
-- Campos essenciais: `codigo`, `nome`, `status`, `observacao` (sanitizada,
-  opcional), `ativo`, origem/legado (`legacy_id`, `legacy_code`,
-  `source_system`, `migration_batch`, `imported_at`), actors, timestamps
+- Campos essenciais: `codigo`, `nome`, `status`, `observacao` (opcional,
+  sanitizada, tamanho limitado; **não** é depósito de PII, CAD, projeto
+  ou instrução logística — isso fica no Local/Entrega), `ativo`,
+  origem/legado (`legacy_id`, `legacy_code`, `source_system`,
+  `migration_batch`, `imported_at`), actors, timestamps
 - Sem: latitude, logradouro, CPF, telefone, crédito, BOM, anexos
 - UNIQUE `(group_id, codigo)`
 - CHECK `status IN ('ATIVA','PAUSADA','CONCLUIDA','CANCELADA')`
@@ -281,7 +390,8 @@ Finalidade: reutilizar ClienteLocal na Obra, com papel operacional.
 - `principal BOOLEAN DEFAULT false`
 - `ativo`, actors, timestamps
 - UNIQUE `(obra_id, cliente_local_id, uso_na_obra)`
-- UNIQUE parcial: um `principal=true` ativo por `obra_id`
+- UNIQUE parcial: uma linha `principal=true AND ativo=true` por `obra_id`
+- CHECK: `principal=true` implica `ativo=true`
 - Trigger: Local e Obra com o mesmo `group_id` **e** o mesmo `cliente_id`
 - Índice `(cliente_local_id)` para bloquear inativação do Local
 - RLS ENABLE + FORCE
@@ -307,11 +417,11 @@ Não criar tabela polimórfica de endereço. Não criar `obras_v2`.
 
 | Cenário | Como o modelo cobre |
 |---|---|
-| 1. Uma obra, um cliente | `obras.cliente_id` obrigatório |
+| 1. Uma obra, um cliente | `obras.cliente_id` = Cliente comercial principal |
 | 2. Cliente com várias obras | N `obras` por `cliente_id` |
 | 3. Atendida por mais de uma empresa | N `obra_empresas` no mesmo Grupo |
-| 4. Construtora compra para obra de terceiro | Cliente da Obra = **comprador** (quem opera no ERP). Proprietário entra depois em `obra_responsaveis`/`obra_papeis` |
-| 5. Proprietário ≠ comprador | Não duplicar `cliente_id`. Papéis futuros; 06B não tem dois FKs de Cliente |
+| 4. Construtora compra para obra de terceiro | Cliente da Obra = comprador/operador no ERP (ex.: Construtora ABC). Condomínio XYZ = papel futuro, não segundo FK |
+| 5. Proprietário ≠ comprador | `cliente_id` **não** é proprietário do imóvel. Papéis futuros; 06B sem dois FKs de Cliente |
 | 6. Troca de responsável | Fora do 06B; histórico no relacionamento de papéis |
 | 7. Obra encerrada com histórico | `status=CONCLUIDA` ou inativa; documentos guardam snapshot |
 | 8. Pedido sem obra | `obra_id` NULL no Pedido futuro; API de Obra não é bloqueio |
@@ -326,17 +436,15 @@ agora.
 ## 7. Relação Obra × ClienteEmpresa
 
 ```text
-operar Obra na Empresa X
+NOVA operação na Empresa X
   ⇒ mesmo group_id
   ⇒ cliente_empresas(cliente, X) elegível
   ⇒ obra_empresas(obra, X) ativo
+
+LEITURA histórica autorizada
+  ⇒ RBAC + tenant + vínculo
+  ⇒ NÃO exige elegivel_operacao atual
 ```
-
-Se o Cliente estiver bloqueado na Empresa, a Obra não “fura” o bloqueio.
-Se a Obra não estiver autorizada na 3Z, a CPA pode operar e a 3Z não.
-
-Criação rápida no Comercial: usa a Empresa do contexto e grava
-`obra_empresas` na mesma transação.
 
 ---
 
@@ -344,6 +452,11 @@ Criação rápida no Comercial: usa a Empresa do contexto e grava
 
 - Obra **referencia**; Local **é** o endereço.
 - Local principal da Obra ≠ automaticamente local de entrega do Pedido.
+- Dívida de cutover: Site CPA hoje usa `addressId` como `obraId`. Modelo
+  final: `addressId`/`cliente_local_id` ≠ `obra_id`. Alias só na transição,
+  com mapeamento explícito; não eternizar ambiguidade.
+- `tipo_endereco=Obra` é legado: staging → ClienteLocal → Obra →
+  `obra_local`. Sem finalidade OBRA.
 - Pedido futuro escolhe o `cliente_local_id` efetivo (descarga, portaria,
   depósito) entre os `obra_locais` (ou, se política permitir, outro Local
   ativo do mesmo Cliente, com auditoria).
@@ -394,26 +507,34 @@ RBAC canônico (reutilizar guard; não criar motor novo):
 - `cadastros.obra.vincular-local`
 - `cadastros.obra.principal`
 
+Proposta alinhada a `cadastros.cliente-empresa.*` e
+`cadastros.local-cliente.*`. **Não existe** chave `cadastros.obra` no código
+hoje. Na implementação, confirmar o vocabulário real e **não** duplicar
+equivalente. Usar Obra no Pedido futuro (`comercial.pedido.*`) ≠ editar
+cadastro. Permissão extra de “usar” só no runtime do Pedido, se necessária.
+
 Usar Obra no Pedido futuro não concede editar cadastro.
 
 ---
 
 ## 11. Auditoria
 
-Eventos do 06B:
+Eventos do 06B (ou equivalentes já usados no projeto):
 
-- `create`, `update`, `soft_delete`/`inactivate`, `restore`
-- `link` / unlink Empresa (`obra_empresas`)
-- `link` / unlink Local (`obra_locais`)
+- `create`, `update`, `change_status`
+- `soft_delete` / `inactivate`, `restore`
+- `link` / unlink / restore Empresa
+- `link` / unlink / restore Local
 - `change_primary_local` (ou `principal`)
-- `change_status`
-- `possible_duplicate`
+- `possible_duplicate` / override
 
-Snapshot **sem PII**: ids, codigo, nome, status, ativo, ids de Empresa/Local,
-uso, flags. **Não** gravar endereço completo, coordenadas, telefone, e-mail,
+Snapshot **sem PII**: `obra_id`, codigo, nome quando seguro, status, ativo,
+`empresa_id`, `cliente_local_id`, `uso_na_obra`, `principal`, IDs e flags.
+**Não** gravar logradouro/CEP completos, coordenadas, telefone, e-mail,
 CPF/CNPJ, arquivos.
 
-Atomicidade: se audit falhar, rollback da mutação (padrão 05/06A).
+Atomicidade: mutação + auditoria na **mesma transação**. Falha de audit →
+ROLLBACK completo.
 
 ---
 
@@ -440,8 +561,8 @@ Base: `/api/v1/clientes/:clienteId/obras`
 
 | Método | Caminho | Operação | RBAC |
 |---|---|---|---|
-| GET | `/` | list/search/count/paginação | visualizar |
-| POST | `/` | criar Obra + empresa do contexto + locais | criar (+ principal se marcar) |
+| GET | `/` | list/search/count; limit/offset/hasMore; search codigo/nome; filtros status/ativo/empresa/cidade/UF; order_by allowlist | visualizar |
+| POST | `/` | criar atômico: Obra + código + obra_empresas + ≥1 local + principal + audit | criar (+ `principal`) |
 | GET | `/:obraId` | obter ativa | visualizar |
 | PATCH | `/:obraId` | nome/status/observacao | editar; status pode exigir editar |
 | DELETE | `/:obraId` | inativar | inativar |
@@ -479,11 +600,17 @@ Wizard atual (`WizardEtapa1Cliente`) deverá, no cutover futuro, listar
 **Obras** (não `locais_entrega` como se fossem Obra) e, à parte, o Local de
 entrega efetivo.
 
-Criação rápida: `+ Nova Obra` no pedido, sem sair do fluxo, com os mesmos
-guards. Campos mínimos: nome + Local existente ou Local novo (reusa API 06A)
-+ Empresa do contexto. Pendentes: papéis, datas, anexos, classificação rica.
+Comercial 360º **compõe** agregados canônicos; não é dono dos dados.
 
-Obra opcional no Pedido: canal marketplace/site pode omitir.
+Criação rápida: `+ Nova Obra` no pedido, sem sair do fluxo, com os mesmos
+guards. Campos mínimos: nome + Local existente ou Local novo (reusa 06A) +
+Empresa do contexto. Código gerado no servidor — nunca pedido ao usuário.
+Pendentes: papéis, datas, anexos, classificação rica.
+Seleção rápida só oferece `ATIVA` + `ativo` (não PAUSADA/CONCLUIDA/
+CANCELADA).
+
+Obra opcional no Pedido: marketplace, varejo, PF, retirada, venda avulsa,
+site, balcão.
 
 Origem do pedido, canal, marketplace e origem do cadastro do Cliente são
 dimensões **distintas** (não modelar no 06B).
@@ -516,11 +643,11 @@ Pedido/item versionado + documentos genéricos.
 | Área | Impacto do 06B | Agora | Futuro | Risco |
 |---|---|---|---|---|
 | Cliente | FK dono | sim | cadastro 360º lista obras | baixo |
-| ClienteEmpresa | pré-condição + trigger | sim | venda/B2B | médio se vínculo frouxo |
+| ClienteEmpresa | cadastro obrigatório; `elegivel_operacao` só para **nova** operação | sim | venda/B2B | médio se misturar histórico |
 | ClienteLocal | reuso via `obra_locais`; bloqueio de inativação | sim | geo/rota | médio |
-| Obra | nasce o agregado | sim | comercial/produção | — |
-| Comercial | contrato de seleção/criação rápida | não UI | 360º / wizard | alto se cutover precoce |
-| Pedido | `obra_id` opcional + snapshot | não | canônico | alto se obrigar Obra |
+| Obra | Grupo+Cliente; `obra_empresas` explícito; `obra_locais` N:N; 1 principal geral | sim | comercial | — |
+| Comercial | seleção/criação rápida; só ATIVA por padrão | não UI | 360º / wizard | alto se cutover precoce |
+| Pedido | `obra_id` **opcional** + Local efetivo + snapshot | não | canônico | alto se obrigar Obra |
 | Produto / BOM / kit | nenhum | não | item especial | baixo |
 | Produção | nenhum | não | herda obra do pedido | baixo |
 | Expedição | nenhum | não | snapshot + janela do Local | médio se reidratar master |
@@ -539,48 +666,55 @@ Pedido/item versionado + documentos genéricos.
 | Ameaça | Mitigação |
 |---|---|
 | IDOR / enumeração | UUID; 404 uniforme; paginação; sem lista global sem cliente |
-| Cross-group | trigger + TenantGuard + RLS |
-| Cross-company | filtro `obra_empresas`; ClienteEmpresa elegível |
+| Cross-group | trigger + TenantGuard + RLS FORCE |
+| Cross-company | filtro `obra_empresas`; visão Empresa ≠ Grupo |
 | Mass assignment | schema strict; codigo/tenant/actors só no servidor |
 | Spoof de cliente/empresa/local | FKs + mesmo `cliente_id`/`group_id` no trigger |
+| Local de outro Cliente | trigger `obra_locais` + 404/422 |
+| Empresa sem ClienteEmpresa | trigger `obra_empresas` |
 | Actor ausente/inválido | fail-closed |
 | Restore indevido | RBAC restaurar + audit |
-| Manipulação de status | allowlist enum; não misturar com financeiro |
-| Vazamento de endereço | join explícito + RBAC Local; audit redigido |
-| Arquivo malicioso (futuro) | fora do 06B; allowlist MIME, scan, storage privado |
-| Corrida no principal/código | transação + `reserve_entity_codigo` + lock da Obra |
-| Falso bloqueio de duplicidade | alerta, não UNIQUE de endereço |
-| Pedido forçado a ter Obra | contrato: coluna futura NULLABLE |
+| Status indevido / PAUSADA silenciosa | allowlist; seleção só ATIVA |
+| Principal concorrente | lock da Obra; unique parcial; transação |
+| Código concorrente | `reserve_entity_codigo` |
+| Falha de audit | rollback completo |
+| PII (endereço na listagem/audit) | join explícito + RBAC Local; audit redigido |
+| Arquivo malicioso (futuro) | fora do 06B |
+| Pedido forçado a ter Obra | coluna futura NULLABLE |
 
 ---
 
 ## 18. Fluxos
 
-**Fluxo 1 — Local existente:** Cliente elegível → POST Obra (nome) → POST
-`obra_locais` no Local já 06A → marca principal → `obra_empresas` da Empresa
-contexto. Audit atômico.
+**Fluxo 1 — Local existente:** POST atômico no contexto Empresa cria Obra +
+código + `obra_empresas` + `obra_local` (Local do mesmo Cliente/Grupo) +
+principal + audit. Local de outro Cliente/Grupo → bloqueio banco/backend.
 
-**Fluxo 2 — Novo Local:** criar ClienteLocal (API 06A, RBAC Local) e em
-seguida (ou na mesma transação de aplicação, duas permissões) vincular à
-Obra. Não gravar endereço em `obras`.
+**Fluxo 2 — Novo Local:** application service reutiliza ClienteLocal 06A no
+mesmo `db.withTransaction` (RBAC Local **e** Obra). Sem endereço em
+`obras` e sem segundo cadastro.
 
-**Fluxo 3 — Pedido futuro, Obra existente:** Cliente → Empresa → Obra
-autorizada → escolher Local de entrega entre `obra_locais` → snapshot.
+**Fluxo 3 — Pedido futuro, Obra existente:** Cliente → Empresa do Pedido →
+Obra autorizada (`obra_empresas` + ClienteEmpresa elegível) → usuário
+escolhe Local de entrega (não o principal por default) → snapshot
+(`obra_id` + `cliente_local_id` + cópia). NF pela Empresa do Pedido.
 
-**Fluxo 4 — Obra rápida no pedido:** modal mínimo (nome + local) com RBAC
-criar; vínculo Empresa implícito; Pedido ainda não existe no PG neste lote.
+**Fluxo 4 — Obra rápida no pedido:** modal mínimo (nome + local); código
+servidor; vínculo Empresa implícito; RBAC criar. Pedido ainda não existe
+no PG neste lote.
 
-**Fluxo 5 — Pedido sem Obra:** permitido; destino pode ser Local do Cliente
-ou snapshot de canal.
+**Fluxo 5 — Pedido sem Obra:** permitido (marketplace/varejo/PF/retirada/
+avulsa/site/balcão).
 
-**Fluxo 6 — Duas empresas:** Grupo autoriza `obra_empresas` CPA e 3Z;
-faturamento escolhe a Empresa da transação.
+**Fluxo 6 — Duas empresas:** uma Obra 000001; `obra_empresas` CPA e 3Z
+ativos; cada operação tem `empresa_id` próprio. Sem cópia CPA/3Z.
 
-**Fluxo 7 — Encerrada:** `status=CONCLUIDA`; some da seleção padrão; Pedidos
-antigos permanecem com snapshot.
+**Fluxo 7 — Encerrada / bloqueio posterior:** `CONCLUIDA` fora da seleção
+nova. Se ClienteEmpresa CPA bloquear depois da venda, nova operação
+bloqueada; histórico permanece visível ao autorizado.
 
 **Fluxo 8 — Troca de endereço atual:** PATCH ClienteLocal ou troca de
-`obra_locais`; documentos históricos inalterados.
+`obra_locais`/principal atômica; documentos históricos inalterados.
 
 ---
 
@@ -588,16 +722,33 @@ antigos permanecem com snapshot.
 
 Obrigatório no lote de código 06B:
 
-CREATE, GET, LIST, PATCH, SEARCH, FILTER, PAGINATION, COUNT, SOFT DELETE,
-RESTORE, RBAC fail-closed, RLS + FORCE RLS, CROSS-GROUP 404, CROSS-COMPANY
-filtrado, MASS ASSIGNMENT rejeitado, TENANT FK trigger, sequential code
-`reserve_entity_codigo` concorrente, principal único atômico, DUPLICATE
-WARNING sem merge, Obra × Local mesmo cliente, Local de outro cliente/grupo
-rejeitado, Obra × Empresa, ClienteEmpresa ausente rejeita vínculo, AUDIT
-sem PII de endereço, ATOMICITY/ROLLBACK se audit falhar, legacy fields
-presentes, API meta ainda `ERP-RUNTIME-06A` **durante o diagnóstico** e
-`ERP-RUNTIME-06B` **somente na implementação**, FRONTEND HTTP OFF,
-finalidade OBRA continua proibida em ClienteLocal, seed A/A2/B convergente.
+CREATE, GET, LIST, PATCH, SEARCH, FILTER, PAGINATION, COUNT (`hasMore`),
+SOFT DELETE, RESTORE, RBAC fail-closed, RLS + FORCE RLS, CROSS-GROUP 404,
+CROSS-COMPANY filtrado, MASS ASSIGNMENT rejeitado, TENANT FK trigger,
+FRONTEND HTTP OFF, finalidade OBRA continua proibida em
+`cliente_local_finalidades`, seed A/A2/B convergente, legacy fields,
+meta `ERP-RUNTIME-06B` **somente na implementação**.
+
+Casos explícitos:
+
+- A. criação atômica: Obra + Empresa + Local principal + audit;
+- B. falha de audit: nada persiste (nem código inconsistente);
+- C. Local de outro Cliente: bloqueado;
+- D. Local de outro Grupo: bloqueado;
+- E. Empresa de outro Grupo: bloqueada;
+- F. Empresa sem ClienteEmpresa: bloqueada;
+- G. ClienteEmpresa inelegível: nova operação bloqueada;
+- H. histórico consultável após inelegibilidade (RBAC/tenant);
+- I. duas criações concorrentes: códigos distintos;
+- J. duas trocas concorrentes de principal: um único principal;
+- K. inativar Local principal usado por Obra ativa: bloqueado;
+- L. inativar Obra: Local continua ativo;
+- M. inativar `obra_empresas`: outras Empresas continuam;
+- N. PAUSADA fora da seleção operacional padrão;
+- O. CONCLUIDA fora da seleção operacional;
+- P. CANCELADA fora da seleção operacional;
+- Q. contrato: Pedido futuro sem Obra permitido (sem implementar Pedido);
+- R. OBRA continua proibida em `cliente_local_finalidades`.
 
 Não exigir teste de Pedido/NF/anexo neste lote.
 
@@ -625,30 +776,22 @@ RLS, audit e RBAC já existem.
 
 ## 21. Escopo definitivo recomendado para o RUNTIME-06B
 
-Implementação **posterior**, após review:
+Implementação **posterior**, após review final:
 
-1. migration `012_obras.sql` (aditiva; 001–011 imutáveis): `obras`,
-   `obra_empresas`, `obra_locais`; checks; triggers; índices; RLS FORCE;
-   REVOKE PUBLIC;
-2. types/schemas Zod;
-3. repositórios in-memory e PostgreSQL (transação compartilhada);
-4. `ObraService` com TenantGuard, RBAC, elegibilidade, duplicidade
-   conservadora, audit atômico;
-5. rotas aninhadas em `/api/v1/clientes/:clienteId/obras`;
-6. chaves RBAC e ações de audit necessárias;
-7. seed sintético A/A2/B (sem PII real);
-8. testes `runtime06b` + atomicidade;
-9. docs de implementação/runbook;
-10. meta API passa a `ERP-RUNTIME-06B` **somente nesse lote de código**.
+1. **uma** migration `012_obras.sql` (aditiva; 001–011 imutáveis) com
+   `obras`, `obra_empresas` e `obra_locais` no mesmo arquivo;
+2. código sequencial, status, lifecycle, triggers tenant, RLS/FORCE;
+3. types/schemas Zod;
+4. repositórios in-memory e PostgreSQL (transação compartilhada);
+5. service/API aninhada, RBAC proposto, duplicidade conservadora;
+6. busca/paginação/count server-side;
+7. auditoria atômica sem PII de endereço;
+8. seed sintético A/A2/B;
+9. testes (inclui A–R);
+10. docs/runbook; meta `ERP-RUNTIME-06B` **somente nesse lote de código**.
 
-Redução em relação ao candidato inicial: sem `obra_responsaveis`, sem
-anexos, sem tipo rico, sem datas de obra, sem eventos de integração
-emitidos, sem frontend.
-
-Ampliação justificada em relação ao 06 original: `obra_locais` e
-`obra_empresas` no mesmo lote, porque um único `cliente_local_id` e o
-compartilhamento implícito nasceriam errados e exigiriam migration
-quebra-contrato em seguida.
+Não dividir em 012/013/014. Sem `obra_responsaveis`, anexos, tipo rico,
+datas, eventos emitidos, frontend, staging real.
 
 ---
 
@@ -735,6 +878,9 @@ Não aplicar agora. Candidatas reutilizáveis:
    (`entity_documents`), não em tabela de arquivo por módulo.
 5. **Interações** (voz, WhatsApp, chat) nascem em camada genérica, não
    dentro do agregado Obra.
+6. **Master compartilhado no Grupo** não deve ser copiado fisicamente por
+   Empresa quando uma relação de autorização (`obra_empresas`,
+   `cliente_empresas`) resolve o escopo.
 
 Nenhuma dessas regras contradiz a Regra-Mãe; apenas materializam decisões
-já usadas em 06A/Comercial legado.
+já usadas em 06A/Comercial legado. **Não aplicar AGENTS.md neste lote.**
