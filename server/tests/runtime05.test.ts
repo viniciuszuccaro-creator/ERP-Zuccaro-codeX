@@ -386,7 +386,7 @@ test('API ClienteEmpresa: tenant, lifecycle, paginação, concorrência e audito
   }).bloqueado, true);
 
   const meta = await fetchOk(app, '/api/v1/meta');
-  assert.ok(['ERP-RUNTIME-05', 'ERP-RUNTIME-06A'].includes(meta.runtime));
+  assert.ok(['ERP-RUNTIME-05', 'ERP-RUNTIME-06A', 'ERP-RUNTIME-06B'].includes(meta.runtime));
   assert.equal(meta.clienteEmpresa.frontendHttp, false);
   assert.ok(!meta.httpPilotEntities.includes('ClienteEmpresa'));
 });

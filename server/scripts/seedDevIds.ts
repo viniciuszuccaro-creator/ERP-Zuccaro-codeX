@@ -31,6 +31,8 @@ export const SEED_IDS = Object.freeze({
   clienteLocalB: 'b6b6b6b6-aaaa-4aaa-8aaa-b6b6b6b6b6b6',
   clienteLocalC: 'c6c6c6c6-aaaa-4aaa-8aaa-c6c6c6c6c6c6',
   clienteLocalB1: 'd6d6d6d6-bbbb-4bbb-8bbb-d6d6d6d6d6d6',
+  obraA: 'e6e6e6e6-aaaa-4aaa-8aaa-e6e6e6e6e6e6',
+  obraB: 'f6f6f6f6-bbbb-4bbb-8bbb-f6f6f6f6f6f6',
 });
 
 /** Documentos sintéticos do seed (normalizados). */

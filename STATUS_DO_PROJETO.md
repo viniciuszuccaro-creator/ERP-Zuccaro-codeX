@@ -1,3 +1,32 @@
+### ERP-RUNTIME-06B — IMPLEMENTAÇÃO Obra (branch)
+
+- Data: 2026-09-18.
+- Branch: `cursor/erp-runtime-06b-obras-392b`.
+- Base: `f7fd49a12699a17db1a3e9f3cc57a4efdf44a88a`.
+- Status: **`IMPLEMENTADO NA BRANCH / AGUARDANDO REVIEW`**.
+- Software/API DEV oficial: **permanece `ERP-RUNTIME-06A`**. Migration 012
+  **não** aplicada no DEV remoto neste lote. VPS **não** acessado.
+- Migration: somente `012_obras.sql` (`obras`, `obra_empresas`, `obra_locais`);
+  001–011 imutáveis.
+- Obra = contexto de negócio (Grupo + Cliente); Empresa autoriza via
+  `obra_empresas`; locais via `obra_locais` N:N; um principal geral.
+- Obra **não** é finalidade de ClienteLocal e **não** armazena endereço/geo.
+- Código: `reserve_entity_codigo(group_id,'Obra',6)`; concorrência coberta.
+- Status: ATIVA/PAUSADA/CONCLUIDA/CANCELADA; operacional exige ATIVA+ativo+
+  obra_empresa+ClienteEmpresa elegível; histórico preservado após bloqueio.
+- RBAC `Cadastros.obra` fail-closed; RLS ENABLE+FORCE nas três tabelas.
+- Auditoria atômica sem PII de endereço/documento; soft delete/restore sem
+  cascade de vínculos.
+- Pedido **não** implementado; `frontendHttp=false`; Obra ausente de
+  `HTTP_PILOT_ENTITIES`.
+- Docs: `docs/ERP_RUNTIME_06B.md` e `docs/ERP_RUNTIME_06B_DEV_RUNBOOK.md`.
+- Validações locais: server typecheck/build OK; server 61 pass / 1 skip;
+  PGlite cobre 012/RLS/tenant/concorrência/audit rollback; `npm test` root
+  570 pass; lint OK; `git diff --check` OK; typecheck frontend mantém
+  baseline histórico (exit 2), sem erro novo no lote.
+- Próximo passo: review humano; **não** merge automático; **não** promover
+  API; **não** iniciar RUNTIME-07; **não** frontend.
+
 ### ERP-RUNTIME-06B — DIAGNÓSTICO ARQUITETURAL (Obra)
 
 - Data: 2026-09-18.

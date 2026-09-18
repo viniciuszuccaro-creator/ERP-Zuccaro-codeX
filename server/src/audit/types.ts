@@ -28,6 +28,9 @@ export type AuditAction =
   | 'inactivate'
   | 'set_purposes'
   | 'possible_duplicate'
+  | 'possible_duplicate_override'
+  | 'change_status'
+  | 'change_primary_local'
   | 'duplicate_block'
   | 'read';
 

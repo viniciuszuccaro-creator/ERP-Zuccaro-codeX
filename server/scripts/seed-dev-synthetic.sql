@@ -306,7 +306,9 @@ WHERE produtos.id = '88888888-bbbb-4bbb-8bbb-888888888888';
 INSERT INTO entity_code_sequences (group_id, entity_name, next_value)
 VALUES
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'Cliente', 3),
-  ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'Cliente', 2)
+  ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'Cliente', 2),
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'Obra', 2),
+  ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'Obra', 2)
 ON CONFLICT (group_id, entity_name) DO UPDATE
   SET next_value = GREATEST(entity_code_sequences.next_value, EXCLUDED.next_value),
       updated_at = timezone('utc', now());
@@ -322,7 +324,7 @@ INSERT INTO profiles (
   true,
   'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
   NULL,
-  '{"Cadastros":{"cliente":["visualizar","criar","editar","inativar","restaurar"],"cliente_empresa":["visualizar","criar","editar","inativar","restaurar","bloquear"],"cliente_local":["visualizar","criar","editar","inativar","restaurar","principal"]}}'::jsonb
+  '{"Cadastros":{"cliente":["visualizar","criar","editar","inativar","restaurar"],"cliente_empresa":["visualizar","criar","editar","inativar","restaurar","bloquear"],"cliente_local":["visualizar","criar","editar","inativar","restaurar","principal"],"obra":["visualizar","criar","editar","inativar","restaurar","vincular-empresa","vincular-local","principal"]}}'::jsonb
 )
 ON CONFLICT (id) DO UPDATE SET
   email = EXCLUDED.email,
@@ -345,7 +347,7 @@ INSERT INTO profiles (
   true,
   'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
   NULL,
-  '{"Cadastros":{"cliente":["visualizar","criar","editar","inativar","restaurar"],"cliente_empresa":["visualizar","criar","editar","inativar","restaurar","bloquear"],"cliente_local":["visualizar","criar","editar","inativar","restaurar","principal"]}}'::jsonb
+  '{"Cadastros":{"cliente":["visualizar","criar","editar","inativar","restaurar"],"cliente_empresa":["visualizar","criar","editar","inativar","restaurar","bloquear"],"cliente_local":["visualizar","criar","editar","inativar","restaurar","principal"],"obra":["visualizar","criar","editar","inativar","restaurar","vincular-empresa","vincular-local","principal"]}}'::jsonb
 )
 ON CONFLICT (id) DO UPDATE SET
   email = EXCLUDED.email,
@@ -644,6 +646,106 @@ INSERT INTO cliente_local_finalidades (
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '99999999-aaaa-4aaa-8aaa-999999999991', 'c6c6c6c6-aaaa-4aaa-8aaa-c6c6c6c6c6c6', 'ENTREGA', false, true, 'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4', 'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'),
   ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '99999999-bbbb-4bbb-8bbb-999999999993', 'd6d6d6d6-bbbb-4bbb-8bbb-d6d6d6d6d6d6', 'ENTREGA', true, true, 'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4', 'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4')
 ON CONFLICT (cliente_local_id, finalidade) DO UPDATE SET
+  principal=EXCLUDED.principal,
+  ativo=EXCLUDED.ativo,
+  updated_by=EXCLUDED.updated_by,
+  updated_at=timezone('utc', now());
+
+INSERT INTO obras (
+  id, group_id, cliente_id, codigo, nome, status, observacao, ativo, origem,
+  legacy_id, legacy_code, source_system, migration_batch, imported_at,
+  created_by, updated_by
+) VALUES
+  (
+    'e6e6e6e6-aaaa-4aaa-8aaa-e6e6e6e6e6e6',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    '99999999-aaaa-4aaa-8aaa-999999999991',
+    '000001', 'OBRA DEV SINTETICA A', 'ATIVA', 'Observacao sintetica',
+    true, 'ERP', 'OBRA-A', 'LEG-OBRA-A', 'ERP_ANTIGO', 'RUNTIME06B-SEED',
+    '2026-09-18T00:00:00Z',
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4',
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'
+  ),
+  (
+    'f6f6f6f6-bbbb-4bbb-8bbb-f6f6f6f6f6f6',
+    'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+    '99999999-bbbb-4bbb-8bbb-999999999993',
+    '000001', 'OBRA DEV SINTETICA B', 'ATIVA', NULL,
+    true, 'ERP', 'OBRA-B', 'LEG-OBRA-B', 'ERP_ANTIGO', 'RUNTIME06B-SEED',
+    '2026-09-18T00:00:00Z',
+    'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4',
+    'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4'
+  )
+ON CONFLICT (id) DO UPDATE SET
+  group_id=EXCLUDED.group_id,
+  cliente_id=EXCLUDED.cliente_id,
+  codigo=EXCLUDED.codigo,
+  nome=EXCLUDED.nome,
+  status=EXCLUDED.status,
+  observacao=EXCLUDED.observacao,
+  ativo=EXCLUDED.ativo,
+  origem=EXCLUDED.origem,
+  legacy_id=EXCLUDED.legacy_id,
+  legacy_code=EXCLUDED.legacy_code,
+  source_system=EXCLUDED.source_system,
+  migration_batch=EXCLUDED.migration_batch,
+  imported_at=EXCLUDED.imported_at,
+  updated_by=EXCLUDED.updated_by,
+  updated_at=timezone('utc', now());
+
+INSERT INTO obra_empresas (
+  group_id, obra_id, empresa_id, ativo, created_by, updated_by
+) VALUES
+  (
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    'e6e6e6e6-aaaa-4aaa-8aaa-e6e6e6e6e6e6',
+    'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+    true,
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4',
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'
+  ),
+  (
+    'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+    'f6f6f6f6-bbbb-4bbb-8bbb-f6f6f6f6f6f6',
+    'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+    true,
+    'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4',
+    'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4'
+  )
+ON CONFLICT (obra_id, empresa_id) DO UPDATE SET
+  ativo=EXCLUDED.ativo,
+  updated_by=EXCLUDED.updated_by,
+  updated_at=timezone('utc', now());
+
+INSERT INTO obra_locais (
+  group_id, obra_id, cliente_local_id, uso_na_obra, principal, ativo,
+  created_by, updated_by
+) VALUES
+  (
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    'e6e6e6e6-aaaa-4aaa-8aaa-e6e6e6e6e6e6',
+    'a6a6a6a6-aaaa-4aaa-8aaa-a6a6a6a6a6a6',
+    'FISICO', true, true,
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4',
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'
+  ),
+  (
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    'e6e6e6e6-aaaa-4aaa-8aaa-e6e6e6e6e6e6',
+    'b6b6b6b6-aaaa-4aaa-8aaa-b6b6b6b6b6b6',
+    'ENTREGA', false, true,
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4',
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'
+  ),
+  (
+    'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+    'f6f6f6f6-bbbb-4bbb-8bbb-f6f6f6f6f6f6',
+    'd6d6d6d6-bbbb-4bbb-8bbb-d6d6d6d6d6d6',
+    'FISICO', true, true,
+    'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4',
+    'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4'
+  )
+ON CONFLICT (obra_id, cliente_local_id, uso_na_obra) DO UPDATE SET
   principal=EXCLUDED.principal,
   ativo=EXCLUDED.ativo,
   updated_by=EXCLUDED.updated_by,
