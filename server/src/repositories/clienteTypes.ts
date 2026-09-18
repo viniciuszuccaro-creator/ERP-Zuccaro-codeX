@@ -6,6 +6,7 @@ export const CLIENTE_ORIGENS = [
   'ERP', 'MIGRACAO', 'SITE_CPA', 'B2B', 'PORTAL', 'CHATBOT', 'WHATSAPP',
   'MARKETPLACE', 'APP', 'API',
 ] as const;
+export const CLIENTE_EMPRESA_SITUACOES = ['PROSPECT', 'ATIVO', 'INATIVO'] as const;
 
 /** Chaves RBAC canônicas; operações existentes são aplicadas por ClienteService. */
 export const CLIENTE_RBAC_KEYS = Object.freeze([
@@ -16,6 +17,15 @@ export const CLIENTE_RBAC_KEYS = Object.freeze([
   'cadastros.cliente.restaurar',
   'cadastros.cliente.importar',
   'cadastros.cliente.exportar',
+] as const);
+
+export const CLIENTE_EMPRESA_RBAC_KEYS = Object.freeze([
+  'cadastros.cliente-empresa.visualizar',
+  'cadastros.cliente-empresa.criar',
+  'cadastros.cliente-empresa.editar',
+  'cadastros.cliente-empresa.inativar',
+  'cadastros.cliente-empresa.restaurar',
+  'cadastros.cliente-empresa.bloquear',
 ] as const);
 
 const baseCreate = {
@@ -124,6 +134,60 @@ export type Cliente = {
   updated_by: string | null;
   created_at: string;
   updated_at: string;
+};
+
+const clienteEmpresaEditableFields = {
+  situacao_comercial: z.enum(CLIENTE_EMPRESA_SITUACOES).optional(),
+  habilitado_operacao: z.boolean().optional(),
+  observacao_comercial: z.string().trim().max(2000).optional().nullable(),
+  origem: z.enum(CLIENTE_ORIGENS).optional(),
+  legacy_id: z.string().trim().max(120).optional().nullable(),
+  legacy_code: z.string().trim().max(80).optional().nullable(),
+  source_system: z.string().trim().max(80).optional().nullable(),
+  migration_batch: z.string().trim().max(80).optional().nullable(),
+  imported_at: z.string().datetime().optional().nullable(),
+};
+
+export const clienteEmpresaCreateSchema = z.object({
+  ...clienteEmpresaEditableFields,
+  situacao_comercial: z.enum(CLIENTE_EMPRESA_SITUACOES).optional().default('ATIVO'),
+  habilitado_operacao: z.boolean().optional().default(true),
+  origem: z.enum(CLIENTE_ORIGENS).optional().default('ERP'),
+}).strict();
+
+export const clienteEmpresaUpdateSchema = z.object(clienteEmpresaEditableFields).strict();
+
+export const clienteEmpresaBlockSchema = z.object({
+  motivo: z.string().trim().min(3).max(500),
+}).strict();
+
+export type ClienteEmpresaCreate = z.infer<typeof clienteEmpresaCreateSchema>;
+export type ClienteEmpresaUpdate = z.infer<typeof clienteEmpresaUpdateSchema>;
+
+export type ClienteEmpresa = {
+  id: string;
+  group_id: string;
+  cliente_id: string;
+  empresa_id: string;
+  ativo: boolean;
+  situacao_comercial: typeof CLIENTE_EMPRESA_SITUACOES[number];
+  habilitado_operacao: boolean;
+  bloqueado: boolean;
+  motivo_bloqueio: string | null;
+  bloqueado_em: string | null;
+  bloqueado_por: string | null;
+  observacao_comercial: string | null;
+  origem: typeof CLIENTE_ORIGENS[number];
+  legacy_id: string | null;
+  legacy_code: string | null;
+  source_system: string | null;
+  migration_batch: string | null;
+  imported_at: string | null;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+  elegivel_operacao: boolean;
 };
 
 /** Campos proibidos (relacionamentos operacionais / crédito / preço — lote futuro). */

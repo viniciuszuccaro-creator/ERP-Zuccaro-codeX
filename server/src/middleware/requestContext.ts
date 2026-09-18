@@ -9,6 +9,7 @@ declare global {
       empresaId?: string;
       actorId?: string;
       actorEmail?: string;
+      scopeType?: 'grupo' | 'empresa';
     }
   }
 }
@@ -31,6 +32,7 @@ export function scopeMiddleware(req: Request, _res: Response, next: NextFunction
   if (empresaId) req.empresaId = empresaId;
   if (actorId) req.actorId = actorId;
   if (actorEmail) req.actorEmail = actorEmail;
+  req.scopeType = empresaId ? 'empresa' : 'grupo';
   next();
 }
 

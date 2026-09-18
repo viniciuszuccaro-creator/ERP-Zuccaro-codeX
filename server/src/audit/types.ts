@@ -1,3 +1,5 @@
+import type { DbQueryExecutor } from '../db/client.js';
+
 export type TenantScope = {
   groupId: string;
   empresaId?: string | null;
@@ -10,6 +12,7 @@ export type ActorContext = {
 
 export type RequestContext = TenantScope & ActorContext & {
   requestId: string;
+  scopeType?: 'grupo' | 'empresa';
   ipAddress?: string | null;
 };
 
@@ -19,6 +22,10 @@ export type AuditAction =
   | 'delete'
   | 'soft_delete'
   | 'restore'
+  | 'link'
+  | 'block'
+  | 'unblock'
+  | 'inactivate'
   | 'duplicate_block'
   | 'read';
 
@@ -37,6 +44,6 @@ export type AuditEntry = {
 };
 
 export interface AuditRepository {
-  append(entry: AuditEntry): Promise<void>;
+  append(entry: AuditEntry, executor?: DbQueryExecutor): Promise<void>;
   listByEntity(entity: string, entityId: string): Promise<AuditEntry[]>;
 }

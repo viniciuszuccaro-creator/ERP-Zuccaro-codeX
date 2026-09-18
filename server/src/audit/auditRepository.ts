@@ -1,11 +1,12 @@
 import type { DbClient } from '../db/client.js';
+import type { DbQueryExecutor } from '../db/client.js';
 import type { AuditEntry, AuditRepository } from './types.js';
 
 export class PostgresAuditRepository implements AuditRepository {
   constructor(private readonly db: DbClient) {}
 
-  async append(entry: AuditEntry): Promise<void> {
-    await this.db.query(
+  async append(entry: AuditEntry, executor?: DbQueryExecutor): Promise<void> {
+    await (executor ?? this.db).query(
       `INSERT INTO audit_logs (
         group_id, empresa_id, actor_id, actor_email,
         entity, entity_id, action, before_data, after_data,
@@ -68,7 +69,7 @@ export class PostgresAuditRepository implements AuditRepository {
 export class InMemoryAuditRepository implements AuditRepository {
   readonly entries: AuditEntry[] = [];
 
-  async append(entry: AuditEntry): Promise<void> {
+  async append(entry: AuditEntry, _executor?: DbQueryExecutor): Promise<void> {
     this.entries.push({ ...entry });
   }
 
