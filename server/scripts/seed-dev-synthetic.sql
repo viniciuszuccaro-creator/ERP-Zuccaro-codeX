@@ -1,6 +1,6 @@
--- Seed DEV sintetico (ERP-RUNTIME-05 Cliente x Empresa)
+-- Seed DEV sintetico (ERP-RUNTIME-06A ClienteLocal)
 -- Sem dados reais CPA.
--- Aplicar SOMENTE apos migrations 001-010.
+-- Aplicar SOMENTE apos migrations 001-011.
 --
 -- REGRA: nomes "A"/"B"/"TESTE B" NAO definem tenant.
 -- Tenant = group_id + empresa_id exclusivamente.
@@ -322,7 +322,7 @@ INSERT INTO profiles (
   true,
   'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
   NULL,
-  '{"Cadastros":{"cliente":["visualizar","criar","editar","inativar","restaurar"],"cliente_empresa":["visualizar","criar","editar","inativar","restaurar","bloquear"]}}'::jsonb
+  '{"Cadastros":{"cliente":["visualizar","criar","editar","inativar","restaurar"],"cliente_empresa":["visualizar","criar","editar","inativar","restaurar","bloquear"],"cliente_local":["visualizar","criar","editar","inativar","restaurar","principal"]}}'::jsonb
 )
 ON CONFLICT (id) DO UPDATE SET
   email = EXCLUDED.email,
@@ -345,7 +345,7 @@ INSERT INTO profiles (
   true,
   'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
   NULL,
-  '{"Cadastros":{"cliente":["visualizar","criar","editar","inativar","restaurar"],"cliente_empresa":["visualizar","criar","editar","inativar","restaurar","bloquear"]}}'::jsonb
+  '{"Cadastros":{"cliente":["visualizar","criar","editar","inativar","restaurar"],"cliente_empresa":["visualizar","criar","editar","inativar","restaurar","bloquear"],"cliente_local":["visualizar","criar","editar","inativar","restaurar","principal"]}}'::jsonb
 )
 ON CONFLICT (id) DO UPDATE SET
   email = EXCLUDED.email,
@@ -542,3 +542,109 @@ ON CONFLICT (cliente_id, empresa_id) DO UPDATE SET
   created_by = EXCLUDED.created_by,
   updated_by = EXCLUDED.updated_by,
   updated_at = timezone('utc', now());
+
+-- =====================================================================
+-- CLIENTE LOCAIS (ERP-RUNTIME-06A)
+-- Endereços exclusivamente sintéticos. OBRA não é finalidade.
+-- =====================================================================
+
+INSERT INTO cliente_locais (
+  id, group_id, cliente_id, nome, cep, logradouro, numero, complemento,
+  bairro, cidade, uf, pais, referencia, latitude, longitude,
+  coordinate_source, geocode_status, geocode_source, geocode_precision, geocoded_at,
+  ativo, origem, legacy_id, legacy_code, source_system, migration_batch,
+  imported_at, created_by, updated_by
+) VALUES
+  (
+    'a6a6a6a6-aaaa-4aaa-8aaa-a6a6a6a6a6a6',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    '99999999-aaaa-4aaa-8aaa-999999999991',
+    'LOCAL DEV MATRIZ A', '00000001', 'RUA SINTETICA A', 'S/N', 'BLOCO A',
+    'BAIRRO DEV', 'CIDADE DEV A', 'SP', 'BRASIL', 'REFERENCIA SINTETICA',
+    NULL, NULL, NULL, 'NAO_GEOCODIFICADO', NULL, NULL, NULL,
+    true, 'ERP', 'LOCAL-A', 'LEG-LOCAL-A', 'ERP_ANTIGO', 'RUNTIME06A-SEED',
+    '2026-09-18T00:00:00Z',
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4',
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'
+  ),
+  (
+    'b6b6b6b6-aaaa-4aaa-8aaa-b6b6b6b6b6b6',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    '99999999-aaaa-4aaa-8aaa-999999999991',
+    'LOCAL DEV ENTREGA A', '00000002', 'AVENIDA SINTETICA B', '100-A', NULL,
+    'BAIRRO DEV', 'CIDADE DEV A', 'SP', 'BRASIL', NULL,
+    0, 0, 'MANUAL', 'NAO_GEOCODIFICADO', NULL, NULL, NULL,
+    true, 'ERP', 'LOCAL-B', 'LEG-LOCAL-B', 'ERP_ANTIGO', 'RUNTIME06A-SEED',
+    '2026-09-18T00:00:00Z',
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4',
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'
+  ),
+  (
+    'c6c6c6c6-aaaa-4aaa-8aaa-c6c6c6c6c6c6',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    '99999999-aaaa-4aaa-8aaa-999999999991',
+    'LOCAL DEV ENTREGA C', '00000003', 'ESTRADA SINTETICA C', 'KM 12', 'PORTAO 2',
+    'BAIRRO DEV', 'CIDADE DEV C', 'MG', 'BRASIL', NULL,
+    NULL, NULL, NULL, 'NAO_GEOCODIFICADO', NULL, NULL, NULL,
+    true, 'ERP', NULL, NULL, NULL, NULL, NULL,
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4',
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'
+  ),
+  (
+    'd6d6d6d6-bbbb-4bbb-8bbb-d6d6d6d6d6d6',
+    'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+    '99999999-bbbb-4bbb-8bbb-999999999993',
+    'LOCAL DEV ENTREGA B', '00000004', 'RUA SINTETICA D', '200', NULL,
+    'BAIRRO DEV', 'CIDADE DEV B', 'RJ', 'BRASIL', NULL,
+    NULL, NULL, NULL, 'NAO_GEOCODIFICADO', NULL, NULL, NULL,
+    true, 'ERP', 'LOCAL-B1', 'LEG-LOCAL-B1', 'ERP_ANTIGO', 'RUNTIME06A-SEED',
+    '2026-09-18T00:00:00Z',
+    'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4',
+    'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4'
+  )
+ON CONFLICT (id) DO UPDATE SET
+  group_id=EXCLUDED.group_id,
+  cliente_id=EXCLUDED.cliente_id,
+  nome=EXCLUDED.nome,
+  cep=EXCLUDED.cep,
+  logradouro=EXCLUDED.logradouro,
+  numero=EXCLUDED.numero,
+  complemento=EXCLUDED.complemento,
+  bairro=EXCLUDED.bairro,
+  cidade=EXCLUDED.cidade,
+  uf=EXCLUDED.uf,
+  pais=EXCLUDED.pais,
+  referencia=EXCLUDED.referencia,
+  latitude=EXCLUDED.latitude,
+  longitude=EXCLUDED.longitude,
+  coordinate_source=EXCLUDED.coordinate_source,
+  geocode_status=EXCLUDED.geocode_status,
+  geocode_source=EXCLUDED.geocode_source,
+  geocode_precision=EXCLUDED.geocode_precision,
+  geocoded_at=EXCLUDED.geocoded_at,
+  ativo=EXCLUDED.ativo,
+  origem=EXCLUDED.origem,
+  legacy_id=EXCLUDED.legacy_id,
+  legacy_code=EXCLUDED.legacy_code,
+  source_system=EXCLUDED.source_system,
+  migration_batch=EXCLUDED.migration_batch,
+  imported_at=EXCLUDED.imported_at,
+  created_by=EXCLUDED.created_by,
+  updated_by=EXCLUDED.updated_by,
+  updated_at=timezone('utc', now());
+
+INSERT INTO cliente_local_finalidades (
+  group_id, cliente_id, cliente_local_id, finalidade, principal,
+  ativo, created_by, updated_by
+) VALUES
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '99999999-aaaa-4aaa-8aaa-999999999991', 'a6a6a6a6-aaaa-4aaa-8aaa-a6a6a6a6a6a6', 'CADASTRAL', true, true, 'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4', 'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'),
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '99999999-aaaa-4aaa-8aaa-999999999991', 'a6a6a6a6-aaaa-4aaa-8aaa-a6a6a6a6a6a6', 'FISCAL', true, true, 'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4', 'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'),
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '99999999-aaaa-4aaa-8aaa-999999999991', 'a6a6a6a6-aaaa-4aaa-8aaa-a6a6a6a6a6a6', 'COBRANCA', true, true, 'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4', 'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'),
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '99999999-aaaa-4aaa-8aaa-999999999991', 'b6b6b6b6-aaaa-4aaa-8aaa-b6b6b6b6b6b6', 'ENTREGA', true, true, 'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4', 'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'),
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '99999999-aaaa-4aaa-8aaa-999999999991', 'c6c6c6c6-aaaa-4aaa-8aaa-c6c6c6c6c6c6', 'ENTREGA', false, true, 'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4', 'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'),
+  ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '99999999-bbbb-4bbb-8bbb-999999999993', 'd6d6d6d6-bbbb-4bbb-8bbb-d6d6d6d6d6d6', 'ENTREGA', true, true, 'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4', 'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4')
+ON CONFLICT (cliente_local_id, finalidade) DO UPDATE SET
+  principal=EXCLUDED.principal,
+  ativo=EXCLUDED.ativo,
+  updated_by=EXCLUDED.updated_by,
+  updated_at=timezone('utc', now());

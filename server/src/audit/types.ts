@@ -26,6 +26,8 @@ export type AuditAction =
   | 'block'
   | 'unblock'
   | 'inactivate'
+  | 'set_purposes'
+  | 'possible_duplicate'
   | 'duplicate_block'
   | 'read';
 

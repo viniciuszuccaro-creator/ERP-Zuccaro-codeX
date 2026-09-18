@@ -60,6 +60,7 @@ test('migrations are ordered through runtime-05', () => {
     '008_produtos_fk_tenant.sql',
     '009_clientes_master_data.sql',
     '010_cliente_empresas_comercial.sql',
+    '011_cliente_locais.sql',
   ]);
 });
 

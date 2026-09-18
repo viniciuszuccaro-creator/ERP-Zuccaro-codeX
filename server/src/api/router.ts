@@ -5,6 +5,7 @@ import type { DbClient } from '../db/client.js';
 import { getAuthFoundation } from '../auth/foundation.js';
 import { requireTenantScope } from '../middleware/requestContext.js';
 import type { ClienteService } from '../services/clienteService.js';
+import type { ClienteLocalService } from '../services/clienteLocalService.js';
 import type { MarcaService } from '../services/marcaService.js';
 import type { ProdutoService } from '../services/produtoService.js';
 import type { TenantCrudService } from '../services/tenantCrudService.js';
@@ -26,6 +27,7 @@ export type ApiDeps = {
   setorService: TenantCrudService<any, any, any>;
   produtoService: ProdutoService;
   clienteService: ClienteService;
+  clienteLocalService: ClienteLocalService;
 };
 
 function ctxFromReq(req: Request) {
@@ -331,6 +333,102 @@ function mountClienteRoutes(router: Router, service: ClienteService) {
   });
 }
 
+function mountClienteLocalRoutes(router: Router, service: ClienteLocalService) {
+  const basePath = '/api/v1/clientes/:clienteId/locais';
+
+  router.get(basePath, requireTenantScope, async (req, res, next) => {
+    try {
+      const orderByRaw = req.query.order_by ? String(req.query.order_by) : undefined;
+      const orderBy = ['nome', 'cidade', 'created_at'].includes(orderByRaw ?? '')
+        ? orderByRaw as 'nome' | 'cidade' | 'created_at'
+        : undefined;
+      const orderDirRaw = req.query.order_dir ? String(req.query.order_dir).toLowerCase() : undefined;
+      const orderDir = orderDirRaw === 'asc' || orderDirRaw === 'desc' ? orderDirRaw : undefined;
+      const page = await service.list(ctxFromReq(req), req.params.clienteId, {
+        ativo: parseAtivoQuery(req.query.ativo),
+        finalidade: req.query.finalidade ? String(req.query.finalidade) : undefined,
+        principal: req.query.principal == null
+          ? undefined
+          : parseAtivoQuery(req.query.principal),
+        cidade: req.query.cidade ? String(req.query.cidade) : undefined,
+        uf: req.query.uf ? String(req.query.uf) : undefined,
+        search: req.query.search ? String(req.query.search) : undefined,
+        orderBy,
+        orderDir,
+        limit: req.query.limit ? Number(req.query.limit) : undefined,
+        offset: req.query.offset ? Number(req.query.offset) : undefined,
+      });
+      res.json(page);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post(basePath, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.create(ctxFromReq(req), req.params.clienteId, req.body);
+      res.status(201).json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get(`${basePath}/:localId`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.get(
+        ctxFromReq(req), req.params.clienteId, req.params.localId,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.patch(`${basePath}/:localId`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.update(
+        ctxFromReq(req), req.params.clienteId, req.params.localId, req.body,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.put(`${basePath}/:localId/finalidades`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.setFinalidades(
+        ctxFromReq(req), req.params.clienteId, req.params.localId, req.body,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.delete(`${basePath}/:localId`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.softDelete(
+        ctxFromReq(req), req.params.clienteId, req.params.localId,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post(`${basePath}/:localId/restore`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.restore(
+        ctxFromReq(req), req.params.clienteId, req.params.localId,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+}
+
 export function createApiRouter(deps: ApiDeps) {
   const router = Router();
 
@@ -365,12 +463,12 @@ export function createApiRouter(deps: ApiDeps) {
 
   router.get('/api/v1/meta', (_req, res) => {
     res.json({
-      runtime: 'ERP-RUNTIME-05',
+      runtime: 'ERP-RUNTIME-06A',
       auth: getAuthFoundation(),
       config: publicConfigView(deps.config),
       httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade'],
-      preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa'],
-      httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa'],
+      preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal'],
+      httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal'],
       rlsModel: 'ENABLE+FORCE fail-closed; BFF uses privileged DB role; JWT policies planned with Auth',
       note: 'ClienteEmpresa prepared in backend; NOT in frontend HTTP_PILOT_ENTITIES until E2E activation authorized',
       produto: {
@@ -394,6 +492,13 @@ export function createApiRouter(deps: ApiDeps) {
         softDeleteRestore: true,
         frontendHttp: false,
       },
+      clienteLocal: {
+        canonicalAddress: true,
+        multiPurpose: true,
+        pagination: true,
+        transactionalAudit: true,
+        frontendHttp: false,
+      },
     });
   });
 
@@ -403,6 +508,7 @@ export function createApiRouter(deps: ApiDeps) {
   mountCrud(router, '/api/v1/setores-atividade', deps.setorService);
   mountProdutoRoutes(router, deps.produtoService);
   mountClienteRoutes(router, deps.clienteService);
+  mountClienteLocalRoutes(router, deps.clienteLocalService);
 
   return router;
 }

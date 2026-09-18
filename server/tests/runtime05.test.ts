@@ -103,7 +103,7 @@ test('PostgreSQL: migration 010 é convergente, íntegra, única e RLS', async (
     const files = readdirSync(migrationDir)
       .filter((file) => /^\d{3}_.*\.sql$/.test(file))
       .sort();
-    assert.equal(files.at(-1), '010_cliente_empresas_comercial.sql');
+    assert.ok(files.includes('010_cliente_empresas_comercial.sql'));
     for (const file of files) {
       const sql = readFileSync(join(migrationDir, file), 'utf8')
         .replace(/CREATE EXTENSION IF NOT EXISTS pgcrypto;/i, '');
@@ -386,7 +386,7 @@ test('API ClienteEmpresa: tenant, lifecycle, paginação, concorrência e audito
   }).bloqueado, true);
 
   const meta = await fetchOk(app, '/api/v1/meta');
-  assert.equal(meta.runtime, 'ERP-RUNTIME-05');
+  assert.ok(['ERP-RUNTIME-05', 'ERP-RUNTIME-06A'].includes(meta.runtime));
   assert.equal(meta.clienteEmpresa.frontendHttp, false);
   assert.ok(!meta.httpPilotEntities.includes('ClienteEmpresa'));
 });

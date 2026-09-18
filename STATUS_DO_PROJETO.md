@@ -1,3 +1,54 @@
+### ERP-RUNTIME-06A — IMPLEMENTAÇÃO ClienteLocal
+
+- Review geo/fingerprint (2026-09-18):
+  - coordenadas são independentes de geocoding e exigidas em par, com limites
+    -90/90 e -180/180 no schema e banco;
+  - `coordinate_source` distingue MANUAL/GPS/IMPORTACAO/GEOCODER/
+    APP_MOTORISTA/API;
+  - coordenada manual/GPS não força `geocode_status=GEOCODIFICADO`;
+  - `geocode_*` descreve somente enriquecimento efetivamente realizado;
+  - fingerprint passou de MD5 para chave textual normalizada determinística,
+    interna, não criptográfica e não exposta na API/audit;
+  - `POSSIBLE_DUPLICATE`, complemento distinto e ausência de UNIQUE agressivo
+    preservados;
+  - seed sintético usa coordenada manual sem geocoding fictício;
+  - nenhuma integração externa, Obra, migration 012 ou frontend foi criada.
+- Data: 2026-09-18.
+- Branch: `cursor/erp-runtime-06a-cliente-locais-392b`.
+- Base: `821b335fd6bff01896fcba3ba3291adab94df262`.
+- Status: **`IMPLEMENTATION_READY — DEV_MIGRATION_PENDING`**.
+- Migration: `011_cliente_locais.sql`; migrations 001–010 imutáveis.
+- Estruturas: `cliente_locais` + `cliente_local_finalidades`; nenhuma Obra.
+- Finalidades: CADASTRAL, FISCAL, COBRANCA, ENTREGA, CORRESPONDENCIA e OUTRO;
+  OBRA proibida por schema/constraint/teste.
+- Principal: índice único parcial por Grupo + Cliente + finalidade; troca
+  serializada/atômica, sem principal duplo.
+- Multiempresa: Local pertence ao Cliente/Grupo; contexto Empresa exige
+  ClienteEmpresa elegível; A/A2/B e cross-group cobertos.
+- RBAC: `Cadastros.cliente_local` com visualizar/criar/editar/inativar/
+  restaurar/principal; usar futuro não concede editar.
+- RLS: ENABLE/FORCE em Locais e Finalidades.
+- Segurança: strict schema, mass assignment bloqueado, CEP/UF/país
+  normalizados, número textual e geo opcional com limites.
+- Duplicidade: fingerprint conservador → `409 POSSIBLE_DUPLICATE`, sem merge ou
+  UNIQUE agressivo; complemento distinto permitido.
+- Auditoria: create/update/set_purposes/soft_delete/restore na mesma transação
+  da mutação; snapshots sem endereço/coordenadas completos.
+- Lifecycle: principal precisa ser removido explicitamente antes de inativar;
+  soft delete e restore preservam histórico.
+- Seed: Locais A/B/C e B1 sintéticos, multifinalidade e principal, convergente.
+- Compatibilidade: Base44 inalterado, sem dual-write/cutover/backfill real.
+- API/meta: CRUD/list/search/count/filtros e `ERP-RUNTIME-06A`; ClienteLocal
+  permanece fora de `HTTP_PILOT_ENTITIES`.
+- Validações: RUNTIME-06A + atomicidade 5/5; server 56 pass/1 skip +
+  typecheck/build OK; audit/lint/build frontend e 570 testes OK;
+  `git diff --check` OK; typecheck frontend mantém baseline histórico (exit 2),
+  sem erro novo no lote.
+- Docs: `docs/ERP_RUNTIME_06A.md` e
+  `docs/ERP_RUNTIME_06A_DEV_RUNBOOK.md`.
+- Pendência: review; depois migration 011 + seed/E2E humano no DEV.
+- RUNTIME-06B e RUNTIME-07 não iniciados.
+
 ### ERP-RUNTIME-06 — DIAGNÓSTICO ARQUITETURAL
 
 - Data: 2026-09-18.
