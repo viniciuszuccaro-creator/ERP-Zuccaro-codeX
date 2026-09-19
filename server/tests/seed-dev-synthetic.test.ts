@@ -176,6 +176,21 @@ test('seed SQL: parents DO NOTHING; Produto A/B e Cliente A/B usam UPSERT conver
   assert.ok(!produtoBBlock!.includes(SEED_IDS.marcaLegacyFalselyNamedB));
 });
 
+test('seed R08 mantém condição, vínculos, parcelas e default na mesma transação', () => {
+  const sql = readFileSync(seedPath, 'utf8');
+  const start = sql.indexOf('-- CONDICOES DE PAGAMENTO (ERP-RUNTIME-08B)');
+  assert.ok(start >= 0);
+  const block = sql.slice(start);
+  const begin = block.indexOf('BEGIN;');
+  const commit = block.indexOf('COMMIT;');
+  assert.ok(begin >= 0 && commit > begin, 'R08 seed must have a closed transaction');
+  const transactional = block.slice(begin, commit);
+  assert.match(transactional, /INSERT INTO condicoes_pagamento/);
+  assert.match(transactional, /INSERT INTO condicao_pagamento_empresas/);
+  assert.match(transactional, /INSERT INTO condicao_pagamento_parcelas/);
+  assert.match(transactional, /UPDATE cliente_empresas SET condicao_pagamento_id/);
+});
+
 test('seed SQL: Cliente PJ/PF A e PJ B com tenant e documentos sintéticos', () => {
   const sql = readFileSync(seedPath, 'utf8');
   assert.match(sql, new RegExp(SEED_IDS.clientePjA));
