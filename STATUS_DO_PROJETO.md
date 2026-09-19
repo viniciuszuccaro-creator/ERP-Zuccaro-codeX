@@ -1,3 +1,11 @@
+### ERP-RUNTIME-08 — diagnóstico Comercial 360º (2026-09-19)
+
+- Diagnóstico documental iniciado sobre a base funcional 07B; nenhuma
+  implementação, migration, VPS, API ou frontend foi alterada.
+- Decisão documentada: próximo agregado proposto é Condição de Pagamento;
+  Orçamento, Pedido e Comercial 360º permanecem futuros.
+- Documento: `docs/ERP_RUNTIME_08_DIAGNOSTICO_COMERCIAL_360.md`.
+
 ### Operação GitHub, Codex, Cursor e VPS DEV — 2026-09-19
 
 - Fonte canônica de código/histórico: `viniciuszuccaro-creator/ERP-Zuccaro-codeX`.

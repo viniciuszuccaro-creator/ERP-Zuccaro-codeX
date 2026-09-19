@@ -39,6 +39,7 @@ Os rollbacks 06B e 06A estão preservados e não devem ser apagados.
 
 ## Próximo passo
 
-Nenhum runtime foi iniciado. Antes do próximo, revisar o roadmap para o
-Comercial 360º e escolher o próximo fundamento canônico. Comercial 360º é um
-objetivo futuro e não está implementado.
+ERP-RUNTIME-08 está em diagnóstico somente; nenhuma implementação foi iniciada.
+O diagnóstico recomenda Condição de Pagamento como próximo agregado canônico,
+antes de Orçamento/Pedido. Comercial 360º continua objetivo futuro e não está
+implementado.
