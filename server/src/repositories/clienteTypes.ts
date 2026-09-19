@@ -197,6 +197,7 @@ export const CLIENTE_FORBIDDEN_FIELDS = Object.freeze([
   'limite_credito',
   'credito_disponivel',
   'tabela_preco_id',
+  'condicao_pagamento_id',
   'vendedor_id',
   'saldo_devedor',
   'titulo_vencido',
