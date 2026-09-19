@@ -45,12 +45,14 @@ export class ClienteService {
     private readonly audit: AuditRepository,
     private readonly tenantGuard: TenantGuard,
     private readonly rbacGuard: RbacGuard,
+    tabelaPrecoRepo?: import('../repositories/inMemoryTabelaPrecoRepository.js').TabelaPrecoRepository,
   ) {
     this.empresaOperations = new ClienteEmpresaOperations(
       repo,
       audit,
       tenantGuard,
       rbacGuard,
+      tabelaPrecoRepo,
     );
   }
 

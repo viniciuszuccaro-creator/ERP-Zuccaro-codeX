@@ -62,16 +62,20 @@ function parseSeedInserts(sql: string) {
     const valuesMatch = block.match(/VALUES\s*\(([\s\S]*?)\)\s*ON CONFLICT/i);
     if (!valuesMatch) continue;
     const parts = [...valuesMatch[1].matchAll(/'([^']*)'|true|false|([0-9.]+)/g)].map((x) => x[1] ?? x[0]);
+    // Colunas: id, group, empresa, codigo, descricao, nome, tipo_item, eh_bitola,
+    // unidade_medida_id, unidade_principal, [unidades_secundarias?], grupo, marca, setor...
+    const hasSecundarias = valuesMatch[1].includes('::jsonb') || valuesMatch[1].includes('["');
+    const offset = hasSecundarias ? 1 : 0;
     produtos.set(parts[0], {
       id: parts[0],
       groupId: parts[1],
       empresaId: parts[2],
       codigo: parts[3],
       unidadeId: parts[8],
-      grupoId: parts[10],
-      marcaId: parts[11],
-      setorId: parts[12],
-      ativo: parts[16] === 'true' || parts.includes('true'),
+      grupoId: parts[10 + offset],
+      marcaId: parts[11 + offset],
+      setorId: parts[12 + offset],
+      ativo: parts.includes('true'),
     });
   }
 
@@ -145,10 +149,10 @@ test('seed SQL: parents DO NOTHING; Produto A/B e Cliente A/B usam UPSERT conver
   const doNothing = codeOnly.match(/ON CONFLICT \(id\) DO NOTHING/gi)?.length ?? 0;
   const doUpdate = codeOnly.match(/ON CONFLICT \(id\) DO UPDATE SET/gi)?.length ?? 0;
 
-  // Base R06A (25) + obras + obra_empresas + obra_locais = 28.
-  assert.equal(inserts, 28);
-  assert.equal(doNothing, 14, 'parents de R01–04 + Empresa A2 = DO NOTHING');
-  assert.equal(doUpdate, 9, 'Base R05 + cliente_locais + obras usam DO UPDATE por id');
+  // Base R06B (28) + unidade UN + tabelas_preco + tabela_preco_empresas + tabela_preco_itens = 32.
+  assert.equal(inserts, 32);
+  assert.equal(doNothing, 15, 'parents de R01–04 + Empresa A2 + unidade UN = DO NOTHING');
+  assert.equal(doUpdate, 11, 'Base R06B + tabelas_preco + itens usam DO UPDATE por id');
 
   assert.match(codeOnly, /WHERE produtos\.id = '77777777-aaaa-4aaa-8aaa-777777777777'/);
   assert.match(codeOnly, /WHERE produtos\.id = '88888888-bbbb-4bbb-8bbb-888888888888'/);

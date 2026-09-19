@@ -73,6 +73,7 @@ function mapClienteEmpresa(row: Record<string, unknown>): ClienteEmpresa {
     observacao_comercial: row.observacao_comercial == null
       ? null
       : String(row.observacao_comercial),
+    tabela_preco_id: row.tabela_preco_id == null ? null : String(row.tabela_preco_id),
     origem: String(row.origem ?? 'ERP') as ClienteEmpresa['origem'],
     legacy_id: row.legacy_id == null ? null : String(row.legacy_id),
     legacy_code: row.legacy_code == null ? null : String(row.legacy_code),
@@ -457,9 +458,10 @@ export class PostgresClienteRepository implements ClienteRepository {
     const result = await client.query(
       `UPDATE cliente_empresas SET
         situacao_comercial=$1, habilitado_operacao=$2, observacao_comercial=$3,
-        origem=$4, legacy_id=$5, legacy_code=$6, source_system=$7,
-        migration_batch=$8, imported_at=$9, updated_by=$10
-       WHERE group_id=$11 AND cliente_id=$12 AND empresa_id=$13
+        tabela_preco_id=$4,
+        origem=$5, legacy_id=$6, legacy_code=$7, source_system=$8,
+        migration_batch=$9, imported_at=$10, updated_by=$11
+       WHERE group_id=$12 AND cliente_id=$13 AND empresa_id=$14
        RETURNING *`,
       [
         data.situacao_comercial ?? current.situacao_comercial,
@@ -467,6 +469,9 @@ export class PostgresClienteRepository implements ClienteRepository {
         data.observacao_comercial === undefined
           ? current.observacao_comercial
           : data.observacao_comercial,
+        data.tabela_preco_id === undefined
+          ? current.tabela_preco_id
+          : data.tabela_preco_id,
         data.origem ?? current.origem,
         data.legacy_id === undefined ? current.legacy_id : data.legacy_id,
         data.legacy_code === undefined ? current.legacy_code : data.legacy_code,

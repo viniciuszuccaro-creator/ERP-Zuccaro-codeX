@@ -1,3 +1,76 @@
+### ERP-RUNTIME-07B — HARDENING FINAL (PR #28)
+
+- Data: 2026-09-19.
+- Branch: `cursor/erp-runtime-07b-tabela-preco-392b`.
+- HEAD anterior: `69547478bf8e80e5f9e4fd653a02942270524387`.
+- Status: **`HARDENING NA BRANCH / AGUARDANDO REVIEW`**.
+- Escopo: reforço de invariantes sem ampliar funcionalidade; 013 única;
+  001–012 imutáveis; sem 014; sem frontend HTTP; sem apply DEV; sem VPS;
+  sem merge; sem promoção de API.
+- Cobertura adicionada em `runtime07b.test.ts`:
+  - UPDATE cross-tenant (tabelas_preco / empresas / itens / cliente_empresas)
+    bloqueado com linha original intacta;
+  - padrão concorrente: unique parcial + service; exatamente 1 `eh_padrao`;
+  - item duplicado concorrente → 409 / count=1 (sem duplicata inativa);
+  - audit rollback em UPDATE e setPadrao (CREATE preservado);
+  - ClienteEmpresa cross-company sem autorização bloqueado; após link A2 ok;
+  - produto+unidade principal/secundária; precisão 1.123456; vigência/fallback
+    seguro (específica expirada → padrão autorizado; nunca tabela não autorizada).
+- Nota concorrência: PGlite serializa TX; unique parcial + `FOR UPDATE` no
+  `setPadrao` cobertos localmente; **PostgreSQL real continua gate obrigatório**
+  antes de promoção (não fingir equivalência de concorrência).
+- Skip `runtime01` Postgres opcional sem `DATABASE_URL` permanece documentado.
+- Próximo passo: CI verde; review humano; **não** merge; **não** aplicar 013
+  no DEV; gate PostgreSQL DEV separado.
+
+### ERP-RUNTIME-07B — CORREÇÃO CI (PR #28)
+
+- Data: 2026-09-19.
+- Branch: `cursor/erp-runtime-07b-tabela-preco-392b`.
+- HEAD anterior: `a8b75e0231fb38a41e5b2caaf0fad59bd8d40903`.
+- Status: **`CI FIX NA BRANCH / AGUARDANDO REVIEW`**.
+- Causa das 9 falhas do CI #112: expectativas históricas obsoletas
+  (última migration=012; meta congelada em 06B; 05 proibia
+  `tabela_preco_id` após cadeia completa com 013). Sem regressão 07B.
+- Correção: 01 exige 001–012 íntegras + 013 última; 02–06A allowlist meta
+  inclui 07B; 05 prova 010 sem `tabela_preco_id` e coluna presente pós-013;
+  06B prova 012 íntegra (não última) + Obra/TabelaPreco HTTP false;
+  07B valida meta exata + unidade/vigência/zero.
+- Skip único: `runtime01` integração Postgres opcional sem `DATABASE_URL`
+  (gate futuro DEV; não fingir PG aprovado).
+- Validações: server 70 pass / 0 fail / 1 skip; typecheck/build OK;
+  lint OK; audit:baseline OK; `git diff --check` OK.
+- 001–012 imutáveis; sem 014; frontendHttp não ativado; DEV API permanece
+  06B; 013 não aplicada no DEV; VPS não acessado; merge não realizado.
+- Próximo passo: CI verde no PR #28; review humano; **não** merge;
+  **não** promover API; **não** aplicar 013 no DEV.
+
+### ERP-RUNTIME-07B — IMPLEMENTAÇÃO TabelaPreco (branch)
+
+- Data: 2026-09-19.
+- Branch: `cursor/erp-runtime-07b-tabela-preco-392b`.
+- Baseline 06B: `67686298be2fa125966e714b1cf20759a7991765`.
+- Status: **`IMPLEMENTADO NA BRANCH / AGUARDANDO REVIEW`**.
+- Software/API DEV oficial: **permanece `ERP-RUNTIME-06B`**. Migration 013
+  **não** aplicada no DEV remoto. VPS **não** acessado.
+- Migration: somente `013_tabelas_preco.sql`
+  (`tabelas_preco`, `tabela_preco_empresas`, `tabela_preco_itens` +
+  `cliente_empresas.tabela_preco_id`); 001–012 imutáveis.
+- Ownership Grupo+empresa origem; N:N autorização; padrão único por Empresa;
+  fallback específica→padrão→sem preço; item produto+unidade; `NUMERIC(18,6)`.
+- Nome ATACADO permitido em Empresas A e A2 (unique só por empresa origem).
+- Cliente master continua bloqueando `tabela_preco_id`.
+- RBAC `Cadastros.tabela_preco` fail-closed; RLS ENABLE+FORCE; audit atômica.
+- `frontendHttp=false`; TabelaPreco ausente de `HTTP_PILOT_ENTITIES`.
+- Docs: `docs/ERP_RUNTIME_07B.md` e `docs/ERP_RUNTIME_07B_DEV_RUNBOOK.md`.
+- Skip `runtime01` integração Postgres: BLOCKER de promoção enquanto
+  `DATABASE_URL` de teste real estiver ausente (opcional documentado).
+- Validações locais: server typecheck/build OK; suite server 0 fail;
+  `runtime07b` reforçado; testes históricos 01–06B atualizados para não
+  assumir última migration/meta eternas; `git diff --check` no fechamento.
+- Próximo passo: review humano; **não** merge automático; **não** promover
+  API; **não** aplicar 013 no DEV; **não** frontend; **não** próximo runtime.
+
 ### ERP-RUNTIME-06B — IMPLEMENTAÇÃO Obra (branch)
 
 - Data: 2026-09-18.

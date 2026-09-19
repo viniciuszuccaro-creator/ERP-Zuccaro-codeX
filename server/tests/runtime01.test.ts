@@ -47,9 +47,9 @@ test('config load and public view never expose secrets', () => {
   assert.doesNotMatch(serialized, /postgresql:\/\//);
 });
 
-test('migrations are ordered through runtime-05', () => {
+test('migrations include foundation through 012 and additive 013', () => {
   const files = listMigrationFiles();
-  assert.deepEqual(files, [
+  const requiredThrough012 = [
     '001_foundation.sql',
     '002_rls_foundation.sql',
     '003_marcas_pilot.sql',
@@ -62,7 +62,19 @@ test('migrations are ordered through runtime-05', () => {
     '010_cliente_empresas_comercial.sql',
     '011_cliente_locais.sql',
     '012_obras.sql',
-  ]);
+  ];
+  for (const file of requiredThrough012) {
+    assert.ok(files.includes(file), `missing ${file}`);
+  }
+  for (let i = 1; i < requiredThrough012.length; i += 1) {
+    assert.ok(
+      files.indexOf(requiredThrough012[i - 1]) < files.indexOf(requiredThrough012[i]),
+      `${requiredThrough012[i - 1]} must precede ${requiredThrough012[i]}`,
+    );
+  }
+  assert.ok(files.includes('013_tabelas_preco.sql'));
+  assert.ok(files.indexOf('012_obras.sql') < files.indexOf('013_tabelas_preco.sql'));
+  assert.equal(files.at(-1), '013_tabelas_preco.sql');
 });
 
 test('marca service validates payload and audits create/update/soft-delete', async () => {

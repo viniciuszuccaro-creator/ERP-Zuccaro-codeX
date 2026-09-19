@@ -156,8 +156,12 @@ test('PostgreSQL: migration 012 é convergente, RLS, tenant e principal único',
     const files = readdirSync(migrationDir)
       .filter((file) => /^\d{3}_.*\.sql$/.test(file))
       .sort();
-    assert.equal(files.at(-1), '012_obras.sql');
+    assert.ok(files.includes('012_obras.sql'));
     assert.ok(files.includes('011_cliente_locais.sql'));
+    assert.ok(files.indexOf('011_cliente_locais.sql') < files.indexOf('012_obras.sql'));
+    if (files.includes('013_tabelas_preco.sql')) {
+      assert.ok(files.indexOf('012_obras.sql') < files.indexOf('013_tabelas_preco.sql'));
+    }
     for (const file of files) {
       await db.exec(
         readFileSync(join(migrationDir, file), 'utf8')
@@ -531,11 +535,16 @@ test('API Obra cobre create atômico, tenant, RBAC, lifecycle, duplicidade e pag
   assert.equal(serialized.includes('00000011'), false);
 
   const meta = await fetchOk(app, '/api/v1/meta');
-  assert.equal(meta.runtime, 'ERP-RUNTIME-06B');
+  assert.ok(['ERP-RUNTIME-06B', 'ERP-RUNTIME-07B'].includes(meta.runtime));
   assert.equal(meta.obra.frontendHttp, false);
   assert.equal(meta.obra.optionalOnPedido, true);
   assert.ok(!meta.httpPilotEntities.includes('Obra'));
   assert.ok(!meta.httpPilotEntities.includes('ClienteLocal'));
+  assert.ok(!meta.httpPilotEntities.includes('TabelaPreco'));
+  if (meta.runtime === 'ERP-RUNTIME-07B') {
+    assert.equal(meta.tabelaPreco?.frontendHttp, false);
+    assert.ok(meta.preparedEntities.includes('TabelaPreco'));
+  }
 
   const viewHeaders = groupHeaders(ACTOR_VIEW);
   assert.equal((await fetchStatus(app, base, { headers: viewHeaders })).statusCode, 200);

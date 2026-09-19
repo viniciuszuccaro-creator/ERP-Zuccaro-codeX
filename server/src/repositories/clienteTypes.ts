@@ -140,6 +140,7 @@ const clienteEmpresaEditableFields = {
   situacao_comercial: z.enum(CLIENTE_EMPRESA_SITUACOES).optional(),
   habilitado_operacao: z.boolean().optional(),
   observacao_comercial: z.string().trim().max(2000).optional().nullable(),
+  tabela_preco_id: z.string().uuid().nullable().optional(),
   origem: z.enum(CLIENTE_ORIGENS).optional(),
   legacy_id: z.string().trim().max(120).optional().nullable(),
   legacy_code: z.string().trim().max(80).optional().nullable(),
@@ -177,6 +178,7 @@ export type ClienteEmpresa = {
   bloqueado_em: string | null;
   bloqueado_por: string | null;
   observacao_comercial: string | null;
+  tabela_preco_id: string | null;
   origem: typeof CLIENTE_ORIGENS[number];
   legacy_id: string | null;
   legacy_code: string | null;
@@ -190,7 +192,7 @@ export type ClienteEmpresa = {
   elegivel_operacao: boolean;
 };
 
-/** Campos proibidos (relacionamentos operacionais / crédito / preço — lote futuro). */
+/** Campos proibidos no Cliente MASTER (preço só em ClienteEmpresa). */
 export const CLIENTE_FORBIDDEN_FIELDS = Object.freeze([
   'limite_credito',
   'credito_disponivel',

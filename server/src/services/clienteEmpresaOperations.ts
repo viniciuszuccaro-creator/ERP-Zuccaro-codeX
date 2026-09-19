@@ -5,6 +5,7 @@ import type { DbQueryExecutor } from '../db/client.js';
 import type { RbacAction, RbacGuard } from '../db/rbacGuard.js';
 import type { TenantGuard } from '../db/tenantGuard.js';
 import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';
+import type { TabelaPrecoRepository } from '../repositories/inMemoryTabelaPrecoRepository.js';
 import {
   CLIENTE_EMPRESA_SITUACOES,
   clienteEmpresaBlockSchema,
@@ -31,6 +32,7 @@ export class ClienteEmpresaOperations {
     private readonly audit: AuditRepository,
     private readonly tenantGuard: TenantGuard,
     private readonly rbacGuard: RbacGuard,
+    private readonly tabelaPrecoRepo?: TabelaPrecoRepository,
   ) {}
 
   async list(
@@ -138,6 +140,20 @@ export class ClienteEmpresaOperations {
     await this.prepare(ctx, clienteId, empresaId, 'editar');
     const parsed = clienteEmpresaUpdateSchema.safeParse(payload);
     if (!parsed.success) this.validationError(parsed.error.flatten());
+    if (parsed.data.tabela_preco_id) {
+      await this.assertPermission(ctx, 'visualizar', 'tabela_preco');
+      if (!this.tabelaPrecoRepo) {
+        throw new AppError(500, 'TABELA_PRECO_UNAVAILABLE', 'TabelaPreco repository unavailable');
+      }
+      const authorized = await this.tabelaPrecoRepo.isAuthorizedForEmpresa(
+        ctx.groupId,
+        parsed.data.tabela_preco_id,
+        empresaId,
+      );
+      if (!authorized) {
+        throw new AppError(404, 'TABELA_PRECO_NOT_FOUND', 'TabelaPreco not found');
+      }
+    }
     return this.repo.withTransaction(async (executor) => {
       const before = await this.requireActive(ctx, clienteId, empresaId, executor);
       this.assertConsistency(
@@ -285,8 +301,8 @@ export class ClienteEmpresaOperations {
     }
   }
 
-  private assertPermission(ctx: RequestContext, action: RbacAction) {
-    return this.rbacGuard.assertAllowed(ctx, 'Cadastros', 'cliente_empresa', action);
+  private assertPermission(ctx: RequestContext, action: RbacAction, section = 'cliente_empresa') {
+    return this.rbacGuard.assertAllowed(ctx, 'Cadastros', section, action);
   }
 
   private scope(ctx: RequestContext) {
