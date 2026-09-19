@@ -152,6 +152,19 @@ Não inventar comportamento para contornar bloqueio.
 
 Codex e Cursor podem trabalhar no mesmo repositório, mas não devem editar simultaneamente o mesmo arquivo/lote sem coordenação. Antes de alterar arquivo crítico, verificar estado/commit recente. Evitar sobrescrever trabalho de outro agente. Nunca desfazer mudança desconhecida apenas para fazer a própria solução passar.
 
+## 3.5 Repositório canônico, handoff de ferramentas e VPS DEV
+
+`viniciuszuccaro-creator/ERP-Zuccaro-codeX` é a fonte canônica de código e
+histórico. Codex e Cursor são ferramentas intercambiáveis e devem sempre usar
+um clone sincronizado desse repositório. Antes de editar, confirmar repositório,
+branch, HEAD e `git status`, e ler `docs/OPERACAO_DEV_VPS.md` e
+`docs/HANDOFF_ATUAL.md`.
+
+VPS DEV é acessada somente em tarefa explicitamente autorizada. Divergência
+entre GitHub, workspace, VPS ou handoff exige parar e diagnosticar; não resetar,
+forçar push, reaplicar migration ou recriar container silenciosamente. Nunca
+registrar segredos nos documentos.
+
 ---
 
 # 4. MULTIEMPRESA ABSOLUTA
