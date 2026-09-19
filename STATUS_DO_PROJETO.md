@@ -1,3 +1,25 @@
+### ERP-RUNTIME-07B — CORREÇÃO CI (PR #28)
+
+- Data: 2026-09-19.
+- Branch: `cursor/erp-runtime-07b-tabela-preco-392b`.
+- HEAD anterior: `a8b75e0231fb38a41e5b2caaf0fad59bd8d40903`.
+- Status: **`CI FIX NA BRANCH / AGUARDANDO REVIEW`**.
+- Causa das 9 falhas do CI #112: expectativas históricas obsoletas
+  (última migration=012; meta congelada em 06B; 05 proibia
+  `tabela_preco_id` após cadeia completa com 013). Sem regressão 07B.
+- Correção: 01 exige 001–012 íntegras + 013 última; 02–06A allowlist meta
+  inclui 07B; 05 prova 010 sem `tabela_preco_id` e coluna presente pós-013;
+  06B prova 012 íntegra (não última) + Obra/TabelaPreco HTTP false;
+  07B valida meta exata + unidade/vigência/zero.
+- Skip único: `runtime01` integração Postgres opcional sem `DATABASE_URL`
+  (gate futuro DEV; não fingir PG aprovado).
+- Validações: server 70 pass / 0 fail / 1 skip; typecheck/build OK;
+  lint OK; audit:baseline OK; `git diff --check` OK.
+- 001–012 imutáveis; sem 014; frontendHttp não ativado; DEV API permanece
+  06B; 013 não aplicada no DEV; VPS não acessado; merge não realizado.
+- Próximo passo: CI verde no PR #28; review humano; **não** merge;
+  **não** promover API; **não** aplicar 013 no DEV.
+
 ### ERP-RUNTIME-07B — IMPLEMENTAÇÃO TabelaPreco (branch)
 
 - Data: 2026-09-19.
@@ -16,8 +38,11 @@
 - RBAC `Cadastros.tabela_preco` fail-closed; RLS ENABLE+FORCE; audit atômica.
 - `frontendHttp=false`; TabelaPreco ausente de `HTTP_PILOT_ENTITIES`.
 - Docs: `docs/ERP_RUNTIME_07B.md` e `docs/ERP_RUNTIME_07B_DEV_RUNBOOK.md`.
-- Validações locais: server typecheck/build OK; `runtime07b` 5/5 pass;
-  seed parser atualizado; `git diff --check` no fechamento.
+- Skip `runtime01` integração Postgres: BLOCKER de promoção enquanto
+  `DATABASE_URL` de teste real estiver ausente (opcional documentado).
+- Validações locais: server typecheck/build OK; suite server 0 fail;
+  `runtime07b` reforçado; testes históricos 01–06B atualizados para não
+  assumir última migration/meta eternas; `git diff --check` no fechamento.
 - Próximo passo: review humano; **não** merge automático; **não** promover
   API; **não** aplicar 013 no DEV; **não** frontend; **não** próximo runtime.
 

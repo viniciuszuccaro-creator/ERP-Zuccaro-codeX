@@ -530,7 +530,7 @@ test('API ClienteLocal cobre multifinalidade, principal, tenant, geo e lifecycle
   assert.equal(serializedAudit.includes('Bloco A'), false);
 
   const meta = await fetchOk(app, '/api/v1/meta');
-  assert.ok(['ERP-RUNTIME-06A', 'ERP-RUNTIME-06B'].includes(meta.runtime));
+  assert.ok(['ERP-RUNTIME-06A', 'ERP-RUNTIME-06B', 'ERP-RUNTIME-07B'].includes(meta.runtime));
   assert.equal(meta.clienteLocal.frontendHttp, false);
   assert.ok(!meta.httpPilotEntities.includes('ClienteLocal'));
   assert.ok(CLIENTE_LOCAL_FINALIDADES.every((purpose) => purpose !== 'OBRA'));

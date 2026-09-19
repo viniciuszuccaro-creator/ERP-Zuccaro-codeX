@@ -4,11 +4,15 @@ import { dirname, join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
+import { createApp } from '../src/app.ts';
 import { PostgresAuditRepository } from '../src/audit/auditRepository.ts';
 import type { RequestContext } from '../src/audit/types.ts';
+import { loadConfig } from '../src/config/env.ts';
 import type { DbClient, DbQueryExecutor } from '../src/db/client.ts';
+import { createDbClient } from '../src/db/client.ts';
 import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
+import { CLIENTE_FORBIDDEN_FIELDS } from '../src/repositories/clienteTypes.ts';
 import { PostgresTabelaPrecoRepository } from '../src/repositories/postgresTabelaPrecoRepository.ts';
 import { TabelaPrecoService } from '../src/services/tabelaPrecoService.ts';
 import { SEED_IDS } from '../scripts/seedDevIds.ts';
@@ -285,6 +289,97 @@ test('audit rollback no CREATE de TabelaPreco', async () => {
     );
     const after = await pg.query<{ total: number }>('SELECT count(*)::int AS total FROM tabelas_preco');
     assert.equal(after.rows[0]?.total, before.rows[0]?.total);
+  } finally {
+    await pg.close();
+  }
+});
+
+test('meta ERP-RUNTIME-07B + frontendHttp false + Cliente master ainda proíbe tabela_preco_id', async () => {
+  assert.ok(CLIENTE_FORBIDDEN_FIELDS.includes('tabela_preco_id'));
+  const config = loadConfig({
+    NODE_ENV: 'test',
+    ERP_ENV: 'dev',
+    PORT: '3080',
+    CORS_ORIGINS: 'http://localhost:5173',
+    REQUIRE_DATABASE: 'false',
+  });
+  const { app } = createApp({
+    config,
+    db: createDbClient(config),
+    useMemory: true,
+  });
+  const server = app.listen(0, '127.0.0.1');
+  try {
+    await new Promise<void>((resolve) => server.once('listening', () => resolve()));
+    const address = server.address();
+    const port = typeof address === 'object' && address ? address.port : 0;
+    const response = await fetch(`http://127.0.0.1:${port}/api/v1/meta`);
+    assert.equal(response.status, 200);
+    const meta = await response.json() as {
+      runtime: string;
+      tabelaPreco: { frontendHttp: boolean };
+      preparedEntities: string[];
+      httpPilotEntities: string[];
+    };
+    assert.equal(meta.runtime, 'ERP-RUNTIME-07B');
+    assert.equal(meta.tabelaPreco.frontendHttp, false);
+    assert.ok(meta.preparedEntities.includes('TabelaPreco'));
+    assert.ok(!meta.httpPilotEntities.includes('TabelaPreco'));
+  } finally {
+    await new Promise<void>((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+});
+
+test('unidade não permitida / vigência fora do fallback / zero explícito != missing', async () => {
+  const pg = await boot();
+  const db = dbClient(pg);
+  const svc = service(db);
+  try {
+    await assert.rejects(
+      () => svc.createItem(ctxA, SEED_IDS.tabelaPrecoA, {
+        produto_id: SEED_IDS.produtoA,
+        unidade_medida_id: SEED_IDS.unidadeB,
+        preco: '10',
+      }),
+      /PRODUTO_UNIDADE_NOT_FOUND|UNIDADE_NOT_ALLOWED|not found|TABELA_PRECO_NOT_FOUND/i,
+    );
+
+    const zeroTabela = await svc.create(ctxA, {
+      nome: 'ZERO EXPLICITO',
+      vigencia_inicio: '2020-01-01',
+    });
+    await svc.createItem(ctxA, zeroTabela.id, {
+      produto_id: SEED_IDS.produtoA,
+      unidade_medida_id: SEED_IDS.unidadeA,
+      preco: '0',
+    });
+    await svc.setPadrao(ctxA, zeroTabela.id);
+    const zeroResolved = await svc.resolvePrice(ctxA, {
+      produtoId: SEED_IDS.produtoA,
+      unidadeMedidaId: SEED_IDS.unidadeA,
+      businessDate: '2024-06-01',
+    });
+    assert.ok(zeroResolved);
+    assert.equal(Number(zeroResolved?.preco), 0);
+
+    const future = await svc.create(ctxA, {
+      nome: 'FUTURA',
+      vigencia_inicio: '2099-01-01',
+    });
+    await svc.createItem(ctxA, future.id, {
+      produto_id: SEED_IDS.produtoA,
+      unidade_medida_id: SEED_IDS.unidadeUnA,
+      preco: '99',
+    });
+    await svc.setPadrao(ctxA, future.id);
+    const futura = await svc.resolvePrice(ctxA, {
+      produtoId: SEED_IDS.produtoA,
+      unidadeMedidaId: SEED_IDS.unidadeUnA,
+      businessDate: '2024-06-01',
+    });
+    assert.equal(futura, null);
   } finally {
     await pg.close();
   }

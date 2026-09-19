@@ -166,16 +166,31 @@ test('PostgreSQL: migration 010 é convergente, íntegra, única e RLS', async (
     assert.equal(rls.rows[0].relrowsecurity, true);
     assert.equal(rls.rows[0].relforcerowsecurity, true);
 
-    const forbiddenColumns = await db.query<{ column_name: string }>(`
+    const migration010 = readFileSync(
+      join(migrationDir, '010_cliente_empresas_comercial.sql'),
+      'utf8',
+    );
+    assert.doesNotMatch(migration010, /tabela_preco_id/);
+
+    const stillForbidden = await db.query<{ column_name: string }>(`
       SELECT column_name FROM information_schema.columns
       WHERE table_name='cliente_empresas'
         AND column_name IN (
           'saldo_devedor', 'limite_credito', 'limite_utilizado', 'preco_efetivo',
           'estoque', 'endereco', 'contato', 'pedido_id', 'vendedor_id',
-          'tabela_preco_id', 'forma_pagamento_id'
+          'forma_pagamento_id'
         )
+      ORDER BY column_name
     `);
-    assert.deepEqual(forbiddenColumns.rows, []);
+    assert.deepEqual(stillForbidden.rows, []);
+
+    // Slot comercial aditivo da 013 (não da 010): coluna existe após cadeia completa.
+    const precoSlot = await db.query<{ column_name: string }>(`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_name='cliente_empresas' AND column_name='tabela_preco_id'
+    `);
+    assert.equal(precoSlot.rows.length, 1);
+    assert.equal(precoSlot.rows[0].column_name, 'tabela_preco_id');
   } finally {
     await db.close();
   }
@@ -386,7 +401,7 @@ test('API ClienteEmpresa: tenant, lifecycle, paginação, concorrência e audito
   }).bloqueado, true);
 
   const meta = await fetchOk(app, '/api/v1/meta');
-  assert.ok(['ERP-RUNTIME-05', 'ERP-RUNTIME-06A', 'ERP-RUNTIME-06B'].includes(meta.runtime));
+  assert.ok(['ERP-RUNTIME-05', 'ERP-RUNTIME-06A', 'ERP-RUNTIME-06B', 'ERP-RUNTIME-07B'].includes(meta.runtime));
   assert.equal(meta.clienteEmpresa.frontendHttp, false);
   assert.ok(!meta.httpPilotEntities.includes('ClienteEmpresa'));
 });
