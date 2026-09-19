@@ -46,6 +46,7 @@ export class ClienteService {
     private readonly tenantGuard: TenantGuard,
     private readonly rbacGuard: RbacGuard,
     tabelaPrecoRepo?: import('../repositories/inMemoryTabelaPrecoRepository.js').TabelaPrecoRepository,
+    condicaoPagamentoRepo?: import('../repositories/inMemoryCondicaoPagamentoRepository.js').CondicaoPagamentoRepository,
   ) {
     this.empresaOperations = new ClienteEmpresaOperations(
       repo,
@@ -53,6 +54,7 @@ export class ClienteService {
       tenantGuard,
       rbacGuard,
       tabelaPrecoRepo,
+      condicaoPagamentoRepo,
     );
   }
 

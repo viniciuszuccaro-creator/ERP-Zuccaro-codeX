@@ -74,6 +74,7 @@ function mapClienteEmpresa(row: Record<string, unknown>): ClienteEmpresa {
       ? null
       : String(row.observacao_comercial),
     tabela_preco_id: row.tabela_preco_id == null ? null : String(row.tabela_preco_id),
+    condicao_pagamento_id: row.condicao_pagamento_id == null ? null : String(row.condicao_pagamento_id),
     origem: String(row.origem ?? 'ERP') as ClienteEmpresa['origem'],
     legacy_id: row.legacy_id == null ? null : String(row.legacy_id),
     legacy_code: row.legacy_code == null ? null : String(row.legacy_code),
@@ -405,11 +406,11 @@ export class PostgresClienteRepository implements ClienteRepository {
       const inserted = await client.query(
         `INSERT INTO cliente_empresas (
           group_id, cliente_id, empresa_id, ativo, situacao_comercial,
-          habilitado_operacao, bloqueado, observacao_comercial, origem,
+          habilitado_operacao, bloqueado, observacao_comercial, condicao_pagamento_id, origem,
           legacy_id, legacy_code, source_system, migration_batch, imported_at,
           created_by, updated_by
         ) VALUES (
-          $1,$2,$3,true,$4,$5,false,$6,$7,$8,$9,$10,$11,$12,$13,$13
+          $1,$2,$3,true,$4,$5,false,$6,$7,$8,$9,$10,$11,$12,$13,$14,$14
         )
         ON CONFLICT (cliente_id, empresa_id) DO NOTHING
         RETURNING *`,
@@ -420,6 +421,7 @@ export class PostgresClienteRepository implements ClienteRepository {
           data.situacao_comercial ?? 'ATIVO',
           data.habilitado_operacao ?? true,
           data.observacao_comercial ?? null,
+          data.condicao_pagamento_id ?? null,
           data.origem ?? 'ERP',
           data.legacy_id ?? null,
           data.legacy_code ?? null,
@@ -458,10 +460,10 @@ export class PostgresClienteRepository implements ClienteRepository {
     const result = await client.query(
       `UPDATE cliente_empresas SET
         situacao_comercial=$1, habilitado_operacao=$2, observacao_comercial=$3,
-        tabela_preco_id=$4,
-        origem=$5, legacy_id=$6, legacy_code=$7, source_system=$8,
-        migration_batch=$9, imported_at=$10, updated_by=$11
-       WHERE group_id=$12 AND cliente_id=$13 AND empresa_id=$14
+        tabela_preco_id=$4, condicao_pagamento_id=$5,
+        origem=$6, legacy_id=$7, legacy_code=$8, source_system=$9,
+        migration_batch=$10, imported_at=$11, updated_by=$12
+       WHERE group_id=$13 AND cliente_id=$14 AND empresa_id=$15
        RETURNING *`,
       [
         data.situacao_comercial ?? current.situacao_comercial,
@@ -472,6 +474,7 @@ export class PostgresClienteRepository implements ClienteRepository {
         data.tabela_preco_id === undefined
           ? current.tabela_preco_id
           : data.tabela_preco_id,
+        data.condicao_pagamento_id === undefined ? current.condicao_pagamento_id : data.condicao_pagamento_id,
         data.origem ?? current.origem,
         data.legacy_id === undefined ? current.legacy_id : data.legacy_id,
         data.legacy_code === undefined ? current.legacy_code : data.legacy_code,

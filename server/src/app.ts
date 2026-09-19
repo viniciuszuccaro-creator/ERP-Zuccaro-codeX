@@ -134,6 +134,7 @@ export function createApp(options: CreateAppOptions) {
     tenantGuard,
     rbacGuard,
     tabelaPrecoRepo,
+    condicaoPagamentoRepo,
   );
   const tabelaPrecoService = new TabelaPrecoService(
     tabelaPrecoRepo,
