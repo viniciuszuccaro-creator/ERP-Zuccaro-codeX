@@ -896,3 +896,19 @@ SET tabela_preco_id = 'a7a7a7a7-aaaa-4aaa-8aaa-a7a7a7a7a7a7',
 WHERE group_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
   AND cliente_id = '99999999-aaaa-4aaa-8aaa-999999999991'
   AND empresa_id = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+
+-- CONDICOES DE PAGAMENTO (ERP-RUNTIME-08B): sintético e idempotente.
+INSERT INTO condicoes_pagamento (id,group_id,empresa_id,codigo,nome,descricao,ativo,origem,created_by,updated_by) VALUES
+('a8a8a8a8-aaaa-4aaa-8aaa-a8a8a8a8a8a8','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','cccccccc-cccc-4ccc-8ccc-cccccccccccc','000001','A VISTA','Sintetica A',true,'ERP','a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4','a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'),
+('b8b8b8b8-bbbb-4bbb-8bbb-b8b8b8b8b8b8','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','dddddddd-dddd-4ddd-8ddd-dddddddddddd','000001','28 DIAS','Sintetica B',true,'ERP','b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4','b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4')
+ON CONFLICT (id) DO UPDATE SET nome=EXCLUDED.nome,descricao=EXCLUDED.descricao,ativo=EXCLUDED.ativo,updated_at=timezone('utc',now());
+INSERT INTO condicao_pagamento_empresas (group_id,condicao_pagamento_id,empresa_id,eh_padrao,ativo,created_by,updated_by) VALUES
+('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','a8a8a8a8-aaaa-4aaa-8aaa-a8a8a8a8a8a8','cccccccc-cccc-4ccc-8ccc-cccccccccccc',true,true,'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4','a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'),
+('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','a8a8a8a8-aaaa-4aaa-8aaa-a8a8a8a8a8a8','c2c2c2c2-cccc-4ccc-8ccc-c2c2c2c2c2c2',false,true,'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4','a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'),
+('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','b8b8b8b8-bbbb-4bbb-8bbb-b8b8b8b8b8b8','dddddddd-dddd-4ddd-8ddd-dddddddddddd',true,true,'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4','b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4')
+ON CONFLICT (condicao_pagamento_id,empresa_id) DO UPDATE SET eh_padrao=EXCLUDED.eh_padrao,ativo=EXCLUDED.ativo,updated_at=timezone('utc',now());
+INSERT INTO condicao_pagamento_parcelas (group_id,condicao_pagamento_id,ordem,dias,percentual,created_by,updated_by) VALUES
+('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','a8a8a8a8-aaaa-4aaa-8aaa-a8a8a8a8a8a8',1,0,100.000000,'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4','a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'),
+('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','b8b8b8b8-bbbb-4bbb-8bbb-b8b8b8b8b8b8',1,28,100.000000,'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4','b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4')
+ON CONFLICT (condicao_pagamento_id,ordem) DO UPDATE SET dias=EXCLUDED.dias,percentual=EXCLUDED.percentual,ativo=true,updated_at=timezone('utc',now());
+UPDATE cliente_empresas SET condicao_pagamento_id='a8a8a8a8-aaaa-4aaa-8aaa-a8a8a8a8a8a8',updated_at=timezone('utc',now()) WHERE group_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' AND cliente_id='99999999-aaaa-4aaa-8aaa-999999999991' AND empresa_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc';
