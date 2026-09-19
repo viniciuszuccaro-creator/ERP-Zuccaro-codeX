@@ -149,10 +149,10 @@ test('seed SQL: parents DO NOTHING; Produto A/B e Cliente A/B usam UPSERT conver
   const doNothing = codeOnly.match(/ON CONFLICT \(id\) DO NOTHING/gi)?.length ?? 0;
   const doUpdate = codeOnly.match(/ON CONFLICT \(id\) DO UPDATE SET/gi)?.length ?? 0;
 
-  // Base R06B (28) + unidade UN + tabelas_preco + tabela_preco_empresas + tabela_preco_itens = 32.
-  assert.equal(inserts, 32);
+  // R07B (32) + CondiçãoPagamento, vínculo Empresa e parcelas do R08 = 35.
+  assert.equal(inserts, 35);
   assert.equal(doNothing, 15, 'parents de R01–04 + Empresa A2 + unidade UN = DO NOTHING');
-  assert.equal(doUpdate, 11, 'Base R06B + tabelas_preco + itens usam DO UPDATE por id');
+  assert.equal(doUpdate, 12, 'R08 acrescenta CondiçãoPagamento ao UPSERT por id');
 
   assert.match(codeOnly, /WHERE produtos\.id = '77777777-aaaa-4aaa-8aaa-777777777777'/);
   assert.match(codeOnly, /WHERE produtos\.id = '88888888-bbbb-4bbb-8bbb-888888888888'/);
@@ -174,6 +174,21 @@ test('seed SQL: parents DO NOTHING; Produto A/B e Cliente A/B usam UPSERT conver
   assert.match(produtoBBlock!, /marca_id = EXCLUDED\.marca_id/);
   assert.ok(produtoBBlock!.includes(SEED_IDS.marcaB));
   assert.ok(!produtoBBlock!.includes(SEED_IDS.marcaLegacyFalselyNamedB));
+});
+
+test('seed R08 mantém condição, vínculos, parcelas e default na mesma transação', () => {
+  const sql = readFileSync(seedPath, 'utf8');
+  const start = sql.indexOf('-- CONDICOES DE PAGAMENTO (ERP-RUNTIME-08B)');
+  assert.ok(start >= 0);
+  const block = sql.slice(start);
+  const begin = block.indexOf('BEGIN;');
+  const commit = block.indexOf('COMMIT;');
+  assert.ok(begin >= 0 && commit > begin, 'R08 seed must have a closed transaction');
+  const transactional = block.slice(begin, commit);
+  assert.match(transactional, /INSERT INTO condicoes_pagamento/);
+  assert.match(transactional, /INSERT INTO condicao_pagamento_empresas/);
+  assert.match(transactional, /INSERT INTO condicao_pagamento_parcelas/);
+  assert.match(transactional, /UPDATE cliente_empresas SET condicao_pagamento_id/);
 });
 
 test('seed SQL: Cliente PJ/PF A e PJ B com tenant e documentos sintéticos', () => {

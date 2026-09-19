@@ -6,6 +6,7 @@ import type { RbacAction, RbacGuard } from '../db/rbacGuard.js';
 import type { TenantGuard } from '../db/tenantGuard.js';
 import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';
 import type { TabelaPrecoRepository } from '../repositories/inMemoryTabelaPrecoRepository.js';
+import type { CondicaoPagamentoRepository } from '../repositories/inMemoryCondicaoPagamentoRepository.js';
 import {
   CLIENTE_EMPRESA_SITUACOES,
   clienteEmpresaBlockSchema,
@@ -33,6 +34,7 @@ export class ClienteEmpresaOperations {
     private readonly tenantGuard: TenantGuard,
     private readonly rbacGuard: RbacGuard,
     private readonly tabelaPrecoRepo?: TabelaPrecoRepository,
+    private readonly condicaoPagamentoRepo?: CondicaoPagamentoRepository,
   ) {}
 
   async list(
@@ -116,6 +118,15 @@ export class ClienteEmpresaOperations {
     const parsed = clienteEmpresaCreateSchema.safeParse(payload);
     if (!parsed.success) this.validationError(parsed.error.flatten());
     this.assertConsistency(parsed.data.situacao_comercial, parsed.data.habilitado_operacao);
+    if (parsed.data.condicao_pagamento_id) {
+      await this.assertPermission(ctx, 'visualizar', 'condicao_pagamento');
+      const condition = await this.condicaoPagamentoRepo?.get(
+        { groupId: ctx.groupId, empresaId }, parsed.data.condicao_pagamento_id,
+      );
+      if (!condition || !condition.ativo) {
+        throw new AppError(404, 'CONDICAO_PAGAMENTO_NOT_FOUND', 'CondicaoPagamento not found');
+      }
+    }
     return this.repo.withTransaction(async (executor) => {
       const result = await this.repo.createEmpresaLink(
         this.scope(ctx), clienteId, empresaId, parsed.data, ctx.actorId, executor,
@@ -152,6 +163,15 @@ export class ClienteEmpresaOperations {
       );
       if (!authorized) {
         throw new AppError(404, 'TABELA_PRECO_NOT_FOUND', 'TabelaPreco not found');
+      }
+    }
+    if (parsed.data.condicao_pagamento_id) {
+      await this.assertPermission(ctx, 'visualizar', 'condicao_pagamento');
+      const condition = await this.condicaoPagamentoRepo?.get(
+        { groupId: ctx.groupId, empresaId }, parsed.data.condicao_pagamento_id,
+      );
+      if (!condition || !condition.ativo) {
+        throw new AppError(404, 'CONDICAO_PAGAMENTO_NOT_FOUND', 'CondicaoPagamento not found');
       }
     }
     return this.repo.withTransaction(async (executor) => {

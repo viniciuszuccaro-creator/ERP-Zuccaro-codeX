@@ -14,7 +14,7 @@ Atualizado em 2026-09-19 após o fechamento do ERP-RUNTIME-07B.
 - VPS: `/opt/erp-zuccaro`.
 - API oficial 3080: `ERP-RUNTIME-07B`.
 - Imagem: `erp-zuccaro-erp-api:runtime07b-main-ca0bc5f3`.
-- PostgreSQL: migrations 001–013 aplicadas.
+- PostgreSQL: migrations 001–014 aplicadas; 015 existe somente no PR e não foi aplicada.
 - `013_tabelas_preco.sql` permanece aplicada uma vez.
 
 O pós-promoção 07B foi aprovado. A API oficial, banco e VPS não são alterados
@@ -39,7 +39,7 @@ Os rollbacks 06B e 06A estão preservados e não devem ser apagados.
 
 ## Próximo passo
 
-ERP-RUNTIME-08 está em diagnóstico somente; nenhuma implementação foi iniciada.
-O diagnóstico recomenda Condição de Pagamento como próximo agregado canônico,
-antes de Orçamento/Pedido. Comercial 360º continua objetivo futuro e não está
-implementado.
+O DEV aceitou um teste sintético ativo sem parcelas; a 015 no PR #31 recria as
+constraint triggers sem alterar 014. API oficial continua R07B. Próximo passo:
+gate VPS controlado da 015, limpeza do possível `R08 INVALID GATE`, seed 2x e
+E2E R08; não reaplicar 014 nem promover API.
