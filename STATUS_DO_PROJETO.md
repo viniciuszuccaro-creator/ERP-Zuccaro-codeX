@@ -1,3 +1,13 @@
+### Operação GitHub, Codex, Cursor e VPS DEV — 2026-09-19
+
+- Fonte canônica de código/histórico: `viniciuszuccaro-creator/ERP-Zuccaro-codeX`.
+- Base funcional do ERP-RUNTIME-07B: `ca0bc5f3529b9071fe80e58dae6aa966a9d6c740`.
+- O histórico deste arquivo foi preservado. A entrada anterior do 07B descrevia
+  a branch antes do merge; o estado operacional fechado está em
+  `docs/HANDOFF_ATUAL.md` e o procedimento permanente em
+  `docs/OPERACAO_DEV_VPS.md`.
+- Nenhum runtime posterior foi iniciado por esta atualização documental.
+
 ### ERP-RUNTIME-07B — HARDENING FINAL (PR #28)
 
 - Data: 2026-09-19.
