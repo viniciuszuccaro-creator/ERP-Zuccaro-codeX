@@ -51,6 +51,9 @@ import { TenantCrudService } from './services/tenantCrudService.js';
 import { createApiRouter } from './api/router.js';
 import { InMemoryTabelaPrecoRepository } from './repositories/inMemoryTabelaPrecoRepository.js';
 import { PostgresTabelaPrecoRepository } from './repositories/postgresTabelaPrecoRepository.js';
+import { InMemoryCondicaoPagamentoRepository } from './repositories/inMemoryCondicaoPagamentoRepository.js';
+import { PostgresCondicaoPagamentoRepository } from './repositories/postgresCondicaoPagamentoRepository.js';
+import { CondicaoPagamentoService } from './services/condicaoPagamentoService.js';
 
 export type CreateAppOptions = {
   config: AppConfig;
@@ -89,6 +92,7 @@ export function createApp(options: CreateAppOptions) {
   const tabelaPrecoRepo = useMemory
     ? new InMemoryTabelaPrecoRepository()
     : new PostgresTabelaPrecoRepository(db);
+  const condicaoPagamentoRepo = useMemory ? new InMemoryCondicaoPagamentoRepository() : new PostgresCondicaoPagamentoRepository(db);
 
   const marcaService = new MarcaService(marcaRepo, auditRepo, tenantGuard);
   const unidadeService = new TenantCrudService(unidadeRepo, auditRepo, tenantGuard, {
@@ -137,6 +141,7 @@ export function createApp(options: CreateAppOptions) {
     tenantGuard,
     rbacGuard,
   );
+  const condicaoPagamentoService = new CondicaoPagamentoService(condicaoPagamentoRepo, auditRepo, tenantGuard, rbacGuard);
   const obraService = new ObraService(
     obraRepo,
     clienteRepo,
@@ -195,6 +200,7 @@ export function createApp(options: CreateAppOptions) {
     clienteLocalService,
     obraService,
     tabelaPrecoService,
+    condicaoPagamentoService,
   }));
   app.use(notFoundHandler);
   app.use(createErrorHandler(config));
@@ -210,6 +216,7 @@ export function createApp(options: CreateAppOptions) {
     clienteLocalService,
     obraService,
     tabelaPrecoService,
+    condicaoPagamentoService,
     auditRepo,
     tenantGuard,
     produtoRelationGuard,

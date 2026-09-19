@@ -74,7 +74,9 @@ test('migrations include foundation through 012 and additive 013', () => {
   }
   assert.ok(files.includes('013_tabelas_preco.sql'));
   assert.ok(files.indexOf('012_obras.sql') < files.indexOf('013_tabelas_preco.sql'));
-  assert.equal(files.at(-1), '013_tabelas_preco.sql');
+  assert.ok(files.includes('014_condicoes_pagamento.sql'));
+  assert.ok(files.indexOf('013_tabelas_preco.sql') < files.indexOf('014_condicoes_pagamento.sql'));
+  assert.equal(files.at(-1), '014_condicoes_pagamento.sql');
 });
 
 test('marca service validates payload and audits create/update/soft-delete', async () => {
