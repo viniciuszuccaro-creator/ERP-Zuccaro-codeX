@@ -492,7 +492,12 @@ export class TabelaPrecoService {
     if (code === 'TABELA_PRECO_NOT_AUTHORIZED' || message.includes('TABELA_PRECO_NOT_AUTHORIZED')) {
       throw new AppError(404, 'TABELA_PRECO_NOT_FOUND', 'TabelaPreco not found');
     }
-    if (message.includes('uq_tabelas_preco_origem_nome_ativo') || message.includes('duplicate key')) {
+    if (
+      message.includes('uq_tabelas_preco_origem_nome_ativo')
+      || message.includes('uq_tabela_preco_empresas_padrao_ativo')
+      || message.includes('tabela_preco_itens_tabela_preco_id_produto_id_unidade_medida_id_key')
+      || message.includes('duplicate key')
+    ) {
       throw new AppError(409, 'CONFLICT', 'Conflict on unique constraint');
     }
     if (message.includes('TENANT_FK_MISMATCH')) {

@@ -384,3 +384,403 @@ test('unidade não permitida / vigência fora do fallback / zero explícito != m
     await pg.close();
   }
 });
+
+test('UPDATE cross-tenant SQL bloqueado e linha original intacta', async () => {
+  const pg = await boot();
+  try {
+    const beforeTabela = await pg.query<{
+      group_id: string; empresa_id: string; nome: string;
+    }>('SELECT group_id, empresa_id, nome FROM tabelas_preco WHERE id=$1', [SEED_IDS.tabelaPrecoA]);
+    assert.equal(beforeTabela.rows[0]?.group_id, SEED_IDS.groupA);
+
+    await assert.rejects(
+      () => pg.query(
+        'UPDATE tabelas_preco SET group_id=$1 WHERE id=$2',
+        [SEED_IDS.groupB, SEED_IDS.tabelaPrecoA],
+      ),
+      /TENANT_FK_MISMATCH|foreign key|violates/i,
+    );
+    await assert.rejects(
+      () => pg.query(
+        'UPDATE tabelas_preco SET empresa_id=$1 WHERE id=$2',
+        [SEED_IDS.empresaB, SEED_IDS.tabelaPrecoA],
+      ),
+      /TENANT_FK_MISMATCH|foreign key|violates/i,
+    );
+    const afterTabela = await pg.query<{
+      group_id: string; empresa_id: string; nome: string;
+    }>('SELECT group_id, empresa_id, nome FROM tabelas_preco WHERE id=$1', [SEED_IDS.tabelaPrecoA]);
+    assert.deepEqual(afterTabela.rows[0], beforeTabela.rows[0]);
+
+    const link = await pg.query<{ id: string; group_id: string; empresa_id: string; tabela_preco_id: string }>(`
+      SELECT id, group_id, empresa_id, tabela_preco_id
+      FROM tabela_preco_empresas
+      WHERE tabela_preco_id=$1 AND empresa_id=$2
+    `, [SEED_IDS.tabelaPrecoA, SEED_IDS.empresaA]);
+    const linkId = link.rows[0]?.id;
+    assert.ok(linkId);
+    const beforeLink = link.rows[0];
+
+    await assert.rejects(
+      () => pg.query('UPDATE tabela_preco_empresas SET group_id=$1 WHERE id=$2', [SEED_IDS.groupB, linkId]),
+      /TENANT_FK_MISMATCH|foreign key|violates/i,
+    );
+    await assert.rejects(
+      () => pg.query('UPDATE tabela_preco_empresas SET empresa_id=$1 WHERE id=$2', [SEED_IDS.empresaB, linkId]),
+      /TENANT_FK_MISMATCH|foreign key|violates/i,
+    );
+    await assert.rejects(
+      () => pg.query(
+        'UPDATE tabela_preco_empresas SET tabela_preco_id=$1 WHERE id=$2',
+        [SEED_IDS.tabelaPrecoB, linkId],
+      ),
+      /TENANT_FK_MISMATCH|foreign key|violates/i,
+    );
+    const afterLink = await pg.query<{
+      group_id: string; empresa_id: string; tabela_preco_id: string;
+    }>('SELECT group_id, empresa_id, tabela_preco_id FROM tabela_preco_empresas WHERE id=$1', [linkId]);
+    assert.equal(afterLink.rows[0]?.group_id, beforeLink?.group_id);
+    assert.equal(afterLink.rows[0]?.empresa_id, beforeLink?.empresa_id);
+    assert.equal(afterLink.rows[0]?.tabela_preco_id, beforeLink?.tabela_preco_id);
+
+    const beforeItem = await pg.query<{
+      group_id: string; produto_id: string; unidade_medida_id: string; tabela_preco_id: string; preco: string;
+    }>(`
+      SELECT group_id, produto_id, unidade_medida_id, tabela_preco_id, preco::text AS preco
+      FROM tabela_preco_itens WHERE id=$1
+    `, [SEED_IDS.tabelaPrecoItemAKg]);
+
+    await assert.rejects(
+      () => pg.query(
+        'UPDATE tabela_preco_itens SET group_id=$1 WHERE id=$2',
+        [SEED_IDS.groupB, SEED_IDS.tabelaPrecoItemAKg],
+      ),
+      /TENANT_FK_MISMATCH|foreign key|violates/i,
+    );
+    await assert.rejects(
+      () => pg.query(
+        'UPDATE tabela_preco_itens SET produto_id=$1 WHERE id=$2',
+        [SEED_IDS.produtoB, SEED_IDS.tabelaPrecoItemAKg],
+      ),
+      /TENANT_FK_MISMATCH|foreign key|violates/i,
+    );
+    await assert.rejects(
+      () => pg.query(
+        'UPDATE tabela_preco_itens SET unidade_medida_id=$1 WHERE id=$2',
+        [SEED_IDS.unidadeB, SEED_IDS.tabelaPrecoItemAKg],
+      ),
+      /TENANT_FK_MISMATCH|foreign key|violates/i,
+    );
+    await assert.rejects(
+      () => pg.query(
+        'UPDATE tabela_preco_itens SET tabela_preco_id=$1 WHERE id=$2',
+        [SEED_IDS.tabelaPrecoB, SEED_IDS.tabelaPrecoItemAKg],
+      ),
+      /TENANT_FK_MISMATCH|foreign key|violates/i,
+    );
+    const afterItem = await pg.query<{
+      group_id: string; produto_id: string; unidade_medida_id: string; tabela_preco_id: string; preco: string;
+    }>(`
+      SELECT group_id, produto_id, unidade_medida_id, tabela_preco_id, preco::text AS preco
+      FROM tabela_preco_itens WHERE id=$1
+    `, [SEED_IDS.tabelaPrecoItemAKg]);
+    assert.deepEqual(afterItem.rows[0], beforeItem.rows[0]);
+
+    const beforeCe = await pg.query<{ tabela_preco_id: string | null; group_id: string; empresa_id: string }>(`
+      SELECT tabela_preco_id, group_id, empresa_id FROM cliente_empresas
+      WHERE cliente_id=$1 AND empresa_id=$2
+    `, [SEED_IDS.clientePjA, SEED_IDS.empresaA]);
+
+    await assert.rejects(
+      () => pg.query(`
+        UPDATE cliente_empresas SET tabela_preco_id=$1
+        WHERE cliente_id=$2 AND empresa_id=$3
+      `, [SEED_IDS.tabelaPrecoB, SEED_IDS.clientePjA, SEED_IDS.empresaA]),
+      /TABELA_PRECO_NOT_AUTHORIZED|TENANT/i,
+    );
+    const afterCe = await pg.query<{ tabela_preco_id: string | null }>(`
+      SELECT tabela_preco_id FROM cliente_empresas
+      WHERE cliente_id=$1 AND empresa_id=$2
+    `, [SEED_IDS.clientePjA, SEED_IDS.empresaA]);
+    assert.equal(afterCe.rows[0]?.tabela_preco_id, beforeCe.rows[0]?.tabela_preco_id);
+  } finally {
+    await pg.close();
+  }
+});
+
+test('padrão concorrente máximo 1 + item duplicado concorrente', async () => {
+  const pg = await boot();
+  const db = dbClient(pg);
+  const svc = service(db);
+  try {
+    const t1 = await svc.create(ctxA, { nome: 'PADRAO CONC 1', vigencia_inicio: '2020-01-01' });
+    const t2 = await svc.create(ctxA, { nome: 'PADRAO CONC 2', vigencia_inicio: '2020-01-01' });
+
+    // Service deixa exatamente um padrão; unique parcial é a barreira final.
+    await svc.setPadrao(ctxA, t1.id);
+    await assert.rejects(
+      () => pg.query(`
+        UPDATE tabela_preco_empresas SET eh_padrao=true
+        WHERE tabela_preco_id=$1 AND empresa_id=$2
+      `, [t2.id, SEED_IDS.empresaA]),
+      /uq_tabela_preco_empresas_padrao_ativo|unique/i,
+    );
+    const padraoAposConstraint = await pg.query<{ total: number }>(`
+      SELECT count(*)::int AS total FROM tabela_preco_empresas
+      WHERE empresa_id=$1 AND eh_padrao=true AND ativo=true
+    `, [SEED_IDS.empresaA]);
+    assert.equal(padraoAposConstraint.rows[0]?.total, 1);
+
+    // Service concorrente (PGlite serializa TX; PostgreSQL real permanece gate obrigatório).
+    const concurrent = await Promise.allSettled([
+      svc.setPadrao(ctxA, t1.id),
+      svc.setPadrao(ctxA, t2.id),
+    ]);
+    assert.ok(concurrent.some((r) => r.status === 'fulfilled'));
+    const rejected = concurrent.filter((r) => r.status === 'rejected');
+    for (const r of rejected) {
+      assert.match(String((r as PromiseRejectedResult).reason), /CONFLICT|unique|padrao|TABELA_PRECO/i);
+    }
+    const padraoFinal = await pg.query<{ total: number }>(`
+      SELECT count(*)::int AS total
+      FROM tabela_preco_empresas
+      WHERE empresa_id=$1 AND eh_padrao=true AND ativo=true
+    `, [SEED_IDS.empresaA]);
+    assert.equal(padraoFinal.rows[0]?.total, 1);
+
+    const itemTabela = await svc.create(ctxA, {
+      nome: 'ITEM CONC',
+      vigencia_inicio: '2020-01-01',
+    });
+    const itemAttempts = await Promise.allSettled([
+      svc.createItem(ctxA, itemTabela.id, {
+        produto_id: SEED_IDS.produtoA,
+        unidade_medida_id: SEED_IDS.unidadeA,
+        preco: '1.50',
+      }),
+      svc.createItem(ctxA, itemTabela.id, {
+        produto_id: SEED_IDS.produtoA,
+        unidade_medida_id: SEED_IDS.unidadeA,
+        preco: '2.50',
+      }),
+    ]);
+    const itemOk = itemAttempts.filter((r) => r.status === 'fulfilled');
+    const itemFail = itemAttempts.filter((r) => r.status === 'rejected');
+    assert.equal(itemOk.length, 1);
+    assert.equal(itemFail.length, 1);
+    assert.match(String((itemFail[0] as PromiseRejectedResult).reason), /CONFLICT|unique|duplicate/i);
+    const itemCount = await pg.query<{ total: number; ativos: number }>(`
+      SELECT count(*)::int AS total,
+             count(*) FILTER (WHERE ativo)::int AS ativos
+      FROM tabela_preco_itens
+      WHERE tabela_preco_id=$1 AND produto_id=$2 AND unidade_medida_id=$3
+    `, [itemTabela.id, SEED_IDS.produtoA, SEED_IDS.unidadeA]);
+    assert.equal(itemCount.rows[0]?.total, 1);
+    assert.equal(itemCount.rows[0]?.ativos, 1);
+  } finally {
+    await pg.close();
+  }
+});
+
+test('audit rollback no UPDATE e setPadrao', async () => {
+  const pg = await boot();
+  const db = dbClient(pg);
+  const svc = service(db);
+  try {
+    const tabela = await svc.create(ctxA, {
+      nome: 'AUDIT UPDATE',
+      vigencia_inicio: '2020-01-01',
+    });
+    const other = await svc.create(ctxA, {
+      nome: 'AUDIT PADRAO OTHER',
+      vigencia_inicio: '2020-01-01',
+    });
+    await svc.setPadrao(ctxA, tabela.id);
+
+    await pg.exec(`
+      CREATE OR REPLACE FUNCTION force_tabela_preco_audit_failure_upd()
+      RETURNS TRIGGER AS $$
+      BEGIN
+        RAISE EXCEPTION 'forced audit failure update';
+      END;
+      $$ LANGUAGE plpgsql;
+      CREATE TRIGGER trg_force_tabela_preco_audit_failure_upd
+      BEFORE INSERT ON audit_logs
+      FOR EACH ROW EXECUTE PROCEDURE force_tabela_preco_audit_failure_upd();
+    `);
+
+    await assert.rejects(
+      () => svc.update(ctxA, tabela.id, { nome: 'NAO DEVE GRAVAR' }),
+      /forced audit failure update/,
+    );
+    const afterUpdate = await pg.query<{ nome: string }>(
+      'SELECT nome FROM tabelas_preco WHERE id=$1',
+      [tabela.id],
+    );
+    assert.equal(afterUpdate.rows[0]?.nome, 'AUDIT UPDATE');
+
+    await assert.rejects(
+      () => svc.setPadrao(ctxA, other.id),
+      /forced audit failure update/,
+    );
+    const padrao = await pg.query<{ tabela_preco_id: string }>(`
+      SELECT tabela_preco_id FROM tabela_preco_empresas
+      WHERE empresa_id=$1 AND eh_padrao=true AND ativo=true
+    `, [SEED_IDS.empresaA]);
+    assert.equal(padrao.rows.length, 1);
+    assert.equal(padrao.rows[0]?.tabela_preco_id, tabela.id);
+  } finally {
+    await pg.close();
+  }
+});
+
+test('ClienteEmpresa cross-company + produto/unidade + precisão + vigência', async () => {
+  const pg = await boot();
+  const db = dbClient(pg);
+  const svc = service(db);
+  try {
+    const exclusivaA = await svc.create(ctxA, {
+      nome: 'EXCLUSIVA A',
+      vigencia_inicio: '2020-01-01',
+    });
+
+    await assert.rejects(
+      () => pg.query(`
+        UPDATE cliente_empresas
+        SET tabela_preco_id=$1
+        WHERE cliente_id=$2 AND empresa_id=$3
+      `, [exclusivaA.id, SEED_IDS.clientePjA, SEED_IDS.empresaA2]),
+      /TABELA_PRECO_NOT_AUTHORIZED/,
+    );
+    const ceA2Antes = await pg.query<{ tabela_preco_id: string | null }>(`
+      SELECT tabela_preco_id FROM cliente_empresas
+      WHERE cliente_id=$1 AND empresa_id=$2
+    `, [SEED_IDS.clientePjA, SEED_IDS.empresaA2]);
+    assert.equal(ceA2Antes.rows[0]?.tabela_preco_id, null);
+
+    await svc.linkEmpresa(ctxA, exclusivaA.id, SEED_IDS.empresaA2);
+    await pg.query(`
+      UPDATE cliente_empresas
+      SET tabela_preco_id=$1
+      WHERE cliente_id=$2 AND empresa_id=$3
+    `, [exclusivaA.id, SEED_IDS.clientePjA, SEED_IDS.empresaA2]);
+    const ceA2Depois = await pg.query<{ tabela_preco_id: string | null }>(`
+      SELECT tabela_preco_id FROM cliente_empresas
+      WHERE cliente_id=$1 AND empresa_id=$2
+    `, [SEED_IDS.clientePjA, SEED_IDS.empresaA2]);
+    assert.equal(ceA2Depois.rows[0]?.tabela_preco_id, exclusivaA.id);
+
+    await assert.rejects(
+      () => pg.query(`
+        UPDATE cliente_empresas
+        SET tabela_preco_id=$1
+        WHERE cliente_id=$2 AND empresa_id=$3
+      `, [SEED_IDS.tabelaPrecoB, SEED_IDS.clientePjA, SEED_IDS.empresaA2]),
+      /TABELA_PRECO_NOT_AUTHORIZED/,
+    );
+
+    // Produto + unidade: principal KG e secundária UN permitidas; outro Grupo bloqueado.
+    const precTabela = await svc.create(ctxA, {
+      nome: 'PRECISAO UN',
+      vigencia_inicio: '2020-01-01',
+    });
+    const kg = await svc.createItem(ctxA, precTabela.id, {
+      produto_id: SEED_IDS.produtoA,
+      unidade_medida_id: SEED_IDS.unidadeA,
+      preco: '1.123456',
+    });
+    assert.equal(kg.preco, '1.123456');
+    const un = await svc.createItem(ctxA, precTabela.id, {
+      produto_id: SEED_IDS.produtoA,
+      unidade_medida_id: SEED_IDS.unidadeUnA,
+      preco: '3.5',
+    });
+    assert.ok(un.id);
+    await assert.rejects(
+      () => svc.createItem(ctxA, precTabela.id, {
+        produto_id: SEED_IDS.produtoB,
+        unidade_medida_id: SEED_IDS.unidadeA,
+        preco: '1',
+      }),
+      /PRODUTO_UNIDADE_NOT_FOUND|TABELA_PRECO_NOT_FOUND|not found/i,
+    );
+    await assert.rejects(
+      () => svc.createItem(ctxA, precTabela.id, {
+        produto_id: SEED_IDS.produtoA,
+        unidade_medida_id: SEED_IDS.unidadeA,
+        preco: '1.1234567',
+      }),
+      /Validation failed|price_scale|scale/i,
+    );
+    await assert.rejects(
+      () => svc.createItem(ctxA, precTabela.id, {
+        produto_id: SEED_IDS.produtoA,
+        unidade_medida_id: SEED_IDS.unidadeUnA,
+        preco: '-0.01',
+      }),
+      /Validation failed|preco/i,
+    );
+
+    // Vigência: específica expirada não cai em tabela não autorizada.
+    const expirada = await svc.create(ctxA, {
+      nome: 'EXPIRADA CE',
+      vigencia_inicio: '2020-01-01',
+      vigencia_fim: '2020-12-31',
+    });
+    await svc.createItem(ctxA, expirada.id, {
+      produto_id: SEED_IDS.produtoA,
+      unidade_medida_id: SEED_IDS.unidadeA,
+      preco: '77',
+    });
+    await svc.linkEmpresa(ctxA, expirada.id, SEED_IDS.empresaA);
+    const vigentePadrao = await svc.create(ctxA, {
+      nome: 'VIGENTE PADRAO',
+      vigencia_inicio: '2020-01-01',
+    });
+    await svc.createItem(ctxA, vigentePadrao.id, {
+      produto_id: SEED_IDS.produtoA,
+      unidade_medida_id: SEED_IDS.unidadeA,
+      preco: '11',
+    });
+    await svc.setPadrao(ctxA, vigentePadrao.id);
+
+    const fromExpiredSpecific = await svc.resolvePrice(ctxA, {
+      clienteEmpresaTabelaId: expirada.id,
+      produtoId: SEED_IDS.produtoA,
+      unidadeMedidaId: SEED_IDS.unidadeA,
+      businessDate: '2024-06-01',
+    });
+    assert.ok(fromExpiredSpecific);
+    assert.equal(fromExpiredSpecific?.origem_resolucao, 'padrao_empresa');
+    assert.equal(fromExpiredSpecific?.tabela_preco_id, vigentePadrao.id);
+    assert.equal(Number(fromExpiredSpecific?.preco), 11);
+
+    // Tabela não autorizada à Empresa A nunca entra no fallback (mesmo passada como específica).
+    const onlyA2 = await svc.create({
+      ...ctxA,
+      empresaId: SEED_IDS.empresaA2,
+    }, {
+      nome: 'SOMENTE A2',
+      vigencia_inicio: '2020-01-01',
+    });
+    await svc.createItem({
+      ...ctxA,
+      empresaId: SEED_IDS.empresaA2,
+    }, onlyA2.id, {
+      produto_id: SEED_IDS.produtoA,
+      unidade_medida_id: SEED_IDS.unidadeA,
+      preco: '55',
+    });
+    const unsafe = await svc.resolvePrice(ctxA, {
+      clienteEmpresaTabelaId: onlyA2.id,
+      produtoId: SEED_IDS.produtoA,
+      unidadeMedidaId: SEED_IDS.unidadeA,
+      businessDate: '2024-06-01',
+    });
+    assert.ok(unsafe);
+    assert.notEqual(unsafe?.tabela_preco_id, onlyA2.id);
+    assert.equal(unsafe?.origem_resolucao, 'padrao_empresa');
+  } finally {
+    await pg.close();
+  }
+});

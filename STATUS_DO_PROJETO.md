@@ -1,3 +1,28 @@
+### ERP-RUNTIME-07B — HARDENING FINAL (PR #28)
+
+- Data: 2026-09-19.
+- Branch: `cursor/erp-runtime-07b-tabela-preco-392b`.
+- HEAD anterior: `69547478bf8e80e5f9e4fd653a02942270524387`.
+- Status: **`HARDENING NA BRANCH / AGUARDANDO REVIEW`**.
+- Escopo: reforço de invariantes sem ampliar funcionalidade; 013 única;
+  001–012 imutáveis; sem 014; sem frontend HTTP; sem apply DEV; sem VPS;
+  sem merge; sem promoção de API.
+- Cobertura adicionada em `runtime07b.test.ts`:
+  - UPDATE cross-tenant (tabelas_preco / empresas / itens / cliente_empresas)
+    bloqueado com linha original intacta;
+  - padrão concorrente: unique parcial + service; exatamente 1 `eh_padrao`;
+  - item duplicado concorrente → 409 / count=1 (sem duplicata inativa);
+  - audit rollback em UPDATE e setPadrao (CREATE preservado);
+  - ClienteEmpresa cross-company sem autorização bloqueado; após link A2 ok;
+  - produto+unidade principal/secundária; precisão 1.123456; vigência/fallback
+    seguro (específica expirada → padrão autorizado; nunca tabela não autorizada).
+- Nota concorrência: PGlite serializa TX; unique parcial + `FOR UPDATE` no
+  `setPadrao` cobertos localmente; **PostgreSQL real continua gate obrigatório**
+  antes de promoção (não fingir equivalência de concorrência).
+- Skip `runtime01` Postgres opcional sem `DATABASE_URL` permanece documentado.
+- Próximo passo: CI verde; review humano; **não** merge; **não** aplicar 013
+  no DEV; gate PostgreSQL DEV separado.
+
 ### ERP-RUNTIME-07B — CORREÇÃO CI (PR #28)
 
 - Data: 2026-09-19.
