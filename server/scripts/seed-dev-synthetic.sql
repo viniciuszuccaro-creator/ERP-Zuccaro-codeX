@@ -158,6 +158,19 @@ INSERT INTO unidades_medida (
 )
 ON CONFLICT (id) DO NOTHING;
 
+INSERT INTO unidades_medida (
+  id, group_id, empresa_id, sigla, nome_completo, tipo_grandeza, ativo
+) VALUES (
+  '12121212-aaaa-4aaa-8aaa-121212121212',
+  'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+  'UN',
+  'Unidade',
+  'Unidade',
+  true
+)
+ON CONFLICT (id) DO NOTHING;
+
 INSERT INTO grupos_produto (
   id, group_id, empresa_id, nome_grupo, codigo, natureza, ativo
 ) VALUES (
@@ -211,7 +224,7 @@ ON CONFLICT (id) DO NOTHING;
 -- Produto A: UPSERT apenas no ID sintetico 77777777-...
 INSERT INTO produtos (
   id, group_id, empresa_id, codigo, descricao, nome, tipo_item, eh_bitola,
-  unidade_medida_id, unidade_principal, grupo_produto_id, marca_id, setor_atividade_id,
+  unidade_medida_id, unidade_principal, unidades_secundarias, grupo_produto_id, marca_id, setor_atividade_id,
   peso_teorico_kg_m, bitola_diametro_mm, status, ativo
 ) VALUES (
   '77777777-aaaa-4aaa-8aaa-777777777777',
@@ -224,6 +237,7 @@ INSERT INTO produtos (
   true,
   '11111111-aaaa-4aaa-8aaa-111111111111',
   'KG',
+  '["UN"]'::jsonb,
   '33333333-aaaa-4aaa-8aaa-333333333333',
   'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
   '55555555-aaaa-4aaa-8aaa-555555555555',
@@ -242,6 +256,7 @@ ON CONFLICT (id) DO UPDATE SET
   eh_bitola = EXCLUDED.eh_bitola,
   unidade_medida_id = EXCLUDED.unidade_medida_id,
   unidade_principal = EXCLUDED.unidade_principal,
+  unidades_secundarias = EXCLUDED.unidades_secundarias,
   grupo_produto_id = EXCLUDED.grupo_produto_id,
   marca_id = EXCLUDED.marca_id,
   setor_atividade_id = EXCLUDED.setor_atividade_id,
@@ -308,7 +323,9 @@ VALUES
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'Cliente', 3),
   ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'Cliente', 2),
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'Obra', 2),
-  ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'Obra', 2)
+  ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'Obra', 2),
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'TabelaPreco', 2),
+  ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'TabelaPreco', 2)
 ON CONFLICT (group_id, entity_name) DO UPDATE
   SET next_value = GREATEST(entity_code_sequences.next_value, EXCLUDED.next_value),
       updated_at = timezone('utc', now());
@@ -324,7 +341,7 @@ INSERT INTO profiles (
   true,
   'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
   NULL,
-  '{"Cadastros":{"cliente":["visualizar","criar","editar","inativar","restaurar"],"cliente_empresa":["visualizar","criar","editar","inativar","restaurar","bloquear"],"cliente_local":["visualizar","criar","editar","inativar","restaurar","principal"],"obra":["visualizar","criar","editar","inativar","restaurar","vincular-empresa","vincular-local","principal"]}}'::jsonb
+  '{"Cadastros":{"cliente":["visualizar","criar","editar","inativar","restaurar"],"cliente_empresa":["visualizar","criar","editar","inativar","restaurar","bloquear"],"cliente_local":["visualizar","criar","editar","inativar","restaurar","principal"],"obra":["visualizar","criar","editar","inativar","restaurar","vincular-empresa","vincular-local","principal"],"tabela_preco":["visualizar","criar","editar","inativar","restaurar","vincular-empresa","gerenciar-itens","definir-padrao"]}}'::jsonb
 )
 ON CONFLICT (id) DO UPDATE SET
   email = EXCLUDED.email,
@@ -347,7 +364,7 @@ INSERT INTO profiles (
   true,
   'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
   NULL,
-  '{"Cadastros":{"cliente":["visualizar","criar","editar","inativar","restaurar"],"cliente_empresa":["visualizar","criar","editar","inativar","restaurar","bloquear"],"cliente_local":["visualizar","criar","editar","inativar","restaurar","principal"],"obra":["visualizar","criar","editar","inativar","restaurar","vincular-empresa","vincular-local","principal"]}}'::jsonb
+  '{"Cadastros":{"cliente":["visualizar","criar","editar","inativar","restaurar"],"cliente_empresa":["visualizar","criar","editar","inativar","restaurar","bloquear"],"cliente_local":["visualizar","criar","editar","inativar","restaurar","principal"],"obra":["visualizar","criar","editar","inativar","restaurar","vincular-empresa","vincular-local","principal"],"tabela_preco":["visualizar","criar","editar","inativar","restaurar","vincular-empresa","gerenciar-itens","definir-padrao"]}}'::jsonb
 )
 ON CONFLICT (id) DO UPDATE SET
   email = EXCLUDED.email,
@@ -750,3 +767,132 @@ ON CONFLICT (obra_id, cliente_local_id, uso_na_obra) DO UPDATE SET
   ativo=EXCLUDED.ativo,
   updated_by=EXCLUDED.updated_by,
   updated_at=timezone('utc', now());
+
+-- =====================================================================
+-- TABELAS DE PRECO (ERP-RUNTIME-07B)
+-- =====================================================================
+
+INSERT INTO tabelas_preco (
+  id, group_id, empresa_id, codigo, nome, descricao, moeda,
+  vigencia_inicio, vigencia_fim, ativo, origem, created_by, updated_by
+) VALUES
+  (
+    'a7a7a7a7-aaaa-4aaa-8aaa-a7a7a7a7a7a7',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+    '000001',
+    'ATACADO',
+    'Tabela sintetica A',
+    'BRL',
+    '2020-01-01',
+    NULL,
+    true,
+    'ERP',
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4',
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'
+  ),
+  (
+    'b7b7b7b7-bbbb-4bbb-8bbb-b7b7b7b7b7b7',
+    'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+    'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+    '000001',
+    'ATACADO',
+    'Tabela sintetica B',
+    'BRL',
+    '2020-01-01',
+    NULL,
+    true,
+    'ERP',
+    'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4',
+    'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4'
+  )
+ON CONFLICT (id) DO UPDATE SET
+  nome = EXCLUDED.nome,
+  descricao = EXCLUDED.descricao,
+  vigencia_inicio = EXCLUDED.vigencia_inicio,
+  vigencia_fim = EXCLUDED.vigencia_fim,
+  ativo = EXCLUDED.ativo,
+  updated_by = EXCLUDED.updated_by,
+  updated_at = timezone('utc', now());
+
+INSERT INTO tabela_preco_empresas (
+  group_id, tabela_preco_id, empresa_id, eh_padrao, ativo, created_by, updated_by
+) VALUES
+  (
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    'a7a7a7a7-aaaa-4aaa-8aaa-a7a7a7a7a7a7',
+    'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+    true, true,
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4',
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'
+  ),
+  (
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    'a7a7a7a7-aaaa-4aaa-8aaa-a7a7a7a7a7a7',
+    'c2c2c2c2-cccc-4ccc-8ccc-c2c2c2c2c2c2',
+    false, true,
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4',
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'
+  ),
+  (
+    'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+    'b7b7b7b7-bbbb-4bbb-8bbb-b7b7b7b7b7b7',
+    'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+    true, true,
+    'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4',
+    'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4'
+  )
+ON CONFLICT (tabela_preco_id, empresa_id) DO UPDATE SET
+  eh_padrao = EXCLUDED.eh_padrao,
+  ativo = EXCLUDED.ativo,
+  updated_by = EXCLUDED.updated_by,
+  updated_at = timezone('utc', now());
+
+INSERT INTO tabela_preco_itens (
+  id, group_id, tabela_preco_id, produto_id, unidade_medida_id, preco, ativo, created_by, updated_by
+) VALUES
+  (
+    'c7c7c7c7-aaaa-4aaa-8aaa-c7c7c7c7c7c7',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    'a7a7a7a7-aaaa-4aaa-8aaa-a7a7a7a7a7a7',
+    '77777777-aaaa-4aaa-8aaa-777777777777',
+    '11111111-aaaa-4aaa-8aaa-111111111111',
+    12.345678,
+    true,
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4',
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'
+  ),
+  (
+    'd7d7d7d7-aaaa-4aaa-8aaa-d7d7d7d7d7d7',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    'a7a7a7a7-aaaa-4aaa-8aaa-a7a7a7a7a7a7',
+    '77777777-aaaa-4aaa-8aaa-777777777777',
+    '12121212-aaaa-4aaa-8aaa-121212121212',
+    150.000000,
+    true,
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4',
+    'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4'
+  ),
+  (
+    'e7e7e7e7-bbbb-4bbb-8bbb-e7e7e7e7e7e7',
+    'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+    'b7b7b7b7-bbbb-4bbb-8bbb-b7b7b7b7b7b7',
+    '88888888-bbbb-4bbb-8bbb-888888888888',
+    '22222222-bbbb-4bbb-8bbb-222222222222',
+    9.990000,
+    true,
+    'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4',
+    'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4'
+  )
+ON CONFLICT (id) DO UPDATE SET
+  preco = EXCLUDED.preco,
+  ativo = EXCLUDED.ativo,
+  updated_by = EXCLUDED.updated_by,
+  updated_at = timezone('utc', now());
+
+UPDATE cliente_empresas
+SET tabela_preco_id = 'a7a7a7a7-aaaa-4aaa-8aaa-a7a7a7a7a7a7',
+    updated_at = timezone('utc', now())
+WHERE group_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+  AND cliente_id = '99999999-aaaa-4aaa-8aaa-999999999991'
+  AND empresa_id = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';

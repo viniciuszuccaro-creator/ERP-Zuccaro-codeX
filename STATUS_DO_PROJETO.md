@@ -1,3 +1,26 @@
+### ERP-RUNTIME-07B — IMPLEMENTAÇÃO TabelaPreco (branch)
+
+- Data: 2026-09-19.
+- Branch: `cursor/erp-runtime-07b-tabela-preco-392b`.
+- Baseline 06B: `67686298be2fa125966e714b1cf20759a7991765`.
+- Status: **`IMPLEMENTADO NA BRANCH / AGUARDANDO REVIEW`**.
+- Software/API DEV oficial: **permanece `ERP-RUNTIME-06B`**. Migration 013
+  **não** aplicada no DEV remoto. VPS **não** acessado.
+- Migration: somente `013_tabelas_preco.sql`
+  (`tabelas_preco`, `tabela_preco_empresas`, `tabela_preco_itens` +
+  `cliente_empresas.tabela_preco_id`); 001–012 imutáveis.
+- Ownership Grupo+empresa origem; N:N autorização; padrão único por Empresa;
+  fallback específica→padrão→sem preço; item produto+unidade; `NUMERIC(18,6)`.
+- Nome ATACADO permitido em Empresas A e A2 (unique só por empresa origem).
+- Cliente master continua bloqueando `tabela_preco_id`.
+- RBAC `Cadastros.tabela_preco` fail-closed; RLS ENABLE+FORCE; audit atômica.
+- `frontendHttp=false`; TabelaPreco ausente de `HTTP_PILOT_ENTITIES`.
+- Docs: `docs/ERP_RUNTIME_07B.md` e `docs/ERP_RUNTIME_07B_DEV_RUNBOOK.md`.
+- Validações locais: server typecheck/build OK; `runtime07b` 5/5 pass;
+  seed parser atualizado; `git diff --check` no fechamento.
+- Próximo passo: review humano; **não** merge automático; **não** promover
+  API; **não** aplicar 013 no DEV; **não** frontend; **não** próximo runtime.
+
 ### ERP-RUNTIME-06B — IMPLEMENTAÇÃO Obra (branch)
 
 - Data: 2026-09-18.

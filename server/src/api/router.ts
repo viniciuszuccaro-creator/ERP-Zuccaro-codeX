@@ -7,6 +7,7 @@ import { requireTenantScope } from '../middleware/requestContext.js';
 import type { ClienteService } from '../services/clienteService.js';
 import type { ClienteLocalService } from '../services/clienteLocalService.js';
 import type { ObraService } from '../services/obraService.js';
+import type { TabelaPrecoService } from '../services/tabelaPrecoService.js';
 import type { MarcaService } from '../services/marcaService.js';
 import type { ProdutoService } from '../services/produtoService.js';
 import type { TenantCrudService } from '../services/tenantCrudService.js';
@@ -30,6 +31,7 @@ export type ApiDeps = {
   clienteService: ClienteService;
   clienteLocalService: ClienteLocalService;
   obraService: ObraService;
+  tabelaPrecoService: TabelaPrecoService;
 };
 
 function ctxFromReq(req: Request) {
@@ -609,6 +611,193 @@ function mountObraRoutes(router: Router, service: ObraService) {
   });
 }
 
+function mountTabelaPrecoRoutes(router: Router, service: TabelaPrecoService) {
+  const basePath = '/api/v1/tabelas-preco';
+
+  router.get(basePath, requireTenantScope, async (req, res, next) => {
+    try {
+      const orderByRaw = req.query.order_by ? String(req.query.order_by) : undefined;
+      const orderBy = ['nome', 'codigo', 'created_at'].includes(orderByRaw ?? '')
+        ? orderByRaw as 'nome' | 'codigo' | 'created_at'
+        : undefined;
+      const orderDirRaw = req.query.order_dir ? String(req.query.order_dir).toLowerCase() : undefined;
+      const orderDir = orderDirRaw === 'asc' || orderDirRaw === 'desc' ? orderDirRaw : undefined;
+      const page = await service.list(ctxFromReq(req), {
+        ativo: parseAtivoQuery(req.query.ativo),
+        vigente: parseAtivoQuery(req.query.vigente),
+        ehPadrao: parseAtivoQuery(req.query.eh_padrao),
+        search: req.query.search ? String(req.query.search) : undefined,
+        orderBy,
+        orderDir,
+        limit: req.query.limit ? Number(req.query.limit) : undefined,
+        offset: req.query.offset ? Number(req.query.offset) : undefined,
+      });
+      res.json(page);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post(basePath, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.create(ctxFromReq(req), req.body);
+      res.status(201).json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get(`${basePath}/:tabelaId`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.get(ctxFromReq(req), req.params.tabelaId);
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.patch(`${basePath}/:tabelaId`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.update(ctxFromReq(req), req.params.tabelaId, req.body);
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.delete(`${basePath}/:tabelaId`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.softDelete(ctxFromReq(req), req.params.tabelaId);
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post(`${basePath}/:tabelaId/restore`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.restore(ctxFromReq(req), req.params.tabelaId);
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get(`${basePath}/:tabelaId/empresas`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.get(ctxFromReq(req), req.params.tabelaId);
+      res.json({ data: row.empresas });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post(`${basePath}/:tabelaId/empresas/:empresaId`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.linkEmpresa(
+        ctxFromReq(req), req.params.tabelaId, req.params.empresaId,
+      );
+      res.status(201).json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.delete(`${basePath}/:tabelaId/empresas/:empresaId`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.unlinkEmpresa(
+        ctxFromReq(req), req.params.tabelaId, req.params.empresaId,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post(`${basePath}/:tabelaId/empresas/:empresaId/restore`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.restoreEmpresa(
+        ctxFromReq(req), req.params.tabelaId, req.params.empresaId,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post(`${basePath}/:tabelaId/empresas/:empresaId/padrao`, requireTenantScope, async (req, res, next) => {
+    try {
+      const ctx = ctxFromReq(req);
+      if (ctx.empresaId && ctx.empresaId !== req.params.empresaId) {
+        res.status(403).json({ error: { code: 'PERMISSION_DENIED', message: 'Permission denied' } });
+        return;
+      }
+      const row = await service.setPadrao(
+        { ...ctx, empresaId: req.params.empresaId },
+        req.params.tabelaId,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get(`${basePath}/:tabelaId/itens`, requireTenantScope, async (req, res, next) => {
+    try {
+      const page = await service.listItens(ctxFromReq(req), req.params.tabelaId, {
+        ativo: parseAtivoQuery(req.query.ativo),
+        limit: req.query.limit ? Number(req.query.limit) : undefined,
+        offset: req.query.offset ? Number(req.query.offset) : undefined,
+      });
+      res.json(page);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post(`${basePath}/:tabelaId/itens`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.createItem(ctxFromReq(req), req.params.tabelaId, req.body);
+      res.status(201).json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.patch(`${basePath}/:tabelaId/itens/:itemId`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.updateItem(
+        ctxFromReq(req), req.params.tabelaId, req.params.itemId, req.body,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.delete(`${basePath}/:tabelaId/itens/:itemId`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.softDeleteItem(
+        ctxFromReq(req), req.params.tabelaId, req.params.itemId,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post(`${basePath}/:tabelaId/itens/:itemId/restore`, requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.restoreItem(
+        ctxFromReq(req), req.params.tabelaId, req.params.itemId,
+      );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+}
+
 export function createApiRouter(deps: ApiDeps) {
   const router = Router();
 
@@ -643,14 +832,14 @@ export function createApiRouter(deps: ApiDeps) {
 
   router.get('/api/v1/meta', (_req, res) => {
     res.json({
-      runtime: 'ERP-RUNTIME-06B',
+      runtime: 'ERP-RUNTIME-07B',
       auth: getAuthFoundation(),
       config: publicConfigView(deps.config),
       httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade'],
-      preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra'],
+      preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'TabelaPreco'],
       httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal'],
       rlsModel: 'ENABLE+FORCE fail-closed; BFF uses privileged DB role; JWT policies planned with Auth',
-      note: 'Obra prepared in backend; NOT in frontend HTTP_PILOT_ENTITIES; Pedido.obra_id remains optional and unimplemented',
+      note: 'TabelaPreco prepared in backend; NOT in frontend HTTP_PILOT_ENTITIES; Pedido/Orçamento not implemented',
       produto: {
         masterData: true,
         pagination: true,
@@ -670,6 +859,7 @@ export function createApiRouter(deps: ApiDeps) {
         pagination: true,
         tenantIntegrity: true,
         softDeleteRestore: true,
+        tabelaPrecoLink: true,
         frontendHttp: false,
       },
       clienteLocal: {
@@ -689,6 +879,15 @@ export function createApiRouter(deps: ApiDeps) {
         frontendHttp: false,
         optionalOnPedido: true,
       },
+      tabelaPreco: {
+        masterData: true,
+        companyAuthorization: true,
+        productUnitPricing: true,
+        sequentialCodigo: true,
+        pagination: true,
+        transactionalAudit: true,
+        frontendHttp: false,
+      },
     });
   });
 
@@ -700,6 +899,7 @@ export function createApiRouter(deps: ApiDeps) {
   mountClienteRoutes(router, deps.clienteService);
   mountClienteLocalRoutes(router, deps.clienteLocalService);
   mountObraRoutes(router, deps.obraService);
+  mountTabelaPrecoRoutes(router, deps.tabelaPrecoService);
 
   return router;
 }

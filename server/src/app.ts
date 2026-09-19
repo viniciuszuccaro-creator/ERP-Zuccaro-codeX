@@ -44,10 +44,13 @@ import {
 import { ClienteService } from './services/clienteService.js';
 import { ClienteLocalService } from './services/clienteLocalService.js';
 import { ObraService } from './services/obraService.js';
+import { TabelaPrecoService } from './services/tabelaPrecoService.js';
 import { MarcaService } from './services/marcaService.js';
 import { ProdutoService } from './services/produtoService.js';
 import { TenantCrudService } from './services/tenantCrudService.js';
 import { createApiRouter } from './api/router.js';
+import { InMemoryTabelaPrecoRepository } from './repositories/inMemoryTabelaPrecoRepository.js';
+import { PostgresTabelaPrecoRepository } from './repositories/postgresTabelaPrecoRepository.js';
 
 export type CreateAppOptions = {
   config: AppConfig;
@@ -83,6 +86,9 @@ export function createApp(options: CreateAppOptions) {
     ? new InMemoryClienteLocalRepository()
     : new PostgresClienteLocalRepository(db);
   const obraRepo = useMemory ? new InMemoryObraRepository() : new PostgresObraRepository(db);
+  const tabelaPrecoRepo = useMemory
+    ? new InMemoryTabelaPrecoRepository()
+    : new PostgresTabelaPrecoRepository(db);
 
   const marcaService = new MarcaService(marcaRepo, auditRepo, tenantGuard);
   const unidadeService = new TenantCrudService(unidadeRepo, auditRepo, tenantGuard, {
@@ -118,7 +124,19 @@ export function createApp(options: CreateAppOptions) {
     tenantGuard,
     produtoRelationGuard,
   );
-  const clienteService = new ClienteService(clienteRepo, auditRepo, tenantGuard, rbacGuard);
+  const clienteService = new ClienteService(
+    clienteRepo,
+    auditRepo,
+    tenantGuard,
+    rbacGuard,
+    tabelaPrecoRepo,
+  );
+  const tabelaPrecoService = new TabelaPrecoService(
+    tabelaPrecoRepo,
+    auditRepo,
+    tenantGuard,
+    rbacGuard,
+  );
   const obraService = new ObraService(
     obraRepo,
     clienteRepo,
@@ -176,6 +194,7 @@ export function createApp(options: CreateAppOptions) {
     clienteService,
     clienteLocalService,
     obraService,
+    tabelaPrecoService,
   }));
   app.use(notFoundHandler);
   app.use(createErrorHandler(config));
@@ -190,6 +209,7 @@ export function createApp(options: CreateAppOptions) {
     clienteService,
     clienteLocalService,
     obraService,
+    tabelaPrecoService,
     auditRepo,
     tenantGuard,
     produtoRelationGuard,

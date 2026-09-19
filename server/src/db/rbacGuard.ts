@@ -12,6 +12,8 @@ export type RbacAction =
   | 'principal'
   | 'vincular-empresa'
   | 'vincular-local'
+  | 'gerenciar-itens'
+  | 'definir-padrao'
   | 'importar'
   | 'exportar';
 

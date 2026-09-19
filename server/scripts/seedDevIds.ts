@@ -33,6 +33,12 @@ export const SEED_IDS = Object.freeze({
   clienteLocalB1: 'd6d6d6d6-bbbb-4bbb-8bbb-d6d6d6d6d6d6',
   obraA: 'e6e6e6e6-aaaa-4aaa-8aaa-e6e6e6e6e6e6',
   obraB: 'f6f6f6f6-bbbb-4bbb-8bbb-f6f6f6f6f6f6',
+  unidadeUnA: '12121212-aaaa-4aaa-8aaa-121212121212',
+  tabelaPrecoA: 'a7a7a7a7-aaaa-4aaa-8aaa-a7a7a7a7a7a7',
+  tabelaPrecoB: 'b7b7b7b7-bbbb-4bbb-8bbb-b7b7b7b7b7b7',
+  tabelaPrecoItemAKg: 'c7c7c7c7-aaaa-4aaa-8aaa-c7c7c7c7c7c7',
+  tabelaPrecoItemAUn: 'd7d7d7d7-aaaa-4aaa-8aaa-d7d7d7d7d7d7',
+  tabelaPrecoItemBKg: 'e7e7e7e7-bbbb-4bbb-8bbb-e7e7e7e7e7e7',
 });
 
 /** Documentos sintéticos do seed (normalizados). */
