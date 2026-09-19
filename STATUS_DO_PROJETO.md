@@ -9646,3 +9646,9 @@ Checklist inicial:
 - Typecheck: zero diagnosticos nos arquivos do lote; o passivo global conhecido ficou em 1.598 e nao foi mascarado.
 - Commit de implementacao: `2f082dc4` (`Protege abas administrativas por RBAC`).
 - Proximo passo P0: revisar criar/editar perfil e vincular usuario na Gestao de Acessos, comprovando botao, persistencia, `entityGuard`, Grupo/Empresa e auditoria antes/depois.
+### ERP-RUNTIME-08B — Condição de Pagamento canônica (2026-09-19)
+
+- Código preparado na branch `codex/erp-runtime-08-condicao-pagamento`; não aplicado no DEV.
+- Migration 014, repositório PostgreSQL, API, RBAC, RLS/FORCE, auditoria e seed sintético foram adicionados.
+- Validação local: typecheck/build e 74 testes do servidor aprovados; PostgreSQL real permanece pendente.
+- Próximo passo: gate VPS autorizado da 014; não mergear nem promover 3080.

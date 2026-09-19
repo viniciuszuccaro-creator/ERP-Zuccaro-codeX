@@ -39,7 +39,7 @@ Os rollbacks 06B e 06A estão preservados e não devem ser apagados.
 
 ## Próximo passo
 
-ERP-RUNTIME-08 está em diagnóstico somente; nenhuma implementação foi iniciada.
-O diagnóstico recomenda Condição de Pagamento como próximo agregado canônico,
-antes de Orçamento/Pedido. Comercial 360º continua objetivo futuro e não está
-implementado.
+ERP-RUNTIME-08B está pronto no código da branch de trabalho, com a migration
+014 ainda não aplicada. Condição de Pagamento canônica precede Orçamento/Pedido;
+Comercial 360º continua objetivo futuro e não está implementado. Próximo passo:
+gate VPS autorizado da 014, com precheck, backup e validação PostgreSQL real.
