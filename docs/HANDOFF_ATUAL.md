@@ -60,10 +60,26 @@ houve crash nem OOM. O hotfix da branch altera somente a identidade de metadata
 para `ERP-RUNTIME-08B` e declara `CondicaoPagamento` como preparado no backend,
 mantendo `frontendHttp=false` e fora do piloto HTTP.
 
+## Diagnóstico RBAC e E2E R08B
+
+O `403` do smoke de Condição de Pagamento é causado por seed RBAC incompleto,
+não por falha do canário: o actor usado no gate,
+`a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4`, pertence ao Grupo A e pode operar as
+Empresas A/A2, mas não possuía `Cadastros.condicao_pagamento.visualizar`.
+LIST e GET exigem essa mesma ação; as demais ações são `criar`, `editar`,
+`inativar`, `restaurar`, `vincular-empresa`, `gerenciar-parcelas` e
+`definir-padrao`. O seed idempotente foi corrigido somente para os dois actors
+sintéticos A/B, com essas ações explícitas e sem wildcard.
+
+A imagem runtime contém somente artefatos de produção, portanto `npm test`
+dentro dela encontrar zero testes é esperado e não prova E2E. O mecanismo
+canônico do próximo gate é `npm run test:postgres` no worktree exato do PR,
+com dependências de teste efêmeras e `DATABASE_URL` fornecida apenas no
+ambiente do gate. O runner falha sem `DATABASE_URL` ou se executar zero testes.
+
 ## Próximo passo
 
-No Gate VPS autorizado, executar o canário da API R08B, validar
-`/api/v1/meta`, executar o E2E R08 e registrar a evidência. O seed já passou
-duas vezes; não reaplicar migrations nem seed. A API oficial 3080 continua
-R07B. Não criar migration 016, não promover a API R08 e não fazer merge neste
-gate.
+No Gate VPS autorizado, executar o seed idempotente duas vezes para propagar a
+correção RBAC, validar LIST/GET com o actor A e rodar o E2E PostgreSQL real do
+worktree. Não reaplicar migrations. A API oficial 3080 continua R07B. Não
+criar migration 016, não promover a API R08 e não fazer merge neste gate.

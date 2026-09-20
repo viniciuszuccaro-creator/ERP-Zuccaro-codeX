@@ -341,7 +341,7 @@ INSERT INTO profiles (
   true,
   'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
   NULL,
-  '{"Cadastros":{"cliente":["visualizar","criar","editar","inativar","restaurar"],"cliente_empresa":["visualizar","criar","editar","inativar","restaurar","bloquear"],"cliente_local":["visualizar","criar","editar","inativar","restaurar","principal"],"obra":["visualizar","criar","editar","inativar","restaurar","vincular-empresa","vincular-local","principal"],"tabela_preco":["visualizar","criar","editar","inativar","restaurar","vincular-empresa","gerenciar-itens","definir-padrao"]}}'::jsonb
+  '{"Cadastros":{"cliente":["visualizar","criar","editar","inativar","restaurar"],"cliente_empresa":["visualizar","criar","editar","inativar","restaurar","bloquear"],"cliente_local":["visualizar","criar","editar","inativar","restaurar","principal"],"obra":["visualizar","criar","editar","inativar","restaurar","vincular-empresa","vincular-local","principal"],"tabela_preco":["visualizar","criar","editar","inativar","restaurar","vincular-empresa","gerenciar-itens","definir-padrao"],"condicao_pagamento":["visualizar","criar","editar","inativar","restaurar","vincular-empresa","gerenciar-parcelas","definir-padrao"]}}'::jsonb
 )
 ON CONFLICT (id) DO UPDATE SET
   email = EXCLUDED.email,
@@ -364,7 +364,7 @@ INSERT INTO profiles (
   true,
   'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
   NULL,
-  '{"Cadastros":{"cliente":["visualizar","criar","editar","inativar","restaurar"],"cliente_empresa":["visualizar","criar","editar","inativar","restaurar","bloquear"],"cliente_local":["visualizar","criar","editar","inativar","restaurar","principal"],"obra":["visualizar","criar","editar","inativar","restaurar","vincular-empresa","vincular-local","principal"],"tabela_preco":["visualizar","criar","editar","inativar","restaurar","vincular-empresa","gerenciar-itens","definir-padrao"]}}'::jsonb
+  '{"Cadastros":{"cliente":["visualizar","criar","editar","inativar","restaurar"],"cliente_empresa":["visualizar","criar","editar","inativar","restaurar","bloquear"],"cliente_local":["visualizar","criar","editar","inativar","restaurar","principal"],"obra":["visualizar","criar","editar","inativar","restaurar","vincular-empresa","vincular-local","principal"],"tabela_preco":["visualizar","criar","editar","inativar","restaurar","vincular-empresa","gerenciar-itens","definir-padrao"],"condicao_pagamento":["visualizar","criar","editar","inativar","restaurar","vincular-empresa","gerenciar-parcelas","definir-padrao"]}}'::jsonb
 )
 ON CONFLICT (id) DO UPDATE SET
   email = EXCLUDED.email,

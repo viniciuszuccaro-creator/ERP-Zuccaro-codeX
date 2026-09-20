@@ -191,6 +191,14 @@ test('seed R08 mantém condição, vínculos, parcelas e default na mesma transa
   assert.match(transactional, /UPDATE cliente_empresas SET condicao_pagamento_id/);
 });
 
+test('seed R08 concede somente ações granulares de CondicaoPagamento aos actors sintéticos', () => {
+  const sql = readFileSync(seedPath, 'utf8');
+  const profiles = sql.slice(sql.indexOf('-- Perfis sintéticos do BFF'));
+  const expected = /"condicao_pagamento":\["visualizar","criar","editar","inativar","restaurar","vincular-empresa","gerenciar-parcelas","definir-padrao"\]/;
+  assert.match(profiles, expected);
+  assert.doesNotMatch(profiles, /"condicao_pagamento":\[[^\]]*"\*"/);
+});
+
 test('seed SQL: Cliente PJ/PF A e PJ B com tenant e documentos sintéticos', () => {
   const sql = readFileSync(seedPath, 'utf8');
   assert.match(sql, new RegExp(SEED_IDS.clientePjA));
