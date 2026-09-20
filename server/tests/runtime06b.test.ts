@@ -535,15 +535,19 @@ test('API Obra cobre create atômico, tenant, RBAC, lifecycle, duplicidade e pag
   assert.equal(serialized.includes('00000011'), false);
 
   const meta = await fetchOk(app, '/api/v1/meta');
-  assert.ok(['ERP-RUNTIME-06B', 'ERP-RUNTIME-07B'].includes(meta.runtime));
+  assert.ok(['ERP-RUNTIME-06B', 'ERP-RUNTIME-07B', 'ERP-RUNTIME-08B'].includes(meta.runtime));
   assert.equal(meta.obra.frontendHttp, false);
   assert.equal(meta.obra.optionalOnPedido, true);
   assert.ok(!meta.httpPilotEntities.includes('Obra'));
   assert.ok(!meta.httpPilotEntities.includes('ClienteLocal'));
   assert.ok(!meta.httpPilotEntities.includes('TabelaPreco'));
-  if (meta.runtime === 'ERP-RUNTIME-07B') {
+  if (['ERP-RUNTIME-07B', 'ERP-RUNTIME-08B'].includes(meta.runtime)) {
     assert.equal(meta.tabelaPreco?.frontendHttp, false);
     assert.ok(meta.preparedEntities.includes('TabelaPreco'));
+    if (meta.runtime === 'ERP-RUNTIME-08B') {
+      assert.ok(meta.preparedEntities.includes('CondicaoPagamento'));
+      assert.equal(meta.condicaoPagamento?.frontendHttp, false);
+    }
   }
 
   const viewHeaders = groupHeaders(ACTOR_VIEW);

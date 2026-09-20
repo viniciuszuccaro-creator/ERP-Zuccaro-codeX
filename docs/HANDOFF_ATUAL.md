@@ -51,10 +51,19 @@ encerrar com sucesso sem executar o `BEGIN`/`INSERT`/`COMMIT`. A causa é, porta
 o harness, não aceitação persistida da condição inválida. Com `ON_ERROR_STOP=1`,
 um erro SQL em execução não interativa precisa resultar em status não zero.
 
+## Hotfix de metadata R08B
+
+O container temporário do R08B iniciou normalmente. O gate aguardava
+`ERP-RUNTIME-08B`, mas `/api/v1/meta` respondia literalmente
+`ERP-RUNTIME-07B`; o timeout do gate provocou o cleanup com `SIGTERM`. Não
+houve crash nem OOM. O hotfix da branch altera somente a identidade de metadata
+para `ERP-RUNTIME-08B` e declara `CondicaoPagamento` como preparado no backend,
+mantendo `frontendHttp=false` e fora do piloto HTTP.
+
 ## Próximo passo
 
-No Gate VPS autorizado, executar o roteiro corrigido em
-`ERP_RUNTIME_08B_HARDENING_015.md`: `docker exec -i` para o heredoc, captura
-imediata de stdout/stderr e do status do `psql`, e consulta em sessão nova para
-provar que a condição inválida não persistiu. Depois, seed 2x e E2E R08. Não
-reaplicar 014/015, não criar migration 016 e não promover a API R08.
+No Gate VPS autorizado, executar o canário da API R08B, validar
+`/api/v1/meta`, executar o E2E R08 e registrar a evidência. O seed já passou
+duas vezes; não reaplicar migrations nem seed. A API oficial 3080 continua
+R07B. Não criar migration 016, não promover a API R08 e não fazer merge neste
+gate.

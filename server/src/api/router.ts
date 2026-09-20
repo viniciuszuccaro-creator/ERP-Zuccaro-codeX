@@ -849,14 +849,14 @@ export function createApiRouter(deps: ApiDeps) {
 
   router.get('/api/v1/meta', (_req, res) => {
     res.json({
-      runtime: 'ERP-RUNTIME-07B',
+      runtime: 'ERP-RUNTIME-08B',
       auth: getAuthFoundation(),
       config: publicConfigView(deps.config),
       httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade'],
-      preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'TabelaPreco'],
+      preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'TabelaPreco', 'CondicaoPagamento'],
       httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal'],
       rlsModel: 'ENABLE+FORCE fail-closed; BFF uses privileged DB role; JWT policies planned with Auth',
-      note: 'TabelaPreco prepared in backend; NOT in frontend HTTP_PILOT_ENTITIES; Pedido/Orçamento not implemented',
+      note: 'TabelaPreco and CondicaoPagamento prepared in backend; NOT in frontend HTTP_PILOT_ENTITIES; Pedido/Orçamento not implemented',
       produto: {
         masterData: true,
         pagination: true,
