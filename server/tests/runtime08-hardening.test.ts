@@ -99,3 +99,20 @@ test('R08 barrier permits active condition and 100 percent parcelas in one trans
     assert.equal(await count(db, '000802'), 1);
   } finally { await db.close(); }
 });
+
+test('R08 E2E PostgreSQL payload uses the six-digit codigo contract and valid related rows', async () => {
+  const db = await boot();
+  const id = 'a8a8a8a8-1111-4111-8111-a8a8a8a8a806';
+  try {
+    await db.exec(`BEGIN;
+      ${condition(id, '999999')}
+      INSERT INTO condicao_pagamento_empresas(group_id,condicao_pagamento_id,empresa_id,ativo)
+        VALUES ('${group}','${id}','${empresa}',true);
+      ${parcela(id, '100.000000')}
+      UPDATE condicoes_pagamento SET nome='R08 E2E UPDATED' WHERE id='${id}';
+      DELETE FROM condicao_pagamento_parcelas WHERE condicao_pagamento_id='${id}';
+      ${parcela(id, '100.000000')}
+      ROLLBACK;`);
+    assert.equal(await count(db, '999999'), 0);
+  } finally { await db.close(); }
+});

@@ -9,8 +9,8 @@ restart, promoção ou alteração da porta 3080.
 1. Confirmar que a main e o PR aprovado correspondem ao commit revisado.
 2. No gate autorizado: executar precheck, criar backup novo em `/opt/erp-zuccaro/backups` e preservar os rollbacks existentes.
 3. Verificar `schema_migrations`: 001–015 registradas uma vez; não reaplicar 014 ou 015.
-4. Executar o seed sintético duas vezes para atualizar somente o RBAC idempotente
-   de Condição de Pagamento. Não usar wildcard e não conceder a outros perfis.
+4. Confirmar que o hotfix RBAC já foi aplicado; não reaplicar seed por este
+   hotfix de payload. Não usar wildcard e não conceder a outros perfis.
 5. Subir o canário temporário e exigir `/api/v1/meta.runtime = ERP-RUNTIME-08B`,
    `CondicaoPagamento` em `preparedEntities` e `frontendHttp=false` fora do piloto HTTP.
 6. Para LIST/GET autorizado, usar o actor A
@@ -27,7 +27,10 @@ restart, promoção ou alteração da porta 3080.
 9. Parar a API temporária e registrar as evidências. A API oficial 3080 continua
    R07B; não promover 3080, não fazer merge e não criar migration 016 neste gate.
 
-O teste `runtime08-postgres-e2e` conecta no PostgreSQL real e cobre LIST/GET
+O primeiro E2E PostgreSQL real falhou somente porque seu payload usava
+`E2E-...` para `codigo`; a constraint `^[0-9]{6}$` respondeu corretamente. O
+teste agora reserva um código numérico livre de seis dígitos, entre `900000` e
+`999999`, dentro da transação rollbackável. Ele conecta no PostgreSQL real e cobre LIST/GET
 via API, RBAC, tenant cross-group e uma transação rollbackável de criação,
 atualização e substituição de parcelas. Os testes de serviço/auditoria e as
 barreiras de commit continuam cobertos pela suíte PGlite; PGlite não substitui

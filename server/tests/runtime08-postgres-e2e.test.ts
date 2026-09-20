@@ -36,7 +36,18 @@ test('R08 PostgreSQL real: RBAC, tenant e invariantes de CondicaoPagamento', { s
     const id = randomUUID();
     try {
       await client.query('BEGIN');
-      await client.query(`INSERT INTO condicoes_pagamento(id,group_id,empresa_id,codigo,nome,ativo) VALUES($1,$2,$3,$4,$5,true)`, [id, SEED_IDS.groupA, SEED_IDS.empresaA, `E2E-${id.slice(0, 8)}`, 'R08 E2E ROLLBACK']);
+      const candidate = await client.query<{ codigo: string }>(`
+        SELECT lpad(candidate::text, 6, '0') AS codigo
+        FROM generate_series(999999, 900000, -1) AS candidate
+        WHERE NOT EXISTS (
+          SELECT 1 FROM condicoes_pagamento c
+          WHERE c.group_id = $1 AND c.codigo = lpad(candidate::text, 6, '0')
+        )
+        LIMIT 1
+      `, [SEED_IDS.groupA]);
+      const codigo = candidate.rows[0]?.codigo;
+      assert.ok(codigo && /^\d{6}$/.test(codigo), 'E2E must reserve a free six-digit codigo');
+      await client.query(`INSERT INTO condicoes_pagamento(id,group_id,empresa_id,codigo,nome,ativo) VALUES($1,$2,$3,$4,$5,true)`, [id, SEED_IDS.groupA, SEED_IDS.empresaA, codigo, 'R08 E2E ROLLBACK']);
       await client.query('INSERT INTO condicao_pagamento_empresas(group_id,condicao_pagamento_id,empresa_id,ativo) VALUES($1,$2,$3,true)', [SEED_IDS.groupA, id, SEED_IDS.empresaA]);
       await client.query('INSERT INTO condicao_pagamento_parcelas(group_id,condicao_pagamento_id,ordem,dias,percentual) VALUES($1,$2,1,0,100.000000)', [SEED_IDS.groupA, id]);
       await client.query('UPDATE condicoes_pagamento SET nome=$2 WHERE id=$1', [id, 'R08 E2E UPDATED']);

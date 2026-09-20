@@ -77,9 +77,16 @@ canônico do próximo gate é `npm run test:postgres` no worktree exato do PR,
 com dependências de teste efêmeras e `DATABASE_URL` fornecida apenas no
 ambiente do gate. O runner falha sem `DATABASE_URL` ou se executar zero testes.
 
+O primeiro E2E PostgreSQL real executou um teste e chegou ao banco. LIST/GET
+autorizados passaram, e RBAC/cross-group permaneceram bloqueados. A falha
+`SQLSTATE 23514` veio exclusivamente do payload de teste: ele enviava
+`E2E-...` para `codigo`, enquanto a constraint exige seis dígitos. A constraint
+funcionou corretamente. O hotfix reserva, dentro da transação rollbackável, um
+código numérico livre entre `900000` e `999999`; API e schema já eram coerentes.
+
 ## Próximo passo
 
-No Gate VPS autorizado, executar o seed idempotente duas vezes para propagar a
-correção RBAC, validar LIST/GET com o actor A e rodar o E2E PostgreSQL real do
-worktree. Não reaplicar migrations. A API oficial 3080 continua R07B. Não
+No Gate VPS autorizado, repetir somente o E2E PostgreSQL real e concluir o
+canário. O seed RBAC já foi aplicado e não deve ser reaplicado por este hotfix;
+não reaplicar migrations. A API oficial 3080 continua R07B. Não
 criar migration 016, não promover a API R08 e não fazer merge neste gate.
