@@ -9715,3 +9715,10 @@ Checklist inicial:
   014/015 foi alterada ou reaplicada.
 - Proximo passo: push da branch e PR de hotfix; executar `test:postgres`
   com banco PostgreSQL autorizado e revisar CI antes de qualquer merge.
+
+### ERP-RUNTIME-08B - Script controlado Gates C/D (2026-09-21)
+
+- Branch: `codex/r08b-ca417-gate-cd`, baseada na MAIN `ca4171600cc30f9922c2f8b2ccb8b22d06aa6888`.
+- Adicionado `scripts/erp_runtime_08b_ca417_gate_cd.sh`, sem executar na VPS. O script cria backup, worktree descartavel e imagem exclusiva do SHA aprovado; valida Gate C e sobe somente canario R08B na porta 3086 para Gate D.
+- Travamentos: recusa SHA divergente, worktree suja, migration fora de 001-015, canario/porta 3086 existentes, metadados inadequados e alteracao da API oficial. Nao aplica migration/seed, nao toca 3080, nao promove, nao apaga imagem/container/backup/rollback; ao final para e preserva apenas o canario.
+- Pendente: revisar a PR deste script e executar manualmente na VPS autorizada; somente depois decidir Gate E. Nenhuma alteracao de runtime foi feita aqui.
