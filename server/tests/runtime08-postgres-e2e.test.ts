@@ -111,9 +111,12 @@ test('R08 PostgreSQL real: CondicaoPagamento reserves code above existing and so
     );
   } finally {
     if (created.length) {
-      await db.query(`DELETE FROM condicao_pagamento_parcelas WHERE condicao_pagamento_id = ANY($1::uuid[])`, [created]);
-      await db.query(`DELETE FROM condicao_pagamento_empresas WHERE condicao_pagamento_id = ANY($1::uuid[])`, [created]);
-      await db.query(`DELETE FROM condicoes_pagamento WHERE id = ANY($1::uuid[])`, [created]);
+      await db.withTransaction(async (tx) => {
+        await tx.query(`UPDATE condicoes_pagamento SET ativo=false WHERE id = ANY($1::uuid[])`, [created]);
+        await tx.query(`DELETE FROM condicao_pagamento_parcelas WHERE condicao_pagamento_id = ANY($1::uuid[])`, [created]);
+        await tx.query(`DELETE FROM condicao_pagamento_empresas WHERE condicao_pagamento_id = ANY($1::uuid[])`, [created]);
+        await tx.query(`DELETE FROM condicoes_pagamento WHERE id = ANY($1::uuid[])`, [created]);
+      });
     }
     for (const [groupId, nextValue] of sequenceState) {
       if (nextValue === null) await db.query(`DELETE FROM entity_code_sequences WHERE group_id=$1 AND entity_name='CondicaoPagamento'`, [groupId]);

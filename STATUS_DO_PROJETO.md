@@ -9664,6 +9664,25 @@ Checklist inicial:
 - Testes: teste focado aprovado; suite completa 563/563; `npm run audit:baseline`, `npm run lint`, `npm run typecheck`, `npm run build` e `git diff --check` aprovados. Build com avisos conhecidos de bundle grande, imports mistos e bases de navegadores desatualizadas.
 - Commit de implementacao: `d8f6dd8b` (`Protege convite de usuario por escopo`).
 - Proximo passo P0: revisar criar/editar Perfil de Acesso e vinculos de usuario existentes, comprovando persistencia, Grupo/Empresa, RBAC granular e auditoria antes/depois.
+### ERP-RUNTIME-08B - Correcao do fixture PostgreSQL da PR #32 (2026-09-21)
+
+- O PostgreSQL DEV real executou a PR #32 e confirmou a causa do erro do
+  teste: o `finally` removia parcelas de fixtures ainda ativos em autocommit,
+  acionando corretamente `assert_condicao_pagamento_integridade_final()`
+  com SQLSTATE `P0001`.
+- Correcao somente em `server/tests/runtime08-postgres-e2e.test.ts`: cleanup
+  transacional inativa primeiro as CondicoesPagamento criadas pelo teste e so
+  depois remove parcelas, vinculos e cabecalhos. Assim, nenhuma transacao
+  termina com condicao ativa sem parcelas totalizando 100%.
+- Nenhuma implementacao de geracao de codigo, constraint, trigger, migration
+  014/015, schema, VPS ou promocao foi alterada. O teste real ainda cobre
+  high-water, soft-delete, concorrencia, isolamento por Grupo e unicidade.
+- Validacoes locais apos a correcao: R08/RBAC 8 pass, 0 fail, 2 skips por
+  `DATABASE_URL` ausente; backend completo sequencial 84 pass, 0 fail,
+  3 skips; typecheck/build do backend e `git diff --check` aprovados.
+- Pendente: repetir `test:postgres` no PostgreSQL DEV autorizado para
+  revalidar a PR #32. Nao fazer merge nem promover 3080 antes desse resultado.
+
 ### ERP-RUNTIME-08B - Hotfix bloqueador de codigo CondicaoPagamento (2026-09-21)
 
 - Branch: `codex/r08b-condicao-pagamento-codigo`, baseada na MAIN
