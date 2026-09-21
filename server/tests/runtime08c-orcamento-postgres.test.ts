@@ -65,7 +65,7 @@ test('postgres orcamento lista com paginacao deterministica e itens sem N+1', as
   assert.equal(page.rows[0].itens.length, 1);
   assert.equal(calls.length, 2);
   const pageCall = calls.find((call) => call.sql.includes('ORDER BY o.numero DESC'));
-  assert.deepEqual(pageCall?.params, [scope.groupId, scope.empresaId, 10, 20]);
+  assert.deepEqual(pageCall?.params, [scope.groupId, scope.empresaId, null, null, null, null, null, 10, 20]);
   assert.match(pageCall?.sql ?? '', /json_agg/);
 });
 test('postgres orcamento abre transacao somente sem executor', async () => {
@@ -95,8 +95,8 @@ test('postgres orcamento get e list reutilizam executor fornecido', async () => 
   assert.equal((await repo.list(scope, 10, 0, supplied.executor)).total, 1);
   assert.equal(supplied.transactionCount(), 0);
   assert.deepEqual(supplied.calls[0].params, [fixture.id, scope.groupId, scope.empresaId]);
-  assert.deepEqual(supplied.calls[1].params, [scope.groupId, scope.empresaId]);
-  assert.deepEqual(supplied.calls[2].params, [scope.groupId, scope.empresaId, 10, 0]);
+  assert.deepEqual(supplied.calls[1].params, [scope.groupId, scope.empresaId, null, null, null, null, null]);
+  assert.deepEqual(supplied.calls[2].params, [scope.groupId, scope.empresaId, null, null, null, null, null, 10, 0]);
 });
 test('postgres orcamento update e cancel diretos abrem uma transacao cada', async () => {
   const fixture = row();

@@ -9860,3 +9860,11 @@ Checklist inicial:
 - O mesmo service prepara create/get/list/update/cancel/historico e workflow inicial, mas ainda nao esta exposto por HTTP. Acoes exatas `converter-pedido` e `alterar-status` foram adicionadas ao tipo RBAC existente.
 - Testes de service/dominio: 8 pass/0 fail/0 skip, cobrindo conversao, repeticao, snapshots, RBAC, tenant, auditoria, calculo e workflow ate `FINALIZADO`. Backend typecheck aprovado; PostgreSQL efemero permanece gate da CI.
 - Nenhuma VPS, migration remota, porta 3080, main ou dado real foi alterado. Proximo checkpoint: `C360-V1-06`, composicao, rotas HTTP e E2E PostgreSQL de Pedido.
+### Comercial 360 V1 - C360-V1-06 Backend HTTP de Pedido (2026-09-21)
+
+- `createApp` passou a compor um unico `PedidoRepository` por ambiente e um unico `PedidoService`, reutilizando TenantGuard, RBAC, auditoria e cadastros mestres existentes.
+- Rotas canonicas adicionadas para create/get/list/update, historico, transicao, cancelamento e conversao `Orcamento -> Pedido`; todas usam `requireTenantScope`, contexto autenticado e envelopes HTTP existentes.
+- Metadata declara backend HTTP ativo e frontend ainda inativo. Nenhuma tela paralela foi criada e o Pedido legado ainda nao foi substituido.
+- HTTP sintetico: 4 testes pass/0 fail/0 skip; familia focada Pedido/Orcamento: 18 pass/0 fail/0 skip. Backend typecheck, build e `git diff --check` aprovados.
+- Runner PostgreSQL passa a exigir R08B, R08C e R09, falhando por status, zero testes ou skip. R09 cobre migrations 001-017 uma unica vez, CRUD/historico, isolamento tenant, constraints e sequencia concorrente; execucao real fica a cargo do PostgreSQL 16 efemero da CI.
+- Nenhuma migration foi executada na VPS; porta 3080, main, dados reais e backups permaneceram intocados. Proximo checkpoint: `C360-V1-07`, frontend funcional de Pedido sobre estas rotas.

@@ -57,6 +57,9 @@ import { CondicaoPagamentoService } from './services/condicaoPagamentoService.js
 import { InMemoryOrcamentoRepository } from './repositories/inMemoryOrcamentoRepository.js';
 import { PostgresOrcamentoRepository } from './repositories/postgresOrcamentoRepository.js';
 import { OrcamentoService } from './services/orcamentoService.js';
+import { InMemoryPedidoRepository } from './repositories/inMemoryPedidoRepository.js';
+import { PostgresPedidoRepository } from './repositories/postgresPedidoRepository.js';
+import { PedidoService } from './services/pedidoService.js';
 
 export type CreateAppOptions = {
   config: AppConfig;
@@ -97,6 +100,7 @@ export function createApp(options: CreateAppOptions) {
     : new PostgresTabelaPrecoRepository(db);
   const condicaoPagamentoRepo = useMemory ? new InMemoryCondicaoPagamentoRepository() : new PostgresCondicaoPagamentoRepository(db);
   const orcamentoRepo = useMemory ? new InMemoryOrcamentoRepository() : new PostgresOrcamentoRepository(db);
+  const pedidoRepo = useMemory ? new InMemoryPedidoRepository() : new PostgresPedidoRepository(db);
 
   const marcaService = new MarcaService(marcaRepo, auditRepo, tenantGuard);
   const unidadeService = new TenantCrudService(unidadeRepo, auditRepo, tenantGuard, {
@@ -149,6 +153,10 @@ export function createApp(options: CreateAppOptions) {
   const condicaoPagamentoService = new CondicaoPagamentoService(condicaoPagamentoRepo, auditRepo, tenantGuard, rbacGuard);
   const orcamentoService = new OrcamentoService(
     orcamentoRepo, auditRepo, tenantGuard, rbacGuard, clienteRepo, produtoRepo, unidadeRepo, condicaoPagamentoRepo,
+  );
+  const pedidoService = new PedidoService(
+    pedidoRepo, orcamentoRepo, auditRepo, tenantGuard, rbacGuard, clienteRepo, produtoRepo,
+    unidadeRepo, condicaoPagamentoRepo, clienteLocalRepo, obraRepo, tabelaPrecoRepo,
   );
   const obraService = new ObraService(
     obraRepo,
@@ -210,6 +218,7 @@ export function createApp(options: CreateAppOptions) {
     tabelaPrecoService,
     condicaoPagamentoService,
     orcamentoService,
+    pedidoService,
   }));
   app.use(notFoundHandler);
   app.use(createErrorHandler(config));
@@ -227,6 +236,7 @@ export function createApp(options: CreateAppOptions) {
     tabelaPrecoService,
     condicaoPagamentoService,
     orcamentoService,
+    pedidoService,
     auditRepo,
     tenantGuard,
     produtoRelationGuard,

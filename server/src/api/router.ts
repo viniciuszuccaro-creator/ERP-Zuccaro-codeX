@@ -10,6 +10,7 @@ import type { ObraService } from '../services/obraService.js';
 import type { TabelaPrecoService } from '../services/tabelaPrecoService.js';
 import type { CondicaoPagamentoService } from '../services/condicaoPagamentoService.js';
 import type { OrcamentoService } from '../services/orcamentoService.js';
+import type { PedidoService } from '../services/pedidoService.js';
 import type { MarcaService } from '../services/marcaService.js';
 import type { ProdutoService } from '../services/produtoService.js';
 import type { TenantCrudService } from '../services/tenantCrudService.js';
@@ -36,6 +37,7 @@ export type ApiDeps = {
   tabelaPrecoService: TabelaPrecoService;
   condicaoPagamentoService: CondicaoPagamentoService;
   orcamentoService: OrcamentoService;
+  pedidoService: PedidoService;
 };
 
 function ctxFromReq(req: Request) {
@@ -849,6 +851,50 @@ function mountOrcamentoRoutes(router: Router, service: OrcamentoService) {
     catch (error) { next(error); }
   });
 }
+
+function mountPedidoRoutes(router: Router, service: PedidoService) {
+  const base = '/api/v1/pedidos';
+  router.get(base, requireTenantScope, async (req, res, next) => {
+    try {
+      res.json(await service.list(ctxFromReq(req), {
+        limit: req.query.limit === undefined ? undefined : Number(req.query.limit),
+        offset: req.query.offset === undefined ? undefined : Number(req.query.offset),
+        search: typeof req.query.search === 'string' ? req.query.search : undefined,
+        status: typeof req.query.status === 'string' ? req.query.status : undefined,
+        clienteEmpresaId: typeof req.query.clienteEmpresaId === 'string' ? req.query.clienteEmpresaId : undefined,
+        tipoOperacao: typeof req.query.tipoOperacao === 'string' ? req.query.tipoOperacao : undefined,
+      }));
+    } catch (error) { next(error); }
+  });
+  router.post(base, requireTenantScope, async (req, res, next) => {
+    try { res.status(201).json({ data: await service.create(ctxFromReq(req), req.body) }); }
+    catch (error) { next(error); }
+  });
+  router.get(`${base}/:id`, requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.get(ctxFromReq(req), req.params.id) }); }
+    catch (error) { next(error); }
+  });
+  router.patch(`${base}/:id`, requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.update(ctxFromReq(req), req.params.id, req.body) }); }
+    catch (error) { next(error); }
+  });
+  router.get(`${base}/:id/historico`, requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.history(ctxFromReq(req), req.params.id) }); }
+    catch (error) { next(error); }
+  });
+  router.post(`${base}/:id/status`, requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.transition(ctxFromReq(req), req.params.id, req.body?.status, req.body?.motivo) }); }
+    catch (error) { next(error); }
+  });
+  router.post(`${base}/:id/cancelar`, requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.cancel(ctxFromReq(req), req.params.id, req.body?.motivo) }); }
+    catch (error) { next(error); }
+  });
+  router.post('/api/v1/orcamentos/:id/converter-pedido', requireTenantScope, async (req, res, next) => {
+    try { res.status(201).json({ data: await service.convert(ctxFromReq(req), req.params.id, req.body) }); }
+    catch (error) { next(error); }
+  });
+}
 export function createApiRouter(deps: ApiDeps) {
   const router = Router();
 
@@ -886,11 +932,11 @@ export function createApiRouter(deps: ApiDeps) {
       runtime: 'ERP-RUNTIME-08B',
       auth: getAuthFoundation(),
       config: publicConfigView(deps.config),
-      httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Orcamento'],
-      preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'TabelaPreco', 'CondicaoPagamento', 'Orcamento'],
-      httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Orcamento'],
+      httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Orcamento', 'Pedido'],
+      preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'TabelaPreco', 'CondicaoPagamento', 'Orcamento', 'Pedido'],
+      httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Orcamento', 'Pedido'],
       rlsModel: 'ENABLE+FORCE fail-closed; BFF uses privileged DB role; JWT policies planned with Auth',
-      note: 'TabelaPreco and CondicaoPagamento prepared in backend; Orcamento uses the canonical frontend HTTP client; Pedido not implemented',
+      note: 'TabelaPreco and CondicaoPagamento prepared in backend; Orcamento uses the canonical frontend HTTP client; Pedido backend HTTP is active with frontend integration pending',
       produto: {
         masterData: true,
         pagination: true,
@@ -950,6 +996,17 @@ export function createApiRouter(deps: ApiDeps) {
         rbacFailClosed: true,
         cancelByState: true,
       },
+      pedido: {
+        backendHttp: true,
+        frontendHttp: false,
+        pagination: true,
+        tenantIntegrity: true,
+        sequentialNumero: true,
+        transactionalAudit: true,
+        rbacFailClosed: true,
+        idempotentConversion: true,
+        statusHistory: true,
+      },
     });
   });
 
@@ -964,6 +1021,7 @@ export function createApiRouter(deps: ApiDeps) {
   mountTabelaPrecoRoutes(router, deps.tabelaPrecoService);
   mountCondicaoPagamentoRoutes(router, deps.condicaoPagamentoService);
   mountOrcamentoRoutes(router, deps.orcamentoService);
+  mountPedidoRoutes(router, deps.pedidoService);
 
   return router;
 }

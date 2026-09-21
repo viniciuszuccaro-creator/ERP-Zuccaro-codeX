@@ -148,7 +148,7 @@ test('HTTP Orcamento preserva validacoes comerciais como 422', async () => {
   assert.equal(result.body.error.code, 'ORCAMENTO_PRODUTO_INVALIDO');
 });
 
-test('meta declara frontend e backend HTTP de Orcamento e mantem Pedido pendente', async () => {
+test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
   const { app } = fixture();
   const result = await request(app, '/api/v1/meta');
   assert.equal(result.status, 200);
@@ -165,7 +165,9 @@ test('meta declara frontend e backend HTTP de Orcamento e mantem Pedido pendente
     rbacFailClosed: true,
     cancelByState: true,
   });
-  assert.match(result.body.note, /Pedido not implemented/);
+  assert.match(result.body.note, /Pedido backend HTTP is active/);
+  assert.equal(result.body.pedido.backendHttp, true);
+  assert.equal(result.body.pedido.frontendHttp, false);
   assert.equal(result.body.runtime, 'ERP-RUNTIME-08B');
 });
 

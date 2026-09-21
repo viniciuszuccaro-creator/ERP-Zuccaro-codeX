@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
 
 if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required for test:postgres');
-const suites = ['tests/runtime08-postgres-e2e.test.ts', 'tests/runtime08c-orcamento-postgres-e2e.test.ts'];
+const suites = ['tests/runtime08-postgres-e2e.test.ts', 'tests/runtime08c-orcamento-postgres-e2e.test.ts', 'tests/runtime09-pedido-postgres-e2e.test.ts'];
 let allPassed = true;
 for (const suite of suites) {
   const result = spawnSync(process.execPath, ['--import', 'tsx', '--test', suite], { cwd: process.cwd(), env: process.env, encoding: 'utf8' });

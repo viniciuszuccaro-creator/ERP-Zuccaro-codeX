@@ -319,6 +319,7 @@ test('meta ERP-RUNTIME-08B prepara CondicaoPagamento sem ativar frontend HTTP', 
       runtime: string;
       tabelaPreco: { frontendHttp: boolean };
       condicaoPagamento: { masterData: boolean; parcelasAtomicas: boolean; frontendHttp: boolean };
+      pedido: { backendHttp: boolean; frontendHttp: boolean };
       preparedEntities: string[];
       httpPilotEntities: string[];
       httpEntities: string[];
@@ -333,7 +334,10 @@ test('meta ERP-RUNTIME-08B prepara CondicaoPagamento sem ativar frontend HTTP', 
     assert.equal(meta.condicaoPagamento.frontendHttp, false);
     assert.ok(!meta.httpPilotEntities.includes('CondicaoPagamento'));
     assert.ok(!meta.httpEntities.includes('CondicaoPagamento'));
-    assert.ok(!meta.preparedEntities.includes('Pedido'));
+    assert.ok(meta.preparedEntities.includes('Pedido'));
+    assert.ok(meta.httpEntities.includes('Pedido'));
+    assert.equal(meta.pedido.backendHttp, true);
+    assert.equal(meta.pedido.frontendHttp, false);
     assert.ok(!meta.preparedEntities.includes('Orçamento'));
   } finally {
     await new Promise<void>((resolve, reject) => {
