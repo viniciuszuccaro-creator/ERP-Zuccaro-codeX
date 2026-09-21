@@ -9731,3 +9731,6 @@ Checklist inicial:
 - Pendente: validacao estatica, commit/push da mesma branch e revisao antes de abrir PR. Nenhuma promotion, migration, seed ou operacao VPS foi executada.
 
 - Validacao local da correcao: Git Bash `bash -n` e `git diff --check` aprovados; `shellcheck` indisponivel neste computador. Revisao estatica confirmou ausencia de `/meta` legado, promotion, migration, seed e comandos contra `erp-api-dev`.
+
+- Correcao de portabilidade pendente de validacao: testes raiz/backend movidos para `node:22-bookworm-slim`; host passa a exigir Docker/curl/git/sha256sum/python3. Metadata e CREATE serao parseados por Python estruturado; nenhum Node/NPM sera exigido no host.
+- Validacao da portabilidade: `bash -n` e `git diff --check` aprovados; busca confirmou que Node/NPM so aparecem dentro dos containers `node:22-bookworm-slim` e que nao ha `node -e` no host. `shellcheck` continua indisponivel.
