@@ -43,6 +43,7 @@ export interface ClienteRepository extends TenantEntityRepository<Cliente, Clien
   findByDocumento(groupId: string, documentoNormalizado: string): Promise<Cliente | null>;
   restore(scope: Scope, id: string): Promise<Cliente | null>;
   listEmpresaLinks(filter: ClienteEmpresaListFilter): Promise<{ rows: ClienteEmpresa[]; total: number }>;
+  getEmpresaLinkById(scope: Scope, linkId: string, executor?: DbQueryExecutor): Promise<ClienteEmpresa | null>;
   getEmpresaLink(
     scope: Scope,
     clienteId: string,
@@ -333,6 +334,11 @@ export class InMemoryClienteRepository implements ClienteRepository {
     const offset = Math.max(filter.offset ?? 0, 0);
     const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);
     return { rows: rows.slice(offset, offset + limit), total };
+  }
+
+  async getEmpresaLinkById(scope: Scope, linkId: string, _executor?: DbQueryExecutor): Promise<ClienteEmpresa | null> {
+    const row = [...this.empresaLinks.values()].find((item) => item.id === linkId);
+    return row?.group_id === scope.groupId && (!scope.empresaId || row.empresa_id === scope.empresaId) ? structuredClone(row) : null;
   }
 
   async getEmpresaLink(

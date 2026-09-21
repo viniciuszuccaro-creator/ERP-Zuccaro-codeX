@@ -378,6 +378,15 @@ export class PostgresClienteRepository implements ClienteRepository {
     };
   }
 
+  async getEmpresaLinkById(scope: Scope, linkId: string, executor?: DbQueryExecutor): Promise<ClienteEmpresa | null> {
+    const result = await (executor ?? this.db).query(
+      'SELECT * FROM cliente_empresas WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND ativo=true',
+      [linkId, scope.groupId, scope.empresaId],
+    );
+    const row = result.rows[0] as Record<string, unknown> | undefined;
+    return row ? mapClienteEmpresa(row) : null;
+  }
+
   async getEmpresaLink(
     scope: Scope,
     clienteId: string,

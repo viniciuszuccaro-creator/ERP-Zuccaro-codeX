@@ -9769,3 +9769,12 @@ Checklist inicial:
 - Testes focados: 12 pass, 0 fail (6 contratuais + 6 controlados PostgreSQL). Suite backend: 101 total, 97 pass, 0 fail, 4 skips locais por DATABASE_URL ausente.
 - Typecheck, build, git diff --check e auditoria de segredos/dados reais aprovados. R08B/R08C reais e migrations 001-016 permanecem cobertos pela CI PostgreSQL.
 - Nenhuma VPS, migration remota, porta 3080, main ou dado real foi alterado. Proximo lote autorizado: A2.1 OrcamentoService e TenantGuard.
+### Comercial 360 - A2.1A OrcamentoService create/get/list (2026-09-21)
+
+- Criado `OrcamentoService` sem rotas HTTP, limitado a create/get/list e com contexto obrigatorio de requestId, actorId, Grupo e Empresa.
+- TenantGuard valida Empresa no Grupo; payload strict rejeita totais, status, numero, tenant e campos internos. GET usa 404 uniforme para ausente/cross-tenant e LIST normaliza limit 1-200/offset nao negativo.
+- CREATE valida ClienteEmpresa ativo/habilitado, CondicaoPagamento ativa/autorizada, Produto ativo no tenant e Unidade principal/ativa. ClienteEmpresa e Condicao sao revalidados no executor da unica transacao; Produto/Unidade reutilizam repositorios canônicos e constraints 016 permanecem barreira final.
+- ClienteRepository ganhou consulta tenant-scoped `getEmpresaLinkById`, implementada em memoria e PostgreSQL, para evitar consulta/cadastro paralelo.
+- Testes direcionados: 7 pass, 0 fail, cobrindo 19 cenarios solicitados. Suite backend: 108 total, 104 pass, 0 fail, 4 skips locais por DATABASE_URL ausente.
+- Typecheck, build, git diff --check e auditoria sensivel aprovados. Nenhuma rota, RBAC parcial, auditoria funcional, VPS, migration remota, porta 3080, main ou dado real foi alterado.
+- Proximo lote: A2.1B update/cancel do service; RBAC/auditoria continuam reservados ao A2.2 antes de qualquer exposicao HTTP.
