@@ -58,3 +58,7 @@ E: frontend, integracao e E2E.
 ## Testes do Lote A
 
 Criar, editar, listar, obter, inativar/restaurar, conversao idempotente, Grupo/Empresa cruzados bloqueados, ator sem permissao bloqueado, desconto acima da alcada, calculo server-side, auditoria e concorrencia do codigo. Validar pagina??o e filtros quando a listagem existir.
+
+## Diagnostico do Lote A
+
+A busca focal em `server/src`, migrations e testes confirmou ausencia de contrato backend, tabela ou rota de Pedido/Orcamento. `server/src/api/router.ts` declara que ambos nao estao implementados; migrations 013/014 tambem os excluem explicitamente. Portanto o Lote A devera introduzir somente os agregados canonicos, em migration aditiva e branch propria deste lote, reutilizando ClienteEmpresa, Produto, TabelaPreco, CondicaoPagamento, sequencia, TenantGuard, RBAC e audit existentes. Nenhuma tela paralela sera criada.

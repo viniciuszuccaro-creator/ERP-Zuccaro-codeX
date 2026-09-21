@@ -9721,3 +9721,4 @@ Checklist inicial:
 - Branch `codex/comercial-360` criada a partir de `ca417160`. Inventario consolidado em `docs/COMERCIAL_360.md`: reutiliza Comercial, Cadastros Gerais, ClienteEmpresa, Produto, TabelaPreco, CondicaoPagamento, Producao, Expedicao e auditoria existentes.
 - Lote A definido: Orcamento/Pedido/Itens/Totais/Descontos/Conversao, com Grupo/Empresa, RBAC fail-closed, auditoria e soft delete. Antes de schema, confirmar contratos de Pedido/Orcamento existentes e evitar estrutura paralela.
 - Proximo passo: diagnostico focal dos contratos backend de Pedido/Orcamento e seus testes para implementar somente o Lote A.
+- Diagnostico focal concluido: Pedido/Orcamento inexistem no backend atual, conforme metadata, migrations 013/014 e testes. O Lote A passa a requerer agregados canonicos aditivos; nao existe implementacao equivalente a preservar.
