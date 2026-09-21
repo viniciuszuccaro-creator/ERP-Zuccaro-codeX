@@ -26,5 +26,15 @@ test('R08C PostgreSQL real: orcamento create get list update cancel e isolamento
     assert.equal(await repo.update(other, id, input), null);
     const cancelled = await repo.cancel(scope, id); assert.equal(cancelled?.status, 'CANCELADO'); assert.equal(cancelled?.ativo, false);
     assert.equal(await repo.cancel(scope, id), null);
-  } finally { if (id) await db.query('DELETE FROM orcamentos WHERE id=$1 AND group_id=$2 AND empresa_id=$3', [id, scope.groupId, scope.empresaId]); await db.end(); }
+  } finally {
+    let cleanupError: unknown;
+    try {
+      if (id) await db.withTransaction(async (tx) => {
+        await tx.query('DELETE FROM orcamento_itens WHERE orcamento_id=$1 AND group_id=$2 AND empresa_id=$3', [id, scope.groupId, scope.empresaId]);
+        await tx.query('DELETE FROM orcamentos WHERE id=$1 AND group_id=$2 AND empresa_id=$3', [id, scope.groupId, scope.empresaId]);
+      });
+    } catch (error) { cleanupError = error; }
+    finally { await db.end(); }
+    if (cleanupError) throw cleanupError;
+  }
 });
