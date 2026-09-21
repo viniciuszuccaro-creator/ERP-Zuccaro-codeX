@@ -9728,3 +9728,9 @@ Checklist inicial:
 - Implementados `orcamentoTypes`, calculo monetario por micros sem float, snapshots de item, schema de entrada e `InMemoryOrcamentoRepository` com sequencia isolada por Empresa, consulta, listagem e cancelamento.
 - Criada `016_orcamentos_comercial_360.sql` apenas no repositorio: cabecalho/itens, decimais, FK, unicidade por Empresa, indices, RLS+FORCE e rollback documentado. Nao foi executada na VPS.
 - Teste direcionado: 1 pass, 0 fail. Backend typecheck/build e `git diff --check` aprovados. Repositorio PostgreSQL, Service, RBAC/auditoria e rotas sao pendencias explicitas do A2; Pedido e frontend nao foram iniciados.
+
+### Comercial 360 - A1.1 Repository PostgreSQL de Orcamento (2026-09-21)
+
+- Implementado `PostgresOrcamentoRepository` com `DbClient.withTransaction`, lock transacional por Empresa, sequencia numerica por Empresa, create de cabecalho/itens, snapshots, consulta tenant-scoped, pagina??o deterministica e cancelamento protegido por estado.
+- Criados tres testes de contrato PostgreSQL/migration e mantido o teste in-memory. Executados 4 pass, 0 fail; backend typecheck/build e diff-check aprovados.
+- PostgreSQL real nao executado: `DATABASE_URL` nao esta configurada neste worktree. Migration 016 continua somente no repositorio; VPS nao foi alterada. Service/RBAC/auditoria/rotas permanecem A2.
