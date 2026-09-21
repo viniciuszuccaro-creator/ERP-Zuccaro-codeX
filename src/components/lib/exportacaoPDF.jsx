@@ -8,6 +8,37 @@
  * @param {object} pedido - Dados do pedido
  * @param {object} empresa - Dados da empresa
  */
+const escapeDocumentText = (value) => String(value ?? '')
+  .replaceAll('&', '&amp;')
+  .replaceAll('<', '&lt;')
+  .replaceAll('>', '&gt;')
+  .replaceAll('"', '&quot;')
+  .replaceAll("'", '&#039;');
+
+const formatDocumentMoney = (value) => new Intl.NumberFormat('pt-BR', {
+  style: 'currency', currency: 'BRL',
+}).format(Number(value || 0));
+
+export function gerarPDFOrcamento(orcamento, { empresa = {}, clienteNome = '', condicaoPagamento = '' } = {}) {
+  if (!orcamento) return false;
+  const empresaNome = empresa.razao_social || empresa.nome_fantasia || empresa.nome || 'Empresa emissora';
+  const documentoEmpresa = empresa.cnpj || empresa.cpf_cnpj || empresa.documento || '';
+  const status = orcamento.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado';
+  const html = `<!doctype html><html><head><meta charset="UTF-8"><title>Orçamento ${escapeDocumentText(orcamento.numero)}</title><style>
+    @media print{@page{size:A4;margin:12mm}.no-print{display:none}}body{font-family:Arial,sans-serif;color:#1f2937;font-size:11px;margin:0}.header{display:flex;justify-content:space-between;border-bottom:3px solid #1d4ed8;padding-bottom:12px}.brand{font-size:20px;font-weight:700}.muted{color:#64748b}.title{text-align:center;font-size:18px;font-weight:700;margin:18px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}.box{border:1px solid #cbd5e1;padding:10px;border-radius:4px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #cbd5e1;padding:7px}th{background:#f1f5f9;text-align:left}.right{text-align:right}.totals{margin:16px 0 0 auto;width:280px}.total{font-size:14px;font-weight:700;border-top:2px solid #1d4ed8;padding-top:6px}.notes{white-space:pre-wrap;margin-top:16px}.footer{margin-top:28px;padding-top:10px;border-top:1px solid #cbd5e1;text-align:center;color:#64748b}</style></head><body>
+    <header class="header"><div><div class="brand">${escapeDocumentText(empresaNome)}</div><div class="muted">${escapeDocumentText(documentoEmpresa)}</div></div><div class="right"><strong>Orçamento ${escapeDocumentText(orcamento.numero)}</strong><br>${escapeDocumentText(status)}</div></header>
+    <div class="title">PROPOSTA COMERCIAL</div><section class="grid"><div class="box"><strong>Cliente</strong><br>${escapeDocumentText(clienteNome)}</div><div class="box"><strong>Condição de pagamento</strong><br>${escapeDocumentText(condicaoPagamento)}<br><strong>Validade</strong>: ${escapeDocumentText(new Date(orcamento.validade_em).toLocaleDateString('pt-BR'))}</div></section>
+    <table><thead><tr><th>Item</th><th>Descrição</th><th>Un.</th><th class="right">Quantidade</th><th class="right">Preço</th><th class="right">Desconto</th><th class="right">Total</th></tr></thead><tbody>${(orcamento.itens || []).map((item, index) => `<tr><td>${index + 1}</td><td>${escapeDocumentText(item.descricao)}</td><td>${escapeDocumentText(item.unidade_sigla)}</td><td class="right">${escapeDocumentText(item.quantidade)}</td><td class="right">${escapeDocumentText(formatDocumentMoney(item.preco_unitario))}</td><td class="right">${escapeDocumentText(formatDocumentMoney(item.desconto))}</td><td class="right">${escapeDocumentText(formatDocumentMoney(item.total))}</td></tr>`).join('')}</tbody></table>
+    <div class="totals"><div>Subtotal: <span style="float:right">${escapeDocumentText(formatDocumentMoney(orcamento.subtotal))}</span></div><div>Desconto: <span style="float:right">${escapeDocumentText(formatDocumentMoney(orcamento.desconto))}</span></div><div class="total">Total: <span style="float:right">${escapeDocumentText(formatDocumentMoney(orcamento.total))}</span></div></div>
+    <div class="notes"><strong>Observações</strong><br>${escapeDocumentText(orcamento.observacoes || 'Sem observações.')}</div><footer class="footer">Documento gerado em ${escapeDocumentText(new Date().toLocaleString('pt-BR'))} pelo ERP Zuccaro</footer></body></html>`;
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) return false;
+  printWindow.opener = null;
+  printWindow.document.write(html);
+  printWindow.document.close();
+  printWindow.onload = () => setTimeout(() => printWindow.print(), 250);
+  return true;
+}
 export function gerarPDFPedido(pedido, empresa = {}) {
   const html = `
     <!DOCTYPE html>

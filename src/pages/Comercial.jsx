@@ -337,7 +337,7 @@ export default function Comercial() {
       windowTitle: 'Orçamentos',
       width: 1500,
       height: 850,
-      props: { groupId, empresaId, actorId: user?.id, actorEmail: user?.email, hasPermission, filterInContext }
+      props: { groupId, empresaId, actorId: user?.id, actorEmail: user?.email, empresaAtual, hasPermission, filterInContext }
     },
     {
       title: 'Pedidos',

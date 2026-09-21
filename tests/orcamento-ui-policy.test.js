@@ -4,6 +4,7 @@ import test from 'node:test';
 
 import {
   buildOrcamentoPayload,
+  buildOrcamentoShareText,
   calculateItem,
   calculateTotals,
   canUseOrcamentoAction,
@@ -80,4 +81,20 @@ test('tela contempla estados, detalhe, edicao, confirmacao e invalidacao por emp
   assert.match(tab, /beforeunload/);
   assert.match(tab, /\[groupId, empresaId\]/);
   assert.match(tab, /invalidateQueries\(\{ queryKey: \['orcamentos-http', groupId, empresaId\]/);
+});
+test('preparacao de compartilhamento usa somente resumo comercial revisavel', () => {
+  const text = buildOrcamentoShareText({ numero: '00000042', status: 'EM_ABERTO', validade_em: '2027-01-31T00:00:00.000Z', total: '125.500000' }, { empresaNome: 'Empresa Sintetica', clienteNome: 'Cliente Sintetico' });
+  assert.match(text, /Orçamento 00000042/);
+  assert.match(text, /Cliente Sintetico/);
+  assert.match(text, /R\$\s*125,50/);
+  assert.doesNotMatch(text, /groupId|empresaId|actorId|token/i);
+});
+
+test('impressao de orcamento escapa campos livres e nao depende de credencial externa', async () => {
+  const source = await readFile(new URL('../src/components/lib/exportacaoPDF.jsx', import.meta.url), 'utf8');
+  assert.match(source, /export function gerarPDFOrcamento/);
+  assert.match(source, /escapeDocumentText\(item\.descricao\)/);
+  assert.match(source, /escapeDocumentText\(orcamento\.observacoes/);
+  assert.match(source, /printWindow\.opener = null/);
+  assert.doesNotMatch(source, /api[_-]?key|access[_-]?token|service[_-]?role/i);
 });

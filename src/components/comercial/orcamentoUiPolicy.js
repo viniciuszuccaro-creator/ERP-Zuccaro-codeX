@@ -57,3 +57,11 @@ export function buildOrcamentoPayload(form) {
     })),
   };
 }
+
+export function buildOrcamentoShareText(orcamento, { empresaNome = 'Empresa', clienteNome = 'Cliente' } = {}) {
+  if (!orcamento?.numero) throw new Error('Orçamento inválido para compartilhamento');
+  const status = orcamento.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado';
+  const total = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(orcamento.total || 0));
+  const validade = orcamento.validade_em ? new Intl.DateTimeFormat('pt-BR').format(new Date(orcamento.validade_em)) : '-';
+  return [`${empresaNome} - Orçamento ${orcamento.numero}`, `Cliente: ${clienteNome}`, `Status: ${status}`, `Validade: ${validade}`, `Total: ${total}`, 'O documento completo deve ser conferido no ERP antes do envio.'].join('\n');
+}

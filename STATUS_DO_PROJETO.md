@@ -9838,3 +9838,10 @@ Checklist inicial:
 - Testes focados backend: 27 pass/0 fail/0 skip. Testes focados frontend: 11 pass/0 fail/0 skip. Suite frontend explicita: 581 pass/0 fail/0 skip. Backend typecheck/build, lint dos arquivos tocados, audit baseline e `git diff --check` aprovados.
 - A suite backend global foi encerrada pelo processo hospedeiro sem resumo neste PC; os testes focados passaram e a CI completa/PostgreSQL da PR permanece gate obrigatorio antes de considerar a versao pronta.
 - Nenhuma migration, VPS, porta 3080, main, segredo ou dado real foi alterado. Proximo checkpoint automatico: `C360-V1-03`, impressao/PDF e preparacao segura de compartilhamento.
+### Comercial 360 V1 - C360-V1-03 Operacao do Orcamento (2026-09-21)
+
+- O detalhe existente de Orcamento passou a oferecer impressao/geracao de PDF pelo dialogo nativo, reutilizando `exportacaoPDF.jsx` e incluindo empresa emissora, cliente, itens, valores, condicao, validade, observacoes, status e numero.
+- Todo texto livre inserido no documento e escapado antes de `document.write`; a janela perde o vinculo `opener` e nenhum segredo, token ou URL temporaria participa do documento.
+- WhatsApp e e-mail preparam somente um resumo comercial no clipboard para revisao humana. Nenhum envio, destinatario, credencial ou servico externo foi integrado; o envio real permanece bloqueado ate configuracao/autorizacao especifica.
+- Testes direcionados frontend: 13 pass/0 fail/0 skip. A suite frontend completa do checkpoint anterior passou 581/581. O build global inicia mas o processo hospedeiro encerra sem codigo neste PC; a CI da PR permanece o gate completo.
+- Nenhuma migration, VPS, porta 3080, main, segredo ou dado real foi alterado. Proximo checkpoint automatico: `C360-V1-04`, dominio e persistencia canonicos de Pedido, reutilizando o modulo existente.
