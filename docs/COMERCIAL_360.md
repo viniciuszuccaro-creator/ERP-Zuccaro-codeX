@@ -49,10 +49,10 @@ Nenhuma migration aplicada sera alterada. O Lote A primeiro confirma se ja exist
 
 ## Lotes
 
-A: Orcamento/Pedido/Itens/Totais/Descontos basicos/Conversao.  
-B: preco, condicao, desconto e aprovacao.  
-C: estoque, reserva e producao.  
-D: expedicao, faturamento e financeiro.  
+A: Orcamento/Pedido/Itens/Totais/Descontos basicos/Conversao.
+B: preco, condicao, desconto e aprovacao.
+C: estoque, reserva e producao.
+D: expedicao, faturamento e financeiro.
 E: frontend, integracao e E2E.
 
 ## Testes do Lote A
