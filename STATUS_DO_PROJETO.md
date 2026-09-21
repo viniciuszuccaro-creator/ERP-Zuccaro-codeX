@@ -9788,3 +9788,14 @@ Checklist inicial:
 - Backend typecheck/build, lint, audit:baseline, frontend build e git diff --check aprovados. O typecheck global da raiz continua com erros legados preexistentes em arquivos frontend/Base44 fora deste lote; nenhum erro pertence aos arquivos alterados.
 - Auditoria do diff nao encontrou segredo ou dado real. Nenhuma rota, RBAC parcial, auditoria funcional, VPS, migration remota, porta 3080, main ou dado real foi alterado.
 - Proximo lote: A2.2 RBAC fail-closed e auditoria transacional do OrcamentoService antes de qualquer exposicao HTTP.
+### Comercial 360 - A2.2 RBAC e auditoria transacional de Orcamento (2026-09-21)
+
+- OrcamentoService passou a exigir permissoes exatas Comercial.orcamento.visualizar, criar, editar e cancelar, sempre apos contexto/TenantGuard e antes do acesso ao repositorio.
+- RbacGuard ganhou opcao compativel para negar wildcard global em operacoes que exigem chave granular; demais consumidores preservam o comportamento anterior. Actor, perfil, Grupo ou Empresa invalidos permanecem fail-closed.
+- CREATE, UPDATE e CANCEL gravam AuditRepository no mesmo DbQueryExecutor da mutacao. CREATE usa action create, UPDATE usa update e CANCEL usa change_status; list/get nao geram auditoria de mutacao.
+- Snapshot de Orcamento passa por sanitizeAuditSnapshot e contem apenas identidade tecnica, tenant, numero, status, referencias, totais, ativo e quantidade de itens. Observacoes, descricoes livres e PII nao sao persistidos.
+- Rollback em memoria comprovado para create e numeracao, update com cabecalho/itens e cancel com estado/ativo. E2E R08C PostgreSQL foi ampliado para provar os tres rollbacks e high-water no banco efemero da CI.
+- Testes focados service/seguranca: 20 pass, 0 fail. Suite backend: 122 total, 117 pass, 0 fail, 5 skips locais por DATABASE_URL ausente.
+- Backend typecheck/build, frontend build, lint, audit:baseline e git diff --check aprovados. R08B/R08C reais permanecem obrigatorios na CI sem skip.
+- Nenhuma rota HTTP, frontend funcional, migration, VPS, porta 3080, main, segredo ou dado real foi alterado.
+- Proximo lote: somente apos CI verde, integrar rotas HTTP canonicas de Orcamento com o service protegido, sem iniciar Pedido ou frontend.

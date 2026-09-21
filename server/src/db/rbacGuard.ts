@@ -6,6 +6,7 @@ export type RbacAction =
   | 'visualizar'
   | 'criar'
   | 'editar'
+  | 'cancelar'
   | 'inativar'
   | 'restaurar'
   | 'bloquear'
@@ -26,6 +27,7 @@ export interface RbacGuard {
     moduleName: string,
     section: string,
     action: RbacAction,
+    options?: { allowGlobalWildcard?: boolean },
   ): Promise<void>;
 }
 
@@ -50,8 +52,9 @@ export function permissionTreeAllows(
   moduleName: string,
   section: string,
   action: RbacAction,
+  options: { allowGlobalWildcard?: boolean } = {},
 ): boolean {
-  if (nodeAllows(permissions['*'], action)) return true;
+  if (options.allowGlobalWildcard !== false && nodeAllows(permissions['*'], action)) return true;
   const moduleNode = permissions[moduleName];
   if (!moduleNode || typeof moduleNode !== 'object' || Array.isArray(moduleNode)) return false;
   return nodeAllows((moduleNode as Record<string, unknown>)[section], action);
@@ -71,6 +74,7 @@ export class PostgresRbacGuard implements RbacGuard {
     moduleName: string,
     section: string,
     action: RbacAction,
+    options?: { allowGlobalWildcard?: boolean },
   ): Promise<void> {
     if (!ctx.actorId || !UUID_RE.test(ctx.actorId)) denied();
 
@@ -88,7 +92,7 @@ export class PostgresRbacGuard implements RbacGuard {
       [ctx.actorId, ctx.groupId, ctx.empresaId ?? null],
     );
     const permissions = result.rows[0]?.permissoes;
-    if (!permissions || !permissionTreeAllows(permissions, moduleName, section, action)) denied();
+    if (!permissions || !permissionTreeAllows(permissions, moduleName, section, action, options)) denied();
   }
 }
 
@@ -112,6 +116,7 @@ export class InMemoryRbacGuard implements RbacGuard {
     moduleName: string,
     section: string,
     action: RbacAction,
+    options?: { allowGlobalWildcard?: boolean },
   ): Promise<void> {
     if (!ctx.actorId) denied();
     const profile = this.profiles.get(ctx.actorId);
@@ -121,6 +126,6 @@ export class InMemoryRbacGuard implements RbacGuard {
       ? profile.empresaId == null || profile.empresaId === ctx.empresaId
       : profile.empresaId == null;
     if (!empresaAllowed) denied();
-    if (!permissionTreeAllows(profile.permissions, moduleName, section, action)) denied();
+    if (!permissionTreeAllows(profile.permissions, moduleName, section, action, options)) denied();
   }
 }

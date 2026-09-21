@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { AppError } from '../src/api/errors.js';
+import { InMemoryAuditRepository } from '../src/audit/auditRepository.js';
 import type { DbQueryExecutor } from '../src/db/client.js';
+import { InMemoryRbacGuard } from '../src/db/rbacGuard.js';
 import { InMemoryOrcamentoRepository } from '../src/repositories/inMemoryOrcamentoRepository.js';
 import type { OrcamentoCreate, OrcamentoScope } from '../src/repositories/orcamentoTypes.js';
 import { OrcamentoService } from '../src/services/orcamentoService.js';
@@ -85,13 +87,18 @@ function fixture(overrides: {
   condicao?: unknown;
 } = {}) {
   const repo = new TrackingRepo();
+  const audit = new InMemoryAuditRepository();
+  const rbac = new InMemoryRbacGuard();
+  rbac.link({ actorId: ctx.actorId, groupId, permissions: { Comercial: { orcamento: ['visualizar', 'criar', 'editar', 'cancelar'] } } });
   const service = new OrcamentoService(
     repo,
+    audit,
     {
       assertEmpresaInGroup: async () => {
         if (overrides.tenantFails) throw new AppError(409, 'TENANT_MISMATCH', 'tenant mismatch');
       },
     },
+    rbac,
     {
       getEmpresaLinkById: async () => overrides.cliente === undefined
         ? { id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true }
@@ -113,7 +120,7 @@ function fixture(overrides: {
         : overrides.condicao,
     } as any,
   );
-  return { repo, service };
+  return { repo, audit, rbac, service };
 }
 
 async function code(promise: Promise<unknown>) {
@@ -236,7 +243,9 @@ test('update revalida todas as referencias sem persistir falha', async () => {
       const validCreated = await valid.service.create(ctx, payload);
       const invalidService = new OrcamentoService(
         valid.repo,
+        new InMemoryAuditRepository(),
         { assertEmpresaInGroup: async () => undefined },
+        valid.rbac,
         { getEmpresaLinkById: async () => item.overrides.cliente === null ? null : { id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true } } as any,
         { getById: async () => item.overrides.produto === null ? null : { id: produtoId, ativo: true, unidade_medida_id: unidadeId } } as any,
         { getById: async () => item.overrides.unidade === null ? null : { id: unidadeId, ativo: true } } as any,
@@ -250,7 +259,9 @@ test('update revalida todas as referencias sem persistir falha', async () => {
   const created = await incompatible.service.create(ctx, payload);
   const invalidService = new OrcamentoService(
     incompatible.repo,
+    new InMemoryAuditRepository(),
     { assertEmpresaInGroup: async () => undefined },
+    incompatible.rbac,
     { getEmpresaLinkById: async () => ({ id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true }) } as any,
     { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: '66666666-6666-4666-8666-666666666666' }) } as any,
     { getById: async () => ({ id: unidadeId, ativo: true }) } as any,

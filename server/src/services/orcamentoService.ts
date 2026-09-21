@@ -1,6 +1,8 @@
 import { AppError } from '../api/errors.js';
-import type { RequestContext } from '../audit/types.js';
+import { sanitizeAuditSnapshot } from '../audit/sanitizeAuditSnapshot.js';
+import type { AuditAction, AuditRepository, RequestContext } from '../audit/types.js';
 import type { DbQueryExecutor } from '../db/client.js';
+import type { RbacAction, RbacGuard } from '../db/rbacGuard.js';
 import type { TenantGuard } from '../db/tenantGuard.js';
 import type { UnidadeMedida } from '../repositories/cadastroTypes.js';
 import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';
@@ -9,10 +11,25 @@ import type { ProdutoRepository } from '../repositories/inMemoryProdutoRepositor
 import { orcamentoCreateSchema, type Orcamento, type OrcamentoCreate, type OrcamentoRepository, type OrcamentoScope } from '../repositories/orcamentoTypes.js';
 import type { TenantEntityRepository } from './tenantCrudService.js';
 
+const RBAC_MODULE = 'Comercial';
+const RBAC_SECTION = 'orcamento';
+
+export function orcamentoAuditSnapshot(row: Orcamento) {
+  return sanitizeAuditSnapshot({
+    id: row.id, group_id: row.group_id, empresa_id: row.empresa_id, numero: row.numero,
+    status: row.status, cliente_empresa_id: row.cliente_empresa_id,
+    condicao_pagamento_id: row.condicao_pagamento_id, subtotal: row.subtotal,
+    desconto: row.desconto, total: row.total, ativo: row.ativo,
+    quantidade_itens: row.itens.length,
+  });
+}
+
 export class OrcamentoService {
   constructor(
     private readonly repo: OrcamentoRepository,
+    private readonly audit: AuditRepository,
     private readonly tenantGuard: TenantGuard,
+    private readonly rbac: RbacGuard,
     private readonly clientes: Pick<ClienteRepository, 'getEmpresaLinkById'>,
     private readonly produtos: Pick<ProdutoRepository, 'getById'>,
     private readonly unidades: Pick<TenantEntityRepository<UnidadeMedida, never, never>, 'getById'>,
@@ -20,22 +37,24 @@ export class OrcamentoService {
   ) {}
 
   async create(ctx: RequestContext, payload: unknown) {
-    const scope = await this.prepare(ctx);
+    const scope = await this.prepare(ctx, 'criar');
     const data = this.parse(payload);
     return this.repo.withTransaction(async (executor) => {
       await this.validateReferences(scope, data, executor);
-      return this.repo.create(scope, data, executor);
+      const created = await this.repo.create(scope, data, executor);
+      await this.auditRow(ctx, 'create', null, created, executor);
+      return created;
     });
   }
 
   async get(ctx: RequestContext, id: string) {
-    const scope = await this.prepare(ctx);
+    const scope = await this.prepare(ctx, 'visualizar');
     this.assertId(id);
     return this.requireOrcamento(scope, id);
   }
 
   async list(ctx: RequestContext, options: { limit?: number; offset?: number } = {}) {
-    const scope = await this.prepare(ctx);
+    const scope = await this.prepare(ctx, 'visualizar');
     const limit = Math.min(200, Math.max(1, Math.trunc(options.limit ?? 50)));
     const offset = Math.max(0, Math.trunc(options.offset ?? 0));
     const page = await this.repo.list(scope, limit, offset);
@@ -43,28 +62,30 @@ export class OrcamentoService {
   }
 
   async update(ctx: RequestContext, id: string, payload: unknown) {
-    const scope = await this.prepare(ctx);
+    const scope = await this.prepare(ctx, 'editar');
     this.assertId(id);
     const data = this.parse(payload);
     return this.repo.withTransaction(async (executor) => {
-      const current = await this.requireOrcamento(scope, id, executor);
-      this.requireOpen(current);
+      const before = await this.requireOrcamento(scope, id, executor);
+      this.requireOpen(before);
       await this.validateReferences(scope, data, executor);
-      const updated = await this.repo.update(scope, id, data, executor);
-      if (!updated) throw new AppError(409, 'ORCAMENTO_STATE_CONFLICT', 'Orcamento is not open');
-      return updated;
+      const after = await this.repo.update(scope, id, data, executor);
+      if (!after) this.stateConflict();
+      await this.auditRow(ctx, 'update', before, after, executor);
+      return after;
     });
   }
 
   async cancel(ctx: RequestContext, id: string) {
-    const scope = await this.prepare(ctx);
+    const scope = await this.prepare(ctx, 'cancelar');
     this.assertId(id);
     return this.repo.withTransaction(async (executor) => {
-      const current = await this.requireOrcamento(scope, id, executor);
-      this.requireOpen(current);
-      const cancelled = await this.repo.cancel(scope, id, executor);
-      if (!cancelled) throw new AppError(409, 'ORCAMENTO_STATE_CONFLICT', 'Orcamento is not open');
-      return cancelled;
+      const before = await this.requireOrcamento(scope, id, executor);
+      this.requireOpen(before);
+      const after = await this.repo.cancel(scope, id, executor);
+      if (!after) this.stateConflict();
+      await this.auditRow(ctx, 'change_status', before, after, executor);
+      return after;
     });
   }
 
@@ -95,15 +116,29 @@ export class OrcamentoService {
   }
 
   private requireOpen(row: Orcamento) {
-    if (row.status !== 'EM_ABERTO') throw new AppError(409, 'ORCAMENTO_STATE_CONFLICT', 'Orcamento is not open');
+    if (row.status !== 'EM_ABERTO') this.stateConflict();
   }
 
-  private async prepare(ctx: RequestContext): Promise<OrcamentoScope> {
+  private stateConflict(): never {
+    throw new AppError(409, 'ORCAMENTO_STATE_CONFLICT', 'Orcamento is not open');
+  }
+
+  private async prepare(ctx: RequestContext, action: RbacAction): Promise<OrcamentoScope> {
     if (!ctx.groupId) throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
     if (!ctx.empresaId) throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required');
     if (!ctx.actorId) throw new AppError(403, 'ACTOR_REQUIRED', 'actorId is required');
     await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
+    await this.rbac.assertAllowed(ctx, RBAC_MODULE, RBAC_SECTION, action, { allowGlobalWildcard: false });
     return { groupId: ctx.groupId, empresaId: ctx.empresaId };
+  }
+
+  private async auditRow(ctx: RequestContext, action: AuditAction, before: Orcamento | null, after: Orcamento, executor?: DbQueryExecutor) {
+    await this.audit.append({
+      groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
+      actorEmail: ctx.actorEmail, entity: 'Orcamento', entityId: after.id, action,
+      beforeData: before ? orcamentoAuditSnapshot(before) : undefined,
+      afterData: orcamentoAuditSnapshot(after), requestId: ctx.requestId, ipAddress: ctx.ipAddress,
+    }, executor);
   }
 
   private assertId(id: string) {
