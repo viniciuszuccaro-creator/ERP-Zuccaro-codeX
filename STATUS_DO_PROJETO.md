@@ -9739,3 +9739,11 @@ Checklist inicial:
 
 - Migration 016 reescrita no repositorio antes de qualquer execucao externa: tenant triggers fail-closed para cabecalho/item, FK composta item-orcamento, validacao de ClienteEmpresa/Condicao/Produto/Unidade, checks monetarios e lifecycle, updated_at, indices, RLS+FORCE, REVOKE PUBLIC e rollback documentado.
 - Testes estruturais executados: 4 pass, 0 fail; backend typecheck/build/diff-check aprovados. PostgreSQL real nao executado neste lote; VPS e migrations remotas permanecem intocados.
+
+### Comercial 360 - A1.2B Repositorio PostgreSQL de Orcamento (2026-09-21)
+
+- O repositorio PostgreSQL existente foi mantido como implementacao canonica do agregado Orcamento: create/update/cancel usam transacao; create serializa a reserva de numero por Empresa com advisory lock e high-water; get/list exigem Grupo e Empresa; itens retornam no mesmo select agregado, sem N+1.
+- A migration 016 continua somente no repositorio e nao foi alterada neste ajuste. A validacao Produto/Unidade da migration usa a unidade principal registrada no Produto; unidades secundarias exigem modelagem explicita posterior, sem aceitar vinculo cruzado.
+- Corrigido o teste direcionado que falhava por inspecao textual com regex escapada incorretamente. Agora usa executor PostgreSQL controlado e valida comportamento de create/itens/transacao, bloqueio entre empresas e paginacao deterministica com itens agregados.
+- Validacoes: testes focados 4 pass, 0 fail; typecheck e build do servidor aprovados; git diff --check aprovado. PostgreSQL real nao executado por DATABASE_URL ausente neste worktree. Nenhuma VPS, porta 3080 ou dado real foi acessado.
+- Proximo passo: executar A1.2C somente em PostgreSQL DEV autorizado, aplicando a migration 016 no ambiente isolado e validando os cenarios reais antes de Service/RBAC/rotas do A2.
