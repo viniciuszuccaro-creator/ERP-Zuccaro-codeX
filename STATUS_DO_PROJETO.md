@@ -9778,3 +9778,13 @@ Checklist inicial:
 - Testes direcionados: 7 pass, 0 fail, cobrindo 19 cenarios solicitados. Suite backend: 108 total, 104 pass, 0 fail, 4 skips locais por DATABASE_URL ausente.
 - Typecheck, build, git diff --check e auditoria sensivel aprovados. Nenhuma rota, RBAC parcial, auditoria funcional, VPS, migration remota, porta 3080, main ou dado real foi alterado.
 - Proximo lote: A2.1B update/cancel do service; RBAC/auditoria continuam reservados ao A2.2 antes de qualquer exposicao HTTP.
+### Comercial 360 - A2.1B Update e cancelamento no OrcamentoService (2026-09-21)
+
+- OrcamentoService passou a expor update e cancel sem rota HTTP. Ambas as operacoes exigem contexto Grupo/Empresa/actor, validam UUID e ocultam registros ausentes ou cross-tenant com ORCAMENTO_NOT_FOUND.
+- UPDATE aceita somente o schema estrito do agregado, exige estado EM_ABERTO, revalida ClienteEmpresa, CondicaoPagamento, Produto e Unidade, recalcula itens/totais e preserva id, tenant, numero e created_at.
+- CANCEL exige estado EM_ABERTO, faz inativacao logica e preserva numero, itens e snapshots; repeticao retorna conflito padronizado ORCAMENTO_STATE_CONFLICT.
+- UPDATE e CANCEL usam exatamente uma repo.withTransaction, repassam o mesmo executor para get/update/cancel e rollbackam integralmente quando o repositorio falha. Nao ha transacao aninhada.
+- Testes direcionados: 14 pass, 0 fail. Suite backend: 115 total, 111 pass, 0 fail, 4 skips locais exclusivamente por DATABASE_URL ausente; R08B/R08C reais permanecem obrigatorios na CI PostgreSQL.
+- Backend typecheck/build, lint, audit:baseline, frontend build e git diff --check aprovados. O typecheck global da raiz continua com erros legados preexistentes em arquivos frontend/Base44 fora deste lote; nenhum erro pertence aos arquivos alterados.
+- Auditoria do diff nao encontrou segredo ou dado real. Nenhuma rota, RBAC parcial, auditoria funcional, VPS, migration remota, porta 3080, main ou dado real foi alterado.
+- Proximo lote: A2.2 RBAC fail-closed e auditoria transacional do OrcamentoService antes de qualquer exposicao HTTP.
