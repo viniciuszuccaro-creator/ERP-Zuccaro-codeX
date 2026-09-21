@@ -9715,3 +9715,8 @@ Checklist inicial:
   014/015 foi alterada ou reaplicada.
 - Proximo passo: push da branch e PR de hotfix; executar `test:postgres`
   com banco PostgreSQL autorizado e revisar CI antes de qualquer merge.
+
+### Programa ERP CPA - Coordenacao inicial (2026-09-21)
+
+- Criado o documento sanitizado `docs/PROGRAMA_ERP_CPA_GO_LIVE.md` na branch `codex/programa-cpa-coordenacao`. Ele registra frentes, ownership, estado R08B, gates, bloqueios, ordem de integracao e proibicao de dados reais no GitHub.
+- Proximo passo seguro: revisao e execucao manual autorizada do script C/D na Web Console; E/F permanece bloqueado ate evidencia de C/D.
