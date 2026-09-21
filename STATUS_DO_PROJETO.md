@@ -9884,3 +9884,11 @@ Checklist inicial:
 - Cobertura consolidada inclui tenant Grupo/Empresa, RBAC backend/visual fail-closed, wildcard bloqueado, auditoria transacional, rollback, sequências, idempotência, filtros, monetário, conversão e workflow Pedido.
 - Criado `COMERCIAL_360_V1_DEPLOY.md` e scripts parametrizados de canário, smoke e rollback. Sintaxe Bash aprovada; rollback é dry-run por padrão e nenhuma operação Docker/VPS foi executada.
 - Migration 017 permanece somente no repositório/CI. Nenhuma migration, seed, imagem, container, VPS, porta 3080, segredo ou dado real foi alterado. Próximo checkpoint: `C360-V1-12`, fechamento documental e CI final da PR #33, sem merge.
+### Comercial 360 V1 - C360-V1-12 Fechamento da versão (2026-09-21)
+
+- Fases 1–12 concluídas na branch `codex/comercial-360`; PR #33 permanece aberta, em draft e não mesclada.
+- Último checkpoint validado: `3c96bb677aef9c5498842005a6a4a2dd3bc36de3`; workflow PR `35667460162` e workflow push `35667455212` concluíram frontend/backend com `SUCCESS`.
+- CI executou audit baseline, testes frontend/backend, lint, typecheck, builds, migrations 001–017, seed exclusivamente sintético e PostgreSQL E2E sem falha/skip.
+- Entrega inclui Orçamento HTTP funcional, impressão/PDF local, preparação revisável de compartilhamento, Pedido canônico backend/frontend, conversão idempotente, workflow inicial, RBAC, multiempresa, auditoria e preparação de deploy.
+- Envio externo real por WhatsApp/e-mail permanece intencionalmente bloqueado por ausência de credenciais/configuração autorizada. Implantação, migrations VPS, promoção 3080 e merge ficam para gate humano separado.
+- Nenhum backup, PII, dump, `.env`, credencial ou dado real foi enviado ao GitHub.
