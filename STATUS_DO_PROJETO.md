@@ -9715,3 +9715,9 @@ Checklist inicial:
   014/015 foi alterada ou reaplicada.
 - Proximo passo: push da branch e PR de hotfix; executar `test:postgres`
   com banco PostgreSQL autorizado e revisar CI antes de qualquer merge.
+
+### Descoberta de backup legado - Ferramentas somente leitura (2026-09-21)
+
+- Branch `codex/legacy-backup-discovery`: adicionados configuracao exemplo e detector PowerShell sem letra fixa. A ferramenta apenas procura volumes, inventaria extensoes e tamanhos agregados e nao acessa conteudo, nao copia nem modifica o backup.
+- `.gitignore` passou a bloquear formatos comuns de bancos/backups, staging e relatorios locais. Nenhum HD externo foi lido nesta sessao; nenhuma analise real e declarada.
+- Proximo passo: executar somente quando o HD estiver conectado e revisar o relatorio sanitizado fora do Git.

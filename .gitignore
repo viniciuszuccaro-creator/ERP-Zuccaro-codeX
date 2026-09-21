@@ -31,4 +31,20 @@ dist-ssr
 *.sln
 *.sw?
 
-.env
+.env# Legacy backup and local migration artifacts
+BACKUP ERP ANTIGO - CODEX/
+legacy-backup-report*.json
+legacy-staging/
+*.bak
+*.backup
+*.dump
+*.mdf
+*.ldf
+*.sqlite
+*.sqlite3
+*.mdb
+*.accdb
+*.fdb
+*.gdb
+*.dbf
+*.tps
