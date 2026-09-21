@@ -9753,3 +9753,10 @@ Checklist inicial:
 - Runner PostgreSQL agora inclui explicitamente R08B e R08C; workflow CI canônico ganhou PostgreSQL 16 efêmero, migrations, seed sintetico e test:postgres.
 - Validacao local sem banco: testes comportamentais 3 pass, 0 fail; typecheck e build do servidor aprovados; diff-check aprovado. Docker indisponivel e DATABASE_URL ausente neste computador, portanto PostgreSQL real e CI permanecem pendentes no GitHub.
 - Nenhuma VPS, migration remota, porta 3080 ou dado real foi acessado.
+### Comercial 360 - A2.0C Executor transacional PostgreSQL (2026-09-21)
+
+- `PostgresOrcamentoRepository` passou a reutilizar `DbQueryExecutor` opcional em create, update, cancel, get e list; mutações abrem `DbClient.withTransaction` somente quando chamadas sem executor.
+- Todas as queries internas de cada mutação, incluindo itens e releitura do agregado, permanecem no mesmo executor. Advisory lock, sequência por Empresa e filtros Group/Empresa foram preservados.
+- Testes controlados: 6 pass, 0 fail; cobrem create/update/cancel com e sem executor, get/list no executor recebido, parâmetros tenant e zero transações aninhadas.
+- Suíte backend: 96 testes, 92 pass, 0 fail, 4 skips por ausência local de DATABASE_URL. Typecheck, build, git diff --check e auditoria do diff sensível aprovados.
+- Nenhuma VPS, migration remota, porta 3080, main ou dado real foi alterado.

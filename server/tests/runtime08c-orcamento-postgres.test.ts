@@ -24,18 +24,19 @@ function row() {
 
 function controlledDb(results: Array<{ rows: unknown[] }>) {
   const calls: Call[] = [];
+  let transactions = 0;
   const query = async <T>(sql: string, params?: unknown[]) => {
     calls.push({ sql, params });
     return (results.shift() ?? { rows: [] }) as { rows: T[] };
   };
   const db = {
     query,
-    withTransaction: async <T>(fn: (executor: { query: typeof query }) => Promise<T>) => fn({ query }),
+    withTransaction: async <T>(fn: (executor: { query: typeof query }) => Promise<T>) => { transactions += 1; return fn({ query }); },
     checkConnection: async () => false,
     end: async () => undefined,
     pool: null,
   } as unknown as DbClient;
-  return { db, calls };
+  return { db, calls, transactionCount: () => transactions, executor: { query } };
 }
 
 test('postgres orcamento cria e recupera agregado com itens dentro da transacao', async () => {
@@ -66,4 +67,44 @@ test('postgres orcamento lista com paginacao deterministica e itens sem N+1', as
   const pageCall = calls.find((call) => call.sql.includes('ORDER BY o.numero DESC'));
   assert.deepEqual(pageCall?.params, [scope.groupId, scope.empresaId, 10, 20]);
   assert.match(pageCall?.sql ?? '', /json_agg/);
+});
+test('postgres orcamento abre transacao somente sem executor', async () => {
+  const fixture = row();
+  const direct = controlledDb([{ rows: [] }, { rows: [{ n: '1' }] }, { rows: [{ id: fixture.id }] }, { rows: [] }, { rows: [fixture] }]);
+  await new PostgresOrcamentoRepository(direct.db).create(scope, payload);
+  assert.equal(direct.transactionCount(), 1);
+
+  const supplied = controlledDb([
+    { rows: [] }, { rows: [{ n: '1' }] }, { rows: [{ id: fixture.id }] }, { rows: [] }, { rows: [fixture] },
+    { rows: [fixture] }, { rows: [] }, { rows: [] }, { rows: [] }, { rows: [fixture] },
+    { rows: [{ id: fixture.id }] }, { rows: [{ ...fixture, status: 'CANCELADO', ativo: false }] },
+  ]);
+  const repo = new PostgresOrcamentoRepository(supplied.db);
+  await repo.create(scope, payload, supplied.executor);
+  await repo.update(scope, fixture.id, payload, supplied.executor);
+  await repo.cancel(scope, fixture.id, supplied.executor);
+  assert.equal(supplied.transactionCount(), 0);
+  assert.ok(supplied.calls.every((call) => !call.params || call.params.includes(scope.empresaId) || call.sql.includes('orcamento_itens')));
+});
+
+test('postgres orcamento get e list reutilizam executor fornecido', async () => {
+  const fixture = row();
+  const supplied = controlledDb([{ rows: [fixture] }, { rows: [{ total: 1 }] }, { rows: [fixture] }]);
+  const repo = new PostgresOrcamentoRepository(supplied.db);
+  assert.equal((await repo.get(scope, fixture.id, supplied.executor))?.id, fixture.id);
+  assert.equal((await repo.list(scope, 10, 0, supplied.executor)).total, 1);
+  assert.equal(supplied.transactionCount(), 0);
+  assert.deepEqual(supplied.calls[0].params, [fixture.id, scope.groupId, scope.empresaId]);
+  assert.deepEqual(supplied.calls[1].params, [scope.groupId, scope.empresaId]);
+  assert.deepEqual(supplied.calls[2].params, [scope.groupId, scope.empresaId, 10, 0]);
+});
+test('postgres orcamento update e cancel diretos abrem uma transacao cada', async () => {
+  const fixture = row();
+  const updateDb = controlledDb([{ rows: [fixture] }, { rows: [] }, { rows: [] }, { rows: [] }, { rows: [fixture] }]);
+  await new PostgresOrcamentoRepository(updateDb.db).update(scope, fixture.id, payload);
+  assert.equal(updateDb.transactionCount(), 1);
+
+  const cancelDb = controlledDb([{ rows: [{ id: fixture.id }] }, { rows: [{ ...fixture, status: 'CANCELADO', ativo: false }] }]);
+  await new PostgresOrcamentoRepository(cancelDb.db).cancel(scope, fixture.id);
+  assert.equal(cancelDb.transactionCount(), 1);
 });
