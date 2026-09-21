@@ -161,29 +161,29 @@ export default function UsuariosTab() {
       await auditarUsuario({
         acao: "Bloqueio email invalido",
         descricao: "Tentativa de convidar usuario com e-mail invalido.",
-        dadosNovos: dadosContextoConvite({ email, motivo: "email_invalido" }),
+        dadosNovos: dadosContextoConvite({ motivo: "email_invalido" }),
         sucesso: false
       });
       return;
     }
 
     try {
-      await base44.users.inviteUser(email, "user");
-      await auditarUsuario({
-        acao: "Convite",
-        descricao: `Convite enviado para usuario ${email}`,
-        dadosNovos: dadosContextoConvite({ email, role: "user" })
+      await base44.functions.invoke("adminInviteUser", {
+        email,
+        role: "user",
+        group_id: grupoAtivoId,
+        empresa_id: contexto === "grupo" ? null : empresaAtual?.id || null,
       });
-      toast.success(`Convite enviado para ${email}`);
+      toast.success("Convite enviado com sucesso.");
       qc.invalidateQueries({ queryKey: ["usuarios-gestao", scopeKey] });
     } catch (e) {
       await auditarUsuario({
         acao: "Falha no convite",
-        descricao: `Falha ao convidar usuario ${email}`,
-        dadosNovos: dadosContextoConvite({ email, erro: e.message }),
+        descricao: "Falha ao convidar usuario pelo fluxo protegido.",
+        dadosNovos: dadosContextoConvite({ erro_tipo: e?.name || "Error" }),
         sucesso: false
       });
-      toast.error("Erro ao convidar: " + e.message);
+      toast.error("Nao foi possivel enviar o convite.");
     }
   };
 

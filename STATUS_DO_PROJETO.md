@@ -9652,3 +9652,15 @@ Checklist inicial:
 - Migration 014, repositório PostgreSQL, API, RBAC, RLS/FORCE, auditoria e seed sintético foram adicionados.
 - Validação local: typecheck/build e 74 testes do servidor aprovados; PostgreSQL real permanece pendente.
 - Próximo passo: gate VPS autorizado da 014; não mergear nem promover 3080.
+
+## 2026-09-21 - Gate 2: convite de usuario protegido
+
+- Objetivo: fazer o convite existente respeitar RBAC, Grupo/Empresa, persistencia real no modo local e auditoria segura.
+- Causa raiz: a tela chamava `base44.users.inviteUser` diretamente; em modo local a funcao era apenas simulada e a auditoria retinha e-mail bruto.
+- Arquivos alterados: `base44/functions/adminInviteUser/entry.ts`, `src/api/localBase44Client.js`, `src/components/administracao-sistema/gestao-acessos/UsuariosTab.jsx`, `tests/sanitize-audit-policy.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e este status.
+- Estruturas reutilizadas: `adminInviteUser`, `entityGuard`, pipeline existente de `User`, `AuditLog` e validacao de contexto. Nenhuma tela, rota, entidade ou mecanismo paralelo foi criado.
+- RBAC/multiempresa: o backend exige usuario autenticado, `Sistema/Controle de Acesso/criar`, Grupo resolvido e Empresa pertencente ao Grupo. Convite de administrador continua exclusivo de administrador real. O dispatcher local aplica o mesmo guard antes de persistir.
+- Auditoria: o backend guarda hash do e-mail, papel, resultado e escopo; a UI deixa de enviar e-mail ou erro bruto aos registros de falha. A criacao local preserva a auditoria antes/depois da entidade existente.
+- Testes: teste focado aprovado; suite completa 563/563; `npm run audit:baseline`, `npm run lint`, `npm run typecheck`, `npm run build` e `git diff --check` aprovados. Build com avisos conhecidos de bundle grande, imports mistos e bases de navegadores desatualizadas.
+- Commit de implementacao: `d8f6dd8b` (`Protege convite de usuario por escopo`).
+- Proximo passo P0: revisar criar/editar Perfil de Acesso e vinculos de usuario existentes, comprovando persistencia, Grupo/Empresa, RBAC granular e auditoria antes/depois.

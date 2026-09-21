@@ -1333,3 +1333,7 @@ Lote concluido em 2026-09-16 na navegacao administrativa existente.
 
 Proxima frente P0: revisar os botoes e persistencias da Gestao de Acessos, comecando por criar/editar perfil e vincular usuario, confirmando permissao granular no frontend, `entityGuard` backend, contexto Grupo/Empresa e auditoria antes/depois.
 
+### Gate 2 - Convite de usuario protegido
+
+Concluido em 2026-09-21. O convite existente passou a usar `adminInviteUser` com `entityGuard`, escopo Grupo/Empresa validado, persistencia local real e auditoria minimizada. Nenhum dado pessoal bruto de convite e registrado no log. Proximo item: revisar criacao/edicao de Perfil de Acesso e vinculos de usuarios existentes.
+
