@@ -9808,3 +9808,4 @@ Checklist inicial:
 - Testes HTTP novos: 5 pass, 0 fail, 0 skip. Familia R08C local: 38 pass, 0 fail, 0 skip. Suite backend: 127 total, 122 pass, 0 fail, 5 skips exclusivamente por `DATABASE_URL` local ausente; R08B/R08C reais continuam obrigatorios na CI PostgreSQL sem skip.
 - Backend typecheck/build, frontend build, lint, `audit:baseline` e `git diff --check` aprovados. O typecheck global da raiz mantem erros legados preexistentes em frontend/Base44 fora deste lote; nenhum erro pertence aos arquivos alterados.
 - Nenhuma migration 017, frontend de Orcamento, Pedido, VPS, porta 3080, main, segredo ou dado real foi alterado. Proximo lote somente apos CI verde da PR #33.
+- CI do commit `1c5061349328b21436244d8a488498b73cac8619`: workflow `35652234951` aprovado; frontend/backend SUCCESS; migrations 001-016 executadas sem pendencias; R08B PostgreSQL 2 pass/0 fail/0 skip e R08C PostgreSQL 2 pass/0 fail/0 skip.
