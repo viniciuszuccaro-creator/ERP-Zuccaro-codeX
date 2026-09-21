@@ -148,15 +148,16 @@ test('HTTP Orcamento preserva validacoes comerciais como 422', async () => {
   assert.equal(result.body.error.code, 'ORCAMENTO_PRODUTO_INVALIDO');
 });
 
-test('meta declara apenas backend HTTP de Orcamento e mantem Pedido pendente', async () => {
+test('meta declara frontend e backend HTTP de Orcamento e mantem Pedido pendente', async () => {
   const { app } = fixture();
   const result = await request(app, '/api/v1/meta');
   assert.equal(result.status, 200);
   assert.ok(result.body.preparedEntities.includes('Orcamento'));
   assert.ok(result.body.httpEntities.includes('Orcamento'));
+  assert.ok(result.body.httpPilotEntities.includes('Orcamento'));
   assert.deepEqual(result.body.orcamento, {
     backendHttp: true,
-    frontendHttp: false,
+    frontendHttp: true,
     pagination: true,
     tenantIntegrity: true,
     sequentialNumero: true,

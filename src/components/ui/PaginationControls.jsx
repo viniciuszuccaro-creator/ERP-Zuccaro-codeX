@@ -4,15 +4,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 /**
- * Componente de Controles de Paginação Reutilizável
- * V21.0 - Implementação de Paginação Universal
- * 
- * @param {number} currentPage - Página atual (1-indexed)
- * @param {number} totalItems - Total de itens no dataset completo
- * @param {number} itemsPerPage - Quantidade de itens por página
- * @param {function} onPageChange - Callback quando a página muda
- * @param {function} onItemsPerPageChange - Callback quando itens por página muda
- * @param {boolean} isLoading - Estado de carregamento
+ * Componente de controles de paginacao reutilizavel.
+ * @param {{ currentPage?: number, totalItems?: number, itemsPerPage?: number, onPageChange: (page: number) => void, onItemsPerPageChange?: (size: number) => void, isLoading?: boolean }} props
  */
 export default function PaginationControls({
   currentPage = 1,

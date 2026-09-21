@@ -7,13 +7,13 @@ import { HTTP_PILOT_ENTITIES, resolveErpApiBaseUrl } from './runtimeBackend.js';
 
 function createHttpError(status, body, requestId) {
   const message = body?.error?.message || `HTTP ${status}`;
-  const error = new Error(message);
-  error.name = 'HttpApiError';
-  error.status = status;
-  error.code = body?.error?.code || 'HTTP_ERROR';
-  error.requestId = requestId || body?.error?.requestId;
-  error.body = body;
-  return error;
+  return Object.assign(new Error(message), {
+    name: 'HttpApiError',
+    status,
+    code: body?.error?.code || 'HTTP_ERROR',
+    requestId: requestId || body?.error?.requestId,
+    body,
+  });
 }
 
 /**
@@ -31,8 +31,12 @@ export function createHttpApiClient(options = {}) {
   const fetchImpl = options.fetchImpl || fetch;
   const getScope = options.getScope || (() => ({}));
 
-  async function request(path, { method = 'GET', body, query } = {}) {
-    const scope = getScope() || {};
+  /**
+   * @param {string} path
+   * @param {{ method?: string, body?: unknown, query?: Record<string, unknown>, signal?: AbortSignal, unwrap?: boolean }} [requestOptions]
+   */
+  async function request(path, { method = 'GET', body, query, signal, unwrap = true } = {}) {
+    const scope = /** @type {{ groupId?: string, empresaId?: string, actorId?: string, actorEmail?: string, token?: string }} */ (getScope() || {});
     const url = baseUrl
       ? new URL(`${baseUrl}${path}`)
       : new URL(path, 'http://same-origin.local');
@@ -58,6 +62,7 @@ export function createHttpApiClient(options = {}) {
       method,
       headers,
       body: body == null ? undefined : JSON.stringify(body),
+      signal,
     });
 
     const requestId = response.headers.get('x-request-id') || undefined;
@@ -74,7 +79,7 @@ export function createHttpApiClient(options = {}) {
     if (!response.ok) {
       throw createHttpError(response.status, payload, requestId);
     }
-    return payload?.data !== undefined ? payload.data : payload;
+    return unwrap && payload?.data !== undefined ? payload.data : payload;
   }
 
   /**
@@ -169,6 +174,28 @@ export function createHttpApiClient(options = {}) {
     })(),
   };
 
+  const orcamentos = {
+    /** @param {{ limit?: number, offset?: number, signal?: AbortSignal }} [options] */
+    list({ limit = 50, offset = 0, signal } = {}) {
+      return request('/api/v1/orcamentos', { query: { limit, offset }, signal, unwrap: false });
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    get(id, { signal } = {}) {
+      return request(`/api/v1/orcamentos/${encodeURIComponent(id)}`, { signal });
+    },
+    /** @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+    create(payload, { signal } = {}) {
+      return request('/api/v1/orcamentos', { method: 'POST', body: payload, signal });
+    },
+    /** @param {string} id @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+    update(id, payload, { signal } = {}) {
+      return request(`/api/v1/orcamentos/${encodeURIComponent(id)}`, { method: 'PATCH', body: payload, signal });
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    cancel(id, { signal } = {}) {
+      return request(`/api/v1/orcamentos/${encodeURIComponent(id)}/cancelar`, { method: 'POST', signal });
+    },
+  };
   /** @type {Record<string, ReturnType<typeof createCrudEntity>>} */
   const entities = {};
   for (const name of HTTP_PILOT_ENTITIES) {
@@ -177,6 +204,7 @@ export function createHttpApiClient(options = {}) {
 
   return {
     entities,
+    orcamentos,
     /** Acesso direto a rotas preparadas (ex.: Produto base) sem feature flag. */
     preparedEntities: entityRoutes,
     async health() {

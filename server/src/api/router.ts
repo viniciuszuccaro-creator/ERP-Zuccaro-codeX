@@ -881,11 +881,11 @@ export function createApiRouter(deps: ApiDeps) {
       runtime: 'ERP-RUNTIME-08B',
       auth: getAuthFoundation(),
       config: publicConfigView(deps.config),
-      httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade'],
+      httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Orcamento'],
       preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'TabelaPreco', 'CondicaoPagamento', 'Orcamento'],
       httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Orcamento'],
       rlsModel: 'ENABLE+FORCE fail-closed; BFF uses privileged DB role; JWT policies planned with Auth',
-      note: 'TabelaPreco and CondicaoPagamento prepared in backend; Orcamento available through backend HTTP; Pedido not implemented; none are in frontend HTTP_PILOT_ENTITIES',
+      note: 'TabelaPreco and CondicaoPagamento prepared in backend; Orcamento uses the canonical frontend HTTP client; Pedido not implemented',
       produto: {
         masterData: true,
         pagination: true,
@@ -937,7 +937,7 @@ export function createApiRouter(deps: ApiDeps) {
       condicaoPagamento: { masterData: true, companyAuthorization: true, parcelasAtomicas: true, frontendHttp: false },
       orcamento: {
         backendHttp: true,
-        frontendHttp: false,
+        frontendHttp: true,
         pagination: true,
         tenantIntegrity: true,
         sequentialNumero: true,

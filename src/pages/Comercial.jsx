@@ -1,7 +1,7 @@
 import React, { Suspense, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Users, ShoppingCart, FileText, TrendingUp, ShieldCheck, Truck, Package, AlertCircle } from "lucide-react";
+import { Users, ShoppingCart, FileText, ClipboardList, TrendingUp, ShieldCheck, Truck, Package, AlertCircle } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
@@ -25,6 +25,7 @@ import useComercialDerivedData from "@/components/comercial/hooks/useComercialDe
 
 const ClientesTab = React.lazy(() => import("../components/comercial/ClientesTab"));
 const PedidosTab = React.lazy(() => import("../components/comercial/PedidosTab"));
+const OrcamentosTab = React.lazy(() => import("../components/comercial/OrcamentosTab"));
 const ComissoesTab = React.lazy(() => import("../components/comercial/ComissoesTab"));
 const NotasFiscaisTab = React.lazy(() => import("../components/comercial/NotasFiscaisTab"));
 const TabelasPrecoTab = React.lazy(() => import("../components/comercial/TabelasPrecoTab"));
@@ -326,6 +327,19 @@ export default function Comercial() {
       props: { clientes, isLoading: false }
     },
     {
+      title: 'Orçamentos',
+      sectionKey: 'orcamento',
+      exactPermission: true,
+      description: 'Propostas comerciais',
+      icon: ClipboardList,
+      color: 'indigo',
+      component: OrcamentosTab,
+      windowTitle: 'Orçamentos',
+      width: 1500,
+      height: 850,
+      props: { groupId, empresaId, actorId: user?.id, actorEmail: user?.email, hasPermission, filterInContext }
+    },
+    {
       title: 'Pedidos',
       sectionKey: 'Pedidos',
       description: 'Orçamentos e vendas',
@@ -421,10 +435,15 @@ export default function Comercial() {
 
   const allowedModules = modules
     .map((m) => ({ ...m, permissionKey: `Comercial.${m.sectionKey || m.title}.visualizar` }))
-    .filter(m => canViewComercial(m.sectionKey || m.title));
+    .filter((m) => m.exactPermission
+      ? hasPermission('Comercial', m.sectionKey, 'visualizar')
+      : canViewComercial(m.sectionKey || m.title));
 
    const handleModuleClick = (module) => {
-    if (!canViewComercial(module.sectionKey || module.title)) {
+    const allowed = module.exactPermission
+      ? hasPermission('Comercial', module.sectionKey, 'visualizar')
+      : canViewComercial(module.sectionKey || module.title);
+    if (!allowed) {
       auditComercial('comercial_modulo_bloqueado', { modulo: module.title, sectionKey: module.sectionKey || module.title, motivo: 'permissao_negada' }, false);
       toast.error('Sem permissao para visualizar esta area do Comercial.');
       return;

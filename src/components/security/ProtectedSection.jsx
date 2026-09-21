@@ -14,7 +14,7 @@ const getGuardKey = (module, section, action, empresaId, groupId) => `${module |
 
 export default function ProtectedSection({
   module: modulo,
-  section,
+  section = null,
   action = "visualizar",
   fallback = null,
   children,

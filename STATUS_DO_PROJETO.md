@@ -9809,3 +9809,15 @@ Checklist inicial:
 - Backend typecheck/build, frontend build, lint, `audit:baseline` e `git diff --check` aprovados. O typecheck global da raiz mantem erros legados preexistentes em frontend/Base44 fora deste lote; nenhum erro pertence aos arquivos alterados.
 - Nenhuma migration 017, frontend de Orcamento, Pedido, VPS, porta 3080, main, segredo ou dado real foi alterado. Proximo lote somente apos CI verde da PR #33.
 - CI do commit `1c5061349328b21436244d8a488498b73cac8619`: workflow `35652234951` aprovado; frontend/backend SUCCESS; migrations 001-016 executadas sem pendencias; R08B PostgreSQL 2 pass/0 fail/0 skip e R08C PostgreSQL 2 pass/0 fail/0 skip.
+
+### Comercial 360 - A3.1 Frontend funcional de Orcamento (2026-09-21)
+
+- `Comercial.jsx` passou a expor o modulo existente `Orcamentos` sob permissao exata `Comercial.orcamento.visualizar`, sem wildcard global e sem criar rota/pagina paralela. A entrada permanece `/comercial` e abre a aba no gerenciador de janelas atual.
+- Criado o componente operacional reutilizavel de lista/formulario/detalhe: paginacao real, loading, vazio, retry, criar, consultar, editar e cancelar. Edicao/cancelamento ficam limitados a `EM_ABERTO`, cancelamento preserva itens e exige confirmacao, e duplo envio fica bloqueado.
+- O cliente HTTP central ganhou as cinco operacoes canonicas de Orcamento e suporte a `AbortSignal`; persistencia usa somente `/api/v1/orcamentos`. Contexto vem de Grupo/Empresa/usuario ativos e caches incluem `groupId`/`empresaId`; nao ha Base44 Entity paralela.
+- ClienteEmpresa, Cliente, CondicaoPagamento, Produto e UnidadeMedida reutilizam `filterInContext` existente como dependencia temporaria ate ativacao HTTP propria, sem duplicar cadastros.
+- Valores do formulario usam micros/BigInt, payload allowlisted omite tenant, numero, status e totais, e o backend A2.3 permanece autoridade para TenantGuard, RBAC e auditoria.
+- Metadata agora declara `orcamento.frontendHttp=true` e inclui `Orcamento` na colecao HTTP frontend. Backend HTTP permanece ativo; Pedido continua nao implementado; nenhuma migration foi criada/aplicada.
+- Testes A3.1 dirigidos: 10 pass, 0 fail, 0 skip. Suite frontend por lista explicita no Windows: 577 pass, 0 fail, 0 skip antes da ampliacao dirigida. Suite backend: 127 total, 122 pass, 0 fail, 5 skips exclusivamente por `DATABASE_URL` local ausente. Backend typecheck/build, frontend lint/build, audit baseline e arquivos tocados no typecheck aprovados.
+- O typecheck global da raiz ainda falha pelo baseline historico fora deste lote; a filtragem dos arquivos tocados retornou zero erro. PostgreSQL R08B/R08C e migrations 001-016 permanecem obrigatorios na CI da PR #33.
+- Nenhuma VPS, porta 3080, migration remota, main, backup legado, segredo ou dado real foi alterado. Proximo lote: somente apos CI verde, definir A3.2 sem iniciar Pedido automaticamente.
