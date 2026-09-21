@@ -39,6 +39,8 @@ export const SEED_IDS = Object.freeze({
   tabelaPrecoItemAKg: 'c7c7c7c7-aaaa-4aaa-8aaa-c7c7c7c7c7c7',
   tabelaPrecoItemAUn: 'd7d7d7d7-aaaa-4aaa-8aaa-d7d7d7d7d7d7',
   tabelaPrecoItemBKg: 'e7e7e7e7-bbbb-4bbb-8bbb-e7e7e7e7e7e7',
+  condicaoPagamentoA: 'a8a8a8a8-aaaa-4aaa-8aaa-a8a8a8a8a8a8',
+  condicaoPagamentoB: 'b8b8b8b8-bbbb-4bbb-8bbb-b8b8b8b8b8b8',
 });
 
 /** Documentos sintéticos do seed (normalizados). */

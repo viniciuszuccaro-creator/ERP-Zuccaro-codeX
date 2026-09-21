@@ -8,6 +8,7 @@ import type { ClienteService } from '../services/clienteService.js';
 import type { ClienteLocalService } from '../services/clienteLocalService.js';
 import type { ObraService } from '../services/obraService.js';
 import type { TabelaPrecoService } from '../services/tabelaPrecoService.js';
+import type { CondicaoPagamentoService } from '../services/condicaoPagamentoService.js';
 import type { MarcaService } from '../services/marcaService.js';
 import type { ProdutoService } from '../services/produtoService.js';
 import type { TenantCrudService } from '../services/tenantCrudService.js';
@@ -32,6 +33,7 @@ export type ApiDeps = {
   clienteLocalService: ClienteLocalService;
   obraService: ObraService;
   tabelaPrecoService: TabelaPrecoService;
+  condicaoPagamentoService: CondicaoPagamentoService;
 };
 
 function ctxFromReq(req: Request) {
@@ -798,6 +800,21 @@ function mountTabelaPrecoRoutes(router: Router, service: TabelaPrecoService) {
   });
 }
 
+function mountCondicaoPagamentoRoutes(router: Router, service: CondicaoPagamentoService) {
+  const base = '/api/v1/condicoes-pagamento';
+  router.get(base, requireTenantScope, async (req,res,next)=>{try { res.json(await service.list(ctxFromReq(req),{ativo:parseAtivoQuery(req.query.ativo),ehPadrao:parseAtivoQuery(req.query.eh_padrao),search:req.query.search?String(req.query.search):undefined,limit:req.query.limit?Number(req.query.limit):undefined,offset:req.query.offset?Number(req.query.offset):undefined})); } catch(e){next(e);} });
+  router.post(base, requireTenantScope, async (req,res,next)=>{try{res.status(201).json({data:await service.create(ctxFromReq(req),req.body)});}catch(e){next(e);}});
+  router.get(`${base}/:id`, requireTenantScope, async(req,res,next)=>{try{res.json({data:await service.get(ctxFromReq(req),req.params.id)});}catch(e){next(e);}});
+  router.patch(`${base}/:id`, requireTenantScope, async(req,res,next)=>{try{res.json({data:await service.update(ctxFromReq(req),req.params.id,req.body)});}catch(e){next(e);}});
+  router.delete(`${base}/:id`, requireTenantScope, async(req,res,next)=>{try{res.json({data:await service.softDelete(ctxFromReq(req),req.params.id)});}catch(e){next(e);}});
+  router.post(`${base}/:id/restore`, requireTenantScope, async(req,res,next)=>{try{res.json({data:await service.restore(ctxFromReq(req),req.params.id)});}catch(e){next(e);}});
+  router.put(`${base}/:id/parcelas`, requireTenantScope, async(req,res,next)=>{try{res.json({data:await service.replaceParcelas(ctxFromReq(req),req.params.id,req.body)});}catch(e){next(e);}});
+  router.post(`${base}/:id/empresas/:empresaId`, requireTenantScope, async(req,res,next)=>{try{res.status(201).json({data:await service.linkEmpresa(ctxFromReq(req),req.params.id,req.params.empresaId)});}catch(e){next(e);}});
+  router.delete(`${base}/:id/empresas/:empresaId`, requireTenantScope, async(req,res,next)=>{try{res.json({data:await service.unlinkEmpresa(ctxFromReq(req),req.params.id,req.params.empresaId)});}catch(e){next(e);}});
+  router.post(`${base}/:id/empresas/:empresaId/restore`, requireTenantScope, async(req,res,next)=>{try{res.json({data:await service.restoreEmpresa(ctxFromReq(req),req.params.id,req.params.empresaId)});}catch(e){next(e);}});
+  router.post(`${base}/:id/padrao`, requireTenantScope, async(req,res,next)=>{try{res.json({data:await service.setPadrao(ctxFromReq(req),req.params.id)});}catch(e){next(e);}});
+}
+
 export function createApiRouter(deps: ApiDeps) {
   const router = Router();
 
@@ -832,14 +849,14 @@ export function createApiRouter(deps: ApiDeps) {
 
   router.get('/api/v1/meta', (_req, res) => {
     res.json({
-      runtime: 'ERP-RUNTIME-07B',
+      runtime: 'ERP-RUNTIME-08B',
       auth: getAuthFoundation(),
       config: publicConfigView(deps.config),
       httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade'],
-      preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'TabelaPreco'],
+      preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'TabelaPreco', 'CondicaoPagamento'],
       httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal'],
       rlsModel: 'ENABLE+FORCE fail-closed; BFF uses privileged DB role; JWT policies planned with Auth',
-      note: 'TabelaPreco prepared in backend; NOT in frontend HTTP_PILOT_ENTITIES; Pedido/Orçamento not implemented',
+      note: 'TabelaPreco and CondicaoPagamento prepared in backend; NOT in frontend HTTP_PILOT_ENTITIES; Pedido/Orçamento not implemented',
       produto: {
         masterData: true,
         pagination: true,
@@ -888,6 +905,7 @@ export function createApiRouter(deps: ApiDeps) {
         transactionalAudit: true,
         frontendHttp: false,
       },
+      condicaoPagamento: { masterData: true, companyAuthorization: true, parcelasAtomicas: true, frontendHttp: false },
     });
   });
 
@@ -900,6 +918,7 @@ export function createApiRouter(deps: ApiDeps) {
   mountClienteLocalRoutes(router, deps.clienteLocalService);
   mountObraRoutes(router, deps.obraService);
   mountTabelaPrecoRoutes(router, deps.tabelaPrecoService);
+  mountCondicaoPagamentoRoutes(router, deps.condicaoPagamentoService);
 
   return router;
 }
