@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS orcamento_itens (
 );
 CREATE OR REPLACE FUNCTION assert_orcamento_item_same_tenant() RETURNS TRIGGER AS $$ BEGIN
  IF NOT EXISTS(SELECT 1 FROM orcamentos o WHERE o.id=NEW.orcamento_id AND o.group_id=NEW.group_id AND o.empresa_id=NEW.empresa_id) THEN RAISE EXCEPTION 'TENANT_FK_MISMATCH: item outside orcamento scope'; END IF;
- IF NOT EXISTS(SELECT 1 FROM produtos p WHERE p.id=NEW.produto_id AND p.group_id=NEW.group_id AND p.empresa_id=NEW.empresa_id) THEN RAISE EXCEPTION 'TENANT_FK_MISMATCH: produto outside scope'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM produtos p WHERE p.id=NEW.produto_id AND p.group_id=NEW.group_id AND p.empresa_id=NEW.empresa_id AND p.unidade_medida_id=NEW.unidade_id) THEN RAISE EXCEPTION 'TENANT_FK_MISMATCH: produto outside scope'; END IF;
  IF NOT EXISTS(SELECT 1 FROM unidades_medida u WHERE u.id=NEW.unidade_id AND u.group_id=NEW.group_id) THEN RAISE EXCEPTION 'TENANT_FK_MISMATCH: unidade outside group'; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql;
 CREATE TRIGGER trg_orcamento_itens_tenant BEFORE INSERT OR UPDATE OF group_id,empresa_id,orcamento_id,produto_id,unidade_id ON orcamento_itens FOR EACH ROW EXECUTE PROCEDURE assert_orcamento_item_same_tenant();
 CREATE TRIGGER trg_orcamento_itens_updated_at BEFORE UPDATE ON orcamento_itens FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
