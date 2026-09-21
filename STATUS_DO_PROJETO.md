@@ -9822,3 +9822,11 @@ Checklist inicial:
 - O typecheck global da raiz ainda falha pelo baseline historico fora deste lote; a filtragem dos arquivos tocados retornou zero erro. PostgreSQL R08B/R08C e migrations 001-016 permanecem obrigatorios na CI da PR #33.
 - Nenhuma VPS, porta 3080, migration remota, main, backup legado, segredo ou dado real foi alterado. Proximo lote: somente apos CI verde, definir A3.2 sem iniciar Pedido automaticamente.
 - CI do commit funcional `d4da33f4c36caa2f4d456ede3983990283ae0b99`: workflow `35657166381` aprovado; frontend/backend SUCCESS; migrations 001-016 sem pendencias; R08B PostgreSQL 2 pass/0 fail/0 skip e R08C PostgreSQL 2 pass/0 fail/0 skip.
+
+### Comercial 360 V1 - C360-V1-01 Fila autonoma (2026-09-21)
+
+- Criado `docs/COMERCIAL_360_V1_EXECUCAO_AUTONOMA.md` como fila executavel oficial da versao, mantendo a base historica `a329c8751323890fd5737e4d3f6d659b10dca52c`, a branch `codex/comercial-360` e a PR #33.
+- O documento divide as fases de pesquisa/filtros, operacao do Orcamento, Pedido, conversao, HTTP, frontend, workflow, seguranca, homologacao, deploy e fechamento em checkpoints com aceite, testes, riscos, rollback, status, commit e CI.
+- O baseline A1-A3.1 foi preservado como fato comprovado; nenhuma implementacao existente foi duplicada ou removida.
+- Validacao deste checkpoint exclusivamente documental: `git diff --check`. Nenhuma VPS, migration remota, porta 3080, segredo ou dado real foi acessado.
+- Proximo checkpoint automatico: `C360-V1-02`, pesquisa e filtros de Orcamento compativeis com backend e isolamento tenant.
