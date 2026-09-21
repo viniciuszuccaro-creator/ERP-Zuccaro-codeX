@@ -9656,5 +9656,5 @@ Checklist inicial:
 - RBAC/multiempresa: o backend exige usuario autenticado, `Sistema/Controle de Acesso/criar`, Grupo resolvido e Empresa pertencente ao Grupo. Convite de administrador continua exclusivo de administrador real. O dispatcher local aplica o mesmo guard antes de persistir.
 - Auditoria: o backend guarda hash do e-mail, papel, resultado e escopo; a UI deixa de enviar e-mail ou erro bruto aos registros de falha. A criacao local preserva a auditoria antes/depois da entidade existente.
 - Testes: teste focado aprovado; suite completa 563/563; `npm run audit:baseline`, `npm run lint`, `npm run typecheck`, `npm run build` e `git diff --check` aprovados. Build com avisos conhecidos de bundle grande, imports mistos e bases de navegadores desatualizadas.
-- Commit de implementacao: `2307a823` (`Protege convite de usuario por escopo`).
+- Commit de implementacao: `d8f6dd8b` (`Protege convite de usuario por escopo`).
 - Proximo passo P0: revisar criar/editar Perfil de Acesso e vinculos de usuario existentes, comprovando persistencia, Grupo/Empresa, RBAC granular e auditoria antes/depois.
