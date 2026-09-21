@@ -53,11 +53,26 @@ export class OrcamentoService {
     return this.requireOrcamento(scope, id);
   }
 
-  async list(ctx: RequestContext, options: { limit?: number; offset?: number } = {}) {
+  async list(ctx: RequestContext, options: { limit?: number; offset?: number; search?: string; status?: string; clienteEmpresaId?: string; validadeDe?: string; validadeAte?: string } = {}) {
     const scope = await this.prepare(ctx, 'visualizar');
-    const limit = Math.min(200, Math.max(1, Math.trunc(options.limit ?? 50)));
-    const offset = Math.max(0, Math.trunc(options.offset ?? 0));
-    const page = await this.repo.list(scope, limit, offset);
+    const requestedLimit = Number.isFinite(options.limit) ? Math.trunc(options.limit!) : 50;
+    const requestedOffset = Number.isFinite(options.offset) ? Math.trunc(options.offset!) : 0;
+    const limit = Math.min(200, Math.max(1, requestedLimit));
+    const offset = Math.max(0, requestedOffset);
+    const search = options.search?.trim();
+    if (search && search.length > 80) throw new AppError(422, 'VALIDATION_ERROR', 'Search is too long');
+    if (options.status && !['EM_ABERTO', 'CANCELADO'].includes(options.status)) throw new AppError(422, 'VALIDATION_ERROR', 'Invalid Orcamento status filter');
+    if (options.clienteEmpresaId) this.assertId(options.clienteEmpresaId);
+    const validadeDe = this.parseFilterDate(options.validadeDe, false);
+    const validadeAte = this.parseFilterDate(options.validadeAte, true);
+    if (validadeDe && validadeAte && validadeDe > validadeAte) throw new AppError(422, 'VALIDATION_ERROR', 'Invalid validity period');
+    const page = await this.repo.list(scope, limit, offset, undefined, {
+      search: search || undefined,
+      status: options.status as 'EM_ABERTO' | 'CANCELADO' | undefined,
+      clienteEmpresaId: options.clienteEmpresaId,
+      validadeDe,
+      validadeAte,
+    });
     return { data: page.rows, meta: { limit, offset, total: page.total, hasMore: offset + page.rows.length < page.total } };
   }
 
@@ -141,6 +156,12 @@ export class OrcamentoService {
     }, executor);
   }
 
+  private parseFilterDate(value: string | undefined, endOfDay: boolean) {
+    if (!value) return undefined;
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T${endOfDay ? '23:59:59.999' : '00:00:00.000'}Z`) : new Date(value);
+    if (Number.isNaN(date.getTime())) throw new AppError(422, 'VALIDATION_ERROR', 'Invalid validity date filter');
+    return date.toISOString();
+  }
   private assertId(id: string) {
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) throw new AppError(400, 'VALIDATION_ERROR', 'Invalid orcamentoId');
   }

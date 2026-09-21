@@ -74,3 +74,12 @@ test('cliente HTTP preserva contratos 400 403 404 409 e 422', async () => {
     await assert.rejects(client.get('orc-1'), (error) => error.status === status && error.code === `HTTP_${status}`);
   }
 });
+
+test('cliente HTTP envia pesquisa e filtros de orcamento sem tenant no query', async () => {
+  const { client, calls } = setup();
+  await client.list({ limit: 10, offset: 20, search: '00042', status: 'EM_ABERTO', clienteEmpresaId: 'cliente-link', validadeDe: '2027-01-01', validadeAte: '2027-01-31' });
+  const url = new URL(calls[0].url);
+  assert.deepEqual(Object.fromEntries(url.searchParams), { limit: '10', offset: '20', search: '00042', status: 'EM_ABERTO', clienteEmpresaId: 'cliente-link', validadeDe: '2027-01-01', validadeAte: '2027-01-31' });
+  assert.equal(url.searchParams.has('groupId'), false);
+  assert.equal(url.searchParams.has('empresaId'), false);
+});

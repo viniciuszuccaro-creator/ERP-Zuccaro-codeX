@@ -824,6 +824,11 @@ function mountOrcamentoRoutes(router: Router, service: OrcamentoService) {
       res.json(await service.list(ctxFromReq(req), {
         limit: req.query.limit === undefined ? undefined : Number(req.query.limit),
         offset: req.query.offset === undefined ? undefined : Number(req.query.offset),
+        search: typeof req.query.search === 'string' ? req.query.search : undefined,
+        status: typeof req.query.status === 'string' ? req.query.status : undefined,
+        clienteEmpresaId: typeof req.query.clienteEmpresaId === 'string' ? req.query.clienteEmpresaId : undefined,
+        validadeDe: typeof req.query.validadeDe === 'string' ? req.query.validadeDe : undefined,
+        validadeAte: typeof req.query.validadeAte === 'string' ? req.query.validadeAte : undefined,
       }));
     } catch (error) { next(error); }
   });

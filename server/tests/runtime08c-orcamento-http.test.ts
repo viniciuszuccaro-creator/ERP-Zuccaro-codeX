@@ -168,3 +168,17 @@ test('meta declara frontend e backend HTTP de Orcamento e mantem Pedido pendente
   assert.match(result.body.note, /Pedido not implemented/);
   assert.equal(result.body.runtime, 'ERP-RUNTIME-08B');
 });
+
+test('HTTP Orcamento aplica pesquisa e filtros tenant-scoped com validacao segura', async () => {
+  const runtime = fixture();
+  const first = await request(runtime.app, '/api/v1/orcamentos', { method: 'POST', headers: headers(), body: JSON.stringify(payload) });
+  const second = await request(runtime.app, '/api/v1/orcamentos', { method: 'POST', headers: headers(), body: JSON.stringify({ ...payload, validade_em: '2028-06-15T00:00:00.000Z' }) });
+  await request(runtime.app, `/api/v1/orcamentos/${second.body.data.id}/cancelar`, { method: 'POST', headers: headers() });
+  const filtered = await request(runtime.app, `/api/v1/orcamentos?search=${first.body.data.numero}&status=EM_ABERTO&clienteEmpresaId=${clienteId}&validadeDe=2026-12-01&validadeAte=2027-12-31`, { headers: headers() });
+  assert.equal(filtered.status, 200);
+  assert.deepEqual(filtered.body.data.map((row: { id: string }) => row.id), [first.body.data.id]);
+  assert.equal(filtered.body.meta.total, 1);
+  assert.equal((await request(runtime.app, '/api/v1/orcamentos?status=INVALIDO', { headers: headers() })).status, 422);
+  assert.equal((await request(runtime.app, '/api/v1/orcamentos?validadeDe=invalida', { headers: headers() })).status, 422);
+  assert.equal((await request(runtime.app, '/api/v1/orcamentos?clienteEmpresaId=invalido', { headers: headers() })).status, 400);
+});

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, Eye, FilePlus2, Pencil, Plus, RefreshCw, Trash2, XCircle } from 'lucide-react';
+import { AlertCircle, Eye, FilePlus2, Pencil, Plus, RefreshCw, Search, Trash2, XCircle } from 'lucide-react';
 import { createHttpApiClient } from '@/api/httpApiClient';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +41,8 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const [dirty, setDirty] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [pendingCancel, setPendingCancel] = useState(null);
+  const [filters, setFilters] = useState({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' });
+  const [appliedFilters, setAppliedFilters] = useState({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' });
   const canView = canUseOrcamentoAction(hasPermission, 'visualizar');
   const canCreate = canUseOrcamentoAction(hasPermission, 'criar');
   const canEdit = (row) => canUseOrcamentoAction(hasPermission, 'editar', row?.status);
@@ -49,10 +51,10 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const api = useMemo(() => createHttpApiClient({
     getScope: () => ({ groupId, empresaId, actorId, actorEmail }),
   }).orcamentos, [groupId, empresaId, actorId, actorEmail]);
-  const queryKey = ['orcamentos-http', groupId, empresaId, page, pageSize];
+  const queryKey = ['orcamentos-http', groupId, empresaId, page, pageSize, appliedFilters];
   const listQuery = useQuery({
     queryKey,
-    queryFn: ({ signal }) => api.list({ limit: pageSize, offset: (page - 1) * pageSize, signal }),
+    queryFn: ({ signal }) => api.list({ limit: pageSize, offset: (page - 1) * pageSize, search: appliedFilters.search || undefined, status: appliedFilters.status === 'TODOS' ? undefined : appliedFilters.status, clienteEmpresaId: appliedFilters.clienteEmpresaId === 'TODOS' ? undefined : appliedFilters.clienteEmpresaId, validadeDe: appliedFilters.validadeDe || undefined, validadeAte: appliedFilters.validadeAte || undefined, signal }),
     enabled: contextReady && canView,
     retry: 1,
   });
@@ -80,7 +82,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   };
   const condicaoLabel = (id) => masters.condicoes.find((item) => item.id === id)?.nome || id;
 
-  useEffect(() => { setPage(1); setSelected(null); setDetailOpen(false); setFormOpen(false); }, [groupId, empresaId]);
+  useEffect(() => { setPage(1); setSelected(null); setDetailOpen(false); setFormOpen(false); setFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); setAppliedFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); }, [groupId, empresaId]);
   useEffect(() => {
     const warn = (event) => { if (dirty) { event.preventDefault(); event.returnValue = ''; } };
     window.addEventListener('beforeunload', warn);
@@ -161,7 +163,14 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
       {canCreate && <Button onClick={openCreate} disabled={!contextReady} data-permission="Comercial.orcamento.criar"><FilePlus2 className="w-4 h-4 mr-2" />Novo orçamento</Button>}
     </div>
     {!contextReady && <Alert><AlertCircle className="h-4 w-4" /><AlertDescription>Selecione uma empresa e entre com um usuário válido.</AlertDescription></Alert>}
-    {listQuery.isLoading ? <div className="flex-1 flex items-center justify-center">Carregando orçamentos...</div> : listQuery.isError ? <div className="flex-1 flex flex-col items-center justify-center gap-3"><p>{errorMessage(listQuery.error)}</p><Button variant="outline" onClick={() => listQuery.refetch()}><RefreshCw className="w-4 h-4 mr-2" />Tentar novamente</Button></div> : rows.length === 0 ? <div className="flex-1 flex flex-col items-center justify-center text-slate-500"><FilePlus2 className="w-10 h-10 mb-2" /><p>Nenhum orçamento nesta empresa.</p></div> : <div className="flex-1 min-h-0 overflow-auto border bg-white rounded-md">
+    <form className="grid grid-cols-1 md:grid-cols-6 gap-2 mb-3" onSubmit={(event) => { event.preventDefault(); setPage(1); setAppliedFilters(filters); }}>
+      <div className="md:col-span-2"><Label htmlFor="orc-search" className="sr-only">Pesquisar número</Label><Input id="orc-search" value={filters.search} maxLength={80} placeholder="Pesquisar número" onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))} /></div>
+      <Select value={filters.status} onValueChange={(value) => setFilters((current) => ({ ...current, status: value }))}><SelectTrigger aria-label="Filtrar status"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os status</SelectItem><SelectItem value="EM_ABERTO">Em aberto</SelectItem><SelectItem value="CANCELADO">Cancelado</SelectItem></SelectContent></Select>
+      <Select value={filters.clienteEmpresaId} onValueChange={(value) => setFilters((current) => ({ ...current, clienteEmpresaId: value }))}><SelectTrigger aria-label="Filtrar cliente"><SelectValue placeholder="Todos os clientes" /></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os clientes</SelectItem>{masters.clientesEmpresa.map((item) => <SelectItem key={item.id} value={item.id}>{clienteLabel(item.id)}</SelectItem>)}</SelectContent></Select>
+      <div className="grid grid-cols-2 gap-2"><Input aria-label="Validade inicial" type="date" value={filters.validadeDe} onChange={(event) => setFilters((current) => ({ ...current, validadeDe: event.target.value }))} /><Input aria-label="Validade final" type="date" value={filters.validadeAte} onChange={(event) => setFilters((current) => ({ ...current, validadeAte: event.target.value }))} /></div>
+      <div className="flex gap-2"><Button type="submit" variant="outline" className="flex-1"><Search className="w-4 h-4 mr-2" />Filtrar</Button><Button type="button" size="icon" variant="ghost" title="Limpar filtros" onClick={() => { const clean = { search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }; setFilters(clean); setAppliedFilters(clean); setPage(1); }}><RefreshCw className="w-4 h-4" /></Button></div>
+    </form>
+    {listQuery.isLoading ? <div className="flex-1 flex items-center justify-center">Carregando orçamentos...</div> : listQuery.isError ? <div className="flex-1 flex flex-col items-center justify-center gap-3"><p>{errorMessage(listQuery.error)}</p><Button variant="outline" onClick={() => listQuery.refetch()}><RefreshCw className="w-4 h-4 mr-2" />Tentar novamente</Button></div> : rows.length === 0 ? <div className="flex-1 flex flex-col items-center justify-center text-slate-500"><FilePlus2 className="w-10 h-10 mb-2" /><p>Nenhum orçamento encontrado para os filtros desta empresa.</p></div> : <div className="flex-1 min-h-0 overflow-auto border bg-white rounded-md">
       <Table><TableHeader><TableRow><TableHead>Número</TableHead><TableHead>Cliente</TableHead><TableHead>Criado</TableHead><TableHead>Validade</TableHead><TableHead>Itens</TableHead><TableHead className="text-right">Subtotal</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader>
       <TableBody>{rows.map((row) => <TableRow key={row.id}><TableCell className="font-mono">{row.numero}</TableCell><TableCell>{clienteLabel(row.cliente_empresa_id)}</TableCell><TableCell>{date(row.created_at)}</TableCell><TableCell>{date(row.validade_em)}</TableCell><TableCell>{row.itens?.length || 0}</TableCell><TableCell className="text-right">{money(row.subtotal)}</TableCell><TableCell className="text-right">{money(row.desconto)}</TableCell><TableCell className="text-right font-semibold">{money(row.total)}</TableCell><TableCell><Badge variant={row.status === 'EM_ABERTO' ? 'default' : 'secondary'}>{row.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado'}</Badge></TableCell><TableCell><div className="flex justify-end gap-1"><Button size="icon" variant="ghost" title="Visualizar" onClick={() => showDetail(row)}><Eye className="w-4 h-4" /></Button>{canEdit(row) && <Button size="icon" variant="ghost" title="Editar" onClick={() => openEdit(row)}><Pencil className="w-4 h-4" /></Button>}{canCancel(row) && <Button size="icon" variant="ghost" title="Cancelar" onClick={() => cancel(row)}><XCircle className="w-4 h-4" /></Button>}</div></TableCell></TableRow>)}</TableBody></Table>
     </div>}

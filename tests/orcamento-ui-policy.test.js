@@ -68,7 +68,11 @@ test('payload invalido e bloqueado antes da chamada HTTP', () => {
 test('tela contempla estados, detalhe, edicao, confirmacao e invalidacao por empresa', async () => {
   const tab = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
   assert.match(tab, /Carregando orçamentos/);
-  assert.match(tab, /Nenhum orçamento nesta empresa/);
+  assert.match(tab, /Nenhum orçamento encontrado para os filtros desta empresa/);
+  assert.match(tab, /Pesquisar número/);
+  assert.match(tab, /clienteEmpresaId/);
+  assert.match(tab, /validadeDe/);
+  assert.match(tab, /validadeAte/);
   assert.match(tab, /Tentar novamente/);
   assert.match(tab, /showDetail/);
   assert.match(tab, /openEdit/);

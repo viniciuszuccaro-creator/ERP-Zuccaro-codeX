@@ -9830,3 +9830,11 @@ Checklist inicial:
 - O baseline A1-A3.1 foi preservado como fato comprovado; nenhuma implementacao existente foi duplicada ou removida.
 - Validacao deste checkpoint exclusivamente documental: `git diff --check`. Nenhuma VPS, migration remota, porta 3080, segredo ou dado real foi acessado.
 - Proximo checkpoint automatico: `C360-V1-02`, pesquisa e filtros de Orcamento compativeis com backend e isolamento tenant.
+### Comercial 360 V1 - C360-V1-02 Pesquisa e filtros de Orcamento (2026-09-21)
+
+- A rota canonica `GET /api/v1/orcamentos` passou a aceitar pesquisa por numero e filtros de status, ClienteEmpresa e periodo de validade, mantendo paginacao, contagem e ordenacao deterministica.
+- Service valida tamanho da pesquisa, status, UUID e datas; os repositorios in-memory/PostgreSQL aplicam os mesmos filtros sempre junto de `groupId` e `empresaId`.
+- A aba existente de Orcamentos ganhou barra responsiva de filtros, limpeza, cache por contexto/filtros e estado vazio coerente. Tenant continua somente nos headers autenticados, nunca no query/body.
+- Testes focados backend: 27 pass/0 fail/0 skip. Testes focados frontend: 11 pass/0 fail/0 skip. Suite frontend explicita: 581 pass/0 fail/0 skip. Backend typecheck/build, lint dos arquivos tocados, audit baseline e `git diff --check` aprovados.
+- A suite backend global foi encerrada pelo processo hospedeiro sem resumo neste PC; os testes focados passaram e a CI completa/PostgreSQL da PR permanece gate obrigatorio antes de considerar a versao pronta.
+- Nenhuma migration, VPS, porta 3080, main, segredo ou dado real foi alterado. Proximo checkpoint automatico: `C360-V1-03`, impressao/PDF e preparacao segura de compartilhamento.

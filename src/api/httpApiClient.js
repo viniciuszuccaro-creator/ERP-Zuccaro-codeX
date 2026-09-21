@@ -175,9 +175,9 @@ export function createHttpApiClient(options = {}) {
   };
 
   const orcamentos = {
-    /** @param {{ limit?: number, offset?: number, signal?: AbortSignal }} [options] */
-    list({ limit = 50, offset = 0, signal } = {}) {
-      return request('/api/v1/orcamentos', { query: { limit, offset }, signal, unwrap: false });
+    /** @param {{ limit?: number, offset?: number, search?: string, status?: string, clienteEmpresaId?: string, validadeDe?: string, validadeAte?: string, signal?: AbortSignal }} [options] */
+    list({ limit = 50, offset = 0, search, status, clienteEmpresaId, validadeDe, validadeAte, signal } = {}) {
+      return request('/api/v1/orcamentos', { query: { limit, offset, search, status, clienteEmpresaId, validadeDe, validadeAte }, signal, unwrap: false });
     },
     /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
     get(id, { signal } = {}) {
