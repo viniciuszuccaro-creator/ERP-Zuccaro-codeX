@@ -9734,3 +9734,8 @@ Checklist inicial:
 - Implementado `PostgresOrcamentoRepository` com `DbClient.withTransaction`, lock transacional por Empresa, sequencia numerica por Empresa, create de cabecalho/itens, snapshots, consulta tenant-scoped, pagina??o deterministica e cancelamento protegido por estado.
 - Criados tres testes de contrato PostgreSQL/migration e mantido o teste in-memory. Executados 4 pass, 0 fail; backend typecheck/build e diff-check aprovados.
 - PostgreSQL real nao executado: `DATABASE_URL` nao esta configurada neste worktree. Migration 016 continua somente no repositorio; VPS nao foi alterada. Service/RBAC/auditoria/rotas permanecem A2.
+
+### Comercial 360 - A1.2A Hardening migration 016 (2026-09-21)
+
+- Migration 016 reescrita no repositorio antes de qualquer execucao externa: tenant triggers fail-closed para cabecalho/item, FK composta item-orcamento, validacao de ClienteEmpresa/Condicao/Produto/Unidade, checks monetarios e lifecycle, updated_at, indices, RLS+FORCE, REVOKE PUBLIC e rollback documentado.
+- Testes estruturais executados: 4 pass, 0 fail; backend typecheck/build/diff-check aprovados. PostgreSQL real nao executado neste lote; VPS e migrations remotas permanecem intocados.
