@@ -1,616 +1,616 @@
-### ERP-RUNTIME-08 — diagnóstico Comercial 360º (2026-09-19)
+### ERP-RUNTIME-08 ? diagn?stico Comercial 360? (2026-09-19)
 
-- Diagnóstico documental iniciado sobre a base funcional 07B; nenhuma
-  implementação, migration, VPS, API ou frontend foi alterada.
-- Decisão documentada: próximo agregado proposto é Condição de Pagamento;
-  Orçamento, Pedido e Comercial 360º permanecem futuros.
+- Diagn?stico documental iniciado sobre a base funcional 07B; nenhuma
+  implementa??o, migration, VPS, API ou frontend foi alterada.
+- Decis?o documentada: pr?ximo agregado proposto ? Condi??o de Pagamento;
+  Or?amento, Pedido e Comercial 360? permanecem futuros.
 - Documento: `docs/ERP_RUNTIME_08_DIAGNOSTICO_COMERCIAL_360.md`.
 
-### Operação GitHub, Codex, Cursor e VPS DEV — 2026-09-19
+### Opera??o GitHub, Codex, Cursor e VPS DEV ? 2026-09-19
 
-- Fonte canônica de código/histórico: `viniciuszuccaro-creator/ERP-Zuccaro-codeX`.
+- Fonte can?nica de c?digo/hist?rico: `viniciuszuccaro-creator/ERP-Zuccaro-codeX`.
 - Base funcional do ERP-RUNTIME-07B: `ca0bc5f3529b9071fe80e58dae6aa966a9d6c740`.
-- O histórico deste arquivo foi preservado. A entrada anterior do 07B descrevia
-  a branch antes do merge; o estado operacional fechado está em
+- O hist?rico deste arquivo foi preservado. A entrada anterior do 07B descrevia
+  a branch antes do merge; o estado operacional fechado est? em
   `docs/HANDOFF_ATUAL.md` e o procedimento permanente em
   `docs/OPERACAO_DEV_VPS.md`.
-- Nenhum runtime posterior foi iniciado por esta atualização documental.
+- Nenhum runtime posterior foi iniciado por esta atualiza??o documental.
 
-### ERP-RUNTIME-07B — HARDENING FINAL (PR #28)
+### ERP-RUNTIME-07B ? HARDENING FINAL (PR #28)
 
 - Data: 2026-09-19.
 - Branch: `cursor/erp-runtime-07b-tabela-preco-392b`.
 - HEAD anterior: `69547478bf8e80e5f9e4fd653a02942270524387`.
 - Status: **`HARDENING NA BRANCH / AGUARDANDO REVIEW`**.
-- Escopo: reforço de invariantes sem ampliar funcionalidade; 013 única;
-  001–012 imutáveis; sem 014; sem frontend HTTP; sem apply DEV; sem VPS;
-  sem merge; sem promoção de API.
+- Escopo: refor?o de invariantes sem ampliar funcionalidade; 013 ?nica;
+  001?012 imut?veis; sem 014; sem frontend HTTP; sem apply DEV; sem VPS;
+  sem merge; sem promo??o de API.
 - Cobertura adicionada em `runtime07b.test.ts`:
   - UPDATE cross-tenant (tabelas_preco / empresas / itens / cliente_empresas)
     bloqueado com linha original intacta;
-  - padrão concorrente: unique parcial + service; exatamente 1 `eh_padrao`;
-  - item duplicado concorrente → 409 / count=1 (sem duplicata inativa);
+  - padr?o concorrente: unique parcial + service; exatamente 1 `eh_padrao`;
+  - item duplicado concorrente ? 409 / count=1 (sem duplicata inativa);
   - audit rollback em UPDATE e setPadrao (CREATE preservado);
-  - ClienteEmpresa cross-company sem autorização bloqueado; após link A2 ok;
-  - produto+unidade principal/secundária; precisão 1.123456; vigência/fallback
-    seguro (específica expirada → padrão autorizado; nunca tabela não autorizada).
-- Nota concorrência: PGlite serializa TX; unique parcial + `FOR UPDATE` no
-  `setPadrao` cobertos localmente; **PostgreSQL real continua gate obrigatório**
-  antes de promoção (não fingir equivalência de concorrência).
+  - ClienteEmpresa cross-company sem autoriza??o bloqueado; ap?s link A2 ok;
+  - produto+unidade principal/secund?ria; precis?o 1.123456; vig?ncia/fallback
+    seguro (espec?fica expirada ? padr?o autorizado; nunca tabela n?o autorizada).
+- Nota concorr?ncia: PGlite serializa TX; unique parcial + `FOR UPDATE` no
+  `setPadrao` cobertos localmente; **PostgreSQL real continua gate obrigat?rio**
+  antes de promo??o (n?o fingir equival?ncia de concorr?ncia).
 - Skip `runtime01` Postgres opcional sem `DATABASE_URL` permanece documentado.
-- Próximo passo: CI verde; review humano; **não** merge; **não** aplicar 013
+- Pr?ximo passo: CI verde; review humano; **n?o** merge; **n?o** aplicar 013
   no DEV; gate PostgreSQL DEV separado.
 
-### ERP-RUNTIME-07B — CORREÇÃO CI (PR #28)
+### ERP-RUNTIME-07B ? CORRE??O CI (PR #28)
 
 - Data: 2026-09-19.
 - Branch: `cursor/erp-runtime-07b-tabela-preco-392b`.
 - HEAD anterior: `a8b75e0231fb38a41e5b2caaf0fad59bd8d40903`.
 - Status: **`CI FIX NA BRANCH / AGUARDANDO REVIEW`**.
-- Causa das 9 falhas do CI #112: expectativas históricas obsoletas
-  (última migration=012; meta congelada em 06B; 05 proibia
-  `tabela_preco_id` após cadeia completa com 013). Sem regressão 07B.
-- Correção: 01 exige 001–012 íntegras + 013 última; 02–06A allowlist meta
-  inclui 07B; 05 prova 010 sem `tabela_preco_id` e coluna presente pós-013;
-  06B prova 012 íntegra (não última) + Obra/TabelaPreco HTTP false;
-  07B valida meta exata + unidade/vigência/zero.
-- Skip único: `runtime01` integração Postgres opcional sem `DATABASE_URL`
-  (gate futuro DEV; não fingir PG aprovado).
-- Validações: server 70 pass / 0 fail / 1 skip; typecheck/build OK;
+- Causa das 9 falhas do CI #112: expectativas hist?ricas obsoletas
+  (?ltima migration=012; meta congelada em 06B; 05 proibia
+  `tabela_preco_id` ap?s cadeia completa com 013). Sem regress?o 07B.
+- Corre??o: 01 exige 001?012 ?ntegras + 013 ?ltima; 02?06A allowlist meta
+  inclui 07B; 05 prova 010 sem `tabela_preco_id` e coluna presente p?s-013;
+  06B prova 012 ?ntegra (n?o ?ltima) + Obra/TabelaPreco HTTP false;
+  07B valida meta exata + unidade/vig?ncia/zero.
+- Skip ?nico: `runtime01` integra??o Postgres opcional sem `DATABASE_URL`
+  (gate futuro DEV; n?o fingir PG aprovado).
+- Valida??es: server 70 pass / 0 fail / 1 skip; typecheck/build OK;
   lint OK; audit:baseline OK; `git diff --check` OK.
-- 001–012 imutáveis; sem 014; frontendHttp não ativado; DEV API permanece
-  06B; 013 não aplicada no DEV; VPS não acessado; merge não realizado.
-- Próximo passo: CI verde no PR #28; review humano; **não** merge;
-  **não** promover API; **não** aplicar 013 no DEV.
+- 001?012 imut?veis; sem 014; frontendHttp n?o ativado; DEV API permanece
+  06B; 013 n?o aplicada no DEV; VPS n?o acessado; merge n?o realizado.
+- Pr?ximo passo: CI verde no PR #28; review humano; **n?o** merge;
+  **n?o** promover API; **n?o** aplicar 013 no DEV.
 
-### ERP-RUNTIME-07B — IMPLEMENTAÇÃO TabelaPreco (branch)
+### ERP-RUNTIME-07B ? IMPLEMENTA??O TabelaPreco (branch)
 
 - Data: 2026-09-19.
 - Branch: `cursor/erp-runtime-07b-tabela-preco-392b`.
 - Baseline 06B: `67686298be2fa125966e714b1cf20759a7991765`.
 - Status: **`IMPLEMENTADO NA BRANCH / AGUARDANDO REVIEW`**.
 - Software/API DEV oficial: **permanece `ERP-RUNTIME-06B`**. Migration 013
-  **não** aplicada no DEV remoto. VPS **não** acessado.
+  **n?o** aplicada no DEV remoto. VPS **n?o** acessado.
 - Migration: somente `013_tabelas_preco.sql`
   (`tabelas_preco`, `tabela_preco_empresas`, `tabela_preco_itens` +
-  `cliente_empresas.tabela_preco_id`); 001–012 imutáveis.
-- Ownership Grupo+empresa origem; N:N autorização; padrão único por Empresa;
-  fallback específica→padrão→sem preço; item produto+unidade; `NUMERIC(18,6)`.
-- Nome ATACADO permitido em Empresas A e A2 (unique só por empresa origem).
+  `cliente_empresas.tabela_preco_id`); 001?012 imut?veis.
+- Ownership Grupo+empresa origem; N:N autoriza??o; padr?o ?nico por Empresa;
+  fallback espec?fica?padr?o?sem pre?o; item produto+unidade; `NUMERIC(18,6)`.
+- Nome ATACADO permitido em Empresas A e A2 (unique s? por empresa origem).
 - Cliente master continua bloqueando `tabela_preco_id`.
-- RBAC `Cadastros.tabela_preco` fail-closed; RLS ENABLE+FORCE; audit atômica.
+- RBAC `Cadastros.tabela_preco` fail-closed; RLS ENABLE+FORCE; audit at?mica.
 - `frontendHttp=false`; TabelaPreco ausente de `HTTP_PILOT_ENTITIES`.
 - Docs: `docs/ERP_RUNTIME_07B.md` e `docs/ERP_RUNTIME_07B_DEV_RUNBOOK.md`.
-- Skip `runtime01` integração Postgres: BLOCKER de promoção enquanto
+- Skip `runtime01` integra??o Postgres: BLOCKER de promo??o enquanto
   `DATABASE_URL` de teste real estiver ausente (opcional documentado).
-- Validações locais: server typecheck/build OK; suite server 0 fail;
-  `runtime07b` reforçado; testes históricos 01–06B atualizados para não
-  assumir última migration/meta eternas; `git diff --check` no fechamento.
-- Próximo passo: review humano; **não** merge automático; **não** promover
-  API; **não** aplicar 013 no DEV; **não** frontend; **não** próximo runtime.
+- Valida??es locais: server typecheck/build OK; suite server 0 fail;
+  `runtime07b` refor?ado; testes hist?ricos 01?06B atualizados para n?o
+  assumir ?ltima migration/meta eternas; `git diff --check` no fechamento.
+- Pr?ximo passo: review humano; **n?o** merge autom?tico; **n?o** promover
+  API; **n?o** aplicar 013 no DEV; **n?o** frontend; **n?o** pr?ximo runtime.
 
-### ERP-RUNTIME-06B — IMPLEMENTAÇÃO Obra (branch)
+### ERP-RUNTIME-06B ? IMPLEMENTA??O Obra (branch)
 
 - Data: 2026-09-18.
 - Branch: `cursor/erp-runtime-06b-obras-392b`.
 - Base: `f7fd49a12699a17db1a3e9f3cc57a4efdf44a88a`.
 - Status: **`IMPLEMENTADO NA BRANCH / AGUARDANDO REVIEW`**.
 - Software/API DEV oficial: **permanece `ERP-RUNTIME-06A`**. Migration 012
-  **não** aplicada no DEV remoto neste lote. VPS **não** acessado.
+  **n?o** aplicada no DEV remoto neste lote. VPS **n?o** acessado.
 - Migration: somente `012_obras.sql` (`obras`, `obra_empresas`, `obra_locais`);
-  001–011 imutáveis.
-- Obra = contexto de negócio (Grupo + Cliente); Empresa autoriza via
+  001?011 imut?veis.
+- Obra = contexto de neg?cio (Grupo + Cliente); Empresa autoriza via
   `obra_empresas`; locais via `obra_locais` N:N; um principal geral.
-- Obra **não** é finalidade de ClienteLocal e **não** armazena endereço/geo.
-- Código: `reserve_entity_codigo(group_id,'Obra',6)`; concorrência coberta.
+- Obra **n?o** ? finalidade de ClienteLocal e **n?o** armazena endere?o/geo.
+- C?digo: `reserve_entity_codigo(group_id,'Obra',6)`; concorr?ncia coberta.
 - Status: ATIVA/PAUSADA/CONCLUIDA/CANCELADA; operacional exige ATIVA+ativo+
-  obra_empresa+ClienteEmpresa elegível+principal ativo; sem empresaId não há
-  bypass de Grupo; restore histórico não cascadeia vínculos.
-- Review técnico (PR #25): FK composta filhas→obras; triggers para
-  Cliente/Empresa/Local históricos; setPrincipal valida target antes;
-  audit de vínculo mínimo; testes de rollback de principal/vínculo.
-- Skip `runtime01` integração Postgres: BLOCKER de promoção enquanto
+  obra_empresa+ClienteEmpresa eleg?vel+principal ativo; sem empresaId n?o h?
+  bypass de Grupo; restore hist?rico n?o cascadeia v?nculos.
+- Review t?cnico (PR #25): FK composta filhas?obras; triggers para
+  Cliente/Empresa/Local hist?ricos; setPrincipal valida target antes;
+  audit de v?nculo m?nimo; testes de rollback de principal/v?nculo.
+- Skip `runtime01` integra??o Postgres: BLOCKER de promo??o enquanto
   `DATABASE_URL` de teste real estiver ausente.
-- RBAC `Cadastros.obra` fail-closed; RLS ENABLE+FORCE nas três tabelas.
-- Auditoria atômica sem PII de endereço/documento; soft delete/restore sem
-  cascade de vínculos.
-- Pedido **não** implementado; `frontendHttp=false`; Obra ausente de
+- RBAC `Cadastros.obra` fail-closed; RLS ENABLE+FORCE nas tr?s tabelas.
+- Auditoria at?mica sem PII de endere?o/documento; soft delete/restore sem
+  cascade de v?nculos.
+- Pedido **n?o** implementado; `frontendHttp=false`; Obra ausente de
   `HTTP_PILOT_ENTITIES`.
 - Docs: `docs/ERP_RUNTIME_06B.md` e `docs/ERP_RUNTIME_06B_DEV_RUNBOOK.md`.
-- Validações locais: server typecheck/build OK; server 61 pass / 1 skip;
-  PGlite cobre 012/RLS/tenant/concorrência/audit rollback; `npm test` root
-  570 pass; lint OK; `git diff --check` OK; typecheck frontend mantém
-  baseline histórico (exit 2), sem erro novo no lote.
-- Próximo passo: review humano; **não** merge automático; **não** promover
-  API; **não** iniciar RUNTIME-07; **não** frontend.
+- Valida??es locais: server typecheck/build OK; server 61 pass / 1 skip;
+  PGlite cobre 012/RLS/tenant/concorr?ncia/audit rollback; `npm test` root
+  570 pass; lint OK; `git diff --check` OK; typecheck frontend mant?m
+  baseline hist?rico (exit 2), sem erro novo no lote.
+- Pr?ximo passo: review humano; **n?o** merge autom?tico; **n?o** promover
+  API; **n?o** iniciar RUNTIME-07; **n?o** frontend.
 
-### ERP-RUNTIME-06B — DIAGNÓSTICO ARQUITETURAL (Obra)
+### ERP-RUNTIME-06B ? DIAGN?STICO ARQUITETURAL (Obra)
 
 - Data: 2026-09-18.
 - Base: `067d002f90b162c507581dfa2f6909b3c1059ed4` (main; RUNTIME-06A).
-- Status: **`DIAGNÓSTICO SOMENTE — AGUARDANDO REVIEW FINAL`**.
-- Software/API DEV: **permanece `ERP-RUNTIME-06A`**. Implementação de Obra
-  **não** iniciada. Migration `012_obras.sql` **não** criada.
-- Arquitetura aprovada e consolidada após review:
+- Status: **`DIAGN?STICO SOMENTE ? AGUARDANDO REVIEW FINAL`**.
+- Software/API DEV: **permanece `ERP-RUNTIME-06A`**. Implementa??o de Obra
+  **n?o** iniciada. Migration `012_obras.sql` **n?o** criada.
+- Arquitetura aprovada e consolidada ap?s review:
   - Obra = contexto comercial/operacional; Grupo + `cliente_id`;
-  - Empresa autoriza via `obra_empresas` (não é dona; não define NF);
+  - Empresa autoriza via `obra_empresas` (n?o ? dona; n?o define NF);
   - Locais via `obra_locais` N:N; um principal geral por Obra;
-  - Obra **não** é finalidade de ClienteLocal;
-  - criação atômica: Obra + código + `obra_empresas` + Local principal + audit;
-  - ClienteEmpresa elegível obrigatório para **nova** operação;
-  - histórico visível após bloqueio, para usuário autorizado;
-  - seleção operacional padrão: `ATIVA` + `ativo`; PAUSADA/CONCLUIDA/
+  - Obra **n?o** ? finalidade de ClienteLocal;
+  - cria??o at?mica: Obra + c?digo + `obra_empresas` + Local principal + audit;
+  - ClienteEmpresa eleg?vel obrigat?rio para **nova** opera??o;
+  - hist?rico vis?vel ap?s bloqueio, para usu?rio autorizado;
+  - sele??o operacional padr?o: `ATIVA` + `ativo`; PAUSADA/CONCLUIDA/
     CANCELADA fora;
   - Pedido futuro: `obra_id` opcional; destino = Local efetivo + snapshot.
 - Modelo original do 06 (`obras.cliente_local_id`) registrado como rascunho
   superado; documento 06 alinhado ao 06B.
 - Documento: `docs/ERP_RUNTIME_06B_DIAGNOSTICO.md`.
-- Próximo passo: review final; **não** implementar 06B; **não** merge
-  automático; **não** iniciar RUNTIME-07.
+- Pr?ximo passo: review final; **n?o** implementar 06B; **n?o** merge
+  autom?tico; **n?o** iniciar RUNTIME-07.
 
-### ERP-RUNTIME-06A — IMPLEMENTAÇÃO ClienteLocal
+### ERP-RUNTIME-06A ? IMPLEMENTA??O ClienteLocal
 
 - Review geo/fingerprint (2026-09-18):
-  - coordenadas são independentes de geocoding e exigidas em par, com limites
+  - coordenadas s?o independentes de geocoding e exigidas em par, com limites
     -90/90 e -180/180 no schema e banco;
   - `coordinate_source` distingue MANUAL/GPS/IMPORTACAO/GEOCODER/
     APP_MOTORISTA/API;
-  - coordenada manual/GPS não força `geocode_status=GEOCODIFICADO`;
+  - coordenada manual/GPS n?o for?a `geocode_status=GEOCODIFICADO`;
   - `geocode_*` descreve somente enriquecimento efetivamente realizado;
-  - fingerprint passou de MD5 para chave textual normalizada determinística,
-    interna, não criptográfica e não exposta na API/audit;
-  - `POSSIBLE_DUPLICATE`, complemento distinto e ausência de UNIQUE agressivo
+  - fingerprint passou de MD5 para chave textual normalizada determin?stica,
+    interna, n?o criptogr?fica e n?o exposta na API/audit;
+  - `POSSIBLE_DUPLICATE`, complemento distinto e aus?ncia de UNIQUE agressivo
     preservados;
-  - seed sintético usa coordenada manual sem geocoding fictício;
-  - nenhuma integração externa, Obra, migration 012 ou frontend foi criada.
+  - seed sint?tico usa coordenada manual sem geocoding fict?cio;
+  - nenhuma integra??o externa, Obra, migration 012 ou frontend foi criada.
 - Data: 2026-09-18.
 - Branch: `cursor/erp-runtime-06a-cliente-locais-392b`.
 - Base: `821b335fd6bff01896fcba3ba3291adab94df262`.
-- Status: **`IMPLEMENTATION_READY — DEV_MIGRATION_PENDING`**.
-- Migration: `011_cliente_locais.sql`; migrations 001–010 imutáveis.
+- Status: **`IMPLEMENTATION_READY ? DEV_MIGRATION_PENDING`**.
+- Migration: `011_cliente_locais.sql`; migrations 001?010 imut?veis.
 - Estruturas: `cliente_locais` + `cliente_local_finalidades`; nenhuma Obra.
 - Finalidades: CADASTRAL, FISCAL, COBRANCA, ENTREGA, CORRESPONDENCIA e OUTRO;
   OBRA proibida por schema/constraint/teste.
-- Principal: índice único parcial por Grupo + Cliente + finalidade; troca
-  serializada/atômica, sem principal duplo.
+- Principal: ?ndice ?nico parcial por Grupo + Cliente + finalidade; troca
+  serializada/at?mica, sem principal duplo.
 - Multiempresa: Local pertence ao Cliente/Grupo; contexto Empresa exige
-  ClienteEmpresa elegível; A/A2/B e cross-group cobertos.
+  ClienteEmpresa eleg?vel; A/A2/B e cross-group cobertos.
 - RBAC: `Cadastros.cliente_local` com visualizar/criar/editar/inativar/
-  restaurar/principal; usar futuro não concede editar.
+  restaurar/principal; usar futuro n?o concede editar.
 - RLS: ENABLE/FORCE em Locais e Finalidades.
-- Segurança: strict schema, mass assignment bloqueado, CEP/UF/país
-  normalizados, número textual e geo opcional com limites.
-- Duplicidade: fingerprint conservador → `409 POSSIBLE_DUPLICATE`, sem merge ou
+- Seguran?a: strict schema, mass assignment bloqueado, CEP/UF/pa?s
+  normalizados, n?mero textual e geo opcional com limites.
+- Duplicidade: fingerprint conservador ? `409 POSSIBLE_DUPLICATE`, sem merge ou
   UNIQUE agressivo; complemento distinto permitido.
-- Auditoria: create/update/set_purposes/soft_delete/restore na mesma transação
-  da mutação; snapshots sem endereço/coordenadas completos.
+- Auditoria: create/update/set_purposes/soft_delete/restore na mesma transa??o
+  da muta??o; snapshots sem endere?o/coordenadas completos.
 - Lifecycle: principal precisa ser removido explicitamente antes de inativar;
-  soft delete e restore preservam histórico.
-- Seed: Locais A/B/C e B1 sintéticos, multifinalidade e principal, convergente.
+  soft delete e restore preservam hist?rico.
+- Seed: Locais A/B/C e B1 sint?ticos, multifinalidade e principal, convergente.
 - Compatibilidade: Base44 inalterado, sem dual-write/cutover/backfill real.
 - API/meta: CRUD/list/search/count/filtros e `ERP-RUNTIME-06A`; ClienteLocal
   permanece fora de `HTTP_PILOT_ENTITIES`.
-- Validações: RUNTIME-06A + atomicidade 5/5; server 56 pass/1 skip +
+- Valida??es: RUNTIME-06A + atomicidade 5/5; server 56 pass/1 skip +
   typecheck/build OK; audit/lint/build frontend e 570 testes OK;
-  `git diff --check` OK; typecheck frontend mantém baseline histórico (exit 2),
+  `git diff --check` OK; typecheck frontend mant?m baseline hist?rico (exit 2),
   sem erro novo no lote.
 - Docs: `docs/ERP_RUNTIME_06A.md` e
   `docs/ERP_RUNTIME_06A_DEV_RUNBOOK.md`.
-- Pendência: review; depois migration 011 + seed/E2E humano no DEV.
-- RUNTIME-06B e RUNTIME-07 não iniciados.
+- Pend?ncia: review; depois migration 011 + seed/E2E humano no DEV.
+- RUNTIME-06B e RUNTIME-07 n?o iniciados.
 
-### ERP-RUNTIME-06 — DIAGNÓSTICO ARQUITETURAL
+### ERP-RUNTIME-06 ? DIAGN?STICO ARQUITETURAL
 
 - Data: 2026-09-18.
 - Base: `7c29f234670cb965f02315a5f1adc15590521a0f`.
-- Status: **`DIAGNÓSTICO SOMENTE`**.
-- Domínio recomendado: **Local/Endereço do Cliente + Obra referenciando Local**.
-- Decisão refinada: Endereço é value object do Local; Obra é contexto
+- Status: **`DIAGN?STICO SOMENTE`**.
+- Dom?nio recomendado: **Local/Endere?o do Cliente + Obra referenciando Local**.
+- Decis?o refinada: Endere?o ? value object do Local; Obra ? contexto
   comercial/operacional separado que referencia Local sem repetir logradouro.
-- Finalidades canônicas de Local: CADASTRAL, FISCAL, COBRANCA, ENTREGA,
-  CORRESPONDENCIA e OUTRO; **OBRA não é finalidade no modelo final**.
+- Finalidades can?nicas de Local: CADASTRAL, FISCAL, COBRANCA, ENTREGA,
+  CORRESPONDENCIA e OUTRO; **OBRA n?o ? finalidade no modelo final**.
 - Legado `tipo_endereco=Obra`/`addressId=obraId`: staging materializa Local e
-  Obra, preserva mapeamento/aliases e mantém compatibilidade até o cutover.
+  Obra, preserva mapeamento/aliases e mant?m compatibilidade at? o cutover.
 - `obras.cliente_local_id` era o rascunho original; **superado** pelo 06B
-  (`obra_locais` N:N). Pendências de legado ficam em staging, não na tabela
-  canônica. Várias Obras podem reutilizar o mesmo Local, sem UNIQUE indevido.
-- Divisão obrigatória para manter lotes pequenos:
-  - RUNTIME-06A: Local/Endereço + finalidades;
-  - RUNTIME-06B: Obra mínima + `obra_empresas` + `obra_locais` + código.
-- Evidência: `Cliente.endereco_principal` + `locais_entrega[]` alimentam
+  (`obra_locais` N:N). Pend?ncias de legado ficam em staging, n?o na tabela
+  can?nica. V?rias Obras podem reutilizar o mesmo Local, sem UNIQUE indevido.
+- Divis?o obrigat?ria para manter lotes pequenos:
+  - RUNTIME-06A: Local/Endere?o + finalidades;
+  - RUNTIME-06B: Obra m?nima + `obra_empresas` + `obra_locais` + c?digo.
+- Evid?ncia: `Cliente.endereco_principal` + `locais_entrega[]` alimentam
   `obra_destino_id`/snapshot do Pedido e `endereco_entrega_completo` da Entrega.
-- Duplicidades: tipos `tipo_endereco`/`tipo`/`obra`; IDs temporários por índice;
+- Duplicidades: tipos `tipo_endereco`/`tipo`/`obra`; IDs tempor?rios por ?ndice;
   quatro aliases de mapa; coordenadas com aliases; contatos e snapshots
-  fragmentados; conversão Orçamento→Pedido perde endereço/obra.
+  fragmentados; convers?o Or?amento?Pedido perde endere?o/obra.
 - Ownership: Local/Cliente no Grupo; uso pela Empresa exige ClienteEmpresa
-  elegível; preferências empresariais não alteram endereço físico.
-- Snapshot: Pedido/Entrega devem guardar referência ao Local + cópia imutável;
-  mudança do master não altera histórico.
-- PostgreSQL provável: `011_cliente_locais.sql` e, após review de 06A,
+  eleg?vel; prefer?ncias empresariais n?o alteram endere?o f?sico.
+- Snapshot: Pedido/Entrega devem guardar refer?ncia ao Local + c?pia imut?vel;
+  mudan?a do master n?o altera hist?rico.
+- PostgreSQL prov?vel: `011_cliente_locais.sql` e, ap?s review de 06A,
   `012_obras.sql`; **nenhuma migration criada**.
-- Projeto/CC, contatos, Entrega, Fiscal e Roteirizador permanecem proprietários
-  de seus dados; Pedido/NF usam referência + snapshot imutável.
-- CEP/geo: ViaCEP + Nominatim já existem; providers, links e aliases precisam
-  de contrato único, rate limit e validação, sem implementação neste lote.
+- Projeto/CC, contatos, Entrega, Fiscal e Roteirizador permanecem propriet?rios
+  de seus dados; Pedido/NF usam refer?ncia + snapshot imut?vel.
+- CEP/geo: ViaCEP + Nominatim j? existem; providers, links e aliases precisam
+  de contrato ?nico, rate limit e valida??o, sem implementa??o neste lote.
 - Multiempresa/RBAC/RLS/auditoria: reutilizar Cliente, ClienteEmpresa,
   PostgresRbacGuard, RLS fail-closed e atomicidade RUNTIME-05.
-- Sequência preservada: após 06A/06B, R07 Preço → R08 Estoque/Disponibilidade
-  → R09 Orçamento/Negociação → R10 Pedido.
+- Sequ?ncia preservada: ap?s 06A/06B, R07 Pre?o ? R08 Estoque/Disponibilidade
+  ? R09 Or?amento/Negocia??o ? R10 Pedido.
 - Frontend, backend, banco, migration, VPS e `HTTP_PILOT_ENTITIES`: inalterados.
 - Documento: `docs/ERP_RUNTIME_06_DIAGNOSTICO.md`.
-- Baseline: audit/lint/build/diff PASS; typecheck mantém baseline histórico
+- Baseline: audit/lint/build/diff PASS; typecheck mant?m baseline hist?rico
   (exit 2), sem erro novo por este lote documental.
-- Não implementar RUNTIME-06 sem review/autorização.
+- N?o implementar RUNTIME-06 sem review/autoriza??o.
 
-### ERP-RUNTIME-05 — CONCLUÍDO E VALIDADO NO DEV
+### ERP-RUNTIME-05 ? CONCLU?DO E VALIDADO NO DEV
 
 - Data: 2026-09-18.
-- Agregado: **Cliente × Empresa — relacionamento comercial e elegibilidade**.
+- Agregado: **Cliente ? Empresa ? relacionamento comercial e elegibilidade**.
 - PR/merge oficial: #19 / `079f594c798c33d903cd4e70a673f9f068639142`.
-- Implementação, review, correção de atomicidade, migration e E2E: **APROVADOS**.
+- Implementa??o, review, corre??o de atomicidade, migration e E2E: **APROVADOS**.
 - Migrations DEV:
-  - `001_foundation.sql` — OK
-  - `002_rls_foundation.sql` — OK
-  - `003_marcas_pilot.sql` — OK
-  - `004_tenant_integrity.sql` — OK
-  - `005_cadastros_simples.sql` — OK
-  - `006_produtos_base.sql` — OK
-  - `007_produtos_master_data.sql` — OK
-  - `008_produtos_fk_tenant.sql` — OK
-  - `009_clientes_master_data.sql` — OK
-  - `010_cliente_empresas_comercial.sql` — APLICADA/OK
-- Modelo consolidado: Cliente MASTER é identidade única no Grupo;
-  `cliente_empresas` contém situação/elegibilidade específica da Empresa. Um
-  bloqueio na 3Z não altera identidade nem vínculo liberado na CPA.
-- Elegibilidade atual: vínculo ativo + situação comercial +
-  `habilitado_operacao` + ausência de bloqueio. Crédito, inadimplência, limite
-  e títulos permanecem no Financeiro.
+  - `001_foundation.sql` ? OK
+  - `002_rls_foundation.sql` ? OK
+  - `003_marcas_pilot.sql` ? OK
+  - `004_tenant_integrity.sql` ? OK
+  - `005_cadastros_simples.sql` ? OK
+  - `006_produtos_base.sql` ? OK
+  - `007_produtos_master_data.sql` ? OK
+  - `008_produtos_fk_tenant.sql` ? OK
+  - `009_clientes_master_data.sql` ? OK
+  - `010_cliente_empresas_comercial.sql` ? APLICADA/OK
+- Modelo consolidado: Cliente MASTER ? identidade ?nica no Grupo;
+  `cliente_empresas` cont?m situa??o/elegibilidade espec?fica da Empresa. Um
+  bloqueio na 3Z n?o altera identidade nem v?nculo liberado na CPA.
+- Elegibilidade atual: v?nculo ativo + situa??o comercial +
+  `habilitado_operacao` + aus?ncia de bloqueio. Cr?dito, inadimpl?ncia, limite
+  e t?tulos permanecem no Financeiro.
 - Multiempresa E2E:
-  - Grupo consolidado e Empresa A → vínculo A: OK;
-  - Empresa A → A2 sem autorização: HTTP 403;
-  - Grupo B → Cliente/vínculo A: HTTP 404;
+  - Grupo consolidado e Empresa A ? v?nculo A: OK;
+  - Empresa A ? A2 sem autoriza??o: HTTP 403;
+  - Grupo B ? Cliente/v?nculo A: HTTP 404;
   - cross-group PostgreSQL: bloqueado; `BAD_LINKS=0`.
-- RBAC fail-closed: sem actor → HTTP 403; usar Cliente, editar Cliente, alterar
-  relacionamento e bloquear/desbloquear são permissões distintas.
+- RBAC fail-closed: sem actor ? HTTP 403; usar Cliente, editar Cliente, alterar
+  relacionamento e bloquear/desbloquear s?o permiss?es distintas.
 - RLS `cliente_empresas`: ENABLE/FORCE (`RLS_STATE=true|true`).
 - Unicidade `(cliente_id, empresa_id)`: aprovada; `DUP_COUNT=0`.
-- Seed executado duas vezes: convergente/idempotente, sem duplicação.
+- Seed executado duas vezes: convergente/idempotente, sem duplica??o.
 - Lifecycle E2E:
   - update/block/unblock/inactivate/restore: HTTP 200;
-  - block → bloqueado e não elegível;
+  - block ? bloqueado e n?o eleg?vel;
   - GET inativo: HTTP 404;
-  - final: ATIVO, habilitado, não bloqueado e `ativo=true`;
-  - busca e paginação/count: HTTP 200; listagem padrão exclui inativos.
+  - final: ATIVO, habilitado, n?o bloqueado e `ativo=true`;
+  - busca e pagina??o/count: HTTP 200; listagem padr?o exclui inativos.
 - Auditoria DEV: update, block, unblock, inactivate e restore confirmados.
-- Atomicidade: mutação + auditoria são uma transação; falha de auditoria
-  rollbacka mutação, comprovado por testes PostgreSQL/PGlite.
-- PII: regex numérico genérico gerou falso positivo; verificação específica
+- Atomicidade: muta??o + auditoria s?o uma transa??o; falha de auditoria
+  rollbacka muta??o, comprovado por testes PostgreSQL/PGlite.
+- PII: regex num?rico gen?rico gerou falso positivo; verifica??o espec?fica
   confirmou `EXACT_CLIENT_DOCUMENT_LEAK=0` e `AUDIT_ROWS_WITH_PII_KEYS=0`.
   Nenhuma chave CPF/CNPJ/documento/telefone/celular/e-mail nos snapshots.
 - API oficial DEV: `127.0.0.1:3080`, runtime `ERP-RUNTIME-05`.
 - Imagem promovida: `erp-zuccaro-erp-api:runtime05-f83acd03`.
-- Frontend HTTP: **NÃO ATIVADO**; sem alteração de `HTTP_PILOT_ENTITIES`.
+- Frontend HTTP: **N?O ATIVADO**; sem altera??o de `HTTP_PILOT_ENTITIES`.
 - Rollback: `erp-api-dev-runtime04-backup` e
   `erp-api-dev-runtime03-backup` preservados temporariamente.
-- Validação do closeout documental: `npm run audit:baseline` e
-  `git diff --check` OK; testes/build dispensados por não alterar runtime.
-- Comercial 360º: pode futuramente compor Cliente + Empresa + situação +
-  habilitação + bloqueio + elegibilidade, sem depositar dados dos módulos
-  proprietários em ClienteEmpresa.
-- Planejamento somente: RUNTIME-06 = Locais/Endereços/Obras. Não implementar.
+- Valida??o do closeout documental: `npm run audit:baseline` e
+  `git diff --check` OK; testes/build dispensados por n?o alterar runtime.
+- Comercial 360?: pode futuramente compor Cliente + Empresa + situa??o +
+  habilita??o + bloqueio + elegibilidade, sem depositar dados dos m?dulos
+  propriet?rios em ClienteEmpresa.
+- Planejamento somente: RUNTIME-06 = Locais/Endere?os/Obras. N?o implementar.
 
-### ERP-RUNTIME-05 — IMPLEMENTAÇÃO Cliente × Empresa
+### ERP-RUNTIME-05 ? IMPLEMENTA??O Cliente ? Empresa
 
 - Review de atomicidade (2026-09-18):
   - `AuditRepository.append` reutiliza o executor de `DbClient.withTransaction`;
-  - link/update/block/unblock/inactivate/restore + audit são uma unidade atômica;
+  - link/update/block/unblock/inactivate/restore + audit s?o uma unidade at?mica;
   - falha em `audit_logs` provoca rollback PostgreSQL comprovado em PGlite;
   - in-memory restaura snapshot na mesma falha;
-  - Cliente criado com `empresa_id`, vínculo e ambas auditorias também são
-    atômicos; nenhuma inconsistência residual do RUNTIME-04 ficou nesse fluxo;
+  - Cliente criado com `empresa_id`, v?nculo e ambas auditorias tamb?m s?o
+    at?micos; nenhuma inconsist?ncia residual do RUNTIME-04 ficou nesse fluxo;
   - prova: `runtime05-audit-atomicity.test.ts` (2/2).
 - Data: 2026-09-18.
 - Branch: `cursor/erp-runtime-05-cliente-empresa-392b`.
 - Base: `9e78d5dc3f5ead25137e8078d6a5326d6c1e47bb`.
-- Status: **`IMPLEMENTATION_READY — DEV_MIGRATION_PENDING`**.
+- Status: **`IMPLEMENTATION_READY ? DEV_MIGRATION_PENDING`**.
 - Migration: `010_cliente_empresas_comercial.sql`, aditiva e convergente;
-  migrations 001–009 imutáveis.
-- Agregado: evolução de `cliente_empresas` existente, sem Cliente paralelo.
-- Campos: situação comercial, habilitação, bloqueio/motivo/quando/actor,
-  observação, origem, legado/importação e actors de criação/alteração.
-- Fora do vínculo: crédito/títulos, preço, estoque, endereço/contato/obra,
-  pedido/orçamento, vendedor e pagamento.
+  migrations 001?009 imut?veis.
+- Agregado: evolu??o de `cliente_empresas` existente, sem Cliente paralelo.
+- Campos: situa??o comercial, habilita??o, bloqueio/motivo/quando/actor,
+  observa??o, origem, legado/importa??o e actors de cria??o/altera??o.
+- Fora do v?nculo: cr?dito/t?tulos, pre?o, estoque, endere?o/contato/obra,
+  pedido/or?amento, vendedor e pagamento.
 - API: list/get/link/update/block/unblock/inactivate/restore sob
   `/api/v1/clientes/:clienteId/empresas`.
-- Multiempresa: Empresa opera apenas seu vínculo; Grupo autorizado consolida;
-  trigger mantém Cliente/Empresa no mesmo Grupo.
+- Multiempresa: Empresa opera apenas seu v?nculo; Grupo autorizado consolida;
+  trigger mant?m Cliente/Empresa no mesmo Grupo.
 - RBAC: `Cadastros.cliente_empresa` com visualizar/criar/editar/bloquear/
-  inativar/restaurar; criação indireta pelo Cliente também protegida.
+  inativar/restaurar; cria??o indireta pelo Cliente tamb?m protegida.
 - RLS: `cliente_empresas` permanece ENABLE + FORCE fail-closed.
 - Auditoria: link/update/block/unblock/inactivate/restore, sem replicar PII.
-- Soft delete: vínculo inativo some da listagem padrão e exige restore.
-- Concorrência: unique existente + criação idempotente impedem linha duplicada.
-- Seed: Empresa A2 + vínculos A/A2/B e perfil RBAC, convergente em reexecução.
+- Soft delete: v?nculo inativo some da listagem padr?o e exige restore.
+- Concorr?ncia: unique existente + cria??o idempotente impedem linha duplicada.
+- Seed: Empresa A2 + v?nculos A/A2/B e perfil RBAC, convergente em reexecu??o.
 - Frontend/Base44: inalterados; sem dual-write; fora de `HTTP_PILOT_ENTITIES`.
-- Validações: RUNTIME-05 3/3 + atomicidade 2/2; server 51 pass/1 skip +
+- Valida??es: RUNTIME-05 3/3 + atomicidade 2/2; server 51 pass/1 skip +
   typecheck/build OK;
   audit/lint/build frontend e 570 testes OK; `git diff --check` OK; typecheck
-  frontend mantém baseline histórico (exit 2), sem erro novo no lote.
+  frontend mant?m baseline hist?rico (exit 2), sem erro novo no lote.
 - Docs: `docs/ERP_RUNTIME_05.md` e `docs/ERP_RUNTIME_05_DEV_RUNBOOK.md`.
-- Pendência: review; depois aplicação manual da migration 010 + E2E DEV.
-- Não aplicar no VPS e não iniciar RUNTIME-06.
+- Pend?ncia: review; depois aplica??o manual da migration 010 + E2E DEV.
+- N?o aplicar no VPS e n?o iniciar RUNTIME-06.
 
-### ERP-RUNTIME-05 — DIAGNÓSTICO ARQUITETURAL
+### ERP-RUNTIME-05 ? DIAGN?STICO ARQUITETURAL
 
 - Data: 2026-09-18.
-- Base: `4c4d798d5108cdf9f49adb222397c8891f00f056` (RUNTIME-04 concluído no DEV).
-- Status: **`DIAGNÓSTICO SOMENTE — AGUARDANDO REVIEW`**.
-- Decisão: próximo agregado recomendado é **Relacionamento Comercial
-  Cliente × Empresa — núcleo e elegibilidade**, evoluindo
-  `cliente_empresas`; não criar estrutura paralela.
-- Causa: condição/vendedor/tabela/limite ainda vivem no Cliente Base44
-  compartilhado do Grupo, enquanto Pedido/Site/Preço operam por Empresa.
-- Escopo futuro proposto: lifecycle e situação/bloqueio comercial por Empresa,
-  API/RBAC/RLS/auditoria/seed/E2E do vínculo; sem Cliente 360º.
-- Ownership preservado: identidade no Cliente/Grupo; crédito/títulos no
-  Financeiro; preço no motor de Preço; vendedor no cadastro canônico; locais e
-  contatos em agregados próprios.
-- Migration provável, não criada: `010_cliente_empresas_comercial.sql`.
-- Ordem provisória: R05 ClienteEmpresa → R06 Locais do Cliente → R07 Preço →
-  R08 Disponibilidade/Reserva → R09 Orçamento/Negociação. Forma/Condição de
-  Pagamento e identidade do vendedor são gates antes de Orçamento/Pedido.
+- Base: `4c4d798d5108cdf9f49adb222397c8891f00f056` (RUNTIME-04 conclu?do no DEV).
+- Status: **`DIAGN?STICO SOMENTE ? AGUARDANDO REVIEW`**.
+- Decis?o: pr?ximo agregado recomendado ? **Relacionamento Comercial
+  Cliente ? Empresa ? n?cleo e elegibilidade**, evoluindo
+  `cliente_empresas`; n?o criar estrutura paralela.
+- Causa: condi??o/vendedor/tabela/limite ainda vivem no Cliente Base44
+  compartilhado do Grupo, enquanto Pedido/Site/Pre?o operam por Empresa.
+- Escopo futuro proposto: lifecycle e situa??o/bloqueio comercial por Empresa,
+  API/RBAC/RLS/auditoria/seed/E2E do v?nculo; sem Cliente 360?.
+- Ownership preservado: identidade no Cliente/Grupo; cr?dito/t?tulos no
+  Financeiro; pre?o no motor de Pre?o; vendedor no cadastro can?nico; locais e
+  contatos em agregados pr?prios.
+- Migration prov?vel, n?o criada: `010_cliente_empresas_comercial.sql`.
+- Ordem provis?ria: R05 ClienteEmpresa ? R06 Locais do Cliente ? R07 Pre?o ?
+  R08 Disponibilidade/Reserva ? R09 Or?amento/Negocia??o. Forma/Condi??o de
+  Pagamento e identidade do vendedor s?o gates antes de Or?amento/Pedido.
 - Documento: `docs/ERP_RUNTIME_05_DIAGNOSTICO.md`.
-- Baseline: audit/lint/build/diff PASS; typecheck mantém baseline histórico
+- Baseline: audit/lint/build/diff PASS; typecheck mant?m baseline hist?rico
   (exit 2), sem nova falha por este lote exclusivamente documental.
-- Nenhum código, API, banco, VPS, migration ou `HTTP_PILOT_ENTITIES` alterado.
-- RUNTIME-03 rollback permanece preservado. RUNTIME-05 não implementado.
+- Nenhum c?digo, API, banco, VPS, migration ou `HTTP_PILOT_ENTITIES` alterado.
+- RUNTIME-03 rollback permanece preservado. RUNTIME-05 n?o implementado.
 
-### ERP-RUNTIME-04 — CONCLUÍDO E VALIDADO NO DEV
+### ERP-RUNTIME-04 ? CONCLU?DO E VALIDADO NO DEV
 
-- Data da validação/promoção: 2026-09-18.
-- Agregado: **Cliente MASTER DATA** (fundação; não Cliente 360º).
+- Data da valida??o/promo??o: 2026-09-18.
+- Agregado: **Cliente MASTER DATA** (funda??o; n?o Cliente 360?).
 - PR/merge oficial: #16 / `e3fbbf324e8727acfb9cdefab546bda3c243a3f0`.
-- Implementação: **CONCLUÍDA**.
+- Implementa??o: **CONCLU?DA**.
 - Migration `009_clientes_master_data.sql`: **APLICADA E VALIDADA NO DEV**.
-- Migrations 001–009 em `schema_migrations`: **OK**.
+- Migrations 001?009 em `schema_migrations`: **OK**.
 - Estruturas PostgreSQL: `clientes`, `cliente_empresas` e
   `entity_code_sequences`: **OK**.
-- RLS nas três estruturas: `ENABLE=true`, `FORCE=true`.
-- Seed DEV: executado duas vezes, reexecutável/convergente e sem duplicação;
+- RLS nas tr?s estruturas: `ENABLE=true`, `FORCE=true`.
+- Seed DEV: executado duas vezes, reexecut?vel/convergente e sem duplica??o;
   Grupo A com dois clientes-base e Grupo B com um cliente-base.
 - E2E real:
   - runtime `/api/v1/meta`: `ERP-RUNTIME-04`;
   - LIST Grupo A e Grupo B: HTTP 200;
   - Grupo B acessando Cliente A: HTTP 404;
-  - RBAC sem actor e actor inválido: HTTP 403;
-  - CREATE Cliente PF: HTTP 201 e código sequencial automático;
-  - GET, busca, paginação/count: HTTP 200;
-  - Cliente recém-criado acessado cross-tenant: HTTP 404;
+  - RBAC sem actor e actor inv?lido: HTTP 403;
+  - CREATE Cliente PF: HTTP 201 e c?digo sequencial autom?tico;
+  - GET, busca, pagina??o/count: HTTP 200;
+  - Cliente rec?m-criado acessado cross-tenant: HTTP 404;
   - soft delete: HTTP 200; GET posterior: HTTP 404; restore: HTTP 200;
   - CNPJ duplicado e duplicidade do Cliente criado: HTTP 409
     `DUPLICATE_DOCUMENT`;
   - auditoria: create, soft_delete e restore (3 eventos);
-  - documento integral na auditoria: 0 ocorrências; mascaramento OK.
+  - documento integral na auditoria: 0 ocorr?ncias; mascaramento OK.
 - API oficial DEV promovida em `127.0.0.1:3080`.
 - Imagem validada/promovida: `erp-zuccaro-erp-api:runtime04-683e0cfb`.
 - Multiempresa, RBAC, auditoria, soft delete/restore e duplicidade: **APROVADOS**.
-- Frontend HTTP: **NÃO ATIVADO**; Cliente permanece fora de
+- Frontend HTTP: **N?O ATIVADO**; Cliente permanece fora de
   `HTTP_PILOT_ENTITIES`.
 - Rollback: `erp-api-dev-runtime03-backup` e dumps pre-runtime04 preservados
-  temporariamente; não remover até decisão posterior.
-- Segurança documental: nenhum IP público, segredo, token, senha ou `.env`
+  temporariamente; n?o remover at? decis?o posterior.
+- Seguran?a documental: nenhum IP p?blico, segredo, token, senha ou `.env`
   registrado.
-- Validação deste lote documental: `npm run audit:baseline` e
-  `git diff --check` OK; testes/build dispensados por não haver alteração runtime.
-- Próximo: nenhum neste lote. Não iniciar ERP-RUNTIME-05.
+- Valida??o deste lote documental: `npm run audit:baseline` e
+  `git diff --check` OK; testes/build dispensados por n?o haver altera??o runtime.
+- Pr?ximo: nenhum neste lote. N?o iniciar ERP-RUNTIME-05.
 
-### ERP-RUNTIME-04 — CORREÇÕES OBRIGATÓRIAS DO REVIEW PR #16
+### ERP-RUNTIME-04 ? CORRE??ES OBRIGAT?RIAS DO REVIEW PR #16
 
 - Data: 2026-09-17.
 - Branch/PR: `cursor/erp-runtime-04-cliente-master-data-392b` / #16.
-- Status: **`IMPLEMENTATION_READY — DEV_MIGRATION_PENDING`**.
-- RBAC backend: `PostgresRbacGuard` aplica o contrato canônico
+- Status: **`IMPLEMENTATION_READY ? DEV_MIGRATION_PENDING`**.
+- RBAC backend: `PostgresRbacGuard` aplica o contrato can?nico
   `Cadastros.cliente.{visualizar,criar,editar,inativar,restaurar}` no
-  `ClienteService`; ausência de actor/perfil/permissão bloqueia com 403.
-- Tenant + RBAC: testes cobrem permissão correta/incorreta e tenant correto/adulterado.
+  `ClienteService`; aus?ncia de actor/perfil/permiss?o bloqueia com 403.
+- Tenant + RBAC: testes cobrem permiss?o correta/incorreta e tenant correto/adulterado.
 - Integridade `cliente_empresas`: trigger da migration 009 valida
   `cliente_id` e `empresa_id` contra o mesmo `group_id`.
 - RLS: `clientes`, `cliente_empresas` e `entity_code_sequences` com
   ENABLE + FORCE e sem policies permissivas; roles comuns fail-closed.
-- Sequence: tabela/função sem acesso PUBLIC; função invoker; testes cobrem
-  concorrência, independência A/B e não reutilização após inativação.
+- Sequence: tabela/fun??o sem acesso PUBLIC; fun??o invoker; testes cobrem
+  concorr?ncia, independ?ncia A/B e n?o reutiliza??o ap?s inativa??o.
 - Documento: create/update validam CPF/CNPJ, bloqueiam duplicidade formatada e
   mascaram documento em auditoria/erro.
-- Semântica: `clientes.empresa_id` = origem/preferencial de compatibilidade;
-  ownership da identidade = Grupo; relacionamento canônico = `cliente_empresas`.
-- PostgreSQL local: migrations 001–009 executadas em PGlite; integridade,
+- Sem?ntica: `clientes.empresa_id` = origem/preferencial de compatibilidade;
+  ownership da identidade = Grupo; relacionamento can?nico = `cliente_empresas`.
+- PostgreSQL local: migrations 001?009 executadas em PGlite; integridade,
   RLS fail-closed e sequence comprovados sem acesso ao DEV.
-- Validações: `audit:baseline` OK; frontend 570 pass; server 46 pass/1 skip;
+- Valida??es: `audit:baseline` OK; frontend 570 pass; server 46 pass/1 skip;
   lint OK; server typecheck/build OK; frontend build OK; `diff --check` OK.
-  Typecheck global mantém baseline histórico do frontend, sem erro novo nos
+  Typecheck global mant?m baseline hist?rico do frontend, sem erro novo nos
   arquivos do server/RUNTIME-04.
-- DEV: migration 009 **não aplicada**; seguir runbook após aprovação.
-- Sem merge, sem Cliente 360º e sem RUNTIME-05.
+- DEV: migration 009 **n?o aplicada**; seguir runbook ap?s aprova??o.
+- Sem merge, sem Cliente 360? e sem RUNTIME-05.
 
-### ERP-RUNTIME-04 — IMPLEMENTAÇÃO Cliente MASTER DATA
+### ERP-RUNTIME-04 ? IMPLEMENTA??O Cliente MASTER DATA
 
 - Data: 2026-09-17.
 - Branch: `cursor/erp-runtime-04-cliente-master-data-392b` (base `74b68257`).
-- Status: **`IMPLEMENTATION_READY — DEV_MIGRATION_PENDING`**.
-- Objetivo: fundação Cliente MASTER DATA (PF/PJ) no PostgreSQL/API — sem Cliente 360º.
+- Status: **`IMPLEMENTATION_READY ? DEV_MIGRATION_PENDING`**.
+- Objetivo: funda??o Cliente MASTER DATA (PF/PJ) no PostgreSQL/API ? sem Cliente 360?.
 - Migration: `009_clientes_master_data.sql` (`clientes`, `cliente_empresas`, `entity_code_sequences` + `reserve_entity_codigo`).
 - Backend: `ClienteService` + rotas `/api/v1/clientes` (list/search/count/get/create/update/soft-delete/restore).
-- Multiempresa: identidade no `group_id`; vínculo opcional `cliente_empresas`; isolamento tenant A/B.
-- Duplicidade: CPF/CNPJ normalizado único por grupo → `409 DUPLICATE_DOCUMENT` + audit `duplicate_block`.
-- Soft delete: `ativo=false`; listagem padrão só ativos; restore com audit.
+- Multiempresa: identidade no `group_id`; v?nculo opcional `cliente_empresas`; isolamento tenant A/B.
+- Duplicidade: CPF/CNPJ normalizado ?nico por grupo ? `409 DUPLICATE_DOCUMENT` + audit `duplicate_block`.
+- Soft delete: `ativo=false`; listagem padr?o s? ativos; restore com audit.
 - Auditoria: create/update/soft_delete/restore/duplicate_block; documento mascarado.
-- Seed: Cliente PJ/PF A + PJ B sintéticos (UPSERT convergente); docs em `SEED_DOCS`.
-- Frontend: **não** incluído em `HTTP_PILOT_ENTITIES`.
+- Seed: Cliente PJ/PF A + PJ B sint?ticos (UPSERT convergente); docs em `SEED_DOCS`.
+- Frontend: **n?o** inclu?do em `HTTP_PILOT_ENTITIES`.
 - Docs: `docs/ERP_RUNTIME_04.md`, `docs/ERP_RUNTIME_04_DEV_RUNBOOK.md`.
-- Validações:
+- Valida??es:
   - `npm run audit:baseline` OK
   - `npm test` (frontend) 570 pass
   - `npm --prefix server test` 39 pass / 1 skip
   - `npm run lint` OK
-  - `npm run typecheck` baseline histórico (HubAtendimento/Portal/Produção/RH/Relatórios) — **sem novas falhas** nos arquivos do lote; `server` typecheck OK
+  - `npm run typecheck` baseline hist?rico (HubAtendimento/Portal/Produ??o/RH/Relat?rios) ? **sem novas falhas** nos arquivos do lote; `server` typecheck OK
   - `npm run build` OK; `server` build OK
   - `git diff --check` OK
-- Pendência DEV: aplicar migration 009 + seed no VPS (humano; runbook). Sem merge. Sem RUNTIME-05.
-- Próximo após review/DEV: ativação HTTP piloto Cliente (autorização explícita) — não iniciar automaticamente.
+- Pend?ncia DEV: aplicar migration 009 + seed no VPS (humano; runbook). Sem merge. Sem RUNTIME-05.
+- Pr?ximo ap?s review/DEV: ativa??o HTTP piloto Cliente (autoriza??o expl?cita) ? n?o iniciar automaticamente.
 
-### ERP-RUNTIME-04 — DEV PRECHECK APROVADO
+### ERP-RUNTIME-04 ? DEV PRECHECK APROVADO
 
 - Data: 2026-09-17.
 - Ambiente: PostgreSQL DEV (VPS; `ERP_ROOT=/opt/erp-zuccaro`; container `supabase-db`).
-- Método: precheck **manual read-only** no VPS (humano). Cloud Agent **não** reexecutou acesso remoto.
-- Base documental anterior: entrada `ERP-RUNTIME-04 / DEV PRECHECK` permanece (histórico `BLOCKED` por falta de acesso do agente) — **não apagada**.
-- Bloqueador resolvido: confirmação real em `schema_migrations`.
+- M?todo: precheck **manual read-only** no VPS (humano). Cloud Agent **n?o** reexecutou acesso remoto.
+- Base documental anterior: entrada `ERP-RUNTIME-04 / DEV PRECHECK` permanece (hist?rico `BLOCKED` por falta de acesso do agente) ? **n?o apagada**.
+- Bloqueador resolvido: confirma??o real em `schema_migrations`.
 - Migrations no DEV:
-  - `001_foundation.sql` — OK
-  - `002_rls_foundation.sql` — OK
-  - `003_marcas_pilot.sql` — OK
-  - `004_tenant_integrity.sql` — OK
-  - `005_cadastros_simples.sql` — OK
-  - `006_produtos_base.sql` — OK
-  - `007_produtos_master_data.sql` — OK
-  - `008_produtos_fk_tenant.sql` — OK
+  - `001_foundation.sql` ? OK
+  - `002_rls_foundation.sql` ? OK
+  - `003_marcas_pilot.sql` ? OK
+  - `004_tenant_integrity.sql` ? OK
+  - `005_cadastros_simples.sql` ? OK
+  - `006_produtos_base.sql` ? OK
+  - `007_produtos_master_data.sql` ? OK
+  - `008_produtos_fk_tenant.sql` ? OK
 - Integridade (11/11 tabelas OK): `audit_logs`, `empresas`, `groups`, `grupos_produto`, `integration_events`, `marcas`, `produtos`, `profiles`, `schema_migrations`, `setores_atividade`, `unidades_medida`.
-- Soft-delete Produto: `produtos.ativo` — OK.
-- Seeds sintéticos (contagens): groups=2, marcas=3, produtos=2.
-- Segurança da execução: **nenhuma** migration aplicada; **nenhum** registro/schema alterado; somente leitura.
+- Soft-delete Produto: `produtos.ativo` ? OK.
+- Seeds sint?ticos (contagens): groups=2, marcas=3, produtos=2.
+- Seguran?a da execu??o: **nenhuma** migration aplicada; **nenhum** registro/schema alterado; somente leitura.
 - Sem credenciais/DATABASE_URL/senhas neste registro.
-- Decisão: **`ERP-RUNTIME-04 — DEV PRECHECK APROVADO`** · migrations 001–008 confirmadas · integridade RUNTIME-01/02/03 confirmada · **READY PARA IMPLEMENTAÇÃO DO ERP-RUNTIME-04**.
-- Próximo (somente após autorização explícita): implementação Cliente MASTER DATA em branch dedicada. Sem Cliente neste lote documental.
+- Decis?o: **`ERP-RUNTIME-04 ? DEV PRECHECK APROVADO`** ? migrations 001?008 confirmadas ? integridade RUNTIME-01/02/03 confirmada ? **READY PARA IMPLEMENTA??O DO ERP-RUNTIME-04**.
+- Pr?ximo (somente ap?s autoriza??o expl?cita): implementa??o Cliente MASTER DATA em branch dedicada. Sem Cliente neste lote documental.
 
 ### ERP-RUNTIME-04 / DEV PRECHECK
 
-- Objetivo: confirmar no PostgreSQL DEV se migrations `001`–`008` estão em `schema_migrations` (bloqueador do diagnóstico).
-- HEAD utilizado: `76fe4ab4` (`origin/main` com diagnóstico RUNTIME-04 incorporado).
+- Objetivo: confirmar no PostgreSQL DEV se migrations `001`?`008` est?o em `schema_migrations` (bloqueador do diagn?stico).
+- HEAD utilizado: `76fe4ab4` (`origin/main` com diagn?stico RUNTIME-04 incorporado).
 - Ambiente tentado: PostgreSQL DEV (mesmo usado em RUNTIME-01/02/03 no VPS Hostinger).
-- Mecanismo: `server/src/db/migrate.ts` → `schema_migrations` / `node dist/db/migrate.js --status`.
-- Resultado da conexão: **falha de acesso a partir do Cloud Agent**.
-  - `DATABASE_URL` não injetada neste ambiente;
+- Mecanismo: `server/src/db/migrate.ts` ? `schema_migrations` / `node dist/db/migrate.js --status`.
+- Resultado da conex?o: **falha de acesso a partir do Cloud Agent**.
+  - `DATABASE_URL` n?o injetada neste ambiente;
   - sem `psql`/Docker local apontando ao DEV;
-  - API local `127.0.0.1:3080` indisponível;
+  - API local `127.0.0.1:3080` indispon?vel;
   - sem worker self-hosted conectado;
-  - runbooks existentes (`docs/ERP_RUNTIME_0*_DEV_RUNBOOK.md`, `docs/ERP_DEV_DEPLOY_01.md`) exigem execução **humana no VPS**.
-- Migrations 001–008 (prova no banco): **não verificáveis** → tratadas como **PENDENTE de confirmação**.
-  - 001 — PENDENTE (não confirmada no DEV)
-  - 002 — PENDENTE
-  - 003 — PENDENTE
-  - 004 — PENDENTE
-  - 005 — PENDENTE
-  - 006 — PENDENTE
-  - 007 — PENDENTE
-  - 008 — PENDENTE
-- Integridade mínima das estruturas: **não executada** (sem conexão).
-- Bloqueadores: ausência de credencial/rota segura ao Postgres DEV neste agente (sem expor secrets).
-- Ação segura recomendada (humano no VPS, runbook):
+  - runbooks existentes (`docs/ERP_RUNTIME_0*_DEV_RUNBOOK.md`, `docs/ERP_DEV_DEPLOY_01.md`) exigem execu??o **humana no VPS**.
+- Migrations 001?008 (prova no banco): **n?o verific?veis** ? tratadas como **PENDENTE de confirma??o**.
+  - 001 ? PENDENTE (n?o confirmada no DEV)
+  - 002 ? PENDENTE
+  - 003 ? PENDENTE
+  - 004 ? PENDENTE
+  - 005 ? PENDENTE
+  - 006 ? PENDENTE
+  - 007 ? PENDENTE
+  - 008 ? PENDENTE
+- Integridade m?nima das estruturas: **n?o executada** (sem conex?o).
+- Bloqueadores: aus?ncia de credencial/rota segura ao Postgres DEV neste agente (sem expor secrets).
+- A??o segura recomendada (humano no VPS, runbook):
   1. `cd /opt/erp-zuccaro/server && npm ci && npm run build`
   2. `node dist/db/migrate.js --status`
   3. Colar no PR/issue apenas a lista de IDs aplicados (sem senha/URL).
-- Decisão: **`BLOCKED`** — não iniciar implementação Cliente / migration 009.
-- Branch: `cursor/erp-runtime-04-dev-precheck-392b`. Sem Hostinger pelo agente; sem apply automático de migrate.
+- Decis?o: **`BLOCKED`** ? n?o iniciar implementa??o Cliente / migration 009.
+- Branch: `cursor/erp-runtime-04-dev-precheck-392b`. Sem Hostinger pelo agente; sem apply autom?tico de migrate.
 
-### ERP-RUNTIME-04 / Diagnóstico registrado (sem implementação)
+### ERP-RUNTIME-04 / Diagn?stico registrado (sem implementa??o)
 
-- Objetivo: registrar o diagnóstico completo do próximo lote após RUNTIME-03, sem editar runtime/código de Cliente.
-- HEAD main na análise: `90a99a4f`.
+- Objetivo: registrar o diagn?stico completo do pr?ximo lote ap?s RUNTIME-03, sem editar runtime/c?digo de Cliente.
+- HEAD main na an?lise: `90a99a4f`.
 - Branch de registro: `cursor/erp-runtime-04-diagnostico-392b`.
-- Documento canônico: `docs/CONSOLIDACAO_SITE_CPA_ERP_RUNTIME_04.md` (seção “Diagnóstico concluído”).
-- Agregado recomendado: **Cliente** (MASTER DATA mínimo; não Cliente 360º).
-- Migrations 001–008 no DEV: **não confirmáveis** neste ambiente (`DATABASE_URL` ausente) → `BLOCKED — MIGRATION PENDENTE` de confirmação humana no VPS (`schema_migrations` / `migrate --status`).
+- Documento can?nico: `docs/CONSOLIDACAO_SITE_CPA_ERP_RUNTIME_04.md` (se??o ?Diagn?stico conclu?do?).
+- Agregado recomendado: **Cliente** (MASTER DATA m?nimo; n?o Cliente 360?).
+- Migrations 001?008 no DEV: **n?o confirm?veis** neste ambiente (`DATABASE_URL` ausente) ? `BLOCKED ? MIGRATION PENDENTE` de confirma??o humana no VPS (`schema_migrations` / `migrate --status`).
 - Baseline clone: audit OK; suite 570/570; lint OK; build OK; typecheck frontend baseline EXIT 2; server 31 pass + 1 skip; build server OK; `git diff --check` OK.
-- Próximo: humano confirmar 001–008 no DEV; depois autorizar implementação em `cursor/erp-runtime-04-cliente-master-data-392b`. Sem Hostinger/deploy neste registro.
+- Pr?ximo: humano confirmar 001?008 no DEV; depois autorizar implementa??o em `cursor/erp-runtime-04-cliente-master-data-392b`. Sem Hostinger/deploy neste registro.
 
-### ERP-RUNTIME-03 / Soft-delete visibility — Incorporacao na main
+### ERP-RUNTIME-03 / Soft-delete visibility ? Incorporacao na main
 
 - Objetivo: incorporar `cursor/runtime03-produto-soft-delete-visibility-fix-392b` em `main`.
 - Antes: `origin/main` = `d7d027de`; fix = `e06a41b5`; merge-base = `d7d027de` (0 atras / 2 a frente).
-- Conflitos: nenhum — fast-forward direto.
-- Preservado: default ativo=true em list/search/count; GET/PATCH/DELETE soft-deleted → 404; seed A/B; TENANT_FK; audit; Produto fora de HTTP_PILOT_ENTITIES.
-- Migrations 001–008: imutaveis (diff vazio).
+- Conflitos: nenhum ? fast-forward direto.
+- Preservado: default ativo=true em list/search/count; GET/PATCH/DELETE soft-deleted ? 404; seed A/B; TENANT_FK; audit; Produto fora de HTTP_PILOT_ENTITIES.
+- Migrations 001?008: imutaveis (diff vazio).
 - Validacoes pre-merge: server 31 pass + 1 skip; suite 570/570; lint/builds OK; audit:baseline OK; typecheck frontend baseline; `git diff --check` OK; secrets OK.
 - Decisao: `ERP_RUNTIME_03_SOFT_DELETE_VISIBILITY_FIX_MERGED_TO_MAIN` apos push.
 - Proximo: humano rebuild/restart API no VPS e retestar search PROD-API-TESTE; sem deploy pelo agente; sem RUNTIME-04.
 
 ### ERP-RUNTIME-03 / Soft-delete visibility fix
 
-- Objetivo: list/search/count de Produto padrão excluem `ativo=false` (defeito E2E VPS: PROD-API-TESTE ainda aparecia após DELETE).
-- Causa raiz: `ProdutoService.list` / repos só filtravam `ativo` quando o query param era explícito; default omitia o filtro.
-- Correção: default `ativo=true` no service + Postgres/InMemory; GET/PATCH/DELETE de soft-deleted → 404 idempotente; sem hard delete; sem includeDeleted.
+- Objetivo: list/search/count de Produto padr?o excluem `ativo=false` (defeito E2E VPS: PROD-API-TESTE ainda aparecia ap?s DELETE).
+- Causa raiz: `ProdutoService.list` / repos s? filtravam `ativo` quando o query param era expl?cito; default omitia o filtro.
+- Corre??o: default `ativo=true` no service + Postgres/InMemory; GET/PATCH/DELETE de soft-deleted ? 404 idempotente; sem hard delete; sem includeDeleted.
 - Branch: `cursor/runtime03-produto-soft-delete-visibility-fix-392b` (base main `d7d027de`).
-- Migrations 001–008: imutáveis (diff vazio).
+- Migrations 001?008: imut?veis (diff vazio).
 - Validacoes: server 31 pass + 1 skip; suite 570/570; lint/builds OK; audit:baseline OK; typecheck frontend baseline; `git diff --check` OK; secrets OK.
 - Sem Hostinger, sem deploy, sem merge main, sem RUNTIME-04.
-- Decisão: **`ERP_RUNTIME_03_SOFT_DELETE_VISIBILITY_FIX_READY`**.
+- Decis?o: **`ERP_RUNTIME_03_SOFT_DELETE_VISIBILITY_FIX_READY`**.
 - PR: ver pull request da branch.
 
-### ERP-RUNTIME-03 / Seed reconciliation — Incorporacao na main
+### ERP-RUNTIME-03 / Seed reconciliation ? Incorporacao na main
 
 - Objetivo: incorporar `cursor/runtime03-seed-reconciliation-fix-392b` em `main`.
 - Antes: `origin/main` = `548830cb`; fix = `fe8d99b3`; merge-base = `548830cb` (0 atras / 3 a frente).
-- Conflitos: nenhum — fast-forward direto.
-- Preservado: UPSERT só Produto A/B sintéticos; Marca LEGACY `ffffffff` Grupo A; trigger 008 / TENANT_FK_MISMATCH / guards / RLS / auditoria; RUNTIME-01/02/03.
-- Migrations 001–008: imutáveis (diff vazio).
-- Validacoes pre-merge: server 30 pass + 1 skip; suite 570/570; lint/builds OK; audit:baseline OK; typecheck frontend baseline histórico; `git diff --check` OK; secrets OK.
+- Conflitos: nenhum ? fast-forward direto.
+- Preservado: UPSERT s? Produto A/B sint?ticos; Marca LEGACY `ffffffff` Grupo A; trigger 008 / TENANT_FK_MISMATCH / guards / RLS / auditoria; RUNTIME-01/02/03.
+- Migrations 001?008: imut?veis (diff vazio).
+- Validacoes pre-merge: server 30 pass + 1 skip; suite 570/570; lint/builds OK; audit:baseline OK; typecheck frontend baseline hist?rico; `git diff --check` OK; secrets OK.
 - Decisao: `ERP_RUNTIME_03_SEED_RECONCILIATION_FIX_MERGED_TO_MAIN` apos push.
 - Proximo: humano reaplicar seed no VPS via runbook; sem deploy pelo agente; sem RUNTIME-04.
 
 ### ERP-RUNTIME-03 / Seed reconciliation (partial-state) fix
 
-- Objetivo: tornar o seed convergente quando Produto B já existe com `marca_id` legado (`ffffffff`, Grupo A).
-- Causa: `ON CONFLICT DO NOTHING` no Produto não reconciliava partial-state.
-- Estratégia: UPSERT (`DO UPDATE`) **somente** nos IDs sintéticos Produto A `77777777-…` e Produto B `88888888-…`; Marca LEGACY permanece `DO NOTHING` (não move tenant); trigger 008 ativo.
+- Objetivo: tornar o seed convergente quando Produto B j? existe com `marca_id` legado (`ffffffff`, Grupo A).
+- Causa: `ON CONFLICT DO NOTHING` no Produto n?o reconciliava partial-state.
+- Estrat?gia: UPSERT (`DO UPDATE`) **somente** nos IDs sint?ticos Produto A `77777777-?` e Produto B `88888888-?`; Marca LEGACY permanece `DO NOTHING` (n?o move tenant); trigger 008 ativo.
 - Branch: `cursor/runtime03-seed-reconciliation-fix-392b` (base main `548830cb`).
-- Migrations 001–008: imutáveis (diff vazio).
-- Validacoes: server 30 pass + 1 skip (inclui partial-state); suite 570/570; lint/builds OK; audit:baseline OK; typecheck frontend baseline histórico; `git diff --check` OK; secrets sem credencial real.
+- Migrations 001?008: imut?veis (diff vazio).
+- Validacoes: server 30 pass + 1 skip (inclui partial-state); suite 570/570; lint/builds OK; audit:baseline OK; typecheck frontend baseline hist?rico; `git diff --check` OK; secrets sem credencial real.
 - Sem Hostinger, sem deploy, sem merge main, sem RUNTIME-04.
-- Decisão: **`ERP_RUNTIME_03_SEED_RECONCILIATION_FIX_READY`**.
+- Decis?o: **`ERP_RUNTIME_03_SEED_RECONCILIATION_FIX_READY`**.
 
-### ERP-RUNTIME-03 / Seed tenant A/B fix — Incorporacao na main
+### ERP-RUNTIME-03 / Seed tenant A/B fix ? Incorporacao na main
 
 - Objetivo: incorporar `cursor/runtime03-seed-tenant-fix-392b` em `main`.
 - Antes: `origin/main` = `e4fb0ed0`; fix = `5111c8bc`; merge-base = `e4fb0ed0` (0 atras / 3 a frente).
-- Conflitos: nenhum — fast-forward direto.
+- Conflitos: nenhum ? fast-forward direto.
 - Preservado: Marca LEGACY `ffffffff` no Grupo A (nao movida); Marca B REAL `b0b0b0b0` no Grupo B; Produto A/B com FKs do proprio tenant; `assert_produto_fk_same_tenant` / TENANT_FK_MISMATCH / ProdutoRelationGuard / TENANT_MISMATCH / RLS / auditoria; RUNTIME-01/02/03.
-- Migrations 001–008: imutaveis (diff vazio).
+- Migrations 001?008: imutaveis (diff vazio).
 - Validacoes pre-merge: server 28 pass + 1 skip; suite 570/570; lint/builds OK; audit:baseline OK; typecheck frontend baseline historico; `git diff --check` OK; secrets sem credencial real no lote.
 - Decisao: `ERP_RUNTIME_03_SEED_TENANT_FIX_MERGED_TO_MAIN` apos push.
 - Proximo: humano reaplicar seed no VPS via runbook; sem deploy pelo agente; sem RUNTIME-04.
 
 ### ERP-RUNTIME-03 / Seed tenant A/B fix
 
-- Objetivo: corrigir seed sintético que criava Produto B (Grupo B) com Marca `ffffffff` pertencente ao Grupo A no DEV.
-- Causa raiz: nome "MARCA TESTE B" não define tenant; `ON CONFLICT DO NOTHING` preservou registro legado no Grupo A; seed RUNTIME-03 reutilizou o ID errado.
+- Objetivo: corrigir seed sint?tico que criava Produto B (Grupo B) com Marca `ffffffff` pertencente ao Grupo A no DEV.
+- Causa raiz: nome "MARCA TESTE B" n?o define tenant; `ON CONFLICT DO NOTHING` preservou registro legado no Grupo A; seed RUNTIME-03 reutilizou o ID errado.
 - Branch: `cursor/runtime03-seed-tenant-fix-392b` (base main `e4fb0ed0`).
-- Correção: Marca B REAL `b0b0b0b0-bbbb-4bbb-8bbb-b0b0b0b0b0b0` (Grupo B/Empresa B); legado `ffffffff` permanece/cria no Grupo A; Produto A/B só com FKs do próprio tenant.
-- Migrations 001–008: **imutáveis** (diff vazio vs main).
-- Proteção `assert_produto_fk_same_tenant` / `TENANT_FK_MISMATCH`: preservada (testes negativos mantidos).
+- Corre??o: Marca B REAL `b0b0b0b0-bbbb-4bbb-8bbb-b0b0b0b0b0b0` (Grupo B/Empresa B); legado `ffffffff` permanece/cria no Grupo A; Produto A/B s? com FKs do pr?prio tenant.
+- Migrations 001?008: **imut?veis** (diff vazio vs main).
+- Prote??o `assert_produto_fk_same_tenant` / `TENANT_FK_MISMATCH`: preservada (testes negativos mantidos).
 - Arquivos: `server/scripts/seed-dev-synthetic.sql`, `server/scripts/seedDevIds.ts`, `server/tests/seed-dev-synthetic.test.ts`, docs/STATUS/runbook.
-- Validacoes: server 28 pass + 1 skip; seed tests OK; runtime01/02/03 OK; suite frontend 570/570; lint OK; build frontend OK; build/typecheck server OK; audit:baseline OK; typecheck frontend baseline histórico; `git diff --check` OK; secrets sem credencial real nos arquivos do lote; migrations 001–008 imutáveis.
-- Seed 1ª/2ª execução: idempotência estrutural (`ON CONFLICT` = inserts) + semântica A/B; apply real no Postgres do VPS fica no runbook (sem Hostinger neste agente).
+- Validacoes: server 28 pass + 1 skip; seed tests OK; runtime01/02/03 OK; suite frontend 570/570; lint OK; build frontend OK; build/typecheck server OK; audit:baseline OK; typecheck frontend baseline hist?rico; `git diff --check` OK; secrets sem credencial real nos arquivos do lote; migrations 001?008 imut?veis.
+- Seed 1?/2? execu??o: idempot?ncia estrutural (`ON CONFLICT` = inserts) + sem?ntica A/B; apply real no Postgres do VPS fica no runbook (sem Hostinger neste agente).
 - Sem Hostinger, sem deploy, sem merge main, sem RUNTIME-04.
-- Decisão: **`ERP_RUNTIME_03_SEED_TENANT_FIX_READY`**.
+- Decis?o: **`ERP_RUNTIME_03_SEED_TENANT_FIX_READY`**.
 - PR: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/10 (draft).
 
 ### ERP-RUNTIME-03 / Incorporacao segura na main
 
 - Objetivo: incorporar `cursor/erp-runtime-03-392b` em `main` preservando RUNTIME-01/02 e trabalhos paralelos.
 - Antes: `origin/main` = `411edc6a`; branch = `cbb12e7a`; merge-base = `411edc6a` (0 atras / 1 a frente).
-- Conflitos: nenhum — fast-forward direto.
-- Preservado: 007/008, ProdutoService, paginação, TENANT_FK_MISMATCH, audit snapshots, prepared HttpApiClient (Produto fora do piloto HTTP), Marca/Unidade/Grupo/Setor, localBase44, ERP-SITE, B2B.
-- 001–006: imutaveis (diff vazio byte-for-byte vs main).
+- Conflitos: nenhum ? fast-forward direto.
+- Preservado: 007/008, ProdutoService, pagina??o, TENANT_FK_MISMATCH, audit snapshots, prepared HttpApiClient (Produto fora do piloto HTTP), Marca/Unidade/Grupo/Setor, localBase44, ERP-SITE, B2B.
+- 001?006: imutaveis (diff vazio byte-for-byte vs main).
 - Validacoes pre-merge: server 23 pass + 1 skip; HttpApiClient 7/7; localEntityGuard 16/16; suite 570/570; lint/builds OK; FK cross-tenant e TENANT_MISMATCH OK.
 - Decisao: `ERP_RUNTIME_03_MERGED_TO_MAIN` apos push.
 - Proximo: humano apply 007-008 no VPS via runbook; sem deploy pelo agente; sem RUNTIME-04.
 
 ### ERP-RUNTIME-03 / Produto MASTER DATA e cadastros estruturais
 
-- Objetivo: consolidar Produto como MASTER DATA (A/B/C + D cadastral) sem estoque/preço/custo/fiscal operacional.
+- Objetivo: consolidar Produto como MASTER DATA (A/B/C + D cadastral) sem estoque/pre?o/custo/fiscal operacional.
 - Branch: `cursor/erp-runtime-03-392b` (base main `411edc6a`).
 - Migrations: `007_produtos_master_data`, `008_produtos_fk_tenant` (001-006 imutaveis).
-- ProdutoService: paginação, busca, TENANT_MISMATCH + TENANT_FK_MISMATCH, rejeita campos operacionais, auditoria completa.
+- ProdutoService: pagina??o, busca, TENANT_MISMATCH + TENANT_FK_MISMATCH, rejeita campos operacionais, auditoria completa.
 - Frontend: Produto **nao** em `HTTP_PILOT_ENTITIES` (apenas prepared).
 - Docs: `docs/ERP_RUNTIME_03.md`, matriz, UI gap, runbook.
 - Validacoes: server 23 pass + 1 skip; HttpApiClient 7/7; localEntityGuard 16/16; suite 570/570; lint/builds OK; audit:baseline OK; typecheck frontend baseline; `git diff --check` OK.
@@ -621,7 +621,7 @@
 
 - Objetivo: incorporar `cursor/runtime02-audit-snapshot-fix-392b` em `main`.
 - Antes: `origin/main` = `1115839e`; fix = `f9864474`; merge-base = `1115839e` (0 atras / 1 a frente).
-- Conflitos: nenhum — fast-forward direto.
+- Conflitos: nenhum ? fast-forward direto.
 - Preservado: sanitizeAuditSnapshot, TenantCrudService CREATE/UPDATE/SOFT_DELETE, TenantGuard 409, Marca, HttpApiClient, localBase44, migrations 001-006 (sem nova migration), RLS, ERP-SITE, B2B.
 - Validacoes pre-merge: server 16 pass + 1 skip (inclui VPS defect Caixa Teste API); HttpApiClient 7/7; localEntityGuard 16/16.
 - Decisao: `ERP_RUNTIME_02_AUDIT_FIX_MERGED_TO_MAIN` apos push.
@@ -642,7 +642,7 @@
 
 - Objetivo: incorporar `cursor/erp-runtime-02-392b` em `main` preservando Codex e demais trabalhos.
 - Antes: `origin/main` = `c943ba09`; branch = `578a1306`; merge-base = `c943ba09` (0 atras / 3 a frente).
-- Conflitos: nenhum — fast-forward direto; nao foi necessario rebase/merge de main na branch.
+- Conflitos: nenhum ? fast-forward direto; nao foi necessario rebase/merge de main na branch.
 - Preservado: migrations 004/005/006, TenantGuard, UnidadeMedida/GrupoProduto/SetorAtividade, Produto base (nao ativado no HTTP piloto), HttpApiClient, auditoria, docs/runbook, RUNTIME-01, DEV-DEPLOY-01, Marca, localBase44, ERP-SITE, B2B, GO-LIVE-HML.
 - 001/002/003: imutaveis (diff vazio vs main).
 - Produto: permanece preparado; fora de `HTTP_PILOT_ENTITIES`.
@@ -675,7 +675,7 @@
 
 - Objetivo: incorporar `cursor/erp-dev-deploy-01-392b` em `main` para desbloquear o deploy manual Hostinger.
 - Antes: `origin/main` = `42b2a21e`; branch = `9fc9d759`; merge-base = `42b2a21e` (0 atras / 1 a frente).
-- Conflitos: nenhum — fast-forward direto.
+- Conflitos: nenhum ? fast-forward direto.
 - Preservado: ERP-RUNTIME-01, Codex, ERP-SITE, localBase44, B2B e demais funcionalidades.
 - Validacoes: HttpApiClient 5/5; server 8 pass + 1 skip; suite 568/568; lint/build frontend OK; build/typecheck server OK; audit:baseline OK; typecheck frontend baseline; `git diff --check` OK.
 - Segredos: nenhum real (CHANGE_ME / placeholders).
@@ -697,7 +697,7 @@
 
 - Objetivo: incorporar `cursor/erp-runtime-01-392b` em `main` preservando Codex e demais trabalhos.
 - Antes: `origin/main` = `4eeebd0e`; branch = `03de223a`; merge-base = `4eeebd0e` (0 atras / 1 a frente).
-- Conflitos: nenhum — fast-forward direto; nao foi necessario rebase/merge de main na branch.
+- Conflitos: nenhum ? fast-forward direto; nao foi necessario rebase/merge de main na branch.
 - Preservado: server/BFF, migrations, RLS, HttpApiClient, feature flag, localBase44, piloto Marca, Docker ERP, docs.
 - Validacoes: server test 8 pass + 1 skip; HttpApiClient 4/4; localEntityGuard+auth 30/30; site-cpa 199/199; go-live-hml 13/13; suite frontend 567/567; lint/build frontend OK; build/typecheck server OK; audit:baseline OK; typecheck frontend baseline EXIT 2; `git diff --check` OK.
 - Segredos: nenhum real (apenas CHANGE_ME / fixtures de teste).
@@ -712,10 +712,10 @@
 - Piloto: entidade **Marca** (cadastro simples; fora de financeiro/fiscal/estoque).
 - Schema: migrations `001_foundation` (groups/empresas/profiles/audit_logs/integration_events), `002_rls_foundation` (fail-closed), `003_marcas_pilot`.
 - Feature flag: `VITE_ERP_BACKEND=local|http|remote` + `VITE_ERP_API_BASE_URL`; default `local` (localBase44 preservado).
-- HttpApiClient: UI → facade → BFF → repository → PostgreSQL (somente Marca no modo http; demais entidades no localBase44).
+- HttpApiClient: UI ? facade ? BFF ? repository ? PostgreSQL (somente Marca no modo http; demais entidades no localBase44).
 - Docker: `server/Dockerfile`, `Dockerfile.frontend`, `docker-compose.erp.yml` (separado do compose oficial do Supabase).
 - Segredos: apenas `.env.example` / `server/.env.example` com `CHANGE_ME`; nenhum secret real; sem SSH no VPS; sem migrate remoto.
-- Validacoes: server typecheck/test/build OK (8 pass + 1 skip Postgres); frontend `npm test` 567 pass; lint OK; build OK; `audit:baseline` OK; `git diff --check` OK; typecheck frontend mantém baseline histórico (EXIT 2, sem novo alvo neste lote).
+- Validacoes: server typecheck/test/build OK (8 pass + 1 skip Postgres); frontend `npm test` 567 pass; lint OK; build OK; `audit:baseline` OK; `git diff --check` OK; typecheck frontend mant?m baseline hist?rico (EXIT 2, sem novo alvo neste lote).
 - Decisao: **`ERP_RUNTIME_01_READY_FOR_DEV_DEPLOY`**.
 - Proximo passo (humano): aplicar migrate/DEV na Hostinger; depois ERP-RUNTIME-02. PARAR sem deploy neste agente.
 - Branch: `cursor/erp-runtime-01-392b`.
@@ -745,8 +745,8 @@
 - Proximo passo: PARAR apos push da branch; nao merge automatico; nao iniciar Opcao B sem pedido.
 ### P0.24 / Acesso mestre local - perfil wildcard reidratado
 - Objetivo: restaurar acesso mestre do Administrador Local para homologacao (sem criar ControlesV2).
-- Diagnostico: sessao local perdia `role=admin`/perfil; UI em "Usuário"; `ProtectedSection` bloqueava todos os modulos; `*` do perfil so era preenchido se ausente.
-- Causa raiz: `normalizeLocalUser` permitia `role: user` no id mestre; perfil admin nao era forçado a cada load.
+- Diagnostico: sessao local perdia `role=admin`/perfil; UI em "Usu?rio"; `ProtectedSection` bloqueava todos os modulos; `*` do perfil so era preenchido se ausente.
+- Causa raiz: `normalizeLocalUser` permitia `role: user` no id mestre; perfil admin nao era for?ado a cada load.
 - Arquivos alterados: `localBase44Client.js`, `tests/entity-guard-policy.test.js`, `STATUS`.
 - Reutilizado: `GRANULAR_PERMISSION_ACTIONS`, `local_perfil_admin`, `entityGuard` local.
 - Alteracoes: `isMasterLocalUser` + `buildMasterLocalPermissions`; mestre sempre admin + `local_perfil_admin` + `*`; usuario comum com perfil restrito permanece fail-closed.
@@ -888,7 +888,7 @@
 - Proximo passo da ordem: Gate 18-20 (virada/homologacao humana) ou residual asServiceRole em outras funcoes.
 ### P2.6 - Gate 16 residual: upsell/recomendacao/PriceBrain/KYC fail-closed
 - Objetivo: fechar residual Gate 16 nas telas IA comerciais irmas (sem IAV2).
-- Diagnostico: Upsell/Motor/PriceBrain liam Pedido global; desconto/preco sem confirm; KYC/IAPriceBrain com OR fail-open e LogsIA Automático; Top10 sem assertIaUiContext.
+- Diagnostico: Upsell/Motor/PriceBrain liam Pedido global; desconto/preco sem confirm; KYC/IAPriceBrain com OR fail-open e LogsIA Autom?tico; Top10 sem assertIaUiContext.
 - Causa raiz: telas irmas fora do contrato `assertIaUiContext` / `requireIaHumanConfirm`.
 - Arquivos alterados: `iaTransversalPolicy.js`, `IAUpsellPrecificacao.jsx`, `MotorRecomendacao.jsx`, `PriceBrain.jsx`, `IAKYCValidacao.jsx`, `IAPriceBrain.jsx`, `Top10ProdutosCliente.jsx`, testes, `PLANO_GO_LIVE.md`.
 - Reutilizado: policy Gate 16, `filterInContext`/`createInContext`, padrao Churn CRM.
@@ -907,7 +907,7 @@
 - Multiempresa/RBAC: Validar exige grupo+empresa; permissoes granulares PedidoExterno/Pedido.
 - Pendencia: OAuth/NF/recebivel reais das APIs; checklist P1 Marketplaces marcado (API real segue pendente).
 - Validacoes: `node --test tests/marketplace-pedido-policy.test.js`, `git diff --check` e `npm run build`.
-- Proximo passo da ordem: P1 checklist encerrado — seguir P2/IA ou residual Go-Live conforme STATUS.
+- Proximo passo da ordem: P1 checklist encerrado ? seguir P2/IA ou residual Go-Live conforme STATUS.
 ### P1.8 - Site proprio: checkout fail-closed, pagamento honesto e canal Site
 - Objetivo: fechar residual Gate 14 / P1 Integracao total do site no `OrcamentoSite` existente (sem SiteV2).
 - Diagnostico: checkout sem contato; ContaReceber com status `gerado` sem link; auditoria engolida; lead/IA sem empresa; CatalogoWeb em grupo sem `empresa_id`; widget Site so via CRM.
@@ -933,7 +933,7 @@
 - Proximo passo da ordem P1: Site proprio integrado.
 
 ### P1.6 - Portal Cliente: shell de abas + write/NFe fail-closed
-- Objetivo: fechar residual P1 Portal do Cliente completo no portal existente (Gate 13 funcoes alcançaveis).
+- Objetivo: fechar residual P1 Portal do Cliente completo no portal existente (Gate 13 funcoes alcan?aveis).
 - Diagnostico: `PortalCliente` so montava Dashboard; `PortalTabsNav` orfao; links `?tab=` mortos; NF so por `cliente_id`; ContaReceber update sem assert portal; DANFE sem policy; config UI-only/spinner infinito.
 - Causa raiz: shell desconectado dos modulos ja existentes e escopo financeiro/fiscal incompleto.
 - Arquivos alterados: `PortalCliente.jsx`, `portal.jsx`, `portalClientePolicy.js`, `localBase44Client.js`, `DocumentosCliente.jsx`, `ConfiguracoesPortal.jsx`, `DashboardCliente.jsx`, `ExternalAppsHub.jsx`, testes, `PLANO_GO_LIVE.md`.
@@ -945,19 +945,19 @@
 - Proximo passo da ordem P1: Chatbot/Hub de atendimento.
 
 ### P1.5 - App Motorista: offline/sync, stamp ID e assert vivo
-- Objetivo: fechar residual P1 App Motorista completo no app existente (ERP → atribuicao → offline → sync → prova).
+- Objetivo: fechar residual P1 App Motorista completo no app existente (ERP ? atribuicao ? offline ? sync ? prova).
 - Diagnostico: chegada bypassava fila; sync sem `updateInContext`; Romaneio so gravava nome; `assertEntregaMotoristaOnUpdate` morto; match so por nome/user.id; entradas sem RBAC; prova exigia foto online.
 - Causa raiz: atribuicao e sync desconectados do fluxo fail-closed do motorista.
 - Arquivos alterados: `appMotoristaPolicy.js`, `AppEntregasMotorista.jsx`, `localBase44Client.js`, `expedicaoEntregaPolicy.js`, `RomaneioForm.jsx`, `MotoristaForm.jsx`, `EntregasMobile.jsx`, `ExternalAppsHub.jsx`, testes, `PLANO_GO_LIVE.md`.
 - Reutilizado: fila offline, build*Patch, `filterInContext`/`updateInContext`, Bloco4 entry.
 - Alteracoes: vinculo usuario/colaborador/email; stamp `motorista_id`+`sequencia_rota` no romaneio; chegada/sync via fila+contexto; assert motorista no client; auditoria das acoes; prova com foto|assinatura|doc; RBAC nas entradas.
-- Multiempresa/RBAC: fila com group/empresa; app exige grupo+empresa; chegada=alçada entregar.
+- Multiempresa/RBAC: fila com group/empresa; app exige grupo+empresa; chegada=al?ada entregar.
 - Pendencia: PWA/IndexedDB media; turn-by-turn Maps; Portal Cliente (proximo P1).
 - Validacoes: `node --test tests/app-motorista-policy.test.js`, `git diff --check` e `npm run build`.
 - Proximo passo da ordem P1: Portal Cliente.
 
 ### P1.4 - Roteirizador avancado: stamp Entrega + IA fail-closed
-- Objetivo: fechar residual P1 Roteirizador avancado no fluxo existente (ERP → rota IA → motorista/sequencia nas Entregas → App Motorista).
+- Objetivo: fechar residual P1 Roteirizador avancado no fluxo existente (ERP ? rota IA ? motorista/sequencia nas Entregas ? App Motorista).
 - Diagnostico: IA criava so `RoteirizacaoInteligente` sem stamp em Entrega; create IA sem motorista/veiculo/grupo; UI auto-escolhia `motoristas[0]`/`veiculos[0]`; `MapaRoteirizacaoIA` usava `Pedido.list()`; catch silencioso no LLM/auditoria.
 - Causa raiz: atribuicao de rota desconectada do App Motorista e guards incompletos na IA.
 - Arquivos alterados: `roteirizacaoPolicy.js`, `RoteirizacaoInteligente.jsx`, `MapaRoteirizacaoIA.jsx`, `localBase44Client.js`, `tests/roteirizacao-policy.test.js`, `PLANO_GO_LIVE.md`.
@@ -970,7 +970,7 @@
 
 ### P1.3 - CRM: update fail-closed, escopo e funis contextuais
 - Objetivo: fechar residual P1 CRM completo no modulo existente (policy de update viva + RBAC CRM).
-- Diagnostico: `assertOportunidadeOnUpdate` importado e nao chamado; entidades CRM caíam em Cadastros; funis IA/Avancado usavam `entities.update`; CRM.jsx engolia erro de listagem; conversao so com `editar`.
+- Diagnostico: `assertOportunidadeOnUpdate` importado e nao chamado; entidades CRM ca?am em Cadastros; funis IA/Avancado usavam `entities.update`; CRM.jsx engolia erro de listagem; conversao so com `editar`.
 - Causa raiz: persistencia de etapa/conversao fora da policy e escopo errado.
 - Arquivos alterados: `crmOportunidadePolicy.js`, `localBase44Client.js`, `entityGuardPolicy`, `CRM.jsx`, `FunilComercialInteligente`, `FunilVendasAvancado`, `OportunidadesLista`, testes, `PLANO_GO_LIVE.md`.
 - Reutilizado: create CRM, `buildDocumentoFromOportunidade`, Funil Visual com `updateInContext`.
@@ -983,7 +983,7 @@
 ### P1.2 - Compras: ContaPagar no recebimento e alcada OC
 - Objetivo: fechar residual P1 Compras avancadas (AP automatica + RBAC receber/aprovar) no fluxo existente.
 - Diagnostico: recebimento atualizava estoque sem ContaPagar; OC update so exigia `editar`; UI OR liberava receber via Estoque/criar; RecebimentoOCForm engolia falha de auditoria.
-- Causa raiz: financeiro desconectado do recebimento e alçada fraca no client.
+- Causa raiz: financeiro desconectado do recebimento e al?ada fraca no client.
 - Arquivos alterados: `comprasOrdemPolicy.js`, `localBase44Client.js`, `OrdensCompraTab.jsx`, `RecebimentoOCForm.jsx`, testes, `PLANO_GO_LIVE.md`.
 - Reutilizado: `assertRecebimentoOc`, stamp de movimento, `assertTituloOnCreate`/ContaPagar, telas de OC existentes.
 - Alteracoes: stamp+find ContaPagar por OC; create idempotente no receber; OC update com receber/aprovar/enviar; escopo Compras no client.
@@ -998,7 +998,7 @@
 - Causa raiz: confirmacao tratada como toast, fora de `assertReconciliacaoMigracao`.
 - Arquivos alterados: `migracaoErpPolicy.js`, `ImportarProdutosLote.jsx`, `ImportadorProdutosPlanilha.jsx`, testes, `PLANO_GO_LIVE.md`.
 - Reutilizado: stamp/lote migracao, janela congelada, createInContext Produto.
-- Alteracoes: legado+grupo obrigatorios; staging→confirm→reconciliar; falhas de lote/planilha nao concluem como sucesso; auditoria obrigatoria.
+- Alteracoes: legado+grupo obrigatorios; staging?confirm?reconciliar; falhas de lote/planilha nao concluem como sucesso; auditoria obrigatoria.
 - Multiempresa/RBAC: migracao exige `group_id`; reuso por legado na mesma empresa.
 - Pendencia: PAD/agente; historicos amplos; execucao humana com export real do ERP antigo.
 - Validacoes: `node --test tests/migracao-erp-policy.test.js`, `git diff --check` e `npm run build`.
@@ -1012,13 +1012,13 @@
 - Reutilizado: GestaoUsuariosAvancada, upsertConfig, assertViradaProducao, GerenciamentoAcessosCompleto.
 - Alteracoes: allowlist+save dos 10 cenarios; homologacao = papeis+cenarios; NF com papel piloto; sem auto-piloto no snapshot.
 - Multiempresa/RBAC: cenarios por grupo/empresa; edicao exige Configuracoes/Acessos; auditoria obrigatoria.
-- Pendencia: execucao humana dos 10 cenarios em ambiente piloto; Migração piloto (proximo P0).
+- Pendencia: execucao humana dos 10 cenarios em ambiente piloto; Migra??o piloto (proximo P0).
 - Validacoes: `node --test tests/piloto-operacao-policy.test.js`, `git diff --check` e `npm run build`.
-- Proximo passo da ordem P0: Migração piloto validada.
+- Proximo passo da ordem P0: Migra??o piloto validada.
 
 ### P0.12 - Backup e rollback: snapshot real e restore fail-closed
 - Objetivo: cumprir residual P0 Backup/rollback no backup existente, sem BackupV2.
-- Diagnostico: Gate 20 gravava hash/resumo sem payload; HistoricoBackups simulava restore; status `Concluido` vs `Concluído` escondia acoes; autoBackup sem group_id e catch silencioso; update reestampava backup.
+- Diagnostico: Gate 20 gravava hash/resumo sem payload; HistoricoBackups simulava restore; status `Concluido` vs `Conclu?do` escondia acoes; autoBackup sem group_id e catch silencioso; update reestampava backup.
 - Causa raiz: rollback tratado como toast, sem snapshot restauravel.
 - Arquivos alterados: `viradaProducaoPolicy.js`, `localBase44Client.js`, `HistoricoBackups.jsx`, `autoBackup/entry.ts`, testes, `PLANO_GO_LIVE.md`.
 - Reutilizado: `BackupAutomatico`, `mergeSnapshotRecords`, ConfiguracaoBackup/Monitoramento existentes.
@@ -1026,12 +1026,12 @@
 - Multiempresa/RBAC: snapshot filtrado por grupo/empresa; restore/expirar com `restaurar`/`excluir`.
 - Pendencia: backup criptografado do legado operacional; reconciliacao pos-virada (Gate 20 residual).
 - Validacoes: `node --test tests/virada-producao-policy.test.js tests/piloto-operacao-policy.test.js`, `git diff --check` e `npm run build`.
-- Proximo passo da ordem P0: Testes e homologacao (checklist) / Migração piloto.
+- Proximo passo da ordem P0: Testes e homologacao (checklist) / Migra??o piloto.
 
 ### P0.11 - Gate 11 Expedicao residual: entrega, prova e escopo
 - Objetivo: cumprir residual do Gate 11 / P0 Expedicao sem ExpedicaoV2.
-- Diagnostico: Entrega caia em Cadastros/`editar`; update sem alçada por status; delete sem policy; Entregue sem prova; Separacao concluia com `editar`; baixa de estoque na confirmação atualizava Produto fora do movimento.
-- Causa raiz: transicao de entrega sem policy e alçada fraca de entregar/conferir.
+- Diagnostico: Entrega caia em Cadastros/`editar`; update sem al?ada por status; delete sem policy; Entregue sem prova; Separacao concluia com `editar`; baixa de estoque na confirma??o atualizava Produto fora do movimento.
+- Causa raiz: transicao de entrega sem policy e al?ada fraca de entregar/conferir.
 - Arquivos alterados: `expedicaoEntregaPolicy.js`, `localBase44Client.js`, `entityGuardPolicy`, `PedidosEntregaTab`, `DetalhesEntregaView`, `SeparacaoConferencia`, testes, `PLANO_GO_LIVE.md`.
 - Reutilizado: `assertEntregaOnCreate`, Romaneio/Separacao/App Motorista existentes.
 - Alteracoes: update/delete fail-closed; escopo Expedicao; entregar/conferir/expedir/ocorrencia granulares; prova antes de Entregue; estoque so via MovimentacaoEstoque.
@@ -1042,8 +1042,8 @@
 
 ### P0.10 - Gate 10 Producao residual: OP status, alcada e estoque unico
 - Objetivo: cumprir residual do Gate 10 / P0 Producao sem ProducaoV2.
-- Diagnostico: OrdemProducao caia em Cadastros/`editar`; sem `assertOpOnUpdate/Delete`; apontar/conferir com `editar`; Kanban listava global; consumo de OP atualizava Produto fora da policy; PedidosTab com encoding quebrado em Produção.
-- Causa raiz: transicao de status de OP sem policy e alçada fraca de apontar/aprovar.
+- Diagnostico: OrdemProducao caia em Cadastros/`editar`; sem `assertOpOnUpdate/Delete`; apontar/conferir com `editar`; Kanban listava global; consumo de OP atualizava Produto fora da policy; PedidosTab com encoding quebrado em Produ??o.
+- Causa raiz: transicao de status de OP sem policy e al?ada fraca de apontar/aprovar.
 - Arquivos alterados: `ordemProducaoPolicy.js`, `localBase44Client.js`, `ApontamentoProducao`, `FormularioOrdemProducao`, `KanbanProducao`, `KanbanProducaoInteligente`, `GerarOPModal`, `PedidosTab`, `useFluxoPedido`, `entityGuardPolicy`, testes, `PLANO_GO_LIVE.md`.
 - Reutilizado: `assertOpOnCreate`, `assertApontamento`, `concluirOPCompleto`, Kanban/Form existentes.
 - Alteracoes: update/delete fail-closed; escopo Producao; apontar/aprovar sem `editar`; Kanban com contexto; baixa de material so via MovimentacaoEstoque.
@@ -1055,7 +1055,7 @@
 ### P0.9 - Gate 9 Fiscal residual: emit/cancel, escopo e producao
 - Objetivo: cumprir residual do Gate 9 / P0 Fiscal sem FiscalV2.
 - Diagnostico: NotaFiscal caia em Cadastros/`editar`; EventosNFe cancelava sem RBAC; `nfeActions` aceitava `autoriza_emissao_producao` do client e secao `NF-e`; config NF-e salvava so com grupo; UI emitia com `criar`.
-- Causa raiz: transicao de status fiscal sem policy e alçada fraca de emitir/cancelar.
+- Causa raiz: transicao de status fiscal sem policy e al?ada fraca de emitir/cancelar.
 - Arquivos alterados: `notaFiscalEmissaoPolicy.js`, `localBase44Client.js`, `nfeActions`, `EventosNFe`, `ConfiguracaoNFeForm`, `NotasFiscaisTab`, `FechamentoFinanceiroTab`, `PedidosTab`, `CaixaPDVCompleto`, `integracaoNFe`, testes, `PLANO_GO_LIVE.md`.
 - Reutilizado: `assertEmissaoNFe`, `nfeActions`, NotasFiscaisTab e cancelarNFe existentes.
 - Alteracoes: `assertNotaFiscalOnUpdate`; escopo Fiscal; producao so por config servidor; cancel persiste; emit UI exige emitir/enviar.
@@ -1066,10 +1066,10 @@
 
 ### P0.8 - Gate 8 Financeiro residual: baixa, caixa e conciliacao
 - Objetivo: cumprir residual do Gate 8 / P0 Financeiro sem FinanceiroV2.
-- Diagnostico: ContaReceber/ContaPagar caíam no escopo Cadastros; caixa/PDV liquidavam com `canEdit`; conciliacao em lote sem `conciliar`; `valor_recebido`/`valor_pago` nao congelavam; `paymentStatusManager` usava `editar` e cancelava titulo liquidado.
-- Causa raiz: alçada de baixa/conciliação fraca e bypass de service-role fora da titulo policy.
+- Diagnostico: ContaReceber/ContaPagar ca?am no escopo Cadastros; caixa/PDV liquidavam com `canEdit`; conciliacao em lote sem `conciliar`; `valor_recebido`/`valor_pago` nao congelavam; `paymentStatusManager` usava `editar` e cancelava titulo liquidado.
+- Causa raiz: al?ada de baixa/concilia??o fraca e bypass de service-role fora da titulo policy.
 - Arquivos alterados: `financeiroTituloPolicy.js`, `localBase44Client.js`, `entityGuardPolicy`, `OrdensLiquidacaoPendentes`, `CaixaPDVCompleto`, `LiquidarReceberPagar`, `CaixaCentralLiquidacao`, `ConciliacaoEmLote`, `ConciliacaoBancariaTab`, `LiquidacaoEmLote`, `ContasReceberTab`, `ContasPagarTab`, `paymentStatusManager`, testes, `PLANO_GO_LIVE.md`.
-- Reutilizado: `assertTituloOnUpdate`, CR/CP tabs, caixa central e conciliação existentes.
+- Reutilizado: `assertTituloOnUpdate`, CR/CP tabs, caixa central e concilia??o existentes.
 - Alteracoes: escopo Financeiro no client; settlement com receber/pagar/baixar/liquidar; freeze de valores liquidados; conciliacao exige `conciliar`; paymentStatusManager com RBAC e idempotencia.
 - Multiempresa/RBAC: titulo exige empresa; baixa manual nao usa `editar`; cancel apos baixa bloqueado.
 - Pendencia: ExtratoBancario listagem sem empresa em ConciliacaoBancaria; rateio multiempresa UI; webhook de pagamento com chave de idempotencia explicita.
@@ -1078,27 +1078,27 @@
 
 ### P0.7 - Gate 7 Estoque residual: tipo, alcada e transferencia
 - Objetivo: cumprir residual do Gate 7 / P0 Estoque sem EstoqueV2.
-- Diagnostico: MovimentacoesTab perdia `tipo_movimento` (saida virava entrada); inventário aprovava com `editar`; `applyInventoryAdjustments` usava `editar` e `isApprovedStatus` fail-open; transferencia usava tipo ambiguo e OR de criar; config de saldo negativo era global.
-- Causa raiz: wiring UI/backend fora da policy e alçada fraca.
+- Diagnostico: MovimentacoesTab perdia `tipo_movimento` (saida virava entrada); invent?rio aprovava com `editar`; `applyInventoryAdjustments` usava `editar` e `isApprovedStatus` fail-open; transferencia usava tipo ambiguo e OR de criar; config de saldo negativo era global.
+- Causa raiz: wiring UI/backend fora da policy e al?ada fraca.
 - Arquivos alterados: `estoqueMovimentoPolicy.js`, `localBase44Client.js`, `MovimentacoesTab.jsx`, `InventarioForm.jsx`, `TransferenciaEntreEmpresasForm.jsx`, `ControleEstoqueCompleto.jsx`, `applyInventoryAdjustments`, `validationUtils`, testes, `PLANO_GO_LIVE.md`.
-- Reutilizado: `assertMovimentacaoEstoque`, `applyLocalEstoqueMovimento`, handler de inventário existente.
-- Alteracoes: tipo obrigatorio; inventário so `aprovar` + invoke de ajustes; transferencia saida/entrada com falha reportada; RBAC Estoque no client local; config negativa por escopo.
-- Multiempresa/RBAC: movimento exige empresa; inventário/ajuste com alçada; transferencia sem criar global.
+- Reutilizado: `assertMovimentacaoEstoque`, `applyLocalEstoqueMovimento`, handler de invent?rio existente.
+- Alteracoes: tipo obrigatorio; invent?rio so `aprovar` + invoke de ajustes; transferencia saida/entrada com falha reportada; RBAC Estoque no client local; config negativa por escopo.
+- Multiempresa/RBAC: movimento exige empresa; invent?rio/ajuste com al?ada; transferencia sem criar global.
 - Pendencia: saldo por local; estoque fisico multiempresa por produto; KPIs de movimentacao limit 50.
 - Validacoes: `node --test tests/estoque-movimento-policy.test.js`, `git diff --check` e `npm run build`.
-- Proximo passo da ordem P0: Gate 8 Financeiro (baixa, conciliação, CR/CP).
+- Proximo passo da ordem P0: Gate 8 Financeiro (baixa, concilia??o, CR/CP).
 
 ### P0.6 - Gate 6 Comercial residual: estoque unico, credito e aprovacao
 - Objetivo: cumprir residual do Gate 6 / P0 Comercial sem ComercialV2.
 - Diagnostico: saida de estoque na aprovacao/save/fechamento e de novo no faturamento; Central aprovava com `editar`; credito liberava cliente ausente e limite zero; `applyOrderStockMovements` fazia saida com clamp.
-- Causa raiz: baixa fisica cedo demais e fail-open de credito/RBAC fora do fluxo canonico reserva→NF.
+- Causa raiz: baixa fisica cedo demais e fail-open de credito/RBAC fora do fluxo canonico reserva?NF.
 - Arquivos alterados: `pedidoFaturamentoPolicy.js`, `useFluxoPedido.jsx`, `PedidoFormCompleto.jsx`, `CentralAprovacoesManager.jsx`, `applyOrderStockMovements/entry.ts`, testes, `PLANO_GO_LIVE.md`.
 - Reutilizado: `orderReservationUtils`, teto de faturamento, Central/fluxo existentes.
 - Alteracoes: aprovacao/fechamento so reservam; saida idempotente no faturamento; credito fail-closed; Central so `aprovar` + valida credito; backend de estoque em modo reserva.
 - Multiempresa/RBAC: empresa obrigatoria no faturar; estoque exige `Comercial.Pedido.aprovar`.
-- Pendencia: baixa parcial por etapa; alçada de margem/desconto por perfil; harmonizar `onNotaFiscalAuthorized`.
+- Pendencia: baixa parcial por etapa; al?ada de margem/desconto por perfil; harmonizar `onNotaFiscalAuthorized`.
 - Validacoes: `node --test tests/pedido-faturamento-policy.test.js`, `git diff --check` e `npm run build`.
-- Proximo passo da ordem P0: Gate 7 Estoque (saldo, reserva, transferencia, inventário).
+- Proximo passo da ordem P0: Gate 7 Estoque (saldo, reserva, transferencia, invent?rio).
 
 ### P0.5 - Gate 5 Cadastros residual: escopo, codigo e duplicidade
 - Objetivo: cumprir residual do Gate 5 / P0 Cadastros Gerais sem CadastrosV2.
@@ -1110,11 +1110,11 @@
 - Multiempresa/RBAC: empresa nao mistura mestres de outras; sem contexto bloqueia listar/salvar.
 - Pendencia: enxugar lista SIMPLE_CATALOG; `DetalhesCadastro` KPIs; forms auxiliares com `entity.list()`; inativar/restaurar universal.
 - Validacoes: `node --test tests/cadastro-master-policy.test.js`, `git diff --check` e `npm run build`.
-- Proximo passo da ordem P0: Gate 6 Comercial (pedido → estoque → aprovacao → faturamento).
+- Proximo passo da ordem P0: Gate 6 Comercial (pedido ? estoque ? aprovacao ? faturamento).
 
 ### P0.4 - Gate 4 Auditoria residual: catches silenciosos e escopo
 - Objetivo: cumprir residual do Gate 4 / P0 Auditoria de `PLANO_GO_LIVE.md` sem AuditV2.
-- Diagnostico: convite/export/estoque/config/CNPJ/portal/WhatsApp engoliam falha de AuditLog; `securityAlerts` aceitava orphan sem group_id e e-mail global; painéis financeiros e prefetch do Layout liam AuditLog sem contexto; `auditEntityEvents` marcava skip como ok.
+- Diagnostico: convite/export/estoque/config/CNPJ/portal/WhatsApp engoliam falha de AuditLog; `securityAlerts` aceitava orphan sem group_id e e-mail global; pain?is financeiros e prefetch do Layout liam AuditLog sem contexto; `auditEntityEvents` marcava skip como ok.
 - Causa raiz: auditoria tratada como opcional e leituras fora do contrato multiempresa.
 - Arquivos alterados: `adminInviteUser`, `exportEstoqueAco`, `applyOrderStockMovements`, `upsertConfig`, `ConsultarCNPJ`, `portalToken`, `onEntityWhatsappNotify`, `securityAlerts`, `auditEntityEvents`, `Layout.jsx`, `AuditoriaLiquidacoes.jsx`, `AuditoriaFormasPagamento.jsx`, testes, `PLANO_GO_LIVE.md`.
 - Reutilizado: `filterInContext`, `AuditLog`, padrao de report via `console.error` / `reportLayoutFailure`.
@@ -1122,7 +1122,7 @@
 - Multiempresa/RBAC: leituras e alertas so no grupo; email so a admins vinculados.
 - Pendencia: matriz pagina-a-pagina de acoes criticas; `orderFlowAuditor` global; limpeza `isAdmin||` residual.
 - Validacoes: `node --test tests/sanitize-audit-policy.test.js`, `git diff --check` e `npm run build`.
-- Proximo passo da ordem P0: Gate 5 Cadastros Gerais (base mestre / paginação / códigos).
+- Proximo passo da ordem P0: Gate 5 Cadastros Gerais (base mestre / pagina??o / c?digos).
 
 ### P0.3 - Gate 3 Multiempresa residual: switcher e contexto fail-closed
 - Objetivo: fechar vazamento residual do Gate 3 / P0 Multiempresa sem MultiempresaV2.
@@ -1180,7 +1180,7 @@
 - Reutilizado: detector financeiro, scan Deno, alertas de seguranca, Dashboard e pedido ja existentes.
 - Alteracoes: helpers `assertAnomalyScanContext`/`stampAnomalyScanResult`/`buildSecurityAnomalySuggestions`; notify/WhatsApp so com confirm; securityAlerts com grupo+RBAC+modo sugestao; tile no Financeiro; Dashboard/pedido consomem `anomaly`/`details`; mocks carimbados.
 - Multiempresa/RBAC: scans e UI fail-closed sem grupo/empresa; Auditoria/Controle de Acesso no backend de seguranca.
-- Pendencia: unificar heuristica UI vs ML do scan; diagnostico de equipamentos/RH ponto; Automações avançadas (ultimo P2).
+- Pendencia: unificar heuristica UI vs ML do scan; diagnostico de equipamentos/RH ponto; Automa??es avan?adas (ultimo P2).
 - Validacoes: `node --test tests/ia-transversal-policy.test.js`, `git diff --check` e `npm run build`.
 - Proximo passo da ordem P2: Automacoes avancadas (melhorar automacoes existentes, sem hub paralelo).
 
@@ -1230,7 +1230,7 @@
 - Multiempresa/RBAC: fail-closed sem grupo/empresa ou permissao de visualizacao.
 - Pendencia: agregacao server-side dedicada em volumes muito altos; OAuth/API marketplace e PSP do site seguem abertos.
 - Validacoes: `node --test tests/dashboard-kpi-policy.test.js`, `git diff --check` e `npm run build`.
-- Proximo passo da ordem: P1 encerrado; iniciar P2 — IA transversal (melhorar IA existente, sem modulo paralelo).
+- Proximo passo da ordem: P1 encerrado; iniciar P2 ? IA transversal (melhorar IA existente, sem modulo paralelo).
 
 ### P1.8 - Marketplaces: sync ativo, SKU e conciliacao local
 - Objetivo: cumprir P1 Marketplaces de `PLANO_GO_LIVE.md` na sincronizacao existente, sem modulo paralelo.
@@ -1238,7 +1238,7 @@
 - Causa raiz: operacao de sync/status fora de `marketplacePedidoPolicy`.
 - Arquivos alterados: `marketplacePedidoPolicy.js`, `marketplaceSimulationData.js`, `SincronizacaoMarketplacesAtiva.jsx`, `SincronizacaoMarketplaces.jsx`, `ValidarPedidosExternos.jsx`, testes.
 - Reutilizado: PedidoExterno, ConfiguracaoIntegracaoMarketplace, simulacao e telas de sync/validacao ja existentes.
-- Alteracoes: sync so em canal ativo; SKU→produto; cancelamento/devolucao idempotentes; conciliacao local de comissao/taxa; Validar alinhado a Em Revisao + import completo.
+- Alteracoes: sync so em canal ativo; SKU?produto; cancelamento/devolucao idempotentes; conciliacao local de comissao/taxa; Validar alinhado a Em Revisao + import completo.
 - Multiempresa: create/update no contexto; reuse por empresa+id externo.
 - Pendencia: OAuth/NF/recebivel reais das APIs; Dashboards avancados e o proximo P1.
 - Validacoes: `node --test tests/marketplace-pedido-policy.test.js`, `git diff --check` e `npm run build`.
@@ -1270,11 +1270,11 @@
 
 ### P1.5 - Portal do Cliente completo: PIX e segunda via operacional
 - Objetivo: cumprir P1 Portal do Cliente completo de `PLANO_GO_LIVE.md` no portal existente, sem portal paralelo.
-- Diagnostico: Gate 13 cobria sessao/isolamento; boletos ainda invocavam `emitirBoleto` quebrado; sem PIX copia-cola nem 2ª via idempotente; documentos e saldo sem carimbo unico de escopo.
+- Diagnostico: Gate 13 cobria sessao/isolamento; boletos ainda invocavam `emitirBoleto` quebrado; sem PIX copia-cola nem 2? via idempotente; documentos e saldo sem carimbo unico de escopo.
 - Causa raiz: financeiro do portal fora de `portalClientePolicy`.
 - Arquivos alterados: `portalClientePolicy.js`, `BoletosList.jsx`, `DocumentosCliente.jsx`, `DashboardCliente.jsx`, testes.
 - Reutilizado: portal, ContaReceber, NF e estados de sessao ja existentes.
-- Alteracoes: assert de titulo/NF do cliente; filtro e saldo do portal; PIX copia-cola e linha digitavel locais estaveis; 2ª via idempotente em ContaReceber; links de documento escopados; dashboard com saldo e BoletosList.
+- Alteracoes: assert de titulo/NF do cliente; filtro e saldo do portal; PIX copia-cola e linha digitavel locais estaveis; 2? via idempotente em ContaReceber; links de documento escopados; dashboard com saldo e BoletosList.
 - Multiempresa: leituras e updates seguem `cliente_id` do vinculo; admin preview continua separado.
 - Pendencia: PSP/banco real para PIX/boleto registrado; Chatbot omnichannel e o proximo P1.
 - Validacoes: `node --test tests/portal-cliente-policy.test.js`, `git diff --check` e `npm run build`.
@@ -1317,7 +1317,7 @@
 - Proximo passo da ordem P1: Roteirizador avancado.
 
 ### P1.1 - Compras avancadas: SC/COT/OC reservados e recebimento idempotente
-- Objetivo: cumprir P1 Compras avancadas de `PLANO_GO_LIVE.md` no fluxo existente (solicitacao → cotacao → OC → recebimento → estoque), sem modulo paralelo.
+- Objetivo: cumprir P1 Compras avancadas de `PLANO_GO_LIVE.md` no fluxo existente (solicitacao ? cotacao ? OC ? recebimento ? estoque), sem modulo paralelo.
 - Diagnostico: SC/COT/OC usavam `Date.now`/`count+1`; cotacao ficava so em mock de tela; retry de OC pela solicitacao criava duplicata; recebimento nao carimbava empresa na movimentacao.
 - Causa raiz: numeracao e idempotencia fora do ponto unico de persistencia.
 - Arquivos alterados: `comprasOrdemPolicy.js` (extracao), `localCadastroMasterPolicy.js`, `localBase44Client.js`, `OrdemCompraForm.jsx`, `OrdensCompraTab.jsx`, `SolicitacaoCompraForm.jsx`, `SolicitacoesCompraTab.jsx`, `CotacaoForm.jsx`, `CotacoesTab.jsx`, testes.
@@ -1437,7 +1437,7 @@
 - Proximo passo da ordem P0: Gate 13 Portal do Cliente.
 
 ### Gate 11 - Expedicao: romaneio, motorista e prova de entrega
-- Objetivo: cumprir o Gate 11 de `PLANO_GO_LIVE.md` no fluxo existente (separacao → romaneio → app motorista → comprovante), sem modulo paralelo.
+- Objetivo: cumprir o Gate 11 de `PLANO_GO_LIVE.md` no fluxo existente (separacao ? romaneio ? app motorista ? comprovante), sem modulo paralelo.
 - Diagnostico: SEP/ROM/ENT usavam `Date.now()`; romaneio nao gravava motorista na entrega; app listava todas as entregas; status `Entregue` podia gravar sem prova.
 - Causa raiz: numeracao e comprovante fora do ponto unico de persistencia, e atribuicao do motorista so no formulario.
 - Arquivos alterados: `expedicaoEntregaPolicy.js` (extracao), `localCadastroMasterPolicy.js`, `localBase44Client.js`, `contextoMultiempresaPolicy.js`, `useFluxoPedido.jsx`, `RomaneioForm.jsx`, `RoteirizacaoMapa.jsx`, `SeparacaoConferencia.jsx`, `SeparacaoConferenciaIA.jsx`, `AppEntregasMotorista.jsx`, testes.
@@ -1449,7 +1449,7 @@
 - Proximo passo da ordem P0: Gate 12 Chatbot e Hub de Atendimento.
 
 ### Gate 10 - Producao: OP numerada, apontamento e conferencia
-- Objetivo: cumprir o Gate 10 de `PLANO_GO_LIVE.md` no fluxo existente (pedido → OP → apontamento → conferencia → pedido pronto), sem modulo de producao paralelo.
+- Objetivo: cumprir o Gate 10 de `PLANO_GO_LIVE.md` no fluxo existente (pedido ? OP ? apontamento ? conferencia ? pedido pronto), sem modulo de producao paralelo.
 - Diagnostico: numero da OP usava `Date.now()`; retry do mesmo pedido gerava outra OP; formulario recusava numero vazio; apontamento gravava so no JSON da OP e nao chamava `concluirOPCompleto`; baixa de estoque no 100% atualizava produto de novo.
 - Causa raiz: numeracao e conferencia fora do ponto unico de persistencia.
 - Arquivos alterados: `ordemProducaoPolicy.js` (extracao de `useFluxoPedido.jsx`), `localCadastroMasterPolicy.js`, `localBase44Client.js`, `useFluxoPedido.jsx`, `GerarOPModal.jsx`, `FormularioOrdemProducao.jsx`, `ApontamentoProducao.jsx`, `contextoMultiempresaPolicy.js`, testes.
@@ -1490,14 +1490,14 @@
 - Causa raiz: saldo e trilha tratados no frontend, fora do ponto unico de gravacao.
 - Arquivos alterados: `estoqueMovimentoPolicy.js` (extracao, `localBase44Client.js` ja passa de 1400 linhas), `localBase44Client.js`, `MovimentacoesTab.jsx`, `MovimentacaoForm.jsx`, `movimentacaoSchema.jsx`, `RecebimentoTab.jsx`, `OrdensCompraTab.jsx`, `entityGuardPolicy/entry.ts`, testes.
 - Reutilizado: `MovimentacaoEstoque`, `Produto.estoque_atual`, `createInContext` e a tela de movimentacao ja existente.
-- Alteracoes: gravacao aplica saldo, recusa negativo sem politica, recusa empresa divergente, idempotencia por origem/documento, bloqueio de exclusao de movimento/auditoria; ajuste exige alçada (`aprovar`); recebimento deixa de somar estoque duas vezes.
+- Alteracoes: gravacao aplica saldo, recusa negativo sem politica, recusa empresa divergente, idempotencia por origem/documento, bloqueio de exclusao de movimento/auditoria; ajuste exige al?ada (`aprovar`); recebimento deixa de somar estoque duas vezes.
 - Multiempresa: movimento operacional exige empresa; produto com empresa dona nao aceita movimento de outra.
-- Pendencia: saldo ainda e um campo no produto mestre, nao por local; transferencia entre empresas nao decompõe estoque por deposito.
+- Pendencia: saldo ainda e um campo no produto mestre, nao por local; transferencia entre empresas nao decomp?e estoque por deposito.
 - Validacoes: `node --test`, `git diff --check` e `npm run build`.
 - Proximo passo da ordem P0: Gate 8 Financeiro.
 
 ### Gate 6 - Comercial: faturamento parcial e teto do pedido
-- Objetivo: cumprir o Gate 6 de `PLANO_GO_LIVE.md` no fluxo existente (pedido → NF), sem tela comercial paralela.
+- Objetivo: cumprir o Gate 6 de `PLANO_GO_LIVE.md` no fluxo existente (pedido ? NF), sem tela comercial paralela.
 - Diagnostico: emitir NF-e no fechamento so fazia `console.log`; `faturarPedidoCompleto` marcava `Faturado` no valor cheio sem saldo; numero do pedido nascia com `Date.now()`.
 - Causa raiz: faturamento sem persistencia nem confronto com NFs ja emitidas do mesmo pedido.
 - Arquivos alterados: `pedidoFaturamentoPolicy.js` (extracao de `useFluxoPedido.jsx`, acima de 900 linhas), `useFluxoPedido.jsx`, `FechamentoFinanceiroTab.jsx`, `GerarNFeModal.jsx`, `NotasFiscaisTab.jsx`, `PedidoForm.jsx`, `DetalhesPedidoHeader.jsx`, `WizardPedidoLateral.jsx`, `WizardEtapa1Cliente.jsx`, `localCadastroMasterPolicy.js`, `localBase44Client.js`, testes.
@@ -1770,30 +1770,30 @@
 - O baseline de capturas operacionais silenciosas caiu de 195 para 191.
 - Mantida a Regra-Mae: somente funcao, teste e status existentes foram melhorados, sem criar tela, modulo ou rota e sem remover funcionalidade.
 - Proximo passo sugerido: revisar `backfillGroupEmpresa`, `seedMultiCompanyData` e as automacoes externas que chamam `syncGroupCompany`, garantindo token interno e escopo estrito na origem.
-### Financeiro - Persistência Interempresas com Escopo Estrito
-- Continuei o plano salvo revisando persistência sensível e isolamento entre empresas.
-- `intercompanyTransfer` deixou de conter a declaração duplicada de usuário que tornava o arquivo inválido.
-- A transferência agora exige empresas distintas, existentes e pertencentes ao mesmo `group_id`.
-- O RBAC backend é validado separadamente para a empresa de origem e a empresa de destino.
-- `ContaPagar` e `ContaReceber` passam a ser criadas com `group_id` e `empresa_id`, preservando a ligação atual entre os lançamentos.
-- A descrição recebida é sanitizada e limitada antes da persistência.
-- Auditorias da transferência incluem Grupo/Empresa e identificadores mínimos, sem gravar a descrição livre.
+### Financeiro - Persist?ncia Interempresas com Escopo Estrito
+- Continuei o plano salvo revisando persist?ncia sens?vel e isolamento entre empresas.
+- `intercompanyTransfer` deixou de conter a declara??o duplicada de usu?rio que tornava o arquivo inv?lido.
+- A transfer?ncia agora exige empresas distintas, existentes e pertencentes ao mesmo `group_id`.
+- O RBAC backend ? validado separadamente para a empresa de origem e a empresa de destino.
+- `ContaPagar` e `ContaReceber` passam a ser criadas com `group_id` e `empresa_id`, preservando a liga??o atual entre os lan?amentos.
+- A descri??o recebida ? sanitizada e limitada antes da persist?ncia.
+- Auditorias da transfer?ncia incluem Grupo/Empresa e identificadores m?nimos, sem gravar a descri??o livre.
 - `conflictPolicy` deixou de registrar os documentos completos antes/depois e agora audita somente nomes e quantidade de campos alterados.
-- Falhas auxiliares de auditoria deixaram de ser silenciosas e passaram a registrar contexto técnico seguro.
+- Falhas auxiliares de auditoria deixaram de ser silenciosas e passaram a registrar contexto t?cnico seguro.
 - O teste existente de baseline foi ampliado para proteger escopo interempresas e auditoria resumida.
-- Validações concluídas: `node --check`, `npm test` (28/28), `npm run build`, `npm run audit:baseline` e `git diff --check` passaram.
-- Mantida a Regra-Mãe: somente fluxos e testes existentes foram melhorados, sem criar módulo, tela ou rota e sem remover funcionalidade.
-- Próximo passo sugerido: endurecer `syncGroupCompany`, removendo fallback global de empresas, exigindo autorização interna/RBAC e restringindo mapas ao Grupo/Empresa.
-### Fiscal/Importação - Escopo e Auditoria Segura
-- Continuei o próximo lote salvo nos fluxos existentes de autorização de NF-e, leitura de planilhas e propagação Grupo/Empresas.
+- Valida??es conclu?das: `node --check`, `npm test` (28/28), `npm run build`, `npm run audit:baseline` e `git diff --check` passaram.
+- Mantida a Regra-M?e: somente fluxos e testes existentes foram melhorados, sem criar m?dulo, tela ou rota e sem remover funcionalidade.
+- Pr?ximo passo sugerido: endurecer `syncGroupCompany`, removendo fallback global de empresas, exigindo autoriza??o interna/RBAC e restringindo mapas ao Grupo/Empresa.
+### Fiscal/Importa??o - Escopo e Auditoria Segura
+- Continuei o pr?ximo lote salvo nos fluxos existentes de autoriza??o de NF-e, leitura de planilhas e propaga??o Grupo/Empresas.
 - `onNotaFiscalAuthorized` agora resolve e valida `group_id`/`empresa_id` e rejeita NotaFiscal, Pedido, Produto e Cliente fora do contexto.
-- A auditoria pós-autorização registra somente metadados e flags de DANFE/XML/chave, sem links ou payload fiscal completo.
-- `parseSpreadsheet` valida URL HTTPS sem credenciais, bloqueia redirecionamentos e limita arquivos a 10 MB; a auditoria registra apenas origem, extensão, planilha, linhas e contexto.
-- `propagateGroupConfigs` exige `DEPLOY_AUDIT_TOKEN` para automações sem usuário, valida todas as empresas no grupo e audita resultados resumidos.
-- A chamada interna existente de `seedMultiCompanyData` passou a enviar o token de automação.
-- Mantida a Regra-Mãe: melhorias nos fluxos existentes, sem criar telas, módulos ou rotas e sem remover funcionalidades.
-- Validações concluídas: `node --check`, `npm test` (27/27), `npm run build`, `npm run audit:baseline` e `git diff --check` passaram.
-- Próximo passo sugerido: revisar os fluxos restantes de Administração do Sistema, persistência sensível e testes de isolamento multiempresa.
+- A auditoria p?s-autoriza??o registra somente metadados e flags de DANFE/XML/chave, sem links ou payload fiscal completo.
+- `parseSpreadsheet` valida URL HTTPS sem credenciais, bloqueia redirecionamentos e limita arquivos a 10 MB; a auditoria registra apenas origem, extens?o, planilha, linhas e contexto.
+- `propagateGroupConfigs` exige `DEPLOY_AUDIT_TOKEN` para automa??es sem usu?rio, valida todas as empresas no grupo e audita resultados resumidos.
+- A chamada interna existente de `seedMultiCompanyData` passou a enviar o token de automa??o.
+- Mantida a Regra-M?e: melhorias nos fluxos existentes, sem criar telas, m?dulos ou rotas e sem remover funcionalidades.
+- Valida??es conclu?das: `node --check`, `npm test` (27/27), `npm run build`, `npm run audit:baseline` e `git diff --check` passaram.
+- Pr?ximo passo sugerido: revisar os fluxos restantes de Administra??o do Sistema, persist?ncia sens?vel e testes de isolamento multiempresa.
 ### Comercial/Fiscal - Hooks Operacionais com Contexto e Auditoria Resumida
 - Continuei o proximo passo salvo: revisar hooks operacionais (`onOrcamentoConfirmed`, `onOportunidadeStageChanged`, `onPedidoReadyToInvoice`) para reduzir logs com payloads completos e reforcar propagacao Grupo/Empresa.
 - `onOrcamentoConfirmed` agora completa `group_id` a partir da empresa antes de criar Pedido, mantendo o fluxo existente de conversao de orcamento confirmado.
@@ -2314,7 +2314,7 @@
 - `Bloco1Pessoas.jsx` passou a auditar abertura de cadastros com contexto multiempresa, permissao granular, titulo, campos principais e total conhecido da entidade.
 - Bloqueios por falta de contexto ou permissao agora registram motivo padronizado, `groupId`, `empresaId`, nome do grupo/empresa e entidade afetada.
 - Filtro aplicado no bloco Pessoas & Parceiros agora gera auditoria com termo sanitizado, total de itens do bloco, total filtrado e entidades filtradas.
-- O fluxo visual, cards, botoes, janelas flutuantes e formulários existentes foram preservados.
+- O fluxo visual, cards, botoes, janelas flutuantes e formul?rios existentes foram preservados.
 - Mantida a Regra-Mae: melhoria feita no componente existente, reforcando RBAC, seguranca, auditoria e multiempresa, sem criar duplicidade.
 - Proximo passo sugerido: continuar em Cadastros Gerais revisando `Bloco2Produtos`, mantendo o mesmo padrao de auditoria/contexto nos itens internos.
 
@@ -2698,7 +2698,7 @@
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
 - Proximo passo sugerido: continuar em `PedidosTab` revisando notificacoes de aprovacao por WhatsApp/Email, edicao e mudanca de status para auditoria contextual/RBAC granular.
 
-### Comercial - Fase 9 Acoes Sensíveis de Pedido
+### Comercial - Fase 9 Acoes Sens?veis de Pedido
 - Segui o proximo passo salvo para acoes sensiveis em `PedidosTab`, sem criar tela, modulo, componente ou arquivo novo.
 - As acoes de gerar NF-e, criar entrega e gerar OP passaram a usar um helper unico (`executarAcaoSensivelPedido`) com contexto, RBAC e auditoria contextual.
 - Os botoes e itens de menu dessas acoes foram preservados, mas agora bloqueiam quando faltar `groupId/empresaId` ou permissao granular aplicavel.
@@ -3132,7 +3132,7 @@
 - Segui o proximo passo salvo em Administracao do Sistema, sem criar tela, modulo, componente ou arquivo novo.
 - `SegurancaGovernancaIndex` deixou de registrar visualizacao de abas por `base44.entities.AuditLog.create` direto e passou a usar `createInContext('AuditLog')`.
 - `MonitoramentoManutencaoIndex` deixou de registrar auditoria de abas/bloqueios por chamada direta e passou a usar `createInContext('AuditLog')`.
-- As auditorias contextuais agora preservam grupo/empresa, usuario, sucesso/falha e tratam erro assíncrono sem quebrar a navegacao.
+- As auditorias contextuais agora preservam grupo/empresa, usuario, sucesso/falha e tratam erro ass?ncrono sem quebrar a navegacao.
 - As abas, permissoes visuais, `ProtectedSection`, banners de contexto/heranca e componentes existentes foram preservados.
 - Mantida a Regra-Mae: melhoria nos componentes existentes, sem exclusao de botao, campo, aba ou funcionalidade.
 - Proximo passo sugerido: continuar em Gestao de Acessos (`GestaoAcessosIndex`, `UsuariosTab`, `SoDChecker`) para trocar listagens/auditorias/updates diretos por helpers contextuais quando aplicavel.
@@ -3436,13 +3436,13 @@
 - Proximo passo sugerido: continuar no mesmo `useFluxoPedido`, migrando os fluxos restantes de aprovar/faturar/concluir/cancelar pedido que ainda possuem chamadas diretas para `Pedido`, `ContaReceber`, `Entrega` e `Produto`.
 
 
-### Comercial - Fase 8 Sugestões e Itens de Produto
-- Segui o próximo passo salvo do plano em Comercial: `SugestoesProdutos`, `TabelaPrecoItensModal` e `AdicionarItemRevendaModal`.
-- `SugestoesProdutos` deixou de consultar pedidos/produtos globalmente e passou a usar `filterInContext` com `groupId`/`empresaId` na chave da query, alerta de contexto/permissão e botão protegido por RBAC.
-- `TabelaPrecoItensModal` passou a listar itens/produtos por contexto, criar/editar/excluir via `createInContext`/`updateInContext`/`deleteInContext`, mantendo confirmação da Regra-Mãe antes de remover item.
-- `AdicionarItemRevendaModal` passou a carregar produtos de revenda por contexto, bloquear busca/seleção/adição sem permissão e preservar o fluxo atual de cálculo de margem, estoque e aprovação.
-- Todos os pontos alterados receberam marcadores `data-context-required`, `data-permission`, `data-action` e `data-sensitive` onde a ação altera dado.
-- Próximo passo: revisar `Top10ProdutosCliente` e os demais componentes auxiliares do pedido comercial que ainda possam usar consultas globais de produto/cliente.
+### Comercial - Fase 8 Sugest?es e Itens de Produto
+- Segui o pr?ximo passo salvo do plano em Comercial: `SugestoesProdutos`, `TabelaPrecoItensModal` e `AdicionarItemRevendaModal`.
+- `SugestoesProdutos` deixou de consultar pedidos/produtos globalmente e passou a usar `filterInContext` com `groupId`/`empresaId` na chave da query, alerta de contexto/permiss?o e bot?o protegido por RBAC.
+- `TabelaPrecoItensModal` passou a listar itens/produtos por contexto, criar/editar/excluir via `createInContext`/`updateInContext`/`deleteInContext`, mantendo confirma??o da Regra-M?e antes de remover item.
+- `AdicionarItemRevendaModal` passou a carregar produtos de revenda por contexto, bloquear busca/sele??o/adi??o sem permiss?o e preservar o fluxo atual de c?lculo de margem, estoque e aprova??o.
+- Todos os pontos alterados receberam marcadores `data-context-required`, `data-permission`, `data-action` e `data-sensitive` onde a a??o altera dado.
+- Pr?ximo passo: revisar `Top10ProdutosCliente` e os demais componentes auxiliares do pedido comercial que ainda possam usar consultas globais de produto/cliente.
 
 
 ### Comercial - Fase 8 Top 10 Produtos do Cliente
@@ -3499,90 +3499,90 @@
 
 ### Comercial - Fase 8 Seletores de Produto
 
-- Seguido o próximo passo salvo no status: revisar seletores comerciais de produto que ainda usavam `Produto.list()` global.
+- Seguido o pr?ximo passo salvo no status: revisar seletores comerciais de produto que ainda usavam `Produto.list()` global.
 - `SelecionarProdutoModal` e `SelecionarProdutoForm` deixaram de usar `base44.entities.Produto.list()` e passaram a buscar produtos via `filterInContext`.
-- Consultas receberam query keys por grupo/empresa/contexto, limite de carregamento e `enabled` condicionado a contexto e permissão RBAC.
-- Busca e botão de adicionar produto agora ficam bloqueados quando faltar contexto de grupo/empresa ou permissão para selecionar produtos no fluxo comercial.
+- Consultas receberam query keys por grupo/empresa/contexto, limite de carregamento e `enabled` condicionado a contexto e permiss?o RBAC.
+- Busca e bot?o de adicionar produto agora ficam bloqueados quando faltar contexto de grupo/empresa ou permiss?o para selecionar produtos no fluxo comercial.
 - Os wrappers receberam `w-full`, `h-full`, `data-permission` e `data-context-required`, mantendo responsividade sem criar tela nova.
-- Textos visíveis dos seletores foram ajustados para português correto com acentuação preservada.
-- Mantida a Regra-Mãe: nenhuma tela, módulo, arquivo ou fluxo novo foi criado; apenas melhoria nos componentes existentes.
-- Próximo passo sugerido: continuar seletores comerciais restantes, priorizando `SugestoesProdutos`, `TabelaPrecoItensModal` e `AdicionarItemRevendaModal`.
-### Cadastros - Fase 8 Multi-Tabelas de Preço
+- Textos vis?veis dos seletores foram ajustados para portugu?s correto com acentua??o preservada.
+- Mantida a Regra-M?e: nenhuma tela, m?dulo, arquivo ou fluxo novo foi criado; apenas melhoria nos componentes existentes.
+- Pr?ximo passo sugerido: continuar seletores comerciais restantes, priorizando `SugestoesProdutos`, `TabelaPrecoItensModal` e `AdicionarItemRevendaModal`.
+### Cadastros - Fase 8 Multi-Tabelas de Pre?o
 
-- Seguido o próximo passo salvo no status: revisar `MultiTabelasEditor`, que ainda buscava produtos globalmente e atualizava itens de tabela diretamente.
+- Seguido o pr?ximo passo salvo no status: revisar `MultiTabelasEditor`, que ainda buscava produtos globalmente e atualizava itens de tabela diretamente.
 - `MultiTabelasEditor` deixou de usar `base44.entities.Produto.list()` e passou a buscar produtos via `filterInContext`.
-- Itens de tabela de preço passaram a ser carregados com `filterInContext` e atualizados com `updateInContext`, mantendo contexto grupo/empresa.
-- Recalculo multi-tabela agora exige contexto de grupo/empresa, permissão RBAC de edição e confirmação do usuário antes de alterar preços em massa.
-- Fluxos de bloqueio, cancelamento, erro, sucesso e sugestão por IA passaram a gerar auditoria com `group_id`, `empresa_id` e resumo antes/depois.
-- Controles sensíveis receberam bloqueio visual e marcadores `data-action`, `data-permission`, `data-sensitive` e `data-context-required`.
-- Mantida a Regra-Mãe: nenhuma tela, módulo, arquivo ou fluxo novo foi criado; apenas melhoria no componente existente.
-- Próximo passo sugerido: continuar seletores comerciais de produto que ainda usam `Produto.list/filter`, priorizando `SelecionarProdutoModal`, `SelecionarProdutoForm`, `SugestoesProdutos` e `TabelaPrecoItensModal`.
+- Itens de tabela de pre?o passaram a ser carregados com `filterInContext` e atualizados com `updateInContext`, mantendo contexto grupo/empresa.
+- Recalculo multi-tabela agora exige contexto de grupo/empresa, permiss?o RBAC de edi??o e confirma??o do usu?rio antes de alterar pre?os em massa.
+- Fluxos de bloqueio, cancelamento, erro, sucesso e sugest?o por IA passaram a gerar auditoria com `group_id`, `empresa_id` e resumo antes/depois.
+- Controles sens?veis receberam bloqueio visual e marcadores `data-action`, `data-permission`, `data-sensitive` e `data-context-required`.
+- Mantida a Regra-M?e: nenhuma tela, m?dulo, arquivo ou fluxo novo foi criado; apenas melhoria no componente existente.
+- Pr?ximo passo sugerido: continuar seletores comerciais de produto que ainda usam `Produto.list/filter`, priorizando `SelecionarProdutoModal`, `SelecionarProdutoForm`, `SugestoesProdutos` e `TabelaPrecoItensModal`.
 ### Cadastros - Fase 8 Dashboard Estruturantes
 
-- Seguido o próximo passo salvo no status: revisar `DashboardEstruturantes`, que ainda listava cadastros estruturantes e produtos globalmente.
+- Seguido o pr?ximo passo salvo no status: revisar `DashboardEstruturantes`, que ainda listava cadastros estruturantes e produtos globalmente.
 - `DashboardEstruturantes` deixou de usar `.list()` global em `SetorAtividade`, `GrupoProduto`, `Marca`, `LocalEstoque`, `TabelaFiscal` e `Produto`.
-- Consultas passaram a usar `filterInContext`, com query keys por grupo/empresa e execução condicionada a contexto e permissão RBAC.
+- Consultas passaram a usar `filterInContext`, com query keys por grupo/empresa e execu??o condicionada a contexto e permiss?o RBAC.
 - O wrapper principal recebeu `w-full`, `h-full`, `data-permission` e `data-context-required`.
-- A tela exibe alerta visual quando faltar contexto de grupo/empresa ou permissão para visualizar cadastros.
-- Mantida a Regra-Mãe: nenhuma tela, módulo, arquivo ou fluxo novo foi criado; apenas melhoria no componente existente.
-- Próximo passo sugerido: continuar varredura em `MultiTabelasEditor` e seletores comerciais de produto que ainda usam `Produto.list/filter` global.
-### Cadastros - Fase 8 Dashboard Produtos Produção
+- A tela exibe alerta visual quando faltar contexto de grupo/empresa ou permiss?o para visualizar cadastros.
+- Mantida a Regra-M?e: nenhuma tela, m?dulo, arquivo ou fluxo novo foi criado; apenas melhoria no componente existente.
+- Pr?ximo passo sugerido: continuar varredura em `MultiTabelasEditor` e seletores comerciais de produto que ainda usam `Produto.list/filter` global.
+### Cadastros - Fase 8 Dashboard Produtos Produ??o
 
-- Seguido o próximo passo salvo no status: continuar varredura em dashboards e seletores de produto que ainda usam `Produto.list/filter` global.
-- `DashboardProdutosProducao` deixou de usar `base44.entities.Produto.list` e passou a consultar produtos via `filterInContext` com filtro de matéria-prima de produção.
-- Consulta de ordens de produção do dashboard também passou para `filterInContext`, mantendo o cruzamento de uso por produto dentro do contexto grupo/empresa.
-- Dashboard agora exige contexto de grupo/empresa e permissão RBAC para visualizar produto antes de carregar dados.
-- Botão de conversão de produtos recebeu bloqueio visual por contexto/permissão e marcadores `data-permission`, `data-action` e `data-sensitive`.
-- Mantida a Regra-Mãe: nenhuma tela, módulo, arquivo ou fluxo novo foi criado; apenas melhoria no componente existente.
-- Próximo passo sugerido: continuar varredura nos seletores e dashboards restantes que ainda usam `Produto.list/filter`, priorizando `DashboardEstruturantes`, `MultiTabelasEditor` e seletores comerciais de produto.
+- Seguido o pr?ximo passo salvo no status: continuar varredura em dashboards e seletores de produto que ainda usam `Produto.list/filter` global.
+- `DashboardProdutosProducao` deixou de usar `base44.entities.Produto.list` e passou a consultar produtos via `filterInContext` com filtro de mat?ria-prima de produ??o.
+- Consulta de ordens de produ??o do dashboard tamb?m passou para `filterInContext`, mantendo o cruzamento de uso por produto dentro do contexto grupo/empresa.
+- Dashboard agora exige contexto de grupo/empresa e permiss?o RBAC para visualizar produto antes de carregar dados.
+- Bot?o de convers?o de produtos recebeu bloqueio visual por contexto/permiss?o e marcadores `data-permission`, `data-action` e `data-sensitive`.
+- Mantida a Regra-M?e: nenhuma tela, m?dulo, arquivo ou fluxo novo foi criado; apenas melhoria no componente existente.
+- Pr?ximo passo sugerido: continuar varredura nos seletores e dashboards restantes que ainda usam `Produto.list/filter`, priorizando `DashboardEstruturantes`, `MultiTabelasEditor` e seletores comerciais de produto.
 
-### Cadastros - Fase 8 Conversão Produção em Massa
+### Cadastros - Fase 8 Convers?o Produ??o em Massa
 
-- Seguido o próximo ponto salvo no status: continuar varredura em Cadastro Gerais/Estoque por chamadas diretas de `Produto.create/update/delete/filter/list`.
+- Seguido o pr?ximo ponto salvo no status: continuar varredura em Cadastro Gerais/Estoque por chamadas diretas de `Produto.create/update/delete/filter/list`.
 - `ConversaoProducaoMassa` deixou de usar `base44.entities.Produto.update` diretamente e passou a usar `updateInContext`.
-- Conversão em massa agora exige contexto de grupo/empresa e permissão RBAC para editar produtos antes de IA, seleção e gravação.
-- A conversão em lote passou a pedir confirmação explícita antes de alterar produtos e registra auditoria de bloqueio, negação, cancelamento, erro e sucesso.
-- Payload de atualização preserva `empresa_id`, `group_id` e `grupo_id` do produto/contexto para manter a ramificação multiempresa.
-- Botões e checkboxes sensíveis receberam bloqueio visual e marcadores `data-permission`, `data-action` e `data-sensitive` quando aplicável.
-- Mantida a Regra-Mãe: nenhuma tela, módulo, arquivo ou fluxo novo foi criado; apenas melhoria no componente existente.
-- Próximo passo sugerido: continuar varredura em Cadastro Gerais/Estoque por chamadas diretas restantes de `Produto.create/update/delete/filter/list`, priorizando dashboards e seletores de produto que ainda usam `Produto.list/filter` global.
+- Convers?o em massa agora exige contexto de grupo/empresa e permiss?o RBAC para editar produtos antes de IA, sele??o e grava??o.
+- A convers?o em lote passou a pedir confirma??o expl?cita antes de alterar produtos e registra auditoria de bloqueio, nega??o, cancelamento, erro e sucesso.
+- Payload de atualiza??o preserva `empresa_id`, `group_id` e `grupo_id` do produto/contexto para manter a ramifica??o multiempresa.
+- Bot?es e checkboxes sens?veis receberam bloqueio visual e marcadores `data-permission`, `data-action` e `data-sensitive` quando aplic?vel.
+- Mantida a Regra-M?e: nenhuma tela, m?dulo, arquivo ou fluxo novo foi criado; apenas melhoria no componente existente.
+- Pr?ximo passo sugerido: continuar varredura em Cadastro Gerais/Estoque por chamadas diretas restantes de `Produto.create/update/delete/filter/list`, priorizando dashboards e seletores de produto que ainda usam `Produto.list/filter` global.
 
-### Cadastros - Fase 8 Importação Produto NF-e/PDF
+### Cadastros - Fase 8 Importa??o Produto NF-e/PDF
 
-- Seguido o próximo ponto salvo no status: revisar `ImportacaoProdutoNFe`, que ainda filtrava e criava produto diretamente pelo `base44.entities.Produto`.
-- Verificação de duplicidade passou a usar `filterInContext`, respeitando contexto de grupo/empresa.
-- Importação de produtos passou a usar `createInContext`, com `group_id`, `grupo_id` e `empresa_id` no payload.
-- Processamento e importação agora exigem contexto de grupo/empresa e permissão RBAC para criar produto.
-- Dados extraídos da NF-e/PDF passam por sanitização simples, limite de tamanho e conversão numérica antes da gravação.
-- Importação em massa passou a pedir confirmação do usuário e gerar auditoria de bloqueio, cancelamento, erro e sucesso.
-- Botões sensíveis receberam alerta de contexto/permissão e marcadores `data-permission`, `data-action` e `data-sensitive`.
-- Mantida a Regra-Mãe: nenhuma tela, módulo, arquivo ou fluxo novo foi criado; apenas melhoria no componente existente.
-- Próximo passo sugerido: continuar varredura em Cadastro Gerais/Estoque por chamadas diretas de `Produto.create/update/delete/filter/list` e corrigir no fluxo existente.
+- Seguido o pr?ximo ponto salvo no status: revisar `ImportacaoProdutoNFe`, que ainda filtrava e criava produto diretamente pelo `base44.entities.Produto`.
+- Verifica??o de duplicidade passou a usar `filterInContext`, respeitando contexto de grupo/empresa.
+- Importa??o de produtos passou a usar `createInContext`, com `group_id`, `grupo_id` e `empresa_id` no payload.
+- Processamento e importa??o agora exigem contexto de grupo/empresa e permiss?o RBAC para criar produto.
+- Dados extra?dos da NF-e/PDF passam por sanitiza??o simples, limite de tamanho e convers?o num?rica antes da grava??o.
+- Importa??o em massa passou a pedir confirma??o do usu?rio e gerar auditoria de bloqueio, cancelamento, erro e sucesso.
+- Bot?es sens?veis receberam alerta de contexto/permiss?o e marcadores `data-permission`, `data-action` e `data-sensitive`.
+- Mantida a Regra-M?e: nenhuma tela, m?dulo, arquivo ou fluxo novo foi criado; apenas melhoria no componente existente.
+- Pr?ximo passo sugerido: continuar varredura em Cadastro Gerais/Estoque por chamadas diretas de `Produto.create/update/delete/filter/list` e corrigir no fluxo existente.
 
 
 ### Cadastros - Fase 8 Importar Produtos NF-e XML
 
-- Seguido o próximo ponto salvo no status: revisar `ImportarProdutosNFe`, que ainda criava produtos diretamente no `base44.entities.Produto.create`.
+- Seguido o pr?ximo ponto salvo no status: revisar `ImportarProdutosNFe`, que ainda criava produtos diretamente no `base44.entities.Produto.create`.
 - Consulta de duplicidade de produtos passou a usar `filterInContext`, respeitando grupo/empresa selecionados.
-- Criação de produtos a partir do XML passou a usar `createInContext`, com `group_id`, `grupo_id` e `empresa_id` no payload.
-- Upload e criação agora exigem contexto de grupo/empresa e permissão RBAC para criar produto.
-- Campos extraídos da NF-e passam por sanitização simples, limite de tamanho e conversão numérica antes da gravação.
-- Criação em massa passou a pedir confirmação do usuário e gerar auditoria de bloqueio, cancelamento, erro e sucesso.
-- A ação sensível recebeu alerta visual quando faltar contexto/permissão e marcadores `data-permission`, `data-action` e `data-sensitive`.
-- Mantida a Regra-Mãe: nenhuma tela, módulo, arquivo ou fluxo novo foi criado; apenas melhoria no componente existente.
-- Próximo passo sugerido: revisar `ImportacaoProdutoNFe`, que ainda tem criação direta de produto por NF-e/PDF.
+- Cria??o de produtos a partir do XML passou a usar `createInContext`, com `group_id`, `grupo_id` e `empresa_id` no payload.
+- Upload e cria??o agora exigem contexto de grupo/empresa e permiss?o RBAC para criar produto.
+- Campos extra?dos da NF-e passam por sanitiza??o simples, limite de tamanho e convers?o num?rica antes da grava??o.
+- Cria??o em massa passou a pedir confirma??o do usu?rio e gerar auditoria de bloqueio, cancelamento, erro e sucesso.
+- A a??o sens?vel recebeu alerta visual quando faltar contexto/permiss?o e marcadores `data-permission`, `data-action` e `data-sensitive`.
+- Mantida a Regra-M?e: nenhuma tela, m?dulo, arquivo ou fluxo novo foi criado; apenas melhoria no componente existente.
+- Pr?ximo passo sugerido: revisar `ImportacaoProdutoNFe`, que ainda tem cria??o direta de produto por NF-e/PDF.
 
 ### Cadastros - Fase 8 Importar Produtos em Lote
 
-- Seguido o próximo ponto do plano: continuar nos importadores de produtos de Cadastro Gerais, priorizando `ImportarProdutosLote`.
-- Criação de produto em lote deixou de usar `base44.entities.Produto.create` diretamente e passou a usar `createInContext`.
-- Importação agora exige contexto de grupo/empresa e permissão RBAC de criação de produto antes de enviar arquivo ou criar registros.
-- Campos importados passam por sanitização simples, limite de tamanho e conversão numérica padronizada antes da gravação.
-- Criação em massa passou a pedir confirmação do usuário com a quantidade de produtos e gera auditoria de bloqueio, cancelamento, erro e sucesso.
+- Seguido o pr?ximo ponto do plano: continuar nos importadores de produtos de Cadastro Gerais, priorizando `ImportarProdutosLote`.
+- Cria??o de produto em lote deixou de usar `base44.entities.Produto.create` diretamente e passou a usar `createInContext`.
+- Importa??o agora exige contexto de grupo/empresa e permiss?o RBAC de cria??o de produto antes de enviar arquivo ou criar registros.
+- Campos importados passam por sanitiza??o simples, limite de tamanho e convers?o num?rica padronizada antes da grava??o.
+- Cria??o em massa passou a pedir confirma??o do usu?rio com a quantidade de produtos e gera auditoria de bloqueio, cancelamento, erro e sucesso.
 - Produtos importados recebem `group_id`, `grupo_id` e `empresa_id` conforme o contexto selecionado.
-- O importador recebeu alerta visual de contexto/permissão e marcadores `data-permission`, `data-action` e `data-sensitive` na ação sensível.
-- Mantida a Regra-Mãe: nenhuma tela, módulo, arquivo ou fluxo novo foi criado; apenas melhoria no componente existente.
-- Próximo passo sugerido: revisar `ImportarProdutosNFe` ou `ImportacaoProdutoNFe`, que ainda criam produto diretamente em Cadastro Gerais.
+- O importador recebeu alerta visual de contexto/permiss?o e marcadores `data-permission`, `data-action` e `data-sensitive` na a??o sens?vel.
+- Mantida a Regra-M?e: nenhuma tela, m?dulo, arquivo ou fluxo novo foi criado; apenas melhoria no componente existente.
+- Pr?ximo passo sugerido: revisar `ImportarProdutosNFe` ou `ImportacaoProdutoNFe`, que ainda criam produto diretamente em Cadastro Gerais.
 
 
 ### Cadastros/Estoque - Fase 8 Historico do Produto em Contexto
@@ -3907,12 +3907,12 @@ O snapshot contem:
    - `src/api/localBase44Client.js`
 6. Validacao executada:
    - `vite build` passou.
-7. Foi iniciado o plano geral de melhoria pelo pilar de Gestão de Acessos/RBAC.
-8. O hook existente `usePermissions` foi reforçado para interpretar permissões granulares por chave completa, como:
+7. Foi iniciado o plano geral de melhoria pelo pilar de Gest?o de Acessos/RBAC.
+8. O hook existente `usePermissions` foi refor?ado para interpretar permiss?es granulares por chave completa, como:
    - `Sistema.Controle de Acesso.editar`
    - `Cadastros.Organizacional.criar`
    - `Financeiro.Caixa.baixa-manual`
-9. Controles base existentes passaram a usar o mesmo resolvedor de permissão:
+9. Controles base existentes passaram a usar o mesmo resolvedor de permiss?o:
    - `Button`
    - `Switch`
    - `Checkbox`
@@ -3923,11 +3923,11 @@ O snapshot contem:
    - `Toggle`
    - `TabsTrigger`
    - `DataTable`
-10. A API local (`localBase44Client.js`) passou a reforçar:
-   - sanitização com `sanitizeOnWrite`;
-   - validação de permissão local em `create`, `update` e `delete`;
-   - auditoria de bloqueio quando usuário sem permissão tenta gravar;
-   - preservação do fluxo para usuário admin.
+10. A API local (`localBase44Client.js`) passou a refor?ar:
+   - sanitiza??o com `sanitizeOnWrite`;
+   - valida??o de permiss?o local em `create`, `update` e `delete`;
+   - auditoria de bloqueio quando usu?rio sem permiss?o tenta gravar;
+   - preserva??o do fluxo para usu?rio admin.
 11. Validacao executada apos RBAC/sanitizacao/API local:
    - `vite build` passou.
 
@@ -4254,7 +4254,7 @@ Checklist inicial:
 
 - Seguido o primeiro foco do plano de melhoria: reforco do modulo existente de Gestao de Acessos, sem criar modulo novo.
 - `usePermissions` passou a reconhecer mais aliases de Controle de Acesso, Perfis e Permissoes, melhorando compatibilidade entre perfis antigos e novos.
-- Removidos trechos inalcançaveis do resolvedor de permissoes, mantendo a mesma API publica do hook.
+- Removidos trechos inalcan?aveis do resolvedor de permissoes, mantendo a mesma API publica do hook.
 - `GestaoAcessosIndex` recebeu `w-full h-full`, areas internas redimensionaveis e `data-permission` nas abas existentes.
 - `UsuariosTab` passou a bloquear convite/configuracao quando nao houver contexto grupo/empresa ou permissao adequada, com aviso visual no escopo invalido.
 - `GestaoUsuariosAvancada` reforcou validacao de contexto antes de salvar e marcou perfil, 2FA, empresas vinculadas e restricoes como acoes sensiveis.
@@ -4422,7 +4422,7 @@ Checklist inicial:
 - Perfis RBAC agora gravam `escopo_acesso`, `nivel_acesso_contexto`, `acesso_grupo`, `acesso_empresas`, `departamentos_permitidos`, `group_id` e `empresa_id` conforme o contexto ativo.
 - Edicao de perfil agora registra auditoria com `dados_anteriores` e `dados_novos`, reforcando rastreabilidade antes/depois.
 - `GestaoUsuariosAvancada` recebeu controle de liberacao por grupo, empresas, grupo+empresas e setores no proprio fluxo existente de configuracao de usuario.
-- Vínculos de empresas agora ficam bloqueados quando o usuario estiver marcado como acesso somente grupo.
+- V?nculos de empresas agora ficam bloqueados quando o usuario estiver marcado como acesso somente grupo.
 - Restricoes adicionais de usuario agora aceitam setores permitidos e centros de custo permitidos, mantendo o escopo limitado ao grupo/empresa atual.
 - Alteracao de usuario agora grava os flags de escopo (`acesso_grupo`, `acesso_empresas`) junto do perfil, empresas vinculadas e restricoes.
 - `UsuariosTab` passou a auditar bloqueios de convite sem permissao ou sem contexto, e recebeu marcadores de contexto nos filtros, convite e configuracao.
@@ -4565,7 +4565,7 @@ Checklist inicial:
 ### Producao - Fase 8 OP e Kanban
 
 - Seguido o plano de melhoria nos componentes existentes `FormularioOrdemProducao` e `KanbanProducaoInteligente`, sem criar telas, modulos ou componentes duplicados.
-- `FormularioOrdemProducao` passou a aceitar tambem as permissoes tecnicas `Producao`, mantendo compatibilidade com os nomes exibidos `Producao/Produção`.
+- `FormularioOrdemProducao` passou a aceitar tambem as permissoes tecnicas `Producao`, mantendo compatibilidade com os nomes exibidos `Producao/Produ??o`.
 - Salvamento de OP agora audita bloqueios sem contexto, sem empresa, sem permissao de criacao e sem permissao de edicao.
 - Criacao e edicao de OP agora reforcam `group_id`, `grupo_id` e `empresa_id`, e registram auditoria com `dados_anteriores` e `dados_novos`.
 - Uso da IA no formulario de OP agora exige contexto/RBAC, audita bloqueios, sucesso e erro operacional.
@@ -4678,7 +4678,7 @@ Checklist inicial:
 ### Expedicao - Fase 8 Detalhes da Entrega e Ortografia
 
 - Seguido o proximo passo salvo no status: continuar Fase 8 em `DetalhesEntregaView`, revisando mudancas de status, confirmacao de entrega, RBAC, contexto e auditoria.
-- Foi revisada a secao visivel `Expedicao e Logistica` e seus componentes de launchpad; nao foi encontrado mojibake real nos arquivos de Expedição, apenas exibicao quebrada do terminal PowerShell ao ler UTF-8.
+- Foi revisada a secao visivel `Expedicao e Logistica` e seus componentes de launchpad; nao foi encontrado mojibake real nos arquivos de Expedi??o, apenas exibicao quebrada do terminal PowerShell ao ler UTF-8.
 - `DetalhesEntregaView` passou a ter handler local para mudanca de status quando a janela for aberta sem `onStatusChange`, corrigindo botoes que podiam nao salvar alteracoes.
 - Mudancas de status agora exigem contexto grupo/empresa e permissao de edicao de Entrega antes de atualizar.
 - Alteracao para `Entrega Frustrada` agora pede confirmacao antes de salvar a mudanca.
@@ -5137,7 +5137,7 @@ Checklist inicial:
 - Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco dos componentes existentes.
 - `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
-- Proximo passo sugerido: continuar Fase 8 nos relatórios financeiros e fluxos bancarios auxiliares, priorizando `FluxoCaixaProjetado`, `ExtratoBancarioResumo`, `MovimentosDiarios`, `CartoesACompensar` e `OrdensLiquidacaoPendentes` para revisar rateio, conciliacao final, auditoria antes/depois e exportacoes.
+- Proximo passo sugerido: continuar Fase 8 nos relat?rios financeiros e fluxos bancarios auxiliares, priorizando `FluxoCaixaProjetado`, `ExtratoBancarioResumo`, `MovimentosDiarios`, `CartoesACompensar` e `OrdensLiquidacaoPendentes` para revisar rateio, conciliacao final, auditoria antes/depois e exportacoes.
 
 ### Financeiro - Fase 8 Caixa Central e Envio para Liquidacao
 
@@ -6014,7 +6014,7 @@ Checklist inicial:
 ### Gate 18 - Pacote de validacao humana das identidades empresariais
 
 - Foi preparado no HD um pacote minimo para revisao humana das identidades legadas, sem alterar dados ou funcionalidades do ERP.
-- A ficha `legacy-company-human-validation.csv` contem exatamente dois candidatos empresariais: um destinado a `CPA FERRO E AÇO` e outro a `3Z LTDA`.
+- A ficha `legacy-company-human-validation.csv` contem exatamente dois candidatos empresariais: um destinado a `CPA FERRO E A?O` e outro a `3Z LTDA`.
 - A ficha `legacy-group-record-human-validation.csv` mantem o terceiro registro isolado no escopo `Grupo CPA`, impedindo seu uso como cadastro de Empresa.
 - Cada ficha expoe somente codigo legado mascarado, quatro ultimos digitos do CNPJ, destino conhecido, motivos pendentes e decisao humana.
 - As tres decisoes foram iniciadas como `PENDENTE`. Nenhuma confirmacao foi inferida e `ImportAuthorized` permanece `false`.
@@ -6028,7 +6028,7 @@ Checklist inicial:
 
 ### Gate 18 - Aprovacao humana e mapa local de aliases
 
-- O proprietario confirmou explicitamente os tres vinculos apresentados: um alias para `CPA FERRO E AÇO`, um alias para `3Z LTDA` e um registro de escopo para `Grupo CPA`.
+- O proprietario confirmou explicitamente os tres vinculos apresentados: um alias para `CPA FERRO E A?O`, um alias para `3Z LTDA` e um registro de escopo para `Grupo CPA`.
 - As duas fichas locais de validacao foram atualizadas de `PENDENTE` para `APROVADO`; nenhuma decisao foi inferida pelo processo.
 - Foi criado `legacy-approved-business-alias-map.json` somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, pois nao existia mapa aprovado equivalente.
 - O mapa vincula as origens e os destinos exclusivamente por hashes completos, preserva o papel de cada alias e proibe criar nova Empresa ou sobrescrever IDs canonicos.
@@ -6437,7 +6437,7 @@ Checklist inicial:
 - Antes da extracao, o contrato estrutural foi corrigido de 19 para 14 campos permitidos. Cinco destinos inicialmente supostos nao existem de forma comprovada no cadastro `Produto` atual: prazo de garantia, descricao separada do site, titulo SEO, marca SEO e MPN; eles retornaram para `REVIEW_MAPPING`, sem criacao automatica de campos.
 - O contrato local final possui 14 colunas `ALLOW_STRUCTURAL`, 60 em revisao e 100 bloqueadas, totalizando 174/174 com `import_authorized=false`. Foram reutilizados somente campos existentes de `Produto` e a politica de migracao atual.
 - Foram produzidos 1.208 candidatos e 14 registros em quarentena, reconciliando 1.222/1.222 sem descarte. Os 1.198 ativos e 24 inativos foram preservados; nenhum inativo foi ativado automaticamente.
-- As unidades `UN`, `PC`, `KG`, `CX` e `MT` foram mantidas; `M²` foi normalizada para `M2` e `LTS` para `LT`, conforme os codigos ja aceitos pelo importador existente. As 14 linhas com `BD`, `GRS`, `PAR`, `RL` ou `SER` ficaram em quarentena por falta de mapeamento homologado.
+- As unidades `UN`, `PC`, `KG`, `CX` e `MT` foram mantidas; `M?` foi normalizada para `M2` e `LTS` para `LT`, conforme os codigos ja aceitos pelo importador existente. As 14 linhas com `BD`, `GRS`, `PAR`, `RL` ou `SER` ficaram em quarentena por falta de mapeamento homologado.
 - Todos os candidatos possuem codigo legado, descricao, unidade valida, `tipo_item=Revenda`, contexto do unico Grupo canonico, `scope_type=grupo`, empresa vazia e compartilhamento de Grupo. Estoque atual, reservado e disponivel foram fixados em zero porque o estoque inicial pertence a lote posterior independente.
 - O lote apresentou zero codigo duplicado, zero fingerprint duplicado, zero candidato invalido, zero quarentena sem motivo e zero celula com risco de formula CSV. Todas as 1.222 linhas mantem `import_authorized=false`, `confirmado=false` e `importacao_erp=false`.
 - A geracao foi repetida integralmente e produziu os mesmos hashes para candidatos e quarentena, comprovando idempotencia. Os hashes gravados no resumo agregado correspondem aos arquivos finais.
@@ -6724,7 +6724,7 @@ Checklist inicial:
 - Foram reconciliadas seis tabelas, 114 colunas, 11 indices e zero chave estrangeira, totalizando 125 linhas de metadados. Apenas `EMP03.TransferenciaEstoque` possui dados, com quatro linhas; as outras cinco estruturas estao vazias.
 - O cabecalho `TransferenciaEstoque` de `EMP03` e estruturalmente identico ao de `EXETPS`: 26 colunas e os mesmos tres indices. Ele contem `CODIGOENTRADA`, `CODIGOSAIDA`, lotes e quantidades, mas nao possui empresa, filial, grupo, estoque/local de origem ou estoque/local de destino.
 - Os unicos campos explicitamente classificados como origem/destino sao `ESTOQUEORIGEM` e `ESTOQUEDESTINO` de `EXETPS.TransferenciaEstoqueEmpresas`. Essa tabela possui 25 colunas, zero linha e nenhuma chave estrangeira que a relacione ao cabecalho de `EMP03`.
-- `EXETPS.TransferenciaEstoqueItens`, `TransferenciaEstoqueEmpresasComplemento` e `EMP03.TransferenciaEstoqueAnexos` tambem estao vazias. Similaridade de nome ou chave numerica nao foi aceita como relacionamento implícito.
+- `EXETPS.TransferenciaEstoqueItens`, `TransferenciaEstoqueEmpresasComplemento` e `EMP03.TransferenciaEstoqueAnexos` tambem estao vazias. Similaridade de nome ou chave numerica nao foi aceita como relacionamento impl?cito.
 - A estrutura das quatro linhas sugere uma operacao entre codigos de entrada/saida com quantidade e lote, mas a semantica nao foi inferida. Elas continuam sem atribuicao empresarial e bloqueadas para importacao.
 - O relatorio `legacy-stock-transfer-schema.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, sob ACL local. Nenhum valor, codigo, quantidade, lote, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
 - Nenhuma entidade, tela, campo, importador ou fluxo do ERP novo foi criado ou alterado. `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
@@ -8210,7 +8210,7 @@ Checklist inicial:
 - A segregacao visual impede o registrante de revisar e impede registrante ou revisor de aprovar. O backend continua sendo a autoridade definitiva e repete todas as validacoes.
 - O cliente local deixou de simular essas acoes: listagem, evidencia, revisao e aprovacao agora persistem no armazenamento local usando a mesma politica de transicao, contexto estrito, RBAC e auditoria atomica.
 - Mesmo aprovada, a pendencia permanece `PENDING_MANUAL_RECONCILIATION`, em `staging`, com `confirmado=false` e bloqueio operacional. A interface nao possui acao de promover, baixar ou criar `ContaPagar` ou `ContaReceber`.
-- Como a Central ultrapassava 600 linhas, o contêiner responsivo e os placeholders repetidos foram extraidos para componente auxiliar, e a aba financeira foi mantida isolada em componente proprio. Todas as abas e comportamentos anteriores foram preservados.
+- Como a Central ultrapassava 600 linhas, o cont?iner responsivo e os placeholders repetidos foram extraidos para componente auxiliar, e a aba financeira foi mantida isolada em componente proprio. Todas as abas e comportamentos anteriores foram preservados.
 - Uma falha silenciosa de auditoria existente na Central foi substituida por registro explicito do erro, reduzindo o baseline de catches vazios operacionais de 128 para 127.
 - Validacao: 22 testes focados e 246 testes globais aprovados; ESLint direcionado, audit baseline, build completo e `git diff --check` aprovados.
 - Divida preexistente: ESLint global melhorou para 84 erros e 17 avisos. O typecheck global permanece com diagnosticos historicos; nenhum diagnostico novo permaneceu nos arquivos deste lote.
@@ -8592,11 +8592,11 @@ Checklist inicial:
 
 - Objetivo: integrar criacao, consulta e resposta a propostas no gateway S2S `v1`, sem criar modulo paralelo e sem permitir que o Site altere regras comerciais.
 - Operacoes: `siteOrcamentoCreate`, `siteOrcamentoGet`, `siteNegociacaoGet` e `siteNegociacaoResponder`.
-- Reuso: `Pedido` com tipo `Orçamento`, itens incorporados, Cliente, Produto/catalogo/preco, Colaborador, enderecos, Projeto, CentroCusto, `Oportunidade`, `SolicitacaoAprovacao`, `IntegracaoEvento` e auditoria.
+- Reuso: `Pedido` com tipo `Or?amento`, itens incorporados, Cliente, Produto/catalogo/preco, Colaborador, enderecos, Projeto, CentroCusto, `Oportunidade`, `SolicitacaoAprovacao`, `IntegracaoEvento` e auditoria.
 - Multiempresa: escopo vem da credencial; Cliente, usuario, Produto, endereco, obra, Projeto, Centro de Custo e proposta exigem o mesmo Grupo/Empresa e ownership aprovado.
 - Proposta: versao 1 e snapshot imutavel; validade de sete dias conforme comportamento existente; Site nao envia preco, desconto, frete ou vendedor como autoridade.
 - Customizados: aceitos como solicitacao, sem ID de Produto ou preco ficticio, sempre com revisao humana obrigatoria.
-- CRM: cada Orçamento garante uma `Oportunidade` existente no mesmo escopo, de forma idempotente e sem duplicar funil.
+- CRM: cada Or?amento garante uma `Oportunidade` existente no mesmo escopo, de forma idempotente e sem duplicar funil.
 - Negociacao: melhoria, alteracao e contraproposta criam `SolicitacaoAprovacao`; aceite/rejeicao usam `expectedProposalVersion`; `externalResponseId` impede evento duplicado.
 - Conversao: aceite reutiliza `sitePedidoCreate`, revalida preco/estoque e cria no maximo um Pedido; pagamento continua `PENDING` e producao nao e liberada.
 - Fail-closed: proposta expirada, customizada, com frete pendente, preco alterado, ownership invalido ou dependencia indisponivel nao e aceita.
@@ -8738,7 +8738,7 @@ Checklist inicial:
 - Capabilities: `WORK`, `WORK_PROJECTS` e `WORK_COST_CENTER` refletem a disponibilidade real das entidades existentes.
 - PRONTO: lista/detalhe, busca, filtros, paginacao, hierarquia, selectable, IDOR, cross-tenant, RBAC, auditoria e gateway autenticado.
 - BLOCKED: criacao/edicao pelo Site, alteracao de allowlist, Centro de Custo sem ownership, financeiro interno e analytics avancado.
-- Validacao focada: 16/16 testes próprios e 69/69 testes do Work Context com Pedido, Orcamento e Armacao aprovados.
+- Validacao focada: 16/16 testes pr?prios e 69/69 testes do Work Context com Pedido, Orcamento e Armacao aprovados.
 - Validacao global: 424/424 testes aprovados; ESLint global, `audit:baseline`, build completo e `git diff --check` sem falhas. Typecheck direcionado sem diagnosticos; baseline global permanece com 2.238 diagnosticos historicos.
 - Nenhum arquivo do Site CPA, dado real, recurso Base44 remoto, backup legado ou HD externo foi acessado ou alterado.
 - Proximo passo somente com autorizacao expressa: ERP-SITE-12 - Copiloto e Oportunidades.
@@ -9220,7 +9220,7 @@ Checklist inicial:
 - Multiempresa: a policy resolve escopo Grupo/Empresa antes de habilitar queries. A visao Grupo consolida sem herdar Empresa; a visao Empresa exige Empresa atual ou listada no Grupo e bloqueia ID externo/adulterado.
 - RBAC/cache: nenhuma consulta inicia sem permissao de visualizacao e contexto valido. As query keys de KPIs, Pedidos e Entregas agora incluem usuario, tipo de escopo, Grupo e Empresa.
 - Tempo real: polling, backoff para limite de requisicoes, cache contextual e ausencia de atualizacao em segundo plano foram preservados; `keepPreviousData` legado foi atualizado para a API vigente `placeholderData` do React Query.
-- Seguranca/auditoria: o lote e somente leitura e nao cria dado operacional. Mensagens de erro nao expõem resposta backend e nenhuma permissao foi ampliada.
+- Seguranca/auditoria: o lote e somente leitura e nao cria dado operacional. Mensagens de erro nao exp?em resposta backend e nenhuma permissao foi ampliada.
 - Layout: todos os cards, alertas, listas, progresso e insight existentes foram preservados; conteudo e acoes passaram a se adaptar melhor entre celular, tablet e desktop em `w-full`/`h-full`.
 - Testes: focados passaram 7/7 e a suite completa passou 462/462. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o build manteve apenas avisos conhecidos de imports mistos, bundle grande e bases de navegador desatualizadas.
 - Typecheck: os 67 diagnosticos diretos dos arquivos tocados passaram para zero; o passivo global caiu de 1.835 para 1.765, reducao liquida de 70 por melhora dos contratos compartilhados, e continua aberto sem ser mascarado.
@@ -9230,7 +9230,7 @@ Checklist inicial:
 
 ## 2026-09-14 - Transferencia de Estoque entre Empresas com Compensacao
 
-- Objetivo: eliminar os diagnosticos do formulario existente e impedir transferencia com contexto adulterado, produto incompatível, saldo insuficiente ou persistencia parcial silenciosa.
+- Objetivo: eliminar os diagnosticos do formulario existente e impedir transferencia com contexto adulterado, produto incompat?vel, saldo insuficiente ou persistencia parcial silenciosa.
 - Causa raiz: o formulario aceitava contexto apenas pela existencia de empresas, nao comprovava origem/destino no mesmo Grupo, persistia campos sem contrato e podia registrar a saida mesmo quando a entrada no destino falhava.
 - Arquivos alterados: `src/components/estoque/TransferenciaEntreEmpresasForm.jsx`, `src/components/estoque/transferencia-empresas/TransferenciaEntreEmpresasFields.jsx`, `src/components/lib/estoqueMovimentoPolicy.js` e `tests/estoque-movimento-policy.test.js`.
 - Refatoracao: o orquestrador caiu de 437 para 257 linhas e os campos visuais foram extraidos para auxiliar privado de 231 linhas. O auxiliar existe somente para decompor o formulario atual, sem criar tela, rota, entidade ou persistencia paralela.
@@ -9640,18 +9640,18 @@ Checklist inicial:
 - Estruturas reutilizadas: `TAB_MAP`, `AdminTabs`, `ProtectedSection`, `usePermissions`, `AuditLog` e o componente interno `AdminFerramentas`. O novo arquivo e somente a extracao exigida da implementacao existente, nao uma tela ou funcionalidade paralela.
 - RBAC: a resolucao inicial usa somente abas permitidas por `Sistema.<secao>.visualizar`; URL invalida ou negada nunca libera conteudo. Marcadores visuais agora usam as mesmas chaves canonicas da verificacao real.
 - Multiempresa/auditoria: acesso inicial e troca de aba registram Grupo, Empresa, aba solicitada sanitizada, aba anterior, resultado e motivo controlado. A deduplicacao impede repeticao do mesmo evento durante rerender.
-- Compatibilidade: aliases continuam aceitos e sao normalizados; administradores preservam todas as abas; perfil somente Ferramentas recebe o fallback correto; Integrações e IA mantiveram seus estados internos padrao.
+- Compatibilidade: aliases continuam aceitos e sao normalizados; administradores preservam todas as abas; perfil somente Ferramentas recebe o fallback correto; Integra??es e IA mantiveram seus estados internos padrao.
 - Refatoracao: `AdminTabs.jsx` caiu de 589 para aproximadamente 300 linhas; `AdminFerramentas.jsx` preserva integralmente seed, dry-run, aplicacao, RBAC e auditoria existentes.
 - Testes: regressao focada 17/17 e suite completa 563/563 aprovadas. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram.
 - Typecheck: zero diagnosticos nos arquivos do lote; o passivo global conhecido ficou em 1.598 e nao foi mascarado.
 - Commit de implementacao: `2f082dc4` (`Protege abas administrativas por RBAC`).
 - Proximo passo P0: revisar criar/editar perfil e vincular usuario na Gestao de Acessos, comprovando botao, persistencia, `entityGuard`, Grupo/Empresa e auditoria antes/depois.
-### ERP-RUNTIME-08B — Condição de Pagamento canônica (2026-09-19)
+### ERP-RUNTIME-08B ? Condi??o de Pagamento can?nica (2026-09-19)
 
-- Código preparado na branch `codex/erp-runtime-08-condicao-pagamento`; não aplicado no DEV.
-- Migration 014, repositório PostgreSQL, API, RBAC, RLS/FORCE, auditoria e seed sintético foram adicionados.
-- Validação local: typecheck/build e 74 testes do servidor aprovados; PostgreSQL real permanece pendente.
-- Próximo passo: gate VPS autorizado da 014; não mergear nem promover 3080.
+- C?digo preparado na branch `codex/erp-runtime-08-condicao-pagamento`; n?o aplicado no DEV.
+- Migration 014, reposit?rio PostgreSQL, API, RBAC, RLS/FORCE, auditoria e seed sint?tico foram adicionados.
+- Valida??o local: typecheck/build e 74 testes do servidor aprovados; PostgreSQL real permanece pendente.
+- Pr?ximo passo: gate VPS autorizado da 014; n?o mergear nem promover 3080.
 
 ## 2026-09-21 - Gate 2: convite de usuario protegido
 
@@ -9728,4 +9728,3 @@ Checklist inicial:
 - Implementados `orcamentoTypes`, calculo monetario por micros sem float, snapshots de item, schema de entrada e `InMemoryOrcamentoRepository` com sequencia isolada por Empresa, consulta, listagem e cancelamento.
 - Criada `016_orcamentos_comercial_360.sql` apenas no repositorio: cabecalho/itens, decimais, FK, unicidade por Empresa, indices, RLS+FORCE e rollback documentado. Nao foi executada na VPS.
 - Teste direcionado: 1 pass, 0 fail. Backend typecheck/build e `git diff --check` aprovados. Repositorio PostgreSQL, Service, RBAC/auditoria e rotas sao pendencias explicitas do A2; Pedido e frontend nao foram iniciados.
-
