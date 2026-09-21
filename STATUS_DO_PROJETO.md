@@ -9664,3 +9664,54 @@ Checklist inicial:
 - Testes: teste focado aprovado; suite completa 563/563; `npm run audit:baseline`, `npm run lint`, `npm run typecheck`, `npm run build` e `git diff --check` aprovados. Build com avisos conhecidos de bundle grande, imports mistos e bases de navegadores desatualizadas.
 - Commit de implementacao: `d8f6dd8b` (`Protege convite de usuario por escopo`).
 - Proximo passo P0: revisar criar/editar Perfil de Acesso e vinculos de usuario existentes, comprovando persistencia, Grupo/Empresa, RBAC granular e auditoria antes/depois.
+### ERP-RUNTIME-08B - Correcao do fixture PostgreSQL da PR #32 (2026-09-21)
+
+- O PostgreSQL DEV real executou a PR #32 e confirmou a causa do erro do
+  teste: o `finally` removia parcelas de fixtures ainda ativos em autocommit,
+  acionando corretamente `assert_condicao_pagamento_integridade_final()`
+  com SQLSTATE `P0001`.
+- Correcao somente em `server/tests/runtime08-postgres-e2e.test.ts`: cleanup
+  transacional inativa primeiro as CondicoesPagamento criadas pelo teste e so
+  depois remove parcelas, vinculos e cabecalhos. Assim, nenhuma transacao
+  termina com condicao ativa sem parcelas totalizando 100%.
+- Nenhuma implementacao de geracao de codigo, constraint, trigger, migration
+  014/015, schema, VPS ou promocao foi alterada. O teste real ainda cobre
+  high-water, soft-delete, concorrencia, isolamento por Grupo e unicidade.
+- Validacoes locais apos a correcao: R08/RBAC 8 pass, 0 fail, 2 skips por
+  `DATABASE_URL` ausente; backend completo sequencial 84 pass, 0 fail,
+  3 skips; typecheck/build do backend e `git diff --check` aprovados.
+- Pendente: repetir `test:postgres` no PostgreSQL DEV autorizado para
+  revalidar a PR #32. Nao fazer merge nem promover 3080 antes desse resultado.
+
+### ERP-RUNTIME-08B - Hotfix bloqueador de codigo CondicaoPagamento (2026-09-21)
+
+- Branch: `codex/r08b-condicao-pagamento-codigo`, baseada na MAIN
+  `a099d31685a0e512e62d5d08a20a75d7aac8087a`; aguardando revisao em PR,
+  sem merge, VPS ou promocao da 3080.
+- Causa raiz do canario: a criacao chamava a primitive transacional
+  `reserve_entity_codigo(group_id,'CondicaoPagamento',6)` sem primeiro
+  alinhar a sequencia aos codigos de CondicaoPagamento ja existentes no grupo.
+  Assim, seed/importacao previa podia deixar a sequencia em `000001` e
+  causar violacao de `condicoes_pagamento_group_id_codigo_key`.
+- Correcao: o repositorio PostgreSQL agora eleva atomicamente
+  `entity_code_sequences.next_value` ao maior codigo numerico existente do
+  mesmo Grupo, incluindo registros inativos, e so entao reutiliza a primitive
+  canonica para reservar o proximo codigo na mesma transacao. Concorrencia fica
+  serializada pela linha `(group_id, entity_name)`; nao ha `count(*) + 1`,
+  retry cego de `23505`, migration 016 ou enfraquecimento da constraint.
+- O repositorio em memoria deixou de usar tamanho de colecao e passou a manter
+  high-water por Grupo, incluindo itens inativos, para preservar o contrato nos
+  testes/harness local.
+- Cobertura PostgreSQL real adicionada ao teste R08: high-water existente,
+  soft-delete sem reuso, dois creates concorrentes, isolamento entre Grupos e
+  confirmacao da constraint unica. A limpeza restaura as sequencias de teste.
+- Validacoes locais: R08/RBAC 8 pass, 0 fail, 2 skips por
+  `DATABASE_URL` ausente; backend completo sequencial com heap de 1536 MB:
+  84 pass, 0 fail, 3 skips; typecheck e build do servidor aprovados; typecheck,
+  build e `audit:baseline` da raiz aprovados; `git diff --check` aprovado.
+- `npm run test:postgres` foi executado e bloqueou somente com
+  `DATABASE_URL is required for test:postgres`; PostgreSQL real permanece
+  pendente no ambiente autorizado antes de novo canario. Nenhuma migration
+  014/015 foi alterada ou reaplicada.
+- Proximo passo: push da branch e PR de hotfix; executar `test:postgres`
+  com banco PostgreSQL autorizado e revisar CI antes de qualquer merge.

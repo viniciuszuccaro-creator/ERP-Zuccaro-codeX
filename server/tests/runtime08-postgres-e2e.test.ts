@@ -4,6 +4,7 @@ import test from 'node:test';
 import { createApp } from '../src/app.ts';
 import { loadConfig } from '../src/config/env.ts';
 import { createDbClient } from '../src/db/client.ts';
+import { PostgresCondicaoPagamentoRepository } from '../src/repositories/postgresCondicaoPagamentoRepository.ts';
 import { SEED_IDS } from '../scripts/seedDevIds.ts';
 
 const enabled = Boolean(process.env.DATABASE_URL);
@@ -56,4 +57,71 @@ test('R08 PostgreSQL real: RBAC, tenant e invariantes de CondicaoPagamento', { s
       await client.query('ROLLBACK');
     } finally { client.release(); }
   } finally { await db.end(); }
+});
+
+test('R08 PostgreSQL real: CondicaoPagamento reserves code above existing and soft-deleted rows', { skip: !enabled && 'DATABASE_URL not available in this environment' }, async () => {
+  const config = loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL });
+  const db = createDbClient(config);
+  const repo = new PostgresCondicaoPagamentoRepository(db);
+  const scopeA = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA };
+  const scopeB = { groupId: SEED_IDS.groupB, empresaId: SEED_IDS.empresaB };
+  const created: string[] = [];
+  const sequenceState = new Map<string, number | null>();
+  const payload = (nome: string) => ({ nome, parcelas: [{ ordem: 1, dias: 0, percentual: '100.000000' }] });
+  const maxCode = async (groupId: string) => {
+    const result = await db.query<{ value: number }>(`SELECT COALESCE(MAX(codigo::int),0)::int AS value FROM condicoes_pagamento WHERE group_id=$1 AND codigo ~ '^[0-9]{6}$'`, [groupId]);
+    return result.rows[0]?.value ?? 0;
+  };
+  const setSequence = async (groupId: string, nextValue: number) => {
+    await db.query(`INSERT INTO entity_code_sequences(group_id,entity_name,next_value) VALUES($1,'CondicaoPagamento',$2) ON CONFLICT(group_id,entity_name) DO UPDATE SET next_value=EXCLUDED.next_value,updated_at=timezone('utc',now())`, [groupId, nextValue]);
+  };
+  const create = async (scope: typeof scopeA, nome: string, actorId: string) => {
+    const row = await db.withTransaction((tx) => repo.create(scope, payload(nome), actorId, tx));
+    created.push(row.id);
+    return row;
+  };
+  try {
+    for (const groupId of [SEED_IDS.groupA, SEED_IDS.groupB]) {
+      const result = await db.query<{ next_value: number }>(`SELECT next_value FROM entity_code_sequences WHERE group_id=$1 AND entity_name='CondicaoPagamento'`, [groupId]);
+      sequenceState.set(groupId, result.rows[0]?.next_value ?? null);
+      await setSequence(groupId, 1);
+    }
+
+    const initialA = await maxCode(SEED_IDS.groupA);
+    const first = await create(scopeA, ['R08 codigo', randomUUID()].join(' '), SEED_IDS.runtimeActorA);
+    assert.equal(first.codigo, String(initialA + 1).padStart(6, '0'));
+    await db.withTransaction((tx) => repo.softDelete(scopeA, first.id, SEED_IDS.runtimeActorA, tx));
+    const second = await create(scopeA, ['R08 soft delete', randomUUID()].join(' '), SEED_IDS.runtimeActorA);
+    assert.equal(second.codigo, String(initialA + 2).padStart(6, '0'), 'soft-deleted code remains reserved');
+
+    await setSequence(SEED_IDS.groupA, 1);
+    const concurrent = await Promise.all([
+      create(scopeA, ['R08 concurrent A', randomUUID()].join(' '), SEED_IDS.runtimeActorA),
+      create(scopeA, ['R08 concurrent B', randomUUID()].join(' '), SEED_IDS.runtimeActorA),
+    ]);
+    assert.deepEqual(concurrent.map((row) => row.codigo).sort(), [initialA + 3, initialA + 4].map((value) => String(value).padStart(6, '0')));
+
+    const initialB = await maxCode(SEED_IDS.groupB);
+    const groupB = await create(scopeB, ['R08 group B', randomUUID()].join(' '), SEED_IDS.runtimeActorB);
+    assert.equal(groupB.codigo, String(initialB + 1).padStart(6, '0'), 'each group has an independent sequence');
+
+    await assert.rejects(
+      () => db.query(`INSERT INTO condicoes_pagamento(group_id,empresa_id,codigo,nome,ativo) VALUES($1,$2,$3,$4,false)`, [SEED_IDS.groupA, SEED_IDS.empresaA, second.codigo, ['R08 duplicate', randomUUID()].join(' ')]),
+      /condicoes_pagamento_group_id_codigo_key/,
+    );
+  } finally {
+    if (created.length) {
+      await db.withTransaction(async (tx) => {
+        await tx.query(`UPDATE condicoes_pagamento SET ativo=false WHERE id = ANY($1::uuid[])`, [created]);
+        await tx.query(`DELETE FROM condicao_pagamento_parcelas WHERE condicao_pagamento_id = ANY($1::uuid[])`, [created]);
+        await tx.query(`DELETE FROM condicao_pagamento_empresas WHERE condicao_pagamento_id = ANY($1::uuid[])`, [created]);
+        await tx.query(`DELETE FROM condicoes_pagamento WHERE id = ANY($1::uuid[])`, [created]);
+      });
+    }
+    for (const [groupId, nextValue] of sequenceState) {
+      if (nextValue === null) await db.query(`DELETE FROM entity_code_sequences WHERE group_id=$1 AND entity_name='CondicaoPagamento'`, [groupId]);
+      else await setSequence(groupId, nextValue);
+    }
+    await db.end();
+  }
 });
