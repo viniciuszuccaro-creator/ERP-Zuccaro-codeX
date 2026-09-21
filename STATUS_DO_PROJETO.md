@@ -9722,3 +9722,10 @@ Checklist inicial:
 - Lote A definido: Orcamento/Pedido/Itens/Totais/Descontos/Conversao, com Grupo/Empresa, RBAC fail-closed, auditoria e soft delete. Antes de schema, confirmar contratos de Pedido/Orcamento existentes e evitar estrutura paralela.
 - Proximo passo: diagnostico focal dos contratos backend de Pedido/Orcamento e seus testes para implementar somente o Lote A.
 - Diagnostico focal concluido: Pedido/Orcamento inexistem no backend atual, conforme metadata, migrations 013/014 e testes. O Lote A passa a requerer agregados canonicos aditivos; nao existe implementacao equivalente a preservar.
+
+### Comercial 360 - Lote A1 Fundacao de Orcamento (2026-09-21)
+
+- Implementados `orcamentoTypes`, calculo monetario por micros sem float, snapshots de item, schema de entrada e `InMemoryOrcamentoRepository` com sequencia isolada por Empresa, consulta, listagem e cancelamento.
+- Criada `016_orcamentos_comercial_360.sql` apenas no repositorio: cabecalho/itens, decimais, FK, unicidade por Empresa, indices, RLS+FORCE e rollback documentado. Nao foi executada na VPS.
+- Teste direcionado: 1 pass, 0 fail. Backend typecheck/build e `git diff --check` aprovados. Repositorio PostgreSQL, Service, RBAC/auditoria e rotas sao pendencias explicitas do A2; Pedido e frontend nao foram iniciados.
+
