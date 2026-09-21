@@ -167,7 +167,7 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
   });
   assert.match(result.body.note, /Pedido backend HTTP is active/);
   assert.equal(result.body.pedido.backendHttp, true);
-  assert.equal(result.body.pedido.frontendHttp, false);
+  assert.equal(result.body.pedido.frontendHttp, true);
   assert.equal(result.body.runtime, 'ERP-RUNTIME-08B');
 });
 

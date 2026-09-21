@@ -337,7 +337,7 @@ test('meta ERP-RUNTIME-08B prepara CondicaoPagamento sem ativar frontend HTTP', 
     assert.ok(meta.preparedEntities.includes('Pedido'));
     assert.ok(meta.httpEntities.includes('Pedido'));
     assert.equal(meta.pedido.backendHttp, true);
-    assert.equal(meta.pedido.frontendHttp, false);
+    assert.equal(meta.pedido.frontendHttp, true);
     assert.ok(!meta.preparedEntities.includes('Orçamento'));
   } finally {
     await new Promise<void>((resolve, reject) => {

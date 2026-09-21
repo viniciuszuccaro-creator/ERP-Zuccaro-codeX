@@ -341,7 +341,8 @@ export default function Comercial() {
     },
     {
       title: 'Pedidos',
-      sectionKey: 'Pedidos',
+      sectionKey: 'pedido',
+      exactPermission: true,
       description: 'Orçamentos e vendas',
       icon: ShoppingCart,
       color: 'purple',
@@ -349,7 +350,7 @@ export default function Comercial() {
       windowTitle: ' Pedidos',
       width: 1500,
       height: 850,
-      props: { pedidos: pedidosFiltrados, clientes: clientesFiltrados, isLoading: false, empresas, onCreatePedido: handleCreateNewPedido, onEditPedido: handleEditPedido }
+      props: { canonicalHttp: true, groupId, empresaId, actorId: user?.id, actorEmail: user?.email, hasPermission, filterInContext, empresas, empresaAtual }
     },
     {
       title: 'Logística Entrega',

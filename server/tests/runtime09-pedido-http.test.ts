@@ -97,5 +97,5 @@ test('HTTP Pedido aplica RBAC fail-closed e isolamento entre empresas', async ()
   const created = await request(runtime.app, '/api/v1/pedidos', { method: 'POST', headers: headers(), body: JSON.stringify(pedidoPayload) });
   const cross = await request(runtime.app, `/api/v1/pedidos/${created.body.data.id}`, { headers: headers({ 'x-empresa-id': otherEmpresaId }) });
   assert.equal(cross.status, 404); assert.equal(cross.body.error.code, 'PEDIDO_NOT_FOUND');
-  const meta = await request(runtime.app, '/api/v1/meta'); assert.equal(meta.body.pedido.backendHttp, true); assert.equal(meta.body.pedido.frontendHttp, false);
+  const meta = await request(runtime.app, '/api/v1/meta'); assert.equal(meta.body.pedido.backendHttp, true); assert.equal(meta.body.pedido.frontendHttp, true);
 });

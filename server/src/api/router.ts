@@ -936,7 +936,7 @@ export function createApiRouter(deps: ApiDeps) {
       preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'TabelaPreco', 'CondicaoPagamento', 'Orcamento', 'Pedido'],
       httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Orcamento', 'Pedido'],
       rlsModel: 'ENABLE+FORCE fail-closed; BFF uses privileged DB role; JWT policies planned with Auth',
-      note: 'TabelaPreco and CondicaoPagamento prepared in backend; Orcamento uses the canonical frontend HTTP client; Pedido backend HTTP is active with frontend integration pending',
+      note: 'TabelaPreco and CondicaoPagamento prepared in backend; Orcamento and Pedido use the canonical frontend HTTP client; Pedido backend HTTP is active',
       produto: {
         masterData: true,
         pagination: true,
@@ -998,7 +998,7 @@ export function createApiRouter(deps: ApiDeps) {
       },
       pedido: {
         backendHttp: true,
-        frontendHttp: false,
+        frontendHttp: true,
         pagination: true,
         tenantIntegrity: true,
         sequentialNumero: true,

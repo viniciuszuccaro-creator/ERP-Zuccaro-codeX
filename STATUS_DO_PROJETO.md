@@ -9868,3 +9868,12 @@ Checklist inicial:
 - HTTP sintetico: 4 testes pass/0 fail/0 skip; familia focada Pedido/Orcamento: 18 pass/0 fail/0 skip. Backend typecheck, build e `git diff --check` aprovados.
 - Runner PostgreSQL passa a exigir R08B, R08C e R09, falhando por status, zero testes ou skip. R09 cobre migrations 001-017 uma unica vez, CRUD/historico, isolamento tenant, constraints e sequencia concorrente; execucao real fica a cargo do PostgreSQL 16 efemero da CI.
 - Nenhuma migration foi executada na VPS; porta 3080, main, dados reais e backups permaneceram intocados. Proximo checkpoint: `C360-V1-07`, frontend funcional de Pedido sobre estas rotas.
+### Comercial 360 V1 - C360-V1-07/08 Frontend e fluxo inicial de Pedido (2026-09-21)
+
+- `PedidosTab` continua sendo a entrada existente do Comercial: o painel HTTP canônico foi extraído como auxiliar e a operação legada foi preservada como fallback, sem criar rota ou cadastro paralelo.
+- A tela canônica oferece listagem paginada, pesquisa, filtros, create, detalhe, update em aberto, cancelamento lógico, histórico e avanço de status. Cache e cliente HTTP incluem Grupo/Empresa/ator; RBAC visual usa chaves exatas e permanece fail-closed.
+- Formulário cobre ClienteEmpresa, Condição de Pagamento, entrega/retirada, data solicitada, local, obra, tabela de preço, produtos, unidades, quantidades, preços, descontos e produção. Payload allowlisted omite tenant, número, status e totais; cálculo local usa micros e o backend continua autoridade.
+- Orçamento em aberto ganhou conversão revisável para Pedido com tipo de operação e data solicitada. O orçamento original é preservado e repetição continua protegida pelo backend idempotente.
+- Workflow visível: Em aberto -> Em produção quando houver item de produção -> Pronto para entrega/retirada -> Finalizado. Transições inválidas não são oferecidas e seguem bloqueadas no backend; nenhuma integração falsa de Estoque, Produção, Expedição, Financeiro ou Fiscal foi criada.
+- Testes frontend focados: 16 pass/0 fail e integração Pedido: 5 pass/0 fail. Suite frontend completa explícita: 588 pass/0 fail/0 skip. HTTP backend relacionado: 10 pass/0 fail. Suite backend completa: 138 pass/0 fail/7 skip locais exclusivamente por ausência de DATABASE_URL. Frontend lint/build, backend typecheck/build e audit baseline aprovados.
+- Nenhuma VPS, migration remota, porta 3080, main, segredo ou dado real foi alterado. Próximo checkpoint: C360-V1-09, cobertura consolidada de segurança/regressão.
