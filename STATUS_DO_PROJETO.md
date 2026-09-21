@@ -9722,3 +9722,12 @@ Checklist inicial:
 - Adicionado `scripts/erp_runtime_08b_ca417_gate_cd.sh`, sem executar na VPS. O script cria backup, worktree descartavel e imagem exclusiva do SHA aprovado; valida Gate C e sobe somente canario R08B na porta 3086 para Gate D.
 - Travamentos: recusa SHA divergente, worktree suja, migration fora de 001-015, canario/porta 3086 existentes, metadados inadequados e alteracao da API oficial. Nao aplica migration/seed, nao toca 3080, nao promove, nao apaga imagem/container/backup/rollback; ao final para e preserva apenas o canario.
 - Pendente: revisar a PR deste script e executar manualmente na VPS autorizada; somente depois decidir Gate E. Nenhuma alteracao de runtime foi feita aqui.
+
+### ERP-RUNTIME-08B - Correcao preventiva do script Gates C/D (2026-09-21)
+
+- Corrigido o script sem execucao de VPS: metadata centralizada em `/api/v1/meta`, `DATABASE_URL` exportada somente durante o E2E e removida em sucesso/falha, e `canary.env` removido logo apos subir o canario e pelo cleanup.
+- O cleanup agora e disparado por `EXIT`, preserva o status original, para apenas o canario e nunca altera `erp-api-dev`; logs, backup e worktree permanecem para diagnostico.
+- Adicionados timeout HTTP, exigencia TAP `fail 0`, smoke pos-restart de Lista/GET/Produto/Cliente e bloqueio de termos sensiveis na auditoria do objeto sintetico.
+- Pendente: validacao estatica, commit/push da mesma branch e revisao antes de abrir PR. Nenhuma promotion, migration, seed ou operacao VPS foi executada.
+
+- Validacao local da correcao: Git Bash `bash -n` e `git diff --check` aprovados; `shellcheck` indisponivel neste computador. Revisao estatica confirmou ausencia de `/meta` legado, promotion, migration, seed e comandos contra `erp-api-dev`.
