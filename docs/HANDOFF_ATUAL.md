@@ -1,5 +1,13 @@
 # ERP ZUCCARO — Handoff atual
 
+## Atualizacao Comercial 360 V1 - 2026-09-21
+
+- Branch de trabalho: `codex/comercial-360`; PR aberta: `#33`; nao mesclada.
+- Ultimo checkpoint funcional publicado: `0040e994a8d4c3c3cdd417cc9502fa332c6b3567`.
+- CI comprovada: workflow PR `35666828387`, frontend/backend `SUCCESS`; migrate, seed sintetico e PostgreSQL E2E passaram.
+- Orçamento e Pedido usam backend HTTP canonico, tenant Grupo/Empresa, RBAC fail-closed e auditoria transacional. Migrations novas 016/017 foram validadas somente no PostgreSQL efemero da CI.
+- Preparacao de deploy: `COMERCIAL_360_V1_DEPLOY.md` e `scripts/deploy/comercial360-{canary,smoke,rollback}.sh`. Os scripts nao foram executados; rollback e dry-run por padrao.
+- VPS permanece intocada por esta versao: API oficial 3080, migrations aplicadas, imagens, containers e backups continuam no estado operacional descrito abaixo. Proximo gate exige merge e autorizacao VPS separados.
 Atualizado em 2026-09-20 após o diagnóstico definitivo do gate do ERP-RUNTIME-08.
 
 ## Referências

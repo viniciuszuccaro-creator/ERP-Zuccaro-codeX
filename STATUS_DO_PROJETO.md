@@ -9877,3 +9877,10 @@ Checklist inicial:
 - Workflow visível: Em aberto -> Em produção quando houver item de produção -> Pronto para entrega/retirada -> Finalizado. Transições inválidas não são oferecidas e seguem bloqueadas no backend; nenhuma integração falsa de Estoque, Produção, Expedição, Financeiro ou Fiscal foi criada.
 - Testes frontend focados: 16 pass/0 fail e integração Pedido: 5 pass/0 fail. Suite frontend completa explícita: 588 pass/0 fail/0 skip. HTTP backend relacionado: 10 pass/0 fail. Suite backend completa: 138 pass/0 fail/7 skip locais exclusivamente por ausência de DATABASE_URL. Frontend lint/build, backend typecheck/build e audit baseline aprovados.
 - Nenhuma VPS, migration remota, porta 3080, main, segredo ou dado real foi alterado. Próximo checkpoint: C360-V1-09, cobertura consolidada de segurança/regressão.
+### Comercial 360 V1 - C360-V1-09/11 Seguranca, homologacao e deploy preparado (2026-09-21)
+
+- Checkpoint funcional `0040e994a8d4c3c3cdd417cc9502fa332c6b3567` sincronizado na branch `codex/comercial-360`; workflows push `35666824339` e PR `35666828387` concluíram frontend/backend com `SUCCESS`.
+- Suite frontend explícita: 588 pass/0 fail/0 skip. Suite backend local: 138 pass/0 fail e 7 skips exclusivamente dos E2E sem `DATABASE_URL`; na CI PostgreSQL 16, migrate, seed sintético e `test:postgres` passaram sem skip.
+- Cobertura consolidada inclui tenant Grupo/Empresa, RBAC backend/visual fail-closed, wildcard bloqueado, auditoria transacional, rollback, sequências, idempotência, filtros, monetário, conversão e workflow Pedido.
+- Criado `COMERCIAL_360_V1_DEPLOY.md` e scripts parametrizados de canário, smoke e rollback. Sintaxe Bash aprovada; rollback é dry-run por padrão e nenhuma operação Docker/VPS foi executada.
+- Migration 017 permanece somente no repositório/CI. Nenhuma migration, seed, imagem, container, VPS, porta 3080, segredo ou dado real foi alterado. Próximo checkpoint: `C360-V1-12`, fechamento documental e CI final da PR #33, sem merge.
