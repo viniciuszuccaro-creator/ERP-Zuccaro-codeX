@@ -2465,6 +2465,65 @@ const functions = {
             auditDenied: auditLocalPermissionDenied,
           });
         }
+      case 'adminInviteUser': {
+        const email = String(payload.email || '').trim().toLowerCase().slice(0, 254);
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+          throw new Error('E-mail invalido para convite.');
+        }
+
+        const currentUser = readUser();
+        const role = payload.role === 'admin' ? 'admin' : 'user';
+        if (role === 'admin' && currentUser?.role !== 'admin') {
+          throw new Error('Convite administrativo restrito.');
+        }
+
+        const groupId = String(payload.group_id || payload.grupo_id || getCurrentGroupId() || '').trim();
+        const empresaId = String(payload.empresa_id || getCurrentEmpresaId() || '').trim() || null;
+        const guard = runLocalEntityGuard({
+          module: 'Sistema',
+          section: 'Controle de Acesso',
+          action: 'criar',
+          group_id: groupId,
+          empresa_id: empresaId,
+        }, {
+          normalizeAction: normalizeGuardAction,
+          validateContext: validateGuardContext,
+          evaluatePermission: evaluateLocalPermission,
+          loadScopeData: () => {
+            const db = loadDb();
+            return {
+              user: currentUser,
+              groups: getEntityStore(db, 'GrupoEmpresarial'),
+              companies: getEntityStore(db, 'Empresa'),
+            };
+          },
+          auditDenied: auditLocalPermissionDenied,
+        });
+        if (guard?.data?.allowed !== true) {
+          throw new Error('Convite bloqueado por escopo ou permissao.');
+        }
+
+        const user = await entities.User.create({
+          email,
+          role,
+          full_name: email,
+          disabled: false,
+          is_verified: false,
+          convite_local: true,
+          group_id: groupId,
+          ...(empresaId ? { empresa_id: empresaId, empresas_vinculadas: [empresaId] } : {}),
+        });
+        return {
+          data: {
+            ok: true,
+            local: true,
+            user_id: user.id,
+            role,
+            group_id: groupId,
+            empresa_id: empresaId,
+          },
+        };
+      }
       case 'verifyTotp':
         return runLocalTotpVerification(payload, {
           validateContext: validateGuardContext,

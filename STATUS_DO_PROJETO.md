@@ -9646,3 +9646,15 @@ Checklist inicial:
 - Typecheck: zero diagnosticos nos arquivos do lote; o passivo global conhecido ficou em 1.598 e nao foi mascarado.
 - Commit de implementacao: `2f082dc4` (`Protege abas administrativas por RBAC`).
 - Proximo passo P0: revisar criar/editar perfil e vincular usuario na Gestao de Acessos, comprovando botao, persistencia, `entityGuard`, Grupo/Empresa e auditoria antes/depois.
+
+## 2026-09-21 - Gate 2: convite de usuario protegido
+
+- Objetivo: fazer o convite existente respeitar RBAC, Grupo/Empresa, persistencia real no modo local e auditoria segura.
+- Causa raiz: a tela chamava `base44.users.inviteUser` diretamente; em modo local a funcao era apenas simulada e a auditoria retinha e-mail bruto.
+- Arquivos alterados: `base44/functions/adminInviteUser/entry.ts`, `src/api/localBase44Client.js`, `src/components/administracao-sistema/gestao-acessos/UsuariosTab.jsx`, `tests/sanitize-audit-policy.test.js`, `PLANO_MELHORIA_ERP_ZUCCARO.md` e este status.
+- Estruturas reutilizadas: `adminInviteUser`, `entityGuard`, pipeline existente de `User`, `AuditLog` e validacao de contexto. Nenhuma tela, rota, entidade ou mecanismo paralelo foi criado.
+- RBAC/multiempresa: o backend exige usuario autenticado, `Sistema/Controle de Acesso/criar`, Grupo resolvido e Empresa pertencente ao Grupo. Convite de administrador continua exclusivo de administrador real. O dispatcher local aplica o mesmo guard antes de persistir.
+- Auditoria: o backend guarda hash do e-mail, papel, resultado e escopo; a UI deixa de enviar e-mail ou erro bruto aos registros de falha. A criacao local preserva a auditoria antes/depois da entidade existente.
+- Testes: teste focado aprovado; suite completa 563/563; `npm run audit:baseline`, `npm run lint`, `npm run typecheck`, `npm run build` e `git diff --check` aprovados. Build com avisos conhecidos de bundle grande, imports mistos e bases de navegadores desatualizadas.
+- Commit: pendente de criacao neste fechamento.
+- Proximo passo P0: revisar criar/editar Perfil de Acesso e vinculos de usuario existentes, comprovando persistencia, Grupo/Empresa, RBAC granular e auditoria antes/depois.

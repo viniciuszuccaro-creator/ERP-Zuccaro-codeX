@@ -33,6 +33,7 @@ test('operational audit call sites no longer swallow AuditLog failures', async (
   const pedido = await readFile(new URL('../src/components/comercial/pedido/PedidoTabsContainer.jsx', import.meta.url), 'utf8');
   const events = await readFile(new URL('../base44/functions/auditEntityEvents/entry.ts', import.meta.url), 'utf8');
   const invite = await readFile(new URL('../base44/functions/adminInviteUser/entry.ts', import.meta.url), 'utf8');
+  const inviteUi = await readFile(new URL('../src/components/administracao-sistema/gestao-acessos/UsuariosTab.jsx', import.meta.url), 'utf8');
   const exportAco = await readFile(new URL('../base44/functions/exportEstoqueAco/entry.ts', import.meta.url), 'utf8');
   const emitirBoleto = await readFile(new URL('../base44/functions/emitirBoleto/entry.ts', import.meta.url), 'utf8');
   const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
@@ -71,8 +72,18 @@ test('operational audit call sites no longer swallow AuditLog failures', async (
   assert.match(events, /ok: false, skipped: true/);
   assert.match(events, /group_id: group_id \|\| null/);
   assert.doesNotMatch(invite, /catch \{\}/);
-  assert.match(invite, /group_id: groupId/);
-  assert.match(invite, /Falha ao registrar auditoria de convite/);
+  assert.match(invite, /requireEntityGuard/);
+  assert.match(invite, /section: 'Controle de Acesso'/);
+  assert.match(invite, /action: 'criar'/);
+  assert.match(invite, /Empresa fora do grupo informado/);
+  assert.match(invite, /email_hash/);
+  assert.doesNotMatch(invite, /dados_novos:\s*\{\s*email,/);
+  assert.match(invite, /asServiceRole\.entities\.AuditLog\.create/);
+  assert.match(inviteUi, /functions\.invoke\("adminInviteUser"/);
+  assert.doesNotMatch(inviteUi, /base44\.users\.inviteUser/);
+  assert.match(local, /case 'adminInviteUser'/);
+  assert.match(local, /section: 'Controle de Acesso'/);
+  assert.match(local, /const user = await entities\.User\.create/);
   assert.doesNotMatch(exportAco, /catch \{\}/);
   assert.match(exportAco, /group_id: groupId/);
   assert.match(exportAco, /Falha ao registrar auditoria da exportacao/);
