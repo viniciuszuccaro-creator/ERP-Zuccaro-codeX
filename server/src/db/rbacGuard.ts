@@ -17,7 +17,9 @@ export type RbacAction =
   | 'gerenciar-itens'
   | 'definir-padrao'
   | 'importar'
-  | 'exportar';
+  | 'exportar'
+  | 'converter-pedido'
+  | 'alterar-status';
 
 export type PermissionTree = Record<string, unknown>;
 
