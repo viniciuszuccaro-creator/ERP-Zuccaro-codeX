@@ -9845,3 +9845,10 @@ Checklist inicial:
 - WhatsApp e e-mail preparam somente um resumo comercial no clipboard para revisao humana. Nenhum envio, destinatario, credencial ou servico externo foi integrado; o envio real permanece bloqueado ate configuracao/autorizacao especifica.
 - Testes direcionados frontend: 13 pass/0 fail/0 skip. A suite frontend completa do checkpoint anterior passou 581/581. O build global inicia mas o processo hospedeiro encerra sem codigo neste PC; a CI da PR permanece o gate completo.
 - Nenhuma migration, VPS, porta 3080, main, segredo ou dado real foi alterado. Proximo checkpoint automatico: `C360-V1-04`, dominio e persistencia canonicos de Pedido, reutilizando o modulo existente.
+### Comercial 360 V1 - C360-V1-04 Dominio e persistencia de Pedido (2026-09-21)
+
+- Criado o agregado backend canonico de Pedido, sem substituir as telas legadas: Grupo/Empresa, sequencia por Empresa, ClienteEmpresa, ClienteLocal, Obra, TabelaPreco, CondicaoPagamento, origem do Orcamento, vendedor, entrega/retirada, data solicitada, itens/snapshots, producao, totais decimais, status e historico.
+- `InMemoryPedidoRepository` e `PostgresPedidoRepository` compartilham contrato tipado, transacao externa reutilizavel, isolamento tenant, update somente em aberto, conversao unica por Orcamento, historico e rollback de registros/sequencia.
+- A migration aditiva `017_pedidos_comercial_360.sql` foi criada somente no repositorio: constraints, FKs, triggers de integridade dos cadastros mestres, RLS+FORCE, revogacao PUBLIC, indices, conversao unica e ordem monotônica de historico. Migrations 001-016 nao foram alteradas.
+- Testes direcionados Pedido/migration/repositorio PG: 6 pass/0 fail/0 skip. Teste de ordem 001-017, backend typecheck e build aprovados; PostgreSQL real fica obrigatorio na CI efemera.
+- Nenhuma migration foi executada na VPS; porta 3080, main, dados reais e backups permaneceram intocados. Proximo checkpoint: `C360-V1-05`, conversao transacional/idempotente Orcamento para Pedido.
