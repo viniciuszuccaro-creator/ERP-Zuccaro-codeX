@@ -9799,3 +9799,12 @@ Checklist inicial:
 - Backend typecheck/build, frontend build, lint, audit:baseline e git diff --check aprovados. R08B/R08C reais permanecem obrigatorios na CI sem skip.
 - Nenhuma rota HTTP, frontend funcional, migration, VPS, porta 3080, main, segredo ou dado real foi alterado.
 - Proximo lote: somente apos CI verde, integrar rotas HTTP canonicas de Orcamento com o service protegido, sem iniciar Pedido ou frontend.
+### Comercial 360 - A2.3 HTTP canonico de Orcamento (2026-09-21)
+
+- `createApp` passou a compor um unico `OrcamentoRepository` por modo (in-memory ou PostgreSQL) e um unico `OrcamentoService` com auditoria, TenantGuard, RBAC e repositorios mestres existentes.
+- Rotas canonicas adicionadas: `GET/POST /api/v1/orcamentos`, `GET/PATCH /api/v1/orcamentos/:id` e `POST /api/v1/orcamentos/:id/cancelar`. Todas usam `requireTenantScope` e `ctxFromReq`; tenant, actor, status, numero e totais nao sao aceitos do body.
+- Contrato HTTP validado para create 201, list paginada, get, update, cancel, escopo/UUID 400, actor/RBAC 403, cross-tenant 404, conflito de estado 409 e payload/referencia 422.
+- Metadata `/api/v1/meta` agora declara `Orcamento` em `preparedEntities`/`httpEntities` e informa backend HTTP ativo, frontend inativo, paginacao, integridade tenant, numero sequencial, auditoria transacional, RBAC fail-closed e cancelamento por estado. Runtime oficial permanece `ERP-RUNTIME-08B`; Pedido continua nao implementado.
+- Testes HTTP novos: 5 pass, 0 fail, 0 skip. Familia R08C local: 38 pass, 0 fail, 0 skip. Suite backend: 127 total, 122 pass, 0 fail, 5 skips exclusivamente por `DATABASE_URL` local ausente; R08B/R08C reais continuam obrigatorios na CI PostgreSQL sem skip.
+- Backend typecheck/build, frontend build, lint, `audit:baseline` e `git diff --check` aprovados. O typecheck global da raiz mantem erros legados preexistentes em frontend/Base44 fora deste lote; nenhum erro pertence aos arquivos alterados.
+- Nenhuma migration 017, frontend de Orcamento, Pedido, VPS, porta 3080, main, segredo ou dado real foi alterado. Proximo lote somente apos CI verde da PR #33.

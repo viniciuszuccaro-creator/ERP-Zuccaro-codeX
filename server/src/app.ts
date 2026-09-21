@@ -54,6 +54,9 @@ import { PostgresTabelaPrecoRepository } from './repositories/postgresTabelaPrec
 import { InMemoryCondicaoPagamentoRepository } from './repositories/inMemoryCondicaoPagamentoRepository.js';
 import { PostgresCondicaoPagamentoRepository } from './repositories/postgresCondicaoPagamentoRepository.js';
 import { CondicaoPagamentoService } from './services/condicaoPagamentoService.js';
+import { InMemoryOrcamentoRepository } from './repositories/inMemoryOrcamentoRepository.js';
+import { PostgresOrcamentoRepository } from './repositories/postgresOrcamentoRepository.js';
+import { OrcamentoService } from './services/orcamentoService.js';
 
 export type CreateAppOptions = {
   config: AppConfig;
@@ -93,6 +96,7 @@ export function createApp(options: CreateAppOptions) {
     ? new InMemoryTabelaPrecoRepository()
     : new PostgresTabelaPrecoRepository(db);
   const condicaoPagamentoRepo = useMemory ? new InMemoryCondicaoPagamentoRepository() : new PostgresCondicaoPagamentoRepository(db);
+  const orcamentoRepo = useMemory ? new InMemoryOrcamentoRepository() : new PostgresOrcamentoRepository(db);
 
   const marcaService = new MarcaService(marcaRepo, auditRepo, tenantGuard);
   const unidadeService = new TenantCrudService(unidadeRepo, auditRepo, tenantGuard, {
@@ -143,6 +147,9 @@ export function createApp(options: CreateAppOptions) {
     rbacGuard,
   );
   const condicaoPagamentoService = new CondicaoPagamentoService(condicaoPagamentoRepo, auditRepo, tenantGuard, rbacGuard);
+  const orcamentoService = new OrcamentoService(
+    orcamentoRepo, auditRepo, tenantGuard, rbacGuard, clienteRepo, produtoRepo, unidadeRepo, condicaoPagamentoRepo,
+  );
   const obraService = new ObraService(
     obraRepo,
     clienteRepo,
@@ -202,6 +209,7 @@ export function createApp(options: CreateAppOptions) {
     obraService,
     tabelaPrecoService,
     condicaoPagamentoService,
+    orcamentoService,
   }));
   app.use(notFoundHandler);
   app.use(createErrorHandler(config));
@@ -218,6 +226,7 @@ export function createApp(options: CreateAppOptions) {
     obraService,
     tabelaPrecoService,
     condicaoPagamentoService,
+    orcamentoService,
     auditRepo,
     tenantGuard,
     produtoRelationGuard,
