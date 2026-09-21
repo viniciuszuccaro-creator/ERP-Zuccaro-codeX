@@ -5,7 +5,7 @@ if (!process.env.DATABASE_URL) {
 }
 
 const result = spawnSync(process.execPath, [
-  '--import', 'tsx', '--test', 'tests/runtime08-postgres-e2e.test.ts',
+  '--import', 'tsx', '--test', 'tests/runtime08-postgres-e2e.test.ts', 'tests/runtime08c-orcamento-postgres-e2e.test.ts',
 ], { cwd: process.cwd(), env: process.env, encoding: 'utf8' });
 const output = `${result.stdout ?? ''}${result.stderr ?? ''}`;
 process.stdout.write(output);

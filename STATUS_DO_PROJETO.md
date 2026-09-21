@@ -9747,3 +9747,9 @@ Checklist inicial:
 - Corrigido o teste direcionado que falhava por inspecao textual com regex escapada incorretamente. Agora usa executor PostgreSQL controlado e valida comportamento de create/itens/transacao, bloqueio entre empresas e paginacao deterministica com itens agregados.
 - Validacoes: testes focados 4 pass, 0 fail; typecheck e build do servidor aprovados; git diff --check aprovado. PostgreSQL real nao executado por DATABASE_URL ausente neste worktree. Nenhuma VPS, porta 3080 ou dado real foi acessado.
 - Proximo passo: executar A1.2C somente em PostgreSQL DEV autorizado, aplicando a migration 016 no ambiente isolado e validando os cenarios reais antes de Service/RBAC/rotas do A2.
+### Comercial 360 - A1.2C Preparacao PostgreSQL real e CI (2026-09-21)
+
+- Adicionado teste R08C exclusivamente sintetico para executar create/get/list/update/cancel e isolamento do repositorio Orcamento em PostgreSQL real.
+- Runner PostgreSQL agora inclui explicitamente R08B e R08C; workflow CI canônico ganhou PostgreSQL 16 efêmero, migrations, seed sintetico e test:postgres.
+- Validacao local sem banco: testes comportamentais 3 pass, 0 fail; typecheck e build do servidor aprovados; diff-check aprovado. Docker indisponivel e DATABASE_URL ausente neste computador, portanto PostgreSQL real e CI permanecem pendentes no GitHub.
+- Nenhuma VPS, migration remota, porta 3080 ou dado real foi acessado.

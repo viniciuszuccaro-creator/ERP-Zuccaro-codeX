@@ -2,9 +2,7 @@ name: erp-runtime-ci
 
 on:
   push:
-    branches:
-      - main
-      - 'cursor/**'
+    branches: [main, 'cursor/**', 'codex/**']
   pull_request:
 
 jobs:
@@ -13,9 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
+        with: { node-version: '22', cache: npm }
       - run: npm ci
       - run: npm run audit:baseline
       - run: npm test
@@ -24,17 +20,26 @@ jobs:
 
   backend:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_USER: erp_test, POSTGRES_PASSWORD: erp_test, POSTGRES_DB: erp_test }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U erp_test -d erp_test"
+          --health-interval 10s --health-timeout 5s --health-retries 5
     defaults:
-      run:
-        working-directory: server
+      run: { working-directory: server }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-          cache-dependency-path: server/package-lock.json
+        with: { node-version: '22', cache: npm, cache-dependency-path: server/package-lock.json }
       - run: npm install
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - run: npm run migrate
+        env: { DATABASE_URL: postgresql://erp_test:erp_test@localhost:5432/erp_test }
+      - run: psql postgresql://erp_test:erp_test@localhost:5432/erp_test -f scripts/seed-dev-synthetic.sql
+      - run: npm run test:postgres
+        env: { DATABASE_URL: postgresql://erp_test:erp_test@localhost:5432/erp_test }
