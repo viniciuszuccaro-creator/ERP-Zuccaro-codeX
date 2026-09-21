@@ -9715,3 +9715,9 @@ Checklist inicial:
   014/015 foi alterada ou reaplicada.
 - Proximo passo: push da branch e PR de hotfix; executar `test:postgres`
   com banco PostgreSQL autorizado e revisar CI antes de qualquer merge.
+
+### Comercial 360 - Especificacao e inventario (2026-09-21)
+
+- Branch `codex/comercial-360` criada a partir de `ca417160`. Inventario consolidado em `docs/COMERCIAL_360.md`: reutiliza Comercial, Cadastros Gerais, ClienteEmpresa, Produto, TabelaPreco, CondicaoPagamento, Producao, Expedicao e auditoria existentes.
+- Lote A definido: Orcamento/Pedido/Itens/Totais/Descontos/Conversao, com Grupo/Empresa, RBAC fail-closed, auditoria e soft delete. Antes de schema, confirmar contratos de Pedido/Orcamento existentes e evitar estrutura paralela.
+- Proximo passo: diagnostico focal dos contratos backend de Pedido/Orcamento e seus testes para implementar somente o Lote A.
