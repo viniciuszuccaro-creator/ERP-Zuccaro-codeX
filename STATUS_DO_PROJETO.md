@@ -9760,3 +9760,12 @@ Checklist inicial:
 - Testes controlados: 6 pass, 0 fail; cobrem create/update/cancel com e sem executor, get/list no executor recebido, parâmetros tenant e zero transações aninhadas.
 - Suíte backend: 96 testes, 92 pass, 0 fail, 4 skips por ausência local de DATABASE_URL. Typecheck, build, git diff --check e auditoria do diff sensível aprovados.
 - Nenhuma VPS, migration remota, porta 3080, main ou dado real foi alterado.
+### Comercial 360 - A2.0D Contrato final dos repositorios de Orcamento (2026-09-21)
+
+- A2.0 concluido: `InMemoryOrcamentoRepository` e `PostgresOrcamentoRepository` compartilham `OrcamentoRepository` com `DbQueryExecutor` tipado.
+- A listagem em memoria normaliza limit inteiro entre 1 e 200, offset inteiro nao negativo, ordena por numero DESC/id DESC e devolve clones.
+- Suite contratual em memoria cobre create/get/list/update/cancel, tenant, numero, recalculo, ordenacao, paginacao, clones, cancelamento repetido e update cancelado.
+- Rollback em memoria comprovado para create, update, cancel e contador sequencial; sucesso preserva alteracoes e erros sao relancados.
+- Testes focados: 12 pass, 0 fail (6 contratuais + 6 controlados PostgreSQL). Suite backend: 101 total, 97 pass, 0 fail, 4 skips locais por DATABASE_URL ausente.
+- Typecheck, build, git diff --check e auditoria de segredos/dados reais aprovados. R08B/R08C reais e migrations 001-016 permanecem cobertos pela CI PostgreSQL.
+- Nenhuma VPS, migration remota, porta 3080, main ou dado real foi alterado. Proximo lote autorizado: A2.1 OrcamentoService e TenantGuard.
