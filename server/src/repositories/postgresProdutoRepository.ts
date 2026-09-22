@@ -1,6 +1,6 @@
 import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope } from '../services/tenantCrudService.js';
-import type { Produto, ProdutoCreate, ProdutoEquivalente, ProdutoUpdate, ProdutoVariante, ProdutoVarianteCreate, ProdutoVarianteUpdate } from './produtoTypes.js';
+import type { Produto, ProdutoCreate, ProdutoEquivalente, ProdutoEquivalenteCreate, ProdutoEquivalenteUpdate, ProdutoUpdate, ProdutoVariante, ProdutoVarianteCreate, ProdutoVarianteUpdate } from './produtoTypes.js';
 import type { ProdutoListFilter, ProdutoReadOptions, ProdutoRepository } from './inMemoryProdutoRepository.js';
 
 function ts(row: Record<string, unknown>) {
@@ -390,5 +390,38 @@ export class PostgresProdutoRepository implements ProdutoRepository {
     sql += ' RETURNING id,group_id,empresa_id,produto_id,sku,nome,atributos,ativo';
     const result = await executor.query(sql, params);
     return (result.rows[0] as ProdutoVariante | undefined) ?? null;
+  }
+
+  async createEquivalent(scope: Scope, produtoId: string, data: ProdutoEquivalenteCreate, executor: DbQueryExecutor): Promise<ProdutoEquivalente> {
+    const result = await executor.query(
+      `INSERT INTO produto_equivalentes (group_id,empresa_id,produto_id,produto_equivalente_id,tipo,direcional,aprovado)
+       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id,group_id,empresa_id,produto_id,produto_equivalente_id,tipo,direcional,aprovado,ativo`,
+      [scope.groupId, scope.empresaId ?? null, produtoId, data.produto_equivalente_id, data.tipo, data.direcional, data.aprovado],
+    );
+    return result.rows[0] as ProdutoEquivalente;
+  }
+
+  async updateEquivalent(scope: Scope, produtoId: string, equivalentId: string, data: ProdutoEquivalenteUpdate, executor: DbQueryExecutor): Promise<ProdutoEquivalente | null> {
+    const current = await executor.query<ProdutoEquivalente>(
+      `SELECT id,group_id,empresa_id,produto_id,produto_equivalente_id,tipo,direcional,aprovado,ativo FROM produto_equivalentes
+       WHERE id=$1 AND group_id=$2 AND produto_id=$3 AND ($4::uuid IS NULL OR empresa_id=$4) FOR UPDATE`,
+      [equivalentId, scope.groupId, produtoId, scope.empresaId ?? null],
+    );
+    if (!current.rows[0]) return null;
+    const next = { ...current.rows[0], ...data };
+    const result = await executor.query(
+      `UPDATE produto_equivalentes SET tipo=$1,direcional=$2,aprovado=$3,updated_at=timezone('utc',now())
+       WHERE id=$4 AND group_id=$5 AND produto_id=$6 RETURNING id,group_id,empresa_id,produto_id,produto_equivalente_id,tipo,direcional,aprovado,ativo`,
+      [next.tipo, next.direcional, next.aprovado, equivalentId, scope.groupId, produtoId],
+    );
+    return (result.rows[0] as ProdutoEquivalente | undefined) ?? null;
+  }
+
+  async deactivateEquivalent(scope: Scope, produtoId: string, equivalentId: string, executor: DbQueryExecutor): Promise<ProdutoEquivalente | null> {
+    const result = await executor.query(`UPDATE produto_equivalentes SET ativo=false,updated_at=timezone('utc',now())
+      WHERE id=$1 AND group_id=$2 AND produto_id=$3 AND ($4::uuid IS NULL OR empresa_id=$4) AND ativo=true
+      RETURNING id,group_id,empresa_id,produto_id,produto_equivalente_id,tipo,direcional,aprovado,ativo`,
+      [equivalentId, scope.groupId, produtoId, scope.empresaId ?? null]);
+    return (result.rows[0] as ProdutoEquivalente | undefined) ?? null;
   }
 }
