@@ -5,7 +5,12 @@ import { InMemoryProdutoRelationGuard } from '../src/db/produtoRelationGuard.ts'
 import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 import { createInMemoryProdutoRepo } from '../src/repositories/inMemoryProdutoRepository.ts';
-import { produtoVarianteCreateSchema, produtoVarianteUpdateSchema } from '../src/repositories/produtoTypes.ts';
+import {
+  produtoEquivalenteCreateSchema,
+  produtoEquivalenteUpdateSchema,
+  produtoVarianteCreateSchema,
+  produtoVarianteUpdateSchema,
+} from '../src/repositories/produtoTypes.ts';
 import { ProdutoService } from '../src/services/produtoService.ts';
 
 const GROUP = '11111111-1111-4111-8111-111111111111';
@@ -182,6 +187,82 @@ test('Variante exige editar e permanece isolada por tenant', async () => {
   const produto = await denied.service.create(denied.ctx, { descricao: 'Sem editar variante' });
   await assert.rejects(
     () => denied.service.createVariant(denied.ctx, produto.id, { sku: 'NEGADA' }),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED',
+  );
+});
+
+test('Equivalente usa payload estrito e bloqueia self relation e mass assignment', async () => {
+  assert.equal(produtoEquivalenteCreateSchema.safeParse({
+    produto_equivalente_id: ACTOR,
+    tipo: 'SUBSTITUTO',
+    direcional: true,
+    aprovado: false,
+  }).success, true);
+  for (const payload of [
+    { produto_equivalente_id: 'invalido' },
+    { produto_equivalente_id: ACTOR, group_id: GROUP },
+    { produto_equivalente_id: ACTOR, empresa_id: EMPRESA },
+    { produto_equivalente_id: ACTOR, ativo: false },
+    { produto_equivalente_id: ACTOR, tipo: 'INVALIDO' },
+  ]) {
+    assert.equal(produtoEquivalenteCreateSchema.safeParse(payload).success, false);
+  }
+  assert.equal(produtoEquivalenteUpdateSchema.safeParse({ tipo: 'EQUIVALENTE', aprovado: true }).success, true);
+  assert.equal(produtoEquivalenteUpdateSchema.safeParse({ produto_equivalente_id: ACTOR }).success, false);
+
+  const { service, ctx } = harness();
+  const produto = await service.create(ctx, { descricao: 'Produto origem equivalente' });
+  await assert.rejects(
+    () => service.createEquivalent(ctx, produto.id, { produto_equivalente_id: produto.id }),
+    (error: unknown) => (error as { code?: string }).code === 'PRODUTO_EQUIVALENTE_SELF',
+  );
+  await assert.rejects(
+    () => service.createEquivalent(ctx, produto.id, { produto_equivalente_id: crypto.randomUUID() }),
+    (error: unknown) => (error as { code?: string }).code === 'PRODUTO_EQUIVALENTE_TARGET_NOT_FOUND',
+  );
+});
+
+test('Equivalente cria atualiza inativa e audita atomicamente', async () => {
+  const { repo, audit, service, ctx } = harness();
+  const produto = await service.create(ctx, { descricao: 'Produto origem' });
+  const target = await service.create(ctx, { descricao: 'Produto substituto' });
+  const relation = await service.createEquivalent(ctx, produto.id, {
+    produto_equivalente_id: target.id,
+    tipo: 'SUBSTITUTO',
+    direcional: true,
+  });
+  assert.equal(relation.produto_equivalente_id, target.id);
+  assert.equal((await service.listEquivalents(ctx, produto.id)).length, 1);
+  const updated = await service.updateEquivalent(ctx, produto.id, relation.id, { tipo: 'EQUIVALENTE', aprovado: true });
+  assert.equal(updated.tipo, 'EQUIVALENTE');
+  assert.equal(updated.aprovado, true);
+  assert.equal(updated.produto_equivalente_id, target.id);
+  const inactive = await service.deactivateEquivalent(ctx, produto.id, relation.id);
+  assert.equal(inactive.ativo, false);
+  assert.deepEqual(await service.listEquivalents(ctx, produto.id), []);
+  const logs = await audit.listByEntity('ProdutoEquivalente', relation.id);
+  assert.deepEqual(logs.map((entry) => entry.action), ['create', 'update', 'soft_delete']);
+
+  const failingAudit = { append: async () => { throw new Error('AUDIT_FAILURE'); }, listByEntity: async () => [] };
+  const tenant = new InMemoryTenantGuard(); tenant.link(EMPRESA, GROUP);
+  const rbac = new InMemoryRbacGuard();
+  rbac.link({ actorId: ACTOR, groupId: GROUP, permissions: { Cadastros: { produto: ['editar'] } } });
+  const failing = new ProdutoService(repo, failingAudit, tenant, new InMemoryProdutoRelationGuard(), rbac);
+  await assert.rejects(
+    () => failing.createEquivalent({ ...ctx, requestId: 'equivalent-rollback' }, produto.id, {
+      produto_equivalente_id: target.id,
+    }),
+    /AUDIT_FAILURE/,
+  );
+  assert.deepEqual(await service.listEquivalents(ctx, produto.id), []);
+});
+
+test('Equivalente exige editar', async () => {
+  const denied = harness(['visualizar', 'criar']);
+  const produto = await denied.service.create(denied.ctx, { descricao: 'Origem sem editar' });
+  const target = await denied.service.create(denied.ctx, { descricao: 'Destino sem editar' });
+  await assert.rejects(
+    () => denied.service.createEquivalent(denied.ctx, produto.id, { produto_equivalente_id: target.id }),
     (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED',
   );
 });

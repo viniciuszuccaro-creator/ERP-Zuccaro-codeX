@@ -10071,3 +10071,12 @@ Checklist inicial:
 ### Onda 1 Produto/PIM - persistencia PostgreSQL de variante (2026-09-22)
 - O adapter existente ganhou create/update/inativacao tenant-scoped; update bloqueia a linha com `FOR UPDATE` e todas as mutacoes exigem executor transacional recebido.
 - Typecheck e diff-check PASS. Nenhuma rota de mutacao foi exposta ainda; proximo incremento conecta contrato unico, in-memory, service e auditoria atomica.
+
+### Onda 1 Produto/PIM - manutencao atomica de variantes e equivalentes (2026-09-22)
+- O contrato canonico `ProdutoRepository` e os adapters PostgreSQL/in-memory agora mantem variantes e equivalentes sem nova entidade paralela; todas as mutacoes reutilizam o executor transacional existente.
+- `ProdutoService` e as rotas `/api/v1/produtos/:id/variantes` e `/api/v1/produtos/:id/equivalentes` oferecem criar, atualizar e inativar logicamente, com tenant Grupo/Empresa, RBAC fail-closed `Cadastros.produto.editar` e 404 seguro fora do escopo.
+- Equivalentes validam Produto origem/destino ativos no mesmo tenant, bloqueiam autoequivalencia e alteracao do destino por mass assignment; variantes preservam SKU e atributos estritos.
+- Leitura bloqueante, mutacao e auditoria antes/depois compartilham a mesma transacao. Falha de auditoria rollbacka registros, relacoes e estado in-memory; PostgreSQL mantem `FOR UPDATE` e constraints da migration 018.
+- Testes R10 direcionados: 11 pass / 0 fail / 0 skip. Backend completo: 167 total / 159 pass / 0 fail / 8 skips condicionais sem `DATABASE_URL`; typecheck e build backend: PASS.
+- Frontend explicito: 599 pass / 0 fail / 0 skip; `audit:baseline`, lint, build e `git diff --check`: PASS. Typecheck global frontend permanece no baseline legado conhecido, sem erro nos arquivos alterados neste lote.
+- Nenhuma migration adicional, VPS, porta 3080, segredo ou dado real foi alterado. Proximo passo: integrar variantes/equivalentes ao formulario Produto V22 existente e concluir o adapter real de `StoragePort`, mantendo a PR #33 sem merge.

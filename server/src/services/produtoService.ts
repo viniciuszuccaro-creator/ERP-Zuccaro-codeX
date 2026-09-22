@@ -10,8 +10,12 @@ import {
   isProdutoTipoCanonico,
   produtoCreateSchema,
   produtoUpdateSchema,
+  produtoEquivalenteCreateSchema,
+  produtoEquivalenteUpdateSchema,
   produtoVarianteCreateSchema,
   produtoVarianteUpdateSchema,
+  type ProdutoEquivalenteCreate,
+  type ProdutoEquivalenteUpdate,
   type ProdutoVarianteCreate,
   type ProdutoVarianteUpdate,
   type Produto,
@@ -317,6 +321,75 @@ export class ProdutoService {
       return result;
     });
   }
+
+  async createEquivalent(ctx: RequestContext, produtoId: string, payload: unknown) {
+    const parsed = produtoEquivalenteCreateSchema.safeParse(payload);
+    if (!parsed.success) throw new AppError(400, 'VALIDATION_ERROR', 'Invalid Produto equivalente payload', parsed.error.flatten());
+    return this.mutateEquivalent(ctx, produtoId, 'create', undefined, parsed.data);
+  }
+
+  async updateEquivalent(ctx: RequestContext, produtoId: string, equivalentId: string, payload: unknown) {
+    const parsed = produtoEquivalenteUpdateSchema.safeParse(payload);
+    if (!parsed.success) throw new AppError(400, 'VALIDATION_ERROR', 'Invalid Produto equivalente payload', parsed.error.flatten());
+    return this.mutateEquivalent(ctx, produtoId, 'update', equivalentId, parsed.data);
+  }
+
+  async deactivateEquivalent(ctx: RequestContext, produtoId: string, equivalentId: string) {
+    return this.mutateEquivalent(ctx, produtoId, 'deactivate', equivalentId);
+  }
+
+  private async mutateEquivalent(
+    ctx: RequestContext,
+    produtoId: string,
+    operation: 'create' | 'update' | 'deactivate',
+    equivalentId?: string,
+    data?: ProdutoEquivalenteCreate | ProdutoEquivalenteUpdate,
+  ) {
+    this.assertScope(ctx);
+    await this.assertPermission(ctx, 'editar');
+    const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
+    return this.repo.withTransaction(async (executor) => {
+      const produto = await this.repo.getById(scope, produtoId, executor, { forUpdate: true });
+      if (!produto || !produto.ativo) throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+      if (operation === 'create') {
+        const targetId = (data as ProdutoEquivalenteCreate).produto_equivalente_id;
+        if (targetId === produtoId) {
+          throw new AppError(400, 'PRODUTO_EQUIVALENTE_SELF', 'Produto cannot be equivalent to itself');
+        }
+        const target = await this.repo.getById(scope, targetId, executor, { forUpdate: true });
+        if (!target || !target.ativo) {
+          throw new AppError(404, 'PRODUTO_EQUIVALENTE_TARGET_NOT_FOUND', 'Equivalent Produto not found in tenant scope');
+        }
+      }
+      const before = equivalentId
+        ? (await this.repo.listEquivalents(scope, produtoId, executor)).find((row) => row.id === equivalentId)
+        : undefined;
+      if (operation !== 'create' && !before) {
+        throw new AppError(404, 'PRODUTO_EQUIVALENTE_NOT_FOUND', 'Produto equivalente not found in tenant scope');
+      }
+      let result;
+      try {
+        result = operation === 'create'
+          ? await this.repo.createEquivalent(scope, produtoId, data as ProdutoEquivalenteCreate, executor)
+          : operation === 'update'
+            ? await this.repo.updateEquivalent(scope, produtoId, equivalentId!, data as ProdutoEquivalenteUpdate, executor)
+            : await this.repo.deactivateEquivalent(scope, produtoId, equivalentId!, executor);
+      } catch (error) {
+        this.rethrowConflict(error);
+        throw error;
+      }
+      if (!result) throw new AppError(404, 'PRODUTO_EQUIVALENTE_NOT_FOUND', 'Produto equivalente not found in tenant scope');
+      await this.audit.append({
+        groupId: ctx.groupId, empresaId: result.empresa_id ?? ctx.empresaId,
+        actorId: ctx.actorId, actorEmail: ctx.actorEmail, entity: 'ProdutoEquivalente', entityId: result.id,
+        action: operation === 'create' ? 'create' : operation === 'update' ? 'update' : 'soft_delete',
+        beforeData: before ? sanitizeAuditSnapshot(before) : undefined,
+        afterData: sanitizeAuditSnapshot(result), requestId: ctx.requestId, ipAddress: ctx.ipAddress,
+      }, executor);
+      return result;
+    });
+  }
+
   /** Garante que CRUD de Produto nao aceita campos transacionais. */
   assertNoStockSideEffects(payload: unknown) {
     this.rejectOperationalFields(payload);

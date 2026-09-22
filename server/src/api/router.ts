@@ -151,6 +151,21 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
     catch (error) { next(error); }
   });
 
+  router.post('/api/v1/produtos/:id/equivalentes', requireTenantScope, async (req, res, next) => {
+    try { res.status(201).json({ data: await service.createEquivalent(ctxFromReq(req), req.params.id, req.body) }); }
+    catch (error) { next(error); }
+  });
+
+  router.patch('/api/v1/produtos/:id/equivalentes/:equivalentId', requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.updateEquivalent(ctxFromReq(req), req.params.id, req.params.equivalentId, req.body) }); }
+    catch (error) { next(error); }
+  });
+
+  router.delete('/api/v1/produtos/:id/equivalentes/:equivalentId', requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.deactivateEquivalent(ctxFromReq(req), req.params.id, req.params.equivalentId) }); }
+    catch (error) { next(error); }
+  });
+
   router.get('/api/v1/produtos/:id', requireTenantScope, async (req, res, next) => {
     try {
       const row = await service.get(ctxFromReq(req), req.params.id);

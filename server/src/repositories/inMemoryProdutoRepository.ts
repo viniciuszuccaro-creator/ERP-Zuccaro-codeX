@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';
-import type { Produto, ProdutoCreate, ProdutoEquivalente, ProdutoUpdate, ProdutoVariante, ProdutoVarianteCreate, ProdutoVarianteUpdate } from './produtoTypes.js';
+import type { Produto, ProdutoCreate, ProdutoEquivalente, ProdutoEquivalenteCreate, ProdutoEquivalenteUpdate, ProdutoUpdate, ProdutoVariante, ProdutoVarianteCreate, ProdutoVarianteUpdate } from './produtoTypes.js';
 
 function nowIso() { return new Date().toISOString(); }
 
@@ -44,6 +44,9 @@ export interface ProdutoRepository extends TenantEntityRepository<Produto, Produ
   createVariant(scope: Scope, produtoId: string, data: ProdutoVarianteCreate, executor?: DbQueryExecutor): Promise<ProdutoVariante>;
   updateVariant(scope: Scope, produtoId: string, variantId: string, data: ProdutoVarianteUpdate, executor?: DbQueryExecutor): Promise<ProdutoVariante | null>;
   deactivateVariant(scope: Scope, produtoId: string, variantId: string, executor?: DbQueryExecutor): Promise<ProdutoVariante | null>;
+  createEquivalent(scope: Scope, produtoId: string, data: ProdutoEquivalenteCreate, executor?: DbQueryExecutor): Promise<ProdutoEquivalente>;
+  updateEquivalent(scope: Scope, produtoId: string, equivalentId: string, data: ProdutoEquivalenteUpdate, executor?: DbQueryExecutor): Promise<ProdutoEquivalente | null>;
+  deactivateEquivalent(scope: Scope, produtoId: string, equivalentId: string, executor?: DbQueryExecutor): Promise<ProdutoEquivalente | null>;
 }
 
 function buildProduto(scope: Scope, data: ProdutoCreate, id: string, ts: string): Produto {
@@ -99,12 +102,14 @@ function buildProduto(scope: Scope, data: ProdutoCreate, id: string, ts: string)
 export class InMemoryProdutoRepository implements ProdutoRepository {
   private readonly rows = new Map<string, Produto>();
   private readonly variants = new Map<string, ProdutoVariante>();
+  private readonly equivalents = new Map<string, ProdutoEquivalente>();
 
   private readonly publicationEvents: Array<{ groupId: string; empresaId: string | null; produtoId: string; requestId: string }> = [];
   async withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> {
     const snapshot = structuredClone([...this.rows.entries()]);
     const eventsSnapshot = structuredClone(this.publicationEvents);
     const variantsSnapshot = structuredClone([...this.variants.entries()]);
+    const equivalentsSnapshot = structuredClone([...this.equivalents.entries()]);
     try {
       return await fn();
     } catch (error) {
@@ -113,6 +118,8 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
       this.publicationEvents.length = 0;
       this.variants.clear();
       for (const [id, row] of variantsSnapshot) this.variants.set(id, row);
+      this.equivalents.clear();
+      for (const [id, row] of equivalentsSnapshot) this.equivalents.set(id, row);
       this.publicationEvents.push(...eventsSnapshot);
       throw error;
     }
@@ -264,7 +271,37 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     return structuredClone(next);
 
   }
-  async listEquivalents(_scope: Scope, _produtoId: string): Promise<ProdutoEquivalente[]> { return []; }
+  async listEquivalents(scope: Scope, produtoId: string): Promise<ProdutoEquivalente[]> {
+    return structuredClone([...this.equivalents.values()].filter((row) => row.ativo && row.group_id === scope.groupId
+      && row.produto_id === produtoId && (!scope.empresaId || row.empresa_id === scope.empresaId)));
+  }
+
+  async createEquivalent(scope: Scope, produtoId: string, data: ProdutoEquivalenteCreate): Promise<ProdutoEquivalente> {
+    if (produtoId === data.produto_equivalente_id) throw new Error('check constraint produto equivalente self');
+    const row: ProdutoEquivalente = { id: randomUUID(), group_id: scope.groupId, empresa_id: scope.empresaId ?? null,
+      produto_id: produtoId, produto_equivalente_id: data.produto_equivalente_id, tipo: data.tipo,
+      direcional: data.direcional, aprovado: data.aprovado, ativo: true };
+    this.equivalents.set(row.id, structuredClone(row));
+    return structuredClone(row);
+  }
+
+  async updateEquivalent(scope: Scope, produtoId: string, equivalentId: string, data: ProdutoEquivalenteUpdate): Promise<ProdutoEquivalente | null> {
+    const current = this.equivalents.get(equivalentId);
+    if (!current || current.group_id !== scope.groupId || current.produto_id !== produtoId
+      || (scope.empresaId && current.empresa_id !== scope.empresaId)) return null;
+    const next = { ...current, ...data };
+    this.equivalents.set(equivalentId, structuredClone(next));
+    return structuredClone(next);
+  }
+
+  async deactivateEquivalent(scope: Scope, produtoId: string, equivalentId: string): Promise<ProdutoEquivalente | null> {
+    const current = this.equivalents.get(equivalentId);
+    if (!current || !current.ativo || current.group_id !== scope.groupId || current.produto_id !== produtoId
+      || (scope.empresaId && current.empresa_id !== scope.empresaId)) return null;
+    const next = { ...current, ativo: false };
+    this.equivalents.set(equivalentId, next);
+    return structuredClone(next);
+  }
 
 
   listPublicationEvents() {
