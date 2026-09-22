@@ -10192,3 +10192,11 @@ Checklist inicial:
 - Nenhuma rota HTTP, frontend DAM, migration adicional, VPS, bucket, objeto, porta 3080, main ou dado real foi alterado. PR #33 permanece draft sem merge.
 - Proximo gate: testar fluxo service com repositório PostgreSQL e auditoria reais no banco efemero; so depois considerar rota HTTP, antivirus, reconciliacao de orfaos e bucket self-hosted sob gate autorizado.
 - Codigo publicado em `be5aa9ceac13173128e97e4639ca12cf2f9d8e73`; workflow `35794489694` da PR #33: frontend SUCCESS, backend SUCCESS, migrations/seed sintetico/test:postgres SUCCESS. Migration 021 nao aplicada na VPS.
+
+### Onda 1 Produto/PIM - E2E PostgreSQL do service DAM (2026-09-22)
+- Objetivo: comprovar que a reserva e confirmacao do ProdutoService usam o repositório e a auditoria PostgreSQL reais, alem dos testes in-memory ja aprovados.
+- O E2E R10 existente ganhou caso com produto/actor/paths sinteticos, StoragePort fake, RBAC negado, isolamento Empresa A/A2, reserva pendente invisivel na listagem, tentativa vinculada ao actor, checksum divergente, auditoria falha com rollback, confirmacao unica em QUARENTENA e auditoria sanitizada.
+- Cleanup remove somente IDs sinteticos do teste dentro do tenant e preserva o erro original; nenhuma URL assinada ou binario real e armazenado no banco. A migration 021 e exigida exatamente uma vez.
+- Local: backend 195 total / 185 pass / 0 fail / 10 skips sem DATABASE_URL; backend typecheck/build, audit:baseline, lint, build frontend e diff-check PASS. E2E PostgreSQL novo descoberto pelo runner, ainda nao executado localmente; aguardar CI efemera antes de aprovar este gate.
+- Arquivo alterado: `server/tests/runtime10-produto-pim-postgres-e2e.test.ts`. Nenhuma migration, VPS, porta 3080, main, rota HTTP, dado real ou objeto Storage foi alterado.
+- Proximo gate: se E2E efemero passar, avaliar contrato HTTP da reserva/confirmacao no router existente; antivirus, reconciliacao de orfaos e buckets self-hosted continuam pendentes de gate especifico.

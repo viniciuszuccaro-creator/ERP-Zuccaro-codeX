@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { PostgresAuditRepository } from '../src/audit/auditRepository.ts';
+import type { StoragePort } from '../src/services/storagePort.ts';
 import { randomUUID } from 'node:crypto';
 import test from 'node:test';
 import { InMemoryProdutoRelationGuard } from '../src/db/produtoRelationGuard.ts';
@@ -264,6 +266,118 @@ test('R10 PostgreSQL real: contrato compartilhado, empresa, grupo, SKU e rollbac
     } catch (error) {
       if (!originalError) throw error;
       process.stderr.write('R10 cleanup failed after the original test error\n');
+    } finally {
+      await db.end();
+    }
+  }
+});
+
+test('R10 PostgreSQL real: service DAM reserva, confirma e rollbacka auditoria', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
+  const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
+  const repo = new PostgresProdutoRepository(db);
+  const audit = new PostgresAuditRepository(db);
+  const productId = randomUUID();
+  const scope = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA };
+  const ctx = { ...scope, actorId: SEED_IDS.runtimeActorA, requestId: 'r10-dam-service' };
+  const allowEdit: RbacGuard = { assertAllowed: async () => undefined };
+  const denied: RbacGuard = { assertAllowed: async () => { throw new Error('RBAC_DENIED'); } };
+  let badChecksum = false;
+  const storage: StoragePort = {
+    createSignedUploadUrl: async () => ({
+      url: 'https://synthetic.example.test/upload?token=synthetic',
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+      requiredHeaders: {},
+    }),
+    confirmUpload: async (request) => ({
+      storageKey: request.storageKey, fileName: request.fileName, mimeType: request.mimeType,
+      sizeBytes: request.sizeBytes, sha256: badChecksum ? 'c'.repeat(64) : request.sha256,
+      version: 1,
+    }),
+    createSignedDownloadUrl: async () => { throw new Error('UNUSED'); },
+  };
+  const service = new ProdutoService(repo, audit, new PostgresTenantGuard(db),
+    new InMemoryProdutoRelationGuard(), allowEdit, storage);
+  const deniedService = new ProdutoService(repo, audit, new PostgresTenantGuard(db),
+    new InMemoryProdutoRelationGuard(), denied, storage);
+  const mediaIds: string[] = [];
+  let originalError: unknown;
+  try {
+    const migration = await db.query<{ total: number }>(
+      "SELECT count(*)::int total FROM schema_migrations WHERE id='021_produto_midia_upload_reservation.sql'",
+    );
+    assert.equal(migration.rows[0]?.total, 1);
+    await db.query(
+      "INSERT INTO produtos (id,group_id,empresa_id,codigo,descricao) VALUES ($1,$2,$3,$4,'R10 DAM SINTETICO')",
+      [productId, scope.groupId, scope.empresaId, `R10-${productId}`],
+    );
+    const data = (suffix: string) => ({
+      storage_key: `groups/${scope.groupId}/companies/${scope.empresaId}/products/${productId}/images/${randomUUID()}-${suffix}.png`,
+      categoria: 'IMAGEM', nome_arquivo: `${suffix}.png`, mime_type: 'image/png',
+      tamanho_bytes: 8, sha256: 'b'.repeat(64), versao: 1,
+    });
+    const firstData = data('first');
+    await assert.rejects(deniedService.reserveMidia(ctx, productId, firstData), /RBAC_DENIED/);
+    await assert.rejects(service.reserveMidia({ ...ctx, empresaId: SEED_IDS.empresaA2 }, productId, firstData),
+      (error: unknown) => (error as { code?: string }).code === 'VALIDATION_ERROR');
+    const first = await service.reserveMidia(ctx, productId, firstData);
+    mediaIds.push(first.mediaId);
+    await assert.rejects(service.confirmMidia({ ...ctx, empresaId: SEED_IDS.empresaA2 }, productId, first.mediaId, first.attemptId),
+      (error: unknown) => (error as { code?: string }).code === 'PRODUTO_NOT_FOUND');
+    const reserved = await db.withTransaction((tx) =>
+      repo.getReservedMidia(scope, productId, first.mediaId, first.attemptId, ctx.actorId, tx));
+    assert.equal(reserved?.status, 'PENDENTE_UPLOAD');
+    assert.deepEqual(await service.listMidias(ctx, productId), []);
+    await assert.rejects(service.confirmMidia({ ...ctx, actorId: randomUUID() }, productId, first.mediaId, first.attemptId),
+      (error: unknown) => (error as { code?: string }).code === 'MEDIA_RESERVATION_NOT_FOUND');
+    badChecksum = true;
+    await assert.rejects(service.confirmMidia(ctx, productId, first.mediaId, first.attemptId),
+      (error: unknown) => (error as { code?: string }).code === 'STORAGE_METADATA_MISMATCH');
+    badChecksum = false;
+    const failingAudit = {
+      append: async () => { throw new Error('SYNTHETIC_AUDIT_FAILURE'); },
+      listByEntity: audit.listByEntity.bind(audit),
+    };
+    const failingService = new ProdutoService(repo, failingAudit, new PostgresTenantGuard(db),
+      new InMemoryProdutoRelationGuard(), allowEdit, storage);
+    await assert.rejects(failingService.confirmMidia(ctx, productId, first.mediaId, first.attemptId),
+      /SYNTHETIC_AUDIT_FAILURE/);
+    const pending = await db.query<{ status: string }>(
+      'SELECT status FROM produto_midias WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+      [first.mediaId, scope.groupId, scope.empresaId],
+    );
+    assert.equal(pending.rows[0]?.status, 'PENDENTE_UPLOAD');
+    const confirmed = await service.confirmMidia(ctx, productId, first.mediaId, first.attemptId);
+    assert.equal(confirmed.status, 'QUARENTENA');
+    assert.equal((await service.listMidias(ctx, productId))[0]?.id, first.mediaId);
+    await assert.rejects(service.confirmMidia(ctx, productId, first.mediaId, first.attemptId),
+      (error: unknown) => (error as { code?: string }).code === 'MEDIA_RESERVATION_NOT_FOUND');
+    const logs = await audit.listByEntity('ProdutoMidia', first.mediaId);
+    assert.deepEqual(logs.map((entry) => entry.action), ['create', 'change_status']);
+    assert.equal(logs.every((entry) => entry.groupId === scope.groupId && entry.empresaId === scope.empresaId), true);
+    assert.equal(JSON.stringify(logs).includes(firstData.storage_key), false);
+    assert.equal(JSON.stringify(logs).includes(first.url), false);
+    const failedData = data('failed');
+    await assert.rejects(failingService.reserveMidia(ctx, productId, failedData), /SYNTHETIC_AUDIT_FAILURE/);
+    const rolledBack = await db.query<{ total: number }>(
+      'SELECT count(*)::int total FROM produto_midias WHERE group_id=$1 AND empresa_id=$2 AND storage_key=$3',
+      [scope.groupId, scope.empresaId, failedData.storage_key],
+    );
+    assert.equal(rolledBack.rows[0]?.total, 0);
+  } catch (error) {
+    originalError = error;
+    throw error;
+  } finally {
+    try {
+      await db.withTransaction(async (tx) => {
+        await tx.query("DELETE FROM audit_logs WHERE entity='ProdutoMidia' AND entity_id=ANY($1::text[])", [mediaIds]);
+        await tx.query('DELETE FROM produto_midias WHERE group_id=$1 AND empresa_id=$2 AND produto_id=$3',
+          [scope.groupId, scope.empresaId, productId]);
+        await tx.query('DELETE FROM produtos WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+          [productId, scope.groupId, scope.empresaId]);
+      });
+    } catch (error) {
+      if (!originalError) throw error;
+      process.stderr.write('R10 DAM cleanup failed after the original test error\n');
     } finally {
       await db.end();
     }
