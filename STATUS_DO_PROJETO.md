@@ -9934,3 +9934,9 @@ Checklist inicial:
 - Gravações diretas Base44 encontradas entram na migração para APIs proprietárias de Pedido, Produção, Estoque e auditoria, preservando fallback até E2E.
 - Arquivo/IA nunca segue direto para produção; storage privado e DAM são dependências. Nenhum runtime/schema foi alterado.
 - Próximo checkpoint: contrato Onda 15 catálogo/outbox.
+### Programa Comercial 360 Omnicanal - Contrato Onda 15 Catalogo/Outbox (2026-09-22)
+
+- Produto/PIM permanece mestre e `integration_events` permanece a unica base de outbox; Site, Portal, App, Chatbot e marketplaces sao canais.
+- Foram definidos projecao allowlisted, versionamento, retry/backoff, dead-letter, replay idempotente, reconciliacao e cutover por Empresa/canal.
+- Policies e telas existentes permanecem fallback ate adapter canonico e E2E; pedidos simulados continuam bloqueados no agregado oficial.
+- Nenhum provider, runtime ou schema foi ativado. Proximo checkpoint: primeiro incremento seguro da Onda 1 sobre o Produto existente.

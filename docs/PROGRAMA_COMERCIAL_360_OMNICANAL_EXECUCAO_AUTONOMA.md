@@ -199,7 +199,7 @@ Este programa consolida, sem substituir nem duplicar, `AGENTS.md`, `COMERCIAL_36
 | 12 | PENDENTE | 1/9/11 | BOM/roteiro/fabricação | produto duplicado | versionamento/revisão |
 | 13 | PENDENTE | 7/11/12 | corte, retalho e sucata | saldo incorreto | transação/estorno |
 | 14 | PENDENTE | 5/9/12/13 | produção canônica | baixa indevida | apontamento reversível |
-| 15 | PENDENTE | 0/1/2/7 | contrato catálogo/outbox | divergência de canal | replay/reconciliação |
+| 15 | PENDENTE | 0 concluída; 1/2/7 | contrato em `COMERCIAL_360_ONDA_15_CATALOGO_OUTBOX.md`; implementar outbox e projeção | divergência de canal | replay/reconciliação |
 | 16 | PENDENTE | 3/5/6/15 | evoluir Site/Portal existentes | segunda verdade | desligar adaptador |
 | 17 | PENDENTE | 16/20 | vistas móveis sobre mesmas APIs | conflito offline | fila idempotente |
 | 18 | PENDENTE | 3/5/15 | evoluir Hub/Chatbot existentes | bot executar ação crítica | transferência humana |
