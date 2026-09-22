@@ -173,6 +173,17 @@ export type Produto = {
   updated_at: string;
 };
 
+export type ProdutoVariante = {
+  id: string; group_id: string; empresa_id: string | null; produto_id: string;
+  sku: string; nome: string | null; atributos: Record<string, unknown>; ativo: boolean;
+};
+
+export type ProdutoEquivalente = {
+  id: string; group_id: string; empresa_id: string | null; produto_id: string;
+  produto_equivalente_id: string; tipo: 'EQUIVALENTE' | 'SUBSTITUTO';
+  direcional: boolean; aprovado: boolean; ativo: boolean;
+};
+
 /** Campos proibidos no payload Produto (transactional / operacional). */
 export const PRODUTO_FORBIDDEN_OPERATIONAL_FIELDS = Object.freeze([
   'estoque_atual',
