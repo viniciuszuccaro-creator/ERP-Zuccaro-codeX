@@ -17,6 +17,7 @@ const ImportacaoProdutoLote = React.lazy(() => import("./ImportacaoProdutoLote")
 import { toast } from "sonner";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { normalizeProdutoTipoItem } from "./produto/produtoTipoPolicy";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeCode = (value, max = 80) => String(value ?? "").replace(/[^0-9A-Za-z_.\-/\s]/g, "").slice(0, max).trim();
@@ -47,7 +48,7 @@ export default function ProdutoFormCompleto({ produto, item, data, initialData, 
     descricao: sanitizeText(formData.descricao || formData.nome, 240),
     nome: sanitizeText(formData.nome || formData.descricao, 240),
     codigo: sanitizeCode(formData.codigo, 80),
-    tipo_item: sanitizeText(formData.tipo_item, 80),
+    tipo_item: normalizeProdutoTipoItem(sanitizeText(formData.tipo_item, 80)),
     grupo: sanitizeText(formData.grupo, 120),
     tipo_aco: sanitizeText(formData.tipo_aco, 40),
     unidade_principal: sanitizeText(formData.unidade_principal, 20),

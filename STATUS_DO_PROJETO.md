@@ -9991,3 +9991,10 @@ Checklist inicial:
 - O arquivo grande nao foi refatorado estruturalmente neste lote localizado para evitar ampliar o risco sobre fluxo legado; a extracao futura deve ocorrer por secoes com testes visuais proprios.
 - Testes direcionados: 8 pass / 0 fail / 0 skip. Suite frontend explicita: 596 pass / 0 fail / 0 skip. `audit:baseline`, lint, build e `git diff --check`: PASS.
 - Nenhuma migration, VPS, porta 3080, segredo ou dado real foi alterado. Proximo incremento: revisar o `ProdutoFormCompleto` intermediario e consolidar somente classificacao, sem substituir o formulario canonico V22.
+### Programa Comercial 360 Omnicanal - Onda 1 Produto/PIM, incremento 7 (2026-09-22)
+
+- O `ProdutoFormCompleto` intermediario foi preservado como wrapper do `ProdutoForm` existente e passou a normalizar `tipo_item` no payload pela policy canonica, sem duplicar opcoes, tela ou persistencia.
+- Aliases inequivocos seguem para o contrato canonico; valores legados desconhecidos permanecem preservados pela mesma regra de compatibilidade aplicada aos demais formularios.
+- Testes direcionados: 9 pass / 0 fail / 0 skip. Suite frontend explicita: 597 pass / 0 fail / 0 skip. `audit:baseline`, lint, build e `git diff --check`: PASS.
+- Typecheck global: baseline legado FAIL (exit 2) em arquivos nao tocados; verificacao direcionada confirmou 0 erros nos arquivos deste incremento.
+- Nenhuma migration, VPS, porta 3080, segredo ou dado real foi alterado. Proximo incremento: concluir a varredura localizada dos consumidores restantes de classificacao de Produto e registrar as lacunas PIM/DAM ainda abertas na Onda 1.

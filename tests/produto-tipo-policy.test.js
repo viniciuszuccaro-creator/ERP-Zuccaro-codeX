@@ -117,3 +117,9 @@ test('ProdutoForm legado preserva compatibilidade usando a policy canônica', as
   assert.doesNotMatch(source, /<SelectItem value="Produto Acabado">/);
   assert.doesNotMatch(source, /tipo_item: 'MatÃ©ria-Prima ProduÃ§Ã£o'/);
 });
+test('ProdutoFormCompleto normaliza o payload sem duplicar opções de classificação', async () => {
+  const source = await readFile(new URL('../src/components/cadastros/ProdutoFormCompleto.jsx', import.meta.url), 'utf8');
+  assert.match(source, /normalizeProdutoTipoItem\(sanitizeText\(formData\.tipo_item, 80\)\)/);
+  assert.match(source, /<ProdutoForm/);
+  assert.doesNotMatch(source, /<SelectItem value="Revenda">/);
+});
