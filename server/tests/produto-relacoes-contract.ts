@@ -42,6 +42,48 @@ export async function assertProdutoMediaContract(
   const inactive = await repo.withTransaction((tx) => repo.deactivateMidia(scope, produtoId, created.id, tx));
   assert.equal(inactive?.status, 'INATIVO');
   assert.equal(inactive?.ativo, false);
+  const reservedData = { ...data, storage_key: `${storageKey}-reserved` };
+  const attempt = {
+    id: randomUUID(), actorId: randomUUID(), requestId: 'synthetic-media-reservation',
+    expiresAt: new Date(Date.now() + 60_000).toISOString(),
+  };
+  const reserved = await repo.withTransaction((tx) => repo.reserveMidia(scope, produtoId, reservedData, attempt, tx));
+  assert.ok(reserved);
+  assert.equal(reserved.status, 'PENDENTE_UPLOAD');
+  assert.equal(reserved.upload_attempt_id, attempt.id);
+  assert.deepEqual(await repo.listMidias(scope, produtoId), []);
+  assert.equal(await repo.withTransaction((tx) => repo.getReservedMidia(
+    foreign, produtoId, reserved.id, attempt.id, attempt.actorId, tx)), null);
+  assert.equal(await repo.withTransaction((tx) => repo.getReservedMidia(
+    scope, produtoId, reserved.id, attempt.id, randomUUID(), tx)), null);
+  assert.equal((await repo.withTransaction((tx) => repo.getReservedMidia(
+    scope, produtoId, reserved.id, attempt.id, attempt.actorId, tx)))?.id, reserved.id);
+  await assert.rejects(repo.withTransaction((tx) => repo.reserveMidia(
+    scope, produtoId, reservedData, { ...attempt, id: randomUUID() }, tx)), /unique|duplicate/i);
+  await assert.rejects(repo.withTransaction((tx) => repo.reserveMidia(
+    scope, produtoId, { ...data, storage_key: `${storageKey}-expired` },
+    { ...attempt, id: randomUUID(), expiresAt: new Date(Date.now() - 60_000).toISOString() }, tx,
+  )), /MEDIA_ATTEMPT_INVALID/);
+  await assert.rejects(repo.withTransaction((tx) => repo.reserveMidia(
+    scope, produtoId, { ...data, storage_key: `${storageKey}-same-attempt` },
+    attempt, tx,
+  )), /unique|duplicate/i);
+  assert.deepEqual(await repo.listMidias(foreign, produtoId), []);
+  assert.equal(await repo.withTransaction((tx) => repo.confirmReservedMidia(
+    scope, produtoId, reserved.id, attempt.id, randomUUID(), tx)), null);
+  await assert.rejects(repo.withTransaction(async (tx) => {
+    await repo.confirmReservedMidia(scope, produtoId, reserved.id, attempt.id, attempt.actorId, tx);
+    throw new Error('MEDIA_RESERVATION_ROLLBACK');
+  }), /MEDIA_RESERVATION_ROLLBACK/);
+  assert.equal((await repo.withTransaction((tx) => repo.getReservedMidia(
+    scope, produtoId, reserved.id, attempt.id, attempt.actorId, tx)))?.status, 'PENDENTE_UPLOAD');
+  const confirmed = await repo.withTransaction((tx) => repo.confirmReservedMidia(
+    scope, produtoId, reserved.id, attempt.id, attempt.actorId, tx));
+  assert.equal(confirmed?.status, 'QUARENTENA');
+  assert.equal(await repo.withTransaction((tx) => repo.confirmReservedMidia(
+    scope, produtoId, reserved.id, attempt.id, attempt.actorId, tx)), null);
+  assert.deepEqual((await repo.listMidias(scope, produtoId)).map((row) => row.id), [reserved.id]);
+  await repo.withTransaction((tx) => repo.deactivateMidia(scope, produtoId, reserved.id, tx));
   assert.deepEqual(await repo.listMidias(scope, produtoId), []);
   await assert.rejects(repo.withTransaction((tx) => repo.createMidia(scope, produtoId,
     { ...data, versao: 3 }, tx)), /unique|duplicate/i);

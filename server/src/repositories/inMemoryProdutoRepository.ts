@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';
-import { produtoMidiaCreateSchema, type Produto, type ProdutoCreate, type ProdutoEquivalente, type ProdutoEquivalenteCreate, type ProdutoEquivalenteUpdate, type ProdutoMidia, type ProdutoMidiaCreate, type ProdutoUpdate, type ProdutoVariante, type ProdutoVarianteCreate, type ProdutoVarianteUpdate } from './produtoTypes.js';
+import { produtoMidiaCreateSchema, type Produto, type ProdutoCreate, type ProdutoEquivalente, type ProdutoEquivalenteCreate, type ProdutoEquivalenteUpdate, type ProdutoMidia, type ProdutoMidiaCreate, type ProdutoMidiaUploadAttempt, type ProdutoUpdate, type ProdutoVariante, type ProdutoVarianteCreate, type ProdutoVarianteUpdate } from './produtoTypes.js';
 
 function nowIso() { return new Date().toISOString(); }
 
@@ -50,6 +50,10 @@ export interface ProdutoRepository extends TenantEntityRepository<Produto, Produ
   listMidias(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia[]>;
   createMidia(scope: Scope, produtoId: string, data: ProdutoMidiaCreate, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
   deactivateMidia(scope: Scope, produtoId: string, midiaId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
+  reserveMidia(scope: Scope, produtoId: string, data: ProdutoMidiaCreate, attempt: ProdutoMidiaUploadAttempt, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
+  getReservedMidia(scope: Scope, produtoId: string, midiaId: string, attemptId: string, actorId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
+  confirmReservedMidia(scope: Scope, produtoId: string, midiaId: string, attemptId: string, actorId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
+
 }
 
 function buildProduto(scope: Scope, data: ProdutoCreate, id: string, ts: string): Produto {
@@ -327,7 +331,7 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
   }
 
   async listMidias(scope: Scope, produtoId: string): Promise<ProdutoMidia[]> {
-    return structuredClone([...this.midias.values()].filter((row) => row.ativo && row.group_id === scope.groupId
+    return structuredClone([...this.midias.values()].filter((row) => row.ativo && row.status !== 'PENDENTE_UPLOAD' && row.group_id === scope.groupId
       && row.produto_id === produtoId && (!scope.empresaId || row.empresa_id === scope.empresaId))
       .sort((a, b) => a.versao - b.versao || a.id.localeCompare(b.id)));
   }
@@ -349,6 +353,44 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     this.midias.set(row.id, structuredClone(row));
     return structuredClone(row);
   }
+  async reserveMidia(scope: Scope, produtoId: string, data: ProdutoMidiaCreate, attempt: ProdutoMidiaUploadAttempt): Promise<ProdutoMidia | null> {
+    const produto = await this.getById(scope, produtoId);
+    if (!produto || !produto.ativo || !scope.empresaId || produto.empresa_id !== scope.empresaId) return null;
+    const parsed = produtoMidiaCreateSchema.parse(data);
+    const prefix = `groups/${scope.groupId}/companies/${scope.empresaId}/products/${produtoId}/`;
+    if (!parsed.storage_key.startsWith(prefix)) throw new Error('TENANT_FK_MISMATCH');
+    if (!attempt.id || !attempt.actorId || !attempt.requestId || !Number.isFinite(Date.parse(attempt.expiresAt))
+      || Date.parse(attempt.expiresAt) <= Date.now()) throw new Error('MEDIA_ATTEMPT_INVALID');
+    if ([...this.midias.values()].some((row) => row.group_id === scope.groupId
+      && (row.storage_key === parsed.storage_key || row.upload_attempt_id === attempt.id))) {
+      throw new Error('unique constraint produto_midias reservation');
+    }
+    const row: ProdutoMidia = {
+      id: randomUUID(), group_id: scope.groupId, empresa_id: scope.empresaId, produto_id: produtoId,
+      ...parsed, status: 'PENDENTE_UPLOAD', principal: false, ativo: true,
+      upload_attempt_id: attempt.id, upload_actor_id: attempt.actorId,
+      upload_request_id: attempt.requestId, upload_expires_at: attempt.expiresAt,
+    };
+    this.midias.set(row.id, structuredClone(row));
+    return structuredClone(row);
+  }
+
+  async getReservedMidia(scope: Scope, produtoId: string, midiaId: string, attemptId: string, actorId: string): Promise<ProdutoMidia | null> {
+    const row = this.midias.get(midiaId);
+    return row && row.ativo && row.status === 'PENDENTE_UPLOAD'
+      && row.group_id === scope.groupId && row.empresa_id === scope.empresaId
+      && row.produto_id === produtoId && row.upload_attempt_id === attemptId
+      && row.upload_actor_id === actorId ? structuredClone(row) : null;
+  }
+
+  async confirmReservedMidia(scope: Scope, produtoId: string, midiaId: string, attemptId: string, actorId: string): Promise<ProdutoMidia | null> {
+    const row = await this.getReservedMidia(scope, produtoId, midiaId, attemptId, actorId);
+    if (!row || !row.upload_expires_at || Date.parse(row.upload_expires_at) <= Date.now()) return null;
+    const next: ProdutoMidia = { ...row, status: 'QUARENTENA' };
+    this.midias.set(midiaId, structuredClone(next));
+    return structuredClone(next);
+  }
+
 
   async deactivateMidia(scope: Scope, produtoId: string, midiaId: string): Promise<ProdutoMidia | null> {
     const current = this.midias.get(midiaId);

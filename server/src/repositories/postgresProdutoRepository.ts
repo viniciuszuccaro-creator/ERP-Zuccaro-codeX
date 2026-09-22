@@ -1,7 +1,7 @@
 import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope } from '../services/tenantCrudService.js';
 import { produtoMidiaCreateSchema } from './produtoTypes.js';
-import type { Produto, ProdutoCreate, ProdutoEquivalente, ProdutoEquivalenteCreate, ProdutoEquivalenteUpdate, ProdutoMidia, ProdutoMidiaCreate, ProdutoUpdate, ProdutoVariante, ProdutoVarianteCreate, ProdutoVarianteUpdate } from './produtoTypes.js';
+import type { Produto, ProdutoCreate, ProdutoEquivalente, ProdutoEquivalenteCreate, ProdutoEquivalenteUpdate, ProdutoMidia, ProdutoMidiaCreate, ProdutoMidiaUploadAttempt, ProdutoUpdate, ProdutoVariante, ProdutoVarianteCreate, ProdutoVarianteUpdate } from './produtoTypes.js';
 import type { ProdutoListFilter, ProdutoReadOptions, ProdutoRepository } from './inMemoryProdutoRepository.js';
 
 function ts(row: Record<string, unknown>) {
@@ -430,7 +430,7 @@ export class PostgresProdutoRepository implements ProdutoRepository {
     const params: unknown[] = [scope.groupId, produtoId];
     let sql = `SELECT id,group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,mime_type,
       tamanho_bytes,sha256,versao,status,principal,ativo FROM produto_midias
-      WHERE group_id=$1 AND produto_id=$2 AND ativo=true`;
+      WHERE group_id=$1 AND produto_id=$2 AND ativo=true AND status<>'PENDENTE_UPLOAD'`;
     if (scope.empresaId) { params.push(scope.empresaId); sql += ` AND empresa_id=$${params.length}`; }
     sql += ' ORDER BY versao ASC,id ASC';
     const result = await (executor ?? this.db).query(sql, params);
@@ -455,6 +455,56 @@ export class PostgresProdutoRepository implements ProdutoRepository {
     );
     return result.rows[0] ? { ...result.rows[0], tamanho_bytes: Number(result.rows[0].tamanho_bytes) } as ProdutoMidia : null;
   }
+  async reserveMidia(scope: Scope, produtoId: string, data: ProdutoMidiaCreate, attempt: ProdutoMidiaUploadAttempt, executor?: DbQueryExecutor): Promise<ProdutoMidia | null> {
+    if (!scope.empresaId) return null;
+    if (!executor) throw new Error('MEDIA_TRANSACTION_REQUIRED');
+    const parsed = produtoMidiaCreateSchema.parse(data);
+    const prefix = `groups/${scope.groupId}/companies/${scope.empresaId}/products/${produtoId}/`;
+    if (!parsed.storage_key.startsWith(prefix)) throw new Error('TENANT_FK_MISMATCH');
+    if (!attempt.id || !attempt.actorId || !attempt.requestId || !Number.isFinite(Date.parse(attempt.expiresAt))
+      || Date.parse(attempt.expiresAt) <= Date.now()) throw new Error('MEDIA_ATTEMPT_INVALID');
+    const result = await executor.query(
+      `INSERT INTO produto_midias (group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,
+        mime_type,tamanho_bytes,sha256,versao,status,upload_attempt_id,upload_actor_id,upload_request_id,upload_expires_at)
+       SELECT $1,$2,p.id,$4,$5,$6,$7,$8,$9,$10,'PENDENTE_UPLOAD',$11,$12,$13,$14
+       FROM produtos p WHERE p.id=$3 AND p.group_id=$1 AND p.empresa_id IS NOT DISTINCT FROM $2::uuid AND p.ativo=true
+       RETURNING id,group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,mime_type,
+         tamanho_bytes,sha256,versao,status,principal,ativo,upload_attempt_id,upload_actor_id,upload_request_id,upload_expires_at`,
+      [scope.groupId, scope.empresaId, produtoId, parsed.storage_key, parsed.categoria,
+        parsed.nome_arquivo, parsed.mime_type, parsed.tamanho_bytes, parsed.sha256, parsed.versao,
+        attempt.id, attempt.actorId, attempt.requestId, attempt.expiresAt],
+    );
+    return result.rows[0] ? { ...result.rows[0], tamanho_bytes: Number(result.rows[0].tamanho_bytes) } as ProdutoMidia : null;
+  }
+
+  async getReservedMidia(scope: Scope, produtoId: string, midiaId: string, attemptId: string, actorId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null> {
+    if (!scope.empresaId) return null;
+    if (!executor) throw new Error('MEDIA_TRANSACTION_REQUIRED');
+    const result = await executor.query(
+      `SELECT id,group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,mime_type,
+         tamanho_bytes,sha256,versao,status,principal,ativo,upload_attempt_id,upload_actor_id,upload_request_id,upload_expires_at
+       FROM produto_midias WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND produto_id=$4
+         AND upload_attempt_id=$5 AND upload_actor_id=$6 AND status='PENDENTE_UPLOAD' AND ativo=true FOR UPDATE`,
+      [midiaId, scope.groupId, scope.empresaId, produtoId, attemptId, actorId],
+    );
+    return result.rows[0] ? { ...result.rows[0], tamanho_bytes: Number(result.rows[0].tamanho_bytes) } as ProdutoMidia : null;
+  }
+
+  async confirmReservedMidia(scope: Scope, produtoId: string, midiaId: string, attemptId: string, actorId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null> {
+    if (!scope.empresaId) return null;
+    if (!executor) throw new Error('MEDIA_TRANSACTION_REQUIRED');
+    const result = await executor.query(
+      `UPDATE produto_midias SET status='QUARENTENA',updated_at=timezone('utc',now())
+       WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND produto_id=$4
+         AND upload_attempt_id=$5 AND upload_actor_id=$6 AND status='PENDENTE_UPLOAD'
+         AND ativo=true AND upload_expires_at>now()
+       RETURNING id,group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,mime_type,
+         tamanho_bytes,sha256,versao,status,principal,ativo,upload_attempt_id,upload_actor_id,upload_request_id,upload_expires_at`,
+      [midiaId, scope.groupId, scope.empresaId, produtoId, attemptId, actorId],
+    );
+    return result.rows[0] ? { ...result.rows[0], tamanho_bytes: Number(result.rows[0].tamanho_bytes) } as ProdutoMidia : null;
+  }
+
 
   async deactivateMidia(scope: Scope, produtoId: string, midiaId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null> {
     if (!scope.empresaId) return null;

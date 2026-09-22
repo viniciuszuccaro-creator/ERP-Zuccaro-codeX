@@ -49,6 +49,15 @@ test('R10 PostgreSQL real: migration 018 preserva PIM, tenant, DAM, RLS e outbox
        AND indexdef LIKE '%(group_id, storage_key)%'`,
     );
     assert.equal(mediaKeyIndex.rows[0]?.total, 1);
+    const reservationMigration = await db.query<{ total: number }>(
+      "SELECT count(*)::int total FROM schema_migrations WHERE id='021_produto_midia_upload_reservation.sql'",
+    );
+    assert.equal(reservationMigration.rows[0]?.total, 1);
+    const reservationColumns = await db.query<{ total: number }>(
+      "SELECT count(*)::int total FROM information_schema.columns WHERE table_name='produto_midias' AND column_name=ANY($1::text[])",
+      [['upload_attempt_id', 'upload_actor_id', 'upload_request_id', 'upload_expires_at']],
+    );
+    assert.equal(reservationColumns.rows[0]?.total, 4);
 
     await db.query(
       `INSERT INTO produtos (id,group_id,empresa_id,codigo,descricao,multiplo_venda,quantidade_minima_venda,workflow_status)
@@ -100,6 +109,12 @@ test('R10 PostgreSQL real: migration 018 preserva PIM, tenant, DAM, RLS e outbox
       `INSERT INTO produto_midias (id,group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,mime_type,tamanho_bytes,sha256,principal)
        VALUES ($1,$2,$3,$4,$5,'IMAGEM','r10.png','image/png',128,$6,true)`,
       [mediaId, SEED_IDS.groupA, SEED_IDS.empresaA, productId, `r10/${productId}`, sha],
+    );
+    await rejectSql(
+      `INSERT INTO produto_midias (group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,mime_type,tamanho_bytes,sha256,status)
+       VALUES ($1,$2,$3,$4,'IMAGEM','pending.png','image/png',1,$5,'PENDENTE_UPLOAD')`,
+      [SEED_IDS.groupA, SEED_IDS.empresaA, productId, `pending/${productId}`, sha],
+      /produto_midias_pending_upload_check/,
     );
     await rejectSql(
       `INSERT INTO produto_midias (group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,mime_type,tamanho_bytes,sha256)

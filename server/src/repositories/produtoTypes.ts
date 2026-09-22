@@ -194,11 +194,20 @@ export const produtoMidiaCreateSchema = z.object({
   versao: z.number().int().positive().default(1),
 }).strict();
 export type ProdutoMidiaCreate = z.input<typeof produtoMidiaCreateSchema>;
+export type ProdutoMidiaUploadAttempt = {
+  id: string;
+  actorId: string;
+  requestId: string;
+  expiresAt: string;
+};
+
 export type ProdutoMidia = {
   id: string; group_id: string; empresa_id: string | null; produto_id: string;
   storage_key: string; categoria: z.infer<typeof produtoMidiaCreateSchema>['categoria'];
   nome_arquivo: string; mime_type: string; tamanho_bytes: number; sha256: string;
-  versao: number; status: 'QUARENTENA' | 'APROVADO' | 'REJEITADO' | 'INATIVO';
+  versao: number; status: 'PENDENTE_UPLOAD' | 'QUARENTENA' | 'APROVADO' | 'REJEITADO' | 'INATIVO';
+  upload_attempt_id?: string | null; upload_actor_id?: string | null;
+  upload_request_id?: string | null; upload_expires_at?: string | null;
   principal: boolean; ativo: boolean;
 };
 
