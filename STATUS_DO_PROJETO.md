@@ -9976,3 +9976,10 @@ Checklist inicial:
 - Importadores existentes de lote e NF-e passaram a reutilizar as constantes canonicas para Revenda e Materia-Prima, sem criar fluxo paralelo.
 - Testes direcionados: 6 pass / 0 fail / 0 skip. Suite frontend explicita: 594 pass / 0 fail / 0 skip. `audit:baseline`, lint, build e `git diff --check`: PASS.
 - Nenhuma migration, VPS, porta 3080, segredo ou dado real foi alterado. Proximo incremento: alinhar conversoes em massa e dashboards de Produto aos mesmos predicados/constantes, preservando confirmacao e auditoria existentes.
+### Programa Comercial 360 Omnicanal - Onda 1 Produto/PIM, incremento 5 (2026-09-22)
+
+- A conversao em massa existente passou a identificar Materia-Prima por predicado canonico, preservando aliases conhecidos e excluindo corretamente itens ja convertidos.
+- O payload auditado de conversao e os filtros existentes do dashboard de producao e dos itens de revenda passaram a reutilizar constantes canonicas, sem mudar endpoints, contexto ou fluxo do usuario.
+- Confirmacao humana, RBAC, contexto Grupo/Empresa e auditoria da conversao foram preservados integralmente.
+- Testes direcionados: 7 pass / 0 fail / 0 skip. Suite frontend explicita: 595 pass / 0 fail / 0 skip. `audit:baseline`, lint, build e `git diff --check`: PASS.
+- Nenhuma migration, VPS, porta 3080, segredo ou dado real foi alterado. Proximo incremento: corrigir o formulario legado `ProdutoForm` para consumir a mesma policy sem perder compatibilidade com seus consumidores atuais.

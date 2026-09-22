@@ -97,3 +97,14 @@ test('importadores existentes usam a classificação canônica e bloqueiam ambig
   assert.match(nfe, /PRODUTO_TIPOS_CANONICOS\.REVENDA/);
   assert.match(xml, /PRODUTO_TIPOS_CANONICOS\.MATERIA_PRIMA/);
 });
+test('conversão, dashboard e itens de pedido usam o contrato canônico', async () => {
+  const conversao = await readFile(new URL('../src/components/cadastros/ConversaoProducaoMassa.jsx', import.meta.url), 'utf8');
+  const dashboard = await readFile(new URL('../src/components/cadastros/DashboardProdutosProducao.jsx', import.meta.url), 'utf8');
+  const itens = await readFile(new URL('../src/components/comercial/ItensRevendaTab.jsx', import.meta.url), 'utf8');
+
+  assert.match(conversao, /!isProdutoMateriaPrima\(p\.tipo_item\)/);
+  assert.match(conversao, /tipo_item: PRODUTO_TIPOS_CANONICOS\.MATERIA_PRIMA/);
+  assert.doesNotMatch(conversao, /p\.tipo_item === 'Matéria-Prima Produção'/);
+  assert.match(dashboard, /tipo_item: PRODUTO_TIPOS_CANONICOS\.MATERIA_PRIMA/);
+  assert.match(itens, /tipo_item: PRODUTO_TIPOS_CANONICOS\.REVENDA/);
+});
