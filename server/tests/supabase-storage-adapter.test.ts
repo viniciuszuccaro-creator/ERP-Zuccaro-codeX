@@ -8,7 +8,7 @@ const empresaId = '22222222-2222-4222-8222-222222222222';
 const entityId = '33333333-3333-4333-8333-333333333333';
 const fileId = '44444444-4444-4444-8444-444444444444';
 const storageKey = `groups/${groupId}/companies/${empresaId}/products/${entityId}/images/${fileId}-foto.png`;
-const bytes = Buffer.from('synthetic-file');
+const bytes = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/qZkAAAAASUVORK5CYII=', 'base64');
 const request = {
   groupId, empresaId, actorId: 'synthetic-actor', entity: 'Produto' as const, entityId,
   storageKey, fileName: 'foto.png', mimeType: 'image/png', sizeBytes: bytes.length,
@@ -42,6 +42,10 @@ test('Storage adapter rejects cross-tenant path before network', async () => {
   await assert.rejects(adapter.createSignedUploadUrl({ ...request, empresaId: groupId }), /STORAGE_SCOPE_INVALID/);
   await assert.rejects(adapter.createSignedDownloadUrl({ ...request, empresaId: groupId }, storageKey), /STORAGE_SCOPE_INVALID/);
   await assert.rejects(adapter.createSignedUploadUrl({ ...request, mimeType: 'application/x-msdownload' }), /STORAGE_UPLOAD_INVALID/);
+  await assert.rejects(adapter.createSignedUploadUrl({ ...request, fileName: '../foto.png' }), /STORAGE_UPLOAD_INVALID/);
+  await assert.rejects(adapter.createSignedUploadUrl({ ...request, storageKey: storageKey.replace('/images/', '/documents/') }), /STORAGE_UPLOAD_INVALID/);
+  await assert.rejects(adapter.createSignedUploadUrl({ ...request, storageKey: storageKey.replace('/images/', '/cad/') }), /STORAGE_SCOPE_INVALID/);
+  await assert.rejects(adapter.createSignedDownloadUrl(request, storageKey.replace('/images/', '/cad/')), /STORAGE_SCOPE_INVALID/);
 });
 
 test('Storage adapter rejects signed response pointing to another object', async () => {
@@ -50,11 +54,32 @@ test('Storage adapter rejects signed response pointing to another object', async
 });
 
 test('Storage adapter confirms exact byte count and SHA-256', async () => {
-  const adapter = makeAdapter(async () => new Response(bytes));
+  const adapter = makeAdapter(async () => new Response(bytes, { headers: { 'content-type': 'image/png' } }));
   const metadata = await adapter.confirmUpload(request);
   assert.equal(metadata.sha256, request.sha256);
   await assert.rejects(adapter.confirmUpload({ ...request, sha256: '0'.repeat(64) }), /STORAGE_CHECKSUM_MISMATCH/);
   await assert.rejects(adapter.confirmUpload({ ...request, sizeBytes: 2 }), /STORAGE_SIZE_MISMATCH/);
+});
+
+test('Storage adapter rejects MIME header and spoofed content even with matching checksum', async () => {
+  const wrongHeader = makeAdapter(async () => new Response(bytes, { headers: { 'content-type': 'text/html' } }));
+  await assert.rejects(wrongHeader.confirmUpload(request), /STORAGE_MIME_MISMATCH/);
+  const spoof = Buffer.from('synthetic-not-a-png');
+  const fake = { ...request, sizeBytes: spoof.length, sha256: createHash('sha256').update(spoof).digest('hex') };
+  const wrongBody = makeAdapter(async () => new Response(spoof, { headers: { 'content-type': 'image/png' } }));
+  await assert.rejects(wrongBody.confirmUpload(fake), /STORAGE_CONTENT_MISMATCH/);
+});
+
+test('Storage adapter accepts a private PDF in a matching category', async () => {
+  const pdf = Buffer.from('%PDF-1.7\nsynthetic');
+  const pdfKey = `groups/${groupId}/companies/${empresaId}/products/${entityId}/documents/${fileId}-manual.pdf`;
+  const pdfRequest = {
+    ...request, storageKey: pdfKey, fileName: 'manual.pdf', mimeType: 'application/pdf',
+    sizeBytes: pdf.length, sha256: createHash('sha256').update(pdf).digest('hex'),
+  };
+  const adapter = makeAdapter(async () => new Response(pdf, { headers: { 'content-type': 'application/pdf' } }));
+  const metadata = await adapter.confirmUpload(pdfRequest);
+  assert.equal(metadata.storageKey, pdfKey);
 });
 
 test('Storage adapter signs private download for one minute', async () => {
