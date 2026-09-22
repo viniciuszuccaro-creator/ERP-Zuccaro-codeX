@@ -195,6 +195,18 @@ export const produtoVarianteCreateSchema = z.object({
 export const produtoVarianteUpdateSchema = produtoVarianteCreateSchema.partial().strict();
 export type ProdutoVarianteCreate = z.infer<typeof produtoVarianteCreateSchema>;
 export type ProdutoVarianteUpdate = z.infer<typeof produtoVarianteUpdateSchema>;
+
+export const produtoEquivalenteCreateSchema = z.object({
+  produto_equivalente_id: z.string().uuid(),
+  tipo: z.enum(['EQUIVALENTE', 'SUBSTITUTO']).optional().default('EQUIVALENTE'),
+  direcional: z.boolean().optional().default(false),
+  aprovado: z.boolean().optional().default(false),
+}).strict();
+
+export const produtoEquivalenteUpdateSchema = produtoEquivalenteCreateSchema
+  .omit({ produto_equivalente_id: true }).partial().strict();
+export type ProdutoEquivalenteCreate = z.infer<typeof produtoEquivalenteCreateSchema>;
+export type ProdutoEquivalenteUpdate = z.infer<typeof produtoEquivalenteUpdateSchema>;
 export const PRODUTO_FORBIDDEN_OPERATIONAL_FIELDS = Object.freeze([
   'estoque_atual',
   'estoque_minimo',
