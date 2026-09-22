@@ -1,0 +1,62 @@
+const TIPOS = [
+  ['REVENDA', 'Revenda'],
+  ['MATERIA_PRIMA', 'Matéria-Prima Produção'],
+  ['COMPONENTE', 'Componente'],
+  ['INTERMEDIARIO', 'Intermediário'],
+  ['FABRICADO', 'Produto Acabado'],
+  ['KIT', 'Kit'],
+  ['SERVICO', 'Serviço'],
+  ['RETALHO', 'Retalho'],
+  ['SUCATA', 'Sucata'],
+  ['CONSUMO_INTERNO', 'Consumo Interno'],
+];
+
+export const PRODUTO_TIPOS_CANONICOS = Object.freeze(
+  Object.fromEntries(TIPOS),
+);
+
+export const PRODUTO_TIPO_OPTIONS = Object.freeze(
+  TIPOS.map(([key, value]) => Object.freeze({ key, value, label: value })),
+);
+
+const aliases = new Map([
+  ['REVENDA', PRODUTO_TIPOS_CANONICOS.REVENDA],
+  ['MATERIA PRIMA', PRODUTO_TIPOS_CANONICOS.MATERIA_PRIMA],
+  ['MATERIA PRIMA PRODUCAO', PRODUTO_TIPOS_CANONICOS.MATERIA_PRIMA],
+  ['COMPONENTE', PRODUTO_TIPOS_CANONICOS.COMPONENTE],
+  ['INTERMEDIARIO', PRODUTO_TIPOS_CANONICOS.INTERMEDIARIO],
+  ['FABRICADO', PRODUTO_TIPOS_CANONICOS.FABRICADO],
+  ['PRODUTO ACABADO', PRODUTO_TIPOS_CANONICOS.FABRICADO],
+  ['KIT', PRODUTO_TIPOS_CANONICOS.KIT],
+  ['SERVICO', PRODUTO_TIPOS_CANONICOS.SERVICO],
+  ['RETALHO', PRODUTO_TIPOS_CANONICOS.RETALHO],
+  ['SUCATA', PRODUTO_TIPOS_CANONICOS.SUCATA],
+  ['CONSUMO INTERNO', PRODUTO_TIPOS_CANONICOS.CONSUMO_INTERNO],
+]);
+
+function aliasKey(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toUpperCase();
+}
+
+export function normalizeProdutoTipoItem(value) {
+  const trimmed = String(value || '').trim();
+  if (!trimmed) return PRODUTO_TIPOS_CANONICOS.REVENDA;
+  return aliases.get(aliasKey(trimmed)) || trimmed;
+}
+
+export function getProdutoTipoOptions(currentValue) {
+  const normalized = normalizeProdutoTipoItem(currentValue);
+  if (PRODUTO_TIPO_OPTIONS.some((option) => option.value === normalized)) {
+    return PRODUTO_TIPO_OPTIONS;
+  }
+  return [
+    ...PRODUTO_TIPO_OPTIONS,
+    Object.freeze({ key: 'LEGADO', value: normalized, label: normalized, legacy: true }),
+  ];
+}

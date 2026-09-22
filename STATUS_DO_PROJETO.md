@@ -9954,3 +9954,10 @@ Checklist inicial:
 - Workflow PR #33: 35719792647, frontend SUCCESS e backend SUCCESS.
 - Backend CI confirmou typecheck, suite, build, migrations 001-017, seed sintetico e test:postgres sem falha.
 - PR #33 permanece draft, sem merge; VPS, porta 3080, dados reais e migrations externas permanecem intocados.
+### Programa Comercial 360 Omnicanal - Onda 1 Produto/PIM, incremento 2 (2026-09-22)
+
+- O formulario canonico `ProdutoFormV22_Completo` passou a consumir a classificacao controlada de Produto/PIM, sem criar tela, cadastro ou persistencia paralela.
+- A policy reutilizavel cobre Revenda, Materia-Prima Producao, Componente, Intermediario, Produto Acabado, Kit, Servico, Retalho, Sucata e Consumo Interno.
+- Aliases inequivocos sao normalizados; valores legados desconhecidos continuam selecionaveis e preservados, evitando reclassificacao silenciosa de registros existentes.
+- Teste direcionado: 2 pass / 0 fail / 0 skip. Suite frontend explicita: 590 pass / 0 fail / 0 skip. `audit:baseline`, lint, build e `git diff --check`: PASS.
+- Nenhuma migration, VPS, porta 3080, segredo ou dado real foi alterado. Proximo incremento: mapear os consumidores do tipo de produto e substituir comparacoes divergentes pela policy canonica, preservando aliases legados.

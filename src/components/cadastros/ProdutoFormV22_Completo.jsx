@@ -22,6 +22,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useQuery } from "@tanstack/react-query";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
+import { PRODUTO_TIPOS_CANONICOS, getProdutoTipoOptions, normalizeProdutoTipoItem } from "./produto/produtoTipoPolicy";
 const HistoricoProduto = React.lazy(() => import("./HistoricoProduto"));
 const FiscalContabilSection = React.lazy(() => import("./produto/FiscalContabilSection"));
 const EstoqueAvancadoSection = React.lazy(() => import("./produto/EstoqueAvancadoSection"));
@@ -74,6 +75,7 @@ function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, w
     if (produto) {
       return {
         ...produto,
+        tipo_item: normalizeProdutoTipoItem(produto.tipo_item),
         // Garante que a Unidade Principal apareça selecionada no formulário
         unidade_principal: produto.unidade_principal || produto.unidade_medida || (produto.eh_bitola ? 'KG' : 'UN'),
         // Garante que a unidade principal esteja presente nas unidades habilitadas
@@ -122,7 +124,7 @@ function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, w
       descricao: '',
       codigo: '',
       codigo_barras: '',
-      tipo_item: 'Revenda',
+      tipo_item: PRODUTO_TIPOS_CANONICOS.REVENDA,
       grupo: 'Outros',
       eh_bitola: false,
       peso_teorico_kg_m: 0,
@@ -862,11 +864,9 @@ Caso contrário, sugira:
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Revenda">Revenda</SelectItem>
-                      <SelectItem value="Matéria-Prima Produção">Matéria-Prima Produção</SelectItem>
-                      <SelectItem value="Produto Acabado">Produto Acabado</SelectItem>
-                      <SelectItem value="Consumo Interno">Consumo Interno</SelectItem>
-                      <SelectItem value="Serviço">Serviço</SelectItem>
+                      {getProdutoTipoOptions(formData.tipo_item).map((option) => (
+                        <SelectItem key={option.key} value={option.value}>{option.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
