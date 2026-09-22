@@ -131,6 +131,21 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
     catch (error) { next(error); }
   });
 
+  router.post('/api/v1/produtos/:id/variantes', requireTenantScope, async (req, res, next) => {
+    try { res.status(201).json({ data: await service.createVariant(ctxFromReq(req), req.params.id, req.body) }); }
+    catch (error) { next(error); }
+  });
+
+  router.patch('/api/v1/produtos/:id/variantes/:variantId', requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.updateVariant(ctxFromReq(req), req.params.id, req.params.variantId, req.body) }); }
+    catch (error) { next(error); }
+  });
+
+  router.delete('/api/v1/produtos/:id/variantes/:variantId', requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.deactivateVariant(ctxFromReq(req), req.params.id, req.params.variantId) }); }
+    catch (error) { next(error); }
+  });
+
   router.get('/api/v1/produtos/:id/equivalentes', requireTenantScope, async (req, res, next) => {
     try { res.json({ data: await service.listEquivalents(ctxFromReq(req), req.params.id) }); }
     catch (error) { next(error); }

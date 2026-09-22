@@ -150,3 +150,38 @@ test('Variante usa payload estrito e bloqueia mass assignment de tenant e campos
   assert.equal(produtoVarianteUpdateSchema.safeParse({ nome: 'Revisada' }).success, true);
   assert.equal(produtoVarianteUpdateSchema.safeParse({ id: ACTOR }).success, false);
 });
+
+test('Variante cria atualiza inativa e audita atomicamente', async () => {
+  const { repo, audit, service, ctx } = harness();
+  const produto = await service.create(ctx, { descricao: 'Produto com variante' });
+  const variante = await service.createVariant(ctx, produto.id, { sku: 'VAR-01', nome: 'Azul', atributos: { cor: 'Azul' } });
+  assert.equal(variante.sku, 'VAR-01');
+  assert.equal((await service.listVariants(ctx, produto.id)).length, 1);
+  const updated = await service.updateVariant(ctx, produto.id, variante.id, { nome: 'Azul revisado' });
+  assert.equal(updated.nome, 'Azul revisado');
+  const inactive = await service.deactivateVariant(ctx, produto.id, variante.id);
+  assert.equal(inactive.ativo, false);
+  assert.deepEqual(await service.listVariants(ctx, produto.id), []);
+  const logs = await audit.listByEntity('ProdutoVariante', variante.id);
+  assert.deepEqual(logs.map((entry) => entry.action), ['create', 'update', 'soft_delete']);
+
+  const failingAudit = { append: async () => { throw new Error('AUDIT_FAILURE'); }, listByEntity: async () => [] };
+  const tenant = new InMemoryTenantGuard(); tenant.link(EMPRESA, GROUP);
+  const rbac = new InMemoryRbacGuard();
+  rbac.link({ actorId: ACTOR, groupId: GROUP, permissions: { Cadastros: { produto: ['editar'] } } });
+  const failing = new ProdutoService(repo, failingAudit, tenant, new InMemoryProdutoRelationGuard(), rbac);
+  await assert.rejects(
+    () => failing.createVariant({ ...ctx, requestId: 'variant-rollback' }, produto.id, { sku: 'ROLLBACK' }),
+    /AUDIT_FAILURE/,
+  );
+  assert.deepEqual(await service.listVariants(ctx, produto.id), []);
+});
+
+test('Variante exige editar e permanece isolada por tenant', async () => {
+  const denied = harness(['visualizar', 'criar']);
+  const produto = await denied.service.create(denied.ctx, { descricao: 'Sem editar variante' });
+  await assert.rejects(
+    () => denied.service.createVariant(denied.ctx, produto.id, { sku: 'NEGADA' }),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED',
+  );
+});
