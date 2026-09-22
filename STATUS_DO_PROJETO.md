@@ -10202,6 +10202,16 @@ Checklist inicial:
 - Proximo gate: se E2E efemero passar, avaliar contrato HTTP da reserva/confirmacao no router existente; antivirus, reconciliacao de orfaos e buckets self-hosted continuam pendentes de gate especifico.
 - Codigo publicado em `e57c4efca9cfb841d810443616c87b39f294b1ad`; workflow `35795871503` da PR #33: frontend SUCCESS, backend SUCCESS, migrations/seed sintetico/test:postgres SUCCESS. R10 PostgreSQL real 3 pass / 0 fail / 0 skip, incluindo o novo fluxo service DAM. Migration 021 nao aplicada na VPS.
 
+### Onda 1 Produto/PIM - reconciliacao conservadora de reservas DAM vencidas (2026-09-22)
+- Objetivo: permitir transicao auditada de metadados PENDENTE_UPLOAD vencidos para REJEITADO sem excluir objetos ou perder a chave fisica unica. Nenhuma varredura automatica, DELETE de Storage ou rota HTTP foi habilitada.
+- O ProdutoService existente oferece operacao interna com groupId, empresaId, actorId e requestId obrigatorios, TenantGuard e permissao `Cadastros.produto.inativar`. Produto e reserva sao verificados na mesma transacao; PostgreSQL usa UPDATE condicional por tenant, produto, estado e vencimento. In-memory preserva rollback equivalente.
+- A linha permanece para rastreabilidade com `ativo=false`, `status=REJEITADO` e `storage_key` original; auditoria before/after registra somente categoria, versao, estado e motivo tecnico, sem chave, checksum ou URL assinada. Falha de auditoria rollbacka a transicao.
+- Teste sintetico in-memory cobre vencimento, reserva ainda valida, RBAC, empresa externa, repeticao, unicidade da chave e rollback. E2E R10 PostgreSQL foi ampliado para validar SQL real, isolamento, RBAC, rollback e linha preservada no banco efemero da CI.
+- Local: teste direcionado Produto 22 pass / 0 fail; backend completo 198 total / 188 pass / 0 fail / 10 skips condicionais sem DATABASE_URL. Typecheck/build backend, lint, audit:baseline, build frontend e git diff --check PASS. E2E PostgreSQL novo aguarda CI; nao declarar aprovado antes da execucao.
+- Arquivos: repositórios Produto in-memory/PostgreSQL, helper e service DAM existentes, testes R10 em memoria/PostgreSQL. Nenhuma migration nova, bucket, VPS, porta 3080, main ou dado real foi alterado. PR #33 permanece draft sem merge.
+- Proximo gate: CI PostgreSQL efemero verde; depois definir reconciliacao de objeto orfao e antivirus, verificar buckets/credenciais self-hosted sob autorizacao especifica e integrar ao ProdutoFormV22. Ate esse gate, nenhuma exclusao de objeto ou ativacao do StoragePort real.
+- `npm run typecheck` da raiz falhou em erros preexistentes de Base44/frontend (ex.: `base44/functions/_lib/security/entityGuardPolicy/entry.ts` e `src/api/httpApiClient.js`), fora dos arquivos deste lote. Nenhum baseline foi alterado para ocultar a falha; typecheck do backend passou.
+
 ### Onda 1 Produto/PIM - contrato HTTP da reserva DAM (2026-09-22)
 - Causa: service e PostgreSQL da reserva/confirmacao ja estavam testados, mas Produto nao oferecia contrato HTTP para o fluxo em duas etapas.
 - As rotas existentes de Produto ganharam POST /:id/midias/reservas (201) e POST /:id/midias/:mediaId/confirmar (200), ambas com contexto tenant e RBAC validados no service. Confirmacao exige body estrito com apenas attemptId; resposta omite chave/checksum internos; Cache-Control no-store protege URL assinada.

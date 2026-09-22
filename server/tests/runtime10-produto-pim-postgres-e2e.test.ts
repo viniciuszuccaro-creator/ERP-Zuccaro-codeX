@@ -363,6 +363,38 @@ test('R10 PostgreSQL real: service DAM reserva, confirma e rollbacka auditoria',
       [scope.groupId, scope.empresaId, failedData.storage_key],
     );
     assert.equal(rolledBack.rows[0]?.total, 0);
+    const expiredData = data('expired');
+    const expired = await service.reserveMidia(ctx, productId, expiredData);
+    mediaIds.push(expired.mediaId);
+    await assert.rejects(service.rejectExpiredMidia(ctx, productId, expired.mediaId),
+      (error: unknown) => (error as { code?: string }).code === 'MEDIA_RESERVATION_NOT_FOUND');
+    await db.query(
+      "UPDATE produto_midias SET upload_expires_at=now()-interval '1 minute' WHERE id=$1 AND group_id=$2 AND empresa_id=$3",
+      [expired.mediaId, scope.groupId, scope.empresaId],
+    );
+    await assert.rejects(deniedService.rejectExpiredMidia(ctx, productId, expired.mediaId), /RBAC_DENIED/);
+    await assert.rejects(service.rejectExpiredMidia({ ...ctx, empresaId: SEED_IDS.empresaA2 }, productId, expired.mediaId),
+      (error: unknown) => (error as { code?: string }).code === 'PRODUTO_NOT_FOUND');
+    await assert.rejects(failingService.rejectExpiredMidia(ctx, productId, expired.mediaId), /SYNTHETIC_AUDIT_FAILURE/);
+    const pendingAfterRollback = await db.query<{ status: string }>(
+      'SELECT status FROM produto_midias WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+      [expired.mediaId, scope.groupId, scope.empresaId],
+    );
+    assert.equal(pendingAfterRollback.rows[0]?.status, 'PENDENTE_UPLOAD');
+    assert.deepEqual(await service.rejectExpiredMidia(ctx, productId, expired.mediaId),
+      { mediaId: expired.mediaId, status: 'REJEITADO' });
+    const rejected = await db.query<{ status: string; ativo: boolean; storage_key: string }>(
+      'SELECT status,ativo,storage_key FROM produto_midias WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+      [expired.mediaId, scope.groupId, scope.empresaId],
+    );
+    assert.equal(rejected.rows[0]?.status, 'REJEITADO');
+    assert.equal(rejected.rows[0]?.ativo, false);
+    assert.equal(rejected.rows[0]?.storage_key, expiredData.storage_key);
+    await assert.rejects(service.rejectExpiredMidia(ctx, productId, expired.mediaId),
+      (error: unknown) => (error as { code?: string }).code === 'MEDIA_RESERVATION_NOT_FOUND');
+    const expiredLogs = await audit.listByEntity('ProdutoMidia', expired.mediaId);
+    assert.deepEqual(expiredLogs.map((entry) => entry.action), ['create', 'change_status']);
+    assert.equal(JSON.stringify(expiredLogs).includes(expiredData.storage_key), false);
   } catch (error) {
     originalError = error;
     throw error;

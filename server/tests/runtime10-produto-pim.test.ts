@@ -1,3 +1,46 @@
+test('DAM reconcilia somente reserva vencida no tenant e rollbacka auditoria', async (t) => {
+  const { repo, service, audit, ctx } = harness();
+  const produto = await service.create(ctx, { descricao: 'Reserva vencida sintetica' });
+  const data = mediaFixture(produto.id);
+  const scope = { groupId: GROUP, empresaId: EMPRESA };
+  const expiresAt = new Date(Date.now() + 10_000).toISOString();
+  const pending = await repo.reserveMidia(scope, produto.id, data, {
+    id: randomUUID(), actorId: ACTOR, requestId: ctx.requestId, expiresAt,
+  });
+  assert.ok(pending);
+  await assert.rejects(service.rejectExpiredMidia(ctx, produto.id, pending.id),
+    (error: unknown) => (error as { code?: string }).code === 'MEDIA_RESERVATION_NOT_FOUND');
+  await assert.rejects(service.rejectExpiredMidia({ ...ctx, empresaId: randomUUID() }, produto.id, pending.id),
+    (error: unknown) => (error as { code?: string }).code === 'TENANT_MISMATCH');
+  t.mock.method(Date, 'now', () => Date.parse(expiresAt) + 1);
+  const denied = harness(['visualizar', 'criar']);
+  await assert.rejects(denied.service.rejectExpiredMidia(denied.ctx, produto.id, pending.id),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED');
+  const originalAppend = audit.append.bind(audit);
+  audit.append = async (...args) => {
+    if (args[0].entity === 'ProdutoMidia') throw new Error('SYNTHETIC_AUDIT_FAILURE');
+    return originalAppend(...args);
+  };
+  await assert.rejects(service.rejectExpiredMidia(ctx, produto.id, pending.id), /SYNTHETIC_AUDIT_FAILURE/);
+  assert.equal((await repo.getReservedMidia(scope, produto.id, pending.id, pending.upload_attempt_id!, ACTOR))?.status,
+    'PENDENTE_UPLOAD');
+  audit.append = originalAppend;
+  assert.deepEqual(await service.rejectExpiredMidia(ctx, produto.id, pending.id),
+    { mediaId: pending.id, status: 'REJEITADO' });
+  assert.deepEqual(await service.listMidias(ctx, produto.id), []);
+  await assert.rejects(repo.reserveMidia(scope, produto.id, data, {
+    id: randomUUID(), actorId: ACTOR, requestId: ctx.requestId,
+    expiresAt: new Date(Date.now() + 10_000).toISOString(),
+  }), /unique constraint/);
+  await assert.rejects(service.rejectExpiredMidia(ctx, produto.id, pending.id),
+    (error: unknown) => (error as { code?: string }).code === 'MEDIA_RESERVATION_NOT_FOUND');
+  const logs = await audit.listByEntity('ProdutoMidia', pending.id);
+  assert.equal(logs.length, 1);
+  assert.equal(logs[0]?.action, 'change_status');
+  assert.equal(JSON.stringify(logs).includes(data.storage_key), false);
+  assert.equal(JSON.stringify(logs).includes(data.sha256), false);
+});
+
 
 function mediaFixture(produtoId: string) {
   return {

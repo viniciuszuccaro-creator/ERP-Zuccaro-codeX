@@ -53,6 +53,7 @@ export interface ProdutoRepository extends TenantEntityRepository<Produto, Produ
   reserveMidia(scope: Scope, produtoId: string, data: ProdutoMidiaCreate, attempt: ProdutoMidiaUploadAttempt, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
   getReservedMidia(scope: Scope, produtoId: string, midiaId: string, attemptId: string, actorId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
   confirmReservedMidia(scope: Scope, produtoId: string, midiaId: string, attemptId: string, actorId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
+  rejectExpiredReservedMidia(scope: Scope, produtoId: string, midiaId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
 
 }
 
@@ -387,6 +388,16 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     const row = await this.getReservedMidia(scope, produtoId, midiaId, attemptId, actorId);
     if (!row || !row.upload_expires_at || Date.parse(row.upload_expires_at) <= Date.now()) return null;
     const next: ProdutoMidia = { ...row, status: 'QUARENTENA' };
+    this.midias.set(midiaId, structuredClone(next));
+    return structuredClone(next);
+  }
+
+  async rejectExpiredReservedMidia(scope: Scope, produtoId: string, midiaId: string): Promise<ProdutoMidia | null> {
+    const row = this.midias.get(midiaId);
+    if (!scope.empresaId || !row || row.group_id !== scope.groupId || row.empresa_id !== scope.empresaId
+      || row.produto_id !== produtoId || !row.ativo || row.status !== 'PENDENTE_UPLOAD'
+      || !row.upload_expires_at || Date.parse(row.upload_expires_at) > Date.now()) return null;
+    const next: ProdutoMidia = { ...row, status: 'REJEITADO', ativo: false, principal: false };
     this.midias.set(midiaId, structuredClone(next));
     return structuredClone(next);
   }

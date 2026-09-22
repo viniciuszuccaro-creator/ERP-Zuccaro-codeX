@@ -25,7 +25,7 @@ import {
   type ProdutoUpdate,
 } from '../repositories/produtoTypes.js';
 
-import { checkProdutoMidiaPath, confirmProdutoMidia, listProdutoMidias, reserveProdutoMidia } from './produtoMidiaFlow.js';
+import { checkProdutoMidiaPath, confirmProdutoMidia, listProdutoMidias, rejectExpiredProdutoMidia, reserveProdutoMidia } from './produtoMidiaFlow.js';
 import { NotImplementedStorage, type StoragePort } from './storagePort.js';
 const WORKFLOW_TRANSITIONS: Record<Produto['workflow_status'], Produto['workflow_status'][]> = {
   RASCUNHO: ['EM_REVISAO'],
@@ -277,6 +277,12 @@ export class ProdutoService {
       repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard,
       rbacGuard: this.rbacGuard, storage: this.storage,
     }, ctx, produtoId, mediaId, attemptId);
+  }
+  async rejectExpiredMidia(ctx: RequestContext, produtoId: string, mediaId: string) {
+    return rejectExpiredProdutoMidia({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard,
+      rbacGuard: this.rbacGuard, storage: this.storage,
+    }, ctx, produtoId, mediaId);
   }
   async registerMidia(ctx: RequestContext, produtoId: string, payload: unknown) {
     this.assertScope(ctx);

@@ -154,3 +154,33 @@ export async function confirmProdutoMidia(
     return after;
   });
 }
+
+export async function rejectExpiredProdutoMidia(
+  deps: Dependencies, ctx: RequestContext, produtoId: string, mediaId: string,
+) {
+  if (!ctx.groupId) throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
+  if (!ctx.empresaId) throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required for media');
+  if (!ctx.actorId) throw new AppError(403, 'PERMISSION_DENIED', 'Actor is required for media');
+  if (!ctx.requestId) throw new AppError(400, 'REQUEST_ID_REQUIRED', 'requestId is required');
+  assertId(produtoId);
+  assertId(mediaId);
+  await deps.rbacGuard.assertAllowed(ctx, 'Cadastros', 'produto', 'inativar');
+  await deps.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
+  const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
+  return deps.repo.withTransaction(async (executor) => {
+    const produto = await deps.repo.getById(scope, produtoId, executor, { forUpdate: true });
+    if (!produto || produto.empresa_id !== scope.empresaId) {
+      throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+    }
+    const after = await deps.repo.rejectExpiredReservedMidia(scope, produtoId, mediaId, executor);
+    if (!after) throw new AppError(404, 'MEDIA_RESERVATION_NOT_FOUND', 'Expired media reservation not found in tenant scope');
+    await deps.audit.append({
+      groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
+      actorEmail: ctx.actorEmail, entity: 'ProdutoMidia', entityId: mediaId, action: 'change_status',
+      beforeData: { categoria: after.categoria, versao: after.versao, status: 'PENDENTE_UPLOAD' },
+      afterData: { categoria: after.categoria, versao: after.versao, status: 'REJEITADO', reason: 'expired_reservation' },
+      requestId: ctx.requestId, ipAddress: ctx.ipAddress,
+    }, executor);
+    return { mediaId: after.id, status: after.status };
+  });
+}
