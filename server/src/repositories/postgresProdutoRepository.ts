@@ -23,15 +23,20 @@ function asArray(value: unknown): string[] {
   return [];
 }
 
-function asObject(value: unknown): Record<string, unknown> {
+function asObject(value: unknown): Record<string, number> {
+  const numericEntries = (record: Record<string, unknown>) => Object.fromEntries(
+    Object.entries(record).filter((entry): entry is [string, number] => (
+      typeof entry[1] === 'number' && Number.isFinite(entry[1]) && entry[1] > 0
+    )),
+  );
   if (value && typeof value === 'object' && !Array.isArray(value)) {
-    return value as Record<string, unknown>;
+    return numericEntries(value as Record<string, unknown>);
   }
   if (typeof value === 'string') {
     try {
       const parsed = JSON.parse(value);
       return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
-        ? parsed as Record<string, unknown>
+        ? numericEntries(parsed as Record<string, unknown>)
         : {};
     } catch {
       return {};

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 const nonNegativeNumber = z.number().finite().min(0);
-const conversionFactors = z.record(nonNegativeNumber).optional().default({});
+const conversionFactors = z.record(z.number().finite().positive()).optional().default({});
 const secondaryUnits = z.array(z.string().trim().min(1).max(40))
   .max(40)
   .transform((values) => {
@@ -34,7 +34,7 @@ export const PRODUTO_TIPOS_CANONICOS = Object.freeze({
   CONSUMO_INTERNO: 'Consumo Interno',
 } as const);
 
-export type ProdutoTipoCanonico = keyof typeof PRODUTO_TIPOS_CANONICOS;
+export type ProdutoTipoCanonico = typeof PRODUTO_TIPOS_CANONICOS[keyof typeof PRODUTO_TIPOS_CANONICOS];
 
 const PRODUTO_TIPO_ALIASES = new Map<string, string>([
   ['REVENDA', PRODUTO_TIPOS_CANONICOS.REVENDA],
@@ -135,7 +135,7 @@ export type Produto = {
   unidade_medida: string | null;
   unidade_principal: string | null;
   unidades_secundarias: string[];
-  fatores_conversao: Record<string, unknown>;
+  fatores_conversao: Record<string, number>;
   grupo_produto_id: string | null;
   grupo_legado: string | null;
   marca_id: string | null;

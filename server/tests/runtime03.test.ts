@@ -16,6 +16,7 @@ import {
   normalizeProdutoTipoItem,
   produtoCreateSchema,
   produtoUpdateSchema,
+  type ProdutoTipoCanonico,
 } from '../src/repositories/produtoTypes.ts';
 import { ProdutoService } from '../src/services/produtoService.ts';
 
@@ -128,7 +129,10 @@ test('Produto valida e normaliza atributos PIM universais existentes', () => {
     { descricao: 'Peso inválido', peso_liquido_kg: -1 },
     { descricao: 'Dimensão inválida', altura_cm: -1 },
     { descricao: 'Volume inválido', volume_m3: -1 },
+    { descricao: 'Fator zero', fatores_conversao: { kg_por_peca: 0 } },
+    { descricao: 'Fator NaN', fatores_conversao: { kg_por_peca: Number.NaN } },
     { descricao: 'Fator inválido', fatores_conversao: { kg_por_peca: -1 } },
+    { descricao: 'Fator infinito', fatores_conversao: { kg_por_peca: Number.POSITIVE_INFINITY } },
     { descricao: 'Fator não numérico', fatores_conversao: { kg_por_peca: '12' } },
     { descricao: 'Unidade vazia', unidades_secundarias: ['KG', ' '] },
   ]) {
@@ -136,6 +140,9 @@ test('Produto valida e normaliza atributos PIM universais existentes', () => {
   }
 });
 test('Produto RBAC falha fechado e classificação bloqueia novos valores desconhecidos', async () => {
+  const canonicalValue: ProdutoTipoCanonico = PRODUTO_TIPOS_CANONICOS.REVENDA;
+  assert.equal(canonicalValue, 'Revenda');
+
   const ctx = {
     requestId: 'produto-rbac',
     actorId: ACTOR_A,

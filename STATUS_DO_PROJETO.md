@@ -10022,3 +10022,8 @@ Checklist inicial:
 - Compatibilidade preservada: nomes dos campos, repositories PostgreSQL/in-memory, rotas, tenant, RBAC fail-closed, auditoria e consumidores atuais permanecem inalterados.
 - Testes sintéticos cobrem normalização de unidades e rejeição de peso, dimensão, volume e fator inválidos. Nenhum dado real foi utilizado.
 - Nenhuma migration, VPS, porta 3080, segredo ou dado real foi alterado. Próximo incremento: inventariar conteúdo técnico/comercial já existente no formulário e definir o menor contrato aditivo compatível, mantendo DAM/canais bloqueados até `StoragePort` e outbox.
+
+### Programa Comercial 360 Omnicanal - Onda 1 macrocheckpoint, correções de auditoria externa (2026-09-22)
+- Fatores de conversão agora exigem números finitos estritamente maiores que zero; zero, negativos, `NaN`, infinito e strings numéricas são rejeitados.
+- `Produto.fatores_conversao` passou a `Record<string, number>` e `ProdutoTipoCanonico` representa os valores persistidos da taxonomia, com cobertura de compilação/typecheck.
+- Dívida obrigatória registrada: mutação de Produto e auditoria devem compartilhar transação e rollback; será fechada dentro deste macrocheckpoint antes do relatório final.
