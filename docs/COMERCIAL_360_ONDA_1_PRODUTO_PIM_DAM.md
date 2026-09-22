@@ -61,7 +61,7 @@ Cadastros continua a UI mestre. Comercial, TabelaPreco, Estoque, Produção, Sit
 - Concluído: o núcleo PIM universal reutiliza os campos existentes de código de barras, unidades/conversões, pesos e dimensões; o backend rejeita números/fatores negativos ou não finitos e normaliza unidades secundárias repetidas sem alterar sua grafia canônica.
 - Aberto: conteúdo técnico/comercial/SEO, variantes/equivalentes, embalagem/fracionamento, aprovação/publicação e DAM seguro dependente de `StoragePort`/outbox.
 - Bloqueado por dependência: DAM e conteúdo por canal aguardam adapter privado de `StoragePort`, antivírus/quarentena e contrato de outbox; nenhuma URL temporária ou binário será incorporado ao Produto.
-- Dívida obrigatória do macrocheckpoint: create/update/inativação de Produto e auditoria devem compartilhar uma única transação, com rollback comprovado quando a auditoria falhar.
+- Concluído: create/update/inativação de Produto e auditoria compartilham uma única transação e o rollback foi comprovado quando a auditoria falha.
 
 Próximo checkpoint: inventariar no formulário existente os campos de conteúdo técnico/comercial já consumidos e definir o menor contrato aditivo, sem iniciar DAM ou canais antes de `StoragePort`/outbox.
 

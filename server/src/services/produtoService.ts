@@ -85,29 +85,32 @@ export class ProdutoService {
     const empresaId = parsed.data.empresa_id ?? ctx.empresaId ?? null;
     await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
     await this.assertRelations(ctx.groupId, parsed.data);
-    let created: Produto;
-    try {
-      created = await this.repo.create(
-        { groupId: ctx.groupId, empresaId: ctx.empresaId },
-        parsed.data,
-      );
-    } catch (error) {
-      this.rethrowConflict(error);
-      throw error;
-    }
-    await this.audit.append({
-      groupId: ctx.groupId,
-      empresaId: created.empresa_id ?? ctx.empresaId,
-      actorId: ctx.actorId,
-      actorEmail: ctx.actorEmail,
-      entity: 'Produto',
-      entityId: created.id,
-      action: 'create',
-      afterData: sanitizeAuditSnapshot(created),
-      requestId: ctx.requestId,
-      ipAddress: ctx.ipAddress,
+    return this.repo.withTransaction(async (executor) => {
+      let created: Produto;
+      try {
+        created = await this.repo.create(
+          { groupId: ctx.groupId, empresaId: ctx.empresaId },
+          parsed.data,
+          executor,
+        );
+      } catch (error) {
+        this.rethrowConflict(error);
+        throw error;
+      }
+      await this.audit.append({
+        groupId: ctx.groupId,
+        empresaId: created.empresa_id ?? ctx.empresaId,
+        actorId: ctx.actorId,
+        actorEmail: ctx.actorEmail,
+        entity: 'Produto',
+        entityId: created.id,
+        action: 'create',
+        afterData: sanitizeAuditSnapshot(created),
+        requestId: ctx.requestId,
+        ipAddress: ctx.ipAddress,
+      }, executor);
+      return created;
     });
-    return created;
   }
 
   async update(ctx: RequestContext, id: string, payload: unknown) {
@@ -130,28 +133,30 @@ export class ProdutoService {
     const empresaId = parsed.data.empresa_id === undefined ? before.empresa_id : parsed.data.empresa_id;
     await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
     await this.assertRelations(ctx.groupId, { ...before, ...parsed.data });
-    let updated: Produto | null;
-    try {
-      updated = await this.repo.update(scope, id, parsed.data);
-    } catch (error) {
-      this.rethrowConflict(error);
-      throw error;
-    }
-    if (!updated) throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
-    await this.audit.append({
-      groupId: ctx.groupId,
-      empresaId: updated.empresa_id ?? ctx.empresaId,
-      actorId: ctx.actorId,
-      actorEmail: ctx.actorEmail,
-      entity: 'Produto',
-      entityId: id,
-      action: 'update',
-      beforeData: sanitizeAuditSnapshot(before),
-      afterData: sanitizeAuditSnapshot(updated),
-      requestId: ctx.requestId,
-      ipAddress: ctx.ipAddress,
+    return this.repo.withTransaction(async (executor) => {
+      let updated: Produto | null;
+      try {
+        updated = await this.repo.update(scope, id, parsed.data, executor);
+      } catch (error) {
+        this.rethrowConflict(error);
+        throw error;
+      }
+      if (!updated) throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+      await this.audit.append({
+        groupId: ctx.groupId,
+        empresaId: updated.empresa_id ?? ctx.empresaId,
+        actorId: ctx.actorId,
+        actorEmail: ctx.actorEmail,
+        entity: 'Produto',
+        entityId: id,
+        action: 'update',
+        beforeData: sanitizeAuditSnapshot(before),
+        afterData: sanitizeAuditSnapshot(updated),
+        requestId: ctx.requestId,
+        ipAddress: ctx.ipAddress,
+      }, executor);
+      return updated;
     });
-    return updated;
   }
 
   async softDelete(ctx: RequestContext, id: string) {
@@ -163,22 +168,24 @@ export class ProdutoService {
     if (!before || before.ativo === false) {
       throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
     }
-    const updated = await this.repo.softDelete(scope, id);
-    if (!updated) throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
-    await this.audit.append({
-      groupId: ctx.groupId,
-      empresaId: updated.empresa_id ?? ctx.empresaId,
-      actorId: ctx.actorId,
-      actorEmail: ctx.actorEmail,
-      entity: 'Produto',
-      entityId: id,
-      action: 'soft_delete',
-      beforeData: sanitizeAuditSnapshot(before),
-      afterData: sanitizeAuditSnapshot(updated),
-      requestId: ctx.requestId,
-      ipAddress: ctx.ipAddress,
+    return this.repo.withTransaction(async (executor) => {
+      const updated = await this.repo.softDelete(scope, id, executor);
+      if (!updated) throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+      await this.audit.append({
+        groupId: ctx.groupId,
+        empresaId: updated.empresa_id ?? ctx.empresaId,
+        actorId: ctx.actorId,
+        actorEmail: ctx.actorEmail,
+        entity: 'Produto',
+        entityId: id,
+        action: 'soft_delete',
+        beforeData: sanitizeAuditSnapshot(before),
+        afterData: sanitizeAuditSnapshot(updated),
+        requestId: ctx.requestId,
+        ipAddress: ctx.ipAddress,
+      }, executor);
+      return updated;
     });
-    return updated;
   }
 
   /** Garante que CRUD de Produto nao aceita campos transacionais. */

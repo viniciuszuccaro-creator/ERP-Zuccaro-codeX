@@ -10027,3 +10027,8 @@ Checklist inicial:
 - Fatores de conversão agora exigem números finitos estritamente maiores que zero; zero, negativos, `NaN`, infinito e strings numéricas são rejeitados.
 - `Produto.fatores_conversao` passou a `Record<string, number>` e `ProdutoTipoCanonico` representa os valores persistidos da taxonomia, com cobertura de compilação/typecheck.
 - Dívida obrigatória registrada: mutação de Produto e auditoria devem compartilhar transação e rollback; será fechada dentro deste macrocheckpoint antes do relatório final.
+
+### Programa Comercial 360 Omnicanal - Onda 1 macrocheckpoint, auditoria transacional (2026-09-22)
+- `ProdutoRepository` agora possui `withTransaction` e executor tipado compartilhado pelos adapters in-memory e PostgreSQL.
+- Create, update e inativação executam mutação e `audit_logs` na mesma transação; nenhuma query interna escapa para conexão paralela quando executor é fornecido.
+- Testes sintéticos comprovam rollback de create/update/inativação quando a auditoria falha e identidade do executor entre repository/audit. Runtime03: 14 pass / 0 fail.

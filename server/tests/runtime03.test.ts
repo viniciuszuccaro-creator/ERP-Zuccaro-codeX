@@ -228,8 +228,71 @@ test('Produto preserva tipo legado existente sem permitir troca para outro desco
     (error: unknown) => (error as { code?: string }).code === 'PRODUTO_TIPO_INVALIDO',
   );
 });
-test('AUDIT: Produto descricao before/after + soft delete', async () => {
+test('Produto rollbacka create update e inativacao quando auditoria falha', async () => {
+  const repo = createInMemoryProdutoRepo();
+  const failingAudit = {
+    append: async () => { throw new Error('AUDIT_FAILURE'); },
+    listByEntity: async () => [],
+  };
+  const service = new ProdutoService(
+    repo,
+    failingAudit,
+    linkedGuard(),
+    linkedRelations(),
+    allowAllRbac(),
+  );
+  const ctx = {
+    requestId: 'produto-tx-audit',
+    groupId: GROUP_A,
+    empresaId: EMPRESA_A,
+  };
+
+  await assert.rejects(
+    () => service.create(ctx, { descricao: 'CREATE ROLLBACK', codigo: 'TX-CREATE' }),
+    /AUDIT_FAILURE/,
+  );
+  assert.equal((await repo.listPage({ groupId: GROUP_A, empresaId: EMPRESA_A })).total, 0);
+
+  const original = await repo.create(
+    { groupId: GROUP_A, empresaId: EMPRESA_A },
+    { descricao: 'ORIGINAL', codigo: 'TX-EXISTENTE' },
+  );
+  await assert.rejects(
+    () => service.update(ctx, original.id, { descricao: 'NAO PERSISTE' }),
+    /AUDIT_FAILURE/,
+  );
+  assert.equal((await repo.getById({ groupId: GROUP_A, empresaId: EMPRESA_A }, original.id))?.descricao, 'ORIGINAL');
+
+  await assert.rejects(
+    () => service.softDelete(ctx, original.id),
+    /AUDIT_FAILURE/,
+  );
+  assert.equal((await repo.getById({ groupId: GROUP_A, empresaId: EMPRESA_A }, original.id))?.ativo, true);
+});
+
+test('Produto repassa o mesmo executor para mutacao e auditoria', async () => {
+  const executor = { query: async () => ({ rows: [], rowCount: 0 }) };
+  const repo = createInMemoryProdutoRepo();
+  let repositoryExecutor: unknown;
+  let auditExecutor: unknown;
+  repo.withTransaction = async (fn) => fn(executor);
+  const originalCreate = repo.create.bind(repo);
+  repo.create = async (scope, data, received) => {
+    repositoryExecutor = received;
+    return originalCreate(scope, data, received);
+  };
+  const audit = {
+    append: async (_entry: unknown, received?: unknown) => { auditExecutor = received; },
+    listByEntity: async () => [],
+  };
+  const service = new ProdutoService(repo, audit, linkedGuard(), linkedRelations(), allowAllRbac());
+  await service.create({ requestId: 'tx-executor', groupId: GROUP_A, empresaId: EMPRESA_A }, { descricao: 'EXECUTOR' });
+  assert.equal(repositoryExecutor, executor);
+  assert.equal(auditExecutor, executor);
+});
+
   const audit = new InMemoryAuditRepository();
+test('AUDIT: Produto descricao before/after + soft delete', async () => {
   const service = new ProdutoService(
     createInMemoryProdutoRepo(),
     audit,

@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import type { DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';
 import type { Produto, ProdutoCreate, ProdutoUpdate } from './produtoTypes.js';
 
@@ -11,7 +12,12 @@ export type ProdutoListFilter = Scope & ListOptions & {
 };
 
 export interface ProdutoRepository extends TenantEntityRepository<Produto, ProdutoCreate, ProdutoUpdate> {
-  listPage(filter: ProdutoListFilter): Promise<{ rows: Produto[]; total: number }>;
+  withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T>;
+  listPage(filter: ProdutoListFilter, executor?: DbQueryExecutor): Promise<{ rows: Produto[]; total: number }>;
+  getById(scope: Scope, id: string, executor?: DbQueryExecutor): Promise<Produto | null>;
+  create(scope: Scope, data: ProdutoCreate, executor?: DbQueryExecutor): Promise<Produto>;
+  update(scope: Scope, id: string, data: ProdutoUpdate, executor?: DbQueryExecutor): Promise<Produto | null>;
+  softDelete(scope: Scope, id: string, executor?: DbQueryExecutor): Promise<Produto | null>;
 }
 
 function buildProduto(scope: Scope, data: ProdutoCreate, id: string, ts: string): Produto {
@@ -58,6 +64,17 @@ function buildProduto(scope: Scope, data: ProdutoCreate, id: string, ts: string)
 export class InMemoryProdutoRepository implements ProdutoRepository {
   private readonly rows = new Map<string, Produto>();
 
+  async withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> {
+    const snapshot = structuredClone([...this.rows.entries()]);
+    try {
+      return await fn();
+    } catch (error) {
+      this.rows.clear();
+      for (const [id, row] of snapshot) this.rows.set(id, row);
+      throw error;
+    }
+  }
+
   seed(rows: Produto[]) {
     for (const row of rows) this.rows.set(row.id, row);
   }
@@ -84,7 +101,7 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     return page.rows;
   }
 
-  async listPage(filter: ProdutoListFilter): Promise<{ rows: Produto[]; total: number }> {
+  async listPage(filter: ProdutoListFilter, _executor?: DbQueryExecutor): Promise<{ rows: Produto[]; total: number }> {
     const all = [...this.rows.values()].filter((r) => this.matches(filter, r));
     const total = all.length;
     const offset = Math.max(filter.offset ?? 0, 0);
@@ -92,14 +109,14 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     return { rows: all.slice(offset, offset + limit), total };
   }
 
-  async getById(scope: Scope, id: string): Promise<Produto | null> {
+  async getById(scope: Scope, id: string, _executor?: DbQueryExecutor): Promise<Produto | null> {
     const row = this.rows.get(id);
     if (!row || row.group_id !== scope.groupId) return null;
     if (scope.empresaId && row.empresa_id !== scope.empresaId) return null;
     return row;
   }
 
-  async create(scope: Scope, data: ProdutoCreate): Promise<Produto> {
+  async create(scope: Scope, data: ProdutoCreate, _executor?: DbQueryExecutor): Promise<Produto> {
     const ts = nowIso();
     const row = buildProduto(scope, data, randomUUID(), ts);
     // conflict: codigo no mesmo grupo
@@ -113,7 +130,7 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     return row;
   }
 
-  async update(scope: Scope, id: string, data: ProdutoUpdate): Promise<Produto | null> {
+  async update(scope: Scope, id: string, data: ProdutoUpdate, _executor?: DbQueryExecutor): Promise<Produto | null> {
     const current = await this.getById(scope, id);
     if (!current) return null;
     const next: Produto = {
@@ -139,8 +156,8 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     return next;
   }
 
-  softDelete(scope: Scope, id: string) {
-    return this.update(scope, id, { ativo: false });
+  softDelete(scope: Scope, id: string, executor?: DbQueryExecutor) {
+    return this.update(scope, id, { ativo: false }, executor);
   }
 }
 

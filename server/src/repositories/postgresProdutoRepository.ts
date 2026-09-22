@@ -1,4 +1,4 @@
-import type { DbClient } from '../db/client.js';
+import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope } from '../services/tenantCrudService.js';
 import type { Produto, ProdutoCreate, ProdutoUpdate } from './produtoTypes.js';
 import type { ProdutoListFilter, ProdutoRepository } from './inMemoryProdutoRepository.js';
@@ -86,6 +86,10 @@ export function mapProduto(row: Record<string, unknown>): Produto {
 }
 
 export class PostgresProdutoRepository implements ProdutoRepository {
+  withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> {
+    return this.db.withTransaction(fn);
+  }
+
   constructor(private readonly db: DbClient) {}
 
   async list(filter: Scope & ListOptions): Promise<Produto[]> {
@@ -93,7 +97,8 @@ export class PostgresProdutoRepository implements ProdutoRepository {
     return page.rows;
   }
 
-  async listPage(filter: ProdutoListFilter): Promise<{ rows: Produto[]; total: number }> {
+  async listPage(filter: ProdutoListFilter, executor?: DbQueryExecutor): Promise<{ rows: Produto[]; total: number }> {
+    const query = executor ?? this.db;
     const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);
     const offset = Math.max(filter.offset ?? 0, 0);
     const params: unknown[] = [filter.groupId];
@@ -123,13 +128,13 @@ export class PostgresProdutoRepository implements ProdutoRepository {
       );
     }
     const whereSql = where.join(' AND ');
-    const countResult = await this.db.query(
+    const countResult = await query.query(
       `SELECT count(*)::int AS total FROM produtos WHERE ${whereSql}`,
       params,
     );
     const total = Number(countResult.rows[0]?.total ?? 0);
     params.push(limit, offset);
-    const result = await this.db.query(
+    const result = await query.query(
       `SELECT * FROM produtos WHERE ${whereSql} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params,
     );
@@ -139,19 +144,22 @@ export class PostgresProdutoRepository implements ProdutoRepository {
     };
   }
 
-  async getById(scope: Scope, id: string): Promise<Produto | null> {
+
+  async getById(scope: Scope, id: string, executor?: DbQueryExecutor): Promise<Produto | null> {
+    const query = executor ?? this.db;
     const params: unknown[] = [scope.groupId, id];
     let sql = 'SELECT * FROM produtos WHERE group_id = $1 AND id = $2';
     if (scope.empresaId) {
       params.push(scope.empresaId);
       sql += ' AND empresa_id = $3';
     }
-    const result = await this.db.query(sql, params);
+    const result = await query.query(sql, params);
     return result.rows[0] ? mapProduto(result.rows[0] as Record<string, unknown>) : null;
   }
 
-  async create(scope: Scope, data: ProdutoCreate): Promise<Produto> {
-    const result = await this.db.query(
+  async create(scope: Scope, data: ProdutoCreate, executor?: DbQueryExecutor): Promise<Produto> {
+    const query = executor ?? this.db;
+    const result = await query.query(
       `INSERT INTO produtos (
         group_id, empresa_id, codigo, codigo_barras, descricao, nome, tipo_item, tipo_aco, eh_bitola,
         peso_teorico_kg_m, bitola_diametro_mm, comprimento_barra_padrao_m,
@@ -202,8 +210,9 @@ export class PostgresProdutoRepository implements ProdutoRepository {
     return mapProduto(result.rows[0] as Record<string, unknown>);
   }
 
-  async update(scope: Scope, id: string, data: ProdutoUpdate): Promise<Produto | null> {
-    const current = await this.getById(scope, id);
+  async update(scope: Scope, id: string, data: ProdutoUpdate, executor?: DbQueryExecutor): Promise<Produto | null> {
+    const query = executor ?? this.db;
+    const current = await this.getById(scope, id, query);
     if (!current) return null;
     const next = {
       ...current,
@@ -240,11 +249,11 @@ export class PostgresProdutoRepository implements ProdutoRepository {
       sql += ` AND empresa_id=$${params.length}`;
     }
     sql += ' RETURNING *';
-    const result = await this.db.query(sql, params);
+    const result = await query.query(sql, params);
     return result.rows[0] ? mapProduto(result.rows[0] as Record<string, unknown>) : null;
   }
 
-  softDelete(scope: Scope, id: string) {
-    return this.update(scope, id, { ativo: false });
+  softDelete(scope: Scope, id: string, executor?: DbQueryExecutor) {
+    return this.update(scope, id, { ativo: false }, executor);
   }
 }
