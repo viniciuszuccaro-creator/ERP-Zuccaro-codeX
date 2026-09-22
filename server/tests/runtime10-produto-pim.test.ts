@@ -23,6 +23,133 @@ function verifiedStorage(override: Partial<{ sha256: string; version: number }> 
   };
   return { storage, calls: () => calls };
 }
+function reservableStorage(options: { badChecksum?: boolean; failSigning?: boolean } = {}) {
+  let signCalls = 0;
+  let confirmCalls = 0;
+  const storage: StoragePort = {
+    createSignedUploadUrl: async () => {
+      signCalls += 1;
+      if (options.failSigning) throw new Error('SYNTHETIC_SIGN_FAILURE');
+      return {
+        url: 'https://public.example.test/storage/v1/object/upload/sign/private/synthetic?token=synthetic',
+        expiresAt: new Date(Date.now() + 60_000).toISOString(),
+        requiredHeaders: { 'content-type': 'image/png' },
+      };
+    },
+    confirmUpload: async (request) => {
+      confirmCalls += 1;
+      return {
+        storageKey: request.storageKey, fileName: request.fileName, mimeType: request.mimeType,
+        sizeBytes: request.sizeBytes, sha256: options.badChecksum ? 'c'.repeat(64) : request.sha256,
+        version: 1,
+      };
+    },
+    createSignedDownloadUrl: async () => { throw new Error('UNUSED'); },
+  };
+  return { storage, signCalls: () => signCalls, confirmCalls: () => confirmCalls };
+}
+
+test('DAM reserva e confirma com auditoria sanitizada e confirmacao unica', async () => {
+  const fake = reservableStorage();
+  const { service, audit, ctx, repo: harnessRepo } = harness(undefined, fake.storage);
+  const produto = await service.create(ctx, { descricao: 'Reserva sintetica' });
+  const data = mediaFixture(produto.id);
+  const signed = await service.reserveMidia(ctx, produto.id, data);
+  assert.equal(fake.signCalls(), 1);
+  assert.match(signed.url, /synthetic/);
+  assert.deepEqual(await service.listMidias(ctx, produto.id), []);
+  const pendingLogs = await audit.listByEntity('ProdutoMidia', signed.mediaId);
+  assert.equal(pendingLogs[0]?.action, 'create');
+  assert.equal(JSON.stringify(pendingLogs).includes(data.storage_key), false);
+  assert.equal(JSON.stringify(pendingLogs).includes(signed.url), false);
+  await assert.rejects(service.confirmMidia({ ...ctx, actorId: randomUUID() }, produto.id, signed.mediaId, signed.attemptId),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED');
+  const otherActor = randomUUID();
+  const tenant = new InMemoryTenantGuard(); tenant.link(EMPRESA, GROUP);
+  const rbac = new InMemoryRbacGuard();
+  rbac.link({ actorId: otherActor, groupId: GROUP, permissions: { Cadastros: { produto: ['editar'] } } });
+  const authorizedOther = new ProdutoService(
+    harnessRepo, audit, tenant, new InMemoryProdutoRelationGuard(), rbac, fake.storage,
+  );
+  await assert.rejects(authorizedOther.confirmMidia(
+    { ...ctx, actorId: otherActor }, produto.id, signed.mediaId, signed.attemptId,
+  ), (error: unknown) => (error as { code?: string }).code === 'MEDIA_RESERVATION_NOT_FOUND');
+  assert.equal(fake.confirmCalls(), 0);
+  const confirmed = await service.confirmMidia(ctx, produto.id, signed.mediaId, signed.attemptId);
+  assert.equal(confirmed.status, 'QUARENTENA');
+  assert.equal(fake.confirmCalls(), 1);
+  assert.equal((await service.listMidias(ctx, produto.id))[0]?.id, signed.mediaId);
+  assert.deepEqual((await audit.listByEntity('ProdutoMidia', signed.mediaId)).map((entry) => entry.action), ['create', 'change_status']);
+  await assert.rejects(service.confirmMidia(ctx, produto.id, signed.mediaId, signed.attemptId),
+    (error: unknown) => (error as { code?: string }).code === 'MEDIA_RESERVATION_NOT_FOUND');
+  assert.equal(fake.confirmCalls(), 1);
+});
+
+test('DAM reserva bloqueia payload, tenant, RBAC, duplicidade e adapter ausente', async () => {
+  const fake = reservableStorage();
+  const denied = harness(['visualizar', 'criar'], fake.storage);
+  const produto = await denied.service.create(denied.ctx, { descricao: 'Reserva negada' });
+  const data = mediaFixture(produto.id);
+  await assert.rejects(denied.service.reserveMidia(denied.ctx, produto.id, data),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED');
+  const allowed = harness(undefined, fake.storage);
+  const own = await allowed.service.create(allowed.ctx, { descricao: 'Reserva valida' });
+  const ownData = mediaFixture(own.id);
+  await assert.rejects(allowed.service.reserveMidia(allowed.ctx, own.id, { ...ownData, groupId: GROUP }),
+    (error: unknown) => (error as { code?: string }).code === 'VALIDATION_ERROR');
+  await assert.rejects(allowed.service.reserveMidia({ ...allowed.ctx, empresaId: ACTOR }, own.id, ownData),
+    (error: unknown) => (error as { code?: string }).code === 'TENANT_MISMATCH');
+  await assert.rejects(allowed.service.reserveMidia(allowed.ctx, own.id, {
+    ...ownData, storage_key: ownData.storage_key.replace('/images/', '/videos/'),
+  }), (error: unknown) => (error as { code?: string }).code === 'VALIDATION_ERROR');
+  const signed = await allowed.service.reserveMidia(allowed.ctx, own.id, ownData);
+  await assert.rejects(allowed.service.reserveMidia(allowed.ctx, own.id, ownData),
+    (error: unknown) => (error as { code?: string }).code === 'MEDIA_RESERVATION_CONFLICT');
+  await assert.rejects(allowed.service.confirmMidia({ ...allowed.ctx, empresaId: ACTOR }, own.id, signed.mediaId, signed.attemptId),
+    (error: unknown) => (error as { code?: string }).code === 'TENANT_MISMATCH');
+  await assert.rejects(allowed.service.confirmMidia(allowed.ctx, own.id, signed.mediaId, randomUUID()),
+    (error: unknown) => (error as { code?: string }).code === 'MEDIA_RESERVATION_NOT_FOUND');
+  const unconfigured = harness();
+  const noStorage = await unconfigured.service.create(unconfigured.ctx, { descricao: 'Storage nao configurado' });
+  await assert.rejects(unconfigured.service.reserveMidia(unconfigured.ctx, noStorage.id, mediaFixture(noStorage.id)),
+    (error: unknown) => (error as { code?: string }).code === 'STORAGE_ADAPTER_NOT_CONFIGURED');
+  const signingFailure = reservableStorage({ failSigning: true });
+  const pending = harness(undefined, signingFailure.storage);
+  const pendingProduct = await pending.service.create(pending.ctx, { descricao: 'Assinatura falhou' });
+  const pendingData = mediaFixture(pendingProduct.id);
+  await assert.rejects(pending.service.reserveMidia(pending.ctx, pendingProduct.id, pendingData), /SYNTHETIC_SIGN_FAILURE/);
+  await assert.rejects(pending.service.reserveMidia(pending.ctx, pendingProduct.id, pendingData),
+    (error: unknown) => (error as { code?: string }).code === 'MEDIA_RESERVATION_CONFLICT');
+  assert.deepEqual(await pending.service.listMidias(pending.ctx, pendingProduct.id), []);
+});
+
+test('DAM reserva e confirmacao rollbackam auditoria e verificacao divergente', async () => {
+  const fake = reservableStorage();
+  const { service, audit, ctx } = harness(undefined, fake.storage);
+  const produto = await service.create(ctx, { descricao: 'Rollback reserva' });
+  const data = mediaFixture(produto.id);
+  const original = audit.append.bind(audit);
+  audit.append = async (...args) => {
+    if (args[0].entity === 'ProdutoMidia') throw new Error('SYNTHETIC_AUDIT_FAILURE');
+    return original(...args);
+  };
+  await assert.rejects(service.reserveMidia(ctx, produto.id, data), /SYNTHETIC_AUDIT_FAILURE/);
+  assert.equal(fake.signCalls(), 0);
+  audit.append = original;
+  const signed = await service.reserveMidia(ctx, produto.id, data);
+  audit.append = async () => { throw new Error('SYNTHETIC_AUDIT_FAILURE'); };
+  await assert.rejects(service.confirmMidia(ctx, produto.id, signed.mediaId, signed.attemptId), /SYNTHETIC_AUDIT_FAILURE/);
+  audit.append = original;
+  const confirmed = await service.confirmMidia(ctx, produto.id, signed.mediaId, signed.attemptId);
+  assert.equal(confirmed.status, 'QUARENTENA');
+  const bad = reservableStorage({ badChecksum: true });
+  const other = harness(undefined, bad.storage);
+  const target = await other.service.create(other.ctx, { descricao: 'Checksum divergente' });
+  const reserved = await other.service.reserveMidia(other.ctx, target.id, mediaFixture(target.id));
+  await assert.rejects(other.service.confirmMidia(other.ctx, target.id, reserved.mediaId, reserved.attemptId),
+    (error: unknown) => (error as { code?: string }).code === 'STORAGE_METADATA_MISMATCH');
+  assert.deepEqual(await other.service.listMidias(other.ctx, target.id), []);
+});
 
 test('DAM Produto confirma Storage, registra quarentena e audita sem chave ou checksum', async () => {
   const fake = verifiedStorage();

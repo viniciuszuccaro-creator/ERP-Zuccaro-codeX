@@ -25,6 +25,7 @@ import {
   type ProdutoUpdate,
 } from '../repositories/produtoTypes.js';
 
+import { checkProdutoMidiaPath, confirmProdutoMidia, listProdutoMidias, reserveProdutoMidia } from './produtoMidiaFlow.js';
 import { NotImplementedStorage, type StoragePort } from './storagePort.js';
 const WORKFLOW_TRANSITIONS: Record<Produto['workflow_status'], Produto['workflow_status'][]> = {
   RASCUNHO: ['EM_REVISAO'],
@@ -34,10 +35,6 @@ const WORKFLOW_TRANSITIONS: Record<Produto['workflow_status'], Produto['workflow
   INATIVO: ['RASCUNHO'],
 };
 
-const MEDIA_FOLDER_BY_CATEGORY: Partial<Record<ProdutoMidia['categoria'], string>> = {
-  IMAGEM: 'images', VIDEO: 'videos', DESENHO: 'documents',
-  MANUAL: 'manuals', CERTIFICADO: 'certificates',
-};
 
 const WORKFLOW_ACTION: Record<Produto['workflow_status'], RbacAction> = {
   RASCUNHO: 'editar',
@@ -262,16 +259,25 @@ export class ProdutoService {
   }
   /** Garante que CRUD de Produto nao aceita campos transacionais. */
   async listMidias(ctx: RequestContext, produtoId: string) {
-    this.assertScope(ctx);
-    this.assertRelationId(produtoId);
-    await this.assertPermission(ctx, 'visualizar');
-    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
-    const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
-    const produto = await this.repo.getById(scope, produtoId);
-    if (!produto || !produto.ativo) throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
-    return this.repo.listMidias(scope, produtoId);
+    return listProdutoMidias({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard,
+      rbacGuard: this.rbacGuard, storage: this.storage,
+    }, ctx, produtoId);
   }
 
+  async reserveMidia(ctx: RequestContext, produtoId: string, payload: unknown) {
+    return reserveProdutoMidia({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard,
+      rbacGuard: this.rbacGuard, storage: this.storage,
+    }, ctx, produtoId, payload);
+  }
+
+  async confirmMidia(ctx: RequestContext, produtoId: string, mediaId: string, attemptId: string) {
+    return confirmProdutoMidia({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard,
+      rbacGuard: this.rbacGuard, storage: this.storage,
+    }, ctx, produtoId, mediaId, attemptId);
+  }
   async registerMidia(ctx: RequestContext, produtoId: string, payload: unknown) {
     this.assertScope(ctx);
     this.assertRelationId(produtoId);
@@ -287,13 +293,7 @@ export class ProdutoService {
       throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
     }
     const data = parsed.data;
-    const prefix = `groups/${ctx.groupId}/companies/${ctx.empresaId}/products/${produtoId}/`;
-    if (!data.storage_key.startsWith(prefix)) throw new AppError(400, 'VALIDATION_ERROR', 'Media path outside tenant scope');
-    const expectedFolder = MEDIA_FOLDER_BY_CATEGORY[data.categoria];
-    if (!expectedFolder) throw new AppError(409, 'MEDIA_CATEGORY_NOT_CONFIGURED', 'Media category is not supported by Storage');
-    if (!data.storage_key.startsWith(`${prefix}${expectedFolder}/`)) {
-      throw new AppError(400, 'VALIDATION_ERROR', 'Media category does not match storage path');
-    }
+    checkProdutoMidiaPath(ctx, produtoId, data);
     const verified = await this.storage.confirmUpload({
       groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
       entity: 'Produto', entityId: produtoId,
