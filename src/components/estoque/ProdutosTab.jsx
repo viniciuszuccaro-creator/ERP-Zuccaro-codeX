@@ -16,6 +16,7 @@ import ConversaoProducaoMassa from "@/components/cadastros/ConversaoProducaoMass
 import DashboardProdutosProducao from "@/components/cadastros/DashboardProdutosProducao";
 import ImportadorProdutosPlanilha from "@/components/estoque/ImportadorProdutosPlanilha";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
+import { isProdutoMateriaPrima, isProdutoRevenda } from "@/components/cadastros/produto/produtoTipoPolicy";
 
 export default function ProdutosTab(props) {
   const { hasPermission } = usePermissions();
@@ -28,8 +29,8 @@ export default function ProdutosTab(props) {
 
   const calcularContagensLocal = (produtos) => {
     const total = produtos.length;
-    const revenda = produtos.filter(p => p.tipo_item === 'Revenda').length;
-    const producao = produtos.filter(p => p.tipo_item === 'Matéria-Prima Produção').length;
+    const revenda = produtos.filter(p => isProdutoRevenda(p.tipo_item)).length;
+    const producao = produtos.filter(p => isProdutoMateriaPrima(p.tipo_item)).length;
     const estoqueBaixo = produtos.filter(p => 
       p.status === 'Ativo' && (p.estoque_disponivel || 0) <= (p.estoque_minimo || 0)
     ).length;

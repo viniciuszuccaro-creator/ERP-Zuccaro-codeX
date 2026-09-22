@@ -9961,3 +9961,11 @@ Checklist inicial:
 - Aliases inequivocos sao normalizados; valores legados desconhecidos continuam selecionaveis e preservados, evitando reclassificacao silenciosa de registros existentes.
 - Teste direcionado: 2 pass / 0 fail / 0 skip. Suite frontend explicita: 590 pass / 0 fail / 0 skip. `audit:baseline`, lint, build e `git diff --check`: PASS.
 - Nenhuma migration, VPS, porta 3080, segredo ou dado real foi alterado. Proximo incremento: mapear os consumidores do tipo de produto e substituir comparacoes divergentes pela policy canonica, preservando aliases legados.
+
+### Programa Comercial 360 Omnicanal - Onda 1 Produto/PIM, incremento 3 (2026-09-22)
+
+- A policy canonica de `tipo_item` passou a expor predicados reutilizaveis para Revenda, Materia-Prima, Produto Acabado e itens vendaveis.
+- Consumidores existentes de Estoque, Comercial e Producao deixaram de comparar grafias literais divergentes e agora interpretam aliases conhecidos de forma consistente.
+- Valores legados desconhecidos continuam preservados e nao sao tratados automaticamente como materia-prima ou item vendavel.
+- Testes direcionados: 4 pass / 0 fail / 0 skip. Suite frontend explicita: 592 pass / 0 fail / 0 skip. `audit:baseline`, lint, build e `git diff --check`: PASS.
+- Nenhuma persistencia, migration, VPS, porta 3080, segredo ou dado real foi alterado. Proximo incremento: alinhar importadores de Produto com a mesma normalizacao allowlisted, mantendo quarentena/revisao para classificacoes ambiguas.

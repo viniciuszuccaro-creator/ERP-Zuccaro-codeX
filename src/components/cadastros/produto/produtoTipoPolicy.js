@@ -50,6 +50,25 @@ export function normalizeProdutoTipoItem(value) {
   return aliases.get(aliasKey(trimmed)) || trimmed;
 }
 
+export function isProdutoTipo(value, expected) {
+  return normalizeProdutoTipoItem(value) === expected;
+}
+
+export function isProdutoRevenda(value) {
+  return isProdutoTipo(value, PRODUTO_TIPOS_CANONICOS.REVENDA);
+}
+
+export function isProdutoMateriaPrima(value) {
+  return isProdutoTipo(value, PRODUTO_TIPOS_CANONICOS.MATERIA_PRIMA);
+}
+
+export function isProdutoAcabado(value) {
+  return isProdutoTipo(value, PRODUTO_TIPOS_CANONICOS.FABRICADO);
+}
+
+export function isProdutoVendavel(value) {
+  return isProdutoRevenda(value) || isProdutoAcabado(value);
+}
 export function getProdutoTipoOptions(currentValue) {
   const normalized = normalizeProdutoTipoItem(currentValue);
   if (PRODUTO_TIPO_OPTIONS.some((option) => option.value === normalized)) {

@@ -5,6 +5,9 @@ import test from 'node:test';
 import {
   PRODUTO_TIPOS_CANONICOS,
   getProdutoTipoOptions,
+  isProdutoMateriaPrima,
+  isProdutoRevenda,
+  isProdutoVendavel,
   normalizeProdutoTipoItem,
 } from '../src/components/cadastros/produto/produtoTipoPolicy.js';
 
@@ -30,3 +33,34 @@ test('formulário canônico de Produto reutiliza a política sem lista local par
   assert.match(source, /PRODUTO_TIPOS_CANONICOS\.REVENDA/);
   assert.doesNotMatch(source, /<SelectItem value="Produto Acabado">/);
 });
+
+test('predicados de tipo tratam aliases sem reclassificar valores legados', () => {
+  assert.equal(isProdutoRevenda('revenda'), true);
+  assert.equal(isProdutoMateriaPrima('materia_prima'), true);
+  assert.equal(isProdutoMateriaPrima('Matéria-Prima Produção'), true);
+  assert.equal(isProdutoVendavel('produto-acabado'), true);
+  assert.equal(isProdutoVendavel('Linha Legada Especial'), false);
+  assert.equal(isProdutoMateriaPrima('producao_aco'), false);
+});
+
+test('consumidores de estoque, comercial e produção reutilizam a policy canônica', async () => {
+  const files = [
+    '../src/pages/Estoque.jsx',
+    '../src/components/estoque/ProdutosTab.jsx',
+    '../src/components/comercial/AdicionarItemRevendaModal.jsx',
+    '../src/components/producao/SeletorProdutosProducao.jsx',
+    '../src/components/producao/FormularioOrdemProducao.jsx',
+    '../src/components/cadastros/HistoricoProduto.jsx',
+  ];
+  const sources = await Promise.all(files.map((file) => readFile(new URL(file, import.meta.url), 'utf8')));
+  for (const source of sources) {
+    assert.match(source, /produtoTipoPolicy/);
+  }
+  assert.match(sources[0], /isProdutoRevenda\(p\.tipo_item\)/);
+  assert.match(sources[1], /isProdutoMateriaPrima\(p\.tipo_item\)/);
+  assert.match(sources[2], /isProdutoVendavel\(p\.tipo_item\)/);
+  assert.match(sources[3], /isProdutoMateriaPrima\(p\.tipo_item\)/);
+  assert.match(sources[4], /isProdutoMateriaPrima\(p\.tipo_item\)/);
+  assert.match(sources[5], /PRODUTO_TIPOS_CANONICOS\.MATERIA_PRIMA/);
+}
+);

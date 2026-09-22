@@ -24,6 +24,7 @@ import { calcularPrecoItem } from "./CalculadorPrecoItem";
 import Top10ProdutosCliente from "./Top10ProdutosCliente";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { isProdutoVendavel } from "@/components/cadastros/produto/produtoTipoPolicy";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -74,7 +75,7 @@ export default function AdicionarItemRevendaModal({
 
   const produtosAtivos = consultaHabilitada ? produtos.filter(p =>
     p.status === 'Ativo' && 
-    (p.tipo_item === 'Revenda' || p.tipo_item === 'Produto Acabado')
+    isProdutoVendavel(p.tipo_item)
   ) : [];
 
   const produtosFiltrados = produtosAtivos.filter(p =>
