@@ -10053,3 +10053,8 @@ Checklist inicial:
 - CI `35755630901` confirmou R08B 2/2, R08C 2/2 e R09 2/2 no PostgreSQL real, mas revelou falha R10 na funcao compartilhada da migration 018: acesso estatico a `NEW.produto_equivalente_id` em tabelas sem essa coluna.
 - A funcao tenant da 018 passou a ler dinamicamente `produto_equivalente_id` somente para `produto_equivalentes`, preservando os bloqueios cross-group sem criar migration posterior. A migration 018 continua nao aplicada na VPS.
 - Revalidacao direcionada local apos a correcao: runtime10 Produto 4 pass / 0 fail e `git diff --check` PASS; PostgreSQL real permanece gate da CI efemera.
+
+### Fechamento do macrocheckpoint Onda 1 PIM/DAM (2026-09-22)
+- Commit remoto `c61631064a336ea5452d40ca63f8e0115c041e3e`; workflows `35756386303` e `35756379721`: frontend SUCCESS e backend SUCCESS.
+- PostgreSQL efemero autorizado: R08B 2/2, R08C 2/2, R09 2/2 e R10 1/1, com 0 falhas e 0 skips. Migrations 001-018 aplicadas somente na CI.
+- Proximo lote funcional: APIs tenant-aware de variantes e equivalentes no `ProdutoService` e repositories existentes, com RBAC, auditoria transacional e sem migration adicional.
