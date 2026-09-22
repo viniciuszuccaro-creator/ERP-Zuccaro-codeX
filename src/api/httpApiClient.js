@@ -151,8 +151,24 @@ export function createHttpApiClient(options = {}) {
       const base = createCrudEntity('/api/v1/produtos', {
         searchKeys: ['descricao', 'codigo', 'nome', 'codigo_barras', 'search'],
       });
+      const relationRoutes = (segment) => ({
+        list(produtoId, { signal } = {}) {
+          return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/${segment}`, { signal });
+        },
+        create(produtoId, payload, { signal } = {}) {
+          return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/${segment}`, { method: 'POST', body: payload, signal });
+        },
+        update(produtoId, relationId, payload, { signal } = {}) {
+          return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/${segment}/${encodeURIComponent(relationId)}`, { method: 'PATCH', body: payload, signal });
+        },
+        deactivate(produtoId, relationId, { signal } = {}) {
+          return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/${segment}/${encodeURIComponent(relationId)}`, { method: 'DELETE', signal });
+        },
+      });
       return {
         ...base,
+        variantes: relationRoutes('variantes'),
+        equivalentes: relationRoutes('equivalentes'),
         async list(orderBy, limit = 50, offset = 0) {
           void orderBy;
           return request('/api/v1/produtos', { query: { limit, offset } });

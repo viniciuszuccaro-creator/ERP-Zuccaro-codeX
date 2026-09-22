@@ -24,6 +24,15 @@ Todas as tabelas novas exigem `group_id`; `empresa_id` somente quando o registro
 ## DAM e segurança
 
 - Implementar adapter real do `StoragePort`; nunca persistir URL temporária como identidade do arquivo.
+
+### Storage self-hosted: checkpoint local
+
+- Provedor definido: Supabase Storage self-hosted na VPS Hostinger; o adapter backend usa `SUPABASE_URL` para assinar/verificar internamente e `SUPABASE_STORAGE_PUBLIC_URL` para devolver URLs assinadas acessíveis ao navegador. Nenhuma URL do Supabase Cloud é presumida.
+- Configuração sem valores versionados: `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_STORAGE_PRIVATE_BUCKET`, `SUPABASE_STORAGE_MAX_BYTES`. O bucket privado é obrigatório; a publicação comercial em bucket público é um fluxo separado, nunca consequência automática do upload.
+- Chaves de objetos seguem `groups/{groupId}/companies/{empresaId}/products/{produtoId}/{categoria}/{uuid}-{nome-sanitizado}`. O adapter valida escopo, extensão/MIME/tamanho e confirma bytes e SHA-256 antes de devolver metadados.
+- O adapter não é exposto por HTTP neste checkpoint. `ProdutoService` deve validar TenantGuard/RBAC, workflow, auditoria e metadados na mesma operação; falha de metadados exige compensação/quarentena do objeto. Download sensível também requer auditoria no service.
+- Antes de habilitar: gate específico para conferir buckets existentes, rede pública do Storage, política privada, antivírus, tamanho/MIME, credenciais apenas no backend, versionamento, rollback e testes E2E. Não criar bucket nem alterar VPS neste checkpoint.
+- O Produto V22 ainda persiste pelo caminho legado/local; `HTTP_PILOT_ENTITIES` não inclui Produto. Não ligar upload nem relações canônicas a IDs legados. A integração visual será habilitada quando o Produto HTTP canônico e seu contrato de mídia estiverem homologados.
 - Upload em duas fases: autorização backend → upload privado → confirmação com hash SHA-256, MIME detectado, tamanho e metadados.
 - Allowlist por categoria; antivírus/quarentena antes de liberar; limite de tamanho/quantidade configurável.
 - Download usa URL assinada curta após RBAC/tenant. Audit registra metadados resumidos, nunca token, URL assinada ou conteúdo.

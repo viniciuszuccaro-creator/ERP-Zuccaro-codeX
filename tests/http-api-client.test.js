@@ -136,3 +136,46 @@ test('Produto route exists in preparedEntities but not in pilot entities', async
   await client.preparedEntities.Produto.get('p1');
   assert.match(urls[0], /\/api\/v1\/produtos\/p1/);
 });
+
+test('Produto preparado expõe oito chamadas de relações sem ativar cadastro piloto', async () => {
+  const calls = [];
+  const client = createHttpApiClient({
+    baseUrl: 'https://erp.invalid',
+    getScope: () => ({ groupId: 'grupo-sintetico', empresaId: 'empresa-sintetica', actorId: 'ator-sintetico' }),
+    fetchImpl: async (url, init) => {
+      calls.push({ url: String(url), method: init.method, headers: init.headers, body: init.body });
+      return new Response(JSON.stringify({ data: init.method === 'GET' ? [] : { id: 'relacao-sintetica' } }), {
+        status: init.method === 'POST' ? 201 : 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    },
+  });
+  assert.equal(client.entities.Produto, undefined);
+  const produto = client.preparedEntities.Produto;
+  await produto.variantes.list('produto/1');
+  await produto.variantes.create('produto/1', { sku: 'SKU-SINTETICO' });
+  await produto.variantes.update('produto/1', 'variante/1', { nome: 'Azul' });
+  await produto.variantes.deactivate('produto/1', 'variante/1');
+  await produto.equivalentes.list('produto/1');
+  await produto.equivalentes.create('produto/1', { produto_equivalente_id: 'produto/2' });
+  await produto.equivalentes.update('produto/1', 'equivalente/1', { aprovado: true });
+  await produto.equivalentes.deactivate('produto/1', 'equivalente/1');
+  assert.deepEqual(calls.map((call) => call.method), ['GET', 'POST', 'PATCH', 'DELETE', 'GET', 'POST', 'PATCH', 'DELETE']);
+  assert.deepEqual(calls.map((call) => new URL(call.url).pathname), [
+    '/api/v1/produtos/produto%2F1/variantes',
+    '/api/v1/produtos/produto%2F1/variantes',
+    '/api/v1/produtos/produto%2F1/variantes/variante%2F1',
+    '/api/v1/produtos/produto%2F1/variantes/variante%2F1',
+    '/api/v1/produtos/produto%2F1/equivalentes',
+    '/api/v1/produtos/produto%2F1/equivalentes',
+    '/api/v1/produtos/produto%2F1/equivalentes/equivalente%2F1',
+    '/api/v1/produtos/produto%2F1/equivalentes/equivalente%2F1',
+  ]);
+  assert.ok(calls.every((call) => call.headers['X-Group-Id'] === 'grupo-sintetico'
+    && call.headers['X-Empresa-Id'] === 'empresa-sintetica'
+    && call.headers['X-Actor-Id'] === 'ator-sintetico'));
+  assert.deepEqual(JSON.parse(calls[1].body), { sku: 'SKU-SINTETICO' });
+  assert.deepEqual(JSON.parse(calls[5].body), { produto_equivalente_id: 'produto/2' });
+  assert.equal(calls[3].body, undefined);
+  assert.equal(calls[7].body, undefined);
+});

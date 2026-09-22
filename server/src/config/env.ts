@@ -13,6 +13,9 @@ const envSchema = z.object({
   SUPABASE_URL: z.string().url().optional(),
   SUPABASE_ANON_KEY: z.string().min(1).optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+  SUPABASE_STORAGE_PUBLIC_URL: z.string().url().optional(),
+  SUPABASE_STORAGE_PRIVATE_BUCKET: z.string().min(1).optional(),
+  SUPABASE_STORAGE_MAX_BYTES: z.coerce.number().int().positive().default(10_000_000),
   CORS_ORIGINS: z.string().default('http://localhost:5173,https://erp-dev.cpaferroeaco.com.br'),
   BODY_LIMIT: z.string().default('1mb'),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
@@ -29,6 +32,9 @@ export type AppConfig = {
   supabaseUrl?: string;
   supabaseAnonKey?: string;
   supabaseServiceRoleKey?: string;
+  supabaseStoragePublicUrl?: string;
+  supabaseStoragePrivateBucket?: string;
+  supabaseStorageMaxBytes: number;
   corsOrigins: string[];
   bodyLimit: string;
   rateLimitWindowMs: number;
@@ -60,6 +66,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     supabaseUrl: data.SUPABASE_URL,
     supabaseAnonKey: data.SUPABASE_ANON_KEY,
     supabaseServiceRoleKey: data.SUPABASE_SERVICE_ROLE_KEY,
+    supabaseStoragePublicUrl: data.SUPABASE_STORAGE_PUBLIC_URL,
+    supabaseStoragePrivateBucket: data.SUPABASE_STORAGE_PRIVATE_BUCKET,
+    supabaseStorageMaxBytes: data.SUPABASE_STORAGE_MAX_BYTES,
     corsOrigins: data.CORS_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean),
     bodyLimit: data.BODY_LIMIT,
     rateLimitWindowMs: data.RATE_LIMIT_WINDOW_MS,
