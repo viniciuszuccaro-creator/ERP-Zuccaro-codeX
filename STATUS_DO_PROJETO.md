@@ -9899,3 +9899,10 @@ Checklist inicial:
 - As 26 ondas receberam controle executável. Ondas 4/5 preservam o trabalho pronto como fundação, mas continuam com lacunas amplas; Ondas 25/26 permanecem bloqueadas por gates de dados reais/VPS.
 - Criadas matriz inicial de rastreabilidade e precedência das especificações. CRM, Produto, Produção, Portal, Chatbot, Estoque, Expedição e marketplaces existentes serão evoluídos, nunca duplicados.
 - Nenhuma alteração de runtime, migration, VPS, porta 3080, backup ou dado real ocorreu. Próximo checkpoint: Onda 0, inventário e contratos compartilhados.
+### Programa Comercial 360 Omnicanal - Onda 0 Inventário e contratos (2026-09-22)
+
+- Inventário real classificou estruturas canônicas, parciais, legadas consumidas e ausência controlada de storage/DAM, preservando todos os módulos existentes.
+- Ownership congelado: Comercial orquestra Orçamento/Pedido; Cadastros, Estoque, Produção, Financeiro, Fiscal e Logística continuam donos de seus dados e regras.
+- Definidos contratos HTTP, tenant/RBAC, transação, idempotência, sequência, auditoria, compatibilidade e envelope lógico de eventos.
+- `integration_events` será reutilizada como outbox; qualquer hardening futuro será aditivo na Onda 15, sem tabela paralela.
+- Nenhum código runtime, schema, migration, VPS, porta 3080 ou dado real foi alterado. Próximo checkpoint: contrato da Onda 1 Produto/PIM/DAM.

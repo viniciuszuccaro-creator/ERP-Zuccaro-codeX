@@ -184,7 +184,7 @@ Este programa consolida, sem substituir nem duplicar, `AGENTS.md`, `COMERCIAL_36
 
 | Onda | Estado inicial | Dependências imediatas | Próximo checkpoint | Risco principal | Rollback |
 | --- | --- | --- | --- | --- | --- |
-| 0 | EM EXECUÇÃO | baseline V1 | inventário, ownership e contratos compartilhados | duplicar fonte de verdade | revert documental |
+| 0 | CONCLUÍDO | baseline V1 | `COMERCIAL_360_ONDA_0_CONTRATOS.md` | duplicar fonte de verdade | revert documental |
 | 1 | PENDENTE | Onda 0 | contrato Produto/PIM/DAM sobre cadastro existente | criar Produto paralelo | manter schema atual |
 | 2 | PENDENTE | 0/1 | lacunas de preço, margem e aprovação | alterar snapshot histórico | feature gate/revert aditivo |
 | 3 | PENDENTE | 0 | contrato Cliente 360/CRM sobre estruturas atuais | expor dados financeiros | RBAC fail-closed |
