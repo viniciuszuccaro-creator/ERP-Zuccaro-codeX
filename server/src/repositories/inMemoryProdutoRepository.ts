@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';
-import type { Produto, ProdutoCreate, ProdutoEquivalente, ProdutoUpdate, ProdutoVariante } from './produtoTypes.js';
+import type { Produto, ProdutoCreate, ProdutoEquivalente, ProdutoUpdate, ProdutoVariante, ProdutoVarianteCreate, ProdutoVarianteUpdate } from './produtoTypes.js';
 
 function nowIso() { return new Date().toISOString(); }
 
@@ -41,6 +41,9 @@ export interface ProdutoRepository extends TenantEntityRepository<Produto, Produ
   ): Promise<void>;
   listVariants(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoVariante[]>;
   listEquivalents(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoEquivalente[]>;
+  createVariant(scope: Scope, produtoId: string, data: ProdutoVarianteCreate, executor?: DbQueryExecutor): Promise<ProdutoVariante>;
+  updateVariant(scope: Scope, produtoId: string, variantId: string, data: ProdutoVarianteUpdate, executor?: DbQueryExecutor): Promise<ProdutoVariante | null>;
+  deactivateVariant(scope: Scope, produtoId: string, variantId: string, executor?: DbQueryExecutor): Promise<ProdutoVariante | null>;
 }
 
 function buildProduto(scope: Scope, data: ProdutoCreate, id: string, ts: string): Produto {
@@ -95,17 +98,21 @@ function buildProduto(scope: Scope, data: ProdutoCreate, id: string, ts: string)
 
 export class InMemoryProdutoRepository implements ProdutoRepository {
   private readonly rows = new Map<string, Produto>();
+  private readonly variants = new Map<string, ProdutoVariante>();
 
   private readonly publicationEvents: Array<{ groupId: string; empresaId: string | null; produtoId: string; requestId: string }> = [];
   async withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> {
     const snapshot = structuredClone([...this.rows.entries()]);
     const eventsSnapshot = structuredClone(this.publicationEvents);
+    const variantsSnapshot = structuredClone([...this.variants.entries()]);
     try {
       return await fn();
     } catch (error) {
       this.rows.clear();
       for (const [id, row] of snapshot) this.rows.set(id, row);
       this.publicationEvents.length = 0;
+      this.variants.clear();
+      for (const [id, row] of variantsSnapshot) this.variants.set(id, row);
       this.publicationEvents.push(...eventsSnapshot);
       throw error;
     }
@@ -225,8 +232,38 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     }
     this.publicationEvents.push({ groupId: scope.groupId, empresaId: produto.empresa_id, produtoId: produto.id, requestId });
   }
-  async listVariants(_scope: Scope, _produtoId: string): Promise<ProdutoVariante[]> { return []; }
+  async listVariants(scope: Scope, produtoId: string): Promise<ProdutoVariante[]> {
+    return structuredClone([...this.variants.values()].filter((row) => row.ativo && row.group_id === scope.groupId
+      && row.produto_id === produtoId && (!scope.empresaId || row.empresa_id === scope.empresaId)));
+  }
 
+  async createVariant(scope: Scope, produtoId: string, data: ProdutoVarianteCreate): Promise<ProdutoVariante> {
+    if ([...this.variants.values()].some((row) => row.group_id === scope.groupId && row.sku.toLowerCase() === data.sku.toLowerCase())) {
+      throw new Error('unique constraint produto_variantes sku');
+    }
+    const row: ProdutoVariante = { id: randomUUID(), group_id: scope.groupId, empresa_id: scope.empresaId ?? null,
+      produto_id: produtoId, sku: data.sku, nome: data.nome ?? null, atributos: data.atributos, ativo: true };
+    this.variants.set(row.id, structuredClone(row));
+    return structuredClone(row);
+  }
+
+  async updateVariant(scope: Scope, produtoId: string, variantId: string, data: ProdutoVarianteUpdate): Promise<ProdutoVariante | null> {
+    const current = this.variants.get(variantId);
+    if (!current || current.group_id !== scope.groupId || current.produto_id !== produtoId
+      || (scope.empresaId && current.empresa_id !== scope.empresaId)) return null;
+    const next = { ...current, ...data };
+    this.variants.set(variantId, structuredClone(next));
+    return structuredClone(next);
+  }
+
+  async deactivateVariant(scope: Scope, produtoId: string, variantId: string): Promise<ProdutoVariante | null> {
+    const current = await this.updateVariant(scope, produtoId, variantId, { });
+    if (!current || !current.ativo) return null;
+    const next = { ...current, ativo: false };
+    this.variants.set(variantId, next);
+    return structuredClone(next);
+
+  }
   async listEquivalents(_scope: Scope, _produtoId: string): Promise<ProdutoEquivalente[]> { return []; }
 
 

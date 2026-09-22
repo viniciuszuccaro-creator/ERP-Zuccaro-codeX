@@ -10,6 +10,10 @@ import {
   isProdutoTipoCanonico,
   produtoCreateSchema,
   produtoUpdateSchema,
+  produtoVarianteCreateSchema,
+  produtoVarianteUpdateSchema,
+  type ProdutoVarianteCreate,
+  type ProdutoVarianteUpdate,
   type Produto,
   type ProdutoCreate,
   type ProdutoUpdate,
@@ -259,6 +263,61 @@ export class ProdutoService {
       : this.repo.listEquivalents(scope, id);
   }
 
+
+  async createVariant(ctx: RequestContext, produtoId: string, payload: unknown) {
+    const parsed = produtoVarianteCreateSchema.safeParse(payload);
+    if (!parsed.success) throw new AppError(400, 'VALIDATION_ERROR', 'Invalid Produto variante payload', parsed.error.flatten());
+    return this.mutateVariant(ctx, produtoId, 'create', undefined, parsed.data);
+  }
+
+  async updateVariant(ctx: RequestContext, produtoId: string, variantId: string, payload: unknown) {
+    const parsed = produtoVarianteUpdateSchema.safeParse(payload);
+    if (!parsed.success) throw new AppError(400, 'VALIDATION_ERROR', 'Invalid Produto variante payload', parsed.error.flatten());
+    return this.mutateVariant(ctx, produtoId, 'update', variantId, parsed.data);
+  }
+
+  async deactivateVariant(ctx: RequestContext, produtoId: string, variantId: string) {
+    return this.mutateVariant(ctx, produtoId, 'deactivate', variantId);
+  }
+
+  private async mutateVariant(ctx: RequestContext, produtoId: string, operation: 'create' | 'update' | 'deactivate', variantId?: string, data?: ProdutoVarianteCreate | ProdutoVarianteUpdate) {
+    this.assertScope(ctx);
+    await this.assertPermission(ctx, 'editar');
+    const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
+    return this.repo.withTransaction(async (executor) => {
+      const produto = await this.repo.getById(scope, produtoId, executor, { forUpdate: true });
+      if (!produto || !produto.ativo) throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+      const before = variantId ? (await this.repo.listVariants(scope, produtoId, executor)).find((row) => row.id === variantId) : undefined;
+      if (operation !== 'create' && !before) throw new AppError(404, 'PRODUTO_VARIANTE_NOT_FOUND', 'Produto variante not found in tenant scope');
+      let result;
+      try {
+        result = operation === 'create'
+          ? await this.repo.createVariant(scope, produtoId, data as ProdutoVarianteCreate, executor)
+          : operation === 'update'
+            ? await this.repo.updateVariant(scope, produtoId, variantId!, data as ProdutoVarianteUpdate, executor)
+            : await this.repo.deactivateVariant(scope, produtoId, variantId!, executor);
+      } catch (error) {
+        this.rethrowConflict(error);
+        throw error;
+      }
+      if (!result) throw new AppError(404, 'PRODUTO_VARIANTE_NOT_FOUND', 'Produto variante not found in tenant scope');
+      await this.audit.append({
+        groupId: ctx.groupId,
+        empresaId: result.empresa_id ?? ctx.empresaId,
+        actorId: ctx.actorId,
+        actorEmail: ctx.actorEmail,
+        entity: 'ProdutoVariante',
+        entityId: result.id,
+        action: operation === 'create' ? 'create' : operation === 'update' ? 'update' : 'soft_delete',
+        beforeData: before ? sanitizeAuditSnapshot(before) : undefined,
+        afterData: sanitizeAuditSnapshot(result),
+        requestId: ctx.requestId,
+        ipAddress: ctx.ipAddress,
+      }, executor);
+      return result;
+    });
+  }
+  /** Garante que CRUD de Produto nao aceita campos transacionais. */
   assertNoStockSideEffects(payload: unknown) {
     this.rejectOperationalFields(payload);
   }
