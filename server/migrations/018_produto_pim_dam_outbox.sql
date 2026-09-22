@@ -91,11 +91,14 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM produtos p WHERE p.id = NEW.produto_id AND p.group_id = NEW.group_id) THEN
     RAISE EXCEPTION 'TENANT_FK_MISMATCH: produto_id % does not belong to group_id %', NEW.produto_id, NEW.group_id;
   END IF;
-  IF TG_TABLE_NAME = 'produto_equivalentes' AND NOT EXISTS (
-    SELECT 1 FROM produtos p WHERE p.id = NEW.produto_equivalente_id AND p.group_id = NEW.group_id
-  ) THEN
-    RAISE EXCEPTION 'TENANT_FK_MISMATCH: produto_equivalente_id % does not belong to group_id %',
-      NEW.produto_equivalente_id, NEW.group_id;
+  IF TG_TABLE_NAME = 'produto_equivalentes' THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM produtos p
+      WHERE p.id = (to_jsonb(NEW)->>'produto_equivalente_id')::uuid AND p.group_id = NEW.group_id
+    ) THEN
+      RAISE EXCEPTION 'TENANT_FK_MISMATCH: produto_equivalente_id % does not belong to group_id %',
+        to_jsonb(NEW)->>'produto_equivalente_id', NEW.group_id;
+    END IF;
   END IF;
   RETURN NEW;
 END;
