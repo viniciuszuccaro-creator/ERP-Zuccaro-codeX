@@ -10211,6 +10211,7 @@ Checklist inicial:
 - Arquivos: repositórios Produto in-memory/PostgreSQL, helper e service DAM existentes, testes R10 em memoria/PostgreSQL. Nenhuma migration nova, bucket, VPS, porta 3080, main ou dado real foi alterado. PR #33 permanece draft sem merge.
 - Proximo gate: CI PostgreSQL efemero verde; depois definir reconciliacao de objeto orfao e antivirus, verificar buckets/credenciais self-hosted sob autorizacao especifica e integrar ao ProdutoFormV22. Ate esse gate, nenhuma exclusao de objeto ou ativacao do StoragePort real.
 - `npm run typecheck` da raiz falhou em erros preexistentes de Base44/frontend (ex.: `base44/functions/_lib/security/entityGuardPolicy/entry.ts` e `src/api/httpApiClient.js`), fora dos arquivos deste lote. Nenhum baseline foi alterado para ocultar a falha; typecheck do backend passou.
+- Validacao posterior: commit `941d7341de754ddfa159e136cea950f4da2674ce` publicado na branch `codex/comercial-360`; workflow `35799092309` da PR #33 com frontend SUCCESS e backend SUCCESS, incluindo migration/seed sintetico e `test:postgres` efemero SUCCESS. O gate CI mencionado acima ficou aprovado; permanecem pendentes objetos orfaos, antivirus, bucket/credenciais e integracao ProdutoFormV22. PR nao mesclada; migration 021 nao aplicada na VPS.
 
 ### Onda 1 Produto/PIM - contrato HTTP da reserva DAM (2026-09-22)
 - Causa: service e PostgreSQL da reserva/confirmacao ja estavam testados, mas Produto nao oferecia contrato HTTP para o fluxo em duas etapas.
