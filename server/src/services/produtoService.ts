@@ -20,6 +20,7 @@ import {
   type ProdutoVarianteCreate,
   type ProdutoVarianteUpdate,
   type Produto,
+  type ProdutoMidia,
   type ProdutoCreate,
   type ProdutoUpdate,
 } from '../repositories/produtoTypes.js';
@@ -31,6 +32,11 @@ const WORKFLOW_TRANSITIONS: Record<Produto['workflow_status'], Produto['workflow
   APROVADO: ['EM_REVISAO', 'PUBLICADO'],
   PUBLICADO: ['INATIVO'],
   INATIVO: ['RASCUNHO'],
+};
+
+const MEDIA_FOLDER_BY_CATEGORY: Partial<Record<ProdutoMidia['categoria'], string>> = {
+  IMAGEM: 'images', VIDEO: 'videos', DESENHO: 'documents',
+  MANUAL: 'manuals', CERTIFICADO: 'certificates',
 };
 
 const WORKFLOW_ACTION: Record<Produto['workflow_status'], RbacAction> = {
@@ -283,6 +289,11 @@ export class ProdutoService {
     const data = parsed.data;
     const prefix = `groups/${ctx.groupId}/companies/${ctx.empresaId}/products/${produtoId}/`;
     if (!data.storage_key.startsWith(prefix)) throw new AppError(400, 'VALIDATION_ERROR', 'Media path outside tenant scope');
+    const expectedFolder = MEDIA_FOLDER_BY_CATEGORY[data.categoria];
+    if (!expectedFolder) throw new AppError(409, 'MEDIA_CATEGORY_NOT_CONFIGURED', 'Media category is not supported by Storage');
+    if (!data.storage_key.startsWith(`${prefix}${expectedFolder}/`)) {
+      throw new AppError(400, 'VALIDATION_ERROR', 'Media category does not match storage path');
+    }
     const verified = await this.storage.confirmUpload({
       groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
       entity: 'Produto', entityId: produtoId,

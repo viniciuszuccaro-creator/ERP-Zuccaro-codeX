@@ -59,6 +59,12 @@ test('DAM Produto nega RBAC, tenant, payload e confirmacao divergente antes de p
     (error: unknown) => (error as { code?: string }).code === 'VALIDATION_ERROR');
   await assert.rejects(allowed.service.registerMidia({ ...allowed.ctx, empresaId: ACTOR }, owner.id, ownData),
     (error: unknown) => (error as { code?: string }).code === 'TENANT_MISMATCH');
+  await assert.rejects(allowed.service.registerMidia(allowed.ctx, owner.id, {
+    ...ownData, storage_key: ownData.storage_key.replace('/images/', '/videos/'),
+  }), (error: unknown) => (error as { code?: string }).code === 'VALIDATION_ERROR');
+  await assert.rejects(allowed.service.registerMidia(allowed.ctx, owner.id, {
+    ...ownData, categoria: 'CAD', storage_key: ownData.storage_key.replace('/images/', '/cad/'),
+  }), (error: unknown) => (error as { code?: string }).code === 'MEDIA_CATEGORY_NOT_CONFIGURED');
   await assert.rejects(allowed.service.registerMidia(allowed.ctx, produto.id, data),
     (error: unknown) => (error as { code?: string }).code === 'PRODUTO_NOT_FOUND');
   assert.equal(fake.calls(), 0);
@@ -92,7 +98,7 @@ import test from 'node:test';
 import { InMemoryAuditRepository } from '../src/audit/auditRepository.ts';
 import { InMemoryProdutoRelationGuard } from '../src/db/produtoRelationGuard.ts';
 import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import type { StoragePort } from '../src/services/storagePort.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 import { createInMemoryProdutoRepo } from '../src/repositories/inMemoryProdutoRepository.ts';
@@ -102,6 +108,7 @@ import {
   produtoVarianteCreateSchema,
   produtoVarianteUpdateSchema,
 } from '../src/repositories/produtoTypes.ts';
+import { SupabaseStorageAdapter } from '../src/services/supabaseStorageAdapter.ts';
 import { ProdutoService } from '../src/services/produtoService.ts';
 import { assertProdutoMediaContract, assertProdutoRelationsContract } from './produto-relacoes-contract.ts';
 
@@ -396,4 +403,30 @@ test('Falha do repository rollbacka mutacao de equivalente em memoria', async ()
     /REPOSITORY_FAILURE/,
   );
   assert.deepEqual(await service.listEquivalents(ctx, source.id), []);
+});
+
+test('DAM Produto confirma objeto no adapter self-hosted com bytes e SHA reais sinteticos', async () => {
+  const bytes = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/qZkAAAAASUVORK5CYII=', 'base64');
+  let reads = 0;
+  const storage = new SupabaseStorageAdapter({
+    internalUrl: 'https://internal.example.test', publicUrl: 'https://public.example.test',
+    serviceRoleKey: 'synthetic-key', privateBucket: 'private', maxBytes: 1024,
+    fetchImpl: async (input, init) => {
+      reads += 1;
+      assert.equal(new URL(String(input)).origin, 'https://internal.example.test');
+      assert.equal(init?.redirect, 'error');
+      assert.equal(init?.method ?? 'GET', 'GET');
+      return new Response(bytes, { headers: { 'content-type': 'image/png' } });
+    },
+  });
+  const { service, audit, ctx } = harness(undefined, storage);
+  const produto = await service.create(ctx, { descricao: 'Midia adapter sintetica' });
+  const data = {
+    ...mediaFixture(produto.id), nome_arquivo: 'synthetic.png',
+    tamanho_bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex'),
+  };
+  const row = await service.registerMidia(ctx, produto.id, data);
+  assert.equal(reads, 1);
+  assert.equal(row.status, 'QUARENTENA');
+  assert.equal((await audit.listByEntity('ProdutoMidia', row.id))[0]?.action, 'create');
 });
