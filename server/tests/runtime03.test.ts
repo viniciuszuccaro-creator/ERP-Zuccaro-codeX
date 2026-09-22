@@ -8,7 +8,13 @@ import { InMemoryProdutoRelationGuard } from '../src/db/produtoRelationGuard.ts'
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 import { listMigrationFiles } from '../src/db/migrate.ts';
 import { createInMemoryProdutoRepo } from '../src/repositories/inMemoryProdutoRepository.ts';
-import { PRODUTO_FORBIDDEN_OPERATIONAL_FIELDS } from '../src/repositories/produtoTypes.ts';
+import {
+  PRODUTO_FORBIDDEN_OPERATIONAL_FIELDS,
+  PRODUTO_TIPOS_CANONICOS,
+  normalizeProdutoTipoItem,
+  produtoCreateSchema,
+  produtoUpdateSchema,
+} from '../src/repositories/produtoTypes.ts';
 import { ProdutoService } from '../src/services/produtoService.ts';
 
 const GROUP_A = '11111111-1111-4111-8111-111111111111';
@@ -61,6 +67,27 @@ test('runtime-03 migrations 007/008 exist after 001-006', () => {
   assert.ok(files.indexOf('007_produtos_master_data.sql') > files.indexOf('006_produtos_base.sql'));
 });
 
+test('Produto normaliza aliases PIM conhecidos sem reclassificar legado desconhecido', () => {
+  assert.equal(normalizeProdutoTipoItem('revenda'), PRODUTO_TIPOS_CANONICOS.REVENDA);
+  assert.equal(normalizeProdutoTipoItem('materia_prima'), PRODUTO_TIPOS_CANONICOS.MATERIA_PRIMA);
+  assert.equal(normalizeProdutoTipoItem('matéria-prima produção'), PRODUTO_TIPOS_CANONICOS.MATERIA_PRIMA);
+  assert.equal(normalizeProdutoTipoItem('producao_aco'), 'producao_aco');
+  assert.equal(normalizeProdutoTipoItem('fabricado'), PRODUTO_TIPOS_CANONICOS.FABRICADO);
+  assert.equal(normalizeProdutoTipoItem('Linha Legada Especial'), 'Linha Legada Especial');
+
+  assert.equal(
+    produtoCreateSchema.parse({ descricao: 'Produto sintético', tipo_item: 'servico' }).tipo_item,
+    PRODUTO_TIPOS_CANONICOS.SERVICO,
+  );
+  assert.equal(
+    produtoUpdateSchema.parse({ tipo_item: 'produto-acabado' }).tipo_item,
+    PRODUTO_TIPOS_CANONICOS.FABRICADO,
+  );
+  assert.equal(
+    produtoCreateSchema.parse({ descricao: 'Produto padrão' }).tipo_item,
+    PRODUTO_TIPOS_CANONICOS.REVENDA,
+  );
+});
 test('AUDIT: Produto descricao before/after + soft delete', async () => {
   const audit = new InMemoryAuditRepository();
   const service = new ProdutoService(

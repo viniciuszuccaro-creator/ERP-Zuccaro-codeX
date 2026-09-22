@@ -9940,3 +9940,11 @@ Checklist inicial:
 - Foram definidos projecao allowlisted, versionamento, retry/backoff, dead-letter, replay idempotente, reconciliacao e cutover por Empresa/canal.
 - Policies e telas existentes permanecem fallback ate adapter canonico e E2E; pedidos simulados continuam bloqueados no agregado oficial.
 - Nenhum provider, runtime ou schema foi ativado. Proximo checkpoint: primeiro incremento seguro da Onda 1 sobre o Produto existente.
+### Programa Comercial 360 Omnicanal - Onda 1 Produto/PIM, incremento 1 (2026-09-22)
+
+- produtoTypes.ts passou a declarar as classificacoes canonicas e normalizar aliases inequivocos no schema existente, sem nova entidade, migration ou tela.
+- Valores legados desconhecidos, inclusive subtipos tecnicos como producao_aco, permanecem intactos para evitar reclassificacao silenciosa. Defaults e rotulos consumidos pela UI foram preservados.
+- Teste direcionado: 1 pass / 0 fail / 0 skip. Backend completo serial: 146 total / 139 pass / 0 fail / 7 skips opcionais por ausencia de DATABASE_URL.
+- Backend typecheck/build: PASS. audit:baseline, lint e frontend build: PASS. Teste frontend local reportou 0 pela expansao de glob no Windows; CI Linux permanece autoridade.
+- Typecheck global frontend: baseline legado FAIL em arquivos nao tocados (erros amplos anteriores); nenhum erro apontou para os arquivos deste incremento.
+- git diff --check e auditoria de segredos/dados reais: PASS. Proximo incremento: expor classificacao controlada no formulario Produto existente e cobrir compatibilidade dos consumidores.

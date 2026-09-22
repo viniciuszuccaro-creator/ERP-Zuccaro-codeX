@@ -8,6 +8,54 @@ const baseCreate = {
   ativo: z.boolean().optional().default(true),
 };
 
+export const PRODUTO_TIPOS_CANONICOS = Object.freeze({
+  REVENDA: 'Revenda',
+  MATERIA_PRIMA: 'Matéria-Prima Produção',
+  COMPONENTE: 'Componente',
+  INTERMEDIARIO: 'Intermediário',
+  FABRICADO: 'Produto Acabado',
+  KIT: 'Kit',
+  SERVICO: 'Serviço',
+  RETALHO: 'Retalho',
+  SUCATA: 'Sucata',
+} as const);
+
+export type ProdutoTipoCanonico = keyof typeof PRODUTO_TIPOS_CANONICOS;
+
+const PRODUTO_TIPO_ALIASES = new Map<string, string>([
+  ['REVENDA', PRODUTO_TIPOS_CANONICOS.REVENDA],
+  ['MATERIA PRIMA', PRODUTO_TIPOS_CANONICOS.MATERIA_PRIMA],
+  ['MATERIA PRIMA PRODUCAO', PRODUTO_TIPOS_CANONICOS.MATERIA_PRIMA],
+  ['COMPONENTE', PRODUTO_TIPOS_CANONICOS.COMPONENTE],
+  ['INTERMEDIARIO', PRODUTO_TIPOS_CANONICOS.INTERMEDIARIO],
+  ['FABRICADO', PRODUTO_TIPOS_CANONICOS.FABRICADO],
+  ['PRODUTO ACABADO', PRODUTO_TIPOS_CANONICOS.FABRICADO],
+  ['KIT', PRODUTO_TIPOS_CANONICOS.KIT],
+  ['SERVICO', PRODUTO_TIPOS_CANONICOS.SERVICO],
+  ['RETALHO', PRODUTO_TIPOS_CANONICOS.RETALHO],
+  ['SUCATA', PRODUTO_TIPOS_CANONICOS.SUCATA],
+]);
+
+function produtoTipoAlias(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toUpperCase();
+}
+
+/**
+ * Normaliza somente aliases conhecidos. Valores legados desconhecidos permanecem
+ * intactos para evitar reclassificação silenciosa durante a transição do PIM.
+ */
+export function normalizeProdutoTipoItem(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return PRODUTO_TIPOS_CANONICOS.REVENDA;
+  return PRODUTO_TIPO_ALIASES.get(produtoTipoAlias(trimmed)) ?? trimmed;
+}
+
 /** Campos MASTER DATA do Produto (RUNTIME-03). Sem estoque/custo/preço/fiscal operacional. */
 export const produtoCreateSchema = z.object({
   ...baseCreate,
@@ -15,7 +63,7 @@ export const produtoCreateSchema = z.object({
   codigo_barras: z.string().trim().max(64).optional().nullable(),
   descricao: z.string().trim().min(1).max(500),
   nome: z.string().trim().max(500).optional().nullable(),
-  tipo_item: z.string().trim().max(80).optional().default('Revenda'),
+  tipo_item: z.string().trim().max(80).optional().default('Revenda').transform(normalizeProdutoTipoItem),
   tipo_aco: z.string().trim().max(40).optional().nullable(),
   eh_bitola: z.boolean().optional().default(false),
   peso_teorico_kg_m: z.number().finite().optional().default(0),
