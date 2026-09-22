@@ -10170,3 +10170,4 @@ Checklist inicial:
 - Arquivos: `server/migrations/020_produto_midia_storage_key_unique.sql`, `server/src/repositories/inMemoryProdutoRepository.ts`, `server/tests/produto-relacoes-contract.ts`, `server/tests/runtime01.test.ts`, `server/tests/runtime10-produto-pim-postgres-e2e.test.ts`.
 - Nenhuma migration executada na VPS, nenhum objeto removido, nenhuma rota HTTP habilitada, nenhum dado real, nenhuma alteracao da porta 3080/main. PR #33 permanece draft sem merge.
 - Proximo gate: reserva duravel por tentativa de upload com ownership e estado de quarentena, reconciliacao segura de orfaos, antivirus e verificacao de buckets/credenciais self-hosted sob autorizacao. Apenas depois considerar compensacao de objetos e exposicao HTTP.
+- Codigo publicado em `c855fff59704adbbce8bfd82ed4621500ac1d798`; workflow `35791134586` da PR #33: frontend SUCCESS, backend SUCCESS, migrations/seed sintetico/test:postgres SUCCESS. Migration 020 nao aplicada na VPS.
