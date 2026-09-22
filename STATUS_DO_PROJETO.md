@@ -10091,3 +10091,11 @@ Checklist inicial:
 - Risco de implantacao futura: conferir duplicidades legadas de SKU que diferem apenas por caixa antes de aplicar o indice 019 fora da CI. Nao houve acesso a dados reais, VPS ou porta 3080; PR #33 permanece aberta sem merge.
 - Proximo foco apos CI verde: integrar manutencao de variantes/equivalentes ao formulario Produto V22 existente, sem criar cadastro paralelo, e prosseguir no StoragePort conforme gates.
 - Checkpoint de codigo `7ffbe6b81e3a64c2d9f40dbaa9324d5a0109d397`: workflow `35770569852` frontend SUCCESS e backend SUCCESS. PostgreSQL 16 efemero aplicou migrations 001-019 e executou R08B 2/2, R08C 2/2, R09 2/2 e R10 2/2, todos com 0 fail e 0 skip. PR #33 permanece draft, sem merge.
+
+### Onda 1 Produto/PIM - fechamento HTTP de variantes e equivalentes (2026-09-22)
+- Causa: as oito rotas HTTP de variantes e equivalentes estavam expostas sem cobertura comportamental suficiente, embora service, repositories e migration 019 ja tivessem CI verde.
+- Foi adicionada uma suite HTTP sintetica no harness existente: GET, POST, PATCH e DELETE das duas relacoes; 201/200; payload estrito 400; RBAC 403; grupo/empresa e registros externos 404; SKU e relacao duplicados 409; autorreferencia com codigo canonico 400.
+- O teste rejeita groupId, empresaId, actorId, requestId e contexto de autenticacao no body, confirma auditoria before/after, rollback quando a auditoria falha e Produto inalterado sem efeitos em estoque, preco ou fiscal.
+- Validacao local: HTTP direcionado 6/6; backend 177 total / 168 pass / 0 fail / 9 skips condicionais sem DATABASE_URL; typecheck e build backend PASS; frontend explicito 599/599; lint, audit:baseline e build frontend PASS. Typecheck global frontend ainda falha no baseline legado de entityGuardPolicy (exit 2), fora deste lote; PostgreSQL real permanece gate da CI efemera da PR #33.
+- Nenhum repository, service, migration, VPS, porta 3080, main ou dado real foi alterado. PR #33 permanece draft e sem merge.
+- Proximo macroincremento: integrar variantes/equivalentes ao formulario Produto V22 existente e concluir o adapter StoragePort real mediante gate proprio, sem criar modulo paralelo.
