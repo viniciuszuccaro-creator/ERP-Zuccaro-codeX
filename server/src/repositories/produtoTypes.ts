@@ -185,6 +185,16 @@ export type ProdutoEquivalente = {
 };
 
 /** Campos proibidos no payload Produto (transactional / operacional). */
+
+export const produtoVarianteCreateSchema = z.object({
+  sku: z.string().trim().min(1).max(120),
+  nome: z.string().trim().min(1).max(240).optional().nullable(),
+  atributos: z.record(z.union([z.string().max(500), z.number().finite(), z.boolean(), z.null()])).optional().default({}),
+}).strict();
+
+export const produtoVarianteUpdateSchema = produtoVarianteCreateSchema.partial().strict();
+export type ProdutoVarianteCreate = z.infer<typeof produtoVarianteCreateSchema>;
+export type ProdutoVarianteUpdate = z.infer<typeof produtoVarianteUpdateSchema>;
 export const PRODUTO_FORBIDDEN_OPERATIONAL_FIELDS = Object.freeze([
   'estoque_atual',
   'estoque_minimo',

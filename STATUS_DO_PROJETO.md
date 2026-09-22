@@ -10063,3 +10063,7 @@ Checklist inicial:
 - `ProdutoRepository`, adapters in-memory/PostgreSQL e `ProdutoService` passaram a expor consultas tenant-scoped das estruturas existentes da migration 018.
 - Rotas GET canonicas exigem `Cadastros.produto.visualizar`, confirmam o Produto ativo no mesmo Grupo/Empresa e retornam 404 seguro fora do tenant.
 - Teste R10 direcionado: 5 pass / 0 fail; typecheck e `git diff --check`: PASS. Nenhuma migration, VPS, porta 3080 ou dado real foi alterado.
+
+### Onda 1 Produto/PIM - contrato de mutacao de variante (2026-09-22)
+- Schema estrito create/update aceita somente SKU, nome e atributos escalares controlados; tenant, IDs, ativo e campos internos sao bloqueados por mass assignment.
+- R10: 6 pass / 0 fail; typecheck e diff-check PASS. Proximo incremento: persistencia e auditoria transacional das mutacoes de variante.

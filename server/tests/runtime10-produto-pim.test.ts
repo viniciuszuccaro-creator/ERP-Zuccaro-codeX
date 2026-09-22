@@ -5,6 +5,7 @@ import { InMemoryProdutoRelationGuard } from '../src/db/produtoRelationGuard.ts'
 import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 import { createInMemoryProdutoRepo } from '../src/repositories/inMemoryProdutoRepository.ts';
+import { produtoVarianteCreateSchema, produtoVarianteUpdateSchema } from '../src/repositories/produtoTypes.ts';
 import { ProdutoService } from '../src/services/produtoService.ts';
 
 const GROUP = '11111111-1111-4111-8111-111111111111';
@@ -132,4 +133,20 @@ test('Variantes e equivalentes exigem Produto no tenant e RBAC visualizar', asyn
     (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED',
   );
   await assert.rejects(() => service.listEquivalents(ctx, crypto.randomUUID()), /not found/i);
+});
+
+test('Variante usa payload estrito e bloqueia mass assignment de tenant e campos internos', () => {
+  assert.equal(produtoVarianteCreateSchema.parse({ sku: ' SKU-01 ', atributos: { cor: 'Azul', peso: 2 } }).sku, 'SKU-01');
+  for (const payload of [
+    { sku: '' },
+    { sku: 'SKU', group_id: GROUP },
+    { sku: 'SKU', empresa_id: EMPRESA },
+    { sku: 'SKU', produto_id: ACTOR },
+    { sku: 'SKU', ativo: false },
+    { sku: 'SKU', atributos: { valor: Number.POSITIVE_INFINITY } },
+  ]) {
+    assert.equal(produtoVarianteCreateSchema.safeParse(payload).success, false);
+  }
+  assert.equal(produtoVarianteUpdateSchema.safeParse({ nome: 'Revisada' }).success, true);
+  assert.equal(produtoVarianteUpdateSchema.safeParse({ id: ACTOR }).success, false);
 });
