@@ -9983,3 +9983,11 @@ Checklist inicial:
 - Confirmacao humana, RBAC, contexto Grupo/Empresa e auditoria da conversao foram preservados integralmente.
 - Testes direcionados: 7 pass / 0 fail / 0 skip. Suite frontend explicita: 595 pass / 0 fail / 0 skip. `audit:baseline`, lint, build e `git diff --check`: PASS.
 - Nenhuma migration, VPS, porta 3080, segredo ou dado real foi alterado. Proximo incremento: corrigir o formulario legado `ProdutoForm` para consumir a mesma policy sem perder compatibilidade com seus consumidores atuais.
+### Programa Comercial 360 Omnicanal - Onda 1 Produto/PIM, incremento 6 (2026-09-22)
+
+- O `ProdutoForm` legado foi preservado e passou a consumir a mesma policy de classificacao do formulario canonico, mantendo compatibilidade com resolucao dinamica existente.
+- A abertura e o payload normalizam apenas aliases inequivocos; classificacoes legadas desconhecidas continuam disponiveis no select e nao sao reclassificadas silenciosamente.
+- Conversao individual, ativacao por bitola e blocos condicionais de Producao agora usam constante/predicado canonicos, eliminando o valor de `tipo_item` com encoding corrompido.
+- O arquivo grande nao foi refatorado estruturalmente neste lote localizado para evitar ampliar o risco sobre fluxo legado; a extracao futura deve ocorrer por secoes com testes visuais proprios.
+- Testes direcionados: 8 pass / 0 fail / 0 skip. Suite frontend explicita: 596 pass / 0 fail / 0 skip. `audit:baseline`, lint, build e `git diff --check`: PASS.
+- Nenhuma migration, VPS, porta 3080, segredo ou dado real foi alterado. Proximo incremento: revisar o `ProdutoFormCompleto` intermediario e consolidar somente classificacao, sem substituir o formulario canonico V22.

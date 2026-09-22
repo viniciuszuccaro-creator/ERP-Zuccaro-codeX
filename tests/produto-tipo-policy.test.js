@@ -108,3 +108,12 @@ test('conversão, dashboard e itens de pedido usam o contrato canônico', async 
   assert.match(dashboard, /tipo_item: PRODUTO_TIPOS_CANONICOS\.MATERIA_PRIMA/);
   assert.match(itens, /tipo_item: PRODUTO_TIPOS_CANONICOS\.REVENDA/);
 });
+test('ProdutoForm legado preserva compatibilidade usando a policy canônica', async () => {
+  const source = await readFile(new URL('../src/components/cadastros/ProdutoForm.jsx', import.meta.url), 'utf8');
+  assert.match(source, /normalizeProdutoTipoItem\(dadosIniciais\.tipo_item\)/);
+  assert.match(source, /getProdutoTipoOptions\(formData\.tipo_item\)/);
+  assert.match(source, /tipo_item: PRODUTO_TIPOS_CANONICOS\.MATERIA_PRIMA/);
+  assert.match(source, /isProdutoMateriaPrima\(formData\.tipo_item\)/);
+  assert.doesNotMatch(source, /<SelectItem value="Produto Acabado">/);
+  assert.doesNotMatch(source, /tipo_item: 'MatÃ©ria-Prima ProduÃ§Ã£o'/);
+});
