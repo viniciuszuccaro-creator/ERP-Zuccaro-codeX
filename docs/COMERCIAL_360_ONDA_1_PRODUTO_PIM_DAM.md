@@ -52,6 +52,16 @@ Cadastros continua a UI mestre. Comercial, TabelaPreco, Estoque, Produção, Sit
 4. Adiar tabelas DAM/canais até o adapter de storage e contrato de outbox estarem implementados.
 5. Validar frontend/backend/PostgreSQL efêmero antes de qualquer cutover.
 
+## Estado após a consolidação da classificação
+
+- Concluído: policy frontend única para classificação, aliases inequívocos, preservação de valores legados, formulários existentes, importadores e consumidores ativos de Estoque, Comercial e Produção.
+- Preservado: tipos operacionais de item de pedido, separação e produção não foram confundidos com `Produto.tipo_item`.
+- Fora do runtime: `StatusProdutosProducaoV21_6` não possui consumidor e permanece inventariado como artefato histórico; não foi conectado nem removido.
+- Aberto: contrato equivalente no backend canônico, validação de mass assignment e persistência tenant-scoped antes de ampliar o schema de Produto.
+- Aberto: atributos PIM universais, variantes/equivalentes, embalagem, múltiplos, fracionamento e workflow de aprovação/publicação.
+- Bloqueado por dependência: DAM e conteúdo por canal aguardam adapter privado de `StoragePort`, antivírus/quarentena e contrato de outbox; nenhuma URL temporária ou binário será incorporado ao Produto.
+
+Próximo checkpoint: implementar o contrato backend de classificação no `ProdutoService` existente, com schema estrito, tenant, RBAC e testes, sem migration enquanto os valores atuais couberem na estrutura vigente.
 ## Aceite
 
 Nenhum cadastro paralelo; estoque/preço/custo não entram em Produto; cross-tenant e empresa externa bloqueados; upload privado e audit sanitizado; variações/canais/mídias versionados; consumidores atuais preservados; dados e arquivos reais fora do GitHub.

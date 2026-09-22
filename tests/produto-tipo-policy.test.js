@@ -123,3 +123,16 @@ test('ProdutoFormCompleto normaliza o payload sem duplicar opções de classific
   assert.match(source, /<ProdutoForm/);
   assert.doesNotMatch(source, /<SelectItem value="Revenda">/);
 });
+test('varredura final mantém filtros ativos de Produto na policy canônica', async () => {
+  const produtosTab = await readFile(new URL('../src/components/estoque/ProdutosTab.jsx', import.meta.url), 'utf8');
+  const statusHistorico = await readFile(
+    new URL('../src/components/sistema/StatusProdutosProducaoV21_6.jsx', import.meta.url),
+    'utf8',
+  );
+
+  assert.match(produtosTab, /tipo_item: PRODUTO_TIPOS_CANONICOS\.REVENDA/);
+  assert.match(produtosTab, /tipo_item: PRODUTO_TIPOS_CANONICOS\.MATERIA_PRIMA/);
+  assert.doesNotMatch(produtosTab, /tipo_item: 'Revenda'/);
+  assert.doesNotMatch(produtosTab, /tipo_item: 'Matéria-Prima Produção'/);
+  assert.match(statusHistorico, /V21\.6 - WIDGET DE STATUS/);
+});

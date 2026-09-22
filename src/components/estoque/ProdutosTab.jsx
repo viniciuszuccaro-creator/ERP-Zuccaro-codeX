@@ -16,7 +16,11 @@ import ConversaoProducaoMassa from "@/components/cadastros/ConversaoProducaoMass
 import DashboardProdutosProducao from "@/components/cadastros/DashboardProdutosProducao";
 import ImportadorProdutosPlanilha from "@/components/estoque/ImportadorProdutosPlanilha";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
-import { isProdutoMateriaPrima, isProdutoRevenda } from "@/components/cadastros/produto/produtoTipoPolicy";
+import {
+  PRODUTO_TIPOS_CANONICOS,
+  isProdutoMateriaPrima,
+  isProdutoRevenda,
+} from "@/components/cadastros/produto/produtoTipoPolicy";
 
 export default function ProdutosTab(props) {
   const { hasPermission } = usePermissions();
@@ -52,7 +56,10 @@ export default function ProdutosTab(props) {
   const { data: revendaCount = 0 } = useQuery({
     queryKey: ['produtos-count-revenda', filtroEmpresaKey],
     queryFn: async () => {
-      const filtro = { ...(getFiltroContexto('empresa_id', true) || {}), tipo_item: 'Revenda' };
+      const filtro = {
+        ...(getFiltroContexto('empresa_id', true) || {}),
+        tipo_item: PRODUTO_TIPOS_CANONICOS.REVENDA,
+      };
       const { data } = await base44.functions.invoke('countEntities', { entityName: 'Produto', filter: filtro });
       return data?.count || 0;
     },
@@ -62,7 +69,10 @@ export default function ProdutosTab(props) {
   const { data: producaoCount = 0 } = useQuery({
     queryKey: ['produtos-count-producao', filtroEmpresaKey],
     queryFn: async () => {
-      const filtro = { ...(getFiltroContexto('empresa_id', true) || {}), tipo_item: 'Matéria-Prima Produção' };
+      const filtro = {
+        ...(getFiltroContexto('empresa_id', true) || {}),
+        tipo_item: PRODUTO_TIPOS_CANONICOS.MATERIA_PRIMA,
+      };
       const { data } = await base44.functions.invoke('countEntities', { entityName: 'Produto', filter: filtro });
       return data?.count || 0;
     },

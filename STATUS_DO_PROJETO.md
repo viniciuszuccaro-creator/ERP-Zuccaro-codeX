@@ -9998,3 +9998,11 @@ Checklist inicial:
 - Testes direcionados: 9 pass / 0 fail / 0 skip. Suite frontend explicita: 597 pass / 0 fail / 0 skip. `audit:baseline`, lint, build e `git diff --check`: PASS.
 - Typecheck global: baseline legado FAIL (exit 2) em arquivos nao tocados; verificacao direcionada confirmou 0 erros nos arquivos deste incremento.
 - Nenhuma migration, VPS, porta 3080, segredo ou dado real foi alterado. Proximo incremento: concluir a varredura localizada dos consumidores restantes de classificacao de Produto e registrar as lacunas PIM/DAM ainda abertas na Onda 1.
+### Programa Comercial 360 Omnicanal - Onda 1 Produto/PIM, incremento 8 (2026-09-22)
+
+- A varredura localizada da classificação foi concluída: os filtros ativos de contagem em `ProdutosTab` passaram a reutilizar as constantes canônicas, mantendo o contexto Grupo/Empresa já aplicado pelo fluxo.
+- Tipos operacionais de item em Pedido, Expedição e Produção foram preservados por não representarem `Produto.tipo_item`; `StatusProdutosProducaoV21_6`, sem consumidor runtime, permaneceu somente inventariado como artefato histórico.
+- O contrato da Onda 1 agora separa fatos concluídos e lacunas abertas: backend canônico/mass assignment/tenant, atributos PIM, variantes/equivalentes, embalagem/fracionamento, aprovação/publicação e DAM seguro dependente de `StoragePort`/outbox.
+- Testes direcionados: 10 pass / 0 fail / 0 skip. Suite frontend explícita: 598 pass / 0 fail / 0 skip. `audit:baseline`, lint, build e `git diff --check`: PASS.
+- Typecheck global permanece no baseline legado conhecido, sem erro apontado nos arquivos deste incremento. Nenhuma migration, VPS, porta 3080, segredo ou dado real foi alterado.
+- Próximo incremento: implementar a classificação no backend canônico `ProdutoService`, com schema estrito, tenant, RBAC e testes, sem migration se a estrutura atual suportar o contrato.
