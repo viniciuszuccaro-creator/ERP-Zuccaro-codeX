@@ -10041,3 +10041,12 @@ Checklist inicial:
 - Runtime03: 16 pass / 0 fail / 0 skip. Typecheck backend e `git diff --check`: PASS.
 - A migration aditiva 018 foi preparada somente no repositorio para conteudo PIM, variantes/equivalentes, metadados DAM, workflow e hardening da outbox existente; nao foi aplicada na VPS.
 - Proximo passo do mesmo macrocheckpoint: integrar os novos contratos ao Produto canonico, RBAC de aprovacao/publicacao, StoragePort, outbox e frontend existente.
+
+### Programa Comercial 360 Omnicanal - Onda 1 macrocheckpoint PIM/DAM (2026-09-22)
+- O teste PostgreSQL R09 deixou de acoplar Pedido a `017` como ultima migration: preserva as verificacoes 001-017, exige `018_produto_pim_dam_outbox.sql` depois de 017 e mantem as constraints tenant de Pedido.
+- O E2E PostgreSQL R10 valida aplicacao unica da 018, colunas e checks PIM, SKU por grupo, variantes/equivalentes/midias tenant-aware, midia principal unica, metadados DAM, RLS/FORCE, ausencia de privilegios PUBLIC, outbox e rollback tenant-scoped. Fixtures sao exclusivamente sinteticas.
+- O `Produto` canonico passou a persistir conteudo tecnico/comercial/SEO, embalagem, multiplo, quantidade minima, fracionamento e workflow, sem criar cadastro ou tela paralela.
+- O workflow RASCUNHO -> EM_REVISAO -> APROVADO -> PUBLICADO -> INATIVO aplica RBAC granular de aprovacao/publicacao, auditoria e evento na outbox dentro da mesma transacao; falha de auditoria rollbacka estado e evento.
+- O formulario V22 existente recebeu secao PIM extraida e integrada na aba existente. O `StoragePort` agora declara contrato tenant-aware para upload/download confirmados e falha fechado enquanto nao houver adapter externo autorizado.
+- Validacao local: backend 160 total / 152 pass / 0 fail / 8 skips condicionais por ausencia de `DATABASE_URL`; teste frontend PIM 1/1; lint, typecheck frontend/backend, build frontend/backend, audit:baseline e `git diff --check`: PASS.
+- A migration 018 permanece somente no repositorio e CI efemera; VPS, porta 3080 e dados reais nao foram alterados. Variantes/equivalentes possuem fundacao persistente e constraints, mas suas APIs de manutencao e o adapter Storage real permanecem como continuidade segura da Onda 1.

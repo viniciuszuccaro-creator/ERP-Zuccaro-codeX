@@ -29,6 +29,7 @@ const EstoqueAvancadoSection = React.lazy(() => import("./produto/EstoqueAvancad
 const PrecosSection = React.lazy(() => import("./produto/PrecosSection"));
 const PesoDimensoesSection = React.lazy(() => import("./produto/PesoDimensoesSection"));
 
+const ProdutoPimSection = React.lazy(() => import("./produto/ProdutoPimSection"));
 /**
  * V21.4 ETAPA 2/3 COMPLETA - CADASTRO COMPLETO DE PRODUTOS
  * ✅ Aba 1: Dados Gerais + TRIPLA CLASSIFICAÇÃO (Setor + Grupo + Marca)
@@ -115,7 +116,15 @@ function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, w
         controla_validade: produto.controla_validade || false,
         prazo_validade_dias: produto.prazo_validade_dias || 0,
         localizacao: produto.localizacao || '',
-        almoxarifado_id: produto.almoxarifado_id || ''
+        almoxarifado_id: produto.almoxarifado_id || '',
+        descricao_tecnica: produto.descricao_tecnica || '',
+        descricao_comercial: produto.descricao_comercial || '',
+        titulo_seo: produto.titulo_seo || '',
+        embalagem_tipo: produto.embalagem_tipo || '',
+        multiplo_venda: produto.multiplo_venda ?? 1,
+        quantidade_minima_venda: produto.quantidade_minima_venda ?? 0,
+        permite_fracionamento: produto.permite_fracionamento || false,
+        workflow_status: produto.workflow_status || 'RASCUNHO',
       };
     }
     
@@ -158,6 +167,14 @@ function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, w
       comprimento_cm: 0,
       exibir_no_site: false,
       exibir_no_marketplace: false,
+      descricao_tecnica: '',
+      descricao_comercial: '',
+      titulo_seo: '',
+      embalagem_tipo: '',
+      multiplo_venda: 1,
+      quantidade_minima_venda: 0,
+      permite_fracionamento: false,
+      workflow_status: 'RASCUNHO',
       origem_mercadoria: '0 - Nacional',
       regime_tributario_produto: 'Simples Nacional',
       tributacao: {
@@ -1124,6 +1141,10 @@ Caso contrário, sugira:
 
         {/* ABA 4: E-COMMERCE */}
         <TabsContent value="ecommerce" className="space-y-6">
+          <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando conteúdo do produto...</div>}>
+            <ProdutoPimSection formData={formData} setFormData={setFormData} />
+          </Suspense>
+
           <Card className="border-purple-200 bg-white/60 backdrop-blur-md shadow-lg">
             <CardContent className="p-6 space-y-4">
               <h3 className="font-bold text-purple-900">🛒 Canais de Venda</h3>

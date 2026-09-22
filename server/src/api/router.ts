@@ -153,6 +153,15 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
     }
   });
 
+  router.patch('/api/v1/produtos/:id/workflow', requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.changeWorkflowStatus(ctxFromReq(req), req.params.id, req.body?.status);
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   router.delete('/api/v1/produtos/:id', requireTenantScope, async (req, res, next) => {
     try {
       const row = await service.softDelete(ctxFromReq(req), req.params.id);

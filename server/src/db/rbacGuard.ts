@@ -19,6 +19,8 @@ export type RbacAction =
   | 'importar'
   | 'exportar'
   | 'converter-pedido'
+  | 'aprovar-conteudo'
+  | 'publicar'
   | 'alterar-status';
 
 export type PermissionTree = Record<string, unknown>;

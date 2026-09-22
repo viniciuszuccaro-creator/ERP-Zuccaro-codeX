@@ -27,6 +27,18 @@ export interface ProdutoRepository extends TenantEntityRepository<Produto, Produ
   create(scope: Scope, data: ProdutoCreate, executor?: DbQueryExecutor): Promise<Produto>;
   update(scope: Scope, id: string, data: ProdutoUpdate, executor?: DbQueryExecutor): Promise<Produto | null>;
   softDelete(scope: Scope, id: string, executor?: DbQueryExecutor): Promise<Produto | null>;
+  changeWorkflowStatus(
+    scope: Scope,
+    id: string,
+    status: Produto['workflow_status'],
+    executor?: DbQueryExecutor,
+  ): Promise<Produto | null>;
+  appendPublicationEvent(
+    scope: Scope,
+    produto: Produto,
+    requestId: string,
+    executor?: DbQueryExecutor,
+  ): Promise<void>;
 }
 
 function buildProduto(scope: Scope, data: ProdutoCreate, id: string, ts: string): Produto {
@@ -65,6 +77,15 @@ function buildProduto(scope: Scope, data: ProdutoCreate, id: string, ts: string)
     status: data.status ?? 'Ativo',
     foto_produto_url: data.foto_produto_url ?? null,
     ativo: data.ativo ?? true,
+    descricao_tecnica: data.descricao_tecnica ?? null,
+    descricao_comercial: data.descricao_comercial ?? null,
+    titulo_seo: data.titulo_seo ?? null,
+    descricao_seo: data.descricao_seo ?? null,
+    embalagem_tipo: data.embalagem_tipo ?? null,
+    multiplo_venda: data.multiplo_venda ?? 1,
+    quantidade_minima_venda: data.quantidade_minima_venda ?? 0,
+    permite_fracionamento: data.permite_fracionamento ?? false,
+    workflow_status: 'RASCUNHO',
     created_at: ts,
     updated_at: ts,
   };
@@ -73,13 +94,17 @@ function buildProduto(scope: Scope, data: ProdutoCreate, id: string, ts: string)
 export class InMemoryProdutoRepository implements ProdutoRepository {
   private readonly rows = new Map<string, Produto>();
 
+  private readonly publicationEvents: Array<{ groupId: string; empresaId: string | null; produtoId: string; requestId: string }> = [];
   async withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> {
     const snapshot = structuredClone([...this.rows.entries()]);
+    const eventsSnapshot = structuredClone(this.publicationEvents);
     try {
       return await fn();
     } catch (error) {
       this.rows.clear();
       for (const [id, row] of snapshot) this.rows.set(id, row);
+      this.publicationEvents.length = 0;
+      this.publicationEvents.push(...eventsSnapshot);
       throw error;
     }
   }
@@ -172,6 +197,35 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
 
   softDelete(scope: Scope, id: string, executor?: DbQueryExecutor) {
     return this.update(scope, id, { ativo: false }, executor);
+  }
+
+  async changeWorkflowStatus(
+    scope: Scope,
+    id: string,
+    status: Produto['workflow_status'],
+    executor?: DbQueryExecutor,
+  ): Promise<Produto | null> {
+    const current = await this.getById(scope, id, executor);
+    if (!current) return null;
+    const next = { ...current, workflow_status: status, updated_at: nowIso() };
+    this.rows.set(id, next);
+    return structuredClone(next);
+  }
+
+  async appendPublicationEvent(
+    scope: Scope,
+    produto: Produto,
+    requestId: string,
+    _executor?: DbQueryExecutor,
+  ): Promise<void> {
+    if (produto.group_id !== scope.groupId || (scope.empresaId && produto.empresa_id !== scope.empresaId)) {
+      throw new Error('TENANT_FK_MISMATCH');
+    }
+    this.publicationEvents.push({ groupId: scope.groupId, empresaId: produto.empresa_id, produtoId: produto.id, requestId });
+  }
+
+  listPublicationEvents() {
+    return structuredClone(this.publicationEvents);
   }
 }
 

@@ -83,6 +83,14 @@ export const produtoCreateSchema = z.object({
   codigo: z.string().trim().max(80).optional().nullable(),
   codigo_barras: z.string().trim().max(64).optional().nullable(),
   descricao: z.string().trim().min(1).max(500),
+  descricao_tecnica: z.string().trim().max(10000).optional().nullable(),
+  descricao_comercial: z.string().trim().max(10000).optional().nullable(),
+  titulo_seo: z.string().trim().max(180).optional().nullable(),
+  descricao_seo: z.string().trim().max(500).optional().nullable(),
+  embalagem_tipo: z.string().trim().max(120).optional().nullable(),
+  multiplo_venda: z.number().finite().positive().optional().default(1),
+  quantidade_minima_venda: nonNegativeNumber.optional().default(0),
+  permite_fracionamento: z.boolean().optional().default(false),
   nome: z.string().trim().max(500).optional().nullable(),
   tipo_item: z.string().trim().max(80).optional().default('Revenda').transform(normalizeProdutoTipoItem),
   tipo_aco: z.string().trim().max(40).optional().nullable(),
@@ -153,6 +161,15 @@ export type Produto = {
   foto_produto_url: string | null;
   ativo: boolean;
   created_at: string;
+  descricao_tecnica: string | null;
+  descricao_comercial: string | null;
+  titulo_seo: string | null;
+  descricao_seo: string | null;
+  embalagem_tipo: string | null;
+  multiplo_venda: number;
+  quantidade_minima_venda: number;
+  permite_fracionamento: boolean;
+  workflow_status: 'RASCUNHO' | 'EM_REVISAO' | 'APROVADO' | 'PUBLICADO' | 'INATIVO';
   updated_at: string;
 };
 

@@ -31,12 +31,17 @@ async function input(db: ReturnType<typeof createDbClient>) {
   };
 }
 
-test('R09 PostgreSQL real: migrations 001-017 existem uma vez e Pedido preserva constraints tenant', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
+test('R09 PostgreSQL real: migration de Pedido e posteriores existem uma vez e constraints tenant permanecem', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
   const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
   const repo = new PostgresPedidoRepository(db); const ids: string[] = [];
   try {
     const migrations = await db.query<{ id: string; total: number }>('SELECT id,count(*)::int total FROM schema_migrations GROUP BY id ORDER BY id');
-    assert.equal(migrations.rows.length, 17); assert.ok(migrations.rows.every((row) => row.total === 1)); assert.equal(migrations.rows.at(-1)?.id, '017_pedidos_comercial_360.sql');
+    assert.ok(migrations.rows.length >= 18);
+    assert.ok(migrations.rows.every((row) => row.total === 1));
+    const migrationIds = migrations.rows.map((row) => row.id);
+    assert.ok(migrationIds.includes('017_pedidos_comercial_360.sql'));
+    assert.ok(migrationIds.includes('018_produto_pim_dam_outbox.sql'));
+    assert.ok(migrationIds.indexOf('017_pedidos_comercial_360.sql') < migrationIds.indexOf('018_produto_pim_dam_outbox.sql'));
     const data = await input(db); const created = await repo.create(scope, data, SEED_IDS.runtimeActorA); ids.push(created.id);
     assert.match(created.numero, /^\d{8}$/); assert.equal(created.total, '19.000000'); assert.equal(created.itens[0].descricao, 'R09 produto sintetico');
     assert.equal(await repo.get(other, created.id), null);

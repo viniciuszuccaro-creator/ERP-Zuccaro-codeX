@@ -1,17 +1,52 @@
-/**
- * Future storage adapter surface (PDF/XML/fotos). Not implemented in RUNTIME-01.
- */
+export type StorageObjectContext = {
+  groupId: string;
+  empresaId?: string | null;
+  actorId: string;
+  entity: 'Produto';
+  entityId: string;
+};
+
+export type StorageUploadRequest = StorageObjectContext & {
+  storageKey: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  sha256: string;
+};
+
+export type StorageObjectMetadata = {
+  storageKey: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  sha256: string;
+  version: number;
+};
+
+/** Contrato DAM: URLs são curtas e metadados tenant-aware; binários nunca entram no banco. */
 export interface StoragePort {
-  createSignedUploadUrl(path: string): Promise<{ url: string; token?: string }>;
-  createSignedDownloadUrl(path: string): Promise<{ url: string }>;
+  createSignedUploadUrl(request: StorageUploadRequest): Promise<{
+    url: string;
+    expiresAt: string;
+    requiredHeaders: Record<string, string>;
+  }>;
+  confirmUpload(request: StorageUploadRequest): Promise<StorageObjectMetadata>;
+  createSignedDownloadUrl(context: StorageObjectContext, storageKey: string): Promise<{
+    url: string;
+    expiresAt: string;
+  }>;
 }
 
 export class NotImplementedStorage implements StoragePort {
-  async createSignedUploadUrl(): Promise<{ url: string; token?: string }> {
-    throw new Error('Storage not implemented in ERP-RUNTIME-01');
+  async createSignedUploadUrl(): Promise<never> {
+    throw new Error('STORAGE_ADAPTER_NOT_CONFIGURED');
   }
 
-  async createSignedDownloadUrl(): Promise<{ url: string }> {
-    throw new Error('Storage not implemented in ERP-RUNTIME-01');
+  async confirmUpload(): Promise<never> {
+    throw new Error('STORAGE_ADAPTER_NOT_CONFIGURED');
+  }
+
+  async createSignedDownloadUrl(): Promise<never> {
+    throw new Error('STORAGE_ADAPTER_NOT_CONFIGURED');
   }
 }

@@ -81,6 +81,15 @@ export function mapProduto(row: Record<string, unknown>): Produto {
     status: String(row.status ?? 'Ativo'),
     foto_produto_url: row.foto_produto_url == null ? null : String(row.foto_produto_url),
     ativo: Boolean(row.ativo),
+    descricao_tecnica: row.descricao_tecnica == null ? null : String(row.descricao_tecnica),
+    descricao_comercial: row.descricao_comercial == null ? null : String(row.descricao_comercial),
+    titulo_seo: row.titulo_seo == null ? null : String(row.titulo_seo),
+    descricao_seo: row.descricao_seo == null ? null : String(row.descricao_seo),
+    embalagem_tipo: row.embalagem_tipo == null ? null : String(row.embalagem_tipo),
+    multiplo_venda: Number(row.multiplo_venda ?? 1),
+    quantidade_minima_venda: Number(row.quantidade_minima_venda ?? 0),
+    permite_fracionamento: Boolean(row.permite_fracionamento),
+    workflow_status: String(row.workflow_status ?? 'RASCUNHO') as Produto['workflow_status'],
     ...ts(row),
   };
 }
@@ -175,10 +184,13 @@ export class PostgresProdutoRepository implements ProdutoRepository {
         unidade_medida_id, unidade_medida, unidade_principal, unidades_secundarias, fatores_conversao,
         grupo_produto_id, grupo_legado, marca_id, setor_atividade_id,
         peso_liquido_kg, peso_bruto_kg, altura_cm, largura_cm, comprimento_cm, volume_m3,
-        ncm, cest, origem_mercadoria, status, foto_produto_url, ativo
+        ncm, cest, origem_mercadoria, status, foto_produto_url, ativo,
+        descricao_tecnica, descricao_comercial, titulo_seo, descricao_seo,
+        embalagem_tipo, multiplo_venda, quantidade_minima_venda, permite_fracionamento
       ) VALUES (
         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16::jsonb,$17::jsonb,
-        $18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33
+        $18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,
+        $34,$35,$36,$37,$38,$39,$40,$41
       ) RETURNING *`,
       [
         scope.groupId,
@@ -214,6 +226,14 @@ export class PostgresProdutoRepository implements ProdutoRepository {
         data.status ?? 'Ativo',
         data.foto_produto_url ?? null,
         data.ativo ?? true,
+        data.descricao_tecnica ?? null,
+        data.descricao_comercial ?? null,
+        data.titulo_seo ?? null,
+        data.descricao_seo ?? null,
+        data.embalagem_tipo ?? null,
+        data.multiplo_venda ?? 1,
+        data.quantidade_minima_venda ?? 0,
+        data.permite_fracionamento ?? false,
       ],
     );
     return mapProduto(result.rows[0] as Record<string, unknown>);
@@ -242,6 +262,8 @@ export class PostgresProdutoRepository implements ProdutoRepository {
       next.grupo_produto_id, next.grupo_legado, next.marca_id, next.setor_atividade_id,
       next.peso_liquido_kg, next.peso_bruto_kg, next.altura_cm, next.largura_cm, next.comprimento_cm, next.volume_m3,
       next.ncm, next.cest, next.origem_mercadoria, next.status, next.foto_produto_url, next.ativo, next.empresa_id,
+      next.descricao_tecnica, next.descricao_comercial, next.titulo_seo, next.descricao_seo,
+      next.embalagem_tipo, next.multiplo_venda, next.quantidade_minima_venda, next.permite_fracionamento,
       scope.groupId, id,
     ];
     let sql = `UPDATE produtos SET
@@ -251,8 +273,10 @@ export class PostgresProdutoRepository implements ProdutoRepository {
       unidades_secundarias=$14::jsonb, fatores_conversao=$15::jsonb,
       grupo_produto_id=$16, grupo_legado=$17, marca_id=$18, setor_atividade_id=$19,
       peso_liquido_kg=$20, peso_bruto_kg=$21, altura_cm=$22, largura_cm=$23, comprimento_cm=$24, volume_m3=$25,
-      ncm=$26, cest=$27, origem_mercadoria=$28, status=$29, foto_produto_url=$30, ativo=$31, empresa_id=$32
-      WHERE group_id=$33 AND id=$34`;
+      ncm=$26, cest=$27, origem_mercadoria=$28, status=$29, foto_produto_url=$30, ativo=$31, empresa_id=$32,
+      descricao_tecnica=$33, descricao_comercial=$34, titulo_seo=$35, descricao_seo=$36,
+      embalagem_tipo=$37, multiplo_venda=$38, quantidade_minima_venda=$39, permite_fracionamento=$40
+      WHERE group_id=$41 AND id=$42`;
     if (scope.empresaId) {
       params.push(scope.empresaId);
       sql += ` AND empresa_id=$${params.length}`;
@@ -264,5 +288,57 @@ export class PostgresProdutoRepository implements ProdutoRepository {
 
   softDelete(scope: Scope, id: string, executor?: DbQueryExecutor) {
     return this.update(scope, id, { ativo: false }, executor);
+  }
+
+  async changeWorkflowStatus(
+    scope: Scope,
+    id: string,
+    status: Produto['workflow_status'],
+    executor?: DbQueryExecutor,
+  ): Promise<Produto | null> {
+    const query = executor ?? this.db;
+    const params: unknown[] = [status, scope.groupId, id];
+    let sql = `UPDATE produtos
+      SET workflow_status=$1, updated_at=timezone('utc', now())
+      WHERE group_id=$2 AND id=$3`;
+    if (scope.empresaId) {
+      params.push(scope.empresaId);
+      sql += ` AND empresa_id=$${params.length}`;
+    }
+    sql += ' RETURNING *';
+    const result = await query.query(sql, params);
+    return result.rows[0] ? mapProduto(result.rows[0] as Record<string, unknown>) : null;
+  }
+
+  async appendPublicationEvent(
+    scope: Scope,
+    produto: Produto,
+    requestId: string,
+    executor?: DbQueryExecutor,
+  ): Promise<void> {
+    const query = executor ?? this.db;
+    const payload = {
+      produtoId: produto.id,
+      codigo: produto.codigo,
+      workflowStatus: produto.workflow_status,
+      schemaVersion: 1,
+    };
+    await query.query(
+      `INSERT INTO integration_events (
+        group_id, empresa_id, source, event_type, idempotency_key, payload, status,
+        schema_version, aggregate_type, aggregate_id, correlation_id, payload_checksum
+      ) VALUES (
+        $1,$2,'ERP','produto.publicado',$3,$4::jsonb,'pending',1,'Produto',$5,$6,
+        encode(digest(convert_to($4, 'UTF8'), 'sha256'), 'hex')
+      ) ON CONFLICT (idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING`,
+      [
+        scope.groupId,
+        produto.empresa_id ?? scope.empresaId ?? null,
+        `produto-publicado:${scope.groupId}:${produto.id}:${requestId}`,
+        JSON.stringify(payload),
+        produto.id,
+        requestId,
+      ],
+    );
   }
 }

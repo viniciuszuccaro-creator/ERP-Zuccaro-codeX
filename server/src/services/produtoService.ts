@@ -15,6 +15,22 @@ import {
   type ProdutoUpdate,
 } from '../repositories/produtoTypes.js';
 
+const WORKFLOW_TRANSITIONS: Record<Produto['workflow_status'], Produto['workflow_status'][]> = {
+  RASCUNHO: ['EM_REVISAO'],
+  EM_REVISAO: ['RASCUNHO', 'APROVADO'],
+  APROVADO: ['EM_REVISAO', 'PUBLICADO'],
+  PUBLICADO: ['INATIVO'],
+  INATIVO: ['RASCUNHO'],
+};
+
+const WORKFLOW_ACTION: Record<Produto['workflow_status'], RbacAction> = {
+  RASCUNHO: 'editar',
+  EM_REVISAO: 'editar',
+  APROVADO: 'aprovar-conteudo',
+  PUBLICADO: 'publicar',
+  INATIVO: 'inativar',
+};
+
 export type ProdutoListOptions = {
   ativo?: boolean;
   search?: string;
@@ -188,6 +204,43 @@ export class ProdutoService {
     });
   }
 
+  async changeWorkflowStatus(ctx: RequestContext, id: string, targetInput: unknown) {
+    this.assertScope(ctx);
+    if (typeof targetInput !== 'string' || !Object.hasOwn(WORKFLOW_TRANSITIONS, targetInput)) {
+      throw new AppError(400, 'VALIDATION_ERROR', 'Invalid Produto workflow status');
+    }
+    const target = targetInput as Produto['workflow_status'];
+    await this.assertPermission(ctx, WORKFLOW_ACTION[target]);
+    const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
+    return this.repo.withTransaction(async (executor) => {
+      const before = await this.repo.getById(scope, id, executor, { forUpdate: true });
+      if (!before || before.ativo === false) {
+        throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+      }
+      if (!WORKFLOW_TRANSITIONS[before.workflow_status].includes(target)) {
+        throw new AppError(409, 'PRODUTO_WORKFLOW_CONFLICT', 'Produto workflow transition is not allowed');
+      }
+      const updated = await this.repo.changeWorkflowStatus(scope, id, target, executor);
+      if (!updated) throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+      if (target === 'PUBLICADO') {
+        await this.repo.appendPublicationEvent(scope, updated, ctx.requestId, executor);
+      }
+      await this.audit.append({
+        groupId: ctx.groupId,
+        empresaId: updated.empresa_id ?? ctx.empresaId,
+        actorId: ctx.actorId,
+        actorEmail: ctx.actorEmail,
+        entity: 'Produto',
+        entityId: id,
+        action: target === 'APROVADO' ? 'approve' : target === 'PUBLICADO' ? 'publish' : 'change_status',
+        beforeData: sanitizeAuditSnapshot({ workflow_status: before.workflow_status }),
+        afterData: sanitizeAuditSnapshot({ workflow_status: updated.workflow_status }),
+        requestId: ctx.requestId,
+        ipAddress: ctx.ipAddress,
+      }, executor);
+      return updated;
+    });
+  }
   /** Garante que CRUD de Produto nao aceita campos transacionais. */
   assertNoStockSideEffects(payload: unknown) {
     this.rejectOperationalFields(payload);
