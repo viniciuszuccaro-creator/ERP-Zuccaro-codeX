@@ -14,6 +14,7 @@ import {
   buildReconciliacaoMigracao,
   stampMigracaoRecord,
 } from '@/components/lib/migracaoErpPolicy';
+import { PRODUTO_TIPOS_CANONICOS } from '@/components/cadastros/produto/produtoTipoPolicy';
 
 const sanitizeText = (value, max = 240) => String(value ?? '').replace(/[<>]/g, '').slice(0, max).trim();
 const toNumber = (value) => {
@@ -216,7 +217,7 @@ IMPORTANTE: Extraia TODOS os itens, não apenas um exemplo.`,
           unidades_secundarias: [sanitizeText(item.unidade || 'UN', 12).toUpperCase() || 'UN'],
           custo_aquisicao: toNumber(item.valor_unitario),
           preco_venda: toNumber(item.valor_unitario),
-          tipo_item: 'Revenda',
+          tipo_item: PRODUTO_TIPOS_CANONICOS.REVENDA,
           grupo: 'Outros',
           status: 'Ativo',
           group_id: groupId,

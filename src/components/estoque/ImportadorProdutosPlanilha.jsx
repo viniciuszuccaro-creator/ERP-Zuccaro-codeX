@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { assertReconciliacaoMigracao, buildReconciliacaoMigracao, stampMigracaoRecord } from "@/components/lib/migracaoErpPolicy";
+import { resolveProdutoTipoImportacao } from "@/components/cadastros/produto/produtoTipoPolicy";
 
 // Helpers
 const num = (v) => {
@@ -159,15 +160,7 @@ const mapUnidade = (v) => {
     default: return undefined;
   }
 };
-const mapTipoItem = (v) => {
-        const s = norm(v || '');
-        if (s.includes('rev')) return 'Revenda';
-        if (s.includes('mater') || s.includes('prima')) return 'Matéria-Prima Produção';
-        if (s.includes('acab')) return 'Produto Acabado';
-        if (s.includes('consum')) return 'Consumo Interno';
-        if (s.includes('serv')) return 'Serviço';
-        return 'Revenda';
-      };
+const mapTipoItem = (value) => resolveProdutoTipoImportacao(value).value;
 
       // Validações adicionais
       const UNIDADES_ACEITAS = ['UN','PC','KG','LT','MT','CX','M2','M3'];
@@ -485,6 +478,7 @@ const [suggesting, setSuggesting] = useState(false);
         if (!p?.descricao || String(p.descricao).trim() === '') erros.push({ empresa_id: p.empresa_id, codigo: p.codigo, motivo: 'Descrição obrigatória ausente' });
         if (!UNIDADES_ACEITAS.includes(p.unidade_medida)) erros.push({ empresa_id: p.empresa_id, codigo: p.codigo, motivo: 'Unidade de medida ausente ou inválida' });
         if (p?.grupo_produto_nome && !p?.grupo_produto_id) erros.push({ empresa_id: p.empresa_id, codigo: p.codigo, motivo: `Grupo de produto não encontrado: ${p.grupo_produto_nome}` });
+        if (resolveProdutoTipoImportacao(p?.tipo_item).requiresReview) erros.push({ empresa_id: p.empresa_id, codigo: p.codigo, motivo: `Classificação de produto exige revisão: ${p.tipo_item}` });
         /* NCM inválido não bloqueia importação; será sugerido por IA */
         if (vistos.has(k)) internos.add(k); else vistos.add(k);
       }
@@ -1040,6 +1034,14 @@ const [suggesting, setSuggesting] = useState(false);
     if (semLegadoPreview.length > 0) {
       const motivo = `Codigo legado obrigatorio: ${semLegadoPreview.length} linha(s) sem codigo.`;
       await auditImportadorProdutos({ acao: 'estoque.produtos.importacao_planilha.bloqueada', sucesso: false, motivo });
+      setErro(motivo);
+      toast.error(motivo);
+      return;
+    }
+    const classificacoesPendentes = produtosAlvoConfirmacao.filter((p) => resolveProdutoTipoImportacao(p?.tipo_item).requiresReview);
+    if (classificacoesPendentes.length > 0) {
+      const motivo = `Classificacao de produto exige revisao em ${classificacoesPendentes.length} linha(s).`;
+      await auditImportadorProdutos({ acao: 'estoque.produtos.importacao_planilha.bloqueada', sucesso: false, motivo, dados: { pendentes: classificacoesPendentes.length } });
       setErro(motivo);
       toast.error(motivo);
       return;

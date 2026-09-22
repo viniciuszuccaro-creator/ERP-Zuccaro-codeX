@@ -9969,3 +9969,10 @@ Checklist inicial:
 - Valores legados desconhecidos continuam preservados e nao sao tratados automaticamente como materia-prima ou item vendavel.
 - Testes direcionados: 4 pass / 0 fail / 0 skip. Suite frontend explicita: 592 pass / 0 fail / 0 skip. `audit:baseline`, lint, build e `git diff --check`: PASS.
 - Nenhuma persistencia, migration, VPS, porta 3080, segredo ou dado real foi alterado. Proximo incremento: alinhar importadores de Produto com a mesma normalizacao allowlisted, mantendo quarentena/revisao para classificacoes ambiguas.
+### Programa Comercial 360 Omnicanal - Onda 1 Produto/PIM, incremento 4 (2026-09-22)
+
+- O importador existente de planilhas deixou de classificar valores desconhecidos silenciosamente como Revenda e passou a usar a allowlist canonica de Produto/PIM.
+- Campo vazio preserva o default historico Revenda; aliases inequivocos sao normalizados; classificacoes desconhecidas permanecem no preview e bloqueiam a gravacao ate revisao humana, com auditoria resumida da quantidade pendente.
+- Importadores existentes de lote e NF-e passaram a reutilizar as constantes canonicas para Revenda e Materia-Prima, sem criar fluxo paralelo.
+- Testes direcionados: 6 pass / 0 fail / 0 skip. Suite frontend explicita: 594 pass / 0 fail / 0 skip. `audit:baseline`, lint, build e `git diff --check`: PASS.
+- Nenhuma migration, VPS, porta 3080, segredo ou dado real foi alterado. Proximo incremento: alinhar conversoes em massa e dashboards de Produto aos mesmos predicados/constantes, preservando confirmacao e auditoria existentes.

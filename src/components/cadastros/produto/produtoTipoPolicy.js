@@ -50,6 +50,15 @@ export function normalizeProdutoTipoItem(value) {
   return aliases.get(aliasKey(trimmed)) || trimmed;
 }
 
+export function resolveProdutoTipoImportacao(value) {
+  const original = String(value || '').trim();
+  if (!original) {
+    return { value: PRODUTO_TIPOS_CANONICOS.REVENDA, requiresReview: false, usedDefault: true };
+  }
+  const normalized = normalizeProdutoTipoItem(original);
+  const known = PRODUTO_TIPO_OPTIONS.some((option) => option.value === normalized);
+  return { value: normalized, requiresReview: !known, usedDefault: false };
+}
 export function isProdutoTipo(value, expected) {
   return normalizeProdutoTipoItem(value) === expected;
 }

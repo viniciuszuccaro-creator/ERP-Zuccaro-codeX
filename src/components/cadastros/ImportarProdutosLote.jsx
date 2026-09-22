@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { assertReconciliacaoMigracao, buildReconciliacaoMigracao, stampMigracaoRecord } from '@/components/lib/migracaoErpPolicy';
+import { PRODUTO_TIPOS_CANONICOS } from '@/components/cadastros/produto/produtoTipoPolicy';
 
 const sanitizeText = (value, max = 240) => String(value ?? '').replace(/[<>]/g, '').slice(0, max).trim();
 const toNumber = (value) => {
@@ -155,7 +156,7 @@ export default function ImportarProdutosLote({ onProdutosCriados, onClose }) {
         preco_venda: mapeamento.preco_venda ? toNumber(linha[mapeamento.preco_venda]) : 0,
         peso_teorico_kg_m: mapeamento.peso_teorico_kg_m ? toNumber(linha[mapeamento.peso_teorico_kg_m]) : 0,
         grupo: mapeamento.grupo ? sanitizeText(linha[mapeamento.grupo], 120) : 'Outros',
-        tipo_item: 'Revenda',
+        tipo_item: PRODUTO_TIPOS_CANONICOS.REVENDA,
         status: 'Ativo',
         group_id: groupId,
         grupo_id: groupId,

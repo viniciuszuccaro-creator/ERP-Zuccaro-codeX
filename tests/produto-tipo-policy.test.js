@@ -9,6 +9,7 @@ import {
   isProdutoRevenda,
   isProdutoVendavel,
   normalizeProdutoTipoItem,
+  resolveProdutoTipoImportacao,
 } from '../src/components/cadastros/produto/produtoTipoPolicy.js';
 
 test('classificação frontend normaliza aliases canônicos e preserva tipo legado', () => {
@@ -64,3 +65,35 @@ test('consumidores de estoque, comercial e produção reutilizam a policy canôn
   assert.match(sources[5], /PRODUTO_TIPOS_CANONICOS\.MATERIA_PRIMA/);
 }
 );
+test('importação normaliza allowlist e exige revisão para classificação desconhecida', () => {
+  assert.deepEqual(resolveProdutoTipoImportacao(''), {
+    value: PRODUTO_TIPOS_CANONICOS.REVENDA,
+    requiresReview: false,
+    usedDefault: true,
+  });
+  assert.deepEqual(resolveProdutoTipoImportacao('materia_prima'), {
+    value: PRODUTO_TIPOS_CANONICOS.MATERIA_PRIMA,
+    requiresReview: false,
+    usedDefault: false,
+  });
+  assert.deepEqual(resolveProdutoTipoImportacao('Linha Legada Especial'), {
+    value: 'Linha Legada Especial',
+    requiresReview: true,
+    usedDefault: false,
+  });
+});
+
+test('importadores existentes usam a classificação canônica e bloqueiam ambiguidade', async () => {
+  const planilha = await readFile(new URL('../src/components/estoque/ImportadorProdutosPlanilha.jsx', import.meta.url), 'utf8');
+  const lote = await readFile(new URL('../src/components/cadastros/ImportarProdutosLote.jsx', import.meta.url), 'utf8');
+  const nfe = await readFile(new URL('../src/components/cadastros/ImportarProdutosNFe.jsx', import.meta.url), 'utf8');
+  const xml = await readFile(new URL('../src/components/fiscal/ImportarXMLNFe.jsx', import.meta.url), 'utf8');
+
+  assert.match(planilha, /resolveProdutoTipoImportacao\(value\)\.value/);
+  assert.match(planilha, /classificacoesPendentes/);
+  assert.match(planilha, /\.requiresReview/);
+  assert.doesNotMatch(planilha, /s\.includes\('rev'\)/);
+  assert.match(lote, /PRODUTO_TIPOS_CANONICOS\.REVENDA/);
+  assert.match(nfe, /PRODUTO_TIPOS_CANONICOS\.REVENDA/);
+  assert.match(xml, /PRODUTO_TIPOS_CANONICOS\.MATERIA_PRIMA/);
+});
