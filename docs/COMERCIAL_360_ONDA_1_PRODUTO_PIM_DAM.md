@@ -58,10 +58,11 @@ Cadastros continua a UI mestre. Comercial, TabelaPreco, Estoque, Produção, Sit
 - Preservado: tipos operacionais de item de pedido, separação e produção não foram confundidos com `Produto.tipo_item`.
 - Fora do runtime: `StatusProdutosProducaoV21_6` não possui consumidor e permanece inventariado como artefato histórico; não foi conectado nem removido.
 - Concluído: backend canônico normaliza aliases, bloqueia novas classificações desconhecidas, preserva valor legado já persistido, rejeita mass assignment operacional e aplica tenant/RBAC fail-closed em visualizar, criar, editar e inativar.
-- Aberto: atributos PIM universais, variantes/equivalentes, embalagem, múltiplos, fracionamento e workflow de aprovação/publicação.
+- Concluído: o núcleo PIM universal reutiliza os campos existentes de código de barras, unidades/conversões, pesos e dimensões; o backend rejeita números/fatores negativos ou não finitos e normaliza unidades secundárias repetidas sem alterar sua grafia canônica.
+- Aberto: conteúdo técnico/comercial/SEO, variantes/equivalentes, embalagem/fracionamento, aprovação/publicação e DAM seguro dependente de `StoragePort`/outbox.
 - Bloqueado por dependência: DAM e conteúdo por canal aguardam adapter privado de `StoragePort`, antivírus/quarentena e contrato de outbox; nenhuma URL temporária ou binário será incorporado ao Produto.
 
-Próximo checkpoint: definir e implementar o menor conjunto de atributos PIM universais no `ProdutoService` existente, após confirmar consumidores e compatibilidade, sem iniciar DAM ou canais antes de `StoragePort`/outbox.
+Próximo checkpoint: inventariar no formulário existente os campos de conteúdo técnico/comercial já consumidos e definir o menor contrato aditivo, sem iniciar DAM ou canais antes de `StoragePort`/outbox.
 
 ## Aceite
 

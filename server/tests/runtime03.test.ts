@@ -106,6 +106,35 @@ test('Produto normaliza aliases PIM conhecidos sem reclassificar legado desconhe
     PRODUTO_TIPOS_CANONICOS.REVENDA,
   );
 });
+
+test('Produto valida e normaliza atributos PIM universais existentes', () => {
+  const parsed = produtoCreateSchema.parse({
+    descricao: 'Produto PIM sintético',
+    unidades_secundarias: ['KG', 'kg', ' PÇ ', 'MT', 'mt'],
+    fatores_conversao: { kg_por_peca: 12.5, metros_por_peca: 6 },
+    peso_liquido_kg: 12.5,
+    peso_bruto_kg: 13,
+    altura_cm: 10,
+    largura_cm: 20,
+    comprimento_cm: 600,
+    volume_m3: 0.12,
+  });
+
+  assert.deepEqual(parsed.unidades_secundarias, ['KG', 'PÇ', 'MT']);
+  assert.deepEqual(parsed.fatores_conversao, { kg_por_peca: 12.5, metros_por_peca: 6 });
+  assert.equal(parsed.peso_liquido_kg, 12.5);
+
+  for (const payload of [
+    { descricao: 'Peso inválido', peso_liquido_kg: -1 },
+    { descricao: 'Dimensão inválida', altura_cm: -1 },
+    { descricao: 'Volume inválido', volume_m3: -1 },
+    { descricao: 'Fator inválido', fatores_conversao: { kg_por_peca: -1 } },
+    { descricao: 'Fator não numérico', fatores_conversao: { kg_por_peca: '12' } },
+    { descricao: 'Unidade vazia', unidades_secundarias: ['KG', ' '] },
+  ]) {
+    assert.equal(produtoCreateSchema.safeParse(payload).success, false);
+  }
+});
 test('Produto RBAC falha fechado e classificação bloqueia novos valores desconhecidos', async () => {
   const ctx = {
     requestId: 'produto-rbac',

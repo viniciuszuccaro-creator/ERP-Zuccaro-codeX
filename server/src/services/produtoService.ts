@@ -186,7 +186,12 @@ export class ProdutoService {
     this.rejectOperationalFields(payload);
   }
 
-  private async assertRelations(groupId: string, data: Partial<ProdutoCreate & Produto>) {
+  private async assertRelations(groupId: string, data: {
+    marca_id?: string | null;
+    unidade_medida_id?: string | null;
+    grupo_produto_id?: string | null;
+    setor_atividade_id?: string | null;
+  }) {
     await this.relationGuard.assertRelationsInGroup(groupId, {
       marcaId: data.marca_id,
       unidadeMedidaId: data.unidade_medida_id,

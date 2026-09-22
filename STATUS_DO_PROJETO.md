@@ -10015,3 +10015,10 @@ Checklist inicial:
 - Testes direcionados runtime02/runtime03: 19 pass / 0 fail / 0 skip. Backend completo em processos isolados: 148 total / 141 pass / 0 fail / 7 skips condicionais sem `DATABASE_URL`; typecheck e build backend: PASS.
 - Frontend: 598 pass / 0 fail / 0 skip; `audit:baseline`, lint, build, `git diff --check` e auditoria de segredos/dados reais: PASS. O runner backend único sofreu OOM acumulativo local; a mesma suíte passou integralmente por arquivo e a CI permanece o gate PostgreSQL sem skips.
 - Nenhuma migration, VPS, porta 3080, segredo ou dado real foi alterado. Próximo incremento: definir o menor conjunto de atributos PIM universais no Produto existente, mantendo DAM/canais bloqueados até `StoragePort` e outbox.
+
+### Programa Comercial 360 Omnicanal - Onda 1 Produto/PIM, incremento 10 (2026-09-22)
+- O núcleo universal do PIM foi consolidado no contrato backend de `Produto` sem criar cadastro, tela, tabela ou migration paralela: código de barras, unidades/conversões, pesos, dimensões e volume continuam nos campos já existentes.
+- Pesos, medidas, volume e fatores de conversão agora aceitam somente números finitos não negativos; unidades secundárias vazias são rejeitadas e duplicidades equivalentes são removidas de forma determinística.
+- Compatibilidade preservada: nomes dos campos, repositories PostgreSQL/in-memory, rotas, tenant, RBAC fail-closed, auditoria e consumidores atuais permanecem inalterados.
+- Testes sintéticos cobrem normalização de unidades e rejeição de peso, dimensão, volume e fator inválidos. Nenhum dado real foi utilizado.
+- Nenhuma migration, VPS, porta 3080, segredo ou dado real foi alterado. Próximo incremento: inventariar conteúdo técnico/comercial já existente no formulário e definir o menor contrato aditivo compatível, mantendo DAM/canais bloqueados até `StoragePort` e outbox.

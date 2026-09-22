@@ -1,7 +1,20 @@
 import { z } from 'zod';
 
-const jsonObject = z.record(z.unknown()).optional().default({});
-const stringArray = z.array(z.string().trim().max(40)).optional().default([]);
+const nonNegativeNumber = z.number().finite().min(0);
+const conversionFactors = z.record(nonNegativeNumber).optional().default({});
+const secondaryUnits = z.array(z.string().trim().min(1).max(40))
+  .max(40)
+  .transform((values) => {
+    const seen = new Set<string>();
+    return values.filter((value) => {
+      const key = value.toLocaleUpperCase('pt-BR');
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  })
+  .optional()
+  .default([]);
 
 const baseCreate = {
   empresa_id: z.string().uuid().optional().nullable(),
@@ -74,24 +87,24 @@ export const produtoCreateSchema = z.object({
   tipo_item: z.string().trim().max(80).optional().default('Revenda').transform(normalizeProdutoTipoItem),
   tipo_aco: z.string().trim().max(40).optional().nullable(),
   eh_bitola: z.boolean().optional().default(false),
-  peso_teorico_kg_m: z.number().finite().optional().default(0),
-  bitola_diametro_mm: z.number().finite().optional().default(0),
-  comprimento_barra_padrao_m: z.number().finite().optional().default(12),
+  peso_teorico_kg_m: nonNegativeNumber.optional().default(0),
+  bitola_diametro_mm: nonNegativeNumber.optional().default(0),
+  comprimento_barra_padrao_m: nonNegativeNumber.optional().default(12),
   unidade_medida_id: z.string().uuid().optional().nullable(),
   unidade_medida: z.string().trim().max(20).optional().nullable(),
   unidade_principal: z.string().trim().max(20).optional().nullable(),
-  unidades_secundarias: stringArray,
-  fatores_conversao: jsonObject,
+  unidades_secundarias: secondaryUnits,
+  fatores_conversao: conversionFactors,
   grupo_produto_id: z.string().uuid().optional().nullable(),
   grupo_legado: z.string().trim().max(120).optional().nullable(),
   marca_id: z.string().uuid().optional().nullable(),
   setor_atividade_id: z.string().uuid().optional().nullable(),
-  peso_liquido_kg: z.number().finite().optional().default(0),
-  peso_bruto_kg: z.number().finite().optional().default(0),
-  altura_cm: z.number().finite().optional().default(0),
-  largura_cm: z.number().finite().optional().default(0),
-  comprimento_cm: z.number().finite().optional().default(0),
-  volume_m3: z.number().finite().optional().default(0),
+  peso_liquido_kg: nonNegativeNumber.optional().default(0),
+  peso_bruto_kg: nonNegativeNumber.optional().default(0),
+  altura_cm: nonNegativeNumber.optional().default(0),
+  largura_cm: nonNegativeNumber.optional().default(0),
+  comprimento_cm: nonNegativeNumber.optional().default(0),
+  volume_m3: nonNegativeNumber.optional().default(0),
   ncm: z.string().trim().max(20).optional().nullable(),
   cest: z.string().trim().max(20).optional().nullable(),
   origem_mercadoria: z.string().trim().max(80).optional().nullable(),
