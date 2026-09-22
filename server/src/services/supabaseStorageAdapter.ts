@@ -94,6 +94,7 @@ export class SupabaseStorageAdapter implements StoragePort {
   private async post(path: string, body: object): Promise<{ url?: string; signedURL?: string }> {
     const response = await this.fetchImpl(new URL(path, this.internalBase), {
       method: 'POST',
+      redirect: 'error',
       headers: {
         apikey: this.options.serviceRoleKey,
         Authorization: `Bearer ${this.options.serviceRoleKey}`,
@@ -128,6 +129,7 @@ export class SupabaseStorageAdapter implements StoragePort {
   async confirmUpload(request: StorageUploadRequest): Promise<StorageObjectMetadata> {
     assertUpload(request, this.options.maxBytes);
     const response = await this.fetchImpl(new URL(`object/authenticated/${this.path(request.storageKey)}`, this.internalBase), {
+      redirect: 'error',
       headers: { apikey: this.options.serviceRoleKey, Authorization: `Bearer ${this.options.serviceRoleKey}` },
     });
     if (!response.ok || !response.body) throw new Error('STORAGE_OBJECT_NOT_FOUND');

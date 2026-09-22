@@ -31,6 +31,7 @@ test('Storage adapter signs only private tenant path and keeps service key off r
   const signed = await adapter.createSignedUploadUrl(request);
   assert.equal(calls[0].url.origin, 'https://internal.example.test');
   assert.equal(calls[0].init?.method, 'POST');
+  assert.equal(calls[0].init?.redirect, 'error');
   assert.match(signed.url, /^https:\/\/public\.example\.test\/storage\/v1\/object\/upload\/sign\/private\//);
   assert.equal(signed.url.includes('synthetic-key'), false);
   assert.equal(signed.requiredHeaders['content-type'], 'image/png');
@@ -72,6 +73,20 @@ test('Storage adapter confirms exact byte count and SHA-256', async () => {
   assert.equal(metadata.sha256, request.sha256);
   await assert.rejects(adapter.confirmUpload({ ...request, sha256: '0'.repeat(64) }), /STORAGE_CHECKSUM_MISMATCH/);
   await assert.rejects(adapter.confirmUpload({ ...request, sizeBytes: 2 }), /STORAGE_SIZE_MISMATCH/);
+});
+
+test('Storage adapter rejects redirects on privileged signing and object reads', async () => {
+  const calls: Array<{ url: URL; init?: RequestInit }> = [];
+  const adapter = makeAdapter(async (input, init) => {
+    calls.push({ url: new URL(String(input)), init });
+    if (init?.redirect !== 'error') throw new Error('UNSAFE_REDIRECT_POLICY');
+    return Response.redirect('https://other.example.test/collect', 302);
+  });
+  await assert.rejects(adapter.createSignedUploadUrl(request), /STORAGE_REQUEST_FAILED/);
+  await assert.rejects(adapter.createSignedDownloadUrl(request, storageKey), /STORAGE_REQUEST_FAILED/);
+  await assert.rejects(adapter.confirmUpload(request), /STORAGE_OBJECT_NOT_FOUND/);
+  assert.equal(calls.length, 3);
+  assert.ok(calls.every(({ url, init }) => url.origin === 'https://internal.example.test' && init?.redirect === 'error'));
 });
 
 test('Storage adapter rejects MIME header and spoofed content even with matching checksum', async () => {
