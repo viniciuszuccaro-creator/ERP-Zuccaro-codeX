@@ -23,6 +23,8 @@ export async function assertProdutoMediaContract(
   assert.equal(await repo.withTransaction((tx) => repo.createMidia(foreign, produtoId, foreignData, tx)), null);
   assert.equal(await repo.withTransaction((tx) => repo.deactivateMidia(foreign, produtoId, created.id, tx)), null);
   await assert.rejects(repo.withTransaction((tx) => repo.createMidia(scope, produtoId, data, tx)), /unique|duplicate/i);
+  await assert.rejects(repo.withTransaction((tx) => repo.createMidia(scope, produtoId,
+    { ...data, versao: 2 }, tx)), /unique|duplicate/i);
   await assert.rejects(repo.withTransaction((tx) => repo.createMidia(scope, produtoId, {
     ...data, storage_key: `groups/${randomUUID()}/companies/${scope.empresaId}/products/${produtoId}/images/bad.png`,
   }, tx)), /TENANT_FK_MISMATCH/);
@@ -41,6 +43,8 @@ export async function assertProdutoMediaContract(
   assert.equal(inactive?.status, 'INATIVO');
   assert.equal(inactive?.ativo, false);
   assert.deepEqual(await repo.listMidias(scope, produtoId), []);
+  await assert.rejects(repo.withTransaction((tx) => repo.createMidia(scope, produtoId,
+    { ...data, versao: 3 }, tx)), /unique|duplicate/i);
   assert.equal(await repo.withTransaction((tx) => repo.deactivateMidia(scope, produtoId, created.id, tx)), null);
 }
 import assert from 'node:assert/strict';

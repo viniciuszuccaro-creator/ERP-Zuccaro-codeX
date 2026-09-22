@@ -339,7 +339,7 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     const prefix = `groups/${scope.groupId}/companies/${scope.empresaId}/products/${produtoId}/`;
     if (!parsed.storage_key.startsWith(prefix)) throw new Error('TENANT_FK_MISMATCH');
     if ([...this.midias.values()].some((row) => row.group_id === scope.groupId
-      && row.storage_key === parsed.storage_key && row.versao === parsed.versao)) {
+      && row.storage_key === parsed.storage_key)) {
       throw new Error('unique constraint produto_midias storage_key');
     }
     const row: ProdutoMidia = {

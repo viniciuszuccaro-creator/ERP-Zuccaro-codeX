@@ -39,6 +39,16 @@ test('R10 PostgreSQL real: migration 018 preserva PIM, tenant, DAM, RLS e outbox
       [['descricao_tecnica','descricao_comercial','titulo_seo','descricao_seo','embalagem_tipo','multiplo_venda','quantidade_minima_venda','permite_fracionamento','workflow_status']],
     );
     assert.equal(columns.rowCount, 9);
+    const mediaKeyMigration = await db.query<{ total: number }>(
+      "SELECT count(*)::int total FROM schema_migrations WHERE id='020_produto_midia_storage_key_unique.sql'",
+    );
+    assert.equal(mediaKeyMigration.rows[0]?.total, 1);
+    const mediaKeyIndex = await db.query<{ total: number }>(
+      `SELECT count(*)::int total FROM pg_indexes WHERE tablename='produto_midias'
+       AND indexname='uq_produto_midias_group_storage_key'
+       AND indexdef LIKE '%(group_id, storage_key)%'`,
+    );
+    assert.equal(mediaKeyIndex.rows[0]?.total, 1);
 
     await db.query(
       `INSERT INTO produtos (id,group_id,empresa_id,codigo,descricao,multiplo_venda,quantidade_minima_venda,workflow_status)
