@@ -10080,3 +10080,13 @@ Checklist inicial:
 - Testes R10 direcionados: 11 pass / 0 fail / 0 skip. Backend completo: 167 total / 159 pass / 0 fail / 8 skips condicionais sem `DATABASE_URL`; typecheck e build backend: PASS.
 - Frontend explicito: 599 pass / 0 fail / 0 skip; `audit:baseline`, lint, build e `git diff --check`: PASS. Typecheck global frontend permanece no baseline legado conhecido, sem erro nos arquivos alterados neste lote.
 - Nenhuma migration adicional, VPS, porta 3080, segredo ou dado real foi alterado. Proximo passo: integrar variantes/equivalentes ao formulario Produto V22 existente e concluir o adapter real de `StoragePort`, mantendo a PR #33 sem merge.
+
+### Onda 1 Produto/PIM - macroincremento variantes e equivalentes (2026-09-22)
+- Contrato compartilhado de variantes/equivalentes agora roda nos adapters in-memory e PostgreSQL, cobrindo criacao, leitura, atualizacao, inativacao, tenant, SKU, duplicidade e rollback.
+- ProdutoService exige empresa pertencente ao Grupo antes das operacoes e valida origem/destino ativos no mesmo tenant. Mutacoes usam uma transacao, RBAC fail-closed e auditoria sanitizada antes/depois; IDs invalidos retornam erro de validacao.
+- Adapter in-memory implementa paridade de duplicidade de SKU sem diferenca de caixa, equivalentes, ordenacao deterministica e rollback de relacoes. PostgreSQL preserva o executor recebido e restringe update a relacao ativa e empresa proprietaria.
+- Migration aditiva 019 acrescenta a coluna nome ja usada pelo repository de variante, indice unico de SKU sem diferenca de caixa e trigger de integridade de origem/destino por Grupo/Empresa. Migrations 018 e anteriores permanecem intactas.
+- Teste PostgreSQL R10 com fixtures sinteticas cobre contrato compartilhado, cross-company/cross-group, autorreferencia e rollback por falha de auditoria. PostgreSQL efemero e migracao 019 serao validados exclusivamente pela CI; nenhuma migration foi aplicada na VPS.
+- Local: backend 171 total / 162 pass / 0 fail / 9 skips condicionais sem DATABASE_URL; typecheck e build backend PASS. Frontend explicito 599 pass / 0 fail; audit:baseline, lint e build PASS. Typecheck global frontend falha no baseline legado (2034 linhas de erros fora dos arquivos deste lote); CI PostgreSQL permanece gate obrigatorio, sem inferir sucesso antecipado.
+- Risco de implantacao futura: conferir duplicidades legadas de SKU que diferem apenas por caixa antes de aplicar o indice 019 fora da CI. Nao houve acesso a dados reais, VPS ou porta 3080; PR #33 permanece aberta sem merge.
+- Proximo foco apos CI verde: integrar manutencao de variantes/equivalentes ao formulario Produto V22 existente, sem criar cadastro paralelo, e prosseguir no StoragePort conforme gates.

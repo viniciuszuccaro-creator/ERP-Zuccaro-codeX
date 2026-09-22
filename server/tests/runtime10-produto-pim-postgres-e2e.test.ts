@@ -1,9 +1,15 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import test from 'node:test';
+import { InMemoryProdutoRelationGuard } from '../src/db/produtoRelationGuard.ts';
+import { PostgresTenantGuard } from '../src/db/tenantGuard.ts';
+import { ProdutoService } from '../src/services/produtoService.ts';
+import type { RbacGuard } from '../src/db/rbacGuard.ts';
 import { createDbClient } from '../src/db/client.ts';
 import { loadConfig } from '../src/config/env.ts';
 import { SEED_IDS } from '../scripts/seedDevIds.ts';
+import { PostgresProdutoRepository } from '../src/repositories/postgresProdutoRepository.ts';
+import { assertProdutoRelationsContract } from './produto-relacoes-contract.ts';
 
 const enabled = Boolean(process.env.DATABASE_URL);
 
@@ -23,6 +29,10 @@ test('R10 PostgreSQL real: migration 018 preserva PIM, tenant, DAM, RLS e outbox
       "SELECT count(*)::int total FROM schema_migrations WHERE id='018_produto_pim_dam_outbox.sql'",
     );
     assert.equal(migration.rows[0]?.total, 1);
+    const hardening = await db.query<{ total: number }>(
+      "SELECT count(*)::int total FROM schema_migrations WHERE id='019_produto_relacoes_tenant.sql'",
+    );
+    assert.equal(hardening.rows[0]?.total, 1);
     const columns = await db.query(
       `SELECT column_name FROM information_schema.columns WHERE table_name='produtos'
        AND column_name=ANY($1::text[])`,
@@ -150,5 +160,85 @@ test('R10 PostgreSQL real: migration 018 preserva PIM, tenant, DAM, RLS e outbox
     } catch (error) { cleanupError = error; }
     finally { await db.end(); }
     if (cleanupError) throw cleanupError;
+  }
+});
+
+test('R10 PostgreSQL real: contrato compartilhado, empresa, grupo, SKU e rollback', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
+  const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
+  const repo = new PostgresProdutoRepository(db);
+  const sourceId = randomUUID();
+  const targetId = randomUUID();
+  const otherCompanyId = randomUUID();
+  const scope = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA };
+  let originalError: unknown;
+  try {
+    const migration = await db.query<{ total: number }>(
+      "SELECT count(*)::int total FROM schema_migrations WHERE id='019_produto_relacoes_tenant.sql'",
+    );
+    assert.equal(migration.rows[0]?.total, 1);
+    const nameColumn = await db.query<{ total: number }>(
+      "SELECT count(*)::int total FROM information_schema.columns WHERE table_name='produto_variantes' AND column_name='nome'",
+    );
+    assert.equal(nameColumn.rows[0]?.total, 1);
+    for (const [id, empresaId] of [
+      [sourceId, SEED_IDS.empresaA],
+      [targetId, SEED_IDS.empresaA],
+      [otherCompanyId, SEED_IDS.empresaA2],
+    ]) {
+      await db.query(
+        `INSERT INTO produtos (id,group_id,empresa_id,codigo,descricao)
+         VALUES ($1,$2,$3,$4,'R10 RELACAO SINTETICA')`,
+        [id, SEED_IDS.groupA, empresaId, `R10-${id}`],
+      );
+    }
+    await assertProdutoRelationsContract(repo, scope, sourceId, targetId, SEED_IDS.empresaA2);
+    await assert.rejects(repo.withTransaction((tx) => repo.createEquivalent(scope, sourceId, {
+      produto_equivalente_id: otherCompanyId, tipo: 'EQUIVALENTE', direcional: false, aprovado: false,
+    }, tx)), /TENANT_FK_MISMATCH/);
+    await assert.rejects(repo.withTransaction((tx) => repo.createEquivalent(scope, sourceId, {
+      produto_equivalente_id: SEED_IDS.produtoB, tipo: 'EQUIVALENTE', direcional: false, aprovado: false,
+    }, tx)), /TENANT_FK_MISMATCH/);
+    await assert.rejects(repo.withTransaction((tx) => repo.createVariant(
+      { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA2 }, sourceId,
+      { sku: `X-${randomUUID()}`, atributos: {} }, tx,
+    )), /TENANT_FK_MISMATCH/);
+
+    const before = await db.query<{ total: number }>(
+      'SELECT count(*)::int total FROM produto_equivalentes WHERE group_id=$1 AND produto_id=$2',
+      [scope.groupId, sourceId],
+    );
+    const failingAudit = {
+      append: async () => { throw new Error('AUDIT_FAILURE'); },
+      listByEntity: async () => [],
+    };
+    const allowEdit: RbacGuard = { assertAllowed: async () => undefined };
+    const service = new ProdutoService(repo, failingAudit, new PostgresTenantGuard(db),
+      new InMemoryProdutoRelationGuard(), allowEdit);
+    await assert.rejects(service.createEquivalent({
+      requestId: 'r10-rollback', actorId: SEED_IDS.runtimeActorA,
+      groupId: scope.groupId, empresaId: scope.empresaId,
+    }, sourceId, { produto_equivalente_id: targetId }), /AUDIT_FAILURE/);
+    const after = await db.query<{ total: number }>(
+      'SELECT count(*)::int total FROM produto_equivalentes WHERE group_id=$1 AND produto_id=$2',
+      [scope.groupId, sourceId],
+    );
+    assert.equal(after.rows[0]?.total, before.rows[0]?.total);
+  } catch (error) {
+    originalError = error;
+    throw error;
+  } finally {
+    try {
+      await db.withTransaction(async (tx) => {
+        await tx.query('DELETE FROM produto_equivalentes WHERE group_id=$1 AND produto_id=$2', [scope.groupId, sourceId]);
+        await tx.query('DELETE FROM produto_variantes WHERE group_id=$1 AND produto_id=$2', [scope.groupId, sourceId]);
+        await tx.query('DELETE FROM produtos WHERE group_id=$1 AND id=ANY($2::uuid[])',
+          [scope.groupId, [sourceId, targetId, otherCompanyId]]);
+      });
+    } catch (error) {
+      if (!originalError) throw error;
+      process.stderr.write('R10 cleanup failed after the original test error\n');
+    } finally {
+      await db.end();
+    }
   }
 });

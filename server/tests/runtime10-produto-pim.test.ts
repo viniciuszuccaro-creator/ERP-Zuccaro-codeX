@@ -12,6 +12,7 @@ import {
   produtoVarianteUpdateSchema,
 } from '../src/repositories/produtoTypes.ts';
 import { ProdutoService } from '../src/services/produtoService.ts';
+import { assertProdutoRelationsContract } from './produto-relacoes-contract.ts';
 
 const GROUP = '11111111-1111-4111-8111-111111111111';
 const EMPRESA = '22222222-2222-4222-8222-222222222222';
@@ -251,6 +252,7 @@ test('Equivalente cria atualiza inativa e audita atomicamente', async () => {
   await assert.rejects(
     () => failing.createEquivalent({ ...ctx, requestId: 'equivalent-rollback' }, produto.id, {
       produto_equivalente_id: target.id,
+      tipo: 'SUBSTITUTO',
     }),
     /AUDIT_FAILURE/,
   );
@@ -265,4 +267,41 @@ test('Equivalente exige editar', async () => {
     () => denied.service.createEquivalent(denied.ctx, produto.id, { produto_equivalente_id: target.id }),
     (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED',
   );
+});
+
+test('Contrato compartilhado variantes e equivalentes: in-memory', async () => {
+  const { repo, service, ctx } = harness();
+  const source = await service.create(ctx, { descricao: 'Contrato origem sintetica' });
+  const target = await service.create(ctx, { descricao: 'Contrato destino sintetico' });
+  await assertProdutoRelationsContract(repo, { groupId: GROUP, empresaId: EMPRESA }, source.id, target.id, ACTOR);
+});
+
+test('TenantGuard bloqueia empresa externa e destino de outra empresa', async () => {
+  const { service, ctx } = harness();
+  const source = await service.create(ctx, { descricao: 'Origem tenant' });
+  const target = await service.create(ctx, { descricao: 'Destino tenant' });
+  await assert.rejects(
+    () => service.createEquivalent({ ...ctx, empresaId: ACTOR }, source.id, { produto_equivalente_id: target.id }),
+    (error: unknown) => (error as { code?: string }).code === 'TENANT_MISMATCH',
+  );
+  await assert.rejects(
+    () => service.createVariant({ ...ctx, empresaId: ACTOR }, source.id, { sku: 'TENANT-NEGADO' }),
+    (error: unknown) => (error as { code?: string }).code === 'TENANT_MISMATCH',
+  );
+});
+
+test('Falha do repository rollbacka mutacao de equivalente em memoria', async () => {
+  const { repo, service, ctx } = harness();
+  const source = await service.create(ctx, { descricao: 'Rollback origem' });
+  const target = await service.create(ctx, { descricao: 'Rollback destino' });
+  const original = repo.createEquivalent.bind(repo);
+  repo.createEquivalent = async (...args) => {
+    await original(...args);
+    throw new Error('REPOSITORY_FAILURE');
+  };
+  await assert.rejects(
+    () => service.createEquivalent(ctx, source.id, { produto_equivalente_id: target.id }),
+    /REPOSITORY_FAILURE/,
+  );
+  assert.deepEqual(await service.listEquivalents(ctx, source.id), []);
 });

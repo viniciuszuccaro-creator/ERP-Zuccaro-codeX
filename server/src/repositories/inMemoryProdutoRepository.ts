@@ -241,7 +241,8 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
   }
   async listVariants(scope: Scope, produtoId: string): Promise<ProdutoVariante[]> {
     return structuredClone([...this.variants.values()].filter((row) => row.ativo && row.group_id === scope.groupId
-      && row.produto_id === produtoId && (!scope.empresaId || row.empresa_id === scope.empresaId)));
+      && row.produto_id === produtoId && (!scope.empresaId || row.empresa_id === scope.empresaId))
+      .sort((a, b) => a.sku.localeCompare(b.sku) || a.id.localeCompare(b.id)));
   }
 
   async createVariant(scope: Scope, produtoId: string, data: ProdutoVarianteCreate): Promise<ProdutoVariante> {
@@ -256,8 +257,12 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
 
   async updateVariant(scope: Scope, produtoId: string, variantId: string, data: ProdutoVarianteUpdate): Promise<ProdutoVariante | null> {
     const current = this.variants.get(variantId);
-    if (!current || current.group_id !== scope.groupId || current.produto_id !== produtoId
+    if (!current || !current.ativo || current.group_id !== scope.groupId || current.produto_id !== produtoId
       || (scope.empresaId && current.empresa_id !== scope.empresaId)) return null;
+    if (data.sku && [...this.variants.values()].some((row) => row.id !== variantId
+      && row.group_id === scope.groupId && row.sku.toLowerCase() === data.sku!.toLowerCase())) {
+      throw new Error('unique constraint produto_variantes sku');
+    }
     const next = { ...current, ...data };
     this.variants.set(variantId, structuredClone(next));
     return structuredClone(next);
@@ -273,10 +278,16 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
   }
   async listEquivalents(scope: Scope, produtoId: string): Promise<ProdutoEquivalente[]> {
     return structuredClone([...this.equivalents.values()].filter((row) => row.ativo && row.group_id === scope.groupId
-      && row.produto_id === produtoId && (!scope.empresaId || row.empresa_id === scope.empresaId)));
+      && row.produto_id === produtoId && (!scope.empresaId || row.empresa_id === scope.empresaId))
+      .sort((a, b) => a.tipo.localeCompare(b.tipo)
+        || a.produto_equivalente_id.localeCompare(b.produto_equivalente_id) || a.id.localeCompare(b.id)));
   }
 
   async createEquivalent(scope: Scope, produtoId: string, data: ProdutoEquivalenteCreate): Promise<ProdutoEquivalente> {
+    if ([...this.equivalents.values()].some((row) => row.group_id === scope.groupId
+      && row.produto_id === produtoId && row.produto_equivalente_id === data.produto_equivalente_id
+      && row.tipo === data.tipo)) throw new Error('unique constraint produto_equivalentes');
+
     if (produtoId === data.produto_equivalente_id) throw new Error('check constraint produto equivalente self');
     const row: ProdutoEquivalente = { id: randomUUID(), group_id: scope.groupId, empresa_id: scope.empresaId ?? null,
       produto_id: produtoId, produto_equivalente_id: data.produto_equivalente_id, tipo: data.tipo,
@@ -287,8 +298,13 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
 
   async updateEquivalent(scope: Scope, produtoId: string, equivalentId: string, data: ProdutoEquivalenteUpdate): Promise<ProdutoEquivalente | null> {
     const current = this.equivalents.get(equivalentId);
-    if (!current || current.group_id !== scope.groupId || current.produto_id !== produtoId
+    if (!current || !current.ativo || current.group_id !== scope.groupId || current.produto_id !== produtoId
       || (scope.empresaId && current.empresa_id !== scope.empresaId)) return null;
+    if ([...this.equivalents.values()].some((row) => row.id !== equivalentId
+      && row.group_id === scope.groupId && row.produto_id === produtoId
+      && row.produto_equivalente_id === current.produto_equivalente_id && row.tipo === (data.tipo ?? current.tipo))) {
+      throw new Error('unique constraint produto_equivalentes');
+    }
     const next = { ...current, ...data };
     this.equivalents.set(equivalentId, structuredClone(next));
     return structuredClone(next);

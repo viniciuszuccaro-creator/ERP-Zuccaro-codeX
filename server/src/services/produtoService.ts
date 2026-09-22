@@ -256,6 +256,8 @@ export class ProdutoService {
 
   private async listRelations(ctx: RequestContext, id: string, kind: 'variantes' | 'equivalentes') {
     this.assertScope(ctx);
+    this.assertRelationId(id);
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
     await this.assertPermission(ctx, 'visualizar');
     const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
     const produto = await this.repo.getById(scope, id);
@@ -287,19 +289,24 @@ export class ProdutoService {
   private async mutateVariant(ctx: RequestContext, produtoId: string, operation: 'create' | 'update' | 'deactivate', variantId?: string, data?: ProdutoVarianteCreate | ProdutoVarianteUpdate) {
     this.assertScope(ctx);
     await this.assertPermission(ctx, 'editar');
+    this.assertRelationId(produtoId);
+    if (variantId) this.assertRelationId(variantId);
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
     const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
     return this.repo.withTransaction(async (executor) => {
       const produto = await this.repo.getById(scope, produtoId, executor, { forUpdate: true });
       if (!produto || !produto.ativo) throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
-      const before = variantId ? (await this.repo.listVariants(scope, produtoId, executor)).find((row) => row.id === variantId) : undefined;
+      await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, produto.empresa_id);
+      const ownerScope = { groupId: ctx.groupId, empresaId: produto.empresa_id ?? undefined };
+      const before = variantId ? (await this.repo.listVariants(ownerScope, produtoId, executor)).find((row) => row.id === variantId) : undefined;
       if (operation !== 'create' && !before) throw new AppError(404, 'PRODUTO_VARIANTE_NOT_FOUND', 'Produto variante not found in tenant scope');
       let result;
       try {
         result = operation === 'create'
-          ? await this.repo.createVariant(scope, produtoId, data as ProdutoVarianteCreate, executor)
+          ? await this.repo.createVariant(ownerScope, produtoId, data as ProdutoVarianteCreate, executor)
           : operation === 'update'
-            ? await this.repo.updateVariant(scope, produtoId, variantId!, data as ProdutoVarianteUpdate, executor)
-            : await this.repo.deactivateVariant(scope, produtoId, variantId!, executor);
+            ? await this.repo.updateVariant(ownerScope, produtoId, variantId!, data as ProdutoVarianteUpdate, executor)
+            : await this.repo.deactivateVariant(ownerScope, produtoId, variantId!, executor);
       } catch (error) {
         this.rethrowConflict(error);
         throw error;
@@ -347,33 +354,44 @@ export class ProdutoService {
   ) {
     this.assertScope(ctx);
     await this.assertPermission(ctx, 'editar');
+    this.assertRelationId(produtoId);
+    if (equivalentId) this.assertRelationId(equivalentId);
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
     const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
     return this.repo.withTransaction(async (executor) => {
       const produto = await this.repo.getById(scope, produtoId, executor, { forUpdate: true });
       if (!produto || !produto.ativo) throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+      await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, produto.empresa_id);
+      const ownerScope = { groupId: ctx.groupId, empresaId: produto.empresa_id ?? undefined };
       if (operation === 'create') {
         const targetId = (data as ProdutoEquivalenteCreate).produto_equivalente_id;
         if (targetId === produtoId) {
           throw new AppError(400, 'PRODUTO_EQUIVALENTE_SELF', 'Produto cannot be equivalent to itself');
         }
-        const target = await this.repo.getById(scope, targetId, executor, { forUpdate: true });
-        if (!target || !target.ativo) {
+        const target = await this.repo.getById(ownerScope, targetId, executor, { forUpdate: true });
+        if (!target || !target.ativo || target.empresa_id !== produto.empresa_id) {
           throw new AppError(404, 'PRODUTO_EQUIVALENTE_TARGET_NOT_FOUND', 'Equivalent Produto not found in tenant scope');
         }
       }
       const before = equivalentId
-        ? (await this.repo.listEquivalents(scope, produtoId, executor)).find((row) => row.id === equivalentId)
+        ? (await this.repo.listEquivalents(ownerScope, produtoId, executor)).find((row) => row.id === equivalentId)
         : undefined;
       if (operation !== 'create' && !before) {
         throw new AppError(404, 'PRODUTO_EQUIVALENTE_NOT_FOUND', 'Produto equivalente not found in tenant scope');
       }
+      if (operation === 'update' && before) {
+        const target = await this.repo.getById(ownerScope, before.produto_equivalente_id, executor, { forUpdate: true });
+        if (!target || !target.ativo || target.empresa_id !== produto.empresa_id) {
+          throw new AppError(404, 'PRODUTO_EQUIVALENTE_TARGET_NOT_FOUND', 'Equivalent Produto not found in tenant scope');
+        }
+      }
       let result;
       try {
         result = operation === 'create'
-          ? await this.repo.createEquivalent(scope, produtoId, data as ProdutoEquivalenteCreate, executor)
+          ? await this.repo.createEquivalent(ownerScope, produtoId, data as ProdutoEquivalenteCreate, executor)
           : operation === 'update'
-            ? await this.repo.updateEquivalent(scope, produtoId, equivalentId!, data as ProdutoEquivalenteUpdate, executor)
-            : await this.repo.deactivateEquivalent(scope, produtoId, equivalentId!, executor);
+            ? await this.repo.updateEquivalent(ownerScope, produtoId, equivalentId!, data as ProdutoEquivalenteUpdate, executor)
+            : await this.repo.deactivateEquivalent(ownerScope, produtoId, equivalentId!, executor);
       } catch (error) {
         this.rethrowConflict(error);
         throw error;
@@ -394,6 +412,12 @@ export class ProdutoService {
   assertNoStockSideEffects(payload: unknown) {
     this.rejectOperationalFields(payload);
   }
+  private assertRelationId(id: string) {
+    if (!produtoEquivalenteCreateSchema.shape.produto_equivalente_id.safeParse(id).success) {
+      throw new AppError(400, 'VALIDATION_ERROR', 'Invalid Produto relation id');
+    }
+  }
+
 
   private async assertRelations(groupId: string, data: {
     marca_id?: string | null;

@@ -370,15 +370,15 @@ export class PostgresProdutoRepository implements ProdutoRepository {
   async updateVariant(scope: Scope, produtoId: string, variantId: string, data: ProdutoVarianteUpdate, executor: DbQueryExecutor): Promise<ProdutoVariante | null> {
     const current = await executor.query<ProdutoVariante>(
       `SELECT id,group_id,empresa_id,produto_id,sku,nome,atributos,ativo FROM produto_variantes
-       WHERE id=$1 AND group_id=$2 AND produto_id=$3 AND ($4::uuid IS NULL OR empresa_id=$4) FOR UPDATE`,
+       WHERE id=$1 AND group_id=$2 AND produto_id=$3 AND ($4::uuid IS NULL OR empresa_id=$4) AND ativo=true FOR UPDATE`,
       [variantId, scope.groupId, produtoId, scope.empresaId ?? null],
     );
     if (!current.rows[0]) return null;
     const next = { ...current.rows[0], ...data };
     const result = await executor.query(
       `UPDATE produto_variantes SET sku=$1,nome=$2,atributos=$3::jsonb,updated_at=timezone('utc',now())
-       WHERE id=$4 AND group_id=$5 AND produto_id=$6 RETURNING id,group_id,empresa_id,produto_id,sku,nome,atributos,ativo`,
-      [next.sku, next.nome, JSON.stringify(next.atributos), variantId, scope.groupId, produtoId],
+       WHERE id=$4 AND group_id=$5 AND produto_id=$6 AND empresa_id IS NOT DISTINCT FROM $7::uuid AND ativo=true RETURNING id,group_id,empresa_id,produto_id,sku,nome,atributos,ativo`,
+      [next.sku, next.nome, JSON.stringify(next.atributos), variantId, scope.groupId, produtoId, scope.empresaId ?? null],
     );
     return (result.rows[0] as ProdutoVariante | undefined) ?? null;
   }
@@ -404,15 +404,15 @@ export class PostgresProdutoRepository implements ProdutoRepository {
   async updateEquivalent(scope: Scope, produtoId: string, equivalentId: string, data: ProdutoEquivalenteUpdate, executor: DbQueryExecutor): Promise<ProdutoEquivalente | null> {
     const current = await executor.query<ProdutoEquivalente>(
       `SELECT id,group_id,empresa_id,produto_id,produto_equivalente_id,tipo,direcional,aprovado,ativo FROM produto_equivalentes
-       WHERE id=$1 AND group_id=$2 AND produto_id=$3 AND ($4::uuid IS NULL OR empresa_id=$4) FOR UPDATE`,
+       WHERE id=$1 AND group_id=$2 AND produto_id=$3 AND ($4::uuid IS NULL OR empresa_id=$4) AND ativo=true FOR UPDATE`,
       [equivalentId, scope.groupId, produtoId, scope.empresaId ?? null],
     );
     if (!current.rows[0]) return null;
     const next = { ...current.rows[0], ...data };
     const result = await executor.query(
       `UPDATE produto_equivalentes SET tipo=$1,direcional=$2,aprovado=$3,updated_at=timezone('utc',now())
-       WHERE id=$4 AND group_id=$5 AND produto_id=$6 RETURNING id,group_id,empresa_id,produto_id,produto_equivalente_id,tipo,direcional,aprovado,ativo`,
-      [next.tipo, next.direcional, next.aprovado, equivalentId, scope.groupId, produtoId],
+       WHERE id=$4 AND group_id=$5 AND produto_id=$6 AND empresa_id IS NOT DISTINCT FROM $7::uuid AND ativo=true RETURNING id,group_id,empresa_id,produto_id,produto_equivalente_id,tipo,direcional,aprovado,ativo`,
+      [next.tipo, next.direcional, next.aprovado, equivalentId, scope.groupId, produtoId, scope.empresaId ?? null],
     );
     return (result.rows[0] as ProdutoEquivalente | undefined) ?? null;
   }

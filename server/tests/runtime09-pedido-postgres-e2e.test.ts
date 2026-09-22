@@ -36,12 +36,14 @@ test('R09 PostgreSQL real: migration de Pedido e posteriores existem uma vez e c
   const repo = new PostgresPedidoRepository(db); const ids: string[] = [];
   try {
     const migrations = await db.query<{ id: string; total: number }>('SELECT id,count(*)::int total FROM schema_migrations GROUP BY id ORDER BY id');
-    assert.ok(migrations.rows.length >= 18);
+    assert.ok(migrations.rows.length >= 19);
     assert.ok(migrations.rows.every((row) => row.total === 1));
     const migrationIds = migrations.rows.map((row) => row.id);
     assert.ok(migrationIds.includes('017_pedidos_comercial_360.sql'));
     assert.ok(migrationIds.includes('018_produto_pim_dam_outbox.sql'));
     assert.ok(migrationIds.indexOf('017_pedidos_comercial_360.sql') < migrationIds.indexOf('018_produto_pim_dam_outbox.sql'));
+    assert.ok(migrationIds.includes('019_produto_relacoes_tenant.sql'));
+    assert.ok(migrationIds.indexOf('018_produto_pim_dam_outbox.sql') < migrationIds.indexOf('019_produto_relacoes_tenant.sql'));
     const data = await input(db); const created = await repo.create(scope, data, SEED_IDS.runtimeActorA); ids.push(created.id);
     assert.match(created.numero, /^\d{8}$/); assert.equal(created.total, '19.000000'); assert.equal(created.itens[0].descricao, 'R09 produto sintetico');
     assert.equal(await repo.get(other, created.id), null);
