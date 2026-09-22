@@ -193,7 +193,7 @@ Este programa consolida, sem substituir nem duplicar, `AGENTS.md`, `COMERCIAL_36
 | 6 | PENDENTE | 2/3/5 | crédito e pagamentos oficiais | baixa duplicada | compensação/idempotência |
 | 7 | PENDENTE | 1/5 | disponibilidade e reserva | overselling | liberar reserva |
 | 8 | PENDENTE | 1/7 | abastecimento ligado à venda | custo divergente | desacoplar sugestão |
-| 9 | PENDENTE | 0/1/3 | contrato Engenharia/arquivos | arquivo técnico virar produção | revisão humana obrigatória |
+| 9 | PENDENTE | 0 concluída; 1/3 | contrato em `COMERCIAL_360_ONDA_9_ENGENHARIA_ARQUIVOS.md`; migrar telas existentes | arquivo técnico virar produção | revisão humana obrigatória |
 | 10 | PENDENTE | 9 | Armação 2.0 no motor existente | cálculo técnico incorreto | manter lançamento manual |
 | 11 | PENDENTE | 9/10 | corte/dobra vergalhão e chapa | plano inseguro | aprovação técnica |
 | 12 | PENDENTE | 1/9/11 | BOM/roteiro/fabricação | produto duplicado | versionamento/revisão |

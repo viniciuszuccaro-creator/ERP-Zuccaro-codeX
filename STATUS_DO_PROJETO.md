@@ -9927,3 +9927,10 @@ Checklist inicial:
 - Estados atuais serão preservados durante evolução aditiva; `FINALIZADO` continua estado final visível e cancelamento nunca apaga histórico.
 - Primeiro incremento futuro será origem/canal/idempotência no domínio existente. Nenhum runtime/schema foi alterado neste contrato.
 - Próximo checkpoint: contrato Onda 9 Engenharia e arquivos técnicos.
+### Programa Comercial 360 Omnicanal - Contrato Onda 9 Engenharia/Arquivos (2026-09-22)
+
+- Componentes existentes de projeto, Armado, Corte/Dobra, upload e Produção serão evoluídos; não haverá segunda Engenharia.
+- Projeto/Revisão, documento técnico, evidência/confiança e gate humano foram definidos. Revisão aprovada será congelada em Orçamento/Pedido/OP.
+- Gravações diretas Base44 encontradas entram na migração para APIs proprietárias de Pedido, Produção, Estoque e auditoria, preservando fallback até E2E.
+- Arquivo/IA nunca segue direto para produção; storage privado e DAM são dependências. Nenhum runtime/schema foi alterado.
+- Próximo checkpoint: contrato Onda 15 catálogo/outbox.
