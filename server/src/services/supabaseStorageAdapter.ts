@@ -108,7 +108,8 @@ export class SupabaseStorageAdapter implements StoragePort {
   private signedUrl(relative: string | undefined, prefix: string, storageKey: string): string {
     const expectedPath = `${prefix}${this.path(storageKey)}`;
     const parsed = relative ? new URL(relative.replace(/^\//, ''), this.publicBase) : null;
-    if (!relative || !parsed || parsed.pathname !== `/storage/v1${expectedPath}` || !parsed.searchParams.has('token')) {
+    if (!relative || !parsed || parsed.origin !== this.publicBase.origin || parsed.username || parsed.password ||
+        parsed.hash || parsed.pathname !== `/storage/v1${expectedPath}` || !parsed.searchParams.get('token')) {
       throw new Error('STORAGE_SIGN_RESPONSE_INVALID');
     }
     return parsed.toString();

@@ -53,6 +53,19 @@ test('Storage adapter rejects signed response pointing to another object', async
   await assert.rejects(adapter.createSignedUploadUrl(request), /STORAGE_SIGN_RESPONSE_INVALID/);
 });
 
+test('Storage adapter rejects signed URLs outside the configured public origin', async () => {
+  const path = `/storage/v1/object/upload/sign/private/${storageKey}?token=synthetic-token`;
+  for (const url of [`https://other.example.test${path}`, `https://public.example.test${path}#fragment`,
+    `https://public.example.test/storage/v1/object/upload/sign/private/${storageKey}?token=`]) {
+    const adapter = makeAdapter(async () => Response.json({ url }));
+    await assert.rejects(adapter.createSignedUploadUrl(request), /STORAGE_SIGN_RESPONSE_INVALID/);
+  }
+  const foreignDownload = makeAdapter(async () => Response.json({
+    signedURL: `https://other.example.test/storage/v1/object/sign/private/${storageKey}?token=synthetic-token`,
+  }));
+  await assert.rejects(foreignDownload.createSignedDownloadUrl(request, storageKey), /STORAGE_SIGN_RESPONSE_INVALID/);
+});
+
 test('Storage adapter confirms exact byte count and SHA-256', async () => {
   const adapter = makeAdapter(async () => new Response(bytes, { headers: { 'content-type': 'image/png' } }));
   const metadata = await adapter.confirmUpload(request);
