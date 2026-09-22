@@ -9913,3 +9913,10 @@ Checklist inicial:
 - DAM reutilizará `StoragePort` com storage privado, hash, MIME, antivírus/quarentena, URL assinada curta e auditoria sem tokens.
 - Compatibilidade preserva `foto_produto_url` como projeção temporária até migração de consumidores. Nenhuma migration ou código runtime foi criado neste checkpoint.
 - Próximo checkpoint: contrato Onda 3 Cliente 360/CRM.
+### Programa Comercial 360 Omnicanal - Contrato Onda 3 Cliente 360/CRM (2026-09-22)
+
+- Cliente/ClienteEmpresa/Local/Obra permanecem mestres; a Central 360 será composição paginada e permissionada, sem copiar operações ou dados financeiros.
+- CRM reutilizará página/policies existentes, estados canônicos e vínculos com Orçamento/Pedido, com deduplicação revisável e idempotência por canal.
+- Busca e blocos sensíveis exigem permissões próprias; cache inclui ator, Grupo, Empresa, cliente e permissões.
+- LGPD, auditoria sanitizada e falha parcial segura foram definidos. Nenhum runtime/schema foi alterado.
+- Próximo checkpoint: contrato Onda 5, lacunas do Pedido 360.

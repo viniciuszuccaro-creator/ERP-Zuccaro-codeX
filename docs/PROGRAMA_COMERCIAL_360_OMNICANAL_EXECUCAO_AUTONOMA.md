@@ -187,7 +187,7 @@ Este programa consolida, sem substituir nem duplicar, `AGENTS.md`, `COMERCIAL_36
 | 0 | CONCLUÍDO | baseline V1 | `COMERCIAL_360_ONDA_0_CONTRATOS.md` | duplicar fonte de verdade | revert documental |
 | 1 | PENDENTE | Onda 0 concluída | contrato em `COMERCIAL_360_ONDA_1_PRODUTO_PIM_DAM.md`; implementar no Produto existente | criar Produto paralelo | manter schema atual |
 | 2 | PENDENTE | 0/1 | lacunas de preço, margem e aprovação | alterar snapshot histórico | feature gate/revert aditivo |
-| 3 | PENDENTE | 0 | contrato Cliente 360/CRM sobre estruturas atuais | expor dados financeiros | RBAC fail-closed |
+| 3 | PENDENTE | Onda 0 concluída | contrato em `COMERCIAL_360_ONDA_3_CLIENTE_CRM.md`; implementar read model no existente | expor dados financeiros | RBAC fail-closed |
 | 4 | PENDENTE | baseline comprovado | versões, anexos e aprovações faltantes | regressão no Orçamento atual | preservar fluxo V1 |
 | 5 | PENDENTE | 0/1/3/4 | lacunas omnicanal do Pedido existente | agregado paralelo | preservar Pedido V1 |
 | 6 | PENDENTE | 2/3/5 | crédito e pagamentos oficiais | baixa duplicada | compensação/idempotência |
