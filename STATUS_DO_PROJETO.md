@@ -10032,3 +10032,12 @@ Checklist inicial:
 - `ProdutoRepository` agora possui `withTransaction` e executor tipado compartilhado pelos adapters in-memory e PostgreSQL.
 - Create, update e inativação executam mutação e `audit_logs` na mesma transação; nenhuma query interna escapa para conexão paralela quando executor é fornecido.
 - Testes sintéticos comprovam rollback de create/update/inativação quando a auditoria falha e identidade do executor entre repository/audit. Runtime03: 14 pass / 0 fail.
+
+### Programa Comercial 360 Omnicanal - Onda 1 macrocheckpoint, snapshot bloqueante (2026-09-22)
+- `ProdutoService.update` e `softDelete` passaram a obter o estado anterior dentro da mesma transacao da mutacao e auditoria.
+- O contrato `ProdutoRepository` ganhou leitura de mutacao explicita; o adapter PostgreSQL exige executor transacional e usa `SELECT ... FOR UPDATE`, preservando `groupId`/`empresaId`.
+- Existencia, atividade, classificacao canonica/legada e snapshot de auditoria agora sao validados sobre a linha bloqueada; leitura, mutacao e `audit.append` compartilham o mesmo executor.
+- Teste controlado simula alteracao concorrente antes da aquisicao do lock e comprova que a auditoria recebe o estado bloqueado, sem snapshot obsoleto. Os testes anteriores continuam comprovando rollback quando a auditoria falha.
+- Runtime03: 16 pass / 0 fail / 0 skip. Typecheck backend e `git diff --check`: PASS.
+- A migration aditiva 018 foi preparada somente no repositorio para conteudo PIM, variantes/equivalentes, metadados DAM, workflow e hardening da outbox existente; nao foi aplicada na VPS.
+- Proximo passo do mesmo macrocheckpoint: integrar os novos contratos ao Produto canonico, RBAC de aprovacao/publicacao, StoragePort, outbox e frontend existente.

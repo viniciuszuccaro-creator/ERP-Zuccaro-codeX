@@ -1,7 +1,7 @@
 import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope } from '../services/tenantCrudService.js';
 import type { Produto, ProdutoCreate, ProdutoUpdate } from './produtoTypes.js';
-import type { ProdutoListFilter, ProdutoRepository } from './inMemoryProdutoRepository.js';
+import type { ProdutoListFilter, ProdutoReadOptions, ProdutoRepository } from './inMemoryProdutoRepository.js';
 
 function ts(row: Record<string, unknown>) {
   return {
@@ -145,13 +145,22 @@ export class PostgresProdutoRepository implements ProdutoRepository {
   }
 
 
-  async getById(scope: Scope, id: string, executor?: DbQueryExecutor): Promise<Produto | null> {
+  async getById(
+    scope: Scope,
+    id: string,
+    executor?: DbQueryExecutor,
+    options?: ProdutoReadOptions,
+  ): Promise<Produto | null> {
     const query = executor ?? this.db;
     const params: unknown[] = [scope.groupId, id];
     let sql = 'SELECT * FROM produtos WHERE group_id = $1 AND id = $2';
     if (scope.empresaId) {
       params.push(scope.empresaId);
       sql += ' AND empresa_id = $3';
+    }
+    if (options?.forUpdate) {
+      if (!executor) throw new Error('PRODUTO_FOR_UPDATE_REQUIRES_TRANSACTION');
+      sql += ' FOR UPDATE';
     }
     const result = await query.query(sql, params);
     return result.rows[0] ? mapProduto(result.rows[0] as Record<string, unknown>) : null;

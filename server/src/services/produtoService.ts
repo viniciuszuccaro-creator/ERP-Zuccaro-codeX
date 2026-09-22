@@ -122,18 +122,18 @@ export class ProdutoService {
       throw new AppError(400, 'VALIDATION_ERROR', 'Invalid Produto payload', parsed.error.flatten());
     }
     const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
-    const before = await this.repo.getById(scope, id);
-    // Nao editar soft-deleted como se estivesse ativo.
-    if (!before || before.ativo === false) {
-      throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
-    }
-    if (parsed.data.tipo_item !== undefined) {
-      this.assertTipoItem(parsed.data.tipo_item, before.tipo_item);
-    }
-    const empresaId = parsed.data.empresa_id === undefined ? before.empresa_id : parsed.data.empresa_id;
-    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
-    await this.assertRelations(ctx.groupId, { ...before, ...parsed.data });
     return this.repo.withTransaction(async (executor) => {
+      const before = await this.repo.getById(scope, id, executor, { forUpdate: true });
+      // A existencia, atividade e classificacao sao validadas sobre a linha bloqueada.
+      if (!before || before.ativo === false) {
+        throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+      }
+      if (parsed.data.tipo_item !== undefined) {
+        this.assertTipoItem(parsed.data.tipo_item, before.tipo_item);
+      }
+      const empresaId = parsed.data.empresa_id === undefined ? before.empresa_id : parsed.data.empresa_id;
+      await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
+      await this.assertRelations(ctx.groupId, { ...before, ...parsed.data });
       let updated: Produto | null;
       try {
         updated = await this.repo.update(scope, id, parsed.data, executor);
@@ -163,12 +163,12 @@ export class ProdutoService {
     this.assertScope(ctx);
     await this.assertPermission(ctx, 'inativar');
     const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
-    const before = await this.repo.getById(scope, id);
-    // Idempotente: ja inativo → 404, sem auditoria enganosa false→false.
-    if (!before || before.ativo === false) {
-      throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
-    }
     return this.repo.withTransaction(async (executor) => {
+      const before = await this.repo.getById(scope, id, executor, { forUpdate: true });
+      // Idempotente: ja inativo -> 404, sem auditoria enganosa false->false.
+      if (!before || before.ativo === false) {
+        throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+      }
       const updated = await this.repo.softDelete(scope, id, executor);
       if (!updated) throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
       await this.audit.append({

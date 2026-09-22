@@ -11,10 +11,19 @@ export type ProdutoListFilter = Scope & ListOptions & {
   codigoBarras?: string;
 };
 
+export type ProdutoReadOptions = {
+  forUpdate?: boolean;
+};
+
 export interface ProdutoRepository extends TenantEntityRepository<Produto, ProdutoCreate, ProdutoUpdate> {
   withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T>;
   listPage(filter: ProdutoListFilter, executor?: DbQueryExecutor): Promise<{ rows: Produto[]; total: number }>;
-  getById(scope: Scope, id: string, executor?: DbQueryExecutor): Promise<Produto | null>;
+  getById(
+    scope: Scope,
+    id: string,
+    executor?: DbQueryExecutor,
+    options?: ProdutoReadOptions,
+  ): Promise<Produto | null>;
   create(scope: Scope, data: ProdutoCreate, executor?: DbQueryExecutor): Promise<Produto>;
   update(scope: Scope, id: string, data: ProdutoUpdate, executor?: DbQueryExecutor): Promise<Produto | null>;
   softDelete(scope: Scope, id: string, executor?: DbQueryExecutor): Promise<Produto | null>;
@@ -109,7 +118,12 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     return { rows: all.slice(offset, offset + limit), total };
   }
 
-  async getById(scope: Scope, id: string, _executor?: DbQueryExecutor): Promise<Produto | null> {
+  async getById(
+    scope: Scope,
+    id: string,
+    _executor?: DbQueryExecutor,
+    _options?: ProdutoReadOptions,
+  ): Promise<Produto | null> {
     const row = this.rows.get(id);
     if (!row || row.group_id !== scope.groupId) return null;
     if (scope.empresaId && row.empresa_id !== scope.empresaId) return null;
@@ -131,7 +145,7 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
   }
 
   async update(scope: Scope, id: string, data: ProdutoUpdate, _executor?: DbQueryExecutor): Promise<Produto | null> {
-    const current = await this.getById(scope, id);
+    const current = await this.getById(scope, id, _executor);
     if (!current) return null;
     const next: Produto = {
       ...current,

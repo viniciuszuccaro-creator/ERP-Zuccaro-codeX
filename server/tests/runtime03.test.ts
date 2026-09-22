@@ -3,12 +3,13 @@ import test from 'node:test';
 import { InMemoryAuditRepository } from '../src/audit/auditRepository.ts';
 import { loadConfig } from '../src/config/env.ts';
 import { createApp } from '../src/app.ts';
-import { createDbClient } from '../src/db/client.ts';
+import { createDbClient, type DbClient, type DbQueryExecutor } from '../src/db/client.ts';
 import { InMemoryProdutoRelationGuard } from '../src/db/produtoRelationGuard.ts';
 import { InMemoryRbacGuard, type RbacGuard } from '../src/db/rbacGuard.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 import { listMigrationFiles } from '../src/db/migrate.ts';
 import { createInMemoryProdutoRepo } from '../src/repositories/inMemoryProdutoRepository.ts';
+import { PostgresProdutoRepository } from '../src/repositories/postgresProdutoRepository.ts';
 import {
   PRODUTO_FORBIDDEN_OPERATIONAL_FIELDS,
   PRODUTO_TIPOS_CANONICOS,
@@ -289,6 +290,87 @@ test('Produto repassa o mesmo executor para mutacao e auditoria', async () => {
   await service.create({ requestId: 'tx-executor', groupId: GROUP_A, empresaId: EMPRESA_A }, { descricao: 'EXECUTOR' });
   assert.equal(repositoryExecutor, executor);
   assert.equal(auditExecutor, executor);
+});
+
+test('Produto update e inativacao leem linha bloqueada e auditam com o mesmo executor', async () => {
+  const executor = { query: async () => ({ rows: [], rowCount: 0 }) } as DbQueryExecutor;
+  const repo = createInMemoryProdutoRepo();
+  const scope = { groupId: GROUP_A, empresaId: EMPRESA_A };
+  const row = await repo.create(scope, { descricao: 'ANTES DA CONCORRENCIA', codigo: 'TX-LOCK' });
+  const originalGet = repo.getById.bind(repo);
+  const originalUpdate = repo.update.bind(repo);
+  const originalSoftDelete = repo.softDelete.bind(repo);
+  const auditEntries: Array<{ entry: Record<string, unknown>; executor?: DbQueryExecutor }> = [];
+  const calls: Array<{ operation: string; executor?: DbQueryExecutor; forUpdate?: boolean }> = [];
+
+  repo.withTransaction = async (fn) => {
+    await originalUpdate(scope, row.id, { descricao: 'ESTADO CONCORRENTE BLOQUEADO' });
+    calls.length = 0;
+    return fn(executor);
+  };
+  repo.getById = async (receivedScope, id, receivedExecutor, options) => {
+    calls.push({ operation: 'get', executor: receivedExecutor, forUpdate: options?.forUpdate });
+    return originalGet(receivedScope, id, receivedExecutor, options);
+  };
+  repo.update = async (receivedScope, id, data, receivedExecutor) => {
+    calls.push({ operation: 'update', executor: receivedExecutor });
+    return originalUpdate(receivedScope, id, data, receivedExecutor);
+  };
+  repo.softDelete = async (receivedScope, id, receivedExecutor) => {
+    calls.push({ operation: 'softDelete', executor: receivedExecutor });
+    return originalSoftDelete(receivedScope, id, receivedExecutor);
+  };
+  const audit = {
+    append: async (entry: Record<string, unknown>, receivedExecutor?: DbQueryExecutor) => {
+      auditEntries.push({ entry, executor: receivedExecutor });
+    },
+    listByEntity: async () => [],
+  };
+  const service = new ProdutoService(repo, audit, linkedGuard(), linkedRelations(), allowAllRbac());
+  const ctx = { requestId: 'produto-lock', groupId: GROUP_A, empresaId: EMPRESA_A };
+
+  await service.update(ctx, row.id, { descricao: 'ESTADO FINAL' });
+  assert.equal((auditEntries[0].entry.beforeData as { descricao: string }).descricao, 'ESTADO CONCORRENTE BLOQUEADO');
+  assert.equal((auditEntries[0].entry.afterData as { descricao: string }).descricao, 'ESTADO FINAL');
+  assert.equal(calls[0].operation, 'get');
+  assert.equal(calls[0].forUpdate, true);
+  assert.ok(calls.filter((call) => call.operation === 'get' || call.operation === 'update').every((call) => call.executor === executor));
+  assert.equal(auditEntries[0].executor, executor);
+
+  calls.length = 0;
+  repo.withTransaction = async (fn) => fn(executor);
+  await service.softDelete({ ...ctx, requestId: 'produto-lock-delete' }, row.id);
+  assert.equal(calls[0].operation, 'get');
+  assert.equal(calls[0].forUpdate, true);
+  assert.ok(calls.every((call) => call.executor === executor));
+  assert.equal(auditEntries[1].executor, executor);
+});
+
+test('Postgres Produto exige transacao e usa SELECT FOR UPDATE no snapshot de mutacao', async () => {
+  let sql = '';
+  let params: unknown[] | undefined;
+  const executor: DbQueryExecutor = {
+    query: async (text, values) => {
+      sql = text;
+      params = values;
+      return { rows: [], rowCount: 0 } as never;
+    },
+  };
+  const db = {
+    query: executor.query,
+    withTransaction: async <T>(fn: (tx: DbQueryExecutor) => Promise<T>) => fn(executor),
+    checkConnection: async () => true,
+    end: async () => undefined,
+    pool: null,
+  } as DbClient;
+  const repo = new PostgresProdutoRepository(db);
+  await assert.rejects(
+    () => repo.getById({ groupId: GROUP_A, empresaId: EMPRESA_A }, ACTOR_A, undefined, { forUpdate: true }),
+    /PRODUTO_FOR_UPDATE_REQUIRES_TRANSACTION/,
+  );
+  await repo.getById({ groupId: GROUP_A, empresaId: EMPRESA_A }, ACTOR_A, executor, { forUpdate: true });
+  assert.match(sql, /WHERE group_id = \$1 AND id = \$2 AND empresa_id = \$3 FOR UPDATE$/);
+  assert.deepEqual(params, [GROUP_A, ACTOR_A, EMPRESA_A]);
 });
 
   const audit = new InMemoryAuditRepository();
