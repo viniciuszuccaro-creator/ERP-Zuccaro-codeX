@@ -10067,3 +10067,7 @@ Checklist inicial:
 ### Onda 1 Produto/PIM - contrato de mutacao de variante (2026-09-22)
 - Schema estrito create/update aceita somente SKU, nome e atributos escalares controlados; tenant, IDs, ativo e campos internos sao bloqueados por mass assignment.
 - R10: 6 pass / 0 fail; typecheck e diff-check PASS. Proximo incremento: persistencia e auditoria transacional das mutacoes de variante.
+
+### Onda 1 Produto/PIM - persistencia PostgreSQL de variante (2026-09-22)
+- O adapter existente ganhou create/update/inativacao tenant-scoped; update bloqueia a linha com `FOR UPDATE` e todas as mutacoes exigem executor transacional recebido.
+- Typecheck e diff-check PASS. Nenhuma rota de mutacao foi exposta ainda; proximo incremento conecta contrato unico, in-memory, service e auditoria atomica.

@@ -1,6 +1,6 @@
 import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope } from '../services/tenantCrudService.js';
-import type { Produto, ProdutoCreate, ProdutoEquivalente, ProdutoUpdate, ProdutoVariante } from './produtoTypes.js';
+import type { Produto, ProdutoCreate, ProdutoEquivalente, ProdutoUpdate, ProdutoVariante, ProdutoVarianteCreate, ProdutoVarianteUpdate } from './produtoTypes.js';
 import type { ProdutoListFilter, ProdutoReadOptions, ProdutoRepository } from './inMemoryProdutoRepository.js';
 
 function ts(row: Record<string, unknown>) {
@@ -357,4 +357,38 @@ export class PostgresProdutoRepository implements ProdutoRepository {
     return (await q.query(sql, params)).rows as ProdutoEquivalente[];
   }
 
+
+  async createVariant(scope: Scope, produtoId: string, data: ProdutoVarianteCreate, executor: DbQueryExecutor): Promise<ProdutoVariante> {
+    const result = await executor.query(
+      `INSERT INTO produto_variantes (group_id,empresa_id,produto_id,sku,nome,atributos)
+       VALUES ($1,$2,$3,$4,$5,$6::jsonb) RETURNING id,group_id,empresa_id,produto_id,sku,nome,atributos,ativo`,
+      [scope.groupId, scope.empresaId ?? null, produtoId, data.sku, data.nome ?? null, JSON.stringify(data.atributos)],
+    );
+    return result.rows[0] as ProdutoVariante;
+  }
+
+  async updateVariant(scope: Scope, produtoId: string, variantId: string, data: ProdutoVarianteUpdate, executor: DbQueryExecutor): Promise<ProdutoVariante | null> {
+    const current = await executor.query<ProdutoVariante>(
+      `SELECT id,group_id,empresa_id,produto_id,sku,nome,atributos,ativo FROM produto_variantes
+       WHERE id=$1 AND group_id=$2 AND produto_id=$3 AND ($4::uuid IS NULL OR empresa_id=$4) FOR UPDATE`,
+      [variantId, scope.groupId, produtoId, scope.empresaId ?? null],
+    );
+    if (!current.rows[0]) return null;
+    const next = { ...current.rows[0], ...data };
+    const result = await executor.query(
+      `UPDATE produto_variantes SET sku=$1,nome=$2,atributos=$3::jsonb,updated_at=timezone('utc',now())
+       WHERE id=$4 AND group_id=$5 AND produto_id=$6 RETURNING id,group_id,empresa_id,produto_id,sku,nome,atributos,ativo`,
+      [next.sku, next.nome, JSON.stringify(next.atributos), variantId, scope.groupId, produtoId],
+    );
+    return (result.rows[0] as ProdutoVariante | undefined) ?? null;
+  }
+
+  async deactivateVariant(scope: Scope, produtoId: string, variantId: string, executor: DbQueryExecutor): Promise<ProdutoVariante | null> {
+    const params: unknown[] = [variantId, scope.groupId, produtoId];
+    let sql = `UPDATE produto_variantes SET ativo=false,updated_at=timezone('utc',now()) WHERE id=$1 AND group_id=$2 AND produto_id=$3 AND ativo=true`;
+    if (scope.empresaId) { params.push(scope.empresaId); sql += ` AND empresa_id=$${params.length}`; }
+    sql += ' RETURNING id,group_id,empresa_id,produto_id,sku,nome,atributos,ativo';
+    const result = await executor.query(sql, params);
+    return (result.rows[0] as ProdutoVariante | undefined) ?? null;
+  }
 }
