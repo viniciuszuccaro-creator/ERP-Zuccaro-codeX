@@ -9948,3 +9948,9 @@ Checklist inicial:
 - Backend typecheck/build: PASS. audit:baseline, lint e frontend build: PASS. Teste frontend local reportou 0 pela expansao de glob no Windows; CI Linux permanece autoridade.
 - Typecheck global frontend: baseline legado FAIL em arquivos nao tocados (erros amplos anteriores); nenhum erro apontou para os arquivos deste incremento.
 - git diff --check e auditoria de segredos/dados reais: PASS. Proximo incremento: expor classificacao controlada no formulario Produto existente e cobrir compatibilidade dos consumidores.
+### Fechamento do checkpoint Onda 1 incremento 1
+
+- Commit de codigo: b6b5068a2fbdb83cc6cdc0cc83f62fe7e04224c8.
+- Workflow PR #33: 35719792647, frontend SUCCESS e backend SUCCESS.
+- Backend CI confirmou typecheck, suite, build, migrations 001-017, seed sintetico e test:postgres sem falha.
+- PR #33 permanece draft, sem merge; VPS, porta 3080, dados reais e migrations externas permanecem intocados.
