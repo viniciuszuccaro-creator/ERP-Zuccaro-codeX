@@ -12,7 +12,7 @@ import {
   produtoVarianteUpdateSchema,
 } from '../src/repositories/produtoTypes.ts';
 import { ProdutoService } from '../src/services/produtoService.ts';
-import { assertProdutoRelationsContract } from './produto-relacoes-contract.ts';
+import { assertProdutoMediaContract, assertProdutoRelationsContract } from './produto-relacoes-contract.ts';
 
 const GROUP = '11111111-1111-4111-8111-111111111111';
 const EMPRESA = '22222222-2222-4222-8222-222222222222';
@@ -274,6 +274,7 @@ test('Contrato compartilhado variantes e equivalentes: in-memory', async () => {
   const source = await service.create(ctx, { descricao: 'Contrato origem sintetica' });
   const target = await service.create(ctx, { descricao: 'Contrato destino sintetico' });
   await assertProdutoRelationsContract(repo, { groupId: GROUP, empresaId: EMPRESA }, source.id, target.id, ACTOR);
+  await assertProdutoMediaContract(repo, { groupId: GROUP, empresaId: EMPRESA }, source.id, ACTOR);
 });
 
 test('TenantGuard bloqueia empresa externa e destino de outra empresa', async () => {

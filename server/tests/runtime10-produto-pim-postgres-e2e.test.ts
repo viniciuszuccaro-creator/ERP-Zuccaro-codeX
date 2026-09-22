@@ -9,7 +9,7 @@ import { createDbClient } from '../src/db/client.ts';
 import { loadConfig } from '../src/config/env.ts';
 import { SEED_IDS } from '../scripts/seedDevIds.ts';
 import { PostgresProdutoRepository } from '../src/repositories/postgresProdutoRepository.ts';
-import { assertProdutoRelationsContract } from './produto-relacoes-contract.ts';
+import { assertProdutoMediaContract, assertProdutoRelationsContract } from './produto-relacoes-contract.ts';
 
 const enabled = Boolean(process.env.DATABASE_URL);
 
@@ -192,6 +192,7 @@ test('R10 PostgreSQL real: contrato compartilhado, empresa, grupo, SKU e rollbac
       );
     }
     await assertProdutoRelationsContract(repo, scope, sourceId, targetId, SEED_IDS.empresaA2);
+    await assertProdutoMediaContract(repo, scope, sourceId, SEED_IDS.empresaA2);
     await assert.rejects(repo.withTransaction((tx) => repo.createEquivalent(scope, sourceId, {
       produto_equivalente_id: otherCompanyId, tipo: 'EQUIVALENTE', direcional: false, aprovado: false,
     }, tx)), /TENANT_FK_MISMATCH/);
@@ -229,6 +230,7 @@ test('R10 PostgreSQL real: contrato compartilhado, empresa, grupo, SKU e rollbac
   } finally {
     try {
       await db.withTransaction(async (tx) => {
+        await tx.query('DELETE FROM produto_midias WHERE group_id=$1 AND produto_id=$2', [scope.groupId, sourceId]);
         await tx.query('DELETE FROM produto_equivalentes WHERE group_id=$1 AND produto_id=$2', [scope.groupId, sourceId]);
         await tx.query('DELETE FROM produto_variantes WHERE group_id=$1 AND produto_id=$2', [scope.groupId, sourceId]);
         await tx.query('DELETE FROM produtos WHERE group_id=$1 AND id=ANY($2::uuid[])',

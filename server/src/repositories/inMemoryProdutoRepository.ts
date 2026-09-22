@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';
-import type { Produto, ProdutoCreate, ProdutoEquivalente, ProdutoEquivalenteCreate, ProdutoEquivalenteUpdate, ProdutoUpdate, ProdutoVariante, ProdutoVarianteCreate, ProdutoVarianteUpdate } from './produtoTypes.js';
+import { produtoMidiaCreateSchema, type Produto, type ProdutoCreate, type ProdutoEquivalente, type ProdutoEquivalenteCreate, type ProdutoEquivalenteUpdate, type ProdutoMidia, type ProdutoMidiaCreate, type ProdutoUpdate, type ProdutoVariante, type ProdutoVarianteCreate, type ProdutoVarianteUpdate } from './produtoTypes.js';
 
 function nowIso() { return new Date().toISOString(); }
 
@@ -47,6 +47,9 @@ export interface ProdutoRepository extends TenantEntityRepository<Produto, Produ
   createEquivalent(scope: Scope, produtoId: string, data: ProdutoEquivalenteCreate, executor?: DbQueryExecutor): Promise<ProdutoEquivalente>;
   updateEquivalent(scope: Scope, produtoId: string, equivalentId: string, data: ProdutoEquivalenteUpdate, executor?: DbQueryExecutor): Promise<ProdutoEquivalente | null>;
   deactivateEquivalent(scope: Scope, produtoId: string, equivalentId: string, executor?: DbQueryExecutor): Promise<ProdutoEquivalente | null>;
+  listMidias(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia[]>;
+  createMidia(scope: Scope, produtoId: string, data: ProdutoMidiaCreate, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
+  deactivateMidia(scope: Scope, produtoId: string, midiaId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
 }
 
 function buildProduto(scope: Scope, data: ProdutoCreate, id: string, ts: string): Produto {
@@ -103,6 +106,7 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
   private readonly rows = new Map<string, Produto>();
   private readonly variants = new Map<string, ProdutoVariante>();
   private readonly equivalents = new Map<string, ProdutoEquivalente>();
+  private readonly midias = new Map<string, ProdutoMidia>();
 
   private readonly publicationEvents: Array<{ groupId: string; empresaId: string | null; produtoId: string; requestId: string }> = [];
   async withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> {
@@ -110,6 +114,7 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     const eventsSnapshot = structuredClone(this.publicationEvents);
     const variantsSnapshot = structuredClone([...this.variants.entries()]);
     const equivalentsSnapshot = structuredClone([...this.equivalents.entries()]);
+    const midiasSnapshot = structuredClone([...this.midias.entries()]);
     try {
       return await fn();
     } catch (error) {
@@ -120,6 +125,8 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
       for (const [id, row] of variantsSnapshot) this.variants.set(id, row);
       this.equivalents.clear();
       for (const [id, row] of equivalentsSnapshot) this.equivalents.set(id, row);
+      this.midias.clear();
+      for (const [id, row] of midiasSnapshot) this.midias.set(id, row);
       this.publicationEvents.push(...eventsSnapshot);
       throw error;
     }
@@ -316,6 +323,39 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
       || (scope.empresaId && current.empresa_id !== scope.empresaId)) return null;
     const next = { ...current, ativo: false };
     this.equivalents.set(equivalentId, next);
+    return structuredClone(next);
+  }
+
+  async listMidias(scope: Scope, produtoId: string): Promise<ProdutoMidia[]> {
+    return structuredClone([...this.midias.values()].filter((row) => row.ativo && row.group_id === scope.groupId
+      && row.produto_id === produtoId && (!scope.empresaId || row.empresa_id === scope.empresaId))
+      .sort((a, b) => a.versao - b.versao || a.id.localeCompare(b.id)));
+  }
+
+  async createMidia(scope: Scope, produtoId: string, data: ProdutoMidiaCreate): Promise<ProdutoMidia | null> {
+    const produto = await this.getById(scope, produtoId);
+    if (!produto || !produto.ativo || !scope.empresaId || produto.empresa_id !== scope.empresaId) return null;
+    const parsed = produtoMidiaCreateSchema.parse(data);
+    const prefix = `groups/${scope.groupId}/companies/${scope.empresaId}/products/${produtoId}/`;
+    if (!parsed.storage_key.startsWith(prefix)) throw new Error('TENANT_FK_MISMATCH');
+    if ([...this.midias.values()].some((row) => row.group_id === scope.groupId
+      && row.storage_key === parsed.storage_key && row.versao === parsed.versao)) {
+      throw new Error('unique constraint produto_midias storage_key');
+    }
+    const row: ProdutoMidia = {
+      id: randomUUID(), group_id: scope.groupId, empresa_id: scope.empresaId, produto_id: produtoId,
+      ...parsed, status: 'QUARENTENA', principal: false, ativo: true,
+    };
+    this.midias.set(row.id, structuredClone(row));
+    return structuredClone(row);
+  }
+
+  async deactivateMidia(scope: Scope, produtoId: string, midiaId: string): Promise<ProdutoMidia | null> {
+    const current = this.midias.get(midiaId);
+    if (!current || !current.ativo || current.group_id !== scope.groupId || current.produto_id !== produtoId
+      || !scope.empresaId || current.empresa_id !== scope.empresaId) return null;
+    const next: ProdutoMidia = { ...current, ativo: false, status: 'INATIVO', principal: false };
+    this.midias.set(midiaId, structuredClone(next));
     return structuredClone(next);
   }
 

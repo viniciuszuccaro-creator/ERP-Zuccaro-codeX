@@ -1,3 +1,48 @@
+
+export async function assertProdutoMediaContract(
+  repo: ProdutoRepository, scope: Scope, produtoId: string, otherEmpresaId: string,
+) {
+  if (!scope.empresaId) throw new Error('TEST_REQUIRES_COMPANY');
+  const storageKey = `groups/${scope.groupId}/companies/${scope.empresaId}/products/${produtoId}/images/${randomUUID()}-media.png`;
+  const data = {
+    storage_key: storageKey, categoria: 'IMAGEM' as const, nome_arquivo: 'media.png',
+    mime_type: 'image/png', tamanho_bytes: 123, sha256: 'a'.repeat(64), versao: 1,
+  };
+  const created = await repo.withTransaction((tx) => repo.createMidia(scope, produtoId, data, tx));
+  assert.ok(created);
+  assert.equal(created.status, 'QUARENTENA');
+  assert.equal(created.principal, false);
+  assert.equal(created.empresa_id, scope.empresaId);
+  assert.equal(created.tamanho_bytes, 123);
+  assert.deepEqual((await repo.listMidias(scope, produtoId)).map((row) => row.id), [created.id]);
+  const foreign = { ...scope, empresaId: otherEmpresaId };
+  assert.deepEqual(await repo.listMidias(foreign, produtoId), []);
+  const foreignData = { ...data, storage_key: storageKey.replace(
+    `/companies/${scope.empresaId}/`, `/companies/${otherEmpresaId}/`,
+  ) };
+  assert.equal(await repo.withTransaction((tx) => repo.createMidia(foreign, produtoId, foreignData, tx)), null);
+  assert.equal(await repo.withTransaction((tx) => repo.deactivateMidia(foreign, produtoId, created.id, tx)), null);
+  await assert.rejects(repo.withTransaction((tx) => repo.createMidia(scope, produtoId, data, tx)), /unique|duplicate/i);
+  await assert.rejects(repo.withTransaction((tx) => repo.createMidia(scope, produtoId, {
+    ...data, storage_key: `groups/${randomUUID()}/companies/${scope.empresaId}/products/${produtoId}/images/bad.png`,
+  }, tx)), /TENANT_FK_MISMATCH/);
+  const rollbackData = { ...data, storage_key: `${storageKey}-rollback` };
+  await assert.rejects(repo.withTransaction(async (tx) => {
+    await repo.createMidia(scope, produtoId, rollbackData, tx);
+    throw new Error('MEDIA_ROLLBACK');
+  }), /MEDIA_ROLLBACK/);
+  assert.equal((await repo.listMidias(scope, produtoId)).some((row) => row.storage_key === rollbackData.storage_key), false);
+  await assert.rejects(repo.withTransaction(async (tx) => {
+    await repo.deactivateMidia(scope, produtoId, created.id, tx);
+    throw new Error('MEDIA_ROLLBACK');
+  }), /MEDIA_ROLLBACK/);
+  assert.equal((await repo.listMidias(scope, produtoId))[0]?.id, created.id);
+  const inactive = await repo.withTransaction((tx) => repo.deactivateMidia(scope, produtoId, created.id, tx));
+  assert.equal(inactive?.status, 'INATIVO');
+  assert.equal(inactive?.ativo, false);
+  assert.deepEqual(await repo.listMidias(scope, produtoId), []);
+  assert.equal(await repo.withTransaction((tx) => repo.deactivateMidia(scope, produtoId, created.id, tx)), null);
+}
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import type { ProdutoRepository } from '../src/repositories/inMemoryProdutoRepository.js';

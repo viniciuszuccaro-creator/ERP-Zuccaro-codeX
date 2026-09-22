@@ -1,6 +1,7 @@
 import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope } from '../services/tenantCrudService.js';
-import type { Produto, ProdutoCreate, ProdutoEquivalente, ProdutoEquivalenteCreate, ProdutoEquivalenteUpdate, ProdutoUpdate, ProdutoVariante, ProdutoVarianteCreate, ProdutoVarianteUpdate } from './produtoTypes.js';
+import { produtoMidiaCreateSchema } from './produtoTypes.js';
+import type { Produto, ProdutoCreate, ProdutoEquivalente, ProdutoEquivalenteCreate, ProdutoEquivalenteUpdate, ProdutoMidia, ProdutoMidiaCreate, ProdutoUpdate, ProdutoVariante, ProdutoVarianteCreate, ProdutoVarianteUpdate } from './produtoTypes.js';
 import type { ProdutoListFilter, ProdutoReadOptions, ProdutoRepository } from './inMemoryProdutoRepository.js';
 
 function ts(row: Record<string, unknown>) {
@@ -423,5 +424,48 @@ export class PostgresProdutoRepository implements ProdutoRepository {
       RETURNING id,group_id,empresa_id,produto_id,produto_equivalente_id,tipo,direcional,aprovado,ativo`,
       [equivalentId, scope.groupId, produtoId, scope.empresaId ?? null]);
     return (result.rows[0] as ProdutoEquivalente | undefined) ?? null;
+  }
+
+  async listMidias(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia[]> {
+    const params: unknown[] = [scope.groupId, produtoId];
+    let sql = `SELECT id,group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,mime_type,
+      tamanho_bytes,sha256,versao,status,principal,ativo FROM produto_midias
+      WHERE group_id=$1 AND produto_id=$2 AND ativo=true`;
+    if (scope.empresaId) { params.push(scope.empresaId); sql += ` AND empresa_id=$${params.length}`; }
+    sql += ' ORDER BY versao ASC,id ASC';
+    const result = await (executor ?? this.db).query(sql, params);
+    return result.rows.map((row) => ({ ...row, tamanho_bytes: Number(row.tamanho_bytes) }) as ProdutoMidia);
+  }
+
+  async createMidia(scope: Scope, produtoId: string, data: ProdutoMidiaCreate, executor?: DbQueryExecutor): Promise<ProdutoMidia | null> {
+    if (!scope.empresaId) return null;
+    if (!executor) throw new Error('MEDIA_TRANSACTION_REQUIRED');
+    const parsed = produtoMidiaCreateSchema.parse(data);
+    const prefix = `groups/${scope.groupId}/companies/${scope.empresaId}/products/${produtoId}/`;
+    if (!parsed.storage_key.startsWith(prefix)) throw new Error('TENANT_FK_MISMATCH');
+    const result = await executor.query(
+      `INSERT INTO produto_midias (group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,
+        mime_type,tamanho_bytes,sha256,versao)
+       SELECT $1,$2,p.id,$4,$5,$6,$7,$8,$9,$10 FROM produtos p
+       WHERE p.id=$3 AND p.group_id=$1 AND p.empresa_id IS NOT DISTINCT FROM $2::uuid AND p.ativo=true
+       RETURNING id,group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,mime_type,
+         tamanho_bytes,sha256,versao,status,principal,ativo`,
+      [scope.groupId, scope.empresaId, produtoId, parsed.storage_key, parsed.categoria,
+        parsed.nome_arquivo, parsed.mime_type, parsed.tamanho_bytes, parsed.sha256, parsed.versao],
+    );
+    return result.rows[0] ? { ...result.rows[0], tamanho_bytes: Number(result.rows[0].tamanho_bytes) } as ProdutoMidia : null;
+  }
+
+  async deactivateMidia(scope: Scope, produtoId: string, midiaId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null> {
+    if (!scope.empresaId) return null;
+    if (!executor) throw new Error('MEDIA_TRANSACTION_REQUIRED');
+    const result = await executor.query(
+      `UPDATE produto_midias SET ativo=false,status='INATIVO',principal=false,updated_at=timezone('utc',now())
+       WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND produto_id=$4 AND ativo=true
+       RETURNING id,group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,mime_type,
+         tamanho_bytes,sha256,versao,status,principal,ativo`,
+      [midiaId, scope.groupId, scope.empresaId, produtoId],
+    );
+    return result.rows[0] ? { ...result.rows[0], tamanho_bytes: Number(result.rows[0].tamanho_bytes) } as ProdutoMidia : null;
   }
 }

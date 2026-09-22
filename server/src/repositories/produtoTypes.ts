@@ -184,6 +184,24 @@ export type ProdutoEquivalente = {
   direcional: boolean; aprovado: boolean; ativo: boolean;
 };
 
+export const produtoMidiaCreateSchema = z.object({
+  storage_key: z.string().trim().min(1).max(1000),
+  categoria: z.enum(['IMAGEM', 'VIDEO', 'DESENHO', 'MANUAL', 'CERTIFICADO', 'CAD']),
+  nome_arquivo: z.string().trim().min(1).max(255),
+  mime_type: z.string().trim().min(1).max(120),
+  tamanho_bytes: z.number().int().positive().safe(),
+  sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  versao: z.number().int().positive().default(1),
+}).strict();
+export type ProdutoMidiaCreate = z.input<typeof produtoMidiaCreateSchema>;
+export type ProdutoMidia = {
+  id: string; group_id: string; empresa_id: string | null; produto_id: string;
+  storage_key: string; categoria: z.infer<typeof produtoMidiaCreateSchema>['categoria'];
+  nome_arquivo: string; mime_type: string; tamanho_bytes: number; sha256: string;
+  versao: number; status: 'QUARENTENA' | 'APROVADO' | 'REJEITADO' | 'INATIVO';
+  principal: boolean; ativo: boolean;
+};
+
 /** Campos proibidos no payload Produto (transactional / operacional). */
 
 export const produtoVarianteCreateSchema = z.object({
