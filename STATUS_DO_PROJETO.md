@@ -9906,3 +9906,10 @@ Checklist inicial:
 - Definidos contratos HTTP, tenant/RBAC, transação, idempotência, sequência, auditoria, compatibilidade e envelope lógico de eventos.
 - `integration_events` será reutilizada como outbox; qualquer hardening futuro será aditivo na Onda 15, sem tabela paralela.
 - Nenhum código runtime, schema, migration, VPS, porta 3080 ou dado real foi alterado. Próximo checkpoint: contrato da Onda 1 Produto/PIM/DAM.
+### Programa Comercial 360 Omnicanal - Contrato Onda 1 Produto/PIM/DAM (2026-09-22)
+
+- Produto foi confirmado como mestre único; Cadastros, service, repositories e `/api/v1/produtos` serão ampliados sem entidade paralela.
+- Contrato separa identidade universal, variantes, conteúdo por canal, mídias versionadas e equivalentes; preço, estoque, custo e BOM permanecem nos módulos proprietários.
+- DAM reutilizará `StoragePort` com storage privado, hash, MIME, antivírus/quarentena, URL assinada curta e auditoria sem tokens.
+- Compatibilidade preserva `foto_produto_url` como projeção temporária até migração de consumidores. Nenhuma migration ou código runtime foi criado neste checkpoint.
+- Próximo checkpoint: contrato Onda 3 Cliente 360/CRM.
