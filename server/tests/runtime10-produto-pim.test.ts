@@ -1,8 +1,99 @@
+
+function mediaFixture(produtoId: string) {
+  return {
+    storage_key: `groups/${GROUP}/companies/${EMPRESA}/products/${produtoId}/images/${randomUUID()}-synthetic.png`,
+    categoria: 'IMAGEM', nome_arquivo: 'synthetic.png', mime_type: 'image/png',
+    tamanho_bytes: 8, sha256: 'b'.repeat(64), versao: 1,
+  };
+}
+
+function verifiedStorage(override: Partial<{ sha256: string; version: number }> = {}) {
+  let calls = 0;
+  const storage: StoragePort = {
+    createSignedUploadUrl: async () => { throw new Error('UNUSED'); },
+    confirmUpload: async (request) => {
+      calls += 1;
+      return {
+        storageKey: request.storageKey, fileName: request.fileName, mimeType: request.mimeType,
+        sizeBytes: request.sizeBytes, sha256: override.sha256 ?? request.sha256,
+        version: override.version ?? 1,
+      };
+    },
+    createSignedDownloadUrl: async () => { throw new Error('UNUSED'); },
+  };
+  return { storage, calls: () => calls };
+}
+
+test('DAM Produto confirma Storage, registra quarentena e audita sem chave ou checksum', async () => {
+  const fake = verifiedStorage();
+  const { service, audit, ctx } = harness(undefined, fake.storage);
+  const produto = await service.create(ctx, { descricao: 'Midia sintetica' });
+  const data = mediaFixture(produto.id);
+  const row = await service.registerMidia(ctx, produto.id, data);
+  assert.equal(row.status, 'QUARENTENA');
+  assert.equal(row.principal, false);
+  assert.equal(fake.calls(), 1);
+  assert.deepEqual((await service.listMidias(ctx, produto.id)).map((item) => item.id), [row.id]);
+  const logs = await audit.listByEntity('ProdutoMidia', row.id);
+  assert.equal(logs[0]?.action, 'create');
+  assert.equal(JSON.stringify(logs).includes(data.storage_key), false);
+  assert.equal(JSON.stringify(logs).includes(data.sha256), false);
+  const inactive = await service.deactivateMidia(ctx, produto.id, row.id);
+  assert.equal(inactive.status, 'INATIVO');
+  assert.deepEqual(await service.listMidias(ctx, produto.id), []);
+  assert.deepEqual((await audit.listByEntity('ProdutoMidia', row.id)).map((entry) => entry.action), ['create', 'soft_delete']);
+});
+
+test('DAM Produto nega RBAC, tenant, payload e confirmacao divergente antes de persistir', async () => {
+  const fake = verifiedStorage();
+  const denied = harness(['visualizar', 'criar'], fake.storage);
+  const produto = await denied.service.create(denied.ctx, { descricao: 'Midia negada' });
+  const data = mediaFixture(produto.id);
+  await assert.rejects(denied.service.registerMidia(denied.ctx, produto.id, data),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED');
+  assert.equal(fake.calls(), 0);
+  const allowed = harness(undefined, fake.storage);
+  const owner = await allowed.service.create(allowed.ctx, { descricao: 'Midia valida' });
+  const ownData = mediaFixture(owner.id);
+  await assert.rejects(allowed.service.registerMidia(allowed.ctx, owner.id, { ...ownData, groupId: GROUP }),
+    (error: unknown) => (error as { code?: string }).code === 'VALIDATION_ERROR');
+  await assert.rejects(allowed.service.registerMidia({ ...allowed.ctx, empresaId: ACTOR }, owner.id, ownData),
+    (error: unknown) => (error as { code?: string }).code === 'TENANT_MISMATCH');
+  await assert.rejects(allowed.service.registerMidia(allowed.ctx, produto.id, data),
+    (error: unknown) => (error as { code?: string }).code === 'PRODUTO_NOT_FOUND');
+  assert.equal(fake.calls(), 0);
+  const mismatch = verifiedStorage({ sha256: 'c'.repeat(64) });
+  const mismatched = harness(undefined, mismatch.storage);
+  const target = await mismatched.service.create(mismatched.ctx, { descricao: 'Checksum divergente' });
+  await assert.rejects(mismatched.service.registerMidia(mismatched.ctx, target.id, mediaFixture(target.id)),
+    (error: unknown) => (error as { code?: string }).code === 'STORAGE_METADATA_MISMATCH');
+  assert.deepEqual(await mismatched.service.listMidias(mismatched.ctx, target.id), []);
+});
+
+test('DAM Produto rollbacka registro e inativacao se auditoria falhar', async () => {
+  const fake = verifiedStorage();
+  const { service, audit, ctx } = harness(undefined, fake.storage);
+  const produto = await service.create(ctx, { descricao: 'Rollback de midia' });
+  const original = audit.append.bind(audit);
+  audit.append = async (...args) => {
+    if (args[0].entity === 'ProdutoMidia') throw new Error('SYNTHETIC_AUDIT_FAILURE');
+    return original(...args);
+  };
+  await assert.rejects(service.registerMidia(ctx, produto.id, mediaFixture(produto.id)), /SYNTHETIC_AUDIT_FAILURE/);
+  assert.deepEqual(await service.listMidias(ctx, produto.id), []);
+  audit.append = original;
+  const row = await service.registerMidia(ctx, produto.id, mediaFixture(produto.id));
+  audit.append = async () => { throw new Error('SYNTHETIC_AUDIT_FAILURE'); };
+  await assert.rejects(service.deactivateMidia(ctx, produto.id, row.id), /SYNTHETIC_AUDIT_FAILURE/);
+  assert.equal((await service.listMidias(ctx, produto.id))[0]?.id, row.id);
+});
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { InMemoryAuditRepository } from '../src/audit/auditRepository.ts';
 import { InMemoryProdutoRelationGuard } from '../src/db/produtoRelationGuard.ts';
 import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
+import { randomUUID } from 'node:crypto';
+import type { StoragePort } from '../src/services/storagePort.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 import { createInMemoryProdutoRepo } from '../src/repositories/inMemoryProdutoRepository.ts';
 import {
@@ -18,14 +109,14 @@ const GROUP = '11111111-1111-4111-8111-111111111111';
 const EMPRESA = '22222222-2222-4222-8222-222222222222';
 const ACTOR = '33333333-3333-4333-8333-333333333333';
 
-function harness(actions = ['visualizar', 'criar', 'editar', 'inativar', 'aprovar-conteudo', 'publicar']) {
+function harness(actions = ['visualizar', 'criar', 'editar', 'inativar', 'aprovar-conteudo', 'publicar'], storage?: StoragePort) {
   const repo = createInMemoryProdutoRepo();
   const tenant = new InMemoryTenantGuard();
   tenant.link(EMPRESA, GROUP);
   const rbac = new InMemoryRbacGuard();
   rbac.link({ actorId: ACTOR, groupId: GROUP, permissions: { Cadastros: { produto: actions } } });
   const audit = new InMemoryAuditRepository();
-  const service = new ProdutoService(repo, audit, tenant, new InMemoryProdutoRelationGuard(), rbac);
+  const service = new ProdutoService(repo, audit, tenant, new InMemoryProdutoRelationGuard(), rbac, storage);
   const ctx = { requestId: 'pim-test', actorId: ACTOR, groupId: GROUP, empresaId: EMPRESA };
   return { repo, audit, service, ctx };
 }

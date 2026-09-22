@@ -12,6 +12,7 @@ import {
   produtoUpdateSchema,
   produtoEquivalenteCreateSchema,
   produtoEquivalenteUpdateSchema,
+  produtoMidiaCreateSchema,
   produtoVarianteCreateSchema,
   produtoVarianteUpdateSchema,
   type ProdutoEquivalenteCreate,
@@ -23,6 +24,7 @@ import {
   type ProdutoUpdate,
 } from '../repositories/produtoTypes.js';
 
+import { NotImplementedStorage, type StoragePort } from './storagePort.js';
 const WORKFLOW_TRANSITIONS: Record<Produto['workflow_status'], Produto['workflow_status'][]> = {
   RASCUNHO: ['EM_REVISAO'],
   EM_REVISAO: ['RASCUNHO', 'APROVADO'],
@@ -55,6 +57,7 @@ export class ProdutoService {
     private readonly tenantGuard: TenantGuard,
     private readonly relationGuard: ProdutoRelationGuard,
     private readonly rbacGuard: RbacGuard,
+    private readonly storage: StoragePort = new NotImplementedStorage(),
   ) {}
 
   async list(ctx: RequestContext, options: ProdutoListOptions = {}) {
@@ -252,6 +255,94 @@ export class ProdutoService {
     });
   }
   /** Garante que CRUD de Produto nao aceita campos transacionais. */
+  async listMidias(ctx: RequestContext, produtoId: string) {
+    this.assertScope(ctx);
+    this.assertRelationId(produtoId);
+    await this.assertPermission(ctx, 'visualizar');
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
+    const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
+    const produto = await this.repo.getById(scope, produtoId);
+    if (!produto || !produto.ativo) throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+    return this.repo.listMidias(scope, produtoId);
+  }
+
+  async registerMidia(ctx: RequestContext, produtoId: string, payload: unknown) {
+    this.assertScope(ctx);
+    this.assertRelationId(produtoId);
+    if (!ctx.empresaId) throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required for media');
+    await this.assertPermission(ctx, 'editar');
+    if (!ctx.actorId) throw new AppError(403, 'PERMISSION_DENIED', 'Actor is required for media');
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
+    const parsed = produtoMidiaCreateSchema.safeParse(payload);
+    if (!parsed.success) throw new AppError(400, 'VALIDATION_ERROR', 'Invalid Produto media payload', parsed.error.flatten());
+    const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
+    const produto = await this.repo.getById(scope, produtoId);
+    if (!produto || !produto.ativo || produto.empresa_id !== ctx.empresaId) {
+      throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+    }
+    const data = parsed.data;
+    const prefix = `groups/${ctx.groupId}/companies/${ctx.empresaId}/products/${produtoId}/`;
+    if (!data.storage_key.startsWith(prefix)) throw new AppError(400, 'VALIDATION_ERROR', 'Media path outside tenant scope');
+    const verified = await this.storage.confirmUpload({
+      groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
+      entity: 'Produto', entityId: produtoId,
+      storageKey: data.storage_key, fileName: data.nome_arquivo,
+      mimeType: data.mime_type, sizeBytes: data.tamanho_bytes, sha256: data.sha256,
+    });
+    if (verified.storageKey !== data.storage_key || verified.fileName !== data.nome_arquivo
+      || verified.mimeType !== data.mime_type || verified.sizeBytes !== data.tamanho_bytes
+      || verified.sha256 !== data.sha256 || verified.version !== data.versao) {
+      throw new AppError(409, 'STORAGE_METADATA_MISMATCH', 'Media metadata differs from verified object');
+    }
+    return this.repo.withTransaction(async (executor) => {
+      const locked = await this.repo.getById(scope, produtoId, executor, { forUpdate: true });
+      if (!locked || !locked.ativo || locked.empresa_id !== ctx.empresaId) {
+        throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+      }
+      let row;
+      try {
+        row = await this.repo.createMidia(scope, produtoId, data, executor);
+      } catch (error) { this.rethrowConflict(error); throw error; }
+      if (!row) throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+      await this.audit.append({
+        groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
+        actorEmail: ctx.actorEmail, entity: 'ProdutoMidia', entityId: row.id,
+        action: 'create',
+        afterData: { categoria: row.categoria, versao: row.versao, status: row.status, tamanho_bytes: row.tamanho_bytes },
+        requestId: ctx.requestId, ipAddress: ctx.ipAddress,
+      }, executor);
+      return row;
+    });
+  }
+
+  async deactivateMidia(ctx: RequestContext, produtoId: string, midiaId: string) {
+    this.assertScope(ctx);
+    this.assertRelationId(produtoId);
+    this.assertRelationId(midiaId);
+    if (!ctx.empresaId) throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required for media');
+    await this.assertPermission(ctx, 'editar');
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
+    const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
+    return this.repo.withTransaction(async (executor) => {
+      const produto = await this.repo.getById(scope, produtoId, executor, { forUpdate: true });
+      if (!produto || !produto.ativo || produto.empresa_id !== ctx.empresaId) {
+        throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+      }
+      const before = (await this.repo.listMidias(scope, produtoId, executor)).find((row) => row.id === midiaId);
+      if (!before) throw new AppError(404, 'PRODUTO_MIDIA_NOT_FOUND', 'Media not found in tenant scope');
+      const after = await this.repo.deactivateMidia(scope, produtoId, midiaId, executor);
+      if (!after) throw new AppError(404, 'PRODUTO_MIDIA_NOT_FOUND', 'Media not found in tenant scope');
+      await this.audit.append({
+        groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
+        actorEmail: ctx.actorEmail, entity: 'ProdutoMidia', entityId: midiaId,
+        action: 'soft_delete',
+        beforeData: { categoria: before.categoria, versao: before.versao, status: before.status },
+        afterData: { categoria: after.categoria, versao: after.versao, status: after.status },
+        requestId: ctx.requestId, ipAddress: ctx.ipAddress,
+      }, executor);
+      return after;
+    });
+  }
   async listVariants(ctx: RequestContext, id: string) { return this.listRelations(ctx, id, 'variantes'); }
 
   async listEquivalents(ctx: RequestContext, id: string) { return this.listRelations(ctx, id, 'equivalentes'); }
