@@ -9892,3 +9892,10 @@ Checklist inicial:
 - Entrega inclui Orçamento HTTP funcional, impressão/PDF local, preparação revisável de compartilhamento, Pedido canônico backend/frontend, conversão idempotente, workflow inicial, RBAC, multiempresa, auditoria e preparação de deploy.
 - Envio externo real por WhatsApp/e-mail permanece intencionalmente bloqueado por ausência de credenciais/configuração autorizada. Implantação, migrations VPS, promoção 3080 e merge ficam para gate humano separado.
 - Nenhum backup, PII, dump, `.env`, credencial ou dado real foi enviado ao GitHub.
+### Programa Comercial 360 Omnicanal - Documento mestre e baseline factual (2026-09-22)
+
+- Consolidado `docs/PROGRAMA_COMERCIAL_360_OMNICANAL_EXECUCAO_AUTONOMA.md` a partir da especificação recebida e dos contratos já versionados, sem substituir `COMERCIAL_360.md` ou a fila V1 concluída.
+- O baseline foi corrigido para o HEAD `e960ec4bfcd5fed340ddac75052378c092c7c1f8`: Orçamento e Pedido canônicos iniciais, conversão, frontend, migrations 016/017 e CI `35667682013` já estão comprovados.
+- As 26 ondas receberam controle executável. Ondas 4/5 preservam o trabalho pronto como fundação, mas continuam com lacunas amplas; Ondas 25/26 permanecem bloqueadas por gates de dados reais/VPS.
+- Criadas matriz inicial de rastreabilidade e precedência das especificações. CRM, Produto, Produção, Portal, Chatbot, Estoque, Expedição e marketplaces existentes serão evoluídos, nunca duplicados.
+- Nenhuma alteração de runtime, migration, VPS, porta 3080, backup ou dado real ocorreu. Próximo checkpoint: Onda 0, inventário e contratos compartilhados.
