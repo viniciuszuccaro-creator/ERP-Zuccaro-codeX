@@ -1,4 +1,6 @@
 import { Router, type Request } from 'express';
+import { z } from 'zod';
+import { AppError } from './errors.js';
 import type { AppConfig } from '../config/env.js';
 import { publicConfigView } from '../config/env.js';
 import type { DbClient } from '../db/client.js';
@@ -164,6 +166,26 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
   router.delete('/api/v1/produtos/:id/equivalentes/:equivalentId', requireTenantScope, async (req, res, next) => {
     try { res.json({ data: await service.deactivateEquivalent(ctxFromReq(req), req.params.id, req.params.equivalentId) }); }
     catch (error) { next(error); }
+  });
+
+  router.post('/api/v1/produtos/:id/midias/reservas', requireTenantScope, async (req, res, next) => {
+    try {
+      const result = await service.reserveMidia(ctxFromReq(req), req.params.id, req.body);
+      res.setHeader('Cache-Control', 'no-store');
+      res.status(201).json({ data: result });
+    } catch (error) { next(error); }
+  });
+
+  router.post('/api/v1/produtos/:id/midias/:mediaId/confirmar', requireTenantScope, async (req, res, next) => {
+    try {
+      const parsed = z.object({ attemptId: z.string().uuid() }).strict().safeParse(req.body);
+      if (!parsed.success) throw new AppError(400, 'VALIDATION_ERROR', 'Invalid media confirmation payload');
+      const result = await service.confirmMidia(
+        ctxFromReq(req), req.params.id, req.params.mediaId, parsed.data.attemptId,
+      );
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data: { id: result.id, status: result.status, categoria: result.categoria, versao: result.versao } });
+    } catch (error) { next(error); }
   });
 
   router.get('/api/v1/produtos/:id', requireTenantScope, async (req, res, next) => {

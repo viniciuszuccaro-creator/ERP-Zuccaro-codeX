@@ -10201,3 +10201,12 @@ Checklist inicial:
 - Arquivo alterado: `server/tests/runtime10-produto-pim-postgres-e2e.test.ts`. Nenhuma migration, VPS, porta 3080, main, rota HTTP, dado real ou objeto Storage foi alterado.
 - Proximo gate: se E2E efemero passar, avaliar contrato HTTP da reserva/confirmacao no router existente; antivirus, reconciliacao de orfaos e buckets self-hosted continuam pendentes de gate especifico.
 - Codigo publicado em `e57c4efca9cfb841d810443616c87b39f294b1ad`; workflow `35795871503` da PR #33: frontend SUCCESS, backend SUCCESS, migrations/seed sintetico/test:postgres SUCCESS. R10 PostgreSQL real 3 pass / 0 fail / 0 skip, incluindo o novo fluxo service DAM. Migration 021 nao aplicada na VPS.
+
+### Onda 1 Produto/PIM - contrato HTTP da reserva DAM (2026-09-22)
+- Causa: service e PostgreSQL da reserva/confirmacao ja estavam testados, mas Produto nao oferecia contrato HTTP para o fluxo em duas etapas.
+- As rotas existentes de Produto ganharam POST /:id/midias/reservas (201) e POST /:id/midias/:mediaId/confirmar (200), ambas com contexto tenant e RBAC validados no service. Confirmacao exige body estrito com apenas attemptId; resposta omite chave/checksum internos; Cache-Control no-store protege URL assinada.
+- createApp aceita StoragePort opcional para injecao controlada. Sem adapter configurado, operacao falha fechado com 503; o adapter self-hosted nao foi ativado por esta mudanca, pois bucket/credenciais exigem gate separado.
+- HTTP sintetico: 9/9 no arquivo R10, incluindo payload adulterado, tenant A/A2, RBAC, repeticao e auditoria sanitizada. Backend completo 197 total / 187 pass / 0 fail / 10 skips locais sem DATABASE_URL; backend typecheck/build, audit:baseline, lint, build frontend e diff-check PASS. npm test da raiz retornou sucesso, mas descobriu 0 testes no Windows; nao foi usado como evidencia de cobertura.
+- Arquivos: server/src/api/router.ts, server/src/app.ts, server/tests/runtime10-produto-relacoes-http.test.ts. Nenhuma migration, VPS, bucket, objeto real, porta 3080, main ou dado real foi alterado. PR #33 permanece draft sem merge.
+- Proximo gate: ativacao do StoragePort self-hosted somente apos verificacao autorizada de buckets e credenciais; antes de uso real, concluir antivirus e reconciliacao segura de reservas/orfaos. Integracao no ProdutoFormV22 continua pendente.
+- CI da PR #33 pendente neste checkpoint.

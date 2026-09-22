@@ -8,6 +8,7 @@ import { loadConfig } from '../src/config/env.ts';
 import { createDbClient } from '../src/db/client.ts';
 import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
+import type { StoragePort } from '../src/services/storagePort.ts';
 
 const GROUP_A = '11111111-1111-4111-8111-111111111111';
 const GROUP_B = '22222222-2222-4222-8222-222222222222';
@@ -18,7 +19,7 @@ const ACTOR_A = '66666666-6666-4666-8666-666666666666';
 const ACTOR_B = '77777777-7777-4777-8777-777777777777';
 const ACTOR_DENIED = '88888888-8888-4888-8888-888888888888';
 
-function fixture() {
+function fixture(storagePort?: StoragePort) {
   const config = loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'false' });
   const tenantGuard = new InMemoryTenantGuard();
   tenantGuard.link(EMPRESA_A, GROUP_A);
@@ -29,15 +30,15 @@ function fixture() {
   rbacGuard.link({ actorId: ACTOR_A, groupId: GROUP_A, permissions: allowed });
   rbacGuard.link({ actorId: ACTOR_B, groupId: GROUP_B, permissions: allowed });
   rbacGuard.link({ actorId: ACTOR_DENIED, groupId: GROUP_A, permissions: { Cadastros: { produto: [] } } });
-  return createApp({ config, db: createDbClient(config), useMemory: true, tenantGuard, rbacGuard });
+  return createApp({ config, db: createDbClient(config), useMemory: true, tenantGuard, rbacGuard, storagePort });
 }
 
 function headers(groupId = GROUP_A, empresaId = EMPRESA_A, actorId = ACTOR_A) {
   return { 'content-type': 'application/json', 'x-group-id': groupId, 'x-empresa-id': empresaId, 'x-actor-id': actorId };
 }
 
-async function withHttp<T>(run: (request: (path: string, method?: string, body?: unknown, requestHeaders?: Record<string, string>) => Promise<{ status: number; body: any }>) => Promise<T>) {
-  const { app, auditRepo } = fixture();
+async function withHttp<T>(run: (request: (path: string, method?: string, body?: unknown, requestHeaders?: Record<string, string>) => Promise<{ status: number; body: any }>) => Promise<T>, storagePort?: StoragePort) {
+  const { app, auditRepo } = fixture(storagePort);
   const server = app.listen(0);
   await new Promise<void>((resolve) => server.once('listening', resolve));
   const port = (server.address() as AddressInfo).port;
@@ -285,5 +286,70 @@ test('HTTP Produto protege empresa proprietaria sem bloquear a visao do Grupo', 
     const foreignGroup = await request(path, 'POST', { descricao: 'Grupo externo', empresa_id: EMPRESA_B }, groupHeaders);
     assert.equal(foreignGroup.status, 409);
     assert.equal(foreignGroup.body.error.code, 'TENANT_MISMATCH');
+  });
+});
+test('HTTP R10 DAM: reserva, confirmacao unica, tenant e auditoria sanitizada', async () => {
+  let signCalls = 0;
+  let verifyCalls = 0;
+  const storage: StoragePort = {
+    createSignedUploadUrl: async () => {
+      signCalls += 1;
+      return { url: 'https://synthetic.example.test/upload?token=synthetic',
+        expiresAt: new Date(Date.now() + 60_000).toISOString(), requiredHeaders: {} };
+    },
+    confirmUpload: async (request) => {
+      verifyCalls += 1;
+      return { storageKey: request.storageKey, fileName: request.fileName,
+        mimeType: request.mimeType, sizeBytes: request.sizeBytes, sha256: request.sha256, version: 1 };
+    },
+    createSignedDownloadUrl: async () => { throw new Error('UNUSED'); },
+  };
+  await withHttp(async (request) => {
+    const id = await product(request, 'Produto DAM HTTP sintetico');
+    const path = `/api/v1/produtos/${id}/midias/reservas`;
+    const payload = {
+      storage_key: `groups/${GROUP_A}/companies/${EMPRESA_A}/products/${id}/images/${randomUUID()}-synthetic.png`,
+      categoria: 'IMAGEM', nome_arquivo: 'synthetic.png', mime_type: 'image/png',
+      tamanho_bytes: 8, sha256: 'b'.repeat(64), versao: 1,
+    };
+    assert.equal((await request(path, 'POST', { ...payload, groupId: GROUP_A })).status, 400);
+    assert.equal((await request(path, 'POST', payload, headers(GROUP_A, EMPRESA_A, ACTOR_DENIED))).status, 403);
+    assert.equal((await request(path, 'POST', payload, headers(GROUP_B, EMPRESA_B, ACTOR_B))).status, 400);
+    assert.equal((await request(path, 'POST', payload, headers(GROUP_A, EMPRESA_A2))).status, 400);
+    assert.equal(signCalls, 0);
+    const reserved = await request(path, 'POST', payload);
+    assert.equal(reserved.status, 201, JSON.stringify(reserved.body));
+    assert.equal(signCalls, 1);
+    assert.ok(reserved.body.data.mediaId);
+    assert.ok(reserved.body.data.attemptId);
+    const confirmPath = `/api/v1/produtos/${id}/midias/${reserved.body.data.mediaId}/confirmar`;
+    const attempt = { attemptId: reserved.body.data.attemptId };
+    assert.equal((await request(confirmPath, 'POST', { ...attempt, actorId: ACTOR_A })).status, 400);
+    assert.equal((await request(confirmPath, 'POST', { attemptId: 'invalid' })).status, 400);
+    assert.equal((await request(confirmPath, 'POST', attempt, headers(GROUP_A, EMPRESA_A2))).status, 404);
+    assert.equal((await request(confirmPath, 'POST', attempt, headers(GROUP_A, EMPRESA_A, ACTOR_DENIED))).status, 403);
+    assert.equal(verifyCalls, 0);
+    const confirmed = await request(confirmPath, 'POST', attempt);
+    assert.equal(confirmed.status, 200, JSON.stringify(confirmed.body));
+    assert.equal(confirmed.body.data.status, 'QUARENTENA');
+    assert.equal(confirmed.body.data.storage_key, undefined);
+    assert.equal(confirmed.body.data.sha256, undefined);
+    assert.equal(verifyCalls, 1);
+    assert.equal((await request(confirmPath, 'POST', attempt)).status, 404);
+    const audit = (request as typeof request & { auditRepo: InMemoryAuditRepository }).auditRepo;
+    const logs = await audit.listByEntity('ProdutoMidia', reserved.body.data.mediaId);
+    assert.deepEqual(logs.map((entry) => entry.action), ['create', 'change_status']);
+    assert.equal(JSON.stringify(logs).includes(payload.storage_key), false);
+    assert.equal(JSON.stringify(logs).includes(reserved.body.data.url), false);
+  }, storage);
+});
+
+test('HTTP R10 DAM: sem Storage configurado falha fechado', async () => {
+  await withHttp(async (request) => {
+    const id = await product(request, 'DAM sem adapter');
+    const path = `/api/v1/produtos/${id}/midias/reservas`;
+    const result = await request(path, 'POST', {});
+    assert.equal(result.status, 503);
+    assert.equal(result.body.error.code, 'STORAGE_ADAPTER_NOT_CONFIGURED');
   });
 });

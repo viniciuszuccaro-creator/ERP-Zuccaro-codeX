@@ -60,6 +60,7 @@ import { OrcamentoService } from './services/orcamentoService.js';
 import { InMemoryPedidoRepository } from './repositories/inMemoryPedidoRepository.js';
 import { PostgresPedidoRepository } from './repositories/postgresPedidoRepository.js';
 import { PedidoService } from './services/pedidoService.js';
+import type { StoragePort } from './services/storagePort.js';
 
 export type CreateAppOptions = {
   config: AppConfig;
@@ -71,6 +72,7 @@ export type CreateAppOptions = {
   produtoRelationGuard?: InMemoryProdutoRelationGuard | PostgresProdutoRelationGuard;
   /** Optional RBAC guard using the canonical entityGuard permission tree (tests). */
   rbacGuard?: InMemoryRbacGuard | PostgresRbacGuard;
+  storagePort?: StoragePort;
 };
 
 export function createApp(options: CreateAppOptions) {
@@ -136,6 +138,7 @@ export function createApp(options: CreateAppOptions) {
     tenantGuard,
     produtoRelationGuard,
     rbacGuard,
+    options.storagePort,
   );
   const clienteService = new ClienteService(
     clienteRepo,
