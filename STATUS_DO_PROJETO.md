@@ -10191,3 +10191,4 @@ Checklist inicial:
 - Arquivos: `server/src/services/produtoService.ts`, `server/src/services/produtoMidiaFlow.ts`, `server/tests/runtime10-produto-pim.test.ts`. Helper novo e extracao interna do fluxo existente, sem modulo paralelo.
 - Nenhuma rota HTTP, frontend DAM, migration adicional, VPS, bucket, objeto, porta 3080, main ou dado real foi alterado. PR #33 permanece draft sem merge.
 - Proximo gate: testar fluxo service com repositório PostgreSQL e auditoria reais no banco efemero; so depois considerar rota HTTP, antivirus, reconciliacao de orfaos e bucket self-hosted sob gate autorizado.
+- Codigo publicado em `be5aa9ceac13173128e97e4639ca12cf2f9d8e73`; workflow `35794489694` da PR #33: frontend SUCCESS, backend SUCCESS, migrations/seed sintetico/test:postgres SUCCESS. Migration 021 nao aplicada na VPS.
