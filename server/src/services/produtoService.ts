@@ -107,6 +107,7 @@ export class ProdutoService {
     }
     this.assertTipoItem(parsed.data.tipo_item);
     const empresaId = parsed.data.empresa_id ?? ctx.empresaId ?? null;
+    this.assertEmpresaOwnership(ctx, empresaId);
     await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
     await this.assertRelations(ctx.groupId, parsed.data);
     return this.repo.withTransaction(async (executor) => {
@@ -156,6 +157,7 @@ export class ProdutoService {
         this.assertTipoItem(parsed.data.tipo_item, before.tipo_item);
       }
       const empresaId = parsed.data.empresa_id === undefined ? before.empresa_id : parsed.data.empresa_id;
+      this.assertEmpresaOwnership(ctx, empresaId);
       await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
       await this.assertRelations(ctx.groupId, { ...before, ...parsed.data });
       let updated: Produto | null;
@@ -431,6 +433,12 @@ export class ProdutoService {
       grupoProdutoId: data.grupo_produto_id,
       setorAtividadeId: data.setor_atividade_id,
     });
+  }
+
+  private assertEmpresaOwnership(ctx: RequestContext, empresaId: string | null) {
+    if (ctx.empresaId && empresaId !== ctx.empresaId) {
+      throw new AppError(403, 'EMPRESA_SCOPE_FORBIDDEN', 'Produto ownership outside current empresa scope');
+    }
   }
 
   private rejectOperationalFields(payload: unknown) {

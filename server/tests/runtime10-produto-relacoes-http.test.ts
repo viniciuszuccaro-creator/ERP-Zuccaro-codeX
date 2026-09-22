@@ -249,3 +249,41 @@ test('HTTP R10: falha de auditoria provoca rollback no service, sem mutacao late
     assert.deepEqual((await request(`/api/v1/produtos/${source}`)).body.data, before);
   });
 });
+
+test('HTTP Produto protege empresa proprietaria sem bloquear a visao do Grupo', async () => {
+  await withHttp(async (request) => {
+    const path = '/api/v1/produtos';
+    const deniedCreate = await request(path, 'POST', { descricao: 'Atribuicao indevida', empresa_id: EMPRESA_A2 });
+    assert.equal(deniedCreate.status, 403);
+    assert.equal(deniedCreate.body.error.code, 'EMPRESA_SCOPE_FORBIDDEN');
+    assert.equal((await request(path, 'GET', undefined, headers(GROUP_A, EMPRESA_A2))).body.meta.total, 0);
+
+    const own = await request(path, 'POST', { descricao: 'Produto Empresa A', empresa_id: EMPRESA_A });
+    assert.equal(own.status, 201);
+    const id = own.body.data.id as string;
+    for (const empresaId of [EMPRESA_A2, null]) {
+      const deniedUpdate = await request(`${path}/${id}`, 'PATCH', { empresa_id: empresaId, descricao: 'Troca indevida' });
+      assert.equal(deniedUpdate.status, 403);
+      assert.equal(deniedUpdate.body.error.code, 'EMPRESA_SCOPE_FORBIDDEN');
+    }
+    const unchanged = await request(`${path}/${id}`);
+    assert.equal(unchanged.body.data.empresa_id, EMPRESA_A);
+    assert.equal(unchanged.body.data.descricao, 'Produto Empresa A');
+    assert.equal((await request(`${path}/${id}`, 'GET', undefined, headers(GROUP_A, EMPRESA_A2))).status, 404);
+    const audit = (request as typeof request & { auditRepo: InMemoryAuditRepository }).auditRepo;
+    assert.equal((await audit.listByEntity('Produto', id)).length, 1);
+
+    const groupHeaders = { ...headers() };
+    delete (groupHeaders as Partial<typeof groupHeaders>)['x-empresa-id'];
+    const groupCreate = await request(path, 'POST', {
+      descricao: 'Produto Empresa A2 pelo Grupo', empresa_id: EMPRESA_A2,
+    }, groupHeaders);
+    assert.equal(groupCreate.status, 201);
+    assert.equal(groupCreate.body.data.empresa_id, EMPRESA_A2);
+    assert.equal((await request(`${path}/${groupCreate.body.data.id}`, 'GET', undefined,
+      headers(GROUP_A, EMPRESA_A2))).status, 200);
+    const foreignGroup = await request(path, 'POST', { descricao: 'Grupo externo', empresa_id: EMPRESA_B }, groupHeaders);
+    assert.equal(foreignGroup.status, 409);
+    assert.equal(foreignGroup.body.error.code, 'TENANT_MISMATCH');
+  });
+});
