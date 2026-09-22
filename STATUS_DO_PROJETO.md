@@ -9920,3 +9920,10 @@ Checklist inicial:
 - Busca e blocos sensíveis exigem permissões próprias; cache inclui ator, Grupo, Empresa, cliente e permissões.
 - LGPD, auditoria sanitizada e falha parcial segura foram definidos. Nenhum runtime/schema foi alterado.
 - Próximo checkpoint: contrato Onda 5, lacunas do Pedido 360.
+### Programa Comercial 360 Omnicanal - Contrato Onda 5 Pedido 360 (2026-09-22)
+
+- Migration 017 e PedidoService permanecem o agregado único; canais externos serão adaptadores com origem, identificador externo e idempotência tenant-scoped.
+- Lacunas congeladas: crédito, reserva, produção, expedição, faturamento parcial, anexos e revisões após marcos críticos, sempre pelos módulos proprietários.
+- Estados atuais serão preservados durante evolução aditiva; `FINALIZADO` continua estado final visível e cancelamento nunca apaga histórico.
+- Primeiro incremento futuro será origem/canal/idempotência no domínio existente. Nenhum runtime/schema foi alterado neste contrato.
+- Próximo checkpoint: contrato Onda 9 Engenharia e arquivos técnicos.
