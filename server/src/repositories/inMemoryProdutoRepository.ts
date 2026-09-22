@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';
-import type { Produto, ProdutoCreate, ProdutoUpdate } from './produtoTypes.js';
+import type { Produto, ProdutoCreate, ProdutoEquivalente, ProdutoUpdate, ProdutoVariante } from './produtoTypes.js';
 
 function nowIso() { return new Date().toISOString(); }
 
@@ -39,6 +39,8 @@ export interface ProdutoRepository extends TenantEntityRepository<Produto, Produ
     requestId: string,
     executor?: DbQueryExecutor,
   ): Promise<void>;
+  listVariants(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoVariante[]>;
+  listEquivalents(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoEquivalente[]>;
 }
 
 function buildProduto(scope: Scope, data: ProdutoCreate, id: string, ts: string): Produto {
@@ -223,6 +225,10 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     }
     this.publicationEvents.push({ groupId: scope.groupId, empresaId: produto.empresa_id, produtoId: produto.id, requestId });
   }
+  async listVariants(_scope: Scope, _produtoId: string): Promise<ProdutoVariante[]> { return []; }
+
+  async listEquivalents(_scope: Scope, _produtoId: string): Promise<ProdutoEquivalente[]> { return []; }
+
 
   listPublicationEvents() {
     return structuredClone(this.publicationEvents);

@@ -118,3 +118,18 @@ test('Falha de auditoria rollbacka publicacao e evento outbox na mesma transacao
   assert.equal((await repo.getById({ groupId: GROUP, empresaId: EMPRESA }, created.id))?.workflow_status, 'APROVADO');
   assert.equal(repo.listPublicationEvents().length, 0);
 });
+
+test('Variantes e equivalentes exigem Produto no tenant e RBAC visualizar', async () => {
+  const { service, ctx } = harness();
+  const created = await service.create(ctx, { descricao: 'Relacoes sinteticas' });
+  assert.deepEqual(await service.listVariants(ctx, created.id), []);
+  assert.deepEqual(await service.listEquivalents(ctx, created.id), []);
+
+  const denied = harness(['criar']);
+  const deniedRow = await denied.service.create(denied.ctx, { descricao: 'Relacoes sem leitura' });
+  await assert.rejects(
+    () => denied.service.listVariants(denied.ctx, deniedRow.id),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED',
+  );
+  await assert.rejects(() => service.listEquivalents(ctx, crypto.randomUUID()), /not found/i);
+});

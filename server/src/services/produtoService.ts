@@ -242,6 +242,23 @@ export class ProdutoService {
     });
   }
   /** Garante que CRUD de Produto nao aceita campos transacionais. */
+  async listVariants(ctx: RequestContext, id: string) { return this.listRelations(ctx, id, 'variantes'); }
+
+  async listEquivalents(ctx: RequestContext, id: string) { return this.listRelations(ctx, id, 'equivalentes'); }
+
+  private async listRelations(ctx: RequestContext, id: string, kind: 'variantes' | 'equivalentes') {
+    this.assertScope(ctx);
+    await this.assertPermission(ctx, 'visualizar');
+    const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
+    const produto = await this.repo.getById(scope, id);
+    if (!produto || produto.ativo === false) {
+      throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+    }
+    return kind === 'variantes'
+      ? this.repo.listVariants(scope, id)
+      : this.repo.listEquivalents(scope, id);
+  }
+
   assertNoStockSideEffects(payload: unknown) {
     this.rejectOperationalFields(payload);
   }

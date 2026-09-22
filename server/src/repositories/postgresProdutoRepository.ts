@@ -1,6 +1,6 @@
 import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope } from '../services/tenantCrudService.js';
-import type { Produto, ProdutoCreate, ProdutoUpdate } from './produtoTypes.js';
+import type { Produto, ProdutoCreate, ProdutoEquivalente, ProdutoUpdate, ProdutoVariante } from './produtoTypes.js';
 import type { ProdutoListFilter, ProdutoReadOptions, ProdutoRepository } from './inMemoryProdutoRepository.js';
 
 function ts(row: Record<string, unknown>) {
@@ -341,4 +341,20 @@ export class PostgresProdutoRepository implements ProdutoRepository {
       ],
     );
   }
+  async listVariants(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoVariante[]> {
+    const q = executor ?? this.db; const params: unknown[] = [scope.groupId, produtoId];
+    let sql = 'SELECT id,group_id,empresa_id,produto_id,sku,nome,atributos,ativo FROM produto_variantes WHERE group_id=$1 AND produto_id=$2 AND ativo=true';
+    if (scope.empresaId) { params.push(scope.empresaId); sql += ` AND empresa_id=$${params.length}`; }
+    sql += ' ORDER BY sku ASC,id ASC';
+    return (await q.query(sql, params)).rows as ProdutoVariante[];
+  }
+
+  async listEquivalents(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoEquivalente[]> {
+    const q = executor ?? this.db; const params: unknown[] = [scope.groupId, produtoId];
+    let sql = 'SELECT id,group_id,empresa_id,produto_id,produto_equivalente_id,tipo,direcional,aprovado,ativo FROM produto_equivalentes WHERE group_id=$1 AND produto_id=$2 AND ativo=true';
+    if (scope.empresaId) { params.push(scope.empresaId); sql += ` AND empresa_id=$${params.length}`; }
+    sql += ' ORDER BY tipo ASC,produto_equivalente_id ASC,id ASC';
+    return (await q.query(sql, params)).rows as ProdutoEquivalente[];
+  }
+
 }

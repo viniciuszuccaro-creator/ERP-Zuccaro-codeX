@@ -126,6 +126,16 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
     }
   });
 
+  router.get('/api/v1/produtos/:id/variantes', requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.listVariants(ctxFromReq(req), req.params.id) }); }
+    catch (error) { next(error); }
+  });
+
+  router.get('/api/v1/produtos/:id/equivalentes', requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.listEquivalents(ctxFromReq(req), req.params.id) }); }
+    catch (error) { next(error); }
+  });
+
   router.get('/api/v1/produtos/:id', requireTenantScope, async (req, res, next) => {
     try {
       const row = await service.get(ctxFromReq(req), req.params.id);

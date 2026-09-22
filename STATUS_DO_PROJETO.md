@@ -10058,3 +10058,8 @@ Checklist inicial:
 - Commit remoto `c61631064a336ea5452d40ca63f8e0115c041e3e`; workflows `35756386303` e `35756379721`: frontend SUCCESS e backend SUCCESS.
 - PostgreSQL efemero autorizado: R08B 2/2, R08C 2/2, R09 2/2 e R10 1/1, com 0 falhas e 0 skips. Migrations 001-018 aplicadas somente na CI.
 - Proximo lote funcional: APIs tenant-aware de variantes e equivalentes no `ProdutoService` e repositories existentes, com RBAC, auditoria transacional e sem migration adicional.
+
+### Onda 1 Produto/PIM - leitura de variantes e equivalentes (2026-09-22)
+- `ProdutoRepository`, adapters in-memory/PostgreSQL e `ProdutoService` passaram a expor consultas tenant-scoped das estruturas existentes da migration 018.
+- Rotas GET canonicas exigem `Cadastros.produto.visualizar`, confirmam o Produto ativo no mesmo Grupo/Empresa e retornam 404 seguro fora do tenant.
+- Teste R10 direcionado: 5 pass / 0 fail; typecheck e `git diff --check`: PASS. Nenhuma migration, VPS, porta 3080 ou dado real foi alterado.
