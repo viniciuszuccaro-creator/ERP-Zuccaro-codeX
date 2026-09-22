@@ -5,12 +5,14 @@ import { loadConfig } from '../src/config/env.ts';
 import { createApp } from '../src/app.ts';
 import { createDbClient } from '../src/db/client.ts';
 import { InMemoryProdutoRelationGuard } from '../src/db/produtoRelationGuard.ts';
+import { InMemoryRbacGuard, type RbacGuard } from '../src/db/rbacGuard.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 import { listMigrationFiles } from '../src/db/migrate.ts';
 import { createInMemoryProdutoRepo } from '../src/repositories/inMemoryProdutoRepository.ts';
 import {
   PRODUTO_FORBIDDEN_OPERATIONAL_FIELDS,
   PRODUTO_TIPOS_CANONICOS,
+  isProdutoTipoCanonico,
   normalizeProdutoTipoItem,
   produtoCreateSchema,
   produtoUpdateSchema,
@@ -29,7 +31,20 @@ const GRUPO_A = 'eeeeeeee-1111-4111-8111-eeeeeeeeeeee';
 const GRUPO_B = 'ffffffff-2222-4222-8222-ffffffffffff';
 const SETOR_A = '99999999-1111-4111-8111-999999999999';
 const SETOR_B = '88888888-2222-4222-8222-888888888888';
+const ACTOR_A = '77777777-1111-4111-8111-777777777777';
+const ACTOR_B = '66666666-2222-4222-8222-666666666666';
 
+function allowAllRbac(): RbacGuard {
+  return { assertAllowed: async () => undefined };
+}
+
+function linkedRbac() {
+  const guard = new InMemoryRbacGuard();
+  const permissions = { Cadastros: { produto: ['visualizar', 'criar', 'editar', 'inativar'] } };
+  guard.link({ actorId: ACTOR_A, groupId: GROUP_A, permissions });
+  guard.link({ actorId: ACTOR_B, groupId: GROUP_B, permissions });
+  return guard;
+}
 function linkedGuard() {
   const guard = new InMemoryTenantGuard();
   guard.link(EMPRESA_A, GROUP_A);
@@ -74,6 +89,9 @@ test('Produto normaliza aliases PIM conhecidos sem reclassificar legado desconhe
   assert.equal(normalizeProdutoTipoItem('producao_aco'), 'producao_aco');
   assert.equal(normalizeProdutoTipoItem('fabricado'), PRODUTO_TIPOS_CANONICOS.FABRICADO);
   assert.equal(normalizeProdutoTipoItem('Linha Legada Especial'), 'Linha Legada Especial');
+  assert.equal(normalizeProdutoTipoItem('consumo_interno'), PRODUTO_TIPOS_CANONICOS.CONSUMO_INTERNO);
+  assert.equal(isProdutoTipoCanonico('consumo-interno'), true);
+  assert.equal(isProdutoTipoCanonico('Linha Legada Especial'), false);
 
   assert.equal(
     produtoCreateSchema.parse({ descricao: 'Produto sintético', tipo_item: 'servico' }).tipo_item,
@@ -88,6 +106,92 @@ test('Produto normaliza aliases PIM conhecidos sem reclassificar legado desconhe
     PRODUTO_TIPOS_CANONICOS.REVENDA,
   );
 });
+test('Produto RBAC falha fechado e classificação bloqueia novos valores desconhecidos', async () => {
+  const ctx = {
+    requestId: 'produto-rbac',
+    actorId: ACTOR_A,
+    groupId: GROUP_A,
+    empresaId: EMPRESA_A,
+  };
+  const denied = new ProdutoService(
+    createInMemoryProdutoRepo(),
+    new InMemoryAuditRepository(),
+    linkedGuard(),
+    linkedRelations(),
+    new InMemoryRbacGuard(),
+  );
+  await assert.rejects(
+    () => denied.list(ctx),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED',
+  );
+
+  const readOnlyRbac = new InMemoryRbacGuard();
+  readOnlyRbac.link({
+    actorId: ACTOR_A,
+    groupId: GROUP_A,
+    permissions: { Cadastros: { produto: ['visualizar'] } },
+  });
+  const readOnly = new ProdutoService(
+    createInMemoryProdutoRepo(),
+    new InMemoryAuditRepository(),
+    linkedGuard(),
+    linkedRelations(),
+    readOnlyRbac,
+  );
+  assert.deepEqual((await readOnly.list(ctx)).data, []);
+  await assert.rejects(
+    () => readOnly.create(ctx, { descricao: 'Produto negado' }),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED',
+  );
+
+  const allowed = new ProdutoService(
+    createInMemoryProdutoRepo(),
+    new InMemoryAuditRepository(),
+    linkedGuard(),
+    linkedRelations(),
+    linkedRbac(),
+  );
+  const consumo = await allowed.create(ctx, {
+    descricao: 'Produto consumo interno',
+    tipo_item: 'consumo_interno',
+  });
+  assert.equal(consumo.tipo_item, PRODUTO_TIPOS_CANONICOS.CONSUMO_INTERNO);
+  await assert.rejects(
+    () => allowed.create(ctx, { descricao: 'Produto inválido', tipo_item: 'Classificação inventada' }),
+    (error: unknown) => (error as { code?: string }).code === 'PRODUTO_TIPO_INVALIDO',
+  );
+});
+
+test('Produto preserva tipo legado existente sem permitir troca para outro desconhecido', async () => {
+  const repo = createInMemoryProdutoRepo();
+  const legacy = await repo.create(
+    { groupId: GROUP_A, empresaId: EMPRESA_A },
+    { descricao: 'Produto legado', tipo_item: 'Linha Legada Especial' },
+  );
+  const service = new ProdutoService(
+    repo,
+    new InMemoryAuditRepository(),
+    linkedGuard(),
+    linkedRelations(),
+    linkedRbac(),
+  );
+  const ctx = {
+    requestId: 'produto-legado',
+    actorId: ACTOR_A,
+    groupId: GROUP_A,
+    empresaId: EMPRESA_A,
+  };
+
+  const preserved = await service.update(ctx, legacy.id, {
+    descricao: 'Produto legado revisado',
+    tipo_item: 'Linha Legada Especial',
+  });
+  assert.equal(preserved.tipo_item, 'Linha Legada Especial');
+  await assert.rejects(
+    () => service.update(ctx, legacy.id, { tipo_item: 'Outro tipo desconhecido' }),
+    (error: unknown) => (error as { code?: string }).code === 'PRODUTO_TIPO_INVALIDO',
+  );
+});
 test('AUDIT: Produto descricao before/after + soft delete', async () => {
   const audit = new InMemoryAuditRepository();
   const service = new ProdutoService(
@@ -95,6 +199,7 @@ test('AUDIT: Produto descricao before/after + soft delete', async () => {
     audit,
     linkedGuard(),
     linkedRelations(),
+    allowAllRbac(),
   );
   const ctx = {
     requestId: 'p-audit-1',
@@ -139,6 +244,7 @@ test('cross-tenant FK blocked for marca/unidade/grupo/setor', async () => {
     new InMemoryAuditRepository(),
     linkedGuard(),
     linkedRelations(),
+    allowAllRbac(),
   );
   const ctx = { requestId: 'fk', groupId: GROUP_A, empresaId: EMPRESA_A };
 
@@ -178,6 +284,7 @@ test('Produto rejects operational fields and same-group codigo conflict', async 
     new InMemoryAuditRepository(),
     linkedGuard(),
     linkedRelations(),
+    allowAllRbac(),
   );
   const ctx = { requestId: 'op', groupId: GROUP_A, empresaId: EMPRESA_A };
 
@@ -214,6 +321,7 @@ test('API Produto pagination + tenant isolation + search no leak', async () => {
     useMemory: true,
     tenantGuard: linkedGuard(),
     produtoRelationGuard: linkedRelations(),
+    rbacGuard: linkedRbac(),
   });
 
   for (let i = 0; i < 3; i += 1) {
@@ -289,6 +397,7 @@ test('API Produto cross-tenant empresa and FK via HTTP', async () => {
     useMemory: true,
     tenantGuard: linkedGuard(),
     produtoRelationGuard: linkedRelations(),
+    rbacGuard: linkedRbac(),
   });
 
   const crossEmpresa = await fetchStatus(app, '/api/v1/produtos', {
@@ -330,6 +439,7 @@ test('soft-deleted produto excluded from default list/search/count (defeito VPS)
     useMemory: true,
     tenantGuard: linkedGuard(),
     produtoRelationGuard: linkedRelations(),
+    rbacGuard: linkedRbac(),
   });
   const headersA = {
     'content-type': 'application/json',
@@ -410,6 +520,7 @@ test('soft-delete visibility respeita tenant A/B', async () => {
     useMemory: true,
     tenantGuard: linkedGuard(),
     produtoRelationGuard: linkedRelations(),
+    rbacGuard: linkedRbac(),
   });
 
   const a1 = await fetchOk(app, '/api/v1/produtos', {
@@ -467,7 +578,11 @@ async function fetchStatus(app: ReturnType<typeof createApp>['app'], path: strin
     throw new Error('Unable to bind test server');
   }
   try {
-    const response = await fetch(`http://127.0.0.1:${address.port}${path}`, init);
+    const headers = new Headers(init.headers);
+    if (!headers.has('x-actor-id')) {
+      headers.set('x-actor-id', headers.get('x-group-id') === GROUP_B ? ACTOR_B : ACTOR_A);
+    }
+    const response = await fetch(`http://127.0.0.1:${address.port}${path}`, { ...init, headers });
     const text = await response.text();
     const body = text ? JSON.parse(text) : null;
     return { statusCode: response.status, body, headers: response.headers };

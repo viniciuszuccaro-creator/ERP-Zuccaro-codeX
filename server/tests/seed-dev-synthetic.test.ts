@@ -317,7 +317,7 @@ function makeServiceWithSeedRelations(legacyMarcaInGroupA = true) {
   relations.linkSetor(SEED_IDS.setorA, SEED_IDS.groupA);
   relations.linkSetor(SEED_IDS.setorB, SEED_IDS.groupB);
   const repo = createInMemoryProdutoRepo();
-  const service = new ProdutoService(repo, audit, tenant, relations);
+  const service = new ProdutoService(repo, audit, tenant, relations, { assertAllowed: async () => undefined });
   return { service, repo };
 }
 

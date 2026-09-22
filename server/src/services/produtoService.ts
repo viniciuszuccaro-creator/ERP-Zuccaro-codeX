@@ -3,9 +3,11 @@ import { sanitizeAuditSnapshot } from '../audit/sanitizeAuditSnapshot.js';
 import { AppError } from '../api/errors.js';
 import type { TenantGuard } from '../db/tenantGuard.js';
 import type { ProdutoRelationGuard } from '../db/produtoRelationGuard.js';
+import type { RbacAction, RbacGuard } from '../db/rbacGuard.js';
 import type { ProdutoRepository } from '../repositories/inMemoryProdutoRepository.js';
 import {
   PRODUTO_FORBIDDEN_OPERATIONAL_FIELDS,
+  isProdutoTipoCanonico,
   produtoCreateSchema,
   produtoUpdateSchema,
   type Produto,
@@ -28,10 +30,12 @@ export class ProdutoService {
     private readonly audit: AuditRepository,
     private readonly tenantGuard: TenantGuard,
     private readonly relationGuard: ProdutoRelationGuard,
+    private readonly rbacGuard: RbacGuard,
   ) {}
 
   async list(ctx: RequestContext, options: ProdutoListOptions = {}) {
     this.assertScope(ctx);
+    await this.assertPermission(ctx, 'visualizar');
     const limit = Math.min(Math.max(options.limit ?? 50, 1), 200);
     const offset = Math.max(options.offset ?? 0, 0);
     // Fail-safe operacional: sem ?ativo= explícito, listar SOMENTE ativo=true.
@@ -60,6 +64,7 @@ export class ProdutoService {
 
   async get(ctx: RequestContext, id: string) {
     this.assertScope(ctx);
+    await this.assertPermission(ctx, 'visualizar');
     const row = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id);
     // Endpoint operacional: soft-deleted (ativo=false) trata-se como inexistente (404).
     if (!row || row.ativo === false) {
@@ -70,11 +75,13 @@ export class ProdutoService {
 
   async create(ctx: RequestContext, payload: unknown) {
     this.assertScope(ctx);
+    await this.assertPermission(ctx, 'criar');
     this.rejectOperationalFields(payload);
     const parsed = produtoCreateSchema.safeParse(payload);
     if (!parsed.success) {
       throw new AppError(400, 'VALIDATION_ERROR', 'Invalid Produto payload', parsed.error.flatten());
     }
+    this.assertTipoItem(parsed.data.tipo_item);
     const empresaId = parsed.data.empresa_id ?? ctx.empresaId ?? null;
     await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
     await this.assertRelations(ctx.groupId, parsed.data);
@@ -105,6 +112,7 @@ export class ProdutoService {
 
   async update(ctx: RequestContext, id: string, payload: unknown) {
     this.assertScope(ctx);
+    await this.assertPermission(ctx, 'editar');
     this.rejectOperationalFields(payload);
     const parsed = produtoUpdateSchema.safeParse(payload);
     if (!parsed.success) {
@@ -115,6 +123,9 @@ export class ProdutoService {
     // Nao editar soft-deleted como se estivesse ativo.
     if (!before || before.ativo === false) {
       throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+    }
+    if (parsed.data.tipo_item !== undefined) {
+      this.assertTipoItem(parsed.data.tipo_item, before.tipo_item);
     }
     const empresaId = parsed.data.empresa_id === undefined ? before.empresa_id : parsed.data.empresa_id;
     await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
@@ -145,6 +156,7 @@ export class ProdutoService {
 
   async softDelete(ctx: RequestContext, id: string) {
     this.assertScope(ctx);
+    await this.assertPermission(ctx, 'inativar');
     const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
     const before = await this.repo.getById(scope, id);
     // Idempotente: ja inativo → 404, sem auditoria enganosa false→false.
@@ -198,6 +210,21 @@ export class ProdutoService {
         { fields: forbidden },
       );
     }
+  }
+
+  private assertTipoItem(value: string, currentLegacyValue?: string) {
+    const preservesLegacy = currentLegacyValue !== undefined && value === currentLegacyValue;
+    if (!isProdutoTipoCanonico(value) && !preservesLegacy) {
+      throw new AppError(
+        400,
+        'PRODUTO_TIPO_INVALIDO',
+        'Produto tipo_item must use the canonical classification',
+      );
+    }
+  }
+
+  private assertPermission(ctx: RequestContext, action: RbacAction) {
+    return this.rbacGuard.assertAllowed(ctx, 'Cadastros', 'produto', action);
   }
 
   private assertScope(ctx: RequestContext) {

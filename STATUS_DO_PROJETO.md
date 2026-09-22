@@ -9998,6 +9998,7 @@ Checklist inicial:
 - Testes direcionados: 9 pass / 0 fail / 0 skip. Suite frontend explicita: 597 pass / 0 fail / 0 skip. `audit:baseline`, lint, build e `git diff --check`: PASS.
 - Typecheck global: baseline legado FAIL (exit 2) em arquivos nao tocados; verificacao direcionada confirmou 0 erros nos arquivos deste incremento.
 - Nenhuma migration, VPS, porta 3080, segredo ou dado real foi alterado. Proximo incremento: concluir a varredura localizada dos consumidores restantes de classificacao de Produto e registrar as lacunas PIM/DAM ainda abertas na Onda 1.
+
 ### Programa Comercial 360 Omnicanal - Onda 1 Produto/PIM, incremento 8 (2026-09-22)
 
 - A varredura localizada da classificação foi concluída: os filtros ativos de contagem em `ProdutosTab` passaram a reutilizar as constantes canônicas, mantendo o contexto Grupo/Empresa já aplicado pelo fluxo.
@@ -10006,3 +10007,11 @@ Checklist inicial:
 - Testes direcionados: 10 pass / 0 fail / 0 skip. Suite frontend explícita: 598 pass / 0 fail / 0 skip. `audit:baseline`, lint, build e `git diff --check`: PASS.
 - Typecheck global permanece no baseline legado conhecido, sem erro apontado nos arquivos deste incremento. Nenhuma migration, VPS, porta 3080, segredo ou dado real foi alterado.
 - Próximo incremento: implementar a classificação no backend canônico `ProdutoService`, com schema estrito, tenant, RBAC e testes, sem migration se a estrutura atual suportar o contrato.
+### Programa Comercial 360 Omnicanal - Onda 1 Produto/PIM, incremento 9 (2026-09-22)
+
+- O `ProdutoService` existente passou a exigir RBAC fail-closed em `Cadastros.produto`: visualizar para list/get, criar para create, editar para update e inativar para soft delete; a composição reutiliza o `RbacGuard` canônico já existente.
+- A taxonomia backend ganhou paridade com o frontend para `Consumo Interno`. Create aceita somente classificação canônica ou alias conhecido; update preserva exatamente um valor legado já persistido, mas bloqueia troca para outro valor desconhecido.
+- Multiempresa, relações tenant-aware, rejeição de campos operacionais e auditoria antes/depois existentes foram preservadas. Nenhuma tabela, rota paralela ou migration foi criada.
+- Testes direcionados runtime02/runtime03: 19 pass / 0 fail / 0 skip. Backend completo em processos isolados: 148 total / 141 pass / 0 fail / 7 skips condicionais sem `DATABASE_URL`; typecheck e build backend: PASS.
+- Frontend: 598 pass / 0 fail / 0 skip; `audit:baseline`, lint, build, `git diff --check` e auditoria de segredos/dados reais: PASS. O runner backend único sofreu OOM acumulativo local; a mesma suíte passou integralmente por arquivo e a CI permanece o gate PostgreSQL sem skips.
+- Nenhuma migration, VPS, porta 3080, segredo ou dado real foi alterado. Próximo incremento: definir o menor conjunto de atributos PIM universais no Produto existente, mantendo DAM/canais bloqueados até `StoragePort` e outbox.

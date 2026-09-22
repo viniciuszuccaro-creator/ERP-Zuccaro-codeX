@@ -18,6 +18,7 @@ export const PRODUTO_TIPOS_CANONICOS = Object.freeze({
   SERVICO: 'Serviço',
   RETALHO: 'Retalho',
   SUCATA: 'Sucata',
+  CONSUMO_INTERNO: 'Consumo Interno',
 } as const);
 
 export type ProdutoTipoCanonico = keyof typeof PRODUTO_TIPOS_CANONICOS;
@@ -34,6 +35,7 @@ const PRODUTO_TIPO_ALIASES = new Map<string, string>([
   ['SERVICO', PRODUTO_TIPOS_CANONICOS.SERVICO],
   ['RETALHO', PRODUTO_TIPOS_CANONICOS.RETALHO],
   ['SUCATA', PRODUTO_TIPOS_CANONICOS.SUCATA],
+  ['CONSUMO INTERNO', PRODUTO_TIPOS_CANONICOS.CONSUMO_INTERNO],
 ]);
 
 function produtoTipoAlias(value: string) {
@@ -54,6 +56,12 @@ export function normalizeProdutoTipoItem(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return PRODUTO_TIPOS_CANONICOS.REVENDA;
   return PRODUTO_TIPO_ALIASES.get(produtoTipoAlias(trimmed)) ?? trimmed;
+}
+
+const PRODUTO_TIPOS_VALUES = new Set<string>(Object.values(PRODUTO_TIPOS_CANONICOS));
+
+export function isProdutoTipoCanonico(value: string) {
+  return PRODUTO_TIPOS_VALUES.has(normalizeProdutoTipoItem(value));
 }
 
 /** Campos MASTER DATA do Produto (RUNTIME-03). Sem estoque/custo/preço/fiscal operacional. */

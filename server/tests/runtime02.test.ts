@@ -6,6 +6,7 @@ import { loadConfig } from '../src/config/env.ts';
 import { createApp } from '../src/app.ts';
 import { createDbClient } from '../src/db/client.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
+import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
 import {
   createInMemoryGrupoProdutoRepo,
   createInMemorySetorRepo,
@@ -30,7 +31,16 @@ const GROUP_A = '11111111-1111-4111-8111-111111111111';
 const GROUP_B = '22222222-2222-4222-8222-222222222222';
 const EMPRESA_A = '33333333-3333-4333-8333-333333333333';
 const EMPRESA_B = '44444444-4444-4444-8444-444444444444';
+const ACTOR_A = '77777777-1111-4111-8111-777777777777';
+const ACTOR_B = '66666666-2222-4222-8222-666666666666';
 
+function linkedRbac() {
+  const guard = new InMemoryRbacGuard();
+  const permissions = { Cadastros: { produto: ['visualizar', 'criar', 'editar', 'inativar'] } };
+  guard.link({ actorId: ACTOR_A, groupId: GROUP_A, permissions });
+  guard.link({ actorId: ACTOR_B, groupId: GROUP_B, permissions });
+  return guard;
+}
 function linkedGuard() {
   const guard = new InMemoryTenantGuard();
   guard.link(EMPRESA_A, GROUP_A);
@@ -138,6 +148,7 @@ test('AUDIT FIX: UnidadeMedida UPDATE snapshot includes nome_completo (VPS defec
     db,
     useMemory: true,
     tenantGuard: linkedGuard(),
+    rbacGuard: linkedRbac(),
   });
 
   const createRes = await fetchStatus(app, '/api/v1/unidades-medida', {
@@ -229,6 +240,7 @@ test('AUDIT FIX: GrupoProduto and SetorAtividade keep entity-specific fields in 
     db,
     useMemory: true,
     tenantGuard: linkedGuard(),
+    rbacGuard: linkedRbac(),
   });
 
   const grupoCreate = await fetchOk(app, '/api/v1/grupos-produto', {
@@ -329,7 +341,7 @@ test('GrupoProduto / SetorAtividade / Produto base isolate tenants A/B', async (
     resolveEmpresaIdFromCreate: (data, scope) => data.empresa_id ?? scope.empresaId,
     resolveEmpresaIdFromUpdate: (data, current) => (data.empresa_id === undefined ? current.empresa_id : data.empresa_id),
   });
-  const produto = new ProdutoService(createInMemoryProdutoRepo(), audit, guard, relationGuard);
+  const produto = new ProdutoService(createInMemoryProdutoRepo(), audit, guard, relationGuard, { assertAllowed: async () => undefined });
 
   const a = { requestId: 'r-a', groupId: GROUP_A, empresaId: EMPRESA_A };
   const b = { requestId: 'r-b', groupId: GROUP_B, empresaId: EMPRESA_B };
@@ -381,6 +393,7 @@ test('API RUNTIME-02 UnidadeMedida E2E + meta + cross-tenant HTTP', async () => 
     db,
     useMemory: true,
     tenantGuard: linkedGuard(),
+    rbacGuard: linkedRbac(),
   });
 
   const meta = await fetchOk(app, '/api/v1/meta');
@@ -492,7 +505,7 @@ test('API RUNTIME-02 UnidadeMedida E2E + meta + cross-tenant HTTP', async () => 
 test('validation rejects empty UnidadeMedida / GrupoProduto / Setor / Produto', async () => {
   const config = testConfig();
   const db = createDbClient(config);
-  const { app } = createApp({ config, db, useMemory: true, tenantGuard: linkedGuard() });
+  const { app } = createApp({ config, db, useMemory: true, tenantGuard: linkedGuard(), rbacGuard: linkedRbac() });
 
   const cases = [
     { path: '/api/v1/unidades-medida', body: { sigla: '', nome_completo: 'X' } },
@@ -524,7 +537,11 @@ async function fetchStatus(app: ReturnType<typeof createApp>['app'], path: strin
     throw new Error('Unable to bind test server');
   }
   try {
-    const response = await fetch(`http://127.0.0.1:${address.port}${path}`, init);
+    const headers = new Headers(init.headers);
+    if (!headers.has('x-actor-id')) {
+      headers.set('x-actor-id', headers.get('x-group-id') === GROUP_B ? ACTOR_B : ACTOR_A);
+    }
+    const response = await fetch(`http://127.0.0.1:${address.port}${path}`, { ...init, headers });
     const text = await response.text();
     const body = text ? JSON.parse(text) : null;
     return { statusCode: response.status, body, headers: response.headers };

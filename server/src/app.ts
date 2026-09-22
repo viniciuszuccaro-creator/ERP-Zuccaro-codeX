@@ -135,6 +135,7 @@ export function createApp(options: CreateAppOptions) {
     auditRepo,
     tenantGuard,
     produtoRelationGuard,
+    rbacGuard,
   );
   const clienteService = new ClienteService(
     clienteRepo,
