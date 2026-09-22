@@ -15,7 +15,7 @@ import {
   TrendingUp, ArrowRightLeft, ShoppingCart, Image, Warehouse,
   Trash2, Power, PowerOff, Save
 } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { base44, isHttpBackendMode } from "@/api/base44Client";
 import { toast } from "sonner";
 import FormWrapper from "@/components/common/FormWrapper";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
@@ -381,12 +381,18 @@ Caso contrário, sugira:
   const handleUploadFoto = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    if (isHttpBackendMode) {
+      toast.error('Upload de foto indisponivel ate a ativacao do Storage do ERP');
+      e.target.value = '';
+      return;
+    }
 
     setUploadingFoto(true);
     
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      setFormData({ ...formData, foto_produto_url: file_url });
+      if (!file_url) throw new Error('Arquivo nao foi armazenado');
+      setFormData((current) => ({ ...current, foto_produto_url: file_url }));
       toast.success('✅ Foto carregada!');
     } catch (error) {
       toast.error('Erro ao fazer upload');
@@ -468,6 +474,10 @@ Caso contrário, sugira:
   };
 
   const gerarImagemIA = async () => {
+    if (isHttpBackendMode) {
+      toast.error('Geracao de imagem indisponivel ate a ativacao do Storage do ERP');
+      return;
+    }
     if (!formData.descricao) {
       toast.error("Preencha a descrição do produto primeiro");
       return;
@@ -480,6 +490,7 @@ Caso contrário, sugira:
         prompt: `Product photography of ${formData.descricao}, professional lighting, white background, high quality, detailed, 4k`
       });
 
+      if (!url) throw new Error('Imagem nao gerada');
       setFormData(prev => ({
         ...prev,
         foto_produto_url: url
@@ -900,6 +911,7 @@ Caso contrário, sugira:
                       type="file"
                       accept="image/*"
                       onChange={handleUploadFoto}
+                      disabled={isHttpBackendMode}
                       className="hidden"
                       id="foto-upload"
                       data-permission="Cadastros.Produto.editar"
@@ -907,7 +919,7 @@ Caso contrário, sugira:
                       data-sensitive
                     />
                     <label htmlFor="foto-upload" className="flex-1">
-                      <Button type="button" variant="outline" size="sm" disabled={uploadingFoto || !contextoValido || (produto?.id ? !podeEditar : !podeCriar)} className="w-full" asChild data-permission="Cadastros.Produto.editar" data-action="abrir-upload-foto-produto" data-sensitive>
+                      <Button type="button" variant="outline" size="sm" disabled={isHttpBackendMode || uploadingFoto || !contextoValido || (produto?.id ? !podeEditar : !podeCriar)} className="w-full" asChild data-permission="Cadastros.Produto.editar" data-action="abrir-upload-foto-produto" data-sensitive>
                         <span>
                           {uploadingFoto ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
                           {formData.foto_produto_url ? 'Alterar' : 'Upload'}
@@ -919,7 +931,7 @@ Caso contrário, sugira:
                         type="button"
                         size="sm"
                         onClick={gerarImagemIA}
-                        disabled={gerandoImagem || !contextoValido || (produto?.id ? !podeEditar : !podeCriar)}
+                        disabled={isHttpBackendMode || gerandoImagem || !contextoValido || (produto?.id ? !podeEditar : !podeCriar)}
                         className="bg-purple-600 hover:bg-purple-700"
                         data-permission="Cadastros.Produto.ia"
                         data-action="gerar-imagem-produto-ia"

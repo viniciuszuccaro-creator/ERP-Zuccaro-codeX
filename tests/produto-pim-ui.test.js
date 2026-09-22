@@ -26,3 +26,17 @@ test('formulario canonico integra secao PIM sem criar tela paralela', async () =
     assert.match(section, new RegExp(field));
   }
 });
+
+test('Produto V22 bloqueia upload legado quando backend HTTP usa Storage oficial', async () => {
+  const form = await readFile(
+    new URL('../src/components/cadastros/ProdutoFormV22_Completo.jsx', import.meta.url),
+    'utf8',
+  );
+  const upload = form.slice(form.indexOf('const handleUploadFoto'), form.indexOf('const toggleUnidadeSecundaria'));
+  assert.match(form, /import \{ base44, isHttpBackendMode \} from "@\/api\/base44Client"/);
+  assert.match(upload, /if \(isHttpBackendMode\)[\s\S]*return;[\s\S]*base44\.integrations\.Core\.UploadFile/);
+  assert.match(form, /onChange=\{handleUploadFoto\}[\s\S]*disabled=\{isHttpBackendMode\}/);
+  assert.match(form, /disabled=\{isHttpBackendMode \|\| uploadingFoto/);
+  assert.match(form, /disabled=\{isHttpBackendMode \|\| gerandoImagem/);
+  assert.match(form, /if \(!url\) throw new Error\('Imagem nao gerada'\)/);
+});
