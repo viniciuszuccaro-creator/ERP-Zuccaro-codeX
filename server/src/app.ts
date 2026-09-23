@@ -212,7 +212,7 @@ export function createApp(options: CreateAppOptions) {
       throw new Error('Supabase Auth configuration missing');
     }
     app.use(createSupabaseAuthMiddleware({
-      supabaseUrl: config.supabaseUrl, anonKey: config.supabaseAnonKey, fetchImpl: options.authFetchImpl,
+      supabaseUrl: config.supabaseUrl, anonKey: config.supabaseAnonKey, db, fetchImpl: options.authFetchImpl,
     }));
   }
 

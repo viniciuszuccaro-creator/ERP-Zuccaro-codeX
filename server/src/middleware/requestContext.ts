@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
 import { AppError } from '../api/errors.js';
+import type { DbClient } from '../db/client.js';
 
 declare global {
   namespace Express {
@@ -27,8 +28,8 @@ const PUBLIC_PATHS = new Set(['/health', '/ready', '/api/v1/meta']);
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export function createSupabaseAuthMiddleware({
-  supabaseUrl, anonKey, fetchImpl = fetch,
-}: { supabaseUrl: string; anonKey: string; fetchImpl?: typeof fetch }) {
+  supabaseUrl, anonKey, db, fetchImpl = fetch,
+}: { supabaseUrl: string; anonKey: string; db: Pick<DbClient, 'query'>; fetchImpl?: typeof fetch }) {
   const userUrl = new URL('auth/v1/user', `${supabaseUrl.replace(/\/+$/, '')}/`);
   return async (req: Request, _res: Response, next: NextFunction) => {
     if (PUBLIC_PATHS.has(req.path)) { next(); return; }
@@ -67,12 +68,39 @@ export function createSupabaseAuthMiddleware({
       next(new AppError(401, 'AUTH_INVALID', 'Invalid user token'));
       return;
     }
-    if ((req.header('x-actor-id') && req.header('x-actor-id') !== id)
+    const groupId = String(req.header('x-group-id') || req.query.group_id || '').trim();
+    const empresaId = String(req.header('x-empresa-id') || req.query.empresa_id || '').trim();
+    if (!groupId || !UUID_RE.test(groupId) || (empresaId && !UUID_RE.test(empresaId))) {
+      next(new AppError(400, 'TENANT_SCOPE_INVALID', 'Valid group and company scope required'));
+      return;
+    }
+    let profileId: string | undefined;
+    try {
+      const result = await db.query<{ id: string }>(
+        `SELECT p.id
+         FROM profiles p
+         WHERE p.auth_user_id = $1 AND p.ativo = true AND p.group_id = $2
+           AND (($3::uuid IS NULL AND p.empresa_id IS NULL)
+             OR ($3::uuid IS NOT NULL AND (p.empresa_id IS NULL OR p.empresa_id = $3)
+               AND EXISTS (SELECT 1 FROM empresas e WHERE e.id = $3 AND e.group_id = $2)))
+         LIMIT 1`,
+        [id, groupId, empresaId || null],
+      );
+      profileId = result.rows[0]?.id;
+    } catch {
+      next(new AppError(503, 'PROFILE_UNAVAILABLE', 'User profile service unavailable'));
+      return;
+    }
+    if (!profileId || !UUID_RE.test(profileId)) {
+      next(new AppError(403, 'ACTOR_SCOPE_DENIED', 'User is not authorized for this scope'));
+      return;
+    }
+    if ((req.header('x-actor-id') && req.header('x-actor-id') !== profileId)
       || (req.header('x-actor-email') && req.header('x-actor-email') !== email)) {
       next(new AppError(403, 'ACTOR_HEADER_MISMATCH', 'Actor headers do not match authenticated user'));
       return;
     }
-    req.actorId = id;
+    req.actorId = profileId;
     if (email) req.actorEmail = email;
     req.authVerified = true;
     next();

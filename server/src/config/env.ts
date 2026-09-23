@@ -55,9 +55,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
 
   const data = parsed.data;
   const requireDatabase = boolFromEnv(data.REQUIRE_DATABASE, data.NODE_ENV === 'production');
-  const authMode = data.ERP_AUTH_MODE ?? (data.NODE_ENV === 'production' || data.ERP_ENV === 'prod' ? 'supabase_user' : 'dev_headers');
-  if (authMode === 'dev_headers' && (data.NODE_ENV === 'production' || data.ERP_ENV === 'prod')) {
-    throw new Error('ERP_AUTH_MODE=dev_headers is forbidden in production');
+  const authMode = data.ERP_AUTH_MODE ?? (data.ERP_ENV === 'dev' && data.NODE_ENV !== 'production' ? 'dev_headers' : 'supabase_user');
+  if (authMode === 'dev_headers' && (data.NODE_ENV === 'production' || data.ERP_ENV !== 'dev')) {
+    throw new Error('ERP_AUTH_MODE=dev_headers is forbidden outside development');
   }
   if (authMode === 'supabase_user' && (!data.SUPABASE_URL || !data.SUPABASE_ANON_KEY)) {
     throw new Error('SUPABASE_URL and SUPABASE_ANON_KEY are required for supabase_user authentication');
