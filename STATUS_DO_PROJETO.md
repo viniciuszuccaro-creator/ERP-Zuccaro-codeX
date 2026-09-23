@@ -1,3 +1,11 @@
+## Comercial 360 / Gate C - checkpoint somente leitura (2026-09-23)
+
+- PR #33 aberta, draft, mergeable e sem merge; HEAD remoto `750a4ab14854e184d6fb2fc8afef7f6e2094b277`. CI do codigo `52167840` (`35909747751`) e do HEAD atual (`35910005796`) frontend/backend SUCCESS, incluindo migrations e PostgreSQL efemero.
+- Desde `9f306391`: Onda 1 corrigiu nome original seguro no upload DAM e adicionou reconciliacao tenant-scoped de reservas vencidas; Onda 15 alinhou idempotencia da outbox em memoria ao indice unico PostgreSQL existente. Migrations continuam 001-022 no repositorio; sem nova migration, worker ou publicacao externa.
+- Gate C nao aprovado: captura anterior informou API 3080 R07B/dev_headers, schema_migrations 001-015 1x e 016-022 ausentes, auth.users=0 e profiles=2 sem Auth. Nao comprova que esse era o banco efetivo da API. Rede compartilhada, disponibilidade de porta isolada, backup e rollback ainda precisam de evidencia atual sanitizada.
+- Nesta sessao a Web Console falhou antes de abrir com `windows sandbox failed: helper_unknown_error: apply deny-read ACLs` (duas tentativas). Ferramentas Hostinger VPS internas nao estao disponiveis. Um unico bloco de consultas somente leitura foi entregue ao usuario; aguardar saida para avaliar, sem inferir homologacao.
+- Nenhuma escrita VPS, migration, seed, restart, bucket, promocao ou alteracao da 3080. Auth novo, scanner real e Produto HTTP continuam desativados/nao homologados. Proximo checkpoint prioritario: confrontar banco efetivo da API, rede, backups e rollback; depois decidir gate separado de Auth/canario.
+
 ## Comercial 360 / Onda 15 - paridade de idempotencia da outbox (2026-09-23)
 
 - Causa: PostgreSQL ja possui indice unico global para `integration_events.idempotency_key` desde a migration 001, mas o repositorio Produto em memoria aceitava eventos duplicados para o mesmo produto/requestId. O registro historico abaixo que tratava a unicidade como lacuna estava desatualizado.
