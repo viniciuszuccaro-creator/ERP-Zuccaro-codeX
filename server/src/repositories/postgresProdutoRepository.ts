@@ -330,7 +330,7 @@ export class PostgresProdutoRepository implements ProdutoRepository {
         schema_version, aggregate_type, aggregate_id, correlation_id, payload_checksum
       ) VALUES (
         $1,$2,'ERP','produto.publicado',$3,$4::jsonb,'pending',1,'Produto',$5,$6,
-        encode(digest(convert_to($4, 'UTF8'), 'sha256'), 'hex')
+        encode(digest(convert_to(($4::jsonb)::text, 'UTF8'), 'sha256'), 'hex')
       ) ON CONFLICT (idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING`,
       [
         scope.groupId,

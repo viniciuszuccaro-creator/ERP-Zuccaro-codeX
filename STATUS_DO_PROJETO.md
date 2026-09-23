@@ -1,7 +1,7 @@
 ## Comercial 360 / Onda 15 - contrato da outbox e E2E Produto (2026-09-23)
 - Base local/remota: `6700ed8c395e840b98361a6e3a22340cc5ac85b1`, PR #33 draft sem merge.
 - Causa: o contrato da Onda 15 ainda previa migration para colunas que a 018 ja entrega. O documento agora reutiliza `integration_events` e `PostgresProdutoRepository.appendPublicationEvent`; registra como lacuna a unicidade global de `idempotency_key` antes de novos consumidores.
-- Teste PostgreSQL sintetico no R10 existente cobre evento Produto tenant-scoped, payload allowlisted, schema/checksum, rollback com mesmo executor e repeticao idempotente. Nenhum worker, provider externo, canal ou migration nova.
+- Teste PostgreSQL sintetico no R10 existente cobre evento Produto tenant-scoped, payload allowlisted, schema/checksum, rollback com mesmo executor e repeticao idempotente. A primeira CI do teste (35898975304) encontrou falha real `convert_to(jsonb, unknown)` no emissor existente; `PostgresProdutoRepository.appendPublicationEvent` agora converte JSONB canônico para texto antes do SHA-256. Nenhum worker, provider externo, canal ou migration nova.
 - Multiempresa: assercoes usam Group/Empresa do evento; RBAC e auditoria continuam sob ProdutoService existente e nao foram alterados. O teste nao acessa dados reais e limpa apenas IDs sinteticos.
 - Validacao local: backend 212 total / 200 pass / 0 fail / 12 skip sem `DATABASE_URL`; novo E2E PostgreSQL foi skip local e depende da CI efemera. Backend typecheck/build, frontend 618/618, audit:baseline, lint, build e `git diff --check` PASS. CI da PR pendente para este lote.
 - Gate DEV segue parcial: Web Console/SQL agregado pendente, API 3080 preservada; nenhuma migration aplicada na VPS.
