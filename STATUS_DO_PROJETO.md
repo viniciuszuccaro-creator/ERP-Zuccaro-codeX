@@ -2,7 +2,7 @@
 
 - Causa: PostgreSQL ja possui indice unico global para `integration_events.idempotency_key` desde a migration 001, mas o repositorio Produto em memoria aceitava eventos duplicados para o mesmo produto/requestId. O registro historico abaixo que tratava a unicidade como lacuna estava desatualizado.
 - Correcao no repositorio existente: repeticao do mesmo produto/requestId nao anexa novo evento; produto diferente mantem evento proprio. Snapshot/rollback transacional preservado. Sem worker, canal, envio externo, schema ou migration nova.
-- Testes sinteticos cobrem repeticao, produto distinto, rollback e tenant invalido. A suite PostgreSQL existente ja prova a unicidade real. Validacao local: Produto dirigido 29/29; backend 218 total, 206 pass, 0 fail, 12 skip opcionais sem PostgreSQL local; frontend 618/618; typecheck/build backend, audit:baseline, lint/build frontend e diff-check PASS. CI PostgreSQL efemera pendente neste commit.
+- Testes sinteticos cobrem repeticao, produto distinto, rollback e tenant invalido. A suite PostgreSQL existente ja prova a unicidade real. Validacao local: Produto dirigido 29/29; backend 218 total, 206 pass, 0 fail, 12 skip opcionais sem PostgreSQL local; frontend 618/618; typecheck/build backend, audit:baseline, lint/build frontend e diff-check PASS. Commit `52167840f49208ffa4085243fedee0b393d9405a` confirmado no remoto; CI `35909747751` frontend/backend SUCCESS, incluindo migrations e `test:postgres` efemero. Gate DEV nao substituido pela CI.
 - Proximo passo: contrato claim/lease e reprocessamento fail-closed da outbox, sem ativar publicacao antes do gate DEV.
 
 ## Comercial 360 / Onda 1 - reconciliacao DAM em lote (2026-09-23)
