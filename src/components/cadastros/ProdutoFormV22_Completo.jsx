@@ -25,7 +25,7 @@ import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 import { PRODUTO_TIPOS_CANONICOS, getProdutoTipoOptions, normalizeProdutoTipoItem } from "./produto/produtoTipoPolicy";
 const HistoricoProduto = React.lazy(() => import("./HistoricoProduto"));
 const FiscalContabilSection = React.lazy(() => import("./produto/FiscalContabilSection"));
-import { toProdutoHttpPayload } from './produto/produtoHttpPolicy';
+import { toProdutoHttpPayload, validateProdutoPimQuantities } from './produto/produtoHttpPolicy';
 const EstoqueAvancadoSection = React.lazy(() => import("./produto/EstoqueAvancadoSection"));
 const PrecosSection = React.lazy(() => import("./produto/PrecosSection"));
 const PesoDimensoesSection = React.lazy(() => import("./produto/PesoDimensoesSection"));
@@ -532,6 +532,14 @@ Caso contrário, sugira:
     }
     if (produto?.id ? !podeEditar : !podeCriar) {
       toast.error('Seu perfil nao permite salvar produtos');
+      return;
+    }
+
+    try {
+      validateProdutoPimQuantities(formData);
+    } catch (error) {
+      toast.error(error.message);
+      setAbaAtiva('ecommerce');
       return;
     }
 

@@ -1,3 +1,11 @@
+## Comercial 360 / Onda 1 - validar multiplos no Produto V22 (2026-09-23)
+
+- Causa: limpar multiplo ou quantidade minima na secao PIM restaurava silenciosamente 1/0, permitindo salvar valor diferente do digitado no fluxo HTTP ou legado.
+- Correcao no formulario existente: preservar campo vazio e bloquear submit com mensagem e foco na aba E-Commerce quando multiplo nao for finito/positivo ou minimo nao for finito/nao negativo. Nenhum payload de tenant, estoque, preco ou fiscal foi alterado.
+- Testes sinteticos direcionados 9/9 PASS, incluindo vazio, zero, negativo, texto e infinito; sem tela, migration ou funcionalidade paralela.
+- Validacao local: frontend 619/619, audit:baseline, lint, build e diff-check PASS; apos ordenar contexto/RBAC antes da validacao, teste direcionado 9/9 PASS. Typecheck geral da raiz permanece com erros preexistentes em arquivos nao relacionados, registrados no checkpoint anterior; nenhum baseline foi alterado. Backend sera novamente validado pela CI.
+- Gate C da VPS ainda parcial; Produto HTTP na 3080 permanece desativado. Proximo passo: seguir integracao Produto/DAM e validar banco efetivo da API por comparacao read-only quando houver saida da Web Console.
+
 ## Comercial 360 / validacao local - descoberta de testes frontend no Windows (2026-09-23)
 
 - Causa: o script `npm test` da raiz usava aspas simples para o glob; no shell Windows do npm elas eram repassadas literalmente, e o runner encerrava com zero testes.

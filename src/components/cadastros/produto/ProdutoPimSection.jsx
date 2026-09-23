@@ -5,6 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 
 const numberValue = (value, fallback) => {
+  if (value === "") return "";
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
 };

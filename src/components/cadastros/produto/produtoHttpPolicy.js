@@ -17,6 +17,17 @@ const NON_NEGATIVE = new Set([
 ]);
 const REFERENCE_FIELDS = new Set(['unidade_medida_id', 'grupo_produto_id', 'marca_id', 'setor_atividade_id']);
 
+export function validateProdutoPimQuantities(form) {
+  const multiple = form.multiplo_venda;
+  const minimum = form.quantidade_minima_venda;
+  if (multiple === '' || multiple == null || !Number.isFinite(Number(multiple)) || Number(multiple) <= 0) {
+    throw new Error('Multiplo de venda deve ser maior que zero');
+  }
+  if (minimum === '' || minimum == null || !Number.isFinite(Number(minimum)) || Number(minimum) < 0) {
+    throw new Error('Quantidade minima deve ser zero ou maior');
+  }
+}
+
 export function toProdutoHttpPayload(form, { update = false } = {}) {
   const result = {};
   for (const key of MASTER_FIELDS) {

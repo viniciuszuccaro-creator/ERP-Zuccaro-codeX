@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { toProdutoHttpPayload, prepareProdutoMediaFile, CAD_FORMAT_POLICY, getProdutoWorkflowActions, getProdutoMediaScanLabel } from '../src/components/cadastros/produto/produtoHttpPolicy.js';
+import { toProdutoHttpPayload, validateProdutoPimQuantities, prepareProdutoMediaFile, CAD_FORMAT_POLICY, getProdutoWorkflowActions, getProdutoMediaScanLabel } from '../src/components/cadastros/produto/produtoHttpPolicy.js';
 
 test('V22 apresenta varredura sem confundir CLEAN com liberacao', async () => {
   assert.match(getProdutoMediaScanLabel({ status: 'QUARENTENA' }), /pendente.*quarentena/i);
@@ -57,6 +57,23 @@ test('formulario canonico integra secao PIM sem criar tela paralela', async () =
     'permite_fracionamento',
   ]) {
     assert.match(section, new RegExp(field));
+  }
+});
+
+test('V22 nao substitui silenciosamente multiplo ou minimo vazios', async () => {
+  const section = await readFile(new URL('../src/components/cadastros/produto/ProdutoPimSection.jsx', import.meta.url), 'utf8');
+  const form = await readFile(new URL('../src/components/cadastros/ProdutoFormV22_Completo.jsx', import.meta.url), 'utf8');
+  assert.match(section, /if \(value === ""\) return ""/);
+  assert.match(form, /validateProdutoPimQuantities\(formData\)/);
+  assert.match(form, /setAbaAtiva\('ecommerce'\)/);
+  for (const [multiple, minimum] of [[1, 0], ['2', '3.5']]) {
+    assert.doesNotThrow(() => validateProdutoPimQuantities({ multiplo_venda: multiple, quantidade_minima_venda: minimum }));
+  }
+  for (const multiple of ['', null, 0, -1, 'abc', Infinity]) {
+    assert.throws(() => validateProdutoPimQuantities({ multiplo_venda: multiple, quantidade_minima_venda: 0 }), /Multiplo/);
+  }
+  for (const minimum of ['', null, -1, 'abc', Infinity]) {
+    assert.throws(() => validateProdutoPimQuantities({ multiplo_venda: 1, quantidade_minima_venda: minimum }), /Quantidade minima/);
   }
 });
 
