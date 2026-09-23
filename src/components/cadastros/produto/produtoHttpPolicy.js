@@ -58,6 +58,27 @@ export const CAD_FORMAT_POLICY = Object.freeze({
   activation: 'antivirus + MIME real + limite de tamanho + download privado homologados',
 });
 
+const WORKFLOW_TRANSITIONS = Object.freeze({
+  RASCUNHO: [{ target: 'EM_REVISAO', label: 'Enviar para revisao', permission: 'edit' }],
+  EM_REVISAO: [
+    { target: 'RASCUNHO', label: 'Voltar ao rascunho', permission: 'edit' },
+    { target: 'APROVADO', label: 'Aprovar conteudo', permission: 'approve' },
+  ],
+  APROVADO: [
+    { target: 'EM_REVISAO', label: 'Reabrir revisao', permission: 'edit' },
+    { target: 'PUBLICADO', label: 'Publicar produto', permission: 'publish' },
+  ],
+  PUBLICADO: [{ target: 'INATIVO', label: 'Inativar publicacao', permission: 'deactivate' }],
+  INATIVO: [{ target: 'RASCUNHO', label: 'Retomar rascunho', permission: 'edit' }],
+});
+
+export function getProdutoWorkflowActions(status, permissions = {}) {
+  const permitted = {
+    edit: permissions.canEdit === true, approve: permissions.canApprove === true,
+    publish: permissions.canPublish === true, deactivate: permissions.canDeactivate === true,
+  };
+  return (WORKFLOW_TRANSITIONS[status] || []).filter((action) => permitted[action.permission]);
+}
 export function prepareProdutoMediaFile(file, { groupId, empresaId, produtoId, version = 1, maxBytes = 10_000_000 }) {
   if (!groupId || !empresaId || !produtoId) throw new Error('Produto e empresa canonicos obrigatorios para midia');
   const originalName = String(file?.name || '');

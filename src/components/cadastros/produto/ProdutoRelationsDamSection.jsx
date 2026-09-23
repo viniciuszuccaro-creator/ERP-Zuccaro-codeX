@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { prepareProdutoMediaFile } from './produtoHttpPolicy';
+import { getProdutoWorkflowActions, prepareProdutoMediaFile } from './produtoHttpPolicy';
 
 function uploadSigned(url, file, requiredHeaders, onProgress, setCancel) {
   return new Promise((resolve, reject) => {
@@ -29,8 +29,9 @@ function uploadSigned(url, file, requiredHeaders, onProgress, setCancel) {
 
 const errorText = (error) => error?.status === 503 ? 'Storage do ERP indisponivel' : (error?.message || 'Operacao nao concluida');
 
-export default function ProdutoRelationsDamSection({ produtoId, groupId, empresaId, canView, canEdit }) {
+export default function ProdutoRelationsDamSection({ produtoId, groupId, empresaId, canView, canEdit, canApprove, canPublish, canDeactivate, workflowStatus, onWorkflowChanged }) {
   const api = getHttpProdutoApi();
+  const workflowActions = getProdutoWorkflowActions(workflowStatus, { canEdit, canApprove, canPublish, canDeactivate });
   const [variants, setVariants] = useState([]);
   const [equivalents, setEquivalents] = useState([]);
   const [media, setMedia] = useState([]);
@@ -98,6 +99,26 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
     else await api.variantes.create(produtoId, payload);
     setVariantEditing(null); setVariantDraft({ sku: '', nome: '' });
   }, 'Variante salva');
+  const changeWorkflow = async (target) => {
+    if (busy || !workflowActions.some((action) => action.target === target)) return;
+    if (target === 'PUBLICADO' && !window.confirm('Publicar este produto nos canais autorizados?')) return;
+    setBusy(true); setError(''); setNotice('');
+    try {
+      const updated = await api.workflow(produtoId, target);
+      if (updated?.workflow_status !== target) throw new Error('Estado do produto nao confirmado pelo ERP');
+      onWorkflowChanged?.(updated.workflow_status);
+      setNotice(`Produto: ${target}`);
+    } catch (err) {
+      setError(errorText(err));
+      try {
+        const current = await api.get(produtoId);
+        if (current?.workflow_status) onWorkflowChanged?.(current.workflow_status);
+      } catch {
+        setError((message) => `${message}. Nao foi possivel atualizar o estado exibido; reabra o produto.`);
+      }
+    } finally { setBusy(false); }
+  };
+
   const saveEquivalent = () => run(async () => {
     if (equivalentEditing) {
       await api.equivalentes.update(produtoId, equivalentEditing, { tipo: equivalentDraft.tipo });
@@ -137,6 +158,15 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
   return <div className="w-full space-y-5 border-t pt-5" data-permission="Cadastros.Produto.visualizar">
     {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
     {notice && <p role="status" className="text-sm text-green-700">{notice}</p>}
+    <section className="space-y-2" data-permission="Cadastros.Produto.visualizar">
+      <h3 className="text-sm font-semibold">Fluxo do produto</h3>
+      <p className="text-sm">{workflowStatus || 'Estado indisponivel'}</p>
+      <div className="flex flex-wrap gap-2">
+        {workflowActions.map((action) => <Button key={action.target} type="button" variant="outline"
+          onClick={() => changeWorkflow(action.target)} disabled={busy}
+          data-action={`produto-workflow-${action.target.toLowerCase()}`} data-sensitive>{action.label}</Button>)}
+      </div>
+    </section>
     <section className="space-y-2">
       <h3 className="text-sm font-semibold">Variantes</h3>
       {variants.map((row) => <div key={row.id} className="flex items-center gap-2 border-b py-1 text-sm">

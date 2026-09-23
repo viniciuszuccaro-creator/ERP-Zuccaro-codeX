@@ -1176,7 +1176,11 @@ Caso contrário, sugira:
           {produtoHttp && produto?.id && empresaAtual?.id && (
             <Suspense fallback={null}>
               <ProdutoRelationsDamSection produtoId={produto.id} groupId={groupId}
-                empresaId={empresaAtual.id} canView={podeVisualizar} canEdit={podeEditar} />
+                empresaId={empresaAtual.id} canView={podeVisualizar} canEdit={podeEditar}
+                canApprove={hasPermission('Cadastros', 'Produto', 'aprovar-conteudo')}
+                canPublish={hasPermission('Cadastros', 'Produto', 'publicar')}
+                canDeactivate={hasPermission('Cadastros', 'Produto', 'inativar')}
+                workflowStatus={formData.workflow_status} onWorkflowChanged={(status) => setFormData((current) => ({ ...current, workflow_status: status }))} />
             </Suspense>
           )}
 

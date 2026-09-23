@@ -10266,3 +10266,11 @@ Checklist inicial:
 - Arquivos: `src/api/runtimeBackend.js`, `src/api/base44Client.js`, `src/components/cadastros/ProdutoFormV22_Completo.jsx`, testes HTTP/V22 e este status.
 - Pendente do mesmo macroincremento: navegacao/listagem canonica e contexto autenticado para opt-in real; workflow e metadados DAM completos, antivirus real fail-closed, reconciliacao segura de objeto orfao e politica de publicacao. Gate VPS de bucket/credenciais segue separado; nenhuma migration remota, bucket ou dado real foi alterado.
 - Proximo passo: concluir esses contratos e fluxos antes de qualquer ativacao ampla, com testes PostgreSQL/CI da PR #33; PR permanece draft sem merge.
+
+### Onda 1 Produto V22 - workflow canonico no formulario (2026-09-23; EM ANDAMENTO)
+- O V22 existente agora mostra transicoes do workflow Produto conforme estado atual e permissao especifica (`editar`, `aprovar-conteudo`, `publicar`, `inativar`). Nao envia tenant no body; o backend existente continua impondo TenantGuard, RBAC, transacao, auditoria e outbox de publicacao.
+- A interface so confirma sucesso quando a API devolve o estado solicitado. Erro, conflito ou falha de recarga sao exibidos sem sucesso falso. Publicacao de Produto nao equivale a aprovacao/publicacao de arquivos: metadados DAM seguem em QUARENTENA, sem URL publica.
+- Testes da policy/V22 7/7, frontend completo 610/610, lint e build PASS; diff-check PASS. Typecheck global continua FAIL no baseline anterior; nenhum diagnostico novo na secao de relacoes/DAM ou na policy. Nao houve alteracao de backend/migration; PostgreSQL efemero sera revalidado pela CI da PR #33.
+- Arquivos: formulario V22, secao de relacoes/DAM existente, policy HTTP existente, testes V22 e este status. Sem modulo/tela/repositorio paralelo.
+- Pendencias do macroincremento: navegacao canonica, autenticacao para opt-in real, workflow de arquivos com antivirus comprovado, conciliacao de orfaos e publicacao controlada. Buckets/credenciais self-hosted permanecem sujeitos ao gate VPS separado.
+- PR #33 permanece draft; nenhuma migration aplicada na VPS, bucket criado, porta 3080 alterada ou dado real usado.

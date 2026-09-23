@@ -1,7 +1,28 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { toProdutoHttpPayload, prepareProdutoMediaFile, CAD_FORMAT_POLICY } from '../src/components/cadastros/produto/produtoHttpPolicy.js';
+import { toProdutoHttpPayload, prepareProdutoMediaFile, CAD_FORMAT_POLICY, getProdutoWorkflowActions } from '../src/components/cadastros/produto/produtoHttpPolicy.js';
+
+test('workflow V22 expõe somente transicoes permitidas ao perfil e estado atual', () => {
+  const denied = { canEdit: false, canApprove: false, canPublish: false, canDeactivate: false };
+  assert.deepEqual(getProdutoWorkflowActions('RASCUNHO', denied), []);
+  assert.deepEqual(getProdutoWorkflowActions('EM_REVISAO', denied), []);
+  assert.deepEqual(getProdutoWorkflowActions('DESCONHECIDO', { canEdit: true }), []);
+  assert.deepEqual(getProdutoWorkflowActions('RASCUNHO', { canEdit: true }).map((a) => a.target), ['EM_REVISAO']);
+  assert.deepEqual(getProdutoWorkflowActions('EM_REVISAO', { canApprove: true }).map((a) => a.target), ['APROVADO']);
+  assert.deepEqual(getProdutoWorkflowActions('APROVADO', { canPublish: true }).map((a) => a.target), ['PUBLICADO']);
+  assert.deepEqual(getProdutoWorkflowActions('PUBLICADO', { canDeactivate: true }).map((a) => a.target), ['INATIVO']);
+  assert.deepEqual(getProdutoWorkflowActions('INATIVO', { canEdit: true }).map((a) => a.target), ['RASCUNHO']);
+});
+
+test('formulario V22 usa RBAC por acao e confirma workflow somente pela resposta do ERP', async () => {
+  const form = await readFile(new URL('../src/components/cadastros/ProdutoFormV22_Completo.jsx', import.meta.url), 'utf8');
+  const section = await readFile(new URL('../src/components/cadastros/produto/ProdutoRelationsDamSection.jsx', import.meta.url), 'utf8');
+  for (const action of ['aprovar-conteudo', 'publicar', 'inativar']) assert.match(form, new RegExp(`hasPermission\\('Cadastros', 'Produto', '${action}'\\)`));
+  assert.match(section, /updated\?\.workflow_status !== target/);
+  assert.match(section, /onWorkflowChanged\?\.\(updated\.workflow_status\)/);
+  assert.match(section, /target === 'PUBLICADO' && !window\.confirm/);
+});
 
 
 test('formulario canonico integra secao PIM sem criar tela paralela', async () => {
