@@ -7,7 +7,7 @@
 - Incremento independente: `comercial360-canary.sh` bloqueia 3080, portas invalidas e nome `erp-api-dev` antes de Docker; testes sinteticos impedem regressao. Script nao executado na VPS.
 - Fluxo preparado em `docs/COMERCIAL_360_V1_DEPLOY.md`: precheck C, compatibilidade/migrations autorizadas, canario isolado, promocao F somente da imagem MAIN aprovada, rollback preservado.
 - Multiempresa/RBAC/auditoria do runtime nao foram alterados neste lote. Proximo passo operacional: consultas agregadas somente leitura na Web Console e decisao de gate; sem merge, migration, seed, restart, bucket ou mudanca da 3080.
-- Validacao local: Bash `-n` PASS; testes do canario 2/2; frontend explicito 616/616; audit:baseline, lint, build frontend, typecheck/build backend e `git diff --check` PASS. PostgreSQL DEV nao consultado; CI efemera da PR sera registrada apos o push.
+- Validacao local: Bash `-n` PASS; testes do canario 2/2; frontend explicito 616/616; audit:baseline, lint, build frontend, typecheck/build backend e `git diff --check` PASS. Commit funcional `b629a1ac73caf9d1a28ff57cb8eff04c12cc74cd`; CI [35893167334](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/35893167334) frontend/backend/PostgreSQL efemero SUCCESS. PostgreSQL DEV nao consultado.
 - Arquivos do lote: script de canario e teste sintetico, status, handoff, documento mestre e runbook existente. Sem credenciais, dados reais, migrations novas ou mudanca funcional da API.
 
 ## Comercial 360 / Onda 1 - inicio obrigatorio da varredura DAM (2026-09-23)
