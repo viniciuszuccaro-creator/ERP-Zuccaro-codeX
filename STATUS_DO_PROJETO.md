@@ -10328,3 +10328,12 @@ Checklist inicial:
 - Web Console Hostinger: link informado pelo usuario `https://bos2.hostingervps.com/4423/`, mas a ferramenta de navegador desta sessao falhou antes de abrir a aba: `windows sandbox failed: helper_unknown_error: apply deny-read ACLs`. O prompt `root@srv1982741` foi informado pelo usuario, nao verificado por ferramenta nesta execucao.
 - Fatos VPS comprovados neste checkpoint: nenhum. Containers, API 3080, Auth, PostgreSQL, migrations e servicos Comercial 360 nao foram consultados; nenhum gate operacional foi aprovado. Nao houve SSH, migration, seed, restart, promocao, alteracao de bucket, configuracao ou dado real.
 - Para prosseguir: habilitar as ferramentas VPS no MCP da conta Hostinger, reiniciar/recarregar sessao Codex e confirmar ferramenta read-only de VPS; ou executar na Web Console os comandos de auditoria sanitizados ja fornecidos e trazer somente a saida filtrada. So entao verificar pre-requisitos e homologar Auth/perfis. Produto HTTP permanece desligado; PR #33 draft sem merge.
+
+### Comercial 360 - reconciliacao do documento mestre (2026-09-23; EM EXECUCAO)
+- Objetivo: alinhar o programa omnicanal ao estado verificavel da PR #33, sem confundir codigo e CI efemera com implantacao DEV.
+- Branch `codex/comercial-360` no inicio deste checkpoint: HEAD local/remoto `865e23d29ed72d6b00180fc52a4bde572f85c864`; PR draft e sem merge; CI `35873286965` frontend/backend/PostgreSQL efemero SUCCESS.
+- Documento mestre corrigido: migrations 001-021 no repositorio, Produto/PIM/DAM e Auth preparados em codigo, Produto HTTP desligado, midia em QUARENTENA, scanner real ausente e Gate C sem evidencia VPS. Ondas 1/4/5 nao foram declaradas concluidas.
+- Multiempresa, RBAC e auditoria existentes nao foram alterados por este checkpoint documental. Nenhuma migration, bucket, seed, container, porta 3080, segredo ou dado real foi acessado ou modificado.
+- Gate C DEV segue BLOQUEADO: MCP Hostinger autenticado nao expos ferramenta VPS read-only; Web Console nao abriu na automacao desta sessao. Nao inferir runtime, Auth, migrations ou buckets reais da CI.
+- Validacao documental: `git diff --check`; testes de aplicacao dispensados porque nao ha alteracao de runtime. Commit/SHA remoto e workflow subsequente devem ser registrados apos publicacao.
+- Proximo passo P0: obter saida sanitizada da Web Console ou ferramenta VPS read-only para precheck Auth/perfis; em paralelo, evoluir DAM/Produto existentes em codigo sem ativar HTTP nem publicacao.

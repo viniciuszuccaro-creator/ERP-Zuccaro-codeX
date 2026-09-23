@@ -2,9 +2,9 @@
 
 > Documento mestre para Codex e Cursor — CPA Ferro e Aço / ERP Zuccaro / Site CPA
 >
-> Data de consolidação: 22/09/2026
+> Data de consolidação: 23/09/2026
 >
-> Estado factual em 22/09/2026: branch `codex/comercial-360`, PR #33 aberta/draft e limpa no HEAD `e960ec4bfcd5fed340ddac75052378c092c7c1f8`, base histórica `a329c8751323890fd5737e4d3f6d659b10dca52c`, Orçamento backend/frontend/PDF e Pedido backend/frontend/conversão inicial implementados, migrations do repositório até `017`, CI final `35667682013` verde; nenhuma migration 016/017 aplicada na VPS e porta 3080 não alterada.
+> Estado factual em 23/09/2026: branch `codex/comercial-360`, PR #33 aberta/draft e sem merge no HEAD `865e23d29ed72d6b00180fc52a4bde572f85c864` (base da PR `ca4171600cc30f9922c2f8b2ccb8b22d06aa6888`). Orçamento e Pedido canônicos iniciais estão implementados; Produto/PIM/DAM seguem em execução. Migrations 001–021 existem no repositório e passaram na CI `35873286965` com PostgreSQL efêmero; nenhuma migration 016–021 foi comprovadamente aplicada na VPS. O Gate C DEV permanece sem evidência de ambiente; não inferir o runtime da 3080 do código da PR.
 
 ---
 
@@ -176,16 +176,18 @@ Este programa consolida, sem substituir nem duplicar, `AGENTS.md`, `COMERCIAL_36
 
 - Orçamento canônico: migration 016, repositories, service, TenantGuard, RBAC, auditoria, HTTP, frontend, filtros, impressão/PDF e compartilhamento revisável.
 - Pedido canônico inicial: migration 017, repositories, service, HTTP, frontend, histórico, workflow inicial e conversão idempotente de Orçamento.
-- PostgreSQL efêmero: migrations 001–017, seed exclusivamente sintético e suítes R08B/R08C/R09 aprovadas na CI.
-- Deploy: runbook e scripts parametrizados de canário, smoke e rollback preparados, mas não executados.
-- Este baseline é fundação das Ondas 4 e 5; não representa conclusão integral dessas ondas.
+- PostgreSQL efêmero: migrations 001–021, seed exclusivamente sintético e suítes R08B/R08C/R09/R10/R01AUTH aprovadas na CI `35873286965`; isso não comprova o banco DEV real.
+- Produto/PIM/DAM no código: classificação, conteúdo técnico/comercial/SEO, workflow, variantes/equivalentes, outbox e formulário V22 opt-in; reserva/confirmacão de upload privado mantém mídia em QUARENTENA. `MalwareScanPort` é contrato fail-closed, sem scanner real integrado. Produto HTTP permanece desligado por padrão.
+- Auth no código: validação Bearer pelo Supabase Auth self-hosted e resolução de `auth_user_id` para `profiles.id`; falta homologação do endpoint/vínculos/escopo no DEV real. O MCP Hostinger autenticado expôs apenas ferramentas Agency Hosting, sem VPS; Web Console não abriu na automação desta sessão.
+- Deploy: runbook e scripts parametrizados de canário, smoke e rollback preparados, mas não executados. Nenhuma mudança de VPS, bucket, migration real ou 3080 decorre deste baseline.
+- Este baseline é fundação das Ondas 1, 4 e 5; não representa conclusão integral de nenhuma delas.
 
 ## 6.3 Controle executável das ondas
 
 | Onda | Estado inicial | Dependências imediatas | Próximo checkpoint | Risco principal | Rollback |
 | --- | --- | --- | --- | --- | --- |
 | 0 | CONCLUÍDO | baseline V1 | `COMERCIAL_360_ONDA_0_CONTRATOS.md` | duplicar fonte de verdade | revert documental |
-| 1 | EM EXECUÇÃO | Onda 0 concluída | contrato concluído; classificação compatível iniciada no Produto existente | criar Produto paralelo | manter schema atual |
+| 1 | EM EXECUÇÃO | Onda 0 concluída | concluir scanner real, reconciliação de órfãos e liberação/publicação separadas no Produto/DAM existentes; homologar Auth antes de ativar HTTP | publicar mídia sem varredura ou misturar IDs | manter opt-in desligado e mídia em QUARENTENA |
 | 2 | PENDENTE | 0/1 | lacunas de preço, margem e aprovação | alterar snapshot histórico | feature gate/revert aditivo |
 | 3 | PENDENTE | Onda 0 concluída | contrato em `COMERCIAL_360_ONDA_3_CLIENTE_CRM.md`; implementar read model no existente | expor dados financeiros | RBAC fail-closed |
 | 4 | PENDENTE | baseline comprovado | versões, anexos e aprovações faltantes | regressão no Orçamento atual | preservar fluxo V1 |
@@ -216,7 +218,7 @@ Este programa consolida, sem substituir nem duplicar, `AGENTS.md`, `COMERCIAL_36
 
 | Requisito | Fonte canônica existente | Lacuna inicial | Onda | Contrato/API/tela | Teste/gate |
 | --- | --- | --- | --- | --- | --- |
-| Produto/PIM | Produto, Cadastros, formulários e policies existentes | taxonomia universal, mídia/versionamento/canais | 1 | ampliar Produto; sem entidade paralela | tenant, RBAC, upload, versão |
+| Produto/PIM | Produto, Cadastros, V22, StoragePort e outbox existentes | scanner real, reconciliação de órfãos, liberação e publicação separadas; gate Auth DEV | 1 | ampliar Produto/DAM existentes; sem entidade paralela | tenant, RBAC, upload, versão, CI 001–021 e Gate C |
 | Preço/condição | TabelaPreco e CondicaoPagamento | custo/margem/alçadas/canal | 2 | services atuais e snapshots | monetário, vigência, aprovação |
 | Cliente 360/CRM | Cliente, ClienteEmpresa, ClienteLocal, Obra e CRM | visão agregada e sinais | 3 | consultas dos módulos donos | RBAC sensível e paginação |
 | Orçamento | agregado/HTTP/frontend migration 016 | versões, anexos e aprovações | 4 | `/api/v1/orcamentos` e Comercial | R08C, HTTP, frontend |
@@ -968,13 +970,13 @@ PRÓXIMO GATE ................. <gate e ação exata>
 
 ## 11. Ordem imediata de execução
 
-1. Versionar este documento consolidado e atualizar PR #33/status com o baseline factual.
-2. Concluir a Onda 0 com inventário, ownership, contratos, eventos e matriz completa, sem reimplementar a V1.
-3. Preparar sequencialmente os contratos das Ondas 1, 3, 5, 9 e 15 no mesmo worktree, evitando edição concorrente.
-4. Iniciar a implementação da Onda 1 no cadastro de Produto existente, primeiro fechando o menor checkpoint estrutural sem migration desnecessária.
-5. Manter as Ondas 4 e 5 como fundações parcialmente entregues até fechar todas as lacunas declaradas.
-6. Continuar automaticamente pelos checkpoints liberados, sempre com commit, push, SHA remoto e CI verde.
-7. Não aguardar nova mensagem de “próximo”; parar apenas nos gates externos descritos.
+1. Preservar PR #33 draft, confirmar branch/HEAD/CI e corrigir baselines documentais sem declarar implantação.
+2. Gate C: obter evidência sanitizada da VPS por ferramenta MCP VPS read-only ou Web Console; não usar SSH nem inferir estado da 3080.
+3. Onda 1: evoluir Produto V22, DAM e StoragePort existentes com scanner real desativado por padrão, testes sintéticos e bloqueio de publicação sem evidência; não ativar Produto HTTP.
+4. Avançar contratos independentes das Ondas 2/3/4/5 em lotes isolados, sem mídia publicada, estoque real, pagamentos ou dados da VPS.
+5. Atualizar status/PR por macrocheckpoint, testar, commitar, fazer push, confirmar SHA remoto e CI; manter Ondas 4/5 parciais.
+6. Solicitar gate próprio antes de migration real, bucket, ClamAV na VPS, canário, merge ou promoção.
+7. Não aguardar mensagem de “próximo” entre checkpoints liberados; parar nos gates externos descritos.
 
 ---
 
