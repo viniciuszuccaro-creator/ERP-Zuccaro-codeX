@@ -5,9 +5,9 @@
 - Fluxo existente de Produto/DAM ganhou acao de verificacao com RBAC `aprovar-conteudo`, tenant Grupo/Empresa, resultado vinculado ao objeto exato, lock e auditoria sanitizada na mesma transacao. Falha da auditoria rollbacka a evidencia.
 - Midia permanece em `QUARENTENA` mesmo com veredito `CLEAN`. Scanner nao esta configurado no runtime padrao; sem ele a operacao falha explicitamente. Nenhum download ou publicacao foi liberado.
 - Testes locais: Produto/migration direcionados 37 pass, 0 fail, 2 skip condicionais; HTTP DAM 10 pass, 0 fail; backend completo 199 pass, 0 fail, 11 skip condicionais sem `DATABASE_URL`; backend typecheck, audit baseline, lint e build frontend passaram.
-- PostgreSQL real da migration 022 e E2E de rollback ficam pendentes da CI efemera da PR. Testes locais nao equivalem a aplicacao DEV/VPS.
+- CI [35881521486](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/35881521486) do commit `b90731f4ff7c4f76a85d8c5132c6e92838d9cd0d`: frontend/backend SUCCESS, incluindo migrate e `test:postgres` no PostgreSQL efemero. Isso nao equivale a aplicacao DEV/VPS.
 - Validacoes adicionais: HTTP DAM 10/10, testes frontend 613/613, build backend PASS. Typecheck global frontend FAIL por 2034 diagnosticos preexistentes em arquivos fora deste lote (por exemplo `base44/functions/_lib/security/entityGuardPolicy/entry.ts` e `src/pages/Relatorios.jsx`); sem alteracao do baseline.
-- `git diff --check` PASS. Migration 022 e E2E PostgreSQL aguardam CI da PR antes de considerar este checkpoint homologado no banco.
+- `git diff --check` PASS. Migration 022 e E2E PostgreSQL validados apenas na CI efemera; ativacao real depende do Gate DEV autorizado.
 - Arquivos principais: `server/migrations/022_produto_midia_scan_evidence.sql`, repository Produto, fluxo DAM, router/app e testes R01/R10.
 - Seguranca: nenhum arquivo real, URL assinada, token ou payload do scanner persistido ou versionado. Sem alteracao em estoque, preco, fiscal ou producao.
 - Proximo passo: CI frontend/backend/PostgreSQL verde; depois Gate DEV autorizado para verificar scanner e buckets existentes antes de configurar varredura real. Sem merge, migration remota ou promocao neste lote.
