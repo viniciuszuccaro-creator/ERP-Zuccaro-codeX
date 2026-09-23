@@ -1,3 +1,8 @@
+## Comercial 360 / handoff operacional vigente (2026-09-23)
+
+- Causa: `docs/HANDOFF_ATUAL.md` ainda apresentava como "Proximo passo" uma ordem R08B de 20/09, incompativel com o HEAD da PR #33 e as migrations 001-022 ja existentes no repositorio.
+- Correcao documental: checkpoint vigente no topo com PR/CI, VPS comprovada e Gate C parcial; a instrucao R08B foi identificada como historica sem apagar seu registro. Nao autoriza migration, canario, Auth novo ou promocao.
+
 ## Comercial 360 / Onda 1 - validar multiplos no Produto V22 (2026-09-23)
 
 - Causa: limpar multiplo ou quantidade minima na secao PIM restaurava silenciosamente 1/0, permitindo salvar valor diferente do digitado no fluxo HTTP ou legado.

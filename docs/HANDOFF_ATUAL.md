@@ -1,3 +1,10 @@
+## Checkpoint vigente - Comercial 360 / Gate C (2026-09-23)
+- Branch `codex/comercial-360`, PR #33 draft e sem merge; ultimo HEAD funcional antes deste checkpoint documental `c3df0c3ca0f95a4c27e21de7b91cb002fb154f53`. CI `35919084889` frontend/backend SUCCESS, incluindo PostgreSQL efemero. A CI nao homologa o DEV real.
+- Migrations 001-022 existem no repositorio/CI; a evidencia agregada fornecida pelo usuario da VPS mostrou somente 001-015 aplicadas uma vez. Nao executar 016-022, seed, Auth novo, scanner, Produto HTTP ou canario sem gate especifico.
+- API oficial 3080 permanece R07B/`dev_headers` conforme capturas fornecidas; backup SQL de 21/09 tem tamanho, hash e marcador de dump completo, mas nao teve restauracao comprovada. Imagem/container de rollback R07B preservados; 3086 estava livre no momento da consulta, sem autorizar implantacao.
+- Gate C PARCIAL: comparar em leitura somente a conexao efetiva da API com uma conexao direta ao `supabase-db` por identidade do servidor/migrations, sem imprimir URL ou credenciais; confirmar restaurabilidade e backup atualizado no gate autorizado. Comparar apenas IP nao e prova suficiente.
+- Orientacoes R08 abaixo sao historicas. Nao usar a secao antiga "Passo historico R08B" como ordem de execucao atual. Preservar PR draft, main e 3080 ate gate separado.
+
 ## Gate C - precheck Web Console adicional (2026-09-23)
 - Backup SQL de 21/09/2026 encontrado com 486969 bytes, SHA-256 calculado e marcador de dump completo; restauracao nao testada e backup atualizado ainda pendente para o gate autorizado.
 - API oficial `erp-api-dev` running na imagem R07B; container de rollback R07B exited e imagem preservada. Porta 3086 sem listener nem container ativo no instante da consulta; 3080 preservada.
@@ -125,9 +132,9 @@ autorizados passaram, e RBAC/cross-group permaneceram bloqueados. A falha
 funcionou corretamente. O hotfix reserva, dentro da transação rollbackável, um
 código numérico livre entre `900000` e `999999`; API e schema já eram coerentes.
 
-## Próximo passo
+## Passo historico R08B (nao executar como proximo gate)
 
-No Gate VPS autorizado, repetir somente o E2E PostgreSQL real e concluir o
+Registro de 20/09, superado pelo checkpoint vigente acima. No Gate VPS autorizado, repetir somente o E2E PostgreSQL real e concluir o
 canário. O seed RBAC já foi aplicado e não deve ser reaplicado por este hotfix;
 não reaplicar migrations. A API oficial 3080 continua R07B. Não
 criar migration 016, não promover a API R08 e não fazer merge neste gate.
