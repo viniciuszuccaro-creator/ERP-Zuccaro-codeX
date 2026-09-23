@@ -455,6 +455,27 @@ test('DAM scan falha fechado em RBAC, tenant, scanner ausente, resultado adulter
   assert.equal((await repo.getMidiaForScan({ groupId: GROUP, empresaId: EMPRESA }, product.id, reservation.mediaId))?.scan_verdict, undefined);
 });
 
+test('Busca PIM pagina e conta somente produtos ativos da empresa autorizada', async () => {
+  const { service, ctx, tenant } = harness();
+  const otherEmpresa = randomUUID();
+  tenant.link(otherEmpresa, GROUP);
+  const own = await service.create(ctx, { descricao: 'Chapa propria', material: 'Aco carbono',
+    liga: 'SAE 1020', norma_tecnica: 'ASTM A36' });
+  await service.create({ ...ctx, empresaId: otherEmpresa }, { descricao: 'Chapa externa',
+    material: 'Aco carbono', liga: 'SAE 1020', norma_tecnica: 'ASTM A36' });
+  for (const search of ['aco carbono', 'sae 1020', 'astm a36']) {
+    const page = await service.list(ctx, { search, limit: 1 });
+    assert.equal(page.meta.total, 1);
+    assert.equal(page.meta.hasMore, false);
+    assert.deepEqual(page.data.map((row) => row.id), [own.id]);
+    assert.equal((await service.list(ctx, { search, limit: 1, offset: 1 })).data.length, 0);
+  }
+  assert.equal((await service.list(ctx, { search: '%' })).meta.total, 0);
+  await service.update(ctx, own.id, { norma_tecnica: null });
+  assert.equal((await service.list(ctx, { search: 'astm a36' })).meta.total, 0);
+  assert.equal((await service.list({ ...ctx, empresaId: otherEmpresa }, { search: 'astm a36' })).meta.total, 1);
+});
+
 test('Produto persiste conteudo PIM, embalagem, minimo e fracionamento no agregado canonico', async () => {
   const { service, audit, ctx } = harness();
   const created = await service.create(ctx, {

@@ -166,8 +166,10 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
       return false;
     }
     if (filter.search) {
-      const hay = `${r.descricao} ${r.codigo || ''} ${r.nome || ''} ${r.codigo_barras || ''}`.toLowerCase();
-      if (!hay.includes(filter.search.toLowerCase())) return false;
+      const term = filter.search.toLowerCase();
+      const fields = [r.descricao, r.codigo, r.nome, r.codigo_barras,
+        r.material, r.liga, r.norma_tecnica];
+      if (!fields.some((value) => String(value ?? '').toLowerCase().includes(term))) return false;
     }
     return true;
   }

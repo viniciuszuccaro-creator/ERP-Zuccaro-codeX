@@ -454,6 +454,13 @@ test('HTTP Produto persiste material, liga e norma sem vazar tenant', async () =
     const id = created.body.data.id as string;
     assert.equal(created.body.data.material, 'Aco carbono');
     assert.equal((await request(`${path}/${id}`)).body.data.norma_tecnica, 'ASTM A36');
+    const found = await request(`${path}?search=ASTM%20A36&limit=1`);
+    assert.equal(found.status, 200);
+    assert.equal(found.body.meta.total, 1);
+    assert.deepEqual(found.body.data.map((product: { id: string }) => product.id), [id]);
+    assert.equal((await request(`${path}?search=ASTM%20A36`, 'GET', undefined,
+      headers(GROUP_A, EMPRESA_A2))).body.meta.total, 0);
+    assert.equal((await request(`${path}?search=%25`)).body.meta.total, 0);
     assert.equal((await request(`${path}/${id}`, 'GET', undefined, headers(GROUP_A, EMPRESA_A2))).status, 404);
     assert.equal((await request(`${path}/${id}`, 'GET', undefined, headers(GROUP_B, EMPRESA_B, ACTOR_B))).status, 404);
     const updated = await request(`${path}/${id}`, 'PATCH', { norma_tecnica: 'ABNT NBR 7007' });

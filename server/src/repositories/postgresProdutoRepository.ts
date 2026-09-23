@@ -133,11 +133,15 @@ export class PostgresProdutoRepository implements ProdutoRepository {
       where.push(`lower(codigo_barras) = $${params.length}`);
     }
     if (filter.search) {
-      params.push(`%${filter.search.toLowerCase()}%`);
+      params.push(filter.search.toLowerCase());
       where.push(
-        `(lower(descricao) LIKE $${params.length} OR lower(coalesce(codigo,'')) LIKE $${params.length}`
-        + ` OR lower(coalesce(nome,'')) LIKE $${params.length}`
-        + ` OR lower(coalesce(codigo_barras,'')) LIKE $${params.length})`,
+        `(strpos(lower(descricao), $${params.length}) > 0`
+        + ` OR strpos(lower(coalesce(codigo,'')), $${params.length}) > 0`
+        + ` OR strpos(lower(coalesce(nome,'')), $${params.length}) > 0`
+        + ` OR strpos(lower(coalesce(codigo_barras,'')), $${params.length}) > 0`
+        + ` OR strpos(lower(coalesce(material,'')), $${params.length}) > 0`
+        + ` OR strpos(lower(coalesce(liga,'')), $${params.length}) > 0`
+        + ` OR strpos(lower(coalesce(norma_tecnica,'')), $${params.length}) > 0)`,
       );
     }
     const whereSql = where.join(' AND ');

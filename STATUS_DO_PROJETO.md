@@ -1,3 +1,10 @@
+## Comercial 360 / Onda 1 - busca de atributos PIM no Produto (2026-09-23)
+
+- Causa: material, liga e norma tecnica ja eram persistidos no Produto, mas a busca server-side ignorava esses campos, impedindo consulta e contagem correta por atributo.
+- Correcao nos repositories existentes: PostgreSQL e memoria pesquisam os mesmos campos com texto literal case-insensitive; `%` e `_` nao viram curingas SQL. Filtros de grupo, empresa e ativo continuam obrigatorios, com count e pagina no mesmo criterio.
+- Testes sinteticos cobrem busca, paginacao, limpeza do atributo, isolamento entre empresas e rota HTTP; E2E PostgreSQL efemero cobre resultado, count e escopo. Sem migration nova ou alteracao em ProdutoService, RBAC, auditoria, VPS ou 3080.
+- Validacao local: backend serial 211 pass/0 fail/13 skips opcionais sem DATABASE_URL; frontend 621/621; backend typecheck/build, frontend lint/build, audit:baseline e diff-check PASS. Typecheck geral da raiz permanece com falhas preexistentes nao relacionadas, conforme checkpoint anterior. E2E PostgreSQL da busca e CI do novo HEAD pendentes; Gate C parcial. Proximo: contratos de canais sem publicacao externa.
+
 ## Comercial 360 / Onda 1 - limpeza de atributos PIM no V22 HTTP (2026-09-23)
 
 - Causa: o formulario permitia apagar material/liga/norma e conteudo PIM, mas `toProdutoHttpPayload` ignorava string vazia no update; a API preservava valor antigo e mostrava sucesso enganoso.

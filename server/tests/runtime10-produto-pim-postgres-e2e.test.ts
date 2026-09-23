@@ -575,17 +575,25 @@ test('R10 PostgreSQL real: Produto material, liga e norma preservam tenant e rol
     );
     assert.deepEqual(columns.rows.map((row) => row.column_name).sort(), ['liga', 'material', 'norma_tecnica']);
     await assert.rejects(db.withTransaction(async (tx) => {
+      const marker = `LIGA-R10-${randomUUID()}`;
       const row = await repo.create(scope, produtoCreateSchema.parse({
         descricao: 'PIM material sintetico', material: 'Aco carbono',
-        liga: 'SAE 1020', norma_tecnica: 'ASTM A36',
+        liga: marker, norma_tecnica: 'ASTM A36',
       }), tx);
       createdId = row.id;
       assert.equal((await repo.getById(scope, row.id, tx))?.material, 'Aco carbono');
       assert.equal(await repo.getById({ groupId: scope.groupId, empresaId: SEED_IDS.empresaA2 }, row.id, tx), null);
+      const ownPage = await repo.listPage({ ...scope, search: marker.toLowerCase(), limit: 1, offset: 0 }, tx);
+      assert.equal(ownPage.total, 1);
+      assert.deepEqual(ownPage.rows.map((product) => product.id), [row.id]);
+      assert.equal((await repo.listPage({ ...scope, search: marker, limit: 1, offset: 1 }, tx)).rows.length, 0);
+      assert.equal((await repo.listPage({ groupId: scope.groupId, empresaId: SEED_IDS.empresaA2,
+        search: marker }, tx)).total, 0);
+      assert.equal((await repo.listPage({ ...scope, search: '%' }, tx)).rows.some((product) => product.id === row.id), false);
       assert.equal(await repo.getById({ groupId: SEED_IDS.groupB, empresaId: SEED_IDS.empresaB }, row.id, tx), null);
       const updated = await repo.update(scope, row.id, { norma_tecnica: 'ABNT NBR 7007' }, tx);
       assert.equal(updated?.norma_tecnica, 'ABNT NBR 7007');
-      assert.equal(updated?.liga, 'SAE 1020');
+      assert.equal(updated?.liga, marker);
       await tx.query('SAVEPOINT invalid_material');
       await assert.rejects(tx.query(
         "UPDATE produtos SET material='' WHERE id=$1 AND group_id=$2 AND empresa_id=$3",
