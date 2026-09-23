@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import test from 'node:test';
 import { SupabaseStorageAdapter } from '../src/services/supabaseStorageAdapter.js';
 
+import { assertCleanMalwareScan, type MalwareScanResult } from '../src/services/storagePort.js';
 const groupId = '11111111-1111-4111-8111-111111111111';
 const empresaId = '22222222-2222-4222-8222-222222222222';
 const entityId = '33333333-3333-4333-8333-333333333333';
@@ -114,4 +115,29 @@ test('Storage adapter signs private download for one minute', async () => {
   const adapter = makeAdapter(async () => Response.json({ signedURL: `/object/sign/private/${storageKey}?token=synthetic-token` }));
   const result = await adapter.createSignedDownloadUrl(request, storageKey);
   assert.match(result.url, /^https:\/\/public\.example\.test\/storage\/v1\/object\/sign\/private\//);
+});
+test('DAM scan contract fails closed for missing, inconclusive, or unrelated results', () => {
+  const clean: MalwareScanResult = {
+    ...request, version: 1, verdict: 'CLEAN', scanner: 'synthetic-scanner',
+    scannedAt: new Date().toISOString(),
+  };
+  assert.doesNotThrow(() => assertCleanMalwareScan(request, clean));
+  const invalid: unknown[] = [
+    undefined, null, {},
+    { ...clean, verdict: 'INFECTED' },
+    { ...clean, verdict: 'ERROR' },
+    { ...clean, scanner: '' },
+    { ...clean, scannedAt: 'invalid' },
+    { ...clean, groupId: empresaId },
+    { ...clean, empresaId: groupId },
+    { ...clean, actorId: 'other-actor' },
+    { ...clean, entityId: fileId },
+    { ...clean, storageKey: 'other-key' },
+    { ...clean, sha256: '0'.repeat(64) },
+    { ...clean, sizeBytes: request.sizeBytes + 1 },
+    { ...clean, version: 2 },
+  ];
+  for (const result of invalid) {
+    assert.throws(() => assertCleanMalwareScan(request, result), /MALWARE_SCAN_NOT_CLEAN/);
+  }
 });

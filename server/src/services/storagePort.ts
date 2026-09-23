@@ -23,6 +23,32 @@ export type StorageObjectMetadata = {
   sha256: string;
   version: number;
 };
+export type MalwareScanResult = StorageObjectMetadata & StorageObjectContext & {
+  verdict: 'CLEAN' | 'INFECTED' | 'ERROR';
+  scanner: string;
+  scannedAt: string;
+};
+
+/** A scanner result is usable only for the exact verified object and tenant. */
+export interface MalwareScanPort {
+  scan(request: StorageUploadRequest): Promise<MalwareScanResult>;
+}
+
+export function assertCleanMalwareScan(request: StorageUploadRequest, result: unknown): void {
+  if (!result || typeof result !== 'object') throw new Error('MALWARE_SCAN_NOT_CLEAN');
+  const scan = result as Partial<MalwareScanResult>;
+  if (scan.verdict !== 'CLEAN' || !scan.scanner?.trim()
+    || !scan.scannedAt || !Number.isFinite(Date.parse(scan.scannedAt))
+    || scan.groupId !== request.groupId || scan.empresaId !== request.empresaId
+    || scan.entity !== request.entity || scan.entityId !== request.entityId
+    || scan.actorId !== request.actorId || scan.storageKey !== request.storageKey
+    || scan.fileName !== request.fileName || scan.mimeType !== request.mimeType
+    || scan.sizeBytes !== request.sizeBytes || scan.sha256?.toLowerCase() !== request.sha256.toLowerCase()
+    || scan.version !== (request.version ?? 1)) {
+    throw new Error('MALWARE_SCAN_NOT_CLEAN');
+  }
+}
+
 
 /** Contrato DAM: URLs são curtas e metadados tenant-aware; binários nunca entram no banco. */
 export interface StoragePort {
