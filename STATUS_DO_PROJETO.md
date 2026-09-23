@@ -1,3 +1,12 @@
+## Comercial 360 / Gate C DEV - inventario SQL somente leitura (2026-09-23)
+- Evidencia recebida do usuario pela Web Console, sem registros pessoais: `public.schema_migrations` tem colunas `id` (text) e `applied_at` (timestamptz). As migrations 001-015 aparecem uma vez cada; nenhuma 016-022 aparece no resultado de 15 linhas.
+- Contagens agregadas: `auth.users=0`, `public.profiles=2`, `groups=2`, `empresas=3`. Os 2 profiles ativos estao sem `auth_user_id`; `auth_inexistente=0`, `ativos_sem_grupo=0` e `empresa_fora_grupo=0`.
+- Conclusao: o banco consultado ainda nao suporta homologar Bearer/Auth novo com perfil vinculado. A API oficial 3080 continua 07B com `auth.mode=dev_headers` conforme evidencia anterior. Nao criar usuarios ou vinculos automaticamente.
+- A captura nao mostra `API_DATABASE_NAME` nem `banco_consultado`; o vinculo entre esse banco e a configuracao efetiva da API permanece sem prova. Rede/porta isolada, backup e rollback do Gate C tambem pendentes.
+- PR #33 draft no HEAD remoto `e523fa4dc08c5d37cc2d98ee0a9b340b172a63af`; CI [35900016924](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/35900016924) frontend/backend e PostgreSQL efemero SUCCESS. CI nao substitui Gate DEV.
+- Nenhuma migration, seed, perfil, container, bucket, scanner, flag HTTP ou porta 3080 alterada. Dados reais e segredos nao foram consultados ou versionados.
+- Proximo Gate C: confirmar nomes de banco API/psql e precheck de rede/backup/rollback somente leitura; depois definir gate separado para identidade Auth sintetica e vinculo de perfil, sem ativar Produto HTTP antes da homologacao.
+
 ## Comercial 360 / Onda 15 - contrato da outbox e E2E Produto (2026-09-23)
 - Base local/remota: `6700ed8c395e840b98361a6e3a22340cc5ac85b1`, PR #33 draft sem merge.
 - Causa: o contrato da Onda 15 ainda previa migration para colunas que a 018 ja entrega. O documento agora reutiliza `integration_events` e `PostgresProdutoRepository.appendPublicationEvent`; registra como lacuna a unicidade global de `idempotency_key` antes de novos consumidores.

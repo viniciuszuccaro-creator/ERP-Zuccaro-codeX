@@ -11,7 +11,7 @@
 >
 > Data de consolidação: 23/09/2026
 >
-> Estado factual: PR #33 aberta/draft e sem merge; base `ca4171600cc30f9922c2f8b2ccb8b22d06aa6888`. Orcamento e Pedido canonicos iniciais estao implementados; Produto/PIM/DAM seguem em execucao. Migrations 001-022 existem no repositorio e passaram somente na CI efemera. Segundo a auditoria informada pelo usuario via Web Console, `supabase-db` esta saudavel, PostgreSQL local e 17.6, `public.profiles` e `public.schema_migrations` existem, e a API oficial 3080 anuncia `ERP-RUNTIME-07B` com `auth.mode=dev_headers`. O MCP confirmou apenas a saude dos containers. Faltam esquema/historico de migrations, confirmacao do banco da API, vinculos agregados de profiles e precheck do canario. Nenhuma migration 016-022 foi comprovadamente aplicada na VPS; Auth novo, scanner e Produto HTTP nao estao homologados.
+> Estado factual: PR #33 aberta/draft e sem merge; base `ca4171600cc30f9922c2f8b2ccb8b22d06aa6888`. Orcamento e Pedido iniciais estao implementados; Produto/PIM/DAM seguem em execucao. Migrations 001-022 existem no repositorio/CI efemera. Web Console informada pelo usuario: `supabase-db` saudavel, PostgreSQL local 17.6, `public.schema_migrations` com `id`/`applied_at`, 001-015 cada 1x e 016-022 ausentes nas 15 linhas; `auth.users=0`, `profiles=2` (ambos ativos sem Auth), `groups=2`, `empresas=3`, sem vinculos de grupo/empresa invalidos nas contagens. API oficial 3080 anuncia `ERP-RUNTIME-07B` e `auth.mode=dev_headers`. A captura nao prova o nome do banco da API; rede, backup e rollback ainda exigem precheck. Auth novo, scanner e Produto HTTP nao estao homologados.
 
 ---
 
