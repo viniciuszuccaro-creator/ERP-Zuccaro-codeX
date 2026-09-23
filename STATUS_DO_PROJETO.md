@@ -1,3 +1,11 @@
+## Comercial 360 / Onda 1 - material, liga e norma tecnica no Produto (2026-09-23)
+
+- Objetivo: completar atributos tecnicos universais do Produto mestre sem cadastro paralelo.
+- Mudanca: migration aditiva 023; schemas, repositories PostgreSQL/in-memory, politica HTTP e formulario V22 existentes. Sem backfill.
+- TenantGuard, RBAC e auditoria transacional permanecem no ProdutoService; testes sinteticos cobrem validacao, HTTP, UI e isolamento.
+- Validacao local: backend direcionado 45 pass/0 fail/2 skips opcionais; HTTP 1/1; UI 10/10. Frontend completo 620/620, backend serial 209 pass/0 fail/13 skips condicionados a DATABASE_URL; lint, builds, backend typecheck, audit:baseline e diff-check PASS. Typecheck geral da raiz permanece com falhas preexistentes nao relacionadas, conforme checkpoint anterior. PostgreSQL de 023 e CI pendentes.
+- Gate C VPS parcial: migration 023 nao aplicada, API 3080 R07B preservada. Proximo: suites completas, push/CI e continuar Onda 1.
+
 ## Comercial 360 / handoff operacional vigente (2026-09-23)
 
 - Causa: `docs/HANDOFF_ATUAL.md` ainda apresentava como "Proximo passo" uma ordem R08B de 20/09, incompativel com o HEAD da PR #33 e as migrations 001-022 ja existentes no repositorio.

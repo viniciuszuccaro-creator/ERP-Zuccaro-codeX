@@ -1,7 +1,7 @@
 // Projecao estrita do V22 legado para o Produto MASTER DATA; campos operacionais
 // continuam com seus modulos proprietarios e nunca entram no body do BFF.
 const MASTER_FIELDS = [
-  'descricao', 'descricao_tecnica', 'descricao_comercial', 'titulo_seo',
+  'descricao', 'material', 'liga', 'norma_tecnica', 'descricao_tecnica', 'descricao_comercial', 'titulo_seo',
   'descricao_seo', 'embalagem_tipo', 'multiplo_venda', 'quantidade_minima_venda',
   'permite_fracionamento', 'nome', 'tipo_item', 'tipo_aco', 'eh_bitola',
   'peso_teorico_kg_m', 'bitola_diametro_mm', 'comprimento_barra_padrao_m',

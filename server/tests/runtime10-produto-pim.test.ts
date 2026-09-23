@@ -455,10 +455,13 @@ test('DAM scan falha fechado em RBAC, tenant, scanner ausente, resultado adulter
   assert.equal((await repo.getMidiaForScan({ groupId: GROUP, empresaId: EMPRESA }, product.id, reservation.mediaId))?.scan_verdict, undefined);
 });
 
-  const { service, ctx } = harness();
 test('Produto persiste conteudo PIM, embalagem, minimo e fracionamento no agregado canonico', async () => {
+  const { service, audit, ctx } = harness();
   const created = await service.create(ctx, {
     descricao: 'Produto PIM sintetico',
+    material: 'Aco carbono',
+    liga: 'SAE 1020',
+    norma_tecnica: 'ASTM A36',
     descricao_tecnica: 'Ficha tecnica controlada',
     descricao_comercial: 'Conteudo comercial aprovado',
     titulo_seo: 'Produto PIM para teste',
@@ -468,6 +471,9 @@ test('Produto persiste conteudo PIM, embalagem, minimo e fracionamento no agrega
     quantidade_minima_venda: 10,
     permite_fracionamento: true,
   });
+  assert.equal(created.material, 'Aco carbono');
+  assert.equal(created.liga, 'SAE 1020');
+  assert.equal(created.norma_tecnica, 'ASTM A36');
   assert.equal(created.descricao_tecnica, 'Ficha tecnica controlada');
   assert.equal(created.descricao_comercial, 'Conteudo comercial aprovado');
   assert.equal(created.multiplo_venda, 5);
@@ -476,10 +482,17 @@ test('Produto persiste conteudo PIM, embalagem, minimo e fracionamento no agrega
   assert.equal(created.workflow_status, 'RASCUNHO');
 
   const updated = await service.update({ ...ctx, requestId: 'pim-update' }, created.id, {
+    norma_tecnica: 'ABNT NBR 7007',
     descricao_comercial: 'Conteudo comercial revisado',
     multiplo_venda: 2,
     quantidade_minima_venda: 4,
   });
+  assert.equal(updated.norma_tecnica, 'ABNT NBR 7007');
+  assert.equal((await service.get(ctx, created.id)).norma_tecnica, 'ABNT NBR 7007');
+  const logs = await audit.listByEntity('Produto', created.id);
+  assert.equal(logs[0]?.afterData?.material, 'Aco carbono');
+  assert.equal(logs[1]?.beforeData?.norma_tecnica, 'ASTM A36');
+  assert.equal(logs[1]?.afterData?.norma_tecnica, 'ABNT NBR 7007');
   assert.equal(updated.descricao_comercial, 'Conteudo comercial revisado');
   assert.equal(updated.multiplo_venda, 2);
   assert.equal(updated.quantidade_minima_venda, 4);
@@ -488,6 +501,9 @@ test('Produto persiste conteudo PIM, embalagem, minimo e fracionamento no agrega
 test('Produto rejeita PIM invalido e workflow_status por mass assignment', async () => {
   const { service, ctx } = harness();
   for (const payload of [
+    { descricao: 'Material vazio', material: '' },
+    { descricao: 'Liga longa', liga: 'x'.repeat(81) },
+    { descricao: 'Norma longa', norma_tecnica: 'x'.repeat(121) },
     { descricao: 'Multiplo zero', multiplo_venda: 0 },
     { descricao: 'Minimo negativo', quantidade_minima_venda: -1 },
     { descricao: 'Workflow injetado', workflow_status: 'PUBLICADO' },

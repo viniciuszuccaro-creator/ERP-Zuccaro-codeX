@@ -1,5 +1,10 @@
 # Comercial 360 - Contrato da Onda 1: Produto, PIM e DAM
 
+
+## Checkpoint 23/09/2026
+
+Migration 023 acrescenta material, liga e norma tecnica ao Produto mestre e ao formulario V22, sem backfill. A migration nao foi aplicada na VPS. Testes e CI deste checkpoint devem ser conferidos antes de homologacao; Gate C continua parcial.
+
 ## Decisão
 
 `Produto` permanece o único mestre. A Onda 1 amplia `produtoTypes`, `ProdutoService`, repositories, rotas `/api/v1/produtos` e formulários de Cadastros. Não criar `ProdutoOmnicanal`, catálogo mestre separado nem armazenamento de mídia em Base44/localStorage.

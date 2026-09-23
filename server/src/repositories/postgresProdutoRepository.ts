@@ -82,6 +82,9 @@ export function mapProduto(row: Record<string, unknown>): Produto {
     status: String(row.status ?? 'Ativo'),
     foto_produto_url: row.foto_produto_url == null ? null : String(row.foto_produto_url),
     ativo: Boolean(row.ativo),
+    material: row.material == null ? null : String(row.material),
+    liga: row.liga == null ? null : String(row.liga),
+    norma_tecnica: row.norma_tecnica == null ? null : String(row.norma_tecnica),
     descricao_tecnica: row.descricao_tecnica == null ? null : String(row.descricao_tecnica),
     descricao_comercial: row.descricao_comercial == null ? null : String(row.descricao_comercial),
     titulo_seo: row.titulo_seo == null ? null : String(row.titulo_seo),
@@ -187,11 +190,12 @@ export class PostgresProdutoRepository implements ProdutoRepository {
         peso_liquido_kg, peso_bruto_kg, altura_cm, largura_cm, comprimento_cm, volume_m3,
         ncm, cest, origem_mercadoria, status, foto_produto_url, ativo,
         descricao_tecnica, descricao_comercial, titulo_seo, descricao_seo,
-        embalagem_tipo, multiplo_venda, quantidade_minima_venda, permite_fracionamento
+        embalagem_tipo, multiplo_venda, quantidade_minima_venda, permite_fracionamento,
+        material, liga, norma_tecnica
       ) VALUES (
         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16::jsonb,$17::jsonb,
         $18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,
-        $34,$35,$36,$37,$38,$39,$40,$41
+        $34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44
       ) RETURNING *`,
       [
         scope.groupId,
@@ -235,6 +239,9 @@ export class PostgresProdutoRepository implements ProdutoRepository {
         data.multiplo_venda ?? 1,
         data.quantidade_minima_venda ?? 0,
         data.permite_fracionamento ?? false,
+        data.material ?? null,
+        data.liga ?? null,
+        data.norma_tecnica ?? null,
       ],
     );
     return mapProduto(result.rows[0] as Record<string, unknown>);
@@ -265,7 +272,7 @@ export class PostgresProdutoRepository implements ProdutoRepository {
       next.ncm, next.cest, next.origem_mercadoria, next.status, next.foto_produto_url, next.ativo, next.empresa_id,
       next.descricao_tecnica, next.descricao_comercial, next.titulo_seo, next.descricao_seo,
       next.embalagem_tipo, next.multiplo_venda, next.quantidade_minima_venda, next.permite_fracionamento,
-      scope.groupId, id,
+      next.material, next.liga, next.norma_tecnica, scope.groupId, id,
     ];
     let sql = `UPDATE produtos SET
       codigo=$1, codigo_barras=$2, descricao=$3, nome=$4, tipo_item=$5, tipo_aco=$6, eh_bitola=$7,
@@ -276,8 +283,9 @@ export class PostgresProdutoRepository implements ProdutoRepository {
       peso_liquido_kg=$20, peso_bruto_kg=$21, altura_cm=$22, largura_cm=$23, comprimento_cm=$24, volume_m3=$25,
       ncm=$26, cest=$27, origem_mercadoria=$28, status=$29, foto_produto_url=$30, ativo=$31, empresa_id=$32,
       descricao_tecnica=$33, descricao_comercial=$34, titulo_seo=$35, descricao_seo=$36,
-      embalagem_tipo=$37, multiplo_venda=$38, quantidade_minima_venda=$39, permite_fracionamento=$40
-      WHERE group_id=$41 AND id=$42`;
+      embalagem_tipo=$37, multiplo_venda=$38, quantidade_minima_venda=$39, permite_fracionamento=$40,
+      material=$41, liga=$42, norma_tecnica=$43
+      WHERE group_id=$44 AND id=$45`;
     if (scope.empresaId) {
       params.push(scope.empresaId);
       sql += ` AND empresa_id=$${params.length}`;

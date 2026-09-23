@@ -19,6 +19,24 @@ export default function ProdutoPimSection({ formData, setFormData }) {
         <h3 id="produto-pim-title" className="text-base font-semibold">Conteúdo técnico e comercial</h3>
       </div>
 
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="space-y-2">
+          <Label htmlFor="produto-material">Material</Label>
+          <Input id="produto-material" value={formData.material || ""}
+            onChange={(event) => update("material", event.target.value)} maxLength={120} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="produto-liga">Liga</Label>
+          <Input id="produto-liga" value={formData.liga || ""}
+            onChange={(event) => update("liga", event.target.value)} maxLength={80} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="produto-norma-tecnica">Norma técnica</Label>
+          <Input id="produto-norma-tecnica" value={formData.norma_tecnica || ""}
+            onChange={(event) => update("norma_tecnica", event.target.value)} maxLength={120} />
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="descricao-tecnica">Descrição técnica</Label>

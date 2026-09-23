@@ -83,6 +83,9 @@ export const produtoCreateSchema = z.object({
   codigo: z.string().trim().max(80).optional().nullable(),
   codigo_barras: z.string().trim().max(64).optional().nullable(),
   descricao: z.string().trim().min(1).max(500),
+  material: z.string().trim().min(1).max(120).optional().nullable(),
+  liga: z.string().trim().min(1).max(80).optional().nullable(),
+  norma_tecnica: z.string().trim().min(1).max(120).optional().nullable(),
   descricao_tecnica: z.string().trim().max(10000).optional().nullable(),
   descricao_comercial: z.string().trim().max(10000).optional().nullable(),
   titulo_seo: z.string().trim().max(180).optional().nullable(),
@@ -161,6 +164,9 @@ export type Produto = {
   foto_produto_url: string | null;
   ativo: boolean;
   created_at: string;
+  material: string | null;
+  liga: string | null;
+  norma_tecnica: string | null;
   descricao_tecnica: string | null;
   descricao_comercial: string | null;
   titulo_seo: string | null;

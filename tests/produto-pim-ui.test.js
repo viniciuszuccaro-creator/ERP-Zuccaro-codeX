@@ -48,6 +48,9 @@ test('formulario canonico integra secao PIM sem criar tela paralela', async () =
   assert.match(form, /descricao_tecnica/);
   assert.match(form, /workflow_status: produto\.workflow_status \|\| 'RASCUNHO'/);
   for (const field of [
+    'material',
+    'liga',
+    'norma_tecnica',
     'descricao_tecnica',
     'descricao_comercial',
     'titulo_seo',
@@ -90,6 +93,13 @@ test('Produto V22 bloqueia upload legado quando backend HTTP usa Storage oficial
   assert.match(form, /disabled=\{isHttpBackendMode \|\| gerandoImagem/);
   assert.match(form, /if \(!url\) throw new Error\('Imagem nao gerada'\)/);
 });
+test('V22 projeta material, liga e norma tecnica sem tenant no body', () => {
+  const body = toProdutoHttpPayload({ descricao: 'Chapa sintetica', material: 'Aco',
+    liga: 'SAE 1020', norma_tecnica: 'ASTM A36', groupId: 'forjado', empresaId: 'forjada' });
+  assert.deepEqual(body, { descricao: 'Chapa sintetica', material: 'Aco',
+    liga: 'SAE 1020', norma_tecnica: 'ASTM A36' });
+});
+
 test('V22 usa API explicita para UUID canonico e preserva operacoes locais para legado', async () => {
   const form = await readFile(new URL('../src/components/cadastros/ProdutoFormV22_Completo.jsx', import.meta.url), 'utf8');
   const client = await readFile(new URL('../src/api/base44Client.js', import.meta.url), 'utf8');

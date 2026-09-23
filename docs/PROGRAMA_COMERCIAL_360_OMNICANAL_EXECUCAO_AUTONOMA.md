@@ -3,7 +3,7 @@
 > Documento mestre para Codex e Cursor — CPA Ferro e Aço / ERP Zuccaro / Site CPA
 > Baseline verificado em 23/09/2026: PR #33 draft, branch `codex/comercial-360`,
 > HEAD remoto confirmado `750a4ab14854e184d6fb2fc8afef7f6e2094b277` (Produto/DAM e paridade da outbox; Gate C ainda parcial).
-> Migrations 001-022 presentes no repositorio; 022 registra evidencia DAM.
+> Migrations 001-023 presentes no repositorio; 022 registra evidencia DAM e 023 material/liga/norma do Produto (nao aplicada na VPS).
 > CI [35910005796](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/35910005796)
 > verde em frontend/backend/PostgreSQL efemero. Nenhuma migration 016-022 foi
 > homologada na VPS por essa CI; Auth, scanner real, Produto HTTP e deploy DEV

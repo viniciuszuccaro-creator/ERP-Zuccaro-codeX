@@ -442,3 +442,29 @@ test('HTTP R10 DAM: rejeicao individual de reserva vencida exige tenant e inativ
     assert.equal(JSON.stringify(logs).includes(reservation.body.data.url), false);
   }, storage);
 });
+
+test('HTTP Produto persiste material, liga e norma sem vazar tenant', async () => {
+  await withHttp(async (request) => {
+    const path = '/api/v1/produtos';
+    const created = await request(path, 'POST', {
+      descricao: 'Chapa PIM sintetica', material: 'Aco carbono',
+      liga: 'SAE 1020', norma_tecnica: 'ASTM A36',
+    });
+    assert.equal(created.status, 201);
+    const id = created.body.data.id as string;
+    assert.equal(created.body.data.material, 'Aco carbono');
+    assert.equal((await request(`${path}/${id}`)).body.data.norma_tecnica, 'ASTM A36');
+    assert.equal((await request(`${path}/${id}`, 'GET', undefined, headers(GROUP_A, EMPRESA_A2))).status, 404);
+    assert.equal((await request(`${path}/${id}`, 'GET', undefined, headers(GROUP_B, EMPRESA_B, ACTOR_B))).status, 404);
+    const updated = await request(`${path}/${id}`, 'PATCH', { norma_tecnica: 'ABNT NBR 7007' });
+    assert.equal(updated.status, 200);
+    assert.equal(updated.body.data.norma_tecnica, 'ABNT NBR 7007');
+    assert.equal((await request(path, 'POST', { descricao: 'Invalido', material: '' })).status, 400);
+    assert.equal((await request(path, 'POST', { descricao: 'Invalido', groupId: GROUP_B })).status, 400);
+    const audit = (request as typeof request & { auditRepo: InMemoryAuditRepository }).auditRepo;
+    const logs = await audit.listByEntity('Produto', id);
+    assert.equal(logs.length, 2);
+    assert.equal(logs[0]?.afterData?.material, 'Aco carbono');
+    assert.equal(logs[1]?.afterData?.norma_tecnica, 'ABNT NBR 7007');
+  });
+});

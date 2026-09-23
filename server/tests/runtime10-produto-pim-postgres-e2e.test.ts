@@ -11,6 +11,7 @@ import { createDbClient } from '../src/db/client.ts';
 import { loadConfig } from '../src/config/env.ts';
 import { SEED_IDS } from '../scripts/seedDevIds.ts';
 import { PostgresProdutoRepository } from '../src/repositories/postgresProdutoRepository.ts';
+import { produtoCreateSchema } from '../src/repositories/produtoTypes.ts';
 import { assertProdutoMediaContract, assertProdutoRelationsContract } from './produto-relacoes-contract.ts';
 
 const enabled = Boolean(process.env.DATABASE_URL);
@@ -555,5 +556,47 @@ test('R10 PostgreSQL real: service DAM reserva, confirma e rollbacka auditoria',
     } finally {
       await db.end();
     }
+  }
+});
+
+test('R10 PostgreSQL real: Produto material, liga e norma preservam tenant e rollback', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
+  const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
+  const repo = new PostgresProdutoRepository(db);
+  const scope = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA };
+  let createdId = '';
+  try {
+    const migration = await db.query<{ total: number }>(
+      "SELECT count(*)::int AS total FROM schema_migrations WHERE id='023_produto_material_norma.sql'",
+    );
+    assert.equal(migration.rows[0]?.total, 1);
+    const columns = await db.query<{ column_name: string }>(
+      "SELECT column_name FROM information_schema.columns WHERE table_name='produtos' AND column_name=ANY($1::text[])",
+      [['material', 'liga', 'norma_tecnica']],
+    );
+    assert.deepEqual(columns.rows.map((row) => row.column_name).sort(), ['liga', 'material', 'norma_tecnica']);
+    await assert.rejects(db.withTransaction(async (tx) => {
+      const row = await repo.create(scope, produtoCreateSchema.parse({
+        descricao: 'PIM material sintetico', material: 'Aco carbono',
+        liga: 'SAE 1020', norma_tecnica: 'ASTM A36',
+      }), tx);
+      createdId = row.id;
+      assert.equal((await repo.getById(scope, row.id, tx))?.material, 'Aco carbono');
+      assert.equal(await repo.getById({ groupId: scope.groupId, empresaId: SEED_IDS.empresaA2 }, row.id, tx), null);
+      assert.equal(await repo.getById({ groupId: SEED_IDS.groupB, empresaId: SEED_IDS.empresaB }, row.id, tx), null);
+      const updated = await repo.update(scope, row.id, { norma_tecnica: 'ABNT NBR 7007' }, tx);
+      assert.equal(updated?.norma_tecnica, 'ABNT NBR 7007');
+      assert.equal(updated?.liga, 'SAE 1020');
+      await tx.query('SAVEPOINT invalid_material');
+      await assert.rejects(tx.query(
+        "UPDATE produtos SET material='' WHERE id=$1 AND group_id=$2 AND empresa_id=$3",
+        [row.id, scope.groupId, scope.empresaId],
+      ), /check constraint/i);
+      await tx.query('ROLLBACK TO SAVEPOINT invalid_material');
+      assert.equal((await repo.getById(scope, row.id, tx))?.norma_tecnica, 'ABNT NBR 7007');
+      throw new Error('ROLLBACK_PIM_MATERIAL_SYNTHETIC');
+    }), /ROLLBACK_PIM_MATERIAL_SYNTHETIC/);
+    assert.equal(await repo.getById(scope, createdId), null);
+  } finally {
+    await db.end();
   }
 });
