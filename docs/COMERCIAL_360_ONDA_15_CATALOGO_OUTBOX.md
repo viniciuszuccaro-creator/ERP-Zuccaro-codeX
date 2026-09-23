@@ -7,7 +7,7 @@ Produto permanece o mestre de catalogo e `integration_events` permanece a unica 
 ## Baseline reutilizado
 
 - `produtos`, unidades, TabelaPreco, ClienteEmpresa, Orcamento e Pedido sao os donos canonicos dos dados comerciais.
-- `integration_events`, criada nas migrations 001/002, ja possui Grupo, Empresa, origem, tipo, idempotencia, payload, estado, erro, timestamps e RLS + FORCE.
+- `integration_events`, criada em 001 e protegida por RLS + FORCE em 002, ja possui Grupo, Empresa, origem, tipo, idempotencia, payload, estado, erro e timestamps. A migration 018 adicionou versao, agregado/id, correlacao, tentativas, proxima tentativa, lease, publicacao, dead-letter e checksum; existe somente no repositorio/CI, nao comprovadamente no DEV.
 - Gateway Site CPA, contratos HML, policies de marketplace, `ValidarPedidosExternos` e operacao local continuam como adapters/fallbacks durante a transicao.
 - A configuracao de integracao existente continua sendo a fonte de habilitacao por Empresa; credenciais nunca entram no payload, frontend, log ou Git.
 
@@ -28,7 +28,7 @@ Publicacao nao copia custo, margem, documento fiscal, observacao interna, segred
 
 Toda mutacao que exige propagacao grava o evento na mesma transacao do agregado. Entrega externa acontece depois do commit.
 
-Antes de ativar worker, `integration_events` deve receber migration aditiva, sem modificar 001/002, para representar no minimo: versao do schema, agregado/id, request/correlation ID, contador e limite de tentativas, proxima tentativa, lock/lease, publicado em, dead-letter em e checksum do payload. A unicidade deve incluir tenant + consumidor/operacao + chave idempotente, preservando compatibilidade com eventos existentes.
+Nao criar migration para colunas ja entregues em 018. A unicidade atual de `idempotency_key` e global; o emissor Produto inclui Grupo/Produto/requestId na chave. Antes de ativar worker ou novos consumidores, revisar a necessidade de unicidade composta por tenant + consumidor/operacao + chave, sem quebrar eventos existentes; qualquer migration adicional exige gate proprio. O repository Produto ja emite `produto.publicado` com payload allowlisted e executor transacional, sem enviar rede.
 
 Estados previstos: `PENDING`, `PROCESSING`, `PUBLISHED`, `RETRY`, `DEAD_LETTER` e `CANCELLED`. Erro armazenado e sanitizado e limitado; payload e envelope nunca incluem credencial ou URL temporaria.
 
@@ -64,9 +64,9 @@ Policies/telas existentes continuam operando como fallback ate que adapter canon
 
 ## Primeiro checkpoint de implementacao
 
-1. Implementar repository/service de outbox sobre `integration_events`, com tenant, executor compartilhado e payload allowlisted.
-2. Criar migration aditiva somente apos reconferir `origin/main`; nao alterar migrations existentes.
-3. Emitir inicialmente evento sintetico de Produto aprovado e testar rollback atomico sem chamar rede.
+1. Reutilizar `PostgresProdutoRepository.appendPublicationEvent` e `integration_events` existentes; testar tenant, payload allowlisted, idempotencia e rollback do executor compartilhado em PostgreSQL efemero.
+2. Antes de worker, revisar contrato de claim/lease e unicidade tenant/consumidor; criar migration apenas para lacuna comprovada apos reconferir `origin/main`.
+3. Manter emissao de Produto aprovado sem rede dentro da transacao; no gate DEV, conferir migrations aplicadas antes de qualquer ativacao.
 4. Adicionar worker controlado com publisher fake, retry/dead-letter e metricas; provider real permanece bloqueado.
 5. Ligar um adapter de catalogo apenas depois da Onda 1 PIM/DAM e da reconciliacao estarem verdes.
 

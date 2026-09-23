@@ -195,6 +195,71 @@ test('R10 PostgreSQL real: migration 018 preserva PIM, tenant, DAM, RLS e outbox
   }
 });
 
+test('R10 PostgreSQL real: publicacao Produto grava outbox tenant-scoped com rollback e idempotencia', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
+  const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
+  const repo = new PostgresProdutoRepository(db);
+  const produtoId = randomUUID();
+  const requestId = randomUUID();
+  const scope = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA };
+  let originalError: unknown;
+  try {
+    await db.query(
+      "INSERT INTO produtos (id,group_id,empresa_id,codigo,descricao) VALUES ($1,$2,$3,$4,'R10 OUTBOX SINTETICO')",
+      [produtoId, scope.groupId, scope.empresaId, 'R10-' + produtoId],
+    );
+    const produto = await repo.getById(scope, produtoId);
+    assert.ok(produto);
+    await assert.rejects(db.withTransaction(async (tx) => {
+      await repo.appendPublicationEvent(scope, produto, requestId, tx);
+      throw new Error('R10_OUTBOX_ROLLBACK');
+    }), /R10_OUTBOX_ROLLBACK/);
+    const count = async () => db.query<{ total: number }>(
+      'SELECT count(*)::int AS total FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND aggregate_id=$3 AND correlation_id=$4',
+      [scope.groupId, scope.empresaId, produtoId, requestId],
+    );
+    assert.equal((await count()).rows[0]?.total, 0);
+    await db.withTransaction((tx) => repo.appendPublicationEvent(scope, produto, requestId, tx));
+    await db.withTransaction((tx) => repo.appendPublicationEvent(scope, produto, requestId, tx));
+    assert.equal((await count()).rows[0]?.total, 1);
+    const events = await db.query<{
+      group_id: string; empresa_id: string; aggregate_type: string; aggregate_id: string;
+      event_type: string; status: string; schema_version: number; payload: Record<string, unknown>;
+      payload_checksum: string;
+    }>(
+      'SELECT group_id,empresa_id,aggregate_type,aggregate_id,event_type,status,schema_version,payload,payload_checksum FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND aggregate_id=$3 AND correlation_id=$4',
+      [scope.groupId, scope.empresaId, produtoId, requestId],
+    );
+    const event = events.rows[0];
+    assert.ok(event);
+    assert.equal(event.group_id, scope.groupId);
+    assert.equal(event.empresa_id, scope.empresaId);
+    assert.equal(event.aggregate_type, 'Produto');
+    assert.equal(event.aggregate_id, produtoId);
+    assert.equal(event.event_type, 'produto.publicado');
+    assert.equal(event.status, 'pending');
+    assert.equal(event.schema_version, 1);
+    assert.deepEqual(Object.keys(event.payload).sort(), ['codigo', 'produtoId', 'schemaVersion', 'workflowStatus']);
+    assert.equal(event.payload.produtoId, produtoId);
+    assert.match(event.payload_checksum, /^[a-f0-9]{64}$/);
+  } catch (error) {
+    originalError = error;
+    throw error;
+  } finally {
+    try {
+      await db.withTransaction(async (tx) => {
+        await tx.query('DELETE FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND aggregate_id=$3 AND correlation_id=$4',
+          [scope.groupId, scope.empresaId, produtoId, requestId]);
+        await tx.query('DELETE FROM produtos WHERE group_id=$1 AND empresa_id=$2 AND id=$3',
+          [scope.groupId, scope.empresaId, produtoId]);
+      });
+    } catch (error) {
+      if (!originalError) throw error;
+      process.stderr.write('R10 outbox cleanup failed after original test error\n');
+    } finally {
+      await db.end();
+    }
+  }
+});
 test('R10 PostgreSQL real: contrato compartilhado, empresa, grupo, SKU e rollback', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
   const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
   const repo = new PostgresProdutoRepository(db);
