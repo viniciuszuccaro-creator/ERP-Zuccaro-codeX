@@ -2,7 +2,7 @@
 
 > Documento mestre para Codex e Cursor — CPA Ferro e Aço / ERP Zuccaro / Site CPA
 > Baseline verificado em 23/09/2026: PR #33 draft, branch `codex/comercial-360`,
-> HEAD funcional anterior `14b2e5704a536b3f9508f845fa64fa2e666b8293`.
+> HEAD funcional `199d5eabac415162a24b32ee66549c1bebfcda09` (inicio obrigatorio do scan); baseline anterior `14b2e5704a536b3f9508f845fa64fa2e666b8293`.
 > Migrations 001-022 presentes no repositorio; 022 registra evidencia DAM.
 > CI [35886360232](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/35886360232)
 > verde em frontend/backend/PostgreSQL efemero. Nenhuma migration 016-022 foi
