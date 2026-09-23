@@ -6,7 +6,8 @@
 - Testes locais: UI direcionada 8/8; HTTP R10 10/10; frontend completo 614/614; backend completo 199 pass, 0 fail e 11 skips condicionais sem `DATABASE_URL`.
 - Typecheck/build backend, lint, audit:baseline, build frontend e `git diff --check` PASS. Typecheck global frontend continua FAIL por 1602 diagnosticos legados, nenhum nos arquivos alterados deste lote; baseline nao foi modificado.
 - Arquivos: router Produto, secao DAM V22, policy HTTP existente e testes relacionados. Nenhuma migration nova, dado real, VPS, bucket, porta 3080 ou `main` alterados.
-- Proximo gate: CI frontend/backend/PostgreSQL da PR; depois auditoria DEV somente leitura e homologacao de scanner/buckets com autorizacao especifica antes de ativacao real.
+- CI [35884041149](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/35884041149) do commit `170d46e8079bdee3274e88dc7b3d606d2b98815f`: frontend/backend SUCCESS, incluindo migrations e `test:postgres` efemero.
+- Proximo gate: auditoria DEV somente leitura e homologacao de scanner/buckets com autorizacao especifica antes de ativacao real. CI efemera nao equivale a aprovacao da VPS.
 
 ### Comercial 360 / Onda 1 - evidencia DAM de varredura (2026-09-23)
 
