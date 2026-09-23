@@ -24,8 +24,8 @@ Este documento prepara o gate futuro e nao autoriza acesso a VPS, merge, migrati
 
 ## Variaveis dos scripts
 
-- Canario: `IMAGE`, `ENV_FILE`, `ERP_DOCKER_NETWORK`, `EXPECTED_RUNTIME`; opcionais `CANARY_NAME`, `CANARY_PORT`.
-- Smoke: `BASE_URL`, `EXPECTED_RUNTIME`.
+- Canario: `IMAGE`, `ENV_FILE`, `ERP_DOCKER_NETWORK`, `EXPECTED_RUNTIME`; opcionais `CANARY_NAME`, `CANARY_PORT`. O script rejeita 3080, nome oficial e metadata que nao declare `auth.mode=supabase_user`.
+- Smoke: `BASE_URL`, `EXPECTED_RUNTIME`; exige runtime revisado, `auth.mode=supabase_user` e entidades Orcamento/Pedido.
 - Rollback: `ROLLBACK_CONTAINER`; opcionais `OFFICIAL_CONTAINER`. O script e dry-run por padrao e so altera containers com `CONFIRM_ROLLBACK=YES` apos autorizacao humana.
 - Segredos permanecem somente no arquivo de ambiente da VPS; nunca no Git, argumentos, logs ou evidencias.
 

@@ -7,6 +7,9 @@ command -v node >/dev/null
 health="$(curl --fail --silent "$BASE_URL/health")"
 ready="$(curl --fail --silent "$BASE_URL/ready")"
 meta="$(curl --fail --silent "$BASE_URL/api/v1/meta")"
-node -e "const m=JSON.parse(process.argv[1]); if(m.runtime!==process.argv[2]) process.exit(1); const e=m.httpEntities||[]; for(const x of ['Orcamento','Pedido']) if(!e.includes(x)) process.exit(1)" "$meta" "$EXPECTED_RUNTIME"
+if ! node -e "try { const m=JSON.parse(process.argv[1]); const e=m.httpEntities||[]; if(m.runtime===process.argv[2] && m.auth?.mode==='supabase_user' && ['Orcamento','Pedido'].every(x=>e.includes(x))) process.exit(0) } catch {} process.exit(1)" "$meta" "$EXPECTED_RUNTIME"; then
+  echo 'BLOCKED: smoke runtime, verified Auth mode or commercial entities mismatch' >&2
+  exit 1
+fi
 printf 'SMOKE_OK base=%s runtime=%s health=%s ready=%s\n' "$BASE_URL" "$EXPECTED_RUNTIME" "$health" "$ready"
 echo 'Authenticated quotation/order mutation smoke remains a manual authorized gate with synthetic tenant headers.'

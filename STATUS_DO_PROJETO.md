@@ -1,3 +1,11 @@
+## Comercial 360 / Gate D - metadata Auth fail-closed (2026-09-23)
+- Base: `4b6a0e54e1c51be5b81f9bc557a17e4209782b13`, PR #33 draft.
+- Causa: canario e smoke existentes verificavam runtime, mas poderiam aceitar `auth.mode=dev_headers` e produzir sinal de prontidao enganoso.
+- Script de canario e smoke agora exigem `auth.mode=supabase_user`; JSON invalido, runtime divergente e entidades comerciais ausentes falham sem imprimir metadata. Porta 3080 e container oficial continuam protegidos.
+- Testes: 4/4 direcionados, frontend 618/618, Bash `-n`, audit:baseline, lint, build e `git diff --check` PASS. Backend/runtime nao alterado; PostgreSQL efemero da CI sera conferido apos push.
+- Multiempresa/RBAC/auditoria do backend mantidos; Auth novo ainda nao homologado na VPS. Nenhuma API, migration, seed, scanner, bucket, container ou porta 3080 alterada no DEV.
+- Proximo gate: concluir SQL agregado e precheck de rede/backup/rollback na Web Console; depois autorizacoes separadas para migrations e canario isolado.
+
 ## Comercial 360 / Gate DEV parcial e guarda do canario (2026-09-23)
 - Branch `codex/comercial-360`, PR #33 draft; base local/remota `440790cd22091749ebf0be24d04bc92b0f06cf35` antes do lote.
 - Evidencia informada pelo usuario via Web Console: `erp-api-dev` na porta oficial 3080 usa imagem `runtime07b-main-ca0bc5f3`; `/health` e `/ready` HTTP 200; `/api/v1/meta` informou `ERP-RUNTIME-07B` e `auth.mode=dev_headers`. Nao se trata de teste Auth do codigo novo.

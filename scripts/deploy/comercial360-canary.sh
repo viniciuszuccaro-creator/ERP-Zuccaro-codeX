@@ -32,7 +32,10 @@ for _ in $(seq 1 30); do
   if curl --fail --silent "http://127.0.0.1:${CANARY_PORT}/health" >/dev/null && \
      curl --fail --silent "http://127.0.0.1:${CANARY_PORT}/ready" >/dev/null; then
     meta="$(curl --fail --silent "http://127.0.0.1:${CANARY_PORT}/api/v1/meta")"
-    node -e "const m=JSON.parse(process.argv[1]); if(m.runtime!==process.argv[2]) process.exit(1)" "$meta" "$EXPECTED_RUNTIME"
+    if ! node -e "try { const m=JSON.parse(process.argv[1]); if(m.runtime===process.argv[2] && m.auth?.mode==='supabase_user') process.exit(0) } catch {} process.exit(1)" "$meta" "$EXPECTED_RUNTIME"; then
+      echo 'BLOCKED: canary runtime or verified Auth mode mismatch' >&2
+      exit 1
+    fi
     echo "CANARY_READY name=$CANARY_NAME port=$CANARY_PORT image=$IMAGE runtime=$EXPECTED_RUNTIME"
     exit 0
   fi
