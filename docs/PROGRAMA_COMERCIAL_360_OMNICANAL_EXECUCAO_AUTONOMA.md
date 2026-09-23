@@ -1,10 +1,17 @@
 # PROGRAMA COMERCIAL 360 OMNICANAL — EXECUÇÃO AUTÔNOMA
 
 > Documento mestre para Codex e Cursor — CPA Ferro e Aço / ERP Zuccaro / Site CPA
+> Baseline verificado em 23/09/2026: PR #33 draft, branch `codex/comercial-360`,
+> HEAD funcional anterior `14b2e5704a536b3f9508f845fa64fa2e666b8293`.
+> Migrations 001-022 presentes no repositorio; 022 registra evidencia DAM.
+> CI [35886360232](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/35886360232)
+> verde em frontend/backend/PostgreSQL efemero. Nenhuma migration 016-022 foi
+> homologada na VPS por essa CI; Auth, scanner real, Produto HTTP e deploy DEV
+> continuam pendentes de verificacao operacional autorizada.
 >
 > Data de consolidação: 23/09/2026
 >
-> Estado factual em 23/09/2026: branch `codex/comercial-360`, PR #33 aberta/draft e sem merge no HEAD `865e23d29ed72d6b00180fc52a4bde572f85c864` (base da PR `ca4171600cc30f9922c2f8b2ccb8b22d06aa6888`). Orçamento e Pedido canônicos iniciais estão implementados; Produto/PIM/DAM seguem em execução. Migrations 001–021 existem no repositório e passaram na CI `35873286965` com PostgreSQL efêmero; nenhuma migration 016–021 foi comprovadamente aplicada na VPS. O Gate C DEV permanece sem evidência de ambiente; não inferir o runtime da 3080 do código da PR.
+> Estado factual: PR #33 aberta/draft e sem merge; base `ca4171600cc30f9922c2f8b2ccb8b22d06aa6888`. Orcamento e Pedido canonicos iniciais estao implementados; Produto/PIM/DAM seguem em execucao. Migrations 001-022 existem no repositorio e passaram na CI efemera indicada acima; nenhuma migration 016-022 foi comprovadamente aplicada na VPS. Gate C DEV segue sem evidencia de ambiente; nao inferir o runtime da 3080 do codigo da PR.
 
 ---
 

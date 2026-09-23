@@ -1,4 +1,21 @@
+## Comercial 360 / Onda 1 - inicio obrigatorio da varredura DAM (2026-09-23)
+- Base: `14b2e5704a536b3f9508f845fa64fa2e666b8293`, CI `35886360232` SUCCESS.
+- Causa: o validador de scan aceitava inicio omitido com janela presumida;
+  o helper CLEAN ainda chamava o validador sem o inicio da tentativa.
+- Alteracao: horario de inicio obrigatorio nos dois contratos, com testes dos
+  chamadores e rejeicao de inicio invalido/futuro. O fluxo Produto ja passa
+  o horario capturado imediatamente antes do scanner.
+- Documento mestre reconciliado com migrations 001-022 e Gate DEV pendente.
+- Sem VPS, migration remota, scanner real, Produto HTTP ou porta 3080 alterados.
+- Validacao: 38/38 focados; backend serial 200 pass/0 fail/11 skip sem
+  DATABASE_URL; frontend explicito 614/614; typecheck/build backend,
+  audit:baseline/lint/build frontend e diff-check PASS. `npm test` frontend
+  no Windows descobriu 0 arquivos pelo glob; execucao explicita foi usada.
+- Gate DEV: Web Console inacessivel por `helper_unknown_error: apply deny-read ACLs`;
+  nenhum fato da VPS foi observado. Proximo gate: auditoria somente leitura.
+
 ### Comercial 360 / Onda 1 - frescor da evidencia DAM (2026-09-23)
+
 
 - Branch `codex/comercial-360`, PR #33 draft; base `f65a6a4e9a2a26023cf5ddfb5bdb04c0cdfd93cc` confirmada no remoto antes do lote.
 - Causa: o contrato de scan aceitava qualquer timestamp parseavel, inclusive evidencia antiga ou futura do mesmo objeto.

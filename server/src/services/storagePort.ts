@@ -34,7 +34,7 @@ export interface MalwareScanPort {
   scan(request: StorageUploadRequest): Promise<MalwareScanResult>;
 }
 
-export function assertMalwareScanResult(request: StorageUploadRequest, result: unknown, startedAtMs = Date.now() - 5 * 60_000): asserts result is MalwareScanResult & { verdict: 'CLEAN' | 'INFECTED' } {
+export function assertMalwareScanResult(request: StorageUploadRequest, result: unknown, startedAtMs: number): asserts result is MalwareScanResult & { verdict: 'CLEAN' | 'INFECTED' } {
   if (!result || typeof result !== 'object') throw new Error('MALWARE_SCAN_NOT_CLEAN');
   const scan = result as Partial<MalwareScanResult>;
   const now = Date.now();
@@ -53,8 +53,8 @@ export function assertMalwareScanResult(request: StorageUploadRequest, result: u
   }
 }
 
-export function assertCleanMalwareScan(request: StorageUploadRequest, result: unknown): void {
-  assertMalwareScanResult(request, result);
+export function assertCleanMalwareScan(request: StorageUploadRequest, result: unknown, startedAtMs: number): void {
+  assertMalwareScanResult(request, result, startedAtMs);
   if (result.verdict !== 'CLEAN') throw new Error('MALWARE_SCAN_NOT_CLEAN');
 }
 

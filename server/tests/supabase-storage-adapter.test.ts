@@ -120,11 +120,12 @@ test('Storage adapter signs private download for one minute', async () => {
   assert.match(result.url, /^https:\/\/public\.example\.test\/storage\/v1\/object\/sign\/private\//);
 });
 test('DAM scan contract fails closed for missing, inconclusive, or unrelated results', () => {
+  const startedAtMs = Date.now();
   const clean: MalwareScanResult = {
     ...request, version: 1, verdict: 'CLEAN', scanner: 'synthetic-scanner',
     scannedAt: new Date().toISOString(),
   };
-  assert.doesNotThrow(() => assertCleanMalwareScan(request, clean));
+  assert.doesNotThrow(() => assertCleanMalwareScan(request, clean, startedAtMs));
   const invalid: unknown[] = [
     undefined, null, {},
     { ...clean, verdict: 'INFECTED' },
@@ -143,7 +144,7 @@ test('DAM scan contract fails closed for missing, inconclusive, or unrelated res
     { ...clean, version: 2 },
   ];
   for (const result of invalid) {
-    assert.throws(() => assertCleanMalwareScan(request, result), /MALWARE_SCAN_NOT_CLEAN/);
+    assert.throws(() => assertCleanMalwareScan(request, result, startedAtMs), /MALWARE_SCAN_NOT_CLEAN/);
   }
 });
 test('DAM rejeita evidencia anterior ao inicio da varredura atual', () => {
@@ -151,6 +152,8 @@ test('DAM rejeita evidencia anterior ao inicio da varredura atual', () => {
   const clean: MalwareScanResult = { ...request, version: 1, verdict: 'CLEAN',
     scanner: 'synthetic-scanner', scannedAt: new Date(startedAtMs - 10_000).toISOString() };
   assert.throws(() => assertMalwareScanResult(request, clean, startedAtMs), /MALWARE_SCAN_NOT_CLEAN/);
+  assert.throws(() => assertMalwareScanResult(request, clean, Number.NaN), /MALWARE_SCAN_NOT_CLEAN/);
+  assert.throws(() => assertMalwareScanResult(request, clean, Date.now() + 60_000), /MALWARE_SCAN_NOT_CLEAN/);
   assert.throws(() => assertMalwareScanResult(request, { ...clean, scannedAt: new Date(startedAtMs + 60_000).toISOString() }, startedAtMs), /MALWARE_SCAN_NOT_CLEAN/);
   assert.doesNotThrow(() => assertMalwareScanResult(request, { ...clean, scannedAt: new Date().toISOString() }, startedAtMs));
 });
@@ -197,15 +200,16 @@ test('Clamd INSTREAM verifies exact private object and fails closed on scanner r
     fetchImpl: async () => new Response(bytes, { headers: { 'content-type': 'image/png' } }),
   });
   try {
+    const startedAtMs = Date.now();
     const clean = await adapter.scan(request);
     assert.equal(clean.verdict, 'CLEAN');
     assert.equal(clean.scanner, 'clamd');
     assert.deepEqual(scanned, bytes);
-    assert.doesNotThrow(() => assertCleanMalwareScan(request, clean));
+    assert.doesNotThrow(() => assertCleanMalwareScan(request, clean, startedAtMs));
     verdict = 'stream: Synthetic.Test FOUND';
     const infected = await adapter.scan(request);
     assert.equal(infected.verdict, 'INFECTED');
-    assert.throws(() => assertCleanMalwareScan(request, infected), /MALWARE_SCAN_NOT_CLEAN/);
+    assert.throws(() => assertCleanMalwareScan(request, infected, startedAtMs), /MALWARE_SCAN_NOT_CLEAN/);
     verdict = 'stream: ERROR';
     await assert.rejects(adapter.scan(request), /MALWARE_SCAN_INCONCLUSIVE/);
     await assert.rejects(adapter.scan({ ...request, sha256: '0'.repeat(64) }), /MALWARE_SCAN_OBJECT_INVALID/);
