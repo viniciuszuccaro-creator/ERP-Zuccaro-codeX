@@ -37,7 +37,7 @@ function headers(groupId = GROUP_A, empresaId = EMPRESA_A, actorId = ACTOR_A) {
   return { 'content-type': 'application/json', 'x-group-id': groupId, 'x-empresa-id': empresaId, 'x-actor-id': actorId };
 }
 
-async function withHttp<T>(run: (request: (path: string, method?: string, body?: unknown, requestHeaders?: Record<string, string>) => Promise<{ status: number; body: any }>) => Promise<T>, storagePort?: StoragePort) {
+async function withHttp<T>(run: (request: (path: string, method?: string, body?: unknown, requestHeaders?: Record<string, string>) => Promise<{ status: number; body: any; headers: Headers }>) => Promise<T>, storagePort?: StoragePort) {
   const { app, auditRepo } = fixture(storagePort);
   const server = app.listen(0);
   await new Promise<void>((resolve) => server.once('listening', resolve));
@@ -46,7 +46,7 @@ async function withHttp<T>(run: (request: (path: string, method?: string, body?:
     const response = await fetch(`http://127.0.0.1:${port}${path}`, {
       method, headers: requestHeaders, body: body === undefined ? undefined : JSON.stringify(body),
     });
-    return { status: response.status, body: await response.json() };
+    return { status: response.status, body: await response.json(), headers: response.headers };
   };
   try {
     return await run(Object.assign(request, { auditRepo }));
@@ -55,7 +55,7 @@ async function withHttp<T>(run: (request: (path: string, method?: string, body?:
   }
 }
 
-async function product(request: (path: string, method?: string, body?: unknown, requestHeaders?: Record<string, string>) => Promise<{ status: number; body: any }>, description: string, requestHeaders = headers()) {
+async function product(request: (path: string, method?: string, body?: unknown, requestHeaders?: Record<string, string>) => Promise<{ status: number; body: any; headers: Headers }>, description: string, requestHeaders = headers()) {
   const created = await request('/api/v1/produtos', 'POST', { descricao: description }, requestHeaders);
   assert.equal(created.status, 201, JSON.stringify(created.body));
   return created.body.data.id as string;
@@ -323,6 +323,13 @@ test('HTTP R10 DAM: reserva, confirmacao unica, tenant e auditoria sanitizada', 
     assert.ok(reserved.body.data.mediaId);
     assert.ok(reserved.body.data.attemptId);
     const mediaPath = `/api/v1/produtos/${id}/midias`;
+    const pagedPending = await request(`${mediaPath}?limit=1&offset=0`);
+    assert.equal(pagedPending.status, 200);
+    assert.deepEqual(pagedPending.body.meta, { limit: 1, offset: 0 });
+    assert.deepEqual(pagedPending.body.data, []);
+    assert.equal((await request(`${mediaPath}?limit=0`)).status, 400);
+    assert.equal((await request(`${mediaPath}?limit=201`)).status, 400);
+    assert.equal((await request(`${mediaPath}?offset=-1`)).status, 400);
     const pending = await request(mediaPath);
     assert.equal(pending.status, 200);
     assert.deepEqual(pending.body.data, []);
@@ -347,6 +354,12 @@ test('HTTP R10 DAM: reserva, confirmacao unica, tenant e auditoria sanitizada', 
     assert.equal((await request(confirmPath, 'POST', attempt)).status, 404);
     const audit = (request as typeof request & { auditRepo: InMemoryAuditRepository }).auditRepo;
     const visible = await request(mediaPath);
+    const pagedVisible = await request(`${mediaPath}?limit=1&offset=0`);
+    assert.equal(pagedVisible.status, 200);
+    assert.deepEqual(pagedVisible.body.meta, { limit: 1, offset: 0 });
+    assert.equal(pagedVisible.body.data.length, 1);
+    assert.deepEqual((await request(`${mediaPath}?limit=1&offset=1`)).body.data, []);
+    assert.equal(pagedVisible.headers.get('cache-control'), 'no-store');
     assert.equal(visible.status, 200);
     assert.equal(visible.body.data.length, 1);
     assert.deepEqual(visible.body.data[0], {

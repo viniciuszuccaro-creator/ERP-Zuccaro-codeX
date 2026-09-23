@@ -258,11 +258,11 @@ export class ProdutoService {
     });
   }
   /** Garante que CRUD de Produto nao aceita campos transacionais. */
-  async listMidias(ctx: RequestContext, produtoId: string) {
+  async listMidias(ctx: RequestContext, produtoId: string, page?: { limit: number; offset: number }) {
     return listProdutoMidias({
       repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard,
       rbacGuard: this.rbacGuard, storage: this.storage,
-    }, ctx, produtoId);
+    }, ctx, produtoId, page);
   }
 
   async reserveMidia(ctx: RequestContext, produtoId: string, payload: unknown) {

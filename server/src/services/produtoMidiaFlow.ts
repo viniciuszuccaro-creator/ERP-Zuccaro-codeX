@@ -63,7 +63,7 @@ function storageRequest(ctx: RequestContext, produtoId: string, data: ProdutoMid
     mimeType: data.mime_type, sizeBytes: data.tamanho_bytes, sha256: data.sha256,
   };
 }
-export async function listProdutoMidias(deps: Dependencies, ctx: RequestContext, produtoId: string) {
+export async function listProdutoMidias(deps: Dependencies, ctx: RequestContext, produtoId: string, page?: { limit: number; offset: number }) {
   if (!ctx.groupId) throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
   assertId(produtoId);
   await deps.rbacGuard.assertAllowed(ctx, 'Cadastros', 'produto', 'visualizar');
@@ -73,7 +73,7 @@ export async function listProdutoMidias(deps: Dependencies, ctx: RequestContext,
   if (!produto || !produto.ativo) {
     throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
   }
-  return deps.repo.listMidias(scope, produtoId);
+  return deps.repo.listMidias(scope, produtoId, undefined, page);
 }
 
 

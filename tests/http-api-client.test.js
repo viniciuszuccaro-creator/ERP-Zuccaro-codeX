@@ -151,10 +151,12 @@ test('Produto preparado lista somente metadados DAM no BFF sem ativar piloto', a
     },
   });
   assert.equal(client.entities.Produto, undefined);
-  const rows = await client.preparedEntities.Produto.midias.list('produto/1', { signal: controller.signal });
+  const rows = await client.preparedEntities.Produto.midias.list('produto/1', { limit: 10, offset: 5, signal: controller.signal });
   assert.deepEqual(rows, [{ id: 'midia-sintetica', status: 'QUARENTENA' }]);
   assert.equal(new URL(calls[0].url).pathname, '/api/v1/produtos/produto%2F1/midias');
   assert.equal(calls[0].method, 'GET');
+  assert.equal(new URL(calls[0].url).searchParams.get('limit'), '10');
+  assert.equal(new URL(calls[0].url).searchParams.get('offset'), '5');
   assert.equal(calls[0].body, undefined);
   assert.equal(calls[0].signal, controller.signal);
   assert.equal(calls[0].headers['X-Group-Id'], 'grupo-sintetico');

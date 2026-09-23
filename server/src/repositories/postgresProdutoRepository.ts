@@ -426,13 +426,17 @@ export class PostgresProdutoRepository implements ProdutoRepository {
     return (result.rows[0] as ProdutoEquivalente | undefined) ?? null;
   }
 
-  async listMidias(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia[]> {
+  async listMidias(scope: Scope, produtoId: string, executor?: DbQueryExecutor, page?: { limit: number; offset: number }): Promise<ProdutoMidia[]> {
     const params: unknown[] = [scope.groupId, produtoId];
     let sql = `SELECT id,group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,mime_type,
       tamanho_bytes,sha256,versao,status,principal,ativo FROM produto_midias
       WHERE group_id=$1 AND produto_id=$2 AND ativo=true AND status<>'PENDENTE_UPLOAD'`;
     if (scope.empresaId) { params.push(scope.empresaId); sql += ` AND empresa_id=$${params.length}`; }
     sql += ' ORDER BY versao ASC,id ASC';
+    if (page) {
+      params.push(page.limit, page.offset);
+      sql += ` LIMIT $${params.length - 1} OFFSET $${params.length}`;
+    }
     const result = await (executor ?? this.db).query(sql, params);
     return result.rows.map((row) => ({ ...row, tamanho_bytes: Number(row.tamanho_bytes) }) as ProdutoMidia);
   }

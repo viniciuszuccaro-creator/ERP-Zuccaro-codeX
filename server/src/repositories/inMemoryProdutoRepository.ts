@@ -47,7 +47,7 @@ export interface ProdutoRepository extends TenantEntityRepository<Produto, Produ
   createEquivalent(scope: Scope, produtoId: string, data: ProdutoEquivalenteCreate, executor?: DbQueryExecutor): Promise<ProdutoEquivalente>;
   updateEquivalent(scope: Scope, produtoId: string, equivalentId: string, data: ProdutoEquivalenteUpdate, executor?: DbQueryExecutor): Promise<ProdutoEquivalente | null>;
   deactivateEquivalent(scope: Scope, produtoId: string, equivalentId: string, executor?: DbQueryExecutor): Promise<ProdutoEquivalente | null>;
-  listMidias(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia[]>;
+  listMidias(scope: Scope, produtoId: string, executor?: DbQueryExecutor, page?: { limit: number; offset: number }): Promise<ProdutoMidia[]>;
   createMidia(scope: Scope, produtoId: string, data: ProdutoMidiaCreate, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
   deactivateMidia(scope: Scope, produtoId: string, midiaId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
   reserveMidia(scope: Scope, produtoId: string, data: ProdutoMidiaCreate, attempt: ProdutoMidiaUploadAttempt, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
@@ -331,10 +331,11 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     return structuredClone(next);
   }
 
-  async listMidias(scope: Scope, produtoId: string): Promise<ProdutoMidia[]> {
-    return structuredClone([...this.midias.values()].filter((row) => row.ativo && row.status !== 'PENDENTE_UPLOAD' && row.group_id === scope.groupId
+  async listMidias(scope: Scope, produtoId: string, _executor?: DbQueryExecutor, page?: { limit: number; offset: number }): Promise<ProdutoMidia[]> {
+    const rows = [...this.midias.values()].filter((row) => row.ativo && row.status !== 'PENDENTE_UPLOAD' && row.group_id === scope.groupId
       && row.produto_id === produtoId && (!scope.empresaId || row.empresa_id === scope.empresaId))
-      .sort((a, b) => a.versao - b.versao || a.id.localeCompare(b.id)));
+      .sort((a, b) => a.versao - b.versao || a.id.localeCompare(b.id));
+    return structuredClone(page ? rows.slice(page.offset, page.offset + page.limit) : rows);
   }
 
   async createMidia(scope: Scope, produtoId: string, data: ProdutoMidiaCreate): Promise<ProdutoMidia | null> {

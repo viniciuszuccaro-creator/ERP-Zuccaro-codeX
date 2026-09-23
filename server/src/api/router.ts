@@ -170,7 +170,10 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
 
   router.get('/api/v1/produtos/:id/midias', requireTenantScope, async (req, res, next) => {
     try {
-      const rows = await service.listMidias(ctxFromReq(req), req.params.id);
+      const page = z.object({ limit: z.coerce.number().int().min(1).max(200), offset: z.coerce.number().int().min(0).max(1000000) })
+        .safeParse({ limit: req.query.limit ?? 50, offset: req.query.offset ?? 0 });
+      if (!page.success) throw new AppError(400, 'VALIDATION_ERROR', 'Invalid media pagination');
+      const rows = await service.listMidias(ctxFromReq(req), req.params.id, page.data);
       res.setHeader('Cache-Control', 'no-store');
       res.json({ data: rows.map((row) => ({
         id: row.id,
@@ -181,7 +184,7 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
         versao: row.versao,
         status: row.status,
         principal: row.principal,
-      })) });
+      })), meta: page.data });
     } catch (error) { next(error); }
   });
 

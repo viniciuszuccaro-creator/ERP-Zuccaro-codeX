@@ -10239,3 +10239,10 @@ Checklist inicial:
 - Arquivos: server/src/api/router.ts, server/tests/runtime10-produto-relacoes-http.test.ts, src/api/httpApiClient.js, tests/http-api-client.test.js e este status. PR #33 permanece draft sem merge.
 - Proximo gate: verificar CI PostgreSQL efemero; manter upload real bloqueado ate autorizacao para buckets/credenciais self-hosted, antivirus e reconciliacao segura de objetos orfaos. Integracao no ProdutoFormV22 ainda pendente.
 - Codigo publicado em `2e5edfaa90961fcc2a9db561ddc7fc4be8b5f324`; workflow `35802579582` da PR #33: frontend SUCCESS e backend SUCCESS, incluindo migrations/seed sintetico/test:postgres efemero. Nenhuma migration aplicada na VPS.
+
+### Onda 1 Produto/PIM - paginacao segura da listagem DAM (2026-09-23)
+- Objetivo: evitar leitura sem limite dos metadados de midia no HTTP sem ativar upload/download nem mudar os consumidores internos existentes.
+- GET /api/v1/produtos/:id/midias valida limit 1-200 e offset 0-1000000, padrao 50/0; repositories aplicam filtro Grupo/Empresa, ordenacao versao/id e LIMIT/OFFSET no banco. A resposta permanece no-store, sanitizada e com meta limit/offset. O cliente HTTP preparado aceita paginacao, sem entrar no piloto.
+- Contrato compartilhado em memoria/PostgreSQL verifica duas midias, paginas 0/1/2 e empresa externa; HTTP verifica limite invalido, reserva pendente invisivel e header no-store. Nenhuma migration, bucket, objeto, VPS, porta 3080, main ou dado real foi alterado.
+- Local: backend direcionado 32/32, cliente HTTP 9/9, backend completo 199 total / 189 pass / 0 fail / 10 skips condicionais sem DATABASE_URL, frontend explicito 602/602. Backend typecheck/build, frontend lint/build, audit:baseline e diff-check PASS. npm test frontend descobre zero no Windows, por isso houve execucao explicita. Typecheck raiz permanece com erros legados Base44/frontend; nao ha erro nas linhas DAM modificadas.
+- Proximo gate: CI da PR #33 com PostgreSQL efemero, mantendo draft sem merge. Storage self-hosted exige gate separado de buckets/credenciais, antivirus e reconciliacao segura de objetos orfaos; ProdutoFormV22 ainda nao pode associar IDs legados ao DAM canonico.

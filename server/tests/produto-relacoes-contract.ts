@@ -15,6 +15,15 @@ export async function assertProdutoMediaContract(
   assert.equal(created.empresa_id, scope.empresaId);
   assert.equal(created.tamanho_bytes, 123);
   assert.deepEqual((await repo.listMidias(scope, produtoId)).map((row) => row.id), [created.id]);
+  const second = await repo.withTransaction((tx) => repo.createMidia(scope, produtoId, {
+    ...data, storage_key: `${storageKey}-second`, versao: 2,
+  }, tx));
+  assert.ok(second);
+  assert.deepEqual((await repo.listMidias(scope, produtoId, undefined, { limit: 1, offset: 0 })).map((row) => row.id), [created.id]);
+  assert.deepEqual((await repo.listMidias(scope, produtoId, undefined, { limit: 1, offset: 1 })).map((row) => row.id), [second.id]);
+  assert.deepEqual(await repo.listMidias(scope, produtoId, undefined, { limit: 1, offset: 2 }), []);
+  assert.deepEqual(await repo.listMidias({ ...scope, empresaId: otherEmpresaId }, produtoId, undefined, { limit: 1, offset: 0 }), []);
+  await repo.withTransaction((tx) => repo.deactivateMidia(scope, produtoId, second.id, tx));
   const foreign = { ...scope, empresaId: otherEmpresaId };
   assert.deepEqual(await repo.listMidias(foreign, produtoId), []);
   const foreignData = { ...data, storage_key: storageKey.replace(

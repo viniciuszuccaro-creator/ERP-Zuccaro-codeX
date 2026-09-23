@@ -170,8 +170,9 @@ export function createHttpApiClient(options = {}) {
         variantes: relationRoutes('variantes'),
         equivalentes: relationRoutes('equivalentes'),
         midias: {
-          list(produtoId, { signal } = {}) {
-            return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/midias`, { signal });
+          /** @param {string} produtoId @param {{ limit?: number, offset?: number, signal?: AbortSignal }} [options] */
+          list(produtoId, { limit = 50, offset = 0, signal } = {}) {
+            return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/midias`, { query: { limit, offset }, signal });
           },
         },
         async list(orderBy, limit = 50, offset = 0) {
