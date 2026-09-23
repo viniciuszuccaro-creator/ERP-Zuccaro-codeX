@@ -1,3 +1,10 @@
+## Comercial 360 / validacao local - descoberta de testes frontend no Windows (2026-09-23)
+
+- Causa: o script `npm test` da raiz usava aspas simples para o glob; no shell Windows do npm elas eram repassadas literalmente, e o runner encerrava com zero testes.
+- Correcao localizada em `package.json`: aspas duplas portaveis para o mesmo padrao `tests/**/*.test.js`; sem mudar testes, regras ou cobertura. A CI Linux continua usando o mesmo comando.
+- Validacao aplicavel ao script: `npm test` agora executa 618/618 no Windows; audit:baseline, lint, build e `git diff --check` PASS. `npm run typecheck` da raiz permanece FAIL por erros TypeScript em arquivos nao alterados (ex.: `base44/functions/_lib/security/entityGuardPolicy/entry.ts` e `src/pages/Relatorios.jsx`); isso nao foi mascarado nem corrigido neste lote de script.
+- Gate C continua parcial; nenhuma alteracao em VPS, porta 3080, migration, Auth ou publicacao externa.
+
 ## Comercial 360 / Onda 15 - rollback concorrente da outbox em memoria (2026-09-23)
 
 - Causa: `InMemoryProdutoRepository.withTransaction` permitia transacoes sobrepostas; rollback de uma podia apagar o evento de publicacao confirmado por outra.
