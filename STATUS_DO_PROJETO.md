@@ -2,7 +2,7 @@
 - Base: `4b6a0e54e1c51be5b81f9bc557a17e4209782b13`, PR #33 draft.
 - Causa: canario e smoke existentes verificavam runtime, mas poderiam aceitar `auth.mode=dev_headers` e produzir sinal de prontidao enganoso.
 - Script de canario e smoke agora exigem `auth.mode=supabase_user`; JSON invalido, runtime divergente e entidades comerciais ausentes falham sem imprimir metadata. Porta 3080 e container oficial continuam protegidos.
-- Testes: 4/4 direcionados, frontend 618/618, Bash `-n`, audit:baseline, lint, build e `git diff --check` PASS. Backend/runtime nao alterado; PostgreSQL efemero da CI sera conferido apos push.
+- Testes: 4/4 direcionados, frontend 618/618, Bash `-n`, audit:baseline, lint, build e `git diff --check` PASS. Commit funcional `798dbfd6be4479c4dd0c65283324bcabb7eee99a`; CI [35894515963](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/35894515963) frontend/backend/PostgreSQL efemero SUCCESS. Backend/runtime nao alterado; PostgreSQL DEV nao consultado.
 - Multiempresa/RBAC/auditoria do backend mantidos; Auth novo ainda nao homologado na VPS. Nenhuma API, migration, seed, scanner, bucket, container ou porta 3080 alterada no DEV.
 - Proximo gate: concluir SQL agregado e precheck de rede/backup/rollback na Web Console; depois autorizacoes separadas para migrations e canario isolado.
 
