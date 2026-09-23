@@ -41,7 +41,9 @@ function assertContext(context: StorageObjectContext, storageKey: string): RegEx
 function assertUpload(request: StorageUploadRequest, maxBytes: number): void {
   const match = assertContext(request, request.storageKey);
   const extension = request.fileName.split('.').at(-1)?.toLowerCase();
-  if (!extension || !/^[a-z0-9][a-z0-9._-]*$/i.test(request.fileName) ||
+  const unsafeName = !request.fileName.trim() || request.fileName.length > 255
+    || /[\/\\\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/u.test(request.fileName);
+  if (!extension || unsafeName ||
       !match[6].toLowerCase().endsWith(`.${extension}`) ||
       MIME_BY_CATEGORY[match[4].toLowerCase()]?.[extension] !== request.mimeType ||
       !Number.isSafeInteger(request.sizeBytes) || request.sizeBytes < 1 || request.sizeBytes > maxBytes ||

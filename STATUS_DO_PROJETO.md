@@ -1,3 +1,11 @@
+## Comercial 360 / Onda 1 - nomes de arquivos DAM no Produto V22 (2026-09-23)
+
+- Causa: o V22 enviava `nome_arquivo` original com espacos/acentos, mas o `SupabaseStorageAdapter` exigia nome ASCII sanitizado; a reserva falhava para arquivos comuns embora a chave privada ja estivesse sanitizada.
+- Correcao: adapter aceita nome original legivel de ate 255 caracteres e mantem a chave tenant-scoped, MIME, extensao, tamanho, checksum e conteudo sob validacao. Adapter e formulario existente bloqueiam separadores de caminho, controles e marcas Unicode de direcao; CAD e formatos desconhecidos seguem bloqueados.
+- Testes sinteticos: assinatura e confirmacao de `Peca` com nome original acentuado/espacado; nomes maliciosos rejeitados antes da rede; V22 preserva nome original e gera chave sanitizada. Nenhuma nova tela, migration, bucket ou credencial.
+- Multiempresa/RBAC/auditoria: fluxo e guards existentes preservados; nenhuma URL real, arquivo ou segredo versionado. Gate DEV continua parcial, Auth/Produto HTTP/scanner real nao homologados.
+- Validacao: adapter 15/15, V22 8/8; backend serial 215 total / 203 pass / 0 fail / 12 skip sem `DATABASE_URL`; frontend 618/618; typecheck/build backend, audit:baseline, lint/build frontend e diff-check PASS. PostgreSQL efemero fica para CI; PostgreSQL DEV nao consultado. Commit/CI pendentes. Proximo passo: reconciliacao segura de reservas expiradas e publicacao separada somente apos gate Auth/storage/scanner DEV.
+
 ## Comercial 360 / Onda 1 - listagem DAM fail-closed (2026-09-23)
 
 - Causa: a listagem de midias aceitava `empresaId` ausente; TenantGuard e os repositories tratam esse escopo como grupo inteiro, expondo metadados de outras empresas do mesmo grupo.

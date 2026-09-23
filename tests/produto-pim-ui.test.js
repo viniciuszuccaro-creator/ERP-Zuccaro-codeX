@@ -100,6 +100,11 @@ test('DAM prepara apenas formatos homologados; CAD continua bloqueado', () => {
   assert.match(image.storage_key, /^groups\/11111111.*\/companies\/22222222.*\/products\/33333333.*\/images\//);
   assert.equal(image.categoria, 'IMAGEM');
   assert.equal(image.sha256, undefined);
+  const accented = prepareProdutoMediaFile({ name: 'Pe\u00e7a 01.png', type: 'image/png', size: 8 }, scope);
+  assert.equal(accented.nome_arquivo, 'Pe\u00e7a 01.png');
+  assert.match(accented.storage_key, /\/images\/[0-9a-f-]+-Pec-a-01\.png$/);
+  assert.throws(() => prepareProdutoMediaFile({ name: 'foto\\mal.png', type: 'image/png', size: 8 }, scope), /Nome de arquivo invalido/);
+  assert.throws(() => prepareProdutoMediaFile({ name: 'foto\u202Egnp.png', type: 'image/png', size: 8 }, scope), /Nome de arquivo invalido/);
   assert.equal(CAD_FORMAT_POLICY.enabled, false);
   assert.throws(() => prepareProdutoMediaFile({ name: 'peca.dwg', type: 'application/acad', size: 8 }, scope), /Formato nao permitido/);
   assert.throws(() => prepareProdutoMediaFile({ name: 'virus.exe', type: 'application/octet-stream', size: 8 }, scope), /Formato nao permitido/);

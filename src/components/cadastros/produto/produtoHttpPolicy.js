@@ -88,6 +88,14 @@ export function getProdutoMediaScanLabel(media) {
 export function prepareProdutoMediaFile(file, { groupId, empresaId, produtoId, version = 1, maxBytes = 10_000_000 }) {
   if (!groupId || !empresaId || !produtoId) throw new Error('Produto e empresa canonicos obrigatorios para midia');
   const originalName = String(file?.name || '');
+  const unsafeName = [...originalName].some((character) => {
+    const code = character.codePointAt(0);
+    return code === 47 || code === 92 || code <= 31 || (code >= 127 && code <= 159)
+      || (code >= 0x202a && code <= 0x202e) || (code >= 0x2066 && code <= 0x2069);
+  });
+  if (!originalName.trim() || originalName.length > 255 || unsafeName) {
+    throw new Error('Nome de arquivo invalido');
+  }
   const extension = originalName.split('.').pop()?.toLowerCase();
   const format = MEDIA_FORMATS[file?.type];
   if (!format || !format.extensions.includes(extension)) throw new Error('Formato nao permitido');

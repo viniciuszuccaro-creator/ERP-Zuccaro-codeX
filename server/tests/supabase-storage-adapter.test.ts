@@ -53,6 +53,27 @@ test('Storage adapter rejects cross-tenant path before network', async () => {
   await assert.rejects(adapter.createSignedDownloadUrl(request, storageKey.replace('/images/', '/cad/')), /STORAGE_SCOPE_INVALID/);
 });
 
+test('Storage adapter aceita nome original com acento e espaco sem mudar a chave privada', async () => {
+  const renamed = { ...request, storageKey: storageKey.replace('foto.png', 'Pec-a-01.png'),
+    fileName: 'Pe\u00e7a 01.png' };
+  const adapter = makeAdapter(async (_input, init) => init?.method === 'POST'
+    ? Response.json({ url: `/object/upload/sign/private/${renamed.storageKey}?token=synthetic-token` })
+    : new Response(bytes, { headers: { 'content-type': 'image/png' } }));
+  const signed = await adapter.createSignedUploadUrl(renamed);
+  assert.ok(signed.url.includes('Pec-a-01.png'));
+  const confirmed = await adapter.confirmUpload(renamed);
+  assert.equal(confirmed.fileName, renamed.fileName);
+  assert.equal(confirmed.storageKey, renamed.storageKey);
+});
+
+test('Storage adapter rejeita nomes com caminho, controle e direcao Unicode antes da rede', async () => {
+  const adapter = makeAdapter(async () => { throw new Error('network must not run'); });
+  for (const fileName of ['foto\\mal.png', 'foto\n.png', 'foto\u202Egnp.png', ' '.repeat(4), 'x'.repeat(256) + '.png']) {
+    await assert.rejects(adapter.createSignedUploadUrl({ ...request, fileName }), /STORAGE_UPLOAD_INVALID/);
+  }
+});
+
+
 test('Storage adapter rejects signed response pointing to another object', async () => {
   const adapter = makeAdapter(async () => Response.json({ url: '/object/upload/sign/private/other?token=synthetic-token' }));
   await assert.rejects(adapter.createSignedUploadUrl(request), /STORAGE_SIGN_RESPONSE_INVALID/);
