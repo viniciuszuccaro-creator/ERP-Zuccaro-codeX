@@ -4,7 +4,8 @@
 - Correcao nos repositorios e ProdutoService existentes: busca ordenada de ate 100 candidatas `PENDENTE_UPLOAD` vencidas por Grupo/Empresa; cada candidata reutiliza a rejeicao individual com transacao e auditoria. Corrida de outra execucao e contabilizada; falhas reais interrompem o lote e podem ser retomadas sem duplicar rejeicao.
 - Seguranca: exige groupId, empresaId, actorId, requestId, RBAC `Cadastros.produto.inativar` e TenantGuard antes da busca; nenhuma chave, hash ou URL retorna no resumo. Nao apaga objeto, nao aciona Storage, scanner, bucket, rota ou job novo.
 - Testes sinteticos in-memory cobrem limite, empresa externa ao lote, reserva fresca, RBAC, auditoria/rollback, retomada e corrida. E2E PostgreSQL existente ampliado para escopo, rollback e preservacao de chave; executar na CI efemera.
-- Validacao local: backend 217 testes (205 pass, 0 fail, 12 skip opcionais sem PostgreSQL local); frontend 618/618; backend typecheck/build, frontend lint/build e audit:baseline passaram; git diff --check passou. PostgreSQL E2E sera validado na CI efemera. Gate DEV/Auth/Storage/scanner real continuam nao homologados; 3080 e VPS intocadas. Proximo passo: gate Auth/Storage DEV antes de qualquer limpeza fisica ou publicacao.
+- Validacao local: backend 217 testes (205 pass, 0 fail, 12 skip opcionais sem PostgreSQL local); frontend 618/618; backend typecheck/build, frontend lint/build e audit:baseline passaram; git diff --check passou. Gate DEV/Auth/Storage/scanner real continuam nao homologados; 3080 e VPS intocadas. Proximo passo: gate Auth/Storage DEV antes de qualquer limpeza fisica ou publicacao.
+- Commit de codigo `7be002fbe47ff8da326e973551fd0c7c52c228c6`, push confirmado. CI `35908197055`: frontend e backend SUCCESS, incluindo migrations e `test:postgres` efemero; nao substitui homologacao DEV.
 
 ## Comercial 360 / Onda 1 - nomes de arquivos DAM no Produto V22 (2026-09-23)
 
