@@ -12,7 +12,7 @@ import {
 import { InMemoryRbacGuard, PostgresRbacGuard } from './db/rbacGuard.js';
 import { InMemoryTenantGuard, PostgresTenantGuard } from './db/tenantGuard.js';
 import { createErrorHandler, notFoundHandler } from './middleware/errorHandler.js';
-import { requestIdMiddleware, scopeMiddleware } from './middleware/requestContext.js';
+import { createSupabaseAuthMiddleware, requestIdMiddleware, scopeMiddleware } from './middleware/requestContext.js';
 import {
   createInMemoryGrupoProdutoRepo,
   createInMemorySetorRepo,
@@ -72,6 +72,7 @@ export type CreateAppOptions = {
   produtoRelationGuard?: InMemoryProdutoRelationGuard | PostgresProdutoRelationGuard;
   /** Optional RBAC guard using the canonical entityGuard permission tree (tests). */
   rbacGuard?: InMemoryRbacGuard | PostgresRbacGuard;
+  authFetchImpl?: typeof fetch;
   storagePort?: StoragePort;
 };
 
@@ -206,8 +207,16 @@ export function createApp(options: CreateAppOptions) {
     legacyHeaders: false,
   }));
   app.use(requestIdMiddleware);
-  app.use(scopeMiddleware);
+  if (config.authMode === 'supabase_user') {
+    if (!config.supabaseUrl || !config.supabaseAnonKey) {
+      throw new Error('Supabase Auth configuration missing');
+    }
+    app.use(createSupabaseAuthMiddleware({
+      supabaseUrl: config.supabaseUrl, anonKey: config.supabaseAnonKey, fetchImpl: options.authFetchImpl,
+    }));
+  }
 
+  app.use(scopeMiddleware);
   app.use(createApiRouter({
     config,
     db,

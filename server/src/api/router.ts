@@ -1032,7 +1032,7 @@ export function createApiRouter(deps: ApiDeps) {
   router.get('/api/v1/meta', (_req, res) => {
     res.json({
       runtime: 'ERP-RUNTIME-08B',
-      auth: getAuthFoundation(),
+      auth: getAuthFoundation(deps.config.authMode),
       config: publicConfigView(deps.config),
       httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Orcamento', 'Pedido'],
       preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'TabelaPreco', 'CondicaoPagamento', 'Orcamento', 'Pedido'],

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
+import express from 'express';
 import test from 'node:test';
 import { InMemoryAuditRepository } from '../src/audit/auditRepository.ts';
 import { loadConfig, publicConfigView } from '../src/config/env.ts';
@@ -7,6 +8,8 @@ import { createApp } from '../src/app.ts';
 import { createDbClient } from '../src/db/client.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 import { listMigrationFiles } from '../src/db/migrate.ts';
+import { createSupabaseAuthMiddleware, requestIdMiddleware, scopeMiddleware } from '../src/middleware/requestContext.ts';
+import { createErrorHandler } from '../src/middleware/errorHandler.ts';
 import { InMemoryMarcaRepository } from '../src/repositories/inMemoryMarcaRepository.ts';
 import { MarcaService } from '../src/services/marcaService.ts';
 
@@ -263,6 +266,97 @@ test('integration postgres ready when DATABASE_URL present (optional)', async (t
   const ok = await db.checkConnection();
   assert.equal(ok, true);
   await db.end();
+});
+test('Supabase Auth middleware derives actor from verified user and rejects spoofed headers', async () => {
+  const actorId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  const calls: Array<{ url: string; headers: HeadersInit | undefined }> = [];
+  const app = express();
+  app.use(requestIdMiddleware);
+  app.use(createSupabaseAuthMiddleware({
+    supabaseUrl: 'http://supabase.internal', anonKey: 'synthetic-anon-key',
+    fetchImpl: async (url, init) => {
+      calls.push({ url: String(url), headers: init?.headers });
+      return new Response(JSON.stringify({ id: actorId, email: 'user@example.test' }), { status: 200 });
+    },
+  }));
+  app.use(scopeMiddleware);
+  app.get('/identity', (req, res) => res.json({ actorId: req.actorId, actorEmail: req.actorEmail, groupId: req.groupId, empresaId: req.empresaId }));
+  app.get('/health', (_req, res) => res.json({ status: 'ok' }));
+  app.use(createErrorHandler(testConfig()));
+  const authenticated = await fetchStatus(app, '/identity', { headers: {
+    authorization: 'Bearer synthetic.jwt.token', 'x-group-id': GROUP_A, 'x-empresa-id': EMPRESA_A,
+  } });
+  assert.equal(authenticated.statusCode, 200);
+  assert.deepEqual(authenticated.body, { actorId, actorEmail: 'user@example.test', groupId: GROUP_A, empresaId: EMPRESA_A });
+  assert.equal(calls[0].url, 'http://supabase.internal/auth/v1/user');
+  assert.equal((calls[0].headers as Record<string, string>).apikey, 'synthetic-anon-key');
+  assert.equal((calls[0].headers as Record<string, string>).Authorization, 'Bearer synthetic.jwt.token');
+  assert.equal((await fetchStatus(app, '/identity', { headers: { 'x-actor-id': actorId } })).statusCode, 401);
+  assert.equal((await fetchStatus(app, '/identity', { headers: {
+    authorization: 'Bearer synthetic.jwt.token', 'x-actor-id': 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+  } })).statusCode, 403);
+  assert.equal((await fetchStatus(app, '/health')).statusCode, 200);
+  assert.equal(calls.length, 2);
+});
+
+test('Supabase Auth middleware fails closed on invalid token, malformed identity and outage', async () => {
+  const outcomes = [
+    { fetchImpl: async () => new Response('{}', { status: 401 }), expected: 401 },
+    { fetchImpl: async () => new Response(JSON.stringify({ id: 'not-a-uuid' }), { status: 200 }), expected: 401 },
+    { fetchImpl: async () => { throw new Error('network synthetic'); }, expected: 503 },
+  ];
+  for (const outcome of outcomes) {
+    const app = express();
+    app.use(requestIdMiddleware);
+    app.use(createSupabaseAuthMiddleware({
+      supabaseUrl: 'http://supabase.internal', anonKey: 'synthetic-anon-key', fetchImpl: outcome.fetchImpl,
+    }));
+    app.use(scopeMiddleware);
+    app.get('/identity', (_req, res) => res.json({ ok: true }));
+    app.use(createErrorHandler(testConfig()));
+    const response = await fetchStatus(app, '/identity', { headers: { authorization: 'Bearer synthetic.jwt.token' } });
+    assert.equal(response.statusCode, outcome.expected);
+    assert.equal(JSON.stringify(response.body).includes('synthetic.jwt.token'), false);
+  }
+});
+
+test('production config requires verified Supabase Auth and never permits actor headers mode', () => {
+  assert.throws(() => testConfig({ ERP_ENV: 'prod', ERP_AUTH_MODE: 'dev_headers' }), /forbidden in production/);
+  assert.throws(() => testConfig({ ERP_ENV: 'prod' }), /SUPABASE_URL and SUPABASE_ANON_KEY/);
+  const config = testConfig({ ERP_ENV: 'prod', SUPABASE_URL: 'http://supabase.internal', SUPABASE_ANON_KEY: 'synthetic-anon-key' });
+  assert.equal(config.authMode, 'supabase_user');
+  assert.equal(JSON.stringify(publicConfigView(config)).includes('synthetic-anon-key'), false);
+});
+
+test('createApp enforces verified identity before tenant scope and exposes truthful auth mode', async () => {
+  const actorId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  const config = testConfig({ ERP_AUTH_MODE: 'supabase_user', SUPABASE_URL: 'http://supabase.internal', SUPABASE_ANON_KEY: 'synthetic-anon-key' });
+  const db = createDbClient(config);
+  let validations = 0;
+  const { app } = createApp({
+    config, db, useMemory: true, tenantGuard: linkedGuard(),
+    authFetchImpl: async () => {
+      validations += 1;
+      return new Response(JSON.stringify({ id: actorId, email: 'user@example.test' }), { status: 200 });
+    },
+  });
+  const meta = await fetchStatus(app, '/api/v1/meta');
+  assert.equal(meta.statusCode, 200);
+  assert.equal(meta.body.auth.mode, 'supabase_user');
+  assert.equal(validations, 0);
+  const path = '/api/v1/marcas';
+  const scope = { 'x-group-id': GROUP_A, 'x-empresa-id': EMPRESA_A };
+  const missing = await fetchStatus(app, path, { headers: { ...scope, 'x-actor-id': actorId } });
+  assert.equal(missing.statusCode, 401);
+  assert.equal(missing.body.error.code, 'AUTH_REQUIRED');
+  const spoofed = await fetchStatus(app, path, { headers: {
+    ...scope, authorization: 'Bearer synthetic.jwt.token', 'x-actor-id': 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+  } });
+  assert.equal(spoofed.statusCode, 403);
+  const valid = await fetchStatus(app, path, { headers: { ...scope, authorization: 'Bearer synthetic.jwt.token' } });
+  assert.equal(valid.statusCode, 200);
+  assert.equal(valid.body.data.length, 0);
+  assert.equal(validations, 2);
 });
 
 async function fetchStatus(app: ReturnType<typeof createApp>['app'], path: string, init: RequestInit = {}) {

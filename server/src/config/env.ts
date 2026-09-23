@@ -9,6 +9,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   ERP_ENV: z.enum(['dev', 'hml', 'prod']).default('dev'),
   PORT: z.coerce.number().int().positive().default(3080),
+  ERP_AUTH_MODE: z.enum(['dev_headers', 'supabase_user']).optional(),
   DATABASE_URL: z.string().min(1).optional(),
   SUPABASE_URL: z.string().url().optional(),
   SUPABASE_ANON_KEY: z.string().min(1).optional(),
@@ -26,6 +27,7 @@ const envSchema = z.object({
 
 export type AppConfig = {
   nodeEnv: 'development' | 'test' | 'production';
+  authMode: 'dev_headers' | 'supabase_user';
   erpEnv: 'dev' | 'hml' | 'prod';
   port: number;
   databaseUrl?: string;
@@ -53,6 +55,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
 
   const data = parsed.data;
   const requireDatabase = boolFromEnv(data.REQUIRE_DATABASE, data.NODE_ENV === 'production');
+  const authMode = data.ERP_AUTH_MODE ?? (data.NODE_ENV === 'production' || data.ERP_ENV === 'prod' ? 'supabase_user' : 'dev_headers');
+  if (authMode === 'dev_headers' && (data.NODE_ENV === 'production' || data.ERP_ENV === 'prod')) {
+    throw new Error('ERP_AUTH_MODE=dev_headers is forbidden in production');
+  }
+  if (authMode === 'supabase_user' && (!data.SUPABASE_URL || !data.SUPABASE_ANON_KEY)) {
+    throw new Error('SUPABASE_URL and SUPABASE_ANON_KEY are required for supabase_user authentication');
+  }
+
 
   if (requireDatabase && !data.DATABASE_URL) {
     throw new Error('DATABASE_URL is required when REQUIRE_DATABASE=true');
@@ -64,6 +74,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     port: data.PORT,
     databaseUrl: data.DATABASE_URL,
     supabaseUrl: data.SUPABASE_URL,
+    authMode,
     supabaseAnonKey: data.SUPABASE_ANON_KEY,
     supabaseServiceRoleKey: data.SUPABASE_SERVICE_ROLE_KEY,
     supabaseStoragePublicUrl: data.SUPABASE_STORAGE_PUBLIC_URL,
