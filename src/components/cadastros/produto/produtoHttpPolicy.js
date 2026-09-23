@@ -17,6 +17,11 @@ const NON_NEGATIVE = new Set([
 ]);
 const REFERENCE_FIELDS = new Set(['unidade_medida_id', 'grupo_produto_id', 'marca_id', 'setor_atividade_id']);
 
+const CLEARABLE_PIM_FIELDS = new Set([
+  'material', 'liga', 'norma_tecnica', 'descricao_tecnica', 'descricao_comercial',
+  'titulo_seo', 'descricao_seo', 'embalagem_tipo',
+]);
+
 export function validateProdutoPimQuantities(form) {
   const multiple = form.multiplo_venda;
   const minimum = form.quantidade_minima_venda;
@@ -32,7 +37,11 @@ export function toProdutoHttpPayload(form, { update = false } = {}) {
   const result = {};
   for (const key of MASTER_FIELDS) {
     let value = form[key];
-    if (value === undefined || value === '') continue;
+    if (value === undefined) continue;
+    if (value === '') {
+      if (update && CLEARABLE_PIM_FIELDS.has(key)) result[key] = null;
+      continue;
+    }
     if (REFERENCE_FIELDS.has(key) && value == null) continue;
     if (NON_NEGATIVE.has(key) || key === 'multiplo_venda') {
       value = Number(value);

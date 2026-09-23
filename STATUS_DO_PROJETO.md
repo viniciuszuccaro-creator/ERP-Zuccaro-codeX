@@ -1,3 +1,10 @@
+## Comercial 360 / Onda 1 - limpeza de atributos PIM no V22 HTTP (2026-09-23)
+
+- Causa: o formulario permitia apagar material/liga/norma e conteudo PIM, mas `toProdutoHttpPayload` ignorava string vazia no update; a API preservava valor antigo e mostrava sucesso enganoso.
+- Correcao no fluxo existente: somente campos PIM opcionais vazios viram null em PATCH. Create continua omitindo vazio; tenant, estoque, preco e fiscal ficam fora da allowlist. ProdutoService/repositories mantem validacao, RBAC, escopo e auditoria transacional.
+- Testes sinteticos de projecao, reabertura HTTP, tenant e snapshot antes/depois; sem migration, VPS ou ativacao Produto HTTP na 3080.
+- Validacao local: frontend 621/621; backend serial 210 pass/0 fail/13 skips opcionais sem DATABASE_URL; backend typecheck/build, frontend lint/build, audit:baseline e git diff --check PASS. Typecheck geral da raiz segue com falhas preexistentes nao relacionadas, ja registradas. CI do novo HEAD pendente; Gate C parcial. Proximo foco: contrato Produto/canais sem publicacao externa antes do gate.
+
 ## Comercial 360 / Onda 1 - material, liga e norma tecnica no Produto (2026-09-23)
 
 - Objetivo: completar atributos tecnicos universais do Produto mestre sem cadastro paralelo.

@@ -100,6 +100,25 @@ test('V22 projeta material, liga e norma tecnica sem tenant no body', () => {
     liga: 'SAE 1020', norma_tecnica: 'ASTM A36' });
 });
 
+test('V22 envia null ao limpar campos PIM no update HTTP, sem alterar o create ou outros dominios', () => {
+  const cleared = {
+    descricao: 'Chapa sintetica', material: '', liga: '', norma_tecnica: '',
+    descricao_tecnica: '', descricao_comercial: '', titulo_seo: '',
+    descricao_seo: '', embalagem_tipo: '', ncm: '', groupId: 'forjado',
+    estoque_atual: 5, preco_venda: 100,
+  };
+  assert.deepEqual(toProdutoHttpPayload(cleared, { update: true }), {
+    descricao: 'Chapa sintetica', material: null, liga: null, norma_tecnica: null,
+    descricao_tecnica: null, descricao_comercial: null, titulo_seo: null,
+    descricao_seo: null, embalagem_tipo: null,
+  });
+  assert.deepEqual(toProdutoHttpPayload(cleared), { descricao: 'Chapa sintetica' });
+  assert.deepEqual(toProdutoHttpPayload({ descricao: 'Chapa', liga: 'SAE 1020' }, { update: true }),
+    { descricao: 'Chapa', liga: 'SAE 1020' });
+  assert.deepEqual(toProdutoHttpPayload({ descricao: 'Chapa' }, { update: true }),
+    { descricao: 'Chapa' });
+});
+
 test('V22 usa API explicita para UUID canonico e preserva operacoes locais para legado', async () => {
   const form = await readFile(new URL('../src/components/cadastros/ProdutoFormV22_Completo.jsx', import.meta.url), 'utf8');
   const client = await readFile(new URL('../src/api/base44Client.js', import.meta.url), 'utf8');

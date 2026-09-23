@@ -498,6 +498,21 @@ test('Produto persiste conteudo PIM, embalagem, minimo e fracionamento no agrega
   assert.equal(updated.quantidade_minima_venda, 4);
 });
 
+test('Produto limpa atributos PIM opcionais com null e audita antes/depois no mesmo tenant', async () => {
+  const { service, audit, ctx } = harness();
+  const created = await service.create(ctx, { descricao: 'Chapa sintetica', material: 'Aco',
+    liga: 'SAE 1020', norma_tecnica: 'ASTM A36', titulo_seo: 'Chapa SEO' });
+  const cleared = await service.update({ ...ctx, requestId: 'pim-clear-synthetic' }, created.id,
+    { material: null, liga: null, norma_tecnica: null, titulo_seo: null });
+  assert.equal(cleared.material, null);
+  assert.equal(cleared.liga, null);
+  assert.equal((await service.get(ctx, created.id)).norma_tecnica, null);
+  assert.equal((await service.get(ctx, created.id)).titulo_seo, null);
+  const logs = await audit.listByEntity('Produto', created.id);
+  assert.equal(logs[1]?.beforeData?.norma_tecnica, 'ASTM A36');
+  assert.equal(logs[1]?.afterData?.norma_tecnica, null);
+});
+
 test('Produto rejeita PIM invalido e workflow_status por mass assignment', async () => {
   const { service, ctx } = harness();
   for (const payload of [
