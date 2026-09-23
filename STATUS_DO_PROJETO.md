@@ -10220,6 +10220,7 @@ Checklist inicial:
 - Backend completo: 199 total / 189 pass / 0 fail / 10 skips locais condicionais sem DATABASE_URL. Backend typecheck/build, lint, audit:baseline, build frontend e git diff --check PASS. O typecheck da raiz permanece com erros anteriores Base44/frontend fora deste lote; PostgreSQL da rota sera verificado na CI efemera.
 - Arquivos: `server/src/api/router.ts`, `server/tests/runtime10-produto-relacoes-http.test.ts`, `STATUS_DO_PROJETO.md`. Nenhuma migration, VPS, porta 3080, main, bucket ou dado real foi alterado. PR #33 continua draft sem merge.
 - Proximo gate: confirmar CI verde; depois definir politica segura de objetos orfaos/antivirus e validar buckets/credenciais self-hosted sob autorizacao separada. A integracao do `ProdutoFormV22_Completo` permanece pendente; sem Storage ativado, o upload HTTP segue bloqueado.
+- Validacao posterior: commit `c142bf384a00267c4f3b90487f03533a7acb0f46` publicado na branch `codex/comercial-360`; workflow `35801140359` da PR #33 com frontend SUCCESS e backend SUCCESS, inclusive `test:postgres` efemero. Gate CI aprovado; PR nao mesclada e nenhuma migration aplicada na VPS.
 
 ### Onda 1 Produto/PIM - contrato HTTP da reserva DAM (2026-09-22)
 - Causa: service e PostgreSQL da reserva/confirmacao ja estavam testados, mas Produto nao oferecia contrato HTTP para o fluxo em duas etapas.
