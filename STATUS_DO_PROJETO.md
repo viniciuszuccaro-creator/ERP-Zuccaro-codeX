@@ -1,3 +1,13 @@
+### Comercial 360 / Onda 1 - frescor da evidencia DAM (2026-09-23)
+
+- Branch `codex/comercial-360`, PR #33 draft; base `f65a6a4e9a2a26023cf5ddfb5bdb04c0cdfd93cc` confirmada no remoto antes do lote.
+- Causa: o contrato de scan aceitava qualquer timestamp parseavel, inclusive evidencia antiga ou futura do mesmo objeto.
+- `assertMalwareScanResult` agora exige timestamp posterior ao inicio da tentativa corrente, nao futuro e no maximo cinco minutos antigo. O fluxo Produto passa o inicio real da varredura; identidade do objeto/tenant, SHA-256, RBAC e auditoria transacional permanecem obrigatorios.
+- Testes: contrato clamd/Produto focados 38/38; backend 200 pass, 0 fail, 11 skips condicionais sem `DATABASE_URL`; frontend 614/614. Backend typecheck/build, frontend lint/build, audit:baseline e `git diff --check` PASS.
+- O typecheck global frontend segue com diagnosticos legados registrados no checkpoint anterior; nenhum arquivo frontend foi alterado neste lote.
+- Arquivos: `server/src/services/storagePort.ts`, `server/src/services/produtoMidiaFlow.ts` e testes existentes. Nenhuma migration, VPS, bucket, scanner real, porta 3080, dado real ou main alterados.
+- Proximo gate: CI frontend/backend/PostgreSQL da PR; auditoria DEV somente leitura continua bloqueada pelo acesso Web Console/MCP desta sessao. Nao ativar scanner/Produto HTTP antes do gate especifico.
+
 ### Comercial 360 / Onda 1 - estado DAM visivel sem liberacao (2026-09-23)
 
 - Branch `codex/comercial-360`, PR #33 draft; base `d129da29d52463630f0bf15ae34c3cf4baed2d69` confirmada no remoto antes do lote.

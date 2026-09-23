@@ -335,10 +335,11 @@ test('DAM scan persiste evidencia limpa e infectada sem liberar quarentena', asy
 });
 
 test('DAM scan falha fechado em RBAC, tenant, scanner ausente, resultado adulterado e auditoria', async () => {
-  let scannerResult: 'VALID' | 'INVALID' = 'VALID';
+  let scannerResult: 'VALID' | 'INVALID' | 'STALE' = 'VALID';
   const scanner: MalwareScanPort = { scan: async (request) => ({
     ...request, version: request.version ?? 1, verdict: 'CLEAN', scanner: 'synthetic-scanner',
-    scannedAt: new Date().toISOString(), sha256: scannerResult === 'VALID' ? request.sha256 : '0'.repeat(64),
+    scannedAt: new Date(Date.now() - (scannerResult === 'STALE' ? 10 * 60_000 : 0)).toISOString(),
+    sha256: scannerResult === 'INVALID' ? '0'.repeat(64) : request.sha256,
   }) };
   const storage = reservableStorage().storage;
   const { service, repo, audit, ctx } = harness(undefined, storage, scanner);
@@ -354,6 +355,9 @@ test('DAM scan falha fechado em RBAC, tenant, scanner ausente, resultado adulter
   await assert.rejects(noScanner.service.scanMidia(noScanner.ctx, product.id, reservation.mediaId),
     (error: unknown) => (error as { code?: string }).code === 'MALWARE_SCANNER_NOT_CONFIGURED');
   scannerResult = 'INVALID';
+  await assert.rejects(service.scanMidia(ctx, product.id, reservation.mediaId), /MALWARE_SCAN_NOT_CLEAN/);
+  assert.equal((await repo.getMidiaForScan({ groupId: GROUP, empresaId: EMPRESA }, product.id, reservation.mediaId))?.scan_verdict, undefined);
+  scannerResult = 'STALE';
   await assert.rejects(service.scanMidia(ctx, product.id, reservation.mediaId), /MALWARE_SCAN_NOT_CLEAN/);
   assert.equal((await repo.getMidiaForScan({ groupId: GROUP, empresaId: EMPRESA }, product.id, reservation.mediaId))?.scan_verdict, undefined);
   scannerResult = 'VALID';

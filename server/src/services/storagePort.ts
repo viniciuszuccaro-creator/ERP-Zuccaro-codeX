@@ -34,11 +34,15 @@ export interface MalwareScanPort {
   scan(request: StorageUploadRequest): Promise<MalwareScanResult>;
 }
 
-export function assertMalwareScanResult(request: StorageUploadRequest, result: unknown): asserts result is MalwareScanResult & { verdict: 'CLEAN' | 'INFECTED' } {
+export function assertMalwareScanResult(request: StorageUploadRequest, result: unknown, startedAtMs = Date.now() - 5 * 60_000): asserts result is MalwareScanResult & { verdict: 'CLEAN' | 'INFECTED' } {
   if (!result || typeof result !== 'object') throw new Error('MALWARE_SCAN_NOT_CLEAN');
   const scan = result as Partial<MalwareScanResult>;
+  const now = Date.now();
+  const scannedAtMs = typeof scan.scannedAt === 'string' ? Date.parse(scan.scannedAt) : NaN;
+  const oldestAllowed = Math.max(startedAtMs, now - 5 * 60_000);
   if (!['CLEAN', 'INFECTED'].includes(scan.verdict ?? '') || !/^[a-zA-Z0-9._-]{1,80}$/.test(scan.scanner ?? '')
-    || !scan.scannedAt || !Number.isFinite(Date.parse(scan.scannedAt))
+    || !Number.isFinite(startedAtMs) || !Number.isFinite(scannedAtMs)
+    || scannedAtMs < oldestAllowed || scannedAtMs > now
     || scan.groupId !== request.groupId || scan.empresaId !== request.empresaId
     || scan.entity !== request.entity || scan.entityId !== request.entityId
     || scan.actorId !== request.actorId || scan.storageKey !== request.storageKey

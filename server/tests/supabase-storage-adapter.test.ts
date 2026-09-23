@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 import { SupabaseStorageAdapter } from '../src/services/supabaseStorageAdapter.js';
 
-import { assertCleanMalwareScan, type MalwareScanResult } from '../src/services/storagePort.js';
+import { assertCleanMalwareScan, assertMalwareScanResult, type MalwareScanResult } from '../src/services/storagePort.js';
 const groupId = '11111111-1111-4111-8111-111111111111';
 const empresaId = '22222222-2222-4222-8222-222222222222';
 const entityId = '33333333-3333-4333-8333-333333333333';
@@ -131,6 +131,8 @@ test('DAM scan contract fails closed for missing, inconclusive, or unrelated res
     { ...clean, verdict: 'ERROR' },
     { ...clean, scanner: '' },
     { ...clean, scannedAt: 'invalid' },
+    { ...clean, scannedAt: new Date(Date.now() - 10 * 60_000).toISOString() },
+    { ...clean, scannedAt: new Date(Date.now() + 2 * 60_000).toISOString() },
     { ...clean, groupId: empresaId },
     { ...clean, empresaId: groupId },
     { ...clean, actorId: 'other-actor' },
@@ -143,6 +145,14 @@ test('DAM scan contract fails closed for missing, inconclusive, or unrelated res
   for (const result of invalid) {
     assert.throws(() => assertCleanMalwareScan(request, result), /MALWARE_SCAN_NOT_CLEAN/);
   }
+});
+test('DAM rejeita evidencia anterior ao inicio da varredura atual', () => {
+  const startedAtMs = Date.now();
+  const clean: MalwareScanResult = { ...request, version: 1, verdict: 'CLEAN',
+    scanner: 'synthetic-scanner', scannedAt: new Date(startedAtMs - 10_000).toISOString() };
+  assert.throws(() => assertMalwareScanResult(request, clean, startedAtMs), /MALWARE_SCAN_NOT_CLEAN/);
+  assert.throws(() => assertMalwareScanResult(request, { ...clean, scannedAt: new Date(startedAtMs + 60_000).toISOString() }, startedAtMs), /MALWARE_SCAN_NOT_CLEAN/);
+  assert.doesNotThrow(() => assertMalwareScanResult(request, { ...clean, scannedAt: new Date().toISOString() }, startedAtMs));
 });
 test('Clamd scan is disabled without an explicit local socket', async () => {
   const adapter = makeAdapter(async () => { throw new Error('network must not run'); });

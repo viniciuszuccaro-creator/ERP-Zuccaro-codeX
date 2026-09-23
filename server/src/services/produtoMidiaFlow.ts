@@ -203,8 +203,9 @@ export async function scanProdutoMidia(deps: Dependencies, ctx: RequestContext, 
     nome_arquivo: beforeScan.nome_arquivo, mime_type: beforeScan.mime_type,
     tamanho_bytes: beforeScan.tamanho_bytes, sha256: beforeScan.sha256, versao: beforeScan.versao,
   });
+  const startedAtMs = Date.now();
   const result = await deps.scanner.scan(request);
-  assertMalwareScanResult(request, result);
+  assertMalwareScanResult(request, result, startedAtMs);
   return deps.repo.withTransaction(async (executor) => {
     const lockedProduct = await deps.repo.getById(scope, produtoId, executor, { forUpdate: true });
     if (!lockedProduct || !lockedProduct.ativo || lockedProduct.empresa_id !== scope.empresaId) {
