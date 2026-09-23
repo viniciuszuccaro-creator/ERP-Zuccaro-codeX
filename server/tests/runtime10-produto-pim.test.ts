@@ -455,6 +455,32 @@ test('DAM scan falha fechado em RBAC, tenant, scanner ausente, resultado adulter
   assert.equal((await repo.getMidiaForScan({ groupId: GROUP, empresaId: EMPRESA }, product.id, reservation.mediaId))?.scan_verdict, undefined);
 });
 
+test('Produto pagina por data e ID estaveis sem misturar empresas', async () => {
+  const { service, repo, ctx, tenant } = harness();
+  const otherEmpresa = randomUUID();
+  tenant.link(otherEmpresa, GROUP);
+  const marker = `PAGINA-R10-${randomUUID()}`;
+  const first = await service.create(ctx, { descricao: 'Primeiro sintetico', liga: marker });
+  const second = await service.create(ctx, { descricao: 'Segundo sintetico', liga: marker });
+  const older = await service.create(ctx, { descricao: 'Mais antigo sintetico', liga: marker });
+  const foreign = await service.create({ ...ctx, empresaId: otherEmpresa },
+    { descricao: 'Outra empresa sintetico', liga: marker });
+  const tied = '2026-01-02T00:00:00.000Z';
+  repo.seed([{ ...first, created_at: tied }, { ...second, created_at: tied },
+    { ...older, created_at: '2026-01-01T00:00:00.000Z' },
+    { ...foreign, created_at: '2026-01-03T00:00:00.000Z' }]);
+  const expected = [first.id, second.id].sort().reverse().concat(older.id);
+  for (let offset = 0; offset < expected.length; offset += 1) {
+    const page = await service.list(ctx, { search: marker, limit: 1, offset });
+    assert.equal(page.meta.total, 3);
+    assert.equal(page.meta.hasMore, offset < expected.length - 1);
+    assert.deepEqual(page.data.map((row) => row.id), [expected[offset]]);
+  }
+  assert.equal((await service.list(ctx, { search: marker, limit: 1, offset: 3 })).data.length, 0);
+  assert.deepEqual((await service.list({ ...ctx, empresaId: otherEmpresa }, { search: marker })).data
+    .map((row) => row.id), [foreign.id]);
+});
+
 test('Busca PIM pagina e conta somente produtos ativos da empresa autorizada', async () => {
   const { service, ctx, tenant } = harness();
   const otherEmpresa = randomUUID();

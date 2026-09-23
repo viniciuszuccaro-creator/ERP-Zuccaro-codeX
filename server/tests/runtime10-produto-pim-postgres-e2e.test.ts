@@ -595,6 +595,21 @@ test('R10 PostgreSQL real: Produto material, liga e norma preservam tenant e rol
       assert.equal(updated?.norma_tecnica, 'ABNT NBR 7007');
       assert.equal(updated?.liga, marker);
       await tx.query('SAVEPOINT invalid_material');
+      const second = await repo.create(scope, produtoCreateSchema.parse({
+        descricao: 'PIM pagina sintetico', liga: marker,
+      }), tx);
+      await tx.query(
+        'UPDATE produtos SET created_at=$1 WHERE group_id=$2 AND empresa_id=$3 AND id=ANY($4::uuid[])',
+        ['2026-01-02T00:00:00.000Z', scope.groupId, scope.empresaId, [row.id, second.id]],
+      );
+      const expected = [row.id, second.id].sort().reverse();
+      for (let offset = 0; offset < expected.length; offset += 1) {
+        const page = await repo.listPage({ ...scope, search: marker, limit: 1, offset }, tx);
+        assert.equal(page.total, 2);
+        assert.deepEqual(page.rows.map((product) => product.id), [expected[offset]]);
+      }
+      assert.equal((await repo.listPage({ groupId: scope.groupId, empresaId: SEED_IDS.empresaA2,
+        search: marker }, tx)).total, 0);
       await assert.rejects(tx.query(
         "UPDATE produtos SET material='' WHERE id=$1 AND group_id=$2 AND empresa_id=$3",
         [row.id, scope.groupId, scope.empresaId],

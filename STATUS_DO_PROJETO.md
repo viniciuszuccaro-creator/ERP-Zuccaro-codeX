@@ -1,3 +1,10 @@
+## Comercial 360 / pre-requisito de catalogo - paginacao deterministica do Produto (2026-09-23)
+
+- Causa: PostgreSQL ordenava Produto apenas por created_at e a memoria mantinha ordem de insercao; timestamps iguais podiam trocar registros entre paginas, comprometendo projecao e conciliacao por canal.
+- Correcao nos repositories canonicos: created_at DESC com desempate id DESC, mantendo filtros de Grupo/Empresa, ativo e busca, contagem e limite. Nenhum schema, fluxo comercial, RBAC ou auditoria de mutacao foi alterado.
+- Testes sinteticos forcados com timestamps iguais verificam paginas sem duplicacao, meta.total/hasMore e isolamento; E2E PostgreSQL efemero verifica empate e tenant dentro de transacao com rollback. Sem migration, publicacao externa, VPS ou alteracao na 3080.
+- Validacao local: backend serial 212 pass/0 fail/13 skips opcionais sem DATABASE_URL; frontend 621/621; backend typecheck/build, frontend lint/build, audit:baseline e diff-check PASS. Typecheck geral da raiz segue com falhas preexistentes nao relacionadas, conforme checkpoint anterior. E2E PostgreSQL e CI do novo HEAD pendentes; Gate C parcial. Proximo: contrato de conteudo por canal sobre Produto/outbox existentes, sem ativacao externa.
+
 ## Comercial 360 / Onda 1 - busca de atributos PIM no Produto (2026-09-23)
 
 - Causa: material, liga e norma tecnica ja eram persistidos no Produto, mas a busca server-side ignorava esses campos, impedindo consulta e contagem correta por atributo.

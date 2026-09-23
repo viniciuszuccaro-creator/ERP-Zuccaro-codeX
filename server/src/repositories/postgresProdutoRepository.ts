@@ -152,7 +152,7 @@ export class PostgresProdutoRepository implements ProdutoRepository {
     const total = Number(countResult.rows[0]?.total ?? 0);
     params.push(limit, offset);
     const result = await query.query(
-      `SELECT * FROM produtos WHERE ${whereSql} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      `SELECT * FROM produtos WHERE ${whereSql} ORDER BY created_at DESC, id DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params,
     );
     return {

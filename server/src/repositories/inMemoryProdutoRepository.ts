@@ -180,7 +180,8 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
   }
 
   async listPage(filter: ProdutoListFilter, _executor?: DbQueryExecutor): Promise<{ rows: Produto[]; total: number }> {
-    const all = [...this.rows.values()].filter((r) => this.matches(filter, r));
+    const all = [...this.rows.values()].filter((r) => this.matches(filter, r))
+      .sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id));
     const total = all.length;
     const offset = Math.max(filter.offset ?? 0, 0);
     const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);
