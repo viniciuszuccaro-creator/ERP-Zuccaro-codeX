@@ -551,6 +551,29 @@ test('Outbox Produto em memoria preserva idempotencia global e rollback', async 
   ), /TENANT_FK_MISMATCH/);
   assert.equal(repo.listPublicationEvents().length, 3);
 });
+test('Outbox Produto em memoria nao perde commit concorrente apos rollback', async () => {
+  const { repo, service, ctx } = harness();
+  const produto = await service.create(ctx, { descricao: 'Concorrencia outbox sintetica' });
+  const scope = { groupId: GROUP, empresaId: EMPRESA };
+  let entered!: () => void;
+  let rejectFirst!: () => void;
+  const firstEntered = new Promise<void>((resolve) => { entered = resolve; });
+  const firstRelease = new Promise<void>((resolve) => { rejectFirst = resolve; });
+  const first = repo.withTransaction(async (executor) => {
+    await repo.appendPublicationEvent(scope, produto, 'outbox-primeira-sintetica', executor);
+    entered();
+    await firstRelease;
+    throw new Error('SYNTHETIC_ROLLBACK');
+  });
+  await firstEntered;
+  const second = repo.withTransaction((executor) =>
+    repo.appendPublicationEvent(scope, produto, 'outbox-segunda-sintetica', executor));
+  rejectFirst();
+  await assert.rejects(first, /SYNTHETIC_ROLLBACK/);
+  await second;
+  assert.deepEqual(repo.listPublicationEvents().map((event) => event.requestId),
+    ['outbox-segunda-sintetica']);
+});
 
 test('Falha de auditoria rollbacka publicacao e evento outbox na mesma transacao', async () => {
   const { repo, service, ctx } = harness();

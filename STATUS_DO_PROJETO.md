@@ -1,3 +1,12 @@
+## Comercial 360 / Onda 15 - rollback concorrente da outbox em memoria (2026-09-23)
+
+- Causa: `InMemoryProdutoRepository.withTransaction` permitia transacoes sobrepostas; rollback de uma podia apagar o evento de publicacao confirmado por outra.
+- Correcao: transacoes em memoria serializadas pela mesma fila ja adotada em ClienteLocal; snapshots de Produto, variantes, equivalentes, midias e eventos continuam restaurados em erro, com liberacao da fila no `finally`.
+- Teste sintetico concorrencial comprova que o rollback da primeira preserva o commit subsequente; testes direcionados da outbox 2/2 PASS.
+- Validacao: backend serial 219 total / 207 pass / 0 fail / 12 skip opcionais sem `DATABASE_URL`; frontend por lista explicita 618/618. Typecheck/build backend, audit:baseline, lint/build frontend e diff-check PASS. `npm test` backend paralelo sofreu OOM/spawn UNKNOWN com 1,7 GB livres; reexecucao serial com heap 2048 MB passou. `npm test` frontend no Windows descobriu zero arquivos pelo glob; lista explicita executou 74 arquivos. PostgreSQL DEV nao consultado.
+- Nenhum worker, publicacao externa, migration, VPS ou porta 3080 foi alterado. Gate C ainda parcial na identidade do banco API e restaurabilidade do backup.
+- Proximo foco: claim/lease fail-closed na outbox existente, condicionado a contrato de identidade de servico e testes PostgreSQL; nao ativar canais antes do gate.
+
 ## Comercial 360 / Gate C - backup, rollback e porta isolada (2026-09-23)
 
 - Evidencia somente leitura fornecida pelo usuario na Web Console: `/opt/erp-zuccaro/backups/pre-pr32-20260921-140012.sql` existe, tem 486969 bytes, SHA-256 calculado e marcador textual de dump PostgreSQL completo. Isso nao comprova restauracao nem substitui backup atualizado no gate de mudanca autorizado.

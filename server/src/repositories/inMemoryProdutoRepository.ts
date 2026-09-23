@@ -118,7 +118,12 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
   private readonly midias = new Map<string, ProdutoMidia>();
 
   private readonly publicationEvents: Array<{ groupId: string; empresaId: string | null; produtoId: string; requestId: string }> = [];
+  private transactionQueue: Promise<void> = Promise.resolve();
   async withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> {
+    const previous = this.transactionQueue;
+    let release = () => {};
+    this.transactionQueue = new Promise<void>((resolve) => { release = resolve; });
+    await previous;
     const snapshot = structuredClone([...this.rows.entries()]);
     const eventsSnapshot = structuredClone(this.publicationEvents);
     const variantsSnapshot = structuredClone([...this.variants.entries()]);
@@ -138,6 +143,8 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
       for (const [id, row] of midiasSnapshot) this.midias.set(id, row);
       this.publicationEvents.push(...eventsSnapshot);
       throw error;
+    } finally {
+      release();
     }
   }
 
