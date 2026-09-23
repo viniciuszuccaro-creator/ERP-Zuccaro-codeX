@@ -53,9 +53,12 @@ export function createHttpApiClient(options = {}) {
     };
     if (scope.groupId) headers['X-Group-Id'] = String(scope.groupId);
     if (scope.empresaId) headers['X-Empresa-Id'] = String(scope.empresaId);
-    if (scope.actorId) headers['X-Actor-Id'] = String(scope.actorId);
-    if (scope.actorEmail) headers['X-Actor-Email'] = String(scope.actorEmail);
-    if (scope.token) headers.Authorization = `Bearer ${scope.token}`;
+    const bearer = typeof scope.token === 'string' ? scope.token.trim() : '';
+    if (bearer) headers.Authorization = `Bearer ${bearer}`;
+    if (!bearer) {
+      if (scope.actorId) headers['X-Actor-Id'] = String(scope.actorId);
+      if (scope.actorEmail) headers['X-Actor-Email'] = String(scope.actorEmail);
+    }
 
     const fetchUrl = baseUrl ? url.toString() : `${url.pathname}${url.search}`;
     const response = await fetchImpl(fetchUrl, {

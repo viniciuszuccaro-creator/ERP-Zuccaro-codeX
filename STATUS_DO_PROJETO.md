@@ -10302,3 +10302,13 @@ Checklist inicial:
 - Arquivos: server/src/middleware/requestContext.ts, server/src/app.ts, server/src/config/env.ts, server/tests/runtime01.test.ts, server/scripts/runPostgresTests.mjs e este status. PR #33 permanece draft, sem merge; nenhuma VPS, porta 3080, migration remota, bucket ou dado real foi alterado.
 - Proximo gate: sob autorizacao separada, homologar endpoint Auth self-hosted e vinculo auth_user_id com profiles.id no ambiente DEV real. Produto HTTP continua desligado ate alinhamento do cliente e do RBAC operacional.
 - Commit funcional `279e74ba23ab2f3bbda6facfafc0162dc10ff8e3` confirmado no remoto. Workflow `35863485341`: frontend SUCCESS, backend SUCCESS, migrations/seed/test:postgres efemeros SUCCESS; R01AUTH 14 executados / 14 pass / 0 fail / 0 skip. PR #33 segue draft sem merge.
+
+### P0 autenticacao HTTP - cliente nao forja ator com Bearer (2026-09-23; CI pendente)
+- Causa: o cliente HTTP enviava token e X-Actor-Id/X-Actor-Email juntos; actorId vindo do escopo local pode ser auth_user_id e nao profiles.id, gerando conflito com o backend e permitindo identidade ambigua na request.
+- O HttpApiClient existente agora envia Authorization: Bearer somente quando ha token string nao vazio. Nesse caso omite ambos os headers de ator, que passam a ser derivados pelo backend. Grupo/Empresa seguem como escopo solicitado, validado no servidor. Sem Bearer, cabecalhos legados sao preservados para o modo local/dev.
+- Testes novos verificam token sem headers de ator, sem token em URL/body, contexto Grupo/Empresa preservado, modo legado inalterado e HTTP 401 sem fallback local ou sucesso falso. Nenhum modulo, tela ou rota foi criado.
+- Validacao local: testes direcionados 15/15; frontend explicito 613/613, lint, build, audit:baseline e git diff --check PASS. Typecheck global segue FAIL no baseline anterior Base44/frontend, incluindo erros ja conhecidos nas linhas 266+ do cliente HTTP; nenhuma linha alterada neste lote apareceu no diagnostico. Backend nao foi modificado e a CI completa da PR repetira os checks backend/PostgreSQL.
+- Arquivos: src/api/httpApiClient.js, tests/http-api-client.test.js e este status. Nenhuma VPS, main, porta 3080, migration, bucket, credencial ou dado real foi alterado; PR #33 segue draft sem merge.
+- Limite: a origem do token e do escopo ainda depende do fluxo de autenticacao do cliente a homologar. Produto HTTP continua desligado; nao interpretar este ajuste como autorizacao de uso operacional.
+- Proximo gate: confirmar CI verde; depois homologar o Auth self-hosted e a associacao auth_user_id/profiles.id em ambiente DEV com autorizacao especifica, antes de ativar Produto HTTP.
+- Commit/hash remoto e workflow serao registrados apos publicacao.

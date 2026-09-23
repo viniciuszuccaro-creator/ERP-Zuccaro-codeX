@@ -265,3 +265,67 @@ test('Produto HTTP notifica consumidores somente apos mutacao confirmada', async
   await produto.create({ descricao: 'Depois' });
   assert.equal(notifications, 3);
 });
+
+test('HTTP Bearer delegates actor identity to backend and keeps requested tenant scope', async () => {
+  const calls = [];
+  const client = createHttpApiClient({
+    baseUrl: 'https://erp.invalid',
+    getScope: () => ({
+      groupId: '11111111-1111-4111-8111-111111111111',
+      empresaId: '33333333-3333-4333-8333-333333333333',
+      actorId: 'supabase-auth-user-not-profile',
+      actorEmail: 'stale@example.test',
+      token: '  synthetic.jwt.token  ',
+    }),
+    fetchImpl: async (url, init) => {
+      calls.push({ url: String(url), ...init });
+      return new Response(JSON.stringify({ data: [] }), { status: 200, headers: { 'content-type': 'application/json' } });
+    },
+  });
+  await client.entities.Marca.list();
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].headers.Authorization, 'Bearer synthetic.jwt.token');
+  assert.equal(calls[0].headers['X-Group-Id'], '11111111-1111-4111-8111-111111111111');
+  assert.equal(calls[0].headers['X-Empresa-Id'], '33333333-3333-4333-8333-333333333333');
+  assert.equal(calls[0].headers['X-Actor-Id'], undefined);
+  assert.equal(calls[0].headers['X-Actor-Email'], undefined);
+  assert.equal(calls[0].url.includes('synthetic.jwt.token'), false);
+  assert.equal(calls[0].body, undefined);
+});
+
+test('HTTP legacy scope still sends actor headers without a Bearer token', async () => {
+  let headers;
+  const client = createHttpApiClient({
+    baseUrl: 'https://erp.invalid',
+    getScope: () => ({ groupId: 'grupo-local', actorId: 'ator-local', actorEmail: 'local@example.test', token: '  ' }),
+    fetchImpl: async (_url, init) => {
+      headers = init.headers;
+      return new Response(JSON.stringify({ data: [] }), { status: 200 });
+    },
+  });
+  await client.entities.Marca.list();
+  assert.equal(headers.Authorization, undefined);
+  assert.equal(headers['X-Actor-Id'], 'ator-local');
+  assert.equal(headers['X-Actor-Email'], 'local@example.test');
+});
+
+test('HTTP rejected Bearer never falls back to local data or leaks token in error', async () => {
+  let calls = 0;
+  const client = createHttpApiClient({
+    baseUrl: 'https://erp.invalid',
+    getScope: () => ({ groupId: 'grupo-sintetico', actorId: 'ator-local', token: 'synthetic.jwt.token' }),
+    fetchImpl: async () => {
+      calls += 1;
+      return new Response(JSON.stringify({ error: { code: 'AUTH_INVALID', message: 'Invalid user token' } }), {
+        status: 401, headers: { 'content-type': 'application/json' },
+      });
+    },
+  });
+  await assert.rejects(client.entities.Marca.list(), (error) => {
+    assert.equal(error.status, 401);
+    assert.equal(error.code, 'AUTH_INVALID');
+    assert.equal(String(error).includes('synthetic.jwt.token'), false);
+    return true;
+  });
+  assert.equal(calls, 1);
+});
