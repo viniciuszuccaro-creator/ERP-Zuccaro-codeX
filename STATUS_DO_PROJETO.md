@@ -1,3 +1,11 @@
+## Comercial 360 / Onda 1 - reconciliacao DAM em lote (2026-09-23)
+
+- Causa: a rejeicao auditada de reserva vencida existia apenas por ID; nao havia descoberta tenant-scoped e limitada para retomada operacional de varias reservas.
+- Correcao nos repositorios e ProdutoService existentes: busca ordenada de ate 100 candidatas `PENDENTE_UPLOAD` vencidas por Grupo/Empresa; cada candidata reutiliza a rejeicao individual com transacao e auditoria. Corrida de outra execucao e contabilizada; falhas reais interrompem o lote e podem ser retomadas sem duplicar rejeicao.
+- Seguranca: exige groupId, empresaId, actorId, requestId, RBAC `Cadastros.produto.inativar` e TenantGuard antes da busca; nenhuma chave, hash ou URL retorna no resumo. Nao apaga objeto, nao aciona Storage, scanner, bucket, rota ou job novo.
+- Testes sinteticos in-memory cobrem limite, empresa externa ao lote, reserva fresca, RBAC, auditoria/rollback, retomada e corrida. E2E PostgreSQL existente ampliado para escopo, rollback e preservacao de chave; executar na CI efemera.
+- Validacao local: backend 217 testes (205 pass, 0 fail, 12 skip opcionais sem PostgreSQL local); frontend 618/618; backend typecheck/build, frontend lint/build e audit:baseline passaram; git diff --check passou. PostgreSQL E2E sera validado na CI efemera. Gate DEV/Auth/Storage/scanner real continuam nao homologados; 3080 e VPS intocadas. Proximo passo: gate Auth/Storage DEV antes de qualquer limpeza fisica ou publicacao.
+
 ## Comercial 360 / Onda 1 - nomes de arquivos DAM no Produto V22 (2026-09-23)
 
 - Causa: o V22 enviava `nome_arquivo` original com espacos/acentos, mas o `SupabaseStorageAdapter` exigia nome ASCII sanitizado; a reserva falhava para arquivos comuns embora a chave privada ja estivesse sanitizada.

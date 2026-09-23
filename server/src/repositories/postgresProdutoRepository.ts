@@ -440,6 +440,18 @@ export class PostgresProdutoRepository implements ProdutoRepository {
     const result = await (executor ?? this.db).query(sql, params);
     return result.rows.map((row) => ({ ...row, tamanho_bytes: Number(row.tamanho_bytes) }) as ProdutoMidia);
   }
+  async listExpiredReservedMidias(scope: Scope, limit: number, executor?: DbQueryExecutor): Promise<Array<{ id: string; produto_id: string }>> {
+    if (!scope.empresaId) return [];
+    const result = await (executor ?? this.db).query<{ id: string; produto_id: string }>(
+      `SELECT id, produto_id FROM produto_midias
+       WHERE group_id=$1 AND empresa_id=$2 AND ativo=true AND status='PENDENTE_UPLOAD'
+         AND upload_expires_at<=now()
+       ORDER BY upload_expires_at ASC, id ASC LIMIT $3`,
+      [scope.groupId, scope.empresaId, limit],
+    );
+    return result.rows;
+  }
+
   async nextMidiaVersion(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<number> {
     if (!executor) throw new Error('MEDIA_TRANSACTION_REQUIRED');
     const result = await executor.query(

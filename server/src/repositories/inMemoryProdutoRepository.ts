@@ -48,6 +48,7 @@ export interface ProdutoRepository extends TenantEntityRepository<Produto, Produ
   updateEquivalent(scope: Scope, produtoId: string, equivalentId: string, data: ProdutoEquivalenteUpdate, executor?: DbQueryExecutor): Promise<ProdutoEquivalente | null>;
   deactivateEquivalent(scope: Scope, produtoId: string, equivalentId: string, executor?: DbQueryExecutor): Promise<ProdutoEquivalente | null>;
   listMidias(scope: Scope, produtoId: string, executor?: DbQueryExecutor, page?: { limit: number; offset: number }): Promise<ProdutoMidia[]>;
+  listExpiredReservedMidias(scope: Scope, limit: number, executor?: DbQueryExecutor): Promise<Array<{ id: string; produto_id: string }>>;
   nextMidiaVersion(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<number>;
   createMidia(scope: Scope, produtoId: string, data: ProdutoMidiaCreate, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
   deactivateMidia(scope: Scope, produtoId: string, midiaId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
@@ -340,6 +341,17 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
       .sort((a, b) => a.versao - b.versao || a.id.localeCompare(b.id));
     return structuredClone(page ? rows.slice(page.offset, page.offset + page.limit) : rows);
   }
+  async listExpiredReservedMidias(scope: Scope, limit: number): Promise<Array<{ id: string; produto_id: string }>> {
+    if (!scope.empresaId) return [];
+    const now = Date.now();
+    return [...this.midias.values()]
+      .filter((row) => row.group_id === scope.groupId && row.empresa_id === scope.empresaId
+        && row.ativo && row.status === 'PENDENTE_UPLOAD' && row.upload_expires_at
+        && Date.parse(row.upload_expires_at) <= now)
+      .sort((a, b) => a.upload_expires_at!.localeCompare(b.upload_expires_at!) || a.id.localeCompare(b.id))
+      .slice(0, limit).map((row) => ({ id: row.id, produto_id: row.produto_id }));
+  }
+
   async nextMidiaVersion(scope: Scope, produtoId: string): Promise<number> {
     const versions = [...this.midias.values()]
       .filter((row) => row.group_id === scope.groupId && row.empresa_id === scope.empresaId && row.produto_id === produtoId)

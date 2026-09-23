@@ -497,6 +497,40 @@ test('R10 PostgreSQL real: service DAM reserva, confirma e rollbacka auditoria',
     const expiredLogs = await audit.listByEntity('ProdutoMidia', expired.mediaId);
     assert.deepEqual(expiredLogs.map((entry) => entry.action), ['create', 'change_status']);
     assert.equal(JSON.stringify(expiredLogs).includes(expiredData.storage_key), false);
+    const batchData = data('batch-expired');
+    const batch = await service.reserveMidia(ctx, productId, batchData);
+    mediaIds.push(batch.mediaId);
+    const freshData = data('batch-fresh');
+    const fresh = await service.reserveMidia(ctx, productId, freshData);
+    mediaIds.push(fresh.mediaId);
+    await db.query(
+      "UPDATE produto_midias SET upload_expires_at=now()-interval '1 minute' WHERE id=$1 AND group_id=$2 AND empresa_id=$3",
+      [batch.mediaId, scope.groupId, scope.empresaId],
+    );
+    const foreignCandidates = await repo.listExpiredReservedMidias(
+      { groupId: scope.groupId, empresaId: SEED_IDS.empresaA2 }, 100);
+    assert.equal(foreignCandidates.some((row) => row.id === batch.mediaId), false);
+    await assert.rejects(deniedService.reconcileExpiredMidias(ctx, 1), /RBAC_DENIED/);
+    await assert.rejects(failingService.reconcileExpiredMidias(ctx, 1), /SYNTHETIC_AUDIT_FAILURE/);
+    const batchBefore = await db.query<{ status: string }>(
+      'SELECT status FROM produto_midias WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+      [batch.mediaId, scope.groupId, scope.empresaId],
+    );
+    assert.equal(batchBefore.rows[0]?.status, 'PENDENTE_UPLOAD');
+    assert.deepEqual(await service.reconcileExpiredMidias(ctx, 1), { inspected: 1, rejected: 1, raced: 0 });
+    assert.deepEqual(await service.reconcileExpiredMidias(ctx, 1), { inspected: 0, rejected: 0, raced: 0 });
+    const batchAfter = await db.query<{ status: string; ativo: boolean; storage_key: string }>(
+      'SELECT status,ativo,storage_key FROM produto_midias WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+      [batch.mediaId, scope.groupId, scope.empresaId],
+    );
+    assert.equal(batchAfter.rows[0]?.status, 'REJEITADO');
+    assert.equal(batchAfter.rows[0]?.ativo, false);
+    assert.equal(batchAfter.rows[0]?.storage_key, batchData.storage_key);
+    const freshAfter = await db.query<{ status: string }>(
+      'SELECT status FROM produto_midias WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+      [fresh.mediaId, scope.groupId, scope.empresaId],
+    );
+    assert.equal(freshAfter.rows[0]?.status, 'PENDENTE_UPLOAD');
   } catch (error) {
     originalError = error;
     throw error;

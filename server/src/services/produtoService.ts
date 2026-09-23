@@ -25,7 +25,7 @@ import {
   type ProdutoUpdate,
 } from '../repositories/produtoTypes.js';
 
-import { checkProdutoMidiaPath, confirmProdutoMidia, listProdutoMidias, rejectExpiredProdutoMidia, reserveProdutoMidia, scanProdutoMidia } from './produtoMidiaFlow.js';
+import { checkProdutoMidiaPath, confirmProdutoMidia, listProdutoMidias, reconcileExpiredProdutoMidias, rejectExpiredProdutoMidia, reserveProdutoMidia, scanProdutoMidia } from './produtoMidiaFlow.js';
 import { NotImplementedStorage, type MalwareScanPort, type StoragePort } from './storagePort.js';
 const WORKFLOW_TRANSITIONS: Record<Produto['workflow_status'], Produto['workflow_status'][]> = {
   RASCUNHO: ['EM_REVISAO'],
@@ -284,6 +284,12 @@ export class ProdutoService {
       repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard,
       rbacGuard: this.rbacGuard, storage: this.storage,
     }, ctx, produtoId, mediaId);
+  }
+  async reconcileExpiredMidias(ctx: RequestContext, limit = 50) {
+    return reconcileExpiredProdutoMidias({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard,
+      rbacGuard: this.rbacGuard, storage: this.storage,
+    }, ctx, limit);
   }
   async scanMidia(ctx: RequestContext, produtoId: string, midiaId: string) {
     return scanProdutoMidia({

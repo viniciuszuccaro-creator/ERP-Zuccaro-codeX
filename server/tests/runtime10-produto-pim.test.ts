@@ -41,6 +41,78 @@ test('DAM reconcilia somente reserva vencida no tenant e rollbacka auditoria', a
   assert.equal(JSON.stringify(logs).includes(data.sha256), false);
 });
 
+test('DAM reconcilia lote limitado por empresa com auditoria, rollback e retomada', async (t) => {
+  const { repo, service, audit, ctx, tenant } = harness();
+  const scope = { groupId: GROUP, empresaId: EMPRESA };
+  const produto = await service.create(ctx, { descricao: 'Lote DAM sintetico' });
+  const now = Date.now();
+  const reserve = async (empresaId: string, produtoId: string, delay: number) => {
+    const ownScope = { groupId: GROUP, empresaId };
+    const data = { ...mediaFixture(produtoId),
+      storage_key: mediaFixture(produtoId).storage_key.replace(`/companies/${EMPRESA}/`, `/companies/${empresaId}/`) };
+    const row = await repo.reserveMidia(ownScope, produtoId, data, {
+      id: randomUUID(), actorId: ACTOR, requestId: ctx.requestId,
+      expiresAt: new Date(now + delay).toISOString(),
+    });
+    assert.ok(row);
+    return row;
+  };
+  const first = await reserve(EMPRESA, produto.id, 1000);
+  const second = await reserve(EMPRESA, produto.id, 2000);
+  const fresh = await reserve(EMPRESA, produto.id, 60_000);
+  const otherEmpresa = randomUUID();
+  tenant.link(otherEmpresa, GROUP);
+  const otherCtx = { ...ctx, empresaId: otherEmpresa };
+  const otherProduct = await service.create(otherCtx, { descricao: 'Outro tenant sintetico' });
+  const foreign = await reserve(otherEmpresa, otherProduct.id, 1000);
+  t.mock.method(Date, 'now', () => now + 3000);
+  await assert.rejects(service.reconcileExpiredMidias({ ...ctx, empresaId: undefined }),
+    (error: unknown) => (error as { code?: string }).code === 'EMPRESA_ID_REQUIRED');
+  await assert.rejects(service.reconcileExpiredMidias(ctx, 101),
+    (error: unknown) => (error as { code?: string }).code === 'VALIDATION_ERROR');
+  const denied = harness(['visualizar', 'criar']);
+  await assert.rejects(denied.service.reconcileExpiredMidias(denied.ctx),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED');
+  assert.deepEqual(await service.reconcileExpiredMidias(ctx, 1), { inspected: 1, rejected: 1, raced: 0 });
+  assert.equal((await repo.getReservedMidia(scope, produto.id, second.id, second.upload_attempt_id!, ACTOR))?.status, 'PENDENTE_UPLOAD');
+  const append = audit.append.bind(audit);
+  audit.append = async (...args) => {
+    if (args[0].entity === 'ProdutoMidia') throw new Error('SYNTHETIC_AUDIT_FAILURE');
+    return append(...args);
+  };
+  await assert.rejects(service.reconcileExpiredMidias(ctx), /SYNTHETIC_AUDIT_FAILURE/);
+  assert.equal((await repo.getReservedMidia(scope, produto.id, second.id, second.upload_attempt_id!, ACTOR))?.status, 'PENDENTE_UPLOAD');
+  audit.append = append;
+  assert.deepEqual(await service.reconcileExpiredMidias(ctx), { inspected: 1, rejected: 1, raced: 0 });
+  assert.deepEqual(await service.reconcileExpiredMidias(ctx), { inspected: 0, rejected: 0, raced: 0 });
+  assert.equal((await repo.getReservedMidia(scope, produto.id, fresh.id, fresh.upload_attempt_id!, ACTOR))?.status, 'PENDENTE_UPLOAD');
+  assert.equal((await repo.getReservedMidia({ groupId: GROUP, empresaId: otherEmpresa }, otherProduct.id, foreign.id, foreign.upload_attempt_id!, ACTOR))?.status, 'PENDENTE_UPLOAD');
+  const logs = await audit.listByEntity('ProdutoMidia', first.id);
+  assert.equal(logs.length, 1);
+  assert.equal(JSON.stringify(logs).includes(first.storage_key), false);
+});
+
+test('DAM lote contabiliza corrida sem repetir rejeicao nem ocultar outras falhas', async (t) => {
+  const { repo, service, audit, ctx } = harness();
+  const produto = await service.create(ctx, { descricao: 'Corrida sintetica' });
+  const expiresAt = Date.now() + 1000;
+  const row = await repo.reserveMidia({ groupId: GROUP, empresaId: EMPRESA }, produto.id, mediaFixture(produto.id), {
+    id: randomUUID(), actorId: ACTOR, requestId: ctx.requestId, expiresAt: new Date(expiresAt).toISOString(),
+  });
+  assert.ok(row);
+  t.mock.method(Date, 'now', () => expiresAt + 1);
+  const originalList = repo.listExpiredReservedMidias.bind(repo);
+  t.mock.method(repo, 'listExpiredReservedMidias', async (scope, limit, executor) => {
+    const candidates = await originalList(scope, limit, executor);
+    await service.rejectExpiredMidia(ctx, produto.id, row.id);
+    return candidates;
+  });
+  assert.deepEqual(await service.reconcileExpiredMidias(ctx), { inspected: 1, rejected: 0, raced: 1 });
+  assert.equal((await audit.listByEntity('ProdutoMidia', row.id)).length, 1);
+});
+
+
+
 
 function mediaFixture(produtoId: string) {
   return {

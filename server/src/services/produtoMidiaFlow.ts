@@ -190,6 +190,35 @@ export async function rejectExpiredProdutoMidia(
   });
 }
 
+export async function reconcileExpiredProdutoMidias(deps: Dependencies, ctx: RequestContext, limit = 50) {
+  if (!ctx.groupId) throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
+  if (!ctx.empresaId) throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required for media');
+  if (!ctx.actorId) throw new AppError(403, 'PERMISSION_DENIED', 'Actor is required for media');
+  if (!ctx.requestId) throw new AppError(400, 'REQUEST_ID_REQUIRED', 'requestId is required');
+  if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+    throw new AppError(400, 'VALIDATION_ERROR', 'Invalid reconciliation limit');
+  }
+  await deps.rbacGuard.assertAllowed(ctx, 'Cadastros', 'produto', 'inativar');
+  await deps.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
+  const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
+  const candidates = await deps.repo.listExpiredReservedMidias(scope, limit);
+  let rejected = 0;
+  let raced = 0;
+  for (const candidate of candidates) {
+    try {
+      await rejectExpiredProdutoMidia(deps, ctx, candidate.produto_id, candidate.id);
+      rejected += 1;
+    } catch (error) {
+      if (error instanceof AppError && error.code === 'MEDIA_RESERVATION_NOT_FOUND') {
+        raced += 1;
+        continue;
+      }
+      throw error;
+    }
+  }
+  return { inspected: candidates.length, rejected, raced };
+}
+
 export async function scanProdutoMidia(deps: Dependencies, ctx: RequestContext, produtoId: string, mediaId: string) {
   const scope = await authorize(deps, ctx, produtoId, 'aprovar-conteudo');
   assertId(mediaId);
