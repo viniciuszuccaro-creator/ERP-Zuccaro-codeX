@@ -10310,5 +10310,5 @@ Checklist inicial:
 - Validacao local: testes direcionados 15/15; frontend explicito 613/613, lint, build, audit:baseline e git diff --check PASS. Typecheck global segue FAIL no baseline anterior Base44/frontend, incluindo erros ja conhecidos nas linhas 266+ do cliente HTTP; nenhuma linha alterada neste lote apareceu no diagnostico. Backend nao foi modificado e a CI completa da PR repetira os checks backend/PostgreSQL.
 - Arquivos: src/api/httpApiClient.js, tests/http-api-client.test.js e este status. Nenhuma VPS, main, porta 3080, migration, bucket, credencial ou dado real foi alterado; PR #33 segue draft sem merge.
 - Limite: a origem do token e do escopo ainda depende do fluxo de autenticacao do cliente a homologar. Produto HTTP continua desligado; nao interpretar este ajuste como autorizacao de uso operacional.
-- Proximo gate: confirmar CI verde; depois homologar o Auth self-hosted e a associacao auth_user_id/profiles.id em ambiente DEV com autorizacao especifica, antes de ativar Produto HTTP.
-- Commit/hash remoto e workflow serao registrados apos publicacao.
+- Proximo gate: homologar o Auth self-hosted e a associacao auth_user_id/profiles.id em ambiente DEV com autorizacao especifica, antes de ativar Produto HTTP.
+- Commit funcional `49c8b7e3061a0d19e0b772eb88076b743bd2c004` confirmado no remoto. Workflow `35865016318`: frontend SUCCESS, backend SUCCESS, incluindo test:postgres efemero. PR #33 permanece draft, sem merge.
