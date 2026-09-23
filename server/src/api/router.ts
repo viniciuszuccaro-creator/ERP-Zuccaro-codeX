@@ -168,6 +168,23 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
     catch (error) { next(error); }
   });
 
+  router.get('/api/v1/produtos/:id/midias', requireTenantScope, async (req, res, next) => {
+    try {
+      const rows = await service.listMidias(ctxFromReq(req), req.params.id);
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data: rows.map((row) => ({
+        id: row.id,
+        categoria: row.categoria,
+        nome_arquivo: row.nome_arquivo,
+        mime_type: row.mime_type,
+        tamanho_bytes: row.tamanho_bytes,
+        versao: row.versao,
+        status: row.status,
+        principal: row.principal,
+      })) });
+    } catch (error) { next(error); }
+  });
+
   router.post('/api/v1/produtos/:id/midias/reservas', requireTenantScope, async (req, res, next) => {
     try {
       const result = await service.reserveMidia(ctxFromReq(req), req.params.id, req.body);

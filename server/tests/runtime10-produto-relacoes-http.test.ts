@@ -322,6 +322,15 @@ test('HTTP R10 DAM: reserva, confirmacao unica, tenant e auditoria sanitizada', 
     assert.equal(signCalls, 1);
     assert.ok(reserved.body.data.mediaId);
     assert.ok(reserved.body.data.attemptId);
+    const mediaPath = `/api/v1/produtos/${id}/midias`;
+    const pending = await request(mediaPath);
+    assert.equal(pending.status, 200);
+    assert.deepEqual(pending.body.data, []);
+    assert.equal((await request(mediaPath, 'GET', undefined, headers(GROUP_A, EMPRESA_A, ACTOR_DENIED))).status, 403);
+    assert.equal((await request(mediaPath, 'GET', undefined, headers(GROUP_A, EMPRESA_A2))).status, 404);
+    assert.equal((await request(mediaPath, 'GET', undefined, headers(GROUP_B, EMPRESA_B, ACTOR_B))).status, 404);
+    assert.equal((await request('/api/v1/produtos/invalid/midias')).status, 400);
+
     const confirmPath = `/api/v1/produtos/${id}/midias/${reserved.body.data.mediaId}/confirmar`;
     const attempt = { attemptId: reserved.body.data.attemptId };
     assert.equal((await request(confirmPath, 'POST', { ...attempt, actorId: ACTOR_A })).status, 400);
@@ -337,6 +346,19 @@ test('HTTP R10 DAM: reserva, confirmacao unica, tenant e auditoria sanitizada', 
     assert.equal(verifyCalls, 1);
     assert.equal((await request(confirmPath, 'POST', attempt)).status, 404);
     const audit = (request as typeof request & { auditRepo: InMemoryAuditRepository }).auditRepo;
+    const visible = await request(mediaPath);
+    assert.equal(visible.status, 200);
+    assert.equal(visible.body.data.length, 1);
+    assert.deepEqual(visible.body.data[0], {
+      id: reserved.body.data.mediaId, categoria: 'IMAGEM', nome_arquivo: 'synthetic.png',
+      mime_type: 'image/png', tamanho_bytes: 8, versao: 1, status: 'QUARENTENA', principal: false,
+    });
+    assert.equal(JSON.stringify(visible.body).includes(payload.storage_key), false);
+    assert.equal(JSON.stringify(visible.body).includes(payload.sha256), false);
+    assert.equal(JSON.stringify(visible.body).includes(reserved.body.data.url), false);
+    assert.equal(JSON.stringify(visible.body).includes(reserved.body.data.attemptId), false);
+    assert.equal(visible.body.data[0].upload_actor_id, undefined);
+
     const logs = await audit.listByEntity('ProdutoMidia', reserved.body.data.mediaId);
     assert.deepEqual(logs.map((entry) => entry.action), ['create', 'change_status']);
     assert.equal(JSON.stringify(logs).includes(payload.storage_key), false);
@@ -349,6 +371,9 @@ test('HTTP R10 DAM: sem Storage configurado falha fechado', async () => {
     const id = await product(request, 'DAM sem adapter');
     const path = `/api/v1/produtos/${id}/midias/reservas`;
     const result = await request(path, 'POST', {});
+    const list = await request(`/api/v1/produtos/${id}/midias`);
+    assert.equal(list.status, 200);
+    assert.deepEqual(list.body.data, []);
     assert.equal(result.status, 503);
     assert.equal(result.body.error.code, 'STORAGE_ADAPTER_NOT_CONFIGURED');
   });

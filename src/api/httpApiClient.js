@@ -169,6 +169,11 @@ export function createHttpApiClient(options = {}) {
         ...base,
         variantes: relationRoutes('variantes'),
         equivalentes: relationRoutes('equivalentes'),
+        midias: {
+          list(produtoId, { signal } = {}) {
+            return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/midias`, { signal });
+          },
+        },
         async list(orderBy, limit = 50, offset = 0) {
           void orderBy;
           return request('/api/v1/produtos', { query: { limit, offset } });

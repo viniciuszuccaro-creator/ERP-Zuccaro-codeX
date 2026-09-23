@@ -10230,3 +10230,11 @@ Checklist inicial:
 - Arquivos: server/src/api/router.ts, server/src/app.ts, server/tests/runtime10-produto-relacoes-http.test.ts. Nenhuma migration, VPS, bucket, objeto real, porta 3080, main ou dado real foi alterado. PR #33 permanece draft sem merge.
 - Proximo gate: ativacao do StoragePort self-hosted somente apos verificacao autorizada de buckets e credenciais; antes de uso real, concluir antivirus e reconciliacao segura de reservas/orfaos. Integracao no ProdutoFormV22 continua pendente.
 - Codigo publicado em `d2da87fe4c4cf913cf283dbe11b1ee8fa3132336`; workflow `35797210045` da PR #33: frontend SUCCESS, backend SUCCESS, R10 PostgreSQL real 3 pass / 0 fail / 0 skip, incluindo service DAM. Rotas HTTP testadas sem adapter real; nenhum bucket/VPS alterado.
+
+### Onda 1 Produto/PIM - listagem HTTP segura de metadados DAM (2026-09-22)
+- Objetivo: permitir a consulta tenant-scoped das midias confirmadas no Produto existente, sem ativar Storage nem expor arquivos/URLs.
+- GET /api/v1/produtos/:id/midias reutiliza ProdutoService.listMidias, TenantGuard e RBAC de visualizacao; responde no-store e somente ID, categoria, nome, MIME, tamanho, versao, status e indicador principal. Reservas pendentes permanecem invisiveis.
+- O cliente HTTP preparado ganhou Produto.midias.list, sem habilitar Produto no piloto HTTP ou alterar o formulario V22. Nenhuma nova migration, bucket, objeto, VPS, porta 3080, main ou dado real foi alterado.
+- Testes locais: HTTP backend 10/10; cliente HTTP 9/9; backend completo 199 total / 189 pass / 0 fail / 10 skips sem DATABASE_URL; frontend explicito 602/602. Backend typecheck/build, frontend lint/build, audit:baseline e diff-check PASS. Typecheck geral da raiz continua com erros preexistentes em Base44 e no cliente HTTP, fora das linhas modificadas neste lote.
+- Arquivos: server/src/api/router.ts, server/tests/runtime10-produto-relacoes-http.test.ts, src/api/httpApiClient.js, tests/http-api-client.test.js e este status. PR #33 permanece draft sem merge.
+- Proximo gate: verificar CI PostgreSQL efemero; manter upload real bloqueado ate autorizacao para buckets/credenciais self-hosted, antivirus e reconciliacao segura de objetos orfaos. Integracao no ProdutoFormV22 ainda pendente.
