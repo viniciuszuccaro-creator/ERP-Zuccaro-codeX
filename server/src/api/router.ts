@@ -187,6 +187,17 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
       res.json({ data: { id: result.id, status: result.status, categoria: result.categoria, versao: result.versao } });
     } catch (error) { next(error); }
   });
+  router.post('/api/v1/produtos/:id/midias/reservas/:mediaId/rejeitar', requireTenantScope, async (req, res, next) => {
+    try {
+      if (!z.object({}).strict().safeParse(req.body ?? {}).success) {
+        throw new AppError(400, 'VALIDATION_ERROR', 'Invalid media rejection payload');
+      }
+      const result = await service.rejectExpiredMidia(ctxFromReq(req), req.params.id, req.params.mediaId);
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data: { id: result.mediaId, status: result.status } });
+    } catch (error) { next(error); }
+  });
+
 
   router.get('/api/v1/produtos/:id', requireTenantScope, async (req, res, next) => {
     try {

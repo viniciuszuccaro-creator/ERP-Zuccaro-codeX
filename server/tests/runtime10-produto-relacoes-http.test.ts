@@ -26,7 +26,7 @@ function fixture(storagePort?: StoragePort) {
   tenantGuard.link(EMPRESA_A2, GROUP_A);
   tenantGuard.link(EMPRESA_B, GROUP_B);
   const rbacGuard = new InMemoryRbacGuard();
-  const allowed = { Cadastros: { produto: ['visualizar', 'criar', 'editar'] } };
+  const allowed = { Cadastros: { produto: ['visualizar', 'criar', 'editar', 'inativar'] } };
   rbacGuard.link({ actorId: ACTOR_A, groupId: GROUP_A, permissions: allowed });
   rbacGuard.link({ actorId: ACTOR_B, groupId: GROUP_B, permissions: allowed });
   rbacGuard.link({ actorId: ACTOR_DENIED, groupId: GROUP_A, permissions: { Cadastros: { produto: [] } } });
@@ -352,4 +352,50 @@ test('HTTP R10 DAM: sem Storage configurado falha fechado', async () => {
     assert.equal(result.status, 503);
     assert.equal(result.body.error.code, 'STORAGE_ADAPTER_NOT_CONFIGURED');
   });
+});
+
+test('HTTP R10 DAM: rejeicao individual de reserva vencida exige tenant e inativar', async (t) => {
+  let storageCalls = 0;
+  const storage: StoragePort = {
+    createSignedUploadUrl: async () => {
+      storageCalls += 1;
+      return { url: 'https://synthetic.example.test/upload?token=synthetic',
+        expiresAt: new Date(Date.now() + 60_000).toISOString(), requiredHeaders: {} };
+    },
+    confirmUpload: async () => { throw new Error('UNUSED'); },
+    createSignedDownloadUrl: async () => { throw new Error('UNUSED'); },
+  };
+  await withHttp(async (request) => {
+    const id = await product(request, 'Reserva HTTP vencida');
+    const before = await request(`/api/v1/produtos/${id}`);
+    const payload = {
+      storage_key: `groups/${GROUP_A}/companies/${EMPRESA_A}/products/${id}/images/${randomUUID()}-synthetic.png`,
+      categoria: 'IMAGEM', nome_arquivo: 'synthetic.png', mime_type: 'image/png',
+      tamanho_bytes: 8, sha256: 'b'.repeat(64), versao: 1,
+    };
+    const reservation = await request(`/api/v1/produtos/${id}/midias/reservas`, 'POST', payload);
+    assert.equal(reservation.status, 201);
+    const mediaId = reservation.body.data.mediaId;
+    const path = `/api/v1/produtos/${id}/midias/reservas/${mediaId}/rejeitar`;
+    assert.equal((await request(path, 'POST', {})).status, 404);
+    assert.equal((await request(path, 'POST', { groupId: GROUP_A })).status, 400);
+    assert.equal((await request(path, 'POST', {}, headers(GROUP_A, EMPRESA_A, ACTOR_DENIED))).status, 403);
+    assert.equal((await request(path, 'POST', {}, headers(GROUP_A, EMPRESA_A2))).status, 404);
+    assert.equal((await request(path, 'POST', {}, headers(GROUP_B, EMPRESA_B, ACTOR_B))).status, 404);
+    assert.equal((await request(path.replace(mediaId, 'invalid'), 'POST', {})).status, 400);
+    const now = Date.now();
+    t.mock.method(Date, 'now', () => now + 3 * 60 * 60 * 1000);
+    const rejected = await request(path, 'POST', {});
+    assert.equal(rejected.status, 200, JSON.stringify(rejected.body));
+    assert.deepEqual(rejected.body.data, { id: mediaId, status: 'REJEITADO' });
+    assert.equal((await request(path, 'POST', {})).status, 404);
+    assert.equal(storageCalls, 1);
+    assert.deepEqual((await request(`/api/v1/produtos/${id}`)).body.data, before.body.data);
+    const audit = (request as typeof request & { auditRepo: InMemoryAuditRepository }).auditRepo;
+    const logs = await audit.listByEntity('ProdutoMidia', mediaId);
+    assert.deepEqual(logs.map((entry) => entry.action), ['create', 'change_status']);
+    assert.equal(JSON.stringify(logs).includes(payload.storage_key), false);
+    assert.equal(JSON.stringify(logs).includes(payload.sha256), false);
+    assert.equal(JSON.stringify(logs).includes(reservation.body.data.url), false);
+  }, storage);
 });

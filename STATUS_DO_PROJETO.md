@@ -10213,6 +10213,14 @@ Checklist inicial:
 - `npm run typecheck` da raiz falhou em erros preexistentes de Base44/frontend (ex.: `base44/functions/_lib/security/entityGuardPolicy/entry.ts` e `src/api/httpApiClient.js`), fora dos arquivos deste lote. Nenhum baseline foi alterado para ocultar a falha; typecheck do backend passou.
 - Validacao posterior: commit `941d7341de754ddfa159e136cea950f4da2674ce` publicado na branch `codex/comercial-360`; workflow `35799092309` da PR #33 com frontend SUCCESS e backend SUCCESS, incluindo migration/seed sintetico e `test:postgres` efemero SUCCESS. O gate CI mencionado acima ficou aprovado; permanecem pendentes objetos orfaos, antivirus, bucket/credenciais e integracao ProdutoFormV22. PR nao mesclada; migration 021 nao aplicada na VPS.
 
+### Onda 1 Produto/PIM - rota HTTP de reconciliacao individual DAM (2026-09-22)
+- Objetivo: expor de forma restrita a rejeicao de metadados de reserva de upload vencida, implementada e validada no checkpoint anterior, sem varredura automatica nem DELETE de objeto.
+- A rota POST `/api/v1/produtos/:id/midias/reservas/:mediaId/rejeitar` no router Produto existente aceita somente body vazio, usa o contexto autenticado, devolve apenas ID/status e marca resposta `no-store`. O service aplica `Cadastros.produto.inativar`, TenantGuard, transacao unica e auditoria sanitizada; repeticao retorna 404 seguro.
+- HTTP R10 sintetico 10/10: antes do vencimento, payload adulterado, RBAC negado, outra empresa/grupo, ID invalido, sucesso 200, repeticao 404, auditoria sem chave/checksum/URL e Produto inalterado. Nenhum arquivo Storage e acessado na rejeicao.
+- Backend completo: 199 total / 189 pass / 0 fail / 10 skips locais condicionais sem DATABASE_URL. Backend typecheck/build, lint, audit:baseline, build frontend e git diff --check PASS. O typecheck da raiz permanece com erros anteriores Base44/frontend fora deste lote; PostgreSQL da rota sera verificado na CI efemera.
+- Arquivos: `server/src/api/router.ts`, `server/tests/runtime10-produto-relacoes-http.test.ts`, `STATUS_DO_PROJETO.md`. Nenhuma migration, VPS, porta 3080, main, bucket ou dado real foi alterado. PR #33 continua draft sem merge.
+- Proximo gate: confirmar CI verde; depois definir politica segura de objetos orfaos/antivirus e validar buckets/credenciais self-hosted sob autorizacao separada. A integracao do `ProdutoFormV22_Completo` permanece pendente; sem Storage ativado, o upload HTTP segue bloqueado.
+
 ### Onda 1 Produto/PIM - contrato HTTP da reserva DAM (2026-09-22)
 - Causa: service e PostgreSQL da reserva/confirmacao ja estavam testados, mas Produto nao oferecia contrato HTTP para o fluxo em duas etapas.
 - As rotas existentes de Produto ganharam POST /:id/midias/reservas (201) e POST /:id/midias/:mediaId/confirmar (200), ambas com contexto tenant e RBAC validados no service. Confirmacao exige body estrito com apenas attemptId; resposta omite chave/checksum internos; Cache-Control no-store protege URL assinada.
