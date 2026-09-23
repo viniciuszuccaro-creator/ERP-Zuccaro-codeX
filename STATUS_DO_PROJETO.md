@@ -1,3 +1,10 @@
+## Comercial 360 / Gate C - evidencia Web Console adicional (2026-09-23)
+
+- Saida sanitizada fornecida pelo usuario: `erp-api-dev` roda imagem `runtime07b-main-ca0bc5f3`; health/ready na 3080 = 200/200. `supabase-auth` e `supabase-db` aparecem healthy. API e DB participam da rede Docker `supabase_default`.
+- A consulta feita a partir da configuracao da API informou `current_database()=postgres` e 15 migrations, mas a comparacao simples entre `inet_server_addr()` e o IP Docker do `supabase-db` retornou `NO`. Isso nao prova banco diferente: proxy, IPv6, socket ou endereco traduzido podem explicar; a identidade do servidor precisa de comparacao direta adicional.
+- Foram listados backups locais de 20/09 e containers/imagens antigos de rollback preservados; presenca e tamanho nao comprovam integridade, atualidade ou restaurabilidade. Entre as portas 3080/3086 consultadas, apenas 3080 estava em escuta no host. Nao houve backup novo nem teste de rollback.
+- Gate C continua PARCIAL/BLOCKED na identidade do banco e nos prechecks completos de backup/rollback. Nenhuma escrita na VPS, migration, seed, reinicio, canario, Auth novo, Produto HTTP ou publicacao externa foi feita. Proxima evidencia: comparar duas conexoes read-only (URL efetiva da API e acesso direto ao `supabase-db`) sem revelar URL, token ou dados pessoais.
+
 ## Comercial 360 / Gate C - checkpoint somente leitura (2026-09-23)
 
 - PR #33 aberta, draft, mergeable e sem merge; HEAD remoto `750a4ab14854e184d6fb2fc8afef7f6e2094b277`. CI do codigo `52167840` (`35909747751`) e do HEAD atual (`35910005796`) frontend/backend SUCCESS, incluindo migrations e PostgreSQL efemero.
