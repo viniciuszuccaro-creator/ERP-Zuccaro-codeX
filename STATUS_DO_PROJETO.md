@@ -1,3 +1,11 @@
+## Comercial 360 / Onda 1 - listagem DAM fail-closed (2026-09-23)
+
+- Causa: a listagem de midias aceitava `empresaId` ausente; TenantGuard e os repositories tratam esse escopo como grupo inteiro, expondo metadados de outras empresas do mesmo grupo.
+- Correcao no fluxo existente `listProdutoMidias`: exigir empresa e actor do contexto antes de consultar produto/midias. Nenhum modulo, rota, migration ou provedor novo.
+- Teste sintetico em `runtime10-produto-pim.test.ts`: empresa ausente e actor ausente negados; outra empresa do mesmo grupo recebe 404 seguro; empresa proprietaria continua vendo sua midia.
+- Multiempresa/RBAC: escopo fail-closed e RBAC existente preservados; auditoria e mutacoes nao alteradas. Nenhum dado real, segredo ou URL assinada versionado.
+- Gate DEV permanece parcial: 001-015 1x, `auth.users=0`, profiles=2 sem vinculo Auth; API oficial 3080 continua R07B/dev_headers. Sem homologacao de Auth, scanner real, Produto HTTP ou migrations 016-022 na VPS.
+- Validacao: DAM dirigido 26/26; backend serial 213 total / 201 pass / 0 fail / 12 skip por `DATABASE_URL` ausente; frontend 618/618; typecheck/build backend, audit:baseline, lint/build frontend e diff-check PASS. `npm test` paralelo falhou por OOM Node; lint/build tiveram falhas transitórias locais (heap/leitura UNKNOWN) e passaram na repetição com heap ampliado. PostgreSQL real DEV nao executado. Commit/CI: pendente. Proximo passo: precheck somente leitura do banco efetivo da API e gates separados de Auth/canario; continuar Onda 1 sem ativacao remota.
 ## Comercial 360 / Gate C DEV - inventario SQL somente leitura (2026-09-23)
 - Evidencia recebida do usuario pela Web Console, sem registros pessoais: `public.schema_migrations` tem colunas `id` (text) e `applied_at` (timestamptz). As migrations 001-015 aparecem uma vez cada; nenhuma 016-022 aparece no resultado de 15 linhas.
 - Contagens agregadas: `auth.users=0`, `public.profiles=2`, `groups=2`, `empresas=3`. Os 2 profiles ativos estao sem `auth_user_id`; `auth_inexistente=0`, `ativos_sem_grupo=0` e `empresa_fora_grupo=0`.

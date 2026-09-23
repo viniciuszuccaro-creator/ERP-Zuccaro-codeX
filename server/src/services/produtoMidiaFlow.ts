@@ -67,6 +67,8 @@ function storageRequest(ctx: RequestContext, produtoId: string, data: ProdutoMid
 }
 export async function listProdutoMidias(deps: Dependencies, ctx: RequestContext, produtoId: string, page?: { limit: number; offset: number }) {
   if (!ctx.groupId) throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
+  if (!ctx.empresaId) throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required for media');
+  if (!ctx.actorId) throw new AppError(403, 'PERMISSION_DENIED', 'Actor is required for media');
   assertId(produtoId);
   await deps.rbacGuard.assertAllowed(ctx, 'Cadastros', 'produto', 'visualizar');
   await deps.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);

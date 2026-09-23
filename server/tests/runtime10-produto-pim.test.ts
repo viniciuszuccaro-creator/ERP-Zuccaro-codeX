@@ -225,6 +225,22 @@ test('DAM Produto confirma Storage, registra quarentena e audita sem chave ou ch
   assert.deepEqual((await audit.listByEntity('ProdutoMidia', row.id)).map((entry) => entry.action), ['create', 'soft_delete']);
 });
 
+test('DAM listagem exige empresa e nao revela midia de outra empresa do grupo', async () => {
+  const fake = verifiedStorage();
+  const { service, ctx, tenant } = harness(undefined, fake.storage);
+  const produto = await service.create(ctx, { descricao: 'Midia isolada' });
+  const row = await service.registerMidia(ctx, produto.id, mediaFixture(produto.id));
+  assert.equal((await service.listMidias(ctx, produto.id))[0]?.id, row.id);
+  await assert.rejects(service.listMidias({ ...ctx, empresaId: undefined }, produto.id),
+    (error: unknown) => (error as { code?: string }).code === 'EMPRESA_ID_REQUIRED');
+  await assert.rejects(service.listMidias({ ...ctx, actorId: undefined }, produto.id),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED');
+  const outraEmpresa = randomUUID();
+  tenant.link(outraEmpresa, GROUP);
+  await assert.rejects(service.listMidias({ ...ctx, empresaId: outraEmpresa }, produto.id),
+    (error: unknown) => (error as { code?: string }).code === 'PRODUTO_NOT_FOUND');
+});
+
 test('DAM Produto nega RBAC, tenant, payload e confirmacao divergente antes de persistir', async () => {
   const fake = verifiedStorage();
   const denied = harness(['visualizar', 'criar'], fake.storage);
@@ -306,7 +322,7 @@ function harness(actions = ['visualizar', 'criar', 'editar', 'inativar', 'aprova
   const audit = new InMemoryAuditRepository();
   const service = new ProdutoService(repo, audit, tenant, new InMemoryProdutoRelationGuard(), rbac, storage, scanner);
   const ctx = { requestId: 'pim-test', actorId: ACTOR, groupId: GROUP, empresaId: EMPRESA };
-  return { repo, audit, service, ctx };
+  return { repo, audit, service, ctx, tenant };
 }
 
 test('DAM scan persiste evidencia limpa e infectada sem liberar quarentena', async () => {
