@@ -60,7 +60,7 @@ import { OrcamentoService } from './services/orcamentoService.js';
 import { InMemoryPedidoRepository } from './repositories/inMemoryPedidoRepository.js';
 import { PostgresPedidoRepository } from './repositories/postgresPedidoRepository.js';
 import { PedidoService } from './services/pedidoService.js';
-import type { StoragePort } from './services/storagePort.js';
+import type { MalwareScanPort, StoragePort } from './services/storagePort.js';
 
 export type CreateAppOptions = {
   config: AppConfig;
@@ -74,6 +74,7 @@ export type CreateAppOptions = {
   rbacGuard?: InMemoryRbacGuard | PostgresRbacGuard;
   authFetchImpl?: typeof fetch;
   storagePort?: StoragePort;
+  malwareScanPort?: MalwareScanPort;
 };
 
 export function createApp(options: CreateAppOptions) {
@@ -140,6 +141,7 @@ export function createApp(options: CreateAppOptions) {
     produtoRelationGuard,
     rbacGuard,
     options.storagePort,
+    options.malwareScanPort,
   );
   const clienteService = new ClienteService(
     clienteRepo,

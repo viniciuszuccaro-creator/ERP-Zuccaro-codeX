@@ -8,7 +8,7 @@ import {
   produtoEquivalenteCreateSchema, produtoMidiaCreateSchema,
   type ProdutoMidia, type ProdutoMidiaCreate,
 } from '../repositories/produtoTypes.js';
-import { NotImplementedStorage, type StoragePort, type StorageUploadRequest } from './storagePort.js';
+import { assertMalwareScanResult, NotImplementedStorage, type MalwareScanPort, type StoragePort, type StorageUploadRequest } from './storagePort.js';
 
 type Dependencies = {
   repo: ProdutoRepository;
@@ -16,6 +16,7 @@ type Dependencies = {
   tenantGuard: TenantGuard;
   rbacGuard: RbacGuard;
   storage: StoragePort;
+  scanner?: MalwareScanPort;
 };
 
 const FOLDER: Partial<Record<ProdutoMidia['categoria'], string>> = {
@@ -29,13 +30,13 @@ function assertId(id: string): void {
   }
 }
 
-async function authorize(deps: Dependencies, ctx: RequestContext, produtoId: string) {
+async function authorize(deps: Dependencies, ctx: RequestContext, produtoId: string, action: 'editar' | 'aprovar-conteudo' = 'editar') {
   if (!ctx.groupId) throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
   if (!ctx.empresaId) throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required for media');
   if (!ctx.actorId) throw new AppError(403, 'PERMISSION_DENIED', 'Actor is required for media');
   if (!ctx.requestId) throw new AppError(400, 'REQUEST_ID_REQUIRED', 'requestId is required');
   assertId(produtoId);
-  await deps.rbacGuard.assertAllowed(ctx, 'Cadastros', 'produto', 'editar');
+  await deps.rbacGuard.assertAllowed(ctx, 'Cadastros', 'produto', action);
   await deps.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
   if (deps.storage instanceof NotImplementedStorage) {
     throw new AppError(503, 'STORAGE_ADAPTER_NOT_CONFIGURED', 'Storage is not configured');
@@ -184,5 +185,48 @@ export async function rejectExpiredProdutoMidia(
       requestId: ctx.requestId, ipAddress: ctx.ipAddress,
     }, executor);
     return { mediaId: after.id, status: after.status };
+  });
+}
+
+export async function scanProdutoMidia(deps: Dependencies, ctx: RequestContext, produtoId: string, mediaId: string) {
+  const scope = await authorize(deps, ctx, produtoId, 'aprovar-conteudo');
+  assertId(mediaId);
+  if (!deps.scanner) throw new AppError(503, 'MALWARE_SCANNER_NOT_CONFIGURED', 'Media scanner is not configured');
+  const produto = await deps.repo.getById(scope, produtoId);
+  if (!produto || !produto.ativo || produto.empresa_id !== scope.empresaId) {
+    throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+  }
+  const beforeScan = await deps.repo.getMidiaForScan(scope, produtoId, mediaId);
+  if (!beforeScan) throw new AppError(404, 'PRODUTO_MIDIA_NOT_FOUND', 'Media not found in tenant scope');
+  const request = storageRequest(ctx, produtoId, {
+    storage_key: beforeScan.storage_key, categoria: beforeScan.categoria,
+    nome_arquivo: beforeScan.nome_arquivo, mime_type: beforeScan.mime_type,
+    tamanho_bytes: beforeScan.tamanho_bytes, sha256: beforeScan.sha256, versao: beforeScan.versao,
+  });
+  const result = await deps.scanner.scan(request);
+  assertMalwareScanResult(request, result);
+  return deps.repo.withTransaction(async (executor) => {
+    const lockedProduct = await deps.repo.getById(scope, produtoId, executor, { forUpdate: true });
+    if (!lockedProduct || !lockedProduct.ativo || lockedProduct.empresa_id !== scope.empresaId) {
+      throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+    }
+    const before = await deps.repo.getMidiaForScan(scope, produtoId, mediaId, executor);
+    if (!before || before.storage_key !== request.storageKey || before.sha256 !== request.sha256
+      || before.versao !== request.version || before.tamanho_bytes !== request.sizeBytes
+      || before.mime_type !== request.mimeType || before.nome_arquivo !== request.fileName) {
+      throw new AppError(409, 'MEDIA_SCAN_CONFLICT', 'Media changed during scan');
+    }
+    const after = await deps.repo.recordMidiaScan(scope, produtoId, mediaId, request.storageKey, before.versao, {
+      verdict: result.verdict, scanner: result.scanner, sha256: result.sha256.toLowerCase(), scannedAt: result.scannedAt,
+    }, executor);
+    if (!after) throw new AppError(409, 'MEDIA_SCAN_CONFLICT', 'Media changed during scan');
+    await deps.audit.append({
+      groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
+      actorEmail: ctx.actorEmail, entity: 'ProdutoMidia', entityId: mediaId, action: 'update',
+      beforeData: { status: before.status, scan_verdict: before.scan_verdict ?? null, versao: before.versao },
+      afterData: { status: after.status, scan_verdict: after.scan_verdict, scanner: after.scan_scanner, versao: after.versao },
+      requestId: ctx.requestId, ipAddress: ctx.ipAddress,
+    }, executor);
+    return { id: after.id, status: after.status, scan_verdict: after.scan_verdict, scanned_at: after.scanned_at };
   });
 }

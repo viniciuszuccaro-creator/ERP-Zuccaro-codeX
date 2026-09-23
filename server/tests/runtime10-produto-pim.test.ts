@@ -280,7 +280,7 @@ import { InMemoryAuditRepository } from '../src/audit/auditRepository.ts';
 import { InMemoryProdutoRelationGuard } from '../src/db/produtoRelationGuard.ts';
 import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
 import { createHash, randomUUID } from 'node:crypto';
-import type { StoragePort } from '../src/services/storagePort.ts';
+import type { MalwareScanPort, StoragePort } from '../src/services/storagePort.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 import { createInMemoryProdutoRepo } from '../src/repositories/inMemoryProdutoRepository.ts';
 import {
@@ -297,20 +297,74 @@ const GROUP = '11111111-1111-4111-8111-111111111111';
 const EMPRESA = '22222222-2222-4222-8222-222222222222';
 const ACTOR = '33333333-3333-4333-8333-333333333333';
 
-function harness(actions = ['visualizar', 'criar', 'editar', 'inativar', 'aprovar-conteudo', 'publicar'], storage?: StoragePort) {
+function harness(actions = ['visualizar', 'criar', 'editar', 'inativar', 'aprovar-conteudo', 'publicar'], storage?: StoragePort, scanner?: MalwareScanPort) {
   const repo = createInMemoryProdutoRepo();
   const tenant = new InMemoryTenantGuard();
   tenant.link(EMPRESA, GROUP);
   const rbac = new InMemoryRbacGuard();
   rbac.link({ actorId: ACTOR, groupId: GROUP, permissions: { Cadastros: { produto: actions } } });
   const audit = new InMemoryAuditRepository();
-  const service = new ProdutoService(repo, audit, tenant, new InMemoryProdutoRelationGuard(), rbac, storage);
+  const service = new ProdutoService(repo, audit, tenant, new InMemoryProdutoRelationGuard(), rbac, storage, scanner);
   const ctx = { requestId: 'pim-test', actorId: ACTOR, groupId: GROUP, empresaId: EMPRESA };
   return { repo, audit, service, ctx };
 }
 
-test('Produto persiste conteudo PIM, embalagem, minimo e fracionamento no agregado canonico', async () => {
+test('DAM scan persiste evidencia limpa e infectada sem liberar quarentena', async () => {
+  let verdict: 'CLEAN' | 'INFECTED' = 'CLEAN';
+  const scanner: MalwareScanPort = { scan: async (request) => ({
+    ...request, version: request.version ?? 1, verdict, scanner: 'synthetic-scanner', scannedAt: new Date().toISOString(),
+  }) };
+  const { service, repo, audit, ctx } = harness(undefined, reservableStorage().storage, scanner);
+  const product = await service.create(ctx, { descricao: 'Scan sintetico' });
+  const reservation = await service.reserveMidia(ctx, product.id, mediaFixture(product.id));
+  await service.confirmMidia(ctx, product.id, reservation.mediaId, reservation.attemptId);
+  const clean = await service.scanMidia(ctx, product.id, reservation.mediaId);
+  assert.equal(clean.status, 'QUARENTENA');
+  assert.equal(clean.scan_verdict, 'CLEAN');
+  verdict = 'INFECTED';
+  const infected = await service.scanMidia(ctx, product.id, reservation.mediaId);
+  assert.equal(infected.status, 'QUARENTENA');
+  assert.equal(infected.scan_verdict, 'INFECTED');
+  const row = await repo.getMidiaForScan({ groupId: GROUP, empresaId: EMPRESA }, product.id, reservation.mediaId);
+  assert.equal(row?.scan_sha256, row?.sha256);
+  assert.equal(row?.scan_scanner, 'synthetic-scanner');
+  const logs = await audit.listByEntity('ProdutoMidia', reservation.mediaId);
+  assert.equal(logs.filter((entry) => entry.action === 'update').length, 2);
+  assert.equal(JSON.stringify(logs).includes(row!.storage_key), false);
+  assert.equal(JSON.stringify(logs).includes(row!.sha256), false);
+});
+
+test('DAM scan falha fechado em RBAC, tenant, scanner ausente, resultado adulterado e auditoria', async () => {
+  let scannerResult: 'VALID' | 'INVALID' = 'VALID';
+  const scanner: MalwareScanPort = { scan: async (request) => ({
+    ...request, version: request.version ?? 1, verdict: 'CLEAN', scanner: 'synthetic-scanner',
+    scannedAt: new Date().toISOString(), sha256: scannerResult === 'VALID' ? request.sha256 : '0'.repeat(64),
+  }) };
+  const storage = reservableStorage().storage;
+  const { service, repo, audit, ctx } = harness(undefined, storage, scanner);
+  const product = await service.create(ctx, { descricao: 'Rollback scan sintetico' });
+  const reservation = await service.reserveMidia(ctx, product.id, mediaFixture(product.id));
+  await service.confirmMidia(ctx, product.id, reservation.mediaId, reservation.attemptId);
+  const denied = harness(['visualizar', 'criar', 'editar'], storage, scanner);
+  await assert.rejects(denied.service.scanMidia(denied.ctx, product.id, reservation.mediaId),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED');
+  await assert.rejects(service.scanMidia({ ...ctx, empresaId: randomUUID() }, product.id, reservation.mediaId),
+    (error: unknown) => (error as { code?: string }).code === 'TENANT_MISMATCH');
+  const noScanner = harness(undefined, storage);
+  await assert.rejects(noScanner.service.scanMidia(noScanner.ctx, product.id, reservation.mediaId),
+    (error: unknown) => (error as { code?: string }).code === 'MALWARE_SCANNER_NOT_CONFIGURED');
+  scannerResult = 'INVALID';
+  await assert.rejects(service.scanMidia(ctx, product.id, reservation.mediaId), /MALWARE_SCAN_NOT_CLEAN/);
+  assert.equal((await repo.getMidiaForScan({ groupId: GROUP, empresaId: EMPRESA }, product.id, reservation.mediaId))?.scan_verdict, undefined);
+  scannerResult = 'VALID';
+  const original = audit.append.bind(audit);
+  audit.append = async (...args) => { if (args[0].action === 'update' && args[0].entity === 'ProdutoMidia') throw new Error('SYNTHETIC_AUDIT_FAILURE'); return original(...args); };
+  await assert.rejects(service.scanMidia(ctx, product.id, reservation.mediaId), /SYNTHETIC_AUDIT_FAILURE/);
+  assert.equal((await repo.getMidiaForScan({ groupId: GROUP, empresaId: EMPRESA }, product.id, reservation.mediaId))?.scan_verdict, undefined);
+});
+
   const { service, ctx } = harness();
+test('Produto persiste conteudo PIM, embalagem, minimo e fracionamento no agregado canonico', async () => {
   const created = await service.create(ctx, {
     descricao: 'Produto PIM sintetico',
     descricao_tecnica: 'Ficha tecnica controlada',

@@ -201,11 +201,21 @@ export type ProdutoMidiaUploadAttempt = {
   expiresAt: string;
 };
 
+export type ProdutoMidiaScanEvidence = {
+  verdict: 'CLEAN' | 'INFECTED';
+  scanner: string;
+  sha256: string;
+  scannedAt: string;
+};
 export type ProdutoMidia = {
   id: string; group_id: string; empresa_id: string | null; produto_id: string;
   storage_key: string; categoria: z.infer<typeof produtoMidiaCreateSchema>['categoria'];
   nome_arquivo: string; mime_type: string; tamanho_bytes: number; sha256: string;
   versao: number; status: 'PENDENTE_UPLOAD' | 'QUARENTENA' | 'APROVADO' | 'REJEITADO' | 'INATIVO';
+  scan_verdict?: ProdutoMidiaScanEvidence['verdict'] | null;
+  scan_scanner?: string | null;
+  scan_sha256?: string | null;
+  scanned_at?: string | null;
   upload_attempt_id?: string | null; upload_actor_id?: string | null;
   upload_request_id?: string | null; upload_expires_at?: string | null;
   principal: boolean; ativo: boolean;

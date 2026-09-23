@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { PostgresAuditRepository } from '../src/audit/auditRepository.ts';
-import type { StoragePort } from '../src/services/storagePort.ts';
+import type { MalwareScanPort, StoragePort } from '../src/services/storagePort.ts';
 import { randomUUID } from 'node:crypto';
 import test from 'node:test';
 import { InMemoryProdutoRelationGuard } from '../src/db/produtoRelationGuard.ts';
@@ -55,6 +55,11 @@ test('R10 PostgreSQL real: migration 018 preserva PIM, tenant, DAM, RLS e outbox
       "SELECT count(*)::int total FROM schema_migrations WHERE id='021_produto_midia_upload_reservation.sql'",
     );
     assert.equal(reservationMigration.rows[0]?.total, 1);
+    const scanMigration = await db.query<{ total: number }>(
+      "SELECT count(*)::int total FROM schema_migrations WHERE id='022_produto_midia_scan_evidence.sql'",
+    );
+    assert.equal(scanMigration.rows[0]?.total, 1);
+
     const reservationColumns = await db.query<{ total: number }>(
       "SELECT count(*)::int total FROM information_schema.columns WHERE table_name='produto_midias' AND column_name=ANY($1::text[])",
       [['upload_attempt_id', 'upload_actor_id', 'upload_request_id', 'upload_expires_at']],
@@ -299,6 +304,10 @@ test('R10 PostgreSQL real: service DAM reserva, confirma e rollbacka auditoria',
     new InMemoryProdutoRelationGuard(), allowEdit, storage);
   const deniedService = new ProdutoService(repo, audit, new PostgresTenantGuard(db),
     new InMemoryProdutoRelationGuard(), denied, storage);
+  const scanner: MalwareScanPort = { scan: async (request) => ({
+    ...request, version: request.version ?? 1, verdict: 'CLEAN',
+    scanner: 'synthetic-scanner', scannedAt: new Date().toISOString(),
+  }) };
   const mediaIds: string[] = [];
   let originalError: unknown;
   try {
@@ -352,6 +361,34 @@ test('R10 PostgreSQL real: service DAM reserva, confirma e rollbacka auditoria',
     await assert.rejects(service.confirmMidia(ctx, productId, first.mediaId, first.attemptId),
       (error: unknown) => (error as { code?: string }).code === 'MEDIA_RESERVATION_NOT_FOUND');
     const logs = await audit.listByEntity('ProdutoMidia', first.mediaId);
+    const scanMigration = await db.query<{ total: number }>(
+      "SELECT count(*)::int total FROM schema_migrations WHERE id='022_produto_midia_scan_evidence.sql'",
+    );
+    assert.equal(scanMigration.rows[0]?.total, 1);
+    await assert.rejects(db.query(
+      "UPDATE produto_midias SET scan_verdict='CLEAN' WHERE id=$1 AND group_id=$2 AND empresa_id=$3",
+      [first.mediaId, scope.groupId, scope.empresaId],
+    ), /check constraint/i);
+    const scanFailingAudit = new ProdutoService(repo, failingAudit, new PostgresTenantGuard(db),
+      new InMemoryProdutoRelationGuard(), allowEdit, storage, scanner);
+    await assert.rejects(scanFailingAudit.scanMidia(ctx, productId, first.mediaId), /SYNTHETIC_AUDIT_FAILURE/);
+    const notScanned = await db.query<{ scan_verdict: string | null }>(
+      'SELECT scan_verdict FROM produto_midias WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+      [first.mediaId, scope.groupId, scope.empresaId],
+    );
+    assert.equal(notScanned.rows[0]?.scan_verdict, null);
+    const scanService = new ProdutoService(repo, audit, new PostgresTenantGuard(db),
+      new InMemoryProdutoRelationGuard(), allowEdit, storage, scanner);
+    await assert.rejects(scanService.scanMidia({ ...ctx, empresaId: SEED_IDS.empresaA2 }, productId, first.mediaId),
+      (error: unknown) => (error as { code?: string }).code === 'PRODUTO_NOT_FOUND');
+    const scanned = await scanService.scanMidia(ctx, productId, first.mediaId);
+    assert.equal(scanned.status, 'QUARENTENA');
+    assert.equal(scanned.scan_verdict, 'CLEAN');
+    const stored = await db.query<{ scan_verdict: string; scan_sha256: string }>(
+      'SELECT scan_verdict,scan_sha256 FROM produto_midias WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+      [first.mediaId, scope.groupId, scope.empresaId],
+    );
+    assert.equal(stored.rows[0]?.scan_sha256, firstData.sha256);
     assert.deepEqual(logs.map((entry) => entry.action), ['create', 'change_status']);
     assert.equal(logs.every((entry) => entry.groupId === scope.groupId && entry.empresaId === scope.empresaId), true);
     assert.equal(JSON.stringify(logs).includes(firstData.storage_key), false);

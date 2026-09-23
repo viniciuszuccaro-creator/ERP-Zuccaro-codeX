@@ -34,10 +34,10 @@ export interface MalwareScanPort {
   scan(request: StorageUploadRequest): Promise<MalwareScanResult>;
 }
 
-export function assertCleanMalwareScan(request: StorageUploadRequest, result: unknown): void {
+export function assertMalwareScanResult(request: StorageUploadRequest, result: unknown): asserts result is MalwareScanResult & { verdict: 'CLEAN' | 'INFECTED' } {
   if (!result || typeof result !== 'object') throw new Error('MALWARE_SCAN_NOT_CLEAN');
   const scan = result as Partial<MalwareScanResult>;
-  if (scan.verdict !== 'CLEAN' || !scan.scanner?.trim()
+  if (!['CLEAN', 'INFECTED'].includes(scan.verdict ?? '') || !/^[a-zA-Z0-9._-]{1,80}$/.test(scan.scanner ?? '')
     || !scan.scannedAt || !Number.isFinite(Date.parse(scan.scannedAt))
     || scan.groupId !== request.groupId || scan.empresaId !== request.empresaId
     || scan.entity !== request.entity || scan.entityId !== request.entityId
@@ -47,6 +47,11 @@ export function assertCleanMalwareScan(request: StorageUploadRequest, result: un
     || scan.version !== (request.version ?? 1)) {
     throw new Error('MALWARE_SCAN_NOT_CLEAN');
   }
+}
+
+export function assertCleanMalwareScan(request: StorageUploadRequest, result: unknown): void {
+  assertMalwareScanResult(request, result);
+  if (result.verdict !== 'CLEAN') throw new Error('MALWARE_SCAN_NOT_CLEAN');
 }
 
 

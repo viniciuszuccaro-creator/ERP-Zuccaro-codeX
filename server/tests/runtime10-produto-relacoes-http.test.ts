@@ -351,6 +351,10 @@ test('HTTP R10 DAM: reserva, confirmacao unica, tenant e auditoria sanitizada', 
     assert.equal(confirmed.body.data.storage_key, undefined);
     assert.equal(confirmed.body.data.sha256, undefined);
     assert.equal(verifyCalls, 1);
+    const scanPath = `/api/v1/produtos/${id}/midias/${reserved.body.data.mediaId}/verificar`;
+    assert.equal((await request(scanPath, 'POST', { groupId: GROUP_A })).status, 400);
+    assert.equal((await request(scanPath, 'POST', {}, headers(GROUP_A, EMPRESA_A, ACTOR_DENIED))).status, 403);
+    assert.equal((await request(scanPath, 'POST', {})).status, 403);
     assert.equal((await request(confirmPath, 'POST', attempt)).status, 404);
     const audit = (request as typeof request & { auditRepo: InMemoryAuditRepository }).auditRepo;
     const visible = await request(mediaPath);

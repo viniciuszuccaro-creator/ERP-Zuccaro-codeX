@@ -25,8 +25,8 @@ import {
   type ProdutoUpdate,
 } from '../repositories/produtoTypes.js';
 
-import { checkProdutoMidiaPath, confirmProdutoMidia, listProdutoMidias, rejectExpiredProdutoMidia, reserveProdutoMidia } from './produtoMidiaFlow.js';
-import { NotImplementedStorage, type StoragePort } from './storagePort.js';
+import { checkProdutoMidiaPath, confirmProdutoMidia, listProdutoMidias, rejectExpiredProdutoMidia, reserveProdutoMidia, scanProdutoMidia } from './produtoMidiaFlow.js';
+import { NotImplementedStorage, type MalwareScanPort, type StoragePort } from './storagePort.js';
 const WORKFLOW_TRANSITIONS: Record<Produto['workflow_status'], Produto['workflow_status'][]> = {
   RASCUNHO: ['EM_REVISAO'],
   EM_REVISAO: ['RASCUNHO', 'APROVADO'],
@@ -61,6 +61,7 @@ export class ProdutoService {
     private readonly relationGuard: ProdutoRelationGuard,
     private readonly rbacGuard: RbacGuard,
     private readonly storage: StoragePort = new NotImplementedStorage(),
+    private readonly scanner?: MalwareScanPort,
   ) {}
 
   async list(ctx: RequestContext, options: ProdutoListOptions = {}) {
@@ -284,6 +285,13 @@ export class ProdutoService {
       rbacGuard: this.rbacGuard, storage: this.storage,
     }, ctx, produtoId, mediaId);
   }
+  async scanMidia(ctx: RequestContext, produtoId: string, midiaId: string) {
+    return scanProdutoMidia({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard,
+      rbacGuard: this.rbacGuard, storage: this.storage, scanner: this.scanner,
+    }, ctx, produtoId, midiaId);
+  }
+
   async registerMidia(ctx: RequestContext, produtoId: string, payload: unknown) {
     this.assertScope(ctx);
     this.assertRelationId(produtoId);

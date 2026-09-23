@@ -1,7 +1,7 @@
 import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope } from '../services/tenantCrudService.js';
 import { produtoMidiaCreateSchema } from './produtoTypes.js';
-import type { Produto, ProdutoCreate, ProdutoEquivalente, ProdutoEquivalenteCreate, ProdutoEquivalenteUpdate, ProdutoMidia, ProdutoMidiaCreate, ProdutoMidiaUploadAttempt, ProdutoUpdate, ProdutoVariante, ProdutoVarianteCreate, ProdutoVarianteUpdate } from './produtoTypes.js';
+import type { Produto, ProdutoCreate, ProdutoEquivalente, ProdutoEquivalenteCreate, ProdutoEquivalenteUpdate, ProdutoMidia, ProdutoMidiaCreate, ProdutoMidiaScanEvidence, ProdutoMidiaUploadAttempt, ProdutoUpdate, ProdutoVariante, ProdutoVarianteCreate, ProdutoVarianteUpdate } from './produtoTypes.js';
 import type { ProdutoListFilter, ProdutoReadOptions, ProdutoRepository } from './inMemoryProdutoRepository.js';
 
 function ts(row: Record<string, unknown>) {
@@ -429,7 +429,7 @@ export class PostgresProdutoRepository implements ProdutoRepository {
   async listMidias(scope: Scope, produtoId: string, executor?: DbQueryExecutor, page?: { limit: number; offset: number }): Promise<ProdutoMidia[]> {
     const params: unknown[] = [scope.groupId, produtoId];
     let sql = `SELECT id,group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,mime_type,
-      tamanho_bytes,sha256,versao,status,principal,ativo FROM produto_midias
+      tamanho_bytes,sha256,versao,status,principal,ativo,scan_verdict,scan_scanner,scan_sha256,scanned_at FROM produto_midias
       WHERE group_id=$1 AND produto_id=$2 AND ativo=true AND status<>'PENDENTE_UPLOAD'`;
     if (scope.empresaId) { params.push(scope.empresaId); sql += ` AND empresa_id=$${params.length}`; }
     sql += ' ORDER BY versao ASC,id ASC';
@@ -543,6 +543,34 @@ export class PostgresProdutoRepository implements ProdutoRepository {
        RETURNING id,group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,mime_type,
          tamanho_bytes,sha256,versao,status,principal,ativo`,
       [midiaId, scope.groupId, scope.empresaId, produtoId],
+    );
+    return result.rows[0] ? { ...result.rows[0], tamanho_bytes: Number(result.rows[0].tamanho_bytes) } as ProdutoMidia : null;
+  }
+
+  async getMidiaForScan(scope: Scope, produtoId: string, midiaId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null> {
+    if (!scope.empresaId) return null;
+    const result = await (executor ?? this.db).query(
+      `SELECT id,group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,mime_type,
+         tamanho_bytes,sha256,versao,status,principal,ativo,scan_verdict,scan_scanner,scan_sha256,scanned_at
+       FROM produto_midias WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND produto_id=$4
+         AND ativo=true AND status='QUARENTENA' ${executor ? 'FOR UPDATE' : ''}`,
+      [midiaId, scope.groupId, scope.empresaId, produtoId],
+    );
+    return result.rows[0] ? { ...result.rows[0], tamanho_bytes: Number(result.rows[0].tamanho_bytes) } as ProdutoMidia : null;
+  }
+
+  async recordMidiaScan(scope: Scope, produtoId: string, midiaId: string, storageKey: string, version: number, evidence: ProdutoMidiaScanEvidence, executor?: DbQueryExecutor): Promise<ProdutoMidia | null> {
+    if (!scope.empresaId) return null;
+    if (!executor) throw new Error('MEDIA_TRANSACTION_REQUIRED');
+    const result = await executor.query(
+      `UPDATE produto_midias SET scan_verdict=$7,scan_scanner=$8,scan_sha256=$9,scanned_at=$10,
+         updated_at=timezone('utc',now())
+       WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND produto_id=$4
+         AND storage_key=$5 AND versao=$6 AND sha256=$9 AND status='QUARENTENA' AND ativo=true
+       RETURNING id,group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,mime_type,
+         tamanho_bytes,sha256,versao,status,principal,ativo,scan_verdict,scan_scanner,scan_sha256,scanned_at`,
+      [midiaId, scope.groupId, scope.empresaId, produtoId, storageKey, version,
+        evidence.verdict, evidence.scanner, evidence.sha256, evidence.scannedAt],
     );
     return result.rows[0] ? { ...result.rows[0], tamanho_bytes: Number(result.rows[0].tamanho_bytes) } as ProdutoMidia : null;
   }

@@ -1,3 +1,17 @@
+### Comercial 360 / Onda 1 - evidencia DAM de varredura (2026-09-23)
+
+- Branch `codex/comercial-360`, PR #33 draft; base anterior `8c36a133edadee84fd92d539b7dec14b2f50423c`.
+- Migration aditiva 022 registra veredito, identificador do scanner, SHA-256 e data da varredura na midia existente. Nao foi aplicada na VPS.
+- Fluxo existente de Produto/DAM ganhou acao de verificacao com RBAC `aprovar-conteudo`, tenant Grupo/Empresa, resultado vinculado ao objeto exato, lock e auditoria sanitizada na mesma transacao. Falha da auditoria rollbacka a evidencia.
+- Midia permanece em `QUARENTENA` mesmo com veredito `CLEAN`. Scanner nao esta configurado no runtime padrao; sem ele a operacao falha explicitamente. Nenhum download ou publicacao foi liberado.
+- Testes locais: Produto/migration direcionados 37 pass, 0 fail, 2 skip condicionais; HTTP DAM 10 pass, 0 fail; backend completo 199 pass, 0 fail, 11 skip condicionais sem `DATABASE_URL`; backend typecheck, audit baseline, lint e build frontend passaram.
+- PostgreSQL real da migration 022 e E2E de rollback ficam pendentes da CI efemera da PR. Testes locais nao equivalem a aplicacao DEV/VPS.
+- Validacoes adicionais: HTTP DAM 10/10, testes frontend 613/613, build backend PASS. Typecheck global frontend FAIL por 2034 diagnosticos preexistentes em arquivos fora deste lote (por exemplo `base44/functions/_lib/security/entityGuardPolicy/entry.ts` e `src/pages/Relatorios.jsx`); sem alteracao do baseline.
+- `git diff --check` PASS. Migration 022 e E2E PostgreSQL aguardam CI da PR antes de considerar este checkpoint homologado no banco.
+- Arquivos principais: `server/migrations/022_produto_midia_scan_evidence.sql`, repository Produto, fluxo DAM, router/app e testes R01/R10.
+- Seguranca: nenhum arquivo real, URL assinada, token ou payload do scanner persistido ou versionado. Sem alteracao em estoque, preco, fiscal ou producao.
+- Proximo passo: CI frontend/backend/PostgreSQL verde; depois Gate DEV autorizado para verificar scanner e buckets existentes antes de configurar varredura real. Sem merge, migration remota ou promocao neste lote.
+
 ### ERP-RUNTIME-08 ? diagn?stico Comercial 360? (2026-09-19)
 
 - Diagn?stico documental iniciado sobre a base funcional 07B; nenhuma

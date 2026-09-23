@@ -219,6 +219,17 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
   });
 
 
+  router.post('/api/v1/produtos/:id/midias/:mediaId/verificar', requireTenantScope, async (req, res, next) => {
+    try {
+      if (!z.object({}).strict().safeParse(req.body ?? {}).success) {
+        throw new AppError(400, 'VALIDATION_ERROR', 'Invalid media scan payload');
+      }
+      const result = await service.scanMidia(ctxFromReq(req), req.params.id, req.params.mediaId);
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data: result });
+    } catch (error) { next(error); }
+  });
+
   router.get('/api/v1/produtos/:id', requireTenantScope, async (req, res, next) => {
     try {
       const row = await service.get(ctxFromReq(req), req.params.id);

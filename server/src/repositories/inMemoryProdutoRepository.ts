@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';
-import { produtoMidiaCreateSchema, type Produto, type ProdutoCreate, type ProdutoEquivalente, type ProdutoEquivalenteCreate, type ProdutoEquivalenteUpdate, type ProdutoMidia, type ProdutoMidiaCreate, type ProdutoMidiaUploadAttempt, type ProdutoUpdate, type ProdutoVariante, type ProdutoVarianteCreate, type ProdutoVarianteUpdate } from './produtoTypes.js';
+import { produtoMidiaCreateSchema, type Produto, type ProdutoCreate, type ProdutoEquivalente, type ProdutoEquivalenteCreate, type ProdutoEquivalenteUpdate, type ProdutoMidia, type ProdutoMidiaCreate, type ProdutoMidiaScanEvidence, type ProdutoMidiaUploadAttempt, type ProdutoUpdate, type ProdutoVariante, type ProdutoVarianteCreate, type ProdutoVarianteUpdate } from './produtoTypes.js';
 
 function nowIso() { return new Date().toISOString(); }
 
@@ -55,6 +55,8 @@ export interface ProdutoRepository extends TenantEntityRepository<Produto, Produ
   getReservedMidia(scope: Scope, produtoId: string, midiaId: string, attemptId: string, actorId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
   confirmReservedMidia(scope: Scope, produtoId: string, midiaId: string, attemptId: string, actorId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
   rejectExpiredReservedMidia(scope: Scope, produtoId: string, midiaId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
+  getMidiaForScan(scope: Scope, produtoId: string, midiaId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
+  recordMidiaScan(scope: Scope, produtoId: string, midiaId: string, storageKey: string, version: number, evidence: ProdutoMidiaScanEvidence, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
 
 }
 
@@ -421,6 +423,25 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     return structuredClone(next);
   }
 
+  async getMidiaForScan(scope: Scope, produtoId: string, midiaId: string): Promise<ProdutoMidia | null> {
+    const row = this.midias.get(midiaId);
+    return row && scope.empresaId && row.group_id === scope.groupId && row.empresa_id === scope.empresaId
+      && row.produto_id === produtoId && row.ativo && row.status === 'QUARENTENA'
+      ? structuredClone(row) : null;
+  }
+
+  async recordMidiaScan(scope: Scope, produtoId: string, midiaId: string, storageKey: string, version: number, evidence: ProdutoMidiaScanEvidence): Promise<ProdutoMidia | null> {
+    const row = await this.getMidiaForScan(scope, produtoId, midiaId);
+    if (!row || row.storage_key !== storageKey || row.versao !== version || row.sha256 !== evidence.sha256
+      || !['CLEAN', 'INFECTED'].includes(evidence.verdict) || !evidence.scanner.trim()
+      || evidence.scanner.length > 80 || !Number.isFinite(Date.parse(evidence.scannedAt))) return null;
+    const next: ProdutoMidia = {
+      ...row, scan_verdict: evidence.verdict, scan_scanner: evidence.scanner,
+      scan_sha256: evidence.sha256, scanned_at: evidence.scannedAt,
+    };
+    this.midias.set(midiaId, structuredClone(next));
+    return structuredClone(next);
+  }
 
   listPublicationEvents() {
     return structuredClone(this.publicationEvents);
