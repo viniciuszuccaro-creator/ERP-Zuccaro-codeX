@@ -60,6 +60,7 @@ function storageRequest(ctx: RequestContext, produtoId: string, data: ProdutoMid
     groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId!,
     entity: 'Produto', entityId: produtoId,
     storageKey: data.storage_key, fileName: data.nome_arquivo,
+    version: data.versao,
     mimeType: data.mime_type, sizeBytes: data.tamanho_bytes, sha256: data.sha256,
   };
 }
@@ -93,8 +94,9 @@ export async function reserveProdutoMidia(deps: Dependencies, ctx: RequestContex
       throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
     }
     let row: ProdutoMidia | null;
+    const versioned = { ...data, versao: await deps.repo.nextMidiaVersion(scope, produtoId, executor) };
     try {
-      row = await deps.repo.reserveMidia(scope, produtoId, data, attempt, executor);
+      row = await deps.repo.reserveMidia(scope, produtoId, versioned, attempt, executor);
     } catch (error) {
       if (/unique|duplicate/i.test(error instanceof Error ? error.message : String(error))) {
         throw new AppError(409, 'MEDIA_RESERVATION_CONFLICT', 'Media key is already reserved');
@@ -108,10 +110,10 @@ export async function reserveProdutoMidia(deps: Dependencies, ctx: RequestContex
       afterData: { categoria: row.categoria, versao: row.versao, status: row.status, tamanho_bytes: row.tamanho_bytes },
       requestId: ctx.requestId, ipAddress: ctx.ipAddress,
     }, executor);
-    return row;
+    const signed = await deps.storage.createSignedUploadUrl(storageRequest(ctx, produtoId, versioned));
+    return { row, signed };
   });
-  const signed = await deps.storage.createSignedUploadUrl(storageRequest(ctx, produtoId, data));
-  return { mediaId: reserved.id, attemptId: attempt.id, ...signed };
+  return { mediaId: reserved.row.id, attemptId: attempt.id, ...reserved.signed };
 }
 
 export async function confirmProdutoMidia(

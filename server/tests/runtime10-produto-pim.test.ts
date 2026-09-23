@@ -84,7 +84,7 @@ function reservableStorage(options: { badChecksum?: boolean; failSigning?: boole
       return {
         storageKey: request.storageKey, fileName: request.fileName, mimeType: request.mimeType,
         sizeBytes: request.sizeBytes, sha256: options.badChecksum ? 'c'.repeat(64) : request.sha256,
-        version: 1,
+        version: request.version ?? 1,
       };
     },
     createSignedDownloadUrl: async () => { throw new Error('UNUSED'); },
@@ -92,6 +92,18 @@ function reservableStorage(options: { badChecksum?: boolean; failSigning?: boole
   return { storage, signCalls: () => signCalls, confirmCalls: () => confirmCalls };
 }
 
+test('DAM versiona reservas por produto e ignora versao escolhida pelo cliente', async () => {
+  const fake = reservableStorage();
+  const { service, ctx, repo } = harness(undefined, fake.storage);
+  const produto = await service.create(ctx, { descricao: 'Versoes sinteticas' });
+  const first = await service.reserveMidia(ctx, produto.id, { ...mediaFixture(produto.id), versao: 99 });
+  await service.confirmMidia(ctx, produto.id, first.mediaId, first.attemptId);
+  const second = await service.reserveMidia(ctx, produto.id, { ...mediaFixture(produto.id), versao: 1 });
+  await service.confirmMidia(ctx, produto.id, second.mediaId, second.attemptId);
+  const listed = await service.listMidias(ctx, produto.id);
+  assert.deepEqual(listed.map((row) => row.versao).sort(), [1, 2]);
+  assert.equal(await repo.nextMidiaVersion({ groupId: GROUP, empresaId: EMPRESA }, produto.id), 3);
+});
 test('DAM reserva e confirma com auditoria sanitizada e confirmacao unica', async () => {
   const fake = reservableStorage();
   const { service, audit, ctx, repo: harnessRepo } = harness(undefined, fake.storage);
@@ -161,8 +173,7 @@ test('DAM reserva bloqueia payload, tenant, RBAC, duplicidade e adapter ausente'
   const pendingProduct = await pending.service.create(pending.ctx, { descricao: 'Assinatura falhou' });
   const pendingData = mediaFixture(pendingProduct.id);
   await assert.rejects(pending.service.reserveMidia(pending.ctx, pendingProduct.id, pendingData), /SYNTHETIC_SIGN_FAILURE/);
-  await assert.rejects(pending.service.reserveMidia(pending.ctx, pendingProduct.id, pendingData),
-    (error: unknown) => (error as { code?: string }).code === 'MEDIA_RESERVATION_CONFLICT');
+  await assert.rejects(pending.service.reserveMidia(pending.ctx, pendingProduct.id, pendingData), /SYNTHETIC_SIGN_FAILURE/);
   assert.deepEqual(await pending.service.listMidias(pending.ctx, pendingProduct.id), []);
 });
 

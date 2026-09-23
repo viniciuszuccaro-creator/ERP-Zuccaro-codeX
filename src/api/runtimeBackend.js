@@ -61,3 +61,10 @@ export const HTTP_PILOT_ENTITIES = Object.freeze([
   'GrupoProduto',
   'SetorAtividade',
 ]);
+
+/** Produto permanece opt-in mesmo quando o restante do piloto usa HTTP. */
+export function resolveHttpPilotEntities(env = import.meta.env) {
+  return env?.VITE_ERP_HTTP_PRODUTO === 'true'
+    ? [...HTTP_PILOT_ENTITIES, 'Produto']
+    : [...HTTP_PILOT_ENTITIES];
+}

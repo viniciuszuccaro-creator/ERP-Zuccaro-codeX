@@ -10,6 +10,7 @@ import {
   HTTP_PILOT_ENTITIES,
   resolveErpApiBaseUrl,
   resolveErpBackendMode,
+  resolveHttpPilotEntities,
 } from './runtimeBackend.js';
 
 const { appId, serverUrl, token, functionsVersion } = appParams;
@@ -26,6 +27,7 @@ export const isLocalOnlyMode = erpBackendMode === 'local'
 export const isHttpBackendMode = erpBackendMode === 'http';
 export const isApiKeyMode = isLocalOnlyMode || isHttpBackendMode || !!apiKey;
 
+export const isHttpProdutoEnabled = isHttpBackendMode && resolveHttpPilotEntities(import.meta.env).includes('Produto');
 export const localApiUser = (isLocalOnlyMode || isHttpBackendMode) ? localOnlyUser : {
   id: 'local-api-key-user',
   email: 'local-api@erp-integra.local',
@@ -60,6 +62,8 @@ const remoteBase44 = (isLocalOnlyMode || isHttpBackendMode || !hasRemoteBase44Co
     functionsVersion,
     requiresAuth: interactiveAuth.allowed ? Boolean(token) : true,
   });
+/** @type {ReturnType<typeof createHttpApiClient> | null} */
+let httpHybridClient = null;
 
 /**
  * Modo http: entidades piloto no BFF; demais no localBase44 (migracao incremental).
@@ -79,11 +83,13 @@ function createHttpHybridClient() {
     },
   });
 
-  const pilotSet = new Set(HTTP_PILOT_ENTITIES);
+  httpHybridClient = http;
+  const pilotSet = new Set(resolveHttpPilotEntities(import.meta.env));
   const entities = new Proxy(localBase44.entities || {}, {
     get(target, prop, receiver) {
-      if (typeof prop === 'string' && pilotSet.has(prop) && http.entities[prop]) {
-        return http.entities[prop];
+      if (typeof prop === 'string' && pilotSet.has(prop)) {
+        if (prop === 'Produto') return http.preparedEntities.Produto;
+        if (http.entities[prop]) return http.entities[prop];
       }
       return Reflect.get(target, prop, receiver);
     },
@@ -102,12 +108,20 @@ function resolveBase44Client() {
   if (isLocalOnlyMode || !remoteBase44) return localBase44;
   return remoteBase44;
 }
+const resolvedBase44 = resolveBase44Client();
+
+export function getHttpProdutoApi() {
+  if (!isHttpProdutoEnabled || !httpHybridClient) {
+    throw new Error('Produto HTTP indisponivel');
+  }
+  return httpHybridClient.preparedEntities.Produto;
+}
 
 /**
  * Contrato publico unico para os clientes remoto, local e http.
  * @type {import('@base44/sdk').Base44Client}
  */
-export const base44 = /** @type {import('@base44/sdk').Base44Client} */ (resolveBase44Client());
+export const base44 = /** @type {import('@base44/sdk').Base44Client} */ (resolvedBase44);
 
 if (!isLocalOnlyMode && !isHttpBackendMode && isApiKeyMode && base44?.auth) {
   const originalMe = base44.auth.me?.bind(base44.auth);

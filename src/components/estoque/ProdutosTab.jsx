@@ -295,9 +295,9 @@ export default function ProdutosTab(props) {
               windowMode: true,
               onSubmit: async (data) => {
                 try {
-                  await createInContext('Produto', data);
                   queryClient.invalidateQueries({ queryKey: ['produtos'] });
-                  try {
+                  if (!data?._http) {
+                    try {
                     await createInContext('AuditLog', {
                       acao: 'Produto.criado',
                       modulo: 'Estoque',
@@ -310,8 +310,9 @@ export default function ProdutosTab(props) {
                       sucesso: true,
                       data_hora: new Date().toISOString()
                     });
-                  } catch (auditError) {
-                    console.error('[ProdutosTab] Falha ao auditar criacao do produto', auditError);
+                    } catch (auditError) {
+                      console.error('[ProdutosTab] Falha ao auditar criacao do produto', auditError);
+                    }
                   }
                   toast({ title: "✅ Produto criado!" });
                 } catch (error) {

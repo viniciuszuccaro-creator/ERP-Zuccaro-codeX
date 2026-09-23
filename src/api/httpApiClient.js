@@ -151,16 +151,26 @@ export function createHttpApiClient(options = {}) {
       const base = createCrudEntity('/api/v1/produtos', {
         searchKeys: ['descricao', 'codigo', 'nome', 'codigo_barras', 'search'],
       });
+      const listeners = new Set();
+      const notify = () => {
+        for (const listener of listeners) {
+          try { listener(); } catch (error) { console.error('[Produto HTTP] subscriber falhou', error); }
+        }
+      };
       const relationRoutes = (segment) => ({
+        /** @param {string} produtoId @param {{ signal?: AbortSignal }} [options] */
         list(produtoId, { signal } = {}) {
           return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/${segment}`, { signal });
         },
+        /** @param {string} produtoId @param {object} payload @param {{ signal?: AbortSignal }} [options] */
         create(produtoId, payload, { signal } = {}) {
           return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/${segment}`, { method: 'POST', body: payload, signal });
         },
+        /** @param {string} produtoId @param {string} relationId @param {object} payload @param {{ signal?: AbortSignal }} [options] */
         update(produtoId, relationId, payload, { signal } = {}) {
           return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/${segment}/${encodeURIComponent(relationId)}`, { method: 'PATCH', body: payload, signal });
         },
+        /** @param {string} produtoId @param {string} relationId @param {{ signal?: AbortSignal }} [options] */
         deactivate(produtoId, relationId, { signal } = {}) {
           return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/${segment}/${encodeURIComponent(relationId)}`, { method: 'DELETE', signal });
         },
@@ -168,6 +178,37 @@ export function createHttpApiClient(options = {}) {
       return {
         ...base,
         variantes: relationRoutes('variantes'),
+        subscribe(listener) {
+          listeners.add(listener);
+          return () => listeners.delete(listener);
+        },
+        async create(data) {
+          const row = await base.create(data);
+          notify();
+          return row;
+        },
+        async update(id, data) {
+          const row = await base.update(id, data);
+          notify();
+          return row;
+        },
+        async delete(id) {
+          const row = await base.delete(id);
+          notify();
+          return row;
+        },
+        /** @param {string} produtoId @param {string} status @param {{ signal?: AbortSignal }} [options] */
+        workflow(produtoId, status, { signal } = {}) {
+          return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/workflow`, { method: 'PATCH', body: { status }, signal });
+        },
+        /** @param {string} produtoId @param {object} payload @param {{ signal?: AbortSignal }} [options] */
+        midiaReserve(produtoId, payload, { signal } = {}) {
+          return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/midias/reservas`, { method: 'POST', body: payload, signal });
+        },
+        /** @param {string} produtoId @param {string} mediaId @param {string} attemptId @param {{ signal?: AbortSignal }} [options] */
+        midiaConfirm(produtoId, mediaId, attemptId, { signal } = {}) {
+          return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/midias/${encodeURIComponent(mediaId)}/confirmar`, { method: 'POST', body: { attemptId }, signal });
+        },
         equivalentes: relationRoutes('equivalentes'),
         midias: {
           /** @param {string} produtoId @param {{ limit?: number, offset?: number, signal?: AbortSignal }} [options] */

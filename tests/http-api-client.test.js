@@ -4,6 +4,7 @@ import { createHttpApiClient } from '../src/api/httpApiClient.js';
 import {
   HTTP_PILOT_ENTITIES,
   resolveErpApiBaseUrl,
+  resolveHttpPilotEntities,
   resolveErpBackendMode,
 } from '../src/api/runtimeBackend.js';
 
@@ -57,6 +58,14 @@ test('HTTP_PILOT_ENTITIES includes RUNTIME-02 cadastros sem Produto', () => {
   assert.equal(HTTP_PILOT_ENTITIES.includes('ClienteLocal'), false);
   assert.equal(HTTP_PILOT_ENTITIES.includes('Obra'), false);
 });
+test('Produto HTTP permanece opt-in e nao altera os pilotos existentes', () => {
+  assert.equal(resolveHttpPilotEntities({}).includes('Produto'), false);
+  assert.equal(resolveHttpPilotEntities({ VITE_ERP_HTTP_PRODUTO: 'false' }).includes('Produto'), false);
+  const enabled = resolveHttpPilotEntities({ VITE_ERP_HTTP_PRODUTO: 'true' });
+  assert.equal(enabled.includes('Produto'), true);
+  assert.deepEqual(enabled.filter((name) => name === 'Produto'), ['Produto']);
+});
+
 
 test('HttpApiClient maps Marca CRUD to BFF routes', async () => {
   /** @type {{ method: string, url: string, headers: HeadersInit, body?: string }[]} */
@@ -164,6 +173,34 @@ test('Produto preparado lista somente metadados DAM no BFF sem ativar piloto', a
   assert.equal(calls[0].headers['X-Actor-Id'], 'ator-sintetico');
 });
 
+test('Produto HTTP preparado cobre workflow e reserva/confirmacao sem tenant no body', async () => {
+  const calls = [];
+  const client = createHttpApiClient({
+    baseUrl: 'https://erp.invalid',
+    getScope: () => ({ groupId: 'grupo-sintetico', empresaId: 'empresa-sintetica', actorId: 'ator-sintetico' }),
+    fetchImpl: async (url, init) => {
+      calls.push({ url: String(url), method: init.method, headers: init.headers, body: init.body });
+      return new Response(JSON.stringify({ data: { id: 'produto-sintetico', status: 'QUARENTENA', mediaId: 'm', attemptId: 'a' } }), {
+        status: init.method === 'POST' ? 201 : 200, headers: { 'content-type': 'application/json' },
+      });
+    },
+  });
+  const produto = client.preparedEntities.Produto;
+  await produto.workflow('p', 'EM_REVISAO');
+  await produto.midiaReserve('p', { storage_key: 'synthetic' });
+  await produto.midiaConfirm('p', 'm', 'a');
+  assert.deepEqual(calls.map((call) => call.method), ['PATCH', 'POST', 'POST']);
+  assert.deepEqual(calls.map((call) => new URL(call.url).pathname), [
+    '/api/v1/produtos/p/workflow', '/api/v1/produtos/p/midias/reservas',
+    '/api/v1/produtos/p/midias/m/confirmar',
+  ]);
+  assert.ok(calls.every((call) => call.headers['X-Group-Id'] === 'grupo-sintetico'
+    && call.headers['X-Empresa-Id'] === 'empresa-sintetica'));
+  assert.equal(JSON.parse(calls[0].body).status, 'EM_REVISAO');
+  assert.deepEqual(JSON.parse(calls[2].body), { attemptId: 'a' });
+  assert.ok(calls.every((call) => !String(call.body).includes('groupId')));
+});
+
 test('Produto preparado expõe oito chamadas de relações sem ativar cadastro piloto', async () => {
   const calls = [];
   const client = createHttpApiClient({
@@ -205,4 +242,26 @@ test('Produto preparado expõe oito chamadas de relações sem ativar cadastro p
   assert.deepEqual(JSON.parse(calls[5].body), { produto_equivalente_id: 'produto/2' });
   assert.equal(calls[3].body, undefined);
   assert.equal(calls[7].body, undefined);
+});
+
+test('Produto HTTP notifica consumidores somente apos mutacao confirmada', async () => {
+  let accepted = true;
+  const client = createHttpApiClient({ baseUrl: 'https://erp.invalid', fetchImpl: async () => new Response(
+    JSON.stringify(accepted ? { data: { id: 'p' } } : { error: { code: 'CONFLICT' } }),
+    { status: accepted ? 200 : 409, headers: { 'content-type': 'application/json' } },
+  ) });
+  const produto = client.preparedEntities.Produto;
+  let notifications = 0;
+  const unsubscribe = produto.subscribe(() => { notifications += 1; });
+  await produto.create({ descricao: 'Sintetico' });
+  await produto.update('p', { descricao: 'Atualizado' });
+  await produto.delete('p');
+  assert.equal(notifications, 3);
+  accepted = false;
+  await assert.rejects(produto.create({ descricao: 'Falha' }));
+  assert.equal(notifications, 3);
+  unsubscribe();
+  accepted = true;
+  await produto.create({ descricao: 'Depois' });
+  assert.equal(notifications, 3);
 });

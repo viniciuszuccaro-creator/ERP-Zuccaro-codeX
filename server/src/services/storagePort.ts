@@ -12,6 +12,7 @@ export type StorageUploadRequest = StorageObjectContext & {
   mimeType: string;
   sizeBytes: number;
   sha256: string;
+  version?: number;
 };
 
 export type StorageObjectMetadata = {

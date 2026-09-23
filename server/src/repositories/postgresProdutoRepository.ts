@@ -440,6 +440,16 @@ export class PostgresProdutoRepository implements ProdutoRepository {
     const result = await (executor ?? this.db).query(sql, params);
     return result.rows.map((row) => ({ ...row, tamanho_bytes: Number(row.tamanho_bytes) }) as ProdutoMidia);
   }
+  async nextMidiaVersion(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<number> {
+    if (!executor) throw new Error('MEDIA_TRANSACTION_REQUIRED');
+    const result = await executor.query(
+      `SELECT COALESCE(MAX(versao),0)+1 AS next_version FROM produto_midias
+       WHERE group_id=$1 AND empresa_id=$2 AND produto_id=$3`,
+      [scope.groupId, scope.empresaId, produtoId],
+    );
+    return Number(result.rows[0].next_version);
+  }
+
 
   async createMidia(scope: Scope, produtoId: string, data: ProdutoMidiaCreate, executor?: DbQueryExecutor): Promise<ProdutoMidia | null> {
     if (!scope.empresaId) return null;

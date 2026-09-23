@@ -48,6 +48,7 @@ export interface ProdutoRepository extends TenantEntityRepository<Produto, Produ
   updateEquivalent(scope: Scope, produtoId: string, equivalentId: string, data: ProdutoEquivalenteUpdate, executor?: DbQueryExecutor): Promise<ProdutoEquivalente | null>;
   deactivateEquivalent(scope: Scope, produtoId: string, equivalentId: string, executor?: DbQueryExecutor): Promise<ProdutoEquivalente | null>;
   listMidias(scope: Scope, produtoId: string, executor?: DbQueryExecutor, page?: { limit: number; offset: number }): Promise<ProdutoMidia[]>;
+  nextMidiaVersion(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<number>;
   createMidia(scope: Scope, produtoId: string, data: ProdutoMidiaCreate, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
   deactivateMidia(scope: Scope, produtoId: string, midiaId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
   reserveMidia(scope: Scope, produtoId: string, data: ProdutoMidiaCreate, attempt: ProdutoMidiaUploadAttempt, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
@@ -337,6 +338,13 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
       .sort((a, b) => a.versao - b.versao || a.id.localeCompare(b.id));
     return structuredClone(page ? rows.slice(page.offset, page.offset + page.limit) : rows);
   }
+  async nextMidiaVersion(scope: Scope, produtoId: string): Promise<number> {
+    const versions = [...this.midias.values()]
+      .filter((row) => row.group_id === scope.groupId && row.empresa_id === scope.empresaId && row.produto_id === produtoId)
+      .map((row) => row.versao);
+    return Math.max(0, ...versions) + 1;
+  }
+
 
   async createMidia(scope: Scope, produtoId: string, data: ProdutoMidiaCreate): Promise<ProdutoMidia | null> {
     const produto = await this.getById(scope, produtoId);

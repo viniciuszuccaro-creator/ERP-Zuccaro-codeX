@@ -15,7 +15,7 @@ import {
   TrendingUp, ArrowRightLeft, ShoppingCart, Image, Warehouse,
   Trash2, Power, PowerOff, Save
 } from "lucide-react";
-import { base44, isHttpBackendMode } from "@/api/base44Client";
+import { base44, isHttpBackendMode, isHttpProdutoEnabled } from "@/api/base44Client";
 import { toast } from "sonner";
 import FormWrapper from "@/components/common/FormWrapper";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
@@ -25,11 +25,13 @@ import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 import { PRODUTO_TIPOS_CANONICOS, getProdutoTipoOptions, normalizeProdutoTipoItem } from "./produto/produtoTipoPolicy";
 const HistoricoProduto = React.lazy(() => import("./HistoricoProduto"));
 const FiscalContabilSection = React.lazy(() => import("./produto/FiscalContabilSection"));
+import { toProdutoHttpPayload } from './produto/produtoHttpPolicy';
 const EstoqueAvancadoSection = React.lazy(() => import("./produto/EstoqueAvancadoSection"));
 const PrecosSection = React.lazy(() => import("./produto/PrecosSection"));
 const PesoDimensoesSection = React.lazy(() => import("./produto/PesoDimensoesSection"));
 
 const ProdutoPimSection = React.lazy(() => import("./produto/ProdutoPimSection"));
+const ProdutoRelationsDamSection = React.lazy(() => import('./produto/ProdutoRelationsDamSection'));
 /**
  * V21.4 ETAPA 2/3 COMPLETA - CADASTRO COMPLETO DE PRODUTOS
  * ✅ Aba 1: Dados Gerais + TRIPLA CLASSIFICAÇÃO (Setor + Grupo + Marca)
@@ -40,7 +42,9 @@ const ProdutoPimSection = React.lazy(() => import("./produto/ProdutoPimSection")
  * ✅ Aba 6: Estoque Avançado (NOVO)
  * ✅ Aba 7: Histórico (se edição)
  */
-function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, windowMode = false, closeSelf }) {
+function ProdutoFormV22_Completo({ produto: produtoProp, item, data, onSubmit, onSuccess, isSubmitting, windowMode = false, closeSelf }) {
+  const produto = produtoProp || item || data || null;
+  const produtoHttp = isHttpProdutoEnabled && (!produto?.id || /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(produto.id));
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
   const [user, setUser] = useState(null);
   const {
@@ -52,9 +56,10 @@ function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, w
     updateInContext,
     deleteInContext
   } = useContextoVisual();
-  const { canCreate, canEdit, canDelete } = usePermissions();
+  const { canCreate, canEdit, canDelete, hasPermission } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const contextKey = empresaAtual?.id || groupId || "sem-contexto";
+  const podeVisualizar = hasPermission('Cadastros', 'Produto', 'visualizar');
   const contextoValido = contextKey !== "sem-contexto";
   const podeCriar = canCreate("Cadastros", "Produto") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Produto") || canEdit("Cadastros", null);
@@ -209,6 +214,17 @@ function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, w
   const [gerandoImagem, setGerandoImagem] = useState(false);
 
   // V21.2 FASE 2: Queries dos estruturantes
+  useEffect(() => {
+    if (!produtoHttp || !produto?.id) return;
+    let active = true;
+    base44.entities.Produto.get(produto.id).then((row) => {
+      if (active) setFormData((current) => ({ ...current, ...row }));
+    }).catch((error) => {
+      if (active) toast.error('Erro ao carregar produto: ' + error.message);
+    });
+    return () => { active = false; };
+  }, [produtoHttp, produto?.id]);
+
   const { data: setores = [] } = useQuery({
     queryKey: ['setores-atividade', contextKey],
     queryFn: () => filterInContext('SetorAtividade', {}, 'nome', 200),
@@ -519,7 +535,7 @@ Caso contrário, sugira:
       return;
     }
 
-    if (formData.codigo && !produto?.id) {
+    if (formData.codigo && !produto?.id && !produtoHttp) {
       try {
         const produtosExistentes = await filterInContext('Produto', { codigo: formData.codigo }, '-created_date', 1);
         if (produtosExistentes.length > 0) {
@@ -580,18 +596,18 @@ Caso contrário, sugira:
       }
     };
 
-    const dadosSubmit = carimbarContexto(dadosBase, 'empresa_id');
-
     try {
+      const dadosSubmit = produtoHttp ? toProdutoHttpPayload(dadosBase, { update: Boolean(produto?.id) }) : carimbarContexto(dadosBase, 'empresa_id');
+      let saved;
       if (produto?.id) {
-        await updateInContext('Produto', produto.id, dadosSubmit);
-        toast.success('✅ Produto atualizado com sucesso!');
+        saved = produtoHttp ? await base44.entities.Produto.update(produto.id, dadosSubmit) : await updateInContext('Produto', produto.id, dadosSubmit);
       } else {
-        await createInContext('Produto', dadosSubmit);
-        toast.success('✅ Produto criado com sucesso!');
+        saved = produtoHttp ? await base44.entities.Produto.create(dadosSubmit) : await createInContext('Produto', dadosSubmit);
       }
+      if (produtoHttp && !saved?.id) throw new Error('Resposta do ERP sem identificador do produto');
       if (onSuccess) onSuccess();
-      if (onSubmit) onSubmit(dadosSubmit);
+      if (onSubmit) await onSubmit(produtoHttp ? { ...saved, _http: true } : dadosSubmit);
+      toast.success(produto?.id ? 'Produto atualizado com sucesso!' : 'Produto criado com sucesso!');
       if (typeof closeSelf === 'function') closeSelf();
     } catch (error) {
       toast.error('❌ Erro ao salvar produto: ' + error.message);
@@ -609,7 +625,7 @@ Caso contrário, sugira:
       return;
     }
     if (produto?.id) {
-      deleteInContext('Produto', produto.id)
+      (produtoHttp ? base44.entities.Produto.delete(produto.id) : deleteInContext('Produto', produto.id))
         .then(() => {
           toast.success('Produto excluido com sucesso!');
           if (onSuccess) onSuccess();
@@ -625,6 +641,7 @@ Caso contrário, sugira:
 
   const handleAlternarStatus = () => {
     const novoStatus = formData.status === 'Ativo' ? 'Inativo' : 'Ativo';
+    if (produtoHttp) return;
     setFormData({ ...formData, status: novoStatus });
   };
 
@@ -1156,6 +1173,13 @@ Caso contrário, sugira:
           <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando conteúdo do produto...</div>}>
             <ProdutoPimSection formData={formData} setFormData={setFormData} />
           </Suspense>
+          {produtoHttp && produto?.id && empresaAtual?.id && (
+            <Suspense fallback={null}>
+              <ProdutoRelationsDamSection produtoId={produto.id} groupId={groupId}
+                empresaId={empresaAtual.id} canView={podeVisualizar} canEdit={podeEditar} />
+            </Suspense>
+          )}
+
 
           <Card className="border-purple-200 bg-white/60 backdrop-blur-md shadow-lg">
             <CardContent className="p-6 space-y-4">
@@ -1294,6 +1318,7 @@ Caso contrário, sugira:
         <div className="flex gap-2">
           {produto && (
             <>
+              {!produtoHttp && (
               <Button
                 type="button"
                 variant="outline"
@@ -1316,6 +1341,7 @@ Caso contrário, sugira:
                   </>
                 )}
               </Button>
+              )}
               <Button
                 type="button"
                 variant="destructive"

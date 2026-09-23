@@ -162,7 +162,7 @@ export class SupabaseStorageAdapter implements StoragePort {
     if (!matchesSignature(request.mimeType, firstBytes)) throw new Error('STORAGE_CONTENT_MISMATCH');
     return {
       storageKey: request.storageKey, fileName: request.fileName, mimeType: request.mimeType,
-      sizeBytes: size, sha256: request.sha256.toLowerCase(), version: 1,
+      sizeBytes: size, sha256: request.sha256.toLowerCase(), version: request.version ?? 1,
     };
   }
 
