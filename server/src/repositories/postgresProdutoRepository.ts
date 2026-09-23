@@ -317,6 +317,9 @@ export class PostgresProdutoRepository implements ProdutoRepository {
     requestId: string,
     executor?: DbQueryExecutor,
   ): Promise<void> {
+    if (produto.group_id !== scope.groupId || (scope.empresaId && produto.empresa_id !== scope.empresaId)) {
+      throw new Error('TENANT_FK_MISMATCH');
+    }
     const query = executor ?? this.db;
     const payload = {
       produtoId: produto.id,

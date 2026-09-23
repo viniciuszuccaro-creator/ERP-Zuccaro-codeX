@@ -1,3 +1,10 @@
+## Comercial 360 / Onda 15 - hardening tenant da outbox Produto (2026-09-23)
+
+- Causa: o emissor PostgreSQL de `produto.publicado` aceitava scope Grupo/Empresa divergente do Produto, enquanto a implementacao em memoria ja recusava a divergencia.
+- Correcao no repositorio canônico: bloquear Grupo ou Empresa adulterados antes de qualquer INSERT; sem migration, worker ou publicacao externa. E2E PostgreSQL sintetico e teste em memoria cobrem ambos os escopos e ausencia de efeito colateral.
+- O documento mestre registra o contrato pendente de claim/lease com tenant, concorrencia, retry, dead-letter, recibo e auditoria; nao declara consumidor implementado.
+- Validacao local: Produto dirigido 29/29; backend 218 total (206 pass, 0 fail, 12 skip opcionais sem PostgreSQL local); frontend 618/618; backend typecheck/build, frontend lint/build, audit:baseline e git diff --check PASS. E2E PostgreSQL real sera executado na CI efemera; commit/CI pendentes. Gate C permanece parcial na identidade do DB API, backup e rollback; 3080 intocada.
+
 ## Comercial 360 / Gate C - evidencia Web Console adicional (2026-09-23)
 
 - Saida sanitizada fornecida pelo usuario: `erp-api-dev` roda imagem `runtime07b-main-ca0bc5f3`; health/ready na 3080 = 200/200. `supabase-auth` e `supabase-db` aparecem healthy. API e DB participam da rede Docker `supabase_default`.

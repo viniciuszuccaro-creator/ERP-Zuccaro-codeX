@@ -546,6 +546,10 @@ test('Outbox Produto em memoria preserva idempotencia global e rollback', async 
     { groupId: randomUUID(), empresaId: EMPRESA }, first, requestId,
   ), /TENANT_FK_MISMATCH/);
   assert.equal(repo.listPublicationEvents().length, 3);
+  await assert.rejects(repo.appendPublicationEvent(
+    { groupId: GROUP, empresaId: randomUUID() }, first, requestId,
+  ), /TENANT_FK_MISMATCH/);
+  assert.equal(repo.listPublicationEvents().length, 3);
 });
 
 test('Falha de auditoria rollbacka publicacao e evento outbox na mesma transacao', async () => {

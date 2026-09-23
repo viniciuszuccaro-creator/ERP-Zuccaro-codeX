@@ -209,6 +209,12 @@ test('R10 PostgreSQL real: publicacao Produto grava outbox tenant-scoped com rol
     );
     const produto = await repo.getById(scope, produtoId);
     assert.ok(produto);
+    await assert.rejects(repo.appendPublicationEvent(
+      { groupId: randomUUID(), empresaId: scope.empresaId }, produto, requestId,
+    ), /TENANT_FK_MISMATCH/);
+    await assert.rejects(repo.appendPublicationEvent(
+      { groupId: scope.groupId, empresaId: SEED_IDS.empresaA2 }, produto, requestId,
+    ), /TENANT_FK_MISMATCH/);
     await assert.rejects(db.withTransaction(async (tx) => {
       await repo.appendPublicationEvent(scope, produto, requestId, tx);
       throw new Error('R10_OUTBOX_ROLLBACK');
