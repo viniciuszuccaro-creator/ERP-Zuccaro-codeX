@@ -1,7 +1,17 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { toProdutoHttpPayload, prepareProdutoMediaFile, CAD_FORMAT_POLICY, getProdutoWorkflowActions } from '../src/components/cadastros/produto/produtoHttpPolicy.js';
+import { toProdutoHttpPayload, prepareProdutoMediaFile, CAD_FORMAT_POLICY, getProdutoWorkflowActions, getProdutoMediaScanLabel } from '../src/components/cadastros/produto/produtoHttpPolicy.js';
+
+test('V22 apresenta varredura sem confundir CLEAN com liberacao', async () => {
+  assert.match(getProdutoMediaScanLabel({ status: 'QUARENTENA' }), /pendente.*quarentena/i);
+  assert.match(getProdutoMediaScanLabel({ status: 'QUARENTENA', scan_verdict: 'CLEAN' }), /ainda em quarentena/i);
+  assert.match(getProdutoMediaScanLabel({ status: 'QUARENTENA', scan_verdict: 'INFECTED' }), /ameaca.*quarentena/i);
+  assert.match(getProdutoMediaScanLabel({ status: 'QUARENTENA', scan_verdict: 'INCONCLUSIVE' }), /pendente.*quarentena/i);
+  const section = await readFile(new URL('../src/components/cadastros/produto/ProdutoRelationsDamSection.jsx', import.meta.url), 'utf8');
+  assert.match(section, /getProdutoMediaScanLabel\(row\)/);
+  assert.doesNotMatch(section, /storage_key|scan_sha256|scan_scanner/);
+});
 
 test('workflow V22 expõe somente transicoes permitidas ao perfil e estado atual', () => {
   const denied = { canEdit: false, canApprove: false, canPublish: false, canDeactivate: false };

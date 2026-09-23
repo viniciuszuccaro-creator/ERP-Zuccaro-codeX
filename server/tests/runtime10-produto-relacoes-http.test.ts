@@ -369,6 +369,7 @@ test('HTTP R10 DAM: reserva, confirmacao unica, tenant e auditoria sanitizada', 
     assert.deepEqual(visible.body.data[0], {
       id: reserved.body.data.mediaId, categoria: 'IMAGEM', nome_arquivo: 'synthetic.png',
       mime_type: 'image/png', tamanho_bytes: 8, versao: 1, status: 'QUARENTENA', principal: false,
+      scan_verdict: null,
     });
     assert.equal(JSON.stringify(visible.body).includes(payload.storage_key), false);
     assert.equal(JSON.stringify(visible.body).includes(payload.sha256), false);

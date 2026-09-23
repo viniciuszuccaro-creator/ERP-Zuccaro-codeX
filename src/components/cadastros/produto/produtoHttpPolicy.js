@@ -79,6 +79,12 @@ export function getProdutoWorkflowActions(status, permissions = {}) {
   };
   return (WORKFLOW_TRANSITIONS[status] || []).filter((action) => permitted[action.permission]);
 }
+export function getProdutoMediaScanLabel(media) {
+  if (media?.status !== 'QUARENTENA') return media?.status || 'Estado indisponivel';
+  if (media.scan_verdict === 'INFECTED') return 'Ameaca detectada; em quarentena';
+  if (media.scan_verdict === 'CLEAN') return 'Sem ameaca detectada; ainda em quarentena';
+  return 'Varredura pendente; em quarentena';
+}
 export function prepareProdutoMediaFile(file, { groupId, empresaId, produtoId, version = 1, maxBytes = 10_000_000 }) {
   if (!groupId || !empresaId || !produtoId) throw new Error('Produto e empresa canonicos obrigatorios para midia');
   const originalName = String(file?.name || '');

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getProdutoWorkflowActions, prepareProdutoMediaFile } from './produtoHttpPolicy';
+import { getProdutoMediaScanLabel, getProdutoWorkflowActions, prepareProdutoMediaFile } from './produtoHttpPolicy';
 
 function uploadSigned(url, file, requiredHeaders, onProgress, setCancel) {
   return new Promise((resolve, reject) => {
@@ -206,8 +206,8 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
     </section>
     <section className="space-y-2">
       <h3 className="text-sm font-semibold">Midias do produto</h3>
-      {media.map((row) => <div key={row.id} className="flex justify-between gap-2 border-b py-1 text-sm">
-        <span className="truncate">{row.nome_arquivo}</span><span>{row.status} · v{row.versao}{row.principal ? ' · principal' : ''}</span>
+      {media.map((row) => <div key={row.id} className="flex flex-col gap-1 border-b py-1 text-sm sm:flex-row sm:justify-between sm:gap-2">
+        <span className="min-w-0 break-all">{row.nome_arquivo}</span><span className="min-w-0 break-words sm:text-right">{getProdutoMediaScanLabel(row)} · v{row.versao}{row.principal ? ' · principal' : ''}</span>
       </div>)}
       <div className="flex items-center gap-2"><Button type="button" variant="outline" disabled={mediaPage === 0 || busy} onClick={() => setMediaPage((p) => p - 1)}>Anterior</Button>
         <span className="text-sm">{mediaPage + 1}</span><Button type="button" variant="outline" disabled={!mediaHasMore || busy} onClick={() => setMediaPage((p) => p + 1)}>Proxima</Button></div>

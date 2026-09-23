@@ -1,3 +1,13 @@
+### Comercial 360 / Onda 1 - estado DAM visivel sem liberacao (2026-09-23)
+
+- Branch `codex/comercial-360`, PR #33 draft; base `d129da29d52463630f0bf15ae34c3cf4baed2d69` confirmada no remoto antes do lote.
+- API existente de listagem DAM devolve apenas `scan_verdict` quando a evidencia corresponde ao SHA-256 atual; caso contrario, devolve `null`. Chave, hash, scanner, timestamp, URL e dados de upload permanecem fora da resposta.
+- Formulario Produto V22 existente mostra varredura pendente, sem ameaca detectada ou ameaca detectada sempre com indicacao de quarentena. `CLEAN` nao libera download/publicacao; scanner e Produto HTTP continuam desligados por padrao.
+- Testes locais: UI direcionada 8/8; HTTP R10 10/10; frontend completo 614/614; backend completo 199 pass, 0 fail e 11 skips condicionais sem `DATABASE_URL`.
+- Typecheck/build backend, lint, audit:baseline, build frontend e `git diff --check` PASS. Typecheck global frontend continua FAIL por 1602 diagnosticos legados, nenhum nos arquivos alterados deste lote; baseline nao foi modificado.
+- Arquivos: router Produto, secao DAM V22, policy HTTP existente e testes relacionados. Nenhuma migration nova, dado real, VPS, bucket, porta 3080 ou `main` alterados.
+- Proximo gate: CI frontend/backend/PostgreSQL da PR; depois auditoria DEV somente leitura e homologacao de scanner/buckets com autorizacao especifica antes de ativacao real.
+
 ### Comercial 360 / Onda 1 - evidencia DAM de varredura (2026-09-23)
 
 - Branch `codex/comercial-360`, PR #33 draft; base anterior `8c36a133edadee84fd92d539b7dec14b2f50423c`.

@@ -184,6 +184,7 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
         versao: row.versao,
         status: row.status,
         principal: row.principal,
+        scan_verdict: row.scan_sha256 === row.sha256 && ['CLEAN', 'INFECTED'].includes(row.scan_verdict ?? '') ? row.scan_verdict : null,
       })), meta: page.data });
     } catch (error) { next(error); }
   });
