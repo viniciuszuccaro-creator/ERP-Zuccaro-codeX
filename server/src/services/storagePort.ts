@@ -38,11 +38,12 @@ export function assertMalwareScanResult(request: StorageUploadRequest, result: u
   if (!result || typeof result !== 'object') throw new Error('MALWARE_SCAN_NOT_CLEAN');
   const scan = result as Partial<MalwareScanResult>;
   const now = Date.now();
-  const scannedAtMs = typeof scan.scannedAt === 'string' ? Date.parse(scan.scannedAt) : NaN;
-  const oldestAllowed = Math.max(startedAtMs, now - 5 * 60_000);
+  const scannedAtMs = typeof scan.scannedAt === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(scan.scannedAt)
+    ? Date.parse(scan.scannedAt) : NaN;
   if (!['CLEAN', 'INFECTED'].includes(scan.verdict ?? '') || !/^[a-zA-Z0-9._-]{1,80}$/.test(scan.scanner ?? '')
     || !Number.isFinite(startedAtMs) || !Number.isFinite(scannedAtMs)
-    || scannedAtMs < oldestAllowed || scannedAtMs > now
+    || startedAtMs < now - 5 * 60_000 || startedAtMs > now
+    || scannedAtMs < startedAtMs || scannedAtMs > now
     || scan.groupId !== request.groupId || scan.empresaId !== request.empresaId
     || scan.entity !== request.entity || scan.entityId !== request.entityId
     || scan.actorId !== request.actorId || scan.storageKey !== request.storageKey

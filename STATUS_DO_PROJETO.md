@@ -1,3 +1,13 @@
+## Comercial 360 / Onda 1 - frescor do scan e Gate C parcial (2026-09-23)
+- Base local/remota antes do lote: `304dd47e9d91760a9491f2f63226689e7b154435`; PR #33 draft, sem merge.
+- Causa: o contrato DAM aceitava inicio de tentativa arbitrariamente antigo se o resultado tivesse data recente e aceitava formato ambiguo de data. Agora inicio deve estar na janela de cinco minutos e a evidencia usa UTC ISO com milissegundos; o resultado permanece posterior ao inicio, nao futuro e vinculado ao objeto/tenant exato.
+- Arquivos: `server/src/services/storagePort.ts`, teste existente de storage e documento mestre. Nenhuma migration, rota, bucket, scanner real ou configuracao da VPS foi alterada.
+- Evidencia DEV informada pelo usuario via Web Console: `supabase-db` saudavel, PostgreSQL local 17.6, existencia de `public.profiles` e `public.schema_migrations`; API oficial 3080 anuncia `ERP-RUNTIME-07B` e `auth.mode=dev_headers`. MCP havia confirmado saude dos containers. Nao foram consultados registros, emails, tokens ou URLs.
+- Gate C ainda pendente: colunas/historico de migrations, confirmacao do banco apontado pela API e vinculos agregados `auth.users`/`profiles`. Auth DEV, scanner real, Produto HTTP e Onda 1 nao homologados; 3080 preservada.
+- Validacao: DAM 38/38; backend completo 200 pass, 0 fail, 11 skip sem `DATABASE_URL` (uma falha isolada em `runtime05` na primeira tentativa nao se repetiu, 3/3 isolado); frontend 618/618; typecheck/build backend, audit:baseline, lint, build frontend e diff-check PASS. CI da PR e PostgreSQL DEV ainda nao executados para este lote.
+- Multiempresa/RBAC/auditoria transacional preservados; nenhuma permissao ou regra de publicacao foi afrouxada. Dados reais/credenciais nao versionados.
+- Proximo checkpoint: obter somente leitura o esquema/historico e vinculos agregados pelo Web Console; depois continuar Produto/DAM e contratos das Ondas 3/5/9/15 sem ativar scanner ou implantar.
+
 ## Comercial 360 / Gate D - metadata Auth fail-closed (2026-09-23)
 - Base: `4b6a0e54e1c51be5b81f9bc557a17e4209782b13`, PR #33 draft.
 - Causa: canario e smoke existentes verificavam runtime, mas poderiam aceitar `auth.mode=dev_headers` e produzir sinal de prontidao enganoso.

@@ -156,6 +156,12 @@ test('DAM rejeita evidencia anterior ao inicio da varredura atual', () => {
   assert.throws(() => assertMalwareScanResult(request, clean, Date.now() + 60_000), /MALWARE_SCAN_NOT_CLEAN/);
   assert.throws(() => assertMalwareScanResult(request, { ...clean, scannedAt: new Date(startedAtMs + 60_000).toISOString() }, startedAtMs), /MALWARE_SCAN_NOT_CLEAN/);
   assert.doesNotThrow(() => assertMalwareScanResult(request, { ...clean, scannedAt: new Date().toISOString() }, startedAtMs));
+  assert.throws(() => assertMalwareScanResult(request, { ...clean, scannedAt: new Date().toISOString() }, Date.now() - 6 * 60_000), /MALWARE_SCAN_NOT_CLEAN/);
+  assert.throws(() => assertCleanMalwareScan(request, { ...clean, scannedAt: new Date().toISOString() }, Date.now() - 6 * 60_000), /MALWARE_SCAN_NOT_CLEAN/);
+  assert.throws(() => assertMalwareScanResult(request, { ...clean, scannedAt: new Date().toUTCString() }, startedAtMs), /MALWARE_SCAN_NOT_CLEAN/);
+  assert.throws(() => assertMalwareScanResult(request, { ...clean, scannedAt: new Date().toISOString().replace('Z', '+00:00') }, startedAtMs), /MALWARE_SCAN_NOT_CLEAN/);
+  assert.throws(() => assertMalwareScanResult(request, { ...clean, scannedAt: new Date().toISOString() }, Number.NEGATIVE_INFINITY), /MALWARE_SCAN_NOT_CLEAN/);
+  assert.doesNotThrow(() => assertCleanMalwareScan(request, { ...clean, scannedAt: new Date().toISOString() }, startedAtMs));
 });
 test('Clamd scan is disabled without an explicit local socket', async () => {
   const adapter = makeAdapter(async () => { throw new Error('network must not run'); });
