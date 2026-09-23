@@ -1,3 +1,15 @@
+## Comercial 360 / Gate DEV parcial e guarda do canario (2026-09-23)
+- Branch `codex/comercial-360`, PR #33 draft; base local/remota `440790cd22091749ebf0be24d04bc92b0f06cf35` antes do lote.
+- Evidencia informada pelo usuario via Web Console: `erp-api-dev` na porta oficial 3080 usa imagem `runtime07b-main-ca0bc5f3`; `/health` e `/ready` HTTP 200; `/api/v1/meta` informou `ERP-RUNTIME-07B` e `auth.mode=dev_headers`. Nao se trata de teste Auth do codigo novo.
+- MCP Hostinger somente leitura confirmou VPS `srv1982741` em execucao e `supabase-auth`, `supabase-db` e `supabase-storage` saudaveis. A listagem de projeto MCP nao inventaria a API oficial avulsa; nao substituir a evidencia da Web Console por essa listagem.
+- Pendente: inventario `schema_migrations` no PostgreSQL DEV, contagens/vinculos agregados de `auth.users`, `profiles`, `groups` e `empresas`, rede/porta isolada, imagem imutavel, backups e rollback. Nenhum registro pessoal, token ou configuracao foi lido.
+- Web Console na automacao falhou antes de abrir; consultas SQL nao foram executadas. Gate C parcialmente evidenciado, nao aprovado; Auth, scanner, Produto HTTP e deploy nao homologados.
+- Incremento independente: `comercial360-canary.sh` bloqueia 3080, portas invalidas e nome `erp-api-dev` antes de Docker; testes sinteticos impedem regressao. Script nao executado na VPS.
+- Fluxo preparado em `docs/COMERCIAL_360_V1_DEPLOY.md`: precheck C, compatibilidade/migrations autorizadas, canario isolado, promocao F somente da imagem MAIN aprovada, rollback preservado.
+- Multiempresa/RBAC/auditoria do runtime nao foram alterados neste lote. Proximo passo operacional: consultas agregadas somente leitura na Web Console e decisao de gate; sem merge, migration, seed, restart, bucket ou mudanca da 3080.
+- Validacao local: Bash `-n` PASS; testes do canario 2/2; frontend explicito 616/616; audit:baseline, lint, build frontend, typecheck/build backend e `git diff --check` PASS. PostgreSQL DEV nao consultado; CI efemera da PR sera registrada apos o push.
+- Arquivos do lote: script de canario e teste sintetico, status, handoff, documento mestre e runbook existente. Sem credenciais, dados reais, migrations novas ou mudanca funcional da API.
+
 ## Comercial 360 / Onda 1 - inicio obrigatorio da varredura DAM (2026-09-23)
 - Base: `14b2e5704a536b3f9508f845fa64fa2e666b8293`, CI `35886360232` SUCCESS.
 - Causa: o validador de scan aceitava inicio omitido com janela presumida;

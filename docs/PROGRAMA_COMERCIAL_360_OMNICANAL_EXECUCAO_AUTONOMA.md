@@ -11,7 +11,7 @@
 >
 > Data de consolidação: 23/09/2026
 >
-> Estado factual: PR #33 aberta/draft e sem merge; base `ca4171600cc30f9922c2f8b2ccb8b22d06aa6888`. Orcamento e Pedido canonicos iniciais estao implementados; Produto/PIM/DAM seguem em execucao. Migrations 001-022 existem no repositorio e passaram na CI efemera indicada acima; nenhuma migration 016-022 foi comprovadamente aplicada na VPS. Gate C DEV segue sem evidencia de ambiente; nao inferir o runtime da 3080 do codigo da PR.
+> Estado factual: PR #33 aberta/draft e sem merge; base `ca4171600cc30f9922c2f8b2ccb8b22d06aa6888`. Orcamento e Pedido canonicos iniciais estao implementados; Produto/PIM/DAM seguem em execucao. Migrations 001-022 existem no repositorio e passaram somente na CI efemera. Gate C DEV tem precheck parcial: Web Console informada pelo usuario mostrou 07B/`dev_headers` na 3080; MCP confirmou VPS e Auth/DB/Storage saudaveis. Faltam SQL agregado, vinculos de profiles e precheck do canario. Nenhuma migration 016-022 foi comprovadamente aplicada na VPS; Auth novo, scanner e Produto HTTP nao estao homologados.
 
 ---
 
