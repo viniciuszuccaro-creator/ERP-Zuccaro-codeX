@@ -1,3 +1,10 @@
+## Comercial 360 / Gate C - backup, rollback e porta isolada (2026-09-23)
+
+- Evidencia somente leitura fornecida pelo usuario na Web Console: `/opt/erp-zuccaro/backups/pre-pr32-20260921-140012.sql` existe, tem 486969 bytes, SHA-256 calculado e marcador textual de dump PostgreSQL completo. Isso nao comprova restauracao nem substitui backup atualizado no gate de mudanca autorizado.
+- `erp-api-dev` permanece running na imagem R07B. O container de rollback `erp-api-runtime07b-main-canary` esta exited; a imagem R07B continua presente e tem o mesmo image ID da API oficial. Nenhum rollback foi executado.
+- No momento da consulta, a porta isolada 3086 nao estava em escuta nem publicada por container ativo. A API oficial 3080 nao foi alterada. Porta livre nao autoriza iniciar canario.
+- Gate C continua PARCIAL: ainda falta comparar a conexao efetiva da API com conexao direta ao `supabase-db`, sem expor credenciais, e validar restaurabilidade/frescor do backup antes de qualquer gate de implantacao. Sem migration, seed, Auth novo, Produto HTTP, scanner real ou promocao na VPS.
+
 ## Comercial 360 / Onda 15 - hardening tenant da outbox Produto (2026-09-23)
 
 - Causa: o emissor PostgreSQL de `produto.publicado` aceitava scope Grupo/Empresa divergente do Produto, enquanto a implementacao em memoria ja recusava a divergencia.
