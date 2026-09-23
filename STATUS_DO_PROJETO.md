@@ -10346,3 +10346,10 @@ Checklist inicial:
 - Os testes do protocolo usam servidor sintético local, nao scanner real nem PostgreSQL DEV. CI da PR validara PostgreSQL efemero; nenhuma VPS, bucket, migration remota, porta 3080, segredo ou dado real foi tocado.
 - Risco/rollback: adapter permanece inativo ate gate especifico para instalacao/configuracao e prova de scanner real; rollback do codigo por revert do commit sem alterar metadados ou objetos.
 - Proximo passo Onda 1: integrar a evidencia de scan ao workflow de quarentena e aprovacao em transacao, sem confundir scan limpo com aprovacao comercial; depois reconciliacao de orfaos e publicacao separada. Gate C Auth/DEV permanece bloqueado sem evidencia sanitizada da VPS.
+
+### Onda 1 DAM - assinatura e prazo total da varredura (2026-09-23; EM EXECUCAO)
+- Objetivo: impedir que um resultado `stream: OK` do clamd sintetico seja aceito para bytes com assinatura incoerente com o MIME declarado e impedir espera indefinida por resposta parcial.
+- No `SupabaseStorageAdapter.scan` existente, tamanho/SHA-256 continuam obrigatorios e a assinatura dos primeiros bytes passa a ser verificada antes do veredito; o socket tem prazo total configurado, independentemente de atividade parcial.
+- Testes sinteticos cobrem MIME/assinatura forjados com hash correto e scanner sem resposta. Nenhum scanner real, estado de midia, RBAC, tenant, auditoria, rota ou migration foi alterado. Midia continua QUARENTENA e Produto HTTP desligado.
+- Validacoes locais: testes direcionados 12/12; backend serial 208 total / 197 pass / 0 fail / 11 skips condicionais sem DATABASE_URL; backend typecheck/build, frontend lint e audit:baseline, `git diff --check` PASS. Frontend nao foi alterado; a CI da PR repetira frontend/backend/PostgreSQL efemero. Sem VPS, bucket, 3080, dados reais ou merge.
+- Proximo passo: definir persistencia tenant-scoped de evidencia de scan e revisao comercial separada antes de adicionar transicao de QUARENTENA; gate DEV real continua pendente.

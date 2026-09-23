@@ -197,11 +197,12 @@ export class SupabaseStorageAdapter implements StoragePort, MalwareScanPort {
       throw new Error('MALWARE_SCAN_OBJECT_INVALID');
     }
     const socket = createConnection({ path: socketPath });
-    socket.setTimeout(timeoutMs, () => socket.destroy(new Error('MALWARE_SCAN_TIMEOUT')));
+    const deadline = setTimeout(() => socket.destroy(new Error('MALWARE_SCAN_TIMEOUT')), timeoutMs);
     const reply = this.clamdReply(socket);
     const reader = response.body.getReader();
     const hash = createHash('sha256');
     let bytes = 0;
+    let firstBytes = Buffer.alloc(0);
     let complete = false;
     try {
       await once(socket, 'connect');
@@ -212,6 +213,7 @@ export class SupabaseStorageAdapter implements StoragePort, MalwareScanPort {
         bytes += chunk.value.byteLength;
         if (bytes > request.sizeBytes || bytes > this.options.maxBytes) throw new Error('MALWARE_SCAN_OBJECT_INVALID');
         hash.update(chunk.value);
+        if (firstBytes.length < 16) firstBytes = Buffer.concat([firstBytes, chunk.value.subarray(0, 16 - firstBytes.length)]);
         for (let offset = 0; offset < chunk.value.byteLength; offset += 1024 * 1024) {
           const part = chunk.value.subarray(offset, offset + 1024 * 1024);
           const length = Buffer.alloc(4);
@@ -223,6 +225,7 @@ export class SupabaseStorageAdapter implements StoragePort, MalwareScanPort {
       if (bytes !== request.sizeBytes || hash.digest('hex').toLowerCase() !== request.sha256.toLowerCase()) {
         throw new Error('MALWARE_SCAN_OBJECT_INVALID');
       }
+      if (!matchesSignature(request.mimeType, firstBytes)) throw new Error('MALWARE_SCAN_OBJECT_INVALID');
       await this.writeClamd(socket, Buffer.alloc(4));
       const verdict = await reply;
       if (verdict !== 'stream: OK' && (!verdict || !/^stream: .+ FOUND$/.test(verdict))) throw new Error('MALWARE_SCAN_INCONCLUSIVE');
@@ -237,6 +240,7 @@ export class SupabaseStorageAdapter implements StoragePort, MalwareScanPort {
       } finally {
         reader.releaseLock();
         socket.destroy();
+        clearTimeout(deadline);
       }
     }
   }

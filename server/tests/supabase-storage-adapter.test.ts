@@ -166,6 +166,7 @@ test('Clamd INSTREAM verifies exact private object and fails closed on scanner r
         const length = pending.readUInt32BE(offset);
         if (length === 0) {
           scanned = Buffer.concat(parts);
+          if (verdict === 'NO_REPLY') return;
           socket.end(`${verdict}\0`);
           return;
         }
@@ -198,6 +199,12 @@ test('Clamd INSTREAM verifies exact private object and fails closed on scanner r
     verdict = 'stream: ERROR';
     await assert.rejects(adapter.scan(request), /MALWARE_SCAN_INCONCLUSIVE/);
     await assert.rejects(adapter.scan({ ...request, sha256: '0'.repeat(64) }), /MALWARE_SCAN_OBJECT_INVALID/);
+    verdict = 'stream: OK';
+    const spoof = Buffer.from('synthetic-not-a-png');
+    const spoofAdapter = new SupabaseStorageAdapter({ internalUrl: 'https://internal.example.test', publicUrl: 'https://public.example.test', serviceRoleKey: 'synthetic-key', privateBucket: 'private', maxBytes: 1024, clamdSocketPath: socketPath, clamdTimeoutMs: 1000, fetchImpl: async () => new Response(spoof, { headers: { 'content-type': 'image/png' } }) });
+    await assert.rejects(spoofAdapter.scan({ ...request, sizeBytes: spoof.length, sha256: createHash('sha256').update(spoof).digest('hex') }), /MALWARE_SCAN_OBJECT_INVALID/);
+    verdict = 'NO_REPLY';
+    await assert.rejects(adapter.scan(request), /MALWARE_SCAN_INCONCLUSIVE|MALWARE_SCAN_TIMEOUT/);
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   }
