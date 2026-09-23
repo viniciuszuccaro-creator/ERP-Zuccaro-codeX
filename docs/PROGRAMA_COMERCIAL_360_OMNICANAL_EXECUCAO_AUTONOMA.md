@@ -590,6 +590,8 @@ Distribuir do ERP para site, portal, app, chatbots e marketplaces:
 - alerta de divergência;
 - webhooks verificados e auditados.
 
+A unicidade global de `integration_events.idempotency_key` ja existe na migration 001 e o emissor Produto usa `ON CONFLICT`; a implementacao em memoria espelha essa semantica. Claim/lease, entrega por canal e reconciliacao externa continuam pendentes e nao sao ativados por esse contrato.
+
 ---
 
 ## Onda 16 — Site CPA, e-commerce e portal B2B

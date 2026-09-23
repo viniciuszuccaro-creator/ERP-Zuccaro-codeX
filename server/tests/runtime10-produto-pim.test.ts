@@ -523,6 +523,31 @@ test('Workflow Produto exige transicoes e RBAC de aprovacao/publicacao e grava o
   );
 });
 
+test('Outbox Produto em memoria preserva idempotencia global e rollback', async () => {
+  const { repo, service, ctx } = harness();
+  const first = await service.create(ctx, { descricao: 'Outbox primeiro sintetico' });
+  const second = await service.create(ctx, { descricao: 'Outbox segundo sintetico' });
+  const scope = { groupId: GROUP, empresaId: EMPRESA };
+  const requestId = 'outbox-idempotente-sintetico';
+  await repo.withTransaction(async (executor) => {
+    await repo.appendPublicationEvent(scope, first, requestId, executor);
+    await repo.appendPublicationEvent(scope, first, requestId, executor);
+    await repo.appendPublicationEvent(scope, second, requestId, executor);
+  });
+  assert.equal(repo.listPublicationEvents().length, 2);
+  await assert.rejects(repo.withTransaction(async (executor) => {
+    await repo.appendPublicationEvent(scope, first, 'outbox-rollback-sintetico', executor);
+    throw new Error('SYNTHETIC_ROLLBACK');
+  }), /SYNTHETIC_ROLLBACK/);
+  assert.equal(repo.listPublicationEvents().length, 2);
+  await repo.appendPublicationEvent(scope, first, 'outbox-rollback-sintetico');
+  assert.equal(repo.listPublicationEvents().length, 3);
+  await assert.rejects(repo.appendPublicationEvent(
+    { groupId: randomUUID(), empresaId: EMPRESA }, first, requestId,
+  ), /TENANT_FK_MISMATCH/);
+  assert.equal(repo.listPublicationEvents().length, 3);
+});
+
 test('Falha de auditoria rollbacka publicacao e evento outbox na mesma transacao', async () => {
   const { repo, service, ctx } = harness();
   const created = await service.create(ctx, { descricao: 'Rollback publicacao' });

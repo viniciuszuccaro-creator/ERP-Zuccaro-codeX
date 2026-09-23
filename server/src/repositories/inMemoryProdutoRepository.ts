@@ -253,6 +253,10 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     if (produto.group_id !== scope.groupId || (scope.empresaId && produto.empresa_id !== scope.empresaId)) {
       throw new Error('TENANT_FK_MISMATCH');
     }
+    if (this.publicationEvents.some((event) => event.groupId === scope.groupId
+      && event.produtoId === produto.id && event.requestId === requestId)) {
+      return;
+    }
     this.publicationEvents.push({ groupId: scope.groupId, empresaId: produto.empresa_id, produtoId: produto.id, requestId });
   }
   async listVariants(scope: Scope, produtoId: string): Promise<ProdutoVariante[]> {
