@@ -58,12 +58,12 @@ test('HTTP_PILOT_ENTITIES includes RUNTIME-02 cadastros sem Produto', () => {
   assert.equal(HTTP_PILOT_ENTITIES.includes('ClienteLocal'), false);
   assert.equal(HTTP_PILOT_ENTITIES.includes('Obra'), false);
 });
-test('Produto HTTP permanece opt-in e nao altera os pilotos existentes', () => {
+test('Produto HTTP nao troca consumidores legados de fonte mesmo com opt-in do formulario', () => {
   assert.equal(resolveHttpPilotEntities({}).includes('Produto'), false);
   assert.equal(resolveHttpPilotEntities({ VITE_ERP_HTTP_PRODUTO: 'false' }).includes('Produto'), false);
   const enabled = resolveHttpPilotEntities({ VITE_ERP_HTTP_PRODUTO: 'true' });
-  assert.equal(enabled.includes('Produto'), true);
-  assert.deepEqual(enabled.filter((name) => name === 'Produto'), ['Produto']);
+  assert.equal(enabled.includes('Produto'), false);
+  assert.deepEqual(enabled.filter((name) => name === 'Produto'), []);
 });
 
 

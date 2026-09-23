@@ -27,7 +27,7 @@ export const isLocalOnlyMode = erpBackendMode === 'local'
 export const isHttpBackendMode = erpBackendMode === 'http';
 export const isApiKeyMode = isLocalOnlyMode || isHttpBackendMode || !!apiKey;
 
-export const isHttpProdutoEnabled = isHttpBackendMode && resolveHttpPilotEntities(import.meta.env).includes('Produto');
+export const isHttpProdutoEnabled = isHttpBackendMode && import.meta.env.VITE_ERP_HTTP_PRODUTO === 'true';
 export const localApiUser = (isLocalOnlyMode || isHttpBackendMode) ? localOnlyUser : {
   id: 'local-api-key-user',
   email: 'local-api@erp-integra.local',
@@ -88,7 +88,6 @@ function createHttpHybridClient() {
   const entities = new Proxy(localBase44.entities || {}, {
     get(target, prop, receiver) {
       if (typeof prop === 'string' && pilotSet.has(prop)) {
-        if (prop === 'Produto') return http.preparedEntities.Produto;
         if (http.entities[prop]) return http.entities[prop];
       }
       return Reflect.get(target, prop, receiver);

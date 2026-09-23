@@ -35,12 +35,20 @@ test('Produto V22 bloqueia upload legado quando backend HTTP usa Storage oficial
     'utf8',
   );
   const upload = form.slice(form.indexOf('const handleUploadFoto'), form.indexOf('const toggleUnidadeSecundaria'));
-  assert.match(form, /import \{ base44, isHttpBackendMode, isHttpProdutoEnabled \} from "@\/api\/base44Client"/);
+  assert.match(form, /import \{ base44, getHttpProdutoApi, isHttpBackendMode, isHttpProdutoEnabled \} from "@\/api\/base44Client"/);
   assert.match(upload, /if \(isHttpBackendMode\)[\s\S]*return;[\s\S]*base44\.integrations\.Core\.UploadFile/);
   assert.match(form, /onChange=\{handleUploadFoto\}[\s\S]*disabled=\{isHttpBackendMode\}/);
   assert.match(form, /disabled=\{isHttpBackendMode \|\| uploadingFoto/);
   assert.match(form, /disabled=\{isHttpBackendMode \|\| gerandoImagem/);
   assert.match(form, /if \(!url\) throw new Error\('Imagem nao gerada'\)/);
+});
+test('V22 usa API explicita para UUID canonico e preserva operacoes locais para legado', async () => {
+  const form = await readFile(new URL('../src/components/cadastros/ProdutoFormV22_Completo.jsx', import.meta.url), 'utf8');
+  const client = await readFile(new URL('../src/api/base44Client.js', import.meta.url), 'utf8');
+  assert.match(form, /produtoHttp \? await getHttpProdutoApi\(\)\.update\(produto\.id, dadosSubmit\) : await updateInContext\('Produto'/);
+  assert.match(form, /produtoHttp \? await getHttpProdutoApi\(\)\.create\(dadosSubmit\) : await createInContext\('Produto'/);
+  assert.match(form, /produtoHttp \? getHttpProdutoApi\(\)\.delete\(produto\.id\) : deleteInContext\('Produto'/);
+  assert.doesNotMatch(client, /if \(prop === 'Produto'\) return http\.preparedEntities\.Produto/);
 });
 test('V22 projeta somente master data no HTTP e nao envia tenant, estoque, preco ou fiscal operacional', () => {
   const body = toProdutoHttpPayload({ descricao: 'Chapa sintetica', tipo_item: 'Revenda', multiplo_venda: '2',

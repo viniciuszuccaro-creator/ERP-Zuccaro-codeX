@@ -15,7 +15,7 @@ import {
   TrendingUp, ArrowRightLeft, ShoppingCart, Image, Warehouse,
   Trash2, Power, PowerOff, Save
 } from "lucide-react";
-import { base44, isHttpBackendMode, isHttpProdutoEnabled } from "@/api/base44Client";
+import { base44, getHttpProdutoApi, isHttpBackendMode, isHttpProdutoEnabled } from "@/api/base44Client";
 import { toast } from "sonner";
 import FormWrapper from "@/components/common/FormWrapper";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
@@ -217,7 +217,7 @@ function ProdutoFormV22_Completo({ produto: produtoProp, item, data, onSubmit, o
   useEffect(() => {
     if (!produtoHttp || !produto?.id) return;
     let active = true;
-    base44.entities.Produto.get(produto.id).then((row) => {
+    getHttpProdutoApi().get(produto.id).then((row) => {
       if (active) setFormData((current) => ({ ...current, ...row }));
     }).catch((error) => {
       if (active) toast.error('Erro ao carregar produto: ' + error.message);
@@ -600,9 +600,9 @@ Caso contrário, sugira:
       const dadosSubmit = produtoHttp ? toProdutoHttpPayload(dadosBase, { update: Boolean(produto?.id) }) : carimbarContexto(dadosBase, 'empresa_id');
       let saved;
       if (produto?.id) {
-        saved = produtoHttp ? await base44.entities.Produto.update(produto.id, dadosSubmit) : await updateInContext('Produto', produto.id, dadosSubmit);
+        saved = produtoHttp ? await getHttpProdutoApi().update(produto.id, dadosSubmit) : await updateInContext('Produto', produto.id, dadosSubmit);
       } else {
-        saved = produtoHttp ? await base44.entities.Produto.create(dadosSubmit) : await createInContext('Produto', dadosSubmit);
+        saved = produtoHttp ? await getHttpProdutoApi().create(dadosSubmit) : await createInContext('Produto', dadosSubmit);
       }
       if (produtoHttp && !saved?.id) throw new Error('Resposta do ERP sem identificador do produto');
       if (onSuccess) onSuccess();
@@ -625,7 +625,7 @@ Caso contrário, sugira:
       return;
     }
     if (produto?.id) {
-      (produtoHttp ? base44.entities.Produto.delete(produto.id) : deleteInContext('Produto', produto.id))
+      (produtoHttp ? getHttpProdutoApi().delete(produto.id) : deleteInContext('Produto', produto.id))
         .then(() => {
           toast.success('Produto excluido com sucesso!');
           if (onSuccess) onSuccess();
