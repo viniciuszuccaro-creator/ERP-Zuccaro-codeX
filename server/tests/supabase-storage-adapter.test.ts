@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { createServer } from 'node:net';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import test from 'node:test';
 import { SupabaseStorageAdapter } from '../src/services/supabaseStorageAdapter.js';
 
@@ -139,5 +142,63 @@ test('DAM scan contract fails closed for missing, inconclusive, or unrelated res
   ];
   for (const result of invalid) {
     assert.throws(() => assertCleanMalwareScan(request, result), /MALWARE_SCAN_NOT_CLEAN/);
+  }
+});
+test('Clamd scan is disabled without an explicit local socket', async () => {
+  const adapter = makeAdapter(async () => { throw new Error('network must not run'); });
+  await assert.rejects(adapter.scan(request), /MALWARE_SCAN_NOT_CONFIGURED/);
+  await assert.rejects(adapter.scan({ ...request, empresaId: groupId }), /STORAGE_SCOPE_INVALID/);
+});
+
+test('Clamd INSTREAM verifies exact private object and fails closed on scanner results', async () => {
+  const socketPath = process.platform === 'win32'
+    ? `\\\\.\\pipe\\erp-clamd-${randomUUID()}` : join(tmpdir(), `erp-clamd-${randomUUID()}.sock`);
+  let verdict = 'stream: OK';
+  let scanned = Buffer.alloc(0);
+  const server = createServer((socket) => {
+    let pending = Buffer.alloc(0);
+    socket.on('data', (chunk: Buffer) => {
+      pending = Buffer.concat([pending, chunk]);
+      if (pending.length < 10 || pending.subarray(0, 10).toString() !== 'zINSTREAM\0') return;
+      let offset = 10;
+      const parts: Buffer[] = [];
+      while (offset + 4 <= pending.length) {
+        const length = pending.readUInt32BE(offset);
+        if (length === 0) {
+          scanned = Buffer.concat(parts);
+          socket.end(`${verdict}\0`);
+          return;
+        }
+        if (offset + 4 + length > pending.length) return;
+        parts.push(pending.subarray(offset + 4, offset + 4 + length));
+        offset += 4 + length;
+      }
+    });
+  });
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(socketPath, resolve);
+  });
+  const adapter = new SupabaseStorageAdapter({
+    internalUrl: 'https://internal.example.test', publicUrl: 'https://public.example.test',
+    serviceRoleKey: 'synthetic-key', privateBucket: 'private', maxBytes: 1024,
+    clamdSocketPath: socketPath, clamdTimeoutMs: 1000,
+    fetchImpl: async () => new Response(bytes, { headers: { 'content-type': 'image/png' } }),
+  });
+  try {
+    const clean = await adapter.scan(request);
+    assert.equal(clean.verdict, 'CLEAN');
+    assert.equal(clean.scanner, 'clamd');
+    assert.deepEqual(scanned, bytes);
+    assert.doesNotThrow(() => assertCleanMalwareScan(request, clean));
+    verdict = 'stream: Synthetic.Test FOUND';
+    const infected = await adapter.scan(request);
+    assert.equal(infected.verdict, 'INFECTED');
+    assert.throws(() => assertCleanMalwareScan(request, infected), /MALWARE_SCAN_NOT_CLEAN/);
+    verdict = 'stream: ERROR';
+    await assert.rejects(adapter.scan(request), /MALWARE_SCAN_INCONCLUSIVE/);
+    await assert.rejects(adapter.scan({ ...request, sha256: '0'.repeat(64) }), /MALWARE_SCAN_OBJECT_INVALID/);
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   }
 });

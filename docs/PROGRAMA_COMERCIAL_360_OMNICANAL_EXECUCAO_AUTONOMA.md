@@ -180,6 +180,7 @@ Este programa consolida, sem substituir nem duplicar, `AGENTS.md`, `COMERCIAL_36
 - Produto/PIM/DAM no código: classificação, conteúdo técnico/comercial/SEO, workflow, variantes/equivalentes, outbox e formulário V22 opt-in; reserva/confirmacão de upload privado mantém mídia em QUARENTENA. `MalwareScanPort` é contrato fail-closed, sem scanner real integrado. Produto HTTP permanece desligado por padrão.
 - Auth no código: validação Bearer pelo Supabase Auth self-hosted e resolução de `auth_user_id` para `profiles.id`; falta homologação do endpoint/vínculos/escopo no DEV real. O MCP Hostinger autenticado expôs apenas ferramentas Agency Hosting, sem VPS; Web Console não abriu na automação desta sessão.
 - Deploy: runbook e scripts parametrizados de canário, smoke e rollback preparados, mas não executados. Nenhuma mudança de VPS, bucket, migration real ou 3080 decorre deste baseline.
+- Varredura preparada em codigo: `SupabaseStorageAdapter.scan()` envia INSTREAM por socket local configurado ao clamd e exige tamanho/SHA-256 do objeto privado; sem socket falha fechado. Os testes usam clamd sintetico. Nao ha scanner real verificado, integracao de liberacao/publicacao ou configuracao na VPS; `CLEAN` nao e aprovacao comercial.
 - Este baseline é fundação das Ondas 1, 4 e 5; não representa conclusão integral de nenhuma delas.
 
 ## 6.3 Controle executável das ondas

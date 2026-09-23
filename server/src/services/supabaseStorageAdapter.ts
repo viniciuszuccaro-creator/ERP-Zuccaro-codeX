@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
-import type { StorageObjectContext, StorageObjectMetadata, StoragePort, StorageUploadRequest } from './storagePort.js';
+import { once } from 'node:events';
+import { createConnection, type Socket } from 'node:net';
+import type { MalwareScanPort, MalwareScanResult, StorageObjectContext, StorageObjectMetadata, StoragePort, StorageUploadRequest } from './storagePort.js';
 
 export type SupabaseStorageOptions = {
   internalUrl: string;
@@ -8,6 +10,8 @@ export type SupabaseStorageOptions = {
   privateBucket: string;
   maxBytes: number;
   fetchImpl?: typeof fetch;
+  clamdSocketPath?: string;
+  clamdTimeoutMs?: number;
 };
 
 const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
@@ -72,7 +76,7 @@ function baseUrl(value: string): URL {
 }
 
 /** Backend-only adapter. Authorization/RBAC and metadata persistence stay with ProdutoService. */
-export class SupabaseStorageAdapter implements StoragePort {
+export class SupabaseStorageAdapter implements StoragePort, MalwareScanPort {
   private readonly internalBase: URL;
   private readonly publicBase: URL;
   private readonly fetchImpl: typeof fetch;
@@ -173,5 +177,85 @@ export class SupabaseStorageAdapter implements StoragePort {
       url: this.signedUrl(data.signedURL, '/object/sign/', storageKey),
       expiresAt: new Date(Date.now() + 60_000).toISOString(),
     };
+  }
+
+  /** Scans the exact private object bytes; this does not approve or publish media. */
+  async scan(request: StorageUploadRequest): Promise<MalwareScanResult> {
+    assertUpload(request, this.options.maxBytes);
+    const socketPath = this.options.clamdSocketPath;
+    const timeoutMs = this.options.clamdTimeoutMs;
+    if (!socketPath || typeof timeoutMs !== 'number' || !Number.isSafeInteger(timeoutMs) || timeoutMs < 1) {
+      throw new Error('MALWARE_SCAN_NOT_CONFIGURED');
+    }
+    const response = await this.fetchImpl(new URL(`object/authenticated/${this.path(request.storageKey)}`, this.internalBase), {
+      redirect: 'error',
+      signal: AbortSignal.timeout(timeoutMs),
+      headers: { apikey: this.options.serviceRoleKey, Authorization: `Bearer ${this.options.serviceRoleKey}` },
+    });
+    if (!response.ok || !response.body || response.headers.get('content-type')?.split(';')[0].trim().toLowerCase() !== request.mimeType) {
+      await response.body?.cancel();
+      throw new Error('MALWARE_SCAN_OBJECT_INVALID');
+    }
+    const socket = createConnection({ path: socketPath });
+    socket.setTimeout(timeoutMs, () => socket.destroy(new Error('MALWARE_SCAN_TIMEOUT')));
+    const reply = this.clamdReply(socket);
+    const reader = response.body.getReader();
+    const hash = createHash('sha256');
+    let bytes = 0;
+    let complete = false;
+    try {
+      await once(socket, 'connect');
+      await this.writeClamd(socket, Buffer.from('zINSTREAM\0'));
+      while (true) {
+        const chunk = await reader.read();
+        if (chunk.done) { complete = true; break; }
+        bytes += chunk.value.byteLength;
+        if (bytes > request.sizeBytes || bytes > this.options.maxBytes) throw new Error('MALWARE_SCAN_OBJECT_INVALID');
+        hash.update(chunk.value);
+        for (let offset = 0; offset < chunk.value.byteLength; offset += 1024 * 1024) {
+          const part = chunk.value.subarray(offset, offset + 1024 * 1024);
+          const length = Buffer.alloc(4);
+          length.writeUInt32BE(part.byteLength);
+          await this.writeClamd(socket, length);
+          await this.writeClamd(socket, part);
+        }
+      }
+      if (bytes !== request.sizeBytes || hash.digest('hex').toLowerCase() !== request.sha256.toLowerCase()) {
+        throw new Error('MALWARE_SCAN_OBJECT_INVALID');
+      }
+      await this.writeClamd(socket, Buffer.alloc(4));
+      const verdict = await reply;
+      if (verdict !== 'stream: OK' && (!verdict || !/^stream: .+ FOUND$/.test(verdict))) throw new Error('MALWARE_SCAN_INCONCLUSIVE');
+      return {
+        ...request, version: request.version ?? 1,
+        verdict: verdict === 'stream: OK' ? 'CLEAN' : 'INFECTED',
+        scanner: 'clamd', scannedAt: new Date().toISOString(),
+      };
+    } finally {
+      try {
+        if (!complete) await reader.cancel();
+      } finally {
+        reader.releaseLock();
+        socket.destroy();
+      }
+    }
+  }
+
+  private async writeClamd(socket: Socket, chunk: Uint8Array): Promise<void> {
+    if (!socket.write(chunk)) await once(socket, 'drain');
+  }
+
+  private clamdReply(socket: Socket): Promise<string | null> {
+    return new Promise((resolve) => {
+      let data = '';
+      socket.on('data', (chunk: Buffer) => {
+        data += chunk.toString('utf8');
+        if (data.length > 512) { resolve(null); socket.destroy(); return; }
+        const end = data.indexOf('\0');
+        if (end >= 0) resolve(data.slice(0, end));
+      });
+      socket.once('error', () => resolve(null));
+      socket.once('close', () => resolve(null));
+    });
   }
 }
