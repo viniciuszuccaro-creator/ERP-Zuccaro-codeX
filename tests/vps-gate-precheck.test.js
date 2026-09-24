@@ -203,7 +203,8 @@ test('print-auth-package-status READY apos Gate C APROVADO', () => {
   assert.match(run.stdout, /GATE_C_RESULT=APROVADO/);
   assert.match(run.stdout, /missing_for_gate_e=016,017,018,019,020,021,022,023,024/);
   assert.match(run.stdout, /proposed_EXPECTED_RUNTIME=ERP-RUNTIME-08B/);
-  assert.match(run.stdout, /TERMO_STATUS=FACTS_READY_WAITING_SIGNATURE/);
+  // Termo pode estar aguardando assinatura ou já assinado (Gate E).
+  assert.match(run.stdout, /TERMO_STATUS=(FACTS_READY_WAITING_SIGNATURE|SIGNED_CHECKLIST_OK)/);
   assert.match(run.stdout, /BACKUP_NOVO_STATUS=NAMED_CANDIDATE_PRESENT/);
   assert.match(run.stdout, /GO_NOGO=NO/);
   assert.match(run.stdout, /PACKAGE_STATUS=READY_FOR_HUMAN_DECISION/);
@@ -375,7 +376,8 @@ test('go-nogo-def reporta GATE_E_READY=NO quando probe da main não tem 016-024'
   assert.match(run.stdout, /image_digest_pending_post_merge/);
   assert.match(run.stdout, /auth_synthetic_gate_pending/);
   assert.match(run.stdout, /GATE_F_READY=NO/);
-  assert.match(run.stdout, /DECISION_STATE=READY_FOR_REVIEW/);
+  // Com termo assinado (Gate E): AUTHORIZED_CHECKLIST; senão READY_FOR_REVIEW.
+  assert.match(run.stdout, /DECISION_STATE=(READY_FOR_REVIEW|AUTHORIZED_CHECKLIST)/);
   assert.match(run.stdout, /AUTHORIZATION=NOT_GRANTED/);
   assert.match(run.stdout, /EXECUTED=NO/);
   assert.match(run.stdout, /GO_NOGO=NO/);
@@ -457,7 +459,7 @@ test('freeze-go-nogo-snapshot grava GO_NOGO=NO e EXHAUSTED', () => {
   assert.match(text, /main_missing_migrations_016_024/);
   assert.match(text, /GATE_D_READY=NO/);
   assert.match(text, /GATE_F_READY=NO/);
-  assert.match(text, /DECISION_STATE=READY_FOR_REVIEW/);
+  assert.match(text, /DECISION_STATE=(READY_FOR_REVIEW|AUTHORIZED_CHECKLIST)/);
   assert.match(text, /AUTONOMOUS_PREP_STATUS=EXHAUSTED_WAITING_HUMAN_CODEX/);
   assert.match(text, /EXECUTE_DEF=NO/);
   assert.doesNotMatch(text, /Bearer |sk_live_|BEGIN PRIVATE KEY/i);
