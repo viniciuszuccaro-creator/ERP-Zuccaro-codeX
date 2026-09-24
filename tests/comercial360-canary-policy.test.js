@@ -44,27 +44,35 @@ function metadataGate(path, metadata) {
   const expression = source.match(/if ! node -e "([^"]+)" "\$meta" "\$EXPECTED_RUNTIME"/)?.[1];
   assert.ok(expression, 'script must fail closed on metadata mismatch');
   const payload = typeof metadata === 'string' ? metadata : JSON.stringify(metadata);
-  return spawnSync(process.execPath, ['-e', expression, payload, 'COMERCIAL-360-V1'], { encoding: 'utf8' });
+  return spawnSync(process.execPath, ['-e', expression, payload, 'ERP-RUNTIME-08B'], { encoding: 'utf8' });
 }
 
+test('Comercial 360 canary default EXPECTED_RUNTIME is ERP-RUNTIME-08B', () => {
+  const source = readFileSync(script, 'utf8');
+  assert.match(source, /EXPECTED_RUNTIME="\$\{EXPECTED_RUNTIME:-ERP-RUNTIME-08B\}"/);
+  assert.doesNotMatch(source, /COMERCIAL-360-V1/);
+});
+
 test('Comercial 360 canary requires the reviewed runtime and verified Supabase Auth', () => {
-  const meta = { runtime: 'COMERCIAL-360-V1', auth: { mode: 'supabase_user' } };
+  const meta = { runtime: 'ERP-RUNTIME-08B', auth: { mode: 'supabase_user' } };
   assert.equal(metadataGate(script, meta).status, 0);
   for (const invalid of [
     { ...meta, auth: { mode: 'dev_headers' } },
     { ...meta, auth: undefined },
     { ...meta, runtime: 'ERP-RUNTIME-07B' },
+    { ...meta, runtime: 'COMERCIAL-360-V1' },
     '{invalid-json',
   ]) assert.equal(metadataGate(script, invalid).status, 1);
 });
 
 test('Comercial 360 smoke also requires verified Auth and both commercial entities', () => {
   const smoke = fileURLToPath(new URL('../scripts/deploy/comercial360-smoke.sh', import.meta.url));
-  const meta = { runtime: 'COMERCIAL-360-V1', auth: { mode: 'supabase_user' }, httpEntities: ['Orcamento', 'Pedido'] };
+  const meta = { runtime: 'ERP-RUNTIME-08B', auth: { mode: 'supabase_user' }, httpEntities: ['Orcamento', 'Pedido'] };
   assert.equal(metadataGate(smoke, meta).status, 0);
   for (const invalid of [
     { ...meta, auth: { mode: 'dev_headers' } },
     { ...meta, httpEntities: ['Orcamento'] },
     { ...meta, runtime: 'ERP-RUNTIME-07B' },
+    { ...meta, runtime: 'COMERCIAL-360-V1' },
   ]) assert.equal(metadataGate(smoke, invalid).status, 1);
 });

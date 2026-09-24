@@ -355,6 +355,7 @@ test('print-gate-e-fatias expoe comercial e produto', () => {
   assert.match(run.stdout, /review_slices_only=YES/);
   assert.match(run.stdout, /APPLY_NOW=NO/);
   assert.match(run.stdout, /AUTHORIZES_GATES_DEF=NO/);
+  assert.match(run.stdout, /GATE_E_PLAN_STATUS=EXECUTED_OK/);
 });
 
 test('go-nogo-def reporta GATE_E_READY=NO quando probe da main não tem 016-024', () => {
@@ -369,12 +370,15 @@ test('go-nogo-def reporta GATE_E_READY=NO quando probe da main não tem 016-024'
   assert.equal(run.status, 0, run.stderr || run.stdout);
   assert.match(run.stdout, /main_migrations_016_024=PENDING_ABSENT/);
   assert.match(run.stdout, /main_missing_migrations=016,017,018,019,020,021,022,023,024/);
-  assert.match(run.stdout, /vps_schema_016_024=PENDING_NOT_APPLIED/);
+  // Evidência Gate E OK no repo: schema DEV marcado APPLIED mesmo se main probe falha.
+  assert.match(run.stdout, /vps_schema_016_024=APPLIED/);
+  assert.match(run.stdout, /gate_e_executed_evidence=OK/);
   assert.match(run.stdout, /GATE_E_READY=NO/);
   assert.match(run.stdout, /gate_e_blockers=.*main_missing_migrations_016_024/);
   assert.match(run.stdout, /GATE_D_READY=NO/);
   assert.match(run.stdout, /image_digest_pending_post_merge/);
   assert.match(run.stdout, /auth_synthetic_gate_pending/);
+  assert.doesNotMatch(run.stdout, /gate_d_blockers=.*gate_e_schema_not_applied/);
   assert.match(run.stdout, /GATE_F_READY=NO/);
   // Com termo assinado (Gate E): AUTHORIZED_CHECKLIST; senão READY_FOR_REVIEW.
   assert.match(run.stdout, /DECISION_STATE=(READY_FOR_REVIEW|AUTHORIZED_CHECKLIST)/);
@@ -397,10 +401,12 @@ test('go-nogo-def GATE_E_READY=YES quando checkout tem 016-024 (probe local)', (
   });
   assert.equal(run.status, 0, run.stderr || run.stdout);
   assert.match(run.stdout, /main_migrations_016_024=PRESENT/);
+  assert.match(run.stdout, /vps_schema_016_024=APPLIED/);
   assert.match(run.stdout, /GATE_E_READY=YES/);
   assert.match(run.stdout, /gate_e_blockers=NONE/);
   assert.match(run.stdout, /AUTHORIZATION=NOT_GRANTED/);
   assert.match(run.stdout, /EXECUTED=NO/);
+  assert.doesNotMatch(run.stdout, /gate_d_blockers=.*gate_e_schema_not_applied/);
 });
 
 test('go-nogo-def GATE_E_READY=YES quando MAIN_MIGRATIONS_DIR tem 016-024', () => {
@@ -416,9 +422,13 @@ test('go-nogo-def GATE_E_READY=YES quando MAIN_MIGRATIONS_DIR tem 016-024', () =
   assert.equal(run.status, 0, run.stderr || run.stdout);
   assert.match(run.stdout, /main_migrations_016_024=PRESENT/);
   assert.match(run.stdout, /main_missing_migrations=NONE/);
+  assert.match(run.stdout, /vps_schema_016_024=APPLIED/);
   assert.match(run.stdout, /GATE_E_READY=YES/);
   assert.match(run.stdout, /gate_e_blockers=NONE/);
   assert.match(run.stdout, /GATE_D_READY=NO/);
+  assert.match(run.stdout, /auth_synthetic_gate_pending/);
+  assert.match(run.stdout, /image_digest_pending_post_merge/);
+  assert.doesNotMatch(run.stdout, /gate_d_blockers=.*gate_e_schema_not_applied/);
   assert.match(run.stdout, /AUTHORIZATION=NOT_GRANTED/);
   assert.match(run.stdout, /EXECUTED=NO/);
   assert.doesNotMatch(run.stdout, /gate_e_blockers=.*image_digest/);

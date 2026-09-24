@@ -131,13 +131,25 @@ else
   echo 'main_present_migrations=NONE'
 fi
 
-# VPS ainda sem 016–024 é esperado pré-E; não confundir com fonte na main
-if [[ -n "$missing_vps" && "$missing_vps" != 'NONE' ]]; then
+# Schema 016–024 no DEV: preferir evidência Gate E sanitizada (pós-apply).
+# missing_for_gate_e do Gate C permanece histórico e não sobrescreve apply comprovado.
+GATE_E_EVIDENCE="${GATE_E_EVIDENCE:-$ROOT/docs/vps/evidence/gate-e-webconsole-2026-09-24.txt}"
+gate_e_applied=0
+if [[ -f "$GATE_E_EVIDENCE" ]] \
+  && grep -qE '^GATE_E_STATUS=OK$' "$GATE_E_EVIDENCE" \
+  && grep -qE '^GATE_E_MIGRATE_STATUS=OK$' "$GATE_E_EVIDENCE"; then
+  echo 'vps_missing_for_gate_e=NONE'
+  echo 'vps_schema_016_024=APPLIED'
+  echo 'gate_e_executed_evidence=OK'
+  gate_e_applied=1
+elif [[ -n "$missing_vps" && "$missing_vps" != 'NONE' ]]; then
   echo "vps_missing_for_gate_e=${missing_vps}"
   echo 'vps_schema_016_024=PENDING_NOT_APPLIED'
+  echo 'gate_e_executed_evidence=NO'
 else
   echo 'vps_missing_for_gate_e=NONE'
   echo 'vps_schema_016_024=APPLIED_OR_UNKNOWN'
+  echo 'gate_e_executed_evidence=UNKNOWN'
 fi
 
 # --- Gate E blockers (sem digest/Auth sintético) ---
@@ -166,7 +178,9 @@ fi
 if [[ "$auth_status" == 'PENDING_AUTH_GATE' || -z "$auth_status" ]]; then
   d_blockers+=('auth_synthetic_gate_pending')
 fi
-d_blockers+=('gate_e_schema_not_applied_yet')
+if ((gate_e_applied != 1)); then
+  d_blockers+=('gate_e_schema_not_applied_yet')
+fi
 
 # --- Gate F blockers ---
 f_blockers=()

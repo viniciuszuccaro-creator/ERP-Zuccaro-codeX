@@ -5,7 +5,8 @@ set -Eeuo pipefail
 : "${ERP_DOCKER_NETWORK:?Set ERP_DOCKER_NETWORK after VPS precheck}"
 CANARY_NAME="${CANARY_NAME:-erp-api-comercial360-canary}"
 CANARY_PORT="${CANARY_PORT:-3086}"
-EXPECTED_RUNTIME="${EXPECTED_RUNTIME:-COMERCIAL-360-V1}"
+# Default alinhado a /api/v1/meta da main pós-#35 (runtime canônico 08B).
+EXPECTED_RUNTIME="${EXPECTED_RUNTIME:-ERP-RUNTIME-08B}"
 if [[ ! "$CANARY_PORT" =~ ^[1-9][0-9]{3,4}$ ]] || (( CANARY_PORT < 1024 || CANARY_PORT > 65535 )) || [[ "$CANARY_PORT" == "3080" ]]; then
   echo 'BLOCKED: canary requires an unprivileged isolated port other than 3080' >&2
   exit 1

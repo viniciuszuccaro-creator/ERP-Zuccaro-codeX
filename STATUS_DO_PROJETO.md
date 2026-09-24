@@ -1,3 +1,13 @@
+### Pós-Gate E — prep Gate D (2026-09-24)
+
+- Gate E **OK** no DEV; go-nogo passa a ler `GATE_E_STATUS=OK` → `vps_schema_016_024=APPLIED` (remove blocker `gate_e_schema_not_applied_yet`).
+- Canary: default `EXPECTED_RUNTIME` corrigido para **`ERP-RUNTIME-08B`** (removido `COMERCIAL-360-V1`).
+- `GATE_D_READY=NO` restante: **digest** pós-build + **Auth sintético** + checkbox/assinatura Gate D no termo.
+- Checklist: `docs/GATE_D_SMOKE_AUTH_CHECKLIST.md` atualizado (pré-condição E OK).
+- Pacote: `docs/PACOTE_DECISAO_GATES_D_E_F.md` alinhado ao pós-E.
+- **Não** executar canário/Auth/3080 sem autorização humana Gate D.
+- **Próximo operacional:** (1) build imagem `comercial360-main-2fc2fc80` e registrar digest; (2) gate Auth sintético autorizado; (3) termo §C Gate D.
+
 ### Gate E — CONCLUÍDO no DEV (2026-09-24)
 
 - Assinatura: **VINICIUS** · `24/09/2026` · `SIGNED_CHECKLIST_OK`.

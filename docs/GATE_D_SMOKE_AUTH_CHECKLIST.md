@@ -1,6 +1,7 @@
 # Gate D — checklist de smoke autenticado (sintético)
 
-**Status:** `PREPARADO / NÃO EXECUTAR sem Gate C APROVADO + autorização`
+**Status:** `PREPARADO / NÃO EXECUTAR` sem autorização Gate D + Auth sintético + digest
+**Pré-condição satisfeita:** Gate E `OK` (schema 016–024 no DEV; `test:postgres` OK).
 **Não usar:** `dev_headers` como prova de Auth.
 **Não publicar:** mídia (`CLEAN` de scan ≠ aprovação comercial).
 
@@ -14,12 +15,13 @@ Complementa `docs/GATES_D_F_PREPARACAO_CANARIO.md` e o contrato
 | # | Item | Evidência |
 |---|---|---|
 | 1 | Gate C APROVADO | `score-gate-c.sh` |
-| 2 | `EXPECTED_RUNTIME` confirmado pelo Codex | contrato §7 |
-| 3 | Imagem imutável `comercial360-main-<sha8>` da **main** | digest |
-| 4 | Canário up em porta ≠3080 | `comercial360-canary.sh` (PR #33) |
-| 5 | Meta do canário: `auth.mode=supabase_user` | smoke script |
-| 6 | Identidade sintética Auth (Bearer) + profile vinculado | **fora do Git** |
-| 7 | Contexto Grupo/Empresa autorizados ao profile | seed sintético |
+| 2 | Gate E OK (schema 016–024 DEV) | `gate-e-webconsole-2026-09-24.txt` |
+| 3 | `EXPECTED_RUNTIME=ERP-RUNTIME-08B` | canary default + `/meta` da imagem main |
+| 4 | Imagem imutável `comercial360-main-<sha8>` da **main** | digest (ainda pendente) |
+| 5 | Canário up em porta ≠3080 | `comercial360-canary.sh` |
+| 6 | Meta do canário: `auth.mode=supabase_user` | smoke script |
+| 7 | Identidade sintética Auth (Bearer) + profile vinculado | **fora do Git** · gate Auth |
+| 8 | Contexto Grupo/Empresa autorizados ao profile | seed sintético |
 
 ---
 
@@ -71,9 +73,10 @@ Não truncar tabelas. Não tocar dados de outros tenants.
 
 - Scanner ClamAV real / buckets DAM  
 - Produto HTTP ligado  
-- Migrations 016+ (Gate E)  
 - Promoção 3080 (Gate F)  
 - Importação legado (Onda 25)
+
+(Gate E / migrations 016–024: **já concluído** em 2026-09-24 — ver evidência Gate E.)
 
 ---
 
