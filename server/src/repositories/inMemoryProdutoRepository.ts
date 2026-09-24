@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto';
+import type { DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';
-import type { Produto, ProdutoCreate, ProdutoUpdate } from './produtoTypes.js';
+import { produtoMidiaCreateSchema, type Produto, type ProdutoCreate, type ProdutoEquivalente, type ProdutoEquivalenteCreate, type ProdutoEquivalenteUpdate, type ProdutoMidia, type ProdutoMidiaCreate, type ProdutoMidiaScanEvidence, type ProdutoMidiaUploadAttempt, type ProdutoUpdate, type ProdutoVariante, type ProdutoVarianteCreate, type ProdutoVarianteUpdate } from './produtoTypes.js';
+import type { ProdutoCanal, ProdutoCanalCreate, ProdutoCanalUpdate } from './produtoTypes.js';
 
 function nowIso() { return new Date().toISOString(); }
 
@@ -10,8 +12,58 @@ export type ProdutoListFilter = Scope & ListOptions & {
   codigoBarras?: string;
 };
 
+export type ProdutoReadOptions = {
+  forUpdate?: boolean;
+};
+
 export interface ProdutoRepository extends TenantEntityRepository<Produto, ProdutoCreate, ProdutoUpdate> {
-  listPage(filter: ProdutoListFilter): Promise<{ rows: Produto[]; total: number }>;
+  withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T>;
+  listPage(filter: ProdutoListFilter, executor?: DbQueryExecutor): Promise<{ rows: Produto[]; total: number }>;
+  getById(
+    scope: Scope,
+    id: string,
+    executor?: DbQueryExecutor,
+    options?: ProdutoReadOptions,
+  ): Promise<Produto | null>;
+  create(scope: Scope, data: ProdutoCreate, executor?: DbQueryExecutor): Promise<Produto>;
+  update(scope: Scope, id: string, data: ProdutoUpdate, executor?: DbQueryExecutor): Promise<Produto | null>;
+  softDelete(scope: Scope, id: string, executor?: DbQueryExecutor): Promise<Produto | null>;
+  changeWorkflowStatus(
+    scope: Scope,
+    id: string,
+    status: Produto['workflow_status'],
+    executor?: DbQueryExecutor,
+  ): Promise<Produto | null>;
+  appendPublicationEvent(
+    scope: Scope,
+    produto: Produto,
+    requestId: string,
+    executor?: DbQueryExecutor,
+  ): Promise<void>;
+  listVariants(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoVariante[]>;
+  listEquivalents(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoEquivalente[]>;
+  listCanais(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoCanal[]>;
+  createCanal(scope: Scope, produtoId: string, data: ProdutoCanalCreate, actorId: string, executor?: DbQueryExecutor): Promise<ProdutoCanal>;
+  updateCanal(scope: Scope, produtoId: string, canalId: string, data: ProdutoCanalUpdate, actorId: string, executor?: DbQueryExecutor): Promise<ProdutoCanal | null>;
+  deactivateCanal(scope: Scope, produtoId: string, canalId: string, actorId: string, executor?: DbQueryExecutor): Promise<ProdutoCanal | null>;
+  createVariant(scope: Scope, produtoId: string, data: ProdutoVarianteCreate, executor?: DbQueryExecutor): Promise<ProdutoVariante>;
+  updateVariant(scope: Scope, produtoId: string, variantId: string, data: ProdutoVarianteUpdate, executor?: DbQueryExecutor): Promise<ProdutoVariante | null>;
+  deactivateVariant(scope: Scope, produtoId: string, variantId: string, executor?: DbQueryExecutor): Promise<ProdutoVariante | null>;
+  createEquivalent(scope: Scope, produtoId: string, data: ProdutoEquivalenteCreate, executor?: DbQueryExecutor): Promise<ProdutoEquivalente>;
+  updateEquivalent(scope: Scope, produtoId: string, equivalentId: string, data: ProdutoEquivalenteUpdate, executor?: DbQueryExecutor): Promise<ProdutoEquivalente | null>;
+  deactivateEquivalent(scope: Scope, produtoId: string, equivalentId: string, executor?: DbQueryExecutor): Promise<ProdutoEquivalente | null>;
+  listMidias(scope: Scope, produtoId: string, executor?: DbQueryExecutor, page?: { limit: number; offset: number }): Promise<ProdutoMidia[]>;
+  listExpiredReservedMidias(scope: Scope, limit: number, executor?: DbQueryExecutor): Promise<Array<{ id: string; produto_id: string }>>;
+  nextMidiaVersion(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<number>;
+  createMidia(scope: Scope, produtoId: string, data: ProdutoMidiaCreate, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
+  deactivateMidia(scope: Scope, produtoId: string, midiaId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
+  reserveMidia(scope: Scope, produtoId: string, data: ProdutoMidiaCreate, attempt: ProdutoMidiaUploadAttempt, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
+  getReservedMidia(scope: Scope, produtoId: string, midiaId: string, attemptId: string, actorId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
+  confirmReservedMidia(scope: Scope, produtoId: string, midiaId: string, attemptId: string, actorId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
+  rejectExpiredReservedMidia(scope: Scope, produtoId: string, midiaId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
+  getMidiaForScan(scope: Scope, produtoId: string, midiaId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
+  recordMidiaScan(scope: Scope, produtoId: string, midiaId: string, storageKey: string, version: number, evidence: ProdutoMidiaScanEvidence, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
+
 }
 
 function buildProduto(scope: Scope, data: ProdutoCreate, id: string, ts: string): Produto {
@@ -50,6 +102,18 @@ function buildProduto(scope: Scope, data: ProdutoCreate, id: string, ts: string)
     status: data.status ?? 'Ativo',
     foto_produto_url: data.foto_produto_url ?? null,
     ativo: data.ativo ?? true,
+    material: data.material ?? null,
+    liga: data.liga ?? null,
+    norma_tecnica: data.norma_tecnica ?? null,
+    descricao_tecnica: data.descricao_tecnica ?? null,
+    descricao_comercial: data.descricao_comercial ?? null,
+    titulo_seo: data.titulo_seo ?? null,
+    descricao_seo: data.descricao_seo ?? null,
+    embalagem_tipo: data.embalagem_tipo ?? null,
+    multiplo_venda: data.multiplo_venda ?? 1,
+    quantidade_minima_venda: data.quantidade_minima_venda ?? 0,
+    permite_fracionamento: data.permite_fracionamento ?? false,
+    workflow_status: 'RASCUNHO',
     created_at: ts,
     updated_at: ts,
   };
@@ -57,6 +121,44 @@ function buildProduto(scope: Scope, data: ProdutoCreate, id: string, ts: string)
 
 export class InMemoryProdutoRepository implements ProdutoRepository {
   private readonly rows = new Map<string, Produto>();
+  private readonly variants = new Map<string, ProdutoVariante>();
+  private readonly equivalents = new Map<string, ProdutoEquivalente>();
+  private readonly canais = new Map<string, ProdutoCanal>();
+  private readonly midias = new Map<string, ProdutoMidia>();
+
+  private readonly publicationEvents: Array<{ groupId: string; empresaId: string | null; produtoId: string; requestId: string }> = [];
+  private transactionQueue: Promise<void> = Promise.resolve();
+  async withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> {
+    const previous = this.transactionQueue;
+    let release = () => {};
+    this.transactionQueue = new Promise<void>((resolve) => { release = resolve; });
+    await previous;
+    const snapshot = structuredClone([...this.rows.entries()]);
+    const eventsSnapshot = structuredClone(this.publicationEvents);
+    const variantsSnapshot = structuredClone([...this.variants.entries()]);
+    const equivalentsSnapshot = structuredClone([...this.equivalents.entries()]);
+    const canaisSnapshot = structuredClone([...this.canais.entries()]);
+    const midiasSnapshot = structuredClone([...this.midias.entries()]);
+    try {
+      return await fn();
+    } catch (error) {
+      this.rows.clear();
+      for (const [id, row] of snapshot) this.rows.set(id, row);
+      this.publicationEvents.length = 0;
+      this.variants.clear();
+      for (const [id, row] of variantsSnapshot) this.variants.set(id, row);
+      this.equivalents.clear();
+      for (const [id, row] of equivalentsSnapshot) this.equivalents.set(id, row);
+      this.canais.clear();
+      for (const [id, row] of canaisSnapshot) this.canais.set(id, row);
+      this.midias.clear();
+      for (const [id, row] of midiasSnapshot) this.midias.set(id, row);
+      this.publicationEvents.push(...eventsSnapshot);
+      throw error;
+    } finally {
+      release();
+    }
+  }
 
   seed(rows: Produto[]) {
     for (const row of rows) this.rows.set(row.id, row);
@@ -73,8 +175,10 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
       return false;
     }
     if (filter.search) {
-      const hay = `${r.descricao} ${r.codigo || ''} ${r.nome || ''} ${r.codigo_barras || ''}`.toLowerCase();
-      if (!hay.includes(filter.search.toLowerCase())) return false;
+      const term = filter.search.toLowerCase();
+      const fields = [r.descricao, r.codigo, r.nome, r.codigo_barras,
+        r.material, r.liga, r.norma_tecnica];
+      if (!fields.some((value) => String(value ?? '').toLowerCase().includes(term))) return false;
     }
     return true;
   }
@@ -84,22 +188,28 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     return page.rows;
   }
 
-  async listPage(filter: ProdutoListFilter): Promise<{ rows: Produto[]; total: number }> {
-    const all = [...this.rows.values()].filter((r) => this.matches(filter, r));
+  async listPage(filter: ProdutoListFilter, _executor?: DbQueryExecutor): Promise<{ rows: Produto[]; total: number }> {
+    const all = [...this.rows.values()].filter((r) => this.matches(filter, r))
+      .sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id));
     const total = all.length;
     const offset = Math.max(filter.offset ?? 0, 0);
     const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);
     return { rows: all.slice(offset, offset + limit), total };
   }
 
-  async getById(scope: Scope, id: string): Promise<Produto | null> {
+  async getById(
+    scope: Scope,
+    id: string,
+    _executor?: DbQueryExecutor,
+    _options?: ProdutoReadOptions,
+  ): Promise<Produto | null> {
     const row = this.rows.get(id);
     if (!row || row.group_id !== scope.groupId) return null;
     if (scope.empresaId && row.empresa_id !== scope.empresaId) return null;
     return row;
   }
 
-  async create(scope: Scope, data: ProdutoCreate): Promise<Produto> {
+  async create(scope: Scope, data: ProdutoCreate, _executor?: DbQueryExecutor): Promise<Produto> {
     const ts = nowIso();
     const row = buildProduto(scope, data, randomUUID(), ts);
     // conflict: codigo no mesmo grupo
@@ -113,8 +223,8 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     return row;
   }
 
-  async update(scope: Scope, id: string, data: ProdutoUpdate): Promise<Produto | null> {
-    const current = await this.getById(scope, id);
+  async update(scope: Scope, id: string, data: ProdutoUpdate, _executor?: DbQueryExecutor): Promise<Produto | null> {
+    const current = await this.getById(scope, id, _executor);
     if (!current) return null;
     const next: Produto = {
       ...current,
@@ -139,8 +249,289 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     return next;
   }
 
-  softDelete(scope: Scope, id: string) {
-    return this.update(scope, id, { ativo: false });
+  softDelete(scope: Scope, id: string, executor?: DbQueryExecutor) {
+    return this.update(scope, id, { ativo: false }, executor);
+  }
+
+  async changeWorkflowStatus(
+    scope: Scope,
+    id: string,
+    status: Produto['workflow_status'],
+    executor?: DbQueryExecutor,
+  ): Promise<Produto | null> {
+    const current = await this.getById(scope, id, executor);
+    if (!current) return null;
+    const next = { ...current, workflow_status: status, updated_at: nowIso() };
+    this.rows.set(id, next);
+    return structuredClone(next);
+  }
+
+  async appendPublicationEvent(
+    scope: Scope,
+    produto: Produto,
+    requestId: string,
+    _executor?: DbQueryExecutor,
+  ): Promise<void> {
+    if (produto.group_id !== scope.groupId || (scope.empresaId && produto.empresa_id !== scope.empresaId)) {
+      throw new Error('TENANT_FK_MISMATCH');
+    }
+    if (this.publicationEvents.some((event) => event.groupId === scope.groupId
+      && event.produtoId === produto.id && event.requestId === requestId)) {
+      return;
+    }
+    this.publicationEvents.push({ groupId: scope.groupId, empresaId: produto.empresa_id, produtoId: produto.id, requestId });
+  }
+  async listVariants(scope: Scope, produtoId: string): Promise<ProdutoVariante[]> {
+    return structuredClone([...this.variants.values()].filter((row) => row.ativo && row.group_id === scope.groupId
+      && row.produto_id === produtoId && (!scope.empresaId || row.empresa_id === scope.empresaId))
+      .sort((a, b) => a.sku.localeCompare(b.sku) || a.id.localeCompare(b.id)));
+  }
+
+  async createVariant(scope: Scope, produtoId: string, data: ProdutoVarianteCreate): Promise<ProdutoVariante> {
+    if ([...this.variants.values()].some((row) => row.group_id === scope.groupId && row.sku.toLowerCase() === data.sku.toLowerCase())) {
+      throw new Error('unique constraint produto_variantes sku');
+    }
+    const row: ProdutoVariante = { id: randomUUID(), group_id: scope.groupId, empresa_id: scope.empresaId ?? null,
+      produto_id: produtoId, sku: data.sku, nome: data.nome ?? null, atributos: data.atributos, ativo: true };
+    this.variants.set(row.id, structuredClone(row));
+    return structuredClone(row);
+  }
+
+  async updateVariant(scope: Scope, produtoId: string, variantId: string, data: ProdutoVarianteUpdate): Promise<ProdutoVariante | null> {
+    const current = this.variants.get(variantId);
+    if (!current || !current.ativo || current.group_id !== scope.groupId || current.produto_id !== produtoId
+      || (scope.empresaId && current.empresa_id !== scope.empresaId)) return null;
+    if (data.sku && [...this.variants.values()].some((row) => row.id !== variantId
+      && row.group_id === scope.groupId && row.sku.toLowerCase() === data.sku!.toLowerCase())) {
+      throw new Error('unique constraint produto_variantes sku');
+    }
+    const next = { ...current, ...data };
+    this.variants.set(variantId, structuredClone(next));
+    return structuredClone(next);
+  }
+
+  async deactivateVariant(scope: Scope, produtoId: string, variantId: string): Promise<ProdutoVariante | null> {
+    const current = await this.updateVariant(scope, produtoId, variantId, { });
+    if (!current || !current.ativo) return null;
+    const next = { ...current, ativo: false };
+    this.variants.set(variantId, next);
+    return structuredClone(next);
+
+  }
+  async listEquivalents(scope: Scope, produtoId: string): Promise<ProdutoEquivalente[]> {
+    return structuredClone([...this.equivalents.values()].filter((row) => row.ativo && row.group_id === scope.groupId
+      && row.produto_id === produtoId && (!scope.empresaId || row.empresa_id === scope.empresaId))
+      .sort((a, b) => a.tipo.localeCompare(b.tipo)
+        || a.produto_equivalente_id.localeCompare(b.produto_equivalente_id) || a.id.localeCompare(b.id)));
+  }
+
+  async createEquivalent(scope: Scope, produtoId: string, data: ProdutoEquivalenteCreate): Promise<ProdutoEquivalente> {
+    if ([...this.equivalents.values()].some((row) => row.group_id === scope.groupId
+      && row.produto_id === produtoId && row.produto_equivalente_id === data.produto_equivalente_id
+      && row.tipo === data.tipo)) throw new Error('unique constraint produto_equivalentes');
+
+    if (produtoId === data.produto_equivalente_id) throw new Error('check constraint produto equivalente self');
+    const row: ProdutoEquivalente = { id: randomUUID(), group_id: scope.groupId, empresa_id: scope.empresaId ?? null,
+      produto_id: produtoId, produto_equivalente_id: data.produto_equivalente_id, tipo: data.tipo,
+      direcional: data.direcional, aprovado: data.aprovado, ativo: true };
+    this.equivalents.set(row.id, structuredClone(row));
+    return structuredClone(row);
+  }
+
+  async updateEquivalent(scope: Scope, produtoId: string, equivalentId: string, data: ProdutoEquivalenteUpdate): Promise<ProdutoEquivalente | null> {
+    const current = this.equivalents.get(equivalentId);
+    if (!current || !current.ativo || current.group_id !== scope.groupId || current.produto_id !== produtoId
+      || (scope.empresaId && current.empresa_id !== scope.empresaId)) return null;
+    if ([...this.equivalents.values()].some((row) => row.id !== equivalentId
+      && row.group_id === scope.groupId && row.produto_id === produtoId
+      && row.produto_equivalente_id === current.produto_equivalente_id && row.tipo === (data.tipo ?? current.tipo))) {
+      throw new Error('unique constraint produto_equivalentes');
+    }
+    const next = { ...current, ...data };
+    this.equivalents.set(equivalentId, structuredClone(next));
+    return structuredClone(next);
+  }
+
+  async deactivateEquivalent(scope: Scope, produtoId: string, equivalentId: string): Promise<ProdutoEquivalente | null> {
+    const current = this.equivalents.get(equivalentId);
+    if (!current || !current.ativo || current.group_id !== scope.groupId || current.produto_id !== produtoId
+      || (scope.empresaId && current.empresa_id !== scope.empresaId)) return null;
+    const next = { ...current, ativo: false };
+    this.equivalents.set(equivalentId, next);
+    return structuredClone(next);
+  }
+
+  async listMidias(scope: Scope, produtoId: string, _executor?: DbQueryExecutor, page?: { limit: number; offset: number }): Promise<ProdutoMidia[]> {
+    const rows = [...this.midias.values()].filter((row) => row.ativo && row.status !== 'PENDENTE_UPLOAD' && row.group_id === scope.groupId
+      && row.produto_id === produtoId && (!scope.empresaId || row.empresa_id === scope.empresaId))
+      .sort((a, b) => a.versao - b.versao || a.id.localeCompare(b.id));
+    return structuredClone(page ? rows.slice(page.offset, page.offset + page.limit) : rows);
+  }
+  async listExpiredReservedMidias(scope: Scope, limit: number): Promise<Array<{ id: string; produto_id: string }>> {
+    if (!scope.empresaId) return [];
+    const now = Date.now();
+    return [...this.midias.values()]
+      .filter((row) => row.group_id === scope.groupId && row.empresa_id === scope.empresaId
+        && row.ativo && row.status === 'PENDENTE_UPLOAD' && row.upload_expires_at
+        && Date.parse(row.upload_expires_at) <= now)
+      .sort((a, b) => a.upload_expires_at!.localeCompare(b.upload_expires_at!) || a.id.localeCompare(b.id))
+      .slice(0, limit).map((row) => ({ id: row.id, produto_id: row.produto_id }));
+  }
+
+  async nextMidiaVersion(scope: Scope, produtoId: string): Promise<number> {
+    const versions = [...this.midias.values()]
+      .filter((row) => row.group_id === scope.groupId && row.empresa_id === scope.empresaId && row.produto_id === produtoId)
+      .map((row) => row.versao);
+    return Math.max(0, ...versions) + 1;
+  }
+
+
+  async createMidia(scope: Scope, produtoId: string, data: ProdutoMidiaCreate): Promise<ProdutoMidia | null> {
+    const produto = await this.getById(scope, produtoId);
+    if (!produto || !produto.ativo || !scope.empresaId || produto.empresa_id !== scope.empresaId) return null;
+    const parsed = produtoMidiaCreateSchema.parse(data);
+    const prefix = `groups/${scope.groupId}/companies/${scope.empresaId}/products/${produtoId}/`;
+    if (!parsed.storage_key.startsWith(prefix)) throw new Error('TENANT_FK_MISMATCH');
+    if ([...this.midias.values()].some((row) => row.group_id === scope.groupId
+      && row.storage_key === parsed.storage_key)) {
+      throw new Error('unique constraint produto_midias storage_key');
+    }
+    const row: ProdutoMidia = {
+      id: randomUUID(), group_id: scope.groupId, empresa_id: scope.empresaId, produto_id: produtoId,
+      ...parsed, status: 'QUARENTENA', principal: false, ativo: true,
+    };
+    this.midias.set(row.id, structuredClone(row));
+    return structuredClone(row);
+  }
+  async reserveMidia(scope: Scope, produtoId: string, data: ProdutoMidiaCreate, attempt: ProdutoMidiaUploadAttempt): Promise<ProdutoMidia | null> {
+    const produto = await this.getById(scope, produtoId);
+    if (!produto || !produto.ativo || !scope.empresaId || produto.empresa_id !== scope.empresaId) return null;
+    const parsed = produtoMidiaCreateSchema.parse(data);
+    const prefix = `groups/${scope.groupId}/companies/${scope.empresaId}/products/${produtoId}/`;
+    if (!parsed.storage_key.startsWith(prefix)) throw new Error('TENANT_FK_MISMATCH');
+    if (!attempt.id || !attempt.actorId || !attempt.requestId || !Number.isFinite(Date.parse(attempt.expiresAt))
+      || Date.parse(attempt.expiresAt) <= Date.now()) throw new Error('MEDIA_ATTEMPT_INVALID');
+    if ([...this.midias.values()].some((row) => row.group_id === scope.groupId
+      && (row.storage_key === parsed.storage_key || row.upload_attempt_id === attempt.id))) {
+      throw new Error('unique constraint produto_midias reservation');
+    }
+    const row: ProdutoMidia = {
+      id: randomUUID(), group_id: scope.groupId, empresa_id: scope.empresaId, produto_id: produtoId,
+      ...parsed, status: 'PENDENTE_UPLOAD', principal: false, ativo: true,
+      upload_attempt_id: attempt.id, upload_actor_id: attempt.actorId,
+      upload_request_id: attempt.requestId, upload_expires_at: attempt.expiresAt,
+    };
+    this.midias.set(row.id, structuredClone(row));
+    return structuredClone(row);
+  }
+
+  async getReservedMidia(scope: Scope, produtoId: string, midiaId: string, attemptId: string, actorId: string): Promise<ProdutoMidia | null> {
+    const row = this.midias.get(midiaId);
+    return row && row.ativo && row.status === 'PENDENTE_UPLOAD'
+      && row.group_id === scope.groupId && row.empresa_id === scope.empresaId
+      && row.produto_id === produtoId && row.upload_attempt_id === attemptId
+      && row.upload_actor_id === actorId ? structuredClone(row) : null;
+  }
+
+  async confirmReservedMidia(scope: Scope, produtoId: string, midiaId: string, attemptId: string, actorId: string): Promise<ProdutoMidia | null> {
+    const row = await this.getReservedMidia(scope, produtoId, midiaId, attemptId, actorId);
+    if (!row || !row.upload_expires_at || Date.parse(row.upload_expires_at) <= Date.now()) return null;
+    const next: ProdutoMidia = { ...row, status: 'QUARENTENA' };
+    this.midias.set(midiaId, structuredClone(next));
+    return structuredClone(next);
+  }
+
+  async rejectExpiredReservedMidia(scope: Scope, produtoId: string, midiaId: string): Promise<ProdutoMidia | null> {
+    const row = this.midias.get(midiaId);
+    if (!scope.empresaId || !row || row.group_id !== scope.groupId || row.empresa_id !== scope.empresaId
+      || row.produto_id !== produtoId || !row.ativo || row.status !== 'PENDENTE_UPLOAD'
+      || !row.upload_expires_at || Date.parse(row.upload_expires_at) > Date.now()) return null;
+    const next: ProdutoMidia = { ...row, status: 'REJEITADO', ativo: false, principal: false };
+    this.midias.set(midiaId, structuredClone(next));
+    return structuredClone(next);
+  }
+
+
+  async deactivateMidia(scope: Scope, produtoId: string, midiaId: string): Promise<ProdutoMidia | null> {
+    const current = this.midias.get(midiaId);
+    if (!current || !current.ativo || current.group_id !== scope.groupId || current.produto_id !== produtoId
+      || !scope.empresaId || current.empresa_id !== scope.empresaId) return null;
+    const next: ProdutoMidia = { ...current, ativo: false, status: 'INATIVO', principal: false };
+    this.midias.set(midiaId, structuredClone(next));
+    return structuredClone(next);
+  }
+
+  async getMidiaForScan(scope: Scope, produtoId: string, midiaId: string): Promise<ProdutoMidia | null> {
+    const row = this.midias.get(midiaId);
+    return row && scope.empresaId && row.group_id === scope.groupId && row.empresa_id === scope.empresaId
+      && row.produto_id === produtoId && row.ativo && row.status === 'QUARENTENA'
+      ? structuredClone(row) : null;
+  }
+
+  async recordMidiaScan(scope: Scope, produtoId: string, midiaId: string, storageKey: string, version: number, evidence: ProdutoMidiaScanEvidence): Promise<ProdutoMidia | null> {
+    const row = await this.getMidiaForScan(scope, produtoId, midiaId);
+    if (!row || row.storage_key !== storageKey || row.versao !== version || row.sha256 !== evidence.sha256
+      || !['CLEAN', 'INFECTED'].includes(evidence.verdict) || !evidence.scanner.trim()
+      || evidence.scanner.length > 80 || !Number.isFinite(Date.parse(evidence.scannedAt))) return null;
+    const next: ProdutoMidia = {
+      ...row, scan_verdict: evidence.verdict, scan_scanner: evidence.scanner,
+      scan_sha256: evidence.sha256, scanned_at: evidence.scannedAt,
+    };
+    this.midias.set(midiaId, structuredClone(next));
+    return structuredClone(next);
+  }
+
+  async listCanais(scope: Scope, produtoId: string): Promise<ProdutoCanal[]> {
+    if (!scope.empresaId) return [];
+    return [...this.canais.values()]
+      .filter((row) => row.group_id === scope.groupId && row.empresa_id === scope.empresaId && row.produto_id === produtoId && row.ativo)
+      .sort((a, b) => a.canal.localeCompare(b.canal) || a.id.localeCompare(b.id))
+      .map((row) => structuredClone(row));
+  }
+
+  async createCanal(scope: Scope, produtoId: string, data: ProdutoCanalCreate, _actorId: string): Promise<ProdutoCanal> {
+    if (!scope.empresaId) throw new Error('EMPRESA_ID_REQUIRED');
+    const produto = this.rows.get(produtoId);
+    if (!produto || !produto.ativo || produto.group_id !== scope.groupId || produto.empresa_id !== scope.empresaId) {
+      throw new Error('TENANT_FK_MISMATCH');
+    }
+    if ([...this.canais.values()].some((row) => row.group_id === scope.groupId && row.empresa_id === scope.empresaId
+      && ((row.produto_id === produtoId && row.canal === data.canal)
+        || (data.sku && row.canal === data.canal && row.sku?.toLowerCase() === data.sku.toLowerCase())))) {
+      throw new Error('duplicate key value violates unique constraint produto_canais');
+    }
+    const timestamp = nowIso();
+    const row: ProdutoCanal = { id: randomUUID(), group_id: scope.groupId, empresa_id: scope.empresaId,
+      produto_id: produtoId, canal: data.canal, sku: data.sku ?? null, nome: data.nome ?? null,
+      descricao: data.descricao ?? null, status: 'RASCUNHO', ativo: true, created_at: timestamp, updated_at: timestamp };
+    this.canais.set(row.id, structuredClone(row));
+    return structuredClone(row);
+  }
+
+  async updateCanal(scope: Scope, produtoId: string, canalId: string, data: ProdutoCanalUpdate, _actorId: string): Promise<ProdutoCanal | null> {
+    const current = this.canais.get(canalId);
+    if (!current || !current.ativo || !scope.empresaId || current.group_id !== scope.groupId
+      || current.empresa_id !== scope.empresaId || current.produto_id !== produtoId) return null;
+    if (data.sku && [...this.canais.values()].some((row) => row.id !== canalId && row.group_id === scope.groupId
+      && row.empresa_id === scope.empresaId && row.canal === current.canal && row.sku?.toLowerCase() === data.sku!.toLowerCase())) {
+      throw new Error('duplicate key value violates unique constraint produto_canais_sku');
+    }
+    const row = { ...current, ...data, updated_at: nowIso() };
+    this.canais.set(canalId, structuredClone(row));
+    return structuredClone(row);
+  }
+
+  async deactivateCanal(scope: Scope, produtoId: string, canalId: string, _actorId: string): Promise<ProdutoCanal | null> {
+    const current = this.canais.get(canalId);
+    if (!current || !current.ativo || !scope.empresaId || current.group_id !== scope.groupId
+      || current.empresa_id !== scope.empresaId || current.produto_id !== produtoId) return null;
+    const row = { ...current, ativo: false, updated_at: nowIso() };
+    this.canais.set(canalId, structuredClone(row));
+    return structuredClone(row);
+  }
+
+  listPublicationEvents() {
+    return structuredClone(this.publicationEvents);
   }
 }
 

@@ -19,6 +19,7 @@ import ModulosGridEstoque from "@/components/estoque/estoque-launchpad/ModulosGr
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import useEstoqueDerivedData from "@/components/estoque/hooks/useEstoqueDerivedData";
 import TransferenciaEntreEmpresasForm from "../components/estoque/TransferenciaEntreEmpresasForm";
+import { isProdutoMateriaPrima, isProdutoRevenda } from "@/components/cadastros/produto/produtoTipoPolicy";
 
 const ProdutosTab = React.lazy(() => import("../components/estoque/ProdutosTab"));
 const MovimentacoesTab = React.lazy(() => import("../components/estoque/MovimentacoesTab"));
@@ -94,8 +95,8 @@ export default function Estoque() {
       }
 
       const total = todosProdutos.length;
-      const revenda = todosProdutos.filter(p => p.tipo_item === 'Revenda').length;
-      const producao = todosProdutos.filter(p => p.tipo_item === 'Matéria-Prima Produção').length;
+      const revenda = todosProdutos.filter(p => isProdutoRevenda(p.tipo_item)).length;
+      const producao = todosProdutos.filter(p => isProdutoMateriaPrima(p.tipo_item)).length;
       const estoqueBaixo = todosProdutos.filter(p => 
         p.status === 'Ativo' && (p.estoque_disponivel || 0) <= (p.estoque_minimo || 0)
       ).length;

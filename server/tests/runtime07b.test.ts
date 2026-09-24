@@ -13,6 +13,8 @@ import { createDbClient } from '../src/db/client.ts';
 import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 import { CLIENTE_FORBIDDEN_FIELDS } from '../src/repositories/clienteTypes.ts';
+import { InMemoryTabelaPrecoRepository } from '../src/repositories/inMemoryTabelaPrecoRepository.ts';
+import { PostgresClienteRepository } from '../src/repositories/postgresClienteRepository.ts';
 import { PostgresTabelaPrecoRepository } from '../src/repositories/postgresTabelaPrecoRepository.ts';
 import { TabelaPrecoService } from '../src/services/tabelaPrecoService.ts';
 import { SEED_IDS } from '../scripts/seedDevIds.ts';
@@ -68,6 +70,7 @@ function service(db: DbClient) {
     new PostgresAuditRepository(db),
     tenant,
     rbac,
+    new PostgresClienteRepository(db),
   );
 }
 
@@ -193,6 +196,30 @@ test('CRUD + padrão único + fallback + item produto/unidade + monetário', asy
     });
     assert.ok(resolved);
     assert.equal(resolved?.origem_resolucao, 'cliente_empresa');
+    const link = await pg.query<{ id: string }>(
+      'SELECT id FROM cliente_empresas WHERE group_id=$1 AND empresa_id=$2 AND cliente_id=$3',
+      [SEED_IDS.groupA, SEED_IDS.empresaA, SEED_IDS.clientePjA],
+    );
+    const clienteEmpresaId = link.rows[0]?.id;
+    assert.ok(clienteEmpresaId);
+    const clientPrice = await svc.resolveClientPrice(ctxA, {
+      clienteEmpresaId, produtoId: SEED_IDS.produtoA,
+      unidadeMedidaId: SEED_IDS.unidadeA, businessDate: '2024-06-01',
+    });
+    assert.equal(clientPrice?.tabela_preco_id, SEED_IDS.tabelaPrecoA);
+    await assert.rejects(
+      () => svc.resolveClientPrice({ ...ctxA, empresaId: SEED_IDS.empresaA2 }, {
+        clienteEmpresaId, produtoId: SEED_IDS.produtoA, unidadeMedidaId: SEED_IDS.unidadeA,
+      }),
+      { code: 'CLIENTE_EMPRESA_NOT_FOUND' },
+    );
+    await assert.rejects(
+      () => svc.resolveClientPrice(ctxA, {
+        clienteEmpresaId, produtoId: SEED_IDS.produtoA,
+        unidadeMedidaId: SEED_IDS.unidadeA, clienteEmpresaTabelaId: SEED_IDS.tabelaPrecoB,
+      }),
+      { code: 'VALIDATION_ERROR' },
+    );
 
     const missing = await svc.resolvePrice(ctxA, {
       produtoId: SEED_IDS.produtoA,
@@ -319,6 +346,7 @@ test('meta ERP-RUNTIME-08B prepara CondicaoPagamento sem ativar frontend HTTP', 
       runtime: string;
       tabelaPreco: { frontendHttp: boolean };
       condicaoPagamento: { masterData: boolean; parcelasAtomicas: boolean; frontendHttp: boolean };
+      pedido: { backendHttp: boolean; frontendHttp: boolean };
       preparedEntities: string[];
       httpPilotEntities: string[];
       httpEntities: string[];
@@ -333,7 +361,10 @@ test('meta ERP-RUNTIME-08B prepara CondicaoPagamento sem ativar frontend HTTP', 
     assert.equal(meta.condicaoPagamento.frontendHttp, false);
     assert.ok(!meta.httpPilotEntities.includes('CondicaoPagamento'));
     assert.ok(!meta.httpEntities.includes('CondicaoPagamento'));
-    assert.ok(!meta.preparedEntities.includes('Pedido'));
+    assert.ok(meta.preparedEntities.includes('Pedido'));
+    assert.ok(meta.httpEntities.includes('Pedido'));
+    assert.equal(meta.pedido.backendHttp, true);
+    assert.equal(meta.pedido.frontendHttp, true);
     assert.ok(!meta.preparedEntities.includes('Orçamento'));
   } finally {
     await new Promise<void>((resolve, reject) => {
@@ -790,7 +821,119 @@ test('ClienteEmpresa cross-company + produto/unidade + precisão + vigência', a
     assert.ok(unsafe);
     assert.notEqual(unsafe?.tabela_preco_id, onlyA2.id);
     assert.equal(unsafe?.origem_resolucao, 'padrao_empresa');
+
+    await svc.setPadrao({ ...ctxA, empresaId: SEED_IDS.empresaA2 }, onlyA2.id);
+    const crossCompanyProduct = await svc.resolvePrice(
+      { ...ctxA, empresaId: SEED_IDS.empresaA2 },
+      { produtoId: SEED_IDS.produtoA, unidadeMedidaId: SEED_IDS.unidadeA, businessDate: '2024-06-01' },
+    );
+    assert.equal(crossCompanyProduct, null);
+
+    for (const invalid of [
+      { produtoId: 'invalid', unidadeMedidaId: SEED_IDS.unidadeA },
+      { produtoId: SEED_IDS.produtoA, unidadeMedidaId: SEED_IDS.unidadeA, businessDate: '2024-02-30' },
+      { produtoId: SEED_IDS.produtoA, unidadeMedidaId: SEED_IDS.unidadeA, empresaId: SEED_IDS.empresaA2 },
+    ]) {
+      await assert.rejects(
+        () => svc.resolvePrice(ctxA, invalid),
+        { code: 'VALIDATION_ERROR' },
+      );
+    }
   } finally {
+    await pg.close();
+  }
+});
+
+test('preço em memória respeita Produto específico ou compartilhado', async () => {
+  const repo = new InMemoryTabelaPrecoRepository();
+  const tabela = await repo.create(
+    { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA2 },
+    { nome: 'PRECO EMPRESA A2', vigencia_inicio: '2024-01-01' },
+    SEED_IDS.runtimeActorA,
+  );
+  await repo.createItem(
+    { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA2 },
+    tabela.id,
+    { produto_id: SEED_IDS.produtoA, unidade_medida_id: SEED_IDS.unidadeA, preco: '12.34' },
+    SEED_IDS.runtimeActorA,
+  );
+  repo.hydrateUnidade({ id: SEED_IDS.unidadeA, group_id: SEED_IDS.groupA, sigla: 'KG' });
+  const input = {
+    groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA2,
+    clienteEmpresaTabelaId: tabela.id, produtoId: SEED_IDS.produtoA,
+    unidadeMedidaId: SEED_IDS.unidadeA, businessDate: '2024-06-01',
+  };
+  repo.hydrateProduto({ id: SEED_IDS.produtoA, group_id: SEED_IDS.groupA, empresa_id: SEED_IDS.empresaA });
+  assert.equal(await repo.resolvePrice(input), null);
+  repo.hydrateProduto({ id: SEED_IDS.produtoA, group_id: SEED_IDS.groupA, empresa_id: null });
+  assert.equal((await repo.resolvePrice(input))?.preco, '12.34');
+});
+
+test('HTTP preco-cliente usa vinculo tenant e rejeita escolha de tabela', async () => {
+  const pg = await boot();
+  const tenant = new InMemoryTenantGuard();
+  tenant.link(SEED_IDS.empresaA, SEED_IDS.groupA);
+  tenant.link(SEED_IDS.empresaA2, SEED_IDS.groupA);
+  const rbac = new InMemoryRbacGuard();
+  rbac.link({
+    actorId: SEED_IDS.runtimeActorA, groupId: SEED_IDS.groupA,
+    permissions: { Cadastros: { tabela_preco: ['visualizar'], cliente_empresa: ['visualizar'] } },
+  });
+  const config = loadConfig({
+    NODE_ENV: 'test', ERP_ENV: 'dev', PORT: '3080',
+    CORS_ORIGINS: 'http://localhost:5173', REQUIRE_DATABASE: 'false',
+    DATABASE_URL: 'postgres://synthetic@localhost:5432/erp_test',
+  });
+  const { app } = createApp({ config, db: dbClient(pg), useMemory: false, tenantGuard: tenant, rbacGuard: rbac });
+  const server = app.listen(0, '127.0.0.1');
+  try {
+    await new Promise<void>((resolve) => server.once('listening', resolve));
+    const address = server.address();
+    const port = typeof address === 'object' && address ? address.port : 0;
+    const link = await pg.query<{ id: string }>(
+      'SELECT id FROM cliente_empresas WHERE group_id=$1 AND empresa_id=$2 AND cliente_id=$3',
+      [SEED_IDS.groupA, SEED_IDS.empresaA, SEED_IDS.clientePjA],
+    );
+    const params = new URLSearchParams({
+      clienteEmpresaId: link.rows[0]!.id, produtoId: SEED_IDS.produtoA,
+      unidadeMedidaId: SEED_IDS.unidadeA, businessDate: '2024-06-01',
+    });
+    const url = `http://127.0.0.1:${port}/api/v1/tabelas-preco/preco-cliente`;
+    const headers = {
+      'x-group-id': SEED_IDS.groupA, 'x-empresa-id': SEED_IDS.empresaA,
+      'x-actor-id': SEED_IDS.runtimeActorA,
+    };
+    const valid = await fetch(`${url}?${params}`, { headers });
+    assert.equal(valid.status, 200);
+    assert.equal((await valid.json() as { data: { tabela_preco_id: string } }).data.tabela_preco_id, SEED_IDS.tabelaPrecoA);
+    const injected = await fetch(`${url}?${params}&clienteEmpresaTabelaId=${SEED_IDS.tabelaPrecoB}`, { headers });
+    assert.equal(injected.status, 422);
+    const otherEmpresa = await fetch(`${url}?${params}`, {
+      headers: { ...headers, 'x-empresa-id': SEED_IDS.empresaA2 },
+    });
+    assert.equal(otherEmpresa.status, 404);
+    const anonymous = await fetch(`${url}?${params}`, {
+      headers: { 'x-group-id': SEED_IDS.groupA, 'x-empresa-id': SEED_IDS.empresaA },
+    });
+    assert.equal(anonymous.status, 403);
+    const deniedRbac = new InMemoryRbacGuard();
+    deniedRbac.link({
+      actorId: SEED_IDS.runtimeActorA, groupId: SEED_IDS.groupA,
+      permissions: { Cadastros: { tabela_preco: ['visualizar'] } },
+    });
+    const deniedApp = createApp({ config, db: dbClient(pg), useMemory: false, tenantGuard: tenant, rbacGuard: deniedRbac }).app;
+    const deniedServer = deniedApp.listen(0, '127.0.0.1');
+    try {
+      await new Promise<void>((resolve) => deniedServer.once('listening', resolve));
+      const deniedAddress = deniedServer.address();
+      const deniedPort = typeof deniedAddress === 'object' && deniedAddress ? deniedAddress.port : 0;
+      const denied = await fetch(`http://127.0.0.1:${deniedPort}/api/v1/tabelas-preco/preco-cliente?${params}`, { headers });
+      assert.equal(denied.status, 403);
+    } finally {
+      await new Promise<void>((resolve) => deniedServer.close(() => resolve()));
+    }
+  } finally {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
     await pg.close();
   }
 });

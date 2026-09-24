@@ -1,0 +1,625 @@
+import assert from 'node:assert/strict';
+import { PostgresAuditRepository } from '../src/audit/auditRepository.ts';
+import type { MalwareScanPort, StoragePort } from '../src/services/storagePort.ts';
+import { randomUUID } from 'node:crypto';
+import test from 'node:test';
+import { InMemoryProdutoRelationGuard } from '../src/db/produtoRelationGuard.ts';
+import { PostgresTenantGuard } from '../src/db/tenantGuard.ts';
+import { ProdutoService } from '../src/services/produtoService.ts';
+import type { RbacGuard } from '../src/db/rbacGuard.ts';
+import { createDbClient } from '../src/db/client.ts';
+import { loadConfig } from '../src/config/env.ts';
+import { SEED_IDS } from '../scripts/seedDevIds.ts';
+import { PostgresProdutoRepository } from '../src/repositories/postgresProdutoRepository.ts';
+import { produtoCreateSchema } from '../src/repositories/produtoTypes.ts';
+import { assertProdutoMediaContract, assertProdutoRelationsContract } from './produto-relacoes-contract.ts';
+
+const enabled = Boolean(process.env.DATABASE_URL);
+
+test('R10 PostgreSQL real: migration 018 preserva PIM, tenant, DAM, RLS e outbox', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
+  const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
+  const productId = randomUUID();
+  const variantId = randomUUID();
+  const equivalentId = randomUUID();
+  const mediaId = randomUUID();
+  const rollbackId = randomUUID();
+  const sha = 'a'.repeat(64);
+  const rejectSql = async (sql: string, params: unknown[], pattern: RegExp) => {
+    await assert.rejects(db.query(sql, params), pattern);
+  };
+  try {
+    const migration = await db.query<{ total: number }>(
+      "SELECT count(*)::int total FROM schema_migrations WHERE id='018_produto_pim_dam_outbox.sql'",
+    );
+    assert.equal(migration.rows[0]?.total, 1);
+    const hardening = await db.query<{ total: number }>(
+      "SELECT count(*)::int total FROM schema_migrations WHERE id='019_produto_relacoes_tenant.sql'",
+    );
+    assert.equal(hardening.rows[0]?.total, 1);
+    const columns = await db.query(
+      `SELECT column_name FROM information_schema.columns WHERE table_name='produtos'
+       AND column_name=ANY($1::text[])`,
+      [['descricao_tecnica','descricao_comercial','titulo_seo','descricao_seo','embalagem_tipo','multiplo_venda','quantidade_minima_venda','permite_fracionamento','workflow_status']],
+    );
+    assert.equal(columns.rowCount, 9);
+    const mediaKeyMigration = await db.query<{ total: number }>(
+      "SELECT count(*)::int total FROM schema_migrations WHERE id='020_produto_midia_storage_key_unique.sql'",
+    );
+    assert.equal(mediaKeyMigration.rows[0]?.total, 1);
+    const mediaKeyIndex = await db.query<{ total: number }>(
+      `SELECT count(*)::int total FROM pg_indexes WHERE tablename='produto_midias'
+       AND indexname='uq_produto_midias_group_storage_key'
+       AND indexdef LIKE '%(group_id, storage_key)%'`,
+    );
+    assert.equal(mediaKeyIndex.rows[0]?.total, 1);
+    const reservationMigration = await db.query<{ total: number }>(
+      "SELECT count(*)::int total FROM schema_migrations WHERE id='021_produto_midia_upload_reservation.sql'",
+    );
+    assert.equal(reservationMigration.rows[0]?.total, 1);
+    const scanMigration = await db.query<{ total: number }>(
+      "SELECT count(*)::int total FROM schema_migrations WHERE id='022_produto_midia_scan_evidence.sql'",
+    );
+    assert.equal(scanMigration.rows[0]?.total, 1);
+
+    const reservationColumns = await db.query<{ total: number }>(
+      "SELECT count(*)::int total FROM information_schema.columns WHERE table_name='produto_midias' AND column_name=ANY($1::text[])",
+      [['upload_attempt_id', 'upload_actor_id', 'upload_request_id', 'upload_expires_at']],
+    );
+    assert.equal(reservationColumns.rows[0]?.total, 4);
+
+    await db.query(
+      `INSERT INTO produtos (id,group_id,empresa_id,codigo,descricao,multiplo_venda,quantidade_minima_venda,workflow_status)
+       VALUES ($1,$2,$3,$4,'R10 SINTETICO',1,0,'RASCUNHO')`,
+      [productId, SEED_IDS.groupA, SEED_IDS.empresaA, `R10-${productId}`],
+    );
+    await rejectSql('UPDATE produtos SET multiplo_venda=0 WHERE id=$1', [productId], /check constraint/i);
+    await rejectSql('UPDATE produtos SET quantidade_minima_venda=-1 WHERE id=$1', [productId], /check constraint/i);
+    await rejectSql("UPDATE produtos SET workflow_status='INVALIDO' WHERE id=$1", [productId], /check constraint/i);
+
+    await db.query(
+      `INSERT INTO produto_variantes (id,group_id,empresa_id,produto_id,sku)
+       VALUES ($1,$2,$3,$4,$5)`,
+      [variantId, SEED_IDS.groupA, SEED_IDS.empresaA, productId, `SKU-${productId}`],
+    );
+    await rejectSql(
+      'INSERT INTO produto_variantes (group_id,empresa_id,produto_id,sku) VALUES ($1,$2,$3,$4)',
+      [SEED_IDS.groupA, SEED_IDS.empresaA, SEED_IDS.produtoB, `XG-${productId}`],
+      /TENANT_FK_MISMATCH/,
+    );
+    await rejectSql(
+      'INSERT INTO produto_variantes (group_id,empresa_id,produto_id,sku) VALUES ($1,$2,$3,$4)',
+      [SEED_IDS.groupA, SEED_IDS.empresaB, productId, `XE-${productId}`],
+      /empresa|group|TENANT/i,
+    );
+    await rejectSql(
+      'INSERT INTO produto_variantes (group_id,empresa_id,produto_id,sku) VALUES ($1,$2,$3,$4)',
+      [SEED_IDS.groupA, SEED_IDS.empresaA, productId, `SKU-${productId}`],
+      /unique constraint/i,
+    );
+
+    await db.query(
+      `INSERT INTO produto_equivalentes (id,group_id,empresa_id,produto_id,produto_equivalente_id)
+       VALUES ($1,$2,$3,$4,$5)`,
+      [equivalentId, SEED_IDS.groupA, SEED_IDS.empresaA, productId, SEED_IDS.produtoA],
+    );
+    await rejectSql(
+      'INSERT INTO produto_equivalentes (group_id,empresa_id,produto_id,produto_equivalente_id) VALUES ($1,$2,$3,$4)',
+      [SEED_IDS.groupA, SEED_IDS.empresaA, productId, SEED_IDS.produtoB],
+      /TENANT_FK_MISMATCH/,
+    );
+    await rejectSql(
+      'INSERT INTO produto_equivalentes (group_id,empresa_id,produto_id,produto_equivalente_id) VALUES ($1,$2,$3,$3)',
+      [SEED_IDS.groupA, SEED_IDS.empresaA, productId],
+      /check constraint/i,
+    );
+
+    await db.query(
+      `INSERT INTO produto_midias (id,group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,mime_type,tamanho_bytes,sha256,principal)
+       VALUES ($1,$2,$3,$4,$5,'IMAGEM','r10.png','image/png',128,$6,true)`,
+      [mediaId, SEED_IDS.groupA, SEED_IDS.empresaA, productId, `r10/${productId}`, sha],
+    );
+    await rejectSql(
+      `INSERT INTO produto_midias (group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,mime_type,tamanho_bytes,sha256,status)
+       VALUES ($1,$2,$3,$4,'IMAGEM','pending.png','image/png',1,$5,'PENDENTE_UPLOAD')`,
+      [SEED_IDS.groupA, SEED_IDS.empresaA, productId, `pending/${productId}`, sha],
+      /produto_midias_pending_upload_check/,
+    );
+    await rejectSql(
+      `INSERT INTO produto_midias (group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,mime_type,tamanho_bytes,sha256)
+       VALUES ($1,$2,$3,$4,'IMAGEM','x.png','image/png',1,$5)`,
+      [SEED_IDS.groupA, SEED_IDS.empresaA, SEED_IDS.produtoB, `xg/${productId}`, sha],
+      /TENANT_FK_MISMATCH/,
+    );
+    await rejectSql(
+      `INSERT INTO produto_midias (group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,mime_type,tamanho_bytes,sha256)
+       VALUES ($1,$2,$3,$4,'IMAGEM','x.png','image/png',1,'invalido')`,
+      [SEED_IDS.groupA, SEED_IDS.empresaA, productId, `sha/${productId}`],
+      /check constraint/i,
+    );
+    await rejectSql(
+      `INSERT INTO produto_midias (group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,mime_type,tamanho_bytes,sha256)
+       VALUES ($1,$2,$3,$4,'IMAGEM','x.png','image/png',0,$5)`,
+      [SEED_IDS.groupA, SEED_IDS.empresaA, productId, `size/${productId}`, sha],
+      /check constraint/i,
+    );
+    await rejectSql(
+      `INSERT INTO produto_midias (group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,mime_type,tamanho_bytes,sha256,principal)
+       VALUES ($1,$2,$3,$4,'IMAGEM','main.png','image/png',1,$5,true)`,
+      [SEED_IDS.groupA, SEED_IDS.empresaA, productId, `main/${productId}`, sha],
+      /unique constraint/i,
+    );
+
+    const rls = await db.query<{ relrowsecurity: boolean; relforcerowsecurity: boolean }>(
+      `SELECT relrowsecurity,relforcerowsecurity FROM pg_class
+       WHERE relname=ANY($1::text[])`,
+      [['produto_variantes','produto_equivalentes','produto_midias']],
+    );
+    assert.equal(rls.rowCount, 3);
+    assert.ok(rls.rows.every((row) => row.relrowsecurity && row.relforcerowsecurity));
+    const privileges = await db.query<{ allowed: boolean }>(
+      `SELECT has_table_privilege('public',name,'SELECT,INSERT,UPDATE,DELETE') allowed
+       FROM unnest($1::text[]) name`,
+      [['produto_variantes','produto_equivalentes','produto_midias']],
+    );
+    assert.ok(privileges.rows.every((row) => !row.allowed));
+
+    await rejectSql(
+      `INSERT INTO integration_events (source,event_type,payload,attempts,max_attempts)
+       VALUES ('R10','invalid','{}'::jsonb,2,1)`,
+      [],
+      /check constraint/i,
+    );
+    await assert.rejects(
+      db.withTransaction(async (tx) => {
+        await tx.query(
+          'INSERT INTO produto_variantes (id,group_id,empresa_id,produto_id,sku) VALUES ($1,$2,$3,$4,$5)',
+          [rollbackId, SEED_IDS.groupA, SEED_IDS.empresaA, productId, `RB-${productId}`],
+        );
+        throw new Error('R10_ROLLBACK');
+      }),
+      /R10_ROLLBACK/,
+    );
+    const rollback = await db.query('SELECT id FROM produto_variantes WHERE id=$1 AND group_id=$2', [rollbackId, SEED_IDS.groupA]);
+    assert.equal(rollback.rowCount, 0);
+  } finally {
+    let cleanupError: unknown;
+    try {
+      await db.withTransaction(async (tx) => {
+        await tx.query('DELETE FROM produto_midias WHERE id=$1 AND group_id=$2', [mediaId, SEED_IDS.groupA]);
+        await tx.query('DELETE FROM produto_equivalentes WHERE id=$1 AND group_id=$2', [equivalentId, SEED_IDS.groupA]);
+        await tx.query('DELETE FROM produto_variantes WHERE id=$1 AND group_id=$2', [variantId, SEED_IDS.groupA]);
+        await tx.query('DELETE FROM produtos WHERE id=$1 AND group_id=$2 AND empresa_id=$3', [productId, SEED_IDS.groupA, SEED_IDS.empresaA]);
+      });
+    } catch (error) { cleanupError = error; }
+    finally { await db.end(); }
+    if (cleanupError) throw cleanupError;
+  }
+});
+
+test('R10 PostgreSQL real: publicacao Produto grava outbox tenant-scoped com rollback e idempotencia', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
+  const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
+  const repo = new PostgresProdutoRepository(db);
+  const produtoId = randomUUID();
+  const requestId = randomUUID();
+  const scope = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA };
+  let originalError: unknown;
+  try {
+    await db.query(
+      "INSERT INTO produtos (id,group_id,empresa_id,codigo,descricao) VALUES ($1,$2,$3,$4,'R10 OUTBOX SINTETICO')",
+      [produtoId, scope.groupId, scope.empresaId, 'R10-' + produtoId],
+    );
+    const produto = await repo.getById(scope, produtoId);
+    assert.ok(produto);
+    await assert.rejects(repo.appendPublicationEvent(
+      { groupId: randomUUID(), empresaId: scope.empresaId }, produto, requestId,
+    ), /TENANT_FK_MISMATCH/);
+    await assert.rejects(repo.appendPublicationEvent(
+      { groupId: scope.groupId, empresaId: SEED_IDS.empresaA2 }, produto, requestId,
+    ), /TENANT_FK_MISMATCH/);
+    await assert.rejects(db.withTransaction(async (tx) => {
+      await repo.appendPublicationEvent(scope, produto, requestId, tx);
+      throw new Error('R10_OUTBOX_ROLLBACK');
+    }), /R10_OUTBOX_ROLLBACK/);
+    const count = async () => db.query<{ total: number }>(
+      'SELECT count(*)::int AS total FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND aggregate_id=$3 AND correlation_id=$4',
+      [scope.groupId, scope.empresaId, produtoId, requestId],
+    );
+    assert.equal((await count()).rows[0]?.total, 0);
+    await db.withTransaction((tx) => repo.appendPublicationEvent(scope, produto, requestId, tx));
+    await db.withTransaction((tx) => repo.appendPublicationEvent(scope, produto, requestId, tx));
+    assert.equal((await count()).rows[0]?.total, 1);
+    const events = await db.query<{
+      group_id: string; empresa_id: string; aggregate_type: string; aggregate_id: string;
+      event_type: string; status: string; schema_version: number; payload: Record<string, unknown>;
+      payload_checksum: string;
+    }>(
+      'SELECT group_id,empresa_id,aggregate_type,aggregate_id,event_type,status,schema_version,payload,payload_checksum FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND aggregate_id=$3 AND correlation_id=$4',
+      [scope.groupId, scope.empresaId, produtoId, requestId],
+    );
+    const event = events.rows[0];
+    assert.ok(event);
+    assert.equal(event.group_id, scope.groupId);
+    assert.equal(event.empresa_id, scope.empresaId);
+    assert.equal(event.aggregate_type, 'Produto');
+    assert.equal(event.aggregate_id, produtoId);
+    assert.equal(event.event_type, 'produto.publicado');
+    assert.equal(event.status, 'pending');
+    assert.equal(event.schema_version, 1);
+    assert.deepEqual(Object.keys(event.payload).sort(), ['codigo', 'produtoId', 'schemaVersion', 'workflowStatus']);
+    assert.equal(event.payload.produtoId, produtoId);
+    assert.match(event.payload_checksum, /^[a-f0-9]{64}$/);
+  } catch (error) {
+    originalError = error;
+    throw error;
+  } finally {
+    try {
+      await db.withTransaction(async (tx) => {
+        await tx.query('DELETE FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND aggregate_id=$3 AND correlation_id=$4',
+          [scope.groupId, scope.empresaId, produtoId, requestId]);
+        await tx.query('DELETE FROM produtos WHERE group_id=$1 AND empresa_id=$2 AND id=$3',
+          [scope.groupId, scope.empresaId, produtoId]);
+      });
+    } catch (error) {
+      if (!originalError) throw error;
+      process.stderr.write('R10 outbox cleanup failed after original test error\n');
+    } finally {
+      await db.end();
+    }
+  }
+});
+test('R10 PostgreSQL real: contrato compartilhado, empresa, grupo, SKU e rollback', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
+  const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
+  const repo = new PostgresProdutoRepository(db);
+  const sourceId = randomUUID();
+  const targetId = randomUUID();
+  const otherCompanyId = randomUUID();
+  const scope = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA };
+  let originalError: unknown;
+  try {
+    const migration = await db.query<{ total: number }>(
+      "SELECT count(*)::int total FROM schema_migrations WHERE id='019_produto_relacoes_tenant.sql'",
+    );
+    assert.equal(migration.rows[0]?.total, 1);
+    const nameColumn = await db.query<{ total: number }>(
+      "SELECT count(*)::int total FROM information_schema.columns WHERE table_name='produto_variantes' AND column_name='nome'",
+    );
+    assert.equal(nameColumn.rows[0]?.total, 1);
+    for (const [id, empresaId] of [
+      [sourceId, SEED_IDS.empresaA],
+      [targetId, SEED_IDS.empresaA],
+      [otherCompanyId, SEED_IDS.empresaA2],
+    ]) {
+      await db.query(
+        `INSERT INTO produtos (id,group_id,empresa_id,codigo,descricao)
+         VALUES ($1,$2,$3,$4,'R10 RELACAO SINTETICA')`,
+        [id, SEED_IDS.groupA, empresaId, `R10-${id}`],
+      );
+    }
+    await assertProdutoRelationsContract(repo, scope, sourceId, targetId, SEED_IDS.empresaA2);
+    await assertProdutoMediaContract(repo, scope, sourceId, SEED_IDS.empresaA2);
+    await assert.rejects(repo.withTransaction((tx) => repo.createEquivalent(scope, sourceId, {
+      produto_equivalente_id: otherCompanyId, tipo: 'EQUIVALENTE', direcional: false, aprovado: false,
+    }, tx)), /TENANT_FK_MISMATCH/);
+    await assert.rejects(repo.withTransaction((tx) => repo.createEquivalent(scope, sourceId, {
+      produto_equivalente_id: SEED_IDS.produtoB, tipo: 'EQUIVALENTE', direcional: false, aprovado: false,
+    }, tx)), /TENANT_FK_MISMATCH/);
+    await assert.rejects(repo.withTransaction((tx) => repo.createVariant(
+      { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA2 }, sourceId,
+      { sku: `X-${randomUUID()}`, atributos: {} }, tx,
+    )), /TENANT_FK_MISMATCH/);
+
+    const before = await db.query<{ total: number }>(
+      'SELECT count(*)::int total FROM produto_equivalentes WHERE group_id=$1 AND produto_id=$2',
+      [scope.groupId, sourceId],
+    );
+    const failingAudit = {
+      append: async () => { throw new Error('AUDIT_FAILURE'); },
+      listByEntity: async () => [],
+    };
+    const allowEdit: RbacGuard = { assertAllowed: async () => undefined };
+    const service = new ProdutoService(repo, failingAudit, new PostgresTenantGuard(db),
+      new InMemoryProdutoRelationGuard(), allowEdit);
+    await assert.rejects(service.createEquivalent({
+      requestId: 'r10-rollback', actorId: SEED_IDS.runtimeActorA,
+      groupId: scope.groupId, empresaId: scope.empresaId,
+    }, sourceId, { produto_equivalente_id: targetId }), /AUDIT_FAILURE/);
+    const after = await db.query<{ total: number }>(
+      'SELECT count(*)::int total FROM produto_equivalentes WHERE group_id=$1 AND produto_id=$2',
+      [scope.groupId, sourceId],
+    );
+    assert.equal(after.rows[0]?.total, before.rows[0]?.total);
+  } catch (error) {
+    originalError = error;
+    throw error;
+  } finally {
+    try {
+      await db.withTransaction(async (tx) => {
+        await tx.query('DELETE FROM produto_midias WHERE group_id=$1 AND produto_id=$2', [scope.groupId, sourceId]);
+        await tx.query('DELETE FROM produto_equivalentes WHERE group_id=$1 AND produto_id=$2', [scope.groupId, sourceId]);
+        await tx.query('DELETE FROM produto_variantes WHERE group_id=$1 AND produto_id=$2', [scope.groupId, sourceId]);
+        await tx.query('DELETE FROM produtos WHERE group_id=$1 AND id=ANY($2::uuid[])',
+          [scope.groupId, [sourceId, targetId, otherCompanyId]]);
+      });
+    } catch (error) {
+      if (!originalError) throw error;
+      process.stderr.write('R10 cleanup failed after the original test error\n');
+    } finally {
+      await db.end();
+    }
+  }
+});
+
+test('R10 PostgreSQL real: service DAM reserva, confirma e rollbacka auditoria', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
+  const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
+  const repo = new PostgresProdutoRepository(db);
+  const audit = new PostgresAuditRepository(db);
+  const productId = randomUUID();
+  const scope = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA };
+  const ctx = { ...scope, actorId: SEED_IDS.runtimeActorA, requestId: 'r10-dam-service' };
+  const allowEdit: RbacGuard = { assertAllowed: async () => undefined };
+  const denied: RbacGuard = { assertAllowed: async () => { throw new Error('RBAC_DENIED'); } };
+  let badChecksum = false;
+  const storage: StoragePort = {
+    createSignedUploadUrl: async () => ({
+      url: 'https://synthetic.example.test/upload?token=synthetic',
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+      requiredHeaders: {},
+    }),
+    confirmUpload: async (request) => ({
+      storageKey: request.storageKey, fileName: request.fileName, mimeType: request.mimeType,
+      sizeBytes: request.sizeBytes, sha256: badChecksum ? 'c'.repeat(64) : request.sha256,
+      version: 1,
+    }),
+    createSignedDownloadUrl: async () => { throw new Error('UNUSED'); },
+  };
+  const service = new ProdutoService(repo, audit, new PostgresTenantGuard(db),
+    new InMemoryProdutoRelationGuard(), allowEdit, storage);
+  const deniedService = new ProdutoService(repo, audit, new PostgresTenantGuard(db),
+    new InMemoryProdutoRelationGuard(), denied, storage);
+  const scanner: MalwareScanPort = { scan: async (request) => ({
+    ...request, version: request.version ?? 1, verdict: 'CLEAN',
+    scanner: 'synthetic-scanner', scannedAt: new Date().toISOString(),
+  }) };
+  const mediaIds: string[] = [];
+  let originalError: unknown;
+  try {
+    const migration = await db.query<{ total: number }>(
+      "SELECT count(*)::int total FROM schema_migrations WHERE id='021_produto_midia_upload_reservation.sql'",
+    );
+    assert.equal(migration.rows[0]?.total, 1);
+    await db.query(
+      "INSERT INTO produtos (id,group_id,empresa_id,codigo,descricao) VALUES ($1,$2,$3,$4,'R10 DAM SINTETICO')",
+      [productId, scope.groupId, scope.empresaId, `R10-${productId}`],
+    );
+    const data = (suffix: string) => ({
+      storage_key: `groups/${scope.groupId}/companies/${scope.empresaId}/products/${productId}/images/${randomUUID()}-${suffix}.png`,
+      categoria: 'IMAGEM', nome_arquivo: `${suffix}.png`, mime_type: 'image/png',
+      tamanho_bytes: 8, sha256: 'b'.repeat(64), versao: 1,
+    });
+    const firstData = data('first');
+    await assert.rejects(deniedService.reserveMidia(ctx, productId, firstData), /RBAC_DENIED/);
+    await assert.rejects(service.reserveMidia({ ...ctx, empresaId: SEED_IDS.empresaA2 }, productId, firstData),
+      (error: unknown) => (error as { code?: string }).code === 'VALIDATION_ERROR');
+    const first = await service.reserveMidia(ctx, productId, firstData);
+    mediaIds.push(first.mediaId);
+    await assert.rejects(service.confirmMidia({ ...ctx, empresaId: SEED_IDS.empresaA2 }, productId, first.mediaId, first.attemptId),
+      (error: unknown) => (error as { code?: string }).code === 'PRODUTO_NOT_FOUND');
+    const reserved = await db.withTransaction((tx) =>
+      repo.getReservedMidia(scope, productId, first.mediaId, first.attemptId, ctx.actorId, tx));
+    assert.equal(reserved?.status, 'PENDENTE_UPLOAD');
+    assert.deepEqual(await service.listMidias(ctx, productId), []);
+    await assert.rejects(service.confirmMidia({ ...ctx, actorId: randomUUID() }, productId, first.mediaId, first.attemptId),
+      (error: unknown) => (error as { code?: string }).code === 'MEDIA_RESERVATION_NOT_FOUND');
+    badChecksum = true;
+    await assert.rejects(service.confirmMidia(ctx, productId, first.mediaId, first.attemptId),
+      (error: unknown) => (error as { code?: string }).code === 'STORAGE_METADATA_MISMATCH');
+    badChecksum = false;
+    const failingAudit = {
+      append: async () => { throw new Error('SYNTHETIC_AUDIT_FAILURE'); },
+      listByEntity: audit.listByEntity.bind(audit),
+    };
+    const failingService = new ProdutoService(repo, failingAudit, new PostgresTenantGuard(db),
+      new InMemoryProdutoRelationGuard(), allowEdit, storage);
+    await assert.rejects(failingService.confirmMidia(ctx, productId, first.mediaId, first.attemptId),
+      /SYNTHETIC_AUDIT_FAILURE/);
+    const pending = await db.query<{ status: string }>(
+      'SELECT status FROM produto_midias WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+      [first.mediaId, scope.groupId, scope.empresaId],
+    );
+    assert.equal(pending.rows[0]?.status, 'PENDENTE_UPLOAD');
+    const confirmed = await service.confirmMidia(ctx, productId, first.mediaId, first.attemptId);
+    assert.equal(confirmed.status, 'QUARENTENA');
+    assert.equal((await service.listMidias(ctx, productId))[0]?.id, first.mediaId);
+    await assert.rejects(service.confirmMidia(ctx, productId, first.mediaId, first.attemptId),
+      (error: unknown) => (error as { code?: string }).code === 'MEDIA_RESERVATION_NOT_FOUND');
+    const logs = await audit.listByEntity('ProdutoMidia', first.mediaId);
+    const scanMigration = await db.query<{ total: number }>(
+      "SELECT count(*)::int total FROM schema_migrations WHERE id='022_produto_midia_scan_evidence.sql'",
+    );
+    assert.equal(scanMigration.rows[0]?.total, 1);
+    await assert.rejects(db.query(
+      "UPDATE produto_midias SET scan_verdict='CLEAN' WHERE id=$1 AND group_id=$2 AND empresa_id=$3",
+      [first.mediaId, scope.groupId, scope.empresaId],
+    ), /check constraint/i);
+    const scanFailingAudit = new ProdutoService(repo, failingAudit, new PostgresTenantGuard(db),
+      new InMemoryProdutoRelationGuard(), allowEdit, storage, scanner);
+    await assert.rejects(scanFailingAudit.scanMidia(ctx, productId, first.mediaId), /SYNTHETIC_AUDIT_FAILURE/);
+    const notScanned = await db.query<{ scan_verdict: string | null }>(
+      'SELECT scan_verdict FROM produto_midias WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+      [first.mediaId, scope.groupId, scope.empresaId],
+    );
+    assert.equal(notScanned.rows[0]?.scan_verdict, null);
+    const scanService = new ProdutoService(repo, audit, new PostgresTenantGuard(db),
+      new InMemoryProdutoRelationGuard(), allowEdit, storage, scanner);
+    await assert.rejects(scanService.scanMidia({ ...ctx, empresaId: SEED_IDS.empresaA2 }, productId, first.mediaId),
+      (error: unknown) => (error as { code?: string }).code === 'PRODUTO_NOT_FOUND');
+    const scanned = await scanService.scanMidia(ctx, productId, first.mediaId);
+    assert.equal(scanned.status, 'QUARENTENA');
+    assert.equal(scanned.scan_verdict, 'CLEAN');
+    const stored = await db.query<{ scan_verdict: string; scan_sha256: string }>(
+      'SELECT scan_verdict,scan_sha256 FROM produto_midias WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+      [first.mediaId, scope.groupId, scope.empresaId],
+    );
+    assert.equal(stored.rows[0]?.scan_sha256, firstData.sha256);
+    assert.deepEqual(logs.map((entry) => entry.action), ['create', 'change_status']);
+    assert.equal(logs.every((entry) => entry.groupId === scope.groupId && entry.empresaId === scope.empresaId), true);
+    assert.equal(JSON.stringify(logs).includes(firstData.storage_key), false);
+    assert.equal(JSON.stringify(logs).includes(first.url), false);
+    const failedData = data('failed');
+    await assert.rejects(failingService.reserveMidia(ctx, productId, failedData), /SYNTHETIC_AUDIT_FAILURE/);
+    const rolledBack = await db.query<{ total: number }>(
+      'SELECT count(*)::int total FROM produto_midias WHERE group_id=$1 AND empresa_id=$2 AND storage_key=$3',
+      [scope.groupId, scope.empresaId, failedData.storage_key],
+    );
+    assert.equal(rolledBack.rows[0]?.total, 0);
+    const expiredData = data('expired');
+    const expired = await service.reserveMidia(ctx, productId, expiredData);
+    mediaIds.push(expired.mediaId);
+    await assert.rejects(service.rejectExpiredMidia(ctx, productId, expired.mediaId),
+      (error: unknown) => (error as { code?: string }).code === 'MEDIA_RESERVATION_NOT_FOUND');
+    await db.query(
+      "UPDATE produto_midias SET upload_expires_at=now()-interval '1 minute' WHERE id=$1 AND group_id=$2 AND empresa_id=$3",
+      [expired.mediaId, scope.groupId, scope.empresaId],
+    );
+    await assert.rejects(deniedService.rejectExpiredMidia(ctx, productId, expired.mediaId), /RBAC_DENIED/);
+    await assert.rejects(service.rejectExpiredMidia({ ...ctx, empresaId: SEED_IDS.empresaA2 }, productId, expired.mediaId),
+      (error: unknown) => (error as { code?: string }).code === 'PRODUTO_NOT_FOUND');
+    await assert.rejects(failingService.rejectExpiredMidia(ctx, productId, expired.mediaId), /SYNTHETIC_AUDIT_FAILURE/);
+    const pendingAfterRollback = await db.query<{ status: string }>(
+      'SELECT status FROM produto_midias WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+      [expired.mediaId, scope.groupId, scope.empresaId],
+    );
+    assert.equal(pendingAfterRollback.rows[0]?.status, 'PENDENTE_UPLOAD');
+    assert.deepEqual(await service.rejectExpiredMidia(ctx, productId, expired.mediaId),
+      { mediaId: expired.mediaId, status: 'REJEITADO' });
+    const rejected = await db.query<{ status: string; ativo: boolean; storage_key: string }>(
+      'SELECT status,ativo,storage_key FROM produto_midias WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+      [expired.mediaId, scope.groupId, scope.empresaId],
+    );
+    assert.equal(rejected.rows[0]?.status, 'REJEITADO');
+    assert.equal(rejected.rows[0]?.ativo, false);
+    assert.equal(rejected.rows[0]?.storage_key, expiredData.storage_key);
+    await assert.rejects(service.rejectExpiredMidia(ctx, productId, expired.mediaId),
+      (error: unknown) => (error as { code?: string }).code === 'MEDIA_RESERVATION_NOT_FOUND');
+    const expiredLogs = await audit.listByEntity('ProdutoMidia', expired.mediaId);
+    assert.deepEqual(expiredLogs.map((entry) => entry.action), ['create', 'change_status']);
+    assert.equal(JSON.stringify(expiredLogs).includes(expiredData.storage_key), false);
+    const batchData = data('batch-expired');
+    const batch = await service.reserveMidia(ctx, productId, batchData);
+    mediaIds.push(batch.mediaId);
+    const freshData = data('batch-fresh');
+    const fresh = await service.reserveMidia(ctx, productId, freshData);
+    mediaIds.push(fresh.mediaId);
+    await db.query(
+      "UPDATE produto_midias SET upload_expires_at=now()-interval '1 minute' WHERE id=$1 AND group_id=$2 AND empresa_id=$3",
+      [batch.mediaId, scope.groupId, scope.empresaId],
+    );
+    const foreignCandidates = await repo.listExpiredReservedMidias(
+      { groupId: scope.groupId, empresaId: SEED_IDS.empresaA2 }, 100);
+    assert.equal(foreignCandidates.some((row) => row.id === batch.mediaId), false);
+    await assert.rejects(deniedService.reconcileExpiredMidias(ctx, 1), /RBAC_DENIED/);
+    await assert.rejects(failingService.reconcileExpiredMidias(ctx, 1), /SYNTHETIC_AUDIT_FAILURE/);
+    const batchBefore = await db.query<{ status: string }>(
+      'SELECT status FROM produto_midias WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+      [batch.mediaId, scope.groupId, scope.empresaId],
+    );
+    assert.equal(batchBefore.rows[0]?.status, 'PENDENTE_UPLOAD');
+    assert.deepEqual(await service.reconcileExpiredMidias(ctx, 1), { inspected: 1, rejected: 1, raced: 0 });
+    assert.deepEqual(await service.reconcileExpiredMidias(ctx, 1), { inspected: 0, rejected: 0, raced: 0 });
+    const batchAfter = await db.query<{ status: string; ativo: boolean; storage_key: string }>(
+      'SELECT status,ativo,storage_key FROM produto_midias WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+      [batch.mediaId, scope.groupId, scope.empresaId],
+    );
+    assert.equal(batchAfter.rows[0]?.status, 'REJEITADO');
+    assert.equal(batchAfter.rows[0]?.ativo, false);
+    assert.equal(batchAfter.rows[0]?.storage_key, batchData.storage_key);
+    const freshAfter = await db.query<{ status: string }>(
+      'SELECT status FROM produto_midias WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+      [fresh.mediaId, scope.groupId, scope.empresaId],
+    );
+    assert.equal(freshAfter.rows[0]?.status, 'PENDENTE_UPLOAD');
+  } catch (error) {
+    originalError = error;
+    throw error;
+  } finally {
+    try {
+      await db.withTransaction(async (tx) => {
+        await tx.query("DELETE FROM audit_logs WHERE entity='ProdutoMidia' AND entity_id=ANY($1::text[])", [mediaIds]);
+        await tx.query('DELETE FROM produto_midias WHERE group_id=$1 AND empresa_id=$2 AND produto_id=$3',
+          [scope.groupId, scope.empresaId, productId]);
+        await tx.query('DELETE FROM produtos WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+          [productId, scope.groupId, scope.empresaId]);
+      });
+    } catch (error) {
+      if (!originalError) throw error;
+      process.stderr.write('R10 DAM cleanup failed after the original test error\n');
+    } finally {
+      await db.end();
+    }
+  }
+});
+
+test('R10 PostgreSQL real: Produto material, liga e norma preservam tenant e rollback', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
+  const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
+  const repo = new PostgresProdutoRepository(db);
+  const scope = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA };
+  let createdId = '';
+  try {
+    const migration = await db.query<{ total: number }>(
+      "SELECT count(*)::int AS total FROM schema_migrations WHERE id='023_produto_material_norma.sql'",
+    );
+    assert.equal(migration.rows[0]?.total, 1);
+    const columns = await db.query<{ column_name: string }>(
+      "SELECT column_name FROM information_schema.columns WHERE table_name='produtos' AND column_name=ANY($1::text[])",
+      [['material', 'liga', 'norma_tecnica']],
+    );
+    assert.deepEqual(columns.rows.map((row) => row.column_name).sort(), ['liga', 'material', 'norma_tecnica']);
+    await assert.rejects(db.withTransaction(async (tx) => {
+      const marker = `LIGA-R10-${randomUUID()}`;
+      const row = await repo.create(scope, produtoCreateSchema.parse({
+        descricao: 'PIM material sintetico', material: 'Aco carbono',
+        liga: marker, norma_tecnica: 'ASTM A36',
+      }), tx);
+      createdId = row.id;
+      assert.equal((await repo.getById(scope, row.id, tx))?.material, 'Aco carbono');
+      assert.equal(await repo.getById({ groupId: scope.groupId, empresaId: SEED_IDS.empresaA2 }, row.id, tx), null);
+      const ownPage = await repo.listPage({ ...scope, search: marker.toLowerCase(), limit: 1, offset: 0 }, tx);
+      assert.equal(ownPage.total, 1);
+      assert.deepEqual(ownPage.rows.map((product) => product.id), [row.id]);
+      assert.equal((await repo.listPage({ ...scope, search: marker, limit: 1, offset: 1 }, tx)).rows.length, 0);
+      assert.equal((await repo.listPage({ groupId: scope.groupId, empresaId: SEED_IDS.empresaA2,
+        search: marker }, tx)).total, 0);
+      assert.equal((await repo.listPage({ ...scope, search: '%' }, tx)).rows.some((product) => product.id === row.id), false);
+      assert.equal(await repo.getById({ groupId: SEED_IDS.groupB, empresaId: SEED_IDS.empresaB }, row.id, tx), null);
+      const updated = await repo.update(scope, row.id, { norma_tecnica: 'ABNT NBR 7007' }, tx);
+      assert.equal(updated?.norma_tecnica, 'ABNT NBR 7007');
+      assert.equal(updated?.liga, marker);
+      await tx.query('SAVEPOINT invalid_material');
+      const second = await repo.create(scope, produtoCreateSchema.parse({
+        descricao: 'PIM pagina sintetico', liga: marker,
+      }), tx);
+      await tx.query(
+        'UPDATE produtos SET created_at=$1 WHERE group_id=$2 AND empresa_id=$3 AND id=ANY($4::uuid[])',
+        ['2026-01-02T00:00:00.000Z', scope.groupId, scope.empresaId, [row.id, second.id]],
+      );
+      const expected = [row.id, second.id].sort().reverse();
+      for (let offset = 0; offset < expected.length; offset += 1) {
+        const page = await repo.listPage({ ...scope, search: marker, limit: 1, offset }, tx);
+        assert.equal(page.total, 2);
+        assert.deepEqual(page.rows.map((product) => product.id), [expected[offset]]);
+      }
+      assert.equal((await repo.listPage({ groupId: scope.groupId, empresaId: SEED_IDS.empresaA2,
+        search: marker }, tx)).total, 0);
+      await assert.rejects(tx.query(
+        "UPDATE produtos SET material='' WHERE id=$1 AND group_id=$2 AND empresa_id=$3",
+        [row.id, scope.groupId, scope.empresaId],
+      ), /check constraint/i);
+      await tx.query('ROLLBACK TO SAVEPOINT invalid_material');
+      assert.equal((await repo.getById(scope, row.id, tx))?.norma_tecnica, 'ABNT NBR 7007');
+      throw new Error('ROLLBACK_PIM_MATERIAL_SYNTHETIC');
+    }), /ROLLBACK_PIM_MATERIAL_SYNTHETIC/);
+    assert.equal(await repo.getById(scope, createdId), null);
+  } finally {
+    await db.end();
+  }
+});

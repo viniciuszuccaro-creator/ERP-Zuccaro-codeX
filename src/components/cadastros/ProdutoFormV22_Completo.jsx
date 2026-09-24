@@ -15,19 +15,23 @@ import {
   TrendingUp, ArrowRightLeft, ShoppingCart, Image, Warehouse,
   Trash2, Power, PowerOff, Save
 } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { base44, getHttpProdutoApi, isHttpBackendMode, isHttpProdutoEnabled } from "@/api/base44Client";
 import { toast } from "sonner";
 import FormWrapper from "@/components/common/FormWrapper";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useQuery } from "@tanstack/react-query";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
+import { PRODUTO_TIPOS_CANONICOS, getProdutoTipoOptions, normalizeProdutoTipoItem } from "./produto/produtoTipoPolicy";
 const HistoricoProduto = React.lazy(() => import("./HistoricoProduto"));
 const FiscalContabilSection = React.lazy(() => import("./produto/FiscalContabilSection"));
+import { toProdutoHttpPayload, validateProdutoPimQuantities } from './produto/produtoHttpPolicy';
 const EstoqueAvancadoSection = React.lazy(() => import("./produto/EstoqueAvancadoSection"));
 const PrecosSection = React.lazy(() => import("./produto/PrecosSection"));
 const PesoDimensoesSection = React.lazy(() => import("./produto/PesoDimensoesSection"));
 
+const ProdutoPimSection = React.lazy(() => import("./produto/ProdutoPimSection"));
+const ProdutoRelationsDamSection = React.lazy(() => import('./produto/ProdutoRelationsDamSection'));
 /**
  * V21.4 ETAPA 2/3 COMPLETA - CADASTRO COMPLETO DE PRODUTOS
  * ✅ Aba 1: Dados Gerais + TRIPLA CLASSIFICAÇÃO (Setor + Grupo + Marca)
@@ -38,7 +42,9 @@ const PesoDimensoesSection = React.lazy(() => import("./produto/PesoDimensoesSec
  * ✅ Aba 6: Estoque Avançado (NOVO)
  * ✅ Aba 7: Histórico (se edição)
  */
-function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, windowMode = false, closeSelf }) {
+function ProdutoFormV22_Completo({ produto: produtoProp, item, data, onSubmit, onSuccess, isSubmitting, windowMode = false, closeSelf }) {
+  const produto = produtoProp || item || data || null;
+  const produtoHttp = isHttpProdutoEnabled && (!produto?.id || /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(produto.id));
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
   const [user, setUser] = useState(null);
   const {
@@ -50,9 +56,10 @@ function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, w
     updateInContext,
     deleteInContext
   } = useContextoVisual();
-  const { canCreate, canEdit, canDelete } = usePermissions();
+  const { canCreate, canEdit, canDelete, hasPermission } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const contextKey = empresaAtual?.id || groupId || "sem-contexto";
+  const podeVisualizar = hasPermission('Cadastros', 'Produto', 'visualizar');
   const contextoValido = contextKey !== "sem-contexto";
   const podeCriar = canCreate("Cadastros", "Produto") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Produto") || canEdit("Cadastros", null);
@@ -74,6 +81,7 @@ function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, w
     if (produto) {
       return {
         ...produto,
+        tipo_item: normalizeProdutoTipoItem(produto.tipo_item),
         // Garante que a Unidade Principal apareça selecionada no formulário
         unidade_principal: produto.unidade_principal || produto.unidade_medida || (produto.eh_bitola ? 'KG' : 'UN'),
         // Garante que a unidade principal esteja presente nas unidades habilitadas
@@ -113,7 +121,18 @@ function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, w
         controla_validade: produto.controla_validade || false,
         prazo_validade_dias: produto.prazo_validade_dias || 0,
         localizacao: produto.localizacao || '',
-        almoxarifado_id: produto.almoxarifado_id || ''
+        almoxarifado_id: produto.almoxarifado_id || '',
+        descricao_tecnica: produto.descricao_tecnica || '',
+        material: produto.material || '',
+        liga: produto.liga || '',
+        norma_tecnica: produto.norma_tecnica || '',
+        descricao_comercial: produto.descricao_comercial || '',
+        titulo_seo: produto.titulo_seo || '',
+        embalagem_tipo: produto.embalagem_tipo || '',
+        multiplo_venda: produto.multiplo_venda ?? 1,
+        quantidade_minima_venda: produto.quantidade_minima_venda ?? 0,
+        permite_fracionamento: produto.permite_fracionamento || false,
+        workflow_status: produto.workflow_status || 'RASCUNHO',
       };
     }
     
@@ -122,7 +141,7 @@ function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, w
       descricao: '',
       codigo: '',
       codigo_barras: '',
-      tipo_item: 'Revenda',
+      tipo_item: PRODUTO_TIPOS_CANONICOS.REVENDA,
       grupo: 'Outros',
       eh_bitola: false,
       peso_teorico_kg_m: 0,
@@ -156,6 +175,17 @@ function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, w
       comprimento_cm: 0,
       exibir_no_site: false,
       exibir_no_marketplace: false,
+      descricao_tecnica: '',
+      material: '',
+      liga: '',
+      norma_tecnica: '',
+      descricao_comercial: '',
+      titulo_seo: '',
+      embalagem_tipo: '',
+      multiplo_venda: 1,
+      quantidade_minima_venda: 0,
+      permite_fracionamento: false,
+      workflow_status: 'RASCUNHO',
       origem_mercadoria: '0 - Nacional',
       regime_tributario_produto: 'Simples Nacional',
       tributacao: {
@@ -190,6 +220,17 @@ function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, w
   const [gerandoImagem, setGerandoImagem] = useState(false);
 
   // V21.2 FASE 2: Queries dos estruturantes
+  useEffect(() => {
+    if (!produtoHttp || !produto?.id) return;
+    let active = true;
+    getHttpProdutoApi().get(produto.id).then((row) => {
+      if (active) setFormData((current) => ({ ...current, ...row }));
+    }).catch((error) => {
+      if (active) toast.error('Erro ao carregar produto: ' + error.message);
+    });
+    return () => { active = false; };
+  }, [produtoHttp, produto?.id]);
+
   const { data: setores = [] } = useQuery({
     queryKey: ['setores-atividade', contextKey],
     queryFn: () => filterInContext('SetorAtividade', {}, 'nome', 200),
@@ -362,12 +403,18 @@ Caso contrário, sugira:
   const handleUploadFoto = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    if (isHttpBackendMode) {
+      toast.error('Upload de foto indisponivel ate a ativacao do Storage do ERP');
+      e.target.value = '';
+      return;
+    }
 
     setUploadingFoto(true);
     
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      setFormData({ ...formData, foto_produto_url: file_url });
+      if (!file_url) throw new Error('Arquivo nao foi armazenado');
+      setFormData((current) => ({ ...current, foto_produto_url: file_url }));
       toast.success('✅ Foto carregada!');
     } catch (error) {
       toast.error('Erro ao fazer upload');
@@ -449,6 +496,10 @@ Caso contrário, sugira:
   };
 
   const gerarImagemIA = async () => {
+    if (isHttpBackendMode) {
+      toast.error('Geracao de imagem indisponivel ate a ativacao do Storage do ERP');
+      return;
+    }
     if (!formData.descricao) {
       toast.error("Preencha a descrição do produto primeiro");
       return;
@@ -461,6 +512,7 @@ Caso contrário, sugira:
         prompt: `Product photography of ${formData.descricao}, professional lighting, white background, high quality, detailed, 4k`
       });
 
+      if (!url) throw new Error('Imagem nao gerada');
       setFormData(prev => ({
         ...prev,
         foto_produto_url: url
@@ -489,7 +541,15 @@ Caso contrário, sugira:
       return;
     }
 
-    if (formData.codigo && !produto?.id) {
+    try {
+      validateProdutoPimQuantities(formData);
+    } catch (error) {
+      toast.error(error.message);
+      setAbaAtiva('ecommerce');
+      return;
+    }
+
+    if (formData.codigo && !produto?.id && !produtoHttp) {
       try {
         const produtosExistentes = await filterInContext('Produto', { codigo: formData.codigo }, '-created_date', 1);
         if (produtosExistentes.length > 0) {
@@ -550,18 +610,18 @@ Caso contrário, sugira:
       }
     };
 
-    const dadosSubmit = carimbarContexto(dadosBase, 'empresa_id');
-
     try {
+      const dadosSubmit = produtoHttp ? toProdutoHttpPayload(dadosBase, { update: Boolean(produto?.id) }) : carimbarContexto(dadosBase, 'empresa_id');
+      let saved;
       if (produto?.id) {
-        await updateInContext('Produto', produto.id, dadosSubmit);
-        toast.success('✅ Produto atualizado com sucesso!');
+        saved = produtoHttp ? await getHttpProdutoApi().update(produto.id, dadosSubmit) : await updateInContext('Produto', produto.id, dadosSubmit);
       } else {
-        await createInContext('Produto', dadosSubmit);
-        toast.success('✅ Produto criado com sucesso!');
+        saved = produtoHttp ? await getHttpProdutoApi().create(dadosSubmit) : await createInContext('Produto', dadosSubmit);
       }
+      if (produtoHttp && !saved?.id) throw new Error('Resposta do ERP sem identificador do produto');
       if (onSuccess) onSuccess();
-      if (onSubmit) onSubmit(dadosSubmit);
+      if (onSubmit) await onSubmit(produtoHttp ? { ...saved, _http: true } : dadosSubmit);
+      toast.success(produto?.id ? 'Produto atualizado com sucesso!' : 'Produto criado com sucesso!');
       if (typeof closeSelf === 'function') closeSelf();
     } catch (error) {
       toast.error('❌ Erro ao salvar produto: ' + error.message);
@@ -579,7 +639,7 @@ Caso contrário, sugira:
       return;
     }
     if (produto?.id) {
-      deleteInContext('Produto', produto.id)
+      (produtoHttp ? getHttpProdutoApi().delete(produto.id) : deleteInContext('Produto', produto.id))
         .then(() => {
           toast.success('Produto excluido com sucesso!');
           if (onSuccess) onSuccess();
@@ -595,6 +655,7 @@ Caso contrário, sugira:
 
   const handleAlternarStatus = () => {
     const novoStatus = formData.status === 'Ativo' ? 'Inativo' : 'Ativo';
+    if (produtoHttp) return;
     setFormData({ ...formData, status: novoStatus });
   };
 
@@ -862,11 +923,9 @@ Caso contrário, sugira:
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Revenda">Revenda</SelectItem>
-                      <SelectItem value="Matéria-Prima Produção">Matéria-Prima Produção</SelectItem>
-                      <SelectItem value="Produto Acabado">Produto Acabado</SelectItem>
-                      <SelectItem value="Consumo Interno">Consumo Interno</SelectItem>
-                      <SelectItem value="Serviço">Serviço</SelectItem>
+                      {getProdutoTipoOptions(formData.tipo_item).map((option) => (
+                        <SelectItem key={option.key} value={option.value}>{option.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -883,6 +942,7 @@ Caso contrário, sugira:
                       type="file"
                       accept="image/*"
                       onChange={handleUploadFoto}
+                      disabled={isHttpBackendMode}
                       className="hidden"
                       id="foto-upload"
                       data-permission="Cadastros.Produto.editar"
@@ -890,7 +950,7 @@ Caso contrário, sugira:
                       data-sensitive
                     />
                     <label htmlFor="foto-upload" className="flex-1">
-                      <Button type="button" variant="outline" size="sm" disabled={uploadingFoto || !contextoValido || (produto?.id ? !podeEditar : !podeCriar)} className="w-full" asChild data-permission="Cadastros.Produto.editar" data-action="abrir-upload-foto-produto" data-sensitive>
+                      <Button type="button" variant="outline" size="sm" disabled={isHttpBackendMode || uploadingFoto || !contextoValido || (produto?.id ? !podeEditar : !podeCriar)} className="w-full" asChild data-permission="Cadastros.Produto.editar" data-action="abrir-upload-foto-produto" data-sensitive>
                         <span>
                           {uploadingFoto ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
                           {formData.foto_produto_url ? 'Alterar' : 'Upload'}
@@ -902,7 +962,7 @@ Caso contrário, sugira:
                         type="button"
                         size="sm"
                         onClick={gerarImagemIA}
-                        disabled={gerandoImagem || !contextoValido || (produto?.id ? !podeEditar : !podeCriar)}
+                        disabled={isHttpBackendMode || gerandoImagem || !contextoValido || (produto?.id ? !podeEditar : !podeCriar)}
                         className="bg-purple-600 hover:bg-purple-700"
                         data-permission="Cadastros.Produto.ia"
                         data-action="gerar-imagem-produto-ia"
@@ -1124,6 +1184,21 @@ Caso contrário, sugira:
 
         {/* ABA 4: E-COMMERCE */}
         <TabsContent value="ecommerce" className="space-y-6">
+          <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando conteúdo do produto...</div>}>
+            <ProdutoPimSection formData={formData} setFormData={setFormData} />
+          </Suspense>
+          {produtoHttp && produto?.id && empresaAtual?.id && (
+            <Suspense fallback={null}>
+              <ProdutoRelationsDamSection produtoId={produto.id} groupId={groupId}
+                empresaId={empresaAtual.id} canView={podeVisualizar} canEdit={podeEditar}
+                canApprove={hasPermission('Cadastros', 'Produto', 'aprovar-conteudo')}
+                canPublish={hasPermission('Cadastros', 'Produto', 'publicar')}
+                canDeactivate={hasPermission('Cadastros', 'Produto', 'inativar')}
+                workflowStatus={formData.workflow_status} onWorkflowChanged={(status) => setFormData((current) => ({ ...current, workflow_status: status }))} />
+            </Suspense>
+          )}
+
+
           <Card className="border-purple-200 bg-white/60 backdrop-blur-md shadow-lg">
             <CardContent className="p-6 space-y-4">
               <h3 className="font-bold text-purple-900">🛒 Canais de Venda</h3>
@@ -1261,6 +1336,7 @@ Caso contrário, sugira:
         <div className="flex gap-2">
           {produto && (
             <>
+              {!produtoHttp && (
               <Button
                 type="button"
                 variant="outline"
@@ -1283,6 +1359,7 @@ Caso contrário, sugira:
                   </>
                 )}
               </Button>
+              )}
               <Button
                 type="button"
                 variant="destructive"

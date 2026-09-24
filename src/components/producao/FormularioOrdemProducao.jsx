@@ -15,6 +15,7 @@ import SeletorProdutosProducao from "./SeletorProdutosProducao";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
+import { isProdutoMateriaPrima } from "@/components/cadastros/produto/produtoTipoPolicy";
 
 /**
  * V21.6 - FORMULÁRIO DE ORDEM DE PRODUÇÃO COMPLETO
@@ -68,7 +69,7 @@ export default function FormularioOrdemProducao({ op, onClose }) {
     queryFn: async () => {
       const all = await filterInContext("Produto", {}, "descricao", 1000);
       return all.filter(p => 
-        p.tipo_item === 'Matéria-Prima Produção' && 
+        isProdutoMateriaPrima(p.tipo_item) &&
         p.status === 'Ativo'
       );
     },

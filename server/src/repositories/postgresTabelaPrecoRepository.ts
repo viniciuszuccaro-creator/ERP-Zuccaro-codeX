@@ -599,6 +599,11 @@ export class PostgresTabelaPrecoRepository implements TabelaPrecoRepository {
          JOIN tabela_preco_itens i
            ON i.tabela_preco_id=t.id AND i.group_id=t.group_id
           AND i.produto_id=$3 AND i.unidade_medida_id=$4 AND i.ativo=true
+         JOIN produtos p
+           ON p.id=i.produto_id AND p.group_id=t.group_id AND p.ativo=true
+          AND (p.empresa_id IS NULL OR p.empresa_id=$2)
+         JOIN unidades_medida u
+           ON u.id=i.unidade_medida_id AND u.group_id=t.group_id AND u.ativo=true
          WHERE t.group_id=$1 AND t.id=$5 AND t.ativo=true
            AND t.vigencia_inicio <= $6::date
            AND (t.vigencia_fim IS NULL OR t.vigencia_fim >= $6::date)

@@ -16,6 +16,7 @@ import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { PRODUTO_TIPOS_CANONICOS, getProdutoTipoOptions, isProdutoMateriaPrima, normalizeProdutoTipoItem } from "./produto/produtoTipoPolicy";
 
 /**
  * V21.6 - EVOLUÃ‡ÃƒO DO CADASTRO DE PRODUTOS
@@ -44,6 +45,7 @@ export default function ProdutoForm({ produto, item, data, initialData, defaultV
     if (dadosIniciais) {
       return {
         ...dadosIniciais,
+        tipo_item: normalizeProdutoTipoItem(dadosIniciais.tipo_item),
         unidades_secundarias: dadosIniciais.unidades_secundarias || ['KG'],
         fatores_conversao: dadosIniciais.fatores_conversao || {
           kg_por_peca: 0,
@@ -64,7 +66,7 @@ export default function ProdutoForm({ produto, item, data, initialData, defaultV
     return {
       descricao: '',
       codigo: '',
-      tipo_item: 'Revenda',
+      tipo_item: PRODUTO_TIPOS_CANONICOS.REVENDA,
       grupo: 'Outros',
       eh_bitola: false,
       peso_teorico_kg_m: 0,
@@ -304,7 +306,7 @@ Caso contrÃ¡rio, sugira:
   const enviarParaProducao = () => {
     setFormData(prev => ({
       ...prev,
-      tipo_item: 'MatÃ©ria-Prima ProduÃ§Ã£o',
+      tipo_item: PRODUTO_TIPOS_CANONICOS.MATERIA_PRIMA,
       setor_atividade_id: 'setor-fabrica-001',
       setor_atividade_nome: 'FÃ¡brica'
     }));
@@ -328,7 +330,7 @@ Caso contrÃ¡rio, sugira:
     descricao: sanitizeText(formData.descricao, 240),
     nome: sanitizeText(formData.descricao, 240),
     codigo: sanitizeCode(formData.codigo, 80),
-    tipo_item: sanitizeText(formData.tipo_item, 80),
+    tipo_item: normalizeProdutoTipoItem(sanitizeText(formData.tipo_item, 80)),
     grupo: sanitizeText(formData.grupo, 120),
     tipo_aco: sanitizeText(formData.tipo_aco, 40),
     unidade_principal: sanitizeText(formData.unidade_principal, 20),
@@ -490,7 +492,7 @@ Caso contrÃ¡rio, sugira:
               <Label>Tipo de Item</Label>
               <Select value={formData.tipo_item} onValueChange={(v) => {
                 setFormData(prev => ({...prev, tipo_item: v}));
-                if (v === 'MatÃ©ria-Prima ProduÃ§Ã£o') {
+                if (isProdutoMateriaPrima(v)) {
                   setModoManual(false);
                 }
               }}>
@@ -498,16 +500,16 @@ Caso contrÃ¡rio, sugira:
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Revenda">Revenda</SelectItem>
-                  <SelectItem value="MatÃ©ria-Prima ProduÃ§Ã£o">MatÃ©ria-Prima ProduÃ§Ã£o</SelectItem>
-                  <SelectItem value="Produto Acabado">Produto Acabado</SelectItem>
+                  {getProdutoTipoOptions(formData.tipo_item).map((option) => (
+                    <SelectItem key={option.key} value={option.value}>{option.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           {/* V21.6: NOVO BOTÃƒO - ENVIAR PARA PRODUÃ‡ÃƒO */}
-          {formData.tipo_item !== 'MatÃ©ria-Prima ProduÃ§Ã£o' && (
+          {!isProdutoMateriaPrima(formData.tipo_item) && (
             <Alert className="border-orange-300 bg-gradient-to-r from-orange-50 to-amber-50">
               <AlertDescription>
                 <div className="flex items-center justify-between">
@@ -531,7 +533,7 @@ Caso contrÃ¡rio, sugira:
             </Alert>
           )}
 
-          {formData.tipo_item === 'MatÃ©ria-Prima ProduÃ§Ã£o' && (
+          {isProdutoMateriaPrima(formData.tipo_item) && (
             <Alert className="border-green-300 bg-green-50">
               <CheckCircle2 className="w-4 h-4 text-green-700" />
               <AlertDescription className="text-sm text-green-900">
@@ -585,7 +587,7 @@ Caso contrÃ¡rio, sugira:
                 ...prev,
                 unidade_principal: 'KG',
                 unidades_secundarias: ['PÃ‡', 'KG', 'MT'],
-                tipo_item: 'MatÃ©ria-Prima ProduÃ§Ã£o'
+                tipo_item: PRODUTO_TIPOS_CANONICOS.MATERIA_PRIMA
               }));
             }
           }}
@@ -736,7 +738,7 @@ Caso contrÃ¡rio, sugira:
                   <p>â€¢ <strong>Compras:</strong> Dropdown terÃ¡ opÃ§Ãµes: {formData.unidades_secundarias.join(', ')}</p>
                   <p>â€¢ <strong>Estoque:</strong> Saldo sempre em KG (conversÃ£o automÃ¡tica)</p>
                   <p>â€¢ <strong>NF-e:</strong> Unidade do pedido + equivalente KG</p>
-                  {formData.tipo_item === 'MatÃ©ria-Prima ProduÃ§Ã£o' && (
+                  {isProdutoMateriaPrima(formData.tipo_item) && (
                     <p className="text-orange-700 font-semibold">â€¢ <strong>ProduÃ§Ã£o:</strong> âœ… DisponÃ­vel em OPs</p>
                   )}
                 </div>

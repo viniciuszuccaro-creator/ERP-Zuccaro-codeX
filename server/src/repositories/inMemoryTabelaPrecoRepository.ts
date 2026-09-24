@@ -196,6 +196,7 @@ export class InMemoryTabelaPrecoRepository implements TabelaPrecoRepository {
   private produtos = new Map<string, {
     id: string;
     group_id: string;
+    empresa_id: string | null;
     ativo: boolean;
     unidade_medida_id: string | null;
     unidades_secundarias: string[];
@@ -211,6 +212,7 @@ export class InMemoryTabelaPrecoRepository implements TabelaPrecoRepository {
   hydrateProduto(row: {
     id: string;
     group_id: string;
+    empresa_id: string | null;
     ativo?: boolean;
     unidade_medida_id?: string | null;
     unidades_secundarias?: string[];
@@ -218,6 +220,7 @@ export class InMemoryTabelaPrecoRepository implements TabelaPrecoRepository {
     this.produtos.set(row.id, {
       id: row.id,
       group_id: row.group_id,
+      empresa_id: row.empresa_id,
       ativo: row.ativo !== false,
       unidade_medida_id: row.unidade_medida_id ?? null,
       unidades_secundarias: row.unidades_secundarias ?? [],
@@ -573,6 +576,11 @@ export class InMemoryTabelaPrecoRepository implements TabelaPrecoRepository {
       const tabela = this.tabelas.get(tabelaId);
       if (!tabela || !tabela.ativo || tabela.group_id !== input.groupId) return null;
       if (!tabela.empresas.some((e) => e.empresa_id === input.empresaId && e.ativo)) return null;
+      const produto = this.produtos.get(input.produtoId);
+      const unidade = this.unidades.get(input.unidadeMedidaId);
+      if (!produto || !produto.ativo || produto.group_id !== input.groupId) return null;
+      if (produto.empresa_id !== null && produto.empresa_id !== input.empresaId) return null;
+      if (!unidade || !unidade.ativo || unidade.group_id !== input.groupId) return null;
       if (input.businessDate < tabela.vigencia_inicio) return null;
       if (tabela.vigencia_fim && input.businessDate > tabela.vigencia_fim) return null;
       const item = [...this.itens.values()].find((row) => (

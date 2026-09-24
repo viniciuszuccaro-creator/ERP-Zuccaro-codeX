@@ -21,6 +21,7 @@ import {
   buildReconciliacaoMigracao,
   stampMigracaoRecord,
 } from '@/components/lib/migracaoErpPolicy';
+import { PRODUTO_TIPOS_CANONICOS } from '@/components/cadastros/produto/produtoTipoPolicy';
 
 /**
  * Componente de Importação de XML de NF-e
@@ -258,7 +259,7 @@ export default function ImportarXMLNFe({ empresaId }) {
             ncm: item.ncm,
             unidade_medida: item.unidade,
             grupo: 'Matéria Prima',
-            tipo_item: 'Matéria-Prima Produção',
+            tipo_item: PRODUTO_TIPOS_CANONICOS.MATERIA_PRIMA,
             custo_aquisicao: item.valor_unitario,
             custo_medio: item.valor_unitario,
             preco_venda: item.valor_unitario * 1.3, // 30% markup padrão

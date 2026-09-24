@@ -12,7 +12,7 @@ import {
 import { InMemoryRbacGuard, PostgresRbacGuard } from './db/rbacGuard.js';
 import { InMemoryTenantGuard, PostgresTenantGuard } from './db/tenantGuard.js';
 import { createErrorHandler, notFoundHandler } from './middleware/errorHandler.js';
-import { requestIdMiddleware, scopeMiddleware } from './middleware/requestContext.js';
+import { createSupabaseAuthMiddleware, requestIdMiddleware, scopeMiddleware } from './middleware/requestContext.js';
 import {
   createInMemoryGrupoProdutoRepo,
   createInMemorySetorRepo,
@@ -54,6 +54,13 @@ import { PostgresTabelaPrecoRepository } from './repositories/postgresTabelaPrec
 import { InMemoryCondicaoPagamentoRepository } from './repositories/inMemoryCondicaoPagamentoRepository.js';
 import { PostgresCondicaoPagamentoRepository } from './repositories/postgresCondicaoPagamentoRepository.js';
 import { CondicaoPagamentoService } from './services/condicaoPagamentoService.js';
+import { InMemoryOrcamentoRepository } from './repositories/inMemoryOrcamentoRepository.js';
+import { PostgresOrcamentoRepository } from './repositories/postgresOrcamentoRepository.js';
+import { OrcamentoService } from './services/orcamentoService.js';
+import { InMemoryPedidoRepository } from './repositories/inMemoryPedidoRepository.js';
+import { PostgresPedidoRepository } from './repositories/postgresPedidoRepository.js';
+import { PedidoService } from './services/pedidoService.js';
+import type { MalwareScanPort, StoragePort } from './services/storagePort.js';
 
 export type CreateAppOptions = {
   config: AppConfig;
@@ -65,6 +72,9 @@ export type CreateAppOptions = {
   produtoRelationGuard?: InMemoryProdutoRelationGuard | PostgresProdutoRelationGuard;
   /** Optional RBAC guard using the canonical entityGuard permission tree (tests). */
   rbacGuard?: InMemoryRbacGuard | PostgresRbacGuard;
+  authFetchImpl?: typeof fetch;
+  storagePort?: StoragePort;
+  malwareScanPort?: MalwareScanPort;
 };
 
 export function createApp(options: CreateAppOptions) {
@@ -93,6 +103,8 @@ export function createApp(options: CreateAppOptions) {
     ? new InMemoryTabelaPrecoRepository()
     : new PostgresTabelaPrecoRepository(db);
   const condicaoPagamentoRepo = useMemory ? new InMemoryCondicaoPagamentoRepository() : new PostgresCondicaoPagamentoRepository(db);
+  const orcamentoRepo = useMemory ? new InMemoryOrcamentoRepository() : new PostgresOrcamentoRepository(db);
+  const pedidoRepo = useMemory ? new InMemoryPedidoRepository() : new PostgresPedidoRepository(db);
 
   const marcaService = new MarcaService(marcaRepo, auditRepo, tenantGuard);
   const unidadeService = new TenantCrudService(unidadeRepo, auditRepo, tenantGuard, {
@@ -127,6 +139,9 @@ export function createApp(options: CreateAppOptions) {
     auditRepo,
     tenantGuard,
     produtoRelationGuard,
+    rbacGuard,
+    options.storagePort,
+    options.malwareScanPort,
   );
   const clienteService = new ClienteService(
     clienteRepo,
@@ -141,8 +156,16 @@ export function createApp(options: CreateAppOptions) {
     auditRepo,
     tenantGuard,
     rbacGuard,
+    clienteRepo,
   );
   const condicaoPagamentoService = new CondicaoPagamentoService(condicaoPagamentoRepo, auditRepo, tenantGuard, rbacGuard);
+  const orcamentoService = new OrcamentoService(
+    orcamentoRepo, auditRepo, tenantGuard, rbacGuard, clienteRepo, produtoRepo, unidadeRepo, condicaoPagamentoRepo,
+  );
+  const pedidoService = new PedidoService(
+    pedidoRepo, orcamentoRepo, auditRepo, tenantGuard, rbacGuard, clienteRepo, produtoRepo,
+    unidadeRepo, condicaoPagamentoRepo, clienteLocalRepo, obraRepo, tabelaPrecoRepo,
+  );
   const obraService = new ObraService(
     obraRepo,
     clienteRepo,
@@ -187,8 +210,16 @@ export function createApp(options: CreateAppOptions) {
     legacyHeaders: false,
   }));
   app.use(requestIdMiddleware);
-  app.use(scopeMiddleware);
+  if (config.authMode === 'supabase_user') {
+    if (!config.supabaseUrl || !config.supabaseAnonKey) {
+      throw new Error('Supabase Auth configuration missing');
+    }
+    app.use(createSupabaseAuthMiddleware({
+      supabaseUrl: config.supabaseUrl, anonKey: config.supabaseAnonKey, db, fetchImpl: options.authFetchImpl,
+    }));
+  }
 
+  app.use(scopeMiddleware);
   app.use(createApiRouter({
     config,
     db,
@@ -202,6 +233,8 @@ export function createApp(options: CreateAppOptions) {
     obraService,
     tabelaPrecoService,
     condicaoPagamentoService,
+    orcamentoService,
+    pedidoService,
   }));
   app.use(notFoundHandler);
   app.use(createErrorHandler(config));
@@ -218,6 +251,8 @@ export function createApp(options: CreateAppOptions) {
     obraService,
     tabelaPrecoService,
     condicaoPagamentoService,
+    orcamentoService,
+    pedidoService,
     auditRepo,
     tenantGuard,
     produtoRelationGuard,

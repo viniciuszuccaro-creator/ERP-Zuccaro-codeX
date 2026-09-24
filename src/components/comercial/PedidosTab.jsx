@@ -44,8 +44,14 @@ import usePersistedSort from "@/components/lib/usePersistedSort";
 import AutomacaoFluxoPedido from "./AutomacaoFluxoPedido";
 import useBackendPagination from "@/components/lib/useBackendPagination";
 import { ProtectedAction } from "@/components/ProtectedAction";
+import PedidoCanonicoPanel from "./PedidoCanonicoPanel";
 
-export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onCreatePedido, onEditPedido, empresaId = null }) {
+export default function PedidosTab(props) {
+  if (props.canonicalHttp) return <PedidoCanonicoPanel {...props} />;
+  return <PedidosOperacaoLegada {...props} />;
+}
+
+function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreatePedido, onEditPedido, empresaId = null }) {
   const { user } = useUser();
   const { canEdit, canCreate, canApprove, canDelete, hasPermission } = usePermissions();
   const { openWindow, closeWindow } = useWindow();

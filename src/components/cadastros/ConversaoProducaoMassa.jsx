@@ -13,6 +13,7 @@ import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { toast } from "sonner";
+import { PRODUTO_TIPOS_CANONICOS, isProdutoMateriaPrima } from "./produto/produtoTipoPolicy";
 
 /**
  * V21.6 - CONVERSÃO EM MASSA PARA PRODUÇÃO
@@ -58,7 +59,7 @@ export default function ConversaoProducaoMassa({ produtos, onConcluido }) {
 
   // Filtrar apenas produtos que não são de produção
   const produtosConversiveis = produtos.filter(p => 
-    p.tipo_item !== 'Matéria-Prima Produção'
+    !isProdutoMateriaPrima(p.tipo_item)
   );
 
   const toggleProduto = (produtoId) => {
@@ -182,7 +183,7 @@ Retorne apenas os índices (0, 1, 2...) dos produtos que DEVEM ir para produçã
           empresa_id: produto?.empresa_id || empresaId || null,
           group_id: produto?.group_id || groupId || null,
           grupo_id: produto?.grupo_id || produto?.group_id || groupId || null,
-          tipo_item: 'Matéria-Prima Produção',
+          tipo_item: PRODUTO_TIPOS_CANONICOS.MATERIA_PRIMA,
           setor_atividade_id: 'setor-fabrica-001',
           setor_atividade_nome: 'Fábrica'
         });
@@ -251,7 +252,7 @@ Retorne apenas os índices (0, 1, 2...) dos produtos que DEVEM ir para produçã
           <CardContent className="p-4">
             <p className="text-sm text-slate-600 mb-1">Já em Produção</p>
             <p className="text-2xl font-bold text-green-700">
-              {produtos.filter(p => p.tipo_item === 'Matéria-Prima Produção').length}
+              {produtos.filter(p => isProdutoMateriaPrima(p.tipo_item)).length}
             </p>
           </CardContent>
         </Card>

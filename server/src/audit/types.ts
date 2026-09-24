@@ -27,6 +27,8 @@ export type AuditAction =
   | 'unblock'
   | 'inactivate'
   | 'set_purposes'
+  | 'approve'
+  | 'publish'
   | 'possible_duplicate'
   | 'possible_duplicate_override'
   | 'change_status'

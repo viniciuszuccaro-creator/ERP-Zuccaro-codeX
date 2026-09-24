@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
+import { isProdutoMateriaPrima } from "@/components/cadastros/produto/produtoTipoPolicy";
 
 /**
  * V21.6 - SELETOR INTELIGENTE DE PRODUTOS PARA PRODUCAO
@@ -56,7 +57,7 @@ export default function SeletorProdutosProducao({ onSelecionarProduto, quantidad
     queryFn: async () => {
       const all = await filterInContext('Produto', {}, 'descricao', 1000);
       return all.filter(p =>
-        p.tipo_item === 'Matéria-Prima Produção' &&
+        isProdutoMateriaPrima(p.tipo_item) &&
         p.status === 'Ativo'
       );
     },
