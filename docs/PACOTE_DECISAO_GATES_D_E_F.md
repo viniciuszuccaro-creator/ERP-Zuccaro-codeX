@@ -37,7 +37,7 @@ Simulação #33→#34: branch `cursor/integracao-sim-33-34-392b` / PR #35 (**mai
 | Script Web Console | `scripts/vps/restore-pre-gate-e-isolated-webconsole.sh` |
 | Evidência | `docs/vps/evidence/restore-isolated-db-pending.txt` |
 | Status | **`PENDING_NO_DUMP_ACCESS`** |
-| Motivo | Dump real (`pre-gate-e-20260924-140304.sql`) só na VPS; Cloud Agent sem MCP Hostinger-vps / sem sessão Web Console |
+| Motivo | Dump real só na VPS; script ausente no checkout `/opt/erp-zuccaro` (só na PR #35). Usar curl→`/tmp` (ver evidência) — **não** `git pull` de feature na VPS |
 | Alvo | `CREATE DATABASE erp_restore_isolated_<stamp>` — **nunca** `postgres` (DEV) |
 | GitHub | Somente bloco `PASTE_TO_GIT_*` sanitizado (hash, banco isolado, migrations, `dev_untouched`) |
 | **Não conta** | `validate-isolated-restore.sh --self-test` (cópia sintética / filesystem) — só prova procedimento anti-DEV |
