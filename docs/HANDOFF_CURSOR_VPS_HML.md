@@ -26,7 +26,8 @@ Regra-Mãe e o documento mestre do programa (PR #33).
 
 ## Próxima ação concreta
 
-1. Codex: confirmar EXPECTED_RUNTIME + `auth.mode=supabase_user` (contrato §7).
-2. Opcional: reexecutar `gate-c-read-only.sh` (meta via docker exec) para fechar ressalva de parse.
-3. Sem autorização humana: **não** D/E/F; **não** aplicar 016+.
+1. **Humano/Codex:** decidir checklist em `docs/PACOTE_AUTORIZACAO_GATES_D_E.md`
+   (EXPECTED_RUNTIME=`ERP-RUNTIME-08B` proposto; Auth `supabase_user`; fatia E).
+2. Sem essa decisão + backup novo: **não** D/E/F.
+3. Opcional: reexecutar `gate-c-read-only.sh` atualizado (meta via docker exec).
 4. Inventário HD legado fora deste cloud.
