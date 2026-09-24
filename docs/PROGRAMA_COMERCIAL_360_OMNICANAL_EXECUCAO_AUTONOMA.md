@@ -2,16 +2,16 @@
 
 > Documento mestre para Codex e Cursor — CPA Ferro e Aço / ERP Zuccaro / Site CPA
 > Baseline verificado em 23/09/2026: PR #33 draft, branch `codex/comercial-360`,
-> HEAD remoto confirmado `750a4ab14854e184d6fb2fc8afef7f6e2094b277` (Produto/DAM e paridade da outbox; Gate C ainda parcial).
+> HEAD remoto confirmado `675b78a8eff7ef93263bd860afd6828e92a29e8d` (Produto/PIM/DAM e paginacao deterministica; Gate C ainda parcial).
 > Migrations 001-023 presentes no repositorio; 022 registra evidencia DAM e 023 material/liga/norma do Produto (nao aplicada na VPS).
-> CI [35910005796](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/35910005796)
-> verde em frontend/backend/PostgreSQL efemero. Nenhuma migration 016-022 foi
+> CI [35925364121](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/35925364121)
+> verde em frontend/backend/PostgreSQL efemero. Nenhuma migration 016-023 foi
 > homologada na VPS por essa CI; Auth, scanner real, Produto HTTP e deploy DEV
 > continuam pendentes de verificacao operacional autorizada.
 >
 > Data de consolidação: 23/09/2026
 >
-> Estado factual: PR #33 aberta/draft e sem merge; base `ca4171600cc30f9922c2f8b2ccb8b22d06aa6888`. Orcamento e Pedido iniciais estao implementados; Produto/PIM/DAM seguem em execucao. Migrations 001-022 existem no repositorio/CI efemera. Web Console informada pelo usuario: `supabase-db` saudavel, PostgreSQL local 17.6, `public.schema_migrations` com `id`/`applied_at`, 001-015 cada 1x e 016-022 ausentes nas 15 linhas; `auth.users=0`, `profiles=2` (ambos ativos sem Auth), `groups=2`, `empresas=3`, sem vinculos de grupo/empresa invalidos nas contagens. API oficial 3080 anuncia `ERP-RUNTIME-07B` e `auth.mode=dev_headers`. A captura nao prova o nome do banco da API; rede, backup e rollback ainda exigem precheck. Auth novo, scanner e Produto HTTP nao estao homologados.
+> Estado factual: PR #33 aberta/draft e sem merge; base `ca4171600cc30f9922c2f8b2ccb8b22d06aa6888`. Orcamento e Pedido iniciais estao implementados; Produto/PIM/DAM seguem em execucao. Migrations 001-023 existem no repositorio e a 023 foi validada em codigo/CI, nao aplicada na VPS. Web Console informada pelo usuario: `supabase-db` saudavel, PostgreSQL local 17.6, `public.schema_migrations` com `id`/`applied_at`, 001-015 cada 1x e nenhuma acima de 015 nas 15 linhas; `auth.users=0`, `profiles=2` (ambos ativos sem Auth), `groups=2`, `empresas=3`, sem vinculos de grupo/empresa invalidos nas contagens. API oficial 3080 anuncia `ERP-RUNTIME-07B` e `auth.mode=dev_headers`. A captura nao comprova a identidade do banco da API; backup e rollback ainda exigem precheck. Auth novo, scanner e Produto HTTP nao estao homologados.
 
 ---
 
@@ -183,7 +183,7 @@ Este programa consolida, sem substituir nem duplicar, `AGENTS.md`, `COMERCIAL_36
 
 - Orçamento canônico: migration 016, repositories, service, TenantGuard, RBAC, auditoria, HTTP, frontend, filtros, impressão/PDF e compartilhamento revisável.
 - Pedido canônico inicial: migration 017, repositories, service, HTTP, frontend, histórico, workflow inicial e conversão idempotente de Orçamento.
-- PostgreSQL efêmero: migrations 001–022, seed exclusivamente sintético e suítes R08B/R08C/R09/R10/R01AUTH aprovadas na CI `35894815849`; isso não comprova o banco DEV real.
+- PostgreSQL efêmero: migrations 001–023 validadas na CI `35925364121`; a CI historica `35894815849` cobriu 001–022. Seeds e suites PostgreSQL sao sinteticos e nao comprovam o banco DEV real.
 - Produto/PIM/DAM no código: classificação, conteúdo técnico/comercial/SEO, workflow, variantes/equivalentes, outbox e formulário V22 opt-in; reserva/confirmacão de upload privado mantém mídia em QUARENTENA. `MalwareScanPort` é contrato fail-closed, sem scanner real integrado. Produto HTTP permanece desligado por padrão.
 - Auth no código: validação Bearer pelo Supabase Auth self-hosted e resolução de `auth_user_id` para `profiles.id`; falta homologação do endpoint/vínculos/escopo no DEV real. O MCP Hostinger confirmou a saude dos containers VPS, mas nao fornece SQL interno. A Web Console nao foi operavel por esta sessao; as evidencias de banco/3080 acima foram fornecidas pelo usuario.
 - Deploy: runbook e scripts parametrizados de canário, smoke e rollback preparados, mas não executados. Nenhuma mudança de VPS, bucket, migration real ou 3080 decorre deste baseline.
@@ -226,7 +226,7 @@ Este programa consolida, sem substituir nem duplicar, `AGENTS.md`, `COMERCIAL_36
 
 | Requisito | Fonte canônica existente | Lacuna inicial | Onda | Contrato/API/tela | Teste/gate |
 | --- | --- | --- | --- | --- | --- |
-| Produto/PIM | Produto, Cadastros, V22, StoragePort e outbox existentes | scanner real, reconciliação de órfãos, liberação e publicação separadas; gate Auth DEV | 1 | ampliar Produto/DAM existentes; sem entidade paralela | tenant, RBAC, upload, versão, CI 001–022 e Gate C |
+| Produto/PIM | Produto, Cadastros, V22, StoragePort e outbox existentes | scanner real, reconciliação de órfãos, liberação e publicação separadas; gate Auth DEV | 1 | ampliar Produto/DAM existentes; sem entidade paralela | tenant, RBAC, upload, versão, CI 001–023 e Gate C |
 | Preço/condição | TabelaPreco e CondicaoPagamento | custo/margem/alçadas/canal | 2 | services atuais e snapshots | monetário, vigência, aprovação |
 | Cliente 360/CRM | Cliente, ClienteEmpresa, ClienteLocal, Obra e CRM | visão agregada e sinais | 3 | consultas dos módulos donos | RBAC sensível e paginação |
 | Orçamento | agregado/HTTP/frontend migration 016 | versões, anexos e aprovações | 4 | `/api/v1/orcamentos` e Comercial | R08C, HTTP, frontend |

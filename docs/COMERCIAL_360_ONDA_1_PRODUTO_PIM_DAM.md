@@ -26,6 +26,11 @@ O Produto atual já possui código, código de barras, descrição/nome, tipo, a
 
 Todas as tabelas novas exigem `group_id`; `empresa_id` somente quando o registro for específico. FKs tenant-aware, RLS+FORCE, soft delete, `created_by/updated_by` e timestamps. Migration futura será a próxima numeração disponível após reconferir `origin/main`; não reservar número neste contrato.
 
+Migration 024 (somente no codigo ate CI/gate) prepara rascunhos por Empresa/canal
+subordinados ao Produto. O status permanece RASCUNHO por constraint; nao ha
+rota, RBAC de edicao, auditoria nem publicacao externa neste checkpoint.
+Rollback estrutural: DROP TABLE produto_canais somente enquanto a tabela estiver vazia e apos gate autorizado; com registros, preservar dados e fazer migration compensatoria.
+
 ## DAM e segurança
 
 - Implementar adapter real do `StoragePort`; nunca persistir URL temporária como identidade do arquivo.

@@ -4,7 +4,7 @@ import test from 'node:test';
 
 const source = await readFile(new URL('../migrations/018_produto_pim_dam_outbox.sql', import.meta.url), 'utf8');
 const materialSource = await readFile(new URL('../migrations/023_produto_material_norma.sql', import.meta.url), 'utf8');
-
+const channelSource = await readFile(new URL('../migrations/024_produto_canais_rascunho.sql', import.meta.url), 'utf8');
 test('migration 018 amplia Produto canonico e preserva invariantes PIM', () => {
   assert.match(source, /ALTER TABLE produtos[\s\S]*descricao_tecnica[\s\S]*workflow_status/);
   assert.match(source, /multiplo_venda > 0/);
@@ -31,4 +31,19 @@ test('migration 023 amplia somente Produto mestre com material, liga e norma', (
   assert.match(materialSource, /produtos_liga_length_check/);
   assert.match(materialSource, /produtos_norma_tecnica_length_check/);
   assert.doesNotMatch(materialSource, /CREATE TABLE|DROP TABLE|TRUNCATE/i);
+});
+
+test('migration 024 cria somente rascunho por canal subordinado ao Produto', () => {
+  assert.match(channelSource, /CREATE TABLE produto_canais/);
+  assert.match(channelSource, /empresa_id UUID NOT NULL/);
+  assert.match(channelSource, /status = 'RASCUNHO'/);
+  assert.match(channelSource, /uq_produto_canais_sku_ci/);
+  assert.match(channelSource, /assert_empresa_belongs_to_group/);
+  assert.match(channelSource, /assert_produto_pim_tenant_integrity/);
+  assert.match(channelSource, /ativo BOOLEAN NOT NULL DEFAULT true/);
+  assert.match(channelSource, /created_by UUID/);
+  assert.match(channelSource, /updated_by UUID/);
+  assert.match(channelSource, /REVOKE ALL ON produto_canais FROM PUBLIC/);
+  assert.match(channelSource, /FORCE ROW LEVEL SECURITY/);
+  assert.doesNotMatch(channelSource, /integration_events|CREATE POLICY|http|https/i);
 });

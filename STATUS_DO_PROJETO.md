@@ -1,3 +1,11 @@
+## Comercial 360 / Onda 1 - rascunho de Produto por canal (2026-09-24)
+
+- Causa: Produto mestre nao tinha persistencia de conteudo por Empresa/canal. Reutilizado Produto e seus triggers tenant; migration 024 aditiva prepara somente rascunhos, sem API, publicacao, estoque, preco ou fiscal.
+- Estrutura: group_id/empresa_id obrigatorios, vinculo ao Produto, SKU unico case-insensitive por Empresa/canal, autoria, inativacao logica, RLS/FORCE e PUBLIC revogado. Sem alteracao de RBAC/auditoria de mutacao ate existir service; nenhuma rota foi exposta.
+- Testes locais: backend 213 pass/0 fail/14 skips condicionais sem DATABASE_URL; frontend 621/621; backend typecheck/build, frontend lint/build, audit:baseline e diff-check PASS. Typecheck raiz segue FAIL por erros preexistentes fora do lote (entityGuardPolicy e httpApiClient).
+- E2E PostgreSQL da 024 sera executado na CI efemera; nao houve migration, seed, canario ou mudanca na VPS/3080. Migration 023 ja validada em codigo/CI anterior, ainda nao aplicada na VPS.
+- Gate C DEV permanece PARCIAL: Web Console desta sessao falhou por ACL; MCP Hostinger confirma VPS e containers, mas nao compara conexao SQL efetiva nem testa restauracao. Proximo: CI do lote 024, depois contrato/service tenant+RBAC+auditoria para rascunhos; Gate C exige evidencia direta sanitizada.
+
 ## Comercial 360 / pre-requisito de catalogo - paginacao deterministica do Produto (2026-09-23)
 
 - Causa: PostgreSQL ordenava Produto apenas por created_at e a memoria mantinha ordem de insercao; timestamps iguais podiam trocar registros entre paginas, comprometendo projecao e conciliacao por canal.

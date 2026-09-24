@@ -6,6 +6,7 @@ const suites = [
   ['R08B', 'tests/runtime08-postgres-e2e.test.ts'],
   ['R08C', 'tests/runtime08c-orcamento-postgres-e2e.test.ts'],
   ['R09', 'tests/runtime09-pedido-postgres-e2e.test.ts'],
+  ['R10C', 'tests/runtime10-produto-canais-postgres-e2e.test.ts'],
   ['R10', 'tests/runtime10-produto-pim-postgres-e2e.test.ts'],
 ];
 let allPassed = true;
