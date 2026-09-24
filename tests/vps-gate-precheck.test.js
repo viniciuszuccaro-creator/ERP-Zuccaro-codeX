@@ -281,6 +281,28 @@ test('print-pedido-codex WAITING com 5 itens', () => {
   assert.match(run.stdout, /proposed_EXPECTED_RUNTIME=ERP-RUNTIME-08B/);
 });
 
+test('freeze-go-nogo-snapshot grava GO_NOGO=NO e EXHAUSTED', () => {
+  const script = path.join(root, 'scripts/vps/freeze-go-nogo-snapshot.sh');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'freeze-'));
+  const out = path.join(tmp, 'snap.txt');
+  const evidence = path.join(root, 'docs/vps/evidence/gate-c-2026-09-24.txt');
+  const run = spawnSync('bash', [script, evidence, out], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr || run.stdout);
+  const text = fs.readFileSync(out, 'utf8');
+  assert.match(text, /GO_NOGO=NO/);
+  assert.match(text, /AUTONOMOUS_PREP_STATUS=EXHAUSTED_WAITING_HUMAN_CODEX/);
+  assert.match(text, /EXECUTE_DEF=NO/);
+  assert.doesNotMatch(text, /Bearer |sk_live_|BEGIN PRIVATE KEY/i);
+});
+
+test('snapshot versionado go-nogo esta coerente', () => {
+  const snap = path.join(root, 'docs/vps/evidence/go-nogo-snapshot-2026-09-24.txt');
+  assert.equal(fs.existsSync(snap), true);
+  const text = fs.readFileSync(snap, 'utf8');
+  assert.match(text, /GO_NOGO=NO/);
+  assert.match(text, /AUTONOMOUS_PREP_STATUS=EXHAUSTED_WAITING_HUMAN_CODEX/);
+});
+
 test('scan-sanitized-artifacts CLEAN nos docs VPS', () => {
   const script = path.join(root, 'scripts/vps/scan-sanitized-artifacts.sh');
   const syn = spawnSync('bash', ['-n', script], { encoding: 'utf8' });

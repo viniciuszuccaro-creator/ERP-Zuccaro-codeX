@@ -1,0 +1,35 @@
+# Snapshot GO/NO-GO — frente Cursor VPS/HML (sanitizado)
+# Gerado localmente. Nao e autorizacao. Nao contem segredos.
+# utc=2026-09-24T12:24:14Z
+# head=41e1b09c
+
+GO_NOGO_BEGIN utc=2026-09-24T12:24:14Z
+gate_c=APROVADO
+termo=WAITING_SIGNATURE
+backup_novo=STALE_NEED_NEW
+rollback_dryrun=OK
+missing_for_gate_e=016,017,018,019,020,021,022,023,024
+proposed_fatia_comercial=016,017
+proposed_fatia_produto_dam_canais=018,019,020,021,022,023,024
+GATE_E_PLAN_STATUS=PROPOSED_AWAITING_CODEX
+sanitize=CLEAN
+codex_pending_count=5
+CODEX_PEDIDO_STATUS=WAITING_CODEX
+blockers=termo_waiting_signature,backup_novo_ausente,codex_confirmacoes_pendentes
+GO_NOGO=NO
+EXECUTE_DEF=NO
+GO_NOGO_END utc=2026-09-24T12:24:14Z
+
+pending_item=`EXPECTED_RUNTIME` = `ERP-RUNTIME-08B` (ou meta alterada de forma coerente)
+pending_item=Meta da imagem imutável terá `auth.mode=supabase_user`
+pending_item=Estratégia Gate E: 016–024 juntas vs fatias
+pending_item=Digest/tag pós-merge
+pending_item=Identidade sintética Auth (sem segredo no Git) para smoke D
+codex_pending_count=5
+proposed_EXPECTED_RUNTIME=ERP-RUNTIME-08B
+proposed_auth_mode=supabase_user
+proposed_gate_e_strategy=fatias_comercial_016_017_then_produto_018_024
+CODEX_PEDIDO_STATUS=WAITING_CODEX
+
+AUTONOMOUS_PREP_STATUS=EXHAUSTED_WAITING_HUMAN_CODEX
+EXECUTE_DEF=NO

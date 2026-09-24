@@ -1,12 +1,11 @@
 ### Frente Cursor — VPS / HML / Gate C / legado (2026-09-24)
 
 - Branch: `cursor/vps-hml-gate-c-legado-392b` / PR `#34`. Codex `#33` intocada.
-- Gate C **APROVADO**; `GO_NOGO=NO` (termo / backup / Codex pendentes).
-- Pedido Codex imprimível: `print-pedido-codex.sh` → 5 confirmações abertas.
-- Legado: mapa códigos empresa 1–5 (rótulos públicos); `4` inativa → quarentena;
-  `0` → quarentena; scan artefatos `CLEAN`.
-- **Não** executados: canário, 016–024, promoção 3080.
-- Próximo: termo + backup `pre-gate-e-…` + respostas Codex no contrato §4.
+- Gate C **APROVADO**; snapshot `docs/vps/evidence/go-nogo-snapshot-2026-09-24.txt`
+  → `GO_NOGO=NO` / `AUTONOMOUS_PREP_STATUS=EXHAUSTED_WAITING_HUMAN_CODEX`.
+- Blockers: termo, backup novo, 5 confirmações Codex (§4 contrato).
+- Prep. autônoma Cursor **esgotada** sem D/E/F; 3080 R07B preservada.
+- Próximo: humano (termo+backup) + Codex (§4); revalidar `go-nogo-def.sh`.
 
 ### ERP-RUNTIME-08 — diagnóstico Comercial 360º (2026-09-19)
 

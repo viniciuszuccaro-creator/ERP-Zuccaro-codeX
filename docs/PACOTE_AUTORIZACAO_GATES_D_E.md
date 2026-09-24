@@ -1,11 +1,14 @@
 # Pacote de autorização — Gates D / E (pós Gate C)
 
-**Status:** `PRONTO PARA DECISÃO HUMANA — NÃO EXECUTAR`
+**Status:** `PRONTO PARA DECISÃO HUMANA — PREPARAÇÃO AUTÔNOMA ESGOTADA`
 **Gate C:** APROVADO em 2026-09-24 (`docs/GATE_C_RESULTADO_2026-09-24.md`)
+**Snapshot:** `docs/vps/evidence/go-nogo-snapshot-2026-09-24.txt` → `GO_NOGO=NO`
 **Frente Cursor:** PR #34 · **Frente Codex:** PR #33 draft HEAD `200000bb` (consultar GitHub)
 
 Este pacote **não** autoriza canário, migration nem promoção. Serve para
 humanos/Codex decidirem o próximo gate com evidência congelada.
+
+Cursor **não** avançará D/E/F sem termo assinado + backup novo + §4 Codex.
 
 ---
 
