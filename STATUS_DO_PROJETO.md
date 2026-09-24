@@ -2,6 +2,12 @@
 - Branch `codex/comercial-360`, PR #33 aberta/draft; commit `c09d69654259eafffd8ad8d2df5362f098308a53` confirmado no remoto. CI `35984653728`: frontend/backend SUCCESS, incluindo migrate, seed sintetico e `test:postgres` efemero. Migrations 001-024 existem no codigo; 023 e 024 validadas em CI, nao aplicadas na VPS.
 - Gate C segue PARCIAL: MCP Hostinger confirmou VPS ativa e projeto Supabase saudavel, mas nao expoe SQL interno; Web Console automatizada falhou em ACL. Evidencia anterior de backup/rollback/porta 3086 e migrations 001-015 e somente leitura, sem prova de conexao efetiva da API nem teste de restauracao. API oficial 3080 permanece R07B conforme ultima evidencia fornecida pelo usuario; nao houve escrita VPS neste lote.
 - Proximo: comparacao read-only da conexao efetiva API com `supabase-db` na Web Console, prechecks atuais de backup/rollback/porta e gate separado para teste de restauracao; continuar contrato de rascunhos por canal no Produto existente, sem publicacao externa.
+## Comercial 360 / Gate C - comparacao efetiva do banco (2026-09-24)
+- Evidencia sanitizada fornecida pelo usuario via captura da Web Console: `conexao_api_vs_supabase_db=MATCH`. O comando comparou `current_database()` e `pg_control_system().system_identifier` da conexao efetiva da API com a conexao direta ao container `supabase-db`; o IP isolado deixa de ser a unica evidencia. Nenhuma URL, credencial ou registro foi exibido.
+- Backup SQL encontrado com 486969 bytes, timestamp 2026-09-21 14:00:13 +0000, SHA-256 calculado e marcador de dump completo. Isto comprova presenca e integridade de leitura, nao restaurabilidade nem frescor suficiente para deploy futuro.
+- `erp-api-dev` estava running; container de rollback R07B estava exited e sua imagem presente. A porta 3086 estava livre no instante da consulta. API oficial 3080 nao foi alterada.
+- Gate C: identidade do banco e prechecks read-only de backup/rollback/porta comprovados pela captura; restauracao isolada do backup, novo backup pre-implantacao e checagem imediatamente antes de qualquer canario exigem gate operacional autorizado. Nao iniciar migrations, seed, Auth novo, Produto HTTP, canario ou promocao com base nesta evidencia.
+- Branch `codex/comercial-360`, PR #33 draft, HEAD de codigo/documentacao anterior `38bb311709673e87fd00c00e9a81d0c660c0bf6b`, CI `35985748032` frontend/backend/PostgreSQL efemero SUCCESS. Nenhuma migration 016-024 aplicada na VPS.
 
 ## Comercial 360 / Onda 1 - rascunho de Produto por canal (2026-09-24)
 
