@@ -1,41 +1,42 @@
 # Termo de autorização — Gates D / E / F
 
-**Status:** fatos atualizados pós-merge `#35` (`main` = `2fc2fc80…`).
+**Status:** Gate E **EXECUTADO** · digest imagem **REGISTERED** · Gate Auth/D/F **aguardam** assinatura.
 Estados: `READY_FOR_REVIEW` ≠ `AUTHORIZED` ≠ `EXECUTED`. `GATE_*_READY` não autoriza.
 Sem checkbox do gate + **assinatura formal** do responsável → **não executar**.
 
 ```bash
 bash scripts/vps/go-nogo-def.sh
-# GATE_E_READY=YES (016–024 na main) — READY≠autorização de execução
+# GATE_E_READY=YES · image_digest=REGISTERED · GATE_D_READY=NO (auth_synthetic)
 ```
 
 Pacote: `docs/PACOTE_DECISAO_GATES_D_E_F.md`.
 Cartão Gate E: `docs/GATE_E_MIGRATIONS_CARTAO.md`.
+Checklist Auth/D: `docs/GATE_D_SMOKE_AUTH_CHECKLIST.md`.
 
-Data (UTC) atualização Cursor: `2026-09-24T17:45:00Z`
+Data (UTC) atualização Cursor: `2026-09-24T20:12:00Z`
 Responsável (assinatura humana): VINICIUS
 Merge integração: PR **#35** → `main` @ `2fc2fc80adb9ca876be6ca3d29aab49305839e8a`
-  (contém #33 `ceeb92e9…` + #34 `f41d87e5…`)
 `main` observada: `2fc2fc80adb9ca876be6ca3d29aab49305839e8a`
 Evidência Gate C: `docs/vps/evidence/gate-c-2026-09-24.txt` (**APROVADO**)
-Restore isolado prévio: `RESTORE_ISOLATED_DB_STATUS=OK` (`docs/vps/evidence/restore-isolated-db-pending.txt`)
-  — dump **não** versionado (`dump_committed_to_git=NO`)
+Gate E: `docs/vps/evidence/gate-e-webconsole-2026-09-24.txt` (**OK**)
+Digest: `docs/vps/evidence/image-digest-comercial360-latest.txt` (**REGISTERED**)
 
 ---
 
-## Fatos comprovados (Gate C + pós-merge #35)
+## Fatos comprovados (Gate C + pós-merge #35 + Gate E)
 
 | Fato | Valor |
 |---|---|
 | VPS | `srv1982741` |
 | API oficial 3080 | imagem R07B `runtime07b-main-ca0bc5f3` (**preservar**; sem Gate F) |
-| Health / ready (Gate C) | HTTP 200 |
+| Health / ready 3080 | HTTP 200 |
 | Rede | `supabase_default` |
-| DB DEV | `postgres` (cluster Gate C) |
-| Migrations na **main** | **001–024 presentes** (pós-#35) |
-| Migrations no **DEV** (antes do Gate E) | 001–015 (1×); 016–024 **ainda a aplicar** |
-| Auth 3080 | `dev_headers` (não é Gate D/F) |
-| `GATE_E_READY` | **YES** (código na main; não autoriza apply sozinho) |
+| DB DEV | `postgres` · schema **001–024** (`GATE_E_STATUS=OK`) |
+| `test:postgres` DEV | OK (fail=0) |
+| Imagem canário candidata | `erp-zuccaro-erp-api:comercial360-main-2fc2fc80` · digest REGISTERED |
+| Auth 3080 | `dev_headers` (não homologa Gate D) |
+| Auth sintético | **ainda não provisionado** (`PENDING_AUTH_GATE`) |
+| `GATE_D_READY` | **NO** — falta Auth + autorização §C |
 
 ---
 
@@ -43,82 +44,90 @@ Restore isolado prévio: `RESTORE_ISOLATED_DB_STATUS=OK` (`docs/vps/evidence/res
 
 | Decisão | Valor |
 |---|---|
-| Gate E | **uma invocação** do migrator canônico (`server`: `npm run migrate`) — aplica pendentes 016–024 em ordem; **1 TX por arquivo** |
-| Escopo autorizado (quando §C Gate E + assinatura) | somente DEV; main pin `2fc2fc80adb9ca876be6ca3d29aab49305839e8a` |
-| Gate D / F / 3080 | **não autorizados** nesta rodada |
-| Tag imagem / canário | fora de escopo |
+| Gate E | **EXECUTADO** — 016–024 no DEV |
+| Imagem canário | tag `comercial360-main-2fc2fc80` · build feito · **não** iniciada |
+| Gate Auth | identidade **somente sintética** no Supabase Auth self-hosted + profile ERP sintético; segredos **fora do Git**; revogar após teste |
+| Gate D | canário porta ≠3080 · `EXPECTED_RUNTIME=ERP-RUNTIME-08B` · `auth.mode=supabase_user` · smoke checklist |
+| Gate F / 3080 | **não** nesta rodada até D APROVADO + termo F |
 
 ---
 
 ## B. Backup e rollback
 
-| Item | Valor | Confirmação humana |
+| Item | Valor | Confirmação |
 |---|---|---|
-| Backup isolado (prova anterior) | restore OK; sha `e72ca99b…` / bytes `390275` | [x] evidência Git |
-| Backup **novo** imediatamente antes do apply | **obrigatório** via `create-pre-gate-e-backup.sh` (ainda não colado nesta autorização) | [ ] |
-| Integridade do backup novo | header/tail/sha256/mode600 | [ ] |
+| Backup pré-Gate E | `pre-gate-e-20260924-174755.sql` · sha `83a9e97d…` | [x] |
 | Dump no GitHub | **proibido** | — |
-| Rollback API R07B | imagem `ca0bc5f3` preservada; sem promoção 3080 | [ ] |
-| Rollback schema | restore do backup novo (autorizado à parte) ≠ rollback API | [ ] |
+| Rollback API R07B | imagem `ca0bc5f3` na 3080 preservada | [x] evidência |
+| Rollback canário | `comercial360-rollback.sh` dry-run (quando D autorizado) | [ ] |
 
 ---
 
 ## C. Autorizações explícitas
 
 Marcar **apenas** o autorizado. Sem marca = **não executar**.
-`GATE_*_READY=YES` **não** substitui esta seção.
 
-- [ ] ~~Merge PR #33~~ — **obsoleto**; merge feito via **#35** em `2fc2fc80…`
-- [x] **Gate E** — aplicar 016–024 da **main** `@2fc2fc80adb9ca876be6ca3d29aab49305839e8a` no DEV (uma invocação)
-- [ ] **Gate D** — **NÃO autorizado**
+- [ ] ~~Merge PR #33~~ — **obsoleto**; merge via **#35**
+- [x] **Gate E** — 016–024 no DEV @ `2fc2fc80…` — **EXECUTADO** (`GATE_E_STATUS=OK`)
+- [ ] **Gate Auth sintético** — provisionar identidade de teste + vincular `profiles.auth_user_id` (Grupo/Empresa sintéticos; RBAC mínimo Orçamento/Pedido; **não** reutilizar profiles sem prova; credenciais fora do Git; revogar após smoke)
+- [ ] **Gate D** — canário `comercial360-main-2fc2fc80` em porta ≠3080 + smoke meta + smoke Bearer (checklist); **exige** Gate Auth OK
 - [ ] **Gate F** — **NÃO autorizado** (3080 inalterada)
 
-### Registro de autorização (chat Cursor)
+### Registro Gate E (já assinado)
 
 ```text
-utc_registro_autorizacao=2026-09-24T17:35:00Z
-utc_assinatura_formal=2026-09-24 (informada: 24/09/2026)
-canal=Cursor_agent_chat
-texto_autorizacao_humana=
-  "Autorizo o Gate E no DEV, limitado às migrations 016–024 da main no commit
-   2fc2fc80adb9ca876be6ca3d29aab49305839e8a. Não autorizo Gate D, Gate F nem
-   alteração da 3080."
-checkbox_gate_e=MARKED
+utc_assinatura_formal=2026-09-24
 assinatura_formal=VINICIUS
-EXECUTE_GATE_E=AUTHORIZED_PENDING_NEW_BACKUP_AND_WEBCONSOLE
-gate_d=NOT_AUTHORIZED
+checkbox_gate_e=MARKED
+GATE_E_STATUS=OK
+```
+
+Assinatura responsável (Gate E): VINICIUS
+Data/hora (UTC): 24/09/2026
+
+### Registro Gate Auth / Gate D (aguardar assinatura)
+
+```text
+utc_registro_pedido=2026-09-24T20:12:00Z
+canal=Cursor_agent_chat
+texto_pedido=
+  "Autorizo o Gate Auth sintético no DEV (identidade de teste + profile
+   vinculado; segredos fora do Git; revogação após smoke) e, em seguida,
+   o Gate D (canário comercial360-main-2fc2fc80 + smoke). Não autorizo
+   Gate F nem alteração da 3080."
+checkbox_gate_auth=PENDING
+checkbox_gate_d=PENDING
+assinatura_formal=PENDING_HUMAN
+EXECUTE_AUTH=NO
+EXECUTE_GATE_D=NO
 gate_f=NOT_AUTHORIZED
 alter_3080=NOT_AUTHORIZED
 ```
 
-Assinatura responsável: VINICIUS
-Data/hora (UTC): 24/09/2026
+Assinatura responsável (Auth / D): PENDING_HUMAN
+Data/hora (UTC): PENDING_HUMAN
 
-**Estado operacional (2026-09-24):** `GATE_E_STATUS=OK` · backup OK · migrate 016–024
-aplicado · `test:postgres` OK (R01AUTH=14 R08B=2 R08C=2 R09=2 R10C=2 R10=5 · fail=0) ·
-3080 permanece R07B · D/F **não** autorizados.
+**Estado operacional:** E OK · digest REGISTERED · Auth/D **WAITING_SIGNATURE** · F/3080 bloqueados.
 
 ---
 
-## D. Sequência concreta para decisão (após este termo) — ordem e efeitos
+## D. Sequência concreta para decisão (Auth → D, após assinatura §C)
 
 ```text
-0) Assinatura formal neste termo (§C) + backup novo validado
-1) Web Console: main @ 2fc2fc80 · DB DEV = postgres · R07B image preservada
-2) create-pre-gate-e-backup.sh → colar PASTE_TO_GIT (sem dump no Git)
-3) Pré-check / rollback-dry-run R07B
-4) Gate E: migrator canônico uma vez (host sem npm → docker run efêmero +
-   volume migrations @2fc2fc80; ver cartão §3; 1 TX/arquivo; sem tocar 3080)
-5) Conferir 016–024 cada 1× em schema_migrations
-6) npm run test:postgres no Postgres DEV real
-7) /health /ready + ops R07B na 3080 (somente leitura/smoke; sem troca de imagem)
-8) Evidência sanitizada no GitHub
+1) Gate Auth: provisionar user Auth sintético (Supabase self-hosted)
+2) Vincular UUID a profile ERP sintético ativo (Grupo/Empresa sintéticos)
+3) Evidência sanitizada: auth_users_count>=1 · profile_com_auth=1 · AUTH_SYNTHETIC_STATUS=OK
+   (sem e-mail/senha/token/UUID no Git)
+4) Subir canário: IMAGE=...comercial360-main-2fc2fc80 · porta ≠3080 · ERP_AUTH_MODE=supabase_user
+5) comercial360-smoke.sh + smoke Bearer (checklist §B/§C)
+6) Revogar/desabilitar identidade de teste; evidência Gate D sanitizada
+7) 3080 permanece R07B até Gate F autorizado
 ```
 
-Se migration N falhar após 016…N−1: **parar**; listar `schema_migrations`; sem canário; 3080 permanece R07B.
+Detalhe operacional: `docs/GATE_D_SMOKE_AUTH_CHECKLIST.md`.
 
 ---
 
 ## E. Proibições
 
-Não Gate D/F · não alterar 3080 · não canário · não commitar dump/`.env`/segredos · não aplicar a partir de branch feature · não inventar assinatura.
+Não inventar assinatura · não Auth com dados reais · não token/senha no Git · não canário sem Auth · não porta 3080 · não Gate F nesta rodada · não `dev_headers` como prova de Auth.

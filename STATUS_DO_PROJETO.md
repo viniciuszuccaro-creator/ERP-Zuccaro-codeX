@@ -1,11 +1,11 @@
 ### Pós-Gate E — prep Gate D (2026-09-24)
 
-- Gate E **OK** · digest imagem **REGISTERED** (`comercial360-main-2fc2fc80` · id `sha256:d89e65ff013c…` · evidência `image-digest-comercial360-latest.txt`).
-- 3080 permanece R07B (`runtime07b-main-ca0bc5f3`) · health 200 · canário **não** iniciado.
-- `GATE_D_READY=NO` restante: **Auth sintético** + checkbox/assinatura Gate D no termo.
-- Canary default `ERP-RUNTIME-08B` · go-nogo: `vps_schema=APPLIED` · `image_digest_status=REGISTERED`.
-- **Próximo operacional:** autorizar gate Auth sintético (checklist `GATE_D_SMOKE_AUTH_CHECKLIST.md`) — **sem** canário até termo §C Gate D.
-- **Não** D/F/3080 sem autorização.
+- Gate E **OK** · digest **REGISTERED** (`comercial360-main-2fc2fc80`).
+- Termo §C atualizado: checkboxes **Gate Auth sintético** + **Gate D** aguardam assinatura humana (`PENDING_HUMAN`).
+- Checklist operacional: `docs/GATE_D_SMOKE_AUTH_CHECKLIST.md` (provisionamento + canário).
+- `GATE_D_READY=NO` · blocker: `auth_synthetic_gate_pending`.
+- **Próximo:** assinatura VINICIUS autorizando Gate Auth (e opcionalmente Gate D) no termo — **sem** executar Auth/canário até assinar.
+- 3080 R07B · F bloqueado.
 
 ### Gate E — CONCLUÍDO no DEV (2026-09-24)
 

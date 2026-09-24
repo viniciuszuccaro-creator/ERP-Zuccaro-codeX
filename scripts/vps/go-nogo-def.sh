@@ -179,6 +179,7 @@ fi
 if [[ "$auth_status" == 'PENDING_AUTH_GATE' || -z "$auth_status" ]]; then
   d_blockers+=('auth_synthetic_gate_pending')
 fi
+# AUTH_SYNTHETIC_STATUS=OK remove este blocker; termo Gate D ainda é humano.
 if ((gate_e_applied != 1)); then
   d_blockers+=('gate_e_schema_not_applied_yet')
 fi

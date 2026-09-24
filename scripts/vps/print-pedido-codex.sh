@@ -47,7 +47,14 @@ else
   echo 'image_digest_status=PENDING_BUILD_AFTER_MERGE'
 fi
 
-echo "auth_synthetic_status=PENDING_AUTH_GATE"
+AUTH_EVIDENCE="${AUTH_EVIDENCE:-$ROOT/docs/vps/evidence/auth-synthetic-latest.txt}"
+if [[ -f "$AUTH_EVIDENCE" ]] && grep -qE '^AUTH_SYNTHETIC_STATUS=OK$' "$AUTH_EVIDENCE"; then
+  echo 'auth_synthetic_status=OK'
+  grep -E '^(auth_users_count|profiles_com_auth_count|rbac_minimo)=' "$AUTH_EVIDENCE" | head -5 || true
+else
+  echo 'auth_synthetic_status=PENDING_AUTH_GATE'
+fi
+
 echo "gates_def_executed=NO"
 echo "EXECUTE_DEF=NO"
 echo "AUTHORIZES_GATES_DEF=NO"
