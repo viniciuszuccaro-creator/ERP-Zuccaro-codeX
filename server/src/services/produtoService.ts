@@ -12,6 +12,10 @@ import {
   produtoUpdateSchema,
   produtoEquivalenteCreateSchema,
   produtoEquivalenteUpdateSchema,
+  produtoCanalCreateSchema,
+  produtoCanalUpdateSchema,
+  type ProdutoCanalCreate,
+  type ProdutoCanalUpdate,
   produtoMidiaCreateSchema,
   produtoVarianteCreateSchema,
   produtoVarianteUpdateSchema,
@@ -374,6 +378,85 @@ export class ProdutoService {
       return after;
     });
   }
+  async listCanais(ctx: RequestContext, produtoId: string) {
+    this.assertScope(ctx);
+    this.assertRelationId(produtoId);
+    if (!ctx.empresaId) throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required');
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
+    await this.assertPermission(ctx, 'visualizar');
+    const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
+    const produto = await this.repo.getById(scope, produtoId);
+    if (!produto?.ativo || produto.empresa_id !== ctx.empresaId) {
+      throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+    }
+    return this.repo.listCanais(scope, produtoId);
+  }
+
+  async createCanal(ctx: RequestContext, produtoId: string, payload: unknown) {
+    const parsed = produtoCanalCreateSchema.safeParse(payload);
+    if (!parsed.success) throw new AppError(400, 'VALIDATION_ERROR', 'Invalid Produto canal payload', parsed.error.flatten());
+    return this.mutateCanal(ctx, produtoId, 'create', undefined, parsed.data);
+  }
+
+  async updateCanal(ctx: RequestContext, produtoId: string, canalId: string, payload: unknown) {
+    const parsed = produtoCanalUpdateSchema.safeParse(payload);
+    if (!parsed.success) throw new AppError(400, 'VALIDATION_ERROR', 'Invalid Produto canal payload', parsed.error.flatten());
+    return this.mutateCanal(ctx, produtoId, 'update', canalId, parsed.data);
+  }
+
+  async deactivateCanal(ctx: RequestContext, produtoId: string, canalId: string) {
+    return this.mutateCanal(ctx, produtoId, 'deactivate', canalId);
+  }
+
+  private async mutateCanal(
+    ctx: RequestContext, produtoId: string, operation: 'create' | 'update' | 'deactivate',
+    canalId?: string, data?: ProdutoCanalCreate | ProdutoCanalUpdate,
+  ) {
+    this.assertScope(ctx);
+    this.assertRelationId(produtoId);
+    if (canalId) this.assertRelationId(canalId);
+    if (!ctx.empresaId) throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required');
+    if (!ctx.actorId) throw new AppError(403, 'ACTOR_REQUIRED', 'actorId is required');
+    const actorId = ctx.actorId;
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
+    await this.assertPermission(ctx, 'editar');
+    const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
+    return this.repo.withTransaction(async (executor) => {
+      const produto = await this.repo.getById(scope, produtoId, executor, { forUpdate: true });
+      if (!produto?.ativo || produto.empresa_id !== ctx.empresaId) {
+        throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+      }
+      const before = canalId
+        ? (await this.repo.listCanais(scope, produtoId, executor)).find((row) => row.id === canalId)
+        : undefined;
+      if (operation !== 'create' && !before) {
+        throw new AppError(404, 'PRODUTO_CANAL_NOT_FOUND', 'Produto canal not found in tenant scope');
+      }
+      let after;
+      try {
+        after = operation === 'create'
+          ? await this.repo.createCanal(scope, produtoId, data as ProdutoCanalCreate, actorId, executor)
+          : operation === 'update'
+            ? await this.repo.updateCanal(scope, produtoId, canalId!, data as ProdutoCanalUpdate, actorId, executor)
+            : await this.repo.deactivateCanal(scope, produtoId, canalId!, actorId, executor);
+      } catch (error) {
+        if ((error as { code?: string }).code === '23505' || /unique|duplicate/i.test(String(error))) {
+          throw new AppError(409, 'PRODUTO_CANAL_CONFLICT', 'Produto canal conflicts with an existing record');
+        }
+        throw error;
+      }
+      if (!after) throw new AppError(404, 'PRODUTO_CANAL_NOT_FOUND', 'Produto canal not found in tenant scope');
+      await this.audit.append({
+        groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId, actorEmail: ctx.actorEmail,
+        entity: 'ProdutoCanal', entityId: after.id,
+        action: operation === 'create' ? 'create' : operation === 'update' ? 'update' : 'soft_delete',
+        beforeData: before ? sanitizeAuditSnapshot(before) : undefined,
+        afterData: sanitizeAuditSnapshot(after), requestId: ctx.requestId, ipAddress: ctx.ipAddress,
+      }, executor);
+      return after;
+    });
+  }
+
   async listVariants(ctx: RequestContext, id: string) { return this.listRelations(ctx, id, 'variantes'); }
 
   async listEquivalents(ctx: RequestContext, id: string) { return this.listRelations(ctx, id, 'equivalentes'); }

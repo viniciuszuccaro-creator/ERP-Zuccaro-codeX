@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import test from 'node:test';
 import { loadConfig } from '../src/config/env.ts';
 import { createDbClient } from '../src/db/client.ts';
+import { PostgresProdutoRepository } from '../src/repositories/postgresProdutoRepository.ts';
 import { SEED_IDS } from '../scripts/seedDevIds.ts';
 
 const enabled = Boolean(process.env.DATABASE_URL);
@@ -57,6 +58,43 @@ test('R10 PostgreSQL real: rascunho por canal respeita tenant, SKU, RLS e rollba
       const remaining = await db.query<{ total: number }>(
         'SELECT count(*)::int AS total FROM produto_canais WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
         [channelId, SEED_IDS.groupA, SEED_IDS.empresaA],
+      );
+      assert.equal(remaining.rows[0]?.total, 0);
+    } finally {
+      await db.end();
+    }
+  });
+
+test('R10 PostgreSQL real: repository CRUD de canal usa tenant e mesma transacao',
+  { skip: !enabled && 'DATABASE_URL not available' }, async () => {
+    const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
+    const repo = new PostgresProdutoRepository(db);
+    const produtoId = randomUUID();
+    const actorId = randomUUID();
+    const scope = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA };
+    const sku = `R10-${randomUUID()}`;
+    try {
+      await assert.rejects(db.withTransaction(async (tx) => {
+        await tx.query(
+          "INSERT INTO produtos (id,group_id,empresa_id,codigo,descricao) VALUES ($1,$2,$3,$4,'R10 CANAL REPO SINTETICO')",
+          [produtoId, scope.groupId, scope.empresaId, sku],
+        );
+        const created = await repo.createCanal(scope, produtoId, { canal: 'site_cpa', sku, nome: 'Teste' }, actorId, tx);
+        assert.equal(created.status, 'RASCUNHO');
+        assert.equal(created.empresa_id, scope.empresaId);
+        assert.equal((await repo.listCanais(scope, produtoId, tx))[0]?.id, created.id);
+        assert.deepEqual(await repo.listCanais({ groupId: scope.groupId, empresaId: SEED_IDS.empresaA2 }, produtoId, tx), []);
+        const updated = await repo.updateCanal(scope, produtoId, created.id, { nome: 'Revisado' }, actorId, tx);
+        assert.equal(updated?.nome, 'Revisado');
+        assert.equal(updated?.sku, sku);
+        const deactivated = await repo.deactivateCanal(scope, produtoId, created.id, actorId, tx);
+        assert.equal(deactivated?.ativo, false);
+        assert.deepEqual(await repo.listCanais(scope, produtoId, tx), []);
+        throw new Error('ROLLBACK_CANAL_REPO_SYNTHETIC');
+      }), /ROLLBACK_CANAL_REPO_SYNTHETIC/);
+      const remaining = await db.query<{ total: number }>(
+        'SELECT count(*)::int AS total FROM produto_canais WHERE produto_id=$1 AND group_id=$2 AND empresa_id=$3',
+        [produtoId, scope.groupId, scope.empresaId],
       );
       assert.equal(remaining.rows[0]?.total, 0);
     } finally {

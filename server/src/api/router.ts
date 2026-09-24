@@ -168,6 +168,28 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
     catch (error) { next(error); }
   });
 
+  router.get('/api/v1/produtos/:id/canais', requireTenantScope, async (req, res, next) => {
+    try {
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data: await service.listCanais(ctxFromReq(req), req.params.id) });
+    } catch (error) { next(error); }
+  });
+
+  router.post('/api/v1/produtos/:id/canais', requireTenantScope, async (req, res, next) => {
+    try { res.status(201).json({ data: await service.createCanal(ctxFromReq(req), req.params.id, req.body) }); }
+    catch (error) { next(error); }
+  });
+
+  router.patch('/api/v1/produtos/:id/canais/:canalId', requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.updateCanal(ctxFromReq(req), req.params.id, req.params.canalId, req.body) }); }
+    catch (error) { next(error); }
+  });
+
+  router.delete('/api/v1/produtos/:id/canais/:canalId', requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.deactivateCanal(ctxFromReq(req), req.params.id, req.params.canalId) }); }
+    catch (error) { next(error); }
+  });
+
   router.get('/api/v1/produtos/:id/midias', requireTenantScope, async (req, res, next) => {
     try {
       const page = z.object({ limit: z.coerce.number().int().min(1).max(200), offset: z.coerce.number().int().min(0).max(1000000) })

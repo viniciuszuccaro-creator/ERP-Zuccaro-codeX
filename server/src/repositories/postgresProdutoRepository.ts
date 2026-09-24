@@ -2,6 +2,7 @@ import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope } from '../services/tenantCrudService.js';
 import { produtoMidiaCreateSchema } from './produtoTypes.js';
 import type { Produto, ProdutoCreate, ProdutoEquivalente, ProdutoEquivalenteCreate, ProdutoEquivalenteUpdate, ProdutoMidia, ProdutoMidiaCreate, ProdutoMidiaScanEvidence, ProdutoMidiaUploadAttempt, ProdutoUpdate, ProdutoVariante, ProdutoVarianteCreate, ProdutoVarianteUpdate } from './produtoTypes.js';
+import type { ProdutoCanal, ProdutoCanalCreate, ProdutoCanalUpdate } from './produtoTypes.js';
 import type { ProdutoListFilter, ProdutoReadOptions, ProdutoRepository } from './inMemoryProdutoRepository.js';
 
 function ts(row: Record<string, unknown>) {
@@ -357,6 +358,62 @@ export class PostgresProdutoRepository implements ProdutoRepository {
       ],
     );
   }
+  private mapCanal(row: Record<string, unknown>): ProdutoCanal {
+    return { ...row, ...ts(row) } as ProdutoCanal;
+  }
+
+  async listCanais(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoCanal[]> {
+    if (!scope.empresaId) return [];
+    const result = await (executor ?? this.db).query(
+      `SELECT id,group_id,empresa_id,produto_id,canal,sku,nome,descricao,status,ativo,created_at,updated_at
+       FROM produto_canais WHERE group_id=$1 AND empresa_id=$2 AND produto_id=$3 AND ativo=true
+       ORDER BY canal ASC,id ASC`,
+      [scope.groupId, scope.empresaId, produtoId],
+    );
+    return result.rows.map((row) => this.mapCanal(row as Record<string, unknown>));
+  }
+
+  async createCanal(scope: Scope, produtoId: string, data: ProdutoCanalCreate, actorId: string, executor: DbQueryExecutor): Promise<ProdutoCanal> {
+    if (!scope.empresaId) throw new Error('EMPRESA_ID_REQUIRED');
+    const result = await executor.query(
+      `INSERT INTO produto_canais (group_id,empresa_id,produto_id,canal,sku,nome,descricao,created_by,updated_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$8)
+       RETURNING id,group_id,empresa_id,produto_id,canal,sku,nome,descricao,status,ativo,created_at,updated_at`,
+      [scope.groupId, scope.empresaId, produtoId, data.canal, data.sku ?? null, data.nome ?? null, data.descricao ?? null, actorId],
+    );
+    return this.mapCanal(result.rows[0] as Record<string, unknown>);
+  }
+
+  async updateCanal(scope: Scope, produtoId: string, canalId: string, data: ProdutoCanalUpdate, actorId: string, executor: DbQueryExecutor): Promise<ProdutoCanal | null> {
+    if (!scope.empresaId) return null;
+    const found = await executor.query<ProdutoCanal>(
+      `SELECT id,group_id,empresa_id,produto_id,canal,sku,nome,descricao,status,ativo,created_at,updated_at
+       FROM produto_canais WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND produto_id=$4 AND ativo=true FOR UPDATE`,
+      [canalId, scope.groupId, scope.empresaId, produtoId],
+    );
+    const current = found.rows[0];
+    if (!current) return null;
+    const result = await executor.query(
+      `UPDATE produto_canais SET sku=$1,nome=$2,descricao=$3,updated_by=$4,updated_at=timezone('utc',now())
+       WHERE id=$5 AND group_id=$6 AND empresa_id=$7 AND produto_id=$8 AND ativo=true
+       RETURNING id,group_id,empresa_id,produto_id,canal,sku,nome,descricao,status,ativo,created_at,updated_at`,
+      [data.sku === undefined ? current.sku : data.sku, data.nome === undefined ? current.nome : data.nome,
+        data.descricao === undefined ? current.descricao : data.descricao, actorId, canalId, scope.groupId, scope.empresaId, produtoId],
+    );
+    return result.rows[0] ? this.mapCanal(result.rows[0] as Record<string, unknown>) : null;
+  }
+
+  async deactivateCanal(scope: Scope, produtoId: string, canalId: string, actorId: string, executor: DbQueryExecutor): Promise<ProdutoCanal | null> {
+    if (!scope.empresaId) return null;
+    const result = await executor.query(
+      `UPDATE produto_canais SET ativo=false,updated_by=$1,updated_at=timezone('utc',now())
+       WHERE id=$2 AND group_id=$3 AND empresa_id=$4 AND produto_id=$5 AND ativo=true
+       RETURNING id,group_id,empresa_id,produto_id,canal,sku,nome,descricao,status,ativo,created_at,updated_at`,
+      [actorId, canalId, scope.groupId, scope.empresaId, produtoId],
+    );
+    return result.rows[0] ? this.mapCanal(result.rows[0] as Record<string, unknown>) : null;
+  }
+
   async listVariants(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoVariante[]> {
     const q = executor ?? this.db; const params: unknown[] = [scope.groupId, produtoId];
     let sql = 'SELECT id,group_id,empresa_id,produto_id,sku,nome,atributos,ativo FROM produto_variantes WHERE group_id=$1 AND produto_id=$2 AND ativo=true';

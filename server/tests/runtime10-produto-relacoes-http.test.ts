@@ -483,3 +483,42 @@ test('HTTP Produto persiste material, liga e norma sem vazar tenant', async () =
     assert.equal(logs[1]?.afterData?.norma_tecnica, 'ABNT NBR 7007');
   });
 });
+
+test('HTTP R10: rascunho por canal faz CRUD isolado sem publicar Produto', async () => {
+  await withHttp(async (request) => {
+    const produtoId = await product(request, 'Produto canal HTTP');
+    const secondId = await product(request, 'Outro produto HTTP');
+    const path = `/api/v1/produtos/${produtoId}/canais`;
+    const before = await request(`/api/v1/produtos/${produtoId}`);
+    const created = await request(path, 'POST', { canal: 'site_cpa', sku: 'HTTP-CANAL', nome: 'Nome site' });
+    assert.equal(created.status, 201, JSON.stringify(created.body));
+    assert.equal(created.body.data.status, 'RASCUNHO');
+    assert.equal(created.body.data.empresa_id, EMPRESA_A);
+    const listed = await request(path);
+    assert.equal(listed.status, 200);
+    assert.equal(listed.headers.get('cache-control'), 'no-store');
+    assert.equal(listed.body.data.length, 1);
+    const canalId = created.body.data.id;
+    const updated = await request(`${path}/${canalId}`, 'PATCH', { nome: 'Nome revisado' });
+    assert.equal(updated.status, 200);
+    assert.equal(updated.body.data.nome, 'Nome revisado');
+    assert.equal((await request(path)).body.data[0].nome, 'Nome revisado');
+    assert.equal((await request(path, 'POST', { canal: 'marketplace', status: 'PUBLICADO' })).status, 400);
+    assert.equal((await request(path, 'POST', { canal: 'marketplace', groupId: GROUP_B })).status, 400);
+    assert.equal((await request(path, 'POST', { canal: 'marketplace', empresaId: EMPRESA_B })).status, 400);
+    assert.equal((await request(path, 'POST', { canal: 'marketplace', actorId: ACTOR_B })).status, 400);
+    assert.equal((await request(path, 'POST', { canal: 'marketplace', requestId: 'fake' })).status, 400);
+    assert.equal((await request(`/api/v1/produtos/${secondId}/canais`, 'POST', { canal: 'site_cpa', sku: 'http-canal' })).status, 409);
+    assert.equal((await request(path, 'GET', undefined, headers(GROUP_A, EMPRESA_A2))).status, 404);
+    assert.equal((await request(path, 'GET', undefined, headers(GROUP_B, EMPRESA_B, ACTOR_B))).status, 404);
+    assert.equal((await request(path, 'GET', undefined, headers(GROUP_A, EMPRESA_A, ACTOR_DENIED))).status, 403);
+    assert.equal((await request(path, 'POST', { canal: 'marketplace' }, headers(GROUP_A, EMPRESA_A, ACTOR_DENIED))).status, 403);
+    const deactivated = await request(`${path}/${canalId}`, 'DELETE');
+    assert.equal(deactivated.status, 200);
+    assert.equal(deactivated.body.data.ativo, false);
+    assert.deepEqual((await request(path)).body.data, []);
+    assert.equal((await request(`${path}/${canalId}`, 'PATCH', { nome: 'Sem acesso' })).status, 404);
+    const after = await request(`/api/v1/produtos/${produtoId}`);
+    assert.deepEqual(after.body.data, before.body.data);
+  });
+});

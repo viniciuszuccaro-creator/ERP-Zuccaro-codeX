@@ -250,6 +250,22 @@ export const produtoEquivalenteUpdateSchema = produtoEquivalenteCreateSchema
   .omit({ produto_equivalente_id: true }).partial().strict();
 export type ProdutoEquivalenteCreate = z.infer<typeof produtoEquivalenteCreateSchema>;
 export type ProdutoEquivalenteUpdate = z.infer<typeof produtoEquivalenteUpdateSchema>;
+export const produtoCanalCreateSchema = z.object({
+  canal: z.string().regex(/^[a-z][a-z0-9_-]{1,39}$/),
+  sku: z.string().trim().min(1).max(120).nullable().optional(),
+  nome: z.string().trim().min(1).max(240).nullable().optional(),
+  descricao: z.string().trim().min(1).max(4000).nullable().optional(),
+}).strict();
+export const produtoCanalUpdateSchema = produtoCanalCreateSchema.omit({ canal: true }).partial().strict()
+  .refine((value) => Object.keys(value).length > 0);
+export type ProdutoCanalCreate = z.infer<typeof produtoCanalCreateSchema>;
+export type ProdutoCanalUpdate = z.infer<typeof produtoCanalUpdateSchema>;
+export type ProdutoCanal = {
+  id: string; group_id: string; empresa_id: string; produto_id: string;
+  canal: string; sku: string | null; nome: string | null; descricao: string | null;
+  status: 'RASCUNHO'; ativo: boolean;
+  created_at: string; updated_at: string;
+};
 export const PRODUTO_FORBIDDEN_OPERATIONAL_FIELDS = Object.freeze([
   'estoque_atual',
   'estoque_minimo',
