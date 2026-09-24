@@ -1,3 +1,6 @@
+## Comercial 360 / Onda 2 - CI do preco por ClienteEmpresa (2026-09-24)
+- Commit funcional `c533f15c65bbd6ce79e9da579b0c05adfd755d4a` confirmado no remoto. Workflow `35999907136` SUCCESS: frontend/backend SUCCESS, incluindo migrate e test:postgres em PostgreSQL efemero. PR #33 permanece draft/sem merge; nenhuma mudanca na VPS, 3080 ou migrations aplicadas. CI nao equivale a homologacao DEV real.
+
 ## Comercial 360 / Onda 2 - preco por ClienteEmpresa (2026-09-24)
 - Objetivo: consultar preco a partir do vinculo real do ClienteEmpresa sem aceitar tabela escolhida pelo navegador. Reutilizados TabelaPrecoService, ClienteRepository, TabelaPrecoRepository e router existentes; nenhuma migration, modulo ou cadastro paralelo.
 - API: GET /api/v1/tabelas-preco/preco-cliente com clienteEmpresaId, produtoId, unidadeMedidaId e businessDate opcional; escopo Grupo/Empresa vem do contexto autenticado. Tabela especifica vem de cliente_empresas.tabela_preco_id; fallback para padrao da Empresa permanece no repository.
