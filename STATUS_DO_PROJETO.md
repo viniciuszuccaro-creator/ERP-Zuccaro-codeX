@@ -1,12 +1,11 @@
 ### Pós-Gate E — prep Gate D (2026-09-24)
 
-- Gate E **OK** no DEV; go-nogo passa a ler `GATE_E_STATUS=OK` → `vps_schema_016_024=APPLIED` (remove blocker `gate_e_schema_not_applied_yet`).
-- Canary: default `EXPECTED_RUNTIME` corrigido para **`ERP-RUNTIME-08B`** (removido default legado).
-- Digest: `print-pedido-codex` lê `docs/vps/evidence/image-digest-comercial360-latest.txt` → `REGISTERED` quando `DIGEST_STATUS=OK`.
-- Bloco Web Console de **build-only** em `docs/GATES_D_F_PREPARACAO_CANARIO.md` (sem canário/3080).
-- `GATE_D_READY=NO` restante: **digest** (build VPS) + **Auth sintético** + checkbox/assinatura Gate D.
-- **Próximo operacional:** colar build Web Console → PASTE digest → depois gate Auth (autorização humana).
-- **Não** executar canário/Auth/3080 sem autorização Gate D.
+- Gate E **OK** · digest imagem **REGISTERED** (`comercial360-main-2fc2fc80` · id `sha256:d89e65ff013c…` · evidência `image-digest-comercial360-latest.txt`).
+- 3080 permanece R07B (`runtime07b-main-ca0bc5f3`) · health 200 · canário **não** iniciado.
+- `GATE_D_READY=NO` restante: **Auth sintético** + checkbox/assinatura Gate D no termo.
+- Canary default `ERP-RUNTIME-08B` · go-nogo: `vps_schema=APPLIED` · `image_digest_status=REGISTERED`.
+- **Próximo operacional:** autorizar gate Auth sintético (checklist `GATE_D_SMOKE_AUTH_CHECKLIST.md`) — **sem** canário até termo §C Gate D.
+- **Não** D/F/3080 sem autorização.
 
 ### Gate E — CONCLUÍDO no DEV (2026-09-24)
 

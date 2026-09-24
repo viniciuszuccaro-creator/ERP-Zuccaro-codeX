@@ -17,7 +17,7 @@ Complementa `docs/GATES_D_F_PREPARACAO_CANARIO.md` e o contrato
 | 1 | Gate C APROVADO | `score-gate-c.sh` |
 | 2 | Gate E OK (schema 016–024 DEV) | `gate-e-webconsole-2026-09-24.txt` |
 | 3 | `EXPECTED_RUNTIME=ERP-RUNTIME-08B` | canary default + `/meta` da imagem main |
-| 4 | Imagem imutável `comercial360-main-<sha8>` da **main** | digest (ainda pendente) |
+| 4 | Imagem imutável `comercial360-main-<sha8>` da **main** | digest **REGISTERED** (`2fc2fc80` · evidência Git) |
 | 5 | Canário up em porta ≠3080 | `comercial360-canary.sh` |
 | 6 | Meta do canário: `auth.mode=supabase_user` | smoke script |
 | 7 | Identidade sintética Auth (Bearer) + profile vinculado | **fora do Git** · gate Auth |
