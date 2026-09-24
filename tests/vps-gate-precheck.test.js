@@ -269,3 +269,20 @@ test('go-nogo-def NO com blockers atuais', () => {
   assert.match(run.stdout, /backup_novo_ausente/);
   assert.match(run.stdout, /EXECUTE_DEF=NO/);
 });
+
+test('scan-sanitized-artifacts CLEAN nos docs VPS', () => {
+  const script = path.join(root, 'scripts/vps/scan-sanitized-artifacts.sh');
+  const syn = spawnSync('bash', ['-n', script], { encoding: 'utf8' });
+  assert.equal(syn.status, 0, syn.stderr);
+  const run = spawnSync('bash', [script], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr || run.stdout);
+  assert.match(run.stdout, /SANITIZE_SCAN_STATUS=CLEAN/);
+  assert.match(run.stdout, /hit_count=0/);
+});
+
+test('print-auth-package-status inclui sanitize CLEAN', () => {
+  const script = path.join(root, 'scripts/vps/print-auth-package-status.sh');
+  const run = spawnSync('bash', [script], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr || run.stdout);
+  assert.match(run.stdout, /SANITIZE_SCAN_STATUS=CLEAN/);
+});

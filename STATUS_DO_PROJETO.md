@@ -2,15 +2,13 @@
 
 - Branch: `cursor/vps-hml-gate-c-legado-392b` / PR `#34`. Codex `#33` intocada
   (HEAD observado `200000bb`, draft).
-- Gate C **APROVADO**; pacote D/E `READY_FOR_HUMAN_DECISION`;
-  agregado local `GO_NOGO=NO`.
-- Validador termo + backup: `WAITING_SIGNATURE` /
-  `BACKUP_NOVO_STATUS=STALE_NEED_NEW`.
-- Fatias Gate E propostas: comercial `016–017` → produto/DAM `018–024`
-  (`scripts/vps/print-gate-e-fatias.sh`).
-- Legado sintético: chave idempotente + lote (sem HD/import).
+- Gate C **APROVADO**; `GO_NOGO=NO` (termo / backup novo / Codex).
+- Fatias Gate E: comercial `016–017` → produto/DAM `018–024`.
+- Legado sintético: obra + condição pagamento; quarentena `codigo_empresa=0`;
+  inventário marca `USUSENHA` como `blocked_secret_candidate`.
+- Scan sanitização artefatos VPS: `scan-sanitized-artifacts.sh` → `CLEAN`.
 - **Não** executados: canário, 016–024, promoção 3080.
-- Próximo: termo + backup `pre-gate-e-…` + confirmação Codex; senão inventário HD.
+- Próximo: termo + backup `pre-gate-e-…` + Codex; senão inventário HD.
 
 ### ERP-RUNTIME-08 — diagnóstico Comercial 360º (2026-09-19)
 

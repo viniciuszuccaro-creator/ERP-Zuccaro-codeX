@@ -40,6 +40,7 @@ somente leitura. Valores abaixo são **candidatos** do ERP canônico atual.
 | Pedido / venda | agregado 017 (PR #33) | 017 | snapshot preço/endereço |
 | Conta pagar/receber | entidades financeiras existentes | staging + reconciliação | `PENDING_MANUAL_RECONCILIATION` |
 | NF | NotaFiscal + reconciliação fiscal | staging | permissões `Fiscal.Migracao.*` |
+| Código empresa legado `0` | **quarentena** (não propaga) | — | `avaliarQuarentenaLegado` |
 | Vendedor | **não** criar `Vendedor` paralelo | Colaborador/Pessoa | bloqueado até identidade canônica |
 | Contato / telefone | **não** inventar Contato2 | Pessoa canônica futura | PII |
 

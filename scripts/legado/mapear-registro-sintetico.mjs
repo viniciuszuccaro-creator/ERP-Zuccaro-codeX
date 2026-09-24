@@ -6,6 +6,8 @@
 import {
   buildReconciliacaoMigracao,
   findRegistroMigracaoDuplicado,
+  MIGRACAO_DESTINO_STAGING,
+  MIGRACAO_STATUS_PENDING_MANUAL_RECONCILIATION,
   stampMigracaoRecord,
   stripSegredosMigracao,
 } from '../../src/components/lib/migracaoErpPolicy.js';
@@ -26,7 +28,18 @@ export const LEGADO_FIELD_ALIASES = Object.freeze({
     nome: ['nome', 'razao_social', 'nome_empresa', 'descricao'],
     documento: ['documento', 'cnpj', 'cgc', 'cpf_cnpj'],
   },
+  obra: {
+    codigo: ['codigo', 'cod_obra', 'codigo_obra', 'obra_id', 'codigo_legado'],
+    nome: ['nome', 'nome_obra', 'descricao', 'titulo'],
+  },
+  condicao_pagamento: {
+    codigo: ['codigo', 'cod_condicao', 'codigo_condicao', 'condicao_id', 'codigo_legado'],
+    nome: ['nome', 'descricao', 'condicao', 'titulo'],
+  },
 });
+
+/** Códigos empresariais legados válidos conhecidos (Gate 18); `0` = quarentena. */
+export const LEGADO_EMPRESA_CODIGOS_VALIDOS = Object.freeze(['1', '2', '3', '4', '5']);
 
 const first = (...vals) => {
   for (const v of vals) {
@@ -67,8 +80,37 @@ export const buildChaveIdempotenteMigracaoLegado = (record = {}, opts = {}) => {
 };
 
 /**
+ * Avalia quarentena sem importar (código empresa 0, entidade sem nome, etc.).
  * @param {Record<string, unknown>} row
- * @param {{ entidade?: 'cliente'|'produto'|'empresa', groupId?: string, empresaId?: string, arquivoNome?: string }} opts
+ * @param {{ entidade?: string }} opts
+ * @returns {{ quarentena: boolean, motivos: string[] }}
+ */
+export const avaliarQuarentenaLegado = (row = {}, opts = {}) => {
+  const motivos = [];
+  const entidade = opts.entidade || 'cliente';
+  const codigoEmpresa = first(
+    row.codigo_empresa,
+    row.codigoempresa,
+    row.cod_empresa,
+    row.empresa_codigo,
+  );
+  if (codigoEmpresa === '0') {
+    motivos.push('codigo_empresa_legado_0');
+  }
+  if (codigoEmpresa && !LEGADO_EMPRESA_CODIGOS_VALIDOS.includes(codigoEmpresa) && codigoEmpresa !== '0') {
+    motivos.push('codigo_empresa_legado_desconhecido');
+  }
+  if (entidade === 'empresa') {
+    const aliases = LEGADO_FIELD_ALIASES.empresa;
+    const doc = pickAlias(row, aliases.documento);
+    if (!doc) motivos.push('empresa_sem_documento');
+  }
+  return { quarentena: motivos.length > 0, motivos };
+};
+
+/**
+ * @param {Record<string, unknown>} row
+ * @param {{ entidade?: keyof typeof LEGADO_FIELD_ALIASES, groupId?: string, empresaId?: string, arquivoNome?: string }} opts
  */
 export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
   const entidade = opts.entidade || 'cliente';
@@ -89,6 +131,8 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
     throw new Error('Registro sintetico sem codigo nem nome/descricao mapeavel.');
   }
 
+  const q = avaliarQuarentenaLegado(row, { entidade });
+
   const base = stripSegredosMigracao({
     group_id: first(opts.groupId, row.group_id, row.grupo_id),
     empresa_id: first(opts.empresaId, row.empresa_id),
@@ -96,20 +140,29 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
     id_antigo: codigo,
     ...(entidade === 'produto'
       ? { descricao: nomeOuDesc }
-      : { nome: nomeOuDesc, documento: documento || undefined }),
+      : { nome: nomeOuDesc, ...(documento ? { documento } : {}) }),
     origem: 'erp_antigo',
+    ...(q.quarentena
+      ? {
+        status_migracao: MIGRACAO_STATUS_PENDING_MANUAL_RECONCILIATION,
+        requer_conciliacao_manual: true,
+        quarentena_motivos: q.motivos,
+      }
+      : {}),
   });
 
   const stamped = stampMigracaoRecord(base, {
     arquivoNome: opts.arquivoNome || 'sintetico.csv',
     entidade,
     confirmado: false,
-    destino: 'staging',
+    destino: MIGRACAO_DESTINO_STAGING,
   });
 
   return {
     ...stamped,
     entidade_migracao: entidade,
+    quarentena: q.quarentena,
+    quarentena_motivos: q.motivos,
     chave_idempotente_migracao: buildChaveIdempotenteMigracaoLegado(stamped, { entidade }),
   };
 };
@@ -118,7 +171,7 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
  * Mapeia lote sintético: carimba staging, detecta duplicata e monta reconciliação.
  * Não grava. Não lê HD.
  * @param {Array<Record<string, unknown>>} rows
- * @param {{ entidade?: 'cliente'|'produto'|'empresa', groupId?: string, empresaId?: string, arquivoNome?: string }} opts
+ * @param {{ entidade?: keyof typeof LEGADO_FIELD_ALIASES, groupId?: string, empresaId?: string, arquivoNome?: string }} opts
  */
 export const mapLegadoLoteSintetico = (rows = [], opts = {}) => {
   const list = Array.isArray(rows) ? rows : [];
@@ -129,6 +182,7 @@ export const mapLegadoLoteSintetico = (rows = [], opts = {}) => {
   const mapped = [];
   const reusos = [];
   const erros = [];
+  const quarentenas = [];
 
   for (let i = 0; i < list.length; i += 1) {
     try {
@@ -142,6 +196,14 @@ export const mapLegadoLoteSintetico = (rows = [], opts = {}) => {
           reuso_de: dup.chave_idempotente_migracao,
         });
         continue;
+      }
+      if (out.quarentena) {
+        quarentenas.push({
+          indice: i,
+          codigo_legado: out.codigo_legado,
+          motivos: out.quarentena_motivos,
+          chave_idempotente_migracao: out.chave_idempotente_migracao,
+        });
       }
       mapped.push(out);
     } catch (err) {
@@ -158,11 +220,12 @@ export const mapLegadoLoteSintetico = (rows = [], opts = {}) => {
 
   return {
     entidade: opts.entidade || 'cliente',
-    destino_migracao: 'staging',
+    destino_migracao: MIGRACAO_DESTINO_STAGING,
     importacao_erp: true,
     gravados: mapped,
     reusos,
     erros,
+    quarentenas,
     reconciliacao,
     chaves: mapped.map((r) => r.chave_idempotente_migracao),
   };
@@ -177,12 +240,21 @@ if (process.argv[1] && process.argv[1].includes('mapear-registro-sintetico')) {
       senha: 'NAO_DEVE_SAIR',
       group_id: 'g-sint',
       empresa_id: 'e-sint',
+      codigo_empresa: '1',
     },
     {
       cod_cliente: 'C-100',
       razao_social: 'Cliente Sintetico LTDA (dup)',
       group_id: 'g-sint',
       empresa_id: 'e-sint',
+      codigo_empresa: '1',
+    },
+    {
+      cod_cliente: 'C-0',
+      nome: 'Quarentena',
+      group_id: 'g-sint',
+      empresa_id: 'e-sint',
+      codigo_empresa: '0',
     },
   ];
   const lote = mapLegadoLoteSintetico(sampleRows, {
@@ -196,6 +268,7 @@ if (process.argv[1] && process.argv[1].includes('mapear-registro-sintetico')) {
   console.log(JSON.stringify({
     gravados: lote.gravados.length,
     reusos: lote.reusos.length,
+    quarentenas: lote.quarentenas.length,
     divergencia: lote.reconciliacao.divergencia_quantidade,
     chave: lote.chaves[0],
     destino_migracao: lote.destino_migracao,

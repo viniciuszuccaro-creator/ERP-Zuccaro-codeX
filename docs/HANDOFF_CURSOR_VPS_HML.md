@@ -30,5 +30,7 @@ Regra-Mãe e o documento mestre do programa (PR #33).
    Checagem: `bash scripts/vps/go-nogo-def.sh` → hoje `GO_NOGO=NO`.
 2. Backup **novo** nomeado `pre-gate-e-…` (histórico Gate C = `STALE_NEED_NEW`).
 3. Sem termo + backup novo + Codex: **não** D/E/F.
-4. Legado: com HD montado, inventário; mapper sintético já cobre lote/idempotência.
-5. Opcional: reexecutar `gate-c-read-only.sh` (meta via docker exec).
+4. Legado: com HD montado, inventário; mapper cobre obra/condição, quarentena
+   `codigo_empresa=0` e lote idempotente. `USUSENHA*` → `blocked_secret_candidate`.
+5. Opcional: `bash scripts/vps/scan-sanitized-artifacts.sh` (artefatos CLEAN).
+6. Opcional: reexecutar `gate-c-read-only.sh` (meta via docker exec).

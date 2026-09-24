@@ -92,6 +92,10 @@ folder_name = os.environ.get("FOLDER_NAME") or "BACKUP ERP ANTIGO - CODEX"
 
 def classify(path: Path):
     ext = path.suffix.lower().lstrip(".") or "sem_extensao"
+    name_u = path.name.upper()
+    # Arquivos de senha/credencial legado: metadados ok, nunca abrir conteúdo.
+    if "USUSENHA" in name_u or name_u.endswith("SENHA.TPS") or "PASSWORD" in name_u:
+        return ext, "blocked_secret_candidate"
     mapping = {
         "sql": "sql_texto",
         "gz": "arquivo_gzip",
@@ -107,11 +111,14 @@ def classify(path: Path):
         "xls": "planilha_office",
         "rar": "arquivo_compactado",
         "7z": "arquivo_compactado",
+        "tps": "clarion_tps",
     }
     return ext, mapping.get(ext, f"ext_{ext}")
 
-def safe_name(name: str) -> str:
+def safe_name(name: str, fmt: str) -> str:
     import re
+    if fmt == "blocked_secret_candidate":
+        return "BLOCKED_SECRET_FILENAME"
     return re.sub(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+", "REDACTED_EMAIL", name)
 
 def sha256_file(path: Path) -> str:
@@ -135,8 +142,11 @@ for path in files:
     ext_count[ext] += 1
     fmt_count[fmt] += 1
     mtime = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(path.stat().st_mtime))
-    name = safe_name(path.name)
+    name = safe_name(path.name, fmt)
+    # Hash estrutural permanece; conteúdo nunca é impresso.
     print(f"file name={name} bytes={size} sha256={digest} format={fmt} mtime_utc={mtime}")
+    if fmt == "blocked_secret_candidate":
+        print("NOTE blocked_secret_candidate=nao_abrir_conteudo")
     items.append({
         "name": name,
         "bytes": size,
