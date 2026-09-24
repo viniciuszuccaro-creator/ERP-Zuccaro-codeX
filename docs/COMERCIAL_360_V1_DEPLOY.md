@@ -7,7 +7,7 @@ Este documento prepara o gate futuro e nao autoriza acesso a VPS, merge, migrati
 - Fonte: merge futuro da PR #33 na `main`; nunca construir a imagem oficial a partir da branch.
 - Tag: imutavel, contendo o `MERGE_SHA`, por exemplo `erp-zuccaro-erp-api:comercial360-main-<sha8>`.
 - Runtime esperado: definir `EXPECTED_RUNTIME` conforme `/api/v1/meta` da `main` revisada.
-- Migrations candidatas na branch: 016-022. Inventariar as aplicadas no DEV antes de decidir qualquer migracao; CI efemera nao equivale a DEV.
+- Migrations candidatas na branch: 016-024; 023 e 024 validadas em codigo/CI, nenhuma aplicada na VPS. Inventariar as aplicadas no DEV antes de decidir qualquer migracao; CI efemera nao equivale a DEV.
 - Migrations historicas sao imutaveis e nao podem ser reaplicadas manualmente.
 
 ## Gates obrigatorios
@@ -15,7 +15,7 @@ Este documento prepara o gate futuro e nao autoriza acesso a VPS, merge, migrati
 1. PR aprovada, CI frontend/backend/PostgreSQL verde e `MERGE_SHA` registrado.
 2. Precheck VPS autorizado: worktree limpo, runtime 3080, containers, rede, porta temporaria e `schema_migrations` inventariados.
 3. Backup novo em `/opt/erp-zuccaro/backups`, com caminho, tamanho e SHA-256; preservar todos os rollbacks existentes.
-4. Quando autorizado, aplicar apenas migrations faltantes da MAIN aprovada pelo migrator canonico, com `ON_ERROR_STOP`; conferir 001-022 em ordem, cada uma exatamente uma vez, e investigar qualquer migration posterior antes de prosseguir.
+4. Quando autorizado, aplicar apenas migrations faltantes da MAIN aprovada pelo migrator canonico, com `ON_ERROR_STOP`; conferir todas as migrations da MAIN aprovada em ordem, cada uma exatamente uma vez, e investigar qualquer migration posterior antes de prosseguir.
 5. Executar `npm run test:postgres` no checkout exato da `main`, com PostgreSQL real, >0 testes e zero fail/skip.
 6. Construir imagem imutavel da mesma `main`; iniciar canario em porta temporaria livre com `scripts/deploy/comercial360-canary.sh`.
 7. Executar `scripts/deploy/comercial360-smoke.sh` e smoke autenticado sintético de Orcamento/Pedido, incluindo RBAC negado e cross-tenant bloqueado.
@@ -35,7 +35,7 @@ Usar exclusivamente identidade sintetica autorizada via Bearer validado pelo Sup
 
 ## Rollback
 
-Rollback de API e schema sao independentes. Preferir retornar ao container/imagem anterior preservado. Nao desfazer 016-022 automaticamente: o runtime anterior deve ser verificado quanto a compatibilidade. Qualquer necessidade de rollback de schema exige plano e autorizacao separados. O script de rollback nao remove imagem, container, volume, backup ou migration.
+Rollback de API e schema sao independentes. Preferir retornar ao container/imagem anterior preservado. Nao desfazer migrations automaticamente: o runtime anterior deve ser verificado quanto a compatibilidade. Qualquer necessidade de rollback de schema exige plano e autorizacao separados. O script de rollback nao remove imagem, container, volume, backup ou migration.
 
 ## Gates C-F: passagem condicional da API
 
