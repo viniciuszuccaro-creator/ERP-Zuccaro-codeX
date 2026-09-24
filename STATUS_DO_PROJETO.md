@@ -1,13 +1,15 @@
 ### Frente Cursor — VPS / HML / Gate C / legado (2026-09-24)
 
-- Branch: `cursor/vps-hml-gate-c-legado-392b` / PR `#34`. Codex `#33` intocada.
-- **Gate C: APROVADO** (Web Console 11:37:49Z). Evidência
-  `docs/vps/evidence/gate-c-2026-09-24.txt` + `docs/GATE_C_RESULTADO_2026-09-24.md`.
-  MATCH DB; 001–015 1×; portas 3086/3090/3091 FREE; backups/rollback R07B;
-  meta_parse=ERR no host (sem node) — script corrigido para parse via container.
-- Gates D–E: preparados (**não** executados). missing 016–024.
-- Auth PR #33 / canário / promoção 3080: **ainda bloqueados**.
-- 3080 permanece `runtime07b-main-ca0bc5f3` / não tocada nesta frente.
+- Branch: `cursor/vps-hml-gate-c-legado-392b` / PR `#34`. Codex `#33` intocada
+  (HEAD recente `d073631a` — canais produto; não mergeada).
+- **Gate C: APROVADO** — evidência + score. Ver
+  `docs/GATE_C_RESULTADO_2026-09-24.md`.
+- **Pacote D/E:** `docs/PACOTE_AUTORIZACAO_GATES_D_E.md` +
+  `scripts/vps/print-auth-package-status.sh` → `READY_FOR_HUMAN_DECISION`.
+- **Proposta Codex:** `EXPECTED_RUNTIME=ERP-RUNTIME-08B` (meta PR #33);
+  default canário `COMERCIAL-360-V1` divergente — precisa alinhar.
+- D/E/F **não** executados; 3080 R07B preservada; Auth não homologado;
+  missing 016–024.
 
 ### ERP-RUNTIME-08 — diagnóstico Comercial 360º (2026-09-19)
 
