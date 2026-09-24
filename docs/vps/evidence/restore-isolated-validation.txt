@@ -1,11 +1,11 @@
 # Evidência — restore isolado (sintético). NÃO é restore na DEV.
-# utc=2026-09-24T14:41:22Z
-restore_target=ISOLATED_PGLITE
+# utc=2026-09-24T14:49:58Z
+restore_target=ISOLATED_FILESYSTEM
 dump_source=SYNTHETIC_PRE_GATE_E_PROCEDURE
 vps_dump_used=NO
 dev_database_touched=NO
-dev_marker_sha_before=c2ca2072252f96feb231c61c2429d02cb0d7a64ca0fa8531fae10c58af5aa23c
-dev_marker_sha_after=c2ca2072252f96feb231c61c2429d02cb0d7a64ca0fa8531fae10c58af5aa23c
+dev_marker_sha_before=eba8dacb37f619c595ac0f705158696ea3c8c0cf3629aea592923b477dfed112
+dev_marker_sha_after=eba8dacb37f619c595ac0f705158696ea3c8c0cf3629aea592923b477dfed112
 isolated_schema_migrations=15
 restore_isolated=VALIDATED_SYNTHETIC
 RESTORE_ISOLATED_STATUS=OK

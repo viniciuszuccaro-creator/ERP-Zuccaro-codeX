@@ -379,12 +379,15 @@ test('go-nogo-def reporta GATE_E_READY=NO enquanto 016-024 ausentes da main', ()
   assert.doesNotMatch(run.stdout, /gate_e_blockers=.*auth_synthetic/);
 });
 
-test('go-nogo-def GATE_E_READY=YES quando MAIN_REF tem 016-024', () => {
+test('go-nogo-def GATE_E_READY=YES quando MAIN_MIGRATIONS_DIR tem 016-024', () => {
   const script = path.join(root, 'scripts/vps/go-nogo-def.sh');
-  // Usa tip da PR #33 como MAIN_REF simulado (não altera origin/main).
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'main-mig-'));
+  for (const id of ['016', '017', '018', '019', '020', '021', '022', '023', '024']) {
+    fs.writeFileSync(path.join(dir, `${id}_probe.sql`), '-- probe\n');
+  }
   const run = spawnSync('bash', [script], {
     encoding: 'utf8',
-    env: { ...process.env, MAIN_REF: 'origin/codex/comercial-360' },
+    env: { ...process.env, MAIN_MIGRATIONS_DIR: dir },
   });
   assert.equal(run.status, 0, run.stderr || run.stdout);
   assert.match(run.stdout, /main_migrations_016_024=PRESENT/);

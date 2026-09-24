@@ -84,10 +84,22 @@ else
 fi
 
 # --- 016–024 devem existir na main (fonte do Gate E) ---
+# MAIN_MIGRATIONS_DIR: probe local (testes) sem precisar de ref remota.
 main_missing=()
 main_present=()
-if git -C "$ROOT" rev-parse --verify "$MAIN_REF" >/dev/null 2>&1; then
-  echo "main_ref=${MAIN_REF}"
+echo "main_ref=${MAIN_REF}"
+if [[ -n "${MAIN_MIGRATIONS_DIR:-}" && -d "$MAIN_MIGRATIONS_DIR" ]]; then
+  echo "main_migrations_probe=DIR:${MAIN_MIGRATIONS_DIR}"
+  main_files="$(find "$MAIN_MIGRATIONS_DIR" -maxdepth 1 -type f -name '*.sql' -printf '%f\n' 2>/dev/null || true)"
+  for id in "${REQUIRED_MAIN_MIGRATIONS[@]}"; do
+    if echo "$main_files" | grep -qE "^${id}_"; then
+      main_present+=("$id")
+    else
+      main_missing+=("$id")
+    fi
+  done
+elif git -C "$ROOT" rev-parse --verify "$MAIN_REF" >/dev/null 2>&1; then
+  echo 'main_migrations_probe=GIT_REF'
   main_files="$(git -C "$ROOT" ls-tree -r --name-only "$MAIN_REF" -- server/migrations 2>/dev/null || true)"
   for id in "${REQUIRED_MAIN_MIGRATIONS[@]}"; do
     if echo "$main_files" | grep -qE "server/migrations/${id}_"; then
@@ -97,8 +109,8 @@ if git -C "$ROOT" rev-parse --verify "$MAIN_REF" >/dev/null 2>&1; then
     fi
   done
 else
-  echo "main_ref=${MAIN_REF}"
   echo 'main_ref_status=UNAVAILABLE'
+  echo 'main_migrations_probe=UNAVAILABLE'
   main_missing=("${REQUIRED_MAIN_MIGRATIONS[@]}")
 fi
 if ((${#main_missing[@]})); then
