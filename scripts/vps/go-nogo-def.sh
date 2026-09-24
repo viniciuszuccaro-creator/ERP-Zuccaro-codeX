@@ -18,9 +18,14 @@ echo "gate_c=${gate_c:-UNKNOWN}"
 termo_out="$(bash "$ROOT/scripts/vps/validate-termo-autorizacao.sh" || true)"
 termo="$(echo "$termo_out" | sed -n 's/^TERMO_STATUS=//p' | head -1)"
 echo "termo=${termo:-UNKNOWN}"
-[[ "$termo" == 'SIGNED_CHECKLIST_OK' ]] || blockers+=('termo_waiting_signature')
+case "$termo" in
+  SIGNED_CHECKLIST_OK) ;;
+  FACTS_READY_WAITING_SIGNATURE) blockers+=('termo_waiting_signature') ;;
+  *) blockers+=('termo_waiting_signature') ;;
+esac
 
-bk_out="$(bash "$ROOT/scripts/vps/check-backup-novo-gate-e.sh" "$EVIDENCE" || true)"
+bk_out="$(bash "$ROOT/scripts/vps/check-backup-novo-gate-e.sh" "$EVIDENCE" \
+  "$ROOT/docs/vps/evidence/pre-gate-e-backup-latest.txt" || true)"
 bk="$(echo "$bk_out" | sed -n 's/^BACKUP_NOVO_STATUS=//p' | head -1)"
 echo "backup_novo=${bk:-UNKNOWN}"
 [[ "$bk" == 'NAMED_CANDIDATE_PRESENT' ]] || blockers+=('backup_novo_ausente')
@@ -62,11 +67,14 @@ if ((${#deduped[@]} > 0)); then
   IFS=','; echo "blockers=${deduped[*]}"; unset IFS
   echo 'GO_NOGO=NO'
   echo 'EXECUTE_DEF=NO'
+  echo 'AUTHORIZATION=NOT_GRANTED'
 else
   echo 'blockers=NONE'
   echo 'GO_NOGO=YES_PENDING_HUMAN_FINAL'
   echo 'EXECUTE_DEF=NO'
-  echo 'NOTE: checklist local limpo — execução ainda exige autorização humana na VPS'
+  echo 'AUTHORIZATION=NOT_GRANTED'
+  echo 'NOTE: YES_PENDING_HUMAN_FINAL nao autoriza migration/canario/promocao'
+  echo 'NOTE: exige checkbox do gate no termo + assinatura + comando VPS explicito'
 fi
 
 echo "GO_NOGO_END utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"

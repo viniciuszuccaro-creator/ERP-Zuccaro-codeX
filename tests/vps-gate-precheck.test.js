@@ -197,19 +197,19 @@ test('print-auth-package-status READY apos Gate C APROVADO', () => {
   assert.match(run.stdout, /GATE_C_RESULT=APROVADO/);
   assert.match(run.stdout, /missing_for_gate_e=016,017,018,019,020,021,022,023,024/);
   assert.match(run.stdout, /proposed_EXPECTED_RUNTIME=ERP-RUNTIME-08B/);
-  assert.match(run.stdout, /TERMO_STATUS=WAITING_SIGNATURE/);
+  assert.match(run.stdout, /TERMO_STATUS=FACTS_READY_WAITING_SIGNATURE/);
   assert.match(run.stdout, /BACKUP_NOVO_STATUS=STALE_NEED_NEW/);
   assert.match(run.stdout, /GO_NOGO=NO/);
   assert.match(run.stdout, /PACKAGE_STATUS=READY_FOR_HUMAN_DECISION/);
 });
 
-test('validate-termo-autorizacao WAITING_SIGNATURE no termo em branco', () => {
+test('validate-termo-autorizacao FACTS_READY no termo pre-preenchido', () => {
   const script = path.join(root, 'scripts/vps/validate-termo-autorizacao.sh');
   const run = spawnSync('bash', ['-n', script], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr);
   const exec = spawnSync('bash', [script], { encoding: 'utf8' });
   assert.equal(exec.status, 0, exec.stderr || exec.stdout);
-  assert.match(exec.stdout, /TERMO_STATUS=WAITING_SIGNATURE/);
+  assert.match(exec.stdout, /TERMO_STATUS=FACTS_READY_WAITING_SIGNATURE/);
   assert.match(exec.stdout, /EXECUTE_DEF=NO/);
 });
 
@@ -219,8 +219,9 @@ test('validate-termo-autorizacao SIGNED_CHECKLIST_OK quando preenchido', () => {
   const filled = path.join(tmp, 'termo.md');
   fs.writeFileSync(filled, [
     '# Termo',
-    'Data (UTC): 2026-09-24T12:00:00Z',
-    'Responsável: Operador Teste',
+    '## Fatos comprovados (Gate C — x)',
+    '## E. Sequência concreta para decisão (após este termo)',
+    'Responsável (assinatura humana): Operador Teste',
     '- [x] **Gate E** — aplicar faltantes',
     'Assinatura responsável: Operador Teste',
     '',
@@ -244,10 +245,43 @@ test('check-backup-novo-gate-e NAMED_CANDIDATE com pre-gate-e', () => {
   const script = path.join(root, 'scripts/vps/check-backup-novo-gate-e.sh');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'bk-'));
   const ev = path.join(tmp, 'ev.txt');
-  fs.writeFileSync(ev, 'backup path=pre-gate-e-20260924-120000.sql bytes=1 sha256=present dump_complete_marker=YES\n');
+  const sha = 'a'.repeat(64);
+  fs.writeFileSync(ev, [
+    `backup path=pre-gate-e-20260924-120000.sql bytes=5000 sha256=${sha} dump_complete_marker=YES`,
+    'integrity_header_pg_dump=YES',
+    'integrity_tail_complete=YES',
+    'integrity_sha256_recompute_match=YES',
+    'restore_destructive=NOT_PERFORMED',
+    '',
+  ].join('\n'));
+  // aponta meta latest via cópia no tmp nao funciona; passa so o arquivo
   const run = spawnSync('bash', [script, ev], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr || run.stdout);
   assert.match(run.stdout, /BACKUP_NOVO_STATUS=NAMED_CANDIDATE_PRESENT/);
+});
+
+test('verify-pre-gate-e-backup-meta OK com fixture', () => {
+  const script = path.join(root, 'scripts/vps/verify-pre-gate-e-backup-meta.sh');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'meta-'));
+  const meta = path.join(tmp, 'meta.txt');
+  const sha = 'b'.repeat(64);
+  fs.writeFileSync(meta, [
+    `backup path=pre-gate-e-20260924-130000.sql bytes=9000 sha256=${sha} dump_complete_marker=YES`,
+    'integrity_header_pg_dump=YES',
+    'integrity_tail_complete=YES',
+    'integrity_sha256_recompute_match=YES',
+    'restore_destructive=NOT_PERFORMED',
+    '',
+  ].join('\n'));
+  const run = spawnSync('bash', [script, meta], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr || run.stdout);
+  assert.match(run.stdout, /PRE_GATE_E_META_STATUS=OK/);
+});
+
+test('create-pre-gate-e-backup.sh passa bash -n', () => {
+  const script = path.join(root, 'scripts/vps/create-pre-gate-e-backup.sh');
+  const run = spawnSync('bash', ['-n', script], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr);
 });
 
 test('print-gate-e-fatias expoe comercial e produto', () => {
@@ -270,6 +304,7 @@ test('go-nogo-def NO com blockers atuais', () => {
   assert.match(run.stdout, /codex_confirmacoes_pendentes/);
   assert.match(run.stdout, /sanitize=CLEAN/);
   assert.match(run.stdout, /EXECUTE_DEF=NO/);
+  assert.match(run.stdout, /AUTHORIZATION=NOT_GRANTED/);
 });
 
 test('print-pedido-codex WAITING com 5 itens', () => {

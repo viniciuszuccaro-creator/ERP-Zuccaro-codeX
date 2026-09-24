@@ -1,7 +1,7 @@
 # Gate E — cartão (migrations faltantes) — NÃO EXECUTAR agora
 
-**Status:** `PREPARADO / BLOQUEADO até termo + backup novo + autorização humana`
-**Frente Cursor:** só inventário/precheck. Apply = processo VPS autorizado.
+**Status:** `PREPARADO / BLOQUEADO até termo assinado + backup pre-gate-e + autorização humana`
+**Frente Cursor:** inventário/precheck/backup. Apply = só com checkbox Gate E no termo.
 
 ## Entrada
 
@@ -13,9 +13,8 @@ bash scripts/vps/check-backup-novo-gate-e.sh
 bash scripts/vps/go-nogo-def.sh
 ```
 
-Esperado hoje (VPS 001–015): `missing_for_gate_e=016,017,018,019,020,021,022,023,024`
-Backup histórico Gate C: `BACKUP_NOVO_STATUS=STALE_NEED_NEW`
-Agregado: `GO_NOGO=NO`
+Esperado enquanto backup VPS não colado: `BACKUP_NOVO_STATUS=STALE_NEED_NEW` · `GO_NOGO=NO`
+`GO_NOGO=YES_PENDING_HUMAN_FINAL` **não** autoriza apply.
 
 ## Fatias propostas (aguardam Codex)
 
@@ -26,9 +25,29 @@ Agregado: `GO_NOGO=NO`
 
 Ordem sugerida: comercial → `test:postgres` → produto. Alternativa: 016–024 juntas se Codex confirmar.
 
-## Quando autorizado (futuro)
+## Backup novo pré-Gate E (sem migration)
 
-1. Backup **novo** em `/opt/erp-zuccaro/backups` (bytes + SHA-256), nome sugerido `pre-gate-e-YYYYMMDD-HHMMSS.sql`.
+Na VPS (Web Console), **somente backup**:
+
+```bash
+bash scripts/vps/create-pre-gate-e-backup.sh
+# Colar bloco PASTE_TO_GIT_* em docs/vps/evidence/pre-gate-e-backup-latest.txt
+```
+
+Integridade (sem restore destrutivo): header `pg_dump` + marker
+`PostgreSQL database dump complete` + SHA-256 recompute.
+Dump real **não** vai para o Git.
+
+Workbench:
+
+```bash
+bash scripts/vps/verify-pre-gate-e-backup-meta.sh
+bash scripts/vps/check-backup-novo-gate-e.sh
+```
+
+## Quando autorizado (futuro — após termo + checkbox Gate E)
+
+1. Backup **novo** já validado (`BACKUP_NOVO_STATUS=NAMED_CANDIDATE_PRESENT`).
 2. Rollback R07B preservado (`rollback-dry-run-check.sh`).
 3. Checkout = **main** pós-merge (não branch feature).
 4. Migrator canônico + `ON_ERROR_STOP`; só ids faltantes da fatia autorizada.

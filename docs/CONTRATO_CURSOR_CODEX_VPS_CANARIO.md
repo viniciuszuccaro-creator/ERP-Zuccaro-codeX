@@ -30,7 +30,7 @@ Este arquivo **não** autoriza canário, migration real, promoção 3080 ou merg
 |---|---|---|
 | `main` base Cursor | `ca4171600cc30f9922c2f8b2ccb8b22d06aa6888` | `git fetch origin main && git rev-parse origin/main` |
 | PR #34 HEAD | consultar `gh pr view 34` | |
-| PR #33 HEAD (Codex) | `200000bba09af6bd98ca97f61f79bef4d75a7270` (+ posteriores) | `gh pr view 33` |
+| PR #33 HEAD (Codex) | `bfdfe8343becea96746691fa46a1a039b05da173` (+ posteriores) | `gh pr view 33` |
 | Imagem oficial VPS 3080 | `erp-zuccaro-erp-api:runtime07b-main-ca0bc5f3` | Gate C |
 | Rede Docker | `supabase_default` | Gate C |
 | Imagem canário futura | `erp-zuccaro-erp-api:comercial360-main-<sha8>` do **MERGE_SHA da main** | só após merge #33 |

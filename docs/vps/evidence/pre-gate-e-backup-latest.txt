@@ -1,0 +1,17 @@
+# Evidência sanitizada — backup pre-gate-e (PENDENTE execução na VPS)
+#
+# O dump real NÃO entra no Git. Fica somente em:
+#   /opt/erp-zuccaro/backups/pre-gate-e-YYYYMMDD-HHMMSS.sql
+#
+# Procedimento (Web Console autenticada, autorização = BACKUP apenas):
+#   1) Copiar scripts/vps/create-pre-gate-e-backup.sh para a VPS (ou clonar repo)
+#   2) bash create-pre-gate-e-backup.sh
+#   3) Substituir este arquivo pelo bloco entre PASTE_TO_GIT_BEGIN/END
+#   4) bash scripts/vps/verify-pre-gate-e-backup-meta.sh
+#   5) bash scripts/vps/check-backup-novo-gate-e.sh
+#
+# NÃO executar migration, canário ou promoção neste passo.
+#
+status=PENDING_VPS_RUN
+EXECUTE_DEF=NO
+APPLY_MIGRATIONS=NO

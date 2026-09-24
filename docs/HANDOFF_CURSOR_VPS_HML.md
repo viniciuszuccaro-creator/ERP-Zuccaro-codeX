@@ -28,9 +28,9 @@ Regra-Mãe e o documento mestre do programa (PR #33).
 
 ## Próxima ação concreta
 
-1. Humano: preencher `docs/TERMO_AUTORIZACAO_GATES_D_E_F.md`.
-2. Humano VPS: backup **novo** `pre-gate-e-…` (bytes+SHA-256).
-3. Codex: marcar §4 do contrato (`bash scripts/vps/print-pedido-codex.sh`).
-4. Revalidar: `bash scripts/vps/go-nogo-def.sh` → só então discutir E→D→F.
-5. Legado HD: inventário somente leitura quando o volume estiver montado.
-6. Congelar de novo: `bash scripts/vps/freeze-go-nogo-snapshot.sh` após mudanças.
+1. **VPS (humano):** `bash scripts/vps/create-pre-gate-e-backup.sh` → colar
+   bloco sanitizado em `docs/vps/evidence/pre-gate-e-backup-latest.txt`.
+2. **Codex:** fechar §4 do contrato (`print-pedido-codex.sh` → pending=0).
+3. **Humano:** assinar termo + marcar checkbox do gate em C.
+4. Revalidar: `go-nogo-def.sh` (ainda `EXECUTE_DEF=NO` / `AUTHORIZATION=NOT_GRANTED`).
+5. Só então decidir E→D→F; **não** interpretar `YES_PENDING_HUMAN_FINAL` como go.

@@ -3,7 +3,7 @@
 **Status:** `PRONTO PARA DECISÃO HUMANA — PREPARAÇÃO AUTÔNOMA ESGOTADA`
 **Gate C:** APROVADO em 2026-09-24 (`docs/GATE_C_RESULTADO_2026-09-24.md`)
 **Snapshot:** `docs/vps/evidence/go-nogo-snapshot-2026-09-24.txt` → `GO_NOGO=NO`
-**Frente Cursor:** PR #34 · **Frente Codex:** PR #33 draft HEAD `200000bb` (consultar GitHub)
+**Frente Cursor:** PR #34 · **Frente Codex:** PR #33 draft HEAD `bfdfe834` (consultar GitHub)
 
 Este pacote **não** autoriza canário, migration nem promoção. Serve para
 humanos/Codex decidirem o próximo gate com evidência congelada.
@@ -113,6 +113,8 @@ bash scripts/vps/check-backup-novo-gate-e.sh
 bash scripts/vps/print-gate-e-fatias.sh
 bash scripts/vps/go-nogo-def.sh
 # → GO_NOGO=NO enquanto termo/backup/Codex pendentes
+bash scripts/vps/freeze-go-nogo-snapshot.sh
+# → docs/vps/evidence/go-nogo-snapshot-*.txt
 
 # Opcional na Web Console (script atualizado — meta via docker exec):
 bash scripts/vps/gate-c-read-only.sh
