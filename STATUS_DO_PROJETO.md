@@ -1,11 +1,9 @@
-### Gate Auth + Gate D — autorizados (2026-09-24)
+### Gate Auth — bloqueado em provisionamento (2026-09-24)
 
-- Assinatura: **VINICIUS** · `24/09/2026` · termo §C (Auth + D marcados).
-- **Não** autorizados: Gate F · alteração 3080.
-- Baseline Auth VPS: `auth_users=0` · `profiles_ativos_sem_auth=2` → **`AUTH_SYNTHETIC_STATUS=PENDING_PROVISION`** (PASTE template com `<N>` **rejeitado**; não é OK).
-- Evidência baseline: `docs/vps/evidence/auth-synthetic-baseline-2026-09-24.txt`.
-- **Próximo:** provisionar user Auth sintético de verdade (GoTrue/Studio) + vincular profile sintético novo → PASTE com contagens reais (`auth_users_count>=1`).
-- Canário Gate D só após `AUTH_SYNTHETIC_STATUS=OK` comprovado.
+- Contagens VPS reconfirmadas: `auth_users=0` · `profiles_com_auth=0` · `profiles_ativos_sem_auth=2`.
+- Auth **ainda não** criado; canário Gate D **bloqueado**.
+- Próximo: bloco Web Console Admin API / Studio (checklist §2–§4) até contagens `auth_users>=1` e `profiles_com_auth>=1`.
+
 
 ### Pós-Gate E — prep Gate D (histórico)
 
