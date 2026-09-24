@@ -2,6 +2,7 @@
 
 **Status preparado:** fatos, SHAs, ordem, efeitos, backup e rollback **preenchidos**.
 **Em aberto:** somente autorização humana específica (§C) + assinatura.
+Estados: `READY_FOR_REVIEW` ≠ `AUTHORIZED` ≠ `EXECUTED`. `GATE_*_READY` não autoriza.
 Sem checkbox + assinatura do gate correspondente → **não executar**.
 
 ```bash

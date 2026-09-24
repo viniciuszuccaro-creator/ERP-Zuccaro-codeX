@@ -350,23 +350,45 @@ test('print-gate-e-fatias expoe comercial e produto', () => {
   assert.match(run.stdout, /AUTHORIZES_GATES_DEF=NO/);
 });
 
-test('go-nogo-def reporta GATE_E_READY separado de D/F', () => {
+test('go-nogo-def reporta GATE_E_READY=NO enquanto 016-024 ausentes da main', () => {
   const script = path.join(root, 'scripts/vps/go-nogo-def.sh');
   const run = spawnSync('bash', [script], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr || run.stdout);
-  assert.match(run.stdout, /GATE_E_READY=YES/);
-  assert.match(run.stdout, /gate_e_blockers=NONE/);
+  assert.match(run.stdout, /main_migrations_016_024=PENDING_ABSENT/);
+  assert.match(run.stdout, /main_missing_migrations=016,017,018,019,020,021,022,023,024/);
+  assert.match(run.stdout, /vps_schema_016_024=PENDING_NOT_APPLIED/);
+  assert.match(run.stdout, /GATE_E_READY=NO/);
+  assert.match(run.stdout, /gate_e_blockers=.*main_missing_migrations_016_024/);
   assert.match(run.stdout, /GATE_D_READY=NO/);
   assert.match(run.stdout, /image_digest_pending_post_merge/);
   assert.match(run.stdout, /auth_synthetic_gate_pending/);
   assert.match(run.stdout, /GATE_F_READY=NO/);
-  assert.match(run.stdout, /gate_d_not_aprovado_yet/);
-  assert.match(run.stdout, /GO_NOGO=NO/);
+  assert.match(run.stdout, /DECISION_STATE=READY_FOR_REVIEW/);
   assert.match(run.stdout, /AUTHORIZATION=NOT_GRANTED/);
+  assert.match(run.stdout, /EXECUTED=NO/);
+  assert.match(run.stdout, /GO_NOGO=NO/);
   assert.match(run.stdout, /EXECUTE_DEF=NO/);
-  assert.match(run.stdout, /NOTE: digest\/Auth nao sao pre-requisitos de GATE_E_READY/);
+  assert.match(run.stdout, /NOTE: READY_FOR_REVIEW != AUTHORIZED != EXECUTED/);
   assert.doesNotMatch(run.stdout, /gate_e_blockers=.*image_digest/);
   assert.doesNotMatch(run.stdout, /gate_e_blockers=.*auth_synthetic/);
+});
+
+test('go-nogo-def GATE_E_READY=YES quando MAIN_REF tem 016-024', () => {
+  const script = path.join(root, 'scripts/vps/go-nogo-def.sh');
+  // Usa tip da PR #33 como MAIN_REF simulado (não altera origin/main).
+  const run = spawnSync('bash', [script], {
+    encoding: 'utf8',
+    env: { ...process.env, MAIN_REF: 'origin/codex/comercial-360' },
+  });
+  assert.equal(run.status, 0, run.stderr || run.stdout);
+  assert.match(run.stdout, /main_migrations_016_024=PRESENT/);
+  assert.match(run.stdout, /main_missing_migrations=NONE/);
+  assert.match(run.stdout, /GATE_E_READY=YES/);
+  assert.match(run.stdout, /gate_e_blockers=NONE/);
+  assert.match(run.stdout, /GATE_D_READY=NO/);
+  assert.match(run.stdout, /AUTHORIZATION=NOT_GRANTED/);
+  assert.match(run.stdout, /EXECUTED=NO/);
+  assert.doesNotMatch(run.stdout, /gate_e_blockers=.*image_digest/);
 });
 
 test('print-pedido-codex DECISIONS_DOCUMENTED com 5 itens e pendencias operacionais', () => {
@@ -395,9 +417,11 @@ test('freeze-go-nogo-snapshot grava GO_NOGO=NO e EXHAUSTED', () => {
   assert.equal(run.status, 0, run.stderr || run.stdout);
   const text = fs.readFileSync(out, 'utf8');
   assert.match(text, /GO_NOGO=NO/);
-  assert.match(text, /GATE_E_READY=YES/);
+  assert.match(text, /GATE_E_READY=NO/);
+  assert.match(text, /main_missing_migrations_016_024/);
   assert.match(text, /GATE_D_READY=NO/);
   assert.match(text, /GATE_F_READY=NO/);
+  assert.match(text, /DECISION_STATE=READY_FOR_REVIEW/);
   assert.match(text, /AUTONOMOUS_PREP_STATUS=EXHAUSTED_WAITING_HUMAN_CODEX/);
   assert.match(text, /EXECUTE_DEF=NO/);
   assert.doesNotMatch(text, /Bearer |sk_live_|BEGIN PRIVATE KEY/i);
@@ -411,7 +435,27 @@ test('snapshot versionado go-nogo esta coerente', () => {
   assert.match(text, /GATE_E_READY=/);
   assert.match(text, /GATE_D_READY=/);
   assert.match(text, /GATE_F_READY=/);
+  assert.match(text, /DECISION_STATE=/);
   assert.match(text, /AUTONOMOUS_PREP_STATUS=EXHAUSTED_WAITING_HUMAN_CODEX/);
+});
+
+test('validate-isolated-restore --self-test nao toca DEV', () => {
+  const script = path.join(root, 'scripts/vps/validate-isolated-restore.sh');
+  const syn = spawnSync('bash', ['-n', script], { encoding: 'utf8' });
+  assert.equal(syn.status, 0, syn.stderr);
+  const out = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'restore-ev-')), 'ev.txt');
+  const run = spawnSync('bash', [script, '--self-test'], {
+    encoding: 'utf8',
+    env: { ...process.env, RESTORE_EVIDENCE_OUT: out },
+  });
+  assert.equal(run.status, 0, run.stderr || run.stdout);
+  assert.match(run.stdout, /RESTORE_ISOLATED_STATUS=OK/);
+  assert.match(run.stdout, /dev_database_touched=NO/);
+  assert.match(run.stdout, /DEV_DATABASE_TOUCHED=NO/);
+  assert.match(run.stdout, /AUTHORIZES_GATES_DEF=NO/);
+  const text = fs.readFileSync(out, 'utf8');
+  assert.match(text, /restore_isolated=VALIDATED_SYNTHETIC/);
+  assert.match(text, /vps_dump_used=NO/);
 });
 
 test('scan-sanitized-artifacts CLEAN nos docs VPS', () => {

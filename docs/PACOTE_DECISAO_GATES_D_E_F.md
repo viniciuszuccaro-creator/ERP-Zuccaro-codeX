@@ -1,118 +1,102 @@
 # Pacote de decisão por gate — D / E / F (sem execução)
 
-**Status:** `PRONTO PARA DECISÃO HUMANA — NÃO EXECUTAR`
-**Gerado:** 2026-09-24 · frente Cursor PR #34
-**Não faz:** merge, migration VPS, canário, promoção 3080, alteração da 3080.
+## Distinção obrigatória de estado
 
-Comando de leitura:
+| Estado | Significado | Valor atual |
+|---|---|---|
+| `READY_FOR_REVIEW` | Pacote técnico pronto para humano revisar | **SIM** (`DECISION_STATE=READY_FOR_REVIEW`) |
+| `AUTHORIZED` | Checkbox + assinatura no termo §C | **NÃO** (`AUTHORIZATION=NOT_GRANTED`) |
+| `EXECUTED` | Merge / Gate E / D / F / 3080 realizados | **NÃO** (`EXECUTED=NO`) |
+
+`GATE_*_READY=YES` **nunca** autoriza nem executa.
 
 ```bash
 bash scripts/vps/go-nogo-def.sh
-# → GATE_E_READY / GATE_D_READY / GATE_F_READY separados
 ```
 
 ---
 
-## 1. Revisão PR #33 e PR #34 (mergeabilidade — sem merge)
+## 1. Revisão PR #33 e PR #34 (sem merge na main)
 
-| PR | Branch | HEAD observado | Draft | mergeable (GitHub) | CI (HEAD) | Conflitos com `main` |
+| PR | Branch | Tip | Draft | mergeable | CI | Conflitos vs main |
 |---|---|---|---|---|---|---|
-| #33 | `codex/comercial-360` | `ceeb92e99954b39d3137dde497208b0db1010869` | sim | **MERGEABLE** / CLEAN | frontend+backend SUCCESS | API sem conflito; merge-tree sem `CONFLICT` |
-| #34 | `cursor/vps-hml-gate-c-legado-392b` | tip: `gh pr view 34 --json headRefOid` | sim | **MERGEABLE** / CLEAN | revalidar após push | sem conflito |
-| `main` | — | `ca4171600cc30f9922c2f8b2ccb8b22d06aa6888` | — | — | — | base comum das PRs |
+| #33 | `codex/comercial-360` | `ceeb92e9…` | sim | MERGEABLE/CLEAN | SUCCESS | nenhum |
+| #34 | `cursor/vps-hml-gate-c-legado-392b` | tip atual | sim | MERGEABLE | ver CI do tip | nenhum |
+| `main` | — | `ca417160…` | — | — | — | base |
 
-**Leitura go-nogo (local, pós-correção anti-circular):**
-`GATE_E_READY=YES` · `GATE_D_READY=NO` (digest+Auth+schema E) · `GATE_F_READY=NO` · `GO_NOGO=NO` · `EXECUTE_DEF=NO`
-Digest/`PENDING_AUTH_GATE` **não** entram em `gate_e_blockers`.
+**Simulação de integração #33 → #34** (branch `cursor/integracao-sim-33-34-392b`, **não** altera `main`):
+resolve conflito previsto em `STATUS_DO_PROJETO.md` preservando topo Cursor + handoff Codex. Evidência em `docs/vps/evidence/integracao-sim-33-34.txt`.
 
-Revalidar SHAs no GitHub antes de qualquer merge (não congelar cegamente).
-
-**Ordem de merge sugerida (só após autorização humana explícita):**
-1) review + undraft + merge **#33** na `main` → 2) (opcional) merge **#34** documental → 3) só então Gate E a partir da **main** pós-merge.
+Ordem real (só após AUTHORIZED): undraft+merge #33 → merge #34 (opcional) → Gate E da **main** pós-merge.
 
 ---
 
-## 2. Migrations 016–024
+## 2. Prontidão por gate (comprovada)
 
-Presentes na PR #33 (ausentes em `main` e na VPS Gate C):
-
-| ID | Arquivo | Natureza (revisão) |
+| Gate | READY | Motivo principal |
 |---|---|---|
-| 016 | `016_orcamentos_comercial_360.sql` | CREATE IF NOT EXISTS + RLS (tabelas novas) |
-| 017 | `017_pedidos_comercial_360.sql` | CREATE IF NOT EXISTS + RLS (tabelas novas) |
-| 018 | `018_produto_pim_dam_outbox.sql` | ALTER `produtos` (cols+CHECK) + tabelas PIM/DAM; **maior risco residual** se dados violarem CHECKs |
-| 019 | `019_produto_relacoes_tenant.sql` | ALTER aditivo + triggers |
-| 020 | `020_produto_midia_storage_key_unique.sql` | índice/unique aditivo |
-| 021–022 | midia upload/scan | ALTER `produto_midias` + CHECKs |
-| 023 | `023_produto_material_norma.sql` | ALTER `produtos` + length CHECKs |
-| 024 | `024_produto_canais_rascunho.sql` | CREATE `produto_canais` + RLS |
+| **E** | **NO** | `main_missing_migrations_016_024` (016–024 ausentes de `origin/main`) |
+| **D** | **NO** | digest `PENDING_BUILD_AFTER_MERGE` + Auth `PENDING_AUTH_GATE` + schema E |
+| **F** | **NO** | D pendente + digest + 3080 R07B |
 
-**Migrator** (`server/src/db/migrate.ts`, igual em #33): uma invocação percorre **todos** os pendentes em ordem lexicográfica; **uma transação por arquivo** (`withTransaction`: SQL + `INSERT schema_migrations`); se N falha, N **não** fica registrada; 016…N−1 **permanecem**. Fatias 016–017 / 018–024 = **revisão humana**, não duas execuções.
+Pendências **reais** D/F (não circular para E): digest pós-merge; Auth sintético.
+
+Anti-circular: digest/Auth **não** entram em `gate_e_blockers`.
+Fonte Gate E: 016–024 **na main** (comprovado via `git ls-tree`); ausência = `main_migrations_016_024=PENDING_ABSENT`.
 
 ---
 
-## 3. Compatibilidade API R07B no intervalo E → D
+## 3. Migrations 016–024
 
-| Fato | Implicação |
-|---|---|
-| 3080 permanece `runtime07b-main-ca0bc5f3` / `dev_headers` até Gate F | Código antigo + schema novo (016–024) coexistem após E |
-| 016/017/024 = tabelas novas | R07B ignora; health/ready não dependem delas |
-| 018+ = ALTER em `produtos`/`produto_*`/`integration_events` | Colunas com DEFAULT tendem a ser compatíveis; CHECKs novos podem rejeitar UPDATE legado se dados inválidos |
-| Canário (Gate D) = imagem nova + `EXPECTED_RUNTIME=ERP-RUNTIME-08B` | Smoke Auth/`supabase_user` só no canário, **não** na 3080 |
-| Se schema novo quebrar R07B | **Parar**; não D; forward-fix ou restore autorizado do pre-gate-e |
+Presentes na PR #33; **ausentes** em `main` e na VPS (001–015 1×).
 
-Durante E→D: **não** promover 3080; observar health/ready da 3080 após E; queries R07B em tabelas alteradas devem continuar sem exigir colunas novas.
+Migrator: uma invocação, uma TX por arquivo. Fatias 016–017 / 018–024 = revisão, não duas execuções.
+
+Maior risco residual: **018** (ALTER `produtos` + CHECKs).
 
 ---
 
-## 4. Plano de recuperação se migration N falhar após 016…N−1
+## 4. Compatibilidade R07B × schema 016–024 (sintético)
 
-1. **Parar imediatamente** — não iniciar Gate D/F; 3080 permanece R07B.
-2. Consultar `SELECT id FROM schema_migrations ORDER BY id` — listar o que ficou 1×.
-3. Schema **parcialmente avançado** (TX por arquivo: N rolou back; anteriores commitados).
-4. Opções (só com autorização humana explícita):
-   - **Forward-fix:** corrigir SQL/dados na MAIN; reexecutar migrator (só pendentes; já aplicadas são skip).
-   - **Restore isolado:** restaurar `pre-gate-e-20260924-140304.sql` em instância **isolada** para prova.
-   - **Restore na DEV oficial:** exige termo + backup adicional pós-falha; **não** automatizado.
-   - **Não** usar `CONFIRM_ROLLBACK` de API como rollback de schema.
-5. Evidência atual: `restore_destructive=NOT_PERFORMED` — restore isolado **ainda não** homologado.
+Prova em PGlite (`server/tests/r07b-schema-016-024-compat.test.ts`):
 
----
-
-## 5. Prontidão por gate (leitura local)
-
-| Gate | READY quando | Não exige (anti-circular) | Exige além do READY |
-|---|---|---|---|
-| **E** | Gate C + backup pre-gate-e + rollback dry-run + sanitize + §4 documentado | digest pós-build, Auth sintético | termo checkbox E + assinatura + MAIN pós-merge |
-| **D** | §4 + digest **não** pendente + Auth sintético pronto + schema E aplicado | — | termo checkbox D + canário + `EXPECTED_RUNTIME` explícito |
-| **F** | D aprovado + mesmo digest do canário + rollback | — | termo checkbox F; 3080 só aqui |
-
-`GATE_*_READY=YES` **não** autoriza execução.
+- Aplica 001–024 (fonte `origin/codex/comercial-360` se checkout local não tiver 016+)
+- Confirma colunas 018 em `produtos` (`workflow_status`, `multiplo_venda`, …) com defaults
+- SELECT/UPDATE legado de Produto (estilo R07B) OK
+- `/health` + `/ready` HTTP 200
+- Tabelas 016/017/024 existem; R07B as ignora
+- **Resultado:** `R07B_SCHEMA_COMPAT=OK` · **não** altera 3080/VPS
 
 ---
 
-## 6. Backup e rollback (preenchidos)
+## 5. Restore isolado do backup pre-Gate E
+
+Procedimento validado com dump **sintético** (`scripts/vps/validate-isolated-restore.sh --self-test`):
+
+- Alvo: PGlite isolado · `dev_database_touched=NO` · `vps_dump_used=NO`
+- Evidência: `docs/vps/evidence/restore-isolated-validation.txt`
+- Dump real VPS (`pre-gate-e-20260924-140304.sql`) **não** versionado; **não** restaurado sobre DEV
+
+---
+
+## 6. Backup / rollback (fatos)
 
 | Item | Valor |
 |---|---|
-| Backup | `pre-gate-e-20260924-140304.sql` |
-| bytes | `390275` |
-| sha256 | `e72ca99b453fa6b060b5264f636794b3a601202c18e4185deb12f0020cae3f80` |
-| mode / umask | `600` / `0077` |
-| integridade | header/tail/sha256/mode = YES |
-| restore isolado | `NOT_PERFORMED` |
-| Rollback API | imagem `runtime07b-main-ca0bc5f3` + containers preservados (dry-run OK) |
-| Rollback schema | ≠ rollback API; via restore autorizado do pre-gate-e |
+| Backup VPS | `pre-gate-e-20260924-140304.sql` bytes=`390275` sha256=`e72ca99b…cae3f80` |
+| Integridade | header/tail/sha256/mode600=YES |
+| Restore isolado | `VALIDATED_SYNTHETIC` (procedimento); dump VPS ainda não refeito em isolado |
+| Rollback API | imagem `runtime07b-main-ca0bc5f3` (dry-run OK) |
 
 ---
 
-## 7. Decisão pedida ao responsável
+## 7. Decisão pedida (termo §C — ainda em aberto)
 
-Marcar **somente** no termo (`docs/TERMO_AUTORIZACAO_GATES_D_E_F.md` §C), sem executar nesta instrução:
+Não pedir assinatura até este pacote estar revisado. Campos em aberto:
 
-- [ ] Autorizo **merge #33** (undraft+CI) após review
-- [ ] Autorizo **Gate E** (016–024 uma invocação na MAIN)
-- [ ] Autorizo **Gate D** (após E + digest + Auth)
-- [ ] Autorizo **Gate F** (após D OK)
+- [ ] Autorizo merge #33
+- [ ] Autorizo Gate E
+- [ ] Autorizo Gate D
+- [ ] Autorizo Gate F
 
-Assinatura / data: campos abertos no termo.
+Assinatura: aberta · `AUTHORIZATION=NOT_GRANTED` · `EXECUTED=NO`

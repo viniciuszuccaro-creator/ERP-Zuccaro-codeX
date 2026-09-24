@@ -28,7 +28,6 @@ Regra-Mãe e o documento mestre do programa (PR #33).
 
 ## Próxima ação concreta
 
-1. Revisar `docs/PACOTE_DECISAO_GATES_D_E_F.md` + termo §C.
-2. Decidir merge #33 e/ou Gate E/D/F **marcando só o autorizado**.
-3. `bash scripts/vps/go-nogo-def.sh` → conferir `GATE_*_READY` (READY≠executar).
-4. Sem checkbox+assinatura: **não** merge/migration/canário/3080.
+1. Revisar pacote (`READY_FOR_REVIEW` ≠ `AUTHORIZED` ≠ `EXECUTED`).
+2. `GATE_E_READY=NO` até 016–024 na main; D/F: digest + Auth pendentes.
+3. Só após revisão: marcar termo §C. Sem isso: **não** merge/E/D/F/3080.

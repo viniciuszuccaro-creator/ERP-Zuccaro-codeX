@@ -1,12 +1,12 @@
 ### Frente Cursor — VPS / HML / Gate C / legado (2026-09-24)
 
 - Branch: `cursor/vps-hml-gate-c-legado-392b` / PR `#34` (tip: `gh pr view 34 --json headRefOid`).
-- Pacote decisão: `docs/PACOTE_DECISAO_GATES_D_E_F.md` (sem merge/E/D/F).
-- `go-nogo-def.sh`: `GATE_E_READY` / `GATE_D_READY` / `GATE_F_READY` separados;
-  digest/Auth **não** bloqueiam E (anti-circular).
-- Termo preenchido (SHA/ordem/efeitos/backup/rollback); §C autorização humana aberta.
-- PR #33/#34: MERGEABLE + CI SUCCESS observados; 3080 R07B preservada.
-- **Não** executados: merge, migration, canário, promoção.
+- Pacote: `docs/PACOTE_DECISAO_GATES_D_E_F.md` — estados `READY_FOR_REVIEW` ≠ `AUTHORIZED` ≠ `EXECUTED`.
+- `go-nogo-def.sh`: `GATE_E_READY=NO` enquanto 016–024 ausentes da `main` (`main_missing_migrations_016_024`).
+- Digest/Auth continuam pendências reais de D/F (não bloqueiam E).
+- Provas sintéticas: R07B×016–024 (PGlite) + restore isolado (`VALIDATED_SYNTHETIC`).
+- **Não** executados: merge na main, migration VPS, canário, promoção 3080.
+
 
 ### ERP-RUNTIME-08 — diagnóstico Comercial 360º (2026-09-19)
 
