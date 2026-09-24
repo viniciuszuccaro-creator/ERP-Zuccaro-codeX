@@ -13,8 +13,7 @@ fi
 {
   grep -E '^[0-9]{3}([_=].*)?=[0-9]+$' "$IN" || true
   grep -E '^conexao_api_vs_supabase_db=' "$IN" || true
-  grep -E '^meta_auth_mode=' "$IN" || true
-  grep -E '^meta_runtime=' "$IN" || true
+  grep -E '^meta_auth_mode=|^meta_parse=|^meta_runtime=' "$IN" || true
   grep -E '^port_[0-9]+=|^official_image=|^db_networks=|^official_networks=' "$IN" || true
 } >"$OUT"
 

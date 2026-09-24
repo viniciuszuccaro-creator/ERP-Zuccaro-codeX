@@ -1,7 +1,6 @@
 # Gate C — Auditoria VPS somente leitura (frente Cursor)
 
-**Status:** `PARCIAL` — aguarda execução do bloco único na Web Console e
-colagem da saída sanitizada.
+**Status:** `APROVADO` — evidência Web Console 2026-09-24 (`docs/GATE_C_RESULTADO_2026-09-24.md`).
 **Frente:** Cursor / VPS / HML / migração legada.
 **Branch:** `cursor/vps-hml-gate-c-legado-392b`
 **Base comprovada:** `origin/main` @ `ca4171600cc30f9922c2f8b2ccb8b22d06aa6888`
@@ -11,8 +10,10 @@ colagem da saída sanitizada.
 **Deploy preparado (PR #33):** `docs/COMERCIAL_360_V1_DEPLOY.md` +
 `scripts/deploy/comercial360-{canary,smoke,rollback}.sh`
 
-Este lote é **somente documentação e ferramentas de leitura**. Não altera VPS,
-banco, API 3080, migrations, Auth, buckets, ClamAV, frontend HTTP nem a PR #33.
+Evidência sanitizada: `docs/vps/evidence/gate-c-2026-09-24.txt`.
+Score: APROVADO (warn: meta live não parseado no host; imagem R07B + MATCH OK).
+
+Auth PR #33, canário, migrations 016+ e promoção **continuam bloqueados**.
 
 ---
 

@@ -130,19 +130,18 @@ if [[ "$MODE" == 'from_gate_c' ]]; then
   declare -A APPLIED
   for id in "${applied_lines[@]}"; do
     APPLIED["$id"]=1
-    # duplicata no arquivo bruto?
   done
 
-  # Duplicatas no bruto (id=N com N!=1)
+  # Duplicatas no bruto (id=N com N!=1), aceita sufixo _nome.sql
   while read -r line; do
-    [[ "$line" =~ ^([0-9]{3}).*=([0-9]+)$ ]] || continue
+    [[ "$line" =~ ^([0-9]{3})([_=].*)?=([0-9]+)$ ]] || continue
     id="${BASH_REMATCH[1]}"
-    n="${BASH_REMATCH[2]}"
+    n="${BASH_REMATCH[3]}"
     if [[ "$n" != '1' ]]; then
       echo "BLOCKED: migration duplicada ou anomala ${id}=${n}"
       blocked=1
     fi
-  done < <(grep -E '^[0-9]{3}.*=[0-9]+$' "$APPLIED_FILE" || true)
+  done < <(grep -E '^[0-9]{3}([_=].*)?=[0-9]+$' "$APPLIED_FILE" || true)
 
   missing=()
   unexpected=()

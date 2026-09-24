@@ -1,13 +1,13 @@
 ### Frente Cursor — VPS / HML / Gate C / legado (2026-09-24)
 
 - Branch: `cursor/vps-hml-gate-c-legado-392b` / PR `#34`. Codex `#33` intocada.
-- Gate C: **PARCIAL** (falta Web Console). Cartão + `score-gate-c.sh`.
-- Gate D: checklist Auth/smoke sintético em
-  `docs/GATE_D_SMOKE_AUTH_CHECKLIST.md` (**não** executado).
-- Gate E: cartão `docs/GATE_E_MIGRATIONS_CARTAO.md` (**não** aplicar).
-- Rollback: `scripts/vps/rollback-dry-run-check.sh` (dry-run; não toca 3080).
-- Contrato EXPECTED_RUNTIME/Auth pendente de confirmação Codex.
-- 3080 preservada; canário não iniciado; legado HD não montado neste cloud.
+- **Gate C: APROVADO** (Web Console 11:37:49Z). Evidência
+  `docs/vps/evidence/gate-c-2026-09-24.txt` + `docs/GATE_C_RESULTADO_2026-09-24.md`.
+  MATCH DB; 001–015 1×; portas 3086/3090/3091 FREE; backups/rollback R07B;
+  meta_parse=ERR no host (sem node) — script corrigido para parse via container.
+- Gates D–E: preparados (**não** executados). missing 016–024.
+- Auth PR #33 / canário / promoção 3080: **ainda bloqueados**.
+- 3080 permanece `runtime07b-main-ca0bc5f3` / não tocada nesta frente.
 
 ### ERP-RUNTIME-08 — diagnóstico Comercial 360º (2026-09-19)
 

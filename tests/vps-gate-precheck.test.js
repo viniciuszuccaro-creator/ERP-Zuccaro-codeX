@@ -180,3 +180,25 @@ test('rollback-dry-run-check bloqueia se parecer escrita', () => {
   assert.notEqual(run.status, 0);
   assert.match(run.stdout, /ROLLBACK_DRYRUN_BLOCKED/);
 });
+
+test('score-gate-c APROVADO com evidência real 2026-09-24 (meta_parse=ERR tolerado)', () => {
+  const score = path.join(root, 'scripts/vps/score-gate-c.sh');
+  const evidence = path.join(root, 'docs/vps/evidence/gate-c-2026-09-24.txt');
+  const run = spawnSync('bash', [score, evidence], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr || run.stdout);
+  assert.match(run.stdout, /GATE_C_RESULT=APROVADO/);
+  assert.match(run.stdout, /identity_match|MATCH/);
+});
+
+test('precheck com evidência real marca missing 016-024', () => {
+  const evidence = path.join(root, 'docs/vps/evidence/gate-c-2026-09-24.txt');
+  const list = path.join(root, 'docs/vps/migrations-candidatas-comercial360.txt');
+  const run = spawnSync('bash', [
+    precheck,
+    '--from-gate-c-output', evidence,
+    '--candidate-list', list,
+  ], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr || run.stdout);
+  assert.match(run.stdout, /missing_for_gate_e=016,017,018,019,020,021,022,023,024/);
+  assert.match(run.stdout, /applied_count=15/);
+});

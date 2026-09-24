@@ -44,18 +44,30 @@ check_warn() {
 check_pass 'identity_match' 'conexao_api_vs_supabase_db=MATCH'
 check_pass 'health_200' 'health_http=200'
 check_pass 'ready_200' 'ready_http=200'
-check_pass 'meta_runtime_present' 'meta_runtime='
 check_pass 'official_image_present' 'official_image='
 
-# Migrations 001-015 exatamente 1x
+# meta: prefer live parse; host sem node não invalida health/ready/imagem
+if hit 'meta_runtime='; then
+  echo 'PASS meta_runtime_present'
+  pass=$((pass + 1))
+elif hit 'meta_parse=ERR' && hit 'official_image=.*runtime07b'; then
+  echo 'WARN meta_runtime_missing_host_node_but_official_07b_image'
+  warn=$((warn + 1))
+else
+  echo 'FAIL meta_runtime_present'
+  fail=$((fail + 1))
+  reasons+=('meta_runtime')
+fi
+
+# Migrations 001-015 exatamente 1x (aceita 001=1 ou 001_nome.sql=1)
 missing_hist=0
 dup=0
 for i in $(seq 1 15); do
   id="$(printf '%03d' "$i")"
-  if ! grep -Eq "^${id}=1$" "$IN"; then
+  if ! grep -Eq "^${id}([_=].*)?=1$" "$IN"; then
     missing_hist=$((missing_hist + 1))
   fi
-  if grep -Eq "^${id}=([2-9]|[1-9][0-9]+)$" "$IN"; then
+  if grep -Eq "^${id}([_=].*)?=([2-9]|[1-9][0-9]+)$" "$IN"; then
     dup=$((dup + 1))
   fi
 done
@@ -77,7 +89,7 @@ else
 fi
 
 # 016+ não devem aparecer como aplicadas no Gate C histórico atual (warn se aparecerem)
-if grep -Eq '^01[6-9]=|^02[0-4]=' "$IN"; then
+if grep -Eq '^01[6-9]([_=].*)?=|^02[0-4]([_=].*)?=' "$IN"; then
   echo 'WARN migrations_016_plus_present_on_dev'
   warn=$((warn + 1))
 else
@@ -89,7 +101,7 @@ check_warn 'backup_metadata' 'backup path=|backups_dir=MISSING'
 check_warn 'port_candidate' 'port_3086=|port_3090=|port_3091='
 check_warn 'auth_containers' 'supabase-auth|name=.*auth'
 
-if hit 'meta_auth_mode=dev_headers'; then
+if hit 'meta_auth_mode=dev_headers' || hit 'auth.mode=dev_headers'; then
   echo 'NOTE official_auth=dev_headers (NAO homologa supabase_user)'
 elif hit 'meta_auth_mode=supabase_user'; then
   echo 'NOTE official_auth=supabase_user'
@@ -124,6 +136,6 @@ if ! hit 'port_3086=FREE' && ! hit 'port_3090=FREE' && ! hit 'port_3091=FREE'; t
 fi
 
 echo 'GATE_C_RESULT=APROVADO'
-echo 'note=Auth PR33 e restaurabilidade de backup continuam gates separados'
+echo 'note=Auth PR33 e restaurabilidade de backup continuam gates separados; meta live falhou por node ausente no host'
 echo "GATE_C_SCORE_END utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 exit 0

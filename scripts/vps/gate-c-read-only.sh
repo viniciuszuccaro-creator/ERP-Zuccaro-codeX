@@ -19,12 +19,16 @@ if docker ps --format '{{.Names}}' | grep -Fxq erp-api-dev; then
   echo "official_networks=$net"
   curl -sS -m 5 -o /tmp/gc_health -w 'health_http=%{http_code}\n' http://127.0.0.1:3080/health || echo 'health_http=ERR'
   curl -sS -m 5 -o /tmp/gc_ready -w 'ready_http=%{http_code}\n' http://127.0.0.1:3080/ready || echo 'ready_http=ERR'
-  curl -sS -m 5 -o /tmp/gc_meta http://127.0.0.1:3080/api/v1/meta || true
-  if [[ -s /tmp/gc_meta ]]; then
-    node -e 'const m=JSON.parse(require("fs").readFileSync("/tmp/gc_meta","utf8")); console.log("meta_runtime="+m.runtime); console.log("meta_auth_mode="+(m.auth&&m.auth.mode||"")); console.log("meta_http_entities="+((m.httpEntities||[]).join(",")))' \
+  # Preferir Node DENTRO do container da API (o host da VPS pode não ter node)
+  if docker exec erp-api-dev node -e 'fetch("http://127.0.0.1:3080/api/v1/meta").then(async(r)=>{if(!r.ok)throw new Error("http");const m=await r.json();console.log("meta_runtime="+(m.runtime||""));console.log("meta_auth_mode="+((m.auth&&m.auth.mode)||""));console.log("meta_http_entities="+((m.httpEntities||[]).join(",")));}).catch(()=>process.exit(1))' 2>/dev/null; then
+    :
+  elif curl -sS -m 5 -o /tmp/gc_meta http://127.0.0.1:3080/api/v1/meta && [[ -s /tmp/gc_meta ]] && command -v python3 >/dev/null; then
+    python3 -c 'import json;m=json.load(open("/tmp/gc_meta"));a=m.get("auth") or {};print("meta_runtime="+str(m.get("runtime") or ""));print("meta_auth_mode="+str(a.get("mode") or ""));print("meta_http_entities="+",".join(m.get("httpEntities") or []))' \
       || echo 'meta_parse=ERR'
   else
-    echo 'meta_parse=EMPTY'
+    curl -sS -m 5 -o /tmp/gc_meta http://127.0.0.1:3080/api/v1/meta || true
+    echo 'meta_parse=ERR'
+    echo 'meta_parse_reason=no_parser_available'
   fi
 else
   echo 'official_api=MISSING'
