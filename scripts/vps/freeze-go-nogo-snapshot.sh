@@ -23,5 +23,5 @@ mkdir -p "$(dirname "$OUT")"
 } >"$OUT"
 
 echo "snapshot_written=${OUT#"$ROOT"/}"
-grep -E 'GO_NOGO=|blockers=|AUTONOMOUS_PREP_STATUS=' "$OUT"
+grep -E 'GO_NOGO=|GATE_[EDF]_READY=|gate_[edf]_blockers=|blockers=|AUTONOMOUS_PREP_STATUS=' "$OUT"
 exit 0

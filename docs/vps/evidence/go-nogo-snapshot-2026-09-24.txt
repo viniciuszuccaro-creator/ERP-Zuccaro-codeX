@@ -1,9 +1,9 @@
 # Snapshot GO/NO-GO — frente Cursor VPS/HML (sanitizado)
 # Gerado localmente. Nao e autorizacao. Nao contem segredos.
-# utc=2026-09-24T14:20:37Z
-# head=46818456
+# utc=2026-09-24T14:28:20Z
+# head=34fc0583
 
-GO_NOGO_BEGIN utc=2026-09-24T14:20:37Z
+GO_NOGO_BEGIN utc=2026-09-24T14:28:20Z
 gate_c=APROVADO
 termo=FACTS_READY_WAITING_SIGNATURE
 backup_novo=NAMED_CANDIDATE_PRESENT
@@ -11,6 +11,7 @@ rollback_dryrun=OK
 missing_for_gate_e=016,017,018,019,020,021,022,023,024
 proposed_fatia_comercial=016,017
 proposed_fatia_produto_dam_canais=018,019,020,021,022,023,024
+proposed_strategy=016_024_single_invocation_main_order
 GATE_E_PLAN_STATUS=PROPOSED_AWAITING_AUTHORIZATION
 sanitize=CLEAN
 codex_pending_count=0
@@ -19,11 +20,21 @@ image_digest_status=PENDING_BUILD_AFTER_MERGE
 auth_synthetic_status=PENDING_AUTH_GATE
 gates_def_executed=NO
 CODEX_PEDIDO_STATUS=DECISIONS_DOCUMENTED
-blockers=termo_waiting_signature,image_digest_pending_post_merge,auth_synthetic_gate_pending
+backup_restore_isolated=NOT_PERFORMED
+gate_e_warn=backup_restore_isolated_not_performed
+GATE_E_READY=YES
+gate_e_blockers=NONE
+GATE_D_READY=NO
+gate_d_blockers=image_digest_pending_post_merge,auth_synthetic_gate_pending,gate_e_schema_not_applied_yet
+GATE_F_READY=NO
+gate_f_blockers=image_digest_pending_post_merge,gate_d_not_aprovado_yet,3080_remains_r07b_until_f
+blockers=termo_waiting_signature,gate_d_not_ready,gate_f_not_ready
 GO_NOGO=NO
 EXECUTE_DEF=NO
 AUTHORIZATION=NOT_GRANTED
-GO_NOGO_END utc=2026-09-24T14:20:38Z
+NOTE: GATE_*_READY=YES nao autoriza execucao; exige checkbox+assinatura no termo
+NOTE: digest/Auth nao sao pre-requisitos de GATE_E_READY
+GO_NOGO_END utc=2026-09-24T14:28:21Z
 
 codex_pending_count=0
 CODEX_PEDIDO_STATUS=DECISIONS_DOCUMENTED

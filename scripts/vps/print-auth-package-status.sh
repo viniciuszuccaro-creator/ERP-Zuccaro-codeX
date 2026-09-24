@@ -33,12 +33,12 @@ echo "$bk_out" | grep -E 'BACKUP_NOVO_STATUS=|fresh_named'
 fatias_out="$(bash "$ROOT/scripts/vps/print-gate-e-fatias.sh" || true)"
 echo "$fatias_out" | grep -E 'proposed_fatia_|GATE_E_PLAN_STATUS='
 go_out="$(bash "$ROOT/scripts/vps/go-nogo-def.sh" "$EVIDENCE" || true)"
-echo "$go_out" | grep -E 'GO_NOGO=|blockers=|sanitize=|CODEX_PEDIDO'
+echo "$go_out" | grep -E 'GATE_[EDF]_READY=|gate_[edf]_blockers=|GO_NOGO=|blockers=|sanitize=|CODEX_PEDIDO|AUTHORIZATION='
 pedido_out="$(bash "$ROOT/scripts/vps/print-pedido-codex.sh" || true)"
 echo "$pedido_out" | grep -E 'codex_pending_count=|CODEX_PEDIDO_STATUS='
 scan_out="$(bash "$ROOT/scripts/vps/scan-sanitized-artifacts.sh" || true)"
 echo "$scan_out" | grep -E 'SANITIZE_SCAN_STATUS=|hit_count='
-echo 'blocked_until=codex_EXPECTED_RUNTIME+auth_supabase_user+human_auth+termo_assinado'
+echo 'blocked_until=human_auth_termo_checkbox+digest_post_merge_for_D+auth_synthetic_for_D+gate_e_schema_for_D'
 echo 'PACKAGE_STATUS=READY_FOR_HUMAN_DECISION'
-echo 'NOTE: do not run canary or apply 016+; backup pre-gate-e nao autoriza D/E/F'
+echo 'NOTE: GATE_E_READY!=autorizacao; digest/Auth nao bloqueiam E; nao merge/canario/016+/3080'
 echo "AUTH_PACKAGE_END utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"

@@ -62,8 +62,12 @@ check_deploy_scripts() {
     echo 'deploy_doc=MISSING_NOTE: documentacao canario na PR #33 / GATES_D_F_PREPARACAO_CANARIO.md'
     warn=1
   fi
-  if [[ -f "$ROOT/docs/GATES_D_F_PREPARACAO_CANARIO.md" ]]; then
+  if [[ -f "$ROOT/docs/PACOTE_DECISAO_GATES_D_E_F.md" ]]; then
     echo 'cursor_df_doc=PRESENT'
+    echo 'pacote_decisao=PRESENT'
+  elif [[ -f "$ROOT/docs/GATES_D_F_PREPARACAO_CANARIO.md" ]]; then
+    echo 'cursor_df_doc=PRESENT'
+    echo 'pacote_decisao=LEGACY_GATES_D_F_DOC'
   else
     echo 'cursor_df_doc=MISSING'
     blocked=1

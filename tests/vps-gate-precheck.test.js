@@ -350,21 +350,23 @@ test('print-gate-e-fatias expoe comercial e produto', () => {
   assert.match(run.stdout, /AUTHORIZES_GATES_DEF=NO/);
 });
 
-test('go-nogo-def NO com blockers atuais', () => {
+test('go-nogo-def reporta GATE_E_READY separado de D/F', () => {
   const script = path.join(root, 'scripts/vps/go-nogo-def.sh');
   const run = spawnSync('bash', [script], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr || run.stdout);
-  assert.match(run.stdout, /GO_NOGO=NO/);
-  assert.match(run.stdout, /termo_waiting_signature/);
-  assert.match(run.stdout, /backup_novo=NAMED_CANDIDATE_PRESENT/);
+  assert.match(run.stdout, /GATE_E_READY=YES/);
+  assert.match(run.stdout, /gate_e_blockers=NONE/);
+  assert.match(run.stdout, /GATE_D_READY=NO/);
   assert.match(run.stdout, /image_digest_pending_post_merge/);
   assert.match(run.stdout, /auth_synthetic_gate_pending/);
-  assert.match(run.stdout, /CODEX_PEDIDO_STATUS=DECISIONS_DOCUMENTED/);
-  assert.match(run.stdout, /sanitize=CLEAN/);
-  assert.match(run.stdout, /EXECUTE_DEF=NO/);
+  assert.match(run.stdout, /GATE_F_READY=NO/);
+  assert.match(run.stdout, /gate_d_not_aprovado_yet/);
+  assert.match(run.stdout, /GO_NOGO=NO/);
   assert.match(run.stdout, /AUTHORIZATION=NOT_GRANTED/);
-  assert.doesNotMatch(run.stdout, /codex_confirmacoes_pendentes/);
-  assert.doesNotMatch(run.stdout, /backup_novo_ausente/);
+  assert.match(run.stdout, /EXECUTE_DEF=NO/);
+  assert.match(run.stdout, /NOTE: digest\/Auth nao sao pre-requisitos de GATE_E_READY/);
+  assert.doesNotMatch(run.stdout, /gate_e_blockers=.*image_digest/);
+  assert.doesNotMatch(run.stdout, /gate_e_blockers=.*auth_synthetic/);
 });
 
 test('print-pedido-codex DECISIONS_DOCUMENTED com 5 itens e pendencias operacionais', () => {
@@ -393,6 +395,9 @@ test('freeze-go-nogo-snapshot grava GO_NOGO=NO e EXHAUSTED', () => {
   assert.equal(run.status, 0, run.stderr || run.stdout);
   const text = fs.readFileSync(out, 'utf8');
   assert.match(text, /GO_NOGO=NO/);
+  assert.match(text, /GATE_E_READY=YES/);
+  assert.match(text, /GATE_D_READY=NO/);
+  assert.match(text, /GATE_F_READY=NO/);
   assert.match(text, /AUTONOMOUS_PREP_STATUS=EXHAUSTED_WAITING_HUMAN_CODEX/);
   assert.match(text, /EXECUTE_DEF=NO/);
   assert.doesNotMatch(text, /Bearer |sk_live_|BEGIN PRIVATE KEY/i);
@@ -403,6 +408,9 @@ test('snapshot versionado go-nogo esta coerente', () => {
   assert.equal(fs.existsSync(snap), true);
   const text = fs.readFileSync(snap, 'utf8');
   assert.match(text, /GO_NOGO=NO/);
+  assert.match(text, /GATE_E_READY=/);
+  assert.match(text, /GATE_D_READY=/);
+  assert.match(text, /GATE_F_READY=/);
   assert.match(text, /AUTONOMOUS_PREP_STATUS=EXHAUSTED_WAITING_HUMAN_CODEX/);
 });
 

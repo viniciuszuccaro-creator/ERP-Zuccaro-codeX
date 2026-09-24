@@ -28,8 +28,7 @@ Regra-Mãe e o documento mestre do programa (PR #33).
 
 ## Próxima ação concreta
 
-1. ~~VPS backup pre-gate-e~~ — metadados registrados (`AUTHORIZES_GATES_DEF=NO`).
-2. ~~Codex §4 decisões~~ — documentadas no contrato (operacional ainda pendente).
-3. **Humano:** assinar termo + marcar checkbox do gate em C.
-4. Pendências operacionais: digest pós-merge; gate Auth sintético.
-5. Revalidar `go-nogo-def.sh` (`EXECUTE_DEF=NO`); **não** alterar 3080.
+1. Revisar `docs/PACOTE_DECISAO_GATES_D_E_F.md` + termo §C.
+2. Decidir merge #33 e/ou Gate E/D/F **marcando só o autorizado**.
+3. `bash scripts/vps/go-nogo-def.sh` → conferir `GATE_*_READY` (READY≠executar).
+4. Sem checkbox+assinatura: **não** merge/migration/canário/3080.
