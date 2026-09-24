@@ -18,13 +18,11 @@ não fazer `git pull` de feature na VPS DEV).
 
 ```bash
 # Restore ISOLADO — dump permanece em /opt/erp-zuccaro/backups; DEV=postgres intocado
+# Fix: stamp com underscore (hífen quebrava CREATE DATABASE)
 set -euo pipefail
-SCRIPT_SHA=9ff95c1a8b35932d9bebb0f4650fcc03280bb309
+SCRIPT_SHA=4c1cd0eeb0307295ab6aab02d181dbc213c85728
 curl -fsSL "https://raw.githubusercontent.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/${SCRIPT_SHA}/scripts/vps/restore-pre-gate-e-isolated-webconsole.sh" \
   -o /tmp/restore-pre-gate-e-isolated-webconsole.sh
-# Conferência opcional do script baixado:
-# sha256sum /tmp/restore-pre-gate-e-isolated-webconsole.sh
-# esperado: 6ebb8ed72173b17b2c88c7d95c8091fd94958fcda9c5653d3d602f3fbd9224f0
 bash /tmp/restore-pre-gate-e-isolated-webconsole.sh
 # Copiar APENAS o bloco PASTE_TO_GIT_BEGIN … PASTE_TO_GIT_END para o GitHub
 ```
