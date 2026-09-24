@@ -20,7 +20,7 @@ não fazer `git pull` de feature na VPS DEV).
 # Restore ISOLADO — dump permanece em /opt/erp-zuccaro/backups; DEV=postgres intocado
 # Fix: stamp com underscore (hífen quebrava CREATE DATABASE)
 set -euo pipefail
-SCRIPT_SHA=4c1cd0eeb0307295ab6aab02d181dbc213c85728
+SCRIPT_SHA=0889eac60d15ae58b578a32479dc19a912b5f143
 curl -fsSL "https://raw.githubusercontent.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/${SCRIPT_SHA}/scripts/vps/restore-pre-gate-e-isolated-webconsole.sh" \
   -o /tmp/restore-pre-gate-e-isolated-webconsole.sh
 bash /tmp/restore-pre-gate-e-isolated-webconsole.sh
