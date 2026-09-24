@@ -43,40 +43,70 @@ docker ps --format '{{.Names}}' | grep -Ei 'auth|kong|gotrue' || true
 curl -sS -o /dev/null -w 'health=%{http_code}\n' http://127.0.0.1:3080/health
 ```
 
-### 2) Criar usuário Auth sintético (cofre local)
+### 2–4) Blocos só-comando (não colar prosa no shell)
 
-Usar **Studio** do Supabase self-hosted **ou** Admin API GoTrue (`POST /auth/v1/admin/users`) com `service_role` lida do `.env` da VPS **sem echo**.
+Containers: `supabase-auth`, `supabase-studio`. Colar **A → B → C → D** isolados.
 
-Requisitos do user:
-- e-mail/senha **somente** de teste (domínio sintético, ex. `*.dev.synthetic.local`)
-- `email_confirm=true` (ou confirmar no Studio)
-- anotar o UUID do user **só no cofre local** (não no PASTE)
-
-### 3) Profile ERP sintético + vínculo
-
-**Não** reutilizar os 2 profiles ativos sem Auth sem prova de que são sintéticos seguros para Bearer. Preferir **profile novo** com:
-- `group_id` / `empresa_id` sintéticos existentes (ou do seed)
-- `permissoes` mínimas Orçamento + Pedido (além do necessário)
-- `auth_user_id` = UUID do Auth (passo 2)
-- `ativo=true`
-
-Exemplo de vínculo (substituir placeholders **na VPS**; não imprimir UUIDs no paste):
-
+**A — carregar service_role**
 ```bash
-# Contagens ANTES (já feitas): auth_users=0
-# Após create+vínculo:
+set -euo pipefail
+set -a
+source /root/supabase/docker/.env
+set +a
+SR="${SERVICE_ROLE_KEY:-${SUPABASE_SERVICE_ROLE_KEY:-}}"
+test -n "$SR"
+AUTH_BASE="${API_EXTERNAL_URL:-${SUPABASE_PUBLIC_URL:-http://127.0.0.1:8000}}"
+AUTH_BASE="${AUTH_BASE%/}"
+echo 'service_role_loaded=YES'
+```
+
+**B — criar user Auth** (antes: `SYNTH_EMAIL=...` e `SYNTH_PASS=...` só no shell local)
+```bash
+test -n "${SYNTH_EMAIL:-}" && test -n "${SYNTH_PASS:-}"
+curl -sS -o /tmp/auth-create.json -w 'http=%{http_code}\n' \
+  -X POST "${AUTH_BASE}/auth/v1/admin/users" \
+  -H "apikey: ${SR}" \
+  -H "Authorization: Bearer ${SR}" \
+  -H 'Content-Type: application/json' \
+  -d "{\"email\":\"${SYNTH_EMAIL}\",\"password\":\"${SYNTH_PASS}\",\"email_confirm\":true}"
+python3 -c "import json;d=json.load(open('/tmp/auth-create.json'));u=d.get('id')or(d.get('user')or{}).get('id');open('/tmp/auth-uuid.txt','w').write(u or '');print('auth_user_created='+('YES' if u else 'NO'))"
+```
+
+**C — profile + vínculo**
+```bash
+AUTH_UUID="$(cat /tmp/auth-uuid.txt)"
+test -n "$AUTH_UUID"
+docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
+  -v auth_uuid="$AUTH_UUID" <<'SQL'
+INSERT INTO profiles (
+  id, email, full_name, role, ativo, group_id, empresa_id, auth_user_id, permissoes
+) VALUES (
+  gen_random_uuid(),
+  'gate-d.synth@dev.synthetic.local',
+  'Gate D Synth Actor',
+  'user',
+  true,
+  (SELECT id FROM groups ORDER BY id LIMIT 1),
+  (SELECT id FROM empresas WHERE group_id=(SELECT id FROM groups ORDER BY id LIMIT 1) ORDER BY id LIMIT 1),
+  :'auth_uuid'::uuid,
+  '{"Comercial":{"orcamento":["visualizar","criar","editar","cancelar"],"pedido":["visualizar","criar","editar","cancelar","converter-pedido","alterar-status"]}}'::jsonb
+);
+SQL
+```
+
+**D — contagens (enviar só estas linhas)**
+```bash
 docker exec supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 -Atc \
   "SELECT 'auth_users='||count(*)::text FROM auth.users;"
 docker exec supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 -Atc \
   "SELECT 'profiles_com_auth='||count(*)::text FROM profiles WHERE auth_user_id IS NOT NULL;"
 docker exec supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 -Atc \
-  "SELECT 'profiles_ativos_sem_auth='||count(*)::text
-   FROM profiles WHERE ativo AND auth_user_id IS NULL;"
+  "SELECT 'profiles_ativos_sem_auth='||count(*)::text FROM profiles WHERE ativo AND auth_user_id IS NULL;"
 ```
 
-Esperado para OK: `auth_users>=1` e `profiles_com_auth>=1`.
+Se A falhar: `ls /root/supabase/docker/.env /opt/erp-zuccaro/.env* 2>/dev/null`
 
-### 4) PASTE sanitizado (só após contagens reais)
+### 5) PASTE sanitizado (só após contagens reais)
 
 ```bash
 # Substituir N pelos números reais das queries acima
