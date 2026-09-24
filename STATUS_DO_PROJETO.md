@@ -10,10 +10,14 @@
 - Pacote: `docs/PACOTE_DECISAO_GATES_D_E_F.md` — `READY_FOR_REVIEW` ≠ `AUTHORIZED` ≠ `EXECUTED`.
 - Prova R07B (`ca0bc5f3`) × schema 001–024 em Postgres isolado: `R07B_API_COMPAT_STATUS=OK`
   (`docs/vps/evidence/r07b-api-schema-016-024-compat.txt`); API nova **não** usada.
+- Guarda anti-DEV no R07B: `assert-isolated-database-url.sh` bloqueia `DROP SCHEMA` em
+  `dbname=postgres`; exige `ISOLATED_DATABASE_NAME` + `ALLOW_DROP_SCHEMA_PUBLIC=ISOLATED_ONLY`.
 - Restore dump pré-Gate E em Postgres isolado: **`PENDING_NO_DUMP_ACCESS`**
-  (dump real fora do Git; cópia sintética **não** conta).
+  (dump só na VPS; MCP Hostinger-vps indisponível nesta sessão). Script pronto:
+  `scripts/vps/restore-pre-gate-e-isolated-webconsole.sh` — executar na Web Console
+  autorizada; colar só `PASTE_TO_GIT_*`; DEV intocado; dump permanece na VPS.
 - `GATE_E_READY=NO` enquanto 016–024 ausentes da `main`; digest/Auth pendentes para D/F.
-- **Não** executados: merge na main, migration VPS, canário, promoção 3080.
+- **Não** executados: merge na main, migration VPS, canário, promoção 3080, restore real.
 
 ### ERP-RUNTIME-08 — diagnóstico Comercial 360º (2026-09-19)
 

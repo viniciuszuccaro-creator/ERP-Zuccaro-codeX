@@ -1,12 +1,14 @@
 # Simulação integração #33 → #34 — NÃO altera main
-# utc=2026-09-24T15:17:37Z
+# utc=2026-09-24T15:35:00Z
 branch=cursor/integracao-sim-33-34-392b
 base=origin/main@ca417160
 merged_33=origin/codex/comercial-360@ceeb92e9
 merged_34=origin/cursor/vps-hml-gate-c-legado-392b@f41d87e5
 r07b_api_compat=OK
 r07b_sha=ca0bc5f3529b9071fe80e58dae6aa966a9d6c740
+r07b_drop_schema_guard=assert-isolated-database-url.sh
 restore_isolated_db=PENDING_NO_DUMP_ACCESS
+restore_webconsole_script=scripts/vps/restore-pre-gate-e-isolated-webconsole.sh
 main_altered=NO
 vps_altered=NO
 AUTHORIZATION=NOT_GRANTED

@@ -21,20 +21,25 @@ Simulação #33→#34: branch `cursor/integracao-sim-33-34-392b` / PR #35 (**mai
 | Item | Valor |
 |---|---|
 | Script | `scripts/vps/prove-r07b-api-schema-compat.sh` |
+| Guarda DROP SCHEMA | `scripts/vps/assert-isolated-database-url.sh` — bloqueia `dbname=postgres`; exige `ISOLATED_DATABASE_NAME` + `ALLOW_DROP_SCHEMA_PUBLIC=ISOLATED_ONLY` |
 | Evidência | `docs/vps/evidence/r07b-api-schema-016-024-compat.txt` |
 | API sob teste | **Somente** commit `ca0bc5f3529b9071fe80e58dae6aa966a9d6c740` (imagem 3080 `runtime07b-main-ca0bc5f3`) |
 | Schema | Migrations **001–024** do checkout integrado (#33), aplicadas no Postgres **isolado** |
 | Operações | `/health`, `/ready`, `/api/v1/meta` (=`ERP-RUNTIME-07B`), Produto **list/get/create/patch** |
 | Resultado local | `R07B_API_COMPAT_STATUS=OK` |
 | **Não comprova** | Homologação na VPS; Auth `supabase_user`; canário; que a 3080 já rode schema 016+ |
+| **Proibido** | Executar o script com `DATABASE_URL` do DEV oficial / VPS (`dbname=postgres`) |
 
 ### B) Restore do dump pré-Gate E em outro Postgres
 
 | Item | Valor |
 |---|---|
+| Script Web Console | `scripts/vps/restore-pre-gate-e-isolated-webconsole.sh` |
 | Evidência | `docs/vps/evidence/restore-isolated-db-pending.txt` |
 | Status | **`PENDING_NO_DUMP_ACCESS`** |
-| Motivo | Dump real (`pre-gate-e-20260924-140304.sql`) só na VPS; **não** está no Git (correto) e este ambiente não o tem |
+| Motivo | Dump real (`pre-gate-e-20260924-140304.sql`) só na VPS; Cloud Agent sem MCP Hostinger-vps / sem sessão Web Console |
+| Alvo | `CREATE DATABASE erp_restore_isolated_<stamp>` — **nunca** `postgres` (DEV) |
+| GitHub | Somente bloco `PASTE_TO_GIT_*` sanitizado (hash, banco isolado, migrations, `dev_untouched`) |
 | **Não conta** | `validate-isolated-restore.sh --self-test` (cópia sintética / filesystem) — só prova procedimento anti-DEV |
 
 ### C) GO/NO-GO local

@@ -16,6 +16,8 @@ echo "expected_runtime=ERP-RUNTIME-07B"
 echo "expected_3080_image=runtime07b-main-ca0bc5f3"
 
 export ROOT DATABASE_URL R07B_SHA EVIDENCE_OUT
+export ISOLATED_DATABASE_NAME="${ISOLATED_DATABASE_NAME:-}"
+export ALLOW_DROP_SCHEMA_PUBLIC="${ALLOW_DROP_SCHEMA_PUBLIC:-}"
 
 if [[ -z "${DATABASE_URL:-}" ]]; then
   echo 'R07B_API_COMPAT_STATUS=SKIPPED_NO_DATABASE_URL'
@@ -23,6 +25,22 @@ if [[ -z "${DATABASE_URL:-}" ]]; then
   echo "R07B_API_COMPAT_END utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   exit 0
 fi
+
+# Fail-closed ANTES de DROP SCHEMA: bloqueia DEV oficial (dbname=postgres)
+# e exige banco isolado identificado + ALLOW_DROP_SCHEMA_PUBLIC=ISOLATED_ONLY.
+# Nunca apontar este script para o banco da VPS DEV.
+# shellcheck source=assert-isolated-database-url.sh
+source "$ROOT/scripts/vps/assert-isolated-database-url.sh"
+if ! assert_isolated_database_url; then
+  echo 'R07B_API_COMPAT_STATUS=BLOCKED_ISOLATED_DB_GUARD'
+  echo 'NOTE: DROP SCHEMA public CASCADE recusado — use ISOLATED_DATABASE_NAME=erp_r07b_compat'
+  echo 'NOTE: e ALLOW_DROP_SCHEMA_PUBLIC=ISOLATED_ONLY; nunca DATABASE_URL do DEV oficial'
+  echo "R07B_API_COMPAT_END utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  exit 2
+fi
+echo "isolated_database_name=${ISOLATED_DB_NAME_RESOLVED}"
+echo 'drop_schema_target=ISOLATED_ONLY'
+echo 'dev_official_dbname_blocked=postgres'
 
 # Migrations 016+ devem existir no checkout (árvore pós-#33)
 if [[ ! -f "$ROOT/server/migrations/018_produto_pim_dam_outbox.sql" ]]; then
@@ -43,12 +61,27 @@ fi
 
 # Aplica 001–024 do checkout atual (fonte pós-merge simulada) no Postgres isolado
 python3 - <<'PY'
-import os, pathlib, subprocess, sys
+import os, pathlib, subprocess, sys, urllib.parse
 url = os.environ["DATABASE_URL"]
 root = pathlib.Path(os.environ["ROOT"])
+required = os.environ.get("ISOLATED_DATABASE_NAME", "")
+# Defesa em profundidade: nunca DROP em dbname=postgres / reservados
+p = urllib.parse.urlparse(url)
+dbname = (p.path or "").lstrip("/").split("?")[0]
+if not dbname:
+    dbname = (urllib.parse.parse_qs(p.query).get("dbname") or [""])[0]
+if dbname in {"postgres", "template0", "template1", "supabase", "supabase_admin"}:
+    print(f"DROP_SCHEMA_BLOCKED_DEV_OR_RESERVED dbname={dbname}", file=sys.stderr)
+    sys.exit(4)
+if not required or dbname != required:
+    print(f"DROP_SCHEMA_BLOCKED_MISMATCH dbname={dbname} required={required}", file=sys.stderr)
+    sys.exit(6)
+if os.environ.get("ALLOW_DROP_SCHEMA_PUBLIC") != "ISOLATED_ONLY":
+    print("DROP_SCHEMA_BLOCKED_ALLOW_FLAG", file=sys.stderr)
+    sys.exit(8)
 mig = sorted((root / "server/migrations").glob("[0-9][0-9][0-9]_*.sql"))
 assert len(mig) >= 24, f"expected >=24 migrations, got {len(mig)}"
-# reset schema for isolation (only this database)
+# reset schema ONLY on the identified isolated database
 subprocess.check_call(["psql", url, "-v", "ON_ERROR_STOP=1", "-c",
   "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;"])
 for f in mig:

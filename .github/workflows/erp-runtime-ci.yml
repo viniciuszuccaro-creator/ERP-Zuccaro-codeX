@@ -45,11 +45,16 @@ jobs:
       - run: psql postgresql://erp_test:erp_test@localhost:5432/erp_test -f scripts/seed-dev-synthetic.sql
       - run: npm run test:postgres
         env: { DATABASE_URL: postgresql://erp_test:erp_test@localhost:5432/erp_test }
+      - name: Prove isolated DB guard (blocks DEV / requires allowlist)
+        working-directory: .
+        run: bash scripts/vps/assert-isolated-database-url.sh --self-test
       - name: Prove R07B API (ca0bc5f3) on schema 001-024 (isolated DB)
         if: hashFiles('server/migrations/018_produto_pim_dam_outbox.sql') != ''
         working-directory: .
         env:
           DATABASE_URL: postgresql://erp_test:erp_test@localhost:5432/erp_r07b_compat
+          ISOLATED_DATABASE_NAME: erp_r07b_compat
+          ALLOW_DROP_SCHEMA_PUBLIC: ISOLATED_ONLY
           R07B_SHA: ca0bc5f3529b9071fe80e58dae6aa966a9d6c740
         run: |
           set -euo pipefail
