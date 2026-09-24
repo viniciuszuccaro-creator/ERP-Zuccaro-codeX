@@ -35,9 +35,18 @@ fi
 
 fatias_out="$(bash "$ROOT/scripts/vps/print-gate-e-fatias.sh" || true)"
 echo "$fatias_out" | grep -E 'missing_for_gate_e=|proposed_fatia_|GATE_E_PLAN_STATUS='
-# Codex ainda não confirmou EXPECTED_RUNTIME / fatias / supabase_user neste pacote
-blockers+=('codex_expected_runtime_pending')
-blockers+=('auth_supabase_user_pending')
+
+scan_out="$(bash "$ROOT/scripts/vps/scan-sanitized-artifacts.sh" || true)"
+scan="$(echo "$scan_out" | sed -n 's/^SANITIZE_SCAN_STATUS=//p' | head -1)"
+echo "sanitize=${scan:-UNKNOWN}"
+[[ "$scan" == 'CLEAN' ]] || blockers+=('sanitize_leak_candidate')
+
+pedido_out="$(bash "$ROOT/scripts/vps/print-pedido-codex.sh" || true)"
+echo "$pedido_out" | grep -E 'codex_pending_count=|CODEX_PEDIDO_STATUS='
+pending_codex="$(echo "$pedido_out" | sed -n 's/^codex_pending_count=//p' | head -1)"
+if [[ -n "$pending_codex" && "$pending_codex" != '0' ]]; then
+  blockers+=('codex_confirmacoes_pendentes')
+fi
 
 # Dedupe preservando ordem
 deduped=()

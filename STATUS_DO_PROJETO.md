@@ -1,14 +1,12 @@
 ### Frente Cursor — VPS / HML / Gate C / legado (2026-09-24)
 
-- Branch: `cursor/vps-hml-gate-c-legado-392b` / PR `#34`. Codex `#33` intocada
-  (HEAD observado `200000bb`, draft).
-- Gate C **APROVADO**; `GO_NOGO=NO` (termo / backup novo / Codex).
-- Fatias Gate E: comercial `016–017` → produto/DAM `018–024`.
-- Legado sintético: obra + condição pagamento; quarentena `codigo_empresa=0`;
-  inventário marca `USUSENHA` como `blocked_secret_candidate`.
-- Scan sanitização artefatos VPS: `scan-sanitized-artifacts.sh` → `CLEAN`.
+- Branch: `cursor/vps-hml-gate-c-legado-392b` / PR `#34`. Codex `#33` intocada.
+- Gate C **APROVADO**; `GO_NOGO=NO` (termo / backup / Codex pendentes).
+- Pedido Codex imprimível: `print-pedido-codex.sh` → 5 confirmações abertas.
+- Legado: mapa códigos empresa 1–5 (rótulos públicos); `4` inativa → quarentena;
+  `0` → quarentena; scan artefatos `CLEAN`.
 - **Não** executados: canário, 016–024, promoção 3080.
-- Próximo: termo + backup `pre-gate-e-…` + Codex; senão inventário HD.
+- Próximo: termo + backup `pre-gate-e-…` + respostas Codex no contrato §4.
 
 ### ERP-RUNTIME-08 — diagnóstico Comercial 360º (2026-09-19)
 

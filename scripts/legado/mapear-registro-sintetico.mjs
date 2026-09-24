@@ -41,6 +41,30 @@ export const LEGADO_FIELD_ALIASES = Object.freeze({
 /** Códigos empresariais legados válidos conhecidos (Gate 18); `0` = quarentena. */
 export const LEGADO_EMPRESA_CODIGOS_VALIDOS = Object.freeze(['1', '2', '3', '4', '5']);
 
+/**
+ * Rótulos públicos já documentados no STATUS (Gate 18) — sem CNPJ/PII.
+ * Uso: staging sintético / conciliação; não autoriza importação.
+ */
+export const LEGADO_EMPRESA_CODIGO_MAP = Object.freeze({
+  1: { label: 'CPA_Central_Paulista', ativo: true },
+  2: { label: '3Z_Armacao', ativo: true },
+  3: { label: 'Grupo_CPA', ativo: true },
+  4: { label: 'Belgo_Cercas', ativo: false },
+  5: { label: 'Zuccaro_Comercio_Ferragens', ativo: true },
+});
+
+/**
+ * @param {unknown} codigo
+ * @returns {{ codigo: string, label?: string, ativo?: boolean, conhecido: boolean } | { codigo: string, conhecido: false, quarentena: true }}
+ */
+export const resolverEmpresaLegadoCodigo = (codigo) => {
+  const c = String(codigo ?? '').trim();
+  if (!c) return { codigo: '', conhecido: false };
+  if (c === '0') return { codigo: '0', conhecido: false, quarentena: true };
+  const hit = LEGADO_EMPRESA_CODIGO_MAP[c];
+  if (!hit) return { codigo: c, conhecido: false };
+  return { codigo: c, label: hit.label, ativo: hit.ativo, conhecido: true };
+};
 const first = (...vals) => {
   for (const v of vals) {
     const t = String(v ?? '').trim();
@@ -100,6 +124,9 @@ export const avaliarQuarentenaLegado = (row = {}, opts = {}) => {
   if (codigoEmpresa && !LEGADO_EMPRESA_CODIGOS_VALIDOS.includes(codigoEmpresa) && codigoEmpresa !== '0') {
     motivos.push('codigo_empresa_legado_desconhecido');
   }
+  if (codigoEmpresa && LEGADO_EMPRESA_CODIGO_MAP[codigoEmpresa]?.ativo === false) {
+    motivos.push('codigo_empresa_legado_inativa');
+  }
   if (entidade === 'empresa') {
     const aliases = LEGADO_FIELD_ALIASES.empresa;
     const doc = pickAlias(row, aliases.documento);
@@ -132,12 +159,28 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
   }
 
   const q = avaliarQuarentenaLegado(row, { entidade });
+  const codigoEmpresaLegado = first(
+    row.codigo_empresa,
+    row.codigoempresa,
+    row.cod_empresa,
+    row.empresa_codigo,
+  );
+  const empresaLegado = codigoEmpresaLegado
+    ? resolverEmpresaLegadoCodigo(codigoEmpresaLegado)
+    : null;
 
   const base = stripSegredosMigracao({
     group_id: first(opts.groupId, row.group_id, row.grupo_id),
     empresa_id: first(opts.empresaId, row.empresa_id),
     codigo_legado: codigo,
     id_antigo: codigo,
+    ...(empresaLegado
+      ? {
+        codigo_empresa_legado: empresaLegado.codigo,
+        empresa_legado_label: empresaLegado.label,
+        empresa_legado_conhecida: empresaLegado.conhecido === true,
+      }
+      : {}),
     ...(entidade === 'produto'
       ? { descricao: nomeOuDesc }
       : { nome: nomeOuDesc, ...(documento ? { documento } : {}) }),

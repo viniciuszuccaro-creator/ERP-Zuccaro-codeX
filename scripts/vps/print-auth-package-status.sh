@@ -32,7 +32,9 @@ echo "$bk_out" | grep -E 'BACKUP_NOVO_STATUS=|fresh_named'
 fatias_out="$(bash "$ROOT/scripts/vps/print-gate-e-fatias.sh" || true)"
 echo "$fatias_out" | grep -E 'proposed_fatia_|GATE_E_PLAN_STATUS='
 go_out="$(bash "$ROOT/scripts/vps/go-nogo-def.sh" "$EVIDENCE" || true)"
-echo "$go_out" | grep -E 'GO_NOGO=|blockers='
+echo "$go_out" | grep -E 'GO_NOGO=|blockers=|sanitize=|CODEX_PEDIDO'
+pedido_out="$(bash "$ROOT/scripts/vps/print-pedido-codex.sh" || true)"
+echo "$pedido_out" | grep -E 'codex_pending_count=|CODEX_PEDIDO_STATUS='
 scan_out="$(bash "$ROOT/scripts/vps/scan-sanitized-artifacts.sh" || true)"
 echo "$scan_out" | grep -E 'SANITIZE_SCAN_STATUS=|hit_count='
 echo 'blocked_until=codex_EXPECTED_RUNTIME+auth_supabase_user+human_auth+new_backup+termo_assinado'

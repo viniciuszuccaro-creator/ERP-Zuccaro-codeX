@@ -5,6 +5,7 @@ import {
   buildChaveIdempotenteMigracaoLegado,
   mapLegadoLoteSintetico,
   mapLegadoRowToCanonicalStub,
+  resolverEmpresaLegadoCodigo,
 } from '../scripts/legado/mapear-registro-sintetico.mjs';
 
 test('mapear legado sintetico cliente carimba staging e remove segredo', () => {
@@ -91,6 +92,22 @@ test('quarentena codigo empresa 0', () => {
   assert.equal(out.quarentena, true);
   assert.equal(out.status_migracao, 'PENDING_MANUAL_RECONCILIATION');
   assert.equal(out.destino_migracao, 'staging');
+});
+
+test('resolver empresa legado codigo 2 e inativa 4', () => {
+  const e2 = resolverEmpresaLegadoCodigo('2');
+  assert.equal(e2.conhecido, true);
+  assert.equal(e2.label, '3Z_Armacao');
+  const e4 = mapLegadoRowToCanonicalStub({
+    cod_cliente: 'Y',
+    nome: 'Cliente Belgo',
+    group_id: 'g1',
+    empresa_id: 'e1',
+    codigo_empresa: '4',
+  }, { entidade: 'cliente' });
+  assert.equal(e4.quarentena, true);
+  assert.ok(e4.quarentena_motivos.includes('codigo_empresa_legado_inativa'));
+  assert.equal(e4.empresa_legado_label, 'Belgo_Cercas');
 });
 
 test('mapear legado sintetico falha sem codigo/nome', () => {

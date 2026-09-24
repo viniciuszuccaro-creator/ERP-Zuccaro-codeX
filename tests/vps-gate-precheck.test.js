@@ -267,7 +267,18 @@ test('go-nogo-def NO com blockers atuais', () => {
   assert.match(run.stdout, /GO_NOGO=NO/);
   assert.match(run.stdout, /termo_waiting_signature/);
   assert.match(run.stdout, /backup_novo_ausente/);
+  assert.match(run.stdout, /codex_confirmacoes_pendentes/);
+  assert.match(run.stdout, /sanitize=CLEAN/);
   assert.match(run.stdout, /EXECUTE_DEF=NO/);
+});
+
+test('print-pedido-codex WAITING com 5 itens', () => {
+  const script = path.join(root, 'scripts/vps/print-pedido-codex.sh');
+  const run = spawnSync('bash', [script], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr || run.stdout);
+  assert.match(run.stdout, /codex_pending_count=5/);
+  assert.match(run.stdout, /CODEX_PEDIDO_STATUS=WAITING_CODEX/);
+  assert.match(run.stdout, /proposed_EXPECTED_RUNTIME=ERP-RUNTIME-08B/);
 });
 
 test('scan-sanitized-artifacts CLEAN nos docs VPS', () => {
