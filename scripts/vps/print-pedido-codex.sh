@@ -38,7 +38,15 @@ echo "decided_auth_mode_criterion=supabase_user"
 # Migrator atual: uma invocação aplica todos os pendentes; fatias = revisão.
 echo "decided_gate_e_strategy=016_024_single_invocation_main_order"
 echo "review_slices=016_017,018_024"
-echo "image_digest_status=PENDING_BUILD_AFTER_MERGE"
+
+DIGEST_EVIDENCE="${DIGEST_EVIDENCE:-$ROOT/docs/vps/evidence/image-digest-comercial360-latest.txt}"
+if [[ -f "$DIGEST_EVIDENCE" ]] && grep -qE '^DIGEST_STATUS=OK$' "$DIGEST_EVIDENCE"; then
+  echo 'image_digest_status=REGISTERED'
+  grep -E '^(merge_sha8|image_tag|image_id_prefix)=' "$DIGEST_EVIDENCE" | head -5 || true
+else
+  echo 'image_digest_status=PENDING_BUILD_AFTER_MERGE'
+fi
+
 echo "auth_synthetic_status=PENDING_AUTH_GATE"
 echo "gates_def_executed=NO"
 echo "EXECUTE_DEF=NO"
@@ -48,7 +56,7 @@ if (( pending > 0 )); then
   echo 'CODEX_PEDIDO_STATUS=WAITING_CODEX'
 elif (( done >= 5 )); then
   echo 'CODEX_PEDIDO_STATUS=DECISIONS_DOCUMENTED'
-  echo 'NOTE: decisoes §4 documentadas; digest/Auth/gates D-E-F ainda operacionais pendentes'
+  echo 'NOTE: decisoes §4 documentadas; Auth/gates D-F ainda operacionais pendentes (digest pode estar REGISTERED)'
 else
   echo 'CODEX_PEDIDO_STATUS=INCOMPLETE_SECTION'
 fi

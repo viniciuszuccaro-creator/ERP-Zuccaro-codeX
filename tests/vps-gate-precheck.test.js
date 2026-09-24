@@ -451,6 +451,43 @@ test('print-pedido-codex DECISIONS_DOCUMENTED com 5 itens e pendencias operacion
   assert.doesNotMatch(run.stdout, /fatias_comercial_016_017_then_produto/);
 });
 
+test('print-pedido-codex e go-nogo aceitam digest REGISTERED sem liberar Auth', () => {
+  const pedido = path.join(root, 'scripts/vps/print-pedido-codex.sh');
+  const go = path.join(root, 'scripts/vps/go-nogo-def.sh');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'digest-'));
+  const evidence = path.join(tmp, 'digest.txt');
+  fs.writeFileSync(
+    evidence,
+    [
+      'merge_sha8=2fc2fc80',
+      'image_tag=erp-zuccaro-erp-api:comercial360-main-2fc2fc80',
+      'image_id_prefix=sha256:deadbeefcafe',
+      'DIGEST_STATUS=OK',
+      'AUTHORIZES_CANARY=NO',
+      'AUTHORIZES_GATE_D=NO',
+      '',
+    ].join('\n'),
+  );
+  const pedidoRun = spawnSync('bash', [pedido], {
+    encoding: 'utf8',
+    env: { ...process.env, DIGEST_EVIDENCE: evidence },
+  });
+  assert.equal(pedidoRun.status, 0, pedidoRun.stderr || pedidoRun.stdout);
+  assert.match(pedidoRun.stdout, /image_digest_status=REGISTERED/);
+  assert.match(pedidoRun.stdout, /auth_synthetic_status=PENDING_AUTH_GATE/);
+
+  const migDir = path.join(root, 'server/migrations');
+  const goRun = spawnSync('bash', [go], {
+    encoding: 'utf8',
+    env: { ...process.env, MAIN_MIGRATIONS_DIR: migDir, DIGEST_EVIDENCE: evidence },
+  });
+  assert.equal(goRun.status, 0, goRun.stderr || goRun.stdout);
+  assert.match(goRun.stdout, /image_digest_status=REGISTERED/);
+  assert.doesNotMatch(goRun.stdout, /gate_d_blockers=.*image_digest_pending/);
+  assert.match(goRun.stdout, /auth_synthetic_gate_pending/);
+  assert.match(goRun.stdout, /GATE_D_READY=NO/);
+});
+
 test('freeze-go-nogo-snapshot grava GO_NOGO=NO e EXHAUSTED', () => {
   const script = path.join(root, 'scripts/vps/freeze-go-nogo-snapshot.sh');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'freeze-'));

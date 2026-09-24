@@ -26,7 +26,7 @@
 
 ## Bloqueios restantes para Gate D
 
-1. **Digest de imagem** pós-build da main (`PENDING_BUILD_AFTER_MERGE`) — tag `comercial360-main-<sha8>`
+1. **Digest de imagem** — build Web Console `comercial360-main-2fc2fc80` + evidência `image-digest-comercial360-latest.txt` (`DIGEST_STATUS=OK` → `REGISTERED`)
 2. **Auth sintético** (`PENDING_AUTH_GATE`) — identidade Supabase + profile vinculado **fora do Git**; checklist `docs/GATE_D_SMOKE_AUTH_CHECKLIST.md`
 3. Autorização humana no termo §C para **Gate D** (checkbox D ainda desmarcado) + assinatura
 4. Canário em porta ≠3080 com `auth.mode=supabase_user` — **não** iniciar sem (1)+(2)+(3)

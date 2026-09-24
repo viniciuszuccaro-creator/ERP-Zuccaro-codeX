@@ -175,6 +175,7 @@ fi
 if [[ "$digest_status" == 'PENDING_BUILD_AFTER_MERGE' || -z "$digest_status" ]]; then
   d_blockers+=('image_digest_pending_post_merge')
 fi
+# REGISTERED remove o blocker de digest; Auth sintético permanece.
 if [[ "$auth_status" == 'PENDING_AUTH_GATE' || -z "$auth_status" ]]; then
   d_blockers+=('auth_synthetic_gate_pending')
 fi
