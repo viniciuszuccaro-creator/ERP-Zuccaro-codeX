@@ -2,11 +2,10 @@
 
 - Assinatura: **VINICIUS** · `24/09/2026` · termo §C (Auth + D marcados).
 - **Não** autorizados: Gate F · alteração 3080.
-- Digest: `comercial360-main-2fc2fc80` REGISTERED · Gate E OK.
-- Execução: **Auth Web Console primeiro** → PASTE `AUTH_SYNTHETIC_STATUS=OK` → canário Gate D.
-- Evidência auth: `docs/vps/evidence/gate-d-auth-autorizacao-registrada.txt`.
-- Checklist: `docs/GATE_D_SMOKE_AUTH_CHECKLIST.md`.
-- **Próximo:** operador cola bloco Auth (agregados + provisionamento); sem segredos no paste.
+- Baseline Auth VPS: `auth_users=0` · `profiles_ativos_sem_auth=2` → **`AUTH_SYNTHETIC_STATUS=PENDING_PROVISION`** (PASTE template com `<N>` **rejeitado**; não é OK).
+- Evidência baseline: `docs/vps/evidence/auth-synthetic-baseline-2026-09-24.txt`.
+- **Próximo:** provisionar user Auth sintético de verdade (GoTrue/Studio) + vincular profile sintético novo → PASTE com contagens reais (`auth_users_count>=1`).
+- Canário Gate D só após `AUTH_SYNTHETIC_STATUS=OK` comprovado.
 
 ### Pós-Gate E — prep Gate D (histórico)
 

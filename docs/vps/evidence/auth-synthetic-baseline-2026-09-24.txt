@@ -1,0 +1,11 @@
+# Gate Auth — baseline Web Console (2026-09-24) — NÃO OK
+# Fonte: captura VPS; sem segredos.
+
+utc=2026-09-24T20:39:00Z
+auth_users=0
+profiles_ativos_sem_auth=2
+AUTH_SYNTHETIC_STATUS=PENDING_PROVISION
+NOTE=paste_template_echoed_with_placeholders_N_rejected
+NOTE2=auth_users_still_zero_no_identity_created
+AUTHORIZES_CANARY=NO
+alter_3080=NOT_PERFORMED
