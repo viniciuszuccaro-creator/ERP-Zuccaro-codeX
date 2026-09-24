@@ -103,8 +103,18 @@ echo "integrity_tail_complete=${TAIL_OK}"
 dev_before="$(docker exec "$DB_CONTAINER" psql -U postgres -d "$DEV_DBNAME" -tAc \
   "SELECT current_database()||'|'||(SELECT system_identifier::text FROM pg_control_system())||'|mig='||(SELECT count(*)::text FROM schema_migrations);")"
 echo "dev_before_sanitized=$(echo "$dev_before" | sed -E 's/[0-9]{10,}/REDACTED_CLUSTER/g')"
-# Guarda valor bruto só em variável local para comparação
 DEV_BEFORE_RAW="$dev_before"
+
+# Segurança: dump não pode redirecionar psql de volta ao DEV via \connect
+CONNECT_COUNT="$(grep -cE '^\\connect' "$DUMP_PATH" || true)"
+CONNECT_TO_DEV="$(grep -cE "^\\\\connect[[:space:]]+(\")?${DEV_DBNAME}(\")?([[:space:]]|$)" "$DUMP_PATH" || true)"
+echo "dump_connect_directives=${CONNECT_COUNT}"
+echo "dump_connect_to_dev=${CONNECT_TO_DEV}"
+if (( CONNECT_TO_DEV > 0 )); then
+  echo 'RESTORE_ISOLATED_DB_STATUS=BLOCKED_DUMP_CONNECTS_TO_DEV'
+  echo 'NOTE: dump contem \\connect para o banco DEV; abortar sem restaurar'
+  exit 9
+fi
 
 # Criar banco isolado (NÃO é DEV)
 docker exec "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
@@ -116,19 +126,78 @@ docker exec "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
   -c "CREATE DATABASE ${ISOLATED_DB};"
 echo "isolated_db_created=${ISOLATED_DB}"
 
-# Restore SOMENTE no isolado (dump via stdin; dump permanece no host)
+# Confirma sessão no isolado (nunca no DEV)
+iso_probe="$(docker exec "$DB_CONTAINER" psql -U postgres -d "$ISOLATED_DB" -tAc "SELECT current_database();")"
+if [[ "$iso_probe" != "$ISOLATED_DB" ]]; then
+  echo "RESTORE_ISOLATED_DB_STATUS=BLOCKED_WRONG_TARGET got=${iso_probe}"
+  docker exec "$DB_CONTAINER" psql -U postgres -d postgres -c "DROP DATABASE IF EXISTS ${ISOLATED_DB};" || true
+  exit 10
+fi
+
+# Pré-reset SOMENTE no isolado: evita ERROR "schema public already exists"
+docker exec "$DB_CONTAINER" psql -U postgres -d "$ISOLATED_DB" -v ON_ERROR_STOP=1 \
+  -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO postgres; GRANT ALL ON SCHEMA public TO public;"
+echo 'isolated_public_schema_reset=YES'
+
+LOG="/tmp/restore-isolated-${STAMP}.log"
+# Filtra \\connect e CREATE/COMMENT SCHEMA public (já resetados); dump no host permanece intacto
 set +e
-docker exec -i "$DB_CONTAINER" psql -U postgres -d "$ISOLATED_DB" -v ON_ERROR_STOP=1 <"$DUMP_PATH" \
-  >/tmp/restore-isolated-${STAMP}.log 2>&1
+grep -vE '^\\connect([[:space:]]|$)|^CREATE SCHEMA public;|^COMMENT ON SCHEMA public' "$DUMP_PATH" \
+  | docker exec -i "$DB_CONTAINER" psql -U postgres -d "$ISOLATED_DB" -v ON_ERROR_STOP=1 \
+  >"$LOG" 2>&1
 rc=$?
 set -e
+
+print_sanitized_restore_errors() {
+  local log="$1"
+  [[ -f "$log" ]] || return 0
+  echo 'restore_error_excerpt_sanitized_begin'
+  # Só linhas de erro; redige UUID, e-mail, URL, password
+  grep -E 'ERROR:|FATAL:|PANIC:|DETAIL:|HINT:|ERROR  ' "$log" 2>/dev/null \
+    | head -n 40 \
+    | sed -E \
+      -e 's/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/REDACTED_UUID/g' \
+      -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/REDACTED_EMAIL/g' \
+      -e 's#postgres(ql)?://[^[:space:]]+#REDACTED_URL#g' \
+      -e 's/(password|secret|token)[=:][^[:space:]]+/\1=REDACTED/gi' \
+      -e 's/[0-9]{12,}/REDACTED_LONGNUM/g' \
+    || echo '(no ERROR/FATAL lines in log)'
+  echo 'restore_error_excerpt_sanitized_end'
+  # Classifica causas comuns (sem conteúdo sensível)
+  if grep -q 'schema "public" already exists' "$log" 2>/dev/null; then
+    echo 'restore_fail_class=PUBLIC_SCHEMA_EXISTS'
+  elif grep -qiE 'role .* does not exist' "$log" 2>/dev/null; then
+    echo 'restore_fail_class=MISSING_ROLE'
+  elif grep -qiE 'extension .* (is not available|does not exist|already exists)' "$log" 2>/dev/null; then
+    echo 'restore_fail_class=EXTENSION'
+  elif grep -qiE 'permission denied' "$log" 2>/dev/null; then
+    echo 'restore_fail_class=PERMISSION'
+  elif grep -qiE 'syntax error' "$log" 2>/dev/null; then
+    echo 'restore_fail_class=SYNTAX'
+  else
+    echo 'restore_fail_class=OTHER_SEE_EXCERPT'
+  fi
+}
+
 if (( rc != 0 )); then
   echo "RESTORE_ISOLATED_DB_STATUS=BLOCKED_RESTORE_FAILED rc=${rc}"
-  # limpa isolado em falha parcial
+  echo "restore_log_path=${LOG}"
+  print_sanitized_restore_errors "$LOG"
+  # limpa isolado em falha parcial (DEV intocado)
   docker exec "$DB_CONTAINER" psql -U postgres -d postgres -c "DROP DATABASE IF EXISTS ${ISOLATED_DB};" || true
+  echo "isolated_db_dropped_after_fail=${ISOLATED_DB}"
+  # Confirma DEV ainda igual após falha
+  dev_after_fail="$(docker exec "$DB_CONTAINER" psql -U postgres -d "$DEV_DBNAME" -tAc \
+    "SELECT current_database()||'|'||(SELECT system_identifier::text FROM pg_control_system())||'|mig='||(SELECT count(*)::text FROM schema_migrations);")"
+  if [[ "$DEV_BEFORE_RAW" != "$dev_after_fail" ]]; then
+    echo 'RESTORE_ISOLATED_DB_STATUS=BLOCKED_DEV_CHANGED_AFTER_FAIL'
+    exit 8
+  fi
+  echo 'dev_untouched_after_fail=YES'
   exit 7
 fi
 echo 'restore_psql_rc=0'
+echo "restore_log_path=${LOG}"
 
 # Contagens no isolado
 iso_mig="$(docker exec "$DB_CONTAINER" psql -U postgres -d "$ISOLATED_DB" -tAc \
