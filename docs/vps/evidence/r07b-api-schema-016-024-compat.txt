@@ -1,0 +1,21 @@
+# Evidência — API R07B (ca0bc5f3) × schema 001–024 em Postgres isolado
+# utc=2026-09-24T15:16:21.784Z
+r07b_sha=ca0bc5f3529b9071fe80e58dae6aa966a9d6c740
+api_under_test=R07B_ca0bc5f3_NOT_08B
+runtime_meta=ERP-RUNTIME-07B
+schema_migrations=001_through_024
+produto_ops=list,get,create,patch
+health=200
+ready=200
+meta_runtime=ERP-RUNTIME-07B
+produto_list_count=1
+produto_get_seed=OK
+produto_create_id=bd6e8f19-8a57-484b-b4f6-8d3468219421
+produto_patch=OK
+produto_get_after_write=OK
+produto_018_defaults_after_r07b_write=workflow=RASCUNHO;multiplo=1.000000
+R07B_API_COMPAT_STATUS=OK
+VPS_ALTERED=NO
+MAIN_ALTERED=NO
+AUTHORIZATION=NOT_GRANTED
+EXECUTED_GATES_DEF=NO

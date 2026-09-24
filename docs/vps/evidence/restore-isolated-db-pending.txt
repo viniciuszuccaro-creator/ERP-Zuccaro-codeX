@@ -1,0 +1,33 @@
+# Evidência — restore do backup pré-Gate E em Postgres isolado
+
+**Status:** `PENDING_NO_DUMP_ACCESS`
+**utc:** 2026-09-24T15:16:30Z
+
+## O que foi tentado
+
+- Dump real VPS: `pre-gate-e-20260924-140304.sql` (bytes=`390275`, sha256=`e72ca99b453fa6b060b5264f636794b3a601202c18e4185deb12f0020cae3f80`)
+- Localização real: somente `/opt/erp-zuccaro/backups` na VPS (não versionado; correto)
+- Neste ambiente Cloud Agent: **arquivo do dump ausente** — sem acesso ao conteúdo
+
+## O que NÃO conta como restauração de banco
+
+- Cópia de arquivo sintético / self-test filesystem (`validate-isolated-restore.sh --self-test`)
+  → prova apenas o **procedimento fail-closed** (DEV não alvo); **não** restaura o dump VPS
+- PGlite / dump inventado localmente
+
+## Critério para fechar esta prova (futuro, autorizado)
+
+1. Obter dump real fora do Git (Web Console / caminho VPS)
+2. `CREATE DATABASE` isolado ≠ DEV oficial
+3. `psql ... -f pre-gate-e-….sql` no isolado
+4. Conferir: header/tail, `schema_migrations` = 001–015 (1×), contagens sanidade
+5. Conferir DEV: `schema_migrations` / marcador inalterados
+6. Registrar evidência sanitizada (sem SQL do dump no Git)
+
+```
+RESTORE_ISOLATED_DB_STATUS=PENDING_NO_DUMP_ACCESS
+vps_dump_used=NO
+dev_database_touched=NO
+AUTHORIZES_GATES_DEF=NO
+EXECUTE_DEF=NO
+```

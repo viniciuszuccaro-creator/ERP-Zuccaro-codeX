@@ -1,104 +1,83 @@
-# Pacote de decisão por gate — D / E / F (sem execução)
+# Pacote de decisão por gate — D / E / F (corrigido e verificável)
 
 ## Distinção obrigatória de estado
 
 | Estado | Significado | Valor atual |
 |---|---|---|
-| `READY_FOR_REVIEW` | Pacote técnico pronto para humano revisar | **SIM** (`DECISION_STATE=READY_FOR_REVIEW`) |
-| `AUTHORIZED` | Checkbox + assinatura no termo §C | **NÃO** (`AUTHORIZATION=NOT_GRANTED`) |
-| `EXECUTED` | Merge / Gate E / D / F / 3080 realizados | **NÃO** (`EXECUTED=NO`) |
+| `READY_FOR_REVIEW` | Pacote técnico revisável | **SIM** |
+| `AUTHORIZED` | Checkbox + assinatura no termo §C | **NÃO** |
+| `EXECUTED` | Merge / Gate E / D / F / 3080 | **NÃO** |
 
 `GATE_*_READY=YES` **nunca** autoriza nem executa.
 
-**Integração simulada publicada em** `cursor/integracao-sim-33-34-392b` (main intocada).
-
-```bash
-bash scripts/vps/go-nogo-def.sh
-```
+Simulação #33→#34: branch `cursor/integracao-sim-33-34-392b` / PR #35 (**main intocada**).
 
 ---
 
-## 1. Revisão PR #33 e PR #34 (sem merge na main)
+## 1. O que cada prova comprova (e o que não comprova)
 
-| PR | Branch | Tip | Draft | mergeable | CI | Conflitos vs main |
-|---|---|---|---|---|---|---|
-| #33 | `codex/comercial-360` | `ceeb92e9…` | sim | MERGEABLE/CLEAN | SUCCESS | nenhum |
-| #34 | `cursor/vps-hml-gate-c-legado-392b` | tip atual | sim | MERGEABLE | ver CI do tip | nenhum |
-| `main` | — | `ca417160…` | — | — | — | base |
-
-**Simulação de integração #33 → #34** (branch `cursor/integracao-sim-33-34-392b`, **não** altera `main`):
-resolve conflito previsto em `STATUS_DO_PROJETO.md` preservando topo Cursor + handoff Codex. Evidência em `docs/vps/evidence/integracao-sim-33-34.txt`.
-
-Ordem real (só após AUTHORIZED): undraft+merge #33 → merge #34 (opcional) → Gate E da **main** pós-merge.
-
----
-
-## 2. Prontidão por gate (comprovada)
-
-| Gate | READY | Motivo principal |
-|---|---|---|
-| **E** | **NO** | `main_missing_migrations_016_024` (016–024 ausentes de `origin/main`) |
-| **D** | **NO** | digest `PENDING_BUILD_AFTER_MERGE` + Auth `PENDING_AUTH_GATE` + schema E |
-| **F** | **NO** | D pendente + digest + 3080 R07B |
-
-Pendências **reais** D/F (não circular para E): digest pós-merge; Auth sintético.
-
-Anti-circular: digest/Auth **não** entram em `gate_e_blockers`.
-Fonte Gate E: 016–024 **na main** (comprovado via `git ls-tree`); ausência = `main_migrations_016_024=PENDING_ABSENT`.
-
----
-
-## 3. Migrations 016–024
-
-Presentes na PR #33; **ausentes** em `main` e na VPS (001–015 1×).
-
-Migrator: uma invocação, uma TX por arquivo. Fatias 016–017 / 018–024 = revisão, não duas execuções.
-
-Maior risco residual: **018** (ALTER `produtos` + CHECKs).
-
----
-
-## 4. Compatibilidade R07B × schema 016–024 (sintético)
-
-Prova em PGlite (`server/tests/r07b-schema-016-024-compat.test.ts`):
-
-- Aplica 001–024 (fonte `origin/codex/comercial-360` se checkout local não tiver 016+)
-- Confirma colunas 018 em `produtos` (`workflow_status`, `multiplo_venda`, …) com defaults
-- SELECT/UPDATE legado de Produto (estilo R07B) OK
-- `/health` + `/ready` HTTP 200
-- Tabelas 016/017/024 existem; R07B as ignora
-- **Resultado:** `R07B_SCHEMA_COMPAT=OK` · **não** altera 3080/VPS
-
----
-
-## 5. Restore isolado do backup pre-Gate E
-
-Procedimento validado com dump **sintético** (`scripts/vps/validate-isolated-restore.sh --self-test`):
-
-- Alvo: PGlite isolado · `dev_database_touched=NO` · `vps_dump_used=NO`
-- Evidência: `docs/vps/evidence/restore-isolated-validation.txt`
-- Dump real VPS (`pre-gate-e-20260924-140304.sql`) **não** versionado; **não** restaurado sobre DEV
-
----
-
-## 6. Backup / rollback (fatos)
+### A) API R07B (`ca0bc5f3`) × schema 001–024 — Postgres isolado
 
 | Item | Valor |
 |---|---|
-| Backup VPS | `pre-gate-e-20260924-140304.sql` bytes=`390275` sha256=`e72ca99b…cae3f80` |
-| Integridade | header/tail/sha256/mode600=YES |
-| Restore isolado | `VALIDATED_SYNTHETIC` (procedimento); dump VPS ainda não refeito em isolado |
-| Rollback API | imagem `runtime07b-main-ca0bc5f3` (dry-run OK) |
+| Script | `scripts/vps/prove-r07b-api-schema-compat.sh` |
+| Evidência | `docs/vps/evidence/r07b-api-schema-016-024-compat.txt` |
+| API sob teste | **Somente** commit `ca0bc5f3529b9071fe80e58dae6aa966a9d6c740` (imagem 3080 `runtime07b-main-ca0bc5f3`) |
+| Schema | Migrations **001–024** do checkout integrado (#33), aplicadas no Postgres **isolado** |
+| Operações | `/health`, `/ready`, `/api/v1/meta` (=`ERP-RUNTIME-07B`), Produto **list/get/create/patch** |
+| Resultado local | `R07B_API_COMPAT_STATUS=OK` |
+| **Não comprova** | Homologação na VPS; Auth `supabase_user`; canário; que a 3080 já rode schema 016+ |
+
+### B) Restore do dump pré-Gate E em outro Postgres
+
+| Item | Valor |
+|---|---|
+| Evidência | `docs/vps/evidence/restore-isolated-db-pending.txt` |
+| Status | **`PENDING_NO_DUMP_ACCESS`** |
+| Motivo | Dump real (`pre-gate-e-20260924-140304.sql`) só na VPS; **não** está no Git (correto) e este ambiente não o tem |
+| **Não conta** | `validate-isolated-restore.sh --self-test` (cópia sintética / filesystem) — só prova procedimento anti-DEV |
+
+### C) GO/NO-GO local
+
+| Item | Valor |
+|---|---|
+| Script | `scripts/vps/go-nogo-def.sh` |
+| `GATE_E_READY` | **NO** se 016–024 ausentes de `origin/main` (`main_missing_migrations_016_024`) |
+| `GATE_D_READY` / `GATE_F_READY` | **NO** — digest pós-merge + Auth sintético pendentes |
+| `DECISION_STATE` | `READY_FOR_REVIEW` |
+
+### D) Self-test de procedimento de restore (filesystem)
+
+| Item | Valor |
+|---|---|
+| Script | `scripts/vps/validate-isolated-restore.sh --self-test` |
+| Comprova | Alvo isolado ≠ DEV; marcador DEV inalterado |
+| **Não comprova** | Restauração do dump VPS em banco Postgres |
 
 ---
 
-## 7. Decisão pedida (termo §C — ainda em aberto)
+## 2. Revisão PR #33 / #34 / #35
 
-Não pedir assinatura até este pacote estar revisado. Campos em aberto:
+| PR | Papel | Merge na main nesta etapa |
+|---|---|---|
+| #33 | Código Comercial 360 + migrations 016–024 | **NÃO** |
+| #34 | Gate C / go-nogo / termo / pacote Cursor | **NÃO** |
+| #35 | Simulação integração #33→#34 + provas | **NÃO** (draft) |
 
-- [ ] Autorizo merge #33
-- [ ] Autorizo Gate E
-- [ ] Autorizo Gate D
-- [ ] Autorizo Gate F
+---
 
-Assinatura: aberta · `AUTHORIZATION=NOT_GRANTED` · `EXECUTED=NO`
+## 3. Bloqueios objetivos (antes de AUTHORIZED / EXECUTED)
+
+1. Autorização humana no termo §C (assinatura + checkbox)
+2. Merge #33 na `main` (após undraft/review) — 016–024 ainda **ausentes** de `origin/main`
+3. Dump pré-Gate E acessível fora do Git → restore isolado em Postgres ainda **PENDENTE**
+4. Digest de imagem pós-merge (`PENDING_BUILD_AFTER_MERGE`) — bloqueia D/F
+5. Auth sintético (`PENDING_AUTH_GATE`) — bloqueia D
+6. Gate E schema na VPS ainda não aplicado — bloqueia D
+7. 3080 permanece R07B até F autorizado
+
+---
+
+## 4. Proibições desta etapa
+
+Não merge na main · não migration VPS · não canário · não promoção 3080.

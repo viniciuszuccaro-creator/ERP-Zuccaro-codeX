@@ -6,11 +6,13 @@
 
 ### Frente Cursor — VPS / HML / Gate C / legado (2026-09-24)
 
-- Branch: `cursor/vps-hml-gate-c-legado-392b` / PR `#34` (tip: `gh pr view 34 --json headRefOid`).
-- Pacote: `docs/PACOTE_DECISAO_GATES_D_E_F.md` — estados `READY_FOR_REVIEW` ≠ `AUTHORIZED` ≠ `EXECUTED`.
-- `go-nogo-def.sh`: `GATE_E_READY=NO` enquanto 016–024 ausentes da `main` (`main_missing_migrations_016_024`).
-- Digest/Auth continuam pendências reais de D/F (não bloqueiam E).
-- Provas sintéticas: R07B×016–024 (PGlite) + restore isolado (`VALIDATED_SYNTHETIC`).
+- Branch integração simulada: `cursor/integracao-sim-33-34-392b` / PR `#35` (main intocada).
+- Pacote: `docs/PACOTE_DECISAO_GATES_D_E_F.md` — `READY_FOR_REVIEW` ≠ `AUTHORIZED` ≠ `EXECUTED`.
+- Prova R07B (`ca0bc5f3`) × schema 001–024 em Postgres isolado: `R07B_API_COMPAT_STATUS=OK`
+  (`docs/vps/evidence/r07b-api-schema-016-024-compat.txt`); API nova **não** usada.
+- Restore dump pré-Gate E em Postgres isolado: **`PENDING_NO_DUMP_ACCESS`**
+  (dump real fora do Git; cópia sintética **não** conta).
+- `GATE_E_READY=NO` enquanto 016–024 ausentes da `main`; digest/Auth pendentes para D/F.
 - **Não** executados: merge na main, migration VPS, canário, promoção 3080.
 
 ### ERP-RUNTIME-08 — diagnóstico Comercial 360º (2026-09-19)

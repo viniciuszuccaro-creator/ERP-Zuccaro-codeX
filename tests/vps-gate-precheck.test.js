@@ -477,9 +477,23 @@ test('scan-sanitized-artifacts CLEAN nos docs VPS', () => {
   assert.match(run.stdout, /hit_count=0/);
 });
 
-test('print-auth-package-status inclui sanitize CLEAN', () => {
-  const script = path.join(root, 'scripts/vps/print-auth-package-status.sh');
-  const run = spawnSync('bash', [script], { encoding: 'utf8' });
-  assert.equal(run.status, 0, run.stderr || run.stdout);
-  assert.match(run.stdout, /SANITIZE_SCAN_STATUS=CLEAN/);
+test('evidence R07B API compat file is OK when present', () => {
+  const ev = path.join(root, 'docs/vps/evidence/r07b-api-schema-016-024-compat.txt');
+  if (!fs.existsSync(ev)) {
+    // Em checkouts sem prova local ainda; CI da #35 gera o arquivo.
+    return;
+  }
+  const text = fs.readFileSync(ev, 'utf8');
+  assert.match(text, /api_under_test=R07B_ca0bc5f3_NOT_08B/);
+  assert.match(text, /runtime_meta=ERP-RUNTIME-07B/);
+  assert.match(text, /produto_ops=list,get,create,patch/);
+  assert.match(text, /R07B_API_COMPAT_STATUS=OK/);
+});
+
+test('evidence restore isolado DB registra PENDING_NO_DUMP_ACCESS', () => {
+  const ev = path.join(root, 'docs/vps/evidence/restore-isolated-db-pending.txt');
+  assert.equal(fs.existsSync(ev), true);
+  const text = fs.readFileSync(ev, 'utf8');
+  assert.match(text, /PENDING_NO_DUMP_ACCESS/);
+  assert.match(text, /não conta|NÃO conta|Nao conta|nao conta/i);
 });

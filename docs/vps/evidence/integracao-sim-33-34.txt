@@ -1,16 +1,14 @@
 # Simulação integração #33 → #34 — NÃO altera main
-# utc=2026-09-24T14:44:07Z
+# utc=2026-09-24T15:17:37Z
 branch=cursor/integracao-sim-33-34-392b
 base=origin/main@ca417160
 merged_33=origin/codex/comercial-360@ceeb92e9
-merged_34=origin/cursor/vps-hml-gate-c-legado-392b@601678b6
-conflict_file=STATUS_DO_PROJETO.md
-conflict_resolution=preserve_cursor_frente_and_codex_handoff
+merged_34=origin/cursor/vps-hml-gate-c-legado-392b@f41d87e5
+r07b_api_compat=OK
+r07b_sha=ca0bc5f3529b9071fe80e58dae6aa966a9d6c740
+restore_isolated_db=PENDING_NO_DUMP_ACCESS
 main_altered=NO
 vps_altered=NO
-gate_e_executed=NO
-canary_executed=NO
-promotion_3080=NO
 AUTHORIZATION=NOT_GRANTED
 EXECUTED=NO
 DECISION_STATE=READY_FOR_REVIEW
