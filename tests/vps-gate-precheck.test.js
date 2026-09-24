@@ -385,9 +385,14 @@ test('go-nogo-def reporta GATE_E_READY=NO quando probe da main não tem 016-024'
   assert.doesNotMatch(run.stdout, /gate_e_blockers=.*auth_synthetic/);
 });
 
-test('go-nogo-def GATE_E_READY=YES na main atual (016-024 presentes)', () => {
+test('go-nogo-def GATE_E_READY=YES quando checkout tem 016-024 (probe local)', () => {
   const script = path.join(root, 'scripts/vps/go-nogo-def.sh');
-  const run = spawnSync('bash', [script], { encoding: 'utf8' });
+  // CI shallow pode não ter origin/main; usar dir local do checkout (pós-#35).
+  const migDir = path.join(root, 'server/migrations');
+  const run = spawnSync('bash', [script], {
+    encoding: 'utf8',
+    env: { ...process.env, MAIN_MIGRATIONS_DIR: migDir },
+  });
   assert.equal(run.status, 0, run.stderr || run.stdout);
   assert.match(run.stdout, /main_migrations_016_024=PRESENT/);
   assert.match(run.stdout, /GATE_E_READY=YES/);
