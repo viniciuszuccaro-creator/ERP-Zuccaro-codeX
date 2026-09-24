@@ -14,7 +14,7 @@ Pacote: `docs/PACOTE_DECISAO_GATES_D_E_F.md`.
 Data (UTC) preparação Cursor: `2026-09-24T14:30:00Z`
 Responsável (assinatura humana): _______________
 PR funcional #33 HEAD: `ceeb92e99954b39d3137dde497208b0db1010869` (draft — revalidar)
-PR infra #34 HEAD: `cfc4c2ab24d6cad9791b1e73cf1208febd2a1d9b`
+PR infra #34 HEAD: `db74e1283d77a82e8f7359812b2c503fd003728a`
 `main` observada: `ca4171600cc30f9922c2f8b2ccb8b22d06aa6888`
 Evidência Gate C: `docs/vps/evidence/gate-c-2026-09-24.txt` (**APROVADO**)
 
