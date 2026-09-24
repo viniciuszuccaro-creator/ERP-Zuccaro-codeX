@@ -103,3 +103,56 @@ test('extract-gate-c-migrations.sh filtra linhas agregadas', () => {
   assert.match(text, /conexao_api_vs_supabase_db=MATCH/);
   assert.doesNotMatch(text, /secret_should_not_matter/);
 });
+
+function writeGateCFixture(file, { match = true, backup = true, portFree = true, dup013 = false } = {}) {
+  const lines = [];
+  for (let i = 1; i <= 15; i += 1) {
+    lines.push(`${String(i).padStart(3, '0')}=1`);
+  }
+  if (dup013) lines.push('013=2');
+  lines.push(match ? 'conexao_api_vs_supabase_db=MATCH' : 'conexao_api_vs_supabase_db=NO');
+  lines.push('health_http=200');
+  lines.push('ready_http=200');
+  lines.push('meta_runtime=ERP-RUNTIME-07B');
+  lines.push('meta_auth_mode=dev_headers');
+  lines.push('official_image=erp-zuccaro-erp-api:runtime07b-main-ca0bc5f3');
+  if (backup) {
+    lines.push('backup path=erp-dev-20260921.sql bytes=486969 sha256=abc dump_complete_marker=YES');
+  } else {
+    lines.push('backups_dir=MISSING');
+  }
+  lines.push(portFree ? 'port_3086=FREE' : 'port_3086=BUSY');
+  lines.push('port_3090=BUSY');
+  lines.push('name=supabase-auth status=Up');
+  fs.writeFileSync(file, `${lines.join('\n')}\n`);
+}
+
+test('score-gate-c APROVADO com fixture completa', () => {
+  const score = path.join(root, 'scripts/vps/score-gate-c.sh');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'gate-c-score-'));
+  const out = path.join(tmp, 'ok.txt');
+  writeGateCFixture(out);
+  const run = spawnSync('bash', [score, out], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr || run.stdout);
+  assert.match(run.stdout, /GATE_C_RESULT=APROVADO/);
+});
+
+test('score-gate-c BLOQUEADO sem MATCH', () => {
+  const score = path.join(root, 'scripts/vps/score-gate-c.sh');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'gate-c-score-'));
+  const out = path.join(tmp, 'bad.txt');
+  writeGateCFixture(out, { match: false });
+  const run = spawnSync('bash', [score, out], { encoding: 'utf8' });
+  assert.notEqual(run.status, 0);
+  assert.match(run.stdout, /GATE_C_RESULT=BLOQUEADO/);
+});
+
+test('score-gate-c PARCIAL sem backup', () => {
+  const score = path.join(root, 'scripts/vps/score-gate-c.sh');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'gate-c-score-'));
+  const out = path.join(tmp, 'partial.txt');
+  writeGateCFixture(out, { backup: false });
+  const run = spawnSync('bash', [score, out], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr || run.stdout);
+  assert.match(run.stdout, /GATE_C_RESULT=PARCIAL/);
+});

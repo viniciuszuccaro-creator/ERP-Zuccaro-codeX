@@ -52,11 +52,8 @@ missing_hist=0
 dup=0
 for i in $(seq 1 15); do
   id="$(printf '%03d' "$i")"
-  if ! hit "^${id}=1$|^${id}_.*=1$"; then
-    # também aceita id=1 sem underscore
-    if ! grep -Eq "^${id}=1$" "$IN"; then
-      missing_hist=$((missing_hist + 1))
-    fi
+  if ! grep -Eq "^${id}=1$" "$IN"; then
+    missing_hist=$((missing_hist + 1))
   fi
   if grep -Eq "^${id}=([2-9]|[1-9][0-9]+)$" "$IN"; then
     dup=$((dup + 1))

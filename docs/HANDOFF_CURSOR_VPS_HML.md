@@ -41,8 +41,8 @@ Regra-Mãe e o documento mestre do programa (PR #33).
 
 ## Próxima ação concreta
 
-1. Operador: `bash scripts/vps/gate-c-read-only.sh` na Web Console → devolver saída.
-2. Cursor: `extract-gate-c-migrations.sh` +
-   `gate-d-f-precheck.sh --from-gate-c-output … --candidate-list docs/vps/migrations-candidatas-comercial360.txt`
-3. Codex: confirmar checklist §7 do contrato (EXPECTED_RUNTIME, supabase_user, digest).
-4. Inventário HD legado na máquina com o backup montado.
+1. Operador: seguir `docs/GATE_C_CARTAO_OPERADOR.md` (Web Console → saída).
+2. Cursor: `bash scripts/vps/score-gate-c.sh saida-gate-c.txt` → APROVADO/PARCIAL/BLOQUEADO.
+3. Precheck faltantes: `--candidate-list docs/vps/migrations-candidatas-comercial360.txt`.
+4. Codex: checklist §7 do contrato (EXPECTED_RUNTIME, supabase_user, digest).
+5. Inventário HD legado na máquina com o backup montado.
