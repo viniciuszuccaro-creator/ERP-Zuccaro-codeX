@@ -140,13 +140,36 @@ docker exec "$DB_CONTAINER" psql -U postgres -d "$ISOLATED_DB" -v ON_ERROR_STOP=
 echo 'isolated_public_schema_reset=YES'
 
 LOG="/tmp/restore-isolated-${STAMP}.log"
-# Filtra \\connect e CREATE/COMMENT SCHEMA public (já resetados); dump no host permanece intacto
+# Filtra do stream (dump no host permanece intacto):
+# - \\connect (nunca voltar ao DEV)
+# - CREATE/COMMENT SCHEMA public (já resetados)
+# - SET/ALTER de GUCs restritos no role postgres do Supabase
+#   (ex.: log_min_messages → permission denied)
+FILTERED="/tmp/restore-isolated-${STAMP}.filtered.sql"
 set +e
 grep -vE '^\\connect([[:space:]]|$)|^CREATE SCHEMA public;|^COMMENT ON SCHEMA public' "$DUMP_PATH" \
-  | docker exec -i "$DB_CONTAINER" psql -U postgres -d "$ISOLATED_DB" -v ON_ERROR_STOP=1 \
-  >"$LOG" 2>&1
+  | sed -E \
+    -e '/^SET[[:space:]]+(SESSION[[:space:]]+|LOCAL[[:space:]]+)?log_[A-Za-z0-9_]+/d' \
+    -e '/^RESET[[:space:]]+log_[A-Za-z0-9_]+/d' \
+    -e '/^SELECT[[:space:]]+pg_catalog\.set_config\(\x27log_/d' \
+    -e '/^ALTER[[:space:]]+(DATABASE|ROLE)[[:space:]].+[[:space:]]SET[[:space:]]+log_/Id' \
+    -e '/^SET[[:space:]]+(SESSION[[:space:]]+|LOCAL[[:space:]]+)?(session_preload_libraries|local_preload_libraries|shared_preload_libraries)/d' \
+  >"$FILTERED"
+filter_rc=$?
+if (( filter_rc != 0 )); then
+  echo "RESTORE_ISOLATED_DB_STATUS=BLOCKED_FILTER_FAILED rc=${filter_rc}"
+  docker exec "$DB_CONTAINER" psql -U postgres -d postgres -c "DROP DATABASE IF EXISTS ${ISOLATED_DB};" || true
+  exit 11
+fi
+filtered_bytes="$(wc -c <"$FILTERED" | tr -d ' ')"
+echo "restore_stream_filtered_bytes=${filtered_bytes}"
+echo 'restore_stream_stripped=connect,public_schema,log_gucs'
+
+docker exec -i "$DB_CONTAINER" psql -U postgres -d "$ISOLATED_DB" -v ON_ERROR_STOP=1 \
+  <"$FILTERED" >"$LOG" 2>&1
 rc=$?
 set -e
+rm -f "$FILTERED"
 
 print_sanitized_restore_errors() {
   local log="$1"
