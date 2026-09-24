@@ -18,7 +18,7 @@ bash scripts/vps/go-nogo-def.sh
 | PR | Branch | HEAD observado | Draft | mergeable (GitHub) | CI (HEAD) | Conflitos com `main` |
 |---|---|---|---|---|---|---|
 | #33 | `codex/comercial-360` | `ceeb92e99954b39d3137dde497208b0db1010869` | sim | **MERGEABLE** / CLEAN | frontend+backend SUCCESS | API sem conflito; merge-tree sem `CONFLICT` |
-| #34 | `cursor/vps-hml-gate-c-legado-392b` | (este commit — `git rev-parse HEAD`) | sim | **MERGEABLE** / CLEAN | revalidar após push | sem conflito |
+| #34 | `cursor/vps-hml-gate-c-legado-392b` | `c370204e3bee3f2194854cb5c077070509cf28bd` | sim | **MERGEABLE** / CLEAN | revalidar após push | sem conflito |
 | `main` | — | `ca4171600cc30f9922c2f8b2ccb8b22d06aa6888` | — | — | — | base comum das PRs |
 
 **Leitura go-nogo (local, pós-correção anti-circular):**

@@ -14,7 +14,7 @@ Pacote: `docs/PACOTE_DECISAO_GATES_D_E_F.md`.
 Data (UTC) preparação Cursor: `2026-09-24T14:30:00Z`
 Responsável (assinatura humana): _______________
 PR funcional #33 HEAD: `ceeb92e99954b39d3137dde497208b0db1010869` (draft — revalidar)
-PR infra #34 HEAD: consultar `git rev-parse origin/cursor/vps-hml-gate-c-legado-392b`
+PR infra #34 HEAD: `c370204e3bee3f2194854cb5c077070509cf28bd`
 `main` observada: `ca4171600cc30f9922c2f8b2ccb8b22d06aa6888`
 Evidência Gate C: `docs/vps/evidence/gate-c-2026-09-24.txt` (**APROVADO**)
 
