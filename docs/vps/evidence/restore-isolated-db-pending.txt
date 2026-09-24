@@ -1,6 +1,6 @@
 # Evidência — restore do backup pré-Gate E em Postgres isolado
 
-**Status:** `PENDING_NO_DUMP_ACCESS` (script ainda ausente no checkout da VPS)
+**Status:**  (último run VPS rc=3; script corrigido)`PENDING_NO_DUMP_ACCESS` (script ainda ausente no checkout da VPS)
 **utc:** 2026-09-24T15:36:00Z
 
 ## Diagnóstico Web Console (2026-09-24)
@@ -20,7 +20,7 @@ não fazer `git pull` de feature na VPS DEV).
 # Restore ISOLADO — dump permanece em /opt/erp-zuccaro/backups; DEV=postgres intocado
 # Fix: stamp com underscore (hífen quebrava CREATE DATABASE)
 set -euo pipefail
-SCRIPT_SHA=0889eac60d15ae58b578a32479dc19a912b5f143
+SCRIPT_SHA=51fbf6dffe1b42fa9e2204e96d3989ad2eded759
 curl -fsSL "https://raw.githubusercontent.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/${SCRIPT_SHA}/scripts/vps/restore-pre-gate-e-isolated-webconsole.sh" \
   -o /tmp/restore-pre-gate-e-isolated-webconsole.sh
 bash /tmp/restore-pre-gate-e-isolated-webconsole.sh
