@@ -1,9 +1,12 @@
-### Gate E — autorização assinada (2026-09-24)
+### Gate E — Web Console parcial (2026-09-24)
 
-- Autorização: Gate E no DEV, 016–024 da `main` `@2fc2fc80…`; **não** D/F/3080.
-- Assinatura formal: **VINICIUS** · `24/09/2026` (termo §C).
-- `TERMO_STATUS` esperado: `SIGNED_CHECKLIST_OK` · apply VPS após backup novo na Web Console.
-- Evidência: `docs/vps/evidence/gate-e-autorizacao-registrada.txt`.
+- Assinatura: **VINICIUS** · `24/09/2026` · `SIGNED_CHECKLIST_OK`.
+- Backup novo VPS: `pre-gate-e-20260924-174755.sql` · bytes `390275` · sha `83a9e97d…` · `PRE_GATE_E_BACKUP_STATUS=OK`.
+- HEAD VPS: `2fc2fc80…` · `ROLLBACK_DRYRUN_OK` · health/ready 3080 = 200 · imagem R07B preservada.
+- Apply **ainda não**: host sem `npm` (`Command 'npm' not found`); **não** instalar via apt.
+- Próximo: migrator via `docker run` efêmero + volume `server/migrations` (cartão §3) → conferir 016–024 → `test:postgres` em container → evidência.
+- Evidências: `pre-gate-e-backup-latest.txt`, `gate-e-webconsole-parcial-2026-09-24.txt`.
+- **Não** D/F/3080.
 
 ### Integração #35 mergeada na main
 

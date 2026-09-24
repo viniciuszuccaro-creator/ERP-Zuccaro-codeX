@@ -71,17 +71,45 @@ bash scripts/vps/create-pre-gate-e-backup.sh
 bash scripts/vps/rollback-dry-run-check.sh --docker
 ```
 
-### 3) Gate E — migrator canônico **uma vez**
+### 3) Gate E — migrator canônico **uma vez** (sem `npm` no host)
 
-Usa `DATABASE_URL` do DEV já aprovado (não imprimir). Uma TX por arquivo; se falhar → parar.
+O host VPS **não** tem `npm`/`node` no PATH. **Não** rodar `apt install npm`.
+Usar imagem R07B já presente + volume das migrations do checkout `2fc2fc80`.
+Container **efêmero** (`--rm`); **não** restart/recreate de `erp-api-dev` / 3080.
 
 ```bash
-cd /opt/erp-zuccaro/server
-# Confirmar pendentes antes:
-npm run migrate:status
-npm run migrate
-npm run migrate:status
+cd /opt/erp-zuccaro
+test "$(git rev-parse HEAD)" = "2fc2fc80adb9ca876be6ca3d29aab49305839e8a"
+ls server/migrations/016_*.sql server/migrations/024_*.sql >/dev/null
+
+IMG=erp-zuccaro-erp-api:runtime07b-main-ca0bc5f3
+NET=$(docker inspect -f '{{range $k, $_ := .NetworkSettings.Networks}}{{println $k}}{{end}}' erp-api-dev | head -1)
+test -n "$NET"
+ENVFILE=$(mktemp)
+docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' erp-api-dev >"$ENVFILE"
+chmod 600 "$ENVFILE"
+
+# Status → apply → status (uma invocação de apply)
+docker run --rm --network "$NET" --env-file "$ENVFILE" \
+  -e REQUIRE_DATABASE=true \
+  -v /opt/erp-zuccaro/server/migrations:/app/migrations:ro \
+  "$IMG" node dist/db/migrate.js --status
+
+docker run --rm --network "$NET" --env-file "$ENVFILE" \
+  -e REQUIRE_DATABASE=true \
+  -v /opt/erp-zuccaro/server/migrations:/app/migrations:ro \
+  "$IMG" node dist/db/migrate.js
+
+docker run --rm --network "$NET" --env-file "$ENVFILE" \
+  -e REQUIRE_DATABASE=true \
+  -v /opt/erp-zuccaro/server/migrations:/app/migrations:ro \
+  "$IMG" node dist/db/migrate.js --status
+
+shred -u "$ENVFILE" 2>/dev/null || rm -f "$ENVFILE"
+# NÃO imprimir ENVFILE / DATABASE_URL
 ```
+
+Se o apply falhar no meio: **parar**; listar `schema_migrations`; não canário; 3080 intacta.
 
 ### 4) Conferir 016–024 cada 1×
 
@@ -93,9 +121,24 @@ docker exec supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 -Atc 
 
 ### 5) Testes PostgreSQL reais + smoke 3080 (sem trocar imagem)
 
+`test:postgres` também via Node em container (host sem npm). Rede = mesma do passo 3.
+
 ```bash
-cd /opt/erp-zuccaro/server
-npm run test:postgres
+cd /opt/erp-zuccaro
+IMG=erp-zuccaro-erp-api:runtime07b-main-ca0bc5f3
+NET=$(docker inspect -f '{{range $k, $_ := .NetworkSettings.Networks}}{{println $k}}{{end}}' erp-api-dev | head -1)
+ENVFILE=$(mktemp)
+docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' erp-api-dev >"$ENVFILE"
+chmod 600 "$ENVFILE"
+
+docker run --rm --network "$NET" --env-file "$ENVFILE" \
+  -e REQUIRE_DATABASE=true \
+  -v /opt/erp-zuccaro/server:/app -w /app \
+  node:22-bookworm-slim \
+  bash -lc 'npm ci && npm run test:postgres'
+
+shred -u "$ENVFILE" 2>/dev/null || rm -f "$ENVFILE"
+
 curl -sS -o /dev/null -w 'health=%{http_code}\n' http://127.0.0.1:3080/health
 curl -sS -o /dev/null -w 'ready=%{http_code}\n' http://127.0.0.1:3080/ready
 curl -sS http://127.0.0.1:3080/api/v1/meta | head -c 400; echo

@@ -105,7 +105,8 @@ Data/hora (UTC): 24/09/2026
 1) Web Console: main @ 2fc2fc80 · DB DEV = postgres · R07B image preservada
 2) create-pre-gate-e-backup.sh → colar PASTE_TO_GIT (sem dump no Git)
 3) Pré-check / rollback-dry-run R07B
-4) Gate E: cd server && npm run migrate  (uma vez; 1 TX/arquivo)
+4) Gate E: migrator canônico uma vez (host sem npm → docker run efêmero +
+   volume migrations @2fc2fc80; ver cartão §3; 1 TX/arquivo; sem tocar 3080)
 5) Conferir 016–024 cada 1× em schema_migrations
 6) npm run test:postgres no Postgres DEV real
 7) /health /ready + ops R07B na 3080 (somente leitura/smoke; sem troca de imagem)
