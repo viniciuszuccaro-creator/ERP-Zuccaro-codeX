@@ -3,6 +3,13 @@
 **Uso:** preencher e anexar à decisão humana. Sem este termo assinado,
 Cursor/Codex **não** executam canário, migration real nem promoção 3080.
 
+Checagem local (não executa D/E/F):
+
+```bash
+bash scripts/vps/validate-termo-autorizacao.sh
+# WAITING_SIGNATURE → preencher; SIGNED_CHECKLIST_OK → ainda exige backup + Codex
+```
+
 Data (UTC): _______________  
 Responsável: _______________  
 PR funcional: #33 · HEAD Codex no momento: _______________  

@@ -27,6 +27,9 @@ Regra-Mãe e o documento mestre do programa (PR #33).
 ## Próxima ação concreta
 
 1. Preencher `docs/TERMO_AUTORIZACAO_GATES_D_E_F.md` (EXPECTED_RUNTIME / Auth / fatia E).
+   Checagem local: `bash scripts/vps/validate-termo-autorizacao.sh` → deve sair de
+   `WAITING_SIGNATURE` para `SIGNED_CHECKLIST_OK` (ainda `EXECUTE_DEF=NO`).
 2. Sem termo + backup novo: **não** D/E/F.
-3. Legado: com HD montado, inventário; mapper sintético já cobre carimbo staging.
+3. Legado: com HD montado, inventário; mapper sintético cobre carimbo staging,
+   chave idempotente e lote com detecção de duplicata (`mapLegadoLoteSintetico`).
 4. Opcional: reexecutar `gate-c-read-only.sh` (meta via docker exec).

@@ -4,6 +4,8 @@
  * Não lê HD real. Não grava staging. Reutiliza migracaoErpPolicy (Regra-Mãe).
  */
 import {
+  buildReconciliacaoMigracao,
+  findRegistroMigracaoDuplicado,
   stampMigracaoRecord,
   stripSegredosMigracao,
 } from '../../src/components/lib/migracaoErpPolicy.js';
@@ -18,6 +20,11 @@ export const LEGADO_FIELD_ALIASES = Object.freeze({
   produto: {
     codigo: ['codigo', 'cod_produto', 'sku', 'codigo_legado'],
     descricao: ['descricao', 'nome', 'produto'],
+  },
+  empresa: {
+    codigo: ['codigo', 'cod_empresa', 'codigo_empresa', 'codigoempresa', 'codigo_legado'],
+    nome: ['nome', 'razao_social', 'nome_empresa', 'descricao'],
+    documento: ['documento', 'cnpj', 'cgc', 'cpf_cnpj'],
   },
 });
 
@@ -42,8 +49,26 @@ const pickAlias = (row, aliases = []) => {
 };
 
 /**
+ * Chave idempotente canônica (Gate 18 / rascunho legado):
+ * group_id|empresa_id|origem|entidade|codigo_legado
+ * @param {Record<string, unknown>} record
+ * @param {{ entidade?: string }} opts
+ */
+export const buildChaveIdempotenteMigracaoLegado = (record = {}, opts = {}) => {
+  const groupId = first(record.group_id, record.grupo_id);
+  const empresaId = first(record.empresa_id);
+  const origem = first(record.origem_migracao, record.origem, 'erp_antigo') || 'erp_antigo';
+  const entidade = first(opts.entidade, record.entidade_migracao, 'registro') || 'registro';
+  const legado = first(record.codigo_legado, record.id_antigo);
+  if (!groupId || !legado) {
+    throw new Error('Chave idempotente exige group_id e codigo_legado.');
+  }
+  return [groupId, empresaId || 'grupo', origem, entidade, legado].join('|');
+};
+
+/**
  * @param {Record<string, unknown>} row
- * @param {{ entidade?: 'cliente'|'produto', groupId?: string, empresaId?: string, arquivoNome?: string }} opts
+ * @param {{ entidade?: 'cliente'|'produto'|'empresa', groupId?: string, empresaId?: string, arquivoNome?: string }} opts
  */
 export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
   const entidade = opts.entidade || 'cliente';
@@ -53,10 +78,12 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
   }
 
   const codigo = pickAlias(row, aliases.codigo);
-  const nomeOuDesc = entidade === 'cliente'
-    ? pickAlias(row, aliases.nome)
-    : pickAlias(row, aliases.descricao);
-  const documento = entidade === 'cliente' ? pickAlias(row, aliases.documento) : '';
+  const nomeOuDesc = entidade === 'produto'
+    ? pickAlias(row, aliases.descricao)
+    : pickAlias(row, aliases.nome);
+  const documento = (entidade === 'cliente' || entidade === 'empresa')
+    ? pickAlias(row, aliases.documento)
+    : '';
 
   if (!codigo && !nomeOuDesc) {
     throw new Error('Registro sintetico sem codigo nem nome/descricao mapeavel.');
@@ -67,45 +94,110 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
     empresa_id: first(opts.empresaId, row.empresa_id),
     codigo_legado: codigo,
     id_antigo: codigo,
-    ...(entidade === 'cliente'
-      ? { nome: nomeOuDesc, documento: documento || undefined }
-      : { descricao: nomeOuDesc }),
+    ...(entidade === 'produto'
+      ? { descricao: nomeOuDesc }
+      : { nome: nomeOuDesc, documento: documento || undefined }),
     origem: 'erp_antigo',
   });
 
-  return stampMigracaoRecord(base, {
+  const stamped = stampMigracaoRecord(base, {
     arquivoNome: opts.arquivoNome || 'sintetico.csv',
     entidade,
     confirmado: false,
     destino: 'staging',
   });
+
+  return {
+    ...stamped,
+    entidade_migracao: entidade,
+    chave_idempotente_migracao: buildChaveIdempotenteMigracaoLegado(stamped, { entidade }),
+  };
 };
 
-const isMain = process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\\/g, '/'))
-  || process.argv[1]?.endsWith('mapear-registro-sintetico.mjs');
+/**
+ * Mapeia lote sintético: carimba staging, detecta duplicata e monta reconciliação.
+ * Não grava. Não lê HD.
+ * @param {Array<Record<string, unknown>>} rows
+ * @param {{ entidade?: 'cliente'|'produto'|'empresa', groupId?: string, empresaId?: string, arquivoNome?: string }} opts
+ */
+export const mapLegadoLoteSintetico = (rows = [], opts = {}) => {
+  const list = Array.isArray(rows) ? rows : [];
+  if (list.length === 0) {
+    throw new Error('Lote sintetico vazio.');
+  }
+
+  const mapped = [];
+  const reusos = [];
+  const erros = [];
+
+  for (let i = 0; i < list.length; i += 1) {
+    try {
+      const out = mapLegadoRowToCanonicalStub(list[i], opts);
+      const dup = findRegistroMigracaoDuplicado(out, mapped);
+      if (dup) {
+        reusos.push({
+          indice: i,
+          codigo_legado: out.codigo_legado,
+          chave_idempotente_migracao: out.chave_idempotente_migracao,
+          reuso_de: dup.chave_idempotente_migracao,
+        });
+        continue;
+      }
+      mapped.push(out);
+    } catch (err) {
+      erros.push({ indice: i, erro: String(err?.message || err) });
+    }
+  }
+
+  const reconciliacao = buildReconciliacaoMigracao({
+    origem: list,
+    gravados: mapped,
+    reusos,
+    campoValor: 'valor',
+  });
+
+  return {
+    entidade: opts.entidade || 'cliente',
+    destino_migracao: 'staging',
+    importacao_erp: true,
+    gravados: mapped,
+    reusos,
+    erros,
+    reconciliacao,
+    chaves: mapped.map((r) => r.chave_idempotente_migracao),
+  };
+};
 
 if (process.argv[1] && process.argv[1].includes('mapear-registro-sintetico')) {
-  const sample = {
-    cod_cliente: 'C-100',
-    razao_social: 'Cliente Sintetico LTDA',
-    cnpj: '00000000000191',
-    senha: 'NAO_DEVE_SAIR',
-    group_id: 'g-sint',
-    empresa_id: 'e-sint',
-  };
-  const out = mapLegadoRowToCanonicalStub(sample, {
+  const sampleRows = [
+    {
+      cod_cliente: 'C-100',
+      razao_social: 'Cliente Sintetico LTDA',
+      cnpj: '00000000000191',
+      senha: 'NAO_DEVE_SAIR',
+      group_id: 'g-sint',
+      empresa_id: 'e-sint',
+    },
+    {
+      cod_cliente: 'C-100',
+      razao_social: 'Cliente Sintetico LTDA (dup)',
+      group_id: 'g-sint',
+      empresa_id: 'e-sint',
+    },
+  ];
+  const lote = mapLegadoLoteSintetico(sampleRows, {
     entidade: 'cliente',
     arquivoNome: 'clientes_sintetico.csv',
   });
-  if (out.senha) {
+  if (lote.gravados.some((r) => r.senha)) {
     console.error('BLOCKED: segredo vazou no mapeamento');
     process.exit(1);
   }
   console.log(JSON.stringify({
-    codigo_legado: out.codigo_legado,
-    nome: out.nome,
-    destino_migracao: out.destino_migracao,
-    origem_migracao: out.origem_migracao,
-    importacao_erp: out.importacao_erp,
+    gravados: lote.gravados.length,
+    reusos: lote.reusos.length,
+    divergencia: lote.reconciliacao.divergencia_quantidade,
+    chave: lote.chaves[0],
+    destino_migracao: lote.destino_migracao,
   }));
 }

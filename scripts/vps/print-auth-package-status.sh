@@ -25,7 +25,9 @@ echo "$rb_out" | grep -E 'ROLLBACK_DRYRUN_'
 echo 'proposed_EXPECTED_RUNTIME=ERP-RUNTIME-08B'
 echo 'proposed_ERP_DOCKER_NETWORK=supabase_default'
 echo 'proposed_CANARY_PORT_CANDIDATES=3086,3090,3091'
-echo 'blocked_until=codex_EXPECTED_RUNTIME+auth_supabase_user+human_auth+new_backup'
+termo_out="$(bash "$ROOT/scripts/vps/validate-termo-autorizacao.sh" || true)"
+echo "$termo_out" | grep -E 'TERMO_STATUS=|EXECUTE_DEF=|blank_underscore'
+echo 'blocked_until=codex_EXPECTED_RUNTIME+auth_supabase_user+human_auth+new_backup+termo_assinado'
 echo 'PACKAGE_STATUS=READY_FOR_HUMAN_DECISION'
 echo 'NOTE: do not run canary or apply 016+'
 echo "AUTH_PACKAGE_END utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"

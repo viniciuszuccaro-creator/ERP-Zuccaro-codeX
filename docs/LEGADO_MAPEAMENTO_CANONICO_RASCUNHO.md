@@ -69,9 +69,21 @@ Reutilizar `stampMigracaoRecord`:
 
 ---
 
-## 5. Próximos passos desta frente
+## 5. Chave idempotente (sintético)
+
+Composição (alinhada ao Gate 18 / `migracaoErpPolicy`):
+
+```text
+group_id|empresa_id|origem_migracao|entidade|codigo_legado
+```
+
+Implementação local (sem HD/import): `buildChaveIdempotenteMigracaoLegado` e
+`mapLegadoLoteSintetico` em `scripts/legado/mapear-registro-sintetico.mjs`.
+Duplicata no lote → reuso; reconciliação via `buildReconciliacaoMigracao`.
+
+## 6. Próximos passos desta frente
 
 1. Rodar inventário no HD (`BACKUP ERP ANTIGO - CODEX`) — metadados/hashes.
 2. Preencher “Formato/origem observada” na matriz §2.
-3. Propor ETL idempotente + testes sintéticos em lote separado.
+3. Propor ETL idempotente real só após inventário + Onda 25.
 4. Staging isolado só com gate Onda 25.

@@ -6,9 +6,14 @@
   `docs/TERMO_AUTORIZACAO_GATES_D_E_F.md`, Gate F
   `docs/GATE_F_PROMOCAO_CARTAO.md`).
 - Proposta: `EXPECTED_RUNTIME=ERP-RUNTIME-08B` + `supabase_user`.
-- Legado: mapper sintético `scripts/legado/mapear-registro-sintetico.mjs`
-  (reusa `migracaoErpPolicy`; sem HD/import real).
+- Validador do termo: `scripts/vps/validate-termo-autorizacao.sh`
+  → `TERMO_STATUS=WAITING_SIGNATURE` / `EXECUTE_DEF=NO` (integrado ao
+  `print-auth-package-status.sh`).
+- Legado: mapper sintético com chave idempotente + lote
+  (`mapLegadoLoteSintetico`; reusa `migracaoErpPolicy`; sem HD/import real).
 - **Não** executados: canário, 016–024, promoção 3080.
+- Próximo: assinar termo + backup novo + confirmação Codex; senão só
+  inventário HD somente leitura.
 
 ### ERP-RUNTIME-08 — diagnóstico Comercial 360º (2026-09-19)
 

@@ -197,5 +197,34 @@ test('print-auth-package-status READY apos Gate C APROVADO', () => {
   assert.match(run.stdout, /GATE_C_RESULT=APROVADO/);
   assert.match(run.stdout, /missing_for_gate_e=016,017,018,019,020,021,022,023,024/);
   assert.match(run.stdout, /proposed_EXPECTED_RUNTIME=ERP-RUNTIME-08B/);
+  assert.match(run.stdout, /TERMO_STATUS=WAITING_SIGNATURE/);
   assert.match(run.stdout, /PACKAGE_STATUS=READY_FOR_HUMAN_DECISION/);
+});
+
+test('validate-termo-autorizacao WAITING_SIGNATURE no termo em branco', () => {
+  const script = path.join(root, 'scripts/vps/validate-termo-autorizacao.sh');
+  const run = spawnSync('bash', ['-n', script], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr);
+  const exec = spawnSync('bash', [script], { encoding: 'utf8' });
+  assert.equal(exec.status, 0, exec.stderr || exec.stdout);
+  assert.match(exec.stdout, /TERMO_STATUS=WAITING_SIGNATURE/);
+  assert.match(exec.stdout, /EXECUTE_DEF=NO/);
+});
+
+test('validate-termo-autorizacao SIGNED_CHECKLIST_OK quando preenchido', () => {
+  const script = path.join(root, 'scripts/vps/validate-termo-autorizacao.sh');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'termo-'));
+  const filled = path.join(tmp, 'termo.md');
+  fs.writeFileSync(filled, [
+    '# Termo',
+    'Data (UTC): 2026-09-24T12:00:00Z',
+    'Responsável: Operador Teste',
+    '- [x] **Gate E** — aplicar faltantes',
+    'Assinatura responsável: Operador Teste',
+    '',
+  ].join('\n'));
+  const run = spawnSync('bash', [script, filled], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr || run.stdout);
+  assert.match(run.stdout, /TERMO_STATUS=SIGNED_CHECKLIST_OK/);
+  assert.match(run.stdout, /EXECUTE_DEF=NO/);
 });
