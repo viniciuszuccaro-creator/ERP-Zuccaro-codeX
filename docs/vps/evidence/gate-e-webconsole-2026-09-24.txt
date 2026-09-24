@@ -1,0 +1,43 @@
+# Gate E — evidência Web Console (2026-09-24) — sanitizada
+# Sem dump, .env, DATABASE_URL, PII ou segredos.
+
+utc_registro=2026-09-24T18:35:00Z
+vps=srv1982741
+main_sha=2fc2fc80adb9ca876be6ca3d29aab49305839e8a
+assinatura=VINICIUS
+termo=SIGNED_CHECKLIST_OK
+
+# Backup pré-apply
+backup_path=pre-gate-e-20260924-174755.sql
+backup_bytes=390275
+backup_sha256=83a9e97d30418a8fafa1a5be8558bcb480aa2a4184ddee1f516d1e33873f9a08
+PRE_GATE_E_BACKUP_STATUS=OK
+ROLLBACK_DRYRUN=OK
+
+# Migrator (docker run efêmero + volume migrations; imagem R07B; 3080 intocada)
+migrate_before_applied=001_015
+migrate_before_pending=016_017_018_019_020_021_022_023_024
+migrate_executed=016_orcamentos_comercial_360.sql,017_pedidos_comercial_360.sql,018_produto_pim_dam_outbox.sql,019_produto_relacoes_tenant.sql,020_produto_midia_storage_key_unique.sql,021_produto_midia_upload_reservation.sql,022_produto_midia_scan_evidence.sql,023_produto_material_norma.sql,024_produto_canais_rascunho.sql
+migrate_after_pending=[]
+GATE_E_MIGRATE_STATUS=OK
+schema_migrations_016_024=PRESENT_9
+
+# test:postgres (falhou — ambiente)
+test_postgres_status=FAIL
+test_postgres_cause=ERR_MODULE_NOT_FOUND_tsx
+test_postgres_note=npm_ci_omitiu_devDependencies_porque_NODE_ENV=production_no_envfile_do_erp-api-dev
+# Suites tentadas (todas falharam no import tsx, não na lógica de negócio):
+# R01AUTH, R08B, R08C, R09, R10C, R10 — TOTAL_TESTS=1 cada; pass=0 fail=1
+
+# Smoke 3080 (sem troca de imagem)
+health_3080=200
+ready_3080=200
+meta_runtime=ERP-RUNTIME-07B
+meta_auth_mode=dev_headers
+official_image=erp-zuccaro-erp-api:runtime07b-main-ca0bc5f3
+alter_3080=NOT_PERFORMED
+
+GATE_E_STATUS=MIGRATE_OK_TEST_POSTGRES_PENDING
+gate_d=NOT_AUTHORIZED
+gate_f=NOT_AUTHORIZED
+EXECUTE_DEF=NO

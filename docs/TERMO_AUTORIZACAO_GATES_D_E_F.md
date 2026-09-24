@@ -94,7 +94,9 @@ alter_3080=NOT_AUTHORIZED
 Assinatura responsável: VINICIUS
 Data/hora (UTC): 24/09/2026
 
-**Próximo passo operacional:** backup **novo** na Web Console + bloco do cartão Gate E (ainda sem D/F/3080).
+**Estado operacional (2026-09-24):** backup OK · migrate 016–024 **aplicado** no DEV ·
+`test:postgres` ainda pendente (falhou por `tsx`/devDeps; cartão §5 corrigido) ·
+3080 permanece R07B · D/F **não** autorizados.
 
 ---
 

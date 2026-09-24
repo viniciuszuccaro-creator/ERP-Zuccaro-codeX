@@ -1,10 +1,11 @@
 # Gate E — cartão de operação (DEV)
 
-**Status:** `ASSINADO` · Gate E autorizado para Web Console (após backup novo)
-**Escopo:** migrations **016–024** da `main` @ `2fc2fc80adb9ca876be6ca3d29aab49305839e8a` no DEV.
+**Status:** `MIGRATE_OK` · `test:postgres` pendente (retry §5 com `--include=dev`)
+**Escopo:** migrations **016–024** da `main` @ `2fc2fc80adb9ca876be6ca3d29aab49305839e8a` no DEV — **já aplicadas**.
 **Não autorizados:** Gate D · Gate F · alteração da 3080 · canário.
 
 Termo: `docs/TERMO_AUTORIZACAO_GATES_D_E_F.md` — assinatura **VINICIUS** · `24/09/2026`.
+Evidência: `docs/vps/evidence/gate-e-webconsole-2026-09-24.txt`.
 
 ---
 
@@ -121,11 +122,11 @@ docker exec supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 -Atc 
 
 ### 5) Testes PostgreSQL reais + smoke 3080 (sem trocar imagem)
 
-`test:postgres` também via Node em container (host sem npm). Rede = mesma do passo 3.
+`test:postgres` via Node em container. **Obrigatório** forçar `NODE_ENV=development` no `npm ci`:
+o env do `erp-api-dev` traz `NODE_ENV=production` e o `npm ci` omite `tsx` (devDependency) → `ERR_MODULE_NOT_FOUND`.
 
 ```bash
 cd /opt/erp-zuccaro
-IMG=erp-zuccaro-erp-api:runtime07b-main-ca0bc5f3
 NET=$(docker inspect -f '{{range $k, $_ := .NetworkSettings.Networks}}{{println $k}}{{end}}' erp-api-dev | head -1)
 ENVFILE=$(mktemp)
 docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' erp-api-dev >"$ENVFILE"
@@ -133,9 +134,10 @@ chmod 600 "$ENVFILE"
 
 docker run --rm --network "$NET" --env-file "$ENVFILE" \
   -e REQUIRE_DATABASE=true \
+  -e NODE_ENV=development \
   -v /opt/erp-zuccaro/server:/app -w /app \
   node:22-bookworm-slim \
-  bash -lc 'npm ci && npm run test:postgres'
+  bash -lc 'npm ci --include=dev && npm run test:postgres'
 
 shred -u "$ENVFILE" 2>/dev/null || rm -f "$ENVFILE"
 

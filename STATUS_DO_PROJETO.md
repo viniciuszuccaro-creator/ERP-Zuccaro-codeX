@@ -1,11 +1,12 @@
-### Gate E — Web Console parcial (2026-09-24)
+### Gate E — migrate OK; test:postgres pendente (2026-09-24)
 
 - Assinatura: **VINICIUS** · `24/09/2026` · `SIGNED_CHECKLIST_OK`.
-- Backup novo VPS: `pre-gate-e-20260924-174755.sql` · bytes `390275` · sha `83a9e97d…` · `PRE_GATE_E_BACKUP_STATUS=OK`.
-- HEAD VPS: `2fc2fc80…` · `ROLLBACK_DRYRUN_OK` · health/ready 3080 = 200 · imagem R07B preservada.
-- Apply **ainda não**: host sem `npm` (`Command 'npm' not found`); **não** instalar via apt.
-- Próximo: migrator via `docker run` efêmero + volume `server/migrations` (cartão §3) → conferir 016–024 → `test:postgres` em container → evidência.
-- Evidências: `pre-gate-e-backup-latest.txt`, `gate-e-webconsole-parcial-2026-09-24.txt`.
+- Backup: `pre-gate-e-20260924-174755.sql` · sha `83a9e97d…` · OK.
+- **Migrate Gate E OK** (docker run + volume migrations): executou 016–024; `pending=[]`; schema 001–024.
+- `test:postgres` **FAIL**: `tsx` ausente — `npm ci` omitiu devDeps com `NODE_ENV=production` do env do `erp-api-dev`.
+- Smoke 3080: health/ready 200 · meta `ERP-RUNTIME-07B` · imagem R07B **não** alterada.
+- Próximo: reexecutar só §5 com `NODE_ENV=development` + `npm ci --include=dev`; colar resultado sanitizado.
+- Evidência: `docs/vps/evidence/gate-e-webconsole-2026-09-24.txt`.
 - **Não** D/F/3080.
 
 ### Integração #35 mergeada na main
