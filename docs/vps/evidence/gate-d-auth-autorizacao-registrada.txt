@@ -1,0 +1,20 @@
+# Gate Auth / Gate D — autorização registrada (sanitizada)
+# Sem token, e-mail, senha, UUID ou .env.
+
+utc_assinatura=2026-09-24
+assinatura=VINICIUS
+canal=Cursor_agent_chat
+texto=
+  Autorizo Gate Auth sintético e Gate D.
+  Não autorizo Gate F / 3080.
+checkbox_gate_auth=MARKED
+checkbox_gate_d=MARKED
+EXECUTE_AUTH=AUTHORIZED_PENDING_WEBCONSOLE
+EXECUTE_GATE_D=AUTHORIZED_AFTER_AUTH_OK
+gate_f=NOT_AUTHORIZED
+alter_3080=NOT_AUTHORIZED
+image_tag=erp-zuccaro-erp-api:comercial360-main-2fc2fc80
+digest_status=REGISTERED
+gate_e_status=OK
+AUTH_SYNTHETIC_STATUS=PENDING_WEBCONSOLE
+GATE_D_STATUS=PENDING_AUTH_OK

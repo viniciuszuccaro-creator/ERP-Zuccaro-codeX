@@ -1,7 +1,9 @@
 # Gate D — checklist de Auth sintético + smoke
 
-**Status:** `PREPARADO / AGUARDA ASSINATURA` Gate Auth + Gate D no termo §C  
+**Status:** `ASSINADO` · Gate Auth + Gate D autorizados (VINICIUS · 24/09/2026)  
+**Execução:** Auth **primeiro** na Web Console → depois canário Gate D  
 **Pré-condições:** Gate E OK · digest `comercial360-main-2fc2fc80` REGISTERED · 3080 R07B  
+**Não autorizados:** Gate F · alteração 3080  
 **Não usar:** `dev_headers` como prova de Auth.  
 **Não publicar:** mídia · token · e-mail · senha · UUID no Git.
 
@@ -18,7 +20,7 @@ Complementa `docs/GATES_D_F_PREPARACAO_CANARIO.md` e
 | 2 | Gate E OK (schema 016–024 DEV) | `gate-e-webconsole-2026-09-24.txt` |
 | 3 | `EXPECTED_RUNTIME=ERP-RUNTIME-08B` | canary default + `/meta` |
 | 4 | Imagem `comercial360-main-2fc2fc80` | digest **REGISTERED** |
-| 5 | Termo §C Gate Auth + Gate D marcados + assinatura | **PENDENTE** |
+| 5 | Termo §C Gate Auth + Gate D marcados + assinatura | **OK** · VINICIUS · 24/09/2026 |
 | 6 | Canário up em porta ≠3080 | após (5) |
 | 7 | Meta canário: `auth.mode=supabase_user` | smoke |
 | 8 | Identidade sintética + profile vinculado | **fora do Git** |

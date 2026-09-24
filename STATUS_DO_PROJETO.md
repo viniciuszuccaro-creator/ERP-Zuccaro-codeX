@@ -1,10 +1,17 @@
-### Pós-Gate E — prep Gate D (2026-09-24)
+### Gate Auth + Gate D — autorizados (2026-09-24)
+
+- Assinatura: **VINICIUS** · `24/09/2026` · termo §C (Auth + D marcados).
+- **Não** autorizados: Gate F · alteração 3080.
+- Digest: `comercial360-main-2fc2fc80` REGISTERED · Gate E OK.
+- Execução: **Auth Web Console primeiro** → PASTE `AUTH_SYNTHETIC_STATUS=OK` → canário Gate D.
+- Evidência auth: `docs/vps/evidence/gate-d-auth-autorizacao-registrada.txt`.
+- Checklist: `docs/GATE_D_SMOKE_AUTH_CHECKLIST.md`.
+- **Próximo:** operador cola bloco Auth (agregados + provisionamento); sem segredos no paste.
+
+### Pós-Gate E — prep Gate D (histórico)
 
 - Gate E **OK** · digest **REGISTERED** (`comercial360-main-2fc2fc80`).
-- Termo §C atualizado: checkboxes **Gate Auth sintético** + **Gate D** aguardam assinatura humana (`PENDING_HUMAN`).
-- Checklist operacional: `docs/GATE_D_SMOKE_AUTH_CHECKLIST.md` (provisionamento + canário).
-- `GATE_D_READY=NO` · blocker: `auth_synthetic_gate_pending`.
-- **Próximo:** assinatura VINICIUS autorizando Gate Auth (e opcionalmente Gate D) no termo — **sem** executar Auth/canário até assinar.
+- Prep go-nogo/canary 08B concluída; Auth/D passaram de WAITING → **AUTHORIZED** (ver seção acima).
 - 3080 R07B · F bloqueado.
 
 ### Gate E — CONCLUÍDO no DEV (2026-09-24)

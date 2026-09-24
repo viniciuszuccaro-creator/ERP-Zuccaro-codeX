@@ -69,8 +69,8 @@ Marcar **apenas** o autorizado. Sem marca = **não executar**.
 
 - [ ] ~~Merge PR #33~~ — **obsoleto**; merge via **#35**
 - [x] **Gate E** — 016–024 no DEV @ `2fc2fc80…` — **EXECUTADO** (`GATE_E_STATUS=OK`)
-- [ ] **Gate Auth sintético** — provisionar identidade de teste + vincular `profiles.auth_user_id` (Grupo/Empresa sintéticos; RBAC mínimo Orçamento/Pedido; **não** reutilizar profiles sem prova; credenciais fora do Git; revogar após smoke)
-- [ ] **Gate D** — canário `comercial360-main-2fc2fc80` em porta ≠3080 + smoke meta + smoke Bearer (checklist); **exige** Gate Auth OK
+- [x] **Gate Auth sintético** — provisionar identidade de teste + vincular `profiles.auth_user_id` (Grupo/Empresa sintéticos; RBAC mínimo Orçamento/Pedido; **não** reutilizar profiles sem prova; credenciais fora do Git; revogar após smoke)
+- [x] **Gate D** — canário `comercial360-main-2fc2fc80` em porta ≠3080 + smoke meta + smoke Bearer (checklist); **exige** Gate Auth OK antes do canário
 - [ ] **Gate F** — **NÃO autorizado** (3080 inalterada)
 
 ### Registro Gate E (já assinado)
@@ -85,29 +85,28 @@ GATE_E_STATUS=OK
 Assinatura responsável (Gate E): VINICIUS
 Data/hora (UTC): 24/09/2026
 
-### Registro Gate Auth / Gate D (aguardar assinatura)
+### Registro Gate Auth / Gate D (assinado)
 
 ```text
 utc_registro_pedido=2026-09-24T20:12:00Z
+utc_assinatura_formal=2026-09-24 (informada: 24/09/2026)
 canal=Cursor_agent_chat
-texto_pedido=
-  "Autorizo o Gate Auth sintético no DEV (identidade de teste + profile
-   vinculado; segredos fora do Git; revogação após smoke) e, em seguida,
-   o Gate D (canário comercial360-main-2fc2fc80 + smoke). Não autorizo
-   Gate F nem alteração da 3080."
-checkbox_gate_auth=PENDING
-checkbox_gate_d=PENDING
-assinatura_formal=PENDING_HUMAN
-EXECUTE_AUTH=NO
-EXECUTE_GATE_D=NO
+texto_autorizacao_humana=
+  "Autorizo: Gate Auth sintético e Gate D. Não autorizo Gate F / 3080."
+checkbox_gate_auth=MARKED
+checkbox_gate_d=MARKED
+assinatura_formal=VINICIUS
+EXECUTE_AUTH=AUTHORIZED_PENDING_WEBCONSOLE
+EXECUTE_GATE_D=AUTHORIZED_AFTER_AUTH_OK
 gate_f=NOT_AUTHORIZED
 alter_3080=NOT_AUTHORIZED
 ```
 
-Assinatura responsável (Auth / D): PENDING_HUMAN
-Data/hora (UTC): PENDING_HUMAN
+Assinatura responsável (Auth / D): VINICIUS
+Data/hora (UTC): 24/09/2026
 
-**Estado operacional:** E OK · digest REGISTERED · Auth/D **WAITING_SIGNATURE** · F/3080 bloqueados.
+**Estado operacional:** E OK · digest REGISTERED · Auth/D **AUTHORIZED** (execução Web Console) · F/3080 bloqueados.
+**Ordem:** Auth primeiro → evidência `AUTH_SYNTHETIC_STATUS=OK` → canário Gate D.
 
 ---
 
