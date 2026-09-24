@@ -43,11 +43,12 @@ docker ps --format '{{.Names}}' | grep -Ei 'auth|kong|gotrue' || true
 curl -sS -o /dev/null -w 'health=%{http_code}\n' http://127.0.0.1:3080/health
 ```
 
-### 2–4) Blocos só-comando (não colar prosa no shell)
+### 2–4) Blocos só-comando — **uma sessão contínua** (sem colar prosa)
 
-Containers: `supabase-auth`, `supabase-studio`. Colar **A → B → C → D** isolados.
+Containers: `supabase-auth`, `supabase-studio`.  
+Se aparecer `Organization: command not found`, prosa foi colada no shell — ignore e continue só com bash.
 
-**A — carregar service_role**
+**A+B juntos (obrigatório na mesma sessão):**
 ```bash
 set -euo pipefail
 set -a
@@ -55,13 +56,16 @@ source /root/supabase/docker/.env
 set +a
 SR="${SERVICE_ROLE_KEY:-${SUPABASE_SERVICE_ROLE_KEY:-}}"
 test -n "$SR"
-AUTH_BASE="${API_EXTERNAL_URL:-${SUPABASE_PUBLIC_URL:-http://127.0.0.1:8000}}"
+AUTH_BASE="${API_EXTERNAL_URL:-}"
+if [ -z "$AUTH_BASE" ]; then AUTH_BASE="${SUPABASE_PUBLIC_URL:-}"; fi
+if [ -z "$AUTH_BASE" ]; then AUTH_BASE="http://127.0.0.1:8000"; fi
 AUTH_BASE="${AUTH_BASE%/}"
-echo 'service_role_loaded=YES'
-```
+echo "auth_base_len=${#AUTH_BASE}"
+curl -sS -o /dev/null -w 'auth_health=%{http_code}\n' "${AUTH_BASE}/auth/v1/health" || true
 
-**B — criar user Auth** (antes: `SYNTH_EMAIL=...` e `SYNTH_PASS=...` só no shell local)
-```bash
+# Defina email/senha LOCAIS (não envie ao chat), depois rode o resto:
+# SYNTH_EMAIL='gate-d.synth@dev.synthetic.local'
+# SYNTH_PASS='senha-forte-local'
 test -n "${SYNTH_EMAIL:-}" && test -n "${SYNTH_PASS:-}"
 curl -sS -o /tmp/auth-create.json -w 'http=%{http_code}\n' \
   -X POST "${AUTH_BASE}/auth/v1/admin/users" \
@@ -69,10 +73,25 @@ curl -sS -o /tmp/auth-create.json -w 'http=%{http_code}\n' \
   -H "Authorization: Bearer ${SR}" \
   -H 'Content-Type: application/json' \
   -d "{\"email\":\"${SYNTH_EMAIL}\",\"password\":\"${SYNTH_PASS}\",\"email_confirm\":true}"
+test -s /tmp/auth-create.json
 python3 -c "import json;d=json.load(open('/tmp/auth-create.json'));u=d.get('id')or(d.get('user')or{}).get('id');open('/tmp/auth-uuid.txt','w').write(u or '');print('auth_user_created='+('YES' if u else 'NO'))"
+test -s /tmp/auth-uuid.txt
 ```
 
-**C — profile + vínculo**
+Se `auth_health`/`http` falhar, tente via rede Docker (sem Kong):
+```bash
+NET=$(docker inspect -f '{{range $k,$_ := .NetworkSettings.Networks}}{{println $k}}{{end}}' supabase-auth | head -1)
+docker run --rm --network "$NET" -v /tmp:/tmp curlimages/curl:8.5.0 \
+  -sS -o /tmp/auth-create.json -w 'http=%{http_code}\n' \
+  -X POST 'http://auth:9999/admin/users' \
+  -H "apikey: ${SR}" \
+  -H "Authorization: Bearer ${SR}" \
+  -H 'Content-Type: application/json' \
+  -d "{\"email\":\"${SYNTH_EMAIL}\",\"password\":\"${SYNTH_PASS}\",\"email_confirm\":true}"
+```
+(Se o hostname interno for `supabase-auth`, troque `http://auth:9999` por `http://supabase-auth:9999`.)
+
+**C — profile (só se `auth_user_created=YES`):**
 ```bash
 AUTH_UUID="$(cat /tmp/auth-uuid.txt)"
 test -n "$AUTH_UUID"
@@ -94,7 +113,7 @@ INSERT INTO profiles (
 SQL
 ```
 
-**D — contagens (enviar só estas linhas)**
+**D — contagens**
 ```bash
 docker exec supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 -Atc \
   "SELECT 'auth_users='||count(*)::text FROM auth.users;"
@@ -104,7 +123,7 @@ docker exec supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 -Atc 
   "SELECT 'profiles_ativos_sem_auth='||count(*)::text FROM profiles WHERE ativo AND auth_user_id IS NULL;"
 ```
 
-Se A falhar: `ls /root/supabase/docker/.env /opt/erp-zuccaro/.env* 2>/dev/null`
+**Plano B (UI):** Supabase Studio → Authentication → Add user (confirm) → anotar UUID no cofre → rodar só o bloco C com `AUTH_UUID=...` (não colar UUID no chat) → bloco D.
 
 ### 5) PASTE sanitizado (só após contagens reais)
 
