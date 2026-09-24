@@ -28,9 +28,8 @@ Regra-Mãe e o documento mestre do programa (PR #33).
 
 ## Próxima ação concreta
 
-1. ~~VPS backup pre-gate-e~~ — metadados em `docs/vps/evidence/pre-gate-e-backup-latest.txt`
-   (`NAMED_CANDIDATE_PRESENT`; dump real só na VPS; **não** autoriza D/E/F).
-2. **Codex:** fechar §4 do contrato (`print-pedido-codex.sh` → pending=0).
-3. **Humano:** assinar termo + marcar checkbox do gate em C (e iniciais B).
-4. Revalidar: `go-nogo-def.sh` (ainda `EXECUTE_DEF=NO` / `AUTHORIZATION=NOT_GRANTED`).
-5. Só então decidir E→D→F; **não** interpretar `YES_PENDING_HUMAN_FINAL` como go.
+1. ~~VPS backup pre-gate-e~~ — metadados registrados (`AUTHORIZES_GATES_DEF=NO`).
+2. ~~Codex §4 decisões~~ — documentadas no contrato (operacional ainda pendente).
+3. **Humano:** assinar termo + marcar checkbox do gate em C.
+4. Pendências operacionais: digest pós-merge; gate Auth sintético.
+5. Revalidar `go-nogo-def.sh` (`EXECUTE_DEF=NO`); **não** alterar 3080.

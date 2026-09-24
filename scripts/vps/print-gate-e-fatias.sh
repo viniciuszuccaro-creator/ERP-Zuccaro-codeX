@@ -23,11 +23,14 @@ fatia_comercial='016,017'
 fatia_produto='018,019,020,021,022,023,024'
 echo "proposed_fatia_comercial=${fatia_comercial}"
 echo "proposed_fatia_produto_dam_canais=${fatia_produto}"
-echo 'proposed_order=comercial_first_then_produto'
-echo 'proposed_strategy=fatias_separadas_com_test_postgres_entre_fatias'
-echo 'alt_strategy=016_024_juntas_se_codex_confirmar'
+echo 'proposed_order=comercial_then_produto_review_only'
+echo 'proposed_strategy=016_024_single_invocation_main_order'
+echo 'review_slices_only=YES'
+echo 'NOTE: migrator atual aplica todos os pendentes numa invocacao; fatias nao sao duas execucoes'
+echo 'alt_strategy=none_without_migrator_change'
 echo 'apply_source=main_pos_merge_only'
 echo 'APPLY_NOW=NO'
-echo 'GATE_E_PLAN_STATUS=PROPOSED_AWAITING_CODEX'
+echo 'AUTHORIZES_GATES_DEF=NO'
+echo 'GATE_E_PLAN_STATUS=PROPOSED_AWAITING_AUTHORIZATION'
 echo "GATE_E_FATIAS_END utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 exit 0

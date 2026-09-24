@@ -47,10 +47,18 @@ echo "sanitize=${scan:-UNKNOWN}"
 [[ "$scan" == 'CLEAN' ]] || blockers+=('sanitize_leak_candidate')
 
 pedido_out="$(bash "$ROOT/scripts/vps/print-pedido-codex.sh" || true)"
-echo "$pedido_out" | grep -E 'codex_pending_count=|CODEX_PEDIDO_STATUS='
+echo "$pedido_out" | grep -E 'codex_pending_count=|CODEX_PEDIDO_STATUS=|decided_gate_e_strategy=|image_digest_status=|auth_synthetic_status=|gates_def_executed='
 pending_codex="$(echo "$pedido_out" | sed -n 's/^codex_pending_count=//p' | head -1)"
+pedido_status="$(echo "$pedido_out" | sed -n 's/^CODEX_PEDIDO_STATUS=//p' | head -1)"
 if [[ -n "$pending_codex" && "$pending_codex" != '0' ]]; then
   blockers+=('codex_confirmacoes_pendentes')
+fi
+# Pendências operacionais mesmo com §4 documentado
+if echo "$pedido_out" | grep -q 'image_digest_status=PENDING_BUILD_AFTER_MERGE'; then
+  blockers+=('image_digest_pending_post_merge')
+fi
+if echo "$pedido_out" | grep -q 'auth_synthetic_status=PENDING_AUTH_GATE'; then
+  blockers+=('auth_synthetic_gate_pending')
 fi
 
 # Dedupe preservando ordem

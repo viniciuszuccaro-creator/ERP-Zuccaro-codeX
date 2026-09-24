@@ -16,7 +16,7 @@ bash scripts/vps/go-nogo-def.sh
 
 Data (UTC) preparação Cursor: `2026-09-24T12:45:00Z`
 Responsável (assinatura humana): _______________
-PR funcional: #33 · HEAD Codex observado: `bfdfe834` (draft — revalidar no GitHub)
+PR funcional: #33 · HEAD Codex observado: `ceeb92e9` (draft — revalidar no GitHub)
 PR infra Cursor: #34 · HEAD: consultar branch `cursor/vps-hml-gate-c-legado-392b`
 Evidência Gate C: `docs/vps/evidence/gate-c-2026-09-24.txt` (**APROVADO**)
 
@@ -40,18 +40,21 @@ Evidência Gate C: `docs/vps/evidence/gate-c-2026-09-24.txt` (**APROVADO**)
 
 ---
 
-## A. Decisões técnicas (Codex / arquitetura)
+## A. Decisões técnicas (Codex — documentadas; execução pendente)
 
-Propostas Cursor abaixo. **Inicial Codex** e valor final ficam em aberto até §4.
+Fonte: §4 do contrato + comentário PR #34 (HEAD #33 observado `ceeb92e9`).
 
-| Decisão | Proposta Cursor (fato/código) | Valor final | Inicial Codex |
-|---|---|---|---|
-| `EXPECTED_RUNTIME` | `ERP-RUNTIME-08B` (meta PR #33) | ________ | ___ |
-| Meta canário `auth.mode` | deve ser `supabase_user` | ________ | ___ |
-| Gate E — fatia migrations | proposta: 016–017 depois 018–024 | ________ | ___ |
-| Tag imagem | `comercial360-main-<sha8>` pós-merge **main** | sha8=________ | ___ |
-| Porta canário | candidatas FREE: 3086 / 3090 / 3091 | ________ | ___ |
-| Rede Docker | `supabase_default` (Gate C) | ________ | ___ |
+| Decisão | Valor documentado | Estado operacional |
+|---|---|---|
+| `EXPECTED_RUNTIME` | `ERP-RUNTIME-08B` | Default canary antigo NÃO usar no D |
+| Meta canário `auth.mode` | critério `supabase_user` | Comprovar pós-merge; 3080 ainda `dev_headers` |
+| Gate E — migrations | **uma invocação** 016–024 (MAIN); fatias só revisão | Não executado |
+| Tag imagem | `comercial360-main-<MERGE_SHA8>` | Digest: `PENDING_BUILD_AFTER_MERGE` |
+| Porta canário | revalidar FREE no instante (3086/3090/3091) | ________ |
+| Rede Docker | `supabase_default` (Gate C) | Confirmado |
+| Auth sintético smoke D | gate Auth próprio | `PENDING_AUTH_GATE` |
+
+Iniciais / assinatura humana ainda em aberto na seção C.
 
 ---
 

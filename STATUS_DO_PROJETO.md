@@ -1,13 +1,12 @@
 ### Frente Cursor — VPS / HML / Gate C / legado (2026-09-24)
 
 - Branch: `cursor/vps-hml-gate-c-legado-392b` / PR `#34`.
-- Gate C **APROVADO**. Termo `FACTS_READY_WAITING_SIGNATURE`.
-- Backup VPS registrado (só metadados): `pre-gate-e-20260924-140304.sql`
-  bytes=`390275` sha256=`e72ca99b453fa6b060b5264f636794b3a601202c18e4185deb12f0020cae3f80`
-  mode 600 · `AUTHORIZES_GATES_DEF=NO` · `BACKUP_NOVO_STATUS=NAMED_CANDIDATE_PRESENT`.
-- `GO_NOGO=NO` — blockers restantes: assinatura do termo + Codex §4 (5).
-- **Não** executados: migration, canário, promoção 3080.
-- Próximo: Codex §4 → assinar termo + checkbox do gate → revalidar go-nogo.
+- Gate C **APROVADO**. Backup pre-gate-e metadados OK (`AUTHORIZES_GATES_DEF=NO`).
+- Contrato §4: **decisões Codex documentadas** (não = D/E/F executados).
+  Gate E = **uma invocação** 016–024; fatias só revisão.
+  Digest `PENDING_BUILD_AFTER_MERGE`; Auth sintético `PENDING_AUTH_GATE`.
+- `GO_NOGO=NO` — termo + digest + Auth gate; 3080 R07B preservada.
+- Próximo: assinar termo + checkbox; sem alterar 3080.
 
 ### ERP-RUNTIME-08 — diagnóstico Comercial 360º (2026-09-19)
 

@@ -344,8 +344,10 @@ test('print-gate-e-fatias expoe comercial e produto', () => {
   assert.equal(run.status, 0, run.stderr || run.stdout);
   assert.match(run.stdout, /proposed_fatia_comercial=016,017/);
   assert.match(run.stdout, /proposed_fatia_produto_dam_canais=018,019,020,021,022,023,024/);
+  assert.match(run.stdout, /proposed_strategy=016_024_single_invocation_main_order/);
+  assert.match(run.stdout, /review_slices_only=YES/);
   assert.match(run.stdout, /APPLY_NOW=NO/);
-  assert.match(run.stdout, /GATE_E_PLAN_STATUS=PROPOSED_AWAITING_CODEX/);
+  assert.match(run.stdout, /AUTHORIZES_GATES_DEF=NO/);
 });
 
 test('go-nogo-def NO com blockers atuais', () => {
@@ -355,20 +357,31 @@ test('go-nogo-def NO com blockers atuais', () => {
   assert.match(run.stdout, /GO_NOGO=NO/);
   assert.match(run.stdout, /termo_waiting_signature/);
   assert.match(run.stdout, /backup_novo=NAMED_CANDIDATE_PRESENT/);
-  assert.match(run.stdout, /codex_confirmacoes_pendentes/);
+  assert.match(run.stdout, /image_digest_pending_post_merge/);
+  assert.match(run.stdout, /auth_synthetic_gate_pending/);
+  assert.match(run.stdout, /CODEX_PEDIDO_STATUS=DECISIONS_DOCUMENTED/);
   assert.match(run.stdout, /sanitize=CLEAN/);
   assert.match(run.stdout, /EXECUTE_DEF=NO/);
   assert.match(run.stdout, /AUTHORIZATION=NOT_GRANTED/);
+  assert.doesNotMatch(run.stdout, /codex_confirmacoes_pendentes/);
   assert.doesNotMatch(run.stdout, /backup_novo_ausente/);
 });
 
-test('print-pedido-codex WAITING com 5 itens', () => {
+test('print-pedido-codex DECISIONS_DOCUMENTED com 5 itens e pendencias operacionais', () => {
   const script = path.join(root, 'scripts/vps/print-pedido-codex.sh');
   const run = spawnSync('bash', [script], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr || run.stdout);
-  assert.match(run.stdout, /codex_pending_count=5/);
-  assert.match(run.stdout, /CODEX_PEDIDO_STATUS=WAITING_CODEX/);
-  assert.match(run.stdout, /proposed_EXPECTED_RUNTIME=ERP-RUNTIME-08B/);
+  assert.match(run.stdout, /codex_pending_count=0/);
+  assert.match(run.stdout, /codex_done_count=5/);
+  assert.match(run.stdout, /CODEX_PEDIDO_STATUS=DECISIONS_DOCUMENTED/);
+  assert.match(run.stdout, /decided_EXPECTED_RUNTIME=ERP-RUNTIME-08B/);
+  assert.match(run.stdout, /decided_gate_e_strategy=016_024_single_invocation_main_order/);
+  assert.match(run.stdout, /review_slices=016_017,018_024/);
+  assert.match(run.stdout, /image_digest_status=PENDING_BUILD_AFTER_MERGE/);
+  assert.match(run.stdout, /auth_synthetic_status=PENDING_AUTH_GATE/);
+  assert.match(run.stdout, /gates_def_executed=NO/);
+  assert.match(run.stdout, /AUTHORIZES_GATES_DEF=NO/);
+  assert.doesNotMatch(run.stdout, /fatias_comercial_016_017_then_produto/);
 });
 
 test('freeze-go-nogo-snapshot grava GO_NOGO=NO e EXHAUSTED', () => {

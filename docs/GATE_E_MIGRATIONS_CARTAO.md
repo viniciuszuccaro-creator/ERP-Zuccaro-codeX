@@ -23,7 +23,9 @@ Esperado enquanto backup VPS não colado: `BACKUP_NOVO_STATUS=STALE_NEED_NEW` ·
 | Comercial | 016, 017 | Orçamento + Pedido |
 | Produto / DAM / canais | 018–024 | PIM/DAM/outbox/mídia/norma/canais |
 
-Ordem sugerida: comercial → `test:postgres` → produto. Alternativa: 016–024 juntas se Codex confirmar.
+Ordem sugerida de **revisão**: comercial `016–017` depois produto `018–024`.
+Execução Gate E (migrator atual): **uma invocação** aplica todos os pendentes
+`016–024` em ordem — fatias **não** são duas execuções.
 
 ## Backup novo pré-Gate E (sem migration)
 
