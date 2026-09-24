@@ -209,13 +209,13 @@ test('print-auth-package-status READY apos Gate C APROVADO', () => {
   assert.match(run.stdout, /PACKAGE_STATUS=READY_FOR_HUMAN_DECISION/);
 });
 
-test('validate-termo-autorizacao FACTS_READY no termo pre-preenchido', () => {
+test('validate-termo-autorizacao SIGNED_CHECKLIST_OK no termo com Gate E assinado', () => {
   const script = path.join(root, 'scripts/vps/validate-termo-autorizacao.sh');
   const run = spawnSync('bash', ['-n', script], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr);
   const exec = spawnSync('bash', [script], { encoding: 'utf8' });
   assert.equal(exec.status, 0, exec.stderr || exec.stdout);
-  assert.match(exec.stdout, /TERMO_STATUS=FACTS_READY_WAITING_SIGNATURE/);
+  assert.match(exec.stdout, /TERMO_STATUS=SIGNED_CHECKLIST_OK/);
   assert.match(exec.stdout, /EXECUTE_DEF=NO/);
 });
 

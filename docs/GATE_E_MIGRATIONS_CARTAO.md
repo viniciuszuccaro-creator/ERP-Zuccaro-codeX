@@ -1,10 +1,10 @@
 # Gate E — cartão de operação (DEV)
 
-**Status:** `AUTORIZAÇÃO_CHAT_REGISTRADA` · **execução bloqueada até assinatura formal no termo**
+**Status:** `ASSINADO` · Gate E autorizado para Web Console (após backup novo)
 **Escopo:** migrations **016–024** da `main` @ `2fc2fc80adb9ca876be6ca3d29aab49305839e8a` no DEV.
 **Não autorizados:** Gate D · Gate F · alteração da 3080 · canário.
 
-Termo: `docs/TERMO_AUTORIZACAO_GATES_D_E_F.md` (checkbox Gate E marcado; assinatura **em branco**).
+Termo: `docs/TERMO_AUTORIZACAO_GATES_D_E_F.md` — assinatura **VINICIUS** · `24/09/2026`.
 
 ---
 
@@ -32,7 +32,7 @@ Esperado: `GATE_E_READY=YES` · termo ainda `FACTS_READY_WAITING_SIGNATURE` ou `
 
 ---
 
-## Bloco Web Console (só após assinatura no termo)
+## Bloco Web Console (autorizado — assinatura VINICIUS)
 
 Colar **na ordem**. Dump permanece em `/opt/erp-zuccaro/backups`. Colar no GitHub **somente** blocos `PASTE_TO_GIT_*` / evidência sanitizada.
 

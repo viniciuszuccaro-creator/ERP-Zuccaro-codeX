@@ -12,8 +12,8 @@ bash scripts/vps/go-nogo-def.sh
 Pacote: `docs/PACOTE_DECISAO_GATES_D_E_F.md`.
 Cartão Gate E: `docs/GATE_E_MIGRATIONS_CARTAO.md`.
 
-Data (UTC) atualização Cursor: `2026-09-24T17:35:00Z`
-Responsável (assinatura humana): _______________
+Data (UTC) atualização Cursor: `2026-09-24T17:45:00Z`
+Responsável (assinatura humana): VINICIUS
 Merge integração: PR **#35** → `main` @ `2fc2fc80adb9ca876be6ca3d29aab49305839e8a`
   (contém #33 `ceeb92e9…` + #34 `f41d87e5…`)
 `main` observada: `2fc2fc80adb9ca876be6ca3d29aab49305839e8a`
@@ -73,24 +73,28 @@ Marcar **apenas** o autorizado. Sem marca = **não executar**.
 - [ ] **Gate D** — **NÃO autorizado**
 - [ ] **Gate F** — **NÃO autorizado** (3080 inalterada)
 
-### Registro de autorização (chat Cursor — sem falsificar assinatura)
+### Registro de autorização (chat Cursor)
 
 ```text
-utc_registro=2026-09-24T17:35:00Z
+utc_registro_autorizacao=2026-09-24T17:35:00Z
+utc_assinatura_formal=2026-09-24 (informada: 24/09/2026)
 canal=Cursor_agent_chat
 texto_autorizacao_humana=
   "Autorizo o Gate E no DEV, limitado às migrations 016–024 da main no commit
    2fc2fc80adb9ca876be6ca3d29aab49305839e8a. Não autorizo Gate D, Gate F nem
    alteração da 3080."
-checkbox_gate_e=MARKED_FROM_CHAT
-assinatura_formal=PENDING_HUMAN_ON_THIS_DOCUMENT
-EXECUTE_GATE_E=BLOCKED_UNTIL_FORMAL_SIGNATURE
+checkbox_gate_e=MARKED
+assinatura_formal=VINICIUS
+EXECUTE_GATE_E=AUTHORIZED_PENDING_NEW_BACKUP_AND_WEBCONSOLE
+gate_d=NOT_AUTHORIZED
+gate_f=NOT_AUTHORIZED
+alter_3080=NOT_AUTHORIZED
 ```
 
-Assinatura responsável: _______________
-Data/hora (UTC): _______________
+Assinatura responsável: VINICIUS
+Data/hora (UTC): 24/09/2026
 
-**Para executar o Gate E:** preencha as duas linhas acima (assinatura + data/hora) e confirme o backup novo na tabela §B. Sem isso, o apply na VPS permanece bloqueado.
+**Próximo passo operacional:** backup **novo** na Web Console + bloco do cartão Gate E (ainda sem D/F/3080).
 
 ---
 

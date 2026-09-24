@@ -1,22 +1,19 @@
-# Evidência — registro de autorização Gate E (sem assinatura forjada)
+# Evidência — autorização Gate E assinada
 
-utc=2026-09-24T17:35:00Z
+utc_autorizacao_chat=2026-09-24T17:35:00Z
+utc_assinatura=2026-09-24
+data_hora_informada=24/09/2026
+assinatura_responsavel=VINICIUS
 main_sha=2fc2fc80adb9ca876be6ca3d29aab49305839e8a
-pr_merge=35
 scope=Gate_E_DEV_migrations_016_024_only
 gate_d=NOT_AUTHORIZED
 gate_f=NOT_AUTHORIZED
 alter_3080=NOT_AUTHORIZED
-
-authorization_source=Cursor_chat_human_message
-checkbox_gate_e=MARKED_IN_TERMO
-formal_signature_on_termo=PENDING
-EXECUTE_GATE_E=BLOCKED_UNTIL_FORMAL_SIGNATURE
-
-quote=
-Autorizo o Gate E no DEV, limitado às migrations 016–024 da main no commit
-2fc2fc80adb9ca876be6ca3d29aab49305839e8a. Não autorizo Gate D, Gate F nem
-alteração da 3080.
+checkbox_gate_e=MARKED
+formal_signature_on_termo=VINICIUS
+EXECUTE_GATE_E=AUTHORIZED_PENDING_NEW_BACKUP_AND_WEBCONSOLE
+backup_novo_antes_apply=PENDING_WEBCONSOLE
+dump_committed_to_git=NO
 
 termo=docs/TERMO_AUTORIZACAO_GATES_D_E_F.md
 cartao=docs/GATE_E_MIGRATIONS_CARTAO.md

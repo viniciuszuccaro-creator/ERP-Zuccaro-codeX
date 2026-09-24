@@ -1,10 +1,8 @@
-### Gate E — autorização registrada (2026-09-24) — execução pendente de assinatura
+### Gate E — autorização assinada (2026-09-24)
 
-- Autorização humana (chat): Gate E no DEV, 016–024 da `main` `@2fc2fc80…`;
-  **não** D/F/3080.
-- Termo + cartão atualizados (`docs/TERMO_AUTORIZACAO_GATES_D_E_F.md`,
-  `docs/GATE_E_MIGRATIONS_CARTAO.md`). Checkbox Gate E marcado; **assinatura formal em branco**.
-- `GATE_E_READY=YES` · `EXECUTE_GATE_E=BLOCKED_UNTIL_FORMAL_SIGNATURE`.
+- Autorização: Gate E no DEV, 016–024 da `main` `@2fc2fc80…`; **não** D/F/3080.
+- Assinatura formal: **VINICIUS** · `24/09/2026` (termo §C).
+- `TERMO_STATUS` esperado: `SIGNED_CHECKLIST_OK` · apply VPS após backup novo na Web Console.
 - Evidência: `docs/vps/evidence/gate-e-autorizacao-registrada.txt`.
 
 ### Integração #35 mergeada na main
