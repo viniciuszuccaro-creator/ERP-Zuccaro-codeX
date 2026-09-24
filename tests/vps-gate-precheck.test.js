@@ -198,7 +198,7 @@ test('print-auth-package-status READY apos Gate C APROVADO', () => {
   assert.match(run.stdout, /missing_for_gate_e=016,017,018,019,020,021,022,023,024/);
   assert.match(run.stdout, /proposed_EXPECTED_RUNTIME=ERP-RUNTIME-08B/);
   assert.match(run.stdout, /TERMO_STATUS=FACTS_READY_WAITING_SIGNATURE/);
-  assert.match(run.stdout, /BACKUP_NOVO_STATUS=STALE_NEED_NEW/);
+  assert.match(run.stdout, /BACKUP_NOVO_STATUS=NAMED_CANDIDATE_PRESENT/);
   assert.match(run.stdout, /GO_NOGO=NO/);
   assert.match(run.stdout, /PACKAGE_STATUS=READY_FOR_HUMAN_DECISION/);
 });
