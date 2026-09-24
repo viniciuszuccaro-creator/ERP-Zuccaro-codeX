@@ -1,30 +1,28 @@
 # Evidência — restore do backup pré-Gate E em Postgres isolado
 
-**Status:** `PENDING_RESTORE_FAILED` (último: PERMISSION log_min_messages; script filtra log_*)
-**utc:** 2026-09-24T15:46:30Z
+**Status:** `PENDING_RESTORE_FAILED` (log_min_messages persistiu após filtro simples; fix -X/admin/agressivo)
+**utc:** 2026-09-24T15:49:00Z
 
-## Último run VPS (sanitizado)
+## Último run VPS
 
-- dump hash OK (`e72ca99b…` / `390275`)
-- banco: `erp_restore_isolated_20260924_154430` (criado e dropado)
-- `dump_connect_to_dev=0` · `isolated_public_schema_reset=YES`
-- `ERROR: permission denied to set parameter "log_min_messages"`
-- `restore_fail_class=PERMISSION` · `dev_untouched_after_fail=YES`
+- `erp_restore_isolated_20260924_154754` · hash dump OK · `dev_untouched` após fail
+- `restore_stream_stripped=connect,public_schema,log_gucs` ainda falhou em log_min_messages
+- Hipótese: `.psqlrc` / role sem privilégio / linha fora do padrão SET
 
-## Bloco Web Console (curl → /tmp)
+## Bloco Web Console
 
 ```bash
 set -euo pipefail
-SCRIPT_SHA=4d6424f034ad0a85a95b10f362ec8593b90e649c
+SCRIPT_SHA=419948b6b41d5421111e01ed6ef26ea7ef9476ec
 curl -fsSL "https://raw.githubusercontent.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/${SCRIPT_SHA}/scripts/vps/restore-pre-gate-e-isolated-webconsole.sh" \
   -o /tmp/restore-pre-gate-e-isolated-webconsole.sh
 bash /tmp/restore-pre-gate-e-isolated-webconsole.sh
 ```
 
+Esperado no início: `psql_no_psqlrc=-X`, `restore_db_user=...`, `filtered_log_min_messages_line_count=0`.
+
 ```
 RESTORE_ISOLATED_DB_STATUS=PENDING_RESTORE_FAILED
-last_fail_class=PERMISSION_SET_GUC
-script_fix=4d6424f034ad0a85a95b10f362ec8593b90e649c
 AUTHORIZES_GATES_DEF=NO
 EXECUTE_DEF=NO
 ```

@@ -53,7 +53,7 @@ O script **não** está no checkout da VPS (`/opt/erp-zuccaro`) até merge na ma
 Baixar para `/tmp` e executar (não altera tree DEV nem o banco `postgres`):
 
 ```bash
-SCRIPT_SHA=4d6424f034ad0a85a95b10f362ec8593b90e649c
+SCRIPT_SHA=419948b6b41d5421111e01ed6ef26ea7ef9476ec
 curl -fsSL "https://raw.githubusercontent.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/${SCRIPT_SHA}/scripts/vps/restore-pre-gate-e-isolated-webconsole.sh" \
   -o /tmp/restore-pre-gate-e-isolated-webconsole.sh
 bash /tmp/restore-pre-gate-e-isolated-webconsole.sh
