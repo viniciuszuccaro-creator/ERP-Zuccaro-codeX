@@ -1,3 +1,6 @@
+## Comercial 360 / Onda 2 - CI do resolvedor (2026-09-24)
+- Commit `dd6c1d36f423e4976216768ea140cc0a7eecc2e8` confirmado em origin/codex/comercial-360. Workflow `35997423982` SUCCESS: frontend e backend SUCCESS, incluindo migrate e test:postgres em PostgreSQL efemero. PR #33 continua draft/sem merge; VPS e 3080 intocadas. O gate DEV real nao foi homologado por esta CI.
+
 ## Comercial 360 / Onda 2 - resolucao interna de preco (2026-09-24)
 - Causa: TabelaPrecoService.resolvePrice aceitava input nao validado, e os repositories podiam devolver preco para Produto especifico de outra Empresa no mesmo Grupo. Reutilizados TabelaPrecoService, repositories canonicos e testes R07B; nenhuma estrutura paralela ou migration.
 - Correcao: payload estrito (UUID/data calendario, sem campos tenant), Produto ativo do Grupo e visivel a Empresa (empresa proprietaria ou mestre compartilhado), Unidade ativa no Grupo. Nenhum endpoint novo nem preco gravado em Orcamento/Pedido; sem mudanca em auditoria de mutacao, RBAC visualizar e TenantGuard existentes.
