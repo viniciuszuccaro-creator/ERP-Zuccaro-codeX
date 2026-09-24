@@ -1,3 +1,10 @@
+## Comercial 360 / Onda 2 - preco por ClienteEmpresa (2026-09-24)
+- Objetivo: consultar preco a partir do vinculo real do ClienteEmpresa sem aceitar tabela escolhida pelo navegador. Reutilizados TabelaPrecoService, ClienteRepository, TabelaPrecoRepository e router existentes; nenhuma migration, modulo ou cadastro paralelo.
+- API: GET /api/v1/tabelas-preco/preco-cliente com clienteEmpresaId, produtoId, unidadeMedidaId e businessDate opcional; escopo Grupo/Empresa vem do contexto autenticado. Tabela especifica vem de cliente_empresas.tabela_preco_id; fallback para padrao da Empresa permanece no repository.
+- Seguranca: ClienteEmpresa ativo, habilitado e nao bloqueado, tenant-scoped; RBAC Cadastros.tabela_preco.visualizar e Cadastros.cliente_empresa.visualizar fail-closed; payload/query estritos, 404 seguro para vinculo externo, sem PII ou mutacao/auditoria de escrita. Sem alterar snapshots de Orcamento/Pedido nem precos historicos.
+- Testes sinteticos focados de service PostgreSQL e HTTP: vinculo valido, cross-company, campo de tabela injetado, ator ausente e RBAC negado. Backend completo 234 total / 219 pass / 0 fail / 15 skips condicionais sem DATABASE_URL; frontend 621/621; backend typecheck/build, frontend lint/build, audit:baseline e git diff --check PASS. Typecheck global da raiz nao repetido neste lote: baseline anterior falha em codigo legado fora do diff. CI do novo HEAD ainda pendente.
+- Deploy: PR #33 draft/sem merge, migrations 023/024 apenas codigo/CI, nenhuma aplicacao na VPS; API oficial 3080 R07B preservada. Proximo: fechar checks/CI; depois integrar snapshot de preco em Orcamento/Pedido somente com politica comercial explicitada e testes de nao retroatividade.
+
 ## Comercial 360 / Onda 2 - CI do resolvedor (2026-09-24)
 - Commit `dd6c1d36f423e4976216768ea140cc0a7eecc2e8` confirmado em origin/codex/comercial-360. Workflow `35997423982` SUCCESS: frontend e backend SUCCESS, incluindo migrate e test:postgres em PostgreSQL efemero. PR #33 continua draft/sem merge; VPS e 3080 intocadas. O gate DEV real nao foi homologado por esta CI.
 

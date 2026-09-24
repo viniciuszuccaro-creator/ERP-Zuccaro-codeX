@@ -156,6 +156,7 @@ export function createApp(options: CreateAppOptions) {
     auditRepo,
     tenantGuard,
     rbacGuard,
+    clienteRepo,
   );
   const condicaoPagamentoService = new CondicaoPagamentoService(condicaoPagamentoRepo, auditRepo, tenantGuard, rbacGuard);
   const orcamentoService = new OrcamentoService(

@@ -756,6 +756,24 @@ function mountObraRoutes(router: Router, service: ObraService) {
 function mountTabelaPrecoRoutes(router: Router, service: TabelaPrecoService) {
   const basePath = '/api/v1/tabelas-preco';
 
+  router.get(`${basePath}/preco-cliente`, requireTenantScope, async (req, res, next) => {
+    try {
+      const allowed = new Set(['clienteEmpresaId', 'produtoId', 'unidadeMedidaId', 'businessDate']);
+      if (Object.keys(req.query).some((key) => !allowed.has(key))) {
+        throw new AppError(422, 'VALIDATION_ERROR', 'Unexpected price query field');
+      }
+      const price = await service.resolveClientPrice(ctxFromReq(req), {
+        clienteEmpresaId: req.query.clienteEmpresaId,
+        produtoId: req.query.produtoId,
+        unidadeMedidaId: req.query.unidadeMedidaId,
+        businessDate: req.query.businessDate,
+      });
+      res.json({ data: price });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   router.get(basePath, requireTenantScope, async (req, res, next) => {
     try {
       const orderByRaw = req.query.order_by ? String(req.query.order_by) : undefined;

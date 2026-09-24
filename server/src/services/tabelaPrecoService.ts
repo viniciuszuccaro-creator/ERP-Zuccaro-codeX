@@ -5,6 +5,7 @@ import { sanitizeAuditSnapshot } from '../audit/sanitizeAuditSnapshot.js';
 import type { DbQueryExecutor } from '../db/client.js';
 import type { RbacAction, RbacGuard } from '../db/rbacGuard.js';
 import type { TenantGuard } from '../db/tenantGuard.js';
+import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';
 import type { TabelaPrecoRepository, TabelaPrecoScope } from '../repositories/inMemoryTabelaPrecoRepository.js';
 import {
   businessDateSaoPaulo,
@@ -38,6 +39,7 @@ export class TabelaPrecoService {
     private readonly audit: AuditRepository,
     private readonly tenantGuard: TenantGuard,
     private readonly rbacGuard: RbacGuard,
+    private readonly clientes: Pick<ClienteRepository, 'getEmpresaLinkById'>,
   ) {}
 
   async list(ctx: RequestContext, options: TabelaPrecoListOptions = {}) {
@@ -346,6 +348,38 @@ export class TabelaPrecoService {
     if (!ok) {
       throw new AppError(404, 'TABELA_PRECO_NOT_FOUND', 'TabelaPreco not found');
     }
+  }
+
+  async resolveClientPrice(ctx: RequestContext, input: unknown) {
+    await this.prepare(ctx, 'visualizar', { requireEmpresa: true });
+    await this.rbacGuard.assertAllowed(ctx, 'Cadastros', 'cliente_empresa', 'visualizar');
+    const parsed = z.object({
+      clienteEmpresaId: z.string().uuid(),
+      produtoId: z.string().uuid(),
+      unidadeMedidaId: z.string().uuid(),
+      businessDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
+        const date = new Date(`${value}T00:00:00.000Z`);
+        return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+      }).optional(),
+    }).strict().safeParse(input);
+    if (!parsed.success) this.validationError(parsed.error.flatten());
+    const link = await this.clientes.getEmpresaLinkById(
+      { groupId: ctx.groupId, empresaId: ctx.empresaId }, parsed.data.clienteEmpresaId,
+    );
+    if (!link || !link.ativo) {
+      throw new AppError(404, 'CLIENTE_EMPRESA_NOT_FOUND', 'ClienteEmpresa not found');
+    }
+    if (link.bloqueado || !link.habilitado_operacao) {
+      throw new AppError(422, 'CLIENTE_EMPRESA_INDISPONIVEL', 'ClienteEmpresa unavailable');
+    }
+    return this.repo.resolvePrice({
+      groupId: ctx.groupId,
+      empresaId: ctx.empresaId!,
+      clienteEmpresaTabelaId: link.tabela_preco_id,
+      produtoId: parsed.data.produtoId,
+      unidadeMedidaId: parsed.data.unidadeMedidaId,
+      businessDate: parsed.data.businessDate ?? businessDateSaoPaulo(),
+    });
   }
 
   async resolvePrice(
