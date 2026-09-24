@@ -37,6 +37,12 @@ if [[ "$ISOLATED_DB" == "$DEV_DBNAME" || "$ISOLATED_DB" == 'postgres' ]]; then
   echo 'RESTORE_ISOLATED_DB_STATUS=BLOCKED_ISOLATED_EQUALS_DEV'
   exit 1
 fi
+# Identificador SQL sem aspas: só [a-z0-9_]
+if [[ ! "$ISOLATED_DB" =~ ^[a-z][a-z0-9_]*$ ]]; then
+  echo "RESTORE_ISOLATED_DB_STATUS=BLOCKED_INVALID_DBNAME isolated=${ISOLATED_DB}"
+  echo 'NOTE: use apenas letras/digitos/underscore (sem hifen)'
+  exit 1
+fi
 # Recusa se alguém exportar DATABASE_URL apontando para DEV neste shell
 if [[ -n "${DATABASE_URL:-}" ]]; then
   _dbn="$(python3 - <<'PY'
