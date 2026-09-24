@@ -37,9 +37,15 @@ test('gate-d-f-precheck --from-gate-c-output calcula faltantes 016+ e exige MATC
   fs.writeFileSync(out, `${lines.join('\n')}\n`);
 
   const run = spawnSync('bash', [precheck, '--from-gate-c-output', out], { encoding: 'utf8' });
-  // main só tem 001-015 → missing_for_gate_e=NONE e OK
   assert.equal(run.status, 0, run.stderr || run.stdout);
-  assert.match(run.stdout, /missing_for_gate_e=NONE/);
+  // Checkout sem 016+ (main/#34) → NONE; árvore integrada #33+#34 → 016–024 faltantes na VPS.
+  const has016 = fs.existsSync(path.join(root, 'server/migrations'))
+    && fs.readdirSync(path.join(root, 'server/migrations')).some((n) => n.startsWith('016_'));
+  if (has016) {
+    assert.match(run.stdout, /missing_for_gate_e=016,017,018,019,020,021,022,023,024/);
+  } else {
+    assert.match(run.stdout, /missing_for_gate_e=NONE/);
+  }
   assert.match(run.stdout, /identity_match=YES/);
   assert.match(run.stdout, /official_auth_mode=dev_headers/);
 });
