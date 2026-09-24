@@ -13,9 +13,9 @@
 - Guarda anti-DEV no R07B: `assert-isolated-database-url.sh` bloqueia `DROP SCHEMA` em
   `dbname=postgres`; exige `ISOLATED_DATABASE_NAME` + `ALLOW_DROP_SCHEMA_PUBLIC=ISOLATED_ONLY`.
 - Restore dump pré-Gate E em Postgres isolado: **`PENDING_NO_DUMP_ACCESS`**
-  (dump só na VPS; MCP Hostinger-vps indisponível nesta sessão). Script pronto:
-  `scripts/vps/restore-pre-gate-e-isolated-webconsole.sh` — executar na Web Console
-  autorizada; colar só `PASTE_TO_GIT_*`; DEV intocado; dump permanece na VPS.
+  — Web Console: `scripts/vps/...` ausente no checkout VPS (esperado; script só na
+  PR #35/`9ff95c1a`). Colar bloco curl→`/tmp` em `docs/vps/evidence/restore-isolated-db-pending.txt`
+  e `docs/GATE_E_MIGRATIONS_CARTAO.md`; DEV intocado; dump permanece na VPS.
 - `GATE_E_READY=NO` enquanto 016–024 ausentes da `main`; digest/Auth pendentes para D/F.
 - **Não** executados: merge na main, migration VPS, canário, promoção 3080, restore real.
 

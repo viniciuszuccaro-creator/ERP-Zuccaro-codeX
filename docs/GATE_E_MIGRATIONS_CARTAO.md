@@ -47,6 +47,22 @@ bash scripts/vps/verify-pre-gate-e-backup-meta.sh
 bash scripts/vps/check-backup-novo-gate-e.sh
 ```
 
+## Restore isolado do dump (prova — NÃO é Gate E apply)
+
+O script **não** está no checkout da VPS (`/opt/erp-zuccaro`) até merge na main.
+Baixar para `/tmp` e executar (não altera tree DEV nem o banco `postgres`):
+
+```bash
+SCRIPT_SHA=9ff95c1a8b35932d9bebb0f4650fcc03280bb309
+curl -fsSL "https://raw.githubusercontent.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/${SCRIPT_SHA}/scripts/vps/restore-pre-gate-e-isolated-webconsole.sh" \
+  -o /tmp/restore-pre-gate-e-isolated-webconsole.sh
+bash /tmp/restore-pre-gate-e-isolated-webconsole.sh
+# Colar PASTE_TO_GIT_* em docs/vps/evidence/restore-isolated-db-pending.txt
+```
+
+Cria `erp_restore_isolated_*`; confere hash do dump; prova `dev_untouched=YES`.
+Dump permanece em `/opt/erp-zuccaro/backups`. **Não** autoriza D/E/F.
+
 ## Quando autorizado (futuro — após termo + checkbox Gate E)
 
 1. Backup **novo** já validado (`BACKUP_NOVO_STATUS=NAMED_CANDIDATE_PRESENT`).
