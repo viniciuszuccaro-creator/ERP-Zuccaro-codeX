@@ -356,9 +356,15 @@ test('print-gate-e-fatias expoe comercial e produto', () => {
   assert.match(run.stdout, /AUTHORIZES_GATES_DEF=NO/);
 });
 
-test('go-nogo-def reporta GATE_E_READY=NO enquanto 016-024 ausentes da main', () => {
+test('go-nogo-def reporta GATE_E_READY=NO quando probe da main não tem 016-024', () => {
   const script = path.join(root, 'scripts/vps/go-nogo-def.sh');
-  const run = spawnSync('bash', [script], { encoding: 'utf8' });
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'main-mig-absent-'));
+  // Probe sem 016–024: simula main antiga
+  fs.writeFileSync(path.join(dir, '015_probe.sql'), '-- probe\n');
+  const run = spawnSync('bash', [script], {
+    encoding: 'utf8',
+    env: { ...process.env, MAIN_MIGRATIONS_DIR: dir },
+  });
   assert.equal(run.status, 0, run.stderr || run.stdout);
   assert.match(run.stdout, /main_migrations_016_024=PENDING_ABSENT/);
   assert.match(run.stdout, /main_missing_migrations=016,017,018,019,020,021,022,023,024/);
@@ -377,6 +383,17 @@ test('go-nogo-def reporta GATE_E_READY=NO enquanto 016-024 ausentes da main', ()
   assert.match(run.stdout, /NOTE: READY_FOR_REVIEW != AUTHORIZED != EXECUTED/);
   assert.doesNotMatch(run.stdout, /gate_e_blockers=.*image_digest/);
   assert.doesNotMatch(run.stdout, /gate_e_blockers=.*auth_synthetic/);
+});
+
+test('go-nogo-def GATE_E_READY=YES na main atual (016-024 presentes)', () => {
+  const script = path.join(root, 'scripts/vps/go-nogo-def.sh');
+  const run = spawnSync('bash', [script], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr || run.stdout);
+  assert.match(run.stdout, /main_migrations_016_024=PRESENT/);
+  assert.match(run.stdout, /GATE_E_READY=YES/);
+  assert.match(run.stdout, /gate_e_blockers=NONE/);
+  assert.match(run.stdout, /AUTHORIZATION=NOT_GRANTED/);
+  assert.match(run.stdout, /EXECUTED=NO/);
 });
 
 test('go-nogo-def GATE_E_READY=YES quando MAIN_MIGRATIONS_DIR tem 016-024', () => {
@@ -422,7 +439,12 @@ test('freeze-go-nogo-snapshot grava GO_NOGO=NO e EXHAUSTED', () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'freeze-'));
   const out = path.join(tmp, 'snap.txt');
   const evidence = path.join(root, 'docs/vps/evidence/gate-c-2026-09-24.txt');
-  const run = spawnSync('bash', [script, evidence, out], { encoding: 'utf8' });
+  const absent = fs.mkdtempSync(path.join(os.tmpdir(), 'main-mig-freeze-'));
+  fs.writeFileSync(path.join(absent, '015_probe.sql'), '-- probe\n');
+  const run = spawnSync('bash', [script, evidence, out], {
+    encoding: 'utf8',
+    env: { ...process.env, MAIN_MIGRATIONS_DIR: absent },
+  });
   assert.equal(run.status, 0, run.stderr || run.stdout);
   const text = fs.readFileSync(out, 'utf8');
   assert.match(text, /GO_NOGO=NO/);

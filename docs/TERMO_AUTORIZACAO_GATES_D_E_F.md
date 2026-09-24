@@ -1,108 +1,117 @@
 # Termo de autorização — Gates D / E / F
 
-**Status preparado:** fatos, SHAs, ordem, efeitos, backup e rollback **preenchidos**.
-**Em aberto:** somente autorização humana específica (§C) + assinatura.
+**Status:** fatos atualizados pós-merge `#35` (`main` = `2fc2fc80…`).
 Estados: `READY_FOR_REVIEW` ≠ `AUTHORIZED` ≠ `EXECUTED`. `GATE_*_READY` não autoriza.
-Sem checkbox + assinatura do gate correspondente → **não executar**.
+Sem checkbox do gate + **assinatura formal** do responsável → **não executar**.
 
 ```bash
 bash scripts/vps/go-nogo-def.sh
-# GATE_E_READY / GATE_D_READY / GATE_F_READY — READY≠autorização
+# GATE_E_READY=YES (016–024 na main) — READY≠autorização de execução
 ```
 
 Pacote: `docs/PACOTE_DECISAO_GATES_D_E_F.md`.
+Cartão Gate E: `docs/GATE_E_MIGRATIONS_CARTAO.md`.
 
-Data (UTC) preparação Cursor: `2026-09-24T14:30:00Z`
+Data (UTC) atualização Cursor: `2026-09-24T17:35:00Z`
 Responsável (assinatura humana): _______________
-PR funcional #33 HEAD: `ceeb92e99954b39d3137dde497208b0db1010869` (draft — revalidar)
-PR infra #34 HEAD: revalidar com `gh pr view 34 --json headRefOid` (tip no push do pacote)
-`main` observada: `ca4171600cc30f9922c2f8b2ccb8b22d06aa6888`
+Merge integração: PR **#35** → `main` @ `2fc2fc80adb9ca876be6ca3d29aab49305839e8a`
+  (contém #33 `ceeb92e9…` + #34 `f41d87e5…`)
+`main` observada: `2fc2fc80adb9ca876be6ca3d29aab49305839e8a`
 Evidência Gate C: `docs/vps/evidence/gate-c-2026-09-24.txt` (**APROVADO**)
+Restore isolado prévio: `RESTORE_ISOLATED_DB_STATUS=OK` (`docs/vps/evidence/restore-isolated-db-pending.txt`)
+  — dump **não** versionado (`dump_committed_to_git=NO`)
 
 ---
 
-## Fatos comprovados (Gate C)
+## Fatos comprovados (Gate C + pós-merge #35)
 
 | Fato | Valor |
 |---|---|
 | VPS | `srv1982741` |
-| API oficial 3080 | `erp-zuccaro-erp-api:runtime07b-main-ca0bc5f3` (**preservar até F**) |
-| Health / ready | HTTP 200 |
+| API oficial 3080 | imagem R07B `runtime07b-main-ca0bc5f3` (**preservar**; sem Gate F) |
+| Health / ready (Gate C) | HTTP 200 |
 | Rede | `supabase_default` |
-| DB | MATCH `postgres` / `7686065785209937954` |
-| Migrations VPS | 001–015 (1×); 016–024 ausentes |
-| Auth 3080 | `dev_headers` (não homologa #33) |
-| `auth.users` | 0 |
+| DB DEV | `postgres` (cluster Gate C) |
+| Migrations na **main** | **001–024 presentes** (pós-#35) |
+| Migrations no **DEV** (antes do Gate E) | 001–015 (1×); 016–024 **ainda a aplicar** |
+| Auth 3080 | `dev_headers` (não é Gate D/F) |
+| `GATE_E_READY` | **YES** (código na main; não autoriza apply sozinho) |
 
 ---
 
-## A. Decisões técnicas (Codex §4 — documentadas)
+## A. Decisões técnicas
 
 | Decisão | Valor |
 |---|---|
-| `EXPECTED_RUNTIME` | `ERP-RUNTIME-08B` (não usar default `COMERCIAL-360-V1` no D) |
-| `auth.mode` canário | critério `supabase_user` (comprovar pós-merge) |
-| Gate E | **uma invocação** 016–024 da MAIN; fatias = revisão |
-| Tag imagem | `comercial360-main-<MERGE_SHA8>` · digest `PENDING_BUILD_AFTER_MERGE` |
-| Auth sintético | `PENDING_AUTH_GATE` (gate próprio) |
-| Rede / portas | `supabase_default` · revalidar FREE no instante do D |
+| Gate E | **uma invocação** do migrator canônico (`server`: `npm run migrate`) — aplica pendentes 016–024 em ordem; **1 TX por arquivo** |
+| Escopo autorizado (quando §C Gate E + assinatura) | somente DEV; main pin `2fc2fc80adb9ca876be6ca3d29aab49305839e8a` |
+| Gate D / F / 3080 | **não autorizados** nesta rodada |
+| Tag imagem / canário | fora de escopo |
 
 ---
 
-## B. Backup e rollback (preenchidos)
+## B. Backup e rollback
 
 | Item | Valor | Confirmação humana |
 |---|---|---|
-| Backup | `pre-gate-e-20260924-140304.sql` bytes=`390275` sha256=`e72ca99b453fa6b060b5264f636794b3a601202c18e4185deb12f0020cae3f80` | [ ] |
-| Integridade | header/tail/sha256/mode600=YES · umask 0077 | [ ] |
-| Restore isolado | `NOT_PERFORMED` (aviso Gate E) | [ ] |
-| Rollback API R07B | dry-run OK · imagem `ca0bc5f3` preservada | [ ] |
-| Rollback schema | restore autorizado do pre-gate-e ≠ rollback API | [ ] |
+| Backup isolado (prova anterior) | restore OK; sha `e72ca99b…` / bytes `390275` | [x] evidência Git |
+| Backup **novo** imediatamente antes do apply | **obrigatório** via `create-pre-gate-e-backup.sh` (ainda não colado nesta autorização) | [ ] |
+| Integridade do backup novo | header/tail/sha256/mode600 | [ ] |
+| Dump no GitHub | **proibido** | — |
+| Rollback API R07B | imagem `ca0bc5f3` preservada; sem promoção 3080 | [ ] |
+| Rollback schema | restore do backup novo (autorizado à parte) ≠ rollback API | [ ] |
 
 ---
 
-## C. Autorizações explícitas (ÚNICOS campos em aberto para execução)
+## C. Autorizações explícitas
 
-Marcar **apenas** o autorizado agora. Sem marca = **não executar**.
+Marcar **apenas** o autorizado. Sem marca = **não executar**.
 `GATE_*_READY=YES` **não** substitui esta seção.
 
-- [ ] **Merge PR #33** na `main` (após undraft/review; não é Gate E)
-- [ ] **Gate E** — aplicar 016–024 da **main** pós-merge (uma invocação)
-- [ ] **Gate D** — canário isolado + smoke (`EXPECTED_RUNTIME` + Auth sintético)
-- [ ] **Gate F** — promoção 3080 (exige D OK + mesmo digest)
+- [ ] ~~Merge PR #33~~ — **obsoleto**; merge feito via **#35** em `2fc2fc80…`
+- [x] **Gate E** — aplicar 016–024 da **main** `@2fc2fc80adb9ca876be6ca3d29aab49305839e8a` no DEV (uma invocação)
+- [ ] **Gate D** — **NÃO autorizado**
+- [ ] **Gate F** — **NÃO autorizado** (3080 inalterada)
+
+### Registro de autorização (chat Cursor — sem falsificar assinatura)
+
+```text
+utc_registro=2026-09-24T17:35:00Z
+canal=Cursor_agent_chat
+texto_autorizacao_humana=
+  "Autorizo o Gate E no DEV, limitado às migrations 016–024 da main no commit
+   2fc2fc80adb9ca876be6ca3d29aab49305839e8a. Não autorizo Gate D, Gate F nem
+   alteração da 3080."
+checkbox_gate_e=MARKED_FROM_CHAT
+assinatura_formal=PENDING_HUMAN_ON_THIS_DOCUMENT
+EXECUTE_GATE_E=BLOCKED_UNTIL_FORMAL_SIGNATURE
+```
 
 Assinatura responsável: _______________
-Data/hora: _______________
+Data/hora (UTC): _______________
+
+**Para executar o Gate E:** preencha as duas linhas acima (assinatura + data/hora) e confirme o backup novo na tabela §B. Sem isso, o apply na VPS permanece bloqueado.
 
 ---
 
 ## D. Sequência concreta para decisão (após este termo) — ordem e efeitos
 
 ```text
-1) Merge #33 → main   | efeito: código+migrations 016-024 na MAIN; 3080 inalterada
-2) Gate E             | efeito: schema DEV 016-024; R07B coexiste; se falha mid-way → PARAR
-3) test:postgres real | efeito: prova schema; 0 fail/skip
-4) Build imagem MAIN  | efeito: tag comercial360-main-<sha8>; digest registrado
-5) Gate Auth          | efeito: identidade+profile sintéticos (fora do Git)
-6) Gate D             | efeito: canário ≠3080; smoke Bearer; 3080 ainda R07B
-7) Gate F             | efeito: 3080 → imagem do canário; rollback API ≠ schema
+0) Assinatura formal neste termo (§C) + backup novo validado
+1) Web Console: main @ 2fc2fc80 · DB DEV = postgres · R07B image preservada
+2) create-pre-gate-e-backup.sh → colar PASTE_TO_GIT (sem dump no Git)
+3) Pré-check / rollback-dry-run R07B
+4) Gate E: cd server && npm run migrate  (uma vez; 1 TX/arquivo)
+5) Conferir 016–024 cada 1× em schema_migrations
+6) npm run test:postgres no Postgres DEV real
+7) /health /ready + ops R07B na 3080 (somente leitura/smoke; sem troca de imagem)
+8) Evidência sanitizada no GitHub
 ```
 
-### Recuperação se migration N falhar após 016…N−1
-
-Parar; não D/F; listar `schema_migrations`; forward-fix na MAIN **ou** restore isolado do pre-gate-e (autorizado); 3080 permanece R07B.
-
-### Intervalo E→D (compatibilidade R07B)
-
-3080 continua R07B/`dev_headers` com schema novo. Observar health/ready. Não promover. Se R07B quebrar → restore/forward-fix antes de D.
+Se migration N falhar após 016…N−1: **parar**; listar `schema_migrations`; sem canário; 3080 permanece R07B.
 
 ---
 
 ## E. Proibições
 
-Não aplicar a partir de `codex/comercial-360` sem merge.
-Não usar `dev_headers` como prova de Auth.
-Não apagar backups/rollback.
-Não commitar dump/`.env`/segredos.
-Não alterar 3080 fora do Gate F autorizado.
-`READY` / `GO_NOGO=YES_PENDING_HUMAN_FINAL` **não** autorizam execução.
+Não Gate D/F · não alterar 3080 · não canário · não commitar dump/`.env`/segredos · não aplicar a partir de branch feature · não inventar assinatura.

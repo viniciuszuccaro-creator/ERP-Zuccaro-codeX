@@ -1,22 +1,20 @@
-### Integração simulada #33 → #34 (2026-09-24) — NÃO é merge na main
+### Gate E — autorização registrada (2026-09-24) — execução pendente de assinatura
 
-- Candidata única: PR `#35` / branch `cursor/integracao-sim-33-34-392b` (main intocada).
-- Contém HEADs pretendidos: `#33` `ceeb92e99954b39d3137dde497208b0db1010869`
-  (`codex/comercial-360`) e `#34` `f41d87e550f7c11d1863bbf8775d03398bebe2de`
-  (`cursor/vps-hml-gate-c-legado-392b`); conflito em `STATUS_DO_PROJETO.md` resolvido.
-- Estados: `READY_FOR_REVIEW` ≠ `AUTHORIZED` ≠ `EXECUTED`.
-- Prova R07B: executou **código do commit** `ca0bc5f3529b9071fe80e58dae6aa966a9d6c740`
-  (worktree/`git show`, runtime meta `ERP-RUNTIME-07B`) × schema 001–024 em Postgres
-  isolado → `R07B_API_COMPAT_STATUS=OK`. **Não** é prova pelo image ID da 3080 nem
-  troca da API oficial; a tag de imagem `runtime07b-main-ca0bc5f3` é só referência
-  operacional da 3080, fora deste teste.
-- Guarda anti-DEV: `assert-isolated-database-url.sh` antes de `DROP SCHEMA`.
-- Restore dump pré-Gate E isolado: **`RESTORE_ISOLATED_DB_STATUS=OK`**
-  (`erp_restore_isolated_20260924_155458`; sha256=`e72ca99b…`; migrations 001–015;
-  `dev_untouched=YES`; dump na VPS). Evidência:
-  `docs/vps/evidence/restore-isolated-db-pending.txt`.
-- `GATE_E_READY=NO` (`main_missing_migrations_016_024`).
-- **Não** executados: merge na main, migration VPS (Gate E apply), canário, promoção 3080.
+- Autorização humana (chat): Gate E no DEV, 016–024 da `main` `@2fc2fc80…`;
+  **não** D/F/3080.
+- Termo + cartão atualizados (`docs/TERMO_AUTORIZACAO_GATES_D_E_F.md`,
+  `docs/GATE_E_MIGRATIONS_CARTAO.md`). Checkbox Gate E marcado; **assinatura formal em branco**.
+- `GATE_E_READY=YES` · `EXECUTE_GATE_E=BLOCKED_UNTIL_FORMAL_SIGNATURE`.
+- Evidência: `docs/vps/evidence/gate-e-autorizacao-registrada.txt`.
+
+### Integração #35 mergeada na main
+
+- PR `#35` mergeada → `main` @ `2fc2fc80adb9ca876be6ca3d29aab49305839e8a`
+  (contém #33+#34).
+- Prova R07B: código do commit `ca0bc5f3…` (não image ID da 3080) × schema 001–024 isolado OK.
+- Restore isolado pré-Gate E: **OK** (`dump_committed_to_git=NO`).
+- `GATE_E_READY=YES` (016–024 na main); apply VPS **ainda não** executado.
+- **Não** autorizados nesta rodada: Gate D, Gate F, alteração da 3080.
 
 ### ERP-RUNTIME-08 — diagnóstico Comercial 360º (2026-09-19)
 

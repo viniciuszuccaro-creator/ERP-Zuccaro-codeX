@@ -1,79 +1,113 @@
-# Gate E — cartão (migrations faltantes) — NÃO EXECUTAR agora
+# Gate E — cartão de operação (DEV)
 
-**Status:** `PREPARADO / BLOQUEADO até termo assinado + backup pre-gate-e + autorização humana`
-**Frente Cursor:** inventário/precheck/backup. Apply = só com checkbox Gate E no termo.
+**Status:** `AUTORIZAÇÃO_CHAT_REGISTRADA` · **execução bloqueada até assinatura formal no termo**
+**Escopo:** migrations **016–024** da `main` @ `2fc2fc80adb9ca876be6ca3d29aab49305839e8a` no DEV.
+**Não autorizados:** Gate D · Gate F · alteração da 3080 · canário.
 
-## Entrada
+Termo: `docs/TERMO_AUTORIZACAO_GATES_D_E_F.md` (checkbox Gate E marcado; assinatura **em branco**).
+
+---
+
+## Fatos (pós-merge #35)
+
+| Item | Valor |
+|---|---|
+| Merge | PR **#35** (contém #33+#34) → `main` |
+| SHA main | `2fc2fc80adb9ca876be6ca3d29aab49305839e8a` |
+| 016–024 na main | **presentes** → `GATE_E_READY=YES` |
+| Restore isolado prévio | **OK** (dump fora do Git) |
+| DEV antes do apply | esperado 001–015; 016–024 pendentes |
+
+---
+
+## Pré-checks locais (Workbench — sem VPS)
 
 ```bash
-bash scripts/vps/gate-d-f-precheck.sh --from-gate-c-output saida-gate-c.txt \
-  --candidate-list docs/vps/migrations-candidatas-comercial360.txt
-bash scripts/vps/print-gate-e-fatias.sh
-bash scripts/vps/check-backup-novo-gate-e.sh
 bash scripts/vps/go-nogo-def.sh
+bash scripts/vps/validate-termo-autorizacao.sh
+bash scripts/vps/print-gate-e-fatias.sh
 ```
 
-Esperado enquanto backup VPS não colado: `BACKUP_NOVO_STATUS=STALE_NEED_NEW` · `GO_NOGO=NO`
-`GO_NOGO=YES_PENDING_HUMAN_FINAL` **não** autoriza apply.
+Esperado: `GATE_E_READY=YES` · termo ainda `FACTS_READY_WAITING_SIGNATURE` ou `WAITING_SIGNATURE` até assinar.
 
-## Fatias propostas (aguardam Codex)
+---
 
-| Fatia | IDs | Conteúdo |
-|---|---|---|
-| Comercial | 016, 017 | Orçamento + Pedido |
-| Produto / DAM / canais | 018–024 | PIM/DAM/outbox/mídia/norma/canais |
+## Bloco Web Console (só após assinatura no termo)
 
-Ordem sugerida de **revisão**: comercial `016–017` depois produto `018–024`.
-Execução Gate E (migrator atual): **uma invocação** aplica todos os pendentes
-`016–024` em ordem — fatias **não** são duas execuções.
+Colar **na ordem**. Dump permanece em `/opt/erp-zuccaro/backups`. Colar no GitHub **somente** blocos `PASTE_TO_GIT_*` / evidência sanitizada.
 
-## Backup novo pré-Gate E (sem migration)
-
-Na VPS (Web Console), **somente backup**:
+### 0) Identidade main + R07B + DEV (somente leitura)
 
 ```bash
+set -euo pipefail
+cd /opt/erp-zuccaro
+git fetch origin main
+git rev-parse HEAD
+git rev-parse origin/main
+# Exigido: ambos = 2fc2fc80adb9ca876be6ca3d29aab49305839e8a (ou checkout origin/main)
+git checkout --detach origin/main
+test "$(git rev-parse HEAD)" = "2fc2fc80adb9ca876be6ca3d29aab49305839e8a"
+
+docker ps --format '{{.Names}} {{.Image}}' | grep -E 'erp-api|supabase-db' || true
+# Confirmar imagem R07B da 3080 presente; NÃO restart/promote
+
+docker exec supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 -Atc \
+  "SELECT current_database()||'|mig='||count(*)::text FROM schema_migrations;"
+docker exec supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 -Atc \
+  "SELECT id||'='||count(*) FROM schema_migrations GROUP BY id ORDER BY id;"
+```
+
+### 1) Backup **novo** imediatamente antes (obrigatório)
+
+```bash
+cd /opt/erp-zuccaro
 bash scripts/vps/create-pre-gate-e-backup.sh
-# Colar bloco PASTE_TO_GIT_* em docs/vps/evidence/pre-gate-e-backup-latest.txt
+# Copiar PASTE_TO_GIT_* → docs/vps/evidence/pre-gate-e-backup-latest.txt (sem o .sql)
 ```
 
-Integridade (sem restore destrutivo): header `pg_dump` + marker
-`PostgreSQL database dump complete` + SHA-256 recompute.
-Dump real **não** vai para o Git.
-
-Workbench:
+### 2) Pré-check rollback R07B (dry-run)
 
 ```bash
-bash scripts/vps/verify-pre-gate-e-backup-meta.sh
-bash scripts/vps/check-backup-novo-gate-e.sh
+bash scripts/vps/rollback-dry-run-check.sh --docker
 ```
 
-## Restore isolado do dump (prova — NÃO é Gate E apply)
+### 3) Gate E — migrator canônico **uma vez**
 
-O script **não** está no checkout da VPS (`/opt/erp-zuccaro`) até merge na main.
-Baixar para `/tmp` e executar (não altera tree DEV nem o banco `postgres`):
+Usa `DATABASE_URL` do DEV já aprovado (não imprimir). Uma TX por arquivo; se falhar → parar.
 
 ```bash
-SCRIPT_SHA=419948b6b41d5421111e01ed6ef26ea7ef9476ec
-curl -fsSL "https://raw.githubusercontent.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/${SCRIPT_SHA}/scripts/vps/restore-pre-gate-e-isolated-webconsole.sh" \
-  -o /tmp/restore-pre-gate-e-isolated-webconsole.sh
-bash /tmp/restore-pre-gate-e-isolated-webconsole.sh
-# Colar PASTE_TO_GIT_* em docs/vps/evidence/restore-isolated-db-pending.txt
+cd /opt/erp-zuccaro/server
+# Confirmar pendentes antes:
+npm run migrate:status
+npm run migrate
+npm run migrate:status
 ```
 
-Cria `erp_restore_isolated_*`; confere hash do dump; prova `dev_untouched=YES`.
-Dump permanece em `/opt/erp-zuccaro/backups`. **Não** autoriza D/E/F.
+### 4) Conferir 016–024 cada 1×
 
-## Quando autorizado (futuro — após termo + checkbox Gate E)
+```bash
+docker exec supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 -Atc \
+  "SELECT id FROM schema_migrations WHERE id ~ '^(016|017|018|019|020|021|022|023|024)_' ORDER BY id;"
+# Esperado: exatamente 9 linhas (016–024), cada id uma vez
+```
 
-1. Backup **novo** já validado (`BACKUP_NOVO_STATUS=NAMED_CANDIDATE_PRESENT`).
-2. Rollback R07B preservado (`rollback-dry-run-check.sh`).
-3. Checkout = **main** pós-merge (não branch feature).
-4. Migrator canônico + `ON_ERROR_STOP`; só ids faltantes da fatia autorizada.
-5. Conferir cada migration da main exatamente 1×.
-6. `npm run test:postgres` no PostgreSQL **real**, >0 testes, 0 fail/skip.
-7. Não reaplicar 001–015. Não usar CI efêmera como prova.
+### 5) Testes PostgreSQL reais + smoke 3080 (sem trocar imagem)
+
+```bash
+cd /opt/erp-zuccaro/server
+npm run test:postgres
+curl -sS -o /dev/null -w 'health=%{http_code}\n' http://127.0.0.1:3080/health
+curl -sS -o /dev/null -w 'ready=%{http_code}\n' http://127.0.0.1:3080/ready
+curl -sS http://127.0.0.1:3080/api/v1/meta | head -c 400; echo
+# Ops R07B Produto (list) com headers de DEV existentes — sem alterar container
+```
+
+### 6) Evidência sanitizada para o GitHub
+
+Publicar apenas: SHA `2fc2fc80…`, nome/bytes/sha256 do **backup novo**, lista 016–024, resultado `test:postgres`, health/ready/meta da 3080, `GATE_E_STATUS=OK` ou falha com `schema_migrations`. **Sem** dump SQL, `.env`, PII.
+
+---
 
 ## Parar se
 
-Duplicata, id inesperado >024, backup falhou, SHA divergente, ou pedido para
-aplicar a partir da branch `codex/comercial-360` sem merge.
+Assinatura ausente · backup novo falhou · HEAD ≠ `2fc2fc80…` · migration falhou no meio · pedido de canário/D/F/3080 · aplicar de branch ≠ main.
