@@ -354,11 +354,12 @@ test('go-nogo-def NO com blockers atuais', () => {
   assert.equal(run.status, 0, run.stderr || run.stdout);
   assert.match(run.stdout, /GO_NOGO=NO/);
   assert.match(run.stdout, /termo_waiting_signature/);
-  assert.match(run.stdout, /backup_novo_ausente/);
+  assert.match(run.stdout, /backup_novo=NAMED_CANDIDATE_PRESENT/);
   assert.match(run.stdout, /codex_confirmacoes_pendentes/);
   assert.match(run.stdout, /sanitize=CLEAN/);
   assert.match(run.stdout, /EXECUTE_DEF=NO/);
   assert.match(run.stdout, /AUTHORIZATION=NOT_GRANTED/);
+  assert.doesNotMatch(run.stdout, /backup_novo_ausente/);
 });
 
 test('print-pedido-codex WAITING com 5 itens', () => {

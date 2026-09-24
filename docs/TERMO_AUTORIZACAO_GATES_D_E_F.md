@@ -59,8 +59,8 @@ Propostas Cursor abaixo. **Inicial Codex** e valor final ficam em aberto até §
 
 | Item | Estado preparação | Feito | Inicial |
 |---|---|---|---|
-| Backup **novo** `pre-gate-e-…` em `/opt/erp-zuccaro/backups` (bytes+SHA-256) | procedimento: `scripts/vps/create-pre-gate-e-backup.sh` (rodar **na VPS**); evidência sanitizada em `docs/vps/evidence/` | [ ] | ___ |
-| Integridade sem restauração destrutiva | marker `dump complete` + SHA-256 recompute + `verify-pre-gate-e-backup-meta.sh` | [ ] | ___ |
+| Backup **novo** `pre-gate-e-…` em `/opt/erp-zuccaro/backups` (bytes+SHA-256) | evidência sanitizada: `pre-gate-e-20260924-140304.sql` bytes=390275 sha256=`e72ca99b…cae3f80` (VPS 2026-09-24T14:03Z); dump real só na VPS | [ ] | ___ |
+| Integridade sem restauração destrutiva | header/tail/sha256/mode600 = YES na evidência | [ ] | ___ |
 | Rollback R07B inspectável (dry-run) | OK na evidência Gate C | [x] | ___ |
 | Porta escolhida **FREE** no instante | revalidar com `ss` no momento do canário | [ ] | ___ |
 | Identidade Auth sintética pronta (fora do Git) | aguarda Codex §4 | [ ] | ___ |

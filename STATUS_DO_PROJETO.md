@@ -2,11 +2,12 @@
 
 - Branch: `cursor/vps-hml-gate-c-legado-392b` / PR `#34`.
 - Gate C **APROVADO**. Termo `FACTS_READY_WAITING_SIGNATURE`.
-- Backup script: `create-pre-gate-e-backup.sh` com **umask 077**, mode **600**,
-  remoção de dump parcial em falha; `--self-test` coberto.
-- Evidência Git `pre-gate-e-backup-latest.txt` = `PENDING_VPS_RUN` (só metadados).
-- `GO_NOGO=NO` / `AUTHORIZES_GATES_DEF=NO` — backup **não** autoriza D/E/F.
-- Próximo: VPS cola PASTE_TO_GIT → Codex §4 → assinatura + checkbox.
+- Backup VPS registrado (só metadados): `pre-gate-e-20260924-140304.sql`
+  bytes=`390275` sha256=`e72ca99b453fa6b060b5264f636794b3a601202c18e4185deb12f0020cae3f80`
+  mode 600 · `AUTHORIZES_GATES_DEF=NO` · `BACKUP_NOVO_STATUS=NAMED_CANDIDATE_PRESENT`.
+- `GO_NOGO=NO` — blockers restantes: assinatura do termo + Codex §4 (5).
+- **Não** executados: migration, canário, promoção 3080.
+- Próximo: Codex §4 → assinar termo + checkbox do gate → revalidar go-nogo.
 
 ### ERP-RUNTIME-08 — diagnóstico Comercial 360º (2026-09-19)
 

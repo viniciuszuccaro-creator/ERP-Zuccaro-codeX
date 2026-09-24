@@ -1,19 +1,19 @@
-# Evidência sanitizada — backup pre-gate-e (PENDENTE execução na VPS)
-#
-# O dump real NÃO entra no Git. Fica somente em:
-#   /opt/erp-zuccaro/backups/pre-gate-e-YYYYMMDD-HHMMSS.sql
-#
-# Procedimento (Web Console autenticada, autorização = BACKUP apenas):
-#   1) Usar o script no SHA verificado da PR #34 (ver HANDOFF)
-#   2) bash scripts/vps/create-pre-gate-e-backup.sh
-#      (umask 077, mode 600, remove parcial em falha)
-#   3) Substituir este arquivo pelo bloco entre PASTE_TO_GIT_BEGIN/END
-#      (nome, bytes, sha256, integrity_* — sem SQL)
-#   4) bash scripts/vps/verify-pre-gate-e-backup-meta.sh
-#   5) bash scripts/vps/check-backup-novo-gate-e.sh
-#
+# Evidência sanitizada — backup pre-gate-e (VPS srv1982741)
+# Dump real SOMENTE em /opt/erp-zuccaro/backups (não versionado).
+# Fonte: Web Console 2026-09-24T14:03:04Z · script SHA commit abada3f8
 # Este backup NÃO autoriza Gates D/E/F.
 
-status=PENDING_VPS_RUN
+backup path=pre-gate-e-20260924-140304.sql bytes=390275 sha256=e72ca99b453fa6b060b5264f636794b3a601202c18e4185deb12f0020cae3f80 dump_complete_marker=YES
+integrity_header_pg_dump=YES
+integrity_tail_complete=YES
+integrity_sha256_recompute_match=YES
+integrity_file_mode_600=YES
+restore_destructive=NOT_PERFORMED
+AUTHORIZES_GATES_DEF=NO
 EXECUTE_DEF=NO
 APPLY_MIGRATIONS=NO
+START_CANARY=NO
+umask=0077
+file_mode=600
+PRE_GATE_E_BACKUP_STATUS=OK
+status=RECORDED_FROM_VPS
