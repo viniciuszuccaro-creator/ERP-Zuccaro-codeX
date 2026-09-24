@@ -1,7 +1,7 @@
-# Gate E — evidência Web Console (2026-09-24) — sanitizada
+# Gate E — evidência Web Console FINAL (2026-09-24) — sanitizada
 # Sem dump, .env, DATABASE_URL, PII ou segredos.
 
-utc_registro=2026-09-24T18:35:00Z
+utc_registro=2026-09-24T19:45:00Z
 vps=srv1982741
 main_sha=2fc2fc80adb9ca876be6ca3d29aab49305839e8a
 assinatura=VINICIUS
@@ -16,18 +16,21 @@ ROLLBACK_DRYRUN=OK
 
 # Migrator (docker run efêmero + volume migrations; imagem R07B; 3080 intocada)
 migrate_before_applied=001_015
-migrate_before_pending=016_017_018_019_020_021_022_023_024
-migrate_executed=016_orcamentos_comercial_360.sql,017_pedidos_comercial_360.sql,018_produto_pim_dam_outbox.sql,019_produto_relacoes_tenant.sql,020_produto_midia_storage_key_unique.sql,021_produto_midia_upload_reservation.sql,022_produto_midia_scan_evidence.sql,023_produto_material_norma.sql,024_produto_canais_rascunho.sql
+migrate_executed=016,017,018,019,020,021,022,023,024
 migrate_after_pending=[]
 GATE_E_MIGRATE_STATUS=OK
 schema_migrations_016_024=PRESENT_9
 
-# test:postgres (falhou — ambiente)
-test_postgres_status=FAIL
-test_postgres_cause=ERR_MODULE_NOT_FOUND_tsx
-test_postgres_note=npm_ci_omitiu_devDependencies_porque_NODE_ENV=production_no_envfile_do_erp-api-dev
-# Suites tentadas (todas falharam no import tsx, não na lógica de negócio):
-# R01AUTH, R08B, R08C, R09, R10C, R10 — TOTAL_TESTS=1 cada; pass=0 fail=1
+# test:postgres (retry com NODE_ENV=development + npm ci --include=dev)
+test_postgres_status=OK
+POSTGRES_E2E_R01AUTH_TOTAL_TESTS=14
+POSTGRES_E2E_R08B_TOTAL_TESTS=2
+POSTGRES_E2E_R08C_TOTAL_TESTS=2
+POSTGRES_E2E_R09_TOTAL_TESTS=2
+POSTGRES_E2E_R10C_TOTAL_TESTS=2
+POSTGRES_E2E_R10_TOTAL_TESTS=5
+test_postgres_fail=0
+test_postgres_skipped=0
 
 # Smoke 3080 (sem troca de imagem)
 health_3080=200
@@ -37,7 +40,8 @@ meta_auth_mode=dev_headers
 official_image=erp-zuccaro-erp-api:runtime07b-main-ca0bc5f3
 alter_3080=NOT_PERFORMED
 
-GATE_E_STATUS=MIGRATE_OK_TEST_POSTGRES_PENDING
+GATE_E_STATUS=OK
 gate_d=NOT_AUTHORIZED
 gate_f=NOT_AUTHORIZED
 EXECUTE_DEF=NO
+NOTE=Gate_E_schema_applied_DEV_only_API_3080_ainda_R07B_sem_promocao

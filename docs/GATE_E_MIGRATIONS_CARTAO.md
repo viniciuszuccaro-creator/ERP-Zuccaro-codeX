@@ -1,11 +1,11 @@
 # Gate E — cartão de operação (DEV)
 
-**Status:** `MIGRATE_OK` · `test:postgres` pendente (retry §5 com `--include=dev`)
-**Escopo:** migrations **016–024** da `main` @ `2fc2fc80adb9ca876be6ca3d29aab49305839e8a` no DEV — **já aplicadas**.
+**Status:** `GATE_E_OK` · schema 016–024 no DEV · `test:postgres` OK · 3080 ainda R07B
+**Escopo:** migrations **016–024** da `main` @ `2fc2fc80adb9ca876be6ca3d29aab49305839e8a` no DEV — **aplicadas e verificadas**.
 **Não autorizados:** Gate D · Gate F · alteração da 3080 · canário.
 
 Termo: `docs/TERMO_AUTORIZACAO_GATES_D_E_F.md` — assinatura **VINICIUS** · `24/09/2026`.
-Evidência: `docs/vps/evidence/gate-e-webconsole-2026-09-24.txt`.
+Evidência: `docs/vps/evidence/gate-e-webconsole-2026-09-24.txt` · `GATE_E_STATUS=OK`.
 
 ---
 

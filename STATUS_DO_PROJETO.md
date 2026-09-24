@@ -1,13 +1,13 @@
-### Gate E — migrate OK; test:postgres pendente (2026-09-24)
+### Gate E — CONCLUÍDO no DEV (2026-09-24)
 
 - Assinatura: **VINICIUS** · `24/09/2026` · `SIGNED_CHECKLIST_OK`.
 - Backup: `pre-gate-e-20260924-174755.sql` · sha `83a9e97d…` · OK.
-- **Migrate Gate E OK** (docker run + volume migrations): executou 016–024; `pending=[]`; schema 001–024.
-- `test:postgres` **FAIL**: `tsx` ausente — `npm ci` omitiu devDeps com `NODE_ENV=production` do env do `erp-api-dev`.
-- Smoke 3080: health/ready 200 · meta `ERP-RUNTIME-07B` · imagem R07B **não** alterada.
-- Próximo: reexecutar só §5 com `NODE_ENV=development` + `npm ci --include=dev`; colar resultado sanitizado.
+- **Migrate OK**: 016–024 aplicadas · `pending=[]` · schema 001–024.
+- **`test:postgres` OK** (retry `--include=dev`): R01AUTH=14 · R08B=2 · R08C=2 · R09=2 · R10C=2 · R10=5 · fail=0 · skipped=0.
+- Smoke 3080: health/ready 200 · meta `ERP-RUNTIME-07B` · imagem **não** alterada.
 - Evidência: `docs/vps/evidence/gate-e-webconsole-2026-09-24.txt`.
-- **Não** D/F/3080.
+- **Próximo (fora deste Gate E):** Gate D/F / Auth sintético / digest / canário — **ainda não autorizados**.
+- **Não** D/F/3080 nesta rodada.
 
 ### Integração #35 mergeada na main
 

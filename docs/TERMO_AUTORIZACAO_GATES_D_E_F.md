@@ -94,8 +94,8 @@ alter_3080=NOT_AUTHORIZED
 Assinatura responsável: VINICIUS
 Data/hora (UTC): 24/09/2026
 
-**Estado operacional (2026-09-24):** backup OK · migrate 016–024 **aplicado** no DEV ·
-`test:postgres` ainda pendente (falhou por `tsx`/devDeps; cartão §5 corrigido) ·
+**Estado operacional (2026-09-24):** `GATE_E_STATUS=OK` · backup OK · migrate 016–024
+aplicado · `test:postgres` OK (R01AUTH=14 R08B=2 R08C=2 R09=2 R10C=2 R10=5 · fail=0) ·
 3080 permanece R07B · D/F **não** autorizados.
 
 ---
