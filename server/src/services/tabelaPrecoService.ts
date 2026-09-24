@@ -1,4 +1,5 @@
 import { AppError } from '../api/errors.js';
+import { z } from 'zod';
 import type { AuditAction, AuditRepository, RequestContext } from '../audit/types.js';
 import { sanitizeAuditSnapshot } from '../audit/sanitizeAuditSnapshot.js';
 import type { DbQueryExecutor } from '../db/client.js';
@@ -349,21 +350,26 @@ export class TabelaPrecoService {
 
   async resolvePrice(
     ctx: RequestContext,
-    input: {
-      clienteEmpresaTabelaId?: string | null;
-      produtoId: string;
-      unidadeMedidaId: string;
-      businessDate?: string;
-    },
+    input: unknown,
   ) {
     await this.prepare(ctx, 'visualizar', { requireEmpresa: true });
+    const parsed = z.object({
+      clienteEmpresaTabelaId: z.string().uuid().nullable().optional(),
+      produtoId: z.string().uuid(),
+      unidadeMedidaId: z.string().uuid(),
+      businessDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
+        const date = new Date(`${value}T00:00:00.000Z`);
+        return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+      }).optional(),
+    }).strict().safeParse(input);
+    if (!parsed.success) this.validationError(parsed.error.flatten());
     return this.repo.resolvePrice({
       groupId: ctx.groupId,
       empresaId: ctx.empresaId!,
-      clienteEmpresaTabelaId: input.clienteEmpresaTabelaId,
-      produtoId: input.produtoId,
-      unidadeMedidaId: input.unidadeMedidaId,
-      businessDate: input.businessDate ?? businessDateSaoPaulo(),
+      clienteEmpresaTabelaId: parsed.data.clienteEmpresaTabelaId,
+      produtoId: parsed.data.produtoId,
+      unidadeMedidaId: parsed.data.unidadeMedidaId,
+      businessDate: parsed.data.businessDate ?? businessDateSaoPaulo(),
     });
   }
 

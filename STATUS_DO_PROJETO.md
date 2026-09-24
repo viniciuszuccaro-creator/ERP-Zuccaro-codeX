@@ -1,3 +1,10 @@
+## Comercial 360 / Onda 2 - resolucao interna de preco (2026-09-24)
+- Causa: TabelaPrecoService.resolvePrice aceitava input nao validado, e os repositories podiam devolver preco para Produto especifico de outra Empresa no mesmo Grupo. Reutilizados TabelaPrecoService, repositories canonicos e testes R07B; nenhuma estrutura paralela ou migration.
+- Correcao: payload estrito (UUID/data calendario, sem campos tenant), Produto ativo do Grupo e visivel a Empresa (empresa proprietaria ou mestre compartilhado), Unidade ativa no Grupo. Nenhum endpoint novo nem preco gravado em Orcamento/Pedido; sem mudanca em auditoria de mutacao, RBAC visualizar e TenantGuard existentes.
+- Testes: PostgreSQL sintetico R07B 2/2 focados, incluindo bloqueio cross-company; memoria 1/1 para Produto especifico/compartilhado; backend completo 233 total / 218 pass / 0 fail / 15 skips locais condicionais sem DATABASE_URL; frontend 621/621. Backend typecheck/build, frontend lint/build, audit:baseline e git diff --check PASS. Typecheck global da raiz segue FAIL em erros legados de Base44/frontend fora deste diff.
+- Deploy: PR #33 continua draft. Migrations 023/024 validadas somente em codigo/CI, nao aplicadas na VPS; sem Auth, scanner, Produto HTTP, canario ou alteracao da API 3080. CI do HEAD deste lote ainda deve ser confirmada.
+- Proximo: confirmar CI; definir e testar contrato de escolha da tabela por ClienteEmpresa/canal e snapshot de preco na criacao de Orcamento/Pedido, sem retroatividade. Cliente 360 permanece independente e pendente.
+
 ## Comercial 360 / Onda 1 - rascunho Produto por canal (2026-09-24)
 - Causa: migration 024 tinha somente persistencia estrutural; Produto nao oferecia CRUD de conteudo por empresa/canal. Reutilizados ProdutoService, ProdutoRepository, router, TenantGuard, RBAC, auditoria e transacao existentes.
 - Implementado: schemas estritos, list/create/update/inativacao logica de produto_canais em memoria/PostgreSQL e rotas GET/POST/PATCH/DELETE /api/v1/produtos/:id/canais. Somente RASCUNHO, sem publicacao externa; SKU unico por empresa/canal inclusive inativos.

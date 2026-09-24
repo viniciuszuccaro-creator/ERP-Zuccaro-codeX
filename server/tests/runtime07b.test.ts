@@ -13,6 +13,7 @@ import { createDbClient } from '../src/db/client.ts';
 import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 import { CLIENTE_FORBIDDEN_FIELDS } from '../src/repositories/clienteTypes.ts';
+import { InMemoryTabelaPrecoRepository } from '../src/repositories/inMemoryTabelaPrecoRepository.ts';
 import { PostgresTabelaPrecoRepository } from '../src/repositories/postgresTabelaPrecoRepository.ts';
 import { TabelaPrecoService } from '../src/services/tabelaPrecoService.ts';
 import { SEED_IDS } from '../scripts/seedDevIds.ts';
@@ -794,7 +795,50 @@ test('ClienteEmpresa cross-company + produto/unidade + precisão + vigência', a
     assert.ok(unsafe);
     assert.notEqual(unsafe?.tabela_preco_id, onlyA2.id);
     assert.equal(unsafe?.origem_resolucao, 'padrao_empresa');
+
+    await svc.setPadrao({ ...ctxA, empresaId: SEED_IDS.empresaA2 }, onlyA2.id);
+    const crossCompanyProduct = await svc.resolvePrice(
+      { ...ctxA, empresaId: SEED_IDS.empresaA2 },
+      { produtoId: SEED_IDS.produtoA, unidadeMedidaId: SEED_IDS.unidadeA, businessDate: '2024-06-01' },
+    );
+    assert.equal(crossCompanyProduct, null);
+
+    for (const invalid of [
+      { produtoId: 'invalid', unidadeMedidaId: SEED_IDS.unidadeA },
+      { produtoId: SEED_IDS.produtoA, unidadeMedidaId: SEED_IDS.unidadeA, businessDate: '2024-02-30' },
+      { produtoId: SEED_IDS.produtoA, unidadeMedidaId: SEED_IDS.unidadeA, empresaId: SEED_IDS.empresaA2 },
+    ]) {
+      await assert.rejects(
+        () => svc.resolvePrice(ctxA, invalid),
+        { code: 'VALIDATION_ERROR' },
+      );
+    }
   } finally {
     await pg.close();
   }
+});
+
+test('preço em memória respeita Produto específico ou compartilhado', async () => {
+  const repo = new InMemoryTabelaPrecoRepository();
+  const tabela = await repo.create(
+    { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA2 },
+    { nome: 'PRECO EMPRESA A2', vigencia_inicio: '2024-01-01' },
+    SEED_IDS.runtimeActorA,
+  );
+  await repo.createItem(
+    { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA2 },
+    tabela.id,
+    { produto_id: SEED_IDS.produtoA, unidade_medida_id: SEED_IDS.unidadeA, preco: '12.34' },
+    SEED_IDS.runtimeActorA,
+  );
+  repo.hydrateUnidade({ id: SEED_IDS.unidadeA, group_id: SEED_IDS.groupA, sigla: 'KG' });
+  const input = {
+    groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA2,
+    clienteEmpresaTabelaId: tabela.id, produtoId: SEED_IDS.produtoA,
+    unidadeMedidaId: SEED_IDS.unidadeA, businessDate: '2024-06-01',
+  };
+  repo.hydrateProduto({ id: SEED_IDS.produtoA, group_id: SEED_IDS.groupA, empresa_id: SEED_IDS.empresaA });
+  assert.equal(await repo.resolvePrice(input), null);
+  repo.hydrateProduto({ id: SEED_IDS.produtoA, group_id: SEED_IDS.groupA, empresa_id: null });
+  assert.equal((await repo.resolvePrice(input))?.preco, '12.34');
 });
