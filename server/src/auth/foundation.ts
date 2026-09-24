@@ -1,20 +1,18 @@
-/**
- * Auth foundation only — full Supabase Auth mapping is a later runtime lote.
- * Service role keys must never reach the browser.
- */
+/** Service role keys must never reach the browser. */
 
 export type AuthFoundation = {
-  mode: 'dev_headers' | 'supabase_jwt_future';
+  mode: 'dev_headers' | 'supabase_user';
   notes: string[];
 };
 
-export function getAuthFoundation(): AuthFoundation {
+export function getAuthFoundation(mode: AuthFoundation['mode']): AuthFoundation {
   return {
-    mode: 'dev_headers',
-    notes: [
-      'ERP-RUNTIME-01 accepts X-Actor-Id / X-Actor-Email for audit only.',
-      'Supabase Auth JWT validation will replace this in a later lote.',
-      'SUPABASE_SERVICE_ROLE_KEY is server-only and must never be exposed to Vite.',
-    ],
+    mode,
+    notes: mode === 'supabase_user'
+      ? ['Bearer user token is validated by self-hosted Supabase Auth before tenant and RBAC checks.',
+        'Group and company headers are requested scope only; server-side guards enforce membership.',
+        'SUPABASE_SERVICE_ROLE_KEY is server-only and must never be exposed to Vite.']
+      : ['Development-only actor headers are not verified identities.',
+        'SUPABASE_SERVICE_ROLE_KEY is server-only and must never be exposed to Vite.'],
   };
 }

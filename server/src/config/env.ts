@@ -9,10 +9,14 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   ERP_ENV: z.enum(['dev', 'hml', 'prod']).default('dev'),
   PORT: z.coerce.number().int().positive().default(3080),
+  ERP_AUTH_MODE: z.enum(['dev_headers', 'supabase_user']).optional(),
   DATABASE_URL: z.string().min(1).optional(),
   SUPABASE_URL: z.string().url().optional(),
   SUPABASE_ANON_KEY: z.string().min(1).optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+  SUPABASE_STORAGE_PUBLIC_URL: z.string().url().optional(),
+  SUPABASE_STORAGE_PRIVATE_BUCKET: z.string().min(1).optional(),
+  SUPABASE_STORAGE_MAX_BYTES: z.coerce.number().int().positive().default(10_000_000),
   CORS_ORIGINS: z.string().default('http://localhost:5173,https://erp-dev.cpaferroeaco.com.br'),
   BODY_LIMIT: z.string().default('1mb'),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
@@ -23,12 +27,16 @@ const envSchema = z.object({
 
 export type AppConfig = {
   nodeEnv: 'development' | 'test' | 'production';
+  authMode: 'dev_headers' | 'supabase_user';
   erpEnv: 'dev' | 'hml' | 'prod';
   port: number;
   databaseUrl?: string;
   supabaseUrl?: string;
   supabaseAnonKey?: string;
   supabaseServiceRoleKey?: string;
+  supabaseStoragePublicUrl?: string;
+  supabaseStoragePrivateBucket?: string;
+  supabaseStorageMaxBytes: number;
   corsOrigins: string[];
   bodyLimit: string;
   rateLimitWindowMs: number;
@@ -47,6 +55,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
 
   const data = parsed.data;
   const requireDatabase = boolFromEnv(data.REQUIRE_DATABASE, data.NODE_ENV === 'production');
+  const authMode = data.ERP_AUTH_MODE ?? (data.ERP_ENV === 'dev' && data.NODE_ENV !== 'production' ? 'dev_headers' : 'supabase_user');
+  if (authMode === 'dev_headers' && (data.NODE_ENV === 'production' || data.ERP_ENV !== 'dev')) {
+    throw new Error('ERP_AUTH_MODE=dev_headers is forbidden outside development');
+  }
+  if (authMode === 'supabase_user' && (!data.SUPABASE_URL || !data.SUPABASE_ANON_KEY)) {
+    throw new Error('SUPABASE_URL and SUPABASE_ANON_KEY are required for supabase_user authentication');
+  }
+
 
   if (requireDatabase && !data.DATABASE_URL) {
     throw new Error('DATABASE_URL is required when REQUIRE_DATABASE=true');
@@ -58,8 +74,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     port: data.PORT,
     databaseUrl: data.DATABASE_URL,
     supabaseUrl: data.SUPABASE_URL,
+    authMode,
     supabaseAnonKey: data.SUPABASE_ANON_KEY,
     supabaseServiceRoleKey: data.SUPABASE_SERVICE_ROLE_KEY,
+    supabaseStoragePublicUrl: data.SUPABASE_STORAGE_PUBLIC_URL,
+    supabaseStoragePrivateBucket: data.SUPABASE_STORAGE_PRIVATE_BUCKET,
+    supabaseStorageMaxBytes: data.SUPABASE_STORAGE_MAX_BYTES,
     corsOrigins: data.CORS_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean),
     bodyLimit: data.BODY_LIMIT,
     rateLimitWindowMs: data.RATE_LIMIT_WINDOW_MS,

@@ -1,0 +1,87 @@
+# Gate D — checklist de smoke autenticado (sintético)
+
+**Status:** `PREPARADO / NÃO EXECUTAR sem Gate C APROVADO + autorização`
+**Não usar:** `dev_headers` como prova de Auth.
+**Não publicar:** mídia (`CLEAN` de scan ≠ aprovação comercial).
+
+Complementa `docs/GATES_D_F_PREPARACAO_CANARIO.md` e o contrato
+`docs/CONTRATO_CURSOR_CODEX_VPS_CANARIO.md`.
+
+---
+
+## Pré-requisitos
+
+| # | Item | Evidência |
+|---|---|---|
+| 1 | Gate C APROVADO | `score-gate-c.sh` |
+| 2 | `EXPECTED_RUNTIME` confirmado pelo Codex | contrato §7 |
+| 3 | Imagem imutável `comercial360-main-<sha8>` da **main** | digest |
+| 4 | Canário up em porta ≠3080 | `comercial360-canary.sh` (PR #33) |
+| 5 | Meta do canário: `auth.mode=supabase_user` | smoke script |
+| 6 | Identidade sintética Auth (Bearer) + profile vinculado | **fora do Git** |
+| 7 | Contexto Grupo/Empresa autorizados ao profile | seed sintético |
+
+---
+
+## Sequência mínima (após canário ready)
+
+### A. Meta / superfície HTTP
+
+```bash
+BASE_URL="http://127.0.0.1:${CANARY_PORT}" \
+EXPECTED_RUNTIME="<valor confirmado>" \
+  ./scripts/deploy/comercial360-smoke.sh
+```
+
+Exige: runtime batendo, `supabase_user`, entidades `Orcamento` e `Pedido`.
+
+### B. Bearer sintético — permitido
+
+Com token válido e escopo correto (sem colar o token em logs/PR):
+
+1. Orçamento: list → get → create → update → cancel  
+2. Conversão idempotente Orçamento→Pedido (mesma chave duas vezes = 1 pedido)  
+3. Pedido: list → get → update → status → cancel → histórico  
+4. Totais recalculados pelo servidor (não confiar no client)
+
+### C. Negativos obrigatórios
+
+| Caso | Esperado |
+|---|---|
+| Sem Authorization | 401/403 fail-closed |
+| Token inválido/expirado | negado |
+| Profile sem permissão Orçamento/Pedido | 403 |
+| `empresa_id` de outra empresa do grupo sem vínculo | bloqueado |
+| `group_id` adulterado / outro grupo | 403 ou 404 (sem vazamento) |
+| Duplo submit create sem idempotency | sem duplicata indevida / ou 409 conforme contrato |
+
+### D. Auditoria
+
+Mutações geram audit atômico; snapshots **sem** PII desnecessária.
+Falha de audit → rollback da mutação (padrão do runtime).
+
+### E. Limpeza
+
+Remover apenas IDs sintéticos criados pelo gate, respeitando FKs/auditoria.
+Não truncar tabelas. Não tocar dados de outros tenants.
+
+---
+
+## O que este checklist NÃO cobre
+
+- Scanner ClamAV real / buckets DAM  
+- Produto HTTP ligado  
+- Migrations 016+ (Gate E)  
+- Promoção 3080 (Gate F)  
+- Importação legado (Onda 25)
+
+---
+
+## Registro de evidência (sanitizado)
+
+Ao executar no futuro, gravar no handoff Cursor apenas:
+
+- `CANARY_PORT`, `IMAGE` tag (sem digest secreto se sensível), `EXPECTED_RUNTIME`
+- `meta_auth_mode=supabase_user`
+- contagem de casos B/C pass/fail
+- **nunca** token, e-mail, senha, UUID de cliente real

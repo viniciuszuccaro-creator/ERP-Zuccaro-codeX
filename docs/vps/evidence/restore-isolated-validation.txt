@@ -1,0 +1,14 @@
+# Evidência — restore isolado (sintético). NÃO é restore na DEV.
+# utc=2026-09-24T15:27:24Z
+restore_target=ISOLATED_FILESYSTEM
+dump_source=SYNTHETIC_PRE_GATE_E_PROCEDURE
+vps_dump_used=NO
+dev_database_touched=NO
+dev_marker_sha_before=bfb0cc866c23974c0d9a8956e7b1a0ea64573e22c761178d16a2ce78e27647ed
+dev_marker_sha_after=bfb0cc866c23974c0d9a8956e7b1a0ea64573e22c761178d16a2ce78e27647ed
+isolated_schema_migrations=15
+restore_isolated=VALIDATED_SYNTHETIC
+RESTORE_ISOLATED_STATUS=OK
+AUTHORIZES_GATES_DEF=NO
+EXECUTE_DEF=NO
+APPLY_MIGRATIONS=NO

@@ -3,12 +3,22 @@ import test from 'node:test';
 import { InMemoryAuditRepository } from '../src/audit/auditRepository.ts';
 import { loadConfig } from '../src/config/env.ts';
 import { createApp } from '../src/app.ts';
-import { createDbClient } from '../src/db/client.ts';
+import { createDbClient, type DbClient, type DbQueryExecutor } from '../src/db/client.ts';
 import { InMemoryProdutoRelationGuard } from '../src/db/produtoRelationGuard.ts';
+import { InMemoryRbacGuard, type RbacGuard } from '../src/db/rbacGuard.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 import { listMigrationFiles } from '../src/db/migrate.ts';
 import { createInMemoryProdutoRepo } from '../src/repositories/inMemoryProdutoRepository.ts';
-import { PRODUTO_FORBIDDEN_OPERATIONAL_FIELDS } from '../src/repositories/produtoTypes.ts';
+import { PostgresProdutoRepository } from '../src/repositories/postgresProdutoRepository.ts';
+import {
+  PRODUTO_FORBIDDEN_OPERATIONAL_FIELDS,
+  PRODUTO_TIPOS_CANONICOS,
+  isProdutoTipoCanonico,
+  normalizeProdutoTipoItem,
+  produtoCreateSchema,
+  produtoUpdateSchema,
+  type ProdutoTipoCanonico,
+} from '../src/repositories/produtoTypes.ts';
 import { ProdutoService } from '../src/services/produtoService.ts';
 
 const GROUP_A = '11111111-1111-4111-8111-111111111111';
@@ -23,7 +33,20 @@ const GRUPO_A = 'eeeeeeee-1111-4111-8111-eeeeeeeeeeee';
 const GRUPO_B = 'ffffffff-2222-4222-8222-ffffffffffff';
 const SETOR_A = '99999999-1111-4111-8111-999999999999';
 const SETOR_B = '88888888-2222-4222-8222-888888888888';
+const ACTOR_A = '77777777-1111-4111-8111-777777777777';
+const ACTOR_B = '66666666-2222-4222-8222-666666666666';
 
+function allowAllRbac(): RbacGuard {
+  return { assertAllowed: async () => undefined };
+}
+
+function linkedRbac() {
+  const guard = new InMemoryRbacGuard();
+  const permissions = { Cadastros: { produto: ['visualizar', 'criar', 'editar', 'inativar'] } };
+  guard.link({ actorId: ACTOR_A, groupId: GROUP_A, permissions });
+  guard.link({ actorId: ACTOR_B, groupId: GROUP_B, permissions });
+  return guard;
+}
 function linkedGuard() {
   const guard = new InMemoryTenantGuard();
   guard.link(EMPRESA_A, GROUP_A);
@@ -61,13 +84,303 @@ test('runtime-03 migrations 007/008 exist after 001-006', () => {
   assert.ok(files.indexOf('007_produtos_master_data.sql') > files.indexOf('006_produtos_base.sql'));
 });
 
-test('AUDIT: Produto descricao before/after + soft delete', async () => {
+test('Produto normaliza aliases PIM conhecidos sem reclassificar legado desconhecido', () => {
+  assert.equal(normalizeProdutoTipoItem('revenda'), PRODUTO_TIPOS_CANONICOS.REVENDA);
+  assert.equal(normalizeProdutoTipoItem('materia_prima'), PRODUTO_TIPOS_CANONICOS.MATERIA_PRIMA);
+  assert.equal(normalizeProdutoTipoItem('matéria-prima produção'), PRODUTO_TIPOS_CANONICOS.MATERIA_PRIMA);
+  assert.equal(normalizeProdutoTipoItem('producao_aco'), 'producao_aco');
+  assert.equal(normalizeProdutoTipoItem('fabricado'), PRODUTO_TIPOS_CANONICOS.FABRICADO);
+  assert.equal(normalizeProdutoTipoItem('Linha Legada Especial'), 'Linha Legada Especial');
+  assert.equal(normalizeProdutoTipoItem('consumo_interno'), PRODUTO_TIPOS_CANONICOS.CONSUMO_INTERNO);
+  assert.equal(isProdutoTipoCanonico('consumo-interno'), true);
+  assert.equal(isProdutoTipoCanonico('Linha Legada Especial'), false);
+
+  assert.equal(
+    produtoCreateSchema.parse({ descricao: 'Produto sintético', tipo_item: 'servico' }).tipo_item,
+    PRODUTO_TIPOS_CANONICOS.SERVICO,
+  );
+  assert.equal(
+    produtoUpdateSchema.parse({ tipo_item: 'produto-acabado' }).tipo_item,
+    PRODUTO_TIPOS_CANONICOS.FABRICADO,
+  );
+  assert.equal(
+    produtoCreateSchema.parse({ descricao: 'Produto padrão' }).tipo_item,
+    PRODUTO_TIPOS_CANONICOS.REVENDA,
+  );
+});
+
+test('Produto valida e normaliza atributos PIM universais existentes', () => {
+  const parsed = produtoCreateSchema.parse({
+    descricao: 'Produto PIM sintético',
+    unidades_secundarias: ['KG', 'kg', ' PÇ ', 'MT', 'mt'],
+    fatores_conversao: { kg_por_peca: 12.5, metros_por_peca: 6 },
+    peso_liquido_kg: 12.5,
+    peso_bruto_kg: 13,
+    altura_cm: 10,
+    largura_cm: 20,
+    comprimento_cm: 600,
+    volume_m3: 0.12,
+  });
+
+  assert.deepEqual(parsed.unidades_secundarias, ['KG', 'PÇ', 'MT']);
+  assert.deepEqual(parsed.fatores_conversao, { kg_por_peca: 12.5, metros_por_peca: 6 });
+  assert.equal(parsed.peso_liquido_kg, 12.5);
+
+  for (const payload of [
+    { descricao: 'Peso inválido', peso_liquido_kg: -1 },
+    { descricao: 'Dimensão inválida', altura_cm: -1 },
+    { descricao: 'Volume inválido', volume_m3: -1 },
+    { descricao: 'Fator zero', fatores_conversao: { kg_por_peca: 0 } },
+    { descricao: 'Fator NaN', fatores_conversao: { kg_por_peca: Number.NaN } },
+    { descricao: 'Fator inválido', fatores_conversao: { kg_por_peca: -1 } },
+    { descricao: 'Fator infinito', fatores_conversao: { kg_por_peca: Number.POSITIVE_INFINITY } },
+    { descricao: 'Fator não numérico', fatores_conversao: { kg_por_peca: '12' } },
+    { descricao: 'Unidade vazia', unidades_secundarias: ['KG', ' '] },
+  ]) {
+    assert.equal(produtoCreateSchema.safeParse(payload).success, false);
+  }
+});
+test('Produto RBAC falha fechado e classificação bloqueia novos valores desconhecidos', async () => {
+  const canonicalValue: ProdutoTipoCanonico = PRODUTO_TIPOS_CANONICOS.REVENDA;
+  assert.equal(canonicalValue, 'Revenda');
+
+  const ctx = {
+    requestId: 'produto-rbac',
+    actorId: ACTOR_A,
+    groupId: GROUP_A,
+    empresaId: EMPRESA_A,
+  };
+  const denied = new ProdutoService(
+    createInMemoryProdutoRepo(),
+    new InMemoryAuditRepository(),
+    linkedGuard(),
+    linkedRelations(),
+    new InMemoryRbacGuard(),
+  );
+  await assert.rejects(
+    () => denied.list(ctx),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED',
+  );
+
+  const readOnlyRbac = new InMemoryRbacGuard();
+  readOnlyRbac.link({
+    actorId: ACTOR_A,
+    groupId: GROUP_A,
+    permissions: { Cadastros: { produto: ['visualizar'] } },
+  });
+  const readOnly = new ProdutoService(
+    createInMemoryProdutoRepo(),
+    new InMemoryAuditRepository(),
+    linkedGuard(),
+    linkedRelations(),
+    readOnlyRbac,
+  );
+  assert.deepEqual((await readOnly.list(ctx)).data, []);
+  await assert.rejects(
+    () => readOnly.create(ctx, { descricao: 'Produto negado' }),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED',
+  );
+
+  const allowed = new ProdutoService(
+    createInMemoryProdutoRepo(),
+    new InMemoryAuditRepository(),
+    linkedGuard(),
+    linkedRelations(),
+    linkedRbac(),
+  );
+  const consumo = await allowed.create(ctx, {
+    descricao: 'Produto consumo interno',
+    tipo_item: 'consumo_interno',
+  });
+  assert.equal(consumo.tipo_item, PRODUTO_TIPOS_CANONICOS.CONSUMO_INTERNO);
+  await assert.rejects(
+    () => allowed.create(ctx, { descricao: 'Produto inválido', tipo_item: 'Classificação inventada' }),
+    (error: unknown) => (error as { code?: string }).code === 'PRODUTO_TIPO_INVALIDO',
+  );
+});
+
+test('Produto preserva tipo legado existente sem permitir troca para outro desconhecido', async () => {
+  const repo = createInMemoryProdutoRepo();
+  const legacy = await repo.create(
+    { groupId: GROUP_A, empresaId: EMPRESA_A },
+    { descricao: 'Produto legado', tipo_item: 'Linha Legada Especial' },
+  );
+  const service = new ProdutoService(
+    repo,
+    new InMemoryAuditRepository(),
+    linkedGuard(),
+    linkedRelations(),
+    linkedRbac(),
+  );
+  const ctx = {
+    requestId: 'produto-legado',
+    actorId: ACTOR_A,
+    groupId: GROUP_A,
+    empresaId: EMPRESA_A,
+  };
+
+  const preserved = await service.update(ctx, legacy.id, {
+    descricao: 'Produto legado revisado',
+    tipo_item: 'Linha Legada Especial',
+  });
+  assert.equal(preserved.tipo_item, 'Linha Legada Especial');
+  await assert.rejects(
+    () => service.update(ctx, legacy.id, { tipo_item: 'Outro tipo desconhecido' }),
+    (error: unknown) => (error as { code?: string }).code === 'PRODUTO_TIPO_INVALIDO',
+  );
+});
+test('Produto rollbacka create update e inativacao quando auditoria falha', async () => {
+  const repo = createInMemoryProdutoRepo();
+  const failingAudit = {
+    append: async () => { throw new Error('AUDIT_FAILURE'); },
+    listByEntity: async () => [],
+  };
+  const service = new ProdutoService(
+    repo,
+    failingAudit,
+    linkedGuard(),
+    linkedRelations(),
+    allowAllRbac(),
+  );
+  const ctx = {
+    requestId: 'produto-tx-audit',
+    groupId: GROUP_A,
+    empresaId: EMPRESA_A,
+  };
+
+  await assert.rejects(
+    () => service.create(ctx, { descricao: 'CREATE ROLLBACK', codigo: 'TX-CREATE' }),
+    /AUDIT_FAILURE/,
+  );
+  assert.equal((await repo.listPage({ groupId: GROUP_A, empresaId: EMPRESA_A })).total, 0);
+
+  const original = await repo.create(
+    { groupId: GROUP_A, empresaId: EMPRESA_A },
+    { descricao: 'ORIGINAL', codigo: 'TX-EXISTENTE' },
+  );
+  await assert.rejects(
+    () => service.update(ctx, original.id, { descricao: 'NAO PERSISTE' }),
+    /AUDIT_FAILURE/,
+  );
+  assert.equal((await repo.getById({ groupId: GROUP_A, empresaId: EMPRESA_A }, original.id))?.descricao, 'ORIGINAL');
+
+  await assert.rejects(
+    () => service.softDelete(ctx, original.id),
+    /AUDIT_FAILURE/,
+  );
+  assert.equal((await repo.getById({ groupId: GROUP_A, empresaId: EMPRESA_A }, original.id))?.ativo, true);
+});
+
+test('Produto repassa o mesmo executor para mutacao e auditoria', async () => {
+  const executor = { query: async () => ({ rows: [], rowCount: 0 }) };
+  const repo = createInMemoryProdutoRepo();
+  let repositoryExecutor: unknown;
+  let auditExecutor: unknown;
+  repo.withTransaction = async (fn) => fn(executor);
+  const originalCreate = repo.create.bind(repo);
+  repo.create = async (scope, data, received) => {
+    repositoryExecutor = received;
+    return originalCreate(scope, data, received);
+  };
+  const audit = {
+    append: async (_entry: unknown, received?: unknown) => { auditExecutor = received; },
+    listByEntity: async () => [],
+  };
+  const service = new ProdutoService(repo, audit, linkedGuard(), linkedRelations(), allowAllRbac());
+  await service.create({ requestId: 'tx-executor', groupId: GROUP_A, empresaId: EMPRESA_A }, { descricao: 'EXECUTOR' });
+  assert.equal(repositoryExecutor, executor);
+  assert.equal(auditExecutor, executor);
+});
+
+test('Produto update e inativacao leem linha bloqueada e auditam com o mesmo executor', async () => {
+  const executor = { query: async () => ({ rows: [], rowCount: 0 }) } as DbQueryExecutor;
+  const repo = createInMemoryProdutoRepo();
+  const scope = { groupId: GROUP_A, empresaId: EMPRESA_A };
+  const row = await repo.create(scope, { descricao: 'ANTES DA CONCORRENCIA', codigo: 'TX-LOCK' });
+  const originalGet = repo.getById.bind(repo);
+  const originalUpdate = repo.update.bind(repo);
+  const originalSoftDelete = repo.softDelete.bind(repo);
+  const auditEntries: Array<{ entry: Record<string, unknown>; executor?: DbQueryExecutor }> = [];
+  const calls: Array<{ operation: string; executor?: DbQueryExecutor; forUpdate?: boolean }> = [];
+
+  repo.withTransaction = async (fn) => {
+    await originalUpdate(scope, row.id, { descricao: 'ESTADO CONCORRENTE BLOQUEADO' });
+    calls.length = 0;
+    return fn(executor);
+  };
+  repo.getById = async (receivedScope, id, receivedExecutor, options) => {
+    calls.push({ operation: 'get', executor: receivedExecutor, forUpdate: options?.forUpdate });
+    return originalGet(receivedScope, id, receivedExecutor, options);
+  };
+  repo.update = async (receivedScope, id, data, receivedExecutor) => {
+    calls.push({ operation: 'update', executor: receivedExecutor });
+    return originalUpdate(receivedScope, id, data, receivedExecutor);
+  };
+  repo.softDelete = async (receivedScope, id, receivedExecutor) => {
+    calls.push({ operation: 'softDelete', executor: receivedExecutor });
+    return originalSoftDelete(receivedScope, id, receivedExecutor);
+  };
+  const audit = {
+    append: async (entry: Record<string, unknown>, receivedExecutor?: DbQueryExecutor) => {
+      auditEntries.push({ entry, executor: receivedExecutor });
+    },
+    listByEntity: async () => [],
+  };
+  const service = new ProdutoService(repo, audit, linkedGuard(), linkedRelations(), allowAllRbac());
+  const ctx = { requestId: 'produto-lock', groupId: GROUP_A, empresaId: EMPRESA_A };
+
+  await service.update(ctx, row.id, { descricao: 'ESTADO FINAL' });
+  assert.equal((auditEntries[0].entry.beforeData as { descricao: string }).descricao, 'ESTADO CONCORRENTE BLOQUEADO');
+  assert.equal((auditEntries[0].entry.afterData as { descricao: string }).descricao, 'ESTADO FINAL');
+  assert.equal(calls[0].operation, 'get');
+  assert.equal(calls[0].forUpdate, true);
+  assert.ok(calls.filter((call) => call.operation === 'get' || call.operation === 'update').every((call) => call.executor === executor));
+  assert.equal(auditEntries[0].executor, executor);
+
+  calls.length = 0;
+  repo.withTransaction = async (fn) => fn(executor);
+  await service.softDelete({ ...ctx, requestId: 'produto-lock-delete' }, row.id);
+  assert.equal(calls[0].operation, 'get');
+  assert.equal(calls[0].forUpdate, true);
+  assert.ok(calls.every((call) => call.executor === executor));
+  assert.equal(auditEntries[1].executor, executor);
+});
+
+test('Postgres Produto exige transacao e usa SELECT FOR UPDATE no snapshot de mutacao', async () => {
+  let sql = '';
+  let params: unknown[] | undefined;
+  const executor: DbQueryExecutor = {
+    query: async (text, values) => {
+      sql = text;
+      params = values;
+      return { rows: [], rowCount: 0 } as never;
+    },
+  };
+  const db = {
+    query: executor.query,
+    withTransaction: async <T>(fn: (tx: DbQueryExecutor) => Promise<T>) => fn(executor),
+    checkConnection: async () => true,
+    end: async () => undefined,
+    pool: null,
+  } as DbClient;
+  const repo = new PostgresProdutoRepository(db);
+  await assert.rejects(
+    () => repo.getById({ groupId: GROUP_A, empresaId: EMPRESA_A }, ACTOR_A, undefined, { forUpdate: true }),
+    /PRODUTO_FOR_UPDATE_REQUIRES_TRANSACTION/,
+  );
+  await repo.getById({ groupId: GROUP_A, empresaId: EMPRESA_A }, ACTOR_A, executor, { forUpdate: true });
+  assert.match(sql, /WHERE group_id = \$1 AND id = \$2 AND empresa_id = \$3 FOR UPDATE$/);
+  assert.deepEqual(params, [GROUP_A, ACTOR_A, EMPRESA_A]);
+});
+
   const audit = new InMemoryAuditRepository();
+test('AUDIT: Produto descricao before/after + soft delete', async () => {
   const service = new ProdutoService(
     createInMemoryProdutoRepo(),
     audit,
     linkedGuard(),
     linkedRelations(),
+    allowAllRbac(),
   );
   const ctx = {
     requestId: 'p-audit-1',
@@ -112,6 +425,7 @@ test('cross-tenant FK blocked for marca/unidade/grupo/setor', async () => {
     new InMemoryAuditRepository(),
     linkedGuard(),
     linkedRelations(),
+    allowAllRbac(),
   );
   const ctx = { requestId: 'fk', groupId: GROUP_A, empresaId: EMPRESA_A };
 
@@ -151,6 +465,7 @@ test('Produto rejects operational fields and same-group codigo conflict', async 
     new InMemoryAuditRepository(),
     linkedGuard(),
     linkedRelations(),
+    allowAllRbac(),
   );
   const ctx = { requestId: 'op', groupId: GROUP_A, empresaId: EMPRESA_A };
 
@@ -187,6 +502,7 @@ test('API Produto pagination + tenant isolation + search no leak', async () => {
     useMemory: true,
     tenantGuard: linkedGuard(),
     produtoRelationGuard: linkedRelations(),
+    rbacGuard: linkedRbac(),
   });
 
   for (let i = 0; i < 3; i += 1) {
@@ -262,6 +578,7 @@ test('API Produto cross-tenant empresa and FK via HTTP', async () => {
     useMemory: true,
     tenantGuard: linkedGuard(),
     produtoRelationGuard: linkedRelations(),
+    rbacGuard: linkedRbac(),
   });
 
   const crossEmpresa = await fetchStatus(app, '/api/v1/produtos', {
@@ -303,6 +620,7 @@ test('soft-deleted produto excluded from default list/search/count (defeito VPS)
     useMemory: true,
     tenantGuard: linkedGuard(),
     produtoRelationGuard: linkedRelations(),
+    rbacGuard: linkedRbac(),
   });
   const headersA = {
     'content-type': 'application/json',
@@ -383,6 +701,7 @@ test('soft-delete visibility respeita tenant A/B', async () => {
     useMemory: true,
     tenantGuard: linkedGuard(),
     produtoRelationGuard: linkedRelations(),
+    rbacGuard: linkedRbac(),
   });
 
   const a1 = await fetchOk(app, '/api/v1/produtos', {
@@ -440,7 +759,11 @@ async function fetchStatus(app: ReturnType<typeof createApp>['app'], path: strin
     throw new Error('Unable to bind test server');
   }
   try {
-    const response = await fetch(`http://127.0.0.1:${address.port}${path}`, init);
+    const headers = new Headers(init.headers);
+    if (!headers.has('x-actor-id')) {
+      headers.set('x-actor-id', headers.get('x-group-id') === GROUP_B ? ACTOR_B : ACTOR_A);
+    }
+    const response = await fetch(`http://127.0.0.1:${address.port}${path}`, { ...init, headers });
     const text = await response.text();
     const body = text ? JSON.parse(text) : null;
     return { statusCode: response.status, body, headers: response.headers };

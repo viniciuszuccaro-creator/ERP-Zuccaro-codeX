@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "typecheck": "tsc -p ./jsconfig.json",
     "preview": "vite preview",
-    "test": "node --test 'tests/**/*.test.js'",
+    "test": "node --test \"tests/**/*.test.js\"",
     "server:dev": "npm --prefix server run dev",
     "server:build": "npm --prefix server run build",
     "server:test": "npm --prefix server run test",

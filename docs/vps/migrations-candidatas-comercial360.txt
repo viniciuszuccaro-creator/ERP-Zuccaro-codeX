@@ -1,0 +1,28 @@
+# Migrations candidatas Comercial 360 (espelho documental PR #33)
+# Somente IDs/nomes. NÃO é SQL. NÃO aplicar a partir deste arquivo.
+# Fonte: origin/pr-33 server/migrations (HEAD Codex consultar no GitHub).
+# Uso: scripts/vps/gate-d-f-precheck.sh --candidate-list este-arquivo
+001_foundation.sql
+002_rls_foundation.sql
+003_marcas_pilot.sql
+004_tenant_integrity.sql
+005_cadastros_simples.sql
+006_produtos_base.sql
+007_produtos_master_data.sql
+008_produtos_fk_tenant.sql
+009_clientes_master_data.sql
+010_cliente_empresas_comercial.sql
+011_cliente_locais.sql
+012_obras.sql
+013_tabelas_preco.sql
+014_condicoes_pagamento.sql
+015_condicoes_pagamento_hardening.sql
+016_orcamentos_comercial_360.sql
+017_pedidos_comercial_360.sql
+018_produto_pim_dam_outbox.sql
+019_produto_relacoes_tenant.sql
+020_produto_midia_storage_key_unique.sql
+021_produto_midia_upload_reservation.sql
+022_produto_midia_scan_evidence.sql
+023_produto_material_norma.sql
+024_produto_canais_rascunho.sql

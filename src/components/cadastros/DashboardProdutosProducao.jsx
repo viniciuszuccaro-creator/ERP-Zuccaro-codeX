@@ -11,6 +11,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { PRODUTO_TIPOS_CANONICOS } from "./produto/produtoTipoPolicy";
 
 /**
  * V21.6 - DASHBOARD DE PRODUTOS EM PRODUÇÃO
@@ -33,7 +34,7 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos-producao', groupId, empresaId, contexto],
-    queryFn: () => filterInContext('Produto', { tipo_item: 'Matéria-Prima Produção' }, 'descricao', 9999),
+    queryFn: () => filterInContext('Produto', { tipo_item: PRODUTO_TIPOS_CANONICOS.MATERIA_PRIMA }, 'descricao', 9999),
     enabled: consultasHabilitadas,
     staleTime: 120000,
   });

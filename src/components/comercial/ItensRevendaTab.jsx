@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Trash2, Search, Copy, Package, ChevronRight, Calculator, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { converterUnidade, ExibirEquivalenteKG, PreviewConversao } from '@/components/lib/CalculadoraUnidades';
+import { PRODUTO_TIPOS_CANONICOS } from '@/components/cadastros/produto/produtoTipoPolicy';
 
 /**
  * V21.1 - Aba 2: Itens de Revenda
@@ -27,8 +28,8 @@ export default function ItensRevendaTab({ formData, setFormData, onNext }) {
     queryKey: ['produtos-revenda', formData?.empresa_id],
     queryFn: async () => {
       const filter = formData?.empresa_id 
-        ? { empresa_id: formData.empresa_id, tipo_item: 'Revenda', status: 'Ativo' }
-        : { tipo_item: 'Revenda', status: 'Ativo' };
+        ? { empresa_id: formData.empresa_id, tipo_item: PRODUTO_TIPOS_CANONICOS.REVENDA, status: 'Ativo' }
+        : { tipo_item: PRODUTO_TIPOS_CANONICOS.REVENDA, status: 'Ativo' };
       return await base44.entities.Produto.filter(filter);
     },
     enabled: true

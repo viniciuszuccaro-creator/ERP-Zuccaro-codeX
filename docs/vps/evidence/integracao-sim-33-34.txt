@@ -1,0 +1,22 @@
+# Simulação integração #33 → #34 — NÃO altera main
+# utc=2026-09-24T16:05:00Z
+branch=cursor/integracao-sim-33-34-392b
+pr=35
+contains_33_head=ceeb92e99954b39d3137dde497208b0db1010869
+contains_34_head=f41d87e550f7c11d1863bbf8775d03398bebe2de
+base=origin/main@ca417160
+r07b_api_compat=OK
+r07b_tested=git_commit_ca0bc5f3529b9071fe80e58dae6aa966a9d6c740_NOT_3080_image_id
+r07b_drop_schema_guard=assert-isolated-database-url.sh
+restore_isolated_db=OK
+restore_isolated_database=erp_restore_isolated_20260924_155458
+restore_dump_sha256=e72ca99b453fa6b060b5264f636794b3a601202c18e4185deb12f0020cae3f80
+restore_migrations_count=15
+restore_dev_untouched=YES
+GATE_E_READY=NO
+gate_e_blockers=main_missing_migrations_016_024
+main_altered=NO
+vps_dev_altered=NO
+AUTHORIZATION=NOT_GRANTED
+EXECUTED=NO
+DECISION_STATE=READY_FOR_REVIEW

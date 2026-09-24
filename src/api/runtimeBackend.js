@@ -61,3 +61,9 @@ export const HTTP_PILOT_ENTITIES = Object.freeze([
   'GrupoProduto',
   'SetorAtividade',
 ]);
+
+/** Produto HTTP e explicito no formulario; consumidores legados mantem sua fonte. */
+export function resolveHttpPilotEntities(env = import.meta.env) {
+  void env;
+  return [...HTTP_PILOT_ENTITIES];
+}

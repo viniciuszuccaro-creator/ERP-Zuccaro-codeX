@@ -2,9 +2,7 @@ name: erp-runtime-ci
 
 on:
   push:
-    branches:
-      - main
-      - 'cursor/**'
+    branches: [main, 'cursor/**', 'codex/**']
   pull_request:
 
 jobs:
@@ -13,9 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
+        with: { node-version: '22', cache: npm }
       - run: npm ci
       - run: npm run audit:baseline
       - run: npm test
@@ -24,17 +20,45 @@ jobs:
 
   backend:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_USER: erp_test, POSTGRES_PASSWORD: erp_test, POSTGRES_DB: erp_test }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U erp_test -d erp_test"
+          --health-interval 10s --health-timeout 5s --health-retries 5
     defaults:
-      run:
-        working-directory: server
+      run: { working-directory: server }
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: npm
-          cache-dependency-path: server/package-lock.json
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: npm, cache-dependency-path: server/package-lock.json }
       - run: npm install
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - run: npm run migrate
+        env: { DATABASE_URL: postgresql://erp_test:erp_test@localhost:5432/erp_test }
+      - run: psql postgresql://erp_test:erp_test@localhost:5432/erp_test -f scripts/seed-dev-synthetic.sql
+      - run: npm run test:postgres
+        env: { DATABASE_URL: postgresql://erp_test:erp_test@localhost:5432/erp_test }
+      - name: Prove isolated DB guard (blocks DEV / requires allowlist)
+        working-directory: .
+        run: bash scripts/vps/assert-isolated-database-url.sh --self-test
+      - name: Prove R07B API (ca0bc5f3) on schema 001-024 (isolated DB)
+        if: hashFiles('server/migrations/018_produto_pim_dam_outbox.sql') != ''
+        working-directory: .
+        env:
+          DATABASE_URL: postgresql://erp_test:erp_test@localhost:5432/erp_r07b_compat
+          ISOLATED_DATABASE_NAME: erp_r07b_compat
+          ALLOW_DROP_SCHEMA_PUBLIC: ISOLATED_ONLY
+          R07B_SHA: ca0bc5f3529b9071fe80e58dae6aa966a9d6c740
+        run: |
+          set -euo pipefail
+          git fetch --depth=1 origin "$R07B_SHA" 2>/dev/null || git fetch --depth=1 origin ca0bc5f3 || true
+          psql postgresql://erp_test:erp_test@localhost:5432/postgres -c "CREATE DATABASE erp_r07b_compat;"
+          bash scripts/vps/prove-r07b-api-schema-compat.sh
+          grep -q 'R07B_API_COMPAT_STATUS=OK' docs/vps/evidence/r07b-api-schema-016-024-compat.txt

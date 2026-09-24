@@ -16,6 +16,11 @@ import ConversaoProducaoMassa from "@/components/cadastros/ConversaoProducaoMass
 import DashboardProdutosProducao from "@/components/cadastros/DashboardProdutosProducao";
 import ImportadorProdutosPlanilha from "@/components/estoque/ImportadorProdutosPlanilha";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
+import {
+  PRODUTO_TIPOS_CANONICOS,
+  isProdutoMateriaPrima,
+  isProdutoRevenda,
+} from "@/components/cadastros/produto/produtoTipoPolicy";
 
 export default function ProdutosTab(props) {
   const { hasPermission } = usePermissions();
@@ -28,8 +33,8 @@ export default function ProdutosTab(props) {
 
   const calcularContagensLocal = (produtos) => {
     const total = produtos.length;
-    const revenda = produtos.filter(p => p.tipo_item === 'Revenda').length;
-    const producao = produtos.filter(p => p.tipo_item === 'Matéria-Prima Produção').length;
+    const revenda = produtos.filter(p => isProdutoRevenda(p.tipo_item)).length;
+    const producao = produtos.filter(p => isProdutoMateriaPrima(p.tipo_item)).length;
     const estoqueBaixo = produtos.filter(p => 
       p.status === 'Ativo' && (p.estoque_disponivel || 0) <= (p.estoque_minimo || 0)
     ).length;
@@ -51,7 +56,10 @@ export default function ProdutosTab(props) {
   const { data: revendaCount = 0 } = useQuery({
     queryKey: ['produtos-count-revenda', filtroEmpresaKey],
     queryFn: async () => {
-      const filtro = { ...(getFiltroContexto('empresa_id', true) || {}), tipo_item: 'Revenda' };
+      const filtro = {
+        ...(getFiltroContexto('empresa_id', true) || {}),
+        tipo_item: PRODUTO_TIPOS_CANONICOS.REVENDA,
+      };
       const { data } = await base44.functions.invoke('countEntities', { entityName: 'Produto', filter: filtro });
       return data?.count || 0;
     },
@@ -61,7 +69,10 @@ export default function ProdutosTab(props) {
   const { data: producaoCount = 0 } = useQuery({
     queryKey: ['produtos-count-producao', filtroEmpresaKey],
     queryFn: async () => {
-      const filtro = { ...(getFiltroContexto('empresa_id', true) || {}), tipo_item: 'Matéria-Prima Produção' };
+      const filtro = {
+        ...(getFiltroContexto('empresa_id', true) || {}),
+        tipo_item: PRODUTO_TIPOS_CANONICOS.MATERIA_PRIMA,
+      };
       const { data } = await base44.functions.invoke('countEntities', { entityName: 'Produto', filter: filtro });
       return data?.count || 0;
     },
@@ -284,9 +295,9 @@ export default function ProdutosTab(props) {
               windowMode: true,
               onSubmit: async (data) => {
                 try {
-                  await createInContext('Produto', data);
                   queryClient.invalidateQueries({ queryKey: ['produtos'] });
-                  try {
+                  if (!data?._http) {
+                    try {
                     await createInContext('AuditLog', {
                       acao: 'Produto.criado',
                       modulo: 'Estoque',
@@ -299,8 +310,9 @@ export default function ProdutosTab(props) {
                       sucesso: true,
                       data_hora: new Date().toISOString()
                     });
-                  } catch (auditError) {
-                    console.error('[ProdutosTab] Falha ao auditar criacao do produto', auditError);
+                    } catch (auditError) {
+                      console.error('[ProdutosTab] Falha ao auditar criacao do produto', auditError);
+                    }
                   }
                   toast({ title: "✅ Produto criado!" });
                 } catch (error) {

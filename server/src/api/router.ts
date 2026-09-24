@@ -1,4 +1,6 @@
 import { Router, type Request } from 'express';
+import { z } from 'zod';
+import { AppError } from './errors.js';
 import type { AppConfig } from '../config/env.js';
 import { publicConfigView } from '../config/env.js';
 import type { DbClient } from '../db/client.js';
@@ -9,6 +11,8 @@ import type { ClienteLocalService } from '../services/clienteLocalService.js';
 import type { ObraService } from '../services/obraService.js';
 import type { TabelaPrecoService } from '../services/tabelaPrecoService.js';
 import type { CondicaoPagamentoService } from '../services/condicaoPagamentoService.js';
+import type { OrcamentoService } from '../services/orcamentoService.js';
+import type { PedidoService } from '../services/pedidoService.js';
 import type { MarcaService } from '../services/marcaService.js';
 import type { ProdutoService } from '../services/produtoService.js';
 import type { TenantCrudService } from '../services/tenantCrudService.js';
@@ -34,6 +38,8 @@ export type ApiDeps = {
   obraService: ObraService;
   tabelaPrecoService: TabelaPrecoService;
   condicaoPagamentoService: CondicaoPagamentoService;
+  orcamentoService: OrcamentoService;
+  pedidoService: PedidoService;
 };
 
 function ctxFromReq(req: Request) {
@@ -122,6 +128,131 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
     }
   });
 
+  router.get('/api/v1/produtos/:id/variantes', requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.listVariants(ctxFromReq(req), req.params.id) }); }
+    catch (error) { next(error); }
+  });
+
+  router.post('/api/v1/produtos/:id/variantes', requireTenantScope, async (req, res, next) => {
+    try { res.status(201).json({ data: await service.createVariant(ctxFromReq(req), req.params.id, req.body) }); }
+    catch (error) { next(error); }
+  });
+
+  router.patch('/api/v1/produtos/:id/variantes/:variantId', requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.updateVariant(ctxFromReq(req), req.params.id, req.params.variantId, req.body) }); }
+    catch (error) { next(error); }
+  });
+
+  router.delete('/api/v1/produtos/:id/variantes/:variantId', requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.deactivateVariant(ctxFromReq(req), req.params.id, req.params.variantId) }); }
+    catch (error) { next(error); }
+  });
+
+  router.get('/api/v1/produtos/:id/equivalentes', requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.listEquivalents(ctxFromReq(req), req.params.id) }); }
+    catch (error) { next(error); }
+  });
+
+  router.post('/api/v1/produtos/:id/equivalentes', requireTenantScope, async (req, res, next) => {
+    try { res.status(201).json({ data: await service.createEquivalent(ctxFromReq(req), req.params.id, req.body) }); }
+    catch (error) { next(error); }
+  });
+
+  router.patch('/api/v1/produtos/:id/equivalentes/:equivalentId', requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.updateEquivalent(ctxFromReq(req), req.params.id, req.params.equivalentId, req.body) }); }
+    catch (error) { next(error); }
+  });
+
+  router.delete('/api/v1/produtos/:id/equivalentes/:equivalentId', requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.deactivateEquivalent(ctxFromReq(req), req.params.id, req.params.equivalentId) }); }
+    catch (error) { next(error); }
+  });
+
+  router.get('/api/v1/produtos/:id/canais', requireTenantScope, async (req, res, next) => {
+    try {
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data: await service.listCanais(ctxFromReq(req), req.params.id) });
+    } catch (error) { next(error); }
+  });
+
+  router.post('/api/v1/produtos/:id/canais', requireTenantScope, async (req, res, next) => {
+    try { res.status(201).json({ data: await service.createCanal(ctxFromReq(req), req.params.id, req.body) }); }
+    catch (error) { next(error); }
+  });
+
+  router.patch('/api/v1/produtos/:id/canais/:canalId', requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.updateCanal(ctxFromReq(req), req.params.id, req.params.canalId, req.body) }); }
+    catch (error) { next(error); }
+  });
+
+  router.delete('/api/v1/produtos/:id/canais/:canalId', requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.deactivateCanal(ctxFromReq(req), req.params.id, req.params.canalId) }); }
+    catch (error) { next(error); }
+  });
+
+  router.get('/api/v1/produtos/:id/midias', requireTenantScope, async (req, res, next) => {
+    try {
+      const page = z.object({ limit: z.coerce.number().int().min(1).max(200), offset: z.coerce.number().int().min(0).max(1000000) })
+        .safeParse({ limit: req.query.limit ?? 50, offset: req.query.offset ?? 0 });
+      if (!page.success) throw new AppError(400, 'VALIDATION_ERROR', 'Invalid media pagination');
+      const rows = await service.listMidias(ctxFromReq(req), req.params.id, page.data);
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data: rows.map((row) => ({
+        id: row.id,
+        categoria: row.categoria,
+        nome_arquivo: row.nome_arquivo,
+        mime_type: row.mime_type,
+        tamanho_bytes: row.tamanho_bytes,
+        versao: row.versao,
+        status: row.status,
+        principal: row.principal,
+        scan_verdict: row.scan_sha256 === row.sha256 && ['CLEAN', 'INFECTED'].includes(row.scan_verdict ?? '') ? row.scan_verdict : null,
+      })), meta: page.data });
+    } catch (error) { next(error); }
+  });
+
+  router.post('/api/v1/produtos/:id/midias/reservas', requireTenantScope, async (req, res, next) => {
+    try {
+      const result = await service.reserveMidia(ctxFromReq(req), req.params.id, req.body);
+      res.setHeader('Cache-Control', 'no-store');
+      res.status(201).json({ data: result });
+    } catch (error) { next(error); }
+  });
+
+  router.post('/api/v1/produtos/:id/midias/:mediaId/confirmar', requireTenantScope, async (req, res, next) => {
+    try {
+      const parsed = z.object({ attemptId: z.string().uuid() }).strict().safeParse(req.body);
+      if (!parsed.success) throw new AppError(400, 'VALIDATION_ERROR', 'Invalid media confirmation payload');
+      const result = await service.confirmMidia(
+        ctxFromReq(req), req.params.id, req.params.mediaId, parsed.data.attemptId,
+      );
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data: { id: result.id, status: result.status, categoria: result.categoria, versao: result.versao } });
+    } catch (error) { next(error); }
+  });
+  router.post('/api/v1/produtos/:id/midias/reservas/:mediaId/rejeitar', requireTenantScope, async (req, res, next) => {
+    try {
+      if (!z.object({}).strict().safeParse(req.body ?? {}).success) {
+        throw new AppError(400, 'VALIDATION_ERROR', 'Invalid media rejection payload');
+      }
+      const result = await service.rejectExpiredMidia(ctxFromReq(req), req.params.id, req.params.mediaId);
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data: { id: result.mediaId, status: result.status } });
+    } catch (error) { next(error); }
+  });
+
+
+  router.post('/api/v1/produtos/:id/midias/:mediaId/verificar', requireTenantScope, async (req, res, next) => {
+    try {
+      if (!z.object({}).strict().safeParse(req.body ?? {}).success) {
+        throw new AppError(400, 'VALIDATION_ERROR', 'Invalid media scan payload');
+      }
+      const result = await service.scanMidia(ctxFromReq(req), req.params.id, req.params.mediaId);
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data: result });
+    } catch (error) { next(error); }
+  });
+
   router.get('/api/v1/produtos/:id', requireTenantScope, async (req, res, next) => {
     try {
       const row = await service.get(ctxFromReq(req), req.params.id);
@@ -143,6 +274,15 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
   router.patch('/api/v1/produtos/:id', requireTenantScope, async (req, res, next) => {
     try {
       const row = await service.update(ctxFromReq(req), req.params.id, req.body);
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.patch('/api/v1/produtos/:id/workflow', requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.changeWorkflowStatus(ctxFromReq(req), req.params.id, req.body?.status);
       res.json({ data: row });
     } catch (error) {
       next(error);
@@ -616,6 +756,24 @@ function mountObraRoutes(router: Router, service: ObraService) {
 function mountTabelaPrecoRoutes(router: Router, service: TabelaPrecoService) {
   const basePath = '/api/v1/tabelas-preco';
 
+  router.get(`${basePath}/preco-cliente`, requireTenantScope, async (req, res, next) => {
+    try {
+      const allowed = new Set(['clienteEmpresaId', 'produtoId', 'unidadeMedidaId', 'businessDate']);
+      if (Object.keys(req.query).some((key) => !allowed.has(key))) {
+        throw new AppError(422, 'VALIDATION_ERROR', 'Unexpected price query field');
+      }
+      const price = await service.resolveClientPrice(ctxFromReq(req), {
+        clienteEmpresaId: req.query.clienteEmpresaId,
+        produtoId: req.query.produtoId,
+        unidadeMedidaId: req.query.unidadeMedidaId,
+        businessDate: req.query.businessDate,
+      });
+      res.json({ data: price });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   router.get(basePath, requireTenantScope, async (req, res, next) => {
     try {
       const orderByRaw = req.query.order_by ? String(req.query.order_by) : undefined;
@@ -815,6 +973,82 @@ function mountCondicaoPagamentoRoutes(router: Router, service: CondicaoPagamento
   router.post(`${base}/:id/padrao`, requireTenantScope, async(req,res,next)=>{try{res.json({data:await service.setPadrao(ctxFromReq(req),req.params.id)});}catch(e){next(e);}});
 }
 
+function mountOrcamentoRoutes(router: Router, service: OrcamentoService) {
+  const base = '/api/v1/orcamentos';
+  router.get(base, requireTenantScope, async (req, res, next) => {
+    try {
+      res.json(await service.list(ctxFromReq(req), {
+        limit: req.query.limit === undefined ? undefined : Number(req.query.limit),
+        offset: req.query.offset === undefined ? undefined : Number(req.query.offset),
+        search: typeof req.query.search === 'string' ? req.query.search : undefined,
+        status: typeof req.query.status === 'string' ? req.query.status : undefined,
+        clienteEmpresaId: typeof req.query.clienteEmpresaId === 'string' ? req.query.clienteEmpresaId : undefined,
+        validadeDe: typeof req.query.validadeDe === 'string' ? req.query.validadeDe : undefined,
+        validadeAte: typeof req.query.validadeAte === 'string' ? req.query.validadeAte : undefined,
+      }));
+    } catch (error) { next(error); }
+  });
+  router.post(base, requireTenantScope, async (req, res, next) => {
+    try { res.status(201).json({ data: await service.create(ctxFromReq(req), req.body) }); }
+    catch (error) { next(error); }
+  });
+  router.get(`${base}/:id`, requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.get(ctxFromReq(req), req.params.id) }); }
+    catch (error) { next(error); }
+  });
+  router.patch(`${base}/:id`, requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.update(ctxFromReq(req), req.params.id, req.body) }); }
+    catch (error) { next(error); }
+  });
+  router.post(`${base}/:id/cancelar`, requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.cancel(ctxFromReq(req), req.params.id) }); }
+    catch (error) { next(error); }
+  });
+}
+
+function mountPedidoRoutes(router: Router, service: PedidoService) {
+  const base = '/api/v1/pedidos';
+  router.get(base, requireTenantScope, async (req, res, next) => {
+    try {
+      res.json(await service.list(ctxFromReq(req), {
+        limit: req.query.limit === undefined ? undefined : Number(req.query.limit),
+        offset: req.query.offset === undefined ? undefined : Number(req.query.offset),
+        search: typeof req.query.search === 'string' ? req.query.search : undefined,
+        status: typeof req.query.status === 'string' ? req.query.status : undefined,
+        clienteEmpresaId: typeof req.query.clienteEmpresaId === 'string' ? req.query.clienteEmpresaId : undefined,
+        tipoOperacao: typeof req.query.tipoOperacao === 'string' ? req.query.tipoOperacao : undefined,
+      }));
+    } catch (error) { next(error); }
+  });
+  router.post(base, requireTenantScope, async (req, res, next) => {
+    try { res.status(201).json({ data: await service.create(ctxFromReq(req), req.body) }); }
+    catch (error) { next(error); }
+  });
+  router.get(`${base}/:id`, requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.get(ctxFromReq(req), req.params.id) }); }
+    catch (error) { next(error); }
+  });
+  router.patch(`${base}/:id`, requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.update(ctxFromReq(req), req.params.id, req.body) }); }
+    catch (error) { next(error); }
+  });
+  router.get(`${base}/:id/historico`, requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.history(ctxFromReq(req), req.params.id) }); }
+    catch (error) { next(error); }
+  });
+  router.post(`${base}/:id/status`, requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.transition(ctxFromReq(req), req.params.id, req.body?.status, req.body?.motivo) }); }
+    catch (error) { next(error); }
+  });
+  router.post(`${base}/:id/cancelar`, requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.cancel(ctxFromReq(req), req.params.id, req.body?.motivo) }); }
+    catch (error) { next(error); }
+  });
+  router.post('/api/v1/orcamentos/:id/converter-pedido', requireTenantScope, async (req, res, next) => {
+    try { res.status(201).json({ data: await service.convert(ctxFromReq(req), req.params.id, req.body) }); }
+    catch (error) { next(error); }
+  });
+}
 export function createApiRouter(deps: ApiDeps) {
   const router = Router();
 
@@ -850,13 +1084,13 @@ export function createApiRouter(deps: ApiDeps) {
   router.get('/api/v1/meta', (_req, res) => {
     res.json({
       runtime: 'ERP-RUNTIME-08B',
-      auth: getAuthFoundation(),
+      auth: getAuthFoundation(deps.config.authMode),
       config: publicConfigView(deps.config),
-      httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade'],
-      preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'TabelaPreco', 'CondicaoPagamento'],
-      httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal'],
+      httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Orcamento', 'Pedido'],
+      preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'TabelaPreco', 'CondicaoPagamento', 'Orcamento', 'Pedido'],
+      httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Orcamento', 'Pedido'],
       rlsModel: 'ENABLE+FORCE fail-closed; BFF uses privileged DB role; JWT policies planned with Auth',
-      note: 'TabelaPreco and CondicaoPagamento prepared in backend; NOT in frontend HTTP_PILOT_ENTITIES; Pedido/Orçamento not implemented',
+      note: 'TabelaPreco and CondicaoPagamento prepared in backend; Orcamento and Pedido use the canonical frontend HTTP client; Pedido backend HTTP is active',
       produto: {
         masterData: true,
         pagination: true,
@@ -906,6 +1140,27 @@ export function createApiRouter(deps: ApiDeps) {
         frontendHttp: false,
       },
       condicaoPagamento: { masterData: true, companyAuthorization: true, parcelasAtomicas: true, frontendHttp: false },
+      orcamento: {
+        backendHttp: true,
+        frontendHttp: true,
+        pagination: true,
+        tenantIntegrity: true,
+        sequentialNumero: true,
+        transactionalAudit: true,
+        rbacFailClosed: true,
+        cancelByState: true,
+      },
+      pedido: {
+        backendHttp: true,
+        frontendHttp: true,
+        pagination: true,
+        tenantIntegrity: true,
+        sequentialNumero: true,
+        transactionalAudit: true,
+        rbacFailClosed: true,
+        idempotentConversion: true,
+        statusHistory: true,
+      },
     });
   });
 
@@ -919,6 +1174,8 @@ export function createApiRouter(deps: ApiDeps) {
   mountObraRoutes(router, deps.obraService);
   mountTabelaPrecoRoutes(router, deps.tabelaPrecoService);
   mountCondicaoPagamentoRoutes(router, deps.condicaoPagamentoService);
+  mountOrcamentoRoutes(router, deps.orcamentoService);
+  mountPedidoRoutes(router, deps.pedidoService);
 
   return router;
 }

@@ -14,6 +14,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { toast } from "sonner";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { PRODUTO_TIPOS_CANONICOS, isProdutoMateriaPrima } from "./produto/produtoTipoPolicy";
 
 /**
  * V21.6 - Histórico e Análise Futurista do Produto
@@ -119,7 +120,7 @@ export default function HistoricoProduto({ produtoId, produto }) {
 
   const riscoRuptura = diasParaRuptura < 7 ? 'alto' : diasParaRuptura < 15 ? 'medio' : 'baixo';
 
-  const ehProducao = produto?.tipo_item === 'Matéria-Prima Produção';
+  const ehProducao = isProdutoMateriaPrima(produto?.tipo_item);
 
   // V21.6: Converter para produção
   const enviarParaProducao = async () => {
@@ -144,7 +145,7 @@ export default function HistoricoProduto({ produtoId, produto }) {
     const dadosAnteriores = produto ? { ...produto } : null;
     try {
       const payload = {
-        tipo_item: 'Matéria-Prima Produção',
+        tipo_item: PRODUTO_TIPOS_CANONICOS.MATERIA_PRIMA,
         setor_atividade_id: 'setor-fabrica-001',
         setor_atividade_nome: 'Fábrica',
         group_id: produto?.group_id || groupId,

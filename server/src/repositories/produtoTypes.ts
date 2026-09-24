@@ -1,12 +1,81 @@
 import { z } from 'zod';
 
-const jsonObject = z.record(z.unknown()).optional().default({});
-const stringArray = z.array(z.string().trim().max(40)).optional().default([]);
+const nonNegativeNumber = z.number().finite().min(0);
+const conversionFactors = z.record(z.number().finite().positive()).optional().default({});
+const secondaryUnits = z.array(z.string().trim().min(1).max(40))
+  .max(40)
+  .transform((values) => {
+    const seen = new Set<string>();
+    return values.filter((value) => {
+      const key = value.toLocaleUpperCase('pt-BR');
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  })
+  .optional()
+  .default([]);
 
 const baseCreate = {
   empresa_id: z.string().uuid().optional().nullable(),
   ativo: z.boolean().optional().default(true),
 };
+
+export const PRODUTO_TIPOS_CANONICOS = Object.freeze({
+  REVENDA: 'Revenda',
+  MATERIA_PRIMA: 'Matéria-Prima Produção',
+  COMPONENTE: 'Componente',
+  INTERMEDIARIO: 'Intermediário',
+  FABRICADO: 'Produto Acabado',
+  KIT: 'Kit',
+  SERVICO: 'Serviço',
+  RETALHO: 'Retalho',
+  SUCATA: 'Sucata',
+  CONSUMO_INTERNO: 'Consumo Interno',
+} as const);
+
+export type ProdutoTipoCanonico = typeof PRODUTO_TIPOS_CANONICOS[keyof typeof PRODUTO_TIPOS_CANONICOS];
+
+const PRODUTO_TIPO_ALIASES = new Map<string, string>([
+  ['REVENDA', PRODUTO_TIPOS_CANONICOS.REVENDA],
+  ['MATERIA PRIMA', PRODUTO_TIPOS_CANONICOS.MATERIA_PRIMA],
+  ['MATERIA PRIMA PRODUCAO', PRODUTO_TIPOS_CANONICOS.MATERIA_PRIMA],
+  ['COMPONENTE', PRODUTO_TIPOS_CANONICOS.COMPONENTE],
+  ['INTERMEDIARIO', PRODUTO_TIPOS_CANONICOS.INTERMEDIARIO],
+  ['FABRICADO', PRODUTO_TIPOS_CANONICOS.FABRICADO],
+  ['PRODUTO ACABADO', PRODUTO_TIPOS_CANONICOS.FABRICADO],
+  ['KIT', PRODUTO_TIPOS_CANONICOS.KIT],
+  ['SERVICO', PRODUTO_TIPOS_CANONICOS.SERVICO],
+  ['RETALHO', PRODUTO_TIPOS_CANONICOS.RETALHO],
+  ['SUCATA', PRODUTO_TIPOS_CANONICOS.SUCATA],
+  ['CONSUMO INTERNO', PRODUTO_TIPOS_CANONICOS.CONSUMO_INTERNO],
+]);
+
+function produtoTipoAlias(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toUpperCase();
+}
+
+/**
+ * Normaliza somente aliases conhecidos. Valores legados desconhecidos permanecem
+ * intactos para evitar reclassificação silenciosa durante a transição do PIM.
+ */
+export function normalizeProdutoTipoItem(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return PRODUTO_TIPOS_CANONICOS.REVENDA;
+  return PRODUTO_TIPO_ALIASES.get(produtoTipoAlias(trimmed)) ?? trimmed;
+}
+
+const PRODUTO_TIPOS_VALUES = new Set<string>(Object.values(PRODUTO_TIPOS_CANONICOS));
+
+export function isProdutoTipoCanonico(value: string) {
+  return PRODUTO_TIPOS_VALUES.has(normalizeProdutoTipoItem(value));
+}
 
 /** Campos MASTER DATA do Produto (RUNTIME-03). Sem estoque/custo/preço/fiscal operacional. */
 export const produtoCreateSchema = z.object({
@@ -14,28 +83,39 @@ export const produtoCreateSchema = z.object({
   codigo: z.string().trim().max(80).optional().nullable(),
   codigo_barras: z.string().trim().max(64).optional().nullable(),
   descricao: z.string().trim().min(1).max(500),
+  material: z.string().trim().min(1).max(120).optional().nullable(),
+  liga: z.string().trim().min(1).max(80).optional().nullable(),
+  norma_tecnica: z.string().trim().min(1).max(120).optional().nullable(),
+  descricao_tecnica: z.string().trim().max(10000).optional().nullable(),
+  descricao_comercial: z.string().trim().max(10000).optional().nullable(),
+  titulo_seo: z.string().trim().max(180).optional().nullable(),
+  descricao_seo: z.string().trim().max(500).optional().nullable(),
+  embalagem_tipo: z.string().trim().max(120).optional().nullable(),
+  multiplo_venda: z.number().finite().positive().optional().default(1),
+  quantidade_minima_venda: nonNegativeNumber.optional().default(0),
+  permite_fracionamento: z.boolean().optional().default(false),
   nome: z.string().trim().max(500).optional().nullable(),
-  tipo_item: z.string().trim().max(80).optional().default('Revenda'),
+  tipo_item: z.string().trim().max(80).optional().default('Revenda').transform(normalizeProdutoTipoItem),
   tipo_aco: z.string().trim().max(40).optional().nullable(),
   eh_bitola: z.boolean().optional().default(false),
-  peso_teorico_kg_m: z.number().finite().optional().default(0),
-  bitola_diametro_mm: z.number().finite().optional().default(0),
-  comprimento_barra_padrao_m: z.number().finite().optional().default(12),
+  peso_teorico_kg_m: nonNegativeNumber.optional().default(0),
+  bitola_diametro_mm: nonNegativeNumber.optional().default(0),
+  comprimento_barra_padrao_m: nonNegativeNumber.optional().default(12),
   unidade_medida_id: z.string().uuid().optional().nullable(),
   unidade_medida: z.string().trim().max(20).optional().nullable(),
   unidade_principal: z.string().trim().max(20).optional().nullable(),
-  unidades_secundarias: stringArray,
-  fatores_conversao: jsonObject,
+  unidades_secundarias: secondaryUnits,
+  fatores_conversao: conversionFactors,
   grupo_produto_id: z.string().uuid().optional().nullable(),
   grupo_legado: z.string().trim().max(120).optional().nullable(),
   marca_id: z.string().uuid().optional().nullable(),
   setor_atividade_id: z.string().uuid().optional().nullable(),
-  peso_liquido_kg: z.number().finite().optional().default(0),
-  peso_bruto_kg: z.number().finite().optional().default(0),
-  altura_cm: z.number().finite().optional().default(0),
-  largura_cm: z.number().finite().optional().default(0),
-  comprimento_cm: z.number().finite().optional().default(0),
-  volume_m3: z.number().finite().optional().default(0),
+  peso_liquido_kg: nonNegativeNumber.optional().default(0),
+  peso_bruto_kg: nonNegativeNumber.optional().default(0),
+  altura_cm: nonNegativeNumber.optional().default(0),
+  largura_cm: nonNegativeNumber.optional().default(0),
+  comprimento_cm: nonNegativeNumber.optional().default(0),
+  volume_m3: nonNegativeNumber.optional().default(0),
   ncm: z.string().trim().max(20).optional().nullable(),
   cest: z.string().trim().max(20).optional().nullable(),
   origem_mercadoria: z.string().trim().max(80).optional().nullable(),
@@ -66,7 +146,7 @@ export type Produto = {
   unidade_medida: string | null;
   unidade_principal: string | null;
   unidades_secundarias: string[];
-  fatores_conversao: Record<string, unknown>;
+  fatores_conversao: Record<string, number>;
   grupo_produto_id: string | null;
   grupo_legado: string | null;
   marca_id: string | null;
@@ -84,10 +164,108 @@ export type Produto = {
   foto_produto_url: string | null;
   ativo: boolean;
   created_at: string;
+  material: string | null;
+  liga: string | null;
+  norma_tecnica: string | null;
+  descricao_tecnica: string | null;
+  descricao_comercial: string | null;
+  titulo_seo: string | null;
+  descricao_seo: string | null;
+  embalagem_tipo: string | null;
+  multiplo_venda: number;
+  quantidade_minima_venda: number;
+  permite_fracionamento: boolean;
+  workflow_status: 'RASCUNHO' | 'EM_REVISAO' | 'APROVADO' | 'PUBLICADO' | 'INATIVO';
   updated_at: string;
 };
 
+export type ProdutoVariante = {
+  id: string; group_id: string; empresa_id: string | null; produto_id: string;
+  sku: string; nome: string | null; atributos: Record<string, unknown>; ativo: boolean;
+};
+
+export type ProdutoEquivalente = {
+  id: string; group_id: string; empresa_id: string | null; produto_id: string;
+  produto_equivalente_id: string; tipo: 'EQUIVALENTE' | 'SUBSTITUTO';
+  direcional: boolean; aprovado: boolean; ativo: boolean;
+};
+
+export const produtoMidiaCreateSchema = z.object({
+  storage_key: z.string().trim().min(1).max(1000),
+  categoria: z.enum(['IMAGEM', 'VIDEO', 'DESENHO', 'MANUAL', 'CERTIFICADO', 'CAD']),
+  nome_arquivo: z.string().trim().min(1).max(255),
+  mime_type: z.string().trim().min(1).max(120),
+  tamanho_bytes: z.number().int().positive().safe(),
+  sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  versao: z.number().int().positive().default(1),
+}).strict();
+export type ProdutoMidiaCreate = z.input<typeof produtoMidiaCreateSchema>;
+export type ProdutoMidiaUploadAttempt = {
+  id: string;
+  actorId: string;
+  requestId: string;
+  expiresAt: string;
+};
+
+export type ProdutoMidiaScanEvidence = {
+  verdict: 'CLEAN' | 'INFECTED';
+  scanner: string;
+  sha256: string;
+  scannedAt: string;
+};
+export type ProdutoMidia = {
+  id: string; group_id: string; empresa_id: string | null; produto_id: string;
+  storage_key: string; categoria: z.infer<typeof produtoMidiaCreateSchema>['categoria'];
+  nome_arquivo: string; mime_type: string; tamanho_bytes: number; sha256: string;
+  versao: number; status: 'PENDENTE_UPLOAD' | 'QUARENTENA' | 'APROVADO' | 'REJEITADO' | 'INATIVO';
+  scan_verdict?: ProdutoMidiaScanEvidence['verdict'] | null;
+  scan_scanner?: string | null;
+  scan_sha256?: string | null;
+  scanned_at?: string | null;
+  upload_attempt_id?: string | null; upload_actor_id?: string | null;
+  upload_request_id?: string | null; upload_expires_at?: string | null;
+  principal: boolean; ativo: boolean;
+};
+
 /** Campos proibidos no payload Produto (transactional / operacional). */
+
+export const produtoVarianteCreateSchema = z.object({
+  sku: z.string().trim().min(1).max(120),
+  nome: z.string().trim().min(1).max(240).optional().nullable(),
+  atributos: z.record(z.union([z.string().max(500), z.number().finite(), z.boolean(), z.null()])).optional().default({}),
+}).strict();
+
+export const produtoVarianteUpdateSchema = produtoVarianteCreateSchema.partial().strict();
+export type ProdutoVarianteCreate = z.infer<typeof produtoVarianteCreateSchema>;
+export type ProdutoVarianteUpdate = z.infer<typeof produtoVarianteUpdateSchema>;
+
+export const produtoEquivalenteCreateSchema = z.object({
+  produto_equivalente_id: z.string().uuid(),
+  tipo: z.enum(['EQUIVALENTE', 'SUBSTITUTO']).optional().default('EQUIVALENTE'),
+  direcional: z.boolean().optional().default(false),
+  aprovado: z.boolean().optional().default(false),
+}).strict();
+
+export const produtoEquivalenteUpdateSchema = produtoEquivalenteCreateSchema
+  .omit({ produto_equivalente_id: true }).partial().strict();
+export type ProdutoEquivalenteCreate = z.infer<typeof produtoEquivalenteCreateSchema>;
+export type ProdutoEquivalenteUpdate = z.infer<typeof produtoEquivalenteUpdateSchema>;
+export const produtoCanalCreateSchema = z.object({
+  canal: z.string().regex(/^[a-z][a-z0-9_-]{1,39}$/),
+  sku: z.string().trim().min(1).max(120).nullable().optional(),
+  nome: z.string().trim().min(1).max(240).nullable().optional(),
+  descricao: z.string().trim().min(1).max(4000).nullable().optional(),
+}).strict();
+export const produtoCanalUpdateSchema = produtoCanalCreateSchema.omit({ canal: true }).partial().strict()
+  .refine((value) => Object.keys(value).length > 0);
+export type ProdutoCanalCreate = z.infer<typeof produtoCanalCreateSchema>;
+export type ProdutoCanalUpdate = z.infer<typeof produtoCanalUpdateSchema>;
+export type ProdutoCanal = {
+  id: string; group_id: string; empresa_id: string; produto_id: string;
+  canal: string; sku: string | null; nome: string | null; descricao: string | null;
+  status: 'RASCUNHO'; ativo: boolean;
+  created_at: string; updated_at: string;
+};
 export const PRODUTO_FORBIDDEN_OPERATIONAL_FIELDS = Object.freeze([
   'estoque_atual',
   'estoque_minimo',
