@@ -198,6 +198,8 @@ test('print-auth-package-status READY apos Gate C APROVADO', () => {
   assert.match(run.stdout, /missing_for_gate_e=016,017,018,019,020,021,022,023,024/);
   assert.match(run.stdout, /proposed_EXPECTED_RUNTIME=ERP-RUNTIME-08B/);
   assert.match(run.stdout, /TERMO_STATUS=WAITING_SIGNATURE/);
+  assert.match(run.stdout, /BACKUP_NOVO_STATUS=STALE_NEED_NEW/);
+  assert.match(run.stdout, /GO_NOGO=NO/);
   assert.match(run.stdout, /PACKAGE_STATUS=READY_FOR_HUMAN_DECISION/);
 });
 
@@ -226,5 +228,44 @@ test('validate-termo-autorizacao SIGNED_CHECKLIST_OK quando preenchido', () => {
   const run = spawnSync('bash', [script, filled], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr || run.stdout);
   assert.match(run.stdout, /TERMO_STATUS=SIGNED_CHECKLIST_OK/);
+  assert.match(run.stdout, /EXECUTE_DEF=NO/);
+});
+
+test('check-backup-novo-gate-e STALE na evidencia Gate C', () => {
+  const script = path.join(root, 'scripts/vps/check-backup-novo-gate-e.sh');
+  const evidence = path.join(root, 'docs/vps/evidence/gate-c-2026-09-24.txt');
+  const run = spawnSync('bash', [script, evidence], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr || run.stdout);
+  assert.match(run.stdout, /BACKUP_NOVO_STATUS=STALE_NEED_NEW/);
+  assert.match(run.stdout, /fresh_named_backups=0/);
+});
+
+test('check-backup-novo-gate-e NAMED_CANDIDATE com pre-gate-e', () => {
+  const script = path.join(root, 'scripts/vps/check-backup-novo-gate-e.sh');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'bk-'));
+  const ev = path.join(tmp, 'ev.txt');
+  fs.writeFileSync(ev, 'backup path=pre-gate-e-20260924-120000.sql bytes=1 sha256=present dump_complete_marker=YES\n');
+  const run = spawnSync('bash', [script, ev], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr || run.stdout);
+  assert.match(run.stdout, /BACKUP_NOVO_STATUS=NAMED_CANDIDATE_PRESENT/);
+});
+
+test('print-gate-e-fatias expoe comercial e produto', () => {
+  const script = path.join(root, 'scripts/vps/print-gate-e-fatias.sh');
+  const run = spawnSync('bash', [script], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr || run.stdout);
+  assert.match(run.stdout, /proposed_fatia_comercial=016,017/);
+  assert.match(run.stdout, /proposed_fatia_produto_dam_canais=018,019,020,021,022,023,024/);
+  assert.match(run.stdout, /APPLY_NOW=NO/);
+  assert.match(run.stdout, /GATE_E_PLAN_STATUS=PROPOSED_AWAITING_CODEX/);
+});
+
+test('go-nogo-def NO com blockers atuais', () => {
+  const script = path.join(root, 'scripts/vps/go-nogo-def.sh');
+  const run = spawnSync('bash', [script], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr || run.stdout);
+  assert.match(run.stdout, /GO_NOGO=NO/);
+  assert.match(run.stdout, /termo_waiting_signature/);
+  assert.match(run.stdout, /backup_novo_ausente/);
   assert.match(run.stdout, /EXECUTE_DEF=NO/);
 });

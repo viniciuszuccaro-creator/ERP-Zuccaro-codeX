@@ -2,7 +2,7 @@
 
 **Status:** `PRONTO PARA DECISÃO HUMANA — NÃO EXECUTAR`
 **Gate C:** APROVADO em 2026-09-24 (`docs/GATE_C_RESULTADO_2026-09-24.md`)
-**Frente Cursor:** PR #34 · **Frente Codex:** PR #33 draft HEAD `d073631a` (consultar GitHub)
+**Frente Cursor:** PR #34 · **Frente Codex:** PR #33 draft HEAD `200000bb` (consultar GitHub)
 
 Este pacote **não** autoriza canário, migration nem promoção. Serve para
 humanos/Codex decidirem o próximo gate com evidência congelada.
@@ -105,6 +105,11 @@ bash scripts/vps/score-gate-c.sh docs/vps/evidence/gate-c-2026-09-24.txt
 bash scripts/vps/gate-d-f-precheck.sh --from-gate-c-output docs/vps/evidence/gate-c-2026-09-24.txt \
   --candidate-list docs/vps/migrations-candidatas-comercial360.txt
 bash scripts/vps/rollback-dry-run-check.sh --from-gate-c-output docs/vps/evidence/gate-c-2026-09-24.txt
+bash scripts/vps/validate-termo-autorizacao.sh
+bash scripts/vps/check-backup-novo-gate-e.sh
+bash scripts/vps/print-gate-e-fatias.sh
+bash scripts/vps/go-nogo-def.sh
+# → GO_NOGO=NO enquanto termo/backup/Codex pendentes
 
 # Opcional na Web Console (script atualizado — meta via docker exec):
 bash scripts/vps/gate-c-read-only.sh
