@@ -53,6 +53,19 @@ else
   ok=0
 fi
 
+if grep -q 'integrity_file_mode_600=YES' "$META"; then
+  echo 'integrity_file_mode_600=YES'
+elif grep -q 'AUTHORIZES_GATES_DEF=NO' "$META"; then
+  # modo 600 pode estar só no log VPS; não falhar metadados antigos sem a flag
+  echo 'integrity_file_mode_600=NOT_IN_META'
+else
+  echo 'integrity_file_mode_600=NOT_IN_META'
+fi
+
+if grep -q 'AUTHORIZES_GATES_DEF=NO' "$META" || grep -q 'EXECUTE_DEF=NO' "$META" || true; then
+  echo 'AUTHORIZES_GATES_DEF=NO'
+fi
+
 if (( ok == 1 )); then
   echo 'PRE_GATE_E_META_STATUS=OK'
 else

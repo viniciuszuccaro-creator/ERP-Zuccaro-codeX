@@ -4,14 +4,16 @@
 #   /opt/erp-zuccaro/backups/pre-gate-e-YYYYMMDD-HHMMSS.sql
 #
 # Procedimento (Web Console autenticada, autorização = BACKUP apenas):
-#   1) Copiar scripts/vps/create-pre-gate-e-backup.sh para a VPS (ou clonar repo)
-#   2) bash create-pre-gate-e-backup.sh
+#   1) Usar o script no SHA verificado da PR #34 (ver HANDOFF)
+#   2) bash scripts/vps/create-pre-gate-e-backup.sh
+#      (umask 077, mode 600, remove parcial em falha)
 #   3) Substituir este arquivo pelo bloco entre PASTE_TO_GIT_BEGIN/END
+#      (nome, bytes, sha256, integrity_* — sem SQL)
 #   4) bash scripts/vps/verify-pre-gate-e-backup-meta.sh
 #   5) bash scripts/vps/check-backup-novo-gate-e.sh
 #
-# NÃO executar migration, canário ou promoção neste passo.
-#
+# Este backup NÃO autoriza Gates D/E/F.
+
 status=PENDING_VPS_RUN
 EXECUTE_DEF=NO
 APPLY_MIGRATIONS=NO

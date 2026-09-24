@@ -1,15 +1,12 @@
 ### Frente Cursor — VPS / HML / Gate C / legado (2026-09-24)
 
-- Branch: `cursor/vps-hml-gate-c-legado-392b` / PR `#34`. Codex `#33` draft
-  HEAD observado `bfdfe834`.
-- Gate C **APROVADO**. Termo com **fatos preenchidos**;
-  `TERMO_STATUS=FACTS_READY_WAITING_SIGNATURE` (assinatura + gates em aberto).
-- Backup: procedimento `create-pre-gate-e-backup.sh` (rodar **na VPS**);
-  evidência Git `pre-gate-e-backup-latest.txt` = `PENDING_VPS_RUN`.
-- `GO_NOGO=NO` / `AUTHORIZATION=NOT_GRANTED`.
-  `YES_PENDING_HUMAN_FINAL` **não** autoriza execução.
-- **Não** executados: migration, canário, promoção 3080.
-- Próximo: VPS cola evidência pre-gate-e → Codex §4 → assinatura + checkbox.
+- Branch: `cursor/vps-hml-gate-c-legado-392b` / PR `#34`.
+- Gate C **APROVADO**. Termo `FACTS_READY_WAITING_SIGNATURE`.
+- Backup script: `create-pre-gate-e-backup.sh` com **umask 077**, mode **600**,
+  remoção de dump parcial em falha; `--self-test` coberto.
+- Evidência Git `pre-gate-e-backup-latest.txt` = `PENDING_VPS_RUN` (só metadados).
+- `GO_NOGO=NO` / `AUTHORIZES_GATES_DEF=NO` — backup **não** autoriza D/E/F.
+- Próximo: VPS cola PASTE_TO_GIT → Codex §4 → assinatura + checkbox.
 
 ### ERP-RUNTIME-08 — diagnóstico Comercial 360º (2026-09-19)
 

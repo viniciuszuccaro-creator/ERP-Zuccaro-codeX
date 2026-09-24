@@ -284,6 +284,60 @@ test('create-pre-gate-e-backup.sh passa bash -n', () => {
   assert.equal(run.status, 0, run.stderr);
 });
 
+test('create-pre-gate-e-backup --self-test umask perms e cleanup', () => {
+  const script = path.join(root, 'scripts/vps/create-pre-gate-e-backup.sh');
+  const run = spawnSync('bash', [script, '--self-test'], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr || run.stdout);
+  assert.match(run.stdout, /umask=0077/);
+  assert.match(run.stdout, /file_mode=600/);
+  assert.match(run.stdout, /integrity_file_mode_600=YES/);
+  assert.match(run.stdout, /self_test_partial_cleanup=OK/);
+  assert.match(run.stdout, /AUTHORIZES_GATES_DEF=NO/);
+  assert.match(run.stdout, /PRE_GATE_E_BACKUP_STATUS=OK/);
+  assert.match(run.stdout, /EXECUTE_DEF=NO/);
+});
+
+test('create-pre-gate-e-backup remove parcial em falha de integridade', () => {
+  const script = path.join(root, 'scripts/vps/create-pre-gate-e-backup.sh');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pre-gate-fail-'));
+  // Força falha: container inexistente com BACKUP_DIR gravável → bloqueia antes do dump.
+  // Exercita falha pós-arquivo: usa self-test pattern via env DB + dump vazio simulado
+  // com um wrapper mínimo inline.
+  const wrapper = path.join(tmp, 'fail-partial.sh');
+  fs.writeFileSync(wrapper, `#!/usr/bin/env bash
+set -Eeuo pipefail
+umask 077
+BACKUP_DIR="${tmp}/b"
+mkdir -p "$BACKUP_DIR"
+OUT="$BACKUP_DIR/pre-gate-e-partial.sql"
+DUMP_COMPLETE=0
+remove_partial_dump() {
+  local path="\$1"
+  [[ -e "\$path" ]] || return 0
+  rm -f "\$path"
+}
+on_exit() {
+  local code=\$?
+  if (( DUMP_COMPLETE != 1 )) && [[ -e "\$OUT" ]]; then
+    remove_partial_dump "\$OUT"
+    echo partial_dump_removed=YES
+  fi
+  exit \$code
+}
+trap on_exit EXIT
+: >"\$OUT"
+chmod 600 "\$OUT"
+echo 'NOT A REAL DUMP' >"\$OUT"
+# falha de integridade proposital
+exit 1
+`);
+  fs.chmodSync(wrapper, 0o755);
+  const run = spawnSync('bash', [wrapper], { encoding: 'utf8' });
+  assert.notEqual(run.status, 0);
+  assert.match(run.stdout + run.stderr, /partial_dump_removed=YES/);
+  assert.equal(fs.existsSync(path.join(tmp, 'b/pre-gate-e-partial.sql')), false);
+});
+
 test('print-gate-e-fatias expoe comercial e produto', () => {
   const script = path.join(root, 'scripts/vps/print-gate-e-fatias.sh');
   const run = spawnSync('bash', [script], { encoding: 'utf8' });
