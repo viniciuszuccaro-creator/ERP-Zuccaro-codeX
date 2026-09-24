@@ -1,3 +1,8 @@
+## Comercial 360 / CI do rascunho por canal e Gate C (2026-09-24)
+- Branch `codex/comercial-360`, PR #33 aberta/draft; commit `c09d69654259eafffd8ad8d2df5362f098308a53` confirmado no remoto. CI `35984653728`: frontend/backend SUCCESS, incluindo migrate, seed sintetico e `test:postgres` efemero. Migrations 001-024 existem no codigo; 023 e 024 validadas em CI, nao aplicadas na VPS.
+- Gate C segue PARCIAL: MCP Hostinger confirmou VPS ativa e projeto Supabase saudavel, mas nao expoe SQL interno; Web Console automatizada falhou em ACL. Evidencia anterior de backup/rollback/porta 3086 e migrations 001-015 e somente leitura, sem prova de conexao efetiva da API nem teste de restauracao. API oficial 3080 permanece R07B conforme ultima evidencia fornecida pelo usuario; nao houve escrita VPS neste lote.
+- Proximo: comparacao read-only da conexao efetiva API com `supabase-db` na Web Console, prechecks atuais de backup/rollback/porta e gate separado para teste de restauracao; continuar contrato de rascunhos por canal no Produto existente, sem publicacao externa.
+
 ## Comercial 360 / Onda 1 - rascunho de Produto por canal (2026-09-24)
 
 - Causa: Produto mestre nao tinha persistencia de conteudo por Empresa/canal. Reutilizado Produto e seus triggers tenant; migration 024 aditiva prepara somente rascunhos, sem API, publicacao, estoque, preco ou fiscal.

@@ -1,11 +1,11 @@
 # PROGRAMA COMERCIAL 360 OMNICANAL — EXECUÇÃO AUTÔNOMA
 
 > Documento mestre para Codex e Cursor — CPA Ferro e Aço / ERP Zuccaro / Site CPA
-> Baseline verificado em 23/09/2026: PR #33 draft, branch `codex/comercial-360`,
-> HEAD remoto confirmado `675b78a8eff7ef93263bd860afd6828e92a29e8d` (Produto/PIM/DAM e paginacao deterministica; Gate C ainda parcial).
-> Migrations 001-023 presentes no repositorio; 022 registra evidencia DAM e 023 material/liga/norma do Produto (nao aplicada na VPS).
+> Baseline verificado em 24/09/2026: PR #33 draft, branch `codex/comercial-360`,
+> HEAD remoto confirmado `c09d69654259eafffd8ad8d2df5362f098308a53` (Produto/PIM/DAM e rascunhos por canal; Gate C ainda parcial).
+> Migrations 001-024 presentes no repositorio; 023 material/liga/norma foi validada em codigo/CI e nao aplicada na VPS; 024 prepara apenas rascunhos por canal, validada na CI efemera e nao aplicada na VPS.
 > CI [35925364121](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/35925364121)
-> verde em frontend/backend/PostgreSQL efemero. Nenhuma migration 016-023 foi
+> verde em frontend/backend/PostgreSQL efemero. CI `35984653728` do HEAD `c09d6965` tambem SUCCESS. Nenhuma migration 016-024 foi
 > homologada na VPS por essa CI; Auth, scanner real, Produto HTTP e deploy DEV
 > continuam pendentes de verificacao operacional autorizada.
 >
