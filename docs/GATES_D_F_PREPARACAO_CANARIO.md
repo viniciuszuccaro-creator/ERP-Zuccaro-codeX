@@ -18,6 +18,24 @@ Cursor ↔ Codex e os critérios de evidência na VPS.
 
 ---
 
+## Pré-validação sem execução (Cursor)
+
+```bash
+# No checkout desta frente — não toca VPS
+bash scripts/vps/gate-d-f-precheck.sh --local
+
+# Depois da saída Gate C salva em arquivo sanitizado
+bash scripts/vps/gate-d-f-precheck.sh --from-gate-c-output saida-gate-c.txt \
+  --candidate-migrations server/migrations
+# Se o checkout ainda for só main (001-015), missing_for_gate_e=NONE.
+# Para simular candidatas da PR #33, aponte --candidate-migrations para um
+# diretório que contenha 016-024 (sem aplicá-las).
+```
+
+O precheck **nunca** inicia canário nem aplica SQL.
+
+---
+
 ## Ordem obrigatória
 
 ```text

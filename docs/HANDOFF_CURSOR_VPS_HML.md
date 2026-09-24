@@ -27,14 +27,17 @@ Regra-Mãe e o documento mestre do programa (PR #33).
 
 ## Documentos
 
-- `docs/GATE_C_AUDITORIA_VPS_SOMENTE_LEITURA.md` — fatos vs inferências + **um** bloco colável
+- `docs/GATE_C_AUDITORIA_VPS_SOMENTE_LEITURA.md` — fatos vs inferências
+- `scripts/vps/gate-c-read-only.sh` — **um** script colável / executável na Web Console
+- `scripts/vps/gate-d-f-precheck.sh` — precheck local a partir da saída Gate C
 - `docs/GATES_D_F_PREPARACAO_CANARIO.md`
 - `docs/LEGADO_BACKUP_DESCOBERTA_SOMENTE_LEITURA.md`
+- `docs/LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md`
 - `scripts/legado/inventario-backup-erp-antigo.sh`
 
 ## Próxima ação concreta
 
-1. Operador cola o bloco §6 do Gate C na Web Console autenticada e devolve a saída.
-2. Cursor atualiza Gate C para APROVADO/BLOQUEADO com evidência.
-3. Em paralelo: rodar inventário legado na máquina com o HD externo montado.
-4. Combinar com Codex: digest de imagem pós-merge, migrations faltantes, identidade Auth sintética para D.
+1. Operador executa/cola `scripts/vps/gate-c-read-only.sh` na Web Console e devolve a saída.
+2. Cursor roda `gate-d-f-precheck.sh --from-gate-c-output` e atualiza Gate C para APROVADO/BLOQUEADO.
+3. Em paralelo: inventário legado na máquina com o HD externo montado.
+4. Combinar com Codex: digest de imagem pós-merge, migrations faltantes 016–024, identidade Auth sintética para D.
