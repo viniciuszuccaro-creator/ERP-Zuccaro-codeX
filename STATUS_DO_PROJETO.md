@@ -1,3 +1,23 @@
+### Frente Cursor — VPS / HML / Gate C / legado (2026-09-24)
+
+- Branch: `cursor/vps-hml-gate-c-legado-392b` (base `origin/main`
+  `ca4171600cc30f9922c2f8b2ccb8b22d06aa6888`).
+- PR Codex #33 (`codex/comercial-360`) **não** editada; permanece draft.
+- Gate C: **PARCIAL**. Auditoria somente leitura documentada em
+  `docs/GATE_C_AUDITORIA_VPS_SOMENTE_LEITURA.md` com um bloco colável para a
+  Web Console. MCP Hostinger VPS ausente neste ambiente Cloud; 3080 não
+  acessível daqui. Fatos históricos (R07B/`dev_headers`, migrations 001–015,
+  Auth não homologado) registrados como fato vs inferência.
+- Gates D–F: preparação em `docs/GATES_D_F_PREPARACAO_CANARIO.md`; scripts de
+  canário/smoke/rollback da PR #33 **não** executados; 3080 preservada.
+- Legado: `docs/LEGADO_BACKUP_DESCOBERTA_SOMENTE_LEITURA.md` +
+  `scripts/legado/inventario-backup-erp-antigo.sh` (somente leitura; teste
+  sintético). HD externo não montado neste cloud — inventário real pendente.
+- Handoff desta frente: `docs/HANDOFF_CURSOR_VPS_HML.md`.
+- Próximo: colar bloco Gate C na Web Console; atualizar APROVADO/BLOQUEADO;
+  inventário do HD na máquina com o backup; combinar SHA/imagem/migrations com
+  Codex antes de D/E/F.
+
 ### ERP-RUNTIME-08 — diagnóstico Comercial 360º (2026-09-19)
 
 - Diagnóstico documental iniciado sobre a base funcional 07B; nenhuma
