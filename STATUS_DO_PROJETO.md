@@ -1,3 +1,13 @@
+## Comercial 360 / Handoff canario PR #33 x PR #34 (2026-09-24)
+- Revisao somente documental da secao 4 de docs/CONTRATO_CURSOR_CODEX_VPS_CANARIO.md na PR #34, HEAD e40a8a61. Nenhuma imagem construida, migration aplicada ou VPS alterada.
+- EXPECTED_RUNTIME: ERP-RUNTIME-08B conforme /meta do codigo da PR #33. Default COMERCIAL-360-V1 no script canary diverge; passar valor explicitamente e corrigir default antes de Gate D.
+- Auth: canario precisa reportar auth.mode=supabase_user com token real validado no Supabase self-hosted e profile ativo vinculado. Evidencia DEV: auth.users=0, dois profiles sem Auth; logo smoke autenticado ainda impossivel e nao homologado.
+- Gate E: 016-024 somente da MAIN aprovada, em ordem; fatias de verificacao 016-017 Comercial e 018-024 Produto/DAM/canais na mesma janela autorizada, com backup novo, controle de aplicacao 1x e parada em falha. Teste PostgreSQL real apos completar a fatia autorizada; canario so apos esquema compativel. Nao reaplicar 001-015.
+- Imagem: tag proposta comercial360-main-<MERGE_SHA8>; SHA de merge e digest so podem ser registrados apos merge/build da MAIN. Nenhum digest atual foi comprovado. PR #33 draft e #34 independentes; revisar contrato operacional #34 antes de merge #33, sem merge automatico.
+- Smoke Auth: requer identidade sintética dedicada no Supabase Auth e profile ERP ativo com auth_user_id correspondente, Grupo/Empresa sinteticos e RBAC minimo; criar/vincular apenas em gate Auth autorizado, credenciais/token fora do Git, revogar/desabilitar apos teste, preservar auditoria.
+- Onda 3 Cliente 360: codigo local em preparacao, nao entregue neste commit documental. Testes dirigidos 3/3 e backend typecheck PASS; suite completa/build local interrompidos por OOM com ~1,1 GB RAM livre, sem evidencia de regressao funcional. Nao declarar CI ou Onda 3 aprovadas.
+- Proximo: CI deste handoff; corrigir default canario, fechar gate Auth e autorizacao D/E; continuar Cliente 360 somente apos validacoes do codigo. 3080 R07B preservada.
+
 ## Comercial 360 / Onda 2 - CI do preco por ClienteEmpresa (2026-09-24)
 - Commit funcional `c533f15c65bbd6ce79e9da579b0c05adfd755d4a` confirmado no remoto. Workflow `35999907136` SUCCESS: frontend/backend SUCCESS, incluindo migrate e test:postgres em PostgreSQL efemero. PR #33 permanece draft/sem merge; nenhuma mudanca na VPS, 3080 ou migrations aplicadas. CI nao equivale a homologacao DEV real.
 
