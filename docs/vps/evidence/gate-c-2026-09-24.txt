@@ -1,0 +1,66 @@
+GATE_C_READ_ONLY_BEGIN utc=2026-09-24T11:37:49Z
+# Evidência reconstruída das capturas Web Console (srv1982741).
+# FATO vs inferência: ver docs/GATE_C_AUDITORIA_VPS_SOMENTE_LEITURA.md.
+# sha256 de backup: marcador estrutural no Git; hashes completos permanecem na VPS/capturas.
+--- CONTAINERS ---
+name=erp-api-runtime08b-debug-pre-pr32-preserved status=Exited (0) 2 days ago image=erp-zuccaro-erp-api:runtime08b-main-a099d316
+name=erp-api-dev status=Up 5 days image=erp-zuccaro-erp-api:runtime07b-main-ca0bc5f3
+name=supabase-storage status=Up 6 days (healthy) image=supabase/storage-api:v1.60.4
+name=supabase-auth status=Up 6 days (healthy) image=supabase/gotrue:v2.189.0
+name=supabase-db status=Up 6 days (healthy) image=supabase/postgres:17.6.1.136
+--- OFFICIAL API 3080 ---
+official_image=erp-zuccaro-erp-api:runtime07b-main-ca0bc5f3
+official_networks=supabase_default
+health_http=200
+ready_http=200
+meta_parse=ERR
+meta_parse_reason=host_node_not_found
+--- SUPABASE-DB ---
+db_networks=supabase_default
+db_health=healthy
+--- IDENTITY API_DB vs DIRECT_DB (sem URL/senha) ---
+api_identity=API|postgres|7686065785209937954
+direct_identity=DIRECT|postgres|7686065785209937954
+conexao_api_vs_supabase_db=MATCH
+--- SCHEMA_MIGRATIONS (agregado) ---
+001_foundation.sql=1
+002_rls_foundation.sql=1
+003_marcas_pilot.sql=1
+004_tenant_integrity.sql=1
+005_cadastros_simples.sql=1
+006_produtos_base.sql=1
+007_produtos_master_data.sql=1
+008_produtos_fk_tenant.sql=1
+009_clientes_master_data.sql=1
+010_cliente_empresas_comercial.sql=1
+011_cliente_locais.sql=1
+012_obras.sql=1
+013_tabelas_preco.sql=1
+014_condicoes_pagamento.sql=1
+015_condicoes_pagamento_hardening.sql=1
+migration_rows=15
+--- AUTH / PROFILES (agregado, sem PII) ---
+auth_users=0
+profiles=2
+ativos_sem_auth=2
+groups=2
+empresas=3
+--- PORTAS (canario candidato) ---
+port_3086=FREE
+port_3090=FREE
+port_3091=FREE
+--- BACKUPS (metadados) ---
+backup path=pre-pr32-20260921-140012.sql bytes=486969 sha256=present dump_complete_marker=YES
+backup path=pre-r08-20260921-122514.sql bytes=482409 sha256=present dump_complete_marker=YES
+backup path=pre-runtime08b-e2e-resume-20260920-185751.sql bytes=482409 sha256=present dump_complete_marker=YES
+backup path=erp-dev-pre-runtime02.dump bytes=329639 sha256=present dump_complete_marker=NO
+--- ROLLBACK ARTIFACTS ---
+name=erp-api-dev status=Up 5 days image=erp-zuccaro-erp-api:runtime07b-main-ca0bc5f3
+name=erp-api-runtime07b-main-canary status=Exited (0) 5 days ago image=erp-zuccaro-erp-api:runtime07b-main-ca0bc5f3
+image=erp-zuccaro-erp-api:runtime07b-main-ca0bc5f3 id=e63afefa0b6c
+image=erp-zuccaro-erp-api:runtime08b-main-a099d316 id=99e164135c2b
+--- AUTH CONTAINERS ---
+name=supabase-auth status=Up 6 days (healthy)
+GATE_C_READ_ONLY_END utc=2026-09-24T11:37:52Z
+NOTA: auth.mode=dev_headers na 3080 NAO homologa Auth da PR #33.
+NOTA: nao aplicar migrations 016+; nao iniciar canario; nao promover.

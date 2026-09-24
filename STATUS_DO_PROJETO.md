@@ -1,3 +1,35 @@
+### Integração simulada #33 → #34 (2026-09-24) — NÃO é merge na main
+
+- Branch de simulação: `cursor/integracao-sim-33-34-392b`.
+- Ordem: `origin/main` + PR #33 + PR #34; conflito em `STATUS_DO_PROJETO.md` resolvido preservando ambas as frentes.
+- Estados: `READY_FOR_REVIEW` ≠ `AUTHORIZED` ≠ `EXECUTED`. Sem migration VPS/canário/3080.
+
+### Frente Cursor — VPS / HML / Gate C / legado (2026-09-24)
+
+- Branch: `cursor/vps-hml-gate-c-legado-392b` / PR `#34` (tip: `gh pr view 34 --json headRefOid`).
+- Pacote: `docs/PACOTE_DECISAO_GATES_D_E_F.md` — estados `READY_FOR_REVIEW` ≠ `AUTHORIZED` ≠ `EXECUTED`.
+- `go-nogo-def.sh`: `GATE_E_READY=NO` enquanto 016–024 ausentes da `main` (`main_missing_migrations_016_024`).
+- Digest/Auth continuam pendências reais de D/F (não bloqueiam E).
+- Provas sintéticas: R07B×016–024 (PGlite) + restore isolado (`VALIDATED_SYNTHETIC`).
+- **Não** executados: merge na main, migration VPS, canário, promoção 3080.
+
+### ERP-RUNTIME-08 — diagnóstico Comercial 360º (2026-09-19)
+
+- Diagnóstico documental iniciado sobre a base funcional 07B; nenhuma
+  implementação, migration, VPS, API ou frontend foi alterada.
+- Decisão documentada: próximo agregado proposto é Condição de Pagamento;
+  Orçamento, Pedido e Comercial 360º permanecem futuros.
+- Documento: `docs/ERP_RUNTIME_08_DIAGNOSTICO_COMERCIAL_360.md`.
+
+### Operação GitHub, Codex, Cursor e VPS DEV — 2026-09-19
+
+- Fonte canônica de código/histórico: `viniciuszuccaro-creator/ERP-Zuccaro-codeX`.
+- Base funcional do ERP-RUNTIME-07B: `ca0bc5f3529b9071fe80e58dae6aa966a9d6c740`.
+- O histórico deste arquivo foi preservado. A entrada anterior do 07B descrevia
+  a branch antes do merge; o estado operacional fechado está em
+  `docs/HANDOFF_ATUAL.md` e o procedimento permanente em
+  `docs/OPERACAO_DEV_VPS.md`.
+- Nenhum runtime posterior foi iniciado por esta atualização documental.
 ## Comercial 360 / Handoff canario PR #33 x PR #34 (2026-09-24)
 - Revisao somente documental da secao 4 de docs/CONTRATO_CURSOR_CODEX_VPS_CANARIO.md na PR #34, HEAD e40a8a61. Nenhuma imagem construida, migration aplicada ou VPS alterada.
 - EXPECTED_RUNTIME: ERP-RUNTIME-08B conforme /meta do codigo da PR #33. Default COMERCIAL-360-V1 no script canary diverge; passar valor explicitamente e corrigir default antes de Gate D.
