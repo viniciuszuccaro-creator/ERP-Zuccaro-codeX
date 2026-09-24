@@ -1,41 +1,30 @@
 # Evidência — restore do backup pré-Gate E em Postgres isolado
 
-**Status:** `PENDING_RESTORE_FAILED` (VPS `rc=3` em 2026-09-24T15:40:55Z; script corrigido)
-**utc:** 2026-09-24T15:42:00Z
+**Status:** `PENDING_RESTORE_FAILED` (último: PERMISSION log_min_messages; script filtra log_*)
+**utc:** 2026-09-24T15:46:30Z
 
 ## Último run VPS (sanitizado)
 
 - dump hash OK (`e72ca99b…` / `390275`)
-- banco criado: `erp_restore_isolated_20260924_154055`
-- `dev_before=postgres|REDACTED_CLUSTER|mig=15`
-- `RESTORE_ISOLATED_DB_STATUS=BLOCKED_RESTORE_FAILED rc=3` → isolado dropado
-- Causa provável: `CREATE SCHEMA public` / objetos em DB novo; script agora pré-reseta
-  `public` só no isolado, filtra `\connect` e imprime excerpt ERROR sanitizado
+- banco: `erp_restore_isolated_20260924_154430` (criado e dropado)
+- `dump_connect_to_dev=0` · `isolated_public_schema_reset=YES`
+- `ERROR: permission denied to set parameter "log_min_messages"`
+- `restore_fail_class=PERMISSION` · `dev_untouched_after_fail=YES`
 
-## Diagnóstico opcional do log antigo (se ainda existir)
-
-```bash
-grep -E 'ERROR:|FATAL:' /tmp/restore-isolated-20260924_154055.log | head -40
-```
-
-## Bloco para colar na Web Console (baixa para /tmp — não altera checkout DEV)
+## Bloco Web Console (curl → /tmp)
 
 ```bash
 set -euo pipefail
-SCRIPT_SHA=51fbf6dffe1b42fa9e2204e96d3989ad2eded759
+SCRIPT_SHA=4d6424f034ad0a85a95b10f362ec8593b90e649c
 curl -fsSL "https://raw.githubusercontent.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/${SCRIPT_SHA}/scripts/vps/restore-pre-gate-e-isolated-webconsole.sh" \
   -o /tmp/restore-pre-gate-e-isolated-webconsole.sh
 bash /tmp/restore-pre-gate-e-isolated-webconsole.sh
-# Em falha: copiar também restore_error_excerpt_sanitized_* / restore_fail_class
-# Em sucesso: copiar PASTE_TO_GIT_BEGIN … PASTE_TO_GIT_END
 ```
-
-**Proibido:** `DATABASE_URL` do DEV; `DROP SCHEMA` no `postgres`; `git pull` de feature na VPS; commit do dump.
 
 ```
 RESTORE_ISOLATED_DB_STATUS=PENDING_RESTORE_FAILED
-last_fail_rc=3
-script_fix=51fbf6df
+last_fail_class=PERMISSION_SET_GUC
+script_fix=4d6424f034ad0a85a95b10f362ec8593b90e649c
 AUTHORIZES_GATES_DEF=NO
 EXECUTE_DEF=NO
 ```
