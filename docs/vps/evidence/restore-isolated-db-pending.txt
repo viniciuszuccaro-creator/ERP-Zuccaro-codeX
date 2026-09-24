@@ -1,46 +1,41 @@
 # Evidência — restore do backup pré-Gate E em Postgres isolado
 
-**Status:**  (último run VPS rc=3; script corrigido)`PENDING_NO_DUMP_ACCESS` (script ainda ausente no checkout da VPS)
-**utc:** 2026-09-24T15:36:00Z
+**Status:** `PENDING_RESTORE_FAILED` (VPS `rc=3` em 2026-09-24T15:40:55Z; script corrigido)
+**utc:** 2026-09-24T15:42:00Z
 
-## Diagnóstico Web Console (2026-09-24)
+## Último run VPS (sanitizado)
 
+- dump hash OK (`e72ca99b…` / `390275`)
+- banco criado: `erp_restore_isolated_20260924_154055`
+- `dev_before=postgres|REDACTED_CLUSTER|mig=15`
+- `RESTORE_ISOLATED_DB_STATUS=BLOCKED_RESTORE_FAILED rc=3` → isolado dropado
+- Causa provável: `CREATE SCHEMA public` / objetos em DB novo; script agora pré-reseta
+  `public` só no isolado, filtra `\connect` e imprime excerpt ERROR sanitizado
+
+## Diagnóstico opcional do log antigo (se ainda existir)
+
+```bash
+grep -E 'ERROR:|FATAL:' /tmp/restore-isolated-20260924_154055.log | head -40
 ```
-root@srv1982741:/opt/erp-zuccaro# bash scripts/vps/restore-pre-gate-e-isolated-webconsole.sh
-bash: scripts/vps/restore-pre-gate-e-isolated-webconsole.sh: No such file or directory
-```
-
-**Causa:** o script existe só na branch `cursor/integracao-sim-33-34-392b` / commit `9ff95c1a`
-(PR #35). O tree em `/opt/erp-zuccaro` na VPS **não** foi atualizado (correto — main intocada;
-não fazer `git pull` de feature na VPS DEV).
 
 ## Bloco para colar na Web Console (baixa para /tmp — não altera checkout DEV)
 
 ```bash
-# Restore ISOLADO — dump permanece em /opt/erp-zuccaro/backups; DEV=postgres intocado
-# Fix: stamp com underscore (hífen quebrava CREATE DATABASE)
 set -euo pipefail
 SCRIPT_SHA=51fbf6dffe1b42fa9e2204e96d3989ad2eded759
 curl -fsSL "https://raw.githubusercontent.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/${SCRIPT_SHA}/scripts/vps/restore-pre-gate-e-isolated-webconsole.sh" \
   -o /tmp/restore-pre-gate-e-isolated-webconsole.sh
 bash /tmp/restore-pre-gate-e-isolated-webconsole.sh
-# Copiar APENAS o bloco PASTE_TO_GIT_BEGIN … PASTE_TO_GIT_END para o GitHub
+# Em falha: copiar também restore_error_excerpt_sanitized_* / restore_fail_class
+# Em sucesso: copiar PASTE_TO_GIT_BEGIN … PASTE_TO_GIT_END
 ```
 
-**Proibido:** `DATABASE_URL` do DEV; `DROP SCHEMA` no `postgres`; `git pull`/`checkout` da feature na VPS; commit do dump.
-
-## Metadados esperados do dump
-
-- path: `/opt/erp-zuccaro/backups/pre-gate-e-20260924-140304.sql`
-- bytes=`390275`
-- sha256=`e72ca99b453fa6b060b5264f636794b3a601202c18e4185deb12f0020cae3f80`
-- banco alvo: `erp_restore_isolated_<stamp>` (≠ `postgres`)
-- `dev_untouched=YES`
+**Proibido:** `DATABASE_URL` do DEV; `DROP SCHEMA` no `postgres`; `git pull` de feature na VPS; commit do dump.
 
 ```
-RESTORE_ISOLATED_DB_STATUS=PENDING_NO_DUMP_ACCESS
-vps_script_missing_on_checkout=YES
-fetch_via_raw_github=READY
+RESTORE_ISOLATED_DB_STATUS=PENDING_RESTORE_FAILED
+last_fail_rc=3
+script_fix=51fbf6df
 AUTHORIZES_GATES_DEF=NO
 EXECUTE_DEF=NO
 ```
