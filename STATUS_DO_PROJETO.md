@@ -1,6 +1,6 @@
 ### Frente Cursor — VPS / HML / Gate C / legado (2026-09-24)
 
-- Branch: `cursor/vps-hml-gate-c-legado-392b` / PR `#34`.
+- Branch: `cursor/vps-hml-gate-c-legado-392b` / PR `#34` HEAD `cfc4c2ab24d6cad9791b1e73cf1208febd2a1d9b`.
 - Pacote decisão: `docs/PACOTE_DECISAO_GATES_D_E_F.md` (sem merge/E/D/F).
 - `go-nogo-def.sh`: `GATE_E_READY` / `GATE_D_READY` / `GATE_F_READY` separados;
   digest/Auth **não** bloqueiam E (anti-circular).
