@@ -10,6 +10,8 @@
 
 `GATE_*_READY=YES` **nunca** autoriza nem executa.
 
+**Integração simulada publicada em** `cursor/integracao-sim-33-34-392b` (main intocada).
+
 ```bash
 bash scripts/vps/go-nogo-def.sh
 ```
