@@ -26,8 +26,7 @@ Regra-Mãe e o documento mestre do programa (PR #33).
 
 ## Próxima ação concreta
 
-1. **Humano/Codex:** decidir checklist em `docs/PACOTE_AUTORIZACAO_GATES_D_E.md`
-   (EXPECTED_RUNTIME=`ERP-RUNTIME-08B` proposto; Auth `supabase_user`; fatia E).
-2. Sem essa decisão + backup novo: **não** D/E/F.
-3. Opcional: reexecutar `gate-c-read-only.sh` atualizado (meta via docker exec).
-4. Inventário HD legado fora deste cloud.
+1. Preencher `docs/TERMO_AUTORIZACAO_GATES_D_E_F.md` (EXPECTED_RUNTIME / Auth / fatia E).
+2. Sem termo + backup novo: **não** D/E/F.
+3. Legado: com HD montado, inventário; mapper sintético já cobre carimbo staging.
+4. Opcional: reexecutar `gate-c-read-only.sh` (meta via docker exec).
