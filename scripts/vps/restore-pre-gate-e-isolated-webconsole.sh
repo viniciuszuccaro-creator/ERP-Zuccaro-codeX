@@ -100,7 +100,7 @@ echo "integrity_tail_complete=${TAIL_OK}"
 }
 
 # Snapshot DEV antes (identidade + contagem migrations) — somente leitura
-dev_before="$(docker exec "$DB_CONTAINER" psql -U postgres -d "$DEV_DBNAME" -tAc \
+dev_before="$(docker exec "$DB_CONTAINER" psql -X -U postgres -d "$DEV_DBNAME" -tAc \
   "SELECT current_database()||'|'||(SELECT system_identifier::text FROM pg_control_system())||'|mig='||(SELECT count(*)::text FROM schema_migrations);")"
 echo "dev_before_sanitized=$(echo "$dev_before" | sed -E 's/[0-9]{10,}/REDACTED_CLUSTER/g')"
 DEV_BEFORE_RAW="$dev_before"
@@ -116,56 +116,98 @@ if (( CONNECT_TO_DEV > 0 )); then
   exit 9
 fi
 
+# Escolhe role com privilégio de GUC quando possível (Supabase: postgres costuma
+# ser restrito; supabase_admin costuma ser superuser).
+RESTORE_DB_USER="${RESTORE_DB_USER:-}"
+if [[ -z "$RESTORE_DB_USER" ]]; then
+  RESTORE_DB_USER=postgres
+  if docker exec "$DB_CONTAINER" psql -X -U supabase_admin -d postgres -tAc 'SELECT 1' >/dev/null 2>&1; then
+    if docker exec "$DB_CONTAINER" psql -X -U supabase_admin -d postgres -v ON_ERROR_STOP=1 \
+      -c "SET log_min_messages TO warning;" >/dev/null 2>&1; then
+      RESTORE_DB_USER=supabase_admin
+    fi
+  fi
+fi
+echo "restore_db_user=${RESTORE_DB_USER}"
+can_set_log=NO
+if docker exec "$DB_CONTAINER" psql -X -U "$RESTORE_DB_USER" -d postgres -v ON_ERROR_STOP=1 \
+  -c "SET log_min_messages TO warning;" >/dev/null 2>&1; then
+  can_set_log=YES
+fi
+echo "restore_user_can_set_log_min_messages=${can_set_log}"
+
+# Pré-scan sanitizado do dump (quantas linhas citam o GUC)
+LOG_GUC_LINES="$(grep -ciE 'log_min_messages' "$DUMP_PATH" || true)"
+echo "dump_log_min_messages_line_count=${LOG_GUC_LINES}"
+if (( LOG_GUC_LINES > 0 )); then
+  echo 'dump_log_min_messages_samples_sanitized_begin'
+  grep -inE 'log_min_messages' "$DUMP_PATH" | head -n 8 \
+    | sed -E 's/(=|TO)[[:space:]]*.*/\1 REDACTED/I' \
+    | sed -E 's/[0-9a-fA-F-]{20,}/REDACTED/g' || true
+  echo 'dump_log_min_messages_samples_sanitized_end'
+fi
+
 # Criar banco isolado (NÃO é DEV)
-docker exec "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+docker exec "$DB_CONTAINER" psql -X -U "$RESTORE_DB_USER" -d postgres -v ON_ERROR_STOP=1 \
   -c "SELECT 1 FROM pg_database WHERE datname='${ISOLATED_DB}'" | grep -q 1 && {
   echo 'RESTORE_ISOLATED_DB_STATUS=BLOCKED_ISOLATED_DB_ALREADY_EXISTS'
   exit 6
 }
-docker exec "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+docker exec "$DB_CONTAINER" psql -X -U "$RESTORE_DB_USER" -d postgres -v ON_ERROR_STOP=1 \
   -c "CREATE DATABASE ${ISOLATED_DB};"
 echo "isolated_db_created=${ISOLATED_DB}"
 
 # Confirma sessão no isolado (nunca no DEV)
-iso_probe="$(docker exec "$DB_CONTAINER" psql -U postgres -d "$ISOLATED_DB" -tAc "SELECT current_database();")"
+iso_probe="$(docker exec "$DB_CONTAINER" psql -X -U "$RESTORE_DB_USER" -d "$ISOLATED_DB" -tAc "SELECT current_database();")"
 if [[ "$iso_probe" != "$ISOLATED_DB" ]]; then
   echo "RESTORE_ISOLATED_DB_STATUS=BLOCKED_WRONG_TARGET got=${iso_probe}"
-  docker exec "$DB_CONTAINER" psql -U postgres -d postgres -c "DROP DATABASE IF EXISTS ${ISOLATED_DB};" || true
+  docker exec "$DB_CONTAINER" psql -X -U "$RESTORE_DB_USER" -d postgres -c "DROP DATABASE IF EXISTS ${ISOLATED_DB};" || true
   exit 10
 fi
 
 # Pré-reset SOMENTE no isolado: evita ERROR "schema public already exists"
-docker exec "$DB_CONTAINER" psql -U postgres -d "$ISOLATED_DB" -v ON_ERROR_STOP=1 \
+docker exec "$DB_CONTAINER" psql -X -U "$RESTORE_DB_USER" -d "$ISOLATED_DB" -v ON_ERROR_STOP=1 \
   -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO postgres; GRANT ALL ON SCHEMA public TO public;"
 echo 'isolated_public_schema_reset=YES'
+echo 'psql_no_psqlrc=-X'
 
 LOG="/tmp/restore-isolated-${STAMP}.log"
+FILTERED="/tmp/restore-isolated-${STAMP}.filtered.sql"
 # Filtra do stream (dump no host permanece intacto):
 # - \\connect (nunca voltar ao DEV)
 # - CREATE/COMMENT SCHEMA public (já resetados)
-# - SET/ALTER de GUCs restritos no role postgres do Supabase
-#   (ex.: log_min_messages → permission denied)
-FILTERED="/tmp/restore-isolated-${STAMP}.filtered.sql"
+# - QUALQUER linha com log_min_messages / set_config log_* (role postgres do Supabase)
+# - SET/RESET log_* (case-insensitive; com indentação)
 set +e
 grep -vE '^\\connect([[:space:]]|$)|^CREATE SCHEMA public;|^COMMENT ON SCHEMA public' "$DUMP_PATH" \
   | sed -E \
-    -e '/^SET[[:space:]]+(SESSION[[:space:]]+|LOCAL[[:space:]]+)?log_[A-Za-z0-9_]+/d' \
-    -e '/^RESET[[:space:]]+log_[A-Za-z0-9_]+/d' \
-    -e '/^SELECT[[:space:]]+pg_catalog\.set_config\(\x27log_/d' \
-    -e '/^ALTER[[:space:]]+(DATABASE|ROLE)[[:space:]].+[[:space:]]SET[[:space:]]+log_/Id' \
-    -e '/^SET[[:space:]]+(SESSION[[:space:]]+|LOCAL[[:space:]]+)?(session_preload_libraries|local_preload_libraries|shared_preload_libraries)/d' \
+    -e '/log_min_messages/Id' \
+    -e '/log_min_error_statement/Id' \
+    -e '/[[:space:]]set_config\(['\''"]log_/Id' \
+    -e '/^[[:space:]]*SET[[:space:]]+(SESSION[[:space:]]+|LOCAL[[:space:]]+)?log_[A-Za-z0-9_]+/Id' \
+    -e '/^[[:space:]]*RESET[[:space:]]+log_[A-Za-z0-9_]+/Id' \
+    -e '/^[[:space:]]*ALTER[[:space:]]+(DATABASE|ROLE)[[:space:]].*[[:space:]]SET[[:space:]]+log_/Id' \
+    -e '/^[[:space:]]*SET[[:space:]]+(SESSION[[:space:]]+|LOCAL[[:space:]]+)?(session_preload_libraries|local_preload_libraries|shared_preload_libraries)/Id' \
   >"$FILTERED"
 filter_rc=$?
 if (( filter_rc != 0 )); then
   echo "RESTORE_ISOLATED_DB_STATUS=BLOCKED_FILTER_FAILED rc=${filter_rc}"
-  docker exec "$DB_CONTAINER" psql -U postgres -d postgres -c "DROP DATABASE IF EXISTS ${ISOLATED_DB};" || true
+  docker exec "$DB_CONTAINER" psql -X -U "$RESTORE_DB_USER" -d postgres -c "DROP DATABASE IF EXISTS ${ISOLATED_DB};" || true
   exit 11
+fi
+# Fail-closed: stream filtrado não pode mais citar o GUC
+left="$(grep -ciE 'log_min_messages' "$FILTERED" || true)"
+echo "filtered_log_min_messages_line_count=${left}"
+if (( left > 0 )); then
+  echo 'RESTORE_ISOLATED_DB_STATUS=BLOCKED_FILTER_INCOMPLETE'
+  docker exec "$DB_CONTAINER" psql -X -U "$RESTORE_DB_USER" -d postgres -c "DROP DATABASE IF EXISTS ${ISOLATED_DB};" || true
+  exit 12
 fi
 filtered_bytes="$(wc -c <"$FILTERED" | tr -d ' ')"
 echo "restore_stream_filtered_bytes=${filtered_bytes}"
-echo 'restore_stream_stripped=connect,public_schema,log_gucs'
+echo 'restore_stream_stripped=connect,public_schema,log_gucs_aggressive'
 
-docker exec -i "$DB_CONTAINER" psql -U postgres -d "$ISOLATED_DB" -v ON_ERROR_STOP=1 \
+docker exec -i "$DB_CONTAINER" psql -X -U "$RESTORE_DB_USER" -d "$ISOLATED_DB" -v ON_ERROR_STOP=1 \
   <"$FILTERED" >"$LOG" 2>&1
 rc=$?
 set -e
@@ -193,6 +235,8 @@ print_sanitized_restore_errors() {
     echo 'restore_fail_class=MISSING_ROLE'
   elif grep -qiE 'extension .* (is not available|does not exist|already exists)' "$log" 2>/dev/null; then
     echo 'restore_fail_class=EXTENSION'
+  elif grep -qiE 'permission denied to set parameter' "$log" 2>/dev/null; then
+    echo 'restore_fail_class=PERMISSION_SET_GUC'
   elif grep -qiE 'permission denied' "$log" 2>/dev/null; then
     echo 'restore_fail_class=PERMISSION'
   elif grep -qiE 'syntax error' "$log" 2>/dev/null; then
@@ -207,10 +251,10 @@ if (( rc != 0 )); then
   echo "restore_log_path=${LOG}"
   print_sanitized_restore_errors "$LOG"
   # limpa isolado em falha parcial (DEV intocado)
-  docker exec "$DB_CONTAINER" psql -U postgres -d postgres -c "DROP DATABASE IF EXISTS ${ISOLATED_DB};" || true
+  docker exec "$DB_CONTAINER" psql -X -U "$RESTORE_DB_USER" -d postgres -c "DROP DATABASE IF EXISTS ${ISOLATED_DB};" || true
   echo "isolated_db_dropped_after_fail=${ISOLATED_DB}"
   # Confirma DEV ainda igual após falha
-  dev_after_fail="$(docker exec "$DB_CONTAINER" psql -U postgres -d "$DEV_DBNAME" -tAc \
+  dev_after_fail="$(docker exec "$DB_CONTAINER" psql -X -U postgres -d "$DEV_DBNAME" -tAc \
     "SELECT current_database()||'|'||(SELECT system_identifier::text FROM pg_control_system())||'|mig='||(SELECT count(*)::text FROM schema_migrations);")"
   if [[ "$DEV_BEFORE_RAW" != "$dev_after_fail" ]]; then
     echo 'RESTORE_ISOLATED_DB_STATUS=BLOCKED_DEV_CHANGED_AFTER_FAIL'
@@ -223,11 +267,11 @@ echo 'restore_psql_rc=0'
 echo "restore_log_path=${LOG}"
 
 # Contagens no isolado
-iso_mig="$(docker exec "$DB_CONTAINER" psql -U postgres -d "$ISOLATED_DB" -tAc \
+iso_mig="$(docker exec "$DB_CONTAINER" psql -X -U "$RESTORE_DB_USER" -d "$ISOLATED_DB" -tAc \
   "SELECT count(*) FROM schema_migrations;" 2>/dev/null || echo MISSING)"
-iso_mig_ids="$(docker exec "$DB_CONTAINER" psql -U postgres -d "$ISOLATED_DB" -tAc \
+iso_mig_ids="$(docker exec "$DB_CONTAINER" psql -X -U "$RESTORE_DB_USER" -d "$ISOLATED_DB" -tAc \
   "SELECT string_agg(id, ',' ORDER BY id) FROM schema_migrations;" 2>/dev/null || echo MISSING)"
-iso_db="$(docker exec "$DB_CONTAINER" psql -U postgres -d "$ISOLATED_DB" -tAc "SELECT current_database();")"
+iso_db="$(docker exec "$DB_CONTAINER" psql -X -U "$RESTORE_DB_USER" -d "$ISOLATED_DB" -tAc "SELECT current_database();")"
 
 echo "isolated_current_database=${iso_db}"
 echo "isolated_schema_migrations_count=${iso_mig}"
@@ -235,7 +279,7 @@ echo "isolated_schema_migrations_count=${iso_mig}"
 echo "isolated_schema_migrations_ids=${iso_mig_ids}"
 
 # DEV depois — deve ser idêntico
-dev_after="$(docker exec "$DB_CONTAINER" psql -U postgres -d "$DEV_DBNAME" -tAc \
+dev_after="$(docker exec "$DB_CONTAINER" psql -X -U postgres -d "$DEV_DBNAME" -tAc \
   "SELECT current_database()||'|'||(SELECT system_identifier::text FROM pg_control_system())||'|mig='||(SELECT count(*)::text FROM schema_migrations);")"
 echo "dev_after_sanitized=$(echo "$dev_after" | sed -E 's/[0-9]{10,}/REDACTED_CLUSTER/g')"
 
