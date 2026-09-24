@@ -21,7 +21,8 @@ EXPECTED_SHA256="${EXPECTED_SHA256:-e72ca99b453fa6b060b5264f636794b3a601202c18e4
 EXPECTED_BYTES="${EXPECTED_BYTES:-390275}"
 DB_CONTAINER="${DB_CONTAINER:-supabase-db}"
 DEV_DBNAME="${DEV_DBNAME:-postgres}"
-STAMP="$(date -u +%Y%m%d-%H%M%S)"
+# Stamp só com [0-9_] — hífen é inválido em identificador SQL sem aspas
+STAMP="$(date -u +%Y%m%d_%H%M%S)"
 ISOLATED_DB="erp_restore_isolated_${STAMP}"
 
 echo "RESTORE_ISOLATED_DB_BEGIN utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
