@@ -27,17 +27,22 @@ Regra-Mãe e o documento mestre do programa (PR #33).
 
 ## Documentos
 
-- `docs/GATE_C_AUDITORIA_VPS_SOMENTE_LEITURA.md` — fatos vs inferências
-- `scripts/vps/gate-c-read-only.sh` — **um** script colável / executável na Web Console
-- `scripts/vps/gate-d-f-precheck.sh` — precheck local a partir da saída Gate C
+- `docs/GATE_C_AUDITORIA_VPS_SOMENTE_LEITURA.md`
+- `docs/CONTRATO_CURSOR_CODEX_VPS_CANARIO.md` — pendências EXPECTED_RUNTIME/Auth
+- `docs/vps/migrations-candidatas-comercial360.txt` — espelho 001–024 (sem SQL)
+- `scripts/vps/gate-c-read-only.sh`
+- `scripts/vps/extract-gate-c-migrations.sh`
+- `scripts/vps/gate-d-f-precheck.sh`
 - `docs/GATES_D_F_PREPARACAO_CANARIO.md`
 - `docs/LEGADO_BACKUP_DESCOBERTA_SOMENTE_LEITURA.md`
 - `docs/LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md`
 - `scripts/legado/inventario-backup-erp-antigo.sh`
+- `fixtures/legado/inventario-sintetico.example.json`
 
 ## Próxima ação concreta
 
-1. Operador executa/cola `scripts/vps/gate-c-read-only.sh` na Web Console e devolve a saída.
-2. Cursor roda `gate-d-f-precheck.sh --from-gate-c-output` e atualiza Gate C para APROVADO/BLOQUEADO.
-3. Em paralelo: inventário legado na máquina com o HD externo montado.
-4. Combinar com Codex: digest de imagem pós-merge, migrations faltantes 016–024, identidade Auth sintética para D.
+1. Operador: `bash scripts/vps/gate-c-read-only.sh` na Web Console → devolver saída.
+2. Cursor: `extract-gate-c-migrations.sh` +
+   `gate-d-f-precheck.sh --from-gate-c-output … --candidate-list docs/vps/migrations-candidatas-comercial360.txt`
+3. Codex: confirmar checklist §7 do contrato (EXPECTED_RUNTIME, supabase_user, digest).
+4. Inventário HD legado na máquina com o backup montado.

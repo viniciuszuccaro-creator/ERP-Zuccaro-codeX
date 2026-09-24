@@ -1,0 +1,24 @@
+{
+  "generated_at_utc": "2026-09-24T00:00:00Z",
+  "folder_name": "BACKUP ERP ANTIGO - CODEX",
+  "synthetic": true,
+  "file_count": 2,
+  "bytes_total": 64,
+  "files": [
+    {
+      "name": "clientes_sintetico.csv",
+      "bytes": 32,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "format": "planilha_texto",
+      "mtime_utc": "2026-09-24T00:00:00Z"
+    },
+    {
+      "name": "produtos_sintetico.sql",
+      "bytes": 32,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "format": "sql_texto",
+      "mtime_utc": "2026-09-24T00:00:00Z"
+    }
+  ],
+  "note": "Fixture sintetica. Sem dados reais. Nao usar como inventario do HD."
+}

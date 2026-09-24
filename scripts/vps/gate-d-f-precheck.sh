@@ -6,6 +6,7 @@ set -Eeuo pipefail
 MODE='local'
 APPLIED_FILE=''
 CANDIDATE_DIR=''
+CANDIDATE_LIST=''
 EXPECT_MIN_APPLIED=15
 
 usage() {
@@ -15,8 +16,11 @@ Uso:
       Valida presença dos scripts de deploy no checkout (sem Docker/VPS).
 
   gate-d-f-precheck.sh --from-gate-c-output FILE [--candidate-migrations DIR]
+      [--candidate-list FILE]
       Lê saída sanitizada do Gate C (linhas id=count) e calcula migrations
-      faltantes vs DIR (padrão: server/migrations do repo). Não aplica nada.
+      faltantes. DIR padrão: server/migrations. LIST: arquivo com nomes
+      016_....sql (ex.: docs/vps/migrations-candidatas-comercial360.txt).
+      Não aplica nada.
 
 Saída: PRECHECK_OK ou PRECHECK_BLOCKED com motivos. Exit 0 só se OK/parcial
 documentada sem bloqueio duro; exit 1 se bloqueado.
@@ -28,6 +32,7 @@ while [[ $# -gt 0 ]]; do
     --local) MODE='local'; shift ;;
     --from-gate-c-output) MODE='from_gate_c'; APPLIED_FILE="$2"; shift 2 ;;
     --candidate-migrations) CANDIDATE_DIR="$2"; shift 2 ;;
+    --candidate-list) CANDIDATE_LIST="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "BLOCKED: argumento desconhecido: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -69,10 +74,29 @@ check_deploy_scripts() {
     echo 'gate_c_script=MISSING'
     blocked=1
   fi
+  if [[ -f "$ROOT/docs/CONTRATO_CURSOR_CODEX_VPS_CANARIO.md" ]]; then
+    echo 'contrato_cursor_codex=PRESENT'
+  else
+    echo 'contrato_cursor_codex=MISSING'
+    warn=1
+  fi
 }
 
 list_candidate_ids() {
-  local f base id
+  local f base id line
+  if [[ -n "$CANDIDATE_LIST" ]]; then
+    [[ -f "$CANDIDATE_LIST" ]] || { echo "BLOCKED: candidate-list ausente: $CANDIDATE_LIST" >&2; return 1; }
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      [[ -z "$line" || "$line" =~ ^# ]] && continue
+      base="$(basename "$line")"
+      id="${base%%_*}"
+      id="${id%%.sql}"
+      if [[ "$id" =~ ^[0-9]{3}$ ]]; then
+        printf '%s\n' "$id"
+      fi
+    done <"$CANDIDATE_LIST" | sort -u
+    return 0
+  fi
   for f in "$CANDIDATE_DIR"/*.sql; do
     [[ -f "$f" ]] || continue
     base="$(basename "$f")"

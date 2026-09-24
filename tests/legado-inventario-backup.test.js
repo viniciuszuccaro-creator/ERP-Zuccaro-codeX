@@ -44,3 +44,12 @@ test('inventario legado: falha fechada se a pasta nao existe', () => {
   assert.notEqual(run.status, 0);
   assert.match(run.stdout + run.stderr, /backup_dir_found=NO/);
 });
+
+test('fixture sintetica de inventario nao contem PII tipica', () => {
+  const fixture = path.join(root, 'fixtures/legado/inventario-sintetico.example.json');
+  const json = JSON.parse(fs.readFileSync(fixture, 'utf8'));
+  assert.equal(json.synthetic, true);
+  const blob = JSON.stringify(json);
+  assert.doesNotMatch(blob, /@cpa|cpf|cnpj|senha|password|Bearer /i);
+  assert.equal(json.note.includes('Sem dados reais') || json.note.includes('sintetica') || json.note.includes('Fixture'), true);
+});

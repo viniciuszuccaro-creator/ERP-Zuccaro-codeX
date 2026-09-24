@@ -2,18 +2,18 @@
 
 - Branch: `cursor/vps-hml-gate-c-legado-392b` (base `origin/main`
   `ca4171600cc30f9922c2f8b2ccb8b22d06aa6888`).
-- PR: `#34` draft. PR Codex #33 **não** editada.
-- Gate C: **PARCIAL**. Script versionado `scripts/vps/gate-c-read-only.sh`;
-  precheck `scripts/vps/gate-d-f-precheck.sh` (local / a partir da saída Gate C).
-  MCP Hostinger ausente; 3080 não tocada.
-- Gates D–F: preparação + precheck; **não** executados.
-- Legado: inventário + rascunho de mapeamento canônico (sem dados reais);
-  HD externo não montado neste cloud.
-- Testes: `tests/legado-inventario-backup.test.js`,
-  `tests/vps-gate-precheck.test.js`.
-- Handoff: `docs/HANDOFF_CURSOR_VPS_HML.md`.
-- Próximo: saída Web Console do Gate C; precheck; inventário HD; combinar
-  SHA/imagem/migrations 016–024 com Codex antes de D/E/F.
+- PR: `#34` draft (CI verde no HEAD anterior `f159ad25`). PR Codex #33 **não**
+  editada.
+- Gate C: **PARCIAL**. Scripts `gate-c-read-only.sh`,
+  `extract-gate-c-migrations.sh`, `gate-d-f-precheck.sh` (+ `--candidate-list`).
+- Contrato Cursor↔Codex: `docs/CONTRATO_CURSOR_CODEX_VPS_CANARIO.md` — destaca
+  divergência `EXPECTED_RUNTIME` (script vs meta `ERP-RUNTIME-08B`) e lista
+  016–024 em `docs/vps/migrations-candidatas-comercial360.txt`.
+- Gates D–F: preparação + precheck; **não** executados; 3080 preservada.
+- Legado: inventário + mapeamento + fixture sintética
+  `fixtures/legado/inventario-sintetico.example.json`.
+- Próximo: saída Web Console Gate C; Codex confirmar EXPECTED_RUNTIME/Auth;
+  inventário HD real.
 
 ### ERP-RUNTIME-08 — diagnóstico Comercial 360º (2026-09-19)
 
