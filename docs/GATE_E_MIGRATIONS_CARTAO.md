@@ -28,7 +28,7 @@ bash scripts/vps/validate-termo-autorizacao.sh
 bash scripts/vps/print-gate-e-fatias.sh
 ```
 
-Esperado: `GATE_E_READY=YES` · termo ainda `FACTS_READY_WAITING_SIGNATURE` ou `WAITING_SIGNATURE` até assinar.
+Esperado: `GATE_E_READY=YES` · `TERMO_STATUS=SIGNED_CHECKLIST_OK` · `DECISION_STATE=AUTHORIZED_CHECKLIST` · apply ainda exige backup novo na VPS.
 
 ---
 
