@@ -1,28 +1,23 @@
-# Evidência — restore do backup pré-Gate E em Postgres isolado
+# Evidência sanitizada — restore isolado dump pré-Gate E (VPS)
+# Fonte: Web Console srv1982741 · utc=2026-09-24T15:55:00Z
+# Script: scripts/vps/restore-pre-gate-e-isolated-webconsole.sh (commit 419948b6)
 
-**Status:** `PENDING_RESTORE_FAILED` (log_min_messages persistiu após filtro simples; fix -X/admin/agressivo)
-**utc:** 2026-09-24T15:49:00Z
-
-## Último run VPS
-
-- `erp_restore_isolated_20260924_154754` · hash dump OK · `dev_untouched` após fail
-- `restore_stream_stripped=connect,public_schema,log_gucs` ainda falhou em log_min_messages
-- Hipótese: `.psqlrc` / role sem privilégio / linha fora do padrão SET
-
-## Bloco Web Console
-
-```bash
-set -euo pipefail
-SCRIPT_SHA=419948b6b41d5421111e01ed6ef26ea7ef9476ec
-curl -fsSL "https://raw.githubusercontent.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/${SCRIPT_SHA}/scripts/vps/restore-pre-gate-e-isolated-webconsole.sh" \
-  -o /tmp/restore-pre-gate-e-isolated-webconsole.sh
-bash /tmp/restore-pre-gate-e-isolated-webconsole.sh
-```
-
-Esperado no início: `psql_no_psqlrc=-X`, `restore_db_user=...`, `filtered_log_min_messages_line_count=0`.
-
-```
-RESTORE_ISOLATED_DB_STATUS=PENDING_RESTORE_FAILED
+dump_basename=pre-gate-e-20260924-140304.sql
+dump_bytes=390275
+dump_sha256=e72ca99b453fa6b060b5264f636794b3a601202c18e4185deb12f0020cae3f80
+dump_sha256_match_expected=YES
+integrity_header_pg_dump=YES
+integrity_tail_complete=YES
+isolated_database_name=erp_restore_isolated_20260924_155458
+isolated_schema_migrations_count=15
+isolated_schema_migrations_ids=001_foundation.sql,002_rls_foundation.sql,003_marcas_pilot.sql,004_tenant_integrity.sql,005_cadastros_simples.sql,006_produtos_base.sql,007_produtos_master_data.sql,008_produtos_fk_tenant.sql,009_clientes_master_data.sql,010_cliente_empresas_comercial.sql,011_cliente_locais.sql,012_obras.sql,013_tabelas_preco.sql,014_condicoes_pagamento.sql,015_condicoes_pagamento_hardening.sql
+isolated_migrations_match_pre_gate_e=YES
+dev_dbname=postgres
+dev_untouched=YES
+dump_left_on_vps=YES
+dump_committed_to_git=NO
+RESTORE_ISOLATED_DB_STATUS=OK
 AUTHORIZES_GATES_DEF=NO
 EXECUTE_DEF=NO
-```
+APPLY_MIGRATIONS=NO
+START_CANARY=NO

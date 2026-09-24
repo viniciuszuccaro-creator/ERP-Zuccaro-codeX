@@ -12,10 +12,10 @@
   (`docs/vps/evidence/r07b-api-schema-016-024-compat.txt`); API nova **não** usada.
 - Guarda anti-DEV no R07B: `assert-isolated-database-url.sh` bloqueia `DROP SCHEMA` em
   `dbname=postgres`; exige `ISOLATED_DATABASE_NAME` + `ALLOW_DROP_SCHEMA_PUBLIC=ISOLATED_ONLY`.
-- Restore dump pré-Gate E em Postgres isolado: **`PENDING_NO_DUMP_ACCESS`**
-  — Web Console: `scripts/vps/...` ausente no checkout VPS (esperado; script só na
-  PR #35/`9ff95c1a`). Colar bloco curl→`/tmp` em `docs/vps/evidence/restore-isolated-db-pending.txt`
-  e `docs/GATE_E_MIGRATIONS_CARTAO.md`; DEV intocado; dump permanece na VPS.
+- Restore dump pré-Gate E em Postgres isolado: **`OK`**
+  (`erp_restore_isolated_20260924_155458`; sha256=`e72ca99b…`; migrations 001–015;
+  `dev_untouched=YES`; dump permanece na VPS). Evidência:
+  `docs/vps/evidence/restore-isolated-db-pending.txt`. **Não** autoriza D/E/F.
 - `GATE_E_READY=NO` enquanto 016–024 ausentes da `main`; digest/Auth pendentes para D/F.
 - **Não** executados: merge na main, migration VPS, canário, promoção 3080, restore real.
 

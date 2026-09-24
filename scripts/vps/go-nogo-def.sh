@@ -72,7 +72,12 @@ pending_codex="$(echo "$pedido_out" | sed -n 's/^codex_pending_count=//p' | head
 digest_status="$(echo "$pedido_out" | sed -n 's/^image_digest_status=//p' | head -1)"
 auth_status="$(echo "$pedido_out" | sed -n 's/^auth_synthetic_status=//p' | head -1)"
 
-if grep -q 'restore_destructive=NOT_PERFORMED' \
+if grep -q 'RESTORE_ISOLATED_DB_STATUS=OK' \
+  "$ROOT/docs/vps/evidence/restore-isolated-db-pending.txt" 2>/dev/null \
+  && grep -q 'dev_untouched=YES' \
+  "$ROOT/docs/vps/evidence/restore-isolated-db-pending.txt" 2>/dev/null; then
+  echo 'backup_restore_isolated=OK_ISOLATED_REAL_DUMP'
+elif grep -q 'restore_destructive=NOT_PERFORMED' \
   "$ROOT/docs/vps/evidence/pre-gate-e-backup-latest.txt" 2>/dev/null; then
   echo 'backup_restore_isolated=NOT_PERFORMED'
 elif grep -q 'restore_isolated=VALIDATED_SYNTHETIC\|RESTORE_ISOLATED_STATUS=OK' \

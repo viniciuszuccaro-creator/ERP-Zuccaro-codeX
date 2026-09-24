@@ -36,11 +36,12 @@ Simulação #33→#34: branch `cursor/integracao-sim-33-34-392b` / PR #35 (**mai
 |---|---|
 | Script Web Console | `scripts/vps/restore-pre-gate-e-isolated-webconsole.sh` |
 | Evidência | `docs/vps/evidence/restore-isolated-db-pending.txt` |
-| Status | **`PENDING_NO_DUMP_ACCESS`** |
-| Motivo | Dump real só na VPS; script ausente no checkout `/opt/erp-zuccaro` (só na PR #35). Usar curl→`/tmp` (ver evidência) — **não** `git pull` de feature na VPS |
-| Alvo | `CREATE DATABASE erp_restore_isolated_<stamp>` — **nunca** `postgres` (DEV) |
-| GitHub | Somente bloco `PASTE_TO_GIT_*` sanitizado (hash, banco isolado, migrations, `dev_untouched`) |
-| **Não conta** | `validate-isolated-restore.sh --self-test` (cópia sintética / filesystem) — só prova procedimento anti-DEV |
+| Status | **`OK`** (Web Console 2026-09-24T15:55:00Z) |
+| Dump | `pre-gate-e-20260924-140304.sql` sha256=`e72ca99b…` bytes=`390275` (permanece na VPS) |
+| Banco isolado | `erp_restore_isolated_20260924_155458` |
+| Migrations no isolado | **15** (001–015) · `isolated_migrations_match_pre_gate_e=YES` |
+| DEV | `dev_untouched=YES` (`postgres` / mig=15) |
+| **Não autoriza** | D/E/F · merge · canário · 3080 · apply migrations |
 
 ### C) GO/NO-GO local
 
@@ -75,7 +76,7 @@ Simulação #33→#34: branch `cursor/integracao-sim-33-34-392b` / PR #35 (**mai
 
 1. Autorização humana no termo §C (assinatura + checkbox)
 2. Merge #33 na `main` (após undraft/review) — 016–024 ainda **ausentes** de `origin/main`
-3. Dump pré-Gate E acessível fora do Git → restore isolado em Postgres ainda **PENDENTE**
+3. Dump pré-Gate E restaurado em Postgres isolado (**OK**; DEV intocado) — **não** autoriza apply Gate E
 4. Digest de imagem pós-merge (`PENDING_BUILD_AFTER_MERGE`) — bloqueia D/F
 5. Auth sintético (`PENDING_AUTH_GATE`) — bloqueia D
 6. Gate E schema na VPS ainda não aplicado — bloqueia D

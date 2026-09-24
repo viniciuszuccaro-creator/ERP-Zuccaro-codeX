@@ -490,13 +490,17 @@ test('evidence R07B API compat file is OK when present', () => {
   assert.match(text, /R07B_API_COMPAT_STATUS=OK/);
 });
 
-test('evidence restore isolado DB registra pendência sem autorizar gates', () => {
+test('evidence restore isolado DB OK sem autorizar gates', () => {
   const ev = path.join(root, 'docs/vps/evidence/restore-isolated-db-pending.txt');
   assert.equal(fs.existsSync(ev), true);
   const text = fs.readFileSync(ev, 'utf8');
-  // Aceita PENDING_NO_DUMP_ACCESS (sem dump) ou PENDING_RESTORE_FAILED (tentativa VPS).
-  assert.match(text, /PENDING_NO_DUMP_ACCESS|PENDING_RESTORE_FAILED|BLOCKED_RESTORE_FAILED/);
+  assert.match(text, /RESTORE_ISOLATED_DB_STATUS=OK/);
+  assert.match(text, /dev_untouched=YES/);
+  assert.match(text, /dump_committed_to_git=NO/);
+  assert.match(text, /dump_left_on_vps=YES/);
+  assert.match(text, /isolated_schema_migrations_count=15/);
   assert.match(text, /AUTHORIZES_GATES_DEF=NO/);
   assert.match(text, /EXECUTE_DEF=NO/);
-  assert.doesNotMatch(text, /RESTORE_ISOLATED_DB_STATUS=OK/);
+  assert.match(text, /erp_restore_isolated_20260924_155458/);
+  assert.match(text, /e72ca99b453fa6b060b5264f636794b3a601202c18e4185deb12f0020cae3f80/);
 });
