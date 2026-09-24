@@ -27,22 +27,18 @@ Regra-Mãe e o documento mestre do programa (PR #33).
 
 ## Documentos
 
-- `docs/GATE_C_AUDITORIA_VPS_SOMENTE_LEITURA.md`
-- `docs/CONTRATO_CURSOR_CODEX_VPS_CANARIO.md` — pendências EXPECTED_RUNTIME/Auth
-- `docs/vps/migrations-candidatas-comercial360.txt` — espelho 001–024 (sem SQL)
-- `scripts/vps/gate-c-read-only.sh`
-- `scripts/vps/extract-gate-c-migrations.sh`
-- `scripts/vps/gate-d-f-precheck.sh`
-- `docs/GATES_D_F_PREPARACAO_CANARIO.md`
-- `docs/LEGADO_BACKUP_DESCOBERTA_SOMENTE_LEITURA.md`
-- `docs/LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md`
-- `scripts/legado/inventario-backup-erp-antigo.sh`
-- `fixtures/legado/inventario-sintetico.example.json`
+- `docs/GATE_C_CARTAO_OPERADOR.md` / `docs/GATE_C_AUDITORIA_VPS_SOMENTE_LEITURA.md`
+- `docs/GATE_D_SMOKE_AUTH_CHECKLIST.md`
+- `docs/GATE_E_MIGRATIONS_CARTAO.md`
+- `docs/CONTRATO_CURSOR_CODEX_VPS_CANARIO.md`
+- `docs/vps/migrations-candidatas-comercial360.txt`
+- `scripts/vps/gate-c-read-only.sh` / `score-gate-c.sh` / `gate-d-f-precheck.sh`
+- `scripts/vps/rollback-dry-run-check.sh`
+- Legado: inventário + mapeamento + fixture sintética
 
 ## Próxima ação concreta
 
-1. Operador: seguir `docs/GATE_C_CARTAO_OPERADOR.md` (Web Console → saída).
-2. Cursor: `bash scripts/vps/score-gate-c.sh saida-gate-c.txt` → APROVADO/PARCIAL/BLOQUEADO.
-3. Precheck faltantes: `--candidate-list docs/vps/migrations-candidatas-comercial360.txt`.
-4. Codex: checklist §7 do contrato (EXPECTED_RUNTIME, supabase_user, digest).
-5. Inventário HD legado na máquina com o backup montado.
+1. **Bloqueio:** saída Web Console (`GATE_C_CARTAO_OPERADOR.md`) → `score-gate-c.sh`.
+2. Codex: confirmar EXPECTED_RUNTIME + `supabase_user` (contrato §7).
+3. Após C APROVADO: dry-run rollback; precheck 016–024; só então autorização D/E.
+4. Inventário HD legado fora deste cloud.

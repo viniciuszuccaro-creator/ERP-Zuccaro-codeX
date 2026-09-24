@@ -156,3 +156,27 @@ test('score-gate-c PARCIAL sem backup', () => {
   assert.equal(run.status, 0, run.stderr || run.stdout);
   assert.match(run.stdout, /GATE_C_RESULT=PARCIAL/);
 });
+
+test('rollback-dry-run-check OK a partir de saída Gate C com 07b', () => {
+  const script = path.join(root, 'scripts/vps/rollback-dry-run-check.sh');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'rb-'));
+  const out = path.join(tmp, 'gc.txt');
+  fs.writeFileSync(out, [
+    'official_image=erp-zuccaro-erp-api:runtime07b-main-ca0bc5f3',
+    'name=erp-api-dev-rollback-07b status=Exited',
+    'image=erp-zuccaro-erp-api:runtime07b-main-ca0bc5f3 id=sha',
+  ].join('\n'));
+  const run = spawnSync('bash', [script, '--from-gate-c-output', out], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr || run.stdout);
+  assert.match(run.stdout, /ROLLBACK_DRYRUN_OK/);
+});
+
+test('rollback-dry-run-check bloqueia se parecer escrita', () => {
+  const script = path.join(root, 'scripts/vps/rollback-dry-run-check.sh');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'rb-'));
+  const out = path.join(tmp, 'gc.txt');
+  fs.writeFileSync(out, 'rollback ok\ndocker stop erp-api-dev\nCONFIRM_ROLLBACK=YES\n');
+  const run = spawnSync('bash', [script, '--from-gate-c-output', out], { encoding: 'utf8' });
+  assert.notEqual(run.status, 0);
+  assert.match(run.stdout, /ROLLBACK_DRYRUN_BLOCKED/);
+});
