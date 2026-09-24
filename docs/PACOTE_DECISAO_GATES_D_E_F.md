@@ -10,7 +10,16 @@
 
 `GATE_*_READY=YES` **nunca** autoriza nem executa.
 
-Simulação #33→#34: branch `cursor/integracao-sim-33-34-392b` / PR #35 (**main intocada**).
+## Candidata única ao merge
+
+| Item | Valor |
+|---|---|
+| PR | **#35** — candidata **única** ao merge em `main` |
+| Branch | `cursor/integracao-sim-33-34-392b` |
+| Contém #33 | **SIM** — HEAD `ceeb92e99954b39d3137dde497208b0db1010869` (`codex/comercial-360`) |
+| Contém #34 | **SIM** — HEAD `f41d87e550f7c11d1863bbf8775d03398bebe2de` (`cursor/vps-hml-gate-c-legado-392b`) |
+| Merge #33 ou #34 isoladas | **NÃO** — integrar só via #35 |
+| Main nesta etapa | **intocada** até autorização humana do merge de #35 |
 
 ---
 
@@ -26,30 +35,32 @@ Simulação #33→#34: branch `cursor/integracao-sim-33-34-392b` / PR #35 (**mai
 | API sob teste | **Código do commit** `ca0bc5f3529b9071fe80e58dae6aa966a9d6c740` (worktree; meta `ERP-RUNTIME-07B`). **Não** é o image ID da 3080 |
 | Schema | Migrations **001–024** do checkout integrado (#33), aplicadas no Postgres **isolado** |
 | Operações | `/health`, `/ready`, `/api/v1/meta` (=`ERP-RUNTIME-07B`), Produto **list/get/create/patch** |
-| Resultado local | `R07B_API_COMPAT_STATUS=OK` |
+| Resultado | `R07B_API_COMPAT_STATUS=OK` |
 | **Não comprova** | Homologação na VPS; Auth `supabase_user`; canário; que a 3080 já rode schema 016+; identidade de imagem Docker da 3080 |
 | **Proibido** | Executar o script com `DATABASE_URL` do DEV oficial / VPS (`dbname=postgres`) |
 
-### B) Restore do dump pré-Gate E em outro Postgres
+### B) Restore do dump pré-Gate E em Postgres isolado
 
 | Item | Valor |
 |---|---|
 | Script Web Console | `scripts/vps/restore-pre-gate-e-isolated-webconsole.sh` |
 | Evidência | `docs/vps/evidence/restore-isolated-db-pending.txt` |
-| Status | **`OK`** (Web Console 2026-09-24T15:55:00Z) |
-| Dump | `pre-gate-e-20260924-140304.sql` sha256=`e72ca99b…` bytes=`390275` (permanece na VPS) |
+| Status | **`RESTORE_ISOLATED_DB_STATUS=OK`** (Web Console 2026-09-24T15:55:00Z) |
+| Dump | `pre-gate-e-20260924-140304.sql` sha256=`e72ca99b…` bytes=`390275` |
+| Dump no GitHub | **NÃO** — `dump_committed_to_git=NO`; arquivo permanece só na VPS (`dump_left_on_vps=YES`) |
 | Banco isolado | `erp_restore_isolated_20260924_155458` |
 | Migrations no isolado | **15** (001–015) · `isolated_migrations_match_pre_gate_e=YES` |
 | DEV | `dev_untouched=YES` (`postgres` / mig=15) |
-| **Não autoriza** | D/E/F · merge · canário · 3080 · apply migrations |
+| **Não autoriza** | Gate E apply · D/F · canário · promoção 3080 |
 
 ### C) GO/NO-GO local
 
 | Item | Valor |
 |---|---|
 | Script | `scripts/vps/go-nogo-def.sh` |
-| `GATE_E_READY` | **NO** se 016–024 ausentes de `origin/main` (`main_missing_migrations_016_024`) |
+| `GATE_E_READY` | **NO** — 016–024 ausentes de `origin/main` (`main_missing_migrations_016_024`) |
 | `GATE_D_READY` / `GATE_F_READY` | **NO** — digest pós-merge + Auth sintético pendentes |
+| `backup_restore_isolated` | `OK_ISOLATED_REAL_DUMP` |
 | `DECISION_STATE` | `READY_FOR_REVIEW` |
 
 ### D) Self-test de procedimento de restore (filesystem)
@@ -58,25 +69,25 @@ Simulação #33→#34: branch `cursor/integracao-sim-33-34-392b` / PR #35 (**mai
 |---|---|
 | Script | `scripts/vps/validate-isolated-restore.sh --self-test` |
 | Comprova | Alvo isolado ≠ DEV; marcador DEV inalterado |
-| **Não comprova** | Restauração do dump VPS em banco Postgres |
+| **Não comprova** | Restauração do dump VPS em banco Postgres (já coberta em B = OK) |
 
 ---
 
-## 2. Revisão PR #33 / #34 / #35
+## 2. Papel das PRs
 
-| PR | Papel | Merge na main nesta etapa |
+| PR | Papel | Merge isolado na main |
 |---|---|---|
-| #33 | Código Comercial 360 + migrations 016–024 | **NÃO** |
-| #34 | Gate C / go-nogo / termo / pacote Cursor | **NÃO** |
-| #35 | Simulação integração #33→#34 + provas | **NÃO** (draft) |
+| #33 | Código Comercial 360 + migrations 016–024 | **NÃO** — entra só via #35 |
+| #34 | Gate C / go-nogo / termo / pacote Cursor | **NÃO** — entra só via #35 |
+| **#35** | **Candidata única** de integração (#33+#34 + provas) | **Somente com autorização humana** (ainda draft / não executado) |
 
 ---
 
 ## 3. Bloqueios objetivos (antes de AUTHORIZED / EXECUTED)
 
-1. Autorização humana no termo §C (assinatura + checkbox)
-2. Merge #33 na `main` (após undraft/review) — 016–024 ainda **ausentes** de `origin/main`
-3. Dump pré-Gate E restaurado em Postgres isolado (**OK**; DEV intocado) — **não** autoriza apply Gate E
+1. Autorização humana no termo §C (assinatura + checkbox) para o que for executar depois
+2. Autorização humana do **merge de #35** (não de #33/#34 isoladas) — 016–024 só entram na `main` com esse merge
+3. Dump pré-Gate E restaurado em Postgres isolado (**OK**; DEV intocado; dump **fora** do Git) — **não** autoriza apply Gate E
 4. Digest de imagem pós-merge (`PENDING_BUILD_AFTER_MERGE`) — bloqueia D/F
 5. Auth sintético (`PENDING_AUTH_GATE`) — bloqueia D
 6. Gate E schema na VPS ainda não aplicado — bloqueia D
@@ -86,4 +97,4 @@ Simulação #33→#34: branch `cursor/integracao-sim-33-34-392b` / PR #35 (**mai
 
 ## 4. Proibições desta etapa
 
-Não merge na main · não migration VPS · não canário · não promoção 3080.
+Não merge na main · não migration VPS (Gate E) · não canário · não promoção 3080 · não enviar o dump SQL ao GitHub.
