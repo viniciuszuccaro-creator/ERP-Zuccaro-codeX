@@ -1,16 +1,9 @@
 # Snapshot GO/NO-GO — frente Cursor VPS/HML (sanitizado)
 # Gerado localmente. Nao e autorizacao. Nao contem segredos.
-<<<<<<< HEAD
-# utc=2026-09-24T14:45:24Z
-# head=f0529a36
+# utc=2026-09-24T14:50:41Z
+# head=0b6b920f
 
-GO_NOGO_BEGIN utc=2026-09-24T14:45:24Z
-=======
-# utc=2026-09-24T14:49:58Z
-# head=854c8117
-
-GO_NOGO_BEGIN utc=2026-09-24T14:49:58Z
->>>>>>> cursor/vps-hml-gate-c-legado-392b
+GO_NOGO_BEGIN utc=2026-09-24T14:50:41Z
 gate_c=APROVADO
 termo=FACTS_READY_WAITING_SIGNATURE
 backup_novo=NAMED_CANDIDATE_PRESENT
@@ -50,11 +43,7 @@ GO_NOGO=NO
 NOTE: GATE_*_READY=YES nao autoriza execucao; exige checkbox+assinatura no termo
 NOTE: READY_FOR_REVIEW != AUTHORIZED != EXECUTED
 NOTE: digest/Auth nao sao pre-requisitos de GATE_E_READY; 016-024 na main sao
-<<<<<<< HEAD
-GO_NOGO_END utc=2026-09-24T14:45:25Z
-=======
-GO_NOGO_END utc=2026-09-24T14:49:59Z
->>>>>>> cursor/vps-hml-gate-c-legado-392b
+GO_NOGO_END utc=2026-09-24T14:50:42Z
 
 codex_pending_count=0
 CODEX_PEDIDO_STATUS=DECISIONS_DOCUMENTED
