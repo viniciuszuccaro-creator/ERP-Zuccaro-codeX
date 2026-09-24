@@ -376,8 +376,10 @@ test('go-nogo-def reporta GATE_E_READY=NO quando probe da main não tem 016-024'
   assert.match(run.stdout, /GATE_E_READY=NO/);
   assert.match(run.stdout, /gate_e_blockers=.*main_missing_migrations_016_024/);
   assert.match(run.stdout, /GATE_D_READY=NO/);
-  assert.match(run.stdout, /image_digest_pending_post_merge/);
   assert.match(run.stdout, /auth_synthetic_gate_pending/);
+  // Digest REGISTERED na evidência versionada; Auth ainda bloqueia D.
+  assert.match(run.stdout, /image_digest_status=REGISTERED/);
+  assert.doesNotMatch(run.stdout, /gate_d_blockers=.*image_digest_pending/);
   assert.doesNotMatch(run.stdout, /gate_d_blockers=.*gate_e_schema_not_applied/);
   assert.match(run.stdout, /GATE_F_READY=NO/);
   // Com termo assinado (Gate E): AUTHORIZED_CHECKLIST; senão READY_FOR_REVIEW.
@@ -427,7 +429,8 @@ test('go-nogo-def GATE_E_READY=YES quando MAIN_MIGRATIONS_DIR tem 016-024', () =
   assert.match(run.stdout, /gate_e_blockers=NONE/);
   assert.match(run.stdout, /GATE_D_READY=NO/);
   assert.match(run.stdout, /auth_synthetic_gate_pending/);
-  assert.match(run.stdout, /image_digest_pending_post_merge/);
+  assert.match(run.stdout, /image_digest_status=REGISTERED/);
+  assert.doesNotMatch(run.stdout, /gate_d_blockers=.*image_digest_pending/);
   assert.doesNotMatch(run.stdout, /gate_d_blockers=.*gate_e_schema_not_applied/);
   assert.match(run.stdout, /AUTHORIZATION=NOT_GRANTED/);
   assert.match(run.stdout, /EXECUTED=NO/);
@@ -444,7 +447,7 @@ test('print-pedido-codex DECISIONS_DOCUMENTED com 5 itens e pendencias operacion
   assert.match(run.stdout, /decided_EXPECTED_RUNTIME=ERP-RUNTIME-08B/);
   assert.match(run.stdout, /decided_gate_e_strategy=016_024_single_invocation_main_order/);
   assert.match(run.stdout, /review_slices=016_017,018_024/);
-  assert.match(run.stdout, /image_digest_status=PENDING_BUILD_AFTER_MERGE/);
+  assert.match(run.stdout, /image_digest_status=REGISTERED/);
   assert.match(run.stdout, /auth_synthetic_status=PENDING_AUTH_GATE/);
   assert.match(run.stdout, /gates_def_executed=NO/);
   assert.match(run.stdout, /AUTHORIZES_GATES_DEF=NO/);
