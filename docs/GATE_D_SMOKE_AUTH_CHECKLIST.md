@@ -182,14 +182,20 @@ Gravar em `docs/vps/evidence/auth-synthetic-latest.txt`. Sem `<N>` literais.
 
 ### A. Subir canário (porta ≠3080)
 
+Use `bash` (evita Permission denied se o clone não tiver bit +x).  
+`ENV_FILE` real na VPS — tipicamente `/opt/erp-zuccaro/.env` (nunca o placeholder `/caminho/local/...`).
+
 ```bash
+# Descobrir arquivo (não cat / não cole conteúdo):
+ls -la /opt/erp-zuccaro/.env /opt/erp-zuccaro/.env.canary 2>/dev/null || true
+
 IMAGE='erp-zuccaro-erp-api:comercial360-main-2fc2fc80'
-ENV_FILE='<caminho .env canário na VPS — não no Git>'
+ENV_FILE='/opt/erp-zuccaro/.env'
 ERP_DOCKER_NETWORK='supabase_default'
 EXPECTED_RUNTIME='ERP-RUNTIME-08B'
-CANARY_PORT='3086'   # confirmar livre; nunca 3080
-# ENV do canário: ERP_AUTH_MODE=supabase_user (+ URL/anon key server-side)
-./scripts/deploy/comercial360-canary.sh
+CANARY_PORT='3086'
+ERP_AUTH_MODE='supabase_user'
+bash scripts/deploy/comercial360-canary.sh
 ```
 
 ### B. Meta / superfície HTTP
@@ -197,7 +203,7 @@ CANARY_PORT='3086'   # confirmar livre; nunca 3080
 ```bash
 BASE_URL="http://127.0.0.1:${CANARY_PORT}" \
 EXPECTED_RUNTIME=ERP-RUNTIME-08B \
-  ./scripts/deploy/comercial360-smoke.sh
+  bash scripts/deploy/comercial360-smoke.sh
 ```
 
 ### C. Bearer sintético — permitido

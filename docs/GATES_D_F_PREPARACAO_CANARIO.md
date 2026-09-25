@@ -114,15 +114,16 @@ Com `DIGEST_STATUS=OK`, o go-nogo passa a `image_digest_status=REGISTERED` (Auth
 ### Execução Gate D (quando autorizado)
 
 ```bash
-# Na VPS, após autorização — NÃO executar neste lote documental
-IMAGE='erp-zuccaro-erp-api:comercial360-main-<sha8>'
-ENV_FILE='/opt/erp-zuccaro/.env'   # caminho real aprovado; não commitar
-ERP_DOCKER_NETWORK='<rede do Gate C>'
-EXPECTED_RUNTIME='<runtime da main>'
-CANARY_PORT='<porta FREE do Gate C>'
-./scripts/deploy/comercial360-canary.sh
+# Na VPS, após Auth OK — usar bash (não ./) se bit +x ausente
+IMAGE='erp-zuccaro-erp-api:comercial360-main-2fc2fc80'
+ENV_FILE='/opt/erp-zuccaro/.env'   # caminho real; não cat / não commitar
+ERP_DOCKER_NETWORK='supabase_default'
+EXPECTED_RUNTIME='ERP-RUNTIME-08B'
+CANARY_PORT='3086'
+ERP_AUTH_MODE='supabase_user'
+bash scripts/deploy/comercial360-canary.sh
 BASE_URL="http://127.0.0.1:${CANARY_PORT}" EXPECTED_RUNTIME="$EXPECTED_RUNTIME" \
-  ./scripts/deploy/comercial360-smoke.sh
+  bash scripts/deploy/comercial360-smoke.sh
 ```
 
 Critérios do script (já codificados na PR #33):

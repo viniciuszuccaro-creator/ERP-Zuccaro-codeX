@@ -28,12 +28,15 @@ if command -v ss >/dev/null && ss -ltn | awk '{print $4}' | grep -Eq "[:.]${CANA
 fi
 docker run -d --name "$CANARY_NAME" --restart no --env-file "$ENV_FILE" \
   -e NODE_ENV=production -e ERP_ENV=dev -e PORT=3080 \
+  -e "ERP_AUTH_MODE=${ERP_AUTH_MODE:-supabase_user}" \
   --network "$ERP_DOCKER_NETWORK" -p "127.0.0.1:${CANARY_PORT}:3080" "$IMAGE" >/dev/null
+echo "canary_auth_mode_override=${ERP_AUTH_MODE:-supabase_user}"
 for _ in $(seq 1 30); do
   if curl --fail --silent "http://127.0.0.1:${CANARY_PORT}/health" >/dev/null && \
      curl --fail --silent "http://127.0.0.1:${CANARY_PORT}/ready" >/dev/null; then
     meta="$(curl --fail --silent "http://127.0.0.1:${CANARY_PORT}/api/v1/meta")"
     if ! node -e "try { const m=JSON.parse(process.argv[1]); if(m.runtime===process.argv[2] && m.auth?.mode==='supabase_user') process.exit(0) } catch {} process.exit(1)" "$meta" "$EXPECTED_RUNTIME"; then
+      node -e "try{const m=JSON.parse(process.argv[1]);console.log('meta_runtime='+(m.runtime||''));console.log('meta_auth_mode='+(m.auth&&m.auth.mode||''))}catch{console.log('meta_parse=FAIL')}" "$meta" >&2 || true
       echo 'BLOCKED: canary runtime or verified Auth mode mismatch' >&2
       exit 1
     fi
