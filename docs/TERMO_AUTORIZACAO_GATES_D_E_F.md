@@ -1,6 +1,6 @@
 # Termo de autorização — Gates D / E / F
 
-**Status:** Gate E **EXECUTADO** · digest MAIN **REGISTERED** · Gate Auth **OK** · Gate D **EXECUTADO** (completo) · Gate F **READY_FOR_HUMAN_SIGNATURE** (não autorizado · não executado).
+**Status:** Gate E **EXECUTADO** · Gate Auth/D **EXECUTADOS** · Gate F **AUTHORIZED_OPTION_A** (VINICIUS · 2026-09-25) · **WAITING_MERGE** · **NÃO EXECUTADO** · 3080 R07B intacta.
 Estados: `READY_FOR_REVIEW` ≠ `AUTHORIZED` ≠ `EXECUTED`. `GATE_*_READY` não autoriza.
 Sem checkbox do gate + **assinatura formal** do responsável → **não executar**.
 
@@ -48,7 +48,7 @@ Digest: `docs/vps/evidence/image-digest-comercial360-latest.txt` (**REGISTERED**
 | Imagem canário | tag `comercial360-main-2fc2fc80` · build feito · **não** iniciada |
 | Gate Auth | identidade **somente sintética** no Supabase Auth self-hosted + profile ERP sintético; segredos **fora do Git**; revogar após teste |
 | Gate D | canário porta ≠3080 · `EXPECTED_RUNTIME=ERP-RUNTIME-08B` · `auth.mode=supabase_user` · smoke checklist |
-| Gate F / 3080 | **READY_FOR_HUMAN_SIGNATURE** — ver cartão `docs/GATE_F_PROMOCAO_CARTAO.md` (opção digest A ou B) |
+| Gate F / 3080 | **AUTHORIZED_OPTION_A** · **WAITING_MERGE** · promoção só após merge+build+re-smoke (cartão F) |
 
 ---
 
@@ -71,18 +71,31 @@ Marcar **apenas** o autorizado. Sem marca = **não executar**.
 - [x] **Gate E** — 016–024 no DEV @ `2fc2fc80…` — **EXECUTADO** (`GATE_E_STATUS=OK`)
 - [x] **Gate Auth sintético** — provisionar identidade de teste + vincular `profiles.auth_user_id` (Grupo/Empresa sintéticos; RBAC mínimo Orçamento/Pedido; **não** reutilizar profiles sem prova; credenciais fora do Git; revogar após smoke)
 - [x] **Gate D** — canário em porta ≠3080 + smoke meta + Bearer + browser URL + mutação Orçamento→Pedido OK (`comercial360-gate-d-2b45292e` from-checkout · `GATE_D_MUTATION_SMOKE=OK` · 14:37Z); digest MAIN `2fc2fc80` permanece REGISTERED para promoção futura
-- [ ] **Gate F** — promoção 3080 · **READY_FOR_HUMAN_SIGNATURE** · **NÃO autorizado** · **NÃO executado** (escolher digest opção A ou B no cartão F)
+- [x] **Gate F** — promoção 3080 · **AUTHORIZED_OPTION_A** (VINICIUS · 2026-09-25) · **WAITING_MERGE** na main (PR #37) · **NÃO EXECUTADO** · não promover `2fc2fc80` sem fix
 
-### Pedido de assinatura Gate F (2026-09-25)
+### Registro Gate F opção A (assinado 2026-09-25)
 
-Cursor **não** inventa assinatura. Responsável deve colar no chat um dos textos do cartão
-`docs/GATE_F_PROMOCAO_CARTAO.md` (§Texto para o responsável), com:
+```text
+utc_registro=2026-09-25T15:37:00Z
+canal=Cursor_agent_chat
+texto_autorizacao_humana=
+  "Autorizo Gate F (promoção 3080) na opção A:
+   merge do fix Orçamento→Pedido na main, build comercial360-main-<MERGE_SHA8>,
+   re-smoke mutação no canário com essa tag, depois promover essa imagem.
+   Não autorizo promoção da tag MAIN antiga 2fc2fc80 sem o fix."
+assinatura_formal=VINICIUS
+data_assinatura_utc=2026-09-25
+checkbox_gate_f=MARKED
+opcao_digest=A
+EXECUTE_GATE_F=AUTHORIZED_WAITING_MERGE
+alter_3080=NOT_YET_PERFORMED
+pr_merge_candidata=#37
+```
 
-- opção **A** (merge+MAIN+re-smoke) **ou** **B** (promover `comercial360-gate-d-2b45292e`);
-- `Assinatura: VINICIUS` (ou responsável formal);
-- data UTC.
+Assinatura responsável (Gate F opção A): VINICIUS
+Data/hora (UTC): 25/09/2026
 
-Até lá: `EXECUTE_GATE_F=WAITING_HUMAN_SIGNATURE` · `alter_3080=NOT_AUTHORIZED`.
+**Próximo:** merge PR #37 → build `comercial360-main-<MERGE_SHA8>` → re-smoke mutação canário → promoção 3080 (cartão F §Sequência).
 
 ### Registro Gate E (já assinado)
 
@@ -115,8 +128,8 @@ GATE_D_NEGATIVES_SMOKE=OK
 utc_negatives_ok=2026-09-25T15:13:45Z
 GATE_D_CLEANUP_STATUS=OK
 utc_cleanup_ok=2026-09-25T15:28:17Z
-gate_f=NOT_AUTHORIZED
-alter_3080=NOT_AUTHORIZED
+gate_f=AUTHORIZED_OPTION_A_WAITING_MERGE
+alter_3080=NOT_YET_PERFORMED
 AUTH_SYNTHETIC_STATUS=OK
 utc_auth_ok=2026-09-25T12:07:49Z
 ```
@@ -124,8 +137,8 @@ utc_auth_ok=2026-09-25T12:07:49Z
 Assinatura responsável (Auth / D): VINICIUS
 Data/hora (UTC): 24/09/2026
 
-**Estado operacional:** E OK · digest MAIN REGISTERED · Auth/D **EXECUTADOS** · Gate F **WAITING_HUMAN_SIGNATURE** · 3080 R07B intacta.
-**Ordem:** … → limpeza ✓ → **assinatura humana Gate F (A ou B)** → precheck VPS → execução F → re-provision Auth → smoke 3080.
+**Estado operacional:** E/D OK · Gate F **AUTHORIZED_OPTION_A** · **WAITING_MERGE** (#37) · 3080 R07B intacta.
+**Ordem:** merge #37 → build MAIN nova → re-smoke mutação → promover 3080 → re-provision Auth → smoke oficial.
 
 ---
 

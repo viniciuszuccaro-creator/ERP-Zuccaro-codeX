@@ -1,9 +1,10 @@
-### Gate F — pedido de assinatura humana (2026-09-25)
+### Gate F — AUTHORIZED opção A · WAITING_MERGE (2026-09-25)
 
-- Gate D VPS **completo**. Gate F **não** executado.
-- Status: `READY_FOR_HUMAN_SIGNATURE` · cartão `docs/GATE_F_PROMOCAO_CARTAO.md`.
-- Digest: opção **A** (merge+MAIN+re-smoke) ou **B** (promover `comercial360-gate-d-2b45292e`).
-- Cursor **aguarda** texto assinado no chat (não inventa assinatura). 3080 intacta.
+- Assinatura: **VINICIUS** · `2026-09-25` · opção **A** (merge+MAIN+re-smoke+promover).
+- Evidência: `docs/vps/evidence/gate-f-autorizacao-opcao-a-2026-09-25.txt`.
+- `EXECUTE_GATE_F=AUTHORIZED_WAITING_MERGE` · **3080 ainda R07B** (não promovida).
+- PR candidata: **#37** (CI verde · draft→ready) com fix `20eda9e2`.
+- Próximo humano: **merge #37 em main**. Depois VPS: build `comercial360-main-<MERGE_SHA8>` → re-smoke mutação → promoção (cartão F).
 
 ### Gate D — cleanup §E OK (2026-09-25T15:28Z)
 

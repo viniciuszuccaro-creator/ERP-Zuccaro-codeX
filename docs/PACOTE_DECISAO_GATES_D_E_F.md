@@ -8,7 +8,7 @@
 | `AUTHORIZED` (Gate E) | Checkbox + assinatura VINICIUS | **SIM** (E) |
 | `EXECUTED` (Gate E) | Migrations 016–024 no DEV + `test:postgres` | **SIM** (`GATE_E_STATUS=OK`) |
 | `AUTHORIZED` / `EXECUTED` (D) | Auth + canário + smokes Gate D | **SIM** (D EXECUTADO 2026-09-25) |
-| `AUTHORIZED` / `EXECUTED` (F) | Promoção 3080 | **NÃO** — `READY_FOR_HUMAN_SIGNATURE` |
+| `AUTHORIZED` / `EXECUTED` (F) | Promoção 3080 | **AUTHORIZED_OPTION_A** · **WAITING_MERGE** · **NÃO EXECUTADO** |
 
 `GATE_*_READY=YES` **nunca** autoriza nem executa.
 
@@ -32,10 +32,11 @@
 ## Bloqueios Gate F
 
 1. ~~Gate D APROVADO~~ — **OK**
-2. **Digest da mesma imagem** — DECISÃO A (merge+MAIN+re-smoke) ou B (promover `gate-d-2b45292e`); ver `docs/GATE_F_PROMOCAO_CARTAO.md`
-3. **Autorização humana Gate F** — texto assinado no termo/chat (**PENDENTE**)
-4. 3080 permanece R07B até F **AUTHORIZED** + **EXECUTED**
-5. Pós-F: re-provision Auth sintético (limpo no §E) antes do smoke Bearer na 3080
+2. ~~Autorização humana Gate F~~ — **OK** opção A · VINICIUS · 2026-09-25
+3. **Merge do fix na main** — **PENDENTE** (PR #37)
+4. Build `comercial360-main-<MERGE_SHA8>` + re-smoke mutação nessa tag
+5. 3080 permanece R07B até promoção **EXECUTED**
+6. Pós-F: re-provision Auth sintético (limpo no §E) antes do smoke Bearer na 3080
 
 ---
 
