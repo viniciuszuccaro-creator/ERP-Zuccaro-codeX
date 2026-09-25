@@ -5,7 +5,7 @@
 - Oficial 3080: health 200 · `ERP-RUNTIME-07B` / `dev_headers` · `official_3080_untouched_probe=YES`.
 - `GATE_D_BROWSER_URL_SMOKE=OK` · `alter_3080=NOT_PERFORMED` · Gate F **não** autorizado.
 - Evidência: `docs/vps/evidence/gate-d-browser-url-smoke-ok-2026-09-25.txt`.
-- Próximo VPS (opcional, sem F): mutações sintéticas Orçamento→Pedido no canário; limpeza Auth de teste. Gate F só com termo/assinatura.
+- Próximo VPS (opcional, sem F): mutações sintéticas Orçamento→Pedido — script `scripts/vps/gate-d-smoke-mutation-orc-ped.sh` (checklist §G). Gate F só com termo/assinatura.
 
 ### Gate D — Bearer smoke OK (reconfirmado 2026-09-25T13:41Z)
 

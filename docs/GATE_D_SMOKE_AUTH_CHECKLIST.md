@@ -274,6 +274,31 @@ Esperado: `canary_auth_mode=supabase_user` · `browser_no_auth_orc/ped=401|403` 
 
 Cole só o bloco `PASTE_TO_GIT_*` (sem token/URL com credencial).
 
+### G. Mutações Orçamento→Pedido — após browser URL OK (sem Gate F / sem 3080)
+
+Cria Orçamento sintético e converte em Pedido no canário, com Bearer real. Requer refs (`cliente_empresas`, condição, produto) no mesmo Grupo/Empresa do profile. **Não** imprime UUID.
+
+```bash
+cd /opt/erp-zuccaro
+git pull origin cursor/pos-gate-e-prep-d-392b
+
+# Mesma sessão: gere senha, atualize Auth, rode mutação
+SYNTH_PASS="$(openssl rand -base64 24)"
+SYNTH_EMAIL='gate-d.synth@dev.synthetic.local'
+SYNTH_EMAIL="$SYNTH_EMAIL" SYNTH_PASS="$SYNTH_PASS" \
+  bash scripts/vps/provision-gate-d-auth-synthetic.sh
+
+SYNTH_EMAIL="$SYNTH_EMAIL" SYNTH_PASS="$SYNTH_PASS" \
+  bash scripts/vps/gate-d-smoke-mutation-orc-ped.sh
+unset SYNTH_PASS
+```
+
+Esperado: `orc_create=201` · `ped_convert=201` · `ped_convert_dup=409` · `ped_get=200` · `mutation_no_auth=401|403` · `GATE_D_MUTATION_SMOKE=OK`.
+
+Se `refs_*=MISSING`, o tenant sintético ainda não tem cadastro mínimo — reportar o BLOCKED sem colar IDs.
+
+Cole só `PASTE_TO_GIT_*`.
+
 ---
 
 ## O que este checklist NÃO cobre

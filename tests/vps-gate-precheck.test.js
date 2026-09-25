@@ -618,3 +618,20 @@ test('gate-d-smoke-browser-url-safe.sh passa bash -n e bloqueia query com segred
   assert.notEqual(blocked.status, 0);
   assert.match(blocked.stderr + blocked.stdout, /secret_or_tenant_query|BLOCKED/);
 });
+
+test('gate-d-smoke-mutation-orc-ped.sh passa bash -n e bloqueia placeholder', () => {
+  const script = path.join(root, 'scripts/vps/gate-d-smoke-mutation-orc-ped.sh');
+  const syn = spawnSync('bash', ['-n', script], { encoding: 'utf8' });
+  assert.equal(syn.status, 0, syn.stderr);
+  const text = fs.readFileSync(script, 'utf8');
+  assert.match(text, /GATE_D_MUTATION_SMOKE/);
+  assert.match(text, /converter-pedido/);
+  assert.match(text, /alter_3080=NOT_PERFORMED/);
+  assert.match(text, /AUTHORIZES_GATE_F=NO/);
+  const blocked = spawnSync('bash', [script], {
+    encoding: 'utf8',
+    env: { ...process.env, SYNTH_PASS: 'SENHA_DO_COFRE_OPENSSL' },
+  });
+  assert.notEqual(blocked.status, 0);
+  assert.match(blocked.stderr + blocked.stdout, /placeholder_from_chat|BLOCKED/);
+});
