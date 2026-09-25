@@ -1,3 +1,113 @@
+### Gate F — DNS ainda NX: NS é Registro.br (2026-09-25T20:50Z)
+
+- Humano marcou ações Hostinger como feitas; probe externo continua **NXDOMAIN** (`dig @8.8.8.8 erp-dev…` / `api-erp-dev…`).
+- Causa: nameservers autoritativos = `a.auto.dns.br` / `b.auto.dns.br` (Registro.br), não Hostinger. A records só no painel Hostinger **não** publicam.
+- Próximo: criar A `erp-dev` / `api-erp-dev` no DNS do **Registro.br** (ou mudar NS para Hostinger e republicar). Depois confirmar Caddy/CORS.
+- Acesso diário **ainda não** concluído. Smoke HTTPS não executável sem resolução pública.
+
+### Gate F — DNS/HTTPS: READY_WAITING_HUMAN (2026-09-25T20:12Z)
+
+- Agente **não** consegue criar A records: Hostinger MCP ausente neste ambiente.
+- Lado repo pronto: nginx `no-store` · smoke `reachability`/`vps_api`/`external_nav` · doc § checklist.
+- Ação humana pedida (setup actions): (1) A `erp-dev`/`api-erp-dev` na zona `cpaferroeaco.com.br`; (2) Caddy 443 + CORS na VPS `srv1982741`.
+- Após `DNS pronto` / `TLS pronto` no chat → agente valida dig + smoke e só então marca acesso diário.
+- Enquanto NX: **acesso diário NÃO concluído**.
+
+### Gate F — smoke HTTPS: VPS API ≠ navegação externa (2026-09-25T19:45Z)
+
+- Script `gate-f-smoke-https-external.sh` separado em camadas: `reachability` · `vps_api` · `external_nav` · `auto`.
+- `GATE_F_HTTPS_VPS_API=OK` (Auth/docker na VPS) **não** prova acesso do laptop.
+- Acesso diário só com `GATE_F_HTTPS_EXTERNAL_NAV=OK` fora da VPS + DNS/TLS.
+- Doc: `docs/vps/DNS_HTTPS_ERP_DEV.md` §5. DNS ainda **NX** — implantação diária **não** concluída.
+- Cache SPA fingerprint (#39 `69c1adc7`) e nginx no-store (#40) já publicados; falta DNS humano.
+
+### Gate F — cache SPA + prep DNS/HTTPS (2026-09-25T19:35Z)
+
+- **Cache nginx:** `deploy/nginx-erp.conf` — `index.html` / `/` / `/api|/health|/ready` com `Cache-Control: no-store`; assets hasheados seguem `immutable`.
+- **Cache UI (#39):** HEAD `d3ea2493` — Cliente 360 sem reaproveitar tenant no React Query (já no remoto).
+- **DNS/HTTPS prep (sem aplicar segredos):** `docs/vps/DNS_HTTPS_ERP_DEV.md` — A records `erp-dev`/`api-erp-dev`, Caddy→3081/3080, CORS, purge Hostinger.
+- **Smoke externo:** `scripts/vps/gate-f-smoke-https-external.sh` (HTTPS obrigatório; 400/403 ≠ sucesso; rejeita loopback).
+- **BLOCKED ainda:** DNS público NX — Hostinger MCP indisponível neste ambiente; registros A são ação humana no painel.
+- Evidência NX: `docs/vps/evidence/gate-f-https-external-dns-blocked-2026-09-25.txt`.
+- Próximo humano: criar A records → TLS 443 → CORS → purge cache → smoke HTTPS na VPS com `ERP_BROWSER_URL=https://erp-dev…`.
+
+### Gate F — HTTPS externo BLOCKED (DNS) (2026-09-25T19:15Z)
+
+- Probe fora da VPS: `erp-dev` / `api-erp-dev` / `erp.cpaferroeaco.com.br` → **Could not resolve host** · http=000.
+- Evidência: `docs/vps/evidence/gate-f-https-external-dns-blocked-2026-09-25.txt`.
+- Browser Gate F OK só em loopback `3081`. Sem login HTTPS externo possível até DNS/TLS.
+- 400/403 não avaliados (sem TLS). Promoção 3080 permanece EXECUTED_OK.
+
+### Gate F — browser login NAV OK (frente VPS, ex-#39) (2026-09-25T18:34Z)
+
+- Artefatos movidos da PR de código #39 para esta frente VPS (#40).
+- Auth unban · `http_token=200` · `tenant_headers_on_nav=YES` · **`nav_api_orc_list=200`** · `GATE_F_BROWSER_LOGIN_NAV=OK`.
+- Script: `scripts/vps/gate-f-smoke-browser-login-nav.sh` · SPA `3081` ≠ API `3080`.
+- Evidência: `docs/vps/evidence/gate-f-browser-login-nav-tenant-ok-2026-09-25.txt` (+ token_not_issued / SYNTH_PASS vazio / NAV ok intermediário).
+- Promoção 3080 já era **EXECUTED_OK** (`894b0db8`). Sem re-promover.
+
+### Gate F — VPS completo · próximo Onda 3 (2026-09-25T16:47Z)
+
+- Gate F **EXECUTED_OK**: promote `894b0db8` · smoke 3080 · cleanup §E.
+- Evidências em `docs/vps/evidence/gate-f-*` · PR docs **#40** (merge pendente).
+- **Próximo:** merge #40 → Comercial 360 Onda 3 (PR **#39**, conflito com `main`).
+
+### Gate F — cleanup §E OK pós-promote (2026-09-25T16:47Z)
+
+- `CONFIRM_GATE_D_CLEANUP=YES` · `GATE_D_CLEANUP_STATUS=OK`.
+- `http_pw_rotate=200` · `http_ban=200` · `login_rotated_pass=400` · `profile_unlinked=YES`.
+- `profiles_com_auth_count=0` · `profiles_synth_ativos=0` · `health_3080=200`.
+- Evidência: `docs/vps/evidence/gate-f-cleanup-ok-2026-09-25.txt`.
+- Gate F VPS **completo** (merge → build → canário → promote → smoke 3080 → cleanup).
+
+### Gate F — pós-promote Auth+smoke 3080 OK (2026-09-25T16:40Z)
+
+- Auth: `AUTH_SYNTHETIC_STATUS=OK` · `http_pw_update=200` · `auth_unban_attempted=YES`.
+- Mutação na **3080**: `orc_create=201` · `ped_convert=201` · `ped_convert_dup=409` · `mutation_no_auth=401`.
+- `GATE_D_MUTATION_SMOKE=OK` · `GATE_F_POST_PROMOTE_SMOKE=OK` · imagem `comercial360-main-894b0db8`.
+- Evidência: `docs/vps/evidence/gate-f-post-promote-smoke-ok-3080-894b0db8-2026-09-25.txt`.
+- Gate F VPS **fechado**. Próximo opcional: cleanup §E.
+
+### Gate F — promoção 3080 EXECUTED_OK (2026-09-25T16:35Z)
+
+- `CONFIRM_GATE_F_PROMOTE=YES` · IMAGE `comercial360-main-894b0db8` · `GATE_F_PROMOTE_STATUS=OK`.
+- Antes: `runtime07b-main-ca0bc5f3` · Depois: `comercial360-main-894b0db8`.
+- Rollback: `erp-api-dev-r07b-pre-f-20260925-163531` · `health_3080_after=200` · `auth_mode=supabase_user`.
+- Evidência: `docs/vps/evidence/gate-f-promote-ok-894b0db8-2026-09-25.txt`.
+- `EXECUTE_GATE_F=EXECUTED_OK` · `alter_3080=PERFORMED`.
+- Próximo VPS: re-provision Auth + `CANARY_PORT=3080` mutation smoke (sem re-promover).
+
+### Gate F — mutation OK na MAIN 894b0db8 (2026-09-25T16:30Z)
+
+- Canário `comercial360-main-894b0db8` · `ped_convert=201` · `ped_convert_dup=409` · `GATE_D_MUTATION_SMOKE=OK`.
+- Evidência: `docs/vps/evidence/gate-f-mutation-smoke-ok-894b0db8-2026-09-25.txt`.
+- `EXECUTE_GATE_F=AUTHORIZED_WAITING_PROMOTE` · script `gate-f-option-a-promote-3080.sh`.
+- Próximo VPS: `CONFIRM_GATE_F_PROMOTE=YES` com IMAGE `...894b0db8` (preserva R07B).
+
+### Gate F — mutation token_not_issued (ban §E) (2026-09-25T16:28Z)
+
+- Canário `894b0db8` OK · `refs_ensure=YES` · Auth provision `OK` · `http_pw_update=200`.
+- `http_token=400` · `token_not_issued` — user ainda banido pela limpeza §E (`ban_duration`).
+- Fix: provision passa `ban_duration=none` + limpa `auth.users.banned_until`.
+- Evidência: `docs/vps/evidence/gate-f-mutation-blocked-token-ban-2026-09-25.txt`.
+- Reexecutar provision+mutação na mesma sessão. Sem promoção 3080.
+
+### Gate F — mutation refs FAIL unique pós-cleanup (2026-09-25T16:15Z)
+
+- Build canário **OK**: `comercial360-main-894b0db8` · `GATE_F_BUILD_CANARY=OK` · 3080 intacta.
+- Auth OK · `refs_ensure=FAIL` · `uq_grupos_produto_group_codigo` (fixtures `GATED-GP` inativas no §E; INSERT tentou duplicar).
+- Fix: `gate-d-smoke-mutation-orc-ped.sh` reativa fixtures GATE_D antes do INSERT (unique ignora `ativo`).
+- Evidência: `docs/vps/evidence/gate-f-mutation-blocked-refs-unique-2026-09-25.txt`.
+- Reexecutar **só** provision+mutação (canário já na tag certa). Sem promoção ainda.
+
+### Gate F — merge #37 na main (2026-09-25T16:11Z)
+
+- PR **#37** **MERGED** → `main` @ `894b0db8` (`merge_sha8=894b0db8`).
+- Fix Orçamento map **na main** (`descricao_snapshot`) · ≠ `2fc2fc80`.
+- Evidência: `docs/vps/evidence/gate-f-merge-opcao-a-2026-09-25.txt`.
+- `EXECUTE_GATE_F=AUTHORIZED_WAITING_VPS_BUILD` · 3080 **ainda R07B**.
+- Próximo VPS: `CONFIRM_GATE_F_BUILD_RESMOKE=YES` + `gate-f-option-a-build-canary.sh` → Auth + mutação → só então promoção.
+
 ### Gate F — AUTHORIZED opção A · WAITING_MERGE (2026-09-25)
 
 - Assinatura: **VINICIUS** · `2026-09-25` · opção **A** (merge+MAIN+re-smoke+promover).

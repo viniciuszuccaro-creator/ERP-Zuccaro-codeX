@@ -265,14 +265,15 @@ fi
 AUTH_UUID="$(cat "$TMP_UUID")"
 echo 'auth_uuid_ready=YES'
 
-# Atualiza senha para a SYNTH_PASS desta execução
+# Atualiza senha + remove ban do §E (ban_duration none) para a SYNTH_PASS desta execução
+UNBAN_PAYLOAD="{\"password\":\"${SYNTH_PASS}\",\"email_confirm\":true,\"ban_duration\":\"none\"}"
 if [[ "$http_health" == "200" ]]; then
   curl -sS -o /dev/null -w 'http_pw_update=%{http_code}\n' --connect-timeout 5 \
     -X PUT "${AUTH_BASE}/auth/v1/admin/users/${AUTH_UUID}" \
     -H "apikey: ${SR}" \
     -H "Authorization: Bearer ${SR}" \
     -H 'Content-Type: application/json' \
-    -d "{\"password\":\"${SYNTH_PASS}\",\"email_confirm\":true}" \
+    -d "$UNBAN_PAYLOAD" \
     2>/dev/null || echo 'http_pw_update=SKIP'
 elif [[ -n "$NET" ]]; then
   http_pw="$(docker run --rm --network "$NET" curlimages/curl:8.5.0 \
@@ -281,10 +282,20 @@ elif [[ -n "$NET" ]]; then
     -H "apikey: ${SR}" \
     -H "Authorization: Bearer ${SR}" \
     -H 'Content-Type: application/json' \
-    -d "{\"password\":\"${SYNTH_PASS}\",\"email_confirm\":true}" \
+    -d "$UNBAN_PAYLOAD" \
     2>/dev/null || true)"
   echo "http_pw_update=${http_pw}"
 fi
+
+# Fallback SQL: limpa banned_until se Admin API não limpar
+docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
+  -v auth_uuid="$AUTH_UUID" -At <<'SQL' >/dev/null 2>&1 || true
+UPDATE auth.users
+SET banned_until = NULL
+WHERE id = :'auth_uuid'::uuid
+  AND banned_until IS NOT NULL;
+SQL
+echo 'auth_unban_attempted=YES'
 
 docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
   -v auth_uuid="$AUTH_UUID" \

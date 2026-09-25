@@ -1,0 +1,23 @@
+# Gate F — mutation smoke OK na tag MAIN pós-merge (sanitizado)
+
+utc=2026-09-25T16:30:56Z
+source=vps_webconsole
+merge_sha8=894b0db8
+canary_image=erp-zuccaro-erp-api:comercial360-main-894b0db8
+canary_image_is_main_immutable=YES
+canary_image_id_prefix=sha256:e0d0ad498224
+AUTH_SYNTHETIC_STATUS=OK
+auth_unban_attempted=YES
+http_token=200
+refs_ensure=YES
+orc_create=201
+ped_convert=201
+ped_convert_dup=409
+ped_get=200
+mutation_no_auth=401
+GATE_D_MUTATION_SMOKE=OK
+GATE_F_CANARY_MUTATION_OK=YES
+alter_3080=NOT_PERFORMED
+AUTHORIZES_PROMOTE=YES_AFTER_CONFIRM
+NOTE=segredos_somente_cofre_local
+NOTE2=next_promote_3080_with_CONFIRM_GATE_F_PROMOTE
