@@ -1,0 +1,10 @@
+# Gate Auth — falha source .env e correção (sanitizado)
+
+utc=2026-09-25T11:45:54Z
+symptom=/root/supabase/docker/.env: line 151: Organization: command not found
+root_cause=source_completo_do_env_supabase
+fix=env_get_KEY_VALUE_only_no_source
+script=scripts/vps/provision-gate-d-auth-synthetic.sh
+AUTH_SYNTHETIC_STATUS=PENDING_RE_RUN
+alter_3080=NOT_PERFORMED
+AUTHORIZES_CANARY=NO

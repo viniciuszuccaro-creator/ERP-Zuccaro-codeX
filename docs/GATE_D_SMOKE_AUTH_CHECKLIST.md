@@ -58,22 +58,34 @@ SYNTH_EMAIL='gate-d.synth@dev.synthetic.local' SYNTH_PASS='COLOQUE_SENHA_FORTE_A
 Envie ao chat **apenas** o bloco `PASTE_TO_GIT_*` (sem JSON Auth).  
 Se `BLOCKED: auth_user_not_created`, rode Studio → Add user e avise o `http_kong=` / `auth_error_hint=`.
 
+**Não** use `source` em `/root/supabase/docker/.env` — há linhas inválidas (ex.: `Organization` na L151) que quebram o shell. O script lê só `KEY=VALUE` via `env_get`.
+
 ### 2b) Blocos manuais (alternativa) — **uma sessão contínua**
 
 Containers: `supabase-auth`, `supabase-studio`.  
-Se aparecer `Organization: command not found`, prosa foi colada no shell — ignore e continue só com bash.
+Preferir §2 (script). Manual abaixo **sem** `source` do `.env`.
 
 **A+B juntos (obrigatório na mesma sessão):**
 ```bash
 set -euo pipefail
-set -a
-source /root/supabase/docker/.env
-set +a
-SR="${SERVICE_ROLE_KEY:-${SUPABASE_SERVICE_ROLE_KEY:-}}"
+ENV_FILE=/root/supabase/docker/.env
+env_get() {
+  local key="$1" line
+  line="$(grep -E "^${key}=" "$ENV_FILE" | tail -1 || true)"
+  [[ -n "$line" ]] || return 0
+  line="${line#${key}=}"
+  line="${line%$'\r'}"
+  if [[ "$line" =~ ^\".*\"$ ]]; then line="${line:1:${#line}-2}"
+  elif [[ "$line" =~ ^\'.*\'$ ]]; then line="${line:1:${#line}-2}"; fi
+  printf '%s' "$line"
+}
+SR="$(env_get SERVICE_ROLE_KEY)"
+[[ -z "$SR" ]] && SR="$(env_get SUPABASE_SERVICE_ROLE_KEY)"
 test -n "$SR"
-AUTH_BASE="${API_EXTERNAL_URL:-}"
-if [ -z "$AUTH_BASE" ]; then AUTH_BASE="${SUPABASE_PUBLIC_URL:-}"; fi
-if [ -z "$AUTH_BASE" ]; then AUTH_BASE="http://127.0.0.1:8000"; fi
+AUTH_BASE="$(env_get API_EXTERNAL_URL)"
+[[ -z "$AUTH_BASE" ]] && AUTH_BASE="$(env_get SUPABASE_PUBLIC_URL)"
+[[ -z "$AUTH_BASE" ]] && AUTH_BASE="$(env_get KONG_URL)"
+[[ -z "$AUTH_BASE" ]] && AUTH_BASE="http://127.0.0.1:8000"
 AUTH_BASE="${AUTH_BASE%/}"
 echo "auth_base_len=${#AUTH_BASE}"
 curl -sS -o /dev/null -w 'auth_health=%{http_code}\n' "${AUTH_BASE}/auth/v1/health" || true

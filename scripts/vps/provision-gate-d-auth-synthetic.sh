@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Provisiona identidade Auth sintética + profile ERP para Gate D (DEV).
 # NÃO imprime service_role, senha, token ou UUID.
+# NÃO faz `source` do .env completo (pode ter linhas inválidas tipo "Organization").
 # Uso (Web Console, uma linha após definir SYNTH_*):
 #   SYNTH_EMAIL='gate-d.synth@dev.synthetic.local' SYNTH_PASS='...' \
 #     bash scripts/vps/provision-gate-d-auth-synthetic.sh
@@ -15,17 +16,31 @@ echo "AUTHORIZES_CANARY=NO"
 echo "alter_3080=NOT_PERFORMED"
 
 [[ -f "$ENV_FILE" ]] || { echo "BLOCKED: env_file_missing path_set=YES" >&2; exit 2; }
-set -a
-# shellcheck disable=SC1090
-source "$ENV_FILE"
-set +a
 
-SR="${SERVICE_ROLE_KEY:-${SUPABASE_SERVICE_ROLE_KEY:-}}"
+# Lê só KEY=VALUE — evita source quebrado do .env Supabase
+env_get() {
+  local key="$1"
+  local line
+  line="$(grep -E "^${key}=" "$ENV_FILE" 2>/dev/null | tail -1 || true)"
+  [[ -n "$line" ]] || return 0
+  line="${line#${key}=}"
+  line="${line%$'\r'}"
+  if [[ "$line" =~ ^\".*\"$ ]]; then
+    line="${line:1:${#line}-2}"
+  elif [[ "$line" =~ ^\'.*\'$ ]]; then
+    line="${line:1:${#line}-2}"
+  fi
+  printf '%s' "$line"
+}
+
+SR="$(env_get SERVICE_ROLE_KEY)"
+[[ -z "$SR" ]] && SR="$(env_get SUPABASE_SERVICE_ROLE_KEY)"
 [[ -n "$SR" ]] || { echo 'BLOCKED: service_role_missing' >&2; exit 2; }
 echo 'service_role_loaded=YES'
 
-AUTH_BASE="${API_EXTERNAL_URL:-}"
-[[ -z "$AUTH_BASE" ]] && AUTH_BASE="${SUPABASE_PUBLIC_URL:-}"
+AUTH_BASE="$(env_get API_EXTERNAL_URL)"
+[[ -z "$AUTH_BASE" ]] && AUTH_BASE="$(env_get SUPABASE_PUBLIC_URL)"
+[[ -z "$AUTH_BASE" ]] && AUTH_BASE="$(env_get KONG_URL)"
 [[ -z "$AUTH_BASE" ]] && AUTH_BASE='http://127.0.0.1:8000'
 AUTH_BASE="${AUTH_BASE%/}"
 echo "auth_base_len=${#AUTH_BASE}"

@@ -1,8 +1,12 @@
-### Gate Auth — bloqueado em provisionamento (2026-09-24)
+### Gate Auth — fix env_get (2026-09-25)
 
-- Contagens VPS reconfirmadas: `auth_users=0` · `profiles_com_auth=0` · `profiles_ativos_sem_auth=2`.
-- Auth **ainda não** criado; canário Gate D **bloqueado**.
-- Próximo: bloco Web Console Admin API / Studio (checklist §2–§4) até contagens `auth_users>=1` e `profiles_com_auth>=1`.
+- Falha Web Console: `source /root/supabase/docker/.env` → L151 `Organization: command not found`.
+- Correção: `scripts/vps/provision-gate-d-auth-synthetic.sh` lê só `KEY=VALUE` via `env_get` (sem `source`).
+- Checklist §2/§2b alinhados. Auth **ainda PENDING** até reexecutar o script na VPS.
+- Contagens últimas: `auth_users=0` · `profiles_com_auth=0` · `profiles_ativos_sem_auth=2`.
+- Canário Gate D **bloqueado** até `AUTH_SYNTHETIC_STATUS=OK`.
+- Próximo: re-curl do script na branch + `SYNTH_EMAIL`/`SYNTH_PASS` reais (não placeholder) → colar só `PASTE_TO_GIT_*`.
+- **Não** Gate F / 3080.
 
 
 ### Pós-Gate E — prep Gate D (histórico)
