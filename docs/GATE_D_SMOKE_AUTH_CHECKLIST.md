@@ -206,38 +206,31 @@ BASE_URL='http://127.0.0.1:3086' EXPECTED_RUNTIME=ERP-RUNTIME-08B \
   bash scripts/deploy/comercial360-smoke.sh
 ```
 
-### C. Bearer sintético — permitido (após canário/smoke meta OK)
+### C. Bearer sintético — após canário com overlay Supabase
 
-Obter token **na VPS** (não cole no chat). Use a senha do cofre gerada no Auth:
+Causa típica de falha: `SUPABASE_URL=http://kong:8000` no host (`Could not resolve host: kong`) e anon stub (`anon_len≈19`).  
+**Recriar canário** (overlay `ANON_KEY` real) e então o smoke Bearer:
 
 ```bash
 cd /opt/erp-zuccaro
-# ANON/URL do container oficial — só lengths, sem valores:
-ANON="$(docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' erp-api-dev | sed -n 's/^SUPABASE_ANON_KEY=//p' | tail -1)"
-AUTH_URL="$(docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' erp-api-dev | sed -n 's/^SUPABASE_URL=//p' | tail -1)"
-AUTH_URL="${AUTH_URL%/}"
-echo "anon_len=${#ANON} auth_url_len=${#AUTH_URL}"
+git pull origin cursor/pos-gate-e-prep-d-392b
+docker rm -f erp-api-comercial360-canary 2>/dev/null || true
 
-# SYNTH_PASS do cofre local (openssl gerado no provisionamento)
-SYNTH_EMAIL='gate-d.synth@dev.synthetic.local'
-TOK="$(curl -sS "${AUTH_URL}/auth/v1/token?grant_type=password" \
-  -H "apikey: ${ANON}" -H 'Content-Type: application/json' \
-  -d "{\"email\":\"${SYNTH_EMAIL}\",\"password\":\"${SYNTH_PASS}\"}" \
-  | python3 -c 'import json,sys; print(json.load(sys.stdin).get("access_token") or "")')"
-echo "token_len=${#TOK}"
-test -n "$TOK"
+IMAGE='erp-zuccaro-erp-api:comercial360-main-2fc2fc80' \
+ENV_FROM_CONTAINER='erp-api-dev' \
+ERP_DOCKER_NETWORK='supabase_default' \
+EXPECTED_RUNTIME='ERP-RUNTIME-08B' \
+CANARY_PORT='3086' \
+ERP_AUTH_MODE='supabase_user' \
+bash scripts/deploy/comercial360-canary.sh
+# Esperado: supabase_overlay=YES · supabase_anon_len>=40 · CANARY_READY
 
-BASE='http://127.0.0.1:3086'
-# Negativo sem auth
-curl -sS -o /dev/null -w 'no_auth=%{http_code}\n' "$BASE/api/v1/orcamentos"
-# Com Bearer — só HTTP codes
-curl -sS -o /dev/null -w 'orc_list=%{http_code}\n' -H "Authorization: Bearer ${TOK}" -H "apikey: ${ANON}" "$BASE/api/v1/orcamentos"
-curl -sS -o /dev/null -w 'ped_list=%{http_code}\n' -H "Authorization: Bearer ${TOK}" -H "apikey: ${ANON}" "$BASE/api/v1/pedidos"
-unset TOK ANON SYNTH_PASS
+SYNTH_PASS='SENHA_DO_COFRE_OPENSSL' \
+  bash scripts/vps/gate-d-smoke-bearer-synthetic.sh
 ```
 
-Cole no chat só: `token_len=` · `no_auth=` · `orc_list=` · `ped_list=` (sem token).  
-Fluxo completo create/update/cancel permanece checklist §C itens 1–4.
+Cole só o bloco `PASTE_TO_GIT_*` (`no_auth`/`orc_list`/`ped_list`/`GATE_D_BEARER_SMOKE`).  
+Fluxo create/update/cancel Orçamento→Pedido permanece checklist manual se listagens OK.
 
 ### D. Negativos obrigatórios
 

@@ -42,6 +42,39 @@ if [[ -n "${ENV_FROM_CONTAINER:-}" ]]; then
   ENV_FILE="$TMP_ENV"
   echo "env_from_container=${ENV_FROM_CONTAINER}"
   echo "env_keys_count=$(grep -cE '^[A-Za-z_][A-Za-z0-9_]*=' "$TMP_ENV" || true)"
+
+  # Overlay Auth real do Supabase self-hosted (erp-api-dev costuma ter stub / URL kong)
+  SUPA_ENV="${SUPABASE_ENV_FILE:-/root/supabase/docker/.env}"
+  if [[ -f "$SUPA_ENV" ]]; then
+    env_get_supa() {
+      local key="$1" line
+      line="$(grep -E "^${key}=" "$SUPA_ENV" 2>/dev/null | tail -1 || true)"
+      [[ -n "$line" ]] || return 0
+      line="${line#${key}=}"
+      line="${line%$'\r'}"
+      if [[ "$line" =~ ^\".*\"$ ]]; then line="${line:1:${#line}-2}"
+      elif [[ "$line" =~ ^\'.*\'$ ]]; then line="${line:1:${#line}-2}"; fi
+      printf '%s' "$line"
+    }
+    REAL_ANON="$(env_get_supa ANON_KEY)"
+    [[ -z "$REAL_ANON" ]] && REAL_ANON="$(env_get_supa SUPABASE_ANON_KEY)"
+    # URL interna Docker (canário na mesma rede); host usa 127.0.0.1:8000 no smoke Bearer
+    KONG_NAME="$(docker ps --format '{{.Names}}' | grep -Ei '^kong$|supabase-kong' | head -1 || true)"
+    [[ -z "$KONG_NAME" ]] && KONG_NAME='kong'
+    if [[ -n "$REAL_ANON" && ${#REAL_ANON} -ge 40 ]]; then
+      grep -vE '^(SUPABASE_ANON_KEY|SUPABASE_URL)=' "$TMP_ENV" >"${TMP_ENV}.new" || true
+      mv "${TMP_ENV}.new" "$TMP_ENV"
+      printf 'SUPABASE_ANON_KEY=%s\n' "$REAL_ANON" >>"$TMP_ENV"
+      printf 'SUPABASE_URL=http://%s:8000\n' "$KONG_NAME" >>"$TMP_ENV"
+      echo "supabase_overlay=YES"
+      echo "supabase_anon_len=${#REAL_ANON}"
+      echo "supabase_url_host=${KONG_NAME}"
+    else
+      echo "supabase_overlay=SKIP_anon_short_or_missing"
+    fi
+  else
+    echo "supabase_overlay=SKIP_env_missing"
+  fi
 elif [[ -n "${ENV_FILE:-}" ]]; then
   [[ -f "$ENV_FILE" ]] || { echo "BLOCKED: ENV_FILE missing path_set=YES" >&2; exit 1; }
   echo "env_from_file=YES"
