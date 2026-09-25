@@ -1,3 +1,11 @@
+### Gate F — browser login NAV OK pós-unban (2026-09-25T18:19Z)
+
+- Pull `260adcc9` · Auth `OK` · `auth_unban_attempted=YES` · `http_token=200` · `login_ok=YES`.
+- `GATE_F_BROWSER_LOGIN_NAV=OK` · meta/SPA 200 · spoof 401 · `alter_3080=NOT_PERFORMED`.
+- Residual: `nav_api_orc_list=400` (Bearer sem tenant) — smoke endurecido para injetar `x-group`/`x-empresa` do profile e exigir 200.
+- Evidência: `docs/vps/evidence/gate-f-browser-login-nav-ok-2026-09-25.txt`.
+- **Sem merge** #39 · sem promoção 3080. Próximo: re-smoke browser com tenant (HEAD deste commit) + revisão Codex.
+
 ### Gate F — browser login token_not_issued (ban §E) (2026-09-25T18:08Z)
 
 - Auth provision `OK` · `profile_linked=YES` · `http_pw_update=200` · SPA/API health 200.

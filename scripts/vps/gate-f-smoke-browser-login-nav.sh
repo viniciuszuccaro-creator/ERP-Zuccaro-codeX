@@ -156,23 +156,61 @@ rm -f /tmp/gate-f-browser-token.json
 [[ -n "$ACCESS" && ${#ACCESS} -ge 40 ]] || { echo 'BLOCKED: access_token_empty' >&2; exit 6; }
 echo "token_len=${#ACCESS}"
 
+# Tenant do profile sintético (mesmo contrato Bearer Gate D — sem ecoar UUIDs no PASTE)
+TMP_GID="$(mktemp)"; TMP_EID="$(mktemp)"
+trap 'rm -f "$TMP_GID" "$TMP_EID"' EXIT
+docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
+  -v synth_email="$SYNTH_EMAIL" -At <<'SQL' >"$TMP_GID" 2>/dev/null || true
+SELECT group_id::text FROM profiles
+ WHERE lower(email)=lower(:'synth_email')
+   AND auth_user_id IS NOT NULL AND ativo IS TRUE
+   AND group_id IS NOT NULL
+ ORDER BY updated_at DESC NULLS LAST, created_at DESC NULLS LAST
+ LIMIT 1;
+SQL
+docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
+  -v synth_email="$SYNTH_EMAIL" -At <<'SQL' >"$TMP_EID" 2>/dev/null || true
+SELECT empresa_id::text FROM profiles
+ WHERE lower(email)=lower(:'synth_email')
+   AND auth_user_id IS NOT NULL AND ativo IS TRUE
+   AND empresa_id IS NOT NULL
+ ORDER BY updated_at DESC NULLS LAST, created_at DESC NULLS LAST
+ LIMIT 1;
+SQL
+GROUP_ID="$(tr -d '[:space:]' <"$TMP_GID" || true)"
+EMPRESA_ID="$(tr -d '[:space:]' <"$TMP_EID" || true)"
+[[ -n "$GROUP_ID" && ${#GROUP_ID} -ge 32 ]] || {
+  echo 'BLOCKED: profile_group_id_missing' >&2
+  exit 4
+}
+echo "tenant_group_set=YES"
+if [[ -n "$EMPRESA_ID" && ${#EMPRESA_ID} -ge 32 ]]; then
+  echo "tenant_empresa_set=YES"
+else
+  echo "tenant_empresa_set=NO"
+  EMPRESA_ID=""
+fi
+
+auth_hdrs=(-H "Authorization: Bearer ${ACCESS}" -H "x-group-id: ${GROUP_ID}")
+[[ -n "$EMPRESA_ID" ]] && auth_hdrs+=(-H "x-empresa-id: ${EMPRESA_ID}")
+
 # Navegação autenticada: meta + listagem orçamentos (sem imprimir body/PII)
-nav_meta="$(code_of "${OFFICIAL_API}/api/v1/meta" -H "Authorization: Bearer ${ACCESS}")"
-nav_orc="$(code_of "${OFFICIAL_API}/api/v1/orcamentos?limit=1" -H "Authorization: Bearer ${ACCESS}" -H 'Content-Type: application/json')"
+nav_meta="$(code_of "${OFFICIAL_API}/api/v1/meta" "${auth_hdrs[@]}")"
+nav_orc="$(code_of "${OFFICIAL_API}/api/v1/orcamentos?limit=1" "${auth_hdrs[@]}" -H 'Content-Type: application/json')"
 # Mesma origem SPA proxy (quando health proxy ok)
 nav_spa_api='SKIP'
 if [[ "$spa_health_code" == "200" ]]; then
-  nav_spa_api="$(code_of "${browser_origin}/api/v1/meta" -H "Authorization: Bearer ${ACCESS}")"
+  nav_spa_api="$(code_of "${browser_origin}/api/v1/meta" "${auth_hdrs[@]}")"
 fi
-unset ACCESS
+unset ACCESS GROUP_ID EMPRESA_ID
 echo "nav_api_meta=${nav_meta}"
 echo "nav_api_orc_list=${nav_orc}"
 echo "nav_spa_proxy_meta=${nav_spa_api}"
 
 ok=YES
 [[ "$nav_meta" == "200" ]] || ok=NO
-[[ "$nav_orc" =~ ^(200|400|403)$ ]] || ok=NO
-# 400 sem tenant headers é aceitável se o BFF exigir x-group/empresa além do Bearer
+# Com Bearer + tenant: listagem deve ser 200 (400 sem tenant era aceitável só no smoke anterior)
+[[ "$nav_orc" =~ ^(200|204)$ ]] || ok=NO
 echo "login_ok=$([[ "$token_http" == "200" ]] && echo YES || echo NO)"
 echo "navigation_ok=${ok}"
 
@@ -185,6 +223,7 @@ echo "official_runtime=${runtime}"
 echo "official_auth_mode=${auth_mode}"
 echo "http_token=${token_http}"
 echo "browser_spoof_rejected=YES"
+echo "tenant_headers_on_nav=YES"
 echo "nav_api_meta=${nav_meta}"
 echo "nav_api_orc_list=${nav_orc}"
 echo "nav_spa_proxy_meta=${nav_spa_api}"
