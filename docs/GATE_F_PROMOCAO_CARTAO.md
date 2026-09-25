@@ -87,3 +87,5 @@ Procedimento alinhado a `docs/COMERCIAL_360_V1_DEPLOY.md` / rollback R07B preser
 - **Não** promover `comercial360-gate-d-*` nesta autorização (opção B não escolhida).
 - Rollback de API ≠ rollback de schema.
 - `CONFIRM_ROLLBACK=YES` só com autorização.
+- **3080 é API**, não URL de browser. SPA DEV canônica: `http://127.0.0.1:3081/` (`erp-web`).
+- Smoke login/navegação: `ERP_BROWSER_URL='http://127.0.0.1:3081/'` + Auth sintético → `scripts/vps/gate-f-smoke-browser-login-nav.sh`.
