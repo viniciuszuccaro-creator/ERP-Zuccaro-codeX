@@ -60,6 +60,8 @@ Se `BLOCKED: auth_user_not_created`, rode Studio → Add user e avise o `http_ko
 
 **Não** use `source` em `/root/supabase/docker/.env` — há linhas inválidas (ex.: `Organization` na L151) que quebram o shell. O script lê só `KEY=VALUE` via `env_get`.
 
+Se `http_direct_*=200` seguido de `422` e `auth_user_created=NO`, o usuário pode já existir: baixe de novo o script (volume `/tmp` + resolve SQL) e reexecute.
+
 ### 2b) Blocos manuais (alternativa) — **uma sessão contínua**
 
 Containers: `supabase-auth`, `supabase-studio`.  

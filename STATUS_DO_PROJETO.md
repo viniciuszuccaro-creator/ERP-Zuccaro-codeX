@@ -1,11 +1,10 @@
-### Gate Auth — fix env_get (2026-09-25)
+### Gate Auth — fix env_get + fallback Docker (2026-09-25)
 
-- Falha Web Console: `source /root/supabase/docker/.env` → L151 `Organization: command not found`.
-- Correção: `scripts/vps/provision-gate-d-auth-synthetic.sh` lê só `KEY=VALUE` via `env_get` (sem `source`).
-- Checklist §2/§2b alinhados. Auth **ainda PENDING** até reexecutar o script na VPS.
-- Contagens últimas: `auth_users=0` · `profiles_com_auth=0` · `profiles_ativos_sem_auth=2`.
-- Canário Gate D **bloqueado** até `AUTH_SYNTHETIC_STATUS=OK`.
-- Próximo: re-curl do script na branch + `SYNTH_EMAIL`/`SYNTH_PASS` reais (não placeholder) → colar só `PASTE_TO_GIT_*`.
+- Falha 1: `source .env` → L151 `Organization: command not found` → corrigido com `env_get`.
+- Falha 2 (re-run 11:54Z): `service_role_loaded=YES` · Kong público 443=`000` · `http_direct_supabase-auth=200` · depois `422` · `auth_user_created=NO`.
+- Causa: curl Docker gravava JSON **dentro** do container efêmero (`-o /tmp/...` sem `-v`); 422 = e-mail já criado na tentativa 200.
+- Correção: `-v /tmp:/tmp`, fallback `http://127.0.0.1:8000` se health público falhar, resolve UUID por SQL no e-mail, profile upsert idempotente, update de senha.
+- Auth **ainda PENDING** até reexecutar o script.
 - **Não** Gate F / 3080.
 
 
