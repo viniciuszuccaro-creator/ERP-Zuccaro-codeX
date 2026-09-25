@@ -1,3 +1,11 @@
+### Gate D — cleanup §E OK (2026-09-25T15:28Z)
+
+- `http_pw_rotate=200` · `http_ban=200` · `profile_unlinked=YES` · `fixtures_inactivated=YES`.
+- `profiles_com_auth_count=0` · `profiles_synth_ativos=0` · `login_rotated_pass=400` (ban efetivo).
+- `health_3080=200` · `health_canary=200` · `GATE_D_CLEANUP_STATUS=OK` · Gate F **não** autorizado.
+- Evidência: `docs/vps/evidence/gate-d-cleanup-ok-2026-09-25.txt`.
+- **Gate D VPS completo** (Auth · canário · Bearer · browser · mutação · negativos · limpeza). Próximo externo: Gate F só com termo/assinatura + digest alinhado (não promover MAIN `2fc2fc80` sem o fix); Onda 3 na PR `#39`.
+
 ### Gate D — cleanup §E BLOCKED habilitacao (2026-09-25T15:25Z)
 
 - Auth OK de novo; fixtures: `chk_cliente_empresas_habilitacao` — `ativo=false` exige `situacao_comercial='INATIVO'` + `habilitado_operacao=false`.

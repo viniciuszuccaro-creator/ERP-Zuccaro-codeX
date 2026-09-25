@@ -1,6 +1,6 @@
 # Gate F — promoção 3080 (cartão)
 
-**Status:** `PREPARADO / BLOQUEADO` — Gate D mutação **OK** no canário; Gate F **sem** autorização humana.
+**Status:** `PREPARADO / BLOQUEADO` — Gate D **completo** (incl. limpeza §E); Gate F **sem** autorização humana.
 **Não executar** neste lote Cursor.
 
 ## Pré-requisitos

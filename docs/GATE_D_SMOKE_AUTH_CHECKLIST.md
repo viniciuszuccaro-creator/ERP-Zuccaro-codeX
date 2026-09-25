@@ -42,6 +42,8 @@ Complementa `docs/GATES_D_F_PREPARACAO_CANARIO.md` e
 
 **Negativos tenant (2026-09-25T15:13Z):** `GATE_D_NEGATIVES_SMOKE=OK` · `positive_orc_list=200` · `neg_no_auth=401` · `neg_invalid_token=401` · `neg_adulterated_group=403` · `neg_foreign_empresa=403` · `neg_missing_tenant_headers=400` · `neg_spoof_dev_headers=401` · `alter_3080=NOT_PERFORMED`.
 
+**Limpeza §E (2026-09-25T15:28Z):** `GATE_D_CLEANUP_STATUS=OK` · `http_ban=200` · `profile_unlinked=YES` · `fixtures_inactivated=YES` · `profiles_com_auth_count=0` · `profiles_synth_ativos=0` · `login_rotated_pass=400` · `alter_3080=NOT_PERFORMED` · Gate F **não** autorizado.
+
 Ordem fail-closed. **Nunca** colar e-mail, senha, token, service_role ou UUID no chat/Git.
 
 ### 1) Descobrir Auth (só nomes)
