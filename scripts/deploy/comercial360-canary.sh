@@ -60,12 +60,47 @@ docker run -d --name "$CANARY_NAME" --restart no --env-file "$ENV_FILE" \
   -e "ERP_AUTH_MODE=${ERP_AUTH_MODE:-supabase_user}" \
   --network "$ERP_DOCKER_NETWORK" -p "127.0.0.1:${CANARY_PORT}:3080" "$IMAGE" >/dev/null
 echo "canary_auth_mode_override=${ERP_AUTH_MODE:-supabase_user}"
+
+# Valida /meta: node (CI) ou python3 (VPS sem Node no host)
+verify_canary_meta() {
+  local meta_json="$1"
+  local expected="$2"
+  if command -v node >/dev/null 2>&1; then
+    node -e "try { const m=JSON.parse(process.argv[1]); if(m.runtime===process.argv[2] && m.auth?.mode==='supabase_user') process.exit(0) } catch {} process.exit(1)" \
+      "$meta_json" "$expected"
+    return $?
+  fi
+  if command -v python3 >/dev/null 2>&1; then
+    python3 -c 'import json,sys; m=json.loads(sys.argv[1]); auth=m.get("auth") or {}; sys.exit(0 if m.get("runtime")==sys.argv[2] and auth.get("mode")=="supabase_user" else 1)' \
+      "$meta_json" "$expected"
+    return $?
+  fi
+  echo 'BLOCKED: need node or python3 to verify canary /meta' >&2
+  return 1
+}
+
+print_meta_hint() {
+  local meta_json="$1"
+  if command -v node >/dev/null 2>&1; then
+    node -e "try{const m=JSON.parse(process.argv[1]);console.log('meta_runtime='+(m.runtime||''));console.log('meta_auth_mode='+(m.auth&&m.auth.mode||''))}catch{console.log('meta_parse=FAIL')}" \
+      "$meta_json" >&2 || true
+  elif command -v python3 >/dev/null 2>&1; then
+    python3 -c 'import json,sys
+try:
+ m=json.loads(sys.argv[1]); a=m.get("auth") or {}
+ print("meta_runtime="+str(m.get("runtime") or ""))
+ print("meta_auth_mode="+str(a.get("mode") or ""))
+except Exception:
+ print("meta_parse=FAIL")' "$meta_json" >&2 || true
+  fi
+}
+
 for _ in $(seq 1 30); do
   if curl --fail --silent "http://127.0.0.1:${CANARY_PORT}/health" >/dev/null && \
      curl --fail --silent "http://127.0.0.1:${CANARY_PORT}/ready" >/dev/null; then
     meta="$(curl --fail --silent "http://127.0.0.1:${CANARY_PORT}/api/v1/meta")"
-    if ! node -e "try { const m=JSON.parse(process.argv[1]); if(m.runtime===process.argv[2] && m.auth?.mode==='supabase_user') process.exit(0) } catch {} process.exit(1)" "$meta" "$EXPECTED_RUNTIME"; then
-      node -e "try{const m=JSON.parse(process.argv[1]);console.log('meta_runtime='+(m.runtime||''));console.log('meta_auth_mode='+(m.auth&&m.auth.mode||''))}catch{console.log('meta_parse=FAIL')}" "$meta" >&2 || true
+    if ! verify_canary_meta "$meta" "$EXPECTED_RUNTIME"; then
+      print_meta_hint "$meta"
       echo 'BLOCKED: canary runtime or verified Auth mode mismatch' >&2
       exit 1
     fi

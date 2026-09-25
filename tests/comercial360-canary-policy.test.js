@@ -41,8 +41,8 @@ test('Comercial 360 canary cannot take the official API container name', () => {
 
 function metadataGate(path, metadata) {
   const source = readFileSync(path, 'utf8');
-  const expression = source.match(/if ! node -e "([^"]+)" "\$meta" "\$EXPECTED_RUNTIME"/)?.[1];
-  assert.ok(expression, 'script must fail closed on metadata mismatch');
+  const expression = source.match(/node -e "([^"]+supabase_user[^"]*)"/)?.[1];
+  assert.ok(expression, 'script must fail closed on metadata mismatch via node -e');
   const payload = typeof metadata === 'string' ? metadata : JSON.stringify(metadata);
   return spawnSync(process.execPath, ['-e', expression, payload, 'ERP-RUNTIME-08B'], { encoding: 'utf8' });
 }
