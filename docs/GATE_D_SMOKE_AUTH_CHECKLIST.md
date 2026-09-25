@@ -224,9 +224,10 @@ SYNTH_EMAIL="$SYNTH_EMAIL" SYNTH_PASS="$SYNTH_PASS" \
   bash scripts/vps/provision-gate-d-auth-synthetic.sh
 # Esperado: AUTH_SYNTHETIC_STATUS=OK (ou profile_linked=YES)
 
-# 3) Bearer no canário 3086 — mesma SYNTH_PASS da sessão
+# 3) Bearer no canário 3086 — mesma SYNTH_PASS; script envia x-group-id/x-empresa-id do profile
 SYNTH_EMAIL="$SYNTH_EMAIL" SYNTH_PASS="$SYNTH_PASS" \
   bash scripts/vps/gate-d-smoke-bearer-synthetic.sh
+# Esperado: tenant_group_set=YES · no_auth=401 · orc_list=200 · ped_list=200 · GATE_D_BEARER_SMOKE=OK
 
 unset SYNTH_PASS
 ```

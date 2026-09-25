@@ -1,0 +1,13 @@
+# Gate D Bearer — 400 sem tenant (sanitizado)
+
+utc=2026-09-25T13:04:40Z
+AUTH_SYNTHETIC_STATUS=OK
+http_token=200
+token_len=688
+no_auth=401
+orc_list=400
+ped_list=400
+GATE_D_BEARER_SMOKE=FAIL
+root_cause=TENANT_SCOPE_INVALID_missing_x_group_id_x_empresa_id
+fix=smoke_bearer_loads_profile_scope_headers
+alter_3080=NOT_PERFORMED

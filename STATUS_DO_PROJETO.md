@@ -1,8 +1,8 @@
 ### Gate D — canário + smoke meta OK (2026-09-25T12:33Z)
 
-- `CANARY_READY` · porta **3086** · overlay Supabase OK (`anon_len=169`).
-- Bearer 12:44Z: `invalid_credentials` — `SYNTH_PASS` foi placeholder do chat, não a senha openssl.
-- Fix: scripts bloqueiam placeholders; reset senha + Bearer na mesma sessão VPS.
+- Canário READY · overlay OK · Auth OK.
+- Bearer 13:04Z: token OK (`http_token=200`) · `no_auth=401` OK · `orc/ped=400` = `TENANT_SCOPE_INVALID` (faltava `x-group-id`/`x-empresa-id`).
+- Fix: smoke Bearer carrega escopo do profile sintético sem imprimir UUID.
 - **3080** intacta · Gate F **não**.
 
 
