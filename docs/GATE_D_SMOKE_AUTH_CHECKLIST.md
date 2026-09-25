@@ -30,7 +30,7 @@ Complementa `docs/GATES_D_F_PREPARACAO_CANARIO.md` e
 
 ## Gate Auth — provisionamento (Web Console, autorizado)
 
-**Baseline Auth (2026-09-25T12:07Z):** `auth_users_count=1` · `profiles_com_auth_count=1` · `AUTH_SYNTHETIC_STATUS=OK`.  
+**Baseline Auth (2026-09-25T12:07Z):** `auth_users_count=1` · `profiles_com_auth_count=1` · `AUTH_SYNTHETIC_STATUS=OK`.
 `profiles_ativos_sem_auth_count=2` (legado preservado). Segredos só no cofre local.
 
 Ordem fail-closed. **Nunca** colar e-mail, senha, token, service_role ou UUID no chat/Git.
