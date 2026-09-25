@@ -1,3 +1,11 @@
+### Gate F — mutation token_not_issued (ban §E) (2026-09-25T16:28Z)
+
+- Canário `894b0db8` OK · `refs_ensure=YES` · Auth provision `OK` · `http_pw_update=200`.
+- `http_token=400` · `token_not_issued` — user ainda banido pela limpeza §E (`ban_duration`).
+- Fix: provision passa `ban_duration=none` + limpa `auth.users.banned_until`.
+- Evidência: `docs/vps/evidence/gate-f-mutation-blocked-token-ban-2026-09-25.txt`.
+- Reexecutar provision+mutação na mesma sessão. Sem promoção 3080.
+
 ### Gate F — mutation refs FAIL unique pós-cleanup (2026-09-25T16:15Z)
 
 - Build canário **OK**: `comercial360-main-894b0db8` · `GATE_F_BUILD_CANARY=OK` · 3080 intacta.

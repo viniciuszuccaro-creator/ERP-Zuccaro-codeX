@@ -1,0 +1,19 @@
+# Gate F — mutation token_not_issued após unban incompleto (sanitizado)
+
+utc=2026-09-25T16:28:37Z
+source=vps_webconsole
+GATE_F_BUILD_CANARY=OK
+canary_image=erp-zuccaro-erp-api:comercial360-main-894b0db8
+AUTH_SYNTHETIC_STATUS=OK
+profile_linked=YES
+http_pw_update=200
+refs_ensure=YES
+http_token=400
+token_len=0
+BLOCKED=token_not_issued
+root_cause=auth_user_still_banned_from_gate_d_cleanup_E
+fix=provision_ban_duration_none_plus_sql_clear_banned_until
+alter_3080=NOT_PERFORMED
+AUTHORIZES_PROMOTE=NO
+NOTE=segredos_somente_cofre_local
+NOTE2=reexecutar_provision_e_mutation_mesma_sessao
