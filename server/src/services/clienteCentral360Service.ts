@@ -2,7 +2,6 @@ import { AppError } from '../api/errors.js';
 import type { RequestContext } from '../audit/types.js';
 import { maskDocumento } from '../db/documentoValidators.js';
 import type { Cliente, ClienteEmpresa } from '../repositories/clienteTypes.js';
-import type { ClienteLocal } from '../repositories/clienteLocalTypes.js';
 import type { Orcamento } from '../repositories/orcamentoTypes.js';
 import type { Pedido } from '../repositories/pedidoTypes.js';
 import type { ClienteService } from './clienteService.js';
@@ -236,7 +235,19 @@ function projectPedido(row: Pedido): ClienteCentral360PedidoProjection {
   };
 }
 
-function projectLocal(row: ClienteLocal): ClienteCentral360LocalProjection {
+function projectLocal(row: {
+  id: string;
+  cliente_id: string;
+  nome: string;
+  cidade: string;
+  uf: string;
+  pais: string;
+  ativo: boolean;
+  origem: string;
+  created_at: string;
+  updated_at: string;
+  finalidades: Array<{ finalidade: string; principal: boolean; ativo: boolean }>;
+}): ClienteCentral360LocalProjection {
   return {
     id: row.id,
     cliente_id: row.cliente_id,
@@ -273,7 +284,7 @@ function projectObra(row: {
     cidade: string | null;
     uf: string | null;
   } | null;
-  empresas?: Array<{ id: string }>;
+  empresas?: Array<{ empresa_id: string; ativo: boolean }>;
 }): ClienteCentral360ObraProjection {
   return {
     id: row.id,
