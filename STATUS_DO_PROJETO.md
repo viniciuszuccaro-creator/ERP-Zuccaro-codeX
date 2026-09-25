@@ -1,3 +1,10 @@
+### Gate F — HTTPS externo BLOCKED (DNS) (2026-09-25T19:15Z)
+
+- Probe fora da VPS: `erp-dev` / `api-erp-dev` / `erp.cpaferroeaco.com.br` → **Could not resolve host** · http=000.
+- Evidência: `docs/vps/evidence/gate-f-https-external-dns-blocked-2026-09-25.txt`.
+- Browser Gate F OK só em loopback `3081`. Sem login HTTPS externo possível até DNS/TLS.
+- 400/403 não avaliados (sem TLS). Promoção 3080 permanece EXECUTED_OK.
+
 ### Gate F — browser login NAV OK (frente VPS, ex-#39) (2026-09-25T18:34Z)
 
 - Artefatos movidos da PR de código #39 para esta frente VPS (#40).
