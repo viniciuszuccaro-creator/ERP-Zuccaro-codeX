@@ -1,3 +1,11 @@
+### Gate F — mutation refs FAIL unique pós-cleanup (2026-09-25T16:15Z)
+
+- Build canário **OK**: `comercial360-main-894b0db8` · `GATE_F_BUILD_CANARY=OK` · 3080 intacta.
+- Auth OK · `refs_ensure=FAIL` · `uq_grupos_produto_group_codigo` (fixtures `GATED-GP` inativas no §E; INSERT tentou duplicar).
+- Fix: `gate-d-smoke-mutation-orc-ped.sh` reativa fixtures GATE_D antes do INSERT (unique ignora `ativo`).
+- Evidência: `docs/vps/evidence/gate-f-mutation-blocked-refs-unique-2026-09-25.txt`.
+- Reexecutar **só** provision+mutação (canário já na tag certa). Sem promoção ainda.
+
 ### Gate F — merge #37 na main (2026-09-25T16:11Z)
 
 - PR **#37** **MERGED** → `main` @ `894b0db8` (`merge_sha8=894b0db8`).
