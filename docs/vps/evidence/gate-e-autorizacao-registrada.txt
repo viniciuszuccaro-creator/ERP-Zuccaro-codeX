@@ -1,0 +1,19 @@
+# Evidência — autorização Gate E assinada
+
+utc_autorizacao_chat=2026-09-24T17:35:00Z
+utc_assinatura=2026-09-24
+data_hora_informada=24/09/2026
+assinatura_responsavel=VINICIUS
+main_sha=2fc2fc80adb9ca876be6ca3d29aab49305839e8a
+scope=Gate_E_DEV_migrations_016_024_only
+gate_d=NOT_AUTHORIZED
+gate_f=NOT_AUTHORIZED
+alter_3080=NOT_AUTHORIZED
+checkbox_gate_e=MARKED
+formal_signature_on_termo=VINICIUS
+EXECUTE_GATE_E=AUTHORIZED_PENDING_NEW_BACKUP_AND_WEBCONSOLE
+backup_novo_antes_apply=PENDING_WEBCONSOLE
+dump_committed_to_git=NO
+
+termo=docs/TERMO_AUTORIZACAO_GATES_D_E_F.md
+cartao=docs/GATE_E_MIGRATIONS_CARTAO.md

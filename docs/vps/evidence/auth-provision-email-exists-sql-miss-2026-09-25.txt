@@ -1,0 +1,16 @@
+# Gate Auth — email_exists sem UUID SQL (sanitizado)
+
+utc=2026-09-25T12:01:27Z
+service_role_loaded=YES
+auth_health=000
+auth_health_local=401
+http_kong=422
+auth_error_hint=email_exists
+http_direct_supabase-auth=422
+auth_user_resolved_sql=NO
+BLOCKED=auth_user_not_created
+root_cause=gotrue_tem_user_sql_lookup_falhou_ou_db_distinto
+fix=admin_users_list_filter_email_+_sql_heredoc_identities_+_health_apikey
+AUTH_SYNTHETIC_STATUS=PENDING_RE_RUN
+alter_3080=NOT_PERFORMED
+AUTHORIZES_CANARY=NO

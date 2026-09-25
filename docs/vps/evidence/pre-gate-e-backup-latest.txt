@@ -1,14 +1,15 @@
 # Evidência sanitizada — backup pre-gate-e (VPS srv1982741)
 # Dump real SOMENTE em /opt/erp-zuccaro/backups (não versionado).
-# Fonte: Web Console 2026-09-24T14:03:04Z · script SHA commit abada3f8
-# Este backup NÃO autoriza Gates D/E/F.
+# Fonte: Web Console 2026-09-24T17:47:55Z · HEAD main 2fc2fc80 · Gate E assinado VINICIUS
+# Este backup NÃO autoriza Gate D/F nem alteração da 3080.
 
-backup path=pre-gate-e-20260924-140304.sql bytes=390275 sha256=e72ca99b453fa6b060b5264f636794b3a601202c18e4185deb12f0020cae3f80 dump_complete_marker=YES
+backup path=pre-gate-e-20260924-174755.sql bytes=390275 sha256=83a9e97d30418a8fafa1a5be8558bcb480aa2a4184ddee1f516d1e33873f9a08 dump_complete_marker=YES
 integrity_header_pg_dump=YES
 integrity_tail_complete=YES
 integrity_sha256_recompute_match=YES
 integrity_file_mode_600=YES
 restore_destructive=NOT_PERFORMED
+git_commit_dump=FORBIDDEN
 AUTHORIZES_GATES_DEF=NO
 EXECUTE_DEF=NO
 APPLY_MIGRATIONS=NO
@@ -16,4 +17,5 @@ START_CANARY=NO
 umask=0077
 file_mode=600
 PRE_GATE_E_BACKUP_STATUS=OK
-status=RECORDED_FROM_VPS
+status=RECORDED_FROM_VPS_WEBCONSOLE
+main_sha=2fc2fc80adb9ca876be6ca3d29aab49305839e8a

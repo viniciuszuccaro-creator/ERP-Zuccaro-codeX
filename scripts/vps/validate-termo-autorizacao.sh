@@ -39,7 +39,7 @@ echo "placeholder_assinatura=${has_assin_blank}"
 # Fatos pré-preenchidos, mas assinatura/autorização ainda abertas
 if (( has_facts == 1 && has_seq == 1 && (has_assin_blank == 1 || has_data_blank == 1 || checked < 1) )); then
   echo 'TERMO_STATUS=FACTS_READY_WAITING_SIGNATURE'
-  echo 'NOTE: fatos Gate C preenchidos; falta assinatura + checkbox do gate + Codex §4'
+  echo 'NOTE: fatos preenchidos; checkbox Gate E pode estar marcado; falta assinatura formal no termo'
   echo 'EXECUTE_DEF=NO'
   echo "TERMO_VALIDATE_END utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   exit 0

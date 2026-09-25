@@ -1,0 +1,26 @@
+# Gate D — browser URL smoke OK (sanitizado)
+# Sem token, senha, UUID, .env ou URL com credencial.
+
+utc=2026-09-25T13:56:57Z
+source=vps_webconsole
+canary_port=3086
+canary_health=200
+canary_ready=200
+canary_runtime=ERP-RUNTIME-08B
+canary_auth_mode=supabase_user
+canary_rejects_dev_headers_as_proof=YES
+browser_no_auth_orc=401
+browser_no_auth_ped=401
+browser_spoof_dev_headers=401
+browser_spoof_rejected=YES
+browser_url_set=NO
+canary_base_loopback_http=YES
+canary_base_safe=YES
+official_health=200
+official_runtime=ERP-RUNTIME-07B
+official_auth_mode=dev_headers
+official_3080_untouched_probe=YES
+GATE_D_BROWSER_URL_SMOKE=OK
+alter_3080=NOT_PERFORMED
+AUTHORIZES_GATE_F=NO
+NOTE=segredos_somente_cofre_local

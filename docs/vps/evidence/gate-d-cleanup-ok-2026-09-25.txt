@@ -1,0 +1,23 @@
+# Gate D — cleanup Auth sintético OK (sanitizado)
+# Sem token, senha, UUID ou .env.
+
+utc=2026-09-25T15:28:17Z
+source=vps_webconsole
+auth_user_found=YES
+http_pw_rotate=200
+http_ban=200
+profile_unlinked=YES
+profile_synth_inactivated=YES
+fixtures_inactivated=YES
+login_old_pass=SKIP
+login_rotated_pass=400
+auth_users_count=1
+profiles_com_auth_count=0
+profiles_synth_ativos=0
+health_3080=200
+health_canary=200
+GATE_D_CLEANUP_STATUS=OK
+alter_3080=NOT_PERFORMED
+AUTHORIZES_GATE_F=NO
+NOTE=segredos_somente_cofre_local
+NOTE2=auth_user_banned_not_deleted

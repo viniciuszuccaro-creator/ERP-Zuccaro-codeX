@@ -1,0 +1,23 @@
+# Gate D — mutation convert FAIL reconfirm (sanitizado)
+# Sem token, senha, UUID ou .env.
+
+utc=2026-09-25T14:30:10Z
+source=vps_webconsole
+AUTH_SYNTHETIC_STATUS=OK
+refs_ensure=YES
+refs_cliente_empresa=YES
+refs_condicao=YES
+refs_produto=YES
+refs_unidade=YES
+http_token=200
+orc_create=201
+ped_convert=500
+ped_convert_error_code=INTERNAL_ERROR
+GATE_D_MUTATION_SMOKE=BLOCKED
+canary_recreated_with=comercial360-main-2fc2fc80
+root_cause=canary_still_on_main_immutable_image_without_orcamento_map_fix
+fix_on_branch=20eda9e2_f0529933
+next=rebuild_via_comercial360-canary-from-checkout.sh
+alter_3080=NOT_PERFORMED
+AUTHORIZES_GATE_F=NO
+NOTE=segredos_somente_cofre_local

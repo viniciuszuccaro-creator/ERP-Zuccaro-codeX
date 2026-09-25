@@ -1,0 +1,37 @@
+# Gate Auth / Gate D — autorização + Auth OK (sanitizada)
+# Sem token, e-mail, senha, UUID ou .env.
+
+utc_assinatura=2026-09-24
+assinatura=VINICIUS
+canal=Cursor_agent_chat
+texto=
+  Autorizo Gate Auth sintético e Gate D.
+  Não autorizo Gate F / 3080.
+checkbox_gate_auth=MARKED
+checkbox_gate_d=MARKED
+EXECUTE_AUTH=EXECUTED_OK
+EXECUTE_GATE_D=CANARY_SMOKE_META_OK
+gate_f=NOT_AUTHORIZED
+alter_3080=NOT_AUTHORIZED
+image_tag=erp-zuccaro-erp-api:comercial360-main-2fc2fc80
+digest_status=REGISTERED
+gate_e_status=OK
+AUTH_SYNTHETIC_STATUS=OK
+auth_users_count=1
+profiles_com_auth_count=1
+profiles_ativos_sem_auth_count=2
+rbac_minimo=orcamento_pedido
+utc_auth_ok=2026-09-25T12:07:49Z
+utc_auth_reconfirm=2026-09-25T13:41:45Z
+utc_canary_ok=2026-09-25T12:33:57Z
+utc_bearer_ok=2026-09-25T13:14:49Z
+utc_bearer_reconfirm=2026-09-25T13:41:46Z
+utc_browser_url_ok=2026-09-25T13:56:57Z
+CANARY_PORT=3086
+GATE_D_STATUS=BROWSER_URL_SMOKE_OK
+GATE_D_BEARER_SMOKE=OK
+GATE_D_BROWSER_URL_SMOKE=OK
+AUTHORIZES_CANARY=NO
+alter_3080=NOT_PERFORMED
+AUTHORIZES_GATE_F=NO
+NOTE=segredos_somente_cofre_local

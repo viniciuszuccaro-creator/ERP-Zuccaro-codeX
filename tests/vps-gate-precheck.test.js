@@ -203,19 +203,20 @@ test('print-auth-package-status READY apos Gate C APROVADO', () => {
   assert.match(run.stdout, /GATE_C_RESULT=APROVADO/);
   assert.match(run.stdout, /missing_for_gate_e=016,017,018,019,020,021,022,023,024/);
   assert.match(run.stdout, /proposed_EXPECTED_RUNTIME=ERP-RUNTIME-08B/);
-  assert.match(run.stdout, /TERMO_STATUS=FACTS_READY_WAITING_SIGNATURE/);
+  // Termo pode estar aguardando assinatura ou já assinado (Gate E).
+  assert.match(run.stdout, /TERMO_STATUS=(FACTS_READY_WAITING_SIGNATURE|SIGNED_CHECKLIST_OK)/);
   assert.match(run.stdout, /BACKUP_NOVO_STATUS=NAMED_CANDIDATE_PRESENT/);
   assert.match(run.stdout, /GO_NOGO=NO/);
   assert.match(run.stdout, /PACKAGE_STATUS=READY_FOR_HUMAN_DECISION/);
 });
 
-test('validate-termo-autorizacao FACTS_READY no termo pre-preenchido', () => {
+test('validate-termo-autorizacao SIGNED_CHECKLIST_OK no termo com Gate E assinado', () => {
   const script = path.join(root, 'scripts/vps/validate-termo-autorizacao.sh');
   const run = spawnSync('bash', ['-n', script], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr);
   const exec = spawnSync('bash', [script], { encoding: 'utf8' });
   assert.equal(exec.status, 0, exec.stderr || exec.stdout);
-  assert.match(exec.stdout, /TERMO_STATUS=FACTS_READY_WAITING_SIGNATURE/);
+  assert.match(exec.stdout, /TERMO_STATUS=SIGNED_CHECKLIST_OK/);
   assert.match(exec.stdout, /EXECUTE_DEF=NO/);
 });
 
@@ -354,22 +355,37 @@ test('print-gate-e-fatias expoe comercial e produto', () => {
   assert.match(run.stdout, /review_slices_only=YES/);
   assert.match(run.stdout, /APPLY_NOW=NO/);
   assert.match(run.stdout, /AUTHORIZES_GATES_DEF=NO/);
+  assert.match(run.stdout, /GATE_E_PLAN_STATUS=EXECUTED_OK/);
 });
 
-test('go-nogo-def reporta GATE_E_READY=NO enquanto 016-024 ausentes da main', () => {
+test('go-nogo-def reporta GATE_E_READY=NO quando probe da main não tem 016-024', () => {
   const script = path.join(root, 'scripts/vps/go-nogo-def.sh');
-  const run = spawnSync('bash', [script], { encoding: 'utf8' });
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'main-mig-absent-'));
+  // Probe sem 016–024: simula main antiga
+  fs.writeFileSync(path.join(dir, '015_probe.sql'), '-- probe\n');
+  const run = spawnSync('bash', [script], {
+    encoding: 'utf8',
+    env: { ...process.env, MAIN_MIGRATIONS_DIR: dir },
+  });
   assert.equal(run.status, 0, run.stderr || run.stdout);
   assert.match(run.stdout, /main_migrations_016_024=PENDING_ABSENT/);
   assert.match(run.stdout, /main_missing_migrations=016,017,018,019,020,021,022,023,024/);
-  assert.match(run.stdout, /vps_schema_016_024=PENDING_NOT_APPLIED/);
+  // Evidência Gate E OK no repo: schema DEV marcado APPLIED mesmo se main probe falha.
+  assert.match(run.stdout, /vps_schema_016_024=APPLIED/);
+  assert.match(run.stdout, /gate_e_executed_evidence=OK/);
   assert.match(run.stdout, /GATE_E_READY=NO/);
   assert.match(run.stdout, /gate_e_blockers=.*main_missing_migrations_016_024/);
-  assert.match(run.stdout, /GATE_D_READY=NO/);
-  assert.match(run.stdout, /image_digest_pending_post_merge/);
-  assert.match(run.stdout, /auth_synthetic_gate_pending/);
+  // Auth sintético OK na evidência versionada → D não bloqueia por Auth.
+  assert.match(run.stdout, /auth_synthetic_status=OK/);
+  assert.match(run.stdout, /GATE_D_READY=YES/);
+  assert.doesNotMatch(run.stdout, /auth_synthetic_gate_pending/);
+  // Digest REGISTERED na evidência versionada.
+  assert.match(run.stdout, /image_digest_status=REGISTERED/);
+  assert.doesNotMatch(run.stdout, /gate_d_blockers=.*image_digest_pending/);
+  assert.doesNotMatch(run.stdout, /gate_d_blockers=.*gate_e_schema_not_applied/);
   assert.match(run.stdout, /GATE_F_READY=NO/);
-  assert.match(run.stdout, /DECISION_STATE=READY_FOR_REVIEW/);
+  // Com termo assinado (Gate E): AUTHORIZED_CHECKLIST; senão READY_FOR_REVIEW.
+  assert.match(run.stdout, /DECISION_STATE=(READY_FOR_REVIEW|AUTHORIZED_CHECKLIST)/);
   assert.match(run.stdout, /AUTHORIZATION=NOT_GRANTED/);
   assert.match(run.stdout, /EXECUTED=NO/);
   assert.match(run.stdout, /GO_NOGO=NO/);
@@ -377,6 +393,24 @@ test('go-nogo-def reporta GATE_E_READY=NO enquanto 016-024 ausentes da main', ()
   assert.match(run.stdout, /NOTE: READY_FOR_REVIEW != AUTHORIZED != EXECUTED/);
   assert.doesNotMatch(run.stdout, /gate_e_blockers=.*image_digest/);
   assert.doesNotMatch(run.stdout, /gate_e_blockers=.*auth_synthetic/);
+});
+
+test('go-nogo-def GATE_E_READY=YES quando checkout tem 016-024 (probe local)', () => {
+  const script = path.join(root, 'scripts/vps/go-nogo-def.sh');
+  // CI shallow pode não ter origin/main; usar dir local do checkout (pós-#35).
+  const migDir = path.join(root, 'server/migrations');
+  const run = spawnSync('bash', [script], {
+    encoding: 'utf8',
+    env: { ...process.env, MAIN_MIGRATIONS_DIR: migDir },
+  });
+  assert.equal(run.status, 0, run.stderr || run.stdout);
+  assert.match(run.stdout, /main_migrations_016_024=PRESENT/);
+  assert.match(run.stdout, /vps_schema_016_024=APPLIED/);
+  assert.match(run.stdout, /GATE_E_READY=YES/);
+  assert.match(run.stdout, /gate_e_blockers=NONE/);
+  assert.match(run.stdout, /AUTHORIZATION=NOT_GRANTED/);
+  assert.match(run.stdout, /EXECUTED=NO/);
+  assert.doesNotMatch(run.stdout, /gate_d_blockers=.*gate_e_schema_not_applied/);
 });
 
 test('go-nogo-def GATE_E_READY=YES quando MAIN_MIGRATIONS_DIR tem 016-024', () => {
@@ -392,15 +426,21 @@ test('go-nogo-def GATE_E_READY=YES quando MAIN_MIGRATIONS_DIR tem 016-024', () =
   assert.equal(run.status, 0, run.stderr || run.stdout);
   assert.match(run.stdout, /main_migrations_016_024=PRESENT/);
   assert.match(run.stdout, /main_missing_migrations=NONE/);
+  assert.match(run.stdout, /vps_schema_016_024=APPLIED/);
   assert.match(run.stdout, /GATE_E_READY=YES/);
   assert.match(run.stdout, /gate_e_blockers=NONE/);
-  assert.match(run.stdout, /GATE_D_READY=NO/);
+  assert.match(run.stdout, /auth_synthetic_status=OK/);
+  assert.match(run.stdout, /GATE_D_READY=YES/);
+  assert.doesNotMatch(run.stdout, /auth_synthetic_gate_pending/);
+  assert.match(run.stdout, /image_digest_status=REGISTERED/);
+  assert.doesNotMatch(run.stdout, /gate_d_blockers=.*image_digest_pending/);
+  assert.doesNotMatch(run.stdout, /gate_d_blockers=.*gate_e_schema_not_applied/);
   assert.match(run.stdout, /AUTHORIZATION=NOT_GRANTED/);
   assert.match(run.stdout, /EXECUTED=NO/);
   assert.doesNotMatch(run.stdout, /gate_e_blockers=.*image_digest/);
 });
 
-test('print-pedido-codex DECISIONS_DOCUMENTED com 5 itens e pendencias operacionais', () => {
+test('print-pedido-codex DECISIONS_DOCUMENTED com 5 itens e Auth OK', () => {
   const script = path.join(root, 'scripts/vps/print-pedido-codex.sh');
   const run = spawnSync('bash', [script], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr || run.stdout);
@@ -410,11 +450,55 @@ test('print-pedido-codex DECISIONS_DOCUMENTED com 5 itens e pendencias operacion
   assert.match(run.stdout, /decided_EXPECTED_RUNTIME=ERP-RUNTIME-08B/);
   assert.match(run.stdout, /decided_gate_e_strategy=016_024_single_invocation_main_order/);
   assert.match(run.stdout, /review_slices=016_017,018_024/);
-  assert.match(run.stdout, /image_digest_status=PENDING_BUILD_AFTER_MERGE/);
-  assert.match(run.stdout, /auth_synthetic_status=PENDING_AUTH_GATE/);
+  assert.match(run.stdout, /image_digest_status=REGISTERED/);
+  assert.match(run.stdout, /auth_synthetic_status=OK/);
   assert.match(run.stdout, /gates_def_executed=NO/);
   assert.match(run.stdout, /AUTHORIZES_GATES_DEF=NO/);
   assert.doesNotMatch(run.stdout, /fatias_comercial_016_017_then_produto/);
+});
+
+test('print-pedido-codex e go-nogo: Auth PENDING ainda bloqueia Gate D', () => {
+  const pedido = path.join(root, 'scripts/vps/print-pedido-codex.sh');
+  const go = path.join(root, 'scripts/vps/go-nogo-def.sh');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'digest-auth-'));
+  const digestEv = path.join(tmp, 'digest.txt');
+  const authEv = path.join(tmp, 'auth.txt');
+  fs.writeFileSync(
+    digestEv,
+    [
+      'merge_sha8=2fc2fc80',
+      'image_tag=erp-zuccaro-erp-api:comercial360-main-2fc2fc80',
+      'image_id_prefix=sha256:deadbeefcafe',
+      'DIGEST_STATUS=OK',
+      'AUTHORIZES_CANARY=NO',
+      'AUTHORIZES_GATE_D=NO',
+      '',
+    ].join('\n'),
+  );
+  fs.writeFileSync(authEv, 'AUTH_SYNTHETIC_STATUS=PENDING_AUTH_GATE\n');
+  const pedidoRun = spawnSync('bash', [pedido], {
+    encoding: 'utf8',
+    env: { ...process.env, DIGEST_EVIDENCE: digestEv, AUTH_EVIDENCE: authEv },
+  });
+  assert.equal(pedidoRun.status, 0, pedidoRun.stderr || pedidoRun.stdout);
+  assert.match(pedidoRun.stdout, /image_digest_status=REGISTERED/);
+  assert.match(pedidoRun.stdout, /auth_synthetic_status=PENDING_AUTH_GATE/);
+
+  const migDir = path.join(root, 'server/migrations');
+  const goRun = spawnSync('bash', [go], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      MAIN_MIGRATIONS_DIR: migDir,
+      DIGEST_EVIDENCE: digestEv,
+      AUTH_EVIDENCE: authEv,
+    },
+  });
+  assert.equal(goRun.status, 0, goRun.stderr || goRun.stdout);
+  assert.match(goRun.stdout, /image_digest_status=REGISTERED/);
+  assert.doesNotMatch(goRun.stdout, /gate_d_blockers=.*image_digest_pending/);
+  assert.match(goRun.stdout, /auth_synthetic_gate_pending/);
+  assert.match(goRun.stdout, /GATE_D_READY=NO/);
 });
 
 test('freeze-go-nogo-snapshot grava GO_NOGO=NO e EXHAUSTED', () => {
@@ -422,15 +506,21 @@ test('freeze-go-nogo-snapshot grava GO_NOGO=NO e EXHAUSTED', () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'freeze-'));
   const out = path.join(tmp, 'snap.txt');
   const evidence = path.join(root, 'docs/vps/evidence/gate-c-2026-09-24.txt');
-  const run = spawnSync('bash', [script, evidence, out], { encoding: 'utf8' });
+  const absent = fs.mkdtempSync(path.join(os.tmpdir(), 'main-mig-freeze-'));
+  fs.writeFileSync(path.join(absent, '015_probe.sql'), '-- probe\n');
+  const run = spawnSync('bash', [script, evidence, out], {
+    encoding: 'utf8',
+    env: { ...process.env, MAIN_MIGRATIONS_DIR: absent },
+  });
   assert.equal(run.status, 0, run.stderr || run.stdout);
   const text = fs.readFileSync(out, 'utf8');
   assert.match(text, /GO_NOGO=NO/);
   assert.match(text, /GATE_E_READY=NO/);
   assert.match(text, /main_missing_migrations_016_024/);
-  assert.match(text, /GATE_D_READY=NO/);
+  // Auth OK no repo: D ready técnico; GO_NOGO=NO permanece por E/F.
+  assert.match(text, /GATE_D_READY=YES/);
   assert.match(text, /GATE_F_READY=NO/);
-  assert.match(text, /DECISION_STATE=READY_FOR_REVIEW/);
+  assert.match(text, /DECISION_STATE=(READY_FOR_REVIEW|AUTHORIZED_CHECKLIST)/);
   assert.match(text, /AUTONOMOUS_PREP_STATUS=EXHAUSTED_WAITING_HUMAN_CODEX/);
   assert.match(text, /EXECUTE_DEF=NO/);
   assert.doesNotMatch(text, /Bearer |sk_live_|BEGIN PRIVATE KEY/i);
@@ -503,4 +593,135 @@ test('evidence restore isolado DB OK sem autorizar gates', () => {
   assert.match(text, /EXECUTE_DEF=NO/);
   assert.match(text, /erp_restore_isolated_20260924_155458/);
   assert.match(text, /e72ca99b453fa6b060b5264f636794b3a601202c18e4185deb12f0020cae3f80/);
+});
+
+test('gate-d-smoke-browser-url-safe.sh passa bash -n e bloqueia query com segredo', () => {
+  const script = path.join(root, 'scripts/vps/gate-d-smoke-browser-url-safe.sh');
+  const syn = spawnSync('bash', ['-n', script], { encoding: 'utf8' });
+  assert.equal(syn.status, 0, syn.stderr);
+  const text = fs.readFileSync(script, 'utf8');
+  assert.match(text, /GATE_D_BROWSER_URL_SMOKE/);
+  assert.match(text, /alter_3080=NOT_PERFORMED/);
+  assert.match(text, /AUTHORIZES_GATE_F=NO/);
+  assert.match(text, /dev_headers/);
+  assert.match(text, /PASTE_TO_GIT_BEGIN/);
+
+  const blocked = spawnSync('bash', [script], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      CANARY_PORT: '3086',
+      EXPECTED_RUNTIME: 'ERP-RUNTIME-08B',
+      BASE_URL: 'http://127.0.0.1:3086/?access_token=leak',
+    },
+  });
+  assert.notEqual(blocked.status, 0);
+  assert.match(blocked.stderr + blocked.stdout, /secret_or_tenant_query|BLOCKED/);
+});
+
+test('gate-d-smoke-mutation-orc-ped.sh passa bash -n e bloqueia placeholder', () => {
+  const script = path.join(root, 'scripts/vps/gate-d-smoke-mutation-orc-ped.sh');
+  const syn = spawnSync('bash', ['-n', script], { encoding: 'utf8' });
+  assert.equal(syn.status, 0, syn.stderr);
+  const text = fs.readFileSync(script, 'utf8');
+  assert.match(text, /GATE_D_MUTATION_SMOKE/);
+  assert.match(text, /converter-pedido/);
+  assert.match(text, /alter_3080=NOT_PERFORMED/);
+  assert.match(text, /AUTHORIZES_GATE_F=NO/);
+  assert.match(text, /canary_image_is_main_immutable/);
+  assert.match(text, /HINT=.*from_checkout|HINT=.*stale_main_image/);
+  const blocked = spawnSync('bash', [script], {
+    encoding: 'utf8',
+    env: { ...process.env, SYNTH_PASS: 'SENHA_DO_COFRE_OPENSSL' },
+  });
+  assert.notEqual(blocked.status, 0);
+  assert.match(blocked.stderr + blocked.stdout, /placeholder_from_chat|BLOCKED/);
+});
+
+test('gate-d-smoke-negatives-tenant.sh passa bash -n e bloqueia placeholder', () => {
+  const script = path.join(root, 'scripts/vps/gate-d-smoke-negatives-tenant.sh');
+  const syn = spawnSync('bash', ['-n', script], { encoding: 'utf8' });
+  assert.equal(syn.status, 0, syn.stderr);
+  const text = fs.readFileSync(script, 'utf8');
+  assert.match(text, /GATE_D_NEGATIVES_SMOKE/);
+  assert.match(text, /neg_adulterated_group/);
+  assert.match(text, /neg_foreign_empresa/);
+  assert.match(text, /alter_3080=NOT_PERFORMED/);
+  assert.match(text, /AUTHORIZES_GATE_F=NO/);
+  const blocked = spawnSync('bash', [script], {
+    encoding: 'utf8',
+    env: { ...process.env, SYNTH_PASS: 'SENHA_DO_COFRE_OPENSSL' },
+  });
+  assert.notEqual(blocked.status, 0);
+  assert.match(blocked.stderr + blocked.stdout, /placeholder_from_chat|BLOCKED/);
+});
+
+test('gate-d-cleanup-auth-synthetic.sh passa bash -n e exige confirmacao', () => {
+  const script = path.join(root, 'scripts/vps/gate-d-cleanup-auth-synthetic.sh');
+  const syn = spawnSync('bash', ['-n', script], { encoding: 'utf8' });
+  assert.equal(syn.status, 0, syn.stderr);
+  const text = fs.readFileSync(script, 'utf8');
+  assert.match(text, /GATE_D_CLEANUP/);
+  assert.match(text, /CONFIRM_GATE_D_CLEANUP/);
+  assert.match(text, /ban_duration/);
+  assert.match(text, /alter_3080=NOT_PERFORMED/);
+  assert.match(text, /AUTHORIZES_GATE_F=NO/);
+  assert.match(text, /auth_user_banned_not_deleted/);
+  assert.match(text, /situacao_comercial = 'INATIVO'/);
+  assert.match(text, /habilitado_operacao/);
+  assert.doesNotMatch(text, /bloqueado = true/);
+  const blocked = spawnSync('bash', [script], {
+    encoding: 'utf8',
+    env: { ...process.env, CONFIRM_GATE_D_CLEANUP: '' },
+  });
+  assert.notEqual(blocked.status, 0);
+  assert.match(blocked.stderr + blocked.stdout, /CONFIRM_GATE_D_CLEANUP|BLOCKED/);
+  const badEmail = spawnSync('bash', [script], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      CONFIRM_GATE_D_CLEANUP: 'YES',
+      SYNTH_EMAIL: 'not-synth@example.com',
+    },
+  });
+  assert.notEqual(badEmail.status, 0);
+  assert.match(badEmail.stderr + badEmail.stdout, /dev_synthetic_local|BLOCKED/);
+});
+
+test('gate-f-option-a-build-canary.sh passa bash -n e exige confirmacao', () => {
+  const script = path.join(root, 'scripts/vps/gate-f-option-a-build-canary.sh');
+  const syn = spawnSync('bash', ['-n', script], { encoding: 'utf8' });
+  assert.equal(syn.status, 0, syn.stderr);
+  const text = fs.readFileSync(script, 'utf8');
+  assert.match(text, /GATE_F_BUILD_CANARY/);
+  assert.match(text, /CONFIRM_GATE_F_BUILD_RESMOKE/);
+  assert.match(text, /2fc2fc80/);
+  assert.match(text, /descricao_snapshot/);
+  assert.match(text, /alter_3080=NOT_PERFORMED/);
+  assert.match(text, /AUTHORIZES_PROMOTE=NO/);
+  const blocked = spawnSync('bash', [script], {
+    encoding: 'utf8',
+    env: { ...process.env, CONFIRM_GATE_F_BUILD_RESMOKE: '', ERP_DOCKER_NETWORK: 'supabase_default' },
+  });
+  assert.notEqual(blocked.status, 0);
+  assert.match(blocked.stderr + blocked.stdout, /CONFIRM_GATE_F_BUILD_RESMOKE|BLOCKED/);
+});
+
+test('comercial360-canary-from-checkout.sh passa bash -n e nao usa tag MAIN', () => {
+  const script = path.join(root, 'scripts/deploy/comercial360-canary-from-checkout.sh');
+  const syn = spawnSync('bash', ['-n', script], { encoding: 'utf8' });
+  assert.equal(syn.status, 0, syn.stderr);
+  const text = fs.readFileSync(script, 'utf8');
+  assert.match(text, /comercial360-gate-d-/);
+  assert.match(text, /main_immutable_tag_used=NO/);
+  assert.match(text, /alter_3080=NOT_PERFORMED/);
+  assert.match(text, /AUTHORIZES_GATE_F=NO/);
+  assert.match(text, /comercial360-canary\.sh/);
+  assert.doesNotMatch(text, /comercial360-main-2fc2fc80/);
+  const blocked = spawnSync('bash', [script], {
+    encoding: 'utf8',
+    env: { ...process.env, CANARY_PORT: '3086' },
+  });
+  assert.notEqual(blocked.status, 0);
+  assert.match(blocked.stderr + blocked.stdout, /ERP_DOCKER_NETWORK|BLOCKED/);
 });

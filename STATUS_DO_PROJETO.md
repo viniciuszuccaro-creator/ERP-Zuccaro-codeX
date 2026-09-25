@@ -1,33 +1,143 @@
 ## Comercial 360 / Onda 3 - Central Cliente 360 read-model minimo (2026-09-25)
 
-- Branch `cursor/comercial360-onda3-cliente-392b` a partir da `main` (`2fc2fc80`); PR `#39` independente da #37 (VPS Gate D).
+- Branch `cursor/comercial360-onda3-cliente-392b` rebaseada em `main` (`894b0db8`); PR `#39` pós Gate F EXECUTED_OK (docs em `#40`).
 - Objetivo: primeiro checkpoint da Onda 3 — composição de leitura over mestres/operações canônicas, sem tabela espelho nem bloco financeiro/fiscal.
 - Reutilizado: `ClienteService`, `OrcamentoService`, `PedidoService`, rotas `/api/v1/clientes`, TenantGuard, RBAC Cadastros/Comercial e mascaramento de documento.
 - API: `GET /api/v1/clientes/:id/central-360` com paginação por bloco (`orcamentos_*`, `pedidos_*`, `empresas_*`). Resposta: identidade mascarada, `empresaLink` da Empresa em contexto, blocos `empresas`/`orcamentos`/`pedidos` com status `ok|forbidden|unavailable|skipped`. `Cache-Control: no-store`. Sem migration, seed, frontend HTTP ou alteração da 3080.
 - Seguranca: escopo Grupo/Empresa obrigatório; base `cadastros.cliente.visualizar`; blocos fail-closed por permissão; filtro comercial por `clienteEmpresaId` do vínculo atual; cross-tenant 404 seguro; projeções sem itens/descrições de linha.
 - Testes focados: `server/tests/runtime-onda3-cliente-central360.test.ts` 3/3 PASS (composição, RBAC parcial + isolamento A/B, anti-mistura ClienteEmpresa). Backend `typecheck`/`build` PASS. `git diff --check` PASS.
 - Commit funcional: `9852854dfdef7760c07d3e8407cb46a3425ea361`. CI PR `36140836040` SUCCESS (4 checks). CI push `36140813552` SUCCESS.
-- Proximo: blocos Local/Obra/CRM na mesma composição; Financeiro/Fiscal somente apos contrato dos modulos donos. VPS/Gate D permanecem na frente operacional (#37), sem mistura neste lote.
+- Proximo: blocos Local/Obra/CRM na mesma composição; Financeiro/Fiscal somente apos contrato dos modulos donos. Gate F VPS fechado (`894b0db8` na 3080); merge docs `#40` pendente.
 
-### Integração simulada #33 → #34 (2026-09-24) — NÃO é merge na main
+### Gate F — VPS EXECUTED_OK (contexto para Onda 3) (2026-09-25)
 
-- Candidata única: PR `#35` / branch `cursor/integracao-sim-33-34-392b` (main intocada).
-- Contém HEADs pretendidos: `#33` `ceeb92e99954b39d3137dde497208b0db1010869`
-  (`codex/comercial-360`) e `#34` `f41d87e550f7c11d1863bbf8775d03398bebe2de`
-  (`cursor/vps-hml-gate-c-legado-392b`); conflito em `STATUS_DO_PROJETO.md` resolvido.
-- Estados: `READY_FOR_REVIEW` ≠ `AUTHORIZED` ≠ `EXECUTED`.
-- Prova R07B: executou **código do commit** `ca0bc5f3529b9071fe80e58dae6aa966a9d6c740`
-  (worktree/`git show`, runtime meta `ERP-RUNTIME-07B`) × schema 001–024 em Postgres
-  isolado → `R07B_API_COMPAT_STATUS=OK`. **Não** é prova pelo image ID da 3080 nem
-  troca da API oficial; a tag de imagem `runtime07b-main-ca0bc5f3` é só referência
-  operacional da 3080, fora deste teste.
-- Guarda anti-DEV: `assert-isolated-database-url.sh` antes de `DROP SCHEMA`.
-- Restore dump pré-Gate E isolado: **`RESTORE_ISOLATED_DB_STATUS=OK`**
-  (`erp_restore_isolated_20260924_155458`; sha256=`e72ca99b…`; migrations 001–015;
-  `dev_untouched=YES`; dump na VPS). Evidência:
-  `docs/vps/evidence/restore-isolated-db-pending.txt`.
-- `GATE_E_READY=NO` (`main_missing_migrations_016_024`).
-- **Não** executados: merge na main, migration VPS (Gate E apply), canário, promoção 3080.
+- Promoção 3080 + Auth/smoke + cleanup §E **OK** · tag `comercial360-main-894b0db8`.
+- Evidências sanitizadas na PR **#40** (`cursor/gate-f-pos-merge-a-392b`); merge docs pendente.
+- Rollback: `erp-api-dev-r07b-pre-f-20260925-163531`. Sem re-promoção neste lote Onda 3.
+
+### Gate F — AUTHORIZED opção A · WAITING_MERGE (2026-09-25)
+
+- Assinatura: **VINICIUS** · `2026-09-25` · opção **A** (merge+MAIN+re-smoke+promover).
+- Evidência: `docs/vps/evidence/gate-f-autorizacao-opcao-a-2026-09-25.txt`.
+- `EXECUTE_GATE_F=AUTHORIZED_WAITING_MERGE` · **3080 ainda R07B** (não promovida).
+- PR candidata: **#37** (CI verde · ready) com fix `20eda9e2` · **ainda OPEN** (`main`=@`2fc2fc80`).
+- Script pós-merge: `scripts/vps/gate-f-option-a-build-canary.sh` (rejeita `2fc2fc80`; não promove).
+- **BLOCKED:** merge #37 em `main`. Sem merge não há build/promoção.
+
+### Gate D — cleanup §E OK (2026-09-25T15:28Z)
+
+- `http_pw_rotate=200` · `http_ban=200` · `profile_unlinked=YES` · `fixtures_inactivated=YES`.
+- `profiles_com_auth_count=0` · `profiles_synth_ativos=0` · `login_rotated_pass=400` (ban efetivo).
+- `health_3080=200` · `health_canary=200` · `GATE_D_CLEANUP_STATUS=OK` · Gate F **não** autorizado.
+- Evidência: `docs/vps/evidence/gate-d-cleanup-ok-2026-09-25.txt`.
+- **Gate D VPS completo** (Auth · canário · Bearer · browser · mutação · negativos · limpeza). Próximo externo: Gate F só com termo/assinatura + digest alinhado (não promover MAIN `2fc2fc80` sem o fix); Onda 3 na PR `#39`.
+
+### Gate D — cleanup §E BLOCKED habilitacao (2026-09-25T15:25Z)
+
+- Auth OK de novo; fixtures: `chk_cliente_empresas_habilitacao` — `ativo=false` exige `situacao_comercial='INATIVO'` + `habilitado_operacao=false`.
+- Fix aplicado; reexecutar limpeza. Evidência: `docs/vps/evidence/gate-d-cleanup-blocked-habilitacao-2026-09-25.txt`.
+
+### Gate D — cleanup §E BLOCKED fixtures (2026-09-25T15:22Z)
+
+- Auth OK: `http_pw_rotate=200` · `http_ban=200` · `profile_unlinked=YES`.
+- Fixtures: `UPDATE cliente_empresas … bloqueado=true` violou `chk_cliente_empresas_bloqueio` (exige `motivo_bloqueio`/`bloqueado_em`/`bloqueado_por`).
+- Fix: inativar com `ativo=false` + `habilitado_operacao=false` **sem** setar `bloqueado`.
+- Evidência: `docs/vps/evidence/gate-d-cleanup-blocked-fixtures-2026-09-25.txt`.
+- Reexecutar limpeza na VPS (Auth já banido — idempotente); Gate F bloqueado.
+
+### Gate D — negatives tenant OK (2026-09-25T15:13Z)
+
+- Canário `comercial360-gate-d-2b45292e` · Auth OK · `positive_orc_list=200`.
+- `neg_no_auth=401` · `neg_invalid_token=401` · `neg_adulterated_group=403` · `neg_foreign_empresa=403` · `neg_missing_tenant_headers=400` · `neg_spoof_dev_headers=401`.
+- `GATE_D_NEGATIVES_SMOKE=OK` · `alter_3080=NOT_PERFORMED` · Gate F **não** autorizado.
+- Evidência: `docs/vps/evidence/gate-d-negatives-smoke-ok-2026-09-25.txt`.
+- Gate D canário **completo** (Auth · Bearer · browser · mutação · negativos). Limpeza §E registrada em `15:28Z`. Gate F só com termo/assinatura + digest alinhado.
+
+### Gate D — mutation Orçamento→Pedido OK (2026-09-25T14:37Z)
+
+- Canário from-checkout: `comercial360-gate-d-2b45292e` · `canary_from_checkout=YES` · `main_immutable_tag_used=NO`.
+- Auth OK · `refs_ensure=YES` · `orc_create=201` · `ped_convert=201` · `ped_convert_dup=409` · `ped_get=200` · `mutation_no_auth=401`.
+- `GATE_D_MUTATION_SMOKE=OK` · `alter_3080=NOT_PERFORMED` · Gate F **não** autorizado.
+- Evidência: `docs/vps/evidence/gate-d-mutation-smoke-ok-2026-09-25.txt`.
+- Gate D (Auth + Bearer + browser URL + mutação) **fechado no canário 3086**. Próximo no canário: negativos §D; F só com termo.
+
+### Gate D — mutation ped_convert=500 reconfirm MAIN imutável (2026-09-25T14:30Z)
+
+- Reexecução VPS: Auth OK · `refs_ensure=YES` · `orc_create=201` · `ped_convert=500` `INTERNAL_ERROR`.
+- Canário recriado com `IMAGE=comercial360-main-2fc2fc80` (tag MAIN imutável **sem** o fix do map Orçamento).
+- Evidência: `docs/vps/evidence/gate-d-mutation-blocked-convert-500-main-image-2026-09-25.txt`.
+- Correção operacional: `scripts/deploy/comercial360-canary-from-checkout.sh` (build `comercial360-gate-d-<sha8>` do HEAD da branch; 3080 intacta).
+- Mutação passa a reportar `canary_image` / `canary_image_is_main_immutable` e hint se 500 em MAIN.
+- Checklist §G atualizado — **não** recriar canário com tag MAIN para mutação.
+- Próximo VPS: pull + from-checkout + smoke + mutação; cole `PASTE_TO_GIT_*`.
+
+### Gate D — mutation ped_convert=500 (2026-09-25T14:24Z)
+
+- `refs_ensure=YES` · `orc_create=201` · `ped_convert=500` `INTERNAL_ERROR`.
+- Causa: map Postgres de Orçamento não projetava `descricao`/`unidade_sigla` a partir de `*_snapshot`; `pedidoCreateSchema.parse` gerava ZodError → 500.
+- Fix: `postgresOrcamentoRepository` map + `PedidoService.convert` com `safeParse` (422); provision força RBAC com `converter-pedido`.
+- Evidência: `docs/vps/evidence/gate-d-mutation-blocked-convert-500-2026-09-25.txt`.
+- **Requer recriar canário 3086 a partir do checkout** (não tag MAIN); 3080/F intocados.
+
+### Gate D — mutation ensure FAIL codigo (2026-09-25T14:13Z)
+
+- `refs_ensure=FAIL` · `condicoes_pagamento_codigo_check` (codigo deve ser `^[0-9]{6}$`; `GATED1` inválido).
+- Evidência: `docs/vps/evidence/gate-d-mutation-blocked-codigo-2026-09-25.txt`.
+- Correção: `reserve_entity_codigo(..., 'CondicaoPagamento', 6)` + match por nome/`source_system`.
+- Reexecutar mutação na VPS; 3080/F intocados.
+
+### Gate D — mutation smoke BLOCKED → fix ensure refs (2026-09-25T14:07Z)
+
+- Auth OK · tenant group/empresa YES · `refs_cliente_empresa=MISSING` no profile sintético (sem cadastro comercial no mesmo tenant).
+- Evidência: `docs/vps/evidence/gate-d-mutation-blocked-refs-2026-09-25.txt`.
+- Correção: `gate-d-smoke-mutation-orc-ped.sh` passa a garantir fixtures mínimas `GATE_D_MUTATION` (cliente/vínculo/condição/produto/unidade) no Grupo/Empresa do profile, sem imprimir UUID.
+- Reexecutar mutação na VPS; 3080/F intocados.
+
+### Gate D — browser URL smoke OK (2026-09-25T13:56Z)
+
+- Canário 3086: health/ready 200 · runtime `ERP-RUNTIME-08B` · `auth.mode=supabase_user`.
+- Browser: `no_auth orc/ped=401` · spoof `dev_headers` sem Bearer=`401` · `browser_spoof_rejected=YES`.
+- Oficial 3080: health 200 · `ERP-RUNTIME-07B` / `dev_headers` · `official_3080_untouched_probe=YES`.
+- `GATE_D_BROWSER_URL_SMOKE=OK` · `alter_3080=NOT_PERFORMED` · Gate F **não** autorizado.
+- Evidência: `docs/vps/evidence/gate-d-browser-url-smoke-ok-2026-09-25.txt`.
+- Próximo VPS (opcional, sem F): mutações sintéticas Orçamento→Pedido — script `scripts/vps/gate-d-smoke-mutation-orc-ped.sh` (checklist §G). Gate F só com termo/assinatura.
+
+### Gate D — Bearer smoke OK (reconfirmado 2026-09-25T13:41Z)
+
+- Canário 3086 READY · overlay Supabase · Auth sintético OK (reconfirm `13:41:45Z`).
+- Bearer: `no_auth=401` · `orc_list=200` · `ped_list=200` · `tenant_group/empresa=YES` · `GATE_D_BEARER_SMOKE=OK` (1ª prova `13:14:49Z`; reconfirm `13:41:46Z`).
+- Contagens Auth: `auth_users=1` · `profiles_com_auth=1` · `profiles_ativos_sem_auth=2` · `rbac_minimo=orcamento_pedido`.
+- Evidência: `docs/vps/evidence/gate-d-bearer-smoke-ok-2026-09-25.txt` · `gate-d-auth-autorizacao-registrada.txt`.
+- **3080** intacta (`alter_3080=NOT_PERFORMED`) · Gate F **não** autorizado.
+- Segredos só no cofre local.
+- Código Comercial 360 Onda 3 segue na PR `#39` (separada).
+
+
+### Pós-Gate E — prep Gate D (histórico)
+
+- Gate E **OK** · digest **REGISTERED** (`comercial360-main-2fc2fc80`).
+- Prep go-nogo/canary 08B concluída; Auth/D passaram de WAITING → **AUTHORIZED** (ver seção acima).
+- 3080 R07B · F bloqueado.
+
+### Gate E — CONCLUÍDO no DEV (2026-09-24)
+
+- Assinatura: **VINICIUS** · `24/09/2026` · `SIGNED_CHECKLIST_OK`.
+- Backup: `pre-gate-e-20260924-174755.sql` · sha `83a9e97d…` · OK.
+- **Migrate OK**: 016–024 aplicadas · `pending=[]` · schema 001–024.
+- **`test:postgres` OK** (retry `--include=dev`): R01AUTH=14 · R08B=2 · R08C=2 · R09=2 · R10C=2 · R10=5 · fail=0 · skipped=0.
+- Smoke 3080: health/ready 200 · meta `ERP-RUNTIME-07B` · imagem **não** alterada.
+- Evidência: `docs/vps/evidence/gate-e-webconsole-2026-09-24.txt`.
+- **Próximo (fora deste Gate E):** Gate D/F / Auth sintético / digest / canário — **ainda não autorizados**.
+- **Não** D/F/3080 nesta rodada.
+
+### Integração #35 mergeada na main
+
+- PR `#35` mergeada → `main` @ `2fc2fc80adb9ca876be6ca3d29aab49305839e8a`
+  (contém #33+#34).
+- Prova R07B: código do commit `ca0bc5f3…` (não image ID da 3080) × schema 001–024 isolado OK.
+- Restore isolado pré-Gate E: **OK** (`dump_committed_to_git=NO`).
+- `GATE_E_READY=YES` (016–024 na main); apply VPS **ainda não** executado.
+- **Não** autorizados nesta rodada: Gate D, Gate F, alteração da 3080.
 
 ### ERP-RUNTIME-08 — diagnóstico Comercial 360º (2026-09-19)
 
@@ -53,8 +163,8 @@
 - Gate E: 016-024 somente da MAIN aprovada, em ordem; fatias de verificacao 016-017 Comercial e 018-024 Produto/DAM/canais na mesma janela autorizada, com backup novo, controle de aplicacao 1x e parada em falha. Teste PostgreSQL real apos completar a fatia autorizada; canario so apos esquema compativel. Nao reaplicar 001-015.
 - Imagem: tag proposta comercial360-main-<MERGE_SHA8>; SHA de merge e digest so podem ser registrados apos merge/build da MAIN. Nenhum digest atual foi comprovado. PR #33 draft e #34 independentes; revisar contrato operacional #34 antes de merge #33, sem merge automatico.
 - Smoke Auth: requer identidade sintética dedicada no Supabase Auth e profile ERP ativo com auth_user_id correspondente, Grupo/Empresa sinteticos e RBAC minimo; criar/vincular apenas em gate Auth autorizado, credenciais/token fora do Git, revogar/desabilitar apos teste, preservar auditoria.
-- Onda 3 Cliente 360: read-model minimo na PR `#39` (`9852854d`); CI `36140836040` SUCCESS. Nao homologado na VPS/3080.
-- Proximo: Local/Obra/CRM na mesma composição; Gate D/Auth na frente VPS (#37) permanece separado. 3080 R07B preservada.
+- Onda 3 Cliente 360: codigo local em preparacao, nao entregue neste commit documental. Testes dirigidos 3/3 e backend typecheck PASS; suite completa/build local interrompidos por OOM com ~1,1 GB RAM livre, sem evidencia de regressao funcional. Nao declarar CI ou Onda 3 aprovadas.
+- Proximo: CI deste handoff; corrigir default canario, fechar gate Auth e autorizacao D/E; continuar Cliente 360 somente apos validacoes do codigo. 3080 R07B preservada.
 
 ## Comercial 360 / Onda 2 - CI do preco por ClienteEmpresa (2026-09-24)
 - Commit funcional `c533f15c65bbd6ce79e9da579b0c05adfd755d4a` confirmado no remoto. Workflow `35999907136` SUCCESS: frontend/backend SUCCESS, incluindo migrate e test:postgres em PostgreSQL efemero. PR #33 permanece draft/sem merge; nenhuma mudanca na VPS, 3080 ou migrations aplicadas. CI nao equivale a homologacao DEV real.

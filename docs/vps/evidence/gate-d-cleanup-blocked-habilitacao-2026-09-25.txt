@@ -1,0 +1,16 @@
+# Gate D — cleanup PARTIAL fixtures habilitacao (sanitizado)
+
+utc=2026-09-25T15:25:18Z
+source=vps_webconsole
+auth_user_found=YES
+http_pw_rotate=200
+http_ban=200
+profile_unlinked=YES
+fixtures_inactivated=NO
+error=chk_cliente_empresas_habilitacao
+root_cause=ativo_false_exige_situacao_INATIVO
+fix=set_situacao_comercial_INATIVO_com_habilitado_false
+alter_3080=NOT_PERFORMED
+AUTHORIZES_GATE_F=NO
+NOTE=segredos_somente_cofre_local
+NOTE2=reexecutar_cleanup_apos_pull

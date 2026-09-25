@@ -1,0 +1,13 @@
+# Gate F — autorização humana opção A (sanitizado)
+# Sem token, senha, UUID ou .env.
+
+utc_registro=2026-09-25T15:37:00Z
+canal=Cursor_agent_chat
+texto_autorizacao_humana=Autorizo_Gate_F_opcao_A_merge_fix_main_build_comercial360-main-MERGE_SHA8_re-smoke_canario_promover_essa_imagem_Nao_autorizo_MAIN_2fc2fc80_sem_fix
+assinatura_formal=VINICIUS
+data_assinatura_utc=2026-09-25
+checkbox_gate_f=MARKED_AUTHORIZED_OPTION_A
+EXECUTE_GATE_F=AUTHORIZED_WAITING_MERGE
+alter_3080=NOT_YET_PERFORMED
+NOTE=promocao_so_apos_merge_build_re-smoke
+NOTE2=segredos_somente_cofre_local

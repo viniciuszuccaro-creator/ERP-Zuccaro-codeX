@@ -1,0 +1,47 @@
+# Gate E — evidência Web Console FINAL (2026-09-24) — sanitizada
+# Sem dump, .env, DATABASE_URL, PII ou segredos.
+
+utc_registro=2026-09-24T19:45:00Z
+vps=srv1982741
+main_sha=2fc2fc80adb9ca876be6ca3d29aab49305839e8a
+assinatura=VINICIUS
+termo=SIGNED_CHECKLIST_OK
+
+# Backup pré-apply
+backup_path=pre-gate-e-20260924-174755.sql
+backup_bytes=390275
+backup_sha256=83a9e97d30418a8fafa1a5be8558bcb480aa2a4184ddee1f516d1e33873f9a08
+PRE_GATE_E_BACKUP_STATUS=OK
+ROLLBACK_DRYRUN=OK
+
+# Migrator (docker run efêmero + volume migrations; imagem R07B; 3080 intocada)
+migrate_before_applied=001_015
+migrate_executed=016,017,018,019,020,021,022,023,024
+migrate_after_pending=[]
+GATE_E_MIGRATE_STATUS=OK
+schema_migrations_016_024=PRESENT_9
+
+# test:postgres (retry com NODE_ENV=development + npm ci --include=dev)
+test_postgres_status=OK
+POSTGRES_E2E_R01AUTH_TOTAL_TESTS=14
+POSTGRES_E2E_R08B_TOTAL_TESTS=2
+POSTGRES_E2E_R08C_TOTAL_TESTS=2
+POSTGRES_E2E_R09_TOTAL_TESTS=2
+POSTGRES_E2E_R10C_TOTAL_TESTS=2
+POSTGRES_E2E_R10_TOTAL_TESTS=5
+test_postgres_fail=0
+test_postgres_skipped=0
+
+# Smoke 3080 (sem troca de imagem)
+health_3080=200
+ready_3080=200
+meta_runtime=ERP-RUNTIME-07B
+meta_auth_mode=dev_headers
+official_image=erp-zuccaro-erp-api:runtime07b-main-ca0bc5f3
+alter_3080=NOT_PERFORMED
+
+GATE_E_STATUS=OK
+gate_d=NOT_AUTHORIZED
+gate_f=NOT_AUTHORIZED
+EXECUTE_DEF=NO
+NOTE=Gate_E_schema_applied_DEV_only_API_3080_ainda_R07B_sem_promocao
