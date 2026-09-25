@@ -375,9 +375,11 @@ test('go-nogo-def reporta GATE_E_READY=NO quando probe da main não tem 016-024'
   assert.match(run.stdout, /gate_e_executed_evidence=OK/);
   assert.match(run.stdout, /GATE_E_READY=NO/);
   assert.match(run.stdout, /gate_e_blockers=.*main_missing_migrations_016_024/);
-  assert.match(run.stdout, /GATE_D_READY=NO/);
-  assert.match(run.stdout, /auth_synthetic_gate_pending/);
-  // Digest REGISTERED na evidência versionada; Auth ainda bloqueia D.
+  // Auth sintético OK na evidência versionada → D não bloqueia por Auth.
+  assert.match(run.stdout, /auth_synthetic_status=OK/);
+  assert.match(run.stdout, /GATE_D_READY=YES/);
+  assert.doesNotMatch(run.stdout, /auth_synthetic_gate_pending/);
+  // Digest REGISTERED na evidência versionada.
   assert.match(run.stdout, /image_digest_status=REGISTERED/);
   assert.doesNotMatch(run.stdout, /gate_d_blockers=.*image_digest_pending/);
   assert.doesNotMatch(run.stdout, /gate_d_blockers=.*gate_e_schema_not_applied/);
@@ -427,8 +429,9 @@ test('go-nogo-def GATE_E_READY=YES quando MAIN_MIGRATIONS_DIR tem 016-024', () =
   assert.match(run.stdout, /vps_schema_016_024=APPLIED/);
   assert.match(run.stdout, /GATE_E_READY=YES/);
   assert.match(run.stdout, /gate_e_blockers=NONE/);
-  assert.match(run.stdout, /GATE_D_READY=NO/);
-  assert.match(run.stdout, /auth_synthetic_gate_pending/);
+  assert.match(run.stdout, /auth_synthetic_status=OK/);
+  assert.match(run.stdout, /GATE_D_READY=YES/);
+  assert.doesNotMatch(run.stdout, /auth_synthetic_gate_pending/);
   assert.match(run.stdout, /image_digest_status=REGISTERED/);
   assert.doesNotMatch(run.stdout, /gate_d_blockers=.*image_digest_pending/);
   assert.doesNotMatch(run.stdout, /gate_d_blockers=.*gate_e_schema_not_applied/);
@@ -437,7 +440,7 @@ test('go-nogo-def GATE_E_READY=YES quando MAIN_MIGRATIONS_DIR tem 016-024', () =
   assert.doesNotMatch(run.stdout, /gate_e_blockers=.*image_digest/);
 });
 
-test('print-pedido-codex DECISIONS_DOCUMENTED com 5 itens e pendencias operacionais', () => {
+test('print-pedido-codex DECISIONS_DOCUMENTED com 5 itens e Auth OK', () => {
   const script = path.join(root, 'scripts/vps/print-pedido-codex.sh');
   const run = spawnSync('bash', [script], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr || run.stdout);
@@ -448,19 +451,20 @@ test('print-pedido-codex DECISIONS_DOCUMENTED com 5 itens e pendencias operacion
   assert.match(run.stdout, /decided_gate_e_strategy=016_024_single_invocation_main_order/);
   assert.match(run.stdout, /review_slices=016_017,018_024/);
   assert.match(run.stdout, /image_digest_status=REGISTERED/);
-  assert.match(run.stdout, /auth_synthetic_status=PENDING_AUTH_GATE/);
+  assert.match(run.stdout, /auth_synthetic_status=OK/);
   assert.match(run.stdout, /gates_def_executed=NO/);
   assert.match(run.stdout, /AUTHORIZES_GATES_DEF=NO/);
   assert.doesNotMatch(run.stdout, /fatias_comercial_016_017_then_produto/);
 });
 
-test('print-pedido-codex e go-nogo aceitam digest REGISTERED sem liberar Auth', () => {
+test('print-pedido-codex e go-nogo: Auth PENDING ainda bloqueia Gate D', () => {
   const pedido = path.join(root, 'scripts/vps/print-pedido-codex.sh');
   const go = path.join(root, 'scripts/vps/go-nogo-def.sh');
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'digest-'));
-  const evidence = path.join(tmp, 'digest.txt');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'digest-auth-'));
+  const digestEv = path.join(tmp, 'digest.txt');
+  const authEv = path.join(tmp, 'auth.txt');
   fs.writeFileSync(
-    evidence,
+    digestEv,
     [
       'merge_sha8=2fc2fc80',
       'image_tag=erp-zuccaro-erp-api:comercial360-main-2fc2fc80',
@@ -471,9 +475,10 @@ test('print-pedido-codex e go-nogo aceitam digest REGISTERED sem liberar Auth', 
       '',
     ].join('\n'),
   );
+  fs.writeFileSync(authEv, 'AUTH_SYNTHETIC_STATUS=PENDING_AUTH_GATE\n');
   const pedidoRun = spawnSync('bash', [pedido], {
     encoding: 'utf8',
-    env: { ...process.env, DIGEST_EVIDENCE: evidence },
+    env: { ...process.env, DIGEST_EVIDENCE: digestEv, AUTH_EVIDENCE: authEv },
   });
   assert.equal(pedidoRun.status, 0, pedidoRun.stderr || pedidoRun.stdout);
   assert.match(pedidoRun.stdout, /image_digest_status=REGISTERED/);
@@ -482,7 +487,12 @@ test('print-pedido-codex e go-nogo aceitam digest REGISTERED sem liberar Auth', 
   const migDir = path.join(root, 'server/migrations');
   const goRun = spawnSync('bash', [go], {
     encoding: 'utf8',
-    env: { ...process.env, MAIN_MIGRATIONS_DIR: migDir, DIGEST_EVIDENCE: evidence },
+    env: {
+      ...process.env,
+      MAIN_MIGRATIONS_DIR: migDir,
+      DIGEST_EVIDENCE: digestEv,
+      AUTH_EVIDENCE: authEv,
+    },
   });
   assert.equal(goRun.status, 0, goRun.stderr || goRun.stdout);
   assert.match(goRun.stdout, /image_digest_status=REGISTERED/);
@@ -507,7 +517,8 @@ test('freeze-go-nogo-snapshot grava GO_NOGO=NO e EXHAUSTED', () => {
   assert.match(text, /GO_NOGO=NO/);
   assert.match(text, /GATE_E_READY=NO/);
   assert.match(text, /main_missing_migrations_016_024/);
-  assert.match(text, /GATE_D_READY=NO/);
+  // Auth OK no repo: D ready técnico; GO_NOGO=NO permanece por E/F.
+  assert.match(text, /GATE_D_READY=YES/);
   assert.match(text, /GATE_F_READY=NO/);
   assert.match(text, /DECISION_STATE=(READY_FOR_REVIEW|AUTHORIZED_CHECKLIST)/);
   assert.match(text, /AUTONOMOUS_PREP_STATUS=EXHAUSTED_WAITING_HUMAN_CODEX/);
