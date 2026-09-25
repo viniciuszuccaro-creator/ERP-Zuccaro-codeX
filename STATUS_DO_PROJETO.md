@@ -1,3 +1,11 @@
+## Comercial 360 / Onda 3 - revisão Cursor APPROVED (2026-09-25T20:00Z)
+
+- HEAD `69c1adc7` · CI verde · mergeable CLEAN.
+- Fingerprint FNV-1a: tokens mesmo length → queryKeys distintos; teste reproduz colisão length-only.
+- Bearer fail-closed · flag HTTP 360 **desligada** · PII/tenant/vínculo ClienteEmpresa: testes backend 4/4 PASS.
+- Sem bloqueador de merge de código. **Próximo:** merge humano #40 → #39 (agente sem permissão de merge).
+- DNS/HTTPS externo e acesso diário: ainda **não** concluídos (#40).
+
 ## Comercial 360 / Onda 3 - cache: tokens mesmo length (2026-09-25)
 
 - Bug: `central360SessionKey` usava só `t${length}` — duas sessões com Bearer distintos de mesmo comprimento compartilhavam queryKey.
