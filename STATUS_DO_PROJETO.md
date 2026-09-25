@@ -1,3 +1,8 @@
+### Gate D — cleanup §E BLOCKED habilitacao (2026-09-25T15:25Z)
+
+- Auth OK de novo; fixtures: `chk_cliente_empresas_habilitacao` — `ativo=false` exige `situacao_comercial='INATIVO'` + `habilitado_operacao=false`.
+- Fix aplicado; reexecutar limpeza. Evidência: `docs/vps/evidence/gate-d-cleanup-blocked-habilitacao-2026-09-25.txt`.
+
 ### Gate D — cleanup §E BLOCKED fixtures (2026-09-25T15:22Z)
 
 - Auth OK: `http_pw_rotate=200` · `http_ban=200` · `profile_unlinked=YES`.

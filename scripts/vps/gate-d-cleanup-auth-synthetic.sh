@@ -130,12 +130,14 @@ echo 'profile_synth_inactivated=YES'
 
 FIX_INACT=NO
 if [[ "$INACTIVATE_FIXTURES" == "YES" ]]; then
-  # Soft-inactivate: ativo=false + desabilita operação.
-  # NÃO setar bloqueado=true sem motivo_bloqueio (chk_cliente_empresas_bloqueio).
+  # Soft-inactivate alinhado a chk_cliente_empresas_habilitacao / bloqueio:
+  # ativo=false ⇒ habilitado_operacao=false ∧ situacao_comercial='INATIVO'
+  # NÃO setar bloqueado=true (exige motivo/em/por).
   docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL' >/dev/null
 UPDATE cliente_empresas
 SET ativo = false,
     habilitado_operacao = false,
+    situacao_comercial = 'INATIVO',
     updated_at = timezone('utc', now())
 WHERE source_system = 'GATE_D_MUTATION';
 UPDATE clientes SET ativo = false
