@@ -42,6 +42,7 @@ import {
   unidadeUpdateSchema,
 } from './repositories/cadastroTypes.js';
 import { ClienteService } from './services/clienteService.js';
+import { ClienteCentral360Service } from './services/clienteCentral360Service.js';
 import { ClienteLocalService } from './services/clienteLocalService.js';
 import { ObraService } from './services/obraService.js';
 import { TabelaPrecoService } from './services/tabelaPrecoService.js';
@@ -182,6 +183,11 @@ export function createApp(options: CreateAppOptions) {
     rbacGuard,
     obraService,
   );
+  const clienteCentral360Service = new ClienteCentral360Service(
+    clienteService,
+    orcamentoService,
+    pedidoService,
+  );
 
   const app = express();
   app.disable('x-powered-by');
@@ -229,6 +235,7 @@ export function createApp(options: CreateAppOptions) {
     setorService,
     produtoService,
     clienteService,
+    clienteCentral360Service,
     clienteLocalService,
     obraService,
     tabelaPrecoService,
@@ -247,6 +254,7 @@ export function createApp(options: CreateAppOptions) {
     setorService,
     produtoService,
     clienteService,
+    clienteCentral360Service,
     clienteLocalService,
     obraService,
     tabelaPrecoService,

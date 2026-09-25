@@ -1,3 +1,13 @@
+## Comercial 360 / Onda 3 - Central Cliente 360 read-model minimo (2026-09-25)
+
+- Branch `cursor/comercial360-onda3-cliente-392b` a partir da `main` (`2fc2fc80`); PR independente da #37 (VPS Gate D).
+- Objetivo: primeiro checkpoint da Onda 3 — composição de leitura over mestres/operações canônicas, sem tabela espelho nem bloco financeiro/fiscal.
+- Reutilizado: `ClienteService`, `OrcamentoService`, `PedidoService`, rotas `/api/v1/clientes`, TenantGuard, RBAC Cadastros/Comercial e mascaramento de documento.
+- API: `GET /api/v1/clientes/:id/central-360` com paginação por bloco (`orcamentos_*`, `pedidos_*`, `empresas_*`). Resposta: identidade mascarada, `empresaLink` da Empresa em contexto, blocos `empresas`/`orcamentos`/`pedidos` com status `ok|forbidden|unavailable|skipped`. `Cache-Control: no-store`. Sem migration, seed, frontend HTTP ou alteração da 3080.
+- Seguranca: escopo Grupo/Empresa obrigatório; base `cadastros.cliente.visualizar`; blocos fail-closed por permissão; filtro comercial por `clienteEmpresaId` do vínculo atual; cross-tenant 404 seguro; projeções sem itens/descrições de linha.
+- Testes focados: `server/tests/runtime-onda3-cliente-central360.test.ts` 3/3 PASS (composição, RBAC parcial + isolamento A/B, anti-mistura ClienteEmpresa). Backend `typecheck` PASS. `git diff --check` PASS.
+- Proximo: CI desta PR; depois blocos Local/Obra/CRM na mesma composição; Financeiro/Fiscal somente apos contrato dos modulos donos. VPS/Gate D permanecem na frente operacional (#37), sem mistura neste lote.
+
 ### Integração simulada #33 → #34 (2026-09-24) — NÃO é merge na main
 
 - Candidata única: PR `#35` / branch `cursor/integracao-sim-33-34-392b` (main intocada).
@@ -42,8 +52,8 @@
 - Gate E: 016-024 somente da MAIN aprovada, em ordem; fatias de verificacao 016-017 Comercial e 018-024 Produto/DAM/canais na mesma janela autorizada, com backup novo, controle de aplicacao 1x e parada em falha. Teste PostgreSQL real apos completar a fatia autorizada; canario so apos esquema compativel. Nao reaplicar 001-015.
 - Imagem: tag proposta comercial360-main-<MERGE_SHA8>; SHA de merge e digest so podem ser registrados apos merge/build da MAIN. Nenhum digest atual foi comprovado. PR #33 draft e #34 independentes; revisar contrato operacional #34 antes de merge #33, sem merge automatico.
 - Smoke Auth: requer identidade sintética dedicada no Supabase Auth e profile ERP ativo com auth_user_id correspondente, Grupo/Empresa sinteticos e RBAC minimo; criar/vincular apenas em gate Auth autorizado, credenciais/token fora do Git, revogar/desabilitar apos teste, preservar auditoria.
-- Onda 3 Cliente 360: codigo local em preparacao, nao entregue neste commit documental. Testes dirigidos 3/3 e backend typecheck PASS; suite completa/build local interrompidos por OOM com ~1,1 GB RAM livre, sem evidencia de regressao funcional. Nao declarar CI ou Onda 3 aprovadas.
-- Proximo: CI deste handoff; corrigir default canario, fechar gate Auth e autorizacao D/E; continuar Cliente 360 somente apos validacoes do codigo. 3080 R07B preservada.
+- Onda 3 Cliente 360: read-model minimo entregue na branch `cursor/comercial360-onda3-cliente-392b` (`GET /api/v1/clientes/:id/central-360`); testes dirigidos 3/3 e backend typecheck PASS neste lote. CI da PR ainda pendente. Nao homologado na VPS/3080.
+- Proximo: CI desta PR de codigo; Gate D/Auth na frente VPS (#37) permanece separado. 3080 R07B preservada.
 
 ## Comercial 360 / Onda 2 - CI do preco por ClienteEmpresa (2026-09-24)
 - Commit funcional `c533f15c65bbd6ce79e9da579b0c05adfd755d4a` confirmado no remoto. Workflow `35999907136` SUCCESS: frontend/backend SUCCESS, incluindo migrate e test:postgres em PostgreSQL efemero. PR #33 permanece draft/sem merge; nenhuma mudanca na VPS, 3080 ou migrations aplicadas. CI nao equivale a homologacao DEV real.

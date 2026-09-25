@@ -54,6 +54,12 @@ Auditar mutações, mescla/vínculo, exportação sensível, mudança de respons
 4. Implementar primeiro o endpoint/read model mínimo de identidade + operações comerciais canônicas.
 5. Adicionar blocos Financeiro/Fiscal/Logística somente após contratos dos módulos proprietários.
 
+### Checkpoint entregue (2026-09-25)
+
+- `GET /api/v1/clientes/:id/central-360` compõe identidade mascarada, vínculo `ClienteEmpresa` da Empresa em contexto e blocos paginados de empresas/orçamentos/pedidos.
+- Status por bloco (`ok|forbidden|unavailable|skipped`); sem cópia de saldo/título; sem migration; frontend HTTP permanece desligado.
+- Testes sintéticos cobrem composição, RBAC parcial e isolamento Grupo A/B.
+
 ## Aceite
 
 Fonte única preservada; busca sensível autorizada; leitura agregada paginada; nenhuma cópia de saldo/título/pedido; deduplicação revisável; cache isolado; recomendações sem ação crítica automática; testes tenant/RBAC/LGPD e auditoria sanitizada.
