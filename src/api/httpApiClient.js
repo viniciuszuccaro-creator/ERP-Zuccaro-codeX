@@ -17,6 +17,87 @@ function createHttpError(status, body, requestId) {
 }
 
 /**
+ * Token da sessão autenticada para Bearer (supabase_user).
+ * Ordem: erp_runtime_scope.token → base44_access_token / appParams.
+ * Nunca logar o valor; retorna string vazia se ausente.
+ *
+ * @param {{
+ *   storage?: { getItem?: (key: string) => string | null },
+ *   appToken?: string | null,
+ * }} [options]
+ * @returns {string}
+ */
+export function resolveErpAuthSessionToken(options = {}) {
+  const storage = options.storage
+    ?? (typeof window !== 'undefined' ? window.localStorage : null);
+  try {
+    const raw = storage?.getItem?.('erp_runtime_scope');
+    if (raw) {
+      const scope = JSON.parse(raw);
+      const fromScope = typeof scope?.token === 'string' ? scope.token.trim() : '';
+      if (fromScope) return fromScope;
+    }
+  } catch {
+    // ignore JSON/storage errors — fail-closed sem token
+  }
+  const storedApp = typeof storage?.getItem === 'function'
+    ? String(storage.getItem('base44_access_token') || '').trim()
+    : '';
+  if (storedApp) return storedApp;
+  const appToken = typeof options.appToken === 'string' ? options.appToken.trim() : '';
+  return appToken;
+}
+
+/**
+ * Gate de carga da Central 360: exige flag + tenant + ator + Bearer de sessão.
+ * @param {{
+ *   flag?: boolean,
+ *   clienteId?: string | null,
+ *   groupId?: string | null,
+ *   empresaId?: string | null,
+ *   actorId?: string | null,
+ *   token?: string | null,
+ * }} input
+ */
+export function canLoadCentralCliente360(input = {}) {
+  const token = typeof input.token === 'string' ? input.token.trim() : '';
+  return Boolean(
+    input.flag
+    && input.clienteId
+    && input.groupId
+    && input.empresaId
+    && input.actorId
+    && token,
+  );
+}
+
+/**
+ * Fingerprint FNV-1a 32-bit (sync, browser+Node) — isola cache sem colocar o Bearer no queryKey.
+ * Dois tokens distintos de mesmo comprimento NÃO colidem (corrigido vs. só `t${length}`).
+ * @param {string} value
+ * @returns {string} hex sem prefixo 0x
+ */
+function fnv1a32Hex(value) {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
+/**
+ * Chave de sessão sem segredo (para queryKey / invalidação ao trocar usuário/token).
+ * Inclui length + fingerprint do conteúdo — tokens diferentes com length idêntico invalidam cache.
+ * @param {string | null | undefined} token
+ */
+export function central360SessionKey(token) {
+  const t = typeof token === 'string' ? token.trim() : '';
+  if (!t) return 'none';
+  return `t${t.length}_${fnv1a32Hex(t)}`;
+}
+
+/**
  * @param {{
  *   baseUrl?: string,
  *   getScope?: () => { groupId?: string, empresaId?: string, actorId?: string, actorEmail?: string, token?: string },
@@ -274,6 +355,31 @@ export function createHttpApiClient(options = {}) {
     history(id, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}/historico`, { signal }); },
     convertOrcamento(id, payload, { signal } = {}) { return request(`/api/v1/orcamentos/${encodeURIComponent(id)}/converter-pedido`, { method: 'POST', body: payload, signal }); },
   };
+  const clientes = {
+    /**
+     * Read-model Central Cliente 360 (opt-in UI via VITE_ERP_HTTP_CLIENTE_360).
+     * @param {string} id
+     * @param {{ orcamentosLimit?: number, pedidosLimit?: number, locaisLimit?: number, obrasLimit?: number, signal?: AbortSignal }} [options]
+     */
+    central360(id, {
+      orcamentosLimit = 10,
+      pedidosLimit = 10,
+      locaisLimit = 10,
+      obrasLimit = 10,
+      signal,
+    } = {}) {
+      return request(`/api/v1/clientes/${encodeURIComponent(id)}/central-360`, {
+        query: {
+          orcamentos_limit: orcamentosLimit,
+          pedidos_limit: pedidosLimit,
+          locais_limit: locaisLimit,
+          obras_limit: obrasLimit,
+        },
+        signal,
+        unwrap: false,
+      });
+    },
+  };
   /** @type {Record<string, ReturnType<typeof createCrudEntity>>} */
   const entities = {};
   for (const name of HTTP_PILOT_ENTITIES) {
@@ -284,6 +390,7 @@ export function createHttpApiClient(options = {}) {
     entities,
     orcamentos,
     pedidos,
+    clientes,
     /** Acesso direto a rotas preparadas (ex.: Produto base) sem feature flag. */
     preparedEntities: entityRoutes,
     async health() {

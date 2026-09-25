@@ -109,12 +109,36 @@ docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
   -v gid="$GROUP_ID" -v eid="$EMPRESA_ID" <<'SQL' >"$ensure_out" 2>&1 || true
 BEGIN;
 
+-- Reativa fixtures GATE_D inativadas na limpeza §E (unique por codigo/nome ignora ativo).
+UPDATE unidades_medida SET ativo=true
+ WHERE group_id=:'gid'::uuid AND lower(sigla)='un';
+UPDATE marcas SET ativo=true
+ WHERE group_id=:'gid'::uuid AND nome_marca='GATE-D SYNTH';
+UPDATE grupos_produto SET ativo=true
+ WHERE group_id=:'gid'::uuid AND (codigo='GATED-GP' OR nome_grupo='GATE-D SYNTH');
+UPDATE setores_atividade SET ativo=true
+ WHERE group_id=:'gid'::uuid AND nome='GATE-D SYNTH';
+UPDATE produtos SET ativo=true, status='Ativo'
+ WHERE group_id=:'gid'::uuid
+   AND (codigo='GATED-PROD' OR descricao='PRODUTO GATE-D SYNTH')
+   AND (empresa_id IS NULL OR empresa_id=:'eid'::uuid);
+UPDATE clientes SET ativo=true, status='Ativo'
+ WHERE group_id=:'gid'::uuid
+   AND (
+     documento_normalizado='00000000000191'
+     OR source_system='GATE_D_MUTATION'
+     OR email='gate-d.cliente@dev.synthetic.local'
+   );
+UPDATE condicoes_pagamento SET ativo=true
+ WHERE group_id=:'gid'::uuid
+   AND (nome='GATE-D A VISTA' OR source_system='GATE_D_MUTATION');
+
 -- Unidade
 INSERT INTO unidades_medida (id, group_id, empresa_id, sigla, nome_completo, tipo_grandeza, ativo)
 SELECT gen_random_uuid(), :'gid'::uuid, :'eid'::uuid, 'UN', 'Unidade Gate-D', 'Unidade', true
 WHERE NOT EXISTS (
   SELECT 1 FROM unidades_medida
-  WHERE group_id=:'gid'::uuid AND ativo IS TRUE AND lower(sigla)='un'
+  WHERE group_id=:'gid'::uuid AND lower(sigla)='un'
 );
 
 -- Marca
@@ -122,7 +146,7 @@ INSERT INTO marcas (id, group_id, empresa_id, nome_marca, ativo)
 SELECT gen_random_uuid(), :'gid'::uuid, :'eid'::uuid, 'GATE-D SYNTH', true
 WHERE NOT EXISTS (
   SELECT 1 FROM marcas
-  WHERE group_id=:'gid'::uuid AND ativo IS TRUE AND nome_marca='GATE-D SYNTH'
+  WHERE group_id=:'gid'::uuid AND nome_marca='GATE-D SYNTH'
 );
 
 -- Grupo produto
@@ -130,7 +154,7 @@ INSERT INTO grupos_produto (id, group_id, empresa_id, nome_grupo, codigo, nature
 SELECT gen_random_uuid(), :'gid'::uuid, :'eid'::uuid, 'GATE-D SYNTH', 'GATED-GP', 'Revenda', true
 WHERE NOT EXISTS (
   SELECT 1 FROM grupos_produto
-  WHERE group_id=:'gid'::uuid AND ativo IS TRUE
+  WHERE group_id=:'gid'::uuid
     AND (codigo='GATED-GP' OR nome_grupo='GATE-D SYNTH')
 );
 
@@ -139,7 +163,7 @@ INSERT INTO setores_atividade (id, group_id, empresa_id, nome, tipo_operacao, at
 SELECT gen_random_uuid(), :'gid'::uuid, :'eid'::uuid, 'GATE-D SYNTH', 'Revenda', true
 WHERE NOT EXISTS (
   SELECT 1 FROM setores_atividade
-  WHERE group_id=:'gid'::uuid AND ativo IS TRUE AND nome='GATE-D SYNTH'
+  WHERE group_id=:'gid'::uuid AND nome='GATE-D SYNTH'
 );
 
 -- Produto mínimo
@@ -156,16 +180,16 @@ SELECT
   'PRODUTO GATE-D SYNTH',
   'PRODUTO GATE-D SYNTH',
   'Revenda',
-  (SELECT id FROM unidades_medida WHERE group_id=:'gid'::uuid AND ativo IS TRUE AND lower(sigla)='un' ORDER BY created_at LIMIT 1),
+  (SELECT id FROM unidades_medida WHERE group_id=:'gid'::uuid AND lower(sigla)='un' ORDER BY created_at LIMIT 1),
   'UN',
-  (SELECT id FROM grupos_produto WHERE group_id=:'gid'::uuid AND ativo IS TRUE AND (codigo='GATED-GP' OR nome_grupo='GATE-D SYNTH') ORDER BY created_at LIMIT 1),
-  (SELECT id FROM marcas WHERE group_id=:'gid'::uuid AND ativo IS TRUE AND nome_marca='GATE-D SYNTH' ORDER BY created_at LIMIT 1),
-  (SELECT id FROM setores_atividade WHERE group_id=:'gid'::uuid AND ativo IS TRUE AND nome='GATE-D SYNTH' ORDER BY created_at LIMIT 1),
+  (SELECT id FROM grupos_produto WHERE group_id=:'gid'::uuid AND (codigo='GATED-GP' OR nome_grupo='GATE-D SYNTH') ORDER BY created_at LIMIT 1),
+  (SELECT id FROM marcas WHERE group_id=:'gid'::uuid AND nome_marca='GATE-D SYNTH' ORDER BY created_at LIMIT 1),
+  (SELECT id FROM setores_atividade WHERE group_id=:'gid'::uuid AND nome='GATE-D SYNTH' ORDER BY created_at LIMIT 1),
   'Ativo',
   true
 WHERE NOT EXISTS (
   SELECT 1 FROM produtos
-  WHERE group_id=:'gid'::uuid AND ativo IS TRUE
+  WHERE group_id=:'gid'::uuid
     AND (codigo='GATED-PROD' OR descricao='PRODUTO GATE-D SYNTH')
     AND (empresa_id IS NULL OR empresa_id=:'eid'::uuid)
 );
@@ -193,7 +217,7 @@ SELECT
   true
 WHERE NOT EXISTS (
   SELECT 1 FROM clientes
-  WHERE group_id=:'gid'::uuid AND ativo IS TRUE
+  WHERE group_id=:'gid'::uuid
     AND (
       documento_normalizado='00000000000191'
       OR source_system='GATE_D_MUTATION'
@@ -266,7 +290,7 @@ SELECT
   'GATE-D'
 WHERE NOT EXISTS (
   SELECT 1 FROM condicoes_pagamento
-  WHERE group_id=:'gid'::uuid AND ativo IS TRUE
+  WHERE group_id=:'gid'::uuid
     AND (nome='GATE-D A VISTA' OR source_system='GATE_D_MUTATION')
 );
 

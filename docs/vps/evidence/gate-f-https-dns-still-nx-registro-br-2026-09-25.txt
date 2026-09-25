@@ -1,0 +1,17 @@
+GATE_F / ERP HTTPS — pós “ações Hostinger concluídas” — 2026-09-25T20:50Z
+Fonte: cloud agent. Sem IP/segredos.
+
+Probe:
+- dig @8.8.8.8 erp-dev.cpaferroeaco.com.br A → NXDOMAIN / vazio
+- dig @8.8.8.8 api-erp-dev.cpaferroeaco.com.br A → NXDOMAIN / vazio
+- dig @1.1.1.1 → idem
+- HTTPS curl → Could not resolve host · http=000
+
+NS autoritativo:
+- a.auto.dns.br / b.auto.dns.br (Registro.br)
+- SOA: a.auto.dns.br. hostmaster.registro.br.
+
+Conclusão:
+- Ações no painel Hostinger Domains sozinhas NÃO publicam (NS ≠ Hostinger).
+- BLOCKED até A records no DNS autoritativo (Registro.br) ou mudança de NS.
+- Acesso diário NÃO concluído. TLS/Caddy não verificável sem DNS público.

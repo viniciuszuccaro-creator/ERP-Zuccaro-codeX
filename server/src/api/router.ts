@@ -7,6 +7,7 @@ import type { DbClient } from '../db/client.js';
 import { getAuthFoundation } from '../auth/foundation.js';
 import { requireTenantScope } from '../middleware/requestContext.js';
 import type { ClienteService } from '../services/clienteService.js';
+import type { ClienteCentral360Service } from '../services/clienteCentral360Service.js';
 import type { ClienteLocalService } from '../services/clienteLocalService.js';
 import type { ObraService } from '../services/obraService.js';
 import type { TabelaPrecoService } from '../services/tabelaPrecoService.js';
@@ -34,6 +35,7 @@ export type ApiDeps = {
   setorService: TenantCrudService<any, any, any>;
   produtoService: ProdutoService;
   clienteService: ClienteService;
+  clienteCentral360Service: ClienteCentral360Service;
   clienteLocalService: ClienteLocalService;
   obraService: ObraService;
   tabelaPrecoService: TabelaPrecoService;
@@ -304,8 +306,34 @@ function parseAtivoQuery(ativoParam: unknown): boolean | undefined {
   return ['1', 'true', 'yes'].includes(String(ativoParam).toLowerCase());
 }
 
-function mountClienteRoutes(router: Router, service: ClienteService) {
+function mountClienteRoutes(
+  router: Router,
+  service: ClienteService,
+  central360: ClienteCentral360Service,
+) {
   const relationshipPath = '/api/v1/clientes/:clienteId/empresas';
+
+  router.get('/api/v1/clientes/:id/central-360', requireTenantScope, async (req, res, next) => {
+    try {
+      const parsePage = (value: unknown) => (value == null ? undefined : Number(value));
+      const data = await central360.get(ctxFromReq(req), req.params.id, {
+        orcamentosLimit: parsePage(req.query.orcamentos_limit),
+        orcamentosOffset: parsePage(req.query.orcamentos_offset),
+        pedidosLimit: parsePage(req.query.pedidos_limit),
+        pedidosOffset: parsePage(req.query.pedidos_offset),
+        empresasLimit: parsePage(req.query.empresas_limit),
+        empresasOffset: parsePage(req.query.empresas_offset),
+        locaisLimit: parsePage(req.query.locais_limit),
+        locaisOffset: parsePage(req.query.locais_offset),
+        obrasLimit: parsePage(req.query.obras_limit),
+        obrasOffset: parsePage(req.query.obras_offset),
+      });
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data });
+    } catch (error) {
+      next(error);
+    }
+  });
 
   router.get(relationshipPath, requireTenantScope, async (req, res, next) => {
     try {
@@ -1103,6 +1131,7 @@ export function createApiRouter(deps: ApiDeps) {
         sequentialCodigo: true,
         documentoUniqueness: true,
         softDeleteRestore: true,
+        central360ReadModel: true,
         frontendHttp: false,
       },
       clienteEmpresa: {
@@ -1169,7 +1198,7 @@ export function createApiRouter(deps: ApiDeps) {
   mountCrud(router, '/api/v1/grupos-produto', deps.grupoProdutoService);
   mountCrud(router, '/api/v1/setores-atividade', deps.setorService);
   mountProdutoRoutes(router, deps.produtoService);
-  mountClienteRoutes(router, deps.clienteService);
+  mountClienteRoutes(router, deps.clienteService, deps.clienteCentral360Service);
   mountClienteLocalRoutes(router, deps.clienteLocalService);
   mountObraRoutes(router, deps.obraService);
   mountTabelaPrecoRoutes(router, deps.tabelaPrecoService);

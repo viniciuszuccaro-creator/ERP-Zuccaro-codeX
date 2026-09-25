@@ -1,0 +1,16 @@
+GATE_F / ERP HTTPS externo — probe DNS (sanitized) — 2026-09-25T19:15Z
+Fonte: cloud agent (fora da VPS). Sem segredos / sem body.
+
+Hosts testados (A record / HTTPS):
+- erp-dev.cpaferroeaco.com.br → DNS NX / Could not resolve host · http=000
+- api-erp-dev.cpaferroeaco.com.br → DNS NX / Could not resolve host · http=000
+- erp.cpaferroeaco.com.br → DNS NX / Could not resolve host · http=000
+
+Conclusão:
+- BLOCKED: não há URL HTTPS pública resolvível para login/navegação externos neste momento.
+- Documentação reserva `erp-dev` / `api-erp-dev` como futuro (docs/ERP_DEV_DEPLOY_01.md · ERP_RUNTIME_01).
+- Smoke browser Gate F OK apenas em loopback VPS `http://127.0.0.1:3081/` (evidência tenant-ok).
+- 400/403 NÃO contam como sucesso; aqui nem houve handshake TLS.
+
+Não impede: CI das PRs #39/#40; promoção 3080 já EXECUTED_OK no loopback.
+Impede uso diário externo: DNS/TLS público do SPA + prova supabase_user no browser.
