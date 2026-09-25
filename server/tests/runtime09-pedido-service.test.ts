@@ -28,6 +28,7 @@ function fixture() {
     {get:async()=>({id:'local',ativo:true} as never)},
     {get:async()=>({id:'obra',ativo:true} as never)},
     {get:async()=>({id:'tabela',ativo:true} as never)},
+    {resolveSalePrice:async()=>({preco:'10.000000',tabela_preco_id:'tabela'})},
   );
   return {service,repo,orcamentos,audit,rbac};
 }

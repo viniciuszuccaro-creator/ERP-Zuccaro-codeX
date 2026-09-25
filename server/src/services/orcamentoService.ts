@@ -14,6 +14,14 @@ import type { TenantEntityRepository } from './tenantCrudService.js';
 const RBAC_MODULE = 'Comercial';
 const RBAC_SECTION = 'orcamento';
 
+/** Porta mínima para snapshot de preço na venda (TabelaPrecoService.resolveSalePrice). */
+export type OrcamentoSalePricePort = {
+  resolveSalePrice(
+    ctx: RequestContext,
+    input: { clienteEmpresaId: string; produtoId: string; unidadeMedidaId: string },
+  ): Promise<{ preco: string } | null>;
+};
+
 export function orcamentoAuditSnapshot(row: Orcamento) {
   return sanitizeAuditSnapshot({
     id: row.id, group_id: row.group_id, empresa_id: row.empresa_id, numero: row.numero,
@@ -34,6 +42,7 @@ export class OrcamentoService {
     private readonly produtos: Pick<ProdutoRepository, 'getById'>,
     private readonly unidades: Pick<TenantEntityRepository<UnidadeMedida, never, never>, 'getById'>,
     private readonly condicoes: Pick<CondicaoPagamentoRepository, 'get'>,
+    private readonly prices: OrcamentoSalePricePort,
   ) {}
 
   async create(ctx: RequestContext, payload: unknown) {
@@ -41,7 +50,8 @@ export class OrcamentoService {
     const data = this.parse(payload);
     return this.repo.withTransaction(async (executor) => {
       await this.validateReferences(scope, data, executor);
-      const created = await this.repo.create(scope, data, executor);
+      const priced = await this.applyServerPriceSnapshots(ctx, data);
+      const created = await this.repo.create(scope, priced, executor);
       await this.auditRow(ctx, 'create', null, created, executor);
       return created;
     });
@@ -84,7 +94,8 @@ export class OrcamentoService {
       const before = await this.requireOrcamento(scope, id, executor);
       this.requireOpen(before);
       await this.validateReferences(scope, data, executor);
-      const after = await this.repo.update(scope, id, data, executor);
+      const priced = await this.applyServerPriceSnapshots(ctx, data);
+      const after = await this.repo.update(scope, id, priced, executor);
       if (!after) this.stateConflict();
       await this.auditRow(ctx, 'update', before, after, executor);
       return after;
@@ -108,6 +119,34 @@ export class OrcamentoService {
     const parsed = orcamentoCreateSchema.safeParse(payload);
     if (!parsed.success) throw new AppError(422, 'VALIDATION_ERROR', 'Invalid Orcamento payload', parsed.error.flatten());
     return parsed.data;
+  }
+
+  /**
+   * Política Onda 2: preço unitário vem do servidor (ClienteEmpresa → tabela).
+   * Payload do cliente não é autoridade; cancelados não passam por aqui (requireOpen).
+   */
+  private async applyServerPriceSnapshots(ctx: RequestContext, data: OrcamentoCreate): Promise<OrcamentoCreate> {
+    const itens = [];
+    for (const item of data.itens) {
+      const resolved = await this.prices.resolveSalePrice(ctx, {
+        clienteEmpresaId: data.cliente_empresa_id,
+        produtoId: item.produto_id,
+        unidadeMedidaId: item.unidade_id,
+      });
+      if (!resolved?.preco) {
+        throw new AppError(422, 'ORCAMENTO_PRECO_INDISPONIVEL', 'Price unavailable for product/unit in authorized table', {
+          produto_id: item.produto_id,
+          unidade_id: item.unidade_id,
+        });
+      }
+      itens.push({ ...item, preco_unitario: this.normalizeMoney(resolved.preco) });
+    }
+    return { ...data, itens };
+  }
+
+  private normalizeMoney(value: string): string {
+    const [i, f = ''] = String(value).split('.');
+    return `${i}.${(f + '000000').slice(0, 6)}`;
   }
 
   private async validateReferences(scope: OrcamentoScope, data: OrcamentoCreate, executor?: DbQueryExecutor) {

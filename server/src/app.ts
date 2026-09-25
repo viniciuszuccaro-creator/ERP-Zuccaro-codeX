@@ -161,10 +161,12 @@ export function createApp(options: CreateAppOptions) {
   const condicaoPagamentoService = new CondicaoPagamentoService(condicaoPagamentoRepo, auditRepo, tenantGuard, rbacGuard);
   const orcamentoService = new OrcamentoService(
     orcamentoRepo, auditRepo, tenantGuard, rbacGuard, clienteRepo, produtoRepo, unidadeRepo, condicaoPagamentoRepo,
+    tabelaPrecoService,
   );
   const pedidoService = new PedidoService(
     pedidoRepo, orcamentoRepo, auditRepo, tenantGuard, rbacGuard, clienteRepo, produtoRepo,
     unidadeRepo, condicaoPagamentoRepo, clienteLocalRepo, obraRepo, tabelaPrecoRepo,
+    tabelaPrecoService,
   );
   const obraService = new ObraService(
     obraRepo,

@@ -119,6 +119,9 @@ function fixture(overrides: {
         ? { id: condicaoId, ativo: true }
         : overrides.condicao,
     } as any,
+    {
+      resolveSalePrice: async () => ({ preco: '10.000000' }),
+    },
   );
   return { repo, audit, rbac, service };
 }
@@ -196,7 +199,7 @@ test('update valido preserva identidade e recalcula totais e itens', async () =>
       ...payload.itens[0],
       descricao: 'Snapshot atualizado',
       quantidade: '3',
-      preco_unitario: '7.5',
+      preco_unitario: '999',
       desconto: '0.5',
     }],
   };
@@ -208,9 +211,10 @@ test('update valido preserva identidade e recalcula totais e itens', async () =>
   assert.equal(updated.empresa_id, created.empresa_id);
   assert.equal(updated.numero, created.numero);
   assert.equal(updated.created_at, created.created_at);
-  assert.equal(updated.subtotal, '22.500000');
+  assert.equal(updated.itens[0].preco_unitario, '10.000000'); // servidor ignora 999 do cliente
+  assert.equal(updated.subtotal, '30.000000');
   assert.equal(updated.desconto, '0.500000');
-  assert.equal(updated.total, '22.000000');
+  assert.equal(updated.total, '29.500000');
   assert.equal(updated.itens.length, 1);
   assert.equal(updated.itens[0].descricao, 'Snapshot atualizado');
   assert.ok(repo.getExecutors.includes(repo.executor));
@@ -250,7 +254,8 @@ test('update revalida todas as referencias sem persistir falha', async () => {
         { getById: async () => item.overrides.produto === null ? null : { id: produtoId, ativo: true, unidade_medida_id: unidadeId } } as any,
         { getById: async () => item.overrides.unidade === null ? null : { id: unidadeId, ativo: true } } as any,
         { get: async () => item.overrides.condicao === null ? null : { id: condicaoId, ativo: true } } as any,
-      );
+    { resolveSalePrice: async () => ({ preco: '10.000000' }) },
+  );
       assert.equal(await code(invalidService.update(ctx, validCreated.id, { ...payload, itens: [{ ...payload.itens[0], quantidade: '9' }] })), item.expected);
       assert.equal((await valid.service.get(ctx, validCreated.id)).total, '19.000000');
     }
@@ -266,6 +271,7 @@ test('update revalida todas as referencias sem persistir falha', async () => {
     { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: '66666666-6666-4666-8666-666666666666' }) } as any,
     { getById: async () => ({ id: unidadeId, ativo: true }) } as any,
     { get: async () => ({ id: condicaoId, ativo: true }) } as any,
+    { resolveSalePrice: async () => ({ preco: '10.000000' }) },
   );
   assert.equal(await code(invalidService.update(ctx, created.id, payload)), 'ORCAMENTO_UNIDADE_INVALIDA');
 });

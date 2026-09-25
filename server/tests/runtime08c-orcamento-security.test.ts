@@ -125,6 +125,7 @@ function serviceFor(options: {
     { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: unidadeId }) } as any,
     { getById: async () => ({ id: unidadeId, ativo: true }) } as any,
     { get: async () => ({ id: condicaoId, ativo: true }) } as any,
+    { resolveSalePrice: async () => ({ preco: '10.000000' }) },
   );
   return { repo, audit, service };
 }
@@ -195,6 +196,7 @@ test('RBAC fail-closed nega actor ausente perfil ausente e tenant divergente', a
     { assertEmpresaInGroup: async () => undefined },
     new InMemoryRbacGuard(),
     {} as any, {} as any, {} as any, {} as any,
+    { resolveSalePrice: async () => ({ preco: '10.000000' }) },
   );
   await assert.rejects(noProfile.list(ctx), /Permission denied/);
   assert.equal(noProfileRepo.listCalls, 0);

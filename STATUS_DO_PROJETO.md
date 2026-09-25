@@ -1,3 +1,13 @@
+## Comercial 360 / Onda 2 - snapshot de preço em Orçamento/Pedido (2026-09-25)
+
+- Política explícita: no `create`/`update` EM_ABERTO, `preco_unitario` vem do servidor via `TabelaPrecoService.resolveSalePrice` (tabela do ClienteEmpresa → fallback padrão Empresa). Payload do cliente **não** é autoridade.
+- Conversão Orçamento→Pedido **preserva** snapshots do orçamento (não reconsulta tabela atual = não-retroatividade). Pedido editado com `orcamento_id` também não reconsulta.
+- Fail-closed: sem preço autorizado → `ORCAMENTO_PRECO_INDISPONIVEL` / `PEDIDO_PRECO_INDISPONIVEL` (422).
+- Reutilizado: `TabelaPrecoService`/`resolvePrice`, repositórios e RBAC Comercial existentes. Sem migration, rota nova ou módulo paralelo. Alçadas/margem/desconto aprovado ficam para lote seguinte da Onda 2.
+- Testes: `runtime-onda2-preco-snapshot.test.ts` + regressão orçamento/pedido service/security + `runtime07b` — PASS.
+- Branch `cursor/comercial360-onda2-preco-snapshot-392b` (separada da #39). Sem merge automático · sem alteração 3080.
+- Próximo Onda 2: alçada/desconto/margem; CRM Central 360 permanece BLOCKED (#39) até decisão A/B.
+
 ### Gate F — AUTHORIZED opção A · WAITING_MERGE (2026-09-25)
 
 - Assinatura: **VINICIUS** · `2026-09-25` · opção **A** (merge+MAIN+re-smoke+promover).

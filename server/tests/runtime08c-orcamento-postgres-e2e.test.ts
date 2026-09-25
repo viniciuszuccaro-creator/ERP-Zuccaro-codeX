@@ -86,7 +86,8 @@ test('R08C PostgreSQL real: auditoria rollbacka create update cancel e sequencia
       { getById: async () => ({ id: SEED_IDS.produtoA, ativo: true, unidade_medida_id: SEED_IDS.unidadeA }) } as any,
       { getById: async () => ({ id: SEED_IDS.unidadeA, ativo: true }) } as any,
       { get: async () => ({ id: SEED_IDS.condicaoPagamentoA, ativo: true }) } as any,
-    );
+    { resolveSalePrice: async () => ({ preco: '10.000000' }) },
+  );
     const ctx = {
       requestId: 'r08c-audit-rollback',
       actorId: SEED_IDS.runtimeActorA,
