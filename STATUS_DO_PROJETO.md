@@ -1,3 +1,11 @@
+### Gate D — limpeza §E pronta (sem Gate F)
+
+- Negativos OK; Gate D canário completo.
+- Script: `scripts/vps/gate-d-cleanup-auth-synthetic.sh` (ban + rotate + unlink profile; fixtures opcional `INACTIVATE_FIXTURES=YES`).
+- Exige `CONFIRM_GATE_D_CLEANUP=YES` · e-mail `*gate-d*@dev.synthetic.local`.
+- Gate F **bloqueado** (sem termo; digest MAIN ≠ canário aprovado).
+- Próximo VPS: limpeza §E; cole `PASTE_TO_GIT_*`. Sem F/3080.
+
 ### Gate D — negatives tenant OK (2026-09-25T15:13Z)
 
 - Canário `comercial360-gate-d-2b45292e` · Auth OK · `positive_orc_list=200`.

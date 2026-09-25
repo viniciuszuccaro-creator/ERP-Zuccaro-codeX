@@ -274,7 +274,22 @@ Cole só `PASTE_TO_GIT_*`.
 
 ### E. Limpeza
 
-Revogar sessão / desabilitar identidade Auth de teste. Remover só IDs sintéticos do gate. Não truncar. 3080 intocada.
+Revogar sessão / desabilitar identidade Auth de teste. Remover só IDs sintéticos do gate (ban + desvínculo; **não** DELETE físico; **não** truncar). 3080 intocada. Gate F **não** autorizado.
+
+```bash
+cd /opt/erp-zuccaro
+git pull origin cursor/pos-gate-e-prep-d-392b
+
+# Opcional: INACTIVATE_FIXTURES=YES inativa cadastros GATE_D_MUTATION (soft)
+CONFIRM_GATE_D_CLEANUP=YES \
+SYNTH_EMAIL='gate-d.synth@dev.synthetic.local' \
+INACTIVATE_FIXTURES=YES \
+  bash scripts/vps/gate-d-cleanup-auth-synthetic.sh
+```
+
+Esperado: `http_ban=200` · `profile_unlinked=YES` · `login_rotated_pass≠200` · `profiles_synth_ativos=0` · `GATE_D_CLEANUP_STATUS=OK` · `alter_3080=NOT_PERFORMED`.
+
+Cole só `PASTE_TO_GIT_*`.
 
 ### F. URL browser segura — após Bearer OK (sem Gate F / sem 3080)
 

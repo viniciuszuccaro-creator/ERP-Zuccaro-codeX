@@ -1,6 +1,6 @@
 # Termo de autorização — Gates D / E / F
 
-**Status:** Gate E **EXECUTADO** · digest **REGISTERED** · Gate Auth **OK** · Gate D **EXECUTADO** (Bearer + browser + mutação + negativos OK) · Gate F **não**.
+**Status:** Gate E **EXECUTADO** · digest **REGISTERED** · Gate Auth **OK** · Gate D **EXECUTADO** (Bearer + browser + mutação + negativos OK; limpeza §E pendente na VPS) · Gate F **não**.
 Estados: `READY_FOR_REVIEW` ≠ `AUTHORIZED` ≠ `EXECUTED`. `GATE_*_READY` não autoriza.
 Sem checkbox do gate + **assinatura formal** do responsável → **não executar**.
 

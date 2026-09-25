@@ -656,6 +656,35 @@ test('gate-d-smoke-negatives-tenant.sh passa bash -n e bloqueia placeholder', ()
   assert.match(blocked.stderr + blocked.stdout, /placeholder_from_chat|BLOCKED/);
 });
 
+test('gate-d-cleanup-auth-synthetic.sh passa bash -n e exige confirmacao', () => {
+  const script = path.join(root, 'scripts/vps/gate-d-cleanup-auth-synthetic.sh');
+  const syn = spawnSync('bash', ['-n', script], { encoding: 'utf8' });
+  assert.equal(syn.status, 0, syn.stderr);
+  const text = fs.readFileSync(script, 'utf8');
+  assert.match(text, /GATE_D_CLEANUP/);
+  assert.match(text, /CONFIRM_GATE_D_CLEANUP/);
+  assert.match(text, /ban_duration/);
+  assert.match(text, /alter_3080=NOT_PERFORMED/);
+  assert.match(text, /AUTHORIZES_GATE_F=NO/);
+  assert.match(text, /auth_user_banned_not_deleted/);
+  const blocked = spawnSync('bash', [script], {
+    encoding: 'utf8',
+    env: { ...process.env, CONFIRM_GATE_D_CLEANUP: '' },
+  });
+  assert.notEqual(blocked.status, 0);
+  assert.match(blocked.stderr + blocked.stdout, /CONFIRM_GATE_D_CLEANUP|BLOCKED/);
+  const badEmail = spawnSync('bash', [script], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      CONFIRM_GATE_D_CLEANUP: 'YES',
+      SYNTH_EMAIL: 'not-synth@example.com',
+    },
+  });
+  assert.notEqual(badEmail.status, 0);
+  assert.match(badEmail.stderr + badEmail.stdout, /dev_synthetic_local|BLOCKED/);
+});
+
 test('comercial360-canary-from-checkout.sh passa bash -n e nao usa tag MAIN', () => {
   const script = path.join(root, 'scripts/deploy/comercial360-canary-from-checkout.sh');
   const syn = spawnSync('bash', ['-n', script], { encoding: 'utf8' });
