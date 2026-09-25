@@ -1,0 +1,10 @@
+GATE_F_BROWSER_LOGIN_NAV — BLOCKED SYNTH_PASS vazio — 2026-09-25T18:28:05Z
+Fonte: PASTE_TO_GIT / terminal VPS (sem segredos)
+
+- Pull: 260adcc9 → 75ea794a (smoke com tenant)
+- SPA/API health 200 · runtime ERP-RUNTIME-08B · spoof 401 OK
+- BLOCKED: set_SYNTH_EMAIL_and_SYNTH_PASS_for_login_step
+- HINT=same_session_SYNTH_PASS_from_provision_openssl
+- Causa: SYNTH_PASS unset após smoke anterior; re-smoke sem reprovision.
+
+Próximo: openssl + provision + browser smoke na mesma sessão (sem unset no meio).

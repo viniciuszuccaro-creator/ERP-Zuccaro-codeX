@@ -1,0 +1,29 @@
+GATE_F_BROWSER_LOGIN_NAV — token_not_issued (ban §E) — 2026-09-25T18:08Z
+Fonte: PASTE_TO_GIT VPS (sem segredos)
+
+Contexto:
+- Branch VPS: cursor/comercial360-onda3-cliente-392b
+- SPA: http://127.0.0.1:3081/ · API oficial: 3080 · ALTER_3080=NOT_PERFORMED
+- Runtime: ERP-RUNTIME-08B · auth_mode=supabase_user
+
+GATE_AUTH_PROVISION:
+- profile_linked=YES · AUTH_SYNTHETIC_STATUS=OK
+- auth_users_count=1 · profiles_com_auth_count=1
+- http_kong=422 email_exists · http_pw_update=200
+- AUTHORIZES_CANARY=NO · NOTE=segredos_somente_cofre_local
+- unban_in_HEAD=NO (provision sem ban_duration=none nesta branch)
+
+GATE_F_BROWSER_LOGIN_NAV:
+- spa_origin_http=200 · spa_proxy_health=200
+- official_api_health=200 · official_api_ready=200
+- browser_nav_no_auth_orc=401 · browser_nav_spoof_dev_headers=401 · spoof_rejected=YES
+- http_token=400 · BLOCKED: token_not_issued
+- HINT=reprovision_auth_synthetic_then_retry
+
+Causa raiz (mesma do mutation ban §E):
+- Limpeza §E deixa user banido; pw_update sem ban_duration=none não desbane.
+- Fix: portar 9ba1fd91 → provision ban_duration=none + SQL clear banned_until.
+
+Próximo:
+- Pull HEAD com unban · SYNTH_PASS mesma sessão · reprovision + browser smoke.
+- Sem promoção 3080 neste lote.
