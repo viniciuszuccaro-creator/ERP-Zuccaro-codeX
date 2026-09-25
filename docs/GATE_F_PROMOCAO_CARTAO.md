@@ -1,47 +1,39 @@
 # Gate F — promoção 3080 (cartão)
 
-**Status:** `AUTHORIZED_OPTION_A` · `WAITING_MERGE` — assinatura VINICIUS (2026-09-25).  
-**EXECUTED:** **NÃO**. 3080 permanece R07B até merge + build + re-smoke + promoção.
+**Status:** `AUTHORIZED_OPTION_A` · `WAITING_VPS_BUILD` — merge #37 **OK** (`894b0db8`).  
+**EXECUTED:** **NÃO**. 3080 permanece R07B até build + re-smoke + promoção.
 
-## Autorização registrada
+## Autorização + merge registrados
 
 ```text
 utc_assinatura_formal=2026-09-25
 assinatura_formal=VINICIUS
 opcao_digest=A
-texto=Autorizo Gate F (promoção 3080) na opção A:
-  merge do fix Orçamento→Pedido na main, build comercial360-main-<MERGE_SHA8>,
-  re-smoke mutação no canário com essa tag, depois promover essa imagem.
-  Não autorizo promoção da tag MAIN antiga 2fc2fc80 sem o fix.
-EXECUTE_GATE_F=AUTHORIZED_WAITING_MERGE
-alter_3080=NOT_YET_PERFORMED
+utc_merge=2026-09-25T16:11:21Z
+pr_merged=#37
+merge_sha=894b0db8f7583137204e1026c6eee26475c7025c
+merge_sha8=894b0db8
+EXECUTE_GATE_F=AUTHORIZED_WAITING_VPS_BUILD
+alter_3080=NOT_PERFORMED
 ```
 
-Evidência: `docs/vps/evidence/gate-f-autorizacao-opcao-a-2026-09-25.txt`.
+## Sequência VPS (agora)
 
-## Sequência obrigatória (opção A)
-
-### 1) Merge na MAIN (humano / GitHub)
-
-- PR candidata: **#37** (`cursor/pos-gate-e-prep-d-392b` → `main`) · CI verde · contém fix `20eda9e2` (map Orçamento).
-- Após merge: anotar `MERGE_SHA` e `MERGE_SHA8` (`git rev-parse origin/main` / primeiros 8).
-
-### 2) Build imagem imutável + canário na VPS (ainda **sem** tocar 3080)
+### 1) Build + canário (sem 3080)
 
 ```bash
 cd /opt/erp-zuccaro
-git pull origin cursor/pos-gate-e-prep-d-392b   # ou main após merge
+git fetch origin main && git checkout --detach origin/main
+test "$(git rev-parse --short=8 HEAD)" = "894b0db8"
 
 CONFIRM_GATE_F_BUILD_RESMOKE=YES \
 ERP_DOCKER_NETWORK='supabase_default' \
   bash scripts/vps/gate-f-option-a-build-canary.sh
 ```
 
-O script: `git fetch origin main` · rejeita SHA `2fc2fc80` · exige `descricao_snapshot` no map · build `comercial360-main-<MERGE_SHA8>` · sobe canário 3086 · smoke meta. **Não** promove 3080.
+Esperado: `merge_sha8=894b0db8` · `image_tag=...comercial360-main-894b0db8` · `GATE_F_BUILD_CANARY=OK` · `alter_3080=NOT_PERFORMED`.
 
-Se `BLOCKED: main_still_2fc2fc80...` → merge da PR #37 ainda não entrou na main.
-
-### 3) Re-smoke mutação (Auth foi banido no §E — re-provision)
+### 2) Re-smoke mutação
 
 ```bash
 SYNTH_PASS="$(openssl rand -base64 24)"
@@ -53,9 +45,9 @@ SYNTH_EMAIL="$SYNTH_EMAIL" SYNTH_PASS="$SYNTH_PASS" \
 unset SYNTH_PASS
 ```
 
-Esperado: `canary_image=...comercial360-main-<MERGE_SHA8>` · `ped_convert=201` · `GATE_D_MUTATION_SMOKE=OK`.
+Esperado: `canary_image=...comercial360-main-894b0db8` · `ped_convert=201` · `GATE_D_MUTATION_SMOKE=OK`.
 
-### 4) Promoção 3080 (só após mutação OK na nova tag)
+### 3) Promoção 3080 (só após mutação OK na nova tag)
 
 Procedimento alinhado a `docs/COMERCIAL_360_V1_DEPLOY.md` / rollback R07B preservado:
 
@@ -76,8 +68,8 @@ Procedimento alinhado a `docs/COMERCIAL_360_V1_DEPLOY.md` / rollback R07B preser
 | 2 | Gate E APROVADO | OK |
 | 3 | Gate D completo | OK |
 | 4 | Assinatura Gate F opção A | **OK** VINICIUS 2026-09-25 |
-| 5 | Merge fix na main | **PENDENTE** (PR #37) |
-| 6 | Build `comercial360-main-<MERGE_SHA8>` | aguarda merge |
+| 5 | Merge fix na main | **OK** #37 → `894b0db8` |
+| 6 | Build `comercial360-main-894b0db8` | **PENDENTE VPS** |
 | 7 | Re-smoke mutação nessa tag | aguarda build |
 | 8 | Backup + rollback R07B | confirmar no instante da promoção |
 

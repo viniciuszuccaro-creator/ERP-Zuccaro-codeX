@@ -1,0 +1,14 @@
+# Gate F — merge opção A na main (sanitizado)
+
+utc=2026-09-25T16:11:21Z
+pr=37
+merge_commit=894b0db8f7583137204e1026c6eee26475c7025c
+merge_sha8=894b0db8
+fix_orcamento_map_in_main=YES
+forbidden_sha8=2fc2fc80
+forbidden_rejected=YES
+EXECUTE_GATE_F=AUTHORIZED_WAITING_VPS_BUILD
+alter_3080=NOT_PERFORMED
+AUTHORIZES_PROMOTE=NO
+NOTE=next_vps_gate-f-option-a-build-canary
+NOTE2=segredos_somente_cofre_local

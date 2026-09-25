@@ -1,3 +1,11 @@
+### Gate F — merge #37 na main (2026-09-25T16:11Z)
+
+- PR **#37** **MERGED** → `main` @ `894b0db8` (`merge_sha8=894b0db8`).
+- Fix Orçamento map **na main** (`descricao_snapshot`) · ≠ `2fc2fc80`.
+- Evidência: `docs/vps/evidence/gate-f-merge-opcao-a-2026-09-25.txt`.
+- `EXECUTE_GATE_F=AUTHORIZED_WAITING_VPS_BUILD` · 3080 **ainda R07B**.
+- Próximo VPS: `CONFIRM_GATE_F_BUILD_RESMOKE=YES` + `gate-f-option-a-build-canary.sh` → Auth + mutação → só então promoção.
+
 ### Gate F — AUTHORIZED opção A · WAITING_MERGE (2026-09-25)
 
 - Assinatura: **VINICIUS** · `2026-09-25` · opção **A** (merge+MAIN+re-smoke+promover).
