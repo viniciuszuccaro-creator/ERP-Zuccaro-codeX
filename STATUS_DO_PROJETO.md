@@ -1,3 +1,10 @@
+### Gate F — pedido de assinatura humana (2026-09-25)
+
+- Gate D VPS **completo**. Gate F **não** executado.
+- Status: `READY_FOR_HUMAN_SIGNATURE` · cartão `docs/GATE_F_PROMOCAO_CARTAO.md`.
+- Digest: opção **A** (merge+MAIN+re-smoke) ou **B** (promover `comercial360-gate-d-2b45292e`).
+- Cursor **aguarda** texto assinado no chat (não inventa assinatura). 3080 intacta.
+
 ### Gate D — cleanup §E OK (2026-09-25T15:28Z)
 
 - `http_pw_rotate=200` · `http_ban=200` · `profile_unlinked=YES` · `fixtures_inactivated=YES`.

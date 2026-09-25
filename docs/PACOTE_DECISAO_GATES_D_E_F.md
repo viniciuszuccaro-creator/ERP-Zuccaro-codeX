@@ -7,7 +7,8 @@
 | `READY_FOR_REVIEW` | Pacote técnico revisável | **SIM** (pré-D) |
 | `AUTHORIZED` (Gate E) | Checkbox + assinatura VINICIUS | **SIM** (E) |
 | `EXECUTED` (Gate E) | Migrations 016–024 no DEV + `test:postgres` | **SIM** (`GATE_E_STATUS=OK`) |
-| `AUTHORIZED` / `EXECUTED` (D/F) | Canário / Auth / 3080 | **NÃO** |
+| `AUTHORIZED` / `EXECUTED` (D) | Auth + canário + smokes Gate D | **SIM** (D EXECUTADO 2026-09-25) |
+| `AUTHORIZED` / `EXECUTED` (F) | Promoção 3080 | **NÃO** — `READY_FOR_HUMAN_SIGNATURE` |
 
 `GATE_*_READY=YES` **nunca** autoriza nem executa.
 
@@ -26,20 +27,18 @@
 
 ## Bloqueios restantes para Gate D
 
-1. ~~**Digest de imagem**~~ — **REGISTERED** (`comercial360-main-2fc2fc80` · evidência `image-digest-comercial360-latest.txt`)
-2. **Auth sintético** (`PENDING_AUTH_GATE`) — identidade Supabase + profile vinculado **fora do Git**; checklist `docs/GATE_D_SMOKE_AUTH_CHECKLIST.md`
-3. Autorização humana no termo §C para **Gate D** (checkbox D ainda desmarcado) + assinatura
-4. Canário em porta ≠3080 com `auth.mode=supabase_user` — **não** iniciar sem (2)+(3)
+~~Concluídos~~ — Auth OK · canário OK · Bearer/browser/mutação/negativos/limpeza OK (2026-09-25).
 
 ## Bloqueios Gate F
 
-1. Gate D APROVADO
-2. Digest da mesma imagem
-3. Autorização humana Gate F
-4. 3080 permanece R07B até F autorizado
+1. ~~Gate D APROVADO~~ — **OK**
+2. **Digest da mesma imagem** — DECISÃO A (merge+MAIN+re-smoke) ou B (promover `gate-d-2b45292e`); ver `docs/GATE_F_PROMOCAO_CARTAO.md`
+3. **Autorização humana Gate F** — texto assinado no termo/chat (**PENDENTE**)
+4. 3080 permanece R07B até F **AUTHORIZED** + **EXECUTED**
+5. Pós-F: re-provision Auth sintético (limpo no §E) antes do smoke Bearer na 3080
 
 ---
 
 ## Proibições desta etapa
 
-Não canário · não Auth novo sem gate · não promoção 3080 · não dump no Git · não marcar D/F executados sem termo.
+Não inventar assinatura Gate F · não promover 3080 sem texto A/B assinado · não dump no Git · não marcar F executado sem termo.
