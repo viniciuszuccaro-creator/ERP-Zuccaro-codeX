@@ -1,3 +1,10 @@
+### Gate F — browser re-smoke BLOCKED SYNTH_PASS vazio (2026-09-25T18:28Z)
+
+- Pull `75ea794a` OK · SPA/API 200 · spoof 401.
+- `BLOCKED: set_SYNTH_EMAIL_and_SYNTH_PASS_for_login_step` — `SYNTH_PASS` já tinha sido `unset`.
+- Evidência: `docs/vps/evidence/gate-f-browser-synth-pass-empty-2026-09-25.txt`.
+- Próximo VPS: openssl + provision + smoke **mesma sessão** (sem unset no meio). Sem promoção 3080.
+
 ### Gate F — browser login NAV OK pós-unban (2026-09-25T18:19Z)
 
 - Pull `260adcc9` · Auth `OK` · `auth_unban_attempted=YES` · `http_token=200` · `login_ok=YES`.
