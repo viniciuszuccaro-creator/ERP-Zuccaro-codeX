@@ -594,3 +594,27 @@ test('evidence restore isolado DB OK sem autorizar gates', () => {
   assert.match(text, /erp_restore_isolated_20260924_155458/);
   assert.match(text, /e72ca99b453fa6b060b5264f636794b3a601202c18e4185deb12f0020cae3f80/);
 });
+
+test('gate-d-smoke-browser-url-safe.sh passa bash -n e bloqueia query com segredo', () => {
+  const script = path.join(root, 'scripts/vps/gate-d-smoke-browser-url-safe.sh');
+  const syn = spawnSync('bash', ['-n', script], { encoding: 'utf8' });
+  assert.equal(syn.status, 0, syn.stderr);
+  const text = fs.readFileSync(script, 'utf8');
+  assert.match(text, /GATE_D_BROWSER_URL_SMOKE/);
+  assert.match(text, /alter_3080=NOT_PERFORMED/);
+  assert.match(text, /AUTHORIZES_GATE_F=NO/);
+  assert.match(text, /dev_headers/);
+  assert.match(text, /PASTE_TO_GIT_BEGIN/);
+
+  const blocked = spawnSync('bash', [script], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      CANARY_PORT: '3086',
+      EXPECTED_RUNTIME: 'ERP-RUNTIME-08B',
+      BASE_URL: 'http://127.0.0.1:3086/?access_token=leak',
+    },
+  });
+  assert.notEqual(blocked.status, 0);
+  assert.match(blocked.stderr + blocked.stdout, /secret_or_tenant_query|BLOCKED/);
+});

@@ -108,7 +108,7 @@ Assinatura responsável (Auth / D): VINICIUS
 Data/hora (UTC): 24/09/2026
 
 **Estado operacional:** E OK · digest REGISTERED · Auth **OK** · canário 3086 **READY** · smoke meta **OK** · Bearer **OK** (reconfirmado `13:41:46Z`) · F/3080 bloqueados.
-**Ordem:** Auth ✓ → canário ✓ → smoke meta ✓ → Bearer ✓ → URL browser segura (sem `dev_headers`) → Gate F só se autorizado.
+**Ordem:** Auth ✓ → canário ✓ → smoke meta ✓ → Bearer ✓ → **URL browser segura (checklist §F)** → mutações sintéticas se autorizadas → Gate F só se autorizado.
 
 ---
 

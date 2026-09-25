@@ -251,6 +251,27 @@ Se o canário ainda não tiver `supabase_overlay=YES`, recrie-o antes do passo 3
 
 Revogar sessão / desabilitar identidade Auth de teste. Remover só IDs sintéticos do gate. Não truncar. 3080 intocada.
 
+### F. URL browser segura — após Bearer OK (sem Gate F / sem 3080)
+
+Prova que a URL do canário é usável por browser **sem** colocar token/escopo na query e **sem** aceitar `dev_headers` como Auth. Não promove a 3080.
+
+```bash
+cd /opt/erp-zuccaro
+git pull origin cursor/pos-gate-e-prep-d-392b
+
+CANARY_PORT='3086' EXPECTED_RUNTIME='ERP-RUNTIME-08B' \
+  bash scripts/vps/gate-d-smoke-browser-url-safe.sh
+
+# Opcional — se houver URL pública HTTPS do canário (sem query secreta):
+# CANARY_BROWSER_URL='https://SEU_HOST_CANARIO/...' \
+#   CANARY_PORT='3086' EXPECTED_RUNTIME='ERP-RUNTIME-08B' \
+#   bash scripts/vps/gate-d-smoke-browser-url-safe.sh
+```
+
+Esperado: `canary_auth_mode=supabase_user` · `browser_no_auth_orc/ped=401|403` · `browser_spoof_rejected=YES` · `GATE_D_BROWSER_URL_SMOKE=OK` · `alter_3080=NOT_PERFORMED`.
+
+Cole só o bloco `PASTE_TO_GIT_*` (sem token/URL com credencial).
+
 ---
 
 ## O que este checklist NÃO cobre

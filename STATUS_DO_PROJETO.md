@@ -6,7 +6,7 @@
 - Evidência: `docs/vps/evidence/gate-d-bearer-smoke-ok-2026-09-25.txt` · `gate-d-auth-autorizacao-registrada.txt`.
 - **3080** intacta (`alter_3080=NOT_PERFORMED`) · Gate F **não** autorizado · `AUTHORIZES_CANARY=NO` neste paste (canário já READY; sem nova autorização).
 - Segredos só no cofre local.
-- Próximo VPS: URL browser segura (sem `dev_headers`/Gate F); mutações Orçamento→Pedido se necessário. Código Comercial 360 Onda 3 segue na PR `#39` (separada).
+- **Próximo VPS (pronto para colar):** smoke URL browser segura — script `scripts/vps/gate-d-smoke-browser-url-safe.sh` (§F do checklist). Sem Gate F / sem alterar 3080. Depois: mutações Orçamento→Pedido se necessário. Código Comercial 360 Onda 3 segue na PR `#39`.
 
 
 ### Pós-Gate E — prep Gate D (histórico)
