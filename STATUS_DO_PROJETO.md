@@ -1,3 +1,10 @@
+### Gate D — mutation ensure FAIL codigo (2026-09-25T14:13Z)
+
+- `refs_ensure=FAIL` · `condicoes_pagamento_codigo_check` (codigo deve ser `^[0-9]{6}$`; `GATED1` inválido).
+- Evidência: `docs/vps/evidence/gate-d-mutation-blocked-codigo-2026-09-25.txt`.
+- Correção: `reserve_entity_codigo(..., 'CondicaoPagamento', 6)` + match por nome/`source_system`.
+- Reexecutar mutação na VPS; 3080/F intocados.
+
 ### Gate D — mutation smoke BLOCKED → fix ensure refs (2026-09-25T14:07Z)
 
 - Auth OK · tenant group/empresa YES · `refs_cliente_empresa=MISSING` no profile sintético (sem cadastro comercial no mesmo tenant).

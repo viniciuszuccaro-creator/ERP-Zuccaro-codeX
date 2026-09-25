@@ -166,7 +166,7 @@ SELECT
   gen_random_uuid(),
   :'gid'::uuid,
   :'eid'::uuid,
-  COALESCE(reserve_entity_codigo(:'gid'::uuid, 'Cliente', 6), 'GATED1'),
+  COALESCE(reserve_entity_codigo(:'gid'::uuid, 'Cliente', 6), '900001'),
   'Pessoa Jurídica',
   '00.000.000/0001-91',
   '00000000000191',
@@ -236,21 +236,25 @@ WHERE ce.group_id=:'gid'::uuid
   );
 
 -- Condição de pagamento + vínculo empresa + parcela 100% (mesma transação)
+-- codigo obrigatório: ^[0-9]{6}$
 INSERT INTO condicoes_pagamento (
-  id, group_id, empresa_id, codigo, nome, descricao, ativo, origem
+  id, group_id, empresa_id, codigo, nome, descricao, ativo, origem, source_system, migration_batch
 )
 SELECT
   gen_random_uuid(),
   :'gid'::uuid,
   :'eid'::uuid,
-  'GATED1',
+  COALESCE(reserve_entity_codigo(:'gid'::uuid, 'CondicaoPagamento', 6), '900001'),
   'GATE-D A VISTA',
   'Sintetica Gate-D',
   true,
-  'ERP'
+  'ERP',
+  'GATE_D_MUTATION',
+  'GATE-D'
 WHERE NOT EXISTS (
   SELECT 1 FROM condicoes_pagamento
-  WHERE group_id=:'gid'::uuid AND ativo IS TRUE AND (codigo='GATED1' OR nome='GATE-D A VISTA')
+  WHERE group_id=:'gid'::uuid AND ativo IS TRUE
+    AND (nome='GATE-D A VISTA' OR source_system='GATE_D_MUTATION')
 );
 
 INSERT INTO condicao_pagamento_empresas (
@@ -263,7 +267,8 @@ SELECT
   true,
   true
 FROM condicoes_pagamento c
-WHERE c.group_id=:'gid'::uuid AND c.ativo IS TRUE AND (c.codigo='GATED1' OR c.nome='GATE-D A VISTA')
+WHERE c.group_id=:'gid'::uuid AND c.ativo IS TRUE
+  AND (c.nome='GATE-D A VISTA' OR c.source_system='GATE_D_MUTATION')
   AND NOT EXISTS (
     SELECT 1 FROM condicao_pagamento_empresas e
     WHERE e.condicao_pagamento_id=c.id AND e.empresa_id=:'eid'::uuid
@@ -276,7 +281,7 @@ FROM condicoes_pagamento c
 WHERE e.condicao_pagamento_id=c.id
   AND c.group_id=:'gid'::uuid
   AND e.empresa_id=:'eid'::uuid
-  AND (c.codigo='GATED1' OR c.nome='GATE-D A VISTA');
+  AND (c.nome='GATE-D A VISTA' OR c.source_system='GATE_D_MUTATION');
 
 INSERT INTO condicao_pagamento_parcelas (
   group_id, condicao_pagamento_id, ordem, dias, percentual, ativo
@@ -289,7 +294,8 @@ SELECT
   100.000000,
   true
 FROM condicoes_pagamento c
-WHERE c.group_id=:'gid'::uuid AND c.ativo IS TRUE AND (c.codigo='GATED1' OR c.nome='GATE-D A VISTA')
+WHERE c.group_id=:'gid'::uuid AND c.ativo IS TRUE
+  AND (c.nome='GATE-D A VISTA' OR c.source_system='GATE_D_MUTATION')
   AND NOT EXISTS (
     SELECT 1 FROM condicao_pagamento_parcelas p
     WHERE p.condicao_pagamento_id=c.id AND p.ordem=1
