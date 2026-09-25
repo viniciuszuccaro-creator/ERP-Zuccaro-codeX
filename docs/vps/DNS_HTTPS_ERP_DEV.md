@@ -90,37 +90,58 @@ Hard refresh ou janela anônima no primeiro teste pós-DNS.
 
 ---
 
-## 5. Smoke HTTPS externo (após DNS+TLS)
+## 5. Smoke HTTPS — duas camadas (não misturar)
 
-Na máquina **fora** da VPS (ou cloud agent com DNS resolvendo):
+O script `scripts/vps/gate-f-smoke-https-external.sh` **não** trata “API ok na VPS” como “ERP aberto no seu PC”.
+
+| Probe (`GATE_F_HTTPS_PROBE`) | Onde roda | O que prova | Veredito |
+|------------------------------|-----------|-------------|----------|
+| `reachability` | Qualquer host | DNS+TLS+health/meta públicos | `LAYER_A_DNS_TLS=OK` ≠ login |
+| `vps_api` | **Somente VPS** | Auth loopback + tenant docker + chamada HTTPS pública | `GATE_F_HTTPS_VPS_API=OK` — **não** é acesso diário |
+| `external_nav` | **Fora** da VPS | Login+nav sem docker/loopback Auth | `GATE_F_HTTPS_EXTERNAL_NAV=OK` — prova laptop/cloud |
+| `auto` | Detecta | VPS local → `vps_api`; senão → `external_nav` | Ver flags acima |
+
+### 5.1 Verificação de API via VPS (híbrido)
 
 ```bash
-export ERP_BROWSER_URL='https://erp-dev.cpaferroeaco.com.br/'
-export OFFICIAL_API='https://api-erp-dev.cpaferroeaco.com.br'   # ou same-origin via SPA
-# Credenciais sintéticas só no cofre local da sessão — NÃO no Git
-bash scripts/vps/gate-f-smoke-https-external.sh
+# Na VPS, após DNS+TLS
+ERP_BROWSER_URL='https://erp-dev.cpaferroeaco.com.br/' \
+GATE_F_HTTPS_PROBE=vps_api \
+SYNTH_EMAIL=... SYNTH_PASS=... \
+  bash scripts/vps/gate-f-smoke-https-external.sh
 ```
 
-Critérios de sucesso (400/403 **não** contam):
+Esperado: `GATE_F_HTTPS_VPS_API=OK` e **`GATE_F_HTTPS_EXTERNAL_NAV=NOT_PROVEN`**.
 
-- `spa_origin_http=200` (HTTPS)
-- `official_api_health=200` · `official_api_ready=200`
-- `http_token=200` (Auth supabase_user)
-- `nav_api_meta=200` · `nav_api_orc_list=200` (com tenant)
-- `GATE_F_HTTPS_EXTERNAL=OK`
+### 5.2 Navegação real fora da VPS (laptop / cloud agent)
 
-Colar apenas bloco `PASTE_TO_GIT` sanitizado.
+```bash
+# FORA da VPS — sem docker supabase-db e sem Auth em 127.0.0.1
+ERP_BROWSER_URL='https://erp-dev.cpaferroeaco.com.br/' \
+GATE_F_HTTPS_PROBE=external_nav \
+ANON_KEY='...' \
+AUTH_TOKEN_URL='https://…/auth/v1/token?grant_type=password' \
+TENANT_GROUP_ID='…' TENANT_EMPRESA_ID='…' \
+SYNTH_EMAIL=... SYNTH_PASS=... \
+  bash scripts/vps/gate-f-smoke-https-external.sh
+```
+
+Alternativa: `ACCESS_TOKEN` + `TENANT_GROUP_ID` do cofre (sem chamar Auth).  
+400/403 na listagem autenticada **não** contam. Colar só `PASTE_TO_GIT` sanitizado.
+
+**Implantação de acesso diário:** só com DNS+TLS **e** `GATE_F_HTTPS_EXTERNAL_NAV=OK`. `vps_api` sozinho **não** fecha.
 
 ---
 
 ## 6. Checklist de aceite
 
-- [ ] A records resolvem de fora da VPS  
-- [ ] `https://erp-dev…/` → 200 (certificado válido)  
+- [ ] A records resolvem de **fora** da VPS  
+- [ ] `https://erp-dev…/` → 200 (certificado válido) · HTML `Cache-Control: no-store`  
 - [ ] `https://api-erp-dev…/health` → 200  
 - [ ] CORS inclui origem HTTPS do SPA  
-- [ ] Cache HTML limpo (nginx no-store + purge Hostinger se aplicável)  
-- [ ] Smoke `gate-f-smoke-https-external.sh` = OK  
+- [ ] (Opcional) `GATE_F_HTTPS_PROBE=vps_api` = OK na VPS  
+- [ ] **`GATE_F_HTTPS_PROBE=external_nav` = OK** a partir de máquina externa  
 - [ ] Evidência sanitizada em `docs/vps/evidence/`  
 
-**BLOCKED atual:** DNS NX (evidência `gate-f-https-external-dns-blocked-2026-09-25.txt`).
+**BLOCKED atual:** DNS NX (evidência `gate-f-https-external-dns-blocked-2026-09-25.txt`).  
+**Acesso diário:** **não** concluído até external_nav OK.

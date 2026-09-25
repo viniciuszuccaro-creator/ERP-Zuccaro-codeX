@@ -1,3 +1,11 @@
+### Gate F — smoke HTTPS: VPS API ≠ navegação externa (2026-09-25T19:45Z)
+
+- Script `gate-f-smoke-https-external.sh` separado em camadas: `reachability` · `vps_api` · `external_nav` · `auto`.
+- `GATE_F_HTTPS_VPS_API=OK` (Auth/docker na VPS) **não** prova acesso do laptop.
+- Acesso diário só com `GATE_F_HTTPS_EXTERNAL_NAV=OK` fora da VPS + DNS/TLS.
+- Doc: `docs/vps/DNS_HTTPS_ERP_DEV.md` §5. DNS ainda **NX** — implantação diária **não** concluída.
+- Cache SPA fingerprint (#39 `69c1adc7`) e nginx no-store (#40) já publicados; falta DNS humano.
+
 ### Gate F — cache SPA + prep DNS/HTTPS (2026-09-25T19:35Z)
 
 - **Cache nginx:** `deploy/nginx-erp.conf` — `index.html` / `/` / `/api|/health|/ready` com `Cache-Control: no-store`; assets hasheados seguem `immutable`.
