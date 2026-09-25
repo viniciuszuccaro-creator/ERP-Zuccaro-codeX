@@ -1,3 +1,10 @@
+## Comercial 360 / Onda 2 - CI HTTP fixtures + snapshot preço (2026-09-25T20:05Z)
+
+- Causa CI vermelha: HTTP Orçamento/Pedido usavam `TabelaPrecoService` real (memória vazia) → 404 no create após Onda 2 exigir `resolveSalePrice`.
+- Fix: stub `prices.resolveSalePrice` nos fixtures `runtime08c-orcamento-http` e `runtime09-pedido-http` (mesmo padrão dos service tests).
+- Testes locais: HTTP orc/ped + onda2 + service — 33/33 PASS.
+- Ordem paralela: #39 APPROVED (merge após #40); DNS ainda NX; merge PRs = humano.
+
 ## Comercial 360 / Onda 2 - snapshot de preço em Orçamento/Pedido (2026-09-25)
 
 - Política explícita: no `create`/`update` EM_ABERTO, `preco_unitario` vem do servidor via `TabelaPrecoService.resolveSalePrice` (tabela do ClienteEmpresa → fallback padrão Empresa). Payload do cliente **não** é autoridade.
