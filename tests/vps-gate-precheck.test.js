@@ -667,6 +667,8 @@ test('gate-d-cleanup-auth-synthetic.sh passa bash -n e exige confirmacao', () =>
   assert.match(text, /alter_3080=NOT_PERFORMED/);
   assert.match(text, /AUTHORIZES_GATE_F=NO/);
   assert.match(text, /auth_user_banned_not_deleted/);
+  assert.match(text, /habilitado_operacao/);
+  assert.doesNotMatch(text, /bloqueado = true/);
   const blocked = spawnSync('bash', [script], {
     encoding: 'utf8',
     env: { ...process.env, CONFIRM_GATE_D_CLEANUP: '' },

@@ -1,0 +1,18 @@
+# Gate D — cleanup PARTIAL (sanitizado)
+# Auth ban/unlink OK; fixtures falhou constraint.
+
+utc=2026-09-25T15:22:50Z
+source=vps_webconsole
+auth_user_found=YES
+http_pw_rotate=200
+http_ban=200
+profile_unlinked=YES
+profile_synth_inactivated=YES
+fixtures_inactivated=NO
+error=chk_cliente_empresas_bloqueio
+root_cause=UPDATE_bloqueado_true_sem_motivo_bloqueio
+fix=inactivate_ativo_false_habilitado_false_sem_bloqueado
+alter_3080=NOT_PERFORMED
+AUTHORIZES_GATE_F=NO
+NOTE=segredos_somente_cofre_local
+NOTE2=reexecutar_cleanup_apos_pull

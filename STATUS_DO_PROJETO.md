@@ -1,3 +1,11 @@
+### Gate D — cleanup §E BLOCKED fixtures (2026-09-25T15:22Z)
+
+- Auth OK: `http_pw_rotate=200` · `http_ban=200` · `profile_unlinked=YES`.
+- Fixtures: `UPDATE cliente_empresas … bloqueado=true` violou `chk_cliente_empresas_bloqueio` (exige `motivo_bloqueio`/`bloqueado_em`/`bloqueado_por`).
+- Fix: inativar com `ativo=false` + `habilitado_operacao=false` **sem** setar `bloqueado`.
+- Evidência: `docs/vps/evidence/gate-d-cleanup-blocked-fixtures-2026-09-25.txt`.
+- Reexecutar limpeza na VPS (Auth já banido — idempotente); Gate F bloqueado.
+
 ### Gate D — limpeza §E pronta (sem Gate F)
 
 - Negativos OK; Gate D canário completo.
