@@ -35,6 +35,7 @@ Evidências:
 
 ```bash
 cd /opt/erp-zuccaro
+CONFIRM_GATE_D_CLEANUP=YES \
 SYNTH_EMAIL='gate-d.synth@dev.synthetic.local' \
   bash scripts/vps/gate-d-cleanup-auth-synthetic.sh
 ```
