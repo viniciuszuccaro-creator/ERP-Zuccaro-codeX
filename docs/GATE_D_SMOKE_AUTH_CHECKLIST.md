@@ -276,26 +276,35 @@ Cole só o bloco `PASTE_TO_GIT_*` (sem token/URL com credencial).
 
 ### G. Mutações Orçamento→Pedido — após browser URL OK (sem Gate F / sem 3080)
 
-Cria Orçamento sintético e converte em Pedido no canário, com Bearer real. Requer refs (`cliente_empresas`, condição, produto) no mesmo Grupo/Empresa do profile. **Não** imprime UUID.
+Cria Orçamento sintético e converte em Pedido no canário, com Bearer real. Requer refs no tenant (o script garante fixtures `GATE_D_MUTATION`). **Não** imprime UUID.
+
+**Importante:** se o canário ainda estiver na imagem antiga sem o fix do map Orçamento (`descricao`/`unidade_sigla`), `ped_convert` pode retornar 500. Após `git pull`, **recrie o canário 3086** antes da mutação (3080 intacta).
 
 ```bash
 cd /opt/erp-zuccaro
 git pull origin cursor/pos-gate-e-prep-d-392b
 
-# Mesma sessão: gere senha, atualize Auth, rode mutação
+# Recriar canário com o código corrigido (porta ≠3080)
+ERP_DOCKER_NETWORK='supabase_default' \
+EXPECTED_RUNTIME='ERP-RUNTIME-08B' \
+CANARY_PORT='3086' \
+ERP_AUTH_MODE='supabase_user' \
+bash scripts/deploy/comercial360-canary.sh
+
+BASE_URL='http://127.0.0.1:3086' EXPECTED_RUNTIME=ERP-RUNTIME-08B \
+  bash scripts/deploy/comercial360-smoke.sh
+
+# Auth + mutação (mesma sessão)
 SYNTH_PASS="$(openssl rand -base64 24)"
 SYNTH_EMAIL='gate-d.synth@dev.synthetic.local'
 SYNTH_EMAIL="$SYNTH_EMAIL" SYNTH_PASS="$SYNTH_PASS" \
   bash scripts/vps/provision-gate-d-auth-synthetic.sh
-
 SYNTH_EMAIL="$SYNTH_EMAIL" SYNTH_PASS="$SYNTH_PASS" \
   bash scripts/vps/gate-d-smoke-mutation-orc-ped.sh
 unset SYNTH_PASS
 ```
 
 Esperado: `refs_ensure=YES` · `orc_create=201` · `ped_convert=201` · `ped_convert_dup=409` · `ped_get=200` · `mutation_no_auth=401|403` · `GATE_D_MUTATION_SMOKE=OK`.
-
-O script **cria** fixtures mínimas marcadas `GATE_D_MUTATION` no tenant do profile se faltarem (ClienteEmpresa/condição/produto). Sem seed global obrigatório.
 
 Cole só `PASTE_TO_GIT_*`.
 

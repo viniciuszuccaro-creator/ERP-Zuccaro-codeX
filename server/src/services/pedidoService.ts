@@ -68,7 +68,26 @@ export class PedidoService {
         const quote = await this.orcamentos.get(scope, orcamentoId, executor);
         if (!quote) throw new AppError(404, 'ORCAMENTO_NOT_FOUND', 'Orcamento not found');
         if (quote.status !== 'EM_ABERTO') throw new AppError(409, 'ORCAMENTO_STATE_CONFLICT', 'Orcamento is not open');
-        const data: PedidoCreate = pedidoCreateSchema.parse({ ...parsed.data, orcamento_id: quote.id, cliente_empresa_id: quote.cliente_empresa_id, condicao_pagamento_id: quote.condicao_pagamento_id, observacoes: parsed.data.observacoes ?? quote.observacoes ?? undefined, itens: quote.itens.map((item) => ({ produto_id: item.produto_id, unidade_id: item.unidade_id, descricao: item.descricao, unidade_sigla: item.unidade_sigla, quantidade: item.quantidade, preco_unitario: item.preco_unitario, desconto: item.desconto, requer_producao: false })) });
+        const draft = {
+          ...parsed.data,
+          orcamento_id: quote.id,
+          cliente_empresa_id: quote.cliente_empresa_id,
+          condicao_pagamento_id: quote.condicao_pagamento_id,
+          observacoes: parsed.data.observacoes ?? quote.observacoes ?? undefined,
+          itens: quote.itens.map((item) => ({
+            produto_id: item.produto_id,
+            unidade_id: item.unidade_id,
+            descricao: item.descricao,
+            unidade_sigla: item.unidade_sigla,
+            quantidade: item.quantidade,
+            preco_unitario: item.preco_unitario,
+            desconto: item.desconto ?? '0',
+            requer_producao: false,
+          })),
+        };
+        const dataParsed = pedidoCreateSchema.safeParse(draft);
+        if (!dataParsed.success) this.validation(dataParsed.error.flatten());
+        const data: PedidoCreate = dataParsed.data;
         await this.validateReferences(scope, data, executor);
         const created = await this.repo.create(scope, data, ctx.actorId!, executor);
         await this.auditRow(ctx, 'create', null, created, executor);

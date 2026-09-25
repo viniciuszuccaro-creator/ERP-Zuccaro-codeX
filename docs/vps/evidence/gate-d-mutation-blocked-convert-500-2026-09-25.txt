@@ -1,0 +1,22 @@
+# Gate D — mutation convert FAIL (sanitizado)
+# Sem token, senha, UUID ou .env.
+
+utc=2026-09-25T14:24:30Z
+source=vps_webconsole
+AUTH_SYNTHETIC_STATUS=OK
+refs_ensure=YES
+refs_cliente_empresa=YES
+refs_condicao=YES
+refs_produto=YES
+refs_unidade=YES
+http_token=200
+orc_create=201
+ped_convert=500
+ped_convert_error_code=INTERNAL_ERROR
+GATE_D_MUTATION_SMOKE=BLOCKED
+root_cause=orcamento_postgres_map_missing_descricao_unidade_sigla
+fix=postgresOrcamentoRepository_map_snapshots_plus_convert_safeParse
+alter_3080=NOT_PERFORMED
+AUTHORIZES_GATE_F=NO
+NOTE=segredos_somente_cofre_local
+NOTE2=requer_rebuild_canario_3086_apos_pull

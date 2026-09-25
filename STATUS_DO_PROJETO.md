@@ -1,3 +1,11 @@
+### Gate D — mutation ped_convert=500 (2026-09-25T14:24Z)
+
+- `refs_ensure=YES` · `orc_create=201` · `ped_convert=500` `INTERNAL_ERROR`.
+- Causa: map Postgres de Orçamento não projetava `descricao`/`unidade_sigla` a partir de `*_snapshot`; `pedidoCreateSchema.parse` gerava ZodError → 500.
+- Fix: `postgresOrcamentoRepository` map + `PedidoService.convert` com `safeParse` (422); provision força RBAC com `converter-pedido`.
+- Evidência: `docs/vps/evidence/gate-d-mutation-blocked-convert-500-2026-09-25.txt`.
+- **Requer recriar canário 3086** com o código novo (checklist §G); 3080/F intocados.
+
 ### Gate D — mutation ensure FAIL codigo (2026-09-25T14:13Z)
 
 - `refs_ensure=FAIL` · `condicoes_pagamento_codigo_check` (codigo deve ser `^[0-9]{6}$`; `GATED1` inválido).

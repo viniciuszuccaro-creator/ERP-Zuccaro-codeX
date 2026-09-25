@@ -296,7 +296,8 @@ SET ativo = true,
       SELECT id FROM empresas
       WHERE group_id = (SELECT id FROM groups ORDER BY id LIMIT 1)
       ORDER BY id LIMIT 1
-    ))
+    )),
+    permissoes = '{"Comercial":{"orcamento":["visualizar","criar","editar","cancelar"],"pedido":["visualizar","criar","editar","cancelar","converter-pedido","alterar-status"]}}'::jsonb
 WHERE auth_user_id = :'auth_uuid'::uuid;
 
 UPDATE profiles
@@ -308,10 +309,7 @@ SET auth_user_id = :'auth_uuid'::uuid,
       WHERE group_id = (SELECT id FROM groups ORDER BY id LIMIT 1)
       ORDER BY id LIMIT 1
     )),
-    permissoes = COALESCE(
-      permissoes,
-      '{"Comercial":{"orcamento":["visualizar","criar","editar","cancelar"],"pedido":["visualizar","criar","editar","cancelar","converter-pedido","alterar-status"]}}'::jsonb
-    )
+    permissoes = '{"Comercial":{"orcamento":["visualizar","criar","editar","cancelar"],"pedido":["visualizar","criar","editar","cancelar","converter-pedido","alterar-status"]}}'::jsonb
 WHERE lower(email) = lower(:'synth_email')
   AND auth_user_id IS NULL;
 
