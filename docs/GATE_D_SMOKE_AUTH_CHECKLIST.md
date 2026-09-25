@@ -183,26 +183,25 @@ Gravar em `docs/vps/evidence/auth-synthetic-latest.txt`. Sem `<N>` literais.
 ### A. Subir canário (porta ≠3080)
 
 Use `bash` (evita Permission denied se o clone não tiver bit +x).  
-`ENV_FILE` real na VPS — tipicamente `/opt/erp-zuccaro/.env` (nunca o placeholder `/caminho/local/...`).
+`ENV_FILE` real na VPS — tipicamente `/opt/erp-zuccaro/.env` (nunca o placeholder `/caminho/local/...`).  
+**Defina as vars no mesmo bloco** (após `git pull` a sessão pode ter perdido exports).
 
 ```bash
-# Descobrir arquivo (não cat / não cole conteúdo):
-ls -la /opt/erp-zuccaro/.env /opt/erp-zuccaro/.env.canary 2>/dev/null || true
+cd /opt/erp-zuccaro
+ls -la /opt/erp-zuccaro/.env >/dev/null
+curl -sS -o /dev/null -w 'health_3080=%{http_code}\n' http://127.0.0.1:3080/health
+# Se sobrou container de tentativa anterior:
+docker rm -f erp-api-comercial360-canary 2>/dev/null || true
 
-IMAGE='erp-zuccaro-erp-api:comercial360-main-2fc2fc80'
-ENV_FILE='/opt/erp-zuccaro/.env'
-ERP_DOCKER_NETWORK='supabase_default'
-EXPECTED_RUNTIME='ERP-RUNTIME-08B'
-CANARY_PORT='3086'
-ERP_AUTH_MODE='supabase_user'
+IMAGE='erp-zuccaro-erp-api:comercial360-main-2fc2fc80' \
+ENV_FILE='/opt/erp-zuccaro/.env' \
+ERP_DOCKER_NETWORK='supabase_default' \
+EXPECTED_RUNTIME='ERP-RUNTIME-08B' \
+CANARY_PORT='3086' \
+ERP_AUTH_MODE='supabase_user' \
 bash scripts/deploy/comercial360-canary.sh
-```
 
-### B. Meta / superfície HTTP
-
-```bash
-BASE_URL="http://127.0.0.1:${CANARY_PORT}" \
-EXPECTED_RUNTIME=ERP-RUNTIME-08B \
+BASE_URL='http://127.0.0.1:3086' EXPECTED_RUNTIME=ERP-RUNTIME-08B \
   bash scripts/deploy/comercial360-smoke.sh
 ```
 
