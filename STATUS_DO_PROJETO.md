@@ -1,3 +1,13 @@
+## Comercial 360 / Onda 3 - inventário CRM BLOCKED (2026-09-25)
+
+- Inventário: `Oportunidade`/`Interacao`/`Campanha` só em localBase44/Base44; **zero** migration/HTTP canônico no server.
+- Consumidores: `CRM.jsx`, `crmOportunidadePolicy`, Site CPA, scorer/churn, PesquisaUniversal.
+- Central 360 mantém `blocks.crm=skipped` (`CRM_CANONICAL_HTTP_PENDING`) — **não** cria CRM paralelo (Regra-Mãe).
+- Evidência/contrato: `docs/COMERCIAL_360_ONDA_3_CLIENTE_CRM.md` § Inventário CRM.
+- **BLOCKED** preencher CRM na Central 360 até decisão humana: (A) migração canônica ou (B) adaptador somente-leitura do legado.
+- PR #39 MERGEABLE · CI verde. PR #40 (docs Gate F) MERGEABLE.
+- Próximo código liberado sem criar módulo: snapshot de preço Onda 2 em Orçamento/Pedido (política comercial explícita) **ou** autorização A/B do CRM.
+
 ## Comercial 360 / Onda 3 - Central Cliente 360 + Local/Obra (2026-09-25)
 
 - Extensão do read-model: blocos `locais` e `obras` via `ClienteLocalService`/`ObraService` existentes (paginação, RBAC fail-closed, projeção sem logradouro/fingerprint).
