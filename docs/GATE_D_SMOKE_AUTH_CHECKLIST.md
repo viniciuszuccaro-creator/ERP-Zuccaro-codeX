@@ -208,29 +208,31 @@ BASE_URL='http://127.0.0.1:3086' EXPECTED_RUNTIME=ERP-RUNTIME-08B \
 
 ### C. Bearer sintético — após canário com overlay Supabase
 
-Causa típica de falha: `SUPABASE_URL=http://kong:8000` no host (`Could not resolve host: kong`) e anon stub (`anon_len≈19`).  
-**Recriar canário** (overlay `ANON_KEY` real) e então o smoke Bearer:
+**Não** cole textos do chat como senha (`SENHA_DO_COFRE_OPENSSL`, etc.) — GoTrue responde `invalid_credentials`.  
+Gere a senha **na VPS**, atualize o Auth na mesma sessão e rode o Bearer **sem** `unset` no meio:
 
 ```bash
 cd /opt/erp-zuccaro
 git pull origin cursor/pos-gate-e-prep-d-392b
-docker rm -f erp-api-comercial360-canary 2>/dev/null || true
 
-IMAGE='erp-zuccaro-erp-api:comercial360-main-2fc2fc80' \
-ENV_FROM_CONTAINER='erp-api-dev' \
-ERP_DOCKER_NETWORK='supabase_default' \
-EXPECTED_RUNTIME='ERP-RUNTIME-08B' \
-CANARY_PORT='3086' \
-ERP_AUTH_MODE='supabase_user' \
-bash scripts/deploy/comercial360-canary.sh
-# Esperado: supabase_overlay=YES · supabase_anon_len>=40 · CANARY_READY
+# 1) Nova senha (guarde no cofre local; NÃO echo / NÃO cole no chat)
+SYNTH_PASS="$(openssl rand -base64 24)"
+SYNTH_EMAIL='gate-d.synth@dev.synthetic.local'
 
-SYNTH_PASS='SENHA_DO_COFRE_OPENSSL' \
+# 2) Atualiza senha do user Auth existente (idempotente)
+SYNTH_EMAIL="$SYNTH_EMAIL" SYNTH_PASS="$SYNTH_PASS" \
+  bash scripts/vps/provision-gate-d-auth-synthetic.sh
+# Esperado: AUTH_SYNTHETIC_STATUS=OK (ou profile_linked=YES)
+
+# 3) Bearer no canário 3086 — mesma SYNTH_PASS da sessão
+SYNTH_EMAIL="$SYNTH_EMAIL" SYNTH_PASS="$SYNTH_PASS" \
   bash scripts/vps/gate-d-smoke-bearer-synthetic.sh
+
+unset SYNTH_PASS
 ```
 
-Cole só o bloco `PASTE_TO_GIT_*` (`no_auth`/`orc_list`/`ped_list`/`GATE_D_BEARER_SMOKE`).  
-Fluxo create/update/cancel Orçamento→Pedido permanece checklist manual se listagens OK.
+Cole só `PASTE_TO_GIT_*` do Bearer (`GATE_D_BEARER_SMOKE=OK` · codes).  
+Se o canário ainda não tiver `supabase_overlay=YES`, recrie-o antes do passo 3 (bloco §A).
 
 ### D. Negativos obrigatórios
 

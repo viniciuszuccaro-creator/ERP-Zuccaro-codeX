@@ -16,6 +16,15 @@ echo "GATE_AUTH_PROVISION_BEGIN utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "AUTHORIZES_CANARY=NO"
 echo "alter_3080=NOT_PERFORMED"
 
+case "${SYNTH_PASS}" in
+  SENHA_DO_COFRE_OPENSSL|SENHA_DO_COFRE|SENHA_REAL_DO_COFRE|SENHA_FORTE_LOCAL|SUA_SENHA_FORTE|COLOQUE_SENHA_FORTE_AQUI|'...'|'…')
+    echo 'BLOCKED: synth_pass_is_placeholder_from_chat' >&2
+    echo 'HINT=use_SYNTH_PASS="$(openssl rand -base64 24)"' >&2
+    exit 2
+    ;;
+esac
+[[ ${#SYNTH_PASS} -ge 12 ]] || { echo 'BLOCKED: synth_pass_too_short' >&2; exit 2; }
+
 [[ -f "$ENV_FILE" ]] || { echo "BLOCKED: env_file_missing path_set=YES" >&2; exit 2; }
 
 env_get() {

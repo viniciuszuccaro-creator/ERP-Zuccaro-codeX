@@ -1,9 +1,8 @@
 ### Gate D — canário + smoke meta OK (2026-09-25T12:33Z)
 
-- `CANARY_READY` · porta **3086** · imagem `comercial360-main-2fc2fc80` · `ERP-RUNTIME-08B`.
-- `SMOKE_OK` health/ready · `ENV_FROM_CONTAINER=erp-api-dev` · `ERP_AUTH_MODE=supabase_user`.
-- Evidência: `docs/vps/evidence/gate-d-canary-smoke-2026-09-25.txt`.
-- Bearer: falhou (`kong` no host + anon stub len=19). Fix: overlay `ANON_KEY` no canário + smoke via `127.0.0.1:8000`.
+- `CANARY_READY` · porta **3086** · overlay Supabase OK (`anon_len=169`).
+- Bearer 12:44Z: `invalid_credentials` — `SYNTH_PASS` foi placeholder do chat, não a senha openssl.
+- Fix: scripts bloqueiam placeholders; reset senha + Bearer na mesma sessão VPS.
 - **3080** intacta · Gate F **não**.
 
 
