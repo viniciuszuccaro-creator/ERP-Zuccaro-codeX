@@ -43,7 +43,22 @@ docker ps --format '{{.Names}}' | grep -Ei 'auth|kong|gotrue' || true
 curl -sS -o /dev/null -w 'health=%{http_code}\n' http://127.0.0.1:3080/health
 ```
 
-### 2–4) Blocos só-comando — **uma sessão contínua** (sem colar prosa)
+### 2) Provisionamento via script (recomendado — evita paste de prosa)
+
+Na Web Console, **só estas linhas** (defina email/senha locais; não cole prosa):
+
+```bash
+cd /opt/erp-zuccaro
+curl -fsSL 'https://raw.githubusercontent.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/cursor/pos-gate-e-prep-d-392b/scripts/vps/provision-gate-d-auth-synthetic.sh' -o /tmp/provision-gate-d-auth.sh
+chmod +x /tmp/provision-gate-d-auth.sh
+SYNTH_EMAIL='gate-d.synth@dev.synthetic.local' SYNTH_PASS='COLOQUE_SENHA_FORTE_AQUI' \
+  bash /tmp/provision-gate-d-auth.sh
+```
+
+Envie ao chat **apenas** o bloco `PASTE_TO_GIT_*` (sem JSON Auth).  
+Se `BLOCKED: auth_user_not_created`, rode Studio → Add user e avise o `http_kong=` / `auth_error_hint=`.
+
+### 2b) Blocos manuais (alternativa) — **uma sessão contínua**
 
 Containers: `supabase-auth`, `supabase-studio`.  
 Se aparecer `Organization: command not found`, prosa foi colada no shell — ignore e continue só com bash.
