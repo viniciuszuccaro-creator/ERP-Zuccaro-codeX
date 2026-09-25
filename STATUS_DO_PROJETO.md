@@ -1,3 +1,10 @@
+## Comercial 360 / Onda 3 - cache: tokens mesmo length (2026-09-25)
+
+- Bug: `central360SessionKey` usava só `t${length}` — duas sessões com Bearer distintos de mesmo comprimento compartilhavam queryKey.
+- Fix: fingerprint FNV-1a (`t{len}_{hex8}`) em `httpApiClient.central360SessionKey`; não coloca o token no queryKey.
+- Teste: `duas sessões com tokens diferentes de comprimento idêntico invalidam o cache` (pré-condição length-only colide).
+- Acesso diário externo **não** concluído: faltam DNS/HTTPS + prova de navegação fora da VPS (#40). Codex revisa esta #39.
+
 ## Comercial 360 / Onda 3 - cache painel + Bearer (2026-09-25)
 
 - `CentralCliente360Panel`: `staleTime=0` · `gcTime=0` · `refetchOnMount=always` — sem reaproveitar payload entre Grupo/Empresa/ator/sessão.
