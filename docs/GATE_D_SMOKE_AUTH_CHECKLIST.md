@@ -38,6 +38,8 @@ Complementa `docs/GATES_D_F_PREPARACAO_CANARIO.md` e
 
 **URL browser segura (2026-09-25T13:56Z):** `GATE_D_BROWSER_URL_SMOKE=OK` · canário `supabase_user`/`08B` · no_auth/spoof `401` · 3080 permanece `07B`/`dev_headers`.
 
+**Mutação Orçamento→Pedido (2026-09-25T14:37Z):** `GATE_D_MUTATION_SMOKE=OK` · canário `comercial360-gate-d-2b45292e` (from-checkout) · `orc_create=201` · `ped_convert=201` · `ped_convert_dup=409` · `ped_get=200` · `mutation_no_auth=401` · `alter_3080=NOT_PERFORMED` · Gate F **não** autorizado.
+
 Ordem fail-closed. **Nunca** colar e-mail, senha, token, service_role ou UUID no chat/Git.
 
 ### 1) Descobrir Auth (só nomes)

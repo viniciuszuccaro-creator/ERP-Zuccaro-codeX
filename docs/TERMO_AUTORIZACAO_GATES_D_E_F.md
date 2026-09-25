@@ -70,7 +70,7 @@ Marcar **apenas** o autorizado. Sem marca = **não executar**.
 - [ ] ~~Merge PR #33~~ — **obsoleto**; merge via **#35**
 - [x] **Gate E** — 016–024 no DEV @ `2fc2fc80…` — **EXECUTADO** (`GATE_E_STATUS=OK`)
 - [x] **Gate Auth sintético** — provisionar identidade de teste + vincular `profiles.auth_user_id` (Grupo/Empresa sintéticos; RBAC mínimo Orçamento/Pedido; **não** reutilizar profiles sem prova; credenciais fora do Git; revogar após smoke)
-- [x] **Gate D** — canário `comercial360-main-2fc2fc80` em porta ≠3080 + smoke meta + smoke Bearer (checklist); **exige** Gate Auth OK antes do canário
+- [x] **Gate D** — canário em porta ≠3080 + smoke meta + Bearer + browser URL + mutação Orçamento→Pedido OK (`comercial360-gate-d-2b45292e` from-checkout · `GATE_D_MUTATION_SMOKE=OK` · 14:37Z); digest MAIN `2fc2fc80` permanece REGISTERED para promoção futura
 - [ ] **Gate F** — **NÃO autorizado** (3080 inalterada)
 
 ### Registro Gate E (já assinado)
