@@ -25,7 +25,7 @@
 - `neg_no_auth=401` · `neg_invalid_token=401` · `neg_adulterated_group=403` · `neg_foreign_empresa=403` · `neg_missing_tenant_headers=400` · `neg_spoof_dev_headers=401`.
 - `GATE_D_NEGATIVES_SMOKE=OK` · `alter_3080=NOT_PERFORMED` · Gate F **não** autorizado.
 - Evidência: `docs/vps/evidence/gate-d-negatives-smoke-ok-2026-09-25.txt`.
-- Gate D canário **completo** (Auth · Bearer · browser · mutação · negativos). Próximo opcional: limpeza §E (revogar sessão sintética). Gate F só com termo/assinatura + digest alinhado (não promover MAIN `2fc2fc80` sem o fix).
+- Gate D canário **completo** (Auth · Bearer · browser · mutação · negativos). Limpeza §E registrada em `15:28Z`. Gate F só com termo/assinatura + digest alinhado.
 
 ### Gate D — mutation Orçamento→Pedido OK (2026-09-25T14:37Z)
 
