@@ -48,8 +48,9 @@ function fixture() {
   const produtos = { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: unidadeId }) };
   const unidades = { getById: async () => ({ id: unidadeId, ativo: true }) };
   const condicoes = { get: async () => ({ id: condicaoId, ativo: true }) };
-  Object.assign(pedidoRefs, { clientes, produtos, unidades, condicoes, locais: { get: async () => null }, obras: { get: async () => null }, tabelas: { get: async () => null } });
-  Object.assign(orcamentoRefs, { clientes, produtos, unidades, condicoes });
+  const prices = { resolveSalePrice: async () => ({ preco: '10.000000', tabela_preco_id: '99999999-9999-4999-8999-999999999999' }) };
+  Object.assign(pedidoRefs, { clientes, produtos, unidades, condicoes, locais: { get: async () => null }, obras: { get: async () => null }, tabelas: { get: async () => null }, prices });
+  Object.assign(orcamentoRefs, { clientes, produtos, unidades, condicoes, prices });
   return runtime;
 }
 function headers(overrides: Record<string, string> = {}) { return { 'content-type': 'application/json', 'x-group-id': groupId, 'x-empresa-id': empresaId, 'x-actor-id': actorId, ...overrides }; }

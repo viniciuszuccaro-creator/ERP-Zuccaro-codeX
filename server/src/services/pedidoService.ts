@@ -25,6 +25,14 @@ const conversionSchema = z.object({
   observacoes: z.string().trim().max(1000).optional(),
 }).strict();
 
+/** Porta mínima para snapshot de preço na venda direta (não usada na conversão de Orçamento). */
+export type PedidoSalePricePort = {
+  resolveSalePrice(
+    ctx: RequestContext,
+    input: { clienteEmpresaId: string; produtoId: string; unidadeMedidaId: string },
+  ): Promise<{ preco: string; tabela_preco_id?: string } | null>;
+};
+
 export function pedidoAuditSnapshot(row: Pedido) {
   return sanitizeAuditSnapshot({ id: row.id, group_id: row.group_id, empresa_id: row.empresa_id, numero: row.numero, status: row.status, cliente_empresa_id: row.cliente_empresa_id, cliente_local_id: row.cliente_local_id, obra_id: row.obra_id, tabela_preco_id: row.tabela_preco_id, condicao_pagamento_id: row.condicao_pagamento_id, orcamento_id: row.orcamento_id, vendedor_id: row.vendedor_id, tipo_operacao: row.tipo_operacao, data_entrega_solicitada: row.data_entrega_solicitada, subtotal: row.subtotal, desconto: row.desconto, total: row.total, ativo: row.ativo, quantidade_itens: row.itens.length, requer_producao: row.itens.some((item) => item.requer_producao) });
 }
@@ -43,6 +51,7 @@ export class PedidoService {
     private readonly locais: Pick<ClienteLocalRepository, 'get'>,
     private readonly obras: Pick<ObraRepository, 'get'>,
     private readonly tabelas: Pick<TabelaPrecoRepository, 'get'>,
+    private readonly prices: PedidoSalePricePort,
   ) {}
 
   async create(ctx: RequestContext, payload: unknown) {
@@ -51,7 +60,8 @@ export class PedidoService {
     if (data.orcamento_id) throw new AppError(422, 'PEDIDO_ORIGEM_INVALIDA', 'Use quotation conversion endpoint');
     return this.repo.withTransaction(async (executor) => {
       await this.validateReferences(scope, data, executor);
-      const created = await this.repo.create(scope, data, ctx.actorId!, executor);
+      const priced = await this.applyServerPriceSnapshots(ctx, data);
+      const created = await this.repo.create(scope, priced, ctx.actorId!, executor);
       await this.auditRow(ctx, 'create', null, created, executor);
       return created;
     });
@@ -68,6 +78,7 @@ export class PedidoService {
         const quote = await this.orcamentos.get(scope, orcamentoId, executor);
         if (!quote) throw new AppError(404, 'ORCAMENTO_NOT_FOUND', 'Orcamento not found');
         if (quote.status !== 'EM_ABERTO') throw new AppError(409, 'ORCAMENTO_STATE_CONFLICT', 'Orcamento is not open');
+        // Não-retroatividade: preserva preco_unitario já snapshotado no Orçamento.
         const draft = {
           ...parsed.data,
           orcamento_id: quote.id,
@@ -122,7 +133,9 @@ export class PedidoService {
       if (before.status !== 'EM_ABERTO') this.stateConflict();
       if ((data.orcamento_id ?? null) !== before.orcamento_id) this.validation({ orcamento_id: 'immutable' });
       await this.validateReferences(scope, data, executor);
-      const after = await this.repo.update(scope, id, data, ctx.actorId!, executor);
+      // Pedido originado de Orçamento: não reconsultar tabela (não-retroatividade).
+      const priced = before.orcamento_id ? data : await this.applyServerPriceSnapshots(ctx, data);
+      const after = await this.repo.update(scope, id, priced, ctx.actorId!, executor);
       if (!after) this.stateConflict();
       await this.auditRow(ctx, 'update', before, after, executor);
       return after;
@@ -165,6 +178,33 @@ export class PedidoService {
   }
 
   private parse(payload: unknown) { const parsed = pedidoCreateSchema.safeParse(payload); if (!parsed.success) this.validation(parsed.error.flatten()); return parsed.data; }
+
+  private async applyServerPriceSnapshots(ctx: RequestContext, data: PedidoCreate): Promise<PedidoCreate> {
+    const itens = [];
+    let tabelaId: string | null | undefined = data.tabela_preco_id;
+    for (const item of data.itens) {
+      const resolved = await this.prices.resolveSalePrice(ctx, {
+        clienteEmpresaId: data.cliente_empresa_id,
+        produtoId: item.produto_id,
+        unidadeMedidaId: item.unidade_id,
+      });
+      if (!resolved?.preco) {
+        throw new AppError(422, 'PEDIDO_PRECO_INDISPONIVEL', 'Price unavailable for product/unit in authorized table', {
+          produto_id: item.produto_id,
+          unidade_id: item.unidade_id,
+        });
+      }
+      if (!tabelaId && resolved.tabela_preco_id) tabelaId = resolved.tabela_preco_id;
+      itens.push({ ...item, preco_unitario: this.normalizeMoney(resolved.preco) });
+    }
+    return { ...data, tabela_preco_id: tabelaId ?? data.tabela_preco_id ?? null, itens };
+  }
+
+  private normalizeMoney(value: string): string {
+    const [i, f = ''] = String(value).split('.');
+    return `${i}.${(f + '000000').slice(0, 6)}`;
+  }
+
   private async validateReferences(scope: PedidoScope, data: PedidoCreate, executor?: DbQueryExecutor) {
     const link = await this.clientes.getEmpresaLinkById(scope, data.cliente_empresa_id, executor);
     if (!link || !link.ativo || link.bloqueado || !link.habilitado_operacao) throw new AppError(422, 'PEDIDO_CLIENTE_INVALIDO', 'ClienteEmpresa unavailable in tenant scope');

@@ -46,11 +46,14 @@ function fixture() {
     produtos: { getById: () => Promise<unknown> };
     unidades: { getById: () => Promise<unknown> };
     condicoes: { get: () => Promise<unknown> };
+    prices: { resolveSalePrice: () => Promise<{ preco: string } | null> };
   };
   refs.clientes = { getEmpresaLinkById: async () => ({ id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true }) };
   refs.produtos = { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: unidadeId }) };
   refs.unidades = { getById: async () => ({ id: unidadeId, ativo: true }) };
   refs.condicoes = { get: async () => ({ id: condicaoId, ativo: true }) };
+  // Onda 2: snapshot de preço no servidor — HTTP fixture stub (TabelaPreco vazia em memória).
+  refs.prices = { resolveSalePrice: async () => ({ preco: '10.000000' }) };
   return runtime;
 }
 

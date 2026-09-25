@@ -350,6 +350,36 @@ export class TabelaPrecoService {
     }
   }
 
+  /**
+   * Preço efetivo para captura em Orçamento/Pedido.
+   * RBAC Comercial já foi assertado pelo caller; não exige Cadastros.tabela_preco.visualizar.
+   * Tabela vem do vínculo ClienteEmpresa (fallback padrão Empresa) — nunca do payload do cliente.
+   */
+  async resolveSalePrice(
+    ctx: RequestContext,
+    input: {
+      clienteEmpresaId: string;
+      produtoId: string;
+      unidadeMedidaId: string;
+      businessDate?: string;
+    },
+  ) {
+    if (!ctx.groupId) throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
+    if (!ctx.empresaId) throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required');
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
+    const parsed = z.object({
+      clienteEmpresaId: z.string().uuid(),
+      produtoId: z.string().uuid(),
+      unidadeMedidaId: z.string().uuid(),
+      businessDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
+        const date = new Date(`${value}T00:00:00.000Z`);
+        return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+      }).optional(),
+    }).strict().safeParse(input);
+    if (!parsed.success) this.validationError(parsed.error.flatten());
+    return this.resolvePriceForClienteEmpresaLink(ctx, parsed.data);
+  }
+
   async resolveClientPrice(ctx: RequestContext, input: unknown) {
     await this.prepare(ctx, 'visualizar', { requireEmpresa: true });
     await this.rbacGuard.assertAllowed(ctx, 'Cadastros', 'cliente_empresa', 'visualizar');
@@ -363,8 +393,20 @@ export class TabelaPrecoService {
       }).optional(),
     }).strict().safeParse(input);
     if (!parsed.success) this.validationError(parsed.error.flatten());
+    return this.resolvePriceForClienteEmpresaLink(ctx, parsed.data);
+  }
+
+  private async resolvePriceForClienteEmpresaLink(
+    ctx: RequestContext,
+    data: {
+      clienteEmpresaId: string;
+      produtoId: string;
+      unidadeMedidaId: string;
+      businessDate?: string;
+    },
+  ) {
     const link = await this.clientes.getEmpresaLinkById(
-      { groupId: ctx.groupId, empresaId: ctx.empresaId }, parsed.data.clienteEmpresaId,
+      { groupId: ctx.groupId, empresaId: ctx.empresaId }, data.clienteEmpresaId,
     );
     if (!link || !link.ativo) {
       throw new AppError(404, 'CLIENTE_EMPRESA_NOT_FOUND', 'ClienteEmpresa not found');
@@ -376,9 +418,9 @@ export class TabelaPrecoService {
       groupId: ctx.groupId,
       empresaId: ctx.empresaId!,
       clienteEmpresaTabelaId: link.tabela_preco_id,
-      produtoId: parsed.data.produtoId,
-      unidadeMedidaId: parsed.data.unidadeMedidaId,
-      businessDate: parsed.data.businessDate ?? businessDateSaoPaulo(),
+      produtoId: data.produtoId,
+      unidadeMedidaId: data.unidadeMedidaId,
+      businessDate: data.businessDate ?? businessDateSaoPaulo(),
     });
   }
 

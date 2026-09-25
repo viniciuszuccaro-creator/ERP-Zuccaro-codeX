@@ -1,9 +1,25 @@
+## Comercial 360 / Onda 2 - CI HTTP fixtures + snapshot preço (2026-09-25T20:05Z)
+
+- Causa CI vermelha: HTTP Orçamento/Pedido usavam `TabelaPrecoService` real (memória vazia) → 404 no create após Onda 2 exigir `resolveSalePrice`.
+- Fix: stub `prices.resolveSalePrice` nos fixtures `runtime08c-orcamento-http` e `runtime09-pedido-http` (mesmo padrão dos service tests).
+- Testes locais: HTTP orc/ped + onda2 + service — 33/33 PASS.
+- Ordem: #40 e #39 já MERGED; esta #41 em merge após rebase em main; DNS ainda NX (Registro.br).
+
+## Comercial 360 / Onda 2 - snapshot de preço em Orçamento/Pedido (2026-09-25)
+
+- Política explícita: no `create`/`update` EM_ABERTO, `preco_unitario` vem do servidor via `TabelaPrecoService.resolveSalePrice` (tabela do ClienteEmpresa → fallback padrão Empresa). Payload do cliente **não** é autoridade.
+- Conversão Orçamento→Pedido **preserva** snapshots do orçamento (não reconsulta tabela atual = não-retroatividade). Pedido editado com `orcamento_id` também não reconsulta.
+- Fail-closed: sem preço autorizado → `ORCAMENTO_PRECO_INDISPONIVEL` / `PEDIDO_PRECO_INDISPONIVEL` (422).
+- Reutilizado: `TabelaPrecoService`/`resolvePrice`, repositórios e RBAC Comercial existentes. Sem migration, rota nova ou módulo paralelo. Alçadas/margem/desconto aprovado ficam para lote seguinte da Onda 2.
+- Testes: `runtime-onda2-preco-snapshot.test.ts` + regressão orçamento/pedido service/security + `runtime07b` — PASS.
+- Branch `cursor/comercial360-onda2-preco-snapshot-392b` (separada da #39). Sem alteração 3080 neste merge.
+- Próximo Onda 2: alçada/desconto/margem; CRM Central 360 permanece BLOCKED (#39) até decisão A/B.
 ### Ordem Save/merge/DNS — progresso (2026-09-25T20:55Z)
 
 - **Save environment:** OK — build `bld-20260925-ba80fcc2` (CONFIG_CHANGE) sucedido após proposta `bld-20260925-0b7239f1`.
 - **Merge #40:** MERGED → `main` @ `1db7dc0c` (Gate F docs + nginx + smoke + DNS Registro.br).
-- **Merge #39:** em resolução de conflito `STATUS_DO_PROJETO.md` pós-#40; em seguida merge.
-- **Merge #41:** aguarda #39.
+- **Merge #39:** MERGED → `main` @ `0a0fa061` (Cliente 360 + fingerprint).
+- **Merge #41:** conflito STATUS resolvido; merge em andamento.
 - **DNS/HTTPS:** ainda NX — NS autoritativo Registro.br (`a.auto.dns.br`/`b.auto.dns.br`); criar A `erp-dev`/`api-erp-dev` lá (ou mudar NS). Acesso diário **não** concluído.
 
 ## Comercial 360 / Onda 3 - revisão Cursor APPROVED (2026-09-25T20:00Z)
