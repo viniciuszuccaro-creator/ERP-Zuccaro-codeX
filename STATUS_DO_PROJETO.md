@@ -1,3 +1,9 @@
+### Gate F — VPS completo · próximo Onda 3 (2026-09-25T16:47Z)
+
+- Gate F **EXECUTED_OK**: promote `894b0db8` · smoke 3080 · cleanup §E.
+- Evidências em `docs/vps/evidence/gate-f-*` · PR docs **#40** (merge pendente).
+- **Próximo:** merge #40 → Comercial 360 Onda 3 (PR **#39**, conflito com `main`).
+
 ### Gate F — cleanup §E OK pós-promote (2026-09-25T16:47Z)
 
 - `CONFIRM_GATE_D_CLEANUP=YES` · `GATE_D_CLEANUP_STATUS=OK`.
