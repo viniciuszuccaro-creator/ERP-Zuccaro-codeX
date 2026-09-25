@@ -1,3 +1,12 @@
+### Gate F — browser login token_not_issued (ban §E) (2026-09-25T18:08Z)
+
+- Auth provision `OK` · `profile_linked=YES` · `http_pw_update=200` · SPA/API health 200.
+- Browser smoke: `http_token=400` · `token_not_issued` (user ainda banido pós-§E).
+- Causa: `provision-gate-d-auth-synthetic.sh` na #39 sem unban (`9ba1fd91` só em gate-f).
+- Fix neste lote: `ban_duration=none` + SQL `banned_until=NULL` + smoke exige `SYNTH_PASS` ≥8 na mesma sessão.
+- Evidência: `docs/vps/evidence/gate-f-browser-token-not-issued-ban-2026-09-25.txt`.
+- **Sem merge** #39 · sem promoção 3080. Próximo VPS: pull HEAD → reprovision+browser smoke mesma sessão.
+
 ## Comercial 360 / Onda 3 - correções Codex P1 + UI + browser URL (2026-09-25)
 
 - P1 corrigidos na #39: (1) PII mascarada sem `dados-sensiveis.visualizar`; (2) vínculo ClienteEmpresa obrigatório na Empresa do contexto (404 seguro); (3) blocos `forbidden`/`unavailable` com `meta=null` e falha parcial sem derrubar a Central.

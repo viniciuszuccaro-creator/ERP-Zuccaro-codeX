@@ -113,8 +113,12 @@ echo "browser_nav_spoof_dev_headers=${spoof}"
 echo "browser_spoof_rejected=YES"
 
 # --- Login Auth sintético (token só em memória; nunca echo) ---
-[[ -n "$SYNTH_EMAIL" && -n "$SYNTH_PASS" ]] || {
+# SYNTH_PASS deve ser a mesma da sessão do provision (openssl); vazio/whitespace = inválido
+SYNTH_PASS="${SYNTH_PASS#"${SYNTH_PASS%%[![:space:]]*}"}"
+SYNTH_PASS="${SYNTH_PASS%"${SYNTH_PASS##*[![:space:]]}"}"
+[[ -n "$SYNTH_EMAIL" && -n "$SYNTH_PASS" && ${#SYNTH_PASS} -ge 8 ]] || {
   echo 'BLOCKED: set_SYNTH_EMAIL_and_SYNTH_PASS_for_login_step' >&2
+  echo 'HINT=same_session_SYNTH_PASS_from_provision_openssl' >&2
   exit 2
 }
 [[ -f "$ENV_FILE" ]] || { echo 'BLOCKED: env_file_missing' >&2; exit 2; }
