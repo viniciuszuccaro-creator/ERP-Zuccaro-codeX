@@ -3,7 +3,8 @@
 - Provisionamento Web Console OK: `auth_users_count=1` · `profiles_com_auth_count=1` · `AUTH_SYNTHETIC_STATUS=OK`.
 - Evidência: `docs/vps/evidence/auth-synthetic-latest.txt`.
 - `profiles_ativos_sem_auth_count=2` preservados (legado sem vínculo; não apagados).
-- Canário Gate D **autorizado** (termo §C) — próximo: subir canário porta ≠3080 + smoke.
+- Canário Gate D **autorizado** (termo §C) — `GATE_D_READY=YES`.
+- Ajuste canário: scripts `+x` no Git; use `bash scripts/deploy/...`; `ENV_FILE=/opt/erp-zuccaro/.env` (não placeholder); override `ERP_AUTH_MODE=supabase_user`.
 - **Não** Gate F / 3080.
 
 
