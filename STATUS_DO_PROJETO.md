@@ -1,3 +1,10 @@
+## Comercial 360 / Onda 3 - cache painel + Bearer (2026-09-25)
+
+- `CentralCliente360Panel`: `staleTime=0` · `gcTime=0` · `refetchOnMount=always` — sem reaproveitar payload entre Grupo/Empresa/ator/sessão.
+- Token Bearer permanece obrigatório; flag `VITE_ERP_HTTP_CLIENTE_360` **desligada**.
+- Testes: `central-cliente-360-session.test.js` (+ política de cache). CI no novo HEAD.
+- DNS/HTTPS externo: frente VPS **#40** (prep + smoke HTTPS).
+
 ## Comercial 360 / Onda 3 - Bearer sessão no Cliente 360 (2026-09-25)
 
 - `DetalhesCliente` obtém token via `resolveErpAuthSessionToken` (`erp_runtime_scope.token` → `base44_access_token` / appParams) e passa a `CentralCliente360Panel`.

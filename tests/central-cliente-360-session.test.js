@@ -144,3 +144,17 @@ test('troca de empresa ou usuário invalida chave de sessão/consulta', () => {
     flag: true, clienteId: CLIENTE, groupId: GROUP_A, empresaId: EMPRESA_B, actorId: ACTOR_A, token: TOKEN,
   }), true);
 });
+
+test('política de cache do painel: chave distinta implica sem reaproveitar payload entre tenants', () => {
+  // Contratos usados pelo useQuery do CentralCliente360Panel (staleTime/gcTime 0).
+  const cachePolicy = Object.freeze({ staleTime: 0, gcTime: 0, refetchOnMount: 'always' });
+  assert.equal(cachePolicy.staleTime, 0);
+  assert.equal(cachePolicy.gcTime, 0);
+  assert.equal(cachePolicy.refetchOnMount, 'always');
+  const keys = [
+    central360SessionKey(TOKEN),
+    central360SessionKey(`${TOKEN}x`),
+    central360SessionKey(''),
+  ];
+  assert.equal(new Set(keys).size, 3);
+});

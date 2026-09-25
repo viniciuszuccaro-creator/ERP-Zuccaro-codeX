@@ -94,6 +94,12 @@ export default function CentralCliente360Panel({
     queryFn: ({ signal }) => api.central360(clienteId, { signal }),
     enabled,
     retry: 1,
+    // Evita reutilizar payload de outro Grupo/Empresa/ator/sessão no painel.
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: false,
+    placeholderData: undefined,
   });
 
   if (!isHttpCliente360Enabled) return null;
