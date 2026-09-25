@@ -101,6 +101,12 @@
 - Próximo: criar A `erp-dev` / `api-erp-dev` no DNS do **Registro.br** (ou mudar NS para Hostinger e republicar). Depois confirmar Caddy/CORS.
 - Acesso diário **ainda não** concluído. Smoke HTTPS não executável sem resolução pública.
 
+### Hotfix main — Central 360 seed + Onda 2 preço (2026-09-25T21:00Z)
+
+- Causa: após merge #41, `seedClienteComercial` cria Orçamento/Pedido sem stub de `resolveSalePrice` → 422 (preço indisponível) e CI `main` vermelha.
+- Fix: stub `prices` no fixture `runtime-onda3-cliente-central360.test.ts` (mesmo padrão dos HTTP fixtures Onda 2).
+- Testes locais 4/4 PASS. Branch `cursor/fix-central360-preco-seed-392b`.
+
 ### Gate F — DNS/HTTPS: READY_WAITING_HUMAN (2026-09-25T20:12Z)
 
 - Agente **não** consegue criar A records: Hostinger MCP ausente neste ambiente.
