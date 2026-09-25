@@ -6,13 +6,6 @@
 - Evidência: `docs/vps/evidence/gate-d-negatives-smoke-ok-2026-09-25.txt`.
 - Gate D canário **completo** (Auth · Bearer · browser · mutação · negativos). Próximo opcional: limpeza §E (revogar sessão sintética). Gate F só com termo/assinatura + digest alinhado (não promover MAIN `2fc2fc80` sem o fix).
 
-### Gate D — próximos negativos tenant (sem Gate F)
-
-- Mutação OK; Gate F **bloqueado** (sem termo).
-- Script novo: `scripts/vps/gate-d-smoke-negatives-tenant.sh` (no_auth, token inválido, group/empresa adulterados, tenant ausente, spoof `dev_headers`).
-- Checklist §D atualizado. Cartão Gate F: não promover MAIN `2fc2fc80` sem o fix — mutação OK só em `gate-d-2b45292e`.
-- Próximo VPS: provision + negativos; cole `PASTE_TO_GIT_*`. Sem F/3080.
-
 ### Gate D — mutation Orçamento→Pedido OK (2026-09-25T14:37Z)
 
 - Canário from-checkout: `comercial360-gate-d-2b45292e` · `canary_from_checkout=YES` · `main_immutable_tag_used=NO`.
