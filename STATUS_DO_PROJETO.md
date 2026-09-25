@@ -1,3 +1,12 @@
+### Gate F — browser login NAV OK com tenant (2026-09-25T18:34Z)
+
+- Auth `OK` · `auth_unban_attempted=YES` · `http_token=200` · `tenant_group_set=YES` · `tenant_empresa_set=YES`.
+- `nav_api_meta=200` · **`nav_api_orc_list=200`** · `nav_spa_proxy_meta=200` · `GATE_F_BROWSER_LOGIN_NAV=OK`.
+- Spoof/no-auth 401 · `alter_3080=NOT_PERFORMED` · runtime `ERP-RUNTIME-08B`.
+- Evidência: `docs/vps/evidence/gate-f-browser-login-nav-tenant-ok-2026-09-25.txt`.
+- **Caminho browser Gate F = FECHADO.** Sem merge #39 · sem promoção 3080.
+- Próximo: revisão Codex do HEAD #39 (Central 360 + P1 + browser).
+
 ### Gate F — browser re-smoke BLOCKED SYNTH_PASS vazio (2026-09-25T18:28Z)
 
 - Pull `75ea794a` OK · SPA/API 200 · spoof 401.
