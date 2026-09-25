@@ -72,13 +72,29 @@ export function canLoadCentralCliente360(input = {}) {
 }
 
 /**
- * Chave de sessão sem segredo (para queryKey / invalidação ao trocar usuário).
+ * Fingerprint FNV-1a 32-bit (sync, browser+Node) — isola cache sem colocar o Bearer no queryKey.
+ * Dois tokens distintos de mesmo comprimento NÃO colidem (corrigido vs. só `t${length}`).
+ * @param {string} value
+ * @returns {string} hex sem prefixo 0x
+ */
+function fnv1a32Hex(value) {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
+/**
+ * Chave de sessão sem segredo (para queryKey / invalidação ao trocar usuário/token).
+ * Inclui length + fingerprint do conteúdo — tokens diferentes com length idêntico invalidam cache.
  * @param {string | null | undefined} token
  */
 export function central360SessionKey(token) {
   const t = typeof token === 'string' ? token.trim() : '';
   if (!t) return 'none';
-  return `t${t.length}`;
+  return `t${t.length}_${fnv1a32Hex(t)}`;
 }
 
 /**

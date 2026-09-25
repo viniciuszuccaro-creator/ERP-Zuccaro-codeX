@@ -58,9 +58,11 @@ test('canLoadCentralCliente360 exige flag tenant ator e Bearer', () => {
   assert.equal(canLoadCentralCliente360({
     flag: true, clienteId: CLIENTE, groupId: GROUP_A, empresaId: EMPRESA_A, actorId: null, token: TOKEN,
   }), false);
-  assert.equal(central360SessionKey(TOKEN), `t${TOKEN.length}`);
+  const sessionKey = central360SessionKey(TOKEN);
+  assert.match(sessionKey, new RegExp(`^t${TOKEN.length}_[0-9a-f]{8}$`));
   assert.equal(central360SessionKey(''), 'none');
-  assert.equal(central360SessionKey(TOKEN).includes(TOKEN), false);
+  assert.equal(sessionKey.includes(TOKEN), false);
+  assert.notEqual(sessionKey, `t${TOKEN.length}`);
 });
 
 test('central360 envia Authorization Bearer e tenant; sem token não mascara falha', async () => {
@@ -157,4 +159,28 @@ test('política de cache do painel: chave distinta implica sem reaproveitar payl
     central360SessionKey(''),
   ];
   assert.equal(new Set(keys).size, 3);
+});
+
+test('duas sessões com tokens diferentes de comprimento idêntico invalidam o cache', () => {
+  // Reproduz o bug: chave só por length colidia; fingerprint deve distinguir.
+  const tokenA = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.session.A';
+  const tokenB = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.session.B';
+  assert.equal(tokenA.length, tokenB.length);
+  assert.notEqual(tokenA, tokenB);
+
+  const legacyLengthOnlyA = `t${tokenA.length}`;
+  const legacyLengthOnlyB = `t${tokenB.length}`;
+  assert.equal(legacyLengthOnlyA, legacyLengthOnlyB, 'pré-condição: length-only colide');
+
+  const keyA = central360SessionKey(tokenA);
+  const keyB = central360SessionKey(tokenB);
+  assert.notEqual(keyA, keyB);
+  assert.equal(keyA.includes(tokenA), false);
+  assert.equal(keyB.includes(tokenB), false);
+  assert.match(keyA, new RegExp(`^t${tokenA.length}_[0-9a-f]{8}$`));
+  assert.match(keyB, new RegExp(`^t${tokenB.length}_[0-9a-f]{8}$`));
+
+  const queryKeyA = ['cliente-central-360', GROUP_A, EMPRESA_A, ACTOR_A, CLIENTE, keyA];
+  const queryKeyB = ['cliente-central-360', GROUP_A, EMPRESA_A, ACTOR_A, CLIENTE, keyB];
+  assert.notDeepEqual(queryKeyA, queryKeyB);
 });
