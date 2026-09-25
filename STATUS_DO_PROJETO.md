@@ -1,10 +1,9 @@
-### Gate Auth — fix env_get + fallback Docker + admin resolve (2026-09-25)
+### Gate Auth — OK (2026-09-25T12:07Z)
 
-- Falha 1: `source .env` → L151 Organization → `env_get`.
-- Falha 2: curl Docker sem volume → JSON efêmero; 200 depois 422.
-- Falha 3 (12:01Z): `email_exists` + `auth_user_resolved_sql=NO` (GoTrue vê o user; SQL no supabase-db não).
-- Correção: listagem Admin API GoTrue (`/admin/users`) filtra e-mail sem imprimir UUID; SQL heredoc + identities; health Kong com apikey; senha via `openssl rand` local.
-- Auth **ainda PENDING** até reexecutar.
+- Provisionamento Web Console OK: `auth_users_count=1` · `profiles_com_auth_count=1` · `AUTH_SYNTHETIC_STATUS=OK`.
+- Evidência: `docs/vps/evidence/auth-synthetic-latest.txt`.
+- `profiles_ativos_sem_auth_count=2` preservados (legado sem vínculo; não apagados).
+- Canário Gate D **autorizado** (termo §C) — próximo: subir canário porta ≠3080 + smoke.
 - **Não** Gate F / 3080.
 
 

@@ -1,12 +1,12 @@
 # Termo de autorização — Gates D / E / F
 
-**Status:** Gate E **EXECUTADO** · digest imagem **REGISTERED** · Gate Auth/D/F **aguardam** assinatura.
+**Status:** Gate E **EXECUTADO** · digest **REGISTERED** · Gate Auth **OK** · Gate D **autorizado (canário pendente)** · Gate F **não**.
 Estados: `READY_FOR_REVIEW` ≠ `AUTHORIZED` ≠ `EXECUTED`. `GATE_*_READY` não autoriza.
 Sem checkbox do gate + **assinatura formal** do responsável → **não executar**.
 
 ```bash
 bash scripts/vps/go-nogo-def.sh
-# GATE_E_READY=YES · image_digest=REGISTERED · GATE_D_READY=NO (auth_synthetic)
+# GATE_E_READY=YES · image_digest=REGISTERED · auth_synthetic=OK · GATE_D_READY depende go-nogo
 ```
 
 Pacote: `docs/PACOTE_DECISAO_GATES_D_E_F.md`.
@@ -35,8 +35,8 @@ Digest: `docs/vps/evidence/image-digest-comercial360-latest.txt` (**REGISTERED**
 | `test:postgres` DEV | OK (fail=0) |
 | Imagem canário candidata | `erp-zuccaro-erp-api:comercial360-main-2fc2fc80` · digest REGISTERED |
 | Auth 3080 | `dev_headers` (não homologa Gate D) |
-| Auth sintético | **ainda não provisionado** (`PENDING_AUTH_GATE`) |
-| `GATE_D_READY` | **NO** — falta Auth + autorização §C |
+| Auth sintético | **OK** (`auth_users=1` · `profiles_com_auth=1` · `2026-09-25T12:07Z`) |
+| `GATE_D_READY` | go-nogo após Auth OK · canário **ainda não** executado |
 
 ---
 
@@ -96,17 +96,19 @@ texto_autorizacao_humana=
 checkbox_gate_auth=MARKED
 checkbox_gate_d=MARKED
 assinatura_formal=VINICIUS
-EXECUTE_AUTH=AUTHORIZED_PENDING_WEBCONSOLE
-EXECUTE_GATE_D=AUTHORIZED_AFTER_AUTH_OK
+EXECUTE_AUTH=EXECUTED_OK
+EXECUTE_GATE_D=AUTHORIZED_READY_FOR_CANARY
 gate_f=NOT_AUTHORIZED
 alter_3080=NOT_AUTHORIZED
+AUTH_SYNTHETIC_STATUS=OK
+utc_auth_ok=2026-09-25T12:07:49Z
 ```
 
 Assinatura responsável (Auth / D): VINICIUS
 Data/hora (UTC): 24/09/2026
 
-**Estado operacional:** E OK · digest REGISTERED · Auth/D **AUTHORIZED** (execução Web Console) · F/3080 bloqueados.
-**Ordem:** Auth primeiro → evidência `AUTH_SYNTHETIC_STATUS=OK` → canário Gate D.
+**Estado operacional:** E OK · digest REGISTERED · Auth **OK** · D **AUTHORIZED** (canário Web Console) · F/3080 bloqueados.
+**Ordem:** Auth OK ✓ → canário Gate D (porta ≠3080) → smoke.
 
 ---
 
