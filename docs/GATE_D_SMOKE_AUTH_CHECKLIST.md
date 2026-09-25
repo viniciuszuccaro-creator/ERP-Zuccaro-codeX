@@ -33,8 +33,8 @@ Complementa `docs/GATES_D_F_PREPARACAO_CANARIO.md` e
 **Baseline Auth (2026-09-25T12:07Z):** `auth_users_count=1` · `profiles_com_auth_count=1` · `AUTH_SYNTHETIC_STATUS=OK`.
 `profiles_ativos_sem_auth_count=2` (legado preservado). Segredos só no cofre local.
 
-**Canário + Bearer (2026-09-25T13:14Z):** `CANARY_READY` 3086 · `SMOKE_OK` meta · `GATE_D_BEARER_SMOKE=OK`
-(`no_auth=401` · `orc_list=200` · `ped_list=200` · tenant group/empresa YES).
+**Canário + Bearer (2026-09-25T13:14Z + reconfirm 13:41Z):** `CANARY_READY` 3086 · `SMOKE_OK` meta · `GATE_D_BEARER_SMOKE=OK`
+(`no_auth=401` · `orc_list=200` · `ped_list=200` · tenant group/empresa YES · `alter_3080=NOT_PERFORMED`).
 
 Ordem fail-closed. **Nunca** colar e-mail, senha, token, service_role ou UUID no chat/Git.
 

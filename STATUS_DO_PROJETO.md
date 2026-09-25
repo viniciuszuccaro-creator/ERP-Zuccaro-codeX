@@ -1,10 +1,12 @@
-### Gate D — Bearer smoke OK (2026-09-25T13:14Z)
+### Gate D — Bearer smoke OK (reconfirmado 2026-09-25T13:41Z)
 
-- Canário 3086 READY · overlay Supabase · Auth sintético OK.
-- Bearer: `no_auth=401` · `orc_list=200` · `ped_list=200` · `tenant_group/empresa=YES` · `GATE_D_BEARER_SMOKE=OK`.
-- Evidência: `docs/vps/evidence/gate-d-bearer-smoke-ok-2026-09-25.txt`.
-- **3080** intacta · Gate F **não** autorizado.
-- Próximo VPS (fora deste lote de código): URL browser segura (sem expor `dev_headers`); mutações Orçamento→Pedido se necessário.
+- Canário 3086 READY · overlay Supabase · Auth sintético OK (reconfirm `13:41:45Z`).
+- Bearer: `no_auth=401` · `orc_list=200` · `ped_list=200` · `tenant_group/empresa=YES` · `GATE_D_BEARER_SMOKE=OK` (1ª prova `13:14:49Z`; reconfirm `13:41:46Z`).
+- Contagens Auth: `auth_users=1` · `profiles_com_auth=1` · `profiles_ativos_sem_auth=2` · `rbac_minimo=orcamento_pedido`.
+- Evidência: `docs/vps/evidence/gate-d-bearer-smoke-ok-2026-09-25.txt` · `gate-d-auth-autorizacao-registrada.txt`.
+- **3080** intacta (`alter_3080=NOT_PERFORMED`) · Gate F **não** autorizado · `AUTHORIZES_CANARY=NO` neste paste (canário já READY; sem nova autorização).
+- Segredos só no cofre local.
+- Próximo VPS: URL browser segura (sem `dev_headers`/Gate F); mutações Orçamento→Pedido se necessário. Código Comercial 360 Onda 3 segue na PR `#39` (separada).
 
 
 ### Pós-Gate E — prep Gate D (histórico)
