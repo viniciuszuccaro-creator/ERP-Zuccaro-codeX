@@ -1,3 +1,11 @@
+### Gate F — pós-promote Auth+smoke 3080 OK (2026-09-25T16:40Z)
+
+- Auth: `AUTH_SYNTHETIC_STATUS=OK` · `http_pw_update=200` · `auth_unban_attempted=YES`.
+- Mutação na **3080**: `orc_create=201` · `ped_convert=201` · `ped_convert_dup=409` · `mutation_no_auth=401`.
+- `GATE_D_MUTATION_SMOKE=OK` · `GATE_F_POST_PROMOTE_SMOKE=OK` · imagem `comercial360-main-894b0db8`.
+- Evidência: `docs/vps/evidence/gate-f-post-promote-smoke-ok-3080-894b0db8-2026-09-25.txt`.
+- Gate F VPS **fechado**. Próximo opcional: cleanup §E.
+
 ### Gate F — promoção 3080 EXECUTED_OK (2026-09-25T16:35Z)
 
 - `CONFIRM_GATE_F_PROMOTE=YES` · IMAGE `comercial360-main-894b0db8` · `GATE_F_PROMOTE_STATUS=OK`.
