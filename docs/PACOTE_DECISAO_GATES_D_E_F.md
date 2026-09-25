@@ -8,7 +8,7 @@
 | `AUTHORIZED` (Gate E) | Checkbox + assinatura VINICIUS | **SIM** (E) |
 | `EXECUTED` (Gate E) | Migrations 016–024 no DEV + `test:postgres` | **SIM** (`GATE_E_STATUS=OK`) |
 | `AUTHORIZED` / `EXECUTED` (D) | Auth + canário + smokes Gate D | **SIM** (D EXECUTADO 2026-09-25) |
-| `AUTHORIZED` / `EXECUTED` (F) | Promoção 3080 | **AUTHORIZED_OPTION_A** · **WAITING_MERGE** · **NÃO EXECUTADO** |
+| `AUTHORIZED` / `EXECUTED` (F) | Promoção 3080 | **AUTHORIZED_OPTION_A** · merge **OK** `894b0db8` · **WAITING_VPS_BUILD** · **NÃO EXECUTADO** |
 
 `GATE_*_READY=YES` **nunca** autoriza nem executa.
 
@@ -33,8 +33,8 @@
 
 1. ~~Gate D APROVADO~~ — **OK**
 2. ~~Autorização humana Gate F~~ — **OK** opção A · VINICIUS · 2026-09-25
-3. **Merge do fix na main** — **PENDENTE** (PR #37)
-4. Build `comercial360-main-<MERGE_SHA8>` + re-smoke mutação nessa tag
+3. ~~Merge do fix na main~~ — **OK** #37 → `894b0db8`
+4. **Build** `comercial360-main-894b0db8` + re-smoke mutação nessa tag — **PENDENTE VPS**
 5. 3080 permanece R07B até promoção **EXECUTED**
 6. Pós-F: re-provision Auth sintético (limpo no §E) antes do smoke Bearer na 3080
 
