@@ -88,7 +88,231 @@ EMPRESA_ID="$(tr -d '[:space:]' <"$TMP_EID" || true)"
 echo "tenant_group_set=YES"
 echo "tenant_empresa_set=YES"
 
-# Refs comerciais no mesmo Grupo/Empresa (sem echo de UUID)
+# Refs comerciais no mesmo Grupo/Empresa (sem echo de UUID).
+# Se o tenant do profile não tiver cadastros (caso típico pós-Auth sintético),
+# cria fixtures mínimas marcadas GATE_D_MUTATION — idempotente.
+ensure_out="$(mktemp)"
+docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
+  -v gid="$GROUP_ID" -v eid="$EMPRESA_ID" <<'SQL' >"$ensure_out" 2>&1 || true
+BEGIN;
+
+-- Unidade
+INSERT INTO unidades_medida (id, group_id, empresa_id, sigla, nome_completo, tipo_grandeza, ativo)
+SELECT gen_random_uuid(), :'gid'::uuid, :'eid'::uuid, 'UN', 'Unidade Gate-D', 'Unidade', true
+WHERE NOT EXISTS (
+  SELECT 1 FROM unidades_medida
+  WHERE group_id=:'gid'::uuid AND ativo IS TRUE AND lower(sigla)='un'
+);
+
+-- Marca
+INSERT INTO marcas (id, group_id, empresa_id, nome_marca, ativo)
+SELECT gen_random_uuid(), :'gid'::uuid, :'eid'::uuid, 'GATE-D SYNTH', true
+WHERE NOT EXISTS (
+  SELECT 1 FROM marcas
+  WHERE group_id=:'gid'::uuid AND ativo IS TRUE AND nome_marca='GATE-D SYNTH'
+);
+
+-- Grupo produto
+INSERT INTO grupos_produto (id, group_id, empresa_id, nome_grupo, codigo, natureza, ativo)
+SELECT gen_random_uuid(), :'gid'::uuid, :'eid'::uuid, 'GATE-D SYNTH', 'GATED-GP', 'Revenda', true
+WHERE NOT EXISTS (
+  SELECT 1 FROM grupos_produto
+  WHERE group_id=:'gid'::uuid AND ativo IS TRUE
+    AND (codigo='GATED-GP' OR nome_grupo='GATE-D SYNTH')
+);
+
+-- Setor
+INSERT INTO setores_atividade (id, group_id, empresa_id, nome, tipo_operacao, ativo)
+SELECT gen_random_uuid(), :'gid'::uuid, :'eid'::uuid, 'GATE-D SYNTH', 'Revenda', true
+WHERE NOT EXISTS (
+  SELECT 1 FROM setores_atividade
+  WHERE group_id=:'gid'::uuid AND ativo IS TRUE AND nome='GATE-D SYNTH'
+);
+
+-- Produto mínimo
+INSERT INTO produtos (
+  id, group_id, empresa_id, codigo, descricao, nome, tipo_item,
+  unidade_medida_id, unidade_principal, grupo_produto_id, marca_id, setor_atividade_id,
+  status, ativo
+)
+SELECT
+  gen_random_uuid(),
+  :'gid'::uuid,
+  :'eid'::uuid,
+  'GATED-PROD',
+  'PRODUTO GATE-D SYNTH',
+  'PRODUTO GATE-D SYNTH',
+  'Revenda',
+  (SELECT id FROM unidades_medida WHERE group_id=:'gid'::uuid AND ativo IS TRUE AND lower(sigla)='un' ORDER BY created_at LIMIT 1),
+  'UN',
+  (SELECT id FROM grupos_produto WHERE group_id=:'gid'::uuid AND ativo IS TRUE AND (codigo='GATED-GP' OR nome_grupo='GATE-D SYNTH') ORDER BY created_at LIMIT 1),
+  (SELECT id FROM marcas WHERE group_id=:'gid'::uuid AND ativo IS TRUE AND nome_marca='GATE-D SYNTH' ORDER BY created_at LIMIT 1),
+  (SELECT id FROM setores_atividade WHERE group_id=:'gid'::uuid AND ativo IS TRUE AND nome='GATE-D SYNTH' ORDER BY created_at LIMIT 1),
+  'Ativo',
+  true
+WHERE NOT EXISTS (
+  SELECT 1 FROM produtos
+  WHERE group_id=:'gid'::uuid AND ativo IS TRUE
+    AND (codigo='GATED-PROD' OR descricao='PRODUTO GATE-D SYNTH')
+    AND (empresa_id IS NULL OR empresa_id=:'eid'::uuid)
+);
+
+-- Cliente PJ sintético (CNPJ válido de teste, nunca real)
+INSERT INTO clientes (
+  id, group_id, empresa_id, codigo, tipo, documento, documento_normalizado,
+  razao_social, nome_fantasia, email, status, origem, source_system, migration_batch, ativo
+)
+SELECT
+  gen_random_uuid(),
+  :'gid'::uuid,
+  :'eid'::uuid,
+  COALESCE(reserve_entity_codigo(:'gid'::uuid, 'Cliente', 6), 'GATED1'),
+  'Pessoa Jurídica',
+  '00.000.000/0001-91',
+  '00000000000191',
+  'CLIENTE GATE-D SYNTH LTDA',
+  'Gate-D Synth',
+  'gate-d.cliente@dev.synthetic.local',
+  'Ativo',
+  'ERP',
+  'GATE_D_MUTATION',
+  'GATE-D',
+  true
+WHERE NOT EXISTS (
+  SELECT 1 FROM clientes
+  WHERE group_id=:'gid'::uuid AND ativo IS TRUE
+    AND (
+      documento_normalizado='00000000000191'
+      OR source_system='GATE_D_MUTATION'
+      OR email='gate-d.cliente@dev.synthetic.local'
+    )
+);
+
+-- Vínculo ClienteEmpresa operacional
+INSERT INTO cliente_empresas (
+  group_id, cliente_id, empresa_id, ativo, situacao_comercial,
+  habilitado_operacao, bloqueado, origem, source_system, migration_batch
+)
+SELECT
+  :'gid'::uuid,
+  c.id,
+  :'eid'::uuid,
+  true,
+  'ATIVO',
+  true,
+  false,
+  'ERP',
+  'GATE_D_MUTATION',
+  'GATE-D'
+FROM clientes c
+WHERE c.group_id=:'gid'::uuid AND c.ativo IS TRUE
+  AND (
+    c.documento_normalizado='00000000000191'
+    OR c.source_system='GATE_D_MUTATION'
+    OR c.email='gate-d.cliente@dev.synthetic.local'
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM cliente_empresas ce
+    WHERE ce.group_id=c.group_id AND ce.cliente_id=c.id AND ce.empresa_id=:'eid'::uuid
+  )
+LIMIT 1;
+
+UPDATE cliente_empresas ce
+SET ativo=true,
+    situacao_comercial='ATIVO',
+    habilitado_operacao=true,
+    bloqueado=false,
+    motivo_bloqueio=NULL,
+    updated_at=timezone('utc', now())
+FROM clientes c
+WHERE ce.group_id=:'gid'::uuid
+  AND ce.empresa_id=:'eid'::uuid
+  AND ce.cliente_id=c.id
+  AND c.group_id=:'gid'::uuid
+  AND (
+    c.documento_normalizado='00000000000191'
+    OR c.source_system='GATE_D_MUTATION'
+    OR c.email='gate-d.cliente@dev.synthetic.local'
+  );
+
+-- Condição de pagamento + vínculo empresa + parcela 100% (mesma transação)
+INSERT INTO condicoes_pagamento (
+  id, group_id, empresa_id, codigo, nome, descricao, ativo, origem
+)
+SELECT
+  gen_random_uuid(),
+  :'gid'::uuid,
+  :'eid'::uuid,
+  'GATED1',
+  'GATE-D A VISTA',
+  'Sintetica Gate-D',
+  true,
+  'ERP'
+WHERE NOT EXISTS (
+  SELECT 1 FROM condicoes_pagamento
+  WHERE group_id=:'gid'::uuid AND ativo IS TRUE AND (codigo='GATED1' OR nome='GATE-D A VISTA')
+);
+
+INSERT INTO condicao_pagamento_empresas (
+  group_id, condicao_pagamento_id, empresa_id, eh_padrao, ativo
+)
+SELECT
+  :'gid'::uuid,
+  c.id,
+  :'eid'::uuid,
+  true,
+  true
+FROM condicoes_pagamento c
+WHERE c.group_id=:'gid'::uuid AND c.ativo IS TRUE AND (c.codigo='GATED1' OR c.nome='GATE-D A VISTA')
+  AND NOT EXISTS (
+    SELECT 1 FROM condicao_pagamento_empresas e
+    WHERE e.condicao_pagamento_id=c.id AND e.empresa_id=:'eid'::uuid
+  )
+LIMIT 1;
+
+UPDATE condicao_pagamento_empresas e
+SET ativo=true, eh_padrao=true, updated_at=timezone('utc', now())
+FROM condicoes_pagamento c
+WHERE e.condicao_pagamento_id=c.id
+  AND c.group_id=:'gid'::uuid
+  AND e.empresa_id=:'eid'::uuid
+  AND (c.codigo='GATED1' OR c.nome='GATE-D A VISTA');
+
+INSERT INTO condicao_pagamento_parcelas (
+  group_id, condicao_pagamento_id, ordem, dias, percentual, ativo
+)
+SELECT
+  :'gid'::uuid,
+  c.id,
+  1,
+  0,
+  100.000000,
+  true
+FROM condicoes_pagamento c
+WHERE c.group_id=:'gid'::uuid AND c.ativo IS TRUE AND (c.codigo='GATED1' OR c.nome='GATE-D A VISTA')
+  AND NOT EXISTS (
+    SELECT 1 FROM condicao_pagamento_parcelas p
+    WHERE p.condicao_pagamento_id=c.id AND p.ordem=1
+  )
+LIMIT 1;
+
+COMMIT;
+SELECT 'ensure_ok';
+SQL
+
+if grep -q 'ensure_ok' "$ensure_out" 2>/dev/null; then
+  echo 'refs_ensure=YES'
+else
+  echo 'refs_ensure=FAIL'
+  # Sanitiza: não vaza UUID; só trecho curto do erro
+  err_hint="$(grep -E 'ERROR:|BLOCKED|EXCEPTION' "$ensure_out" 2>/dev/null | head -1 | cut -c1-120 || true)"
+  [[ -n "$err_hint" ]] && echo "refs_ensure_hint=${err_hint}" >&2
+  echo 'BLOCKED: mutation_refs_ensure_failed' >&2
+  rm -f "$ensure_out"
+  exit 7
+fi
+rm -f "$ensure_out"
+
 docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
   -v gid="$GROUP_ID" -v eid="$EMPRESA_ID" -At <<'SQL' >"$TMP_CE" 2>/dev/null || true
 SELECT id::text FROM cliente_empresas
@@ -289,6 +513,7 @@ echo "mutation_no_auth=${no_auth}"
 echo "refs_cliente_empresa=YES"
 echo "refs_condicao=YES"
 echo "refs_produto=YES"
+echo "refs_ensure=YES"
 echo "token_len=${#TOK}"
 echo "anon_len=${#ANON}"
 echo "GATE_D_MUTATION_SMOKE=$([[ "$ok" == "YES" ]] && echo OK || echo FAIL)"

@@ -293,9 +293,9 @@ SYNTH_EMAIL="$SYNTH_EMAIL" SYNTH_PASS="$SYNTH_PASS" \
 unset SYNTH_PASS
 ```
 
-Esperado: `orc_create=201` · `ped_convert=201` · `ped_convert_dup=409` · `ped_get=200` · `mutation_no_auth=401|403` · `GATE_D_MUTATION_SMOKE=OK`.
+Esperado: `refs_ensure=YES` · `orc_create=201` · `ped_convert=201` · `ped_convert_dup=409` · `ped_get=200` · `mutation_no_auth=401|403` · `GATE_D_MUTATION_SMOKE=OK`.
 
-Se `refs_*=MISSING`, o tenant sintético ainda não tem cadastro mínimo — reportar o BLOCKED sem colar IDs.
+O script **cria** fixtures mínimas marcadas `GATE_D_MUTATION` no tenant do profile se faltarem (ClienteEmpresa/condição/produto). Sem seed global obrigatório.
 
 Cole só `PASTE_TO_GIT_*`.
 

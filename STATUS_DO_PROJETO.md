@@ -1,3 +1,10 @@
+### Gate D — mutation smoke BLOCKED → fix ensure refs (2026-09-25T14:07Z)
+
+- Auth OK · tenant group/empresa YES · `refs_cliente_empresa=MISSING` no profile sintético (sem cadastro comercial no mesmo tenant).
+- Evidência: `docs/vps/evidence/gate-d-mutation-blocked-refs-2026-09-25.txt`.
+- Correção: `gate-d-smoke-mutation-orc-ped.sh` passa a garantir fixtures mínimas `GATE_D_MUTATION` (cliente/vínculo/condição/produto/unidade) no Grupo/Empresa do profile, sem imprimir UUID.
+- Reexecutar mutação na VPS; 3080/F intocados.
+
 ### Gate D — browser URL smoke OK (2026-09-25T13:56Z)
 
 - Canário 3086: health/ready 200 · runtime `ERP-RUNTIME-08B` · `auth.mode=supabase_user`.
