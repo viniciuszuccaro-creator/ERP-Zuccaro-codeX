@@ -1,6 +1,6 @@
 # Termo de autorização — Gates D / E / F
 
-**Status:** Gate E/D **OK** · Gate F **AUTHORIZED_OPTION_A** · mutação MAIN `894b0db8` **OK** · **WAITING_PROMOTE** · 3080 ainda R07B até `CONFIRM_GATE_F_PROMOTE`.
+**Status:** Gate E/D **OK** · Gate F **EXECUTED_OK** · promoção 3080 com `comercial360-main-894b0db8` (`16:35:34Z`) · rollback `erp-api-dev-r07b-pre-f-20260925-163531` · **próximo:** Auth + smoke na 3080.
 Estados: `READY_FOR_REVIEW` ≠ `AUTHORIZED` ≠ `EXECUTED`. `GATE_*_READY` não autoriza.
 Sem checkbox do gate + **assinatura formal** do responsável → **não executar**.
 
@@ -28,15 +28,16 @@ Digest: `docs/vps/evidence/image-digest-comercial360-latest.txt` (**REGISTERED**
 | Fato | Valor |
 |---|---|
 | VPS | `srv1982741` |
-| API oficial 3080 | imagem R07B `runtime07b-main-ca0bc5f3` (**preservar**; sem Gate F) |
-| Health / ready 3080 | HTTP 200 |
+| API oficial 3080 | `comercial360-main-894b0db8` (**Gate F EXECUTED_OK** · `16:35:34Z`) |
+| Health / ready 3080 | HTTP 200 (antes e depois da promoção) |
+| Rollback 3080 | `erp-api-dev-r07b-pre-f-20260925-163531` (ex-R07B `ca0bc5f3`) |
 | Rede | `supabase_default` |
 | DB DEV | `postgres` · schema **001–024** (`GATE_E_STATUS=OK`) |
 | `test:postgres` DEV | OK (fail=0) |
-| Imagem canário candidata | `erp-zuccaro-erp-api:comercial360-main-2fc2fc80` · digest REGISTERED |
-| Auth 3080 | `dev_headers` (não homologa Gate D) |
-| Auth sintético | **OK** (`auth_users=1` · `profiles_com_auth=1` · `2026-09-25T12:07Z`) |
-| `GATE_D_READY` | go-nogo após Auth OK · canário **ainda não** executado |
+| Imagem promovida | `erp-zuccaro-erp-api:comercial360-main-894b0db8` · runtime `ERP-RUNTIME-08B` |
+| Auth 3080 | `supabase_user` (pós-Gate F; re-smoke Auth pendente) |
+| Auth sintético | **OK** no canário pré-promote; **re-provision** na 3080 pendente |
+| `GATE_D_READY` | Gate D completo · Gate F promoção **OK** |
 
 ---
 
@@ -48,7 +49,7 @@ Digest: `docs/vps/evidence/image-digest-comercial360-latest.txt` (**REGISTERED**
 | Imagem canário | tag `comercial360-main-2fc2fc80` · build feito · **não** iniciada |
 | Gate Auth | identidade **somente sintética** no Supabase Auth self-hosted + profile ERP sintético; segredos **fora do Git**; revogar após teste |
 | Gate D | canário porta ≠3080 · `EXPECTED_RUNTIME=ERP-RUNTIME-08B` · `auth.mode=supabase_user` · smoke checklist |
-| Gate F / 3080 | **AUTHORIZED_OPTION_A** · merge #37 **OK** (`894b0db8`) · **WAITING_VPS_BUILD** |
+| Gate F / 3080 | **EXECUTED_OK** · merge #37 · promoção `894b0db8` · `alter_3080=PERFORMED` |
 
 ---
 
@@ -58,7 +59,7 @@ Digest: `docs/vps/evidence/image-digest-comercial360-latest.txt` (**REGISTERED**
 |---|---|---|
 | Backup pré-Gate E | `pre-gate-e-20260924-174755.sql` · sha `83a9e97d…` | [x] |
 | Dump no GitHub | **proibido** | — |
-| Rollback API R07B | imagem `ca0bc5f3` na 3080 preservada | [x] evidência |
+| Rollback API R07B | container `erp-api-dev-r07b-pre-f-20260925-163531` (imagem `ca0bc5f3`) | [x] pós-Gate F |
 | Rollback canário | `comercial360-rollback.sh` dry-run (quando D autorizado) | [ ] |
 
 ---
@@ -71,9 +72,9 @@ Marcar **apenas** o autorizado. Sem marca = **não executar**.
 - [x] **Gate E** — 016–024 no DEV @ `2fc2fc80…` — **EXECUTADO** (`GATE_E_STATUS=OK`)
 - [x] **Gate Auth sintético** — provisionar identidade de teste + vincular `profiles.auth_user_id` (Grupo/Empresa sintéticos; RBAC mínimo Orçamento/Pedido; **não** reutilizar profiles sem prova; credenciais fora do Git; revogar após smoke)
 - [x] **Gate D** — canário em porta ≠3080 + smoke meta + Bearer + browser URL + mutação Orçamento→Pedido OK (`comercial360-gate-d-2b45292e` from-checkout · `GATE_D_MUTATION_SMOKE=OK` · 14:37Z); digest MAIN `2fc2fc80` permanece REGISTERED para promoção futura
-- [x] **Gate F** — promoção 3080 · **AUTHORIZED_OPTION_A** (VINICIUS · 2026-09-25) · merge #37 **OK** (`894b0db8`) · **WAITING_VPS_BUILD** · **NÃO EXECUTADO**
+- [x] **Gate F** — promoção 3080 · **AUTHORIZED_OPTION_A** (VINICIUS · 2026-09-25) · merge #37 **OK** (`894b0db8`) · **EXECUTED_OK** (`16:35:34Z`)
 
-### Registro Gate F opção A (assinado 2026-09-25)
+### Registro Gate F opção A (assinado 2026-09-25 · executado)
 
 ```text
 utc_registro=2026-09-25T15:37:00Z
@@ -91,15 +92,25 @@ utc_merge=2026-09-25T16:11:21Z
 pr_merged=#37
 merge_sha=894b0db8f7583137204e1026c6eee26475c7025c
 merge_sha8=894b0db8
-EXECUTE_GATE_F=AUTHORIZED_WAITING_PROMOTE
 utc_mutation_ok_main_tag=2026-09-25T16:30:56Z
-alter_3080=NOT_PERFORMED
+utc_promote=2026-09-25T16:35:34Z
+promote_image=erp-zuccaro-erp-api:comercial360-main-894b0db8
+official_image_before=erp-zuccaro-erp-api:runtime07b-main-ca0bc5f3
+official_image_after=erp-zuccaro-erp-api:comercial360-main-894b0db8
+rollback_container=erp-api-dev-r07b-pre-f-20260925-163531
+GATE_F_PROMOTE_STATUS=OK
+EXECUTE_GATE_F=EXECUTED_OK
+alter_3080=PERFORMED
+health_3080_after=200
+auth_mode=supabase_user
+expected_runtime=ERP-RUNTIME-08B
+evidence=docs/vps/evidence/gate-f-promote-ok-894b0db8-2026-09-25.txt
 ```
 
 Assinatura responsável (Gate F opção A): VINICIUS
 Data/hora (UTC): 25/09/2026
 
-**Próximo:** VPS build `comercial360-main-894b0db8` + re-smoke mutação → promoção 3080 (cartão F).
+**Próximo:** re-provision Auth sintético + smoke de mutação na **3080** (`CANARY_PORT=3080`). Sem re-promoção.
 
 ### Registro Gate E (já assinado)
 
@@ -132,9 +143,10 @@ GATE_D_NEGATIVES_SMOKE=OK
 utc_negatives_ok=2026-09-25T15:13:45Z
 GATE_D_CLEANUP_STATUS=OK
 utc_cleanup_ok=2026-09-25T15:28:17Z
-gate_f=AUTHORIZED_OPTION_A_WAITING_VPS_BUILD
+gate_f=EXECUTED_OK
 merge_sha8=894b0db8
-alter_3080=NOT_PERFORMED
+alter_3080=PERFORMED
+utc_promote=2026-09-25T16:35:34Z
 AUTH_SYNTHETIC_STATUS=OK
 utc_auth_ok=2026-09-25T12:07:49Z
 ```
@@ -142,8 +154,8 @@ utc_auth_ok=2026-09-25T12:07:49Z
 Assinatura responsável (Auth / D): VINICIUS
 Data/hora (UTC): 24/09/2026
 
-**Estado operacional:** E/D OK · Gate F **AUTHORIZED_OPTION_A** · merge #37 **OK** (`894b0db8`) · **WAITING_VPS_BUILD** · 3080 R07B intacta.
-**Ordem:** build MAIN `894b0db8` → re-smoke mutação → promover 3080 → re-provision Auth → smoke oficial.
+**Estado operacional:** E/D OK · Gate F **EXECUTED_OK** · 3080 em `comercial360-main-894b0db8` · rollback R07B preservado.
+**Ordem restante:** re-provision Auth → smoke mutação na 3080 → (opcional) cleanup §E.
 
 ---
 

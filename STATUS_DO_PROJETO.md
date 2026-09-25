@@ -1,3 +1,12 @@
+### Gate F — promoção 3080 EXECUTED_OK (2026-09-25T16:35Z)
+
+- `CONFIRM_GATE_F_PROMOTE=YES` · IMAGE `comercial360-main-894b0db8` · `GATE_F_PROMOTE_STATUS=OK`.
+- Antes: `runtime07b-main-ca0bc5f3` · Depois: `comercial360-main-894b0db8`.
+- Rollback: `erp-api-dev-r07b-pre-f-20260925-163531` · `health_3080_after=200` · `auth_mode=supabase_user`.
+- Evidência: `docs/vps/evidence/gate-f-promote-ok-894b0db8-2026-09-25.txt`.
+- `EXECUTE_GATE_F=EXECUTED_OK` · `alter_3080=PERFORMED`.
+- Próximo VPS: re-provision Auth + `CANARY_PORT=3080` mutation smoke (sem re-promover).
+
 ### Gate F — mutation OK na MAIN 894b0db8 (2026-09-25T16:30Z)
 
 - Canário `comercial360-main-894b0db8` · `ped_convert=201` · `ped_convert_dup=409` · `GATE_D_MUTATION_SMOKE=OK`.
