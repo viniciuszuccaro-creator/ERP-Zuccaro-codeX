@@ -1,10 +1,20 @@
+### Gate D — mutation ped_convert=500 reconfirm MAIN imutável (2026-09-25T14:30Z)
+
+- Reexecução VPS: Auth OK · `refs_ensure=YES` · `orc_create=201` · `ped_convert=500` `INTERNAL_ERROR`.
+- Canário recriado com `IMAGE=comercial360-main-2fc2fc80` (tag MAIN imutável **sem** o fix do map Orçamento).
+- Evidência: `docs/vps/evidence/gate-d-mutation-blocked-convert-500-main-image-2026-09-25.txt`.
+- Correção operacional: `scripts/deploy/comercial360-canary-from-checkout.sh` (build `comercial360-gate-d-<sha8>` do HEAD da branch; 3080 intacta).
+- Mutação passa a reportar `canary_image` / `canary_image_is_main_immutable` e hint se 500 em MAIN.
+- Checklist §G atualizado — **não** recriar canário com tag MAIN para mutação.
+- Próximo VPS: pull + from-checkout + smoke + mutação; cole `PASTE_TO_GIT_*`.
+
 ### Gate D — mutation ped_convert=500 (2026-09-25T14:24Z)
 
 - `refs_ensure=YES` · `orc_create=201` · `ped_convert=500` `INTERNAL_ERROR`.
 - Causa: map Postgres de Orçamento não projetava `descricao`/`unidade_sigla` a partir de `*_snapshot`; `pedidoCreateSchema.parse` gerava ZodError → 500.
 - Fix: `postgresOrcamentoRepository` map + `PedidoService.convert` com `safeParse` (422); provision força RBAC com `converter-pedido`.
 - Evidência: `docs/vps/evidence/gate-d-mutation-blocked-convert-500-2026-09-25.txt`.
-- **Requer recriar canário 3086** com o código novo (checklist §G); 3080/F intocados.
+- **Requer recriar canário 3086 a partir do checkout** (não tag MAIN); 3080/F intocados.
 
 ### Gate D — mutation ensure FAIL codigo (2026-09-25T14:13Z)
 

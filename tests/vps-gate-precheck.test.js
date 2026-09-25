@@ -628,10 +628,31 @@ test('gate-d-smoke-mutation-orc-ped.sh passa bash -n e bloqueia placeholder', ()
   assert.match(text, /converter-pedido/);
   assert.match(text, /alter_3080=NOT_PERFORMED/);
   assert.match(text, /AUTHORIZES_GATE_F=NO/);
+  assert.match(text, /canary_image_is_main_immutable/);
+  assert.match(text, /HINT=.*from_checkout|HINT=.*stale_main_image/);
   const blocked = spawnSync('bash', [script], {
     encoding: 'utf8',
     env: { ...process.env, SYNTH_PASS: 'SENHA_DO_COFRE_OPENSSL' },
   });
   assert.notEqual(blocked.status, 0);
   assert.match(blocked.stderr + blocked.stdout, /placeholder_from_chat|BLOCKED/);
+});
+
+test('comercial360-canary-from-checkout.sh passa bash -n e nao usa tag MAIN', () => {
+  const script = path.join(root, 'scripts/deploy/comercial360-canary-from-checkout.sh');
+  const syn = spawnSync('bash', ['-n', script], { encoding: 'utf8' });
+  assert.equal(syn.status, 0, syn.stderr);
+  const text = fs.readFileSync(script, 'utf8');
+  assert.match(text, /comercial360-gate-d-/);
+  assert.match(text, /main_immutable_tag_used=NO/);
+  assert.match(text, /alter_3080=NOT_PERFORMED/);
+  assert.match(text, /AUTHORIZES_GATE_F=NO/);
+  assert.match(text, /comercial360-canary\.sh/);
+  assert.doesNotMatch(text, /comercial360-main-2fc2fc80/);
+  const blocked = spawnSync('bash', [script], {
+    encoding: 'utf8',
+    env: { ...process.env, CANARY_PORT: '3086' },
+  });
+  assert.notEqual(blocked.status, 0);
+  assert.match(blocked.stderr + blocked.stdout, /ERP_DOCKER_NETWORK|BLOCKED/);
 });

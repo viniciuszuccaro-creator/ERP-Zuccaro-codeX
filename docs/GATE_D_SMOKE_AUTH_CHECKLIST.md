@@ -278,21 +278,23 @@ Cole só o bloco `PASTE_TO_GIT_*` (sem token/URL com credencial).
 
 Cria Orçamento sintético e converte em Pedido no canário, com Bearer real. Requer refs no tenant (o script garante fixtures `GATE_D_MUTATION`). **Não** imprime UUID.
 
-**Importante:** se o canário ainda estiver na imagem antiga sem o fix do map Orçamento (`descricao`/`unidade_sigla`), `ped_convert` pode retornar 500. Após `git pull`, **recrie o canário 3086** antes da mutação (3080 intacta).
+**Causa do `ped_convert=500` com MAIN imutável:** a tag `comercial360-main-2fc2fc80` **não** contém o fix do map Orçamento (`descricao`/`unidade_sigla`). Recriar o canário com essa tag **repete** o 500. Para mutação Gate D use **build do checkout** da branch (script abaixo) — nunca promove 3080 nem Gate F.
 
 ```bash
 cd /opt/erp-zuccaro
 git pull origin cursor/pos-gate-e-prep-d-392b
 
-# Recriar canário com o código corrigido (porta ≠3080)
+# Rebuild canário a partir do HEAD (tag comercial360-gate-d-<sha8>, ≠ MAIN)
 ERP_DOCKER_NETWORK='supabase_default' \
 EXPECTED_RUNTIME='ERP-RUNTIME-08B' \
 CANARY_PORT='3086' \
 ERP_AUTH_MODE='supabase_user' \
-bash scripts/deploy/comercial360-canary.sh
+bash scripts/deploy/comercial360-canary-from-checkout.sh
 
 BASE_URL='http://127.0.0.1:3086' EXPECTED_RUNTIME=ERP-RUNTIME-08B \
   bash scripts/deploy/comercial360-smoke.sh
+
+# Confirme no PASTE: canary_from_checkout=YES · main_immutable_tag_used=NO · image_tag=...gate-d-...
 
 # Auth + mutação (mesma sessão)
 SYNTH_PASS="$(openssl rand -base64 24)"
@@ -304,9 +306,9 @@ SYNTH_EMAIL="$SYNTH_EMAIL" SYNTH_PASS="$SYNTH_PASS" \
 unset SYNTH_PASS
 ```
 
-Esperado: `refs_ensure=YES` · `orc_create=201` · `ped_convert=201` · `ped_convert_dup=409` · `ped_get=200` · `mutation_no_auth=401|403` · `GATE_D_MUTATION_SMOKE=OK`.
+Esperado: `canary_image_is_main_immutable=NO` · `refs_ensure=YES` · `orc_create=201` · `ped_convert=201` · `ped_convert_dup=409` · `ped_get=200` · `mutation_no_auth=401|403` · `GATE_D_MUTATION_SMOKE=OK`.
 
-Cole só `PASTE_TO_GIT_*`.
+Cole só `PASTE_TO_GIT_*` (canário + mutação). Sem token/senha/UUID.
 
 ---
 

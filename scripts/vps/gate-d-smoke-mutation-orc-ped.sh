@@ -16,6 +16,19 @@ echo "GATE_D_MUTATION_SMOKE_BEGIN utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "alter_3080=NOT_PERFORMED"
 echo "AUTHORIZES_GATE_F=NO"
 
+CANARY_NAME="${CANARY_NAME:-erp-api-comercial360-canary}"
+CANARY_IMAGE="$(docker inspect -f '{{.Config.Image}}' "$CANARY_NAME" 2>/dev/null || true)"
+CANARY_IMAGE_ID="$(docker inspect -f '{{.Image}}' "$CANARY_NAME" 2>/dev/null || true)"
+echo "canary_name=${CANARY_NAME}"
+echo "canary_image=${CANARY_IMAGE:-unknown}"
+echo "canary_image_id_prefix=${CANARY_IMAGE_ID:0:19}"
+if [[ "$CANARY_IMAGE" == *comercial360-main-* ]]; then
+  echo "canary_image_is_main_immutable=YES"
+  echo "HINT=ped_convert_500_likely_stale_main_image_rebuild_via_comercial360-canary-from-checkout.sh" >&2
+else
+  echo "canary_image_is_main_immutable=NO"
+fi
+
 case "${SYNTH_PASS}" in
   SENHA_DO_COFRE_OPENSSL|SENHA_DO_COFRE|SENHA_REAL_DO_COFRE|SENHA_FORTE_LOCAL|SUA_SENHA_FORTE|COLOQUE_SENHA_FORTE_AQUI|'...'|'…')
     echo 'BLOCKED: synth_pass_is_placeholder_from_chat' >&2
@@ -481,8 +494,38 @@ print((d.get('data') or {}).get('id') or '')
 PY
 )"
 [[ "$ped_convert" == "201" && -n "$PED_ID" ]] || {
-  code="$(python3 -c "import json;d=json.load(open('$TMP_PED'));e=d.get('error')or{};print(e.get('code')or d.get('code')or 'unknown')" 2>/dev/null || echo parse_fail)"
+  code="$(python3 - "$TMP_PED" <<'PY'
+import json, re, sys
+try:
+    d = json.load(open(sys.argv[1]))
+except Exception:
+    print('parse_fail')
+    raise SystemExit(0)
+e = d.get('error') or {}
+print(e.get('code') or d.get('code') or 'unknown')
+PY
+)"
+  # Mensagem sanitizada: sem UUID / sem body completo
+  msg="$(python3 - "$TMP_PED" <<'PY'
+import json, re, sys
+try:
+    d = json.load(open(sys.argv[1]))
+except Exception:
+    print('parse_fail')
+    raise SystemExit(0)
+e = d.get('error') or {}
+raw = str(e.get('message') or d.get('message') or '')
+raw = re.sub(r'[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}', '<uuid>', raw, flags=re.I)
+raw = re.sub(r'\s+', ' ', raw).strip()
+print((raw[:120] if raw else 'empty'))
+PY
+)"
   echo "ped_convert_error_code=${code}" >&2
+  echo "ped_convert_error_msg_sanitized=${msg}" >&2
+  echo "canary_image=${CANARY_IMAGE:-unknown}" >&2
+  if [[ "$CANARY_IMAGE" == *comercial360-main-* ]]; then
+    echo 'HINT=rebuild_canary_from_checkout_not_main_tag' >&2
+  fi
   echo 'BLOCKED: pedido_convert_failed' >&2
   exit 8
 }
@@ -520,6 +563,8 @@ echo "refs_cliente_empresa=YES"
 echo "refs_condicao=YES"
 echo "refs_produto=YES"
 echo "refs_ensure=YES"
+echo "canary_image=${CANARY_IMAGE:-unknown}"
+echo "canary_image_is_main_immutable=$([[ "${CANARY_IMAGE:-}" == *comercial360-main-* ]] && echo YES || echo NO)"
 echo "token_len=${#TOK}"
 echo "anon_len=${#ANON}"
 echo "GATE_D_MUTATION_SMOKE=$([[ "$ok" == "YES" ]] && echo OK || echo FAIL)"
