@@ -4,6 +4,7 @@ import type { DbClient } from './client.js';
 
 export type RbacAction =
   | 'visualizar'
+  | 'dados-sensiveis.visualizar'
   | 'criar'
   | 'editar'
   | 'cancelar'

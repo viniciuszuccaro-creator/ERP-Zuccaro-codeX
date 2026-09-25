@@ -1,3 +1,83 @@
+### Ordem Save/merge/DNS — progresso (2026-09-25T20:55Z)
+
+- **Save environment:** OK — build `bld-20260925-ba80fcc2` (CONFIG_CHANGE) sucedido após proposta `bld-20260925-0b7239f1`.
+- **Merge #40:** MERGED → `main` @ `1db7dc0c` (Gate F docs + nginx + smoke + DNS Registro.br).
+- **Merge #39:** em resolução de conflito `STATUS_DO_PROJETO.md` pós-#40; em seguida merge.
+- **Merge #41:** aguarda #39.
+- **DNS/HTTPS:** ainda NX — NS autoritativo Registro.br (`a.auto.dns.br`/`b.auto.dns.br`); criar A `erp-dev`/`api-erp-dev` lá (ou mudar NS). Acesso diário **não** concluído.
+
+## Comercial 360 / Onda 3 - revisão Cursor APPROVED (2026-09-25T20:00Z)
+
+- HEAD `69c1adc7` · CI verde · mergeable CLEAN.
+- Fingerprint FNV-1a: tokens mesmo length → queryKeys distintos; teste reproduz colisão length-only.
+- Bearer fail-closed · flag HTTP 360 **desligada** · PII/tenant/vínculo ClienteEmpresa: testes backend 4/4 PASS.
+- Sem bloqueador de merge de código. PR **#40** já MERGED em `main` (`1db7dc0c`).
+- DNS/HTTPS externo e acesso diário: ainda **não** concluídos (Registro.br).
+
+## Comercial 360 / Onda 3 - cache: tokens mesmo length (2026-09-25)
+
+- Bug: `central360SessionKey` usava só `t${length}` — duas sessões com Bearer distintos de mesmo comprimento compartilhavam queryKey.
+- Fix: fingerprint FNV-1a (`t{len}_{hex8}`) em `httpApiClient.central360SessionKey`; não coloca o token no queryKey.
+- Teste: `duas sessões com tokens diferentes de comprimento idêntico invalidam o cache` (pré-condição length-only colide).
+- Acesso diário externo **não** concluído: faltam DNS/HTTPS + prova de navegação fora da VPS (#40). Codex revisa esta #39.
+
+## Comercial 360 / Onda 3 - cache painel + Bearer (2026-09-25)
+
+- `CentralCliente360Panel`: `staleTime=0` · `gcTime=0` · `refetchOnMount=always` — sem reaproveitar payload entre Grupo/Empresa/ator/sessão.
+- Token Bearer permanece obrigatório; flag `VITE_ERP_HTTP_CLIENTE_360` **desligada**.
+- Testes: `central-cliente-360-session.test.js` (+ política de cache). CI no novo HEAD.
+- DNS/HTTPS externo: frente VPS **#40** (prep + smoke HTTPS).
+
+## Comercial 360 / Onda 3 - Bearer sessão no Cliente 360 (2026-09-25)
+
+- `DetalhesCliente` obtém token via `resolveErpAuthSessionToken` (`erp_runtime_scope.token` → `base44_access_token` / appParams) e passa a `CentralCliente360Panel`.
+- Painel exige Bearer para disparar query; sem sessão mostra alerta fail-closed. `queryKey` inclui `sessionKey` (sem segredo) + grupo/empresa/ator.
+- Testes: `tests/central-cliente-360-session.test.js` — Bearer, ausência de sessão (401), 403, troca empresa/usuário. **Não** ativa `VITE_ERP_HTTP_CLIENTE_360` neste lote (aguardaprova supabase_user).
+- Artefatos Gate F (browser smoke/evidências) movidos para a frente VPS **#40**. Unban do provision permanece no script compartilhado.
+- **Sem merge** automático · CRM Central ainda BLOCKED até A/B.
+
+## Comercial 360 / Onda 3 - correções Codex P1 + UI + browser URL (2026-09-25)
+
+- P1 corrigidos na #39: (1) PII mascarada sem `dados-sensiveis.visualizar`; (2) vínculo ClienteEmpresa obrigatório na Empresa do contexto (404 seguro); (3) blocos `forbidden`/`unavailable` com `meta=null` e falha parcial sem derrubar a Central.
+- Testes: `runtime-onda3-cliente-central360.test.ts` 4/4 PASS (PII, 2 empresas mesmo Grupo, falha parcial).
+- UI: `DetalhesCliente` + `CentralCliente360Panel` (opt-in `VITE_ERP_HTTP_CLIENTE_360=true` — **ainda desligado** até prova supabase_user).
+- Gate F browser/evidências: ver PR **#40** (frente VPS). SPA canônica `3081` ≠ API `3080`.
+- **Sem merge** da #39 — aguarda revisão Codex do novo HEAD.
+
+## Comercial 360 / Onda 3 - inventário CRM BLOCKED (2026-09-25)
+
+- Inventário: `Oportunidade`/`Interacao`/`Campanha` só em localBase44/Base44; **zero** migration/HTTP canônico no server.
+- Consumidores: `CRM.jsx`, `crmOportunidadePolicy`, Site CPA, scorer/churn, PesquisaUniversal.
+- Central 360 mantém `blocks.crm=skipped` (`CRM_CANONICAL_HTTP_PENDING`) — **não** cria CRM paralelo (Regra-Mãe).
+- Evidência/contrato: `docs/COMERCIAL_360_ONDA_3_CLIENTE_CRM.md` § Inventário CRM.
+- **BLOCKED** preencher CRM na Central 360 até decisão humana: (A) migração canônica ou (B) adaptador somente-leitura do legado.
+- PR #39 MERGEABLE · CI verde. PR #40 (docs Gate F) MERGEABLE.
+- Próximo código liberado sem criar módulo: snapshot de preço Onda 2 em Orçamento/Pedido (política comercial explícita) **ou** autorização A/B do CRM.
+
+## Comercial 360 / Onda 3 - Central Cliente 360 + Local/Obra (2026-09-25)
+
+- Extensão do read-model: blocos `locais` e `obras` via `ClienteLocalService`/`ObraService` existentes (paginação, RBAC fail-closed, projeção sem logradouro/fingerprint).
+- Bloco `crm` permanece `skipped` (`CRM_CANONICAL_HTTP_PENDING`) — Oportunidade só no localBase44; sem HTTP canônico no server (não duplicar).
+- Query: `locais_limit/offset`, `obras_limit/offset`. Sem migration, seed, frontend HTTP ou alteração da 3080.
+- Testes: `runtime-onda3-cliente-central360.test.ts` 3/3 PASS (composição Local/Obra, RBAC parcial, isolamento A/B).
+- Próximo: endpoint CRM canônico (inventário de consumidores) antes de preencher o bloco; Financeiro/Fiscal somente com contrato dos módulos donos.
+
+## Comercial 360 / Onda 3 - Central Cliente 360 read-model minimo (2026-09-25)
+
+- Branch `cursor/comercial360-onda3-cliente-392b` rebaseada em `main` (`894b0db8`); PR `#39` pós Gate F EXECUTED_OK (docs em `#40`).
+- Objetivo: primeiro checkpoint da Onda 3 — composição de leitura over mestres/operações canônicas, sem tabela espelho nem bloco financeiro/fiscal.
+- Reutilizado: `ClienteService`, `OrcamentoService`, `PedidoService`, rotas `/api/v1/clientes`, TenantGuard, RBAC Cadastros/Comercial e mascaramento de documento.
+- API: `GET /api/v1/clientes/:id/central-360` com paginação por bloco (`orcamentos_*`, `pedidos_*`, `empresas_*`, `locais_*`, `obras_*`). Resposta: identidade mascarada, `empresaLink` da Empresa em contexto, blocos `empresas`/`locais`/`obras`/`orcamentos`/`pedidos`/`crm` com status `ok|forbidden|unavailable|skipped`. `Cache-Control: no-store`. Sem migration, seed, frontend HTTP ou alteração da 3080.
+- Seguranca: escopo Grupo/Empresa obrigatório; base `cadastros.cliente.visualizar`; blocos fail-closed por permissão; filtro comercial por `clienteEmpresaId` do vínculo atual; cross-tenant 404 seguro; projeções sem itens/descrições de linha.
+- Testes focados: `server/tests/runtime-onda3-cliente-central360.test.ts` 3/3 PASS (composição, RBAC parcial + isolamento A/B, anti-mistura ClienteEmpresa). Backend `typecheck`/`build` PASS. `git diff --check` PASS.
+- Commit funcional: `9852854dfdef7760c07d3e8407cb46a3425ea361`. CI PR `36140836040` SUCCESS (4 checks). CI push `36140813552` SUCCESS.
+- Proximo: CRM HTTP canônico pendente de inventário. Gate F VPS fechado (`894b0db8` na 3080); docs `#40` na main.
+
+### Gate F — VPS EXECUTED_OK (contexto para Onda 3) (2026-09-25)
+
+- Promoção 3080 + Auth/smoke + cleanup §E **OK** · tag `comercial360-main-894b0db8`.
+- Evidências sanitizadas na PR **#40** (`cursor/gate-f-pos-merge-a-392b`); **#40 MERGED**.
+- Rollback: `erp-api-dev-r07b-pre-f-20260925-163531`. Sem re-promoção neste lote Onda 3.
 ### Gate F — DNS ainda NX: NS é Registro.br (2026-09-25T20:50Z)
 
 - Humano marcou ações Hostinger como feitas; probe externo continua **NXDOMAIN** (`dig @8.8.8.8 erp-dev…` / `api-erp-dev…`).
@@ -49,8 +129,8 @@
 ### Gate F — VPS completo · próximo Onda 3 (2026-09-25T16:47Z)
 
 - Gate F **EXECUTED_OK**: promote `894b0db8` · smoke 3080 · cleanup §E.
-- Evidências em `docs/vps/evidence/gate-f-*` · PR docs **#40** (merge pendente).
-- **Próximo:** merge #40 → Comercial 360 Onda 3 (PR **#39**, conflito com `main`).
+- Evidências em `docs/vps/evidence/gate-f-*` · PR docs **#40** **MERGED** (`1db7dc0c`).
+- **Próximo:** merge #39 (Cliente 360) → #41 (Onda 2); DNS ainda NX no Registro.br.
 
 ### Gate F — cleanup §E OK pós-promote (2026-09-25T16:47Z)
 
