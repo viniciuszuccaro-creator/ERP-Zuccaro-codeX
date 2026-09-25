@@ -1,12 +1,20 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 : "${IMAGE:?Set IMAGE to the immutable MAIN image tag}"
-: "${ENV_FILE:?Set ENV_FILE to the approved VPS environment file}"
 : "${ERP_DOCKER_NETWORK:?Set ERP_DOCKER_NETWORK after VPS precheck}"
+# ENV_FILE=/caminho/.env  OU  ENV_FROM_CONTAINER=erp-api-dev (sem cat no chat)
 CANARY_NAME="${CANARY_NAME:-erp-api-comercial360-canary}"
 CANARY_PORT="${CANARY_PORT:-3086}"
 # Default alinhado a /api/v1/meta da main pós-#35 (runtime canônico 08B).
 EXPECTED_RUNTIME="${EXPECTED_RUNTIME:-ERP-RUNTIME-08B}"
+TMP_ENV=""
+cleanup_tmp_env() {
+  if [[ -n "$TMP_ENV" && -f "$TMP_ENV" ]]; then
+    rm -f "$TMP_ENV"
+  fi
+}
+trap cleanup_tmp_env EXIT
+
 if [[ ! "$CANARY_PORT" =~ ^[1-9][0-9]{3,4}$ ]] || (( CANARY_PORT < 1024 || CANARY_PORT > 65535 )) || [[ "$CANARY_PORT" == "3080" ]]; then
   echo 'BLOCKED: canary requires an unprivileged isolated port other than 3080' >&2
   exit 1
@@ -17,7 +25,26 @@ if [[ "$CANARY_NAME" == "erp-api-dev" ]]; then
 fi
 
 command -v docker >/dev/null
-[[ -f "$ENV_FILE" ]]
+
+if [[ -n "${ENV_FROM_CONTAINER:-}" ]]; then
+  if ! docker ps --format '{{.Names}}' | grep -Fxq "$ENV_FROM_CONTAINER"; then
+    echo "BLOCKED: ENV_FROM_CONTAINER not running: $ENV_FROM_CONTAINER" >&2
+    exit 1
+  fi
+  TMP_ENV="$(mktemp /tmp/canary-env.XXXXXX)"
+  # Copia só KEY=VALUE do container oficial — não imprime valores
+  docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$ENV_FROM_CONTAINER" >"$TMP_ENV"
+  ENV_FILE="$TMP_ENV"
+  echo "env_from_container=${ENV_FROM_CONTAINER}"
+  echo "env_keys_count=$(grep -cE '^[A-Za-z_][A-Za-z0-9_]*=' "$TMP_ENV" || true)"
+elif [[ -n "${ENV_FILE:-}" ]]; then
+  [[ -f "$ENV_FILE" ]] || { echo "BLOCKED: ENV_FILE missing path_set=YES" >&2; exit 1; }
+  echo "env_from_file=YES"
+else
+  echo 'BLOCKED: set ENV_FILE=/path/.env or ENV_FROM_CONTAINER=erp-api-dev' >&2
+  exit 1
+fi
+
 if docker ps -a --format '{{.Names}}' | grep -Fxq "$CANARY_NAME"; then
   echo "BLOCKED: canary container already exists: $CANARY_NAME" >&2
   exit 1

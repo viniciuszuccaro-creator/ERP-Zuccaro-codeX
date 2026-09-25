@@ -114,9 +114,9 @@ Com `DIGEST_STATUS=OK`, o go-nogo passa a `image_digest_status=REGISTERED` (Auth
 ### Execução Gate D (quando autorizado)
 
 ```bash
-# Na VPS, após Auth OK — usar bash (não ./) se bit +x ausente
+# Na VPS, após Auth OK — usar bash; ENV_FROM_CONTAINER (sem .env no disco)
 IMAGE='erp-zuccaro-erp-api:comercial360-main-2fc2fc80'
-ENV_FILE='/opt/erp-zuccaro/.env'   # caminho real; não cat / não commitar
+ENV_FROM_CONTAINER='erp-api-dev'
 ERP_DOCKER_NETWORK='supabase_default'
 EXPECTED_RUNTIME='ERP-RUNTIME-08B'
 CANARY_PORT='3086'

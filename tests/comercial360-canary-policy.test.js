@@ -47,10 +47,26 @@ function metadataGate(path, metadata) {
   return spawnSync(process.execPath, ['-e', expression, payload, 'ERP-RUNTIME-08B'], { encoding: 'utf8' });
 }
 
-test('Comercial 360 canary default EXPECTED_RUNTIME is ERP-RUNTIME-08B', () => {
+test('Comercial 360 canary requires ENV_FILE or ENV_FROM_CONTAINER', () => {
+  const result = spawnSync(bash, [script], {
+    encoding: 'utf8',
+    env: {
+      PATH: process.env.PATH ?? '',
+      SystemRoot: process.env.SystemRoot ?? '',
+      IMAGE: 'synthetic:sha',
+      ERP_DOCKER_NETWORK: 'synthetic',
+      CANARY_PORT: '3086',
+      CANARY_NAME: 'erp-api-comercial360-canary',
+    },
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /BLOCKED: set ENV_FILE=\/path\/\.env or ENV_FROM_CONTAINER=erp-api-dev/);
+});
+
+test('Comercial 360 canary supports ENV_FROM_CONTAINER in script contract', () => {
   const source = readFileSync(script, 'utf8');
-  assert.match(source, /EXPECTED_RUNTIME="\$\{EXPECTED_RUNTIME:-ERP-RUNTIME-08B\}"/);
-  assert.doesNotMatch(source, /COMERCIAL-360-V1/);
+  assert.match(source, /ENV_FROM_CONTAINER/);
+  assert.match(source, /env_from_container=/);
 });
 
 test('Comercial 360 canary requires the reviewed runtime and verified Supabase Auth', () => {

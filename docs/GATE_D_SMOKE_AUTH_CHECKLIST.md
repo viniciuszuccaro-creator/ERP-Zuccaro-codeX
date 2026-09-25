@@ -182,19 +182,18 @@ Gravar em `docs/vps/evidence/auth-synthetic-latest.txt`. Sem `<N>` literais.
 
 ### A. Subir canário (porta ≠3080)
 
-Use `bash` (evita Permission denied se o clone não tiver bit +x).  
-`ENV_FILE` real na VPS — tipicamente `/opt/erp-zuccaro/.env` (nunca o placeholder `/caminho/local/...`).  
-**Defina as vars no mesmo bloco** (após `git pull` a sessão pode ter perdido exports).
+Use `bash`. Preferir `ENV_FROM_CONTAINER=erp-api-dev` (padrão Gate E) — `/opt/erp-zuccaro/.env` pode **não** existir.  
+**Não** `cat`/cole `.env`. Vars no mesmo bloco.
 
 ```bash
 cd /opt/erp-zuccaro
-ls -la /opt/erp-zuccaro/.env >/dev/null
+git pull origin cursor/pos-gate-e-prep-d-392b
 curl -sS -o /dev/null -w 'health_3080=%{http_code}\n' http://127.0.0.1:3080/health
-# Se sobrou container de tentativa anterior:
+docker ps --format '{{.Names}}' | grep -E 'erp-api' || true
 docker rm -f erp-api-comercial360-canary 2>/dev/null || true
 
 IMAGE='erp-zuccaro-erp-api:comercial360-main-2fc2fc80' \
-ENV_FILE='/opt/erp-zuccaro/.env' \
+ENV_FROM_CONTAINER='erp-api-dev' \
 ERP_DOCKER_NETWORK='supabase_default' \
 EXPECTED_RUNTIME='ERP-RUNTIME-08B' \
 CANARY_PORT='3086' \
