@@ -52,7 +52,9 @@ Auditar mutações, mescla/vínculo, exportação sensível, mudança de respons
 2. Centralizar normalização/deduplicação já existente.
 3. Criar teste de composição sintética com dois grupos/empresas e permissões diferentes.
 4. Implementar primeiro o endpoint/read model mínimo de identidade + operações comerciais canônicas.
-5. Adicionar blocos Financeiro/Fiscal/Logística somente após contratos dos módulos proprietários.
+5. Adicionar blocos Local/Obra reutilizando serviços canônicos (entregue na PR #39).
+6. Bloco CRM HTTP: só após inventário — hoje `skipped` (`CRM_CANONICAL_HTTP_PENDING`); Oportunidade permanece no localBase44.
+7. Adicionar blocos Financeiro/Fiscal/Logística somente após contratos dos módulos proprietários.
 
 ### Checkpoint entregue (2026-09-25)
 

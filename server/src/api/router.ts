@@ -323,6 +323,10 @@ function mountClienteRoutes(
         pedidosOffset: parsePage(req.query.pedidos_offset),
         empresasLimit: parsePage(req.query.empresas_limit),
         empresasOffset: parsePage(req.query.empresas_offset),
+        locaisLimit: parsePage(req.query.locais_limit),
+        locaisOffset: parsePage(req.query.locais_offset),
+        obrasLimit: parsePage(req.query.obras_limit),
+        obrasOffset: parsePage(req.query.obras_offset),
       });
       res.setHeader('Cache-Control', 'no-store');
       res.json({ data });

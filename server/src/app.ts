@@ -187,6 +187,8 @@ export function createApp(options: CreateAppOptions) {
     clienteService,
     orcamentoService,
     pedidoService,
+    clienteLocalService,
+    obraService,
   );
 
   const app = express();

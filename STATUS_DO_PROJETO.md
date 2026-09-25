@@ -1,13 +1,21 @@
+## Comercial 360 / Onda 3 - Central Cliente 360 + Local/Obra (2026-09-25)
+
+- Extensão do read-model: blocos `locais` e `obras` via `ClienteLocalService`/`ObraService` existentes (paginação, RBAC fail-closed, projeção sem logradouro/fingerprint).
+- Bloco `crm` permanece `skipped` (`CRM_CANONICAL_HTTP_PENDING`) — Oportunidade só no localBase44; sem HTTP canônico no server (não duplicar).
+- Query: `locais_limit/offset`, `obras_limit/offset`. Sem migration, seed, frontend HTTP ou alteração da 3080.
+- Testes: `runtime-onda3-cliente-central360.test.ts` 3/3 PASS (composição Local/Obra, RBAC parcial, isolamento A/B).
+- Próximo: endpoint CRM canônico (inventário de consumidores) antes de preencher o bloco; Financeiro/Fiscal somente com contrato dos módulos donos.
+
 ## Comercial 360 / Onda 3 - Central Cliente 360 read-model minimo (2026-09-25)
 
 - Branch `cursor/comercial360-onda3-cliente-392b` rebaseada em `main` (`894b0db8`); PR `#39` pós Gate F EXECUTED_OK (docs em `#40`).
 - Objetivo: primeiro checkpoint da Onda 3 — composição de leitura over mestres/operações canônicas, sem tabela espelho nem bloco financeiro/fiscal.
 - Reutilizado: `ClienteService`, `OrcamentoService`, `PedidoService`, rotas `/api/v1/clientes`, TenantGuard, RBAC Cadastros/Comercial e mascaramento de documento.
-- API: `GET /api/v1/clientes/:id/central-360` com paginação por bloco (`orcamentos_*`, `pedidos_*`, `empresas_*`). Resposta: identidade mascarada, `empresaLink` da Empresa em contexto, blocos `empresas`/`orcamentos`/`pedidos` com status `ok|forbidden|unavailable|skipped`. `Cache-Control: no-store`. Sem migration, seed, frontend HTTP ou alteração da 3080.
+- API: `GET /api/v1/clientes/:id/central-360` com paginação por bloco (`orcamentos_*`, `pedidos_*`, `empresas_*`, `locais_*`, `obras_*`). Resposta: identidade mascarada, `empresaLink` da Empresa em contexto, blocos `empresas`/`locais`/`obras`/`orcamentos`/`pedidos`/`crm` com status `ok|forbidden|unavailable|skipped`. `Cache-Control: no-store`. Sem migration, seed, frontend HTTP ou alteração da 3080.
 - Seguranca: escopo Grupo/Empresa obrigatório; base `cadastros.cliente.visualizar`; blocos fail-closed por permissão; filtro comercial por `clienteEmpresaId` do vínculo atual; cross-tenant 404 seguro; projeções sem itens/descrições de linha.
 - Testes focados: `server/tests/runtime-onda3-cliente-central360.test.ts` 3/3 PASS (composição, RBAC parcial + isolamento A/B, anti-mistura ClienteEmpresa). Backend `typecheck`/`build` PASS. `git diff --check` PASS.
 - Commit funcional: `9852854dfdef7760c07d3e8407cb46a3425ea361`. CI PR `36140836040` SUCCESS (4 checks). CI push `36140813552` SUCCESS.
-- Proximo: blocos Local/Obra/CRM na mesma composição; Financeiro/Fiscal somente apos contrato dos modulos donos. Gate F VPS fechado (`894b0db8` na 3080); merge docs `#40` pendente.
+- Proximo: blocos Local/Obra entregues neste lote; CRM HTTP canônico pendente de inventário. Gate F VPS fechado (`894b0db8` na 3080); merge docs `#40` pendente.
 
 ### Gate F — VPS EXECUTED_OK (contexto para Onda 3) (2026-09-25)
 

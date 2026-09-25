@@ -2,9 +2,12 @@ import { AppError } from '../api/errors.js';
 import type { RequestContext } from '../audit/types.js';
 import { maskDocumento } from '../db/documentoValidators.js';
 import type { Cliente, ClienteEmpresa } from '../repositories/clienteTypes.js';
+import type { ClienteLocal } from '../repositories/clienteLocalTypes.js';
 import type { Orcamento } from '../repositories/orcamentoTypes.js';
 import type { Pedido } from '../repositories/pedidoTypes.js';
 import type { ClienteService } from './clienteService.js';
+import type { ClienteLocalService } from './clienteLocalService.js';
+import type { ObraService } from './obraService.js';
 import type { OrcamentoService } from './orcamentoService.js';
 import type { PedidoService } from './pedidoService.js';
 
@@ -15,6 +18,10 @@ export type ClienteCentral360PageOptions = {
   pedidosOffset?: number;
   empresasLimit?: number;
   empresasOffset?: number;
+  locaisLimit?: number;
+  locaisOffset?: number;
+  obrasLimit?: number;
+  obrasOffset?: number;
 };
 
 export type ClienteCentral360BlockStatus = 'ok' | 'forbidden' | 'unavailable' | 'skipped';
@@ -98,6 +105,38 @@ export type ClienteCentral360PedidoProjection = {
   updated_at: string;
 };
 
+export type ClienteCentral360LocalProjection = {
+  id: string;
+  cliente_id: string;
+  nome: string;
+  cidade: string;
+  uf: string;
+  pais: string;
+  ativo: boolean;
+  origem: string;
+  finalidades: Array<{ finalidade: string; principal: boolean; ativo: boolean }>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ClienteCentral360ObraProjection = {
+  id: string;
+  codigo: string;
+  nome: string;
+  status: string;
+  ativo: boolean;
+  cliente_id: string;
+  local_principal: {
+    id: string;
+    nome: string | null;
+    cidade: string | null;
+    uf: string | null;
+  } | null;
+  empresas_count: number;
+  created_at: string;
+  updated_at: string;
+};
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function pageBounds(limit: number | undefined, offset: number | undefined) {
@@ -108,6 +147,18 @@ function pageBounds(limit: number | undefined, offset: number | undefined) {
 
 function emptyMeta(limit: number, offset: number) {
   return { limit, offset, total: 0, hasMore: false };
+}
+
+function skippedBlock<T>(
+  bounds: { limit: number; offset: number },
+  code: string,
+): ClienteCentral360Block<T> {
+  return {
+    status: 'skipped',
+    code,
+    data: [],
+    meta: emptyMeta(bounds.limit, bounds.offset),
+  };
 }
 
 function projectIdentity(row: Cliente): ClienteCentral360Identity {
@@ -185,15 +236,78 @@ function projectPedido(row: Pedido): ClienteCentral360PedidoProjection {
   };
 }
 
+function projectLocal(row: ClienteLocal): ClienteCentral360LocalProjection {
+  return {
+    id: row.id,
+    cliente_id: row.cliente_id,
+    nome: row.nome,
+    cidade: row.cidade,
+    uf: row.uf,
+    pais: row.pais,
+    ativo: row.ativo,
+    origem: row.origem,
+    finalidades: row.finalidades
+      .filter((item) => item.ativo)
+      .map((item) => ({
+        finalidade: item.finalidade,
+        principal: item.principal,
+        ativo: item.ativo,
+      })),
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
+function projectObra(row: {
+  id: string;
+  codigo: string;
+  nome: string;
+  status: string;
+  ativo: boolean;
+  cliente_id: string;
+  created_at: string;
+  updated_at: string;
+  local_principal?: {
+    id: string;
+    nome: string | null;
+    cidade: string | null;
+    uf: string | null;
+  } | null;
+  empresas?: Array<{ id: string }>;
+}): ClienteCentral360ObraProjection {
+  return {
+    id: row.id,
+    codigo: row.codigo,
+    nome: row.nome,
+    status: row.status,
+    ativo: row.ativo,
+    cliente_id: row.cliente_id,
+    local_principal: row.local_principal
+      ? {
+        id: row.local_principal.id,
+        nome: row.local_principal.nome,
+        cidade: row.local_principal.cidade,
+        uf: row.local_principal.uf,
+      }
+      : null,
+    empresas_count: Array.isArray(row.empresas) ? row.empresas.length : 0,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
 /**
  * Read-model da Central Cliente 360: composição permissionada sobre mestres e
  * operações canônicas existentes. Não cria tabela espelho nem copia saldos.
+ * CRM HTTP canônico ainda não existe no server — bloco `crm` fica skipped.
  */
 export class ClienteCentral360Service {
   constructor(
     private readonly clientes: ClienteService,
     private readonly orcamentos: OrcamentoService,
     private readonly pedidos: PedidoService,
+    private readonly locais: ClienteLocalService,
+    private readonly obras: ObraService,
   ) {}
 
   async get(ctx: RequestContext, clienteId: string, options: ClienteCentral360PageOptions = {}) {
@@ -207,8 +321,14 @@ export class ClienteCentral360Service {
     const empresaBounds = pageBounds(options.empresasLimit, options.empresasOffset);
     const orcBounds = pageBounds(options.orcamentosLimit, options.orcamentosOffset);
     const pedBounds = pageBounds(options.pedidosLimit, options.pedidosOffset);
+    const localBounds = pageBounds(options.locaisLimit, options.locaisOffset);
+    const obraBounds = pageBounds(options.obrasLimit, options.obrasOffset);
 
     const empresas = await this.loadEmpresas(ctx, clienteId, empresaBounds);
+    const locais = await this.loadLocais(ctx, clienteId, localBounds);
+    const obras = await this.loadObras(ctx, clienteId, obraBounds);
+    const crm = skippedBlock(pageBounds(20, 0), 'CRM_CANONICAL_HTTP_PENDING');
+
     const linkResolution = await this.resolveEmpresaLink(ctx, clienteId);
     const empresaLink = linkResolution.link;
     const clienteEmpresaId = empresaLink?.id ?? null;
@@ -229,18 +349,8 @@ export class ClienteCentral360Service {
         meta: emptyMeta(pedBounds.limit, pedBounds.offset),
       };
     } else if (!clienteEmpresaId) {
-      orcamentos = {
-        status: 'skipped',
-        code: 'CLIENTE_EMPRESA_LINK_REQUIRED',
-        data: [],
-        meta: emptyMeta(orcBounds.limit, orcBounds.offset),
-      };
-      pedidos = {
-        status: 'skipped',
-        code: 'CLIENTE_EMPRESA_LINK_REQUIRED',
-        data: [],
-        meta: emptyMeta(pedBounds.limit, pedBounds.offset),
-      };
+      orcamentos = skippedBlock(orcBounds, 'CLIENTE_EMPRESA_LINK_REQUIRED');
+      pedidos = skippedBlock(pedBounds, 'CLIENTE_EMPRESA_LINK_REQUIRED');
     } else {
       orcamentos = await this.loadOrcamentos(ctx, clienteEmpresaId, orcBounds);
       pedidos = await this.loadPedidos(ctx, clienteEmpresaId, pedBounds);
@@ -251,8 +361,11 @@ export class ClienteCentral360Service {
       empresaLink: empresaLink ? projectEmpresa(empresaLink) : null,
       blocks: {
         empresas,
+        locais,
+        obras,
         orcamentos,
         pedidos,
+        crm,
       },
       meta: {
         requestId: ctx.requestId ?? null,
@@ -296,6 +409,42 @@ export class ClienteCentral360Service {
       });
       return {
         data: page.data.map(projectEmpresa),
+        meta: page.meta,
+      };
+    }, bounds);
+  }
+
+  private async loadLocais(
+    ctx: RequestContext,
+    clienteId: string,
+    bounds: { limit: number; offset: number },
+  ): Promise<ClienteCentral360Block<ClienteCentral360LocalProjection>> {
+    return this.loadBlock(async () => {
+      const page = await this.locais.list(ctx, clienteId, {
+        limit: bounds.limit,
+        offset: bounds.offset,
+        ativo: true,
+      });
+      return {
+        data: page.data.map(projectLocal),
+        meta: page.meta,
+      };
+    }, bounds);
+  }
+
+  private async loadObras(
+    ctx: RequestContext,
+    clienteId: string,
+    bounds: { limit: number; offset: number },
+  ): Promise<ClienteCentral360Block<ClienteCentral360ObraProjection>> {
+    return this.loadBlock(async () => {
+      const page = await this.obras.list(ctx, clienteId, {
+        limit: bounds.limit,
+        offset: bounds.offset,
+        ativo: true,
+      });
+      return {
+        data: page.data.map(projectObra),
         meta: page.meta,
       };
     }, bounds);

@@ -43,6 +43,8 @@ function fixture(permissions: {
       Cadastros: {
         cliente: ['visualizar', 'criar', 'editar'],
         cliente_empresa: ['visualizar', 'criar', 'editar'],
+        cliente_local: ['visualizar', 'criar', 'editar', 'principal'],
+        obra: ['visualizar', 'criar', 'editar', 'principal', 'vincular-local', 'vincular-empresa'],
       },
       Comercial: {
         orcamento: ['visualizar', 'criar'],
@@ -64,6 +66,8 @@ function fixture(permissions: {
       Cadastros: {
         cliente: ['visualizar', 'criar'],
         cliente_empresa: ['visualizar', 'criar'],
+        cliente_local: ['visualizar', 'criar', 'principal'],
+        obra: ['visualizar', 'criar', 'principal', 'vincular-local', 'vincular-empresa'],
       },
       Comercial: {
         orcamento: ['visualizar', 'criar'],
@@ -187,11 +191,41 @@ async function seedClienteComercial(runtime: ReturnType<typeof fixture>, actorId
   });
   assert.equal(pedido.status, 201, JSON.stringify(pedido.body));
 
+  const local = await request(runtime.app, `/api/v1/clientes/${clienteId}/locais`, {
+    method: 'POST',
+    headers: headers(actorId, groupId, empresaId),
+    body: JSON.stringify({
+      nome: 'Local Central 360',
+      cep: '01310100',
+      logradouro: 'Av Paulista',
+      numero: '1000',
+      bairro: 'Bela Vista',
+      cidade: 'Sao Paulo',
+      uf: 'SP',
+      pais: 'Brasil',
+      finalidades: [{ finalidade: 'ENTREGA', principal: true }],
+    }),
+  });
+  assert.equal(local.status, 201, JSON.stringify(local.body));
+  const localId = local.body.data.id as string;
+
+  const obra = await request(runtime.app, `/api/v1/clientes/${clienteId}/obras`, {
+    method: 'POST',
+    headers: headers(actorId, groupId, empresaId),
+    body: JSON.stringify({
+      nome: 'Obra Central 360',
+      locais: [{ cliente_local_id: localId, uso_na_obra: 'FISICO', principal: true }],
+    }),
+  });
+  assert.equal(obra.status, 201, JSON.stringify(obra.body));
+
   return {
     clienteId,
     clienteEmpresaId,
     orcamentoId: orcamento.body.data.id as string,
     pedidoId: pedido.body.data.id as string,
+    localId,
+    obraId: obra.body.data.id as string,
   };
 }
 
@@ -211,11 +245,19 @@ test('Central 360 compoe identidade + blocos comerciais canonicos com documento 
   assert.equal(result.body.data.identity.documento, '**.***.***/****-81');
   assert.equal(result.body.data.empresaLink.id, seeded.clienteEmpresaId);
   assert.equal(result.body.data.blocks.empresas.status, 'ok');
+  assert.equal(result.body.data.blocks.locais.status, 'ok');
+  assert.equal(result.body.data.blocks.obras.status, 'ok');
   assert.equal(result.body.data.blocks.orcamentos.status, 'ok');
   assert.equal(result.body.data.blocks.pedidos.status, 'ok');
+  assert.equal(result.body.data.blocks.crm.status, 'skipped');
+  assert.equal(result.body.data.blocks.crm.code, 'CRM_CANONICAL_HTTP_PENDING');
   assert.equal(result.body.data.blocks.orcamentos.data[0].id, seeded.orcamentoId);
   assert.equal(result.body.data.blocks.pedidos.data[0].id, seeded.pedidoId);
+  assert.equal(result.body.data.blocks.locais.data[0].id, seeded.localId);
+  assert.equal(result.body.data.blocks.obras.data[0].id, seeded.obraId);
   assert.equal(result.body.data.blocks.orcamentos.data[0].quantidade_itens, 1);
+  assert.ok(!JSON.stringify(result.body.data.blocks.locais.data[0]).includes('logradouro'));
+  assert.ok(!JSON.stringify(result.body).includes('endereco_fingerprint'));
   assert.equal(result.body.data.meta.clienteEmpresaId, seeded.clienteEmpresaId);
   assert.equal(result.body.data.meta.groupId, GROUP_A);
   assert.equal(result.body.data.meta.empresaId, EMPRESA_A);
@@ -235,11 +277,16 @@ test('Central 360 aplica RBAC parcial por bloco e isola tenant A/B', async () =>
   assert.equal(partial.status, 200);
   assert.equal(partial.body.data.identity.id, seededA.clienteId);
   assert.equal(partial.body.data.blocks.empresas.status, 'forbidden');
+  assert.equal(partial.body.data.blocks.locais.status, 'forbidden');
+  assert.equal(partial.body.data.blocks.obras.status, 'forbidden');
   assert.equal(partial.body.data.blocks.orcamentos.status, 'forbidden');
   assert.equal(partial.body.data.blocks.pedidos.status, 'forbidden');
+  assert.equal(partial.body.data.blocks.crm.status, 'skipped');
   assert.equal(partial.body.data.empresaLink, null);
   assert.deepEqual(partial.body.data.blocks.orcamentos.data, []);
   assert.deepEqual(partial.body.data.blocks.pedidos.data, []);
+  assert.deepEqual(partial.body.data.blocks.locais.data, []);
+  assert.deepEqual(partial.body.data.blocks.obras.data, []);
 
   const cross = await request(
     runtime.app,
