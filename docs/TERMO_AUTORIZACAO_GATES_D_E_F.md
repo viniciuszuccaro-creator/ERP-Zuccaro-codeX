@@ -107,8 +107,8 @@ utc_auth_ok=2026-09-25T12:07:49Z
 Assinatura responsável (Auth / D): VINICIUS
 Data/hora (UTC): 24/09/2026
 
-**Estado operacional:** E OK · digest REGISTERED · Auth **OK** · D **AUTHORIZED** (canário Web Console) · F/3080 bloqueados.
-**Ordem:** Auth OK ✓ → canário Gate D (porta ≠3080) → smoke.
+**Estado operacional:** E OK · digest REGISTERED · Auth **OK** · canário 3086 **READY** + smoke meta **OK** · Bearer **pendente** · F/3080 bloqueados.
+**Ordem:** Auth OK ✓ → canário ✓ → smoke meta ✓ → smoke Bearer sintético → (só depois) Gate F se autorizado.
 
 ---
 

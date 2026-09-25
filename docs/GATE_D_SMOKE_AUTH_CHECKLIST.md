@@ -33,6 +33,8 @@ Complementa `docs/GATES_D_F_PREPARACAO_CANARIO.md` e
 **Baseline Auth (2026-09-25T12:07Z):** `auth_users_count=1` · `profiles_com_auth_count=1` · `AUTH_SYNTHETIC_STATUS=OK`.
 `profiles_ativos_sem_auth_count=2` (legado preservado). Segredos só no cofre local.
 
+**Canário (2026-09-25T12:33Z):** `CANARY_READY` porta 3086 · `SMOKE_OK` meta · `GATE_D_BEARER_SMOKE=PENDING_MANUAL`.
+
 Ordem fail-closed. **Nunca** colar e-mail, senha, token, service_role ou UUID no chat/Git.
 
 ### 1) Descobrir Auth (só nomes)
@@ -204,14 +206,38 @@ BASE_URL='http://127.0.0.1:3086' EXPECTED_RUNTIME=ERP-RUNTIME-08B \
   bash scripts/deploy/comercial360-smoke.sh
 ```
 
-### C. Bearer sintético — permitido
+### C. Bearer sintético — permitido (após canário/smoke meta OK)
 
-Com token válido (somente cofre local):
+Obter token **na VPS** (não cole no chat). Use a senha do cofre gerada no Auth:
 
-1. Orçamento: list → get → create → update → cancel  
-2. Conversão idempotente Orçamento→Pedido  
-3. Pedido: list → get → update → status → cancel → histórico  
-4. Totais recalculados pelo servidor  
+```bash
+cd /opt/erp-zuccaro
+# ANON/URL do container oficial — só lengths, sem valores:
+ANON="$(docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' erp-api-dev | sed -n 's/^SUPABASE_ANON_KEY=//p' | tail -1)"
+AUTH_URL="$(docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' erp-api-dev | sed -n 's/^SUPABASE_URL=//p' | tail -1)"
+AUTH_URL="${AUTH_URL%/}"
+echo "anon_len=${#ANON} auth_url_len=${#AUTH_URL}"
+
+# SYNTH_PASS do cofre local (openssl gerado no provisionamento)
+SYNTH_EMAIL='gate-d.synth@dev.synthetic.local'
+TOK="$(curl -sS "${AUTH_URL}/auth/v1/token?grant_type=password" \
+  -H "apikey: ${ANON}" -H 'Content-Type: application/json' \
+  -d "{\"email\":\"${SYNTH_EMAIL}\",\"password\":\"${SYNTH_PASS}\"}" \
+  | python3 -c 'import json,sys; print(json.load(sys.stdin).get("access_token") or "")')"
+echo "token_len=${#TOK}"
+test -n "$TOK"
+
+BASE='http://127.0.0.1:3086'
+# Negativo sem auth
+curl -sS -o /dev/null -w 'no_auth=%{http_code}\n' "$BASE/api/v1/orcamentos"
+# Com Bearer — só HTTP codes
+curl -sS -o /dev/null -w 'orc_list=%{http_code}\n' -H "Authorization: Bearer ${TOK}" -H "apikey: ${ANON}" "$BASE/api/v1/orcamentos"
+curl -sS -o /dev/null -w 'ped_list=%{http_code}\n' -H "Authorization: Bearer ${TOK}" -H "apikey: ${ANON}" "$BASE/api/v1/pedidos"
+unset TOK ANON SYNTH_PASS
+```
+
+Cole no chat só: `token_len=` · `no_auth=` · `orc_list=` · `ped_list=` (sem token).  
+Fluxo completo create/update/cancel permanece checklist §C itens 1–4.
 
 ### D. Negativos obrigatórios
 

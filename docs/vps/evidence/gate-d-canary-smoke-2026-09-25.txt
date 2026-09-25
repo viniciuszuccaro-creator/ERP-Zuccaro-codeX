@@ -1,0 +1,22 @@
+# Gate D — canário Comercial 360 + smoke meta (sanitizado)
+# Sem .env, token, e-mail, senha ou UUID.
+
+utc=2026-09-25T12:33:57Z
+source=vps_webconsole
+CANARY_READY=YES
+canary_name=erp-api-comercial360-canary
+CANARY_PORT=3086
+image=erp-zuccaro-erp-api:comercial360-main-2fc2fc80
+runtime=ERP-RUNTIME-08B
+env_from_container=erp-api-dev
+canary_auth_mode_override=supabase_user
+SMOKE_OK=YES
+health_status=ok
+ready_status=ready
+database=ok
+official_3080=NOT_ALTERED
+alter_3080=NOT_PERFORMED
+AUTHORIZES_GATE_F=NO
+GATE_D_META_SMOKE=OK
+GATE_D_BEARER_SMOKE=PENDING_MANUAL
+NOTE=segredos_somente_cofre_local

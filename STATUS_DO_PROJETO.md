@@ -1,11 +1,10 @@
-### Gate Auth — OK (2026-09-25T12:07Z)
+### Gate D — canário + smoke meta OK (2026-09-25T12:33Z)
 
-- Provisionamento Web Console OK: `auth_users_count=1` · `profiles_com_auth_count=1` · `AUTH_SYNTHETIC_STATUS=OK`.
-- Evidência: `docs/vps/evidence/auth-synthetic-latest.txt`.
-- `profiles_ativos_sem_auth_count=2` preservados (legado sem vínculo; não apagados).
-- Canário Gate D **autorizado** (termo §C) — `GATE_D_READY=YES`.
-- Canário: `ENV_FROM_CONTAINER=erp-api-dev` (`.env` em `/opt/erp-zuccaro` ausente); override `ERP_AUTH_MODE=supabase_user`.
-- **Não** Gate F / 3080.
+- `CANARY_READY` · porta **3086** · imagem `comercial360-main-2fc2fc80` · `ERP-RUNTIME-08B`.
+- `SMOKE_OK` health/ready · `ENV_FROM_CONTAINER=erp-api-dev` · `ERP_AUTH_MODE=supabase_user`.
+- Evidência: `docs/vps/evidence/gate-d-canary-smoke-2026-09-25.txt`.
+- Auth sintético OK (12:07Z). **3080** intacta · Gate F **não**.
+- Próximo: smoke Bearer sintético (Orçamento/Pedido + negativos) — token só no cofre local.
 
 
 ### Pós-Gate E — prep Gate D (histórico)
