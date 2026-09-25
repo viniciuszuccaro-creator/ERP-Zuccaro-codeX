@@ -1,3 +1,11 @@
+### Gate F — browser login NAV OK (frente VPS, ex-#39) (2026-09-25T18:34Z)
+
+- Artefatos movidos da PR de código #39 para esta frente VPS (#40).
+- Auth unban · `http_token=200` · `tenant_headers_on_nav=YES` · **`nav_api_orc_list=200`** · `GATE_F_BROWSER_LOGIN_NAV=OK`.
+- Script: `scripts/vps/gate-f-smoke-browser-login-nav.sh` · SPA `3081` ≠ API `3080`.
+- Evidência: `docs/vps/evidence/gate-f-browser-login-nav-tenant-ok-2026-09-25.txt` (+ token_not_issued / SYNTH_PASS vazio / NAV ok intermediário).
+- Promoção 3080 já era **EXECUTED_OK** (`894b0db8`). Sem re-promover.
+
 ### Gate F — VPS completo · próximo Onda 3 (2026-09-25T16:47Z)
 
 - Gate F **EXECUTED_OK**: promote `894b0db8` · smoke 3080 · cleanup §E.

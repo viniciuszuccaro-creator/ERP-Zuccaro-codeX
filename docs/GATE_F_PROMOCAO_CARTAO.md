@@ -30,6 +30,13 @@ Evidências:
 - promoção: `docs/vps/evidence/gate-f-promote-ok-894b0db8-2026-09-25.txt`
 - pós-promote 3080: `docs/vps/evidence/gate-f-post-promote-smoke-ok-3080-894b0db8-2026-09-25.txt`
 - cleanup §E: `docs/vps/evidence/gate-f-cleanup-ok-2026-09-25.txt`
+- browser login/nav (SPA 3081): `docs/vps/evidence/gate-f-browser-login-nav-tenant-ok-2026-09-25.txt`
+
+## Browser (SPA ≠ API)
+
+- **3080 é API**, não URL de browser. SPA DEV canônica: `http://127.0.0.1:3081/` (`erp-web`) ou HTTPS público do ERP.
+- Smoke: `ERP_BROWSER_URL=…` + Auth sintético → `scripts/vps/gate-f-smoke-browser-login-nav.sh`.
+- `GATE_F_BROWSER_LOGIN_NAV=OK` (tenant · `nav_api_orc_list=200`) em `2026-09-25T18:34Z`.
 
 ## Rollback (se necessário)
 
