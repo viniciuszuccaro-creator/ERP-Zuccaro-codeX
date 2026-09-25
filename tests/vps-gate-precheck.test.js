@@ -707,6 +707,25 @@ test('gate-f-option-a-build-canary.sh passa bash -n e exige confirmacao', () => 
   assert.match(blocked.stderr + blocked.stdout, /CONFIRM_GATE_F_BUILD_RESMOKE|BLOCKED/);
 });
 
+test('gate-f-option-a-promote-3080.sh passa bash -n e exige confirmacao', () => {
+  const script = path.join(root, 'scripts/vps/gate-f-option-a-promote-3080.sh');
+  const syn = spawnSync('bash', ['-n', script], { encoding: 'utf8' });
+  assert.equal(syn.status, 0, syn.stderr);
+  const text = fs.readFileSync(script, 'utf8');
+  assert.match(text, /GATE_F_PROMOTE/);
+  assert.match(text, /CONFIRM_GATE_F_PROMOTE/);
+  assert.match(text, /894b0db8/);
+  assert.match(text, /2fc2fc80/);
+  assert.match(text, /r07b-pre-f/);
+  assert.match(text, /canary_image_mismatch/);
+  const blocked = spawnSync('bash', [script], {
+    encoding: 'utf8',
+    env: { ...process.env, CONFIRM_GATE_F_PROMOTE: '' },
+  });
+  assert.notEqual(blocked.status, 0);
+  assert.match(blocked.stderr + blocked.stdout, /CONFIRM_GATE_F_PROMOTE|BLOCKED/);
+});
+
 test('comercial360-canary-from-checkout.sh passa bash -n e nao usa tag MAIN', () => {
   const script = path.join(root, 'scripts/deploy/comercial360-canary-from-checkout.sh');
   const syn = spawnSync('bash', ['-n', script], { encoding: 'utf8' });

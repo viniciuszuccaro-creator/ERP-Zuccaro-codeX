@@ -1,0 +1,17 @@
+# Gate F — mutation refs_ensure FAIL pós-cleanup (sanitizado)
+
+utc=2026-09-25T16:15:01Z
+source=vps_webconsole
+GATE_F_BUILD_CANARY=OK
+merge_sha8=894b0db8
+canary_image=erp-zuccaro-erp-api:comercial360-main-894b0db8
+canary_image_is_main_immutable=YES
+AUTH_SYNTHETIC_STATUS=OK
+refs_ensure=FAIL
+refs_ensure_hint=uq_grupos_produto_group_codigo
+root_cause=fixtures_inativadas_cleanup_E_reinsert_violates_unique
+fix=reactivate_then_insert_if_absent
+alter_3080=NOT_PERFORMED
+AUTHORIZES_PROMOTE=NO
+NOTE=segredos_somente_cofre_local
+NOTE2=reexecutar_somente_mutation_apos_pull

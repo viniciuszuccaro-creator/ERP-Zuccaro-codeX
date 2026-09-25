@@ -1,0 +1,21 @@
+# Gate F — promoção 3080 OK (sanitizado)
+
+utc=2026-09-25T16:35:34Z
+source=vps_webconsole
+opcao_digest=A
+merge_sha8=894b0db8
+promote_image=erp-zuccaro-erp-api:comercial360-main-894b0db8
+official_image_before=erp-zuccaro-erp-api:runtime07b-main-ca0bc5f3
+official_image_after=erp-zuccaro-erp-api:comercial360-main-894b0db8
+rollback_container=erp-api-dev-r07b-pre-f-20260925-163531
+official_renamed_to_rollback=YES
+canary_image=erp-zuccaro-erp-api:comercial360-main-894b0db8
+expected_runtime=ERP-RUNTIME-08B
+auth_mode=supabase_user
+health_3080_before=200
+health_3080_after=200
+GATE_F_PROMOTE_STATUS=OK
+EXECUTE_GATE_F=EXECUTED_OK
+alter_3080=PERFORMED
+NOTE=segredos_somente_cofre_local
+NOTE2=next_reprovision_auth_and_smoke_on_3080
