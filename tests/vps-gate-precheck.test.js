@@ -638,6 +638,24 @@ test('gate-d-smoke-mutation-orc-ped.sh passa bash -n e bloqueia placeholder', ()
   assert.match(blocked.stderr + blocked.stdout, /placeholder_from_chat|BLOCKED/);
 });
 
+test('gate-d-smoke-negatives-tenant.sh passa bash -n e bloqueia placeholder', () => {
+  const script = path.join(root, 'scripts/vps/gate-d-smoke-negatives-tenant.sh');
+  const syn = spawnSync('bash', ['-n', script], { encoding: 'utf8' });
+  assert.equal(syn.status, 0, syn.stderr);
+  const text = fs.readFileSync(script, 'utf8');
+  assert.match(text, /GATE_D_NEGATIVES_SMOKE/);
+  assert.match(text, /neg_adulterated_group/);
+  assert.match(text, /neg_foreign_empresa/);
+  assert.match(text, /alter_3080=NOT_PERFORMED/);
+  assert.match(text, /AUTHORIZES_GATE_F=NO/);
+  const blocked = spawnSync('bash', [script], {
+    encoding: 'utf8',
+    env: { ...process.env, SYNTH_PASS: 'SENHA_DO_COFRE_OPENSSL' },
+  });
+  assert.notEqual(blocked.status, 0);
+  assert.match(blocked.stderr + blocked.stdout, /placeholder_from_chat|BLOCKED/);
+});
+
 test('comercial360-canary-from-checkout.sh passa bash -n e nao usa tag MAIN', () => {
   const script = path.join(root, 'scripts/deploy/comercial360-canary-from-checkout.sh');
   const syn = spawnSync('bash', ['-n', script], { encoding: 'utf8' });

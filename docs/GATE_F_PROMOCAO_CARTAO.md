@@ -1,6 +1,6 @@
 # Gate F — promoção 3080 (cartão)
 
-**Status:** `PREPARADO / BLOQUEADO até D APROVADO + autorização expressa`
+**Status:** `PREPARADO / BLOQUEADO` — Gate D mutação **OK** no canário; Gate F **sem** autorização humana.
 **Não executar** neste lote Cursor.
 
 ## Pré-requisitos
@@ -13,6 +13,8 @@
 | 4 | Backup novo + rollback R07B preservados |
 | 5 | `comercial360-rollback.sh` dry-run OK no instante |
 | 6 | Autorização humana no termo (`TERMO_AUTORIZACAO_GATES_D_E_F.md`) |
+
+**Atenção digest (2026-09-25):** a mutação Orçamento→Pedido passou em `comercial360-gate-d-2b45292e` (from-checkout), **não** na tag MAIN `comercial360-main-2fc2fc80`. Gate F **não** pode promover a MAIN antiga sem o fix do map Orçamento: exige merge do fix na MAIN + rebuild imutável `comercial360-main-<MERGE_SHA8>` + re-smoke no canário com essa tag, **ou** autorização explícita para promover o digest do canário aprovado.
 
 ## Regras
 

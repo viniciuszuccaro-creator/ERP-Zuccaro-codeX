@@ -251,6 +251,25 @@ Se o canário ainda não tiver `supabase_overlay=YES`, recrie-o antes do passo 3
 | `group_id` adulterado | 403 ou 404 |
 | Duplo submit sem idempotency | sem duplicata indevida / 409 |
 
+**Script automatizado (canário 3086, sem Gate F):** cobre no_auth, token inválido, group adulterado, empresa estrangeira, tenant ausente e spoof `dev_headers`. Duplo convert já coberto pela mutação (`ped_convert_dup=409`). Profile sem permissão Orçamento/Pedido permanece manual/opcional (não recria RBAC destrutivo).
+
+```bash
+cd /opt/erp-zuccaro
+git pull origin cursor/pos-gate-e-prep-d-392b
+
+SYNTH_PASS="$(openssl rand -base64 24)"
+SYNTH_EMAIL='gate-d.synth@dev.synthetic.local'
+SYNTH_EMAIL="$SYNTH_EMAIL" SYNTH_PASS="$SYNTH_PASS" \
+  bash scripts/vps/provision-gate-d-auth-synthetic.sh
+SYNTH_EMAIL="$SYNTH_EMAIL" SYNTH_PASS="$SYNTH_PASS" \
+  bash scripts/vps/gate-d-smoke-negatives-tenant.sh
+unset SYNTH_PASS
+```
+
+Esperado: `positive_orc_list=200` · `neg_*=401|403|404|400` · `GATE_D_NEGATIVES_SMOKE=OK` · `alter_3080=NOT_PERFORMED`.
+
+Cole só `PASTE_TO_GIT_*`.
+
 ### E. Limpeza
 
 Revogar sessão / desabilitar identidade Auth de teste. Remover só IDs sintéticos do gate. Não truncar. 3080 intocada.

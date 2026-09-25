@@ -97,7 +97,9 @@ checkbox_gate_auth=MARKED
 checkbox_gate_d=MARKED
 assinatura_formal=VINICIUS
 EXECUTE_AUTH=EXECUTED_OK
-EXECUTE_GATE_D=AUTHORIZED_READY_FOR_CANARY
+EXECUTE_GATE_D=EXECUTED_OK
+GATE_D_MUTATION_SMOKE=OK
+utc_mutation_ok=2026-09-25T14:37:07Z
 gate_f=NOT_AUTHORIZED
 alter_3080=NOT_AUTHORIZED
 AUTH_SYNTHETIC_STATUS=OK
@@ -107,8 +109,8 @@ utc_auth_ok=2026-09-25T12:07:49Z
 Assinatura responsável (Auth / D): VINICIUS
 Data/hora (UTC): 24/09/2026
 
-**Estado operacional:** E OK · digest REGISTERED · Auth **OK** · canário 3086 **READY** · smoke meta **OK** · Bearer **OK** · browser URL **OK** (`13:56:57Z`) · F/3080 bloqueados.
-**Ordem:** Auth ✓ → canário ✓ → smoke meta ✓ → Bearer ✓ → URL browser segura ✓ → mutações sintéticas se autorizadas → Gate F só se autorizado.
+**Estado operacional:** E OK · digest REGISTERED · Auth **OK** · canário 3086 **READY** · smoke meta **OK** · Bearer **OK** · browser URL **OK** · mutação Orçamento→Pedido **OK** (`14:37:07Z` · `comercial360-gate-d-2b45292e`) · F/3080 bloqueados.
+**Ordem:** Auth ✓ → canário ✓ → smoke meta ✓ → Bearer ✓ → URL browser ✓ → mutação ✓ → Gate F só se autorizado.
 
 ---
 
