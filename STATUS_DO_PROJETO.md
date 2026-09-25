@@ -1,3 +1,11 @@
+### Gate F — DNS/HTTPS: READY_WAITING_HUMAN (2026-09-25T20:12Z)
+
+- Agente **não** consegue criar A records: Hostinger MCP ausente neste ambiente.
+- Lado repo pronto: nginx `no-store` · smoke `reachability`/`vps_api`/`external_nav` · doc § checklist.
+- Ação humana pedida (setup actions): (1) A `erp-dev`/`api-erp-dev` na zona `cpaferroeaco.com.br`; (2) Caddy 443 + CORS na VPS `srv1982741`.
+- Após `DNS pronto` / `TLS pronto` no chat → agente valida dig + smoke e só então marca acesso diário.
+- Enquanto NX: **acesso diário NÃO concluído**.
+
 ### Gate F — smoke HTTPS: VPS API ≠ navegação externa (2026-09-25T19:45Z)
 
 - Script `gate-f-smoke-https-external.sh` separado em camadas: `reachability` · `vps_api` · `external_nav` · `auto`.

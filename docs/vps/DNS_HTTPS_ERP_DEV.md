@@ -1,7 +1,14 @@
 # DNS + HTTPS ERP DEV — preparação (sem aplicar segredos)
 
-**Status:** PREP · DNS público ainda **não** resolve (`erp-dev` / `api-erp-dev` → NX).  
+**Status:** `READY_WAITING_HUMAN_DNS` · agente **não** aplica DNS (Hostinger MCP ausente).  
 **Objetivo:** liberar teste externo de login/navegação (HTTPS) sem publicar 3080/3081 na internet aberta — só 443 via proxy.
+
+**Para concluir acesso diário agora (humano):**
+
+1. Hostinger Domains → `cpaferroeaco.com.br` → A `erp-dev` + A `api-erp-dev` → IP da VPS `srv1982741` (não colar IP no Git).
+2. VPS: Caddy 443 → `3081`/`3080` · firewall 443 · CORS `https://erp-dev.cpaferroeaco.com.br`.
+3. Responder no chat: `DNS pronto` e depois `TLS pronto`.
+4. Agente valida `dig` + `GATE_F_HTTPS_PROBE=reachability` e `external_nav`.
 
 Não registrar IP público, tokens, chaves ou dados reais neste arquivo.
 
