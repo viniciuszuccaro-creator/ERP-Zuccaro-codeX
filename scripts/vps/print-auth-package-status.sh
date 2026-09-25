@@ -38,7 +38,7 @@ pedido_out="$(bash "$ROOT/scripts/vps/print-pedido-codex.sh" || true)"
 echo "$pedido_out" | grep -E 'codex_pending_count=|CODEX_PEDIDO_STATUS='
 scan_out="$(bash "$ROOT/scripts/vps/scan-sanitized-artifacts.sh" || true)"
 echo "$scan_out" | grep -E 'SANITIZE_SCAN_STATUS=|hit_count='
-echo 'blocked_until=human_auth_termo_checkbox+digest_post_merge_for_D+auth_synthetic_for_D+gate_e_schema_for_D'
+echo 'blocked_until=digest_post_merge_for_D+auth_synthetic_for_D'
 echo 'PACKAGE_STATUS=READY_FOR_HUMAN_DECISION'
-echo 'NOTE: GATE_E_READY!=autorizacao; digest/Auth nao bloqueiam E; nao merge/canario/016+/3080'
+echo 'NOTE: GATE_E_STATUS=OK no DEV; GATE_D ainda bloqueado por digest+Auth; nao canario/3080/D/F'
 echo "AUTH_PACKAGE_END utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"

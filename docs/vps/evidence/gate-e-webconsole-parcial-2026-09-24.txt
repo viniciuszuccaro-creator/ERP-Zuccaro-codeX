@@ -1,0 +1,23 @@
+# Gate E — evidência parcial Web Console (2026-09-24)
+# Sem dump, .env, PII ou segredos.
+
+utc_backup=2026-09-24T17:47:55Z
+main_sha=2fc2fc80adb9ca876be6ca3d29aab49305839e8a
+HEAD_detached_origin_main=YES
+PRE_GATE_E_BACKUP_STATUS=OK
+backup_path=pre-gate-e-20260924-174755.sql
+backup_bytes=390275
+backup_sha256=83a9e97d30418a8fafa1a5be8558bcb480aa2a4184ddee1f516d1e33873f9a08
+ROLLBACK_DRYRUN=OK
+official_container=/erp-api-dev
+official_image=erp-zuccaro-erp-api:runtime07b-main-ca0bc5f3
+official_status=running
+health_3080=200
+ready_3080=200
+host_npm=NOT_FOUND
+GATE_E_MIGRATE=NOT_RUN
+GATE_E_STATUS=BLOCKED_HOST_NPM_MISSING
+NOTE=usar docker run efêmero com migrations do checkout 2fc2fc80; não apt install npm; não tocar 3080
+gate_d=NOT_AUTHORIZED
+gate_f=NOT_AUTHORIZED
+alter_3080=NOT_AUTHORIZED

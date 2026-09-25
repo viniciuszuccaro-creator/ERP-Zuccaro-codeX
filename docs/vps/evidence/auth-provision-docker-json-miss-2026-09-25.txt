@@ -1,0 +1,17 @@
+# Gate Auth — falha Docker JSON efêmero (sanitizado)
+
+utc=2026-09-25T11:54:51Z
+service_role_loaded=YES
+auth_base=srv1982741.hstgr.cloud:443
+auth_health=000
+http_kong=000
+docker_net_fallback=YES
+http_direct_supabase-auth=200
+http_direct_auth=422
+auth_user_created=NO
+BLOCKED=auth_user_not_created
+root_cause=curl_inner_json_not_mounted_to_host
+fix=volume_/tmp_+_sql_lookup_on_422_+_local_8000_fallback
+AUTH_SYNTHETIC_STATUS=PENDING_RE_RUN
+alter_3080=NOT_PERFORMED
+AUTHORIZES_CANARY=NO

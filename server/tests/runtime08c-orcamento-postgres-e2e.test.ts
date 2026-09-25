@@ -21,6 +21,11 @@ test('R08C PostgreSQL real: orcamento create get list update cancel e isolamento
     const input = { cliente_empresa_id: client.rows[0].id, condicao_pagamento_id: SEED_IDS.condicaoPagamentoA, validade_em: '2026-10-01T00:00:00.000Z', itens: [{ produto_id: SEED_IDS.produtoA, unidade_id: SEED_IDS.unidadeA, descricao: 'R08C sintetico', unidade_sigla: 'UN', quantidade: '2.000000', preco_unitario: '10.000000', desconto: '0.000000' }] };
     const created = await repo.create(scope, input); id = created.id;
     assert.match(created.numero, /^\d{8}$/); assert.equal(created.itens.length, 1); assert.equal(created.total, '20.000000');
+    assert.equal(created.itens[0].descricao, 'R08C sintetico');
+    assert.equal(created.itens[0].unidade_sigla, 'UN');
+    const reloaded = await repo.get(scope, id);
+    assert.equal(reloaded?.itens[0].descricao, 'R08C sintetico');
+    assert.equal(reloaded?.itens[0].unidade_sigla, 'UN');
     assert.equal((await repo.get(other, id)), null);
     const page = await repo.list(scope, 1, 0); assert.ok(page.total >= 1); assert.ok(page.rows.every((x) => x.itens.length >= 1));
     const updated = await repo.update(scope, id, { ...input, itens: [{ ...input.itens[0], quantidade: '3.000000' }] });

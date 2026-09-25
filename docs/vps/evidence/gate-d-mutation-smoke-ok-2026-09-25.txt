@@ -1,0 +1,34 @@
+# Gate D — mutation Orçamento→Pedido OK (sanitizado)
+# Sem token, senha, UUID ou .env.
+
+utc=2026-09-25T14:37:07Z
+source=vps_webconsole
+checkout_sha8=2b45292e
+canary_from_checkout=YES
+canary_image=erp-zuccaro-erp-api:comercial360-gate-d-2b45292e
+canary_image_id_prefix=sha256:fde96b1e265a
+canary_image_is_main_immutable=NO
+main_immutable_tag_used=NO
+canary_port=3086
+expected_runtime=ERP-RUNTIME-08B
+SMOKE_OK=YES
+AUTH_SYNTHETIC_STATUS=OK
+auth_users_count=1
+profiles_com_auth_count=1
+profiles_ativos_sem_auth_count=2
+rbac_minimo=orcamento_pedido
+refs_ensure=YES
+refs_cliente_empresa=YES
+refs_condicao=YES
+refs_produto=YES
+refs_unidade=YES
+http_token=200
+orc_create=201
+ped_convert=201
+ped_convert_dup=409
+ped_get=200
+mutation_no_auth=401
+GATE_D_MUTATION_SMOKE=OK
+alter_3080=NOT_PERFORMED
+AUTHORIZES_GATE_F=NO
+NOTE=segredos_somente_cofre_local

@@ -31,6 +31,14 @@ echo 'alt_strategy=none_without_migrator_change'
 echo 'apply_source=main_pos_merge_only'
 echo 'APPLY_NOW=NO'
 echo 'AUTHORIZES_GATES_DEF=NO'
-echo 'GATE_E_PLAN_STATUS=PROPOSED_AWAITING_AUTHORIZATION'
+GATE_E_EVIDENCE="${GATE_E_EVIDENCE:-$ROOT/docs/vps/evidence/gate-e-webconsole-2026-09-24.txt}"
+if [[ -f "$GATE_E_EVIDENCE" ]] \
+  && grep -qE '^GATE_E_STATUS=OK$' "$GATE_E_EVIDENCE" \
+  && grep -qE '^GATE_E_MIGRATE_STATUS=OK$' "$GATE_E_EVIDENCE"; then
+  echo 'GATE_E_PLAN_STATUS=EXECUTED_OK'
+  echo 'NOTE: missing_for_gate_e acima espelha Gate C historico; schema DEV ja aplicado (evidencia Gate E)'
+else
+  echo 'GATE_E_PLAN_STATUS=PROPOSED_AWAITING_AUTHORIZATION'
+fi
 echo "GATE_E_FATIAS_END utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 exit 0

@@ -1,0 +1,44 @@
+# Gate D — Bearer smoke OK (sanitizado)
+# Sem token, senha, UUID ou .env.
+
+utc=2026-09-25T13:14:49Z
+source=vps_webconsole
+AUTH_SYNTHETIC_STATUS=OK
+auth_health_local=200
+http_token=200
+token_len=688
+anon_len=169
+tenant_group_set=YES
+tenant_empresa_set=YES
+no_auth=401
+orc_list=200
+ped_list=200
+GATE_D_BEARER_SMOKE=OK
+CANARY_PORT=3086
+alter_3080=NOT_PERFORMED
+AUTHORIZES_GATE_F=NO
+NOTE=segredos_somente_cofre_local
+
+# Reconfirmacao (mesmo dia, canario 3086)
+
+utc=2026-09-25T13:41:46Z
+source=vps_webconsole
+AUTH_SYNTHETIC_STATUS=OK
+auth_users_count=1
+profiles_com_auth_count=1
+profiles_ativos_sem_auth_count=2
+rbac_minimo=orcamento_pedido
+AUTHORIZES_CANARY=NO
+auth_health_local=200
+http_token=200
+token_len=688
+anon_len=169
+tenant_group_set=YES
+tenant_empresa_set=YES
+no_auth=401
+orc_list=200
+ped_list=200
+GATE_D_BEARER_SMOKE=OK
+alter_3080=NOT_PERFORMED
+AUTHORIZES_GATE_F=NO
+NOTE=segredos_somente_cofre_local

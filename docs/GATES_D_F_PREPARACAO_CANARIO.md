@@ -66,18 +66,64 @@ A API oficial **3080 permanece R07B** até o Gate F autorizado.
 | 7 | `ENV_FILE` só na VPS (nunca no Git) | existência do arquivo, sem conteúdo |
 | 8 | `EXPECTED_RUNTIME` alinhado ao `/api/v1/meta` da main | contrato Codex |
 
-### Execução (quando autorizado)
+### Build imagem main (somente registro de digest — sem canário)
+
+Pré-requisito: Gate E OK · main `@2fc2fc80…` · **não** autoriza Gate D.
+
+Colar na Web Console. **Não** restart `erp-api-dev` · **não** canário · **não** 3080.
 
 ```bash
-# Na VPS, após autorização — NÃO executar neste lote documental
-IMAGE='erp-zuccaro-erp-api:comercial360-main-<sha8>'
-ENV_FILE='/opt/erp-zuccaro/.env'   # caminho real aprovado; não commitar
-ERP_DOCKER_NETWORK='<rede do Gate C>'
-EXPECTED_RUNTIME='<runtime da main>'
-CANARY_PORT='<porta FREE do Gate C>'
-./scripts/deploy/comercial360-canary.sh
+set -euo pipefail
+cd /opt/erp-zuccaro
+git fetch origin main
+git checkout --detach origin/main
+test "$(git rev-parse HEAD)" = "2fc2fc80adb9ca876be6ca3d29aab49305839e8a"
+SHA8=2fc2fc80
+TAG="erp-zuccaro-erp-api:comercial360-main-${SHA8}"
+
+docker build -t "$TAG" ./server
+
+ID="$(docker image inspect -f '{{.Id}}' "$TAG")"
+SIZE="$(docker image inspect -f '{{.Size}}' "$TAG")"
+CREATED="$(docker image inspect -f '{{.Created}}' "$TAG")"
+# RepoDigests pode ser vazio em tag só local — OK; Id basta para registro.
+RD="$(docker image inspect -f '{{index .RepoDigests 0}}' "$TAG" 2>/dev/null || true)"
+
+echo 'PASTE_TO_GIT_BEGIN'
+echo "merge_sha=2fc2fc80adb9ca876be6ca3d29aab49305839e8a"
+echo "merge_sha8=${SHA8}"
+echo "image_tag=${TAG}"
+echo "image_id_prefix=${ID:0:19}"
+echo "image_size_bytes=${SIZE}"
+echo "image_created=${CREATED}"
+echo "repo_digest=${RD:-local_tag_only}"
+echo 'DIGEST_STATUS=OK'
+echo 'AUTHORIZES_CANARY=NO'
+echo 'AUTHORIZES_GATE_D=NO'
+echo 'alter_3080=NOT_PERFORMED'
+echo 'PASTE_TO_GIT_END'
+
+docker ps --format '{{.Names}} {{.Image}}' | grep -E 'erp-api-dev|supabase-db' || true
+curl -sS -o /dev/null -w 'health=%{http_code}\n' http://127.0.0.1:3080/health
+curl -sS -o /dev/null -w 'ready=%{http_code}\n' http://127.0.0.1:3080/ready
+```
+
+Colar `PASTE_TO_GIT_*` em `docs/vps/evidence/image-digest-comercial360-latest.txt` (sem `.env`).
+Com `DIGEST_STATUS=OK`, o go-nogo passa a `image_digest_status=REGISTERED` (Auth sintético ainda pendente).
+
+### Execução Gate D (quando autorizado)
+
+```bash
+# Na VPS, após Auth OK — usar bash; ENV_FROM_CONTAINER (sem .env no disco)
+IMAGE='erp-zuccaro-erp-api:comercial360-main-2fc2fc80'
+ENV_FROM_CONTAINER='erp-api-dev'
+ERP_DOCKER_NETWORK='supabase_default'
+EXPECTED_RUNTIME='ERP-RUNTIME-08B'
+CANARY_PORT='3086'
+ERP_AUTH_MODE='supabase_user'
+bash scripts/deploy/comercial360-canary.sh
 BASE_URL="http://127.0.0.1:${CANARY_PORT}" EXPECTED_RUNTIME="$EXPECTED_RUNTIME" \
-  ./scripts/deploy/comercial360-smoke.sh
+  bash scripts/deploy/comercial360-smoke.sh
 ```
 
 Critérios do script (já codificados na PR #33):
@@ -148,12 +194,12 @@ Até F: **3080 = R07B / `dev_headers`**.
 | Recurso | Código/CI (PR #33) | VPS agora (evidência) |
 |---|---|---|
 | Orçamento/Pedido HTTP | preparado | **não** na 3080 (07B) |
-| Migrations 016–024 | no repo/CI | **não** aplicadas (001–015) |
+| Migrations 016–024 | no repo/CI | **aplicadas no DEV** (`GATE_E_STATUS=OK`) |
 | Auth `supabase_user` | no código | 3080 = `dev_headers` |
-| Canário script | preparado | **não** executado |
+| Canário script | preparado · default `ERP-RUNTIME-08B` | **não** executado |
 | Scanner ClamAV real | socket local em código | **não** homologado na VPS |
 | Produto HTTP / DAM buckets | opt-in desligado | **não** habilitado |
-| Imagem comercial360-main-\* | ainda não | só R07B oficial |
+| Imagem comercial360-main-\* | build Web Console pendente | só R07B oficial na 3080 |
 
 ---
 

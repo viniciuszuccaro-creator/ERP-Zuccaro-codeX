@@ -1,0 +1,15 @@
+# Gate D — mutation smoke BLOCKED (sanitizado)
+# Sem token, senha, UUID ou .env.
+
+utc=2026-09-25T14:07:17Z
+source=vps_webconsole
+AUTH_SYNTHETIC_STATUS=OK
+tenant_group_set=YES
+tenant_empresa_set=YES
+refs_cliente_empresa=MISSING
+GATE_D_MUTATION_SMOKE=BLOCKED
+block_reason=no_operable_cliente_empresa_in_tenant
+alter_3080=NOT_PERFORMED
+AUTHORIZES_GATE_F=NO
+NOTE=segredos_somente_cofre_local
+NOTE2=corrigido_por_ensure_fixtures_GATE_D_MUTATION_no_script

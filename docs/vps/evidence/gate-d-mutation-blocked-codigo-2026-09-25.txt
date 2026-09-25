@@ -1,0 +1,16 @@
+# Gate D — mutation ensure FAIL (sanitizado)
+# Sem token, senha, UUID ou .env.
+
+utc=2026-09-25T14:13:20Z
+source=vps_webconsole
+AUTH_SYNTHETIC_STATUS=OK
+tenant_group_set=YES
+tenant_empresa_set=YES
+refs_ensure=FAIL
+block_reason=condicoes_pagamento_codigo_check
+codigo_rule=^[0-9]{6}$
+GATE_D_MUTATION_SMOKE=BLOCKED
+alter_3080=NOT_PERFORMED
+AUTHORIZES_GATE_F=NO
+NOTE=segredos_somente_cofre_local
+NOTE2=fix_reserve_entity_codigo_CondicaoPagamento
