@@ -1,9 +1,10 @@
-### Gate D — canário + smoke meta OK (2026-09-25T12:33Z)
+### Gate D — Bearer smoke OK (2026-09-25T13:14Z)
 
-- Canário READY · overlay OK · Auth OK.
-- Bearer 13:04Z: token OK (`http_token=200`) · `no_auth=401` OK · `orc/ped=400` = `TENANT_SCOPE_INVALID` (faltava `x-group-id`/`x-empresa-id`).
-- Fix: smoke Bearer carrega escopo do profile sintético sem imprimir UUID.
-- **3080** intacta · Gate F **não**.
+- Canário 3086 READY · overlay Supabase · Auth sintético OK.
+- Bearer: `no_auth=401` · `orc_list=200` · `ped_list=200` · `tenant_group/empresa=YES` · `GATE_D_BEARER_SMOKE=OK`.
+- Evidência: `docs/vps/evidence/gate-d-bearer-smoke-ok-2026-09-25.txt`.
+- **3080** intacta · Gate F **não** autorizado.
+- Próximo VPS (fora deste lote de código): URL browser segura (sem expor `dev_headers`); mutações Orçamento→Pedido se necessário.
 
 
 ### Pós-Gate E — prep Gate D (histórico)
