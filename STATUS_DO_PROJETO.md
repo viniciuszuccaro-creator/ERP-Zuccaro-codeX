@@ -1,3 +1,13 @@
+### Gate F — cache SPA + prep DNS/HTTPS (2026-09-25T19:35Z)
+
+- **Cache nginx:** `deploy/nginx-erp.conf` — `index.html` / `/` / `/api|/health|/ready` com `Cache-Control: no-store`; assets hasheados seguem `immutable`.
+- **Cache UI (#39):** HEAD `d3ea2493` — Cliente 360 sem reaproveitar tenant no React Query (já no remoto).
+- **DNS/HTTPS prep (sem aplicar segredos):** `docs/vps/DNS_HTTPS_ERP_DEV.md` — A records `erp-dev`/`api-erp-dev`, Caddy→3081/3080, CORS, purge Hostinger.
+- **Smoke externo:** `scripts/vps/gate-f-smoke-https-external.sh` (HTTPS obrigatório; 400/403 ≠ sucesso; rejeita loopback).
+- **BLOCKED ainda:** DNS público NX — Hostinger MCP indisponível neste ambiente; registros A são ação humana no painel.
+- Evidência NX: `docs/vps/evidence/gate-f-https-external-dns-blocked-2026-09-25.txt`.
+- Próximo humano: criar A records → TLS 443 → CORS → purge cache → smoke HTTPS na VPS com `ERP_BROWSER_URL=https://erp-dev…`.
+
 ### Gate F — HTTPS externo BLOCKED (DNS) (2026-09-25T19:15Z)
 
 - Probe fora da VPS: `erp-dev` / `api-erp-dev` / `erp.cpaferroeaco.com.br` → **Could not resolve host** · http=000.
