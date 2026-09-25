@@ -355,7 +355,11 @@ layer_reachability
 rc_a=$?
 set -e
 if [[ $rc_a -ne 0 ]]; then
-  LAYER_A=FAIL
+  if [[ "${spa_root:-}" == "000" || "${api_health:-}" == "000" ]]; then
+    LAYER_A=BLOCKED
+  else
+    LAYER_A=FAIL
+  fi
   paste_summary
   exit "$rc_a"
 fi
