@@ -14,13 +14,14 @@
 - Testes: `runtime-onda2-preco-snapshot.test.ts` + regressão orçamento/pedido service/security + `runtime07b` — PASS.
 - Branch `cursor/comercial360-onda2-preco-snapshot-392b` (separada da #39). Sem alteração 3080 neste merge.
 - Próximo Onda 2: alçada/desconto/margem; CRM Central 360 permanece BLOCKED (#39) até decisão A/B.
-### Ordem Save/merge/DNS — progresso (2026-09-25T20:55Z)
 
-- **Save environment:** OK — build `bld-20260925-ba80fcc2` (CONFIG_CHANGE) sucedido após proposta `bld-20260925-0b7239f1`.
-- **Merge #40:** MERGED → `main` @ `1db7dc0c` (Gate F docs + nginx + smoke + DNS Registro.br).
+### Ordem Save/merge/DNS — CONCLUÍDA no GitHub (2026-09-25T20:55Z)
+
+- **Save environment:** OK — `bld-20260925-ba80fcc2` (CONFIG_CHANGE) após proposta `bld-20260925-0b7239f1`.
+- **Merge #40:** MERGED → `main` @ `1db7dc0c` (Gate F docs/nginx/smoke/DNS Registro.br).
 - **Merge #39:** MERGED → `main` @ `0a0fa061` (Cliente 360 + fingerprint).
-- **Merge #41:** conflito STATUS resolvido; merge em andamento.
-- **DNS/HTTPS:** ainda NX — NS autoritativo Registro.br (`a.auto.dns.br`/`b.auto.dns.br`); criar A `erp-dev`/`api-erp-dev` lá (ou mudar NS). Acesso diário **não** concluído.
+- **Merge #41:** MERGED → `main` @ `7160e169` (Onda 2 snapshot preço + fix CI HTTP).
+- **DNS/HTTPS:** ainda **BLOCKED** — NXDOMAIN; NS = Registro.br. Criar A `erp-dev`/`api-erp-dev` no Registro.br (ou mudar NS→Hostinger). Depois Caddy/CORS e responder `DNS publicado` / `TLS confirmado`. Acesso diário **não** concluído.
 
 ## Comercial 360 / Onda 3 - revisão Cursor APPROVED (2026-09-25T20:00Z)
 
