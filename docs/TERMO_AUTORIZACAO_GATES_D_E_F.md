@@ -1,6 +1,6 @@
 # Termo de autorização — Gates D / E / F
 
-**Status:** Gate E **EXECUTADO** · Gate Auth/D **EXECUTADOS** · Gate F **AUTHORIZED_OPTION_A** (VINICIUS · 2026-09-25) · merge #37 **OK** (`894b0db8`) · **WAITING_VPS_BUILD** · **NÃO EXECUTADO** · 3080 R07B intacta.
+**Status:** Gate E/D **OK** · Gate F **AUTHORIZED_OPTION_A** · mutação MAIN `894b0db8` **OK** · **WAITING_PROMOTE** · 3080 ainda R07B até `CONFIRM_GATE_F_PROMOTE`.
 Estados: `READY_FOR_REVIEW` ≠ `AUTHORIZED` ≠ `EXECUTED`. `GATE_*_READY` não autoriza.
 Sem checkbox do gate + **assinatura formal** do responsável → **não executar**.
 
@@ -91,7 +91,8 @@ utc_merge=2026-09-25T16:11:21Z
 pr_merged=#37
 merge_sha=894b0db8f7583137204e1026c6eee26475c7025c
 merge_sha8=894b0db8
-EXECUTE_GATE_F=AUTHORIZED_WAITING_VPS_BUILD
+EXECUTE_GATE_F=AUTHORIZED_WAITING_PROMOTE
+utc_mutation_ok_main_tag=2026-09-25T16:30:56Z
 alter_3080=NOT_PERFORMED
 ```
 

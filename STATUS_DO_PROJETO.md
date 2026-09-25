@@ -1,3 +1,10 @@
+### Gate F — mutation OK na MAIN 894b0db8 (2026-09-25T16:30Z)
+
+- Canário `comercial360-main-894b0db8` · `ped_convert=201` · `ped_convert_dup=409` · `GATE_D_MUTATION_SMOKE=OK`.
+- Evidência: `docs/vps/evidence/gate-f-mutation-smoke-ok-894b0db8-2026-09-25.txt`.
+- `EXECUTE_GATE_F=AUTHORIZED_WAITING_PROMOTE` · script `gate-f-option-a-promote-3080.sh`.
+- Próximo VPS: `CONFIRM_GATE_F_PROMOTE=YES` com IMAGE `...894b0db8` (preserva R07B).
+
 ### Gate F — mutation token_not_issued (ban §E) (2026-09-25T16:28Z)
 
 - Canário `894b0db8` OK · `refs_ensure=YES` · Auth provision `OK` · `http_pw_update=200`.
