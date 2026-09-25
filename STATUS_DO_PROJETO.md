@@ -4,7 +4,7 @@
 - Evidência: `docs/vps/evidence/auth-synthetic-latest.txt`.
 - `profiles_ativos_sem_auth_count=2` preservados (legado sem vínculo; não apagados).
 - Canário Gate D **autorizado** (termo §C) — `GATE_D_READY=YES`.
-- Ajuste canário: scripts `+x` no Git; use `bash scripts/deploy/...`; `ENV_FILE=/opt/erp-zuccaro/.env` (não placeholder); override `ERP_AUTH_MODE=supabase_user`.
+- Canário: `ENV_FROM_CONTAINER=erp-api-dev` (`.env` em `/opt/erp-zuccaro` ausente); override `ERP_AUTH_MODE=supabase_user`.
 - **Não** Gate F / 3080.
 
 

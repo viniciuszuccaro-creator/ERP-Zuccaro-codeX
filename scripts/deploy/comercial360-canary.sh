@@ -24,6 +24,11 @@ if [[ "$CANARY_NAME" == "erp-api-dev" ]]; then
   exit 1
 fi
 
+if [[ -z "${ENV_FROM_CONTAINER:-}" && -z "${ENV_FILE:-}" ]]; then
+  echo 'BLOCKED: set ENV_FILE=/path/.env or ENV_FROM_CONTAINER=erp-api-dev' >&2
+  exit 1
+fi
+
 command -v docker >/dev/null
 
 if [[ -n "${ENV_FROM_CONTAINER:-}" ]]; then
@@ -40,9 +45,6 @@ if [[ -n "${ENV_FROM_CONTAINER:-}" ]]; then
 elif [[ -n "${ENV_FILE:-}" ]]; then
   [[ -f "$ENV_FILE" ]] || { echo "BLOCKED: ENV_FILE missing path_set=YES" >&2; exit 1; }
   echo "env_from_file=YES"
-else
-  echo 'BLOCKED: set ENV_FILE=/path/.env or ENV_FROM_CONTAINER=erp-api-dev' >&2
-  exit 1
 fi
 
 if docker ps -a --format '{{.Names}}' | grep -Fxq "$CANARY_NAME"; then
