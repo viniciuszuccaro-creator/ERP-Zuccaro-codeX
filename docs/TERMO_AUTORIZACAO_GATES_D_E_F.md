@@ -1,6 +1,6 @@
 # Termo de autorização — Gates D / E / F
 
-**Status:** Gate E **EXECUTADO** · digest **REGISTERED** · Gate Auth **OK** · Gate D **EXECUTADO** (Bearer + browser + mutação OK; negativos §D pendentes na VPS) · Gate F **não**.
+**Status:** Gate E **EXECUTADO** · digest **REGISTERED** · Gate Auth **OK** · Gate D **EXECUTADO** (Bearer + browser + mutação + negativos OK) · Gate F **não**.
 Estados: `READY_FOR_REVIEW` ≠ `AUTHORIZED` ≠ `EXECUTED`. `GATE_*_READY` não autoriza.
 Sem checkbox do gate + **assinatura formal** do responsável → **não executar**.
 
@@ -100,6 +100,8 @@ EXECUTE_AUTH=EXECUTED_OK
 EXECUTE_GATE_D=EXECUTED_OK
 GATE_D_MUTATION_SMOKE=OK
 utc_mutation_ok=2026-09-25T14:37:07Z
+GATE_D_NEGATIVES_SMOKE=OK
+utc_negatives_ok=2026-09-25T15:13:45Z
 gate_f=NOT_AUTHORIZED
 alter_3080=NOT_AUTHORIZED
 AUTH_SYNTHETIC_STATUS=OK
@@ -109,8 +111,8 @@ utc_auth_ok=2026-09-25T12:07:49Z
 Assinatura responsável (Auth / D): VINICIUS
 Data/hora (UTC): 24/09/2026
 
-**Estado operacional:** E OK · digest REGISTERED · Auth **OK** · canário 3086 **READY** · smoke meta **OK** · Bearer **OK** · browser URL **OK** · mutação Orçamento→Pedido **OK** (`14:37:07Z` · `comercial360-gate-d-2b45292e`) · F/3080 bloqueados.
-**Ordem:** Auth ✓ → canário ✓ → smoke meta ✓ → Bearer ✓ → URL browser ✓ → mutação ✓ → Gate F só se autorizado.
+**Estado operacional:** E OK · digest REGISTERED · Auth **OK** · canário 3086 **READY** · smoke meta **OK** · Bearer **OK** · browser URL **OK** · mutação Orçamento→Pedido **OK** · negativos tenant **OK** (`15:13:45Z`) · F/3080 bloqueados.
+**Ordem:** Auth ✓ → canário ✓ → smoke meta ✓ → Bearer ✓ → URL browser ✓ → mutação ✓ → negativos ✓ → limpeza §E (opcional) → Gate F só se autorizado.
 
 ---
 

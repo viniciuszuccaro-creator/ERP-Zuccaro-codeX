@@ -40,6 +40,8 @@ Complementa `docs/GATES_D_F_PREPARACAO_CANARIO.md` e
 
 **Mutação Orçamento→Pedido (2026-09-25T14:37Z):** `GATE_D_MUTATION_SMOKE=OK` · canário `comercial360-gate-d-2b45292e` (from-checkout) · `orc_create=201` · `ped_convert=201` · `ped_convert_dup=409` · `ped_get=200` · `mutation_no_auth=401` · `alter_3080=NOT_PERFORMED` · Gate F **não** autorizado.
 
+**Negativos tenant (2026-09-25T15:13Z):** `GATE_D_NEGATIVES_SMOKE=OK` · `positive_orc_list=200` · `neg_no_auth=401` · `neg_invalid_token=401` · `neg_adulterated_group=403` · `neg_foreign_empresa=403` · `neg_missing_tenant_headers=400` · `neg_spoof_dev_headers=401` · `alter_3080=NOT_PERFORMED`.
+
 Ordem fail-closed. **Nunca** colar e-mail, senha, token, service_role ou UUID no chat/Git.
 
 ### 1) Descobrir Auth (só nomes)
