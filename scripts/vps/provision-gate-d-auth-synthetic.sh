@@ -2,9 +2,10 @@
 # Provisiona identidade Auth sintética + profile ERP para Gate D (DEV).
 # NÃO imprime service_role, senha, token ou UUID.
 # NÃO faz `source` do .env completo (pode ter linhas inválidas tipo "Organization").
-# Uso (Web Console, uma linha após definir SYNTH_*):
-#   SYNTH_EMAIL='gate-d.synth@dev.synthetic.local' SYNTH_PASS='...' \
-#     bash scripts/vps/provision-gate-d-auth-synthetic.sh
+# Uso (Web Console):
+#   SYNTH_PASS="$(openssl rand -base64 24)"   # guarde no cofre local; não cole no chat
+#   SYNTH_EMAIL='gate-d.synth@dev.synthetic.local' SYNTH_PASS="$SYNTH_PASS" \
+#     bash /tmp/provision-gate-d-auth.sh
 set -euo pipefail
 
 ENV_FILE="${ENV_FILE:-/root/supabase/docker/.env}"
@@ -17,7 +18,6 @@ echo "alter_3080=NOT_PERFORMED"
 
 [[ -f "$ENV_FILE" ]] || { echo "BLOCKED: env_file_missing path_set=YES" >&2; exit 2; }
 
-# Lê só KEY=VALUE — evita source quebrado do .env Supabase
 env_get() {
   local key="$1"
   local line
@@ -45,11 +45,18 @@ AUTH_BASE="$(env_get API_EXTERNAL_URL)"
 AUTH_BASE="${AUTH_BASE%/}"
 echo "auth_base_len=${#AUTH_BASE}"
 
-http_health="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 3 "${AUTH_BASE}/auth/v1/health" 2>/dev/null || true)"
+auth_health_code() {
+  local base="$1"
+  curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 3 \
+    -H "apikey: ${SR}" -H "Authorization: Bearer ${SR}" \
+    "${base}/auth/v1/health" 2>/dev/null || true
+}
+
+http_health="$(auth_health_code "$AUTH_BASE")"
 echo "auth_health=${http_health}"
 if [[ "$http_health" != "200" ]]; then
   AUTH_BASE='http://127.0.0.1:8000'
-  http_health="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 3 "${AUTH_BASE}/auth/v1/health" 2>/dev/null || true)"
+  http_health="$(auth_health_code "$AUTH_BASE")"
   echo "auth_base_local_fallback=YES"
   echo "auth_health_local=${http_health}"
 fi
@@ -57,23 +64,49 @@ fi
 TMP_JSON="$(mktemp)"
 TMP_UUID="$(mktemp)"
 TMP_HOST_JSON="/tmp/gate-d-auth-create-$$.json"
-cleanup() { rm -f "$TMP_JSON" "$TMP_UUID" "$TMP_HOST_JSON"; }
+TMP_LIST_JSON="/tmp/gate-d-auth-list-$$.json"
+cleanup() { rm -f "$TMP_JSON" "$TMP_UUID" "$TMP_HOST_JSON" "$TMP_LIST_JSON"; }
 trap cleanup EXIT
 
-extract_uuid() {
-  python3 - "$TMP_JSON" "$TMP_UUID" <<'PY'
+NET="$(docker inspect -f '{{range $k, $_ := .NetworkSettings.Networks}}{{println $k}}{{end}}' supabase-auth 2>/dev/null | head -1 || true)"
+
+extract_uuid_from_json() {
+  local src="${1:-$TMP_JSON}"
+  python3 - "$src" "$TMP_UUID" "$SYNTH_EMAIL" <<'PY'
 import json, sys
-path, out = sys.argv[1], sys.argv[2]
+path, out, email = sys.argv[1], sys.argv[2], sys.argv[3].lower()
 try:
     d = json.load(open(path))
 except Exception:
     open(out, 'w').write('')
     print('auth_user_created=NO')
     raise SystemExit(0)
-uid = d.get('id') or (d.get('user') or {}).get('id') or ''
-if not uid and isinstance(d.get('users'), list) and d['users']:
-    uid = d['users'][0].get('id') or ''
-open(out, 'w').write(uid)
+
+def pick(obj):
+    if not isinstance(obj, dict):
+        return ''
+    uid = obj.get('id') or ''
+    if uid:
+        return uid
+    user = obj.get('user')
+    if isinstance(user, dict) and user.get('id'):
+        return user['id']
+    return ''
+
+uid = pick(d)
+if not uid and isinstance(d.get('users'), list):
+    for u in d['users']:
+        if not isinstance(u, dict):
+            continue
+        em = (u.get('email') or '').lower()
+        if em == email or not email:
+            uid = u.get('id') or ''
+            if uid:
+                break
+    if not uid and d['users']:
+        uid = d['users'][0].get('id') or ''
+
+open(out, 'w').write(uid or '')
 print('auth_user_created=' + ('YES' if uid else 'NO'))
 if not uid:
     err = d.get('error_code') or d.get('error') or d.get('msg') or d.get('message') or 'unknown'
@@ -81,12 +114,72 @@ if not uid:
 PY
 }
 
-# Resolve UUID por e-mail via SQL (sem imprimir o UUID)
+# Resolve UUID via Admin API (mesma instância GoTrue que respondeu email_exists)
+resolve_uuid_admin() {
+  : >"$TMP_UUID"
+  local http_list=""
+  # 1) Kong
+  http_list="$(curl -sS -o "$TMP_LIST_JSON" -w '%{http_code}' --connect-timeout 5 \
+    -H "apikey: ${SR}" -H "Authorization: Bearer ${SR}" \
+    "${AUTH_BASE}/auth/v1/admin/users?page=1&per_page=200" 2>/dev/null || true)"
+  echo "http_admin_list_kong=${http_list}"
+  if [[ -s "$TMP_LIST_JSON" ]]; then
+    extract_uuid_from_json "$TMP_LIST_JSON"
+    [[ -s "$TMP_UUID" ]] && { echo 'auth_user_resolved_admin=YES'; return 0; }
+  fi
+  # 2) Docker direto
+  if [[ -n "$NET" ]]; then
+    rm -f "$TMP_LIST_JSON"
+    http_list="$(docker run --rm --network "$NET" -v /tmp:/tmp curlimages/curl:8.5.0 \
+      -sS -o "$TMP_LIST_JSON" -w '%{http_code}' \
+      -H "apikey: ${SR}" -H "Authorization: Bearer ${SR}" \
+      "http://supabase-auth:9999/admin/users?page=1&per_page=200" \
+      2>/dev/null || true)"
+    echo "http_admin_list_direct=${http_list}"
+    if [[ -s "$TMP_LIST_JSON" ]]; then
+      extract_uuid_from_json "$TMP_LIST_JSON"
+      [[ -s "$TMP_UUID" ]] && { echo 'auth_user_resolved_admin=YES'; return 0; }
+    fi
+  fi
+  echo 'auth_user_resolved_admin=NO'
+  return 0
+}
+
+# Resolve UUID por e-mail via SQL (heredoc; tenta users + identities)
 resolve_uuid_sql() {
+  : >"$TMP_UUID"
+  local sql_err="/tmp/gate-d-auth-sql-$$.err"
   docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
-    -v synth_email="$SYNTH_EMAIL" -Atc \
-    "SELECT id::text FROM auth.users WHERE lower(email)=lower(:'synth_email') ORDER BY created_at DESC LIMIT 1;" \
-    >"$TMP_UUID" 2>/dev/null || true
+    -v synth_email="$SYNTH_EMAIL" -At <<'SQL' >"$TMP_UUID" 2>"$sql_err" || true
+SELECT id::text FROM auth.users
+ WHERE lower(coalesce(email,'')) = lower(:'synth_email')
+ ORDER BY created_at DESC NULLS LAST
+ LIMIT 1;
+SQL
+  if [[ ! -s "$TMP_UUID" ]]; then
+    docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
+      -v synth_email="$SYNTH_EMAIL" -At <<'SQL' >"$TMP_UUID" 2>>"$sql_err" || true
+SELECT user_id::text FROM auth.identities
+ WHERE lower(coalesce(identity_data->>'email','')) = lower(:'synth_email')
+ ORDER BY created_at DESC NULLS LAST
+ LIMIT 1;
+SQL
+  fi
+  # Diagnóstico sanitizado (sem e-mail/UUID)
+  docker exec supabase-db psql -X -U postgres -d postgres -Atc \
+    "SELECT 'diag_auth_users='||count(*)::text FROM auth.users;" 2>/dev/null || echo 'diag_auth_users=ERR'
+  docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
+    -v synth_email="$SYNTH_EMAIL" -At <<'SQL' 2>/dev/null || echo 'diag_auth_match=ERR'
+SELECT 'diag_auth_match='||count(*)::text FROM auth.users
+ WHERE lower(coalesce(email,'')) = lower(:'synth_email');
+SQL
+  if [[ -s "$sql_err" ]]; then
+    # só indica se houve erro SQL, sem detalhe sensível
+    echo "diag_sql_err=YES"
+  else
+    echo "diag_sql_err=NO"
+  fi
+  rm -f "$sql_err"
   if [[ -s "$TMP_UUID" ]]; then
     echo 'auth_user_resolved_sql=YES'
   else
@@ -107,18 +200,22 @@ create_via_kong() {
 
 http_create="$(create_via_kong)"
 echo "http_kong=${http_create}"
-extract_uuid
+extract_uuid_from_json "$TMP_JSON"
 
-# Se Kong falhou ou não devolveu UUID, tenta GoTrue na rede Docker (JSON no host via -v)
+# email_exists → buscar usuário existente imediatamente
+if [[ ! -s "$TMP_UUID" ]] && grep -Eq 'email_exists|User already registered' "$TMP_JSON" 2>/dev/null; then
+  echo 'email_exists_detected=YES'
+  resolve_uuid_admin
+  [[ -s "$TMP_UUID" ]] || resolve_uuid_sql
+fi
+
+# Fallback GoTrue na rede Docker (JSON no host via -v /tmp)
 if [[ ! -s "$TMP_UUID" ]]; then
-  NET="$(docker inspect -f '{{range $k, $_ := .NetworkSettings.Networks}}{{println $k}}{{end}}' supabase-auth 2>/dev/null | head -1 || true)"
   if [[ -n "$NET" ]]; then
     echo "docker_net_fallback=YES"
     for host in supabase-auth auth; do
       rm -f "$TMP_HOST_JSON"
-      http_d="$(docker run --rm --network "$NET" \
-        -v /tmp:/tmp \
-        curlimages/curl:8.5.0 \
+      http_d="$(docker run --rm --network "$NET" -v /tmp:/tmp curlimages/curl:8.5.0 \
         -sS -o "$TMP_HOST_JSON" -w '%{http_code}' \
         -X POST "http://${host}:9999/admin/users" \
         -H "apikey: ${SR}" \
@@ -129,11 +226,12 @@ if [[ ! -s "$TMP_UUID" ]]; then
       echo "http_direct_${host}=${http_d}"
       if [[ -s "$TMP_HOST_JSON" ]]; then
         cp "$TMP_HOST_JSON" "$TMP_JSON"
-        extract_uuid
+        extract_uuid_from_json "$TMP_JSON"
         [[ -s "$TMP_UUID" ]] && break
       fi
-      # 422 = e-mail já existe (comum após 200 em tentativa anterior sem capturar UUID)
       if [[ "$http_d" == "422" || "$http_d" == "200" ]]; then
+        resolve_uuid_admin
+        [[ -s "$TMP_UUID" ]] && break
         resolve_uuid_sql
         [[ -s "$TMP_UUID" ]] && break
       fi
@@ -143,15 +241,22 @@ if [[ ! -s "$TMP_UUID" ]]; then
   fi
 fi
 
-# Último recurso: usuário já criado em tentativa anterior
+if [[ ! -s "$TMP_UUID" ]]; then
+  resolve_uuid_admin
+fi
 if [[ ! -s "$TMP_UUID" ]]; then
   resolve_uuid_sql
 fi
 
-[[ -s "$TMP_UUID" ]] || { echo 'BLOCKED: auth_user_not_created' >&2; exit 3; }
+if [[ ! -s "$TMP_UUID" ]]; then
+  echo 'BLOCKED: auth_user_not_created' >&2
+  echo 'HINT=email_exists_sem_uuid_admin_list_e_sql_vazios' >&2
+  exit 3
+fi
 AUTH_UUID="$(cat "$TMP_UUID")"
+echo 'auth_uuid_ready=YES'
 
-# Atualiza senha (idempotente) para a SYNTH_PASS desta execução — sem imprimir corpo
+# Atualiza senha para a SYNTH_PASS desta execução
 if [[ "$http_health" == "200" ]]; then
   curl -sS -o /dev/null -w 'http_pw_update=%{http_code}\n' --connect-timeout 5 \
     -X PUT "${AUTH_BASE}/auth/v1/admin/users/${AUTH_UUID}" \
@@ -160,23 +265,18 @@ if [[ "$http_health" == "200" ]]; then
     -H 'Content-Type: application/json' \
     -d "{\"password\":\"${SYNTH_PASS}\",\"email_confirm\":true}" \
     2>/dev/null || echo 'http_pw_update=SKIP'
-else
-  NET="$(docker inspect -f '{{range $k, $_ := .NetworkSettings.Networks}}{{println $k}}{{end}}' supabase-auth 2>/dev/null | head -1 || true)"
-  if [[ -n "$NET" ]]; then
-    http_pw="$(docker run --rm --network "$NET" curlimages/curl:8.5.0 \
-      -sS -o /dev/null -w '%{http_code}' \
-      -X PUT "http://supabase-auth:9999/admin/users/${AUTH_UUID}" \
-      -H "apikey: ${SR}" \
-      -H "Authorization: Bearer ${SR}" \
-      -H 'Content-Type: application/json' \
-      -d "{\"password\":\"${SYNTH_PASS}\",\"email_confirm\":true}" \
-      2>/dev/null || true)"
-    echo "http_pw_update=${http_pw}"
-  fi
+elif [[ -n "$NET" ]]; then
+  http_pw="$(docker run --rm --network "$NET" curlimages/curl:8.5.0 \
+    -sS -o /dev/null -w '%{http_code}' \
+    -X PUT "http://supabase-auth:9999/admin/users/${AUTH_UUID}" \
+    -H "apikey: ${SR}" \
+    -H "Authorization: Bearer ${SR}" \
+    -H 'Content-Type: application/json' \
+    -d "{\"password\":\"${SYNTH_PASS}\",\"email_confirm\":true}" \
+    2>/dev/null || true)"
+  echo "http_pw_update=${http_pw}"
 fi
 
-# Profile: vincula se ainda não houver auth_user_id para este e-mail/UUID
-# (variáveis psql fora de $$ — :'var' não expande dentro de DO $$)
 docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
   -v auth_uuid="$AUTH_UUID" \
   -v synth_email="$SYNTH_EMAIL" <<'SQL'

@@ -1,10 +1,10 @@
-### Gate Auth — fix env_get + fallback Docker (2026-09-25)
+### Gate Auth — fix env_get + fallback Docker + admin resolve (2026-09-25)
 
-- Falha 1: `source .env` → L151 `Organization: command not found` → corrigido com `env_get`.
-- Falha 2 (re-run 11:54Z): `service_role_loaded=YES` · Kong público 443=`000` · `http_direct_supabase-auth=200` · depois `422` · `auth_user_created=NO`.
-- Causa: curl Docker gravava JSON **dentro** do container efêmero (`-o /tmp/...` sem `-v`); 422 = e-mail já criado na tentativa 200.
-- Correção: `-v /tmp:/tmp`, fallback `http://127.0.0.1:8000` se health público falhar, resolve UUID por SQL no e-mail, profile upsert idempotente, update de senha.
-- Auth **ainda PENDING** até reexecutar o script.
+- Falha 1: `source .env` → L151 Organization → `env_get`.
+- Falha 2: curl Docker sem volume → JSON efêmero; 200 depois 422.
+- Falha 3 (12:01Z): `email_exists` + `auth_user_resolved_sql=NO` (GoTrue vê o user; SQL no supabase-db não).
+- Correção: listagem Admin API GoTrue (`/admin/users`) filtra e-mail sem imprimir UUID; SQL heredoc + identities; health Kong com apikey; senha via `openssl rand` local.
+- Auth **ainda PENDING** até reexecutar.
 - **Não** Gate F / 3080.
 
 

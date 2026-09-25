@@ -51,8 +51,12 @@ Na Web Console, **só estas linhas** (defina email/senha locais; não cole prosa
 cd /opt/erp-zuccaro
 curl -fsSL 'https://raw.githubusercontent.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/cursor/pos-gate-e-prep-d-392b/scripts/vps/provision-gate-d-auth-synthetic.sh' -o /tmp/provision-gate-d-auth.sh
 chmod +x /tmp/provision-gate-d-auth.sh
-SYNTH_EMAIL='gate-d.synth@dev.synthetic.local' SYNTH_PASS='COLOQUE_SENHA_FORTE_AQUI' \
+# Gere a senha NA VPS e guarde no cofre local (não cole senha/UUID no chat):
+SYNTH_PASS="$(openssl rand -base64 24)"
+printf 'SENHA_GERADA — copie para o cofre local agora, depois limpe o scroll.\n'
+SYNTH_EMAIL='gate-d.synth@dev.synthetic.local' SYNTH_PASS="$SYNTH_PASS" \
   bash /tmp/provision-gate-d-auth.sh
+unset SYNTH_PASS
 ```
 
 Envie ao chat **apenas** o bloco `PASTE_TO_GIT_*` (sem JSON Auth).  
