@@ -1,7 +1,11 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AlertCircle, Building2, MapPin, FileText, ShoppingCart, HardHat } from 'lucide-react';
-import { createHttpApiClient } from '@/api/httpApiClient';
+import {
+  canLoadCentralCliente360,
+  central360SessionKey,
+  createHttpApiClient,
+} from '@/api/httpApiClient';
 import { isHttpCliente360Enabled } from '@/api/base44Client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -51,7 +55,8 @@ function BlockCard({ title, icon: Icon, block, renderRow }) {
 
 /**
  * Composição Visual da Central Cliente 360 sobre o DetalhesCliente existente.
- * Opt-in: VITE_ERP_BACKEND=http + VITE_ERP_HTTP_CLIENTE_360=true.
+ * Opt-in: VITE_ERP_BACKEND=http + VITE_ERP_HTTP_CLIENTE_360=true (só após prova supabase_user).
+ * Exige Bearer da sessão autenticada — sem token a query não dispara.
  */
 export default function CentralCliente360Panel({
   clienteId,
@@ -61,22 +66,48 @@ export default function CentralCliente360Panel({
   actorEmail,
   token,
 }) {
-  const enabled = isHttpCliente360Enabled && Boolean(clienteId && groupId && empresaId && actorId);
+  const sessionToken = typeof token === 'string' ? token.trim() : '';
+  const enabled = canLoadCentralCliente360({
+    flag: isHttpCliente360Enabled,
+    clienteId,
+    groupId,
+    empresaId,
+    actorId,
+    token: sessionToken,
+  });
+  const sessionKey = central360SessionKey(sessionToken);
   const api = useMemo(
     () => createHttpApiClient({
-      getScope: () => ({ groupId, empresaId, actorId, actorEmail, token }),
+      getScope: () => ({
+        groupId,
+        empresaId,
+        actorId,
+        actorEmail,
+        token: sessionToken,
+      }),
     }).clientes,
-    [groupId, empresaId, actorId, actorEmail, token],
+    [groupId, empresaId, actorId, actorEmail, sessionToken],
   );
 
   const query = useQuery({
-    queryKey: ['cliente-central-360', groupId, empresaId, actorId, clienteId],
+    queryKey: ['cliente-central-360', groupId, empresaId, actorId, clienteId, sessionKey],
     queryFn: ({ signal }) => api.central360(clienteId, { signal }),
     enabled,
     retry: 1,
   });
 
   if (!isHttpCliente360Enabled) return null;
+
+  if (!sessionToken) {
+    return (
+      <Alert className="mb-4 border-amber-200 bg-amber-50" data-central360-session="missing">
+        <AlertCircle className="h-4 w-4 text-amber-600" />
+        <AlertDescription className="text-amber-800">
+          Central 360 exige sessão autenticada (Bearer). Faça login com supabase_user antes de carregar.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   if (!enabled) {
     return (
@@ -97,15 +128,17 @@ export default function CentralCliente360Panel({
     const status = query.error?.status;
     const code = query.error?.code || query.error?.body?.error?.code;
     return (
-      <div className="mb-4 space-y-2">
+      <div className="mb-4 space-y-2" data-central360-error={status || 'error'}>
         <Alert className="border-red-200 bg-red-50">
           <AlertCircle className="h-4 w-4 text-red-600" />
           <AlertDescription className="text-red-800">
             {status === 403
               ? 'Sem permissão ou vínculo ClienteEmpresa nesta empresa.'
-              : status === 404
-                ? 'Cliente sem vínculo ativo nesta empresa (404 seguro).'
-                : `Falha ao carregar Central 360${code ? ` (${code})` : ''}.`}
+              : status === 401
+                ? 'Sessão inválida ou expirada. Faça login novamente.'
+                : status === 404
+                  ? 'Cliente sem vínculo ativo nesta empresa (404 seguro).'
+                  : `Falha ao carregar Central 360${code ? ` (${code})` : ''}.`}
           </AlertDescription>
         </Alert>
         <Button type="button" size="sm" variant="outline" onClick={() => query.refetch()}>

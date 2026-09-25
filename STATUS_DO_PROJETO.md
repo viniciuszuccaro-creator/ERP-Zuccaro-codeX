@@ -1,42 +1,17 @@
-### Gate F — browser login NAV OK com tenant (2026-09-25T18:34Z)
+## Comercial 360 / Onda 3 - Bearer sessão no Cliente 360 (2026-09-25)
 
-- Auth `OK` · `auth_unban_attempted=YES` · `http_token=200` · `tenant_group_set=YES` · `tenant_empresa_set=YES`.
-- `nav_api_meta=200` · **`nav_api_orc_list=200`** · `nav_spa_proxy_meta=200` · `GATE_F_BROWSER_LOGIN_NAV=OK`.
-- Spoof/no-auth 401 · `alter_3080=NOT_PERFORMED` · runtime `ERP-RUNTIME-08B`.
-- Evidência: `docs/vps/evidence/gate-f-browser-login-nav-tenant-ok-2026-09-25.txt`.
-- **Caminho browser Gate F = FECHADO.** Sem merge #39 · sem promoção 3080.
-- Próximo: revisão Codex do HEAD #39 (Central 360 + P1 + browser).
-
-### Gate F — browser re-smoke BLOCKED SYNTH_PASS vazio (2026-09-25T18:28Z)
-
-- Pull `75ea794a` OK · SPA/API 200 · spoof 401.
-- `BLOCKED: set_SYNTH_EMAIL_and_SYNTH_PASS_for_login_step` — `SYNTH_PASS` já tinha sido `unset`.
-- Evidência: `docs/vps/evidence/gate-f-browser-synth-pass-empty-2026-09-25.txt`.
-- Próximo VPS: openssl + provision + smoke **mesma sessão** (sem unset no meio). Sem promoção 3080.
-
-### Gate F — browser login NAV OK pós-unban (2026-09-25T18:19Z)
-
-- Pull `260adcc9` · Auth `OK` · `auth_unban_attempted=YES` · `http_token=200` · `login_ok=YES`.
-- `GATE_F_BROWSER_LOGIN_NAV=OK` · meta/SPA 200 · spoof 401 · `alter_3080=NOT_PERFORMED`.
-- Residual: `nav_api_orc_list=400` (Bearer sem tenant) — smoke endurecido para injetar `x-group`/`x-empresa` do profile e exigir 200.
-- Evidência: `docs/vps/evidence/gate-f-browser-login-nav-ok-2026-09-25.txt`.
-- **Sem merge** #39 · sem promoção 3080. Próximo: re-smoke browser com tenant (HEAD deste commit) + revisão Codex.
-
-### Gate F — browser login token_not_issued (ban §E) (2026-09-25T18:08Z)
-
-- Auth provision `OK` · `profile_linked=YES` · `http_pw_update=200` · SPA/API health 200.
-- Browser smoke: `http_token=400` · `token_not_issued` (user ainda banido pós-§E).
-- Causa: `provision-gate-d-auth-synthetic.sh` na #39 sem unban (`9ba1fd91` só em gate-f).
-- Fix neste lote: `ban_duration=none` + SQL `banned_until=NULL` + smoke exige `SYNTH_PASS` ≥8 na mesma sessão.
-- Evidência: `docs/vps/evidence/gate-f-browser-token-not-issued-ban-2026-09-25.txt`.
-- **Sem merge** #39 · sem promoção 3080. Próximo VPS: pull HEAD → reprovision+browser smoke mesma sessão.
+- `DetalhesCliente` obtém token via `resolveErpAuthSessionToken` (`erp_runtime_scope.token` → `base44_access_token` / appParams) e passa a `CentralCliente360Panel`.
+- Painel exige Bearer para disparar query; sem sessão mostra alerta fail-closed. `queryKey` inclui `sessionKey` (sem segredo) + grupo/empresa/ator.
+- Testes: `tests/central-cliente-360-session.test.js` — Bearer, ausência de sessão (401), 403, troca empresa/usuário. **Não** ativa `VITE_ERP_HTTP_CLIENTE_360` neste lote (aguardaprova supabase_user).
+- Artefatos Gate F (browser smoke/evidências) movidos para a frente VPS **#40**. Unban do provision permanece no script compartilhado.
+- **Sem merge** automático · CRM Central ainda BLOCKED até A/B.
 
 ## Comercial 360 / Onda 3 - correções Codex P1 + UI + browser URL (2026-09-25)
 
 - P1 corrigidos na #39: (1) PII mascarada sem `dados-sensiveis.visualizar`; (2) vínculo ClienteEmpresa obrigatório na Empresa do contexto (404 seguro); (3) blocos `forbidden`/`unavailable` com `meta=null` e falha parcial sem derrubar a Central.
 - Testes: `runtime-onda3-cliente-central360.test.ts` 4/4 PASS (PII, 2 empresas mesmo Grupo, falha parcial).
-- UI: `DetalhesCliente` + `CentralCliente360Panel` (opt-in `VITE_ERP_HTTP_CLIENTE_360=true`).
-- Browser: URL canônica SPA `http://127.0.0.1:3081/` (erp-web); 3080 é API. Script `scripts/vps/gate-f-smoke-browser-login-nav.sh` (login Auth + navegação; exige `ERP_BROWSER_URL`).
+- UI: `DetalhesCliente` + `CentralCliente360Panel` (opt-in `VITE_ERP_HTTP_CLIENTE_360=true` — **ainda desligado** até prova supabase_user).
+- Gate F browser/evidências: ver PR **#40** (frente VPS). SPA canônica `3081` ≠ API `3080`.
 - **Sem merge** da #39 — aguarda revisão Codex do novo HEAD.
 
 ## Comercial 360 / Onda 3 - inventário CRM BLOCKED (2026-09-25)

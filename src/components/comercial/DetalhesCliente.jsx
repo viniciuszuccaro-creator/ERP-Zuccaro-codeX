@@ -11,10 +11,13 @@ import HistoricoOrigemCliente from "./HistoricoOrigemCliente";
 import CentralCliente360Panel from "./CentralCliente360Panel";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { resolveErpAuthSessionToken } from "@/api/httpApiClient";
+import { appParams } from "@/lib/app-params";
 
 /**
  * V21.1.2 - WINDOW MODE READY
  * Central 360 HTTP (opt-in) composta sobre este detalhe existente.
+ * Token Bearer da sessão autenticada é passado ao painel (não ativar flag sem supabase_user).
  */
 export default function DetalhesCliente({ cliente, onClose, windowMode = false }) {
   const [activeTab, setActiveTab] = useState("historico");
@@ -32,6 +35,7 @@ export default function DetalhesCliente({ cliente, onClose, windowMode = false }
   const consultaHabilitada = Boolean(cliente.id && contextoValido && podeVisualizarDetalhes);
   const actorId = user?.id || user?.profile_id || null;
   const actorEmail = user?.email || null;
+  const sessionToken = resolveErpAuthSessionToken({ appToken: appParams?.token });
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ["pedidos-cliente-contexto", cliente.id, groupId, empresaId, contexto],
@@ -88,6 +92,7 @@ export default function DetalhesCliente({ cliente, onClose, windowMode = false }
             empresaId={empresaId || empresaAtual?.id}
             actorId={actorId}
             actorEmail={actorEmail}
+            token={sessionToken}
           />
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>

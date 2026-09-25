@@ -77,7 +77,13 @@ function createHttpHybridClient() {
       if (typeof window === 'undefined') return {};
       try {
         const raw = window.localStorage?.getItem('erp_runtime_scope');
-        return raw ? JSON.parse(raw) : {};
+        const scope = raw ? JSON.parse(raw) : {};
+        const token = typeof scope.token === 'string' && scope.token.trim()
+          ? scope.token.trim()
+          : (typeof window.localStorage?.getItem === 'function'
+            ? String(window.localStorage.getItem('base44_access_token') || '').trim()
+            : '');
+        return token ? { ...scope, token } : scope;
       } catch {
         return {};
       }

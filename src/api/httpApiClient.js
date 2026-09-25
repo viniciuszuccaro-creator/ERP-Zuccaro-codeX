@@ -17,6 +17,71 @@ function createHttpError(status, body, requestId) {
 }
 
 /**
+ * Token da sessão autenticada para Bearer (supabase_user).
+ * Ordem: erp_runtime_scope.token → base44_access_token / appParams.
+ * Nunca logar o valor; retorna string vazia se ausente.
+ *
+ * @param {{
+ *   storage?: { getItem?: (key: string) => string | null },
+ *   appToken?: string | null,
+ * }} [options]
+ * @returns {string}
+ */
+export function resolveErpAuthSessionToken(options = {}) {
+  const storage = options.storage
+    ?? (typeof window !== 'undefined' ? window.localStorage : null);
+  try {
+    const raw = storage?.getItem?.('erp_runtime_scope');
+    if (raw) {
+      const scope = JSON.parse(raw);
+      const fromScope = typeof scope?.token === 'string' ? scope.token.trim() : '';
+      if (fromScope) return fromScope;
+    }
+  } catch {
+    // ignore JSON/storage errors — fail-closed sem token
+  }
+  const storedApp = typeof storage?.getItem === 'function'
+    ? String(storage.getItem('base44_access_token') || '').trim()
+    : '';
+  if (storedApp) return storedApp;
+  const appToken = typeof options.appToken === 'string' ? options.appToken.trim() : '';
+  return appToken;
+}
+
+/**
+ * Gate de carga da Central 360: exige flag + tenant + ator + Bearer de sessão.
+ * @param {{
+ *   flag?: boolean,
+ *   clienteId?: string | null,
+ *   groupId?: string | null,
+ *   empresaId?: string | null,
+ *   actorId?: string | null,
+ *   token?: string | null,
+ * }} input
+ */
+export function canLoadCentralCliente360(input = {}) {
+  const token = typeof input.token === 'string' ? input.token.trim() : '';
+  return Boolean(
+    input.flag
+    && input.clienteId
+    && input.groupId
+    && input.empresaId
+    && input.actorId
+    && token,
+  );
+}
+
+/**
+ * Chave de sessão sem segredo (para queryKey / invalidação ao trocar usuário).
+ * @param {string | null | undefined} token
+ */
+export function central360SessionKey(token) {
+  const t = typeof token === 'string' ? token.trim() : '';
+  if (!t) return 'none';
+  return `t${t.length}`;
+}
+
+/**
  * @param {{
  *   baseUrl?: string,
  *   getScope?: () => { groupId?: string, empresaId?: string, actorId?: string, actorEmail?: string, token?: string },
