@@ -1,3 +1,11 @@
+### Gate F — cleanup §E OK pós-promote (2026-09-25T16:47Z)
+
+- `CONFIRM_GATE_D_CLEANUP=YES` · `GATE_D_CLEANUP_STATUS=OK`.
+- `http_pw_rotate=200` · `http_ban=200` · `login_rotated_pass=400` · `profile_unlinked=YES`.
+- `profiles_com_auth_count=0` · `profiles_synth_ativos=0` · `health_3080=200`.
+- Evidência: `docs/vps/evidence/gate-f-cleanup-ok-2026-09-25.txt`.
+- Gate F VPS **completo** (merge → build → canário → promote → smoke 3080 → cleanup).
+
 ### Gate F — pós-promote Auth+smoke 3080 OK (2026-09-25T16:40Z)
 
 - Auth: `AUTH_SYNTHETIC_STATUS=OK` · `http_pw_update=200` · `auth_unban_attempted=YES`.

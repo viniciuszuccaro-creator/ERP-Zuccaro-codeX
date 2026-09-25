@@ -1,6 +1,6 @@
 # Termo de autorização — Gates D / E / F
 
-**Status:** Gate E/D **OK** · Gate F **EXECUTED_OK** · promoção 3080 + Auth + smoke OK (`16:40:30Z`) · tag `comercial360-main-894b0db8` · rollback `erp-api-dev-r07b-pre-f-20260925-163531`.
+**Status:** Gate E/D **OK** · Gate F **EXECUTED_OK** · promoção 3080 + Auth + smoke + cleanup §E OK · tag `comercial360-main-894b0db8` · rollback `erp-api-dev-r07b-pre-f-20260925-163531`.
 Estados: `READY_FOR_REVIEW` ≠ `AUTHORIZED` ≠ `EXECUTED`. `GATE_*_READY` não autoriza.
 Sem checkbox do gate + **assinatura formal** do responsável → **não executar**.
 
@@ -110,12 +110,15 @@ GATE_F_POST_PROMOTE_SMOKE=OK
 AUTH_SYNTHETIC_STATUS=OK
 GATE_D_MUTATION_SMOKE=OK
 evidence_post_smoke=docs/vps/evidence/gate-f-post-promote-smoke-ok-3080-894b0db8-2026-09-25.txt
+utc_cleanup=2026-09-25T16:47:44Z
+GATE_D_CLEANUP_STATUS=OK
+evidence_cleanup=docs/vps/evidence/gate-f-cleanup-ok-2026-09-25.txt
 ```
 
 Assinatura responsável (Gate F opção A): VINICIUS
 Data/hora (UTC): 25/09/2026
 
-**Próximo (opcional):** cleanup §E da identidade sintética. Gate F VPS **fechado**. Sem re-promoção.
+**Gate F VPS fechado** (promote + pós-smoke + cleanup §E). Sem re-promoção.
 
 ### Registro Gate E (já assinado)
 
@@ -159,8 +162,8 @@ utc_auth_ok=2026-09-25T12:07:49Z
 Assinatura responsável (Auth / D): VINICIUS
 Data/hora (UTC): 24/09/2026
 
-**Estado operacional:** E/D OK · Gate F **EXECUTED_OK** · 3080 em `comercial360-main-894b0db8` · pós-smoke OK · rollback R07B preservado.
-**Ordem restante (opcional):** cleanup §E da identidade sintética.
+**Estado operacional:** E/D OK · Gate F **EXECUTED_OK** · 3080 em `comercial360-main-894b0db8` · pós-smoke OK · cleanup §E OK · rollback R07B preservado.
+**Ordem restante:** nenhuma no Gate F VPS.
 
 ---
 
