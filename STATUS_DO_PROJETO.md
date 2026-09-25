@@ -1,3 +1,11 @@
+## Comercial 360 / Onda 3 - correções Codex P1 + UI + browser URL (2026-09-25)
+
+- P1 corrigidos na #39: (1) PII mascarada sem `dados-sensiveis.visualizar`; (2) vínculo ClienteEmpresa obrigatório na Empresa do contexto (404 seguro); (3) blocos `forbidden`/`unavailable` com `meta=null` e falha parcial sem derrubar a Central.
+- Testes: `runtime-onda3-cliente-central360.test.ts` 4/4 PASS (PII, 2 empresas mesmo Grupo, falha parcial).
+- UI: `DetalhesCliente` + `CentralCliente360Panel` (opt-in `VITE_ERP_HTTP_CLIENTE_360=true`).
+- Browser: URL canônica SPA `http://127.0.0.1:3081/` (erp-web); 3080 é API. Script `scripts/vps/gate-f-smoke-browser-login-nav.sh` (login Auth + navegação; exige `ERP_BROWSER_URL`).
+- **Sem merge** da #39 — aguarda revisão Codex do novo HEAD.
+
 ## Comercial 360 / Onda 3 - inventário CRM BLOCKED (2026-09-25)
 
 - Inventário: `Oportunidade`/`Interacao`/`Campanha` só em localBase44/Base44; **zero** migration/HTTP canônico no server.

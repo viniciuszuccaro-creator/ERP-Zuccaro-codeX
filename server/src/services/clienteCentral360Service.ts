@@ -9,6 +9,7 @@ import type { ClienteLocalService } from './clienteLocalService.js';
 import type { ObraService } from './obraService.js';
 import type { OrcamentoService } from './orcamentoService.js';
 import type { PedidoService } from './pedidoService.js';
+import type { RbacGuard } from '../db/rbacGuard.js';
 
 export type ClienteCentral360PageOptions = {
   orcamentosLimit?: number;
@@ -160,7 +161,32 @@ function skippedBlock<T>(
   };
 }
 
-function projectIdentity(row: Cliente): ClienteCentral360Identity {
+function deniedOrUnavailableBlock<T>(
+  status: 'forbidden' | 'unavailable',
+  code: string,
+): ClienteCentral360Block<T> {
+  // Contrato Onda 3: falha parcial não inventa total=0.
+  return { status, code, data: [], meta: null };
+}
+
+function maskEmail(value: string | null): string | null {
+  if (!value) return null;
+  const at = value.indexOf('@');
+  if (at <= 0) return '***';
+  const local = value.slice(0, at);
+  const domain = value.slice(at + 1);
+  const head = local.slice(0, 1);
+  return `${head}***@${domain}`;
+}
+
+function maskPhone(value: string | null): string | null {
+  if (!value) return null;
+  const digits = value.replace(/\D/g, '');
+  if (digits.length < 4) return '****';
+  return `****${digits.slice(-4)}`;
+}
+
+function projectIdentity(row: Cliente, canViewSensitive: boolean): ClienteCentral360Identity {
   return {
     id: row.id,
     group_id: row.group_id,
@@ -172,9 +198,9 @@ function projectIdentity(row: Cliente): ClienteCentral360Identity {
     razao_social: row.razao_social,
     nome_fantasia: row.nome_fantasia,
     nome_social: row.nome_social,
-    email: row.email,
-    telefone: row.telefone,
-    celular: row.celular,
+    email: canViewSensitive ? row.email : maskEmail(row.email),
+    telefone: canViewSensitive ? row.telefone : maskPhone(row.telefone),
+    celular: canViewSensitive ? row.celular : maskPhone(row.celular),
     status: row.status,
     origem: row.origem,
     ativo: row.ativo,
@@ -319,6 +345,7 @@ export class ClienteCentral360Service {
     private readonly pedidos: PedidoService,
     private readonly locais: ClienteLocalService,
     private readonly obras: ObraService,
+    private readonly rbacGuard: RbacGuard,
   ) {}
 
   async get(ctx: RequestContext, clienteId: string, options: ClienteCentral360PageOptions = {}) {
@@ -328,7 +355,21 @@ export class ClienteCentral360Service {
       throw new AppError(400, 'VALIDATION_ERROR', 'Invalid clienteId');
     }
 
-    const identity = projectIdentity(await this.clientes.get(ctx, clienteId));
+    // Exigir vínculo ClienteEmpresa ativo na Empresa atual antes de devolver identidade.
+    const linkResolution = await this.resolveEmpresaLink(ctx, clienteId);
+    if (linkResolution.denied) {
+      throw new AppError(403, 'PERMISSION_DENIED', 'Permission denied');
+    }
+    const empresaLink = linkResolution.link;
+    if (!empresaLink || !empresaLink.ativo) {
+      // 404 seguro: não revelar cadastro mestre sem vínculo na Empresa do contexto.
+      throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');
+    }
+
+    const cliente = await this.clientes.get(ctx, clienteId);
+    const canViewSensitive = await this.canViewSensitive(ctx);
+    const identity = projectIdentity(cliente, canViewSensitive);
+
     const empresaBounds = pageBounds(options.empresasLimit, options.empresasOffset);
     const orcBounds = pageBounds(options.orcamentosLimit, options.orcamentosOffset);
     const pedBounds = pageBounds(options.pedidosLimit, options.pedidosOffset);
@@ -339,37 +380,13 @@ export class ClienteCentral360Service {
     const locais = await this.loadLocais(ctx, clienteId, localBounds);
     const obras = await this.loadObras(ctx, clienteId, obraBounds);
     const crm = skippedBlock(pageBounds(20, 0), 'CRM_CANONICAL_HTTP_PENDING');
-
-    const linkResolution = await this.resolveEmpresaLink(ctx, clienteId);
-    const empresaLink = linkResolution.link;
-    const clienteEmpresaId = empresaLink?.id ?? null;
-
-    let orcamentos: ClienteCentral360Block<ClienteCentral360OrcamentoProjection>;
-    let pedidos: ClienteCentral360Block<ClienteCentral360PedidoProjection>;
-    if (linkResolution.denied) {
-      orcamentos = {
-        status: 'forbidden',
-        code: 'PERMISSION_DENIED',
-        data: [],
-        meta: emptyMeta(orcBounds.limit, orcBounds.offset),
-      };
-      pedidos = {
-        status: 'forbidden',
-        code: 'PERMISSION_DENIED',
-        data: [],
-        meta: emptyMeta(pedBounds.limit, pedBounds.offset),
-      };
-    } else if (!clienteEmpresaId) {
-      orcamentos = skippedBlock(orcBounds, 'CLIENTE_EMPRESA_LINK_REQUIRED');
-      pedidos = skippedBlock(pedBounds, 'CLIENTE_EMPRESA_LINK_REQUIRED');
-    } else {
-      orcamentos = await this.loadOrcamentos(ctx, clienteEmpresaId, orcBounds);
-      pedidos = await this.loadPedidos(ctx, clienteEmpresaId, pedBounds);
-    }
+    const clienteEmpresaId = empresaLink.id;
+    const orcamentos = await this.loadOrcamentos(ctx, clienteEmpresaId, orcBounds);
+    const pedidos = await this.loadPedidos(ctx, clienteEmpresaId, pedBounds);
 
     return {
       identity,
-      empresaLink: empresaLink ? projectEmpresa(empresaLink) : null,
+      empresaLink: projectEmpresa(empresaLink),
       blocks: {
         empresas,
         locais,
@@ -384,8 +401,19 @@ export class ClienteCentral360Service {
         empresaId: ctx.empresaId,
         clienteId,
         clienteEmpresaId,
+        sensitiveFields: canViewSensitive ? 'revealed' : 'masked',
       },
     };
+  }
+
+  private async canViewSensitive(ctx: RequestContext): Promise<boolean> {
+    try {
+      await this.rbacGuard.assertAllowed(ctx, 'Cadastros', 'cliente', 'dados-sensiveis.visualizar');
+      return true;
+    } catch (error) {
+      if (error instanceof AppError && error.statusCode === 403) return false;
+      throw error;
+    }
   }
 
   private async resolveEmpresaLink(
@@ -506,22 +534,13 @@ export class ClienteCentral360Service {
       return { status: 'ok', data: page.data, meta: page.meta };
     } catch (error) {
       if (error instanceof AppError && error.statusCode === 403) {
-        return {
-          status: 'forbidden',
-          code: error.code,
-          data: [],
-          meta: emptyMeta(bounds.limit, bounds.offset),
-        };
+        return deniedOrUnavailableBlock('forbidden', error.code);
       }
       if (error instanceof AppError) {
-        return {
-          status: 'unavailable',
-          code: error.code,
-          data: [],
-          meta: emptyMeta(bounds.limit, bounds.offset),
-        };
+        return deniedOrUnavailableBlock('unavailable', error.code);
       }
-      throw error;
+      // Falha parcial: não derruba a Central inteira; não inventa total=0.
+      return deniedOrUnavailableBlock('unavailable', 'BLOCK_UNAVAILABLE');
     }
   }
 }

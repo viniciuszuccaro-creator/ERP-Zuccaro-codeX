@@ -8,16 +8,18 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { X, TrendingUp, Package, FileText, ShieldAlert } from "lucide-react";
 import { motion } from "framer-motion";
 import HistoricoOrigemCliente from "./HistoricoOrigemCliente";
+import CentralCliente360Panel from "./CentralCliente360Panel";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * V21.1.2 - WINDOW MODE READY
+ * Central 360 HTTP (opt-in) composta sobre este detalhe existente.
  */
 export default function DetalhesCliente({ cliente, onClose, windowMode = false }) {
   const [activeTab, setActiveTab] = useState("historico");
   const { filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, user } = usePermissions();
 
   const groupId = cliente.group_id || cliente.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = cliente.empresa_id || cliente.empresa_dona_id || (contexto === "empresa" ? empresaAtual?.id : null);
@@ -28,6 +30,8 @@ export default function DetalhesCliente({ cliente, onClose, windowMode = false }
     hasPermission("Cadastros.Cliente.visualizar") ||
     hasPermission("comercial", "visualizar_pedido");
   const consultaHabilitada = Boolean(cliente.id && contextoValido && podeVisualizarDetalhes);
+  const actorId = user?.id || user?.profile_id || null;
+  const actorEmail = user?.email || null;
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ["pedidos-cliente-contexto", cliente.id, groupId, empresaId, contexto],
@@ -78,6 +82,14 @@ export default function DetalhesCliente({ cliente, onClose, windowMode = false }
         </CardHeader>
 
         <CardContent className="p-6">
+          <CentralCliente360Panel
+            clienteId={cliente.id}
+            groupId={groupId}
+            empresaId={empresaId || empresaAtual?.id}
+            actorId={actorId}
+            actorEmail={actorEmail}
+          />
+
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               <Card>

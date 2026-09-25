@@ -80,6 +80,16 @@ Conclusões (Regra-Mãe):
 - Status por bloco (`ok|forbidden|unavailable|skipped`); sem cópia de saldo/título; sem migration; frontend HTTP permanece desligado.
 - Testes sintéticos cobrem composição Local/Obra, RBAC parcial e isolamento Grupo A/B.
 
+
+### Correções P1 Codex (2026-09-25)
+
+1. PII (`email`/`telefone`/`celular`): exige `Cadastros.cliente` + ação `dados-sensiveis.visualizar`; caso contrário mascara.
+2. Identidade só após vínculo `ClienteEmpresa` ativo na Empresa do contexto; sem vínculo → 404 seguro.
+3. Blocos `forbidden`/`unavailable` usam `meta: null` (não inventam total=0); erro não-AppError isola o bloco.
+
+UI: composição no `DetalhesCliente` existente via `CentralCliente360Panel` (flag `VITE_ERP_HTTP_CLIENTE_360`).
+Acesso browser: SPA `http://127.0.0.1:3081/` — não confundir com API 3080.
+
 ## Aceite
 
 Fonte única preservada; busca sensível autorizada; leitura agregada paginada; nenhuma cópia de saldo/título/pedido; deduplicação revisável; cache isolado; recomendações sem ação crítica automática; testes tenant/RBAC/LGPD e auditoria sanitizada.

@@ -274,6 +274,31 @@ export function createHttpApiClient(options = {}) {
     history(id, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}/historico`, { signal }); },
     convertOrcamento(id, payload, { signal } = {}) { return request(`/api/v1/orcamentos/${encodeURIComponent(id)}/converter-pedido`, { method: 'POST', body: payload, signal }); },
   };
+  const clientes = {
+    /**
+     * Read-model Central Cliente 360 (opt-in UI via VITE_ERP_HTTP_CLIENTE_360).
+     * @param {string} id
+     * @param {{ orcamentosLimit?: number, pedidosLimit?: number, locaisLimit?: number, obrasLimit?: number, signal?: AbortSignal }} [options]
+     */
+    central360(id, {
+      orcamentosLimit = 10,
+      pedidosLimit = 10,
+      locaisLimit = 10,
+      obrasLimit = 10,
+      signal,
+    } = {}) {
+      return request(`/api/v1/clientes/${encodeURIComponent(id)}/central-360`, {
+        query: {
+          orcamentos_limit: orcamentosLimit,
+          pedidos_limit: pedidosLimit,
+          locais_limit: locaisLimit,
+          obras_limit: obrasLimit,
+        },
+        signal,
+        unwrap: false,
+      });
+    },
+  };
   /** @type {Record<string, ReturnType<typeof createCrudEntity>>} */
   const entities = {};
   for (const name of HTTP_PILOT_ENTITIES) {
@@ -284,6 +309,7 @@ export function createHttpApiClient(options = {}) {
     entities,
     orcamentos,
     pedidos,
+    clientes,
     /** Acesso direto a rotas preparadas (ex.: Produto base) sem feature flag. */
     preparedEntities: entityRoutes,
     async health() {

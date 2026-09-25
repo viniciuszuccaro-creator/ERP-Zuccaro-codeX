@@ -28,6 +28,7 @@ export const isHttpBackendMode = erpBackendMode === 'http';
 export const isApiKeyMode = isLocalOnlyMode || isHttpBackendMode || !!apiKey;
 
 export const isHttpProdutoEnabled = isHttpBackendMode && import.meta.env.VITE_ERP_HTTP_PRODUTO === 'true';
+export const isHttpCliente360Enabled = isHttpBackendMode && import.meta.env.VITE_ERP_HTTP_CLIENTE_360 === 'true';
 export const localApiUser = (isLocalOnlyMode || isHttpBackendMode) ? localOnlyUser : {
   id: 'local-api-key-user',
   email: 'local-api@erp-integra.local',
