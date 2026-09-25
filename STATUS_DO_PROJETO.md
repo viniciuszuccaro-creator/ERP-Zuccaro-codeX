@@ -3,8 +3,9 @@
 - Assinatura: **VINICIUS** · `2026-09-25` · opção **A** (merge+MAIN+re-smoke+promover).
 - Evidência: `docs/vps/evidence/gate-f-autorizacao-opcao-a-2026-09-25.txt`.
 - `EXECUTE_GATE_F=AUTHORIZED_WAITING_MERGE` · **3080 ainda R07B** (não promovida).
-- PR candidata: **#37** (CI verde · draft→ready) com fix `20eda9e2`.
-- Próximo humano: **merge #37 em main**. Depois VPS: build `comercial360-main-<MERGE_SHA8>` → re-smoke mutação → promoção (cartão F).
+- PR candidata: **#37** (CI verde · ready) com fix `20eda9e2` · **ainda OPEN** (`main`=@`2fc2fc80`).
+- Script pós-merge: `scripts/vps/gate-f-option-a-build-canary.sh` (rejeita `2fc2fc80`; não promove).
+- **BLOCKED:** merge #37 em `main`. Sem merge não há build/promoção.
 
 ### Gate D — cleanup §E OK (2026-09-25T15:28Z)
 

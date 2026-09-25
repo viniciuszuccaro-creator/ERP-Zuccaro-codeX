@@ -26,47 +26,24 @@ Evidência: `docs/vps/evidence/gate-f-autorizacao-opcao-a-2026-09-25.txt`.
 - PR candidata: **#37** (`cursor/pos-gate-e-prep-d-392b` → `main`) · CI verde · contém fix `20eda9e2` (map Orçamento).
 - Após merge: anotar `MERGE_SHA` e `MERGE_SHA8` (`git rev-parse origin/main` / primeiros 8).
 
-### 2) Build imagem imutável na VPS (ainda **sem** tocar 3080)
+### 2) Build imagem imutável + canário na VPS (ainda **sem** tocar 3080)
 
 ```bash
 cd /opt/erp-zuccaro
-git fetch origin main
-git checkout --detach origin/main
-MERGE_SHA="$(git rev-parse HEAD)"
-MERGE_SHA8="${MERGE_SHA:0:8}"
-TAG="erp-zuccaro-erp-api:comercial360-main-${MERGE_SHA8}"
-test "$MERGE_SHA8" != "2fc2fc80"   # deve ser o SHA novo pós-merge
+git pull origin cursor/pos-gate-e-prep-d-392b   # ou main após merge
 
-docker build -t "$TAG" ./server
-ID="$(docker image inspect -f '{{.Id}}' "$TAG")"
-echo "PASTE_TO_GIT_BEGIN"
-echo "merge_sha=${MERGE_SHA}"
-echo "merge_sha8=${MERGE_SHA8}"
-echo "image_tag=${TAG}"
-echo "image_id_prefix=${ID:0:19}"
-echo "DIGEST_STATUS=OK"
-echo "AUTHORIZES_PROMOTE=NO"
-echo "alter_3080=NOT_PERFORMED"
-echo "PASTE_TO_GIT_END"
+CONFIRM_GATE_F_BUILD_RESMOKE=YES \
+ERP_DOCKER_NETWORK='supabase_default' \
+  bash scripts/vps/gate-f-option-a-build-canary.sh
 ```
 
-### 3) Recriar canário 3086 com a **nova** tag MAIN + re-smoke mutação
+O script: `git fetch origin main` · rejeita SHA `2fc2fc80` · exige `descricao_snapshot` no map · build `comercial360-main-<MERGE_SHA8>` · sobe canário 3086 · smoke meta. **Não** promove 3080.
+
+Se `BLOCKED: main_still_2fc2fc80...` → merge da PR #37 ainda não entrou na main.
+
+### 3) Re-smoke mutação (Auth foi banido no §E — re-provision)
 
 ```bash
-docker rm -f erp-api-comercial360-canary 2>/dev/null || true
-
-IMAGE="$TAG" \
-ENV_FROM_CONTAINER='erp-api-dev' \
-ERP_DOCKER_NETWORK='supabase_default' \
-EXPECTED_RUNTIME='ERP-RUNTIME-08B' \
-CANARY_PORT='3086' \
-ERP_AUTH_MODE='supabase_user' \
-bash scripts/deploy/comercial360-canary.sh
-
-BASE_URL='http://127.0.0.1:3086' EXPECTED_RUNTIME=ERP-RUNTIME-08B \
-  bash scripts/deploy/comercial360-smoke.sh
-
-# Auth sintético foi banido no §E — re-provision obrigatório
 SYNTH_PASS="$(openssl rand -base64 24)"
 SYNTH_EMAIL='gate-d.synth@dev.synthetic.local'
 SYNTH_EMAIL="$SYNTH_EMAIL" SYNTH_PASS="$SYNTH_PASS" \

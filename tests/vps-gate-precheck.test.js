@@ -688,6 +688,25 @@ test('gate-d-cleanup-auth-synthetic.sh passa bash -n e exige confirmacao', () =>
   assert.match(badEmail.stderr + badEmail.stdout, /dev_synthetic_local|BLOCKED/);
 });
 
+test('gate-f-option-a-build-canary.sh passa bash -n e exige confirmacao', () => {
+  const script = path.join(root, 'scripts/vps/gate-f-option-a-build-canary.sh');
+  const syn = spawnSync('bash', ['-n', script], { encoding: 'utf8' });
+  assert.equal(syn.status, 0, syn.stderr);
+  const text = fs.readFileSync(script, 'utf8');
+  assert.match(text, /GATE_F_BUILD_CANARY/);
+  assert.match(text, /CONFIRM_GATE_F_BUILD_RESMOKE/);
+  assert.match(text, /2fc2fc80/);
+  assert.match(text, /descricao_snapshot/);
+  assert.match(text, /alter_3080=NOT_PERFORMED/);
+  assert.match(text, /AUTHORIZES_PROMOTE=NO/);
+  const blocked = spawnSync('bash', [script], {
+    encoding: 'utf8',
+    env: { ...process.env, CONFIRM_GATE_F_BUILD_RESMOKE: '', ERP_DOCKER_NETWORK: 'supabase_default' },
+  });
+  assert.notEqual(blocked.status, 0);
+  assert.match(blocked.stderr + blocked.stdout, /CONFIRM_GATE_F_BUILD_RESMOKE|BLOCKED/);
+});
+
 test('comercial360-canary-from-checkout.sh passa bash -n e nao usa tag MAIN', () => {
   const script = path.join(root, 'scripts/deploy/comercial360-canary-from-checkout.sh');
   const syn = spawnSync('bash', ['-n', script], { encoding: 'utf8' });
