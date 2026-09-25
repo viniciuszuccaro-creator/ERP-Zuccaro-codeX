@@ -1,14 +1,15 @@
 # DNS + HTTPS ERP DEV — preparação (sem aplicar segredos)
 
-**Status:** `READY_WAITING_HUMAN_DNS` · agente **não** aplica DNS (Hostinger MCP ausente).  
-**Objetivo:** liberar teste externo de login/navegação (HTTPS) sem publicar 3080/3081 na internet aberta — só 443 via proxy.
+**Status:** `BLOCKED_WRONG_DNS_PANEL` · NS autoritativo = **Registro.br** (`a.auto.dns.br` / `b.auto.dns.br`).  
+Registros só no painel Hostinger Domains **não** resolvem na internet (NXDOMAIN confirmado em 8.8.8.8 / 1.1.1.1).
 
 **Para concluir acesso diário agora (humano):**
 
-1. Hostinger Domains → `cpaferroeaco.com.br` → A `erp-dev` + A `api-erp-dev` → IP da VPS `srv1982741` (não colar IP no Git).
-2. VPS: Caddy 443 → `3081`/`3080` · firewall 443 · CORS `https://erp-dev.cpaferroeaco.com.br`.
-3. Responder no chat: `DNS pronto` e depois `TLS pronto`.
-4. Agente valida `dig` + `GATE_F_HTTPS_PROBE=reachability` e `external_nav`.
+1. **Registro.br** (ou trocar NS → Hostinger e usar o painel certo) → A `erp-dev` + A `api-erp-dev` → IP da VPS `srv1982741` (não colar IP no Git).
+2. Validar: `dig @8.8.8.8 +short erp-dev.cpaferroeaco.com.br A` → IPv4.
+3. VPS: Caddy 443 → `3081`/`3080` · firewall 443 · CORS `https://erp-dev.cpaferroeaco.com.br`.
+4. Responder no chat: `DNS publicado` e depois `TLS confirmado`.
+5. Agente valida `dig` + `GATE_F_HTTPS_PROBE=reachability` e `external_nav`.
 
 Não registrar IP público, tokens, chaves ou dados reais neste arquivo.
 

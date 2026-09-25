@@ -1,3 +1,10 @@
+### Gate F — DNS ainda NX: NS é Registro.br (2026-09-25T20:50Z)
+
+- Humano marcou ações Hostinger como feitas; probe externo continua **NXDOMAIN** (`dig @8.8.8.8 erp-dev…` / `api-erp-dev…`).
+- Causa: nameservers autoritativos = `a.auto.dns.br` / `b.auto.dns.br` (Registro.br), não Hostinger. A records só no painel Hostinger **não** publicam.
+- Próximo: criar A `erp-dev` / `api-erp-dev` no DNS do **Registro.br** (ou mudar NS para Hostinger e republicar). Depois confirmar Caddy/CORS.
+- Acesso diário **ainda não** concluído. Smoke HTTPS não executável sem resolução pública.
+
 ### Gate F — DNS/HTTPS: READY_WAITING_HUMAN (2026-09-25T20:12Z)
 
 - Agente **não** consegue criar A records: Hostinger MCP ausente neste ambiente.
