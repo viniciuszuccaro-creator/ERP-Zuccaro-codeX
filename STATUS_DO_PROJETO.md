@@ -1,12 +1,21 @@
+### Gate D — browser URL smoke OK (2026-09-25T13:56Z)
+
+- Canário 3086: health/ready 200 · runtime `ERP-RUNTIME-08B` · `auth.mode=supabase_user`.
+- Browser: `no_auth orc/ped=401` · spoof `dev_headers` sem Bearer=`401` · `browser_spoof_rejected=YES`.
+- Oficial 3080: health 200 · `ERP-RUNTIME-07B` / `dev_headers` · `official_3080_untouched_probe=YES`.
+- `GATE_D_BROWSER_URL_SMOKE=OK` · `alter_3080=NOT_PERFORMED` · Gate F **não** autorizado.
+- Evidência: `docs/vps/evidence/gate-d-browser-url-smoke-ok-2026-09-25.txt`.
+- Próximo VPS (opcional, sem F): mutações sintéticas Orçamento→Pedido no canário; limpeza Auth de teste. Gate F só com termo/assinatura.
+
 ### Gate D — Bearer smoke OK (reconfirmado 2026-09-25T13:41Z)
 
 - Canário 3086 READY · overlay Supabase · Auth sintético OK (reconfirm `13:41:45Z`).
 - Bearer: `no_auth=401` · `orc_list=200` · `ped_list=200` · `tenant_group/empresa=YES` · `GATE_D_BEARER_SMOKE=OK` (1ª prova `13:14:49Z`; reconfirm `13:41:46Z`).
 - Contagens Auth: `auth_users=1` · `profiles_com_auth=1` · `profiles_ativos_sem_auth=2` · `rbac_minimo=orcamento_pedido`.
 - Evidência: `docs/vps/evidence/gate-d-bearer-smoke-ok-2026-09-25.txt` · `gate-d-auth-autorizacao-registrada.txt`.
-- **3080** intacta (`alter_3080=NOT_PERFORMED`) · Gate F **não** autorizado · `AUTHORIZES_CANARY=NO` neste paste (canário já READY; sem nova autorização).
+- **3080** intacta (`alter_3080=NOT_PERFORMED`) · Gate F **não** autorizado.
 - Segredos só no cofre local.
-- **Próximo VPS (pronto para colar):** smoke URL browser segura — script `scripts/vps/gate-d-smoke-browser-url-safe.sh` (§F do checklist). Sem Gate F / sem alterar 3080. Depois: mutações Orçamento→Pedido se necessário. Código Comercial 360 Onda 3 segue na PR `#39`.
+- Código Comercial 360 Onda 3 segue na PR `#39` (separada).
 
 
 ### Pós-Gate E — prep Gate D (histórico)

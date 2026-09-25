@@ -36,6 +36,8 @@ Complementa `docs/GATES_D_F_PREPARACAO_CANARIO.md` e
 **Canário + Bearer (2026-09-25T13:14Z + reconfirm 13:41Z):** `CANARY_READY` 3086 · `SMOKE_OK` meta · `GATE_D_BEARER_SMOKE=OK`
 (`no_auth=401` · `orc_list=200` · `ped_list=200` · tenant group/empresa YES · `alter_3080=NOT_PERFORMED`).
 
+**URL browser segura (2026-09-25T13:56Z):** `GATE_D_BROWSER_URL_SMOKE=OK` · canário `supabase_user`/`08B` · no_auth/spoof `401` · 3080 permanece `07B`/`dev_headers`.
+
 Ordem fail-closed. **Nunca** colar e-mail, senha, token, service_role ou UUID no chat/Git.
 
 ### 1) Descobrir Auth (só nomes)
