@@ -1,3 +1,11 @@
+## SPA login HTTP/supabase_user — formulário e-mail/senha (2026-09-26T13:30Z)
+
+- Sintoma no browser HTTPS: “Sessão inválida” sem campos de login/senha.
+- Causa: modo `VITE_ERP_BACKEND=http` usava `redirectToLogin` local (noop) e AuthContext não tratava Bearer/supabase_user na UI.
+- Fix: `POST /api/v1/auth/session` (BFF→GoTrue) + formulário no fluxo existente (`UserNotRegisteredError`/`AuthContext`).
+- Testes: auth-session-password 2/2 · erp-http-session 1/1.
+- VPS: rebuild `erp-api-dev` + `erp-web-dev`; garantir perfil Auth sintético **ativo** (cleanup Gate F pode ter inativado).
+
 ## Comercial 360 / Onda 2 - CI HTTP fixtures + snapshot preço (2026-09-25T20:05Z)
 
 - Causa CI vermelha: HTTP Orçamento/Pedido usavam `TabelaPrecoService` real (memória vazia) → 404 no create após Onda 2 exigir `resolveSalePrice`.
