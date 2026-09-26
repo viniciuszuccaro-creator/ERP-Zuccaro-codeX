@@ -1,10 +1,11 @@
-## SPA login HTTP/supabase_user — formulário e-mail/senha (2026-09-26T13:30Z)
+## SPA login HTTP/supabase_user — formulário e-mail/senha (2026-09-26T13:35Z)
 
-- Sintoma no browser HTTPS: “Sessão inválida” sem campos de login/senha.
+- Sintoma no browser HTTPS: “Sessão inválida” sem campos de login/senha (confirmado humano + probe).
 - Causa: modo `VITE_ERP_BACKEND=http` usava `redirectToLogin` local (noop) e AuthContext não tratava Bearer/supabase_user na UI.
-- Fix: `POST /api/v1/auth/session` (BFF→GoTrue) + formulário no fluxo existente (`UserNotRegisteredError`/`AuthContext`).
-- Testes: auth-session-password 2/2 · erp-http-session 1/1.
-- VPS: rebuild `erp-api-dev` + `erp-web-dev`; garantir perfil Auth sintético **ativo** (cleanup Gate F pode ter inativado).
+- Fix código (PR #45): `POST /api/v1/auth/session` (BFF→GoTrue) + formulário no fluxo existente (`UserNotRegisteredError`/`AuthContext`).
+- Probe ao vivo (pré-deploy): SPA `index-BBakQWij.js` sem `erp-login-email`; `POST /api/v1/auth/session` → 401 `AUTH_REQUIRED` (API antiga).
+- Script VPS: `scripts/vps/spa-login-rebuild-api-web.sh` (rebuild api+web, prova endpoint + bundle).
+- Próximo: CI #45 verde → merge humano → colar rebuild na Web Console → hard refresh em `https://erp-dev…` e validar campos e-mail/senha.
 
 ## Comercial 360 / Onda 2 - CI HTTP fixtures + snapshot preço (2026-09-25T20:05Z)
 
