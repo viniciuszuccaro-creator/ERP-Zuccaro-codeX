@@ -6,6 +6,7 @@ import {
   assertTituloOnCreate,
   assertTituloOnDelete,
   assertTituloOnUpdate,
+  assertTitulosProntosParaCaixa,
   findDuplicateTitulo,
   tituloIdempotencyKey,
   tituloSettlementPermissionActions,
@@ -103,6 +104,42 @@ test('settlement permission actions include baixa aliases', () => {
   assert.deepEqual(tituloSettlementPermissionActions('ContaPagar'), ['pagar', 'baixar', 'liquidar']);
 });
 
+test('envio ao caixa exige contexto unico e bloqueia titulo liquidado', () => {
+  assert.throws(
+    () => assertTitulosProntosParaCaixa({ titulos: [{ id: '1', group_id: 'g', empresa_id: 'e', valor: 10 }], groupId: '', empresaId: 'e' }),
+    /grupo e empresa/,
+  );
+  assert.throws(
+    () => assertTitulosProntosParaCaixa({
+      titulos: [
+        { id: '1', group_id: 'g', empresa_id: 'e', valor: 10 },
+        { id: '2', group_id: 'g', empresa_id: 'outra', valor: 5 },
+      ],
+      groupId: 'g',
+      empresaId: 'e',
+    }),
+    /outro grupo\/empresa/,
+  );
+  assert.throws(
+    () => assertTitulosProntosParaCaixa({
+      titulos: [{ id: '1', group_id: 'g', empresa_id: 'e', valor: 10, status: 'Recebido' }],
+      groupId: 'g',
+      empresaId: 'e',
+    }),
+    /liquidado/,
+  );
+  const ok = assertTitulosProntosParaCaixa({
+    titulos: [
+      { id: '1', group_id: 'g', empresa_id: 'e', valor: 10, status: 'Pendente', pedido_id: 'p1' },
+      { id: '2', group_id: 'g', empresa_id: 'e', valor: 5.5, status: 'Aberto' },
+    ],
+    groupId: 'g',
+    empresaId: 'e',
+  });
+  assert.equal(ok.quantidade, 2);
+  assert.equal(ok.total, 15.5);
+});
+
 test('finance persistence blocks delete of settled titles and closes caixa/conciliacao fail-open', async () => {
   const client = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
   const updateTransitions = await readFile(new URL('../src/api/localEntityUpdateTransitions.js', import.meta.url), 'utf8');
@@ -136,4 +173,8 @@ test('finance persistence blocks delete of settled titles and closes caixa/conci
   assert.match(payment, /assertFinanceSettlementPermission/);
   assert.match(payment, /Estorno deve preservar historico/);
   assert.match(guard, /'baixar'/);
+  const enviarCaixa = await readFile(new URL('../src/components/financeiro/EnviarParaCaixa.jsx', import.meta.url), 'utf8');
+  assert.match(enviarCaixa, /assertTitulosProntosParaCaixa/);
+  assert.match(enviarCaixa, /data-action="enviar-para-caixa"/);
+  assert.match(enviarCaixa, /pedido_id/);
 });
