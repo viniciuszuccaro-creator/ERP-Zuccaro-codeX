@@ -354,6 +354,14 @@ export function createHttpApiClient(options = {}) {
     listAnexos(id, { signal } = {}) {
       return request(`/api/v1/orcamentos/${encodeURIComponent(id)}/anexos`, { signal });
     },
+    /** @param {string} id @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+    registerAnexo(id, payload, { signal } = {}) {
+      return request(`/api/v1/orcamentos/${encodeURIComponent(id)}/anexos`, { method: 'POST', body: payload, signal });
+    },
+    /** @param {string} id @param {string} anexoId @param {{ signal?: AbortSignal }} [options] */
+    deactivateAnexo(id, anexoId, { signal } = {}) {
+      return request(`/api/v1/orcamentos/${encodeURIComponent(id)}/anexos/${encodeURIComponent(anexoId)}/inativar`, { method: 'POST', signal });
+    },
   };
   const pedidos = {
     list({ limit = 50, offset = 0, search, status, clienteEmpresaId, tipoOperacao, origem, tipoComercial, signal } = {}) {
@@ -370,6 +378,14 @@ export function createHttpApiClient(options = {}) {
     transition(id, status, motivo, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}/status`, { method: 'POST', body: { status, ...(motivo ? { motivo } : {}) }, signal }); },
     history(id, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}/historico`, { signal }); },
     listAnexos(id, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}/anexos`, { signal }); },
+    /** @param {string} id @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+    registerAnexo(id, payload, { signal } = {}) {
+      return request(`/api/v1/pedidos/${encodeURIComponent(id)}/anexos`, { method: 'POST', body: payload, signal });
+    },
+    /** @param {string} id @param {string} anexoId @param {{ signal?: AbortSignal }} [options] */
+    deactivateAnexo(id, anexoId, { signal } = {}) {
+      return request(`/api/v1/pedidos/${encodeURIComponent(id)}/anexos/${encodeURIComponent(anexoId)}/inativar`, { method: 'POST', signal });
+    },
     convertOrcamento(id, payload, { signal } = {}) { return request(`/api/v1/orcamentos/${encodeURIComponent(id)}/converter-pedido`, { method: 'POST', body: payload, signal }); },
   };
   const clientes = {
