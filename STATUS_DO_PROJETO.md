@@ -1,8 +1,8 @@
-## SPA login HTTP/supabase_user — formulário e-mail/senha (2026-09-26T13:56Z)
+## SPA login HTTP/supabase_user — formulário e-mail/senha (2026-09-26T14:00Z)
 
-- Formulário HTTPS confirmado pelo humano (E-mail/Senha/Entrar).
-- Credencial: **não há senha padrão**. Provisionar Auth sintético na VPS (`provision-gate-d-auth-synthetic.sh`); e-mail `gate-d.synth@dev.synthetic.local`; senha gerada com `openssl` fica só no cofre local (nunca no chat/Git).
-- Script reativa/unban + vincula `profiles` (cleanup Gate F pode ter banido o synth).
+- Formulário HTTPS confirmado; credencial via Auth sintético (`gate-d.synth@…` + senha openssl no cofre).
+- Branding aba: remove Base44 — `index.html` título **ERP Zuccaro** + `public/favicon.svg`; PWA/apple em `Layout.jsx` apontam para `/favicon.svg`.
+- Deploy: rebuild só `erp-web` na VPS após pull do branch.
 
 
 
