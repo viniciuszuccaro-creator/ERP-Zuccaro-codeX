@@ -1,6 +1,16 @@
 import { randomUUID } from 'node:crypto';
 import type { DbQueryExecutor } from '../db/client.js';
-import { calculatePedido, type Pedido, type PedidoCreate, type PedidoHistorico, type PedidoListFilters, type PedidoRepository, type PedidoScope, type PedidoStatus } from './pedidoTypes.js';
+import {
+  calculatePedido,
+  type Pedido,
+  type PedidoCreate,
+  type PedidoHistorico,
+  type PedidoListFilters,
+  type PedidoOrigem,
+  type PedidoRepository,
+  type PedidoScope,
+  type PedidoStatus,
+} from './pedidoTypes.js';
 
 const clone = <T>(value: T): T => structuredClone(value);
 const key = (scope: PedidoScope) => `${scope.groupId}:${scope.empresaId}`;
@@ -20,6 +30,13 @@ export class InMemoryPedidoRepository implements PedidoRepository {
 
   async create(scope: PedidoScope, data: PedidoCreate, actorId: string, _executor?: DbQueryExecutor): Promise<Pedido> {
     if (data.orcamento_id && await this.getByOrcamento(scope, data.orcamento_id)) throw new Error('PEDIDO_ORCAMENTO_ALREADY_CONVERTED');
+    const origem = data.origem ?? 'MANUAL';
+    if (data.idempotency_key && await this.getByIdempotencyKey(scope, origem, data.idempotency_key)) {
+      throw new Error('PEDIDO_IDEMPOTENCY_CONFLICT');
+    }
+    if (data.external_id && await this.getByExternalId(scope, origem, data.external_id)) {
+      throw new Error('PEDIDO_EXTERNAL_ID_CONFLICT');
+    }
     const now = new Date().toISOString();
     const sequenceKey = key(scope);
     const number = this.next.get(sequenceKey) ?? 1;
@@ -32,6 +49,10 @@ export class InMemoryPedidoRepository implements PedidoRepository {
       condicao_pagamento_id: data.condicao_pagamento_id, orcamento_id: data.orcamento_id ?? null,
       vendedor_id: actorId, tipo_operacao: data.tipo_operacao,
       data_entrega_solicitada: data.data_entrega_solicitada, observacoes: data.observacoes ?? null,
+      origem,
+      canal: data.canal ?? null,
+      external_id: data.external_id ?? null,
+      idempotency_key: data.idempotency_key ?? null,
       subtotal: totals.subtotal, desconto: totals.desconto, total: totals.total,
       ativo: true, itens: totals.itens, created_at: now, updated_at: now,
     };
@@ -51,6 +72,24 @@ export class InMemoryPedidoRepository implements PedidoRepository {
     return row ? clone(row) : null;
   }
 
+  async getByIdempotencyKey(scope: PedidoScope, origem: PedidoOrigem, idempotencyKey: string, _executor?: DbQueryExecutor): Promise<Pedido | null> {
+    const row = [...this.rows.values()].find((item) =>
+      item.group_id === scope.groupId
+      && item.empresa_id === scope.empresaId
+      && item.origem === origem
+      && item.idempotency_key === idempotencyKey);
+    return row ? clone(row) : null;
+  }
+
+  async getByExternalId(scope: PedidoScope, origem: PedidoOrigem, externalId: string, _executor?: DbQueryExecutor): Promise<Pedido | null> {
+    const row = [...this.rows.values()].find((item) =>
+      item.group_id === scope.groupId
+      && item.empresa_id === scope.empresaId
+      && item.origem === origem
+      && item.external_id === externalId);
+    return row ? clone(row) : null;
+  }
+
   async list(scope: PedidoScope, limit = 50, offset = 0, _executor?: DbQueryExecutor, filters: PedidoListFilters = {}): Promise<{ rows: Pedido[]; total: number }> {
     const safeLimit = Math.min(200, Math.max(1, Math.trunc(limit)));
     const safeOffset = Math.max(0, Math.trunc(offset));
@@ -59,7 +98,8 @@ export class InMemoryPedidoRepository implements PedidoRepository {
       && (!search || row.numero.toLocaleLowerCase('pt-BR').includes(search))
       && (!filters.status || row.status === filters.status)
       && (!filters.clienteEmpresaId || row.cliente_empresa_id === filters.clienteEmpresaId)
-      && (!filters.tipoOperacao || row.tipo_operacao === filters.tipoOperacao))
+      && (!filters.tipoOperacao || row.tipo_operacao === filters.tipoOperacao)
+      && (!filters.origem || row.origem === filters.origem))
       .sort((a, b) => b.numero.localeCompare(a.numero) || b.id.localeCompare(a.id));
     return { rows: clone(rows.slice(safeOffset, safeOffset + safeLimit)), total: rows.length };
   }
@@ -68,7 +108,21 @@ export class InMemoryPedidoRepository implements PedidoRepository {
     const current = await this.get(scope, id);
     if (!current || current.status !== 'EM_ABERTO') return null;
     const totals = calculatePedido(data.itens);
-    const updated: Pedido = { ...current, ...data, cliente_local_id: data.cliente_local_id ?? null, obra_id: data.obra_id ?? null, tabela_preco_id: data.tabela_preco_id ?? null, orcamento_id: current.orcamento_id, observacoes: data.observacoes ?? null, ...totals, updated_at: new Date().toISOString() };
+    const updated: Pedido = {
+      ...current,
+      ...data,
+      cliente_local_id: data.cliente_local_id ?? null,
+      obra_id: data.obra_id ?? null,
+      tabela_preco_id: data.tabela_preco_id ?? null,
+      orcamento_id: current.orcamento_id,
+      origem: current.origem,
+      canal: current.canal,
+      external_id: current.external_id,
+      idempotency_key: current.idempotency_key,
+      observacoes: data.observacoes ?? null,
+      ...totals,
+      updated_at: new Date().toISOString(),
+    };
     this.rows.set(id, updated);
     return clone(updated);
   }

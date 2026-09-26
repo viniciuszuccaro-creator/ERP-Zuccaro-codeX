@@ -1,5 +1,15 @@
 import type { DbClient, DbQueryExecutor } from '../db/client.js';
-import { calculatePedido, type Pedido, type PedidoCreate, type PedidoHistorico, type PedidoListFilters, type PedidoRepository, type PedidoScope, type PedidoStatus } from './pedidoTypes.js';
+import {
+  calculatePedido,
+  type Pedido,
+  type PedidoCreate,
+  type PedidoHistorico,
+  type PedidoListFilters,
+  type PedidoOrigem,
+  type PedidoRepository,
+  type PedidoScope,
+  type PedidoStatus,
+} from './pedidoTypes.js';
 
 type Row = Record<string, unknown>;
 const SELECT = `SELECT p.*,COALESCE((SELECT json_agg(i ORDER BY i.created_at,i.id) FROM pedido_itens i WHERE i.pedido_id=p.id AND i.group_id=p.group_id AND i.empresa_id=p.empresa_id),'[]') itens FROM pedidos p`;
@@ -10,6 +20,10 @@ const map = (row: Row): Pedido => ({
   obra_id: row.obra_id == null ? null : String(row.obra_id), tabela_preco_id: row.tabela_preco_id == null ? null : String(row.tabela_preco_id),
   condicao_pagamento_id: String(row.condicao_pagamento_id), orcamento_id: row.orcamento_id == null ? null : String(row.orcamento_id),
   vendedor_id: String(row.vendedor_id), ativo: Boolean(row.ativo), subtotal: String(row.subtotal), desconto: String(row.desconto), total: String(row.total),
+  origem: String(row.origem ?? 'MANUAL') as PedidoOrigem,
+  canal: row.canal == null ? null : String(row.canal),
+  external_id: row.external_id == null ? null : String(row.external_id),
+  idempotency_key: row.idempotency_key == null ? null : String(row.idempotency_key),
   created_at: new Date(String(row.created_at)).toISOString(), updated_at: new Date(String(row.updated_at)).toISOString(),
   itens: (Array.isArray(row.itens) ? row.itens : JSON.parse(String(row.itens ?? '[]'))).map((item: Row) => ({
     ...item, id: String(item.id), produto_id: String(item.produto_id), unidade_id: String(item.unidade_id),
@@ -43,6 +57,22 @@ export class PostgresPedidoRepository implements PedidoRepository {
     return result.rows[0] ? map(result.rows[0]) : null;
   }
 
+  async getByIdempotencyKey(scope: PedidoScope, origem: PedidoOrigem, idempotencyKey: string, executor: DbQueryExecutor = this.db): Promise<Pedido | null> {
+    const result = await executor.query<Row>(
+      `${SELECT} WHERE p.group_id=$1 AND p.empresa_id=$2 AND p.origem=$3 AND p.idempotency_key=$4`,
+      [scope.groupId, scope.empresaId, origem, idempotencyKey],
+    );
+    return result.rows[0] ? map(result.rows[0]) : null;
+  }
+
+  async getByExternalId(scope: PedidoScope, origem: PedidoOrigem, externalId: string, executor: DbQueryExecutor = this.db): Promise<Pedido | null> {
+    const result = await executor.query<Row>(
+      `${SELECT} WHERE p.group_id=$1 AND p.empresa_id=$2 AND p.origem=$3 AND p.external_id=$4`,
+      [scope.groupId, scope.empresaId, origem, externalId],
+    );
+    return result.rows[0] ? map(result.rows[0]) : null;
+  }
+
   async create(scope: PedidoScope, data: PedidoCreate, actorId: string, executor?: DbQueryExecutor): Promise<Pedido> {
     return this.run(executor, async (query) => {
       await query.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`pedido:${scope.empresaId}`]);
@@ -50,9 +80,19 @@ export class PostgresPedidoRepository implements PedidoRepository {
       const numero = String(sequence.rows[0]?.next ?? '').padStart(8, '0');
       if (!/^\d{8}$/.test(numero)) throw new Error('PEDIDO_NUMERO_RESERVATION_FAILED');
       const totals = calculatePedido(data.itens);
+      const origem = data.origem ?? 'MANUAL';
       const inserted = await query.query<{ id: string }>(
-        'INSERT INTO pedidos(group_id,empresa_id,numero,cliente_empresa_id,cliente_local_id,obra_id,tabela_preco_id,condicao_pagamento_id,orcamento_id,vendedor_id,tipo_operacao,data_entrega_solicitada,observacoes,subtotal,desconto,total,created_by,updated_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$10,$10) RETURNING id',
-        [scope.groupId, scope.empresaId, numero, data.cliente_empresa_id, data.cliente_local_id ?? null, data.obra_id ?? null, data.tabela_preco_id ?? null, data.condicao_pagamento_id, data.orcamento_id ?? null, actorId, data.tipo_operacao, data.data_entrega_solicitada, data.observacoes ?? null, totals.subtotal, totals.desconto, totals.total],
+        `INSERT INTO pedidos(
+          group_id,empresa_id,numero,cliente_empresa_id,cliente_local_id,obra_id,tabela_preco_id,condicao_pagamento_id,
+          orcamento_id,vendedor_id,tipo_operacao,data_entrega_solicitada,observacoes,origem,canal,external_id,idempotency_key,
+          subtotal,desconto,total,created_by,updated_by
+        ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$10,$10) RETURNING id`,
+        [
+          scope.groupId, scope.empresaId, numero, data.cliente_empresa_id, data.cliente_local_id ?? null, data.obra_id ?? null,
+          data.tabela_preco_id ?? null, data.condicao_pagamento_id, data.orcamento_id ?? null, actorId, data.tipo_operacao,
+          data.data_entrega_solicitada, data.observacoes ?? null, origem, data.canal ?? null, data.external_id ?? null,
+          data.idempotency_key ?? null, totals.subtotal, totals.desconto, totals.total,
+        ],
       );
       const id = String(inserted.rows[0]?.id);
       await this.insertItems(query, scope, id, data, actorId);
@@ -63,12 +103,12 @@ export class PostgresPedidoRepository implements PedidoRepository {
 
   async list(scope: PedidoScope, limit = 50, offset = 0, executor?: DbQueryExecutor, filters: PedidoListFilters = {}) {
     const query = executor ?? this.db;
-    const where = `p.group_id=$1 AND p.empresa_id=$2 AND ($3::text IS NULL OR p.numero ILIKE '%'||$3||'%') AND ($4::text IS NULL OR p.status=$4) AND ($5::uuid IS NULL OR p.cliente_empresa_id=$5) AND ($6::text IS NULL OR p.tipo_operacao=$6)`;
-    const filterParams = [scope.groupId, scope.empresaId, filters.search || null, filters.status || null, filters.clienteEmpresaId || null, filters.tipoOperacao || null];
+    const where = `p.group_id=$1 AND p.empresa_id=$2 AND ($3::text IS NULL OR p.numero ILIKE '%'||$3||'%') AND ($4::text IS NULL OR p.status=$4) AND ($5::uuid IS NULL OR p.cliente_empresa_id=$5) AND ($6::text IS NULL OR p.tipo_operacao=$6) AND ($7::text IS NULL OR p.origem=$7)`;
+    const filterParams = [scope.groupId, scope.empresaId, filters.search || null, filters.status || null, filters.clienteEmpresaId || null, filters.tipoOperacao || null, filters.origem || null];
     const params = [...filterParams, Math.min(200, Math.max(1, Math.trunc(limit))), Math.max(0, Math.trunc(offset))];
     const [count, rows] = await Promise.all([
       query.query<{ total: number }>(`SELECT count(*)::int total FROM pedidos p WHERE ${where}`, filterParams),
-      query.query<Row>(`${SELECT} WHERE ${where} ORDER BY p.numero DESC,p.id DESC LIMIT $7 OFFSET $8`, params),
+      query.query<Row>(`${SELECT} WHERE ${where} ORDER BY p.numero DESC,p.id DESC LIMIT $8 OFFSET $9`, params),
     ]);
     return { rows: rows.rows.map(map), total: Number(count.rows[0]?.total ?? 0) };
   }
@@ -78,7 +118,10 @@ export class PostgresPedidoRepository implements PedidoRepository {
       const current = await this.get(scope, id, query);
       if (!current || current.status !== 'EM_ABERTO') return null;
       const totals = calculatePedido(data.itens);
-      await query.query('UPDATE pedidos SET cliente_empresa_id=$4,cliente_local_id=$5,obra_id=$6,tabela_preco_id=$7,condicao_pagamento_id=$8,tipo_operacao=$9,data_entrega_solicitada=$10,observacoes=$11,subtotal=$12,desconto=$13,total=$14,updated_by=$15 WHERE id=$1 AND group_id=$2 AND empresa_id=$3', [id, scope.groupId, scope.empresaId, data.cliente_empresa_id, data.cliente_local_id ?? null, data.obra_id ?? null, data.tabela_preco_id ?? null, data.condicao_pagamento_id, data.tipo_operacao, data.data_entrega_solicitada, data.observacoes ?? null, totals.subtotal, totals.desconto, totals.total, actorId]);
+      await query.query(
+        'UPDATE pedidos SET cliente_empresa_id=$4,cliente_local_id=$5,obra_id=$6,tabela_preco_id=$7,condicao_pagamento_id=$8,tipo_operacao=$9,data_entrega_solicitada=$10,observacoes=$11,subtotal=$12,desconto=$13,total=$14,updated_by=$15 WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+        [id, scope.groupId, scope.empresaId, data.cliente_empresa_id, data.cliente_local_id ?? null, data.obra_id ?? null, data.tabela_preco_id ?? null, data.condicao_pagamento_id, data.tipo_operacao, data.data_entrega_solicitada, data.observacoes ?? null, totals.subtotal, totals.desconto, totals.total, actorId],
+      );
       await query.query('DELETE FROM pedido_itens WHERE pedido_id=$1 AND group_id=$2 AND empresa_id=$3', [id, scope.groupId, scope.empresaId]);
       await this.insertItems(query, scope, id, data, actorId);
       return this.get(scope, id, query);
