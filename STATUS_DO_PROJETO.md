@@ -1,3 +1,21 @@
+## #50 STATUS REAL — Onda 5 Pedido origem/canal/idempotency (2026-09-26T20:50Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — backfill ORCAMENTO + 23505 canal antes de converted |
+| Testado | **SIM** — service + HTTP + migration order |
+| CI | **SIM** @ `55fc45a0` frontend+backend SUCCESS |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** (migration 025 só após gate) |
+
+## Comercial 360 / Onda 5 - origem/canal/idempotency no Pedido (2026-09-26T20:50Z)
+
+- Branch `cursor/comercial360-onda5-pedido-origem-392b` (base `main`; PR #50).
+- Campos aditivos no Pedido canônico: `origem`, `canal`, `external_id`, `idempotency_key`.
+- Backfill: pedidos com `orcamento_id` → `origem=ORCAMENTO` **antes** de DEFAULT/NOT NULL MANUAL.
+- Catch de convert: `rethrowChannelConflict` antes de `ORCAMENTO_ALREADY_CONVERTED` (ambos 23505).
+- Sem módulo paralelo; reutiliza Pedido 017. Migration **não** aplicada em VPS neste lote.
+
 ## Comercial 360 / Onda 2 - CI HTTP fixtures + snapshot preço (2026-09-25T20:05Z)
 
 - Causa CI vermelha: HTTP Orçamento/Pedido usavam `TabelaPrecoService` real (memória vazia) → 404 no create após Onda 2 exigir `resolveSalePrice`.
