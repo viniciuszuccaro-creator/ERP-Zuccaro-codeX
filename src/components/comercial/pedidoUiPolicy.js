@@ -73,3 +73,35 @@ export function calculatePedidoTotals(items) {
   const total = calculateTotals(items);
   return { subtotal: microsToDecimal(total.subtotal), desconto: microsToDecimal(total.desconto), total: microsToDecimal(total.total) };
 }
+
+const PEDIDO_ANEXO_MIME = {
+  'application/pdf': ['pdf'],
+  'image/png': ['png'],
+  'image/jpeg': ['jpg', 'jpeg'],
+  'image/webp': ['webp'],
+};
+
+/** Metadados DAM do Pedido (path tenant + sha256); registro HTTP sem upload assinado neste checkpoint. */
+export function preparePedidoAnexoFile(file, { groupId, empresaId, pedidoId, version = 1, maxBytes = 52_428_800 }) {
+  if (!groupId || !empresaId || !pedidoId) throw new Error('Pedido e empresa canônicos obrigatórios para anexo');
+  const originalName = String(file?.name || '');
+  const unsafeName = [...originalName].some((character) => {
+    const code = character.codePointAt(0);
+    return code === 47 || code === 92 || code <= 31 || (code >= 127 && code <= 159)
+      || (code >= 0x202a && code <= 0x202e) || (code >= 0x2066 && code <= 0x2069);
+  });
+  if (!originalName.trim() || originalName.length > 255 || unsafeName) throw new Error('Nome de arquivo inválido');
+  const extension = originalName.split('.').pop()?.toLowerCase();
+  const allowed = PEDIDO_ANEXO_MIME[file?.type];
+  if (!allowed || !allowed.includes(extension)) throw new Error('Formato não permitido (PDF/PNG/JPEG/WebP)');
+  if (!Number.isSafeInteger(file.size) || file.size <= 0 || file.size > maxBytes) throw new Error('Tamanho de arquivo inválido');
+  const safeName = originalName.normalize('NFKD').replace(/[^a-zA-Z0-9._-]/g, '-').slice(-120);
+  const storageKey = `groups/${groupId}/companies/${empresaId}/pedidos/${pedidoId}/documents/${crypto.randomUUID()}-${safeName}`;
+  return {
+    storage_key: storageKey,
+    nome_arquivo: originalName,
+    mime_type: file.type,
+    tamanho_bytes: file.size,
+    versao: version,
+  };
+}

@@ -1,3 +1,20 @@
+## #61 STATUS REAL — Onda 5 registrar/inativar anexos Pedido (2026-09-26T19:12Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — httpApiClient + PedidoCanonicoPanel + preparePedidoAnexoFile |
+| Testado | **SIM** — pedido-ui-policy + frontend-integration + pedido-http-client |
+| CI | **PENDENTE** |
+| Mesclado | **NÃO** (empilhada #60→…) |
+| Implantado VPS | **NÃO** |
+
+## Comercial 360 / Onda 5 - mutação anexos Pedido (2026-09-26T19:12Z)
+
+- Branch `cursor/comercial360-onda5-pedido-anexo-mutacao-392b` (base #60).
+- Registra metadados DAM (path tenant + sha256) e inativa anexos; RBAC `editar` + só `EM_ABERTO`.
+- Sem módulo/tela paralela; upload assinado StoragePort fica para ck posterior.
+- Cliente Orçamento também ganhou `registerAnexo`/`deactivateAnexo` no httpApiClient (endpoints já existiam).
+
 ## #60 STATUS REAL — Onda 5 UI Pedido anexos no painel canônico (2026-09-26T19:08Z)
 
 | Etapa | Estado |
