@@ -55,10 +55,12 @@ export function descontoExcedeAlcadaLivre(
   items: DescontoAlcadaItem[],
   livreBps: number = DESCONTO_ALCADA_LIVRE_BPS_DEFAULT,
 ): boolean {
-  const { descontoBps, descontoMicros } = computeDescontoBps(items);
+  const { subtotalMicros, descontoMicros } = computeDescontoBps(items);
   if (descontoMicros <= 0n) return false;
+  if (subtotalMicros <= 0n) return true;
   const lim = Number.isFinite(livreBps) ? Math.max(0, Math.trunc(livreBps)) : 0;
-  return descontoBps > lim;
+  // Comparação inteira: evita truncar bps < 1 (ex.: 0.01 em 1000 → 0 bp truncado).
+  return descontoMicros * 10000n > subtotalMicros * BigInt(lim);
 }
 
 export function assertDescontoDentroDaAlcadaOuAprovar(options: {
