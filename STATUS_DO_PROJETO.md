@@ -1,10 +1,10 @@
-## #52 STATUS REAL — Onda 4 Orçamento versionamento (2026-09-26T19:45Z)
+## #52 STATUS REAL — Onda 4 Orçamento versionamento (2026-09-26T19:15Z)
 
 | Etapa | Estado |
 | --- | --- |
 | Implementado | **SIM** — migration 027 + createVersion/listVersions |
 | Testado | **SIM** — onda4 + runtime08c/01 + regressão onda5 (78/78) |
-| CI | **PENDENTE** — aguardando workflow |
+| CI | **SIM** — frontend+backend SUCCESS (`8999db83`) |
 | Mesclado | **NÃO** (empilhada #50→#51→#52) |
 | Implantado VPS | **NÃO** |
 
