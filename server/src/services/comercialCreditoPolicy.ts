@@ -1,7 +1,8 @@
 /**
  * Crédito Comercial 360 (Onda 6) — política pura.
  * Saldo/limite NÃO são copiados para o Pedido; vêm de porta do Financeiro/Cadastros.
- * Sem porta → não inventa. Com porta e limite insuficiente → exige `aprovar-credito`.
+ * Sem porta / snapshot null → não inventa e não força alçada.
+ * Com porta e limite insuficiente → exige `aprovar-credito`.
  */
 import { AppError } from '../api/errors.js';
 
@@ -135,21 +136,8 @@ export async function assertCreditoSuficienteOuAprovar(options: {
     clienteEmpresaId: options.clienteEmpresaId,
   });
   if (!snap) {
-    if (options.canAprovarCredito) {
-      return {
-        aprovado: true,
-        limite_total: '0.000000',
-        limite_utilizado: '0.000000',
-        limite_disponivel: '0.000000',
-        valor_pedido: microsToDecimal(computePedidoTotalMicros(options.items)),
-        motivo: 'Credito ausente com alçada aprovar-credito',
-      };
-    }
-    throw new AppError(
-      403,
-      'CREDITO_INDISPONIVEL',
-      `${options.entityLabel || 'Pedido'} sem snapshot de credito exige permissao aprovar-credito`,
-    );
+    // Snapshot ausente = crédito não configurado no ClienteEmpresa (não inventa, não força alçada).
+    return null;
   }
   const evaluation = evaluatePedidoCreditoSnapshot({
     items: options.items,

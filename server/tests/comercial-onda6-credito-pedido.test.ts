@@ -63,11 +63,20 @@ test('politica pura: total em micros e avaliacao fail-closed', () => {
   assert.match(none.motivo, /sem limite/i);
 });
 
-test('assertCredito: sem porta nao inventa; porta nega sem alçada', async () => {
+test('assertCredito: sem porta ou snapshot null nao inventa; porta insuficiente exige alçada', async () => {
   const skipped = await assertCreditoSuficienteOuAprovar({
     groupId, empresaId, clienteEmpresaId: clienteId, items, credit: null, canAprovarCredito: false,
   });
   assert.equal(skipped, null);
+
+  const unsetPort: ComercialCreditPort = {
+    async getClienteEmpresaCredit() {
+      return null;
+    },
+  };
+  assert.equal(await assertCreditoSuficienteOuAprovar({
+    groupId, empresaId, clienteEmpresaId: clienteId, items, credit: unsetPort, canAprovarCredito: false,
+  }), null);
 
   const port: ComercialCreditPort = {
     async getClienteEmpresaCredit() {
