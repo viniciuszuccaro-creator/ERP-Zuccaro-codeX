@@ -3,7 +3,7 @@
 | Etapa | Estado |
 | --- | --- |
 | Implementado | **SIM** — OrcamentosTab + httpApiClient (versoes/anexos/origem) |
-| Testado | **PENDENTE** |
+| Testado | **SIM** — orcamento-ui-policy 11/11 |
 | CI | **PENDENTE** |
 | Mesclado | **NÃO** (empilhada #58→…) |
 | Implantado VPS | **NÃO** |
