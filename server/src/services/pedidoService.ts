@@ -12,7 +12,8 @@ import type { ObraRepository } from '../repositories/inMemoryObraRepository.js';
 import type { ProdutoRepository } from '../repositories/inMemoryProdutoRepository.js';
 import type { TabelaPrecoRepository } from '../repositories/inMemoryTabelaPrecoRepository.js';
 import type { OrcamentoRepository } from '../repositories/orcamentoTypes.js';
-import { PEDIDO_ORIGENS, PEDIDO_STATUS, pedidoCreateSchema, type Pedido, type PedidoCreate, type PedidoOrigem, type PedidoRepository, type PedidoScope, type PedidoStatus } from '../repositories/pedidoTypes.js';
+import { PEDIDO_ORIGENS, PEDIDO_STATUS, PEDIDO_TIPOS_COMERCIAIS, pedidoCreateSchema, type Pedido, type PedidoCreate, type PedidoCreateResolved, type PedidoOrigem, type PedidoRepository, type PedidoScope, type PedidoStatus, type PedidoTipoComercial } from '../repositories/pedidoTypes.js';
+import { aggregatePedidoTipoComercial, resolveItemTipoComercial } from './comercialTipoComercialPolicy.js';
 import type { TenantEntityRepository } from './tenantCrudService.js';
 import { z } from 'zod';
 
@@ -43,8 +44,10 @@ export function pedidoAuditSnapshot(row: Pedido) {
     tabela_preco_id: row.tabela_preco_id, condicao_pagamento_id: row.condicao_pagamento_id, orcamento_id: row.orcamento_id,
     vendedor_id: row.vendedor_id, tipo_operacao: row.tipo_operacao, data_entrega_solicitada: row.data_entrega_solicitada,
     origem: row.origem, canal: row.canal, external_id: row.external_id, idempotency_key: row.idempotency_key,
+    tipo_comercial: row.tipo_comercial,
     subtotal: row.subtotal, desconto: row.desconto, total: row.total, ativo: row.ativo,
     quantidade_itens: row.itens.length, requer_producao: row.itens.some((item) => item.requer_producao),
+    tipos_itens: row.itens.map((item) => item.tipo_comercial_snapshot),
   });
 }
 
@@ -77,7 +80,8 @@ export class PedidoService {
         await this.assertChannelUniqueness(scope, data, executor);
         await this.validateReferences(scope, data, executor);
         const priced = await this.applyServerPriceSnapshots(ctx, data);
-        const created = await this.repo.create(scope, priced, ctx.actorId!, executor);
+        const resolved = await this.applyTipoComercialSnapshots(scope, priced, executor);
+        const created = await this.repo.create(scope, resolved, ctx.actorId!, executor);
         await this.auditRow(ctx, 'create', null, created, executor);
         return created;
       });
@@ -122,7 +126,8 @@ export class PedidoService {
         const data: PedidoCreate = this.normalizeCreate(dataParsed.data);
         await this.assertChannelUniqueness(scope, data, executor);
         await this.validateReferences(scope, data, executor);
-        const created = await this.repo.create(scope, data, ctx.actorId!, executor);
+        const resolved = await this.applyTipoComercialSnapshots(scope, data, executor);
+        const created = await this.repo.create(scope, resolved, ctx.actorId!, executor);
         await this.auditRow(ctx, 'create', null, created, executor);
         return created;
       });
@@ -136,7 +141,7 @@ export class PedidoService {
   async get(ctx: RequestContext, id: string) { const scope = await this.prepare(ctx, 'visualizar'); this.assertId(id, 'pedidoId'); return this.requirePedido(scope, id); }
   async history(ctx: RequestContext, id: string) { const scope = await this.prepare(ctx, 'visualizar'); this.assertId(id, 'pedidoId'); await this.requirePedido(scope, id); return this.repo.history(scope, id); }
 
-  async list(ctx: RequestContext, options: { limit?: number; offset?: number; search?: string; status?: string; clienteEmpresaId?: string; tipoOperacao?: string; origem?: string } = {}) {
+  async list(ctx: RequestContext, options: { limit?: number; offset?: number; search?: string; status?: string; clienteEmpresaId?: string; tipoOperacao?: string; origem?: string; tipoComercial?: string } = {}) {
     const scope = await this.prepare(ctx, 'visualizar');
     const limit = Math.min(200, Math.max(1, Number.isFinite(options.limit) ? Math.trunc(options.limit!) : 50));
     const offset = Math.max(0, Number.isFinite(options.offset) ? Math.trunc(options.offset!) : 0);
@@ -146,12 +151,16 @@ export class PedidoService {
     if (options.clienteEmpresaId) this.assertId(options.clienteEmpresaId, 'clienteEmpresaId');
     if (options.tipoOperacao && !['ENTREGA', 'RETIRADA'].includes(options.tipoOperacao)) this.validation({ tipoOperacao: 'invalid' });
     if (options.origem && !PEDIDO_ORIGENS.includes(options.origem as PedidoOrigem)) this.validation({ origem: 'invalid' });
+    if (options.tipoComercial && !PEDIDO_TIPOS_COMERCIAIS.includes(options.tipoComercial as PedidoTipoComercial)) {
+      this.validation({ tipoComercial: 'invalid' });
+    }
     const page = await this.repo.list(scope, limit, offset, undefined, {
       search: search || undefined,
       status: options.status as PedidoStatus | undefined,
       clienteEmpresaId: options.clienteEmpresaId,
       tipoOperacao: options.tipoOperacao as 'ENTREGA' | 'RETIRADA' | undefined,
       origem: options.origem as PedidoOrigem | undefined,
+      tipoComercial: options.tipoComercial as PedidoTipoComercial | undefined,
     });
     return { data: page.rows, meta: { limit, offset, total: page.total, hasMore: offset + page.rows.length < page.total } };
   }
@@ -171,7 +180,8 @@ export class PedidoService {
       await this.validateReferences(scope, data, executor);
       // Pedido originado de Orçamento: não reconsultar tabela (não-retroatividade).
       const priced = before.orcamento_id ? data : await this.applyServerPriceSnapshots(ctx, data);
-      const after = await this.repo.update(scope, id, priced, ctx.actorId!, executor);
+      const resolved = await this.applyTipoComercialSnapshots(scope, priced, executor);
+      const after = await this.repo.update(scope, id, resolved, ctx.actorId!, executor);
       if (!after) this.stateConflict();
       await this.auditRow(ctx, 'update', before, after, executor);
       return after;
@@ -263,6 +273,35 @@ export class PedidoService {
       if (!product?.ativo) throw new AppError(422, 'PEDIDO_PRODUTO_INVALIDO', 'Produto unavailable in tenant scope');
       if (product.unidade_medida_id !== item.unidade_id || !(await this.unidades.getById({ groupId: scope.groupId }, item.unidade_id))?.ativo) throw new AppError(422, 'PEDIDO_UNIDADE_INVALIDA', 'Unidade unavailable for product');
     }
+  }
+
+  private async applyTipoComercialSnapshots(
+    scope: PedidoScope,
+    data: PedidoCreate,
+    _executor?: DbQueryExecutor,
+  ): Promise<PedidoCreateResolved> {
+    const itens = [];
+    for (const item of data.itens) {
+      const product = await this.produtos.getById(scope, item.produto_id);
+      const resolved = resolveItemTipoComercial({
+        produtoTipoItem: product?.tipo_item,
+        requerProducao: item.requer_producao,
+        hint: item.tipo_comercial,
+      });
+      if (!resolved.ok) {
+        throw new AppError(422, 'PEDIDO_TIPO_COMERCIAL_INVALIDO', 'Commercial type hint not allowed for product/item', {
+          produto_id: item.produto_id,
+          reason: resolved.reason,
+        });
+      }
+      const { tipo_comercial: _hint, ...rest } = item;
+      itens.push({ ...rest, tipo_comercial_snapshot: resolved.tipo });
+    }
+    return {
+      ...data,
+      tipo_comercial: aggregatePedidoTipoComercial(itens.map((item) => item.tipo_comercial_snapshot)),
+      itens,
+    };
   }
 
   private async prepare(ctx: RequestContext, action: RbacAction): Promise<PedidoScope> {

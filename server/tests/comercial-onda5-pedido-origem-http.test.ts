@@ -56,7 +56,7 @@ function fixture() {
   });
   const stub = (service: any) => {
     service.clientes = { getEmpresaLinkById: async () => ({ id: clienteId, cliente_id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true }) };
-    service.produtos = { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: unidadeId }) };
+    service.produtos = { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: unidadeId, tipo_item: 'Revenda' }) };
     service.unidades = { getById: async () => ({ id: unidadeId, ativo: true }) };
     service.condicoes = { get: async () => ({ id: condicaoId, ativo: true }) };
     service.prices = { resolveSalePrice: async () => ({ preco: '10.000000' }) };

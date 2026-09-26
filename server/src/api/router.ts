@@ -1046,6 +1046,7 @@ function mountPedidoRoutes(router: Router, service: PedidoService) {
         clienteEmpresaId: typeof req.query.clienteEmpresaId === 'string' ? req.query.clienteEmpresaId : undefined,
         tipoOperacao: typeof req.query.tipoOperacao === 'string' ? req.query.tipoOperacao : undefined,
         origem: typeof req.query.origem === 'string' ? req.query.origem : undefined,
+        tipoComercial: typeof req.query.tipoComercial === 'string' ? req.query.tipoComercial : undefined,
       }));
     } catch (error) { next(error); }
   });

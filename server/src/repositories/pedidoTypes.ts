@@ -17,8 +17,23 @@ export const PEDIDO_ORIGENS = [
   'IMPORTACAO',
 ] as const;
 
+/** Tipos comerciais do item (sem MISTO — MISTO só no cabeçalho). */
+export const PEDIDO_TIPOS_COMERCIAIS_ITEM = [
+  'REVENDA',
+  'ARMADO',
+  'CORTE_DOBRA',
+  'FABRICADO',
+  'KIT',
+  'SERVICO',
+] as const;
+
+/** Tipos comerciais do Pedido (agregado; MISTO quando itens divergem). */
+export const PEDIDO_TIPOS_COMERCIAIS = [...PEDIDO_TIPOS_COMERCIAIS_ITEM, 'MISTO'] as const;
+
 export const pedidoItemSchema = orcamentoItemSchema.extend({
   requer_producao: z.boolean().optional().default(false),
+  /** Hint opcional: somente ARMADO/CORTE_DOBRA com requer_producao; demais derivados do Produto. */
+  tipo_comercial: z.enum(PEDIDO_TIPOS_COMERCIAIS_ITEM).optional(),
 }).strict();
 
 export const pedidoCreateSchema = z.object({
@@ -41,7 +56,13 @@ export const pedidoCreateSchema = z.object({
 export type PedidoCreate = z.infer<typeof pedidoCreateSchema>;
 export type PedidoStatus = typeof PEDIDO_STATUS[number];
 export type PedidoOrigem = typeof PEDIDO_ORIGENS[number];
-export type PedidoItem = z.infer<typeof pedidoItemSchema> & { subtotal: string; total: string };
+export type PedidoTipoComercialItem = typeof PEDIDO_TIPOS_COMERCIAIS_ITEM[number];
+export type PedidoTipoComercial = typeof PEDIDO_TIPOS_COMERCIAIS[number];
+export type PedidoItem = Omit<z.infer<typeof pedidoItemSchema>, 'tipo_comercial'> & {
+  subtotal: string;
+  total: string;
+  tipo_comercial_snapshot: PedidoTipoComercialItem;
+};
 export type PedidoHistorico = {
   id: string;
   group_id: string;
@@ -73,6 +94,7 @@ export type Pedido = {
   canal: string | null;
   external_id: string | null;
   idempotency_key: string | null;
+  tipo_comercial: PedidoTipoComercial;
   subtotal: string;
   desconto: string;
   total: string;
@@ -82,6 +104,12 @@ export type Pedido = {
   updated_at: string;
 };
 
+/** Create já resolvido pelo service (snapshots de tipo comercial server-side). */
+export type PedidoCreateResolved = PedidoCreate & {
+  tipo_comercial: PedidoTipoComercial;
+  itens: Array<z.infer<typeof pedidoItemSchema> & { tipo_comercial_snapshot: PedidoTipoComercialItem }>;
+};
+
 export type PedidoScope = { groupId: string; empresaId: string };
 export type PedidoListFilters = {
   search?: string;
@@ -89,26 +117,37 @@ export type PedidoListFilters = {
   clienteEmpresaId?: string;
   tipoOperacao?: typeof PEDIDO_TIPOS_OPERACAO[number];
   origem?: PedidoOrigem;
+  tipoComercial?: PedidoTipoComercial;
 };
 export type PedidoPage = { rows: Pedido[]; total: number };
 
-export function calculatePedido(items: z.infer<typeof pedidoItemSchema>[]): Pick<Pedido, 'itens' | 'subtotal' | 'desconto' | 'total'> {
+export function calculatePedido(
+  items: Array<z.infer<typeof pedidoItemSchema> & { tipo_comercial_snapshot?: PedidoTipoComercialItem }>,
+): Pick<Pedido, 'itens' | 'subtotal' | 'desconto' | 'total'> {
   const calculated = calculateOrcamento(items);
   return {
     ...calculated,
-    itens: calculated.itens.map((item, index) => ({ ...item, requer_producao: items[index].requer_producao ?? false })),
+    itens: calculated.itens.map((item, index) => {
+      const source = items[index]!;
+      const { tipo_comercial: _hint, ...rest } = source;
+      return {
+        ...item,
+        requer_producao: rest.requer_producao ?? false,
+        tipo_comercial_snapshot: source.tipo_comercial_snapshot ?? 'REVENDA',
+      };
+    }),
   };
 }
 
 export interface PedidoRepository {
   withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T>;
-  create(scope: PedidoScope, data: PedidoCreate, actorId: string, executor?: DbQueryExecutor): Promise<Pedido>;
+  create(scope: PedidoScope, data: PedidoCreateResolved, actorId: string, executor?: DbQueryExecutor): Promise<Pedido>;
   get(scope: PedidoScope, id: string, executor?: DbQueryExecutor): Promise<Pedido | null>;
   getByOrcamento(scope: PedidoScope, orcamentoId: string, executor?: DbQueryExecutor): Promise<Pedido | null>;
   getByIdempotencyKey(scope: PedidoScope, origem: PedidoOrigem, idempotencyKey: string, executor?: DbQueryExecutor): Promise<Pedido | null>;
   getByExternalId(scope: PedidoScope, origem: PedidoOrigem, externalId: string, executor?: DbQueryExecutor): Promise<Pedido | null>;
   list(scope: PedidoScope, limit?: number, offset?: number, executor?: DbQueryExecutor, filters?: PedidoListFilters): Promise<PedidoPage>;
-  update(scope: PedidoScope, id: string, data: PedidoCreate, actorId: string, executor?: DbQueryExecutor): Promise<Pedido | null>;
+  update(scope: PedidoScope, id: string, data: PedidoCreateResolved, actorId: string, executor?: DbQueryExecutor): Promise<Pedido | null>;
   changeStatus(scope: PedidoScope, id: string, status: PedidoStatus, actorId: string, motivo?: string, executor?: DbQueryExecutor): Promise<Pedido | null>;
   history(scope: PedidoScope, id: string, executor?: DbQueryExecutor): Promise<PedidoHistorico[]>;
 }
