@@ -1,8 +1,9 @@
-## SPA login — Credenciais inválidas (2026-09-26T14:16Z)
+## SPA login — Credenciais inválidas pós-CORS (2026-09-26T14:22Z)
 
-- CORS OK; Entrar agora retorna `AUTH_INVALID_CREDENTIALS` (senha Auth não confere / synth não reprovisionado após cleanup).
-- Ação: `scripts/vps/reset-auth-synth-login.sh` — gera senha nova, provisiona, prova GoTrue+BFF (sem vazar token).
-- Colar: `CONFIRM_AUTH_SYNTH_RESET=YES bash scripts/vps/reset-auth-synth-login.sh` e usar E-MAIL/SENHA impressos no cofre.
+- Humano: senha nova ainda `AUTH_INVALID_CREDENTIALS`.
+- Hipótese: `SUPABASE_ANON_KEY`/`SUPABASE_URL` no `.env.erp.dev` divergente do Auth real (provision usa service_role do Supabase; BFF usa anon do ERP).
+- Script: `scripts/vps/repair-auth-login-erp-dev.sh` — sync chaves Supabase→ERP, recreate API, reset senha, prova GoTrue+BFF=200.
+- Colar: `CONFIRM_AUTH_LOGIN_REPAIR=YES ERP_DOCKER_NETWORK=supabase_default bash scripts/vps/repair-auth-login-erp-dev.sh`
 
 
 

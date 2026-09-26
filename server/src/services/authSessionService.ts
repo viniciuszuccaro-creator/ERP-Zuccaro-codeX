@@ -77,6 +77,13 @@ export async function createPasswordAuthSession(options: {
   }
 
   if (!response.ok) {
+    const goTrueMsg = typeof payload.error_description === 'string'
+      ? payload.error_description
+      : (typeof payload.msg === 'string' ? payload.msg : typeof payload.error === 'string' ? payload.error : '');
+    const looksLikeBadKey = /api.?key|invalid jwt|unauthorized/i.test(goTrueMsg);
+    if (looksLikeBadKey || response.status === 403) {
+      throw new AppError(503, 'AUTH_CONFIG', 'Identity service configuration mismatch');
+    }
     const status = response.status >= 500 ? 503 : 401;
     throw new AppError(
       status,
