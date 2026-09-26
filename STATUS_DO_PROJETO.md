@@ -1,20 +1,21 @@
-## #49 STATUS REAL — à vista libera desconto (rebase sobre #47) (2026-09-26T22:15Z)
+## #49 STATUS REAL — à vista libera desconto (rebase sobre #47) (2026-09-26T22:16Z)
 
 | Etapa | Estado |
 | --- | --- |
 | Implementado | **SIM** — `comercialCondicaoAvistaPolicy` + porta `alcadaConfig` + segregação #46 |
-| Testado | **PENDENTE** — unit+HTTP após rebase |
+| Testado | **SIM** — 36/36 (`desconto-alcada*` + `margem*` + `condicao-avista*`) |
 | CI | **PENDENTE** |
 | Mesclado | **NÃO** |
 | Implantado | **N/A** |
 
-## Comercial 360 / Onda 2 - condição à vista (rebase #49) (2026-09-26T22:15Z)
+## Comercial 360 / Onda 2 - condição à vista (rebase #49) (2026-09-26T22:16Z)
 
 - Branch `cursor/comercial360-onda2-avista-392b` empilhada sobre `origin/cursor/comercial360-onda2-margem-392b` (`a261790d`).
+- Cherry-picks: `2a37c353` feat à vista · `59857100` alcadaConfig/422 · `ce420fc4` testes segregação.
 - À vista = parcelas ativas com `dias === 0`. Liberação de alçada **somente** com `avistaLiberaDescontoSemAprovar === true` (fail-closed sem config).
 - Mantém segregação #46 (outro aprovador; à vista **dispensa** alçada, não autoaprova). Valida `ORCAMENTO_DESCONTO_INVALIDO` antes da isenção.
 - Margem CostPort (#47) preservada. Sem UI omnicanal.
-- Testes: `comercial-condicao-avista*.ts` + desconto/margem.
+- Testes: `comercial-condicao-avista*.ts` + desconto/margem — **36/36 PASS**.
 
 ## #47 STATUS REAL — alçada margem (CostPort) (2026-09-26T20:40Z)
 
