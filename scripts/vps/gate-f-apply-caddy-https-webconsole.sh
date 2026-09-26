@@ -110,9 +110,13 @@ if [[ "$APPLY" != "YES" ]]; then
   exit 0
 fi
 
-if [[ -z "$CADDY_ACME_EMAIL" || "$CADDY_ACME_EMAIL" == *@exemplo* ]]; then
+if [[ -z "$CADDY_ACME_EMAIL" \
+   || "$CADDY_ACME_EMAIL" == *@exemplo* \
+   || "$CADDY_ACME_EMAIL" == 'voce@seu-dominio-real.com' \
+   || "$CADDY_ACME_EMAIL" == 'seu-email-letsencrypt' \
+   || "$CADDY_ACME_EMAIL" == *placeholder* ]]; then
   echo 'BLOCKED: set_CADDY_ACME_EMAIL_real'
-  echo 'HINT=export CADDY_ACME_EMAIL=voce@seu-dominio'
+  echo 'HINT=export CADDY_ACME_EMAIL=email_real_seu_nao_placeholder'
   exit 2
 fi
 
@@ -159,8 +163,15 @@ ${API_HOST} {
   }
 }
 EOF
-chmod 600 "$CADDYFILE_PATH"
+# Unit systemd do Caddy roda como user `caddy` — 600 root:root bloqueia a leitura.
+if id caddy >/dev/null 2>&1; then
+  chown root:caddy "$CADDYFILE_PATH" 2>/dev/null || chown root:root "$CADDYFILE_PATH"
+  chmod 640 "$CADDYFILE_PATH"
+else
+  chmod 644 "$CADDYFILE_PATH"
+fi
 echo "caddyfile_path=${CADDYFILE_PATH}"
+echo "caddyfile_mode=$(stat -c '%a' "$CADDYFILE_PATH" 2>/dev/null || echo '?')"
 echo 'caddyfile=WRITTEN'
 
 if ! caddy validate --config "$CADDYFILE_PATH" 2>/dev/null; then
@@ -170,14 +181,47 @@ if ! caddy validate --config "$CADDYFILE_PATH" 2>/dev/null; then
 fi
 echo 'caddy_validate=OK'
 
+# Portas 80/443: se nginx/apache ocuparem, Caddy não sobe
+free_http_ports() {
+  local p proc
+  for p in 80 443; do
+    proc="$(ss -lntp "sport = :$p" 2>/dev/null | awk 'NR>1{print; exit}' || true)"
+    if [[ -n "$proc" ]]; then
+      echo "port_${p}_busy=$(echo "$proc" | tr -s ' ' | cut -c1-140)"
+      if echo "$proc" | grep -Eiq 'nginx'; then
+        systemctl stop nginx 2>/dev/null || true
+        systemctl disable nginx 2>/dev/null || true
+        echo "port_${p}_action=stopped_nginx"
+      elif echo "$proc" | grep -Eiq 'apache2|httpd'; then
+        systemctl stop apache2 2>/dev/null || systemctl stop httpd 2>/dev/null || true
+        echo "port_${p}_action=stopped_apache"
+      elif echo "$proc" | grep -Eiq 'caddy'; then
+        echo "port_${p}_action=caddy_already"
+      else
+        echo "port_${p}_action=MANUAL_FREE_REQUIRED"
+      fi
+    else
+      echo "port_${p}_busy=NO"
+    fi
+  done
+}
+free_http_ports
+
 # Prefer systemd unit se existir
 if systemctl list-unit-files caddy.service 2>/dev/null | grep -q caddy.service; then
   systemctl enable caddy >/dev/null 2>&1 || true
-  systemctl restart caddy
+  if ! systemctl restart caddy; then
+    echo 'BLOCKED: caddy_service_restart_failed'
+    systemctl status caddy --no-pager -l 2>/dev/null | head -40 | sed 's/@[^ ]*/@REDACTED/g' || true
+    journalctl -u caddy -n 40 --no-pager 2>/dev/null | sed 's/@[^ ]*/@REDACTED/g' | head -40 || true
+    ss -lntp 'sport = :80 or sport = :443' 2>/dev/null | head -10 || true
+    echo 'HINT=chown_root:caddy_chmod_640_/etc/caddy/Caddyfile; liberar_80_443; email_ACME_real'
+    exit 5
+  fi
   sleep 2
   systemctl is-active caddy >/dev/null && echo 'caddy_service=active' || {
     echo 'BLOCKED: caddy_service_not_active'
-    journalctl -u caddy -n 30 --no-pager 2>/dev/null | sed 's/@[^ ]*/@REDACTED/g' | head -30 || true
+    journalctl -u caddy -n 40 --no-pager 2>/dev/null | sed 's/@[^ ]*/@REDACTED/g' | head -40 || true
     exit 5
   }
 else
