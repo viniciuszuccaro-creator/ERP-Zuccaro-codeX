@@ -61,6 +61,7 @@ import { OrcamentoService } from './services/orcamentoService.js';
 import { InMemoryPedidoRepository } from './repositories/inMemoryPedidoRepository.js';
 import { PostgresPedidoRepository } from './repositories/postgresPedidoRepository.js';
 import { PedidoService } from './services/pedidoService.js';
+import { createClienteEmpresaCreditPort } from './services/comercialCreditoPolicy.js';
 import type { MalwareScanPort, StoragePort } from './services/storagePort.js';
 
 export type CreateAppOptions = {
@@ -168,6 +169,7 @@ export function createApp(options: CreateAppOptions) {
     pedidoRepo, orcamentoRepo, auditRepo, tenantGuard, rbacGuard, clienteRepo, produtoRepo,
     unidadeRepo, condicaoPagamentoRepo, clienteLocalRepo, obraRepo, tabelaPrecoRepo,
     tabelaPrecoService,
+    createClienteEmpresaCreditPort(clienteRepo),
   );
   const obraService = new ObraService(
     obraRepo,

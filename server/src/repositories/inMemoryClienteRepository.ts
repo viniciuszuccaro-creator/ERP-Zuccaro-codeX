@@ -482,6 +482,8 @@ export class InMemoryClienteRepository implements ClienteRepository {
       observacao_comercial: data.observacao_comercial ?? null,
       tabela_preco_id: data.tabela_preco_id ?? null,
       condicao_pagamento_id: data.condicao_pagamento_id ?? null,
+      limite_credito: data.limite_credito ?? null,
+      limite_utilizado: data.limite_utilizado ?? '0.000000',
       origem: data.origem ?? 'ERP',
       legacy_id: data.legacy_id ?? null,
       legacy_code: data.legacy_code ?? null,

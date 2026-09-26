@@ -63,6 +63,35 @@ export function computePedidoTotalMicros(items: CreditoItem[]): bigint {
   return total;
 }
 
+/**
+ * Adapter CreditPort lendo limite no ClienteEmpresa canônico (Onda 6).
+ * limite_credito NULL → retorna null (não inventa / não força alçada).
+ */
+export function createClienteEmpresaCreditPort(
+  clientes: {
+    getEmpresaLinkById(
+      scope: { groupId: string; empresaId: string },
+      id: string,
+    ): Promise<{
+      ativo: boolean;
+      limite_credito: string | null;
+      limite_utilizado: string;
+    } | null>;
+  },
+): ComercialCreditPort {
+  return {
+    async getClienteEmpresaCredit({ groupId, empresaId, clienteEmpresaId }) {
+      const link = await clientes.getEmpresaLinkById({ groupId, empresaId }, clienteEmpresaId);
+      if (!link || !link.ativo) return null;
+      if (link.limite_credito == null || link.limite_credito === '') return null;
+      return {
+        limite_credito: link.limite_credito,
+        limite_utilizado: link.limite_utilizado || '0.000000',
+      };
+    },
+  };
+}
+
 export function evaluatePedidoCreditoSnapshot(options: {
   items: CreditoItem[];
   limite_credito: string;
