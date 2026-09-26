@@ -15,7 +15,9 @@ const payload = {
 
 function row() {
   return {
-    id: '88888888-8888-4888-8888-888888888888', group_id: scope.groupId, empresa_id: scope.empresaId, numero: '00000001', status: 'EM_ABERTO',
+    id: '88888888-8888-4888-8888-888888888888', group_id: scope.groupId, empresa_id: scope.empresaId, numero: '00000001',
+    versao: 1, orcamento_raiz_id: '88888888-8888-4888-8888-888888888888', supersedido_por_id: null,
+    status: 'EM_ABERTO',
     cliente_empresa_id: payload.cliente_empresa_id, condicao_pagamento_id: payload.condicao_pagamento_id, validade_em: payload.validade_em, observacoes: null,
     subtotal: '20.000000', desconto: '0.000000', total: '20.000000', ativo: true, created_at: payload.validade_em, updated_at: payload.validade_em,
     itens: [{ ...payload.itens[0], descricao_snapshot: payload.itens[0].descricao, unidade_snapshot: 'UN', subtotal: '20.000000', total: '20.000000' }],
@@ -41,11 +43,15 @@ function controlledDb(results: Array<{ rows: unknown[] }>) {
 
 test('postgres orcamento cria e recupera agregado com itens dentro da transacao', async () => {
   const fixture = row();
-  const { db, calls } = controlledDb([{ rows: [] }, { rows: [{ n: '1' }] }, { rows: [{ id: fixture.id }] }, { rows: [] }, { rows: [fixture] }]);
+  // lock, sequence, insert, set raiz, insert item, get
+  const { db, calls } = controlledDb([
+    { rows: [] }, { rows: [{ n: '1' }] }, { rows: [{ id: fixture.id }] }, { rows: [] }, { rows: [] }, { rows: [fixture] },
+  ]);
   const created = await new PostgresOrcamentoRepository(db).create(scope, payload);
   assert.equal(created.numero, '00000001');
+  assert.equal(created.versao, 1);
   assert.equal(created.itens[0].total, '20.000000');
-  assert.deepEqual(calls[0].params, [scope.empresaId]);
+  assert.deepEqual(calls[0].params, [`orcamento:${scope.empresaId}`]);
   assert.ok(calls.some((call) => call.sql.includes('INSERT INTO orcamento_itens')));
   assert.ok(calls.every((call) => !call.params || !call.params.includes(otherScope.empresaId)));
 });
@@ -70,12 +76,14 @@ test('postgres orcamento lista com paginacao deterministica e itens sem N+1', as
 });
 test('postgres orcamento abre transacao somente sem executor', async () => {
   const fixture = row();
-  const direct = controlledDb([{ rows: [] }, { rows: [{ n: '1' }] }, { rows: [{ id: fixture.id }] }, { rows: [] }, { rows: [fixture] }]);
+  const direct = controlledDb([
+    { rows: [] }, { rows: [{ n: '1' }] }, { rows: [{ id: fixture.id }] }, { rows: [] }, { rows: [] }, { rows: [fixture] },
+  ]);
   await new PostgresOrcamentoRepository(direct.db).create(scope, payload);
   assert.equal(direct.transactionCount(), 1);
 
   const supplied = controlledDb([
-    { rows: [] }, { rows: [{ n: '1' }] }, { rows: [{ id: fixture.id }] }, { rows: [] }, { rows: [fixture] },
+    { rows: [] }, { rows: [{ n: '1' }] }, { rows: [{ id: fixture.id }] }, { rows: [] }, { rows: [] }, { rows: [fixture] },
     { rows: [fixture] }, { rows: [] }, { rows: [] }, { rows: [] }, { rows: [fixture] },
     { rows: [{ id: fixture.id }] }, { rows: [{ ...fixture, status: 'CANCELADO', ativo: false }] },
   ]);
@@ -84,7 +92,7 @@ test('postgres orcamento abre transacao somente sem executor', async () => {
   await repo.update(scope, fixture.id, payload, supplied.executor);
   await repo.cancel(scope, fixture.id, supplied.executor);
   assert.equal(supplied.transactionCount(), 0);
-  assert.ok(supplied.calls.every((call) => !call.params || call.params.includes(scope.empresaId) || call.sql.includes('orcamento_itens')));
+  assert.ok(supplied.calls.every((call) => !call.params || call.params.some((param) => String(param).includes(scope.empresaId)) || call.sql.includes('orcamento_itens')));
 });
 
 test('postgres orcamento get e list reutilizam executor fornecido', async () => {

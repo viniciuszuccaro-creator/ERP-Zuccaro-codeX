@@ -8,7 +8,7 @@ import type { UnidadeMedida } from '../repositories/cadastroTypes.js';
 import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';
 import type { CondicaoPagamentoRepository } from '../repositories/inMemoryCondicaoPagamentoRepository.js';
 import type { ProdutoRepository } from '../repositories/inMemoryProdutoRepository.js';
-import { orcamentoCreateSchema, type Orcamento, type OrcamentoCreate, type OrcamentoRepository, type OrcamentoScope } from '../repositories/orcamentoTypes.js';
+import { orcamentoCreateSchema, ORCAMENTO_STATUS, type Orcamento, type OrcamentoCreate, type OrcamentoRepository, type OrcamentoScope, type OrcamentoStatus } from '../repositories/orcamentoTypes.js';
 import type { TenantEntityRepository } from './tenantCrudService.js';
 
 const RBAC_MODULE = 'Comercial';
@@ -25,6 +25,7 @@ export type OrcamentoSalePricePort = {
 export function orcamentoAuditSnapshot(row: Orcamento) {
   return sanitizeAuditSnapshot({
     id: row.id, group_id: row.group_id, empresa_id: row.empresa_id, numero: row.numero,
+    versao: row.versao, orcamento_raiz_id: row.orcamento_raiz_id, supersedido_por_id: row.supersedido_por_id,
     status: row.status, cliente_empresa_id: row.cliente_empresa_id,
     condicao_pagamento_id: row.condicao_pagamento_id, subtotal: row.subtotal,
     desconto: row.desconto, total: row.total, ativo: row.ativo,
@@ -71,19 +72,49 @@ export class OrcamentoService {
     const offset = Math.max(0, requestedOffset);
     const search = options.search?.trim();
     if (search && search.length > 80) throw new AppError(422, 'VALIDATION_ERROR', 'Search is too long');
-    if (options.status && !['EM_ABERTO', 'CANCELADO'].includes(options.status)) throw new AppError(422, 'VALIDATION_ERROR', 'Invalid Orcamento status filter');
+    if (options.status && !(ORCAMENTO_STATUS as readonly string[]).includes(options.status)) {
+      throw new AppError(422, 'VALIDATION_ERROR', 'Invalid Orcamento status filter');
+    }
     if (options.clienteEmpresaId) this.assertId(options.clienteEmpresaId);
     const validadeDe = this.parseFilterDate(options.validadeDe, false);
     const validadeAte = this.parseFilterDate(options.validadeAte, true);
     if (validadeDe && validadeAte && validadeDe > validadeAte) throw new AppError(422, 'VALIDATION_ERROR', 'Invalid validity period');
     const page = await this.repo.list(scope, limit, offset, undefined, {
       search: search || undefined,
-      status: options.status as 'EM_ABERTO' | 'CANCELADO' | undefined,
+      status: options.status as OrcamentoStatus | undefined,
       clienteEmpresaId: options.clienteEmpresaId,
       validadeDe,
       validadeAte,
     });
     return { data: page.rows, meta: { limit, offset, total: page.total, hasMore: offset + page.rows.length < page.total } };
+  }
+
+  async listVersions(ctx: RequestContext, id: string) {
+    const scope = await this.prepare(ctx, 'visualizar');
+    this.assertId(id);
+    const current = await this.requireOrcamento(scope, id);
+    return this.repo.listVersions(scope, current.orcamento_raiz_id);
+  }
+
+  async createVersion(ctx: RequestContext, id: string, payload: unknown) {
+    const scope = await this.prepare(ctx, 'versionar');
+    this.assertId(id);
+    const data = this.parse(payload);
+    return this.repo.withTransaction(async (executor) => {
+      const before = await this.requireOrcamento(scope, id, executor);
+      this.requireOpen(before);
+      await this.validateReferences(scope, data, executor);
+      const priced = await this.applyServerPriceSnapshots(ctx, data);
+      try {
+        const { previous, current } = await this.repo.createVersion(scope, id, priced, executor);
+        await this.auditRow(ctx, 'update', before, previous, executor);
+        await this.auditRow(ctx, 'create', null, current, executor);
+        return current;
+      } catch (error) {
+        if (String((error as Error).message).includes('ORCAMENTO_STATE_CONFLICT')) this.stateConflict();
+        throw error;
+      }
+    });
   }
 
   async update(ctx: RequestContext, id: string, payload: unknown) {

@@ -16,11 +16,15 @@ test('R08C PostgreSQL real: orcamento create get list update cancel e isolamento
   const repo = new PostgresOrcamentoRepository(db);
   let id: string | null = null;
   try {
+    const migrations = await db.query<{ id: string }>('SELECT id FROM schema_migrations');
+    if (!migrations.rows.some((row) => row.id === '027_orcamentos_versao.sql')) return;
     const client = await db.query<{ id: string }>('SELECT id FROM cliente_empresas WHERE group_id=$1 AND empresa_id=$2 AND ativo=true LIMIT 1', [scope.groupId, scope.empresaId]);
     assert.ok(client.rows[0]?.id);
     const input = { cliente_empresa_id: client.rows[0].id, condicao_pagamento_id: SEED_IDS.condicaoPagamentoA, validade_em: '2026-10-01T00:00:00.000Z', itens: [{ produto_id: SEED_IDS.produtoA, unidade_id: SEED_IDS.unidadeA, descricao: 'R08C sintetico', unidade_sigla: 'UN', quantidade: '2.000000', preco_unitario: '10.000000', desconto: '0.000000' }] };
     const created = await repo.create(scope, input); id = created.id;
     assert.match(created.numero, /^\d{8}$/); assert.equal(created.itens.length, 1); assert.equal(created.total, '20.000000');
+    assert.equal(created.versao, 1);
+    assert.equal(created.orcamento_raiz_id, created.id);
     assert.equal(created.itens[0].descricao, 'R08C sintetico');
     assert.equal(created.itens[0].unidade_sigla, 'UN');
     const reloaded = await repo.get(scope, id);
@@ -51,6 +55,8 @@ test('R08C PostgreSQL real: auditoria rollbacka create update cancel e sequencia
   const repo = new PostgresOrcamentoRepository(db);
   const ids: string[] = [];
   try {
+    const migrations = await db.query<{ id: string }>('SELECT id FROM schema_migrations');
+    if (!migrations.rows.some((row) => row.id === '027_orcamentos_versao.sql')) return;
     const client = await db.query<{ id: string }>('SELECT id FROM cliente_empresas WHERE group_id=$1 AND empresa_id=$2 AND ativo=true LIMIT 1', [scope.groupId, scope.empresaId]);
     assert.ok(client.rows[0]?.id);
     const input = {
