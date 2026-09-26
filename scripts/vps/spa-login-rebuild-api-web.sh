@@ -1,27 +1,35 @@
 #!/usr/bin/env bash
 # Rebuild erp-api-dev + erp-web-dev com o formulário e-mail/senha (PR #45).
-# Não mexe no Supabase. Não usa down -v. Exige merge na main com o endpoint
-# POST /api/v1/auth/session e o formulário erp-login-email no SPA.
+# Não mexe no Supabase. Não usa down -v.
 #
-# Uso (Web Console VPS, após merge #45):
-#   CONFIRM_SPA_LOGIN_REBUILD=YES \
-#   ERP_DOCKER_NETWORK=supabase_default \
-#   bash scripts/vps/spa-login-rebuild-api-web.sh
+# Uso (Web Console VPS) — com PR ainda aberta (deploy do branch):
+#   cd /opt/erp-zuccaro
+#   git fetch origin cursor/spa-login-http-supabase-392b
+#   git checkout --detach origin/cursor/spa-login-http-supabase-392b
+#   CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
+#     GIT_REF=HEAD \
+#     bash scripts/vps/spa-login-rebuild-api-web.sh
+#
+# Após merge #45 na main:
+#   CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
+#     bash scripts/vps/spa-login-rebuild-api-web.sh
 set -Eeuo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 
 CONFIRM_SPA_LOGIN_REBUILD="${CONFIRM_SPA_LOGIN_REBUILD:-}"
+GIT_REF="${GIT_REF:-origin/main}"
 EXPECTED_MARKER_API='passwordLoginPath'
 EXPECTED_MARKER_SPA='erp-login-email'
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.erp.yml}"
 ENV_FILE="${ENV_FILE:-.env.erp.dev}"
 
 echo "SPA_LOGIN_REBUILD_BEGIN utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+echo "git_ref=${GIT_REF}"
 
 [[ "$CONFIRM_SPA_LOGIN_REBUILD" == "YES" ]] || {
-  echo 'BLOCKED: set CONFIRM_SPA_LOGIN_REBUILD=YES after PR #45 merged' >&2
+  echo 'BLOCKED: set CONFIRM_SPA_LOGIN_REBUILD=YES' >&2
   exit 2
 }
 : "${ERP_DOCKER_NETWORK:?Set ERP_DOCKER_NETWORK}"
@@ -36,24 +44,31 @@ curl -sS -o /dev/null -w 'health_3080_before=%{http_code}\n' --connect-timeout 3
 curl -sS -o /dev/null -w 'web_3081_before=%{http_code}\n' --connect-timeout 3 \
   http://127.0.0.1:3081/ 2>/dev/null || echo 'web_3081_before=000'
 
-git fetch origin main
-git checkout --detach origin/main
+if [[ "$GIT_REF" == "HEAD" ]]; then
+  echo 'git_checkout=SKIP_ALREADY_ON_REF'
+else
+  # Aceita branch remota (ex.: origin/cursor/spa-login-http-supabase-392b) ou main.
+  REF_BRANCH="${GIT_REF#origin/}"
+  git fetch origin "$REF_BRANCH"
+  git checkout --detach "origin/${REF_BRANCH}"
+fi
+
 MERGE_SHA="$(git rev-parse HEAD)"
 MERGE_SHA8="${MERGE_SHA:0:8}"
 echo "merge_sha=${MERGE_SHA}"
 echo "merge_sha8=${MERGE_SHA8}"
 
 if ! grep -q "$EXPECTED_MARKER_API" "$ROOT/server/src/api/router.ts"; then
-  echo 'BLOCKED: auth_session_endpoint_missing_on_main' >&2
-  echo 'HINT=merge_PR_45_first' >&2
+  echo 'BLOCKED: auth_session_endpoint_missing_on_ref' >&2
+  echo 'HINT=fetch_PR_45_branch_or_merge_first' >&2
   exit 3
 fi
 if ! grep -q "$EXPECTED_MARKER_SPA" "$ROOT/src/components/UserNotRegisteredError.jsx"; then
-  echo 'BLOCKED: spa_login_form_missing_on_main' >&2
-  echo 'HINT=merge_PR_45_first' >&2
+  echo 'BLOCKED: spa_login_form_missing_on_ref' >&2
+  echo 'HINT=fetch_PR_45_branch_or_merge_first' >&2
   exit 3
 fi
-echo 'login_markers_on_main=YES'
+echo 'login_markers_on_ref=YES'
 
 # Preserve official containers by renaming before recreate (rollback names).
 STAMP="$(date -u +%Y%m%d-%H%M%S)"

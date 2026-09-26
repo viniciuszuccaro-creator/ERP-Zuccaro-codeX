@@ -1,11 +1,11 @@
-## SPA login HTTP/supabase_user — formulário e-mail/senha (2026-09-26T13:35Z)
+## SPA login HTTP/supabase_user — formulário e-mail/senha (2026-09-26T13:45Z)
 
-- Sintoma no browser HTTPS: “Sessão inválida” sem campos de login/senha (confirmado humano + probe).
-- Causa: modo `VITE_ERP_BACKEND=http` usava `redirectToLogin` local (noop) e AuthContext não tratava Bearer/supabase_user na UI.
-- Fix código (PR #45): `POST /api/v1/auth/session` (BFF→GoTrue) + formulário no fluxo existente (`UserNotRegisteredError`/`AuthContext`).
-- Probe ao vivo (pré-deploy): SPA `index-BBakQWij.js` sem `erp-login-email`; `POST /api/v1/auth/session` → 401 `AUTH_REQUIRED` (API antiga).
-- Script VPS: `scripts/vps/spa-login-rebuild-api-web.sh` (rebuild api+web, prova endpoint + bundle).
-- Próximo: CI #45 verde → merge humano → colar rebuild na Web Console → hard refresh em `https://erp-dev…` e validar campos e-mail/senha.
+- Sintoma: “Sessão inválida” sem e-mail/senha (HTTPS ok; bundle antigo).
+- PR #45 CI verde · ainda OPEN (não na main) → script ausente no checkout VPS (`No such file`).
+- Colar VPS (deploy do branch, sem esperar merge):
+  `git fetch origin cursor/spa-login-http-supabase-392b && git checkout --detach origin/cursor/spa-login-http-supabase-392b`
+  depois `CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default GIT_REF=HEAD bash scripts/vps/spa-login-rebuild-api-web.sh`
+- Script aceita `GIT_REF=HEAD` ou branch do PR (não exige main).
 
 ## Comercial 360 / Onda 2 - CI HTTP fixtures + snapshot preço (2026-09-25T20:05Z)
 
