@@ -1,10 +1,26 @@
-## #59 STATUS REAL — Onda 4 UI Orçamento versões/origem/anexos (2026-09-26T20:00Z)
+## #60 STATUS REAL — Onda 5 UI Pedido anexos no painel canônico (2026-09-26T19:08Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — PedidoCanonicoPanel lista anexos via `listAnexos` |
+| Testado | **SIM** — pedido-frontend-integration 2/2 |
+| CI | **SIM** — frontend+backend SUCCESS (`c73d47c7`) |
+| Mesclado | **NÃO** (empilhada #59→…) |
+| Implantado VPS | **NÃO** |
+
+## Comercial 360 / Onda 5 - UI anexos Pedido (2026-09-26T19:08Z)
+
+- Branch `cursor/comercial360-onda5-pedido-ui-anexos-392b` (base #59).
+- Reutiliza painel HTTP e endpoint DAM já existentes; só leitura de metadados no detalhe.
+- Sem módulo/tela paralela. Ready for review. Próximo: registrar/inativar anexos Pedido no cliente HTTP + painel.
+
+## #59 STATUS REAL — Onda 4 UI Orçamento versões/origem/anexos (2026-09-26T20:02Z)
 
 | Etapa | Estado |
 | --- | --- |
 | Implementado | **SIM** — OrcamentosTab + httpApiClient (versoes/anexos/origem) |
 | Testado | **SIM** — orcamento-ui-policy 11/11 |
-| CI | **PENDENTE** |
+| CI | **SIM** — frontend+backend SUCCESS (`6b2f3c21`) |
 | Mesclado | **NÃO** (empilhada #58→…) |
 | Implantado VPS | **NÃO** |
 
@@ -12,7 +28,7 @@
 
 - Branch `cursor/comercial360-onda4-orcamento-ui-versoes-392b` (base #58).
 - Reutiliza tela existente: filtro origem, listar versões, nova versão, listar anexos.
-- RBAC `versionar` fail-closed; sem módulo paralelo.
+- RBAC `versionar` fail-closed; sem módulo paralelo. Próximo: UI anexos Pedido no painel canônico.
 
 ## #58 STATUS REAL — Onda 5 UI Pedido omnicanal (origem/tipo/campanha) (2026-09-26T19:55Z)
 
