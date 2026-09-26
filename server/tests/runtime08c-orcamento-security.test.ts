@@ -34,7 +34,7 @@ const payload = {
     unidade_sigla: 'UN',
     quantidade: '2',
     preco_unitario: '10',
-    desconto: '1',
+    desconto: '0',
   }],
 };
 
@@ -141,7 +141,7 @@ test('RBAC granular permite visualizar criar editar e cancelar sem eventos de le
   });
   await service.cancel(ctx, created.id);
 
-  assert.equal(updated.total, '29.000000');
+  assert.equal(updated.total, '30.000000');
   assert.deepEqual(audit.entries.map((entry) => entry.action), ['create', 'update', 'change_status']);
   assert.ok(audit.executors.every((executor) => executor === repo.executor));
   const encoded = JSON.stringify(audit.entries.map((entry) => ({ beforeData: entry.beforeData, afterData: entry.afterData })));

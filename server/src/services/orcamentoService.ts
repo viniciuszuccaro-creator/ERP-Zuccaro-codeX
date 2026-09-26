@@ -1,4 +1,4 @@
-import { AppError } from '../api/errors.js';
+import { AppError, isAppError } from '../api/errors.js';
 import { sanitizeAuditSnapshot } from '../audit/sanitizeAuditSnapshot.js';
 import type { AuditAction, AuditRepository, RequestContext } from '../audit/types.js';
 import type { DbQueryExecutor } from '../db/client.js';
@@ -10,6 +10,11 @@ import type { CondicaoPagamentoRepository } from '../repositories/inMemoryCondic
 import type { ProdutoRepository } from '../repositories/inMemoryProdutoRepository.js';
 import { orcamentoCreateSchema, type Orcamento, type OrcamentoCreate, type OrcamentoRepository, type OrcamentoScope } from '../repositories/orcamentoTypes.js';
 import type { TenantEntityRepository } from './tenantCrudService.js';
+import {
+  assertDescontoDentroDaAlcadaOuAprovar,
+  descontoExcedeAlcadaLivre,
+  type DescontoAlcadaDecisao,
+} from './comercialDescontoAlcadaPolicy.js';
 
 const RBAC_MODULE = 'Comercial';
 const RBAC_SECTION = 'orcamento';
@@ -51,6 +56,8 @@ export class OrcamentoService {
     return this.repo.withTransaction(async (executor) => {
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
+      // Create: criador = actor → alçada acima da livre nunca autoaprova.
+      await this.assertDescontoAlcada(ctx, priced.itens, ctx.actorId!);
       const created = await this.repo.create(scope, priced, executor);
       await this.auditRow(ctx, 'create', null, created, executor);
       return created;
@@ -95,9 +102,27 @@ export class OrcamentoService {
       this.requireOpen(before);
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
+      const criador = await this.resolveCriadorActorId('Orcamento', id);
+      const alcada = await this.assertDescontoAlcada(ctx, priced.itens, criador);
       const after = await this.repo.update(scope, id, priced, executor);
       if (!after) this.stateConflict();
       await this.auditRow(ctx, 'update', before, after, executor);
+      if (alcada.aprovadaPorOutro) {
+        await this.audit.append({
+          groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
+          actorEmail: ctx.actorEmail, entity: 'Orcamento', entityId: after.id, action: 'approve',
+          beforeData: orcamentoAuditSnapshot(before),
+          afterData: {
+            ...orcamentoAuditSnapshot(after),
+            desconto_alcada: {
+              aprovada_por_outro: true,
+              desconto_bps: alcada.descontoBps,
+              criador_actor_id: criador,
+            },
+          },
+          requestId: ctx.requestId, ipAddress: ctx.ipAddress,
+        }, executor);
+      }
       return after;
     });
   }
@@ -142,6 +167,41 @@ export class OrcamentoService {
       itens.push({ ...item, preco_unitario: this.normalizeMoney(resolved.preco) });
     }
     return { ...data, itens };
+  }
+
+  private async resolveCriadorActorId(entity: string, entityId: string): Promise<string | null> {
+    const entries = await this.audit.listByEntity(entity, entityId);
+    const created = entries.find((entry) => entry.action === 'create' && entry.actorId);
+    return created?.actorId ?? null;
+  }
+
+  private async assertDescontoAlcada(
+    ctx: RequestContext,
+    itens: OrcamentoCreate['itens'],
+    criadorActorId: string | null,
+  ): Promise<DescontoAlcadaDecisao> {
+    if (!descontoExcedeAlcadaLivre(itens)) {
+      return { aprovacaoExigida: false, aprovadaPorOutro: false, descontoBps: 0 };
+    }
+
+    let canAprovar = false;
+    try {
+      await this.rbac.assertAllowed(ctx, RBAC_MODULE, RBAC_SECTION, 'aprovar', { allowGlobalWildcard: false });
+      canAprovar = true;
+    } catch (error) {
+      if (isAppError(error) && error.code === 'PERMISSION_DENIED') {
+        canAprovar = false;
+      } else {
+        throw error;
+      }
+    }
+    return assertDescontoDentroDaAlcadaOuAprovar({
+      items: itens,
+      canAprovar,
+      actorId: ctx.actorId!,
+      criadorActorId,
+      entityLabel: 'Orçamento',
+    });
   }
 
   private normalizeMoney(value: string): string {

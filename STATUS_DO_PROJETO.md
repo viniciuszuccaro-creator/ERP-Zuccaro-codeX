@@ -1,3 +1,49 @@
+## #46 STATUS REAL — alçada desconto (2026-09-26T22:20Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — P1 segregação (outro aprovador + audit `approve`) + P2 catch só `PERMISSION_DENIED` |
+| Testado | **SIM** — 14/14 alcada unit+HTTP (autoaprovação 403; timeout → 500 não mascarado) |
+| CI | **PENDENTE** neste HEAD |
+| Re-review Codex | **PENDENTE** — bloqueios discussion_r4112240714 / r4112240716 |
+| Mesclado | **NÃO** |
+| Implantado VPS | **N/A** |
+
+Fluxo canônico: create com desconto acima da livre → 403 mesmo com `aprovar` (sem autoaprovação). Update/convert: ator com `aprovar` ≠ criador (audit create) + log `approve`. Falha operacional RBAC propaga (não vira `DESCONTO_ALCADA_DENIED`).
+
+## #46 STATUS REAL — alçada desconto (2026-09-26T17:30Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — HEAD `e6490000` (P1 truncamento `<1 bp` + HTTP create/update/convert) |
+| Testado | **SIM** — 9/9 alcada unit+HTTP |
+| CI | **SIM** @ `e6490000` frontend+backend SUCCESS |
+| Re-review Codex | **PENDENTE** no HEAD ≥`5ba34df3` (review anterior era de `9415094f`) |
+| Mesclado | **NÃO** |
+| Implantado VPS | **N/A** (somente código/CI; sem deploy deste PR) |
+
+## Comercial 360 / Onda 2 - alçada P1 truncamento <1 bp (2026-09-26T17:20Z)
+
+- Achado Codex no HEAD `9415094f`: `descontoBps` truncava BigInt → desconto 0.01/1000 (0.1 bp) passava com alçada 0.
+- Fix: comparação inteira `descontoMicros * 10000n > subtotalMicros * lim` em `descontoExcedeAlcadaLivre`.
+- Testes: regressão unitária + HTTP create/update/convert sem `aprovar` → 403 exact + sem persistência (9/9 PASS).
+- Pedido Codex: re-revisar novo HEAD. #45 permanece independente (acesso).
+
+## Comercial 360 / Onda 2 - alçada HTTP exact DESCONTO_ALCADA_DENIED (2026-09-26T17:15Z)
+
+- Avanço #46 (branch separada; não bloqueia #45): teste HTTP exacto Orçamento/Pedido — criador sem `aprovar` → **403** `{ code: DESCONTO_ALCADA_DENIED }`; aprovador → 201.
+- Arquivo: `server/tests/comercial-desconto-alcada-http.test.ts` (5/5 com unitários).
+- Próximo Onda 2 nesta branch: margem/custo sensível (permissão própria), após re-review Codex da alçada.
+
+## Comercial 360 / Onda 2 - alçada de desconto (2026-09-26T16:40Z)
+
+- Branch `cursor/comercial360-onda2-alcada-desconto-392b` (separada da #45).
+- Política pura `comercialDescontoAlcadaPolicy`: desconto > alçada livre (0 bps) exige `Comercial.{orcamento|pedido}.aprovar`.
+- Orçamento/Pedido create/update/convert aplicam a regra após snapshot de preço; fail-closed 403 `DESCONTO_ALCADA_DENIED`.
+- Sem módulo paralelo; reutiliza agregados e RBAC existentes. UI `AprovacaoDescontos*` permanece a superfície legada.
+- Testes: alcada 3/3 + orc/ped service/http/onda2 — PASS.
+- #45 segue com RBAC owner explícito (implantação VPS após re-review Codex).
+
 ## Comercial 360 / Onda 2 - CI HTTP fixtures + snapshot preço (2026-09-25T20:05Z)
 
 - Causa CI vermelha: HTTP Orçamento/Pedido usavam `TabelaPrecoService` real (memória vazia) → 404 no create após Onda 2 exigir `resolveSalePrice`.
