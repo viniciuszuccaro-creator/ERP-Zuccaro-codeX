@@ -1,3 +1,20 @@
+## #52 STATUS REAL — Onda 4 Orçamento versionamento (2026-09-26T19:45Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — migration 027 + createVersion/listVersions |
+| Testado | **SIM** — onda4 + runtime08c/01 + regressão onda5 (78/78) |
+| CI | **PENDENTE** |
+| Mesclado | **NÃO** (empilhada #50→#51→#52) |
+| Implantado VPS | **NÃO** |
+
+## Comercial 360 / Onda 4 - versionamento Orçamento (2026-09-26T19:45Z)
+
+- Branch `cursor/comercial360-onda4-orcamento-versao-392b` (base #51).
+- Mesmo `numero`; `versao` incrementa; status `SUPERSEDIDO`; no máximo um `EM_ABERTO` por número/empresa.
+- RBAC `Comercial.orcamento.versionar`; rotas `GET/POST /api/v1/orcamentos/:id/versoes`.
+- Sem módulo paralelo; anexos/PDF/aprovação ficam para checkpoint seguinte da Onda 4.
+
 ## #51 STATUS REAL — Onda 5 ck2 tipo comercial Pedido (2026-09-26T19:20Z)
 
 | Etapa | Estado |
