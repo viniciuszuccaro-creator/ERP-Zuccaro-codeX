@@ -1,10 +1,8 @@
-## SPA login — acesso total DEV pós-login (2026-09-26T14:35Z)
+## SPA login — acesso total DEV (2ª correção) (2026-09-26T14:45Z)
 
-- Sintoma: entrou, mas “Permissão negada” + sem empresa no seletor.
-- Causa: UserContext HTTP usava `localApiUser` paralelo; sessão Auth sem `role=admin`/perfil; entityGuard fail-closed.
-- Fix UI: `buildHttpDevAdminUser` + espelho local Grupo/Empresa; admin bypass em `usePermissions`/`ProtectedSection`.
-- Fix dados: `grant-dev-admin-profile.sh` (role admin + empresa_id no profile synth).
-- Deploy: rebuild `erp-web` + script grant + logout/login.
+- Bundle anterior já tinha “Administrador DEV”, mas contexto HTTP ainda usava `localApiUser` → sem empresa real + entity create RBAC no espelho.
+- Fix: `useContextoGrupoEmpresa` usa sessão HTTP; espelho via `upsertHttpTenantLocalMirror` (sem RBAC); admin em `userTemAcessoEmpresa`; login BFF preenche `empresa_id` via COALESCE.
+- Colar VPS: grant profile + rebuild **api e web** + logout/login.
 
 
 

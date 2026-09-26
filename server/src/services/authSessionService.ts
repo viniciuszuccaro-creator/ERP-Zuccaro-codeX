@@ -107,7 +107,14 @@ export async function createPasswordAuthSession(options: {
   let profiles: AuthSessionProfile[] = [];
   try {
     const result = await options.db.query<{ id: string; group_id: string; empresa_id: string | null }>(
-      `SELECT p.id, p.group_id, p.empresa_id
+      `SELECT p.id, p.group_id,
+              COALESCE(
+                p.empresa_id,
+                (SELECT e.id FROM empresas e
+                  WHERE e.group_id = p.group_id
+                  ORDER BY e.id
+                  LIMIT 1)
+              ) AS empresa_id
        FROM profiles p
        WHERE p.auth_user_id = $1 AND p.ativo = true
        ORDER BY p.empresa_id NULLS LAST, p.id

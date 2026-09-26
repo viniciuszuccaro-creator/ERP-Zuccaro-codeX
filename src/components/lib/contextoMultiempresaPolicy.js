@@ -69,6 +69,9 @@ export const empresaPertenceAoGrupo = (empresa, groupId) => recordMatchesGroupSc
 export const userTemAcessoGrupo = (user, grupoId) => {
   const id = normalizeIdentifier(grupoId);
   if (!user || !id) return false;
+  if (user.pode_operar_em_grupo === true || user.role === 'admin' || user._app_role === 'admin') {
+    if (firstValue(user.grupo_atual_id, user.grupo_padrao_id, user.group_id) === id) return true;
+  }
   if (firstValue(user.grupo_atual_id, user.grupo_padrao_id, user.group_id) === id) return true;
   const vinculos = Array.isArray(user.grupos_vinculados) ? user.grupos_vinculados : [];
   return vinculos.some((vinculo) => (
@@ -81,6 +84,7 @@ export const userTemAcessoEmpresa = (user, empresa) => {
   if (!user || !empresaPertenceAoGrupo(empresa, groupId)) return false;
   const empresaId = normalizeIdentifier(empresa?.id);
   if (!empresaId) return false;
+  if (user.pode_ver_todas_empresas === true || user.role === 'admin' || user._app_role === 'admin') return true;
   if (firstValue(user.empresa_atual_id, user.empresa_padrao_id) === empresaId) return true;
   const vinculos = Array.isArray(user.empresas_vinculadas) ? user.empresas_vinculadas : [];
   if (!vinculos.length) return false;

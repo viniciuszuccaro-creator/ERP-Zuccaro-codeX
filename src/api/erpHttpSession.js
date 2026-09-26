@@ -100,77 +100,29 @@ export function buildHttpDevAdminUser(session) {
 /**
  * Espelha Grupo/Empresa do Postgres no localBase44 (IDs reais da sessão)
  * para o seletor multiempresa e o PerfilAcesso admin existirem no browser.
- * @param {{ groupId: string, empresaId?: string | null, base44Client: { entities: Record<string, any> } }} input
+ * Usa upsert direto (sem RBAC create) — bootstrap de sessão HTTP.
+ * @param {{ groupId: string, empresaId?: string | null, base44Client?: unknown }} input
  */
 export async function ensureHttpTenantLocalMirror(input) {
   const groupId = String(input?.groupId || '').trim();
   const empresaId = input?.empresaId ? String(input.empresaId).trim() : '';
-  const entities = input?.base44Client?.entities;
-  if (!groupId || !entities) return { group: false, empresa: false, perfil: false };
+  if (!groupId) return { group: false, empresa: false, perfil: false };
 
-  let groupOk = false;
-  let empresaOk = false;
-  let perfilOk = false;
-
-  const grupos = await entities.GrupoEmpresarial.filter({ id: groupId });
-  if (grupos?.[0]) {
-    groupOk = true;
-  } else {
-    await entities.GrupoEmpresarial.create({
-      id: groupId,
-      nome_do_grupo: 'Grupo ERP DEV',
-      nome: 'Grupo ERP DEV',
-      status: 'Ativo',
-    });
-    groupOk = true;
-  }
-
-  if (empresaId) {
-    const empresas = await entities.Empresa.filter({ id: empresaId });
-    if (empresas?.[0]) {
-      empresaOk = true;
-    } else {
-      await entities.Empresa.create({
-        id: empresaId,
-        nome_fantasia: 'Empresa ERP DEV',
-        razao_social: 'Empresa ERP DEV',
-        group_id: groupId,
-        grupo_id: groupId,
-        status: 'Ativa',
-        tipo: 'Matriz',
-        ativo: true,
-      });
-      empresaOk = true;
-    }
-  }
-
-  try {
-    const perfil = await entities.PerfilAcesso.get('local_perfil_admin');
-    if (perfil?.id) {
-      perfilOk = true;
-    }
-  } catch {
-    await entities.PerfilAcesso.create({
-      id: 'local_perfil_admin',
-      nome: 'Administrador Local',
-      ativo: true,
-      permissoes: { '*': ['visualizar', 'criar', 'editar', 'excluir', 'aprovar', 'cancelar', 'importar', 'exportar', 'configurar', 'executar'] },
-      group_id: groupId,
-    });
-    perfilOk = true;
-  }
+  const { upsertHttpTenantLocalMirror } = await import('./localBase44Client.js');
+  const result = upsertHttpTenantLocalMirror({ groupId, empresaId });
 
   try {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('group_atual_id', groupId);
       localStorage.setItem('contexto_atual', empresaId ? 'empresa' : 'grupo');
       if (empresaId) localStorage.setItem('empresa_atual_id', empresaId);
+      else localStorage.removeItem('empresa_atual_id');
     }
   } catch {
-    /* storage indisponível — contexto em memória ainda pode ser setado pelos hooks */
+    /* storage indisponível */
   }
 
-  return { group: groupOk, empresa: empresaOk, perfil: perfilOk };
+  return result;
 }
 
 /**
