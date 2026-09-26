@@ -140,6 +140,8 @@ export default function usePermissions() {
 
   const hasPermission = (module, section, action = "visualizar") => {
     if (!user) return false;
+    // Admin DEV / mestre: acesso total na UI (RBAC granular para funcionários vem depois).
+    if (user.role === "admin" || user._app_role === "admin") return true;
     const perms = perfilAcesso?.permissoes;
     if (!perms) return false;
     if (!section && typeof module === "string" && module.includes(".")) {

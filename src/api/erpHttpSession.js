@@ -65,6 +65,115 @@ export function readErpHttpSession(storage = typeof window !== 'undefined' ? win
 }
 
 /**
+ * Usuário UI pós-login HTTP DEV: admin total para homologação
+ * (funcionários/setores virão depois via PerfilAcesso real).
+ * @param {{ token?: string, groupId: string, empresaId?: string | null, actorId: string, email?: string | null }} session
+ */
+export function buildHttpDevAdminUser(session) {
+  const groupId = String(session?.groupId || '').trim();
+  const actorId = String(session?.actorId || '').trim();
+  const empresaId = session?.empresaId ? String(session.empresaId).trim() : '';
+  const email = session?.email || 'admin-dev@erp.local';
+  if (!groupId || !actorId) return null;
+  return {
+    id: actorId,
+    email,
+    full_name: 'Administrador DEV',
+    role: 'admin',
+    _app_role: 'admin',
+    perfil_acesso_id: 'local_perfil_admin',
+    mestre_local: false,
+    disabled: false,
+    is_verified: true,
+    contexto_atual: empresaId ? 'empresa' : 'grupo',
+    grupo_atual_id: groupId,
+    grupo_padrao_id: groupId,
+    empresa_atual_id: empresaId || null,
+    empresa_padrao_id: empresaId || null,
+    pode_operar_em_grupo: true,
+    pode_ver_todas_empresas: true,
+    empresas_vinculadas: empresaId ? [{ empresa_id: empresaId, ativo: true }] : [],
+    grupos_vinculados: [{ grupo_id: groupId, ativo: true }],
+  };
+}
+
+/**
+ * Espelha Grupo/Empresa do Postgres no localBase44 (IDs reais da sessão)
+ * para o seletor multiempresa e o PerfilAcesso admin existirem no browser.
+ * @param {{ groupId: string, empresaId?: string | null, base44Client: { entities: Record<string, any> } }} input
+ */
+export async function ensureHttpTenantLocalMirror(input) {
+  const groupId = String(input?.groupId || '').trim();
+  const empresaId = input?.empresaId ? String(input.empresaId).trim() : '';
+  const entities = input?.base44Client?.entities;
+  if (!groupId || !entities) return { group: false, empresa: false, perfil: false };
+
+  let groupOk = false;
+  let empresaOk = false;
+  let perfilOk = false;
+
+  const grupos = await entities.GrupoEmpresarial.filter({ id: groupId });
+  if (grupos?.[0]) {
+    groupOk = true;
+  } else {
+    await entities.GrupoEmpresarial.create({
+      id: groupId,
+      nome_do_grupo: 'Grupo ERP DEV',
+      nome: 'Grupo ERP DEV',
+      status: 'Ativo',
+    });
+    groupOk = true;
+  }
+
+  if (empresaId) {
+    const empresas = await entities.Empresa.filter({ id: empresaId });
+    if (empresas?.[0]) {
+      empresaOk = true;
+    } else {
+      await entities.Empresa.create({
+        id: empresaId,
+        nome_fantasia: 'Empresa ERP DEV',
+        razao_social: 'Empresa ERP DEV',
+        group_id: groupId,
+        grupo_id: groupId,
+        status: 'Ativa',
+        tipo: 'Matriz',
+        ativo: true,
+      });
+      empresaOk = true;
+    }
+  }
+
+  try {
+    const perfil = await entities.PerfilAcesso.get('local_perfil_admin');
+    if (perfil?.id) {
+      perfilOk = true;
+    }
+  } catch {
+    await entities.PerfilAcesso.create({
+      id: 'local_perfil_admin',
+      nome: 'Administrador Local',
+      ativo: true,
+      permissoes: { '*': ['visualizar', 'criar', 'editar', 'excluir', 'aprovar', 'cancelar', 'importar', 'exportar', 'configurar', 'executar'] },
+      group_id: groupId,
+    });
+    perfilOk = true;
+  }
+
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('group_atual_id', groupId);
+      localStorage.setItem('contexto_atual', empresaId ? 'empresa' : 'grupo');
+      if (empresaId) localStorage.setItem('empresa_atual_id', empresaId);
+    }
+  } catch {
+    /* storage indisponível — contexto em memória ainda pode ser setado pelos hooks */
+  }
+
+  return { group: groupOk, empresa: empresaOk, perfil: perfilOk };
+}
+
+/**
  * Login password via BFF (same-origin /api).
  * @param {{ email: string, password: string, baseUrl?: string, fetchImpl?: typeof fetch }} input
  */

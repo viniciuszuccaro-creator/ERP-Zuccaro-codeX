@@ -1,9 +1,10 @@
-## SPA login — Credenciais inválidas pós-CORS (2026-09-26T14:22Z)
+## SPA login — acesso total DEV pós-login (2026-09-26T14:35Z)
 
-- Humano: senha nova ainda `AUTH_INVALID_CREDENTIALS`.
-- Hipótese: `SUPABASE_ANON_KEY`/`SUPABASE_URL` no `.env.erp.dev` divergente do Auth real (provision usa service_role do Supabase; BFF usa anon do ERP).
-- Script: `scripts/vps/repair-auth-login-erp-dev.sh` — sync chaves Supabase→ERP, recreate API, reset senha, prova GoTrue+BFF=200.
-- Colar: `CONFIRM_AUTH_LOGIN_REPAIR=YES ERP_DOCKER_NETWORK=supabase_default bash scripts/vps/repair-auth-login-erp-dev.sh`
+- Sintoma: entrou, mas “Permissão negada” + sem empresa no seletor.
+- Causa: UserContext HTTP usava `localApiUser` paralelo; sessão Auth sem `role=admin`/perfil; entityGuard fail-closed.
+- Fix UI: `buildHttpDevAdminUser` + espelho local Grupo/Empresa; admin bypass em `usePermissions`/`ProtectedSection`.
+- Fix dados: `grant-dev-admin-profile.sh` (role admin + empresa_id no profile synth).
+- Deploy: rebuild `erp-web` + script grant + logout/login.
 
 
 

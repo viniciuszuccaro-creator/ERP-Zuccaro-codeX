@@ -1,9 +1,42 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { base44, isApiKeyMode, isLocalOnlyMode, localApiUser } from "@/api/base44Client";
+import { base44, isApiKeyMode, isHttpBackendMode, isLocalOnlyMode, localApiUser } from "@/api/base44Client";
+import {
+  buildHttpDevAdminUser,
+  ensureHttpTenantLocalMirror,
+  readErpHttpSession,
+} from "@/api/erpHttpSession";
 
 const UserContext = createContext(null);
 
 const resolveBootUser = async () => {
+  // HTTP/supabase_user: usar sessão Bearer + tenant real (não o admin local paralelo).
+  if (isHttpBackendMode) {
+    const session = readErpHttpSession();
+    if (!session) {
+      const err = new Error('Authentication required');
+      err.status = 401;
+      err.authType = 'auth_required';
+      throw err;
+    }
+    try {
+      await ensureHttpTenantLocalMirror({
+        groupId: session.groupId,
+        empresaId: session.empresaId,
+        base44Client: base44,
+      });
+    } catch (error) {
+      console.warn('[UserContext] espelho local tenant falhou.', error?.message || error);
+    }
+    const adminUser = buildHttpDevAdminUser(session);
+    if (!adminUser) {
+      const err = new Error('Authentication required');
+      err.status = 401;
+      err.authType = 'auth_required';
+      throw err;
+    }
+    return adminUser;
+  }
+
   if (isApiKeyMode && !isLocalOnlyMode) {
     return localApiUser;
   }

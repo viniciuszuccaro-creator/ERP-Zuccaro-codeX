@@ -4,7 +4,9 @@ import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
 import { assertInteractiveAuthAllowed } from '@/api/localAuthSessionPolicy';
 import {
+  buildHttpDevAdminUser,
   clearErpHttpSession,
+  ensureHttpTenantLocalMirror,
   loginErpHttpSession,
   readErpHttpSession,
 } from '@/api/erpHttpSession';
@@ -21,21 +23,30 @@ export const AuthProvider = ({ children }) => {
   const [loginBusy, setLoginBusy] = useState(false);
   const [loginError, setLoginError] = useState(null);
 
-  const applyHttpSession = useCallback((session) => {
+  const applyHttpSession = useCallback(async (session) => {
     if (!session?.token || !session?.groupId || !session?.actorId) {
       setUser(null);
       setIsAuthenticated(false);
       setAuthError({ type: 'auth_required', message: 'Authentication required' });
       return false;
     }
-    setUser({
-      id: session.actorId,
-      email: session.email || '',
-      full_name: session.email || 'Usuário ERP',
-      role: 'user',
-      grupo_atual_id: session.groupId,
-      empresa_atual_id: session.empresaId,
-    });
+    try {
+      await ensureHttpTenantLocalMirror({
+        groupId: session.groupId,
+        empresaId: session.empresaId,
+        base44Client: base44,
+      });
+    } catch (error) {
+      console.warn('[Auth] espelho local Grupo/Empresa falhou; seguindo com sessão.', error);
+    }
+    const adminUser = buildHttpDevAdminUser(session);
+    if (!adminUser) {
+      setUser(null);
+      setIsAuthenticated(false);
+      setAuthError({ type: 'auth_required', message: 'Authentication required' });
+      return false;
+    }
+    setUser(adminUser);
     setIsAuthenticated(true);
     setAuthError(null);
     return true;
@@ -46,7 +57,7 @@ export const AuthProvider = ({ children }) => {
       setIsLoadingAuth(true);
       if (isHttpBackendMode) {
         const session = readErpHttpSession();
-        const ok = applyHttpSession(session);
+        const ok = await applyHttpSession(session);
         setIsLoadingAuth(false);
         setAuthChecked(true);
         return ok;
@@ -184,7 +195,7 @@ export const AuthProvider = ({ children }) => {
     setLoginError(null);
     try {
       const session = await loginErpHttpSession({ email, password });
-      applyHttpSession({
+      await applyHttpSession({
         token: session.accessToken,
         groupId: session.groupId,
         empresaId: session.empresaId,
