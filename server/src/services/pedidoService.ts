@@ -127,8 +127,11 @@ export class PedidoService {
         return created;
       });
     } catch (error) {
-      if ((error as { code?: string }).code === '23505' || String((error as Error).message).includes('ALREADY_CONVERTED')) this.convertedConflict();
+      // Canal/idempotency/external_id antes de ORCAMENTO_ALREADY_CONVERTED (ambos são 23505).
       this.rethrowChannelConflict(error);
+      if ((error as { code?: string }).code === '23505' || String((error as Error).message).includes('ALREADY_CONVERTED')) {
+        this.convertedConflict();
+      }
       throw error;
     }
   }
