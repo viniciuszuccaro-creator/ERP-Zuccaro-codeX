@@ -328,6 +328,8 @@ export class PedidoService {
     scope: PedidoScope,
     itens: PedidoCreate['itens'],
   ) {
+    // Sem porta: skip sem consultar RBAC `aprovar` (não inventa custo / não mascara timeout).
+    if (!this.costs) return null;
     return assertMargemDentroDaAlcadaOuAprovar({
       groupId: scope.groupId,
       empresaId: scope.empresaId,

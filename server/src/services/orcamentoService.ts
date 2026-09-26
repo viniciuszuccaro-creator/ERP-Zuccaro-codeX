@@ -222,6 +222,8 @@ export class OrcamentoService {
     scope: OrcamentoScope,
     itens: OrcamentoCreate['itens'],
   ) {
+    // Sem porta: skip sem consultar RBAC `aprovar` (não inventa custo / não mascara timeout).
+    if (!this.costs) return null;
     return assertMargemDentroDaAlcadaOuAprovar({
       groupId: scope.groupId,
       empresaId: scope.empresaId,
