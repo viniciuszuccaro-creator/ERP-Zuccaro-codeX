@@ -140,7 +140,10 @@ export default function usePermissions() {
 
   const hasPermission = (module, section, action = "visualizar") => {
     if (!user) return false;
-    const perms = perfilAcesso?.permissoes;
+    // Fail-closed: admin HTTP/ERP usa a árvore explícita do perfil (sem bypass de role).
+    // Apenas mestre local DEV mantém acesso total na UI local-only.
+    if (user.mestre_local === true && (user.role === "admin" || user._app_role === "admin")) return true;
+    const perms = perfilAcesso?.permissoes || user?.permissoes;
     if (!perms) return false;
     if (!section && typeof module === "string" && module.includes(".")) {
       const parsed = parsePermissionKey(module, action);
@@ -192,7 +195,8 @@ export default function usePermissions() {
   };
 
   const isAdmin = () => {
-    return user?.role === "admin";
+    // Flag informativa — NÃO autoriza ações sensíveis sozinha.
+    return user?.mestre_local === true || user?.role === "admin";
   };
 
   // Expor resolvedor de módulo para uso externo (ex.: DataTableERP permission prop)

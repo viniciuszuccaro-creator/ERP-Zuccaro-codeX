@@ -1,10 +1,16 @@
 import { useState, useEffect } from "react";
-import { base44, isApiKeyMode, isLocalOnlyMode, localApiUser } from "@/api/base44Client";
+import { base44, isApiKeyMode, isHttpBackendMode, isLocalOnlyMode, localApiUser } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { empresaPertenceAoGrupo, userTemAcessoEmpresa, userTemAcessoGrupo } from "./contextoMultiempresaPolicy";
+import {
+  buildHttpSessionUser,
+  ensureHttpTenantLocalMirror,
+  readErpHttpSession,
+  switchErpHttpSessionEmpresa,
+} from "@/api/erpHttpSession";
 
 export function useContextoGrupoEmpresa() {
-  const isRemoteApiKeyMode = isApiKeyMode && !isLocalOnlyMode;
+  const isRemoteApiKeyMode = isApiKeyMode && !isLocalOnlyMode && !isHttpBackendMode;
   const [user, setUser] = useState(null);
   const [contexto, setContexto] = useState(() => {
     try {
@@ -17,6 +23,20 @@ export function useContextoGrupoEmpresa() {
   const [grupoAtual, setGrupoAtual] = useState(null);
   const [empresaAtual, setEmpresaAtual] = useState(null);
   const queryClient = useQueryClient();
+
+  const resolveSessionUser = async () => {
+    if (isHttpBackendMode) {
+      const session = readErpHttpSession();
+      if (!session) return null;
+      await ensureHttpTenantLocalMirror({
+        groupId: session.groupId,
+        empresaId: session.empresaId,
+      });
+      return buildHttpSessionUser(session);
+    }
+    if (isRemoteApiKeyMode) return localApiUser;
+    return await base44.auth.me();
+  };
 
   const carregarGrupoPorIdOuPadrao = async (currentUser) => {
     const grupoId = currentUser?.grupo_atual_id || currentUser?.grupo_padrao_id || localStorage.getItem('group_atual_id');
@@ -41,7 +61,13 @@ export function useContextoGrupoEmpresa() {
   const carregarContextoInicial = async () => {
     setIsLoadingContexto(true);
     try {
-      const currentUser = isRemoteApiKeyMode ? localApiUser : await base44.auth.me();
+      const currentUser = await resolveSessionUser();
+      if (!currentUser) {
+        setUser(null);
+        setGrupoAtual(null);
+        setEmpresaAtual(null);
+        return;
+      }
       setUser(currentUser);
 
       // Detecta contexto: prioridade user.contexto_atual, senão localStorage
@@ -88,7 +114,14 @@ export function useContextoGrupoEmpresa() {
         throw new Error("Você não tem acesso a este grupo. Configure os vínculos em Cadastros > Acesso.");
       }
 
-      if (isRemoteApiKeyMode) {
+      if (isRemoteApiKeyMode || isHttpBackendMode) {
+        if (isHttpBackendMode) {
+          switchErpHttpSessionEmpresa({ empresaId: null });
+          await ensureHttpTenantLocalMirror({
+            groupId: grupo.id,
+            empresaId: null,
+          });
+        }
         return grupo;
       }
 
@@ -134,7 +167,14 @@ export function useContextoGrupoEmpresa() {
         throw new Error("Você não tem acesso a esta empresa. Configure os vínculos em Cadastros > Acesso.");
       }
 
-      if (isRemoteApiKeyMode) {
+      if (isRemoteApiKeyMode || isHttpBackendMode) {
+        if (isHttpBackendMode) {
+          switchErpHttpSessionEmpresa({ empresaId });
+          await ensureHttpTenantLocalMirror({
+            groupId: empresa.group_id || empresa.grupo_id || user?.grupo_atual_id,
+            empresaId,
+          });
+        }
         return empresa;
       }
 

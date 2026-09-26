@@ -363,6 +363,61 @@ const ensureRecord = (db, entityName, id, factory) => {
   return next;
 };
 
+/**
+ * Espelho tenant HTTP→local sem passar por RBAC de create (bootstrap de sessão).
+ * @param {{ groupId: string, empresaId?: string | null }} input
+ */
+export function upsertHttpTenantLocalMirror(input = {}) {
+  const groupId = String(input.groupId || '').trim();
+  const empresaId = input.empresaId ? String(input.empresaId).trim() : '';
+  if (!groupId) return { group: false, empresa: false, perfil: false };
+  const db = loadDb();
+  ensureRecord(db, 'GrupoEmpresarial', groupId, () => ({
+    id: groupId,
+    nome_do_grupo: 'Grupo ERP DEV',
+    nome: 'Grupo ERP DEV',
+    status: 'Ativo',
+    created_date: now(),
+    updated_date: now(),
+  }));
+  if (empresaId) {
+    ensureRecord(db, 'Empresa', empresaId, () => ({
+      id: empresaId,
+      nome_fantasia: 'Empresa ERP DEV',
+      razao_social: 'Empresa ERP DEV',
+      group_id: groupId,
+      grupo_id: groupId,
+      status: 'Ativa',
+      tipo: 'Matriz',
+      ativo: true,
+      created_date: now(),
+      updated_date: now(),
+    }));
+  }
+  const perfilId = String(input.perfilAcessoId || '').trim() || 'local_perfil_admin';
+  const permissoes = input.permissoes && typeof input.permissoes === 'object' && !Array.isArray(input.permissoes)
+    ? input.permissoes
+    : (perfilId === 'local_perfil_admin' ? { '*': [...GRANULAR_PERMISSION_ACTIONS] } : {});
+  const perfilNome = String(input.perfilNome || '').trim()
+    || (perfilId === 'local_perfil_admin' ? 'Administrador Local' : 'Perfil HTTP');
+  // Upsert forçado: atualiza árvore server-side a cada restore/login.
+  const store = getEntityStore(db, 'PerfilAcesso');
+  const idx = store.findIndex((item) => String(item.id) === perfilId);
+  const row = {
+    id: perfilId,
+    nome: perfilNome,
+    ativo: true,
+    permissoes,
+    group_id: groupId,
+    updated_date: now(),
+    created_date: idx >= 0 ? (store[idx].created_date || now()) : now(),
+  };
+  if (idx >= 0) store[idx] = { ...store[idx], ...row };
+  else store.push(row);
+  saveDb(db);
+  return { group: true, empresa: Boolean(empresaId), perfil: true };
+}
+
 const uniqueByString = (items = []) => {
   const seen = new Set();
   return items.filter((item) => {

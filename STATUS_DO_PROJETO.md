@@ -1,3 +1,119 @@
+## #45 STATUS REAL — acesso owner (2026-09-26T22:05Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado (código) | **SIM** — scripts VPS + restore sessão via GET `/auth/session` + RBAC sem bypass admin |
+| Testado (local) | **SIM** — scripts reais 11/11 · erp-http-session 9/9 · auth-session 3/3 |
+| CI | **PENDENTE** neste HEAD |
+| Re-review Codex | **PENDENTE** — sessão/RBAC + scripts |
+| Mesclado em `main` | **NÃO** |
+| Implantado VPS | **NÃO** — só após Codex OK + IDs humanos + logout/login real |
+
+Lote sessão/RBAC: `refreshErpHttpSessionFromServer` (Bearer validado); `permissoes` no perfil HTTP; `ProtectedSection`/`usePermissions` sem bypass `role=admin`; espelho `http_perfil_*` com árvore server-side. Scripts: preflight portas + restore cp fail-closed.
+
+### PASTE_VPS (só após Codex OK + IDs humanos) — registrar digests
+
+```bash
+cd /opt/erp-zuccaro
+git fetch origin cursor/spa-login-http-supabase-392b
+git checkout --detach origin/cursor/spa-login-http-supabase-392b
+# Registrar ANTES:
+docker inspect -f '{{.Id}} {{.Config.Image}} {{index .RepoDigests 0}}' erp-api-dev erp-web-dev 2>/dev/null || true
+export OWNER_GROUP_ID='<uuid>' OWNER_EMPRESA_ID='<uuid>'
+CONFIRM_OWNER_ADMIN_PROFILE=YES OWNER_EMAIL='vinicius.zuccaro@gmail.com' DEMOTE_SYNTH=YES \
+  bash scripts/vps/provision-owner-admin-profile.sh
+CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default GIT_REF=HEAD \
+  bash scripts/vps/spa-login-rebuild-api-web.sh
+# Registrar DEPOIS (colar evidência sanitizada — sem tokens):
+docker inspect -f 'name={{.Name}} image={{.Config.Image}} id={{.Id}}' erp-api-dev erp-web-dev
+curl -sS http://127.0.0.1:3080/api/v1/meta | python3 -c 'import sys,json;m=json.load(sys.stdin);print("runtime",m.get("runtime"));print("auth", (m.get("auth") or {}).get("mode"));print("pwd",(m.get("authSession") or {}).get("passwordLoginPath"))'
+```
+
+## #45 Codex P1 (cab15caa) — min(uuid), if invertido, rebuild, restore seletivo (2026-09-26T17:10Z)
+
+- Achados Codex do HEAD `cab15caa` corrigidos na mesma branch #45:
+  1. **sem `min(uuid)`**: count + `SELECT id` separados no provision.
+  2. **`if docker exec` não invertido**: exit 0 → `transaction=COMMITTED`; falha → exit 4 sem postcheck/OK.
+  3. **rebuild**: `compose build` **antes** de stop; `trap ERR` + `SWAP_STARTED` restaura 3080/3081 se a troca falhar.
+  4. **backup seletivo JSON** + `CONFIRM_OWNER_ADMIN_RESTORE=YES` (sem replay `pg_dump --data-only`).
+- Sessão SPA: `expiresAt`/`expires_in`, fail-closed em expirada/adulterada; troca de empresa atualiza `erp_runtime_scope`.
+- Testes: `vps-owner-provision-guard` 5/5 · `erp-http-session` 7/7 · `owner-provision-sql` (PGlite) 2/2 · `auth-session-http-exact` 2/2 · `owner-permission-tree` 2/2 (HTTP 200/403 exactos).
+- HEAD `67a3284b` · CI [36257722349](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/36257722349) frontend+backend **SUCCESS**. Comentário de re-review Codex postado na #45.
+- **VPS:** não executar até re-review Codex + humano com `OWNER_GROUP_ID`/`OWNER_EMPRESA_ID`; depois logout/login real.
+- #46 permanece em branch separada (avançada com HTTP exact alçada); não bloqueia esta correção de acesso.
+
+## #45 Codex P1 — RBAC explícito + backup + rollback fail-closed (2026-09-26T16:30Z)
+
+- Achados Codex corrigidos na branch #45 (sem rodar VPS ainda):
+  1. Grupo/Empresa explícitos + `empresas.group_id` conferido (já no lote anterior; mantido).
+  2. **Sem `*`**: `scripts/vps/owner-admin-permissoes.json` + `OWNER_ERP_PERMISSION_TREE` (Cadastros/Comercial/Sistema); testes 403 para comum e ação fora da allowlist.
+  3. Backup `profiles` antes da TX + demote synth na mesma TX + rollback de imagens; rollback/rebuild **recusam** container desconhecido em 3080/3081.
+- Testes: `owner-permission-tree` 2/2 PASS · HEAD `f4910e3c`.
+- **Implantação VPS:** após re-review Codex + humano com `OWNER_GROUP_ID`/`OWNER_EMPRESA_ID`; registrar SHA imagens + bundle; validar login owner.
+- Próximo código paralelo: Comercial 360 Onda 2 alçada/desconto/margem em branch separada.
+
+## #43 merged + provision/rebuild endurecidos (#45) (2026-09-26T16:20Z)
+
+- **#43 MERGED** em `main` @ `f37b8a65` · CI main [36254946184](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/36254946184) frontend+backend **SUCCESS** (seed Central 360 corrigido).
+- **#45** (não executar o script antigo na VPS):
+  - `provision-owner-admin-profile.sh`: exige Auth única (=1), perfil único (0|1), `OWNER_GROUP_ID`+`OWNER_EMPRESA_ID` explícitos e conferidos **antes** de UPDATE; owner+demote synth na **mesma TX**; falha se `owner_admin_ativos`/`synth_admin_ativos` ≠ esperados.
+  - `spa-login-rebuild-api-web.sh`: preserva 3080/3081, grava `.spa-login-rollback-tags`, auto-rollback em falha de health/marker.
+  - Novo: `spa-login-rollback-api-web.sh` (rollback executável com `CONFIRM_SPA_LOGIN_ROLLBACK=YES`).
+- **Não rodar** provision/rebuild na VPS até o humano colar o HEAD novo com `OWNER_GROUP_ID`/`OWNER_EMPRESA_ID`.
+
+## Owner admin — rebuild VPS confirmado (2026-09-26T14:58Z)
+
+- Evidência Web Console (sanitizada): `SPA_LOGIN_REBUILD_OK` · `merge_sha8=d696c00b` · `spa_asset=/assets/index-DUZjZKV8.js` · `spa_login_form_in_bundle=YES` · `auth_mode=supabase_user` · `password_login_path=/api/v1/auth/session` · `browser_login=True` · health 3080/3081=200 · runtime `ERP-RUNTIME-08B`.
+- Probe externo agente: SPA 200 com `index-DUZjZKV8.js`; bundle **sem** “Administrador DEV” forçado; meta API alinhada.
+- Rollback tags: `pre-spa-login-20260926-145653` (api/web).
+- **Pendente humano:** (1) se ainda não rodou — `provision-owner-admin-profile.sh` (`owner_admin_ativos=1` · `synth_admin_ativos=0`); (2) hard refresh + **logout/login com a conta real** e validar admin (módulos + empresas).
+- #45 CI verde no mesmo SHA. #44 CLOSED. #43 MERGEABLE (merge humano → CI main).
+
+## Owner admin real + demote synth (2026-09-26T14:55Z)
+
+- Objetivo: vincular `vinicius.zuccaro@gmail.com` como admin proprietário (role + `permissoes.*` + grupo/empresa), sem privilegiar o synth.
+- Código: sessão BFF devolve `role`/`full_name`; SPA monta usuário via `buildHttpSessionUser` (admin só se `role=admin` no Postgres).
+- VPS script: `scripts/vps/provision-owner-admin-profile.sh` (owner admin + `DEMOTE_SYNTH=YES`).
+- Implantado agora em `erp-dev`: bundle `index-BL-7pNHC.js` (ainda força “Administrador DEV” — **pré** deste lote). API `authSession.passwordLoginPath` + `supabase_user` OK. HTTPS OK — **não** reexecutar script #44.
+- PR #45 aberta (branch deployada). PR #44: HTTPS já OK → encerrar. PR #43 MERGEABLE/CI verde → merge humano para CI da `main`.
+- **Validação humana obrigatória:** após colar o bloco VPS abaixo + logout/login com a conta real, confirmar módulos/empresas e que o synth não é admin.
+
+### PASTE_TO_GIT_VPS (sanitizado — Web Console) — **somente após pull do HEAD novo**
+
+```bash
+cd /opt/erp-zuccaro
+git fetch origin cursor/spa-login-http-supabase-392b
+git checkout --detach origin/cursor/spa-login-http-supabase-392b
+
+# OBRIGATÓRIO: grupo/empresa explícitos (não inventar — conferir no DB antes)
+export OWNER_GROUP_ID='<uuid-grupo>'
+export OWNER_EMPRESA_ID='<uuid-empresa>'
+
+CONFIRM_OWNER_ADMIN_PROFILE=YES \
+  OWNER_EMAIL='vinicius.zuccaro@gmail.com' \
+  DEMOTE_SYNTH=YES \
+  bash scripts/vps/provision-owner-admin-profile.sh
+# Esperado: precheck_ok=YES · owner_auth_count=1 · owner_admin_ativos=1 · synth_admin_ativos=0
+
+CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
+  GIT_REF=HEAD \
+  bash scripts/vps/spa-login-rebuild-api-web.sh
+# Rollback se preciso:
+# CONFIRM_SPA_LOGIN_ROLLBACK=YES ERP_DOCKER_NETWORK=supabase_default \
+#   bash scripts/vps/spa-login-rollback-api-web.sh
+```
+
+**Agente: não executar na VPS.** Humano cola evidência sanitizada + valida login owner.
+
+
+## SPA login — acesso total DEV (2ª correção) (2026-09-26T14:45Z)
+
+- Bundle anterior já tinha “Administrador DEV”, mas contexto HTTP ainda usava `localApiUser` → sem empresa real + entity create RBAC no espelho.
+- Fix: `useContextoGrupoEmpresa` usa sessão HTTP; espelho via `upsertHttpTenantLocalMirror` (sem RBAC); admin em `userTemAcessoEmpresa`; login BFF preenche `empresa_id` via COALESCE.
+- Colar VPS: grant profile + rebuild **api e web** + logout/login.
+
+
+
 ## Comercial 360 / Onda 2 - CI HTTP fixtures + snapshot preço (2026-09-25T20:05Z)
 
 - Causa CI vermelha: HTTP Orçamento/Pedido usavam `TabelaPrecoService` real (memória vazia) → 404 no create após Onda 2 exigir `resolveSalePrice`.

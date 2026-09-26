@@ -29,7 +29,7 @@ export default function ProtectedSection({
   const [requestingAccess, setRequestingAccess] = useState(false);
   const [requestedAccess, setRequestedAccess] = useState(false);
 
-  // Sempre manter a mesma ordem de hooks entre renders
+  // Sem bypass de role=admin: árvore explícita + entityGuard (fail-closed).
   const allowed = !isLoading && hasPermission(modulo, section, action);
   const [allowedFinal, setAllowedFinal] = useState(null);
 
