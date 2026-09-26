@@ -1,3 +1,22 @@
+## #51 STATUS REAL — Onda 5 ck2 tipo comercial Pedido (2026-09-26T19:20Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — migration 026 + policy + Pedido service/repos |
+| Testado | **SIM** — policy/service/HTTP regressão onda5 + runtime01/09 (47/47) |
+| CI | **PENDENTE** — aguardando push |
+| Mesclado | **NÃO** (empilhada sobre #50) |
+| Implantado VPS | **NÃO** |
+
+## Comercial 360 / Onda 5 ck2 - tipo comercial no Pedido (2026-09-26T19:20Z)
+
+- Branch `cursor/comercial360-onda5-tipo-comercial-392b` (base `#50` / origem-canal).
+- `tipo_comercial` no cabeçalho; `tipo_comercial_snapshot` no item; derivado do `Produto.tipo_item`.
+- Allowlist: REVENDA/ARMADO/CORTE_DOBRA/FABRICADO/KIT/SERVICO + MISTO (só cabeçalho).
+- Hint ARMADO/CORTE_DOBRA só com `requer_producao`; hint divergente → 422 `PEDIDO_TIPO_COMERCIAL_INVALIDO`.
+- Filtro list `tipoComercial`; auditoria inclui tipo; sem módulo paralelo.
+- **#45/#46:** CI SIM, MERGEABLE, marcadas **ready for review**; mesclado NÃO; #45 VPS/re-login BLOCKED humano.
+
 ## #50 STATUS REAL — Onda 5 Pedido origem/canal/idempotency (2026-09-26T19:00Z)
 
 | Etapa | Estado |
