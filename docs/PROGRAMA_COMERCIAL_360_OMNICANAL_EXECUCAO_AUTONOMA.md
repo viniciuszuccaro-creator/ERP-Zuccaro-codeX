@@ -1014,3 +1014,9 @@ Novos requisitos não devem ser perdidos em chats. Sempre que surgir melhoria:
 6. testar e registrar o resultado.
 
 Este documento é vivo, mas suas alterações também obedecem à Regra-Mãe, revisão e versionamento.
+
+## Checkpoint omnicanal — reconciliação de sinais, 2026-09-26
+
+Ondas 15/16/18: lotes técnicos próprios #68 → #69 → #70 → #71, abertos e sem merge/deploy; CIs dos HEADs publicadas nas PRs. #71 HEAD 8fae1bb329b973b7722b62b14ee3eadae6122098: runtime #984 e PostgreSQL #7 SUCCESS (4 PASS/0 FAIL/0 SKIP). Novo lote codex/comercial-catalogo-reconciliacao reutiliza integration_events e audita comparação dos ACKs, com paginação tenant-scoped, cursor de microssegundos e idempotência concorrente. Backend local 250 PASS/0 FAIL/19 SKIP; detalhes e gates em COMERCIAL_OMNICANAL_INGRESS.md. CI do novo lote pendente de publicação.
+
+Implementado/testado não equivale a aprovado/mesclado/implantado. Nenhuma onda é declarada integralmente concluída por esses contratos. Publicação completa de catálogo requer projeção aprovada (produto_canais ainda só RASCUNHO), policy company-scoped coordenada e providers reais homologados. Acesso do proprietário, legado com HD e implantação continuam gates externos; sem dados reais, merge automático ou acesso VPS nesta frente.
