@@ -26,6 +26,7 @@ test('catalog lease fences stale outcomes, expires to retry and preserves genera
   try {
     const id = await f.event({ max: 2 });
     const [first] = await f.outbox.claim(f.ctx);
+    await assert.rejects(() => f.outbox.finish(f.ctx, { ...first, key: 'wrong-key' }, { status: 'published' }));
     assert.deepEqual(await f.outbox.claim(f.ctx), []);
     await f.pg.query("UPDATE integration_events SET locked_until=clock_timestamp()-interval '1 second' WHERE id=$1", [id]);
     const [second] = await f.outbox.claim(f.ctx);

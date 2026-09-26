@@ -14,7 +14,7 @@ export const catalogSignalSchema = z.object({ produtoId: z.string().uuid(), codi
 export type CatalogLease = { id: string; produtoId: string; key: string; attempt: number; expiresAt: string; payload: unknown };
 type Event = { id: string; idempotency_key: string; attempts: number; max_attempts: number; status: string;
   locked_until: Date; payload: unknown; aggregate_id: string };
-const leaseSchema = z.object({ id: z.string().uuid(), attempt: z.number().int().positive(), expiresAt: z.string().datetime() });
+const leaseSchema = z.object({ id: z.string().uuid(), key: z.string().min(1).max(512), attempt: z.number().int().positive(), expiresAt: z.string().datetime() });
 
 /** Operates existing Produto publication events only. No provider, schema or parallel queue. */
 export class CatalogOutbox {
@@ -76,8 +76,8 @@ export class CatalogOutbox {
     return this.scoped(ctx, async (tx) => {
       const selected = await tx.query<Event>(`SELECT * FROM integration_events WHERE id=$1 AND group_id=$2 AND empresa_id=$3
         AND source='ERP' AND event_type='produto.publicado' AND aggregate_type='Produto' AND status='processing'
-        AND attempts=$4 AND locked_until=$5::timestamptz AND locked_until>clock_timestamp() FOR UPDATE`,
-      [lease.id, ctx.groupId, ctx.empresaId, lease.attempt, lease.expiresAt]);
+        AND attempts=$4 AND locked_until=$5::timestamptz AND idempotency_key=$6 AND locked_until>clock_timestamp() FOR UPDATE`,
+      [lease.id, ctx.groupId, ctx.empresaId, lease.attempt, lease.expiresAt, lease.key]);
       const event = selected.rows[0];
       if (!event) throw new AppError(409, 'OUTBOX_LEASE_STALE', 'Lease is stale or unavailable');
       const status = outcome.status === 'retry' && event.attempts >= event.max_attempts ? 'dead_letter' : outcome.status;
