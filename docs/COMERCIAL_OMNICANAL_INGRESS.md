@@ -115,4 +115,3 @@ Respostas validadas estritamente (UUID, tipo e formato); resposta 2xx inválida 
 
 Testes usam receptor/services/repos PostgreSQL PGlite reais: quatro canais com criação e consulta; resposta perdida após commit, seguido de retry que retorna um único documento/evento; configuração insegura, teto de tentativas, rejeições definitivas e respostas inválidas. Nenhuma chamada externa. CI do novo HEAD pendente; sem merge/deploy. Próxima integração operacional depende dos gates RLS/produtores/least privilege e das bases documentais #50/#53; estas permanecem em branches do Cursor e não serão recriadas nesta frente.
 Validação local Lote 3: backend completo 242 PASS / 0 FAIL / 17 SKIP (259 testes); cliente focado 3/3 PASS; typecheck/build backend, lint e diff --check PASS. Frontend não alterado; CI Linux pendente.
-
