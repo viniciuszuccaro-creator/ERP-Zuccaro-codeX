@@ -15,6 +15,10 @@ import type { OrcamentoRepository } from '../repositories/orcamentoTypes.js';
 import { PEDIDO_STATUS, pedidoCreateSchema, type Pedido, type PedidoCreate, type PedidoRepository, type PedidoScope, type PedidoStatus } from '../repositories/pedidoTypes.js';
 import type { TenantEntityRepository } from './tenantCrudService.js';
 import { assertDescontoDentroDaAlcadaOuAprovar } from './comercialDescontoAlcadaPolicy.js';
+import {
+  assertMargemDentroDaAlcadaOuAprovar,
+  type ComercialCostPort,
+} from './comercialMargemAlcadaPolicy.js';
 import { z } from 'zod';
 
 const conversionSchema = z.object({
@@ -33,6 +37,8 @@ export type PedidoSalePricePort = {
     input: { clienteEmpresaId: string; produtoId: string; unidadeMedidaId: string },
   ): Promise<{ preco: string; tabela_preco_id?: string } | null>;
 };
+
+export type { ComercialCostPort };
 
 export function pedidoAuditSnapshot(row: Pedido) {
   return sanitizeAuditSnapshot({ id: row.id, group_id: row.group_id, empresa_id: row.empresa_id, numero: row.numero, status: row.status, cliente_empresa_id: row.cliente_empresa_id, cliente_local_id: row.cliente_local_id, obra_id: row.obra_id, tabela_preco_id: row.tabela_preco_id, condicao_pagamento_id: row.condicao_pagamento_id, orcamento_id: row.orcamento_id, vendedor_id: row.vendedor_id, tipo_operacao: row.tipo_operacao, data_entrega_solicitada: row.data_entrega_solicitada, subtotal: row.subtotal, desconto: row.desconto, total: row.total, ativo: row.ativo, quantidade_itens: row.itens.length, requer_producao: row.itens.some((item) => item.requer_producao) });
@@ -53,6 +59,8 @@ export class PedidoService {
     private readonly obras: Pick<ObraRepository, 'get'>,
     private readonly tabelas: Pick<TabelaPrecoRepository, 'get'>,
     private readonly prices: PedidoSalePricePort,
+    /** Opcional: sem porta de custo a alçada de margem não roda (não inventa custo). */
+    private readonly costs: ComercialCostPort | null = null,
   ) {}
 
   async create(ctx: RequestContext, payload: unknown) {
@@ -63,6 +71,7 @@ export class PedidoService {
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
       await this.assertDescontoAlcada(ctx, priced.itens);
+      await this.assertMargemAlcada(ctx, scope, priced.itens);
       const created = await this.repo.create(scope, priced, ctx.actorId!, executor);
       await this.auditRow(ctx, 'create', null, created, executor);
       return created;
@@ -103,6 +112,7 @@ export class PedidoService {
         const data: PedidoCreate = dataParsed.data;
         await this.validateReferences(scope, data, executor);
         await this.assertDescontoAlcada(ctx, data.itens);
+        await this.assertMargemAlcada(ctx, scope, data.itens);
         const created = await this.repo.create(scope, data, ctx.actorId!, executor);
         await this.auditRow(ctx, 'create', null, created, executor);
         return created;
@@ -139,6 +149,7 @@ export class PedidoService {
       // Pedido originado de Orçamento: não reconsultar tabela (não-retroatividade).
       const priced = before.orcamento_id ? data : await this.applyServerPriceSnapshots(ctx, data);
       await this.assertDescontoAlcada(ctx, priced.itens);
+      await this.assertMargemAlcada(ctx, scope, priced.itens);
       const after = await this.repo.update(scope, id, priced, ctx.actorId!, executor);
       if (!after) this.stateConflict();
       await this.auditRow(ctx, 'update', before, after, executor);
@@ -232,17 +243,34 @@ export class PedidoService {
     return { groupId: ctx.groupId, empresaId: ctx.empresaId };
   }
 
-  private async assertDescontoAlcada(ctx: RequestContext, itens: PedidoCreate['itens']) {
-    let canAprovar = false;
+  private async canAprovarComercial(ctx: RequestContext): Promise<boolean> {
     try {
       await this.rbac.assertAllowed(ctx, 'Comercial', 'pedido', 'aprovar', { allowGlobalWildcard: false });
-      canAprovar = true;
+      return true;
     } catch {
-      canAprovar = false;
+      return false;
     }
+  }
+
+  private async assertDescontoAlcada(ctx: RequestContext, itens: PedidoCreate['itens']) {
     assertDescontoDentroDaAlcadaOuAprovar({
       items: itens,
-      canAprovar,
+      canAprovar: await this.canAprovarComercial(ctx),
+      entityLabel: 'Pedido',
+    });
+  }
+
+  private async assertMargemAlcada(
+    ctx: RequestContext,
+    scope: PedidoScope,
+    itens: PedidoCreate['itens'],
+  ) {
+    await assertMargemDentroDaAlcadaOuAprovar({
+      groupId: scope.groupId,
+      empresaId: scope.empresaId,
+      items: itens,
+      costs: this.costs,
+      canAprovar: await this.canAprovarComercial(ctx),
       entityLabel: 'Pedido',
     });
   }

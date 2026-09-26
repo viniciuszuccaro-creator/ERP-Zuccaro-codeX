@@ -11,6 +11,10 @@ import type { ProdutoRepository } from '../repositories/inMemoryProdutoRepositor
 import { orcamentoCreateSchema, type Orcamento, type OrcamentoCreate, type OrcamentoRepository, type OrcamentoScope } from '../repositories/orcamentoTypes.js';
 import type { TenantEntityRepository } from './tenantCrudService.js';
 import { assertDescontoDentroDaAlcadaOuAprovar } from './comercialDescontoAlcadaPolicy.js';
+import {
+  assertMargemDentroDaAlcadaOuAprovar,
+  type ComercialCostPort,
+} from './comercialMargemAlcadaPolicy.js';
 
 const RBAC_MODULE = 'Comercial';
 const RBAC_SECTION = 'orcamento';
@@ -22,6 +26,8 @@ export type OrcamentoSalePricePort = {
     input: { clienteEmpresaId: string; produtoId: string; unidadeMedidaId: string },
   ): Promise<{ preco: string } | null>;
 };
+
+export type { ComercialCostPort };
 
 export function orcamentoAuditSnapshot(row: Orcamento) {
   return sanitizeAuditSnapshot({
@@ -44,6 +50,8 @@ export class OrcamentoService {
     private readonly unidades: Pick<TenantEntityRepository<UnidadeMedida, never, never>, 'getById'>,
     private readonly condicoes: Pick<CondicaoPagamentoRepository, 'get'>,
     private readonly prices: OrcamentoSalePricePort,
+    /** Opcional: sem porta de custo a alçada de margem não roda (não inventa custo). */
+    private readonly costs: ComercialCostPort | null = null,
   ) {}
 
   async create(ctx: RequestContext, payload: unknown) {
@@ -53,6 +61,7 @@ export class OrcamentoService {
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
       await this.assertDescontoAlcada(ctx, priced.itens);
+      await this.assertMargemAlcada(ctx, scope, priced.itens);
       const created = await this.repo.create(scope, priced, executor);
       await this.auditRow(ctx, 'create', null, created, executor);
       return created;
@@ -98,6 +107,7 @@ export class OrcamentoService {
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
       await this.assertDescontoAlcada(ctx, priced.itens);
+      await this.assertMargemAlcada(ctx, scope, priced.itens);
       const after = await this.repo.update(scope, id, priced, executor);
       if (!after) this.stateConflict();
       await this.auditRow(ctx, 'update', before, after, executor);
@@ -147,17 +157,34 @@ export class OrcamentoService {
     return { ...data, itens };
   }
 
-  private async assertDescontoAlcada(ctx: RequestContext, itens: OrcamentoCreate['itens']) {
-    let canAprovar = false;
+  private async canAprovarComercial(ctx: RequestContext): Promise<boolean> {
     try {
       await this.rbac.assertAllowed(ctx, RBAC_MODULE, RBAC_SECTION, 'aprovar', { allowGlobalWildcard: false });
-      canAprovar = true;
+      return true;
     } catch {
-      canAprovar = false;
+      return false;
     }
+  }
+
+  private async assertDescontoAlcada(ctx: RequestContext, itens: OrcamentoCreate['itens']) {
     assertDescontoDentroDaAlcadaOuAprovar({
       items: itens,
-      canAprovar,
+      canAprovar: await this.canAprovarComercial(ctx),
+      entityLabel: 'Orçamento',
+    });
+  }
+
+  private async assertMargemAlcada(
+    ctx: RequestContext,
+    scope: OrcamentoScope,
+    itens: OrcamentoCreate['itens'],
+  ) {
+    await assertMargemDentroDaAlcadaOuAprovar({
+      groupId: scope.groupId,
+      empresaId: scope.empresaId,
+      items: itens,
+      costs: this.costs,
+      canAprovar: await this.canAprovarComercial(ctx),
       entityLabel: 'Orçamento',
     });
   }
